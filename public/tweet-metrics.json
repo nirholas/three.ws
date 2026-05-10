@@ -1,0 +1,534 @@
+{
+  "refreshed_at": "2026-05-10T00:24:45.624Z",
+  "count": 33,
+  "tweets": {
+    "2049355559225503889": {
+      "id": "2049355559225503889",
+      "created_at": "2026-04-29T05:10:15.000Z",
+      "author": {
+        "username": "nichxbt",
+        "name": "nich"
+      },
+      "metrics": {
+        "retweet_count": 37,
+        "reply_count": 64,
+        "like_count": 282,
+        "quote_count": 20,
+        "bookmark_count": 51,
+        "impression_count": 135671
+      }
+    },
+    "2049360194128507336": {
+      "id": "2049360194128507336",
+      "created_at": "2026-04-29T05:28:40.000Z",
+      "author": {
+        "username": "nichxbt",
+        "name": "nich"
+      },
+      "metrics": {
+        "retweet_count": 8,
+        "reply_count": 3,
+        "like_count": 31,
+        "quote_count": 1,
+        "bookmark_count": 8,
+        "impression_count": 3740
+      }
+    },
+    "2049391191771562038": {
+      "id": "2049391191771562038",
+      "created_at": "2026-04-29T07:31:50.000Z",
+      "author": {
+        "username": "nichxbt",
+        "name": "nich"
+      },
+      "metrics": {
+        "retweet_count": 4,
+        "reply_count": 7,
+        "like_count": 18,
+        "quote_count": 2,
+        "bookmark_count": 0,
+        "impression_count": 4107
+      }
+    },
+    "2049684977600909769": {
+      "id": "2049684977600909769",
+      "created_at": "2026-04-30T02:59:14.000Z",
+      "author": {
+        "username": "nichxbt",
+        "name": "nich"
+      },
+      "metrics": {
+        "retweet_count": 10,
+        "reply_count": 10,
+        "like_count": 82,
+        "quote_count": 3,
+        "bookmark_count": 0,
+        "impression_count": 13483
+      }
+    },
+    "2049412062837928202": {
+      "id": "2049412062837928202",
+      "created_at": "2026-04-29T08:54:46.000Z",
+      "author": {
+        "username": "trythreews",
+        "name": "three.ws"
+      },
+      "metrics": {
+        "retweet_count": 6,
+        "reply_count": 14,
+        "like_count": 41,
+        "quote_count": 0,
+        "bookmark_count": 0,
+        "impression_count": 1720
+      }
+    },
+    "2049447738434339171": {
+      "id": "2049447738434339171",
+      "created_at": "2026-04-29T11:16:32.000Z",
+      "author": {
+        "username": "trythreews",
+        "name": "three.ws"
+      },
+      "metrics": {
+        "retweet_count": 13,
+        "reply_count": 7,
+        "like_count": 32,
+        "quote_count": 0,
+        "bookmark_count": 0,
+        "impression_count": 1960
+      }
+    },
+    "2049458671139336613": {
+      "id": "2049458671139336613",
+      "created_at": "2026-04-29T11:59:58.000Z",
+      "author": {
+        "username": "trythreews",
+        "name": "three.ws"
+      },
+      "metrics": {
+        "retweet_count": 16,
+        "reply_count": 9,
+        "like_count": 39,
+        "quote_count": 0,
+        "bookmark_count": 0,
+        "impression_count": 4110
+      }
+    },
+    "2049567362693963905": {
+      "id": "2049567362693963905",
+      "created_at": "2026-04-29T19:11:53.000Z",
+      "author": {
+        "username": "trythreews",
+        "name": "three.ws"
+      },
+      "metrics": {
+        "retweet_count": 14,
+        "reply_count": 12,
+        "like_count": 25,
+        "quote_count": 0,
+        "bookmark_count": 0,
+        "impression_count": 5791
+      }
+    },
+    "2049573582247022869": {
+      "id": "2049573582247022869",
+      "created_at": "2026-04-29T19:36:35.000Z",
+      "author": {
+        "username": "trythreews",
+        "name": "three.ws"
+      },
+      "metrics": {
+        "retweet_count": 10,
+        "reply_count": 11,
+        "like_count": 98,
+        "quote_count": 0,
+        "bookmark_count": 0,
+        "impression_count": 5346
+      }
+    },
+    "2049557523330638269": {
+      "id": "2049557523330638269",
+      "created_at": "2026-04-29T18:32:47.000Z",
+      "author": {
+        "username": "trythreews",
+        "name": "three.ws"
+      },
+      "metrics": {
+        "retweet_count": 7,
+        "reply_count": 13,
+        "like_count": 97,
+        "quote_count": 2,
+        "bookmark_count": 0,
+        "impression_count": 2558
+      }
+    },
+    "2049762179042484636": {
+      "id": "2049762179042484636",
+      "created_at": "2026-04-30T08:06:00.000Z",
+      "author": {
+        "username": "nichxbt",
+        "name": "nich"
+      },
+      "metrics": {
+        "retweet_count": 13,
+        "reply_count": 7,
+        "like_count": 36,
+        "quote_count": 2,
+        "bookmark_count": 0,
+        "impression_count": 5519
+      }
+    },
+    "2049997615421649363": {
+      "id": "2049997615421649363",
+      "created_at": "2026-04-30T23:41:33.000Z",
+      "author": {
+        "username": "trythreews",
+        "name": "three.ws"
+      },
+      "metrics": {
+        "retweet_count": 18,
+        "reply_count": 2,
+        "like_count": 232,
+        "quote_count": 0,
+        "bookmark_count": 0,
+        "impression_count": 6905
+      }
+    },
+    "2050049239301165535": {
+      "id": "2050049239301165535",
+      "created_at": "2026-05-01T03:06:41.000Z",
+      "author": {
+        "username": "trythreews",
+        "name": "three.ws"
+      },
+      "metrics": {
+        "retweet_count": 8,
+        "reply_count": 16,
+        "like_count": 165,
+        "quote_count": 2,
+        "bookmark_count": 3,
+        "impression_count": 2109
+      }
+    },
+    "2050226678321102975": {
+      "id": "2050226678321102975",
+      "created_at": "2026-05-01T14:51:46.000Z",
+      "author": {
+        "username": "trythreews",
+        "name": "three.ws"
+      },
+      "metrics": {
+        "retweet_count": 30,
+        "reply_count": 25,
+        "like_count": 277,
+        "quote_count": 7,
+        "bookmark_count": 7,
+        "impression_count": 22526
+      }
+    },
+    "2050585585191186781": {
+      "id": "2050585585191186781",
+      "created_at": "2026-05-02T14:37:56.000Z",
+      "author": {
+        "username": "trythreews",
+        "name": "three.ws"
+      },
+      "metrics": {
+        "retweet_count": 16,
+        "reply_count": 16,
+        "like_count": 54,
+        "quote_count": 7,
+        "bookmark_count": 4,
+        "impression_count": 7199
+      }
+    },
+    "2050627547394916768": {
+      "id": "2050627547394916768",
+      "created_at": "2026-05-02T17:24:40.000Z",
+      "author": {
+        "username": "trythreews",
+        "name": "three.ws"
+      },
+      "metrics": {
+        "retweet_count": 15,
+        "reply_count": 7,
+        "like_count": 40,
+        "quote_count": 1,
+        "bookmark_count": 1,
+        "impression_count": 1628
+      }
+    },
+    "2050680402923471106": {
+      "id": "2050680402923471106",
+      "created_at": "2026-05-02T20:54:42.000Z",
+      "author": {
+        "username": "nichxbt",
+        "name": "nich"
+      },
+      "metrics": {
+        "retweet_count": 14,
+        "reply_count": 8,
+        "like_count": 33,
+        "quote_count": 1,
+        "bookmark_count": 8,
+        "impression_count": 2366
+      }
+    },
+    "2050753406109880576": {
+      "id": "2050753406109880576",
+      "created_at": "2026-05-03T01:44:47.000Z",
+      "author": {
+        "username": "trythreews",
+        "name": "three.ws"
+      },
+      "metrics": {
+        "retweet_count": 17,
+        "reply_count": 10,
+        "like_count": 41,
+        "quote_count": 2,
+        "bookmark_count": 8,
+        "impression_count": 3740
+      }
+    },
+    "2051126902447124561": {
+      "id": "2051126902447124561",
+      "created_at": "2026-05-04T02:28:56.000Z",
+      "author": {
+        "username": "trythreews",
+        "name": "three.ws"
+      },
+      "metrics": {
+        "retweet_count": 17,
+        "reply_count": 4,
+        "like_count": 41,
+        "quote_count": 2,
+        "bookmark_count": 4,
+        "impression_count": 4332
+      }
+    },
+    "2051261108506558901": {
+      "id": "2051261108506558901",
+      "created_at": "2026-05-04T11:22:13.000Z",
+      "author": {
+        "username": "trythreews",
+        "name": "three.ws"
+      },
+      "metrics": {
+        "retweet_count": 611,
+        "reply_count": 316,
+        "like_count": 2841,
+        "quote_count": 9,
+        "bookmark_count": 11,
+        "impression_count": 42926
+      }
+    },
+    "2051616708482498843": {
+      "id": "2051616708482498843",
+      "created_at": "2026-05-05T10:55:15.000Z",
+      "author": {
+        "username": "trythreews",
+        "name": "three.ws"
+      },
+      "metrics": {
+        "retweet_count": 18,
+        "reply_count": 7,
+        "like_count": 49,
+        "quote_count": 6,
+        "bookmark_count": 7,
+        "impression_count": 12449
+      }
+    },
+    "2051689230997618690": {
+      "id": "2051689230997618690",
+      "created_at": "2026-05-05T15:43:25.000Z",
+      "author": {
+        "username": "trythreews",
+        "name": "three.ws"
+      },
+      "metrics": {
+        "retweet_count": 11,
+        "reply_count": 7,
+        "like_count": 46,
+        "quote_count": 2,
+        "bookmark_count": 1,
+        "impression_count": 2500
+      }
+    },
+    "2051762380686946592": {
+      "id": "2051762380686946592",
+      "created_at": "2026-05-05T20:34:06.000Z",
+      "author": {
+        "username": "nichxbt",
+        "name": "nich"
+      },
+      "metrics": {
+        "retweet_count": 12,
+        "reply_count": 6,
+        "like_count": 52,
+        "quote_count": 2,
+        "bookmark_count": 2,
+        "impression_count": 2458
+      }
+    },
+    "2051774915876098063": {
+      "id": "2051774915876098063",
+      "created_at": "2026-05-05T21:23:54.000Z",
+      "author": {
+        "username": "trythreews",
+        "name": "three.ws"
+      },
+      "metrics": {
+        "retweet_count": 8,
+        "reply_count": 6,
+        "like_count": 42,
+        "quote_count": 1,
+        "bookmark_count": 3,
+        "impression_count": 1610
+      }
+    },
+    "2052402481024667887": {
+      "id": "2052402481024667887",
+      "created_at": "2026-05-07T14:57:37.000Z",
+      "author": {
+        "username": "trythreews",
+        "name": "three.ws"
+      },
+      "metrics": {
+        "retweet_count": 12,
+        "reply_count": 1,
+        "like_count": 41,
+        "quote_count": 2,
+        "bookmark_count": 2,
+        "impression_count": 3884
+      }
+    },
+    "2052424777223336058": {
+      "id": "2052424777223336058",
+      "created_at": "2026-05-07T16:26:13.000Z",
+      "author": {
+        "username": "trythreews",
+        "name": "three.ws"
+      },
+      "metrics": {
+        "retweet_count": 13,
+        "reply_count": 14,
+        "like_count": 48,
+        "quote_count": 1,
+        "bookmark_count": 4,
+        "impression_count": 3439
+      }
+    },
+    "2052418108837781511": {
+      "id": "2052418108837781511",
+      "created_at": "2026-05-07T15:59:43.000Z",
+      "author": {
+        "username": "trythreews",
+        "name": "three.ws"
+      },
+      "metrics": {
+        "retweet_count": 10,
+        "reply_count": 4,
+        "like_count": 30,
+        "quote_count": 2,
+        "bookmark_count": 2,
+        "impression_count": 1149
+      }
+    },
+    "2052186605360943431": {
+      "id": "2052186605360943431",
+      "created_at": "2026-05-07T00:39:49.000Z",
+      "author": {
+        "username": "trythreews",
+        "name": "three.ws"
+      },
+      "metrics": {
+        "retweet_count": 12,
+        "reply_count": 11,
+        "like_count": 40,
+        "quote_count": 1,
+        "bookmark_count": 1,
+        "impression_count": 1977
+      }
+    },
+    "2052610261140598848": {
+      "id": "2052610261140598848",
+      "created_at": "2026-05-08T04:43:16.000Z",
+      "author": {
+        "username": "0xdetweiler",
+        "name": "Theo"
+      },
+      "metrics": {
+        "retweet_count": 16,
+        "reply_count": 12,
+        "like_count": 62,
+        "quote_count": 3,
+        "bookmark_count": 2,
+        "impression_count": 11217
+      }
+    },
+    "2052685648377913671": {
+      "id": "2052685648377913671",
+      "created_at": "2026-05-08T09:42:50.000Z",
+      "author": {
+        "username": "trythreews",
+        "name": "three.ws"
+      },
+      "metrics": {
+        "retweet_count": 23,
+        "reply_count": 7,
+        "like_count": 55,
+        "quote_count": 2,
+        "bookmark_count": 9,
+        "impression_count": 4366
+      }
+    },
+    "2052790746256920583": {
+      "id": "2052790746256920583",
+      "created_at": "2026-05-08T16:40:27.000Z",
+      "author": {
+        "username": "trythreews",
+        "name": "three.ws"
+      },
+      "metrics": {
+        "retweet_count": 13,
+        "reply_count": 10,
+        "like_count": 50,
+        "quote_count": 2,
+        "bookmark_count": 2,
+        "impression_count": 2978
+      }
+    },
+    "2053025259645981078": {
+      "id": "2053025259645981078",
+      "created_at": "2026-05-09T08:12:19.000Z",
+      "author": {
+        "username": "trythreews",
+        "name": "three.ws"
+      },
+      "metrics": {
+        "retweet_count": 22,
+        "reply_count": 14,
+        "like_count": 77,
+        "quote_count": 6,
+        "bookmark_count": 5,
+        "impression_count": 5963
+      }
+    },
+    "2050221870264545681": {
+      "id": "2050221870264545681",
+      "created_at": "2026-05-01T14:32:39.000Z",
+      "author": {
+        "username": "trythreews",
+        "name": "three.ws"
+      },
+      "metrics": {
+        "retweet_count": 2,
+        "reply_count": 0,
+        "like_count": 11,
+        "quote_count": 0,
+        "bookmark_count": 0,
+        "impression_count": 631
+      }
+    }
+  }
+}

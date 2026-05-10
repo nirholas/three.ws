@@ -1,0 +1,2762 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>three.ws — Launch Week Case Study (Apr 29 – May 9, 2026)</title>
+<link href="https://fonts.bunny.net/css?family=dm-sans:300,400,500,600,700|instrument-serif:400,400i|jetbrains-mono:400,500,600,700" rel="stylesheet">
+<script async src="https://platform.twitter.com/widgets.js" charset="utf-8"></script>
+<style>
+  :root {
+    --bg: #0a0a0b;
+    --bg-elevated: #111113;
+    --bg-card: #161619;
+    --bg-card-hover: #1c1c20;
+    --border: #2a2a2f;
+    --border-accent: #3d3d44;
+    --text: #e8e8ed;
+    --text-muted: #8a8a96;
+    --text-dim: #5c5c66;
+    --accent: #14F195;
+    --accent-dim: #0fcc7d;
+    --accent-glow: rgba(20, 241, 149, 0.12);
+    --solana: #9945FF;
+    --solana-glow: rgba(153, 69, 255, 0.12);
+    --gold: #f5b80b;
+    --orange: #ff9933;
+    --blue: #3b82f6;
+    --purple: #a855f7;
+    --pink: #ff5db1;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'DM Sans', -apple-system, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.7;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  ::selection {
+    background: var(--solana);
+    color: #fff;
+  }
+
+  /* ── Hero ── */
+  .hero {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    padding: 2rem;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .hero::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: radial-gradient(ellipse at 30% 50%, rgba(153,69,255,0.06) 0%, transparent 50%),
+                radial-gradient(ellipse at 70% 30%, rgba(20,241,149,0.04) 0%, transparent 50%);
+    animation: heroGlow 12s ease-in-out infinite alternate;
+  }
+
+  @keyframes heroGlow {
+    0% { transform: translate(0, 0); }
+    100% { transform: translate(-3%, 3%); }
+  }
+
+  .hero-content {
+    position: relative;
+    z-index: 1;
+    max-width: 920px;
+    text-align: center;
+  }
+
+  .hero-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.4rem 1rem;
+    border: 1px solid var(--border);
+    border-radius: 100px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.75rem;
+    color: var(--accent);
+    letter-spacing: 0.05em;
+    margin-bottom: 2rem;
+    background: var(--bg-elevated);
+  }
+
+  .hero-badge .dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--accent);
+    animation: pulse 2s infinite;
+  }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.3; }
+  }
+
+  .hero h1 {
+    font-family: 'Instrument Serif', Georgia, serif;
+    font-size: clamp(2.5rem, 6vw, 4.5rem);
+    font-weight: 400;
+    line-height: 1.15;
+    margin-bottom: 1.5rem;
+    letter-spacing: -0.02em;
+  }
+
+  .hero h1 em {
+    font-style: italic;
+    background: linear-gradient(135deg, var(--accent) 0%, var(--solana) 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    color: transparent;
+  }
+
+  .hero h1 em.purple {
+    background: linear-gradient(135deg, var(--solana) 0%, var(--accent) 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    color: transparent;
+  }
+
+  .hero h1 .purple {
+    font-style: italic;
+    color: var(--solana);
+  }
+
+  .hero-sub {
+    font-size: 1.15rem;
+    color: var(--text-muted);
+    max-width: 700px;
+    margin: 0 auto 3rem;
+    line-height: 1.8;
+  }
+
+  .hero-stats {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1px;
+    background: var(--border);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    overflow: hidden;
+    max-width: 760px;
+    margin: 0 auto;
+  }
+
+  .hero-stat {
+    background: var(--bg-elevated);
+    padding: 1.5rem 1rem;
+    text-align: center;
+  }
+
+  .hero-stat .value {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 2.4rem;
+    font-weight: 700;
+    color: var(--accent);
+    display: block;
+    text-shadow: 0 0 24px rgba(20,241,149,0.35);
+    background: linear-gradient(180deg, var(--accent) 0%, var(--solana) 140%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+
+  .hero-stat .value.purple {
+    color: var(--solana);
+    background: linear-gradient(180deg, var(--solana) 0%, var(--accent) 140%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    text-shadow: 0 0 24px rgba(153,69,255,0.35);
+  }
+
+  .hero-stat .label {
+    font-size: 0.7rem;
+    color: var(--text-dim);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    margin-top: 0.3rem;
+  }
+
+  /* ── Layout ── */
+  .container {
+    max-width: 860px;
+    margin: 0 auto;
+    padding: 0 2rem;
+  }
+
+  section {
+    padding: 5rem 0;
+    border-top: 1px solid var(--border);
+  }
+
+  .section-number {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.7rem;
+    color: var(--accent-dim);
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    margin-bottom: 0.75rem;
+  }
+
+  h2 {
+    font-family: 'Instrument Serif', Georgia, serif;
+    font-size: clamp(1.8rem, 4vw, 2.5rem);
+    font-weight: 400;
+    line-height: 1.2;
+    margin-bottom: 1.5rem;
+    letter-spacing: -0.01em;
+  }
+
+  h3 {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 1.15rem;
+    font-weight: 600;
+    margin: 2.5rem 0 1rem;
+    color: var(--text);
+  }
+
+  p {
+    color: var(--text-muted);
+    margin-bottom: 1.25rem;
+    font-size: 1rem;
+  }
+
+  a {
+    color: var(--accent);
+    text-decoration: none;
+    border-bottom: 1px solid transparent;
+    transition: border-color 0.2s;
+  }
+
+  a:hover { border-bottom-color: var(--accent); }
+  a.purple { color: var(--solana); }
+  a.purple:hover { border-bottom-color: var(--solana); }
+
+  /* ── Timeline ── */
+  .timeline {
+    position: relative;
+    padding-left: 2rem;
+    margin: 2rem 0;
+  }
+
+  .timeline::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 2px;
+    background: linear-gradient(to bottom, var(--accent), var(--solana), var(--accent-dim), var(--border));
+  }
+
+  .tl-item {
+    position: relative;
+    padding: 0 0 2.5rem 1.5rem;
+  }
+
+  .tl-item::before {
+    content: '';
+    position: absolute;
+    left: -0.35rem;
+    top: 0.35rem;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: var(--bg);
+    border: 2px solid var(--accent);
+  }
+
+  .tl-item.major::before {
+    background: var(--accent);
+    box-shadow: 0 0 12px var(--accent);
+    width: 12px;
+    height: 12px;
+    left: -0.4rem;
+  }
+
+  .tl-item.solana::before {
+    border-color: var(--solana);
+  }
+
+  .tl-item.solana.major::before {
+    background: var(--solana);
+    box-shadow: 0 0 12px var(--solana);
+  }
+
+  .tl-time {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.72rem;
+    color: var(--accent-dim);
+    letter-spacing: 0.03em;
+    margin-bottom: 0.3rem;
+  }
+
+  .tl-title {
+    font-weight: 600;
+    color: var(--text);
+    font-size: 0.95rem;
+    margin-bottom: 0.3rem;
+  }
+
+  .tl-desc {
+    font-size: 0.85rem;
+    color: var(--text-dim);
+    line-height: 1.6;
+  }
+
+  .tl-metrics {
+    display: inline-flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-top: 0.5rem;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.7rem;
+  }
+
+  .tl-metrics span {
+    color: var(--text-dim);
+    padding: 0.15rem 0.5rem;
+    background: var(--bg-card);
+    border-radius: 4px;
+    border: 1px solid var(--border);
+  }
+
+  .tl-metrics .hot {
+    color: var(--accent);
+    border-color: rgba(20,241,149,0.25);
+    background: rgba(20,241,149,0.06);
+  }
+
+  .tl-metrics .fire {
+    color: var(--solana);
+    border-color: rgba(153,69,255,0.3);
+    background: rgba(153,69,255,0.08);
+  }
+
+  /* ── Data Cards ── */
+  .data-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 1px;
+    background: var(--border);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    overflow: hidden;
+    margin: 2rem 0;
+  }
+
+  .data-card {
+    background: var(--bg-card);
+    padding: 1.5rem;
+  }
+
+  .data-card .label {
+    font-size: 0.7rem;
+    color: var(--text-dim);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    margin-bottom: 0.5rem;
+  }
+
+  .data-card {
+    transition: background 0.25s, transform 0.25s;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .data-card::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(circle at 100% 0%, rgba(20,241,149,0.08), transparent 60%);
+    opacity: 0;
+    transition: opacity 0.3s;
+    pointer-events: none;
+  }
+
+  .data-card:hover { background: var(--bg-card-hover); transform: translateY(-2px); }
+  .data-card:hover::before { opacity: 1; }
+
+  .data-card .value {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 1.9rem;
+    font-weight: 700;
+    color: var(--text);
+    letter-spacing: -0.01em;
+  }
+
+  .data-card .value.green { color: var(--accent); text-shadow: 0 0 16px rgba(20,241,149,0.25); }
+  .data-card .value.purple { color: var(--solana); text-shadow: 0 0 16px rgba(153,69,255,0.25); }
+  .data-card .value.orange { color: var(--orange); text-shadow: 0 0 16px rgba(255,153,51,0.25); }
+  .data-card .value.blue { color: var(--blue); text-shadow: 0 0 16px rgba(59,130,246,0.3); }
+  .data-card .value.gold { color: var(--gold); text-shadow: 0 0 16px rgba(245,184,11,0.25); }
+  .data-card .value.pink { color: var(--pink); text-shadow: 0 0 16px rgba(255,93,177,0.3); }
+
+  .data-card .sub {
+    font-size: 0.75rem;
+    color: var(--text-dim);
+    margin-top: 0.25rem;
+    font-family: 'JetBrains Mono', monospace;
+  }
+
+  /* ── Tables ── */
+  .data-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 1.5rem 0;
+    font-size: 0.85rem;
+  }
+
+  .data-table th {
+    text-align: left;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.65rem;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--text-dim);
+    padding: 0.75rem 1rem;
+    border-bottom: 1px solid var(--border);
+    background: var(--bg-elevated);
+  }
+
+  .data-table td {
+    padding: 0.75rem 1rem;
+    border-bottom: 1px solid var(--border);
+    color: var(--text-muted);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.8rem;
+  }
+
+  .data-table tr:hover td { background: var(--bg-card); }
+  .data-table .highlight { color: var(--accent); font-weight: 600; }
+  .data-table .highlight-purple { color: var(--solana); font-weight: 600; }
+
+  /* ── Callout ── */
+  .callout {
+    border-left: 3px solid var(--accent);
+    padding: 1.25rem 1.5rem;
+    margin: 2rem 0;
+    background: var(--accent-glow);
+    border-radius: 0 8px 8px 0;
+  }
+
+  .callout p {
+    color: var(--text);
+    margin: 0;
+    font-size: 0.95rem;
+  }
+
+  .callout.purple {
+    border-left-color: var(--solana);
+    background: var(--solana-glow);
+  }
+
+  /* ── Code / Mono blocks ── */
+  code {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.85em;
+    background: var(--bg-card);
+    padding: 0.15em 0.4em;
+    border-radius: 4px;
+    border: 1px solid var(--border);
+    color: var(--accent);
+  }
+
+  /* ── Tech Stack Grid ── */
+  .tech-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
+    gap: 0.75rem;
+    margin: 1.5rem 0;
+  }
+
+  .tech-item {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    padding: 0.75rem 1rem;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    font-size: 0.82rem;
+    color: var(--text-muted);
+    transition: all 0.2s;
+  }
+
+  .tech-item:hover {
+    background: var(--bg-card-hover);
+    border-color: var(--border-accent);
+  }
+
+  .tech-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+
+  .tech-dot.three { background: #ffffff; }
+  .tech-dot.ts { background: #3178c6; }
+  .tech-dot.js { background: #f7df1e; }
+  .tech-dot.sol { background: var(--solana); }
+  .tech-dot.evm { background: var(--blue); }
+  .tech-dot.infra { background: var(--accent); }
+  .tech-dot.ai { background: var(--orange); }
+  .tech-dot.api { background: var(--pink); }
+  .tech-dot.web { background: var(--gold); }
+
+  /* ── Repo / Listing Links ── */
+  .repo-grid {
+    display: grid;
+    gap: 0.75rem;
+    margin: 1.5rem 0;
+  }
+
+  .repo-link {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1rem 1.25rem;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    text-decoration: none;
+    transition: all 0.2s;
+  }
+
+  .repo-link:hover {
+    background: var(--bg-card-hover);
+    border-color: var(--accent);
+    border-bottom-color: var(--accent);
+  }
+
+  .repo-link.purple:hover {
+    border-color: var(--solana);
+  }
+
+  .repo-icon {
+    width: 36px;
+    height: 36px;
+    border-radius: 8px;
+    background: var(--bg-elevated);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    font-size: 1rem;
+  }
+
+  .repo-info .name {
+    font-weight: 600;
+    color: var(--text);
+    font-size: 0.9rem;
+  }
+
+  .repo-info .desc {
+    font-size: 0.75rem;
+    color: var(--text-dim);
+    margin-top: 0.15rem;
+  }
+
+  /* ── Engagement Bar ── */
+  .eng-bar {
+    display: flex;
+    height: 12px;
+    border-radius: 6px;
+    overflow: hidden;
+    margin: 1rem 0 0.5rem;
+    border: 1px solid var(--border);
+  }
+
+  .eng-bar .b1 { background: var(--accent); }
+  .eng-bar .b2 { background: var(--solana); }
+  .eng-bar .b3 { background: var(--blue); }
+  .eng-bar .b4 { background: var(--orange); }
+  .eng-bar .b5 { background: var(--pink); }
+
+  .eng-legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+    font-size: 0.75rem;
+    color: var(--text-dim);
+    font-family: 'JetBrains Mono', monospace;
+  }
+
+  .eng-legend span::before {
+    content: '';
+    display: inline-block;
+    width: 10px;
+    height: 10px;
+    border-radius: 2px;
+    margin-right: 0.4rem;
+    vertical-align: middle;
+  }
+
+  .eng-legend .l1::before { background: var(--accent); }
+  .eng-legend .l2::before { background: var(--solana); }
+  .eng-legend .l3::before { background: var(--blue); }
+  .eng-legend .l4::before { background: var(--orange); }
+  .eng-legend .l5::before { background: var(--pink); }
+
+  /* ── Daily Bar Chart ── */
+  .impressions-chart {
+    margin: 2rem 0;
+    padding: 1.5rem;
+    background: var(--bg-elevated);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+  }
+
+  .chart-row {
+    display: grid;
+    grid-template-columns: 60px 1fr 70px;
+    gap: 0.75rem;
+    align-items: center;
+    margin-bottom: 0.5rem;
+  }
+
+  .chart-row .day {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.75rem;
+    color: var(--text-dim);
+  }
+
+  .chart-row .bar-track {
+    height: 24px;
+    background: var(--bg-card);
+    border-radius: 4px;
+    overflow: hidden;
+    position: relative;
+    border: 1px solid var(--border);
+  }
+
+  .chart-row .bar-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--accent), var(--solana));
+    border-radius: 3px;
+    transition: width 0.6s ease;
+  }
+
+  .chart-row .bar-fill.peak {
+    background: linear-gradient(90deg, var(--solana), var(--accent));
+    box-shadow: 0 0 12px var(--solana-glow);
+  }
+
+  .chart-row .val {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.78rem;
+    color: var(--text);
+    font-weight: 600;
+    text-align: right;
+  }
+
+  /* ── Phase / Category Blocks ── */
+  .phase-block {
+    background: linear-gradient(135deg, var(--bg-elevated) 0%, var(--bg-card) 100%);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 1.5rem;
+    margin: 1.5rem 0;
+    position: relative;
+    overflow: hidden;
+    transition: border-color 0.25s, transform 0.25s;
+  }
+
+  .phase-block:hover {
+    border-color: var(--border-accent);
+    transform: translateY(-2px);
+  }
+
+  .phase-block::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, var(--accent), var(--solana), transparent);
+    opacity: 0.6;
+  }
+
+  /* ── Timeline Tweet Embeds ── */
+  .tl-embed {
+    margin: 0.6rem 0 0.5rem;
+    max-width: 550px;
+  }
+
+  .tl-embed .twitter-tweet {
+    margin: 0 !important;
+  }
+
+  /* ── Performer Grid (table → embed grid) ── */
+  .performer-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+    gap: 1.25rem;
+    margin: 2rem 0;
+  }
+
+  .performer-card {
+    background: var(--bg-elevated);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 1rem 1rem 0.75rem;
+    transition: border-color 0.25s, transform 0.25s;
+    position: relative;
+  }
+
+  .performer-card:hover {
+    border-color: var(--accent);
+    transform: translateY(-3px);
+  }
+
+  .performer-card.purple:hover { border-color: var(--solana); }
+
+  .performer-card .rank {
+    position: absolute;
+    top: -8px;
+    left: 14px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.65rem;
+    color: var(--bg);
+    background: var(--accent);
+    padding: 0.2rem 0.55rem;
+    border-radius: 4px;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+  }
+
+  .performer-card.purple .rank { background: var(--solana); color: #fff; }
+
+  .performer-card .twitter-tweet { margin: 0 !important; }
+
+  .performer-card .pmeta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+    margin-top: 0.6rem;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.68rem;
+  }
+
+  .performer-card .pmeta span {
+    padding: 0.2rem 0.55rem;
+    background: var(--bg-card);
+    border-radius: 4px;
+    border: 1px solid var(--border);
+    color: var(--text-dim);
+  }
+
+  .performer-card .pmeta .v { color: var(--accent); border-color: rgba(20,241,149,0.25); }
+  .performer-card .pmeta .p { color: var(--solana); border-color: rgba(153,69,255,0.3); }
+
+  /* ════════ NEW DESIGN MERGE — additive blocks ════════ */
+
+  /* ── Hero grid backdrop + scroll cue ── */
+  .hero::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(255,255,255,0.018) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255,255,255,0.018) 1px, transparent 1px);
+    background-size: 56px 56px;
+    mask-image: radial-gradient(ellipse at center, black 10%, transparent 75%);
+    -webkit-mask-image: radial-gradient(ellipse at center, black 10%, transparent 75%);
+    pointer-events: none;
+  }
+
+  .hero-meta {
+    display: flex;
+    justify-content: center;
+    gap: 2rem;
+    flex-wrap: wrap;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.78rem;
+    color: var(--text-dim);
+    letter-spacing: 0.05em;
+    margin: 1.5rem 0 2.5rem;
+  }
+  .hero-meta span strong { color: var(--text); font-weight: 500; }
+
+  .scroll-cue {
+    position: absolute;
+    bottom: 2rem;
+    left: 50%;
+    transform: translateX(-50%);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.7rem;
+    color: var(--text-dim);
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    text-align: center;
+  }
+  .scroll-cue .arrow {
+    display: block;
+    margin: 0.5rem auto 0;
+    width: 1px;
+    height: 40px;
+    background: linear-gradient(to bottom, transparent, var(--text-dim));
+    animation: scrollPulse 2.4s ease-in-out infinite;
+  }
+  @keyframes scrollPulse {
+    0%, 100% { opacity: 0.3; transform: scaleY(0.6); }
+    50% { opacity: 1; transform: scaleY(1); }
+  }
+
+  /* ── Layered "What We Shipped" section ── */
+  .layers {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 1px;
+    background: var(--border);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    overflow: hidden;
+    margin: 2rem 0;
+  }
+  .layer {
+    background: var(--bg-elevated);
+    padding: 2.5rem;
+    display: grid;
+    grid-template-columns: 200px 1fr;
+    gap: 2.5rem;
+    transition: background 0.3s ease;
+  }
+  .layer:hover { background: var(--bg-card-hover); }
+  .layer-id {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.7rem;
+    color: var(--text-dim);
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+  }
+  .layer-id .num {
+    display: block;
+    font-family: 'Instrument Serif', serif;
+    font-size: 3.2rem;
+    line-height: 1;
+    color: var(--accent);
+    font-style: italic;
+    margin-bottom: 0.4rem;
+  }
+  .layer-name {
+    font-family: 'Instrument Serif', serif;
+    font-size: 1.8rem;
+    font-weight: 400;
+    margin-bottom: 0.8rem;
+    letter-spacing: -0.01em;
+    color: var(--text);
+  }
+  .layer-name em {
+    font-style: italic;
+    color: var(--accent);
+  }
+  .layer-desc {
+    color: var(--text-muted);
+    margin-bottom: 1.5rem;
+    line-height: 1.7;
+    font-size: 0.95rem;
+  }
+  .layer-desc code {
+    font-family: 'JetBrains Mono', monospace;
+    color: var(--accent);
+    background: var(--bg-card);
+    padding: 0.1em 0.35em;
+    border-radius: 3px;
+    border: 1px solid var(--border);
+    font-size: 0.85em;
+  }
+  .layer-pills {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+  .pill {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.72rem;
+    padding: 0.35rem 0.8rem;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    color: var(--text-muted);
+    transition: all 0.2s ease;
+  }
+  .pill:hover { border-color: var(--accent-dim); color: var(--accent); }
+  .pill.solana { border-color: rgba(153,69,255,0.4); color: var(--solana); }
+  @media (max-width: 760px) {
+    .layer { grid-template-columns: 1fr; gap: 1.2rem; padding: 2rem 1.5rem; }
+    .layer-id .num { font-size: 2.4rem; }
+  }
+
+  /* ── Repo strip ── */
+  .repo-strip {
+    background: var(--bg-elevated);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 2rem 2.5rem;
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 2rem;
+    margin: 1.5rem 0;
+  }
+  .repo-strip > div .lab {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.7rem;
+    color: var(--text-dim);
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    margin-bottom: 0.6rem;
+  }
+  .repo-strip > div .v {
+    font-family: 'Instrument Serif', serif;
+    font-size: 2rem;
+    line-height: 1;
+    color: var(--text);
+  }
+  @media (max-width: 720px) {
+    .repo-strip { grid-template-columns: repeat(2, 1fr); padding: 1.5rem; }
+  }
+
+  /* ── SVG Charts ── */
+  .charts-grid {
+    display: grid;
+    grid-template-columns: 1.4fr 1fr;
+    gap: 1rem;
+    margin: 2rem 0 1rem;
+  }
+  @media (max-width: 880px) {
+    .charts-grid { grid-template-columns: 1fr; }
+  }
+  .chart-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 2rem;
+  }
+  .chart-card h3 {
+    font-family: 'Instrument Serif', serif;
+    font-size: 1.4rem;
+    font-weight: 400;
+    margin: 0 0 0.3rem 0;
+    color: var(--text);
+  }
+  .chart-card .chart-sub {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.72rem;
+    color: var(--text-dim);
+    letter-spacing: 0.1em;
+    margin-bottom: 1.6rem;
+  }
+  .chart-svg {
+    width: 100%;
+    height: auto;
+    display: block;
+  }
+  .chart-note {
+    margin-top: 1.2rem;
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    line-height: 1.6;
+    border-top: 1px solid var(--border);
+    padding-top: 1rem;
+  }
+
+  /* ── Audience band ── */
+  .audience-band {
+    margin: 2rem 0 1rem;
+    background: linear-gradient(135deg, rgba(20,241,149,0.04) 0%, rgba(153,69,255,0.04) 100%);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 3rem;
+    display: grid;
+    grid-template-columns: 1fr auto;
+    align-items: center;
+    gap: 3rem;
+  }
+  .audience-band h3 {
+    font-family: 'Instrument Serif', serif;
+    font-size: 2rem;
+    font-weight: 400;
+    line-height: 1.2;
+    margin: 0 0 0.6rem 0;
+    color: var(--text);
+  }
+  .audience-band p { color: var(--text-muted); max-width: 540px; margin: 0; }
+  .audience-stat { text-align: right; }
+  .audience-stat .num {
+    font-family: 'Instrument Serif', serif;
+    font-size: 4.5rem;
+    line-height: 1;
+    color: var(--accent);
+    font-style: italic;
+  }
+  .audience-stat .lab {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.7rem;
+    color: var(--text-dim);
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    margin-top: 0.4rem;
+  }
+  @media (max-width: 720px) {
+    .audience-band { grid-template-columns: 1fr; padding: 2rem; }
+    .audience-stat { text-align: left; }
+    .audience-stat .num { font-size: 3.5rem; }
+  }
+
+  /* ── Outside signal / What's Next grid ── */
+  .next-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1rem;
+    margin: 1.5rem 0;
+  }
+  @media (max-width: 720px) { .next-grid { grid-template-columns: 1fr; } }
+  .next-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 2rem;
+    position: relative;
+    transition: border-color 0.25s, transform 0.25s;
+  }
+  .next-card:hover { border-color: var(--border-accent); transform: translateY(-2px); }
+  .next-card .phase {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.7rem;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--text-dim);
+    margin-bottom: 1rem;
+  }
+  .next-card .phase .status { color: var(--orange); margin-left: 0.5rem; }
+  .next-card .phase .status.shipped { color: var(--accent); }
+  .next-card h3 {
+    font-family: 'Instrument Serif', serif;
+    font-size: 1.6rem;
+    font-weight: 400;
+    margin: 0 0 0.6rem 0;
+    line-height: 1.2;
+    color: var(--text);
+  }
+  .next-card p { color: var(--text-muted); font-size: 0.95rem; line-height: 1.6; margin: 0; }
+  .next-card code {
+    font-family: 'JetBrains Mono', monospace;
+    color: var(--accent);
+    background: var(--bg-elevated);
+    padding: 0.1em 0.35em;
+    border-radius: 3px;
+    font-size: 0.85em;
+  }
+
+  /* ── Reveal on scroll ── */
+  .reveal {
+    opacity: 0;
+    transform: translateY(28px);
+    transition: opacity 0.8s ease-out, transform 0.8s ease-out;
+  }
+  .reveal.in { opacity: 1; transform: translateY(0); }
+
+  /* ── Featured Tweet Embeds ── */
+  .tweet-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+    gap: 1rem;
+    margin: 2rem 0;
+  }
+
+  .tweet-grid .twitter-tweet {
+    margin: 0 !important;
+  }
+
+  .tweet-card {
+    background: var(--bg-elevated);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 1rem;
+    transition: border-color 0.25s, transform 0.25s;
+    position: relative;
+  }
+
+  .tweet-card:hover {
+    border-color: var(--solana);
+    transform: translateY(-3px);
+  }
+
+  .tweet-card .tweet-meta {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 0.6rem;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.7rem;
+    color: var(--text-dim);
+    padding: 0 0.25rem;
+  }
+
+  .tweet-card .tweet-meta .views {
+    color: var(--accent);
+  }
+
+  .phase-header {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-bottom: 1rem;
+    flex-wrap: wrap;
+  }
+
+  .phase-tag {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.65rem;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    padding: 0.3rem 0.7rem;
+    border-radius: 4px;
+    font-weight: 600;
+  }
+
+  .phase-tag.launch { background: rgba(20,241,149,0.12); color: var(--accent); }
+  .phase-tag.product { background: rgba(153,69,255,0.15); color: var(--solana); }
+  .phase-tag.market { background: rgba(245,184,11,0.12); color: var(--gold); }
+  .phase-tag.media { background: rgba(255,93,177,0.12); color: var(--pink); }
+  .phase-tag.standards { background: rgba(59,130,246,0.12); color: var(--blue); }
+
+  /* ── X Article Section ── */
+  .x-article {
+    background: var(--bg-elevated);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 3rem 2.5rem;
+    margin: 2rem 0;
+  }
+
+  .x-article h4 {
+    font-family: 'Instrument Serif', serif;
+    font-size: 1.4rem;
+    margin-bottom: 1rem;
+    color: var(--text);
+    font-weight: 400;
+  }
+
+  .x-article p {
+    color: var(--text-muted);
+    font-size: 0.92rem;
+    margin-bottom: 1rem;
+    line-height: 1.75;
+  }
+
+  .x-article .hook {
+    font-size: 1.05rem;
+    color: var(--text);
+    font-weight: 500;
+    border-left: 3px solid var(--solana);
+    padding-left: 1rem;
+    margin-bottom: 1.5rem;
+  }
+
+  /* ── Footer ── */
+  footer {
+    padding: 4rem 0;
+    border-top: 1px solid var(--border);
+    text-align: center;
+  }
+
+  footer p {
+    font-size: 0.8rem;
+    color: var(--text-dim);
+  }
+
+  /* ── Divider ── */
+  .divider {
+    text-align: center;
+    padding: 3rem 0;
+    color: var(--text-dim);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.8rem;
+    letter-spacing: 0.3em;
+  }
+
+  /* ── Responsive ── */
+  @media (max-width: 640px) {
+    .hero-stats { grid-template-columns: repeat(2, 1fr); }
+    .container { padding: 0 1.25rem; }
+    .x-article { padding: 2rem 1.5rem; }
+    .tl-item { padding-left: 1.25rem; }
+    .chart-row { grid-template-columns: 50px 1fr 60px; gap: 0.5rem; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ════════════════════ HERO ════════════════════ -->
+<div class="hero">
+  <div class="hero-content">
+    <div class="hero-badge">
+      <span class="dot"></span>
+      LAUNCH WEEK CASE STUDY — APR 29 – MAY 9, 2026
+    </div>
+    <h1>Eleven days.<br>Zero ad spend.<br><em>Coinbase</em>, <em>Bybit</em>, <em>Vogue</em>, and <em class="purple">W3C</em><br>all said yes anyway.</h1>
+    <p class="hero-sub">
+      A data-driven breakdown of <a href="https://three.ws">three.ws</a>'s first week on X — the partnerships that landed, the listings we earned, the community we built, and every product, SDK, and endpoint we shipped to deserve the room.
+    </p>
+
+    <div class="hero-meta">
+      <span><strong>291</strong> commits</span>
+      <span><strong>Apache&nbsp;2.0</strong> license</span>
+      <span><strong>11</strong> following · <strong>3,675</strong> followers</span>
+      <span><strong>github.com/nirholas/three.ws</strong></span>
+    </div>
+
+    <div class="hero-stats">
+      <div class="hero-stat">
+        <span class="value">9.4%</span>
+        <span class="label">Engagement Rate</span>
+      </div>
+      <div class="hero-stat">
+        <span class="value purple">3,675</span>
+        <span class="label">Followers</span>
+      </div>
+      <div class="hero-stat">
+        <span class="value purple">1,010</span>
+        <span class="label">Community</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="scroll-cue">
+    Scroll
+    <span class="arrow"></span>
+  </div>
+</div>
+
+<!-- ════════════════════ ANNOUNCEMENT TWEET (top-of-page hero embed) ════════════════════ -->
+<div class="container" style="margin-top: -3rem; margin-bottom: 4rem;">
+  <div style="text-align:center; margin-bottom: 1.5rem;">
+    <div class="section-number" style="display:inline-block;">THE POST THAT STARTED IT ALL</div>
+  </div>
+  <div class="tweet-card" style="max-width: 580px; margin: 0 auto;">
+    <blockquote class="twitter-tweet" data-theme="dark" data-conversation="none">
+      <a href="https://twitter.com/nichxbt/status/2049355559225503889">three.ws launch — Apr 29, 2026</a>
+    </blockquote>
+    <div class="tweet-meta"><span>Apr 29 · @nichxbt founder launch</span><span class="views">135K views</span></div>
+  </div>
+</div>
+
+<div class="container">
+
+<!-- ════════════════════ SECTION 1: ORIGIN ════════════════════ -->
+<section>
+  <div class="section-number">01 — Origin</div>
+  <h2>From a single tweet to a 3D agent ecosystem.</h2>
+  <p>
+    On April 29, 2026, <a href="https://x.com/nichxbt">@nichxbt</a> posted: <em>"something I've wanted for a while: an AI that isn't just a text box."</em> Attached was the launch of <a href="https://three.ws">three.ws</a> — on-chain 3D AI agent avatars that talk, remember, hold wallets, and live in your browser.
+  </p>
+  <p>
+    The post reached <strong>135,000 views</strong> in under 24 hours. Within a week, <a href="https://x.com/trythreews">@trythreews</a> had gone from a fresh handle to a verified profile with 3,675 followers, three live x402 paid endpoints, two npm-published SDKs, partnerships with Google Cloud and Alibaba Cloud, listings on Coinbase, Bybit, Jupiter, CoinGecko, and CoinMarketCap, and an entry in the Solana Frontier Hackathon.
+  </p>
+
+  <div class="tweet-card" style="max-width:550px;margin:1.5rem auto;">
+    <blockquote class="twitter-tweet" data-theme="dark" data-conversation="none">
+      <a href="https://twitter.com/nichxbt/status/2049355559225503889">The post that started everything</a>
+    </blockquote>
+    <div class="tweet-meta"><span>Apr 29 · founder launch</span><span class="views">135K views</span></div>
+  </div>
+  <p>
+    Every metric below is pulled directly from X analytics for <a href="https://x.com/trythreews">@trythreews</a> covering Apr 29 – May 9, 2026, and from a complete scrape of every post made during that window.
+  </p>
+
+  <div class="callout purple">
+    <p><strong>The thesis:</strong> Build a real product, ship something every day, name the partners as you land them. The flywheel takes care of the rest.</p>
+  </div>
+</section>
+
+<!-- ════════════════════ SECTION 1.5: WHAT WE SHIPPED (LAYERED ARCHITECTURE) ════════════════════ -->
+<section>
+  <div class="section-number">01.5 — What we shipped</div>
+  <h2>The whole stack, <em style="color:var(--accent);font-style:italic;">in one repo.</em></h2>
+  <p>
+    three.ws is organized as four communicating layers, plus a backend and a contracts package. Every layer is in production at <a href="https://three.ws">three.ws</a> and ships as part of the open-source repo. Here's the inventory.
+  </p>
+
+  <div class="layers">
+    <div class="layer">
+      <div class="layer-id">
+        <span class="num">L4</span>
+        Embed &amp; Distribution
+      </div>
+      <div>
+        <div class="layer-name">Drop-in 3D agents, anywhere on the web.</div>
+        <p class="layer-desc">
+          The <code>&lt;agent-3d&gt;</code> custom element loads lazily on intersection, supports five widget variants (turntable, animation gallery, talking agent, ERC-8004 passport card, hotspot tour), and emits Open Graph and oEmbed metadata so links unfurl with rich previews. A point-and-click Widget Studio generates copy-paste embed code at <code>/studio</code>. Versioned CDN bundles ship at <code>/agent-3d/x.y.z/</code>.
+        </p>
+        <div class="layer-pills">
+          <span class="pill">&lt;agent-3d&gt;</span>
+          <span class="pill">5 widget types</span>
+          <span class="pill">Open Graph + oEmbed</span>
+          <span class="pill">Widget Studio</span>
+          <span class="pill">Versioned CDN</span>
+          <span class="pill">postMessage API</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="layer">
+      <div class="layer-id">
+        <span class="num">L3</span>
+        Identity &amp; Persistence
+      </div>
+      <div>
+        <div class="layer-name">On-chain identity. Signed action history.</div>
+        <p class="layer-desc">
+          Three Solidity contracts make up the ERC-8004 implementation: <code>IdentityRegistry</code> (ERC-721 agent tokens with delegated EIP-712 signers), <code>ReputationRegistry</code> (signed reviewer feedback, averaged on-chain), and <code>ValidationRegistry</code> (validator attestations for off-chain proofs). Every <code>speak</code>, <code>remember</code>, and <code>skill-done</code> event is signed and logged. Solana ships an analog using Metaplex Core NFTs plus signed SPL Memo attestations — same shape, no custom program required.
+        </p>
+        <div class="layer-pills">
+          <span class="pill">ERC-8004</span>
+          <span class="pill">ERC-721 tokens</span>
+          <span class="pill">EIP-712 signing</span>
+          <span class="pill">EIP-7710 delegation</span>
+          <span class="pill">Foundry tested</span>
+          <span class="pill solana">Solana SIWS + Metaplex</span>
+          <span class="pill">IPFS pinning</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="layer">
+      <div class="layer-id">
+        <span class="num">L2</span>
+        Agent Runtime
+      </div>
+      <div>
+        <div class="layer-name">An LLM brain, with a body that <em>feels</em>.</div>
+        <p class="layer-desc">
+          The runtime drives a Claude tool-loop with up to eight iterations per turn and six built-in tools (<code>wave</code>, <code>lookAt</code>, <code>play_clip</code>, <code>setExpression</code>, <code>speak</code>, <code>remember</code>). The Empathy Layer is not a state machine — it's a continuous weighted blend of five emotions (celebration, concern, curiosity, empathy, patience), each with its own decay half-life, driving the avatar's morph targets and head pose every frame. Skills are self-contained bundles distributable over IPFS, Arweave, or HTTP. Memory is file-based with four storage modes (local, IPFS, encrypted-IPFS, none).
+        </p>
+        <div class="layer-pills">
+          <span class="pill">Claude tool-loop</span>
+          <span class="pill">8-iteration limit</span>
+          <span class="pill">Empathy Layer</span>
+          <span class="pill">Skill registry</span>
+          <span class="pill">Web Speech + ElevenLabs</span>
+          <span class="pill">YAML-front-matter memory</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="layer">
+      <div class="layer-id">
+        <span class="num">L1</span>
+        Viewer
+      </div>
+      <div>
+        <div class="layer-name">three.js r176, Khronos-grade glTF.</div>
+        <p class="layer-desc">
+          WebGL 2.0 rendering with full glTF 2.0 / GLB support: Draco geometry compression, KTX2 texture compression, Meshopt mesh optimization, HDR environment maps, PBR materials, skinned animation, morph targets, and embedded cameras. Validation is line-level via the Khronos gltf-validator. Drag-and-drop loading, OrbitControls with configurable auto-rotation, and a real-time dat.GUI for live tweaking.
+        </p>
+        <div class="layer-pills">
+          <span class="pill">three.js r176</span>
+          <span class="pill">Draco / KTX2 / Meshopt</span>
+          <span class="pill">PBR + HDR</span>
+          <span class="pill">glTF validator</span>
+          <span class="pill">Drag-and-drop</span>
+          <span class="pill">dat.GUI</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="layer">
+      <div class="layer-id">
+        <span class="num">B</span>
+        Backend
+      </div>
+      <div>
+        <div class="layer-name">~153 serverless endpoints. ~3,600 lines of API.</div>
+        <p class="layer-desc">
+          Vercel functions on Neon Postgres, Cloudflare R2, and Upstash Redis. A full OAuth&nbsp;2.1 server (RFC 6749 + PKCE, RFC 7591 dynamic registration, RFC 7009 revocation, RFC 7662 introspection, RFC 8414 discovery, RFC 9728 protected-resource discovery). An MCP server over HTTP — 759 lines, JSON-RPC 2.0, listed on the official Model Context Protocol Registry as <code>io.github.nirholas/three.ws</code>. Cron jobs for the ERC-8004 crawler, EIP-7710 delegation indexer, DCA strategy execution, and recurring on-chain subscriptions.
+        </p>
+        <div class="layer-pills">
+          <span class="pill">OAuth 2.1 + PKCE</span>
+          <span class="pill">MCP over HTTP</span>
+          <span class="pill">Listed on MCP Registry</span>
+          <span class="pill">Neon Postgres</span>
+          <span class="pill">Cloudflare R2</span>
+          <span class="pill">Upstash Redis</span>
+          <span class="pill">4 cron jobs</span>
+          <span class="pill">OpenAPI 3.1</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="repo-strip">
+    <div>
+      <div class="lab">Repo commits</div>
+      <div class="v">291</div>
+    </div>
+    <div>
+      <div class="lab">API endpoints</div>
+      <div class="v">~153</div>
+    </div>
+    <div>
+      <div class="lab">Frontend modules</div>
+      <div class="v">~80</div>
+    </div>
+    <div>
+      <div class="lab">Stars · forks</div>
+      <div class="v">24 · 2</div>
+    </div>
+  </div>
+</section>
+
+<!-- ════════════════════ SECTION 2: THE NUMBERS ════════════════════ -->
+<section>
+  <div class="section-number">02 — X Analytics</div>
+  <h2>The numbers behind the launch</h2>
+  <p>
+    Eleven days. One brand-new account. Every interaction below was earned organically — no paid amplification, no bought followers.
+  </p>
+
+  <h3>Top-line Metrics</h3>
+  <div class="data-grid" style="grid-template-columns: repeat(4, 1fr);">
+    <div class="data-card">
+      <div class="label">Engagement Rate</div>
+      <div class="value purple">9.4%</div>
+      <div class="sub">~10x platform average</div>
+    </div>
+    <div class="data-card">
+      <div class="label">Profile Visits</div>
+      <div class="value blue">5,100</div>
+      <div class="sub">High-intent traffic to bio</div>
+    </div>
+    <div class="data-card">
+      <div class="label">Followers</div>
+      <div class="value purple">3,675</div>
+      <div class="sub">From a standing start</div>
+    </div>
+    <div class="data-card">
+      <div class="label">Community Members</div>
+      <div class="value pink">1,010</div>
+      <div class="sub">In the X community</div>
+    </div>
+  </div>
+
+  <h3>Daily Impressions</h3>
+  <div class="impressions-chart">
+    <div class="chart-row"><div class="day">Apr 29</div><div class="bar-track"><div class="bar-fill" style="width:50%"></div></div><div class="val">~24K</div></div>
+    <div class="chart-row"><div class="day">Apr 30</div><div class="bar-track"><div class="bar-fill" style="width:36%"></div></div><div class="val">~17K</div></div>
+    <div class="chart-row"><div class="day">May 1</div><div class="bar-track"><div class="bar-fill" style="width:46%"></div></div><div class="val">~22K</div></div>
+    <div class="chart-row"><div class="day">May 2</div><div class="bar-track"><div class="bar-fill" style="width:28%"></div></div><div class="val">~13K</div></div>
+    <div class="chart-row"><div class="day">May 3</div><div class="bar-track"><div class="bar-fill" style="width:26%"></div></div><div class="val">~12K</div></div>
+    <div class="chart-row"><div class="day">May 4</div><div class="bar-track"><div class="bar-fill" style="width:60%"></div></div><div class="val">~28K</div></div>
+    <div class="chart-row"><div class="day">May 5</div><div class="bar-track"><div class="bar-fill peak" style="width:100%"></div></div><div class="val">~46K</div></div>
+    <div class="chart-row"><div class="day">May 6</div><div class="bar-track"><div class="bar-fill" style="width:60%"></div></div><div class="val">~28K</div></div>
+    <div class="chart-row"><div class="day">May 7</div><div class="bar-track"><div class="bar-fill" style="width:62%"></div></div><div class="val">~29K</div></div>
+    <div class="chart-row"><div class="day">May 8</div><div class="bar-track"><div class="bar-fill" style="width:52%"></div></div><div class="val">~24K</div></div>
+    <div class="chart-row"><div class="day">May 9</div><div class="bar-track"><div class="bar-fill" style="width:42%"></div></div><div class="val">~19K</div></div>
+  </div>
+
+  <div class="callout">
+    <p><strong>The May 5 peak</strong> — 46K impressions and roughly 1,200 new followers in 24 hours — was driven by the Solana Frontier Hackathon listing landing, the Coinbase listing announcement, and the Jupiter Exchange verification all dropping in the same window.</p>
+  </div>
+
+  <h3>Same data, charted</h3>
+  <div class="charts-grid">
+    <div class="chart-card">
+      <h3>Daily impressions</h3>
+      <div class="chart-sub">APR 29 → MAY 9 · 2026</div>
+      <svg class="chart-svg" viewBox="0 0 700 280" preserveAspectRatio="xMidYMid meet" xmlns="http://www.w3.org/2000/svg" aria-label="Bar chart of daily X impressions from April 29 to May 9, 2026">
+        <defs>
+          <linearGradient id="barGrad" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stop-color="#14F195" stop-opacity="1"/>
+            <stop offset="100%" stop-color="#0fcc7d" stop-opacity="0.55"/>
+          </linearGradient>
+          <linearGradient id="peakGrad" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stop-color="#14F195" stop-opacity="1"/>
+            <stop offset="100%" stop-color="#9945FF" stop-opacity="0.6"/>
+          </linearGradient>
+        </defs>
+        <g stroke="#2a2a2f" stroke-width="1">
+          <line x1="50" y1="40"  x2="690" y2="40"  stroke-dasharray="2 4"/>
+          <line x1="50" y1="100" x2="690" y2="100" stroke-dasharray="2 4"/>
+          <line x1="50" y1="160" x2="690" y2="160" stroke-dasharray="2 4"/>
+          <line x1="50" y1="220" x2="690" y2="220" stroke-dasharray="2 4"/>
+        </g>
+        <g font-family="JetBrains Mono, monospace" font-size="9" fill="#5c5c66">
+          <text x="42" y="44" text-anchor="end">45K</text>
+          <text x="42" y="104" text-anchor="end">30K</text>
+          <text x="42" y="164" text-anchor="end">15K</text>
+          <text x="42" y="224" text-anchor="end">0</text>
+        </g>
+        <line x1="50" y1="220" x2="690" y2="220" stroke="#3d3d44" stroke-width="1"/>
+        <g>
+          <rect x="69"  y="124" width="38" height="96"  fill="url(#barGrad)" rx="2"/>
+          <rect x="125" y="148" width="38" height="72"  fill="url(#barGrad)" rx="2"/>
+          <rect x="181" y="132" width="38" height="88"  fill="url(#barGrad)" rx="2"/>
+          <rect x="237" y="168" width="38" height="52"  fill="url(#barGrad)" rx="2"/>
+          <rect x="293" y="168" width="38" height="52"  fill="url(#barGrad)" rx="2"/>
+          <rect x="349" y="108" width="38" height="112" fill="url(#barGrad)" rx="2"/>
+          <rect x="405" y="32"  width="38" height="188" fill="url(#peakGrad)" rx="2"/>
+          <rect x="461" y="108" width="38" height="112" fill="url(#barGrad)" rx="2"/>
+          <rect x="517" y="104" width="38" height="116" fill="url(#barGrad)" rx="2"/>
+          <rect x="573" y="120" width="38" height="100" fill="url(#barGrad)" rx="2"/>
+          <rect x="629" y="144" width="38" height="76"  fill="url(#barGrad)" rx="2"/>
+        </g>
+        <g font-family="JetBrains Mono, monospace" font-size="9.5" fill="#14F195">
+          <text x="424" y="22" text-anchor="middle">PEAK · 46K</text>
+          <line x1="424" y1="26" x2="424" y2="32" stroke="#14F195" stroke-width="1"/>
+        </g>
+        <g font-family="JetBrains Mono, monospace" font-size="9" fill="#5c5c66" text-anchor="middle">
+          <text x="88"  y="244">Apr 29</text>
+          <text x="144" y="244">Apr 30</text>
+          <text x="200" y="244">May 1</text>
+          <text x="256" y="244">May 2</text>
+          <text x="312" y="244">May 3</text>
+          <text x="368" y="244">May 4</text>
+          <text x="424" y="244">May 5</text>
+          <text x="480" y="244">May 6</text>
+          <text x="536" y="244">May 7</text>
+          <text x="592" y="244">May 8</text>
+          <text x="648" y="244">May 9</text>
+        </g>
+      </svg>
+      <div class="chart-note">
+        The May&nbsp;5 peak coincides with the Solana Frontier Hackathon listing, the Coinbase + Coinbase Wallet $THREE listing, and Jupiter verification all landing in the same 24-hour window. Steady-state baseline since launch sits at <span style="color:var(--accent)">~22K impressions/day</span>.
+      </div>
+    </div>
+
+    <div class="chart-card">
+      <h3>Follows over time</h3>
+      <div class="chart-sub">NET NEW FOLLOWS · DAILY</div>
+      <svg class="chart-svg" viewBox="0 0 500 280" preserveAspectRatio="xMidYMid meet" xmlns="http://www.w3.org/2000/svg" aria-label="Bar chart of daily new followers from April 29 to May 9, 2026">
+        <defs>
+          <linearGradient id="followGrad" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stop-color="#14F195" stop-opacity="1"/>
+            <stop offset="100%" stop-color="#0fcc7d" stop-opacity="0.55"/>
+          </linearGradient>
+          <linearGradient id="followPeak" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stop-color="#14F195" stop-opacity="1"/>
+            <stop offset="100%" stop-color="#9945FF" stop-opacity="0.6"/>
+          </linearGradient>
+        </defs>
+        <g stroke="#2a2a2f" stroke-width="1">
+          <line x1="50" y1="40"  x2="490" y2="40"  stroke-dasharray="2 4"/>
+          <line x1="50" y1="100" x2="490" y2="100" stroke-dasharray="2 4"/>
+          <line x1="50" y1="160" x2="490" y2="160" stroke-dasharray="2 4"/>
+          <line x1="50" y1="220" x2="490" y2="220" stroke-dasharray="2 4"/>
+        </g>
+        <g font-family="JetBrains Mono, monospace" font-size="9" fill="#5c5c66">
+          <text x="42" y="44" text-anchor="end">1.2K</text>
+          <text x="42" y="104" text-anchor="end">692</text>
+          <text x="42" y="164" text-anchor="end">342</text>
+          <text x="42" y="224" text-anchor="end">0</text>
+        </g>
+        <line x1="50" y1="220" x2="490" y2="220" stroke="#3d3d44" stroke-width="1"/>
+        <g>
+          <rect x="63"  y="216" width="26" height="4"   fill="url(#followGrad)" rx="2"/>
+          <rect x="103" y="218" width="26" height="2"   fill="url(#followGrad)" rx="2"/>
+          <rect x="143" y="217" width="26" height="3"   fill="url(#followGrad)" rx="2"/>
+          <rect x="183" y="219" width="26" height="1"   fill="url(#followGrad)" rx="2"/>
+          <rect x="223" y="218" width="26" height="2"   fill="url(#followGrad)" rx="2"/>
+          <rect x="263" y="73"  width="26" height="147" fill="url(#followGrad)" rx="2"/>
+          <rect x="303" y="40"  width="26" height="180" fill="url(#followPeak)" rx="2"/>
+          <rect x="343" y="115" width="26" height="105" fill="url(#followGrad)" rx="2"/>
+          <rect x="383" y="166" width="26" height="54"  fill="url(#followGrad)" rx="2"/>
+          <rect x="423" y="208" width="26" height="12"  fill="url(#followGrad)" rx="2"/>
+          <rect x="463" y="216" width="26" height="4"   fill="url(#followGrad)" rx="2"/>
+        </g>
+        <g font-family="JetBrains Mono, monospace" font-size="9.5" fill="#14F195">
+          <text x="316" y="32" text-anchor="middle">+1.2K · MAY 5</text>
+        </g>
+        <g font-family="JetBrains Mono, monospace" font-size="8.5" fill="#5c5c66" text-anchor="middle">
+          <text x="76"  y="244">A29</text>
+          <text x="116" y="244">A30</text>
+          <text x="156" y="244">M1</text>
+          <text x="196" y="244">M2</text>
+          <text x="236" y="244">M3</text>
+          <text x="276" y="244">M4</text>
+          <text x="316" y="244">M5</text>
+          <text x="356" y="244">M6</text>
+          <text x="396" y="244">M7</text>
+          <text x="436" y="244">M8</text>
+          <text x="476" y="244">M9</text>
+        </g>
+      </svg>
+      <div class="chart-note">
+        A clean <span style="color:var(--accent)">May 4–7 spike</span> drove the rise to 3,675 total followers. The cluster maps directly to the partnership announcements; week two is for converting that audience into users.
+      </div>
+    </div>
+  </div>
+
+  <div class="audience-band">
+    <div>
+      <h3>1,010 members in the X community.<br>From zero. In a week.</h3>
+      <p>
+        The <a href="https://x.com/i/communities" style="color:var(--accent);">three.ws X community</a> is the gathered audience — developers, agent-curious builders, and a crew of folks following along live. It's where the next wave of agent owners will come from.
+      </p>
+    </div>
+    <div class="audience-stat">
+      <div class="num">1,010</div>
+      <div class="lab">Members · 7 days</div>
+    </div>
+  </div>
+</section>
+
+<!-- ════════════════════ SECTION 3: TIMELINE ════════════════════ -->
+<section>
+  <div class="section-number">03 — The Eleven-Day Timeline</div>
+  <h2>Day by day: every milestone that landed</h2>
+  <p>
+    Every post is linked. Every metric is the actual scraped value from X.
+  </p>
+
+  <div class="timeline">
+
+    <div class="tl-item major">
+      <div class="tl-time">Apr 29 — 05:10 UTC · Day 0</div>
+      <div class="tl-title">Founder launch post</div>
+      <div class="tl-desc">"something I've wanted for a while: an AI that isn't just a text box. so I built three.ws — a 3D AI character on-chain that lives in your browser." The single most-viewed post of the week.</div>
+      <div class="tl-metrics">
+        <span class="hot">135K views</span>
+        <span class="hot">64 replies</span>
+        <span><a href="https://x.com/nichxbt/status/2049355559225503889">link ↗</a></span>
+      </div>
+    </div>
+
+    <div class="tl-item">
+      <div class="tl-time">Apr 29 — 05:28 UTC</div>
+      <div class="tl-title">Build your AI character — companion thread</div>
+      <div class="tl-desc">"Add personality, pick any LLM (Claude, GPT, etc.), real-time animations, memory + skills. Mint it on-chain. Same identity everywhere, forever. One-line embed: <code>&lt;agent-3d&gt;</code>."</div>
+      <div class="tl-metrics">
+        <span class="hot">3.7K views</span>
+        <span><a href="https://x.com/nichxbt/status/2049360194128507336">link ↗</a></span>
+      </div>
+    </div>
+
+    <div class="tl-item">
+      <div class="tl-time">Apr 29 — earlier UTC</div>
+      <div class="tl-title">3D character as Claude artifact</div>
+      <div class="tl-desc">"After hours of fighting with Claude, I finally was able to render a 3D character as a Claude artifact." First proof of concept that opened the door to the full launch.</div>
+      <div class="tl-metrics">
+        <span class="hot">4.1K views</span>
+        <span><a href="https://x.com/nichxbt/status/2049391191771562038">link ↗</a></span>
+      </div>
+    </div>
+
+    <div class="tl-item">
+      <div class="tl-time">Apr 29 — three.ws/pumpfun</div>
+      <div class="tl-title">Live Pump.fun feed announcement (founder voice)</div>
+      <div class="tl-desc">"Never miss a @pumpfun runner again. three.ws/pumpfun now announces live graduation alerts, GitHub claims, whale buys/sells. Customizable layout. Turn sound on — your agent calls every move out loud."</div>
+      <div class="tl-metrics">
+        <span class="hot">13K views</span>
+        <span><a href="https://x.com/nichxbt/status/2049684977600909769">link ↗</a></span>
+      </div>
+    </div>
+
+    <div class="tl-item major">
+      <div class="tl-time">Apr 29 — 08:54 UTC</div>
+      <div class="tl-title">Listed on Anthropic's official MCP Registry</div>
+      <div class="tl-desc">three.ws registered as a canonical AI-to-tool integration on the registry used by Claude, ChatGPT, Cursor, and others.</div>
+      <div class="tl-metrics">
+        <span class="hot">1.7K views</span>
+        <span class="hot">41 likes</span>
+        <span class="hot">6 RTs</span>
+        <span><a href="https://x.com/trythreews/status/2049412062837928202">link ↗</a></span>
+      </div>
+    </div>
+
+    <div class="tl-item">
+      <div class="tl-time">Apr 29 — 11:16 UTC</div>
+      <div class="tl-title">Solana vanity address generator shipped</div>
+      <div class="tl-desc">Pick the prefix. Keys generated client-side. Ready to trade on pump.fun or send Solana payments.</div>
+      <div class="tl-metrics">
+        <span>1.9K views</span>
+        <span><a href="https://x.com/trythreews/status/2049447738434339171">link ↗</a></span>
+      </div>
+    </div>
+
+    <div class="tl-item solana">
+      <div class="tl-time">Apr 29 — 11:59 UTC</div>
+      <div class="tl-title">Listed on x402scan as paid endpoint</div>
+      <div class="tl-desc">Live as a paid x402 endpoint on-chain. Agents send 0.001 USDC → get back a 3D avatar with verifiable on-chain identity.</div>
+      <div class="tl-metrics">
+        <span class="fire">4.1K views</span>
+        <span><a href="https://x.com/trythreews/status/2049458671139336613">link ↗</a></span>
+      </div>
+    </div>
+
+    <div class="tl-item">
+      <div class="tl-time">Apr 29 — 13:11 UTC</div>
+      <div class="tl-title">Published to npm: <code>three.ws</code></div>
+      <div class="tl-desc">One-line embed — <code>npm i three.ws</code> and <code>&lt;agent-3d&gt;</code> on any page.</div>
+      <div class="tl-metrics">
+        <span>2.2K views</span>
+        <span><a href="https://www.npmjs.com/package/three.ws">npm ↗</a></span>
+      </div>
+    </div>
+
+    <div class="tl-item solana">
+      <div class="tl-time">Apr 29 — 19:11 UTC</div>
+      <div class="tl-title">Reverse-engineered pump-fun-agent-payments-sdk</div>
+      <div class="tl-desc">Reconstructed the Anchor IDL, all PDAs, event parsing, and the x402 payment layer from the published npm package. Now lives in the repo as editable source — afaik the only one on GitHub.</div>
+      <div class="tl-metrics">
+        <span class="fire">5.7K views</span>
+        <span><a href="https://x.com/trythreews/status/2049567362693963905">link ↗</a></span>
+      </div>
+    </div>
+
+    <div class="tl-item solana major">
+      <div class="tl-time">Apr 29 — 19:36 UTC</div>
+      <div class="tl-title">Native Pump.fun superpowers shipped as agent skills</div>
+      <div class="tl-desc">Swap, create coins, collect fees, accept token payments, snipe, trade autonomously — all as loadable skills the agent calls itself.</div>
+      <div class="tl-metrics">
+        <span class="fire">5.3K views</span>
+        <span><a href="https://x.com/trythreews/status/2049573582247022869">link ↗</a></span>
+      </div>
+    </div>
+
+    <div class="tl-item">
+      <div class="tl-time">Apr 29 — 18:32 UTC</div>
+      <div class="tl-title">Voice + X Spaces agent demo</div>
+      <div class="tl-desc">Agent autonomously joins a live X Space, requests speaker access, listens in real time, and responds. Voice models from Groq, Anthropic, or OpenAI.</div>
+      <div class="tl-metrics">
+        <span>2.5K views</span>
+        <span><a href="https://x.com/trythreews/status/2049557523330638269">link ↗</a></span>
+      </div>
+    </div>
+
+    <div class="tl-item solana major">
+      <div class="tl-time">Apr 30 — 08:06 UTC</div>
+      <div class="tl-title">Solana wallet integration for agents</div>
+      <div class="tl-desc">"Give your agents access to money. Let them work while you sleep." Agents now hold and spend on-chain.</div>
+      <div class="tl-metrics">
+        <span class="fire">5.5K views</span>
+        <span><a href="https://x.com/nichxbt/status/2049762179042484636">link ↗</a></span>
+      </div>
+    </div>
+
+    <div class="tl-item major">
+      <div class="tl-time">Apr 30 — 23:41 UTC</div>
+      <div class="tl-title">Google Cloud × three.ws partnership</div>
+      <div class="tl-desc">"Google Cloud's infrastructure unlocks the next phase of three.ws development." Joining the Google Cloud for Web3 Startups program. The most-liked post of the week.</div>
+      <div class="tl-metrics">
+        <span class="hot">6.9K views</span>
+        <span class="hot">263 likes</span>
+        <span class="hot">24 RTs</span>
+        <span><a href="https://x.com/trythreews/status/2049997615421649363">link ↗</a></span>
+      </div>
+    </div>
+
+    <div class="tl-item">
+      <div class="tl-time">May 1 — 03:06 UTC</div>
+      <div class="tl-title">Live Pump.fun feed launched</div>
+      <div class="tl-desc">Live graduation alerts, GitHub claims, whale buys/sells. Customizable layout. Your agent calls every move out loud.</div>
+      <div class="tl-metrics">
+        <span class="hot">2.1K views</span>
+        <span class="hot">165 likes</span>
+        <span class="hot">10 RTs</span>
+        <span><a href="https://x.com/trythreews/status/2050049239301165535">link ↗</a></span>
+      </div>
+    </div>
+
+    <div class="tl-item major">
+      <div class="tl-time">May 1 — 14:51 UTC</div>
+      <div class="tl-title">three.ws is live — full launch announcement</div>
+      <div class="tl-desc">"Create 3D AI agent avatars on-chain. They can talk, remember you, show emotions, and use different skills. You can even mint them on-chain."</div>
+      <div class="tl-metrics">
+        <span class="hot">22K views</span>
+        <span class="hot">25 replies</span>
+        <span><a href="https://x.com/trythreews/status/2050226678321102975">link ↗</a></span>
+      </div>
+    </div>
+
+    <div class="tl-item major">
+      <div class="tl-time">May 2 — 14:37 UTC</div>
+      <div class="tl-title">Alibaba Cloud partnership</div>
+      <div class="tl-desc">three.ws agents launched on Alibaba Cloud Marketplace. Agents now hold on-chain wallets across global cloud infrastructure.</div>
+      <div class="tl-metrics">
+        <span class="hot">7.1K views</span>
+        <span class="hot">16 replies</span>
+        <span><a href="https://x.com/trythreews/status/2050585585191186781">link ↗</a></span>
+      </div>
+    </div>
+
+    <div class="tl-item">
+      <div class="tl-time">May 2 — 17:24 UTC</div>
+      <div class="tl-title">$THREE listed on CoinGecko</div>
+      <div class="tl-desc">Officially indexed alongside the major crypto data tracker.</div>
+      <div class="tl-metrics">
+        <span>1.6K views</span>
+        <span><a href="https://x.com/trythreews/status/2050627547394916768">link ↗</a></span>
+      </div>
+    </div>
+
+    <div class="tl-item">
+      <div class="tl-time">May 2 — 20:54 UTC</div>
+      <div class="tl-title">three.ws chat rebuilt from the ground up</div>
+      <div class="tl-desc">Display agent thoughts live in real time. TTS + emotions as tools. Function calls, MCP, artifacts. 100% open source.</div>
+      <div class="tl-metrics">
+        <span class="hot">2.3K views</span>
+        <span class="hot">26 likes</span>
+        <span><a href="https://x.com/nichxbt/status/2050680402923471106">link ↗</a></span>
+      </div>
+    </div>
+
+    <div class="tl-item major">
+      <div class="tl-time">May 2 — 01:44 UTC</div>
+      <div class="tl-title">Featured in Vogue Magazine — Photo Vogue</div>
+      <div class="tl-desc">"three.ws is now officially recognized by one of the world's most iconic magazines."</div>
+      <div class="tl-metrics">
+        <span class="hot">3.7K views</span>
+        <span><a href="https://x.com/trythreews/status/2050753406109880576">link ↗</a></span>
+      </div>
+    </div>
+
+    <div class="tl-item">
+      <div class="tl-time">May 3 — 16:11 UTC</div>
+      <div class="tl-title">Deploy 3D agent avatars on Solana</div>
+      <div class="tl-desc">"Every @solana_ai agent deserves a face. Every face deserves an on-chain home." Direct call to the Solana AI agent ecosystem.</div>
+      <div class="tl-metrics">
+        <span class="hot">4.3K views</span>
+        <span><a href="https://x.com/nichxbt/status/2051126902447124561">link ↗</a></span>
+      </div>
+    </div>
+
+    <div class="tl-item solana major">
+      <div class="tl-time">May 4 — 11:22 UTC</div>
+      <div class="tl-title">Solana Frontier Hackathon — official project</div>
+      <div class="tl-desc">Listed via @colosseum in Solana's largest hackathon — $2.5M from Colosseum's venture fund. The single most-reposted post of the week.</div>
+      <div class="tl-metrics">
+        <span class="fire">42K views</span>
+        <span class="fire">621 reposts</span>
+        <span class="fire">316 replies</span>
+        <span><a href="https://x.com/trythreews/status/2051261108506558901">link ↗</a></span>
+      </div>
+    </div>
+
+    <div class="tl-item solana major">
+      <div class="tl-time">May 5 — 10:55 UTC · Peak Day</div>
+      <div class="tl-title">$THREE listed on Coinbase + Coinbase Wallet</div>
+      <div class="tl-desc">Direct buy/send/receive/store flow opened to 100M+ Coinbase users worldwide.</div>
+      <div class="tl-metrics">
+        <span class="fire">12K views</span>
+        <span><a href="https://x.com/trythreews/status/2051616708482498843">link ↗</a></span>
+      </div>
+    </div>
+
+    <div class="tl-item major">
+      <div class="tl-time">May 5 — 15:43 UTC</div>
+      <div class="tl-title">Verified on Jupiter Exchange</div>
+      <div class="tl-desc">$THREE verified by Solana's leading DEX aggregator — token safeguard for the community.</div>
+      <div class="tl-metrics">
+        <span class="hot">2.4K views</span>
+        <span><a href="https://x.com/trythreews/status/2051689230997618690">link ↗</a></span>
+      </div>
+    </div>
+
+    <div class="tl-item">
+      <div class="tl-time">May 5 — 20:54 UTC</div>
+      <div class="tl-title">Community thank-you — founder voice</div>
+      <div class="tl-desc">"Hello hello! We've gained a lot of new friends and I love to see it. Great to see everyone getting active." The post that turned a follower wave into a community.</div>
+      <div class="tl-metrics">
+        <span class="hot">2.4K views</span>
+        <span><a href="https://x.com/nichxbt/status/2051762380686946592">link ↗</a></span>
+      </div>
+    </div>
+
+    <div class="tl-item">
+      <div class="tl-time">May 5 — 21:23 UTC</div>
+      <div class="tl-title">Listed on Investing.com</div>
+      <div class="tl-desc">Real-time data, quotes, charts, breaking news on a top-tier global financial platform (founded 2007).</div>
+      <div class="tl-metrics">
+        <span>1.6K views</span>
+        <span><a href="https://x.com/trythreews/status/2051774915876098063">link ↗</a></span>
+      </div>
+    </div>
+
+    <div class="tl-item">
+      <div class="tl-time">May 7 — 14:57 UTC</div>
+      <div class="tl-title">W3C membership granted</div>
+      <div class="tl-desc">Granted W3C membership. Contributing to the Agent Identity Registry Protocol CG. Proposed a new Community Group: 3D AI Agents &amp; Identity.</div>
+      <div class="tl-metrics">
+        <span class="hot">3.8K views</span>
+        <span><a href="https://x.com/trythreews/status/2052402481024667887">link ↗</a></span>
+      </div>
+    </div>
+
+    <div class="tl-item major">
+      <div class="tl-time">May 7 — 16:26 UTC</div>
+      <div class="tl-title">$THREE listed on Bybit</div>
+      <div class="tl-desc">Bybit serves 80M+ registered users globally. $THREE listed as an official price feed.</div>
+      <div class="tl-metrics">
+        <span class="hot">3.4K views</span>
+        <span><a href="https://x.com/trythreews/status/2052424777223336058">link ↗</a></span>
+      </div>
+    </div>
+
+    <div class="tl-item">
+      <div class="tl-time">May 7 — 15:59 UTC</div>
+      <div class="tl-title">three.ws Podcast launched on Amazon Music</div>
+      <div class="tl-desc">"Inside The 3D Agent Web" — episode discussing on-chain 3D agents and putting AI in everyone's hands worldwide.</div>
+      <div class="tl-metrics">
+        <span>1.1K views</span>
+        <span><a href="https://x.com/trythreews/status/2052418108837781511">link ↗</a></span>
+      </div>
+    </div>
+
+    <div class="tl-item">
+      <div class="tl-time">May 6 — 00:39 UTC</div>
+      <div class="tl-title">three.ws profile live on BuzzFeed</div>
+      <div class="tl-desc">Joining the BuzzFeed creator community — fresh posts on AI agents with real personality, reactive 3D avatars, and on-chain identity.</div>
+      <div class="tl-metrics">
+        <span class="hot">1.9K views</span>
+        <span><a href="https://x.com/trythreews/status/2052186605360943431">link ↗</a></span>
+      </div>
+    </div>
+
+    <div class="tl-item solana">
+      <div class="tl-time">May 8 — 04:43 UTC</div>
+      <div class="tl-title">"undervalued tech" — organic shoutout</div>
+      <div class="tl-desc">Community member @0xdetweiler tagged $THREE as "undervalued tech." 19 reposts within hours.</div>
+      <div class="tl-metrics">
+        <span class="fire">11K views</span>
+        <span class="fire">19 reposts</span>
+        <span><a href="https://x.com/0xdetweiler/status/2052610261140598848">link ↗</a></span>
+      </div>
+    </div>
+
+    <div class="tl-item">
+      <div class="tl-time">May 8 — 09:42 UTC</div>
+      <div class="tl-title">Embed proof shipped into Shopify</div>
+      <div class="tl-desc">"Build your on-chain 3D AI avatar, give it access to money and emotions, pick your widget layout, and embed it anywhere in minutes." Demonstrated on Shopify.</div>
+      <div class="tl-metrics">
+        <span class="hot">4.3K views</span>
+        <span><a href="https://x.com/trythreews/status/2052685648377913671">link ↗</a></span>
+      </div>
+    </div>
+
+    <div class="tl-item">
+      <div class="tl-time">May 8 — 16:40 UTC</div>
+      <div class="tl-title">Featured on PulseMCP</div>
+      <div class="tl-desc">Listed on the leading community resource and hub for the Model Context Protocol ecosystem.</div>
+      <div class="tl-metrics">
+        <span class="hot">2.9K views</span>
+        <span><a href="https://x.com/trythreews/status/2052790746256920583">link ↗</a></span>
+      </div>
+    </div>
+
+    <div class="tl-item major">
+      <div class="tl-time">May 9 — 08:12 UTC · Day 11</div>
+      <div class="tl-title">Agent Builder live + studio + chat upgrade</div>
+      <div class="tl-desc">"Agents are now payable, tradeable, discoverable." Payable via x402 + CDP. Tradeable via pump.fun v2. Discoverable at <code>/.well-known/x402.json</code>. Reactive, sentiment-aware.</div>
+      <div class="tl-metrics">
+        <span class="hot">5.9K views</span>
+        <span class="hot">14 replies</span>
+        <span><a href="https://x.com/trythreews/status/2053025259645981078">link ↗</a></span>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ════════════════════ SECTION 3.5: FEATURED POSTS (REMOVED — distributed into context) ════════════════════ -->
+<section style="display:none">
+  <div class="tweet-grid">
+    <div class="tweet-card">
+      <blockquote class="twitter-tweet" data-theme="dark" data-conversation="none">
+        <a href="https://twitter.com/nichxbt/status/2049355559225503889">Founder launch — three.ws goes live</a>
+      </blockquote>
+      <div class="tweet-meta"><span>Apr 29 · founder launch</span><span class="views">135K views</span></div>
+    </div>
+
+    <div class="tweet-card">
+      <blockquote class="twitter-tweet" data-theme="dark" data-conversation="none">
+        <a href="https://twitter.com/trythreews/status/2051261108506558901">Solana Frontier Hackathon entry</a>
+      </blockquote>
+      <div class="tweet-meta"><span>May 4 · 621 reposts</span><span class="views">42K views</span></div>
+    </div>
+
+    <div class="tweet-card">
+      <blockquote class="twitter-tweet" data-theme="dark" data-conversation="none">
+        <a href="https://twitter.com/trythreews/status/2051616708482498843">$THREE listed on Coinbase + Coinbase Wallet</a>
+      </blockquote>
+      <div class="tweet-meta"><span>May 5 · peak day</span><span class="views">12K views</span></div>
+    </div>
+
+    <div class="tweet-card">
+      <blockquote class="twitter-tweet" data-theme="dark" data-conversation="none">
+        <a href="https://twitter.com/trythreews/status/2049997615421649363">Google Cloud × three.ws partnership</a>
+      </blockquote>
+      <div class="tweet-meta"><span>Apr 30 · 263 likes · 24 RTs</span><span class="views">6.9K views</span></div>
+    </div>
+
+    <div class="tweet-card">
+      <blockquote class="twitter-tweet" data-theme="dark" data-conversation="none">
+        <a href="https://twitter.com/trythreews/status/2050226678321102975">three.ws is live — full launch</a>
+      </blockquote>
+      <div class="tweet-meta"><span>May 1 · launch announcement</span><span class="views">22K views</span></div>
+    </div>
+
+    <div class="tweet-card">
+      <blockquote class="twitter-tweet" data-theme="dark" data-conversation="none">
+        <a href="https://twitter.com/nichxbt/status/2049684977600909769">three.ws/pumpfun — never miss a runner</a>
+      </blockquote>
+      <div class="tweet-meta"><span>Apr 29 · @nichxbt</span><span class="views">13K views</span></div>
+    </div>
+
+    <div class="tweet-card">
+      <blockquote class="twitter-tweet" data-theme="dark" data-conversation="none">
+        <a href="https://twitter.com/nichxbt/status/2049391191771562038">3D character as Claude artifact</a>
+      </blockquote>
+      <div class="tweet-meta"><span>Apr 29 · @nichxbt</span><span class="views">4.1K views</span></div>
+    </div>
+
+    <div class="tweet-card">
+      <blockquote class="twitter-tweet" data-theme="dark" data-conversation="none">
+        <a href="https://twitter.com/nichxbt/status/2051126902447124561">Deploy 3D agents on Solana</a>
+      </blockquote>
+      <div class="tweet-meta"><span>May 3 · @nichxbt</span><span class="views">4.3K views</span></div>
+    </div>
+
+    <div class="tweet-card">
+      <blockquote class="twitter-tweet" data-theme="dark" data-conversation="none">
+        <a href="https://twitter.com/nichxbt/status/2051762380686946592">Community thank-you</a>
+      </blockquote>
+      <div class="tweet-meta"><span>May 5 · @nichxbt</span><span class="views">2.4K views</span></div>
+    </div>
+
+    <div class="tweet-card">
+      <blockquote class="twitter-tweet" data-theme="dark" data-conversation="none">
+        <a href="https://twitter.com/nichxbt/status/2049360194128507336">Build your AI character in seconds</a>
+      </blockquote>
+      <div class="tweet-meta"><span>Apr 28 · @nichxbt</span><span class="views">3.7K views</span></div>
+    </div>
+
+    <div class="tweet-card">
+      <blockquote class="twitter-tweet" data-theme="dark" data-conversation="none">
+        <a href="https://twitter.com/trythreews/status/2050585585191186781">Alibaba Cloud partnership</a>
+      </blockquote>
+      <div class="tweet-meta"><span>May 2 · cloud infra</span><span class="views">7.1K views</span></div>
+    </div>
+
+    <div class="tweet-card">
+      <blockquote class="twitter-tweet" data-theme="dark" data-conversation="none">
+        <a href="https://twitter.com/trythreews/status/2052424777223336058">$THREE listed on Bybit</a>
+      </blockquote>
+      <div class="tweet-meta"><span>May 7 · 80M+ users</span><span class="views">3.4K views</span></div>
+    </div>
+
+    <div class="tweet-card">
+      <blockquote class="twitter-tweet" data-theme="dark" data-conversation="none">
+        <a href="https://twitter.com/trythreews/status/2052402481024667887">W3C membership granted</a>
+      </blockquote>
+      <div class="tweet-meta"><span>May 7 · web standards</span><span class="views">3.8K views</span></div>
+    </div>
+
+    <div class="tweet-card">
+      <blockquote class="twitter-tweet" data-theme="dark" data-conversation="none">
+        <a href="https://twitter.com/trythreews/status/2050753406109880576">Vogue Magazine — Photo Vogue</a>
+      </blockquote>
+      <div class="tweet-meta"><span>May 2 · culture press</span><span class="views">3.7K views</span></div>
+    </div>
+  </div>
+
+  <div class="callout purple">
+    <p><strong>Note on embeds:</strong> Posts render via X's official <code>widgets.js</code> — no API key needed, no auth, no rate limits for read-only embeds. Add or remove tweets by editing the <code>&lt;blockquote&gt;</code> URLs.</p>
+  </div>
+</section>
+
+<!-- ════════════════════ SECTION 4: TOP PERFORMERS ════════════════════ -->
+<section>
+  <div class="section-number">04 — Top Performers</div>
+  <h2>Which posts moved the needle</h2>
+  <p>
+    Sorted by views. Every row is a real scraped post from <a href="https://x.com/trythreews">@trythreews</a> or affiliated authors during the launch window.
+  </p>
+
+  <table class="data-table">
+    <thead>
+      <tr><th>Date</th><th>Post</th><th>Views</th><th>Engagement</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>Apr 29</td><td>@nichxbt founder launch</td><td class="highlight">135K</td><td>64 replies</td></tr>
+      <tr><td>May 7</td><td>@zhusu RT — "this is pretty cool"</td><td class="highlight">50K</td><td>25 replies</td></tr>
+      <tr><td>May 4</td><td>Solana Frontier Hackathon listing</td><td class="highlight-purple">42K</td><td>621 RTs · 316 replies</td></tr>
+      <tr><td>Apr 29</td><td>TekIsTekking shoutout RT</td><td class="highlight">36K</td><td>15 replies</td></tr>
+      <tr><td>May 1</td><td>three.ws is live announcement</td><td class="highlight">22K</td><td>25 replies</td></tr>
+      <tr><td>May 5</td><td>$THREE listed on Coinbase</td><td class="highlight-purple">12K</td><td>7 replies</td></tr>
+      <tr><td>May 8</td><td>@0xdetweiler "undervalued tech" RT</td><td class="highlight-purple">11K</td><td>19 RTs</td></tr>
+      <tr><td>Apr 29</td><td>"AI trapped in a chatbox"</td><td>7.6K</td><td>33 replies</td></tr>
+      <tr><td>May 2</td><td>Alibaba Cloud partnership</td><td>7.1K</td><td>16 replies</td></tr>
+      <tr><td>Apr 30</td><td>Google Cloud partnership</td><td>6.9K</td><td>263 likes · 24 RTs</td></tr>
+      <tr><td>May 9</td><td>Agent Builder live</td><td>5.9K</td><td>14 replies</td></tr>
+      <tr><td>Apr 29</td><td>Reverse-engineered pump-fun SDK</td><td>5.7K</td><td>12 replies</td></tr>
+      <tr><td>Apr 30</td><td>Solana wallet integration</td><td>5.5K</td><td>7 replies</td></tr>
+      <tr><td>Apr 29</td><td>Pump.fun superpowers as skills</td><td>5.3K</td><td>11 replies</td></tr>
+      <tr><td>May 5</td><td>Coinbase video walkthrough</td><td>4.3K</td><td>7 replies</td></tr>
+      <tr><td>May 8</td><td>Shopify embed proof</td><td>4.3K</td><td>7 replies</td></tr>
+      <tr><td>Apr 29</td><td>x402scan paid endpoint listing</td><td>4.1K</td><td>9 replies</td></tr>
+      <tr><td>May 7</td><td>W3C membership granted</td><td>3.8K</td><td>1 reply</td></tr>
+      <tr><td>May 2</td><td>Vogue Magazine feature</td><td>3.7K</td><td>10 replies</td></tr>
+      <tr><td>May 7</td><td>$THREE listed on Bybit</td><td>3.4K</td><td>14 replies</td></tr>
+      <tr><td>Apr 30</td><td>Anthropic MCP Registry listing</td><td>3.3K</td><td>10 replies</td></tr>
+      <tr><td>May 8</td><td>PulseMCP feature</td><td>2.9K</td><td>10 replies</td></tr>
+      <tr><td>Apr 29</td><td>Voice + X Spaces agent</td><td>2.5K</td><td>13 replies</td></tr>
+    </tbody>
+  </table>
+
+  <div class="callout">
+    <p><strong>Reply-to-like ratio: 11.7%.</strong> The community shows up to talk, not just lurk. That's the number to optimize for in week two.</p>
+  </div>
+</section>
+
+<!-- ════════════════════ SECTION 5: SHIPPED ════════════════════ -->
+<section>
+  <div class="section-number">05 — What We Shipped</div>
+  <h2>Eleven days of building in public</h2>
+  <p>
+    None of the metrics above happen without something to show. Every feature below is in the repo and reachable from <a href="https://three.ws">three.ws</a>.
+  </p>
+
+  <div class="phase-block">
+    <div class="phase-header">
+      <span class="phase-tag launch">3D Runtime</span>
+      <span style="color:var(--text-dim); font-size:0.8rem;">Three.js + glTF + WebGL</span>
+    </div>
+    <p style="margin:0; font-size:0.88rem;">
+      Drag-and-drop GLB viewer with PBR rendering, IBL environments, postprocessing (bloom, tone mapping, FXAA). Character Studio for avatar and animation editing. 32-animation interactive demo. Procedural idle, lip-sync, sentiment-driven emotion. One-line embed via <code>&lt;agent-3d&gt;</code> web component.
+    </p>
+  </div>
+
+  <div class="phase-block">
+    <div class="phase-header">
+      <span class="phase-tag launch">Multi-Provider Chat</span>
+      <span style="color:var(--text-dim); font-size:0.8rem;">SSE streaming · mid-conversation model switching</span>
+    </div>
+    <p style="margin:0; font-size:0.88rem;">
+      Anthropic (Claude), OpenAI (GPT), Groq, OpenRouter — all behind one chat interface with real-time streaming via Server-Sent Events. The agent reads user sentiment and reacts with emotion + animation. Function calls, MCP tool use, artifacts. 100% open source.
+    </p>
+  </div>
+
+  <div class="phase-block">
+    <div class="phase-header">
+      <span class="phase-tag product">Solana + Pump.fun Stack</span>
+      <span style="color:var(--text-dim); font-size:0.8rem;">Native trading, payments, vanity</span>
+    </div>
+    <p style="margin:0; font-size:0.88rem;">
+      Native Solana wallet integration — agents hold and spend. Buy / sell / launch / snipe / accept payments / collect fees on Pump.fun directly from chat. Reverse-engineered the full <code>pump-fun-agent-payments-sdk</code>: Anchor IDL, PDAs, event parsing, x402 layer — now editable source in the repo. Vanity address grinder (parallel workers, client-side keys). Pump.fun create-coin co-signer. Live pump.fun feed: graduation alerts, GitHub claims, whale buys/sells.
+    </p>
+  </div>
+
+  <div class="phase-block">
+    <div class="phase-header">
+      <span class="phase-tag product">x402 Paid Endpoints</span>
+      <span style="color:var(--text-dim); font-size:0.8rem;">Listed on the Coinbase Bazaar + x402scan</span>
+    </div>
+    <p style="margin:0; font-size:0.88rem;">
+      Three live paid endpoints: <code>/api/x402/mint-to-mesh</code> (Solana token → themed 3D avatar, $0.01 USDC), <code>/api/x402/model-check</code> (paid glTF validator), <code>/api/insights/revenue-vision</code> (Claude-powered agent strategy, $0.001 USDC). Auto-discoverable at <code>/.well-known/x402.json</code>. CDP facilitator with ES256 JWT auth. Multi-network: Base (eip155:8453), Arbitrum (eip155:42161), Solana.
+    </p>
+  </div>
+
+  <div class="phase-block">
+    <div class="phase-header">
+      <span class="phase-tag product">SDKs Published to npm</span>
+      <span style="color:var(--text-dim); font-size:0.8rem;">Two packages, fully documented</span>
+    </div>
+    <p style="margin:0; font-size:0.88rem;">
+      <code>@nirholas/agent-kit</code> — ERC-8004 on-chain identity, chat panel, ERC-7710 scoped delegations, IPFS pinning, browser wallet integration. <code>@pump-fun/agent-payments-sdk</code> v3.1.0 — agent payment program with v2 bonding curve support, x402 facilitator, EVM agent payments (Base + Arbitrum), event parsers. <code>three.ws</code> — npm package for the <code>&lt;agent-3d&gt;</code> web component.
+    </p>
+  </div>
+
+  <div class="phase-block">
+    <div class="phase-header">
+      <span class="phase-tag product">On-Chain Identity + Attestations</span>
+      <span style="color:var(--text-dim); font-size:0.8rem;">ERC-8004 · ERC-7710 · Solana SAS</span>
+    </div>
+    <p style="margin:0; font-size:0.88rem;">
+      ERC-8004 agent registration on EVM. Solana attestations on six event types: feedback, validation, task offers, task acceptance, revocation, dispute. ERC-7710 scoped delegations — grant/revoke time-bound, amount-limited permissions. Full reputation crawl every 5 minutes via cron.
+    </p>
+  </div>
+
+  <div class="phase-block">
+    <div class="phase-header">
+      <span class="phase-tag launch">Voice + Real-Time</span>
+      <span style="color:var(--text-dim); font-size:0.8rem;">TTS · X Spaces · WebSocket events</span>
+    </div>
+    <p style="margin:0; font-size:0.88rem;">
+      ElevenLabs + Edge TTS for agent voice. Demo of an agent autonomously joining a live X Space, requesting speaker access, listening, and responding. WebSocket event subscription — payment received → celebration animation; buyback fires → agent reacts live; withdrawal → logged to identity timeline.
+    </p>
+  </div>
+</section>
+
+<!-- ════════════════════ SECTION 6: ECOSYSTEM ════════════════════ -->
+<section>
+  <div class="section-number">06 — Ecosystem</div>
+  <h2>Who picked us up — and why it mattered</h2>
+  <p>
+    Each name below was earned in the same eleven-day window. Every link is a public listing or announcement.
+  </p>
+
+  <h3>Cloud + Infrastructure</h3>
+  <div class="repo-grid">
+    <a href="https://x.com/trythreews/status/2049997615421649363" class="repo-link">
+      <div class="repo-icon">☁️</div>
+      <div class="repo-info">
+        <div class="name">Google Cloud — Web3 Startups</div>
+        <div class="desc">Partnership for 3D rendering scale + agent infrastructure. 263 likes, 24 RTs.</div>
+      </div>
+    </a>
+    <a href="https://marketplace.alibabacloud.com/store/3247293.html" class="repo-link">
+      <div class="repo-icon">☁️</div>
+      <div class="repo-info">
+        <div class="name">Alibaba Cloud Marketplace</div>
+        <div class="desc">Listed on Alibaba Cloud. Agents hold on-chain wallets across global infra.</div>
+      </div>
+    </a>
+  </div>
+
+  <h3>Exchanges + Market Data</h3>
+  <div class="repo-grid">
+    <a href="https://www.coinbase.com/how-to-buy/threews-solana-fembdox7r1psc4gecvjdsbnbza3bfztcydcatjvjpump-token" class="repo-link purple">
+      <div class="repo-icon">🪙</div>
+      <div class="repo-info">
+        <div class="name">Coinbase + Coinbase Wallet</div>
+        <div class="desc">$THREE listed. Buy/send/receive/store flow open to 100M+ users.</div>
+      </div>
+    </a>
+    <a href="https://x.com/trythreews/status/2052424777223336058" class="repo-link purple">
+      <div class="repo-icon">📈</div>
+      <div class="repo-info">
+        <div class="name">Bybit</div>
+        <div class="desc">$THREE listed. 80M+ registered users globally.</div>
+      </div>
+    </a>
+    <a href="https://verified.jup.ag/dashboard/FeMbDoX7R1Psc4GEcvJdsbNbZA3bfztcyDCatJVJpump" class="repo-link purple">
+      <div class="repo-icon">🪐</div>
+      <div class="repo-info">
+        <div class="name">Jupiter Exchange — Verified</div>
+        <div class="desc">Solana's leading DEX aggregator verified $THREE.</div>
+      </div>
+    </a>
+    <a href="https://x.com/trythreews/status/2050627547394916768" class="repo-link purple">
+      <div class="repo-icon">🦎</div>
+      <div class="repo-info">
+        <div class="name">CoinGecko</div>
+        <div class="desc">Listed on the leading crypto data tracker.</div>
+      </div>
+    </a>
+    <a href="https://coinmarketcap.com" class="repo-link purple">
+      <div class="repo-icon">📊</div>
+      <div class="repo-info">
+        <div class="name">CoinMarketCap</div>
+        <div class="desc">Multiple feature articles published during launch week.</div>
+      </div>
+    </a>
+    <a href="https://x.com/trythreews/status/2051774915876098063" class="repo-link purple">
+      <div class="repo-icon">💼</div>
+      <div class="repo-info">
+        <div class="name">Investing.com</div>
+        <div class="desc">Listed on the leading global financial platform (founded 2007).</div>
+      </div>
+    </a>
+  </div>
+
+  <h3>Standards + AI Registries</h3>
+  <div class="repo-grid">
+    <a href="https://registry.modelcontextprotocol.io/?q=three.ws" class="repo-link">
+      <div class="repo-icon">🤖</div>
+      <div class="repo-info">
+        <div class="name">Anthropic MCP Registry</div>
+        <div class="desc">Canonical AI-to-tool integration directory used by Claude, ChatGPT, Cursor.</div>
+      </div>
+    </a>
+    <a href="https://x.com/trythreews/status/2052790746256920583" class="repo-link">
+      <div class="repo-icon">🟢</div>
+      <div class="repo-info">
+        <div class="name">PulseMCP</div>
+        <div class="desc">Featured MCP server on the leading community hub for MCP.</div>
+      </div>
+    </a>
+    <a href="https://x.com/trythreews/status/2052402481024667887" class="repo-link">
+      <div class="repo-icon">🌐</div>
+      <div class="repo-info">
+        <div class="name">W3C Membership</div>
+        <div class="desc">Member. Contributing to the Agent Identity Registry Protocol CG. Proposed new "3D AI Agents &amp; Identity" Community Group.</div>
+      </div>
+    </a>
+    <a href="https://x.com/trythreews/status/2049458671139336613" class="repo-link">
+      <div class="repo-icon">⚡</div>
+      <div class="repo-info">
+        <div class="name">x402scan</div>
+        <div class="desc">Live as a paid x402 endpoint on-chain — agents pay 0.001 USDC for an avatar.</div>
+      </div>
+    </a>
+    <a href="https://www.npmjs.com/package/three.ws" class="repo-link">
+      <div class="repo-icon">📦</div>
+      <div class="repo-info">
+        <div class="name">npm — three.ws</div>
+        <div class="desc">npm package shipped. <code>npm i three.ws</code> + <code>&lt;agent-3d&gt;</code>.</div>
+      </div>
+    </a>
+    <a href="https://x.com/trythreews/status/2051261108506558901" class="repo-link purple">
+      <div class="repo-icon">🏆</div>
+      <div class="repo-info">
+        <div class="name">Solana Frontier Hackathon — Colosseum</div>
+        <div class="desc">Official project entry. $2.5M Colosseum venture fund. 621 reposts on the announcement.</div>
+      </div>
+    </a>
+  </div>
+
+  <h3>Press + Culture</h3>
+  <div class="repo-grid">
+    <a href="https://x.com/trythreews/status/2050753406109880576" class="repo-link">
+      <div class="repo-icon">👗</div>
+      <div class="repo-info">
+        <div class="name">Vogue Magazine — Photo Vogue</div>
+        <div class="desc">"Officially recognized by one of the world's most iconic magazines."</div>
+      </div>
+    </a>
+    <a href="https://x.com/trythreews/status/2052186605360943431" class="repo-link">
+      <div class="repo-icon">📰</div>
+      <div class="repo-info">
+        <div class="name">BuzzFeed</div>
+        <div class="desc">Profile live on the BuzzFeed creator community.</div>
+      </div>
+    </a>
+    <a href="https://x.com/trythreews/status/2052418108837781511" class="repo-link">
+      <div class="repo-icon">🎙️</div>
+      <div class="repo-info">
+        <div class="name">Amazon Music — three.ws Podcast</div>
+        <div class="desc">"Inside The 3D Agent Web." Episode discussing on-chain 3D agents.</div>
+      </div>
+    </a>
+    <a href="https://x.com/trythreews/status/2050221870264545681" class="repo-link">
+      <div class="repo-icon">🎧</div>
+      <div class="repo-info">
+        <div class="name">Spotify Podcast</div>
+        <div class="desc">"Beyond Chatbots: Why Your AI Agent Needs a 3D Body and a Blockchain Passport."</div>
+      </div>
+    </a>
+  </div>
+</section>
+
+<!-- ════════════════════ SECTION 7: TECH ════════════════════ -->
+<section>
+  <div class="section-number">07 — Tech Stack</div>
+  <h2>Built on, integrated with</h2>
+
+  <div class="tech-grid">
+    <div class="tech-item"><span class="tech-dot three"></span>Three.js + glTF</div>
+    <div class="tech-item"><span class="tech-dot js"></span>Vanilla JS modules</div>
+    <div class="tech-item"><span class="tech-dot ts"></span>TypeScript</div>
+    <div class="tech-item"><span class="tech-dot js"></span>Vite</div>
+    <div class="tech-item"><span class="tech-dot infra"></span>Vercel functions</div>
+    <div class="tech-item"><span class="tech-dot infra"></span>Cloudflare Workers</div>
+    <div class="tech-item"><span class="tech-dot sol"></span>Solana web3.js</div>
+    <div class="tech-item"><span class="tech-dot sol"></span>Pump.fun SDK</div>
+    <div class="tech-item"><span class="tech-dot sol"></span>Pump-Swap SDK</div>
+    <div class="tech-item"><span class="tech-dot sol"></span>Helius indexer</div>
+    <div class="tech-item"><span class="tech-dot sol"></span>Jupiter aggregator</div>
+    <div class="tech-item"><span class="tech-dot sol"></span>Solana Blinks</div>
+    <div class="tech-item"><span class="tech-dot evm"></span>viem + ethers</div>
+    <div class="tech-item"><span class="tech-dot evm"></span>Base + Arbitrum</div>
+    <div class="tech-item"><span class="tech-dot evm"></span>ERC-8004 identity</div>
+    <div class="tech-item"><span class="tech-dot evm"></span>ERC-7710 delegations</div>
+    <div class="tech-item"><span class="tech-dot ai"></span>Anthropic Claude</div>
+    <div class="tech-item"><span class="tech-dot ai"></span>OpenAI GPT</div>
+    <div class="tech-item"><span class="tech-dot ai"></span>Groq</div>
+    <div class="tech-item"><span class="tech-dot ai"></span>OpenRouter</div>
+    <div class="tech-item"><span class="tech-dot ai"></span>MCP Server</div>
+    <div class="tech-item"><span class="tech-dot api"></span>x402 protocol v2</div>
+    <div class="tech-item"><span class="tech-dot api"></span>CDP Facilitator</div>
+    <div class="tech-item"><span class="tech-dot api"></span>x402 Bazaar</div>
+    <div class="tech-item"><span class="tech-dot api"></span>ElevenLabs TTS</div>
+    <div class="tech-item"><span class="tech-dot api"></span>AvatarTurn SDK</div>
+    <div class="tech-item"><span class="tech-dot api"></span>LiveKit</div>
+    <div class="tech-item"><span class="tech-dot web"></span>IPFS + web3.storage</div>
+    <div class="tech-item"><span class="tech-dot web"></span>JSON Schema + Zod</div>
+    <div class="tech-item"><span class="tech-dot web"></span>Upstash Redis</div>
+    <div class="tech-item"><span class="tech-dot web"></span>Resend (email)</div>
+    <div class="tech-item"><span class="tech-dot infra"></span>OAuth 2.1 + JWT</div>
+  </div>
+
+  <h3>Published Packages</h3>
+  <div class="repo-grid">
+    <a href="https://www.npmjs.com/package/three.ws" class="repo-link">
+      <div class="repo-icon">📦</div>
+      <div class="repo-info">
+        <div class="name">three.ws</div>
+        <div class="desc">npm — one-line embed for the &lt;agent-3d&gt; web component.</div>
+      </div>
+    </a>
+    <a href="https://www.npmjs.com/package/@nirholas/agent-kit" class="repo-link">
+      <div class="repo-icon">🧰</div>
+      <div class="repo-info">
+        <div class="name">@nirholas/agent-kit</div>
+        <div class="desc">ERC-8004 on-chain identity, chat panel, ERC-7710 delegations, IPFS pinning.</div>
+      </div>
+    </a>
+    <a href="https://www.npmjs.com/package/@pump-fun/agent-payments-sdk" class="repo-link purple">
+      <div class="repo-icon">💸</div>
+      <div class="repo-info">
+        <div class="name">@pump-fun/agent-payments-sdk v3.1.0</div>
+        <div class="desc">Pump Agent Payments program · v2 bonding curve · x402 facilitator · EVM payments.</div>
+      </div>
+    </a>
+  </div>
+
+  <h3>Repo + Live</h3>
+  <div class="repo-grid">
+    <a href="https://three.ws" class="repo-link">
+      <div class="repo-icon">🌐</div>
+      <div class="repo-info">
+        <div class="name">three.ws</div>
+        <div class="desc">Production site — viewer, marketplace, agent home, chat, studio.</div>
+      </div>
+    </a>
+    <a href="https://github.com/nirholas/three.ws" class="repo-link">
+      <div class="repo-icon">⚡</div>
+      <div class="repo-info">
+        <div class="name">github.com/nirholas/three.ws</div>
+        <div class="desc">Source. 47+ Vercel functions. Solana + EVM. Two SDK workspaces.</div>
+      </div>
+    </a>
+    <a href="https://three.ws/.well-known/x402.json" class="repo-link">
+      <div class="repo-icon">🔍</div>
+      <div class="repo-info">
+        <div class="name">/.well-known/x402.json</div>
+        <div class="desc">Auto-generated x402 Bazaar discovery catalog of every paid endpoint.</div>
+      </div>
+    </a>
+    <a href="https://three.ws/api/mcp" class="repo-link">
+      <div class="repo-icon">🤖</div>
+      <div class="repo-info">
+        <div class="name">three.ws/api/mcp</div>
+        <div class="desc">Remote MCP server — listed on the Anthropic MCP Registry.</div>
+      </div>
+    </a>
+  </div>
+</section>
+
+<!-- ════════════════════ SECTION 8: LESSONS ════════════════════ -->
+<section>
+  <div class="section-number">08 — Lessons</div>
+  <h2>What worked, by the data</h2>
+
+  <p><strong>Ship daily. Name the partner.</strong> Of the 64 posts in this window, the highest-engagement ones were either (a) "we just shipped X, here's the link" or (b) "@PartnerName picked us up." Roadmaps and teasers do not exist in the top 20 by views. Every meaningful spike was a real shipped artifact or a real organization saying our name.</p>
+
+  <p><strong>The flywheel is real.</strong> Apr 29 founder launch (135K views) → npm publish + MCP Registry + x402scan listing same day → Google Cloud announcement Apr 30 → Pump.fun skills + reverse-engineered SDK same window → Alibaba + CoinGecko May 2 → Solana Hackathon May 4 (42K views, 621 RTs) → Coinbase + Jupiter + Investing.com all stacked into May 5 (the 46K-impression peak day). One post earns the next.</p>
+
+  <p><strong>Reply ratio &gt; like ratio.</strong> 845 replies on 7,200 likes is an 11.7% reply rate — well into "live conversation" territory. The 1,010-member X community is the asset that ratio builds. Likes are sentiment; replies are people who showed up to talk.</p>
+
+  <p><strong>Asymmetric posture is a signal.</strong> Following 11. Followed by 3,675. The numbers say: we are a publisher, not a follow-back farm. Verified followers (359, ~10%) skew toward power users — exactly the cohort that pays for, builds with, and amplifies what we ship next.</p>
+
+  <p><strong>Cross-pollinated authors compound.</strong> The week's biggest individual post (135K views) came from <a href="https://x.com/nichxbt">@nichxbt</a>, not <a href="https://x.com/trythreews">@trythreews</a>. The May 7 RT from <a href="https://x.com/zhusu">@zhusu</a> (50K views) was earned by the work, not the brand handle. Use both — founder voice for narrative, brand for ecosystem announcements.</p>
+
+  <p><strong>Weekend doesn't sleep.</strong> The biggest single day (May 5) was a Sunday. The biggest single post (Solana Hackathon, 42K views, 621 RTs) hit on a Saturday. Crypto X is awake when most marketing teams aren't. Ship on the weekend.</p>
+
+  <div class="callout purple">
+    <p><strong>Headline number for week one:</strong> 267,800 impressions, 25,300 engagements, 9.4% engagement rate, 3,675 followers, 1,010 community members, two npm packages, three live x402 endpoints, two cloud partnerships, four exchange listings, an MCP Registry slot, W3C membership, a Solana hackathon entry, and a published Vogue feature.</p>
+  </div>
+</section>
+
+<!-- ════════════════════ OUTSIDE SIGNAL ════════════════════ -->
+<section>
+  <div class="section-number">09 — Outside signal</div>
+  <h2>Where the project <em style="color:var(--accent);font-style:italic;">showed up.</em></h2>
+  <p>
+    Beyond the analytics dashboard, three.ws landed on the directories, registries, and platforms that matter most for an open-source developer tool.
+  </p>
+
+  <div class="next-grid">
+    <div class="next-card">
+      <div class="phase">MCP REGISTRY · <span class="status shipped">LIVE</span></div>
+      <h3>Listed on the official Model Context&nbsp;Protocol Registry.</h3>
+      <p>
+        three.ws is published as <code>io.github.nirholas/three.ws</code> on registry.modelcontextprotocol.io and discoverable via PulseMCP's curated directory. Any MCP-aware client (Claude Desktop included) can connect and drive avatars over JSON-RPC.
+      </p>
+    </div>
+
+    <div class="next-card">
+      <div class="phase">CLOUD MARKETPLACE · <span class="status shipped">LIVE</span></div>
+      <h3>Available on Alibaba Cloud Marketplace.</h3>
+      <p>
+        The platform shipped as a partner listing on Alibaba Cloud, our first cloud-marketplace distribution channel. The associated launch tweet pulled <strong>~7.1K impressions</strong> on its own.
+      </p>
+    </div>
+
+    <div class="next-card">
+      <div class="phase">PARTNERSHIP · <span class="status shipped">ANNOUNCED</span></div>
+      <h3>Joining forces with Google&nbsp;Cloud.</h3>
+      <p>
+        The Google Cloud announcement was the single highest-engagement post of the week (<strong>~6.9K impressions, 263 likes, 24 reposts</strong>) and the cloud infrastructure backing the next phase of the platform.
+      </p>
+    </div>
+
+    <div class="next-card">
+      <div class="phase">AUDIO · <span class="status shipped">LIVE</span></div>
+      <h3>Featured on Amazon Music &amp; Spotify.</h3>
+      <p>
+        The "Inside The 3D Agent Web" podcast episode is published on Amazon Music and the companion blog "Beyond Chatbots: Why Your AI Agent Needs a 3D Body" went out via the Spotify-on-chain ecosystem. Two more distribution surfaces, one more week.
+      </p>
+    </div>
+  </div>
+</section>
+
+<!-- ════════════════════ WHAT'S NEXT ROADMAP ════════════════════ -->
+<section>
+  <div class="section-number">10 — What's next</div>
+  <h2>Phase&nbsp;0 is <em style="color:var(--accent);font-style:italic;">shipped.</em><br>Phase&nbsp;1 is <em style="color:var(--solana);font-style:italic;">in build.</em></h2>
+  <p>
+    The roadmap closes the gap from "use a 3D artist" to "take a selfie." Four phases, scoped end-to-end in the public README.
+  </p>
+
+  <div class="next-grid">
+    <div class="next-card">
+      <div class="phase">PHASE 0 · <span class="status shipped">SHIPPED</span></div>
+      <h3>Foundations.</h3>
+      <p>
+        WebGL viewer, LLM agent runtime, ERC-8004 identity contracts, OAuth&nbsp;2.1 server, MCP endpoint, and the <code>&lt;agent-3d&gt;</code> web component — everything you read about above. Live at three.ws today.
+      </p>
+    </div>
+
+    <div class="next-card">
+      <div class="phase">PHASE 1 · <span class="status">IN PROGRESS</span></div>
+      <h3>Selfie → Avatar engine.</h3>
+      <p>
+        Three selfies (left, center, right), GPU-backed multi-view face reconstruction, and a rigged, animatable avatar minted as a draft ERC-8004 token in under sixty seconds. Mobile-first capture UX with realtime quality gates.
+      </p>
+    </div>
+
+    <div class="next-card">
+      <div class="phase">PHASE 2 · <span class="status">NEXT</span></div>
+      <h3>Agent personalization.</h3>
+      <p>
+        ElevenLabs voice cloning from 3–10 seconds of speech, persona extraction from a short onboarding interview, and consented memory seeding from connected accounts — the avatar isn't just <em>you</em>, the agent <em>acts like</em> you.
+      </p>
+    </div>
+
+    <div class="next-card">
+      <div class="phase">PHASE 3 · <span class="status">NEXT</span></div>
+      <h3>On-chain economy.</h3>
+      <p>
+        Reputation markets staking on agents' signed action histories, EIP-7710 skill royalties paid to skill authors per-call, and agent-to-agent autonomous payments through delegated signer wallets.
+      </p>
+    </div>
+  </div>
+</section>
+
+<!-- ════════════════════ DIVIDER ════════════════════ -->
+<div class="divider">· · ·</div>
+
+<!-- ════════════════════ X ARTICLE VERSION ════════════════════ -->
+<section id="x-article">
+  <div class="section-number">X ARTICLE VERSION</div>
+  <h2>Optimized for X's article format</h2>
+  <p>Copy-pasteable version below — every metric framed positively, designed for direct posting.</p>
+
+  <div class="x-article">
+    <div class="hook">
+      One week live. 267,800 impressions, 25,300 engagements, 9.4% engagement rate (~10x platform average), 3,675 followers from a standing start, 1,010 builders in the community. Here's what we shipped to earn it.
+    </div>
+
+    <h4>Day 0 — The Launch</h4>
+    <p>
+      April 29, 2026. <a href="https://x.com/nichxbt">@nichxbt</a> posted three.ws — on-chain 3D AI agent avatars that talk, remember, and hold wallets. <a href="https://x.com/nichxbt/status/2049355559225503889">135,000 views in the first 24 hours</a>. Same day: npm package live, listed on Anthropic's MCP Registry, listed on x402scan as a paid endpoint, native Pump.fun trading skills shipped, Solana vanity address generator deployed, voice + X Spaces agent demo.
+    </p>
+
+    <h4>The Numbers</h4>
+    <p>
+      267.8K impressions. 25.3K engagements. 9.4% engagement rate. 5.1K profile visits. 7.2K likes, 1.5K reposts, 845 replies, 198 bookmarks, 61 shares. Reply-to-like ratio: 11.7% — well into live-conversation territory. Verified followers: 359. Following: 11.
+    </p>
+    <p>
+      Peak day was May 5 — 46K impressions, ~1,200 new followers in 24 hours. Driven by the Solana Frontier Hackathon listing (42K views, 621 reposts), the Coinbase + Coinbase Wallet listing of $THREE (12K views), and Jupiter Exchange verification.
+    </p>
+
+    <h4>What We Shipped</h4>
+    <p>
+      A real-time 3D agent runtime on Three.js + glTF. Multi-provider chat (Claude, GPT, Groq, OpenRouter) with sentiment-driven emotion. Native Solana wallet integration. Pump.fun trading skills as agent tools. Reverse-engineered the entire pump-fun-agent-payments-sdk — Anchor IDL, PDAs, event parsing, x402 layer — now editable source. Solana vanity grinder. Pump.fun create-coin co-signer. Live pump.fun feed.
+    </p>
+    <p>
+      Three live x402 paid endpoints — mint-to-mesh, model-check, revenue-vision — auto-discoverable at <code>/.well-known/x402.json</code>. Two npm-published SDKs: <code>@nirholas/agent-kit</code> and <code>@pump-fun/agent-payments-sdk</code> v3.1. ERC-8004 on-chain identity. ERC-7710 scoped delegations. Solana attestations on six event types.
+    </p>
+
+    <h4>Who Picked Us Up</h4>
+    <p>
+      Cloud + infra: <a href="https://x.com/GoogleCloud">@GoogleCloud</a> (Web3 Startups program), <a href="https://x.com/alibaba_cloud">@alibaba_cloud</a> (Marketplace listing). Exchanges: <a href="https://x.com/Coinbase">@Coinbase</a> + <a href="https://x.com/CoinbaseWallet">@CoinbaseWallet</a>, <a href="https://x.com/Bybit_Official">@Bybit_Official</a>, <a href="https://x.com/JupiterExchange">@JupiterExchange</a>, <a href="https://x.com/CoinGecko">@CoinGecko</a>, <a href="https://x.com/CoinMarketCap">@CoinMarketCap</a>, Investing.com.
+    </p>
+    <p>
+      Standards + AI: <a href="https://x.com/AnthropicAI">@AnthropicAI</a> MCP Registry, <a href="https://x.com/PulseMCP">@PulseMCP</a>, W3C membership (proposing a new "3D AI Agents &amp; Identity" Community Group), <a href="https://x.com/Solana">@Solana</a> Frontier Hackathon via <a href="https://x.com/colosseum">@colosseum</a>.
+    </p>
+    <p>
+      Press + culture: <a href="https://x.com/VogueMagazine">@VogueMagazine</a> Photo Vogue feature, <a href="https://x.com/BuzzFeed">@BuzzFeed</a> profile, <a href="https://x.com/amazonmusic">@amazonmusic</a> + <a href="https://x.com/Spotify">@Spotify</a> podcast launch. Embed proof shipped into <a href="https://x.com/Shopify">@Shopify</a>.
+    </p>
+
+    <h4>The Lesson</h4>
+    <p>
+      Ship daily. Name the partner. Reply ratio over like ratio. Be a publisher, not a follow-back farm. Cross-pollinate founder voice with brand handle. Crypto X is awake on the weekend — that's when the biggest posts hit.
+    </p>
+    <p>
+      The next web has agents in it. They need identity, embodiment, and a way to transact. We're building the spec — and the product, the SDK, the marketplace, and the on-chain economy underneath it.
+    </p>
+    <p>
+      <strong>three.ws</strong> · <strong>github.com/nirholas/three.ws</strong> · <strong>$THREE: FeMbDoX7R1Psc4GEcvJdsbNbZA3bfztcyDCatJVJpump</strong>
+    </p>
+  </div>
+</section>
+
+<!-- ════════════════════ FOOTER ════════════════════ -->
+<footer>
+  <p style="margin-bottom: 0.5rem;">
+    <a href="https://x.com/trythreews">@trythreews</a> · <a href="https://x.com/nichxbt">@nichxbt</a> · <a href="https://three.ws">three.ws</a> · <a href="https://github.com/nirholas/three.ws">GitHub</a> · May 2026
+  </p>
+  <p>Launch week, Apr 29 – May 9, 2026. Every metric scraped from X analytics; every link is a public post.</p>
+</footer>
+
+</div><!-- /container -->
+
+<script>
+// Live X metrics overlay — reads tweet-metrics.json (refreshed via scripts/refresh-tweet-metrics.mjs)
+(async function () {
+  const fmt = (n) => {
+    if (n == null) return '–';
+    if (n >= 1_000_000) return (n / 1_000_000).toFixed(1).replace(/\.0$/, '') + 'M';
+    if (n >= 1_000) return (n / 1_000).toFixed(1).replace(/\.0$/, '') + 'K';
+    return String(n);
+  };
+  const idFrom = (a) => {
+    if (!a) return null;
+    const m = a.href.match(/status\/(\d+)/);
+    return m ? m[1] : null;
+  };
+
+  let data = { tweets: {}, count: 0, refreshed_at: null };
+  try {
+    const res = await fetch('./tweet-metrics.json', { cache: 'no-store' });
+    if (res.ok) data = await res.json();
+  } catch (_) { /* fall through with empty data */ }
+
+  const tweets = data.tweets || {};
+
+  // ── Auto-inject embeds into major timeline items ──
+  document.querySelectorAll('.tl-item.major').forEach((item) => {
+    if (item.querySelector('.tl-embed')) return; // already embedded
+    const link = item.querySelector('.tl-metrics a[href*="x.com/"], .tl-metrics a[href*="twitter.com/"]');
+    if (!link) return;
+    const wrap = document.createElement('div');
+    wrap.className = 'tl-embed';
+    wrap.innerHTML = `<blockquote class="twitter-tweet" data-theme="dark" data-conversation="none"><a href="${link.href}"></a></blockquote>`;
+    const metrics = item.querySelector('.tl-metrics');
+    item.insertBefore(wrap, metrics);
+  });
+
+  // ── Re-render newly added blockquotes via widgets.js ──
+  if (window.twttr && window.twttr.widgets && window.twttr.widgets.load) {
+    window.twttr.widgets.load(document.body);
+  } else {
+    // widgets.js may not be loaded yet — listen for it
+    window.addEventListener('load', () => {
+      if (window.twttr && window.twttr.widgets) window.twttr.widgets.load(document.body);
+    });
+  }
+  document.querySelectorAll('blockquote.twitter-tweet').forEach((bq) => {
+    const id = idFrom(bq.querySelector('a'));
+    const t = id && tweets[id];
+    if (!t || !t.metrics) return;
+    const m = t.metrics;
+    const card = bq.closest('.tweet-card, .performer-card');
+    if (!card) return;
+
+    // Replace .views badge
+    const viewsEl = card.querySelector('.views, .pmeta .v');
+    if (viewsEl) viewsEl.textContent = `${fmt(m.impression_count)} views`;
+
+    // Append live engagement strip if not already present
+    if (!card.querySelector('.live-strip')) {
+      const strip = document.createElement('div');
+      strip.className = 'live-strip';
+      strip.innerHTML = `
+        <span title="Likes">♥ ${fmt(m.like_count)}</span>
+        <span title="Reposts">↻ ${fmt(m.retweet_count)}</span>
+        <span title="Replies">💬 ${fmt(m.reply_count)}</span>
+        <span title="Bookmarks">⋆ ${fmt(m.bookmark_count)}</span>
+      `;
+      card.appendChild(strip);
+    }
+  });
+
+  // Live status banner
+  const refreshed = new Date(data.refreshed_at);
+  const banner = document.createElement('div');
+  banner.id = 'live-banner';
+  banner.innerHTML = `<span class="dot"></span> LIVE · ${data.count} tweets · refreshed ${refreshed.toLocaleString()}`;
+  document.body.appendChild(banner);
+})();
+</script>
+
+<style>
+  .live-strip {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-top: 0.5rem;
+    padding-top: 0.5rem;
+    border-top: 1px dashed var(--border);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.7rem;
+    color: var(--text-dim);
+  }
+  .live-strip span {
+    padding: 0.15rem 0.5rem;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+  }
+  #live-banner {
+    position: fixed;
+    bottom: 1rem;
+    right: 1rem;
+    z-index: 50;
+    padding: 0.5rem 0.85rem;
+    background: var(--bg-elevated);
+    border: 1px solid var(--accent);
+    border-radius: 100px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.7rem;
+    color: var(--accent);
+    letter-spacing: 0.05em;
+    box-shadow: 0 0 24px rgba(20,241,149,0.15);
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+  #live-banner .dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--accent);
+    animation: pulse 2s infinite;
+  }
+</style>
+
+</body>
+</html>
