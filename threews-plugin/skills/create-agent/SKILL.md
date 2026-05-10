@@ -86,18 +86,28 @@ Same shape as the create body. Only the fields you send are updated.
 
 ## Built-in skill names
 
-The following skill identifiers are understood by the three.ws runtime:
+The following skill identifiers are understood by the three.ws runtime. All are enabled by default unless overridden.
+
+**Core:**
 
 | Skill | What it does |
 |-------|-------------|
-| `greet` | First-meet greeting and intro sequence |
-| `present-model` | Narrates and highlights the agent's 3D body |
-| `validate-model` | Runs the glTF validator and speaks results |
-| `remember` | Stores facts into agent memory |
-| `think` | Extended thinking before responding |
-| `trade` | Token trading via connected wallet |
-| `watch-pump` | Monitors pump.fun feed in real time |
-| `pump-compose` | Composes pump.fun social posts |
+| `greet` | First-meet greeting and intro sequence (animation: wave) |
+| `present-model` | Traverses the loaded GLB — counts vertices, meshes, materials, clips — then narrates (animation: present) |
+| `validate-model` | Runs the glTF validator and speaks results (animation: inspect) |
+| `remember` | Stores a fact into persistent agent memory (animation: nod) |
+| `think` | Extended thinking mode before responding (animation: think) |
+| `sign-action` | Signs an agent action with its EVM wallet for provenance (animation: sign) |
+| `help` | Lists the agent's available skills |
+
+**3D scene manipulation** (add any of these to `skills`):
+
+| Skill | What it does |
+|-------|-------------|
+| `scene-create-object` | Creates a box, sphere, cone, or cylinder in the Three.js scene with color and position |
+| `scene-find-object` | Finds an object in the scene by name |
+| `scene-update-object` | Moves, re-colors, or rescales an existing scene object |
+| `analyze-sentiment` | Analyzes sentiment in text and drives avatar emote intensity |
 
 ## Linking an avatar GLB
 
