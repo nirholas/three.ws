@@ -41,8 +41,11 @@ import {
 	EffectPass,
 } from 'postprocessing';
 import { computeBoundsTree, disposeBoundsTree, acceleratedRaycast } from 'three-mesh-bvh';
+import { BufferGeometry } from 'three';
 
-// Patch Three.js Mesh prototype once so all geometries use BVH-accelerated raycasting.
+// Patch Three.js prototypes once so all geometries use BVH-accelerated raycasting.
+BufferGeometry.prototype.computeBoundsTree = computeBoundsTree;
+BufferGeometry.prototype.disposeBoundsTree = disposeBoundsTree;
 Mesh.prototype.raycast = acceleratedRaycast;
 
 const SLOT_SPACING = 1.6; // metres between avatar centres
@@ -144,7 +147,7 @@ export async function mountLobby(canvas, avatars, options = {}) {
 				fitToHeight(root, TARGET_HEIGHT);
 				root.traverse((node) => {
 					if (node.isMesh && node.geometry) {
-						node.geometry.computeBoundsTree();
+						node.geometry.computeBoundsTree?.();
 					}
 				});
 				slotMeta[i].group.add(root);
