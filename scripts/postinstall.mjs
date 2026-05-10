@@ -26,16 +26,40 @@ function hashDir(dir) {
 	return h.digest('hex');
 }
 
-const srcHash = hashDir(srcDir);
-const needsBuild =
-	!existsSync(distIndex) ||
-	!existsSync(stamp) ||
-	readFileSync(stamp, 'utf8').trim() !== srcHash;
+// tsup is a dev dep — absent when installed with --omit=dev (Vercel CI).
+// Gate on whether the binary actually exists rather than any env var,
+// since VERCEL/CI are not reliably set during the npm install phase.
+const tsupBin = resolve(root, 'node_modules/.bin/tsup');
+const srcIndex = resolve(root, 'agent-payments-sdk/src/index.ts');
+// Check for the actual entry point: .vercelignore removes files but can leave empty subdirs,
+// so readdirSync length > 0 is not a reliable "src is present" signal.
+const srcPresent = existsSync(tsupBin) && existsSync(srcIndex);
 
-if (needsBuild) {
+const srcHash = srcPresent ? hashDir(srcDir) : null;
+const needsBuild =
+	srcPresent && (
+		!existsSync(distIndex) ||
+		!existsSync(stamp) ||
+		readFileSync(stamp, 'utf8').trim() !== srcHash
+	);
+
+if (!srcPresent) {
+	console.log('[postinstall] agent-payments-sdk src not present — trusting committed dist');
+} else if (needsBuild) {
 	console.log('[postinstall] agent-payments-sdk src changed — rebuilding...');
-	execSync('npm run build --prefix agent-payments-sdk', { stdio: 'inherit', cwd: root });
-	writeFileSync(stamp, srcHash);
+	// Use the root tsup binary directly; `npm run build --prefix` resolves binaries
+	// from the sub-package's own node_modules/.bin, which may be absent (e.g. Vercel CI).
+	const sdkRoot = resolve(root, 'agent-payments-sdk');
+	try {
+		execSync(`"${tsupBin}"`, { stdio: 'inherit', cwd: sdkRoot });
+		writeFileSync(stamp, srcHash);
+	} catch (e) {
+		if (existsSync(distIndex)) {
+			console.warn('[postinstall] tsup build failed — committed dist present, continuing');
+		} else {
+			throw e;
+		}
+	}
 } else {
 	console.log('[postinstall] agent-payments-sdk dist up to date — skipping tsup');
 }

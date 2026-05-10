@@ -343,6 +343,8 @@ A map of every user-facing route. Full detail (source files, feature description
 | **Widgets** | `/widgets`, `/w/[id]` | Widget gallery and public widget pages (OG + oEmbed) |
 | **Artifacts** | `/artifact`, `/artifact/snippet`, `/artifact-example` | Claude Artifact viewer |
 | **Solana / DeFi** | `/pumpfun`, `/vanity-wallet` | Token launcher, vanity address grinder |
+| **Ethereum Vanity** | `/eth-vanity` | EOA + CREATE2 vanity address grinder (browser, offline-capable, multi-threaded) |
+| **x402 Payments** | `/pay`, `/pay/calls/[tx]` | Live x402 micropayment demo — pay per MCP tool call in USDC on Base or Solana |
 | **Admin / Rep** | `/admin`, `/reputation` | Staff admin, reputation registry |
 | **Experiments** | `/rider` | A-Frame WebVR music visualization |
 | **Integrations** | `/cz`, `/lobehub/iframe` | CZ demo, LobeHub plugin |

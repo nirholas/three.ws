@@ -1,3 +1,36 @@
+# Contracts
+
+## ThreeWSFactory + ThreeWSPayments
+
+Vanity-address CREATE2 factory and x402 payment receiver deployed across chains.
+
+### ThreeWSFactory — `0x00000000D49195AE81759cd247cFeDD9D0B479df`
+
+8 leading zeros. Deployed via Arachnid proxy on all chains.
+
+| Chain | Explorer |
+|-------|---------|
+| BSC | [bscscan.com](https://bscscan.com/address/0x00000000D49195AE81759cd247cFeDD9D0B479df) |
+| Base | [basescan.org](https://basescan.org/address/0x00000000D49195AE81759cd247cFeDD9D0B479df) |
+| Arbitrum | [arbiscan.io](https://arbiscan.io/address/0x00000000D49195AE81759cd247cFeDD9D0B479df) |
+
+Deploy: `node scripts/factory-deploy-bsc.mjs` (same salt works on all chains)
+Salt: `0xfc1ecd1953bb17cf798c1eaeed287873008f3a3038f438e9e74c3b33ce370ef5`
+
+### ThreeWSPayments — x402 pay-per-call receiver
+
+Owner: `0x4022de2d36c334e73c7a108805cea11c0564f402`
+
+| Chain | Address | Zeros | USDC |
+|-------|---------|-------|------|
+| BSC | [`0x00000000381f09742a30a5a49975514AeC1B72Cc`](https://bscscan.com/address/0x00000000381f09742a30a5a49975514AeC1B72Cc) | 8 | `0x8AC76a51cc950d9822D68b83fE1Ad97B32Cd580d` |
+| Base | [`0x00000000b43689a688e51a06fCC0e3F2E058720a`](https://basescan.org/address/0x00000000b43689a688e51a06fCC0e3F2E058720a) | 8 | `0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913` |
+| Arbitrum | [`0x0000000DEDc7C0C21b0F41dB31CA690DDEEC09C8`](https://arbiscan.io/address/0x0000000DEDc7C0C21b0F41dB31CA690DDEEC09C8) | 7 | `0xaf88d065e77c8cC2239327C5EDb3A432268e5831` |
+
+Deploy: `CHAIN=base|arbitrum|bsc PK=0x... SALT=0x... node scripts/payments-deploy-chain.mjs`
+
+---
+
 # ERC-8004 Contracts (optional / reference)
 
 > **You probably don't need to deploy these.** The canonical ERC-8004 reference
