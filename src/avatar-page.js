@@ -1,0 +1,769 @@
+/**
+ * Avatar studio page controller — /avatars/:id
+ *
+ * Renders an avatar with a 3D viewer, metadata, attachable skills + plugins,
+ * a live LLM chat, embed snippets, and a related-avatars grid. Demo IDs
+ * (avatar_demo_*) are resolved server-side via /api/avatars/[id].js so the
+ * same code path serves both real and seeded avatars.
+ */
+
+const ATTACHED_KEY_PREFIX = 'avatar_attached_v1:';
+
+const $ = (id) => document.getElementById(id);
+const esc = (s) =>
+	String(s ?? '').replace(
+		/[&<>"']/g,
+		(c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c],
+	);
+
+// ── Routing ───────────────────────────────────────────────────────────
+
+// Avatar id: path-based in production (/avatars/:id) or `?id=` query param in
+// dev (vite doesn't rewrite arbitrary paths to avatar-page.html).
+const segments = location.pathname.split('/').filter(Boolean);
+const queryId = new URLSearchParams(location.search).get('id');
+const avatarId = (segments[0] === 'avatars' && segments[1]) || queryId || '';
+
+// Embed mode: hide chrome (header, actionbar, related, footer) so the page
+// looks clean inside an iframe.
+const isEmbed = new URLSearchParams(location.search).get('embed') === '1';
+if (isEmbed) {
+	document.body.classList.add('av-embed');
+	document.querySelectorAll('.site-header, .av-actionbar, .av-related, .h-footer-horizon')
+		.forEach((el) => { el.style.display = 'none'; });
+}
+
+if (!avatarId) {
+	$('av-shell').innerHTML = `<div class="av-error">No avatar specified.</div>`;
+} else {
+	init().catch((err) => {
+		console.error('[avatar] init', err);
+		$('av-shell').innerHTML = `<div class="av-error">${esc(err.message || 'Failed to load')}</div>`;
+	});
+}
+
+// ── State ─────────────────────────────────────────────────────────────
+
+let avatar = null;
+let attachedSkills = new Set();
+let attachedPlugins = new Set();
+let chatHistory = [];
+
+// ── Init ──────────────────────────────────────────────────────────────
+
+async function init() {
+	avatar = await fetchAvatar(avatarId);
+	if (!avatar.model_url && !avatar.url) throw new Error('This avatar has no GLB.');
+
+	const glbUrl = avatar.model_url || avatar.url;
+
+	// Persisted skill/plugin attachments (per-avatar, in localStorage)
+	loadAttached();
+
+	updateOg();
+	renderShell(glbUrl);
+	bindShareButtons();
+	bindTabs();
+	bindChat();
+	loadSkills();
+	loadPlugins();
+	loadRelated();
+	measureModel(glbUrl);
+}
+
+// ── API ───────────────────────────────────────────────────────────────
+
+async function fetchAvatar(id) {
+	const r = await fetch(`/api/avatars/${encodeURIComponent(id)}`);
+	if (!r.ok) {
+		const j = await r.json().catch(() => ({}));
+		throw new Error(j.error_description || `Avatar not found (${r.status})`);
+	}
+	return (await r.json()).avatar;
+}
+
+async function fetchRelated() {
+	const url = new URL('/api/explore', location.origin);
+	url.searchParams.set('source', 'avatar');
+	url.searchParams.set('limit', '12');
+	if (avatar.tags?.[0]) url.searchParams.set('q', avatar.tags[0]);
+	const r = await fetch(url);
+	if (!r.ok) return [];
+	const j = await r.json();
+	return (j.items || []).filter((it) => it.kind === 'avatar' && it.avatarId !== avatarId).slice(0, 8);
+}
+
+async function fetchPlugins() {
+	const r = await fetch('/api/plugins/list?limit=24');
+	if (!r.ok) return [];
+	const j = await r.json();
+	return j?.data?.items || [];
+}
+
+// Skills are derived from a curated catalogue + any agent-defined skills
+// surfaced through marketplace. For the avatar studio we expose a stable
+// catalog of capabilities the user can attach to give the avatar behavior.
+const SKILL_CATALOG = [
+	{ id: 'wave', name: 'Wave hello', desc: 'Greet the visitor with a wave gesture' },
+	{ id: 'idle-anim', name: 'Idle animation', desc: 'Subtle breathing/sway loop when not chatting' },
+	{ id: 'lip-sync', name: 'Lip sync', desc: 'Mouth animation synced to TTS responses' },
+	{ id: 'face-track', name: 'Face camera', desc: 'Avatar head tracks the cursor / camera' },
+	{ id: 'memory', name: 'Conversation memory', desc: 'Remember chat history across page loads' },
+	{ id: 'voice-tts', name: 'Voice (TTS)', desc: 'Speak responses out loud with synthesized voice' },
+	{ id: 'voice-stt', name: 'Voice input', desc: 'Listen to the user via microphone (speech-to-text)' },
+	{ id: 'web-search', name: 'Web search', desc: 'Look up information online during chat' },
+	{ id: 'image-gen', name: 'Image generation', desc: 'Generate images on request' },
+	{ id: 'pump-feed', name: 'Pump.fun feed', desc: 'Real-time data on new Solana token launches' },
+	{ id: 'wallet-pay', name: 'Wallet payments', desc: 'Accept USDC tips via Solana Pay' },
+	{ id: 'erc8004', name: 'ERC-8004 identity', desc: 'On-chain agent identity for cross-app reputation' },
+];
+
+async function fetchSkills() {
+	return SKILL_CATALOG;
+}
+
+// ── Render ────────────────────────────────────────────────────────────
+
+function renderShell(glbUrl) {
+	const tagsHtml = (avatar.tags || []).map((t) => `<span class="av-tag">${esc(t)}</span>`).join('');
+	const author = avatar.author || avatar.attribution;
+	const byLine = author?.handle
+		? author.profileUrl || author.url
+			? `<p class="av-by">by <a href="${esc(author.profileUrl || author.url)}" target="_blank" rel="noopener">${esc(author.displayName || author.handle)}</a></p>`
+			: `<p class="av-by">by ${esc(author.displayName || author.handle)}</p>`
+		: avatar.owner_username
+			? `<p class="av-by">by <a href="/u/${esc(avatar.owner_username)}">@${esc(avatar.owner_username)}</a></p>`
+			: '';
+
+	$('av-shell').innerHTML = `
+		<div class="av-stage-col">
+			<div class="av-stage" id="av-stage">
+				<div class="av-stage-loading" id="av-stage-loading">Loading 3D model…</div>
+				<model-viewer
+					id="av-viewer"
+					src="${esc(glbUrl)}"
+					alt="${esc(avatar.name)}"
+					camera-controls
+					auto-rotate
+					rotation-per-second="14deg"
+					interaction-prompt="none"
+					exposure="1.05"
+					shadow-intensity="0.9"
+					shadow-softness="0.7"
+					tone-mapping="aces"
+					environment-image="neutral"
+					reveal="auto"
+				></model-viewer>
+			</div>
+			<div class="av-meta-strip" id="av-meta-strip">
+				<div class="av-meta-item"><span class="av-meta-key">Format</span><span class="av-meta-val">glTF 2.0</span></div>
+				<div class="av-meta-item"><span class="av-meta-key">License</span><span class="av-meta-val" id="av-license">${esc(avatar.attribution?.license || 'Public')}</span></div>
+				<div class="av-meta-item" id="av-size-item" hidden><span class="av-meta-key">Size</span><span class="av-meta-val" id="av-size">—</span></div>
+				<div class="av-meta-item" id="av-vert-item" hidden><span class="av-meta-key">Vertices</span><span class="av-meta-val" id="av-vert">—</span></div>
+				<div class="av-meta-item" id="av-tri-item" hidden><span class="av-meta-key">Triangles</span><span class="av-meta-val" id="av-tri">—</span></div>
+				<div class="av-meta-item" id="av-mat-item" hidden><span class="av-meta-key">Materials</span><span class="av-meta-val" id="av-mat">—</span></div>
+			</div>
+		</div>
+
+		<div class="av-side">
+			<div class="av-side-head">
+				<div class="av-eyebrow">${avatar.demo ? 'Curated · Public Domain' : 'Community Avatar'}</div>
+				<h1 class="av-name">${esc(avatar.name)}</h1>
+				${byLine}
+				${tagsHtml ? `<div class="av-tags">${tagsHtml}</div>` : ''}
+			</div>
+			<div class="av-cta-row">
+				<button class="av-cta" id="av-use">Start an agent</button>
+				<a class="av-cta-sec" href="${esc(glbUrl)}" download>Download GLB</a>
+			</div>
+			<nav class="av-tabs" role="tablist">
+				<button class="av-tab active" data-tab="overview" role="tab">Overview</button>
+				<button class="av-tab" data-tab="chat" role="tab">Chat</button>
+				<button class="av-tab" data-tab="skills" role="tab">Skills</button>
+				<button class="av-tab" data-tab="plugins" role="tab">Plugins</button>
+				<button class="av-tab" data-tab="embed" role="tab">Embed</button>
+			</nav>
+			<div class="av-panels">
+				<div class="av-panel active" data-panel="overview" id="av-overview">
+					${avatar.description ? `<p class="av-desc">${esc(avatar.description)}</p>` : '<p class="av-desc" style="color:var(--text-3)">No description provided.</p>'}
+					${renderAttribution()}
+					${renderAttached()}
+				</div>
+				<div class="av-panel" data-panel="chat">
+					<div class="av-chat">
+						<div class="av-chat-log" id="av-chat-log">
+							<div class="av-chat-empty">
+								<strong>Chat with ${esc(avatar.name)}</strong>
+								Ask anything — the response uses the model configured for this server.
+							</div>
+						</div>
+						<form class="av-chat-form" id="av-chat-form">
+							<textarea class="av-chat-input" id="av-chat-input" placeholder="Say something…" rows="1" autocomplete="off"></textarea>
+							<button type="submit" class="av-chat-send" id="av-chat-send">Send</button>
+						</form>
+					</div>
+				</div>
+				<div class="av-panel" data-panel="skills">
+					<div class="av-list" id="av-skills-list">
+						<div class="av-list-loading">Loading skills…</div>
+					</div>
+				</div>
+				<div class="av-panel" data-panel="plugins">
+					<div class="av-list" id="av-plugins-list">
+						<div class="av-list-loading">Loading plugins…</div>
+					</div>
+				</div>
+				<div class="av-panel" data-panel="embed">
+					${renderEmbedPanel(glbUrl)}
+				</div>
+			</div>
+		</div>
+	`;
+
+	const viewer = $('av-viewer');
+	viewer?.addEventListener('load', () => {
+		$('av-stage-loading')?.remove();
+	});
+	viewer?.addEventListener('error', () => {
+		const ld = $('av-stage-loading');
+		if (ld) ld.textContent = 'Failed to load 3D model.';
+	});
+
+	$('av-use')?.addEventListener('click', startAgentWithAvatar);
+}
+
+function renderAttribution() {
+	const a = avatar.attribution;
+	if (!a) return '';
+	const url = a.url ? `<a href="${esc(a.url)}" target="_blank" rel="noopener">${esc(a.displayName || a.handle)}</a>` : esc(a.displayName || a.handle);
+	const license = a.license ? ` · ${esc(a.license)}` : '';
+	return `<div class="av-attribution">
+		<strong>Attribution</strong>
+		<div>${url}${license}</div>
+	</div>`;
+}
+
+function renderAttached() {
+	if (attachedSkills.size === 0 && attachedPlugins.size === 0) return '';
+	const skills = [...attachedSkills].map((s) => {
+		const sk = SKILL_CATALOG.find((x) => x.id === s);
+		return `<span class="av-attached-pill">${esc(sk?.name || s)}</span>`;
+	}).join('');
+	const plugins = [...attachedPlugins].map((p) => `<span class="av-attached-pill">${esc(p)}</span>`).join('');
+	return `<div class="av-attached">
+		<strong>Attached to this avatar</strong>
+		<div class="av-attached-list">${skills}${plugins}</div>
+	</div>`;
+}
+
+function renderEmbedPanel(glbUrl) {
+	const fullUrl = location.origin + location.pathname;
+	// The avatar studio page itself is iframe-friendly; embedders can drop the
+	// page URL with `?embed=1` and we hide the chrome (handled below).
+	const iframeSrc = `${fullUrl}?embed=1`;
+	const webComponentSnippet = `<script type="module" src="https://three.ws/dist-lib/agent-3d.js"><\/script>
+<agent-3d
+  src="${glbUrl}"
+  style="width:480px;height:480px"
+></agent-3d>`;
+	const iframeSnippet = `<iframe
+  src="${iframeSrc}"
+  width="480"
+  height="480"
+  style="border:0;border-radius:14px"
+  allow="autoplay; xr-spatial-tracking"
+></iframe>`;
+	const linkSnippet = fullUrl;
+	return `
+		<div class="av-embed-section">
+			<div class="av-embed-label">
+				<span>Web component</span>
+				<button class="av-embed-copy" data-copy="wc">Copy</button>
+			</div>
+			<pre class="av-embed-code" id="embed-wc">${esc(webComponentSnippet)}</pre>
+		</div>
+		<div class="av-embed-section">
+			<div class="av-embed-label">
+				<span>Iframe</span>
+				<button class="av-embed-copy" data-copy="iframe">Copy</button>
+			</div>
+			<pre class="av-embed-code" id="embed-iframe">${esc(iframeSnippet)}</pre>
+		</div>
+		<div class="av-embed-section">
+			<div class="av-embed-label">
+				<span>Direct link</span>
+				<button class="av-embed-copy" data-copy="link">Copy</button>
+			</div>
+			<pre class="av-embed-code" id="embed-link">${esc(linkSnippet)}</pre>
+		</div>
+	`;
+}
+
+// ── Tabs ──────────────────────────────────────────────────────────────
+
+function bindTabs() {
+	document.querySelectorAll('.av-tab').forEach((btn) => {
+		btn.addEventListener('click', () => {
+			document.querySelectorAll('.av-tab').forEach((b) => b.classList.remove('active'));
+			btn.classList.add('active');
+			const tab = btn.dataset.tab;
+			document.querySelectorAll('.av-panel').forEach((p) => {
+				p.classList.toggle('active', p.dataset.panel === tab);
+			});
+		});
+	});
+
+	// Embed copy buttons
+	document.body.addEventListener('click', async (e) => {
+		const btn = e.target.closest('.av-embed-copy');
+		if (!btn) return;
+		const which = btn.dataset.copy;
+		const sourceMap = { wc: 'embed-wc', iframe: 'embed-iframe', link: 'embed-link' };
+		const src = $(sourceMap[which]);
+		if (!src) return;
+		try {
+			await navigator.clipboard.writeText(src.textContent);
+			btn.textContent = 'Copied ✓';
+			btn.classList.add('copied');
+			setTimeout(() => {
+				btn.textContent = 'Copy';
+				btn.classList.remove('copied');
+			}, 1800);
+		} catch (err) {
+			console.error('[avatar] clipboard', err);
+		}
+	});
+}
+
+// ── Share buttons ─────────────────────────────────────────────────────
+
+function bindShareButtons() {
+	const linkBtn = $('share-link');
+	const twBtn = $('share-twitter');
+	if (linkBtn) {
+		linkBtn.addEventListener('click', async () => {
+			try {
+				await navigator.clipboard.writeText(location.href);
+				linkBtn.textContent = 'Copied ✓';
+				linkBtn.classList.add('copied');
+				setTimeout(() => {
+					linkBtn.textContent = 'Copy link';
+					linkBtn.classList.remove('copied');
+				}, 1800);
+			} catch (err) {
+				console.error('[avatar] copy link', err);
+			}
+		});
+	}
+	if (twBtn && avatar) {
+		const text = `Check out "${avatar.name}" — a 3D avatar on three.ws`;
+		const url = `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(location.href)}`;
+		twBtn.href = url;
+	}
+}
+
+// ── Use this avatar → create + edit an agent ─────────────────────────
+//
+// Demo avatars don't exist in the DB; the marketplace API silently drops
+// avatar_id for those, so the caller still gets an agent — just without the
+// glb attached. Real (DB-backed) avatars get linked. Either way the user
+// lands on the edit page for their new draft.
+
+async function startAgentWithAvatar() {
+	const btn = $('av-use');
+	if (!btn) return;
+	const original = btn.textContent;
+	btn.disabled = true;
+	btn.textContent = 'Creating…';
+	try {
+		const skillsArr = [...attachedSkills].map((s) => ({
+			name: SKILL_CATALOG.find((x) => x.id === s)?.name || s,
+			id: s,
+		}));
+		const body = {
+			name: `${avatar.name} agent`,
+			description: avatar.description?.slice(0, 480) || `An agent voiced by the "${avatar.name}" avatar.`,
+			system_prompt: buildSystemContext(),
+			greeting: `Hi! I'm ${avatar.name}.`,
+			category: 'general',
+			tags: (avatar.tags || []).slice(0, 8),
+			capabilities: { skills: skillsArr, library: [], bullets: [] },
+			avatar_id: avatar.id || avatarId,
+			publish: false,
+		};
+		const r = await fetch('/api/marketplace/agents', {
+			method: 'POST',
+			headers: { 'content-type': 'application/json' },
+			credentials: 'include',
+			body: JSON.stringify(body),
+		});
+		if (r.status === 401) {
+			location.href = `/login?next=${encodeURIComponent(location.pathname + location.search)}`;
+			return;
+		}
+		const j = await r.json();
+		if (!r.ok) throw new Error(j.error_description || j.error || 'Failed to create agent');
+		const newId = j?.data?.agent?.id;
+		if (!newId) throw new Error('Server did not return new agent id');
+		location.href = `/agent-edit.html?id=${encodeURIComponent(newId)}`;
+	} catch (err) {
+		console.error('[avatar] start agent', err);
+		btn.textContent = original;
+		btn.disabled = false;
+		alert(err.message || 'Failed to start agent');
+	}
+}
+
+// ── Skills panel ──────────────────────────────────────────────────────
+
+async function loadSkills() {
+	const list = $('av-skills-list');
+	if (!list) return;
+	const skills = await fetchSkills();
+	if (!skills.length) {
+		list.innerHTML = '<div class="av-list-empty">No skills available.</div>';
+		return;
+	}
+	list.innerHTML = skills.map(renderSkillRow).join('');
+	list.querySelectorAll('[data-skill]').forEach((btn) => {
+		btn.addEventListener('click', () => toggleSkill(btn.dataset.skill));
+	});
+}
+
+function renderSkillRow(s) {
+	const on = attachedSkills.has(s.id);
+	return `<div class="av-row">
+		<div class="av-row-main">
+			<p class="av-row-title">${esc(s.name)}</p>
+			<p class="av-row-sub">${esc(s.desc)}</p>
+		</div>
+		<button class="av-row-action${on ? ' active' : ''}" data-skill="${esc(s.id)}">
+			${on ? 'Attached' : 'Attach'}
+		</button>
+	</div>`;
+}
+
+function toggleSkill(id) {
+	if (attachedSkills.has(id)) attachedSkills.delete(id);
+	else attachedSkills.add(id);
+	saveAttached();
+	loadSkills();
+	const overview = $('av-overview');
+	if (overview) {
+		// re-render attached pills in the overview panel
+		const existing = overview.querySelector('.av-attached');
+		if (existing) existing.remove();
+		const html = renderAttached();
+		if (html) overview.insertAdjacentHTML('beforeend', html);
+	}
+}
+
+// ── Plugins panel ─────────────────────────────────────────────────────
+
+async function loadPlugins() {
+	const list = $('av-plugins-list');
+	if (!list) return;
+	const plugins = await fetchPlugins();
+	if (!plugins.length) {
+		list.innerHTML = '<div class="av-list-empty">No plugins published yet.</div>';
+		return;
+	}
+	list.innerHTML = plugins.slice(0, 20).map(renderPluginRow).join('');
+	list.querySelectorAll('[data-plugin]').forEach((btn) => {
+		btn.addEventListener('click', () => togglePlugin(btn.dataset.plugin));
+	});
+}
+
+function renderPluginRow(p) {
+	const id = p.identifier || p.id;
+	const on = attachedPlugins.has(id);
+	const name = p.name || p.manifest_json?.meta?.title || id;
+	const desc = p.description || p.manifest_json?.meta?.description || '';
+	const tools = Array.isArray(p.manifest_json?.api) ? p.manifest_json.api.length : 0;
+	return `<div class="av-row">
+		<div class="av-row-main">
+			<p class="av-row-title">${esc(name)}</p>
+			<p class="av-row-sub">${tools ? `${tools} tool${tools === 1 ? '' : 's'} · ` : ''}${esc(desc.slice(0, 80))}</p>
+		</div>
+		<button class="av-row-action${on ? ' active' : ''}" data-plugin="${esc(id)}">
+			${on ? 'Attached' : 'Attach'}
+		</button>
+	</div>`;
+}
+
+function togglePlugin(id) {
+	if (attachedPlugins.has(id)) attachedPlugins.delete(id);
+	else attachedPlugins.add(id);
+	saveAttached();
+	loadPlugins();
+	const overview = $('av-overview');
+	if (overview) {
+		const existing = overview.querySelector('.av-attached');
+		if (existing) existing.remove();
+		const html = renderAttached();
+		if (html) overview.insertAdjacentHTML('beforeend', html);
+	}
+}
+
+// ── Attached storage ──────────────────────────────────────────────────
+
+function attachedKey() {
+	return ATTACHED_KEY_PREFIX + (avatar?.id || avatarId);
+}
+function loadAttached() {
+	try {
+		const raw = localStorage.getItem(attachedKey());
+		if (!raw) return;
+		const parsed = JSON.parse(raw);
+		attachedSkills = new Set(parsed.skills || []);
+		attachedPlugins = new Set(parsed.plugins || []);
+	} catch {
+		// ignore corrupt entries
+	}
+}
+function saveAttached() {
+	try {
+		localStorage.setItem(attachedKey(), JSON.stringify({
+			skills: [...attachedSkills],
+			plugins: [...attachedPlugins],
+		}));
+	} catch {
+		// localStorage full or disabled — non-fatal, attachments stay in-memory for the session
+	}
+}
+
+// ── Chat panel ────────────────────────────────────────────────────────
+
+function bindChat() {
+	const form = $('av-chat-form');
+	const input = $('av-chat-input');
+	const send = $('av-chat-send');
+	if (!form || !input || !send) return;
+
+	input.addEventListener('input', () => {
+		input.style.height = 'auto';
+		input.style.height = Math.min(input.scrollHeight, 120) + 'px';
+	});
+	input.addEventListener('keydown', (e) => {
+		if (e.key === 'Enter' && !e.shiftKey) {
+			e.preventDefault();
+			form.requestSubmit();
+		}
+	});
+	form.addEventListener('submit', async (e) => {
+		e.preventDefault();
+		const text = input.value.trim();
+		if (!text) return;
+		input.value = '';
+		input.style.height = 'auto';
+		await sendChatMessage(text);
+	});
+}
+
+async function sendChatMessage(text) {
+	const log = $('av-chat-log');
+	const send = $('av-chat-send');
+	if (!log) return;
+
+	// Drop empty-state once we have any message
+	const empty = log.querySelector('.av-chat-empty');
+	if (empty) empty.remove();
+
+	chatHistory.push({ role: 'user', content: text });
+	appendChatMessage('user', text);
+
+	const assistantNode = appendChatMessage('assistant', '');
+	const cursor = document.createElement('span');
+	cursor.className = 'av-chat-cursor';
+	assistantNode.appendChild(cursor);
+
+	send.disabled = true;
+	let acc = '';
+	try {
+		const systemContext = buildSystemContext();
+		const r = await fetch('/api/chat', {
+			method: 'POST',
+			headers: { 'content-type': 'application/json' },
+			credentials: 'include',
+			body: JSON.stringify({
+				message: text,
+				context: systemContext,
+				history: chatHistory.slice(-10, -1),
+				agentId: avatar?.id || avatarId,
+			}),
+		});
+		if (!r.ok) {
+			const j = await r.json().catch(() => ({}));
+			throw new Error(j.error_description || j.error || `Chat failed (${r.status})`);
+		}
+		const reader = r.body.getReader();
+		const decoder = new TextDecoder();
+		let buf = '';
+		while (true) {
+			const { value, done } = await reader.read();
+			if (done) break;
+			buf += decoder.decode(value, { stream: true });
+			let lines = buf.split('\n\n');
+			buf = lines.pop() || '';
+			for (const block of lines) {
+				const dataLine = block.split('\n').find((l) => l.startsWith('data:'));
+				if (!dataLine) continue;
+				const payload = dataLine.slice(5).trim();
+				if (!payload) continue;
+				let evt;
+				try { evt = JSON.parse(payload); } catch { continue; }
+				if (evt.type === 'chunk' && evt.text) {
+					acc += evt.text;
+					assistantNode.textContent = acc;
+					log.scrollTop = log.scrollHeight;
+				} else if (evt.type === 'error') {
+					throw new Error(evt.message || evt.error || 'Stream error');
+				}
+			}
+		}
+		chatHistory.push({ role: 'assistant', content: acc });
+	} catch (err) {
+		assistantNode.textContent = acc || `⚠ ${err.message}`;
+		console.error('[avatar] chat', err);
+	} finally {
+		cursor.remove();
+		send.disabled = false;
+	}
+}
+
+function appendChatMessage(role, text) {
+	const log = $('av-chat-log');
+	const node = document.createElement('div');
+	node.className = `av-chat-msg ${role}`;
+	node.textContent = text;
+	log.appendChild(node);
+	log.scrollTop = log.scrollHeight;
+	return node;
+}
+
+function buildSystemContext() {
+	const parts = [
+		`You are voicing the avatar "${avatar.name}" on three.ws.`,
+		avatar.description ? `Your character description: ${avatar.description}` : '',
+		avatar.tags?.length ? `Tags: ${avatar.tags.join(', ')}` : '',
+	];
+	if (attachedSkills.size > 0) {
+		const skills = [...attachedSkills].map((s) => SKILL_CATALOG.find((x) => x.id === s)?.name || s);
+		parts.push(`Skills attached: ${skills.join(', ')}`);
+	}
+	parts.push('Respond in character, keep replies under 3 short paragraphs.');
+	return parts.filter(Boolean).join('\n');
+}
+
+// ── Related avatars ───────────────────────────────────────────────────
+
+async function loadRelated() {
+	const items = await fetchRelated();
+	if (!items.length) return;
+	const grid = $('av-related-grid');
+	if (!grid) return;
+	$('av-related').hidden = false;
+	grid.innerHTML = items.map((a) => `
+		<a class="av-related-card" href="/avatars/${encodeURIComponent(a.avatarId)}">
+			<div class="av-related-thumb">
+				${a.glbUrl ? `<model-viewer
+					src="${esc(a.glbUrl)}"
+					alt="${esc(a.name || 'Avatar')}"
+					auto-rotate
+					rotation-per-second="14deg"
+					interaction-prompt="none"
+					disable-zoom
+					disable-pan
+					disable-tap
+					exposure="1"
+					shadow-intensity="0.4"
+					tone-mapping="aces"
+					loading="lazy"
+				></model-viewer>` : ''}
+			</div>
+			<div class="av-related-info">
+				<p class="av-related-name">${esc(a.name || 'Untitled')}</p>
+				<p class="av-related-author">${esc(a.author?.displayName || a.author?.handle || 'Anonymous')}</p>
+			</div>
+		</a>
+	`).join('');
+}
+
+// ── Model measurement ─────────────────────────────────────────────────
+
+async function measureModel(glbUrl) {
+	// Real file size via HEAD. Polygon counts come from the loaded model-viewer
+	// scene graph (when 3DOM is available — gracefully skipped otherwise).
+	try {
+		const r = await fetch(glbUrl, { method: 'HEAD' });
+		const len = r.headers.get('content-length');
+		if (len) {
+			const bytes = Number(len);
+			const mb = (bytes / 1_048_576).toFixed(1);
+			$('av-size').textContent = `${mb} MB`;
+			$('av-size-item').hidden = false;
+		}
+	} catch {
+		// non-fatal
+	}
+
+	const viewer = $('av-viewer');
+	if (!viewer) return;
+	const onLoad = async () => {
+		try {
+			// model-viewer 3DOM gives us the loaded scene graph.
+			const stats = await viewer.requestUpdate?.();
+			void stats;
+			const model = viewer.model || viewer.scene;
+			if (!model) return;
+			let verts = 0;
+			let tris = 0;
+			let mats = new Set();
+			for (const mesh of model.materials || []) mats.add(mesh.name || mesh.id);
+			// Fall back to walking the THREE scene if exposed
+			const scene = viewer[Symbol.for('scene')] || viewer.scene;
+			const root = scene?.modelContainer || scene;
+			if (root && typeof root.traverse === 'function') {
+				root.traverse((node) => {
+					if (node.isMesh && node.geometry) {
+						const pos = node.geometry.attributes?.position?.count;
+						if (pos) verts += pos;
+						const idx = node.geometry.index?.count;
+						if (idx) tris += idx / 3;
+						else if (pos) tris += pos / 3;
+						if (node.material?.name) mats.add(node.material.name);
+					}
+				});
+			}
+			if (verts > 0) {
+				$('av-vert').textContent = verts.toLocaleString();
+				$('av-vert-item').hidden = false;
+			}
+			if (tris > 0) {
+				$('av-tri').textContent = Math.round(tris).toLocaleString();
+				$('av-tri-item').hidden = false;
+			}
+			if (mats.size > 0) {
+				$('av-mat').textContent = mats.size;
+				$('av-mat-item').hidden = false;
+			}
+		} catch {
+			// non-fatal
+		}
+	};
+	viewer.addEventListener('load', onLoad, { once: true });
+}
+
+// ── OG meta ───────────────────────────────────────────────────────────
+
+function updateOg() {
+	document.title = `${avatar.name} — Avatar Studio · three.ws`;
+	$('og-title')?.setAttribute('content', `${avatar.name} — Avatar Studio`);
+	$('og-description')?.setAttribute('content', avatar.description || `A 3D avatar on three.ws`);
+	$('og-url')?.setAttribute('content', location.href);
+	$('tw-title')?.setAttribute('content', `${avatar.name} — Avatar Studio`);
+	$('tw-description')?.setAttribute('content', avatar.description || `A 3D avatar on three.ws`);
+	if (avatar.thumbnail_url) {
+		$('og-image')?.setAttribute('content', avatar.thumbnail_url);
+	}
+}
