@@ -226,7 +226,7 @@ export class IdleAnimation {
 			!this._hipBone &&
 			this._morphMeshes.length === 0
 		) {
-			console.log(
+			console.warn(
 				'[IdleAnimation] No bones or morph targets found on avatar root — channels will be no-ops.',
 			);
 		}

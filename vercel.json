@@ -285,6 +285,10 @@
 			"dest": "/marketplace.html"
 		},
 		{
+			"src": "/marketplace/avatars/([^/]+)",
+			"dest": "/marketplace.html"
+		},
+		{
 			"src": "/api/agents/me",
 			"dest": "/api/agents"
 		},
@@ -986,11 +990,11 @@
 		},
 		{
 			"src": "/discover/a/(\\d+)/(\\d+)",
-			"dest": "/discover/detail.html"
+			"dest": "/api/discover-detail?kind=onchain&chain=$1&id=$2"
 		},
 		{
 			"src": "/discover/avatar/([^/]+)",
-			"dest": "/discover/detail.html"
+			"dest": "/api/discover-detail?kind=avatar&id=$1"
 		},
 		{
 			"src": "/discover/(.*)",

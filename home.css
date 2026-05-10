@@ -298,6 +298,10 @@
 	position: relative;
 	min-height: 360px;
 	background: rgba(255, 255, 255, 0.02);
+	/* isolate compositing layer so WebGL canvas renders correctly inside the
+	   CSS 3D perspective context on .home-parallax */
+	will-change: transform;
+	transform: translateZ(0);
 }
 
 .h-bento-visual model-viewer {
@@ -2840,5 +2844,62 @@
 
 	.h-scroll-hint {
 		display: none;
+	}
+}
+
+/* ── prefers-reduced-motion ──────────────────────────────────────────────── */
+/*
+ * Users who request reduced motion (vestibular disorders, slow devices, battery
+ * saver) get: no looping animations, instant transitions, no parallax.
+ * WebGL viewers are still shown but stop auto-rotating (handled in JS).
+ */
+@media (prefers-reduced-motion: reduce) {
+	/* kill ALL CSS animations and transitions site-wide */
+	*,
+	*::before,
+	*::after {
+		animation-duration: 0.01ms !important;
+		animation-iteration-count: 1 !important;
+		transition-duration: 0.01ms !important;
+		scroll-behavior: auto !important;
+	}
+
+	/* reveal elements immediately — no fade/slide in */
+	.h-reveal {
+		opacity: 1;
+		transform: none;
+	}
+
+	/* hide the star canvas entirely — it's decorative */
+	.h-star-canvas {
+		display: none;
+	}
+
+	/* flatten the CSS scroll-driven parallax layers */
+	.h-layer {
+		transform: none !important;
+	}
+
+	/* stop the hero avatar scroll-based float */
+	.h-avatar-wrap {
+		animation: none !important;
+	}
+
+	/* stop ambient glow / mesh drift */
+	.h-hero-mesh,
+	.h-hero-glow-a,
+	.h-hero-glow-b,
+	.h-hero-haze {
+		animation: none !important;
+	}
+
+	/* stop the floor scroll ribbon */
+	.h-floor-ribbon {
+		animation: none !important;
+	}
+
+	/* stop the status dot pulse */
+	.h-status-dot::before {
+		animation: none !important;
 	}
 }

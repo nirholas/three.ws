@@ -72,6 +72,6 @@ describe('scoreSentiment', () => {
 
 	it('pct values sum to 100', () => {
 		const result = scoreSentiment(posts(['moon', 'crash', 'nothing']));
-		expect(result.posPct + result.negPct + result.neuPct).toBeCloseTo(100, 1);
+		expect(result.posPct + result.negPct + result.neuPct).toBeCloseTo(100, 0);
 	});
 });

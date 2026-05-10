@@ -370,6 +370,155 @@ body.market-page {
 	cursor: pointer;
 }
 
+/* ── Avatar deep-link detail page ────────────────────────────────────── */
+
+.market-avatar-detail {
+	flex: 1;
+	min-height: 0;
+	overflow-y: auto;
+}
+.market-avatar-detail-inner {
+	max-width: 1200px;
+	margin: 0 auto;
+	padding: 0 24px 80px;
+}
+.market-avatar-detail-layout {
+	display: grid;
+	grid-template-columns: 1fr 380px;
+	gap: 32px;
+	min-height: 520px;
+	padding: 8px 0 32px;
+}
+@media (max-width: 900px) {
+	.market-avatar-detail-layout {
+		grid-template-columns: 1fr;
+		min-height: 0;
+	}
+}
+.market-avatar-detail-stage {
+	position: relative;
+	background: linear-gradient(180deg, #0a0a0c 0%, #0d0d10 100%);
+	border: 1px solid var(--mk-border);
+	border-radius: 20px;
+	overflow: hidden;
+	min-height: 420px;
+}
+.market-avatar-detail-stage model-viewer {
+	width: 100%;
+	height: 100%;
+	position: absolute;
+	inset: 0;
+	--poster-color: transparent;
+	opacity: 0;
+	transition: opacity 0.5s ease;
+}
+.market-avatar-detail-stage.mv-ready model-viewer { opacity: 1; }
+
+/* Loading bar inside stage */
+.avatar-detail-load-wrap {
+	position: absolute;
+	inset: 0;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	gap: 10px;
+	pointer-events: none;
+	transition: opacity 0.3s;
+}
+.market-avatar-detail-stage.mv-ready .avatar-detail-load-wrap { opacity: 0; }
+.avatar-detail-load-bar-outer {
+	width: 160px;
+	height: 2px;
+	background: rgba(255,255,255,0.08);
+	border-radius: 999px;
+	overflow: hidden;
+}
+.avatar-detail-load-bar {
+	height: 100%;
+	width: 0;
+	background: linear-gradient(90deg, #a78bfa, #6366f1);
+	border-radius: 999px;
+	transition: width 0.2s;
+}
+.avatar-detail-load-label {
+	font-size: 11px;
+	color: var(--mk-text-3);
+	letter-spacing: 0.04em;
+}
+
+/* Right column meta */
+.market-avatar-detail-meta {
+	display: flex;
+	flex-direction: column;
+	gap: 14px;
+	padding-top: 8px;
+}
+.market-avatar-detail-name {
+	font-family: 'Space Grotesk', sans-serif;
+	font-size: 28px;
+	font-weight: 700;
+	color: var(--mk-text);
+	margin: 0;
+	line-height: 1.1;
+	word-break: break-word;
+}
+.market-avatar-detail-author {
+	font-size: 13px;
+	color: var(--mk-text-3);
+	margin: 0;
+}
+.market-avatar-detail-author a { color: var(--mk-text-2); text-decoration: none; }
+.market-avatar-detail-author a:hover { color: var(--mk-text); text-decoration: underline; }
+.market-avatar-detail-desc {
+	font-size: 14px;
+	color: var(--mk-text-2);
+	line-height: 1.55;
+	margin: 0;
+}
+.market-avatar-detail-pills {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 6px;
+}
+.market-avatar-detail-actions {
+	display: flex;
+	flex-direction: column;
+	gap: 10px;
+	margin-top: 4px;
+}
+.market-avatar-detail-cta {
+	background: var(--mk-text);
+	color: var(--mk-bg);
+	border: 0;
+	padding: 13px 20px;
+	border-radius: 12px;
+	font-weight: 700;
+	font-size: 14px;
+	cursor: pointer;
+	text-align: left;
+	transition: opacity 0.15s;
+}
+.market-avatar-detail-cta:hover { opacity: 0.88; }
+.market-avatar-detail .btn-secondary {
+	display: block;
+	background: var(--mk-panel);
+	color: var(--mk-text-2);
+	border: 1px solid var(--mk-border-2);
+	padding: 11px 16px;
+	border-radius: 10px;
+	font-size: 13px;
+	font-weight: 500;
+	text-align: center;
+	text-decoration: none;
+	cursor: pointer;
+	transition: background 0.15s, color 0.15s;
+}
+.market-avatar-detail .btn-secondary:hover { background: var(--mk-panel-2); color: var(--mk-text); }
+
+/* Similar avatars */
+.market-avatar-detail-similar { margin-top: 12px; }
+
 /* ── Detail ──────────────────────────────────────────────────────────── */
 
 .market-detail {

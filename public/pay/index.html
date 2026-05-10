@@ -506,6 +506,75 @@
     .quick button[data-cmd="search_public_avatars:"] { display: none; }
     .pill .label { display: none; }
   }
+
+  /* Agent picker */
+  .agent-bar {
+    border-bottom: 1px solid var(--border);
+    background: var(--bg-2);
+    padding: 10px 28px;
+    display: flex; gap: 10px; align-items: center; flex-wrap: wrap;
+    font-size: 13px;
+  }
+  .agent-bar .label { color: var(--muted); white-space: nowrap; }
+  .agent-list { display: flex; gap: 8px; flex-wrap: wrap; flex: 1; min-width: 0; }
+  .agent-card {
+    display: flex; gap: 8px; align-items: center;
+    padding: 7px 12px;
+    border: 1px solid var(--border); border-radius: 10px;
+    cursor: pointer; background: var(--panel);
+    transition: border-color 0.15s, background 0.15s;
+    font-size: 12px;
+  }
+  .agent-card:hover { border-color: var(--accent); background: rgba(139,92,246,0.06); }
+  .agent-card.selected { border-color: var(--accent-2); background: rgba(34,211,238,0.07); }
+  .agent-card .av {
+    width: 24px; height: 24px; border-radius: 6px;
+    background: conic-gradient(from 200deg, var(--accent), var(--accent-2));
+    display: flex; align-items: center; justify-content: center;
+    font-size: 10px; font-weight: 700; color: #0a0b10; flex: 0 0 auto;
+  }
+  .agent-card .av img { width: 24px; height: 24px; border-radius: 6px; object-fit: cover; }
+  .agent-card .name { font-weight: 600; }
+  .agent-card .bal { color: var(--muted); font-family: var(--mono); font-size: 11px; }
+  .agent-card .no-wallet {
+    color: var(--orange); font-size: 10px; font-family: var(--mono);
+    background: rgba(245,158,11,0.1); border: 1px solid rgba(245,158,11,0.3);
+    padding: 2px 6px; border-radius: 4px;
+  }
+  .agent-bar .login-cta {
+    color: var(--muted); font-size: 12px;
+  }
+  .agent-bar .login-cta a { color: var(--accent-2); }
+  .agent-bar .login-cta .demo-note { font-style: italic; }
+
+  /* Generate wallet modal */
+  .gen-overlay {
+    position: fixed; inset: 0; background: rgba(0,0,0,0.7);
+    backdrop-filter: blur(8px);
+    display: none; align-items: center; justify-content: center; z-index: 100;
+  }
+  .gen-overlay.show { display: flex; }
+  .gen-modal {
+    background: var(--panel); border: 1px solid var(--border-strong);
+    border-radius: 16px; padding: 28px 32px; max-width: 420px; width: calc(100% - 32px);
+    animation: walkIn 0.25s ease-out;
+  }
+  .gen-modal h3 { margin: 0 0 6px; font-size: 18px; }
+  .gen-modal p { color: var(--muted); margin: 0 0 18px; font-size: 13px; }
+  .gen-modal .actions { display: flex; flex-direction: column; gap: 8px; }
+  .gen-modal button {
+    padding: 12px 16px; border-radius: 10px;
+    border: 1px solid var(--border); background: var(--panel-2);
+    color: var(--text); cursor: pointer; font-size: 13px; font-family: inherit;
+    display: flex; align-items: center; gap: 10px;
+    transition: border-color 0.15s;
+  }
+  .gen-modal button:hover { border-color: var(--accent); }
+  .gen-modal button.primary { background: var(--accent); color: #fff; border-color: var(--accent); }
+  .gen-modal button.primary:hover { background: #7c3aed; }
+  .gen-modal .cancel { color: var(--muted); margin-top: 8px; font-size: 12px; text-align: center; cursor: pointer; }
+  .gen-modal .cancel:hover { color: var(--text); }
+  .gen-modal .spinner { font-size: 18px; animation: spin 1.2s linear infinite; }
 </style>
 </head>
 <body>
@@ -533,6 +602,16 @@
 
 <main>
   <section class="chat">
+    <div class="agent-bar" id="agentBar">
+      <span class="label">agent wallet</span>
+      <div class="agent-list" id="agentList">
+        <span class="login-cta" id="agentLoginCta" style="display:none">
+          <a href="/login?redirect=/pay">Sign in</a> to use your own agent's wallet.
+          <span class="demo-note">Using shared demo wallet for now.</span>
+        </span>
+        <span id="agentLoading" style="color:var(--muted);font-size:12px">loading agents…</span>
+      </div>
+    </div>
     <div class="conv" id="conv">
       <div class="msg agent">
         <div class="av">3</div>
@@ -574,6 +653,21 @@
   </div>
 </footer>
 
+<div class="gen-overlay" id="genOverlay">
+  <div class="gen-modal">
+    <h3 id="genTitle">Set up Solana wallet</h3>
+    <p id="genBody">Your agent needs a Solana wallet to pay for tool calls. Generate one now or import a vanity address.</p>
+    <div class="actions">
+      <button class="primary" id="genBtn">
+        <span id="genSpinner" style="display:none" class="spinner">↻</span>
+        ⚡ Generate wallet instantly
+      </button>
+      <button id="vanityBtn">🎨 Grind a vanity address instead</button>
+    </div>
+    <div class="cancel" id="genCancel">cancel</div>
+  </div>
+</div>
+
 <div class="overlay" id="walkthrough">
   <div class="walkthrough">
     <h1>How this works</h1>
@@ -594,6 +688,117 @@ const promptEl = $('prompt'), sendBtn = $('send'), quickEl = $('quick');
 const walletText = $('walletText'), walletPill = $('walletPill');
 const tickerText = $('tickerText'), tickerPill = $('tickerPill');
 const feedStrip = $('feedStrip'), walkthrough = $('walkthrough'), closeWalk = $('closeWalk');
+const agentList = $('agentList'), agentLoading = $('agentLoading'), agentLoginCta = $('agentLoginCta');
+const genOverlay = $('genOverlay'), genCancel = $('genCancel'), genBtn = $('genBtn'), vanityBtn = $('vanityBtn');
+const genSpinner = $('genSpinner');
+
+// ---- Agent state --------------------------------------------------------
+let selectedAgent = null;  // { id, name, solana_address, usdc, sol }
+let pendingGenAgentId = null;
+
+function setSelectedAgent(agent) {
+  selectedAgent = agent;
+  // update wallet pill to show selected agent's balance
+  if (agent) {
+    walletText.textContent = `${agent.name} · ${
+      agent.usdc != null ? agent.usdc.toFixed(3) + ' USDC' : '? USDC'
+    } · ${agent.sol != null ? agent.sol.toFixed(4) + ' SOL' : ''} · ${
+      agent.solana_address ? agent.solana_address.slice(0,4)+'…'+agent.solana_address.slice(-4) : '?'
+    }`;
+  }
+  // re-render agent cards to highlight selected
+  renderAgentCards(window._agentCache || []);
+}
+
+function renderAgentCards(agents) {
+  window._agentCache = agents;
+  agentLoading.style.display = 'none';
+  // remove existing cards
+  for (const el of agentList.querySelectorAll('.agent-card')) el.remove();
+  if (!agents.length) {
+    agentLoginCta.style.display = 'block';
+    agentLoginCta.innerHTML = `No agents yet. <a href="/create">Create your first agent →</a>`;
+    return;
+  }
+  agents.forEach(agent => {
+    const el = document.createElement('div');
+    el.className = 'agent-card' + (selectedAgent?.id === agent.id ? ' selected' : '');
+    el.dataset.agentId = agent.id;
+    const avatarHtml = agent.avatar_id
+      ? `<img src="https://three.ws/avatars/${agent.avatar_id}/thumbnail.png" onerror="this.style.display='none';this.nextSibling.style.display='flex'" alt="" /><span style="display:none">${escape(agent.name[0]||'?')}</span>`
+      : `<span>${escape(agent.name[0]||'?')}</span>`;
+    const walletHtml = agent.solana_address
+      ? `<span class="bal">${agent.usdc != null ? agent.usdc.toFixed(3)+' USDC' : ''}</span>`
+      : `<span class="no-wallet">no wallet</span>`;
+    el.innerHTML = `<div class="av">${avatarHtml}</div><div><div class="name">${escape(agent.name)}</div>${walletHtml}</div>`;
+    el.addEventListener('click', () => {
+      if (!agent.solana_address) {
+        openGenOverlay(agent);
+      } else {
+        setSelectedAgent(agent);
+      }
+    });
+    agentList.appendChild(el);
+  });
+}
+
+async function loadAgents() {
+  try {
+    const r = await fetch('/api/x402-pay?agents=1');
+    if (r.status === 401) {
+      agentLoading.style.display = 'none';
+      agentLoginCta.style.display = 'block';
+      return;
+    }
+    if (!r.ok) throw new Error('load_failed');
+    const { agents } = await r.json();
+    renderAgentCards(agents);
+    // auto-select first agent with a wallet
+    if (!selectedAgent) {
+      const withWallet = agents.find(a => a.solana_address);
+      if (withWallet) setSelectedAgent(withWallet);
+    }
+  } catch {
+    agentLoading.style.display = 'none';
+    agentLoginCta.style.display = 'block';
+  }
+}
+
+function openGenOverlay(agent) {
+  pendingGenAgentId = agent.id;
+  $('genTitle').textContent = `Set up wallet for "${agent.name}"`;
+  $('genBody').textContent = `This agent needs a Solana wallet to pay $0.001 USDC per tool call. Generate one now (instant) or grind a vanity address.`;
+  genOverlay.classList.add('show');
+}
+
+genCancel.addEventListener('click', () => { genOverlay.classList.remove('show'); pendingGenAgentId = null; });
+vanityBtn.addEventListener('click', () => {
+  window.open(`/vanity-wallet?agent=${pendingGenAgentId}`, '_blank');
+  genOverlay.classList.remove('show');
+});
+genBtn.addEventListener('click', async () => {
+  if (!pendingGenAgentId) return;
+  genBtn.disabled = true;
+  genSpinner.style.display = '';
+  genBtn.childNodes[1].textContent = ' Generating…';
+  try {
+    const r = await fetch(`/api/agents/${pendingGenAgentId}/solana`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: '{}' });
+    if (!r.ok) throw new Error((await r.json()).error || 'gen_failed');
+    genOverlay.classList.remove('show');
+    // reload agents to get the new address
+    await loadAgents();
+    const agent = (window._agentCache || []).find(a => a.id === pendingGenAgentId);
+    if (agent) setSelectedAgent(agent);
+    pendingGenAgentId = null;
+    addMsg('agent', `✅ Wallet generated for <strong>${escape(agent?.name || 'your agent')}</strong>. Address: <code>${agent?.solana_address || ''}</code>. Fund it with USDC to start making paid calls.`);
+  } catch (err) {
+    addMsg('agent', `<div class="err">Failed to generate wallet: ${escape(err.message)}</div>`);
+  } finally {
+    genBtn.disabled = false;
+    genSpinner.style.display = 'none';
+    genBtn.childNodes[1].textContent = ' Generate wallet instantly';
+  }
+});
 
 const DEMO_MODEL = 'https://threejs.org/examples/models/gltf/DamagedHelmet/glTF-Binary/DamagedHelmet.glb';
 const TOOL_PRICE_USDC = 0.001;
@@ -924,7 +1129,7 @@ async function run(call, displayLabel) {
     const res = await fetch('/api/x402-pay', {
       method: 'POST',
       headers: { 'content-type': 'application/json', accept: 'text/event-stream' },
-      body: JSON.stringify(call),
+      body: JSON.stringify(selectedAgent ? { ...call, agentId: selectedAgent.id } : call),
     });
     if (!res.ok || !res.body) {
       const text = await res.text();
@@ -992,6 +1197,21 @@ function bumpTicker() {
 // ---- Wallet balance + activity feed ------------------------------------
 
 async function refreshBalance() {
+  // If using an agent wallet, reload agents to get fresh balances.
+  if (selectedAgent) {
+    try {
+      const r = await fetch('/api/x402-pay?agents=1');
+      if (r.ok) {
+        const { agents } = await r.json();
+        window._agentCache = agents;
+        const updated = agents.find(a => a.id === selectedAgent.id);
+        if (updated) { selectedAgent = updated; setSelectedAgent(updated); }
+        renderAgentCards(agents);
+      }
+    } catch {}
+    return;
+  }
+  // Shared demo wallet
   try {
     const r = await fetch('/api/x402-pay?balance=1');
     if (!r.ok) throw new Error('bal_fetch_failed');
@@ -1060,6 +1280,16 @@ refreshBalance();
 refreshFeed();
 setInterval(refreshBalance, 30_000);
 setInterval(refreshFeed, 20_000);
+
+// Agent picker — try to load if there's any sign the user is logged in.
+// The localStorage hint is set by the main site on login.
+const authHint = (() => { try { return JSON.parse(localStorage.getItem('3dagent:auth-hint') || 'null'); } catch { return null; } })();
+if (authHint?.authed) {
+  loadAgents();
+} else {
+  // Not obviously logged in — try anyway (session cookie may exist).
+  loadAgents().catch(() => {});
+}
 
 // Deep-link prefill: /pay?validate=https://...glb auto-fires the call.
 const params = new URLSearchParams(location.search);

@@ -13,12 +13,29 @@ function parseRoute() {
 }
 
 async function fetchItem(route) {
+	// SSR handler may have pre-loaded the item to avoid a round-trip
+	if (window.__DETAIL_ITEM__) return window.__DETAIL_ITEM__;
 	const params = new URLSearchParams({ kind: route.kind, id: route.id });
 	if (route.kind === 'onchain') params.set('chain', route.chainId);
 	const res = await fetch(`/api/explore-item?${params}`);
 	if (!res.ok) throw Object.assign(new Error('fetch failed'), { status: res.status });
 	const data = await res.json();
 	return data.item;
+}
+
+// Derive a smart back URL: restore the referrer if it was the discover page so
+// filters and search state are not lost.
+function backUrl() {
+	try {
+		const ref = document.referrer;
+		if (ref) {
+			const u = new URL(ref);
+			if (u.hostname === location.hostname && u.pathname === '/discover') {
+				return ref; // preserves ?q=, ?chain=, etc.
+			}
+		}
+	} catch (_) { /* ignore */ }
+	return '/discover';
 }
 
 function escapeHtml(s) {
@@ -51,6 +68,10 @@ function render(item) {
 	document.title = `${item.name} · three.ws`;
 	const metaDesc = document.querySelector('meta[name="description"]');
 	if (metaDesc) metaDesc.content = item.description || `${item.name} on three.ws`;
+
+	// Smart back link
+	const backEl = $('back-link');
+	if (backEl) backEl.href = backUrl();
 
 	// Hero media
 	const media = $('hero-media');
@@ -121,24 +142,23 @@ function render(item) {
 	}
 
 	// 3D viewer
-	if (item.has3d && item.glbUrl) {
+	if (item.has3d) {
 		const viewerWrap = $('viewer-wrap');
 		viewerWrap.hidden = false;
 		const viewer = $('viewer');
 
-		if (item.kind === 'onchain') {
-			// Use agent-3d web component for ERC-8004 agents
-			const script = document.createElement('script');
-			script.type = 'module';
-			script.src = LIB_CDN_URL;
-			document.head.appendChild(script);
+		const script = document.createElement('script');
+		script.type = 'module';
+		script.src = LIB_CDN_URL;
+		document.head.appendChild(script);
 
+		if (item.kind === 'onchain' && item.chainId && item.agentId) {
 			const agentUri = `agent://${item.chainId}/${item.agentId}`;
 			viewer.innerHTML = `<agent-3d src="${escapeAttr(agentUri)}" mode="inline" responsive style="width:100%;height:100%"></agent-3d>`;
-		} else {
-			// Avatar: use iframe embed of the 3D viewer
-			const embedSrc = `${location.origin}/#model=${encodeURIComponent(item.glbUrl)}`;
-			viewer.innerHTML = `<iframe src="${escapeAttr(embedSrc)}" allow="autoplay; xr-spatial-tracking" allowfullscreen></iframe>`;
+		} else if (item.kind === 'avatar' && item.avatarId) {
+			// Use /api/avatars/:id — the agent-3d component resolves it as a manifest
+			const apiSrc = `${location.origin}/api/avatars/${encodeURIComponent(item.avatarId)}`;
+			viewer.innerHTML = `<agent-3d src="${escapeAttr(apiSrc)}" mode="inline" responsive style="width:100%;height:100%"></agent-3d>`;
 		}
 	}
 
@@ -184,9 +204,7 @@ function render(item) {
 			const txUrl = item.explorerBase ? `${item.explorerBase}/tx/${item.registeredTx}` : '#';
 			rows.push(['Reg. tx', `<a href="${escapeAttr(txUrl)}" target="_blank" rel="noopener">${escapeHtml(shortAddr(item.registeredTx))}</a>`]);
 		}
-		dl.innerHTML = rows
-			.map(([k, v]) => `<dt>${escapeHtml(k)}</dt><dd>${v}</dd>`)
-			.join('');
+		dl.innerHTML = rows.map(([k, v]) => `<dt>${escapeHtml(k)}</dt><dd>${v}</dd>`).join('');
 	}
 
 	// Avatar details panel
@@ -252,7 +270,14 @@ function buildEmbedPanel(item, $) {
 	} else {
 		const detailUrl = `${origin}/discover/avatar/${item.avatarId}`;
 		const name = item.name || 'Avatar';
+		const apiSrc = `${origin}/api/avatars/${item.avatarId}`;
 		snippets = [
+			{
+				label: 'Web component',
+				key: 'wc',
+				value: `<script type="module" src="${LIB_CDN_URL}"></script>\n<agent-3d src="${apiSrc}" mode="inline" width="480px" responsive></agent-3d>`,
+				rows: 3,
+			},
 			{
 				label: 'iframe',
 				key: 'iframe',
@@ -302,7 +327,7 @@ function buildEmbedPanel(item, $) {
 		const btn = e.target.closest('.detail-embed-copy');
 		if (!btn) return;
 		const key = btn.dataset.copyKey;
-		const textarea = panesEl.querySelector(`[data-pane="${key}"] textarea, [data-pane="${key}"] input`);
+		const textarea = panesEl.querySelector(`[data-pane="${key}"] textarea`);
 		if (!textarea) return;
 		navigator.clipboard.writeText(textarea.value).then(() => {
 			const orig = btn.textContent;

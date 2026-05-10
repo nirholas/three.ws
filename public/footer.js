@@ -32,11 +32,29 @@
 			.then((html) => {
 				container.innerHTML = html;
 
-				if (container.querySelector('model-viewer')) {
-					ensureScript({
-						src: 'https://ajax.googleapis.com/ajax/libs/model-viewer/4.0.0/model-viewer.min.js',
-						type: 'module',
-					});
+				if (container.querySelector('#footer-bot-canvas')) {
+					if (document.querySelector('meta[name="has-three-bundle"]')) {
+						// This page already has a Vite-bundled Three.js — load the canvas
+						// renderer that shares that instance, avoiding a duplicate load.
+						ensureScript({ src: '/footer-bot.js', type: 'module' });
+					} else {
+						// Plain HTML page (login, register, etc.) — fall back to model-viewer.
+						ensureScript({
+							src: 'https://ajax.googleapis.com/ajax/libs/model-viewer/4.0.0/model-viewer.min.js',
+							type: 'module',
+						});
+						// model-viewer needs a <model-viewer> element; swap the canvas for one.
+						const avatar = container.querySelector('.h-footer-avatar');
+						if (avatar) {
+							avatar.innerHTML = `<model-viewer
+								src="/animations/robotexpressive.glb"
+								auto-rotate auto-rotate-delay="0" rotation-per-second="20deg"
+								interaction-prompt="none" camera-controls="false" disable-zoom
+								shadow-intensity="0" exposure="0.7" environment-image="neutral"
+								camera-orbit="0deg 80deg 9m" field-of-view="35deg" loading="lazy"
+							></model-viewer>`;
+						}
+					}
 				}
 
 				ensureScript({ src: '/footer-newsletter.js', attr: 'defer' });

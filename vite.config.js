@@ -73,14 +73,24 @@ const appConfig = {
 	},
 	build: {
 		chunkSizeWarningLimit: 1000,
+		// Skip computing gzip/brotli sizes during build — saves several seconds on
+		// large bundles (Three.js, ethers) without affecting the output.
+		reportCompressedSize: false,
 		rollupOptions: {
 			output: {
 				manualChunks(id) {
 					if (id.includes('node_modules/three/')) return 'three';
 					if (id.includes('node_modules/ethers/')) return 'ethers';
 				},
+				// footer-bot.js needs a stable, unhashed filename so footer.js can
+				// load it by a predictable URL without knowing the build hash.
+				entryFileNames: (chunk) =>
+					chunk.name === 'footer-bot'
+						? 'footer-bot.js'
+						: 'assets/[name]-[hash].js',
 			},
 			input: {
+				'footer-bot': resolve(__dirname, 'src/footer-bot.js'),
 				app: resolve(__dirname, 'app.html'),
 				'app-demo': resolve(__dirname, 'app-demo.html'),
 				home: resolve(__dirname, 'home.html'),
@@ -221,6 +231,8 @@ const appConfig = {
 					let filePath = fileMap[path];
 					if (!filePath && /^\/marketplace\/agents\/[^/]+\/?$/.test(path))
 						filePath = resolve(root, 'marketplace.html');
+					else if (!filePath && /^\/marketplace\/avatars\/[^/]+\/?$/.test(path))
+						filePath = resolve(root, 'marketplace.html');
 					// /agents/:id  → rich detail page (UUID expected, validated client-side)
 					else if (!filePath && /^\/agents\/[^/]+\/?$/.test(path))
 						filePath = resolve(root, 'agent-detail.html');
@@ -243,7 +255,13 @@ const appConfig = {
 					else if (!filePath && /^\/pay\/calls\/[1-9A-HJ-NP-Za-km-z]+\/?$/.test(path))
 						filePath = resolve(root, 'public/pay/calls/index.html');
 					// Serve the rider webpack app as static files.
-					if (path === '/rider' || path === '/rider/') {
+					// /footer-bot.js — serve the Vite-processed src/footer-bot.js at a
+				// stable URL in dev so footer.js can load it without knowing the hash.
+				if (path === '/footer-bot.js') {
+					req.url = '/src/footer-bot.js';
+					return next();
+				}
+				if (path === '/rider' || path === '/rider/') {
 						const html = readFileSync(resolve(root, 'rider/index.html'), 'utf8');
 						res.setHeader('Content-Type', 'text/html; charset=utf-8');
 						return res.end(html);
@@ -274,6 +292,17 @@ const appConfig = {
 						next();
 					}
 				});
+			},
+		},
+		{
+			// Stamp every Vite-processed HTML page so footer.js can detect that
+			// Three.js is already bundled and skip loading the model-viewer CDN script.
+			name: 'three-bundle-meta',
+			transformIndexHtml: {
+				order: 'pre',
+				handler() {
+					return [{ tag: 'meta', attrs: { name: 'has-three-bundle', content: 'true' }, injectTo: 'head' }];
+				},
 			},
 		},
 		{

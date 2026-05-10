@@ -157,6 +157,7 @@ function handleX402(req, res) {
 		200,
 		{
 			...body,
+			schemes: ['pump-agent-payments', 'x402', 'x402-v2'],
 			pump_agent_payments: {
 				prep: '/api/pump/accept-payment-prep',
 				confirm: '/api/pump/accept-payment-confirm',

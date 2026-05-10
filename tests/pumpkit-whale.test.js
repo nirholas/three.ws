@@ -64,6 +64,8 @@ describe('watchWhaleTrades', () => {
 	beforeEach(() => {
 		state.logCallback = null;
 		state.fakeEvents = [];
+		state.conn.onLogs.mockClear();
+		state.conn.removeOnLogsListener.mockClear();
 	});
 
 	function fireLog(signature = 'sig1') {

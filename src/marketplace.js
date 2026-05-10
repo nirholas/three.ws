@@ -94,6 +94,8 @@ const els = {
 function readRoute() {
 	const m = location.pathname.match(/^\/marketplace\/agents\/([^/]+)/);
 	if (m) return { view: 'detail', id: m[1] };
+	const av = location.pathname.match(/^\/marketplace\/avatars\/([^/]+)/);
+	if (av) return { view: 'avatar-detail', id: av[1] };
 	const params = new URLSearchParams(location.search);
 	const tab = params.get('tab');
 	const tag = (params.get('tag') || '').trim().toLowerCase().slice(0, 40) || null;
@@ -828,8 +830,7 @@ function renderGrid() {
 				return;
 			}
 			const id = card.dataset.avatarId;
-			const avatar = state.publicAvatars.find((a) => a.avatarId === id);
-			if (avatar) openAvatarModal(avatar);
+			if (id) navTo(`/marketplace/avatars/${encodeURIComponent(id)}`);
 		});
 	});
 	els.grid.querySelectorAll('[data-onchain-href]').forEach((card) => {
@@ -1578,6 +1579,171 @@ async function loadDetail(id) {
 	}
 }
 
+// ── Avatar deep-link detail ───────────────────────────────────────────────
+
+/** Normalise the /api/avatars/:id response shape to the explore-API shape. */
+function _normaliseAvatar(a) {
+	return {
+		avatarId:    a.id    || a.avatarId    || '',
+		slug:        a.slug  || null,
+		name:        a.name  || 'Untitled avatar',
+		description: a.description || '',
+		glbUrl:      a.model_url   || a.url     || a.glbUrl   || a.glb_url   || '',
+		image:       a.thumbnail_url || a.image || null,
+		tags:        Array.isArray(a.tags) ? a.tags : [],
+		author:      a.author || null,
+		createdAt:   a.created_at  || a.createdAt || null,
+		viewCount:   Number(a.view_count || a.viewCount || 0),
+		featured:    a.featured || false,
+		viewerUrl:   a.viewerUrl || null,
+	};
+}
+
+let _avatarDetailId = null;
+let _avatarDetailMv = null;
+
+async function loadAvatarDetail(id) {
+	if (_avatarDetailId === id) return;  // already loaded for this ID
+	_avatarDetailId = id;
+
+	// Reset stage.
+	const stage = $('avatar-detail-stage');
+	const bar   = $('avatar-detail-load-bar');
+	const wrap  = $('avatar-detail-load-wrap');
+	if (stage) {
+		if (_avatarDetailMv) { try { _avatarDetailMv.src = ''; } catch {} }
+		// Remove previous model-viewer but keep the load-wrap.
+		stage.querySelectorAll('model-viewer').forEach((el) => el.remove());
+		stage.classList.remove('mv-ready');
+		if (bar)  bar.style.width = '0%';
+		if (wrap) wrap.style.opacity = '1';
+	}
+
+	$('avatar-detail-name').textContent  = 'Loading…';
+	$('avatar-detail-desc').textContent  = '';
+	$('avatar-detail-author').innerHTML  = '';
+	$('avatar-detail-pills').innerHTML   = '';
+	const similarWrap = $('avatar-detail-similar-wrap');
+	if (similarWrap) similarWrap.hidden = true;
+
+	// Try the loaded list first (instant if user browsed there), then fetch.
+	let avatar = state.publicAvatars.find((a) => a.avatarId === id || a.slug === id);
+	if (!avatar) {
+		try {
+			const r = await fetch(`${API}/avatars/${encodeURIComponent(id)}`);
+			if (r.ok) {
+				const j = await r.json();
+				avatar = _normaliseAvatar(j?.avatar || j?.data?.avatar || j);
+			}
+		} catch (err) {
+			console.error('[marketplace] avatar detail fetch', err);
+		}
+	}
+
+	if (!avatar?.glbUrl) {
+		$('avatar-detail-name').textContent = 'Avatar not found';
+		return;
+	}
+
+	// Populate meta.
+	$('avatar-detail-name').textContent = avatar.name || 'Untitled avatar';
+	$('avatar-detail-desc').textContent = avatar.description || 'A 3D avatar published to the community.';
+
+	const authorEl = $('avatar-detail-author');
+	if (avatar.author?.handle) {
+		authorEl.innerHTML = avatar.author.profileUrl
+			? `by <a href="${escapeHtml(avatar.author.profileUrl)}" rel="author">${escapeHtml(avatar.author.displayName || avatar.author.handle)}</a>`
+			: `by ${escapeHtml(avatar.author.displayName || avatar.author.handle)}`;
+	}
+
+	const pillsEl = $('avatar-detail-pills');
+	const pills = [];
+	if (Number(avatar.viewCount) > 0) pills.push(`<span class="stat-pill">⊙ ${fmtNumber(avatar.viewCount)} views</span>`);
+	if (avatar.createdAt) pills.push(`<span class="stat-pill">${escapeHtml(liveTime(avatar.createdAt))}</span>`);
+	pills.push('<span class="stat-pill">3D · GLB</span>');
+	(avatar.tags || []).forEach((t) => {
+		pills.push(`<button type="button" class="stat-pill tag-pill" data-tag="${escapeHtml(t)}">#${escapeHtml(t)}</button>`);
+	});
+	pillsEl.innerHTML = pills.join('');
+	pillsEl.querySelectorAll('[data-tag]').forEach((btn) => {
+		btn.addEventListener('click', () => navTo(`/marketplace?tag=${encodeURIComponent(btn.dataset.tag)}`));
+	});
+
+	// CTAs.
+	const useBtn  = $('avatar-detail-use');
+	const viewBtn = $('avatar-detail-view');
+	const dlBtn   = $('avatar-detail-download');
+	if (useBtn) useBtn.onclick = () => {
+		const p = new URLSearchParams();
+		if (avatar.glbUrl) p.set('avatar_glb', avatar.glbUrl);
+		if (avatar.name)   p.set('avatar_name', avatar.name);
+		location.href = `/create?${p}`;
+	};
+	if (viewBtn) viewBtn.href = avatar.viewerUrl || (avatar.glbUrl ? `/#model=${encodeURIComponent(avatar.glbUrl)}` : '#');
+	if (dlBtn)   { dlBtn.href = avatar.glbUrl || '#'; dlBtn.setAttribute('download', (avatar.slug || avatar.avatarId || 'avatar') + '.glb'); }
+
+	// Update page title + meta for social sharing.
+	document.title = `${avatar.name} — Community Avatar · three.ws`;
+	const descMeta = document.querySelector('meta[name="description"]');
+	if (descMeta) descMeta.content = avatar.description || `A 3D avatar on three.ws — use it as the face of an AI agent.`;
+
+	// Inject model-viewer into stage.
+	if (stage) {
+		const mv = document.createElement('model-viewer');
+		mv.setAttribute('src', avatar.glbUrl);
+		mv.setAttribute('alt', avatar.name || 'Avatar');
+		mv.setAttribute('auto-rotate', '');
+		mv.setAttribute('rotation-per-second', '12deg');
+		mv.setAttribute('camera-controls', '');
+		mv.setAttribute('interaction-prompt', 'when-focused');
+		mv.setAttribute('exposure', '1.05');
+		mv.setAttribute('shadow-intensity', '0.7');
+		mv.setAttribute('tone-mapping', 'aces');
+		if (avatar.image) mv.setAttribute('poster', avatar.image);
+		mv.style.cssText = 'width:100%;height:100%;position:absolute;inset:0;';
+		if (bar) {
+			mv.addEventListener('progress', (e) => {
+				bar.style.width = Math.round((e.detail?.totalProgress || 0) * 100) + '%';
+			});
+		}
+		mv.addEventListener('load', () => {
+			stage.classList.add('mv-ready');
+		}, { once: true });
+		stage.appendChild(mv);
+		_avatarDetailMv = mv;
+	}
+
+	// Similar avatars — show others from the loaded list (same tags).
+	const similar = state.publicAvatars
+		.filter((a) => a.avatarId !== id && (a.tags || []).some((t) => (avatar.tags || []).includes(t)))
+		.slice(0, 8);
+	if (similar.length && similarWrap) {
+		similarWrap.hidden = false;
+		const grid = $('avatar-detail-similar-grid');
+		if (grid) {
+			grid.innerHTML = similar.map((a) => renderAvatarCard(a)).join('');
+			grid.querySelectorAll('[data-avatar-id]').forEach((card) => {
+				card.addEventListener('click', (e) => {
+					if (e.target.closest('a')) return;
+					navTo(`/marketplace/avatars/${encodeURIComponent(card.dataset.avatarId)}`);
+				});
+			});
+			attachModelViewerBehavior();
+			observeCardModelViewers();
+		}
+	}
+
+	// Fire-and-forget view tracking.
+	if (avatar.avatarId && !String(avatar.avatarId).startsWith('avatar_demo_')) {
+		fetch(`${API}/avatars/view`, {
+			method: 'POST',
+			headers: { 'content-type': 'application/json' },
+			body: JSON.stringify({ avatar_id: avatar.avatarId }),
+			keepalive: true,
+		}).catch(() => {});
+	}
+}
+
 function renderDetailError(msg) {
 	$('d-name').textContent = msg;
 	$('d-author').textContent = '';
@@ -1822,6 +1988,9 @@ function bindEvents() {
 		}
 	});
 	els.back.addEventListener('click', () => navTo('/marketplace'));
+	// Avatar detail back button.
+	const avatarDetailBack = $('avatar-detail-back');
+	if (avatarDetailBack) avatarDetailBack.addEventListener('click', () => { _avatarDetailId = null; navTo('/marketplace'); });
 	$('d-fork').addEventListener('click', fork);
 	$('d-bookmark').addEventListener('click', toggleBookmark);
 	bindTabs();
@@ -2469,13 +2638,25 @@ function render() {
 
 	const setHidden = (el, hidden) => { if (el) el.hidden = hidden; };
 
-	if (r.view === 'detail') {
+	const avatarDetailSec = $('market-avatar-detail');
+	if (r.view === 'avatar-detail') {
+		loadAvatarDetail(r.id);
+		setHidden(discovery, true);
+		setHidden(detail, true);
+		setHidden(tools, true);
+		setHidden(skillsSec, true);
+		setHidden(mineSec, true);
+		setHidden(purchasesSec, true);
+		setHidden(avatarDetailSec, false);
+		avatarDetailSec?.scrollIntoView({ behavior: 'instant', block: 'start' });
+	} else if (r.view === 'detail') {
 		loadDetail(r.id);
 		setHidden(discovery, true);
 		setHidden(tools, true);
 		setHidden(skillsSec, true);
 		setHidden(mineSec, true);
 		setHidden(purchasesSec, true);
+		setHidden(avatarDetailSec, true);
 		setHidden(detail, false);
 	} else if (r.view === 'tools') {
 		setHidden(detail, true);
@@ -2511,11 +2692,13 @@ function render() {
 		loadPurchases();
 	} else {
 		setHidden(detail, true);
+		setHidden(avatarDetailSec, true);
 		setHidden(tools, true);
 		setHidden(skillsSec, true);
 		setHidden(mineSec, true);
 		setHidden(purchasesSec, true);
 		setHidden(discovery, false);
+		document.title = 'Agent Marketplace · three.ws';
 	}
 }
 

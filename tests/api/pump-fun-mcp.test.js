@@ -88,10 +88,10 @@ describe('initialize', () => {
 });
 
 describe('tools/list', () => {
-	it('returns all 10 declared tools with schemas', async () => {
+	it('returns all 22 declared tools with schemas', async () => {
 		const { json } = await call({ jsonrpc: '2.0', id: 1, method: 'tools/list' });
 		expect(Array.isArray(json.result.tools)).toBe(true);
-		expect(json.result.tools).toHaveLength(10);
+		expect(json.result.tools).toHaveLength(22);
 		const names = json.result.tools.map((t) => t.name).sort();
 		expect(names).toEqual(
 			[
@@ -104,7 +104,19 @@ describe('tools/list', () => {
 				'getTokenHolders',
 				'getTokenTrades',
 				'getTrendingTokens',
+				'kol_leaderboard',
+				'kol_radar',
+				'pumpfun_first_claims',
+				'pumpfun_list_claims',
+				'pumpfun_quote_swap',
+				'pumpfun_vanity_mint',
+				'pumpfun_watch_claims',
+				'pumpfun_watch_whales',
 				'searchTokens',
+				'sns_resolve',
+				'sns_reverseLookup',
+				'social_cashtag_sentiment',
+				'social_x_post_impact',
 			].sort(),
 		);
 		for (const t of json.result.tools) expect(t.inputSchema.type).toBe('object');

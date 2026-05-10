@@ -103,11 +103,13 @@
 	filter: grayscale(1) drop-shadow(0 0 18px rgba(255, 255, 255, 0.30));
 }
 
-.h-footer-avatar model-viewer {
+.h-footer-avatar model-viewer,
+.h-footer-avatar canvas {
 	width: 100%;
 	height: 100%;
 	background: transparent;
 	--poster-color: transparent;
+	display: block;
 }
 
 .h-footer-cta {

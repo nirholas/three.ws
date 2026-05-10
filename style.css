@@ -6278,6 +6278,14 @@ textarea.erc8004-code {
 	text-overflow: ellipsis;
 	white-space: nowrap;
 }
+.explore-card-name-link {
+	color: inherit;
+	text-decoration: none;
+}
+.explore-card-name-link:hover {
+	text-decoration: underline;
+	text-underline-offset: 2px;
+}
 .explore-card-id {
 	font-size: 11px;
 	color: rgba(255, 255, 255, 0.35);

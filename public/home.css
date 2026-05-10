@@ -298,6 +298,8 @@
 	position: relative;
 	min-height: 360px;
 	background: rgba(255, 255, 255, 0.02);
+	will-change: transform;
+	transform: translateZ(0);
 }
 
 .h-bento-visual model-viewer {
@@ -2625,5 +2627,42 @@
 
 	.h-scroll-hint {
 		display: none;
+	}
+}
+
+@media (prefers-reduced-motion: reduce) {
+	*,
+	*::before,
+	*::after {
+		animation-duration: 0.01ms !important;
+		animation-iteration-count: 1 !important;
+		transition-duration: 0.01ms !important;
+		scroll-behavior: auto !important;
+	}
+
+	.h-reveal {
+		opacity: 1;
+		transform: none;
+	}
+
+	.h-star-canvas {
+		display: none;
+	}
+
+	.h-layer {
+		transform: none !important;
+	}
+
+	.h-avatar-wrap,
+	.h-hero-mesh,
+	.h-hero-glow-a,
+	.h-hero-glow-b,
+	.h-hero-haze,
+	.h-floor-ribbon {
+		animation: none !important;
+	}
+
+	.h-status-dot::before {
+		animation: none !important;
 	}
 }

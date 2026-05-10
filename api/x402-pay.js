@@ -31,7 +31,7 @@ import {
 import bs58 from 'bs58';
 
 import { Redis } from '@upstash/redis';
-import { cors, json, readJson, wrap } from './_lib/http.js';
+import { cors, json, readJson, wrap, error } from './_lib/http.js';
 import { limits, clientIp } from './_lib/rate-limit.js';
 import {
 	paymentRequirements,
@@ -41,6 +41,9 @@ import {
 } from './_lib/x402-spec.js';
 import { dispatch } from './_mcp/dispatch.js';
 import { env } from './_lib/env.js';
+import { sql } from './_lib/db.js';
+import { getSessionUser, authenticateBearer, extractBearer } from './_lib/auth.js';
+import { recoverSolanaAgentKeypair } from './_lib/agent-wallet.js';
 
 // ---- Persistent feed of recent paid calls -------------------------------
 // Backed by Upstash Redis when available; falls back to an in-memory ring
@@ -117,6 +120,73 @@ async function readCall(tx) {
 		} catch {}
 	}
 	return memCalls.get(tx) || null;
+}
+
+// ---- User auth + agent wallet loading ----------------------------------
+
+async function requireAuth(req) {
+	try {
+		const session = await getSessionUser(req);
+		if (session) return { userId: session.id };
+		const bearer = await authenticateBearer(extractBearer(req));
+		if (bearer) return { userId: bearer.userId };
+	} catch {}
+	return null;
+}
+
+async function loadAgentKeypairForUser(agentId, userId) {
+	const [row] = await sql`
+		SELECT id, meta FROM agent_identities
+		WHERE id = ${agentId} AND user_id = ${userId} AND deleted_at IS NULL
+	`;
+	if (!row) return null;
+	const enc = row.meta?.encrypted_solana_secret;
+	if (!enc) return null;
+	return recoverSolanaAgentKeypair(enc, {
+		agentId,
+		userId,
+		reason: 'x402_pay_tool_call',
+	});
+}
+
+async function getAgentsForUser(userId) {
+	const rows = await sql`
+		SELECT id, name, description, avatar_id, meta
+		FROM agent_identities
+		WHERE user_id = ${userId} AND deleted_at IS NULL
+		ORDER BY created_at ASC
+	`;
+	const conn = new Connection(SOLANA_RPC, 'confirmed');
+	return Promise.all(rows.map(async (row) => {
+		const address = row.meta?.solana_address || null;
+		const source = row.meta?.solana_wallet_source || null;
+		let usdc = null;
+		let sol = null;
+		if (address) {
+			try {
+				const lamports = await conn.getBalance(new PublicKey(address));
+				sol = lamports / 1e9;
+			} catch {}
+			try {
+				const ata = getAssociatedTokenAddressSync(
+					new PublicKey(USDC_MAINNET_MINT),
+					new PublicKey(address), false, TOKEN_PROGRAM_ID, ASSOCIATED_TOKEN_PROGRAM_ID,
+				);
+				const acct = await conn.getTokenAccountBalance(ata);
+				usdc = Number(acct.value.uiAmount || 0);
+			} catch {}
+		}
+		return {
+			id: row.id,
+			name: row.name,
+			description: row.description,
+			avatar_id: row.avatar_id,
+			solana_address: address,
+			solana_wallet_source: source,
+			usdc,
+			sol,
+		};
+	}));
 }
 
 function summarizeArgs(args) {
@@ -255,8 +325,8 @@ function sseSend(res, event, data) {
 	res.write(`data: ${JSON.stringify(data)}\n\n`);
 }
 
-async function runFlow({ tool, args, emit }) {
-	const buyer = loadAgentKeypair();
+async function runFlow({ tool, args, emit, buyer: buyerOverride }) {
+	const buyer = buyerOverride ?? loadAgentKeypair();
 	const conn = new Connection(SOLANA_RPC, 'confirmed');
 
 	const requirements = paymentRequirements();
@@ -378,6 +448,12 @@ export default wrap(async (req, res) => {
 			if (!record) return json(res, 404, { error: 'call_not_found' });
 			return json(res, 200, record);
 		}
+		if (u.searchParams.get('agents') === '1') {
+			const auth = await requireAuth(req);
+			if (!auth) return json(res, 401, { error: 'authentication_required' });
+			const agents = await getAgentsForUser(auth.userId);
+			return json(res, 200, { agents });
+		}
 		return json(res, 404, { error: 'not_found' });
 	}
 	if (req.method !== 'POST') return json(res, 405, { error: 'method_not_allowed' });
@@ -405,6 +481,18 @@ export default wrap(async (req, res) => {
 		return json(res, 400, { error: 'invalid_tool', allowed: [...ALLOWED_TOOLS] });
 	}
 
+	// Resolve payer: agent wallet (agentId + authed) or shared showcase wallet.
+	let buyer;
+	if (input.agentId) {
+		const auth = await requireAuth(req);
+		if (!auth) return json(res, 401, { error: 'authentication_required' });
+		const kp = await loadAgentKeypairForUser(String(input.agentId), auth.userId);
+		if (!kp) return json(res, 403, { error: 'agent_not_found_or_no_solana_wallet' });
+		buyer = kp;
+	} else {
+		buyer = loadAgentKeypair();
+	}
+
 	const wantsStream =
 		(req.headers.accept || '').includes('text/event-stream') ||
 		input.stream === true;
@@ -413,7 +501,7 @@ export default wrap(async (req, res) => {
 		sseInit(res);
 		const emit = (ev, data) => sseSend(res, ev, data);
 		try {
-			await runFlow({ tool, args, emit });
+			await runFlow({ tool, args, emit, buyer });
 		} catch (err) {
 			emit('error', {
 				ok: false,
@@ -434,7 +522,7 @@ export default wrap(async (req, res) => {
 		else if (ev === 'error') errEnv = data;
 	};
 	try {
-		await runFlow({ tool, args, emit });
+		await runFlow({ tool, args, emit, buyer });
 	} catch (err) {
 		errEnv = { ok: false, error: err.message || 'flow_failed', mcpError: err.mcpError || null };
 	}

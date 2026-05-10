@@ -110,6 +110,9 @@ describe('GET /api/agents — list', () => {
 
 	it('returns caller agents when authenticated via session', async () => {
 		authState.session = { id: 'user-1' };
+		// handlers makes sql`` (empty fragment for onchainFilter) before the SELECT;
+		// the mock intercepts both calls so queue needs one entry per sql call.
+		sqlState.queue.push([]); // sql`` empty fragment
 		sqlState.queue.push([
 			{
 				id: 'agent-1',

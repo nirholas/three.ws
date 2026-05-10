@@ -23,6 +23,12 @@
 			rel="stylesheet"
 		/>
 		<style>
+			/* Author display rules on modal overlays override the UA stylesheet's
+			   [hidden] { display: none } default, so `<div … hidden>` was still
+			   rendering as a grid/flex container — taking up body-grid cells and
+			   blocking page scroll. Force display:none whenever hidden is set. */
+			[hidden] { display: none !important; }
+
 			.market-wip-banner {
 				display: flex;
 				align-items: center;
@@ -1420,6 +1426,48 @@
 	</div>
 
 	    <script src="/src/marketplace.js" type="module"></script>
+
+		<!-- Avatar deep-link detail page — mirrors market-detail for agents -->
+		<section class="market-avatar-detail" id="market-avatar-detail" hidden aria-label="Avatar detail">
+			<div class="market-avatar-detail-inner">
+				<button class="market-back" id="avatar-detail-back" aria-label="Back to marketplace">←</button>
+				<div class="market-avatar-detail-layout">
+					<!-- Left: interactive 3D stage -->
+					<div class="market-avatar-detail-stage" id="avatar-detail-stage">
+						<div class="avatar-detail-load-wrap" id="avatar-detail-load-wrap">
+							<div class="avatar-detail-load-bar-outer">
+								<div class="avatar-detail-load-bar" id="avatar-detail-load-bar"></div>
+							</div>
+							<span class="avatar-detail-load-label">Loading 3D…</span>
+						</div>
+					</div>
+					<!-- Right: meta + actions -->
+					<aside class="market-avatar-detail-meta">
+						<div class="market-detail-eyebrow">Community Avatar</div>
+						<h1 class="market-avatar-detail-name" id="avatar-detail-name">—</h1>
+						<p class="market-avatar-detail-author" id="avatar-detail-author"></p>
+						<p class="market-avatar-detail-desc" id="avatar-detail-desc"></p>
+						<div class="market-avatar-detail-pills" id="avatar-detail-pills"></div>
+						<div class="market-avatar-detail-actions">
+							<button class="btn-primary market-avatar-detail-cta" id="avatar-detail-use">
+								Start agent with this avatar →
+							</button>
+							<a class="btn-secondary" id="avatar-detail-view" href="#" target="_blank" rel="noopener">
+								Open in 3D viewer ↗
+							</a>
+							<a class="btn-secondary" id="avatar-detail-download" href="#">
+								Download GLB
+							</a>
+						</div>
+					</aside>
+				</div>
+				<!-- Similar avatars grid -->
+				<div class="market-avatar-detail-similar" id="avatar-detail-similar-wrap" hidden>
+					<h2 class="market-section-heading">Similar avatars</h2>
+					<div class="market-grid" id="avatar-detail-similar-grid"></div>
+				</div>
+			</div>
+		</section>
 
 		<!-- Avatar Detail Modal -->
 		<div class="avatar-modal-overlay" id="avatar-modal-overlay" hidden aria-modal="true" role="dialog" aria-labelledby="avatar-modal-title">

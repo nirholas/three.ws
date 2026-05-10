@@ -216,6 +216,12 @@ void main(){
 		const canvas = document.getElementById('home-fluid-canvas');
 		if (!canvas) return;
 
+		/* skip entirely for users who prefer no motion */
+		if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+			canvas.style.display = 'none';
+			return;
+		}
+
 		/* particle count: fewer on low-end / mobile */
 		const mobile  = innerWidth < 768;
 		const lowTier = navigator.hardwareConcurrency <= 4;

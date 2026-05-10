@@ -288,7 +288,7 @@ function bindWalletActions() {
 			await connection.confirmTransaction(signature);
 
 			alert(`Withdrawal of ${amount} SOL to ${recipientAddress} successful!`);
-			console.log('Transaction signature:', signature);
+
 			modal.classList.add('hidden');
 			withdrawAmountInput.value = '';
 			recipientAddressInput.value = '';
@@ -301,7 +301,7 @@ function bindWalletActions() {
 
 	swapBtn.addEventListener('click', () => {
 			alert("Swap functionality coming soon!");
-			console.log('Swap button clicked');
+
 	});
 }
 
@@ -471,7 +471,7 @@ connectWalletBtn.addEventListener('click', async () => {
 		try {
 			const resp = await provider.connect();
 			wallet = resp.publicKey;
-			console.log('Wallet connected:', wallet.toString());
+
 			connectWalletBtn.textContent = `${wallet.toString().slice(0, 4)}...${wallet.toString().slice(-4)}`;
 		} catch (err) {
 			console.error('Failed to connect to wallet:', err);

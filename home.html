@@ -720,6 +720,15 @@
 		</main>
 
 		<script>
+			// Devices with < 2 GB RAM get no WebGL viewers — avoids GPU OOM and
+			// context-limit issues. navigator.deviceMemory is undefined on Firefox/Safari
+			// so we default to "capable" when the API is absent.
+			const LOW_MEMORY = typeof navigator.deviceMemory === 'number' && navigator.deviceMemory < 2;
+			const REDUCED_MOTION = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+			// Hero viewer is always created (above fold), but we skip all below-fold
+			// viewers on constrained devices.
+			const SKIP_OFFSCREEN_GL = LOW_MEMORY || REDUCED_MOTION;
+
 			// Scroll reveal — use viewport (root: null) so IntersectionObserver
 			// avoids the perspective transform on .home-parallax breaking intersection math.
 			(function () {
@@ -856,7 +865,6 @@
 										node.scale.setScalar(2.5);
 									}
 								}
-								console.log('[cz node]', node.name, node.type);
 							});
 							viewer._modelFocusY = 1.1;
 							viewer.setOrbit(curTheta, curPhi, curR);
@@ -943,6 +951,7 @@
 					setTimeout(() => whenReady(cb), 60);
 				}
 
+				function initAct2() {
 				whenReady(() => {
 					const viewer = new window.Act2Viewer(canvas);
 
@@ -1003,6 +1012,19 @@
 						viewer.zoom(wider ? FAR : NEAR);
 					});
 				});
+				}
+
+				if (!SKIP_OFFSCREEN_GL) {
+					let act2Inited = false;
+					const act2Obs = new IntersectionObserver((entries) => {
+						if (entries[0].isIntersecting && !act2Inited) {
+							act2Inited = true;
+							act2Obs.disconnect();
+							initAct2();
+						}
+					}, { threshold: 0.05 });
+					act2Obs.observe(canvas);
+				}
 			})();
 
 			// Bento Viewer card — same Act2Viewer + animation panel as Act 2
@@ -1017,7 +1039,8 @@
 					setTimeout(() => whenReady(cb), 60);
 				}
 
-				whenReady(() => {
+				function initViewer() {
+					whenReady(() => {
 					const viewer = new window.Act2Viewer(canvas, { fov: 20 });
 
 					function prettyLabel(def) {
@@ -1071,7 +1094,22 @@
 							);
 						});
 					}
-				});
+					});
+				}
+
+				// Defer viewer init until canvas scrolls into view — avoids creating
+				// WebGL context before the card is visible inside the parallax container.
+				if (!SKIP_OFFSCREEN_GL) {
+					let inited = false;
+					const io = new IntersectionObserver((entries) => {
+						if (entries[0].isIntersecting && !inited) {
+							inited = true;
+							io.disconnect();
+							initViewer();
+						}
+					}, { threshold: 0.05 });
+					io.observe(canvas);
+				}
 			})();
 
 			// Chain ribbon (Act 3)
@@ -1105,7 +1143,7 @@
 			// Custom cursor
 			(function () {
 				const cursor = document.getElementById('cursor');
-				if (!cursor || window.matchMedia('(hover: none)').matches) return;
+				if (!cursor || window.matchMedia('(hover: none)').matches || REDUCED_MOTION) return;
 				let cx = -100,
 					cy = -100,
 					tx = -100,
@@ -1149,17 +1187,33 @@
 					setTimeout(() => whenReady(cb), 60);
 				}
 
-				whenReady(() => {
-					configs.forEach(({ id, src, anim }) => {
-						const canvas = document.getElementById(id);
-						if (!canvas) return;
-						const viewer = new window.Act2Viewer(canvas, { fov: 22 });
-						viewer
-							.loadModel(src)
-							.then(() => viewer.playClip(anim).catch(() => {}))
-							.catch(() => {});
+				function initAct3() {
+					whenReady(() => {
+						configs.forEach(({ id, src, anim }) => {
+							const canvas = document.getElementById(id);
+							if (!canvas) return;
+							const viewer = new window.Act2Viewer(canvas, { fov: 22 });
+							viewer
+								.loadModel(src)
+								.then(() => viewer.playClip(anim).catch(() => {}))
+								.catch(() => {});
+						});
 					});
-				});
+				}
+
+				// Observe the first Act3 canvas; when it enters view, init all three.
+				const firstCanvas = document.getElementById('act3-avatar-a');
+				if (firstCanvas && !SKIP_OFFSCREEN_GL) {
+					let act3Inited = false;
+					const act3Obs = new IntersectionObserver((entries) => {
+						if (entries[0].isIntersecting && !act3Inited) {
+							act3Inited = true;
+							act3Obs.disconnect();
+							initAct3();
+						}
+					}, { threshold: 0.05 });
+					act3Obs.observe(firstCanvas);
+				}
 			})();
 
 			// Star field canvas

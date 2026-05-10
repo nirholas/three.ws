@@ -318,7 +318,7 @@ function renderOnchainCard(item) {
 		</a>
 		<div class="explore-card-body">
 			<div class="explore-card-head">
-				<a class="explore-card-name" href="${escapeAttr(detailUrl)}" style="text-decoration:none;color:inherit">${escapeHtml(item.name)}</a>
+				<h3 class="explore-card-name"><a class="explore-card-name-link" href="${escapeAttr(detailUrl)}">${escapeHtml(item.name)}</a></h3>
 				<span class="explore-card-id">#${escapeHtml(item.agentId)}</span>
 			</div>
 			<div class="explore-card-badges">${badges.join('')}</div>
@@ -371,7 +371,7 @@ function renderAvatarCard(item) {
 		</a>
 		<div class="explore-card-body">
 			<div class="explore-card-head">
-				<a class="explore-card-name" href="${escapeAttr(detailUrl)}" style="text-decoration:none;color:inherit">${escapeHtml(item.name)}</a>
+				<h3 class="explore-card-name"><a class="explore-card-name-link" href="${escapeAttr(detailUrl)}">${escapeHtml(item.name)}</a></h3>
 			</div>
 			<div class="explore-card-badges">${badges.join('')}</div>
 			${item.description ? `<p class="explore-card-desc">${escapeHtml(item.description)}</p>` : ''}
