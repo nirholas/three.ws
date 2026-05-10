@@ -18,6 +18,12 @@ const TARGET = process.env.TARGET || 'app';
 // so pages like /pumpfun see real SSE feeds and JSON responses in dev.
 // Override with DEV_API_PROXY=http://localhost:3001 to point at vercel-dev.
 const DEV_API_PROXY = process.env.DEV_API_PROXY || 'https://three.ws';
+// Local-only override for /api/x402-pay (the demo's paid-call backend).
+// Spin up the helper with `node scripts/dev-x402-pay-server.mjs` and the main
+// Vite dev server will route /api/x402-pay → here while other /api/* still
+// proxy to prod. Set X402_PAY_DEV_URL='' to disable.
+const X402_PAY_DEV_URL =
+	process.env.X402_PAY_DEV_URL ?? 'http://localhost:3032';
 
 const appConfig = {
 	server: {
@@ -26,6 +32,15 @@ const appConfig = {
 				target: 'http://localhost:5174',
 				changeOrigin: true,
 			},
+			...(X402_PAY_DEV_URL
+				? {
+					'/api/x402-pay': {
+						target: X402_PAY_DEV_URL,
+						changeOrigin: true,
+						secure: false,
+					},
+				}
+				: {}),
 			'/api': {
 				target: DEV_API_PROXY,
 				changeOrigin: true,

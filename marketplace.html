@@ -127,8 +127,6 @@
 		<script src="https://unpkg.com/@solana/wallet-adapter-wallets@latest/lib/index.iife.js"></script>
 		<script src="https://unpkg.com/@solana/wallet-adapter-react@latest/lib/index.iife.js"></script>
 		<script src="https://unpkg.com/@solana/wallet-adapter-react-ui@latest/lib/index.iife.js"></script>
-		<script src="https://unpkg.com/@solana/spl-token@0.3.7/lib/index.iife.js"></script>
-		<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode/1.5.3/qrcode.min.js"></script>
 
 	</head>
 	<body class="market-page">
@@ -392,16 +390,6 @@
 	</div>
 
 	    <script src="/src/marketplace.js" type="module"></script>
-
-    <div id="purchase-modal" class="modal" hidden>
-        <div class="modal-content">
-            <button class="modal-close" onclick="$('purchase-modal').hidden = true;">&times;</button>
-            <h3>Complete Your Purchase</h3>
-            <p>Scan the QR code with a Solana Pay-compatible wallet to purchase the skill.</p>
-            <canvas id="qr-canvas"></canvas>
-            <p id="purchase-details"></p>
-        </div>
-    </div>
 
 	<!-- Payment Modal -->
 	<div class="market-modal-overlay" id="payment-modal-overlay" hidden aria-modal="true" role="dialog" aria-labelledby="payment-modal-title">
