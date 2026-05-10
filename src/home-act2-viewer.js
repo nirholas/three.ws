@@ -25,7 +25,7 @@ import {
 	SRGBColorSpace,
 	PMREMGenerator,
 } from 'three';
-import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+import { getGLTFLoader } from './lib/gltf-loader.js';
 import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
 
 const CROSSFADE = 0.35;
@@ -62,7 +62,7 @@ export class Act2Viewer {
 		this._manifest = [];
 		this._manifestPromise = null;
 
-		this._loader = new GLTFLoader();
+		this._loaderPromise = getGLTFLoader(this.renderer);
 		this._clock = new Clock();
 		this._modelYaw = 0;
 		this._modelFocusY = 1.0;
@@ -174,7 +174,7 @@ export class Act2Viewer {
 			this.clips.clear();
 		}
 
-		const gltf = await this._loader.loadAsync(url);
+		const gltf = await (await this._loaderPromise).loadAsync(url);
 		this.model = gltf.scene;
 		this.scene.add(this.model);
 

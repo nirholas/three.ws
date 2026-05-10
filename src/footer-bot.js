@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
+import { getGLTFLoader } from './lib/gltf-loader.js';
 
 const canvas = document.getElementById('footer-bot-canvas');
 if (!canvas) throw new Error('[footer-bot] canvas not found');
@@ -36,14 +36,16 @@ let mixer = null;
 const clock = new THREE.Clock();
 let robot = null;
 
-new GLTFLoader().load('/animations/robotexpressive.glb', (gltf) => {
-	robot = gltf.scene;
-	scene.add(robot);
-	if (gltf.animations.length > 0) {
-		mixer = new THREE.AnimationMixer(robot);
-		mixer.clipAction(gltf.animations[0]).play();
-	}
-});
+getGLTFLoader(renderer).then((loader) =>
+	loader.load('/animations/robotexpressive.glb', (gltf) => {
+		robot = gltf.scene;
+		scene.add(robot);
+		if (gltf.animations.length > 0) {
+			mixer = new THREE.AnimationMixer(robot);
+			mixer.clipAction(gltf.animations[0]).play();
+		}
+	})
+);
 
 // 20deg/sec auto-rotate, matching model-viewer rotation-per-second="20deg"
 const rotSpeed = THREE.MathUtils.degToRad(20);
