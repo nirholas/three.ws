@@ -35,7 +35,7 @@ import { env } from './env.js';
 
 export const X402_VERSION = 2;
 
-// CAIP-2 network IDs as advertised by Coinbase x402 facilitators (PayAI, CDP).
+// CAIP-2 network IDs as used in the x402 wire format.
 // Solana mainnet's CAIP-2 namespace uses the truncated genesis-block hash.
 export const NETWORK_BASE_MAINNET = 'eip155:8453';
 export const NETWORK_BASE_SEPOLIA = 'eip155:84532';
@@ -59,6 +59,9 @@ export class X402Error extends Error {
 export function paymentRequirements() {
 	const common = {
 		scheme: 'exact',
+		// x402Version inside the requirement is v1; v2 moves it to the top-level
+		// envelope, but facilitators (including sperax) still expect it here.
+		x402Version: 1,
 		amount: env.X402_MAX_AMOUNT_REQUIRED,
 		maxTimeoutSeconds: 60,
 	};
@@ -97,7 +100,16 @@ function facilitatorFor(network) {
 		network === 'solana'
 	)
 		return { url: env.X402_FACILITATOR_URL_SOLANA, token: env.X402_FACILITATOR_TOKEN_SOLANA };
-	if (network === NETWORK_BASE_MAINNET || network === NETWORK_BASE_SEPOLIA || network === 'base')
+	// All EVM chains (Base, Arbitrum, Ethereum mainnet) → sperax facilitator.
+	if (
+		network === NETWORK_BASE_MAINNET ||
+		network === NETWORK_BASE_SEPOLIA ||
+		network === 'base' ||
+		network === 'eip155:42161' ||
+		network === 'eip155:1' ||
+		network === 'arbitrum' ||
+		network === 'ethereum'
+	)
 		return { url: env.X402_FACILITATOR_URL_BASE, token: env.X402_FACILITATOR_TOKEN_BASE };
 	throw new X402Error('unsupported_network', `unsupported network: ${network}`, 400);
 }

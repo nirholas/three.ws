@@ -19,6 +19,31 @@ function initNav(root) {
 	initDropdowns(root);
 	initBurger(root);
 	initAuthHint(root);
+	initActivePage(root);
+}
+
+function initActivePage(root) {
+	const path = location.pathname.replace(/\/$/, '') || '/';
+	root.querySelectorAll('.nav-root > li > a, .nav-root > li > button').forEach((el) => {
+		const href = el.getAttribute('href')?.replace(/\/$/, '');
+		if (!href) return;
+		if (href === path || (href !== '/' && path.startsWith(href))) {
+			el.setAttribute('aria-current', 'page');
+			el.classList.add('is-active');
+		}
+	});
+	root.querySelectorAll('.nav-has-menu').forEach((li) => {
+		const hasActive = li.querySelector('.nav-menu a[href]');
+		if (!hasActive) return;
+		const items = li.querySelectorAll('.nav-menu a[href]');
+		items.forEach((a) => {
+			const href = a.getAttribute('href')?.replace(/\/$/, '').split('#')[0];
+			if (!href) return;
+			if (href === path || (href !== '/' && path.startsWith(href))) {
+				li.querySelector('.nav-trigger')?.classList.add('is-active');
+			}
+		});
+	});
 }
 
 function initDropdowns(root) {
