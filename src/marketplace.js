@@ -312,13 +312,18 @@ function updateHeroMeta() {
 	$('market-hero-title').textContent = a.name || 'Untitled avatar';
 	$('market-hero-desc').textContent =
 		a.description ||
-		(a.author?.handle
-			? `A 3D avatar by ${a.author.handle}.`
-			: 'A 3D avatar published to the community.');
+		'A 3D avatar published to the community. Use it as the visual identity for a new agent.';
 	const view = $('market-hero-view');
 	if (view) {
-		view.onclick = () => {
-			location.href = a.avatarId ? `/avatars/${a.avatarId}` : a.viewerUrl || '/';
+		view.onclick = () => openAvatarModal(a);
+	}
+	const fork = $('market-hero-fork');
+	if (fork) {
+		fork.hidden = false;
+		fork.textContent = 'Start an agent →';
+		fork.onclick = () => {
+			activeAvatar = a;
+			startAgentFromAvatar();
 		};
 	}
 	renderHeroStats();

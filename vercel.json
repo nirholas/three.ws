@@ -1157,6 +1157,14 @@
 			"schedule": "0 4 * * *"
 		},
 		{
+			"path": "/api/cron/expire-pending-purchases",
+			"schedule": "*/5 * * * *"
+		},
+		{
+			"path": "/api/cron/cleanup-csrf-tokens",
+			"schedule": "17 * * * *"
+		},
+		{
 			"path": "/api/cron/erc8004-crawl",
 			"schedule": "*/15 * * * *"
 		},
