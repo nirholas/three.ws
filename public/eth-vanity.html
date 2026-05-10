@@ -2,13 +2,14 @@
 <html lang="en">
 <head>
 	<meta charset="utf-8">
-	<title>Ethereum CREATE2 vanity grinder · three.ws</title>
+	<title>Ethereum vanity grinder · three.ws</title>
 	<meta name="viewport" content="width=device-width, initial-scale=1">
-	<meta name="description" content="Grind a vanity Ethereum smart-contract address by searching CREATE2 salts. Runs entirely in your browser — no keys involved, just a salt you feed to your factory.">
+	<meta name="description" content="Grind a vanity Ethereum address — wallet EOA or smart contract (CREATE2). Runs entirely in your browser across all CPU cores.">
 	<link rel="icon" href="/favicon.ico">
 	<link rel="stylesheet" href="/nav.css">
 	<link rel="preconnect" href="https://fonts.googleapis.com">
 	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+	<link rel="preconnect" href="https://esm.sh">
 	<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Space+Grotesk:wght@600;700&display=swap" rel="stylesheet">
 	<style>
 		* { box-sizing: border-box; }
@@ -86,6 +87,41 @@
 		}
 		.skip-link { position: absolute; left: -9999px; }
 		.skip-link:focus { left: 1rem; top: 1rem; padding: .5rem 1rem; background: #0c0c0c; border: 1px solid rgba(255,255,255,0.1); border-radius: 6px; z-index: 9999; color: #fff; text-decoration: none; }
+
+		/* Mode tabs */
+		.mode-tabs { display: flex; gap: .35rem; margin-bottom: 1.5rem; }
+		.mode-tab {
+			flex: 1; padding: .65rem 1rem; border-radius: 8px; cursor: pointer;
+			border: 1px solid var(--border); background: #111;
+			color: #888; font-size: .9rem; font-weight: 500; text-align: center;
+			transition: all .15s;
+		}
+		.mode-tab:hover { border-color: rgba(167,139,250,0.4); color: #ccc; }
+		.mode-tab.active {
+			background: rgba(167,139,250,0.1); border-color: rgba(167,139,250,0.5);
+			color: #fff;
+		}
+		.mode-section { display: none; }
+		.mode-section.active { display: block; }
+
+		/* Wallet key display */
+		.key-reveal {
+			margin-top: .75rem; padding: .9rem 1rem;
+			background: rgba(239,68,68,0.06); border: 1px solid rgba(239,68,68,0.3);
+			border-radius: 8px;
+		}
+		.key-reveal .key-label {
+			font-size: .75rem; text-transform: uppercase; letter-spacing: .06em;
+			color: #f87171; margin-bottom: .4rem; display: flex; align-items: center; gap: .5rem;
+		}
+		.key-reveal .key-val {
+			font-family: ui-monospace, monospace; font-size: .8rem; word-break: break-all;
+			background: #0a0a0a; padding: .5rem .7rem; border-radius: 6px;
+			border: 1px solid rgba(239,68,68,0.2); color: #fca5a5; user-select: all;
+		}
+		.key-reveal .key-warn {
+			font-size: .75rem; color: #888; margin-top: .5rem; line-height: 1.4;
+		}
 	</style>
 </head>
 <body>
@@ -96,13 +132,30 @@
 	<script src="/nav.js"></script>
 
 	<main id="main-content">
-		<h1>✦ Ethereum CREATE2 vanity grinder</h1>
+		<h1>✦ Ethereum vanity grinder</h1>
 		<p class="lede">
-			Grind a vanity smart-contract address by searching <strong>CREATE2 salts</strong> — no private keys involved.
-			The result is a deterministic address you can deploy to from your factory of choice (Safe, ERC-4337 SimpleAccount, CreateX, Coinbase Smart Wallet…).
-			Runs entirely in your browser.
+			Grind a vanity Ethereum address entirely in your browser — no server, no uploads.
+			All cores run in parallel.
 		</p>
 
+		<div class="mode-tabs">
+			<button class="mode-tab active" data-mode="wallet" type="button">💳 Wallet (EOA)</button>
+			<button class="mode-tab" data-mode="contract" type="button">📜 Smart contract (CREATE2)</button>
+		</div>
+
+		<!-- ── EOA Wallet mode ─────────────────────────────── -->
+		<div class="mode-section active" id="section-wallet">
+			<div class="card" style="background:rgba(239,68,68,0.04);border-color:rgba(239,68,68,0.2)">
+				<h2>⚠ Private key security</h2>
+				<p class="desc" style="margin:0">
+					This tool generates real private keys in your browser. The key is <strong>never sent anywhere</strong> — it only exists in your browser's memory and in whatever you save it to.
+					Once the page closes, it's gone. <strong>Save the key immediately when found.</strong>
+				</p>
+			</div>
+		</div>
+
+		<!-- ── CREATE2 Contract mode ──────────────────────── -->
+		<div class="mode-section" id="section-contract">
 		<div class="card">
 			<h2>1. Factory + init code</h2>
 			<p class="desc">CREATE2 fixes the deployer address and the init code; only the salt is yours to choose.</p>
@@ -118,6 +171,16 @@
 				<button class="preset" type="button" data-deployer="0x0BA5ED0c6AA8c49038F819E587E2633c4A9F428a" data-name="Coinbase Smart Wallet factory">Coinbase Smart Wallet</button>
 			</div>
 
+			<div style="margin-top:1.1rem;padding:.9rem 1rem;background:#0e0e0e;border:1px solid rgba(167,139,250,0.3);border-radius:8px">
+				<div style="font-size:.75rem;text-transform:uppercase;letter-spacing:.06em;color:#a78bfa;margin-bottom:.5rem">✦ three.ws · ThreeWSPayments contract</div>
+				<p class="desc" style="margin:0 0 .55rem">x402 pay-per-call receiver for BNB Chain. Enter your wallet address as owner, then grind for a <strong>0x333…</strong> address.</p>
+				<label for="owner-input" style="font-size:.8rem">Your wallet address (will be the contract owner)</label>
+				<div style="display:flex;gap:.5rem;margin-top:.35rem">
+					<input id="owner-input" type="text" placeholder="0x… your wallet" autocomplete="off" spellcheck="false" style="flex:1;font-size:.85rem" />
+					<button id="fill-threews" class="btn" type="button" style="white-space:nowrap;font-size:.8rem">Fill values ↓</button>
+				</div>
+			</div>
+
 			<label for="initcode-hash">keccak256(initCode) — 32 bytes</label>
 			<input id="initcode-hash" type="text" placeholder="0x… (64 hex chars)" autocomplete="off" spellcheck="false" />
 			<p class="desc" style="margin-top:.4rem">
@@ -126,9 +189,10 @@
 			<label for="initcode-raw" style="margin-top:.5rem">Raw init code (optional — auto-hashes)</label>
 			<textarea id="initcode-raw" rows="3" placeholder="0x… (paste bytecode + ABI-encoded args)"></textarea>
 		</div>
+		</div><!-- /section-contract -->
 
 		<div class="card">
-			<h2>2. Pattern</h2>
+			<h2 id="pattern-heading">Pattern</h2>
 			<p class="desc">
 				Hex characters only (0–9, a–f). Each extra character is 16× harder.
 				<strong>Mixed case</strong> (e.g. <code>Beef</code>) matches the EIP-55 checksum — visually distinctive, ~2× harder per letter.
@@ -151,7 +215,13 @@
 
 			<div class="row">
 				<span id="est">type a pattern to see estimated time</span>
-				<span id="cores-row">cores: <span id="cores">?</span> <span id="case-tag" style="margin-left:.5rem"></span></span>
+				<span id="case-tag"></span>
+			</div>
+
+			<div style="display:flex;align-items:center;gap:.75rem;margin-top:.75rem">
+				<label for="thread-count" style="font-size:.8rem;color:#888;white-space:nowrap">threads</label>
+				<input id="thread-count" type="range" min="1" max="32" step="1" style="flex:1;accent-color:#a78bfa" />
+				<span id="thread-display" style="font-family:ui-monospace,monospace;font-size:.85rem;min-width:3ch;text-align:right">?</span>
 			</div>
 
 			<div class="actions">
@@ -179,7 +249,10 @@
 	</main>
 
 	<script type="module">
-		import { keccak_256 } from '@noble/hashes/sha3';
+		// CDN import for keccak_256 — works without Vite's bare-specifier resolution.
+		// Vite still resolves it on dev/build for users who hit the resolver path,
+		// but this guarantees the page works even when served as a plain static file.
+		import { keccak_256 } from 'https://esm.sh/@noble/hashes@1.5.0/sha3?bundle';
 		import { grindCreate2Vanity } from '/src/eth/vanity/grinder.js';
 		import {
 			validatePattern, validateAddress, validateInitCodeHash,
@@ -190,10 +263,62 @@
 
 		const $ = (id) => document.getElementById(id);
 		const HEX_ALPHA = '0123456789abcdef';
-		const RATE_PER_CORE = 60_000; // measured order-of-magnitude for keccak_256 on 85 bytes in a worker
-		const cores = Math.max(1, Math.min(navigator.hardwareConcurrency || 4, 8));
-		$('cores').textContent = cores;
+		const RATE_PER_CORE = 60_000;
+		const hwCores = navigator.hardwareConcurrency || 4;
+		const cores = Math.max(1, Math.min(hwCores, 8));
 		$('cores2').textContent = cores;
+
+		// ── Mode tabs ─────────────────────────────────────────────────────────
+		let currentMode = 'wallet'; // 'wallet' | 'contract'
+
+		document.querySelectorAll('.mode-tab').forEach(tab => {
+			tab.addEventListener('click', () => {
+				currentMode = tab.dataset.mode;
+				document.querySelectorAll('.mode-tab').forEach(t => t.classList.toggle('active', t === tab));
+				document.querySelectorAll('.mode-section').forEach(s =>
+					s.classList.toggle('active', s.id === `section-${currentMode}`)
+				);
+				$('pattern-heading').textContent = currentMode === 'wallet' ? 'Pattern' : '2. Pattern';
+				// In wallet mode the deployer/initcode fields are irrelevant — clear validation
+				$('grind').disabled = currentMode === 'wallet'
+					? !readPattern().p && !readPattern().s
+					: $('grind').disabled;
+				update();
+			});
+		});
+
+		// Thread count slider — default to all logical cores, max = navigator.hardwareConcurrency
+		const threadInput = $('thread-count');
+		const threadDisplay = $('thread-display');
+		threadInput.max = Math.max(2, hwCores);
+		threadInput.value = hwCores;
+		threadDisplay.textContent = hwCores;
+		threadInput.addEventListener('input', () => { threadDisplay.textContent = threadInput.value; });
+		const getThreadCount = () => Math.max(1, Number(threadInput.value) || hwCores);
+
+		// three.ws ThreeWSPayments preset — computes initcode hash client-side from owner address
+		$('fill-threews').addEventListener('click', async () => {
+			const owner = $('owner-input').value.trim();
+			if (!/^0x[0-9a-fA-F]{40}$/.test(owner)) {
+				alert('Enter a valid 0x… wallet address first.');
+				return;
+			}
+			// ThreeWSPayments.sol — solc 0.8.24, optimizer 200 runs, BSC USDC hardcoded
+			const BYTECODE = '60806040526103e85f55348015610014575f80fd5b506040516105513803806105518339810160408190526100339161007f565b6001600160a01b03811661005a5760405163d92e233d60e01b815260040160405180910390fd5b600180546001600160a01b0319166001600160a01b03929092169190911790556100ac565b5f6020828403121561008f575f80fd5b81516001600160a01b03811681146100a5575f80fd5b9392505050565b610498806100b95f395ff3fe608060405234801561000f575f80fd5b506004361061007a575f3560e01c80638da5cb5b116100585780638da5cb5b146100d357806391b7f5ed146100e6578063c1907c9b146100f9578063f2fde38b1461010f575f80fd5b80633ccfd60b1461007e5780638609cad11461008857806389a302711461009b575b5f80fd5b610086610122565b005b6100866100963660046103e8565b61024d565b6100b6738ac76a51cc950d9822d68b83fe1ad97b32cd580d81565b6040516001600160a01b0390911681526020015b60405180910390f35b6001546100b6906001600160a01b031681565b6100866100f43660046103e8565b61030a565b6101015f5481565b6040519081526020016100ca565b61008661011d3660046103ff565b610374565b6001546001600160a01b0316331461014d576040516330cd747160e01b815260040160405180910390fd5b6040516370a0823160e01b81523060048201525f90738ac76a51cc950d9822d68b83fe1ad97b32cd580d906370a0823190602401602060405180830381865afa15801561019c573d5f803e3d5ffd5b505050506040513d601f19601f820116820180604052508101906101c0919061042c565b60015460405163a9059cbb60e01b81526001600160a01b03909116600482015260248101829052909150738ac76a51cc950d9822d68b83fe1ad97b32cd580d9063a9059cbb906044016020604051808303815f875af1158015610225573d5f803e3d5ffd5b505050506040513d601f19601f820116820180604052508101906102499190610443565b5050565b5f546040516323b872dd60e01b815233600482015230602482015260448101829052738ac76a51cc950d9822d68b83fe1ad97b32cd580d906323b872dd906064016020604051808303815f875af11580156102aa573d5f803e3d5ffd5b505050506040513d601f19601f820116820180604052508101906102ce9190610443565b50604051818152829033907fd17e8b542e550255f0bc5a7b2230f59fdc24847d2003255bf6199ab46ad8f3009060200160405180910390a35050565b6001546001600160a01b03163314610335576040516330cd747160e01b815260040160405180910390fd5b5f5460408051918252602082018390527f945c1c4e99aa89f648fbfe3df471b916f719e16d960fcec0737d4d56bd696838910160405180910390a15f55565b6001546001600160a01b0316331461039f576040516330cd747160e01b815260040160405180910390fd5b6001600160a01b0381166103c65760405163d92e233d60e01b815260040160405180910390fd5b600180546001600160a01b0319166001600160a01b0392909216919091179055565b5f602082840312156103f8575f80fd5b5035919050565b5f6020828403121561040f575f80fd5b81356001600160a01b0381168114610425575f80fd5b9392505050565b5f6020828403121561043c575f80fd5b5051919050565b5f60208284031215610453575f80fd5b81518015158114610425575f80fdfea2646970667358221220f2c508f0afd5d552e79d9e493336b34e8fac65bb5ff72930bac73fe66e71947a64736f6c63430008180033';
+			// ABI-encode owner: 32-byte left-padded address
+			const ownerPadded = owner.slice(2).toLowerCase().padStart(64, '0');
+			const initcodeHex = BYTECODE + ownerPadded;
+			const initcodeBytes = new Uint8Array(initcodeHex.match(/../g).map(h => parseInt(h, 16)));
+			const hash = keccak_256(initcodeBytes);
+			const hashHex = '0x' + Array.from(hash).map(b => b.toString(16).padStart(2,'0')).join('');
+			$('deployer').value = '0x4e59b44847b379578588920cA78FbF26c0B4956C';
+			$('initcode-hash').value = hashHex;
+			$('initcode-raw').value = '0x' + initcodeHex; // enables one-click deploy via assign block
+			if (!$('prefix').value) $('prefix').value = '333';
+			update();
+			$('prefix').scrollIntoView({ behavior: 'smooth', block: 'center' });
+			$('fill-threews').textContent = '✓ filled — adjust prefix then grind';
+		});
 
 		function esc(s) { return String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' })[c]); }
 		function sample(prefix = '', suffix = '') {
@@ -323,9 +448,15 @@
 					: '';
 			}
 
-			$('grind').disabled =
-				!dv.valid || !ich.valid || total === 0 ||
-				(!!p && !pv.valid) || (!!s && !sv.valid);
+			if (currentMode === 'wallet') {
+				$('grind').disabled = total === 0 || (!!p && !pv.valid) || (!!s && !sv.valid);
+				$('grind').textContent = 'Grind wallet';
+			} else {
+				$('grind').disabled =
+					!dv.valid || !ich.valid || total === 0 ||
+					(!!p && !pv.valid) || (!!s && !sv.valid);
+				$('grind').textContent = 'Grind salt';
+			}
 		}
 
 		['prefix','suffix','deployer','initcode-hash'].forEach((id) => {
@@ -337,15 +468,51 @@
 		update();
 		startPreviewLoop();
 
+		// ── Wallet grinder (spawns wallet-worker.js) ──────────────────────
+		function grindWalletVanity({ prefix, suffix, caseSensitive, maxWorkers, signal, onProgress }) {
+			return new Promise((resolve, reject) => {
+				const n = Math.max(1, maxWorkers || hwCores);
+				const workers = [];
+				let totalAttempts = 0;
+				let done = false;
+				const started = performance.now();
+				const stopAll = () => { done = true; workers.forEach(w => { try { w.terminate(); } catch {} }); };
+				signal?.addEventListener('abort', () => { stopAll(); reject(Object.assign(new Error('Aborted'), { name: 'AbortError' })); });
+				for (let i = 0; i < n; i++) {
+					const w = new Worker(new URL('/src/eth/vanity/wallet-worker.js', location.origin), { type: 'module' });
+					workers.push(w);
+					w.postMessage({ type: 'start', prefix, suffix, caseSensitive });
+					w.onmessage = (e) => {
+						if (done) return;
+						if (e.data.type === 'progress') {
+							totalAttempts += e.data.attempts;
+							const rate = e.data.rate * n;
+							const needed = estimateAttempts(prefix?.length || 0, suffix?.length || 0, letterCount(prefix || '') + letterCount(suffix || ''), caseSensitive);
+							const etaSec = rate > 0 ? Math.max(0, (needed - totalAttempts) / rate) : null;
+							onProgress?.({ attempts: totalAttempts, rate, eta: etaSec != null ? fmtTime(etaSec) : '…', sample: e.data.sample });
+						} else if (e.data.type === 'match') {
+							stopAll();
+							resolve({ ...e.data, attempts: totalAttempts + (e.data.attempts || 0), durationMs: performance.now() - started, workers: n, caseSensitive: !!caseSensitive });
+						}
+					};
+					w.onerror = (err) => { if (!done) { stopAll(); reject(err); } };
+				}
+			});
+		}
+
 		// ── Grind ──────────────────────────────────────────────────────────
 		let abort = null;
 
 		$('grind').addEventListener('click', async () => {
 			const { p, s, caseSensitive } = readPattern();
-			const dv = validateAddress($('deployer').value);
-			const ich = validateInitCodeHash($('initcode-hash').value);
-			if (!dv.valid)  { showError(dv.error);  return; }
-			if (!ich.valid) { showError(ich.error); return; }
+			const isWallet = currentMode === 'wallet';
+
+			if (!isWallet) {
+				const dv = validateAddress($('deployer').value);
+				const ich = validateInitCodeHash($('initcode-hash').value);
+				if (!dv.valid)  { showError(dv.error);  return; }
+				if (!ich.valid) { showError(ich.error); return; }
+			}
 
 			$('grind').hidden = true;
 			$('cancel').hidden = false;
@@ -358,27 +525,29 @@
 			$('scan').textContent = `0x${sample(p, s)}`;
 			stopPreviewLoop();
 
-			const scanLoop = setInterval(() => {
-				$('scan').textContent = `0x${sample(p, s)}`;
-			}, 100);
-
+			const scanLoop = setInterval(() => { $('scan').textContent = `0x${sample(p, s)}`; }, 100);
+			const maxWorkers = getThreadCount();
+			$('cores2').textContent = maxWorkers;
 			abort = new AbortController();
+			const onProgress = ({ attempts, rate, eta, sample: sm }) => {
+				$('attempts').textContent = attempts.toLocaleString();
+				$('rate').textContent = `${Math.round(rate).toLocaleString()}/s`;
+				$('eta').textContent = eta;
+				if (sm) $('scan').textContent = sm;
+			};
+
 			try {
-				const result = await grindCreate2Vanity({
-					deployer:     dv.normalized,
-					initCodeHash: ich.normalized,
-					prefix:       p || undefined,
-					suffix:       s || undefined,
-					signal:       abort.signal,
-					onProgress: ({ attempts, rate, eta, sample: sm }) => {
-						$('attempts').textContent = attempts.toLocaleString();
-						$('rate').textContent = `${Math.round(rate).toLocaleString()}/s`;
-						$('eta').textContent = eta;
-						if (sm) $('scan').textContent = sm;
-					},
-				});
-				clearInterval(scanLoop);
-				renderResult(result, p, s);
+				if (isWallet) {
+					const result = await grindWalletVanity({ prefix: p || undefined, suffix: s || undefined, caseSensitive, maxWorkers, signal: abort.signal, onProgress });
+					clearInterval(scanLoop);
+					renderWalletResult(result, p, s);
+				} else {
+					const dv = validateAddress($('deployer').value);
+					const ich = validateInitCodeHash($('initcode-hash').value);
+					const result = await grindCreate2Vanity({ deployer: dv.normalized, initCodeHash: ich.normalized, prefix: p || undefined, suffix: s || undefined, maxWorkers, signal: abort.signal, onProgress });
+					clearInterval(scanLoop);
+					renderResult(result, p, s);
+				}
 			} catch (err) {
 				clearInterval(scanLoop);
 				if (err?.name !== 'AbortError') showError(`Grind failed: ${err.message || err}`);
@@ -394,9 +563,81 @@
 		}
 		function resetIdle() {
 			$('grind').hidden = false;
+			$('grind').textContent = currentMode === 'wallet' ? 'Grind wallet' : 'Grind salt';
 			$('cancel').hidden = true;
 			$('progress').hidden = true;
 			startPreviewLoop();
+		}
+
+		function renderWalletResult(result, p, s) {
+			$('cancel').hidden = true;
+			$('grind').hidden = false;
+			$('grind').textContent = 'Grind another';
+			$('progress').hidden = true;
+
+			const display = result.caseSensitive ? result.addressChecksum : result.address;
+			const addrNoPrefix = display.slice(2);
+			const mid = addrNoPrefix.slice(p.length, addrNoPrefix.length - s.length);
+
+			$('result').hidden = false;
+			$('result').innerHTML = `
+				<div class="result">
+					<h3>✦ Wallet found</h3>
+					<div class="out-row">
+						<span class="k">address</span> 0x${
+							(p ? `<span class="pfx">${esc(p)}</span>` : '') +
+							esc(mid) +
+							(s ? `<span class="sfx">${esc(s)}</span>` : '')
+						}
+					</div>
+					${result.caseSensitive ? `<div class="out-row"><span class="k">lowercase</span> ${esc(result.address)}</div>` : ''}
+					<div class="key-reveal">
+						<div class="key-label">
+							🔑 private key — save this now, it will not be shown again
+						</div>
+						<div class="key-val" id="key-val" title="click to select all">${esc(result.privateKey)}</div>
+						<div class="key-warn">
+							This key was generated locally and never left your browser.
+							Import it into MetaMask: Account → Import Account → paste the key.
+							Anyone with this key controls the address above.
+						</div>
+					</div>
+					<div class="meta">
+						${result.attempts.toLocaleString()} attempts in ${(result.durationMs/1000).toFixed(1)}s
+						across ${result.workers} cores
+						(${Math.round(result.attempts / (result.durationMs/1000)).toLocaleString()}/s)${result.caseSensitive ? ' · EIP-55 case-sensitive' : ''}
+					</div>
+					<div class="actions">
+						<button id="copy-addr-w" class="btn primary" type="button">Copy address</button>
+						<button id="copy-key-w" class="btn" type="button" style="border-color:rgba(239,68,68,0.4);color:#fca5a5">Copy private key</button>
+						<button id="download-w" class="btn" type="button">⬇ Download JSON</button>
+					</div>
+					<div class="warn" style="margin-top:.75rem">
+						<strong>Security:</strong> MetaMask / hardware wallets are safer for long-term storage.
+						This grinder is best for vanity addresses on burner or contract-owner wallets.
+					</div>
+				</div>`;
+
+			$('copy-addr-w').addEventListener('click', () => copy(result.caseSensitive ? result.addressChecksum : result.address, 'copy-addr-w', 'Copy address'));
+			$('copy-key-w').addEventListener('click', () => copy(result.privateKey, 'copy-key-w', 'Copy private key'));
+			$('download-w').addEventListener('click', () => {
+				const payload = {
+					address:         result.address,
+					addressChecksum: result.addressChecksum,
+					privateKey:      result.privateKey,
+					pattern:         { prefix: p || null, suffix: s || null, caseSensitive: !!result.caseSensitive },
+					attempts:        result.attempts,
+					durationMs:      result.durationMs,
+					generatedAt:     new Date().toISOString(),
+					warning:         'Keep this file secret. Anyone with the privateKey controls the address.',
+				};
+				const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+				const url = URL.createObjectURL(blob);
+				const a = document.createElement('a');
+				a.href = url; a.download = `wallet-${result.address.slice(2, 10)}.json`;
+				document.body.appendChild(a); a.click(); a.remove();
+				URL.revokeObjectURL(url);
+			});
 		}
 
 		function renderResult(result, p, s) {
