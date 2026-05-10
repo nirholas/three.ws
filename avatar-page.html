@@ -2,15 +2,16 @@
 <html lang="en">
 	<head>
 		<meta charset="utf-8" />
-		<title>Avatar — three.ws</title>
+		<title>Avatar Studio · three.ws</title>
 		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
 		<meta name="theme-color" content="#000000" />
 		<link rel="shortcut icon" href="/favicon.ico" />
 		<link rel="stylesheet" href="/style.css" />
 		<link rel="stylesheet" href="/footer.css" />
+		<link rel="stylesheet" href="/nav.css" />
 		<script defer src="/footer-newsletter.js"></script>
 		<link
-			href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500&display=swap"
+			href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap"
 			rel="stylesheet"
 		/>
 		<script
@@ -29,228 +30,583 @@
 		<meta name="twitter:description" content="A 3D avatar on three.ws" id="tw-description" />
 
 		<style>
+			:root {
+				--bg: #0a0a0a;
+				--panel: #111;
+				--panel-2: #161616;
+				--border: #1f1f1f;
+				--border-2: #2a2a2a;
+				--text: #fafafa;
+				--text-2: #a1a1aa;
+				--text-3: #71717a;
+				--accent: #7dd3fc;
+				--accent-2: #a78bfa;
+				--success: #34d399;
+				--warn: #fde047;
+				--radius: 14px;
+			}
+
+			html, body {
+				margin: 0;
+				background: var(--bg);
+				color: var(--text);
+				font-family: 'Inter', system-ui, sans-serif;
+				-webkit-font-smoothing: antialiased;
+			}
 			body {
-				overflow: auto;
 				display: flex;
 				flex-direction: column;
 				min-height: 100vh;
 			}
+			a { color: inherit; }
 
-			.av-header {
+			/* ── Top action bar ────────────────────────────────── */
+			.av-actionbar {
 				display: flex;
 				align-items: center;
 				justify-content: space-between;
-				padding: 1rem 1.618rem;
-				border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+				gap: 12px;
+				padding: 12px 24px;
+				border-bottom: 1px solid var(--border);
+				background: rgba(10, 10, 10, 0.85);
+				backdrop-filter: blur(8px);
+				position: sticky;
+				top: 0;
+				z-index: 20;
 			}
-
-			.av-header a {
-				color: rgba(255, 255, 255, 0.4);
+			.av-back {
+				display: inline-flex;
+				align-items: center;
+				gap: 8px;
+				color: var(--text-2);
 				text-decoration: none;
-				font-size: 0.764rem;
+				font-size: 13px;
 			}
-
-			.av-header a:hover {
-				color: rgba(255, 255, 255, 0.8);
+			.av-back:hover { color: var(--text); }
+			.av-share-group {
+				display: inline-flex;
+				gap: 6px;
 			}
-
-			.av-copy-btn {
+			.av-share-btn {
 				background: transparent;
-				border: 1px solid rgba(255, 255, 255, 0.1);
-				color: rgba(255, 255, 255, 0.4);
-				font-size: 0.618rem;
-				padding: 0.25rem 0.618rem;
-				border-radius: 6px;
+				border: 1px solid var(--border-2);
+				color: var(--text-2);
+				padding: 6px 12px;
+				border-radius: 8px;
 				cursor: pointer;
+				font-size: 12px;
 				font-family: inherit;
 				transition: color 0.15s, border-color 0.15s;
 			}
-
-			.av-copy-btn:hover {
-				color: rgba(255, 255, 255, 0.8);
-				border-color: rgba(255, 255, 255, 0.2);
+			.av-share-btn:hover { color: var(--text); border-color: var(--text-3); }
+			.av-share-btn.copied {
+				color: var(--success);
+				border-color: var(--success);
 			}
 
-			.av-copy-btn.copied {
-				color: #4ade80;
-				border-color: rgba(74, 222, 128, 0.3);
-			}
-
-			.av-root {
-				max-width: 960px;
-				margin: 0 auto;
-				padding: 2.5rem 1.5rem 5rem;
-				width: 100%;
-				flex: 1;
-			}
-
-			.av-layout {
+			/* ── Layout ───────────────────────────────────────── */
+			.av-shell {
 				display: grid;
-				grid-template-columns: minmax(280px, 1fr) minmax(280px, 1.2fr);
-				gap: 2rem;
-				align-items: start;
+				grid-template-columns: minmax(0, 1.5fr) minmax(380px, 1fr);
+				gap: 0;
+				flex: 1;
+				min-height: 0;
 			}
 
-			.av-viewer {
-				background: radial-gradient(ellipse at center, rgba(154, 140, 255, 0.04) 0%, transparent 70%),
-					rgba(255, 255, 255, 0.02);
-				border: 1px solid rgba(255, 255, 255, 0.07);
-				border-radius: 16px;
-				overflow: hidden;
-				aspect-ratio: 1 / 1;
-			}
-
-			.av-viewer model-viewer {
-				width: 100%;
-				height: 100%;
-			}
-
-			.av-info {
+			.av-stage-col {
+				border-right: 1px solid var(--border);
 				display: flex;
 				flex-direction: column;
-				gap: 1rem;
+				min-height: 0;
+			}
+			.av-stage {
+				flex: 1;
+				min-height: 480px;
+				background:
+					radial-gradient(ellipse at 50% 35%, rgba(125, 211, 252, 0.06), transparent 60%),
+					radial-gradient(ellipse at 70% 80%, rgba(167, 139, 250, 0.04), transparent 50%),
+					var(--bg);
+				position: relative;
+			}
+			.av-stage model-viewer {
+				width: 100%;
+				height: 100%;
+				background: transparent;
+				--poster-color: transparent;
+			}
+			.av-stage-loading {
+				position: absolute;
+				inset: 0;
+				display: flex;
+				align-items: center;
+				justify-content: center;
+				color: var(--text-3);
+				font-size: 13px;
+				pointer-events: none;
 			}
 
+			.av-meta-strip {
+				display: flex;
+				gap: 18px;
+				padding: 14px 24px;
+				border-top: 1px solid var(--border);
+				background: var(--panel);
+				font-size: 12px;
+				color: var(--text-2);
+				flex-wrap: wrap;
+			}
+			.av-meta-item { display: flex; flex-direction: column; gap: 1px; }
+			.av-meta-key { font-size: 10px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-3); }
+			.av-meta-val { color: var(--text); font-weight: 500; }
+
+			/* ── Sidebar (right column) ───────────────────────── */
+			.av-side {
+				display: flex;
+				flex-direction: column;
+				min-height: 0;
+			}
+			.av-side-head {
+				padding: 22px 24px 16px;
+				border-bottom: 1px solid var(--border);
+			}
+			.av-eyebrow {
+				font-family: 'Space Grotesk', sans-serif;
+				font-size: 10px;
+				letter-spacing: 0.18em;
+				text-transform: uppercase;
+				color: var(--accent);
+				font-weight: 600;
+			}
 			.av-name {
-				font-size: 1.618rem;
-				font-weight: 400;
-				color: #e5e5e5;
-				letter-spacing: -0.02em;
-				margin: 0;
-				line-height: 1.2;
+				font-family: 'Space Grotesk', sans-serif;
+				font-size: 28px;
+				font-weight: 700;
+				color: var(--text);
+				margin: 6px 0 4px;
+				line-height: 1.1;
+				letter-spacing: -0.01em;
+				word-break: break-word;
 			}
-
 			.av-by {
-				font-size: 0.764rem;
-				color: rgba(255, 255, 255, 0.3);
-				margin: 0;
+				font-size: 13px;
+				color: var(--text-3);
+				margin: 0 0 10px;
 			}
-
-			.av-by a {
-				color: rgba(154, 140, 255, 0.8);
-				text-decoration: none;
-			}
-
-			.av-by a:hover {
-				color: #9a8cff;
-			}
-
-			.av-desc {
-				font-size: 0.875rem;
-				color: rgba(255, 255, 255, 0.5);
-				line-height: 1.6;
-				margin: 0;
-			}
-
+			.av-by a { color: var(--accent-2); text-decoration: none; }
+			.av-by a:hover { color: var(--text); }
 			.av-tags {
 				display: flex;
 				flex-wrap: wrap;
-				gap: 0.382rem;
+				gap: 5px;
+				margin-top: 8px;
 			}
-
 			.av-tag {
-				font-size: 0.618rem;
-				padding: 0.2rem 0.618rem;
+				font-size: 11px;
+				padding: 3px 9px;
 				border-radius: 999px;
-				background: rgba(154, 140, 255, 0.08);
-				border: 1px solid rgba(154, 140, 255, 0.2);
-				color: rgba(154, 140, 255, 0.7);
+				background: rgba(167, 139, 250, 0.08);
+				border: 1px solid rgba(167, 139, 250, 0.2);
+				color: rgba(167, 139, 250, 0.9);
 			}
 
-			.av-actions {
-				display: flex;
-				gap: 0.75rem;
-				flex-wrap: wrap;
-				margin-top: 0.5rem;
+			.av-cta-row {
+				display: grid;
+				grid-template-columns: 1fr 1fr;
+				gap: 8px;
+				padding: 16px 24px;
+				border-bottom: 1px solid var(--border);
 			}
-
-			.av-btn {
-				display: inline-flex;
-				align-items: center;
-				gap: 0.382rem;
-				padding: 0.5rem 1.2rem;
-				border-radius: 8px;
-				font-size: 0.764rem;
+			.av-cta {
+				background: var(--text);
+				color: #000;
+				border: 0;
+				border-radius: 10px;
+				padding: 10px 12px;
+				font-size: 13px;
+				font-weight: 600;
 				font-family: inherit;
 				cursor: pointer;
+				text-align: center;
 				text-decoration: none;
-				transition: opacity 0.15s;
-				border: none;
+				transition: transform 0.1s;
 			}
-
-			.av-btn:hover {
-				opacity: 0.8;
-			}
-
-			.av-btn-primary {
-				background: #9a8cff;
-				color: #000;
-				font-weight: 500;
-			}
-
-			.av-btn-sec {
+			.av-cta:hover { transform: translateY(-1px); }
+			.av-cta-sec {
 				background: transparent;
-				border: 1px solid rgba(255, 255, 255, 0.12);
-				color: rgba(255, 255, 255, 0.6);
-			}
-
-			.av-social-btn {
-				background: transparent;
-				border: 1px solid rgba(255, 255, 255, 0.12);
-				color: rgba(255, 255, 255, 0.6);
-				padding: 0.5rem;
-			}
-
-			.av-embed {
-				margin-top: 2rem;
-			}
-
-			.av-embed-label {
-				font-size: 0.764rem;
-				color: rgba(255, 255, 255, 0.5);
+				border: 1px solid var(--border-2);
+				color: var(--text);
+				border-radius: 10px;
+				padding: 10px 12px;
+				font-size: 13px;
 				font-weight: 500;
-				margin-bottom: 0.5rem;
-				display: block;
-			}
-
-			.av-embed-code {
-				background: rgba(255, 255, 255, 0.04);
-				border: 1px solid rgba(255, 255, 255, 0.1);
-				border-radius: 8px;
-				padding: 0.75rem 1rem;
-				font-family: monospace;
-				font-size: 0.764rem;
-				color: rgba(255, 255, 255, 0.7);
-				word-break: break-all;
-				position: relative;
-				padding-right: 4rem;
-			}
-
-			.av-embed-copy-btn {
-				position: absolute;
-				top: 0.5rem;
-				right: 0.5rem;
-				background: rgba(255, 255, 255, 0.1);
-				border: 1px solid rgba(255, 255, 255, 0.2);
-				color: rgba(255, 255, 255, 0.7);
-				font-size: 0.618rem;
-				padding: 0.25rem 0.618rem;
-				border-radius: 6px;
+				font-family: inherit;
 				cursor: pointer;
+				text-align: center;
+				text-decoration: none;
+				transition: border-color 0.15s, color 0.15s;
+			}
+			.av-cta-sec:hover { border-color: var(--text-2); }
+
+			/* ── Tabs ────────────────────────────────────────── */
+			.av-tabs {
+				display: flex;
+				gap: 0;
+				border-bottom: 1px solid var(--border);
+				padding: 0 8px;
+				overflow-x: auto;
+				background: var(--panel);
+			}
+			.av-tab {
+				background: transparent;
+				border: 0;
+				color: var(--text-3);
+				padding: 12px 14px;
+				font-size: 13px;
+				font-weight: 500;
+				cursor: pointer;
+				font-family: inherit;
+				border-bottom: 2px solid transparent;
+				transition: color 0.15s, border-color 0.15s;
+				white-space: nowrap;
+			}
+			.av-tab:hover { color: var(--text-2); }
+			.av-tab.active {
+				color: var(--text);
+				border-color: var(--text);
 			}
 
-			.av-embed-copy-btn.copied {
-				color: #4ade80;
-				border-color: rgba(74, 222, 128, 0.3);
+			.av-panels {
+				flex: 1;
+				min-height: 0;
+				overflow-y: auto;
+			}
+			.av-panel { display: none; padding: 20px 24px; }
+			.av-panel.active { display: block; }
+
+			/* ── Overview panel ──────────────────────────────── */
+			.av-desc {
+				font-size: 14px;
+				color: var(--text-2);
+				line-height: 1.6;
+				margin: 0;
+				white-space: pre-wrap;
+			}
+			.av-attribution {
+				margin-top: 18px;
+				padding: 12px 14px;
+				background: var(--panel);
+				border: 1px solid var(--border);
+				border-radius: 10px;
+				font-size: 12px;
+				color: var(--text-3);
+				display: flex;
+				flex-direction: column;
+				gap: 4px;
+			}
+			.av-attribution strong { color: var(--text-2); font-weight: 500; }
+			.av-attribution a { color: var(--accent); text-decoration: none; }
+			.av-attribution a:hover { color: var(--text); }
+
+			/* ── Chat panel ──────────────────────────────────── */
+			.av-chat {
+				display: flex;
+				flex-direction: column;
+				height: 100%;
+				min-height: 380px;
+				gap: 0;
+			}
+			.av-chat-log {
+				flex: 1;
+				min-height: 240px;
+				overflow-y: auto;
+				padding: 4px 0 12px;
+				display: flex;
+				flex-direction: column;
+				gap: 10px;
+			}
+			.av-chat-msg {
+				max-width: 85%;
+				padding: 10px 13px;
+				border-radius: 12px;
+				font-size: 14px;
+				line-height: 1.5;
+				white-space: pre-wrap;
+				word-wrap: break-word;
+			}
+			.av-chat-msg.user {
+				align-self: flex-end;
+				background: rgba(125, 211, 252, 0.12);
+				border: 1px solid rgba(125, 211, 252, 0.25);
+				color: var(--text);
+			}
+			.av-chat-msg.assistant {
+				align-self: flex-start;
+				background: var(--panel);
+				border: 1px solid var(--border);
+				color: var(--text);
+			}
+			.av-chat-msg.assistant .av-chat-cursor {
+				display: inline-block;
+				width: 7px;
+				height: 14px;
+				vertical-align: -2px;
+				background: var(--accent);
+				margin-left: 2px;
+				animation: av-blink 1s steps(2, start) infinite;
+			}
+			@keyframes av-blink { 0%, 50% { opacity: 1; } 50.01%, 100% { opacity: 0; } }
+			.av-chat-empty {
+				align-self: center;
+				font-size: 13px;
+				color: var(--text-3);
+				text-align: center;
+				padding: 32px 0;
+			}
+			.av-chat-empty strong { color: var(--text); display: block; margin-bottom: 4px; }
+			.av-chat-form {
+				display: flex;
+				gap: 8px;
+				padding-top: 10px;
+				border-top: 1px solid var(--border);
+			}
+			.av-chat-input {
+				flex: 1;
+				background: var(--panel);
+				border: 1px solid var(--border-2);
+				border-radius: 10px;
+				padding: 10px 12px;
+				color: var(--text);
+				font-family: inherit;
+				font-size: 14px;
+				outline: none;
+				resize: none;
+				min-height: 40px;
+				max-height: 120px;
+			}
+			.av-chat-input:focus { border-color: var(--accent); }
+			.av-chat-send {
+				background: var(--text);
+				color: #000;
+				border: 0;
+				border-radius: 10px;
+				padding: 0 16px;
+				font-weight: 600;
+				font-size: 13px;
+				cursor: pointer;
+				font-family: inherit;
+			}
+			.av-chat-send:disabled { opacity: 0.4; cursor: default; }
+
+			/* ── Skills / Plugins panel ──────────────────────── */
+			.av-list {
+				display: flex;
+				flex-direction: column;
+				gap: 8px;
+			}
+			.av-row {
+				display: flex;
+				justify-content: space-between;
+				align-items: center;
+				gap: 12px;
+				padding: 12px 14px;
+				background: var(--panel);
+				border: 1px solid var(--border);
+				border-radius: 10px;
+				transition: border-color 0.15s;
+			}
+			.av-row:hover { border-color: var(--border-2); }
+			.av-row-main { min-width: 0; flex: 1; }
+			.av-row-title {
+				font-size: 13px;
+				font-weight: 600;
+				color: var(--text);
+				margin: 0 0 2px;
+				white-space: nowrap;
+				overflow: hidden;
+				text-overflow: ellipsis;
+			}
+			.av-row-sub {
+				font-size: 11px;
+				color: var(--text-3);
+				margin: 0;
+			}
+			.av-row-action {
+				background: transparent;
+				border: 1px solid var(--border-2);
+				color: var(--text-2);
+				padding: 5px 10px;
+				border-radius: 7px;
+				font-size: 11px;
+				font-family: inherit;
+				font-weight: 600;
+				cursor: pointer;
+				flex-shrink: 0;
+			}
+			.av-row-action.active {
+				background: var(--text);
+				color: #000;
+				border-color: var(--text);
+			}
+			.av-row-action:hover { border-color: var(--text-2); color: var(--text); }
+			.av-row-action.active:hover { color: #000; }
+			.av-list-loading,
+			.av-list-empty {
+				color: var(--text-3);
+				font-size: 13px;
+				text-align: center;
+				padding: 24px 0;
 			}
 
-			.av-meta {
-				font-size: 0.618rem;
-				color: rgba(255, 255, 255, 0.2);
-				margin-top: 1rem;
+			.av-attached {
+				margin-top: 18px;
+				padding: 12px 14px;
+				background: rgba(52, 211, 153, 0.05);
+				border: 1px solid rgba(52, 211, 153, 0.18);
+				border-radius: 10px;
+				font-size: 12px;
+				color: rgba(52, 211, 153, 0.9);
+			}
+			.av-attached-list {
+				display: flex;
+				gap: 6px;
+				flex-wrap: wrap;
+				margin-top: 6px;
+			}
+			.av-attached-pill {
+				background: rgba(52, 211, 153, 0.1);
+				color: rgba(52, 211, 153, 1);
+				border-radius: 999px;
+				padding: 2px 8px;
+				font-size: 10px;
+				font-weight: 600;
+			}
+
+			/* ── Embed panel ─────────────────────────────────── */
+			.av-embed-section { margin-bottom: 18px; }
+			.av-embed-label {
+				display: flex;
+				justify-content: space-between;
+				align-items: center;
+				margin-bottom: 6px;
+				font-size: 11px;
+				text-transform: uppercase;
+				letter-spacing: 0.06em;
+				color: var(--text-3);
+			}
+			.av-embed-code {
+				background: #050505;
+				border: 1px solid var(--border);
+				border-radius: 10px;
+				padding: 12px 14px;
+				font-family: ui-monospace, 'SF Mono', monospace;
+				font-size: 12px;
+				color: var(--text-2);
+				overflow-x: auto;
+				white-space: pre;
+				line-height: 1.5;
+			}
+			.av-embed-copy {
+				background: transparent;
+				border: 1px solid var(--border-2);
+				color: var(--text-2);
+				padding: 3px 9px;
+				border-radius: 6px;
+				font-size: 10px;
+				font-weight: 600;
+				cursor: pointer;
+				font-family: inherit;
+			}
+			.av-embed-copy:hover { color: var(--text); border-color: var(--text-3); }
+			.av-embed-copy.copied { color: var(--success); border-color: var(--success); }
+
+			/* ── Related row ─────────────────────────────────── */
+			.av-related {
+				border-top: 1px solid var(--border);
+				padding: 24px;
+			}
+			.av-related h2 {
+				font-family: 'Space Grotesk', sans-serif;
+				font-size: 16px;
+				font-weight: 600;
+				margin: 0 0 12px;
+				color: var(--text);
+			}
+			.av-related-grid {
+				display: grid;
+				grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+				gap: 12px;
+			}
+			.av-related-card {
+				background: var(--panel);
+				border: 1px solid var(--border);
+				border-radius: 12px;
+				overflow: hidden;
+				cursor: pointer;
+				text-decoration: none;
+				color: inherit;
+				transition: border-color 0.15s, transform 0.15s;
+			}
+			.av-related-card:hover {
+				border-color: var(--border-2);
+				transform: translateY(-1px);
+			}
+			.av-related-thumb {
+				aspect-ratio: 1 / 1;
+				background:
+					radial-gradient(ellipse at center, rgba(125, 211, 252, 0.05), transparent 60%),
+					var(--panel-2);
+				position: relative;
+			}
+			.av-related-thumb model-viewer {
+				width: 100%;
+				height: 100%;
+				background: transparent;
+				--poster-color: transparent;
+			}
+			.av-related-info {
+				padding: 10px 12px;
+			}
+			.av-related-name {
+				font-size: 12px;
+				font-weight: 600;
+				color: var(--text);
+				margin: 0;
+				white-space: nowrap;
+				overflow: hidden;
+				text-overflow: ellipsis;
+			}
+			.av-related-author {
+				font-size: 10px;
+				color: var(--text-3);
+				margin: 2px 0 0;
+			}
+
+			.av-error {
+				padding: 80px 24px;
+				text-align: center;
+				color: var(--text-3);
+				font-size: 14px;
+			}
+
+			/* ── Responsive ──────────────────────────────────── */
+			@media (max-width: 980px) {
+				.av-shell {
+					grid-template-columns: 1fr;
+				}
+				.av-stage-col {
+					border-right: 0;
+					border-bottom: 1px solid var(--border);
+				}
+				.av-stage { min-height: 420px; }
+			}
+			@media (max-width: 600px) {
+				.av-actionbar { padding: 10px 14px; }
+				.av-side-head, .av-cta-row { padding-left: 16px; padding-right: 16px; }
+				.av-panel { padding: 16px; }
+				.av-related { padding: 16px; }
+				.av-name { font-size: 22px; }
 			}
 		</style>
-			<link rel="stylesheet" href="/nav.css" />
 	</head>
 	<body>
 		<header class="site-header">
@@ -261,51 +617,26 @@
 		</header>
 		<script src="/nav.js"></script>
 
-		<header class="av-header">
-			<a href="/" aria-label="Back to three.ws">← three.ws</a>
-			<button class="av-copy-btn" id="copy-btn">copy link</button>
+		<header class="av-actionbar">
+			<a class="av-back" href="/marketplace">← Marketplace</a>
+			<div class="av-share-group">
+				<button class="av-share-btn" id="share-link">Copy link</button>
+				<a class="av-share-btn" id="share-twitter" target="_blank" rel="noopener">Share on X</a>
+			</div>
 		</header>
 
-		<main>
-			<div class="av-root" id="av-root">
-				<div class="av-error">Loading…</div>
-			</div>
+		<main class="av-shell" id="av-shell">
+			<div class="av-error" id="av-loading">Loading avatar…</div>
 		</main>
+
+		<section class="av-related" id="av-related" hidden>
+			<h2>Related avatars</h2>
+			<div class="av-related-grid" id="av-related-grid"></div>
+		</section>
 
 		<footer class="h-footer-horizon">
 			<div class="h-footer-glow-line" aria-hidden="true"></div>
-			<div class="h-footer-floor" aria-hidden="true"></div>
-			<div class="h-footer-haze" aria-hidden="true"></div>
 			<div class="h-footer-watermark" aria-hidden="true">three.ws</div>
-			<div class="h-footer-cta">
-				<div class="h-footer-newsletter">
-					<h3>Stay in the loop</h3>
-					<p>Get updates on new features, agent tooling, and protocol changes.</p>
-					<form class="h-footer-newsletter-form" data-newsletter-form novalidate>
-						<input
-							type="email"
-							class="h-footer-newsletter-input"
-							name="email"
-							placeholder="Enter your email"
-							aria-label="Email address"
-							autocomplete="email"
-							required
-						/>
-						<button type="submit" class="h-footer-newsletter-btn" aria-label="Subscribe">
-							<svg viewBox="0 0 16 16" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" d="M2 8h11m0 0L9 4m4 4l-4 4"/></svg>
-						</button>
-					</form>
-					<p class="h-footer-newsletter-msg" data-newsletter-msg aria-live="polite"></p>
-				</div>
-				<div class="h-footer-community">
-					<h3>Join the community</h3>
-					<p>Follow along for builds, demos, and conversations with the team.</p>
-					<a class="h-footer-community-btn" href="https://x.com/trythreews" target="_blank" rel="noopener">
-						<svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
-						Follow on X
-					</a>
-				</div>
-			</div>
 			<div class="h-footer-inner">
 				<div class="h-footer-brand-col">
 					<div class="h-footer-brand">
@@ -314,428 +645,30 @@
 						<span>three.ws</span>
 					</div>
 					<p class="h-footer-tagline">Give your AI a body.</p>
-					<div class="h-footer-socials">
-						<a class="h-footer-social" href="https://x.com/trythreews" target="_blank" rel="noopener" aria-label="three.ws on X">
-							<svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
-						</a>
-						<a class="h-footer-social" href="https://github.com/nirholas/three.ws" target="_blank" rel="noopener" aria-label="three.ws on GitHub">
-							<svg viewBox="0 0 16 16" aria-hidden="true"><path fill="currentColor" d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0 0 16 8c0-4.42-3.58-8-8-8z"/></svg>
-						</a>
-					</div>
 				</div>
 				<nav class="h-footer-links" aria-label="Footer">
 					<div class="h-footer-link-col">
 						<h4 class="h-footer-link-heading">Product</h4>
 						<a href="/create">Create</a>
 						<a href="/studio">Studio</a>
-						<a href="/widgets">Widgets</a>
-						<a href="/discover">Discover</a>
+						<a href="/marketplace">Marketplace</a>
 					</div>
 					<div class="h-footer-link-col">
 						<h4 class="h-footer-link-heading">Developers</h4>
 						<a href="/docs">Docs</a>
 						<a href="https://github.com/nirholas/three.ws" target="_blank" rel="noopener">GitHub</a>
-						<a href="https://eips.ethereum.org/EIPS/eip-8004" target="_blank" rel="noopener">ERC-8004</a>
-					</div>
-					<div class="h-footer-link-col">
-						<h4 class="h-footer-link-heading">Resources</h4>
-						<a href="/dashboard">Dashboard</a>
 					</div>
 				</nav>
 			</div>
 			<div class="h-footer-bottom">
 				<p class="h-footer-legal">© 2026 three.ws — All rights reserved.</p>
 				<div class="h-footer-legal-links">
-					<a href="/legal/privacy">Privacy Policy</a>
-					<a href="/legal/tos">Terms of Use</a>
+					<a href="/legal/privacy">Privacy</a>
+					<a href="/legal/tos">Terms</a>
 				</div>
 			</div>
 		</footer>
 
-		<script type="module">
-			const esc = (s) =>
-				String(s ?? '').replace(
-					/[&<>"']/g,
-					(c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c],
-				);
-
-			const root = document.getElementById('av-root');
-			const segments = location.pathname.split('/').filter(Boolean);
-			const id = segments[1]; // /avatars/<id>
-
-			if (!id) {
-				root.innerHTML = `<div class="av-error">No avatar specified.</div>`;
-			} else {
-				load(id);
-			}
-
-			async function load(avatarId) {
-				let avatar;
-				try {
-					const res = await fetch(`/api/avatars/${encodeURIComponent(avatarId)}`);
-					if (!res.ok) {
-						const data = await res.json().catch(() => ({}));
-						throw new Error(data.error_description || res.statusText);
-					}
-					avatar = (await res.json()).avatar;
-				} catch (err) {
-					root.innerHTML = `<div class="av-error">${esc(err.message)}</div>`;
-					return;
-				}
-
-				if (!avatar.model_url) {
-					root.innerHTML = `<div class="av-error">This avatar is private.</div>`;
-					return;
-				}
-
-				// OG / title
-				document.title = `${avatar.name} — three.ws`;
-				document.querySelector('#og-title')?.setAttribute('content', avatar.name);
-				document.querySelector('#og-description')?.setAttribute(
-					'content',
-					avatar.description || `A 3D avatar on three.ws`,
-				);
-				document.querySelector('#og-url')?.setAttribute('content', location.href);
-				document.querySelector('#tw-title')?.setAttribute('content', avatar.name);
-				document.querySelector('#tw-description')?.setAttribute(
-					'content',
-					avatar.description || `A 3D avatar on three.ws`,
-				);
-				if (avatar.thumbnail_url) {
-					document.querySelector('#og-image')?.setAttribute('content', avatar.thumbnail_url);
-				}
-
-				const tagsHtml = (avatar.tags || [])
-					.map((t) => `<span class="av-tag">${esc(t)}</span>`)
-					.join('');
-
-				const byLine = avatar.owner_username
-					? `<p class="av-by">by <a href="/u/${esc(avatar.owner_username)}">@${esc(avatar.owner_username)}</a></p>`
-					: '';
-
-				const sizeStr = avatar.size_bytes
-					? `${(avatar.size_bytes / 1_048_576).toFixed(1)} MB`
-					: '';
-				const dateStr = avatar.created_at
-					? new Date(avatar.created_at).toLocaleDateString()
-					: '';
-
-				const embedCode = `<script type="module" src="https://three.ws/dist-lib/agent-3d.js"><\/script>
-<agent-3d src="${esc(avatar.model_url)}"></agent-3d>`;
-
-				root.innerHTML = `
-					<div class="av-layout">
-						<div class="av-viewer">
-							<model-viewer
-								src="${esc(avatar.model_url)}"
-								camera-controls
-								auto-rotate
-								rotation-per-second="12deg"
-								shadow-intensity="1"
-								exposure="1"
-								tone-mapping="aces"
-							></model-viewer>
-						</div>
-						<div class="av-info">
-							<h1 class="av-name">${esc(avatar.name)}</h1>
-							${byLine}
-							${avatar.description ? `<p class="av-desc">${esc(avatar.description)}</p>` : ''}
-							${tagsHtml ? `<div class="av-tags">${tagsHtml}</div>` : ''}
-							<div class="av-actions">
-								<a class="av-btn av-btn-primary" href="/dashboard">Use this avatar</a>
-								<a class="av-btn av-btn-sec" href="${esc(avatar.model_url)}" download>Download GLB</a>
-								<a class="av-btn av-social-btn" id="twitter-share" href="#" target="_blank" rel="noopener">
-									<svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
-								</a>
-								<a class="av-btn av-social-btn" id="discord-share" href="#" target="_blank" rel="noopener">
-									<svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M20.317 4.369a19.791 19.791 0 00-4.885-1.515.074.074 0 00-.079.037c-.21.369-.42.738-.609 1.114a18.332 18.332 0 00-5.484 0 18.275 18.275 0 00-.61-1.114.074.074 0 00-.078-.037A19.79 19.79 0 003.683 4.37a.074.074 0 00-.036.079C3.336 5.623 2.92 9.444 3.483 12.164a.074.074 0 00.045.065c1.766.993 3.535 1.488 5.303 1.545a.073.073 0 00.063-.036c.143-.236.286-.492.409-.758a.074.074 0 00-.028-.086 15.655 15.655 0 01-1.788-.594.074.074 0 01-.018-.114c.06-.086.118-.171.178-.257a.074.074 0 01.092-.019c.357.143.714.267 1.07.391a.074.074 0 00.079-.018c.952-.515 1.838-1.133 2.659-1.84a.074.074 0 00.018-.1c-.347-.276-.694-.572-1.022-.888a.074.074 0 00-.102.009c-.046.046-.092.093-.138.139a.074.074 0 00-.009.102 14.122 14.122 0 01-1.921.605.074.074 0 00-.018.114c.06.086.118.171.178.257a.074.074 0 00.093-.018c1.328-.535 2.529-1.258 3.599-2.158a.074.074 0 00.018-.093c-.086-.143-.171-.286-.257-.429a.074.074 0 00-.092-.028c-1.133.391-2.285.714-3.456.952a.074.074 0 00-.054.065c-.009.046-.018.093-.018.139a13.315 13.315 0 00.018 1.458.074.074 0 00.054.065c2.4.456 4.829.357 6.942-.456a.074.074 0 00.045-.065c.562-2.719.147-6.54-.162-8.08a.074.074 0 00-.036-.079zm-4.733 8.322a2.448 2.448 0 01-2.448-2.448 2.448 2.448 0 012.448-2.448 2.448 2.448 0 012.448 2.448 2.448 2.448 0 01-2.448 2.448zm-6.289 0a2.448 2.448 0 01-2.448-2.448 2.448 2.448 0 012.448-2.448 2.448 2.448 0 012.448 2.448 2.448 2.448 0 01-2.448 2.448z" /></svg>
-								</a>
-							</div>
-							<p class="av-meta">${[sizeStr, avatar.source, dateStr].filter(Boolean).join(' · ')}</p>
-
-							<div class="av-embed">
-								<label class="av-embed-label">Embed Code</label>
-								<div class="av-embed-code" id="embed-code">
-									${esc(embedCode)}
-									<button class="av-embed-copy-btn" id="embed-copy-btn">Copy</button>
-								</div>
-							</div>
-						</div>
-					</div>
-				`;
-
-				// Add event listeners for the new buttons
-				document.getElementById('twitter-share').addEventListener('click', (e) => {
-					e.preventDefault();
-					const text = `Check out this 3D avatar: ${avatar.name}`;
-					const url = `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(location.href)}`;
-					window.open(url, '_blank');
-				});
-
-				document.getElementById('discord-share').addEventListener('click', (e) => {
-					e.preventDefault();
-					// Note: Discord doesn't have a direct share link, so we'll just copy the link
-					navigator.clipboard.writeText(location.href);
-					alert('Link copied to clipboard for sharing on Discord!');
-				});
-
-				document.getElementById('embed-copy-btn').addEventListener('click', async () => {
-					const btn = document.getElementById('embed-copy-btn');
-					try {
-						await navigator.clipboard.writeText(embedCode);
-						btn.textContent = 'Copied ✓';
-						btn.classList.add('copied');
-						setTimeout(() => {
-							btn.textContent = 'Copy';
-							btn.classList.remove('copied');
-						}, 1800);
-					} catch {}
-				});
-			}
-
-			// Copy link button
-			document.getElementById('copy-btn').addEventListener('click', async () => {
-				const btn = document.getElementById('copy-btn');
-				try {
-					await navigator.clipboard.writeText(location.href);
-					btn.textContent = 'copied ✓';
-					btn.classList.add('copied');
-					setTimeout(() => {
-						btn.textContent = 'copy link';
-						btn.classList.remove('copied');
-					}, 1800);
-				} catch {}
-			});
-		</script>
-	</body>
-</html>
-
-			.av-error {
-				text-align: center;
-				color: rgba(255, 255, 255, 0.3);
-				font-size: 0.875rem;
-				padding: 4rem 1rem;
-			}
-
-			@media (max-width: 600px) {
-				.av-layout {
-					grid-template-columns: 1fr;
-				}
-			}
-		</style>
-	</head>
-	<body>
-		<header class="av-header">
-			<a href="/" aria-label="Back to three.ws">← three.ws</a>
-			<button class="av-copy-btn" id="copy-btn">copy link</button>
-		</header>
-
-		<main>
-			<div class="av-root" id="av-root">
-				<div class="av-error">Loading…</div>
-			</div>
-		</main>
-
-		<footer class="h-footer-horizon">
-			<div class="h-footer-glow-line" aria-hidden="true"></div>
-			<div class="h-footer-floor" aria-hidden="true"></div>
-			<div class="h-footer-haze" aria-hidden="true"></div>
-			<div class="h-footer-watermark" aria-hidden="true">three.ws</div>
-			<div class="h-footer-cta">
-				<div class="h-footer-newsletter">
-					<h3>Stay in the loop</h3>
-					<p>Get updates on new features, agent tooling, and protocol changes.</p>
-					<form class="h-footer-newsletter-form" data-newsletter-form novalidate>
-						<input
-							type="email"
-							class="h-footer-newsletter-input"
-							name="email"
-							placeholder="Enter your email"
-							aria-label="Email address"
-							autocomplete="email"
-							required
-						/>
-						<button type="submit" class="h-footer-newsletter-btn" aria-label="Subscribe">
-							<svg viewBox="0 0 16 16" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" d="M2 8h11m0 0L9 4m4 4l-4 4"/></svg>
-						</button>
-					</form>
-											<p class="h-footer-newsletter-msg" data-newsletter-msg aria-live="polite"></p>
-					</form>
-				</div>
-				<div class="h-footer-resources">
-					<h3>Resources</h3>
-					<p>Read the docs, join the community, and get help.</p>
-					<a class="h-footer-community-btn" href="/docs" target="_blank" rel="noopener">
-						<svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
-						Docs
-					</a>
-				</div>
-			</div>
-				</div>
-				<div class="h-footer-community">
-					<h3>Join the community</h3>
-					<p>Follow along for builds, demos, and conversations with the team.</p>
-					<a class="h-footer-community-btn" href="https://x.com/trythreews" target="_blank" rel="noopener">
-						<svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
-						Follow on X
-					</a>
-				</div>
-			</div>
-			<div class="h-footer-inner">
-				<div class="h-footer-brand-col">
-					<div class="h-footer-brand">
-						<img class="wordmark-logo" src="/three.svg" alt="" aria-hidden="true" />
-						<span class="wordmark-dot" aria-hidden="true"></span>
-						<span>three.ws</span>
-					</div>
-					<p class="h-footer-tagline">Give your AI a body.</p>
-					<div class="h-footer-socials">
-						<a class="h-footer-social" href="https://x.com/trythreews" target="_blank" rel="noopener" aria-label="three.ws on X">
-							<svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
-						</a>
-						<a class="h-footer-social" href="https://github.com/nirholas/three.ws" target="_blank" rel="noopener" aria-label="three.ws on GitHub">
-							<svg viewBox="0 0 16 16" aria-hidden="true"><path fill="currentColor" d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0 0 16 8c0-4.42-3.58-8-8-8z"/></svg>
-						</a>
-					</div>
-				</div>
-				<nav class="h-footer-links" aria-label="Footer">
-					<div class="h-footer-link-col">
-						<h4 class="h-footer-link-heading">Product</h4>
-						<a href="/create">Create</a>
-						<a href="/studio">Studio</a>
-						<a href="/widgets">Widgets</a>
-						<a href="/discover">Discover</a>
-					</div>
-					<div class="h-footer-link-col">
-						<h4 class="h-footer-link-heading">Developers</h4>
-						<a href="/docs">Docs</a>
-						<a href="https://github.com/nirholas/three.ws" target="_blank" rel="noopener">GitHub</a>
-						<a href="https://eips.ethereum.org/EIPS/eip-8004" target="_blank" rel="noopener">ERC-8004</a>
-					</div>
-					<div class="h-footer-link-col">
-						<h4 class="h-footer-link-heading">Resources</h4>
-						<a href="/dashboard">Dashboard</a>
-					</div>
-				</nav>
-			</div>
-			<div class="h-footer-bottom">
-				<p class="h-footer-legal">© 2026 three.ws — All rights reserved.</p>
-				<div class="h-footer-legal-links">
-					<a href="/legal/privacy">Privacy Policy</a>
-					<a href="/legal/tos">Terms of Use</a>
-				</div>
-			</div>
-		</footer>
-
-		<script type="module">
-			const esc = (s) =>
-				String(s ?? '').replace(
-					/[&<>"']/g,
-					(c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c],
-				);
-
-			const root = document.getElementById('av-root');
-			const segments = location.pathname.split('/').filter(Boolean);
-			const id = segments[1]; // /avatars/<id>
-
-			if (!id) {
-				root.innerHTML = `<div class="av-error">No avatar specified.</div>`;
-			} else {
-				load(id);
-			}
-
-			async function load(avatarId) {
-				let avatar;
-				try {
-					const res = await fetch(`/api/avatars/${encodeURIComponent(avatarId)}`);
-					if (!res.ok) {
-						const data = await res.json().catch(() => ({}));
-						throw new Error(data.error_description || res.statusText);
-					}
-					avatar = (await res.json()).avatar;
-				} catch (err) {
-					root.innerHTML = `<div class="av-error">${esc(err.message)}</div>`;
-					return;
-				}
-
-				if (!avatar.model_url) {
-					root.innerHTML = `<div class="av-error">This avatar is private.</div>`;
-					return;
-				}
-
-				// OG / title
-				document.title = `${avatar.name} — three.ws`;
-				document.querySelector('#og-title')?.setAttribute('content', avatar.name);
-				document.querySelector('#og-description')?.setAttribute(
-					'content',
-					avatar.description || `A 3D avatar on three.ws`,
-				);
-				document.querySelector('#og-url')?.setAttribute('content', location.href);
-				document.querySelector('#tw-title')?.setAttribute('content', avatar.name);
-				document.querySelector('#tw-description')?.setAttribute(
-					'content',
-					avatar.description || `A 3D avatar on three.ws`,
-				);
-				if (avatar.thumbnail_url) {
-					document.querySelector('#og-image')?.setAttribute('content', avatar.thumbnail_url);
-				}
-
-				const tagsHtml = (avatar.tags || [])
-					.map((t) => `<span class="av-tag">${esc(t)}</span>`)
-					.join('');
-
-				const byLine = avatar.owner_username
-					? `<p class="av-by">by <a href="/u/${esc(avatar.owner_username)}">@${esc(avatar.owner_username)}</a></p>`
-					: '';
-
-				const sizeStr = avatar.size_bytes
-					? `${(avatar.size_bytes / 1_048_576).toFixed(1)} MB`
-					: '';
-				const dateStr = avatar.created_at
-					? new Date(avatar.created_at).toLocaleDateString()
-					: '';
-
-				root.innerHTML = `
-					<div class="av-layout">
-						<div class="av-viewer">
-							<model-viewer
-								src="${esc(avatar.model_url)}"
-								camera-controls
-								auto-rotate
-								rotation-per-second="12deg"
-								shadow-intensity="1"
-								exposure="1"
-								tone-mapping="aces"
-							></model-viewer>
-						</div>
-						<div class="av-info">
-							<h1 class="av-name">${esc(avatar.name)}</h1>
-							${byLine}
-							${avatar.description ? `<p class="av-desc">${esc(avatar.description)}</p>` : ''}
-							${tagsHtml ? `<div class="av-tags">${tagsHtml}</div>` : ''}
-							<div class="av-actions">
-								<a class="av-btn av-btn-primary" href="/dashboard">Use this avatar</a>
-								<a class="av-btn av-btn-sec" href="${esc(avatar.model_url)}" download>Download GLB</a>
-							</div>
-							<p class="av-meta">${[sizeStr, avatar.source, dateStr].filter(Boolean).join(' · ')}</p>
-						</div>
-					</div>
-				`;
-			}
-
-			// Copy link button
-			document.getElementById('copy-btn').addEventListener('click', async () => {
-				const btn = document.getElementById('copy-btn');
-				try {
-					await navigator.clipboard.writeText(location.href);
-					btn.textContent = 'copied ✓';
-					btn.classList.add('copied');
-					setTimeout(() => {
-						btn.textContent = 'copy link';
-						btn.classList.remove('copied');
-					}, 1800);
-				} catch {}
-			});
-		</script>
+		<script src="/src/avatar-page.js" type="module"></script>
 	</body>
 </html>

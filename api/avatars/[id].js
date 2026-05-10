@@ -19,6 +19,7 @@ import { limits } from '../_lib/rate-limit.js';
 import { recordEvent } from '../_lib/usage.js';
 import { z } from 'zod';
 import { avatarVisibility, parse } from '../_lib/validate.js';
+import { DEMO_AVATARS } from '../_lib/demo-avatars.js';
 
 const patchSchema = z.object({
 	name: z.string().trim().min(1).max(120).optional(),
@@ -46,6 +47,35 @@ export default wrap(async (req, res) => {
 	const auth = await resolveAuth(req);
 
 	if (req.method === 'GET') {
+		// Demo avatars (avatar_demo_*) are seeded fixtures, not DB rows.
+		// Resolve them from DEMO_AVATARS so the detail page works for them too.
+		if (id.startsWith('avatar_demo_')) {
+			const demo = DEMO_AVATARS.find((a) => a.avatarId === id);
+			if (!demo) return error(res, 404, 'not_found', 'avatar not found');
+			return json(res, 200, {
+				avatar: {
+					id: demo.avatarId,
+					slug: demo.slug,
+					name: demo.name,
+					description: demo.description,
+					tags: demo.tags,
+					visibility: 'public',
+					source: 'demo',
+					storage_key: null,
+					size_bytes: null,
+					content_type: 'model/gltf-binary',
+					created_at: demo.createdAt,
+					updated_at: demo.createdAt,
+					thumbnail_url: demo.image,
+					model_url: demo.glbUrl,
+					url: demo.glbUrl,
+					cdn: true,
+					attribution: demo.attribution || null,
+					author: demo.author || null,
+					demo: true,
+				},
+			});
+		}
 		const avatar = await getAvatar({ id, requesterId: auth?.userId });
 		if (!avatar) return error(res, 404, 'not_found', 'avatar not found');
 		const urlInfo = await resolveAvatarUrl(avatar);

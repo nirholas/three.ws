@@ -43,7 +43,7 @@ export default wrap(async (req, res) => {
 	const chainId = parseInt(url.searchParams.get('chain') || '', 10);
 	const q = (url.searchParams.get('q') || '').trim().slice(0, 80);
 	const cursor = url.searchParams.get('cursor');
-	const limit = Math.min(Math.max(parseInt(url.searchParams.get('limit') || '24', 10), 1), 60);
+	const limit = Math.min(Math.max(parseInt(url.searchParams.get('limit') || '24', 10), 1), 250);
 	const sourceFilter = url.searchParams.get('source') || 'all';
 	const quality = url.searchParams.get('quality') === 'all' ? 'all' : 'high';
 
