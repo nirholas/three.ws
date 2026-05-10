@@ -847,6 +847,10 @@
 			"dest": "/pay/index.html"
 		},
 		{
+			"src": "/pay/calls/[1-9A-HJ-NP-Za-km-z]+",
+			"dest": "/pay/calls/index.html"
+		},
+		{
 			"src": "/pay/(.*)",
 			"dest": "/pay/$1"
 		},

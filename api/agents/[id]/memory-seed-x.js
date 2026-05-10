@@ -4,7 +4,6 @@
 // Auth: session user must own the agent AND have an active 'x' social_connection.
 // Rate limit: 1 seed per agent per 6 hours.
 
-import Anthropic from '@anthropic-ai/sdk';
 import { sql } from '../../_lib/db.js';
 import { getSessionUser } from '../../_lib/auth.js';
 import { cors, json, method, wrap, error } from '../../_lib/http.js';
@@ -61,40 +60,54 @@ async function getAccessToken(conn) {
 // ── Distil tweets → facts via Claude ─────────────────────────────────────────
 
 async function distilFacts(profile, tweets) {
-	const client = new Anthropic({ apiKey: env.ANTHROPIC_API_KEY });
 	const tweetLines = tweets.map((t) => t.text).join('\n');
 
-	const msg = await client.messages.create({
-		model: 'claude-haiku-4-5-20251001',
-		max_tokens: 1024,
-		system: 'You distill tweets into concise memory facts for an AI agent. Focus on: recurring topics, strong opinions, projects, communication style, humor.',
-		messages: [
-			{
-				role: 'user',
-				content: `Profile: @${profile.username} | ${profile.description || ''} | ${profile.public_metrics?.followers_count ?? 0} followers\n\nRecent tweets (newest first):\n${tweetLines}`,
-			},
-		],
-		tools: [
-			{
-				name: 'extract_memory_facts',
-				description: 'Extract up to 15 concise single-sentence memory facts from the tweets.',
-				input_schema: {
-					type: 'object',
-					properties: {
-						facts: {
-							type: 'array',
-							items: { type: 'string' },
-							maxItems: 15,
-						},
-					},
-					required: ['facts'],
+	const res = await fetch('https://api.anthropic.com/v1/messages', {
+		method: 'POST',
+		headers: {
+			'x-api-key': env.ANTHROPIC_API_KEY,
+			'anthropic-version': '2023-06-01',
+			'content-type': 'application/json',
+		},
+		body: JSON.stringify({
+			model: 'claude-haiku-4-5-20251001',
+			max_tokens: 1024,
+			system:
+				'You distill tweets into concise memory facts for an AI agent. ' +
+				'Focus on: recurring topics, strong opinions, projects, communication style, humor.',
+			messages: [
+				{
+					role: 'user',
+					content:
+						`Profile: @${profile.username} | ${profile.description || ''} | ` +
+						`${profile.public_metrics?.followers_count ?? 0} followers\n\n` +
+						`Recent tweets (newest first):\n${tweetLines}`,
 				},
-			},
-		],
-		tool_choice: { type: 'tool', name: 'extract_memory_facts' },
+			],
+			tools: [
+				{
+					name: 'extract_memory_facts',
+					description: 'Extract up to 15 concise single-sentence memory facts from the tweets.',
+					input_schema: {
+						type: 'object',
+						properties: {
+							facts: { type: 'array', items: { type: 'string' }, maxItems: 15 },
+						},
+						required: ['facts'],
+					},
+				},
+			],
+			tool_choice: { type: 'tool', name: 'extract_memory_facts' },
+		}),
 	});
 
-	const toolUse = msg.content.find((b) => b.type === 'tool_use');
+	if (!res.ok) {
+		const text = await res.text().catch(() => '');
+		throw new Error(`Claude API error ${res.status}: ${text.slice(0, 200)}`);
+	}
+
+	const data = await res.json();
+	const toolUse = (data.content || []).find((b) => b.type === 'tool_use');
 	return toolUse?.input?.facts ?? [];
 }
 

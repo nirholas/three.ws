@@ -3,173 +3,736 @@
 	<head>
 		<meta charset="UTF-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-		<title>three.ws Artifact Demo</title>
+		<title>three.ws — Claude.ai artifact</title>
+		<meta
+			name="description"
+			content="Embed an interactive three.ws agent inside a Claude.ai artifact. Self-contained HTML, zero external dependencies."
+		/>
+		<link rel="stylesheet" href="/style.css" />
 		<style>
-			* {
-				margin: 0;
-				padding: 0;
-				box-sizing: border-box;
+			body {
+				overflow: auto;
+				background: radial-gradient(circle at 50% 0%, #1a0d3a 0%, #0a0e27 50%, #06081a 100%);
 			}
 
-			body {
-				font-family:
-					system-ui,
-					-apple-system,
-					sans-serif;
-				background: #0a0e27;
-				color: #fff;
+			.artifact-page {
+				max-width: 1180px;
+				margin: 0 auto;
+				padding: var(--space-2xl) var(--space-lg) var(--space-2xl);
 				display: flex;
 				flex-direction: column;
-				align-items: center;
-				justify-content: center;
-				min-height: 100vh;
-				padding: 20px;
+				gap: var(--space-2xl);
 			}
 
-			.container {
-				max-width: 800px;
-				width: 100%;
-			}
-
-			h1 {
+			.hero {
 				text-align: center;
-				margin-bottom: 20px;
-				font-size: 28px;
-			}
-
-			.info {
-				background: rgba(255, 255, 255, 0.05);
-				border: 1px solid rgba(255, 255, 255, 0.1);
-				border-radius: 8px;
-				padding: 16px;
-				margin-bottom: 20px;
-				font-size: 14px;
-				line-height: 1.6;
-			}
-
-			.viewer-frame {
-				background: #000;
-				border: 1px solid rgba(255, 255, 255, 0.1);
-				border-radius: 8px;
-				overflow: hidden;
-				aspect-ratio: 16 / 9;
-				margin-bottom: 20px;
-			}
-
-			#agent3d {
-				width: 100%;
-				height: 100%;
-			}
-
-			.controls {
 				display: flex;
-				gap: 10px;
-				flex-wrap: wrap;
-				justify-content: center;
+				flex-direction: column;
+				gap: var(--space-md);
+				align-items: center;
 			}
 
-			button {
-				background: rgba(59, 130, 246, 0.8);
-				border: none;
+			.eyebrow {
+				display: inline-flex;
+				align-items: center;
+				gap: 8px;
+				padding: 4px 12px;
+				border-radius: 999px;
+				font-size: var(--text-sm);
+				font-weight: 500;
+				color: var(--accent);
+				background: var(--accent-soft);
+				border: 1px solid var(--accent-soft);
+				letter-spacing: 0.04em;
+				text-transform: uppercase;
+			}
+
+			.eyebrow::before {
+				content: '';
+				width: 6px;
+				height: 6px;
+				border-radius: 50%;
+				background: var(--accent);
+				box-shadow: 0 0 12px var(--accent);
+			}
+
+			h1.headline {
+				font-family: var(--font-display);
+				font-size: clamp(2rem, 5vw, 3.4rem);
+				font-weight: 700;
+				line-height: 1.05;
+				margin: 0;
+				letter-spacing: -0.02em;
+				background: linear-gradient(180deg, #fff 0%, #b9b3ff 100%);
+				-webkit-background-clip: text;
+				background-clip: text;
+				color: transparent;
+			}
+
+			.lede {
+				max-width: 580px;
+				color: rgba(255, 255, 255, 0.7);
+				font-size: var(--text-lg);
+				line-height: var(--leading-tight);
+				margin: 0;
+			}
+
+			.builder {
+				display: grid;
+				grid-template-columns: minmax(320px, 1fr) minmax(0, 1.382fr);
+				gap: var(--space-lg);
+				align-items: stretch;
+			}
+
+			@media (max-width: 880px) {
+				.builder {
+					grid-template-columns: 1fr;
+				}
+			}
+
+			.panel {
+				background: rgba(255, 255, 255, 0.03);
+				border: 1px solid rgba(255, 255, 255, 0.08);
+				border-radius: var(--radius-lg);
+				padding: var(--space-lg);
+				display: flex;
+				flex-direction: column;
+				gap: var(--space-md);
+				min-width: 0;
+			}
+
+			.panel h2 {
+				margin: 0;
+				font-size: var(--text-base);
+				font-weight: 600;
+				color: rgba(255, 255, 255, 0.85);
+				letter-spacing: 0.02em;
+			}
+
+			.field {
+				display: flex;
+				flex-direction: column;
+				gap: 6px;
+			}
+
+			.field label {
+				font-size: var(--text-sm);
+				color: rgba(255, 255, 255, 0.6);
+				font-weight: 500;
+			}
+
+			.field input,
+			.field select {
+				background: rgba(0, 0, 0, 0.3);
+				border: 1px solid rgba(255, 255, 255, 0.12);
 				color: #fff;
-				padding: 10px 20px;
-				border-radius: 6px;
+				padding: 10px 12px;
+				border-radius: var(--radius-md);
+				font: inherit;
+				font-size: var(--text-base);
+				transition:
+					border-color 120ms,
+					background 120ms;
+			}
+
+			.field input:focus,
+			.field select:focus {
+				outline: none;
+				border-color: var(--accent);
+				background: rgba(0, 0, 0, 0.4);
+			}
+
+			.field-row {
+				display: grid;
+				grid-template-columns: 1fr 1fr;
+				gap: var(--space-sm);
+			}
+
+			.btn-row {
+				display: flex;
+				gap: 8px;
+				flex-wrap: wrap;
+			}
+
+			button.btn {
+				flex: 1;
+				min-width: 120px;
+				background: var(--accent);
+				color: #fff;
+				border: none;
+				padding: 11px 16px;
+				border-radius: var(--radius-md);
+				font: inherit;
+				font-weight: 600;
+				font-size: var(--text-base);
 				cursor: pointer;
-				font-size: 14px;
-				transition: background 0.2s;
+				transition:
+					transform 80ms,
+					filter 120ms;
 			}
 
-			button:hover {
-				background: rgba(59, 130, 246, 1);
+			button.btn:hover {
+				filter: brightness(1.1);
 			}
 
-			button:active {
+			button.btn:active {
 				transform: scale(0.98);
 			}
 
-			.input-group {
+			button.btn.ghost {
+				background: rgba(255, 255, 255, 0.06);
+				color: rgba(255, 255, 255, 0.9);
+				border: 1px solid rgba(255, 255, 255, 0.1);
+			}
+
+			button.btn.ghost:hover {
+				background: rgba(255, 255, 255, 0.12);
+				filter: none;
+			}
+
+			button.btn:disabled {
+				opacity: 0.5;
+				cursor: not-allowed;
+				filter: none;
+			}
+
+			.preview {
 				display: flex;
-				gap: 10px;
-				align-items: center;
-				margin-bottom: 10px;
+				flex-direction: column;
+				gap: var(--space-md);
 			}
 
-			input {
-				background: rgba(255, 255, 255, 0.1);
-				border: 1px solid rgba(255, 255, 255, 0.2);
-				color: #fff;
-				padding: 8px 12px;
-				border-radius: 4px;
+			.preview-frame {
 				flex: 1;
+				min-height: 380px;
+				background: #000;
+				border-radius: var(--radius-md);
+				border: 1px solid rgba(255, 255, 255, 0.1);
+				overflow: hidden;
+				position: relative;
 			}
 
-			input::placeholder {
+			.preview-frame iframe {
+				width: 100%;
+				height: 100%;
+				min-height: 380px;
+				border: 0;
+				display: block;
+			}
+
+			.preview-overlay {
+				position: absolute;
+				inset: 0;
+				display: flex;
+				align-items: center;
+				justify-content: center;
+				flex-direction: column;
+				gap: 12px;
+				background: rgba(8, 8, 20, 0.92);
+				color: rgba(255, 255, 255, 0.85);
+				font-size: var(--text-sm);
+				transition: opacity 200ms;
+				text-align: center;
+				padding: 24px;
+			}
+
+			.preview-overlay[hidden] {
+				display: none;
+			}
+
+			.preview-overlay.error {
+				color: #fca5a5;
+			}
+
+			.spinner {
+				width: 28px;
+				height: 28px;
+				border: 2px solid rgba(255, 255, 255, 0.15);
+				border-top-color: var(--accent);
+				border-radius: 50%;
+				animation: spin 700ms linear infinite;
+			}
+
+			@keyframes spin {
+				to {
+					transform: rotate(360deg);
+				}
+			}
+
+			.stats {
+				display: grid;
+				grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+				gap: var(--space-sm);
+			}
+
+			.stat {
+				background: rgba(0, 0, 0, 0.25);
+				border: 1px solid rgba(255, 255, 255, 0.06);
+				border-radius: var(--radius-md);
+				padding: 10px 12px;
+				display: flex;
+				flex-direction: column;
+				gap: 2px;
+			}
+
+			.stat .label {
+				font-size: var(--text-xs);
 				color: rgba(255, 255, 255, 0.5);
+				text-transform: uppercase;
+				letter-spacing: 0.06em;
+			}
+
+			.stat .value {
+				font-family: var(--font-mono);
+				font-size: var(--text-base);
+				color: #fff;
+				font-weight: 500;
+			}
+
+			.stat .value.ok {
+				color: #6ee7b7;
+			}
+
+			.stat .value.warn {
+				color: #fcd34d;
+			}
+
+			.stat .value.bad {
+				color: #fca5a5;
+			}
+
+			details.snippet {
+				background: rgba(0, 0, 0, 0.3);
+				border: 1px solid rgba(255, 255, 255, 0.08);
+				border-radius: var(--radius-md);
+				padding: var(--space-sm) var(--space-md);
+			}
+
+			details.snippet > summary {
+				cursor: pointer;
+				font-size: var(--text-sm);
+				font-weight: 500;
+				color: rgba(255, 255, 255, 0.75);
+				list-style: none;
+				display: flex;
+				align-items: center;
+				gap: 8px;
+			}
+
+			details.snippet > summary::-webkit-details-marker {
+				display: none;
+			}
+
+			details.snippet > summary::before {
+				content: '›';
+				transition: transform 150ms;
+				color: var(--accent);
+				font-size: 1.2em;
+			}
+
+			details.snippet[open] > summary::before {
+				transform: rotate(90deg);
+			}
+
+			details.snippet pre {
+				margin: var(--space-sm) 0 0;
+				padding: var(--space-md);
+				background: #06081a;
+				border-radius: var(--radius-md);
+				color: #d8d4ff;
+				font-family: var(--font-mono);
+				font-size: var(--text-sm);
+				line-height: 1.6;
+				overflow-x: auto;
+				white-space: pre-wrap;
+				word-break: break-all;
+			}
+
+			.facts {
+				display: grid;
+				grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+				gap: var(--space-md);
+			}
+
+			.fact {
+				background: rgba(255, 255, 255, 0.025);
+				border: 1px solid rgba(255, 255, 255, 0.06);
+				border-radius: var(--radius-md);
+				padding: var(--space-md);
+			}
+
+			.fact h3 {
+				margin: 0 0 6px;
+				font-size: var(--text-base);
+				font-weight: 600;
+				color: rgba(255, 255, 255, 0.92);
+			}
+
+			.fact p {
+				margin: 0;
+				font-size: var(--text-sm);
+				color: rgba(255, 255, 255, 0.65);
+				line-height: var(--leading-tight);
+			}
+
+			.toast {
+				position: fixed;
+				left: 50%;
+				bottom: 32px;
+				transform: translate(-50%, 24px);
+				background: #14141c;
+				color: #fff;
+				padding: 10px 18px;
+				border-radius: 999px;
+				border: 1px solid rgba(255, 255, 255, 0.12);
+				font-size: var(--text-sm);
+				font-weight: 500;
+				opacity: 0;
+				transition:
+					opacity 180ms,
+					transform 180ms;
+				pointer-events: none;
+				z-index: 50;
+				box-shadow: 0 12px 32px rgba(0, 0, 0, 0.4);
+			}
+
+			.toast.show {
+				opacity: 1;
+				transform: translate(-50%, 0);
+			}
+
+			.csp-line {
+				font-family: var(--font-mono);
+				font-size: 11px;
+				color: rgba(255, 255, 255, 0.4);
+				word-break: break-all;
+				padding: var(--space-sm) var(--space-md);
+				background: rgba(0, 0, 0, 0.3);
+				border-radius: var(--radius-sm);
+				border: 1px solid rgba(255, 255, 255, 0.05);
+				line-height: 1.5;
 			}
 		</style>
 	</head>
 	<body>
-		<div class="container">
-			<h1>three.ws Artifact Viewer</h1>
-
-			<div class="info">
-				<p>
-					This demo shows how a three.ws renders inside a Claude Artifact. The bundle is
-					self-contained — no external dependencies or iframes.
+		<main class="artifact-page">
+			<header class="hero">
+				<span class="eyebrow">Claude.ai artifact</span>
+				<h1 class="headline">Embed your agent in Claude.ai</h1>
+				<p class="lede">
+					Paste a single URL into a Claude conversation. The response is one self-contained
+					HTML document — three.js, GLTFLoader, and your agent's GLB are all inlined. No
+					script blocked by Claude's sandbox CSP, no fetch that ever leaves the page.
 				</p>
-			</div>
+			</header>
 
-			<div class="input-group">
-				<input
-					type="text"
-					id="agentIdInput"
-					placeholder="Enter agent ID (e.g., from URL ?agentId=123)"
-					value=""
-					onkeydown="if(event.key==='Enter') loadAgent()"
-				/>
-				<button onclick="loadAgent()">Load</button>
-			</div>
+			<section class="builder">
+				<div class="panel" aria-labelledby="config-h">
+					<h2 id="config-h">Configure</h2>
 
-			<div class="viewer-frame">
-				<div id="agent3d" data-origin="https://three.ws/"></div>
-			</div>
+					<div class="field">
+						<label for="agentIdInput">Agent ID</label>
+						<input
+							type="text"
+							id="agentIdInput"
+							placeholder="e.g. 3f2a4c…  (UUID or handle)"
+							autocomplete="off"
+							spellcheck="false"
+						/>
+					</div>
 
-			<div class="controls">
-				<button onclick="reloadAgent()">Reload</button>
-			</div>
-		</div>
+					<div class="field-row">
+						<div class="field">
+							<label for="themeInput">Theme</label>
+							<select id="themeInput">
+								<option value="dark">dark</option>
+								<option value="light">light</option>
+							</select>
+						</div>
+						<div class="field">
+							<label for="idleInput">Idle clip</label>
+							<input
+								type="text"
+								id="idleInput"
+								placeholder="(default)"
+								autocomplete="off"
+								spellcheck="false"
+							/>
+						</div>
+					</div>
 
-		<!-- The artifact bundle -->
-		<script src="/artifact.js"></script>
+					<div class="field">
+						<label for="bgInput">Background hex (optional)</label>
+						<input
+							type="text"
+							id="bgInput"
+							placeholder="1a0533"
+							maxlength="7"
+							autocomplete="off"
+							spellcheck="false"
+						/>
+					</div>
 
-		<script>
-			function getAgentIdFromUrl() {
-				return new URLSearchParams(window.location.search).get('agentId');
+					<div class="btn-row">
+						<button class="btn" id="btnGenerate" type="button">Generate</button>
+						<button class="btn ghost" id="btnReload" type="button" disabled>Reload</button>
+					</div>
+
+					<div class="stats" id="stats" hidden>
+						<div class="stat">
+							<span class="label">Artifact</span>
+							<span class="value" id="statSize">—</span>
+						</div>
+						<div class="stat">
+							<span class="label">First paint</span>
+							<span class="value" id="statTtfp">—</span>
+						</div>
+						<div class="stat">
+							<span class="label">Sandbox</span>
+							<span class="value" id="statSandbox">—</span>
+						</div>
+					</div>
+
+					<details class="snippet">
+						<summary>Claude artifact sandbox CSP</summary>
+						<div class="csp-line" id="cspText">Loading actual CSP from Claude.ai mirror…</div>
+					</details>
+				</div>
+
+				<div class="panel preview" aria-labelledby="preview-h">
+					<h2 id="preview-h">Live preview</h2>
+
+					<div class="preview-frame">
+						<iframe
+							id="previewFrame"
+							title="Claude.ai artifact preview"
+							sandbox="allow-scripts"
+							referrerpolicy="no-referrer"
+						></iframe>
+						<div class="preview-overlay" id="previewOverlay">
+							<div>Enter an agent ID and press <strong>Generate</strong></div>
+						</div>
+					</div>
+
+					<div class="btn-row">
+						<button class="btn" id="btnCopyUrl" type="button" disabled>Copy URL</button>
+						<button class="btn ghost" id="btnCopyHtml" type="button" disabled>
+							Copy raw HTML
+						</button>
+						<button class="btn ghost" id="btnOpen" type="button" disabled>Open in tab</button>
+					</div>
+
+					<details class="snippet">
+						<summary>Paste-into-Claude snippet</summary>
+						<pre id="claudeSnippet">Generate to see the snippet…</pre>
+					</details>
+				</div>
+			</section>
+
+			<section class="facts">
+				<div class="fact">
+					<h3>Self-contained</h3>
+					<p>
+						three.js, GLTFLoader, and the GLB are all inlined. The page renders with zero
+						network calls — fully compatible with Claude's sandbox CSP that forbids fetch
+						and external scripts.
+					</p>
+				</div>
+				<div class="fact">
+					<h3>Sandbox-locked CSP</h3>
+					<p>
+						The response sets a CSP mirroring Claude's own. Behavior in the live preview
+						matches behavior inside Claude.ai — no surprises between staging and prod.
+					</p>
+				</div>
+				<div class="fact">
+					<h3>Size budget</h3>
+					<p>
+						GLBs over 6 MB are rejected — Claude's artifact panel can hang on huge inlined
+						payloads. The viewer adds a flat 565 KB on top of the model.
+					</p>
+				</div>
+			</section>
+		</main>
+
+		<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+		<script type="module">
+			const $ = (id) => document.getElementById(id);
+			const els = {
+				agentInput: $('agentIdInput'),
+				themeInput: $('themeInput'),
+				idleInput: $('idleInput'),
+				bgInput: $('bgInput'),
+				btnGenerate: $('btnGenerate'),
+				btnReload: $('btnReload'),
+				btnCopyUrl: $('btnCopyUrl'),
+				btnCopyHtml: $('btnCopyHtml'),
+				btnOpen: $('btnOpen'),
+				frame: $('previewFrame'),
+				overlay: $('previewOverlay'),
+				stats: $('stats'),
+				statSize: $('statSize'),
+				statTtfp: $('statTtfp'),
+				statSandbox: $('statSandbox'),
+				snippet: $('claudeSnippet'),
+				toast: $('toast'),
+				cspText: $('cspText'),
+			};
+
+			const state = { url: null, html: null };
+
+			function showOverlay(message, isError = false) {
+				els.overlay.hidden = false;
+				els.overlay.classList.toggle('error', isError);
+				els.overlay.innerHTML = isError
+					? `<div>${escapeHtml(message)}</div>`
+					: `<div class="spinner"></div><div>${escapeHtml(message)}</div>`;
 			}
 
-			function loadAgent() {
-				const input = document.getElementById('agentIdInput');
-				const agentId = input.value.trim();
-				if (!agentId) return;
-				history.pushState({}, '', '?agentId=' + encodeURIComponent(agentId));
-				document.getElementById('agent3d').setAttribute('data-agent-id', agentId);
+			function hideOverlay() {
+				els.overlay.hidden = true;
 			}
 
-			function reloadAgent() {
-				const el = document.getElementById('agent3d');
-				const agentId = el.getAttribute('data-agent-id');
-				if (!agentId) return;
-				el.removeAttribute('data-agent-id');
-				setTimeout(() => el.setAttribute('data-agent-id', agentId), 0);
+			function escapeHtml(s) {
+				return String(s).replace(/[&<>]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' })[c]);
 			}
 
-			window.addEventListener('DOMContentLoaded', () => {
-				const agentId = getAgentIdFromUrl();
-				if (agentId) {
-					document.getElementById('agent3d').setAttribute('data-agent-id', agentId);
-					document.getElementById('agentIdInput').value = agentId;
+			function toast(msg) {
+				els.toast.textContent = msg;
+				els.toast.classList.add('show');
+				clearTimeout(toast._t);
+				toast._t = setTimeout(() => els.toast.classList.remove('show'), 1600);
+			}
+
+			function buildUrl() {
+				const agentId = els.agentInput.value.trim();
+				if (!agentId) return null;
+				const url = new URL('/api/artifact', window.location.origin);
+				url.searchParams.set('agent', agentId);
+				if (els.themeInput.value === 'light') url.searchParams.set('theme', 'light');
+				const idle = els.idleInput.value.trim();
+				if (idle) url.searchParams.set('idle', idle);
+				const bg = els.bgInput.value.trim().replace(/^#/, '');
+				if (/^[0-9a-f]{6}$/i.test(bg)) url.searchParams.set('bg', bg);
+				return url.toString();
+			}
+
+			function fmtBytes(n) {
+				if (n < 1024) return `${n} B`;
+				if (n < 1024 * 1024) return `${(n / 1024).toFixed(1)} KB`;
+				return `${(n / 1024 / 1024).toFixed(2)} MB`;
+			}
+
+			async function generate() {
+				const url = buildUrl();
+				if (!url) {
+					showOverlay('Enter an agent ID first.', true);
+					return;
 				}
+				state.url = url;
+				history.replaceState({}, '', '?agentId=' + encodeURIComponent(els.agentInput.value.trim()));
+
+				showOverlay('Fetching artifact…');
+				els.btnReload.disabled = true;
+				els.btnCopyUrl.disabled = true;
+				els.btnCopyHtml.disabled = true;
+				els.btnOpen.disabled = true;
+				els.stats.hidden = true;
+
+				const t0 = performance.now();
+				let res, html;
+				try {
+					res = await fetch(url, { credentials: 'omit' });
+				} catch (err) {
+					showOverlay(`Network error: ${err.message}`, true);
+					return;
+				}
+				if (!res.ok) {
+					let body;
+					try {
+						body = await res.json();
+					} catch {
+						body = null;
+					}
+					const msg = body?.error_description || body?.error || `HTTP ${res.status}`;
+					showOverlay(`${msg}`, true);
+					return;
+				}
+				html = await res.text();
+				const t1 = performance.now();
+
+				state.html = html;
+				const cspHeader = res.headers.get('content-security-policy') || '';
+				const sandboxOk = /frame-ancestors\s+\*/.test(cspHeader);
+				const sizeBytes = new Blob([html]).size;
+
+				els.statSize.textContent = fmtBytes(sizeBytes);
+				els.statSize.className =
+					'value ' + (sizeBytes > 8 * 1024 * 1024 ? 'bad' : sizeBytes > 5 * 1024 * 1024 ? 'warn' : 'ok');
+				els.statTtfp.textContent = `${(t1 - t0).toFixed(0)} ms`;
+				els.statTtfp.className =
+					'value ' + (t1 - t0 > 2000 ? 'warn' : t1 - t0 > 5000 ? 'bad' : 'ok');
+				els.statSandbox.textContent = sandboxOk ? 'compliant' : 'mismatch';
+				els.statSandbox.className = 'value ' + (sandboxOk ? 'ok' : 'bad');
+				els.stats.hidden = false;
+
+				els.frame.srcdoc = html;
+				hideOverlay();
+
+				els.btnReload.disabled = false;
+				els.btnCopyUrl.disabled = false;
+				els.btnCopyHtml.disabled = false;
+				els.btnOpen.disabled = false;
+
+				els.snippet.textContent =
+					"Here's my agent for this conversation:\n" + state.url;
+			}
+
+			els.btnGenerate.addEventListener('click', generate);
+			els.btnReload.addEventListener('click', generate);
+
+			els.agentInput.addEventListener('keydown', (e) => {
+				if (e.key === 'Enter') generate();
 			});
+
+			els.btnCopyUrl.addEventListener('click', async () => {
+				if (!state.url) return;
+				await navigator.clipboard.writeText(state.url);
+				toast('URL copied');
+			});
+
+			els.btnCopyHtml.addEventListener('click', async () => {
+				if (!state.html) return;
+				await navigator.clipboard.writeText(state.html);
+				toast(`Raw HTML copied (${fmtBytes(new Blob([state.html]).size)})`);
+			});
+
+			els.btnOpen.addEventListener('click', () => {
+				if (state.url) window.open(state.url, '_blank', 'noopener');
+			});
+
+			(function loadCsp() {
+				const cspUrl =
+					'https://raw.githubusercontent.com/simonw/scrape-claude-artifacts/main/content-security-policy.txt';
+				fetch(cspUrl)
+					.then((r) => (r.ok ? r.text() : Promise.reject()))
+					.then((txt) => {
+						els.cspText.textContent = txt.trim();
+					})
+					.catch(() => {
+						els.cspText.textContent =
+							'Could not reach simonw/scrape-claude-artifacts — see specs/CLAUDE_ARTIFACT.md for the locked-in copy.';
+					});
+			})();
+
+			(function init() {
+				const initialId = new URLSearchParams(window.location.search).get('agentId');
+				if (initialId) {
+					els.agentInput.value = initialId;
+					generate();
+				}
+			})();
 		</script>
 	</body>
 </html>

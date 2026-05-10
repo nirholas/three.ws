@@ -30,6 +30,7 @@ import {
 } from '@solana/spl-token';
 import bs58 from 'bs58';
 
+import { Redis } from '@upstash/redis';
 import { cors, json, readJson, wrap } from './_lib/http.js';
 import { limits, clientIp } from './_lib/rate-limit.js';
 import {
@@ -39,6 +40,95 @@ import {
 	NETWORK_SOLANA_MAINNET,
 } from './_lib/x402-spec.js';
 import { dispatch } from './_mcp/dispatch.js';
+import { env } from './_lib/env.js';
+
+// ---- Persistent feed of recent paid calls -------------------------------
+// Backed by Upstash Redis when available; falls back to an in-memory ring
+// in dev so the feed still works locally.
+const FEED_KEY = 'x402:pay:feed';
+const FEED_MAX = 50;
+const memFeed = [];
+
+let _redis = null;
+function redis() {
+	if (_redis !== null) return _redis;
+	if (env.UPSTASH_REDIS_REST_URL && env.UPSTASH_REDIS_REST_TOKEN) {
+		_redis = new Redis({
+			url: env.UPSTASH_REDIS_REST_URL,
+			token: env.UPSTASH_REDIS_REST_TOKEN,
+		});
+	} else {
+		_redis = false;
+	}
+	return _redis;
+}
+
+async function recordFeedEntry(entry) {
+	const r = redis();
+	if (r) {
+		try {
+			await r.lpush(FEED_KEY, JSON.stringify(entry));
+			await r.ltrim(FEED_KEY, 0, FEED_MAX - 1);
+		} catch {}
+	}
+	memFeed.unshift(entry);
+	if (memFeed.length > FEED_MAX) memFeed.length = FEED_MAX;
+}
+
+async function readFeed(limit = 25) {
+	const r = redis();
+	if (r) {
+		try {
+			const rows = await r.lrange(FEED_KEY, 0, limit - 1);
+			return rows
+				.map((row) => {
+					if (typeof row === 'string') {
+						try { return JSON.parse(row); } catch { return null; }
+					}
+					return row;
+				})
+				.filter(Boolean);
+		} catch {}
+	}
+	return memFeed.slice(0, limit);
+}
+
+// Per-tx record so /pay/calls/<tx> can show the full receipt + tool result.
+const memCalls = new Map();
+const CALL_KEY = (tx) => `x402:pay:call:${tx}`;
+const CALL_TTL_SECONDS = 60 * 60 * 24 * 30; // 30 days
+
+async function persistCall(tx, record) {
+	const r = redis();
+	if (r) {
+		try { await r.set(CALL_KEY(tx), JSON.stringify(record), { ex: CALL_TTL_SECONDS }); }
+		catch {}
+	}
+	memCalls.set(tx, record);
+}
+
+async function readCall(tx) {
+	const r = redis();
+	if (r) {
+		try {
+			const row = await r.get(CALL_KEY(tx));
+			if (typeof row === 'string') { try { return JSON.parse(row); } catch {} }
+			else if (row && typeof row === 'object') return row;
+		} catch {}
+	}
+	return memCalls.get(tx) || null;
+}
+
+function summarizeArgs(args) {
+	if (!args || typeof args !== 'object') return '';
+	if (args.url) {
+		try { return new URL(args.url).pathname.split('/').pop() || args.url; }
+		catch { return args.url.slice(0, 40); }
+	}
+	if (args.q) return `q=${String(args.q).slice(0, 24)}`;
+	const keys = Object.keys(args);
+	return keys.length ? keys.map((k) => `${k}=${String(args[k]).slice(0,16)}`).join(' ') : '';
+}
 
 const ALLOWED_TOOLS = new Set([
 	'tools/list',
@@ -218,6 +308,28 @@ async function runFlow({ tool, args, emit }) {
 		explorer: settled.transaction ? `https://solscan.io/tx/${settled.transaction}` : null,
 	});
 
+	// Persist a feed entry + per-tx record for the public feed and /pay/calls/<tx>.
+	const feedEntry = {
+		ts: Date.now(),
+		tool,
+		argsSummary: summarizeArgs(args),
+		tx: settled.transaction || null,
+		network: settled.network || accept.network,
+		amount: accept.amount,
+	};
+	void recordFeedEntry(feedEntry).catch(() => {});
+	if (settled.transaction) {
+		void persistCall(settled.transaction, {
+			...feedEntry,
+			args,
+			result: rpcResp?.result ?? rpcResp,
+			payer: verified.payer || buyer.publicKey.toBase58(),
+			payTo: accept.payTo,
+			asset: accept.asset,
+			explorer: `https://solscan.io/tx/${settled.transaction}`,
+		}).catch(() => {});
+	}
+
 	const total_ms = tSettled - t0;
 	emit('result', {
 		ok: true,
@@ -254,6 +366,17 @@ export default wrap(async (req, res) => {
 			} catch (err) {
 				return json(res, err.status || 500, { error: err.message });
 			}
+		}
+		if (u.searchParams.get('feed') === '1') {
+			const limit = Math.max(1, Math.min(50, Number(u.searchParams.get('limit') || 25)));
+			const items = await readFeed(limit);
+			return json(res, 200, { items });
+		}
+		const txParam = u.searchParams.get('call');
+		if (txParam) {
+			const record = await readCall(txParam);
+			if (!record) return json(res, 404, { error: 'call_not_found' });
+			return json(res, 200, record);
 		}
 		return json(res, 404, { error: 'not_found' });
 	}

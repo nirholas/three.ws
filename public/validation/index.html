@@ -3,7 +3,11 @@
 	<head>
 		<meta charset="utf-8" />
 		<meta name="viewport" content="width=device-width,initial-scale=1" />
-		<title>Validation Records · three.ws</title>
+		<title>glTF Validator · three.ws</title>
+		<meta
+			name="description"
+			content="Run the official Khronos glTF 2.0 validator and glTF-Transform performance inspector in your browser. Optionally sign &amp; pin reports on-chain."
+		/>
 		<link rel="icon" href="/favicon.ico" />
 		<style>
 			:root {
@@ -13,6 +17,13 @@
 				--border: #22222e;
 				--bg: #0b0b10;
 				--panel: #14141c;
+				--panel2: #1a1a24;
+				--muted: #888;
+				--text: #eee;
+				--text-soft: #bbb;
+				--ok: #76d776;
+				--warn: #ffc107;
+				--err: #ff5252;
 			}
 			* {
 				box-sizing: border-box;
@@ -24,7 +35,7 @@
 					Segoe UI,
 					Roboto,
 					sans-serif;
-				color: #eee;
+				color: var(--text);
 				margin: 0;
 				background: var(--bg);
 				min-height: 100vh;
@@ -67,65 +78,9 @@
 				letter-spacing: -0.01em;
 			}
 			.sub {
-				color: #888;
+				color: var(--muted);
 				margin: 0 0 22px;
 				font-size: 14px;
-			}
-			.toolbar {
-				display: flex;
-				gap: 12px;
-				margin-bottom: 24px;
-				flex-wrap: wrap;
-				align-items: center;
-			}
-			.toolbar input {
-				padding: 9px 11px;
-				background: #0f0f17;
-				border: 1px solid var(--border);
-				color: #eee;
-				border-radius: 8px;
-				font-size: 14px;
-			}
-			.toolbar input:focus {
-				outline: none;
-				border-color: var(--accent);
-			}
-			.form-group {
-				margin-bottom: 18px;
-			}
-			label {
-				display: block;
-				font-size: 13px;
-				font-weight: 500;
-				color: #bbb;
-				margin-bottom: 6px;
-			}
-			input[type='text'],
-			textarea,
-			select {
-				width: 100%;
-				background: #0f0f17;
-				border: 1px solid var(--border);
-				color: #eee;
-				padding: 9px 11px;
-				border-radius: 8px;
-				font-size: 14px;
-				font-family: inherit;
-			}
-			input[type='text']:focus,
-			textarea:focus,
-			select:focus {
-				outline: none;
-				border-color: var(--accent);
-			}
-			textarea {
-				resize: vertical;
-				font-family:
-					ui-monospace,
-					SF Mono,
-					Menlo,
-					monospace;
-				font-size: 13px;
 			}
 			.btn {
 				padding: 9px 14px;
@@ -136,6 +91,7 @@
 				cursor: pointer;
 				background: var(--accent);
 				color: #fff;
+				transition: filter 0.12s;
 			}
 			.btn:hover {
 				filter: brightness(1.1);
@@ -149,22 +105,448 @@
 				background: #222230;
 				color: #ddd;
 			}
+			.btn.ghost {
+				background: transparent;
+				border: 1px solid var(--border);
+				color: var(--text-soft);
+			}
+			.btn.ghost:hover {
+				background: var(--panel);
+				color: var(--text);
+			}
+			input[type='text'],
+			input[type='url'],
+			textarea,
+			select {
+				width: 100%;
+				background: #0f0f17;
+				border: 1px solid var(--border);
+				color: #eee;
+				padding: 9px 11px;
+				border-radius: 8px;
+				font-size: 14px;
+				font-family: inherit;
+			}
+			input:focus,
+			textarea:focus,
+			select:focus {
+				outline: none;
+				border-color: var(--accent);
+			}
+			textarea {
+				resize: vertical;
+				font-family: ui-monospace, SF Mono, Menlo, monospace;
+				font-size: 13px;
+			}
+
+			/* ── Tabs ────────────────────────────────────────────────────── */
+			.tabs {
+				display: flex;
+				gap: 4px;
+				border-bottom: 1px solid var(--border);
+				margin: 18px 0 24px;
+			}
+			.tab {
+				padding: 10px 18px;
+				background: transparent;
+				border: 0;
+				border-bottom: 2px solid transparent;
+				color: var(--muted);
+				font: inherit;
+				font-weight: 500;
+				cursor: pointer;
+				margin-bottom: -1px;
+			}
+			.tab:hover {
+				color: var(--text-soft);
+			}
+			.tab.active {
+				color: var(--text);
+				border-bottom-color: var(--accent);
+			}
+			.tab-panel {
+				display: none;
+			}
+			.tab-panel.active {
+				display: block;
+			}
+
+			/* ── Drop zone + URL input ───────────────────────────────────── */
+			.input-row {
+				display: grid;
+				grid-template-columns: 1fr 1fr;
+				gap: 14px;
+				margin-bottom: 14px;
+			}
+			@media (max-width: 720px) {
+				.input-row {
+					grid-template-columns: 1fr;
+				}
+			}
+			.drop-zone {
+				border: 2px dashed var(--border);
+				border-radius: 12px;
+				padding: 26px 18px;
+				text-align: center;
+				background: var(--panel);
+				cursor: pointer;
+				transition: border-color 0.15s, background 0.15s;
+			}
+			.drop-zone:hover,
+			.drop-zone.drag {
+				border-color: var(--accent);
+				background: rgba(106, 92, 255, 0.05);
+			}
+			.drop-zone input[type='file'] {
+				display: none;
+			}
+			.drop-zone .dz-title {
+				font-weight: 600;
+				color: var(--text);
+				margin-bottom: 4px;
+			}
+			.drop-zone .dz-sub {
+				font-size: 12px;
+				color: var(--muted);
+			}
+			.url-box {
+				background: var(--panel);
+				border: 1px solid var(--border);
+				border-radius: 12px;
+				padding: 18px;
+			}
+			.url-box label {
+				display: block;
+				font-size: 13px;
+				font-weight: 500;
+				color: var(--text-soft);
+				margin-bottom: 6px;
+			}
+			.url-row {
+				display: flex;
+				gap: 8px;
+			}
+			.url-row input {
+				flex: 1;
+			}
+			.url-box .url-hint {
+				font-size: 12px;
+				color: var(--muted);
+				margin-top: 8px;
+			}
+
+			.samples {
+				display: flex;
+				flex-wrap: wrap;
+				align-items: center;
+				gap: 8px;
+				margin-bottom: 16px;
+			}
+			.samples-label {
+				font-size: 12px;
+				color: var(--muted);
+				margin-right: 4px;
+			}
+			.sample-chip {
+				background: var(--panel);
+				border: 1px solid var(--border);
+				color: var(--text-soft);
+				padding: 6px 12px;
+				border-radius: 99px;
+				font-size: 12px;
+				cursor: pointer;
+				transition: all 0.12s;
+			}
+			.sample-chip:hover {
+				border-color: var(--accent);
+				color: var(--text);
+			}
+
+			.status {
+				font-size: 13px;
+				color: var(--text-soft);
+				padding: 10px 14px;
+				background: var(--panel);
+				border: 1px solid var(--border);
+				border-radius: 8px;
+				margin-bottom: 16px;
+				font-family: ui-monospace, SF Mono, Menlo, monospace;
+			}
+			.status.ok {
+				border-color: rgba(118, 215, 118, 0.3);
+				color: var(--ok);
+			}
+			.status.err {
+				border-color: rgba(255, 92, 92, 0.4);
+				color: #ffb3b3;
+				background: rgba(255, 92, 92, 0.08);
+			}
+			.status:empty {
+				display: none;
+			}
+
+			.action-bar {
+				display: flex;
+				gap: 8px;
+				margin-bottom: 16px;
+				align-items: center;
+				justify-content: flex-end;
+			}
+
+			/* ── Validator report (shared by /app and /validation) ─────── */
+			.report {
+				padding: 0;
+				color: var(--text);
+			}
+			.report h1 {
+				margin: 0 0 8px;
+				font-size: 20px;
+			}
+			.report-sub {
+				color: var(--muted);
+				font-size: 13px;
+				margin: 0 0 16px;
+			}
+			.report-head {
+				display: flex;
+				align-items: baseline;
+				justify-content: space-between;
+				gap: 14px;
+				flex-wrap: wrap;
+				margin-bottom: 12px;
+			}
+			.report-download {
+				font-size: 12px;
+				background: var(--panel);
+				border: 1px solid var(--border);
+				padding: 6px 12px;
+				border-radius: 7px;
+				color: var(--text-soft);
+			}
+			.report-download:hover {
+				background: var(--panel2);
+				color: var(--text);
+			}
+			.report ul {
+				line-height: 1.65;
+				padding-left: 22px;
+			}
+			.report ul li {
+				margin: 4px 0;
+			}
+			.report-banner {
+				display: flex;
+				align-items: center;
+				gap: 12px;
+				padding: 14px 16px;
+				border-radius: 8px;
+				margin-bottom: 16px;
+				font-size: 14px;
+			}
+			.report-banner-clean {
+				background: rgba(118, 215, 118, 0.1);
+				border: 1px solid rgba(118, 215, 118, 0.3);
+				color: var(--ok);
+			}
+			.report-banner-issues {
+				background: rgba(244, 67, 54, 0.08);
+				border: 1px solid rgba(244, 67, 54, 0.25);
+				color: var(--text);
+			}
+			.report-banner-icon {
+				font-size: 18px;
+				font-weight: bold;
+			}
+			.report-section-heading {
+				font-size: 15px;
+				margin: 22px 0 10px;
+				padding-left: 12px;
+				border-left: 4px solid #888;
+				font-weight: 600;
+			}
+			.report-count {
+				font-weight: normal;
+				opacity: 0.7;
+				font-size: 0.9em;
+			}
+			.report-table-wrap {
+				overflow-x: auto;
+				border: 1px solid var(--border);
+				border-radius: 8px;
+				margin-bottom: 14px;
+			}
+			.report-table {
+				border-collapse: collapse;
+				width: 100%;
+				font-size: 13px;
+			}
+			.report-table thead tr {
+				background: var(--panel);
+			}
+			.report-table th,
+			.report-table td {
+				padding: 8px 12px;
+				text-align: left;
+				color: var(--text-soft);
+				border-bottom: 1px solid var(--border);
+			}
+			.report-table tr:last-child td {
+				border-bottom: 0;
+			}
+			.report-table tr:nth-child(2n) td {
+				background: rgba(255, 255, 255, 0.015);
+			}
+			.report-table code {
+				font-family: ui-monospace, SF Mono, Menlo, monospace;
+				font-size: 12px;
+				color: var(--text);
+			}
+
+			/* ── Inspect report ──────────────────────────────────────────── */
+			.inspect-grid {
+				display: grid;
+				grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+				gap: 10px;
+				margin-bottom: 22px;
+			}
+			.inspect-card {
+				background: var(--panel);
+				border: 1px solid var(--border);
+				border-radius: 10px;
+				padding: 14px 16px;
+			}
+			.inspect-card-label {
+				font-size: 11px;
+				text-transform: uppercase;
+				letter-spacing: 0.5px;
+				color: var(--muted);
+				margin-bottom: 6px;
+			}
+			.inspect-card-value {
+				font-size: 22px;
+				font-weight: 600;
+				color: var(--text);
+				font-variant-numeric: tabular-nums;
+			}
+			.inspect-card-foot {
+				font-size: 11px;
+				color: var(--muted);
+				margin-top: 4px;
+			}
+			.inspect-suggestions {
+				display: flex;
+				flex-direction: column;
+				gap: 8px;
+				margin-bottom: 22px;
+			}
+			.inspect-suggestion {
+				background: var(--panel);
+				border: 1px solid var(--border);
+				border-left: 3px solid #888;
+				border-radius: 8px;
+				padding: 12px 14px;
+			}
+			.inspect-suggestion-head {
+				display: flex;
+				align-items: center;
+				gap: 10px;
+				margin-bottom: 6px;
+				flex-wrap: wrap;
+			}
+			.inspect-suggestion-badge {
+				font-size: 10px;
+				font-weight: 700;
+				color: #fff;
+				padding: 2px 8px;
+				border-radius: 4px;
+				text-transform: uppercase;
+				letter-spacing: 0.5px;
+			}
+			.inspect-suggestion-id {
+				font-size: 11px;
+				color: var(--muted);
+				font-family: ui-monospace, SF Mono, Menlo, monospace;
+			}
+			.inspect-suggestion-estimate {
+				font-size: 11px;
+				color: var(--ok);
+				margin-left: auto;
+			}
+			.inspect-suggestion-msg {
+				font-size: 13px;
+				color: var(--text-soft);
+				line-height: 1.5;
+			}
+			.inspect-ext-list {
+				list-style: none;
+				padding: 0;
+				display: flex;
+				flex-wrap: wrap;
+				gap: 6px;
+				margin-bottom: 22px;
+			}
+			.inspect-ext-list li {
+				background: var(--panel);
+				border: 1px solid var(--border);
+				border-radius: 6px;
+				padding: 4px 10px;
+				font-size: 12px;
+			}
+			.inspect-ext-list code {
+				font-family: ui-monospace, SF Mono, Menlo, monospace;
+				color: var(--text);
+			}
+			.inspect-ext-required {
+				margin-left: 8px;
+				font-size: 10px;
+				color: var(--accent2);
+				text-transform: uppercase;
+				letter-spacing: 0.5px;
+			}
+
+			.loading {
+				padding: 40px 20px;
+				text-align: center;
+				color: var(--muted);
+				font-size: 13px;
+			}
 			.err {
 				padding: 12px;
 				background: rgba(255, 92, 92, 0.1);
 				border: 1px solid rgba(255, 92, 92, 0.3);
 				border-radius: 8px;
 				color: #ffb3b3;
-				margin-bottom: 14px;
 			}
-			.info {
-				padding: 12px;
-				background: rgba(106, 92, 255, 0.1);
-				border: 1px solid rgba(106, 92, 255, 0.3);
+			.empty-result {
+				padding: 60px 20px;
+				text-align: center;
+				color: var(--muted);
+				border: 1px dashed var(--border);
+				border-radius: 12px;
+			}
+			.empty-result-title {
+				font-size: 14px;
+				font-weight: 600;
+				color: var(--text-soft);
+				margin-bottom: 6px;
+			}
+
+			/* ── Records tab (kept compatible with ValidationDashboard) ── */
+			.records-toolbar {
+				display: flex;
+				gap: 12px;
+				margin-bottom: 18px;
+				flex-wrap: wrap;
+				align-items: center;
+			}
+			.records-toolbar input {
+				padding: 9px 11px;
+				background: #0f0f17;
+				border: 1px solid var(--border);
+				color: #eee;
 				border-radius: 8px;
-				color: #c9bfff;
-				margin-bottom: 14px;
-				font-size: 13px;
+				font-size: 14px;
+				width: 190px;
 			}
 			.records {
 				display: flex;
@@ -204,22 +586,23 @@
 			}
 			.badge.pass {
 				background: rgba(76, 175, 80, 0.15);
-				color: #76d776;
+				color: var(--ok);
 			}
 			.badge.warn {
 				background: rgba(255, 193, 7, 0.15);
-				color: #ffc107;
+				color: var(--warn);
 			}
 			.badge.fail {
 				background: rgba(244, 67, 54, 0.15);
-				color: #ff5252;
+				color: var(--err);
 			}
 			.record-meta {
 				display: flex;
 				gap: 16px;
 				font-size: 12px;
-				color: #888;
+				color: var(--muted);
 				margin: 8px 0;
+				flex-wrap: wrap;
 			}
 			.record-meta-item {
 				display: flex;
@@ -234,11 +617,7 @@
 			}
 			.record-meta-value {
 				color: #ccc;
-				font-family:
-					ui-monospace,
-					SF Mono,
-					Menlo,
-					monospace;
+				font-family: ui-monospace, SF Mono, Menlo, monospace;
 				font-size: 13px;
 				word-break: break-all;
 			}
@@ -253,7 +632,7 @@
 				font-size: 12px;
 				border-radius: 7px;
 				border: 1px solid var(--border);
-				background: #1a1a24;
+				background: var(--panel2);
 				color: #ddd;
 				cursor: pointer;
 				text-decoration: none;
@@ -262,12 +641,21 @@
 			.record-actions a:hover {
 				background: #22222e;
 			}
+			.record-notes {
+				font-size: 13px;
+				color: #aaa;
+				margin: 8px 0 4px;
+				padding: 8px 10px;
+				background: rgba(106, 92, 255, 0.06);
+				border-left: 2px solid var(--accent);
+				border-radius: 0 6px 6px 0;
+			}
 			.empty {
 				text-align: center;
 				padding: 60px 20px;
 				border: 1px dashed var(--border);
 				border-radius: 14px;
-				color: #888;
+				color: var(--muted);
 			}
 			.empty-title {
 				font-size: 15px;
@@ -279,42 +667,25 @@
 				font-size: 13px;
 				margin-bottom: 18px;
 			}
-			.how-grid {
-				display: grid;
-				grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-				gap: 12px;
-				margin-bottom: 28px;
+			.err-box {
+				padding: 12px;
+				background: rgba(255, 92, 92, 0.1);
+				border: 1px solid rgba(255, 92, 92, 0.3);
+				border-radius: 8px;
+				color: #ffb3b3;
+				margin-bottom: 14px;
 			}
-			.how-card {
-				background: var(--panel);
-				border: 1px solid var(--border);
-				border-radius: 10px;
-				padding: 14px 16px;
-			}
-			.how-card-icon {
-				font-size: 18px;
-				margin-bottom: 8px;
-			}
-			.how-card-title {
+			.info-box {
+				padding: 12px;
+				background: rgba(106, 92, 255, 0.1);
+				border: 1px solid rgba(106, 92, 255, 0.3);
+				border-radius: 8px;
+				color: #c9bfff;
+				margin-bottom: 14px;
 				font-size: 13px;
-				font-weight: 600;
-				color: #ddd;
-				margin-bottom: 4px;
 			}
-			.how-card-desc {
-				font-size: 12px;
-				color: #888;
-				line-height: 1.5;
-			}
-			.record-notes {
-				font-size: 13px;
-				color: #aaa;
-				margin: 8px 0 4px;
-				padding: 8px 10px;
-				background: rgba(106, 92, 255, 0.06);
-				border-left: 2px solid var(--accent);
-				border-radius: 0 6px 6px 0;
-			}
+
+			/* ── Submit modal (unchanged element IDs/classes for dashboard) */
 			.modal-overlay {
 				position: fixed;
 				inset: 0;
@@ -335,7 +706,7 @@
 				border: 1px solid var(--border);
 				border-radius: 14px;
 				padding: 22px;
-				width: min(600px, calc(100vw - 32px));
+				width: min(640px, calc(100vw - 32px));
 				max-height: calc(100vh - 32px);
 				overflow-y: auto;
 			}
@@ -352,43 +723,21 @@
 				margin-top: 20px;
 				justify-content: flex-end;
 			}
-			.toast {
-				position: fixed;
-				bottom: 24px;
-				left: 50%;
-				transform: translateX(-50%);
-				background: #1a1a24;
-				border: 1px solid var(--border);
-				padding: 10px 18px;
-				border-radius: 99px;
+			.form-group {
+				margin-bottom: 18px;
+			}
+			.form-group label {
+				display: block;
 				font-size: 13px;
-				color: #ddd;
-				z-index: 70;
-				box-shadow: 0 4px 18px rgba(0, 0, 0, 0.4);
-				animation: toast-in 0.2s;
-			}
-			@keyframes toast-in {
-				from {
-					opacity: 0;
-					transform: translate(-50%, 8px);
-				}
-				to {
-					opacity: 1;
-					transform: translateX(-50%);
-				}
-			}
-			.toast.err {
-				border-color: #cc4040;
-				background: #1e1010;
-			}
-			.section {
-				margin-top: 34px;
+				font-weight: 500;
+				color: var(--text-soft);
+				margin-bottom: 6px;
 			}
 			.section-title {
-				font-size: 15px;
+				font-size: 13px;
 				font-weight: 600;
-				margin: 0 0 12px;
-				color: #eee;
+				margin: 14px 0 8px;
+				color: var(--text-soft);
 			}
 			.file-input-wrapper {
 				position: relative;
@@ -409,16 +758,11 @@
 				border-radius: 8px;
 				text-align: center;
 				cursor: pointer;
-				transition: border-color 0.15s;
-				color: #888;
-			}
-			.file-input-wrapper input[type='file']:focus + .file-input-label {
-				border-color: var(--accent);
-				color: #ccc;
+				color: var(--muted);
 			}
 			.file-input-wrapper:hover .file-input-label {
-				border-color: #444;
-				color: #aaa;
+				border-color: var(--accent);
+				color: var(--text-soft);
 			}
 			pre {
 				background: #0f0f17;
@@ -430,11 +774,25 @@
 				max-height: 200px;
 			}
 			code {
-				font-family:
-					ui-monospace,
-					SF Mono,
-					Menlo,
-					monospace;
+				font-family: ui-monospace, SF Mono, Menlo, monospace;
+			}
+			.toast {
+				position: fixed;
+				bottom: 24px;
+				left: 50%;
+				transform: translateX(-50%);
+				background: var(--panel2);
+				border: 1px solid var(--border);
+				padding: 10px 18px;
+				border-radius: 99px;
+				font-size: 13px;
+				color: #ddd;
+				z-index: 70;
+				box-shadow: 0 4px 18px rgba(0, 0, 0, 0.4);
+			}
+			.toast.err {
+				border-color: #cc4040;
+				background: #1e1010;
 			}
 			.header-logo {
 				width: 14px;
@@ -442,11 +800,42 @@
 				vertical-align: -2px;
 				margin-right: 6px;
 			}
+			.how-grid {
+				display: grid;
+				grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+				gap: 12px;
+				margin-bottom: 22px;
+			}
+			.how-card {
+				background: var(--panel);
+				border: 1px solid var(--border);
+				border-radius: 10px;
+				padding: 14px 16px;
+			}
+			.how-card-icon {
+				font-size: 18px;
+				margin-bottom: 8px;
+			}
+			.how-card-title {
+				font-size: 13px;
+				font-weight: 600;
+				color: #ddd;
+				margin-bottom: 4px;
+			}
+			.how-card-desc {
+				font-size: 12px;
+				color: var(--muted);
+				line-height: 1.5;
+			}
 		</style>
 	</head>
 	<body>
 		<header>
-			<div class="brand"><a href="/"><img src="/three.svg" alt="" class="header-logo" aria-hidden="true" />three.ws</a></div>
+			<div class="brand">
+				<a href="/"
+					><img src="/three.svg" alt="" class="header-logo" aria-hidden="true" />three.ws</a
+				>
+			</div>
 			<nav>
 				<a href="/marketplace.html?tab=mine">Home</a>
 				<a href="/dashboard">Dashboard</a>
@@ -454,62 +843,150 @@
 			</nav>
 		</header>
 
-		<main id="main">
-			<h1>Validation Records</h1>
+		<main>
+			<h1>glTF Validator</h1>
 			<p class="sub">
-				On-chain proof that an agent's GLB model, metadata, and skills have been audited. Each record is signed by a validator's wallet and stored immutably.
+				Run the official
+				<a href="https://github.com/KhronosGroup/glTF-Validator" target="_blank" rel="noreferrer"
+					>Khronos glTF 2.0 validator</a
+				>
+				and a
+				<a href="https://gltf-transform.dev" target="_blank" rel="noreferrer"
+					>glTF-Transform</a
+				>
+				performance inspector — fully client-side. Optionally sign &amp; pin reports
+				on-chain.
 			</p>
 
 			<div class="how-grid">
 				<div class="how-card">
 					<div class="how-card-icon">◈</div>
-					<div class="how-card-title">GLB Schema</div>
-					<div class="how-card-desc">Validates glTF 2.0 file structure — required chunks, mesh data, extensions.</div>
+					<div class="how-card-title">Khronos spec check</div>
+					<div class="how-card-desc">
+						Validates glTF 2.0 file structure, accessors, materials and extensions against
+						the official Khronos suite.
+					</div>
 				</div>
 				<div class="how-card">
 					<div class="how-card-icon">◆</div>
-					<div class="how-card-title">Manifest Integrity</div>
-					<div class="how-card-desc">Checks on-chain metadata — agent ID, chain ID, registry address consistency.</div>
+					<div class="how-card-title">Performance inspector</div>
+					<div class="how-card-desc">
+						Surfaces what the spec check does not — texture weights, draw-call shape, and
+						compression opportunities (Draco, Meshopt, KTX2).
+					</div>
 				</div>
 				<div class="how-card">
 					<div class="how-card-icon">◇</div>
-					<div class="how-card-title">Skill Handlers</div>
-					<div class="how-card-desc">Verifies declared skills initialize without errors or missing dependencies.</div>
+					<div class="how-card-title">On-chain attestations</div>
+					<div class="how-card-desc">
+						Sign reports with a wallet, pin to IPFS, and record on the Validation Registry
+						so anyone can verify the audit.
+					</div>
 				</div>
 			</div>
 
-			<div class="toolbar">
-				<input
-					type="text"
-					id="agent-input"
-					placeholder="Agent ID (e.g., 1)"
-					style="width: 180px"
-				/>
-				<input
-					type="text"
-					id="chain-input"
-					placeholder="Chain ID (e.g., 84532)"
-					style="width: 190px"
-				/>
-				<button class="btn" id="load-btn">Load Records</button>
-				<button class="btn sec" id="submit-btn">Submit Validation</button>
+			<div class="tabs" role="tablist">
+				<button class="tab active" role="tab" data-tab="validate" aria-selected="true">
+					Validate
+				</button>
+				<button class="tab" role="tab" data-tab="inspect" aria-selected="false">
+					Inspect
+				</button>
+				<button class="tab" role="tab" data-tab="records" aria-selected="false">
+					Records
+				</button>
 			</div>
 
-			<div id="error" class="err" style="display: none"></div>
-			<div id="info" class="info" style="display: none"></div>
-			<div id="records" class="records"></div>
-			<div id="empty" class="empty" style="display: none">
-				<div class="empty-title">No validation records found</div>
-				<div class="empty-sub">This agent hasn't been validated yet, or the agent ID / chain ID is incorrect.</div>
-				<button class="btn" id="empty-submit-btn">Submit a Validation</button>
-			</div>
+			<!-- ── Validate panel ─────────────────────────────────────────── -->
+			<section class="tab-panel active" data-tab="validate" role="tabpanel">
+				<div class="input-row">
+					<label class="drop-zone" id="drop-zone">
+						<input type="file" id="file-input" accept=".glb,.gltf,model/gltf-binary,model/gltf+json" />
+						<div class="dz-title">Drop a .glb or .gltf file</div>
+						<div class="dz-sub">or click to choose · runs entirely in your browser</div>
+					</label>
+					<div class="url-box">
+						<label for="url-input">…or fetch from a URL</label>
+						<div class="url-row">
+							<input
+								type="url"
+								id="url-input"
+								placeholder="https://example.com/model.glb"
+							/>
+							<button class="btn" id="url-btn">Fetch</button>
+						</div>
+						<div class="url-hint">CORS must be allowed by the host server.</div>
+					</div>
+				</div>
+
+				<div class="samples">
+					<span class="samples-label">Try a sample:</span>
+					<span id="samples"></span>
+				</div>
+
+				<div id="status" class="status"></div>
+
+				<div class="action-bar">
+					<button class="btn ghost" id="sign-btn" disabled>
+						Sign &amp; pin on-chain →
+					</button>
+				</div>
+
+				<div id="validate-output">
+					<div class="empty-result">
+						<div class="empty-result-title">No model loaded</div>
+						<div>Drop a file, paste a URL, or pick a sample to run the validator.</div>
+					</div>
+				</div>
+			</section>
+
+			<!-- ── Inspect panel ──────────────────────────────────────────── -->
+			<section class="tab-panel" data-tab="inspect" role="tabpanel">
+				<div id="inspect-output">
+					<div class="empty-result">
+						<div class="empty-result-title">No model loaded</div>
+						<div>
+							Load a model in the <b>Validate</b> tab — both checks run in parallel and
+							results appear here.
+						</div>
+					</div>
+				</div>
+			</section>
+
+			<!-- ── Records panel ──────────────────────────────────────────── -->
+			<section class="tab-panel" data-tab="records" role="tabpanel">
+				<p class="sub">
+					On-chain proof that an agent's GLB model has been audited. Each record is signed by
+					a validator's wallet and stored immutably.
+				</p>
+
+				<div class="records-toolbar">
+					<input type="text" id="agent-input" placeholder="Agent ID (e.g., 1)" />
+					<input type="text" id="chain-input" placeholder="Chain ID (e.g., 84532)" />
+					<button class="btn" id="load-btn">Load Records</button>
+					<button class="btn sec" id="submit-btn">Submit JSON Report</button>
+				</div>
+
+				<div id="error" class="err-box" style="display: none"></div>
+				<div id="info" class="info-box" style="display: none"></div>
+				<div id="records" class="records"></div>
+				<div id="empty" class="empty" style="display: none">
+					<div class="empty-title">No validation records found</div>
+					<div class="empty-sub">
+						This agent hasn't been validated yet, or the agent ID / chain ID is incorrect.
+					</div>
+					<button class="btn" id="empty-submit-btn">Submit a Validation</button>
+				</div>
+			</section>
 		</main>
 
-		<!-- Submit Modal -->
+		<!-- Submit Modal — IDs preserved so ValidationDashboard wiring still works -->
 		<div class="modal-overlay" id="submit-modal">
 			<div class="modal">
 				<h2>Submit Validation Report</h2>
-				<p class="sub">Upload a JSON validation report signed by your wallet.</p>
+				<p class="sub">
+					Upload a JSON validation report — signed by your wallet and stored on-chain.
+				</p>
 
 				<div class="form-group">
 					<label>Report File (JSON)</label>
@@ -519,19 +996,13 @@
 							📄 Click to select or drag a JSON report file
 						</label>
 					</div>
-					<div
-						id="file-status"
-						style="font-size: 12px; color: #888; margin-top: 8px"
-					></div>
+					<div id="file-status" style="font-size: 12px; color: var(--muted); margin-top: 8px"></div>
 				</div>
 
-				<div id="preview-section" style="display: none" class="section">
+				<div id="preview-section" style="display: none">
 					<div class="section-title">Preview</div>
 					<pre id="preview-json"></pre>
-					<div
-						id="preview-error"
-						style="color: #ffb3b3; font-size: 12px; margin-top: 8px"
-					></div>
+					<div id="preview-error" style="color: #ffb3b3; font-size: 12px; margin-top: 8px"></div>
 				</div>
 
 				<div id="hash-section" style="display: none" class="form-group">
@@ -540,16 +1011,9 @@
 						type="text"
 						id="report-hash"
 						readonly
-						style="
-							font-family:
-								ui-monospace,
-								SF Mono,
-								Menlo,
-								monospace;
-							font-size: 12px;
-						"
+						style="font-family: ui-monospace, SF Mono, Menlo, monospace; font-size: 12px"
 					/>
-					<div style="font-size: 12px; color: #888; margin-top: 6px">
+					<div style="font-size: 12px; color: var(--muted); margin-top: 6px">
 						Computed via keccak256(JSON.stringify(report))
 					</div>
 				</div>
@@ -563,8 +1027,9 @@
 
 		<script type="module">
 			import { ValidationDashboard } from '/src/validation-ui.js';
+			import { ValidationPage } from '/src/validation-page.js';
 
-			const dashboard = new ValidationDashboard(document.getElementById('main'), {
+			const dashboard = new ValidationDashboard(document.querySelector('main'), {
 				agentInput: document.getElementById('agent-input'),
 				chainInput: document.getElementById('chain-input'),
 				loadBtn: document.getElementById('load-btn'),
@@ -584,11 +1049,30 @@
 				submitReportBtn: document.getElementById('submit-report-btn'),
 			});
 
-			window.valDash = dashboard;
-			window.closeSubmitModal = () => dashboard.closeModal();
-			window.submitModal = () => dashboard.submitReport();
+			const page = new ValidationPage(
+				{
+					tabs: document.querySelectorAll('.tab'),
+					panels: document.querySelectorAll('.tab-panel'),
+					dropZone: document.getElementById('drop-zone'),
+					fileInput: document.getElementById('file-input'),
+					urlInput: document.getElementById('url-input'),
+					urlBtn: document.getElementById('url-btn'),
+					samples: document.getElementById('samples'),
+					statusEl: document.getElementById('status'),
+					validateOut: document.getElementById('validate-output'),
+					inspectOut: document.getElementById('inspect-output'),
+					signBtn: document.getElementById('sign-btn'),
+				},
+				dashboard,
+			);
 
-			document.getElementById('empty-submit-btn').addEventListener('click', () => dashboard.openModal());
+			window.valDash = dashboard;
+			window.valPage = page;
+			window.closeSubmitModal = () => dashboard.closeModal();
+
+			document
+				.getElementById('empty-submit-btn')
+				.addEventListener('click', () => dashboard.openModal());
 		</script>
 	</body>
 </html>

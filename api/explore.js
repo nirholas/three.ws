@@ -8,7 +8,21 @@
  *   cursor=<iso>   — created_at/registered_at ISO string for pagination
  *   limit=<int>    — page size, default 24, max 60
  *   source=<all|onchain|avatar> — restrict feed to one source. Default 'all'.
+ *   quality=<all|high> — avatar quality filter. 'high' (default) hides
+ *                        autonamed/filename-like junk and surfaces named
+ *                        community + curated avatars first.
  */
+
+// Names we never want surfaced in marketplace-quality views. Mirrors the
+// auto-naming patterns used by the avatar editor and by raw filename uploads
+// (mo-prefixed short IDs, draft slugs, UUIDs, "Avatar #abcd12", etc.).
+const NAME_AUTONAMED_RE =
+	/^(Avatar #[0-9a-f]{6}|Avatar \d+\/\d+\/\d{4}.*|mo[a-z0-9]{4,}|draft-[a-z0-9]+|[a-f0-9-]{30,}|new_project_\d+|TEST|test|Untitled.*)$/i;
+
+function isAutoNamed(name) {
+	if (!name || !name.trim()) return true;
+	return NAME_AUTONAMED_RE.test(name.trim());
+}
 
 import { sql } from './_lib/db.js';
 import { cors, json, method, wrap, error } from './_lib/http.js';
@@ -31,6 +45,7 @@ export default wrap(async (req, res) => {
 	const cursor = url.searchParams.get('cursor');
 	const limit = Math.min(Math.max(parseInt(url.searchParams.get('limit') || '24', 10), 1), 60);
 	const sourceFilter = url.searchParams.get('source') || 'all';
+	const quality = url.searchParams.get('quality') === 'all' ? 'all' : 'high';
 
 	const cursorDate = cursor ? new Date(cursor) : null;
 	if (cursor && isNaN(cursorDate?.getTime())) {
@@ -65,17 +80,22 @@ export default wrap(async (req, res) => {
 
 	const avatarRows = includeAvatars
 		? await sql`
-		SELECT id, slug, name, description, storage_key, thumbnail_key, tags, created_at
-		FROM avatars
-		WHERE deleted_at IS NULL
-		  AND visibility = 'public'
+		SELECT a.id, a.slug, a.name, a.description, a.storage_key, a.thumbnail_key,
+		       a.tags, a.created_at, a.source,
+		       u.username AS owner_username,
+		       u.display_name AS owner_display_name,
+		       u.wallet_address AS owner_wallet
+		FROM avatars a
+		LEFT JOIN users u ON u.id = a.owner_id AND u.deleted_at IS NULL
+		WHERE a.deleted_at IS NULL
+		  AND a.visibility = 'public'
 		  AND (${q || null}::text IS NULL OR (
-		       coalesce(name,'') ILIKE ${'%' + q + '%'}
-		    OR coalesce(description,'') ILIKE ${'%' + q + '%'}
+		       coalesce(a.name,'') ILIKE ${'%' + q + '%'}
+		    OR coalesce(a.description,'') ILIKE ${'%' + q + '%'}
 		  ))
-		  AND (${cursorDate ? cursorDate.toISOString() : null}::timestamptz IS NULL OR created_at < ${cursorDate ? cursorDate.toISOString() : null}::timestamptz)
-		ORDER BY created_at DESC
-		LIMIT ${limit + 1}
+		  AND (${cursorDate ? cursorDate.toISOString() : null}::timestamptz IS NULL OR a.created_at < ${cursorDate ? cursorDate.toISOString() : null}::timestamptz)
+		ORDER BY a.created_at DESC
+		LIMIT ${(limit + 1) * 3}
 	`
 		: [];
 
@@ -108,8 +128,13 @@ export default wrap(async (req, res) => {
 		};
 	});
 
-	const avatarItems = avatarRows.map((r) => {
+	let avatarItems = avatarRows.map((r) => {
 		const glb = publicUrl(r.storage_key);
+		const handle = r.owner_username
+			? `@${r.owner_username}`
+			: r.owner_wallet
+				? shortAddr(r.owner_wallet)
+				: null;
 		return {
 			kind: 'avatar',
 			sortDate: r.created_at,
@@ -121,10 +146,28 @@ export default wrap(async (req, res) => {
 			glbUrl: glb,
 			has3d: true,
 			tags: r.tags || [],
+			source: r.source || null,
 			createdAt: r.created_at,
 			viewerUrl: `/#model=${encodeURIComponent(glb)}`,
+			author: handle
+				? {
+					handle,
+					displayName: r.owner_display_name || r.owner_username || handle,
+					profileUrl: r.owner_username ? `/u/${r.owner_username}` : null,
+				}
+				: null,
+			autoNamed: isAutoNamed(r.name),
 		};
 	});
+
+	// Quality filter: hide auto-named/junk by default. The marketplace UI uses
+	// quality=high to populate a "Community Avatars" wall that should look
+	// curated, not like a debug dump.
+	if (includeAvatars && quality === 'high') {
+		avatarItems = avatarItems.filter((a) => !a.autoNamed);
+	}
+	// Cap to requested limit after filtering (we overfetch above).
+	if (avatarItems.length > limit + 1) avatarItems = avatarItems.slice(0, limit + 1);
 
 	// Inject demo avatars on the first page when the source allows avatars.
 	// Filter by query if one is set so search still feels correct.

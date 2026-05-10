@@ -46,12 +46,19 @@ const state = {
 	category: null, // null = Discover (all)
 	q: '',
 	sort: 'recommended',
+	filter: 'all', // all | agents | avatars
 	cursor: null,
 	items: [],
 	loading: false,
 	publicAvatars: [],
 	publicAvatarsLoaded: false,
+	featured: [],
+	heroIndex: 0,
+	heroTimer: null,
+	stats: null,
 };
+
+const WIP_DISMISS_KEY = 'marketplace_wip_dismissed_v1';
 
 const $ = (id) => document.getElementById(id);
 const els = {
@@ -73,6 +80,9 @@ function readRoute() {
 	if (m) return { view: 'detail', id: m[1] };
 	const tab = new URLSearchParams(location.search).get('tab');
 	if (tab === 'tools') return { view: 'tools' };
+	if (tab === 'skills') return { view: 'skills' };
+	if (tab === 'mine') return { view: 'mine' };
+	if (tab === 'avatars') return { view: 'list', filter: 'avatars' };
 	return { view: 'list' };
 }
 
@@ -162,8 +172,11 @@ async function loadList(reset = false) {
 		if (state.cursor) url.searchParams.set('cursor', state.cursor);
 		const r = await fetch(url);
 		const j = await r.json();
-		const items = j || [];
+		// Real endpoint wraps as { data: { items, next_cursor } }; legacy mock returns a bare array.
+		const items = Array.isArray(j) ? j : (j?.data?.items ?? []);
+		const nextCursor = Array.isArray(j) ? null : (j?.data?.next_cursor ?? null);
 		state.items = reset ? items : [...state.items, ...items];
+		state.cursor = nextCursor;
 		renderGrid();
 	} catch (err) {
 		console.error('[marketplace] list', err);
@@ -172,7 +185,10 @@ async function loadList(reset = false) {
 		state.loading = false;
 	}
 
-	if (reset) loadPublicAvatars();
+	if (reset) {
+		loadPublicAvatars();
+		loadFeatured();
+	}
 }
 
 async function loadPublicAvatars() {
@@ -180,6 +196,7 @@ async function loadPublicAvatars() {
 		const url = new URL(`${API}/explore`, location.origin);
 		url.searchParams.set('source', 'avatar');
 		url.searchParams.set('limit', '60');
+		url.searchParams.set('quality', 'high');
 		if (state.q) url.searchParams.set('q', state.q);
 		const r = await fetch(url);
 		if (!r.ok) return;
@@ -187,31 +204,257 @@ async function loadPublicAvatars() {
 		const avatars = (j?.items || []).filter((it) => it.kind === 'avatar' && it.glbUrl);
 		state.publicAvatars = avatars;
 		state.publicAvatarsLoaded = true;
+		state.stats = j?.totals || state.stats;
 		renderGrid();
+		renderHeroStats();
 	} catch (err) {
 		console.error('[marketplace] public avatars', err);
 	}
 }
 
+// ── Featured hero (rotating 3D showcase) ─────────────────────────────────
+
+async function loadFeatured() {
+	if (state.featured.length || state.q || state.category) return;
+	try {
+		const url = new URL(`${API}/explore`, location.origin);
+		url.searchParams.set('source', 'avatar');
+		url.searchParams.set('quality', 'high');
+		url.searchParams.set('limit', '12');
+		const r = await fetch(url);
+		if (!r.ok) return;
+		const j = await r.json();
+		const named = (j?.items || []).filter(
+			(it) =>
+				it.kind === 'avatar' &&
+				it.glbUrl &&
+				it.name &&
+				!/^Avatar #|^TEST$|^test$/i.test(it.name.trim()) &&
+				it.name.trim().length > 1,
+		);
+		state.featured = named.slice(0, 3);
+		if (!state.featured.length) {
+			// Fall back to any 3 named avatars to keep hero populated.
+			state.featured = (j?.items || [])
+				.filter((it) => it.kind === 'avatar' && it.glbUrl)
+				.slice(0, 3);
+		}
+		state.heroIndex = 0;
+		renderHero();
+		startHeroAutoplay();
+	} catch (err) {
+		console.error('[marketplace] featured', err);
+	}
+}
+
+function renderHero() {
+	const hero = $('market-hero');
+	if (!hero) return;
+	if (!state.featured.length) {
+		hero.hidden = true;
+		return;
+	}
+	hero.hidden = false;
+	const stage = $('market-hero-stage');
+	const dots = $('market-hero-dots');
+	stage.innerHTML = state.featured
+		.map(
+			(a, i) => `
+				<div class="market-hero-slide${i === state.heroIndex ? ' active' : ''}" data-slot="${i}">
+					<model-viewer
+						src="${escapeHtml(a.glbUrl)}"
+						alt="${escapeHtml(a.name || 'Avatar')}"
+						auto-rotate
+						rotation-per-second="20deg"
+						camera-controls
+						interaction-prompt="none"
+						exposure="1.05"
+						shadow-intensity="0.8"
+						tone-mapping="aces"
+						loading="${i === state.heroIndex ? 'eager' : 'lazy'}"
+						reveal="auto"
+					></model-viewer>
+				</div>`,
+		)
+		.join('');
+	dots.innerHTML = state.featured
+		.map(
+			(_, i) =>
+				`<button class="market-hero-dot${i === state.heroIndex ? ' active' : ''}" data-dot="${i}" aria-label="Slide ${i + 1}"></button>`,
+		)
+		.join('');
+	dots.querySelectorAll('[data-dot]').forEach((btn) => {
+		btn.addEventListener('click', () => {
+			state.heroIndex = Number(btn.dataset.dot);
+			renderHero();
+			startHeroAutoplay();
+		});
+	});
+	updateHeroMeta();
+}
+
+function updateHeroMeta() {
+	const a = state.featured[state.heroIndex];
+	if (!a) return;
+	$('market-hero-title').textContent = a.name || 'Untitled avatar';
+	$('market-hero-desc').textContent =
+		a.description ||
+		(a.author?.handle
+			? `A 3D avatar by ${a.author.handle}.`
+			: 'A 3D avatar published to the community.');
+	const view = $('market-hero-view');
+	if (view) {
+		view.onclick = () => {
+			location.href = a.avatarId ? `/avatars/${a.avatarId}` : a.viewerUrl || '/';
+		};
+	}
+	renderHeroStats();
+}
+
+function renderHeroStats() {
+	const el = $('market-hero-stats');
+	if (!el) return;
+	const totals = state.stats;
+	if (!totals) return;
+	const items = [];
+	if (totals.avatars != null) items.push(`<span><strong>${fmtNumber(totals.avatars)}</strong> avatars</span>`);
+	if (totals.onchain != null) items.push(`<span><strong>${fmtNumber(totals.onchain)}</strong> onchain agents</span>`);
+	if (totals.threeD != null) items.push(`<span><strong>${fmtNumber(totals.threeD)}</strong> in 3D</span>`);
+	el.innerHTML = items.join('<span class="dot">·</span>');
+	updateNavCounts();
+}
+
+// Update sidebar count badges from current state. Called after the explore
+// feed settles so the nav reflects what's actually browsable.
+function updateNavCounts() {
+	const agentEl = $('nav-count-agent');
+	const avatarEl = $('nav-count-avatar');
+	const totals = state.stats || {};
+	if (agentEl) {
+		const n = Number(totals.onchain ?? state.items.length);
+		if (Number.isFinite(n) && n > 0) {
+			agentEl.textContent = fmtNumber(n);
+			agentEl.hidden = false;
+		} else {
+			agentEl.hidden = true;
+		}
+	}
+	if (avatarEl) {
+		const n = Number(totals.avatars ?? state.publicAvatars.length);
+		if (Number.isFinite(n) && n > 0) {
+			avatarEl.textContent = fmtNumber(n);
+			avatarEl.hidden = false;
+		} else {
+			avatarEl.hidden = true;
+		}
+	}
+}
+
+function startHeroAutoplay() {
+	if (state.heroTimer) clearInterval(state.heroTimer);
+	if (state.featured.length < 2) return;
+	state.heroTimer = setInterval(() => {
+		state.heroIndex = (state.heroIndex + 1) % state.featured.length;
+		// Cheap update — just toggle active classes + meta, don't re-render model-viewers.
+		document.querySelectorAll('.market-hero-slide').forEach((el) => {
+			el.classList.toggle('active', Number(el.dataset.slot) === state.heroIndex);
+		});
+		document.querySelectorAll('.market-hero-dot').forEach((el) => {
+			el.classList.toggle('active', Number(el.dataset.dot) === state.heroIndex);
+		});
+		updateHeroMeta();
+	}, 6500);
+}
+
+function stopHeroAutoplay() {
+	if (state.heroTimer) clearInterval(state.heroTimer);
+	state.heroTimer = null;
+}
+
+// ── WIP banner dismiss ───────────────────────────────────────────────────
+
+function initWipBanner() {
+	const banner = $('market-wip-banner');
+	const dismiss = $('market-wip-dismiss');
+	if (!banner) return;
+	const dismissed = (() => {
+		try {
+			return localStorage.getItem(WIP_DISMISS_KEY) === '1';
+		} catch {
+			return false;
+		}
+	})();
+	banner.hidden = dismissed;
+	if (dismiss) {
+		dismiss.addEventListener('click', () => {
+			banner.hidden = true;
+			try {
+				localStorage.setItem(WIP_DISMISS_KEY, '1');
+			} catch {
+				// localStorage unavailable — banner stays dismissed only for the session
+			}
+		});
+	}
+}
+
+// ── Filter chips (All / Agents / Avatars) ────────────────────────────────
+
+function bindFilterChips() {
+	const chips = document.querySelectorAll('#market-filter-chips .market-chip');
+	chips.forEach((chip) => {
+		chip.addEventListener('click', () => {
+			chips.forEach((c) => c.classList.remove('active'));
+			chip.classList.add('active');
+			state.filter = chip.dataset.filter || 'all';
+			// Hero showcases community avatars; hide it when filter is agents-only.
+			const hero = $('market-hero');
+			if (hero) {
+				if (state.filter === 'agents') {
+					hero.hidden = true;
+					stopHeroAutoplay();
+				} else if (state.featured.length) {
+					hero.hidden = false;
+					startHeroAutoplay();
+				}
+			}
+			renderGrid();
+		});
+	});
+}
+
 function renderGrid() {
-	const showAvatars = !state.category;
+	const showAgents = state.filter !== 'avatars';
+	const showAvatars = state.filter !== 'agents' && !state.category;
+	const agentItems = showAgents ? state.items : [];
 	const avatars = showAvatars ? state.publicAvatars : [];
 
-	if (!state.items.length && !avatars.length) {
-		const msg = state.publicAvatarsLoaded
-			? 'No agents yet. Be the first to publish!'
-			: 'Loading…';
-		els.grid.innerHTML = `<div class="market-empty">${msg}</div>`;
+	if (!agentItems.length && !avatars.length) {
+		let msg;
+		if (!state.publicAvatarsLoaded && !state.items.length) {
+			msg = renderSkeletons(8);
+		} else if (state.filter === 'agents') {
+			msg = '<div class="market-empty">No agents published yet. Be the first.</div>';
+		} else if (state.filter === 'avatars') {
+			msg = '<div class="market-empty">No public avatars match your search.</div>';
+		} else {
+			msg = '<div class="market-empty">Nothing here yet — try a different search.</div>';
+		}
+		els.grid.innerHTML = msg;
 		els.loadMore.hidden = true;
 		return;
 	}
 
 	let html = '';
-	if (state.items.length) {
-		html += state.items.map(renderCard).join('');
+	if (agentItems.length) {
+		if (state.filter === 'all' && avatars.length) {
+			html += `<div class="market-grid-section-title">Agents <span class="count">${agentItems.length}</span></div>`;
+		}
+		html += agentItems.map(renderCard).join('');
 	}
 	if (avatars.length) {
-		html += `<div class="market-grid-section-title">Community Avatars <span class="count">${avatars.length} public</span></div>`;
+		if (state.filter === 'all' && agentItems.length) {
+			html += `<div class="market-grid-section-title">Community Avatars <span class="count">${avatars.length} public</span></div>`;
+		}
 		html += avatars.map(renderAvatarCard).join('');
 	}
 	els.grid.innerHTML = html;
@@ -219,53 +462,340 @@ function renderGrid() {
 	els.grid.querySelectorAll('[data-id]').forEach((card) => {
 		card.addEventListener('click', () => navTo(`/marketplace/agents/${card.dataset.id}`));
 	});
-	els.grid.querySelectorAll('[data-avatar-glb]').forEach((card) => {
-		card.addEventListener('click', () => {
-			const glb = card.dataset.avatarGlb;
-			if (glb) location.href = `/#model=${encodeURIComponent(glb)}`;
+	els.grid.querySelectorAll('[data-avatar-id]').forEach((card) => {
+		card.addEventListener('click', (e) => {
+			// Don't trigger card nav when clicking the embedded author link.
+			if (e.target.closest('a')) return;
+			const id = card.dataset.avatarId;
+			const avatar = state.publicAvatars.find((a) => a.avatarId === id);
+			if (avatar) openAvatarModal(avatar);
 		});
 	});
 	els.loadMore.hidden = !state.cursor;
 }
 
+// ── Avatar detail modal ──────────────────────────────────────────────────
+
+let activeAvatar = null;
+
+function openAvatarModal(avatar) {
+	activeAvatar = avatar;
+	const overlay = $('avatar-modal-overlay');
+	const stage = $('avatar-modal-stage');
+	if (!overlay || !stage) return;
+
+	const closeBtn = stage.querySelector('.avatar-modal-close');
+	stage.innerHTML = '';
+	if (closeBtn) stage.appendChild(closeBtn);
+	const mv = document.createElement('model-viewer');
+	mv.setAttribute('src', avatar.glbUrl || '');
+	mv.setAttribute('alt', avatar.name || 'Avatar');
+	mv.setAttribute('auto-rotate', '');
+	mv.setAttribute('rotation-per-second', '18deg');
+	mv.setAttribute('camera-controls', '');
+	mv.setAttribute('interaction-prompt', 'none');
+	mv.setAttribute('exposure', '1.05');
+	mv.setAttribute('shadow-intensity', '0.7');
+	mv.setAttribute('tone-mapping', 'aces');
+	stage.appendChild(mv);
+
+	$('avatar-modal-title').textContent = avatar.name || 'Untitled avatar';
+	$('avatar-modal-desc').textContent =
+		avatar.description ||
+		'A 3D avatar published to the community. You can use it as the visual identity for a new agent.';
+
+	const meta = $('avatar-modal-meta');
+	const pills = [];
+	if (avatar.createdAt) pills.push(`<span class="stat-pill">${escapeHtml(liveTime(avatar.createdAt))}</span>`);
+	if (avatar.has3d !== false) pills.push('<span class="stat-pill">3D · GLB</span>');
+	(avatar.tags || []).slice(0, 4).forEach((t) => {
+		pills.push(`<span class="stat-pill">#${escapeHtml(t)}</span>`);
+	});
+	meta.innerHTML = pills.join('');
+
+	const view = $('avatar-modal-view');
+	if (view) {
+		view.href = avatar.viewerUrl || (avatar.glbUrl ? `/#model=${encodeURIComponent(avatar.glbUrl)}` : '#');
+	}
+	const dl = $('avatar-modal-download');
+	if (dl) {
+		dl.href = avatar.glbUrl || '#';
+		dl.download = (avatar.slug || avatar.avatarId || 'avatar') + '.glb';
+	}
+
+	overlay.hidden = false;
+	requestAnimationFrame(() => overlay.classList.add('show'));
+}
+
+function closeAvatarModal() {
+	const overlay = $('avatar-modal-overlay');
+	if (!overlay) return;
+	overlay.classList.remove('show');
+	setTimeout(() => {
+		overlay.hidden = true;
+		const stage = $('avatar-modal-stage');
+		const closeBtn = stage?.querySelector('.avatar-modal-close');
+		if (stage) {
+			stage.innerHTML = '';
+			if (closeBtn) stage.appendChild(closeBtn);
+		}
+		activeAvatar = null;
+	}, 200);
+}
+
+async function startAgentFromAvatar() {
+	if (!activeAvatar) return;
+	const params = new URLSearchParams({ avatar_id: activeAvatar.avatarId || '' });
+	if (activeAvatar.name) params.set('avatar_name', activeAvatar.name);
+	if (activeAvatar.glbUrl) params.set('avatar_glb', activeAvatar.glbUrl);
+	location.href = `/agent-edit.html?${params.toString()}`;
+}
+
+// ── Skills marketplace tab ───────────────────────────────────────────────
+
+const skillsState = {
+	loaded: false,
+	loading: false,
+	skills: [],
+	q: '',
+	filter: 'all',
+};
+
+async function loadSkillsTab(force = false) {
+	if (skillsState.loading) return;
+	if (skillsState.loaded && !force) {
+		renderSkillsGrid();
+		return;
+	}
+	skillsState.loading = true;
+	const grid = $('skills-grid');
+	if (grid) grid.innerHTML = renderSkeletons(8);
+
+	try {
+		const url = new URL(`${API}/marketplace/agents`, location.origin);
+		url.searchParams.set('limit', '48');
+		const r = await fetch(url);
+		const j = await r.json();
+		const items = Array.isArray(j) ? j : (j?.data?.items ?? []);
+
+		const flat = [];
+		for (const a of items) {
+			const skills = Array.isArray(a.skills) ? a.skills : [];
+			for (const s of skills) {
+				const name = typeof s === 'string' ? s : s?.name;
+				if (!name) continue;
+				flat.push({
+					name: String(name),
+					agentId: a.id,
+					agentName: a.name || 'Untitled',
+					agentAuthor: a.author_name || 'Anonymous',
+					agentAvatar: a.thumbnail_url || null,
+					paid: !!a.has_paid_skills,
+					category: a.category,
+				});
+			}
+		}
+		flat.sort((a, b) => Number(b.paid) - Number(a.paid) || a.name.localeCompare(b.name));
+		skillsState.skills = flat;
+		skillsState.loaded = true;
+	} catch (err) {
+		console.error('[marketplace] skills load', err);
+	} finally {
+		skillsState.loading = false;
+	}
+	renderSkillsGrid();
+}
+
+function renderSkillsGrid() {
+	const grid = $('skills-grid');
+	if (!grid) return;
+	const q = skillsState.q.toLowerCase();
+	const filtered = skillsState.skills.filter((s) => {
+		if (skillsState.filter === 'paid' && !s.paid) return false;
+		if (skillsState.filter === 'free' && s.paid) return false;
+		if (q && !(s.name.toLowerCase().includes(q) || s.agentName.toLowerCase().includes(q))) return false;
+		return true;
+	});
+	const sub = $('skills-subtitle');
+	if (sub) sub.textContent = `${filtered.length} ${filtered.length === 1 ? 'skill' : 'skills'} across the marketplace`;
+
+	if (!filtered.length) {
+		const msg = !skillsState.skills.length
+			? `<div class="market-empty-cta">
+					<h3>No skills published yet</h3>
+					<p>Skills appear here once agents are published with capabilities. Be the first to publish.</p>
+					<button id="skills-empty-publish">Submit an Agent</button>
+				</div>`
+			: '<div class="market-empty">No skills match your filter.</div>';
+		grid.innerHTML = msg;
+		const btn = $('skills-empty-publish');
+		if (btn) btn.addEventListener('click', openSubmitModal);
+		return;
+	}
+	grid.innerHTML = filtered.map(renderSkillCard).join('');
+	grid.querySelectorAll('[data-agent-id]').forEach((card) => {
+		card.addEventListener('click', () => {
+			const id = card.dataset.agentId;
+			if (id) navTo(`/marketplace/agents/${id}`);
+		});
+	});
+}
+
+function renderSkillCard(s) {
+	const av = s.agentAvatar
+		? `<span class="av" style="background:url('${escapeHtml(s.agentAvatar)}') center/cover"></span>`
+		: `<span class="av">${escapeHtml(initial(s.agentName))}</span>`;
+	return `<div class="market-skill-card" data-agent-id="${escapeHtml(s.agentId)}">
+		<div class="skill-head">
+			<div class="skill-name">${escapeHtml(s.name)}</div>
+			<div class="skill-price ${s.paid ? 'paid' : 'free'}">${s.paid ? 'Paid' : 'Free'}</div>
+		</div>
+		<div class="skill-agent">${av}<span>${escapeHtml(s.agentName)}</span></div>
+		<div class="skill-cta ${s.paid ? 'purchase' : ''}">${s.paid ? 'View &amp; purchase →' : 'Open agent →'}</div>
+	</div>`;
+}
+
+// ── My Agents tab ────────────────────────────────────────────────────────
+
+const mineState = { loaded: false, loading: false, items: [] };
+
+async function loadMine(force = false) {
+	if (mineState.loading) return;
+	if (mineState.loaded && !force) return renderMineGrid();
+	mineState.loading = true;
+	const grid = $('mine-grid');
+	if (grid) grid.innerHTML = renderSkeletons(4);
+	try {
+		const r = await fetch(`${API}/marketplace/agents/mine`, { credentials: 'include' });
+		if (r.status === 401) {
+			grid.innerHTML = `<div class="market-empty-cta">
+					<h3>Sign in to see your agents</h3>
+					<p>Your published and draft agents will appear here.</p>
+					<button id="mine-signin">Sign in</button>
+				</div>`;
+			$('mine-signin')?.addEventListener('click', () => {
+				location.href = `/login?next=${encodeURIComponent(location.pathname + location.search)}`;
+			});
+			mineState.loading = false;
+			return;
+		}
+		const j = await r.json().catch(() => ({}));
+		mineState.items = Array.isArray(j) ? j : (j?.data?.items ?? []);
+		mineState.loaded = true;
+	} catch (err) {
+		console.error('[marketplace] mine', err);
+	} finally {
+		mineState.loading = false;
+	}
+	renderMineGrid();
+}
+
+function renderMineGrid() {
+	const grid = $('mine-grid');
+	const sub = $('mine-subtitle');
+	if (!grid) return;
+	if (sub) {
+		sub.textContent = mineState.items.length
+			? `${mineState.items.length} ${mineState.items.length === 1 ? 'agent' : 'agents'}`
+			: '';
+	}
+	if (!mineState.items.length) {
+		grid.innerHTML = `<div class="market-empty-cta">
+				<h3>No agents yet</h3>
+				<p>Create your first agent — it'll appear here as draft, then publish when you're ready.</p>
+				<button id="mine-empty-new">+ New Agent</button>
+			</div>`;
+		$('mine-empty-new')?.addEventListener('click', () => {
+			location.href = '/agent-edit.html';
+		});
+		return;
+	}
+	grid.innerHTML = mineState.items.map(renderCard).join('');
+	grid.querySelectorAll('[data-id]').forEach((card) => {
+		card.addEventListener('click', () => navTo(`/marketplace/agents/${card.dataset.id}`));
+	});
+}
+
+function renderSkeletons(n) {
+	const cards = Array.from({ length: n }, () =>
+		`<div class="market-card-skeleton"><div class="sk-thumb"></div><div class="sk-line"></div><div class="sk-line short"></div></div>`,
+	).join('');
+	return cards;
+}
+
 function renderAvatarCard(a) {
-	const name = escapeHtml(a.name || 'Untitled Avatar');
+	const name = escapeHtml(a.name || 'Untitled avatar');
 	const desc = escapeHtml(a.description || '');
-	const date = a.createdAt ? formatDate(a.createdAt) : '';
-	const thumbStyle = a.image
-		? `style="background-image:url('${escapeHtml(a.image)}')"`
+	const when = a.createdAt ? liveTime(a.createdAt) : '';
+	const author = a.author;
+	const authorLine = author?.profileUrl
+		? `<a class="card-author" href="${escapeHtml(author.profileUrl)}" rel="author">${escapeHtml(author.displayName || author.handle)}</a>`
+		: author?.handle
+			? `<span class="card-author">${escapeHtml(author.displayName || author.handle)}</span>`
+			: `<span class="card-author muted">Anonymous</span>`;
+	const tags = (a.tags || []).slice(0, 3);
+	const tagPills = tags.length
+		? `<div class="card-tags">${tags.map((t) => `<span class="tag-pill">${escapeHtml(t)}</span>`).join('')}</div>`
 		: '';
-	const fallback = a.image ? '' : '◉';
-	return `<div class="market-card-avatar" data-avatar-glb="${escapeHtml(a.glbUrl || '')}">
-		<div class="thumb" ${thumbStyle}>${fallback}</div>
+	const preview = a.image
+		? `<img src="${escapeHtml(a.image)}" alt="${name}" loading="lazy" decoding="async" />`
+		: a.glbUrl
+			? `<model-viewer
+					src="${escapeHtml(a.glbUrl)}"
+					alt="${name}"
+					auto-rotate
+					rotation-per-second="14deg"
+					interaction-prompt="none"
+					disable-zoom
+					disable-pan
+					disable-tap
+					exposure="1"
+					shadow-intensity="0.4"
+					tone-mapping="aces"
+					loading="lazy"
+					reveal="auto"
+				></model-viewer>`
+			: `<div class="thumb-fallback">◉</div>`;
+	return `<div class="market-card-avatar" data-avatar-id="${escapeHtml(a.avatarId || '')}">
+		<div class="thumb">${preview}</div>
 		<div class="body">
 			<div class="title">${name}</div>
-			<div class="desc">${desc}</div>
+			<div class="byline">${authorLine}${when ? `<span class="dot">·</span><span class="when">${escapeHtml(when)}</span>` : ''}</div>
+			${desc ? `<div class="desc">${desc}</div>` : ''}
+			${tagPills}
 			<div class="footer">
-				<span>${date}</span>
 				<span class="avatar-pill">3D Avatar</span>
+				<span class="open-cta">Open →</span>
 			</div>
 		</div>
 	</div>`;
 }
 
 function renderCard(a) {
-	const date = a.published ? formatDate(a.published) : '';
-	const skills = (a.skills || []).length;
+	const published = a.published_at || a.published || a.created_at;
+	const date = published ? formatDate(published) : '';
+	const skillsCount = (a.skills || []).length;
+	const author = a.author_name || a.author || 'Anonymous';
+	const views = a.views_count ?? a.views ?? 0;
+	const forks = a.forks_count ?? a.forks ?? 0;
+	const paid = a.has_paid_skills || Object.keys(a.skill_prices || {}).length > 0;
+	const avatarBlock = a.thumbnail_url
+		? `<div class="avatar avatar-img" style="background-image:url('${escapeHtml(a.thumbnail_url)}')"></div>`
+		: `<div class="avatar">${escapeHtml(initial(a.name))}</div>`;
 	return `<div class="market-card-agent" data-id="${a.id}">
 		<div class="head">
-			<div class="avatar">${a.avatar}</div>
+			${avatarBlock}
 			<div style="min-width:0;flex:1">
 				<div class="title">${escapeHtml(a.name || 'Untitled')}</div>
-				<div class="author">${escapeHtml(a.author || 'Anonymous')}</div>
+				<div class="author">${escapeHtml(author)}</div>
 			</div>
 		</div>
 		<div class="desc">${escapeHtml(a.description || '')}</div>
 		<div class="stats">
-			<span class="stat-pill">⊙ ${a.views || 0}</span>
-			<span class="stat-pill">⑂ ${a.forks || 0}</span>
-			${skills ? `<span class="stat-pill">▤ ${skills}</span>` : ''}
-			${Object.keys(a.skill_prices || {}).length > 0 ? `<span class="stat-pill paid-badge">$ Paid</span>` : ''}
+			<span class="stat-pill">⊙ ${fmtNumber(views)}</span>
+			<span class="stat-pill">⑂ ${fmtNumber(forks)}</span>
+			${skillsCount ? `<span class="stat-pill">▤ ${skillsCount}</span>` : ''}
+			${paid ? `<span class="stat-pill paid-badge">$ Paid</span>` : ''}
 		</div>
 		<div class="footer">
 			<span>${date}</span>
@@ -316,22 +846,56 @@ async function loadDetail(id) {
 	els.detail.hidden = false;
 	els.detail.scrollIntoView({ behavior: 'instant', block: 'start' });
 
-	const agent = state.items.find(item => item.id === id);
-	if (agent) {
-		detailState = { agent: agent, bookmarked: false };
-		renderDetail(agent, false);
+	// Optimistically render from cached list item if available, then refresh from API.
+	const cached = state.items.find((item) => item.id === id);
+	if (cached) {
+		detailState = { agent: cached, bookmarked: false };
+		renderDetail(cached, false);
+	} else {
+		renderDetailError('Loading…');
+	}
+
+	try {
+		const r = await fetch(`${API}/marketplace/agents/${id}`, { credentials: 'include' });
+		if (!r.ok) {
+			if (!cached) renderDetailError('Agent not found');
+			return;
+		}
+		const j = await r.json();
+		const agent = j?.data?.agent;
+		if (!agent) {
+			if (!cached) renderDetailError('Agent not found');
+			return;
+		}
+		detailState = { agent, bookmarked: !!agent.bookmarked };
+		renderDetail(agent, !!agent.bookmarked);
 
 		try {
-			const res = await fetch(`/api/users/me/agent-skills/${id}`);
-			const { skills: agentSkills } = await res.json();
-			unlockedSkills = new Set(agentSkills || []);
+			const res = await fetch(`/api/users/me/agent-skills/${id}`, { credentials: 'include' });
+			if (res.ok) {
+				const { skills: agentSkills } = await res.json();
+				unlockedSkills = new Set(agentSkills || []);
+			} else {
+				unlockedSkills = new Set();
+			}
 		} catch {
 			unlockedSkills = new Set();
 		}
 		renderSkillList(agent);
 
-	} else {
-		renderDetailError('Agent not found');
+		// Versions + similar (best-effort).
+		Promise.all([
+			fetch(`${API}/marketplace/agents/${id}/versions`).then((r) => (r.ok ? r.json() : null)).catch(() => null),
+			fetch(`${API}/marketplace/agents/${id}/similar`).then((r) => (r.ok ? r.json() : null)).catch(() => null),
+		]).then(([versionsRes, similarRes]) => {
+			const versions = versionsRes?.data?.items || versionsRes?.data?.versions || [];
+			renderVersions(versions);
+			const similar = similarRes?.data?.items || similarRes?.data?.similar || [];
+			renderSimilar(similar);
+		});
+	} catch (err) {
+		console.error('[marketplace] detail load', err);
+		if (!cached) renderDetailError('Failed to load agent.');
 	}
 }
 
@@ -345,22 +909,35 @@ function renderDetailError(msg) {
 }
 
 function renderDetail(a, bookmarked) {
+	const author = a.author_name || a.author || 'Anonymous';
+	const published = a.published_at || a.published || a.created_at;
+	const views = a.views_count ?? a.views ?? 0;
+	const forks = a.forks_count ?? a.forks ?? 0;
 	$('d-name').textContent = a.name || 'Untitled';
-	$('d-avatar').textContent = a.avatar;
-	$('d-author').textContent = a.author || 'Anonymous';
-	$('d-published').textContent = a.published ? formatDate(a.published) : '';
+	const avEl = $('d-avatar');
+	if (a.thumbnail_url) {
+		avEl.style.backgroundImage = `url('${a.thumbnail_url}')`;
+		avEl.style.backgroundSize = 'cover';
+		avEl.style.backgroundPosition = 'center';
+		avEl.textContent = '';
+	} else {
+		avEl.style.backgroundImage = '';
+		avEl.textContent = initial(a.name);
+	}
+	$('d-author').textContent = author;
+	$('d-published').textContent = published ? formatDate(published) : '';
 	$('d-category').textContent = CATEGORY_LABELS[a.category] || a.category || 'General';
-	$('d-views').textContent = `⊙ ${a.views || 0}`;
+	$('d-views').textContent = `⊙ ${fmtNumber(views)}`;
 	$('d-overview').textContent = a.description || '';
 	$('d-overview-side').textContent = a.description || '';
 	$('d-greeting').textContent = a.greeting || `Hello! I am ${a.name}. How can I help you today?`;
-	$('d-profile').textContent = a.prompt || '(No profile yet.)';
+	$('d-profile').textContent = a.system_prompt || a.prompt || '(No profile yet.)';
 	$('d-bookmark').classList.toggle('on', bookmarked);
 	$('d-bookmark').textContent = bookmarked ? '★' : '☆';
 
 	const forksEl = $('d-forks-pill');
-	if (a.forks > 0) {
-		forksEl.textContent = `⑂ ${a.forks} forks`;
+	if (forks > 0) {
+		forksEl.textContent = `⑂ ${fmtNumber(forks)} forks`;
 		forksEl.hidden = false;
 	} else {
 		forksEl.hidden = true;
@@ -542,8 +1119,16 @@ function bindEvents() {
 	els.back.addEventListener('click', () => navTo('/marketplace'));
 	$('d-fork').addEventListener('click', fork);
 	$('d-bookmark').addEventListener('click', toggleBookmark);
-		bindTabs();
+	bindTabs();
 	bindSubmit();
+	bindFilterChips();
+	initWipBanner();
+	// Pause the hero rotation when the page is hidden, resume when it returns —
+	// avoids burning GPU on a tab the user isn't even looking at.
+	document.addEventListener('visibilitychange', () => {
+		if (document.hidden) stopHeroAutoplay();
+		else if (state.featured.length) startHeroAutoplay();
+	});
 
 	document.body.addEventListener('click', async (e) => {
 		if (e.target.matches('.purchase-btn')) {
@@ -557,6 +1142,63 @@ function bindEvents() {
 	$('payment-confirm-btn')?.addEventListener('click', handlePurchase);
 	$('payment-modal-overlay')?.addEventListener('click', (e) => {
 		if (e.target.id === 'payment-modal-overlay') closePaymentModal();
+	});
+
+	// Avatar detail modal
+	$('avatar-modal-close')?.addEventListener('click', closeAvatarModal);
+	$('avatar-modal-overlay')?.addEventListener('click', (e) => {
+		if (e.target.id === 'avatar-modal-overlay') closeAvatarModal();
+	});
+	$('avatar-modal-use')?.addEventListener('click', startAgentFromAvatar);
+	document.addEventListener('keydown', (e) => {
+		if (e.key === 'Escape' && !$('avatar-modal-overlay')?.hidden) closeAvatarModal();
+	});
+
+	// Hero CTA — open most recent featured avatar in 3D modal
+	$('market-hero-view')?.addEventListener('click', () => {
+		const a = state.featured[state.heroIndex];
+		if (a) openAvatarModal(a);
+	});
+	$('market-hero-fork')?.addEventListener('click', () => {
+		const a = state.featured[state.heroIndex];
+		if (a) {
+			activeAvatar = a;
+			startAgentFromAvatar();
+		}
+	});
+
+	// Skills tab controls
+	let skillsSearchTimer;
+	$('skills-search')?.addEventListener('input', (e) => {
+		clearTimeout(skillsSearchTimer);
+		skillsSearchTimer = setTimeout(() => {
+			skillsState.q = e.target.value.trim();
+			renderSkillsGrid();
+		}, 150);
+	});
+	document.querySelectorAll('[data-skill-filter]').forEach((chip) => {
+		chip.addEventListener('click', () => {
+			document.querySelectorAll('[data-skill-filter]').forEach((c) => c.classList.remove('active'));
+			chip.classList.add('active');
+			skillsState.filter = chip.dataset.skillFilter;
+			renderSkillsGrid();
+		});
+	});
+
+	// New Agent CTA on Mine tab
+	$('market-new-agent-btn')?.addEventListener('click', () => {
+		location.href = '/agent-edit.html';
+	});
+
+	// Sidebar nav: intercept marketplace links so we route via SPA
+	document.querySelectorAll('.market-nav a[data-nav]').forEach((a) => {
+		a.addEventListener('click', (e) => {
+			const href = a.getAttribute('href') || '';
+			if (href.startsWith('/marketplace')) {
+				e.preventDefault();
+				navTo(href);
+			}
+		});
 	});
 }
 
@@ -632,6 +1274,27 @@ function formatDate(iso) {
 	const d = new Date(iso);
 	if (isNaN(d)) return '';
 	return d.toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' });
+}
+
+function liveTime(iso) {
+	if (!iso) return '';
+	const d = new Date(iso);
+	if (isNaN(d)) return '';
+	const sec = (Date.now() - d.getTime()) / 1000;
+	if (sec < 60) return 'just now';
+	if (sec < 3600) return `${Math.floor(sec / 60)}m ago`;
+	if (sec < 86400) return `${Math.floor(sec / 3600)}h ago`;
+	if (sec < 604800) return `${Math.floor(sec / 86400)}d ago`;
+	if (sec < 2592000) return `${Math.floor(sec / 604800)}w ago`;
+	return formatDate(iso);
+}
+
+function fmtNumber(n) {
+	const num = Number(n);
+	if (!Number.isFinite(num)) return String(n ?? '');
+	if (num >= 1_000_000) return `${(num / 1_000_000).toFixed(num >= 10_000_000 ? 0 : 1)}M`;
+	if (num >= 1_000) return `${(num / 1_000).toFixed(num >= 10_000 ? 0 : 1)}k`;
+	return String(num);
 }
 
 // ── Purchase Flow ─────────────────────────────────────────────────────────
@@ -855,24 +1518,67 @@ function render() {
 	document.querySelectorAll('.market-nav a[data-nav]').forEach((a) => {
 		const nav = a.dataset.nav;
 		const active =
-			(nav === 'agent' && (r.view === 'list' || r.view === 'detail')) ||
-			(nav === 'tools' && r.view === 'tools');
+			(nav === 'agent' && r.view === 'list' && r.filter !== 'avatars') ||
+			(nav === 'agent' && r.view === 'detail') ||
+			(nav === 'avatars' && r.view === 'list' && r.filter === 'avatars') ||
+			(nav === 'tools' && r.view === 'tools') ||
+			(nav === 'skills' && r.view === 'skills') ||
+			(nav === 'mine' && r.view === 'mine');
 		a.classList.toggle('active', active);
 	});
 
+	// Apply route-driven filter (e.g. ?tab=avatars selects the avatars chip).
+	if (r.view === 'list' && r.filter && r.filter !== state.filter) {
+		state.filter = r.filter;
+		document.querySelectorAll('#market-filter-chips .market-chip').forEach((c) => {
+			c.classList.toggle('active', c.dataset.filter === r.filter);
+		});
+		// Re-render so the grid reflects the new filter without a refetch.
+		if (state.publicAvatarsLoaded) renderGrid();
+	}
+
+	const skillsSec = $('market-skills-section');
+	const mineSec = $('market-mine');
+	const discovery = els.discovery;
+	const tools = els.tools;
+	const detail = els.detail;
+
+	const setHidden = (el, hidden) => { if (el) el.hidden = hidden; };
+
 	if (r.view === 'detail') {
 		loadDetail(r.id);
-		els.discovery.hidden = true;
-		els.tools.hidden = true;
+		setHidden(discovery, true);
+		setHidden(tools, true);
+		setHidden(skillsSec, true);
+		setHidden(mineSec, true);
+		setHidden(detail, false);
 	} else if (r.view === 'tools') {
-		els.detail.hidden = true;
-		els.discovery.hidden = true;
-		els.tools.hidden = false;
+		setHidden(detail, true);
+		setHidden(discovery, true);
+		setHidden(skillsSec, true);
+		setHidden(mineSec, true);
+		setHidden(tools, false);
 		if (!pluginState.loaded) loadPlugins(true);
+	} else if (r.view === 'skills') {
+		setHidden(detail, true);
+		setHidden(discovery, true);
+		setHidden(tools, true);
+		setHidden(mineSec, true);
+		setHidden(skillsSec, false);
+		loadSkillsTab();
+	} else if (r.view === 'mine') {
+		setHidden(detail, true);
+		setHidden(discovery, true);
+		setHidden(tools, true);
+		setHidden(skillsSec, true);
+		setHidden(mineSec, false);
+		loadMine();
 	} else {
-		els.detail.hidden = true;
-		els.discovery.hidden = false;
-		els.tools.hidden = true;
+		setHidden(detail, true);
+		setHidden(tools, true);
+		setHidden(skillsSec, true);
+		setHidden(mineSec, true);
+		setHidden(discovery, false);
 	}
 }
 

@@ -1,11 +1,11 @@
 import { z } from 'zod';
-import { sql } from '../../_lib/db.js';
-import { getSessionUser, authenticateBearer, extractBearer } from '../../_lib/auth.js';
-import { cors, json, method, readJson, wrap, error } from '../../_lib/http.js';
-import { limits, clientIp } from '../../_lib/rate-limit.js';
-import { env } from '../../_lib/env.js';
-import { parse } from '../../_lib/validate.js';
-import { randomToken } from '../../_lib/crypto.js';
+import { sql } from '../_lib/db.js';
+import { getSessionUser, authenticateBearer, extractBearer } from '../_lib/auth.js';
+import { cors, json, method, readJson, wrap, error } from '../_lib/http.js';
+import { limits, clientIp } from '../_lib/rate-limit.js';
+import { env } from '../_lib/env.js';
+import { parse } from '../_lib/validate.js';
+import { randomToken } from '../_lib/crypto.js';
 
 const bodySchema = z.object({
 	sceneRef: z.string().trim().min(1).max(8000),

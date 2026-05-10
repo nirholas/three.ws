@@ -6,7 +6,6 @@
 // Keep this list in sync with src/widget-types.js as new types light up.
 
 import { mountLaunchPanel } from './launch-panel.js';
-import { openPumpLaunchWizard } from '/src/pump/pump-modals.js';
 
 const WIDGET_TYPES = {
 	turntable: {
@@ -126,6 +125,8 @@ const captureBtn = $('#capture-camera-btn');
 const saveBtn = $('#save-draft-btn');
 const generateBtn = $('#generate-btn');
 const toastEl = $('#toast');
+
+let launchPanel = null; // set in wireButtons, used in selectAvatar
 
 const state = {
 	user: null,

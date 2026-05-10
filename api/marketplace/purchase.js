@@ -16,21 +16,14 @@
  * Routed via vercel.json rewrites — see project root.
  */
 
-import { Keypair, PublicKey } from '@solana/web3.js';
-import { findReference, validateTransfer } from '@solana/pay';
-import BigNumber from 'bignumber.js';
+import { Keypair } from '@solana/web3.js';
 
 import { sql } from '../_lib/db.js';
 import { authenticateBearer, extractBearer, getSessionUser } from '../_lib/auth.js';
 import { cors, error, json, method, readJson, wrap } from '../_lib/http.js';
 import { clientIp, limits } from '../_lib/rate-limit.js';
-import { rpcFallbackFromEnv } from '../_lib/solana/rpc-fallback.js';
-
-let _rpc;
-function rpc() {
-	if (!_rpc) _rpc = rpcFallbackFromEnv({ network: 'mainnet' });
-	return _rpc;
-}
+import { confirmSkillPurchase, logEvent, resolvePayoutAddress } from '../_lib/purchase-confirm.js';
+import { requireCsrf } from '../_lib/csrf.js';
 
 const REFERENCE_RE = /^[1-9A-HJ-NP-Za-km-z]{32,44}$/; // base58 Pubkey
 
@@ -73,6 +66,8 @@ async function handleCreate(req, res) {
 	const auth = await resolveAuth(req);
 	if (!auth) return error(res, 401, 'unauthorized', 'sign in required');
 
+	if (!(await requireCsrf(req, res, auth.userId))) return;
+
 	const rl = await limits.authIp(clientIp(req));
 	if (!rl.success) return error(res, 429, 'rate_limited', 'too many requests');
 
@@ -85,13 +80,13 @@ async function handleCreate(req, res) {
 
 	// Look up the active price for this skill on this agent.
 	const [price] = await sql`
-		SELECT amount, currency_mint, chain
+		SELECT amount, currency_mint, chain, mint_decimals, trial_uses
 		FROM agent_skill_prices
 		WHERE agent_id = ${agentId} AND skill = ${skill} AND is_active = true
 	`;
 	if (!price) return error(res, 404, 'not_found', 'this skill is not for sale');
 
-	// Look up the agent owner's payout wallet for the relevant chain.
+	// Resolve the agent owner's payout wallet for the relevant chain.
 	const [payout] = await sql`
 		SELECT pw.address
 		FROM agent_identities a
@@ -107,13 +102,15 @@ async function handleCreate(req, res) {
 		return error(res, 412, 'creator_wallet_missing', 'agent owner has not configured a payout wallet');
 	}
 
-	// Block double-purchase: if the buyer already has a confirmed purchase
-	// for this (agent, skill), return it as-is rather than minting a new ref.
+	// Already-owned short-circuit: any active access (confirmed purchase, live trial,
+	// unexpired time-pass) returns the existing row so the buyer doesn't pay twice.
 	const [existing] = await sql`
-		SELECT reference, status, tx_signature, confirmed_at
+		SELECT reference, status, tx_signature, confirmed_at, valid_until, trial_remaining, kind
 		FROM skill_purchases
 		WHERE user_id = ${auth.userId} AND agent_id = ${agentId} AND skill = ${skill}
-		  AND status = 'confirmed'
+		  AND status IN ('confirmed', 'trial')
+		  AND (valid_until IS NULL OR valid_until > now())
+		ORDER BY (status = 'confirmed') DESC, confirmed_at DESC NULLS LAST
 		LIMIT 1
 	`;
 	if (existing) {
@@ -124,25 +121,48 @@ async function handleCreate(req, res) {
 				status: existing.status,
 				tx_signature: existing.tx_signature,
 				confirmed_at: existing.confirmed_at,
+				valid_until: existing.valid_until,
+				trial_remaining: existing.trial_remaining,
+				kind: existing.kind,
 			},
 		});
 	}
 
-	const reference = Keypair.generate().publicKey.toBase58();
+	// Idempotent create (A4): reuse a fresh pending row for the same (user, agent, skill)
+	// rather than minting a new reference on every retry click.
+	const referrerUserId = await resolveReferrer(req, auth.userId);
+	const [pending] = await sql`
+		SELECT reference, amount, currency_mint, chain, expires_at
+		FROM skill_purchases
+		WHERE user_id = ${auth.userId} AND agent_id = ${agentId} AND skill = ${skill}
+		  AND status = 'pending'
+		  AND expires_at > now()
+		ORDER BY created_at DESC
+		LIMIT 1
+	`;
+	const reference = pending?.reference ?? Keypair.generate().publicKey.toBase58();
 	const label = `Skill: ${skill.slice(0, 40)}`;
 	const message = `Unlock '${skill}' for this agent`;
 
-	const [row] = await sql`
-		INSERT INTO skill_purchases (
-			user_id, agent_id, skill, status, reference,
-			amount, currency_mint, chain
-		)
-		VALUES (
-			${auth.userId}, ${agentId}, ${skill}, 'pending', ${reference},
-			${price.amount}, ${price.currency_mint}, ${price.chain}
-		)
-		RETURNING reference, amount, currency_mint, chain, created_at
-	`;
+	let row = pending;
+	if (!pending) {
+		const inserted = await sql`
+			INSERT INTO skill_purchases (
+				user_id, agent_id, skill, status, reference,
+				amount, currency_mint, chain, expires_at, kind, referrer_user_id
+			)
+			VALUES (
+				${auth.userId}, ${agentId}, ${skill}, 'pending', ${reference},
+				${price.amount}, ${price.currency_mint}, ${price.chain},
+				now() + interval '30 minutes', 'purchase', ${referrerUserId}
+			)
+			RETURNING reference, amount, currency_mint, chain, expires_at
+		`;
+		row = inserted[0];
+		await logEvent(row.reference, 'created', { agent_id: agentId, skill });
+	} else {
+		await logEvent(pending.reference, 'create_idempotent_hit', { agent_id: agentId, skill });
+	}
 
 	return json(res, 201, {
 		data: {
@@ -151,6 +171,8 @@ async function handleCreate(req, res) {
 			amount: String(row.amount),
 			currency_mint: row.currency_mint,
 			chain: row.chain,
+			mint_decimals: price.mint_decimals,
+			expires_at: row.expires_at,
 			label,
 			message,
 		},
@@ -189,110 +211,65 @@ async function handleConfirm(req, res, reference) {
 	const auth = await resolveAuth(req);
 	if (!auth) return error(res, 401, 'unauthorized', 'sign in required');
 
+	if (!(await requireCsrf(req, res, auth.userId))) return;
+
 	const rl = await limits.authIp(clientIp(req));
 	if (!rl.success) return error(res, 429, 'rate_limited', 'too many requests');
 
 	const [pur] = await sql`
-		SELECT id, user_id, agent_id, skill, status, amount, currency_mint, chain, tx_signature
-		FROM skill_purchases
-		WHERE reference = ${reference} AND user_id = ${auth.userId}
+		SELECT sp.id, sp.user_id, sp.agent_id, sp.skill, sp.status,
+		       sp.amount, sp.currency_mint, sp.chain, sp.tx_signature,
+		       sp.expires_at, sp.referrer_user_id,
+		       COALESCE(asp.mint_decimals, 6) AS mint_decimals
+		FROM skill_purchases sp
+		LEFT JOIN agent_skill_prices asp
+		       ON asp.agent_id = sp.agent_id AND asp.skill = sp.skill
+		WHERE sp.reference = ${reference} AND sp.user_id = ${auth.userId}
 	`;
 	if (!pur) return error(res, 404, 'not_found', 'purchase not found');
 	if (pur.status === 'confirmed') {
 		return json(res, 200, { data: { status: 'confirmed', tx_signature: pur.tx_signature } });
 	}
+	if (pur.status === 'expired' || (pur.expires_at && new Date(pur.expires_at) < new Date())) {
+		return error(res, 410, 'purchase_expired', 'this pending purchase expired; please start a new one');
+	}
 	if (pur.chain !== 'solana') {
 		return error(res, 501, 'not_implemented', `chain '${pur.chain}' confirmation not yet supported`);
 	}
 
-	// Resolve the agent owner's payout wallet again — it must match what the
-	// buyer paid to. Re-resolving on confirm protects against owner key
-	// rotation between create and confirm.
-	const [payout] = await sql`
-		SELECT pw.address
-		FROM agent_identities a
-		JOIN agent_payout_wallets pw
-		  ON pw.user_id = a.user_id
-		 AND pw.chain = ${pur.chain}
-		 AND (pw.agent_id = a.id OR pw.is_default = true)
-		WHERE a.id = ${pur.agent_id}
-		ORDER BY (pw.agent_id IS NOT NULL) DESC, pw.is_default DESC, pw.created_at ASC
-		LIMIT 1
-	`;
-	if (!payout?.address) {
-		return error(res, 412, 'creator_wallet_missing', 'agent owner has not configured a payout wallet');
+	const result = await confirmSkillPurchase({ ...pur, reference });
+	if (result.status === 'pending') {
+		return json(res, 200, { data: { status: 'pending' } });
 	}
-
-	const refKey = new PublicKey(reference);
-	const recipient = new PublicKey(payout.address);
-	const splToken = new PublicKey(pur.currency_mint);
-	const expectedAmount = new BigNumber(pur.amount).dividedBy(1e6); // assume 6 decimals (USDC)
-
-	let signatureInfo;
-	try {
-		signatureInfo = await rpc().withFallback((conn) => findReference(conn, refKey, { finality: 'confirmed' }));
-	} catch (e) {
-		// Solana Pay throws FindReferenceError when no tx is found yet.
-		if (/FindReferenceError|not found/i.test(e?.message || '')) {
-			return json(res, 200, { data: { status: 'pending' } });
-		}
-		throw e;
+	if (result.status === 'tipped') {
+		return error(res, 409, 'transfer_mismatch', result.message || 'on-chain transfer did not match expected', {
+			status: 'tipped',
+			tipped_amount: result.tipped_amount,
+			tx_signature: result.tx_signature,
+		});
 	}
-
-	const txSignature = signatureInfo.signature;
-
-	try {
-		await rpc().withFallback((conn) =>
-			validateTransfer(
-				conn,
-				txSignature,
-				{ recipient, amount: expectedAmount, splToken, reference: refKey },
-				{ commitment: 'confirmed' },
-			),
-		);
-	} catch (e) {
-		// Transfer was found but doesn't match — mark failed so the user can retry.
-		await sql`
-			UPDATE skill_purchases
-			SET status = 'failed', tx_signature = ${txSignature}
-			WHERE id = ${pur.id} AND status = 'pending'
-		`;
-		return error(res, 409, 'transfer_mismatch', `on-chain transfer did not match expected: ${e.message}`);
+	if (result.status === 'mismatch') {
+		return error(res, 409, 'transfer_mismatch', result.message || 'no matching transfer found');
 	}
-
-	// Atomic confirm + revenue ledger. The status='pending' guard keeps concurrent
-	// confirms idempotent: the second one updates 0 rows and skips the ledger writes.
-	// agent_revenue_events.intent_id has a FK to agent_payment_intents, so we
-	// synthesize a payment-intent row keyed off the skill_purchase id.
-	const intentId = `sp_${pur.id}`;
-	const updated = await sql`
-		UPDATE skill_purchases
-		SET status = 'confirmed', tx_signature = ${txSignature}, confirmed_at = now()
-		WHERE id = ${pur.id} AND status = 'pending'
-		RETURNING id
-	`;
-	if (updated.length > 0) {
-		await sql`
-			INSERT INTO agent_payment_intents
-				(id, payer_user_id, agent_id, currency_mint, amount, status, expires_at,
-				 cluster, tx_signature, paid_at, payload)
-			VALUES
-				(${intentId}, ${pur.user_id}, ${pur.agent_id}, ${pur.currency_mint},
-				 ${String(pur.amount)}, 'confirmed', now() + interval '30 days',
-				 'mainnet', ${txSignature}, now(),
-				 ${JSON.stringify({ kind: 'skill_purchase', skill: pur.skill, reference })}::jsonb)
-			ON CONFLICT (id) DO NOTHING
-		`;
-		await sql`
-			INSERT INTO agent_revenue_events
-				(agent_id, intent_id, skill, gross_amount, fee_amount, net_amount,
-				 currency_mint, chain, payer_address)
-			VALUES
-				(${pur.agent_id}, ${intentId}, ${pur.skill},
-				 ${pur.amount}, 0, ${pur.amount},
-				 ${pur.currency_mint}, ${pur.chain}, ${payout.address})
-		`;
+	if (result.status === 'expired') {
+		return error(res, 410, 'purchase_expired', 'this pending purchase expired; please start a new one');
 	}
+	return json(res, 200, { data: { status: 'confirmed', tx_signature: result.tx_signature } });
+}
 
-	return json(res, 200, { data: { status: 'confirmed', tx_signature: txSignature } });
+// ── Helpers ────────────────────────────────────────────────────────────────
+
+// Look up the referrer who sent the buyer here. Two paths:
+//   1. ?ref=<code> querystring — buyer arrived via a referral link.
+//   2. users.referred_by_id — buyer signed up under someone.
+async function resolveReferrer(req, buyerUserId) {
+	const url = new URL(req.url, 'http://x');
+	const code = url.searchParams.get('ref');
+	if (code) {
+		const [u] = await sql`SELECT id FROM users WHERE referral_code = ${code} LIMIT 1`;
+		if (u && u.id !== buyerUserId) return u.id;
+	}
+	const [me] = await sql`SELECT referred_by_id FROM users WHERE id = ${buyerUserId}`;
+	if (me?.referred_by_id && me.referred_by_id !== buyerUserId) return me.referred_by_id;
+	return null;
 }

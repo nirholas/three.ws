@@ -111,6 +111,7 @@ const appConfig = {
 				'vanity-wallet': resolve(__dirname, 'public/vanity-wallet.html'),
 				'eth-vanity': resolve(__dirname, 'public/eth-vanity.html'),
 				pay: resolve(__dirname, 'public/pay/index.html'),
+				'pay-calls': resolve(__dirname, 'public/pay/calls/index.html'),
 			},
 		},
 	},
@@ -150,6 +151,8 @@ const appConfig = {
 					'/marketplace/': resolve(root, 'marketplace.html'),
 					'/pay': resolve(root, 'public/pay/index.html'),
 					'/pay/': resolve(root, 'public/pay/index.html'),
+					'/pay/calls': resolve(root, 'public/pay/calls/index.html'),
+					'/pay/calls/': resolve(root, 'public/pay/calls/index.html'),
 					'/explore': resolve(root, 'public/discover/index.html'),
 					'/explore/': resolve(root, 'public/discover/index.html'),
 					// END:DISCOVER_ROUTE
@@ -224,6 +227,9 @@ const appConfig = {
 					// /a/<chainId>/<agentId>  or  /a/<chainId>/<registry>/<agentId>
 					else if (!filePath && /^\/a\/[^/]+(?:\/[^/]+){1,2}\/?$/.test(path))
 						filePath = resolve(root, 'app.html');
+					// /pay/calls/<base58 tx sig> → permalink for a paid x402 call
+					else if (!filePath && /^\/pay\/calls\/[1-9A-HJ-NP-Za-km-z]+\/?$/.test(path))
+						filePath = resolve(root, 'public/pay/calls/index.html');
 					// Serve the rider webpack app as static files.
 					if (path === '/rider' || path === '/rider/') {
 						const html = readFileSync(resolve(root, 'rider/index.html'), 'utf8');

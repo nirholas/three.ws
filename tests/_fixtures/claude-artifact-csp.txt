@@ -1,0 +1,13 @@
+content-security-policy: default-src https://www.claudeusercontent.com;
+  script-src 'unsafe-eval' 'unsafe-inline' https://www.claudeusercontent.com https://cdnjs.cloudflare.com https://cdn.jsdelivr.net/pyodide/;
+  connect-src https://cdn.jsdelivr.net/pyodide/;
+  worker-src https://www.claudeusercontent.com blob:;
+  style-src 'unsafe-inline' https://www.claudeusercontent.com https://cdnjs.cloudflare.com https://fonts.googleapis.com;
+  img-src blob: data: https://www.claudeusercontent.com;
+  font-src data: https://www.claudeusercontent.com;
+  object-src 'none';
+  base-uri https://www.claudeusercontent.com;
+  form-action https://www.claudeusercontent.com;
+  frame-ancestors https://www.claudeusercontent.com https://claude.ai https://preview.claude.ai https://claude.site https://feedback.anthropic.com;
+  upgrade-insecure-requests;
+  block-all-mixed-content

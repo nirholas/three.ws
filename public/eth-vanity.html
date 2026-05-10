@@ -129,12 +129,15 @@
 
 		<div class="card">
 			<h2>2. Pattern</h2>
-			<p class="desc">Hex characters only (0–9, a–f). Each extra character is 16× harder.</p>
+			<p class="desc">
+				Hex characters only (0–9, a–f). Each extra character is 16× harder.
+				<strong>Mixed case</strong> (e.g. <code>Beef</code>) matches the EIP-55 checksum — visually distinctive, ~2× harder per letter.
+			</p>
 
 			<div class="row2">
 				<div>
 					<label for="prefix">Prefix (after 0x)</label>
-					<input id="prefix" type="text" maxlength="10" placeholder="e.g. beef" autocomplete="off" spellcheck="false" />
+					<input id="prefix" type="text" maxlength="10" placeholder="e.g. beef or Beef" autocomplete="off" spellcheck="false" />
 				</div>
 				<div>
 					<label for="suffix">Suffix</label>
@@ -142,11 +145,13 @@
 				</div>
 			</div>
 
+			<div class="preset-row" id="word-chips" aria-label="Quick-pick patterns" style="margin-top:.6rem"></div>
+
 			<div class="preview" id="preview" aria-live="polite"></div>
 
 			<div class="row">
 				<span id="est">type a pattern to see estimated time</span>
-				<span id="cores-row">cores: <span id="cores">?</span></span>
+				<span id="cores-row">cores: <span id="cores">?</span> <span id="case-tag" style="margin-left:.5rem"></span></span>
 			</div>
 
 			<div class="actions">
@@ -178,8 +183,10 @@
 		import { grindCreate2Vanity } from '/src/eth/vanity/grinder.js';
 		import {
 			validatePattern, validateAddress, validateInitCodeHash,
-			estimateAttempts, formatTimeEstimate, MAX_PATTERN_LENGTH,
+			estimateAttempts, formatTimeEstimate, letterCount, eip55Checksum,
+			MAX_PATTERN_LENGTH,
 		} from '/src/eth/vanity/validation.js';
+		import { PRESET_CHIPS } from '/src/eth/vanity/wordlist.js';
 
 		const $ = (id) => document.getElementById(id);
 		const HEX_ALPHA = '0123456789abcdef';
@@ -205,9 +212,14 @@
 			if (seconds < 31536000) return `~${Math.round(seconds/86400)}d`;
 			return '>1y';
 		}
-		function estSeconds(prefixLen, suffixLen) {
+		function estSeconds(prefixLen, suffixLen, letters = 0, caseSensitive = false) {
 			const total = prefixLen + suffixLen;
-			return total <= 0 ? 0 : Math.pow(16, total) / (RATE_PER_CORE * cores);
+			if (total <= 0) return 0;
+			const base = Math.pow(16, total);
+			const tax  = caseSensitive ? Math.pow(2, letters) : 1;
+			// case-sensitive mode pays an extra keccak per attempt → ~30% slower hot loop.
+			const ratePerCore = caseSensitive ? RATE_PER_CORE * 0.7 : RATE_PER_CORE;
+			return (base * tax) / (ratePerCore * cores);
 		}
 		function bytesToHex(bytes) {
 			let s = '';
@@ -233,6 +245,21 @@
 			});
 		});
 
+		// ── Wordlist chips ────────────────────────────────────────────────
+		const chipsEl = $('word-chips');
+		PRESET_CHIPS.forEach((w) => {
+			const b = document.createElement('button');
+			b.type = 'button';
+			b.className = 'preset';
+			b.textContent = w;
+			b.addEventListener('click', () => {
+				$('prefix').value = w;
+				$('prefix').dispatchEvent(new Event('input'));
+				$('prefix').focus();
+			});
+			chipsEl.appendChild(b);
+		});
+
 		// ── Auto-hash raw initCode → fill initcode-hash ────────────────────
 		$('initcode-raw').addEventListener('input', () => {
 			const raw = $('initcode-raw').value.trim();
@@ -247,9 +274,11 @@
 
 		// ── Live preview / validation ──────────────────────────────────────
 		function readPattern() {
-			const p = $('prefix').value.trim().replace(/^0x/i, '').toLowerCase();
-			const s = $('suffix').value.trim().toLowerCase();
-			return { p, s };
+			// Preserve casing — the grinder switches into EIP-55 mode if any char is uppercase.
+			const p = $('prefix').value.trim().replace(/^0x/i, '');
+			const s = $('suffix').value.trim();
+			const caseSensitive = /[A-F]/.test(p) || /[A-F]/.test(s);
+			return { p, s, caseSensitive };
 		}
 		let previewLoop = null;
 		function startPreviewLoop() {
@@ -264,9 +293,9 @@
 		function stopPreviewLoop() { if (previewLoop) clearInterval(previewLoop); previewLoop = null; }
 
 		function update() {
-			const { p, s } = readPattern();
-			const pv = p ? validatePattern(p) : { valid: true, errors: [] };
-			const sv = s ? validatePattern(s) : { valid: true, errors: [] };
+			const { p, s, caseSensitive } = readPattern();
+			const pv = p ? validatePattern(p) : { valid: true, errors: [], caseSensitive: false };
+			const sv = s ? validatePattern(s) : { valid: true, errors: [], caseSensitive: false };
 			$('prefix').classList.toggle('invalid', !!p && !pv.valid);
 			$('suffix').classList.toggle('invalid', !!s && !sv.valid);
 
@@ -276,9 +305,11 @@
 			$('initcode-hash').classList.toggle('invalid', !!$('initcode-hash').value && !ich.valid);
 
 			const total = (pv.valid ? p.length : 0) + (sv.valid ? s.length : 0);
+			const letters = letterCount(p) + letterCount(s);
 			if (total === 0) {
 				$('preview').innerHTML = `<span class="rest">0x${esc(sample())}</span>`;
 				$('est').textContent = 'type a pattern to see estimated time';
+				$('case-tag').innerHTML = '';
 			} else {
 				const mid = sample('', '').slice(0, 40 - p.length - s.length);
 				$('preview').innerHTML =
@@ -286,7 +317,10 @@
 					(p ? `<span class="pfx">${esc(p)}</span>` : '') +
 					`<span class="rest">${esc(mid)}</span>` +
 					(s ? `<span class="sfx">${esc(s)}</span>` : '');
-				$('est').textContent = `est. ${fmtTime(estSeconds(p.length, s.length))} on ${cores} cores`;
+				$('est').textContent = `est. ${fmtTime(estSeconds(p.length, s.length, letters, caseSensitive))} on ${cores} cores`;
+				$('case-tag').innerHTML = caseSensitive
+					? `<span style="background:linear-gradient(90deg,rgba(167,139,250,0.2),rgba(99,102,241,0.2));color:#c4b5fd;border:1px solid rgba(167,139,250,0.25);padding:.05rem .4rem;border-radius:999px;font-size:.7rem">EIP-55 case-sensitive</span>`
+					: '';
 			}
 
 			$('grind').disabled =
@@ -307,7 +341,7 @@
 		let abort = null;
 
 		$('grind').addEventListener('click', async () => {
-			const { p, s } = readPattern();
+			const { p, s, caseSensitive } = readPattern();
 			const dv = validateAddress($('deployer').value);
 			const ich = validateInitCodeHash($('initcode-hash').value);
 			if (!dv.valid)  { showError(dv.error);  return; }
@@ -320,7 +354,7 @@
 			$('error').hidden = true;
 			$('attempts').textContent = '0';
 			$('rate').textContent = '0/s';
-			$('eta').textContent = fmtTime(estSeconds(p.length, s.length));
+			$('eta').textContent = fmtTime(estSeconds(p.length, s.length, letterCount(p) + letterCount(s), caseSensitive));
 			$('scan').textContent = `0x${sample(p, s)}`;
 			stopPreviewLoop();
 
@@ -371,7 +405,10 @@
 			$('grind').textContent = 'Grind another';
 			$('progress').hidden = true;
 
-			const addrNoPrefix = result.address.slice(2); // 40 hex chars
+			// Use the checksummed (EIP-55) form for display when the user
+			// asked for a case-sensitive match; otherwise show lowercase.
+			const display = result.caseSensitive ? result.addressChecksum : result.address;
+			const addrNoPrefix = display.slice(2);
 			const mid = addrNoPrefix.slice(p.length, addrNoPrefix.length - s.length);
 			const html = `
 				<div class="result">
@@ -383,13 +420,14 @@
 							(s ? `<span class="sfx">${esc(s)}</span>` : '')
 						}
 					</div>
+					${result.caseSensitive ? `<div class="out-row"><span class="k">lowercase</span> ${esc(result.address)}</div>` : ''}
 					<div class="out-row"><span class="k">salt</span> ${esc(result.salt)}</div>
 					<div class="out-row"><span class="k">deployer</span> ${esc(result.deployer)}</div>
 					<div class="out-row"><span class="k">initCodeHash</span> ${esc(result.initCodeHash)}</div>
 					<div class="meta">
 						${result.attempts.toLocaleString()} attempts in ${(result.durationMs/1000).toFixed(1)}s
 						across ${result.workers} cores
-						(${Math.round(result.attempts / (result.durationMs/1000)).toLocaleString()}/s)
+						(${Math.round(result.attempts / (result.durationMs/1000)).toLocaleString()}/s)${result.caseSensitive ? ' · EIP-55 case-sensitive' : ''}
 					</div>
 					<div class="actions">
 						<button id="copy-salt" class="btn primary" type="button">Copy salt</button>
@@ -408,17 +446,18 @@
 			renderAssignBlock(result, p, s);
 
 			$('copy-salt').addEventListener('click', () => copy(result.salt, 'copy-salt', 'Copy salt'));
-			$('copy-addr').addEventListener('click', () => copy(result.address, 'copy-addr', 'Copy address'));
+			$('copy-addr').addEventListener('click', () => copy(result.caseSensitive ? result.addressChecksum : result.address, 'copy-addr', 'Copy address'));
 			$('download').addEventListener('click', () => {
 				const payload = {
-					address:      result.address,
-					salt:         result.salt,
-					deployer:     result.deployer,
-					initCodeHash: result.initCodeHash,
-					pattern:      { prefix: p || null, suffix: s || null },
-					attempts:     result.attempts,
-					durationMs:   result.durationMs,
-					generatedAt:  new Date().toISOString(),
+					address:         result.address,
+					addressChecksum: result.addressChecksum,
+					salt:            result.salt,
+					deployer:        result.deployer,
+					initCodeHash:    result.initCodeHash,
+					pattern:         { prefix: p || null, suffix: s || null, caseSensitive: !!result.caseSensitive },
+					attempts:        result.attempts,
+					durationMs:      result.durationMs,
+					generatedAt:     new Date().toISOString(),
 				};
 				const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
 				const url = URL.createObjectURL(blob);
@@ -521,6 +560,7 @@
 					predicted_address: result.address,
 					prefix:            p || null,
 					suffix:            s || null,
+					case_sensitive:    !!result.caseSensitive,
 					deployer_label:    presetLabel,
 				};
 				try {

@@ -1,0 +1,324 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>three.ws · paid call · x402</title>
+<meta name="description" content="An x402 paid call to three.ws/api/mcp — settled on Solana, $0.001 USDC." />
+<meta property="og:type" content="article" />
+<meta property="og:title" content="three.ws · paid call (x402)" />
+<meta property="og:image" content="" id="ogImage" />
+<meta property="og:image:width" content="1200" />
+<meta property="og:image:height" content="630" />
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:image" content="" id="twImage" />
+<meta name="theme-color" content="#0a0b10" />
+<script type="module" src="https://ajax.googleapis.com/ajax/libs/model-viewer/4.0.0/model-viewer.min.js"></script>
+<style>
+  :root {
+    --bg: #0a0b10; --bg-2: #0f1119;
+    --panel: #14161f; --panel-2: #1a1d29;
+    --border: #232636; --border-strong: #2e3447;
+    --text: #e6e8f0; --muted: #8a90a8;
+    --accent: #8b5cf6; --accent-2: #22d3ee;
+    --green: #22c55e; --orange: #f59e0b; --red: #ef4444;
+    --mono: ui-monospace, "JetBrains Mono", "Fira Code", Menlo, monospace;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; background: var(--bg); color: var(--text); }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+  a { color: var(--accent-2); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+
+  header {
+    padding: 16px 28px;
+    display: flex; align-items: center; justify-content: space-between;
+    gap: 16px; border-bottom: 1px solid var(--border);
+    background: linear-gradient(180deg, rgba(139,92,246,0.04), transparent);
+  }
+  .brand { display: flex; align-items: center; gap: 12px; }
+  .brand .logo {
+    width: 32px; height: 32px;
+    background: conic-gradient(from 230deg, var(--accent), var(--accent-2), var(--accent));
+    border-radius: 9px; box-shadow: 0 0 24px rgba(139, 92, 246, 0.5);
+  }
+  .brand a { color: var(--text); }
+  .brand .title { font-weight: 700; font-size: 16px; letter-spacing: -0.01em; }
+  .brand .sub { font-size: 12px; color: var(--muted); }
+
+  main { max-width: 980px; margin: 32px auto; padding: 0 24px 64px; }
+
+  .hero {
+    padding: 24px 28px;
+    border: 1px solid var(--border-strong);
+    border-radius: 16px;
+    background: linear-gradient(180deg, rgba(34, 211, 238, 0.06), rgba(139, 92, 246, 0.04), var(--panel));
+    margin-bottom: 24px;
+  }
+  .hero .top { display: flex; gap: 14px; align-items: center; margin-bottom: 16px; flex-wrap: wrap; }
+  .hero .badge {
+    background: rgba(34, 197, 94, 0.12); color: var(--green);
+    border: 1px solid rgba(34, 197, 94, 0.4);
+    padding: 4px 10px; border-radius: 99px;
+    font-size: 11px; font-family: var(--mono); text-transform: uppercase; letter-spacing: 0.06em;
+  }
+  .hero h1 {
+    margin: 0 0 4px; font-size: 22px; font-weight: 600; letter-spacing: -0.01em;
+  }
+  .hero .ts { color: var(--muted); font-size: 12px; font-family: var(--mono); }
+
+  .grid {
+    display: grid; gap: 18px;
+    grid-template-columns: 1fr 1fr;
+  }
+  @media (max-width: 760px) { .grid { grid-template-columns: 1fr; } }
+  .card {
+    background: var(--panel); border: 1px solid var(--border);
+    border-radius: 12px; padding: 18px 20px;
+  }
+  .card h2 {
+    font-size: 11px; text-transform: uppercase; letter-spacing: 0.08em;
+    color: var(--muted); margin: 0 0 12px;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .card h2::before {
+    content: ''; width: 4px; height: 12px;
+    background: var(--accent); border-radius: 2px;
+  }
+  .row {
+    display: flex; justify-content: space-between; gap: 12px;
+    font-size: 13px; padding: 6px 0;
+    border-bottom: 1px dashed rgba(255,255,255,0.04);
+    font-family: var(--mono);
+  }
+  .row:last-child { border-bottom: none; }
+  .row .k { color: var(--muted); }
+  .row .v { color: var(--text); word-break: break-all; text-align: right; }
+
+  .result-block { margin-top: 24px; }
+  .meta-grid {
+    display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+    gap: 8px; margin-top: 12px;
+  }
+  .chip {
+    background: var(--bg); border: 1px solid var(--border);
+    border-radius: 8px; padding: 10px 12px;
+  }
+  .chip .k { font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.05em; }
+  .chip .v { font-size: 16px; font-family: var(--mono); margin-top: 2px; }
+
+  .mv-block { margin-top: 16px; border: 1px solid var(--border); border-radius: 12px; overflow: hidden; background: linear-gradient(180deg, #1a1d29, #0a0b10); }
+  .mv-block model-viewer { width: 100%; height: 420px; display: block; --progress-bar-color: var(--accent); }
+  .mv-block .caption { padding: 8px 14px; font-size: 11px; color: var(--muted); border-top: 1px solid var(--border); font-family: var(--mono); }
+
+  .cta {
+    margin-top: 32px; padding: 18px 22px;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    background: linear-gradient(180deg, rgba(139,92,246,0.08), transparent);
+    display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap;
+  }
+  .cta .text { font-size: 14px; }
+  .cta .btn {
+    display: inline-block;
+    background: var(--accent); color: #fff !important;
+    padding: 10px 18px; border-radius: 10px;
+    font-weight: 600; font-size: 14px; text-decoration: none;
+  }
+  .cta .btn:hover { background: #7c3aed; text-decoration: none; }
+
+  .skeleton { color: var(--muted); padding: 32px; text-align: center; font-family: var(--mono); font-size: 13px; }
+  .err { color: var(--red); padding: 32px; text-align: center; font-family: var(--mono); font-size: 13px; }
+
+  pre.json {
+    margin: 12px 0 0; padding: 12px; background: var(--bg);
+    border: 1px solid var(--border); border-radius: 8px;
+    font-family: var(--mono); font-size: 11px; line-height: 1.5;
+    overflow-x: auto; max-height: 320px;
+  }
+
+  .opt-list { display: flex; flex-direction: column; gap: 8px; margin-top: 10px; }
+  .opt-row { display: flex; gap: 10px; padding: 10px 12px; background: var(--bg); border-left: 3px solid var(--border); border-radius: 4px; }
+  .opt-row.high { border-left-color: var(--red); background: rgba(239,68,68,0.05); }
+  .opt-row.medium { border-left-color: var(--orange); background: rgba(245,158,11,0.05); }
+  .opt-row.low { border-left-color: var(--green); background: rgba(34,197,94,0.05); }
+  .opt-row .opt-icon { flex: 0 0 auto; width: 24px; height: 24px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 14px; }
+  .opt-row.high .opt-icon { background: rgba(239,68,68,0.15); color: var(--red); }
+  .opt-row.medium .opt-icon { background: rgba(245,158,11,0.15); color: var(--orange); }
+  .opt-row.low .opt-icon { background: rgba(34,197,94,0.15); color: var(--green); }
+  .opt-row .opt-body { flex: 1; min-width: 0; font-size: 13px; line-height: 1.5; }
+  .opt-row .opt-title { font-weight: 600; }
+  .opt-row .opt-detail { color: var(--muted); margin-top: 2px; font-size: 12px; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="brand">
+    <a href="/pay"><div class="logo"></div></a>
+    <div>
+      <div class="title">three.ws · pay-per-call</div>
+      <div class="sub">paid x402 call · permalink</div>
+    </div>
+  </div>
+  <a href="/pay" style="font-size: 13px;">← back to demo</a>
+</header>
+
+<main id="main">
+  <div class="skeleton">loading paid call…</div>
+</main>
+
+<script type="module">
+const main = document.getElementById('main');
+
+function escape(s) { return String(s).replace(/[<>&]/g, c => ({'<':'&lt;','>':'&gt;','&':'&amp;'}[c])); }
+function formatBytes(n) {
+  if (!Number.isFinite(n)) return '—';
+  if (n < 1024) return `${n} B`;
+  if (n < 1024*1024) return `${(n/1024).toFixed(1)} KB`;
+  return `${(n/1024/1024).toFixed(1)} MB`;
+}
+function chip(k, v) { return `<div class="chip"><div class="k">${k}</div><div class="v">${v}</div></div>`; }
+function modelViewer(url) {
+  return `<div class="mv-block">
+    <model-viewer src="${escape(url)}" autoplay auto-rotate camera-controls ar shadow-intensity="0.6" exposure="1.0" interaction-prompt="none" loading="eager" reveal="auto"></model-viewer>
+    <div class="caption">rendered from <code>${escape(url)}</code></div>
+  </div>`;
+}
+function parseTextResult(result) {
+  const c = result?.content?.[0];
+  if (c?.type === 'text' && typeof c.text === 'string') {
+    try { return JSON.parse(c.text); } catch { return c.text; }
+  }
+  return null;
+}
+
+function renderResultBlock(record) {
+  const { tool, args, result } = record;
+  const url = args?.url || '';
+  if (tool === 'tools/list') {
+    const tools = result?.tools || [];
+    return `<div class="card"><h2>${tools.length} MCP tools returned</h2>
+      <pre class="json">${escape(tools.map(t => t.name + (t.title ? ' · ' + t.title : '')).join('\n'))}</pre>
+    </div>`;
+  }
+  if (tool === 'validate_model') {
+    const t = parseTextResult(result);
+    if (!t) return `<div class="card"><h2>validate_model</h2><pre class="json">${escape(JSON.stringify(result, null, 2))}</pre></div>`;
+    const issues = t.issues || {};
+    const errs = Number(issues.numErrors ?? 0);
+    const meta = t.meta || {};
+    return `<div class="card"><h2>validate_model</h2>
+      <div style="font-size:15px">${errs === 0 ? '✅ glTF spec-compliant' : '❌ ' + errs + ' errors'}</div>
+      <div class="meta-grid">
+        ${meta.vertices != null ? chip('vertices', Number(meta.vertices).toLocaleString()) : ''}
+        ${meta.triangles != null ? chip('triangles', Number(meta.triangles).toLocaleString()) : ''}
+        ${meta.meshes != null ? chip('meshes', meta.meshes) : ''}
+        ${meta.materials != null ? chip('materials', meta.materials) : ''}
+        ${meta.textures != null ? chip('textures', meta.textures) : ''}
+        ${meta.bytes != null ? chip('size', formatBytes(meta.bytes)) : ''}
+      </div>
+      ${url ? modelViewer(url) : ''}
+    </div>`;
+  }
+  if (tool === 'inspect_model') {
+    const t = parseTextResult(result);
+    if (!t) return `<div class="card"><h2>inspect_model</h2><pre class="json">${escape(JSON.stringify(result, null, 2))}</pre></div>`;
+    const meta = t.meta || t;
+    return `<div class="card"><h2>inspect_model</h2>
+      <div class="meta-grid">
+        ${meta.vertices != null ? chip('vertices', Number(meta.vertices).toLocaleString()) : ''}
+        ${meta.triangles != null ? chip('triangles', Number(meta.triangles).toLocaleString()) : ''}
+        ${meta.meshes != null ? chip('meshes', meta.meshes) : ''}
+        ${meta.materials != null ? chip('materials', meta.materials) : ''}
+        ${meta.textures != null ? chip('textures', meta.textures) : ''}
+        ${meta.bytes != null ? chip('size', formatBytes(meta.bytes)) : ''}
+      </div>
+      ${url ? modelViewer(url) : ''}
+    </div>`;
+  }
+  if (tool === 'optimize_model') {
+    const t = parseTextResult(result);
+    const sugs = t?.suggestions || t?.recommendations || [];
+    return `<div class="card"><h2>optimize_model · ${sugs.length} suggestion${sugs.length===1?'':'s'}</h2>
+      <div class="opt-list">
+        ${sugs.map(s => {
+          const sev = (s.severity || s.priority || 'low').toLowerCase();
+          const title = s.title || s.kind || s.id || 'suggestion';
+          const detail = s.detail || s.description || s.message || '';
+          return `<div class="opt-row ${sev}"><div class="opt-icon">${sev === 'high' ? '!' : sev === 'medium' ? '~' : '·'}</div><div class="opt-body"><div class="opt-title">${escape(title)}</div>${detail ? `<div class="opt-detail">${escape(detail)}</div>` : ''}</div></div>`;
+        }).join('')}
+      </div>
+      ${url ? modelViewer(url) : ''}
+    </div>`;
+  }
+  return `<div class="card"><h2>${escape(tool)}</h2>
+    <pre class="json">${escape(JSON.stringify(result, null, 2)).slice(0, 4000)}</pre>
+  </div>`;
+}
+
+function render(record) {
+  const tx = record.tx;
+  const explorer = `https://solscan.io/tx/${tx}`;
+  const amount = (Number(record.amount || 1000) / 1e6).toFixed(6);
+  const ts = new Date(record.ts || Date.now()).toUTCString();
+  const url = record.args?.url;
+
+  document.title = `${record.tool} · paid call · three.ws`;
+  // Update OG meta
+  document.querySelector('meta[property="og:title"]').content =
+    `three.ws · ${record.tool} (${amount} USDC) · x402 paid call`;
+  document.querySelector('meta[name="description"]').content =
+    `${record.tool}${record.argsSummary ? ' · ' + record.argsSummary : ''} — paid ${amount} USDC on Solana, settled on-chain. View the receipt + result.`;
+
+  main.innerHTML = `
+    <div class="hero">
+      <div class="top">
+        <span class="badge">✓ settled on-chain</span>
+        <span class="ts">${escape(ts)}</span>
+      </div>
+      <h1><code style="background: rgba(255,255,255,0.06); padding: 4px 10px; border-radius: 6px; font-family: var(--mono); font-size: 18px;">${escape(record.tool)}</code>${record.argsSummary ? ' · ' + escape(record.argsSummary) : ''}</h1>
+      <div class="meta-grid" style="margin-top:14px">
+        ${chip('amount', amount + ' USDC')}
+        ${chip('network', 'Solana mainnet')}
+        ${chip('payer', `${(record.payer||'').slice(0,4)}…${(record.payer||'').slice(-4)}`)}
+        ${chip('payTo', `${(record.payTo||'').slice(0,4)}…${(record.payTo||'').slice(-4)}`)}
+      </div>
+      <div style="margin-top:14px;font-family:var(--mono);font-size:12px;color:var(--muted)">
+        tx: <a href="${explorer}" target="_blank" rel="noopener">${escape(tx)} ↗</a>
+      </div>
+    </div>
+
+    <div class="result-block">
+      ${renderResultBlock(record)}
+    </div>
+
+    <div class="cta">
+      <div class="text"><strong>Try it yourself.</strong> Pay $0.001 USDC for any MCP tool, settled per call on Solana — no API keys, no signup.</div>
+      <a class="btn" href="/pay${url ? `?validate=${encodeURIComponent(url)}` : ''}">Open the demo →</a>
+    </div>
+  `;
+}
+
+const m = location.pathname.match(/^\/pay\/calls\/([1-9A-HJ-NP-Za-km-z]+)/);
+const tx = m ? m[1] : null;
+
+if (!tx) {
+  main.innerHTML = `<div class="err">Missing transaction signature in URL.</div>`;
+} else {
+  fetch(`/api/x402-pay?call=${tx}`)
+    .then(r => r.ok ? r.json() : r.json().then(e => Promise.reject(e.error || 'load_failed')))
+    .then(render)
+    .catch((err) => {
+      main.innerHTML = `<div class="err">Couldn't load this paid call.<br/><br/>
+        <a href="/pay">← back to demo</a> &nbsp; · &nbsp;
+        <a href="https://solscan.io/tx/${tx}" target="_blank" rel="noopener">view on Solscan</a></div>`;
+    });
+}
+</script>
+
+</body>
+</html>

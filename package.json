@@ -45,6 +45,7 @@
 		"dev:lib": "TARGET=lib vite",
 		"build": "vite build",
 		"build:animations": "node scripts/build-animations.mjs",
+		"build:artifact-viewer": "node scripts/build-artifact-viewer.mjs",
 		"build:lib": "TARGET=lib vite build",
 		"build:lib:full": "TARGET=lib LIB_FORMATS=es,umd vite build",
 		"build:artifact": "vite build --config vite.config.artifact.js",

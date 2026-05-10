@@ -3,15 +3,24 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>three.ws · pay-per-call demo (x402)</title>
-<meta name="description" content="Live demo of x402 paid API calls on Solana. The on-page agent pays $0.001 USDC per request to the three.ws MCP server and renders the response in real time." />
+<title>three.ws · pay-per-call (x402)</title>
+<meta name="description" content="Live x402 demo — agent pays $0.001 USDC on Solana per request to call MCP tools, render glTF/GLB models, and inspect 3D assets. No keys, no signup, on-chain settlement per call." />
+<meta property="og:title" content="three.ws · pay-per-call (x402)" />
+<meta property="og:description" content="Live x402 demo — agent pays $0.001 USDC on Solana per MCP tool call. Settled on-chain, rendered live." />
+<meta property="og:type" content="website" />
+<meta property="og:url" content="https://three.ws/pay" />
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="theme-color" content="#0a0b10" />
 <link rel="preconnect" href="https://api.mainnet-beta.solana.com" />
+<script type="module" src="https://ajax.googleapis.com/ajax/libs/model-viewer/4.0.0/model-viewer.min.js"></script>
 <style>
   :root {
     --bg: #0a0b10;
+    --bg-2: #0f1119;
     --panel: #14161f;
     --panel-2: #1a1d29;
     --border: #232636;
+    --border-strong: #2e3447;
     --text: #e6e8f0;
     --muted: #8a90a8;
     --accent: #8b5cf6;
@@ -28,56 +37,78 @@
     min-height: 100vh;
     display: flex;
     flex-direction: column;
+    -webkit-font-smoothing: antialiased;
   }
+  a { color: var(--accent-2); }
+  a:hover { color: #67e8f9; }
+
+  /* Header */
   header {
-    padding: 22px 32px 14px;
+    padding: 16px 28px;
     display: flex;
     align-items: center;
     justify-content: space-between;
-    gap: 24px;
+    gap: 16px;
     border-bottom: 1px solid var(--border);
+    background: linear-gradient(180deg, rgba(139,92,246,0.04), transparent);
   }
-  .brand { display: flex; align-items: center; gap: 12px; }
+  .brand { display: flex; align-items: center; gap: 12px; min-width: 0; }
   .brand .logo {
     width: 32px; height: 32px;
     background: conic-gradient(from 230deg, var(--accent), var(--accent-2), var(--accent));
     border-radius: 9px;
-    box-shadow: 0 0 20px rgba(139, 92, 246, 0.4);
+    box-shadow: 0 0 24px rgba(139, 92, 246, 0.5);
+    flex: 0 0 auto;
   }
-  .brand .title { font-weight: 700; font-size: 16px; letter-spacing: -0.01em; }
-  .brand .sub { font-size: 12px; color: var(--muted); }
+  .brand .title { font-weight: 700; font-size: 16px; letter-spacing: -0.01em; white-space: nowrap; }
+  .brand .sub { font-size: 12px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .header-right { display: flex; gap: 8px; align-items: center; }
   .pill {
-    display: inline-flex; align-items: center; gap: 6px;
+    display: inline-flex; align-items: center; gap: 8px;
     background: var(--panel); border: 1px solid var(--border);
     padding: 6px 12px; border-radius: 99px;
     font-family: var(--mono); font-size: 12px;
-    color: var(--muted);
+    color: var(--text);
+    transition: border-color 0.2s;
   }
   .pill .dot {
     width: 6px; height: 6px; border-radius: 50%;
     background: var(--green); box-shadow: 0 0 8px var(--green);
+    animation: pulse 2s ease-in-out infinite;
   }
+  .pill.ticker .dot { background: var(--accent-2); box-shadow: 0 0 8px var(--accent-2); }
+  .pill .label { color: var(--muted); }
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.5; }
+  }
+  .pill.flash {
+    border-color: var(--accent-2);
+    animation: flash 0.6s ease-out;
+  }
+  @keyframes flash {
+    0% { background: var(--accent-2); color: #0a0b10; }
+    100% { background: var(--panel); }
+  }
+
+  /* Main */
   main {
     flex: 1; display: grid;
-    grid-template-columns: 1.4fr 1fr;
+    grid-template-columns: 1.55fr 1fr;
     gap: 0; min-height: 0;
   }
-  @media (max-width: 900px) {
+  @media (max-width: 980px) {
     main { grid-template-columns: 1fr; }
-    aside { border-left: none !important; border-top: 1px solid var(--border); }
+    aside.status { border-left: none !important; border-top: 1px solid var(--border); }
   }
-  section.chat {
-    display: flex; flex-direction: column; min-height: 0;
-  }
+  section.chat { display: flex; flex-direction: column; min-height: 0; }
   .conv {
     flex: 1; overflow-y: auto;
-    padding: 24px 32px;
-    display: flex; flex-direction: column; gap: 16px;
+    padding: 22px 28px;
+    display: flex; flex-direction: column; gap: 14px;
+    scroll-behavior: smooth;
   }
-  .msg {
-    display: flex; gap: 12px; align-items: flex-start;
-    animation: fade 0.18s ease-out;
-  }
+  .msg { display: flex; gap: 12px; align-items: flex-start; animation: fade 0.18s ease-out; }
   @keyframes fade {
     from { opacity: 0; transform: translateY(4px); }
     to { opacity: 1; transform: translateY(0); }
@@ -94,12 +125,12 @@
     color: #0a0b10;
   }
   .msg .body {
-    flex: 1;
+    flex: 1; min-width: 0;
     background: var(--panel);
     border: 1px solid var(--border);
     border-radius: 12px;
     padding: 12px 14px;
-    font-size: 14px; line-height: 1.5;
+    font-size: 14px; line-height: 1.55;
   }
   .msg.user .body { background: var(--panel-2); }
   .msg .body code {
@@ -111,10 +142,13 @@
     background: var(--bg); border: 1px solid var(--border);
     border-radius: 8px; overflow-x: auto;
     font-family: var(--mono); font-size: 12px; line-height: 1.5;
+    max-height: 320px;
   }
+
+  /* Composer */
   .composer {
     border-top: 1px solid var(--border);
-    padding: 16px 32px;
+    padding: 14px 28px;
     background: linear-gradient(to bottom, transparent, rgba(0,0,0,0.2));
   }
   .quick {
@@ -125,16 +159,12 @@
     color: var(--text);
     padding: 6px 12px; border-radius: 99px;
     font-size: 12px; cursor: pointer;
-    transition: border-color 0.15s, background 0.15s;
+    transition: border-color 0.15s, background 0.15s, transform 0.05s;
   }
-  .quick button:hover {
-    border-color: var(--accent);
-    background: rgba(139, 92, 246, 0.08);
-  }
+  .quick button:hover { border-color: var(--accent); background: rgba(139, 92, 246, 0.08); }
+  .quick button:active { transform: translateY(1px); }
   .quick button:disabled { opacity: 0.4; cursor: not-allowed; }
-  .input-row {
-    display: flex; gap: 10px; align-items: stretch;
-  }
+  .input-row { display: flex; gap: 10px; align-items: stretch; }
   .input-row input {
     flex: 1;
     background: var(--panel);
@@ -146,33 +176,41 @@
     transition: border-color 0.15s;
   }
   .input-row input:focus { border-color: var(--accent); }
-  .input-row button {
+  .input-row .send {
     background: var(--accent); color: #fff;
-    border: none; padding: 0 20px; border-radius: 10px;
+    border: none; padding: 0 22px; border-radius: 10px;
     font-weight: 600; font-size: 14px; cursor: pointer;
     transition: background 0.15s, transform 0.05s;
   }
-  .input-row button:hover { background: #7c3aed; }
-  .input-row button:active { transform: translateY(1px); }
-  .input-row button:disabled { opacity: 0.5; cursor: not-allowed; }
-  aside {
+  .input-row .send:hover { background: #7c3aed; }
+  .input-row .send:active { transform: translateY(1px); }
+  .input-row .send:disabled { opacity: 0.5; cursor: not-allowed; }
+
+  /* Status sidebar */
+  aside.status {
     border-left: 1px solid var(--border);
-    padding: 24px;
+    padding: 22px 24px;
     background: var(--panel);
     overflow-y: auto;
   }
-  aside h2 {
+  aside.status h2 {
     font-size: 11px; text-transform: uppercase; letter-spacing: 0.08em;
-    color: var(--muted); margin: 0 0 14px;
+    color: var(--muted); margin: 0 0 12px;
+    display: flex; align-items: center; gap: 8px;
+  }
+  aside.status h2::before {
+    content: '';
+    width: 4px; height: 12px; background: var(--accent); border-radius: 2px;
   }
   .step {
     display: flex; align-items: flex-start; gap: 12px;
     padding: 10px 12px;
     border: 1px solid var(--border);
     border-radius: 10px;
-    margin-bottom: 8px;
+    margin-bottom: 6px;
     background: var(--panel-2);
     font-size: 13px;
+    transition: border-color 0.2s, background 0.2s;
   }
   .step .icon {
     width: 22px; height: 22px; flex: 0 0 auto;
@@ -180,20 +218,39 @@
     display: flex; align-items: center; justify-content: center;
     font-size: 12px; background: var(--bg);
     border: 1px solid var(--border);
+    transition: all 0.2s;
   }
-  .step.active { border-color: var(--accent); }
-  .step.active .icon { background: var(--accent); color: #fff; border-color: var(--accent); }
-  .step.done .icon { background: var(--green); color: #0a0b10; border-color: var(--green); }
+  .step.active {
+    border-color: var(--accent);
+    background: linear-gradient(180deg, rgba(139,92,246,0.06), var(--panel-2));
+  }
+  .step.active .icon {
+    background: var(--accent); color: #fff; border-color: var(--accent);
+    animation: spin 1.2s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .step.done .icon { background: var(--green); color: #0a0b10; border-color: var(--green); animation: none; }
   .step.error { border-color: var(--red); }
-  .step.error .icon { background: var(--red); color: #fff; border-color: var(--red); }
+  .step.error .icon { background: var(--red); color: #fff; border-color: var(--red); animation: none; }
   .step .label { font-weight: 500; }
-  .step .meta { color: var(--muted); font-family: var(--mono); font-size: 11px; }
+  .step .meta { color: var(--muted); font-family: var(--mono); font-size: 11px; margin-top: 2px; }
+
+  /* Receipt */
   .receipt {
-    margin-top: 18px;
+    margin-top: 14px;
     padding: 14px;
     border-radius: 10px;
     background: linear-gradient(180deg, rgba(34, 211, 238, 0.06), transparent);
     border: 1px solid rgba(34, 211, 238, 0.3);
+    animation: receiptIn 0.4s ease-out;
+  }
+  @keyframes receiptIn {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  .receipt h3 {
+    margin: 0 0 8px; font-size: 11px; text-transform: uppercase;
+    letter-spacing: 0.08em; color: var(--accent-2);
   }
   .receipt .row {
     display: flex; justify-content: space-between; gap: 12px;
@@ -204,6 +261,42 @@
   .receipt .row .v { color: var(--text); word-break: break-all; text-align: right; }
   .receipt a { color: var(--accent-2); text-decoration: none; }
   .receipt a:hover { text-decoration: underline; }
+  .receipt .actions {
+    display: flex; gap: 6px; margin-top: 10px; flex-wrap: wrap;
+  }
+  .receipt .actions a, .receipt .actions button {
+    flex: 1;
+    background: var(--panel-2); border: 1px solid var(--border);
+    color: var(--text); padding: 6px 10px; border-radius: 6px;
+    font-size: 11px; text-decoration: none; text-align: center;
+    cursor: pointer; transition: border-color 0.15s, background 0.15s;
+    font-family: inherit;
+  }
+  .receipt .actions a:hover, .receipt .actions button:hover {
+    border-color: var(--accent-2);
+  }
+  .copied { background: rgba(34, 197, 94, 0.15) !important; color: var(--green) !important; }
+
+  /* Curl drawer */
+  details.curl { margin-top: 14px; }
+  details.curl summary {
+    cursor: pointer; font-size: 11px; color: var(--muted);
+    text-transform: uppercase; letter-spacing: 0.08em;
+    padding: 6px 0;
+    list-style: none;
+  }
+  details.curl summary::-webkit-details-marker { display: none; }
+  details.curl summary::before { content: '▸ '; }
+  details.curl[open] summary::before { content: '▾ '; }
+  details.curl pre {
+    margin: 6px 0 0; padding: 10px 12px;
+    background: var(--bg); border: 1px solid var(--border);
+    border-radius: 8px; overflow-x: auto;
+    font-family: var(--mono); font-size: 11px; line-height: 1.5;
+    color: var(--accent-2);
+  }
+
+  /* Errors */
   .err {
     color: var(--red); font-family: var(--mono); font-size: 12px;
     padding: 10px 12px;
@@ -211,34 +304,179 @@
     border: 1px solid rgba(239, 68, 68, 0.3);
     border-radius: 8px;
   }
-  .avatars-grid {
-    display: grid; grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
-    gap: 8px; margin-top: 8px;
-  }
-  .avatars-grid .card {
-    background: var(--bg); border: 1px solid var(--border);
-    border-radius: 8px; padding: 8px;
-    font-size: 12px; line-height: 1.3;
-  }
-  .avatars-grid .card .name { font-weight: 600; word-break: break-word; }
-  .avatars-grid .card .slug { color: var(--muted); font-family: var(--mono); font-size: 11px; }
+
+  /* Result chips */
   .meta-grid {
-    display: grid; grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
-    gap: 8px; margin-top: 8px;
+    display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+    gap: 8px; margin-top: 10px;
   }
-  .meta-grid .chip {
+  .chip {
     background: var(--bg); border: 1px solid var(--border);
     border-radius: 8px; padding: 8px 10px;
   }
-  .meta-grid .chip .k { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.05em; }
-  .meta-grid .chip .v { font-size: 14px; font-family: var(--mono); margin-top: 2px; }
-  .footer-note {
-    padding: 10px 32px 18px;
-    font-size: 11px; color: var(--muted);
-    text-align: center;
-    border-top: 1px solid var(--border);
+  .chip .k { font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.05em; }
+  .chip .v { font-size: 14px; font-family: var(--mono); margin-top: 2px; word-break: break-word; }
+
+  /* Tools list */
+  .tools-list { display: flex; flex-direction: column; gap: 6px; margin-top: 10px; }
+  .tool-row {
+    display: flex; justify-content: space-between; gap: 12px;
+    padding: 8px 10px; background: var(--bg);
+    border: 1px solid var(--border); border-radius: 8px;
+    font-size: 12px;
   }
-  .footer-note code { font-family: var(--mono); }
+  .tool-row .name { font-family: var(--mono); color: var(--accent-2); }
+  .tool-row .desc { color: var(--muted); }
+  .tool-row .price {
+    font-family: var(--mono); font-size: 11px; color: var(--orange);
+    background: rgba(245, 158, 11, 0.1);
+    border: 1px solid rgba(245, 158, 11, 0.3);
+    padding: 2px 6px; border-radius: 4px; flex: 0 0 auto;
+  }
+
+  /* Avatars */
+  .avatars-grid {
+    display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+    gap: 10px; margin-top: 10px;
+  }
+  .avatar-card {
+    background: var(--bg); border: 1px solid var(--border);
+    border-radius: 10px; overflow: hidden;
+    transition: border-color 0.2s, transform 0.15s;
+  }
+  .avatar-card:hover { border-color: var(--accent); transform: translateY(-1px); }
+  .avatar-card model-viewer {
+    width: 100%; height: 140px;
+    background: linear-gradient(180deg, #1a1d29, #0a0b10);
+    --poster-color: transparent;
+  }
+  .avatar-card .body { padding: 8px 10px; }
+  .avatar-card .name { font-weight: 600; font-size: 12px; }
+  .avatar-card .slug { color: var(--muted); font-family: var(--mono); font-size: 10px; }
+
+  /* Model viewer block */
+  .mv-block {
+    margin-top: 10px;
+    border: 1px solid var(--border);
+    border-radius: 10px; overflow: hidden;
+    background: linear-gradient(180deg, #1a1d29, #0a0b10);
+  }
+  .mv-block model-viewer {
+    width: 100%; height: 320px; display: block;
+    --progress-bar-color: var(--accent);
+  }
+  .mv-block .caption {
+    padding: 6px 10px; font-size: 11px; color: var(--muted);
+    border-top: 1px solid var(--border);
+    font-family: var(--mono);
+    display: flex; justify-content: space-between; gap: 12px;
+  }
+
+  /* Optimize / inspect cards */
+  .opt-list { display: flex; flex-direction: column; gap: 8px; margin-top: 10px; }
+  .opt-row {
+    display: flex; gap: 10px;
+    padding: 10px 12px; background: var(--bg);
+    border-left: 3px solid var(--border);
+    border-radius: 4px;
+  }
+  .opt-row.high { border-left-color: var(--red); background: rgba(239,68,68,0.05); }
+  .opt-row.medium { border-left-color: var(--orange); background: rgba(245,158,11,0.05); }
+  .opt-row.low { border-left-color: var(--green); background: rgba(34,197,94,0.05); }
+  .opt-row .opt-icon {
+    flex: 0 0 auto; width: 24px; height: 24px;
+    border-radius: 50%; display: flex; align-items: center; justify-content: center;
+    font-size: 14px;
+  }
+  .opt-row.high .opt-icon { background: rgba(239,68,68,0.15); color: var(--red); }
+  .opt-row.medium .opt-icon { background: rgba(245,158,11,0.15); color: var(--orange); }
+  .opt-row.low .opt-icon { background: rgba(34,197,94,0.15); color: var(--green); }
+  .opt-row .opt-body { flex: 1; min-width: 0; font-size: 13px; line-height: 1.5; }
+  .opt-row .opt-title { font-weight: 600; }
+  .opt-row .opt-detail { color: var(--muted); margin-top: 2px; font-size: 12px; }
+
+  /* Tree (inspect) */
+  .tree { margin-top: 8px; font-family: var(--mono); font-size: 12px; line-height: 1.6; }
+  .tree-node { padding-left: 14px; border-left: 1px dashed var(--border); margin-left: 4px; }
+  .tree-node .tag { color: var(--accent-2); }
+  .tree-node .stat { color: var(--muted); }
+
+  /* Footer & activity feed */
+  footer.feed {
+    border-top: 1px solid var(--border);
+    padding: 8px 28px;
+    background: var(--bg-2);
+    display: flex; align-items: center; gap: 12px;
+    font-size: 11px; font-family: var(--mono);
+    overflow: hidden;
+  }
+  .feed-label {
+    color: var(--muted); flex: 0 0 auto;
+    text-transform: uppercase; letter-spacing: 0.06em;
+  }
+  .feed-track {
+    flex: 1; overflow: hidden; position: relative;
+    height: 18px;
+  }
+  .feed-strip {
+    display: flex; gap: 28px;
+    white-space: nowrap;
+    animation: marquee 60s linear infinite;
+  }
+  .feed-strip:hover { animation-play-state: paused; }
+  @keyframes marquee {
+    from { transform: translateX(0); }
+    to { transform: translateX(-50%); }
+  }
+  .feed-item { color: var(--text); }
+  .feed-item .tool { color: var(--accent-2); }
+  .feed-item .ago { color: var(--muted); }
+
+  /* Walkthrough overlay */
+  .overlay {
+    position: fixed; inset: 0; background: rgba(0,0,0,0.7);
+    backdrop-filter: blur(8px);
+    display: none; align-items: center; justify-content: center;
+    z-index: 100;
+  }
+  .overlay.show { display: flex; }
+  .walkthrough {
+    background: var(--panel);
+    border: 1px solid var(--border-strong);
+    border-radius: 16px;
+    padding: 28px 32px;
+    max-width: 480px; width: calc(100% - 32px);
+    animation: walkIn 0.25s ease-out;
+  }
+  @keyframes walkIn {
+    from { opacity: 0; transform: scale(0.96); }
+    to { opacity: 1; transform: scale(1); }
+  }
+  .walkthrough h1 { margin: 0 0 4px; font-size: 22px; letter-spacing: -0.01em; }
+  .walkthrough p { color: var(--muted); margin: 0 0 18px; font-size: 14px; }
+  .walkthrough .steps { display: flex; flex-direction: column; gap: 10px; margin-bottom: 18px; }
+  .walkthrough .step-item {
+    display: flex; gap: 12px; align-items: flex-start;
+    padding: 10px 12px;
+    border: 1px solid var(--border); border-radius: 10px;
+    background: var(--panel-2);
+  }
+  .walkthrough .step-item .num {
+    width: 24px; height: 24px; flex: 0 0 auto;
+    border-radius: 50%;
+    background: conic-gradient(from 200deg, var(--accent), var(--accent-2));
+    color: #0a0b10; font-weight: 700;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 13px;
+  }
+  .walkthrough .step-item .text { font-size: 13px; line-height: 1.5; }
+  .walkthrough .step-item .text b { color: var(--accent-2); }
+  .walkthrough button {
+    background: var(--accent); color: #fff; border: none;
+    width: 100%; padding: 12px; border-radius: 10px;
+    font-weight: 600; font-size: 14px; cursor: pointer;
+  }
+  .walkthrough button:hover { background: #7c3aed; }
 </style>
 </head>
 <body>
@@ -251,9 +489,16 @@
       <div class="sub">Live x402 demo — agent pays USDC on Solana per request</div>
     </div>
   </div>
-  <div class="pill" id="walletPill" title="Agent wallet on Solana mainnet">
-    <span class="dot"></span>
-    <span id="walletText">loading…</span>
+  <div class="header-right">
+    <div class="pill ticker" id="tickerPill" title="USDC settled this session">
+      <span class="dot"></span>
+      <span class="label">session</span>
+      <span id="tickerText">0.000 USDC</span>
+    </div>
+    <div class="pill" id="walletPill" title="Agent wallet on Solana mainnet">
+      <span class="dot"></span>
+      <span id="walletText">loading…</span>
+    </div>
   </div>
 </header>
 
@@ -263,9 +508,9 @@
       <div class="msg agent">
         <div class="av">3</div>
         <div class="body">
-          Hi. I'm the three.ws agent. Every request you send below triggers a real <strong>x402</strong> paid API call to <code>https://three.ws/api/mcp</code>: I pay <strong>$0.001 USDC on Solana mainnet</strong>, the facilitator settles on-chain, then the MCP tool runs and I render the response.
+          Hi. I'm the three.ws agent. Every request below triggers a real <strong>x402</strong> paid API call to <code>three.ws/api/mcp</code>: I sign a Solana SPL transfer for <strong>$0.001 USDC</strong>, the facilitator settles on-chain, the MCP tool runs, and I render the result — including <em>actual 3D models</em> when the tool processes one.
           <br/><br/>
-          Try one of the chips below, or type your own model URL.
+          Try one of the chips below, or paste a glTF/GLB URL.
         </div>
       </div>
     </div>
@@ -279,31 +524,68 @@
       </div>
       <div class="input-row">
         <input id="prompt" placeholder='Try: validate https://example.com/model.glb' autocomplete="off" />
-        <button id="send">Pay & Run</button>
+        <button id="send" class="send">Pay & Run</button>
       </div>
     </div>
   </section>
 
-  <aside id="status">
+  <aside class="status">
     <h2>x402 settlement timeline</h2>
     <div id="steps"></div>
     <div id="receipt"></div>
   </aside>
 </main>
 
-<div class="footer-note">
-  Source: <code>POST /api/x402-pay</code> → <code>POST /api/mcp</code> with <code>X-PAYMENT</code>. Settlement via <code>facilitator.payai.network</code>.
+<footer class="feed">
+  <span class="feed-label">recent paid calls</span>
+  <div class="feed-track">
+    <div class="feed-strip" id="feedStrip">
+      <span class="feed-item"><span class="ago">…</span></span>
+    </div>
+  </div>
+</footer>
+
+<div class="overlay" id="walkthrough">
+  <div class="walkthrough">
+    <h1>How this works</h1>
+    <p>Every action on this page costs the agent $0.001 USDC. Settled per call. No keys, no signup.</p>
+    <div class="steps">
+      <div class="step-item"><div class="num">1</div><div class="text">You click. The page POSTs to <b>/api/mcp</b>. The server replies <b>402 Payment Required</b> with the price.</div></div>
+      <div class="step-item"><div class="num">2</div><div class="text">The agent wallet builds an <b>SPL transferChecked</b> on Solana, signs it, and re-sends the request with an <b>X-PAYMENT</b> header.</div></div>
+      <div class="step-item"><div class="num">3</div><div class="text">The facilitator <b>verifies + settles</b> on-chain. The MCP tool runs. You see the result + a Solscan tx link in &lt;2s.</div></div>
+    </div>
+    <button id="closeWalk">Got it — let's go</button>
+  </div>
 </div>
 
 <script type="module">
-const conv = document.getElementById('conv');
-const stepsEl = document.getElementById('steps');
-const receiptEl = document.getElementById('receipt');
-const promptEl = document.getElementById('prompt');
-const sendBtn = document.getElementById('send');
-const quickEl = document.getElementById('quick');
+const $ = (id) => document.getElementById(id);
+const conv = $('conv'), stepsEl = $('steps'), receiptEl = $('receipt');
+const promptEl = $('prompt'), sendBtn = $('send'), quickEl = $('quick');
+const walletText = $('walletText'), walletPill = $('walletPill');
+const tickerText = $('tickerText'), tickerPill = $('tickerPill');
+const feedStrip = $('feedStrip'), walkthrough = $('walkthrough'), closeWalk = $('closeWalk');
 
 const DEMO_MODEL = 'https://threejs.org/examples/models/gltf/DamagedHelmet/glTF-Binary/DamagedHelmet.glb';
+const TOOL_PRICE_USDC = 0.001;
+
+let sessionTotal = Number(sessionStorage.getItem('x402:total') || 0);
+const renderTicker = () => { tickerText.textContent = `${sessionTotal.toFixed(3)} USDC`; };
+renderTicker();
+
+function escape(s) { return String(s).replace(/[<>&]/g, c => ({'<':'&lt;','>':'&gt;','&':'&amp;'}[c])); }
+function formatBytes(n) {
+  if (!Number.isFinite(n)) return '—';
+  if (n < 1024) return `${n} B`;
+  if (n < 1024*1024) return `${(n/1024).toFixed(1)} KB`;
+  return `${(n/1024/1024).toFixed(1)} MB`;
+}
+function ago(ts) {
+  const d = Math.max(0, Date.now() - ts);
+  if (d < 60_000) return `${Math.floor(d/1000)}s ago`;
+  if (d < 3600_000) return `${Math.floor(d/60_000)}m ago`;
+  return `${Math.floor(d/3600_000)}h ago`;
+}
 
 function addMsg(role, html) {
   const el = document.createElement('div');
@@ -322,7 +604,6 @@ const STEP_DEFS = [
   { id: 'dispatched', label: 'Run MCP tool in-process' },
   { id: 'settled',    label: 'Facilitator settle (on-chain)' },
 ];
-
 function resetSteps() {
   stepsEl.innerHTML = '';
   receiptEl.innerHTML = '';
@@ -334,72 +615,104 @@ function resetSteps() {
     stepsEl.appendChild(el);
   }
 }
-
 function setStep(id, state, meta) {
-  const el = document.getElementById(`step-${id}`);
+  const el = $(`step-${id}`);
   if (!el) return;
   el.className = `step ${state}`;
   const ic = el.querySelector('.icon');
   if (state === 'active') ic.textContent = '…';
   else if (state === 'done') ic.textContent = '✓';
   else if (state === 'error') ic.textContent = '!';
-  if (meta) el.querySelector('[data-meta]').textContent = meta;
+  if (meta != null) el.querySelector('[data-meta]').textContent = meta;
 }
 
-function renderReceipt(payment, durations) {
+function curlSnippet(call) {
+  const body = JSON.stringify({
+    jsonrpc: '2.0', id: 1,
+    method: call.tool === 'tools/list' ? 'tools/list' : 'tools/call',
+    params: call.tool === 'tools/list' ? undefined : { name: call.tool, arguments: call.args || {} },
+  });
+  return [
+    `# 1) Get the 402 challenge`,
+    `curl -i -X POST https://three.ws/api/mcp \\`,
+    `  -H 'content-type: application/json' \\`,
+    `  -d '${body}'`,
+    ``,
+    `# 2) Build & sign a Solana transferChecked, base64-encode the v2 paymentPayload,`,
+    `#    then re-POST with X-PAYMENT: <base64>. See scripts/x402-pay-three-ws-sol.mjs.`,
+  ].join('\n');
+}
+
+function renderReceipt(call, payment, durations) {
   const explorer = payment.tx ? `https://solscan.io/tx/${payment.tx}` : null;
+  const permalink = payment.tx ? `${location.origin}/pay/calls/${payment.tx}` : null;
   receiptEl.innerHTML = `
     <div class="receipt">
+      <h3>settlement receipt</h3>
       <div class="row"><span class="k">amount</span><span class="v">${(Number(payment.amount) / 1e6).toFixed(6)} USDC</span></div>
       <div class="row"><span class="k">network</span><span class="v">Solana mainnet</span></div>
       <div class="row"><span class="k">payer</span><span class="v">${payment.payer.slice(0,8)}…${payment.payer.slice(-4)}</span></div>
       <div class="row"><span class="k">payTo</span><span class="v">${payment.payTo.slice(0,8)}…${payment.payTo.slice(-4)}</span></div>
       <div class="row"><span class="k">total</span><span class="v">${durations.total_ms} ms</span></div>
       ${explorer ? `<div class="row"><span class="k">tx</span><span class="v"><a href="${explorer}" target="_blank" rel="noopener">${payment.tx.slice(0,10)}…${payment.tx.slice(-6)} ↗</a></span></div>` : ''}
+      <div class="actions">
+        ${explorer ? `<a href="${explorer}" target="_blank" rel="noopener">view on Solscan</a>` : ''}
+        ${permalink ? `<button data-copy="${permalink}">copy permalink</button>` : ''}
+        <button data-replay>↻ replay</button>
+      </div>
+      <details class="curl">
+        <summary>show equivalent curl</summary>
+        <pre>${escape(curlSnippet(call))}</pre>
+      </details>
+    </div>`;
+  receiptEl.querySelector('[data-replay]')?.addEventListener('click', () => run(call, displayLabelFor(call)));
+  for (const btn of receiptEl.querySelectorAll('[data-copy]')) {
+    btn.addEventListener('click', async () => {
+      try { await navigator.clipboard.writeText(btn.dataset.copy); btn.classList.add('copied'); btn.textContent = '✓ copied'; }
+      catch { btn.textContent = 'copy failed'; }
+    });
+  }
+}
+
+function displayLabelFor(call) {
+  if (call.tool === 'tools/list') return '/list_tools';
+  if (call.tool === 'search_public_avatars') return call.args?.q ? `/search ${call.args.q}` : '/search_avatars';
+  const url = call.args?.url || '';
+  const short = url.split('/').pop() || url;
+  return `/${call.tool.replace('_model','')} ${short}`;
+}
+
+// ---- Result rendering ---------------------------------------------------
+
+function modelViewerBlock(url, captionExtra) {
+  return `
+    <div class="mv-block">
+      <model-viewer src="${escape(url)}" autoplay auto-rotate camera-controls
+        ar shadow-intensity="0.6" exposure="1.0" interaction-prompt="none"
+        loading="eager" reveal="auto"></model-viewer>
+      <div class="caption">
+        <span>rendered from <code>${escape(url.split('/').pop())}</code></span>
+        <span>drag to rotate · scroll to zoom</span>
+      </div>
     </div>`;
 }
 
-function renderResultBubble(tool, result) {
-  if (tool === 'tools/list') {
-    const tools = result?.tools || [];
-    return `<div><strong>${tools.length} tools available</strong> on the MCP server:</div>
-      <pre>${tools.map(t => `${t.name.padEnd(28)} ${t.title || ''}`).join('\n')}</pre>`;
-  }
-  if (tool === 'search_public_avatars') {
-    const text = parseTextResult(result);
-    if (text?.items) {
-      return `<div><strong>${text.items.length} public avatars</strong></div>
-        <div class="avatars-grid">${
-          text.items.map(a => `<div class="card"><div class="name">${escape(a.name || a.slug || '—')}</div><div class="slug">${escape(a.slug || '')}</div></div>`).join('')
-        }</div>`;
-    }
-    return defaultRender(result);
-  }
-  if (tool === 'validate_model') {
-    const text = parseTextResult(result);
-    if (text) {
-      const ok = text.ok ? '✅ valid' : '⚠️ warnings';
-      const meta = text.meta || {};
-      return `<div><strong>${ok}</strong> — ${(text.warnings || []).length} warnings</div>
-        <div class="meta-grid">
-          ${meta.vertices != null ? chip('vertices', meta.vertices.toLocaleString()) : ''}
-          ${meta.triangles != null ? chip('triangles', meta.triangles.toLocaleString()) : ''}
-          ${meta.materials != null ? chip('materials', meta.materials) : ''}
-          ${meta.meshes != null ? chip('meshes', meta.meshes) : ''}
-          ${meta.textures != null ? chip('textures', meta.textures) : ''}
-          ${meta.bytes != null ? chip('size', formatBytes(meta.bytes)) : ''}
-        </div>
-        ${(text.warnings || []).length ? `<pre>${text.warnings.join('\n')}</pre>` : ''}`;
-    }
-  }
-  if (tool === 'inspect_model') {
-    const text = parseTextResult(result);
-    if (text) return `<pre>${escape(JSON.stringify(text, null, 2)).slice(0, 1500)}</pre>`;
-  }
-  return defaultRender(result);
-}
 function chip(k, v) { return `<div class="chip"><div class="k">${k}</div><div class="v">${v}</div></div>`; }
-function defaultRender(result) { return `<pre>${escape(JSON.stringify(result, null, 2)).slice(0, 1500)}</pre>`; }
+
+function renderToolsList(result) {
+  const tools = result?.tools || [];
+  const rows = tools.map(t => {
+    const price = t.pricing?.amount_usdc;
+    const priceTag = price ? `<span class="price">${price} USDC</span>` : '';
+    return `<div class="tool-row">
+      <div><div class="name">${escape(t.name)}</div><div class="desc">${escape((t.description || '').slice(0, 90))}</div></div>
+      ${priceTag}
+    </div>`;
+  }).join('');
+  return `<div><strong>${tools.length} MCP tools</strong> exposed by three.ws:</div>
+    <div class="tools-list">${rows}</div>`;
+}
+
 function parseTextResult(result) {
   const c = result?.content?.[0];
   if (c?.type === 'text' && typeof c.text === 'string') {
@@ -407,29 +720,138 @@ function parseTextResult(result) {
   }
   return null;
 }
-function escape(s) { return String(s).replace(/[<>&]/g, c => ({'<':'&lt;','>':'&gt;','&':'&amp;'}[c])); }
-function formatBytes(n) {
-  if (n < 1024) return `${n} B`;
-  if (n < 1024*1024) return `${(n/1024).toFixed(1)} KB`;
-  return `${(n/1024/1024).toFixed(1)} MB`;
+
+function renderValidate(args, result) {
+  const text = parseTextResult(result);
+  const url = args?.url || '';
+  if (!text || typeof text !== 'object') {
+    return `<div>Validation result:</div><pre>${escape(JSON.stringify(result, null, 2)).slice(0, 1500)}</pre>`;
+  }
+  const issues = text.issues || {};
+  const errs = Number(issues.numErrors ?? 0);
+  const warns = Number(issues.numWarnings ?? 0);
+  const infos = Number(issues.numInfos ?? 0);
+  const ok = errs === 0;
+  const meta = text.meta || {};
+  return `
+    <div><strong>${ok ? '✅ glTF spec-compliant' : '❌ has errors'}</strong> — ${errs} errors, ${warns} warnings, ${infos} infos</div>
+    <div class="meta-grid">
+      ${meta.vertices != null ? chip('vertices', Number(meta.vertices).toLocaleString()) : ''}
+      ${meta.triangles != null ? chip('triangles', Number(meta.triangles).toLocaleString()) : ''}
+      ${meta.meshes != null ? chip('meshes', meta.meshes) : ''}
+      ${meta.materials != null ? chip('materials', meta.materials) : ''}
+      ${meta.textures != null ? chip('textures', meta.textures) : ''}
+      ${meta.animations != null ? chip('animations', meta.animations) : ''}
+      ${meta.bytes != null ? chip('size', formatBytes(meta.bytes)) : ''}
+      ${meta.version ? chip('glTF', `v${meta.version}`) : ''}
+    </div>
+    ${url.startsWith('http') ? modelViewerBlock(url) : ''}`;
 }
+
+function renderInspect(args, result) {
+  const text = parseTextResult(result);
+  const url = args?.url || '';
+  if (!text || typeof text !== 'object') return defaultRender(result);
+  const meta = text.meta || text;
+  const exts = (text.extensions || meta.extensionsUsed || []);
+  const animations = text.animations || meta.animations || [];
+  const meshes = text.meshes || [];
+  return `
+    <div><strong>Inspection complete</strong> · ${meta.scenes || 1} scene${(meta.scenes||1)>1?'s':''}, ${meta.nodes || '?'} nodes, ${meta.meshes || '?'} meshes</div>
+    <div class="meta-grid">
+      ${meta.vertices != null ? chip('vertices', Number(meta.vertices).toLocaleString()) : ''}
+      ${meta.triangles != null ? chip('triangles', Number(meta.triangles).toLocaleString()) : ''}
+      ${meta.materials != null ? chip('materials', meta.materials) : ''}
+      ${meta.textures != null ? chip('textures', meta.textures) : ''}
+      ${(animations.length || meta.animations) != null ? chip('animations', Array.isArray(animations) ? animations.length : meta.animations) : ''}
+      ${meta.bytes != null ? chip('size', formatBytes(meta.bytes)) : ''}
+    </div>
+    ${exts.length ? `<div style="margin-top:10px;font-size:12px;color:var(--muted)">extensions: ${exts.map(e => `<code>${escape(e)}</code>`).join(' ')}</div>` : ''}
+    ${Array.isArray(meshes) && meshes.length ? `
+      <div class="tree" style="margin-top:10px;">
+        ${meshes.slice(0, 8).map(m => `<div class="tree-node"><span class="tag">${escape(m.name || 'mesh')}</span> <span class="stat">· ${Number(m.vertices||0).toLocaleString()} verts · ${Number(m.triangles||0).toLocaleString()} tris</span></div>`).join('')}
+        ${meshes.length > 8 ? `<div class="tree-node"><span class="stat">… ${meshes.length - 8} more</span></div>` : ''}
+      </div>` : ''}
+    ${url.startsWith('http') ? modelViewerBlock(url) : ''}`;
+}
+
+function renderOptimize(args, result) {
+  const text = parseTextResult(result);
+  const url = args?.url || '';
+  if (!text || typeof text !== 'object') return defaultRender(result);
+  const sugs = text.suggestions || text.recommendations || [];
+  const sevIcon = (s) => s === 'high' ? '!' : s === 'medium' ? '~' : '·';
+  const summary = text.summary || `${sugs.length} optimization suggestion${sugs.length===1?'':'s'}`;
+  return `
+    <div><strong>${escape(summary)}</strong></div>
+    <div class="opt-list">
+      ${sugs.slice(0, 12).map(s => {
+        const sev = (s.severity || s.priority || 'low').toLowerCase();
+        const title = s.title || s.name || s.kind || s.id || 'suggestion';
+        const detail = s.detail || s.description || s.message || s.recommendation || '';
+        const est = s.estimatedSavings || s.savings;
+        return `<div class="opt-row ${sev}">
+          <div class="opt-icon">${sevIcon(sev)}</div>
+          <div class="opt-body">
+            <div class="opt-title">${escape(title)}</div>
+            ${detail ? `<div class="opt-detail">${escape(detail)}${est ? ` · est. <strong>${escape(String(est))}</strong> saved` : ''}</div>` : ''}
+          </div>
+        </div>`;
+      }).join('')}
+    </div>
+    ${url.startsWith('http') ? modelViewerBlock(url) : ''}`;
+}
+
+function renderSearch(args, result) {
+  const text = parseTextResult(result);
+  const items = text?.items || text?.avatars || (Array.isArray(text) ? text : []);
+  if (!items?.length) return `<div>No avatars matched.</div>${defaultRender(result)}`;
+  const cards = items.map(a => {
+    const url = a.model_url || a.url;
+    return `<div class="avatar-card">
+      ${url ? `<model-viewer src="${escape(url)}" auto-rotate disable-zoom interaction-prompt="none" loading="lazy" camera-orbit="0deg 80deg 2.5m" reveal="auto"></model-viewer>` : ''}
+      <div class="body">
+        <div class="name">${escape(a.name || a.slug || 'avatar')}</div>
+        <div class="slug">${escape(a.slug || a.id || '')}</div>
+      </div>
+    </div>`;
+  }).join('');
+  return `<div><strong>${items.length} public avatar${items.length===1?'':'s'}</strong>${args?.q ? ` matching "${escape(args.q)}"` : ''}:</div>
+    <div class="avatars-grid">${cards}</div>`;
+}
+
+function defaultRender(result) {
+  return `<pre>${escape(JSON.stringify(result, null, 2)).slice(0, 1500)}</pre>`;
+}
+
+function renderResult(call, result) {
+  if (call.tool === 'tools/list') return renderToolsList(result);
+  if (call.tool === 'validate_model') return renderValidate(call.args, result);
+  if (call.tool === 'inspect_model') return renderInspect(call.args, result);
+  if (call.tool === 'optimize_model') return renderOptimize(call.args, result);
+  if (call.tool === 'search_public_avatars') return renderSearch(call.args, result);
+  return defaultRender(result);
+}
+
+// ---- Prompt parsing -----------------------------------------------------
 
 function parsePrompt(text) {
   const t = text.trim();
   if (!t) return null;
-  if (t === '/list_tools' || t === 'list tools' || t === 'tools/list') return { tool: 'tools/list', args: {} };
+  if (/^(\/?list_tools|tools\/list|list tools)$/i.test(t)) return { tool: 'tools/list', args: {} };
   let m;
   if ((m = t.match(/^\/?validate(?:_model)?\s+(\S+)/i))) return { tool: 'validate_model', args: { url: m[1] } };
   if ((m = t.match(/^\/?inspect(?:_model)?\s+(\S+)/i))) return { tool: 'inspect_model', args: { url: m[1] } };
-  if ((m = t.match(/^\/?optimize(?:_model)?\s+(\S+)/i))) return { tool: 'optimize_model', args: { url: m[1] } };
+  if ((m = t.match(/^\/?(?:optimize|fix|improve)(?:_model)?\s+(\S+)/i))) return { tool: 'optimize_model', args: { url: m[1] } };
   if ((m = t.match(/^\/?search(?:_avatars|_public_avatars)?(?:\s+(.+))?/i))) {
     return { tool: 'search_public_avatars', args: m[1] ? { q: m[1].trim(), limit: 12 } : { limit: 12 } };
   }
   if (t.startsWith('http')) return { tool: 'validate_model', args: { url: t } };
-  return { tool: 'validate_model', args: { url: t } };
+  return { tool: 'search_public_avatars', args: { q: t, limit: 12 } };
 }
 
-// Parse a Server-Sent Events stream from a fetch ReadableStream.
+// ---- SSE consumer -------------------------------------------------------
+
 async function* sseEvents(response) {
   const reader = response.body.getReader();
   const decoder = new TextDecoder();
@@ -462,12 +884,11 @@ async function run(call, displayLabel) {
   for (const b of quickEl.querySelectorAll('button')) b.disabled = true;
   promptEl.disabled = true;
 
-  addMsg('user', escape(displayLabel));
+  addMsg('user', escape(displayLabel || displayLabelFor(call)));
   resetSteps();
   setStep('challenge', 'active', 'requesting paymentRequirements…');
   const t0 = performance.now();
-  let final = null;
-  let errored = false;
+  let final = null, errored = false;
   let activeId = 'challenge';
 
   try {
@@ -483,47 +904,40 @@ async function run(call, displayLabel) {
       addMsg('agent', `<div class="err">x402 call failed: ${escape(parsed.error || res.statusText)}</div>`);
       return;
     }
-
     for await (const { event, data } of sseEvents(res)) {
       if (event === 'challenge') {
         setStep('challenge', 'done', `${(Number(data.amount)/1e6).toFixed(6)} USDC`);
-        activeId = 'built';
-        setStep('built', 'active', 'signing partial Solana tx…');
+        activeId = 'built'; setStep('built', 'active', 'signing partial Solana tx…');
       } else if (event === 'built') {
         setStep('built', 'done', `${data.build_ms} ms`);
-        activeId = 'verified';
-        setStep('verified', 'active', 'facilitator /verify…');
+        activeId = 'verified'; setStep('verified', 'active', 'facilitator /verify…');
       } else if (event === 'verified') {
         setStep('verified', 'done', `${data.verify_ms} ms`);
-        activeId = 'dispatched';
-        setStep('dispatched', 'active', 'running MCP tool…');
+        activeId = 'dispatched'; setStep('dispatched', 'active', 'running MCP tool…');
       } else if (event === 'dispatched') {
         setStep('dispatched', 'done', `${data.dispatch_ms} ms`);
-        activeId = 'settled';
-        setStep('settled', 'active', 'facilitator /settle (on-chain)…');
+        activeId = 'settled'; setStep('settled', 'active', 'facilitator /settle (on-chain)…');
       } else if (event === 'settled') {
         setStep('settled', 'done', `${data.settle_ms} ms · ${data.tx ? data.tx.slice(0,8)+'…' : ''}`);
       } else if (event === 'result') {
         final = data;
       } else if (event === 'error') {
         setStep(activeId, 'error', data.error || 'failed');
-        addMsg('agent', `<div class="err">x402 call failed: ${escape(data.error || 'unknown')}${
-          data.mcpError ? ` · MCP: ${escape(data.mcpError.message || '')}` : ''
-        }</div>`);
+        addMsg('agent', `<div class="err">x402 call failed: ${escape(data.error || 'unknown')}${data.mcpError ? ` · MCP: ${escape(data.mcpError.message || '')}` : ''}</div>`);
         errored = true;
       }
     }
-
     if (errored) return;
     if (!final) {
       setStep(activeId, 'error', 'stream ended without result');
       addMsg('agent', `<div class="err">Stream ended without a result event.</div>`);
       return;
     }
-
-    renderReceipt(final.payment, final.durations);
-    addMsg('agent', renderResultBubble(call.tool, final.result));
+    renderReceipt(call, final.payment, final.durations);
+    addMsg('agent', renderResult(call, final.result));
+    bumpTicker();
     refreshBalance();
+    refreshFeed();
   } catch (err) {
     setStep(activeId, 'error', String(err.message || err));
     addMsg('agent', `<div class="err">Network error: ${escape(String(err.message || err))}</div>`);
@@ -537,7 +951,17 @@ async function run(call, displayLabel) {
   }
 }
 
-const walletText = document.getElementById('walletText');
+function bumpTicker() {
+  sessionTotal += TOOL_PRICE_USDC;
+  sessionStorage.setItem('x402:total', String(sessionTotal));
+  renderTicker();
+  tickerPill.classList.remove('flash');
+  void tickerPill.offsetWidth;
+  tickerPill.classList.add('flash');
+}
+
+// ---- Wallet balance + activity feed ------------------------------------
+
 async function refreshBalance() {
   try {
     const r = await fetch('/api/x402-pay?balance=1');
@@ -548,10 +972,26 @@ async function refreshBalance() {
     } else {
       walletText.textContent = 'agent wallet (no env)';
     }
-  } catch {
-    walletText.textContent = 'agent wallet';
-  }
+  } catch { walletText.textContent = 'agent wallet'; }
 }
+
+async function refreshFeed() {
+  try {
+    const r = await fetch('/api/x402-pay?feed=1');
+    if (!r.ok) return;
+    const f = await r.json();
+    const items = (f.items || []).slice(0, 25);
+    if (!items.length) { feedStrip.innerHTML = `<span class="feed-item"><span class="ago">no calls yet</span></span>`; return; }
+    const make = () => items.map(it => `<span class="feed-item">
+      <span class="tool">${escape(it.tool)}</span>
+      <span class="ago">${ago(it.ts)}</span>
+      ${it.tx ? `· <a href="https://solscan.io/tx/${it.tx}" target="_blank" rel="noopener">${it.tx.slice(0,6)}…</a>` : ''}
+    </span>`).join('');
+    feedStrip.innerHTML = make() + make();
+  } catch {}
+}
+
+// ---- Wire up ------------------------------------------------------------
 
 quickEl.addEventListener('click', (e) => {
   const btn = e.target.closest('button');
@@ -576,9 +1016,21 @@ promptEl.addEventListener('keydown', (e) => {
   if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendBtn.click(); }
 });
 
+closeWalk.addEventListener('click', () => {
+  walkthrough.classList.remove('show');
+  localStorage.setItem('x402:seen-walk', '1');
+});
+if (!localStorage.getItem('x402:seen-walk') && !location.search.includes('skipwalk=1')) {
+  walkthrough.classList.add('show');
+}
+
+// ---- Init ---------------------------------------------------------------
+
 resetSteps();
 refreshBalance();
+refreshFeed();
 setInterval(refreshBalance, 30_000);
+setInterval(refreshFeed, 20_000);
 
 // Deep-link prefill: /pay?validate=https://...glb auto-fires the call.
 const params = new URLSearchParams(location.search);
@@ -589,13 +1041,11 @@ for (const [tool, alias] of [
 ]) {
   const url = params.get(alias);
   if (url) {
-    setTimeout(() => run({ tool, args: { url } }, `${alias} ${url.split('/').pop()}`), 200);
+    setTimeout(() => run({ tool, args: { url } }), 250);
     break;
   }
 }
-if (params.get('list') === '1') {
-  setTimeout(() => run({ tool: 'tools/list', args: {} }, '/list_tools'), 200);
-}
+if (params.get('list') === '1') setTimeout(() => run({ tool: 'tools/list', args: {} }), 250);
 
 promptEl.focus();
 </script>

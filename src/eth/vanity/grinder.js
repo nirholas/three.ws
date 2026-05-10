@@ -25,6 +25,8 @@ import {
 	validateInitCodeHash,
 	estimateAttempts,
 	formatTimeEstimate,
+	letterCount,
+	eip55Checksum,
 } from './validation.js';
 
 const DEFAULT_MAX_WORKERS = 8;
@@ -67,22 +69,26 @@ export function grindCreate2Vanity(opts = {}) {
 		return Promise.reject(new Error('prefix or suffix is required'));
 	}
 	let normPrefix = '', normSuffix = '';
+	let caseSensitive = false;
 	if (prefix) {
 		const v = validatePattern(prefix);
 		if (!v.valid) return Promise.reject(new Error(`invalid prefix: ${v.errors.join('; ')}`));
 		normPrefix = v.normalized;
+		if (v.caseSensitive) caseSensitive = true;
 	}
 	if (suffix) {
 		const v = validatePattern(suffix);
 		if (!v.valid) return Promise.reject(new Error(`invalid suffix: ${v.errors.join('; ')}`));
 		normSuffix = v.normalized;
+		if (v.caseSensitive) caseSensitive = true;
 	}
 
 	const cores = Math.max(1, Math.min(
 		opts.maxWorkers || (typeof navigator !== 'undefined' && navigator.hardwareConcurrency) || 4,
 		DEFAULT_MAX_WORKERS,
 	));
-	const expected = estimateAttempts(normPrefix.length + normSuffix.length);
+	const totalLetters = letterCount(normPrefix) + letterCount(normSuffix);
+	const expected = estimateAttempts(normPrefix.length + normSuffix.length, totalLetters, caseSensitive);
 	const startedAt = performance.now();
 
 	/** @type {Worker[]} */
@@ -119,13 +125,15 @@ export function grindCreate2Vanity(opts = {}) {
 					if (signal) signal.removeEventListener('abort', onAbort);
 					const totalAttempts = attemptsByWorker.reduce((a, b) => a + b, 0) + msg.attempts;
 					resolve({
-						address:      msg.address,
-						salt:         msg.salt,
-						deployer:     dep.normalized,
-						initCodeHash: ich.normalized,
-						attempts:     totalAttempts,
-						durationMs:   performance.now() - startedAt,
-						workers:      cores,
+						address:         msg.address,
+						addressChecksum: msg.addressChecksum || ('0x' + eip55Checksum(msg.address.slice(2))),
+						salt:            msg.salt,
+						deployer:        dep.normalized,
+						initCodeHash:    ich.normalized,
+						caseSensitive,
+						attempts:        totalAttempts,
+						durationMs:      performance.now() - startedAt,
+						workers:         cores,
 					});
 				} else if (msg.type === 'progress') {
 					attemptsByWorker[i] = msg.attempts;
@@ -154,14 +162,15 @@ export function grindCreate2Vanity(opts = {}) {
 			};
 
 			w.postMessage({
-				type:         'start',
-				deployer:     dep.normalized,
-				initCodeHash: ich.normalized,
-				prefix:       normPrefix,
-				suffix:       normSuffix,
+				type:          'start',
+				deployer:      dep.normalized,
+				initCodeHash:  ich.normalized,
+				prefix:        normPrefix,
+				suffix:        normSuffix,
+				caseSensitive,
 			});
 		}
 	});
 }
 
-export { validatePattern, validateAddress, validateInitCodeHash, estimateAttempts, formatTimeEstimate };
+export { validatePattern, validateAddress, validateInitCodeHash, estimateAttempts, formatTimeEstimate, letterCount, eip55Checksum };

@@ -1350,3 +1350,548 @@ body.market-page {
 		position: static;
 	}
 }
+
+/* ── WIP banner dismiss ──────────────────────────────────────────── */
+
+.market-wip-dismiss {
+	background: transparent;
+	border: 0;
+	color: #fde68a;
+	opacity: 0.6;
+	cursor: pointer;
+	font-size: 18px;
+	line-height: 1;
+	padding: 4px 8px;
+	border-radius: 6px;
+	transition: opacity 0.15s, background 0.15s;
+}
+.market-wip-dismiss:hover {
+	opacity: 1;
+	background: rgba(253, 224, 71, 0.08);
+}
+
+/* ── Hero carousel (live 3D) ──────────────────────────────────── */
+
+.market-hero {
+	display: grid;
+	grid-template-columns: minmax(280px, 480px) 1fr;
+	gap: 32px;
+	padding: 32px 28px;
+	border-bottom: 1px solid var(--mk-border);
+	background:
+		radial-gradient(ellipse at top right, rgba(125, 211, 252, 0.04), transparent 60%),
+		radial-gradient(ellipse at bottom left, rgba(253, 224, 71, 0.03), transparent 50%),
+		var(--mk-bg);
+	min-height: 360px;
+	position: relative;
+	overflow: hidden;
+}
+
+.market-hero-stage {
+	position: relative;
+	border-radius: var(--mk-radius);
+	background:
+		radial-gradient(ellipse at center, rgba(255, 255, 255, 0.04), transparent 70%),
+		var(--mk-panel);
+	border: 1px solid var(--mk-border);
+	overflow: hidden;
+	min-height: 320px;
+	aspect-ratio: 1 / 1;
+	max-width: 480px;
+}
+
+.market-hero-stage model-viewer {
+	width: 100%;
+	height: 100%;
+	background: transparent;
+	--poster-color: transparent;
+	opacity: 0;
+	transition: opacity 0.45s ease;
+	position: absolute;
+	inset: 0;
+}
+
+.market-hero-stage model-viewer.active {
+	opacity: 1;
+}
+
+.market-hero-meta {
+	display: flex;
+	flex-direction: column;
+	justify-content: center;
+	gap: 14px;
+	min-width: 0;
+}
+
+.market-hero-eyebrow {
+	font-size: 11px;
+	letter-spacing: 0.12em;
+	text-transform: uppercase;
+	color: #7dd3fc;
+	font-weight: 600;
+}
+
+.market-hero-title {
+	font-family: 'Space Grotesk', 'Inter', sans-serif;
+	font-size: 36px;
+	font-weight: 700;
+	line-height: 1.1;
+	margin: 0;
+	color: var(--mk-text);
+	letter-spacing: -0.02em;
+}
+
+.market-hero-desc {
+	font-size: 15px;
+	color: var(--mk-text-2);
+	line-height: 1.5;
+	margin: 0;
+	max-width: 56ch;
+	display: -webkit-box;
+	-webkit-line-clamp: 3;
+	-webkit-box-orient: vertical;
+	overflow: hidden;
+}
+
+.market-hero-stats {
+	display: flex;
+	gap: 18px;
+	flex-wrap: wrap;
+	margin-top: 4px;
+}
+.market-hero-stat {
+	display: flex;
+	flex-direction: column;
+	gap: 2px;
+}
+.market-hero-stat .num {
+	font-family: 'Space Grotesk', sans-serif;
+	font-size: 22px;
+	font-weight: 700;
+	color: var(--mk-text);
+	line-height: 1;
+}
+.market-hero-stat .lbl {
+	font-size: 11px;
+	color: var(--mk-text-3);
+	letter-spacing: 0.04em;
+	text-transform: uppercase;
+}
+
+.market-hero-actions {
+	display: flex;
+	gap: 10px;
+	margin-top: 8px;
+	flex-wrap: wrap;
+}
+
+.market-hero-cta,
+.market-hero-secondary {
+	border: 0;
+	border-radius: 10px;
+	padding: 10px 18px;
+	font-size: 13px;
+	font-weight: 600;
+	cursor: pointer;
+	transition: transform 0.1s, background 0.15s, border-color 0.15s;
+}
+.market-hero-cta {
+	background: var(--mk-text);
+	color: #000;
+}
+.market-hero-cta:hover {
+	transform: translateY(-1px);
+}
+.market-hero-secondary {
+	background: transparent;
+	color: var(--mk-text);
+	border: 1px solid var(--mk-border-2);
+}
+.market-hero-secondary:hover {
+	border-color: var(--mk-text-2);
+}
+
+.market-hero-dots {
+	display: flex;
+	gap: 6px;
+	margin-top: 10px;
+}
+.market-hero-dot {
+	width: 22px;
+	height: 4px;
+	border-radius: 2px;
+	background: rgba(255, 255, 255, 0.12);
+	border: 0;
+	cursor: pointer;
+	padding: 0;
+	transition: background 0.2s, width 0.2s;
+}
+.market-hero-dot.active {
+	background: var(--mk-text);
+	width: 36px;
+}
+
+/* ── Filter chips (All / Agents / Avatars) ──────────────────── */
+
+.market-filter-chips {
+	display: inline-flex;
+	gap: 4px;
+	padding: 4px;
+	background: var(--mk-panel-2);
+	border: 1px solid var(--mk-border);
+	border-radius: 10px;
+}
+.market-chip {
+	background: transparent;
+	border: 0;
+	color: var(--mk-text-3);
+	padding: 6px 12px;
+	font-size: 12px;
+	font-weight: 600;
+	border-radius: 7px;
+	cursor: pointer;
+	transition: background 0.15s, color 0.15s;
+}
+.market-chip:hover {
+	color: var(--mk-text-2);
+}
+.market-chip.active {
+	background: var(--mk-bg);
+	color: var(--mk-text);
+}
+
+/* ── Skeleton loaders ───────────────────────────────────────── */
+
+@keyframes mk-skel {
+	0% { background-position: -200px 0; }
+	100% { background-position: calc(200px + 100%) 0; }
+}
+
+.mk-skel-card {
+	background: var(--mk-panel);
+	border: 1px solid var(--mk-border);
+	border-radius: var(--mk-radius);
+	padding: 16px;
+	display: flex;
+	flex-direction: column;
+	gap: 10px;
+	min-height: 200px;
+}
+.mk-skel-line {
+	background: linear-gradient(90deg, #1a1a1a 0%, #232323 50%, #1a1a1a 100%);
+	background-size: 200px 100%;
+	animation: mk-skel 1.4s ease-in-out infinite;
+	border-radius: 6px;
+	height: 12px;
+}
+.mk-skel-thumb {
+	background: linear-gradient(90deg, #1a1a1a 0%, #232323 50%, #1a1a1a 100%);
+	background-size: 200px 100%;
+	animation: mk-skel 1.4s ease-in-out infinite;
+	aspect-ratio: 1 / 1;
+	border-radius: 8px;
+}
+.mk-skel-line.w-60 { width: 60%; }
+.mk-skel-line.w-40 { width: 40%; }
+.mk-skel-line.w-80 { width: 80%; }
+.mk-skel-line.tall { height: 18px; }
+
+/* ── Hover 3D preview overlay on avatar cards ──────────────── */
+
+.market-card-avatar .thumb {
+	position: relative;
+	overflow: hidden;
+}
+.market-card-avatar .thumb model-viewer {
+	position: absolute;
+	inset: 0;
+	width: 100%;
+	height: 100%;
+	background: transparent;
+	--poster-color: transparent;
+	opacity: 0;
+	transition: opacity 0.3s ease;
+}
+.market-card-avatar:hover .thumb model-viewer {
+	opacity: 1;
+}
+.market-card-avatar .thumb-badge {
+	position: absolute;
+	top: 8px;
+	right: 8px;
+	background: rgba(0, 0, 0, 0.55);
+	backdrop-filter: blur(6px);
+	color: #fff;
+	font-size: 10px;
+	font-weight: 600;
+	letter-spacing: 0.04em;
+	padding: 3px 8px;
+	border-radius: 999px;
+	z-index: 2;
+	pointer-events: none;
+	opacity: 0;
+	transition: opacity 0.2s ease;
+}
+.market-card-avatar:hover .thumb-badge {
+	opacity: 1;
+}
+
+/* ── My Agents states ───────────────────────────────────────── */
+
+.market-mine-head {
+	display: flex;
+	flex-direction: column;
+	gap: 2px;
+}
+.market-mine-sub {
+	font-size: 12px;
+	color: var(--mk-text-3);
+}
+
+.market-mine-empty,
+.market-mine-signin {
+	grid-column: 1 / -1;
+	padding: 60px 20px;
+	text-align: center;
+	color: var(--mk-text-2);
+	font-size: 14px;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: 16px;
+}
+.market-mine-empty .icon,
+.market-mine-signin .icon {
+	font-size: 42px;
+	opacity: 0.3;
+}
+.market-mine-empty h3,
+.market-mine-signin h3 {
+	margin: 0;
+	font-size: 18px;
+	font-weight: 600;
+	color: var(--mk-text);
+}
+.market-mine-empty p,
+.market-mine-signin p {
+	margin: 0;
+	max-width: 36ch;
+	color: var(--mk-text-3);
+}
+.market-mine-cta {
+	background: var(--mk-text);
+	color: #000;
+	border: 0;
+	padding: 10px 20px;
+	border-radius: 10px;
+	font-size: 13px;
+	font-weight: 600;
+	cursor: pointer;
+	margin-top: 8px;
+}
+.market-mine-cta:hover {
+	transform: translateY(-1px);
+}
+
+/* ── Smart empty: category w/ 0 agents ──────────────────────── */
+
+.market-empty-redirect {
+	grid-column: 1 / -1;
+	padding: 32px 20px;
+	text-align: center;
+	background: var(--mk-panel);
+	border: 1px dashed var(--mk-border-2);
+	border-radius: var(--mk-radius);
+	margin-bottom: 16px;
+	color: var(--mk-text-2);
+	font-size: 14px;
+}
+.market-empty-redirect strong {
+	color: var(--mk-text);
+}
+.market-empty-redirect button {
+	background: transparent;
+	border: 1px solid var(--mk-border-2);
+	color: var(--mk-text);
+	padding: 6px 14px;
+	border-radius: 8px;
+	font-size: 12px;
+	font-weight: 600;
+	cursor: pointer;
+	margin-left: 12px;
+}
+.market-empty-redirect button:hover {
+	border-color: var(--mk-text-2);
+}
+
+/* ── Hero responsive ────────────────────────────────────────── */
+
+@media (max-width: 880px) {
+	.market-hero {
+		grid-template-columns: 1fr;
+		padding: 20px 16px;
+		min-height: auto;
+	}
+	.market-hero-stage {
+		max-width: 100%;
+		min-height: 260px;
+		aspect-ratio: 4 / 3;
+	}
+	.market-hero-title {
+		font-size: 26px;
+	}
+}
+
+/* ── Avatar card body (byline, tags, footer) ──────────────────── */
+
+.market-card-avatar .byline {
+	display: flex;
+	align-items: center;
+	gap: 6px;
+	font-size: 12px;
+	color: var(--mk-text-3);
+	min-width: 0;
+}
+.market-card-avatar .byline .dot { color: var(--mk-text-3); opacity: 0.6; }
+.market-card-avatar .byline .when { color: var(--mk-text-3); }
+.card-author {
+	color: #7dd3fc;
+	font-weight: 500;
+	text-decoration: none;
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	max-width: 50%;
+}
+.card-author:hover { text-decoration: underline; }
+.card-author.muted { color: var(--mk-text-3); font-weight: 400; font-style: italic; }
+
+.market-card-avatar .card-tags {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 4px;
+	margin-top: 2px;
+}
+.market-card-avatar .card-tags .tag-pill {
+	font-size: 10px;
+	padding: 2px 7px;
+	background: rgba(125, 211, 252, 0.07);
+	color: rgba(125, 211, 252, 0.85);
+	border-radius: 999px;
+}
+
+.market-card-avatar .footer {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	margin-top: 4px;
+}
+.market-card-avatar .footer .avatar-pill {
+	background: rgba(125, 211, 252, 0.1);
+	color: #7dd3fc;
+	padding: 2px 8px;
+	border-radius: 999px;
+	font-size: 10px;
+	font-weight: 600;
+	letter-spacing: 0.02em;
+}
+.market-card-avatar .footer .open-cta {
+	font-size: 11px;
+	color: var(--mk-text-3);
+	font-weight: 500;
+	transition: color 0.15s, transform 0.15s;
+}
+.market-card-avatar:hover .footer .open-cta {
+	color: #f4f4f5;
+	transform: translateX(2px);
+}
+
+.market-card-avatar .thumb-fallback {
+	position: absolute;
+	inset: 0;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	font-size: 60px;
+	color: rgba(255, 255, 255, 0.18);
+	background: radial-gradient(circle at 50% 50%, rgba(125, 211, 252, 0.05), transparent 70%);
+}
+
+/* ── Card skeletons (initial load) ───────────────────────────── */
+
+@keyframes mk-card-skel {
+	0% { opacity: 0.45; }
+	50% { opacity: 0.75; }
+	100% { opacity: 0.45; }
+}
+.market-card-skeleton {
+	background: var(--mk-panel);
+	border: 1px solid var(--mk-border);
+	border-radius: var(--mk-radius);
+	padding: 14px;
+	display: flex;
+	flex-direction: column;
+	gap: 10px;
+	min-height: 240px;
+	animation: mk-card-skel 1.4s ease-in-out infinite;
+}
+.market-card-skeleton .sk-thumb {
+	aspect-ratio: 1 / 1;
+	background: linear-gradient(135deg, #161616, #1c1c1c);
+	border-radius: 10px;
+}
+.market-card-skeleton .sk-line {
+	height: 12px;
+	background: #1a1a1a;
+	border-radius: 4px;
+	width: 100%;
+}
+.market-card-skeleton .sk-line.short { width: 55%; }
+
+/* ── Avatar in-page modal (3D viewer + actions) ───────────────── */
+
+.avatar-modal-overlay[hidden] { display: none; }
+
+/* ── Sidebar nav: live counts ─────────────────────────────────── */
+
+.market-nav .nav-count {
+	margin-left: auto;
+	font-size: 10px;
+	font-weight: 600;
+	color: var(--mk-text-3);
+	background: var(--mk-panel-2);
+	border-radius: 999px;
+	padding: 2px 7px;
+	font-variant-numeric: tabular-nums;
+	min-width: 22px;
+	text-align: center;
+}
+.market-nav .nav-count.hot {
+	color: #7dd3fc;
+	background: rgba(125, 211, 252, 0.12);
+}
+.market-nav a {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+}
+
+/* ── Submit Avatar CTA in topbar ──────────────────────────────── */
+
+.market-submit-avatar-btn {
+	background: rgba(125, 211, 252, 0.1);
+	color: #7dd3fc;
+	border: 1px solid rgba(125, 211, 252, 0.25);
+	border-radius: 8px;
+	padding: 7px 12px;
+	font-size: 13px;
+	font-weight: 600;
+	cursor: pointer;
+	white-space: nowrap;
+	text-decoration: none;
+	transition: background 0.15s, border-color 0.15s;
+}
+.market-submit-avatar-btn:hover {
+	background: rgba(125, 211, 252, 0.18);
+	border-color: rgba(125, 211, 252, 0.4);
+}

@@ -1,11 +1,11 @@
 import { z } from 'zod';
 import { verifyMessage } from 'ethers';
-import { sql } from '../../_lib/db.js';
-import { cors, json, method, readJson, wrap, error } from '../../_lib/http.js';
-import { limits, clientIp } from '../../_lib/rate-limit.js';
-import { randomToken } from '../../_lib/crypto.js';
-import { verifySiwsSignature } from '../../_lib/siws.js';
-import { parse } from '../../_lib/validate.js';
+import { sql } from '../_lib/db.js';
+import { cors, json, method, readJson, wrap, error } from '../_lib/http.js';
+import { limits, clientIp } from '../_lib/rate-limit.js';
+import { randomToken } from '../_lib/crypto.js';
+import { verifySiwsSignature } from '../_lib/siws.js';
+import { parse } from '../_lib/validate.js';
 
 const NONCE_TTL_SEC = 10 * 60;
 

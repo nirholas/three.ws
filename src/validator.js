@@ -45,6 +45,27 @@ export class Validator {
 	}
 
 	/**
+	 * Validate a raw byte buffer (no Three.js viewer dependency). Used by the
+	 * standalone /validation page where there's no GLTFLoader response to enrich
+	 * the report with `asset.extras` metadata.
+	 *
+	 * @param  {ArrayBuffer | Uint8Array} buffer
+	 * @param  {Object}   [opts]
+	 * @param  {Function} [opts.externalResourceFunction]  resolves URIs in .gltf
+	 * @return {Promise<Object>}  the processed report
+	 */
+	async validateBuffer(buffer, opts = {}) {
+		const bytes = buffer instanceof Uint8Array ? buffer : new Uint8Array(buffer);
+		const externalResourceFunction =
+			opts.externalResourceFunction ||
+			((uri) => Promise.reject(new Error(`external resource not available: ${uri}`)));
+		const report = await validateBytes(bytes, { externalResourceFunction });
+		this._processReport(report);
+		this.report = report;
+		return this.report;
+	}
+
+	/**
 	 * Loads a resource (either locally or from the network) and returns it.
 	 * @param  {string} uri
 	 * @param  {string} rootFile
@@ -76,10 +97,13 @@ export class Validator {
 	}
 
 	/**
+	 * Decorate a raw glTF-Validator report with the derived shape consumed by
+	 * ValidatorReport / ValidatorToggle / ValidatorTable: maxSeverity, severity-
+	 * bucketed message arrays, and aggregation of repeated error codes.
+	 *
 	 * @param {GLTFValidator.Report} report
-	 * @param {Object} response
 	 */
-	setReport(report, response) {
+	_processReport(report) {
 		report.generator = (report && report.info && report.info.generator) || '';
 		report.issues.maxSeverity = -1;
 		SEVERITY_MAP.forEach((severity, index) => {
@@ -91,48 +115,51 @@ export class Validator {
 		report.warnings = report.issues.messages.filter((msg) => msg.severity === 1);
 		report.infos = report.issues.messages.filter((msg) => msg.severity === 2);
 		report.hints = report.issues.messages.filter((msg) => msg.severity === 3);
-		groupMessages(report);
-		this.report = report;
 
-		this.setResponse(response);
+		const CODES = {
+			ACCESSOR_NON_UNIT: {
+				message: '{count} accessor elements not of unit length: 0. [AGGREGATED]',
+				pointerCounts: {},
+			},
+			ACCESSOR_ANIMATION_INPUT_NON_INCREASING: {
+				message: '{count} animation input accessor elements not in ascending order. [AGGREGATED]',
+				pointerCounts: {},
+			},
+		};
 
-		function groupMessages(report) {
-			const CODES = {
-				ACCESSOR_NON_UNIT: {
-					message: '{count} accessor elements not of unit length: 0. [AGGREGATED]',
-					pointerCounts: {},
-				},
-				ACCESSOR_ANIMATION_INPUT_NON_INCREASING: {
-					message:
-						'{count} animation input accessor elements not in ascending order. [AGGREGATED]',
-					pointerCounts: {},
-				},
-			};
-
-			report.errors.forEach((message) => {
-				if (!CODES[message.code]) return;
-				if (!CODES[message.code].pointerCounts[message.pointer]) {
-					CODES[message.code].pointerCounts[message.pointer] = 0;
-				}
-				CODES[message.code].pointerCounts[message.pointer]++;
-			});
-			report.errors = report.errors.filter((message) => {
-				if (!CODES[message.code]) return true;
-				if (!CODES[message.code].pointerCounts[message.pointer]) return true;
-				return CODES[message.code].pointerCounts[message.pointer] < 2;
-			});
-			Object.keys(CODES).forEach((code) => {
-				Object.keys(CODES[code].pointerCounts).forEach((pointer) => {
-					const count = CODES[code].pointerCounts[pointer];
-					if (count < 2) return;
-					report.errors.push({
-						code: code,
-						pointer: pointer,
-						message: CODES[code].message.replace('{count}', count),
-					});
+		report.errors.forEach((message) => {
+			if (!CODES[message.code]) return;
+			if (!CODES[message.code].pointerCounts[message.pointer]) {
+				CODES[message.code].pointerCounts[message.pointer] = 0;
+			}
+			CODES[message.code].pointerCounts[message.pointer]++;
+		});
+		report.errors = report.errors.filter((message) => {
+			if (!CODES[message.code]) return true;
+			if (!CODES[message.code].pointerCounts[message.pointer]) return true;
+			return CODES[message.code].pointerCounts[message.pointer] < 2;
+		});
+		Object.keys(CODES).forEach((code) => {
+			Object.keys(CODES[code].pointerCounts).forEach((pointer) => {
+				const count = CODES[code].pointerCounts[pointer];
+				if (count < 2) return;
+				report.errors.push({
+					code: code,
+					pointer: pointer,
+					message: CODES[code].message.replace('{count}', count),
 				});
 			});
-		}
+		});
+	}
+
+	/**
+	 * @param {GLTFValidator.Report} report
+	 * @param {Object} response
+	 */
+	setReport(report, response) {
+		this._processReport(report);
+		this.report = report;
+		this.setResponse(response);
 	}
 
 	/**

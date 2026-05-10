@@ -1,27 +1,31 @@
 // /api/agents/:id/eth-vanity — assign / read / delete a CREATE2 vanity record.
+// /api/agents/:id/eth-vanity/deployed — record an on-chain deployment.
 //
 // Stores the salt + factory + initCode(Hash) the owner ground in the
-// browser at /eth-vanity. Unlike the Solana custodial wallet, this record
-// holds NO secret material — the predicted address is just a deterministic
-// function of (deployer, salt, initCodeHash). The owner deploys the
-// contract themselves with their own EVM signer.
+// browser at /eth-vanity. No secret material — the predicted address
+// is a deterministic function of (deployer, salt, initCodeHash).
+//
+// Server invariants enforced on POST:
+//  • predicted_address == keccak256(0xff‖deployer‖salt‖init_code_hash)[12:]
+//  • if init_code is provided, keccak256(init_code) == init_code_hash
+//
+// Server invariants enforced on POST /deployed:
+//  • the chain RPC must return non-empty bytecode at predicted_address.
+//    No trust in the client's claim — we verify.
 //
 // Persisted under agent_identities.meta.eth_vanity:
 //   {
-//     deployer:        "0x…20 bytes…",
-//     init_code_hash:  "0x…32 bytes…",
-//     init_code:       "0x…" | null,   // optional raw bytecode for deploy convenience
-//     salt:            "0x…32 bytes…",
-//     predicted_address: "0x…20 bytes…",
-//     prefix:          "beef" | null,
-//     suffix:          "cafe" | null,
-//     deployer_label:  "CreateX" | null,
-//     created_at:      ISO,
-//     deployed: {
-//       chain_id: 8453,
-//       tx_hash:  "0x…",
-//       at:       ISO
-//     } | null
+//     deployer:           "0x…20 bytes…",
+//     init_code_hash:     "0x…32 bytes…",
+//     init_code:          "0x…" | null,
+//     salt:               "0x…32 bytes…",
+//     predicted_address:  "0x…20 bytes…",
+//     prefix:             "beef" | "Beef" | null,
+//     suffix:             "cafe" | null,
+//     deployer_label:     "CreateX" | null,
+//     case_sensitive:     boolean,
+//     created_at:         ISO,
+//     deployments:        [{ chain_id, tx_hash, at, verified: bool }]
 //   }
 
 import { getSessionUser, authenticateBearer, extractBearer } from '../_lib/auth.js';
@@ -30,10 +34,28 @@ import { cors, json, method, error, readJson } from '../_lib/http.js';
 import { limits, clientIp } from '../_lib/rate-limit.js';
 import { keccak_256 } from '@noble/hashes/sha3';
 
-const HEX_RE = /^0x[0-9a-f]+$/i;
-const ADDR_RE  = /^0x[0-9a-f]{40}$/i;
-const HASH_RE  = /^0x[0-9a-f]{64}$/i;
-const TX_RE    = /^0x[0-9a-f]{64}$/i;
+const HEX_RE  = /^0x[0-9a-f]+$/i;
+const ADDR_RE = /^0x[0-9a-f]{40}$/i;
+const HASH_RE = /^0x[0-9a-f]{64}$/i;
+const TX_RE   = /^0x[0-9a-f]{64}$/i;
+
+/**
+ * Curated list of known-good public RPCs. We don't hold secrets here, and
+ * anyone can spam these — but they're rate-limited per chain, and we only
+ * call them on deploy confirmation (rare). If a chain isn't listed, the
+ * deploy is recorded *unverified* with a warning flag.
+ */
+const RPCS = {
+	1:        'https://cloudflare-eth.com',
+	8453:     'https://mainnet.base.org',
+	10:       'https://mainnet.optimism.io',
+	42161:    'https://arb1.arbitrum.io/rpc',
+	137:      'https://polygon-rpc.com',
+	56:       'https://bsc-dataseed.bnbchain.org',
+	43114:    'https://api.avax.network/ext/bc/C/rpc',
+	11155111: 'https://ethereum-sepolia-rpc.publicnode.com',
+	84532:    'https://sepolia.base.org',
+};
 
 async function resolveAuth(req) {
 	const session = await getSessionUser(req);
@@ -54,11 +76,6 @@ function _bytesToHex(b) {
 	return s;
 }
 
-/**
- * Re-derive the CREATE2 address server-side and verify it matches the
- * client-supplied prediction. Anyone can claim "this salt produces that
- * address"; we don't take their word for it.
- */
 function _verifyCreate2(deployer, salt, initCodeHash, predicted) {
 	const buf = new Uint8Array(85);
 	buf[0] = 0xff;
@@ -68,6 +85,42 @@ function _verifyCreate2(deployer, salt, initCodeHash, predicted) {
 	const digest = keccak_256(buf);
 	const derived = '0x' + _bytesToHex(digest.subarray(12));
 	return derived.toLowerCase() === predicted.toLowerCase();
+}
+
+/**
+ * Verify on-chain that bytecode exists at `address` on `chainId`. Uses
+ * eth_getCode against a public RPC. Returns:
+ *   { ok: true,  bytecodeHash }   → contract is deployed
+ *   { ok: false, reason }         → not deployed / RPC unreachable / wrong chain
+ *
+ * We don't hard-fail when the chain isn't in our RPC table — the caller
+ * can choose to record the deployment as unverified.
+ */
+async function _verifyDeployed(chainId, address) {
+	const rpc = RPCS[Number(chainId)];
+	if (!rpc) return { ok: false, reason: 'unsupported_chain', supported: Object.keys(RPCS).map(Number) };
+	try {
+		const r = await fetch(rpc, {
+			method: 'POST',
+			headers: { 'content-type': 'application/json' },
+			body: JSON.stringify({ jsonrpc: '2.0', id: 1, method: 'eth_getCode', params: [address, 'latest'] }),
+		});
+		if (!r.ok) return { ok: false, reason: `rpc_${r.status}` };
+		const data = await r.json();
+		if (data.error) return { ok: false, reason: data.error.message || 'rpc_error' };
+		const code = String(data.result || '0x');
+		if (code === '0x' || code === '0x0') return { ok: false, reason: 'no_code_at_address' };
+		// Use the keccak hash of the runtime bytecode as a stable identifier
+		// so we can detect cross-chain divergence later.
+		try {
+			const bytes = _hexToBytes(code);
+			return { ok: true, bytecodeHash: '0x' + _bytesToHex(keccak_256(bytes)) };
+		} catch {
+			return { ok: true, bytecodeHash: null };
+		}
+	} catch (e) {
+		return { ok: false, reason: e?.message || 'rpc_unreachable' };
+	}
 }
 
 export default async function handler(req, res, id, action) {
@@ -97,50 +150,72 @@ export default async function handler(req, res, id, action) {
 	if (req.method === 'POST') {
 		const body = await readJson(req).catch(() => ({}));
 
-		// "Mark as deployed" sub-action — record an on-chain deployment of the
-		// existing saved record. Owner deploys with their own signer; this is
-		// just metadata we use to hide the Deploy button afterwards.
+		// ── Sub-action: record an on-chain deployment ───────────────────────
 		if (action === 'deployed' || body.mark_deployed) {
 			if (!meta.eth_vanity) return error(res, 404, 'not_found', 'no vanity record to mark deployed');
 			const chainId = Number(body.chain_id);
 			const txHash = String(body.tx_hash || '');
 			if (!Number.isInteger(chainId) || chainId <= 0) return error(res, 400, 'validation_error', 'chain_id must be a positive integer');
 			if (!TX_RE.test(txHash)) return error(res, 400, 'validation_error', 'tx_hash must be 0x + 64 hex');
+
+			// Verify bytecode is actually present at the predicted address on
+			// the claimed chain. Defends against malicious clients faking
+			// deploys to spoof badge / passport state.
+			const v = await _verifyDeployed(chainId, meta.eth_vanity.predicted_address);
+			const verified = v.ok;
+			const reason   = v.ok ? null : v.reason;
+
+			const existing = Array.isArray(meta.eth_vanity.deployments) ? meta.eth_vanity.deployments : [];
+			// Replace any prior unverified record for the same chain rather than duplicating.
+			const others = existing.filter((d) => d.chain_id !== chainId);
+			const entry = {
+				chain_id:      chainId,
+				tx_hash:       txHash.toLowerCase(),
+				at:            new Date().toISOString(),
+				verified,
+				bytecode_hash: v.bytecodeHash || null,
+				...(reason ? { unverified_reason: reason } : {}),
+			};
 			meta.eth_vanity = {
 				...meta.eth_vanity,
-				deployed: { chain_id: chainId, tx_hash: txHash.toLowerCase(), at: new Date().toISOString() },
+				deployments: [...others, entry].sort((a, b) => a.chain_id - b.chain_id),
+				// Back-compat: keep the legacy single-deploy field set to the latest verified.
+				deployed: verified ? entry : meta.eth_vanity.deployed || null,
 			};
 			await sql`UPDATE agent_identities SET meta = ${JSON.stringify(meta)}::jsonb WHERE id = ${id}`;
-			return json(res, 200, { data: meta.eth_vanity });
+			return json(res, verified ? 200 : 202, {
+				data: { record: meta.eth_vanity, verified, reason },
+			});
 		}
 
-		// Save / replace.
+		// ── Save / replace ─────────────────────────────────────────────────
 		const deployer = String(body.deployer || '').toLowerCase();
 		const salt     = String(body.salt || '').toLowerCase();
 		const ich      = String(body.init_code_hash || body.initCodeHash || '').toLowerCase();
 		const pred     = String(body.predicted_address || body.address || '').toLowerCase();
 		const initCode = body.init_code || body.initCode || null;
-		const prefix   = body.prefix ? String(body.prefix).toLowerCase().replace(/^0x/, '') : null;
-		const suffix   = body.suffix ? String(body.suffix).toLowerCase().replace(/^0x/, '') : null;
+		const prefixIn = body.prefix ? String(body.prefix) : null;
+		const suffixIn = body.suffix ? String(body.suffix) : null;
 		const label    = body.deployer_label ? String(body.deployer_label).slice(0, 64) : null;
+		const caseSensitive = !!body.case_sensitive;
 
-		if (!ADDR_RE.test(deployer))    return error(res, 400, 'validation_error', 'deployer must be 0x + 40 hex');
-		if (!HASH_RE.test(salt))        return error(res, 400, 'validation_error', 'salt must be 0x + 64 hex');
-		if (!HASH_RE.test(ich))         return error(res, 400, 'validation_error', 'init_code_hash must be 0x + 64 hex');
-		if (!ADDR_RE.test(pred))        return error(res, 400, 'validation_error', 'predicted_address must be 0x + 40 hex');
+		if (!ADDR_RE.test(deployer)) return error(res, 400, 'validation_error', 'deployer must be 0x + 40 hex');
+		if (!HASH_RE.test(salt))     return error(res, 400, 'validation_error', 'salt must be 0x + 64 hex');
+		if (!HASH_RE.test(ich))      return error(res, 400, 'validation_error', 'init_code_hash must be 0x + 64 hex');
+		if (!ADDR_RE.test(pred))     return error(res, 400, 'validation_error', 'predicted_address must be 0x + 40 hex');
 		if (initCode != null && (typeof initCode !== 'string' || !HEX_RE.test(initCode))) {
 			return error(res, 400, 'validation_error', 'init_code must be a 0x-prefixed hex string');
 		}
-		if (prefix && !/^[0-9a-f]+$/.test(prefix)) return error(res, 400, 'validation_error', 'prefix must be hex');
-		if (suffix && !/^[0-9a-f]+$/.test(suffix)) return error(res, 400, 'validation_error', 'suffix must be hex');
+		// Patterns: allow either case (case-sensitive grinding preserves casing).
+		const prefix = prefixIn ? prefixIn.replace(/^0x/i, '') : null;
+		const suffix = suffixIn ? suffixIn.replace(/^0x/i, '') : null;
+		if (prefix && !/^[0-9a-fA-F]+$/.test(prefix)) return error(res, 400, 'validation_error', 'prefix must be hex');
+		if (suffix && !/^[0-9a-fA-F]+$/.test(suffix)) return error(res, 400, 'validation_error', 'suffix must be hex');
 
-		// Re-derive server-side — refuse the request if the supplied address
-		// doesn't actually match (deployer, salt, initCodeHash).
 		if (!_verifyCreate2(deployer, salt, ich, pred)) {
 			return error(res, 400, 'validation_error', 'predicted_address does not match keccak256(0xff‖deployer‖salt‖init_code_hash)');
 		}
 
-		// If raw init_code was supplied, verify its hash matches.
 		if (initCode) {
 			const computed = '0x' + _bytesToHex(keccak_256(_hexToBytes(initCode)));
 			if (computed.toLowerCase() !== ich) {
@@ -148,8 +223,6 @@ export default async function handler(req, res, id, action) {
 			}
 		}
 
-		// If the agent already has a vanity record, require explicit DELETE first
-		// (matches the Solana wallet semantics).
 		if (meta.eth_vanity) {
 			return error(res, 409, 'conflict', 'agent already has an eth vanity record — DELETE /api/agents/:id/eth-vanity first to replace');
 		}
@@ -163,14 +236,20 @@ export default async function handler(req, res, id, action) {
 			prefix,
 			suffix,
 			deployer_label: label,
+			case_sensitive: caseSensitive,
 			created_at: new Date().toISOString(),
-			deployed: null,
+			deployments: [],
+			deployed: null, // legacy
 		};
 		await sql`UPDATE agent_identities SET meta = ${JSON.stringify(meta)}::jsonb WHERE id = ${id}`;
 		return json(res, 201, { data: meta.eth_vanity });
 	}
 
-	// GET
+	// ── GET ─────────────────────────────────────────────────────────────────
 	if (!meta.eth_vanity) return error(res, 404, 'not_found', 'agent has no eth vanity record');
 	return json(res, 200, { data: meta.eth_vanity });
 }
+
+// Re-exported so the test suite can hit the verifier directly without
+// spinning up the full Vercel handler shape.
+export const __test__ = { _verifyCreate2, _verifyDeployed };
