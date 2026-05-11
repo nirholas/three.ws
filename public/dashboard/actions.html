@@ -323,6 +323,7 @@
 						style: 'color:#f87171;padding:20px;',
 					}),
 				);
+				return;
 			}
 
 			// Auth check
@@ -395,7 +396,8 @@
 				{ rootMargin: '200px' },
 			);
 
-			observer.observe(document.getElementById('scroll-trigger'));
+			const scrollTrigger = document.getElementById('scroll-trigger');
+			if (scrollTrigger) observer.observe(scrollTrigger);
 
 			// Load more actions
 			async function loadMore() {
@@ -463,6 +465,7 @@
 			function render() {
 				const filtered = getFiltered();
 				const timeline = document.getElementById('timeline');
+				if (!timeline) return;
 
 				if (filtered.length === 0 && allActions.length === 0) {
 					timeline.innerHTML =

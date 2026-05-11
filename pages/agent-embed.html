@@ -367,7 +367,7 @@
 
 				if (bg === 'dark') {
 					// Midnight-blue atmosphere with volumetric clouds.
-					const { Clouds, Cloud } = await import('./src/cloud.js');
+					const { Clouds, Cloud } = await import('../src/cloud.js');
 					if (viewer.scene.background?.set) viewer.scene.background.set('#070b18');
 
 					const clouds = new Clouds({ limit: 350 });

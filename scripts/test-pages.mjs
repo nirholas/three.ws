@@ -105,6 +105,13 @@ const IGNORE_PATTERNS = [
 	/rpc\.\d+\.io/, // placeholder RPC URL from sample agent IDs
 	/Unexpected token .+, .<!doctype /, // API endpoint returned HTML instead of JSON (dev-only: no serverless functions)
 	/Expected a JavaScript-or-Wasm module script but the server responded with a MIME type of "text\/html"/, // Vite html-proxy MIME mismatch for public/ files served via dynamic paths
+	/unpkg\.com/, // external CDN scripts (Solana wallet adapters) blocked by ORB in headless
+	/r2\.cloudflarestorage\.com/, // private R2 presigned URLs — inaccessible from test runner
+	/r2\.dev\/u\//, // public R2 CDN URLs for user-uploaded GLBs — not available in dev
+	/private-user-images\.githubusercontent\.com/, // GitHub private image URLs
+	/localhost:\d+\/app\?_=/, // studio iframe preview pointing to /app with cache-buster
+	/invalid input syntax for type uuid/, // avatar page with placeholder non-UUID test ID
+	/\.vite\/deps\/chunk-[A-Z0-9]+\.js/, // Vite pre-bundled dep chunks aborted by page navigation
 ];
 
 function shouldIgnore(text) {

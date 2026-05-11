@@ -1130,6 +1130,86 @@
 			"dest": "/pages/app-demo.html"
 		},
 		{
+			"src": "/tutorials",
+			"dest": "/pages/tutorials.html"
+		},
+		{
+			"src": "/tutorials/",
+			"dest": "/pages/tutorials.html"
+		},
+		{
+			"src": "/playground",
+			"dest": "/pages/playground.html"
+		},
+		{
+			"src": "/playground/",
+			"dest": "/pages/playground.html"
+		},
+		{
+			"src": "/widget-studio",
+			"dest": "/pages/widget-studio.html"
+		},
+		{
+			"src": "/widget-studio/",
+			"dest": "/pages/widget-studio.html"
+		},
+		{
+			"src": "/pump-live",
+			"dest": "/pages/pump-live.html"
+		},
+		{
+			"src": "/pump-live/",
+			"dest": "/pages/pump-live.html"
+		},
+		{
+			"src": "/pump-dashboard",
+			"dest": "/pages/pump-dashboard.html"
+		},
+		{
+			"src": "/pump-dashboard/",
+			"dest": "/pages/pump-dashboard.html"
+		},
+		{
+			"src": "/community",
+			"dest": "/pages/community.html"
+		},
+		{
+			"src": "/community/",
+			"dest": "/pages/community.html"
+		},
+		{
+			"src": "/embed",
+			"dest": "/pages/embed.html"
+		},
+		{
+			"src": "/agent-chat-widget",
+			"dest": "/pages/agent-chat-widget.html"
+		},
+		{
+			"src": "/pumpfun-search",
+			"dest": "/pages/pumpfun-search.html"
+		},
+		{
+			"src": "/pumpfun-trending",
+			"dest": "/pages/pumpfun-trending.html"
+		},
+		{
+			"src": "/pumpfun-counter",
+			"dest": "/pages/pumpfun-counter.html"
+		},
+		{
+			"src": "/pumpfun-buy",
+			"dest": "/pages/pumpfun-buy.html"
+		},
+		{
+			"src": "/pumpfun-widget",
+			"dest": "/pages/pumpfun-widget.html"
+		},
+		{
+			"src": "/pump-coin-page",
+			"dest": "/pages/pump-coin-page.html"
+		},
+		{
 			"src": "/chat",
 			"dest": "/chat/index.html"
 		},

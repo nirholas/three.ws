@@ -300,6 +300,7 @@
 			</div>
 		</main>
 		<script type="module">
+			(async () => {
 			const params = new URL(location.href).searchParams;
 			const avatarId = params.get('id');
 			const statusEl = document.getElementById('status');
@@ -309,7 +310,7 @@
 			if (!avatarId) {
 				statusEl.innerHTML =
 					'<div class="err">Missing <code>?id=AVATAR_ID</code> in URL.</div>';
-				throw new Error('no avatar id');
+				return;
 			}
 			labelEl.textContent = avatarId;
 
@@ -448,10 +449,9 @@
 			document.getElementById('pin-btn').addEventListener('click', pinIpfs);
 			document.getElementById('reload').addEventListener('click', loadMode);
 
-			(async () => {
-				await loadMe();
-				await loadAvatar();
-				await loadMode();
+			await loadMe();
+			await loadAvatar();
+			await loadMode();
 			})();
 		</script>
 	</body>

@@ -174,6 +174,14 @@ const appConfig = {
 					// END:DISCOVER_ROUTE
 					'/tutorials': resolve(root, 'pages/tutorials.html'),
 					'/tutorials/': resolve(root, 'pages/tutorials.html'),
+					'/playground': resolve(root, 'pages/playground.html'),
+					'/playground/': resolve(root, 'pages/playground.html'),
+					'/widget-studio': resolve(root, 'pages/widget-studio.html'),
+					'/widget-studio/': resolve(root, 'pages/widget-studio.html'),
+					'/community': resolve(root, 'pages/community.html'),
+					'/community/': resolve(root, 'pages/community.html'),
+					'/embed': resolve(root, 'pages/embed.html'),
+					'/embed/': resolve(root, 'pages/embed.html'),
 					'/pump-live': resolve(root, 'pages/pump-live.html'),
 					'/pump-live/': resolve(root, 'pages/pump-live.html'),
 					'/pump-dashboard': resolve(root, 'pages/pump-dashboard.html'),
@@ -182,16 +190,39 @@ const appConfig = {
 					'/eth-vanity/': resolve(root, 'public/eth-vanity.html'),
 					'/strategy-lab': resolve(root, 'public/strategy-lab.html'),
 					'/strategy-lab/': resolve(root, 'public/strategy-lab.html'),
+					'/features': resolve(root, 'pages/features.html'),
+					'/features/': resolve(root, 'pages/features.html'),
+					'/register': resolve(root, 'public/register.html'),
+					'/register/': resolve(root, 'public/register.html'),
+					'/forgot-password': resolve(root, 'public/forgot-password.html'),
+					'/forgot-password/': resolve(root, 'public/forgot-password.html'),
+					'/reset-password': resolve(root, 'public/reset-password.html'),
+					'/reset-password/': resolve(root, 'public/reset-password.html'),
+					'/settings': resolve(root, 'public/settings/index.html'),
+					'/settings/': resolve(root, 'public/settings/index.html'),
+					'/admin': resolve(root, 'public/admin/index.html'),
+					'/admin/': resolve(root, 'public/admin/index.html'),
+					'/pumpfun': resolve(root, 'public/pumpfun.html'),
+					'/pumpfun/': resolve(root, 'public/pumpfun.html'),
+					'/legal/privacy': resolve(root, 'public/legal/privacy.html'),
+					'/legal/tos': resolve(root, 'public/legal/tos.html'),
+					'/first-meet': resolve(root, 'public/first-meet/index.html'),
+					'/first-meet/': resolve(root, 'public/first-meet/index.html'),
+					'/lobehub/iframe': resolve(root, 'public/lobehub/iframe/index.html'),
+					'/lobehub/iframe/': resolve(root, 'public/lobehub/iframe/index.html'),
+					'/dashboard/actions': resolve(root, 'public/dashboard/actions.html'),
+					'/dashboard/sessions': resolve(root, 'public/dashboard/sessions.html'),
+					'/dashboard/usage': resolve(root, 'public/dashboard/usage.html'),
+					'/dashboard/wallets': resolve(root, 'public/dashboard/wallets.html'),
+					'/dashboard/storage': resolve(root, 'public/dashboard/storage.html'),
+					'/dashboard/embed-policy': resolve(root, 'public/dashboard/embed-policy.html'),
+					'/dashboard/agent-pumpfun': resolve(root, 'public/dashboard/agent-pumpfun.html'),
 					'/': resolve(root, 'pages/home.html'),
 					'/home': resolve(root, 'pages/home.html'),
 					'/agent': resolve(root, 'pages/agent-home.html'),
 					'/agent-home': resolve(root, 'pages/agent-home.html'),
-					'/community': resolve(root, 'pages/community.html'),
 					'/profile': resolve(root, 'pages/profile.html'),
-					'/playground': resolve(root, 'pages/playground.html'),
-					'/embed': resolve(root, 'pages/embed.html'),
 					'/avatar-page': resolve(root, 'pages/avatar-page.html'),
-					'/widget-studio': resolve(root, 'pages/widget-studio.html'),
 					'/docs': resolve(root, 'docs/index.html'),
 					'/docs/': resolve(root, 'docs/index.html'),
 				};
@@ -265,6 +296,12 @@ const appConfig = {
 					// /pay/calls/<base58 tx sig> → permalink for a paid x402 call
 					else if (!filePath && /^\/pay\/calls\/[1-9A-HJ-NP-Za-km-z]+\/?$/.test(path))
 						filePath = resolve(root, 'public/pay/calls/index.html');
+					// /u/<username> → profile page
+					else if (!filePath && /^\/u\/[^/]+\/?$/.test(path))
+						filePath = resolve(root, 'pages/profile.html');
+					// /avatars/<id> (non-.glb) → avatar viewer page
+					else if (!filePath && /^\/avatars\/[^/]+\/?$/.test(path) && !path.endsWith('.glb'))
+						filePath = resolve(root, 'pages/avatar-page.html');
 					// Serve the rider webpack app as static files.
 					// /footer-bot.js — serve the Vite-processed src/footer-bot.js at a
 				// stable URL in dev so footer.js can load it without knowing the hash.

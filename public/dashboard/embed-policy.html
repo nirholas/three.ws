@@ -390,6 +390,7 @@
 			</div>
 		</main>
 		<script type="module">
+			(async () => {
 			const params = new URL(location.href).searchParams;
 			const agentId = params.get('agent');
 			const statusEl = document.getElementById('status');
@@ -404,7 +405,7 @@
 			if (!agentId) {
 				statusEl.innerHTML =
 					'<div class="err">Missing <code>?agent=ID</code> in URL.</div>';
-				throw new Error('no agent id');
+				return;
 			}
 			urlEl.textContent = `/agent/${agentId}/embed`;
 
@@ -615,10 +616,9 @@
 			document.getElementById('reload').addEventListener('click', loadPolicy);
 			document.getElementById('clear').addEventListener('click', clearPolicy);
 
-			(async () => {
-				await loadMe();
-				await loadAgent();
-				await loadPolicy();
+			await loadMe();
+			await loadAgent();
+			await loadPolicy();
 			})();
 		</script>
 	</body>
