@@ -1,0 +1,34 @@
+{
+  "name": "three-ws-mcp",
+  "version": "1.0.2",
+  "description": "Local MCP sidecar for three.ws — Solana identity, Pump.fun intel, 3D avatar tools with spend tracking and response caching",
+  "type": "module",
+  "bin": {
+    "three-ws-mcp": "bin/three-ws-mcp.js"
+  },
+  "files": [
+    "bin",
+    "src"
+  ],
+  "scripts": {
+    "start": "node bin/three-ws-mcp.js",
+    "init": "node bin/three-ws-mcp.js init",
+    "status": "node bin/three-ws-mcp.js status"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.29.0"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "keywords": [
+    "mcp",
+    "solana",
+    "pumpfun",
+    "three.ws",
+    "agent",
+    "avatar",
+    "gltf"
+  ],
+  "license": "MIT"
+}
