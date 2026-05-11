@@ -7,6 +7,8 @@
 		"NODE_OPTIONS": "--no-deprecation"
 	},
 	"functions": {
+		"api/x402/solana-vanity-grind.js": { "maxDuration": 60 },
+		"api/x402/solana-tx-explain.js": { "maxDuration": 30 },
 		"api/pump/[action].js": {
 			"includeFiles": "examples/skills/**"
 		}

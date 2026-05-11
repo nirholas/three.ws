@@ -186,6 +186,11 @@ function handleX402Discovery(req, res) {
 	const modelCheckUrl = `${origin}/api/x402/model-check`;
 	const mintToMeshUrl = `${origin}/api/x402/mint-to-mesh`;
 	const revenueVisionUrl = `${origin}/api/insights/revenue-vision`;
+	const vanityGrindUrl = `${origin}/api/x402/solana-vanity-grind`;
+	const solanaPassportUrl = `${origin}/api/x402/solana-agent-passport`;
+	const pumpfunTokenIntelUrl = `${origin}/api/x402/pumpfun-token-intel`;
+	const pumpfunCreatorIntelUrl = `${origin}/api/x402/pumpfun-creator-intel`;
+	const solanaTxExplainUrl = `${origin}/api/x402/solana-tx-explain`;
 	const price = RAW_AMOUNT_TO_USDC(env.X402_MAX_AMOUNT_REQUIRED);
 
 	const mcpAccepts = [];
@@ -370,6 +375,114 @@ function handleX402Discovery(req, res) {
 										maxLength: 4000,
 									},
 								},
+							},
+						},
+					},
+				},
+				{
+					path: '/api/x402/solana-vanity-grind',
+					url: vanityGrindUrl,
+					method: 'POST',
+					description:
+						'Solana Vanity Grind — server-side Keypair.generate() loop that finds a Solana address matching a requested prefix and/or suffix. Returns the full keypair (publicKey + secretKey in Base58). Pattern must be valid Base58 chars; total length ≤ 4 chars. $0.05 USDC per grind on Base or Arbitrum mainnet.',
+					mimeType: 'application/json',
+					accepts: modelCheckAccepts,
+					extensions: {
+						bazaar: {
+							method: 'POST',
+							discoverable: true,
+							input: { prefix: 'AGNT', caseSensitive: false },
+							inputSchema: {
+								type: 'object',
+								properties: {
+									prefix: { type: 'string', minLength: 1, maxLength: 4, description: 'Base58 chars the address must start with.' },
+									suffix: { type: 'string', minLength: 1, maxLength: 4, description: 'Base58 chars the address must end with.' },
+									caseSensitive: { type: 'boolean', default: false },
+								},
+								additionalProperties: false,
+							},
+						},
+					},
+				},
+				{
+					path: '/api/x402/solana-agent-passport',
+					url: solanaPassportUrl,
+					method: 'GET',
+					description: 'Solana Agent Passport — full discovery card for a Solana-registered agent: Metaplex Core identity, owner wallet, reputation summary, validation results, and recent attestations in one call. Pass ?asset=<base58>&network=mainnet|devnet. $0.001 USDC.',
+					mimeType: 'application/json',
+					accepts: modelCheckAccepts,
+					extensions: {
+						bazaar: {
+							method: 'GET',
+							discoverable: true,
+							input: { asset: 'AgNTxxxxxx', network: 'mainnet' },
+							inputSchema: {
+								type: 'object',
+								required: ['asset'],
+								properties: {
+									asset: { type: 'string', description: 'Metaplex Core asset pubkey (base58).' },
+									network: { type: 'string', enum: ['mainnet', 'devnet'], default: 'devnet' },
+								},
+							},
+						},
+					},
+				},
+				{
+					path: '/api/x402/pumpfun-token-intel',
+					url: pumpfunTokenIntelUrl,
+					method: 'GET',
+					description: 'Pump.fun Token Intel — full intelligence on a pump.fun token: graduation status, bonding-curve progress, creator profile, top holders, volume, bundle detection, and trust signals. Pass ?mint=<base58>. $0.005 USDC.',
+					mimeType: 'application/json',
+					accepts: modelCheckAccepts,
+					extensions: {
+						bazaar: {
+							method: 'GET',
+							discoverable: true,
+							input: { mint: 'DezXAZ8z7PnrnRJjz3wXBoRgixCa6xjnB7YaB1pPB263' },
+							inputSchema: {
+								type: 'object',
+								required: ['mint'],
+								properties: { mint: { type: 'string', description: 'Pump.fun SPL mint pubkey (base58).' } },
+							},
+						},
+					},
+				},
+				{
+					path: '/api/x402/pumpfun-creator-intel',
+					url: pumpfunCreatorIntelUrl,
+					method: 'GET',
+					description: 'Pump.fun Creator Intel — reputation profile for a pump.fun creator wallet: prior launches, graduation rate, claim activity, and behavioural trust signals. Pass ?wallet=<base58>. $0.005 USDC.',
+					mimeType: 'application/json',
+					accepts: modelCheckAccepts,
+					extensions: {
+						bazaar: {
+							method: 'GET',
+							discoverable: true,
+							input: { wallet: '9WzDXwBbmkg8ZTbNMqUxvQRAyrZzDsGYdLVL9zYtAWWM' },
+							inputSchema: {
+								type: 'object',
+								required: ['wallet'],
+								properties: { wallet: { type: 'string', description: 'Solana wallet pubkey (base58).' } },
+							},
+						},
+					},
+				},
+				{
+					path: '/api/x402/solana-tx-explain',
+					url: solanaTxExplainUrl,
+					method: 'POST',
+					description: 'Solana TX Explain — decode a Solana transaction signature via Helius: token transfers, native SOL transfers, type, fee payer, description, and an optional plain-English AI summary. $0.002 USDC.',
+					mimeType: 'application/json',
+					accepts: modelCheckAccepts,
+					extensions: {
+						bazaar: {
+							method: 'POST',
+							discoverable: true,
+							input: { signature: '5KtPn3xxxxxx' },
+							inputSchema: {
+								type: 'object',
+								required: ['signature'],
+								properties: { signature: { type: 'string', description: 'Base58 Solana transaction signature.' } },
 							},
 						},
 					},
