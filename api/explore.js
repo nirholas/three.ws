@@ -78,28 +78,63 @@ export default wrap(async (req, res) => {
 	`
 		: [];
 
-	const avatarRows = includeAvatars
-		? await sql`
-		SELECT a.id, a.slug, a.name, a.description, a.storage_key, a.thumbnail_key,
-		       a.tags, a.created_at, a.source,
-		       coalesce(a.featured, false)   AS featured,
-		       coalesce(a.view_count, 0)     AS view_count,
-		       u.username AS owner_username,
-		       u.display_name AS owner_display_name,
-		       u.wallet_address AS owner_wallet
-		FROM avatars a
-		LEFT JOIN users u ON u.id = a.owner_id AND u.deleted_at IS NULL
-		WHERE a.deleted_at IS NULL
-		  AND a.visibility = 'public'
-		  AND (${q || null}::text IS NULL OR (
-		       coalesce(a.name,'') ILIKE ${'%' + q + '%'}
-		    OR coalesce(a.description,'') ILIKE ${'%' + q + '%'}
-		  ))
-		  AND (${cursorDate ? cursorDate.toISOString() : null}::timestamptz IS NULL OR a.created_at < ${cursorDate ? cursorDate.toISOString() : null}::timestamptz)
-		ORDER BY coalesce(a.featured, false) DESC, a.created_at DESC
-		LIMIT ${(limit + 1) * 3}
-	`
-		: [];
+	let avatarRows = [];
+	if (includeAvatars) {
+		const avatarBaseQuery = (hasFeatured) => {
+			// Two query variants — ORDER BY differs so we can't use a single fragment.
+			return hasFeatured
+				? sql`
+				SELECT a.id, a.slug, a.name, a.description, a.storage_key, a.thumbnail_key,
+				       a.tags, a.created_at, a.source,
+				       coalesce(a.featured, false) AS featured,
+				       coalesce(a.view_count, 0)   AS view_count,
+				       u.username AS owner_username,
+				       u.display_name AS owner_display_name,
+				       u.wallet_address AS owner_wallet
+				FROM avatars a
+				LEFT JOIN users u ON u.id = a.owner_id AND u.deleted_at IS NULL
+				WHERE a.deleted_at IS NULL
+				  AND a.visibility = 'public'
+				  AND (${q || null}::text IS NULL OR (
+				       coalesce(a.name,'') ILIKE ${'%' + q + '%'}
+				    OR coalesce(a.description,'') ILIKE ${'%' + q + '%'}
+				  ))
+				  AND (${cursorDate ? cursorDate.toISOString() : null}::timestamptz IS NULL OR a.created_at < ${cursorDate ? cursorDate.toISOString() : null}::timestamptz)
+				ORDER BY coalesce(a.featured, false) DESC, a.created_at DESC
+				LIMIT ${(limit + 1) * 3}
+			`
+				: sql`
+				SELECT a.id, a.slug, a.name, a.description, a.storage_key, a.thumbnail_key,
+				       a.tags, a.created_at, a.source,
+				       false AS featured,
+				       0     AS view_count,
+				       u.username AS owner_username,
+				       u.display_name AS owner_display_name,
+				       u.wallet_address AS owner_wallet
+				FROM avatars a
+				LEFT JOIN users u ON u.id = a.owner_id AND u.deleted_at IS NULL
+				WHERE a.deleted_at IS NULL
+				  AND a.visibility = 'public'
+				  AND (${q || null}::text IS NULL OR (
+				       coalesce(a.name,'') ILIKE ${'%' + q + '%'}
+				    OR coalesce(a.description,'') ILIKE ${'%' + q + '%'}
+				  ))
+				  AND (${cursorDate ? cursorDate.toISOString() : null}::timestamptz IS NULL OR a.created_at < ${cursorDate ? cursorDate.toISOString() : null}::timestamptz)
+				ORDER BY a.created_at DESC
+				LIMIT ${(limit + 1) * 3}
+			`;
+		};
+		try {
+			avatarRows = await avatarBaseQuery(true);
+		} catch (e) {
+			// Migration adding featured/view_count hasn't run yet — fall back.
+			if (e.code === '42703') {
+				avatarRows = await avatarBaseQuery(false);
+			} else {
+				throw e;
+			}
+		}
+	}
 
 	const onchainItems = onchainRows.map((r) => {
 		const chain = CHAIN_BY_ID[r.chain_id];

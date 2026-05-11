@@ -8,13 +8,20 @@ export default wrap(async (req, res) => {
 	if (cors(req, res, { methods: 'GET,OPTIONS' })) return;
 	if (!method(req, res, ['GET'])) return;
 
-	const rows = await sql`
-		SELECT id, title, blurb, tag, starts_at, ends_at
-		FROM marketplace_themes
-		WHERE starts_at <= now() AND ends_at >= now()
-		ORDER BY created_at DESC
-		LIMIT 1
-	`;
+	let rows;
+	try {
+		rows = await sql`
+			SELECT id, title, blurb, tag, starts_at, ends_at
+			FROM marketplace_themes
+			WHERE starts_at <= now() AND ends_at >= now()
+			ORDER BY created_at DESC
+			LIMIT 1
+		`;
+	} catch (e) {
+		// Table doesn't exist yet (migration pending) — return no active theme.
+		if (e.code === '42P01') return json(res, 200, { data: { theme: null } });
+		throw e;
+	}
 
 	const theme = rows[0]
 		? {

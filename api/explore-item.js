@@ -79,21 +79,42 @@ export default wrap(async (req, res) => {
 		const demo = DEMO_AVATARS.find((a) => String(a.avatarId) === String(id));
 		if (demo) return json(res, 200, { item: demo });
 
-		const rows = await sql`
-			SELECT a.id, a.slug, a.name, a.description, a.storage_key, a.thumbnail_key,
-			       a.tags, a.created_at, a.source,
-			       coalesce(a.featured, false) AS featured,
-			       coalesce(a.view_count, 0)   AS view_count,
-			       u.username        AS owner_username,
-			       u.display_name    AS owner_display_name,
-			       u.wallet_address  AS owner_wallet
-			FROM avatars a
-			LEFT JOIN users u ON u.id = a.owner_id AND u.deleted_at IS NULL
-			WHERE a.deleted_at IS NULL
-			  AND a.visibility = 'public'
-			  AND a.id = ${id}
-			LIMIT 1
-		`;
+		let rows;
+		try {
+			rows = await sql`
+				SELECT a.id, a.slug, a.name, a.description, a.storage_key, a.thumbnail_key,
+				       a.tags, a.created_at, a.source,
+				       coalesce(a.featured, false) AS featured,
+				       coalesce(a.view_count, 0)   AS view_count,
+				       u.username        AS owner_username,
+				       u.display_name    AS owner_display_name,
+				       u.wallet_address  AS owner_wallet
+				FROM avatars a
+				LEFT JOIN users u ON u.id = a.owner_id AND u.deleted_at IS NULL
+				WHERE a.deleted_at IS NULL
+				  AND a.visibility = 'public'
+				  AND a.id = ${id}
+				LIMIT 1
+			`;
+		} catch (e) {
+			// Migration adding featured/view_count hasn't run yet — fall back.
+			if (e.code !== '42703') throw e;
+			rows = await sql`
+				SELECT a.id, a.slug, a.name, a.description, a.storage_key, a.thumbnail_key,
+				       a.tags, a.created_at, a.source,
+				       false AS featured,
+				       0     AS view_count,
+				       u.username        AS owner_username,
+				       u.display_name    AS owner_display_name,
+				       u.wallet_address  AS owner_wallet
+				FROM avatars a
+				LEFT JOIN users u ON u.id = a.owner_id AND u.deleted_at IS NULL
+				WHERE a.deleted_at IS NULL
+				  AND a.visibility = 'public'
+				  AND a.id = ${id}
+				LIMIT 1
+			`;
+		}
 
 		if (!rows.length) return error(res, 404, 'not_found', 'avatar not found');
 

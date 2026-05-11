@@ -142,6 +142,7 @@ const appConfig = {
 					'/agents/': resolve(root, 'public/agents/index.html'),
 					'/create': resolve(root, 'create.html'),
 					'/dashboard': resolve(root, 'public/dashboard/index.html'),
+					'/dashboard/': resolve(root, 'public/dashboard/index.html'),
 					'/studio': resolve(root, 'public/studio/index.html'),
 					'/studio/': resolve(root, 'public/studio/index.html'),
 					'/widgets': resolve(root, 'public/widgets-gallery/index.html'),
