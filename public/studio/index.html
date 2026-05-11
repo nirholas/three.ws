@@ -19,6 +19,7 @@
 			rel="stylesheet"
 		/>
 		<link rel="stylesheet" href="/studio/studio.css?v=2" />
+		<script type="module" src="https://ajax.googleapis.com/ajax/libs/model-viewer/4.0.0/model-viewer.min.js"></script>
 		<style>
 			/* Critical layout — guarantees the 3-column grid renders even if
 			   studio.css is held by a stale SW cache. */
@@ -119,12 +120,22 @@
 			<section class="studio-col-mid" aria-label="Preview">
 				<div class="preview-shell">
 					<div class="preview-frame" id="preview-frame">
-						<iframe
-							id="preview-iframe"
-							title="Live widget preview"
-							allow="autoplay"
+						<model-viewer
+							id="preview-model"
+							camera-controls
+							auto-rotate
+							auto-rotate-delay="500"
+							rotation-per-second="20deg"
+							interaction-prompt="none"
+							shadow-intensity="0.6"
+							exposure="1.0"
+							environment-image="neutral"
+							camera-orbit="0deg 80deg 105%"
+							field-of-view="auto"
+							bounds="tight"
 							loading="eager"
-						></iframe>
+							aria-label="Avatar preview"
+						></model-viewer>
 					</div>
 					<div class="preview-meta">
 						<span id="preview-status" class="muted">Pick an avatar to preview</span>

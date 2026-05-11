@@ -141,6 +141,9 @@ const LP_CSS = `
   padding:0;outline:none;font-family:ui-monospace,monospace;letter-spacing:.05em}
 .lp-isymbol::placeholder{color:rgba(164,240,188,.28)}
 .lp-img-hint{font-size:.6rem;color:rgba(255,255,255,.2);margin-top:.3rem}
+.lp-ghost-sym{align-self:flex-start;font-size:.6rem;color:rgba(164,240,188,.45);background:transparent;border:none;padding:.15rem 0;cursor:pointer;text-decoration:underline dotted;text-underline-offset:2px}
+.lp-ghost-sym:hover{color:#a4f0bc}
+.lp-ghost-sym:disabled{opacity:.3;cursor:not-allowed;text-decoration:none}
 
 .lp label{font-size:.72rem;color:rgba(255,255,255,.4);display:block;margin-bottom:.22rem}
 .lp textarea,.lp-number{width:100%;padding:.5rem .7rem;border-radius:8px;outline:none;
@@ -728,6 +731,8 @@ export function mountLaunchPanel(container, { getAvatar, getUser } = {}) {
 						placeholder="Token name" value="${esc(s.name)}" ${dis} />
 					<input class="lp-isymbol" id="lp-sym" type="text" maxlength="10"
 						placeholder="SYMBOL" value="${esc(s.symbol)}" ${dis} />
+					<button type="button" class="lp-ghost-sym" id="lp-sym-ghost" ${dis}
+						title="Set ticker to an invisible character (Hangul filler)">use invisible ticker</button>
 					<div class="lp-img-hint">Click image to replace · drag &amp; drop</div>
 				</div>
 			</div>
@@ -823,6 +828,10 @@ export function mountLaunchPanel(container, { getAvatar, getUser } = {}) {
 		q('#lp-sym')?.addEventListener('input', (e) => {
 			const raw = e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 10);
 			e.target.value = raw; s.symbol = raw; s._symbolEdited = true;
+		});
+		q('#lp-sym-ghost')?.addEventListener('click', () => {
+			s.symbol = 'ㅤ'; s._symbolEdited = true;
+			const se = q('#lp-sym'); if (se) se.value = 'ㅤ';
 		});
 		q('#lp-desc')?.addEventListener('input', (e) => { s.description = e.target.value; });
 

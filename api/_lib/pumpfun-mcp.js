@@ -12,6 +12,7 @@
 
 import { Redis } from '@upstash/redis';
 import { env } from './env.js';
+import { scanTokenMetadata } from './token-xss-scan.js';
 
 const LIST_KEY = process.env.GRADUATIONS_LIST_KEY || 'pf:graduations';
 
@@ -89,7 +90,9 @@ export const pumpfunMcp = {
 	},
 	async tokenIntel({ mint } = {}) {
 		if (!mint) return { ok: false, error: 'mint is required' };
-		return jsonrpc('getTokenIntel', { mint });
+		const r = await jsonrpc('getTokenIntel', { mint });
+		if (r.ok && r.data) r.data = { ...r.data, xss_scan: scanTokenMetadata(r.data) };
+		return r;
 	},
 	async graduations({ limit = 20 } = {}) {
 		if (pumpfunBotEnabled()) return jsonrpc('getGraduations', { limit });

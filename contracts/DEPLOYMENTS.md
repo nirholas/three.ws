@@ -1,4 +1,20 @@
-# ERC-8004 Contract Deployments
+# Contract Deployments
+
+## Three.ws Infrastructure (BSC Mainnet)
+
+Deployed by `0x4022de2D36C334E73C7a108805Cea11C0564f402`. Both use a `0x00000000`
+vanity prefix grinded via CREATE2.
+
+| Contract          | Address (BSC, chain 56)                        | Notes |
+| ----------------- | ---------------------------------------------- | ----- |
+| ThreeWSFactory    | `0x00000000D49195AE81759cd247cFeDD9D0B479df`   | Our own CREATE2 factory; used to deploy vanity-addressed contracts |
+| ThreeWSPayments   | `0x00000000381f09742a30a5a49975514AeC1B72Cc`   | USDC payment contract; token = BSC USDC `0x8AC76a51cc950d9822D68b83fE1Ad97B32Cd580d` |
+
+Source: [`ThreeWSFactory.sol`](ThreeWSFactory.sol), [`ThreeWSPayments.sol`](ThreeWSPayments.sol)
+
+---
+
+## ERC-8004 Registries
 
 All three registries are deployed via CREATE2, giving the same address on every
 supported EVM chain within each environment class (mainnet vs. testnet).

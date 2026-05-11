@@ -119,7 +119,7 @@ const $ = (sel, root = document) => root.querySelector(sel);
 const layoutEl = $('#studio-layout');
 const formEl = $('#config-form');
 const errEl = $('#form-error');
-const previewIfr = $('#preview-iframe');
+const previewMv = $('#preview-model');
 const previewSt = $('#preview-status');
 const captureBtn = $('#capture-camera-btn');
 const saveBtn = $('#save-draft-btn');
@@ -166,8 +166,8 @@ if (preModel) state.preselectedModel = preModel;
 	else if (state.preselectedModel) selectByModelUrl(state.preselectedModel);
 	else if (!state.avatarId) selectAvatar(DEMO_AVATAR.id);
 
-	// Re-send config after every iframe navigation so brand settings apply on load.
-	previewIfr.addEventListener('load', postConfigToPreview);
+	previewMv.addEventListener('load', () => { previewSt.textContent = state.avatarId ? 'Live preview' : 'Preview only — pick an avatar from your library to save'; });
+	previewMv.addEventListener('error', (e) => { previewSt.textContent = `Preview failed: ${e?.detail?.sourceError?.message || 'load error'}`; });
 
 	updatePreview(true);
 })();
@@ -188,21 +188,28 @@ async function loadAvatars() {
 	const list = $('#avatar-list');
 	list.removeAttribute('aria-busy');
 	state.avatars = [DEMO_AVATAR];
-	if (!state.user) {
-		renderAvatarList();
-		return;
-	}
-	try {
-		const res = await fetch('/api/avatars?limit=100', { credentials: 'include' });
-		if (!res.ok) throw new Error(`avatars: ${res.status}`);
-		const { avatars = [] } = await res.json();
-		state.avatars = [DEMO_AVATAR, ...avatars];
-		renderAvatarList();
-	} catch (err) {
-		renderAvatarList();
+
+	const errors = [];
+	const own = state.user
+		? fetch('/api/avatars?limit=100', { credentials: 'include' })
+			.then((r) => (r.ok ? r.json() : Promise.reject(new Error(`own avatars: ${r.status}`))))
+			.then(({ avatars = [] }) => avatars)
+			.catch((err) => { errors.push(`yours: ${err.message}`); return []; })
+		: Promise.resolve([]);
+	const pub = fetch('/api/avatars/public?limit=100')
+		.then((r) => (r.ok ? r.json() : Promise.reject(new Error(`public avatars: ${r.status}`))))
+		.then(({ avatars = [] }) => avatars.map((a) => ({ ...a, is_public: true })))
+		.catch((err) => { errors.push(`public: ${err.message}`); return []; });
+
+	const [ownList, pubList] = await Promise.all([own, pub]);
+	const seen = new Set(ownList.map((a) => a.id));
+	const merged = [...ownList, ...pubList.filter((a) => !seen.has(a.id))];
+	state.avatars = [DEMO_AVATAR, ...merged];
+	renderAvatarList();
+	if (errors.length) {
 		const note = document.createElement('div');
 		note.className = 'empty';
-		note.textContent = `Couldn't load your avatars: ${err.message}`;
+		note.textContent = `Couldn't load some avatars: ${errors.join(', ')}`;
 		list.appendChild(note);
 	}
 }
@@ -271,7 +278,11 @@ function renderAvatarList() {
 		const thumb = a.thumbnail_url
 			? `<div class="thumb"><img src="${attr(a.thumbnail_url)}" alt="" loading="lazy"></div>`
 			: `<div class="thumb">◎</div>`;
-		const badge = a.is_demo ? '<span class="badge-demo">Demo</span>' : '';
+		const badge = a.is_demo
+			? '<span class="badge-demo">Demo</span>'
+			: a.is_public
+				? '<span class="badge-public">Public</span>'
+				: '';
 		card.innerHTML = `${thumb}<span class="name">${escapeHtml(a.name || a.slug || a.id)}</span>${badge}`;
 		card.addEventListener('click', () => selectAvatar(a.id));
 		list.appendChild(card);
@@ -280,7 +291,7 @@ function renderAvatarList() {
 		const loginHref = `/login?next=${encodeURIComponent(location.pathname + location.search)}`;
 		const note = document.createElement('div');
 		note.className = 'empty';
-		note.innerHTML = `<a href="${attr(loginHref)}">Sign in</a> to use your own avatars.`;
+		note.innerHTML = `Browse public avatars above. <a href="${attr(loginHref)}">Sign in</a> to add your own.`;
 		list.appendChild(note);
 	}
 }
@@ -489,12 +500,10 @@ function wireButtons() {
 
 	captureBtn.addEventListener('click', () => {
 		try {
-			const w = previewIfr.contentWindow;
-			const cam = w?.VIEWER?.viewer?.activeCamera;
-			if (!cam) return toast('Preview not ready');
-			state.config.cameraPosition = [cam.position.x, cam.position.y, cam.position.z];
+			const orbit = previewMv?.getCameraOrbit?.();
+			if (!orbit) return toast('Preview not ready');
+			state.config.cameraOrbit = `${orbit.theta}rad ${orbit.phi}rad ${orbit.radius}m`;
 			toast('Camera captured');
-			updatePreview(true);
 		} catch {
 			toast('Could not read camera');
 		}
@@ -564,50 +573,29 @@ function schedulePreview() {
 function updatePreview(forceReload) {
 	if (!state.avatarId && !state.preselectedModel) {
 		previewSt.textContent = 'Pick an avatar to preview';
+		previewMv.removeAttribute('src');
+		previewSrcKey = '';
 		return;
 	}
 	const avatar = state.avatars.find((a) => a.id === state.avatarId);
 	const modelUrl = avatar?.model_url || state.preselectedModel;
 	if (!modelUrl) {
 		previewSt.textContent = 'Avatar has no public URL — make it public/unlisted to preview';
+		previewMv.removeAttribute('src');
+		previewSrcKey = '';
 		return;
 	}
-	previewSt.textContent = state.avatarId
-		? 'Live preview'
-		: 'Preview only — pick an avatar from your library to save';
 	if (!state.avatarId) captureBtn.disabled = false;
-
-	const camStr = Array.isArray(state.config.cameraPosition)
-		? `&cameraPosition=${state.config.cameraPosition.map((n) => n.toFixed(3)).join(',')}`
-		: '';
-	const presetStr =
-		state.config.envPreset && state.config.envPreset !== 'none'
-			? `&preset=${encodeURIComponent(state.config.envPreset)}`
-			: '';
-	const hashStr = `model=${encodeURIComponent(modelUrl)}&kiosk=true&type=${encodeURIComponent(state.type)}${camStr}${presetStr}`;
-	const key = hashStr;
-	if (forceReload || key !== previewSrcKey) {
-		previewSrcKey = key;
+	if (forceReload || modelUrl !== previewSrcKey) {
+		previewSrcKey = modelUrl;
 		previewSt.textContent = 'Loading preview…';
-		// Cache-buster query forces a full reload. Without it, hash-only
-		// changes (e.g. switching avatars) trigger fragment navigation in
-		// the iframe — and /app reads `model`/`type` from the hash only on
-		// boot, so the preview wouldn't update.
-		previewIfr.src = `/app?_=${Date.now()}#${hashStr}`;
+		previewMv.src = modelUrl;
 	}
-	postConfigToPreview();
 }
 
 function postConfigToPreview() {
-	if (!previewIfr.contentWindow) return;
-	try {
-		previewIfr.contentWindow.postMessage(
-			{ type: 'widget:config', config: { ...state.config } },
-			location.origin,
-		);
-	} catch {
-		/* iframe may not be ready yet — full reload covers it */
-	}
+	// model-viewer preview is config-agnostic; widget chrome config no longer
+	// applies in the studio preview pane. Embed snippet still uses the full /app.
 }
 
 // ── save / generate ──────────────────────────────────────────────────────────

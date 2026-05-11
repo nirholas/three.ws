@@ -16,6 +16,7 @@ import { parse, loginBody, registerBody, usernameRegisterBody, username as usern
 import { sendPasswordResetEmail, sendVerificationEmail } from '../_lib/email.js';
 import { generateReferralCode } from '../_lib/referrals.js';
 import { seedDefaultAgent } from '../_lib/seed-default-agent.js';
+import { logAudit } from '../_lib/audit.js';
 import { z } from 'zod';
 
 const APP_ORIGIN = process.env.APP_ORIGIN || 'https://three.ws';
@@ -125,8 +126,9 @@ async function handleRegister(req, res) {
 // cookie was presented but didn't resolve to a live session — the client
 // should clear local state and treat it as a forced logout.
 async function handleMe(req, res) {
-	if (cors(req, res, { methods: 'GET,OPTIONS', credentials: true })) return;
-	if (!method(req, res, ['GET'])) return;
+	if (cors(req, res, { methods: 'GET,DELETE,OPTIONS', credentials: true })) return;
+	if (!method(req, res, ['GET', 'DELETE'])) return;
+	if (req.method === 'DELETE') return handleDeleteMe(req, res);
 	if (!hasSessionCookie(req)) return json(res, 200, { user: null });
 	const user = await getSessionUser(req);
 	if (!user) {
@@ -134,6 +136,33 @@ async function handleMe(req, res) {
 		return error(res, 401, 'invalid_session', 'session expired or revoked');
 	}
 	return json(res, 200, { user });
+}
+
+// Soft-delete the current user. Anonymises uniqueness-bearing columns so the
+// freed email/username/wallet can be reused, revokes all sessions and refresh
+// tokens, and clears the session cookie. Audit row is written for the trail.
+async function handleDeleteMe(req, res) {
+	const user = await getSessionUser(req);
+	if (!user) return error(res, 401, 'unauthenticated', 'not signed in');
+	const rl = await limits.authIp(clientIp(req));
+	if (!rl.success) return error(res, 429, 'rate_limited', 'too many requests');
+	const tombstoneEmail = `deleted+${user.id}@deleted.invalid`;
+	await sql`
+		update users set
+			deleted_at = now(),
+			email = ${tombstoneEmail},
+			email_verified = false,
+			username = null,
+			wallet_address = null,
+			password_hash = null,
+			updated_at = now()
+		where id = ${user.id} and deleted_at is null
+	`;
+	await sql`update sessions set revoked_at = now() where user_id = ${user.id} and revoked_at is null`;
+	await sql`update oauth_refresh_tokens set revoked_at = now() where user_id = ${user.id} and revoked_at is null`;
+	logAudit({ userId: user.id, action: 'delete_account', resourceId: user.id });
+	res.setHeader('set-cookie', sessionCookie('', { clear: true }));
+	return json(res, 200, { ok: true });
 }
 
 // ── profile ───────────────────────────────────────────────────────────────────
