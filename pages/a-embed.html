@@ -147,7 +147,7 @@
 		<div id="blocked"></div>
 
 		<script type="module">
-			import { Viewer } from './src/viewer.js';
+			import { Viewer } from '../src/viewer.js';
 			import {
 				parseAgentRef,
 				resolveOnchainAgent,
@@ -155,7 +155,7 @@
 				resolveUrlCandidates,
 				isEmbedAllowed,
 				toPublicUrl,
-			} from './src/erc8004/resolver.js';
+			} from '../src/erc8004/resolver.js';
 
 			const params = new URL(location.href).searchParams;
 			const bg = params.get('bg') || 'transparent';

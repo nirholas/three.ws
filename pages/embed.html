@@ -22,7 +22,7 @@
 	<body>
 		<div id="root"></div>
 		<script type="module">
-			import { mountEmbedEditor } from './src/editor/embed-editor.js';
+			import { mountEmbedEditor } from '../src/editor/embed-editor.js';
 			const url = new URL(location.href);
 			mountEmbedEditor(document.getElementById('root'), {
 				src: url.searchParams.get('src') || '',

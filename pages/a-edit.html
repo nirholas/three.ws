@@ -256,7 +256,7 @@
 		<script src="/nav.js"></script>
 
 		<header class="ce-page-header">
-			<a id="back-link" href="/marketplace.html">← Back</a>
+			<a id="back-link" href="/marketplace">← Back</a>
 		</header>
 
 		<main>
@@ -266,7 +266,7 @@
 		</main>
 
 		<script type="module">
-			import { mountChainEdit } from './src/erc8004/chain-edit.js';
+			import { mountChainEdit } from '../src/erc8004/chain-edit.js';
 
 			// URL: /a/:chainId/:agentId/edit
 			const parts = location.pathname.split('/').filter(Boolean);
