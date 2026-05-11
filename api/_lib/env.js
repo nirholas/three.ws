@@ -190,6 +190,17 @@ export const env = {
 	get X402_FACILITATOR_TOKEN_BASE() {
 		return opt('X402_FACILITATOR_TOKEN_BASE', opt('X402_FACILITATOR_TOKEN'));
 	},
+	get X402_CDP_FACILITATOR_URL() {
+		return trimSlash(
+			opt('X402_CDP_FACILITATOR_URL', 'https://api.cdp.coinbase.com/platform/v2/x402'),
+		);
+	},
+	get CDP_API_KEY_ID() {
+		return opt('CDP_API_KEY_ID');
+	},
+	get CDP_API_KEY_SECRET() {
+		return opt('CDP_API_KEY_SECRET');
+	},
 	// Solana fee payer advertised in the 402 challenge's `extra.feePayer`.
 	// Clients build the SPL transfer with this account paying SOL fees; the
 	// Solana facilitator co-signs on /settle. Must match what the PayAI facilitator

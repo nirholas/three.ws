@@ -32,6 +32,7 @@
 //      Server attaches a base64 settlement object as `X-PAYMENT-RESPONSE` on the success reply.
 
 import { env } from './env.js';
+import { createAuthHeader, createCorrelationHeader } from '@coinbase/x402';
 
 export const X402_VERSION = 2;
 
@@ -100,7 +101,7 @@ function facilitatorFor(network) {
 		network === 'solana'
 	)
 		return { url: env.X402_FACILITATOR_URL_SOLANA, token: env.X402_FACILITATOR_TOKEN_SOLANA };
-	// All EVM chains (Base, Arbitrum, Ethereum mainnet) → sperax facilitator.
+	// EVM chains — auto-route to CDP when keys are set (required for Bazaar indexing).
 	if (
 		network === NETWORK_BASE_MAINNET ||
 		network === NETWORK_BASE_SEPOLIA ||
@@ -109,8 +110,11 @@ function facilitatorFor(network) {
 		network === 'eip155:1' ||
 		network === 'arbitrum' ||
 		network === 'ethereum'
-	)
+	) {
+		if (env.CDP_API_KEY_ID && env.CDP_API_KEY_SECRET)
+			return { url: env.X402_CDP_FACILITATOR_URL, kind: 'cdp' };
 		return { url: env.X402_FACILITATOR_URL_BASE, token: env.X402_FACILITATOR_TOKEN_BASE };
+	}
 	throw new X402Error('unsupported_network', `unsupported network: ${network}`, 400);
 }
 
@@ -147,11 +151,23 @@ function hostOf(url) {
 }
 
 async function callFacilitator(network, path, body) {
-	const { url: base, token } = facilitatorFor(network);
+	const { url: base, token, kind } = facilitatorFor(network);
 	const url = `${base}${path}`;
 	const host = hostOf(base);
 	const headers = { 'content-type': 'application/json', accept: 'application/json' };
-	if (token) headers.authorization = `Bearer ${token}`;
+	if (kind === 'cdp') {
+		const parsed = new URL(url);
+		headers.authorization = await createAuthHeader(
+			env.CDP_API_KEY_ID,
+			env.CDP_API_KEY_SECRET,
+			'POST',
+			parsed.host,
+			parsed.pathname,
+		);
+		headers['correlation-id'] = createCorrelationHeader();
+	} else if (token) {
+		headers.authorization = `Bearer ${token}`;
+	}
 	let res;
 	try {
 		res = await fetch(url, {
@@ -218,7 +234,16 @@ export async function probeFacilitators() {
 				try {
 					const probeUrl = `${t.url}/supported`;
 					const headers = { accept: 'application/json' };
-					if (t.kind === 'cdp') headers.authorization = cdpAuthHeader('GET', probeUrl);
+					if (t.kind === 'cdp') {
+						const parsed = new URL(probeUrl);
+						headers.authorization = await createAuthHeader(
+							env.CDP_API_KEY_ID,
+							env.CDP_API_KEY_SECRET,
+							'GET',
+							parsed.host,
+							parsed.pathname,
+						);
+					}
 					const res = await fetch(probeUrl, {
 						headers,
 						signal: AbortSignal.timeout(10_000),
