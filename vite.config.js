@@ -185,6 +185,13 @@ const appConfig = {
 					'/': resolve(root, 'pages/home.html'),
 					'/home': resolve(root, 'pages/home.html'),
 					'/agent': resolve(root, 'pages/agent-home.html'),
+					'/agent-home': resolve(root, 'pages/agent-home.html'),
+					'/community': resolve(root, 'pages/community.html'),
+					'/profile': resolve(root, 'pages/profile.html'),
+					'/playground': resolve(root, 'pages/playground.html'),
+					'/embed': resolve(root, 'pages/embed.html'),
+					'/avatar-page': resolve(root, 'pages/avatar-page.html'),
+					'/widget-studio': resolve(root, 'pages/widget-studio.html'),
 					'/docs': resolve(root, 'docs/index.html'),
 					'/docs/': resolve(root, 'docs/index.html'),
 				};
