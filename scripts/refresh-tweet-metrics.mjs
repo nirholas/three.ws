@@ -11,7 +11,7 @@ import path from 'node:path';
 
 const ROOT = path.resolve(import.meta.dirname, '..');
 const HTML_PATH = path.join(ROOT, 'threews-launch-week-case-study.html');
-const OUT_PATH = path.join(ROOT, 'tweet-metrics.json');
+const OUT_PATH = path.join(ROOT, 'data/tweet-metrics.json');
 const ENV_PATH = path.join(ROOT, '.env');
 
 async function loadEnv() {

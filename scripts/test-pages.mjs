@@ -66,8 +66,8 @@ const ROUTES = [
 	'/settings',
 	'/admin',
 	'/pumpfun',
-	'/pump-live.html',
-	'/pump-dashboard.html',
+	'/pump-live',
+	'/pump-dashboard',
 	'/strategy-lab',
 
 	// Legal
@@ -75,14 +75,14 @@ const ROUTES = [
 	'/legal/tos',
 
 	// Standalone HTML viewers / artifacts
-	'/embed.html?src=/avatars/cz.glb',
-	'/embed-test.html',
-	'/avatar-page.html',
+	'/pages/embed.html?src=/avatars/cz.glb',
+	'/pages/embed-test.html',
+	'/pages/avatar-page.html',
 	`/avatars/${SAMPLE_AGENT}`,
-	'/avatar-artifact.html',
-	'/agent-embed.html',
-	'/a-edit.html',
-	'/a-embed.html',
+	'/pages/avatar-artifact.html',
+	'/pages/agent-embed.html',
+	'/pages/a-edit.html',
+	'/pages/a-embed.html',
 	'/artifact-example.html',
 	'/first-meet/',
 	'/lobehub/iframe/',

@@ -190,7 +190,7 @@
 		},
 		{
 			"src": "/deploy",
-			"dest": "/app.html"
+			"dest": "/pages/app.html"
 		},
 		{
 			"src": "/dashboard",
@@ -282,19 +282,19 @@
 		},
 		{
 			"src": "/marketplace",
-			"dest": "/marketplace.html"
+			"dest": "/pages/marketplace.html"
 		},
 		{
 			"src": "/marketplace/",
-			"dest": "/marketplace.html"
+			"dest": "/pages/marketplace.html"
 		},
 		{
 			"src": "/marketplace/agents/([^/]+)",
-			"dest": "/marketplace.html"
+			"dest": "/pages/marketplace.html"
 		},
 		{
 			"src": "/marketplace/avatars/([^/]+)",
-			"dest": "/marketplace.html"
+			"dest": "/pages/marketplace.html"
 		},
 		{
 			"src": "/api/agents/me",
@@ -684,7 +684,7 @@
 		},
 		{
 			"src": "/u/([^/]+)",
-			"dest": "/profile.html"
+			"dest": "/pages/profile.html"
 		},
 		{
 			"src": "/avatars/([^/]+\\.glb)",
@@ -695,7 +695,7 @@
 		},
 		{
 			"src": "/avatars/([^/]+)",
-			"dest": "/avatar-page.html"
+			"dest": "/pages/avatar-page.html"
 		},
 		{
 			"src": "/api/users/me/earnings",
@@ -711,11 +711,11 @@
 		},
 		{
 			"src": "/a/(\\d+)/(\\d+)/edit",
-			"dest": "/a-edit.html"
+			"dest": "/pages/a-edit.html"
 		},
 		{
 			"src": "/agent/([^/]+)/edit",
-			"dest": "/agent-edit.html"
+			"dest": "/pages/agent-edit.html"
 		},
 		{
 			"src": "/agent/([^/]+)/embed",
@@ -726,7 +726,7 @@
 				"permissions-policy": "microphone=(self), camera=(self), xr-spatial-tracking=*",
 				"cross-origin-resource-policy": "cross-origin"
 			},
-			"dest": "/agent-embed.html"
+			"dest": "/pages/agent-embed.html"
 		},
 		{
 			"src": "/agent/index.html",
@@ -741,7 +741,7 @@
 					"value": "1"
 				}
 			],
-			"dest": "/agent-home.html"
+			"dest": "/pages/agent-home.html"
 		},
 		{
 			"src": "/agent/([^/]+)",
@@ -749,7 +749,7 @@
 		},
 		{
 			"src": "/agent",
-			"dest": "/agent-home.html"
+			"dest": "/pages/agent-home.html"
 		},
 		{
 			"src": "/api/widgets/oembed",
@@ -977,7 +977,7 @@
 		},
 		{
 			"src": "/agents/([^/]+)",
-			"dest": "/agent-detail.html"
+			"dest": "/pages/agent-detail.html"
 		},
 		{
 			"src": "/my-agents",
@@ -1123,11 +1123,11 @@
 		},
 		{
 			"src": "/app",
-			"dest": "/app.html"
+			"dest": "/pages/app.html"
 		},
 		{
 			"src": "/app-demo",
-			"dest": "/app-demo.html"
+			"dest": "/pages/app-demo.html"
 		},
 		{
 			"src": "/chat",
@@ -1143,15 +1143,15 @@
 		},
 		{
 			"src": "/create",
-			"dest": "/create.html"
+			"dest": "/pages/create.html"
 		},
 		{
 			"src": "/create/",
-			"dest": "/create.html"
+			"dest": "/pages/create.html"
 		},
 		{
 			"src": "/",
-			"dest": "/home.html"
+			"dest": "/pages/home.html"
 		},
 		{
 			"src": "/home",
@@ -1182,7 +1182,7 @@
 				"referrer-policy": "strict-origin-when-cross-origin",
 				"permissions-policy": "microphone=(self), camera=(self), xr-spatial-tracking=*"
 			},
-			"dest": "/a-embed.html"
+			"dest": "/pages/a-embed.html"
 		},
 		{
 			"src": "/a/(\\d+)/(\\d+)",
@@ -1190,7 +1190,7 @@
 		},
 		{
 			"src": "/a/(.*)",
-			"dest": "/app.html"
+			"dest": "/pages/app.html"
 		},
 		{
 			"src": "/dist-lib/(.*)",

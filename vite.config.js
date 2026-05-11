@@ -94,26 +94,26 @@ const appConfig = {
 			},
 			input: {
 				'footer-bot': resolve(__dirname, 'src/footer-bot.js'),
-				app: resolve(__dirname, 'app.html'),
-				'app-demo': resolve(__dirname, 'app-demo.html'),
-				home: resolve(__dirname, 'home.html'),
-				tutorials: resolve(__dirname, 'tutorials.html'),
-				playground: resolve(__dirname, 'playground.html'),
-				embed: resolve(__dirname, 'embed.html'),
-				create: resolve(__dirname, 'create.html'),
-				'agent-home': resolve(__dirname, 'agent-home.html'),
-				marketplace: resolve(__dirname, 'marketplace.html'),
-				'agent-edit': resolve(__dirname, 'agent-edit.html'),
-				'agent-embed': resolve(__dirname, 'agent-embed.html'),
-				'agent-detail': resolve(__dirname, 'agent-detail.html'),
-				'a-embed': resolve(__dirname, 'a-embed.html'),
-				'a-edit': resolve(__dirname, 'a-edit.html'),
-				'pump-live': resolve(__dirname, 'pump-live.html'),
-				'pump-dashboard': resolve(__dirname, 'pump-dashboard.html'),
-				community: resolve(__dirname, 'community.html'),
-				profile: resolve(__dirname, 'profile.html'),
-				'avatar-page': resolve(__dirname, 'avatar-page.html'),
-				'widget-studio': resolve(__dirname, 'widget-studio.html'),
+				app: resolve(__dirname, 'pages/app.html'),
+				'app-demo': resolve(__dirname, 'pages/app-demo.html'),
+				home: resolve(__dirname, 'pages/home.html'),
+				tutorials: resolve(__dirname, 'pages/tutorials.html'),
+				playground: resolve(__dirname, 'pages/playground.html'),
+				embed: resolve(__dirname, 'pages/embed.html'),
+				create: resolve(__dirname, 'pages/create.html'),
+				'agent-home': resolve(__dirname, 'pages/agent-home.html'),
+				marketplace: resolve(__dirname, 'pages/marketplace.html'),
+				'agent-edit': resolve(__dirname, 'pages/agent-edit.html'),
+				'agent-embed': resolve(__dirname, 'pages/agent-embed.html'),
+				'agent-detail': resolve(__dirname, 'pages/agent-detail.html'),
+				'a-embed': resolve(__dirname, 'pages/a-embed.html'),
+				'a-edit': resolve(__dirname, 'pages/a-edit.html'),
+				'pump-live': resolve(__dirname, 'pages/pump-live.html'),
+				'pump-dashboard': resolve(__dirname, 'pages/pump-dashboard.html'),
+				community: resolve(__dirname, 'pages/community.html'),
+				profile: resolve(__dirname, 'pages/profile.html'),
+				'avatar-page': resolve(__dirname, 'pages/avatar-page.html'),
+				'widget-studio': resolve(__dirname, 'pages/widget-studio.html'),
 				studio: resolve(__dirname, 'public/studio/index.html'),
 				reputation: resolve(__dirname, 'public/reputation/index.html'),
 				hydrate: resolve(__dirname, 'public/hydrate/index.html'),
@@ -134,13 +134,13 @@ const appConfig = {
 			configureServer(server) {
 				const root = resolve(__dirname);
 				const fileMap = {
-					'/app': resolve(root, 'app.html'),
-					'/app-demo': resolve(root, 'app-demo.html'),
+					'/app': resolve(root, 'pages/app.html'),
+					'/app-demo': resolve(root, 'pages/app-demo.html'),
 					'/login': resolve(root, 'public/login.html'),
-					'/deploy': resolve(root, 'app.html'),
+					'/deploy': resolve(root, 'pages/app.html'),
 					'/agents': resolve(root, 'public/agents/index.html'),
 					'/agents/': resolve(root, 'public/agents/index.html'),
-					'/create': resolve(root, 'create.html'),
+					'/create': resolve(root, 'pages/create.html'),
 					'/dashboard': resolve(root, 'public/dashboard/index.html'),
 					'/dashboard/': resolve(root, 'public/dashboard/index.html'),
 					'/studio': resolve(root, 'public/studio/index.html'),
@@ -163,8 +163,8 @@ const appConfig = {
 					'/my-agents/': resolve(root, 'public/my-agents/index.html'),
 					'/discover': resolve(root, 'public/discover/index.html'),
 					'/discover/': resolve(root, 'public/discover/index.html'),
-					'/marketplace': resolve(root, 'marketplace.html'),
-					'/marketplace/': resolve(root, 'marketplace.html'),
+					'/marketplace': resolve(root, 'pages/marketplace.html'),
+					'/marketplace/': resolve(root, 'pages/marketplace.html'),
 					'/pay': resolve(root, 'public/pay/index.html'),
 					'/pay/': resolve(root, 'public/pay/index.html'),
 					'/pay/calls': resolve(root, 'public/pay/calls/index.html'),
@@ -172,19 +172,19 @@ const appConfig = {
 					'/explore': resolve(root, 'public/discover/index.html'),
 					'/explore/': resolve(root, 'public/discover/index.html'),
 					// END:DISCOVER_ROUTE
-					'/tutorials': resolve(root, 'tutorials.html'),
-					'/tutorials/': resolve(root, 'tutorials.html'),
-					'/pump-live': resolve(root, 'pump-live.html'),
-					'/pump-live/': resolve(root, 'pump-live.html'),
-					'/pump-dashboard': resolve(root, 'pump-dashboard.html'),
-					'/pump-dashboard/': resolve(root, 'pump-dashboard.html'),
+					'/tutorials': resolve(root, 'pages/tutorials.html'),
+					'/tutorials/': resolve(root, 'pages/tutorials.html'),
+					'/pump-live': resolve(root, 'pages/pump-live.html'),
+					'/pump-live/': resolve(root, 'pages/pump-live.html'),
+					'/pump-dashboard': resolve(root, 'pages/pump-dashboard.html'),
+					'/pump-dashboard/': resolve(root, 'pages/pump-dashboard.html'),
 					'/eth-vanity': resolve(root, 'public/eth-vanity.html'),
 					'/eth-vanity/': resolve(root, 'public/eth-vanity.html'),
 					'/strategy-lab': resolve(root, 'public/strategy-lab.html'),
 					'/strategy-lab/': resolve(root, 'public/strategy-lab.html'),
-					'/': resolve(root, 'home.html'),
-					'/home': resolve(root, 'home.html'),
-					'/agent': resolve(root, 'agent-home.html'),
+					'/': resolve(root, 'pages/home.html'),
+					'/home': resolve(root, 'pages/home.html'),
+					'/agent': resolve(root, 'pages/agent-home.html'),
 					'/docs': resolve(root, 'docs/index.html'),
 					'/docs/': resolve(root, 'docs/index.html'),
 				};
@@ -234,27 +234,27 @@ const appConfig = {
 					}
 					let filePath = fileMap[path];
 					if (!filePath && /^\/marketplace\/agents\/[^/]+\/?$/.test(path))
-						filePath = resolve(root, 'marketplace.html');
+						filePath = resolve(root, 'pages/marketplace.html');
 					else if (!filePath && /^\/marketplace\/avatars\/[^/]+\/?$/.test(path))
-						filePath = resolve(root, 'marketplace.html');
+						filePath = resolve(root, 'pages/marketplace.html');
 					// /agents/:id  → rich detail page (UUID expected, validated client-side)
 					else if (!filePath && /^\/agents\/[^/]+\/?$/.test(path))
-						filePath = resolve(root, 'agent-detail.html');
+						filePath = resolve(root, 'pages/agent-detail.html');
 					else if (!filePath && /^\/agent\/[^/]+\/edit$/.test(path))
-						filePath = resolve(root, 'agent-edit.html');
+						filePath = resolve(root, 'pages/agent-edit.html');
 					else if (!filePath && /^\/agent\/[^/]+\/embed$/.test(path))
-						filePath = resolve(root, 'agent-embed.html');
+						filePath = resolve(root, 'pages/agent-embed.html');
 					else if (!filePath && /^\/agent\/[^/]+$/.test(path))
-						filePath = resolve(root, 'agent-home.html');
+						filePath = resolve(root, 'pages/agent-home.html');
 					// /a/<chainId>/<agentId>/edit  → chain-edit page
 					else if (!filePath && /^\/a\/[^/]+(?:\/[^/]+){1,2}\/edit\/?$/.test(path))
-						filePath = resolve(root, 'a-edit.html');
+						filePath = resolve(root, 'pages/a-edit.html');
 					// /a/<chainId>/<agentId>/embed or /a/<chainId>/<registry>/<agentId>/embed  → iframe viewer
 					else if (!filePath && /^\/a\/[^/]+(?:\/[^/]+){1,2}\/embed\/?$/.test(path))
-						filePath = resolve(root, 'a-embed.html');
+						filePath = resolve(root, 'pages/a-embed.html');
 					// /a/<chainId>/<agentId>  or  /a/<chainId>/<registry>/<agentId>
 					else if (!filePath && /^\/a\/[^/]+(?:\/[^/]+){1,2}\/?$/.test(path))
-						filePath = resolve(root, 'app.html');
+						filePath = resolve(root, 'pages/app.html');
 					// /pay/calls/<base58 tx sig> → permalink for a paid x402 call
 					else if (!filePath && /^\/pay\/calls\/[1-9A-HJ-NP-Za-km-z]+\/?$/.test(path))
 						filePath = resolve(root, 'public/pay/calls/index.html');

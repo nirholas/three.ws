@@ -76,7 +76,7 @@
 		"compress:glbs": "node scripts/compress-glbs.mjs",
 		"seed:skills": "node scripts/seed-skills.js",
 		"install:sdk": "npm install --prefix agent-payments-sdk && npm run build --prefix agent-payments-sdk && npm install ./agent-payments-sdk",
-		"claude": "./claude.sh"
+		"claude": "./scripts/claude.sh"
 	},
 	"dependencies": {
 		"@avaturn/sdk": "^1.1.4",
