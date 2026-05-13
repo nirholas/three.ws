@@ -1,0 +1,47 @@
+{
+  "name": "create-xspace-agent",
+  "version": "0.1.0",
+  "description": "Scaffold a new xspace-agent project",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "bin": {
+    "create-xspace-agent": "./bin/create-xspace-agent"
+  },
+  "files": [
+    "dist/",
+    "templates/"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "clean": "rm -rf dist",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage"
+  },
+  "keywords": [
+    "create",
+    "scaffold",
+    "xspace",
+    "agent",
+    "voice",
+    "ai"
+  ],
+  "license": "UNLICENSED",
+  "dependencies": {
+    "chalk": "^4.1.2",
+    "commander": "^12.0.0",
+    "handlebars": "^4.7.8",
+    "inquirer": "^9.3.0",
+    "ora": "^5.4.1"
+  },
+  "devDependencies": {
+    "@types/inquirer": "^9.0.7",
+    "@types/node": "^20.11.0",
+    "@vitest/coverage-v8": "^1.6.1",
+    "typescript": "^5.3.3",
+    "vitest": "^1.6.1"
+  }
+}
+
+

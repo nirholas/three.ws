@@ -1,0 +1,17 @@
+{
+  "name": "xspace-discord-bridge-example",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "start": "tsx index.ts"
+  },
+  "dependencies": {
+    "xspace-agent": "workspace:*",
+    "discord.js": "^14.16.0"
+  },
+  "devDependencies": {
+    "tsx": "^4.21.0"
+  }
+}
+
+

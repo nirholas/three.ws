@@ -1,0 +1,1534 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>xspace-agent Hub — Everything in One Place</title>
+  <meta name="description" content="The complete xspace-agent ecosystem: all pages, features, examples, documentation, architecture, and packages in one hub.">
+  <meta name="theme-color" content="#0a0a0a">
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+    :root {
+      --bg: #0a0a0a;
+      --bg-elevated: #111111;
+      --bg-card: #141414;
+      --bg-card-hover: #1a1a1a;
+      --border: rgba(255,255,255,0.08);
+      --border-hover: rgba(255,255,255,0.15);
+      --text: #f5f0e8;
+      --text-muted: #a8a29e;
+      --text-dim: #6b6560;
+      --accent-cream: #f5f0e8;
+      --accent-orange: #e87b35;
+      --accent-indigo: #6366f1;
+      --accent-green: #22c55e;
+      --accent-rose: #f43f5e;
+      --accent-blue: #3b82f6;
+      --radius: 12px;
+      --radius-lg: 20px;
+      --radius-xl: 28px;
+    }
+
+    html { scroll-behavior: smooth; -webkit-font-smoothing: antialiased; }
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      overflow-x: hidden;
+      line-height: 1.6;
+    }
+    code, .mono { font-family: 'JetBrains Mono', monospace; }
+
+    /* ── Grid Background ─────────────── */
+    .grid-bg {
+      position: fixed; inset: 0;
+      background-image:
+        linear-gradient(rgba(255,255,255,0.025) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,0.025) 1px, transparent 1px);
+      background-size: 80px 80px;
+      pointer-events: none; z-index: 0;
+    }
+
+    .particles { position: fixed; inset: 0; pointer-events: none; z-index: 0; overflow: hidden; }
+    .particle {
+      position: absolute; width: 3px; height: 3px;
+      background: rgba(232, 220, 200, 0.12); border-radius: 50%;
+      animation: float-p linear infinite;
+    }
+    @keyframes float-p {
+      0% { transform: translateY(100vh) translateX(0); opacity: 0; }
+      10% { opacity: 1; } 90% { opacity: 1; }
+      100% { transform: translateY(-10vh) translateX(20px); opacity: 0; }
+    }
+
+    .glow-top {
+      position: absolute; top: -200px; left: 50%; transform: translateX(-50%);
+      width: 900px; height: 500px;
+      background: radial-gradient(ellipse, rgba(99,102,241,0.06) 0%, transparent 70%);
+      pointer-events: none;
+    }
+
+    /* ── Layout ──────────────────────── */
+    .container { max-width: 1200px; margin: 0 auto; padding: 0 24px; position: relative; z-index: 1; }
+    section { position: relative; z-index: 1; }
+
+    /* ── Navbar ───────────────────────── */
+    .navbar {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+      padding: 16px 0; transition: background 0.3s, backdrop-filter 0.3s;
+    }
+    .navbar.scrolled {
+      background: rgba(10,10,10,0.85); backdrop-filter: blur(20px);
+      border-bottom: 1px solid var(--border);
+    }
+    .navbar .container { display: flex; align-items: center; justify-content: space-between; }
+    .nav-logo {
+      display: flex; align-items: center; gap: 10px;
+      text-decoration: none; color: var(--text); font-weight: 700; font-size: 1.15rem;
+    }
+    .nav-logo svg { width: 32px; height: 32px; }
+    .nav-links { display: flex; align-items: center; gap: 28px; list-style: none; }
+    .nav-links a {
+      color: var(--text-muted); text-decoration: none; font-size: 0.85rem;
+      font-weight: 500; transition: color 0.2s;
+    }
+    .nav-links a:hover { color: var(--text); }
+    .nav-actions { display: flex; align-items: center; gap: 12px; }
+
+    .btn {
+      display: inline-flex; align-items: center; gap: 8px;
+      padding: 10px 22px; border-radius: 999px; font-size: 0.9rem; font-weight: 600;
+      text-decoration: none; cursor: pointer; border: none; transition: all 0.25s; font-family: inherit;
+    }
+    .btn-ghost { background: transparent; color: var(--text); border: 1px solid var(--border); }
+    .btn-ghost:hover { background: rgba(255,255,255,0.05); border-color: var(--border-hover); }
+    .btn-primary { background: var(--accent-cream); color: #0a0a0a; }
+    .btn-primary:hover { background: #fff; transform: translateY(-1px); box-shadow: 0 4px 20px rgba(245,240,232,0.2); }
+    .btn-sm { padding: 7px 16px; font-size: 0.8rem; }
+
+    /* ── Hero ─────────────────────────── */
+    .hero { padding: 160px 0 80px; text-align: center; position: relative; }
+    .hero-badge {
+      display: inline-flex; align-items: center; gap: 10px;
+      padding: 8px 20px 8px 8px;
+      background: rgba(255,255,255,0.05); border: 1px solid var(--border);
+      border-radius: 999px; margin-bottom: 32px; font-size: 0.85rem; color: var(--text-muted);
+    }
+    .hero-badge-icon {
+      width: 28px; height: 28px; border-radius: 50%;
+      background: linear-gradient(135deg, var(--accent-indigo), #4f46e5);
+      display: flex; align-items: center; justify-content: center;
+    }
+    .hero-badge-icon svg { width: 14px; height: 14px; }
+    .hero h1 {
+      font-size: clamp(2.8rem, 6vw, 5rem); font-weight: 800; line-height: 1.05;
+      letter-spacing: -0.03em; color: var(--accent-cream); margin-bottom: 24px;
+    }
+    .hero h1 .gradient {
+      background: linear-gradient(135deg, var(--accent-orange), var(--accent-indigo));
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    .hero p {
+      font-size: 1.15rem; color: var(--text-muted); max-width: 700px;
+      margin: 0 auto 40px; line-height: 1.7;
+    }
+    .hero-stats {
+      display: flex; justify-content: center; gap: 48px; margin-top: 48px;
+    }
+    .hero-stat { text-align: center; }
+    .hero-stat .num { font-size: 2rem; font-weight: 800; color: var(--text); }
+    .hero-stat .label { font-size: 0.8rem; color: var(--text-dim); margin-top: 4px; }
+
+    /* ── Section Headers ─────────────── */
+    .section-header { text-align: center; margin-bottom: 48px; }
+    .section-header h2 {
+      font-size: clamp(2rem, 4vw, 3rem); font-weight: 800;
+      color: var(--accent-cream); letter-spacing: -0.02em; margin-bottom: 16px;
+    }
+    .section-header p {
+      font-size: 1rem; color: var(--text-muted); max-width: 650px; margin: 0 auto; line-height: 1.7;
+    }
+    .section-divider {
+      border: none; border-top: 1px solid var(--border);
+      margin: 0;
+    }
+
+    /* ── Page Cards Grid ─────────────── */
+    .pages-section { padding: 100px 0; }
+    .page-category { margin-bottom: 48px; }
+    .page-category-title {
+      font-size: 0.8rem; font-weight: 600; color: var(--text-muted);
+      text-transform: uppercase; letter-spacing: 0.08em;
+      margin-bottom: 20px; padding-bottom: 12px; border-bottom: 1px solid var(--border);
+      display: flex; align-items: center; gap: 8px;
+    }
+    .page-category-title .count {
+      background: rgba(255,255,255,0.06); padding: 2px 8px; border-radius: 999px;
+      font-size: 0.7rem; color: var(--text-dim);
+    }
+    .pages-grid {
+      display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 16px;
+    }
+    .page-card {
+      background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius);
+      padding: 24px; text-decoration: none; color: inherit;
+      transition: all 0.3s; position: relative; overflow: hidden;
+    }
+    .page-card:hover {
+      border-color: var(--border-hover); transform: translateY(-4px);
+      box-shadow: 0 20px 40px rgba(0,0,0,0.3);
+    }
+    .page-card-icon {
+      width: 40px; height: 40px; border-radius: 10px;
+      display: flex; align-items: center; justify-content: center;
+      margin-bottom: 14px; font-size: 1.1rem;
+    }
+    .page-card h3 { font-size: 1rem; font-weight: 700; color: var(--text); margin-bottom: 6px; }
+    .page-card p { font-size: 0.82rem; color: var(--text-dim); line-height: 1.5; margin-bottom: 14px; }
+    .page-card .url-tag {
+      font-family: 'JetBrains Mono', monospace; font-size: 0.72rem;
+      color: var(--accent-orange); opacity: 0.8;
+    }
+    .page-card .arrow {
+      position: absolute; top: 24px; right: 24px;
+      color: var(--text-dim); font-size: 1.1rem; transition: transform 0.2s;
+    }
+    .page-card:hover .arrow { transform: translate(3px, -3px); color: var(--text-muted); }
+
+    /* ── Architecture Section ─────────── */
+    .arch-section { padding: 100px 0; }
+    .arch-diagram {
+      background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius-xl);
+      overflow: hidden; max-width: 1000px; margin: 0 auto;
+      box-shadow: 0 40px 80px -20px rgba(0,0,0,0.5);
+    }
+    .arch-bar {
+      display: flex; align-items: center; gap: 8px; padding: 14px 20px;
+      border-bottom: 1px solid var(--border);
+    }
+    .arch-dot { width: 12px; height: 12px; border-radius: 50%; background: rgba(255,255,255,0.08); }
+    .arch-title { margin-left: 16px; font-size: 0.8rem; color: var(--text-muted); font-weight: 500; }
+    .arch-body { padding: 40px 32px; }
+    .arch-flow {
+      display: flex; align-items: stretch; gap: 0; justify-content: center;
+      flex-wrap: wrap;
+    }
+    .arch-node {
+      background: rgba(255,255,255,0.03); border: 1px solid var(--border);
+      border-radius: 10px; padding: 20px; text-align: center;
+      min-width: 140px; flex: 1; max-width: 180px;
+      transition: border-color 0.3s;
+    }
+    .arch-node:hover { border-color: var(--border-hover); }
+    .arch-node-icon {
+      width: 44px; height: 44px; border-radius: 12px;
+      display: flex; align-items: center; justify-content: center;
+      margin: 0 auto 10px; font-size: 1.2rem;
+    }
+    .arch-node h4 { font-size: 0.85rem; font-weight: 600; color: var(--text); margin-bottom: 4px; }
+    .arch-node p { font-size: 0.72rem; color: var(--text-dim); line-height: 1.4; }
+    .arch-arrow {
+      display: flex; align-items: center; color: var(--text-dim);
+      font-size: 1.2rem; padding: 0 8px; flex-shrink: 0;
+    }
+    .arch-middleware {
+      margin-top: 28px; padding: 16px 20px;
+      background: rgba(255,255,255,0.02); border: 1px solid var(--border);
+      border-radius: 10px; display: flex; align-items: center; gap: 10px;
+      justify-content: center; flex-wrap: wrap;
+    }
+    .mw-label {
+      font-size: 0.75rem; color: var(--text-dim); font-weight: 600; margin-right: 4px;
+    }
+    .mw-tag {
+      padding: 5px 12px; border-radius: 8px; font-size: 0.72rem; font-weight: 500;
+      color: var(--text-muted); border: 1px solid var(--border);
+      font-family: 'JetBrains Mono', monospace;
+    }
+    .mw-arrow { color: var(--accent-orange); font-size: 0.8rem; }
+
+    /* FSM visual */
+    .fsm-section { margin-top: 32px; }
+    .fsm-label {
+      font-size: 0.75rem; font-weight: 600; color: var(--text-muted);
+      text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 12px;
+    }
+    .fsm-flow {
+      display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+      padding: 16px 20px; background: rgba(255,255,255,0.02);
+      border: 1px solid var(--border); border-radius: 10px;
+    }
+    .fsm-state {
+      padding: 5px 12px; border-radius: 8px; font-size: 0.72rem; font-weight: 600;
+      white-space: nowrap; border: 1px solid var(--border); color: var(--text-dim);
+      background: rgba(255,255,255,0.02);
+    }
+    .fsm-state.done { background: rgba(99,102,241,0.1); color: #818cf8; border-color: rgba(99,102,241,0.2); }
+    .fsm-state.active { background: rgba(34,197,94,0.1); color: #4ade80; border-color: rgba(34,197,94,0.2); }
+    .fsm-sep { color: var(--text-dim); font-size: 0.8rem; flex-shrink: 0; }
+
+    /* ── Features Grid ───────────────── */
+    .features-section { padding: 100px 0; }
+    .features-grid {
+      display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px;
+    }
+    .feature-card {
+      background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius);
+      padding: 28px; transition: all 0.3s;
+    }
+    .feature-card:hover { border-color: var(--border-hover); transform: translateY(-3px); }
+    .feature-icon {
+      width: 44px; height: 44px; border-radius: 12px;
+      display: flex; align-items: center; justify-content: center;
+      margin-bottom: 16px;
+    }
+    .feature-icon svg { width: 22px; height: 22px; }
+    .feature-card h3 { font-size: 1rem; font-weight: 700; color: var(--text); margin-bottom: 8px; }
+    .feature-card p { font-size: 0.82rem; color: var(--text-dim); line-height: 1.6; }
+
+    /* ── Examples Section ────────────── */
+    .examples-section { padding: 100px 0; }
+    .examples-grid {
+      display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); gap: 16px;
+    }
+    .example-card {
+      background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius);
+      padding: 28px; transition: all 0.3s;
+    }
+    .example-card:hover { border-color: var(--border-hover); transform: translateY(-3px); }
+    .example-head { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }
+    .example-emoji { font-size: 1.4rem; }
+    .example-card h3 { font-size: 0.95rem; font-weight: 700; color: var(--text); }
+    .example-card > p { font-size: 0.82rem; color: var(--text-dim); line-height: 1.6; margin-bottom: 16px; }
+    .example-code {
+      background: rgba(255,255,255,0.03); border: 1px solid var(--border);
+      border-radius: 8px; padding: 12px 16px;
+      font-family: 'JetBrains Mono', monospace; font-size: 0.75rem;
+      color: var(--text-muted); line-height: 1.7; overflow-x: auto;
+    }
+    .example-code .kw { color: var(--accent-indigo); }
+    .example-code .str { color: var(--accent-orange); }
+    .example-code .fn { color: var(--accent-green); }
+    .example-code .cm { color: var(--text-dim); }
+    .example-tags { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 12px; }
+    .example-tag {
+      padding: 3px 10px; border-radius: 6px; font-size: 0.68rem; font-weight: 600;
+      border: 1px solid var(--border); color: var(--text-dim);
+    }
+
+    /* ── Providers Section ───────────── */
+    .providers-section { padding: 100px 0; }
+    .provider-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
+    .provider-col h3 {
+      font-size: 0.9rem; font-weight: 700; color: var(--text); margin-bottom: 16px;
+      display: flex; align-items: center; gap: 8px;
+    }
+    .provider-col h3 .dot {
+      width: 8px; height: 8px; border-radius: 50%;
+    }
+    .provider-item {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 12px 0; border-bottom: 1px solid var(--border);
+      font-size: 0.85rem;
+    }
+    .provider-item:last-child { border-bottom: none; }
+    .provider-item .name { color: var(--text-muted); font-weight: 500; }
+    .provider-item .detail { color: var(--text-dim); font-size: 0.75rem; }
+
+    /* ── Docs Section ────────────────── */
+    .docs-section { padding: 100px 0; }
+    .docs-grid {
+      display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 12px;
+    }
+    .doc-item {
+      display: flex; align-items: center; gap: 12px;
+      padding: 14px 18px; background: var(--bg-card); border: 1px solid var(--border);
+      border-radius: var(--radius); text-decoration: none; color: inherit;
+      transition: all 0.2s;
+    }
+    .doc-item:hover { border-color: var(--border-hover); background: var(--bg-card-hover); }
+    .doc-icon {
+      width: 32px; height: 32px; border-radius: 8px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 0.9rem; flex-shrink: 0;
+      background: rgba(255,255,255,0.04);
+    }
+    .doc-item h4 { font-size: 0.85rem; font-weight: 600; color: var(--text); }
+    .doc-item p { font-size: 0.72rem; color: var(--text-dim); margin-top: 2px; }
+
+    /* ── Packages Section ────────────── */
+    .packages-section { padding: 100px 0; }
+    .packages-grid {
+      display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); gap: 16px;
+    }
+    .pkg-card {
+      background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius-lg);
+      padding: 32px; transition: all 0.3s;
+    }
+    .pkg-card:hover { border-color: var(--border-hover); transform: translateY(-3px); }
+    .pkg-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+    .pkg-name {
+      font-family: 'JetBrains Mono', monospace; font-size: 0.95rem;
+      font-weight: 600; color: var(--accent-cream);
+    }
+    .pkg-version {
+      padding: 3px 10px; border-radius: 999px; font-size: 0.7rem;
+      font-weight: 600; background: rgba(255,255,255,0.05); color: var(--text-dim);
+      border: 1px solid var(--border);
+    }
+    .pkg-card p { font-size: 0.85rem; color: var(--text-muted); line-height: 1.6; margin-bottom: 16px; }
+    .pkg-meta { display: flex; gap: 12px; flex-wrap: wrap; }
+    .pkg-meta-item {
+      font-size: 0.72rem; color: var(--text-dim);
+      display: flex; align-items: center; gap: 4px;
+    }
+
+    /* ── CTA ──────────────────────────── */
+    .cta-section { padding: 100px 0; }
+    .cta-box {
+      background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius-xl);
+      padding: 80px 40px; text-align: center; position: relative; overflow: hidden;
+    }
+    .cta-box::before {
+      content: ''; position: absolute; bottom: 0; left: 0; right: 0; height: 200px;
+      background:
+        linear-gradient(transparent, rgba(10,10,10,0.3)),
+        repeating-linear-gradient(90deg, transparent, transparent 79px, rgba(255,255,255,0.03) 79px, rgba(255,255,255,0.03) 80px),
+        repeating-linear-gradient(0deg, transparent, transparent 79px, rgba(255,255,255,0.03) 79px, rgba(255,255,255,0.03) 80px);
+      perspective: 500px; transform: rotateX(45deg); transform-origin: bottom; pointer-events: none;
+    }
+    .cta-box .label { font-size: 0.9rem; color: var(--text-dim); margin-bottom: 16px; }
+    .cta-box h2 {
+      font-size: clamp(2rem, 4vw, 3rem); font-weight: 800; color: var(--accent-cream);
+      letter-spacing: -0.02em; margin-bottom: 32px;
+    }
+    .cta-buttons { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
+
+    /* ── Footer ───────────────────────── */
+    .footer { border-top: 1px solid var(--border); padding: 60px 0 40px; position: relative; z-index: 1; }
+    .footer-top { display: grid; grid-template-columns: 1.5fr 1fr 1fr 1fr; gap: 40px; margin-bottom: 48px; }
+    .footer-brand p { font-size: 0.85rem; color: var(--text-dim); line-height: 1.6; margin-top: 12px; }
+    .footer-col h4 { font-size: 0.85rem; font-weight: 600; color: var(--text); margin-bottom: 16px; }
+    .footer-col a {
+      display: block; font-size: 0.85rem; color: var(--text-dim); text-decoration: none;
+      padding: 4px 0; transition: color 0.2s;
+    }
+    .footer-col a:hover { color: var(--accent-cream); }
+    .footer-bottom {
+      display: flex; justify-content: space-between; align-items: center;
+      padding-top: 24px; border-top: 1px solid var(--border); font-size: 0.8rem; color: var(--text-dim);
+    }
+
+    /* ── Responsive ──────────────────── */
+    @media (max-width: 900px) {
+      .nav-links { display: none; }
+      .features-grid { grid-template-columns: 1fr 1fr; }
+      .provider-grid { grid-template-columns: 1fr; }
+      .arch-flow { flex-direction: column; align-items: center; }
+      .arch-arrow { transform: rotate(90deg); }
+      .footer-top { grid-template-columns: 1fr 1fr; }
+      .hero-stats { gap: 32px; }
+    }
+    @media (max-width: 600px) {
+      .hero h1 { font-size: 2.2rem; }
+      .features-grid { grid-template-columns: 1fr; }
+      .pages-grid { grid-template-columns: 1fr; }
+      .examples-grid { grid-template-columns: 1fr; }
+      .hero-stats { flex-direction: column; gap: 16px; }
+      .footer-top { grid-template-columns: 1fr; }
+      .cta-buttons { flex-direction: column; align-items: center; }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="grid-bg"></div>
+  <div class="particles" id="particles"></div>
+
+  <!-- ═══════════════════════════════════════════════════ -->
+  <!-- NAVBAR                                              -->
+  <!-- ═══════════════════════════════════════════════════ -->
+  <nav class="navbar" id="navbar">
+    <div class="container">
+      <a href="/" class="nav-logo">
+        <svg viewBox="0 0 32 32" fill="none"><rect x="4" y="4" width="24" height="24" rx="6" stroke="currentColor" stroke-width="2"/><circle cx="12" cy="16" r="3" fill="currentColor" opacity="0.4"/><circle cx="20" cy="16" r="3" fill="currentColor" opacity="0.4"/><path d="M12 16h8" stroke="currentColor" stroke-width="1.5" stroke-dasharray="2 2"/></svg>
+        xspace-agent hub
+      </a>
+      <ul class="nav-links">
+        <li><a href="#pages">Pages</a></li>
+        <li><a href="#architecture">Architecture</a></li>
+        <li><a href="#features">Features</a></li>
+        <li><a href="#examples">Examples</a></li>
+        <li><a href="#providers">Providers</a></li>
+        <li><a href="#docs">Docs</a></li>
+        <li><a href="#packages">Packages</a></li>
+      </ul>
+      <div class="nav-actions">
+        <a href="/landing" class="btn btn-ghost btn-sm">Landing</a>
+        <a href="/admin" class="btn btn-primary btn-sm">Dashboard</a>
+      </div>
+    </div>
+  </nav>
+
+  <!-- ═══════════════════════════════════════════════════ -->
+  <!-- HERO                                                -->
+  <!-- ═══════════════════════════════════════════════════ -->
+  <section class="hero">
+    <div class="glow-top"></div>
+    <div class="container">
+      <div class="hero-badge">
+        <div class="hero-badge-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+        </div>
+        21 pages &middot; 12 examples &middot; 27 docs &middot; 5 packages
+      </div>
+
+      <h1>The complete <span class="gradient">xspace-agent</span><br>ecosystem</h1>
+
+      <p>Every page, feature, example, architecture diagram, documentation file, and npm package &mdash; all accessible from one hub. Your portal to the entire project.</p>
+
+      <div class="hero-stats">
+        <div class="hero-stat"><div class="num">21</div><div class="label">Pages</div></div>
+        <div class="hero-stat"><div class="num">30+</div><div class="label">SDK Modules</div></div>
+        <div class="hero-stat"><div class="num">12</div><div class="label">Examples</div></div>
+        <div class="hero-stat"><div class="num">5</div><div class="label">Packages</div></div>
+        <div class="hero-stat"><div class="num">27</div><div class="label">Docs</div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════════════════════════ -->
+  <!-- ALL PAGES                                           -->
+  <!-- ═══════════════════════════════════════════════════ -->
+  <hr class="section-divider">
+  <section class="pages-section" id="pages">
+    <div class="container">
+      <div class="section-header">
+        <h2>All Pages</h2>
+        <p>Every UI in the project — dashboards, agents, builders, voice chat, admin panels, and more. Each on its own unique URL.</p>
+      </div>
+
+      <!-- Main App -->
+      <div class="page-category">
+        <div class="page-category-title">Main Application <span class="count">7</span></div>
+        <div class="pages-grid">
+          <a href="/landing" class="page-card">
+            <div class="page-card-icon" style="background:rgba(232,123,53,0.15);">&#127758;</div>
+            <span class="arrow">&nearr;</span>
+            <h3>Landing Page</h3>
+            <p>Marketing landing for the xspace-agent SDK. Hero, terminal mockup, feature sections, pipeline diagrams.</p>
+            <div class="url-tag">/landing</div>
+          </a>
+          <a href="/" class="page-card">
+            <div class="page-card-icon" style="background:rgba(99,102,241,0.15);">&#128200;</div>
+            <span class="arrow">&nearr;</span>
+            <h3>Dashboard Home</h3>
+            <p>Main dashboard with dot grid background and feature showcases. Entry point for agent control.</p>
+            <div class="url-tag">/</div>
+          </a>
+          <a href="/admin" class="page-card">
+            <div class="page-card-icon" style="background:rgba(244,63,94,0.15);">&#9881;&#65039;</div>
+            <span class="arrow">&nearr;</span>
+            <h3>Admin Panel</h3>
+            <p>Multi-route admin dashboard with sidebar navigation. Agents, logs, settings, and connection monitoring.</p>
+            <div class="url-tag">/admin</div>
+          </a>
+          <a href="/builder" class="page-card">
+            <div class="page-card-icon" style="background:rgba(34,197,94,0.15);">&#128736;</div>
+            <span class="arrow">&nearr;</span>
+            <h3>Flow Builder</h3>
+            <p>Visual node editor for agent flows. Drag-and-drop trigger, listener, processor, responder, and branch nodes.</p>
+            <div class="url-tag">/builder</div>
+          </a>
+          <a href="/alice" class="page-card">
+            <div class="page-card-icon" style="background:rgba(244,63,94,0.15);">&#129502;</div>
+            <span class="arrow">&nearr;</span>
+            <h3>Agent Alice</h3>
+            <p>Named agent dashboard with rose color scheme. Agent-specific metrics, status, and real-time interaction.</p>
+            <div class="url-tag">/alice</div>
+          </a>
+          <a href="/bob" class="page-card">
+            <div class="page-card-icon" style="background:rgba(99,102,241,0.15);">&#129302;</div>
+            <span class="arrow">&nearr;</span>
+            <h3>Agent Bob</h3>
+            <p>Named agent dashboard with violet color scheme. Similar to Alice but themed for Bob's personality.</p>
+            <div class="url-tag">/bob</div>
+          </a>
+          <a href="/login" class="page-card">
+            <div class="page-card-icon" style="background:rgba(255,255,255,0.08);">&#128274;</div>
+            <span class="arrow">&nearr;</span>
+            <h3>Login</h3>
+            <p>Authentication page with centered login card. Email/password fields, dark minimal design.</p>
+            <div class="url-tag">/login</div>
+          </a>
+        </div>
+      </div>
+
+      <!-- Server Package -->
+      <div class="page-category">
+        <div class="page-category-title">Server Package <span class="count">5</span></div>
+        <div class="pages-grid">
+          <a href="/server-dashboard" class="page-card">
+            <div class="page-card-icon" style="background:rgba(34,197,94,0.15);">&#128421;</div>
+            <span class="arrow">&nearr;</span>
+            <h3>Server Dashboard</h3>
+            <p>Retro terminal aesthetic with VT323 font, CRT scanline effects, and green-on-black color scheme.</p>
+            <div class="url-tag">/server-dashboard</div>
+          </a>
+          <a href="/server-admin" class="page-card">
+            <div class="page-card-icon" style="background:rgba(99,102,241,0.15);">&#128205;</div>
+            <span class="arrow">&nearr;</span>
+            <h3>Server Admin</h3>
+            <p>Modern admin panel with Inter font. Multi-pane sidebar layout for agent management.</p>
+            <div class="url-tag">/server-admin</div>
+          </a>
+          <a href="/server-builder" class="page-card">
+            <div class="page-card-icon" style="background:rgba(232,123,53,0.15);">&#128295;</div>
+            <span class="arrow">&nearr;</span>
+            <h3>Server Builder</h3>
+            <p>Agent builder interface from the server package. Visual workflow construction.</p>
+            <div class="url-tag">/server-builder</div>
+          </a>
+          <a href="/server-agent1" class="page-card">
+            <div class="page-card-icon" style="background:rgba(34,197,94,0.15);">&#127919;</div>
+            <span class="arrow">&nearr;</span>
+            <h3>Server Agent 1</h3>
+            <p>Individual agent monitoring page from the server package.</p>
+            <div class="url-tag">/server-agent1</div>
+          </a>
+          <a href="/server-agent2" class="page-card">
+            <div class="page-card-icon" style="background:rgba(244,63,94,0.15);">&#127919;</div>
+            <span class="arrow">&nearr;</span>
+            <h3>Server Agent 2</h3>
+            <p>Second agent monitoring page. Multi-agent support from the server package.</p>
+            <div class="url-tag">/server-agent2</div>
+          </a>
+        </div>
+      </div>
+
+      <!-- Voice Chat -->
+      <div class="page-category">
+        <div class="page-category-title">Voice Chat Platform <span class="count">3</span></div>
+        <div class="pages-grid">
+          <a href="/voice-chat" class="page-card">
+            <div class="page-card-icon" style="background:rgba(232,123,53,0.15);">&#127908;</div>
+            <span class="arrow">&nearr;</span>
+            <h3>Voice Chat Home</h3>
+            <p>Agent list with DaisyUI + Tailwind styling. Glassmorphism cards with hover effects and ambient glow.</p>
+            <div class="url-tag">/voice-chat</div>
+          </a>
+          <a href="/voice-chat-landing" class="page-card">
+            <div class="page-card-icon" style="background:rgba(232,123,53,0.15);">&#127775;</div>
+            <span class="arrow">&nearr;</span>
+            <h3>Voice Chat Landing</h3>
+            <p>Marketing landing for the voice platform. Multi-agent mockup, memory &amp; knowledge, analytics, multi-room features.</p>
+            <div class="url-tag">/voice-chat-landing</div>
+          </a>
+          <a href="/voice-chat-session" class="page-card">
+            <div class="page-card-icon" style="background:rgba(34,197,94,0.15);">&#128483;</div>
+            <span class="arrow">&nearr;</span>
+            <h3>Voice Chat Session</h3>
+            <p>Individual voice chat session page. Real-time conversation UI with status indicators and grid background.</p>
+            <div class="url-tag">/voice-chat-session</div>
+          </a>
+        </div>
+      </div>
+
+      <!-- Contentium & Legacy -->
+      <div class="page-category">
+        <div class="page-category-title">Contentium &amp; Legacy <span class="count">3</span></div>
+        <div class="pages-grid">
+          <a href="/contentium" class="page-card">
+            <div class="page-card-icon" style="background:rgba(255,255,255,0.08);">&#128221;</div>
+            <span class="arrow">&nearr;</span>
+            <h3>Contentium</h3>
+            <p>Speak.ai landing page with light beige/cream palette. DM Serif Display headings. Voice-to-text writing product.</p>
+            <div class="url-tag">/contentium</div>
+          </a>
+          <a href="/contentium-v2" class="page-card">
+            <div class="page-card-icon" style="background:rgba(255,255,255,0.08);">&#128221;</div>
+            <span class="arrow">&nearr;</span>
+            <h3>Contentium v2</h3>
+            <p>Updated version of the Contentium landing. Same light theme, refined design language.</p>
+            <div class="url-tag">/contentium-v2</div>
+          </a>
+          <a href="/legacy-admin" class="page-card">
+            <div class="page-card-icon" style="background:rgba(255,255,255,0.08);">&#128190;</div>
+            <span class="arrow">&nearr;</span>
+            <h3>Legacy Admin</h3>
+            <p>Earlier version of the admin interface from the xspace-agent legacy codebase.</p>
+            <div class="url-tag">/legacy-admin</div>
+          </a>
+        </div>
+      </div>
+
+      <!-- Widget Demos -->
+      <div class="page-category">
+        <div class="page-category-title">Widget Demos <span class="count">3</span></div>
+        <div class="pages-grid">
+          <a href="/widget-demo" class="page-card">
+            <div class="page-card-icon" style="background:rgba(99,102,241,0.15);">&#129513;</div>
+            <span class="arrow">&nearr;</span>
+            <h3>Widget Demo</h3>
+            <p>Standalone voice chat widget demo. Embeddable component for any website.</p>
+            <div class="url-tag">/widget-demo</div>
+          </a>
+          <a href="/react-widget-demo" class="page-card">
+            <div class="page-card-icon" style="background:rgba(59,130,246,0.15);">&#9883;</div>
+            <span class="arrow">&nearr;</span>
+            <h3>React Widget Demo</h3>
+            <p>React component integration demo for the voice chat widget.</p>
+            <div class="url-tag">/react-widget-demo</div>
+          </a>
+          <a href="/vue-widget-demo" class="page-card">
+            <div class="page-card-icon" style="background:rgba(34,197,94,0.15);">&#9881;</div>
+            <span class="arrow">&nearr;</span>
+            <h3>Vue Widget Demo</h3>
+            <p>Vue.js component integration demo for the voice chat widget.</p>
+            <div class="url-tag">/vue-widget-demo</div>
+          </a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════════════════════════ -->
+  <!-- ARCHITECTURE                                        -->
+  <!-- ═══════════════════════════════════════════════════ -->
+  <hr class="section-divider">
+  <section class="arch-section" id="architecture">
+    <div class="container">
+      <div class="section-header">
+        <h2>Architecture</h2>
+        <p>The full voice agent pipeline: from X Space audio capture through STT, LLM, and TTS — with 6 middleware hooks and a finite state machine driving the lifecycle.</p>
+      </div>
+
+      <div class="arch-diagram">
+        <div class="arch-bar">
+          <div class="arch-dot"></div><div class="arch-dot"></div><div class="arch-dot"></div>
+          <span class="arch-title">xspace-agent pipeline</span>
+        </div>
+        <div class="arch-body">
+          <!-- Main pipeline -->
+          <div class="arch-flow">
+            <div class="arch-node">
+              <div class="arch-node-icon" style="background:rgba(99,102,241,0.15);">&#127897;</div>
+              <h4>X Space</h4>
+              <p>Live audio via<br>WebRTC + CDP</p>
+            </div>
+            <div class="arch-arrow">&rarr;</div>
+            <div class="arch-node">
+              <div class="arch-node-icon" style="background:rgba(232,123,53,0.15);">&#127908;</div>
+              <h4>Audio Capture</h4>
+              <p>PCM → VAD →<br>silence detect</p>
+            </div>
+            <div class="arch-arrow">&rarr;</div>
+            <div class="arch-node">
+              <div class="arch-node-icon" style="background:rgba(34,197,94,0.15);">&#128172;</div>
+              <h4>STT</h4>
+              <p>Groq Whisper<br>or OpenAI</p>
+            </div>
+            <div class="arch-arrow">&rarr;</div>
+            <div class="arch-node">
+              <div class="arch-node-icon" style="background:rgba(244,63,94,0.15);">&#129504;</div>
+              <h4>Intelligence</h4>
+              <p>Speaker ID, topic,<br>sentiment, context</p>
+            </div>
+            <div class="arch-arrow">&rarr;</div>
+            <div class="arch-node">
+              <div class="arch-node-icon" style="background:rgba(99,102,241,0.15);">&#128161;</div>
+              <h4>LLM</h4>
+              <p>OpenAI, Claude,<br>Groq, custom</p>
+            </div>
+            <div class="arch-arrow">&rarr;</div>
+            <div class="arch-node">
+              <div class="arch-node-icon" style="background:rgba(232,123,53,0.15);">&#128264;</div>
+              <h4>TTS</h4>
+              <p>ElevenLabs, OpenAI,<br>browser native</p>
+            </div>
+            <div class="arch-arrow">&rarr;</div>
+            <div class="arch-node">
+              <div class="arch-node-icon" style="background:rgba(34,197,94,0.15);">&#127911;</div>
+              <h4>Inject</h4>
+              <p>Audio back into<br>Space via WebRTC</p>
+            </div>
+          </div>
+
+          <!-- Middleware hooks -->
+          <div class="arch-middleware">
+            <span class="mw-label">Middleware:</span>
+            <span class="mw-tag">before:stt</span>
+            <span class="mw-arrow">&rarr;</span>
+            <span class="mw-tag">after:stt</span>
+            <span class="mw-arrow">&rarr;</span>
+            <span class="mw-tag">before:llm</span>
+            <span class="mw-arrow">&rarr;</span>
+            <span class="mw-tag">after:llm</span>
+            <span class="mw-arrow">&rarr;</span>
+            <span class="mw-tag">before:tts</span>
+            <span class="mw-arrow">&rarr;</span>
+            <span class="mw-tag">after:tts</span>
+          </div>
+
+          <!-- FSM -->
+          <div class="fsm-section">
+            <div class="fsm-label">Agent State Machine</div>
+            <div class="fsm-flow">
+              <span class="fsm-state done">idle</span>
+              <span class="fsm-sep">&rarr;</span>
+              <span class="fsm-state done">launching</span>
+              <span class="fsm-sep">&rarr;</span>
+              <span class="fsm-state done">authenticating</span>
+              <span class="fsm-sep">&rarr;</span>
+              <span class="fsm-state done">joining</span>
+              <span class="fsm-sep">&rarr;</span>
+              <span class="fsm-state active">listening</span>
+              <span class="fsm-sep">&rarr;</span>
+              <span class="fsm-state">processing</span>
+              <span class="fsm-sep">&rarr;</span>
+              <span class="fsm-state">speaking</span>
+              <span class="fsm-sep">&rarr;</span>
+              <span class="fsm-state">leaving</span>
+              <span class="fsm-sep">&rarr;</span>
+              <span class="fsm-state">stopped</span>
+            </div>
+          </div>
+
+          <!-- Team FSM -->
+          <div class="fsm-section" style="margin-top:16px;">
+            <div class="fsm-label">Team State Machine</div>
+            <div class="fsm-flow">
+              <span class="fsm-state done">idle</span>
+              <span class="fsm-sep">&rarr;</span>
+              <span class="fsm-state done">initializing</span>
+              <span class="fsm-sep">&rarr;</span>
+              <span class="fsm-state done">ready</span>
+              <span class="fsm-sep">&rarr;</span>
+              <span class="fsm-state active">turn-active</span>
+              <span class="fsm-sep">&harr;</span>
+              <span class="fsm-state">space-ended</span>
+              <span class="fsm-sep">&rarr;</span>
+              <span class="fsm-state">stopped</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════════════════════════ -->
+  <!-- SDK FEATURES                                        -->
+  <!-- ═══════════════════════════════════════════════════ -->
+  <hr class="section-divider">
+  <section class="features-section" id="features">
+    <div class="container">
+      <div class="section-header">
+        <h2>SDK Features</h2>
+        <p>30+ modules across audio, browser automation, intelligence, state management, providers, plugins, memory, and turn coordination.</p>
+      </div>
+
+      <div class="features-grid">
+        <div class="feature-card">
+          <div class="feature-icon" style="background:rgba(99,102,241,0.15);">
+            <svg viewBox="0 0 24 24" fill="none" stroke="#818cf8" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+          </div>
+          <h3>Browser Automation</h3>
+          <p>Puppeteer CDP integration with self-healing selectors. Automatic login, Space join, speaker request, and audio injection via WebRTC.</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon" style="background:rgba(232,123,53,0.15);">
+            <svg viewBox="0 0 24 24" fill="none" stroke="#e87b35" stroke-width="2"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/></svg>
+          </div>
+          <h3>Audio Pipeline</h3>
+          <p>Real-time PCM capture, VAD with configurable silence detection, WAV encoding, and audio injection back into Space.</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon" style="background:rgba(34,197,94,0.15);">
+            <svg viewBox="0 0 24 24" fill="none" stroke="#4ade80" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M8 14s1.5 2 4 2 4-2 4-2"/><line x1="9" y1="9" x2="9.01" y2="9"/><line x1="15" y1="9" x2="15.01" y2="9"/></svg>
+          </div>
+          <h3>Intelligence Layer</h3>
+          <p>Speaker identification, topic tracking, sentiment analysis, context windowing, and prompt building from conversation state.</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon" style="background:rgba(244,63,94,0.15);">
+            <svg viewBox="0 0 24 24" fill="none" stroke="#f43f5e" stroke-width="2"><polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/></svg>
+          </div>
+          <h3>Finite State Machine</h3>
+          <p>Agent and team lifecycle driven by FSM with guards, actions, and history. No ad-hoc flags — all transitions are explicit.</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon" style="background:rgba(59,130,246,0.15);">
+            <svg viewBox="0 0 24 24" fill="none" stroke="#60a5fa" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+          </div>
+          <h3>Multi-Agent Teams</h3>
+          <p>Deploy multiple AI agents with distinct personalities. Coordinated turn-taking, shared browser session, team state machine.</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon" style="background:rgba(99,102,241,0.15);">
+            <svg viewBox="0 0 24 24" fill="none" stroke="#818cf8" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09"/></svg>
+          </div>
+          <h3>Middleware Pipeline</h3>
+          <p>6 interception points: before/after STT, LLM, and TTS. Transform, filter, or abort processing at any stage.</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon" style="background:rgba(232,123,53,0.15);">
+            <svg viewBox="0 0 24 24" fill="none" stroke="#e87b35" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+          </div>
+          <h3>Provider Router</h3>
+          <p>Intelligent routing across multiple LLM providers. Automatic failover, cost optimization, and health monitoring.</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon" style="background:rgba(34,197,94,0.15);">
+            <svg viewBox="0 0 24 24" fill="none" stroke="#4ade80" stroke-width="2"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
+          </div>
+          <h3>Memory &amp; Knowledge</h3>
+          <p>Long-term memory with vector embeddings. RAG knowledge base for grounding responses in user-provided documents.</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon" style="background:rgba(244,63,94,0.15);">
+            <svg viewBox="0 0 24 24" fill="none" stroke="#f43f5e" stroke-width="2"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>
+          </div>
+          <h3>Decision Engine</h3>
+          <p>Should-I-respond logic based on: directly addressed, is question, topic relevance, silence duration, last spoke.</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon" style="background:rgba(59,130,246,0.15);">
+            <svg viewBox="0 0 24 24" fill="none" stroke="#60a5fa" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+          </div>
+          <h3>Self-Healing Selectors</h3>
+          <p>SelectorEngine tries CSS, text content, and aria attributes. Adapts when X changes their DOM — no manual maintenance.</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon" style="background:rgba(99,102,241,0.15);">
+            <svg viewBox="0 0 24 24" fill="none" stroke="#818cf8" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+          </div>
+          <h3>Cost Tracking</h3>
+          <p>Per-provider cost monitoring with USD estimates. Track tokens, requests, and spending across all AI services.</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon" style="background:rgba(232,123,53,0.15);">
+            <svg viewBox="0 0 24 24" fill="none" stroke="#e87b35" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+          </div>
+          <h3>Plugin System</h3>
+          <p>Extend agent behavior with plugins. Analytics, moderation, webhooks — load via PluginManager with lifecycle hooks.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════════════════════════ -->
+  <!-- EXAMPLES                                            -->
+  <!-- ═══════════════════════════════════════════════════ -->
+  <hr class="section-divider">
+  <section class="examples-section" id="examples">
+    <div class="container">
+      <div class="section-header">
+        <h2>Examples Gallery</h2>
+        <p>12 runnable example projects covering everything from basic joins to multi-agent debates, Discord bridges, and scheduled Spaces.</p>
+      </div>
+
+      <div class="examples-grid">
+        <!-- Basic Join -->
+        <div class="example-card">
+          <div class="example-head">
+            <span class="example-emoji">&#128640;</span>
+            <h3>Basic Join</h3>
+          </div>
+          <p>Absolute minimum — join an X Space with an AI agent in ~15 lines. Listens via STT, responds with GPT-4o-mini + TTS.</p>
+          <div class="example-code">
+<span class="kw">const</span> agent = <span class="kw">new</span> <span class="fn">XSpaceAgent</span>({
+  auth: { token, ct0 },
+  ai: { provider: <span class="str">'openai'</span> },
+})
+<span class="kw">await</span> agent.<span class="fn">join</span>(<span class="str">'https://x.com/i/spaces/...'</span>)
+          </div>
+          <div class="example-tags">
+            <span class="example-tag">beginner</span>
+            <span class="example-tag">SDK</span>
+          </div>
+        </div>
+
+        <!-- Multi-Agent -->
+        <div class="example-card">
+          <div class="example-head">
+            <span class="example-emoji">&#128101;</span>
+            <h3>Multi-Agent</h3>
+          </div>
+          <p>Two AI agents (Bob &amp; Alice) taking turns in one Space. Round-robin turn management with distinct voices.</p>
+          <div class="example-code">
+<span class="kw">const</span> team = <span class="kw">new</span> <span class="fn">AgentTeam</span>({
+  agents: [bob, alice],
+  turnStrategy: <span class="str">'round-robin'</span>,
+})
+<span class="kw">await</span> team.<span class="fn">join</span>(spaceUrl)
+          </div>
+          <div class="example-tags">
+            <span class="example-tag">multi-agent</span>
+            <span class="example-tag">teams</span>
+          </div>
+        </div>
+
+        <!-- Multi-Agent Debate -->
+        <div class="example-card">
+          <div class="example-head">
+            <span class="example-emoji">&#9878;&#65039;</span>
+            <h3>Multi-Agent Debate</h3>
+          </div>
+          <p>Two agents debate a topic live. Bull (OpenAI) vs Bear (Claude) — takes turns every 2s for up to 20 turns, then summarizes.</p>
+          <div class="example-code">
+<span class="cm">// Bull uses alloy voice, Bear uses echo</span>
+<span class="cm">// Concludes with debate summary</span>
+<span class="kw">const</span> debate = <span class="kw">new</span> <span class="fn">AgentTeam</span>({
+  agents: [bull, bear],
+  maxTurns: <span class="str">20</span>,
+})
+          </div>
+          <div class="example-tags">
+            <span class="example-tag">debate</span>
+            <span class="example-tag">multi-llm</span>
+          </div>
+        </div>
+
+        <!-- Discord Bridge -->
+        <div class="example-card">
+          <div class="example-head">
+            <span class="example-emoji">&#128302;</span>
+            <h3>Discord Bridge</h3>
+          </div>
+          <p>Control the X Space agent from Discord. Commands: join, leave, speak, view transcriptions. Bridges two platforms.</p>
+          <div class="example-code">
+<span class="cm">// Discord commands:</span>
+<span class="cm">// !join &lt;space-url&gt;</span>
+<span class="cm">// !leave</span>
+<span class="cm">// !speak &lt;message&gt;</span>
+<span class="cm">// !transcriptions</span>
+          </div>
+          <div class="example-tags">
+            <span class="example-tag">discord</span>
+            <span class="example-tag">bridge</span>
+          </div>
+        </div>
+
+        <!-- Custom Provider -->
+        <div class="example-card">
+          <div class="example-head">
+            <span class="example-emoji">&#128736;</span>
+            <h3>Custom Provider</h3>
+          </div>
+          <p>Use a local LLM (Ollama) or custom API. Runs LLM locally, only TTS uses cloud. Implement your own provider interface.</p>
+          <div class="example-code">
+<span class="kw">const</span> agent = <span class="kw">new</span> <span class="fn">XSpaceAgent</span>({
+  ai: {
+    provider: <span class="str">'custom'</span>,
+    endpoint: <span class="str">'http://localhost:11434'</span>,
+  }
+})
+          </div>
+          <div class="example-tags">
+            <span class="example-tag">ollama</span>
+            <span class="example-tag">custom</span>
+          </div>
+        </div>
+
+        <!-- Middleware Pipeline -->
+        <div class="example-card">
+          <div class="example-head">
+            <span class="example-emoji">&#128279;</span>
+            <h3>Middleware Pipeline</h3>
+          </div>
+          <p>Demonstrates all 6 middleware hooks: noise filtering, language detection, safety redaction, and analytics at each stage.</p>
+          <div class="example-code">
+agent.<span class="fn">use</span>(<span class="str">'after:stt'</span>, filterNoise)
+agent.<span class="fn">use</span>(<span class="str">'before:llm'</span>, injectContext)
+agent.<span class="fn">use</span>(<span class="str">'after:llm'</span>, redactSafety)
+agent.<span class="fn">use</span>(<span class="str">'after:tts'</span>, logAnalytics)
+          </div>
+          <div class="example-tags">
+            <span class="example-tag">middleware</span>
+            <span class="example-tag">hooks</span>
+          </div>
+        </div>
+
+        <!-- Scheduled Spaces -->
+        <div class="example-card">
+          <div class="example-head">
+            <span class="example-emoji">&#128197;</span>
+            <h3>Scheduled Spaces</h3>
+          </div>
+          <p>Join X Spaces on a cron schedule with auto-leave timers. Mon-Fri 9am crypto show, Fri 6pm AMA, Sun 3pm recap.</p>
+          <div class="example-code">
+<span class="cm">// Schedule: cron-based</span>
+<span class="cm">// Mon-Fri 9:00 → Crypto Show</span>
+<span class="cm">// Friday 18:00 → AMA Session</span>
+<span class="cm">// Sunday 15:00 → Weekly Recap</span>
+          </div>
+          <div class="example-tags">
+            <span class="example-tag">cron</span>
+            <span class="example-tag">schedule</span>
+          </div>
+        </div>
+
+        <!-- Transcription Logger -->
+        <div class="example-card">
+          <div class="example-head">
+            <span class="example-emoji">&#128196;</span>
+            <h3>Transcription Logger</h3>
+          </div>
+          <p>Listen-only agent. Saves timestamped transcripts to file. Never speaks — only records. Outputs to stdout + transcript.txt.</p>
+          <div class="example-code">
+agent.<span class="fn">on</span>(<span class="str">'transcription'</span>, ({ text, speaker }) => {
+  <span class="fn">appendFile</span>(<span class="str">'transcript.txt'</span>,
+    <span class="str">`[${timestamp}] ${speaker}: ${text}\n`</span>)
+})
+          </div>
+          <div class="example-tags">
+            <span class="example-tag">listen-only</span>
+            <span class="example-tag">logging</span>
+          </div>
+        </div>
+
+        <!-- Express Integration -->
+        <div class="example-card">
+          <div class="example-head">
+            <span class="example-emoji">&#9889;</span>
+            <h3>Express Integration</h3>
+          </div>
+          <p>Embed agent as a sub-router in your existing Express app. Your routes + agent admin panel + API all on one server.</p>
+          <div class="example-code">
+<span class="kw">const</span> app = <span class="fn">express</span>()
+app.<span class="fn">use</span>(<span class="str">'/agent'</span>, agentRouter)
+<span class="cm">// /agent/admin → Admin UI</span>
+<span class="cm">// /agent/api/status → API</span>
+          </div>
+          <div class="example-tags">
+            <span class="example-tag">express</span>
+            <span class="example-tag">integration</span>
+          </div>
+        </div>
+
+        <!-- Plugins -->
+        <div class="example-card">
+          <div class="example-head">
+            <span class="example-emoji">&#128268;</span>
+            <h3>Plugins</h3>
+          </div>
+          <p>Three plugin examples: analytics tracking, content moderation, and webhook notifications. Shows the full plugin API.</p>
+          <div class="example-code">
+agent.<span class="fn">loadPlugin</span>(<span class="kw">new</span> <span class="fn">AnalyticsPlugin</span>())
+agent.<span class="fn">loadPlugin</span>(<span class="kw">new</span> <span class="fn">ModerationPlugin</span>())
+agent.<span class="fn">loadPlugin</span>(<span class="kw">new</span> <span class="fn">WebhookPlugin</span>({ url }))
+          </div>
+          <div class="example-tags">
+            <span class="example-tag">plugins</span>
+            <span class="example-tag">extensibility</span>
+          </div>
+        </div>
+
+        <!-- With Plugins -->
+        <div class="example-card">
+          <div class="example-head">
+            <span class="example-emoji">&#127912;</span>
+            <h3>With Plugins</h3>
+          </div>
+          <p>Complete agent setup with plugins loaded together. Shows how to register and compose multiple plugins into one agent.</p>
+          <div class="example-code">
+<span class="kw">const</span> agent = <span class="fn">createAgent</span>({
+  plugins: [analytics, moderation, webhook],
+  <span class="cm">// All plugins active simultaneously</span>
+})
+          </div>
+          <div class="example-tags">
+            <span class="example-tag">complete</span>
+            <span class="example-tag">production</span>
+          </div>
+        </div>
+
+        <!-- Chrome Connect -->
+        <div class="example-card">
+          <div class="example-head">
+            <span class="example-emoji">&#127760;</span>
+            <h3>Chrome Connect</h3>
+          </div>
+          <p>Connect to an existing Chromium instance instead of launching a new browser. Uses connect mode instead of managed.</p>
+          <div class="example-code">
+<span class="kw">const</span> agent = <span class="kw">new</span> <span class="fn">XSpaceAgent</span>({
+  browser: {
+    mode: <span class="str">'connect'</span>,
+    wsEndpoint: <span class="str">'ws://localhost:9222'</span>,
+  }
+})
+          </div>
+          <div class="example-tags">
+            <span class="example-tag">chrome</span>
+            <span class="example-tag">connect</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════════════════════════ -->
+  <!-- PROVIDERS                                           -->
+  <!-- ═══════════════════════════════════════════════════ -->
+  <hr class="section-divider">
+  <section class="providers-section" id="providers">
+    <div class="container">
+      <div class="section-header">
+        <h2>Provider Matrix</h2>
+        <p>Every LLM, STT, and TTS provider supported. All implement standardized interfaces with health checks, metrics, and cost estimation.</p>
+      </div>
+
+      <div class="provider-grid">
+        <div class="provider-col" style="background:var(--bg-card); border:1px solid var(--border); border-radius:var(--radius-lg); padding: 28px;">
+          <h3><span class="dot" style="background:var(--accent-indigo);"></span> LLM Providers</h3>
+          <div class="provider-item">
+            <span class="name">OpenAI</span>
+            <span class="detail">GPT-4o, GPT-4o-mini</span>
+          </div>
+          <div class="provider-item">
+            <span class="name">Anthropic Claude</span>
+            <span class="detail">Sonnet, Haiku</span>
+          </div>
+          <div class="provider-item">
+            <span class="name">Groq</span>
+            <span class="detail">Llama, Mixtral</span>
+          </div>
+          <div class="provider-item">
+            <span class="name">Custom</span>
+            <span class="detail">Any OpenAI-compatible API</span>
+          </div>
+        </div>
+        <div class="provider-col" style="background:var(--bg-card); border:1px solid var(--border); border-radius:var(--radius-lg); padding: 28px;">
+          <h3><span class="dot" style="background:var(--accent-green);"></span> STT Providers</h3>
+          <div class="provider-item">
+            <span class="name">Groq Whisper</span>
+            <span class="detail">~180ms latency (fastest)</span>
+          </div>
+          <div class="provider-item">
+            <span class="name">OpenAI Whisper</span>
+            <span class="detail">~350ms latency</span>
+          </div>
+          <div class="provider-item">
+            <span class="name">Custom</span>
+            <span class="detail">Any STT endpoint</span>
+          </div>
+        </div>
+        <div class="provider-col" style="background:var(--bg-card); border:1px solid var(--border); border-radius:var(--radius-lg); padding: 28px;">
+          <h3><span class="dot" style="background:var(--accent-orange);"></span> TTS Providers</h3>
+          <div class="provider-item">
+            <span class="name">ElevenLabs</span>
+            <span class="detail">25+ voices, best quality</span>
+          </div>
+          <div class="provider-item">
+            <span class="name">OpenAI TTS</span>
+            <span class="detail">alloy, echo, onyx, nova, shimmer, fable</span>
+          </div>
+          <div class="provider-item">
+            <span class="name">Browser Native</span>
+            <span class="detail">Web Speech API (free)</span>
+          </div>
+          <div class="provider-item">
+            <span class="name">Piper</span>
+            <span class="detail">Local, open-source</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════════════════════════ -->
+  <!-- DOCUMENTATION                                       -->
+  <!-- ═══════════════════════════════════════════════════ -->
+  <hr class="section-divider">
+  <section class="docs-section" id="docs">
+    <div class="container">
+      <div class="section-header">
+        <h2>Documentation</h2>
+        <p>27+ markdown docs covering architecture, deployment, API reference, configuration, providers, testing, and more.</p>
+      </div>
+
+      <div class="docs-grid">
+        <div class="doc-item">
+          <div class="doc-icon">&#128203;</div>
+          <div><h4>Getting Started</h4><p>Quick start guide — first 5 minutes</p></div>
+        </div>
+        <div class="doc-item">
+          <div class="doc-icon">&#127959;</div>
+          <div><h4>Architecture Overview</h4><p>System design, tiers, provider pattern</p></div>
+        </div>
+        <div class="doc-item">
+          <div class="doc-icon">&#128268;</div>
+          <div><h4>API Specification</h4><p>REST &amp; WebSocket endpoints</p></div>
+        </div>
+        <div class="doc-item">
+          <div class="doc-icon">&#9881;</div>
+          <div><h4>Configuration Guide</h4><p>All config options &amp; env vars</p></div>
+        </div>
+        <div class="doc-item">
+          <div class="doc-icon">&#128295;</div>
+          <div><h4>CLI Tool</h4><p>init, auth, join, start, dashboard</p></div>
+        </div>
+        <div class="doc-item">
+          <div class="doc-icon">&#128225;</div>
+          <div><h4>Providers</h4><p>LLM, STT, TTS options</p></div>
+        </div>
+        <div class="doc-item">
+          <div class="doc-icon">&#128205;</div>
+          <div><h4>Admin Panel Guide</h4><p>Web UI usage &amp; features</p></div>
+        </div>
+        <div class="doc-item">
+          <div class="doc-icon">&#128230;</div>
+          <div><h4>Docker Deployment</h4><p>Multi-stage build, compose profiles</p></div>
+        </div>
+        <div class="doc-item">
+          <div class="doc-icon">&#128270;</div>
+          <div><h4>Testing &amp; CI</h4><p>Vitest, coverage, CI pipeline</p></div>
+        </div>
+        <div class="doc-item">
+          <div class="doc-icon">&#128190;</div>
+          <div><h4>Conversation Persistence</h4><p>JSON + gzip file storage</p></div>
+        </div>
+        <div class="doc-item">
+          <div class="doc-icon">&#128202;</div>
+          <div><h4>Data Flow Diagrams</h4><p>Visual pipeline diagrams</p></div>
+        </div>
+        <div class="doc-item">
+          <div class="doc-icon">&#128268;</div>
+          <div><h4>Plugin System</h4><p>Middleware, hooks, extensibility</p></div>
+        </div>
+        <div class="doc-item">
+          <div class="doc-icon">&#127760;</div>
+          <div><h4>X Spaces Module</h4><p>Browser automation deep dive</p></div>
+        </div>
+        <div class="doc-item">
+          <div class="doc-icon">&#128221;</div>
+          <div><h4>SDK Design Spec</h4><p>Type system, interfaces, decisions</p></div>
+        </div>
+        <div class="doc-item">
+          <div class="doc-icon">&#128736;</div>
+          <div><h4>Troubleshooting</h4><p>Common issues &amp; fixes</p></div>
+        </div>
+        <div class="doc-item">
+          <div class="doc-icon">&#128300;</div>
+          <div><h4>Env Vars Reference</h4><p>215 variables with comments</p></div>
+        </div>
+        <div class="doc-item">
+          <div class="doc-icon">&#127912;</div>
+          <div><h4>Examples Gallery</h4><p>Overview of all 12 examples</p></div>
+        </div>
+        <div class="doc-item">
+          <div class="doc-icon">&#128187;</div>
+          <div><h4>TypeScript Migration</h4><p>TS setup &amp; tsconfig strategy</p></div>
+        </div>
+        <div class="doc-item">
+          <div class="doc-icon">&#128301;</div>
+          <div><h4>Multi-Platform</h4><p>Cross-OS deployment notes</p></div>
+        </div>
+        <div class="doc-item">
+          <div class="doc-icon">&#128172;</div>
+          <div><h4>Discord Community</h4><p>Community bot setup</p></div>
+        </div>
+        <div class="doc-item">
+          <div class="doc-icon">&#128588;</div>
+          <div><h4>Contributing</h4><p>Open-source contributor guide</p></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════════════════════════ -->
+  <!-- PACKAGES                                            -->
+  <!-- ═══════════════════════════════════════════════════ -->
+  <hr class="section-divider">
+  <section class="packages-section" id="packages">
+    <div class="container">
+      <div class="section-header">
+        <h2>npm Packages</h2>
+        <p>5 packages published to npm. TypeScript-first, MIT licensed, Node 18+.</p>
+      </div>
+
+      <div class="packages-grid">
+        <div class="pkg-card">
+          <div class="pkg-head">
+            <span class="pkg-name">xspace-agent</span>
+            <span class="pkg-version">v0.2.0</span>
+          </div>
+          <p>The core SDK. XSpaceAgent class, providers, audio pipeline, browser automation, FSM, intelligence layer, middleware, plugins, memory.</p>
+          <div class="pkg-meta">
+            <span class="pkg-meta-item">&#128230; packages/core</span>
+            <span class="pkg-meta-item">&#128196; TypeScript</span>
+            <span class="pkg-meta-item">&#128220; MIT</span>
+          </div>
+        </div>
+        <div class="pkg-card">
+          <div class="pkg-head">
+            <span class="pkg-name">@xspace/server</span>
+            <span class="pkg-version">v0.1.0</span>
+          </div>
+          <p>Admin panel and WebSocket API server. Express + Socket.IO with auth, rate limiting, real-time agent control, and selector management.</p>
+          <div class="pkg-meta">
+            <span class="pkg-meta-item">&#128230; packages/server</span>
+            <span class="pkg-meta-item">&#128196; TypeScript</span>
+            <span class="pkg-meta-item">&#128220; MIT</span>
+          </div>
+        </div>
+        <div class="pkg-card">
+          <div class="pkg-head">
+            <span class="pkg-name">@xspace/cli</span>
+            <span class="pkg-version">v0.1.0</span>
+          </div>
+          <p>CLI tool for xspace-agent. Commands: init, auth, join, start, dashboard. Zero to live agent in under a minute.</p>
+          <div class="pkg-meta">
+            <span class="pkg-meta-item">&#128230; packages/cli</span>
+            <span class="pkg-meta-item">&#128196; TypeScript</span>
+            <span class="pkg-meta-item">&#128220; MIT</span>
+          </div>
+        </div>
+        <div class="pkg-card">
+          <div class="pkg-head">
+            <span class="pkg-name">@xspace/widget</span>
+            <span class="pkg-version">v0.1.0</span>
+          </div>
+          <p>Embeddable voice chat widget. UMD + ESM builds. Drop a script tag on any page to add voice chat capabilities.</p>
+          <div class="pkg-meta">
+            <span class="pkg-meta-item">&#128230; packages/widget</span>
+            <span class="pkg-meta-item">&#128196; TypeScript</span>
+            <span class="pkg-meta-item">&#128220; MIT</span>
+          </div>
+        </div>
+        <div class="pkg-card">
+          <div class="pkg-head">
+            <span class="pkg-name">create-xspace-agent</span>
+            <span class="pkg-version">v0.1.0</span>
+          </div>
+          <p>Project scaffolding tool. Run npm create xspace-agent to generate a new project with config, env template, and boilerplate.</p>
+          <div class="pkg-meta">
+            <span class="pkg-meta-item">&#128230; packages/create-xspace-agent</span>
+            <span class="pkg-meta-item">&#128196; TypeScript</span>
+            <span class="pkg-meta-item">&#128220; MIT</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════════════════════════ -->
+  <!-- CTA                                                 -->
+  <!-- ═══════════════════════════════════════════════════ -->
+  <hr class="section-divider">
+  <section class="cta-section">
+    <div class="container">
+      <div class="cta-box">
+        <div class="label">Start exploring</div>
+        <h2>Everything you need, one hub</h2>
+        <div class="cta-buttons">
+          <a href="/landing" class="btn btn-primary">SDK Landing</a>
+          <a href="/voice-chat-landing" class="btn btn-ghost">Voice Chat Landing</a>
+          <a href="/admin" class="btn btn-ghost">Admin Panel</a>
+          <a href="/builder" class="btn btn-ghost">Flow Builder</a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════════════════════════ -->
+  <!-- FOOTER                                              -->
+  <!-- ═══════════════════════════════════════════════════ -->
+  <footer class="footer">
+    <div class="container">
+      <div class="footer-top">
+        <div class="footer-brand">
+          <a href="/" class="nav-logo" style="margin-bottom:4px;">
+            <svg width="28" height="28" viewBox="0 0 32 32" fill="none"><rect x="4" y="4" width="24" height="24" rx="6" stroke="currentColor" stroke-width="2"/><circle cx="12" cy="16" r="3" fill="currentColor" opacity="0.4"/><circle cx="20" cy="16" r="3" fill="currentColor" opacity="0.4"/><path d="M12 16h8" stroke="currentColor" stroke-width="1.5" stroke-dasharray="2 2"/></svg>
+            xspace-agent
+          </a>
+          <p>Open-source AI agent SDK for X Spaces.<br>Build the future of live audio.</p>
+        </div>
+        <div class="footer-col">
+          <h4>Main Pages</h4>
+          <a href="/landing">Landing</a>
+          <a href="/">Dashboard</a>
+          <a href="/admin">Admin</a>
+          <a href="/builder">Builder</a>
+          <a href="/alice">Alice</a>
+          <a href="/bob">Bob</a>
+        </div>
+        <div class="footer-col">
+          <h4>Voice Chat</h4>
+          <a href="/voice-chat">Home</a>
+          <a href="/voice-chat-landing">Landing</a>
+          <a href="/voice-chat-session">Session</a>
+          <a href="/widget-demo">Widget</a>
+          <a href="/react-widget-demo">React Demo</a>
+          <a href="/vue-widget-demo">Vue Demo</a>
+        </div>
+        <div class="footer-col">
+          <h4>More</h4>
+          <a href="/server-dashboard">Server Dashboard</a>
+          <a href="/server-admin">Server Admin</a>
+          <a href="/contentium">Contentium</a>
+          <a href="/contentium-v2">Contentium v2</a>
+          <a href="/legacy-admin">Legacy Admin</a>
+        </div>
+      </div>
+      <div class="footer-bottom">
+        <span>&copy; xspace-agent, 2024. All rights reserved.</span>
+      </div>
+    </div>
+  </footer>
+
+  <script>
+    // Navbar scroll
+    const navbar = document.getElementById('navbar');
+    window.addEventListener('scroll', () => {
+      navbar.classList.toggle('scrolled', window.scrollY > 40);
+    });
+
+    // Particles
+    const pc = document.getElementById('particles');
+    for (let i = 0; i < 25; i++) {
+      const p = document.createElement('div');
+      p.className = 'particle';
+      p.style.left = Math.random() * 100 + '%';
+      p.style.animationDuration = (18 + Math.random() * 25) + 's';
+      p.style.animationDelay = (Math.random() * 20) + 's';
+      p.style.width = (2 + Math.random() * 2) + 'px';
+      p.style.height = p.style.width;
+      pc.appendChild(p);
+    }
+
+    // Fade-in on scroll
+    const obs = new IntersectionObserver((entries) => {
+      entries.forEach(e => {
+        if (e.isIntersecting) {
+          e.target.style.opacity = '1';
+          e.target.style.transform = 'translateY(0)';
+        }
+      });
+    }, { threshold: 0.05 });
+
+    document.querySelectorAll('.page-card, .feature-card, .example-card, .doc-item, .pkg-card, .arch-diagram').forEach(el => {
+      el.style.opacity = '0';
+      el.style.transform = 'translateY(20px)';
+      el.style.transition = 'opacity 0.5s ease, transform 0.5s ease';
+      obs.observe(el);
+    });
+
+    // Stagger animation for grids
+    document.querySelectorAll('.pages-grid, .features-grid, .examples-grid, .docs-grid, .packages-grid').forEach(grid => {
+      const children = grid.children;
+      for (let i = 0; i < children.length; i++) {
+        children[i].style.transitionDelay = (i * 0.05) + 's';
+      }
+    });
+  </script>
+</body>
+</html>
+
+

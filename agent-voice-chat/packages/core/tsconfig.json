@@ -1,0 +1,14 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "outDir": "dist",
+    "rootDir": "src",
+    "lib": ["ES2022", "DOM", "DOM.Iterable"],
+    "noImplicitAny": false,
+    "downlevelIteration": true
+  },
+  "include": ["src/**/*"],
+  "exclude": ["tests", "__mocks__", "src/__tests__"]
+}
+
+

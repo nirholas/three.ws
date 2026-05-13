@@ -1,0 +1,90 @@
+# =============================================================================
+# Soak Test — Sustained load for memory leak detection
+# Runs a steady arrival rate for 10 minutes to detect:
+#   - Memory leaks (growing heap / RSS)
+#   - Connection pool exhaustion
+#   - Rate limiter map growth
+#   - GC pauses affecting latency
+#   - File descriptor leaks
+# =============================================================================
+#
+# Usage:
+#   npx artillery run tests/load/soak.yml
+#
+# Tip: Monitor server memory in a separate terminal:
+#   watch -n 2 'curl -s http://localhost:3000/metrics/json | jq .memory'
+#
+# Requires: server running on http://localhost:3000 with ADMIN_API_KEY set
+
+config:
+  target: "http://localhost:3000"
+  phases:
+    - duration: 60
+      arrivalRate: 5
+      name: "Ramp up"
+    - duration: 600
+      arrivalRate: 10
+      name: "Sustained load (10 min)"
+    - duration: 30
+      arrivalRate: 2
+      name: "Cool down"
+  engines:
+    socketio-v3:
+      transports: ["websocket"]
+      path: "/socket.io"
+      query:
+        apiKey: "{{ $processEnvironment.ADMIN_API_KEY }}"
+  defaults:
+    headers:
+      X-API-Key: "{{ $processEnvironment.ADMIN_API_KEY }}"
+  ensure:
+    p99: 2000
+    p95: 1000
+    maxErrorRate: 1
+  plugins:
+    ensure: {}
+
+scenarios:
+  # Scenario 1: Long-lived Socket.IO connections
+  - name: "Long-lived connection"
+    weight: 40
+    engine: socketio-v3
+    flow:
+      - emit:
+          channel: "xspace:status"
+          data: {}
+      - think: 5
+      - emit:
+          channel: "xspace:status"
+          data: {}
+      - think: 10
+      - emit:
+          channel: "xspace:status"
+          data: {}
+      - think: 5
+
+  # Scenario 2: HTTP endpoint polling
+  - name: "Steady HTTP polling"
+    weight: 40
+    flow:
+      - get:
+          url: "/health"
+      - think: 3
+      - get:
+          url: "/metrics/json"
+      - think: 3
+      - get:
+          url: "/config"
+      - think: 3
+
+  # Scenario 3: Connection churn (connect/disconnect cycles)
+  - name: "Connection churn"
+    weight: 20
+    engine: socketio-v3
+    flow:
+      - emit:
+          channel: "xspace:status"
+          data: {}
+      - think: 2
+
+

@@ -1,0 +1,74 @@
+# =============================================================================
+# Basic Load Test — Socket.IO concurrent users sending messages
+# Simulates 50 concurrent users joining rooms and sending messages.
+# =============================================================================
+#
+# Usage:
+#   npx artillery run tests/load/basic.yml
+#   npx artillery run tests/load/basic.yml --output tests/load/reports/basic.json
+#
+# Requires: server running on http://localhost:3000 with ADMIN_API_KEY set
+
+config:
+  target: "http://localhost:3000"
+  phases:
+    - duration: 30
+      arrivalRate: 5
+      name: "Warm up"
+    - duration: 60
+      arrivalRate: 20
+      name: "Ramp up"
+    - duration: 60
+      arrivalRate: 50
+      name: "Sustained load"
+  engines:
+    socketio-v3:
+      transports: ["websocket"]
+      path: "/socket.io"
+      query:
+        apiKey: "{{ $processEnvironment.ADMIN_API_KEY }}"
+  defaults:
+    headers:
+      X-API-Key: "{{ $processEnvironment.ADMIN_API_KEY }}"
+  ensure:
+    p99: 2000
+    p95: 1000
+    maxErrorRate: 1
+  plugins:
+    ensure: {}
+
+scenarios:
+  # Scenario 1: Join room, send messages, leave
+  - name: "Socket.IO message flow"
+    engine: socketio-v3
+    flow:
+      - emit:
+          channel: "xspace:status"
+          data: {}
+      - think: 1
+      - emit:
+          channel: "xspace:start"
+          data:
+            spaceUrl: "https://x.com/i/spaces/load-test-{{ $randomNumber(1, 10) }}"
+      - think: 3
+      - emit:
+          channel: "xspace:status"
+          data: {}
+      - think: 2
+      - emit:
+          channel: "xspace:stop"
+          data: {}
+      - think: 1
+
+  # Scenario 2: Rapid status polling (simulates dashboard)
+  - name: "Dashboard polling"
+    engine: socketio-v3
+    flow:
+      - loop:
+          - emit:
+              channel: "xspace:status"
+              data: {}
+          - think: 2
+        count: 5
+
+

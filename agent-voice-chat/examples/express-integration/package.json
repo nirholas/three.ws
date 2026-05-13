@@ -1,0 +1,19 @@
+{
+  "name": "xspace-express-integration-example",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "start": "tsx index.ts",
+    "dev": "tsx watch index.ts"
+  },
+  "dependencies": {
+    "xspace-agent": "workspace:*",
+    "express": "^4.21.0"
+  },
+  "devDependencies": {
+    "@types/express": "^5.0.0",
+    "tsx": "^4.21.0"
+  }
+}
+
+

@@ -1,0 +1,28 @@
+node_modules
+dist
+.git
+.env
+*.log
+.cookies.json
+.xspace-state.json
+.xspace-conversations/
+
+# Docker build context exclusions
+docker/grafana/data
+agent-voice-chat/
+xspace-agent/
+docs/
+examples/
+improvement-prompts/
+prompts/
+x-spaces/
+src/
+*.md
+
+# IDE / tooling
+.vscode/
+.github/
+coverage/
+.husky/
+
+

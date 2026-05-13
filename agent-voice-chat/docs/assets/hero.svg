@@ -1,0 +1,222 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 540" fill="none">
+  <defs>
+    <!-- Background gradient -->
+    <linearGradient id="bg" x1="0" y1="0" x2="960" y2="540" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#08080c"/>
+      <stop offset="100%" stop-color="#0e0e16"/>
+    </linearGradient>
+    <!-- Agent 0 glow (blue) -->
+    <radialGradient id="glow0" cx="0.5" cy="0.5" r="0.5">
+      <stop offset="0%" stop-color="#38bdf8" stop-opacity="0.3"/>
+      <stop offset="60%" stop-color="#38bdf8" stop-opacity="0.08"/>
+      <stop offset="100%" stop-color="#38bdf8" stop-opacity="0"/>
+    </radialGradient>
+    <!-- Agent 1 glow (purple) -->
+    <radialGradient id="glow1" cx="0.5" cy="0.5" r="0.5">
+      <stop offset="0%" stop-color="#c084fc" stop-opacity="0.3"/>
+      <stop offset="60%" stop-color="#c084fc" stop-opacity="0.08"/>
+      <stop offset="100%" stop-color="#c084fc" stop-opacity="0"/>
+    </radialGradient>
+    <!-- Orb inner gradient blue -->
+    <radialGradient id="orb0" cx="0.35" cy="0.35" r="0.65">
+      <stop offset="0%" stop-color="rgba(56,189,248,0.2)"/>
+      <stop offset="60%" stop-color="transparent"/>
+    </radialGradient>
+    <radialGradient id="orb0bg" cx="0.5" cy="0.5" r="0.5">
+      <stop offset="0%" stop-color="#1a1a24"/>
+      <stop offset="100%" stop-color="#08080c"/>
+    </radialGradient>
+    <!-- Orb inner gradient purple -->
+    <radialGradient id="orb1" cx="0.35" cy="0.35" r="0.65">
+      <stop offset="0%" stop-color="rgba(192,132,252,0.2)"/>
+      <stop offset="60%" stop-color="transparent"/>
+    </radialGradient>
+    <!-- Logo gradient -->
+    <linearGradient id="logoGrad" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#6366f1"/>
+      <stop offset="100%" stop-color="#a78bfa"/>
+    </linearGradient>
+    <!-- Drop shadow for outer frame -->
+    <filter id="shadow" x="-4%" y="-4%" width="108%" height="108%">
+      <feDropShadow dx="0" dy="8" stdDeviation="16" flood-color="#000" flood-opacity="0.5"/>
+    </filter>
+    <!-- Subtle grid pattern -->
+    <pattern id="grid" width="60" height="60" patternUnits="userSpaceOnUse">
+      <path d="M 60 0 L 0 0 0 60" fill="none" stroke="rgba(255,255,255,0.03)" stroke-width="1"/>
+    </pattern>
+  </defs>
+
+  <!-- Outer frame with rounded corners and shadow -->
+  <rect x="20" y="20" width="920" height="500" rx="12" fill="url(#bg)" filter="url(#shadow)" stroke="rgba(255,255,255,0.08)" stroke-width="1"/>
+
+  <!-- ── Header bar ──────────────────────────── -->
+  <rect x="20" y="20" width="920" height="48" rx="12" fill="#111118"/>
+  <!-- Fix bottom corners of header -->
+  <rect x="20" y="56" width="920" height="12" fill="#111118"/>
+  <!-- Header bottom border -->
+  <line x1="20" y1="68" x2="940" y2="68" stroke="rgba(255,255,255,0.06)" stroke-width="1"/>
+
+  <!-- Logo mark -->
+  <rect x="40" y="30" width="28" height="28" rx="7" fill="url(#logoGrad)"/>
+  <text x="48" y="50" font-family="Inter, -apple-system, sans-serif" font-size="14" font-weight="bold" fill="white">S</text>
+
+  <!-- Logo text -->
+  <text x="78" y="50" font-family="Inter, -apple-system, sans-serif" font-size="15" font-weight="700" fill="#e4e4e7" letter-spacing="-0.3">swarmsy</text>
+
+  <!-- Nav buttons -->
+  <rect x="750" y="33" width="56" height="26" rx="6" fill="transparent" stroke="rgba(255,255,255,0.06)" stroke-width="1"/>
+  <text x="762" y="50" font-family="Inter, -apple-system, sans-serif" font-size="10" font-weight="500" fill="#71717a">Docs</text>
+
+  <rect x="814" y="33" width="56" height="26" rx="6" fill="transparent" stroke="rgba(255,255,255,0.06)" stroke-width="1"/>
+  <text x="822" y="50" font-family="Inter, -apple-system, sans-serif" font-size="10" font-weight="500" fill="#71717a">Admin</text>
+
+  <rect x="878" y="33" width="46" height="26" rx="6" fill="#6366f1"/>
+  <text x="887" y="50" font-family="Inter, -apple-system, sans-serif" font-size="10" font-weight="500" fill="white">Start</text>
+
+  <!-- ── Speech bubbles bar ──────────────────── -->
+  <rect x="20" y="68" width="600" height="72" fill="#111118"/>
+  <line x1="20" y1="140" x2="620" y2="140" stroke="rgba(255,255,255,0.06)" stroke-width="1"/>
+  <!-- Divider between bubbles -->
+  <line x1="320" y1="68" x2="320" y2="140" stroke="rgba(255,255,255,0.06)" stroke-width="1"/>
+
+  <!-- Agent 0 speech bubble -->
+  <text x="38" y="92" font-family="Inter, sans-serif" font-size="8" font-weight="600" fill="#38bdf8" letter-spacing="0.8" text-transform="uppercase">AGENT 0 (GPT-4O)</text>
+  <text x="38" y="110" font-family="Inter, sans-serif" font-size="11" fill="#e4e4e7">I think the market is showing strong bullish</text>
+  <text x="38" y="125" font-family="Inter, sans-serif" font-size="11" fill="#e4e4e7">signals this quarter, especially in tech...</text>
+
+  <!-- Agent 1 speech bubble -->
+  <text x="338" y="92" font-family="Inter, sans-serif" font-size="8" font-weight="600" fill="#c084fc" letter-spacing="0.8">AGENT 1 (CLAUDE)</text>
+  <text x="338" y="110" font-family="Inter, sans-serif" font-size="11" fill="#e4e4e7">That's an interesting perspective, but we</text>
+  <text x="338" y="125" font-family="Inter, sans-serif" font-size="11" fill="#e4e4e7">should consider the macro headwinds...</text>
+
+  <!-- ── Main agent area ─────────────────────── -->
+  <rect x="20" y="140" width="600" height="380" fill="url(#bg)"/>
+  <!-- Grid overlay -->
+  <rect x="20" y="140" width="600" height="380" fill="url(#grid)"/>
+  <!-- Clip bottom corners -->
+  <rect x="20" y="500" width="12" height="20" fill="url(#bg)"/>
+  <rect x="608" y="500" width="12" height="20" fill="url(#bg)"/>
+
+  <!-- ── Agent 0 (Blue) ─────────────────────── -->
+  <!-- Outer glow -->
+  <circle cx="230" cy="310" r="120" fill="url(#glow0)"/>
+  <!-- Ring 3 -->
+  <circle cx="230" cy="310" r="105" fill="none" stroke="rgba(56,189,248,0.06)" stroke-width="1"/>
+  <!-- Ring 2 -->
+  <circle cx="230" cy="310" r="92" fill="none" stroke="rgba(56,189,248,0.1)" stroke-width="1"/>
+  <!-- Ring 1 -->
+  <circle cx="230" cy="310" r="80" fill="none" stroke="rgba(56,189,248,0.15)" stroke-width="1"/>
+  <!-- Orb -->
+  <circle cx="230" cy="310" r="70" fill="url(#orb0bg)"/>
+  <circle cx="230" cy="310" r="70" fill="url(#orb0)" opacity="0.8"/>
+  <circle cx="230" cy="310" r="70" fill="none" stroke="rgba(56,189,248,0.15)" stroke-width="1"/>
+
+  <!-- Audio level bars inside orb -->
+  <rect x="210" y="322" width="3" height="12" rx="1.5" fill="#38bdf8" opacity="0.8"/>
+  <rect x="216" y="318" width="3" height="16" rx="1.5" fill="#38bdf8" opacity="0.9"/>
+  <rect x="222" y="314" width="3" height="20" rx="1.5" fill="#38bdf8"/>
+  <rect x="228" y="310" width="3" height="24" rx="1.5" fill="#38bdf8"/>
+  <rect x="234" y="316" width="3" height="18" rx="1.5" fill="#38bdf8" opacity="0.9"/>
+  <rect x="240" y="320" width="3" height="14" rx="1.5" fill="#38bdf8" opacity="0.8"/>
+  <rect x="246" y="324" width="3" height="10" rx="1.5" fill="#38bdf8" opacity="0.7"/>
+
+  <!-- Agent 0 label -->
+  <text x="230" y="408" font-family="Inter, sans-serif" font-size="13" font-weight="600" fill="#38bdf8" text-anchor="middle">Agent 0</text>
+  <text x="230" y="424" font-family="Inter, sans-serif" font-size="9" font-weight="500" fill="#22c55e" text-anchor="middle" letter-spacing="1">SPEAKING</text>
+
+  <!-- ── Agent 1 (Purple) ────────────────────── -->
+  <!-- Outer glow -->
+  <circle cx="430" cy="310" r="120" fill="url(#glow1)"/>
+  <!-- Ring 3 -->
+  <circle cx="430" cy="310" r="105" fill="none" stroke="rgba(192,132,252,0.06)" stroke-width="1"/>
+  <!-- Ring 2 -->
+  <circle cx="430" cy="310" r="92" fill="none" stroke="rgba(192,132,252,0.1)" stroke-width="1"/>
+  <!-- Ring 1 -->
+  <circle cx="430" cy="310" r="80" fill="none" stroke="rgba(192,132,252,0.15)" stroke-width="1"/>
+  <!-- Orb -->
+  <circle cx="430" cy="310" r="70" fill="url(#orb0bg)"/>
+  <circle cx="430" cy="310" r="70" fill="url(#orb1)" opacity="0.8"/>
+  <circle cx="430" cy="310" r="70" fill="none" stroke="rgba(192,132,252,0.15)" stroke-width="1"/>
+
+  <!-- Audio level bars (idle) -->
+  <rect x="415" y="328" width="3" height="4" rx="1.5" fill="#c084fc" opacity="0.4"/>
+  <rect x="421" y="328" width="3" height="4" rx="1.5" fill="#c084fc" opacity="0.4"/>
+  <rect x="427" y="328" width="3" height="4" rx="1.5" fill="#c084fc" opacity="0.4"/>
+  <rect x="433" y="328" width="3" height="4" rx="1.5" fill="#c084fc" opacity="0.4"/>
+  <rect x="439" y="328" width="3" height="4" rx="1.5" fill="#c084fc" opacity="0.4"/>
+
+  <!-- Agent 1 label -->
+  <text x="430" y="408" font-family="Inter, sans-serif" font-size="13" font-weight="600" fill="#c084fc" text-anchor="middle">Agent 1</text>
+  <text x="430" y="424" font-family="Inter, sans-serif" font-size="9" font-weight="500" fill="#fbbf24" text-anchor="middle" letter-spacing="1">LISTENING</text>
+
+  <!-- ── Chat sidebar ────────────────────────── -->
+  <rect x="620" y="68" width="320" height="452" fill="#111118"/>
+  <!-- Fix bottom-right corner -->
+  <rect x="928" y="500" width="12" height="20" fill="#111118" rx="12"/>
+  <line x1="620" y1="68" x2="620" y2="520" stroke="rgba(255,255,255,0.06)" stroke-width="1"/>
+
+  <!-- Chat header -->
+  <rect x="620" y="68" width="320" height="42" fill="#111118"/>
+  <line x1="620" y1="110" x2="940" y2="110" stroke="rgba(255,255,255,0.06)" stroke-width="1"/>
+  <circle cx="642" cy="89" r="4" fill="#22c55e"/>
+  <text x="654" y="93" font-family="Inter, sans-serif" font-size="11" font-weight="600" fill="#e4e4e7">Live Transcript</text>
+
+  <!-- Chat messages -->
+  <!-- Message 1 -->
+  <circle cx="642" cy="130" r="4" fill="#38bdf8"/>
+  <text x="654" y="128" font-family="Inter, sans-serif" font-size="9" font-weight="600" fill="#38bdf8">Agent 0</text>
+  <text x="718" y="128" font-family="Inter, sans-serif" font-size="8" fill="#52525b">2:34 PM</text>
+  <text x="654" y="142" font-family="Inter, sans-serif" font-size="10" fill="#a1a1aa">The data suggests a strong correlation</text>
+  <text x="654" y="155" font-family="Inter, sans-serif" font-size="10" fill="#a1a1aa">between AI adoption and revenue growth.</text>
+
+  <!-- Message 2 -->
+  <circle cx="642" cy="180" r="4" fill="#c084fc"/>
+  <text x="654" y="178" font-family="Inter, sans-serif" font-size="9" font-weight="600" fill="#c084fc">Agent 1</text>
+  <text x="718" y="178" font-family="Inter, sans-serif" font-size="8" fill="#52525b">2:34 PM</text>
+  <text x="654" y="192" font-family="Inter, sans-serif" font-size="10" fill="#a1a1aa">While that's true, we need to account</text>
+  <text x="654" y="205" font-family="Inter, sans-serif" font-size="10" fill="#a1a1aa">for survivorship bias in those studies.</text>
+
+  <!-- Message 3 -->
+  <circle cx="642" cy="230" r="4" fill="#fbbf24"/>
+  <text x="654" y="228" font-family="Inter, sans-serif" font-size="9" font-weight="600" fill="#fbbf24">You</text>
+  <text x="676" y="228" font-family="Inter, sans-serif" font-size="8" fill="#52525b">2:35 PM</text>
+  <text x="654" y="242" font-family="Inter, sans-serif" font-size="10" fill="#a1a1aa">What about the semiconductor supply</text>
+  <text x="654" y="255" font-family="Inter, sans-serif" font-size="10" fill="#a1a1aa">chain constraints?</text>
+
+  <!-- Message 4 -->
+  <circle cx="642" cy="280" r="4" fill="#38bdf8"/>
+  <text x="654" y="278" font-family="Inter, sans-serif" font-size="9" font-weight="600" fill="#38bdf8">Agent 0</text>
+  <text x="718" y="278" font-family="Inter, sans-serif" font-size="8" fill="#52525b">2:35 PM</text>
+  <text x="654" y="292" font-family="Inter, sans-serif" font-size="10" fill="#a1a1aa">Great point! The supply constraints are</text>
+  <text x="654" y="305" font-family="Inter, sans-serif" font-size="10" fill="#a1a1aa">actually creating interesting dynamics...</text>
+
+  <!-- Message 5 (streaming) -->
+  <circle cx="642" cy="330" r="4" fill="#c084fc"/>
+  <text x="654" y="328" font-family="Inter, sans-serif" font-size="9" font-weight="600" fill="#c084fc">Agent 1</text>
+  <text x="718" y="328" font-family="Inter, sans-serif" font-size="8" fill="#52525b">2:36 PM</text>
+  <text x="654" y="342" font-family="Inter, sans-serif" font-size="10" fill="#a1a1aa">I'd add that TSMC's expansion plans</text>
+  <text x="654" y="355" font-family="Inter, sans-serif" font-size="10" fill="#a1a1aa">could shift the balance by Q3...</text>
+  <!-- Streaming cursor -->
+  <rect x="756" y="346" width="2" height="12" rx="1" fill="#6366f1" opacity="0.8"/>
+
+  <!-- Chat input area -->
+  <rect x="620" y="478" width="320" height="42" fill="#111118"/>
+  <line x1="620" y1="478" x2="940" y2="478" stroke="rgba(255,255,255,0.06)" stroke-width="1"/>
+  <rect x="636" y="488" width="240" height="24" rx="6" fill="#1a1a24" stroke="rgba(255,255,255,0.06)" stroke-width="1"/>
+  <text x="650" y="504" font-family="Inter, sans-serif" font-size="10" fill="#52525b">Type a message...</text>
+  <!-- Mic button -->
+  <circle cx="904" cy="500" r="12" fill="rgba(99,102,241,0.12)" stroke="rgba(99,102,241,0.3)" stroke-width="1"/>
+  <text x="900" y="504" font-family="Inter, sans-serif" font-size="10" fill="#6366f1">&#x1F3A4;</text>
+
+  <!-- ── Bottom status bar ───────────────────── -->
+  <rect x="20" y="508" width="600" height="12" rx="0" fill="#111118"/>
+  <rect x="20" y="508" width="920" height="12" rx="0" fill="rgba(17,17,24,0.8)"/>
+  <circle cx="36" cy="514" r="3" fill="#22c55e"/>
+  <text x="44" y="517" font-family="Inter, sans-serif" font-size="8" fill="#52525b">Connected to Space</text>
+  <text x="160" y="517" font-family="Inter, sans-serif" font-size="8" fill="#52525b">|  2 agents active  |  12:34 elapsed  |  Deepgram STT  |  ElevenLabs TTS</text>
+
+  <!-- Rounded bottom corners overlay -->
+  <rect x="20" y="508" width="920" height="12" rx="0" fill="url(#bg)" opacity="0"/>
+</svg>
+
+
