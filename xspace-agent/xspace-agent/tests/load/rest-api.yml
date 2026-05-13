@@ -1,0 +1,109 @@
+# =============================================================================
+# REST API Load Test — HTTP endpoints under load
+# Tests health, config, state, and admin endpoints.
+# =============================================================================
+#
+# Usage:
+#   npx artillery run tests/load/rest-api.yml
+#
+# Requires: server running on http://localhost:3000 with ADMIN_API_KEY set
+
+config:
+  target: "http://localhost:3000"
+  phases:
+    - duration: 30
+      arrivalRate: 10
+      name: "Warm up"
+    - duration: 60
+      arrivalRate: 30
+      name: "Ramp up"
+    - duration: 60
+      arrivalRate: 50
+      name: "Sustained load"
+  defaults:
+    headers:
+      X-API-Key: "{{ $processEnvironment.ADMIN_API_KEY }}"
+  ensure:
+    p99: 2000
+    p95: 1000
+    maxErrorRate: 1
+  plugins:
+    ensure: {}
+
+scenarios:
+  # Scenario 1: Unauthenticated health checks (load balancer simulation)
+  - name: "Health check polling"
+    weight: 40
+    flow:
+      - get:
+          url: "/health"
+          expect:
+            - statusCode: 200
+      - think: 1
+      - get:
+          url: "/metrics/json"
+          expect:
+            - statusCode: 200
+
+  # Scenario 2: Authenticated admin endpoints
+  - name: "Admin API usage"
+    weight: 30
+    flow:
+      - get:
+          url: "/config"
+          expect:
+            - statusCode:
+                - 200
+                - 401
+      - think: 1
+      - get:
+          url: "/state"
+          expect:
+            - statusCode:
+                - 200
+                - 401
+      - think: 1
+      - get:
+          url: "/admin/providers"
+          expect:
+            - statusCode:
+                - 200
+                - 401
+
+  # Scenario 3: Provider monitoring endpoints
+  - name: "Provider health checks"
+    weight: 20
+    flow:
+      - get:
+          url: "/admin/providers/health"
+          expect:
+            - statusCode:
+                - 200
+                - 401
+      - think: 2
+      - get:
+          url: "/admin/providers/costs"
+          expect:
+            - statusCode:
+                - 200
+                - 401
+
+  # Scenario 4: Selector management
+  - name: "Selector health monitoring"
+    weight: 10
+    flow:
+      - get:
+          url: "/admin/selectors/health"
+          expect:
+            - statusCode:
+                - 200
+                - 401
+      - think: 2
+      - get:
+          url: "/admin/selectors/failures"
+          expect:
+            - statusCode:
+                - 200
+                - 401
+
+
