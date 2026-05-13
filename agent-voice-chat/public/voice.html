@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="luxury">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Agent - Loading...</title>
+  <meta name="description" content="AI Voice Chat - Real-time voice conversation with an AI agent">
+  <meta name="theme-color" content="#09090b">
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/daisyui@4.12.14/dist/full.min.css" rel="stylesheet" type="text/css" />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: { sans: ['Inter', 'system-ui', 'sans-serif'] },
+        }
+      }
+    }
+  </script>
+  <style>
+    body {
+      font-family: 'Inter', system-ui, sans-serif;
+      background: radial-gradient(ellipse at top, #1a1025 0%, #09090b 60%);
+      min-height: 100vh;
+    }
+    .bg-grid {
+      background-image:
+        linear-gradient(rgba(255,255,255,0.02) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,0.02) 1px, transparent 1px);
+      background-size: 60px 60px;
+    }
+    .glass-panel {
+      background: rgba(255,255,255,0.03);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border: 1px solid rgba(255,255,255,0.06);
+    }
+    .gradient-text {
+      background: linear-gradient(135deg, var(--primary, #c4b5fd) 0%, var(--gradient-end, #f0abfc) 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    /* Status indicator */
+    .status-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: #ef4444;
+      flex-shrink: 0;
+    }
+    .status-dot.connected { background: #4ade80; }
+    .status-dot.speaking { background: #4ade80; animation: pulse 1s infinite; }
+    .status-dot.listening { background: #60a5fa; animation: pulse 1.5s infinite; }
+    @keyframes pulse {
+      0%, 100% { transform: scale(1); opacity: 1; }
+      50% { transform: scale(1.3); opacity: 0.6; }
+    }
+    /* Audio meter */
+    .audio-meter-bar {
+      height: 6px;
+      background: rgba(255,255,255,0.06);
+      border-radius: 999px;
+      overflow: hidden;
+    }
+    .audio-level {
+      height: 100%;
+      background: linear-gradient(90deg, var(--primary, #4ade80), var(--gradient-end, #22d3ee));
+      width: 0%;
+      transition: width 0.1s ease;
+      border-radius: 999px;
+    }
+    /* Chat messages */
+    .chat-msg {
+      padding: 10px 14px;
+      background: rgba(0,0,0,0.3);
+      border-radius: 10px;
+      margin-bottom: 8px;
+      border-left: 3px solid transparent;
+      font-size: 0.9rem;
+    }
+    .chat-msg.self { border-left-color: var(--primary, #a78bfa); }
+    .chat-msg.other { border-left-color: #f472b6; }
+    .chat-msg.user { border-left-color: #fbbf24; }
+    /* Turn status */
+    .turn-badge { transition: all 0.3s ease; }
+    .turn-badge.my-turn {
+      background: rgba(74, 222, 128, 0.1);
+      border-color: rgba(74, 222, 128, 0.3);
+      color: #4ade80;
+    }
+    .turn-badge.waiting {
+      background: rgba(251, 191, 36, 0.1);
+      border-color: rgba(251, 191, 36, 0.3);
+      color: #fbbf24;
+    }
+    /* Loading spinner */
+    .spinner {
+      width: 28px; height: 28px;
+      border: 3px solid rgba(255,255,255,0.08);
+      border-top-color: #a78bfa;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+      margin: 0 auto 10px;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    /* Log panel */
+    .log-panel p { margin-bottom: 4px; color: #52525b; }
+    .log-panel p.error { color: #f87171; }
+    .log-panel p.success { color: #4ade80; }
+    /* Error banner */
+    .error-banner {
+      background: rgba(239, 68, 68, 0.1);
+      border: 1px solid rgba(239, 68, 68, 0.3);
+      border-radius: 12px;
+      padding: 16px;
+      color: #fca5a5;
+      margin-top: 15px;
+    }
+    /* Focus indicators */
+    :focus-visible { outline: 2px solid var(--primary, #a78bfa); outline-offset: 3px; }
+  </style>
+</head>
+<body class="bg-grid">
+  <!-- Ambient blobs -->
+  <div class="fixed inset-0 pointer-events-none overflow-hidden -z-10" aria-hidden="true">
+    <div class="absolute -top-40 -left-40 w-96 h-96 bg-purple-600/10 rounded-full blur-3xl"></div>
+    <div class="absolute top-1/3 -right-20 w-80 h-80 bg-fuchsia-600/8 rounded-full blur-3xl"></div>
+  </div>
+
+  <div class="min-h-screen p-5 flex flex-col items-center">
+    <div class="w-full max-w-3xl">
+
+      <!-- Back link -->
+      <a href="/" class="inline-flex items-center gap-1.5 text-zinc-500 hover:text-zinc-300 text-sm mb-6 transition-colors">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+        Back to agents
+      </a>
+
+      <!-- Loading state -->
+      <div class="text-center py-20 text-zinc-500" id="loadingPanel" aria-live="polite">
+        <div class="spinner"></div>
+        Loading agent...
+      </div>
+
+      <!-- Agent panel (hidden until loaded) -->
+      <div id="agentPanel" style="display: none;">
+        <h1 id="agentTitle" class="text-3xl font-bold gradient-text mb-4 tracking-tight"></h1>
+
+        <!-- Room info -->
+        <div class="glass-panel rounded-xl px-4 py-3 mb-4 flex items-center gap-3 text-sm text-zinc-400" id="roomInfo" style="display: none;">
+          <span>Room:</span>
+          <code id="roomIdDisplay" class="bg-white/10 px-2 py-0.5 rounded font-mono text-white text-xs"></code>
+          <button class="btn btn-ghost btn-xs text-zinc-400 hover:text-white" id="copyRoomBtn" aria-label="Copy shareable room link">Copy Link</button>
+        </div>
+
+        <!-- Turn status -->
+        <div class="turn-badge glass-panel rounded-xl px-4 py-3 mb-4 text-center text-sm font-medium" id="turnStatus" aria-live="polite" aria-atomic="true">
+          Waiting to connect...
+        </div>
+
+        <!-- Status panel -->
+        <div class="glass-panel rounded-2xl p-5 mb-4 space-y-4">
+          <div class="flex items-center gap-4">
+            <div class="status-dot" id="connIndicator" aria-hidden="true"></div>
+            <span id="connStatus" class="text-sm text-zinc-400 flex-1" aria-live="polite">Disconnected</span>
+            <button class="btn btn-primary btn-sm px-5 font-semibold" id="connectBtn" aria-label="Connect to agent">Connect</button>
+          </div>
+          <div class="flex items-center gap-2 text-sm">
+            <span class="text-zinc-500">Status:</span>
+            <strong id="agentStatus" class="text-white" aria-live="polite">Offline</strong>
+          </div>
+          <div class="audio-meter-bar" aria-hidden="true">
+            <div class="audio-level" id="audioLevel"></div>
+          </div>
+        </div>
+
+        <!-- Log panel -->
+        <div class="log-panel glass-panel rounded-2xl p-4 h-44 overflow-y-auto font-mono text-xs mb-4" id="logPanel" role="log" aria-label="Connection log" aria-live="polite" aria-relevant="additions"></div>
+
+        <!-- Chat panel -->
+        <div class="glass-panel rounded-2xl p-4 h-64 overflow-y-auto" id="chatPanel" role="log" aria-label="Chat messages" aria-live="polite" aria-relevant="additions"></div>
+      </div>
+    </div>
+  </div>
+
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="/js/agent-common.js"></script>
+  <script src="/js/provider-openai-realtime.js"></script>
+  <script src="/js/provider-socket.js"></script>
+  <script>
+    (async function() {
+      // Extract agent ID from URL: /voice/:agentId
+      const pathParts = window.location.pathname.split("/")
+      const agentId = pathParts[pathParts.length - 1]
+
+      // Extract room ID from query param: ?room=abc123
+      const urlParams = new URLSearchParams(window.location.search)
+      const roomId = urlParams.get("room") || null
+
+      if (!agentId) {
+        document.getElementById("loadingPanel").textContent = "Error: No agent ID in URL"
+        return
+      }
+
+      try {
+        const res = await fetch("/api/agents/" + encodeURIComponent(agentId))
+        if (!res.ok) {
+          throw new Error(res.status === 404 ? "Agent not found" : "Failed to load agent")
+        }
+        const json = await res.json()
+        const agent = json.data || json
+
+        // Apply theme via CSS variables
+        const root = document.documentElement
+        if (agent.theme) {
+          root.style.setProperty("--primary", agent.theme.primary)
+          if (agent.theme.gradient) {
+            root.style.setProperty("--gradient-start", agent.theme.gradient[0])
+            root.style.setProperty("--gradient-end", agent.theme.gradient[1])
+          }
+          if (agent.theme.background) {
+            root.style.setProperty("--bg-start", agent.theme.background[0])
+            root.style.setProperty("--bg-end", agent.theme.background[1])
+          }
+        }
+
+        // Set page content
+        document.title = `Agent - ${agent.name}`
+        const titleEl = document.getElementById("agentTitle")
+        const emojiSpan = document.createElement("span")
+        emojiSpan.setAttribute("aria-hidden", "true")
+        emojiSpan.textContent = "🎤 "
+        titleEl.appendChild(emojiSpan)
+        titleEl.appendChild(document.createTextNode(agent.name))
+
+        // Hide loading, show agent panel
+        document.getElementById("loadingPanel").style.display = "none"
+        document.getElementById("agentPanel").style.display = "block"
+
+        // Set AGENT_CONFIG with room support
+        window.AGENT_CONFIG = {
+          agentId: agent.id,
+          agentName: agent.name,
+          sessionEndpoint: "/session/" + encodeURIComponent(agent.id),
+          roomId: roomId
+        }
+
+        // Initialize agent (same logic as agent-loader.js)
+        const agentCommon = new AgentCommon(window.AGENT_CONFIG)
+
+        // Show room info once we know the actual room ID
+        agentCommon.socket.on("roomJoined", ({ roomId: joinedRoomId }) => {
+          const roomInfoEl = document.getElementById("roomInfo")
+          const roomIdDisplay = document.getElementById("roomIdDisplay")
+          const copyBtn = document.getElementById("copyRoomBtn")
+
+          roomIdDisplay.textContent = joinedRoomId
+          roomInfoEl.style.display = "flex"
+
+          copyBtn.addEventListener("click", () => {
+            const url = new URL(window.location.href)
+            url.searchParams.set("room", joinedRoomId)
+            navigator.clipboard.writeText(url.toString()).then(() => {
+              copyBtn.textContent = "Copied!"
+              setTimeout(() => { copyBtn.textContent = "Copy Link" }, 2000)
+            })
+          })
+        })
+
+        const configRes = await fetch("/config")
+        const serverConfig = await configRes.json()
+
+        agentCommon.log(`AI Provider: ${serverConfig.aiProvider} (${serverConfig.providerType} mode)`)
+
+        if (serverConfig.providerType === "webrtc") {
+          initOpenAIRealtime(agentCommon)
+        } else {
+          initSocketProvider(agentCommon)
+        }
+      } catch (err) {
+        const loadingPanel = document.getElementById("loadingPanel")
+        loadingPanel.setAttribute("role", "alert")
+        loadingPanel.textContent = "Error: " + err.message
+      }
+    })()
+  </script>
+</body>
+</html>
