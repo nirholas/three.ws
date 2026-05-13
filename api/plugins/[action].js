@@ -143,17 +143,30 @@ async function handleList(req, res, url) {
 			? 'p.created_at DESC'
 			: 'p.name ASC';
 
-	const rows = await sql`
+	const where = ['p.is_public = true', 'p.deleted_at IS NULL'];
+	const params = [];
+	if (category) {
+		params.push(category);
+		where.push(`p.category = $${params.length}`);
+	}
+	if (q) {
+		params.push(`%${q}%`);
+		where.push(`(p.name ILIKE $${params.length} OR p.description ILIKE $${params.length})`);
+	}
+	params.push(limit + 1);
+	const limitIdx = params.length;
+	params.push(offset);
+	const offsetIdx = params.length;
+
+	const text = `
 		SELECT p.*, u.display_name AS author_display_name
 		FROM plugins p
 		LEFT JOIN users u ON u.id = p.author_id
-		WHERE p.is_public = true
-		  AND p.deleted_at IS NULL
-		  ${category ? sql`AND p.category = ${category}` : sql``}
-		  ${q ? sql`AND (p.name ILIKE ${'%' + q + '%'} OR p.description ILIKE ${'%' + q + '%'})` : sql``}
-		ORDER BY ${sql.unsafe(sortClause)}
-		LIMIT ${limit + 1} OFFSET ${offset}
+		WHERE ${where.join(' AND ')}
+		ORDER BY ${sortClause}
+		LIMIT $${limitIdx} OFFSET $${offsetIdx}
 	`;
+	const rows = await sql(text, params);
 
 	const hasMore = rows.length > limit;
 	const items = rows.slice(0, limit).map(toPlugin);

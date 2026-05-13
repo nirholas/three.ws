@@ -190,7 +190,15 @@ const app = express();
 // to discover advertised scheme/network pairs. Requires CDP_API_KEY_ID and
 // CDP_API_KEY_SECRET to be set — without them the first request returns 500
 // with "Failed to initialize: no supported payment kinds loaded".
-app.use(paymentMiddleware(routeConfig, resourceServer));
+// Lazy-construct paymentMiddleware on first request. Building it eagerly fires
+// resourceServer.initialize() at module load, and the resulting promise
+// rejection (e.g. missing CDP credentials in tests) becomes "unhandled" until
+// a request arrives to await it.
+let _paidMiddleware;
+app.use((req, res, next) => {
+	if (!_paidMiddleware) _paidMiddleware = paymentMiddleware(routeConfig, resourceServer);
+	return _paidMiddleware(req, res, next);
+});
 
 app.get(ROUTE, async (req, res) => {
 	const target = String(req.query?.url || '').trim();

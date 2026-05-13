@@ -31,9 +31,13 @@ Avalanche Fuji (43113)
 
 Custom vanity-prefixed CREATE2 deployer used to obtain matching addresses across chains.
 
-| Chain | Address                                      | Deployer EOA                  | Deployed   |
-| ----- | -------------------------------------------- | ----------------------------- | ---------- |
-| BSC (56) | `0x00000000D49195AE81759cd247cFeDD9D0B479df` | `0x4022de2D...C0564f402` | 2026-05-11 |
+| Chain            | Address                                      | Deployer EOA             | Deployed   |
+| ---------------- | -------------------------------------------- | ------------------------ | ---------- |
+| BSC (56)         | `0x00000000D49195AE81759cd247cFeDD9D0B479df` | `0x4022de2D...C0564f402` | 2026-05-11 |
+| Base (8453)      | `0x00000000D49195AE81759cd247cFeDD9D0B479df` | `0x4022de2D...C0564f402` | —          |
+| Arbitrum (42161) | `0x00000000D49195AE81759cd247cFeDD9D0B479df` | `0x4022de2D...C0564f402` | —          |
+
+Bytecode SHA-256 `424e78aad2b19a37…` (1278 bytes) is identical on all three chains.
 
 - Source: `ThreeWSFactory.sol`, solc v0.8.35, optimizer 200 runs, MIT, verified on BscScan.
 - ABI:
@@ -41,7 +45,7 @@ Custom vanity-prefixed CREATE2 deployer used to obtain matching addresses across
   - `predict(bytes32 salt, bytes32 initCodeHash) → address` (view).
   - Event: `Deployed(address indexed addr, bytes32 indexed salt)`.
 - Vanity 8-byte zero prefix (`0x00000000…`) saves calldata gas on every `deploy`/`predict` call.
-- Not yet deployed on other chains — replicate via the same EOA + nonce to keep the address.
+- To replicate on a new chain, use the same EOA + nonce + init code so CREATE2 yields the same address.
 
 ## Notes
 

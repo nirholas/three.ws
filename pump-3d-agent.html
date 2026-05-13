@@ -98,9 +98,8 @@
     import { AgentAvatar } from '/src/agent-avatar.js';
     import { protocol } from '/src/agent-protocol.js';
 
-    const agentId = 'agent-test-ad415d18';
-
-    try {
+    async function bootAgent() {
+        const agentId = 'agent-test-ad415d18';
         const identity = new AgentIdentity({ agentId, autoLoad: true });
         await identity.load();
 
@@ -117,7 +116,6 @@
 
         const { avatar } = await resp.json();
         const glbUrl = avatar?.url;
-
         if (!glbUrl) {
             console.error('No avatar URL found');
             return;
@@ -126,19 +124,21 @@
         const stage = document.getElementById('stage');
         const viewer = new Viewer(stage, { kiosk: true });
         viewer.renderer?.setClearAlpha(0);
-		if (viewer.scene) viewer.scene.background = null;
+        if (viewer.scene) viewer.scene.background = null;
         await viewer.load(glbUrl, '', new Map());
 
         const avatarCtl = new AgentAvatar(viewer, protocol, identity);
         avatarCtl.attach();
+    }
+
+    try {
+        await bootAgent();
     } catch (err) {
         console.error('Failed to load 3D agent:', err);
         const stage = document.getElementById('stage');
         stage.innerHTML = `<div style="color: #ff4141; padding: 10px;">Failed to load agent. See console for details.</div>`;
     }
 </script>
-
-<script type="module" src="/src/pump-live-client.js"></script>
 
 
 		<div id="footer-container"></div>

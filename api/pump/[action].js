@@ -100,6 +100,8 @@ const wrapped = wrap(async (req, res) => {
 		case 'deliver-telegram':        return handleDeliverTelegram(req, res);
 		case 'first-claims':            return handleFirstClaims(req, res);
 		case 'recent-graduations':      return handleRecentGraduations(req, res);
+		case 'trending':                return handleTrending(req, res);
+		case 'search':                  return handleSearch(req, res);
 		default:
 			return error(res, 404, 'not_found', 'unknown pump action');
 	}
@@ -1928,6 +1930,62 @@ async function handleChannelFeed(req, res) {
 	const [mints, whales, claims] = await Promise.all([getMints(limit), getWhales(limit), getClaims(limit)]);
 	const items = buildFeed([{ kind: 'mint', items: mints }, { kind: 'whale', items: whales }, { kind: 'claim', items: claims }], { limit, kinds });
 	return json(res, 200, { items });
+}
+
+// ── trending / search (proxies for the CORS-protected pump.fun frontend API) ──
+
+const PUMP_FRONTEND_BASE = 'https://frontend-api-v3.pump.fun';
+const TRENDING_CACHE = { at: 0, body: null };
+const TRENDING_TTL_MS = 15_000;
+
+async function handleTrending(req, res) {
+	if (cors(req, res, { methods: 'GET,OPTIONS', origins: '*' })) return;
+	if (!method(req, res, ['GET'])) return;
+	const rl = await limits.mcpIp(clientIp(req));
+	if (!rl.success) return error(res, 429, 'rate_limited', 'too many requests');
+	const now = Date.now();
+	if (TRENDING_CACHE.body && now - TRENDING_CACHE.at < TRENDING_TTL_MS) {
+		res.setHeader('cache-control', 'public, max-age=15');
+		return json(res, 200, TRENDING_CACHE.body);
+	}
+	const url = new URL(req.url, `http://${req.headers.host}`);
+	const limit = Math.min(Math.max(1, Number(url.searchParams.get('limit') || 50)), 100);
+	const upstream = new URL('/coins', PUMP_FRONTEND_BASE);
+	upstream.searchParams.set('offset', '0');
+	upstream.searchParams.set('limit', String(limit));
+	upstream.searchParams.set('sort', 'market_cap');
+	upstream.searchParams.set('order', 'DESC');
+	upstream.searchParams.set('includeNsfw', 'false');
+	const resp = await fetch(upstream, { headers: { accept: 'application/json' }, signal: AbortSignal.timeout(8000) });
+	if (!resp.ok) return error(res, 502, 'upstream_failed', `pump.fun returned ${resp.status}`);
+	const body = await resp.json();
+	const arr = Array.isArray(body) ? body : Array.isArray(body?.coins) ? body.coins : [];
+	TRENDING_CACHE.at = now;
+	TRENDING_CACHE.body = arr;
+	res.setHeader('cache-control', 'public, max-age=15');
+	return json(res, 200, arr);
+}
+
+async function handleSearch(req, res) {
+	if (cors(req, res, { methods: 'GET,OPTIONS', origins: '*' })) return;
+	if (!method(req, res, ['GET'])) return;
+	const rl = await limits.mcpIp(clientIp(req));
+	if (!rl.success) return error(res, 429, 'rate_limited', 'too many requests');
+	const url = new URL(req.url, `http://${req.headers.host}`);
+	const q = (url.searchParams.get('q') || '').trim();
+	if (!q) return json(res, 200, []);
+	const upstream = new URL('/coins', PUMP_FRONTEND_BASE);
+	upstream.searchParams.set('searchTerm', q);
+	upstream.searchParams.set('offset', '0');
+	upstream.searchParams.set('limit', '30');
+	upstream.searchParams.set('sort', 'market_cap');
+	upstream.searchParams.set('order', 'DESC');
+	upstream.searchParams.set('includeNsfw', 'false');
+	const resp = await fetch(upstream, { headers: { accept: 'application/json' }, signal: AbortSignal.timeout(8000) });
+	if (!resp.ok) return error(res, 502, 'upstream_failed', `pump.fun returned ${resp.status}`);
+	const body = await resp.json();
+	const arr = Array.isArray(body) ? body : Array.isArray(body?.coins) ? body.coins : [];
+	return json(res, 200, arr);
 }
 
 // ── deliver-telegram ──────────────────────────────────────────────────────────

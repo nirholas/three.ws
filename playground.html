@@ -83,12 +83,11 @@
     <div class="av-viewer">
         <model-viewer
             id="viewer"
-            src="/assets/default-avatar.glb"
+            src="/avatars/default.glb"
             alt="A 3D model of an avatar"
             ar
             ar-modes="webxr scene-viewer quick-look"
             camera-controls
-            poster="/assets/default-avatar-poster.webp"
             shadow-intensity="1"
             environment-image="neutral"
             auto-rotate
@@ -236,7 +235,7 @@
 
             const defaultAvatar = {
                 name: 'Default Avatar',
-                file: '/assets/default-avatar.glb'
+                file: '/avatars/default.glb'
             };
 
             const showLoading = () => loadingIndicator.style.display = 'block';

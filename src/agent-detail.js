@@ -8,6 +8,16 @@
  * the requester is the agent's owner — render() tolerates them being absent.
  */
 
+import {
+	Connection,
+	PublicKey,
+	Transaction,
+	SystemProgram,
+	LAMPORTS_PER_SOL,
+	clusterApiUrl,
+} from '@solana/web3.js';
+const solanaWeb3 = { Connection, PublicKey, Transaction, SystemProgram, LAMPORTS_PER_SOL, clusterApiUrl };
+
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 const SERVICE_TYPES = {

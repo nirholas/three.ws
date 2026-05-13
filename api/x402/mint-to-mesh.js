@@ -168,11 +168,14 @@ const routeConfig = {
 
 const app = express();
 
-// Middleware initializes by hitting the CDP facilitator's /supported endpoint
-// to discover advertised scheme/network pairs. Requires CDP_API_KEY_ID and
-// CDP_API_KEY_SECRET to be set — without them the first request returns 500
-// with "Failed to initialize: no supported payment kinds loaded".
-app.use(paymentMiddleware(routeConfig, resourceServer));
+// Lazy-construct paymentMiddleware on first request — see model-check.js for
+// rationale (avoids unhandled init-promise rejection at module load when CDP
+// credentials are absent, e.g. during tests).
+let _paidMiddleware;
+app.use((req, res, next) => {
+	if (!_paidMiddleware) _paidMiddleware = paymentMiddleware(routeConfig, resourceServer);
+	return _paidMiddleware(req, res, next);
+});
 
 // Loose Solana base58 sanity check. Real validation happens in solanaPubkey()
 // inside fetchTokenMeta — this just rejects obvious garbage early so we don't

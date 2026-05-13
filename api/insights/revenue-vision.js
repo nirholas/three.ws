@@ -137,10 +137,14 @@ const routeConfig = {
 
 const app = express();
 
-// Initializes by hitting the CDP facilitator's /supported endpoint to discover
-// advertised scheme/network pairs. Requires CDP_API_KEY_ID and CDP_API_KEY_SECRET
-// — without them the first request returns 500.
-app.use(paymentMiddleware(routeConfig, resourceServer));
+// Lazy-construct paymentMiddleware on first request — see x402/model-check.js
+// for rationale (avoids unhandled init-promise rejection at module load when
+// CDP credentials are absent, e.g. during tests).
+let _paidMiddleware;
+app.use((req, res, next) => {
+	if (!_paidMiddleware) _paidMiddleware = paymentMiddleware(routeConfig, resourceServer);
+	return _paidMiddleware(req, res, next);
+});
 
 const SYSTEM_PROMPT =
 	'You are Revenue Vision, an agentic growth analyst. Reply with a single JSON object ' +

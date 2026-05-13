@@ -1036,13 +1036,12 @@
 		<meta property="og:url" content="https://three.ws/marketplace" />
 		<meta property="og:image" content="https://three.ws/og-image.png" />
 
-		<link rel="stylesheet" href="https://unpkg.com/@solana/wallet-adapter-react-ui/styles.css" />
-
+		<!-- @solana/web3.js exposes the global `solanaWeb3` used by initWalletAdapter
+		     in src/marketplace.js. The wallet-adapter-* React packages were
+		     previously loaded here but nothing on the page consumes them — the
+		     in-page wallet button talks to window.phantom/solflare/backpack
+		     directly via connectWalletProvider(). -->
 		<script src="https://unpkg.com/@solana/web3.js@latest/lib/index.iife.js"></script>
-		<script src="https://unpkg.com/@solana/wallet-adapter-base@latest/lib/index.iife.js"></script>
-		<script src="https://unpkg.com/@solana/wallet-adapter-wallets@latest/lib/index.iife.js"></script>
-		<script src="https://unpkg.com/@solana/wallet-adapter-react@latest/lib/index.iife.js"></script>
-		<script src="https://unpkg.com/@solana/wallet-adapter-react-ui@latest/lib/index.iife.js"></script>
 
 		<script type="module" src="https://ajax.googleapis.com/ajax/libs/model-viewer/4.0.0/model-viewer.min.js"></script>
 			<link rel="stylesheet" href="/nav.css" />

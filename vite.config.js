@@ -19,11 +19,12 @@ const TARGET = process.env.TARGET || 'app';
 // Override with DEV_API_PROXY=http://localhost:3001 to point at vercel-dev.
 const DEV_API_PROXY = process.env.DEV_API_PROXY || 'https://three.ws';
 // Local-only override for /api/x402-pay (the demo's paid-call backend).
-// Spin up the helper with `node scripts/dev-x402-pay-server.mjs` and the main
-// Vite dev server will route /api/x402-pay → here while other /api/* still
-// proxy to prod. Set X402_PAY_DEV_URL='' to disable.
-const X402_PAY_DEV_URL =
-	process.env.X402_PAY_DEV_URL ?? 'http://localhost:3032';
+// Spin up the helper with `node scripts/dev-x402-pay-server.mjs`; if set, the
+// main Vite dev server will route /api/x402-pay → here while other /api/* still
+// proxy to prod. Default is empty so /api/x402-pay falls through to the prod
+// proxy when the helper isn't running — otherwise the first hit to /pay would
+// crash the dev server with an unhandled ECONNREFUSED proxy error.
+const X402_PAY_DEV_URL = process.env.X402_PAY_DEV_URL ?? '';
 
 const appConfig = {
 	server: {
@@ -38,6 +39,17 @@ const appConfig = {
 						target: X402_PAY_DEV_URL,
 						changeOrigin: true,
 						secure: false,
+						configure: (proxy) => {
+							proxy.on('error', (err, _req, res) => {
+								if (!res || res.headersSent || res.writableEnded) return;
+								res.statusCode = 502;
+								res.setHeader('content-type', 'application/json');
+								res.end(JSON.stringify({
+									error: 'bad_gateway',
+									message: `x402-pay dev helper unreachable at ${X402_PAY_DEV_URL}: ${err.message}`,
+								}));
+							});
+						},
 					},
 				}
 				: {}),
@@ -54,6 +66,18 @@ const appConfig = {
 						// Disable any compression that would force buffering
 						// of streaming responses on the upstream side.
 						proxyReq.setHeader('accept-encoding', 'identity');
+					});
+					proxy.on('error', (err, _req, res) => {
+						// Without this handler, an upstream connection failure
+						// (ECONNREFUSED on a transient blip) bubbles up as an
+						// uncaught exception and kills the dev server.
+						if (!res || res.headersSent || res.writableEnded) return;
+						res.statusCode = 502;
+						res.setHeader('content-type', 'application/json');
+						res.end(JSON.stringify({
+							error: 'bad_gateway',
+							message: `api proxy → ${DEV_API_PROXY} failed: ${err.message}`,
+						}));
 					});
 				},
 			},
@@ -305,6 +329,53 @@ const appConfig = {
 				},
 			},
 		},
+		(() => {
+			// Suppress the cosmetic "Multiple instances of Three.js being imported"
+			// warning. Three.js does `if (window.__THREE__) warn(); else __THREE__ = REVISION;`
+			// so the naive "pre-claim the global" trick actively triggers the warning
+			// instead of suppressing it. Instead, install a property accessor whose
+			// getter always returns undefined and whose setter is a no-op — every
+			// three.js instance's check then passes silently. Runs in head-prepend
+			// so it executes before model-viewer's bundled three or our app bundle.
+			const GUARD = 'try{Object.defineProperty(window,"__THREE__",{configurable:true,get:function(){return undefined},set:function(){}})}catch(_){}';
+			return {
+				name: 'three-multi-instance-guard',
+				transformIndexHtml: {
+					order: 'pre',
+					handler() {
+						return [{ tag: 'script', children: GUARD, injectTo: 'head-prepend' }];
+					},
+				},
+				closeBundle: {
+					sequential: true,
+					order: 'post',
+					async handler() {
+						const { readdirSync, statSync, readFileSync, writeFileSync } = await import('fs');
+						const { join } = await import('path');
+						const distDir = resolve(__dirname, 'dist');
+						if (!existsSync(distDir)) return;
+						const MARKER = 'Object.defineProperty(window,"__THREE__"';
+						const LEGACY = /<script>\s*window\.__THREE__\s*=\s*window\.__THREE__\s*\|\|\s*["'][^"']+["']\s*;?\s*<\/script>\s*/g;
+						const tag = `<script>${GUARD}</script>`;
+						const walk = (dir) => {
+							for (const entry of readdirSync(dir)) {
+								const full = join(dir, entry);
+								if (statSync(full).isDirectory()) walk(full);
+								else if (entry.endsWith('.html')) {
+									const html = readFileSync(full, 'utf8');
+									let next = html.replace(LEGACY, '');
+									if (!next.includes(MARKER)) {
+										next = next.replace(/<head(\s[^>]*)?>/i, (m) => `${m}\n\t\t${tag}`);
+									}
+									if (next !== html) writeFileSync(full, next);
+								}
+							}
+						};
+						walk(distDir);
+					},
+				},
+			};
+		})(),
 		{
 			name: 'copy-static-docs',
 			closeBundle() {

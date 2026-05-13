@@ -987,7 +987,12 @@
 			import { AgentHome } from '/src/agent-home.js';
 			import { protocol } from '/src/agent-protocol.js';
 
-			const agentId = location.pathname.split('/').filter(Boolean).pop();
+			const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+			const rawSeg = location.pathname.split('/').filter(Boolean).pop() || '';
+			// Only treat the last path segment as an agent id when it actually
+			// looks like one (UUID). Otherwise (e.g. /agent, /agent-home, /) fall
+			// through to the "my agents" listing view.
+			const agentId = UUID_RE.test(rawSeg) ? rawSeg : '';
 
 			function renderAgents(agents) {
 				const grid = document.querySelector('.my-agents-grid');
@@ -1007,7 +1012,7 @@
 			}
 
 			async function main() {
-				if (agentId === 'my-agents' || agentId === 'agents') {
+				if (!agentId) {
 					document.getElementById('page-agent-name').textContent = 'My Agents';
 					document.getElementById('page-agent-desc').textContent = 'Create, manage, and deploy your agents.';
 					document.querySelector('.agent-stage').innerHTML = `
