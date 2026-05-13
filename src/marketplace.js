@@ -559,6 +559,18 @@ function renderHero() {
 				</div>`,
 		)
 		.join('');
+	// If a hero GLB upstream blocks CORS or 404s, model-viewer logs to console
+	// and shows nothing. Listen for that and remove the broken slide so we
+	// don't show empty stages or pollute the console.
+	stage.querySelectorAll('model-viewer').forEach((mv) => {
+		mv.addEventListener('error', () => {
+			const slot = Number(mv.closest('.market-hero-slide')?.dataset?.slot ?? -1);
+			if (slot < 0) return;
+			state.featured.splice(slot, 1);
+			if (state.heroIndex >= state.featured.length) state.heroIndex = 0;
+			if (state.featured.length) renderHero();
+		}, { once: true });
+	});
 	dots.innerHTML = state.featured
 		.map(
 			(_, i) =>
@@ -2214,13 +2226,11 @@ async function loadSolanaModules() {
 	return { web3: solanaWeb3Mod, spl: splTokenMod };
 }
 
-function initWalletAdapter() {
-	try {
-		const { Connection, clusterApiUrl } = solanaWeb3;
-		solanaConnection = new Connection(clusterApiUrl('mainnet-beta'), 'confirmed');
-	} catch (err) {
-		console.warn('[marketplace] Wallet adapter unavailable:', err.message);
-	}
+async function getSolanaConnection() {
+	if (solanaConnection) return solanaConnection;
+	const { web3 } = await loadSolanaModules();
+	solanaConnection = new web3.Connection(web3.clusterApiUrl('mainnet-beta'), 'confirmed');
+	return solanaConnection;
 }
 
 function listAvailableWallets() {
@@ -2489,11 +2499,11 @@ async function handlePurchase() {
 			const result = await connectedWallet.provider.signAndSendTransaction(tx);
 			txid = result?.signature ?? result;
 		} else {
-			txid = await connectedWallet.provider.sendTransaction(tx, solanaConnection);
+			txid = await connectedWallet.provider.sendTransaction(tx, await getSolanaConnection());
 		}
 
 		setStatus('Waiting for on-chain confirmation…');
-		await solanaConnection.confirmTransaction(txid, 'confirmed');
+		await (await getSolanaConnection()).confirmTransaction(txid, 'confirmed');
 
 		setStatus('Verifying with server…');
 		const ok = await pollConfirm(purchase.reference, 60_000);
@@ -2575,7 +2585,7 @@ async function buildSplTransferWithReference({ payer, recipient, mint, amount, r
 	// server can later locate this tx via getSignaturesForAddress(reference).
 	ix.keys.push({ pubkey: referenceKey, isSigner: false, isWritable: false });
 
-	const { blockhash } = await solanaConnection.getLatestBlockhash('confirmed');
+	const { blockhash } = await (await getSolanaConnection()).getLatestBlockhash('confirmed');
 	const tx = new Transaction({ feePayer: payer, recentBlockhash: blockhash }).add(ix);
 	return tx;
 }
@@ -2708,7 +2718,6 @@ function init() {
 	loadList(true);
 	loadTheme();
 	initPlugins();
-	initWalletAdapter();
 	fetchUserPurchases();
 	bindDetailExtras({ navTo, openAvatarModal });
 	render();

@@ -1036,13 +1036,6 @@
 		<meta property="og:url" content="https://three.ws/marketplace" />
 		<meta property="og:image" content="https://three.ws/og-image.png" />
 
-		<!-- @solana/web3.js exposes the global `solanaWeb3` used by initWalletAdapter
-		     in src/marketplace.js. The wallet-adapter-* React packages were
-		     previously loaded here but nothing on the page consumes them — the
-		     in-page wallet button talks to window.phantom/solflare/backpack
-		     directly via connectWalletProvider(). -->
-		<script src="https://unpkg.com/@solana/web3.js@latest/lib/index.iife.js"></script>
-
 		<script type="module" src="https://ajax.googleapis.com/ajax/libs/model-viewer/4.0.0/model-viewer.min.js"></script>
 			<link rel="stylesheet" href="/nav.css" />
 			<link rel="stylesheet" href="/footer.css" />
@@ -1138,7 +1131,6 @@
 					</select>
 					<button class="market-submit-btn" id="market-submit-btn-top">+ Submit Agent</button>
 					<a class="market-submit-avatar-btn" href="/create" id="market-submit-avatar-btn">+ Create Avatar</a>
-					<div class="wallet-adapter-button-container"></div>
 				</header>
 
 				<div class="market-cat-chips" id="market-cat-chips" role="navigation" aria-label="Categories"></div>
