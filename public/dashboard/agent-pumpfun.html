@@ -41,21 +41,104 @@
 			a:hover {
 				text-decoration: underline;
 			}
-			header {
+			header.site-header {
 				display: flex;
 				align-items: center;
 				justify-content: space-between;
-				padding: 16px 24px;
+				gap: 18px;
+				padding: 14px 24px;
 				border-bottom: 1px solid var(--border);
 				position: sticky;
 				top: 0;
-				background: var(--bg);
+				background: rgba(0, 0, 0, 0.85);
+				backdrop-filter: blur(8px);
 				z-index: 5;
+			}
+			.site-header .brand {
+				display: inline-flex;
+				align-items: center;
+				gap: 8px;
+				font-weight: 600;
+				letter-spacing: -0.01em;
+				color: #fff;
+			}
+			.site-header .brand img {
+				height: 22px;
+				width: auto;
+				display: block;
+			}
+			.site-nav {
+				display: flex;
+				gap: 2px;
+				flex-wrap: wrap;
+				margin-left: auto;
+			}
+			.site-nav a {
+				font-size: 13px;
+				padding: 7px 11px;
+				border-radius: 7px;
+				color: #bbb;
+			}
+			.site-nav a:hover {
+				background: var(--panel);
+				text-decoration: none;
+				color: #eee;
+			}
+			.site-nav a.active {
+				background: var(--panel);
+				color: #fff;
 			}
 			.brand {
 				font-weight: 600;
 				letter-spacing: -0.01em;
 			}
+			.crumb {
+				display: flex;
+				align-items: center;
+				gap: 10px;
+				padding: 10px 24px;
+				border-bottom: 1px solid var(--border);
+				background: var(--bg);
+				position: sticky;
+				top: 53px;
+				z-index: 4;
+				font-size: 13px;
+			}
+			.crumb a { color: #9a8cff; }
+			.crumb .sep { color: #555; }
+			footer.site-footer {
+				margin-top: 40px;
+				padding: 28px 24px 36px;
+				border-top: 1px solid var(--border);
+				background: #06060a;
+				color: var(--muted);
+				font-size: 13px;
+			}
+			.site-footer-inner {
+				max-width: 1280px;
+				margin: 0 auto;
+				display: flex;
+				flex-wrap: wrap;
+				gap: 18px;
+				align-items: center;
+				justify-content: space-between;
+			}
+			.site-footer-brand {
+				display: inline-flex;
+				align-items: center;
+				gap: 8px;
+				color: #ddd;
+				font-weight: 600;
+			}
+			.site-footer-brand img { height: 18px; width: auto; }
+			.site-footer-links {
+				display: flex;
+				gap: 14px;
+				flex-wrap: wrap;
+			}
+			.site-footer-links a { color: #aaa; }
+			.site-footer-links a:hover { color: #fff; }
+			.site-footer-legal { color: #666; font-size: 12px; }
 			main {
 				padding: 28px;
 				max-width: 1280px;
@@ -193,7 +276,7 @@
 				border-bottom: 1px solid var(--border);
 				background: var(--bg);
 				position: sticky;
-				top: 57px;
+				top: 96px;
 				z-index: 4;
 			}
 			.subnav a {
@@ -366,17 +449,28 @@
 		</style>
 	</head>
 	<body>
-		<header>
-			<div class="row">
-				<a class="brand" href="/dashboard">← Dashboard</a>
-				<span class="muted">/</span>
-				<span class="brand">Agent · Pump.fun</span>
-			</div>
-			<div class="row">
-				<a href="/dashboard/wallets">Wallets</a>
+		<header class="site-header">
+			<a class="brand" href="/" aria-label="three.ws home">
+				<img src="/three.svg" alt="" aria-hidden="true" />
+				<span>three.ws</span>
+			</a>
+			<nav class="site-nav" aria-label="Primary">
+				<a href="/app">Viewer</a>
+				<a href="/create">Create</a>
 				<a href="/discover">Discover</a>
-			</div>
+				<a href="/widgets">Widgets</a>
+				<a href="/studio">Studio</a>
+				<a href="/docs">Docs</a>
+				<a href="/dashboard" class="active" aria-current="page">Dashboard</a>
+			</nav>
+			<div id="header-user-slot"></div>
 		</header>
+
+		<div class="crumb">
+			<a href="/dashboard">← Dashboard</a>
+			<span class="sep">/</span>
+			<span class="brand">Agent · Pump.fun</span>
+		</div>
 
 		<nav class="subnav" aria-label="Agent wallet tools">
 			<a href="/dashboard/agent-pumpfun" class="active" aria-current="page">Pump.fun</a>
@@ -722,6 +816,31 @@
 		</main>
 
 		<div class="toast" id="toast"></div>
+
+		<footer class="site-footer">
+			<div class="site-footer-inner">
+				<a class="site-footer-brand" href="/">
+					<img src="/three.svg" alt="" aria-hidden="true" />
+					<span>three.ws</span>
+				</a>
+				<nav class="site-footer-links" aria-label="Footer">
+					<a href="/discover">Discover</a>
+					<a href="/dashboard">Dashboard</a>
+					<a href="/dashboard/wallets">Wallets</a>
+					<a href="/pumpfun" target="_blank" rel="noopener">Pump.fun feed ↗</a>
+					<a href="/docs">Docs</a>
+					<a href="https://github.com/nirholas/three.ws" target="_blank" rel="noopener">GitHub</a>
+					<a href="/legal/privacy">Privacy</a>
+					<a href="/legal/tos">Terms</a>
+				</nav>
+				<span class="site-footer-legal">© 2026 three.ws</span>
+			</div>
+		</footer>
+
+		<script type="module">
+			import { mountHeaderUser } from '/header-user.js';
+			mountHeaderUser({ slot: '#header-user-slot' }).catch(() => {});
+		</script>
 
 		<script type="module">
 			const $ = (sel) => document.querySelector(sel);

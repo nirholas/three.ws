@@ -21,6 +21,9 @@ import { reverseLookupAddress } from '../../src/solana/sns.js';
 import { env } from '../_lib/env.js';
 import { z } from 'zod';
 
+// `send` does a Solana submit + EVM RPC roundtrips; default 10s is not enough.
+export const maxDuration = 60;
+
 const SNS_CACHE_TTL_MS = 10 * 60_000;
 const _snsCache = new Map();
 
@@ -210,8 +213,8 @@ const sendSchema = z.object({
 	// 'native' for SOL/ETH, otherwise a mint (Solana) or 0x contract (EVM).
 	asset: z.string().min(1),
 	recipient: z.string().min(1),
-	// Decimal string, in human units (e.g. "1.5" SOL or "100" USDC).
-	amount: z.string().regex(/^\d+(\.\d+)?$/),
+	// Decimal string, in human units (e.g. "1.5" SOL, ".5" SOL, "100" USDC).
+	amount: z.string().regex(/^(\d+(\.\d*)?|\.\d+)$/, 'invalid amount'),
 	memo: z.string().max(120).optional(),
 });
 
@@ -336,13 +339,17 @@ async function sendSolana({ agent, asset, recipient, amount, userId }) {
 		tx.add(createTransferInstruction(senderAta, recipientAta, kp.publicKey, amountUnits));
 	}
 
-	const { blockhash, lastValidBlockHeight } = await conn.getLatestBlockhash();
+	const { blockhash } = await conn.getLatestBlockhash();
 	tx.feePayer = kp.publicKey;
 	tx.recentBlockhash = blockhash;
 	tx.sign(kp);
 
+	// Preflight runs on the RPC and throws synchronously if the tx would fail
+	// (insufficient lamports, missing ATA rent, etc.) — that gives us instant
+	// validation feedback. We deliberately don't await confirmTransaction here:
+	// 'confirmed' commitment takes 10-30s under load and the function would
+	// time out (Vercel default 10s). The signature is the receipt.
 	const sig = await conn.sendRawTransaction(tx.serialize(), { skipPreflight: false });
-	await conn.confirmTransaction({ signature: sig, blockhash, lastValidBlockHeight }, 'confirmed');
 	return { tx_hash: sig };
 }
 

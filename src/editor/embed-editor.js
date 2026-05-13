@@ -33,6 +33,11 @@ const RESPONSIVE_PRESETS = [
 	{ id: 'desktop-first', label: 'Desktop-first', hint: 'Shrinks from preferred size' },
 ];
 
+// Shown in the preview when the user hasn't entered a `src` yet — so the stage
+// always renders an actual avatar instead of an empty box. Not emitted in the
+// generated snippet.
+const DEFAULT_PREVIEW_SRC = '/avatars/default.glb';
+
 const STYLE = `
 	.editor-root {
 		position: fixed;
@@ -79,6 +84,26 @@ const STYLE = `
 	}
 	.agent-wrap.dragging { cursor: grabbing; }
 	.agent-wrap agent-3d { width: 100%; height: 100%; }
+	.agent-wrap iframe.widget-frame {
+		width: 100%;
+		height: 100%;
+		border: 0;
+		display: block;
+		background: transparent;
+		border-radius: 12px;
+		box-shadow: 0 8px 32px rgba(0,0,0,0.35);
+	}
+	.widget-badge {
+		position: absolute;
+		top: -28px;
+		right: 0;
+		background: #1e293b;
+		color: #a7f3d0;
+		font: 11px/1 ui-monospace, Menlo, monospace;
+		padding: 4px 8px;
+		border-radius: 4px;
+		border: 1px solid #334155;
+	}
 	.resize-handle {
 		position: absolute;
 		width: 14px;
@@ -256,6 +281,7 @@ const STYLE = `
 
 export function mountEmbedEditor(root, options = {}) {
 	const defaults = {
+		widgetId: options.widgetId || '',
 		src: options.src || '',
 		mode: options.mode || 'floating',
 		position: options.position || 'bottom-right',
@@ -267,7 +293,7 @@ export function mountEmbedEditor(root, options = {}) {
 		...options,
 	};
 
-	const state = { ...defaults };
+	const state = { ...defaults, widget: null };
 	const host = document.createElement('div');
 	const shadow = host.attachShadow({ mode: 'open' });
 	root.appendChild(host);
@@ -298,6 +324,9 @@ export function mountEmbedEditor(root, options = {}) {
 					<iframe id="preview-frame" hidden></iframe>
 					<div class="agent-wrap" id="agent-wrap">
 						<div class="size-readout" id="size-readout"></div>
+						<div class="widget-badge" id="widget-badge" hidden></div>
+						<iframe class="widget-frame" id="widget-frame" hidden
+							allow="autoplay; clipboard-write; microphone; camera; xr-spatial-tracking"></iframe>
 						<agent-3d eager kiosk id="preview-agent"></agent-3d>
 						<div class="resize-handle nw" data-h="nw"></div>
 						<div class="resize-handle ne" data-h="ne"></div>
@@ -400,6 +429,8 @@ export function mountEmbedEditor(root, options = {}) {
 	const stage = $('#stage');
 	const agentWrap = $('#agent-wrap');
 	const agentEl = $('#preview-agent');
+	const widgetFrame = $('#widget-frame');
+	const widgetBadge = $('#widget-badge');
 	const readout = $('#size-readout');
 	const snippetEl = $('#snippet');
 	const srcInput = $('#src-input');
@@ -408,7 +439,61 @@ export function mountEmbedEditor(root, options = {}) {
 	const copyBtn = $('#copy-btn');
 
 	srcInput.value = state.src;
-	if (state.src) agentEl.setAttribute('src', state.src);
+	agentEl.setAttribute('src', state.src || DEFAULT_PREVIEW_SRC);
+
+	// If a widget id was passed, swap the bare <agent-3d> preview for an
+	// iframe loading the live widget renderer (/app#widget=<id>&kiosk=true).
+	if (state.widgetId) loadWidget(state.widgetId);
+
+	async function loadWidget(id) {
+		const origin = location.origin;
+		// Show the live widget immediately — don't wait on the metadata fetch.
+		widgetFrame.src = `${origin}/app#widget=${encodeURIComponent(id)}&kiosk=true`;
+		widgetFrame.hidden = false;
+		agentEl.style.display = 'none';
+		widgetBadge.hidden = false;
+		widgetBadge.textContent = id;
+
+		try {
+			const res = await fetch(`${origin}/api/widgets/${encodeURIComponent(id)}`, {
+				credentials: 'include',
+			});
+			if (!res.ok) {
+				widgetBadge.textContent = `${id} · not found`;
+				widgetBadge.style.color = '#fca5a5';
+				return;
+			}
+			const { widget } = await res.json();
+			state.widget = widget;
+			widgetBadge.textContent = `${widget.name || id} · ${widget.type}`;
+
+			// Type-aware preferred sizes (mirrors public/embed.js defaults).
+			const TYPE_SIZES = {
+				turntable: [600, 600],
+				'animation-gallery': [720, 720],
+				'talking-agent': [420, 600],
+				passport: [480, 560],
+				'hotspot-tour': [800, 600],
+			};
+			const [w, h] = TYPE_SIZES[widget.type] || [600, 600];
+			state.width = `${w}px`;
+			state.height = `${h}px`;
+			wInput.value = state.width;
+			hInput.value = state.height;
+
+			// Pre-fill src with the avatar model so a fallback agent-3d snippet
+			// works if the user later toggles off the widget id.
+			if (widget.avatar?.model_url) {
+				state.src = widget.avatar.model_url;
+				srcInput.value = state.src;
+			}
+
+			sync();
+		} catch (err) {
+			widgetBadge.textContent = `${id} · ${err.message}`;
+			widgetBadge.style.color = '#fca5a5';
+		}
+	}
 
 	// Mode cards
 	const modeGrid = $('#mode-grid');
@@ -652,12 +737,33 @@ export function mountEmbedEditor(root, options = {}) {
 			$('#pos-grid').style.display = 'none';
 		}
 
-		// Agent attrs
-		if (state.src) agentEl.setAttribute('src', state.src);
-		else agentEl.removeAttribute('src');
+		// Agent attrs — skip when a widget is driving the preview iframe so the
+		// hidden <agent-3d> doesn't fetch a GLB we'll never show. Fall back to a
+		// default avatar when the user hasn't entered a src, so the preview is
+		// never an empty box.
+		if (!state.widgetId) {
+			agentEl.setAttribute('src', state.src || DEFAULT_PREVIEW_SRC);
+		}
 	}
 
 	function buildSnippet() {
+		// Widget snippet — when a saved widget id is loaded, prefer the
+		// canonical script-tag embed (matches Studio's "share" modal).
+		if (state.widgetId) {
+			const origin = location.origin;
+			const wPx = parsePx(state.width);
+			const hPx = parsePx(state.height);
+			const dataAttrs = [
+				`data-widget="${escapeAttr(state.widgetId)}"`,
+				state.widget?.type ? `data-type="${escapeAttr(state.widget.type)}"` : '',
+				wPx ? `data-width="${wPx}"` : '',
+				hPx ? `data-height="${hPx}"` : '',
+			]
+				.filter(Boolean)
+				.join(' ');
+			return `<script async src="${origin}/embed.js" ${dataAttrs}></` + 'script>';
+		}
+
 		const attrs = [];
 		if (state.src) attrs.push(`src="${escapeAttr(state.src)}"`);
 		if (state.mode && state.mode !== 'inline') attrs.push(`mode="${state.mode}"`);

@@ -316,12 +316,18 @@ create table if not exists agent_memories (
     context     jsonb not null default '{}'::jsonb,
     salience    real not null default 0.5,
     created_at  timestamptz not null default now(),
+    updated_at  timestamptz not null default now(),
     expires_at  timestamptz
 );
 
 create index if not exists agent_memories_agent_type
     on agent_memories(agent_id, type, created_at desc)
     where expires_at is null;
+
+do $$ begin
+    create trigger agent_memories_set_updated_at before update on agent_memories
+        for each row execute function set_updated_at();
+exception when duplicate_object then null; end $$;
 
 -- ── agent_actions — append-only signed history ───────────────────────────────
 create table if not exists agent_actions (

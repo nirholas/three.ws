@@ -1562,7 +1562,7 @@ async function loadWidgets() {
       return;
     }
     container.innerHTML = items.map((w) => {
-      const url = `${embedOrigin()}/embed.html?id=${encodeURIComponent(w.id)}`;
+      const url = `${embedOrigin()}/w/${encodeURIComponent(w.id)}`;
       return `
         <div class="widget-card" data-id="${escapeHtml(w.id)}">
           <div class="widget-card-type">${escapeHtml(w.type)}</div>

@@ -232,33 +232,40 @@
 
 			async function main() {
 				if (avatar) {
-					const viewer = new Viewer({
-						el: document.getElementById('stage'),
-						model: avatar,
+					const r = await fetch(`/api/avatars/${encodeURIComponent(avatar)}`, {
+						credentials: 'include',
 					});
+					if (!r.ok) return showError(`Avatar not found (${r.status})`);
+					const { avatar: a } = await r.json();
+					const glbUrl = a?.url || a?.model_url;
+					if (!glbUrl) return showError('Avatar has no 3D body');
+
+					const stage = document.getElementById('stage');
+					const viewer = new Viewer(stage, { kiosk: true, postToParent });
 					if (bg === 'transparent') {
 						viewer.renderer?.setClearAlpha(0);
 						if (viewer.scene) viewer.scene.background = null;
 					}
-					if (plateOn || openLinkOn) {
-						try {
-							const r = await fetch(`/api/avatars/${encodeURIComponent(avatar)}`, {
-								credentials: 'include',
-							});
-							if (r.ok) {
-								const { avatar: a } = await r.json();
-								if (plateOn && a?.name) {
-									document.getElementById('name-plate').textContent = a.name;
-								}
-								if (openLinkOn) {
-									const ol = document.getElementById('open-link');
-									ol.href = `/avatars/${encodeURIComponent(avatar)}`;
-									ol.style.display = 'inline-block';
-								}
-							}
-						} catch {}
+
+					if (plateOn && a?.name) {
+						document.getElementById('name-plate').textContent = a.name;
 					}
+					if (openLinkOn) {
+						const ol = document.getElementById('open-link');
+						ol.href = `/avatars/${encodeURIComponent(avatar)}`;
+						ol.style.display = 'inline-block';
+					}
+
+					const candidates = resolveUrlCandidates(glbUrl);
+					await loadWithFallback(viewer, candidates);
+
 					document.getElementById('loading').style.display = 'none';
+					postToParent({
+						__agent: true,
+						type: 'ready',
+						avatar,
+						name: a?.name || '',
+					});
 					return;
 				}
 

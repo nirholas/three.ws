@@ -781,9 +781,16 @@
 				await ensureChart();
 				const data = filtered
 					.map((p) => ({ time: Math.floor(new Date(p.t).getTime() / 1000), value: Number(p.usd) }))
+					// lightweight-charts rejects NaN/null; drop any malformed snapshot rows
+					.filter((d) => Number.isFinite(d.time) && Number.isFinite(d.value))
 					.sort((a, b) => a.time - b.time)
 					// dedupe identical timestamps (lightweight-charts requires unique time keys)
 					.filter((d, i, arr) => i === 0 || d.time !== arr[i - 1].time);
+				if (!data.length) {
+					$('chart').style.display = 'none';
+					$('chart-empty').style.display = 'flex';
+					return;
+				}
 				series.setData(data);
 				chart.timeScale().fitContent();
 			}

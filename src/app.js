@@ -1298,6 +1298,23 @@ class App {
 		dropCtrl.on('drop', ({ files }) => this.load(files));
 		dropCtrl.on('dropstart', () => this.showSpinner());
 		dropCtrl.on('droperror', () => this.hideSpinner());
+
+		// Reflect drag state on <body> so the dropzone bar can highlight.
+		let dragDepth = 0;
+		const wrap = this.dropEl;
+		wrap.addEventListener('dragenter', (e) => {
+			if (!e.dataTransfer || !Array.from(e.dataTransfer.types || []).includes('Files')) return;
+			dragDepth += 1;
+			document.body.classList.add('is-dragover');
+		});
+		wrap.addEventListener('dragleave', () => {
+			dragDepth = Math.max(0, dragDepth - 1);
+			if (dragDepth === 0) document.body.classList.remove('is-dragover');
+		});
+		wrap.addEventListener('drop', () => {
+			dragDepth = 0;
+			document.body.classList.remove('is-dragover');
+		});
 	}
 
 	// ── Avatar Creator ────────────────────────────────────────────────────────

@@ -164,18 +164,18 @@ export async function runSolanaDeploy({ agent, network, vanity }) {
 		tx.partialSign(vanityKeypair);
 	}
 
-	// Phantom + Backpack expose signAndSendTransaction; Solflare does too.
+	// Always sign locally and submit via our Helius-backed proxy. Wallet
+	// `signAndSendTransaction` routes through the wallet's own RPC, which
+	// returns 403 "Access forbidden" intermittently on mainnet.
 	const endpoint = RPC[network] || RPC.mainnet;
-	let signature;
-	if (typeof wallet.signAndSendTransaction === 'function') {
-		const res = await wallet.signAndSendTransaction(tx);
-		signature = res?.signature || res;
-	} else {
-		const signed = await wallet.signTransaction(tx);
-		const conn2 = new Connection(endpoint, 'confirmed');
-		const raw = signed.serialize();
-		signature = await conn2.sendRawTransaction(raw);
-	}
+	const signed = await wallet.signTransaction(tx);
+	const conn2 = new Connection(endpoint, 'confirmed');
+	const raw = signed.serialize();
+	const signature = await conn2.sendRawTransaction(raw, {
+		skipPreflight: false,
+		preflightCommitment: 'confirmed',
+		maxRetries: 5,
+	});
 
 	// Wait for confirmation before calling the server.
 	const conn3 = new Connection(endpoint, 'confirmed');

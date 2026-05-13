@@ -246,8 +246,9 @@ export default async function handler(req, res, id, action) {
 	}
 
 	// ── GET ─────────────────────────────────────────────────────────────────
-	if (!meta.eth_vanity) return error(res, 404, 'not_found', 'agent has no eth vanity record');
-	return json(res, 200, { data: meta.eth_vanity });
+	// Return 200 + null for the "no record yet" state. 404 is reserved for
+	// missing parent resources (agent not found). Mirrors the SNS endpoint.
+	return json(res, 200, { data: meta.eth_vanity || null });
 }
 
 // Re-exported so the test suite can hit the verifier directly without

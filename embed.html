@@ -25,6 +25,7 @@
 			import { mountEmbedEditor } from './src/editor/embed-editor.js';
 			const url = new URL(location.href);
 			mountEmbedEditor(document.getElementById('root'), {
+				widgetId: url.searchParams.get('id') || '',
 				src: url.searchParams.get('src') || '',
 				mode: url.searchParams.get('mode') || 'floating',
 				position: url.searchParams.get('position') || 'bottom-right',
