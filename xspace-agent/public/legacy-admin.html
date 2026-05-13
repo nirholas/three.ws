@@ -1,0 +1,591 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>XSpace Agent — Admin</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap');
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #0a0a0b;
+      --surface: #111113;
+      --surface-2: #18181b;
+      --border: #27272a;
+      --border-hover: #3f3f46;
+      --text: #fafafa;
+      --text-muted: #a1a1aa;
+      --text-dim: #71717a;
+      --green: #22c55e;
+      --green-bg: #052e16;
+      --yellow: #eab308;
+      --yellow-bg: #1c1a07;
+      --red: #ef4444;
+      --red-bg: #1f0707;
+      --blue: #3b82f6;
+      --blue-bg: #0c1629;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Inter', -apple-system, sans-serif;
+      padding: 24px;
+      max-width: 900px;
+      margin: 0 auto;
+      line-height: 1.5;
+    }
+
+    header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 32px;
+      padding-bottom: 16px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    header h1 {
+      font-size: 1.1rem;
+      font-weight: 600;
+      letter-spacing: -0.02em;
+    }
+
+    header .conn-badge {
+      font-size: 0.75rem;
+      color: var(--text-dim);
+      font-family: 'JetBrains Mono', monospace;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .conn-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: var(--red);
+    }
+
+    .conn-dot.ok { background: var(--green); box-shadow: 0 0 6px var(--green); }
+
+    .grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      margin-bottom: 16px;
+    }
+
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 20px;
+    }
+
+    .card.full { grid-column: 1 / -1; }
+
+    .card h2 {
+      font-size: 0.7rem;
+      color: var(--text-dim);
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      font-weight: 500;
+      margin-bottom: 16px;
+    }
+
+    /* Status section */
+    .status-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 16px;
+    }
+
+    .status-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: #333;
+      flex-shrink: 0;
+      transition: all 0.3s;
+    }
+
+    .status-dot.connected { background: var(--green); box-shadow: 0 0 8px var(--green); }
+    .status-dot.working { background: var(--yellow); box-shadow: 0 0 8px var(--yellow); animation: pulse 1.5s infinite; }
+    .status-dot.error { background: var(--red); box-shadow: 0 0 8px var(--red); }
+
+    @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.3; } }
+
+    #status-text {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    /* Buttons */
+    .btn-row { display: flex; gap: 8px; flex-wrap: wrap; }
+
+    button {
+      background: var(--surface-2);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      color: var(--text);
+      cursor: pointer;
+      font-family: 'Inter', sans-serif;
+      font-size: 0.8rem;
+      font-weight: 500;
+      padding: 8px 18px;
+      transition: all 0.15s;
+    }
+
+    button:hover:not(:disabled) { background: #252528; border-color: var(--border-hover); }
+    button:disabled { opacity: 0.35; cursor: not-allowed; }
+    button.primary { border-color: var(--green); color: var(--green); }
+    button.primary:hover:not(:disabled) { background: var(--green-bg); }
+    button.danger { border-color: var(--red); color: var(--red); }
+    button.danger:hover:not(:disabled) { background: var(--red-bg); }
+    button.warn { border-color: var(--yellow); color: var(--yellow); }
+    button.warn:hover:not(:disabled) { background: var(--yellow-bg); }
+
+    /* Inputs */
+    label {
+      font-size: 0.7rem;
+      color: var(--text-dim);
+      display: block;
+      margin-bottom: 6px;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      font-weight: 500;
+    }
+
+    input[type="text"] {
+      width: 100%;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      color: var(--text);
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.85rem;
+      padding: 10px 14px;
+      margin-bottom: 12px;
+      outline: none;
+      transition: border-color 0.15s;
+    }
+
+    input:focus { border-color: var(--blue); }
+
+    /* Agent cards */
+    .agent-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 16px; }
+
+    .agent-card {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 14px;
+    }
+
+    .agent-card .name { font-weight: 600; font-size: 0.85rem; margin-bottom: 4px; }
+    .agent-card .meta { font-size: 0.75rem; color: var(--text-dim); font-family: 'JetBrains Mono', monospace; }
+
+    .agent-status { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 0.7rem; font-weight: 500; }
+    .agent-status.idle { background: var(--green-bg); color: var(--green); }
+    .agent-status.speaking { background: var(--yellow-bg); color: var(--yellow); }
+    .agent-status.offline { background: var(--surface-2); color: var(--text-dim); }
+    .agent-status.listening { background: var(--blue-bg); color: var(--blue); }
+
+    /* Audio levels */
+    .level-bar {
+      height: 4px;
+      background: var(--surface-2);
+      border-radius: 2px;
+      margin-top: 8px;
+      overflow: hidden;
+    }
+
+    .level-fill {
+      height: 100%;
+      background: var(--green);
+      border-radius: 2px;
+      width: 0%;
+      transition: width 0.1s;
+    }
+
+    /* Turn queue */
+    .turn-info {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      font-family: 'JetBrains Mono', monospace;
+      margin-bottom: 8px;
+    }
+
+    /* 2FA section */
+    #twofa-section { display: none; }
+
+    /* Log viewer */
+    #log {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.72rem;
+      height: 260px;
+      overflow-y: auto;
+      padding: 12px;
+      color: var(--text-dim);
+      line-height: 1.8;
+    }
+
+    #log::-webkit-scrollbar { width: 6px; }
+    #log::-webkit-scrollbar-track { background: transparent; }
+    #log::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+    .log-entry { padding: 1px 0; }
+    .log-entry.ok { color: var(--green); }
+    .log-entry.err { color: var(--red); }
+    .log-entry.info { color: var(--blue); }
+    .log-entry .ts { color: var(--text-dim); opacity: 0.5; margin-right: 8px; }
+
+    /* Prompt editor */
+    textarea {
+      width: 100%;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      color: var(--text);
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.8rem;
+      padding: 10px 14px;
+      outline: none;
+      resize: vertical;
+      min-height: 80px;
+      margin-bottom: 8px;
+      transition: border-color 0.15s;
+    }
+    textarea:focus { border-color: var(--blue); }
+
+    /* Diagnostics */
+    .diag-row { display: flex; justify-content: space-between; padding: 6px 0; border-bottom: 1px solid var(--border); font-size: 0.8rem; }
+    .diag-row:last-child { border-bottom: none; }
+    .diag-label { color: var(--text-dim); }
+    .diag-value { font-family: 'JetBrains Mono', monospace; color: var(--text-muted); }
+
+    @media (max-width: 640px) {
+      .grid { grid-template-columns: 1fr; }
+      .agent-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>XSpace Agent Admin</h1>
+    <div class="conn-badge">
+      <div class="conn-dot" id="conn-dot"></div>
+      <span id="conn-text">disconnected</span>
+    </div>
+  </header>
+
+  <!-- Status & Join -->
+  <div class="grid">
+    <div class="card">
+      <h2>Bot Status</h2>
+      <div class="status-row">
+        <div class="status-dot" id="status-dot"></div>
+        <span id="status-text">disconnected</span>
+      </div>
+      <div class="btn-row">
+        <button class="primary" id="btn-start" onclick="startBot()">Start Bot</button>
+        <button class="danger" id="btn-stop" onclick="stopBot()" disabled>Stop Bot</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>Join Space</h2>
+      <label>Space URL</label>
+      <input type="text" id="space-url" placeholder="https://x.com/i/spaces/..." />
+      <div class="btn-row">
+        <button class="primary" id="btn-join" onclick="joinSpace()" disabled>Join</button>
+        <button class="warn" id="btn-leave" onclick="leaveSpace()" disabled>Leave</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 2FA -->
+  <div class="card full" id="twofa-section" style="margin-bottom:16px">
+    <h2>2FA Required</h2>
+    <label>Enter code from authenticator app</label>
+    <input type="text" id="twofa-code" placeholder="000000" maxlength="6" style="max-width:200px" />
+    <div class="btn-row">
+      <button class="primary" onclick="submit2fa()">Submit Code</button>
+    </div>
+  </div>
+
+  <!-- Agents -->
+  <div class="card full" style="margin-bottom:16px">
+    <h2>Agents</h2>
+    <div class="turn-info">Current turn: <span id="turn-display">none</span> | Queue: <span id="queue-display">empty</span></div>
+    <div class="agent-grid">
+      <div class="agent-card" id="agent-card-0">
+        <div class="name">Agent 0 — <span id="agent-name-0">Agent</span></div>
+        <div class="meta"><span class="agent-status offline" id="agent-status-0">offline</span></div>
+        <div class="level-bar"><div class="level-fill" id="level-0"></div></div>
+      </div>
+      <div class="agent-card" id="agent-card-1">
+        <div class="name">Agent 1 — <span id="agent-name-1">Agent</span></div>
+        <div class="meta"><span class="agent-status offline" id="agent-status-1">offline</span></div>
+        <div class="level-bar"><div class="level-fill" id="level-1"></div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Prompt Editor -->
+  <div class="card full" style="margin-bottom:16px">
+    <h2>Prompt Editor</h2>
+    <label>Agent 0 System Prompt</label>
+    <textarea id="prompt-0" rows="3"></textarea>
+    <label>Agent 1 System Prompt</label>
+    <textarea id="prompt-1" rows="3"></textarea>
+    <div class="btn-row">
+      <button class="primary" onclick="savePrompts()">Save Prompts</button>
+    </div>
+  </div>
+
+  <!-- Diagnostics -->
+  <div class="grid">
+    <div class="card">
+      <h2>Diagnostics</h2>
+      <div class="diag-row"><span class="diag-label">Uptime</span><span class="diag-value" id="diag-uptime">—</span></div>
+      <div class="diag-row"><span class="diag-label">AI Provider</span><span class="diag-value" id="diag-provider">—</span></div>
+      <div class="diag-row"><span class="diag-label">TTS</span><span class="diag-value" id="diag-tts">—</span></div>
+      <div class="diag-row"><span class="diag-label">STT</span><span class="diag-value" id="diag-stt">—</span></div>
+      <div class="diag-row"><span class="diag-label">Socket Latency</span><span class="diag-value" id="diag-latency">—</span></div>
+    </div>
+
+    <div class="card">
+      <h2>Log</h2>
+      <div id="log"></div>
+    </div>
+  </div>
+
+  <script src="/socket.io/socket.io.js"></script>
+  <script>
+    const socket = io('/space')
+    const dot = document.getElementById('status-dot')
+    const statusText = document.getElementById('status-text')
+    const btnStart = document.getElementById('btn-start')
+    const btnStop = document.getElementById('btn-stop')
+    const btnJoin = document.getElementById('btn-join')
+    const btnLeave = document.getElementById('btn-leave')
+    const connDot = document.getElementById('conn-dot')
+    const connText = document.getElementById('conn-text')
+    const twofaSection = document.getElementById('twofa-section')
+
+    let currentStatus = 'disconnected'
+    let _pendingJoinUrl = null
+
+    // Logging
+    function log(msg, type) {
+      const el = document.getElementById('log')
+      const entry = document.createElement('div')
+      entry.className = 'log-entry ' + (type || '')
+      const ts = new Date().toLocaleTimeString()
+      entry.innerHTML = '<span class="ts">' + ts + '</span>' + msg
+      el.prepend(entry)
+      if (el.children.length > 200) el.removeChild(el.lastChild)
+    }
+
+    // Status management
+    function setStatus(status) {
+      currentStatus = status
+      statusText.textContent = status
+      dot.className = 'status-dot'
+      btnJoin.disabled = true
+      btnLeave.disabled = true
+      btnStop.disabled = false
+
+      if (status === 'disconnected') {
+        dot.className = 'status-dot'
+        btnStart.disabled = false
+        btnStop.disabled = true
+        btnJoin.disabled = false
+      } else if (status === 'logged-in') {
+        dot.className = 'status-dot connected'
+        btnJoin.disabled = false
+        btnStart.disabled = true
+        if (_pendingJoinUrl) {
+          const url = _pendingJoinUrl
+          _pendingJoinUrl = null
+          log('Auto-joining: ' + url, 'info')
+          socket.emit('xspace:join', { spaceUrl: url })
+        }
+      } else if (status === 'speaking-in-space') {
+        dot.className = 'status-dot connected'
+        btnJoin.disabled = false
+        btnLeave.disabled = false
+        btnStart.disabled = true
+      } else if (status === 'space-ended') {
+        dot.className = 'status-dot error'
+        btnJoin.disabled = false
+        btnStart.disabled = true
+      } else {
+        dot.className = 'status-dot working'
+        btnStart.disabled = true
+      }
+    }
+
+    // Agent state updates
+    function updateAgents(data) {
+      if (data.agents) {
+        for (const [id, agent] of Object.entries(data.agents)) {
+          const nameEl = document.getElementById('agent-name-' + id)
+          const statusEl = document.getElementById('agent-status-' + id)
+          if (nameEl) nameEl.textContent = agent.name
+          if (statusEl) {
+            statusEl.textContent = agent.status
+            statusEl.className = 'agent-status ' + agent.status
+          }
+        }
+      }
+      const turnDisplay = document.getElementById('turn-display')
+      const queueDisplay = document.getElementById('queue-display')
+      turnDisplay.textContent = data.currentTurn !== null ? 'Agent ' + data.currentTurn : 'none'
+      queueDisplay.textContent = data.turnQueue && data.turnQueue.length ? data.turnQueue.map(id => 'Agent ' + id).join(', ') : 'empty'
+    }
+
+    // Socket events
+    socket.on('xSpacesStatus', ({ status }) => {
+      setStatus(status)
+      log('Status: ' + status, status === 'speaking-in-space' || status === 'logged-in' ? 'ok' : 'info')
+    })
+
+    socket.on('xSpacesError', ({ error }) => {
+      log('Error: ' + error, 'err')
+      dot.className = 'status-dot error'
+    })
+
+    socket.on('stateUpdate', updateAgents)
+
+    socket.on('agentStatus', ({ agentId, status }) => {
+      const el = document.getElementById('agent-status-' + agentId)
+      if (el) { el.textContent = status; el.className = 'agent-status ' + status }
+    })
+
+    socket.on('audioLevel', ({ agentId, level }) => {
+      const el = document.getElementById('level-' + agentId)
+      if (el) el.style.width = Math.min(100, level * 100) + '%'
+    })
+
+    socket.on('textComplete', (msg) => {
+      const who = msg.isUser ? msg.name : 'Agent ' + msg.agentId
+      log(who + ': ' + msg.text.slice(0, 120), msg.isUser ? '' : 'info')
+    })
+
+    socket.on('connect', () => {
+      connDot.className = 'conn-dot ok'
+      connText.textContent = 'connected'
+      log('Admin panel connected', 'info')
+      socket.emit('xspace:status')
+      fetchDiagnostics()
+    })
+
+    socket.on('disconnect', () => {
+      connDot.className = 'conn-dot'
+      connText.textContent = 'disconnected'
+      log('Admin panel disconnected', 'err')
+    })
+
+    socket.on('xSpaces2faRequired', () => {
+      twofaSection.style.display = 'block'
+      log('2FA required — enter code above', 'info')
+    })
+
+    socket.on('log', ({ level, message }) => {
+      log(message, level === 'error' ? 'err' : level === 'warn' ? 'err' : 'info')
+    })
+
+    // Latency measurement
+    let latencyStart = 0
+    setInterval(() => {
+      latencyStart = Date.now()
+      socket.volatile.emit('xspace:status')
+    }, 5000)
+
+    socket.on('xSpacesStatus', () => {
+      if (latencyStart) {
+        const latency = Date.now() - latencyStart
+        const el = document.getElementById('diag-latency')
+        if (el) el.textContent = latency + 'ms'
+        latencyStart = 0
+      }
+    })
+
+    // Actions
+    function startBot() {
+      log('Starting bot...', 'info')
+      socket.emit('xspace:start')
+      setStatus('launching')
+    }
+
+    function stopBot() {
+      log('Stopping bot...', 'info')
+      socket.emit('xspace:stop')
+    }
+
+    function joinSpace() {
+      const url = document.getElementById('space-url').value.trim()
+      if (!url) return log('Enter a Space URL first', 'err')
+      if (currentStatus === 'disconnected') {
+        log('Starting bot then joining...', 'info')
+        _pendingJoinUrl = url
+        socket.emit('xspace:start')
+        setStatus('launching')
+      } else {
+        log('Joining: ' + url, 'info')
+        socket.emit('xspace:join', { spaceUrl: url })
+      }
+    }
+
+    function leaveSpace() {
+      log('Leaving space...', 'info')
+      socket.emit('xspace:leave')
+    }
+
+    function submit2fa() {
+      const code = document.getElementById('twofa-code').value.trim()
+      if (!code) return
+      socket.emit('xspace:2fa', { code })
+      twofaSection.style.display = 'none'
+      log('2FA code submitted', 'info')
+    }
+
+    function savePrompts() {
+      const p0 = document.getElementById('prompt-0').value
+      const p1 = document.getElementById('prompt-1').value
+      if (p0) fetch('/admin/api/prompts/0', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ prompt: p0 }) })
+      if (p1) fetch('/admin/api/prompts/1', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ prompt: p1 }) })
+      log('Prompts saved', 'ok')
+    }
+
+    async function fetchDiagnostics() {
+      try {
+        const [configRes, healthRes] = await Promise.all([
+          fetch('/admin/api/config'), fetch('/admin/api/health')
+        ])
+        const cfg = await configRes.json()
+        const health = await healthRes.json()
+        document.getElementById('diag-provider').textContent = cfg.aiProvider + ' (' + cfg.providerType + ')'
+        document.getElementById('diag-tts').textContent = cfg.ttsProvider
+        document.getElementById('diag-stt').textContent = cfg.sttProvider
+        document.getElementById('diag-uptime').textContent = Math.round(health.uptime) + 's'
+      } catch {}
+    }
+
+    // Refresh diagnostics every 30s
+    setInterval(fetchDiagnostics, 30000)
+  </script>
+</body>
+</html>
+
+
