@@ -655,10 +655,9 @@ export class LaunchTokenModal {
 
 			this._msg('Broadcasting to Solana…');
 			const { Connection } = await import('@solana/web3.js');
-			const rpcUrl =
-				prep.cluster === 'devnet'
-					? 'https://api.devnet.solana.com'
-					: 'https://api.mainnet-beta.solana.com';
+			// Route via same-origin proxy — public mainnet RPC 403s most browsers.
+			const rpcOrigin = window.location?.origin || 'https://three.ws';
+			const rpcUrl = `${rpcOrigin}/api/solana-rpc${prep.cluster === 'devnet' ? '?net=devnet' : ''}`;
 			const conn = new Connection(rpcUrl, 'confirmed');
 
 			let signature;

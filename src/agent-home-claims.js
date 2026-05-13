@@ -5,9 +5,16 @@
  */
 
 const PUMP_PROGRAM = '6EF8rrecthR5Dkzon8Nwu78hRvfCKubJ14M5uBEwF6P';
+// Route through our same-origin proxy. The public mainnet RPC returns 403 to
+// most browser origins; the proxy forwards server-side to Helius when
+// HELIUS_API_KEY is set.
+const RPC_ORIGIN =
+	typeof window !== 'undefined' && window.location?.origin
+		? window.location.origin
+		: 'https://three.ws';
 const SOLANA_RPC = {
-	mainnet: 'https://api.mainnet-beta.solana.com',
-	devnet: 'https://api.devnet.solana.com',
+	mainnet: `${RPC_ORIGIN}/api/solana-rpc`,
+	devnet: `${RPC_ORIGIN}/api/solana-rpc?net=devnet`,
 };
 
 // Minimum SOL delta (lamports) to qualify as a fee claim rather than tx-fee noise.

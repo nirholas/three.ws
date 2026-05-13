@@ -121,10 +121,17 @@ import {
 	ASSOCIATED_TOKEN_PROGRAM_ID,
 } from '@solana/spl-token';
 
+// Route through our same-origin proxy. The public mainnet RPC returns 403 to
+// most browser origins; the proxy forwards server-side to Helius when
+// HELIUS_API_KEY is set.
+const RPC_ORIGIN =
+	typeof window !== 'undefined' && window.location?.origin
+		? window.location.origin
+		: 'https://three.ws';
 const RPC = (network) =>
 	network === 'devnet'
-		? 'https://api.devnet.solana.com'
-		: 'https://api.mainnet-beta.solana.com';
+		? `${RPC_ORIGIN}/api/solana-rpc?net=devnet`
+		: `${RPC_ORIGIN}/api/solana-rpc`;
 
 const USDC_MINT = {
 	mainnet: 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v',

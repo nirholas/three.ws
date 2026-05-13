@@ -55,6 +55,8 @@ export interface ResourceInfo {
   url: string;
   /** Human-readable description */
   description?: string;
+  /** MIME type of the response body (required on PaymentPayload.resource by PayAI) */
+  mimeType?: string;
 }
 
 // ─── Payment Requirements (per-scheme offer in 402 body) ────────────────────
@@ -119,8 +121,9 @@ export interface PaymentPayload {
   scheme: PaymentScheme;
   /** CAIP-2 network identifier (matches the chosen `accepts[]` entry) */
   network: string;
-  /** The resource URL this payment is for */
-  resource?: string;
+  /** The resource this payment is for — PayAI's facilitator requires the
+   *  ResourceInfo object shape (bare string is rejected as invalid_payload). */
+  resource?: ResourceInfo;
   /** Which accepted scheme/requirements this payment matches (full entry) */
   accepted: PaymentRequirements;
   /** Scheme-specific proof data */

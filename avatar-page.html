@@ -624,6 +624,85 @@
 				font-weight: 600;
 			}
 
+			/* ── Linked coins (pump.fun mints on agents wearing this avatar) ── */
+			.av-coins {
+				margin-top: 18px;
+				padding-top: 16px;
+				border-top: 1px solid var(--border);
+			}
+			.av-coins-heading {
+				font-size: 11px;
+				text-transform: uppercase;
+				letter-spacing: 0.08em;
+				color: var(--text-3);
+				margin: 0 0 10px;
+				font-weight: 600;
+			}
+			.av-coins-grid {
+				display: grid;
+				grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+				gap: 8px;
+			}
+			.av-coin-card {
+				display: flex;
+				flex-direction: column;
+				gap: 6px;
+				padding: 10px 12px;
+				background: var(--panel);
+				border: 1px solid var(--border);
+				border-radius: 10px;
+				text-decoration: none;
+				color: inherit;
+				transition: border-color 0.15s, transform 0.15s;
+			}
+			.av-coin-card:hover {
+				border-color: rgba(253, 224, 71, 0.45);
+				transform: translateY(-1px);
+			}
+			.av-coin-head {
+				display: flex;
+				align-items: center;
+				justify-content: space-between;
+				gap: 8px;
+			}
+			.av-coin-symbol {
+				font-family: 'Space Grotesk', sans-serif;
+				font-size: 13px;
+				font-weight: 700;
+				color: var(--warn);
+				letter-spacing: 0.04em;
+			}
+			.av-coin-net {
+				font-size: 9px;
+				letter-spacing: 0.08em;
+				text-transform: uppercase;
+				color: var(--text-3);
+				border: 1px solid var(--border-2);
+				border-radius: 999px;
+				padding: 1px 7px;
+			}
+			.av-coin-name {
+				font-size: 12px;
+				color: var(--text);
+				white-space: nowrap;
+				overflow: hidden;
+				text-overflow: ellipsis;
+			}
+			.av-coin-mint {
+				font-family: ui-monospace, 'SF Mono', monospace;
+				font-size: 10px;
+				color: var(--text-3);
+				white-space: nowrap;
+				overflow: hidden;
+				text-overflow: ellipsis;
+			}
+			.av-coin-agent {
+				font-size: 10px;
+				color: var(--text-3);
+			}
+			.av-coin-agent a { color: var(--accent-2); text-decoration: none; }
+			.av-coin-agent a:hover { color: var(--text); }
+
 			/* ── Embed panel ─────────────────────────────────── */
 			.av-embed-section { margin-bottom: 18px; }
 			.av-embed-label {

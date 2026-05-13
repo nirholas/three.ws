@@ -381,6 +381,10 @@
 			"dest": "/api/avatars/[id]/agents?id=$1"
 		},
 		{
+			"src": "/api/avatars/([^/]+)/coins",
+			"dest": "/api/avatars/[id]/coins?id=$1"
+		},
+		{
 			"src": "/api/avatars/([^/]+)/storage-mode",
 			"dest": "/api/avatars/[id]/storage-mode?id=$1"
 		},

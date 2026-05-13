@@ -130,6 +130,7 @@
 		"jose": "^5.9.6",
 		"livekit-client": "^2.18.8",
 		"node-fetch": "^3.3.2",
+		"qrcode": "^1.5.4",
 		"query-string": "^8.1.0",
 		"resend": "^6.12.2",
 		"sas-lib": "^1.0.10",

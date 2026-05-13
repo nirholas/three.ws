@@ -1,6 +1,6 @@
 import { defineConfig } from 'vite';
 import { resolve } from 'path';
-import { readFileSync, cpSync, createReadStream, existsSync, statSync } from 'fs';
+import { readFileSync, cpSync, createReadStream, existsSync, statSync, rmSync } from 'fs';
 import { VitePWA } from 'vite-plugin-pwa';
 
 // The build emits two targets controlled by the TARGET env var:
@@ -143,6 +143,11 @@ const appConfig = {
 				studio: resolve(__dirname, 'public/studio/index.html'),
 				reputation: resolve(__dirname, 'public/reputation/index.html'),
 				hydrate: resolve(__dirname, 'public/hydrate/index.html'),
+				// /agent/index.html is reachable as a static page (vercel.json
+				// routes it to itself). Registering it as a Vite input bundles
+				// its inline modules (incl. pump-modals, agent-token-widget)
+				// instead of shipping /src/* refs that 404 in production.
+				'agent-token-page': resolve(__dirname, 'public/agent/index.html'),
 				// BEGIN:DISCOVER_ROUTE
 				'my-agents': resolve(__dirname, 'public/my-agents/index.html'),
 				discover: resolve(__dirname, 'public/discover/index.html'),
@@ -434,6 +439,31 @@ const appConfig = {
 				cpSync(resolve(__dirname, 'pump-fun-skills'), resolve(__dirname, 'dist/pump-fun-skills'), {
 					recursive: true,
 				});
+			},
+		},
+		{
+			// publicDir copies `public/agent/index.html` verbatim to
+			// `dist/agent/index.html`, but we also register it as a Vite
+			// input so its inline modules are bundled (Solana SDKs etc.).
+			// The bundled output lands at `dist/public/agent/index.html`;
+			// swap it into the serving path and drop the duplicate tree
+			// so Vercel doesn't ship the raw-imports version that 404s on
+			// `/src/*` in production.
+			name: 'promote-bundled-public-html',
+			closeBundle() {
+				const pairs = [
+					['dist/public/agent/index.html', 'dist/agent/index.html'],
+				];
+				for (const [from, to] of pairs) {
+					const src = resolve(__dirname, from);
+					const dst = resolve(__dirname, to);
+					if (!existsSync(src)) continue;
+					cpSync(src, dst, { force: true });
+				}
+				const publicMirror = resolve(__dirname, 'dist/public');
+				if (existsSync(publicMirror)) {
+					rmSync(publicMirror, { recursive: true, force: true });
+				}
 			},
 		},
 		VitePWA({

@@ -18,9 +18,15 @@ const MEMO_PROGRAM_ID = new PublicKey('MemoSq4gqABAXKb96qnH8TysNcWxMyWCqXgDLGmfc
 export const MIN_STAKE_LAMPORTS = 1_000_000n; // 0.001 SOL
 export const SOL_PER_LAMPORT = 1e-9;
 
+// Route through our same-origin proxy. The public mainnet RPC returns 403 to
+// most browser origins.
+const RPC_ORIGIN =
+	typeof window !== 'undefined' && window.location?.origin
+		? window.location.origin
+		: 'https://three.ws';
 const RPC = {
-	mainnet: 'https://api.mainnet-beta.solana.com',
-	devnet: 'https://api.devnet.solana.com',
+	mainnet: `${RPC_ORIGIN}/api/solana-rpc`,
+	devnet: `${RPC_ORIGIN}/api/solana-rpc?net=devnet`,
 };
 
 /**

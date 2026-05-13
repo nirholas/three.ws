@@ -288,10 +288,14 @@ export class AgentTokenWidget {
 		if (this._wsUnsubs.length) return; // already subscribed
 		try {
 			const [{ Connection, PublicKey }] = await Promise.all([import('@solana/web3.js')]);
+			// Route through our same-origin proxy. Public mainnet RPC 403s most
+			// browser origins. NOTE: WS subscriptions still go direct to the
+			// derived ws:// URL; proxying WS is a separate concern.
+			const rpcOrigin = window.location?.origin || 'https://three.ws';
 			const url =
 				this.token.network === 'devnet'
-					? 'https://api.devnet.solana.com'
-					: 'https://api.mainnet-beta.solana.com';
+					? `${rpcOrigin}/api/solana-rpc?net=devnet`
+					: `${rpcOrigin}/api/solana-rpc`;
 			const conn = new Connection(url, 'confirmed');
 			this._wsConn = conn;
 			const subscribe = (addr, name) => {

@@ -68,12 +68,12 @@ async function getSolanaBalances(address) {
 			const info = a.account?.data?.parsed?.info;
 			if (!info) return null;
 			const { mint, tokenAmount } = info;
-			if (!tokenAmount || tokenAmount.uiAmount === 0) return null;
+			if (!tokenAmount || !tokenAmount.uiAmount || tokenAmount.uiAmount === 0) return null;
 			return { mint, amount: tokenAmount.uiAmount, decimals: tokenAmount.decimals };
 		})
 		.filter(Boolean)
 		.sort((a, b) => b.amount - a.amount)
-		.slice(0, 9);
+		.slice(0, 50);
 
 	const mintList = fungible.map((t) => t.mint).join(',');
 	let cgTokenPrices = {};
@@ -121,6 +121,7 @@ async function getSolanaBalances(address) {
 		tokens.push({ symbol, mint: t.mint, decimals: t.decimals, amount: t.amount, usd: t.amount * price, logo });
 	}
 
+	tokens.sort((a, b) => (b.usd || 0) - (a.usd || 0));
 	return {
 		chain: 'solana',
 		address,
@@ -167,7 +168,7 @@ async function getEvmBalances(address) {
 
 	const rawTokens = (tokenBalResp.result?.tokenBalances ?? [])
 		.filter((t) => t.tokenBalance && t.tokenBalance !== '0x0' && t.tokenBalance !== '0x')
-		.slice(0, 9);
+		.slice(0, 50);
 
 	const metadataResults = await Promise.allSettled(
 		rawTokens.map((t) =>
@@ -222,6 +223,7 @@ async function getEvmBalances(address) {
 		};
 	});
 
+	tokens.sort((a, b) => (b.usd || 0) - (a.usd || 0));
 	return {
 		chain: 'evm',
 		address,

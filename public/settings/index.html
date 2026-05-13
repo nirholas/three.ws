@@ -640,7 +640,7 @@
 
 			// ── Privacy (stored in localStorage until backend supports it) ──
 			const PRIV_KEY = '3dagent:default-vis';
-			document.getElementById('sel-default-vis').value = localStorage.getItem(PRIV_KEY) || 'private';
+			document.getElementById('sel-default-vis').value = localStorage.getItem(PRIV_KEY) || 'public';
 			document.getElementById('save-privacy-btn').addEventListener('click', () => {
 				const val = document.getElementById('sel-default-vis').value;
 				localStorage.setItem(PRIV_KEY, val);

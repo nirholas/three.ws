@@ -124,11 +124,16 @@ export function createX402Fetch(
         : input instanceof URL
           ? input.href
           : input.url);
+    // PayAI's facilitator rejects a bare-string `resource` with `invalid_payload`;
+    // it requires the same `{url, mimeType}` ResourceInfo object as the 402 body.
     const paymentPayload: PaymentPayload = {
       x402Version: X402_VERSION,
       scheme: accepted.scheme,
       network: accepted.network,
-      resource: resourceUrl,
+      resource: {
+        url: resourceUrl,
+        mimeType: paymentRequired.resource.mimeType ?? "application/json",
+      },
       accepted,
       payload: proof,
     };
