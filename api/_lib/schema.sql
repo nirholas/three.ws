@@ -997,15 +997,19 @@ create index if not exists pumpfun_graduations_creator on pumpfun_graduations(cr
 -- Per-skill price set by the agent owner. Authoritative source of truth for
 -- "is this skill paid, and how much?". See migration 2026-04-30-agent-monetization.sql.
 CREATE TABLE IF NOT EXISTS agent_skill_prices (
-    id            UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    agent_id      UUID NOT NULL REFERENCES agent_identities(id) ON DELETE CASCADE,
-    skill         TEXT NOT NULL,
-    currency_mint TEXT NOT NULL,
-    chain         TEXT NOT NULL DEFAULT 'solana',
-    amount        BIGINT NOT NULL,
-    is_active     BOOLEAN NOT NULL DEFAULT true,
-    created_at    TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    updated_at    TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    id                UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    agent_id          UUID NOT NULL REFERENCES agent_identities(id) ON DELETE CASCADE,
+    skill             TEXT NOT NULL,
+    currency_mint     TEXT NOT NULL,
+    chain             TEXT NOT NULL DEFAULT 'solana',
+    amount            BIGINT NOT NULL,
+    is_active         BOOLEAN NOT NULL DEFAULT true,
+    mint_decimals     SMALLINT NOT NULL DEFAULT 6,                 -- A2 cached mint decimals
+    trial_uses        INTEGER  NOT NULL DEFAULT 0,                 -- C2 trial allowance per buyer
+    time_pass_hours   INTEGER,                                     -- C3 time-pass duration
+    time_pass_amount  BIGINT,                                      -- C3 time-pass price
+    created_at        TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at        TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     UNIQUE (agent_id, skill)
 );
 
@@ -1082,6 +1086,22 @@ CREATE INDEX IF NOT EXISTS purchase_events_purchase
 
 CREATE INDEX IF NOT EXISTS purchase_events_event_time
     ON purchase_events (event, created_at DESC);
+
+-- ── csrf_tokens ──────────────────────────────────────────────────────────────
+-- Lightweight double-submit cookie tokens (A5). See api/_lib/csrf.js. Expired
+-- rows are pruned by the cron job in api/cron/[name].js.
+CREATE TABLE IF NOT EXISTS csrf_tokens (
+    token       TEXT PRIMARY KEY,
+    user_id     UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    created_at  TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    expires_at  TIMESTAMPTZ NOT NULL
+);
+
+CREATE INDEX IF NOT EXISTS csrf_tokens_user
+    ON csrf_tokens (user_id, expires_at DESC);
+
+CREATE INDEX IF NOT EXISTS csrf_tokens_expires
+    ON csrf_tokens (expires_at);
 
 -- ── agent_payment_intents ────────────────────────────────────────────────────
 -- Generic payment intent (subscriptions, one-shot, x402 invocations). Skill

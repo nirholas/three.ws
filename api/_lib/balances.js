@@ -72,38 +72,38 @@ async function getSolanaBalances(address) {
 			return { mint, amount: tokenAmount.uiAmount, decimals: tokenAmount.decimals };
 		})
 		.filter(Boolean)
-		.sort((a, b) => b.amount - a.amount)
-		.slice(0, 50);
+		.sort((a, b) => b.amount - a.amount);
 
-	const mintList = fungible.map((t) => t.mint).join(',');
-	let cgTokenPrices = {};
-	if (mintList) {
+	// CoinGecko caps each request at ~100 contract addresses; chunk to stay safe.
+	const cgTokenPrices = {};
+	for (let i = 0; i < fungible.length; i += 80) {
+		const chunk = fungible.slice(i, i + 80).map((t) => t.mint).join(',');
 		try {
-			cgTokenPrices = await fetchJson(
-				`https://api.coingecko.com/api/v3/simple/token_price/solana?contract_addresses=${mintList}&vs_currencies=usd`,
+			const part = await fetchJson(
+				`https://api.coingecko.com/api/v3/simple/token_price/solana?contract_addresses=${chunk}&vs_currencies=usd&include_24hr_change=true`,
 			);
+			Object.assign(cgTokenPrices, part);
 		} catch {
 			// best-effort
 		}
 	}
 
 	let solUsdPrice = 0;
+	let solChange24h = 0;
 	try {
 		const cgSol = await fetchJson(
-			'https://api.coingecko.com/api/v3/simple/price?ids=solana&vs_currencies=usd',
+			'https://api.coingecko.com/api/v3/simple/price?ids=solana&vs_currencies=usd&include_24hr_change=true',
 		);
 		solUsdPrice = cgSol?.solana?.usd ?? 0;
+		solChange24h = cgSol?.solana?.usd_24h_change ?? 0;
 	} catch {
 		// best-effort
 	}
 
-	const tokens = [];
-	for (const t of fungible) {
-		const price = cgTokenPrices[t.mint.toLowerCase()]?.usd ?? 0;
-		let symbol = t.mint.slice(0, 6);
-		let logo = null;
-		try {
-			const das = await fetchJson(rpcUrl, {
+	// DAS metadata is one RPC per mint; run them concurrently.
+	const metaResults = await Promise.all(
+		fungible.map((t) =>
+			fetchJson(rpcUrl, {
 				method: 'POST',
 				headers: { 'content-type': 'application/json' },
 				body: JSON.stringify({
@@ -112,20 +112,43 @@ async function getSolanaBalances(address) {
 					method: 'getAsset',
 					params: { id: t.mint },
 				}),
-			});
-			symbol = das.result?.content?.metadata?.symbol || symbol;
-			logo = das.result?.content?.links?.image || null;
-		} catch {
-			// metadata is best-effort
-		}
-		tokens.push({ symbol, mint: t.mint, decimals: t.decimals, amount: t.amount, usd: t.amount * price, logo });
-	}
+			}).catch(() => null),
+		),
+	);
+
+	const tokens = fungible.map((t, i) => {
+		const priceInfo = cgTokenPrices[t.mint.toLowerCase()] || cgTokenPrices[t.mint] || {};
+		const price = priceInfo.usd ?? 0;
+		const change24h = priceInfo.usd_24h_change ?? null;
+		const das = metaResults[i];
+		const symbol = das?.result?.content?.metadata?.symbol || t.mint.slice(0, 6);
+		const name = das?.result?.content?.metadata?.name || symbol;
+		const logo = das?.result?.content?.links?.image || null;
+		return {
+			symbol,
+			name,
+			mint: t.mint,
+			decimals: t.decimals,
+			amount: t.amount,
+			price,
+			change24h,
+			usd: t.amount * price,
+			logo,
+		};
+	});
 
 	tokens.sort((a, b) => (b.usd || 0) - (a.usd || 0));
 	return {
 		chain: 'solana',
 		address,
-		native: { symbol: 'SOL', amount: solAmount, usd: solAmount * solUsdPrice },
+		native: {
+			symbol: 'SOL',
+			name: 'Solana',
+			amount: solAmount,
+			price: solUsdPrice,
+			change24h: solChange24h,
+			usd: solAmount * solUsdPrice,
+		},
 		tokens,
 	};
 }
@@ -167,8 +190,7 @@ async function getEvmBalances(address) {
 	});
 
 	const rawTokens = (tokenBalResp.result?.tokenBalances ?? [])
-		.filter((t) => t.tokenBalance && t.tokenBalance !== '0x0' && t.tokenBalance !== '0x')
-		.slice(0, 50);
+		.filter((t) => t.tokenBalance && t.tokenBalance !== '0x0' && t.tokenBalance !== '0x');
 
 	const metadataResults = await Promise.allSettled(
 		rawTokens.map((t) =>
@@ -185,24 +207,27 @@ async function getEvmBalances(address) {
 		),
 	);
 
-	const contractList = rawTokens.map((t) => t.contractAddress).join(',');
-	let cgTokenPrices = {};
-	if (contractList) {
+	const cgTokenPrices = {};
+	for (let i = 0; i < rawTokens.length; i += 80) {
+		const chunk = rawTokens.slice(i, i + 80).map((t) => t.contractAddress).join(',');
 		try {
-			cgTokenPrices = await fetchJson(
-				`https://api.coingecko.com/api/v3/simple/token_price/ethereum?contract_addresses=${contractList}&vs_currencies=usd`,
+			const part = await fetchJson(
+				`https://api.coingecko.com/api/v3/simple/token_price/ethereum?contract_addresses=${chunk}&vs_currencies=usd&include_24hr_change=true`,
 			);
+			Object.assign(cgTokenPrices, part);
 		} catch {
 			// best-effort
 		}
 	}
 
 	let ethUsdPrice = 0;
+	let ethChange24h = 0;
 	try {
 		const cgEth = await fetchJson(
-			'https://api.coingecko.com/api/v3/simple/price?ids=ethereum&vs_currencies=usd',
+			'https://api.coingecko.com/api/v3/simple/price?ids=ethereum&vs_currencies=usd&include_24hr_change=true',
 		);
 		ethUsdPrice = cgEth?.ethereum?.usd ?? 0;
+		ethChange24h = cgEth?.ethereum?.usd_24h_change ?? 0;
 	} catch {
 		// best-effort
 	}
@@ -212,12 +237,17 @@ async function getEvmBalances(address) {
 		const decimals = meta?.decimals ?? 18;
 		const rawBal = BigInt(t.tokenBalance || '0x0');
 		const amount = Number(rawBal) / Math.pow(10, decimals);
-		const price = cgTokenPrices[t.contractAddress.toLowerCase()]?.usd ?? 0;
+		const priceInfo = cgTokenPrices[t.contractAddress.toLowerCase()] || {};
+		const price = priceInfo.usd ?? 0;
+		const change24h = priceInfo.usd_24h_change ?? null;
 		return {
 			symbol: meta?.symbol || t.contractAddress.slice(0, 8),
+			name: meta?.name || meta?.symbol || t.contractAddress.slice(0, 8),
 			contract: t.contractAddress,
 			decimals,
 			amount,
+			price,
+			change24h,
 			usd: amount * price,
 			logo: meta?.logo || null,
 		};
@@ -227,7 +257,14 @@ async function getEvmBalances(address) {
 	return {
 		chain: 'evm',
 		address,
-		native: { symbol: 'ETH', amount: ethAmount, usd: ethAmount * ethUsdPrice },
+		native: {
+			symbol: 'ETH',
+			name: 'Ethereum',
+			amount: ethAmount,
+			price: ethUsdPrice,
+			change24h: ethChange24h,
+			usd: ethAmount * ethUsdPrice,
+		},
 		tokens,
 	};
 }

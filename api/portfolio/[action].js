@@ -381,6 +381,217 @@ async function handleSend(req, res) {
 	}
 }
 
+// ── GET /api/portfolio/asset ───────────────────────────────────────────────
+//
+// Returns combined data for a single token across all of the user's agent
+// wallets: which wallets hold it, total amount, USD value, plus current market
+// data (price, 24h change, market cap) and a price history chart pulled from
+// CoinGecko. Params:
+//   chain   = "solana" | "evm"
+//   id      = "native" | <mint or 0x contract>
+//   days    = optional, defaults to 30
+//
+// Native maps to SOL on Solana and ETH on EVM (mainnet coin IDs are used for
+// the price chart; the holding is read directly from the live balances).
+
+async function cgFetch(url) {
+	const r = await fetch(url, { headers: { accept: 'application/json' } });
+	if (!r.ok) {
+		const text = await r.text().catch(() => '');
+		throw Object.assign(new Error(`coingecko ${r.status}: ${text.slice(0, 200)}`), { status: 502 });
+	}
+	return r.json();
+}
+
+async function handleAsset(req, res) {
+	if (cors(req, res, { methods: 'GET,OPTIONS', credentials: true })) return;
+	if (!method(req, res, ['GET'])) return;
+
+	const user = await getSessionUser(req, res);
+	if (!user) return error(res, 401, 'unauthorized', 'sign in required');
+
+	const rl = await limits.walletRead(user.id);
+	if (!rl.success) return error(res, 429, 'rate_limited', 'too many requests');
+
+	const url = new URL(req.url, 'http://localhost');
+	const chain = String(url.searchParams.get('chain') || '').toLowerCase();
+	const idRaw = String(url.searchParams.get('id') || '').trim();
+	const days = Math.min(365, Math.max(1, parseInt(url.searchParams.get('days') || '30', 10)));
+
+	if (chain !== 'solana' && chain !== 'evm') {
+		return error(res, 400, 'validation_error', 'chain must be solana or evm');
+	}
+	if (!idRaw) return error(res, 400, 'validation_error', 'id required');
+
+	const isNative = idRaw === 'native';
+	const id = isNative ? 'native' : idRaw;
+
+	// 1) Walk this user's wallets, fetch live balances, and pick out matching holdings.
+	const wallets = await listUserAgentWallets(user.id);
+	const chainWallets = wallets.filter((w) => w.chain === chain);
+	const balResults = await Promise.allSettled(
+		chainWallets.map((w) => getBalances({ chain: w.chain, address: w.address })),
+	);
+
+	const holdings = [];
+	let totalAmount = 0;
+	let totalUsd = 0;
+	let symbol = isNative ? (chain === 'solana' ? 'SOL' : 'ETH') : null;
+	let logo = null;
+	let decimals = isNative ? (chain === 'solana' ? 9 : 18) : null;
+	let unitPrice = 0;
+
+	for (let i = 0; i < chainWallets.length; i++) {
+		const w = chainWallets[i];
+		const r = balResults[i];
+		if (r.status !== 'fulfilled') continue;
+		const bal = r.value;
+		if (isNative) {
+			const a = Number(bal.native?.amount || 0);
+			const u = Number(bal.native?.usd || 0);
+			if (a > 0 || u > 0) {
+				holdings.push({
+					agent_id: w.agent_id,
+					agent_name: w.agent_name,
+					chain: w.chain,
+					chain_id: w.chain_id,
+					address: w.address,
+					amount: a,
+					usd: u,
+				});
+				totalAmount += a;
+				totalUsd += u;
+				if (!unitPrice && a > 0) unitPrice = u / a;
+			}
+		} else {
+			const tokens = bal.tokens || [];
+			const idLower = id.toLowerCase();
+			const match = tokens.find((t) => {
+				const tid = (t.mint || t.contract || '').toLowerCase();
+				return tid === idLower;
+			});
+			if (!match) continue;
+			symbol = symbol || match.symbol;
+			logo = logo || match.logo;
+			decimals = decimals ?? match.decimals;
+			const a = Number(match.amount || 0);
+			const u = Number(match.usd || 0);
+			holdings.push({
+				agent_id: w.agent_id,
+				agent_name: w.agent_name,
+				chain: w.chain,
+				chain_id: w.chain_id,
+				address: w.address,
+				amount: a,
+				usd: u,
+			});
+			totalAmount += a;
+			totalUsd += u;
+			if (!unitPrice && a > 0) unitPrice = u / a;
+		}
+	}
+
+	// 2) Pull market data + price history from CoinGecko.
+	//    For native: use coin id ("solana" or "ethereum").
+	//    For tokens: use /coins/{platform}/contract/{address}.
+	let market = null;
+	let chartPoints = [];
+	try {
+		if (isNative) {
+			const coinId = chain === 'solana' ? 'solana' : 'ethereum';
+			const [meta, chart] = await Promise.all([
+				cgFetch(
+					`https://api.coingecko.com/api/v3/coins/${coinId}?localization=false&tickers=false&market_data=true&community_data=false&developer_data=false`,
+				).catch(() => null),
+				cgFetch(
+					`https://api.coingecko.com/api/v3/coins/${coinId}/market_chart?vs_currency=usd&days=${days}`,
+				).catch(() => null),
+			]);
+			if (meta) {
+				symbol = (meta.symbol || symbol || '').toUpperCase();
+				logo = logo || meta.image?.small || meta.image?.thumb || null;
+				market = {
+					name: meta.name,
+					price_usd: meta.market_data?.current_price?.usd ?? null,
+					change_24h_pct: meta.market_data?.price_change_percentage_24h ?? null,
+					change_7d_pct: meta.market_data?.price_change_percentage_7d ?? null,
+					change_30d_pct: meta.market_data?.price_change_percentage_30d ?? null,
+					market_cap_usd: meta.market_data?.market_cap?.usd ?? null,
+					total_volume_usd: meta.market_data?.total_volume?.usd ?? null,
+					high_24h_usd: meta.market_data?.high_24h?.usd ?? null,
+					low_24h_usd: meta.market_data?.low_24h?.usd ?? null,
+					ath_usd: meta.market_data?.ath?.usd ?? null,
+					ath_change_pct: meta.market_data?.ath_change_percentage?.usd ?? null,
+					description: (meta.description?.en || '').split('. ').slice(0, 2).join('. '),
+					homepage: meta.links?.homepage?.[0] || null,
+					coingecko_id: coinId,
+				};
+			}
+			if (chart?.prices?.length) {
+				chartPoints = chart.prices.map(([t, p]) => ({ t: new Date(t).toISOString(), price: p }));
+			}
+		} else {
+			const platform = chain === 'solana' ? 'solana' : 'ethereum';
+			const [meta, chart] = await Promise.all([
+				cgFetch(
+					`https://api.coingecko.com/api/v3/coins/${platform}/contract/${encodeURIComponent(id)}`,
+				).catch(() => null),
+				cgFetch(
+					`https://api.coingecko.com/api/v3/coins/${platform}/contract/${encodeURIComponent(id)}/market_chart?vs_currency=usd&days=${days}`,
+				).catch(() => null),
+			]);
+			if (meta) {
+				symbol = (meta.symbol || symbol || '').toUpperCase();
+				logo = logo || meta.image?.small || meta.image?.thumb || null;
+				market = {
+					name: meta.name,
+					price_usd: meta.market_data?.current_price?.usd ?? null,
+					change_24h_pct: meta.market_data?.price_change_percentage_24h ?? null,
+					change_7d_pct: meta.market_data?.price_change_percentage_7d ?? null,
+					change_30d_pct: meta.market_data?.price_change_percentage_30d ?? null,
+					market_cap_usd: meta.market_data?.market_cap?.usd ?? null,
+					total_volume_usd: meta.market_data?.total_volume?.usd ?? null,
+					high_24h_usd: meta.market_data?.high_24h?.usd ?? null,
+					low_24h_usd: meta.market_data?.low_24h?.usd ?? null,
+					ath_usd: meta.market_data?.ath?.usd ?? null,
+					ath_change_pct: meta.market_data?.ath_change_percentage?.usd ?? null,
+					description: (meta.description?.en || '').split('. ').slice(0, 2).join('. '),
+					homepage: meta.links?.homepage?.[0] || null,
+					coingecko_id: meta.id,
+				};
+			}
+			if (chart?.prices?.length) {
+				chartPoints = chart.prices.map(([t, p]) => ({ t: new Date(t).toISOString(), price: p }));
+			}
+		}
+	} catch (e) {
+		console.error('[portfolio/asset] coingecko fetch failed', e?.message);
+	}
+
+	// If CoinGecko gave us a more reliable spot price, use it for the holding
+	// USD calculation as well so the page is internally consistent.
+	if (market?.price_usd && totalAmount > 0) {
+		totalUsd = totalAmount * market.price_usd;
+		for (const h of holdings) h.usd = h.amount * market.price_usd;
+		unitPrice = market.price_usd;
+	}
+
+	return json(res, 200, {
+		chain,
+		id,
+		is_native: isNative,
+		symbol: symbol || (chain === 'solana' ? 'SOL' : 'ETH'),
+		logo,
+		decimals,
+		unit_price_usd: unitPrice,
+		total_amount: totalAmount,
+		total_usd: totalUsd,
+		holdings,
+		market,
+		chart: { days, points: chartPoints },
+	});
+}
+
 // ── Dispatcher ─────────────────────────────────────────────────────────────
 
 export default wrap(async (req, res) => {
@@ -390,6 +601,8 @@ export default wrap(async (req, res) => {
 			return handleSummary(req, res);
 		case 'history':
 			return handleHistory(req, res);
+		case 'asset':
+			return handleAsset(req, res);
 		case 'send':
 			return handleSend(req, res);
 		default:
