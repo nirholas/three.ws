@@ -270,7 +270,7 @@ CREATE TABLE IF NOT EXISTS agent_identities (
 	home_url text,
 	avatar_url text,
 	profile_image_url text,
-	is_public boolean NOT NULL DEFAULT false,
+	is_public boolean NOT NULL DEFAULT true,
 	is_template boolean NOT NULL DEFAULT false
 );
 
@@ -298,6 +298,13 @@ alter table agent_identities add column if not exists persona_prompt_hash   text
 alter table agent_identities add column if not exists persona_prompt_sig    text;
 alter table agent_identities add column if not exists persona_tone_tags     jsonb not null default '[]'::jsonb;
 alter table agent_identities add column if not exists persona_extracted_at  timestamptz;
+-- is_public arrived via inline CREATE on fresh DBs but never as an additive
+-- migration, so pre-existing deployments are missing the column entirely —
+-- that 500s /api/avatars/:id/agents. Add it and backfill to the new default.
+alter table agent_identities add column if not exists is_public boolean not null default true;
+alter table agent_identities alter column is_public set default true;
+update agent_identities set is_public = true
+ where is_public = false and deleted_at is null;
 
 -- ── agent_memories — the agent's persistent context ──────────────────────────
 create table if not exists agent_memories (
@@ -1010,29 +1017,71 @@ CREATE INDEX IF NOT EXISTS agent_skill_prices_agent_id ON agent_skill_prices(age
 -- verified by /api/marketplace/purchase/:reference/confirm or by the
 -- /api/webhooks/solana-pay endpoint. See migration 2026-05-10-skill-purchases.sql.
 CREATE TABLE IF NOT EXISTS skill_purchases (
-    id            UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    user_id       UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-    agent_id      UUID NOT NULL REFERENCES agent_identities(id) ON DELETE CASCADE,
-    skill         TEXT NOT NULL,
-    status        TEXT NOT NULL DEFAULT 'pending'
-                    CHECK (status IN ('pending', 'confirmed', 'failed')),
-    reference     TEXT NOT NULL UNIQUE,
-    tx_signature  TEXT UNIQUE,
-    amount        BIGINT NOT NULL,
-    currency_mint TEXT NOT NULL,
-    chain         TEXT NOT NULL DEFAULT 'solana',
-    created_at    TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    updated_at    TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    confirmed_at  TIMESTAMPTZ
+    id               UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id          UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    agent_id         UUID NOT NULL REFERENCES agent_identities(id) ON DELETE CASCADE,
+    skill            TEXT NOT NULL,
+    status           TEXT NOT NULL DEFAULT 'pending'
+                       CHECK (status IN ('pending', 'confirmed', 'failed', 'expired', 'tipped', 'trial')),
+    reference        TEXT NOT NULL UNIQUE,
+    tx_signature     TEXT UNIQUE,
+    amount           BIGINT NOT NULL,
+    currency_mint    TEXT NOT NULL,
+    chain            TEXT NOT NULL DEFAULT 'solana',
+    kind             TEXT NOT NULL DEFAULT 'purchase'
+                       CHECK (kind IN ('purchase', 'trial', 'time_pass')),
+    expires_at       TIMESTAMPTZ,                                 -- A3 pending TTL
+    valid_until      TIMESTAMPTZ,                                 -- C3 time-bounded access (time_pass)
+    trial_remaining  INTEGER,                                     -- C2 trial counter
+    tipped_amount    BIGINT,                                      -- A6 mismatch-as-tip
+    referrer_user_id UUID REFERENCES users(id),                   -- C6 referral attribution
+    created_at       TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at       TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    confirmed_at     TIMESTAMPTZ
 );
 
-CREATE UNIQUE INDEX IF NOT EXISTS skill_purchases_one_confirmed_per_user
+-- 'confirmed' or 'trial' both count as active ownership for uniqueness.
+CREATE UNIQUE INDEX IF NOT EXISTS skill_purchases_one_active_per_user
     ON skill_purchases (user_id, agent_id, skill)
-    WHERE status = 'confirmed';
+    WHERE status IN ('confirmed', 'trial');
 
 CREATE INDEX IF NOT EXISTS skill_purchases_user_agent       ON skill_purchases (user_id, agent_id);
 CREATE INDEX IF NOT EXISTS skill_purchases_agent            ON skill_purchases (agent_id);
 CREATE INDEX IF NOT EXISTS skill_purchases_status_created   ON skill_purchases (status, created_at DESC);
+CREATE INDEX IF NOT EXISTS skill_purchases_expires_at
+    ON skill_purchases (expires_at)
+    WHERE status = 'pending' AND expires_at IS NOT NULL;
+
+-- ── purchase_receipts ────────────────────────────────────────────────────────
+-- Append-only signed receipts for confirmed skill purchases. See
+-- api/_lib/purchase-confirm.js and migration 2026-05-10-monetization-v2.sql.
+CREATE TABLE IF NOT EXISTS purchase_receipts (
+    id            UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    purchase_id   UUID NOT NULL REFERENCES skill_purchases(id) ON DELETE CASCADE,
+    receipt_json  JSONB NOT NULL,
+    signature     TEXT NOT NULL,                                  -- HMAC-SHA256 over canonical receipt_json
+    created_at    TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    UNIQUE (purchase_id)
+);
+
+CREATE INDEX IF NOT EXISTS purchase_receipts_created_at
+    ON purchase_receipts (created_at DESC);
+
+-- ── purchase_events ──────────────────────────────────────────────────────────
+-- Funnel telemetry for the purchase lifecycle.
+CREATE TABLE IF NOT EXISTS purchase_events (
+    id          BIGSERIAL PRIMARY KEY,
+    purchase_id UUID REFERENCES skill_purchases(id) ON DELETE CASCADE,
+    event       TEXT NOT NULL,
+    payload     JSONB NOT NULL DEFAULT '{}'::jsonb,
+    created_at  TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS purchase_events_purchase
+    ON purchase_events (purchase_id, created_at DESC);
+
+CREATE INDEX IF NOT EXISTS purchase_events_event_time
+    ON purchase_events (event, created_at DESC);
 
 -- ── agent_payment_intents ────────────────────────────────────────────────────
 -- Generic payment intent (subscriptions, one-shot, x402 invocations). Skill

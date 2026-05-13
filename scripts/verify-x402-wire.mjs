@@ -75,7 +75,9 @@ const sdkPayload = {
 	x402Version: 2,
 	scheme: accept.scheme,
 	network: accept.network,
-	resource: 'https://three.ws/api/mcp',
+	// PayAI's facilitator requires the ResourceInfo object form on the payload,
+	// not a bare URL string — a string triggers `invalid_payload` on /verify.
+	resource: { url: 'https://three.ws/api/mcp', mimeType: 'application/json' },
 	accepted: accept,
 	payload: { transaction: 'base64...', payer: '11111111111111111111111111111111' },
 };

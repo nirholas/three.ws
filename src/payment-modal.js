@@ -11,13 +11,14 @@
 
 const USDC_DECIMALS = 6;
 
-// Lazy-load Solana modules from esm.sh — same pattern as marketplace.js so
-// the browser can reuse the same cached module across both surfaces.
+// Lazy-load Solana modules via bundled npm deps. Dynamic import keeps the
+// Solana SDKs out of the initial chunk; Vite splits them into their own
+// asset that's only fetched when a payment actually happens.
 let _web3 = null;
 let _spl = null;
 async function loadSolana() {
-	if (!_web3) _web3 = await import('https://esm.sh/@solana/web3.js@1.95.4');
-	if (!_spl) _spl = await import('https://esm.sh/@solana/spl-token@0.4.8');
+	if (!_web3) _web3 = await import('@solana/web3.js');
+	if (!_spl) _spl = await import('@solana/spl-token');
 	return { web3: _web3, spl: _spl };
 }
 
@@ -270,7 +271,7 @@ export class SkillPaymentModal {
 			const { getAssociatedTokenAddressSync, createTransferInstruction } = spl;
 
 			if (!this._connection) {
-				const rpc = window.__solanaRpc || 'https://api.mainnet-beta.solana.com';
+				const rpc = window.__solanaRpc || `${window.location.origin}/api/solana-rpc`;
 				this._connection = new Connection(rpc, 'confirmed');
 			}
 

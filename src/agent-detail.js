@@ -695,7 +695,10 @@ const getProvider = () => {
 };
 
 let wallet = null;
-const connection = new solanaWeb3.Connection(solanaWeb3.clusterApiUrl('devnet'), 'confirmed');
+// Route through our same-origin proxy. Public devnet RPC is also rate-limited
+// from browsers; the proxy keeps both clusters consistent.
+const _rpcOrigin = window.location?.origin || 'https://three.ws';
+const connection = new solanaWeb3.Connection(`${_rpcOrigin}/api/solana-rpc?net=devnet`, 'confirmed');
 const connectWalletBtn = document.getElementById('connect-wallet-btn');
 
 connectWalletBtn.addEventListener('click', async () => {

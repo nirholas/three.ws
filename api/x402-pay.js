@@ -344,9 +344,10 @@ async function buildSolanaPaymentPayload({ accept, buyer, conn, resourceUrl }) {
 		x402Version: 2,
 		scheme: 'exact',
 		network: accept.network,
-		// v2 spec: resource is a string URL on the PaymentPayload. The mimeType
-		// belongs on the 402-challenge top-level resource object, not on the payload.
-		resource: resourceUrl,
+		// PayAI's v2 facilitator schema rejects a bare-string `resource` with
+		// `invalid_payload` — it requires the same `{url, mimeType}` object
+		// shape as the 402-challenge top-level resource. Keep them aligned.
+		resource: { url: resourceUrl, mimeType: 'application/json' },
 		accepted: accept,
 		payload: { transaction: txBase64 },
 	};

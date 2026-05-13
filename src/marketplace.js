@@ -2221,15 +2221,17 @@ const WALLET_PROVIDERS = [
 let connectedWallet = null; // { provider, name, publicKey }
 
 async function loadSolanaModules() {
-	if (!solanaWeb3Mod) solanaWeb3Mod = await import('https://esm.sh/@solana/web3.js@1.95.4');
-	if (!splTokenMod) splTokenMod = await import('https://esm.sh/@solana/spl-token@0.4.8');
+	if (!solanaWeb3Mod) solanaWeb3Mod = await import('@solana/web3.js');
+	if (!splTokenMod) splTokenMod = await import('@solana/spl-token');
 	return { web3: solanaWeb3Mod, spl: splTokenMod };
 }
 
 async function getSolanaConnection() {
 	if (solanaConnection) return solanaConnection;
 	const { web3 } = await loadSolanaModules();
-	solanaConnection = new web3.Connection(web3.clusterApiUrl('mainnet-beta'), 'confirmed');
+	// Route through our same-origin proxy. Public mainnet RPC 403s most browsers.
+	const rpcOrigin = window.location?.origin || 'https://three.ws';
+	solanaConnection = new web3.Connection(`${rpcOrigin}/api/solana-rpc`, 'confirmed');
 	return solanaConnection;
 }
 
@@ -2552,7 +2554,7 @@ async function startQrPurchase() {
 	if (qrEl) {
 		qrEl.innerHTML = `<canvas id="payment-qr-canvas" width="240" height="240"></canvas>
 			<p class="muted small">Scan with a Solana Pay wallet (Phantom mobile, Solflare mobile, etc.)</p>`;
-		const QRCode = await import('https://esm.sh/qrcode@1.5.3');
+		const QRCode = await import('qrcode');
 		await (QRCode.default ?? QRCode).toCanvas(document.getElementById('payment-qr-canvas'), url.toString(), { width: 240 });
 	}
 

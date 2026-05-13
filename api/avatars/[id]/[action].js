@@ -33,6 +33,8 @@ export default wrap(async (req, res) => {
 	switch (action) {
 		case 'agents':
 			return handleAgentsByAvatar(req, res);
+		case 'coins':
+			return handleCoinsByAvatar(req, res);
 		case 'glb-versions':
 			return handleGlbVersions(req, res);
 		case 'pin-ipfs':
@@ -96,6 +98,64 @@ async function handleAgentsByAvatar(req, res) {
 
 	res.setHeader('cache-control', 'public, max-age=30, s-maxage=120, stale-while-revalidate=600');
 	return json(res, 200, { agents });
+}
+
+// ── coins (pump.fun mints linked to agents wearing this avatar) ───────────
+// GET /api/avatars/:id/coins
+// Lists every pump_agent_mints row whose owning agent_identity has avatar_id
+// = :id and is public. Demo avatars short-circuit to []. One coin per agent
+// (most recent if an agent has multiple).
+
+async function handleCoinsByAvatar(req, res) {
+	if (cors(req, res, { methods: 'GET,OPTIONS' })) return;
+	if (!method(req, res, ['GET'])) return;
+
+	const id = req.query?.id;
+	if (!id) return error(res, 400, 'invalid_request', 'id required');
+
+	const rl = await limits.publicIp(clientIp(req));
+	if (!rl.success) return error(res, 429, 'rate_limited', 'too many requests');
+
+	if (String(id).startsWith('avatar_demo_')) {
+		return json(res, 200, { coins: [] });
+	}
+
+	const rows = await sql`
+		SELECT DISTINCT ON (pam.agent_id)
+		       pam.id, pam.mint, pam.network, pam.name, pam.symbol,
+		       pam.buyback_bps, pam.agent_authority, pam.metadata_uri,
+		       pam.created_at,
+		       ai.id AS agent_id, ai.name AS agent_name
+		  FROM pump_agent_mints pam
+		  JOIN agent_identities ai
+		    ON ai.id = pam.agent_id
+		   AND ai.deleted_at IS NULL
+		   AND ai.is_public = true
+		 WHERE ai.avatar_id = ${id}
+		 ORDER BY pam.agent_id, pam.created_at DESC
+	`;
+
+	const coins = rows.map((r) => ({
+		id: r.id,
+		mint: r.mint,
+		network: r.network,
+		name: r.name,
+		symbol: r.symbol,
+		buybackBps: r.buyback_bps,
+		agentAuthority: r.agent_authority,
+		metadataUri: r.metadata_uri,
+		createdAt: r.created_at,
+		agentId: r.agent_id,
+		agentName: r.agent_name,
+		agentUrl: `/agent/${r.agent_id}`,
+		pumpfunUrl:
+			r.network === 'devnet'
+				? `https://explorer.solana.com/address/${r.mint}?cluster=devnet`
+				: `https://pump.fun/${r.mint}`,
+	}));
+
+	res.setHeader('cache-control', 'public, max-age=30, s-maxage=120, stale-while-revalidate=600');
+	return json(res, 200, { coins });
 }
 
 // ── glb-versions ───────────────────────────────────────────────────────────

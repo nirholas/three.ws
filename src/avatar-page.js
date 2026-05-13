@@ -98,6 +98,7 @@ async function init() {
 	loadPlugins();
 	loadRelated();
 	loadUsedBy();
+	loadCoins();
 	measureModel(glbUrl);
 }
 
@@ -238,6 +239,10 @@ function renderShell(glbUrl) {
 					<section class="av-used-by" id="av-used-by" hidden aria-labelledby="av-used-by-heading">
 						<h3 class="av-used-by-heading" id="av-used-by-heading">Used by</h3>
 						<div class="av-used-by-grid" id="av-used-by-grid"></div>
+					</section>
+					<section class="av-coins" id="av-coins" hidden aria-labelledby="av-coins-heading">
+						<h3 class="av-coins-heading" id="av-coins-heading">Linked coins</h3>
+						<div class="av-coins-grid" id="av-coins-grid"></div>
 					</section>
 					${renderAttribution()}
 					${renderAttached()}
@@ -918,6 +923,43 @@ async function loadUsedBy() {
 					<span class="av-used-by-name">${esc(a.name)}</span>
 					${badge}
 				</div>
+			</a>`;
+		})
+		.join('');
+}
+
+// ── Linked coins (pump.fun mints on agents wearing this avatar) ──────
+
+async function loadCoins() {
+	const grid = $('av-coins-grid');
+	const section = $('av-coins');
+	if (!grid || !section) return;
+
+	const r = await fetch(`/api/avatars/${encodeURIComponent(avatarId)}/coins`);
+	if (!r.ok) return;
+	const { coins } = await r.json();
+	if (!Array.isArray(coins) || coins.length === 0) return;
+
+	section.hidden = false;
+	grid.innerHTML = coins
+		.map((c) => {
+			const symbol = c.symbol || 'TOKEN';
+			const name = c.name || c.symbol || 'Untitled token';
+			const mintShort = c.mint
+				? `${c.mint.slice(0, 4)}…${c.mint.slice(-4)}`
+				: '';
+			const network = (c.network || 'mainnet').toUpperCase();
+			const agentLine = c.agentId
+				? `On <a href="${esc(c.agentUrl)}">${esc(c.agentName || 'agent')}</a>`
+				: '';
+			return `<a class="av-coin-card" href="${esc(c.pumpfunUrl)}" target="_blank" rel="noopener" title="${esc(name)}">
+				<div class="av-coin-head">
+					<span class="av-coin-symbol">$${esc(symbol)}</span>
+					<span class="av-coin-net">${esc(network)}</span>
+				</div>
+				<div class="av-coin-name">${esc(name)}</div>
+				<div class="av-coin-mint">${esc(mintShort)}</div>
+				${agentLine ? `<div class="av-coin-agent">${agentLine}</div>` : ''}
 			</a>`;
 		})
 		.join('');

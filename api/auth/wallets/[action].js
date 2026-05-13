@@ -1,15 +1,16 @@
 // Wallet endpoints — dispatched by req.query.action.
 //   GET    /api/auth/wallets                  → handleListWallets   (action undefined)
 //   POST   /api/auth/wallets                  → handleLinkWallet    (action undefined)
+//   GET    /api/auth/wallets/check            → handleCheck         (action === 'check')
 //   POST   /api/auth/wallets/nonce            → handleNonce         (action === 'nonce')
 //   POST   /api/auth/wallets/nonce-solana     → handleNonceSolana   (action === 'nonce-solana')
 //   POST   /api/auth/wallets/link-solana      → handleLinkSolana    (action === 'link-solana')
 //   DELETE /api/auth/wallets/<address>        → handleUnlinkWallet  (action === <address>)
 //
 // Dispatcher convention: undefined action → index (GET/POST), reserved literal
-// actions handle nonce/link flows, and anything else is treated as an address
-// for DELETE. _link-nonces.js remains a separate helper (underscore-prefixed,
-// not file-routed by Vercel).
+// actions handle nonce/link/check flows, and anything else is treated as an
+// address for DELETE. _link-nonces.js remains a separate helper (underscore-
+// prefixed, not file-routed by Vercel).
 
 import { verifyMessage, getAddress } from 'ethers';
 import { z } from 'zod';
@@ -42,6 +43,11 @@ export default wrap(async (req, res) => {
 	// /api/auth/wallets — list (GET) or link (POST)
 	if (action === undefined || action === '' || action === null) {
 		return handleIndex(req, res);
+	}
+
+	// /api/auth/wallets/check — cheap pre-check: is this address already linked to the session user?
+	if (action === 'check') {
+		return handleCheck(req, res);
 	}
 
 	// /api/auth/wallets/nonce — issue link nonce (EVM/SIWE)
@@ -193,6 +199,43 @@ async function handleLinkWallet(userId, req, res) {
 	`;
 
 	return json(res, 201, { wallet: { address: claimed, chain_id: chainId } });
+}
+
+// ── Check ──────────────────────────────────────────────────────────────────
+// GET /api/auth/wallets/check?chain_type=<solana|evm>&address=<addr>
+// Returns { linked: bool } — true iff the address is already linked to the
+// session user with a matching chain_type. Used by the Solana deploy flow
+// to skip the SIWS prompt when the wallet is already linked. Unauthenticated
+// callers get { linked: false } (200) — the address simply isn't linked to
+// "the current session" when there is no session.
+
+const checkAddressRe = /^[A-Za-z0-9]{1,128}$/;
+
+async function handleCheck(req, res) {
+	if (cors(req, res, { methods: 'GET,OPTIONS', credentials: true })) return;
+	if (!method(req, res, ['GET'])) return;
+
+	const session = await getSessionUser(req);
+	if (!session) return json(res, 200, { linked: false });
+
+	const chainType = String(req.query?.chain_type || '').toLowerCase();
+	const address = String(req.query?.address || '');
+	if (!chainType || !address || !checkAddressRe.test(address)) {
+		return error(res, 400, 'invalid_request', 'chain_type and address required');
+	}
+
+	// EVM addresses normalize to lowercase; Solana base58 is case-sensitive.
+	const addrLookup = chainType === 'solana' ? address : address.toLowerCase();
+
+	const rows = await sql`
+		select 1 from user_wallets
+		where user_id = ${session.id}
+		  and address = ${addrLookup}
+		  and chain_type = ${chainType}
+		limit 1
+	`;
+
+	return json(res, 200, { linked: rows.length > 0 });
 }
 
 // ── Nonce ──────────────────────────────────────────────────────────────────

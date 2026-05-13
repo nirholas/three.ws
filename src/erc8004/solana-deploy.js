@@ -25,9 +25,16 @@ export function detectSolanaWallet() {
 	return null;
 }
 
+// Route through our same-origin proxy. The public mainnet RPC returns 403 to
+// most browser origins; the proxy forwards server-side to Helius when
+// HELIUS_API_KEY is set, otherwise to the public RPC from a datacentre IP.
+const SOLANA_RPC_ORIGIN =
+	typeof window !== 'undefined' && window.location?.origin
+		? window.location.origin
+		: 'https://three.ws';
 export const SOLANA_RPC = {
-	mainnet: 'https://api.mainnet-beta.solana.com',
-	devnet: 'https://api.devnet.solana.com',
+	mainnet: `${SOLANA_RPC_ORIGIN}/api/solana-rpc`,
+	devnet: `${SOLANA_RPC_ORIGIN}/api/solana-rpc?net=devnet`,
 };
 const RPC = SOLANA_RPC;
 

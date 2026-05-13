@@ -112,28 +112,36 @@ function openModal() {
 	return { back, inner, close };
 }
 
-// Loaded from esm.sh because this module is served raw to the browser
-// (Vercel does not bundle /src/*). Versions match package.json so signing
-// produces byte-identical transactions to the bundled Node code paths.
+// Bundled npm imports — public/agent/index.html is registered as a Vite
+// build input so its inline scripts (and this module) are processed by Rollup,
+// which resolves bare specifiers against node_modules and ships the deps
+// in the page's hashed asset chunk.
 const {
 	VersionedTransaction,
 	Connection,
 	PublicKey,
 	Keypair,
 	TransactionMessage,
-} = await import('https://esm.sh/@solana/web3.js@1.98.4');
+} = await import('@solana/web3.js');
 const {
 	getAssociatedTokenAddress,
 	createAssociatedTokenAccountInstruction,
 	getAccount,
 	TOKEN_PROGRAM_ID,
 	ASSOCIATED_TOKEN_PROGRAM_ID,
-} = await import('https://esm.sh/@solana/spl-token@0.4.14?deps=@solana/web3.js@1.98.4');
+} = await import('@solana/spl-token');
 
+// Route through our same-origin proxy. The public mainnet RPC returns 403 to
+// most browser origins; the proxy forwards server-side to Helius when
+// HELIUS_API_KEY is set.
+const RPC_ORIGIN =
+	typeof window !== 'undefined' && window.location?.origin
+		? window.location.origin
+		: 'https://three.ws';
 const RPC = (network) =>
 	network === 'devnet'
-		? 'https://api.devnet.solana.com'
-		: 'https://api.mainnet-beta.solana.com';
+		? `${RPC_ORIGIN}/api/solana-rpc?net=devnet`
+		: `${RPC_ORIGIN}/api/solana-rpc`;
 
 const USDC_MINT = {
 	mainnet: 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v',

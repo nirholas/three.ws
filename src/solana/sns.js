@@ -1,9 +1,13 @@
 import { Connection, PublicKey } from '@solana/web3.js';
 import { resolve, getFavoriteDomain } from '@bonfida/spl-name-service';
 
+// Server-side: prefer SOLANA_RPC_URL (typically Helius). Browser-side: route
+// through our same-origin proxy because public mainnet-beta 403s most origins.
 const DEFAULT_RPC_URL =
 	(typeof process !== 'undefined' && process.env?.SOLANA_RPC_URL) ||
-	'https://api.mainnet-beta.solana.com';
+	(typeof window !== 'undefined' && window.location?.origin
+		? `${window.location.origin}/api/solana-rpc`
+		: 'https://three.ws/api/solana-rpc');
 
 function makeConnection() {
 	return new Connection(DEFAULT_RPC_URL, 'confirmed');

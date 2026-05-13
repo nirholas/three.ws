@@ -128,7 +128,7 @@ export async function saveRemoteGlbToAccount(source, meta = {}) {
 		checksum_sha256: checksum,
 		name: meta.name || deriveAvatarName(source, checksum),
 		description: meta.description,
-		visibility: meta.visibility || 'private',
+		visibility: meta.visibility || 'public',
 		tags: meta.tags || [],
 		source: meta.source || 'upload',
 		source_meta: sourceMeta,

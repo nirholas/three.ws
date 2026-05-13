@@ -278,10 +278,24 @@ export default wrap(async (req, res) => {
 			status: upstream.status,
 			body: text.slice(0, 400),
 		});
-		if (process.env.DEBUG === 'true') {
-			console.warn(`[chat:${route.name}]`, upstream.status, text.slice(0, 400));
+		// Always log — diagnosing prod 502s without provider context is hopeless.
+		console.warn(`[chat:${route.name}]`, upstream.status, text.slice(0, 400));
+		// Surface the upstream reason in the response body. Strip any API-key
+		// fragments out of defence; the body is generally short JSON like
+		// {"error":{"type":"invalid_request_error","message":"..."}}.
+		let upstreamMessage = '';
+		try {
+			const parsed = JSON.parse(text);
+			upstreamMessage = parsed?.error?.message || parsed?.message || '';
+		} catch {
+			upstreamMessage = text.slice(0, 200);
 		}
-		return error(res, 502, 'upstream_error', `chat backend returned ${upstream.status}`);
+		return error(
+			res,
+			502,
+			'upstream_error',
+			`${route.name} returned ${upstream.status}${upstreamMessage ? `: ${upstreamMessage}` : ''}`,
+		);
 	}
 
 	res.writeHead(200, {
