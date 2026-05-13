@@ -41,7 +41,7 @@ create table if not exists avatars (
     source          text not null default 'upload' check (source in ('upload','avaturn','import')),
     source_meta     jsonb not null default '{}'::jsonb,
     thumbnail_key   text,
-    visibility      text not null default 'private' check (visibility in ('private','unlisted','public')),
+    visibility      text not null default 'public' check (visibility in ('private','unlisted','public')),
     tags            text[] not null default '{}',
     checksum_sha256 text,
     version         int not null default 1,
