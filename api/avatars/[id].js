@@ -20,6 +20,7 @@ import { recordEvent } from '../_lib/usage.js';
 import { z } from 'zod';
 import { avatarVisibility, parse } from '../_lib/validate.js';
 import { DEMO_AVATARS } from '../_lib/demo-avatars.js';
+import { userHasPaidPlan } from '../_lib/plans.js';
 
 const patchSchema = z.object({
 	name: z.string().trim().min(1).max(120).optional(),
@@ -101,6 +102,14 @@ export default wrap(async (req, res) => {
 			return handleGlbPatch(res, auth, id, body.glbUrl);
 		}
 		const patch = parse(patchSchema, body);
+		if (patch.visibility === 'private' && !(await userHasPaidPlan(auth.userId))) {
+			return error(
+				res,
+				402,
+				'plan_required',
+				'private avatars require a Pro plan — upgrade at /dashboard/#billing or set visibility to public/unlisted',
+			);
+		}
 		const avatar = await updateAvatar({ id, userId: auth.userId, patch });
 		if (!avatar) return error(res, 404, 'not_found', 'avatar not found or not yours');
 		return json(res, 200, { avatar });
