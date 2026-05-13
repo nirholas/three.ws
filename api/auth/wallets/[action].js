@@ -284,6 +284,11 @@ async function handleNonceSolana(req, res) {
 const linkSolanaBody = z.object({
 	message: z.string().min(32).max(4000),
 	signature: z.string().min(1).max(256),
+	// When true and the wallet is already linked to a different account, the
+	// signature proves ownership of the keypair and the row is moved to the
+	// session user atomically. The default keeps the safe "409 first, confirm
+	// second" UX: the caller must opt in to a takeover.
+	takeover: z.boolean().optional(),
 });
 
 async function handleLinkSolana(req, res) {
@@ -366,12 +371,40 @@ async function handleLinkSolana(req, res) {
 		select user_id from user_wallets where address = ${addr} limit 1
 	`;
 	if (conflict) {
-		return error(
-			res,
-			409,
-			'address_in_use',
-			'this address is already linked to another account',
-		);
+		// Signature already verified above — the caller controls the keypair.
+		// With explicit takeover consent, move the wallet row to the session
+		// user atomically. Without it, surface 409 so the UI can confirm.
+		if (!body.takeover) {
+			return error(
+				res,
+				409,
+				'address_in_use',
+				'this address is already linked to another account',
+				{ takeover_available: true },
+			);
+		}
+
+		await sql.transaction([
+			sql`delete from user_wallets where address = ${addr}`,
+			sql`insert into user_wallets (user_id, address, chain_type, is_primary)
+				values (${session.id}, ${addr}, 'solana', false)`,
+		]);
+		logAudit({
+			userId: conflict.user_id,
+			action: 'unlink_wallet_transferred',
+			resourceId: addr,
+			meta: { to_user_id: session.id },
+		});
+		logAudit({
+			userId: session.id,
+			action: 'link_wallet_solana_takeover',
+			resourceId: addr,
+			meta: { from_user_id: conflict.user_id },
+		});
+		return json(res, 200, {
+			wallet: { address: addr, chain_type: 'solana', chain_id: chain },
+			transferred: true,
+		});
 	}
 
 	await sql`

@@ -367,6 +367,10 @@ export function mountLaunchPanel(container, { getAvatar, getUser, getPreviewView
 		walletAddr: null, solBalance: null,
 		// link status: null=unknown/checking, true=linked, false=not linked
 		walletLinked: null, walletLinkChecking: false, walletLinking: false, walletLinkError: '',
+		// True after a 409 from /link-solana; flips the link row into a
+		// "Transfer wallet to this account" confirmation that re-signs with
+		// takeover=true.
+		walletConflict: false,
 
 		// agent wallet (resolved/provisioned when source switches to 'agent')
 		agentWallet: null,         // { agent_id, address, sol, lamports } | null
@@ -439,7 +443,7 @@ export function mountLaunchPanel(container, { getAvatar, getUser, getPreviewView
 			if (addr === s.walletAddr) return;
 			s.walletAddr = addr;
 			s.solBalance = null;
-			s.walletLinked = null; s.walletLinkError = '';
+			s.walletLinked = null; s.walletLinkError = ''; s.walletConflict = false;
 			render();
 			fetchBalance(addr);
 			checkWalletLinked(addr);
@@ -476,7 +480,7 @@ export function mountLaunchPanel(container, { getAvatar, getUser, getPreviewView
 			const addr = w.publicKey?.toBase58?.() || w.publicKey?.toString?.();
 			if (!addr) return;
 			s.walletAddr = addr;
-			s.walletLinked = null; s.walletLinkError = '';
+			s.walletLinked = null; s.walletLinkError = ''; s.walletConflict = false;
 			render();
 			subscribeWalletEvents(w);
 			startBalancePoll(addr);
@@ -488,6 +492,7 @@ export function mountLaunchPanel(container, { getAvatar, getUser, getPreviewView
 		s.walletAddr = null; s.solBalance = null;
 		s.walletLinked = null; s.walletLinkChecking = false;
 		s.walletLinking = false; s.walletLinkError = '';
+		s.walletConflict = false;
 		if (_balanceInterval) { clearInterval(_balanceInterval); _balanceInterval = null; }
 		render();
 	}
@@ -517,17 +522,26 @@ export function mountLaunchPanel(container, { getAvatar, getUser, getPreviewView
 
 	// Run the SIWS link ceremony for the connected wallet. Triggered by the
 	// explicit "Link wallet" button so the user understands the prompt.
-	async function linkConnectedWallet() {
+	// When `takeover` is true the server is told to move the wallet from
+	// whichever account currently holds it to the session user — only
+	// reached from the conflict confirmation UI.
+	async function linkConnectedWallet(takeover = false) {
 		const provider = detectWallet();
 		const addr = s.walletAddr;
 		if (!provider || !addr || s.walletLinking) return;
 		s.walletLinking = true; s.walletLinkError = '';
 		render();
 		try {
-			await linkSolanaWallet(provider, addr);
+			await linkSolanaWallet(provider, addr, { takeover });
 			s.walletLinked = true;
+			s.walletConflict = false;
 		} catch (e) {
-			s.walletLinkError = friendlyError(e.message || String(e));
+			if (e.code === 'address_in_use' && !takeover) {
+				s.walletConflict = true;
+				s.walletLinkError = '';
+			} else {
+				s.walletLinkError = friendlyError(e.message || String(e));
+			}
 		} finally {
 			s.walletLinking = false;
 			render();
@@ -891,7 +905,9 @@ export function mountLaunchPanel(container, { getAvatar, getUser, getPreviewView
 			// 1 ── Build / reuse metadata (shared)
 			s.phase = 'building'; s.phaseLabel = 'Uploading metadata…'; render();
 
-			const nameTrim = s.name.trim(), symTrim = s.symbol.trim(), descTrim = s.description.trim();
+			const nameTrim = s.name.trim().slice(0, 32);
+			const symTrim  = s.symbol.trim().slice(0, 10);
+			const descTrim = s.description.trim().slice(0, 500);
 			const metaKey = `${nameTrim}|${symTrim}|${descTrim}|${!!s.imageFile}`;
 
 			if (s._metaKey !== metaKey || !s._metaUrl) {
@@ -907,7 +923,14 @@ export function mountLaunchPanel(container, { getAvatar, getUser, getPreviewView
 						...(imageDataUrl ? { image_data_url: imageDataUrl } : {}),
 					}),
 				});
-				if (!mr.ok) throw new Error(`Metadata build failed (${mr.status})`);
+				if (!mr.ok) {
+					const errJson = await mr.json().catch(() => null);
+					const detail = errJson?.error_description
+						|| errJson?.issues?.map((i) => `${i.path?.join('.') || 'body'}: ${i.message}`).join('; ')
+						|| errJson?.error
+						|| `HTTP ${mr.status}`;
+					throw new Error(`Metadata build failed — ${detail}`);
+				}
 				const md = await mr.json();
 				s._metaUrl = md.metadata_url; s._metaKey = metaKey;
 			}
@@ -925,7 +948,9 @@ export function mountLaunchPanel(container, { getAvatar, getUser, getPreviewView
 
 	// Issue a SIWS "link wallet" prompt and POST it to /api/auth/wallets/link-solana.
 	// Idempotent on the server — safe to call when already linked.
-	async function linkSolanaWallet(provider, address) {
+	// With `{ takeover: true }`, an existing link on another account is moved
+	// to the session user atomically (signature already proves ownership).
+	async function linkSolanaWallet(provider, address, { takeover = false } = {}) {
 		const nonceRes = await fetch('/api/auth/wallets/nonce-solana', {
 			method: 'POST', credentials: 'include',
 			headers: { 'content-type': 'application/json' },
@@ -933,7 +958,9 @@ export function mountLaunchPanel(container, { getAvatar, getUser, getPreviewView
 		});
 		const nonceData = await nonceRes.json();
 		if (!nonceRes.ok) {
-			throw new Error(nonceData.error_description || nonceData.error || 'Could not start wallet link');
+			const err = new Error(nonceData.error_description || nonceData.error || 'Could not start wallet link');
+			err.code = nonceData.error;
+			throw err;
 		}
 
 		const msgBytes = new TextEncoder().encode(nonceData.message);
@@ -943,11 +970,14 @@ export function mountLaunchPanel(container, { getAvatar, getUser, getPreviewView
 		const linkRes = await fetch('/api/auth/wallets/link-solana', {
 			method: 'POST', credentials: 'include',
 			headers: { 'content-type': 'application/json' },
-			body: JSON.stringify({ message: nonceData.message, signature: sigBase64 }),
+			body: JSON.stringify({ message: nonceData.message, signature: sigBase64, takeover }),
 		});
 		const linkData = await linkRes.json();
 		if (!linkRes.ok) {
-			throw new Error(linkData.error_description || linkData.error || 'Wallet link failed');
+			const err = new Error(linkData.error_description || linkData.error || 'Wallet link failed');
+			err.code = linkData.error;
+			err.takeoverAvailable = linkData.takeover_available === true;
+			throw err;
 		}
 	}
 
@@ -1547,9 +1577,9 @@ export function mountLaunchPanel(container, { getAvatar, getUser, getPreviewView
 		s.agentWalletLoading = false;
 
 		if (av && av.id !== DEMO_ID) {
-			if (!s.name)           s.name        = av.name        || '';
+			if (!s.name)           s.name        = (av.name || '').slice(0, 32);
 			if (!s._symbolEdited)  s.symbol      = toSymbol(s.name);
-			if (!s.description)    s.description = av.description || '';
+			if (!s.description)    s.description = (av.description || '').slice(0, 500);
 			if (s.walletSource === 'agent') loadAgentWallet();
 		}
 
@@ -1560,9 +1590,9 @@ export function mountLaunchPanel(container, { getAvatar, getUser, getPreviewView
 
 	av = getAvatar?.() || null;
 	if (av && av.id !== DEMO_ID) {
-		s.name        = av.name        || '';
+		s.name        = (av.name || '').slice(0, 32);
 		s.symbol      = toSymbol(s.name);
-		s.description = av.description || '';
+		s.description = (av.description || '').slice(0, 500);
 	}
 
 	render();

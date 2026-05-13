@@ -302,16 +302,34 @@ function agentCard(a, onRemoved) {
 	const skillCount = (a.skills || []).length;
 	const wallet = a.wallet_address ? `${a.wallet_address.slice(0, 6)}…${a.wallet_address.slice(-4)}` : '';
 
+	const agentIdEnc = encodeURIComponent(a.id);
 	el.innerHTML = `
 		<div class="preview" data-agent-preview></div>
 		<h3>${esc(a.name || 'Agent')}</h3>
 		<p class="meta">${skillCount} skill${skillCount === 1 ? '' : 's'}${wallet ? ' · ' + esc(wallet) : ''} · ${new Date(a.created_at).toLocaleDateString()}</p>
 		<div class="row" style="gap:6px; margin-bottom:10px; flex-wrap:wrap">${onchainBadge}</div>
 		${a.description ? `<p class="meta" style="white-space:normal;color:#aaa;margin:0 0 10px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden">${esc(a.description)}</p>` : ''}
+		<details class="agent-inspector" style="margin:0 0 10px;border-top:1px solid #22222e;padding-top:10px">
+			<summary style="cursor:pointer;font-size:12px;color:#9a8cff;list-style:none">Inspector ▾</summary>
+			<div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px 12px;margin-top:10px;font-size:12px">
+				<a href="/dashboard/memory?agent=${agentIdEnc}">Memory</a>
+				<a href="/dashboard/actions?agent=${agentIdEnc}">Action log</a>
+				<a href="/dashboard/strategy?agent=${agentIdEnc}">Strategy</a>
+				<a href="/dashboard/usage?agent=${agentIdEnc}">LLM usage</a>
+				<a href="/dashboard/voice?agent=${agentIdEnc}">Voice</a>
+				<a href="/dashboard/sns?agent=${agentIdEnc}">SNS domains</a>
+				<a href="/dashboard/delegation?agent=${agentIdEnc}">Delegation</a>
+				<a href="/dashboard/embed-policy?agent=${agentIdEnc}">Embed policy</a>
+				<a href="/dashboard/portfolio?agent=${agentIdEnc}">Portfolio &amp; NFTs</a>
+				<a href="/dashboard/sessions?agent=${agentIdEnc}">Sessions</a>
+				<a href="/dashboard/storage?agent=${agentIdEnc}">Storage</a>
+				<a href="/dashboard/tokens?agent=${agentIdEnc}">Tokens (Pump.fun)</a>
+			</div>
+		</details>
 		<div class="footer">
 			<div class="actions">
-				<a class="btn sec" href="/agent/${encodeURIComponent(a.id)}">Open</a>
-				<a class="btn sec" href="/agent-edit.html?id=${encodeURIComponent(a.id)}">Edit</a>
+				<a class="btn sec" href="/agent/${agentIdEnc}">Open</a>
+				<a class="btn sec" href="/agent-edit.html?id=${agentIdEnc}">Edit</a>
 				${a.is_registered ? '' : `<a class="btn sec" href="/deploy${a.avatar_id ? '?avatar=' + encodeURIComponent(a.avatar_id) : ''}" title="Mint as ERC-8004 agent">Deploy on-chain</a>`}
 				<button class="btn sec danger" data-del>Delete</button>
 			</div>
@@ -516,6 +534,15 @@ async function renderAvatars(root) {
 function avatarCard(a) {
 	const el = document.createElement('div');
 	el.className = 'card';
+	const isPrivate = a.visibility === 'private';
+	const studioUrl = `/studio?avatar=${encodeURIComponent(a.id)}`;
+	const viewUrl = `/avatars/${encodeURIComponent(a.id)}`;
+	const embedDisabledAttr = isPrivate
+		? 'disabled title="Set this avatar to public or unlisted to embed it."'
+		: '';
+	const copyDisabledAttr = isPrivate
+		? 'disabled title="Private avatars have no public link. Switch to unlisted or public to share."'
+		: '';
 	el.innerHTML = `
 		<div class="preview" data-preview></div>
 		<h3>${esc(a.name)}</h3>
@@ -524,6 +551,10 @@ function avatarCard(a) {
 		<div class="footer">
 			<select data-vis aria-label="Visibility">${visibilityOptionsHtml(a.visibility)}</select>
 			<div class="actions">
+				<a class="btn" href="${attr(studioUrl)}" title="Open this avatar in Studio to build an embeddable widget">Studio</a>
+				<button class="btn" data-embed ${embedDisabledAttr}>Embed</button>
+				<a class="btn sec" href="${attr(viewUrl)}" target="_blank" rel="noopener" title="Open the public viewer in a new tab">View</a>
+				<button class="btn sec" data-copy-url ${copyDisabledAttr}>Copy URL</button>
 				<a class="btn sec" href="/dashboard/edit/${encodeURIComponent(a.id)}">Edit</a>
 				<button class="btn sec" data-replace>Replace GLB</button>
 				<a class="btn sec" href="/deploy?avatar=${encodeURIComponent(a.id)}" title="Mint as ERC-8004 agent">Deploy on-chain</a>
@@ -537,11 +568,32 @@ function avatarCard(a) {
 	mountAvatarWalletSection(el.querySelector('[data-wallet-host]'), a);
 
 	el.querySelector('[data-vis]').addEventListener('change', async (e) => {
+		const next = e.target.value;
 		try {
-			await api.patchAvatar(a.id, { visibility: e.target.value });
-			a.visibility = e.target.value;
+			await api.patchAvatar(a.id, { visibility: next });
+			a.visibility = next;
+			const nowPrivate = next === 'private';
+			const embedBtn = el.querySelector('[data-embed]');
+			const copyBtn = el.querySelector('[data-copy-url]');
+			if (embedBtn) {
+				embedBtn.disabled = nowPrivate;
+				embedBtn.title = nowPrivate
+					? 'Set this avatar to public or unlisted to embed it.'
+					: '';
+			}
+			if (copyBtn) {
+				copyBtn.disabled = nowPrivate;
+				copyBtn.title = nowPrivate
+					? 'Private avatars have no public link. Switch to unlisted or public to share.'
+					: '';
+			}
+			const metaEl = el.querySelector('.meta');
+			if (metaEl) {
+				metaEl.textContent = `${a.size_bytes ? fmtSize(a.size_bytes) : ''} · ${next} · ${new Date(a.created_at).toLocaleDateString()}`;
+			}
 		} catch (err) {
-			alert(err.message);
+			toast(err.message || 'Failed to update visibility', true);
+			e.target.value = a.visibility;
 		}
 	});
 	el.querySelector('[data-del]').addEventListener('click', async () => {
@@ -554,6 +606,14 @@ function avatarCard(a) {
 		}
 	});
 	el.querySelector('[data-replace]').addEventListener('click', () => replaceGlbFlow(a, el));
+	el.querySelector('[data-embed]').addEventListener('click', (e) => {
+		if (e.currentTarget.disabled) return;
+		openAvatarEmbedModal(a);
+	});
+	el.querySelector('[data-copy-url]').addEventListener('click', (e) => {
+		if (e.currentTarget.disabled) return;
+		copyToClipboard(`${location.origin}/avatars/${a.id}`, e.currentTarget);
+	});
 	return el;
 }
 
@@ -643,22 +703,43 @@ async function loadXPanel({ host, meterEl, bodyEl, avatar }) {
 	const used = status.posts_used;
 	const quota = status.quota;
 	const remaining = Math.max(0, quota - used);
-	meterEl.innerHTML = `@${esc(status.username)} · <span style="color:${remaining === 0 ? '#ffb3b3' : '#9a8cff'}">${used}/${quota} posts</span>`;
+	const tier = status.tier || 'free';
+	const tierBadge = tier === 'pro'
+		? `<span style="background:rgba(106,92,255,0.15);color:#a78bfa;padding:2px 7px;border-radius:99px;font-size:10px;font-weight:600;margin-left:6px">PRO</span>`
+		: `<a href="/pricing" style="background:rgba(255,184,77,0.15);color:#ffb84d;padding:2px 7px;border-radius:99px;font-size:10px;font-weight:600;margin-left:6px;text-decoration:none">FREE · upgrade</a>`;
+	meterEl.innerHTML = `@${esc(status.username)} ${tierBadge} <span style="color:${remaining === 0 ? '#ffb3b3' : '#9a8cff'};margin-left:6px">${used}/${quota}</span>`;
 
 	bodyEl.innerHTML = `
-		<textarea data-x-text placeholder="What should your agent tweet?" rows="3" maxlength="280" style="width:100%;font-family:inherit"></textarea>
+		<div class="row" style="gap:8px;margin-bottom:8px;font-size:12px;flex-wrap:wrap;align-items:center">
+			<label style="color:#888">Tone
+				<select data-x-tone style="width:auto;display:inline-block;margin-left:4px">
+					<option value="neutral">Neutral</option>
+					<option value="hype">Hype</option>
+					<option value="sarcastic">Sarcastic</option>
+					<option value="technical">Technical</option>
+					<option value="deadpan">Deadpan</option>
+				</select>
+			</label>
+			<label style="color:#888"><input type="checkbox" data-x-thread style="width:auto;display:inline-block;margin:0 4px 0 8px"> Thread</label>
+			<label style="color:#888"><input type="checkbox" data-x-link checked style="width:auto;display:inline-block;margin:0 4px 0 8px"> Append three.ws link</label>
+		</div>
+		<textarea data-x-text placeholder="What should your agent tweet? (or click Draft with AI)" rows="3" style="width:100%;font-family:inherit"></textarea>
 		<div class="row" style="justify-content:space-between;margin-top:6px;font-size:11px">
-			<span class="muted"><span data-x-count>0</span>/280</span>
+			<span class="muted"><span data-x-count>0</span> chars</span>
 			<span class="muted">Resets ${new Date(status.month_resets_at).toLocaleDateString()}</span>
 		</div>
 		<div class="row" style="gap:8px;margin-top:10px;flex-wrap:wrap">
-			<button class="btn sec" data-x-draft type="button">✨ Draft with AI</button>
+			<button class="btn sec" data-x-draft type="button">✨ Draft (1)</button>
+			<button class="btn sec" data-x-draft3 type="button">✨ Draft 3 options</button>
 			<button class="btn" data-x-post type="button" ${remaining === 0 ? 'disabled' : ''}>Post now</button>
 			<button class="btn sec" data-x-schedule type="button" ${remaining === 0 ? 'disabled' : ''}>Schedule…</button>
 			<button class="btn sec" data-x-disconnect type="button" style="margin-left:auto;font-size:11px;padding:4px 8px;background:transparent;color:#888">Disconnect</button>
 		</div>
+		<div data-x-drafts style="margin-top:10px"></div>
 		<div data-x-msg style="margin-top:10px;font-size:13px"></div>
+		<div data-x-reviews style="margin-top:14px"></div>
 		<div data-x-scheduled style="margin-top:14px"></div>
+		<div data-x-analytics style="margin-top:14px"></div>
 		<div data-x-triggers style="margin-top:18px;padding-top:14px;border-top:1px solid #22222e"></div>
 	`;
 
@@ -666,38 +747,93 @@ async function loadXPanel({ host, meterEl, bodyEl, avatar }) {
 	const countEl = bodyEl.querySelector('[data-x-count]');
 	const msgEl = bodyEl.querySelector('[data-x-msg]');
 	const draftBtn = bodyEl.querySelector('[data-x-draft]');
+	const draft3Btn = bodyEl.querySelector('[data-x-draft3]');
 	const postBtn = bodyEl.querySelector('[data-x-post]');
 	const scheduleBtn = bodyEl.querySelector('[data-x-schedule]');
 	const disconnectBtn = bodyEl.querySelector('[data-x-disconnect]');
 	const scheduledEl = bodyEl.querySelector('[data-x-scheduled]');
 	const triggersEl = bodyEl.querySelector('[data-x-triggers]');
+	const reviewsEl = bodyEl.querySelector('[data-x-reviews]');
+	const analyticsEl = bodyEl.querySelector('[data-x-analytics]');
+	const draftsEl = bodyEl.querySelector('[data-x-drafts]');
+	const toneEl = bodyEl.querySelector('[data-x-tone]');
+	const threadEl = bodyEl.querySelector('[data-x-thread]');
+	const linkEl = bodyEl.querySelector('[data-x-link]');
 
 	const setMsg = (text, color = '#9a8cff') => { msgEl.style.color = color; msgEl.innerHTML = text; };
 	textEl.addEventListener('input', () => { countEl.textContent = textEl.value.length; });
 
-	draftBtn.addEventListener('click', async () => {
-		const original = draftBtn.textContent;
-		draftBtn.disabled = true;
-		draftBtn.textContent = 'Drafting…';
+	function readThreadParts() {
+		const raw = textEl.value;
+		if (!threadEl.checked) return null;
+		return raw.split(/\n---+\n|\n\n\n+/).map((s) => s.trim()).filter(Boolean);
+	}
+
+	async function generateDrafts(count) {
 		try {
 			const r = await fetch('/api/x/draft', {
-				method: 'POST',
-				credentials: 'include',
+				method: 'POST', credentials: 'include',
 				headers: { 'content-type': 'application/json' },
-				body: JSON.stringify({ agent_id: avatar.agent_id || avatar.id, prompt: textEl.value.trim() }),
+				body: JSON.stringify({
+					agent_id: avatar.agent_id || avatar.id,
+					prompt: textEl.value.trim(),
+					tone: toneEl.value,
+					thread: threadEl.checked,
+					count,
+				}),
 			});
 			const data = await r.json();
 			if (!r.ok) throw new Error(data.error_description || 'draft failed');
-			textEl.value = data.text;
-			countEl.textContent = data.text.length;
-			setMsg('Draft ready — review and post.');
+			return data.drafts;
 		} catch (err) {
 			setMsg(err.message, '#ffb3b3');
-		} finally {
-			draftBtn.disabled = false;
-			draftBtn.textContent = original;
+			return null;
 		}
-	});
+	}
+
+	function renderDrafts(drafts) {
+		if (!drafts || !drafts.length) { draftsEl.innerHTML = ''; return; }
+		if (drafts.length === 1) {
+			const d = drafts[0];
+			if (d.thread_parts) textEl.value = d.thread_parts.join('\n\n\n');
+			else textEl.value = d.text;
+			countEl.textContent = textEl.value.length;
+			draftsEl.innerHTML = '';
+			setMsg('Draft ready — review and post.');
+			return;
+		}
+		draftsEl.innerHTML = `
+			<div class="muted" style="font-size:11px;text-transform:uppercase;letter-spacing:0.07em;margin-bottom:6px">Pick one</div>
+			${drafts.map((d, i) => {
+				const display = d.thread_parts ? d.thread_parts.join('\n\n— —\n\n') : d.text;
+				return `<div data-draft-idx="${i}" style="padding:10px 12px;background:#0f0f17;border:1px solid #22222e;border-radius:8px;margin-bottom:6px;cursor:pointer;font-size:13px;color:#ccc;white-space:pre-wrap">${esc(display)}</div>`;
+			}).join('')}
+		`;
+		draftsEl.querySelectorAll('[data-draft-idx]').forEach((el) => {
+			el.addEventListener('click', () => {
+				const d = drafts[Number(el.getAttribute('data-draft-idx'))];
+				if (d.thread_parts) textEl.value = d.thread_parts.join('\n\n\n');
+				else textEl.value = d.text;
+				countEl.textContent = textEl.value.length;
+				draftsEl.innerHTML = '';
+				setMsg('Selected.');
+			});
+		});
+	}
+
+	async function doDraft(count) {
+		const btn = count === 1 ? draftBtn : draft3Btn;
+		const original = btn.textContent;
+		btn.disabled = true;
+		btn.textContent = 'Drafting…';
+		const drafts = await generateDrafts(count);
+		btn.disabled = false;
+		btn.textContent = original;
+		if (drafts) renderDrafts(drafts);
+	}
+
+	draftBtn.addEventListener('click', () => doDraft(1));
+	draft3Btn.addEventListener('click', () => doDraft(3));
 
 	postBtn.addEventListener('click', async () => {
 		const text = textEl.value.trim();
@@ -705,15 +841,24 @@ async function loadXPanel({ host, meterEl, bodyEl, avatar }) {
 		postBtn.disabled = true;
 		setMsg('Posting…');
 		try {
+			const parts = readThreadParts();
+			const body = parts && parts.length > 1
+				? { thread_parts: parts, agent_id: avatar.agent_id || avatar.id, append_link: linkEl.checked }
+				: { text, agent_id: avatar.agent_id || avatar.id, append_link: linkEl.checked };
 			const r = await fetch('/api/x/post', {
-				method: 'POST',
-				credentials: 'include',
+				method: 'POST', credentials: 'include',
 				headers: { 'content-type': 'application/json' },
-				body: JSON.stringify({ text, agent_id: avatar.agent_id || avatar.id }),
+				body: JSON.stringify(body),
 			});
 			const data = await r.json();
-			if (!r.ok) throw new Error(data.error_description || 'post failed');
-			setMsg(`Posted: <a href="${data.url}" target="_blank" rel="noopener">${data.url}</a>`);
+			if (!r.ok) {
+				if (data.upgrade_url) {
+					setMsg(`${data.error_description} <a href="${data.upgrade_url}">Upgrade to Pro</a>`, '#ffb3b3');
+					return;
+				}
+				throw new Error(data.error_description || 'post failed');
+			}
+			setMsg(`Posted: <a href="${data.url}" target="_blank" rel="noopener">${data.url}</a>${data.thread ? ` (${data.thread.length}-tweet thread)` : ''}`);
 			textEl.value = '';
 			countEl.textContent = 0;
 			loadXPanel({ host, meterEl, bodyEl, avatar });
@@ -734,8 +879,7 @@ async function loadXPanel({ host, meterEl, bodyEl, avatar }) {
 		setMsg('Scheduling…');
 		try {
 			const r = await fetch('/api/x/schedule', {
-				method: 'POST',
-				credentials: 'include',
+				method: 'POST', credentials: 'include',
 				headers: { 'content-type': 'application/json' },
 				body: JSON.stringify({ text, scheduled_at: when.toISOString(), agent_id: avatar.agent_id || avatar.id }),
 			});
@@ -3683,6 +3827,152 @@ function clampInt(v, lo, hi, fallback) {
 function makeIframeSnippet(w, pageUrl, width, height) {
 	const title = (w.name || 'Widget').replace(/"/g, '&quot;');
 	return `<iframe src="${pageUrl}" width="${width}" height="${height}" style="border:0;border-radius:12px;max-width:100%" allow="autoplay; xr-spatial-tracking; clipboard-write" title="${title}" loading="lazy"></iframe>`;
+}
+
+// ── Avatar embed modal ──────────────────────────────────────────────────────
+// Builds a copy-paste <iframe> for /a-embed.html?avatar=<id> with size presets,
+// background choice, and live preview. Mirrors openShareModal() for parity.
+function openAvatarEmbedModal(avatar) {
+	const SIZES = [
+		{ label: 'Square', width: 480, height: 480 },
+		{ label: 'Portrait', width: 360, height: 540 },
+		{ label: 'Banner', width: 1200, height: 400 },
+		{ label: 'Custom', width: 0, height: 0 },
+	];
+	let active = 0;
+	let dim = { ...SIZES[active] };
+	const opts = { bg: 'transparent', name: true, openLink: true };
+
+	const buildEmbedUrl = () => {
+		const u = new URL('/a-embed.html', location.origin);
+		u.searchParams.set('avatar', avatar.id);
+		if (opts.bg !== 'transparent') u.searchParams.set('bg', opts.bg);
+		if (!opts.name) u.searchParams.set('name', '0');
+		if (!opts.openLink) u.searchParams.set('open-link', '0');
+		return u.toString();
+	};
+
+	const overlay = document.createElement('div');
+	overlay.className = 'modal-overlay';
+	overlay.innerHTML = `
+		<div class="modal" role="dialog" aria-label="Embed avatar">
+			<h2>Embed "${esc(avatar.name || 'avatar')}"</h2>
+			<p class="sub">Drop this iframe into any site to render the avatar inline.</p>
+			<div class="size-presets" role="tablist">
+				${SIZES.map((s, i) => `<button type="button" data-i="${i}" class="${i === active ? 'active' : ''}" role="tab" aria-selected="${i === active}">${esc(s.label)}${s.width ? ` (${s.width}×${s.height})` : ''}</button>`).join('')}
+			</div>
+			<div class="size-inputs">
+				<label class="muted" style="font-size:12px">W <input id="a-em-w" type="number" min="120" max="2000" value="${dim.width}"></label>
+				<label class="muted" style="font-size:12px">H <input id="a-em-h" type="number" min="120" max="2000" value="${dim.height}"></label>
+			</div>
+			<div class="size-presets" style="margin-bottom:14px" role="tablist" aria-label="Background">
+				<button type="button" data-bg="transparent" class="active">Transparent</button>
+				<button type="button" data-bg="dark">Dark</button>
+				<button type="button" data-bg="light">Light</button>
+			</div>
+			<div class="row" style="gap:14px; flex-wrap:wrap; margin-bottom:14px; font-size:12px; color:#bbb">
+				<label class="row" style="gap:6px"><input type="checkbox" id="a-em-name" checked> Name plate</label>
+				<label class="row" style="gap:6px"><input type="checkbox" id="a-em-link" checked> "Open ↗" link</label>
+			</div>
+			<div style="background:#0f0f17; border:1px solid var(--border); border-radius:10px; padding:12px; margin-bottom:12px">
+				<div class="muted" style="font-size:11px; margin-bottom:8px">Live preview (scaled to fit)</div>
+				<div id="a-em-preview" style="display:grid; place-items:center; min-height:200px; max-height:340px; overflow:hidden"></div>
+			</div>
+			<div>
+				<div class="row" style="justify-content:space-between; margin-bottom:4px"><strong style="font-size:12px">Iframe</strong><button class="btn sec" id="a-em-copy" type="button">Copy</button></div>
+				<pre id="a-em-snip" style="margin:0"></pre>
+			</div>
+			<div class="row" style="justify-content:space-between; margin-top:14px">
+				<a class="muted" style="font-size:12px" href="/avatars/${encodeURIComponent(avatar.id)}" target="_blank" rel="noopener">Open public page ↗</a>
+				<button class="btn sec" id="a-em-close" type="button">Close</button>
+			</div>
+		</div>
+	`;
+	document.body.appendChild(overlay);
+	requestAnimationFrame(() => overlay.classList.add('open'));
+
+	const wInput = overlay.querySelector('#a-em-w');
+	const hInput = overlay.querySelector('#a-em-h');
+	const snipEl = overlay.querySelector('#a-em-snip');
+	const previewEl = overlay.querySelector('#a-em-preview');
+	const sizeBtns = overlay.querySelectorAll('.size-presets [data-i]');
+	const bgBtns = overlay.querySelectorAll('.size-presets [data-bg]');
+
+	const safeName = (avatar.name || 'avatar').replace(/"/g, '&quot;');
+	const refresh = () => {
+		const url = buildEmbedUrl();
+		snipEl.textContent = `<iframe src="${url}" width="${dim.width}" height="${dim.height}" style="border:0;border-radius:12px;max-width:100%" allow="xr-spatial-tracking" title="${safeName}" loading="lazy"></iframe>`;
+		const maxW = 320,
+			maxH = 320;
+		const scale = Math.min(maxW / dim.width, maxH / dim.height, 1);
+		previewEl.innerHTML = `<iframe src="${attr(url)}" style="width:${dim.width}px; height:${dim.height}px; border:0; transform:scale(${scale}); transform-origin:center" title="Preview" allow="xr-spatial-tracking"></iframe>`;
+		previewEl.style.width = `${dim.width * scale}px`;
+		previewEl.style.height = `${dim.height * scale}px`;
+	};
+	const setPreset = (i) => {
+		active = i;
+		sizeBtns.forEach((b, j) => {
+			b.classList.toggle('active', i === j);
+			b.setAttribute('aria-selected', i === j ? 'true' : 'false');
+		});
+		if (SIZES[i].width) {
+			dim = { width: SIZES[i].width, height: SIZES[i].height };
+			wInput.value = dim.width;
+			hInput.value = dim.height;
+		}
+		refresh();
+	};
+	sizeBtns.forEach((b) => b.addEventListener('click', () => setPreset(Number(b.dataset.i))));
+	bgBtns.forEach((b) =>
+		b.addEventListener('click', () => {
+			opts.bg = b.dataset.bg;
+			bgBtns.forEach((x) => x.classList.toggle('active', x === b));
+			refresh();
+		}),
+	);
+	const onDimChange = () => {
+		dim = {
+			width: clampInt(wInput.value, 120, 2000, 480),
+			height: clampInt(hInput.value, 120, 2000, 480),
+		};
+		active = SIZES.length - 1;
+		sizeBtns.forEach((b, j) => {
+			b.classList.toggle('active', j === active);
+			b.setAttribute('aria-selected', j === active ? 'true' : 'false');
+		});
+		refresh();
+	};
+	wInput.addEventListener('input', onDimChange);
+	hInput.addEventListener('input', onDimChange);
+	overlay.querySelector('#a-em-name').addEventListener('change', (e) => {
+		opts.name = e.target.checked;
+		refresh();
+	});
+	overlay.querySelector('#a-em-link').addEventListener('change', (e) => {
+		opts.openLink = e.target.checked;
+		refresh();
+	});
+
+	const close = () => {
+		overlay.classList.remove('open');
+		setTimeout(() => {
+			overlay.remove();
+			document.removeEventListener('keydown', onKey);
+		}, 200);
+	};
+	const onKey = (e) => {
+		if (e.key === 'Escape') close();
+	};
+	document.addEventListener('keydown', onKey);
+	overlay.addEventListener('click', (e) => {
+		if (e.target === overlay) close();
+	});
+	overlay.querySelector('#a-em-close').addEventListener('click', close);
+	overlay
+		.querySelector('#a-em-copy')
+		.addEventListener('click', (e) => copyToClipboard(snipEl.textContent, e.currentTarget));
+
+	refresh();
 }
 
 // ── shared widget UI helpers ────────────────────────────────────────────────

@@ -189,6 +189,10 @@
 			"dest": "/three-ws-launch-week.html"
 		},
 		{
+			"src": "/pricing/?",
+			"dest": "/pricing.html"
+		},
+		{
 			"src": "/deploy",
 			"dest": "/app.html"
 		},
@@ -223,6 +227,30 @@
 		{
 			"src": "/dashboard/embed-policy",
 			"dest": "/dashboard/embed-policy.html"
+		},
+		{
+			"src": "/dashboard/memory",
+			"dest": "/dashboard/memory.html"
+		},
+		{
+			"src": "/dashboard/strategy",
+			"dest": "/dashboard/strategy.html"
+		},
+		{
+			"src": "/dashboard/voice",
+			"dest": "/dashboard/voice.html"
+		},
+		{
+			"src": "/dashboard/sns",
+			"dest": "/dashboard/sns.html"
+		},
+		{
+			"src": "/dashboard/delegation",
+			"dest": "/dashboard/delegation.html"
+		},
+		{
+			"src": "/dashboard/tokens",
+			"dest": "/dashboard/tokens.html"
 		},
 		{
 			"src": "/dashboard/(agents|avatars|create|upload|animations|widgets|embed|keys|mcp|monetization|payments|subscriptions|billing|revenue|earnings|account)/?",
@@ -349,12 +377,20 @@
 			"dest": "/api/agents/[id]"
 		},
 		{
+			"src": "/api/avatars/([^/]+)/agents",
+			"dest": "/api/avatars/[id]/agents?id=$1"
+		},
+		{
 			"src": "/api/avatars/([^/]+)/storage-mode",
 			"dest": "/api/avatars/[id]/storage-mode?id=$1"
 		},
 		{
 			"src": "/api/avatars/([^/]+)/pin-ipfs",
 			"dest": "/api/avatars/[id]/pin-ipfs?id=$1"
+		},
+		{
+			"src": "/api/avatars/([^/]+)/thumbnail",
+			"dest": "/api/avatars/[id]/thumbnail?id=$1"
 		},
 		{
 			"src": "/dashboard/storage",
@@ -1153,6 +1189,24 @@
 			"dest": "/sitemap.xml"
 		},
 		{
+			"src": "/sitemap",
+			"dest": "/sitemap/index.html"
+		},
+		{
+			"src": "/sitemap/",
+			"dest": "/sitemap/index.html"
+		},
+		{
+			"src": "/llms.txt",
+			"headers": { "content-type": "text/plain; charset=utf-8", "cache-control": "public, max-age=3600" },
+			"dest": "/llms.txt"
+		},
+		{
+			"src": "/llms-full.txt",
+			"headers": { "content-type": "text/plain; charset=utf-8", "cache-control": "public, max-age=3600" },
+			"dest": "/llms-full.txt"
+		},
+		{
 			"src": "/app",
 			"dest": "/app.html"
 		},
@@ -1301,6 +1355,10 @@
 		{
 			"path": "/api/cron/run-x-triggers",
 			"schedule": "*/5 * * * *"
+		},
+		{
+			"path": "/api/cron/fetch-x-metrics",
+			"schedule": "0 */6 * * *"
 		},
 		{
 			"path": "/api/cron/pumpfun-signals",

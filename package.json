@@ -43,6 +43,8 @@
 		"postinstall": "npm run build --prefix agent-payments-sdk && node scripts/fix-pump-sdk-esm.mjs",
 		"dev": "vite --port 3000",
 		"dev:lib": "TARGET=lib vite",
+		"build:pages": "node scripts/build-page-index.mjs",
+		"prebuild": "node scripts/build-page-index.mjs",
 		"build": "vite build",
 		"build:animations": "node scripts/build-animations.mjs",
 		"build:artifact-viewer": "node scripts/build-artifact-viewer.mjs",

@@ -209,7 +209,7 @@ ${items}
 </style>
 </head>
 <body>
-\t<div id="home-nav-mount"></div>
+\t<div id="nav-container"></div>
 \t<main class="sm-wrap">
 \t\t<div class="sm-hero">
 \t\t\t<h1>Sitemap</h1>
@@ -226,7 +226,7 @@ ${tocHtml}
 \t\t</nav>
 ${sectionHtml}
 \t</main>
-\t<div id="home-footer-mount"></div>
+\t<div id="footer-container"></div>
 \t<script type="module" src="/nav.js"></script>
 \t<script type="module" src="/footer.js"></script>
 </body>

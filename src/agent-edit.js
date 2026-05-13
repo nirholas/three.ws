@@ -453,28 +453,1207 @@ $('autopilot-save').addEventListener('click', async () => {
   }
 });
 
-// --- Tab switching ---
+// ─────────────────────────────────────────────────────────────────────────────
+// Voice tab
+// ─────────────────────────────────────────────────────────────────────────────
 
-document.querySelectorAll('.edit-tab').forEach((tab) => {
-  tab.addEventListener('click', (e) => {
-    const btn = e.currentTarget;
-    const tabId = btn.dataset.tab;
+let voicesCache = null;
+let voiceStatus = null;
+let voicePreviewAudio = null;
+let voiceTabMounted = false;
 
-    document.querySelectorAll('.edit-tab').forEach((t) => {
-      const active = t === btn;
-      t.classList.toggle('active', active);
-      t.setAttribute('aria-selected', active ? 'true' : 'false');
+async function ensureVoiceTab() {
+  if (voiceTabMounted) return;
+  voiceTabMounted = true;
+  await Promise.all([loadVoiceStatus(), loadVoiceList()]);
+}
+
+async function loadVoiceStatus() {
+  const el = $('voice-current');
+  try {
+    const r = await fetch(`${API_BASE}/agents/${agentId}/voice`, { credentials: 'include' });
+    if (!r.ok) throw new Error(`HTTP ${r.status}`);
+    voiceStatus = await r.json();
+    renderVoiceStatus();
+  } catch (err) {
+    el.textContent = `Could not load voice: ${err.message}`;
+  }
+}
+
+function renderVoiceStatus() {
+  const el = $('voice-current');
+  const previewBtn = $('voice-preview-btn');
+  const removeBtn = $('voice-remove-btn');
+  if (!voiceStatus || !voiceStatus.voice_id) {
+    el.textContent = `Browser speech synthesis (no custom voice set).`;
+    previewBtn.hidden = true;
+    removeBtn.hidden = true;
+    return;
+  }
+  const name = (voicesCache || []).find((v) => v.voice_id === voiceStatus.voice_id)?.name || voiceStatus.voice_id;
+  const cloned = voiceStatus.voice_cloned_at ? ` — cloned ${new Date(voiceStatus.voice_cloned_at).toLocaleDateString()}` : '';
+  el.textContent = `${voiceStatus.voice_provider || 'elevenlabs'}: ${name}${cloned}`;
+  previewBtn.hidden = false;
+  removeBtn.hidden = false;
+}
+
+async function loadVoiceList(filter = '') {
+  const container = $('voice-list');
+  if (!voicesCache) {
+    try {
+      const r = await fetch(`${API_BASE}/tts/eleven/voices`, { credentials: 'include' });
+      if (!r.ok) throw new Error(`HTTP ${r.status}`);
+      const j = await r.json();
+      voicesCache = j.voices || [];
+    } catch (err) {
+      container.innerHTML = `<div class="muted">Could not load voices: ${escapeHtml(err.message)}</div>`;
+      return;
+    }
+  }
+  renderVoiceList(filter);
+}
+
+function renderVoiceList(filter = '') {
+  const container = $('voice-list');
+  const f = filter.trim().toLowerCase();
+  const list = (voicesCache || []).filter((v) => !f || (v.name || '').toLowerCase().includes(f) || (v.category || '').toLowerCase().includes(f));
+  if (!list.length) {
+    container.innerHTML = '<div class="muted">No voices match.</div>';
+    return;
+  }
+  const currentId = voiceStatus?.voice_id;
+  container.innerHTML = list.map((v) => `
+    <div class="voice-tile${v.voice_id === currentId ? ' current' : ''}" data-voice-id="${escapeHtml(v.voice_id)}" data-preview="${escapeHtml(v.preview_url || '')}">
+      <div class="voice-tile-name">
+        <span>${escapeHtml(v.name || v.voice_id)}</span>
+        <span class="voice-tile-meta">${escapeHtml(v.category || '')}</span>
+      </div>
+      ${v.preview_url ? '<button type="button" class="voice-tile-play" title="Preview">▶</button>' : ''}
+    </div>
+  `).join('');
+  container.querySelectorAll('.voice-tile').forEach((tile) => {
+    tile.addEventListener('click', (e) => {
+      if (e.target.classList.contains('voice-tile-play')) {
+        playVoicePreview(tile.dataset.preview);
+        return;
+      }
+      selectVoice(tile.dataset.voiceId);
     });
-
-    document.querySelectorAll('.edit-panel').forEach((p) => {
-      const active = p.id === `panel-${tabId}`;
-      p.classList.toggle('active', active);
-      if (active) p.removeAttribute('hidden');
-      else p.setAttribute('hidden', '');
-    });
-
-    if (tabId === 'outfit' && agentData) ensureOutfitTab();
   });
+}
+
+function playVoicePreview(url) {
+  if (!url) return;
+  try { voicePreviewAudio?.pause(); } catch {}
+  voicePreviewAudio = new Audio(url);
+  voicePreviewAudio.play().catch(() => {});
+}
+
+async function selectVoice(voiceId) {
+  if (!voiceId) return;
+  const status = $('voice-status');
+  status.textContent = 'Saving…';
+  status.className = 'form-status';
+  try {
+    const r = await fetch(`${API_BASE}/agents/${agentId}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify({ voice_provider: 'elevenlabs', voice_id: voiceId }),
+    });
+    if (!r.ok) {
+      const j = await r.json().catch(() => ({}));
+      throw new Error(j.error_description || j.error || `HTTP ${r.status}`);
+    }
+    voiceStatus = { voice_provider: 'elevenlabs', voice_id: voiceId, voice_cloned_at: null };
+    renderVoiceStatus();
+    renderVoiceList($('voice-filter').value);
+    status.textContent = 'Saved.';
+    status.className = 'form-status ok';
+  } catch (err) {
+    status.textContent = `Error: ${err.message}`;
+    status.className = 'form-status err';
+  }
+}
+
+$('voice-filter').addEventListener('input', (e) => renderVoiceList(e.target.value));
+
+$('voice-preview-btn').addEventListener('click', () => {
+  const v = (voicesCache || []).find((x) => x.voice_id === voiceStatus?.voice_id);
+  if (v?.preview_url) playVoicePreview(v.preview_url);
 });
 
-loadAgent();
+$('voice-remove-btn').addEventListener('click', async () => {
+  const status = $('voice-status');
+  if (!confirm('Remove cloned voice? This frees the ElevenLabs quota slot.')) return;
+  status.textContent = 'Removing…';
+  status.className = 'form-status';
+  try {
+    const r = await fetch(`${API_BASE}/agents/${agentId}/voice`, { method: 'DELETE', credentials: 'include' });
+    if (!r.ok) {
+      const j = await r.json().catch(() => ({}));
+      throw new Error(j.error_description || j.error || `HTTP ${r.status}`);
+    }
+    voiceStatus = { voice_provider: 'browser', voice_id: null, voice_cloned_at: null };
+    renderVoiceStatus();
+    renderVoiceList($('voice-filter').value);
+    status.textContent = 'Removed.';
+    status.className = 'form-status ok';
+  } catch (err) {
+    status.textContent = `Error: ${err.message}`;
+    status.className = 'form-status err';
+  }
+});
+
+$('voice-clone-btn').addEventListener('click', () => $('voice-clone-file').click());
+
+$('voice-clone-file').addEventListener('change', async (e) => {
+  const file = e.target.files?.[0];
+  if (!file) return;
+  const status = $('voice-status');
+  status.textContent = 'Uploading…';
+  status.className = 'form-status';
+  try {
+    const cloneName = $('voice-clone-name').value.trim() || `${agentData.name || 'Agent'} voice`;
+    const qs = new URLSearchParams({ name: cloneName });
+    const audio = await blobToArrayBuffer(file);
+    const r = await fetch(`${API_BASE}/agents/${agentId}/voice/clone?${qs}`, {
+      method: 'POST',
+      credentials: 'include',
+      headers: { 'Content-Type': file.type || 'audio/mpeg' },
+      body: audio,
+    });
+    if (!r.ok) {
+      const j = await r.json().catch(() => ({}));
+      throw new Error(j.error_description || j.error || `HTTP ${r.status}`);
+    }
+    const j = await r.json();
+    voiceStatus = { voice_provider: 'elevenlabs', voice_id: j.voice_id, voice_cloned_at: new Date().toISOString() };
+    renderVoiceStatus();
+    status.textContent = 'Voice cloned.';
+    status.className = 'form-status ok';
+  } catch (err) {
+    status.textContent = `Error: ${err.message}`;
+    status.className = 'form-status err';
+  } finally {
+    e.target.value = '';
+  }
+});
+
+function blobToArrayBuffer(blob) {
+  return new Promise((resolve, reject) => {
+    const fr = new FileReader();
+    fr.onload = () => resolve(fr.result);
+    fr.onerror = reject;
+    fr.readAsArrayBuffer(blob);
+  });
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Knowledge tab
+// ─────────────────────────────────────────────────────────────────────────────
+
+let knowledgeTabMounted = false;
+
+async function ensureKnowledgeTab() {
+  if (knowledgeTabMounted) return;
+  knowledgeTabMounted = true;
+  await loadMemories();
+}
+
+async function loadMemories() {
+  const container = $('mem-list');
+  try {
+    const r = await fetch(`${API_BASE}/agents/${agentId}/memories`, { credentials: 'include' });
+    if (!r.ok) throw new Error(`HTTP ${r.status}`);
+    const j = await r.json();
+    renderMemories(j.data || []);
+  } catch (err) {
+    container.innerHTML = `<div class="muted">Could not load memories: ${escapeHtml(err.message)}</div>`;
+  }
+}
+
+function renderMemories(rows) {
+  const container = $('mem-list');
+  if (!rows.length) {
+    container.innerHTML = '<div class="muted">No memories yet.</div>';
+    return;
+  }
+  container.innerHTML = rows.map((m) => `
+    <div class="mem-item" data-id="${escapeHtml(m.id)}">
+      <div class="mem-item-body">
+        <div class="mem-item-type">${escapeHtml(m.type)}</div>
+        <div class="mem-item-content">${escapeHtml(m.content)}</div>
+        ${m.tags?.length ? `<div class="mem-item-tags">${m.tags.map(escapeHtml).join(' · ')}</div>` : ''}
+      </div>
+      <button class="chip-remove" data-del="${escapeHtml(m.id)}" title="Delete">×</button>
+    </div>
+  `).join('');
+  container.querySelectorAll('[data-del]').forEach((btn) => {
+    btn.addEventListener('click', () => deleteMemory(btn.dataset.del));
+  });
+}
+
+async function deleteMemory(id) {
+  try {
+    const r = await fetch(`${API_BASE}/agents/${agentId}/memories/${id}`, { method: 'DELETE', credentials: 'include' });
+    if (!r.ok) throw new Error(`HTTP ${r.status}`);
+    await loadMemories();
+  } catch (err) {
+    $('mem-status').textContent = `Delete failed: ${err.message}`;
+    $('mem-status').className = 'form-status err';
+  }
+}
+
+$('mem-add-btn').addEventListener('click', async () => {
+  const status = $('mem-status');
+  const type = $('mem-type').value;
+  const content = $('mem-content').value.trim();
+  const tags = $('mem-tags').value.split(',').map((t) => t.trim()).filter(Boolean).slice(0, 20);
+  if (!content) {
+    status.textContent = 'Content is required.';
+    status.className = 'form-status err';
+    return;
+  }
+  status.textContent = 'Saving…';
+  status.className = 'form-status';
+  try {
+    const r = await fetch(`${API_BASE}/agents/${agentId}/memories`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify({ type, content, tags }),
+    });
+    if (!r.ok) {
+      const j = await r.json().catch(() => ({}));
+      throw new Error(j.error_description || j.error || `HTTP ${r.status}`);
+    }
+    $('mem-content').value = '';
+    $('mem-tags').value = '';
+    status.textContent = 'Added.';
+    status.className = 'form-status ok';
+    await loadMemories();
+  } catch (err) {
+    status.textContent = `Error: ${err.message}`;
+    status.className = 'form-status err';
+  }
+});
+
+$('mem-seed-btn').addEventListener('click', async () => {
+  const status = $('mem-status');
+  const url = $('mem-seed-url').value.trim();
+  if (!url) {
+    status.textContent = 'URL is required.';
+    status.className = 'form-status err';
+    return;
+  }
+  status.textContent = 'Seeding…';
+  status.className = 'form-status';
+  try {
+    const r = await fetch(`${API_BASE}/agents/${agentId}/memory-seed`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify({ url }),
+    });
+    if (!r.ok) {
+      const j = await r.json().catch(() => ({}));
+      throw new Error(j.error_description || j.error || `HTTP ${r.status}`);
+    }
+    const j = await r.json().catch(() => ({}));
+    $('mem-seed-url').value = '';
+    status.textContent = `Seeded ${j.added ?? ''} memories.`.trim();
+    status.className = 'form-status ok';
+    await loadMemories();
+  } catch (err) {
+    status.textContent = `Error: ${err.message}`;
+    status.className = 'form-status err';
+  }
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Skills tab
+// ─────────────────────────────────────────────────────────────────────────────
+
+const BUILTIN_SKILLS = new Set(['greet', 'present-model', 'validate-model', 'remember', 'think']);
+let skillsTabMounted = false;
+let workingSkills = null;
+
+async function ensureSkillsTab() {
+  if (skillsTabMounted) return;
+  skillsTabMounted = true;
+  workingSkills = [...(agentData.skills || [])];
+  renderSkillsChips();
+  await loadMarketplaceSkillSuggestions();
+}
+
+function renderSkillsChips() {
+  const container = $('skills-list');
+  if (!workingSkills.length) {
+    container.innerHTML = '<div class="muted">No skills.</div>';
+    return;
+  }
+  container.innerHTML = workingSkills.map((s) => {
+    const builtin = BUILTIN_SKILLS.has(s);
+    return `<span class="chip${builtin ? ' chip-builtin' : ''}">${escapeHtml(s)}${builtin ? '' : ` <button class="chip-remove" data-skill="${escapeHtml(s)}" title="Remove">×</button>`}</span>`;
+  }).join('');
+  container.querySelectorAll('.chip-remove').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      workingSkills = workingSkills.filter((s) => s !== btn.dataset.skill);
+      renderSkillsChips();
+    });
+  });
+}
+
+async function loadMarketplaceSkillSuggestions() {
+  const datalist = $('skills-marketplace');
+  try {
+    const r = await fetch(`${API_BASE}/skills?limit=50`, { credentials: 'include' });
+    if (!r.ok) return;
+    const j = await r.json();
+    const items = j.skills || j.data || [];
+    datalist.innerHTML = items.map((s) => `<option value="${escapeHtml(s.slug || s.name)}">${escapeHtml(s.name || s.slug || '')}</option>`).join('');
+  } catch {
+    // Suggestions are optional; silently skip on error.
+  }
+}
+
+$('skill-add-btn').addEventListener('click', () => {
+  const status = $('skills-status');
+  const value = $('skill-add-input').value.trim().toLowerCase();
+  if (!value) return;
+  if (workingSkills.includes(value)) {
+    status.textContent = 'Already added.';
+    status.className = 'form-status err';
+    return;
+  }
+  workingSkills.push(value);
+  $('skill-add-input').value = '';
+  renderSkillsChips();
+  status.textContent = '';
+});
+
+$('skills-save').addEventListener('click', async () => {
+  const status = $('skills-status');
+  status.textContent = 'Saving…';
+  status.className = 'form-status';
+  try {
+    const r = await fetch(`${API_BASE}/agents/${agentId}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify({ skills: workingSkills }),
+    });
+    if (!r.ok) {
+      const j = await r.json().catch(() => ({}));
+      throw new Error(j.error_description || j.error || `HTTP ${r.status}`);
+    }
+    const j = await r.json();
+    agentData.skills = j.agent?.skills || workingSkills;
+    status.textContent = 'Saved.';
+    status.className = 'form-status ok';
+    renderMonetization();
+  } catch (err) {
+    status.textContent = `Error: ${err.message}`;
+    status.className = 'form-status err';
+  }
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Wallet tab
+// ─────────────────────────────────────────────────────────────────────────────
+
+let walletTabMounted = false;
+let walletInfo = null;
+
+async function ensureWalletTab() {
+  if (walletTabMounted) return;
+  walletTabMounted = true;
+  await loadWallet();
+  loadWalletActivity();
+}
+
+async function loadWallet() {
+  const meta = agentData.meta || {};
+  const solAddr = meta.solana_address || agentData.solana_address || null;
+  const evmAddr = agentData.wallet_address || null;
+  const chainId = agentData.chain_id || null;
+
+  walletInfo = { solAddr, evmAddr, chainId };
+
+  if (solAddr) {
+    $('wallet-sol-address').textContent = solAddr;
+    $('wallet-explorer').href = `https://solscan.io/account/${solAddr}`;
+    $('wallet-explorer').hidden = false;
+  } else {
+    $('wallet-sol-address').textContent = 'Not provisioned.';
+    $('wallet-explorer').hidden = true;
+  }
+
+  if (evmAddr) {
+    $('wallet-evm-address').textContent = evmAddr;
+    $('wallet-evm-chain').textContent = chainId ? `Chain ${chainId}` : '—';
+    const explorer = $('wallet-evm-explorer');
+    explorer.href = chainId === 8453 ? `https://basescan.org/address/${evmAddr}` : `https://etherscan.io/address/${evmAddr}`;
+    explorer.hidden = false;
+  } else {
+    $('wallet-evm-address').textContent = 'Not linked.';
+    $('wallet-evm-chain').textContent = '—';
+    $('wallet-evm-explorer').hidden = true;
+  }
+
+  const idParts = [];
+  if (agentData.erc8004_agent_id) idParts.push(`ERC-8004 agent #${agentData.erc8004_agent_id} on chain ${chainId}`);
+  const fname = meta.farcaster_fname || agentData.farcaster_fname;
+  if (fname) idParts.push(`Farcaster: @${fname}`);
+  if (agentData.registration_cid) idParts.push(`IPFS: ${agentData.registration_cid}`);
+  if (agentData.x_username) idParts.push(`X: @${agentData.x_username}`);
+  $('wallet-identity').innerHTML = idParts.length
+    ? idParts.map(escapeHtml).join('<br>')
+    : '<span class="muted">No on-chain registrations linked.</span>';
+
+  await refreshBalances();
+}
+
+async function refreshBalances() {
+  try {
+    const r = await fetch(`${API_BASE}/portfolio/summary`, { credentials: 'include' });
+    if (!r.ok) return;
+    const j = await r.json();
+    const mine = (j.wallets || []).filter((w) => w.agent_id === agentId);
+    let solBal = null, usdcBal = null, totalUsd = 0;
+    for (const w of mine) {
+      totalUsd += Number(w.usd_total || 0);
+      for (const a of (w.assets || [])) {
+        if (w.chain === 'solana') {
+          if (a.symbol === 'SOL') solBal = a;
+          if (a.symbol === 'USDC') usdcBal = a;
+        }
+      }
+    }
+    $('wallet-sol-balance').textContent = solBal ? Number(solBal.amount).toFixed(4) : '0';
+    $('wallet-usdc-balance').textContent = usdcBal ? Number(usdcBal.amount).toFixed(2) : '0';
+    $('wallet-total-usd').textContent = `$${totalUsd.toFixed(2)}`;
+  } catch {
+    // Balance fetch is non-fatal — addresses are still useful.
+  }
+}
+
+async function loadWalletActivity() {
+  const el = $('wallet-activity');
+  if (!walletInfo?.solAddr) {
+    el.innerHTML = '<span class="muted">No Solana wallet.</span>';
+    return;
+  }
+  try {
+    const r = await fetch(`${API_BASE}/agents/${agentId}/solana/activity?limit=5`, { credentials: 'include' });
+    if (!r.ok) throw new Error(`HTTP ${r.status}`);
+    const j = await r.json();
+    const items = j.activity || [];
+    if (!items.length) {
+      el.innerHTML = '<span class="muted">No recent activity.</span>';
+      return;
+    }
+    el.innerHTML = items.map((it) => {
+      const date = it.blockTime ? new Date(it.blockTime * 1000).toLocaleDateString() : '';
+      const delta = it.lamportDelta != null ? `${(it.lamportDelta / 1e9).toFixed(4)} SOL` : '';
+      return `<div class="pay-item"><span>${escapeHtml(it.summary || it.signature?.slice(0, 8) || 'tx')} · ${escapeHtml(date)}</span><span>${escapeHtml(delta)}</span></div>`;
+    }).join('');
+  } catch {
+    el.innerHTML = `<span class="muted">Activity unavailable.</span>`;
+  }
+}
+
+function copyToClipboard(text) {
+  return navigator.clipboard.writeText(text).catch(() => {});
+}
+
+$('wallet-copy-sol').addEventListener('click', () => walletInfo?.solAddr && copyToClipboard(walletInfo.solAddr));
+$('wallet-evm-copy').addEventListener('click', () => walletInfo?.evmAddr && copyToClipboard(walletInfo.evmAddr));
+
+$('wallet-send-btn').addEventListener('click', () => {
+  if (!walletInfo?.solAddr) { alert('Solana wallet not provisioned yet.'); return; }
+  $('send-modal').hidden = false;
+});
+
+$('send-cancel').addEventListener('click', () => { $('send-modal').hidden = true; });
+
+$('send-confirm').addEventListener('click', async () => {
+  const status = $('send-status');
+  const asset = $('send-asset').value;
+  const to = $('send-to').value.trim();
+  const amount = parseFloat($('send-amount').value);
+  if (!to || !(amount > 0)) {
+    status.textContent = 'Recipient and positive amount required.';
+    status.className = 'form-status err';
+    return;
+  }
+  if (!confirm(`Send ${amount} ${asset.toUpperCase()} to ${to}?`)) return;
+  status.textContent = 'Sending…';
+  status.className = 'form-status';
+  try {
+    const r = await fetch(`${API_BASE}/portfolio/send`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify({ agent_id: agentId, chain: 'solana', asset, to, amount: amount.toString() }),
+    });
+    const j = await r.json().catch(() => ({}));
+    if (!r.ok) throw new Error(j.error_description || j.error || `HTTP ${r.status}`);
+    status.textContent = `Sent. tx ${j.signature?.slice(0, 8) || ''}…`;
+    status.className = 'form-status ok';
+    $('send-to').value = '';
+    $('send-amount').value = '';
+    refreshBalances();
+    setTimeout(() => { $('send-modal').hidden = true; status.textContent = ''; }, 2500);
+  } catch (err) {
+    status.textContent = `Error: ${err.message}`;
+    status.className = 'form-status err';
+  }
+});
+
+$('wallet-fund-btn').addEventListener('click', () => {
+  if (!walletInfo?.solAddr) { alert('Solana wallet not provisioned yet.'); return; }
+  $('fund-address').textContent = walletInfo.solAddr;
+  $('fund-qr').src = `https://api.qrserver.com/v1/create-qr-code/?size=240x240&data=${encodeURIComponent(walletInfo.solAddr)}`;
+  $('fund-modal').hidden = false;
+});
+$('fund-close').addEventListener('click', () => { $('fund-modal').hidden = true; });
+$('fund-copy').addEventListener('click', () => walletInfo?.solAddr && copyToClipboard(walletInfo.solAddr));
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Social (X) tab
+// ─────────────────────────────────────────────────────────────────────────────
+
+let socialTabMounted = false;
+let xConnection = null;
+
+async function ensureSocialTab() {
+  if (socialTabMounted) return;
+  socialTabMounted = true;
+
+  $('x-username').value = agentData.x_username || '';
+  await Promise.all([loadXStatus(), loadXTriggers()]);
+
+  const params = new URLSearchParams(location.search);
+  const xParam = params.get('x');
+  if (xParam === 'connected') {
+    $('x-post-status').textContent = 'X connected.';
+    $('x-post-status').className = 'form-status ok';
+  } else if (xParam === 'error' || xParam === 'denied') {
+    $('x-post-status').textContent = `X connect failed (${xParam}).`;
+    $('x-post-status').className = 'form-status err';
+  }
+}
+
+async function loadXStatus() {
+  const el = $('x-status');
+  try {
+    const r = await fetch(`${API_BASE}/x/status`, { credentials: 'include' });
+    if (!r.ok) throw new Error(`HTTP ${r.status}`);
+    xConnection = await r.json();
+    renderXStatus();
+  } catch (err) {
+    el.textContent = `Could not load status: ${err.message}`;
+  }
+}
+
+function renderXStatus() {
+  const el = $('x-status');
+  const connectBtn = $('x-connect-btn');
+  const disconnectBtn = $('x-disconnect-btn');
+  if (!xConnection?.connected) {
+    el.textContent = 'Not connected.';
+    connectBtn.hidden = false;
+    disconnectBtn.hidden = true;
+    return;
+  }
+  el.innerHTML = `Connected as <strong>@${escapeHtml(xConnection.username)}</strong> · ${xConnection.posts_used}/${xConnection.quota} posts this month`;
+  connectBtn.hidden = true;
+  disconnectBtn.hidden = false;
+}
+
+$('x-connect-btn').addEventListener('click', () => {
+  location.href = `${API_BASE}/auth/x/connect?agent_id=${encodeURIComponent(agentId)}`;
+});
+
+$('x-disconnect-btn').addEventListener('click', async () => {
+  if (!confirm('Disconnect X account?')) return;
+  try {
+    const r = await fetch(`${API_BASE}/x/status`, { method: 'DELETE', credentials: 'include' });
+    if (!r.ok) throw new Error(`HTTP ${r.status}`);
+    await loadXStatus();
+  } catch (err) {
+    alert(`Disconnect failed: ${err.message}`);
+  }
+});
+
+$('x-username-save').addEventListener('click', async () => {
+  const val = $('x-username').value.trim().replace(/^@/, '') || null;
+  try {
+    const r = await fetch(`${API_BASE}/agents/${agentId}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify({ x_username: val }),
+    });
+    if (!r.ok) {
+      const j = await r.json().catch(() => ({}));
+      throw new Error(j.error_description || j.error || `HTTP ${r.status}`);
+    }
+    agentData.x_username = val;
+    $('x-post-status').textContent = 'Handle saved.';
+    $('x-post-status').className = 'form-status ok';
+  } catch (err) {
+    $('x-post-status').textContent = `Error: ${err.message}`;
+    $('x-post-status').className = 'form-status err';
+  }
+});
+
+async function loadXTriggers() {
+  const container = $('x-triggers-list');
+  try {
+    const r = await fetch(`${API_BASE}/x/triggers`, { credentials: 'include' });
+    if (!r.ok) throw new Error(`HTTP ${r.status}`);
+    const j = await r.json();
+    const mine = (j.triggers || []).filter((t) => !t.agent_id || t.agent_id === agentId);
+    renderXTriggers(mine);
+  } catch (err) {
+    container.innerHTML = `<div class="muted">Could not load triggers: ${escapeHtml(err.message)}</div>`;
+  }
+}
+
+function defaultTriggerConfig(kind) {
+  if (kind === 'daily_persona') return { hour_utc: 14, topic: '' };
+  if (kind === 'weekly_digest') return { day_of_week: 1, hour_utc: 14 };
+  if (kind === 'price_milestone') return { thresholds_usd: [10, 100, 1000] };
+  if (kind === 'payment_received') return { min_amount_usd: 1 };
+  return {};
+}
+
+function triggerLabel(kind) {
+  return {
+    daily_persona: 'Daily persona post',
+    weekly_digest: 'Weekly digest',
+    price_milestone: 'Price milestone',
+    payment_received: 'Payment received',
+  }[kind] || kind;
+}
+
+function renderXTriggers(rows) {
+  const container = $('x-triggers-list');
+  if (!rows.length) {
+    container.innerHTML = '<div class="muted">No triggers yet.</div>';
+    return;
+  }
+  container.innerHTML = rows.map((t) => {
+    const cfg = t.config || {};
+    let body = '';
+    if (t.kind === 'daily_persona') {
+      body = `<label>Hour (UTC): <input type="number" min="0" max="23" data-cfg="hour_utc" value="${cfg.hour_utc ?? 14}"></label>
+        <label>Topic: <input type="text" data-cfg="topic" value="${escapeHtml(cfg.topic || '')}" placeholder="optional"></label>`;
+    } else if (t.kind === 'weekly_digest') {
+      body = `<label>Day: <select data-cfg="day_of_week">
+        ${['Sun','Mon','Tue','Wed','Thu','Fri','Sat'].map((d, i) => `<option value="${i}" ${cfg.day_of_week === i ? 'selected' : ''}>${d}</option>`).join('')}
+      </select></label>
+      <label>Hour (UTC): <input type="number" min="0" max="23" data-cfg="hour_utc" value="${cfg.hour_utc ?? 14}"></label>`;
+    } else if (t.kind === 'price_milestone') {
+      body = `<label>Thresholds (USD, comma-separated): <input type="text" data-cfg="thresholds_usd" value="${(cfg.thresholds_usd || []).join(', ')}"></label>`;
+    } else if (t.kind === 'payment_received') {
+      body = `<label>Min amount (USD): <input type="number" min="0" step="0.01" data-cfg="min_amount_usd" value="${cfg.min_amount_usd ?? 1}"></label>`;
+    }
+    return `
+      <div class="trigger-item" data-id="${escapeHtml(t.id)}">
+        <div class="trigger-item-head">
+          <div class="trigger-item-kind">${escapeHtml(triggerLabel(t.kind))}</div>
+          <label style="display:inline-flex;align-items:center;gap:.5rem;font-size:.764rem;color:rgba(255,255,255,.6)">
+            <input type="checkbox" class="trigger-enabled" ${t.enabled ? 'checked' : ''}> Enabled
+          </label>
+          <button class="chip-remove" data-del="${escapeHtml(t.id)}" title="Delete">×</button>
+        </div>
+        <div class="trigger-item-body">${body}</div>
+        <div class="form-actions" style="margin-top:.5rem">
+          <button class="btn-ghost trigger-save">Save</button>
+        </div>
+      </div>
+    `;
+  }).join('');
+
+  container.querySelectorAll('.trigger-item').forEach((item) => {
+    const id = item.dataset.id;
+    item.querySelector('[data-del]').addEventListener('click', () => deleteTrigger(id));
+    item.querySelector('.trigger-save').addEventListener('click', () => saveTrigger(item, id));
+    item.querySelector('.trigger-enabled').addEventListener('change', (e) => saveTriggerEnabled(id, e.target.checked));
+  });
+}
+
+function readTriggerConfig(item) {
+  const cfg = {};
+  item.querySelectorAll('[data-cfg]').forEach((el) => {
+    const key = el.dataset.cfg;
+    let val = el.value;
+    if (el.type === 'number') val = Number(val);
+    if (key === 'thresholds_usd') val = val.split(',').map((n) => Number(n.trim())).filter((n) => n > 0);
+    if (key === 'day_of_week') val = Number(val);
+    cfg[key] = val;
+  });
+  return cfg;
+}
+
+async function saveTrigger(item, id) {
+  const cfg = readTriggerConfig(item);
+  try {
+    const r = await fetch(`${API_BASE}/x/triggers?id=${encodeURIComponent(id)}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify({ config: cfg }),
+    });
+    if (!r.ok) {
+      const j = await r.json().catch(() => ({}));
+      throw new Error(j.error_description || j.error || `HTTP ${r.status}`);
+    }
+  } catch (err) {
+    alert(`Save failed: ${err.message}`);
+  }
+}
+
+async function saveTriggerEnabled(id, enabled) {
+  await fetch(`${API_BASE}/x/triggers?id=${encodeURIComponent(id)}`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    credentials: 'include',
+    body: JSON.stringify({ enabled }),
+  });
+}
+
+async function deleteTrigger(id) {
+  if (!confirm('Delete this trigger?')) return;
+  await fetch(`${API_BASE}/x/triggers?id=${encodeURIComponent(id)}`, { method: 'DELETE', credentials: 'include' });
+  await loadXTriggers();
+}
+
+$('x-trigger-add').addEventListener('click', async () => {
+  const kind = $('x-trigger-kind').value;
+  const config = defaultTriggerConfig(kind);
+  try {
+    const r = await fetch(`${API_BASE}/x/triggers`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify({ kind, config, agent_id: agentId, enabled: true }),
+    });
+    if (!r.ok) {
+      const j = await r.json().catch(() => ({}));
+      throw new Error(j.error_description || j.error || `HTTP ${r.status}`);
+    }
+    await loadXTriggers();
+  } catch (err) {
+    alert(`Add trigger failed: ${err.message}`);
+  }
+});
+
+$('x-post-btn').addEventListener('click', async () => {
+  const status = $('x-post-status');
+  const text = $('x-post-text').value.trim();
+  if (!text) {
+    status.textContent = 'Tweet text required.';
+    status.className = 'form-status err';
+    return;
+  }
+  status.textContent = 'Posting…';
+  status.className = 'form-status';
+  try {
+    const r = await fetch(`${API_BASE}/x/post`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify({ text, agent_id: agentId }),
+    });
+    const j = await r.json().catch(() => ({}));
+    if (!r.ok) throw new Error(j.error_description || j.error || `HTTP ${r.status}`);
+    status.textContent = `Posted (${j.tweet_id || 'ok'}).`;
+    status.className = 'form-status ok';
+    $('x-post-text').value = '';
+    loadXStatus();
+  } catch (err) {
+    status.textContent = `Error: ${err.message}`;
+    status.className = 'form-status err';
+  }
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Analytics tab
+// ─────────────────────────────────────────────────────────────────────────────
+
+let analyticsTabMounted = false;
+
+async function ensureAnalyticsTab() {
+  if (analyticsTabMounted) return;
+  analyticsTabMounted = true;
+  await Promise.all([loadUsage(), loadPayments('received'), loadPayments('sent')]);
+}
+
+async function loadUsage() {
+  try {
+    const r = await fetch(`${API_BASE}/agents/${agentId}/usage`, { credentials: 'include' });
+    if (!r.ok) throw new Error(`HTTP ${r.status}`);
+    const j = await r.json();
+    $('m-llm-month').textContent = String(j.currentMonthCalls ?? 0);
+    const daily = j.dailyBreakdown || [];
+    const total30 = daily.reduce((sum, d) => sum + (d.calls || 0), 0);
+    $('m-llm-30d').textContent = String(total30);
+    renderBarChart(daily);
+  } catch (err) {
+    $('m-llm-month').textContent = '—';
+    $('m-llm-30d').textContent = '—';
+    $('m-chart').innerHTML = `<div class="muted">Usage unavailable: ${escapeHtml(err.message)}</div>`;
+  }
+}
+
+function renderBarChart(daily) {
+  const container = $('m-chart');
+  const byDay = new Map(daily.map((d) => [String(d.day).slice(0, 10), d.calls]));
+  const cols = [];
+  for (let i = 29; i >= 0; i--) {
+    const d = new Date();
+    d.setDate(d.getDate() - i);
+    const key = d.toISOString().slice(0, 10);
+    cols.push({ key, calls: byDay.get(key) || 0 });
+  }
+  const max = Math.max(1, ...cols.map((c) => c.calls));
+  container.innerHTML = cols.map((c) => {
+    const h = Math.round((c.calls / max) * 100);
+    return `<div class="bar-chart-col" data-value="${c.calls}" style="height:${h}%" title="${c.key}: ${c.calls}"></div>`;
+  }).join('');
+}
+
+async function loadPayments(direction) {
+  const el = direction === 'received' ? $('m-pay-in') : $('m-pay-out');
+  const totalEl = direction === 'received' ? $('m-earn-in') : $('m-earn-out');
+  try {
+    const r = await fetch(`${API_BASE}/agents/${agentId}/payments?direction=${direction}&limit=10`, { credentials: 'include' });
+    if (!r.ok) throw new Error(`HTTP ${r.status}`);
+    const j = await r.json();
+    const rows = j.payments || j.data || [];
+    let total = 0;
+    rows.forEach((p) => { total += Number(p.amount_wei || 0) / 1e6; });
+    totalEl.textContent = `$${total.toFixed(2)}`;
+    if (!rows.length) { el.innerHTML = '<div class="muted">None yet.</div>'; return; }
+    el.innerHTML = rows.slice(0, 10).map((p) => {
+      const amt = (Number(p.amount_wei || 0) / 1e6).toFixed(2);
+      const who = direction === 'received' ? (p.payer_name || p.payer_agent_id?.slice(0, 8)) : (p.payee_name || p.payee_agent_id?.slice(0, 8));
+      const skill = p.skill_name || p.skill_slug || '';
+      return `<div class="pay-item"><span>${escapeHtml(who || 'someone')}${skill ? ` · ${escapeHtml(skill)}` : ''}</span><span class="pay-amount${direction === 'sent' ? ' out' : ''}">$${amt}</span></div>`;
+    }).join('');
+  } catch {
+    el.innerHTML = `<div class="muted">Unavailable.</div>`;
+    totalEl.textContent = '—';
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Embed tab
+// ─────────────────────────────────────────────────────────────────────────────
+
+let embedTabMounted = false;
+
+function embedOrigin() {
+  return location.origin;
+}
+
+function ensureEmbedTab() {
+  if (embedTabMounted) return;
+  embedTabMounted = true;
+  updateEmbedPreview();
+  loadEmbedPolicy();
+}
+
+function parseSize(token) {
+  const [w, h] = token.split('x');
+  return { w, h };
+}
+
+function updateEmbedPreview() {
+  const { w, h } = parseSize($('embed-size').value);
+  const origin = embedOrigin();
+  const embedUrl = `${origin}/agent/${agentId}/embed`;
+  const pageUrl = `${origin}/agent/${agentId}`;
+  const oembedUrl = `${origin}/api/oembed?url=${encodeURIComponent(pageUrl)}`;
+
+  const iframeAttrs = `src="${embedUrl}" width="${w}" height="${h}" frameborder="0" allow="microphone; autoplay; clipboard-write" style="border:0;border-radius:12px;background:#000"`;
+  $('embed-iframe-code').value = `<iframe ${iframeAttrs}></iframe>`;
+  $('embed-link').value = pageUrl;
+  $('embed-oembed').value = oembedUrl;
+  $('embed-open').href = pageUrl;
+
+  $('embed-preview').innerHTML = `<iframe ${iframeAttrs}></iframe>`;
+}
+
+async function loadEmbedPolicy() {
+  try {
+    const r = await fetch(`${API_BASE}/agents/${agentId}/embed-policy`, { credentials: 'include' });
+    if (!r.ok) return;
+    const j = await r.json();
+    const origins = j.policy?.allowed_origins || [];
+    $('embed-allowed-origins').value = origins.join('\n');
+  } catch {
+    // Policy is optional — silent.
+  }
+}
+
+$('embed-size').addEventListener('change', updateEmbedPreview);
+
+document.addEventListener('click', (e) => {
+  const btn = e.target.closest('[data-copy]');
+  if (!btn) return;
+  const target = document.querySelector(btn.dataset.copy);
+  if (!target) return;
+  copyToClipboard(target.value);
+  const original = btn.textContent;
+  btn.textContent = 'Copied';
+  setTimeout(() => { btn.textContent = original; }, 1200);
+});
+
+$('embed-policy-save').addEventListener('click', async () => {
+  const status = $('embed-policy-status');
+  const origins = $('embed-allowed-origins').value.split('\n').map((s) => s.trim()).filter(Boolean);
+  status.textContent = 'Saving…';
+  status.className = 'form-status';
+  try {
+    const r = await fetch(`${API_BASE}/agents/${agentId}/embed-policy`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify({ allowed_origins: origins }),
+    });
+    if (!r.ok) {
+      const j = await r.json().catch(() => ({}));
+      throw new Error(j.error_description || j.error || `HTTP ${r.status}`);
+    }
+    status.textContent = 'Saved.';
+    status.className = 'form-status ok';
+  } catch (err) {
+    status.textContent = `Error: ${err.message}`;
+    status.className = 'form-status err';
+  }
+});
+
+$('embed-policy-clear').addEventListener('click', async () => {
+  if (!confirm('Clear embed policy (allow embedding everywhere)?')) return;
+  const status = $('embed-policy-status');
+  status.textContent = 'Clearing…';
+  status.className = 'form-status';
+  try {
+    const r = await fetch(`${API_BASE}/agents/${agentId}/embed-policy`, { method: 'DELETE', credentials: 'include' });
+    if (!r.ok) throw new Error(`HTTP ${r.status}`);
+    $('embed-allowed-origins').value = '';
+    status.textContent = 'Cleared.';
+    status.className = 'form-status ok';
+  } catch (err) {
+    status.textContent = `Error: ${err.message}`;
+    status.className = 'form-status err';
+  }
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Widgets tab
+// ─────────────────────────────────────────────────────────────────────────────
+
+let widgetsTabMounted = false;
+
+async function ensureWidgetsTab() {
+  if (widgetsTabMounted) return;
+  widgetsTabMounted = true;
+  await loadWidgets();
+}
+
+async function loadWidgets() {
+  const container = $('widgets-list');
+  try {
+    const r = await fetch(`${API_BASE}/widgets`, { credentials: 'include' });
+    if (!r.ok) throw new Error(`HTTP ${r.status}`);
+    const j = await r.json();
+    const items = j.widgets || [];
+    if (!items.length) {
+      container.innerHTML = '<div class="muted">No widgets yet. Create one above.</div>';
+      return;
+    }
+    container.innerHTML = items.map((w) => {
+      const url = `${embedOrigin()}/embed.html?id=${encodeURIComponent(w.id)}`;
+      return `
+        <div class="widget-card" data-id="${escapeHtml(w.id)}">
+          <div class="widget-card-type">${escapeHtml(w.type)}</div>
+          <div class="widget-card-name">${escapeHtml(w.name || 'Untitled')}</div>
+          <div class="widget-card-meta">${w.view_count || 0} views · ${w.is_public ? 'public' : 'private'}</div>
+          <div class="form-actions">
+            <a class="btn-ghost" href="${escapeHtml(url)}" target="_blank" rel="noopener">Open ›</a>
+            <button class="btn-ghost" data-copy-text="${escapeHtml(url)}">Copy link</button>
+            <button class="btn-ghost danger" data-del-widget="${escapeHtml(w.id)}">Delete</button>
+          </div>
+        </div>
+      `;
+    }).join('');
+    container.querySelectorAll('[data-del-widget]').forEach((btn) => {
+      btn.addEventListener('click', () => deleteWidget(btn.dataset.delWidget));
+    });
+    container.querySelectorAll('[data-copy-text]').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        copyToClipboard(btn.dataset.copyText);
+        const t = btn.textContent;
+        btn.textContent = 'Copied';
+        setTimeout(() => { btn.textContent = t; }, 1200);
+      });
+    });
+  } catch (err) {
+    container.innerHTML = `<div class="muted">Could not load widgets: ${escapeHtml(err.message)}</div>`;
+  }
+}
+
+$('widget-new-btn').addEventListener('click', async () => {
+  const status = $('widget-status');
+  const type = $('widget-new-type').value;
+  const name = $('widget-new-name').value.trim() || `${agentData.name || 'Agent'} ${type}`;
+  if (!agentData.avatar_id) {
+    status.textContent = 'Pick an avatar first (Outfit tab).';
+    status.className = 'form-status err';
+    return;
+  }
+  status.textContent = 'Creating…';
+  status.className = 'form-status';
+  try {
+    const r = await fetch(`${API_BASE}/widgets`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify({ type, name, avatar_id: agentData.avatar_id, config: { agent_id: agentId }, is_public: true }),
+    });
+    if (!r.ok) {
+      const j = await r.json().catch(() => ({}));
+      throw new Error(j.error_description || j.error || `HTTP ${r.status}`);
+    }
+    $('widget-new-name').value = '';
+    status.textContent = 'Created.';
+    status.className = 'form-status ok';
+    await loadWidgets();
+  } catch (err) {
+    status.textContent = `Error: ${err.message}`;
+    status.className = 'form-status err';
+  }
+});
+
+async function deleteWidget(id) {
+  if (!confirm('Delete this widget?')) return;
+  try {
+    const r = await fetch(`${API_BASE}/widgets/${id}`, { method: 'DELETE', credentials: 'include' });
+    if (!r.ok) throw new Error(`HTTP ${r.status}`);
+    await loadWidgets();
+  } catch (err) {
+    alert(`Delete failed: ${err.message}`);
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Studio tab
+// ─────────────────────────────────────────────────────────────────────────────
+
+let studioTabMounted = false;
+
+function ensureStudioTab() {
+  if (studioTabMounted) return;
+  studioTabMounted = true;
+  const origin = embedOrigin();
+  $('studio-playground').href = `/playground.html?agent_id=${encodeURIComponent(agentId)}`;
+  $('studio-avatar').href = agentData.avatar_id ? `/avatar-page.html?id=${encodeURIComponent(agentData.avatar_id)}` : '/dashboard/#avatars';
+  $('studio-public').href = `/agent/${agentId}`;
+  $('studio-manifest').href = `${origin}/api/agents/${agentId}/manifest`;
+
+  const anims = agentData.meta?.animations || [];
+  const animsEl = $('studio-animations');
+  if (!anims.length) {
+    animsEl.innerHTML = '<div class="muted">No animations attached.</div>';
+  } else {
+    animsEl.innerHTML = anims.map((a) => `<span class="chip">${escapeHtml(a.name)}${a.source ? ` <span class="voice-tile-meta">(${escapeHtml(a.source)})</span>` : ''}</span>`).join('');
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Danger zone
+// ─────────────────────────────────────────────────────────────────────────────
+
+$('danger-confirm').addEventListener('input', (e) => {
+  $('danger-delete-btn').disabled = !agentData?.name || e.target.value.trim() !== agentData.name.trim();
+});
+
+$('danger-delete-btn').addEventListener('click', async () => {
+  const status = $('danger-status');
+  if ($('danger-confirm').value.trim() !== agentData.name) {
+    status.textContent = 'Name does not match.';
+    status.className = 'form-status err';
+    return;
+  }
+  status.textContent = 'Deleting…';
+  status.className = 'form-status';
+  try {
+    const r = await fetch(`${API_BASE}/agents/${agentId}`, { method: 'DELETE', credentials: 'include' });
+    if (!r.ok) {
+      const j = await r.json().catch(() => ({}));
+      throw new Error(j.error_description || j.error || `HTTP ${r.status}`);
+    }
+    status.textContent = 'Deleted. Redirecting…';
+    status.className = 'form-status ok';
+    setTimeout(() => location.replace('/dashboard/'), 1000);
+  } catch (err) {
+    status.textContent = `Error: ${err.message}`;
+    status.className = 'form-status err';
+  }
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Tab switching
+// ─────────────────────────────────────────────────────────────────────────────
+
+const TAB_LOADERS = {
+  outfit: ensureOutfitTab,
+  voice: ensureVoiceTab,
+  knowledge: ensureKnowledgeTab,
+  skills: ensureSkillsTab,
+  wallet: ensureWalletTab,
+  social: ensureSocialTab,
+  analytics: ensureAnalyticsTab,
+  embed: ensureEmbedTab,
+  widgets: ensureWidgetsTab,
+  studio: ensureStudioTab,
+};
+
+function activateTab(tabId) {
+  document.querySelectorAll('.edit-tab').forEach((t) => {
+    const active = t.dataset.tab === tabId;
+    t.classList.toggle('active', active);
+    t.setAttribute('aria-selected', active ? 'true' : 'false');
+  });
+  document.querySelectorAll('.edit-panel').forEach((p) => {
+    const active = p.id === `panel-${tabId}`;
+    p.classList.toggle('active', active);
+    if (active) p.removeAttribute('hidden');
+    else p.setAttribute('hidden', '');
+  });
+  if (agentData && TAB_LOADERS[tabId]) TAB_LOADERS[tabId]();
+}
+
+document.querySelectorAll('.edit-tab').forEach((tab) => {
+  tab.addEventListener('click', (e) => activateTab(e.currentTarget.dataset.tab));
+});
+
+// Open a specific tab via ?tab=… (used by OAuth callback redirects).
+async function init() {
+  await loadAgent();
+  if (!agentData) return;
+  const params = new URLSearchParams(location.search);
+  const initialTab = params.get('tab');
+  if (initialTab && document.getElementById(`panel-${initialTab}`)) {
+    activateTab(initialTab);
+  }
+}
+
+init();

@@ -236,6 +236,28 @@
 						el: document.getElementById('stage'),
 						model: avatar,
 					});
+					if (bg === 'transparent') {
+						viewer.renderer?.setClearAlpha(0);
+						if (viewer.scene) viewer.scene.background = null;
+					}
+					if (plateOn || openLinkOn) {
+						try {
+							const r = await fetch(`/api/avatars/${encodeURIComponent(avatar)}`, {
+								credentials: 'include',
+							});
+							if (r.ok) {
+								const { avatar: a } = await r.json();
+								if (plateOn && a?.name) {
+									document.getElementById('name-plate').textContent = a.name;
+								}
+								if (openLinkOn) {
+									const ol = document.getElementById('open-link');
+									ol.href = `/avatars/${encodeURIComponent(avatar)}`;
+									ol.style.display = 'inline-block';
+								}
+							}
+						} catch {}
+					}
 					document.getElementById('loading').style.display = 'none';
 					return;
 				}

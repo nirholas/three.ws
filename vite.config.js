@@ -219,6 +219,8 @@ const appConfig = {
 					'/eth-vanity/': resolve(root, 'public/eth-vanity.html'),
 					'/strategy-lab': resolve(root, 'public/strategy-lab.html'),
 					'/strategy-lab/': resolve(root, 'public/strategy-lab.html'),
+					'/sitemap': resolve(root, 'public/sitemap/index.html'),
+					'/sitemap/': resolve(root, 'public/sitemap/index.html'),
 					'/': resolve(root, 'home.html'),
 					'/home': resolve(root, 'home.html'),
 					'/features': resolve(root, 'features.html'),

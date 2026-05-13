@@ -1,0 +1,182 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width,initial-scale=1" />
+		<title>SNS Domains · three.ws</title>
+		<link rel="stylesheet" href="/dashboard/_dash-shell.css" />
+	</head>
+	<body>
+		<div class="dash-shell">
+			<a class="dash-back" href="/dashboard/agents">← Back to dashboard</a>
+			<h1 class="dash-title">SNS Domains</h1>
+			<p class="dash-sub">
+				Attach a Solana Name Service <code class="dash-mono">.sol</code> domain as your agent's
+				readable id. Domains owned by either the agent's wallet or any wallet linked to your account
+				are eligible.
+			</p>
+
+			<div id="picker"></div>
+			<div id="status"></div>
+			<div id="content"></div>
+		</div>
+
+		<script type="module">
+			import { mountAgentPicker } from '/dashboard/_agent-picker.js';
+
+			const statusEl = document.getElementById('status');
+			const contentEl = document.getElementById('content');
+
+			function showStatus(msg, kind = '') {
+				statusEl.innerHTML = msg
+					? `<div class="${kind === 'err' ? 'dash-err' : 'dash-ok'}">${escapeHtml(msg)}</div>`
+					: '';
+			}
+			function escapeHtml(s) {
+				return String(s == null ? '' : s).replace(
+					/[&<>"']/g,
+					(c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' })[c],
+				);
+			}
+
+			async function getSns(agentId) {
+				const r = await fetch(`/api/agents/${encodeURIComponent(agentId)}/sns`, {
+					credentials: 'include',
+				});
+				if (!r.ok) {
+					const err = await r.json().catch(() => ({}));
+					throw new Error(err.error_description || `HTTP ${r.status}`);
+				}
+				return r.json();
+			}
+
+			async function attach(agentId, domain) {
+				const r = await fetch(`/api/agents/${encodeURIComponent(agentId)}/sns`, {
+					method: 'POST',
+					credentials: 'include',
+					headers: { 'content-type': 'application/json' },
+					body: JSON.stringify({ domain }),
+				});
+				if (!r.ok) {
+					const err = await r.json().catch(() => ({}));
+					throw new Error(err.error_description || `HTTP ${r.status}`);
+				}
+				return r.json();
+			}
+
+			async function detach(agentId) {
+				const r = await fetch(`/api/agents/${encodeURIComponent(agentId)}/sns`, {
+					method: 'DELETE',
+					credentials: 'include',
+				});
+				if (!r.ok) {
+					const err = await r.json().catch(() => ({}));
+					throw new Error(err.error_description || `HTTP ${r.status}`);
+				}
+				return r.json();
+			}
+
+			function render(agentId, data) {
+				const current = data.sns_domain;
+				const domains = data.domains || [];
+				const favorite = data.favorite;
+
+				contentEl.innerHTML = `
+					<div class="dash-card">
+						<h2>Current SNS id</h2>
+						<div class="dash-row">
+							${
+								current
+									? `<span class="dash-pill" style="font-size:13px">${escapeHtml(current)}.sol</span>
+									   ${data.sns_owner_wallet ? `<span class="dash-muted">owned by <span class="dash-mono">${escapeHtml(data.sns_owner_wallet)}</span></span>` : ''}
+									   <button class="dash-btn danger" id="detach-btn">Detach</button>`
+									: '<span class="dash-muted">None attached.</span>'
+							}
+						</div>
+						<div class="dash-muted" style="margin-top:10px">
+							Agent wallet: <span class="dash-mono">${escapeHtml(data.address || '')}</span>
+						</div>
+					</div>
+
+					<div class="dash-card">
+						<h2>Owned domains</h2>
+						${
+							!data.upstream_ok
+								? '<div class="dash-err">SNS API unreachable — retry in a moment.</div>'
+								: ''
+						}
+						${
+							domains.length
+								? `<ul class="dash-list">
+									${domains
+										.map(
+											(d) => `<li class="dash-row" style="justify-content:space-between">
+												<div>
+													<span class="dash-mono" style="font-size:14px">${escapeHtml(d)}.sol</span>
+													${favorite === d ? ' <span class="dash-pill">favorite</span>' : ''}
+													${current === d ? ' <span class="dash-pill">attached</span>' : ''}
+												</div>
+												${current === d ? '' : `<button class="dash-btn primary" data-attach="${escapeHtml(d)}">Use as agent id</button>`}
+											</li>`,
+										)
+										.join('')}
+								  </ul>`
+								: '<div class="dash-empty">No .sol domains found for this agent\'s wallet or your linked Solana wallets.</div>'
+						}
+					</div>
+
+					<div class="dash-card">
+						<h2>Register a new domain</h2>
+						<p class="dash-muted">Search and buy a fresh .sol on the official SNS site, then return here to attach it.</p>
+						<a class="dash-btn primary" href="${escapeHtml(data.register_url || 'https://www.sns.id/?search=')}" target="_blank" rel="noopener">Open sns.id ↗</a>
+					</div>
+				`;
+
+				const detachBtn = document.getElementById('detach-btn');
+				if (detachBtn) {
+					detachBtn.addEventListener('click', async () => {
+						if (!confirm(`Detach ${current}.sol?`)) return;
+						detachBtn.disabled = true;
+						try {
+							await detach(agentId);
+							showStatus('Detached.', 'ok');
+							await refresh(agentId);
+						} catch (e) {
+							showStatus(e.message || 'Detach failed', 'err');
+							detachBtn.disabled = false;
+						}
+					});
+				}
+				contentEl.querySelectorAll('[data-attach]').forEach((btn) => {
+					btn.addEventListener('click', async () => {
+						btn.disabled = true;
+						try {
+							await attach(agentId, btn.dataset.attach);
+							showStatus(`Attached ${btn.dataset.attach}.sol`, 'ok');
+							await refresh(agentId);
+						} catch (e) {
+							showStatus(e.message || 'Attach failed', 'err');
+							btn.disabled = false;
+						}
+					});
+				});
+			}
+
+			async function refresh(agentId) {
+				contentEl.innerHTML = '<div class="dash-empty">Loading SNS data…</div>';
+				try {
+					const { data } = await getSns(agentId);
+					render(agentId, data);
+				} catch (e) {
+					showStatus(e.message || 'Failed to load', 'err');
+					contentEl.innerHTML = '';
+				}
+			}
+
+			mountAgentPicker({
+				host: document.getElementById('picker'),
+				onPick: (agentId) => refresh(agentId),
+			});
+		</script>
+	</body>
+</html>

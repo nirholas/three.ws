@@ -396,20 +396,29 @@ function openLaunch({ identity, agentId, avatarId, formData }) {
 				reader.readAsDataURL(formData.image);
 			});
 		}
+		const descSource = description || formData?.description || identity?.description || '';
+		const payload = {
+			name: String(name).trim().slice(0, 32),
+			symbol: String(symbol).trim().slice(0, 10),
+			description: String(descSource).trim().slice(0, 500),
+			...(avatarId ? { avatar_id: avatarId } : {}),
+			...(agentId ? { agent_id: agentId } : {}),
+			...(imageDataUrl ? { image_data_url: imageDataUrl } : {}),
+		};
 		const resp = await fetch('/api/pump/build-metadata', {
 			method: 'POST',
 			headers: { 'content-type': 'application/json' },
 			credentials: 'include',
-			body: JSON.stringify({
-				name,
-				symbol,
-				description: description || formData?.description || identity?.description || '',
-				...(avatarId ? { avatar_id: avatarId } : {}),
-				...(agentId ? { agent_id: agentId } : {}),
-				...(imageDataUrl ? { image_data_url: imageDataUrl } : {}),
-			}),
+			body: JSON.stringify(payload),
 		});
-		if (!resp.ok) throw new Error(`Metadata build failed: ${resp.status}`);
+		if (!resp.ok) {
+			const errJson = await resp.json().catch(() => null);
+			const detail = errJson?.error_description
+				|| errJson?.issues?.map((i) => `${i.path?.join('.') || 'body'}: ${i.message}`).join('; ')
+				|| errJson?.error
+				|| `HTTP ${resp.status}`;
+			throw new Error(detail);
+		}
 		return resp.json();
 	}
 
@@ -420,11 +429,12 @@ function openLaunch({ identity, agentId, avatarId, formData }) {
 	}
 
 	function render() {
-		const nameDefault = formData?.name || identity?.name || 'Agent';
+		const nameDefault = String(formData?.name || identity?.name || 'Agent').slice(0, 32);
 		const symbolDefault = (formData?.symbol || nameDefault)
 			.toUpperCase()
 			.replace(/[^A-Z0-9]/g, '')
 			.slice(0, 8) || 'AGENT';
+		const descDefault = String(formData?.description || identity?.description || '').slice(0, 500);
 
 		inner.innerHTML = `
 			<h3>Launch $${esc(symbolDefault)}</h3>
@@ -452,7 +462,7 @@ function openLaunch({ identity, agentId, avatarId, formData }) {
 				<label>Symbol</label>
 				<input type="text" id="pmodal-launch-symbol" maxlength="10" value="${esc(cachedSymbol)}" />
 				<label>Description</label>
-				<textarea id="pmodal-launch-desc" rows="2" maxlength="500">${esc(formData?.description || identity?.description || '')}</textarea>
+				<textarea id="pmodal-launch-desc" rows="2" maxlength="500">${esc(descDefault)}</textarea>
 				<div class="pmodal-sub" style="margin-top:0.5rem">Token image and metadata are generated automatically from your avatar.</div>
 			`;
 		} else if (step === 2) {

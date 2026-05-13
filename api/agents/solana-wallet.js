@@ -64,47 +64,92 @@ async function handleActivity(req, res, id) {
 	const url = new URL(req.url, 'http://x');
 	const network = url.searchParams.get('network') === 'devnet' ? 'devnet' : 'mainnet';
 	const limit = Math.min(parseInt(url.searchParams.get('limit') || '20', 10) || 20, 50);
+	const pk = new PublicKey(address);
 
-	const fetchActivity = async (conn) => {
-		const pk = new PublicKey(address);
-		const sigs = await conn.getSignaturesForAddress(pk, { limit });
-		const parsed = await conn.getParsedTransactions(sigs.map((s) => s.signature), { maxSupportedTransactionVersion: 0, commitment: 'confirmed' });
-		return sigs.map((s, i) => {
-			const tx = parsed[i];
-			let lamportDelta = null, summary = null;
-			if (tx?.meta && tx?.transaction) {
-				const keys = tx.transaction.message.accountKeys.map((k) => k.pubkey?.toString());
-				const idx = keys.indexOf(address);
-				if (idx >= 0 && tx.meta.preBalances && tx.meta.postBalances) lamportDelta = tx.meta.postBalances[idx] - tx.meta.preBalances[idx];
-				const ix = tx.transaction.message.instructions?.[0];
-				if (ix?.parsed?.type) summary = ix.parsed.type;
-				else if (ix?.programId) summary = `program ${ix.programId.toString().slice(0, 6)}…`;
-			}
-			return { signature: s.signature, slot: s.slot, block_time: s.blockTime ?? null, success: !s.err && !tx?.meta?.err, error: s.err || tx?.meta?.err || null, lamport_delta: lamportDelta, sol_delta: lamportDelta == null ? null : lamportDelta / 1e9, summary };
-		});
-	};
+	// Try the configured RPC first, then the public RPC. Distinct connection
+	// objects each call so a hung socket on one doesn't poison retries.
+	const conns = [solanaConnection(network), solanaPublicConnection(network)];
 
-	let signatures = [];
-	try {
-		signatures = await fetchActivity(solanaConnection(network));
-	} catch (err) {
-		const hasCustomRpc = !!(network === 'devnet'
-			? process.env.SOLANA_RPC_URL_DEVNET
-			: process.env.SOLANA_RPC_URL);
-		if (hasCustomRpc) {
-			try {
-				signatures = await fetchActivity(solanaPublicConnection(network));
-			} catch (fallbackErr) {
-				console.error('[agents/solana/activity] RPC fetch failed (fallback)', fallbackErr);
-				return error(res, 502, 'rpc_error', 'failed to fetch on-chain activity');
-			}
+	const sigInfos = await withRpcRetry(
+		conns,
+		(c) => c.getSignaturesForAddress(pk, { limit }),
+		'getSignaturesForAddress',
+	);
+	if (!sigInfos.ok) {
+		console.error('[agents/solana/activity] signature fetch failed on all RPCs', sigInfos.error);
+		return error(res, 502, 'rpc_error', 'failed to fetch on-chain activity');
+	}
+	const sigs = sigInfos.value;
+
+	// getParsedTransactions is the expensive call and the one most often rate-limited.
+	// Degrade gracefully: if it fails everywhere, we still return the signature list
+	// without the lamport delta / summary enrichment instead of 502-ing the whole call.
+	let parsed = null;
+	if (sigs.length) {
+		const parsedRes = await withRpcRetry(
+			conns,
+			(c) => c.getParsedTransactions(sigs.map((s) => s.signature), {
+				maxSupportedTransactionVersion: 0,
+				commitment: 'confirmed',
+			}),
+			'getParsedTransactions',
+		);
+		if (parsedRes.ok) {
+			parsed = parsedRes.value;
 		} else {
-			console.error('[agents/solana/activity] RPC fetch failed', err);
-			return error(res, 502, 'rpc_error', 'failed to fetch on-chain activity');
+			console.warn('[agents/solana/activity] parsed-tx enrichment unavailable', parsedRes.error?.message);
 		}
 	}
 
-	return json(res, 200, { data: { address, network, signatures } });
+	const signatures = sigs.map((s, i) => {
+		const tx = parsed?.[i] ?? null;
+		let lamportDelta = null;
+		let summary = null;
+		if (tx?.meta && tx?.transaction) {
+			const keys = tx.transaction.message.accountKeys.map((k) => k.pubkey?.toString());
+			const idx = keys.indexOf(address);
+			if (idx >= 0 && tx.meta.preBalances && tx.meta.postBalances) {
+				lamportDelta = tx.meta.postBalances[idx] - tx.meta.preBalances[idx];
+			}
+			const ix = tx.transaction.message.instructions?.[0];
+			if (ix?.parsed?.type) summary = ix.parsed.type;
+			else if (ix?.programId) summary = `program ${ix.programId.toString().slice(0, 6)}…`;
+		}
+		return {
+			signature: s.signature,
+			slot: s.slot,
+			block_time: s.blockTime ?? null,
+			success: !s.err && !tx?.meta?.err,
+			error: s.err || tx?.meta?.err || null,
+			lamport_delta: lamportDelta,
+			sol_delta: lamportDelta == null ? null : lamportDelta / 1e9,
+			summary,
+		};
+	});
+
+	return json(res, 200, {
+		data: { address, network, signatures, parsed_available: parsed !== null },
+	});
+}
+
+// Walk an ordered list of connections, returning the first successful result.
+// Skips duplicates (e.g. when SOLANA_RPC_URL is unset, both entries point at
+// the same public endpoint — no point in calling it twice).
+async function withRpcRetry(conns, call, label) {
+	let lastErr = null;
+	const seen = new Set();
+	for (const conn of conns) {
+		const key = conn?.rpcEndpoint || '';
+		if (key && seen.has(key)) continue;
+		seen.add(key);
+		try {
+			return { ok: true, value: await call(conn) };
+		} catch (err) {
+			lastErr = err;
+			console.warn(`[agents/solana/activity] ${label} via ${key} failed: ${err?.message || err}`);
+		}
+	}
+	return { ok: false, error: lastErr };
 }
 
 // ── airdrop ───────────────────────────────────────────────────────────────────

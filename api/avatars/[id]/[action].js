@@ -22,14 +22,17 @@ import {
 	defaultStorageMode,
 } from '../../_lib/storage-mode.js';
 import { getAvatar, resolveAvatarUrl } from '../../_lib/avatars.js';
-import { r2 } from '../../_lib/r2.js';
+import { r2, publicUrl } from '../../_lib/r2.js';
 import { env } from '../../_lib/env.js';
+import { DEMO_AVATARS } from '../../_lib/demo-avatars.js';
 
 const PINATA_ENDPOINT = 'https://api.pinata.cloud/pinning/pinFileToIPFS';
 
 export default wrap(async (req, res) => {
 	const action = req.query?.action;
 	switch (action) {
+		case 'agents':
+			return handleAgentsByAvatar(req, res);
 		case 'glb-versions':
 			return handleGlbVersions(req, res);
 		case 'pin-ipfs':
@@ -40,12 +43,60 @@ export default wrap(async (req, res) => {
 			return handleSession(req, res);
 		case 'storage-mode':
 			return handleStorageMode(req, res);
+		case 'thumbnail':
+			return handleThumbnail(req, res);
 		case 'versions':
 			return handleVersions(req, res);
 		default:
 			return error(res, 404, 'not_found', 'unknown avatar action');
 	}
 });
+
+// ── agents (public agents wearing this avatar) ────────────────────────────
+// GET /api/avatars/:id/agents
+// Returns up to 12 public agents (is_public = true) whose avatar_id matches.
+// Public endpoint, rate-limited by IP. Demo avatars never have wearers (they
+// are seeded fixtures), so we short-circuit with an empty list.
+
+async function handleAgentsByAvatar(req, res) {
+	if (cors(req, res, { methods: 'GET,OPTIONS' })) return;
+	if (!method(req, res, ['GET'])) return;
+
+	const id = req.query?.id;
+	if (!id) return error(res, 400, 'invalid_request', 'id required');
+
+	const rl = await limits.publicIp(clientIp(req));
+	if (!rl.success) return error(res, 429, 'rate_limited', 'too many requests');
+
+	if (String(id).startsWith('avatar_demo_')) {
+		return json(res, 200, { agents: [] });
+	}
+
+	const rows = await sql`
+		SELECT i.id, i.name, i.description, i.profile_image_url, i.created_at,
+		       i.erc8004_agent_id, i.chain_id
+		  FROM agent_identities i
+		 WHERE i.avatar_id = ${id}
+		   AND i.deleted_at IS NULL
+		   AND i.is_public = true
+		 ORDER BY (i.erc8004_agent_id IS NOT NULL) DESC, i.created_at DESC
+		 LIMIT 12
+	`;
+
+	const agents = rows.map((r) => ({
+		id: r.id,
+		name: r.name,
+		description: r.description || '',
+		profileImage: r.profile_image_url || null,
+		onchain: r.erc8004_agent_id != null,
+		chainId: r.chain_id || null,
+		createdAt: r.created_at,
+		url: `/agent/${r.id}`,
+	}));
+
+	res.setHeader('cache-control', 'public, max-age=30, s-maxage=120, stale-while-revalidate=600');
+	return json(res, 200, { agents });
+}
 
 // ── glb-versions ───────────────────────────────────────────────────────────
 
@@ -449,4 +500,50 @@ async function resolveVersionsAuth(req) {
 	if (session) return { userId: session.id };
 	const bearer = await authenticateBearer(extractBearer(req));
 	return bearer ? { userId: bearer.userId } : null;
+}
+
+// ── thumbnail ──────────────────────────────────────────────────────────────
+// GET /api/avatars/:id/thumbnail — 302 to the avatar's R2-hosted PNG poster.
+// Public/unlisted avatars: anyone. Private: owner (session or bearer) only.
+// Demo avatars: redirect to the bundled demo image. No thumbnail → 404.
+
+async function handleThumbnail(req, res) {
+	if (cors(req, res, { methods: 'GET,OPTIONS', credentials: true })) return;
+	if (!method(req, res, ['GET'])) return;
+
+	const id =
+		req.query?.id || new URL(req.url, 'http://x').pathname.split('/').filter(Boolean)[2];
+	if (!id) return error(res, 400, 'invalid_request', 'avatar id required');
+
+	if (id.startsWith('avatar_demo_')) {
+		const demo = DEMO_AVATARS.find((a) => a.avatarId === id);
+		if (!demo?.image) return error(res, 404, 'not_found', 'demo avatar has no thumbnail');
+		return redirect(res, demo.image);
+	}
+
+	const [row] = await sql`
+		SELECT id, owner_id, visibility, thumbnail_key
+		FROM avatars WHERE id = ${id} AND deleted_at IS NULL
+		LIMIT 1
+	`;
+	if (!row) return error(res, 404, 'not_found', 'avatar not found');
+
+	if (row.visibility === 'private') {
+		const auth = await resolveVersionsAuth(req);
+		if (!auth) return error(res, 401, 'unauthorized', 'sign in required');
+		if (auth.userId !== row.owner_id) return error(res, 403, 'forbidden', 'not your avatar');
+	}
+
+	if (!row.thumbnail_key) return error(res, 404, 'not_found', 'avatar has no thumbnail');
+
+	return redirect(res, publicUrl(row.thumbnail_key));
+}
+
+function redirect(res, url) {
+	// 302 keeps the URL cacheable for short windows without sticking permanently —
+	// the underlying thumbnail_key can change after a re-render.
+	res.statusCode = 302;
+	res.setHeader('location', url);
+	res.setHeader('cache-control', 'public, max-age=60, s-maxage=300');
+	res.end();
 }

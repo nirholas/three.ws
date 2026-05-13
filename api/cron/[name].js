@@ -69,6 +69,7 @@ const HANDLERS = {
 	'process-withdrawals': handleProcessWithdrawals,
 	'run-x-scheduled-posts': handleRunXScheduledPosts,
 	'run-x-triggers': handleRunXTriggers,
+	'fetch-x-metrics': handleFetchXMetrics,
 };
 
 export default wrap(async (req, res) => {
@@ -2574,7 +2575,7 @@ async function handleRunXScheduledPosts(req, res) {
 	const { publishTweet, XPostError } = await import('../_lib/x-post.js');
 
 	const due = await sql`
-		select id, user_id, agent_id, text, attempts
+		select id, user_id, agent_id, text, thread_parts, reply_to_tweet_id, attempts
 		from x_scheduled_posts
 		where posted_at is null and error is null
 		  and scheduled_at <= now()
@@ -2588,7 +2589,14 @@ async function handleRunXScheduledPosts(req, res) {
 	for (const row of due) {
 		report.processed++;
 		try {
-			const result = await publishTweet({ userId: row.user_id, agentId: row.agent_id, text: row.text });
+			const result = await publishTweet({
+				userId: row.user_id,
+				agentId: row.agent_id,
+				text: row.thread_parts ? null : row.text,
+				threadParts: Array.isArray(row.thread_parts) ? row.thread_parts : null,
+				replyTo: row.reply_to_tweet_id || null,
+				appendLink: Boolean(row.agent_id),
+			});
 			await sql`
 				update x_scheduled_posts
 				set posted_at = now(), tweet_id = ${result.tweet_id}, attempts = attempts + 1
@@ -2634,7 +2642,7 @@ async function handleRunXTriggers(req, res) {
 
 	const started = Date.now();
 	const rows = await sql`
-		select id, user_id, agent_id, kind, config, last_fired_at, last_state
+		select id, user_id, agent_id, kind, config, auto_publish, last_fired_at, last_state
 		from x_triggers
 		where enabled = true
 		order by coalesce(last_fired_at, '1970-01-01'::timestamptz) asc
@@ -2669,7 +2677,16 @@ function utcHour(d) { return d.getUTCHours(); }
 function utcDay(d)  { return d.getUTCDay(); }
 function ymdUTC(d)  { return `${d.getUTCFullYear()}-${String(d.getUTCMonth()+1).padStart(2,'0')}-${String(d.getUTCDate()).padStart(2,'0')}`; }
 
+// Either enqueue for immediate publish (auto_publish=true) or stash in the
+// pending-review queue for the user to approve (auto_publish=false).
 async function enqueueTriggerPost(t, text) {
+	if (t.auto_publish === false) {
+		await sql`
+			insert into x_pending_reviews (user_id, trigger_id, agent_id, text)
+			values (${t.user_id}, ${t.id}, ${t.agent_id}, ${text})
+		`;
+		return;
+	}
 	await sql`
 		insert into x_scheduled_posts (user_id, agent_id, text, scheduled_at)
 		values (${t.user_id}, ${t.agent_id}, ${text}, now())
@@ -2823,4 +2840,78 @@ async function evalPaymentReceived(t) {
 	}
 	if (lastId) await setTriggerState(t, { last_payment_id: lastId });
 	return true;
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// fetch-x-metrics
+//
+// Pulls public_metrics (likes, retweets, replies, impressions) for posts
+// older than ~1h and not refreshed in last 6h. Stored on x_posts.metrics.
+// ═══════════════════════════════════════════════════════════════════════════
+
+async function handleFetchXMetrics(req, res) {
+	if (cors(req, res, { methods: 'GET,POST,OPTIONS' })) return;
+	const auth = req.headers['authorization'] || '';
+	const expected = env.CRON_SECRET ? `Bearer ${env.CRON_SECRET}` : null;
+	const fromCron = req.headers['x-vercel-cron'] === '1';
+	if (!fromCron && expected && auth !== expected) {
+		return error(res, 401, 'unauthorized', 'cron secret required');
+	}
+
+	const { decryptToken } = await import('../auth/x/[action].js');
+
+	// Pick distinct users with posts needing refresh.
+	const users = await sql`
+		select distinct user_id
+		from x_posts
+		where created_at < now() - interval '1 hour'
+		  and (metrics_fetched_at is null or metrics_fetched_at < now() - interval '6 hours')
+		limit 50
+	`;
+
+	const report = { users: 0, fetched: 0, errors: 0 };
+	for (const u of users) {
+		report.users++;
+		const conn = (await sql`
+			select access_token, expires_at, refresh_token, id
+			from social_connections
+			where user_id = ${u.user_id} and provider = 'x' and disconnected_at is null
+			limit 1
+		`)[0];
+		if (!conn || !conn.access_token) continue;
+		let accessToken;
+		try { accessToken = decryptToken(conn.access_token); } catch { continue; }
+
+		const posts = await sql`
+			select id, tweet_id from x_posts
+			where user_id = ${u.user_id}
+			  and created_at < now() - interval '1 hour'
+			  and (metrics_fetched_at is null or metrics_fetched_at < now() - interval '6 hours')
+			order by created_at desc
+			limit 100
+		`;
+		if (!posts.length) continue;
+
+		// X allows up to 100 ids per /2/tweets lookup.
+		const ids = posts.map((p) => p.tweet_id).join(',');
+		const r = await fetch(`https://api.twitter.com/2/tweets?ids=${ids}&tweet.fields=public_metrics`, {
+			headers: { authorization: `Bearer ${accessToken}` },
+		});
+		if (!r.ok) { report.errors++; continue; }
+		const { data = [] } = await r.json();
+		const byId = new Map(data.map((d) => [d.id, d.public_metrics]));
+
+		for (const p of posts) {
+			const m = byId.get(p.tweet_id);
+			if (!m) continue;
+			await sql`
+				update x_posts
+				set metrics = ${JSON.stringify(m)}::jsonb, metrics_fetched_at = now()
+				where id = ${p.id}
+			`;
+			report.fetched++;
+		}
+	}
+
+	return json(res, 200, report);
 }

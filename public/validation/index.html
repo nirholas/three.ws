@@ -831,17 +831,9 @@
 	</head>
 	<body>
 		<header>
-			<div class="brand">
-				<a href="/"
-					><img src="/three.svg" alt="" class="header-logo" aria-hidden="true" />three.ws</a
-				>
-			</div>
-			<nav>
-				<a href="/marketplace.html?tab=mine">Home</a>
-				<a href="/dashboard">Dashboard</a>
-				<a href="/discover">Discover</a>
-			</nav>
+			<div id="nav-container"></div>
 		</header>
+		<script src="/nav.js"></script>
 
 		<main>
 			<h1>glTF Validator</h1>
@@ -1074,5 +1066,8 @@
 				.getElementById('empty-submit-btn')
 				.addEventListener('click', () => dashboard.openModal());
 		</script>
+
+		<div id="footer-container"></div>
+		<script src="/footer.js" defer></script>
 	</body>
 </html>

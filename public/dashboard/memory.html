@@ -1,0 +1,204 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width,initial-scale=1" />
+		<title>Agent Memory · three.ws</title>
+		<link rel="stylesheet" href="/dashboard/_dash-shell.css" />
+	</head>
+	<body>
+		<div class="dash-shell">
+			<a class="dash-back" href="/dashboard/agents">← Back to dashboard</a>
+			<h1 class="dash-title">Agent Memory</h1>
+			<p class="dash-sub">
+				Browse, prune, and add long-term memories your agent uses for context. Memories sync via
+				<code class="dash-mono">/api/agent-memory</code>.
+			</p>
+
+			<div id="picker"></div>
+			<div id="status"></div>
+			<div id="content"></div>
+		</div>
+
+		<script type="module">
+			import { mountAgentPicker } from '/dashboard/_agent-picker.js';
+
+			const TYPES = ['user', 'feedback', 'project', 'reference'];
+
+			const $ = (id) => document.getElementById(id);
+			const statusEl = $('status');
+			const contentEl = $('content');
+
+			function showStatus(msg, kind = '') {
+				statusEl.innerHTML = msg
+					? `<div class="${kind === 'err' ? 'dash-err' : 'dash-ok'}">${escapeHtml(msg)}</div>`
+					: '';
+			}
+
+			function escapeHtml(s) {
+				return String(s == null ? '' : s).replace(
+					/[&<>"']/g,
+					(c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' })[c],
+				);
+			}
+
+			function fmtTime(ms) {
+				if (!ms) return '';
+				const d = new Date(ms);
+				return d.toLocaleString();
+			}
+
+			async function loadMemories(agentId) {
+				const r = await fetch(
+					`/api/agent-memory?agentId=${encodeURIComponent(agentId)}&limit=500`,
+					{ credentials: 'include' },
+				);
+				if (!r.ok) throw new Error(`HTTP ${r.status}`);
+				const data = await r.json();
+				return data.entries || [];
+			}
+
+			async function deleteMemory(id) {
+				const r = await fetch(`/api/agent-memory/${encodeURIComponent(id)}`, {
+					method: 'DELETE',
+					credentials: 'include',
+				});
+				if (!r.ok) throw new Error(`HTTP ${r.status}`);
+				return r.json();
+			}
+
+			async function createMemory(agentId, entry) {
+				const r = await fetch('/api/agent-memory', {
+					method: 'POST',
+					credentials: 'include',
+					headers: { 'content-type': 'application/json' },
+					body: JSON.stringify({ agentId, entry }),
+				});
+				if (!r.ok) {
+					const err = await r.json().catch(() => ({}));
+					throw new Error(err.error_description || `HTTP ${r.status}`);
+				}
+				return r.json();
+			}
+
+			function renderList(agentId, entries) {
+				const grouped = {};
+				for (const t of TYPES) grouped[t] = [];
+				for (const e of entries) (grouped[e.type] || (grouped[e.type] = [])).push(e);
+
+				const sections = Object.entries(grouped)
+					.filter(([, arr]) => arr.length)
+					.map(
+						([type, arr]) => `
+						<div class="dash-card">
+							<h2>${escapeHtml(type)} <span class="dash-muted" style="text-transform:none;letter-spacing:0">· ${arr.length}</span></h2>
+							<ul class="dash-list">
+								${arr
+									.map(
+										(m) => `
+									<li>
+										<div style="display:flex;justify-content:space-between;gap:14px;align-items:flex-start">
+											<div style="flex:1;min-width:0">
+												<div style="white-space:pre-wrap;word-break:break-word;color:#ddd;font-size:14px">${escapeHtml(m.content)}</div>
+												<div class="dash-muted" style="margin-top:6px;font-size:11px">
+													${escapeHtml(fmtTime(m.createdAt))}
+													${(m.tags || []).length ? ' · ' + m.tags.map((t) => `<span class="dash-pill">${escapeHtml(t)}</span>`).join(' ') : ''}
+													${m.salience != null ? ` · salience ${Number(m.salience).toFixed(2)}` : ''}
+												</div>
+											</div>
+											<button class="dash-btn danger" data-del="${escapeHtml(m.id)}">Forget</button>
+										</div>
+									</li>
+								`,
+									)
+									.join('')}
+							</ul>
+						</div>
+					`,
+					)
+					.join('');
+
+				contentEl.innerHTML = `
+					<div class="dash-card">
+						<h2>Add memory</h2>
+						<form id="mem-form" style="display:grid;gap:10px">
+							<label>
+								<div class="dash-muted" style="margin-bottom:4px">Type</div>
+								<select class="dash-select" name="type">
+									${TYPES.map((t) => `<option value="${t}">${t}</option>`).join('')}
+								</select>
+							</label>
+							<label>
+								<div class="dash-muted" style="margin-bottom:4px">Content</div>
+								<textarea class="dash-textarea" name="content" required maxlength="4000" placeholder="Anything the agent should remember…"></textarea>
+							</label>
+							<label>
+								<div class="dash-muted" style="margin-bottom:4px">Tags (comma-separated)</div>
+								<input class="dash-input" name="tags" placeholder="trading, defi" />
+							</label>
+							<div class="dash-row">
+								<button class="dash-btn primary" type="submit">Save memory</button>
+								<span class="dash-muted" id="mem-form-status"></span>
+							</div>
+						</form>
+					</div>
+					${sections || '<div class="dash-empty">No memories yet for this agent.</div>'}
+				`;
+
+				$('mem-form').addEventListener('submit', async (e) => {
+					e.preventDefault();
+					const fd = new FormData(e.target);
+					const tags = String(fd.get('tags') || '')
+						.split(',')
+						.map((t) => t.trim())
+						.filter(Boolean);
+					const entry = {
+						type: String(fd.get('type')),
+						content: String(fd.get('content')),
+						tags,
+						createdAt: Date.now(),
+						updatedAt: Date.now(),
+					};
+					const formStatus = $('mem-form-status');
+					formStatus.textContent = 'Saving…';
+					try {
+						await createMemory(agentId, entry);
+						formStatus.textContent = '';
+						await refresh(agentId);
+					} catch (err) {
+						formStatus.textContent = err.message || 'Save failed';
+					}
+				});
+
+				contentEl.querySelectorAll('[data-del]').forEach((btn) => {
+					btn.addEventListener('click', async () => {
+						if (!confirm('Forget this memory? This cannot be undone.')) return;
+						btn.disabled = true;
+						try {
+							await deleteMemory(btn.dataset.del);
+							await refresh(agentId);
+						} catch (err) {
+							showStatus(err.message || 'Delete failed', 'err');
+							btn.disabled = false;
+						}
+					});
+				});
+			}
+
+			async function refresh(agentId) {
+				contentEl.innerHTML = '<div class="dash-empty">Loading memories…</div>';
+				try {
+					const entries = await loadMemories(agentId);
+					renderList(agentId, entries);
+				} catch (e) {
+					showStatus(e.message || 'Failed to load memories', 'err');
+				}
+			}
+
+			mountAgentPicker({
+				host: document.getElementById('picker'),
+				onPick: (agentId) => refresh(agentId),
+			});
+		</script>
+	</body>
+</html>

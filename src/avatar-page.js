@@ -97,6 +97,7 @@ async function init() {
 	loadSkills();
 	loadPlugins();
 	loadRelated();
+	loadUsedBy();
 	measureModel(glbUrl);
 }
 
@@ -234,6 +235,10 @@ function renderShell(glbUrl) {
 			<div class="av-panels">
 				<div class="av-panel active" data-panel="overview" id="av-overview">
 					${avatar.description ? `<p class="av-desc">${esc(avatar.description)}</p>` : '<p class="av-desc" style="color:var(--text-3)">No description provided.</p>'}
+					<section class="av-used-by" id="av-used-by" hidden aria-labelledby="av-used-by-heading">
+						<h3 class="av-used-by-heading" id="av-used-by-heading">Used by</h3>
+						<div class="av-used-by-grid" id="av-used-by-grid"></div>
+					</section>
 					${renderAttribution()}
 					${renderAttached()}
 				</div>
@@ -884,6 +889,38 @@ function buildSystemContext() {
 	}
 	parts.push('Respond in character, keep replies under 3 short paragraphs.');
 	return parts.filter(Boolean).join('\n');
+}
+
+// ── Agents wearing this avatar ────────────────────────────────────────
+
+async function loadUsedBy() {
+	const grid = $('av-used-by-grid');
+	const section = $('av-used-by');
+	if (!grid || !section) return;
+
+	const r = await fetch(`/api/avatars/${encodeURIComponent(avatarId)}/agents`);
+	if (!r.ok) return;
+	const { agents } = await r.json();
+	if (!Array.isArray(agents) || agents.length === 0) return;
+
+	section.hidden = false;
+	grid.innerHTML = agents
+		.map((a) => {
+			const thumb = a.profileImage
+				? `<img class="av-used-by-thumb" src="${esc(a.profileImage)}" alt="${esc(a.name)} avatar" loading="lazy" />`
+				: `<div class="av-used-by-thumb av-used-by-thumb--placeholder" aria-hidden="true">${esc((a.name || 'A').slice(0, 1).toUpperCase())}</div>`;
+			const badge = a.onchain
+				? `<span class="av-used-by-badge" title="Registered on-chain">on-chain</span>`
+				: '';
+			return `<a class="av-used-by-card" href="${esc(a.url)}" title="${esc(a.name)}">
+				${thumb}
+				<div class="av-used-by-meta">
+					<span class="av-used-by-name">${esc(a.name)}</span>
+					${badge}
+				</div>
+			</a>`;
+		})
+		.join('');
 }
 
 // ── Related avatars ───────────────────────────────────────────────────

@@ -1,4 +1,11 @@
 User-agent: *
 Allow: /
 Disallow: /my-agents
+Disallow: /dashboard
+Disallow: /settings
+
 Sitemap: https://three.ws/sitemap.xml
+
+# AI-agent index (https://llmstxt.org/)
+# Concise:  https://three.ws/llms.txt
+# Long form: https://three.ws/llms-full.txt

@@ -1,25 +1,33 @@
 import { sql } from '../../_lib/db.js';
-import { getSessionUser } from '../../_lib/auth.js';
+import { getSessionUser, authenticateBearer, extractBearer } from '../../_lib/auth.js';
 import { cors, json, method, wrap, error } from '../../_lib/http.js';
 import { limits, clientIp } from '../../_lib/rate-limit.js';
+
+async function resolveAuth(req) {
+	const session = await getSessionUser(req);
+	if (session) return { userId: session.id };
+	const bearer = await authenticateBearer(extractBearer(req));
+	return bearer ? { userId: bearer.userId } : null;
+}
 
 // GET /api/agents/:id/payments?direction=sent|received&limit=20&cursor=
 export const handlePayments = wrap(async (req, res, id) => {
 	if (cors(req, res, { methods: 'GET,OPTIONS', credentials: true })) return;
 	if (!method(req, res, ['GET'])) return;
 
-	const user = await getSessionUser(req);
-	if (!user) return error(res, 401, 'unauthorized', 'sign in required');
+	const auth = await resolveAuth(req);
+	if (!auth) return error(res, 401, 'unauthorized', 'sign in required');
 
 	const rl = await limits.authIp(clientIp(req));
 	if (!rl.success) return error(res, 429, 'rate_limited', 'too many requests');
 
 	const [agent] = await sql`
-		select id from agent_identities
-		where id = ${id} and user_id = ${user.id} and deleted_at is null
+		select id, user_id from agent_identities
+		where id = ${id} and deleted_at is null
 		limit 1
 	`;
 	if (!agent) return error(res, 404, 'not_found', 'agent not found');
+	if (agent.user_id !== auth.userId) return error(res, 403, 'forbidden', 'not your agent');
 
 	const url = new URL(req.url, 'http://x');
 	const direction = url.searchParams.get('direction') === 'received' ? 'received' : 'sent';
