@@ -215,8 +215,180 @@ function render(agent) {
 	if (agent.tradeUrl && agent.tradeUrl !== '#') $('ad-trade').href = agent.tradeUrl;
 	else $('ad-trade').style.display = 'none';
 
+	const sns = agent.rawMetadata?.meta?.sns_domain;
+	if (sns) {
+		document.getElementById('ad-sns-row').style.display = '';
+		document.getElementById('ad-sns').textContent = `${sns}.sol`;
+	}
+
+	const voiceProvider = agent.rawMetadata?.voice_provider;
+	const voiceId = agent.rawMetadata?.voice_id;
+	if (voiceProvider && voiceProvider !== 'browser') {
+		document.getElementById('ad-voice-row').style.display = '';
+		document.getElementById('ad-voice').innerHTML = `<span class="ad-pill ad-pill-green">cloned · ${voiceProvider}</span>`;
+	} else if (voiceProvider === 'browser') {
+		document.getElementById('ad-voice-row').style.display = '';
+		document.getElementById('ad-voice').textContent = 'browser TTS';
+	}
+
 	document.querySelector('.ad-main').classList.remove('loading');
 	bindWalletActions();
+
+	loadExtraSections(agent.id, agent.rawMetadata);
+}
+
+async function loadExtraSections(agentId, rec) {
+	const url = (p) => `/api/agents/${encodeURIComponent(agentId)}${p}`;
+
+	const safe = async (fn) => {
+		try { return await fn(); } catch (e) { return null; }
+	};
+
+	const [actions, memory, strategy, reputation, embedPolicy] = await Promise.all([
+		safe(() => fetchJson(url('/actions?limit=8'))),
+		safe(() => fetch(`/api/agent-memory?agentId=${encodeURIComponent(agentId)}&limit=6`, { credentials: 'include' }).then((r) => r.ok ? r.json() : null)),
+		safe(() => fetch(`/api/agent-strategy?id=${encodeURIComponent(agentId)}`, { credentials: 'include' }).then((r) => r.ok ? r.json() : null)),
+		safe(() => fetchJson(url('/reputation'))),
+		safe(() => fetch(url('/embed-policy'), { credentials: 'include' }).then((r) => r.ok ? r.json() : null)),
+	]);
+
+	if (actions?.actions?.length) renderActions(actions.actions, agentId);
+	if (memory?.entries?.length) renderMemory(memory.entries);
+	if (strategy?.data?.strategy != null) renderStrategy(strategy.data.strategy);
+	if (reputation && (reputation.count > 0 || reputation.average > 0)) renderReputation(reputation);
+	if (embedPolicy) renderEmbedPolicy(embedPolicy);
+}
+
+function escapeText(s) {
+	return String(s == null ? '' : s);
+}
+
+function fmtRelTime(iso) {
+	const t = new Date(iso).getTime();
+	const sec = Math.floor((Date.now() - t) / 1000);
+	if (sec < 60) return `${sec}s ago`;
+	if (sec < 3600) return `${Math.floor(sec / 60)}m ago`;
+	if (sec < 86400) return `${Math.floor(sec / 3600)}h ago`;
+	if (sec < 604800) return `${Math.floor(sec / 86400)}d ago`;
+	return new Date(iso).toLocaleDateString();
+}
+
+function actionIcon(type) {
+	return ({ speak: '💬', remember: '📝', sign: '✍️', 'skill-done': '✓', validate: '✔', 'load-end': '📦' })[type] || '•';
+}
+
+function summarizeActionPayload(p) {
+	if (typeof p !== 'object' || !p) return '';
+	if (p.text) return String(p.text).slice(0, 90);
+	if (p.content) return String(p.content).slice(0, 90);
+	const k = Object.keys(p)[0];
+	if (k == null) return '';
+	const v = p[k];
+	return typeof v === 'string' ? `${k}=${v.slice(0, 60)}` : `${k}=${typeof v}`;
+}
+
+function renderActions(actions, agentId) {
+	const card = document.getElementById('ad-actions-card');
+	const list = document.getElementById('ad-actions-list');
+	document.getElementById('ad-actions-count').textContent = `${actions.length} recent`;
+	list.innerHTML = '';
+	for (const a of actions) {
+		const verifyMark =
+			a.verified === true ? '<span class="ad-pill ad-pill-green" title="signature verified">✓</span>'
+			: a.verified === false ? '<span class="ad-pill" title="invalid signature">✗</span>'
+			: '';
+		const meta = el('span', { class: 'ad-muted', style: 'font-size:11px;display:flex;align-items:center;gap:6px' });
+		if (verifyMark) {
+			const m = document.createElement('span');
+			m.innerHTML = verifyMark;
+			meta.appendChild(m);
+		}
+		meta.appendChild(el('span', { text: fmtRelTime(a.timestamp) }));
+		const row = el('div', { class: 'ad-row ad-row-split', style: 'padding:8px 0;border-bottom:1px solid rgba(255,255,255,0.04)' }, [
+			el('span', { style: 'display:flex;align-items:center;gap:8px;min-width:0' }, [
+				el('span', { text: actionIcon(a.type) }),
+				el('span', { class: 'ad-mono', style: 'min-width:90px;flex-shrink:0', text: a.type }),
+				el('span', { class: 'ad-muted', style: 'overflow:hidden;text-overflow:ellipsis;white-space:nowrap', text: summarizeActionPayload(a.payload) }),
+			]),
+			meta,
+		]);
+		list.appendChild(row);
+	}
+	list.appendChild(
+		el('div', { style: 'text-align:center;padding-top:10px' }, [
+			el('a', { class: 'ad-cta', href: `/dashboard/actions?agent=${encodeURIComponent(agentId)}`, text: 'See full action log →' }),
+		]),
+	);
+	card.style.display = '';
+}
+
+function renderMemory(entries) {
+	const card = document.getElementById('ad-memory-card');
+	document.getElementById('ad-memory-count').textContent = `${entries.length}`;
+	const list = document.getElementById('ad-memory-list');
+	list.innerHTML = '';
+	for (const m of entries) {
+		const row = el('div', { style: 'padding:8px 0;border-bottom:1px solid rgba(255,255,255,0.04)' }, [
+			el('div', { class: 'ad-muted', style: 'font-size:11px;text-transform:uppercase;letter-spacing:.05em;margin-bottom:2px', text: m.type || 'memory' }),
+			el('div', { style: 'color:#ddd;font-size:13px;white-space:pre-wrap', text: String(m.content || '').slice(0, 240) }),
+		]);
+		list.appendChild(row);
+	}
+	card.style.display = '';
+}
+
+function renderStrategy(strategy) {
+	const card = document.getElementById('ad-strategy-card');
+	const pre = document.getElementById('ad-strategy');
+	pre.textContent = typeof strategy === 'string' ? strategy : JSON.stringify(strategy, null, 2);
+	card.style.display = '';
+}
+
+function renderReputation(r) {
+	const card = document.getElementById('ad-reputation-card');
+	document.getElementById('ad-rep-avg').textContent = r.average ? Number(r.average).toFixed(2) : '0.00';
+	document.getElementById('ad-rep-count').textContent = String(r.count || 0);
+	if (r.total_stake_wei && r.total_stake_wei !== '0') {
+		document.getElementById('ad-rep-stake-row').style.display = '';
+		const wei = BigInt(r.total_stake_wei);
+		const eth = Number(wei) / 1e18;
+		document.getElementById('ad-rep-stake').textContent = `${eth.toFixed(4)} ETH`;
+	}
+	card.style.display = '';
+}
+
+function renderEmbedPolicy(p) {
+	if (!p || typeof p !== 'object') return;
+	const card = document.getElementById('ad-embed-policy-card');
+	const host = document.getElementById('ad-embed-policy');
+	host.innerHTML = '';
+
+	const allowEmbed = p.allow_embed === false ? 'No' : 'Yes';
+	const allowedOrigins = Array.isArray(p.allowed_origins) ? p.allowed_origins : [];
+	const monthlyQuota = p?.brain?.monthly_quota;
+
+	host.appendChild(el('div', { class: 'ad-row ad-row-split' }, [
+		el('span', { class: 'ad-muted', text: 'Embeddable' }),
+		el('span', { text: allowEmbed }),
+	]));
+	if (allowedOrigins.length) {
+		host.appendChild(el('div', { class: 'ad-row ad-row-split' }, [
+			el('span', { class: 'ad-muted', text: 'Allowed origins' }),
+			el('span', { class: 'ad-mono', style: 'font-size:11px;text-align:right', text: allowedOrigins.slice(0, 3).join(', ') + (allowedOrigins.length > 3 ? ` +${allowedOrigins.length - 3}` : '') }),
+		]));
+	} else if (allowEmbed === 'Yes') {
+		host.appendChild(el('div', { class: 'ad-row ad-row-split' }, [
+			el('span', { class: 'ad-muted', text: 'Allowed origins' }),
+			el('span', { text: 'any' }),
+		]));
+	}
+	if (monthlyQuota != null) {
+		host.appendChild(el('div', { class: 'ad-row ad-row-split' }, [
+			el('span', { class: 'ad-muted', text: 'Monthly LLM quota' }),
+			el('span', { text: String(monthlyQuota) }),
+		]));
+	}
+	card.style.display = '';
 }
 
 function bindWalletActions() {

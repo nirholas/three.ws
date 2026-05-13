@@ -221,6 +221,7 @@ const LP_CSS = `
   background:rgba(246,179,179,.06);border:1px solid rgba(246,179,179,.22);border-radius:8px;
   font-size:.73rem;color:rgba(255,221,221,.85);line-height:1.35}
 .lp-link-row.checking{background:rgba(255,255,255,.04);border-color:rgba(255,255,255,.08);color:rgba(255,255,255,.5)}
+.lp-link-row.conflict{background:rgba(255,196,114,.08);border-color:rgba(255,196,114,.32);color:rgba(255,230,194,.9)}
 .lp-link-row .lp-link-info{flex:1;min-width:0}
 .lp-link-row .lp-link-title{display:block;font-weight:500;color:#fff;margin-bottom:.1rem;font-size:.78rem}
 .lp-link-row .lp-link-sub{display:block;color:rgba(255,255,255,.55);font-size:.7rem}
@@ -1238,6 +1239,17 @@ export function mountLaunchPanel(container, { getAvatar, getUser, getPreviewView
 
 		if (s.walletLinked === false) {
 			const busy = s.walletLinking ? 'disabled' : '';
+			if (s.walletConflict) {
+				const short = esc(shortenAddr(s.walletAddr));
+				return `<div class="lp-link-row conflict">
+					<div class="lp-link-info">
+						<span class="lp-link-title">This wallet belongs to a different three.ws account</span>
+						<span class="lp-link-sub">Sign once more with ${short} to transfer it to the account you&rsquo;re signed into now. The previous account loses this wallet.</span>
+						${s.walletLinkError ? `<span class="lp-link-err">${esc(s.walletLinkError)}</span>` : ''}
+					</div>
+					<button class="lp-link-btn" id="lp-link-transfer" ${busy}>${s.walletLinking ? 'Sign in your wallet…' : 'Transfer wallet to this account'}</button>
+				</div>`;
+			}
 			return `<div class="lp-link-row">
 				<div class="lp-link-info">
 					<span class="lp-link-title">Link this wallet to launch</span>
@@ -1537,7 +1549,8 @@ export function mountLaunchPanel(container, { getAvatar, getUser, getPreviewView
 		q('#lp-disc')?.addEventListener('click', disconnectWallet);
 		q('#lp-addr-copy')?.addEventListener('click', (e) => copyAddressToClipboard(e.currentTarget));
 		q('#lp-deposit')?.addEventListener('click', openDepositModal);
-		q('#lp-link-wallet')?.addEventListener('click', linkConnectedWallet);
+		q('#lp-link-wallet')?.addEventListener('click', () => linkConnectedWallet(false));
+		q('#lp-link-transfer')?.addEventListener('click', () => linkConnectedWallet(true));
 
 		// Wallet-source toggle
 		container.querySelectorAll('.lp-src button[data-src]').forEach((btn) => {

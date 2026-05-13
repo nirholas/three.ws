@@ -72,6 +72,39 @@ const SOLANA_LABELS = {
 const _isSolana = (id) => id === SOLANA_MAINNET || id === SOLANA_DEVNET;
 const _solanaNetwork = (id) => (id === SOLANA_DEVNET ? 'devnet' : 'mainnet');
 
+/**
+ * Map an external `?network=` argument to one of our chain IDs.
+ * Accepts canonical Solana strings ("mainnet-beta", "devnet"), bare chain
+ * names ("base", "polygon", "bsc"), or numeric EVM chainIds. Returns null
+ * when the value is empty or unknown so the caller can fall back.
+ */
+function _resolveNetworkArg(raw) {
+	if (!raw) return null;
+	const s = String(raw).trim().toLowerCase();
+	if (!s) return null;
+	if (s === 'mainnet-beta' || s === 'solana' || s === 'solana-mainnet' || s === 'mainnet')
+		return SOLANA_MAINNET;
+	if (s === 'devnet' || s === 'solana-devnet') return SOLANA_DEVNET;
+	if (/^\d+$/.test(s)) {
+		const id = Number(s);
+		return REGISTRY_DEPLOYMENTS[id] ? id : null;
+	}
+	const aliases = {
+		ethereum: 1, eth: 1, mainnet_eth: 1,
+		optimism: 10, op: 10,
+		bsc: 56, bnb: 56,
+		polygon: 137, matic: 137, pol: 137,
+		base: 8453,
+		arbitrum: 42161, arb: 42161,
+		avalanche: 43114, avax: 43114,
+		linea: 59144, scroll: 534352, celo: 42220,
+		'bsc-testnet': 97, sepolia: 11155111,
+		'base-sepolia': 84532, 'arbitrum-sepolia': 421614,
+	};
+	const id = aliases[s];
+	return id && REGISTRY_DEPLOYMENTS[id] ? id : null;
+}
+
 // ───────────────────────────────────────────────────────────────────────────
 // SRI integrity cache
 // ───────────────────────────────────────────────────────────────────────────
@@ -289,7 +322,9 @@ export class RegisterUI {
 
 		// Selected chain for reads + writes. Initialized to BSC Testnet; if the
 		// wallet is already on a different supported chain, we'll adopt that.
-		this.selectedChainId = DEFAULT_CHAIN_ID;
+		// `initial.network` (from ?network= URL param) overrides the default
+		// when it maps to a known chain.
+		this.selectedChainId = _resolveNetworkArg(opts.initial?.network) ?? DEFAULT_CHAIN_ID;
 
 		// Tab state
 		this.activeTab = opts.initialTab || 'create';
@@ -362,40 +397,86 @@ export class RegisterUI {
 		const pageMode = this.mode === 'page';
 		this.el = document.createElement('div');
 		this.el.className = 'erc8004-register' + (pageMode ? ' erc8004-register--page' : '');
-		const closeBtn = pageMode
-			? ''
-			: `<button class="erc8004-btn erc8004-btn--close" type="button" title="Close">✕</button>`;
-		this.el.innerHTML = `
-			<div class="erc8004-card erc8004-card--wide">
-				<div class="erc8004-header">
-					<div class="erc8004-controls">
-						<select class="erc8004-chain-select" title="Target chain"></select>
-						<button class="erc8004-btn erc8004-btn--wallet" type="button">
-							Connect MetaMask
-						</button>
-						${closeBtn}
+
+		if (pageMode) {
+			this.el.innerHTML = `
+				<div class="deploy-shell">
+					<header class="deploy-hero">
+						<div class="deploy-hero-text">
+							<div class="deploy-hero-eyebrow">
+								<span class="deploy-hero-dot" aria-hidden="true"></span>
+								<span>Deploy on-chain</span>
+							</div>
+							<h1 class="deploy-hero-title">Give your agent an on-chain identity</h1>
+							<p class="deploy-hero-sub">
+								Mint your agent as an NFT on Solana (Metaplex Core) or EVM (ERC-8004).
+								Your 3D body, services, and metadata live in a single discoverable record.
+							</p>
+							<div class="deploy-hero-meta">
+								<a class="deploy-hero-link" href="/dashboard">My agents →</a>
+								<a class="deploy-hero-link" href="https://eips.ethereum.org/EIPS/eip-8004" target="_blank" rel="noopener">ERC-8004 spec ↗</a>
+								<a class="deploy-hero-link" href="https://developers.metaplex.com/core" target="_blank" rel="noopener">Metaplex Core ↗</a>
+							</div>
+						</div>
+						<div class="deploy-hero-controls">
+							<label class="deploy-chain-control">
+								<span class="deploy-chain-label">Target network</span>
+								<select class="erc8004-chain-select" title="Target chain"></select>
+							</label>
+							<button class="erc8004-btn erc8004-btn--wallet deploy-wallet-btn" type="button">
+								Connect wallet
+							</button>
+						</div>
+					</header>
+
+					<div class="erc8004-mainnet-banner deploy-banner" data-role="mainnet-banner" style="display:none"></div>
+
+					<div class="deploy-grid">
+						<main class="deploy-main">
+							<div class="erc8004-tab-body" data-role="tab-body"></div>
+						</main>
+						<aside class="deploy-preview" data-role="preview" aria-label="Agent preview"></aside>
 					</div>
 				</div>
+			`;
+		} else {
+			this.el.innerHTML = `
+				<div class="erc8004-card erc8004-card--wide">
+					<div class="erc8004-header">
+						<div class="erc8004-controls">
+							<select class="erc8004-chain-select" title="Target chain"></select>
+							<button class="erc8004-btn erc8004-btn--wallet" type="button">
+								Connect MetaMask
+							</button>
+							<button class="erc8004-btn erc8004-btn--close" type="button" title="Close">✕</button>
+						</div>
+					</div>
 
-				<div class="erc8004-mainnet-banner" data-role="mainnet-banner" style="display:none"></div>
+					<div class="erc8004-mainnet-banner" data-role="mainnet-banner" style="display:none"></div>
 
-				<nav class="erc8004-tabs" role="tablist">
-					<button class="erc8004-tab erc8004-tab--active" data-tab="create">Create Agent</button>
-					<button class="erc8004-tab" data-tab="my">My Agents</button>
-					<button class="erc8004-tab" data-tab="search">Search</button>
-					<button class="erc8004-tab" data-tab="templates">Templates</button>
-					<button class="erc8004-tab" data-tab="batch">Batch</button>
-					<button class="erc8004-tab" data-tab="history">History</button>
-				</nav>
+					<nav class="erc8004-tabs" role="tablist">
+						<button class="erc8004-tab erc8004-tab--active" data-tab="create">Create Agent</button>
+						<button class="erc8004-tab" data-tab="my">My Agents</button>
+						<button class="erc8004-tab" data-tab="search">Search</button>
+						<button class="erc8004-tab" data-tab="templates">Templates</button>
+						<button class="erc8004-tab" data-tab="batch">Batch</button>
+						<button class="erc8004-tab" data-tab="history">History</button>
+					</nav>
 
-				<div class="erc8004-tab-body" data-role="tab-body"></div>
-			</div>
-		`;
+					<div class="erc8004-tab-body" data-role="tab-body"></div>
+				</div>
+			`;
+		}
 		this.container.appendChild(this.el);
 
 		this._populateChainSelect();
 		this._renderActiveTab();
 		this._refreshMainnetBanner();
+		this._refreshWalletButton();
+	}
+
+	_isPageMode() {
+		return this.mode === 'page';
 	}
 
 	_refreshMainnetBanner() {
@@ -434,6 +515,7 @@ export class RegisterUI {
 			const raw = e.target.value;
 			const newChain = _isSolana(raw) ? raw : Number(raw);
 			this.selectedChainId = newChain;
+			this._refreshWalletButton();
 			// If we just selected an EVM chain and the user has an EVM wallet on a
 			// different chain, prompt to switch. Solana chains skip this entirely.
 			if (
@@ -469,6 +551,24 @@ export class RegisterUI {
 	// -----------------------------------------------------------------------
 
 	async _connectWallet() {
+		// On Solana, route to Phantom instead of MetaMask.
+		if (_isSolana(this.selectedChainId)) {
+			try {
+				const provider = detectSolanaWallet();
+				if (!provider) {
+					window.open('https://phantom.app/', '_blank', 'noopener');
+					return;
+				}
+				const res = await provider.connect();
+				const pk = res?.publicKey?.toBase58?.() || provider.publicKey?.toBase58?.();
+				if (pk) this._toast('Connected ' + shortAddr(pk));
+				this._refreshWalletButton();
+				this._renderActiveTab();
+			} catch (err) {
+				this._toast('Phantom: ' + (err?.message || String(err)), true);
+			}
+			return;
+		}
 		try {
 			const { address, chainId } = await connectWallet();
 			this.wallet = { address, chainId: Number(chainId) };
@@ -514,8 +614,24 @@ export class RegisterUI {
 
 	_refreshWalletButton() {
 		const btn = this.el.querySelector('.erc8004-btn--wallet');
+		if (!btn) return;
+		const solana = _isSolana(this.selectedChainId);
+		if (solana) {
+			// Solana — `this.wallet` tracks EVM only; show Phantom CTA / connected state
+			// from window.solana when available.
+			const hasPhantom = !!detectSolanaWallet();
+			const pk = window.solana?.publicKey?.toBase58?.() || null;
+			if (pk) {
+				btn.textContent = shortAddr(pk);
+				btn.classList.add('erc8004-btn--connected');
+			} else {
+				btn.textContent = hasPhantom ? 'Connect Phantom' : 'Install Phantom';
+				btn.classList.remove('erc8004-btn--connected');
+			}
+			return;
+		}
 		if (!this.wallet) {
-			btn.textContent = 'Connect MetaMask';
+			btn.textContent = window.ethereum ? 'Connect MetaMask' : 'Install MetaMask';
 			btn.classList.remove('erc8004-btn--connected');
 			return;
 		}
@@ -681,6 +797,15 @@ export class RegisterUI {
 	_renderActiveTab() {
 		const body = this.el.querySelector('[data-role="tab-body"]');
 		body.innerHTML = '';
+		// In page mode (/deploy) we hide the tab strip and always render the
+		// Create wizard — this URL is single-purpose. The preview rail mirrors
+		// the form state on the right.
+		if (this._isPageMode()) {
+			this.activeTab = 'create';
+			this._renderCreate(body);
+			this._refreshPreview();
+			return;
+		}
 		switch (this.activeTab) {
 			case 'create':
 				this._renderCreate(body);
@@ -701,6 +826,68 @@ export class RegisterUI {
 				this._renderHistory(body);
 				break;
 		}
+	}
+
+	// ----- Preview rail (page mode only) -----------------------------------
+
+	_refreshPreview() {
+		const rail = this.el.querySelector('[data-role="preview"]');
+		if (!rail) return;
+		const f = this.form;
+		const solana = _isSolana(this.selectedChainId);
+		const chainLabel = solana
+			? SOLANA_LABELS[this.selectedChainId]
+			: (CHAIN_META[this.selectedChainId]?.name || `Chain ${this.selectedChainId}`);
+		const standard = solana ? 'Metaplex Core NFT' : 'ERC-8004 (ERC-721)';
+		const costLabel = solana ? '~0.003 SOL' : `gas on ${esc(chainLabel)}`;
+		const img = f.imageUrl?.trim();
+		const avatarLine = this._avatarSummary();
+		const services = (f.services || []).filter((s) => s.endpoint?.trim());
+		rail.innerHTML = `
+			<div class="deploy-preview-card">
+				<div class="deploy-preview-eyebrow">Live preview</div>
+				<div class="deploy-preview-thumb">
+					${img
+						? `<img src="${esc(img)}" alt="" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'" />
+						   <div class="deploy-preview-ph" style="display:none">No image</div>`
+						: `<div class="deploy-preview-ph">No image yet</div>`}
+				</div>
+				<div class="deploy-preview-name">${esc(f.name) || '<span class="deploy-preview-dim">Untitled agent</span>'}</div>
+				<div class="deploy-preview-desc">${esc(f.description) || '<span class="deploy-preview-dim">Add a description in Step 1.</span>'}</div>
+				<dl class="deploy-preview-meta">
+					<dt>Chain</dt><dd>${esc(chainLabel)}</dd>
+					<dt>Standard</dt><dd>${standard}</dd>
+					<dt>Avatar</dt><dd>${avatarLine}</dd>
+					<dt>Services</dt><dd>${services.length ? services.map((s) => `<span class="deploy-svc-pill">${esc(s.type)}</span>`).join(' ') : '<span class="deploy-preview-dim">none</span>'}</dd>
+					<dt>Cost</dt><dd>${esc(costLabel)}</dd>
+				</dl>
+				<div class="deploy-preview-checklist">
+					<div class="deploy-check ${f.name?.trim() ? 'is-ok' : ''}">${f.name?.trim() ? '✓' : '○'} Name</div>
+					<div class="deploy-check ${f.description?.trim() ? 'is-ok' : ''}">${f.description?.trim() ? '✓' : '○'} Description</div>
+					<div class="deploy-check ${this._hasAvatar() ? 'is-ok' : ''}">${this._hasAvatar() ? '✓' : '○'} Avatar</div>
+					<div class="deploy-check ${this._walletReady() ? 'is-ok' : ''}">${this._walletReady() ? '✓' : '○'} Wallet</div>
+				</div>
+			</div>
+		`;
+	}
+
+	_hasAvatar() {
+		const f = this.form;
+		const s = f.avatarSource;
+		if (s === 'current') return !!f.glbUrl;
+		if (s === 'saved') return !!f.savedAvatar;
+		if (s === 'upload') return !!f.glbFile;
+		if (s === 'url') return !!f.pastedGlbUrl?.trim();
+		if (s === 'default') return !!f.defaultAvatarId;
+		if (s === 'skip') return true;
+		return false;
+	}
+
+	_walletReady() {
+		if (_isSolana(this.selectedChainId)) {
+			return !!window.solana?.publicKey;
+		}
+		return !!this.wallet;
 	}
 
 	_renderBatch(body) {
@@ -724,8 +911,32 @@ export class RegisterUI {
 
 	_renderCreate(body) {
 		const step = this.wizardStep;
-		body.innerHTML = `
-			<div class="erc8004-wizard">
+		const pageMode = this._isPageMode();
+		const stepLabels = ['Identity', 'Services', 'Avatar', 'Deploy'];
+		const stepBar = `
+			<ol class="erc8004-steps deploy-steps" role="list">
+				${[1, 2, 3, 4]
+					.map((n) => {
+						const state = n === step ? 'active' : (n < step ? 'done' : '');
+						const clickable = n < step ? 'data-role="goto-step" data-step="' + n + '"' : '';
+						return `
+						<li class="erc8004-step deploy-step ${state ? 'deploy-step--' + state : ''} ${n === step ? 'erc8004-step--active' : ''} ${n < step ? 'erc8004-step--done' : ''}" ${clickable}>
+							<span class="erc8004-step-num">${n < step ? '✓' : n}</span>
+							<span class="erc8004-step-lbl">${stepLabels[n - 1]}</span>
+						</li>`;
+					})
+					.join('')}
+			</ol>`;
+		const quickstart = pageMode
+			? `
+				<div class="deploy-quickstart-bar">
+					<span class="deploy-quickstart-bar-label">Start from</span>
+					<button class="deploy-qs-chip" data-role="qs-current" type="button">Current session</button>
+					<button class="deploy-qs-chip" data-role="qs-saved" type="button" ${this._signedIn ? '' : 'disabled'}>Saved agent</button>
+					<button class="deploy-qs-chip" data-role="qs-scratch" type="button">Scratch</button>
+					<button class="deploy-qs-chip" data-role="qs-update" type="button">Edit existing →</button>
+				</div>`
+			: `
 				<div class="erc8004-quickstart" data-role="quickstart">
 					<div class="erc8004-quickstart-title">How would you like to start?</div>
 					<div class="erc8004-quickstart-grid">
@@ -746,19 +957,11 @@ export class RegisterUI {
 							<div class="erc8004-quickstart-btn-hint">Edit an agent you've already registered.</div>
 						</button>
 					</div>
-				</div>
-				<ol class="erc8004-steps">
-					${[1, 2, 3, 4]
-						.map(
-							(n) => `
-						<li class="erc8004-step ${n === step ? 'erc8004-step--active' : ''} ${n < step ? 'erc8004-step--done' : ''}">
-							<span class="erc8004-step-num">${n}</span>
-							<span class="erc8004-step-lbl">${['Identity', 'Services', 'Configuration', 'Deploy'][n - 1]}</span>
-						</li>
-					`,
-						)
-						.join('')}
-				</ol>
+				</div>`;
+		body.innerHTML = `
+			<div class="erc8004-wizard ${pageMode ? 'deploy-wizard' : ''}">
+				${quickstart}
+				${stepBar}
 				<div class="erc8004-wizard-body" data-role="wizard-body"></div>
 			</div>
 		`;
@@ -774,6 +977,15 @@ export class RegisterUI {
 		body.querySelector('[data-role="qs-update"]').addEventListener('click', () =>
 			this._applyQuickStart('update'),
 		);
+		body.querySelectorAll('[data-role="goto-step"]').forEach((el) => {
+			el.addEventListener('click', () => {
+				const n = Number(el.dataset.step);
+				if (n >= 1 && n < this.wizardStep) {
+					this.wizardStep = n;
+					this._renderActiveTab();
+				}
+			});
+		});
 		const wbody = body.querySelector('[data-role="wizard-body"]');
 		if (step === 1) this._renderStepIdentity(wbody);
 		else if (step === 2) this._renderStepServices(wbody);
@@ -864,18 +1076,18 @@ export class RegisterUI {
 				<button class="erc8004-btn erc8004-btn--primary" data-role="next">Next: Services →</button>
 			</div>
 		`;
-		body.querySelector('[name="name"]').addEventListener(
-			'input',
-			(e) => (this.form.name = e.target.value),
-		);
-		body.querySelector('[name="description"]').addEventListener(
-			'input',
-			(e) => (this.form.description = e.target.value),
-		);
-		body.querySelector('[name="imageUrl"]').addEventListener(
-			'input',
-			(e) => (this.form.imageUrl = e.target.value),
-		);
+		body.querySelector('[name="name"]').addEventListener('input', (e) => {
+			this.form.name = e.target.value;
+			this._refreshPreview();
+		});
+		body.querySelector('[name="description"]').addEventListener('input', (e) => {
+			this.form.description = e.target.value;
+			this._refreshPreview();
+		});
+		body.querySelector('[name="imageUrl"]').addEventListener('input', (e) => {
+			this.form.imageUrl = e.target.value;
+			this._refreshPreview();
+		});
 		body.querySelector('[data-role="next"]').addEventListener('click', () => {
 			if (!this.form.name.trim() || !this.form.description.trim()) {
 				this._toast('Name and description are required.', true);

@@ -906,6 +906,70 @@ async function loadXPanel({ host, meterEl, bodyEl, avatar }) {
 
 	loadScheduledPosts(scheduledEl);
 	loadXTriggers(triggersEl, avatar);
+	loadXReviews(reviewsEl);
+	loadXAnalytics(analyticsEl, avatar);
+}
+
+async function loadXReviews(host) {
+	if (!host) return;
+	try {
+		const r = await fetch('/api/x/reviews', { credentials: 'include' });
+		const reviews = (await r.json()).reviews || [];
+		if (!reviews.length) { host.innerHTML = ''; return; }
+		host.innerHTML = `
+			<div class="muted" style="font-size:11px;text-transform:uppercase;letter-spacing:0.07em;margin-bottom:6px;color:#ffb84d">⚠ ${reviews.length} draft${reviews.length === 1 ? '' : 's'} awaiting your review</div>
+			${reviews.map((r) => `
+				<div style="padding:10px 12px;background:#1a1408;border:1px solid #3a2a14;border-radius:8px;margin-bottom:6px">
+					<div style="color:#ccc;font-size:13px;white-space:pre-wrap">${esc(r.text)}</div>
+					<div class="row" style="gap:6px;margin-top:8px">
+						<button class="btn" data-approve="${attr(r.id)}" style="font-size:11px;padding:4px 10px">Approve & post</button>
+						<button class="btn sec" data-reject="${attr(r.id)}" style="font-size:11px;padding:4px 10px">Reject</button>
+						<span class="muted" style="font-size:11px;margin-left:auto">${new Date(r.created_at).toLocaleString()}</span>
+					</div>
+				</div>
+			`).join('')}
+		`;
+		host.querySelectorAll('[data-approve]').forEach((btn) => {
+			btn.addEventListener('click', async () => {
+				const id = btn.getAttribute('data-approve');
+				btn.disabled = true;
+				const r = await fetch(`/api/x/reviews?id=${encodeURIComponent(id)}`, {
+					method: 'PATCH', credentials: 'include',
+					headers: { 'content-type': 'application/json' },
+					body: JSON.stringify({ action: 'approve', append_link: true }),
+				});
+				if (!r.ok) { alert((await r.json()).error_description || 'approve failed'); btn.disabled = false; return; }
+				loadXReviews(host);
+			});
+		});
+		host.querySelectorAll('[data-reject]').forEach((btn) => {
+			btn.addEventListener('click', async () => {
+				const id = btn.getAttribute('data-reject');
+				await fetch(`/api/x/reviews?id=${encodeURIComponent(id)}`, { method: 'DELETE', credentials: 'include' });
+				loadXReviews(host);
+			});
+		});
+	} catch {}
+}
+
+async function loadXAnalytics(host, avatar) {
+	if (!host) return;
+	try {
+		const r = await fetch(`/api/x/analytics?agent_id=${encodeURIComponent(avatar.agent_id || avatar.id)}`, { credentials: 'include' });
+		const data = await r.json();
+		const t = data.totals || {};
+		if (!t.posts) { host.innerHTML = ''; return; }
+		host.innerHTML = `
+			<div class="muted" style="font-size:11px;text-transform:uppercase;letter-spacing:0.07em;margin-bottom:6px">Engagement (last 50 posts)</div>
+			<div class="row" style="gap:14px;flex-wrap:wrap;font-size:12px;color:#ccc">
+				<div><b>${t.posts}</b> <span class="muted">posts</span></div>
+				<div><b>${t.likes}</b> <span class="muted">likes</span></div>
+				<div><b>${t.retweets}</b> <span class="muted">RTs</span></div>
+				<div><b>${t.replies}</b> <span class="muted">replies</span></div>
+				<div><b>${t.impressions.toLocaleString()}</b> <span class="muted">impressions</span></div>
+			</div>
+		`;
+	} catch {}
 }
 
 async function loadXTriggers(host, avatar) {
@@ -944,8 +1008,13 @@ async function loadXTriggers(host, avatar) {
 	const priceThresholds = (byKind.price_milestone?.config?.thresholds_usd ?? [10000, 50000, 100000, 500000, 1000000]).join(', ');
 	const paymentMin = byKind.payment_received?.config?.min_amount_usd ?? 1;
 
+	const anyReviewMode = triggers.some((t) => t.auto_publish === false);
+
 	host.innerHTML = `
-		<div class="muted" style="font-size:11px;text-transform:uppercase;letter-spacing:0.07em;margin-bottom:8px">Auto-post triggers</div>
+		<div class="row" style="justify-content:space-between;margin-bottom:8px">
+			<div class="muted" style="font-size:11px;text-transform:uppercase;letter-spacing:0.07em">Auto-post triggers</div>
+			<label class="muted" style="font-size:11px"><input type="checkbox" data-trig-review-all ${anyReviewMode ? 'checked' : ''} style="width:auto;display:inline-block;margin-right:4px;vertical-align:middle"> Review before publish</label>
+		</div>
 		${row('daily_persona', 'Daily in-character post',
 			'Agent tweets once a day at your chosen UTC hour, in voice.',
 			`<label style="font-size:12px;color:#888">UTC hour <input type="number" min="0" max="23" data-trig-input="daily_persona.hour_utc" value="${dailyHour}" style="width:60px;display:inline-block;margin-left:6px"></label>
@@ -992,14 +1061,37 @@ async function loadXTriggers(host, avatar) {
 			if (!r.ok) throw new Error((await r.json()).error_description || 'update failed');
 			byKind[kind] = (await r.json()).trigger;
 		} else {
+			const autoPublish = !host.querySelector('[data-trig-review-all]')?.checked;
 			const r = await fetch('/api/x/triggers', {
 				method: 'POST', credentials: 'include',
 				headers: { 'content-type': 'application/json' },
-				body: JSON.stringify({ kind, config, enabled, agent_id: agentId }),
+				body: JSON.stringify({ kind, config, enabled, agent_id: agentId, auto_publish: autoPublish }),
 			});
 			if (!r.ok) throw new Error((await r.json()).error_description || 'create failed');
 			byKind[kind] = (await r.json()).trigger;
 		}
+	}
+
+	const reviewAllEl = host.querySelector('[data-trig-review-all]');
+	if (reviewAllEl) {
+		reviewAllEl.addEventListener('change', async () => {
+			const autoPublish = !reviewAllEl.checked;
+			const ids = Object.values(byKind).map((t) => t.id);
+			for (const id of ids) {
+				try {
+					const r = await fetch(`/api/x/triggers?id=${encodeURIComponent(id)}`, {
+						method: 'PATCH', credentials: 'include',
+						headers: { 'content-type': 'application/json' },
+						body: JSON.stringify({ auto_publish: autoPublish }),
+					});
+					if (r.ok) {
+						const t = (await r.json()).trigger;
+						byKind[t.kind] = t;
+					}
+				} catch {}
+			}
+			setTrigMsg(autoPublish ? 'Auto-publish enabled.' : 'New trigger drafts will require your review.');
+		});
 	}
 
 	host.querySelectorAll('[data-trig]').forEach((cb) => {

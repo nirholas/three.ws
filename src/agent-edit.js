@@ -195,10 +195,25 @@ function renderMonetization() {
 // Lazily mount the agent preview + avatar picker only when the user opens
 // the tab so we don't pay for a WebGL context up front.
 
+async function ensureAgent3DLib() {
+  if (customElements.get('agent-3d')) return true;
+  const candidates = ['/agent-3d/latest/agent-3d.js', '/dist-lib/agent-3d.js'];
+  for (const url of candidates) {
+    try {
+      await import(/* @vite-ignore */ url);
+      if (customElements.get('agent-3d')) return true;
+    } catch {
+      /* try next candidate */
+    }
+  }
+  return false;
+}
+
 async function ensureOutfitTab() {
   if (outfitMounted) return;
   outfitMounted = true;
 
+  await ensureAgent3DLib();
   const preview = $('outfit-preview');
   const a3d = document.createElement('agent-3d');
   a3d.setAttribute('agent-id', agentId);
@@ -1169,6 +1184,9 @@ function renderXTriggers(rows) {
           <label style="display:inline-flex;align-items:center;gap:.5rem;font-size:.764rem;color:rgba(255,255,255,.6)">
             <input type="checkbox" class="trigger-enabled" ${t.enabled ? 'checked' : ''}> Enabled
           </label>
+          <label style="display:inline-flex;align-items:center;gap:.5rem;font-size:.764rem;color:rgba(255,255,255,.6)" title="If off, fired triggers queue as drafts instead of posting automatically.">
+            <input type="checkbox" class="trigger-auto" ${t.auto_publish !== false ? 'checked' : ''}> Auto-publish
+          </label>
           <button class="chip-remove" data-del="${escapeHtml(t.id)}" title="Delete">×</button>
         </div>
         <div class="trigger-item-body">${body}</div>
@@ -1183,7 +1201,8 @@ function renderXTriggers(rows) {
     const id = item.dataset.id;
     item.querySelector('[data-del]').addEventListener('click', () => deleteTrigger(id));
     item.querySelector('.trigger-save').addEventListener('click', () => saveTrigger(item, id));
-    item.querySelector('.trigger-enabled').addEventListener('change', (e) => saveTriggerEnabled(id, e.target.checked));
+    item.querySelector('.trigger-enabled').addEventListener('change', (e) => patchTrigger(id, { enabled: e.target.checked }));
+    item.querySelector('.trigger-auto').addEventListener('change', (e) => patchTrigger(id, { auto_publish: e.target.checked }));
   });
 }
 
@@ -1218,12 +1237,12 @@ async function saveTrigger(item, id) {
   }
 }
 
-async function saveTriggerEnabled(id, enabled) {
+async function patchTrigger(id, body) {
   await fetch(`${API_BASE}/x/triggers?id=${encodeURIComponent(id)}`, {
     method: 'PATCH',
     headers: { 'Content-Type': 'application/json' },
     credentials: 'include',
-    body: JSON.stringify({ enabled }),
+    body: JSON.stringify(body),
   });
 }
 

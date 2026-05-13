@@ -354,14 +354,14 @@
 			<p class="sub">Get started free. <span class="badge">✓ No email needed</span></p>
 
 			<div class="chain-tabs" role="tablist" aria-label="Wallet chain">
-				<button type="button" class="chain-tab active" data-chain="evm" role="tab" aria-selected="true" aria-controls="evm-panel">EVM</button>
-				<button type="button" class="chain-tab" data-chain="solana" role="tab" aria-selected="false" aria-controls="solana-panel">Solana</button>
+				<button type="button" class="chain-tab active" data-chain="solana" role="tab" aria-selected="true" aria-controls="solana-panel">Solana</button>
+				<button type="button" class="chain-tab" data-chain="evm" role="tab" aria-selected="false" aria-controls="evm-panel">EVM</button>
 			</div>
-			<div id="evm-panel" class="chain-panel active" role="tabpanel">
-				<div id="wallet-mount"></div>
-			</div>
-			<div id="solana-panel" class="chain-panel" role="tabpanel">
+			<div id="solana-panel" class="chain-panel active" role="tabpanel">
 				<div id="solana-wallet-mount"></div>
+			</div>
+			<div id="evm-panel" class="chain-panel" role="tabpanel">
+				<div id="wallet-mount"></div>
 			</div>
 			<p class="hint" style="margin-top:10px;text-align:center;font-size:11px;color:#555;cursor:help" title="Your wallet will prompt twice — once to connect, once to sign.">Wallet prompts to connect, then to sign.</p>
 
@@ -566,22 +566,25 @@
 			// Wallet chain tabs + Solana detection
 			(function () {
 				const solanaTab = document.querySelector('.chain-tab[data-chain="solana"]');
+				function activateChain(chain) {
+					document.querySelectorAll('.chain-tab').forEach((x) => {
+						const on = x.dataset.chain === chain;
+						x.classList.toggle('active', on);
+						x.setAttribute('aria-selected', on ? 'true' : 'false');
+					});
+					document.getElementById('evm-panel').classList.toggle('active', chain === 'evm');
+					document.getElementById('solana-panel').classList.toggle('active', chain === 'solana');
+				}
 				const hasSolana = !!(window.solana || window.phantom?.solana || window.backpack || window.solflare);
 				if (solanaTab && !hasSolana) {
 					solanaTab.disabled = true;
 					solanaTab.title = 'Install Phantom, Backpack, or Solflare to use Solana';
+					activateChain('evm');
 				}
 				document.querySelectorAll('.chain-tab').forEach((t) => {
 					t.addEventListener('click', () => {
 						if (t.disabled) return;
-						const chain = t.dataset.chain;
-						document.querySelectorAll('.chain-tab').forEach((x) => {
-							const on = x.dataset.chain === chain;
-							x.classList.toggle('active', on);
-							x.setAttribute('aria-selected', on ? 'true' : 'false');
-						});
-						document.getElementById('evm-panel').classList.toggle('active', chain === 'evm');
-						document.getElementById('solana-panel').classList.toggle('active', chain === 'solana');
+						activateChain(t.dataset.chain);
 					});
 				});
 

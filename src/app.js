@@ -1709,33 +1709,49 @@ class App {
 	}
 
 	/**
-	 * Resolve the initial state passed to RegisterUI. If `?avatar=<id>` is
-	 * present, fetch that avatar from the backend and pre-fill name /
-	 * description / image / GLB. Otherwise fall back to the current viewer
-	 * model.
+	 * Resolve the initial state passed to RegisterUI. Honors:
+	 *   ?avatar=<id>       — fetch a saved avatar from the backend
+	 *   ?name=             — prefill identity name
+	 *   ?description=      — prefill description
+	 *   ?image=            — prefill image URL
+	 *   ?network=          — preselect chain (mainnet-beta/devnet/base/bsc/…)
+	 * Avatar lookup wins over the viewer's current model when both exist;
+	 * direct query params override either as last-step "manual" entries.
 	 */
 	async _resolveDeployInitial() {
 		const qp = new URLSearchParams(location.search);
 		const avatarId = qp.get('avatar');
-		const fallback = { glbUrl: this._currentModelUrl || '' };
-		if (!avatarId) return fallback;
-		try {
-			const res = await fetch(`/api/avatars/${encodeURIComponent(avatarId)}`, {
-				credentials: 'include',
-			});
-			if (!res.ok) throw new Error(`HTTP ${res.status}`);
-			const { avatar } = await res.json();
-			if (!avatar) throw new Error('empty avatar payload');
-			return {
-				name: avatar.name || '',
-				description: avatar.description || '',
-				imageUrl: avatar.thumbnail_url || '',
-				glbUrl: avatar.url || avatar.model_url || '',
-			};
-		} catch (err) {
-			console.warn('[deploy] avatar prefill failed; falling back to viewer model', err);
-			return fallback;
+		const qpName = qp.get('name') || '';
+		const qpDesc = qp.get('description') || '';
+		const qpImage = qp.get('image') || '';
+		const qpNetwork = qp.get('network') || '';
+		const base = { glbUrl: this._currentModelUrl || '' };
+		let resolved = base;
+		if (avatarId) {
+			try {
+				const res = await fetch(`/api/avatars/${encodeURIComponent(avatarId)}`, {
+					credentials: 'include',
+				});
+				if (!res.ok) throw new Error(`HTTP ${res.status}`);
+				const { avatar } = await res.json();
+				if (!avatar) throw new Error('empty avatar payload');
+				resolved = {
+					name: avatar.name || '',
+					description: avatar.description || '',
+					imageUrl: avatar.thumbnail_url || '',
+					glbUrl: avatar.url || avatar.model_url || '',
+				};
+			} catch (err) {
+				console.warn('[deploy] avatar prefill failed; falling back to viewer model', err);
+			}
 		}
+		return {
+			...resolved,
+			name: qpName || resolved.name || '',
+			description: qpDesc || resolved.description || '',
+			imageUrl: qpImage || resolved.imageUrl || '',
+			network: qpNetwork || '',
+		};
 	}
 
 	_upgradeToHorizonFooter() {

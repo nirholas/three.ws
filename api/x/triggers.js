@@ -44,7 +44,7 @@ export default wrap(async (req, res) => {
 
 	if (req.method === 'GET') {
 		const rows = await sql`
-			select id, agent_id, kind, config, enabled, last_fired_at, created_at, updated_at
+			select id, agent_id, kind, config, enabled, auto_publish, last_fired_at, created_at, updated_at
 			from x_triggers
 			where user_id = ${user.id}
 			order by created_at desc
@@ -60,10 +60,11 @@ export default wrap(async (req, res) => {
 		try { validateConfig(kind, config); } catch (err) { return error(res, 400, 'validation_error', err.message); }
 		const agentId = typeof body?.agent_id === 'string' ? body.agent_id : null;
 		const enabled = body?.enabled !== false;
+		const autoPublish = body?.auto_publish !== false;
 		const rows = await sql`
-			insert into x_triggers (user_id, agent_id, kind, config, enabled)
-			values (${user.id}, ${agentId}, ${kind}, ${JSON.stringify(config)}::jsonb, ${enabled})
-			returning id, agent_id, kind, config, enabled, last_fired_at, created_at, updated_at
+			insert into x_triggers (user_id, agent_id, kind, config, enabled, auto_publish)
+			values (${user.id}, ${agentId}, ${kind}, ${JSON.stringify(config)}::jsonb, ${enabled}, ${autoPublish})
+			returning id, agent_id, kind, config, enabled, auto_publish, last_fired_at, created_at, updated_at
 		`;
 		return json(res, 201, { trigger: rows[0] });
 	}
@@ -80,14 +81,16 @@ export default wrap(async (req, res) => {
 			try { validateConfig(existing.kind, nextConfig); } catch (err) { return error(res, 400, 'validation_error', err.message); }
 		}
 		const nextEnabled = typeof body?.enabled === 'boolean' ? body.enabled : null;
+		const nextAuto = typeof body?.auto_publish === 'boolean' ? body.auto_publish : null;
 
 		const rows = await sql`
 			update x_triggers
 			set config = ${JSON.stringify(nextConfig)}::jsonb,
 			    enabled = coalesce(${nextEnabled}, enabled),
+			    auto_publish = coalesce(${nextAuto}, auto_publish),
 			    updated_at = now()
 			where id = ${id} and user_id = ${user.id}
-			returning id, agent_id, kind, config, enabled, last_fired_at, created_at, updated_at
+			returning id, agent_id, kind, config, enabled, auto_publish, last_fired_at, created_at, updated_at
 		`;
 		return json(res, 200, { trigger: rows[0] });
 	}

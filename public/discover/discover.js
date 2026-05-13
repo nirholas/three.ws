@@ -72,9 +72,13 @@ for (const c of CHAINS) {
 }
 
 // Hydrate initial state from URL so deep links from register-ui (?q=…) and
-// browser back/forward restore the user's filters.
+// browser back/forward restore the user's filters. The marketplace is a 3D
+// showcase first — when no `only3d` param is present, default to 3D. Pass
+// `only3d=0` (or click the "All agents" chip) to opt into the full firehose.
 const initialParams = new URLSearchParams(location.search);
-const initialFilter = initialParams.get('only3d') === '1' ? '3d' : 'all';
+const hasAnyParam = initialParams.toString().length > 0;
+const only3dParam = initialParams.get('only3d');
+const initialFilter = only3dParam === '0' ? 'all' : '3d';
 const initialChain = initialParams.get('chain') || '';
 const initialQuery = initialParams.get('q') || '';
 const initialSource = ['onchain', 'avatar'].includes(initialParams.get('source'))
@@ -112,7 +116,11 @@ if (els.sources && initialSource !== 'all') {
 /** Sync state into URL via replaceState (no history spam). */
 function syncUrl() {
 	const p = new URLSearchParams();
+	// 3D is the default — encode the opposite explicitly so /discover (no
+	// params) and /discover?only3d=1 both mean "3D only", while clicking
+	// "All agents" produces /discover?only3d=0 (sticky on reload).
 	if (state.filter === '3d') p.set('only3d', '1');
+	else p.set('only3d', '0');
 	if (state.source !== 'all') p.set('source', state.source);
 	if (state.chainId) p.set('chain', state.chainId);
 	if (state.query) p.set('q', state.query);
@@ -174,6 +182,12 @@ els.searchClear?.addEventListener('click', () => {
 
 // Initial visibility (covers ?q= deep links).
 updateSearchClearVisibility();
+
+// If we defaulted to 3D-only (no params on the URL), reflect that in the URL
+// so the user can copy/share the canonical view.
+if (!hasAnyParam) {
+	syncUrl();
+}
 
 els.loadMore.addEventListener('click', () => loadPage());
 
@@ -287,13 +301,50 @@ function renderCard(item) {
 	return renderOnchainCard(item);
 }
 
+/**
+ * Card thumbnail. Priority:
+ *   1. Static image (R2 thumbnail or remote PNG)
+ *   2. Live <model-viewer> preview of the GLB (lazy, no controls)
+ *   3. Emoji placeholder
+ * model-viewer is loaded once via index.html; lazy reveal limits work to
+ * cards actually in viewport.
+ */
+function renderThumb({ image, glbUrl, has3d, alt }) {
+	if (image) {
+		return `<img src="${escapeAttr(image)}" alt="${escapeAttr(alt || '')}" loading="lazy" onerror="this.replaceWith(Object.assign(document.createElement('div'),{className:'explore-card-ph',textContent:'${has3d ? '🎭' : '🤖'}'}))" />`;
+	}
+	if (glbUrl) {
+		return `<model-viewer
+			src="${escapeAttr(glbUrl)}"
+			alt="${escapeAttr(alt || '')}"
+			class="explore-card-mv"
+			reveal="auto"
+			loading="lazy"
+			disable-zoom
+			disable-pan
+			disable-tap
+			interaction-prompt="none"
+			camera-controls="false"
+			auto-rotate
+			rotation-per-second="20deg"
+			environment-image="neutral"
+			shadow-intensity="0"
+			exposure="1"
+		></model-viewer>`;
+	}
+	return `<div class="explore-card-ph">${has3d ? '🎭' : '🤖'}</div>`;
+}
+
 function renderOnchainCard(item) {
 	const card = document.createElement('article');
 	card.className = 'explore-card' + (item.has3d ? ' explore-card--3d' : '');
 
-	const thumb = item.image
-		? `<img src="${escapeAttr(item.image)}" alt="" loading="lazy" />`
-		: `<div class="explore-card-ph">${item.has3d ? '🎭' : '🤖'}</div>`;
+	const thumb = renderThumb({
+		image: item.image,
+		glbUrl: item.glbUrl,
+		has3d: item.has3d,
+		alt: item.name,
+	});
 
 	const badges = [];
 	badges.push(
@@ -347,9 +398,12 @@ function renderAvatarCard(item) {
 	const card = document.createElement('article');
 	card.className = 'explore-card explore-card--3d explore-card--avatar';
 
-	const thumb = item.image
-		? `<img src="${escapeAttr(item.image)}" alt="" loading="lazy" />`
-		: `<div class="explore-card-ph">🎭</div>`;
+	const thumb = renderThumb({
+		image: item.image,
+		glbUrl: item.glbUrl,
+		has3d: true,
+		alt: item.name,
+	});
 
 	const badges = [
 		`<span class="explore-badge explore-badge--avatar">Public avatar</span>`,
