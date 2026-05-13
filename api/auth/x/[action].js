@@ -1,26 +1,80 @@
 // X (Twitter) OAuth 2.0 PKCE flow. Dispatches on ?action=connect|callback.
 // Env required: X_OAUTH_CLIENT_ID, X_OAUTH_CLIENT_SECRET
 // If unset, /connect returns 501 not_configured.
+//
+// PKCE state ({code_verifier, user_id, agent_id}) is carried in a short-lived,
+// HMAC-signed httpOnly cookie keyed by the OAuth `state` param. No external
+// store needed; the cookie is sent back on the top-level redirect from x.com
+// thanks to SameSite=Lax.
 
 import { createCipheriv, createDecipheriv, hkdfSync, randomBytes } from 'node:crypto';
-import { Redis } from '@upstash/redis';
 import { sql } from '../../_lib/db.js';
 import { getSessionUser } from '../../_lib/auth.js';
-import { sha256Base64Url, randomToken } from '../../_lib/crypto.js';
+import {
+	sha256Base64Url,
+	randomToken,
+	hmacSha256,
+	constantTimeEquals,
+} from '../../_lib/crypto.js';
 import { cors, method, wrap, error, redirect } from '../../_lib/http.js';
 import { limits, clientIp } from '../../_lib/rate-limit.js';
 import { env } from '../../_lib/env.js';
 
-// ── Redis ─────────────────────────────────────────────────────────────────────
+// ── Signed-cookie PKCE state ─────────────────────────────────────────────────
 
-let _redis = null;
-function getRedis() {
-	if (_redis) return _redis;
-	const url = env.UPSTASH_REDIS_REST_URL;
-	const token = env.UPSTASH_REDIS_REST_TOKEN;
-	if (!url || !token) throw Object.assign(new Error('Redis not configured'), { status: 503 });
-	_redis = new Redis({ url, token });
-	return _redis;
+const STATE_COOKIE = '__Host-xoa';
+const STATE_TTL_SEC = 600;
+
+function b64urlEncode(str) {
+	return Buffer.from(str, 'utf8').toString('base64url');
+}
+function b64urlDecode(s) {
+	return Buffer.from(s, 'base64url').toString('utf8');
+}
+
+async function signState({ state, codeVerifier, userId, agentId }) {
+	const payload = {
+		s: state,
+		v: codeVerifier,
+		u: userId,
+		a: agentId,
+		e: Math.floor(Date.now() / 1000) + STATE_TTL_SEC,
+	};
+	const body = b64urlEncode(JSON.stringify(payload));
+	const sig = await hmacSha256(env.JWT_SECRET, body);
+	return `${body}.${sig}`;
+}
+
+async function verifyState(token, expectedState) {
+	if (!token || typeof token !== 'string') return null;
+	const dot = token.indexOf('.');
+	if (dot < 1) return null;
+	const body = token.slice(0, dot);
+	const sig = token.slice(dot + 1);
+	const expected = await hmacSha256(env.JWT_SECRET, body);
+	if (!constantTimeEquals(sig, expected)) return null;
+	let payload;
+	try {
+		payload = JSON.parse(b64urlDecode(body));
+	} catch {
+		return null;
+	}
+	if (!payload || payload.s !== expectedState) return null;
+	if (typeof payload.e !== 'number' || payload.e < Math.floor(Date.now() / 1000)) return null;
+	return { codeVerifier: payload.v, userId: payload.u, agentId: payload.a };
+}
+
+function readStateCookie(req) {
+	const cookie = req.headers.cookie || '';
+	const m = cookie.match(/(?:^|;\s*)__Host-xoa=([^;]+)/);
+	return m ? decodeURIComponent(m[1]) : null;
+}
+
+function stateCookie(value, { clear = false } = {}) {
+	if (clear) {
+		return `${STATE_COOKIE}=; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=0`;
+	}
+	return `${STATE_COOKIE}=${value}; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=${STATE_TTL_SEC}`;
 }
 
 // ── Token encryption (AES-256-GCM, key from JWT_SECRET via HKDF) ─────────────
@@ -76,11 +130,8 @@ async function handleConnect(req, res) {
 	const codeChallenge = await sha256Base64Url(codeVerifier);
 	const state = randomToken(16);
 
-	await getRedis().set(
-		`x_oauth:${state}`,
-		JSON.stringify({ code_verifier: codeVerifier, user_id: user.id, agent_id: agentId }),
-		{ ex: 600 },
-	);
+	const signed = await signState({ state, codeVerifier, userId: user.id, agentId });
+	res.setHeader('set-cookie', stateCookie(signed));
 
 	const authUrl = new URL('https://twitter.com/i/oauth2/authorize');
 	authUrl.searchParams.set('response_type', 'code');
@@ -110,13 +161,13 @@ async function handleCallback(req, res) {
 
 	if (!state) return error(res, 400, 'validation_error', 'missing state');
 
-	const r = getRedis();
-	const raw = await r.get(`x_oauth:${state}`);
-	if (!raw) return error(res, 400, 'invalid_state', 'OAuth state expired or invalid');
-	await r.del(`x_oauth:${state}`);
+	const cookieToken = readStateCookie(req);
+	const stateData = await verifyState(cookieToken, state);
+	// Burn the cookie regardless of validity so a leaked/replayed token can't be reused.
+	res.setHeader('set-cookie', stateCookie('', { clear: true }));
+	if (!stateData) return error(res, 400, 'invalid_state', 'OAuth state expired or invalid');
 
-	const stateData = typeof raw === 'string' ? JSON.parse(raw) : raw;
-	const { code_verifier: codeVerifier, user_id: userId, agent_id: stateAgentId } = stateData;
+	const { codeVerifier, userId, agentId: stateAgentId } = stateData;
 	const successRedirect = stateAgentId
 		? `/agent-edit.html?id=${encodeURIComponent(stateAgentId)}&tab=social&x=connected`
 		: `/settings?tab=connected-accounts&x=connected`;

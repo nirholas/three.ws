@@ -316,6 +316,8 @@ const appConfig = {
 					else if (!filePath && /^\/dashboard\/edit\/[^/]+\/?$/.test(path))
 						filePath = resolve(root, 'public/dashboard/index.html');
 					// /dashboard/<page> → corresponding static HTML page
+					else if (!filePath && /^\/dashboard\/portfolio\/asset\/?$/.test(path))
+						filePath = resolve(root, 'public/dashboard/portfolio-asset.html');
 					else if (!filePath && /^\/dashboard\/(?:portfolio|wallets|sessions|actions|embed-policy|agent-pumpfun|usage|storage)\/?$/.test(path)) {
 						const slug = path.replace(/^\/dashboard\//, '').replace(/\/$/, '');
 						filePath = resolve(root, `public/dashboard/${slug}.html`);
