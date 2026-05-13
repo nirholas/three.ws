@@ -51,8 +51,30 @@
 		<li class="nav-item" role="none">
 			<a href="/marketplace" role="menuitem">Marketplace</a>
 		</li>
-		<li class="nav-item" role="none">
-			<a href="/discover" role="menuitem">Discover</a>
+		<li class="nav-item nav-has-menu" role="none">
+			<button
+				type="button"
+				class="nav-trigger"
+				aria-haspopup="true"
+				aria-expanded="false"
+				role="menuitem"
+			>
+				Discover<span class="nav-caret" aria-hidden="true">▾</span>
+			</button>
+			<ul class="nav-menu" role="menu" aria-label="Discover">
+				<li role="none">
+					<a href="/discover" role="menuitem"
+						><span class="nav-mi-title">ERC-8004 Agents</span
+						><span class="nav-mi-sub">On-chain agent directory</span></a
+					>
+				</li>
+				<li role="none">
+					<a href="/gallery" role="menuitem"
+						><span class="nav-mi-title">Avatar Gallery</span
+						><span class="nav-mi-sub">Every public 3D avatar</span></a
+					>
+				</li>
+			</ul>
 		</li>
 		<li class="nav-item nav-has-menu" role="none">
 			<button

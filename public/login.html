@@ -782,7 +782,7 @@
 
 				// ── Auth redirect ──
 				const next =
-					params.get('next') || sessionStorage.getItem('login_redirect') || '/create';
+					params.get('next') || sessionStorage.getItem('login_redirect') || '/dashboard';
 				sessionStorage.removeItem('login_redirect');
 				window.__loginNext = next;
 				const navType = performance.getEntriesByType('navigation')[0]?.type;

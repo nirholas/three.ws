@@ -146,6 +146,7 @@ const editId = params.get('edit');
 const tplId = params.get('template');
 const pickType = params.get('type');
 const preModel = params.get('model');
+const preAvatarId = params.get('avatar');
 
 if (pickType && WIDGET_TYPES[pickType]) state.type = pickType;
 if (preModel) state.preselectedModel = preModel;
@@ -164,6 +165,7 @@ if (preModel) state.preselectedModel = preModel;
 
 	if (editId) await loadForEdit(editId);
 	else if (tplId) await cloneTemplate(tplId);
+	else if (preAvatarId) await selectByAvatarId(preAvatarId);
 	else if (state.preselectedModel) selectByModelUrl(state.preselectedModel);
 	else if (!state.avatarId) selectAvatar(DEMO_AVATAR.id);
 
@@ -469,6 +471,41 @@ function findAvatar(id) {
 		state.publicAvatars.find((a) => a.id === id) ||
 		null
 	);
+}
+
+async function selectByAvatarId(id) {
+	const existing = findAvatar(id);
+	if (existing) return selectAvatar(existing.id);
+	try {
+		const res = await fetch(`/api/avatars/${encodeURIComponent(id)}`, {
+			credentials: 'include',
+		});
+		if (!res.ok) throw new Error(`avatar ${id}: ${res.status}`);
+		const { avatar } = await res.json();
+		if (!avatar?.model_url) throw new Error('avatar missing model_url');
+		const ownIds = new Set(state.avatars.map((a) => a.id));
+		if (!ownIds.has(avatar.id)) {
+			state.publicAvatars = [
+				{
+					id: avatar.id,
+					name: avatar.name,
+					slug: avatar.slug,
+					description: avatar.description,
+					tags: avatar.tags || [],
+					visibility: avatar.visibility,
+					model_url: avatar.model_url,
+					thumbnail_url: avatar.thumbnail_url || null,
+				},
+				...state.publicAvatars.filter((a) => a.id !== avatar.id),
+			];
+			renderPublicAvatarList();
+		}
+		selectAvatar(avatar.id);
+	} catch (err) {
+		console.warn('[studio] selectByAvatarId failed', err);
+		toast('Pre-selected avatar not available');
+		if (!state.avatarId) selectAvatar(DEMO_AVATAR.id);
+	}
 }
 
 function selectByModelUrl(url) {

@@ -1,0 +1,351 @@
+/* ───────────────────────────────────────────────────────────────────────────
+   home-polish.css — additive professional polish over home.css.
+   Loaded AFTER /home.css from home.html. Nothing here removes prior styles;
+   it tightens typography, adds a section rail, numbers pillars, glows
+   bento cards, refines focus rings, and adds a copy button + scroll bar.
+   ─────────────────────────────────────────────────────────────────────────── */
+
+/* ── Typographic polish ─────────────────────────────────────────────────── */
+
+.home-page {
+	text-rendering: optimizeLegibility;
+	-webkit-font-smoothing: antialiased;
+	-moz-osx-font-smoothing: grayscale;
+	font-feature-settings:
+		'ss01' on,
+		'cv11' on,
+		'kern' on,
+		'liga' on;
+}
+
+.home-page h1,
+.home-page h2,
+.home-page h3,
+.home-page .h-title,
+.home-page .h-act-title,
+.home-page .h-section-title {
+	font-feature-settings:
+		'ss01' on,
+		'cv11' on,
+		'kern' on,
+		'liga' on,
+		'ss02' on;
+}
+
+.home-page p,
+.home-page li {
+	text-wrap: pretty;
+}
+
+/* ── Top scroll progress bar ────────────────────────────────────────────── */
+
+.h-scroll-progress {
+	position: fixed;
+	top: 0;
+	left: 0;
+	height: 2px;
+	width: 0%;
+	z-index: 250;
+	background: linear-gradient(
+		90deg,
+		rgba(255, 215, 106, 0.95) 0%,
+		rgba(255, 143, 77, 0.95) 50%,
+		rgba(167, 139, 250, 0.95) 100%
+	);
+	box-shadow:
+		0 0 12px rgba(255, 175, 60, 0.55),
+		0 0 24px rgba(255, 175, 60, 0.25);
+	pointer-events: none;
+	transition: width 0.08s linear;
+	border-bottom-right-radius: 2px;
+}
+
+/* ── Right-side chapter rail (anchor nav) ───────────────────────────────── */
+
+.h-chapter-rail {
+	position: fixed;
+	top: 50%;
+	right: clamp(0.85rem, 1.5vw, 1.5rem);
+	transform: translateY(-50%);
+	z-index: 180;
+	display: flex;
+	flex-direction: column;
+	gap: 0.85rem;
+	padding: 0.85rem 0.55rem;
+	background: rgba(10, 8, 6, 0.35);
+	border: 1px solid rgba(255, 255, 255, 0.06);
+	border-radius: 999px;
+	backdrop-filter: blur(10px) saturate(140%);
+	-webkit-backdrop-filter: blur(10px) saturate(140%);
+	pointer-events: auto;
+	opacity: 0;
+	transform: translateY(-50%) translateX(10px);
+	transition:
+		opacity 0.4s ease,
+		transform 0.4s ease;
+}
+
+.h-chapter-rail.is-visible {
+	opacity: 1;
+	transform: translateY(-50%) translateX(0);
+}
+
+.h-chapter-dot {
+	position: relative;
+	display: block;
+	width: 10px;
+	height: 10px;
+	border-radius: 50%;
+	background: rgba(255, 255, 255, 0.18);
+	border: 1px solid rgba(255, 255, 255, 0.08);
+	cursor: pointer;
+	transition:
+		background 0.25s ease,
+		border-color 0.25s ease,
+		transform 0.25s ease,
+		box-shadow 0.25s ease;
+}
+
+.h-chapter-dot:hover {
+	background: rgba(255, 215, 106, 0.7);
+	border-color: rgba(255, 215, 106, 0.9);
+	transform: scale(1.15);
+}
+
+.h-chapter-dot.is-active {
+	background: linear-gradient(135deg, #ffd76a, #ff8f4d);
+	border-color: rgba(255, 215, 106, 0.95);
+	box-shadow:
+		0 0 0 3px rgba(255, 175, 60, 0.18),
+		0 0 14px rgba(255, 143, 77, 0.55);
+}
+
+.h-chapter-dot .h-chapter-label {
+	position: absolute;
+	right: calc(100% + 0.9rem);
+	top: 50%;
+	transform: translateY(-50%) translateX(6px);
+	font-family: 'Space Grotesk', 'Inter', sans-serif;
+	font-size: 0.7rem;
+	font-weight: 600;
+	letter-spacing: 0.08em;
+	text-transform: uppercase;
+	color: rgba(255, 255, 255, 0.85);
+	background: rgba(10, 8, 6, 0.85);
+	border: 1px solid rgba(255, 255, 255, 0.08);
+	padding: 0.35rem 0.7rem;
+	border-radius: 6px;
+	white-space: nowrap;
+	pointer-events: none;
+	opacity: 0;
+	transition:
+		opacity 0.2s ease,
+		transform 0.2s ease;
+	backdrop-filter: blur(6px);
+	-webkit-backdrop-filter: blur(6px);
+}
+
+.h-chapter-dot:hover .h-chapter-label,
+.h-chapter-dot:focus-visible .h-chapter-label {
+	opacity: 1;
+	transform: translateY(-50%) translateX(0);
+}
+
+.h-chapter-dot:focus-visible {
+	outline: none;
+	box-shadow:
+		0 0 0 3px rgba(255, 175, 60, 0.35),
+		0 0 14px rgba(255, 143, 77, 0.55);
+}
+
+@media (max-width: 880px) {
+	.h-chapter-rail {
+		display: none;
+	}
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.h-chapter-rail,
+	.h-chapter-dot,
+	.h-chapter-dot .h-chapter-label,
+	.h-scroll-progress {
+		transition: none;
+	}
+}
+
+/* ── Pillar number badges + card polish ─────────────────────────────────── */
+
+.h-pillar {
+	position: relative;
+	padding: clamp(1.25rem, 2vw, 1.75rem);
+	border: 1px solid rgba(255, 255, 255, 0.06);
+	border-radius: 14px;
+	background:
+		linear-gradient(
+			180deg,
+			rgba(255, 215, 106, 0.04) 0%,
+			rgba(255, 255, 255, 0.012) 35%,
+			rgba(255, 255, 255, 0) 100%
+		),
+		rgba(255, 255, 255, 0.015);
+	overflow: hidden;
+	transition:
+		border-color 0.35s cubic-bezier(0.2, 0.9, 0.3, 1),
+		transform 0.35s cubic-bezier(0.2, 0.9, 0.3, 1),
+		box-shadow 0.35s cubic-bezier(0.2, 0.9, 0.3, 1);
+}
+
+.h-pillar::before {
+	content: '';
+	position: absolute;
+	top: 0;
+	left: 0;
+	right: 0;
+	height: 1px;
+	background: linear-gradient(
+		90deg,
+		transparent 0%,
+		rgba(255, 215, 106, 0.55) 50%,
+		transparent 100%
+	);
+	opacity: 0.7;
+}
+
+.h-pillar:hover {
+	border-color: rgba(255, 215, 106, 0.22);
+	transform: translateY(-3px);
+	box-shadow:
+		0 18px 40px -22px rgba(255, 143, 77, 0.35),
+		0 0 0 1px rgba(255, 215, 106, 0.08) inset;
+}
+
+.h-pillar-num {
+	display: inline-block;
+	font-family: 'JetBrains Mono', monospace;
+	font-size: 0.7rem;
+	font-weight: 500;
+	letter-spacing: 0.14em;
+	color: rgba(255, 215, 106, 0.7);
+	margin-bottom: 0.85rem;
+}
+
+.h-pillar-num::before {
+	content: '';
+	display: inline-block;
+	width: 18px;
+	height: 1px;
+	background: rgba(255, 215, 106, 0.45);
+	vertical-align: middle;
+	margin-right: 0.55rem;
+	transform: translateY(-1px);
+}
+
+/* ── Bento card hover glow ──────────────────────────────────────────────── */
+
+.h-bento-card {
+	position: relative;
+}
+
+.h-bento-card::after {
+	content: '';
+	position: absolute;
+	inset: 0;
+	border-radius: inherit;
+	pointer-events: none;
+	opacity: 0;
+	transition: opacity 0.35s ease;
+	background: radial-gradient(
+		380px circle at var(--bx, 50%) var(--by, 0%),
+		rgba(255, 175, 60, 0.07) 0%,
+		transparent 60%
+	);
+}
+
+.h-bento-card:hover::after {
+	opacity: 1;
+}
+
+/* ── Dev code: copy button ──────────────────────────────────────────────── */
+
+.h-dev-code {
+	position: relative;
+}
+
+.h-dev-copy {
+	position: absolute;
+	top: 0.55rem;
+	right: 0.7rem;
+	z-index: 2;
+	display: inline-flex;
+	align-items: center;
+	gap: 0.4em;
+	padding: 0.35rem 0.65rem;
+	font-family: 'Space Grotesk', 'Inter', sans-serif;
+	font-size: 0.68rem;
+	font-weight: 600;
+	letter-spacing: 0.08em;
+	text-transform: uppercase;
+	color: rgba(255, 255, 255, 0.6);
+	background: rgba(255, 255, 255, 0.04);
+	border: 1px solid rgba(255, 255, 255, 0.08);
+	border-radius: 6px;
+	cursor: pointer;
+	transition:
+		color 0.2s ease,
+		background 0.2s ease,
+		border-color 0.2s ease,
+		transform 0.2s ease;
+}
+
+.h-dev-copy:hover {
+	color: #fff;
+	background: rgba(255, 215, 106, 0.08);
+	border-color: rgba(255, 215, 106, 0.35);
+}
+
+.h-dev-copy:active {
+	transform: scale(0.97);
+}
+
+.h-dev-copy.is-copied {
+	color: #6ee7b7;
+	background: rgba(110, 231, 183, 0.1);
+	border-color: rgba(110, 231, 183, 0.45);
+}
+
+.h-dev-copy svg {
+	width: 12px;
+	height: 12px;
+	display: block;
+}
+
+/* ── Focus ring polish ──────────────────────────────────────────────────── */
+
+.home-page a:focus-visible,
+.home-page button:focus-visible,
+.home-page input:focus-visible,
+.home-page select:focus-visible,
+.home-page textarea:focus-visible {
+	outline: none;
+	box-shadow:
+		0 0 0 2px rgba(10, 8, 6, 0.9),
+		0 0 0 4px rgba(255, 175, 60, 0.55);
+	border-radius: 6px;
+}
+
+.home-page .h-btn-primary:focus-visible {
+	box-shadow:
+		0 0 0 2px rgba(10, 8, 6, 0.9),
+		0 0 0 4px rgba(255, 175, 60, 0.7),
+		0 6px 24px -8px rgba(255, 143, 77, 0.55);
+}
+
+/* ── Section anchor offset so chapter-rail jumps don't hide under header ── */
+
+#pick-animate,
+#deploy-act,
+.h-bento-section,
+.h-dev-section,
+.h-cta-section {
+	scroll-margin-top: 80px;
+}
