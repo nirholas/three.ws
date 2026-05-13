@@ -1,0 +1,7 @@
+{
+    "claudeCode.initialPermissionMode": "bypassPermissions",
+    "claudeCode.selectedModel": "claude-opus-4-6",
+    "telemetry.feedback.enabled": false,
+    "telemetry.editStats.enabled": false
+}
+
