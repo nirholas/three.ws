@@ -37,15 +37,50 @@ export default wrap(async (req, res) => {
 
 // ── chat ───────────────────────────────────────────────────────────────────
 
-const ANTHROPIC_URL = 'https://api.anthropic.com/v1/messages';
-const DEFAULT_MODEL = 'claude-sonnet-4-6';
 const DEFAULT_MAX_TOKENS = 1024;
 const HARD_MAX_TOKENS = 4096;
 
 const SAFE_SKILLS = new Set(['speak', 'wave', 'lookAt', 'playClip', 'remember']);
 
+// LLM provider routing — mirrors /api/chat.js. Anthropic is the historical
+// default; the OpenAI-compatible providers (OpenRouter / Groq / OpenAI) ship
+// here too so the talking-agent widget can pick any configured brain.
+const PROVIDERS = {
+	anthropic: {
+		envKey: 'ANTHROPIC_API_KEY',
+		defaultModel: 'claude-sonnet-4-6',
+		url: 'https://api.anthropic.com/v1/messages',
+		style: 'anthropic',
+	},
+	openrouter: {
+		envKey: 'OPENROUTER_API_KEY',
+		defaultModel: 'meta-llama/llama-3.3-70b-instruct:free',
+		url: 'https://openrouter.ai/api/v1/chat/completions',
+		style: 'openai',
+		extraHeaders: { 'HTTP-Referer': 'https://three.ws', 'X-Title': 'three.ws widget' },
+	},
+	groq: {
+		envKey: 'GROQ_API_KEY',
+		defaultModel: 'llama-3.3-70b-versatile',
+		url: 'https://api.groq.com/openai/v1/chat/completions',
+		style: 'openai',
+	},
+	openai: {
+		envKey: 'OPENAI_API_KEY',
+		defaultModel: 'gpt-4o-mini',
+		url: 'https://api.openai.com/v1/chat/completions',
+		style: 'openai',
+	},
+};
+
+// Brain settings that surface in widget config. `auto` picks the first
+// configured provider; `custom`/`none` keep their legacy meanings.
+const BRAIN_PROVIDERS = new Set(['auto', 'anthropic', 'openrouter', 'groq', 'openai']);
+
 const chatBody = z.object({
 	message: z.string().trim().min(1).max(4000),
+	provider: z.enum(['auto', 'anthropic', 'openrouter', 'groq', 'openai']).optional(),
+	model: z.string().min(1).max(160).optional(),
 	history: z
 		.array(
 			z.object({
@@ -133,7 +168,17 @@ async function handleChat(req, res) {
 
 	const body = parse(chatBody, await readJson(req));
 
-	const provider = cfg.brainProvider || 'anthropic';
+	// Owner config wins. If the owner explicitly set 'none' or 'custom', the
+	// visitor cannot override. Otherwise (auto or a named LLM provider) the
+	// visitor's `provider` / `model` choice from the chat header dropdown is
+	// honoured, but still constrained to the supported set.
+	const cfgProvider = cfg.brainProvider || 'auto';
+	let provider = cfgProvider;
+	let requestedModel = cfg.brainModel || null;
+	if (BRAIN_PROVIDERS.has(cfgProvider) && body.provider && BRAIN_PROVIDERS.has(body.provider)) {
+		provider = body.provider;
+		if (body.model) requestedModel = body.model;
+	}
 	const allowedSkills = filterSkills(cfg.skills);
 
 	// Open SSE stream.
@@ -152,14 +197,24 @@ async function handleChat(req, res) {
 		} else if (provider === 'custom') {
 			result = await callCustomProxy(cfg.proxyURL, body, cfg, allowedSkills);
 		} else {
-			result = await callAnthropic({
-				message: body.message,
-				history: body.history,
-				systemPrompt: buildSystemPrompt(cfg, widget),
-				temperature: Number(cfg.temperature) || 0.7,
-				maxTurns: Math.min(20, Math.max(1, Number(cfg.maxTurns) || 20)),
-				allowedSkills,
-			});
+			const route = pickProvider(provider, requestedModel);
+			if (!route) {
+				result = {
+					reply:
+						"I'm not configured to answer just yet — no chat provider key is set on this site.",
+					actions: [],
+				};
+			} else {
+				result = await callLLM({
+					route,
+					message: body.message,
+					history: body.history,
+					systemPrompt: buildSystemPrompt(cfg, widget),
+					temperature: Number(cfg.temperature) || 0.7,
+					maxTurns: Math.min(20, Math.max(1, Number(cfg.maxTurns) || 20)),
+					allowedSkills,
+				});
+			}
 		}
 
 		writeSse(res, 'message', { reply: result.reply || '', actions: result.actions || [] });
@@ -180,7 +235,28 @@ async function handleChat(req, res) {
 
 // ── Brain dispatchers ──────────────────────────────────────────────────────
 
-async function callAnthropic({
+function pickProvider(requested, requestedModel) {
+	const order =
+		requested && requested !== 'auto'
+			? [requested, ...Object.keys(PROVIDERS).filter((p) => p !== requested)]
+			: ['anthropic', 'openrouter', 'groq', 'openai'];
+
+	for (const name of order) {
+		const cfg = PROVIDERS[name];
+		const apiKey = process.env[cfg.envKey];
+		if (!apiKey) continue;
+		const model =
+			(requested === name && requestedModel) ||
+			(requested === 'auto' && requestedModel) ||
+			process.env.CHAT_MODEL ||
+			cfg.defaultModel;
+		return { name, cfg, apiKey, model };
+	}
+	return null;
+}
+
+async function callLLM({
+	route,
 	message,
 	history,
 	systemPrompt,
@@ -188,14 +264,6 @@ async function callAnthropic({
 	maxTurns,
 	allowedSkills,
 }) {
-	const apiKey = process.env.ANTHROPIC_API_KEY;
-	if (!apiKey) {
-		return {
-			reply: "I'm not configured to answer just yet — the owner needs to set ANTHROPIC_API_KEY.",
-			actions: [],
-		};
-	}
-	const model = process.env.CHAT_MODEL || DEFAULT_MODEL;
 	const maxTokens = clampInt(
 		parseInt(process.env.CHAT_MAX_TOKENS || '', 10) || DEFAULT_MAX_TOKENS,
 		128,
@@ -208,8 +276,39 @@ async function callAnthropic({
 
 	const tools = SKILL_TOOLS.filter((t) => allowedSkills.has(t.name));
 
+	if (route.cfg.style === 'anthropic') {
+		return callAnthropic({
+			route,
+			messages,
+			systemPrompt,
+			temperature,
+			maxTokens,
+			tools,
+			allowedSkills,
+		});
+	}
+	return callOpenAICompatible({
+		route,
+		messages,
+		systemPrompt,
+		temperature,
+		maxTokens,
+		tools,
+		allowedSkills,
+	});
+}
+
+async function callAnthropic({
+	route,
+	messages,
+	systemPrompt,
+	temperature,
+	maxTokens,
+	tools,
+	allowedSkills,
+}) {
 	const payload = {
-		model,
+		model: route.model,
 		max_tokens: maxTokens,
 		temperature,
 		system: systemPrompt,
@@ -217,10 +316,10 @@ async function callAnthropic({
 	};
 	if (tools.length) payload.tools = tools;
 
-	const upstream = await fetch(ANTHROPIC_URL, {
+	const upstream = await fetch(route.cfg.url, {
 		method: 'POST',
 		headers: {
-			'x-api-key': apiKey,
+			'x-api-key': route.apiKey,
 			'anthropic-version': '2023-06-01',
 			'content-type': 'application/json',
 		},
@@ -243,6 +342,64 @@ async function callAnthropic({
 	}
 	const data = await upstream.json();
 	return normalizeAnthropic(data, allowedSkills);
+}
+
+async function callOpenAICompatible({
+	route,
+	messages,
+	systemPrompt,
+	temperature,
+	maxTokens,
+	tools,
+	allowedSkills,
+}) {
+	const openaiTools = tools.map((t) => ({
+		type: 'function',
+		function: {
+			name: t.name,
+			description: t.description,
+			parameters: t.input_schema,
+		},
+	}));
+
+	const payload = {
+		model: route.model,
+		max_tokens: maxTokens,
+		temperature,
+		messages: [{ role: 'system', content: systemPrompt }, ...messages],
+	};
+	if (openaiTools.length) {
+		payload.tools = openaiTools;
+		payload.tool_choice = 'auto';
+	}
+
+	const upstream = await fetch(route.cfg.url, {
+		method: 'POST',
+		headers: {
+			Authorization: `Bearer ${route.apiKey}`,
+			'Content-Type': 'application/json',
+			...(route.cfg.extraHeaders || {}),
+		},
+		body: JSON.stringify(payload),
+	});
+	if (!upstream.ok) {
+		const text = await upstream.text().catch(() => '');
+		captureException(new Error(`${route.name} upstream ${upstream.status}`), {
+			route: 'widget-chat',
+			provider: route.name,
+			status: upstream.status,
+			body: text.slice(0, 400),
+		});
+		if (process.env.DEBUG === 'true') {
+			console.warn(`[widget-chat] ${route.name}`, upstream.status, text.slice(0, 400));
+		}
+		return {
+			reply: 'I had trouble thinking of a response. Try again in a moment.',
+			actions: [],
+		};
+	}
+	const data = await upstream.json();
+	return normalizeOpenAI(data, allowedSkills);
 }
 
 async function callCustomProxy(proxyURL, body, cfg, allowedSkills) {
@@ -312,6 +469,29 @@ function normalizeAnthropic(data, allowedSkills) {
 		else if (block.type === 'tool_use' && allowedSkills.has(block.name)) {
 			actions.push({ type: block.name, ...(block.input || {}) });
 		}
+	}
+	return { reply: reply.trim(), actions };
+}
+
+function normalizeOpenAI(data, allowedSkills) {
+	const choice = data?.choices?.[0]?.message || {};
+	const reply = typeof choice.content === 'string' ? choice.content : '';
+	const actions = [];
+	for (const call of choice.tool_calls || []) {
+		const name = call?.function?.name;
+		if (!name || !allowedSkills.has(name)) continue;
+		let args = {};
+		const raw = call.function?.arguments;
+		if (typeof raw === 'string' && raw.trim()) {
+			try {
+				args = JSON.parse(raw);
+			} catch {
+				args = {};
+			}
+		} else if (raw && typeof raw === 'object') {
+			args = raw;
+		}
+		actions.push({ type: name, ...args });
 	}
 	return { reply: reply.trim(), actions };
 }

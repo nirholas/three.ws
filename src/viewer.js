@@ -385,14 +385,20 @@ export class Viewer {
 		const panelFrac = this._panelFrac();
 		const usableFrac = Math.max(1 - panelFrac, 0.55);
 
-		// Fit full avatar into usable area with breathing room above/below.
-		const extentV = (bbSize.y / 2) / usableFrac * 1.10;
+		// Padding around the model. 1.25 leaves ~12.5% margin per side so the
+		// avatar isn't clipped at idle and stays mostly visible during animations
+		// with root motion (Death, Jump, etc).
+		const PAD_V = 1.25;
+		const PAD_H = 1.15;
+
+		const extentV = (bbSize.y / 2) * PAD_V / usableFrac;
 		const distV = extentV / Math.tan(vFovRad / 2);
-		const distH = (bbSize.x / 2 * 1.05) / Math.tan(hFovRad / 2);
+		const distH = (bbSize.x / 2) * PAD_H / Math.tan(hFovRad / 2);
 		const dist = Math.max(distV, distH);
 
-		// Center look-at on the usable area so the avatar clears the panel.
-		const focusY = bbCenter.y + (bbSize.y / 2) - extentV;
+		// Center look-at on the usable area: with no panel focusY = bbCenter.y;
+		// with a bottom panel, shift down so the avatar rises into the upper area.
+		const focusY = bbCenter.y - extentV * panelFrac;
 		const target = new Vector3(bbCenter.x, focusY, bbCenter.z);
 		const pos = new Vector3(bbCenter.x + dist * 0.12, focusY, bbCenter.z + dist);
 
@@ -795,14 +801,20 @@ export class Viewer {
 		const aspect = Math.max(this.defaultCamera.aspect, 0.01);
 		const hFovRad = 2 * Math.atan(Math.tan(vFovRad / 2) * aspect);
 
-		const extentV = (bbSize.y / 2) / usableFrac * 1.10;
+		// Same padding as frameContent() — keep both code paths in sync.
+		const PAD_V = 1.25;
+		const PAD_H = 1.15;
+
+		const extentV = (bbSize.y / 2) * PAD_V / usableFrac;
 		const distV = extentV / Math.tan(vFovRad / 2);
-		const distH = (bbSize.x / 2) / Math.tan(hFovRad / 2);
+		const distH = (bbSize.x / 2) * PAD_H / Math.tan(hFovRad / 2);
 		const dist = Math.max(distV, distH);
 
-		// Shift the look-at point down so the avatar is vertically centered in
-		// the usable area — when panelFrac=0 this is essentially 0 (unchanged).
-		const focusY = (bbSize.y / 2) - extentV;
+		// Model has been recentered so bbCenter is at world origin (see
+		// setContent above). Center the look-at on the usable area: with no
+		// panel focusY=0; with a bottom panel shift down so the avatar rises
+		// into the usable upper portion of the canvas.
+		const focusY = -extentV * panelFrac;
 
 		// Final framed camera (the position the user should end up at).
 		const framedPos = new Vector3();

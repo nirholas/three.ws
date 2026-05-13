@@ -146,6 +146,7 @@ function parseStrategy(text) {
 }
 
 function renderMonetization() {
+  renderLaunchTokenState();
   const container = $('skill-prices-list');
   const skills = agentData.skills || [];
   if (!skills.length) {
@@ -189,6 +190,68 @@ function renderMonetization() {
       wrapper.style.display = e.target.checked ? 'flex' : 'none';
     });
   });
+}
+
+function renderLaunchTokenState() {
+  const host = $('launch-token-state');
+  if (!host) return;
+  host.innerHTML = '';
+  host.classList.remove('muted');
+
+  const token = agentData.token || agentData.meta?.token || null;
+  if (token?.mint) {
+    const dashLink = token.pumpfun_url
+      || (token.cluster === 'devnet'
+        ? `https://explorer.solana.com/address/${token.mint}?cluster=devnet`
+        : `https://pump.fun/${token.mint}`);
+    const row = document.createElement('div');
+    row.style.cssText = 'display:flex;align-items:center;gap:12px;flex-wrap:wrap';
+    row.innerHTML = `
+      <span style="font-weight:600;color:#a4f0bc">$${escapeHtml(token.symbol || 'TOKEN')}</span>
+      <span style="font-family:ui-monospace,monospace;font-size:12px;color:rgba(255,255,255,0.55)">${escapeHtml(token.mint)}</span>
+    `;
+    const view = document.createElement('a');
+    view.href = dashLink;
+    view.target = '_blank';
+    view.rel = 'noopener noreferrer';
+    view.className = 'btn-primary';
+    view.textContent = `View on ${token.cluster === 'devnet' ? 'Solana Explorer' : 'pump.fun'} →`;
+    row.appendChild(view);
+    host.appendChild(row);
+    return;
+  }
+
+  const btn = document.createElement('button');
+  btn.type = 'button';
+  btn.className = 'btn-primary';
+  btn.textContent = '🚀 Launch agent token';
+  btn.addEventListener('click', async () => {
+    btn.disabled = true;
+    try {
+      const { openLaunchTokenModal } = await import('/src/pump/launch-token-modal.js');
+      const onchain = agentData.onchain || agentData.meta?.onchain || null;
+      const needsDeploy = !onchain || onchain.family !== 'solana';
+      const imageUrl = agentData.avatar_thumbnail_url || agentData.meta?.thumbnail_url || '';
+      openLaunchTokenModal({
+        agentId: agentData.id,
+        agentName: agentData.name || 'Agent',
+        imageUrl,
+        needsDeploy,
+        agentForDeploy: needsDeploy
+          ? {
+              id: agentData.id,
+              name: agentData.name,
+              description: agentData.description || '',
+              avatar_id: agentData.avatar_id || null,
+              skills: agentData.skills || undefined,
+            }
+          : null,
+      });
+    } finally {
+      btn.disabled = false;
+    }
+  });
+  host.appendChild(btn);
 }
 
 // ── Outfit tab ────────────────────────────────────────────────────────────

@@ -305,11 +305,15 @@ function agentCard(a, onRemoved) {
 	const agentIdEnc = encodeURIComponent(a.id);
 	const hasAvatar = Boolean(a.avatar_id);
 	const embedDisabledAttr = hasAvatar ? '' : 'disabled title="Link an avatar (Edit → Avatar) to enable embed"';
+	const token = a.token || a.meta?.token || null;
+	const tokenBadge = token?.mint
+		? `<span class="tag" title="${attr(token.mint)}" style="background:rgba(120,200,140,0.18); color:#c6f0d6;">$${esc(token.symbol || 'TOKEN')}</span>`
+		: '';
 	el.innerHTML = `
 		<div class="preview" data-agent-preview></div>
 		<h3>${esc(a.name || 'Agent')}</h3>
 		<p class="meta">${skillCount} skill${skillCount === 1 ? '' : 's'}${wallet ? ' · ' + esc(wallet) : ''} · ${new Date(a.created_at).toLocaleDateString()}</p>
-		<div class="row" style="gap:6px; margin-bottom:10px; flex-wrap:wrap">${onchainBadge}</div>
+		<div class="row" style="gap:6px; margin-bottom:10px; flex-wrap:wrap">${onchainBadge}${tokenBadge}</div>
 		${a.description ? `<p class="meta" style="white-space:normal;color:#aaa;margin:0 0 10px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden">${esc(a.description)}</p>` : ''}
 		<details class="agent-inspector" style="margin:0 0 10px;border-top:1px solid #22222e;padding-top:10px">
 			<summary style="cursor:pointer;font-size:12px;color:#9a8cff;list-style:none">Inspector ▾</summary>
@@ -334,6 +338,9 @@ function agentCard(a, onRemoved) {
 				<a class="btn sec" href="/agent-edit.html?id=${agentIdEnc}" title="Edit name, persona, avatar, skills">Edit</a>
 				<button class="btn sec" data-share type="button" title="Copy public agent link">Share</button>
 				<button class="btn sec" data-embed type="button" ${embedDisabledAttr}>Embed</button>
+				${token?.mint
+					? `<a class="btn sec" href="/dashboard/tokens?agent=${agentIdEnc}" title="Open pump.fun token dashboard">Token ↗</a>`
+					: `<button class="btn sec" data-launch type="button" title="Launch a pump.fun token for this agent">🚀 Launch token</button>`}
 				${a.is_registered ? '' : `<a class="btn sec" href="/deploy${a.avatar_id ? '?avatar=' + encodeURIComponent(a.avatar_id) : ''}" title="Mint as ERC-8004 agent">Deploy on-chain</a>`}
 				<div class="more-menu-wrap"><button class="btn sec" data-more type="button" aria-haspopup="menu" aria-expanded="false">More ▾</button></div>
 			</div>
@@ -349,6 +356,35 @@ function agentCard(a, onRemoved) {
 		if (e.currentTarget.disabled) return;
 		openAgentEmbedModal(a);
 	});
+	const launchBtn = el.querySelector('[data-launch]');
+	if (launchBtn) {
+		launchBtn.addEventListener('click', async (e) => {
+			const btn = e.currentTarget;
+			btn.disabled = true;
+			try {
+				const { openLaunchTokenModal } = await import('/src/pump/launch-token-modal.js');
+				const onchain = a.onchain || a.meta?.onchain || null;
+				const needsDeploy = !onchain || onchain.family !== 'solana';
+				openLaunchTokenModal({
+					agentId: a.id,
+					agentName: a.name || 'Agent',
+					imageUrl: a.avatar_thumbnail_url || a.meta?.thumbnail_url || '',
+					needsDeploy,
+					agentForDeploy: needsDeploy
+						? {
+								id: a.id,
+								name: a.name,
+								description: a.description || '',
+								avatar_id: a.avatar_id || null,
+								skills: a.skills || undefined,
+							}
+						: null,
+				});
+			} finally {
+				btn.disabled = false;
+			}
+		});
+	}
 	el.querySelector('[data-more]').addEventListener('click', (e) => {
 		const btn = e.currentTarget;
 		if (_openMoreMenu?.triggerBtn === btn) {

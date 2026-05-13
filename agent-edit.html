@@ -18,6 +18,7 @@
 		<link rel="shortcut icon" href="/favicon.ico" />
 		<link rel="stylesheet" href="/style.css" />
 		<link rel="stylesheet" href="/fonts/fonts.css" />
+		<link rel="stylesheet" href="/src/pump/launch-token-modal.css" />
 		<style>
 			body {
 				overflow: auto;
@@ -912,6 +913,11 @@
 				aria-labelledby="tab-monetization"
 				hidden
 			>
+				<div class="form-group" id="launch-token-group">
+					<label class="form-label">Agent Token</label>
+					<p class="note" style="font-size: 0.764rem; color: rgba(255,255,255,0.4); margin-top: -0.5rem; margin-bottom: 1rem;">Launch a pump.fun bonding-curve token tied to this agent. Buyers fund the curve, fees route to the agent.</p>
+					<div id="launch-token-state" class="muted">Loading…</div>
+				</div>
 				<div class="form-group">
 					<label class="form-label">Skill Prices</label>
 					<p class="note" style="font-size: 0.764rem; color: rgba(255,255,255,0.4); margin-top: -0.5rem; margin-bottom: 1rem;">Set a price for your skills to be used by other agents. Leave blank for free skills. Prices are set in USDC on Solana.</p>
