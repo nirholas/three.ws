@@ -1,0 +1,33 @@
+{
+  "name": "@xspace/widget",
+  "version": "0.1.0",
+  "description": "Embeddable voice chat widget for XSpace Agent servers",
+  "main": "dist/xspace-widget.umd.js",
+  "module": "dist/xspace-widget.esm.js",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "scripts": {
+    "build": "vite build && tsc --emitDeclarationOnly --declaration --outDir dist",
+    "dev": "vite",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "socket.io-client": "^4.8.3"
+  },
+  "devDependencies": {
+    "@vitest/coverage-v8": "^4.1.0",
+    "jsdom": "^25.0.1",
+    "typescript": "^5.3.3",
+    "vite": "^8.0.2",
+    "vite-plugin-dts": "^4.0.0",
+    "vitest": "^4.1.0"
+  }
+}
+
+
