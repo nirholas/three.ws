@@ -27,6 +27,22 @@ Avalanche Fuji (43113)
 | ReputationRegistry   | `0x8004B663056A597Dffe9eCcC1965A193B7388713` | TODO: fill after deployment |
 | ValidationRegistry   | `0x8004Cb1BF31DAf7788923b405b754f57acEB4272` | TODO: fill after deployment |
 
+## CREATE2 Factory (ThreeWSFactory)
+
+Custom vanity-prefixed CREATE2 deployer used to obtain matching addresses across chains.
+
+| Chain | Address                                      | Deployer EOA                  | Deployed   |
+| ----- | -------------------------------------------- | ----------------------------- | ---------- |
+| BSC (56) | `0x00000000D49195AE81759cd247cFeDD9D0B479df` | `0x4022de2D...C0564f402` | 2026-05-11 |
+
+- Source: `ThreeWSFactory.sol`, solc v0.8.35, optimizer 200 runs, MIT, verified on BscScan.
+- ABI:
+  - `deploy(bytes32 salt, bytes initCode) → address` — wraps `CREATE2(0, initCode, salt)`, reverts `"create2 failed"` on zero address.
+  - `predict(bytes32 salt, bytes32 initCodeHash) → address` (view).
+  - Event: `Deployed(address indexed addr, bytes32 indexed salt)`.
+- Vanity 8-byte zero prefix (`0x00000000…`) saves calldata gas on every `deploy`/`predict` call.
+- Not yet deployed on other chains — replicate via the same EOA + nonce to keep the address.
+
 ## Notes
 
 - Addresses are authoritative in [`src/erc8004/abi.js`](../src/erc8004/abi.js) (`REGISTRY_DEPLOYMENTS`).

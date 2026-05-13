@@ -45,6 +45,24 @@ const { identityRegistry, reputationRegistry, validationRegistry } =
   REGISTRY_DEPLOYMENTS[chainId];
 ```
 
+### CREATE2 Factory — ThreeWSFactory
+
+Vanity-prefixed CREATE2 deployer used to obtain matching addresses across chains.
+
+| Chain | Address | Deployer EOA |
+|---|---|---|
+| BSC (56) | `0x00000000D49195AE81759cd247cFeDD9D0B479df` | `0x4022de2D...C0564f402` |
+
+The 8-byte zero prefix (`0x00000000…`) saves calldata gas on every call. Source is `ThreeWSFactory.sol` (solc 0.8.35, optimizer 200 runs, MIT, verified on BscScan).
+
+```solidity
+function deploy(bytes32 salt, bytes initCode) external returns (address);
+function predict(bytes32 salt, bytes32 initCodeHash) external view returns (address);
+event Deployed(address indexed addr, bytes32 indexed salt);
+```
+
+`deploy` wraps `CREATE2(0, initCode, salt)` and reverts `"create2 failed"` if the resulting address is zero. To replicate the factory's address on another chain, send the same creation tx from the same EOA at the same nonce.
+
 ---
 
 ## IdentityRegistry
