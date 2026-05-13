@@ -20,7 +20,7 @@ import { limits, clientIp } from '../../_lib/rate-limit.js';
 import { parse } from '../../_lib/validate.js';
 import { randomToken } from '../../_lib/crypto.js';
 import { env } from '../../_lib/env.js';
-import { r2 } from '../../_lib/r2.js';
+import { r2, publicUrl } from '../../_lib/r2.js';
 
 // Heavy SDKs (Solana web3, Pump.fun, AWS S3 commands) are dynamic-imported
 // inside the handlers that need them. Loading them at module top-level was
@@ -108,7 +108,6 @@ async function pinTokenMetadata({ name, symbol, description, image }) {
 		}
 	}
 	const hash = createHash('sha256').update(bytes).digest('hex');
-	const stub = `bafkreigenerated${hash.slice(0, 40)}`;
 	const key = `token-metadata/${Date.now()}-${Math.random().toString(36).slice(2)}.json`;
 	const { PutObjectCommand } = await loadS3Commands();
 	await r2.send(
@@ -119,7 +118,8 @@ async function pinTokenMetadata({ name, symbol, description, image }) {
 			ContentType: 'application/json',
 		}),
 	);
-	return { cid: stub, uri: `ipfs://${stub}` };
+	const uri = publicUrl(key);
+	return { cid: hash, uri };
 }
 
 async function handleLaunchPrep(req, res) {
@@ -198,7 +198,7 @@ async function handleLaunchPrep(req, res) {
 			bondingCurve: null,
 			amount: lamports,
 		});
-		const launchIxs = await sdk.createAndBuyInstructions({
+		const launchIxs = await sdk.createV2AndBuyInstructions({
 			global,
 			mint: mintKeypair.publicKey,
 			name: body.name,

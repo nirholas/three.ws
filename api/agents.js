@@ -38,6 +38,8 @@ const animationEntrySchema = z.object({
 
 const animationsSchema = z.array(animationEntrySchema).max(30);
 
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
 export default wrap(async (req, res) => {
 	if (cors(req, res, { methods: 'GET,POST,OPTIONS', credentials: true })) return;
 	if (!method(req, res, ['GET', 'POST'])) return;
@@ -171,6 +173,19 @@ async function handleCreate(req, res) {
 
 	if (!name) return error(res, 400, 'validation_error', 'name is required');
 
+	let avatarId = null;
+	if (body.avatar_id) {
+		const raw = String(body.avatar_id);
+		if (!UUID_RE.test(raw)) return error(res, 400, 'validation_error', 'avatar_id must be a UUID');
+		const [av] = await sql`
+			SELECT id FROM avatars
+			 WHERE id = ${raw} AND owner_id = ${auth.userId} AND deleted_at IS NULL
+			 LIMIT 1
+		`;
+		if (!av) return error(res, 404, 'not_found', 'avatar not found');
+		avatarId = av.id;
+	}
+
 	const wallet = await generateAgentWallet();
 	const sol = await generateSolanaAgentWallet();
 	const meta = {
@@ -181,14 +196,15 @@ async function handleCreate(req, res) {
 	};
 
 	const [agent] = await sql`
-		INSERT INTO agent_identities (user_id, name, description, skills, wallet_address, meta)
+		INSERT INTO agent_identities (user_id, name, description, skills, wallet_address, meta, avatar_id)
 		VALUES (
 			${auth.userId},
 			${name},
 			${body.description ? String(body.description).slice(0, 500) : null},
 			${body.skills || ['greet', 'present-model', 'validate-model', 'remember', 'think']},
 			${wallet.address},
-			${JSON.stringify(meta)}::jsonb
+			${JSON.stringify(meta)}::jsonb,
+			${avatarId}
 		)
 		RETURNING *
 	`;
@@ -197,8 +213,6 @@ async function handleCreate(req, res) {
 }
 
 // ── Get One ───────────────────────────────────────────────────────────────
-
-const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 export async function handleGetOne(req, res, id) {
 	if (cors(req, res, { methods: 'GET,PUT,PATCH,DELETE,OPTIONS', credentials: true })) return;

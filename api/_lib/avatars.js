@@ -33,7 +33,7 @@ export async function listAvatars({
 		 from avatars a
 		 left join lateral (
 		   select id, wallet_address from agent_identities
-		   where avatar_id = a.id and deleted_at is null
+		   where avatar_id = a.id and user_id = $1 and deleted_at is null
 		   order by created_at asc limit 1
 		 ) ai on true
 		 where ${conds.join(' and ')}
@@ -54,7 +54,7 @@ export async function getAvatar({ id, requesterId = null }) {
 		from avatars a
 		left join lateral (
 			select id, wallet_address from agent_identities
-			where avatar_id = a.id and deleted_at is null
+			where avatar_id = a.id and user_id = ${requesterId} and deleted_at is null
 			order by created_at asc limit 1
 		) ai on true
 		where a.id = ${id} and a.deleted_at is null limit 1

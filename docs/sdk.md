@@ -7,7 +7,7 @@ This document covers programmatic use of three.ws beyond simple embedding. There
 | **Web component bundle** | `agent-3d.js` (CDN or `TARGET=lib` build) | Drop-in `<agent-3d>` element + programmatic viewer/runtime APIs |
 | **AgentKit SDK** | `@nirholas/agent-kit` | Ship an ERC-8004 agent: chat panel, on-chain registration, `.well-known` manifests |
 
-Both are MIT-licensed. Neither requires the other.
+Both are Apache-2.0 licensed. Neither requires the other.
 
 ---
 

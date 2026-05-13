@@ -114,7 +114,7 @@ export const DEMO_WIDGETS = {
 		id: 'wdgt_demo_hotspot',
 		type: 'hotspot-tour',
 		name: 'Hotspot Tour',
-		modelUrl: SOLDIER,
+		modelUrl: CZ,
 		config: {
 			background: '#0a0a0a',
 			accent: '#8b5cf6',
@@ -122,7 +122,26 @@ export const DEMO_WIDGETS = {
 			showControls: false,
 			autoRotate: false,
 			envPreset: 'neutral',
-			hotspots: [],
+			hotspots: [
+				{
+					id: 'head',
+					label: 'Head',
+					position: [0, 0.75, 0.1],
+					body: 'The agent\'s head — face mesh, eyes, and the empathy layer that drives six real-time emotion states.',
+				},
+				{
+					id: 'chest',
+					label: 'Chest',
+					position: [0.15, 0.2, 0.18],
+					body: 'Torso anchor — bone the camera tracks during conversation and where overlay badges (ERC-8004 passport, reputation) attach.',
+				},
+				{
+					id: 'hand',
+					label: 'Hand',
+					position: [-0.35, -0.15, 0.1],
+					body: 'Right hand — drives wave, point, and reach gestures triggered by the agent\'s skill layer (wave, lookAt, playClip).',
+				},
+			],
 		},
 	}),
 

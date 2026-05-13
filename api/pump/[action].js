@@ -491,8 +491,10 @@ const buildMetadataSchema = z.object({
 	description: z.string().trim().max(500).default(''),
 	avatar_id: z.string().uuid().optional(),
 	agent_id: z.string().uuid().optional(),
-	// Base64 data URL: "data:image/png;base64,..." — max 4 MB raw (≈5.5 MB base64).
-	image_data_url: z.string().max(5_500_000).optional(),
+	// Base64 data URL: "data:image/png;base64,..." — max 4 MB raw.
+	// Cap the string at 6 MB chars to safely cover 4 MB raw (base64 inflates ~4/3 → ~5.59 M)
+	// plus the data URL header. Raw-byte ceiling is re-checked after decode.
+	image_data_url: z.string().max(6_000_000).optional(),
 });
 
 async function handleBuildMetadata(req, res) {
@@ -505,7 +507,18 @@ async function handleBuildMetadata(req, res) {
 	const rl = await limits.authIp(clientIp(req));
 	if (!rl.success) return error(res, 429, 'rate_limited', 'too many requests');
 
-	const body = parse(buildMetadataSchema, await readJson(req));
+	let body;
+	try {
+		body = parse(buildMetadataSchema, await readJson(req));
+	} catch (err) {
+		if (err.code === 'validation_error') {
+			console.warn('[pump/build-metadata] validation_error', {
+				userId: user.id,
+				issues: err.issues,
+			});
+		}
+		throw err;
+	}
 	const uid = user.id;
 	const ts = Date.now().toString(36);
 	const prefix = `pump/meta/${uid}/${ts}`;
@@ -562,50 +575,39 @@ async function handleBuildMetadata(req, res) {
 // ── shared launch helpers ──────────────────────────────────────────────────
 
 // Build the pump.fun launch instructions for the requested coin variant.
-// Mayhem coins go through createV2* (token-2022 + mayhem program accounts).
-// Regular / agent coins keep the legacy V1 path; agent binding (PumpAgent.create)
-// is appended by the caller when applicable.
+// All variants now go through createV2* (token-2022). Pump.fun no longer
+// accepts V1 (SPL Token) launches — calling the deprecated createInstruction /
+// createAndBuyInstructions paths returned tokens the pump.fun program rejected.
+// mayhemMode toggles the high-volatility curve; agent binding is appended by
+// the caller when applicable.
 async function buildLaunchInstructions({
 	sdk, BN, mint, creator, name, symbol, uri, solBuyIn, isMayhem,
 }) {
 	const LAMPORTS = 1_000_000_000;
 	const hasBuy   = solBuyIn > 0;
 
-	if (isMayhem) {
-		if (hasBuy && sdk.createV2AndBuyInstructions) {
-			const global    = await sdk.fetchGlobal();
-			const solAmount = new BN(Math.floor(solBuyIn * LAMPORTS));
-			const pumpSdk   = await import('@pump-fun/pump-sdk');
-			const tokenAmount = pumpSdk.getBuyTokenAmountFromSolAmount(global, null, solAmount);
-			const ixs = await sdk.createV2AndBuyInstructions({
-				global, mint, name, symbol, uri,
-				creator, user: creator,
-				solAmount, amount: tokenAmount,
-				mayhemMode: true,
-			});
-			return Array.isArray(ixs) ? [...ixs] : [ixs];
-		}
-		const ix = await sdk.createV2Instruction({
-			mint, name, symbol, uri, creator, user: creator, mayhemMode: true,
-		});
-		return [ix];
-	}
-
-	// Regular / agent — legacy V1 path (TOKEN_PROGRAM_ID).
-	if (hasBuy && sdk.createAndBuyInstructions) {
+	if (hasBuy) {
 		const global    = await sdk.fetchGlobal();
 		const solAmount = new BN(Math.floor(solBuyIn * LAMPORTS));
 		const pumpSdk   = await import('@pump-fun/pump-sdk');
-		const tokenAmount = pumpSdk.getBuyTokenAmountFromSolAmount(global, null, solAmount);
-		const ixs = await sdk.createAndBuyInstructions({
+		const tokenAmount = pumpSdk.getBuyTokenAmountFromSolAmount({
+			global,
+			feeConfig: null,
+			mintSupply: null,
+			bondingCurve: null,
+			amount: solAmount,
+		});
+		const ixs = await sdk.createV2AndBuyInstructions({
 			global, mint, name, symbol, uri,
 			creator, user: creator,
 			solAmount, amount: tokenAmount,
+			mayhemMode: !!isMayhem,
 		});
 		return Array.isArray(ixs) ? [...ixs] : [ixs];
 	}
-	const ix = await sdk.createInstruction({
-		mint, name, symbol, uri, creator, user: creator,
+
+	const ix = await sdk.createV2Instruction({
+		mint, name, symbol, uri, creator, user: creator, mayhemMode: !!isMayhem,
 	});
 	return [ix];
 }
@@ -1626,11 +1628,23 @@ async function handleQuote(req, res) {
 				const sol = Number(solRaw);
 				if (!(sol > 0)) return error(res, 400, 'validation_error', 'sol must be > 0');
 				const lamports = new BN(Math.floor(sol * LAMPORTS_PER_SOL_Q));
-				const tokens = pumpSdk.getBuyTokenAmountFromSolAmount(global, curve, lamports);
+				const tokens = pumpSdk.getBuyTokenAmountFromSolAmount({
+					global,
+					feeConfig: null,
+					mintSupply: null,
+					bondingCurve: curve,
+					amount: lamports,
+				});
 				quote = { sol_in: sol, tokens_out: tokens.toString(), source: 'bonding_curve' };
 			} else if (direction === 'sell' && tokenRaw) {
 				const tokens = new BN(tokenRaw);
-				const lamports = pumpSdk.getSellSolAmountFromTokenAmount(global, curve, tokens);
+				const lamports = pumpSdk.getSellSolAmountFromTokenAmount({
+					global,
+					feeConfig: null,
+					mintSupply: null,
+					bondingCurve: curve,
+					amount: tokens,
+				});
 				quote = {
 					tokens_in: tokenRaw,
 					sol_out: Number(lamports.toString()) / LAMPORTS_PER_SOL_Q,

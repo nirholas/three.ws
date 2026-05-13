@@ -573,6 +573,10 @@
 			"dest": "/api/onboarding/[action]?action=link-avatar"
 		},
 		{
+			"src": "/api/pump/build-metadata",
+			"dest": "/api/pump/[action]?action=build-metadata"
+		},
+		{
 			"src": "/api/pump/channel-feed",
 			"dest": "/api/pump/[action]?action=channel-feed"
 		},
