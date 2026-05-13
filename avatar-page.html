@@ -230,10 +230,15 @@
 
 			.av-cta-row {
 				display: grid;
-				grid-template-columns: 1fr 1fr;
+				grid-template-columns: repeat(3, 1fr);
 				gap: 8px;
 				padding: 16px 24px;
 				border-bottom: 1px solid var(--border);
+			}
+			@media (max-width: 480px) {
+				.av-cta-row {
+					grid-template-columns: 1fr;
+				}
 			}
 			.av-cta {
 				background: var(--text);

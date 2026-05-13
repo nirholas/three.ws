@@ -17,8 +17,25 @@ import { logAudit } from '../_lib/audit.js';
 import { sql } from '../_lib/db.js';
 import { getBalances, walletUsdTotal, invalidateBalances } from '../_lib/balances.js';
 import { recoverAgentKey, recoverSolanaAgentKeypair } from '../_lib/agent-wallet.js';
+import { reverseLookupAddress } from '../../src/solana/sns.js';
 import { env } from '../_lib/env.js';
 import { z } from 'zod';
+
+const SNS_CACHE_TTL_MS = 10 * 60_000;
+const _snsCache = new Map();
+
+async function lookupSnsCached(address) {
+	const hit = _snsCache.get(address);
+	if (hit && Date.now() - hit.at < SNS_CACHE_TTL_MS) return hit.value;
+	let value = null;
+	try {
+		value = await reverseLookupAddress(address);
+	} catch {
+		value = null;
+	}
+	_snsCache.set(address, { at: Date.now(), value });
+	return value;
+}
 
 const ETH_ADDR_RE = /^0x[a-fA-F0-9]{40}$/;
 const SOL_ADDR_RE = /^[1-9A-HJ-NP-Za-km-z]{32,44}$/;
@@ -86,12 +103,16 @@ async function handleSummary(req, res) {
 
 	const wallets = await listUserAgentWallets(user.id);
 
-	const results = await Promise.allSettled(
-		wallets.map((w) => getBalances({ chain: w.chain, address: w.address })),
-	);
+	const [balanceResults, snsResults] = await Promise.all([
+		Promise.allSettled(wallets.map((w) => getBalances({ chain: w.chain, address: w.address }))),
+		Promise.all(
+			wallets.map((w) => (w.chain === 'solana' ? lookupSnsCached(w.address) : Promise.resolve(null))),
+		),
+	]);
 
 	const byWallet = wallets.map((w, i) => {
-		const r = results[i];
+		const r = balanceResults[i];
+		const sns = snsResults[i];
 		if (r.status === 'fulfilled') {
 			const bal = r.value;
 			return {
@@ -100,6 +121,7 @@ async function handleSummary(req, res) {
 				chain: w.chain,
 				chain_id: w.chain_id,
 				address: w.address,
+				sns,
 				native: bal.native,
 				tokens: bal.tokens,
 				usd: walletUsdTotal(bal),
@@ -113,6 +135,7 @@ async function handleSummary(req, res) {
 			chain: w.chain,
 			chain_id: w.chain_id,
 			address: w.address,
+			sns,
 			native: { symbol: w.chain === 'solana' ? 'SOL' : 'ETH', amount: 0, usd: 0 },
 			tokens: [],
 			usd: 0,

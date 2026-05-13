@@ -6,7 +6,8 @@
  * Wired to /agent/:id via vercel.json. Returns an HTML page with
  * Open Graph + Twitter Player Card + oEmbed discovery + Farcaster Frame tags
  * so social crawlers get a rich preview. Real browsers are redirected to the
- * agent-home.html SPA.
+ * agent's Avatar Studio (/avatars/<avatar_id>) when the agent has an avatar,
+ * or to the agent-home SPA fallback otherwise.
  */
 
 import { sql } from './_lib/db.js';
@@ -23,7 +24,7 @@ export default wrap(async (req, res) => {
 	if (!isUuid(agentId)) return notFound(res, 'Agent not found');
 
 	const [agent] = await sql`
-		SELECT id, name, description
+		SELECT id, name, description, avatar_id
 		FROM agent_identities
 		WHERE id = ${agentId} AND deleted_at IS NULL
 		LIMIT 1
@@ -36,6 +37,7 @@ export default wrap(async (req, res) => {
 	const embedUrl = `${origin}/agent/${agentId}/embed`;
 	const ogUrl = `${origin}/api/agent/${agentId}/og`;
 	const oembedJs = `${origin}/api/oembed?url=${encodeURIComponent(pageUrl)}&format=json`;
+	const spaUrl = agent.avatar_id ? `/avatars/${agent.avatar_id}` : `${pageUrl}?_spa=1`;
 
 	const title = agent.name || 'Agent';
 	const desc = agent.description || 'An embodied three.ws.';
@@ -43,7 +45,7 @@ export default wrap(async (req, res) => {
 	res.statusCode = 200;
 	res.setHeader('content-type', 'text/html; charset=utf-8');
 	res.setHeader('cache-control', 'public, max-age=60, s-maxage=600, stale-while-revalidate=3600');
-	res.end(renderHtml({ title, desc, agentId, pageUrl, embedUrl, ogUrl, oembedJs, origin }));
+	res.end(renderHtml({ title, desc, agentId, pageUrl, embedUrl, ogUrl, oembedJs, origin, spaUrl }));
 });
 
 function notFound(res, reason) {
@@ -127,7 +129,7 @@ function renderHtml(p) {
 	</div>
 	<script>
 		(function () {
-			window.location.replace(${JSON.stringify(p.pageUrl)} + '?_spa=1');
+			window.location.replace(${JSON.stringify(p.spaUrl)});
 		})();
 	</script>
 	<script type="application/ld+json">

@@ -224,6 +224,7 @@ function renderShell(glbUrl) {
 			</div>
 			<div class="av-cta-row">
 				<button class="av-cta" id="av-use">Start an agent</button>
+				<a class="av-cta-sec" href="/studio?avatar=${encodeURIComponent(avatar.id || avatarId)}" title="Use this avatar in Widget Studio">Open in Studio</a>
 				<a class="av-cta-sec" href="${esc(glbUrl)}" download>Download GLB</a>
 			</div>
 			<nav class="av-tabs" role="tablist">

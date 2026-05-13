@@ -213,6 +213,10 @@
 			"dest": "/dashboard/wallets.html"
 		},
 		{
+			"src": "/dashboard/portfolio/asset",
+			"dest": "/dashboard/portfolio-asset.html"
+		},
+		{
 			"src": "/dashboard/portfolio",
 			"dest": "/dashboard/portfolio.html"
 		},
