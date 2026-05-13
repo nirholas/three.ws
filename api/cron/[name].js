@@ -1287,6 +1287,14 @@ function dcaLog(level, event, fields = {}) {
 	else console.log(line);
 }
 
+async function insertDcaExecution(row) {
+	const keys = Object.keys(row);
+	const cols = keys.map((k) => `"${k}"`).join(', ');
+	const placeholders = keys.map((_, i) => `$${i + 1}`).join(', ');
+	const values = keys.map((k) => row[k]);
+	return sql(`INSERT INTO dca_executions (${cols}) VALUES (${placeholders})`, values);
+}
+
 function dcaIsTransient(err) {
 	// Network-level & RPC transport errors
 	const code = err?.code;
@@ -1572,7 +1580,7 @@ async function handleRunDca(req, res) {
 			`;
 			execRow.status = 'aborted';
 			execRow.error = `Delegation ${strategy.delegation_status}`;
-			await sql`INSERT INTO dca_executions ${sql(execRow)}`.catch((e) =>
+			await insertDcaExecution(execRow).catch((e) =>
 				dcaLog('error', 'exec_insert_failed', { ...logCtx, message: e?.message }),
 			);
 			dcaLog('info', 'skipped', { ...logCtx, reason: execRow.error });
@@ -1586,7 +1594,7 @@ async function handleRunDca(req, res) {
 			`;
 			execRow.status = 'aborted';
 			execRow.error = 'Delegation expired';
-			await sql`INSERT INTO dca_executions ${sql(execRow)}`.catch((e) =>
+			await insertDcaExecution(execRow).catch((e) =>
 				dcaLog('error', 'exec_insert_failed', { ...logCtx, message: e?.message }),
 			);
 			dcaLog('info', 'skipped', { ...logCtx, reason: execRow.error });
@@ -1672,7 +1680,7 @@ async function handleRunDca(req, res) {
 		}
 
 		// Insert execution record regardless of outcome
-		await sql`INSERT INTO dca_executions ${sql(execRow)}`.catch((e) =>
+		await insertDcaExecution(execRow).catch((e) =>
 			dcaLog('error', 'exec_insert_failed', { ...logCtx, message: e?.message }),
 		);
 	}

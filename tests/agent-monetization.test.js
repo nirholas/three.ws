@@ -17,7 +17,11 @@ vi.mock('../api/_lib/auth.js', () => ({
 
 vi.mock('../api/_lib/db.js', () => ({
 	sql: vi.fn(async (strings, ...values) => {
-		sqlState.calls.push({ query: strings.join('?'), values });
+		if (typeof strings === 'string') {
+			sqlState.calls.push({ query: strings, values: values[0] ?? [] });
+		} else {
+			sqlState.calls.push({ query: strings.join('?'), values });
+		}
 		return sqlState.queue.length ? sqlState.queue.shift() : [];
 	}),
 }));
@@ -360,8 +364,6 @@ describe('Revenue Dashboard', () => {
 	it('returns correct revenue totals', async () => {
 		authState.session = { id: 'user-1' };
 
-		// revenue.js calls sql`` for agentFilter when agentId is null
-		sqlState.queue.push([]); // agentFilter = sql``
 		// summary query
 		sqlState.queue.push([
 			{

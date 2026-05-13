@@ -1362,7 +1362,7 @@ function renderAvatarCard(a, spotlight = false) {
 	// the observer promotes it to `src` on intersect — no GLB download, no
 	// scene parse, no animation loop until the card is actually on screen.
 	const preview = a.image
-		? `<img src="${escapeHtml(a.image)}" alt="${name}" loading="lazy" decoding="async" />`
+		? `<img src="${escapeHtml(a.image)}" alt="${name}" loading="lazy" decoding="async" onerror="this.replaceWith(Object.assign(document.createElement('div'),{className:'card-img-fallback'}))" />`
 		: a.glbUrl
 			? `<model-viewer
 					data-src="${escapeHtml(a.glbUrl)}"
@@ -1448,7 +1448,7 @@ function renderOnchainCard(a) {
 	const x402 = a.x402Support ? `<span class="onchain-x402" title="Accepts x402 micropayments">x402</span>` : '';
 	const href = a.viewerUrl || a.tokenExplorerUrl || '#';
 	const preview = a.image
-		? `<img src="${escapeHtml(a.image)}" alt="${name}" loading="lazy" decoding="async" />`
+		? `<img src="${escapeHtml(a.image)}" alt="${name}" loading="lazy" decoding="async" onerror="this.replaceWith(Object.assign(document.createElement('div'),{className:'card-img-fallback'}))" />`
 		: a.glbUrl
 			? `<model-viewer
 					src="${escapeHtml(a.glbUrl)}"

@@ -24,10 +24,12 @@ const sqlState = {
 
 vi.mock('../../api/_lib/db.js', () => ({
 	sql: vi.fn(async (strings, ...values) => {
-		sqlState.calls.push({
-			query: strings.join('?'),
-			values,
-		});
+		// Supports both `sql\`...\`` tagged-template form and `sql(text, params)` form.
+		if (typeof strings === 'string') {
+			sqlState.calls.push({ query: strings, values: values[0] ?? [] });
+		} else {
+			sqlState.calls.push({ query: strings.join('?'), values });
+		}
 		if (sqlState.queue.length === 0) return [];
 		return sqlState.queue.shift();
 	}),
@@ -110,9 +112,6 @@ describe('GET /api/agents — list', () => {
 
 	it('returns caller agents when authenticated via session', async () => {
 		authState.session = { id: 'user-1' };
-		// handlers makes sql`` (empty fragment for onchainFilter) before the SELECT;
-		// the mock intercepts both calls so queue needs one entry per sql call.
-		sqlState.queue.push([]); // sql`` empty fragment
 		sqlState.queue.push([
 			{
 				id: 'agent-1',

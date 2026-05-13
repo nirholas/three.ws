@@ -59,6 +59,7 @@
 		"release:lib": "npm run build:lib && npm run publish:lib",
 		"clean": "rm -rf dist/* dist-lib/* || true",
 		"generate-icons": "node scripts/generate-pwa-icons.mjs",
+		"optimize:glb": "node scripts/optimize-glb.mjs",
 		"fetch-animations": "node scripts/download-animations.mjs",
 		"fetch:mixamo-catalog": "node scripts/fetch-mixamo-catalog.mjs",
 		"test": "vitest run",
@@ -138,6 +139,7 @@
 		"zod": "^3.23.8"
 	},
 	"devDependencies": {
+		"@gltf-transform/functions": "^4.3.0",
 		"@x402/fetch": "^2.11.0",
 		"ajv": "^8.17.1",
 		"ajv-formats": "^3.0.1",

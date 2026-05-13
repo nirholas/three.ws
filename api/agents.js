@@ -74,15 +74,14 @@ async function handleList(req, res) {
 
 	if (isMe) return handleGetOrCreateMe(req, res, auth);
 
-	const onchainFilter = onchainOnly ? sql`AND (erc8004_agent_id IS NOT NULL OR meta->>'onchain' IS NOT NULL)` : sql``;
-
-	const rows = await sql`
+	const text = `
 		SELECT * FROM agent_identities
-		WHERE user_id = ${auth.userId}
+		WHERE user_id = $1
 		  AND deleted_at IS NULL
-		  ${onchainFilter}
+		  ${onchainOnly ? `AND (erc8004_agent_id IS NOT NULL OR meta->>'onchain' IS NOT NULL)` : ''}
 		ORDER BY created_at ASC
 	`;
+	const rows = await sql(text, [auth.userId]);
 	return json(res, 200, { agents: rows.map((row) => decorate(row)) });
 }
 

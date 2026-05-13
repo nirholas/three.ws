@@ -123,22 +123,41 @@ async function handleUpdate(req, res, id) {
 		return error(res, 400, 'validation_error', 'no fields to update');
 	}
 
-	const updates = [];
-	if (body.name !== undefined) updates.push(sql`name = ${body.name}`);
-	if (body.description !== undefined) updates.push(sql`description = ${body.description}`);
-	if (body.tags !== undefined) updates.push(sql`tags = ${body.tags}`);
-	if (body.is_public !== undefined) updates.push(sql`is_public = ${body.is_public}`);
-	if (body.schema_json !== undefined)
-		updates.push(sql`schema_json = ${JSON.stringify(body.schema_json)}::jsonb`);
-	if (body.content !== undefined)
-		updates.push(sql`content = ${body.content}`);
-	updates.push(sql`updated_at = now()`);
+	const setFrags = [];
+	const params = [];
+	if (body.name !== undefined) {
+		params.push(body.name);
+		setFrags.push(`name = $${params.length}`);
+	}
+	if (body.description !== undefined) {
+		params.push(body.description);
+		setFrags.push(`description = $${params.length}`);
+	}
+	if (body.tags !== undefined) {
+		params.push(body.tags);
+		setFrags.push(`tags = $${params.length}`);
+	}
+	if (body.is_public !== undefined) {
+		params.push(body.is_public);
+		setFrags.push(`is_public = $${params.length}`);
+	}
+	if (body.schema_json !== undefined) {
+		params.push(JSON.stringify(body.schema_json));
+		setFrags.push(`schema_json = $${params.length}::jsonb`);
+	}
+	if (body.content !== undefined) {
+		params.push(body.content);
+		setFrags.push(`content = $${params.length}`);
+	}
+	setFrags.push(`updated_at = now()`);
 
-	const setClauses = updates.reduce((acc, frag) => sql`${acc}, ${frag}`);
+	params.push(id);
+	const idIdx = params.length;
 
-	const [updated] = await sql`
-		UPDATE marketplace_skills SET ${setClauses} WHERE id = ${id} RETURNING *
-	`;
+	const [updated] = await sql(
+		`UPDATE marketplace_skills SET ${setFrags.join(', ')} WHERE id = $${idIdx} RETURNING *`,
+		params,
+	);
 
 	const [author] = updated.author_id
 		? await sql`SELECT id, display_name FROM users WHERE id = ${updated.author_id}`

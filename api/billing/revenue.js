@@ -37,9 +37,12 @@ export default wrap(async (req, res) => {
 	if (isNaN(toDate.getTime()))
 		return error(res, 400, 'validation_error', 'to must be a valid ISO-8601 date');
 
-	const agentFilter = agentId ? sql`AND re.agent_id = ${agentId}::uuid` : sql``;
+	const baseParams = [user.id, fromDate, toDate];
+	const agentFilterSql = agentId ? `AND re.agent_id = $4::uuid` : '';
+	const filterParams = agentId ? [...baseParams, agentId] : baseParams;
 
-	const [summaryRow] = await sql`
+	const [summaryRow] = await sql(
+		`
 		SELECT
 			COALESCE(SUM(re.gross_amount), 0)::bigint AS gross_total,
 			COALESCE(SUM(re.fee_amount), 0)::bigint   AS fee_total,
@@ -49,38 +52,50 @@ export default wrap(async (req, res) => {
 			MAX(re.chain)                             AS chain
 		FROM agent_revenue_events re
 		JOIN agent_identities ai ON ai.id = re.agent_id
-		WHERE ai.user_id = ${user.id}
-		  AND re.created_at BETWEEN ${fromDate} AND ${toDate}
-		  ${agentFilter}
-	`;
+		WHERE ai.user_id = $1
+		  AND re.created_at BETWEEN $2 AND $3
+		  ${agentFilterSql}
+	`,
+		filterParams,
+	);
 
-	const bySkill = await sql`
+	const bySkill = await sql(
+		`
 		SELECT
 			re.skill,
 			COALESCE(SUM(re.net_amount), 0)::bigint AS net_total,
 			COUNT(*)::int                           AS count
 		FROM agent_revenue_events re
 		JOIN agent_identities ai ON ai.id = re.agent_id
-		WHERE ai.user_id = ${user.id}
-		  AND re.created_at BETWEEN ${fromDate} AND ${toDate}
-		  ${agentFilter}
+		WHERE ai.user_id = $1
+		  AND re.created_at BETWEEN $2 AND $3
+		  ${agentFilterSql}
 		GROUP BY re.skill
 		ORDER BY net_total DESC
-	`;
+	`,
+		filterParams,
+	);
 
-	const timeseries = await sql`
+	const tsParams = agentId
+		? [user.id, fromDate, toDate, granularity, agentId]
+		: [user.id, fromDate, toDate, granularity];
+	const tsAgentFilter = agentId ? `AND re.agent_id = $5::uuid` : '';
+	const timeseries = await sql(
+		`
 		SELECT
-			date_trunc(${granularity}, re.created_at) AS period,
+			date_trunc($4, re.created_at) AS period,
 			COALESCE(SUM(re.net_amount), 0)::bigint   AS net_total,
 			COUNT(*)::int                             AS count
 		FROM agent_revenue_events re
 		JOIN agent_identities ai ON ai.id = re.agent_id
-		WHERE ai.user_id = ${user.id}
-		  AND re.created_at BETWEEN ${fromDate} AND ${toDate}
-		  ${agentFilter}
+		WHERE ai.user_id = $1
+		  AND re.created_at BETWEEN $2 AND $3
+		  ${tsAgentFilter}
 		GROUP BY period
 		ORDER BY period
-	`;
+	`,
+		tsParams,
+	);
 
 	return json(res, 200, {
 		summary: {

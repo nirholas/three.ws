@@ -70,3 +70,6 @@ threews-launch-week-case-study.html
 
 # Temp working directories
 .tmp/
+
+# GLB optimization backups (see scripts/optimize-glb.mjs)
+*.glb.bak

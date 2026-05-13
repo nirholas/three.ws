@@ -48,16 +48,37 @@ export default wrap(async (req, res) => {
 
 	// PATCH
 	const body = parse(patchSchema, await readJson(req));
-	const sets = [];
-	if (body.plan     !== undefined) sets.push(sql`plan = ${body.plan}`);
-	if (body.is_admin !== undefined) sets.push(sql`is_admin = ${body.is_admin}`);
-	if (body.deleted  !== undefined) sets.push(sql`deleted_at = ${body.deleted ? sql`now()` : null}`);
+	const setFrags = [];
+	const params = [];
+	if (body.plan !== undefined) {
+		params.push(body.plan);
+		setFrags.push(`plan = $${params.length}`);
+	}
+	if (body.is_admin !== undefined) {
+		params.push(body.is_admin);
+		setFrags.push(`is_admin = $${params.length}`);
+	}
+	if (body.deleted !== undefined) {
+		if (body.deleted) {
+			setFrags.push(`deleted_at = now()`);
+		} else {
+			setFrags.push(`deleted_at = NULL`);
+		}
+	}
 
-	const [updated] = await sql`
-		update users set ${sql(sets.reduce((a, b) => sql`${a}, ${b}`))}
-		where id = ${id}
+	if (setFrags.length === 0) return error(res, 400, 'validation_error', 'nothing to update');
+
+	params.push(id);
+	const idIdx = params.length;
+
+	const [updated] = await sql(
+		`
+		update users set ${setFrags.join(', ')}
+		where id = $${idIdx}
 		returning id, email, display_name, plan, is_admin, deleted_at
-	`;
+	`,
+		params,
+	);
 	if (!updated) return error(res, 404, 'not_found', 'user not found');
 	return json(res, 200, { user: updated });
 });

@@ -20,8 +20,13 @@ const snippetIframe = document.getElementById('snippet-iframe');
 const errorMsgEl = document.getElementById('error-msg');
 const rehearsalBadge = document.getElementById('rehearsal-badge');
 
-// Wire agent-id into the embed element
-document.getElementById('preview').setAttribute('agent-id', AGENT_ID);
+// Wire the preview element. We point at a local body GLB rather than resolving
+// agent-id=cz-preview through /api/agents/* so the on-page preview renders
+// instantly without depending on whether the cz-preview agent has been seeded
+// in the current environment. The embed snippets below still surface the
+// agent-id form for users to copy.
+document.getElementById('preview').setAttribute('body', '/avatars/cz.glb');
+document.getElementById('preview').setAttribute('name', AGENT_NAME);
 
 if (REHEARSAL) rehearsalBadge.classList.remove('hidden');
 

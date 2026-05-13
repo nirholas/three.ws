@@ -216,7 +216,24 @@ function loadAgentKeypair() {
 	if (_agent) return _agent;
 	const b58 = process.env.X402_AGENT_SOLANA_SECRET_BASE58;
 	if (b58) {
-		_agent = Keypair.fromSecretKey(bs58.decode(b58));
+		let raw;
+		try {
+			raw = bs58.decode(b58);
+		} catch {
+			const e = new Error('X402_AGENT_SOLANA_SECRET_BASE58 is not valid base58');
+			e.status = 503;
+			e.code = 'wallet_misconfigured';
+			throw e;
+		}
+		if (raw.length !== 64) {
+			const e = new Error(
+				`X402_AGENT_SOLANA_SECRET_BASE58 decoded to ${raw.length} bytes; expected 64 (ed25519 keypair)`,
+			);
+			e.status = 503;
+			e.code = 'wallet_misconfigured';
+			throw e;
+		}
+		_agent = Keypair.fromSecretKey(raw);
 		return _agent;
 	}
 	try {
@@ -226,7 +243,8 @@ function loadAgentKeypair() {
 		return _agent;
 	} catch {
 		const e = new Error('agent wallet not configured (set X402_AGENT_SOLANA_SECRET_BASE58)');
-		e.status = 500;
+		e.status = 503;
+		e.code = 'wallet_unconfigured';
 		throw e;
 	}
 }
@@ -432,8 +450,14 @@ export default wrap(async (req, res) => {
 		if (u.searchParams.get('balance') === '1') {
 			try {
 				const b = await getAgentBalance();
-				return json(res, 200, b);
+				return json(res, 200, { configured: true, ...b });
 			} catch (err) {
+				// Wallet config problems are surfaced as a 200 with a flag so
+				// the demo UI can render "wallet not configured" instead of a
+				// red console error. Other failures still bubble as 500.
+				if (err.code === 'wallet_misconfigured' || err.code === 'wallet_unconfigured') {
+					return json(res, 200, { configured: false, error: err.message, address: null, sol: 0, usdc: 0 });
+				}
 				return json(res, err.status || 500, { error: err.message });
 			}
 		}

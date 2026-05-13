@@ -128,20 +128,41 @@ async function handlePatch(req, res, planId) {
 	`;
 	if (!existing) return error(res, 404, 'not_found', 'plan not found');
 
-	const sets = [];
-	if (body.name !== undefined) sets.push(sql`name = ${body.name}`);
-	if (body.price_usd !== undefined) sets.push(sql`price_usd = ${body.price_usd}`);
-	if (body.perks !== undefined) sets.push(sql`perks = ${body.perks}`);
-	if (body.active !== undefined) sets.push(sql`active = ${body.active}`);
+	const setFrags = [];
+	const params = [];
+	if (body.name !== undefined) {
+		params.push(body.name);
+		setFrags.push(`name = $${params.length}`);
+	}
+	if (body.price_usd !== undefined) {
+		params.push(body.price_usd);
+		setFrags.push(`price_usd = $${params.length}`);
+	}
+	if (body.perks !== undefined) {
+		params.push(body.perks);
+		setFrags.push(`perks = $${params.length}`);
+	}
+	if (body.active !== undefined) {
+		params.push(body.active);
+		setFrags.push(`active = $${params.length}`);
+	}
 
-	if (sets.length === 0) return error(res, 400, 'validation_error', 'nothing to update');
+	if (setFrags.length === 0) return error(res, 400, 'validation_error', 'nothing to update');
 
-	const [plan] = await sql`
+	params.push(planId);
+	const planIdIdx = params.length;
+	params.push(user.id);
+	const userIdIdx = params.length;
+
+	const [plan] = await sql(
+		`
 		UPDATE subscription_plans
-		SET ${sql(sets.reduce((a, b) => sql`${a}, ${b}`))}
-		WHERE id = ${planId} AND creator_id = ${user.id}
+		SET ${setFrags.join(', ')}
+		WHERE id = $${planIdIdx} AND creator_id = $${userIdIdx}
 		RETURNING id, creator_id, agent_id, name, price_usd, interval, perks, active, created_at
-	`;
+	`,
+		params,
+	);
 	return json(res, 200, { plan });
 }
 
