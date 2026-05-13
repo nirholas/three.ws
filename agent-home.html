@@ -709,6 +709,13 @@
 				font-weight: 500;
 				color: rgba(255,255,255,0.7);
 			}
+			.my-agents-status {
+				grid-column: 1 / -1;
+				padding: 1.5rem;
+				text-align: center;
+				color: rgba(255,255,255,0.6);
+				font-size: 0.95rem;
+			}
 		</style>
 			<link rel="stylesheet" href="/nav.css" />
 	</head>
@@ -994,6 +1001,10 @@
 			// through to the "my agents" listing view.
 			const agentId = UUID_RE.test(rawSeg) ? rawSeg : '';
 
+			function escapeHtml(s) {
+				return String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
+			}
+
 			function renderAgents(agents) {
 				const grid = document.querySelector('.my-agents-grid');
 				for (const agent of agents) {
@@ -1001,10 +1012,11 @@
 					card.className = 'my-agents-card';
 					card.href = `/agent/${agent.id}`;
 					const avatarUrl = agent.avatar?.startsWith('http') ? agent.avatar : `/api/avatars/${agent.avatar}/thumbnail`;
+					const name = escapeHtml(agent.name);
 					card.innerHTML = `
-						<img src="${avatarUrl || '/three.svg'}" class="my-agents-card-icon" alt="${agent.name} avatar">
-						<div class="my-agents-card-title">${agent.name}</div>
-						<div class="my-agents-card-desc">${agent.description || 'No description'}</div>
+						<img src="${escapeHtml(avatarUrl || '/three.svg')}" class="my-agents-card-icon" alt="${name} avatar">
+						<div class="my-agents-card-title">${name}</div>
+						<div class="my-agents-card-desc">${escapeHtml(agent.description || 'No description')}</div>
 						${agent.onchain ? '<div class="my-agents-card-badge">On-chain</div>' : ''}
 					`;
 					grid.appendChild(card);
@@ -1026,22 +1038,35 @@
 					document.getElementById('agent-embed-section').remove();
 					document.getElementById('agent-skills-section').remove();
 
+					const grid = document.querySelector('.my-agents-grid');
+					const loading = document.createElement('div');
+					loading.className = 'my-agents-status';
+					loading.textContent = 'Loading your agents…';
+					grid.appendChild(loading);
+
 					try {
-						const resp = await fetch('/api/agents?onchain=true', { credentials: 'include' });
-						if (resp.ok) {
-							const { agents } = await resp.json();
-							if (agents) {
-								renderAgents(agents);
-							}
+						const resp = await fetch('/api/agents', { credentials: 'include' });
+						if (!resp.ok) {
+							const msg = resp.status === 401
+								? 'Sign in to see your agents.'
+								: `Could not load agents (HTTP ${resp.status}).`;
+							loading.textContent = msg;
+							return;
 						}
-						const resp2 = await fetch('/api/agents', { credentials: 'include' });
-						if (resp2.ok) {
-							const { agents } = await resp2.json();
-							if (agents) {
-								renderAgents(agents.filter(a => !a.onchain));
-							}
+						const { agents } = await resp.json();
+						loading.remove();
+						const list = Array.isArray(agents) ? agents : [];
+						if (list.length === 0) {
+							const empty = document.createElement('div');
+							empty.className = 'my-agents-status';
+							empty.textContent = 'No agents yet — create your first one.';
+							grid.appendChild(empty);
+						} else {
+							const sorted = [...list].sort((a, b) => Number(!!b.onchain) - Number(!!a.onchain));
+							renderAgents(sorted);
 						}
 					} catch (err) {
+						loading.textContent = 'Network error loading agents. Refresh to retry.';
 						console.error('Could not load agents:', err);
 					}
 					return;
