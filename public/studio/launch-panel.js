@@ -85,6 +85,17 @@ const PUMP_URL = (mint) => `https://pump.fun/coin/${mint}`;
 
 const LP_CSS = `
 .lp{display:flex;flex-direction:column;gap:.9rem}
+
+/* Wallet-source toggle */
+.lp-src{display:grid;grid-template-columns:1fr 1fr;gap:.35rem;padding:.25rem;
+  background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.07);border-radius:10px}
+.lp-src button{padding:.45rem .6rem;border-radius:7px;cursor:pointer;background:transparent;
+  border:1px solid transparent;color:rgba(255,255,255,.45);font-size:.78rem;font-weight:500;transition:all .15s;line-height:1.2}
+.lp-src button:hover:not(.on):not([disabled]){color:rgba(255,255,255,.75)}
+.lp-src button.on{background:rgba(164,240,188,.1);border-color:rgba(164,240,188,.28);color:#c8f0d8}
+.lp-src button[disabled]{opacity:.4;cursor:not-allowed}
+.lp-src-sub{display:block;font-size:.62rem;color:rgba(255,255,255,.32);font-weight:400;margin-top:.15rem;letter-spacing:.01em}
+.lp-src button.on .lp-src-sub{color:rgba(164,240,188,.55)}
 .lp-empty{text-align:center;padding:2.5rem 1rem;color:rgba(255,255,255,.3);font-size:.85rem;line-height:1.7}
 .lp-empty a{color:rgba(164,240,188,.7);text-decoration:none}
 .lp-empty a:hover{color:#a4f0bc}
@@ -173,18 +184,72 @@ const LP_CSS = `
 .lp-dot.on{background:#a4f0bc;box-shadow:0 0 6px rgba(164,240,188,.45)}
 .lp-dot.off{background:rgba(255,255,255,.18)}
 .lp-wallet-info{flex:1;min-width:0}
-.lp-wallet-addr{color:rgba(255,255,255,.75)}
+.lp-wallet-addr{color:rgba(255,255,255,.75);background:none;border:none;padding:0;cursor:pointer;
+  font:inherit;font-family:ui-monospace,monospace;vertical-align:baseline;
+  text-align:left;display:inline}
+.lp-wallet-addr:hover{color:#fff;text-decoration:underline;text-decoration-color:rgba(255,255,255,.2);
+  text-underline-offset:3px}
+.lp-wallet-addr:focus-visible{outline:1px solid rgba(164,240,188,.5);outline-offset:2px;border-radius:3px}
 .lp-wallet-bal{color:rgba(255,255,255,.42);margin-left:.4rem;font-size:.73rem}
 .lp-wallet-cost{display:block;font-size:.69rem;margin-top:.1rem}
 .lp-wallet-cost.ok{color:#a4f0bc}
 .lp-wallet-cost.warn{color:#f6b3b3}
 .lp-wallet-cost.dim{color:rgba(255,255,255,.3)}
 .lp-wallet-none{flex:1;color:rgba(255,255,255,.32)}
+.lp-link-row{display:flex;align-items:center;gap:.55rem;padding:.55rem .8rem;margin-top:.3rem;
+  background:rgba(246,179,179,.06);border:1px solid rgba(246,179,179,.22);border-radius:8px;
+  font-size:.73rem;color:rgba(255,221,221,.85);line-height:1.35}
+.lp-link-row.checking{background:rgba(255,255,255,.04);border-color:rgba(255,255,255,.08);color:rgba(255,255,255,.5)}
+.lp-link-row .lp-link-info{flex:1;min-width:0}
+.lp-link-row .lp-link-title{display:block;font-weight:500;color:#fff;margin-bottom:.1rem;font-size:.78rem}
+.lp-link-row .lp-link-sub{display:block;color:rgba(255,255,255,.55);font-size:.7rem}
+.lp-link-row .lp-link-err{display:block;color:#f6b3b3;margin-top:.2rem;font-size:.7rem}
+.lp-link-btn{padding:.42rem .85rem;border-radius:7px;border:1px solid rgba(164,240,188,.4);
+  background:rgba(164,240,188,.12);color:#c8f0d8;font-size:.74rem;font-weight:500;cursor:pointer;
+  white-space:nowrap}
+.lp-link-btn:hover:not([disabled]){background:rgba(164,240,188,.2)}
+.lp-link-btn[disabled]{opacity:.55;cursor:wait}
 .lp-wbtn{padding:.28rem .65rem;border-radius:6px;cursor:pointer;flex-shrink:0;
   background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.1);
   color:rgba(255,255,255,.78);font-size:.72rem;white-space:nowrap;transition:background .15s}
 .lp-wbtn:hover{background:rgba(255,255,255,.13)}
 .lp-wbtn.ghost{opacity:.4;font-size:.65rem}
+.lp-wbtn.deposit{background:rgba(164,240,188,.1);border-color:rgba(164,240,188,.25);color:#c8f0d8}
+.lp-wbtn.deposit:hover{background:rgba(164,240,188,.18);border-color:rgba(164,240,188,.4)}
+
+/* Deposit modal */
+.lp-dep-bd{position:fixed;inset:0;background:rgba(0,0,0,.72);backdrop-filter:blur(6px);
+  display:flex;align-items:center;justify-content:center;z-index:9999;padding:1rem}
+.lp-dep{width:100%;max-width:380px;background:#15171a;border:1px solid rgba(255,255,255,.1);
+  border-radius:16px;padding:1.4rem;display:flex;flex-direction:column;gap:1rem;
+  box-shadow:0 24px 60px rgba(0,0,0,.5)}
+.lp-dep-head{display:flex;align-items:flex-start;justify-content:space-between;gap:.5rem}
+.lp-dep-title{font-size:1rem;font-weight:600;color:#fff;margin:0}
+.lp-dep-sub{font-size:.72rem;color:rgba(255,255,255,.42);margin:.2rem 0 0;line-height:1.45}
+.lp-dep-x{background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);
+  color:rgba(255,255,255,.65);width:28px;height:28px;border-radius:7px;cursor:pointer;
+  font-size:1rem;line-height:1;flex-shrink:0;display:flex;align-items:center;justify-content:center}
+.lp-dep-x:hover{background:rgba(255,255,255,.12);color:#fff}
+.lp-dep-qr{align-self:center;background:#fff;padding:.75rem;border-radius:12px;line-height:0;
+  width:244px;height:244px;display:flex;align-items:center;justify-content:center}
+.lp-dep-qr canvas{display:block;border-radius:4px}
+.lp-dep-qr-load{width:24px;height:24px;border:3px solid rgba(0,0,0,.12);border-top-color:rgba(0,0,0,.45);
+  border-radius:50%;animation:lp-spin .8s linear infinite}
+.lp-dep-qr-err{font-size:.72rem;color:#a33;text-align:center;padding:1rem}
+.lp-dep-net{align-self:center;font-size:.68rem;color:rgba(164,240,188,.7);
+  background:rgba(164,240,188,.08);border:1px solid rgba(164,240,188,.2);
+  padding:.22rem .55rem;border-radius:999px;letter-spacing:.04em}
+.lp-dep-addr{display:flex;align-items:center;gap:.5rem;padding:.6rem .75rem;
+  background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:9px;
+  cursor:pointer;transition:border-color .15s}
+.lp-dep-addr:hover{border-color:rgba(255,255,255,.18)}
+.lp-dep-addr code{flex:1;min-width:0;font-family:ui-monospace,monospace;font-size:.72rem;
+  color:rgba(255,255,255,.75);word-break:break-all;line-height:1.4}
+.lp-dep-addr-copy{flex-shrink:0;font-size:.7rem;color:rgba(164,240,188,.75);font-weight:500}
+.lp-dep-note{font-size:.7rem;color:rgba(255,255,255,.35);line-height:1.5;text-align:center;
+  padding:.4rem 0;border-top:1px solid rgba(255,255,255,.05)}
+.lp-dep-warn{font-size:.68rem;color:rgba(246,200,100,.85);background:rgba(246,200,100,.06);
+  border:1px solid rgba(246,200,100,.18);padding:.5rem .65rem;border-radius:8px;line-height:1.5}
 
 /* Launch button */
 .lp-launch{width:100%;padding:.8rem 1rem;border-radius:10px;cursor:pointer;
@@ -270,8 +335,19 @@ export function mountLaunchPanel(container, { getAvatar, getUser, getPreviewView
 		imageFile: null, imagePreviewUrl: null,
 		_symbolEdited: false,
 
-		// wallet
+		// wallet source: 'connected' (Phantom/Backpack) or 'agent' (custodial agent wallet)
+		walletSource: 'connected',
+
+		// connected wallet
 		walletAddr: null, solBalance: null,
+		// link status: null=unknown/checking, true=linked, false=not linked
+		walletLinked: null, walletLinkChecking: false, walletLinking: false, walletLinkError: '',
+
+		// agent wallet (resolved/provisioned when source switches to 'agent')
+		agentWallet: null,         // { agent_id, address, sol, lamports } | null
+		agentWalletLoading: false,
+		agentWalletError: '',
+		_agentBalanceTimer: null,
 
 		// existing token (checked on avatar change)
 		checkingMint: false,
@@ -299,6 +375,7 @@ export function mountLaunchPanel(container, { getAvatar, getUser, getPreviewView
 
 	function cleanup() {
 		if (_balanceInterval) { clearInterval(_balanceInterval); _balanceInterval = null; }
+		if (s._agentBalanceTimer) { clearInterval(s._agentBalanceTimer); s._agentBalanceTimer = null; }
 		for (const { wallet, event, fn } of _walletListeners) {
 			try { wallet.off?.(event, fn); } catch { /* ignore */ }
 		}
@@ -337,8 +414,10 @@ export function mountLaunchPanel(container, { getAvatar, getUser, getPreviewView
 			if (addr === s.walletAddr) return;
 			s.walletAddr = addr;
 			s.solBalance = null;
+			s.walletLinked = null; s.walletLinkError = '';
 			render();
 			fetchBalance(addr);
+			checkWalletLinked(addr);
 		};
 
 		const onDisconnect = () => disconnectWallet();
@@ -357,9 +436,11 @@ export function mountLaunchPanel(container, { getAvatar, getUser, getPreviewView
 		const addr = w.publicKey.toBase58?.() || w.publicKey.toString?.();
 		if (!addr || addr === s.walletAddr) return;
 		s.walletAddr = addr;
+		s.walletLinked = null; s.walletLinkError = '';
 		render();
 		subscribeWalletEvents(w);
 		startBalancePoll(addr);
+		checkWalletLinked(addr);
 	}
 
 	async function connectWallet() {
@@ -370,16 +451,62 @@ export function mountLaunchPanel(container, { getAvatar, getUser, getPreviewView
 			const addr = w.publicKey?.toBase58?.() || w.publicKey?.toString?.();
 			if (!addr) return;
 			s.walletAddr = addr;
+			s.walletLinked = null; s.walletLinkError = '';
 			render();
 			subscribeWalletEvents(w);
 			startBalancePoll(addr);
+			checkWalletLinked(addr);
 		} catch { /* user dismissed */ }
 	}
 
 	function disconnectWallet() {
 		s.walletAddr = null; s.solBalance = null;
+		s.walletLinked = null; s.walletLinkChecking = false;
+		s.walletLinking = false; s.walletLinkError = '';
 		if (_balanceInterval) { clearInterval(_balanceInterval); _balanceInterval = null; }
 		render();
+	}
+
+	// Check whether the connected wallet is already linked to the signed-in
+	// account. Returns silently on auth failure — the launch flow surfaces
+	// "sign in to launch" separately.
+	async function checkWalletLinked(addr) {
+		if (!addr) return;
+		s.walletLinkChecking = true;
+		s.walletLinkError = '';
+		render();
+		try {
+			const r = await fetch('/api/auth/wallets', { credentials: 'include' });
+			if (r.status === 401) { s.walletLinked = null; return; }
+			const data = await r.json();
+			const linked = Array.isArray(data.wallets)
+				&& data.wallets.some((w) => w.address === addr && w.chain_type === 'solana');
+			s.walletLinked = linked;
+		} catch {
+			s.walletLinked = null;
+		} finally {
+			s.walletLinkChecking = false;
+			render();
+		}
+	}
+
+	// Run the SIWS link ceremony for the connected wallet. Triggered by the
+	// explicit "Link wallet" button so the user understands the prompt.
+	async function linkConnectedWallet() {
+		const provider = detectWallet();
+		const addr = s.walletAddr;
+		if (!provider || !addr || s.walletLinking) return;
+		s.walletLinking = true; s.walletLinkError = '';
+		render();
+		try {
+			await linkSolanaWallet(provider, addr);
+			s.walletLinked = true;
+		} catch (e) {
+			s.walletLinkError = friendlyError(e.message || String(e));
+		} finally {
+			s.walletLinking = false;
+			render();
+		}
 	}
 
 	async function fetchBalance(addr) {
@@ -395,6 +522,228 @@ export function mountLaunchPanel(container, { getAvatar, getUser, getPreviewView
 		if (_balanceInterval) clearInterval(_balanceInterval);
 		fetchBalance(addr);
 		_balanceInterval = setInterval(() => { if (s.walletAddr) fetchBalance(s.walletAddr); }, 30_000);
+	}
+
+	async function copyAddressToClipboard(btn) {
+		if (!s.walletAddr) return;
+		try { await navigator.clipboard.writeText(s.walletAddr); } catch { return; }
+		if (!btn) return;
+		const orig = btn.textContent;
+		btn.textContent = '✓ Copied full address';
+		setTimeout(() => { btn.textContent = orig; }, 1600);
+	}
+
+	async function openDepositModal() {
+		if (!s.walletAddr) return;
+		const addr = s.walletAddr;
+		// Solana Pay URI — mobile wallets (Phantom, Solflare, Backpack) recognize this
+		// scheme and pre-fill a transfer screen. Plain addresses also work as a fallback.
+		const payUri = `solana:${addr}?label=${encodeURIComponent('three.ws launch wallet')}`;
+
+		const prevActive = document.activeElement;
+		const prevOverflow = document.body.style.overflow;
+		document.body.style.overflow = 'hidden';
+
+		const bd = document.createElement('div');
+		bd.className = 'lp-dep-bd';
+		bd.innerHTML = `<div class="lp-dep" role="dialog" aria-modal="true" aria-labelledby="lp-dep-title">
+			<div class="lp-dep-head">
+				<div>
+					<p class="lp-dep-title" id="lp-dep-title">Deposit SOL</p>
+					<p class="lp-dep-sub">Send SOL to this wallet to fund your token launch.</p>
+				</div>
+				<button class="lp-dep-x" id="lp-dep-close" aria-label="Close">✕</button>
+			</div>
+			<span class="lp-dep-net">SOLANA · MAINNET</span>
+			<div class="lp-dep-qr" id="lp-dep-qr"><div class="lp-dep-qr-load" aria-label="Loading QR code"></div></div>
+			<div class="lp-dep-addr" id="lp-dep-addr" role="button" tabindex="0" aria-label="Copy wallet address">
+				<code>${esc(addr)}</code>
+				<span class="lp-dep-addr-copy" id="lp-dep-addr-label">Copy</span>
+			</div>
+			<div class="lp-dep-warn">Only send SOL on Solana mainnet. Other networks or tokens will be lost.</div>
+			<div class="lp-dep-note">Balance refreshes automatically once the deposit confirms on-chain.</div>
+		</div>`;
+		document.body.appendChild(bd);
+
+		let closed = false;
+		const close = () => {
+			if (closed) return;
+			closed = true;
+			bd.remove();
+			document.removeEventListener('keydown', onKey);
+			document.body.style.overflow = prevOverflow;
+			if (prevActive && typeof prevActive.focus === 'function') prevActive.focus();
+		};
+		const onKey = (e) => { if (e.key === 'Escape') close(); };
+		document.addEventListener('keydown', onKey);
+		bd.addEventListener('click', (e) => { if (e.target === bd) close(); });
+		bd.querySelector('#lp-dep-close').addEventListener('click', close);
+
+		const copyAddr = async () => {
+			try { await navigator.clipboard.writeText(addr); }
+			catch {
+				const label = bd.querySelector('#lp-dep-addr-label');
+				if (label) { label.textContent = 'Copy failed'; setTimeout(() => { label.textContent = 'Copy'; }, 1800); }
+				return;
+			}
+			const label = bd.querySelector('#lp-dep-addr-label');
+			if (!label) return;
+			label.textContent = '✓ Copied';
+			setTimeout(() => { if (!closed) label.textContent = 'Copy'; }, 1800);
+		};
+		const addrEl = bd.querySelector('#lp-dep-addr');
+		addrEl.addEventListener('click', copyAddr);
+		addrEl.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); copyAddr(); } });
+
+		bd.querySelector('#lp-dep-close').focus();
+
+		try {
+			const mod = await import('https://esm.sh/qrcode@1.5.3');
+			if (closed) return;
+			const QRCode = mod.default ?? mod;
+			const canvas = document.createElement('canvas');
+			await QRCode.toCanvas(canvas, payUri, {
+				width: 220,
+				margin: 1,
+				errorCorrectionLevel: 'M',
+				color: { dark: '#0a0c0e', light: '#ffffff' },
+			});
+			if (closed) return;
+			const slot = bd.querySelector('#lp-dep-qr');
+			if (slot) { slot.innerHTML = ''; slot.appendChild(canvas); }
+		} catch {
+			if (closed) return;
+			const slot = bd.querySelector('#lp-dep-qr');
+			if (slot) slot.innerHTML = `<div class="lp-dep-qr-err">QR unavailable —<br>copy address below</div>`;
+		}
+	}
+
+	// ── Agent wallet (custodial) ───────────────────────────────────────────
+
+	async function loadAgentWallet() {
+		if (!av || av.id === DEMO_ID) return;
+		s.agentWalletLoading = true;
+		s.agentWalletError = '';
+		render();
+		try {
+			const body = av.agent_id ? { agent_id: av.agent_id } : { avatar_id: av.id };
+			const r = await fetch('/api/pump/agent-wallet', {
+				method: 'POST', credentials: 'include',
+				headers: { 'content-type': 'application/json' },
+				body: JSON.stringify({ ...body, network: 'mainnet' }),
+			});
+			const data = await r.json();
+			if (!r.ok) throw new Error(data.error_description || data.error || `HTTP ${r.status}`);
+			s.agentWallet = {
+				agent_id: data.agent_id,
+				address: data.address,
+				lamports: data.lamports,
+				sol: data.sol,
+			};
+		} catch (e) {
+			s.agentWalletError = e.message || String(e);
+			s.agentWallet = null;
+		}
+		s.agentWalletLoading = false;
+		render();
+		startAgentBalancePoll();
+	}
+
+	async function refreshAgentBalance() {
+		if (!s.agentWallet?.address) return;
+		try {
+			const { Connection, PublicKey } = await import('https://esm.sh/@solana/web3.js@1.98.4');
+			const conn = new Connection(RPC_URL, 'confirmed');
+			const lamports = await conn.getBalance(new PublicKey(s.agentWallet.address));
+			s.agentWallet = { ...s.agentWallet, lamports, sol: lamports / 1e9 };
+			render();
+		} catch { /* ignore */ }
+	}
+
+	function startAgentBalancePoll() {
+		if (s._agentBalanceTimer) clearInterval(s._agentBalanceTimer);
+		s._agentBalanceTimer = setInterval(refreshAgentBalance, 30_000);
+	}
+
+	function stopAgentBalancePoll() {
+		if (s._agentBalanceTimer) { clearInterval(s._agentBalanceTimer); s._agentBalanceTimer = null; }
+	}
+
+	async function copyAgentAddress(btn) {
+		if (!s.agentWallet?.address) return;
+		try { await navigator.clipboard.writeText(s.agentWallet.address); } catch { return; }
+		if (!btn) return;
+		const orig = btn.textContent;
+		btn.textContent = '✓ Copied';
+		setTimeout(() => { btn.textContent = orig; }, 1600);
+	}
+
+	async function openAgentDepositModal() {
+		const addr = s.agentWallet?.address;
+		if (!addr) return;
+		const bd = document.createElement('div');
+		bd.className = 'lp-dep-bd';
+		bd.innerHTML = `<div class="lp-dep" role="dialog" aria-label="Fund agent wallet">
+			<div class="lp-dep-head">
+				<div>
+					<p class="lp-dep-title">Fund agent wallet</p>
+					<p class="lp-dep-sub">Send SOL to your agent's custodial wallet. The agent signs and pays for its own launch.</p>
+				</div>
+				<button class="lp-dep-x" id="lp-dep-close" aria-label="Close">✕</button>
+			</div>
+			<span class="lp-dep-net">SOLANA · MAINNET</span>
+			<div class="lp-dep-qr" id="lp-dep-qr"></div>
+			<div class="lp-dep-addr" id="lp-dep-addr" role="button" tabindex="0" title="Click to copy">
+				<code>${esc(addr)}</code>
+				<span class="lp-dep-addr-copy" id="lp-dep-addr-label">Copy</span>
+			</div>
+			<div class="lp-dep-warn">This wallet is custodial — keys are encrypted on three.ws servers. Only send SOL on Solana mainnet.</div>
+			<div class="lp-dep-note">Balance refreshes every 30 seconds after deposit confirms.</div>
+		</div>`;
+		document.body.appendChild(bd);
+
+		const close = () => { bd.remove(); document.removeEventListener('keydown', onKey); };
+		const onKey = (e) => { if (e.key === 'Escape') close(); };
+		document.addEventListener('keydown', onKey);
+		bd.addEventListener('click', (e) => { if (e.target === bd) close(); });
+		bd.querySelector('#lp-dep-close').addEventListener('click', close);
+
+		const copyAddr = async () => {
+			try { await navigator.clipboard.writeText(addr); } catch { return; }
+			const label = bd.querySelector('#lp-dep-addr-label');
+			if (!label) return;
+			const orig = label.textContent;
+			label.textContent = '✓ Copied';
+			setTimeout(() => { label.textContent = orig; }, 1600);
+		};
+		const addrEl = bd.querySelector('#lp-dep-addr');
+		addrEl.addEventListener('click', copyAddr);
+		addrEl.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); copyAddr(); } });
+
+		try {
+			const mod = await import('https://esm.sh/qrcode@1.5.3');
+			const QRCode = mod.default ?? mod;
+			const canvas = document.createElement('canvas');
+			await QRCode.toCanvas(canvas, addr, { width: 220, margin: 1, color: { dark: '#0a0c0e', light: '#ffffff' } });
+			const slot = bd.querySelector('#lp-dep-qr');
+			if (slot) { slot.innerHTML = ''; slot.appendChild(canvas); }
+		} catch {
+			const slot = bd.querySelector('#lp-dep-qr');
+			if (slot) slot.innerHTML = `<div style="padding:1rem;font-size:.72rem;color:#666">QR unavailable — copy address below</div>`;
+		}
+	}
+
+	function switchSource(next) {
+		if (next === s.walletSource) return;
+		s.walletSource = next;
+		s.errorMsg = '';
+		if (next === 'agent') {
+			if (!s.agentWallet && !s.agentWalletLoading) loadAgentWallet();
+			else render();
+		} else {
+			stopAgentBalancePoll();
+			render();
+		}
 	}
 
 	// ── Image handling ─────────────────────────────────────────────────────
@@ -471,12 +820,14 @@ export function mountLaunchPanel(container, { getAvatar, getUser, getPreviewView
 	// ── Launch ─────────────────────────────────────────────────────────────
 
 	async function launch() {
-		if (!formValid() || !s.walletAddr || s.phase !== 'idle') return;
+		if (!formValid() || s.phase !== 'idle') return;
 		if (!av || av.id === DEMO_ID) return;
+		if (s.walletSource === 'connected' && !s.walletAddr) return;
+		if (s.walletSource === 'agent' && !s.agentWallet?.address) return;
 		s.errorMsg = '';
 
 		try {
-			// 1 ── Build / reuse metadata
+			// 1 ── Build / reuse metadata (shared)
 			s.phase = 'building'; s.phaseLabel = 'Uploading metadata…'; render();
 
 			const nameTrim = s.name.trim(), symTrim = s.symbol.trim(), descTrim = s.description.trim();
@@ -500,67 +851,131 @@ export function mountLaunchPanel(container, { getAvatar, getUser, getPreviewView
 				s._metaUrl = md.metadata_url; s._metaKey = metaKey;
 			}
 
-			// 2 ── Prep transaction
-			s.phase = 'signing'; s.phaseLabel = 'Sign in your wallet…'; render();
-
-			const w = detectWallet();
-			if (!w) throw new Error('No Solana wallet detected. Install Phantom or Backpack.');
-			if (!w.isConnected) await w.connect?.();
-			const payer = w.publicKey?.toBase58?.() || w.publicKey?.toString?.();
-			if (!payer) throw new Error('Could not read wallet public key.');
-
-			const pr = await fetch('/api/pump/launch-prep', {
-				method: 'POST', credentials: 'include',
-				headers: { 'content-type': 'application/json' },
-				body: JSON.stringify({
-					...(av.agent_id ? { agent_id: av.agent_id } : { avatar_id: av.id }),
-					wallet_address: payer,
-					name: nameTrim, symbol: symTrim, uri: s._metaUrl,
-					buyback_bps: s.buybackBps,
-					sol_buy_in: Math.max(0, parseFloat(s.initialBuy) || 0),
-					network: 'mainnet',
-				}),
-			});
-			const prep = await pr.json();
-			if (prep.error) throw new Error(prep.error_description || prep.error);
-			s.resolvedAgentId = prep.agent_id;
-
-			// 3 ── Sign
-			const { VersionedTransaction, Keypair, Connection } =
-				await import('https://esm.sh/@solana/web3.js@1.98.4');
-			const tx = VersionedTransaction.deserialize(
-				Uint8Array.from(atob(prep.tx_base64), (c) => c.charCodeAt(0)),
-			);
-			if (prep.mint_secret_key_b64) {
-				tx.sign([Keypair.fromSecretKey(
-					Uint8Array.from(atob(prep.mint_secret_key_b64), (c) => c.charCodeAt(0)),
-				)]);
+			if (s.walletSource === 'agent') {
+				await launchViaAgentWallet(nameTrim, symTrim);
+			} else {
+				await launchViaConnectedWallet(nameTrim, symTrim);
 			}
-			const signed = await w.signTransaction(tx);
-
-			// 4 ── Send + poll confirmation (75s timeout)
-			s.phase = 'confirming'; s.phaseLabel = 'Confirming on-chain…'; render();
-
-			const conn = new Connection(RPC_URL, 'confirmed');
-			const sig  = await conn.sendRawTransaction(signed.serialize(), { skipPreflight: false });
-
-			try {
-				await pollConfirmation(conn, sig);
-			} catch (confErr) {
-				if (confErr.code === 'CONFIRM_TIMEOUT') {
-					s.phase = 'confirm-timeout';
-					s.pendingConfirm = { prepId: prep.prep_id, sig, network: 'mainnet' };
-					render(); return;
-				}
-				throw confErr;
-			}
-
-			await finalizeConfirm(prep.prep_id, sig);
-
 		} catch (e) {
 			s.errorMsg = friendlyError(e.message || String(e));
 			s.phase = 'error'; render();
 		}
+	}
+
+	// Issue a SIWS "link wallet" prompt and POST it to /api/auth/wallets/link-solana.
+	// Idempotent on the server — safe to call when already linked.
+	async function linkSolanaWallet(provider, address) {
+		const nonceRes = await fetch('/api/auth/wallets/nonce-solana', {
+			method: 'POST', credentials: 'include',
+			headers: { 'content-type': 'application/json' },
+			body: JSON.stringify({ address, chainId: 'mainnet' }),
+		});
+		const nonceData = await nonceRes.json();
+		if (!nonceRes.ok) {
+			throw new Error(nonceData.error_description || nonceData.error || 'Could not start wallet link');
+		}
+
+		const msgBytes = new TextEncoder().encode(nonceData.message);
+		const { signature } = await provider.signMessage(msgBytes, 'utf8');
+		const sigBase64 = btoa(String.fromCharCode(...signature));
+
+		const linkRes = await fetch('/api/auth/wallets/link-solana', {
+			method: 'POST', credentials: 'include',
+			headers: { 'content-type': 'application/json' },
+			body: JSON.stringify({ message: nonceData.message, signature: sigBase64 }),
+		});
+		const linkData = await linkRes.json();
+		if (!linkRes.ok) {
+			throw new Error(linkData.error_description || linkData.error || 'Wallet link failed');
+		}
+	}
+
+	async function launchViaConnectedWallet(nameTrim, symTrim) {
+		// Prep transaction
+		s.phase = 'signing'; s.phaseLabel = 'Sign in your wallet…'; render();
+
+		const w = detectWallet();
+		if (!w) throw new Error('No Solana wallet detected. Install Phantom or Backpack.');
+		if (!w.isConnected) await w.connect?.();
+		const payer = w.publicKey?.toBase58?.() || w.publicKey?.toString?.();
+		if (!payer) throw new Error('Could not read wallet public key.');
+
+		const pr = await fetch('/api/pump/launch-prep', {
+			method: 'POST', credentials: 'include',
+			headers: { 'content-type': 'application/json' },
+			body: JSON.stringify({
+				...(av.agent_id ? { agent_id: av.agent_id } : { avatar_id: av.id }),
+				wallet_address: payer,
+				name: nameTrim, symbol: symTrim, uri: s._metaUrl,
+				buyback_bps: s.buybackBps,
+				sol_buy_in: Math.max(0, parseFloat(s.initialBuy) || 0),
+				network: 'mainnet',
+			}),
+		});
+		const prep = await pr.json();
+		if (prep.error) throw new Error(prep.error_description || prep.error);
+		s.resolvedAgentId = prep.agent_id;
+
+		const { VersionedTransaction, Keypair, Connection } =
+			await import('https://esm.sh/@solana/web3.js@1.98.4');
+		const tx = VersionedTransaction.deserialize(
+			Uint8Array.from(atob(prep.tx_base64), (c) => c.charCodeAt(0)),
+		);
+		if (prep.mint_secret_key_b64) {
+			tx.sign([Keypair.fromSecretKey(
+				Uint8Array.from(atob(prep.mint_secret_key_b64), (c) => c.charCodeAt(0)),
+			)]);
+		}
+		const signed = await w.signTransaction(tx);
+
+		// Send + poll confirmation (75s timeout)
+		s.phase = 'confirming'; s.phaseLabel = 'Confirming on-chain…'; render();
+
+		const conn = new Connection(RPC_URL, 'confirmed');
+		const sig  = await conn.sendRawTransaction(signed.serialize(), { skipPreflight: false });
+
+		try {
+			await pollConfirmation(conn, sig);
+		} catch (confErr) {
+			if (confErr.code === 'CONFIRM_TIMEOUT') {
+				s.phase = 'confirm-timeout';
+				s.pendingConfirm = { prepId: prep.prep_id, sig, network: 'mainnet' };
+				render(); return;
+			}
+			throw confErr;
+		}
+
+		await finalizeConfirm(prep.prep_id, sig);
+	}
+
+	async function launchViaAgentWallet(nameTrim, symTrim) {
+		s.phase = 'signing'; s.phaseLabel = 'Agent wallet signing…'; render();
+
+		const body = {
+			...(av.agent_id ? { agent_id: av.agent_id } : { avatar_id: av.id }),
+			name: nameTrim, symbol: symTrim, uri: s._metaUrl,
+			buyback_bps: s.buybackBps,
+			sol_buy_in: Math.max(0, parseFloat(s.initialBuy) || 0),
+			network: 'mainnet',
+		};
+		s.phase = 'confirming'; s.phaseLabel = 'Launching on-chain (may take ~10s)…'; render();
+
+		const r = await fetch('/api/pump/launch-agent', {
+			method: 'POST', credentials: 'include',
+			headers: { 'content-type': 'application/json' },
+			body: JSON.stringify(body),
+		});
+		const data = await r.json();
+		if (!r.ok || data.error) {
+			throw new Error(data.error_description || data.error || `Launch failed (${r.status})`);
+		}
+
+		s.resolvedAgentId = data.agent_id;
+		s.mint = data.mint;
+		s.phase = 'success';
+		// Refresh agent balance so the UI reflects the launch spend.
+		refreshAgentBalance();
+		render();
 	}
 
 	// Called after confirmed on-chain (normal path or escape-hatch path)
@@ -714,53 +1129,150 @@ export function mountLaunchPanel(container, { getAvatar, getUser, getPreviewView
 		});
 	}
 
-	function renderForm() {
-		const busy = s.phase !== 'idle' && s.phase !== 'error';
-		const dis  = busy ? 'disabled' : '';
-		const w    = detectWallet();
-		const cost = estimatedCost();
+	// One-time SIWS link prompt UI for the connected Solana wallet. Only renders
+	// when the wallet is connected and we know it's not yet linked.
+	function renderLinkRow() {
+		if (!s.walletAddr || s.walletLinked === true) return '';
 
-		let walletHtml;
+		if (s.walletLinkChecking) {
+			return `<div class="lp-link-row checking">
+				<div class="lp-link-info">
+					<span class="lp-link-title">Checking wallet…</span>
+					<span class="lp-link-sub">Verifying this wallet is linked to your account.</span>
+				</div>
+			</div>`;
+		}
+
+		if (s.walletLinked === false) {
+			const busy = s.walletLinking ? 'disabled' : '';
+			return `<div class="lp-link-row">
+				<div class="lp-link-info">
+					<span class="lp-link-title">Link this wallet to launch</span>
+					<span class="lp-link-sub">One-time signature — proves you own ${esc(shortenAddr(s.walletAddr))}. No transaction, no fee.</span>
+					${s.walletLinkError ? `<span class="lp-link-err">${esc(s.walletLinkError)}</span>` : ''}
+				</div>
+				<button class="lp-link-btn" id="lp-link-wallet" ${busy}>${s.walletLinking ? 'Sign in your wallet…' : 'Link wallet'}</button>
+			</div>`;
+		}
+		return '';
+	}
+
+	function renderConnectedWalletBar(cost) {
+		const w = detectWallet();
 		if (!w) {
-			walletHtml = `<div class="lp-wallet">
+			return `<div class="lp-wallet">
 				<div class="lp-dot off"></div>
 				<span class="lp-wallet-none">No Solana wallet found</span>
 				<button class="lp-wbtn" id="lp-install">Install Phantom ↗</button>
 			</div>`;
-		} else if (!s.walletAddr) {
-			walletHtml = `<div class="lp-wallet">
+		}
+		if (!s.walletAddr) {
+			return `<div class="lp-wallet">
 				<div class="lp-dot off"></div>
 				<span class="lp-wallet-none">Wallet not connected</span>
 				<button class="lp-wbtn" id="lp-connect">Connect</button>
 			</div>`;
-		} else {
-			const hasEnough = s.solBalance !== null && s.solBalance >= cost;
-			const cls       = s.solBalance === null ? 'dim' : hasEnough ? 'ok' : 'warn';
-			const costTxt   = s.solBalance === null
-				? `Est. cost ~${cost.toFixed(3)} SOL`
-				: hasEnough
-					? `~${cost.toFixed(3)} SOL required · ${s.solBalance.toFixed(3)} available ✓`
-					: `Need ~${cost.toFixed(3)} SOL · ${s.solBalance.toFixed(3)} in wallet`;
-			walletHtml = `<div class="lp-wallet">
-				<div class="lp-dot on"></div>
-				<div class="lp-wallet-info">
-					<span class="lp-wallet-addr">${shortenAddr(s.walletAddr)}</span>
-					${s.solBalance !== null ? `<span class="lp-wallet-bal">${s.solBalance.toFixed(3)} SOL</span>` : ''}
-					<span class="lp-wallet-cost ${cls}">${costTxt}</span>
-				</div>
-				<button class="lp-wbtn ghost" id="lp-disc" title="Disconnect">✕</button>
+		}
+		const hasEnough = s.solBalance !== null && s.solBalance >= cost;
+		const cls       = s.solBalance === null ? 'dim' : hasEnough ? 'ok' : 'warn';
+		const costTxt   = s.solBalance === null
+			? `Est. cost ~${cost.toFixed(3)} SOL`
+			: hasEnough
+				? `~${cost.toFixed(3)} SOL required · ${s.solBalance.toFixed(3)} available ✓`
+				: `Need ~${cost.toFixed(3)} SOL · ${s.solBalance.toFixed(3)} in wallet`;
+		return `<div class="lp-wallet">
+			<div class="lp-dot on"></div>
+			<div class="lp-wallet-info">
+				<button class="lp-wallet-addr" id="lp-addr-copy" title="Click to copy full address">${shortenAddr(s.walletAddr)}</button>
+				${s.solBalance !== null ? `<span class="lp-wallet-bal">${s.solBalance.toFixed(3)} SOL</span>` : ''}
+				<span class="lp-wallet-cost ${cls}">${costTxt}</span>
+			</div>
+			<button class="lp-wbtn deposit" id="lp-deposit" title="Show deposit address &amp; QR">Deposit</button>
+			<button class="lp-wbtn ghost" id="lp-disc" title="Disconnect">✕</button>
+		</div>`;
+	}
+
+	function renderAgentWalletBar(cost) {
+		if (s.agentWalletLoading) {
+			return `<div class="lp-wallet">
+				<div class="lp-spin"></div>
+				<span class="lp-wallet-none">Preparing agent wallet…</span>
 			</div>`;
+		}
+		if (s.agentWalletError) {
+			return `<div class="lp-wallet">
+				<div class="lp-dot off"></div>
+				<span class="lp-wallet-none">Agent wallet error: ${esc(s.agentWalletError)}</span>
+				<button class="lp-wbtn" id="lp-agent-retry">Retry</button>
+			</div>`;
+		}
+		if (!s.agentWallet?.address) {
+			return `<div class="lp-wallet">
+				<div class="lp-dot off"></div>
+				<span class="lp-wallet-none">Agent wallet not provisioned</span>
+				<button class="lp-wbtn" id="lp-agent-retry">Provision</button>
+			</div>`;
+		}
+		const bal = s.agentWallet.sol ?? null;
+		const hasEnough = bal !== null && bal >= cost;
+		const cls = bal === null ? 'dim' : hasEnough ? 'ok' : 'warn';
+		const costTxt = bal === null
+			? `Est. cost ~${cost.toFixed(3)} SOL`
+			: hasEnough
+				? `~${cost.toFixed(3)} SOL required · ${bal.toFixed(3)} available ✓`
+				: `Need ~${cost.toFixed(3)} SOL · ${bal.toFixed(3)} in agent wallet`;
+		return `<div class="lp-wallet">
+			<div class="lp-dot on"></div>
+			<div class="lp-wallet-info">
+				<button class="lp-wallet-addr" id="lp-agent-addr-copy" title="Click to copy full agent wallet address">${shortenAddr(s.agentWallet.address)}</button>
+				${bal !== null ? `<span class="lp-wallet-bal">${bal.toFixed(3)} SOL</span>` : ''}
+				<span class="lp-wallet-cost ${cls}">${costTxt}</span>
+			</div>
+			<button class="lp-wbtn deposit" id="lp-agent-deposit" title="Show agent wallet deposit address &amp; QR">Fund</button>
+		</div>`;
+	}
+
+	function renderForm() {
+		const busy = s.phase !== 'idle' && s.phase !== 'error';
+		const dis  = busy ? 'disabled' : '';
+		const cost = estimatedCost();
+
+		const sourceToggleHtml = `<div class="lp-src" role="tablist" aria-label="Launch wallet">
+			<button type="button" role="tab" data-src="connected" class="${s.walletSource === 'connected' ? 'on' : ''}" ${busy ? 'disabled' : ''}>
+				Connected wallet<span class="lp-src-sub">Phantom / Backpack</span>
+			</button>
+			<button type="button" role="tab" data-src="agent" class="${s.walletSource === 'agent' ? 'on' : ''}" ${busy ? 'disabled' : ''}>
+				Agent wallet<span class="lp-src-sub">Custodial · server-signed</span>
+			</button>
+		</div>`;
+
+		let walletHtml;
+		if (s.walletSource === 'agent') {
+			walletHtml = renderAgentWalletBar(cost);
+		} else {
+			walletHtml = renderConnectedWalletBar(cost) + renderLinkRow();
 		}
 
 		const signedIn = !!(getUser?.());
-		const loginHref = `/login?next=${encodeURIComponent(location.pathname + location.search)}`;
 
 		let btnText, btnDis;
-		if (busy)              { btnText = s.phaseLabel || 'Working…'; btnDis = true; }
-		else if (!signedIn)    { btnText = 'Sign in to launch'; btnDis = false; }
-		else if (!formValid()) { btnText = 'Fill in name, symbol &amp; description'; btnDis = true; }
-		else if (!s.walletAddr){ btnText = 'Connect wallet to launch'; btnDis = true; }
-		else                   { btnText = `Launch $${esc(s.symbol.trim() || 'TOKEN')}`; btnDis = false; }
+		if (busy) {
+			btnText = s.phaseLabel || 'Working…'; btnDis = true;
+		} else if (!signedIn) {
+			btnText = 'Sign in to launch'; btnDis = false;
+		} else if (!formValid()) {
+			btnText = 'Fill in name, symbol &amp; description'; btnDis = true;
+		} else if (s.walletSource === 'agent') {
+			if (s.agentWalletLoading)         { btnText = 'Preparing agent wallet…'; btnDis = true; }
+			else if (!s.agentWallet)          { btnText = 'Provision agent wallet'; btnDis = true; }
+			else if ((s.agentWallet.sol ?? 0) < cost) { btnText = `Fund agent wallet (~${cost.toFixed(3)} SOL)`; btnDis = true; }
+			else                              { btnText = `Launch $${esc(s.symbol.trim() || 'TOKEN')} from agent wallet`; btnDis = false; }
+		} else {
+			if (!s.walletAddr)                 { btnText = 'Connect wallet to launch'; btnDis = true; }
+			else if (s.walletLinkChecking)     { btnText = 'Checking wallet link…';     btnDis = true; }
+			else if (s.walletLinked === false) { btnText = 'Link wallet to launch';     btnDis = true; }
+			else                               { btnText = `Launch $${esc(s.symbol.trim() || 'TOKEN')}`; btnDis = false; }
+		}
 
 		const imgSrc = s.imagePreviewUrl || av?.thumbnail_url;
 
@@ -800,6 +1312,7 @@ export function mountLaunchPanel(container, { getAvatar, getUser, getPreviewView
 					<div class="lp-slider-hint">Of agent revenue burned back</div>
 				</div>
 			</div>
+			${sourceToggleHtml}
 			${walletHtml}
 			${s.phase === 'error' ? `<div class="lp-err">${esc(s.errorMsg)}<div class="lp-err-sub">Fix the issue above and try again.</div></div>` : ''}
 			<button class="lp-launch${busy ? ' busy' : ''}" id="lp-go" ${btnDis ? 'disabled' : ''}>${btnText}</button>
@@ -895,6 +1408,20 @@ export function mountLaunchPanel(container, { getAvatar, getUser, getPreviewView
 		q('#lp-install')?.addEventListener('click', () => window.open('https://phantom.app/', '_blank', 'noopener'));
 		q('#lp-connect')?.addEventListener('click', connectWallet);
 		q('#lp-disc')?.addEventListener('click', disconnectWallet);
+		q('#lp-addr-copy')?.addEventListener('click', (e) => copyAddressToClipboard(e.currentTarget));
+		q('#lp-deposit')?.addEventListener('click', openDepositModal);
+		q('#lp-link-wallet')?.addEventListener('click', linkConnectedWallet);
+
+		// Wallet-source toggle
+		container.querySelectorAll('.lp-src button[data-src]').forEach((btn) => {
+			btn.addEventListener('click', () => switchSource(btn.dataset.src));
+		});
+
+		// Agent-wallet bar
+		q('#lp-agent-retry')?.addEventListener('click', () => loadAgentWallet());
+		q('#lp-agent-deposit')?.addEventListener('click', openAgentDepositModal);
+		q('#lp-agent-addr-copy')?.addEventListener('click', (e) => copyAgentAddress(e.currentTarget));
+
 		q('#lp-go')?.addEventListener('click', () => {
 			if (!getUser?.()) {
 				location.href = `/login?next=${encodeURIComponent(location.pathname + location.search)}`;
@@ -911,10 +1438,17 @@ export function mountLaunchPanel(container, { getAvatar, getUser, getPreviewView
 		s.forceNew = false;
 		s._metaUrl = null; s._metaKey = null;
 
+		// Reset agent-wallet binding — it's per-avatar (each avatar maps to a different agent_identity).
+		stopAgentBalancePoll();
+		s.agentWallet = null;
+		s.agentWalletError = '';
+		s.agentWalletLoading = false;
+
 		if (av && av.id !== DEMO_ID) {
 			if (!s.name)           s.name        = av.name        || '';
 			if (!s._symbolEdited)  s.symbol      = toSymbol(s.name);
 			if (!s.description)    s.description = av.description || '';
+			if (s.walletSource === 'agent') loadAgentWallet();
 		}
 
 		checkExistingMint(av); // async — updates state and re-renders when done

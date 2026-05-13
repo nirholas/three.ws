@@ -213,7 +213,7 @@
 			"dest": "/dashboard/embed-policy.html"
 		},
 		{
-			"src": "/dashboard/(avatars|create|upload|animations|widgets|embed|keys|mcp|monetization|payments|subscriptions|billing|revenue|earnings|account)/?",
+			"src": "/dashboard/(agents|avatars|create|upload|animations|widgets|embed|keys|mcp|monetization|payments|subscriptions|billing|revenue|earnings|account)/?",
 			"dest": "/dashboard/index.html"
 		},
 		{
@@ -571,6 +571,14 @@
 		{
 			"src": "/api/pump/launch-confirm",
 			"dest": "/api/pump/[action]?action=launch-confirm"
+		},
+		{
+			"src": "/api/pump/launch-agent",
+			"dest": "/api/pump/[action]?action=launch-agent"
+		},
+		{
+			"src": "/api/pump/agent-wallet",
+			"dest": "/api/pump/[action]?action=agent-wallet"
 		},
 		{
 			"src": "/api/pump/accept-payment-prep",
@@ -970,11 +978,15 @@
 		},
 		{
 			"src": "/api/erc8004/hydrate",
-			"dest": "/api/erc8004/hydrate.js"
+			"dest": "/api/erc8004/[action]?action=hydrate"
 		},
 		{
 			"src": "/api/erc8004/import",
-			"dest": "/api/erc8004/import.js"
+			"dest": "/api/erc8004/[action]?action=import"
+		},
+		{
+			"src": "/api/erc8004/pin",
+			"dest": "/api/erc8004/[action]?action=pin"
 		},
 		{
 			"src": "/api/subscriptions/plans(/.*)?",
