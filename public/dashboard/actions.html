@@ -314,88 +314,137 @@
 
 			const params = new URLSearchParams(location.search);
 			const agentId = params.get('agent');
+
 			if (!agentId) {
-				showError('Missing ?agent= parameter.');
-				document.body.innerHTML = '';
-				document.body.appendChild(
-					Object.assign(document.createElement('div'), {
-						textContent: 'Missing ?agent= parameter. Expected: ?agent=<id>',
-						style: 'color:#f87171;padding:20px;',
-					}),
-				);
-			}
-
-			// Auth check
-			(async () => {
-				try {
-					const r = await fetch(`/api/agents/${agentId}/actions?limit=1`, {
-						credentials: 'include',
-					});
-					if (r.status === 401) {
-						window.location.href = `/login?next=/dashboard/actions.html?agent=${agentId}`;
-						return;
-					}
-					if (r.status === 403) {
-						showError('Not authorized to view this agent.');
-						document.body.removeAttribute('data-auth-pending');
-						return;
-					}
-					if (r.status === 404) {
-						showError('Agent not found.');
-						document.body.removeAttribute('data-auth-pending');
-						return;
-					}
-					if (!r.ok) {
-						showError(`Error ${r.status}`);
-						document.body.removeAttribute('data-auth-pending');
-						return;
-					}
-
-					document.body.removeAttribute('data-auth-pending');
-					const data = await r.json();
-					const { actions, nextCursor: nc } = data;
-
-					// Fetch agent info
-					const agentR = await fetch(`/api/agents/${agentId}`, {
-						credentials: 'include',
-					});
-					if (agentR.ok) {
-						const agentData = await agentR.json();
-						const agent = agentData.agent;
-						document.getElementById('agent-name').textContent = agent?.name || agentId;
-						document.getElementById('agent-id').textContent = `${agentId}${
-							agent?.wallet_address ? ` · ${agent.wallet_address.slice(0, 10)}…` : ''
-						}`;
-
-						if (agent?.wallet_address) {
-							const pill = document.getElementById('signer-pill');
-							pill.textContent = `Signed by ${agent.wallet_address.slice(0, 10)}…${agent.wallet_address.slice(
-								-8,
-							)}`;
-							pill.className = 'signer-pill verified';
-							pill.style.display = 'inline-block';
+				// No agent id in the URL (e.g. the dashboard sidebar "Action log"
+				// link). Resolve the user's default agent and redirect.
+				(async () => {
+					try {
+						const r = await fetch('/api/agents/me', { credentials: 'include' });
+						if (r.status === 401) {
+							window.location.href = '/login?next=' + encodeURIComponent('/dashboard/actions');
+							return;
 						}
+						if (!r.ok) {
+							document.body.removeAttribute('data-auth-pending');
+							showError(`Could not load your default agent (HTTP ${r.status}).`);
+							return;
+						}
+						const data = await r.json();
+						const id = data?.agent?.id;
+						if (!id) {
+							document.body.removeAttribute('data-auth-pending');
+							showError(
+								'No agent found on this account yet. Create one from the dashboard first.',
+							);
+							return;
+						}
+						window.location.replace(
+							`/dashboard/actions?agent=${encodeURIComponent(id)}`,
+						);
+					} catch (e) {
+						document.body.removeAttribute('data-auth-pending');
+						showError(`Could not resolve your default agent: ${e.message}`);
 					}
+				})();
+			} else {
+				// Auth check
+				(async () => {
+					try {
+						const r = await fetch(`/api/agents/${agentId}/actions?limit=1`, {
+							credentials: 'include',
+						});
+						if (r.status === 401) {
+							window.location.href = `/login?next=/dashboard/actions.html?agent=${agentId}`;
+							return;
+						}
+						if (r.status === 403) {
+							showError('Not authorized to view this agent.');
+							document.body.removeAttribute('data-auth-pending');
+							return;
+						}
+						if (r.status === 404) {
+							showError('Agent not found.');
+							document.body.removeAttribute('data-auth-pending');
+							return;
+						}
+						if (!r.ok) {
+							showError(`Error ${r.status}`);
+							document.body.removeAttribute('data-auth-pending');
+							return;
+						}
 
-					// Load initial page
-					nextCursor = nc;
-					await loadMore();
-				} catch (e) {
-					showError(`Fetch failed: ${e.message}`);
-				}
-			})();
+						document.body.removeAttribute('data-auth-pending');
+						const data = await r.json();
+						const { actions, nextCursor: nc } = data;
 
-			// IntersectionObserver for infinite scroll
-			const observer = new IntersectionObserver(
-				(entries) => {
-					if (entries[0].isIntersecting && !isLoading && hasMore) {
-						loadMore();
+						// Fetch agent info
+						const agentR = await fetch(`/api/agents/${agentId}`, {
+							credentials: 'include',
+						});
+						if (agentR.ok) {
+							const agentData = await agentR.json();
+							const agent = agentData.agent;
+							document.getElementById('agent-name').textContent = agent?.name || agentId;
+							document.getElementById('agent-id').textContent = `${agentId}${
+								agent?.wallet_address ? ` · ${agent.wallet_address.slice(0, 10)}…` : ''
+							}`;
+
+							if (agent?.wallet_address) {
+								const pill = document.getElementById('signer-pill');
+								pill.textContent = `Signed by ${agent.wallet_address.slice(0, 10)}…${agent.wallet_address.slice(
+									-8,
+								)}`;
+								pill.className = 'signer-pill verified';
+								pill.style.display = 'inline-block';
+							}
+						}
+
+						// Load initial page
+						nextCursor = nc;
+						await loadMore();
+					} catch (e) {
+						showError(`Fetch failed: ${e.message}`);
 					}
-				},
-				{ rootMargin: '200px' },
-			);
+				})();
 
-			observer.observe(document.getElementById('scroll-trigger'));
+				// IntersectionObserver for infinite scroll
+				const observer = new IntersectionObserver(
+					(entries) => {
+						if (entries[0].isIntersecting && !isLoading && hasMore) {
+							loadMore();
+						}
+					},
+					{ rootMargin: '200px' },
+				);
+
+				observer.observe(document.getElementById('scroll-trigger'));
+
+				// Filter changes
+				document.querySelectorAll('.filter-chip').forEach((btn) => {
+					btn.addEventListener('click', () => {
+						document
+							.querySelectorAll('.filter-chip')
+							.forEach((b) => b.classList.remove('active'));
+						btn.classList.add('active');
+						currentFilter = btn.dataset.filter;
+						render();
+					});
+				});
+
+				// Export
+				document.getElementById('export-btn').addEventListener('click', () => {
+					const filtered = getFiltered();
+					const json = JSON.stringify(filtered, null, 2);
+					const blob = new Blob([json], { type: 'application/json' });
+					const url = URL.createObjectURL(blob);
+					const a = document.createElement('a');
+					a.href = url;
+					a.download = `actions-${agentId}-${new Date().toISOString().split('T')[0]}.json`;
+					a.click();
+					URL.revokeObjectURL(url);
+				});
+			}
 
 			// Load more actions
 			async function loadMore() {
@@ -429,31 +478,6 @@
 					isLoading = false;
 				}
 			}
-
-			// Filter changes
-			document.querySelectorAll('.filter-chip').forEach((btn) => {
-				btn.addEventListener('click', () => {
-					document
-						.querySelectorAll('.filter-chip')
-						.forEach((b) => b.classList.remove('active'));
-					btn.classList.add('active');
-					currentFilter = btn.dataset.filter;
-					render();
-				});
-			});
-
-			// Export
-			document.getElementById('export-btn').addEventListener('click', () => {
-				const filtered = getFiltered();
-				const json = JSON.stringify(filtered, null, 2);
-				const blob = new Blob([json], { type: 'application/json' });
-				const url = URL.createObjectURL(blob);
-				const a = document.createElement('a');
-				a.href = url;
-				a.download = `actions-${agentId}-${new Date().toISOString().split('T')[0]}.json`;
-				a.click();
-				URL.revokeObjectURL(url);
-			});
 
 			function getFiltered() {
 				if (currentFilter === 'all') return allActions;

@@ -1,5 +1,21 @@
 /* ── Shared nav styles for .home-nav (used wherever nav.js is loaded) ── */
 
+.site-header-brand .wordmark-logo {
+	width: 28px;
+	height: 28px;
+	display: inline-block;
+	vertical-align: middle;
+}
+
+.site-header-brand .wordmark-dot {
+	width: 8px;
+	height: 8px;
+	border-radius: 50%;
+	background: linear-gradient(135deg, #a78bfa 0%, #6366f1 100%);
+	box-shadow: 0 0 10px rgba(139, 92, 246, 0.6);
+	display: inline-block;
+}
+
 .home-nav {
 	margin-left: auto;
 	display: flex;

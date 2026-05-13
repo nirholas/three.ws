@@ -4,10 +4,23 @@
 		<meta charset="utf-8" />
 		<meta name="viewport" content="width=device-width,initial-scale=1" />
 		<title>Agent Memory · three.ws</title>
+		<link rel="icon" href="/favicon.ico" />
+		<link rel="stylesheet" href="/nav.css" />
+		<link rel="stylesheet" href="/fonts/fonts.css" />
 		<link rel="stylesheet" href="/dashboard/_dash-shell.css" />
+		<style>
+			.skip-link { position: absolute; left: -9999px; }
+			.skip-link:focus { left: 1rem; top: 1rem; padding: .5rem 1rem; background: #0c0c0c; border: 1px solid rgba(255,255,255,0.1); border-radius: 6px; z-index: 9999; color: #fff; text-decoration: none; }
+		</style>
 	</head>
 	<body>
-		<div class="dash-shell">
+		<a href="#main-content" class="skip-link">Skip to main content</a>
+		<header>
+			<div id="nav-container"></div>
+		</header>
+		<script src="/nav.js"></script>
+
+		<main id="main-content" class="dash-shell">
 			<a class="dash-back" href="/dashboard/agents">← Back to dashboard</a>
 			<h1 class="dash-title">Agent Memory</h1>
 			<p class="dash-sub">
@@ -18,7 +31,7 @@
 			<div id="picker"></div>
 			<div id="status"></div>
 			<div id="content"></div>
-		</div>
+		</main>
 
 		<script type="module">
 			import { mountAgentPicker } from '/dashboard/_agent-picker.js';
@@ -200,5 +213,8 @@
 				onPick: (agentId) => refresh(agentId),
 			});
 		</script>
+
+		<div id="footer-container"></div>
+		<script src="/footer.js" defer></script>
 	</body>
 </html>

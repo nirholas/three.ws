@@ -1,59 +1,891 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>3D-Agent · Pump.fun Visualizer</title>
-    <meta name="description" content="A real-time 3D visualization of trending tokens on Pump.fun.">
-    <link rel="stylesheet" href="/style.css">
-    <style>
-        body { margin: 0; overflow: hidden; }
-        canvas { display: block; }
-    </style>
-		<link rel="stylesheet" href="/nav.css" />
-			<link rel="stylesheet" href="/footer.css" />
-			<script defer src="/footer-newsletter.js"></script>
-	</head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>3D-Agent · Pump.fun Visualizer</title>
+	<meta name="description" content="A real-time 3D visualization of trending tokens on Pump.fun. Each sphere is a live coin, sized by market cap.">
+	<link rel="canonical" href="/pump-visualizer">
+	<link rel="stylesheet" href="/style.css">
+	<link rel="stylesheet" href="/nav.css" />
+	<link rel="stylesheet" href="/footer.css" />
+	<script defer src="/footer-newsletter.js"></script>
+	<style>
+		:root {
+			--vz-bg: #05060a;
+			--vz-panel: rgba(12, 14, 22, 0.88);
+			--vz-border: rgba(139, 92, 246, 0.35);
+			--vz-text: #e6e7ee;
+			--vz-muted: #8a8fa6;
+			--vz-accent: #8b5cf6;
+			--vz-green: #34d399;
+			--vz-red: #f87171;
+		}
+		html, body { background: var(--vz-bg); color: var(--vz-text); overflow: hidden; height: 100%; }
+		body { margin: 0; }
+		.site-header { position: relative; z-index: 20; background: rgba(5, 6, 10, 0.85); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); }
+
+		#vz-stage {
+			position: fixed;
+			inset: 0;
+			z-index: 0;
+		}
+		#vz-canvas-host {
+			position: absolute;
+			inset: 0;
+		}
+		#vz-canvas-host canvas {
+			display: block;
+			width: 100% !important;
+			height: 100% !important;
+			cursor: grab;
+		}
+		#vz-canvas-host canvas:active { cursor: grabbing; }
+		#vz-canvas-host.is-pointing canvas { cursor: pointer; }
+
+		.vz-overlay {
+			position: absolute;
+			pointer-events: none;
+			z-index: 10;
+		}
+		.vz-overlay > * { pointer-events: auto; }
+
+		/* ── Top status bar ───────────────────────────── */
+		.vz-status {
+			top: calc(var(--header-h, 3.5rem) + 12px);
+			left: 16px;
+			display: flex;
+			align-items: center;
+			gap: 10px;
+			background: var(--vz-panel);
+			border: 1px solid var(--vz-border);
+			border-radius: 10px;
+			padding: 8px 14px;
+			font-family: var(--font-mono);
+			font-size: 12px;
+			letter-spacing: 0.04em;
+			color: var(--vz-text);
+		}
+		.vz-status .dot {
+			width: 8px; height: 8px; border-radius: 50%;
+			background: #555; box-shadow: 0 0 8px rgba(0,0,0,0.4);
+		}
+		.vz-status[data-state="loading"] .dot { background: #f59e0b; animation: vzPulse 1.2s ease-in-out infinite; }
+		.vz-status[data-state="ready"] .dot { background: var(--vz-green); box-shadow: 0 0 10px rgba(52, 211, 153, 0.7); }
+		.vz-status[data-state="error"] .dot { background: var(--vz-red); }
+		@keyframes vzPulse {
+			0%, 100% { opacity: 0.4; }
+			50% { opacity: 1; }
+		}
+		.vz-status button {
+			background: transparent;
+			border: 1px solid var(--vz-border);
+			color: var(--vz-text);
+			border-radius: 6px;
+			padding: 4px 10px;
+			font: inherit;
+			cursor: pointer;
+			margin-left: 4px;
+		}
+		.vz-status button:hover { background: var(--accent-soft); }
+		.vz-status button:disabled { opacity: 0.5; cursor: not-allowed; }
+
+		/* ── Help / hint ──────────────────────────────── */
+		.vz-hint {
+			top: calc(var(--header-h, 3.5rem) + 12px);
+			right: 16px;
+			background: var(--vz-panel);
+			border: 1px solid rgba(255, 255, 255, 0.08);
+			border-radius: 10px;
+			padding: 8px 12px;
+			font-family: var(--font-mono);
+			font-size: 11px;
+			color: var(--vz-muted);
+			max-width: 240px;
+			line-height: 1.6;
+		}
+		.vz-hint b { color: var(--vz-text); font-weight: 600; }
+
+		/* ── Hover tooltip (follows cursor) ───────────── */
+		.vz-tooltip {
+			position: fixed;
+			z-index: 15;
+			pointer-events: none;
+			background: rgba(5, 6, 10, 0.95);
+			border: 1px solid var(--vz-border);
+			border-radius: 8px;
+			padding: 8px 12px;
+			font-family: var(--font-mono);
+			font-size: 12px;
+			color: var(--vz-text);
+			transform: translate(12px, 12px);
+			opacity: 0;
+			transition: opacity 0.12s ease;
+			white-space: nowrap;
+		}
+		.vz-tooltip.is-visible { opacity: 1; }
+		.vz-tooltip .name { color: var(--vz-accent); font-weight: 600; }
+		.vz-tooltip .mcap { color: var(--vz-green); }
+
+		/* ── Detail panel ─────────────────────────────── */
+		.vz-detail {
+			position: absolute;
+			top: 0;
+			right: 0;
+			bottom: 0;
+			width: 360px;
+			max-width: 90vw;
+			background: var(--vz-panel);
+			border-left: 1px solid var(--vz-border);
+			backdrop-filter: blur(12px);
+			-webkit-backdrop-filter: blur(12px);
+			padding: calc(var(--header-h, 3.5rem) + 20px) 20px 20px;
+			overflow-y: auto;
+			transform: translateX(100%);
+			transition: transform 0.28s cubic-bezier(0.2, 0.8, 0.2, 1);
+			display: flex;
+			flex-direction: column;
+			gap: 14px;
+		}
+		.vz-detail.is-open { transform: translateX(0); }
+		.vz-detail .close {
+			position: absolute;
+			top: calc(var(--header-h, 3.5rem) + 12px);
+			right: 12px;
+			width: 28px; height: 28px;
+			border: 1px solid rgba(255,255,255,0.15);
+			background: rgba(255,255,255,0.04);
+			color: var(--vz-text);
+			border-radius: 50%;
+			cursor: pointer;
+			font-size: 16px;
+			line-height: 1;
+		}
+		.vz-detail .close:hover { background: var(--accent-soft); }
+		.vz-detail .head { display: flex; align-items: center; gap: 12px; }
+		.vz-detail .avatar {
+			width: 56px; height: 56px; border-radius: 50%;
+			background: #111; border: 1px solid var(--vz-border);
+			object-fit: cover; flex-shrink: 0;
+		}
+		.vz-detail .title { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+		.vz-detail .title .name {
+			font-family: var(--font-display);
+			font-size: 18px; font-weight: 600;
+			color: var(--vz-text);
+			overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+		}
+		.vz-detail .title .symbol {
+			font-family: var(--font-mono);
+			font-size: 13px; color: var(--vz-accent);
+		}
+		.vz-detail .stats {
+			display: grid; grid-template-columns: 1fr 1fr; gap: 10px;
+			padding: 12px; border-radius: 8px;
+			background: rgba(255,255,255,0.03);
+			border: 1px solid rgba(255,255,255,0.06);
+		}
+		.vz-detail .stat .label {
+			font-family: var(--font-mono);
+			font-size: 10px; letter-spacing: 0.08em;
+			color: var(--vz-muted); text-transform: uppercase;
+		}
+		.vz-detail .stat .value {
+			font-family: var(--font-mono);
+			font-size: 14px; color: var(--vz-text); margin-top: 2px;
+		}
+		.vz-detail .stat .value.green { color: var(--vz-green); }
+		.vz-detail .description {
+			font-size: 13px; line-height: 1.55; color: var(--vz-muted);
+			max-height: 140px; overflow-y: auto;
+			padding: 10px; border-radius: 8px;
+			background: rgba(255,255,255,0.02);
+			border: 1px solid rgba(255,255,255,0.05);
+		}
+		.vz-detail .description:empty { display: none; }
+		.vz-detail .mint {
+			font-family: var(--font-mono);
+			font-size: 11px; color: var(--vz-muted);
+			word-break: break-all;
+			padding: 8px 10px;
+			background: rgba(0,0,0,0.4);
+			border: 1px solid rgba(255,255,255,0.05);
+			border-radius: 6px;
+		}
+		.vz-detail .links { display: flex; flex-wrap: wrap; gap: 6px; }
+		.vz-detail .links a {
+			display: inline-flex; align-items: center; gap: 4px;
+			padding: 6px 10px; font-size: 12px;
+			border-radius: 6px;
+			border: 1px solid var(--vz-border);
+			color: var(--vz-text);
+			text-decoration: none;
+			background: rgba(139, 92, 246, 0.08);
+			transition: background 0.15s;
+		}
+		.vz-detail .links a:hover { background: var(--accent-soft); }
+		.vz-detail .links a.primary {
+			background: var(--vz-accent); color: #fff; border-color: var(--vz-accent);
+		}
+		.vz-detail .live-badge {
+			display: inline-flex; align-items: center; gap: 6px;
+			padding: 3px 8px; font-size: 10px; letter-spacing: 0.06em;
+			text-transform: uppercase;
+			background: rgba(248, 113, 113, 0.15);
+			color: var(--vz-red);
+			border: 1px solid rgba(248, 113, 113, 0.4);
+			border-radius: 20px;
+			margin-top: 4px;
+			width: max-content;
+		}
+		.vz-detail .live-badge::before {
+			content: ''; width: 6px; height: 6px; border-radius: 50%;
+			background: var(--vz-red); animation: vzPulse 1.2s ease-in-out infinite;
+		}
+
+		/* ── Legend (bottom-left rank list) ───────────── */
+		.vz-legend {
+			bottom: 16px;
+			left: 16px;
+			background: var(--vz-panel);
+			border: 1px solid rgba(255,255,255,0.08);
+			border-radius: 10px;
+			padding: 10px 12px;
+			max-height: 220px;
+			overflow-y: auto;
+			width: 240px;
+			font-family: var(--font-mono);
+			font-size: 12px;
+		}
+		.vz-legend .head {
+			color: var(--vz-muted);
+			font-size: 10px; letter-spacing: 0.1em;
+			text-transform: uppercase;
+			padding-bottom: 6px; margin-bottom: 6px;
+			border-bottom: 1px solid rgba(255,255,255,0.06);
+		}
+		.vz-legend ol { list-style: none; padding: 0; margin: 0; }
+		.vz-legend li {
+			display: flex; align-items: center; gap: 8px;
+			padding: 4px 2px; border-radius: 4px;
+			cursor: pointer;
+			color: var(--vz-text);
+		}
+		.vz-legend li:hover { background: rgba(255,255,255,0.04); }
+		.vz-legend li.is-selected { background: var(--accent-soft); }
+		.vz-legend li .rank { color: var(--vz-muted); width: 22px; }
+		.vz-legend li .sym { color: var(--vz-accent); }
+		.vz-legend li .name {
+			flex: 1; min-width: 0;
+			overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+		}
+
+		/* ── Error overlay ────────────────────────────── */
+		.vz-error {
+			position: absolute;
+			top: 50%; left: 50%;
+			transform: translate(-50%, -50%);
+			background: var(--vz-panel);
+			border: 1px solid rgba(248, 113, 113, 0.4);
+			border-radius: 10px;
+			padding: 20px 28px;
+			text-align: center;
+			max-width: 360px;
+		}
+		.vz-error h3 { margin: 0 0 8px; color: var(--vz-red); font-family: var(--font-display); }
+		.vz-error p { margin: 0 0 14px; color: var(--vz-muted); font-size: 13px; }
+		.vz-error button {
+			background: var(--vz-accent);
+			color: #fff;
+			border: none;
+			border-radius: 6px;
+			padding: 8px 18px;
+			font: inherit;
+			cursor: pointer;
+		}
+
+		@media (max-width: 720px) {
+			.vz-hint { display: none; }
+			.vz-legend { width: 180px; max-height: 160px; bottom: 12px; left: 12px; }
+			.vz-detail { width: 100%; }
+		}
+	</style>
+</head>
 <body>
-		<header class="site-header">
-			<h1 class="site-header-brand">
-				<a href="/" aria-label="three.ws home"><img class="wordmark-logo" src="/three.svg" alt="" aria-hidden="true" /><span class="wordmark-dot" aria-hidden="true"></span>three.ws</a>
-			</h1>
-			<div id="nav-container"></div>
-		</header>
-		<script src="/nav.js"></script>
+	<header class="site-header">
+		<h1 class="site-header-brand">
+			<a href="/" aria-label="three.ws home"><img class="wordmark-logo" src="/three.svg" alt="" aria-hidden="true" /><span class="wordmark-dot" aria-hidden="true"></span>three.ws</a>
+		</h1>
+		<div id="nav-container"></div>
+	</header>
+	<script src="/nav.js"></script>
 
-    <script type="module">
-        import * as THREE from 'three';
+	<div id="vz-stage">
+		<div id="vz-canvas-host"></div>
 
-        // Scene setup
-        const scene = new THREE.Scene();
-        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-        const renderer = new THREE.WebGLRenderer();
-        renderer.setSize(window.innerWidth, window.innerHeight);
-        document.body.appendChild(renderer.domElement);
+		<div class="vz-overlay vz-status" id="vz-status" data-state="loading" role="status" aria-live="polite">
+			<span class="dot"></span>
+			<span id="vz-status-text">Loading trending tokens…</span>
+			<button id="vz-refresh" type="button" title="Refresh data" disabled>↻ Refresh</button>
+		</div>
 
-        // Placeholder object
-        const geometry = new THREE.BoxGeometry();
-        const material = new THREE.MeshBasicMaterial({ color: 0x00ff00 });
-        const cube = new THREE.Mesh(geometry, material);
-        scene.add(cube);
+		<div class="vz-overlay vz-hint" aria-hidden="true">
+			<b>Drag</b> to rotate · <b>Scroll</b> to zoom · <b>Click</b> a sphere for details
+		</div>
 
-        camera.position.z = 5;
+		<aside class="vz-overlay vz-legend" id="vz-legend" hidden>
+			<div class="head">Top 20 by Market Cap</div>
+			<ol id="vz-legend-list"></ol>
+		</aside>
 
-        // Animation loop
-        function animate() {
-            requestAnimationFrame(animate);
-            cube.rotation.x += 0.01;
-            cube.rotation.y += 0.01;
-            renderer.render(scene, camera);
-        }
+		<aside class="vz-overlay vz-detail" id="vz-detail" aria-hidden="true">
+			<button class="close" type="button" id="vz-detail-close" aria-label="Close details">×</button>
+			<div class="head">
+				<img class="avatar" id="vz-detail-avatar" alt="" />
+				<div class="title">
+					<span class="name" id="vz-detail-name"></span>
+					<span class="symbol" id="vz-detail-symbol"></span>
+				</div>
+			</div>
+			<div class="live-badge" id="vz-detail-live" hidden>Live now</div>
+			<div class="stats">
+				<div class="stat"><div class="label">Market cap</div><div class="value green" id="vz-detail-mcap"></div></div>
+				<div class="stat"><div class="label">ATH market cap</div><div class="value" id="vz-detail-ath"></div></div>
+				<div class="stat"><div class="label">Replies</div><div class="value" id="vz-detail-replies"></div></div>
+				<div class="stat"><div class="label">Age</div><div class="value" id="vz-detail-age"></div></div>
+			</div>
+			<div class="description" id="vz-detail-description"></div>
+			<div class="mint" id="vz-detail-mint" title="Token mint address"></div>
+			<div class="links" id="vz-detail-links"></div>
+		</aside>
 
-        animate();
-    </script>
+		<div class="vz-tooltip" id="vz-tooltip">
+			<div class="name" id="vz-tt-name"></div>
+			<div class="mcap" id="vz-tt-mcap"></div>
+		</div>
 
-		<div id="footer-container"></div>
-		<script src="/footer.js"></script>
+		<div class="vz-error" id="vz-error" hidden>
+			<h3>Could not load trending tokens</h3>
+			<p id="vz-error-message"></p>
+			<button type="button" id="vz-error-retry">Retry</button>
+		</div>
+	</div>
+
+	<script type="module">
+		import * as THREE from 'three';
+		import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+
+		const TRENDING_API = '/api/pump/trending?limit=50';
+		const SPHERE_RADIUS = 28;
+		const MIN_TOKEN_R = 0.9;
+		const MAX_TOKEN_R = 3.2;
+
+		const host = document.getElementById('vz-canvas-host');
+		const statusEl = document.getElementById('vz-status');
+		const statusText = document.getElementById('vz-status-text');
+		const refreshBtn = document.getElementById('vz-refresh');
+		const tooltip = document.getElementById('vz-tooltip');
+		const ttName = document.getElementById('vz-tt-name');
+		const ttMcap = document.getElementById('vz-tt-mcap');
+		const detailEl = document.getElementById('vz-detail');
+		const detailClose = document.getElementById('vz-detail-close');
+		const legendEl = document.getElementById('vz-legend');
+		const legendList = document.getElementById('vz-legend-list');
+		const errorEl = document.getElementById('vz-error');
+		const errorMessage = document.getElementById('vz-error-message');
+		const errorRetry = document.getElementById('vz-error-retry');
+
+		// ── three.js scene ────────────────────────────────────────────
+		const scene = new THREE.Scene();
+		scene.background = new THREE.Color(0x05060a);
+		scene.fog = new THREE.Fog(0x05060a, 80, 220);
+
+		const camera = new THREE.PerspectiveCamera(55, 1, 0.1, 500);
+		camera.position.set(0, 8, 70);
+
+		const renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: 'high-performance' });
+		renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+		renderer.outputColorSpace = THREE.SRGBColorSpace;
+		host.appendChild(renderer.domElement);
+
+		const controls = new OrbitControls(camera, renderer.domElement);
+		controls.enableDamping = true;
+		controls.dampingFactor = 0.06;
+		controls.rotateSpeed = 0.6;
+		controls.zoomSpeed = 0.7;
+		controls.minDistance = 8;
+		controls.maxDistance = 160;
+		controls.autoRotate = true;
+		controls.autoRotateSpeed = 0.35;
+
+		// Lights
+		scene.add(new THREE.AmbientLight(0xffffff, 0.55));
+		const key = new THREE.DirectionalLight(0xc4b5fd, 0.9);
+		key.position.set(40, 60, 50);
+		scene.add(key);
+		const rim = new THREE.DirectionalLight(0x6366f1, 0.45);
+		rim.position.set(-50, -20, -40);
+		scene.add(rim);
+
+		// Starfield
+		(function buildStars() {
+			const count = 2500;
+			const geom = new THREE.BufferGeometry();
+			const positions = new Float32Array(count * 3);
+			for (let i = 0; i < count; i++) {
+				const r = 180 + Math.random() * 140;
+				const t = Math.random() * Math.PI * 2;
+				const p = Math.acos(2 * Math.random() - 1);
+				positions[i * 3 + 0] = r * Math.sin(p) * Math.cos(t);
+				positions[i * 3 + 1] = r * Math.sin(p) * Math.sin(t);
+				positions[i * 3 + 2] = r * Math.cos(p);
+			}
+			geom.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+			const mat = new THREE.PointsMaterial({ size: 0.6, color: 0xaaaaff, transparent: true, opacity: 0.7, sizeAttenuation: true });
+			scene.add(new THREE.Points(geom, mat));
+		})();
+
+		// Centerpiece — accent core
+		const core = new THREE.Mesh(
+			new THREE.IcosahedronGeometry(1.6, 1),
+			new THREE.MeshStandardMaterial({ color: 0x8b5cf6, emissive: 0x4c1d95, emissiveIntensity: 0.5, roughness: 0.35, metalness: 0.7, wireframe: false })
+		);
+		scene.add(core);
+		const coreGlow = new THREE.Mesh(
+			new THREE.SphereGeometry(2.4, 32, 32),
+			new THREE.MeshBasicMaterial({ color: 0x8b5cf6, transparent: true, opacity: 0.12 })
+		);
+		scene.add(coreGlow);
+
+		// Token meshes
+		const tokensGroup = new THREE.Group();
+		scene.add(tokensGroup);
+
+		const tokenMeshes = []; // { mesh, ring, data, baseScale }
+		const textureLoader = new THREE.TextureLoader();
+		textureLoader.crossOrigin = 'anonymous';
+
+		function fibonacciSphere(n) {
+			const points = [];
+			const phi = Math.PI * (Math.sqrt(5) - 1);
+			for (let i = 0; i < n; i++) {
+				const y = 1 - (i / (n - 1)) * 2;
+				const r = Math.sqrt(1 - y * y);
+				const theta = phi * i;
+				points.push({ x: Math.cos(theta) * r, y, z: Math.sin(theta) * r });
+			}
+			return points;
+		}
+
+		// Fallback canvas-textured material when the token image fails to load.
+		// Renders the symbol on a tinted background so the sphere is never blank.
+		function fallbackTexture(symbol, seedMint) {
+			const size = 256;
+			const c = document.createElement('canvas');
+			c.width = size; c.height = size;
+			const ctx = c.getContext('2d');
+			const hue = hashStr(seedMint || symbol || 'pump') % 360;
+			const grad = ctx.createRadialGradient(size / 2, size / 2, size / 8, size / 2, size / 2, size / 2);
+			grad.addColorStop(0, `hsl(${hue}, 70%, 55%)`);
+			grad.addColorStop(1, `hsl(${(hue + 40) % 360}, 70%, 25%)`);
+			ctx.fillStyle = grad;
+			ctx.fillRect(0, 0, size, size);
+			ctx.fillStyle = '#fff';
+			ctx.font = 'bold 88px "Space Grotesk", system-ui, sans-serif';
+			ctx.textAlign = 'center';
+			ctx.textBaseline = 'middle';
+			const label = ((symbol || '?').slice(0, 4)).toUpperCase();
+			ctx.fillText(label, size / 2, size / 2 + 6);
+			const tex = new THREE.CanvasTexture(c);
+			tex.colorSpace = THREE.SRGBColorSpace;
+			tex.anisotropy = 4;
+			return tex;
+		}
+
+		function hashStr(s) {
+			let h = 0;
+			for (let i = 0; i < s.length; i++) h = ((h << 5) - h + s.charCodeAt(i)) | 0;
+			return Math.abs(h);
+		}
+
+		function loadTokenTexture(url, fallback) {
+			return new Promise((resolve) => {
+				if (!url) return resolve(fallback);
+				textureLoader.load(
+					url,
+					(tex) => {
+						tex.colorSpace = THREE.SRGBColorSpace;
+						tex.anisotropy = 4;
+						resolve(tex);
+					},
+					undefined,
+					() => resolve(fallback),
+				);
+			});
+		}
+
+		function buildTokenMesh(token, position, radius) {
+			const fallback = fallbackTexture(token.symbol, token.mint);
+			const material = new THREE.MeshStandardMaterial({
+				map: fallback,
+				roughness: 0.45,
+				metalness: 0.25,
+				emissive: 0x000000,
+				emissiveIntensity: 0,
+			});
+			const geometry = new THREE.SphereGeometry(radius, 28, 28);
+			const mesh = new THREE.Mesh(geometry, material);
+			mesh.position.copy(position);
+
+			// Selection / hover ring (hidden by default)
+			const ringGeo = new THREE.RingGeometry(radius * 1.18, radius * 1.32, 48);
+			const ringMat = new THREE.MeshBasicMaterial({
+				color: 0x8b5cf6,
+				transparent: true,
+				opacity: 0,
+				side: THREE.DoubleSide,
+				depthWrite: false,
+			});
+			const ring = new THREE.Mesh(ringGeo, ringMat);
+			ring.position.copy(position);
+			ring.lookAt(0, 0, 0);
+
+			mesh.userData = { token, ring };
+
+			// Swap to real artwork asynchronously; keeps fallback if it fails.
+			if (token.image_uri) {
+				loadTokenTexture(token.image_uri, null).then((tex) => {
+					if (tex) {
+						material.map = tex;
+						material.needsUpdate = true;
+					}
+				});
+			}
+
+			return { mesh, ring };
+		}
+
+		function placeTokens(tokens) {
+			// Wipe previous run so refresh swaps cleanly.
+			while (tokensGroup.children.length) {
+				const child = tokensGroup.children[0];
+				tokensGroup.remove(child);
+				if (child.geometry) child.geometry.dispose();
+				if (child.material) {
+					if (child.material.map) child.material.map.dispose();
+					child.material.dispose();
+				}
+			}
+			tokenMeshes.length = 0;
+
+			const caps = tokens.map((t) => Math.max(1, Number(t.usd_market_cap) || 0));
+			const maxLog = Math.log10(Math.max(...caps, 10));
+			const minLog = Math.log10(Math.max(Math.min(...caps), 1));
+			const span = Math.max(0.0001, maxLog - minLog);
+
+			const points = fibonacciSphere(tokens.length);
+
+			tokens.forEach((token, i) => {
+				const cap = caps[i];
+				const t = (Math.log10(cap) - minLog) / span;
+				const radius = MIN_TOKEN_R + t * (MAX_TOKEN_R - MIN_TOKEN_R);
+
+				// Wobble each point inward a touch for big caps so they don't all sit on a perfect shell.
+				const shellR = SPHERE_RADIUS * (0.82 + (1 - t) * 0.25);
+				const p = points[i];
+				const position = new THREE.Vector3(p.x * shellR, p.y * shellR, p.z * shellR);
+
+				const { mesh, ring } = buildTokenMesh(token, position, radius);
+				tokensGroup.add(mesh);
+				tokensGroup.add(ring);
+				tokenMeshes.push({ mesh, ring, data: token, baseScale: 1 });
+			});
+		}
+
+		// ── interactivity ────────────────────────────────────────────
+		const raycaster = new THREE.Raycaster();
+		const pointer = new THREE.Vector2();
+		let hovered = null;
+		let selected = null;
+
+		renderer.domElement.addEventListener('pointermove', (ev) => {
+			const rect = renderer.domElement.getBoundingClientRect();
+			pointer.x = ((ev.clientX - rect.left) / rect.width) * 2 - 1;
+			pointer.y = -((ev.clientY - rect.top) / rect.height) * 2 + 1;
+			tooltip.style.left = ev.clientX + 'px';
+			tooltip.style.top = ev.clientY + 'px';
+		});
+
+		// Click vs drag detection — OrbitControls swallows drags but we still
+		// want to suppress clicks that came from a long mouse-down or movement.
+		let pressStart = null;
+		renderer.domElement.addEventListener('pointerdown', (ev) => {
+			pressStart = { x: ev.clientX, y: ev.clientY, t: Date.now() };
+		});
+		renderer.domElement.addEventListener('pointerup', (ev) => {
+			if (!pressStart) return;
+			const dx = ev.clientX - pressStart.x;
+			const dy = ev.clientY - pressStart.y;
+			const dt = Date.now() - pressStart.t;
+			pressStart = null;
+			if (Math.hypot(dx, dy) > 6 || dt > 350) return;
+			handleClick();
+		});
+
+		function handleClick() {
+			raycaster.setFromCamera(pointer, camera);
+			const meshes = tokenMeshes.map((t) => t.mesh);
+			const hits = raycaster.intersectObjects(meshes, false);
+			if (!hits.length) return;
+			const data = hits[0].object.userData.token;
+			selectToken(data);
+		}
+
+		function setHovered(entry) {
+			if (hovered === entry) return;
+			if (hovered && hovered !== selected) hovered.ring.material.opacity = 0;
+			hovered = entry;
+			if (entry) {
+				if (entry !== selected) entry.ring.material.opacity = 0.55;
+				host.classList.add('is-pointing');
+				ttName.textContent = (entry.data.name || 'Unknown') + (entry.data.symbol ? ` · $${entry.data.symbol}` : '');
+				ttMcap.textContent = formatMcap(entry.data.usd_market_cap);
+				tooltip.classList.add('is-visible');
+			} else {
+				host.classList.remove('is-pointing');
+				tooltip.classList.remove('is-visible');
+			}
+		}
+
+		function selectToken(token) {
+			const entry = tokenMeshes.find((t) => t.data.mint === token.mint);
+			if (!entry) return;
+			if (selected && selected !== entry) selected.ring.material.opacity = 0;
+			selected = entry;
+			selected.ring.material.color.set(0x34d399);
+			selected.ring.material.opacity = 1;
+			controls.autoRotate = false;
+			renderDetail(token);
+			highlightLegend(token.mint);
+		}
+
+		function clearSelection() {
+			if (selected) {
+				selected.ring.material.opacity = 0;
+				selected.ring.material.color.set(0x8b5cf6);
+				selected = null;
+			}
+			detailEl.classList.remove('is-open');
+			detailEl.setAttribute('aria-hidden', 'true');
+			controls.autoRotate = true;
+			highlightLegend(null);
+		}
+
+		detailClose.addEventListener('click', clearSelection);
+		document.addEventListener('keydown', (ev) => {
+			if (ev.key === 'Escape') clearSelection();
+		});
+
+		// ── detail panel rendering ───────────────────────────────────
+		function renderDetail(token) {
+			const avatar = document.getElementById('vz-detail-avatar');
+			const fallbackAvatar = `https://api.dicebear.com/7.x/shapes/svg?seed=${encodeURIComponent(token.mint || token.symbol || 'x')}`;
+			avatar.src = token.image_uri || fallbackAvatar;
+			avatar.onerror = () => { avatar.onerror = null; avatar.src = fallbackAvatar; };
+
+			document.getElementById('vz-detail-name').textContent = token.name || 'Unknown';
+			document.getElementById('vz-detail-symbol').textContent = token.symbol ? '$' + token.symbol : '';
+
+			document.getElementById('vz-detail-mcap').textContent = formatMcap(token.usd_market_cap);
+			document.getElementById('vz-detail-ath').textContent = formatMcap(token.ath_market_cap);
+			document.getElementById('vz-detail-replies').textContent = token.reply_count != null ? Number(token.reply_count).toLocaleString() : '—';
+			document.getElementById('vz-detail-age').textContent = formatAge(token.created_timestamp);
+
+			const desc = (token.description || '').trim();
+			const descEl = document.getElementById('vz-detail-description');
+			descEl.textContent = desc.length > 800 ? desc.slice(0, 800) + '…' : desc;
+
+			document.getElementById('vz-detail-mint').textContent = token.mint || '';
+			document.getElementById('vz-detail-live').hidden = !token.is_currently_live;
+
+			const linksEl = document.getElementById('vz-detail-links');
+			linksEl.innerHTML = '';
+			if (token.mint) {
+				linksEl.appendChild(linkNode(`https://pump.fun/coin/${token.mint}`, 'Pump.fun ↗', true));
+				linksEl.appendChild(linkNode(`https://solscan.io/token/${token.mint}`, 'Solscan ↗'));
+			}
+			if (token.twitter) linksEl.appendChild(linkNode(token.twitter, 'Twitter ↗'));
+			if (token.telegram) linksEl.appendChild(linkNode(token.telegram, 'Telegram ↗'));
+			if (token.website) linksEl.appendChild(linkNode(token.website, 'Website ↗'));
+
+			detailEl.classList.add('is-open');
+			detailEl.setAttribute('aria-hidden', 'false');
+		}
+
+		function linkNode(href, label, primary) {
+			const a = document.createElement('a');
+			a.href = href;
+			a.target = '_blank';
+			a.rel = 'noopener noreferrer';
+			a.textContent = label;
+			if (primary) a.className = 'primary';
+			return a;
+		}
+
+		// ── formatters ───────────────────────────────────────────────
+		function formatMcap(v) {
+			const n = Number(v);
+			if (!Number.isFinite(n) || n <= 0) return '—';
+			if (n >= 1e9) return '$' + (n / 1e9).toFixed(2) + 'B';
+			if (n >= 1e6) return '$' + (n / 1e6).toFixed(2) + 'M';
+			if (n >= 1e3) return '$' + (n / 1e3).toFixed(1) + 'K';
+			return '$' + n.toFixed(2);
+		}
+		function formatAge(ts) {
+			const n = Number(ts);
+			if (!Number.isFinite(n) || n <= 0) return '—';
+			const ms = Date.now() - n;
+			const days = ms / 86_400_000;
+			if (days >= 30) return Math.floor(days / 30) + 'mo';
+			if (days >= 1) return Math.floor(days) + 'd';
+			const hours = ms / 3_600_000;
+			if (hours >= 1) return Math.floor(hours) + 'h';
+			return Math.max(1, Math.floor(ms / 60_000)) + 'm';
+		}
+
+		// ── legend ───────────────────────────────────────────────────
+		function renderLegend(tokens) {
+			legendList.innerHTML = '';
+			tokens.slice(0, 20).forEach((token, i) => {
+				const li = document.createElement('li');
+				li.dataset.mint = token.mint || '';
+				const rank = document.createElement('span');
+				rank.className = 'rank';
+				rank.textContent = '#' + (i + 1);
+				const name = document.createElement('span');
+				name.className = 'name';
+				name.textContent = token.name || 'Unknown';
+				const sym = document.createElement('span');
+				sym.className = 'sym';
+				sym.textContent = token.symbol ? '$' + token.symbol : '';
+				li.appendChild(rank);
+				li.appendChild(name);
+				li.appendChild(sym);
+				li.addEventListener('click', () => focusToken(token));
+				legendList.appendChild(li);
+			});
+			legendEl.hidden = false;
+		}
+		function highlightLegend(mint) {
+			legendList.querySelectorAll('li').forEach((li) => {
+				li.classList.toggle('is-selected', !!mint && li.dataset.mint === mint);
+			});
+		}
+
+		// Camera tween toward a clicked token so the user actually sees it.
+		const tween = { active: false, from: new THREE.Vector3(), to: new THREE.Vector3(), target: new THREE.Vector3(), start: 0, duration: 700 };
+		function focusToken(token) {
+			selectToken(token);
+			const entry = tokenMeshes.find((t) => t.data.mint === token.mint);
+			if (!entry) return;
+			const pos = entry.mesh.position.clone();
+			const dir = pos.clone().normalize();
+			const dest = pos.clone().add(dir.multiplyScalar(8));
+			tween.from.copy(camera.position);
+			tween.to.copy(dest);
+			tween.target.copy(pos);
+			tween.start = performance.now();
+			tween.active = true;
+		}
+		function easeOutCubic(t) { return 1 - Math.pow(1 - t, 3); }
+
+		// ── animation loop ───────────────────────────────────────────
+		function animate() {
+			requestAnimationFrame(animate);
+			const time = performance.now();
+
+			core.rotation.x += 0.003;
+			core.rotation.y += 0.005;
+			coreGlow.scale.setScalar(1 + Math.sin(time * 0.0015) * 0.04);
+
+			if (tween.active) {
+				const t = Math.min(1, (time - tween.start) / tween.duration);
+				const e = easeOutCubic(t);
+				camera.position.lerpVectors(tween.from, tween.to, e);
+				controls.target.lerp(tween.target, e * 0.4);
+				if (t >= 1) tween.active = false;
+			}
+
+			// Hover raycast
+			raycaster.setFromCamera(pointer, camera);
+			const hits = raycaster.intersectObjects(tokenMeshes.map((t) => t.mesh), false);
+			if (hits.length) {
+				const hit = hits[0].object;
+				const entry = tokenMeshes.find((t) => t.mesh === hit);
+				setHovered(entry || null);
+			} else {
+				setHovered(null);
+			}
+
+			// Subtle pulse on selected ring
+			if (selected) {
+				const s = 1 + Math.sin(time * 0.005) * 0.06;
+				selected.ring.scale.setScalar(s);
+			}
+
+			controls.update();
+			renderer.render(scene, camera);
+		}
+
+		// ── resize ───────────────────────────────────────────────────
+		function resize() {
+			const w = host.clientWidth || window.innerWidth;
+			const h = host.clientHeight || window.innerHeight;
+			renderer.setSize(w, h, false);
+			camera.aspect = w / h;
+			camera.updateProjectionMatrix();
+		}
+		window.addEventListener('resize', resize);
+		resize();
+		animate();
+
+		// ── data loading ─────────────────────────────────────────────
+		async function loadData() {
+			statusEl.dataset.state = 'loading';
+			statusText.textContent = 'Loading trending tokens…';
+			refreshBtn.disabled = true;
+			errorEl.hidden = true;
+			try {
+				const resp = await fetch(TRENDING_API, { headers: { accept: 'application/json' } });
+				if (!resp.ok) throw new Error(`API returned ${resp.status}`);
+				const data = await resp.json();
+				if (!Array.isArray(data) || !data.length) throw new Error('No trending tokens returned');
+
+				placeTokens(data);
+				renderLegend(data);
+				statusEl.dataset.state = 'ready';
+				statusText.textContent = `${data.length} tokens · live from pump.fun`;
+				refreshBtn.disabled = false;
+			} catch (err) {
+				console.error('[pump-visualizer] load failed', err);
+				statusEl.dataset.state = 'error';
+				statusText.textContent = 'Failed to load';
+				refreshBtn.disabled = false;
+				errorMessage.textContent = err.message || 'Unknown error';
+				errorEl.hidden = false;
+			}
+		}
+
+		refreshBtn.addEventListener('click', () => {
+			clearSelection();
+			loadData();
+		});
+		errorRetry.addEventListener('click', loadData);
+
+		loadData();
+	</script>
+
+	<div id="footer-container"></div>
+	<script src="/footer.js"></script>
 </body>
 </html>

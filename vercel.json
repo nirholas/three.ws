@@ -177,6 +177,14 @@
 			"dest": "/pump-visualizer.html"
 		},
 		{
+			"src": "/pump-live/?",
+			"dest": "/pump-live.html"
+		},
+		{
+			"src": "/pump-dashboard/?",
+			"dest": "/pump-dashboard.html"
+		},
+		{
 			"src": "/avatar-artifact/?",
 			"dest": "/avatar-artifact.html"
 		},
