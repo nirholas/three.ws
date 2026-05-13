@@ -4,10 +4,7 @@ https://github.com/user-attachments/assets/d52515d1-cb04-4dd6-98bd-fef233312dc4
 
 **Give your AI a body.** three.ws is an open-source, browser-native 3D AI agent platform. Drop a GLB file, add an LLM brain, register on-chain, and embed anywhere — no plugins, no server uploads, no installs required.
 
-<video width="100%" height="auto" autoplay loop muted playsinline>
-  <source src="https://github.com/nirholas/3D-Agent/raw/refs/heads/main/public/skills.mp4" type="video/mp4">
-  Your browser does not support the video tag.
-</video>
+![three.ws skills demo](https://github.com/nirholas/3D-Agent/raw/refs/heads/main/.github/assets/skills.gif)
 
 ---
 
