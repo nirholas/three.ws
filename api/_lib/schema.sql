@@ -276,8 +276,6 @@ CREATE TABLE IF NOT EXISTS agent_identities (
 
 create index if not exists agent_identities_user
     on agent_identities(user_id) where deleted_at is null;
-create unique index if not exists agent_identities_user_unique
-    on agent_identities(user_id) where deleted_at is null;
 create index if not exists agent_identities_wallet
     on agent_identities(wallet_address) where wallet_address is not null;
 
@@ -489,10 +487,6 @@ create table if not exists agent_registrations_pending (
 
 create index if not exists agent_registrations_pending_user_expiry
 	on agent_registrations_pending(user_id, expires_at);
-
--- ── Additive: ensure partial unique index exists (required by ON CONFLICT in agents.js) ──
-create unique index if not exists agent_identities_user_unique
-    on agent_identities(user_id) where deleted_at is null;
 
 -- ── agent_delegations — ERC-7710 signed delegation envelopes ────────────────
 create table if not exists agent_delegations (

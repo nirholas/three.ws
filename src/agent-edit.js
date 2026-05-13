@@ -10,9 +10,10 @@ const initAvatarName = params.get('avatar_name') || null;
 const $ = (id) => document.getElementById(id);
 
 let agentData = null;
+let outfitMounted = false;
+let availableAvatars = null;
 
 async function loadAgent() {
-  // No existing agent ID — create a fresh one pre-loaded with the avatar.
   if (!agentId) {
     if (initAvatarId || initAvatarGlb) {
       await createAgentFromAvatar();
@@ -22,10 +23,19 @@ async function loadAgent() {
     return;
   }
   try {
-    const r = await fetch(`${API_BASE}/marketplace/agents/${agentId}`);
-    if (!r.ok) throw new Error(`HTTP ${r.status}`);
+    const r = await fetch(`${API_BASE}/agents/${agentId}`, { credentials: 'include' });
+    if (r.status === 401) {
+      sessionStorage.setItem('login_redirect', location.href);
+      location.replace('/login');
+      return;
+    }
+    if (!r.ok) {
+      const j = await r.json().catch(() => ({}));
+      throw new Error(j.error_description || j.error || `HTTP ${r.status}`);
+    }
     const j = await r.json();
-    agentData = j.data.agent;
+    agentData = j.agent;
+    if (!agentData) throw new Error('agent not in response');
     render();
   } catch (err) {
     showError(err.message);
@@ -35,7 +45,6 @@ async function loadAgent() {
 async function createAgentFromAvatar() {
   showLoading('Creating agent…');
   try {
-    // 1. Create a new agent.
     const name = initAvatarName ? `${initAvatarName} Agent` : 'My Agent';
     const createRes = await fetch(`${API_BASE}/agents`, {
       method: 'POST',
@@ -54,7 +63,6 @@ async function createAgentFromAvatar() {
     }
     const { agent } = await createRes.json();
 
-    // 2. Attach the avatar if we have an ID (already in the user's account).
     if (initAvatarId) {
       const patchRes = await fetch(`${API_BASE}/agents/${agent.id}`, {
         method: 'PUT',
@@ -63,16 +71,12 @@ async function createAgentFromAvatar() {
         body: JSON.stringify({ avatar_id: initAvatarId }),
       });
       if (!patchRes.ok) {
-        // Non-fatal — agent was created, avatar link just didn't stick.
         console.warn('[agent-edit] avatar attach failed', patchRes.status);
       }
     }
 
-    // 3. Replace URL so the page now "owns" this agent ID without re-creating
-    //    on back-nav, then load normally.
     history.replaceState({}, '', `/agent-edit.html?id=${agent.id}`);
     agentData = agent;
-    // Seed a helpful prompt based on the avatar name.
     if (initAvatarName) {
       agentData.name = name;
       agentData.system_prompt = agentData.system_prompt ||
@@ -105,22 +109,40 @@ function showBanner(msg) {
 
 function render() {
   $('loading').hidden = true;
+  // Reveal the persona panel (the rest stay [hidden] until their tab is opened).
+  $('panel-persona').hidden = false;
   $('panel-persona').classList.add('active');
-  $('agent-title').textContent = `Edit Agent: ${agentData.name}`;
+  $('agent-title').textContent = `Edit Agent: ${agentData.name || 'Untitled'}`;
   $('back-link').href = `/agent-detail.html?id=${agentId}`;
 
   // Persona
-  $('f-name').value = agentData.name;
-  $('f-desc').value = agentData.description;
+  $('f-name').value = agentData.name || '';
+  $('f-desc').value = agentData.description || '';
 
   // Publish
-  $('f-category').value = agentData.category;
+  $('f-category').value = agentData.category || '';
   $('f-tags').value = (agentData.tags || []).join(', ');
-  $('f-prompt').value = agentData.system_prompt;
-  $('f-greeting').value = agentData.greeting;
+  $('f-prompt').value = agentData.system_prompt || '';
+  $('f-greeting').value = agentData.greeting || '';
 
   // Monetization
   renderMonetization();
+
+  // Autopilot
+  $('f-strategy').value = formatStrategy(agentData.meta?.strategy);
+}
+
+function formatStrategy(strategy) {
+  if (strategy == null) return '';
+  if (typeof strategy === 'string') return strategy;
+  try { return JSON.stringify(strategy, null, 2); } catch { return String(strategy); }
+}
+
+function parseStrategy(text) {
+  const trimmed = text.trim();
+  if (!trimmed) return null;
+  // If it parses as JSON, store as object; otherwise as plain string (freeform).
+  try { return JSON.parse(trimmed); } catch { return trimmed; }
 }
 
 function renderMonetization() {
@@ -169,6 +191,100 @@ function renderMonetization() {
   });
 }
 
+// ── Outfit tab ────────────────────────────────────────────────────────────
+// Lazily mount the agent preview + avatar picker only when the user opens
+// the tab so we don't pay for a WebGL context up front.
+
+async function ensureOutfitTab() {
+  if (outfitMounted) return;
+  outfitMounted = true;
+
+  const preview = $('outfit-preview');
+  const a3d = document.createElement('agent-3d');
+  a3d.setAttribute('agent-id', agentId);
+  a3d.setAttribute('controls', 'orbit');
+  a3d.style.cssText = 'width:100%;height:100%;display:block';
+  preview.innerHTML = '';
+  preview.appendChild(a3d);
+
+  await renderAvatarList();
+}
+
+async function renderAvatarList() {
+  const container = $('avatar-picker-list');
+  container.textContent = 'Loading avatars…';
+  try {
+    const r = await fetch(`${API_BASE}/avatars?limit=50`, { credentials: 'include' });
+    if (!r.ok) throw new Error(`HTTP ${r.status}`);
+    const j = await r.json();
+    availableAvatars = j.avatars || [];
+  } catch (err) {
+    container.innerHTML = `<div class="error-msg" style="padding:1rem">Could not load avatars: ${escapeHtml(err.message)}</div>`;
+    return;
+  }
+
+  if (!availableAvatars.length) {
+    container.innerHTML = '<div class="no-named-mats">You have no avatars yet. <a href="/dashboard/#avatars" style="color:#93c5fd">Create one in the dashboard ›</a></div>';
+    return;
+  }
+
+  container.innerHTML = availableAvatars.map((av) => {
+    const thumb = av.thumbnail_url || av.url || '';
+    const isCurrent = av.id === agentData.avatar_id;
+    return `
+      <button type="button" class="avatar-tile${isCurrent ? ' current' : ''}" data-avatar-id="${escapeHtml(av.id)}" title="${escapeHtml(av.name || av.id)}">
+        ${thumb ? `<img src="${escapeHtml(thumb)}" alt="" loading="lazy">` : '<div class="avatar-tile-ph">3D</div>'}
+        <span class="avatar-tile-name">${escapeHtml(av.name || 'Untitled')}</span>
+        ${isCurrent ? '<span class="avatar-tile-badge">Current</span>' : ''}
+      </button>
+    `;
+  }).join('');
+
+  container.querySelectorAll('.avatar-tile').forEach((btn) => {
+    btn.addEventListener('click', () => selectAvatar(btn.dataset.avatarId));
+  });
+}
+
+async function selectAvatar(avatarId) {
+  if (!avatarId || avatarId === agentData.avatar_id) return;
+  const status = $('outfit-status');
+  status.textContent = 'Saving…';
+  status.className = 'outfit-status saving';
+  try {
+    const r = await fetch(`${API_BASE}/agents/${agentId}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify({ avatar_id: avatarId }),
+    });
+    if (!r.ok) {
+      const j = await r.json().catch(() => ({}));
+      throw new Error(j.error_description || j.error || `HTTP ${r.status}`);
+    }
+    agentData.avatar_id = avatarId;
+    // Re-render the avatar tiles so the "Current" badge moves, and reload the
+    // 3D preview so the new model paints.
+    await renderAvatarList();
+    reloadOutfitPreview();
+    status.textContent = 'Saved.';
+    status.className = 'outfit-status saved';
+    setTimeout(() => { status.textContent = ''; status.className = 'outfit-status'; }, 2000);
+  } catch (err) {
+    status.textContent = `Error: ${err.message}`;
+    status.className = 'outfit-status err';
+  }
+}
+
+function reloadOutfitPreview() {
+  const preview = $('outfit-preview');
+  const a3d = document.createElement('agent-3d');
+  a3d.setAttribute('agent-id', agentId);
+  a3d.setAttribute('controls', 'orbit');
+  a3d.style.cssText = 'width:100%;height:100%;display:block';
+  preview.innerHTML = '';
+  preview.appendChild(a3d);
+}
+
 function showError(msg) {
   $('loading').hidden = true;
   const errEl = $('error');
@@ -177,12 +293,11 @@ function showError(msg) {
 }
 
 function escapeHtml(s) {
-	return String(s || '').replace(
-		/[&<>"']/g,
-		(ch) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[ch],
-	);
+  return String(s || '').replace(
+    /[&<>"']/g,
+    (ch) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[ch],
+  );
 }
-
 
 // --- Event Listeners ---
 
@@ -311,15 +426,54 @@ $('monetization-save').addEventListener('click', async () => {
   }
 });
 
+$('autopilot-save').addEventListener('click', async () => {
+  const status = $('autopilot-status');
+  const text = $('f-strategy').value;
+  status.textContent = 'Saving…';
+  status.className = 'form-status';
+  try {
+    const strategy = parseStrategy(text);
+    const r = await fetch(`${API_BASE}/agent-strategy?id=${encodeURIComponent(agentId)}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify({ strategy }),
+    });
+    if (!r.ok) {
+      const j = await r.json().catch(() => ({}));
+      throw new Error(j.error_description || j.error || `HTTP ${r.status}`);
+    }
+    agentData.meta = agentData.meta || {};
+    agentData.meta.strategy = strategy;
+    status.textContent = 'Strategy saved.';
+    status.className = 'form-status ok';
+  } catch (err) {
+    status.textContent = `Error: ${err.message}`;
+    status.className = 'form-status err';
+  }
+});
 
-document.querySelectorAll('.edit-tab').forEach(tab => {
+// --- Tab switching ---
+
+document.querySelectorAll('.edit-tab').forEach((tab) => {
   tab.addEventListener('click', (e) => {
-    document.querySelectorAll('.edit-tab').forEach(t => t.classList.remove('active'));
-    document.querySelectorAll('.edit-panel').forEach(p => p.classList.remove('active'));
-    
-    const tabId = e.target.dataset.tab;
-    e.target.classList.add('active');
-    $(`panel-${tabId}`).classList.add('active');
+    const btn = e.currentTarget;
+    const tabId = btn.dataset.tab;
+
+    document.querySelectorAll('.edit-tab').forEach((t) => {
+      const active = t === btn;
+      t.classList.toggle('active', active);
+      t.setAttribute('aria-selected', active ? 'true' : 'false');
+    });
+
+    document.querySelectorAll('.edit-panel').forEach((p) => {
+      const active = p.id === `panel-${tabId}`;
+      p.classList.toggle('active', active);
+      if (active) p.removeAttribute('hidden');
+      else p.setAttribute('hidden', '');
+    });
+
+    if (tabId === 'outfit' && agentData) ensureOutfitTab();
   });
 });
 

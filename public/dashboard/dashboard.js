@@ -122,25 +122,25 @@ export function currentRoute() {
 	if (m && m[1]) return m[1];
 	const hash = location.hash.slice(1);
 	if (hash) return hash;
-	return 'agents';
+	return 'avatars';
 }
 
 // Render a route into <main>. Does not touch the URL.
 function renderRoute(route) {
-	const [base, ...rest] = (route || 'agents').split('/');
+	const [base, ...rest] = (route || 'avatars').split('/');
 	document
 		.querySelectorAll('aside a')
 		.forEach((a) => a.classList.toggle('active', a.dataset.tab === base));
 	const main = document.getElementById('main');
 	main.innerHTML = '';
-	const renderer = tabs[base] || tabs.agents;
+	const renderer = tabs[base] || tabs.avatars;
 	renderer(main, rest);
 }
 
 // Programmatic navigation: pushes /dashboard/<route> into history and renders.
 // Use this instead of `location.hash = ...`.
 export function goto(route) {
-	const clean = (route || 'agents').replace(/^#?\/+|\/+$/g, '').replace(/^#/, '');
+	const clean = (route || 'avatars').replace(/^#?\/+|\/+$/g, '').replace(/^#/, '');
 	const target = '/dashboard/' + clean;
 	if (location.pathname + location.search !== target) {
 		history.pushState({ route: clean }, '', target);
@@ -240,7 +240,7 @@ async function renderAgents(root) {
 		<div class="widgets-header">
 			<div>
 				<h1>Your agents</h1>
-				<p class="sub">Agents you've created on three.ws — each has a wallet, skills, and an optional ERC-8004 on-chain identity.</p>
+				<p class="sub">Agents you've created on three.ws — each has a wallet, skills, and an optional on-chain identity.</p>
 			</div>
 			<button id="agents-new" class="btn-primary" type="button">New agent</button>
 		</div>
@@ -659,6 +659,7 @@ async function loadXPanel({ host, meterEl, bodyEl, avatar }) {
 		</div>
 		<div data-x-msg style="margin-top:10px;font-size:13px"></div>
 		<div data-x-scheduled style="margin-top:14px"></div>
+		<div data-x-triggers style="margin-top:18px;padding-top:14px;border-top:1px solid #22222e"></div>
 	`;
 
 	const textEl = bodyEl.querySelector('[data-x-text]');
@@ -669,6 +670,7 @@ async function loadXPanel({ host, meterEl, bodyEl, avatar }) {
 	const scheduleBtn = bodyEl.querySelector('[data-x-schedule]');
 	const disconnectBtn = bodyEl.querySelector('[data-x-disconnect]');
 	const scheduledEl = bodyEl.querySelector('[data-x-scheduled]');
+	const triggersEl = bodyEl.querySelector('[data-x-triggers]');
 
 	const setMsg = (text, color = '#9a8cff') => { msgEl.style.color = color; msgEl.innerHTML = text; };
 	textEl.addEventListener('input', () => { countEl.textContent = textEl.value.length; });
@@ -759,6 +761,135 @@ async function loadXPanel({ host, meterEl, bodyEl, avatar }) {
 	});
 
 	loadScheduledPosts(scheduledEl);
+	loadXTriggers(triggersEl, avatar);
+}
+
+async function loadXTriggers(host, avatar) {
+	if (!host) return;
+	const agentId = avatar.agent_id || avatar.id;
+	host.innerHTML = `<div class="muted" style="font-size:11px">Loading triggers…</div>`;
+	let triggers = [];
+	try {
+		const r = await fetch('/api/x/triggers', { credentials: 'include' });
+		triggers = (await r.json()).triggers || [];
+	} catch {}
+	triggers = triggers.filter((t) => !t.agent_id || t.agent_id === agentId);
+	const byKind = Object.fromEntries(triggers.map((t) => [t.kind, t]));
+
+	const row = (kind, label, summary, controlsHtml) => {
+		const t = byKind[kind];
+		const on = t?.enabled;
+		return `
+			<div style="display:flex;gap:10px;padding:10px 0;border-bottom:1px solid #1a1a24;align-items:flex-start">
+				<label style="display:flex;align-items:center;cursor:pointer;padding-top:2px">
+					<input type="checkbox" data-trig="${kind}" ${on ? 'checked' : ''} style="margin:0;width:auto">
+				</label>
+				<div style="flex:1;min-width:0">
+					<div style="color:#ccc;font-size:13px;font-weight:500">${label}</div>
+					<div class="muted" style="font-size:11px;margin-top:2px">${summary}</div>
+					<div data-trig-config="${kind}" style="margin-top:8px;${on ? '' : 'display:none'}">${controlsHtml}</div>
+				</div>
+			</div>
+		`;
+	};
+
+	const dailyHour = byKind.daily_persona?.config?.hour_utc ?? 13;
+	const dailyTopic = byKind.daily_persona?.config?.topic ?? '';
+	const weeklyDay  = byKind.weekly_digest?.config?.day_of_week ?? 0;
+	const weeklyHour = byKind.weekly_digest?.config?.hour_utc ?? 16;
+	const priceThresholds = (byKind.price_milestone?.config?.thresholds_usd ?? [10000, 50000, 100000, 500000, 1000000]).join(', ');
+	const paymentMin = byKind.payment_received?.config?.min_amount_usd ?? 1;
+
+	host.innerHTML = `
+		<div class="muted" style="font-size:11px;text-transform:uppercase;letter-spacing:0.07em;margin-bottom:8px">Auto-post triggers</div>
+		${row('daily_persona', 'Daily in-character post',
+			'Agent tweets once a day at your chosen UTC hour, in voice.',
+			`<label style="font-size:12px;color:#888">UTC hour <input type="number" min="0" max="23" data-trig-input="daily_persona.hour_utc" value="${dailyHour}" style="width:60px;display:inline-block;margin-left:6px"></label>
+			 <label style="font-size:12px;color:#888;display:block;margin-top:6px">Topic hint (optional) <input type="text" data-trig-input="daily_persona.topic" value="${attr(dailyTopic)}" placeholder="What should I talk about?" style="width:100%;display:block;margin-top:4px"></label>`)}
+		${row('weekly_digest', 'Weekly digest',
+			'Once-a-week recap including token activity if linked.',
+			`<label style="font-size:12px;color:#888">Day <select data-trig-input="weekly_digest.day_of_week" style="width:auto;display:inline-block;margin-left:6px">
+				${['Sun','Mon','Tue','Wed','Thu','Fri','Sat'].map((d,i)=>`<option value="${i}" ${i===weeklyDay?'selected':''}>${d}</option>`).join('')}
+			</select></label>
+			<label style="font-size:12px;color:#888;margin-left:10px">UTC hour <input type="number" min="0" max="23" data-trig-input="weekly_digest.hour_utc" value="${weeklyHour}" style="width:60px;display:inline-block;margin-left:6px"></label>`)}
+		${row('price_milestone', 'Token market-cap milestones',
+			'Auto-tweets when your pump.fun token crosses each threshold.',
+			`<label style="font-size:12px;color:#888;display:block">USD thresholds (comma-separated) <input type="text" data-trig-input="price_milestone.thresholds_usd" value="${attr(priceThresholds)}" style="width:100%;display:block;margin-top:4px"></label>`)}
+		${row('payment_received', 'Thank-you on every payment',
+			'Tweets a thank-you when a user pays your agent for a skill.',
+			`<label style="font-size:12px;color:#888">Minimum amount (USD) <input type="number" min="0" step="0.01" data-trig-input="payment_received.min_amount_usd" value="${paymentMin}" style="width:80px;display:inline-block;margin-left:6px"></label>`)}
+		<div data-trig-msg style="margin-top:8px;font-size:12px"></div>
+	`;
+
+	const trigMsg = host.querySelector('[data-trig-msg]');
+	const setTrigMsg = (text, color = '#9a8cff') => { trigMsg.style.color = color; trigMsg.textContent = text; };
+
+	function readConfigFromUI(kind) {
+		const get = (k) => host.querySelector(`[data-trig-input="${kind}.${k}"]`)?.value;
+		if (kind === 'daily_persona') return { hour_utc: parseInt(get('hour_utc') || '0', 10), topic: (get('topic') || '').trim() || undefined };
+		if (kind === 'weekly_digest') return { day_of_week: parseInt(get('day_of_week') || '0', 10), hour_utc: parseInt(get('hour_utc') || '0', 10) };
+		if (kind === 'price_milestone') {
+			const list = (get('thresholds_usd') || '').split(',').map((s) => parseFloat(s.trim())).filter((n) => Number.isFinite(n) && n > 0);
+			return { thresholds_usd: list };
+		}
+		if (kind === 'payment_received') return { min_amount_usd: parseFloat(get('min_amount_usd') || '0') };
+		return {};
+	}
+
+	async function upsertTrigger(kind, enabled) {
+		const config = readConfigFromUI(kind);
+		const existing = byKind[kind];
+		if (existing) {
+			const r = await fetch(`/api/x/triggers?id=${encodeURIComponent(existing.id)}`, {
+				method: 'PATCH', credentials: 'include',
+				headers: { 'content-type': 'application/json' },
+				body: JSON.stringify({ enabled, config }),
+			});
+			if (!r.ok) throw new Error((await r.json()).error_description || 'update failed');
+			byKind[kind] = (await r.json()).trigger;
+		} else {
+			const r = await fetch('/api/x/triggers', {
+				method: 'POST', credentials: 'include',
+				headers: { 'content-type': 'application/json' },
+				body: JSON.stringify({ kind, config, enabled, agent_id: agentId }),
+			});
+			if (!r.ok) throw new Error((await r.json()).error_description || 'create failed');
+			byKind[kind] = (await r.json()).trigger;
+		}
+	}
+
+	host.querySelectorAll('[data-trig]').forEach((cb) => {
+		cb.addEventListener('change', async () => {
+			const kind = cb.getAttribute('data-trig');
+			const configBox = host.querySelector(`[data-trig-config="${kind}"]`);
+			if (configBox) configBox.style.display = cb.checked ? '' : 'none';
+			try {
+				await upsertTrigger(kind, cb.checked);
+				setTrigMsg(`${cb.checked ? 'Enabled' : 'Disabled'} ${kind.replace('_', ' ')}.`);
+			} catch (err) {
+				cb.checked = !cb.checked;
+				setTrigMsg(err.message, '#ffb3b3');
+			}
+		});
+	});
+
+	host.querySelectorAll('[data-trig-input]').forEach((inp) => {
+		let timer;
+		inp.addEventListener('input', () => {
+			clearTimeout(timer);
+			timer = setTimeout(async () => {
+				const kind = inp.getAttribute('data-trig-input').split('.')[0];
+				const cb = host.querySelector(`[data-trig="${kind}"]`);
+				if (!cb?.checked) return;
+				try {
+					await upsertTrigger(kind, true);
+					setTrigMsg('Saved.', '#888');
+				} catch (err) {
+					setTrigMsg(err.message, '#ffb3b3');
+				}
+			}, 600);
+		});
+	});
 }
 
 async function loadScheduledPosts(host) {
@@ -4256,7 +4387,17 @@ async function renderPayments(root) {
 		let data;
 		try {
 			const res = await fetch(`/api/agents/${agentId}/payments?${params}`, { credentials: 'include' });
-			if (!res.ok) throw new Error(await res.text());
+			if (!res.ok) {
+				const text = await res.text();
+				let msg = text;
+				try {
+					const j = JSON.parse(text);
+					msg = j.error_description || j.message || j.error || text;
+				} catch { /* not JSON */ }
+				const err = new Error(msg);
+				err.status = res.status;
+				throw err;
+			}
 			data = await res.json();
 		} catch (e) {
 			body.innerHTML = `<div class="err">${esc(String(e.message || e))}</div>`;

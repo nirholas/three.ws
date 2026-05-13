@@ -108,10 +108,7 @@ async function handleCallback(req, res) {
 	const code = url.searchParams.get('code');
 	const state = url.searchParams.get('state');
 
-	if (url.searchParams.get('error')) {
-		return redirect(res, `/settings?tab=connected-accounts&x=denied`);
-	}
-	if (!code || !state) return error(res, 400, 'validation_error', 'missing code or state');
+	if (!state) return error(res, 400, 'validation_error', 'missing state');
 
 	const r = getRedis();
 	const raw = await r.get(`x_oauth:${state}`);
@@ -119,7 +116,19 @@ async function handleCallback(req, res) {
 	await r.del(`x_oauth:${state}`);
 
 	const stateData = typeof raw === 'string' ? JSON.parse(raw) : raw;
-	const { code_verifier: codeVerifier, user_id: userId } = stateData;
+	const { code_verifier: codeVerifier, user_id: userId, agent_id: stateAgentId } = stateData;
+	const successRedirect = stateAgentId
+		? `/agent-edit.html?id=${encodeURIComponent(stateAgentId)}&tab=social&x=connected`
+		: `/settings?tab=connected-accounts&x=connected`;
+	const errorRedirect = stateAgentId
+		? `/agent-edit.html?id=${encodeURIComponent(stateAgentId)}&tab=social&x=error`
+		: `/settings?tab=connected-accounts&x=error`;
+	const deniedRedirect = stateAgentId
+		? `/agent-edit.html?id=${encodeURIComponent(stateAgentId)}&tab=social&x=denied`
+		: `/settings?tab=connected-accounts&x=denied`;
+
+	if (url.searchParams.get('error')) return redirect(res, deniedRedirect);
+	if (!code) return error(res, 400, 'validation_error', 'missing code');
 
 	// Exchange code for tokens
 	const creds = Buffer.from(`${env.X_OAUTH_CLIENT_ID}:${env.X_OAUTH_CLIENT_SECRET}`).toString(
@@ -142,7 +151,7 @@ async function handleCallback(req, res) {
 
 	if (!tokenRes.ok) {
 		console.error('[x-oauth] token exchange failed', await tokenRes.text());
-		return redirect(res, `/settings?tab=connected-accounts&x=error`);
+		return redirect(res, errorRedirect);
 	}
 
 	const tokens = await tokenRes.json();
@@ -156,7 +165,7 @@ async function handleCallback(req, res) {
 	);
 	if (!profileRes.ok) {
 		console.error('[x-oauth] profile fetch failed', await profileRes.text());
-		return redirect(res, `/settings?tab=connected-accounts&x=error`);
+		return redirect(res, errorRedirect);
 	}
 	const { data: profile } = await profileRes.json();
 
@@ -180,7 +189,7 @@ async function handleCallback(req, res) {
 			updated_at      = now()
 	`;
 
-	return redirect(res, `/settings?tab=connected-accounts&x=connected`);
+	return redirect(res, successRedirect);
 }
 
 // ── dispatch ──────────────────────────────────────────────────────────────────

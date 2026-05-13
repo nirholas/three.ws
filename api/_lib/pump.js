@@ -51,8 +51,22 @@ export async function getPumpSdk({ network = 'mainnet' } = {}) {
 		import('bn.js').then((m) => m.default || m),
 	]);
 	const connection = getConnection({ network });
-	const sdk = new OnlinePumpSdk() ? new OnlinePumpSdk(connection) : new PumpSdk(connection);
-	return { sdk, connection, BN, web3, PumpSdk, OnlinePumpSdk };
+	// `OnlinePumpSdk` exposes the `fetch*` helpers; the instruction builders
+	// (`createInstruction`, `createV2AndBuyInstructions`, `buyInstructions`, …)
+	// live on the offline `PumpSdk`. Compose both so callers see one `sdk` with
+	// the full surface — required by the studio launch flow.
+	const offline = new PumpSdk();
+	const online = OnlinePumpSdk ? new OnlinePumpSdk(connection) : null;
+	const sdk = online
+		? new Proxy(online, {
+				get(target, prop, receiver) {
+					if (prop in target) return Reflect.get(target, prop, receiver);
+					const fallback = offline[prop];
+					return typeof fallback === 'function' ? fallback.bind(offline) : fallback;
+				},
+			})
+		: offline;
+	return { sdk, connection, BN, web3, PumpSdk, OnlinePumpSdk, offline, online };
 }
 
 // v2 bonding curve helpers — buy_v2, sell_v2, create_v2, USDC quote support
@@ -108,7 +122,7 @@ export async function getPumpSwapSdk({ network = 'mainnet' } = {}) {
 	]);
 	const connection = getConnection({ network });
 	const sdk = new PumpAmmSdk(connection);
-	const internalSdk = new PumpAmmInternalSdk() ? new PumpAmmInternalSdk(connection) : null;
+	const internalSdk = PumpAmmInternalSdk ? new PumpAmmInternalSdk(connection) : null;
 	return { sdk, internalSdk, connection, BN, web3 };
 }
 

@@ -118,6 +118,7 @@ const appConfig = {
 				app: resolve(__dirname, 'app.html'),
 				'app-demo': resolve(__dirname, 'app-demo.html'),
 				home: resolve(__dirname, 'home.html'),
+				features: resolve(__dirname, 'features.html'),
 				tutorials: resolve(__dirname, 'tutorials.html'),
 				playground: resolve(__dirname, 'playground.html'),
 				embed: resolve(__dirname, 'embed.html'),
@@ -131,6 +132,10 @@ const appConfig = {
 				'a-edit': resolve(__dirname, 'a-edit.html'),
 				'pump-live': resolve(__dirname, 'pump-live.html'),
 				'pump-dashboard': resolve(__dirname, 'pump-dashboard.html'),
+				'pump-visualizer': resolve(__dirname, 'pump-visualizer.html'),
+				'avatar-artifact': resolve(__dirname, 'avatar-artifact.html'),
+				'pretext-demo': resolve(__dirname, 'pretext-demo.html'),
+				'launch-week': resolve(__dirname, 'three-ws-launch-week.html'),
 				community: resolve(__dirname, 'community.html'),
 				profile: resolve(__dirname, 'profile.html'),
 				'avatar-page': resolve(__dirname, 'avatar-page.html'),
@@ -147,6 +152,7 @@ const appConfig = {
 				'eth-vanity': resolve(__dirname, 'public/eth-vanity.html'),
 				pay: resolve(__dirname, 'public/pay/index.html'),
 				'pay-calls': resolve(__dirname, 'public/pay/calls/index.html'),
+				sitemap: resolve(__dirname, 'public/sitemap/index.html'),
 			},
 		},
 	},
@@ -201,12 +207,22 @@ const appConfig = {
 					'/pump-live/': resolve(root, 'pump-live.html'),
 					'/pump-dashboard': resolve(root, 'pump-dashboard.html'),
 					'/pump-dashboard/': resolve(root, 'pump-dashboard.html'),
+					'/pump-visualizer': resolve(root, 'pump-visualizer.html'),
+					'/pump-visualizer/': resolve(root, 'pump-visualizer.html'),
+					'/avatar-artifact': resolve(root, 'avatar-artifact.html'),
+					'/avatar-artifact/': resolve(root, 'avatar-artifact.html'),
+					'/pretext-demo': resolve(root, 'pretext-demo.html'),
+					'/pretext-demo/': resolve(root, 'pretext-demo.html'),
+					'/launch-week': resolve(root, 'three-ws-launch-week.html'),
+					'/launch-week/': resolve(root, 'three-ws-launch-week.html'),
 					'/eth-vanity': resolve(root, 'public/eth-vanity.html'),
 					'/eth-vanity/': resolve(root, 'public/eth-vanity.html'),
 					'/strategy-lab': resolve(root, 'public/strategy-lab.html'),
 					'/strategy-lab/': resolve(root, 'public/strategy-lab.html'),
 					'/': resolve(root, 'home.html'),
 					'/home': resolve(root, 'home.html'),
+					'/features': resolve(root, 'features.html'),
+					'/features/': resolve(root, 'features.html'),
 					'/agent': resolve(root, 'agent-home.html'),
 					'/docs': resolve(root, 'docs/index.html'),
 					'/docs/': resolve(root, 'docs/index.html'),
@@ -292,6 +308,11 @@ const appConfig = {
 						filePath = resolve(root, 'public/dashboard/index.html');
 					else if (!filePath && /^\/dashboard\/edit\/[^/]+\/?$/.test(path))
 						filePath = resolve(root, 'public/dashboard/index.html');
+					// /dashboard/<page> → corresponding static HTML page
+					else if (!filePath && /^\/dashboard\/(?:portfolio|wallets|sessions|actions|embed-policy|agent-pumpfun|usage|storage)\/?$/.test(path)) {
+						const slug = path.replace(/^\/dashboard\//, '').replace(/\/$/, '');
+						filePath = resolve(root, `public/dashboard/${slug}.html`);
+					}
 					// Serve the rider webpack app as static files.
 					// /footer-bot.js — serve the Vite-processed src/footer-bot.js at a
 				// stable URL in dev so footer.js can load it without knowing the hash.

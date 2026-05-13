@@ -223,6 +223,33 @@
 }
 .ltm-status-msg.ltm-err { color: #fca5a5; }
 
+/* Step 0 — deploy agent on-chain */
+.ltm-deploy-intro {
+	display: flex;
+	flex-direction: column;
+	gap: 0.55rem;
+	padding: 0.1rem 0 0.25rem 0;
+}
+.ltm-deploy-title {
+	font-size: 0.95rem;
+	font-weight: 400;
+	color: #e7e7ec;
+}
+.ltm-deploy-sub {
+	font-size: 0.78rem;
+	line-height: 1.45;
+	color: rgba(255, 255, 255, 0.58);
+}
+.ltm-deploy-bullets {
+	margin: 0.1rem 0 0 0;
+	padding: 0 0 0 1.05rem;
+	font-size: 0.76rem;
+	line-height: 1.55;
+	color: rgba(255, 255, 255, 0.55);
+}
+.ltm-deploy-bullets li { margin-bottom: 0.15rem; }
+.ltm-deploy-bullets strong { color: #d8f5e2; font-weight: 500; }
+
 /* Success state */
 .ltm-success {
 	text-align: center;

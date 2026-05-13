@@ -1,0 +1,560 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width,initial-scale=1" />
+		<title>Portfolio · Dashboard · three.ws</title>
+		<link rel="icon" href="/favicon.ico" />
+		<style>
+			:root {
+				color-scheme: dark;
+				--accent: #6a5cff;
+				--accent2: #ff5ca8;
+				--ok: #5ce0a8;
+				--warn: #ffb35c;
+				--err: #ff6a6a;
+				--border: #22222e;
+				--bg: #0b0b10;
+				--panel: #14141c;
+			}
+			* { box-sizing: border-box; }
+			body {
+				font: 15px/1.55 -apple-system, system-ui, Segoe UI, Roboto, sans-serif;
+				color: #eee;
+				margin: 0;
+				background: var(--bg);
+				min-height: 100vh;
+			}
+			a { color: #9a8cff; text-decoration: none; }
+			header {
+				display: flex; align-items: center; justify-content: space-between;
+				padding: 16px 24px; border-bottom: 1px solid var(--border);
+				position: sticky; top: 0; background: var(--bg); z-index: 5;
+			}
+			.brand { font-weight: 600; letter-spacing: -0.01em; }
+			.row { display: flex; align-items: center; gap: 8px; }
+			main { padding: 28px; max-width: 1100px; margin: 0 auto; }
+			h1 { font-size: 22px; margin: 0 0 6px; letter-spacing: -0.01em; }
+			.sub { color: #888; margin: 0 0 22px; font-size: 14px; }
+			.btn {
+				padding: 9px 14px; border-radius: 9px; border: 0;
+				font-size: 13px; font-weight: 600; cursor: pointer;
+				background: var(--accent); color: #fff;
+			}
+			.btn:hover { filter: brightness(1.08); }
+			.btn.sec { background: #222230; color: #ddd; }
+			.btn.ghost { background: transparent; color: #ccc; border: 1px solid var(--border); }
+			.btn:disabled { opacity: 0.5; cursor: not-allowed; }
+			.btn.sm { padding: 6px 10px; font-size: 12px; }
+
+			.top-card {
+				background: linear-gradient(135deg, rgba(106,92,255,0.08), rgba(255,92,168,0.06));
+				border: 1px solid var(--border);
+				border-radius: 16px;
+				padding: 24px 24px 0;
+				margin-bottom: 18px;
+				overflow: hidden;
+			}
+			.top-row {
+				display: flex; align-items: baseline; justify-content: space-between;
+				gap: 16px; flex-wrap: wrap; margin-bottom: 12px;
+			}
+			.tot-label { color: #888; font-size: 12px; text-transform: uppercase; letter-spacing: 0.08em; }
+			.tot-value { font-size: 38px; font-weight: 600; letter-spacing: -0.02em; line-height: 1.1; margin-top: 4px; }
+			.tot-meta { color: #888; font-size: 13px; margin-top: 4px; }
+			.tot-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+			#chart { height: 220px; margin: 0 -24px -1px; }
+			#chart-empty {
+				height: 220px; display: none; align-items: center; justify-content: center;
+				color: #555; font-size: 13px; border-top: 1px solid var(--border);
+				margin: 0 -24px -1px;
+			}
+
+			.section-head {
+				display: flex; align-items: center; justify-content: space-between;
+				margin: 24px 0 10px;
+			}
+			.section-head h2 { font-size: 14px; margin: 0; color: #aaa; text-transform: uppercase; letter-spacing: 0.06em; }
+
+			.wallet-list { display: flex; flex-direction: column; gap: 10px; }
+			.wcard {
+				background: var(--panel); border: 1px solid var(--border);
+				border-radius: 12px; padding: 14px 16px;
+			}
+			.wcard-head {
+				display: flex; align-items: center; justify-content: space-between;
+				gap: 12px; flex-wrap: wrap;
+			}
+			.wcard-name { font-weight: 600; font-size: 14px; }
+			.wcard-addr {
+				font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+				font-size: 12px; color: #888;
+				display: inline-flex; align-items: center; gap: 6px;
+			}
+			.copy-btn {
+				background: none; border: none; color: #666; cursor: pointer;
+				padding: 0 2px; font-size: 12px;
+			}
+			.copy-btn:hover { color: #aaa; }
+			.pill {
+				display: inline-flex; align-items: center; gap: 6px;
+				font-size: 11px; padding: 3px 8px; border-radius: 99px;
+				background: #20202c; color: #ccc; white-space: nowrap;
+				text-transform: uppercase; letter-spacing: 0.05em;
+			}
+			.pill.sol { background: rgba(20,241,149,0.12); color: #5ce0a8; }
+			.pill.evm { background: rgba(106,92,255,0.14); color: #9a8cff; }
+			.pill.err { background: rgba(255,106,106,0.14); color: #ff9a9a; }
+			.wcard-usd { font-size: 18px; font-weight: 600; }
+			.wcard-actions { display: flex; gap: 6px; flex-wrap: wrap; }
+			.tokens {
+				display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+				gap: 8px; margin-top: 12px; padding-top: 12px;
+				border-top: 1px solid var(--border);
+			}
+			.tok { display: flex; align-items: center; gap: 8px; padding: 6px 8px; border-radius: 8px; background: #0f0f17; }
+			.tok img { width: 18px; height: 18px; border-radius: 50%; flex-shrink: 0; background: #222; }
+			.tok-sym { font-weight: 500; font-size: 13px; }
+			.tok-amt { color: #888; font-size: 12px; margin-left: auto; text-align: right; font-variant-numeric: tabular-nums; }
+
+			.empty {
+				text-align: center; padding: 40px 20px;
+				border: 1px dashed var(--border); border-radius: 14px; color: #888;
+			}
+			.err-banner {
+				padding: 12px 14px; background: rgba(255,92,92,0.1);
+				border: 1px solid rgba(255,92,92,0.3); border-radius: 10px;
+				color: #ffb3b3; margin-bottom: 14px; display: none; font-size: 13px;
+			}
+			.muted { color: #888; font-size: 13px; }
+			body[data-auth-pending] { visibility: hidden; }
+			.header-logo { width: 14px; height: 14px; vertical-align: -2px; margin-right: 6px; }
+
+			/* Modal */
+			.scrim {
+				position: fixed; inset: 0; background: rgba(5,5,9,0.72);
+				display: none; align-items: center; justify-content: center;
+				z-index: 50; padding: 20px;
+			}
+			.scrim[data-open="true"] { display: flex; }
+			.modal {
+				background: var(--panel); border: 1px solid var(--border);
+				border-radius: 14px; padding: 22px;
+				width: 100%; max-width: 460px; max-height: 90vh; overflow: auto;
+			}
+			.modal h3 { margin: 0 0 4px; font-size: 17px; }
+			.modal .sub { margin: 0 0 16px; }
+			.modal label { display: block; margin-bottom: 10px; }
+			.modal label span { display: block; font-size: 12px; color: #aaa; margin-bottom: 4px; }
+			.modal input, .modal select {
+				width: 100%; padding: 10px 12px; border-radius: 8px;
+				border: 1px solid var(--border); background: #0c0c14; color: #eee;
+				font-size: 14px; font-family: inherit;
+			}
+			.modal input[data-mono] { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
+			.modal-actions { display: flex; gap: 8px; justify-content: flex-end; margin-top: 18px; }
+			.qr-wrap { display: flex; flex-direction: column; align-items: center; gap: 12px; padding: 12px 0; }
+			.qr-wrap canvas { background: #fff; padding: 10px; border-radius: 10px; }
+			.qr-addr {
+				font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+				font-size: 12px; color: #ccc; word-break: break-all; text-align: center; max-width: 100%;
+			}
+		</style>
+	</head>
+	<body data-auth-pending>
+		<header>
+			<div class="brand"><a href="/"><img src="/three.svg" alt="" class="header-logo" aria-hidden="true" />three.ws</a></div>
+			<div class="row">
+				<a href="/dashboard" class="muted" style="font-size:13px">← Dashboard</a>
+				<div id="header-user-slot"></div>
+			</div>
+		</header>
+		<main>
+			<h1>Portfolio</h1>
+			<p class="sub">Real-time value across every agent wallet under your account.</p>
+
+			<div id="error" class="err-banner"></div>
+
+			<div class="top-card">
+				<div class="top-row">
+					<div>
+						<div class="tot-label">Total value</div>
+						<div class="tot-value" id="tot-value">—</div>
+						<div class="tot-meta" id="tot-meta">Click refresh to fetch live balances.</div>
+					</div>
+					<div class="tot-actions">
+						<button id="refresh-btn" class="btn">Refresh</button>
+					</div>
+				</div>
+				<div id="chart"></div>
+				<div id="chart-empty">No snapshots yet — hit Refresh to capture your first.</div>
+			</div>
+
+			<div class="section-head">
+				<h2>Agent wallets</h2>
+				<span class="muted" id="wallet-count"></span>
+			</div>
+			<div id="wallets" class="wallet-list">
+				<div class="muted" style="padding:20px 4px">Loading…</div>
+			</div>
+		</main>
+
+		<div id="scrim" class="scrim" role="dialog" aria-modal="true">
+			<div class="modal" id="modal-body"></div>
+		</div>
+
+		<script type="module">
+			import { renderHeaderUser } from '/header-user.js';
+
+			const apiUrl = '/api';
+			let csrfToken = null;
+			let chart = null;
+			let series = null;
+			let currentSummary = null;
+
+			const $ = (id) => document.getElementById(id);
+
+			function fmtUsd(n) {
+				if (!Number.isFinite(n)) return '$0.00';
+				if (n >= 1000) return '$' + n.toLocaleString('en-US', { maximumFractionDigits: 2 });
+				return '$' + n.toFixed(2);
+			}
+			function shortAddr(a) {
+				if (!a) return '';
+				return a.length > 14 ? `${a.slice(0, 6)}…${a.slice(-4)}` : a;
+			}
+			function setError(msg) {
+				const el = $('error');
+				if (!msg) { el.style.display = 'none'; return; }
+				el.textContent = msg;
+				el.style.display = 'block';
+			}
+
+			async function fetchUser() {
+				const res = await fetch(`${apiUrl}/auth/me`, { credentials: 'include' });
+				const data = res.ok ? await res.json() : null;
+				if (!data?.user) {
+					location.href = '/login?next=' + encodeURIComponent(location.pathname);
+					return null;
+				}
+				document.body.removeAttribute('data-auth-pending');
+				return data;
+			}
+
+			async function getCsrf() {
+				if (csrfToken) return csrfToken;
+				const r = await fetch(`${apiUrl}/csrf-token`, { credentials: 'include' });
+				if (!r.ok) throw new Error('csrf failed');
+				const d = await r.json();
+				csrfToken = d?.data?.token;
+				return csrfToken;
+			}
+
+			async function loadHistory() {
+				const r = await fetch(`${apiUrl}/portfolio/history?days=90`, { credentials: 'include' });
+				if (!r.ok) return [];
+				const d = await r.json();
+				return d.points || [];
+			}
+
+			async function loadSummary({ snapshot = false } = {}) {
+				const url = `${apiUrl}/portfolio/summary${snapshot ? '?snapshot=1' : ''}`;
+				const r = await fetch(url, { credentials: 'include' });
+				if (!r.ok) {
+					const e = await r.json().catch(() => ({}));
+					throw new Error(e.error_description || 'failed to load portfolio');
+				}
+				return r.json();
+			}
+
+			function renderTotal(summary) {
+				$('tot-value').textContent = fmtUsd(summary.total_usd);
+				const at = new Date(summary.captured_at);
+				$('tot-meta').textContent = `Updated ${at.toLocaleTimeString()} · ${summary.wallets.length} wallets`;
+			}
+
+			function renderWallets(summary) {
+				const container = $('wallets');
+				$('wallet-count').textContent = summary.wallets.length ? `${summary.wallets.length} wallets` : '';
+				if (!summary.wallets.length) {
+					container.innerHTML = `
+						<div class="empty">
+							<p>No agent wallets yet.</p>
+							<p class="muted">Create an agent and you'll get a Solana + EVM custodial wallet automatically.</p>
+							<p style="margin-top:14px"><a href="/dashboard/agents" class="btn sec sm">Manage agents</a></p>
+						</div>`;
+					return;
+				}
+				container.innerHTML = summary.wallets.map((w, i) => walletCard(w, i)).join('');
+				for (const w of summary.wallets) {
+					const id = `w-${w.chain}-${w.address}`.replace(/[^a-z0-9-]/gi, '_');
+					document.querySelectorAll(`[data-wid="${id}"]`).forEach((b) => {
+						b.addEventListener('click', () => onAction(b.dataset.kind, w));
+					});
+				}
+				container.querySelectorAll('.copy-btn').forEach((b) =>
+					b.addEventListener('click', () => {
+						navigator.clipboard.writeText(b.dataset.copy);
+						const orig = b.textContent;
+						b.textContent = '✓';
+						setTimeout(() => (b.textContent = orig), 1200);
+					}),
+				);
+			}
+
+			function walletCard(w) {
+				const id = `w-${w.chain}-${w.address}`.replace(/[^a-z0-9-]/gi, '_');
+				const chainPill = w.ok === false
+					? `<span class="pill err" title="${w.error || ''}">${w.chain} · error</span>`
+					: `<span class="pill ${w.chain === 'solana' ? 'sol' : 'evm'}">${w.chain === 'solana' ? 'Solana' : (w.chain_id === 8453 ? 'Base' : 'Ethereum')}</span>`;
+				const tokens = (w.tokens || []).slice(0, 8).map((t) => `
+					<div class="tok">
+						${t.logo ? `<img src="${t.logo}" alt="" onerror="this.style.visibility='hidden'" />` : '<span style="width:18px;height:18px"></span>'}
+						<span class="tok-sym">${escapeHtml(t.symbol || '?')}</span>
+						<span class="tok-amt">${fmtAmt(t.amount)}<br><span style="color:#666">${fmtUsd(t.usd)}</span></span>
+					</div>`).join('');
+				const nativeRow = (w.native?.amount > 0 || (w.native?.usd ?? 0) > 0)
+					? `<div class="tok">
+							<span style="width:18px;height:18px;display:inline-flex;align-items:center;justify-content:center;background:${w.chain === 'solana' ? '#14f195' : '#627eea'};color:#000;font-size:9px;font-weight:700;border-radius:50%">${w.native.symbol}</span>
+							<span class="tok-sym">${w.native.symbol}</span>
+							<span class="tok-amt">${fmtAmt(w.native.amount)}<br><span style="color:#666">${fmtUsd(w.native.usd)}</span></span>
+						</div>` : '';
+				return `
+					<div class="wcard">
+						<div class="wcard-head">
+							<div>
+								<div class="wcard-name">${escapeHtml(w.agent_name)} ${chainPill}</div>
+								<div class="wcard-addr">
+									<span>${shortAddr(w.address)}</span>
+									<button class="copy-btn" data-copy="${w.address}" title="Copy address">📋</button>
+								</div>
+							</div>
+							<div style="text-align:right">
+								<div class="wcard-usd">${fmtUsd(w.usd || 0)}</div>
+								<div class="wcard-actions" style="margin-top:6px">
+									<button class="btn ghost sm" data-wid="${id}" data-kind="receive">Receive</button>
+									<button class="btn sec sm" data-wid="${id}" data-kind="send">Send</button>
+								</div>
+							</div>
+						</div>
+						${(nativeRow || tokens) ? `<div class="tokens">${nativeRow}${tokens}</div>` : ''}
+					</div>`;
+			}
+
+			function fmtAmt(n) {
+				if (!Number.isFinite(n)) return '0';
+				if (n === 0) return '0';
+				if (n < 0.0001) return n.toExponential(2);
+				if (n < 1) return n.toFixed(4);
+				if (n < 1000) return n.toFixed(3);
+				return n.toLocaleString('en-US', { maximumFractionDigits: 2 });
+			}
+			function escapeHtml(s) {
+				return String(s).replace(/[&<>"']/g, (c) => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]));
+			}
+
+			// ── Chart ─────────────────────────────────────────────────────────
+			async function ensureChart() {
+				if (chart) return;
+				const mod = await import('https://esm.sh/lightweight-charts@4.2.3');
+				const { createChart, AreaSeries } = mod;
+				const el = $('chart');
+				chart = createChart(el, {
+					layout: { background: { color: 'transparent' }, textColor: '#888', fontFamily: 'inherit', fontSize: 11 },
+					grid: { vertLines: { visible: false }, horzLines: { color: '#1a1a24' } },
+					rightPriceScale: { borderVisible: false },
+					timeScale: { borderVisible: false, timeVisible: false },
+					crosshair: { vertLine: { color: '#333' }, horzLine: { color: '#333' } },
+					handleScroll: false,
+					handleScale: false,
+				});
+				series = chart.addAreaSeries
+					? chart.addAreaSeries({
+							lineColor: '#9a8cff',
+							topColor: 'rgba(106,92,255,0.32)',
+							bottomColor: 'rgba(106,92,255,0)',
+							lineWidth: 2,
+							priceFormat: { type: 'price', precision: 2, minMove: 0.01 },
+						})
+					: chart.addSeries(AreaSeries, {
+							lineColor: '#9a8cff',
+							topColor: 'rgba(106,92,255,0.32)',
+							bottomColor: 'rgba(106,92,255,0)',
+							lineWidth: 2,
+							priceFormat: { type: 'price', precision: 2, minMove: 0.01 },
+						});
+				new ResizeObserver(() => {
+					if (el.clientWidth) chart.applyOptions({ width: el.clientWidth, height: el.clientHeight });
+				}).observe(el);
+			}
+			async function renderChart(points) {
+				if (!points || points.length < 1) {
+					$('chart').style.display = 'none';
+					$('chart-empty').style.display = 'flex';
+					return;
+				}
+				$('chart').style.display = 'block';
+				$('chart-empty').style.display = 'none';
+				await ensureChart();
+				const data = points.map((p) => ({ time: Math.floor(new Date(p.t).getTime() / 1000), value: Number(p.usd) }));
+				series.setData(data);
+				chart.timeScale().fitContent();
+			}
+
+			// ── Actions ───────────────────────────────────────────────────────
+			function openModal(html, after) {
+				$('modal-body').innerHTML = html;
+				$('scrim').setAttribute('data-open', 'true');
+				if (after) after();
+			}
+			function closeModal() { $('scrim').removeAttribute('data-open'); }
+			$('scrim').addEventListener('click', (e) => { if (e.target.id === 'scrim') closeModal(); });
+
+			async function onAction(kind, w) {
+				if (kind === 'receive') return openReceive(w);
+				if (kind === 'send') return openSend(w);
+			}
+
+			async function openReceive(w) {
+				openModal(`
+					<h3>Receive ${w.chain === 'solana' ? 'Solana' : 'EVM'}</h3>
+					<p class="sub">Send tokens to this address from any wallet or exchange.</p>
+					<div class="qr-wrap">
+						<canvas id="qr-canvas" width="220" height="220"></canvas>
+						<div class="qr-addr">${escapeHtml(w.address)}</div>
+						<button class="btn sec sm" id="qr-copy">Copy address</button>
+					</div>
+					<div class="modal-actions">
+						<button class="btn ghost" id="close">Done</button>
+					</div>
+				`, async () => {
+					$('close').onclick = closeModal;
+					$('qr-copy').onclick = () => navigator.clipboard.writeText(w.address);
+					const mod = await import('https://esm.sh/qrcode@1.5.3');
+					const QR = mod.default ?? mod;
+					await QR.toCanvas($('qr-canvas'), w.address, { width: 220, margin: 1, color: { dark: '#0b0b10', light: '#ffffff' } });
+				});
+			}
+
+			function openSend(w) {
+				const assets = [{ value: 'native', label: w.native?.symbol || (w.chain === 'solana' ? 'SOL' : 'ETH') }];
+				for (const t of w.tokens || []) {
+					const id = t.mint || t.contract;
+					if (id) assets.push({ value: id, label: t.symbol });
+				}
+				openModal(`
+					<h3>Send from ${escapeHtml(w.agent_name)}</h3>
+					<p class="sub">${w.chain === 'solana' ? 'Solana' : (w.chain_id === 8453 ? 'Base' : 'Ethereum')} · ${shortAddr(w.address)}</p>
+					<form id="send-form">
+						<label><span>Asset</span>
+							<select name="asset">${assets.map((a) => `<option value="${escapeHtml(a.value)}">${escapeHtml(a.label)}</option>`).join('')}</select>
+						</label>
+						<label><span>Recipient address</span>
+							<input name="recipient" data-mono required placeholder="${w.chain === 'solana' ? 'Solana address (base58)' : '0x…'}" />
+						</label>
+						<label><span>Amount</span>
+							<input name="amount" inputmode="decimal" required placeholder="0.0" pattern="[0-9]*\\.?[0-9]*" />
+						</label>
+						<div class="modal-actions">
+							<button type="button" class="btn ghost" id="cancel">Cancel</button>
+							<button type="submit" class="btn">Send</button>
+						</div>
+						<p id="send-err" class="muted" style="color:#ff9a9a;display:none;margin-top:10px"></p>
+					</form>
+				`, () => {
+					$('cancel').onclick = closeModal;
+					$('send-form').addEventListener('submit', (e) => onSendSubmit(e, w));
+				});
+			}
+
+			async function onSendSubmit(e, w) {
+				e.preventDefault();
+				const f = e.target;
+				const asset = f.asset.value;
+				const recipient = f.recipient.value.trim();
+				const amount = f.amount.value.trim();
+				const submit = f.querySelector('button[type="submit"]');
+				submit.disabled = true;
+				$('send-err').style.display = 'none';
+				try {
+					const token = await getCsrf();
+					const r = await fetch(`${apiUrl}/portfolio/send`, {
+						method: 'POST',
+						credentials: 'include',
+						headers: { 'content-type': 'application/json', 'x-csrf-token': token },
+						body: JSON.stringify({
+							agent_id: w.agent_id,
+							chain: w.chain,
+							asset,
+							recipient,
+							amount,
+						}),
+					});
+					const d = await r.json();
+					if (!r.ok) throw new Error(d.error_description || 'send failed');
+					csrfToken = null; // one-time use
+					closeModal();
+					await refresh({ snapshot: true });
+				} catch (err) {
+					$('send-err').textContent = err.message;
+					$('send-err').style.display = 'block';
+					csrfToken = null;
+				} finally {
+					submit.disabled = false;
+				}
+			}
+
+			// ── Page lifecycle ────────────────────────────────────────────────
+			async function refresh({ snapshot = true } = {}) {
+				setError('');
+				$('refresh-btn').disabled = true;
+				$('refresh-btn').textContent = 'Loading…';
+				try {
+					const [summary, history] = await Promise.all([
+						loadSummary({ snapshot }),
+						loadHistory(),
+					]);
+					currentSummary = summary;
+					renderTotal(summary);
+					renderWallets(summary);
+					// Always include the live "now" point so the chart isn't empty
+					// when there's only one snapshot.
+					const points = [...history];
+					const last = points[points.length - 1];
+					if (!last || Math.abs(new Date(last.t).getTime() - new Date(summary.captured_at).getTime()) > 5000) {
+						points.push({ t: summary.captured_at, usd: summary.total_usd });
+					}
+					await renderChart(points);
+				} catch (err) {
+					setError(err.message);
+				} finally {
+					$('refresh-btn').disabled = false;
+					$('refresh-btn').textContent = 'Refresh';
+				}
+			}
+
+			(async () => {
+				const me = await fetchUser();
+				if (!me) return;
+				renderHeaderUser($('header-user-slot'), me.user, { activePath: '/dashboard/portfolio' });
+				$('refresh-btn').addEventListener('click', () => refresh({ snapshot: true }));
+				// Initial load: read existing snapshots but don't write a new one
+				// until the user clicks Refresh.
+				try {
+					const [summary, history] = await Promise.all([loadSummary({ snapshot: false }), loadHistory()]);
+					currentSummary = summary;
+					renderTotal(summary);
+					renderWallets(summary);
+					const points = [...history];
+					if (points.length || summary.total_usd > 0) {
+						points.push({ t: summary.captured_at, usd: summary.total_usd });
+					}
+					await renderChart(points);
+				} catch (err) {
+					setError(err.message);
+					$('wallets').innerHTML = '<div class="muted" style="padding:20px 4px">Failed to load.</div>';
+				}
+			})();
+		</script>
+	</body>
+</html>

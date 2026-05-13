@@ -33,13 +33,26 @@ function _mount() {
 					window.open(`/pump-dashboard.html?agent=${agentId}`, '_blank');
 				});
 			} else {
-				// Not launched yet, show launch button
+				const imageUrl =
+					rawAgent.avatar_thumbnail_url || rawAgent.meta?.thumbnail_url || '';
+				const onchain = rawAgent.onchain || rawAgent.meta?.onchain || null;
+				const needsDeploy = !onchain || onchain.family !== 'solana';
+
 				btn.addEventListener('click', () => {
 					openLaunchTokenModal({
 						agentId,
 						agentName: identity.name,
-						imageUrl:
-							rawAgent.avatar_thumbnail_url || rawAgent.meta?.thumbnail_url || '',
+						imageUrl,
+						needsDeploy,
+						agentForDeploy: needsDeploy
+							? {
+									id: agentId,
+									name: rawAgent.name || identity.name,
+									description: rawAgent.description || '',
+									avatar_id: rawAgent.avatar_id || null,
+									skills: rawAgent.skills || undefined,
+								}
+							: null,
 					});
 				});
 			}

@@ -60,6 +60,8 @@ scripts/pump-usdc-race.mjs
 # Wallet / private-key material — NEVER commit
 *.privkey.txt
 *.b58.txt
+*-pump-wallet.json
+.fresh-pump-wallet.json
 wallets/
 .wallets/
 x402-test-wallets/

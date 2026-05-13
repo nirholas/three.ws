@@ -1,0 +1,82 @@
+# three.ws
+
+> three.ws is the AI-agent layer for the open web: build, embed, monetize, and trade autonomous agents with real 3D avatars, on-chain identity (ERC-8004), pay-per-call (x402), and pump.fun token launches.
+
+Tagline: Give your AI a body.
+Site: https://three.ws
+Source: https://github.com/nirholas/three.ws
+Contact: https://x.com/trythreews
+
+## Main
+
+Entry points into the product.
+
+- [Home](https://three.ws/): Landing page. Pitch, live agent demos, and the front door to every flow.
+- [Discover](https://three.ws/discover): On-chain agent directory (ERC-8004 + Solana). Browse, search, and inspect every registered agent.
+- [Avatar Gallery](https://three.ws/gallery): Every public 3D avatar in the system, browsable as a grid.
+- [Marketplace](https://three.ws/marketplace): Buy access to agents, skills, and avatars from other creators.
+- [Community](https://three.ws/community): Featured creators, builds, and conversations from the three.ws community.
+- [Sitemap](https://three.ws/sitemap): Human-readable index of every page on three.ws.
+
+## Build
+
+Create and customize an agent.
+
+- [Create Agent](https://three.ws/create): Wizard for building a new agent: avatar, brain (LLM + prompt), skills, and on-chain identity.
+- [Viewer](https://three.ws/app): Drag-and-drop glTF/GLB viewer for inspecting 3D models in the browser.
+- [glTF Validator](https://three.ws/validation): Khronos-spec validator for glTF/GLB files. Paste a URL or upload a model.
+- [Widget Studio](https://three.ws/studio): Pick an avatar, configure embed options, copy a one-line snippet for your site.
+- [Artifact Viewer](https://three.ws/artifact): Renders Claude artifact bundles as standalone embeddable apps.
+- [Widgets Gallery](https://three.ws/widgets): Pre-built chat, voice, and 3D-avatar widgets you can drop into any page.
+- [Hydrate](https://three.ws/hydrate): Take an existing on-chain agent (ERC-8004 / Solana) and attach a 3D body, voice, and skills.
+
+## Crypto
+
+On-chain features: pay-per-call, token launches, vanity wallets.
+
+- [Pay (x402)](https://three.ws/pay): Pay-per-call gateway: invoke any x402-protocol paid API with a USDC micro-transaction.
+- [Pump.fun Stream](https://three.ws/pumpfun): Mint and trade pump.fun agent tokens on Solana. Live feed of every launch.
+- [Pump Live](https://three.ws/pump-live): Real-time SSE feed of every pump.fun launch as it happens.
+- [Pump Dashboard](https://three.ws/pump-dashboard): Pump.fun trading desk: watchlists, scanner, quotes, portfolio, and live charts.
+- [Strategy Lab](https://three.ws/strategy-lab): Build DCA and subscription strategies that trade on-chain on your behalf.
+- [Solana Vanity Wallet](https://three.ws/vanity-wallet): Grind a Solana address with a custom prefix using your browser's GPU.
+- [ETH Vanity (CREATE2)](https://three.ws/eth-vanity): Grind a vanity smart-contract address using the ThreeWSFactory CREATE2 deployer on BSC.
+
+## Agent Tools
+
+Manage, talk to, and deploy individual agents.
+
+- [Chat](https://three.ws/chat): Talk to your agent. Voice, text, and tool-use in one interface.
+- [Agent Home](https://three.ws/agent): Default landing for an agent instance — chat, embed, and remix actions.
+- [Agents Index](https://three.ws/agents): Browse every registered agent on three.ws.
+- [Reputation Explorer](https://three.ws/reputation): Inspect on-chain reputation scores and attestations for any agent.
+
+## Account
+
+Sign-in, dashboard, billing.
+
+- [Sign in](https://three.ws/login): Sign in with email, GitHub, or a connected wallet.
+- [Create account](https://three.ws/register): Create a new three.ws account.
+- [Forgot password](https://three.ws/forgot-password): Request a password-reset email.
+
+## Learn
+
+Docs, tutorials, and reference.
+
+- [Docs](https://three.ws/docs): Full documentation: SDKs, API reference, embedding, agent system, smart contracts.
+- [Docs · Quick Start](https://three.ws/docs/quick-start): Five-minute walkthrough: create an agent, embed it, get a paid call.
+- [Docs · Agent System](https://three.ws/docs/agent-system): How agents, avatars, skills, and memories fit together.
+- [Docs · ERC-8004](https://three.ws/docs/erc8004): Reference for the on-chain agent identity standard.
+- [Docs · Embedding](https://three.ws/docs/embedding): Embed an agent via iframe, oEmbed, or the <agent-3d> web component.
+- [Docs · <agent-3d>](https://three.ws/docs/web-component): Reference for the <agent-3d> custom element.
+- [Docs · MCP](https://three.ws/docs/mcp): Expose your agent as an MCP server for Claude, ChatGPT, and other clients.
+- [Docs · Skills](https://three.ws/docs/skills): Write, package, and monetize agent skills.
+- [Docs · Widgets](https://three.ws/docs/widgets): Build and publish reusable chat and 3D widgets.
+- [Docs · API Reference](https://three.ws/docs/api-reference): Full HTTP API reference.
+- [Docs · SDK](https://three.ws/docs/sdk): JavaScript / Node SDK for three.ws.
+- [Tutorials](https://three.ws/tutorials): Step-by-step build guides.
+
+## Legal
+
+- [Privacy Policy](https://three.ws/legal/privacy): How three.ws handles user data.
+- [Terms of Use](https://three.ws/legal/tos): Terms of service for three.ws.

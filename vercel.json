@@ -97,14 +97,6 @@
 			"dest": "/api/agents/[id]/unlocked-skills?id=$1"
 		},
 		{
-			"src": "/api/billing/payout-wallet",
-			"dest": "/api/billing/payout-wallet"
-		},
-		{
-			"src": "/api/billing/withdraw",
-			"dest": "/api/billing/withdraw"
-		},
-		{
 			"src": "/api/billing/receipts",
 			"dest": "/api/billing/receipts"
 		},
@@ -181,6 +173,22 @@
 			"dest": "/vanity-wallet.html"
 		},
 		{
+			"src": "/pump-visualizer/?",
+			"dest": "/pump-visualizer.html"
+		},
+		{
+			"src": "/avatar-artifact/?",
+			"dest": "/avatar-artifact.html"
+		},
+		{
+			"src": "/pretext-demo/?",
+			"dest": "/pretext-demo.html"
+		},
+		{
+			"src": "/launch-week/?",
+			"dest": "/three-ws-launch-week.html"
+		},
+		{
 			"src": "/deploy",
 			"dest": "/app.html"
 		},
@@ -199,6 +207,10 @@
 		{
 			"src": "/dashboard/wallets",
 			"dest": "/dashboard/wallets.html"
+		},
+		{
+			"src": "/dashboard/portfolio",
+			"dest": "/dashboard/portfolio.html"
 		},
 		{
 			"src": "/dashboard/sessions",
@@ -736,7 +748,7 @@
 		},
 		{
 			"src": "/api/auth/profile",
-			"dest": "/api/auth/profile"
+			"dest": "/api/auth/[action]?action=profile"
 		},
 		{
 			"src": "/a/(\\d+)/(\\d+)/edit",
@@ -951,18 +963,6 @@
 		{
 			"src": "/settings/(.*)",
 			"dest": "/settings/$1"
-		},
-		{
-			"src": "/admin",
-			"dest": "/admin/index.html"
-		},
-		{
-			"src": "/admin/",
-			"dest": "/admin/index.html"
-		},
-		{
-			"src": "/admin/(.*)",
-			"dest": "/admin/$1"
 		},
 		{
 			"src": "/api/llm/anthropic",
@@ -1181,6 +1181,14 @@
 			"dest": "/create.html"
 		},
 		{
+			"src": "/features",
+			"dest": "/features.html"
+		},
+		{
+			"src": "/features/",
+			"dest": "/features.html"
+		},
+		{
 			"src": "/",
 			"dest": "/home.html"
 		},
@@ -1289,6 +1297,10 @@
 		{
 			"path": "/api/cron/run-x-scheduled-posts",
 			"schedule": "* * * * *"
+		},
+		{
+			"path": "/api/cron/run-x-triggers",
+			"schedule": "*/5 * * * *"
 		},
 		{
 			"path": "/api/cron/pumpfun-signals",

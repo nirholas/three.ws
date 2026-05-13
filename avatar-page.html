@@ -169,12 +169,35 @@
 				border-bottom: 1px solid var(--border);
 			}
 			.av-eyebrow {
+				display: inline-flex;
+				align-items: center;
+				gap: 7px;
 				font-family: 'Space Grotesk', sans-serif;
 				font-size: 10px;
 				letter-spacing: 0.18em;
 				text-transform: uppercase;
 				color: var(--accent);
 				font-weight: 600;
+				padding: 3px 9px;
+				border: 1px solid rgba(125, 211, 252, 0.3);
+				border-radius: 999px;
+				background: rgba(125, 211, 252, 0.07);
+			}
+			.av-eyebrow-help {
+				color: rgba(125, 211, 252, 0.65);
+				text-decoration: none;
+				border-left: 1px solid rgba(125, 211, 252, 0.3);
+				padding-left: 7px;
+				font-size: 11px;
+				letter-spacing: 0;
+				cursor: help;
+			}
+			.av-eyebrow-help:hover { color: var(--text); }
+			.av-source-tag {
+				font-size: 11px;
+				color: var(--text-3);
+				margin: 8px 0 0;
+				letter-spacing: 0.02em;
 			}
 			.av-name {
 				font-family: 'Space Grotesk', sans-serif;

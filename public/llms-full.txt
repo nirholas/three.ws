@@ -1,0 +1,413 @@
+# three.ws — Complete Page Index
+
+three.ws is the AI-agent layer for the open web: build, embed, monetize, and trade autonomous agents with real 3D avatars, on-chain identity (ERC-8004), pay-per-call (x402), and pump.fun token launches.
+
+Canonical site: https://three.ws
+Tagline: Give your AI a body.
+Source code: https://github.com/nirholas/three.ws
+Contact / social: https://x.com/trythreews
+
+This file is generated from data/pages.json. It lists every public surface on the site, grouped by section, so AI agents and crawlers can navigate without scraping the home page.
+
+## Main
+
+Entry points into the product.
+
+### Home
+
+URL: https://three.ws/
+
+Landing page. Pitch, live agent demos, and the front door to every flow.
+
+### Discover
+
+URL: https://three.ws/discover
+
+On-chain agent directory (ERC-8004 + Solana). Browse, search, and inspect every registered agent.
+
+### Avatar Gallery
+
+URL: https://three.ws/gallery
+
+Every public 3D avatar in the system, browsable as a grid.
+
+### Marketplace
+
+URL: https://three.ws/marketplace
+
+Buy access to agents, skills, and avatars from other creators.
+
+### Community
+
+URL: https://three.ws/community
+
+Featured creators, builds, and conversations from the three.ws community.
+
+### Sitemap
+
+URL: https://three.ws/sitemap
+
+Human-readable index of every page on three.ws.
+
+## Build
+
+Create and customize an agent.
+
+### Create Agent
+
+URL: https://three.ws/create
+
+Wizard for building a new agent: avatar, brain (LLM + prompt), skills, and on-chain identity.
+
+### Viewer
+
+URL: https://three.ws/app
+
+Drag-and-drop glTF/GLB viewer for inspecting 3D models in the browser.
+
+### glTF Validator
+
+URL: https://three.ws/validation
+
+Khronos-spec validator for glTF/GLB files. Paste a URL or upload a model.
+
+### Widget Studio
+
+URL: https://three.ws/studio
+
+Pick an avatar, configure embed options, copy a one-line snippet for your site.
+
+### Artifact Viewer
+
+URL: https://three.ws/artifact
+
+Renders Claude artifact bundles as standalone embeddable apps.
+
+### Widgets Gallery
+
+URL: https://three.ws/widgets
+
+Pre-built chat, voice, and 3D-avatar widgets you can drop into any page.
+
+### Hydrate
+
+URL: https://three.ws/hydrate
+
+Take an existing on-chain agent (ERC-8004 / Solana) and attach a 3D body, voice, and skills.
+
+## Crypto
+
+On-chain features: pay-per-call, token launches, vanity wallets.
+
+### Pay (x402)
+
+URL: https://three.ws/pay
+
+Pay-per-call gateway: invoke any x402-protocol paid API with a USDC micro-transaction.
+
+### Pump.fun Stream
+
+URL: https://three.ws/pumpfun
+
+Mint and trade pump.fun agent tokens on Solana. Live feed of every launch.
+
+### Pump Live
+
+URL: https://three.ws/pump-live
+
+Real-time SSE feed of every pump.fun launch as it happens.
+
+### Pump Dashboard
+
+URL: https://three.ws/pump-dashboard
+
+Pump.fun trading desk: watchlists, scanner, quotes, portfolio, and live charts.
+
+### Strategy Lab
+
+URL: https://three.ws/strategy-lab
+
+Build DCA and subscription strategies that trade on-chain on your behalf.
+
+### Solana Vanity Wallet
+
+URL: https://three.ws/vanity-wallet
+
+Grind a Solana address with a custom prefix using your browser's GPU.
+
+### ETH Vanity (CREATE2)
+
+URL: https://three.ws/eth-vanity
+
+Grind a vanity smart-contract address using the ThreeWSFactory CREATE2 deployer on BSC.
+
+## Agent Tools
+
+Manage, talk to, and deploy individual agents.
+
+### Chat
+
+URL: https://three.ws/chat
+
+Talk to your agent. Voice, text, and tool-use in one interface.
+
+### Agent Home
+
+URL: https://three.ws/agent
+
+Default landing for an agent instance — chat, embed, and remix actions.
+
+### Agents Index
+
+URL: https://three.ws/agents
+
+Browse every registered agent on three.ws.
+
+### My Agents
+
+URL: https://three.ws/my-agents
+Auth: required (sign-in)
+Indexable: no (excluded from sitemap)
+
+Your private collection of agents and avatars. Requires sign-in.
+
+### Reputation Explorer
+
+URL: https://three.ws/reputation
+
+Inspect on-chain reputation scores and attestations for any agent.
+
+## Account
+
+Sign-in, dashboard, billing.
+
+### Sign in
+
+URL: https://three.ws/login
+
+Sign in with email, GitHub, or a connected wallet.
+
+### Create account
+
+URL: https://three.ws/register
+
+Create a new three.ws account.
+
+### Forgot password
+
+URL: https://three.ws/forgot-password
+
+Request a password-reset email.
+
+### Dashboard
+
+URL: https://three.ws/dashboard
+Auth: required (sign-in)
+Indexable: no (excluded from sitemap)
+
+Your account dashboard: agents, avatars, payments, keys, MCP servers, monetization, billing.
+
+### Dashboard · Wallets
+
+URL: https://three.ws/dashboard/wallets
+Auth: required (sign-in)
+Indexable: no (excluded from sitemap)
+
+Manage connected and agent-managed wallets.
+
+### Dashboard · Usage
+
+URL: https://three.ws/dashboard/usage
+Auth: required (sign-in)
+Indexable: no (excluded from sitemap)
+
+API call volume, x402 spend, and per-agent usage breakdowns.
+
+### Dashboard · Storage
+
+URL: https://three.ws/dashboard/storage
+Auth: required (sign-in)
+Indexable: no (excluded from sitemap)
+
+Avatar storage modes (R2 vs IPFS) and pin management.
+
+### Dashboard · Sessions
+
+URL: https://three.ws/dashboard/sessions
+Auth: required (sign-in)
+Indexable: no (excluded from sitemap)
+
+Active sign-in sessions across devices.
+
+### Dashboard · Actions
+
+URL: https://three.ws/dashboard/actions
+Auth: required (sign-in)
+Indexable: no (excluded from sitemap)
+
+Agent action history and approvals.
+
+### Settings
+
+URL: https://three.ws/settings
+Auth: required (sign-in)
+Indexable: no (excluded from sitemap)
+
+Account, profile, and notification settings.
+
+## Learn
+
+Docs, tutorials, and reference.
+
+### Docs
+
+URL: https://three.ws/docs
+
+Full documentation: SDKs, API reference, embedding, agent system, smart contracts.
+
+### Docs · Quick Start
+
+URL: https://three.ws/docs/quick-start
+
+Five-minute walkthrough: create an agent, embed it, get a paid call.
+
+### Docs · Agent System
+
+URL: https://three.ws/docs/agent-system
+
+How agents, avatars, skills, and memories fit together.
+
+### Docs · ERC-8004
+
+URL: https://three.ws/docs/erc8004
+
+Reference for the on-chain agent identity standard.
+
+### Docs · Embedding
+
+URL: https://three.ws/docs/embedding
+
+Embed an agent via iframe, oEmbed, or the <agent-3d> web component.
+
+### Docs · <agent-3d>
+
+URL: https://three.ws/docs/web-component
+
+Reference for the <agent-3d> custom element.
+
+### Docs · MCP
+
+URL: https://three.ws/docs/mcp
+
+Expose your agent as an MCP server for Claude, ChatGPT, and other clients.
+
+### Docs · Skills
+
+URL: https://three.ws/docs/skills
+
+Write, package, and monetize agent skills.
+
+### Docs · Widgets
+
+URL: https://three.ws/docs/widgets
+
+Build and publish reusable chat and 3D widgets.
+
+### Docs · API Reference
+
+URL: https://three.ws/docs/api-reference
+
+Full HTTP API reference.
+
+### Docs · SDK
+
+URL: https://three.ws/docs/sdk
+
+JavaScript / Node SDK for three.ws.
+
+### Tutorials
+
+URL: https://three.ws/tutorials
+
+Step-by-step build guides.
+
+## Legal
+
+### Privacy Policy
+
+URL: https://three.ws/legal/privacy
+
+How three.ws handles user data.
+
+### Terms of Use
+
+URL: https://three.ws/legal/tos
+
+Terms of service for three.ws.
+
+## Machine-readable
+
+Indexes and well-known files for crawlers and AI agents.
+
+### sitemap.xml
+
+URL: https://three.ws/sitemap.xml
+Indexable: no (excluded from sitemap)
+
+XML sitemap for search-engine crawlers.
+
+### llms.txt
+
+URL: https://three.ws/llms.txt
+Indexable: no (excluded from sitemap)
+
+AI-agent-friendly index of every public page (Howard convention).
+
+### llms-full.txt
+
+URL: https://three.ws/llms-full.txt
+Indexable: no (excluded from sitemap)
+
+Expanded llms.txt with full descriptions and content hints.
+
+### robots.txt
+
+URL: https://three.ws/robots.txt
+Indexable: no (excluded from sitemap)
+
+Crawler directives.
+
+### OpenAPI
+
+URL: https://three.ws/openapi.json
+Indexable: no (excluded from sitemap)
+
+Machine-readable HTTP API spec.
+
+### .well-known/x402
+
+URL: https://three.ws/.well-known/x402
+Indexable: no (excluded from sitemap)
+
+x402 paid-API discovery document.
+
+### .well-known/agent-attestation-schemas
+
+URL: https://three.ws/.well-known/agent-attestation-schemas
+Indexable: no (excluded from sitemap)
+
+JSON schemas for agent attestations.
+
+### .well-known/oauth-authorization-server
+
+URL: https://three.ws/.well-known/oauth-authorization-server
+Indexable: no (excluded from sitemap)
+
+OAuth 2.1 authorization-server metadata.
+
+### .well-known/chat-plugin.json
+
+URL: https://three.ws/.well-known/chat-plugin.json
+Indexable: no (excluded from sitemap)
+
+ChatGPT-style plugin manifest.

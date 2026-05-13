@@ -1,0 +1,99 @@
+// GET    /api/x/triggers              — list triggers for current user
+// POST   /api/x/triggers               — create  { kind, config, agent_id?, enabled? }
+// PATCH  /api/x/triggers?id=<uuid>     — update  { config?, enabled? }
+// DELETE /api/x/triggers?id=<uuid>     — delete
+
+import { sql } from '../_lib/db.js';
+import { getSessionUser } from '../_lib/auth.js';
+import { cors, method, wrap, error, readJson, json } from '../_lib/http.js';
+
+const VALID_KINDS = new Set(['daily_persona', 'weekly_digest', 'price_milestone', 'payment_received']);
+
+function validateConfig(kind, config) {
+	if (typeof config !== 'object' || config === null) throw new Error('config must be an object');
+	if (kind === 'daily_persona') {
+		const h = Number(config.hour_utc);
+		if (!Number.isInteger(h) || h < 0 || h > 23) throw new Error('hour_utc must be integer 0–23');
+		if (config.topic && typeof config.topic !== 'string') throw new Error('topic must be a string');
+	}
+	if (kind === 'weekly_digest') {
+		const d = Number(config.day_of_week);
+		const h = Number(config.hour_utc);
+		if (!Number.isInteger(d) || d < 0 || d > 6) throw new Error('day_of_week must be integer 0 (Sun)–6 (Sat)');
+		if (!Number.isInteger(h) || h < 0 || h > 23) throw new Error('hour_utc must be integer 0–23');
+	}
+	if (kind === 'price_milestone') {
+		if (!Array.isArray(config.thresholds_usd) || !config.thresholds_usd.length) throw new Error('thresholds_usd must be non-empty array of numbers');
+		if (config.thresholds_usd.some((t) => typeof t !== 'number' || t <= 0)) throw new Error('thresholds_usd entries must be positive numbers');
+	}
+	if (kind === 'payment_received') {
+		const min = Number(config.min_amount_usd ?? 0);
+		if (!Number.isFinite(min) || min < 0) throw new Error('min_amount_usd must be a non-negative number');
+	}
+}
+
+export default wrap(async (req, res) => {
+	if (cors(req, res, { methods: 'GET,POST,PATCH,DELETE,OPTIONS', credentials: true })) return;
+	if (!method(req, res, ['GET', 'POST', 'PATCH', 'DELETE'])) return;
+
+	const user = await getSessionUser(req);
+	if (!user) return error(res, 401, 'unauthorized', 'sign in required');
+
+	const url = new URL(req.url, 'http://x');
+	const id = url.searchParams.get('id');
+
+	if (req.method === 'GET') {
+		const rows = await sql`
+			select id, agent_id, kind, config, enabled, last_fired_at, created_at, updated_at
+			from x_triggers
+			where user_id = ${user.id}
+			order by created_at desc
+		`;
+		return json(res, 200, { triggers: rows });
+	}
+
+	if (req.method === 'POST') {
+		const body = await readJson(req);
+		const kind = body?.kind;
+		if (!VALID_KINDS.has(kind)) return error(res, 400, 'validation_error', `kind must be one of: ${[...VALID_KINDS].join(', ')}`);
+		const config = body?.config ?? {};
+		try { validateConfig(kind, config); } catch (err) { return error(res, 400, 'validation_error', err.message); }
+		const agentId = typeof body?.agent_id === 'string' ? body.agent_id : null;
+		const enabled = body?.enabled !== false;
+		const rows = await sql`
+			insert into x_triggers (user_id, agent_id, kind, config, enabled)
+			values (${user.id}, ${agentId}, ${kind}, ${JSON.stringify(config)}::jsonb, ${enabled})
+			returning id, agent_id, kind, config, enabled, last_fired_at, created_at, updated_at
+		`;
+		return json(res, 201, { trigger: rows[0] });
+	}
+
+	if (!id) return error(res, 400, 'validation_error', 'id required');
+
+	if (req.method === 'PATCH') {
+		const body = await readJson(req);
+		const existing = (await sql`select kind, config from x_triggers where id = ${id} and user_id = ${user.id} limit 1`)[0];
+		if (!existing) return error(res, 404, 'not_found', 'trigger not found');
+
+		const nextConfig = body?.config !== undefined ? body.config : existing.config;
+		if (body?.config !== undefined) {
+			try { validateConfig(existing.kind, nextConfig); } catch (err) { return error(res, 400, 'validation_error', err.message); }
+		}
+		const nextEnabled = typeof body?.enabled === 'boolean' ? body.enabled : null;
+
+		const rows = await sql`
+			update x_triggers
+			set config = ${JSON.stringify(nextConfig)}::jsonb,
+			    enabled = coalesce(${nextEnabled}, enabled),
+			    updated_at = now()
+			where id = ${id} and user_id = ${user.id}
+			returning id, agent_id, kind, config, enabled, last_fired_at, created_at, updated_at
+		`;
+		return json(res, 200, { trigger: rows[0] });
+	}
+
+	// DELETE
+	const result = await sql`delete from x_triggers where id = ${id} and user_id = ${user.id} returning id`;
+	if (!result.length) return error(res, 404, 'not_found', 'trigger not found');
+	return json(res, 200, { deleted: id });
+});

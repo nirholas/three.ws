@@ -57,9 +57,21 @@ function _apiError(status, data) {
 
 export class LaunchTokenModal {
 	/**
-	 * @param {{ agentId: string, agentName?: string, imageUrl?: string }} opts
+	 * @param {{
+	 *   agentId: string,
+	 *   agentName?: string,
+	 *   imageUrl?: string,
+	 *   needsDeploy?: boolean,
+	 *   agentForDeploy?: { id: string, name: string, description?: string, avatar_id?: string|null, skills?: string[] }|null,
+	 * }} opts
 	 */
-	constructor({ agentId, agentName = 'Agent', imageUrl = '' }) {
+	constructor({
+		agentId,
+		agentName = 'Agent',
+		imageUrl = '',
+		needsDeploy = false,
+		agentForDeploy = null,
+	}) {
 		this.agentId = agentId;
 		this._d = {
 			name: String(agentName).slice(0, 32),
@@ -69,11 +81,16 @@ export class LaunchTokenModal {
 			initialBuySol: 0,
 			cluster: 'mainnet',
 		};
-		this._step = 1;
+		this._needsDeploy = !!needsDeploy;
+		this._agentForDeploy = agentForDeploy;
+		// Step 0 = deploy-on-chain (only when needsDeploy is true).
+		// Step 1..4 = the normal launch flow.
+		this._step = needsDeploy ? 0 : 1;
 		this._overlay = null;
 		this._chart = null;
 		this._keyHandler = null;
 		this._solPriceUsd = null;
+		this._deployBusy = false;
 	}
 
 	async _fetchSolPrice() {
@@ -142,7 +159,8 @@ export class LaunchTokenModal {
 		};
 		window.addEventListener('keydown', this._keyHandler);
 		requestAnimationFrame(() => el.classList.add('ltm-open'));
-		this._renderStep1();
+		if (this._needsDeploy) this._renderStep0();
+		else this._renderStep1();
 	}
 
 	_close() {
@@ -162,7 +180,8 @@ export class LaunchTokenModal {
 	}
 
 	_stepDots() {
-		return [1, 2, 3, 4]
+		const steps = this._needsDeploy ? [0, 1, 2, 3, 4] : [1, 2, 3, 4];
+		return steps
 			.map(
 				(i) =>
 					`<div class="ltm-step-dot ${this._step === i ? 'active' : this._step > i ? 'done' : ''}"></div>`,
@@ -193,6 +212,117 @@ export class LaunchTokenModal {
 		if (!this._overlay) return;
 		this._overlay.innerHTML = html;
 		this._overlay.querySelector('.ltm-close')?.addEventListener('click', () => this._close());
+	}
+
+	// ── Step 0 — Deploy agent on Solana (only when needsDeploy) ───────────────
+
+	_renderStep0() {
+		this._step = 0;
+		this._paint(
+			this._shell(
+				'Launch Token — Deploy Agent',
+				`<div class="ltm-deploy-intro">
+					<div class="ltm-deploy-title">Deploy your agent on Solana first</div>
+					<div class="ltm-deploy-sub">
+						Pump.fun tokens are tied to the agent's on-chain identity. We'll mint
+						a Metaplex Core asset to your wallet — that asset becomes the agent's
+						permanent on-chain record. The same wallet then launches the token.
+					</div>
+					<ul class="ltm-deploy-bullets">
+						<li>You'll sign <strong>2 transactions</strong>: one to deploy, one to launch.</li>
+						<li>Both use the same Solana wallet.</li>
+						<li>Deploy cost is ~0.003 SOL of rent + network fees.</li>
+					</ul>
+				</div>
+				<div class="ltm-status-msg" id="ltm-deploy-msg"></div>`,
+				`<button class="ltm-btn" id="ltm-s0-cancel">Cancel</button>
+				<button class="ltm-btn ltm-btn-primary" id="ltm-s0-deploy">Deploy on Solana →</button>`,
+			),
+		);
+
+		this._overlay.querySelector('#ltm-s0-cancel').addEventListener('click', () => this._close());
+		this._overlay
+			.querySelector('#ltm-s0-deploy')
+			.addEventListener('click', () => this._runDeploy());
+	}
+
+	async _runDeploy() {
+		if (this._deployBusy) return;
+		const btn = this._overlay.querySelector('#ltm-s0-deploy');
+		const cancel = this._overlay.querySelector('#ltm-s0-cancel');
+		const setMsg = (text, err = false) => {
+			const el = this._overlay?.querySelector('#ltm-deploy-msg');
+			if (!el) return;
+			el.textContent = text;
+			el.className = `ltm-status-msg${err ? ' ltm-err' : ''}`;
+		};
+
+		if (!this._agentForDeploy?.id) {
+			setMsg('Missing agent context — please reload and try again.', true);
+			return;
+		}
+
+		this._deployBusy = true;
+		btn.disabled = true;
+		cancel.disabled = true;
+
+		const labels = {
+			connect: 'Connecting Solana wallet…',
+			prep: 'Preparing on-chain manifest…',
+			sign: 'Sign the deploy transaction in your wallet…',
+			confirm: 'Confirming on Solana…',
+			save: 'Linking agent to wallet…',
+		};
+
+		try {
+			const [{ deployAgent }, { solana }] = await Promise.all([
+				import('../onchain/deploy.js'),
+				import('../onchain/chain-ref.js'),
+			]);
+
+			const ref = solana(this._d.cluster === 'devnet' ? 'devnet' : 'mainnet');
+
+			setMsg(labels.connect);
+			await deployAgent({
+				agent: this._agentForDeploy,
+				ref,
+				onProgress: (step) => {
+					const text = labels[step] || step;
+					setMsg(text);
+					btn.textContent = text;
+				},
+			});
+
+			this._needsDeploy = false;
+			setMsg('Deployed. Continuing to token details…');
+			// Brief pause so user sees the success state before advancing.
+			setTimeout(() => {
+				if (!this._overlay) return;
+				this._renderStep1();
+			}, 400);
+		} catch (err) {
+			// Re-import to avoid an extra round trip in the happy path.
+			const { isUserRejection } = await import('../onchain/adapters/index.js');
+			if (isUserRejection(err)) {
+				setMsg('Deploy cancelled. Click Deploy on Solana to try again.', true);
+				btn.textContent = 'Deploy on Solana →';
+				btn.disabled = false;
+				cancel.disabled = false;
+				this._deployBusy = false;
+				return;
+			}
+			if (err?.code === 'NO_PROVIDER') {
+				const url = err.installUrl || 'https://phantom.app';
+				setMsg(`No Solana wallet detected. Install Phantom: ${url}`, true);
+			} else {
+				const msg = err?.message || 'Deploy failed — please try again.';
+				setMsg(msg, true);
+			}
+			btn.textContent = 'Retry deploy';
+			btn.disabled = false;
+			cancel.disabled = false;
+			this._deployBusy = false;
+		}
 	}
 
 	// ── Step 1 — Token details ────────────────────────────────────────────────

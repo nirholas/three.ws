@@ -113,7 +113,7 @@ async function handleGetOrCreateMe(req, res, auth) {
 			const sol = await generateSolanaAgentWallet();
 			await sql`
 				INSERT INTO agent_identities (user_id, name, skills, wallet_address, meta)
-				VALUES (
+				SELECT
 					${auth.userId},
 					${'Agent'},
 					${['greet', 'present-model', 'validate-model', 'remember', 'think']},
@@ -123,10 +123,14 @@ async function handleGetOrCreateMe(req, res, auth) {
 						solana_address: sol.address,
 						encrypted_solana_secret: sol.encrypted_secret,
 					})}::jsonb
+				WHERE NOT EXISTS (
+					SELECT 1 FROM agent_identities
+					WHERE user_id = ${auth.userId} AND deleted_at IS NULL
 				)
-				ON CONFLICT (user_id) WHERE deleted_at IS NULL DO NOTHING
 			`;
-			// Re-select covers both: we inserted, or a concurrent request beat us.
+			// Re-select returns the oldest agent: if a concurrent request beat
+			// us, that one wins; if both inserted (rare race during first visit),
+			// the oldest is canonical and the extra row is harmless.
 			[agent] = await sql`
 				SELECT i.*,
 				       a.storage_key  AS avatar_storage_key,
@@ -438,6 +442,14 @@ function decorate(row, isOwner = true) {
 		base.erc8004_agent_id = row.erc8004_agent_id;
 		base.erc8004_registry = row.erc8004_registry;
 		base.registration_cid = row.registration_cid;
+		// Publish-time fields needed by the agent editor. Owner-only because the
+		// system prompt is private IP.
+		base.system_prompt = row.system_prompt || null;
+		base.greeting = row.greeting || null;
+		base.category = row.category || null;
+		base.tags = row.tags || [];
+		base.capabilities = row.capabilities || {};
+		base.is_published = !!row.is_published;
 	}
 	return base;
 }

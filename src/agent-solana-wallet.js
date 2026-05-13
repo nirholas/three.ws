@@ -279,7 +279,11 @@ export function mountAgentSolanaWalletCard({ panel, identity, onProvisioned }) {
 
 	async function refreshBalance() {
 		if (!state.address) return;
+		// Host detached (route changed, parent re-rendered) — tear down and exit.
+		if (!wrapper.isConnected) { stopBalancePoll(); return; }
 		const r = await fetchAgentSolanaWallet(identity.id, state.network);
+		// Session lost or ownership revoked mid-poll — stop hammering the API.
+		if (r.status === 'forbidden') { stopBalancePoll(); return; }
 		if (r.status === 'ok') {
 			state.lamports = r.data.lamports;
 			state.sol = r.data.sol;
@@ -289,6 +293,7 @@ export function mountAgentSolanaWalletCard({ panel, identity, onProvisioned }) {
 
 	function startBalancePoll() {
 		stopBalancePoll();
+		if (!wrapper.isConnected) return;
 		balanceTimer = setInterval(refreshBalance, 30_000);
 	}
 	function stopBalancePoll() {

@@ -68,6 +68,7 @@ const HANDLERS = {
 	'cleanup-csrf-tokens': handleCleanupCsrfTokens,
 	'process-withdrawals': handleProcessWithdrawals,
 	'run-x-scheduled-posts': handleRunXScheduledPosts,
+	'run-x-triggers': handleRunXTriggers,
 };
 
 export default wrap(async (req, res) => {
@@ -2608,4 +2609,218 @@ async function handleRunXScheduledPosts(req, res) {
 	}
 
 	return json(res, 200, report);
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// run-x-triggers
+//
+// Evaluates enabled rows in x_triggers. Each kind has its own predicate;
+// when it fires, we draft post text (LLM for personas, formatted for
+// milestones) and insert into x_scheduled_posts with scheduled_at=now().
+// The run-x-scheduled-posts cron picks it up on the next tick.
+// ═══════════════════════════════════════════════════════════════════════════
+
+const TRIGGER_BUDGET_MS = 60_000;
+const SOL_USD_FALLBACK = 150;
+
+async function handleRunXTriggers(req, res) {
+	if (cors(req, res, { methods: 'GET,POST,OPTIONS' })) return;
+	const auth = req.headers['authorization'] || '';
+	const expected = env.CRON_SECRET ? `Bearer ${env.CRON_SECRET}` : null;
+	const fromCron = req.headers['x-vercel-cron'] === '1';
+	if (!fromCron && expected && auth !== expected) {
+		return error(res, 401, 'unauthorized', 'cron secret required');
+	}
+
+	const started = Date.now();
+	const rows = await sql`
+		select id, user_id, agent_id, kind, config, last_fired_at, last_state
+		from x_triggers
+		where enabled = true
+		order by coalesce(last_fired_at, '1970-01-01'::timestamptz) asc
+		limit 200
+	`;
+
+	const report = { evaluated: 0, fired: 0, skipped: 0, errors: 0 };
+	for (const t of rows) {
+		if (Date.now() - started > TRIGGER_BUDGET_MS) break;
+		report.evaluated++;
+		try {
+			const fired = await evalTrigger(t);
+			if (fired) report.fired++;
+			else report.skipped++;
+		} catch (err) {
+			report.errors++;
+			console.error('[run-x-triggers] error', t.id, t.kind, err.message);
+		}
+	}
+	return json(res, 200, report);
+}
+
+async function evalTrigger(t) {
+	if (t.kind === 'daily_persona')    return await evalDailyPersona(t);
+	if (t.kind === 'weekly_digest')    return await evalWeeklyDigest(t);
+	if (t.kind === 'price_milestone')  return await evalPriceMilestone(t);
+	if (t.kind === 'payment_received') return await evalPaymentReceived(t);
+	return false;
+}
+
+function utcHour(d) { return d.getUTCHours(); }
+function utcDay(d)  { return d.getUTCDay(); }
+function ymdUTC(d)  { return `${d.getUTCFullYear()}-${String(d.getUTCMonth()+1).padStart(2,'0')}-${String(d.getUTCDate()).padStart(2,'0')}`; }
+
+async function enqueueTriggerPost(t, text) {
+	await sql`
+		insert into x_scheduled_posts (user_id, agent_id, text, scheduled_at)
+		values (${t.user_id}, ${t.agent_id}, ${text}, now())
+	`;
+}
+
+async function setTriggerState(t, state) {
+	await sql`update x_triggers set last_state = ${JSON.stringify(state)}::jsonb, last_fired_at = now() where id = ${t.id}`;
+}
+
+async function loadAvatarFromAgent(agentId) {
+	if (!agentId) return null;
+	const r = await sql`select id, name, description, agent_id from avatars where id = ${agentId} or agent_id::text = ${agentId} limit 1`;
+	return r[0] || null;
+}
+
+const DRAFT_SYSTEM = `You write tweets for AI agents on three.ws. Tweets must be:
+- Under 280 characters (hard limit).
+- In the agent's voice (first person, matching the description).
+- No hashtag spam. At most 1 hashtag.
+- No leading/trailing quotes. Plain text only.
+- Avoid em-dashes.
+Output ONLY the tweet text, nothing else.`;
+
+async function llmDraft({ system, user, max = 200 }) {
+	const r = await fetch('https://api.anthropic.com/v1/messages', {
+		method: 'POST',
+		headers: {
+			'content-type': 'application/json',
+			'anthropic-version': '2023-06-01',
+			'x-api-key': env.ANTHROPIC_API_KEY,
+		},
+		body: JSON.stringify({
+			model: 'claude-haiku-4-5-20251001',
+			max_tokens: max,
+			system,
+			messages: [{ role: 'user', content: user }],
+		}),
+	});
+	if (!r.ok) throw new Error(`llm failed: ${await r.text()}`);
+	const data = await r.json();
+	let text = (data.content?.[0]?.text || '').trim();
+	if (text.startsWith('"') && text.endsWith('"')) text = text.slice(1, -1).trim();
+	if (text.length > 280) text = text.slice(0, 279) + '…';
+	return text;
+}
+
+async function evalDailyPersona(t) {
+	const now = new Date();
+	if (utcHour(now) !== Number(t.config.hour_utc)) return false;
+	const today = ymdUTC(now);
+	if (t.last_state?.fired_ymd === today) return false;
+
+	const avatar = await loadAvatarFromAgent(t.agent_id);
+	const ctx = avatar
+		? `Agent name: ${avatar.name || 'Unnamed'}\nAgent description: ${avatar.description || '(none)'}`
+		: '';
+	const topic = t.config.topic ? `Topic for today: ${t.config.topic}` : 'Write something engaging and in-character about being an autonomous AI agent today.';
+	const text = await llmDraft({ system: DRAFT_SYSTEM, user: [ctx, topic].filter(Boolean).join('\n\n') });
+	await enqueueTriggerPost(t, text);
+	await setTriggerState(t, { fired_ymd: today });
+	return true;
+}
+
+async function evalWeeklyDigest(t) {
+	const now = new Date();
+	if (utcDay(now) !== Number(t.config.day_of_week) || utcHour(now) !== Number(t.config.hour_utc)) return false;
+	const week = `${now.getUTCFullYear()}-W${Math.floor((now.getUTCDate()+6)/7)}`;
+	if (t.last_state?.fired_week === week) return false;
+
+	const avatar = await loadAvatarFromAgent(t.agent_id);
+	const mint = avatar ? (await sql`
+		select m.symbol, m.name, s.recent_tx_count
+		from pump_agent_mints m left join pump_agent_stats s on s.mint_id = m.id
+		where m.agent_id::text = ${avatar.agent_id ?? null} or m.agent_id::text = ${avatar.id}
+		order by m.created_at desc limit 1
+	`)[0] : null;
+
+	const ctx = avatar ? `Agent name: ${avatar.name || 'Unnamed'}\nDescription: ${avatar.description || '(none)'}` : '';
+	const stats = mint ? `\nToken: $${mint.symbol || 'TOKEN'} on pump.fun. Recent transactions: ${mint.recent_tx_count || 0}.` : '';
+	const text = await llmDraft({
+		system: DRAFT_SYSTEM,
+		user: `${ctx}${stats}\n\nWrite a weekly recap tweet covering the agent's progress this week. If token stats are present, mention them naturally.`,
+	});
+	await enqueueTriggerPost(t, text);
+	await setTriggerState(t, { fired_week: week });
+	return true;
+}
+
+async function evalPriceMilestone(t) {
+	const thresholds = (t.config.thresholds_usd || []).slice().sort((a, b) => a - b);
+	if (!thresholds.length) return false;
+	const avatar = await loadAvatarFromAgent(t.agent_id);
+	if (!avatar) return false;
+	const mintRow = (await sql`
+		select m.id as mint_id, m.symbol, p.market_cap_lamports
+		from pump_agent_mints m
+		left join lateral (
+			select market_cap_lamports from pump_agent_price_points
+			where mint_id = m.id order by ts desc limit 1
+		) p on true
+		where m.agent_id::text = ${avatar.agent_id ?? null} or m.agent_id::text = ${avatar.id}
+		order by m.created_at desc limit 1
+	`)[0];
+	if (!mintRow || !mintRow.market_cap_lamports) return false;
+
+	const solUsd = Number(t.config.sol_usd) || SOL_USD_FALLBACK;
+	const mcapUsd = (Number(mintRow.market_cap_lamports) / 1e9) * solUsd;
+	const lastFired = Number(t.last_state?.last_threshold_fired_usd || 0);
+	const nextThreshold = thresholds.find((th) => mcapUsd >= th && th > lastFired);
+	if (!nextThreshold) return false;
+
+	const text = await llmDraft({
+		system: DRAFT_SYSTEM,
+		user: `Agent name: ${avatar.name || 'Unnamed'}\nDescription: ${avatar.description || '(none)'}\nToken: $${mintRow.symbol || 'TOKEN'} on pump.fun.\nMilestone: market cap just crossed $${nextThreshold.toLocaleString()} (now ≈ $${Math.round(mcapUsd).toLocaleString()}).\n\nWrite a tweet celebrating this milestone in the agent's voice.`,
+	});
+	await enqueueTriggerPost(t, text);
+	await setTriggerState(t, { last_threshold_fired_usd: nextThreshold, mcap_usd: mcapUsd });
+	return true;
+}
+
+async function evalPaymentReceived(t) {
+	const avatar = await loadAvatarFromAgent(t.agent_id);
+	if (!avatar) return false;
+	const since = t.last_state?.last_payment_id ?? '00000000-0000-0000-0000-000000000000';
+	const minUsd = Number(t.config.min_amount_usd || 0);
+
+	const payments = await sql`
+		select p.id, p.amount_atomics, p.currency_mint, p.skill_id, p.tool_name, m.symbol
+		from pump_agent_payments p
+		join pump_agent_mints m on m.id = p.mint_id
+		where (m.agent_id::text = ${avatar.agent_id ?? null} or m.agent_id::text = ${avatar.id})
+		  and p.status = 'confirmed'
+		  and p.id::text > ${since}
+		order by p.confirmed_at asc
+		limit 3
+	`;
+	if (!payments.length) return false;
+
+	let lastId = null;
+	for (const p of payments) {
+		const approxUsd = Number(p.amount_atomics) / 1e6;
+		if (approxUsd < minUsd) { lastId = p.id; continue; }
+		const label = p.tool_name ? `for "${p.tool_name}"` : (p.skill_id ? `for skill ${p.skill_id}` : 'for a paid action');
+		const text = await llmDraft({
+			system: DRAFT_SYSTEM,
+			user: `Agent name: ${avatar.name || 'Unnamed'}\nDescription: ${avatar.description || '(none)'}\nA user just paid ~$${approxUsd.toFixed(2)} ${label}.\n\nWrite a short thank-you tweet in the agent's voice.`,
+		});
+		await enqueueTriggerPost(t, text);
+		lastId = p.id;
+	}
+	if (lastId) await setTriggerState(t, { last_payment_id: lastId });
+	return true;
 }

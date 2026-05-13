@@ -1,0 +1,127 @@
+{
+	"$schema": "./pages.schema.json",
+	"site": {
+		"name": "three.ws",
+		"url": "https://three.ws",
+		"tagline": "Give your AI a body.",
+		"description": "three.ws is the AI-agent layer for the open web: build, embed, monetize, and trade autonomous agents with real 3D avatars, on-chain identity (ERC-8004), pay-per-call (x402), and pump.fun token launches.",
+		"contact": "https://x.com/trythreews",
+		"github": "https://github.com/nirholas/three.ws"
+	},
+	"sections": [
+		{
+			"id": "main",
+			"title": "Main",
+			"description": "Entry points into the product.",
+			"pages": [
+				{ "path": "/", "title": "Home", "description": "Landing page. Pitch, live agent demos, and the front door to every flow.", "priority": 1.0, "changefreq": "weekly" },
+				{ "path": "/discover", "title": "Discover", "description": "On-chain agent directory (ERC-8004 + Solana). Browse, search, and inspect every registered agent.", "priority": 0.9, "changefreq": "daily" },
+				{ "path": "/gallery", "title": "Avatar Gallery", "description": "Every public 3D avatar in the system, browsable as a grid.", "priority": 0.8, "changefreq": "daily" },
+				{ "path": "/marketplace", "title": "Marketplace", "description": "Buy access to agents, skills, and avatars from other creators.", "priority": 0.8, "changefreq": "daily" },
+				{ "path": "/community", "title": "Community", "description": "Featured creators, builds, and conversations from the three.ws community.", "priority": 0.6, "changefreq": "weekly" },
+				{ "path": "/sitemap", "title": "Sitemap", "description": "Human-readable index of every page on three.ws.", "priority": 0.4, "changefreq": "weekly" }
+			]
+		},
+		{
+			"id": "build",
+			"title": "Build",
+			"description": "Create and customize an agent.",
+			"pages": [
+				{ "path": "/create", "title": "Create Agent", "description": "Wizard for building a new agent: avatar, brain (LLM + prompt), skills, and on-chain identity.", "priority": 0.9, "changefreq": "weekly" },
+				{ "path": "/app", "title": "Viewer", "description": "Drag-and-drop glTF/GLB viewer for inspecting 3D models in the browser.", "priority": 0.7, "changefreq": "monthly" },
+				{ "path": "/validation", "title": "glTF Validator", "description": "Khronos-spec validator for glTF/GLB files. Paste a URL or upload a model.", "priority": 0.6, "changefreq": "monthly" },
+				{ "path": "/studio", "title": "Widget Studio", "description": "Pick an avatar, configure embed options, copy a one-line snippet for your site.", "priority": 0.8, "changefreq": "weekly" },
+				{ "path": "/artifact", "title": "Artifact Viewer", "description": "Renders Claude artifact bundles as standalone embeddable apps.", "priority": 0.5, "changefreq": "monthly" },
+				{ "path": "/widgets", "title": "Widgets Gallery", "description": "Pre-built chat, voice, and 3D-avatar widgets you can drop into any page.", "priority": 0.7, "changefreq": "weekly" },
+				{ "path": "/hydrate", "title": "Hydrate", "description": "Take an existing on-chain agent (ERC-8004 / Solana) and attach a 3D body, voice, and skills.", "priority": 0.7, "changefreq": "weekly" }
+			]
+		},
+		{
+			"id": "crypto",
+			"title": "Crypto",
+			"description": "On-chain features: pay-per-call, token launches, vanity wallets.",
+			"pages": [
+				{ "path": "/pay", "title": "Pay (x402)", "description": "Pay-per-call gateway: invoke any x402-protocol paid API with a USDC micro-transaction.", "priority": 0.9, "changefreq": "weekly" },
+				{ "path": "/pumpfun", "title": "Pump.fun Stream", "description": "Mint and trade pump.fun agent tokens on Solana. Live feed of every launch.", "priority": 0.8, "changefreq": "daily" },
+				{ "path": "/pump-live", "title": "Pump Live", "description": "Real-time SSE feed of every pump.fun launch as it happens.", "priority": 0.7, "changefreq": "daily" },
+				{ "path": "/pump-dashboard", "title": "Pump Dashboard", "description": "Pump.fun trading desk: watchlists, scanner, quotes, portfolio, and live charts.", "priority": 0.8, "changefreq": "daily" },
+				{ "path": "/strategy-lab", "title": "Strategy Lab", "description": "Build DCA and subscription strategies that trade on-chain on your behalf.", "priority": 0.7, "changefreq": "weekly" },
+				{ "path": "/vanity-wallet", "title": "Solana Vanity Wallet", "description": "Grind a Solana address with a custom prefix using your browser's GPU.", "priority": 0.6, "changefreq": "monthly" },
+				{ "path": "/eth-vanity", "title": "ETH Vanity (CREATE2)", "description": "Grind a vanity smart-contract address using the ThreeWSFactory CREATE2 deployer on BSC.", "priority": 0.6, "changefreq": "monthly" }
+			]
+		},
+		{
+			"id": "agent-tools",
+			"title": "Agent Tools",
+			"description": "Manage, talk to, and deploy individual agents.",
+			"pages": [
+				{ "path": "/chat", "title": "Chat", "description": "Talk to your agent. Voice, text, and tool-use in one interface.", "priority": 0.8, "changefreq": "weekly" },
+				{ "path": "/agent", "title": "Agent Home", "description": "Default landing for an agent instance — chat, embed, and remix actions.", "priority": 0.7, "changefreq": "weekly" },
+				{ "path": "/agents", "title": "Agents Index", "description": "Browse every registered agent on three.ws.", "priority": 0.7, "changefreq": "daily" },
+				{ "path": "/my-agents", "title": "My Agents", "description": "Your private collection of agents and avatars. Requires sign-in.", "priority": 0.5, "changefreq": "weekly", "auth": "required", "indexable": false },
+				{ "path": "/reputation", "title": "Reputation Explorer", "description": "Inspect on-chain reputation scores and attestations for any agent.", "priority": 0.6, "changefreq": "weekly" }
+			]
+		},
+		{
+			"id": "account",
+			"title": "Account",
+			"description": "Sign-in, dashboard, billing.",
+			"pages": [
+				{ "path": "/login", "title": "Sign in", "description": "Sign in with email, GitHub, or a connected wallet.", "priority": 0.4, "changefreq": "yearly" },
+				{ "path": "/register", "title": "Create account", "description": "Create a new three.ws account.", "priority": 0.4, "changefreq": "yearly" },
+				{ "path": "/forgot-password", "title": "Forgot password", "description": "Request a password-reset email.", "priority": 0.2, "changefreq": "yearly" },
+				{ "path": "/dashboard", "title": "Dashboard", "description": "Your account dashboard: agents, avatars, payments, keys, MCP servers, monetization, billing.", "priority": 0.5, "changefreq": "weekly", "auth": "required", "indexable": false },
+				{ "path": "/dashboard/wallets", "title": "Dashboard · Wallets", "description": "Manage connected and agent-managed wallets.", "auth": "required", "indexable": false },
+				{ "path": "/dashboard/usage", "title": "Dashboard · Usage", "description": "API call volume, x402 spend, and per-agent usage breakdowns.", "auth": "required", "indexable": false },
+				{ "path": "/dashboard/storage", "title": "Dashboard · Storage", "description": "Avatar storage modes (R2 vs IPFS) and pin management.", "auth": "required", "indexable": false },
+				{ "path": "/dashboard/sessions", "title": "Dashboard · Sessions", "description": "Active sign-in sessions across devices.", "auth": "required", "indexable": false },
+				{ "path": "/dashboard/actions", "title": "Dashboard · Actions", "description": "Agent action history and approvals.", "auth": "required", "indexable": false },
+				{ "path": "/settings", "title": "Settings", "description": "Account, profile, and notification settings.", "auth": "required", "indexable": false }
+			]
+		},
+		{
+			"id": "learn",
+			"title": "Learn",
+			"description": "Docs, tutorials, and reference.",
+			"pages": [
+				{ "path": "/docs", "title": "Docs", "description": "Full documentation: SDKs, API reference, embedding, agent system, smart contracts.", "priority": 0.9, "changefreq": "weekly" },
+				{ "path": "/docs/quick-start", "title": "Docs · Quick Start", "description": "Five-minute walkthrough: create an agent, embed it, get a paid call.", "priority": 0.8, "changefreq": "weekly" },
+				{ "path": "/docs/agent-system", "title": "Docs · Agent System", "description": "How agents, avatars, skills, and memories fit together." },
+				{ "path": "/docs/erc8004", "title": "Docs · ERC-8004", "description": "Reference for the on-chain agent identity standard." },
+				{ "path": "/docs/embedding", "title": "Docs · Embedding", "description": "Embed an agent via iframe, oEmbed, or the <agent-3d> web component." },
+				{ "path": "/docs/web-component", "title": "Docs · <agent-3d>", "description": "Reference for the <agent-3d> custom element." },
+				{ "path": "/docs/mcp", "title": "Docs · MCP", "description": "Expose your agent as an MCP server for Claude, ChatGPT, and other clients." },
+				{ "path": "/docs/skills", "title": "Docs · Skills", "description": "Write, package, and monetize agent skills." },
+				{ "path": "/docs/widgets", "title": "Docs · Widgets", "description": "Build and publish reusable chat and 3D widgets." },
+				{ "path": "/docs/api-reference", "title": "Docs · API Reference", "description": "Full HTTP API reference." },
+				{ "path": "/docs/sdk", "title": "Docs · SDK", "description": "JavaScript / Node SDK for three.ws." },
+				{ "path": "/tutorials", "title": "Tutorials", "description": "Step-by-step build guides." }
+			]
+		},
+		{
+			"id": "legal",
+			"title": "Legal",
+			"description": "",
+			"pages": [
+				{ "path": "/legal/privacy", "title": "Privacy Policy", "description": "How three.ws handles user data.", "priority": 0.2, "changefreq": "yearly" },
+				{ "path": "/legal/tos", "title": "Terms of Use", "description": "Terms of service for three.ws.", "priority": 0.2, "changefreq": "yearly" }
+			]
+		},
+		{
+			"id": "machine",
+			"title": "Machine-readable",
+			"description": "Indexes and well-known files for crawlers and AI agents.",
+			"pages": [
+				{ "path": "/sitemap.xml", "title": "sitemap.xml", "description": "XML sitemap for search-engine crawlers.", "indexable": false },
+				{ "path": "/llms.txt", "title": "llms.txt", "description": "AI-agent-friendly index of every public page (Howard convention).", "indexable": false },
+				{ "path": "/llms-full.txt", "title": "llms-full.txt", "description": "Expanded llms.txt with full descriptions and content hints.", "indexable": false },
+				{ "path": "/robots.txt", "title": "robots.txt", "description": "Crawler directives.", "indexable": false },
+				{ "path": "/openapi.json", "title": "OpenAPI", "description": "Machine-readable HTTP API spec.", "indexable": false },
+				{ "path": "/.well-known/x402", "title": ".well-known/x402", "description": "x402 paid-API discovery document.", "indexable": false },
+				{ "path": "/.well-known/agent-attestation-schemas", "title": ".well-known/agent-attestation-schemas", "description": "JSON schemas for agent attestations.", "indexable": false },
+				{ "path": "/.well-known/oauth-authorization-server", "title": ".well-known/oauth-authorization-server", "description": "OAuth 2.1 authorization-server metadata.", "indexable": false },
+				{ "path": "/.well-known/chat-plugin.json", "title": ".well-known/chat-plugin.json", "description": "ChatGPT-style plugin manifest.", "indexable": false }
+			]
+		}
+	]
+}

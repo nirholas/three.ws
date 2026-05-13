@@ -12,8 +12,7 @@ import {
 	Vector3,
 } from 'three';
 
-const CLOUD_TEXTURE =
-	'https://rawcdn.githack.com/pmndrs/drei-assets/9225a9f1fbd449d9411125c2f419b843d0308c9b/cloud.png';
+const CLOUD_TEXTURE = '/textures/cloud.png';
 
 // mulberry32 — fast, seeded, deterministic
 function seededRand(seed) {

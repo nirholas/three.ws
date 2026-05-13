@@ -35,7 +35,12 @@ for (const envFile of ['.env.local', '.env']) {
 		const raw = readFileSync(path.resolve(REPO_ROOT, envFile), 'utf8');
 		for (const line of raw.split('\n')) {
 			const m = line.match(/^([A-Z_][A-Z0-9_]*)=(.*)$/);
-			if (m && !process.env[m[1]]) process.env[m[1]] = m[2].trim();
+			if (!m || process.env[m[1]]) continue;
+			let val = m[2].trim();
+			if ((val.startsWith('"') && val.endsWith('"')) || (val.startsWith("'") && val.endsWith("'"))) {
+				val = val.slice(1, -1);
+			}
+			process.env[m[1]] = val;
 		}
 		break;
 	} catch { /* file not present */ }

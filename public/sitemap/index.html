@@ -1,0 +1,547 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Sitemap · three.ws</title>
+<meta name="description" content="Complete index of every public page on three.ws." />
+<link rel="canonical" href="https://three.ws/sitemap" />
+<link rel="alternate" type="application/xml" title="XML sitemap" href="/sitemap.xml" />
+<link rel="alternate" type="text/plain" title="llms.txt" href="/llms.txt" />
+<link rel="stylesheet" href="/nav.css" />
+<link rel="stylesheet" href="/footer.css" />
+<style>
+	:root { color-scheme: dark; }
+	body { margin: 0; background: #060611; color: #e7e7f5; font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; -webkit-font-smoothing: antialiased; }
+	.sm-wrap { max-width: 1080px; margin: 0 auto; padding: 96px 24px 64px; }
+	.sm-hero { margin-bottom: 48px; }
+	.sm-hero h1 { font-size: clamp(34px, 5vw, 56px); margin: 0 0 12px; letter-spacing: -0.02em; }
+	.sm-hero p { color: #b6b6cf; font-size: 17px; max-width: 64ch; margin: 0; line-height: 1.55; }
+	.sm-formats { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 20px; }
+	.sm-formats a { padding: 6px 12px; border: 1px solid rgba(255,255,255,.12); border-radius: 999px; color: #d8d8ee; text-decoration: none; font-size: 13px; background: rgba(255,255,255,.02); transition: background .15s, border-color .15s; }
+	.sm-formats a:hover { background: rgba(255,255,255,.06); border-color: rgba(255,255,255,.24); }
+	.sm-formats code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12px; color: #9ad4ff; }
+	.sm-toc { display: flex; flex-wrap: wrap; gap: 6px 8px; padding: 14px 16px; border: 1px solid rgba(255,255,255,.08); border-radius: 14px; background: rgba(255,255,255,.02); margin-bottom: 56px; }
+	.sm-toc a { color: #cfd0e8; text-decoration: none; font-size: 13px; padding: 4px 10px; border-radius: 999px; }
+	.sm-toc a:hover { background: rgba(255,255,255,.06); color: #fff; }
+	.sm-section { margin-bottom: 56px; scroll-margin-top: 80px; }
+	.sm-section h2 { font-size: 22px; margin: 0 0 6px; letter-spacing: -0.01em; }
+	.sm-section-desc { color: #9b9bb7; margin: 0 0 18px; font-size: 14px; }
+	.sm-list { list-style: none; padding: 0; margin: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 10px; }
+	.sm-list li { display: block; }
+	.sm-list a { display: flex; flex-direction: column; gap: 4px; padding: 14px 16px; border: 1px solid rgba(255,255,255,.08); border-radius: 12px; background: rgba(255,255,255,.015); color: inherit; text-decoration: none; transition: background .15s, border-color .15s, transform .15s; }
+	.sm-list a:hover { background: rgba(120,140,255,.06); border-color: rgba(150,170,255,.30); transform: translateY(-1px); }
+	.sm-title { font-weight: 600; font-size: 15px; display: flex; align-items: center; gap: 8px; }
+	.sm-path { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12px; color: #7a85a8; }
+	.sm-desc { color: #b6b6cf; font-size: 13px; line-height: 1.45; }
+	.sm-badge { display: inline-block; padding: 1px 7px; border-radius: 999px; font-size: 10px; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; }
+	.sm-badge-auth { background: rgba(255, 200, 80, .15); color: #ffcf66; }
+	.sm-badge-internal { background: rgba(120,200,255,.12); color: #9ad4ff; }
+</style>
+</head>
+<body>
+	<div id="home-nav-mount"></div>
+	<main class="sm-wrap">
+		<div class="sm-hero">
+			<h1>Sitemap</h1>
+			<p>Every public page on three.ws, grouped by purpose. Looking for the machine-readable versions?</p>
+			<div class="sm-formats">
+				<a href="/sitemap.xml"><code>sitemap.xml</code> · for search engines</a>
+				<a href="/llms.txt"><code>llms.txt</code> · for AI agents</a>
+				<a href="/llms-full.txt"><code>llms-full.txt</code> · long form</a>
+				<a href="/openapi.json"><code>openapi.json</code> · HTTP API</a>
+			</div>
+		</div>
+		<nav class="sm-toc" aria-label="Sections">
+			<a href="#main">Main</a>
+			<a href="#build">Build</a>
+			<a href="#crypto">Crypto</a>
+			<a href="#agent-tools">Agent Tools</a>
+			<a href="#account">Account</a>
+			<a href="#learn">Learn</a>
+			<a href="#legal">Legal</a>
+			<a href="#machine">Machine-readable</a>
+		</nav>
+		<section class="sm-section" id="main">
+			<header>
+				<h2>Main</h2>
+				<p class="sm-section-desc">Entry points into the product.</p>
+			</header>
+			<ul class="sm-list">
+				<li>
+					<a href="/">
+						<span class="sm-title">Home</span>
+						<span class="sm-path">/</span>
+						<span class="sm-desc">Landing page. Pitch, live agent demos, and the front door to every flow.</span>
+					</a>
+				</li>
+				<li>
+					<a href="/discover">
+						<span class="sm-title">Discover</span>
+						<span class="sm-path">/discover</span>
+						<span class="sm-desc">On-chain agent directory (ERC-8004 + Solana). Browse, search, and inspect every registered agent.</span>
+					</a>
+				</li>
+				<li>
+					<a href="/gallery">
+						<span class="sm-title">Avatar Gallery</span>
+						<span class="sm-path">/gallery</span>
+						<span class="sm-desc">Every public 3D avatar in the system, browsable as a grid.</span>
+					</a>
+				</li>
+				<li>
+					<a href="/marketplace">
+						<span class="sm-title">Marketplace</span>
+						<span class="sm-path">/marketplace</span>
+						<span class="sm-desc">Buy access to agents, skills, and avatars from other creators.</span>
+					</a>
+				</li>
+				<li>
+					<a href="/community">
+						<span class="sm-title">Community</span>
+						<span class="sm-path">/community</span>
+						<span class="sm-desc">Featured creators, builds, and conversations from the three.ws community.</span>
+					</a>
+				</li>
+				<li>
+					<a href="/sitemap">
+						<span class="sm-title">Sitemap</span>
+						<span class="sm-path">/sitemap</span>
+						<span class="sm-desc">Human-readable index of every page on three.ws.</span>
+					</a>
+				</li>
+			</ul>
+		</section>
+
+		<section class="sm-section" id="build">
+			<header>
+				<h2>Build</h2>
+				<p class="sm-section-desc">Create and customize an agent.</p>
+			</header>
+			<ul class="sm-list">
+				<li>
+					<a href="/create">
+						<span class="sm-title">Create Agent</span>
+						<span class="sm-path">/create</span>
+						<span class="sm-desc">Wizard for building a new agent: avatar, brain (LLM + prompt), skills, and on-chain identity.</span>
+					</a>
+				</li>
+				<li>
+					<a href="/app">
+						<span class="sm-title">Viewer</span>
+						<span class="sm-path">/app</span>
+						<span class="sm-desc">Drag-and-drop glTF/GLB viewer for inspecting 3D models in the browser.</span>
+					</a>
+				</li>
+				<li>
+					<a href="/validation">
+						<span class="sm-title">glTF Validator</span>
+						<span class="sm-path">/validation</span>
+						<span class="sm-desc">Khronos-spec validator for glTF/GLB files. Paste a URL or upload a model.</span>
+					</a>
+				</li>
+				<li>
+					<a href="/studio">
+						<span class="sm-title">Widget Studio</span>
+						<span class="sm-path">/studio</span>
+						<span class="sm-desc">Pick an avatar, configure embed options, copy a one-line snippet for your site.</span>
+					</a>
+				</li>
+				<li>
+					<a href="/artifact">
+						<span class="sm-title">Artifact Viewer</span>
+						<span class="sm-path">/artifact</span>
+						<span class="sm-desc">Renders Claude artifact bundles as standalone embeddable apps.</span>
+					</a>
+				</li>
+				<li>
+					<a href="/widgets">
+						<span class="sm-title">Widgets Gallery</span>
+						<span class="sm-path">/widgets</span>
+						<span class="sm-desc">Pre-built chat, voice, and 3D-avatar widgets you can drop into any page.</span>
+					</a>
+				</li>
+				<li>
+					<a href="/hydrate">
+						<span class="sm-title">Hydrate</span>
+						<span class="sm-path">/hydrate</span>
+						<span class="sm-desc">Take an existing on-chain agent (ERC-8004 / Solana) and attach a 3D body, voice, and skills.</span>
+					</a>
+				</li>
+			</ul>
+		</section>
+
+		<section class="sm-section" id="crypto">
+			<header>
+				<h2>Crypto</h2>
+				<p class="sm-section-desc">On-chain features: pay-per-call, token launches, vanity wallets.</p>
+			</header>
+			<ul class="sm-list">
+				<li>
+					<a href="/pay">
+						<span class="sm-title">Pay (x402)</span>
+						<span class="sm-path">/pay</span>
+						<span class="sm-desc">Pay-per-call gateway: invoke any x402-protocol paid API with a USDC micro-transaction.</span>
+					</a>
+				</li>
+				<li>
+					<a href="/pumpfun">
+						<span class="sm-title">Pump.fun Stream</span>
+						<span class="sm-path">/pumpfun</span>
+						<span class="sm-desc">Mint and trade pump.fun agent tokens on Solana. Live feed of every launch.</span>
+					</a>
+				</li>
+				<li>
+					<a href="/pump-live">
+						<span class="sm-title">Pump Live</span>
+						<span class="sm-path">/pump-live</span>
+						<span class="sm-desc">Real-time SSE feed of every pump.fun launch as it happens.</span>
+					</a>
+				</li>
+				<li>
+					<a href="/pump-dashboard">
+						<span class="sm-title">Pump Dashboard</span>
+						<span class="sm-path">/pump-dashboard</span>
+						<span class="sm-desc">Pump.fun trading desk: watchlists, scanner, quotes, portfolio, and live charts.</span>
+					</a>
+				</li>
+				<li>
+					<a href="/strategy-lab">
+						<span class="sm-title">Strategy Lab</span>
+						<span class="sm-path">/strategy-lab</span>
+						<span class="sm-desc">Build DCA and subscription strategies that trade on-chain on your behalf.</span>
+					</a>
+				</li>
+				<li>
+					<a href="/vanity-wallet">
+						<span class="sm-title">Solana Vanity Wallet</span>
+						<span class="sm-path">/vanity-wallet</span>
+						<span class="sm-desc">Grind a Solana address with a custom prefix using your browser's GPU.</span>
+					</a>
+				</li>
+				<li>
+					<a href="/eth-vanity">
+						<span class="sm-title">ETH Vanity (CREATE2)</span>
+						<span class="sm-path">/eth-vanity</span>
+						<span class="sm-desc">Grind a vanity smart-contract address using the ThreeWSFactory CREATE2 deployer on BSC.</span>
+					</a>
+				</li>
+			</ul>
+		</section>
+
+		<section class="sm-section" id="agent-tools">
+			<header>
+				<h2>Agent Tools</h2>
+				<p class="sm-section-desc">Manage, talk to, and deploy individual agents.</p>
+			</header>
+			<ul class="sm-list">
+				<li>
+					<a href="/chat">
+						<span class="sm-title">Chat</span>
+						<span class="sm-path">/chat</span>
+						<span class="sm-desc">Talk to your agent. Voice, text, and tool-use in one interface.</span>
+					</a>
+				</li>
+				<li>
+					<a href="/agent">
+						<span class="sm-title">Agent Home</span>
+						<span class="sm-path">/agent</span>
+						<span class="sm-desc">Default landing for an agent instance — chat, embed, and remix actions.</span>
+					</a>
+				</li>
+				<li>
+					<a href="/agents">
+						<span class="sm-title">Agents Index</span>
+						<span class="sm-path">/agents</span>
+						<span class="sm-desc">Browse every registered agent on three.ws.</span>
+					</a>
+				</li>
+				<li>
+					<a href="/my-agents">
+						<span class="sm-title">My Agents<span class="sm-badge sm-badge-auth">sign-in</span><span class="sm-badge sm-badge-internal">internal</span></span>
+						<span class="sm-path">/my-agents</span>
+						<span class="sm-desc">Your private collection of agents and avatars. Requires sign-in.</span>
+					</a>
+				</li>
+				<li>
+					<a href="/reputation">
+						<span class="sm-title">Reputation Explorer</span>
+						<span class="sm-path">/reputation</span>
+						<span class="sm-desc">Inspect on-chain reputation scores and attestations for any agent.</span>
+					</a>
+				</li>
+			</ul>
+		</section>
+
+		<section class="sm-section" id="account">
+			<header>
+				<h2>Account</h2>
+				<p class="sm-section-desc">Sign-in, dashboard, billing.</p>
+			</header>
+			<ul class="sm-list">
+				<li>
+					<a href="/login">
+						<span class="sm-title">Sign in</span>
+						<span class="sm-path">/login</span>
+						<span class="sm-desc">Sign in with email, GitHub, or a connected wallet.</span>
+					</a>
+				</li>
+				<li>
+					<a href="/register">
+						<span class="sm-title">Create account</span>
+						<span class="sm-path">/register</span>
+						<span class="sm-desc">Create a new three.ws account.</span>
+					</a>
+				</li>
+				<li>
+					<a href="/forgot-password">
+						<span class="sm-title">Forgot password</span>
+						<span class="sm-path">/forgot-password</span>
+						<span class="sm-desc">Request a password-reset email.</span>
+					</a>
+				</li>
+				<li>
+					<a href="/dashboard">
+						<span class="sm-title">Dashboard<span class="sm-badge sm-badge-auth">sign-in</span><span class="sm-badge sm-badge-internal">internal</span></span>
+						<span class="sm-path">/dashboard</span>
+						<span class="sm-desc">Your account dashboard: agents, avatars, payments, keys, MCP servers, monetization, billing.</span>
+					</a>
+				</li>
+				<li>
+					<a href="/dashboard/wallets">
+						<span class="sm-title">Dashboard · Wallets<span class="sm-badge sm-badge-auth">sign-in</span><span class="sm-badge sm-badge-internal">internal</span></span>
+						<span class="sm-path">/dashboard/wallets</span>
+						<span class="sm-desc">Manage connected and agent-managed wallets.</span>
+					</a>
+				</li>
+				<li>
+					<a href="/dashboard/usage">
+						<span class="sm-title">Dashboard · Usage<span class="sm-badge sm-badge-auth">sign-in</span><span class="sm-badge sm-badge-internal">internal</span></span>
+						<span class="sm-path">/dashboard/usage</span>
+						<span class="sm-desc">API call volume, x402 spend, and per-agent usage breakdowns.</span>
+					</a>
+				</li>
+				<li>
+					<a href="/dashboard/storage">
+						<span class="sm-title">Dashboard · Storage<span class="sm-badge sm-badge-auth">sign-in</span><span class="sm-badge sm-badge-internal">internal</span></span>
+						<span class="sm-path">/dashboard/storage</span>
+						<span class="sm-desc">Avatar storage modes (R2 vs IPFS) and pin management.</span>
+					</a>
+				</li>
+				<li>
+					<a href="/dashboard/sessions">
+						<span class="sm-title">Dashboard · Sessions<span class="sm-badge sm-badge-auth">sign-in</span><span class="sm-badge sm-badge-internal">internal</span></span>
+						<span class="sm-path">/dashboard/sessions</span>
+						<span class="sm-desc">Active sign-in sessions across devices.</span>
+					</a>
+				</li>
+				<li>
+					<a href="/dashboard/actions">
+						<span class="sm-title">Dashboard · Actions<span class="sm-badge sm-badge-auth">sign-in</span><span class="sm-badge sm-badge-internal">internal</span></span>
+						<span class="sm-path">/dashboard/actions</span>
+						<span class="sm-desc">Agent action history and approvals.</span>
+					</a>
+				</li>
+				<li>
+					<a href="/settings">
+						<span class="sm-title">Settings<span class="sm-badge sm-badge-auth">sign-in</span><span class="sm-badge sm-badge-internal">internal</span></span>
+						<span class="sm-path">/settings</span>
+						<span class="sm-desc">Account, profile, and notification settings.</span>
+					</a>
+				</li>
+			</ul>
+		</section>
+
+		<section class="sm-section" id="learn">
+			<header>
+				<h2>Learn</h2>
+				<p class="sm-section-desc">Docs, tutorials, and reference.</p>
+			</header>
+			<ul class="sm-list">
+				<li>
+					<a href="/docs">
+						<span class="sm-title">Docs</span>
+						<span class="sm-path">/docs</span>
+						<span class="sm-desc">Full documentation: SDKs, API reference, embedding, agent system, smart contracts.</span>
+					</a>
+				</li>
+				<li>
+					<a href="/docs/quick-start">
+						<span class="sm-title">Docs · Quick Start</span>
+						<span class="sm-path">/docs/quick-start</span>
+						<span class="sm-desc">Five-minute walkthrough: create an agent, embed it, get a paid call.</span>
+					</a>
+				</li>
+				<li>
+					<a href="/docs/agent-system">
+						<span class="sm-title">Docs · Agent System</span>
+						<span class="sm-path">/docs/agent-system</span>
+						<span class="sm-desc">How agents, avatars, skills, and memories fit together.</span>
+					</a>
+				</li>
+				<li>
+					<a href="/docs/erc8004">
+						<span class="sm-title">Docs · ERC-8004</span>
+						<span class="sm-path">/docs/erc8004</span>
+						<span class="sm-desc">Reference for the on-chain agent identity standard.</span>
+					</a>
+				</li>
+				<li>
+					<a href="/docs/embedding">
+						<span class="sm-title">Docs · Embedding</span>
+						<span class="sm-path">/docs/embedding</span>
+						<span class="sm-desc">Embed an agent via iframe, oEmbed, or the &lt;agent-3d&gt; web component.</span>
+					</a>
+				</li>
+				<li>
+					<a href="/docs/web-component">
+						<span class="sm-title">Docs · &lt;agent-3d&gt;</span>
+						<span class="sm-path">/docs/web-component</span>
+						<span class="sm-desc">Reference for the &lt;agent-3d&gt; custom element.</span>
+					</a>
+				</li>
+				<li>
+					<a href="/docs/mcp">
+						<span class="sm-title">Docs · MCP</span>
+						<span class="sm-path">/docs/mcp</span>
+						<span class="sm-desc">Expose your agent as an MCP server for Claude, ChatGPT, and other clients.</span>
+					</a>
+				</li>
+				<li>
+					<a href="/docs/skills">
+						<span class="sm-title">Docs · Skills</span>
+						<span class="sm-path">/docs/skills</span>
+						<span class="sm-desc">Write, package, and monetize agent skills.</span>
+					</a>
+				</li>
+				<li>
+					<a href="/docs/widgets">
+						<span class="sm-title">Docs · Widgets</span>
+						<span class="sm-path">/docs/widgets</span>
+						<span class="sm-desc">Build and publish reusable chat and 3D widgets.</span>
+					</a>
+				</li>
+				<li>
+					<a href="/docs/api-reference">
+						<span class="sm-title">Docs · API Reference</span>
+						<span class="sm-path">/docs/api-reference</span>
+						<span class="sm-desc">Full HTTP API reference.</span>
+					</a>
+				</li>
+				<li>
+					<a href="/docs/sdk">
+						<span class="sm-title">Docs · SDK</span>
+						<span class="sm-path">/docs/sdk</span>
+						<span class="sm-desc">JavaScript / Node SDK for three.ws.</span>
+					</a>
+				</li>
+				<li>
+					<a href="/tutorials">
+						<span class="sm-title">Tutorials</span>
+						<span class="sm-path">/tutorials</span>
+						<span class="sm-desc">Step-by-step build guides.</span>
+					</a>
+				</li>
+			</ul>
+		</section>
+
+		<section class="sm-section" id="legal">
+			<header>
+				<h2>Legal</h2>
+				
+			</header>
+			<ul class="sm-list">
+				<li>
+					<a href="/legal/privacy">
+						<span class="sm-title">Privacy Policy</span>
+						<span class="sm-path">/legal/privacy</span>
+						<span class="sm-desc">How three.ws handles user data.</span>
+					</a>
+				</li>
+				<li>
+					<a href="/legal/tos">
+						<span class="sm-title">Terms of Use</span>
+						<span class="sm-path">/legal/tos</span>
+						<span class="sm-desc">Terms of service for three.ws.</span>
+					</a>
+				</li>
+			</ul>
+		</section>
+
+		<section class="sm-section" id="machine">
+			<header>
+				<h2>Machine-readable</h2>
+				<p class="sm-section-desc">Indexes and well-known files for crawlers and AI agents.</p>
+			</header>
+			<ul class="sm-list">
+				<li>
+					<a href="/sitemap.xml">
+						<span class="sm-title">sitemap.xml<span class="sm-badge sm-badge-internal">internal</span></span>
+						<span class="sm-path">/sitemap.xml</span>
+						<span class="sm-desc">XML sitemap for search-engine crawlers.</span>
+					</a>
+				</li>
+				<li>
+					<a href="/llms.txt">
+						<span class="sm-title">llms.txt<span class="sm-badge sm-badge-internal">internal</span></span>
+						<span class="sm-path">/llms.txt</span>
+						<span class="sm-desc">AI-agent-friendly index of every public page (Howard convention).</span>
+					</a>
+				</li>
+				<li>
+					<a href="/llms-full.txt">
+						<span class="sm-title">llms-full.txt<span class="sm-badge sm-badge-internal">internal</span></span>
+						<span class="sm-path">/llms-full.txt</span>
+						<span class="sm-desc">Expanded llms.txt with full descriptions and content hints.</span>
+					</a>
+				</li>
+				<li>
+					<a href="/robots.txt">
+						<span class="sm-title">robots.txt<span class="sm-badge sm-badge-internal">internal</span></span>
+						<span class="sm-path">/robots.txt</span>
+						<span class="sm-desc">Crawler directives.</span>
+					</a>
+				</li>
+				<li>
+					<a href="/openapi.json">
+						<span class="sm-title">OpenAPI<span class="sm-badge sm-badge-internal">internal</span></span>
+						<span class="sm-path">/openapi.json</span>
+						<span class="sm-desc">Machine-readable HTTP API spec.</span>
+					</a>
+				</li>
+				<li>
+					<a href="/.well-known/x402">
+						<span class="sm-title">.well-known/x402<span class="sm-badge sm-badge-internal">internal</span></span>
+						<span class="sm-path">/.well-known/x402</span>
+						<span class="sm-desc">x402 paid-API discovery document.</span>
+					</a>
+				</li>
+				<li>
+					<a href="/.well-known/agent-attestation-schemas">
+						<span class="sm-title">.well-known/agent-attestation-schemas<span class="sm-badge sm-badge-internal">internal</span></span>
+						<span class="sm-path">/.well-known/agent-attestation-schemas</span>
+						<span class="sm-desc">JSON schemas for agent attestations.</span>
+					</a>
+				</li>
+				<li>
+					<a href="/.well-known/oauth-authorization-server">
+						<span class="sm-title">.well-known/oauth-authorization-server<span class="sm-badge sm-badge-internal">internal</span></span>
+						<span class="sm-path">/.well-known/oauth-authorization-server</span>
+						<span class="sm-desc">OAuth 2.1 authorization-server metadata.</span>
+					</a>
+				</li>
+				<li>
+					<a href="/.well-known/chat-plugin.json">
+						<span class="sm-title">.well-known/chat-plugin.json<span class="sm-badge sm-badge-internal">internal</span></span>
+						<span class="sm-path">/.well-known/chat-plugin.json</span>
+						<span class="sm-desc">ChatGPT-style plugin manifest.</span>
+					</a>
+				</li>
+			</ul>
+		</section>
+	</main>
+	<div id="home-footer-mount"></div>
+	<script type="module" src="/nav.js"></script>
+	<script type="module" src="/footer.js"></script>
+</body>
+</html>

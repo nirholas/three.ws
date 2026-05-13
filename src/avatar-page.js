@@ -206,8 +206,17 @@ function renderShell(glbUrl) {
 
 		<div class="av-side">
 			<div class="av-side-head">
-				<div class="av-eyebrow">${avatar.demo ? 'Curated · Public Domain' : 'Community Avatar'}</div>
+				<div class="av-eyebrow">
+					<span>Avatar · 3D Body</span>
+					<a
+						class="av-eyebrow-help"
+						href="/docs/agents-vs-avatars"
+						title="An avatar is the 3D body. Pair it with an agent to give that agent a presence."
+						aria-label="What is an avatar?"
+					>?</a>
+				</div>
 				<h1 class="av-name">${esc(avatar.name)}</h1>
+				<div class="av-source-tag">${avatar.demo ? 'Curated · Public Domain' : 'Community avatar'}</div>
 				${byLine}
 				${tagsHtml ? `<div class="av-tags">${tagsHtml}</div>` : ''}
 			</div>

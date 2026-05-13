@@ -259,6 +259,61 @@
 				text-align: center;
 			}
 
+			.agent-type-pill {
+				display: inline-flex;
+				align-items: center;
+				gap: 0.4em;
+				font-family: 'Space Grotesk', 'Inter', system-ui, sans-serif;
+				font-size: 0.62rem;
+				letter-spacing: 0.18em;
+				text-transform: uppercase;
+				color: rgba(255, 215, 0, 0.85);
+				background: rgba(255, 215, 0, 0.07);
+				border: 1px solid rgba(255, 215, 0, 0.22);
+				padding: 0.25em 0.75em;
+				border-radius: 999px;
+				font-weight: 600;
+				margin-bottom: 0.9rem;
+			}
+			.agent-type-pill .agent-type-help {
+				color: rgba(255, 215, 0, 0.55);
+				text-decoration: none;
+				border-left: 1px solid rgba(255, 215, 0, 0.25);
+				padding-left: 0.55em;
+				margin-left: 0.1em;
+				font-size: 0.85em;
+				cursor: help;
+			}
+			.agent-type-pill .agent-type-help:hover {
+				color: rgba(255, 215, 0, 1);
+			}
+
+			.agent-body-link {
+				display: flex;
+				width: fit-content;
+				align-items: center;
+				gap: 0.45em;
+				margin: 0.85rem auto 0;
+				font-size: 0.7rem;
+				color: rgba(255, 255, 255, 0.45);
+				text-decoration: none;
+				padding: 0.3em 0.8em;
+				border: 1px solid rgba(255, 255, 255, 0.1);
+				border-radius: 999px;
+				transition: color 0.15s, border-color 0.15s, background 0.15s;
+			}
+			.agent-body-link:hover {
+				color: #fff;
+				border-color: rgba(255, 255, 255, 0.3);
+				background: rgba(255, 255, 255, 0.04);
+			}
+			.agent-body-link-key {
+				font-size: 0.58rem;
+				text-transform: uppercase;
+				letter-spacing: 0.12em;
+				color: rgba(255, 255, 255, 0.3);
+			}
+
 			.agent-page-title {
 				font-size: 2rem;
 				font-weight: 300;
@@ -753,9 +808,24 @@
 					ar-modes="webxr scene-viewer quick-look"
 					alt="Loading agent avatar"
 				></model-viewer>
-				<p class="agent-stage-empty" id="agent-stage-empty" hidden>
-					This agent doesn't have a body yet.
-				</p>
+				<div class="agent-stage-empty" id="agent-stage-empty" hidden>
+					<p style="margin:0 0 0.6rem;">This agent doesn't have a body yet.</p>
+					<a
+						class="agent-stage-cta agent-stage-cta--primary"
+						href="/marketplace?tab=avatars"
+						style="font-size:0.78rem; padding:0.45em 0.95em;"
+					>Pick a body →</a>
+				</div>
+				<a
+					class="agent-body-link"
+					id="agent-body-link"
+					href="#"
+					hidden
+					title="Open the 3D body this agent wears"
+				>
+					<span class="agent-body-link-key">Body</span>
+					<span id="agent-body-link-name">View avatar →</span>
+				</a>
 				<div class="agent-stage-cta-row" id="agent-stage-ctas" hidden>
 					<a class="agent-stage-cta agent-stage-cta--primary" id="agent-stage-edit" hidden
 						>Open in editor →</a
@@ -784,6 +854,15 @@
 			</section>
 
 			<div class="agent-page-hero">
+				<div class="agent-type-pill" id="agent-type-pill" aria-label="This page is an agent profile">
+					<span>Agent</span>
+					<a
+						class="agent-type-help"
+						href="/docs/agents-vs-avatars"
+						aria-label="What is an agent?"
+						title="An agent is the mind — identity, skills, wallet. An avatar is the body it wears. Learn more."
+					>?</a>
+				</div>
 				<h1 class="agent-page-title" id="page-agent-name">Agent</h1>
 				<p class="agent-page-subtitle" id="page-agent-desc">
 					Embodied. Present. Persistent.
@@ -1011,10 +1090,10 @@
 					const card = document.createElement('a');
 					card.className = 'my-agents-card';
 					card.href = `/agent/${agent.id}`;
-					const avatarUrl = agent.avatar?.startsWith('http') ? agent.avatar : `/api/avatars/${agent.avatar}/thumbnail`;
+					const avatarUrl = agent.avatar_thumbnail_url || '/three.svg';
 					const name = escapeHtml(agent.name);
 					card.innerHTML = `
-						<img src="${escapeHtml(avatarUrl || '/three.svg')}" class="my-agents-card-icon" alt="${name} avatar">
+						<img src="${escapeHtml(avatarUrl)}" class="my-agents-card-icon" alt="${name} avatar" onerror="this.src='/three.svg'">
 						<div class="my-agents-card-title">${name}</div>
 						<div class="my-agents-card-desc">${escapeHtml(agent.description || 'No description')}</div>
 						${agent.onchain ? '<div class="my-agents-card-badge">On-chain</div>' : ''}
@@ -1219,19 +1298,29 @@
 					}
 				} catch {}
 
-				const glbUrl = await resolveAgentGlb(identity);
-				if (glbUrl) {
-					viewer.src = glbUrl;
+				const resolved = await resolveAgentGlb(identity);
+				if (resolved?.url) {
+					viewer.src = resolved.url;
 				} else {
 					empty.hidden = false;
 					viewer.style.display = 'none';
+				}
+				if (resolved?.avatarId) {
+					const bodyLink = document.getElementById('agent-body-link');
+					const bodyName = document.getElementById('agent-body-link-name');
+					if (bodyLink) {
+						bodyLink.href = `/avatars/${resolved.avatarId}`;
+						bodyLink.hidden = false;
+					}
+					if (bodyName && resolved.avatarName) {
+						bodyName.textContent = `${resolved.avatarName} →`;
+					}
 				}
 				stage.setAttribute('aria-busy', 'false');
 			}
 
 			async function resolveAgentGlb(identity) {
 				try {
-					// identity.avatarId is already populated from the backend in _loadAsync
 					const avatarId = identity.avatarId;
 					if (!avatarId) return null;
 
@@ -1240,7 +1329,8 @@
 					});
 					if (!avResp.ok) return null;
 					const { avatar } = await avResp.json();
-					return avatar?.url || null;
+					if (!avatar?.url) return null;
+					return { url: avatar.url, avatarId, avatarName: avatar.name || '' };
 				} catch {
 					return null;
 				}
