@@ -141,17 +141,19 @@
 				min-width: 0;
 			}
 			.btn {
-				padding: 9px 14px;
-				border-radius: 9px;
-				border: 0;
+				padding: 8px 14px;
+				border-radius: 6px;
+				border: 1px solid #2a2a36;
 				font: inherit;
 				font-weight: 600;
 				cursor: pointer;
-				background: var(--accent);
+				background: #000;
 				color: #fff;
+				transition: border-color 0.12s ease, background 0.12s ease;
 			}
-			.btn:hover {
-				filter: brightness(1.1);
+			.btn:hover:not(:disabled) {
+				border-color: #3d3d52;
+				background: #0a0a12;
 			}
 			.btn:disabled {
 				opacity: 0.45;
@@ -159,8 +161,12 @@
 			}
 			.btn.ghost {
 				background: transparent;
-				border: 1px solid var(--border);
+				border: 1px solid #22222e;
 				color: #ddd;
+			}
+			.btn.ghost:hover:not(:disabled) {
+				background: #15151d;
+				border-color: #2e2e3e;
 			}
 			.btn.danger {
 				background: #3a1d22;

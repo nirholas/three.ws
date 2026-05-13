@@ -1287,6 +1287,10 @@
 			"schedule": "0 * * * *"
 		},
 		{
+			"path": "/api/cron/run-x-scheduled-posts",
+			"schedule": "* * * * *"
+		},
+		{
 			"path": "/api/cron/pumpfun-signals",
 			"schedule": "*/15 * * * *"
 		},

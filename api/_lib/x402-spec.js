@@ -206,7 +206,7 @@ export async function probeFacilitators() {
 				try {
 					const probeUrl = `${t.url}/supported`;
 					const headers = { accept: 'application/json' };
-					if (t.kind === 'cdp') headers.authorization = cdpAuthHeader('GET', probeUrl);
+					if (t.token) headers.authorization = `Bearer ${t.token}`;
 					const res = await fetch(probeUrl, {
 						headers,
 						signal: AbortSignal.timeout(10_000),

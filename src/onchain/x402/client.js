@@ -97,17 +97,23 @@ export async function x402Fetch(url, opts = {}) {
 }
 
 async function fetchAgentSnippet(agentId) {
-	try {
-		const r = await fetch(`/api/agents/${encodeURIComponent(agentId)}`, {
-			credentials: 'include',
-		});
-		if (!r.ok) return {};
-		const data = await r.json();
-		return {
-			payments: data?.agent?.payments || data?.payments,
-			meta: { payments: data?.agent?.payments || data?.payments },
-		};
-	} catch {
-		return {};
+	const r = await fetch(`/api/agents/${encodeURIComponent(agentId)}`, {
+		credentials: 'include',
+	});
+	if (!r.ok) {
+		throw new Error(
+			`x402: failed to load agent ${agentId} (status ${r.status}); cannot route payment without payments config`,
+		);
 	}
+	const data = await r.json();
+	const payments = data?.agent?.payments || data?.payments;
+	if (!payments) {
+		throw new Error(
+			`x402: agent ${agentId} has no payments config; cannot route payment`,
+		);
+	}
+	return {
+		payments,
+		meta: { payments },
+	};
 }

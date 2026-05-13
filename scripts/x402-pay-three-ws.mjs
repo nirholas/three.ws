@@ -56,7 +56,7 @@ const types = {
   ],
 };
 
-console.log('[x402] signing EIP-3009 transferWithAuthorization (v1 payload)...');
+console.log('[x402] signing EIP-3009 transferWithAuthorization (v2 payload)...');
 const signature = await account.signTypedData({
   domain,
   types,
@@ -72,7 +72,7 @@ const signature = await account.signTypedData({
 });
 
 const paymentPayload = {
-  x402Version: 1,
+  x402Version: 2,
   scheme: 'exact',
   network: 'eip155:8453',
   payload: { signature, authorization },
@@ -81,7 +81,7 @@ console.log('  payload keys:', Object.keys(paymentPayload), ' size:', Buffer.byt
 
 const xPayment = Buffer.from(JSON.stringify(paymentPayload)).toString('base64');
 
-console.log('[x402] POST 2 (X-PAYMENT, v1 payload)');
+console.log('[x402] POST 2 (X-PAYMENT, v2 payload)');
 const t0 = Date.now();
 const paidRes = await fetch(url, {
   method: 'POST',

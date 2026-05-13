@@ -16,10 +16,20 @@
 
 export const X402_VERSION = 2;
 
-/** Standard x402 header names (v2 spec) */
-export const X402_HEADER_PAYMENT_REQUIRED = "PAYMENT-REQUIRED";
-export const X402_HEADER_PAYMENT_SIGNATURE = "PAYMENT-SIGNATURE";
-export const X402_HEADER_PAYMENT_RESPONSE = "PAYMENT-RESPONSE";
+/**
+ * Standard x402 header names (Coinbase v2 wire spec).
+ *
+ *   X-PAYMENT          – client → server, retry request with payment proof
+ *   X-PAYMENT-RESPONSE – server → client, settlement receipt on the success reply
+ *
+ * The 402 response carries the PaymentRequired struct in the response **body**
+ * (`application/json`). Some servers also expose it base64-encoded as the
+ * `payment-required` response header for header-only inspection by Bazaar
+ * crawlers — read the body first, fall back to the header.
+ */
+export const X402_HEADER_PAYMENT = "X-PAYMENT";
+export const X402_HEADER_PAYMENT_RESPONSE = "X-PAYMENT-RESPONSE";
+export const X402_HEADER_PAYMENT_REQUIRED = "payment-required";
 
 /** CAIP-2 network identifiers for Solana */
 export const SOLANA_MAINNET = "solana:5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp";
@@ -101,13 +111,17 @@ export interface PaymentRequired {
   accepts: PaymentRequirements[];
 }
 
-// ─── Payment Payload (client → server proof in PAYMENT-SIGNATURE) ───────────
+// ─── Payment Payload (client → server proof in X-PAYMENT header) ───────────
 
 export interface PaymentPayload {
   x402Version: 2;
+  /** Payment scheme (matches one of the `accepts[]` entries) */
+  scheme: PaymentScheme;
+  /** CAIP-2 network identifier (matches the chosen `accepts[]` entry) */
+  network: string;
   /** The resource URL this payment is for */
   resource?: string;
-  /** Which accepted scheme/requirements this payment matches */
+  /** Which accepted scheme/requirements this payment matches (full entry) */
   accepted: PaymentRequirements;
   /** Scheme-specific proof data */
   payload: Record<string, unknown>;
@@ -158,7 +172,7 @@ export interface FacilitatorClient {
   getSupported(): Promise<SupportedResponse>;
 }
 
-// ─── Payment Response (server → client via PAYMENT-RESPONSE header) ─────────
+// ─── Payment Response (server → client via X-PAYMENT-RESPONSE header) ──────
 
 export interface PaymentResponse {
   success: boolean;

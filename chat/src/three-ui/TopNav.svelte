@@ -4,6 +4,7 @@
 	import { feMenu, feX } from '../feather.js';
 	import WalletConnect from '../WalletConnect.svelte';
 	import NotificationBell from '../NotificationBell.svelte';
+	import PayWalletPicker from '../PayWalletPicker.svelte';
 
 	let mobileOpen = false;
 </script>
@@ -24,6 +25,7 @@
 		<div class="flex items-center gap-2">
 			<div class="hidden items-center gap-2 md:flex">
 				<NotificationBell />
+				<PayWalletPicker />
 				<WalletConnect />
 			</div>
 			<button
@@ -39,7 +41,8 @@
 	<!-- Mobile sheet -->
 	{#if mobileOpen}
 		<div class="border-t border-rule bg-paper md:hidden">
-			<div class="flex gap-2 px-6 py-4">
+			<div class="flex flex-col gap-3 px-6 py-4">
+				<PayWalletPicker />
 				<WalletConnect />
 			</div>
 		</div>

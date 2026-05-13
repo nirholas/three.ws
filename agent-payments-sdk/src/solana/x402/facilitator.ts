@@ -36,8 +36,8 @@ import type {
 } from "./types";
 import {
   X402_VERSION,
+  X402_HEADER_PAYMENT,
   X402_HEADER_PAYMENT_REQUIRED,
-  X402_HEADER_PAYMENT_SIGNATURE,
   X402_HEADER_PAYMENT_RESPONSE,
   SOLANA_MAINNET,
   USDC_MAINNET,
@@ -264,8 +264,9 @@ export function buildPumpAgentRequirements(
 /**
  * Creates a handler wrapper that implements the x402 Resource Server role.
  *
- * On requests without PAYMENT-SIGNATURE: returns 402 with PAYMENT-REQUIRED.
- * On requests with PAYMENT-SIGNATURE: verifies → settles → forwards to handler.
+ * On requests without X-PAYMENT: returns 402 with PaymentRequired body
+ *   (mirrored as the `payment-required` header for Bazaar inspection).
+ * On requests with X-PAYMENT: verifies → settles → forwards to handler.
  *
  * Works with any framework using the standard Request/Response API
  * (Hono, Next.js App Router, Cloudflare Workers, Bun, Deno, etc.).
@@ -300,7 +301,7 @@ export function createResourceServer(
     request: Request,
     handler: () => Response | Promise<Response>,
   ): Promise<Response> => {
-    const paymentHeader = request.headers.get(X402_HEADER_PAYMENT_SIGNATURE);
+    const paymentHeader = request.headers.get(X402_HEADER_PAYMENT);
 
     if (!paymentHeader) {
       // Build fresh requirements (with new invoice memos)
@@ -325,7 +326,7 @@ export function createResourceServer(
     try {
       paymentPayload = decodePaymentPayload(paymentHeader);
     } catch {
-      return new Response("Invalid PAYMENT-SIGNATURE header", { status: 400 });
+      return new Response("Invalid X-PAYMENT header", { status: 400 });
     }
 
     // Find the matching requirement
@@ -360,7 +361,7 @@ export function createResourceServer(
     // Invoke the actual handler
     const finalResponse = await handler();
 
-    // Attach PAYMENT-RESPONSE header to the success response
+    // Attach X-PAYMENT-RESPONSE header to the success response
     const paymentResponse: PaymentResponse = {
       success: true,
       transaction: settleResult.transaction,

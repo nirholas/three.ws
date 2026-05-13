@@ -914,6 +914,17 @@
 			return;
 		}
 
+		// If the x402 pay-per-call pack is installed, pre-enable its tools on
+		// new conversations so the model can immediately call paid MCP tools
+		// without the user having to dig through the Tools dropdown first.
+		const x402PackMeta = curatedToolPacks.find((p) => p.id === 'x402-pay');
+		const x402PackInstalled = x402PackMeta
+			? $toolSchema.find((g) => g.name === x402PackMeta.name)
+			: null;
+		const defaultTools = x402PackInstalled
+			? x402PackInstalled.schema.map((t) => t.function?.name).filter(Boolean)
+			: [];
+
 		const convoData = {
 			id: uuidv4(),
 			time: Date.now(),
@@ -923,7 +934,7 @@
 					: [models.find((m) => m.id === 'anthropic/claude-3.5-sonnet')],
 			messages: [],
 			versions: {},
-			tools: [],
+			tools: defaultTools,
 			agentId: null,
 		};
 		if ($activeAgent?.preferred_model) {
@@ -1449,6 +1460,31 @@
 			const url = new URL(window.location.href);
 			url.searchParams.delete('install');
 			window.history.replaceState({}, '', url.toString());
+		}
+
+		// One-time bootstrap of the x402 pay-per-call pack so every chat user
+		// can immediately exercise paid MCP tools. Honors removal: once a user
+		// uninstalls the pack from Tool Packs, the bootstrap flag prevents us
+		// from forcing it back in. Also enables the pack's tools on the active
+		// conversation if it's still empty, so the LLM sees them on the first
+		// turn without requiring the user to dig through the Tools dropdown.
+		try {
+			if (!localStorage.getItem('x402PayPackBootstrapped')) {
+				const x402Pack = curatedToolPacks.find((p) => p.id === 'x402-pay');
+				if (x402Pack && !$toolSchema.some((g) => g.name === x402Pack.name)) {
+					$toolSchema = [...$toolSchema, { name: x402Pack.name, schema: x402Pack.schema }];
+				}
+				if (x402Pack && convo && (convo.messages?.length ?? 0) === 0) {
+					const names = x402Pack.schema.map((t) => t.function?.name).filter(Boolean);
+					convo.tools = Array.from(new Set([...(convo.tools || []), ...names]));
+					saveConversation(convo);
+				}
+				localStorage.setItem('x402PayPackBootstrapped', '1');
+			}
+		} catch (err) {
+			// Best-effort bootstrap — e.g. Safari private mode blocks
+			// localStorage. Don't break the rest of onMount over it.
+			console.warn('[x402-pay] bootstrap failed:', err);
 		}
 
 		initializePWAStyles();

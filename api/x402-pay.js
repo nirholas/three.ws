@@ -12,7 +12,7 @@
 //
 // Env (required for prod):
 //   X402_AGENT_SOLANA_SECRET_BASE58  base58-encoded 64-byte ed25519 secret
-// Local dev fallback (when env unset): reads keypair JSON at
+// Local dev fallback (NODE_ENV !== 'production' only): reads keypair JSON at
 //   /home/codespace/.config/x402-test-wallets/solana.json
 //
 // Also: GET /api/x402-pay?balance=1 → returns the agent wallet's USDC + SOL
@@ -31,19 +31,23 @@ import {
 import bs58 from 'bs58';
 
 import { Redis } from '@upstash/redis';
-import { cors, json, readJson, wrap, error } from './_lib/http.js';
+import { cors, json, readJson, wrap } from './_lib/http.js';
 import { limits, clientIp } from './_lib/rate-limit.js';
 import {
 	paymentRequirements,
 	verifyPayment,
 	settlePayment,
+	resolveResourceUrl,
 	NETWORK_SOLANA_MAINNET,
 } from './_lib/x402-spec.js';
 import { dispatch } from './_mcp/dispatch.js';
 import { env } from './_lib/env.js';
 import { sql } from './_lib/db.js';
+import { logger } from './_lib/usage.js';
 import { getSessionUser, authenticateBearer, extractBearer } from './_lib/auth.js';
 import { recoverSolanaAgentKeypair } from './_lib/agent-wallet.js';
+
+const log = logger('x402-pay');
 
 // ---- Persistent feed of recent paid calls -------------------------------
 // Backed by Upstash Redis when available; falls back to an in-memory ring
@@ -72,7 +76,9 @@ async function recordFeedEntry(entry) {
 		try {
 			await r.lpush(FEED_KEY, JSON.stringify(entry));
 			await r.ltrim(FEED_KEY, 0, FEED_MAX - 1);
-		} catch {}
+		} catch (err) {
+			log.warn('feed_write_failed', { message: err?.message });
+		}
 	}
 	memFeed.unshift(entry);
 	if (memFeed.length > FEED_MAX) memFeed.length = FEED_MAX;
@@ -86,12 +92,19 @@ async function readFeed(limit = 25) {
 			return rows
 				.map((row) => {
 					if (typeof row === 'string') {
-						try { return JSON.parse(row); } catch { return null; }
+						try {
+							return JSON.parse(row);
+						} catch (parseErr) {
+							log.warn('feed_row_parse_failed', { message: parseErr?.message });
+							return null;
+						}
 					}
 					return row;
 				})
 				.filter(Boolean);
-		} catch {}
+		} catch (err) {
+			log.warn('feed_read_failed', { message: err?.message });
+		}
 	}
 	return memFeed.slice(0, limit);
 }
@@ -104,8 +117,11 @@ const CALL_TTL_SECONDS = 60 * 60 * 24 * 30; // 30 days
 async function persistCall(tx, record) {
 	const r = redis();
 	if (r) {
-		try { await r.set(CALL_KEY(tx), JSON.stringify(record), { ex: CALL_TTL_SECONDS }); }
-		catch {}
+		try {
+			await r.set(CALL_KEY(tx), JSON.stringify(record), { ex: CALL_TTL_SECONDS });
+		} catch (err) {
+			log.warn('call_persist_failed', { tx, message: err?.message });
+		}
 	}
 	memCalls.set(tx, record);
 }
@@ -115,9 +131,16 @@ async function readCall(tx) {
 	if (r) {
 		try {
 			const row = await r.get(CALL_KEY(tx));
-			if (typeof row === 'string') { try { return JSON.parse(row); } catch {} }
-			else if (row && typeof row === 'object') return row;
-		} catch {}
+			if (typeof row === 'string') {
+				try {
+					return JSON.parse(row);
+				} catch (parseErr) {
+					log.warn('call_read_parse_failed', { tx, message: parseErr?.message });
+				}
+			} else if (row && typeof row === 'object') return row;
+		} catch (err) {
+			log.warn('call_read_failed', { tx, message: err?.message });
+		}
 	}
 	return memCalls.get(tx) || null;
 }
@@ -130,7 +153,9 @@ async function requireAuth(req) {
 		if (session) return { userId: session.id };
 		const bearer = await authenticateBearer(extractBearer(req));
 		if (bearer) return { userId: bearer.userId };
-	} catch {}
+	} catch (err) {
+		log.warn('require_auth_failed', { message: err?.message });
+	}
 	return null;
 }
 
@@ -166,7 +191,9 @@ async function getAgentsForUser(userId) {
 			try {
 				const lamports = await conn.getBalance(new PublicKey(address));
 				sol = lamports / 1e9;
-			} catch {}
+			} catch (err) {
+				log.warn('agent_sol_balance_failed', { address, message: err?.message });
+			}
 			try {
 				const ata = getAssociatedTokenAddressSync(
 					new PublicKey(USDC_MAINNET_MINT),
@@ -174,7 +201,14 @@ async function getAgentsForUser(userId) {
 				);
 				const acct = await conn.getTokenAccountBalance(ata);
 				usdc = Number(acct.value.uiAmount || 0);
-			} catch {}
+			} catch (err) {
+				// Missing ATA throws TokenAccountNotFoundError — that's an expected
+				// state (agent never received USDC), so debug not warn.
+				if (!/could not find account|TokenAccountNotFound/i.test(err?.message || '')) {
+					log.warn('agent_usdc_balance_failed', { address, message: err?.message });
+				}
+				usdc = 0;
+			}
 		}
 		return {
 			id: row.id,
@@ -208,8 +242,8 @@ const ALLOWED_TOOLS = new Set([
 	'search_public_avatars',
 ]);
 
-const SOLANA_RPC = process.env.SOLANA_RPC_URL || 'https://api.mainnet-beta.solana.com';
-const USDC_MAINNET_MINT = 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v';
+const SOLANA_RPC = env.SOLANA_RPC_URL;
+const USDC_MAINNET_MINT = env.X402_ASSET_MINT_SOLANA;
 
 let _agent = null;
 function loadAgentKeypair() {
@@ -219,10 +253,11 @@ function loadAgentKeypair() {
 		let raw;
 		try {
 			raw = bs58.decode(b58);
-		} catch {
-			const e = new Error('X402_AGENT_SOLANA_SECRET_BASE58 is not valid base58');
+		} catch (decodeErr) {
+			const e = new Error(`X402_AGENT_SOLANA_SECRET_BASE58 is not valid base58: ${decodeErr?.message}`);
 			e.status = 503;
 			e.code = 'wallet_misconfigured';
+			e.cause = decodeErr;
 			throw e;
 		}
 		if (raw.length !== 64) {
@@ -236,17 +271,23 @@ function loadAgentKeypair() {
 		_agent = Keypair.fromSecretKey(raw);
 		return _agent;
 	}
-	try {
-		const path = '/home/codespace/.config/x402-test-wallets/solana.json';
-		const arr = JSON.parse(readFileSync(path, 'utf8'));
-		_agent = Keypair.fromSecretKey(Uint8Array.from(arr));
-		return _agent;
-	} catch {
-		const e = new Error('agent wallet not configured (set X402_AGENT_SOLANA_SECRET_BASE58)');
-		e.status = 503;
-		e.code = 'wallet_unconfigured';
-		throw e;
+	// Local dev only: load the developer's test keypair from a well-known
+	// codespace path so `npm run dev` works without setting env vars. Refusing
+	// to read it in production prevents accidental key reuse across deploys.
+	if (process.env.NODE_ENV !== 'production') {
+		try {
+			const path = '/home/codespace/.config/x402-test-wallets/solana.json';
+			const arr = JSON.parse(readFileSync(path, 'utf8'));
+			_agent = Keypair.fromSecretKey(Uint8Array.from(arr));
+			return _agent;
+		} catch (err) {
+			log.warn('dev_keypair_load_failed', { path: '/home/codespace/.config/x402-test-wallets/solana.json', message: err?.message });
+		}
 	}
+	const e = new Error('agent wallet not configured (set X402_AGENT_SOLANA_SECRET_BASE58)');
+	e.status = 503;
+	e.code = 'wallet_unconfigured';
+	throw e;
 }
 
 function buildJsonRpc(tool, args) {
@@ -303,7 +344,9 @@ async function buildSolanaPaymentPayload({ accept, buyer, conn, resourceUrl }) {
 		x402Version: 2,
 		scheme: 'exact',
 		network: accept.network,
-		resource: { url: resourceUrl, mimeType: 'application/json' },
+		// v2 spec: resource is a string URL on the PaymentPayload. The mimeType
+		// belongs on the 402-challenge top-level resource object, not on the payload.
+		resource: resourceUrl,
 		accepted: accept,
 		payload: { transaction: txBase64 },
 	};
@@ -321,7 +364,12 @@ async function getAgentBalance() {
 		);
 		const acct = await conn.getTokenAccountBalance(ata);
 		usdc = Number(acct.value.uiAmount || 0);
-	} catch {}
+	} catch (err) {
+		// Missing ATA is the expected case before the demo wallet has ever held USDC.
+		if (!/could not find account|TokenAccountNotFound/i.test(err?.message || '')) {
+			log.warn('demo_usdc_balance_failed', { address: buyer.publicKey.toBase58(), message: err?.message });
+		}
+	}
 	return {
 		address: buyer.publicKey.toBase58(),
 		sol: sol / 1e9,
@@ -343,7 +391,7 @@ function sseSend(res, event, data) {
 	res.write(`data: ${JSON.stringify(data)}\n\n`);
 }
 
-async function runFlow({ tool, args, emit, buyer: buyerOverride }) {
+async function runFlow({ tool, args, emit, buyer: buyerOverride, resourceUrl }) {
 	const buyer = buyerOverride ?? loadAgentKeypair();
 	const conn = new Connection(SOLANA_RPC, 'confirmed');
 
@@ -355,7 +403,7 @@ async function runFlow({ tool, args, emit, buyer: buyerOverride }) {
 	emit('challenge', { network: accept.network, amount: accept.amount, payTo: accept.payTo });
 
 	const paymentPayload = await buildSolanaPaymentPayload({
-		accept, buyer, conn, resourceUrl: 'https://three.ws/api/mcp',
+		accept, buyer, conn, resourceUrl,
 	});
 	const tBuilt = Date.now();
 	emit('built', { build_ms: tBuilt - t0, network: accept.network });
@@ -405,7 +453,9 @@ async function runFlow({ tool, args, emit, buyer: buyerOverride }) {
 		network: settled.network || accept.network,
 		amount: accept.amount,
 	};
-	void recordFeedEntry(feedEntry).catch(() => {});
+	void recordFeedEntry(feedEntry).catch((err) => {
+		log.warn('feed_record_failed', { tx: settled.transaction, message: err?.message });
+	});
 	if (settled.transaction) {
 		void persistCall(settled.transaction, {
 			...feedEntry,
@@ -415,7 +465,9 @@ async function runFlow({ tool, args, emit, buyer: buyerOverride }) {
 			payTo: accept.payTo,
 			asset: accept.asset,
 			explorer: `https://solscan.io/tx/${settled.transaction}`,
-		}).catch(() => {});
+		}).catch((err) => {
+			log.warn('call_persist_failed_outer', { tx: settled.transaction, message: err?.message });
+		});
 	}
 
 	const total_ms = tSettled - t0;
@@ -520,12 +572,13 @@ export default wrap(async (req, res) => {
 	const wantsStream =
 		(req.headers.accept || '').includes('text/event-stream') ||
 		input.stream === true;
+	const resourceUrl = resolveResourceUrl(req, '/api/mcp');
 
 	if (wantsStream) {
 		sseInit(res);
 		const emit = (ev, data) => sseSend(res, ev, data);
 		try {
-			await runFlow({ tool, args, emit, buyer });
+			await runFlow({ tool, args, emit, buyer, resourceUrl });
 		} catch (err) {
 			emit('error', {
 				ok: false,
@@ -546,7 +599,7 @@ export default wrap(async (req, res) => {
 		else if (ev === 'error') errEnv = data;
 	};
 	try {
-		await runFlow({ tool, args, emit, buyer });
+		await runFlow({ tool, args, emit, buyer, resourceUrl });
 	} catch (err) {
 		errEnv = { ok: false, error: err.message || 'flow_failed', mcpError: err.mcpError || null };
 	}

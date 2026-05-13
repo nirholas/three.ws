@@ -192,15 +192,17 @@
 			.preview .ph button {
 				margin-top: 8px;
 				padding: 6px 12px;
-				border-radius: 7px;
-				border: 1px solid var(--border);
-				background: #1a1a24;
+				border-radius: 6px;
+				border: 1px solid #22222e;
+				background: #15151d;
 				color: #ddd;
 				font-size: 12px;
 				cursor: pointer;
+				transition: border-color 0.12s ease, background 0.12s ease;
 			}
 			.preview .ph button:hover {
-				background: #22222e;
+				background: #1c1c26;
+				border-color: #2e2e3e;
 			}
 			.preview .spinner {
 				width: 22px;
@@ -232,9 +234,9 @@
 			}
 			.card .actions .btn,
 			.card .actions a.btn {
-				padding: 6px 10px;
+				padding: 6px 11px;
 				font-size: 12px;
-				border-radius: 7px;
+				border-radius: 6px;
 				font-weight: 500;
 			}
 			.card .actions .danger {
@@ -287,16 +289,18 @@
 				padding: 14px 0;
 			}
 			.load-more button {
-				padding: 9px 18px;
-				border-radius: 9px;
-				border: 1px solid var(--border);
-				background: #1a1a24;
+				padding: 8px 18px;
+				border-radius: 6px;
+				border: 1px solid #22222e;
+				background: #15151d;
 				color: #ddd;
 				font-size: 13px;
 				cursor: pointer;
+				transition: border-color 0.12s ease, background 0.12s ease;
 			}
 			.load-more button:hover:not(:disabled) {
-				background: #22222e;
+				background: #1c1c26;
+				border-color: #2e2e3e;
 			}
 			.load-more button:disabled {
 				opacity: 0.6;
@@ -315,18 +319,33 @@
 				color: #ccc;
 			}
 			.btn {
-				padding: 9px 14px;
-				border-radius: 9px;
-				border: 0;
+				padding: 8px 14px;
+				border-radius: 6px;
+				border: 1px solid #2a2a36;
 				font-size: 13px;
 				font-weight: 600;
 				cursor: pointer;
-				background: var(--accent);
+				background: #000;
 				color: #fff;
+				transition: border-color 0.12s ease, background 0.12s ease;
+			}
+			.btn:hover:not(:disabled) {
+				border-color: #3d3d52;
+				background: #0a0a12;
+				filter: none;
+			}
+			.btn:disabled {
+				opacity: 0.5;
+				cursor: not-allowed;
 			}
 			.btn.sec {
-				background: #222230;
+				background: #15151d;
 				color: #ddd;
+				border-color: #22222e;
+			}
+			.btn.sec:hover:not(:disabled) {
+				background: #1c1c26;
+				border-color: #2e2e3e;
 			}
 			.empty {
 				text-align: center;
@@ -402,21 +421,30 @@
 			/* ── Widgets tab ─────────────────────────────────────────────────────── */
 			.btn-primary {
 				display: inline-block;
-				padding: 9px 14px;
-				border-radius: 9px;
-				border: 0;
+				padding: 8px 14px;
+				border-radius: 6px;
+				border: 1px solid #2a2a36;
 				font-size: 13px;
 				font-weight: 600;
 				cursor: pointer;
-				background: var(--accent);
+				background: #000;
 				color: #fff;
 				text-decoration: none;
+				transition: border-color 0.12s ease, background 0.12s ease;
 			}
 			.btn-primary:hover {
-				filter: brightness(1.08);
+				border-color: #3d3d52;
+				background: #0a0a12;
+				filter: none;
 			}
 			.btn-danger {
-				background: #cc4040;
+				background: #15151d;
+				border-color: rgba(204, 64, 64, 0.4);
+				color: #ffb3b3;
+			}
+			.btn-danger:hover {
+				background: rgba(204, 64, 64, 0.12);
+				border-color: rgba(204, 64, 64, 0.6);
 			}
 			.widgets-header {
 				display: flex;

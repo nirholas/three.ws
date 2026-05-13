@@ -1,10 +1,18 @@
 /**
- * x402 — HTTP 402 Payment Required helpers.
+ * Pump.fun agent-skill HTTP 402 manifest helpers.
  *
- * Spec: https://x402.org (in flux as of 2026-04). We implement a minimal
- * subset that matches the Coinbase x402 client and our internal payment
- * pipeline (Pump.fun agent-payments-sdk).
+ * NOTE: this module is NOT the Coinbase x402 v2 wire spec — that lives in
+ * `api/_lib/x402-spec.js`. This file implements an internal Pump.fun
+ * agent-skill payment flow that *also* uses HTTP 402 as the negotiation
+ * status, but with its own manifest format (`version: "x402/0.1"`,
+ * `kind: "agent-skill"`), retry header (`x-payment-intent`), and
+ * server-side payment pipeline (`/api/agents/payments/pay-prep` +
+ * `/pay-confirm`). The two flows are deliberately separate.
  *
+ * Used by /api/agents/x402/[action].js (invoke + manifest) for per-skill
+ * billing on agent-hosted skills.
+ *
+
  * Server-side flow:
  *   1. Caller hits a paid endpoint.
  *   2. We look for a payment proof header (x-payment-intent or
@@ -139,14 +147,6 @@ export async function consumeIntent(intentId) {
 		where id = ${intentId} and status = 'paid'
 	`;
 }
-
-/**
- * Emit a structured response that mixes 402 manifests with normal JSON when
- * the caller advertises support via `Accept: application/x402+json`.
- * Currently a no-op alias for emit402 — kept as a hook for future content
- * negotiation.
- */
-export const emit402Negotiated = emit402;
 
 /**
  * Helper: respond with the manifest only (no 402), for prefetch/discovery

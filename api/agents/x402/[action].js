@@ -15,6 +15,8 @@ const HANDLERS = { echo: async (args) => ({ ok: true, echoed: args }) };
 // C1 — x402 bridge: prices come from the canonical agent_skill_prices table
 // first (the marketplace's source of truth), with the legacy meta.skill_prices
 // jsonb as a fallback for agents priced before the marketplace migration.
+// Returns null when the skill has no canonical price — callers must respond
+// with 409 no_payments rather than synthesize a price.
 async function priceFor(agent, skill) {
 	const [row] = await sql`
 		SELECT amount, currency_mint, chain
@@ -28,8 +30,7 @@ async function priceFor(agent, skill) {
 	if (fromMap?.amount && fromMap?.currency) return fromMap;
 	const defaultPrice = agent.meta?.payments?.default_price;
 	if (defaultPrice?.amount && defaultPrice?.currency) return defaultPrice;
-	const cluster = agent.meta?.payments?.cluster || 'mainnet';
-	return { amount: '10000', currency: cluster === 'devnet' ? '4zMMC9srt5Ri5X14GAgXhaHii3GnPAEERYPJgZJDncDU' : 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v' };
+	return null;
 }
 
 async function resolveAuth(req) {
@@ -68,6 +69,9 @@ async function handleInvoke(req, res) {
 	}
 
 	const price = await priceFor(agent, body.skill);
+	if (!price) {
+		return error(res, 409, 'no_payments', `skill "${body.skill}" is not priced on this agent`);
+	}
 	const paid = await verifyPaid(req, { agentId: agent.id, skill: body.skill, expectedAmount: price.amount, expectedCurrency: price.currency });
 	if (!paid) return emit402(res, { agent, skill: body.skill, amount: price.amount, currency: price.currency });
 
@@ -131,6 +135,10 @@ async function handleManifest(req, res) {
 	}
 
 	const price = await priceFor(agent, skill);
+	if (!price) {
+		// Defensive — the no-payments precheck above should have caught this.
+		return error(res, 409, 'no_payments', 'this skill is not priced');
+	}
 	return manifestOnly(res, { agent, skill, amount: price.amount, currency: price.currency });
 }
 

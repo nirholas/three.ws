@@ -56,7 +56,16 @@ export default defineConfig(function () {
 		},
 		server: {
 			proxy: {
-				'/api': { target: 'http://localhost:3000', changeOrigin: true },
+				// Vercel serverless functions live under /api/* in production but
+				// Vite's dev server doesn't run them. Forward /api/* to a real
+				// upstream so paid x402 calls, model fetches, and auth all work
+				// against the production backend during chat dev unless the user
+				// explicitly points DEV_API_PROXY at a local vercel-dev process.
+				'/api': {
+					target: process.env.DEV_API_PROXY || 'https://three.ws',
+					changeOrigin: true,
+					secure: true,
+				},
 			},
 		},
 		plugins: [

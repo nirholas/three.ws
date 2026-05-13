@@ -6,6 +6,9 @@
 import sharp from 'sharp';
 import { Redis } from '@upstash/redis';
 import { env } from '../_lib/env.js';
+import { logger } from '../_lib/usage.js';
+
+const log = logger('x402-og');
 
 const FALLBACK_TITLE = 'three.ws · pay-per-call (x402)';
 const FALLBACK_SUB = 'Live demo — agent pays $0.001 USDC per MCP tool call.';
@@ -24,9 +27,16 @@ async function readCall(tx) {
 	if (!r) return null;
 	try {
 		const row = await r.get(`x402:pay:call:${tx}`);
-		if (typeof row === 'string') { try { return JSON.parse(row); } catch {} }
-		else if (row && typeof row === 'object') return row;
-	} catch {}
+		if (typeof row === 'string') {
+			try {
+				return JSON.parse(row);
+			} catch (parseErr) {
+				log.warn('og_row_parse_failed', { tx, message: parseErr?.message });
+			}
+		} else if (row && typeof row === 'object') return row;
+	} catch (err) {
+		log.warn('og_row_read_failed', { tx, message: err?.message });
+	}
 	return null;
 }
 
@@ -60,7 +70,12 @@ function svgFor(record, txParam) {
 	const args = record?.argsSummary || '';
 	const tx = record?.tx || txParam || '';
 	const payer = record?.payer || '';
-	const amount = ((Number(record?.amount || 1000)) / 1e6).toFixed(6);
+	// Persisted records always carry `amount` from accept.amount; if a malformed
+	// row sneaks in, render '—' rather than fabricating a $0.001 figure.
+	const rawAmount = record?.amount != null ? Number(record.amount) : null;
+	const amount = rawAmount != null && Number.isFinite(rawAmount)
+		? (rawAmount / 1e6).toFixed(6)
+		: '—';
 	const ago = relativeAgo(record?.ts);
 
 	return `<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630">
@@ -183,7 +198,9 @@ export default async function handler(req, res) {
 		res.setHeader('cache-control', 'public, max-age=3600, s-maxage=3600, stale-while-revalidate=86400');
 		return res.end(png);
 	} catch (err) {
-		// Graceful fallback to SVG if sharp can't render (some envs).
+		// Graceful fallback to SVG if sharp can't render (some envs — e.g.
+		// missing libvips). Surface why so we notice if sharp regresses.
+		log.warn('og_png_render_failed', { message: err?.message });
 		res.statusCode = 200;
 		res.setHeader('content-type', 'image/svg+xml');
 		res.setHeader('cache-control', 'public, max-age=300');

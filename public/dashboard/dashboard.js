@@ -296,7 +296,6 @@ function agentCard(a, onRemoved) {
 	const el = document.createElement('div');
 	el.className = 'card';
 
-	const thumbSrc = a.avatar_id ? `/api/avatars/${encodeURIComponent(a.avatar_id)}/thumbnail` : null;
 	const onchainBadge = a.is_registered
 		? `<span class="tag" title="Registered on-chain (ERC-8004)" style="background:rgba(106,92,255,0.18); color:#cfc6ff;">on-chain${a.chain_id ? ' · ' + esc(agentChainName(a.chain_id)) : ''}</span>`
 		: `<span class="tag" title="Not yet registered on-chain">off-chain</span>`;
@@ -304,11 +303,7 @@ function agentCard(a, onRemoved) {
 	const wallet = a.wallet_address ? `${a.wallet_address.slice(0, 6)}…${a.wallet_address.slice(-4)}` : '';
 
 	el.innerHTML = `
-		<div class="preview">
-			${thumbSrc
-				? `<img class="thumb" src="${esc(thumbSrc)}" alt="${esc(a.name)} avatar" loading="lazy">`
-				: `<div class="ph"><div style="font-size:32px;line-height:1;margin-bottom:8px" aria-hidden="true">🤖</div><div>No avatar linked</div></div>`}
-		</div>
+		<div class="preview" data-agent-preview></div>
 		<h3>${esc(a.name || 'Agent')}</h3>
 		<p class="meta">${skillCount} skill${skillCount === 1 ? '' : 's'}${wallet ? ' · ' + esc(wallet) : ''} · ${new Date(a.created_at).toLocaleDateString()}</p>
 		<div class="row" style="gap:6px; margin-bottom:10px; flex-wrap:wrap">${onchainBadge}</div>
@@ -323,6 +318,8 @@ function agentCard(a, onRemoved) {
 		</div>
 	`;
 
+	mountAgentAvatarPreview(el.querySelector('[data-agent-preview]'), a);
+
 	el.querySelector('[data-del]').addEventListener('click', async () => {
 		if (!confirm(`Delete "${a.name}"? This cannot be undone.`)) return;
 		try {
@@ -336,6 +333,74 @@ function agentCard(a, onRemoved) {
 	});
 
 	return el;
+}
+
+// Mount a 3D model-viewer (or thumbnail fallback) for an agent card.
+// Lazy-loads when the card scrolls into view. For private linked avatars,
+// fetches a short-lived signed URL via /api/avatars/:id.
+function mountAgentAvatarPreview(host, agent) {
+	if (!host) return;
+	const name = agent?.name || 'Agent';
+	const showPlaceholder = () => {
+		host.innerHTML = `<div class="ph"><div style="font-size:32px;line-height:1;margin-bottom:8px" aria-hidden="true">🤖</div><div>No avatar linked</div></div>`;
+	};
+	const showSpinner = () => {
+		host.innerHTML = '<div class="spinner" aria-label="Loading preview"></div>';
+	};
+	const showModel = (url) => {
+		host.innerHTML = `<model-viewer src="${attr(url)}" camera-controls auto-rotate shadow-intensity="1" exposure="1" tone-mapping="aces" loading="lazy" reveal="auto"></model-viewer>`;
+	};
+	const showThumb = (url) => {
+		host.innerHTML = `<img class="thumb" src="${attr(url)}" alt="${attr(name)} avatar" loading="lazy">`;
+	};
+
+	if (!agent?.avatar_id) {
+		showPlaceholder();
+		return;
+	}
+
+	// Seed with the public thumbnail (if any) so the card paints instantly.
+	if (agent.avatar_thumbnail_url) showThumb(agent.avatar_thumbnail_url);
+	else host.innerHTML = '<div class="ph">Loading preview…</div>';
+
+	let loaded = false;
+	const load = async () => {
+		if (loaded) return;
+		loaded = true;
+		if (agent.avatar_model_url) {
+			showModel(agent.avatar_model_url);
+			return;
+		}
+		showSpinner();
+		try {
+			const { avatar } = await api.getAvatar(agent.avatar_id);
+			const url = avatar?.url || avatar?.model_url;
+			if (url) showModel(url);
+			else if (avatar?.thumbnail_url) showThumb(avatar.thumbnail_url);
+			else showPlaceholder();
+		} catch {
+			loaded = false;
+			host.innerHTML = `<div class="ph">Preview unavailable<br><button data-retry>Retry</button></div>`;
+			host.querySelector('[data-retry]').addEventListener('click', load);
+		}
+	};
+
+	if ('IntersectionObserver' in window) {
+		const io = new IntersectionObserver(
+			(entries) => {
+				for (const entry of entries) {
+					if (entry.isIntersecting) {
+						io.disconnect();
+						load();
+					}
+				}
+			},
+			{ rootMargin: '200px' },
+		);
+		io.observe(host);
+	} else {
+		load();
+	}
 }
 
 function openCreateForm(host, listEl) {
@@ -541,6 +606,188 @@ function mountAvatarWalletSection(host, a) {
 		identity: { id: a.agent_id, name: a.name },
 		onProvisioned: () => walletCard?.refresh?.(),
 	});
+}
+
+// ── X (Twitter) panel for the agent edit page ──────────────────────────────
+// Renders: connect button | quota meter + composer + draft + schedule | disconnect.
+function mountAgentXPanel(host, avatar) {
+	if (!host) return;
+	host.innerHTML = `
+		<div class="card" style="padding:16px">
+			<div class="row" style="justify-content:space-between;margin-bottom:10px;align-items:baseline">
+				<h3 style="margin:0;font-size:14px">Post to X (Twitter)</h3>
+				<span class="muted" style="font-size:11px" data-x-meter>Loading…</span>
+			</div>
+			<div data-x-body><div class="muted" style="font-size:13px">Loading…</div></div>
+		</div>
+	`;
+	const meterEl = host.querySelector('[data-x-meter]');
+	const bodyEl = host.querySelector('[data-x-body]');
+	loadXPanel({ host, meterEl, bodyEl, avatar }).catch((err) => {
+		bodyEl.innerHTML = `<div style="color:#ffb3b3;font-size:13px">${esc(err.message || 'Failed to load')}</div>`;
+	});
+}
+
+async function loadXPanel({ host, meterEl, bodyEl, avatar }) {
+	const status = await fetch('/api/x/status', { credentials: 'include' }).then((r) => r.json());
+
+	if (!status.connected) {
+		meterEl.textContent = '';
+		bodyEl.innerHTML = `
+			<p class="muted" style="font-size:13px;margin:0 0 10px">Connect your X account to let this agent post tweets. Free tier: 5 posts/month per account.</p>
+			<a class="btn" href="/api/auth/x/connect?agent_id=${encodeURIComponent(avatar.agent_id || avatar.id)}">Connect X</a>
+		`;
+		return;
+	}
+
+	const used = status.posts_used;
+	const quota = status.quota;
+	const remaining = Math.max(0, quota - used);
+	meterEl.innerHTML = `@${esc(status.username)} · <span style="color:${remaining === 0 ? '#ffb3b3' : '#9a8cff'}">${used}/${quota} posts</span>`;
+
+	bodyEl.innerHTML = `
+		<textarea data-x-text placeholder="What should your agent tweet?" rows="3" maxlength="280" style="width:100%;font-family:inherit"></textarea>
+		<div class="row" style="justify-content:space-between;margin-top:6px;font-size:11px">
+			<span class="muted"><span data-x-count>0</span>/280</span>
+			<span class="muted">Resets ${new Date(status.month_resets_at).toLocaleDateString()}</span>
+		</div>
+		<div class="row" style="gap:8px;margin-top:10px;flex-wrap:wrap">
+			<button class="btn sec" data-x-draft type="button">✨ Draft with AI</button>
+			<button class="btn" data-x-post type="button" ${remaining === 0 ? 'disabled' : ''}>Post now</button>
+			<button class="btn sec" data-x-schedule type="button" ${remaining === 0 ? 'disabled' : ''}>Schedule…</button>
+			<button class="btn sec" data-x-disconnect type="button" style="margin-left:auto;font-size:11px;padding:4px 8px;background:transparent;color:#888">Disconnect</button>
+		</div>
+		<div data-x-msg style="margin-top:10px;font-size:13px"></div>
+		<div data-x-scheduled style="margin-top:14px"></div>
+	`;
+
+	const textEl = bodyEl.querySelector('[data-x-text]');
+	const countEl = bodyEl.querySelector('[data-x-count]');
+	const msgEl = bodyEl.querySelector('[data-x-msg]');
+	const draftBtn = bodyEl.querySelector('[data-x-draft]');
+	const postBtn = bodyEl.querySelector('[data-x-post]');
+	const scheduleBtn = bodyEl.querySelector('[data-x-schedule]');
+	const disconnectBtn = bodyEl.querySelector('[data-x-disconnect]');
+	const scheduledEl = bodyEl.querySelector('[data-x-scheduled]');
+
+	const setMsg = (text, color = '#9a8cff') => { msgEl.style.color = color; msgEl.innerHTML = text; };
+	textEl.addEventListener('input', () => { countEl.textContent = textEl.value.length; });
+
+	draftBtn.addEventListener('click', async () => {
+		const original = draftBtn.textContent;
+		draftBtn.disabled = true;
+		draftBtn.textContent = 'Drafting…';
+		try {
+			const r = await fetch('/api/x/draft', {
+				method: 'POST',
+				credentials: 'include',
+				headers: { 'content-type': 'application/json' },
+				body: JSON.stringify({ agent_id: avatar.agent_id || avatar.id, prompt: textEl.value.trim() }),
+			});
+			const data = await r.json();
+			if (!r.ok) throw new Error(data.error_description || 'draft failed');
+			textEl.value = data.text;
+			countEl.textContent = data.text.length;
+			setMsg('Draft ready — review and post.');
+		} catch (err) {
+			setMsg(err.message, '#ffb3b3');
+		} finally {
+			draftBtn.disabled = false;
+			draftBtn.textContent = original;
+		}
+	});
+
+	postBtn.addEventListener('click', async () => {
+		const text = textEl.value.trim();
+		if (!text) return setMsg('Write something first.', '#ffb3b3');
+		postBtn.disabled = true;
+		setMsg('Posting…');
+		try {
+			const r = await fetch('/api/x/post', {
+				method: 'POST',
+				credentials: 'include',
+				headers: { 'content-type': 'application/json' },
+				body: JSON.stringify({ text, agent_id: avatar.agent_id || avatar.id }),
+			});
+			const data = await r.json();
+			if (!r.ok) throw new Error(data.error_description || 'post failed');
+			setMsg(`Posted: <a href="${data.url}" target="_blank" rel="noopener">${data.url}</a>`);
+			textEl.value = '';
+			countEl.textContent = 0;
+			loadXPanel({ host, meterEl, bodyEl, avatar });
+		} catch (err) {
+			setMsg(err.message, '#ffb3b3');
+		} finally {
+			postBtn.disabled = false;
+		}
+	});
+
+	scheduleBtn.addEventListener('click', async () => {
+		const text = textEl.value.trim();
+		if (!text) return setMsg('Write something first.', '#ffb3b3');
+		const input = prompt('Schedule for (any date — e.g. "tomorrow 9am" or "2026-05-14T15:00"):', new Date(Date.now() + 3600_000).toISOString().slice(0, 16));
+		if (!input) return;
+		const when = new Date(input);
+		if (isNaN(when.getTime())) return setMsg('Could not parse that date.', '#ffb3b3');
+		setMsg('Scheduling…');
+		try {
+			const r = await fetch('/api/x/schedule', {
+				method: 'POST',
+				credentials: 'include',
+				headers: { 'content-type': 'application/json' },
+				body: JSON.stringify({ text, scheduled_at: when.toISOString(), agent_id: avatar.agent_id || avatar.id }),
+			});
+			const data = await r.json();
+			if (!r.ok) throw new Error(data.error_description || 'schedule failed');
+			setMsg(`Scheduled for ${when.toLocaleString()}.`);
+			textEl.value = '';
+			countEl.textContent = 0;
+			loadScheduledPosts(scheduledEl);
+		} catch (err) {
+			setMsg(err.message, '#ffb3b3');
+		}
+	});
+
+	disconnectBtn.addEventListener('click', async () => {
+		if (!confirm('Disconnect your X account from three.ws?')) return;
+		try {
+			await fetch('/api/x/status', { method: 'DELETE', credentials: 'include' });
+			loadXPanel({ host, meterEl, bodyEl, avatar });
+		} catch (err) {
+			setMsg(err.message, '#ffb3b3');
+		}
+	});
+
+	loadScheduledPosts(scheduledEl);
+}
+
+async function loadScheduledPosts(host) {
+	if (!host) return;
+	try {
+		const r = await fetch('/api/x/schedule', { credentials: 'include' });
+		const data = await r.json();
+		const pending = (data.posts || []).filter((p) => !p.posted_at && !p.error);
+		if (!pending.length) { host.innerHTML = ''; return; }
+		host.innerHTML = `
+			<div class="muted" style="font-size:11px;text-transform:uppercase;letter-spacing:0.07em;margin-bottom:6px">Scheduled</div>
+			${pending.map((p) => `
+				<div class="row" style="justify-content:space-between;padding:8px 10px;background:#0f0f17;border:1px solid #22222e;border-radius:8px;margin-bottom:6px;font-size:12px">
+					<div style="flex:1;min-width:0">
+						<div style="color:#ccc;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(p.text)}</div>
+						<div class="muted" style="font-size:11px;margin-top:2px">${new Date(p.scheduled_at).toLocaleString()}</div>
+					</div>
+					<button class="btn sec" data-cancel="${attr(p.id)}" style="font-size:11px;padding:4px 8px">Cancel</button>
+				</div>
+			`).join('')}
+		`;
+		host.querySelectorAll('[data-cancel]').forEach((btn) => {
+			btn.addEventListener('click', async () => {
+				const id = btn.getAttribute('data-cancel');
+				await fetch(`/api/x/schedule?id=${encodeURIComponent(id)}`, { method: 'DELETE', credentials: 'include' });
+				loadScheduledPosts(host);
+			});
+		});
+	} catch {}
 }
 
 // Lazy-load preview when card scrolls into view. For private avatars, fetch
@@ -1001,8 +1248,10 @@ async function renderEdit(root, params = []) {
 			</form>
 		</div>
 		<div data-wallet-host style="margin-top:20px; max-width:560px; margin-left:auto; margin-right:auto"></div>
+		<div data-x-host style="margin-top:20px; max-width:560px; margin-left:auto; margin-right:auto"></div>
 	`;
 	mountAvatarWalletSection(body.querySelector('[data-wallet-host]'), avatar);
+	mountAgentXPanel(body.querySelector('[data-x-host]'), avatar);
 
 	const msg = body.querySelector('#emsg');
 	body.querySelector('#ef').addEventListener('submit', async (e) => {

@@ -110,6 +110,15 @@ export const locale = persisted('locale', 'en');
 
 export const currentUser = writable(null);
 
+// Selected agent id whose Solana wallet pays for x402 paid-tool calls.
+// Null means "use the shared demo wallet" served by /api/x402-pay.
+export const payAgentId = persisted('payAgentId', null);
+
+// Snapshot of {address, usdc, sol} for the currently selected payer (agent
+// wallet or shared demo wallet). Refreshed by PayWalletPicker so the topbar
+// pill ticks down after each paid tool call.
+export const payWallet = writable({ address: null, usdc: null, sol: null, name: null, agentId: null });
+
 export async function loadCurrentUser() {
   try {
     const res = await fetch('/api/auth/me', { credentials: 'include' });

@@ -7,7 +7,7 @@
  *
  * A fetch wrapper that intercepts HTTP 402 responses, builds and signs
  * a payment transaction matching the server's PaymentRequirements, and
- * retries the request with a PAYMENT-SIGNATURE header.
+ * retries the request with an X-PAYMENT header.
  *
  * Supports both "pump-agent" (Pump Agent invoice) and "exact" (SPL
  * TransferChecked) schemes.
@@ -40,7 +40,7 @@ import type {
   ExactPaymentRequirements,
 } from "./types";
 import {
-  X402_HEADER_PAYMENT_SIGNATURE,
+  X402_HEADER_PAYMENT,
   X402_VERSION,
   SOLANA_MAINNET,
 } from "./types";
@@ -97,7 +97,7 @@ export function createX402Fetch(
 
     if (response.status !== 402) return response;
 
-    const paymentRequired = getPaymentRequiredFromResponse(response);
+    const paymentRequired = await getPaymentRequiredFromResponse(response);
     if (!paymentRequired) return response;
 
     // Find a compatible requirement
@@ -114,18 +114,29 @@ export function createX402Fetch(
       confirmationTimeoutMs,
     );
 
-    // Build the PaymentPayload
+    // Build the PaymentPayload. Top-level scheme/network match the chosen
+    // `accepts[]` entry so the server's verify() can route the proof without
+    // re-walking `accepted` — this matches the Coinbase v2 wire shape.
+    const resourceUrl =
+      paymentRequired.resource.url ||
+      (typeof input === "string"
+        ? input
+        : input instanceof URL
+          ? input.href
+          : input.url);
     const paymentPayload: PaymentPayload = {
       x402Version: X402_VERSION,
-      resource: typeof input === "string" ? input : input instanceof URL ? input.href : input.url,
+      scheme: accepted.scheme,
+      network: accepted.network,
+      resource: resourceUrl,
       accepted,
       payload: proof,
     };
 
-    // Retry the original request with PAYMENT-SIGNATURE header
+    // Retry the original request with X-PAYMENT header
     const retryInit: RequestInit = { ...init };
     const headers = new Headers(retryInit.headers);
-    headers.set(X402_HEADER_PAYMENT_SIGNATURE, encodePaymentPayload(paymentPayload));
+    headers.set(X402_HEADER_PAYMENT, encodePaymentPayload(paymentPayload));
     retryInit.headers = headers;
 
     return fetch(input, retryInit);

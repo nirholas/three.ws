@@ -16,6 +16,7 @@ import { sql } from './_lib/db.js';
 import { cors, json, method, readJson, wrap, error } from './_lib/http.js';
 import { limits, clientIp } from './_lib/rate-limit.js';
 import { generateAgentWallet, generateSolanaAgentWallet } from './_lib/agent-wallet.js';
+import { publicUrl } from './_lib/r2.js';
 import { z } from 'zod';
 
 const animationEntrySchema = z.object({
@@ -75,11 +76,16 @@ async function handleList(req, res) {
 	if (isMe) return handleGetOrCreateMe(req, res, auth);
 
 	const text = `
-		SELECT * FROM agent_identities
-		WHERE user_id = $1
-		  AND deleted_at IS NULL
-		  ${onchainOnly ? `AND (erc8004_agent_id IS NOT NULL OR meta->>'onchain' IS NOT NULL)` : ''}
-		ORDER BY created_at ASC
+		SELECT i.*,
+		       a.storage_key  AS avatar_storage_key,
+		       a.thumbnail_key AS avatar_thumbnail_key,
+		       a.visibility   AS avatar_visibility
+		  FROM agent_identities i
+		  LEFT JOIN avatars a ON a.id = i.avatar_id AND a.deleted_at IS NULL
+		 WHERE i.user_id = $1
+		   AND i.deleted_at IS NULL
+		   ${onchainOnly ? `AND (i.erc8004_agent_id IS NOT NULL OR i.meta->>'onchain' IS NOT NULL)` : ''}
+		 ORDER BY i.created_at ASC
 	`;
 	const rows = await sql(text, [auth.userId]);
 	return json(res, 200, { agents: rows.map((row) => decorate(row)) });
@@ -90,11 +96,16 @@ async function handleList(req, res) {
 async function handleGetOrCreateMe(req, res, auth) {
 	try {
 		let [agent] = await sql`
-			SELECT * FROM agent_identities
-			WHERE user_id  = ${auth.userId}
-			  AND deleted_at IS NULL
-			ORDER BY created_at ASC
-			LIMIT 1
+			SELECT i.*,
+			       a.storage_key  AS avatar_storage_key,
+			       a.thumbnail_key AS avatar_thumbnail_key,
+			       a.visibility   AS avatar_visibility
+			  FROM agent_identities i
+			  LEFT JOIN avatars a ON a.id = i.avatar_id AND a.deleted_at IS NULL
+			 WHERE i.user_id  = ${auth.userId}
+			   AND i.deleted_at IS NULL
+			 ORDER BY i.created_at ASC
+			 LIMIT 1
 		`;
 
 		if (!agent) {
@@ -117,9 +128,14 @@ async function handleGetOrCreateMe(req, res, auth) {
 			`;
 			// Re-select covers both: we inserted, or a concurrent request beat us.
 			[agent] = await sql`
-				SELECT * FROM agent_identities
-				WHERE user_id = ${auth.userId} AND deleted_at IS NULL
-				ORDER BY created_at ASC LIMIT 1
+				SELECT i.*,
+				       a.storage_key  AS avatar_storage_key,
+				       a.thumbnail_key AS avatar_thumbnail_key,
+				       a.visibility   AS avatar_visibility
+				  FROM agent_identities i
+				  LEFT JOIN avatars a ON a.id = i.avatar_id AND a.deleted_at IS NULL
+				 WHERE i.user_id = ${auth.userId} AND i.deleted_at IS NULL
+				 ORDER BY i.created_at ASC LIMIT 1
 			`;
 		}
 
@@ -191,9 +207,15 @@ export async function handleGetOne(req, res, id) {
 		if (!rl.success) return error(res, 429, 'rate_limited', 'too many requests');
 
 		const [row] = await sql`
-			SELECT i.*, u.display_name as author_name, u.avatar_url as author_avatar
+			SELECT i.*,
+			       u.display_name as author_name,
+			       u.avatar_url   as author_avatar,
+			       a.storage_key  AS avatar_storage_key,
+			       a.thumbnail_key AS avatar_thumbnail_key,
+			       a.visibility   AS avatar_visibility
 			FROM agent_identities i
-			LEFT JOIN users u ON i.user_id = u.id
+			LEFT JOIN users u   ON i.user_id = u.id
+			LEFT JOIN avatars a ON a.id = i.avatar_id AND a.deleted_at IS NULL
 			WHERE i.id = ${id} AND i.deleted_at IS NULL
 		`;
 		if (!row) return error(res, 404, 'not_found', 'agent not found');
@@ -376,11 +398,25 @@ function decorate(row, isOwner = true) {
 			}
 		: null;
 
+	const avatarVisibility = row.avatar_visibility || null;
+	const avatarPubliclyReadable =
+		avatarVisibility === 'public' || avatarVisibility === 'unlisted';
+	const avatarModelUrl =
+		row.avatar_storage_key && avatarPubliclyReadable
+			? publicUrl(row.avatar_storage_key)
+			: null;
+	const avatarThumbnailUrl = row.avatar_thumbnail_key
+		? publicUrl(row.avatar_thumbnail_key)
+		: null;
+
 	const base = {
 		id: row.id,
 		name: row.name,
 		description: row.description,
 		avatar_id: row.avatar_id,
+		avatar_visibility: avatarVisibility,
+		avatar_model_url: avatarModelUrl,
+		avatar_thumbnail_url: avatarThumbnailUrl,
 		home_url: row.home_url || `/agent/${row.id}`,
 		skills: row.skills || [],
 		skill_prices: row.skill_prices || {},

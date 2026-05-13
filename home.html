@@ -150,7 +150,8 @@
 					<ul class="h-standards h-reveal" aria-label="Supported formats and standards">
 						<li>glTF 2.0</li>
 						<li>GLB</li>
-						<li>ERC-8004</li>
+						<li>Solana</li>
+						<li>Metaplex Core</li>
 						<li>A2A</li>
 						<li>MCP</li>
 					</ul>
@@ -185,11 +186,11 @@
 					</article>
 					<article class="h-pillar h-reveal">
 						<span class="h-pillar-num">03 / Ownership</span>
-						<h3>Owned, on-chain, portable</h3>
+						<h3>Owned on Solana, portable</h3>
 						<p>
-							Register your agent on 20+ EVM chains via ERC-8004 — a verifiable,
-							CREATE2-deterministic identity discoverable by any A2A or MCP client.
-							Your agent. Your keys.
+							Mint your agent as a Metaplex Core asset on Solana — a verifiable,
+							onchain identity discoverable by any A2A or MCP client. Your agent.
+							Your keys.
 						</p>
 					</article>
 				</div>
@@ -337,14 +338,14 @@
 				<div class="h-act-text">
 					<div class="h-act-eyebrow">
 						<span class="h-act-dot h-act-dot--mint"></span>
-						<span>ERC-8004 native</span>
+						<span>Metaplex native</span>
 					</div>
 					<h2 class="h-act-title h-act-title--mint">
 						One transaction.<br /><em>One identity.</em>
 					</h2>
 					<p class="h-act-lede">
-						Register onchain. Get a portable, verifiable agentId discoverable by any A2A
-						or MCP client.
+						Mint onchain on Solana. Get a portable, verifiable agentId discoverable
+						by any A2A or MCP client.
 					</p>
 
 					<form class="h-deploy-form" id="home-deploy-form" action="/deploy" method="get">
@@ -361,34 +362,28 @@
 							/>
 						</div>
 						<div class="h-form-row">
-							<label class="h-form-label" for="chain-home">Chain</label>
-							<select id="chain-home" name="chain" class="h-form-select">
-								<option value="8453" selected>Base</option>
-								<option value="1">Ethereum</option>
-								<option value="10">Optimism</option>
-								<option value="137">Polygon</option>
-								<option value="42161">Arbitrum</option>
-								<option value="43114">Avalanche</option>
-								<option value="59144">Linea</option>
-								<option value="534352">Scroll</option>
+							<label class="h-form-label" for="network-home">Network</label>
+							<select id="network-home" name="network" class="h-form-select">
+								<option value="mainnet-beta" selected>Solana Mainnet</option>
+								<option value="devnet">Solana Devnet</option>
 							</select>
 						</div>
 						<div class="h-deploy-stats">
 							<div>
-								<span class="h-stat-label">Chains</span
-								><span class="h-stat-val">20+</span>
+								<span class="h-stat-label">Chain</span
+								><span class="h-stat-val">Solana</span>
 							</div>
 							<div>
 								<span class="h-stat-label">Standard</span
-								><span class="h-stat-val">ERC-721</span>
+								><span class="h-stat-val">Metaplex Core</span>
 							</div>
 							<div>
-								<span class="h-stat-label">Protocol</span
-								><span class="h-stat-val">ERC-8004</span>
+								<span class="h-stat-label">Fee</span
+								><span class="h-stat-val">~$0.01</span>
 							</div>
 						</div>
 						<button type="submit" class="h-btn-primary h-btn-deploy">
-							<span>Deploy your agent</span>
+							<span>Mint your agent</span>
 							<span class="arrow">→</span>
 						</button>
 					</form>
@@ -443,7 +438,7 @@
 								<span class="tag">&lt;agent-3d</span>
 								<br />&nbsp;&nbsp;<span class="attr">agent-id</span>=<span
 									class="val"
-									>"0x3d…"</span
+									>"3DAg…uPL"</span
 								>
 								<br /><span class="tag">&gt;&lt;/agent-3d&gt;</span>
 							</div>
@@ -454,13 +449,9 @@
 							<span class="h-bento-tag h-bento-tag--mint">On-chain</span>
 							<h3>Verifiable identity.</h3>
 							<p>
-								ERC-8004 registration. One transaction. Discoverable by any A2A or
-								MCP client on 20+ chains.
+								Metaplex Core asset on Solana. One transaction, sub-cent fees.
+								Discoverable by any A2A or MCP client.
 							</p>
-							<div class="h-bento-id">
-								<span class="h-id-dot h-id-dot--mint" aria-hidden="true"></span>
-								<span class="h-id-addr">0x3d…a9f · Base</span>
-							</div>
 						</div>
 					</div>
 					<div class="h-bento-card h-reveal">
@@ -530,7 +521,7 @@
 
 <span class="c">&lt;!-- 2. Drop the tag --&gt;</span>
 <span class="tag">&lt;agent-3d</span>
-  <span class="attr">agent-id</span>=<span class="val">"0x3d…a9f"</span>
+  <span class="attr">agent-id</span>=<span class="val">"3DAg…uPL"</span>
   <span class="attr">kiosk</span>
 <span class="tag">&gt;&lt;/agent-3d&gt;</span></code></pre>
 					</div>
@@ -688,10 +679,10 @@
 								>GitHub</a
 							>
 							<a
-								href="https://eips.ethereum.org/EIPS/eip-8004"
+								href="https://developers.metaplex.com/core"
 								target="_blank"
 								rel="noopener"
-								>ERC-8004</a
+								>Metaplex Core</a
 							>
 						</div>
 						<div class="h-footer-link-col">
@@ -716,9 +707,10 @@
 			// so we default to "capable" when the API is absent.
 			const LOW_MEMORY = typeof navigator.deviceMemory === 'number' && navigator.deviceMemory < 2;
 			const REDUCED_MOTION = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-			// Hero viewer is always created (above fold), but we skip all below-fold
-			// viewers on constrained devices.
-			const SKIP_OFFSCREEN_GL = LOW_MEMORY || REDUCED_MOTION;
+			// Skip GL only on truly constrained devices. Reduced-motion users still
+			// see the avatars (without auto-rotate); skipping rendering for them left
+			// the bento/Act 2/Act 3 canvases permanently blank.
+			const SKIP_OFFSCREEN_GL = LOW_MEMORY;
 
 			// Scroll reveal — use viewport (root: null) so IntersectionObserver
 			// avoids the perspective transform on .home-parallax breaking intersection math.
@@ -1013,7 +1005,7 @@
 							act2Obs.disconnect();
 							initAct2();
 						}
-					}, { threshold: 0.05 });
+					}, { threshold: 0, rootMargin: '600px 0px 600px 0px' });
 					act2Obs.observe(canvas);
 				}
 			})();
@@ -1098,7 +1090,7 @@
 							io.disconnect();
 							initViewer();
 						}
-					}, { threshold: 0.05 });
+					}, { threshold: 0, rootMargin: '600px 0px 600px 0px' });
 					io.observe(canvas);
 				}
 			})();
@@ -1202,7 +1194,7 @@
 							act3Obs.disconnect();
 							initAct3();
 						}
-					}, { threshold: 0.05 });
+					}, { threshold: 0, rootMargin: '600px 0px 600px 0px' });
 					act3Obs.observe(firstCanvas);
 				}
 			})();

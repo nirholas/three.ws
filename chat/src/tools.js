@@ -1,4 +1,183 @@
+// Reusable client-side body that POSTs to /api/x402-pay and returns a
+// structured envelope the LLM can reason over. Built once and shared by every
+// x402-paid tool below so the on-chain payment + MCP dispatch happens for real
+// on every call — no mocks, no fallbacks.
+//
+// Inputs: `tool` (string) → MCP tool name; `args` (object) → MCP arguments.
+// Side-effects: dispatches a CustomEvent on window after settlement so the
+// PayWalletPicker can refresh its balance pill immediately.
+const X402_PAY_BODY = `const agentId = (() => { try { return localStorage.getItem('payAgentId') || null; } catch { return null; } })();
+const body = { tool: TOOL_NAME, args: ARGS_BUILDER };
+if (agentId) body.agentId = agentId;
+const r = await fetch('/api/x402-pay', {
+	method: 'POST',
+	headers: { 'content-type': 'application/json' },
+	credentials: 'include',
+	body: JSON.stringify(body),
+});
+const text = await r.text();
+let j = null; try { j = text ? JSON.parse(text) : null; } catch { j = null; }
+if (!r.ok) {
+	const reason = (j && (j.error || j.mcpError?.message)) || ('HTTP ' + r.status);
+	throw new Error('x402 paid call failed: ' + reason);
+}
+if (!j) throw new Error('x402 paid call returned an empty response');
+try { window.dispatchEvent(new CustomEvent('x402-pay-settled', { detail: j })); } catch {}
+const amount_usdc = j.payment?.amount != null ? Number(j.payment.amount) / 1e6 : null;
+return {
+	paid: true,
+	network: j.payment?.network || null,
+	amount_usdc,
+	tx: j.payment?.tx || null,
+	explorer: j.payment?.explorer || null,
+	payer: j.payment?.payer || null,
+	payTo: j.payment?.payTo || null,
+	durations_ms: j.durations || null,
+	result: j.result ?? null,
+};`;
+
+function x402PayBody(toolName, argsBuilder) {
+	return X402_PAY_BODY
+		.replace('TOOL_NAME', JSON.stringify(toolName))
+		.replace('ARGS_BUILDER', argsBuilder);
+}
+
 export const curatedToolPacks = [
+	{
+		id: 'x402-pay',
+		name: 'three.ws · Pay-per-call (x402)',
+		description:
+			'Call real paid MCP tools on three.ws — every invocation signs an SPL transferChecked, pays $0.001 USDC on Solana mainnet, and settles on-chain. Same flow as /pay, surfaced as native chat tools.',
+		schema: [
+			{
+				clientDefinition: {
+					id: 'pack-x402-list-tools-001',
+					name: 'x402_list_mcp_tools',
+					description: 'List the MCP tools exposed by three.ws via x402, with their per-call USDC prices.',
+					arguments: [],
+					body: x402PayBody('tools/list', '({})'),
+				},
+				type: 'function',
+				function: {
+					name: 'x402_list_mcp_tools',
+					description:
+						'List the paid MCP tools exposed by three.ws (via x402). Settles a $0.001 USDC payment on Solana mainnet, then returns the tools/list response. Use first to discover what is available before calling validate/inspect/optimize/search.',
+					parameters: { type: 'object', properties: {}, required: [] },
+				},
+			},
+			{
+				clientDefinition: {
+					id: 'pack-x402-validate-001',
+					name: 'x402_validate_glb',
+					description: 'Validate a glTF/GLB asset against the glTF spec via three.ws MCP (paid x402 call).',
+					arguments: [
+						{ name: 'url', type: 'string', description: 'Public URL of the .glb or .gltf file to validate.' },
+					],
+					body:
+						`const url = String(args.url || '').trim();
+if (!url) throw new Error('url is required (https URL of a .glb / .gltf)');
+` + x402PayBody('validate_model', '({ url })'),
+				},
+				type: 'function',
+				function: {
+					name: 'x402_validate_glb',
+					description:
+						'Validate a glTF/GLB 3D asset against the glTF spec via the three.ws MCP. Pays $0.001 USDC on Solana mainnet per call and returns the validation report (errors / warnings / infos) plus mesh stats. Use when the user wants to check whether a 3D model is spec-compliant.',
+					parameters: {
+						type: 'object',
+						properties: {
+							url: { type: 'string', description: 'Public URL of a .glb or .gltf model.' },
+						},
+						required: ['url'],
+					},
+				},
+			},
+			{
+				clientDefinition: {
+					id: 'pack-x402-inspect-001',
+					name: 'x402_inspect_glb',
+					description: 'Inspect a glTF/GLB asset (meshes, materials, animations, extensions) via three.ws MCP.',
+					arguments: [
+						{ name: 'url', type: 'string', description: 'Public URL of the .glb or .gltf file to inspect.' },
+					],
+					body:
+						`const url = String(args.url || '').trim();
+if (!url) throw new Error('url is required (https URL of a .glb / .gltf)');
+` + x402PayBody('inspect_model', '({ url })'),
+				},
+				type: 'function',
+				function: {
+					name: 'x402_inspect_glb',
+					description:
+						'Inspect a glTF/GLB 3D asset and return structural metadata: scenes, nodes, meshes (with vertex / triangle counts), materials, textures, animations and extensions used. Pays $0.001 USDC on Solana mainnet per call via x402.',
+					parameters: {
+						type: 'object',
+						properties: {
+							url: { type: 'string', description: 'Public URL of a .glb or .gltf model.' },
+						},
+						required: ['url'],
+					},
+				},
+			},
+			{
+				clientDefinition: {
+					id: 'pack-x402-optimize-001',
+					name: 'x402_optimize_glb',
+					description: 'Get optimization suggestions for a glTF/GLB asset via three.ws MCP (paid x402 call).',
+					arguments: [
+						{ name: 'url', type: 'string', description: 'Public URL of the .glb or .gltf file to optimize.' },
+					],
+					body:
+						`const url = String(args.url || '').trim();
+if (!url) throw new Error('url is required (https URL of a .glb / .gltf)');
+` + x402PayBody('optimize_model', '({ url })'),
+				},
+				type: 'function',
+				function: {
+					name: 'x402_optimize_glb',
+					description:
+						'Return actionable optimization suggestions for a glTF/GLB 3D asset (texture compression, draco, instancing, etc.) with severity and estimated savings. Pays $0.001 USDC on Solana mainnet per call via x402.',
+					parameters: {
+						type: 'object',
+						properties: {
+							url: { type: 'string', description: 'Public URL of a .glb or .gltf model.' },
+						},
+						required: ['url'],
+					},
+				},
+			},
+			{
+				clientDefinition: {
+					id: 'pack-x402-search-avatars-001',
+					name: 'x402_search_avatars',
+					description: 'Search public avatars on three.ws (paid x402 call).',
+					arguments: [
+						{ name: 'q', type: 'string', description: 'Optional free-text query (name, traits, description).' },
+						{ name: 'limit', type: 'number', description: 'Max number of results (default 12).' },
+					],
+					body:
+						`const q = args.q != null ? String(args.q).trim() : '';
+const limit = Math.max(1, Math.min(48, Number(args.limit || 12)));
+const argsObj = q ? { q, limit } : { limit };
+` + x402PayBody('search_public_avatars', 'argsObj'),
+				},
+				type: 'function',
+				function: {
+					name: 'x402_search_avatars',
+					description:
+						'Search the three.ws public-avatar library. Pays $0.001 USDC on Solana mainnet per call via x402 and returns up to `limit` avatars (name, slug, model_url). Use when the user wants to find a 3D character / avatar by name or description.',
+					parameters: {
+						type: 'object',
+						properties: {
+							q: { type: 'string', description: 'Free-text query (name, traits, description). Omit to browse.' },
+							limit: { type: 'integer', description: 'Max results (1–48, default 12).' },
+						},
+						required: [],
+					},
+				},
+			},
+		],
+	},
 	{
 		id: 'tradingview',
 		name: 'TradingView Charts',

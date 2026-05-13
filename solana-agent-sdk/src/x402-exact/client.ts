@@ -2,7 +2,7 @@
  * x402 "exact" scheme client — SPL TransferChecked payment.
  *
  * Builds a TransferChecked transaction, signs + sends it, and returns the
- * tx signature as the proof payload for the PAYMENT-SIGNATURE header.
+ * tx signature as the proof payload for the X-PAYMENT header.
  *
  * Compatible with the x402 v2 spec and the PaymentPayload/PaymentRequirements
  * types from @pump-fun/agent-payments-sdk/x402.
@@ -30,7 +30,7 @@ export interface ExactPaymentProof {
 
 /**
  * Pay using the "exact" x402 scheme.
- * Returns the proof to include in the PAYMENT-SIGNATURE header payload.
+ * Returns the proof to include in the X-PAYMENT header payload.
  */
 export async function payExact(
   wallet: WalletProvider,
@@ -81,7 +81,11 @@ export async function payExact(
 
 /**
  * Build an x402 PaymentPayload for the "exact" scheme.
- * Pass the result to encodePaymentPayload() before attaching to PAYMENT-SIGNATURE header.
+ *
+ * Pass the result to `encodePaymentPayload()` before attaching to the
+ * `X-PAYMENT` request header on the retry. Top-level `scheme` and `network`
+ * mirror the chosen `accepts[]` entry so the server's facilitator can route
+ * the proof without re-walking the nested `accepted` object.
  */
 export function buildExactPaymentPayload(
   requirements: ExactPaymentRequirements,
@@ -90,6 +94,8 @@ export function buildExactPaymentPayload(
 ) {
   return {
     x402Version: 2 as const,
+    scheme: requirements.scheme,
+    network: requirements.network,
     resource: resourceUrl,
     accepted: requirements,
     payload: proof,

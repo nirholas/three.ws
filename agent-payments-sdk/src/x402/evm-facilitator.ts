@@ -55,7 +55,7 @@ export interface EvmPaymentVerificationResult {
 export async function verifyEvmPayment(
   params: VerifyEvmPaymentParams
 ): Promise<EvmPaymentVerificationResult> {
-  const { proof, expectedMemo, minAmountUsdc, agentMint: _agentMint } = params;
+  const { proof, expectedMemo, minAmountUsdc, agentMint } = params;
 
   if (proof.scheme !== "pump-agent-evm") {
     return { valid: false, error: "Unknown payment scheme" };
@@ -65,15 +65,38 @@ export async function verifyEvmPayment(
     return { valid: false, error: "Memo mismatch" };
   }
 
-  // Fetch the deposit record from Pump.fun API using the quoteId / txHash
+  // Fetch the deposit record from Pump.fun API using the quoteId / txHash.
+  // The deposit response must echo back the Solana agent mint that the quote
+  // was created against so we can re-verify the payer didn't reuse a deposit
+  // destined for a different agent.
   let depositId: string;
   try {
     const res = await fetch(
       `${PUMP_CROSSCHAIN_API}/deposit?txHash=${proof.txHash}&chainId=${proof.chainId}`
     );
     if (!res.ok) throw new Error(`Deposit lookup failed (${res.status})`);
-    const data: { depositId: string; amountUsdc: string } = await res.json();
+    const data: {
+      depositId: string;
+      amountUsdc: string;
+      agentMint?: string;
+    } = await res.json();
     depositId = data.depositId;
+
+    if (!data.agentMint) {
+      return {
+        valid: false,
+        depositId,
+        error:
+          "Deposit lookup did not return agentMint — cannot verify the deposit is bound to this agent",
+      };
+    }
+    if (data.agentMint !== agentMint) {
+      return {
+        valid: false,
+        depositId,
+        error: `Agent mint mismatch: deposit is for ${data.agentMint}, this endpoint sells ${agentMint}`,
+      };
+    }
 
     const confirmedAmount = BigInt(data.amountUsdc);
     if (confirmedAmount < minAmountUsdc) {

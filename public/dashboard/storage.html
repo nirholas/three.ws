@@ -145,22 +145,32 @@
 				border: 1px solid rgba(255, 220, 92, 0.25);
 			}
 			.btn {
-				padding: 9px 14px;
-				border-radius: 9px;
-				border: 0;
+				padding: 8px 14px;
+				border-radius: 6px;
+				border: 1px solid #2a2a36;
 				font-size: 13px;
 				font-weight: 600;
 				cursor: pointer;
-				background: var(--accent);
+				background: #000;
 				color: #fff;
+				transition: border-color 0.12s ease, background 0.12s ease;
+			}
+			.btn:hover:not(:disabled) {
+				border-color: #3d3d52;
+				background: #0a0a12;
 			}
 			.btn:disabled {
 				opacity: 0.5;
 				cursor: not-allowed;
 			}
 			.btn.sec {
-				background: #222230;
+				background: #15151d;
 				color: #ddd;
+				border-color: #22222e;
+			}
+			.btn.sec:hover:not(:disabled) {
+				background: #1c1c26;
+				border-color: #2e2e3e;
 			}
 			.muted {
 				color: #888;

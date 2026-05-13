@@ -50,6 +50,8 @@ async function step1_challenge() {
 	const r = await postMcp();
 	if (r.status !== 402) return bad(`expected 402, got ${r.status}`);
 	ok('returns 402');
+	const x402Version = r.json?.x402Version;
+	if (x402Version !== 2) bad(`expected x402Version=2 (Coinbase v2), got ${x402Version}`);
 	const accepts = r.json?.accepts;
 	if (!Array.isArray(accepts) || accepts.length === 0)
 		return bad('missing accepts[] in 402 body');
@@ -57,10 +59,12 @@ async function step1_challenge() {
 		const tag = `${a.network}/${a.scheme}`;
 		if (!a.payTo) bad(`${tag}: missing payTo`);
 		if (!a.asset) bad(`${tag}: missing asset`);
-		if (!a.maxAmountRequired) bad(`${tag}: missing maxAmountRequired`);
-		if (a.network === 'solana' && !a.extra?.feePayer)
+		// v2 wire uses `amount`, not `maxAmountRequired`.
+		if (!a.amount) bad(`${tag}: missing amount (v2 spec)`);
+		if (a.network?.startsWith('solana:') && !a.extra?.feePayer)
 			bad(`${tag}: missing extra.feePayer (clients cannot build tx)`);
-		else ok(`${tag}: ${a.payTo.slice(0, 8)}… amount=${a.maxAmountRequired}`);
+		else if (a.payTo && a.amount)
+			ok(`${tag}: ${a.payTo.slice(0, 8)}… amount=${a.amount}`);
 	}
 	return accepts;
 }
@@ -69,31 +73,31 @@ async function step2_verifyReachable(accepts) {
 	console.log('\n[2] facilitator /verify reachability per network');
 	for (const a of accepts) {
 		// Shape-correct but unsigned payload — facilitator should respond with
-		// a structured invalidReason (not a 5xx network error).
-		const payload =
-			a.network === 'solana'
-				? {
-						x402Version: 1,
-						scheme: 'exact',
-						network: a.network,
-						payload: { transaction: 'AAA', payer: '11111111111111111111111111111111' },
-					}
-				: {
-						x402Version: 1,
-						scheme: 'exact',
-						network: a.network,
-						payload: {
-							signature: '0x' + '00'.repeat(65),
-							authorization: {
-								from: '0x' + '00'.repeat(20),
-								to: a.payTo,
-								value: a.maxAmountRequired,
-								validAfter: '0',
-								validBefore: '99999999999',
-								nonce: '0x' + '00'.repeat(32),
-							},
+		// a structured invalidReason (not a 5xx network error). v2 wire shape.
+		const isSolana = a.network?.startsWith('solana:');
+		const payload = isSolana
+			? {
+					x402Version: 2,
+					scheme: 'exact',
+					network: a.network,
+					payload: { transaction: 'AAA', payer: '11111111111111111111111111111111' },
+				}
+			: {
+					x402Version: 2,
+					scheme: 'exact',
+					network: a.network,
+					payload: {
+						signature: '0x' + '00'.repeat(65),
+						authorization: {
+							from: '0x' + '00'.repeat(20),
+							to: a.payTo,
+							value: a.amount,
+							validAfter: '0',
+							validBefore: '99999999999',
+							nonce: '0x' + '00'.repeat(32),
 						},
-					};
+					},
+				};
 		const xPayment = Buffer.from(JSON.stringify(payload)).toString('base64');
 		const r = await postMcp({ 'x-payment': xPayment });
 		if (r.status === 502 && /No facilitator registered/i.test(r.text))

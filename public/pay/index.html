@@ -758,7 +758,8 @@ async function loadAgents() {
       const withWallet = agents.find(a => a.solana_address);
       if (withWallet) setSelectedAgent(withWallet);
     }
-  } catch {
+  } catch (err) {
+    console.warn('[pay] loadAgents failed:', err?.message || err);
     agentLoading.style.display = 'none';
     agentLoginCta.style.display = 'block';
   }
@@ -1106,7 +1107,11 @@ async function* sseEvents(response) {
       }
       if (!dataLines.length) continue;
       let data = null;
-      try { data = JSON.parse(dataLines.join('\n')); } catch {}
+      try {
+        data = JSON.parse(dataLines.join('\n'));
+      } catch (err) {
+        console.warn('[pay] SSE JSON parse failed:', err?.message || err);
+      }
       yield { event, data };
     }
   }
@@ -1208,7 +1213,9 @@ async function refreshBalance() {
         if (updated) { selectedAgent = updated; setSelectedAgent(updated); }
         renderAgentCards(agents);
       }
-    } catch {}
+    } catch (err) {
+      console.warn('[pay] refreshBalance(agent) failed:', err?.message || err);
+    }
     return;
   }
   // Shared demo wallet
@@ -1221,7 +1228,10 @@ async function refreshBalance() {
     } else {
       walletText.textContent = 'agent wallet (no env)';
     }
-  } catch { walletText.textContent = 'agent wallet'; }
+  } catch (err) {
+    console.warn('[pay] refreshBalance(shared) failed:', err?.message || err);
+    walletText.textContent = 'agent wallet';
+  }
 }
 
 async function refreshFeed() {
@@ -1237,7 +1247,9 @@ async function refreshFeed() {
       ${it.tx ? `· <a href="https://solscan.io/tx/${it.tx}" target="_blank" rel="noopener">${it.tx.slice(0,6)}…</a>` : ''}
     </span>`).join('');
     feedStrip.innerHTML = make() + make();
-  } catch {}
+  } catch (err) {
+    console.warn('[pay] refreshFeed failed:', err?.message || err);
+  }
 }
 
 // ---- Wire up ------------------------------------------------------------
@@ -1300,11 +1312,11 @@ for (const [tool, alias] of [
 ]) {
   const url = params.get(alias);
   if (url) {
-    setTimeout(() => run({ tool, args: { url } }), 250);
+    queueMicrotask(() => run({ tool, args: { url } }));
     break;
   }
 }
-if (params.get('list') === '1') setTimeout(() => run({ tool: 'tools/list', args: {} }), 250);
+if (params.get('list') === '1') queueMicrotask(() => run({ tool: 'tools/list', args: {} }));
 
 promptEl.focus();
 </script>

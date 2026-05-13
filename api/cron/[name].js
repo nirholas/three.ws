@@ -67,6 +67,7 @@ const HANDLERS = {
 	'expire-pending-purchases': handleExpirePendingPurchases,
 	'cleanup-csrf-tokens': handleCleanupCsrfTokens,
 	'process-withdrawals': handleProcessWithdrawals,
+	'run-x-scheduled-posts': handleRunXScheduledPosts,
 };
 
 export default wrap(async (req, res) => {
@@ -2551,4 +2552,60 @@ async function handleProcessWithdrawals(req, res) {
 	}
 
 	return json(res, 200, { ok: true, ...report });
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// run-x-scheduled-posts
+//
+// Publishes due rows from x_scheduled_posts. Terminal errors (quota, dedup,
+// not connected, reauth) are recorded once; transient errors retry up to 3x.
+// ═══════════════════════════════════════════════════════════════════════════
+
+async function handleRunXScheduledPosts(req, res) {
+	if (cors(req, res, { methods: 'GET,POST,OPTIONS' })) return;
+	const auth = req.headers['authorization'] || '';
+	const expected = env.CRON_SECRET ? `Bearer ${env.CRON_SECRET}` : null;
+	const fromCron = req.headers['x-vercel-cron'] === '1';
+	if (!fromCron && expected && auth !== expected) {
+		return error(res, 401, 'unauthorized', 'cron secret required');
+	}
+
+	const { publishTweet, XPostError } = await import('../_lib/x-post.js');
+
+	const due = await sql`
+		select id, user_id, agent_id, text, attempts
+		from x_scheduled_posts
+		where posted_at is null and error is null
+		  and scheduled_at <= now()
+		order by scheduled_at asc
+		limit 50
+	`;
+
+	const report = { processed: 0, posted: 0, errored: 0 };
+	const TERMINAL = new Set(['quota_exceeded', 'duplicate', 'not_connected', 'validation_error', 'reauth_required']);
+
+	for (const row of due) {
+		report.processed++;
+		try {
+			const result = await publishTweet({ userId: row.user_id, agentId: row.agent_id, text: row.text });
+			await sql`
+				update x_scheduled_posts
+				set posted_at = now(), tweet_id = ${result.tweet_id}, attempts = attempts + 1
+				where id = ${row.id}
+			`;
+			report.posted++;
+		} catch (err) {
+			report.errored++;
+			const code = err instanceof XPostError ? err.code : 'internal_error';
+			const terminal = TERMINAL.has(code) || row.attempts >= 2;
+			await sql`
+				update x_scheduled_posts
+				set attempts = attempts + 1,
+				    error = ${terminal ? `${code}: ${err.message}`.slice(0, 500) : null}
+				where id = ${row.id}
+			`;
+		}
+	}
+
+	return json(res, 200, report);
 }
