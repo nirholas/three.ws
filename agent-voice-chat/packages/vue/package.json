@@ -1,0 +1,45 @@
+{
+  "name": "@agent-voice-chat/vue",
+  "version": "1.0.0",
+  "description": "Vue components and composables for AI voice chat integration",
+  "type": "module",
+  "main": "dist/index.cjs",
+  "module": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": {
+        "types": "./dist/index.d.ts",
+        "default": "./dist/index.js"
+      },
+      "require": {
+        "types": "./dist/index.d.cts",
+        "default": "./dist/index.cjs"
+      }
+    }
+  },
+  "files": ["dist"],
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build && vue-tsc --emitDeclarationOnly --declaration --outDir dist",
+    "typecheck": "vue-tsc --noEmit",
+    "demo": "vite --config demo/vite.config.ts"
+  },
+  "dependencies": {
+    "@agent-voice-chat/core": "1.0.0"
+  },
+  "peerDependencies": {
+    "vue": ">=3.3.0"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-vue": "^5.0.0",
+    "typescript": "^5.4.0",
+    "vite": "^5.4.0",
+    "vite-plugin-dts": "^3.9.0",
+    "vue": "^3.4.0",
+    "vue-tsc": "^2.0.0"
+  },
+  "sideEffects": false,
+  "license": "MIT",
+  "keywords": ["voice-chat", "ai", "vue", "composable", "component"]
+}
