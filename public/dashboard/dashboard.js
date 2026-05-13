@@ -303,6 +303,8 @@ function agentCard(a, onRemoved) {
 	const wallet = a.wallet_address ? `${a.wallet_address.slice(0, 6)}…${a.wallet_address.slice(-4)}` : '';
 
 	const agentIdEnc = encodeURIComponent(a.id);
+	const hasAvatar = Boolean(a.avatar_id);
+	const embedDisabledAttr = hasAvatar ? '' : 'disabled title="Link an avatar (Edit → Avatar) to enable embed"';
 	el.innerHTML = `
 		<div class="preview" data-agent-preview></div>
 		<h3>${esc(a.name || 'Agent')}</h3>
@@ -328,29 +330,108 @@ function agentCard(a, onRemoved) {
 		</details>
 		<div class="footer">
 			<div class="actions">
-				<a class="btn sec" href="/agent/${agentIdEnc}">Open</a>
-				<a class="btn sec" href="/agent-edit.html?id=${agentIdEnc}">Edit</a>
+				<a class="btn sec" href="/agent/${agentIdEnc}" title="Open public agent page">Open</a>
+				<a class="btn sec" href="/agent-edit.html?id=${agentIdEnc}" title="Edit name, persona, avatar, skills">Edit</a>
+				<button class="btn sec" data-share type="button" title="Copy public agent link">Share</button>
+				<button class="btn sec" data-embed type="button" ${embedDisabledAttr}>Embed</button>
 				${a.is_registered ? '' : `<a class="btn sec" href="/deploy${a.avatar_id ? '?avatar=' + encodeURIComponent(a.avatar_id) : ''}" title="Mint as ERC-8004 agent">Deploy on-chain</a>`}
-				<button class="btn sec danger" data-del>Delete</button>
+				<div class="more-menu-wrap"><button class="btn sec" data-more type="button" aria-haspopup="menu" aria-expanded="false">More ▾</button></div>
 			</div>
 		</div>
 	`;
 
 	mountAgentAvatarPreview(el.querySelector('[data-agent-preview]'), a);
 
-	el.querySelector('[data-del]').addEventListener('click', async () => {
-		if (!confirm(`Delete "${a.name}"? This cannot be undone.`)) return;
-		try {
-			await api.deleteAgent(a.id);
-			el.remove();
-			toast(`Deleted "${a.name}"`);
-			onRemoved?.();
-		} catch (err) {
-			toast(err.message || 'Delete failed', true);
+	el.querySelector('[data-share]').addEventListener('click', (e) => {
+		copyToClipboard(`${location.origin}/agent/${a.id}`, e.currentTarget);
+	});
+	el.querySelector('[data-embed]').addEventListener('click', (e) => {
+		if (e.currentTarget.disabled) return;
+		openAgentEmbedModal(a);
+	});
+	el.querySelector('[data-more]').addEventListener('click', (e) => {
+		const btn = e.currentTarget;
+		if (_openMoreMenu?.triggerBtn === btn) {
+			closeMoreMenu();
+			return;
 		}
+		openMoreMenu(btn, agentMoreItems(a, el, onRemoved));
 	});
 
 	return el;
+}
+
+// Items shown in an agent card's "More ▾" dropdown. Each item is wired to a
+// real action — no placeholders.
+function agentMoreItems(a, el, onRemoved) {
+	const agentIdEnc = encodeURIComponent(a.id);
+	const items = [
+		{
+			label: 'Open public page ↗',
+			run: () => window.open(`/agent/${agentIdEnc}`, '_blank', 'noopener'),
+		},
+		{
+			label: 'View manifest JSON ↗',
+			run: () => window.open(`/api/agents/${agentIdEnc}/manifest`, '_blank', 'noopener'),
+		},
+		{
+			label: 'Show QR code',
+			run: () => openQrModal(`${location.origin}/agent/${a.id}`, a.name || 'Agent'),
+		},
+		{
+			label: 'Duplicate',
+			run: () => duplicateAgent(a, el),
+		},
+	];
+	if (a.is_registered) {
+		items.push({
+			label: 'View on-chain passport ↗',
+			run: () => {
+				const meta = a.meta || {};
+				const asset = meta.solana_asset || meta.metaplex_asset || a.solana_asset;
+				const url = asset
+					? `/agent-passport.html?asset=${encodeURIComponent(asset)}`
+					: `/agent-badge.html?id=${agentIdEnc}`;
+				window.open(url, '_blank', 'noopener');
+			},
+		});
+	}
+	items.push({
+		label: 'Delete',
+		danger: true,
+		run: async () => {
+			if (!confirm(`Delete "${a.name}"? This cannot be undone.`)) return;
+			try {
+				await api.deleteAgent(a.id);
+				el.remove();
+				toast(`Deleted "${a.name}"`);
+				onRemoved?.();
+			} catch (err) {
+				toast(err.message || 'Delete failed', true);
+			}
+		},
+	});
+	return items;
+}
+
+async function duplicateAgent(a, sourceEl) {
+	const baseName = a.name || 'Agent';
+	const newName = `${baseName} copy`.slice(0, 100);
+	try {
+		const payload = { name: newName };
+		if (a.description) payload.description = a.description;
+		if (a.skills?.length) payload.skills = a.skills;
+		if (a.avatar_id) payload.avatar_id = a.avatar_id;
+		const { agent } = await api.createAgent(payload);
+		const list = sourceEl.parentElement;
+		if (list) {
+			const newCard = agentCard(agent, () => maybeRenderEmpty(list, list.previousElementSibling || list));
+			sourceEl.insertAdjacentElement('afterend', newCard);
+		}
+		toast(`Created "${agent.name}"`);
+	} catch (err) {
+		toast(err.message || 'Duplicate failed', true);
+	}
 }
 
 // Mount a 3D model-viewer (or thumbnail fallback) for an agent card.
@@ -543,6 +624,10 @@ function avatarCard(a) {
 	const copyDisabledAttr = isPrivate
 		? 'disabled title="Private avatars have no public link. Switch to unlisted or public to share."'
 		: '';
+	const hasAgent = Boolean(a.agent_id);
+	const makeAgentAttrs = hasAgent
+		? 'disabled title="This avatar already has an agent linked"'
+		: 'title="Create a new agent linked to this avatar"';
 	el.innerHTML = `
 		<div class="preview" data-preview></div>
 		<h3>${esc(a.name)}</h3>
@@ -554,11 +639,9 @@ function avatarCard(a) {
 				<a class="btn" href="${attr(studioUrl)}" title="Open this avatar in Studio to build an embeddable widget">Studio</a>
 				<button class="btn" data-embed ${embedDisabledAttr}>Embed</button>
 				<a class="btn sec" href="${attr(viewUrl)}" target="_blank" rel="noopener" title="Open the public viewer in a new tab">View</a>
-				<button class="btn sec" data-copy-url ${copyDisabledAttr}>Copy URL</button>
-				<a class="btn sec" href="/dashboard/edit/${encodeURIComponent(a.id)}">Edit</a>
-				<button class="btn sec" data-replace>Replace GLB</button>
-				<a class="btn sec" href="/deploy?avatar=${encodeURIComponent(a.id)}" title="Mint as ERC-8004 agent">Deploy on-chain</a>
-				<button class="btn sec danger" data-del>Delete</button>
+				<button class="btn sec" data-make-agent type="button" ${makeAgentAttrs}>Make agent</button>
+				<button class="btn sec" data-download type="button" title="Download the .glb file">Download</button>
+				<div class="more-menu-wrap"><button class="btn sec" data-more type="button" aria-haspopup="menu" aria-expanded="false">More ▾</button></div>
 			</div>
 		</div>
 		<div data-wallet-host></div>
@@ -596,25 +679,129 @@ function avatarCard(a) {
 			e.target.value = a.visibility;
 		}
 	});
-	el.querySelector('[data-del]').addEventListener('click', async () => {
-		if (!confirm(`Delete "${a.name}"?`)) return;
-		try {
-			await api.deleteAvatar(a.id);
-			el.remove();
-		} catch (err) {
-			alert(err.message);
-		}
-	});
-	el.querySelector('[data-replace]').addEventListener('click', () => replaceGlbFlow(a, el));
 	el.querySelector('[data-embed]').addEventListener('click', (e) => {
 		if (e.currentTarget.disabled) return;
 		openAvatarEmbedModal(a);
 	});
-	el.querySelector('[data-copy-url]').addEventListener('click', (e) => {
+	el.querySelector('[data-make-agent]').addEventListener('click', async (e) => {
 		if (e.currentTarget.disabled) return;
-		copyToClipboard(`${location.origin}/avatars/${a.id}`, e.currentTarget);
+		await makeAgentFromAvatar(a, e.currentTarget);
+	});
+	el.querySelector('[data-download]').addEventListener('click', async (e) => {
+		await downloadAvatarGlb(a, e.currentTarget);
+	});
+	el.querySelector('[data-more]').addEventListener('click', (e) => {
+		const btn = e.currentTarget;
+		if (_openMoreMenu?.triggerBtn === btn) {
+			closeMoreMenu();
+			return;
+		}
+		openMoreMenu(btn, avatarMoreItems(a, el));
 	});
 	return el;
+}
+
+function avatarMoreItems(a, el) {
+	const isPrivate = a.visibility === 'private';
+	const items = [];
+	if (!isPrivate) {
+		items.push({
+			label: 'Copy public URL',
+			run: () => copyToClipboard(`${location.origin}/avatars/${a.id}`),
+		});
+	}
+	items.push({
+		label: 'Show QR code',
+		run: () => openQrModal(`${location.origin}/avatars/${a.id}`, a.name || 'Avatar'),
+	});
+	items.push({
+		label: 'Edit details',
+		run: () => goto(`edit/${encodeURIComponent(a.id)}`),
+	});
+	items.push({
+		label: 'Replace GLB…',
+		run: () => replaceGlbFlow(a, el),
+	});
+	items.push({
+		label: 'Deploy on-chain',
+		run: () => { location.href = `/deploy?avatar=${encodeURIComponent(a.id)}`; },
+	});
+	items.push({
+		label: 'Delete',
+		danger: true,
+		run: async () => {
+			if (!confirm(`Delete "${a.name}"?`)) return;
+			try {
+				await api.deleteAvatar(a.id);
+				el.remove();
+				toast(`Deleted "${a.name}"`);
+			} catch (err) {
+				toast(err.message || 'Delete failed', true);
+			}
+		},
+	});
+	return items;
+}
+
+async function makeAgentFromAvatar(a, btn) {
+	const original = btn.textContent;
+	btn.disabled = true;
+	btn.textContent = 'Creating…';
+	try {
+		const baseName = a.name || 'Agent';
+		const { agent } = await api.createAgent({
+			name: baseName.slice(0, 100),
+			avatar_id: a.id,
+		});
+		toast(`Created agent "${agent.name}"`);
+		// Swap the button for a plain link so the original click handler that
+		// calls makeAgentFromAvatar can't fire again and race a second create.
+		const link = document.createElement('a');
+		link.className = 'btn sec';
+		link.href = `/agent-edit.html?id=${encodeURIComponent(agent.id)}`;
+		link.textContent = 'Open agent →';
+		link.title = 'Open the newly-created agent';
+		btn.replaceWith(link);
+	} catch (err) {
+		btn.disabled = false;
+		btn.textContent = original;
+		toast(err.message || 'Failed to create agent', true);
+	}
+}
+
+async function downloadAvatarGlb(a, btn) {
+	const original = btn.textContent;
+	btn.disabled = true;
+	btn.textContent = 'Preparing…';
+	try {
+		let url = a.model_url;
+		if (!url) {
+			const { avatar } = await api.getAvatar(a.id);
+			url = avatar?.url || avatar?.model_url;
+		}
+		if (!url) throw new Error('No download URL available');
+		const resp = await fetch(url, { credentials: 'omit' });
+		if (!resp.ok) throw new Error(`Download failed (${resp.status})`);
+		const blob = await resp.blob();
+		const safeName = (a.name || 'avatar').replace(/[^a-z0-9._-]+/gi, '_').slice(0, 80) || 'avatar';
+		const link = document.createElement('a');
+		const objectUrl = URL.createObjectURL(blob);
+		link.href = objectUrl;
+		link.download = `${safeName}.glb`;
+		document.body.appendChild(link);
+		link.click();
+		link.remove();
+		setTimeout(() => URL.revokeObjectURL(objectUrl), 5000);
+		btn.textContent = 'Downloaded';
+		setTimeout(() => {
+			btn.textContent = original;
+			btn.disabled = false;
+		}, 1200);
+	} catch (err) {
+		btn.textContent = original;
+		btn.disabled = false;
+		toast(err.message || 'Download failed', true);
+	}
 }
 
 // Mount the agent's wallet card under an avatar. If the avatar has no linked
@@ -4065,6 +4252,158 @@ function openAvatarEmbedModal(avatar) {
 		.addEventListener('click', (e) => copyToClipboard(snipEl.textContent, e.currentTarget));
 
 	refresh();
+}
+
+// ── Agent embed modal ──────────────────────────────────────────────────────
+// Reuses the avatar embed flow against the agent's linked avatar. Requires
+// avatar_id; callers gate the button when no avatar is linked.
+function openAgentEmbedModal(agent) {
+	if (!agent?.avatar_id) {
+		toast('Link an avatar to the agent first', true);
+		return;
+	}
+	openAvatarEmbedModal({
+		id: agent.avatar_id,
+		name: agent.name || 'Agent',
+	});
+}
+
+// ── QR modal ────────────────────────────────────────────────────────────────
+// Renders a scannable QR code for a URL. Uses the qrcode library via esm.sh,
+// matching the existing pattern in src/marketplace.js and dashboard/portfolio.html.
+async function openQrModal(url, title) {
+	const overlay = document.createElement('div');
+	overlay.className = 'modal-overlay';
+	overlay.innerHTML = `
+		<div class="modal" role="dialog" aria-label="QR code" style="width:min(380px,calc(100vw - 32px))">
+			<h2>${esc(title || 'Share')}</h2>
+			<p class="sub" style="margin:0 0 16px">Scan to open on another device.</p>
+			<div id="qr-host" style="display:grid;place-items:center;padding:14px;background:#fff;border-radius:10px;margin-bottom:14px;min-height:240px">
+				<div class="muted" style="color:#666">Generating…</div>
+			</div>
+			<div style="background:#0f0f17;border:1px solid var(--border);border-radius:8px;padding:8px 10px;font-size:11px;word-break:break-all;color:#bbb;margin-bottom:14px">${esc(url)}</div>
+			<div class="row" style="justify-content:space-between;gap:8px">
+				<button class="btn sec" id="qr-copy" type="button">Copy URL</button>
+				<button class="btn sec" id="qr-close" type="button">Close</button>
+			</div>
+		</div>
+	`;
+	document.body.appendChild(overlay);
+	requestAnimationFrame(() => overlay.classList.add('open'));
+
+	const close = () => {
+		overlay.classList.remove('open');
+		setTimeout(() => {
+			overlay.remove();
+			document.removeEventListener('keydown', onKey);
+		}, 200);
+	};
+	const onKey = (e) => {
+		if (e.key === 'Escape') close();
+	};
+	document.addEventListener('keydown', onKey);
+	overlay.addEventListener('click', (e) => {
+		if (e.target === overlay) close();
+	});
+	overlay.querySelector('#qr-close').addEventListener('click', close);
+	overlay
+		.querySelector('#qr-copy')
+		.addEventListener('click', (e) => copyToClipboard(url, e.currentTarget));
+
+	const host = overlay.querySelector('#qr-host');
+	try {
+		const mod = await import('https://esm.sh/qrcode@1.5.3');
+		const QRCode = mod.default || mod;
+		const canvas = document.createElement('canvas');
+		await QRCode.toCanvas(canvas, url, {
+			width: 240,
+			margin: 1,
+			color: { dark: '#000000', light: '#ffffff' },
+		});
+		host.innerHTML = '';
+		host.appendChild(canvas);
+	} catch (err) {
+		host.innerHTML = `<div style="color:#a33;font-size:12px">QR generation failed: ${esc(err.message || 'error')}</div>`;
+	}
+}
+
+// ── Dropdown "More ▾" menu ──────────────────────────────────────────────────
+// Anchors a small menu to the trigger button. Each item is { label, run, danger? }.
+// One menu open at a time; closes on outside click, Escape, or item click.
+let _openMoreMenu = null;
+function openMoreMenu(triggerBtn, items) {
+	closeMoreMenu();
+	if (!items?.length) return;
+
+	const menu = document.createElement('div');
+	menu.className = 'more-menu';
+	menu.setAttribute('role', 'menu');
+	items.forEach((item, i) => {
+		const btn = document.createElement('button');
+		btn.type = 'button';
+		btn.setAttribute('role', 'menuitem');
+		btn.className = 'more-menu-item' + (item.danger ? ' danger' : '');
+		btn.textContent = item.label;
+		btn.addEventListener('click', (e) => {
+			e.stopPropagation();
+			closeMoreMenu();
+			try {
+				item.run();
+			} catch (err) {
+				toast(err.message || 'Action failed', true);
+			}
+		});
+		menu.appendChild(btn);
+		if (i === 0) requestAnimationFrame(() => btn.focus());
+	});
+
+	document.body.appendChild(menu);
+	const rect = triggerBtn.getBoundingClientRect();
+	const menuRect = menu.getBoundingClientRect();
+	let left = rect.right - menuRect.width;
+	if (left < 8) left = 8;
+	let top = rect.bottom + 4;
+	if (top + menuRect.height > window.innerHeight - 8) {
+		top = rect.top - menuRect.height - 4;
+	}
+	menu.style.left = `${Math.round(left + window.scrollX)}px`;
+	menu.style.top = `${Math.round(top + window.scrollY)}px`;
+
+	triggerBtn.setAttribute('aria-expanded', 'true');
+
+	const onDocClick = (e) => {
+		if (menu.contains(e.target)) return;
+		if (triggerBtn.contains(e.target)) return;
+		closeMoreMenu();
+	};
+	const onKey = (e) => {
+		if (e.key === 'Escape') closeMoreMenu();
+	};
+	const onScroll = () => closeMoreMenu();
+	document.addEventListener('click', onDocClick, { capture: true });
+	document.addEventListener('keydown', onKey);
+	window.addEventListener('scroll', onScroll, { capture: true, passive: true });
+	window.addEventListener('resize', onScroll);
+
+	_openMoreMenu = {
+		menu,
+		triggerBtn,
+		cleanup: () => {
+			document.removeEventListener('click', onDocClick, { capture: true });
+			document.removeEventListener('keydown', onKey);
+			window.removeEventListener('scroll', onScroll, { capture: true });
+			window.removeEventListener('resize', onScroll);
+		},
+	};
+}
+
+function closeMoreMenu() {
+	if (!_openMoreMenu) return;
+	const { menu, triggerBtn, cleanup } = _openMoreMenu;
+	_openMoreMenu = null;
+	triggerBtn.setAttribute('aria-expanded', 'false');
+	cleanup();
+	menu.remove();
 }
 
 // ── shared widget UI helpers ────────────────────────────────────────────────

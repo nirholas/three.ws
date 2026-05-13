@@ -240,6 +240,49 @@
 			.card .actions .danger:hover {
 				background: rgba(204, 64, 64, 0.18);
 			}
+			.more-menu-wrap {
+				display: inline-flex;
+				margin-left: auto;
+			}
+			.more-menu {
+				position: absolute;
+				z-index: 80;
+				min-width: 180px;
+				background: #14141c;
+				border: 1px solid var(--border);
+				border-radius: 10px;
+				padding: 6px;
+				box-shadow: 0 8px 28px rgba(0, 0, 0, 0.55);
+				display: flex;
+				flex-direction: column;
+				gap: 2px;
+			}
+			.more-menu-item {
+				appearance: none;
+				background: transparent;
+				border: none;
+				color: #ddd;
+				font: inherit;
+				font-size: 13px;
+				padding: 7px 10px;
+				text-align: left;
+				border-radius: 6px;
+				cursor: pointer;
+			}
+			.more-menu-item:hover,
+			.more-menu-item:focus {
+				background: #1d1d28;
+				color: #fff;
+				outline: none;
+			}
+			.more-menu-item.danger {
+				color: #ffb3b3;
+			}
+			.more-menu-item.danger:hover,
+			.more-menu-item.danger:focus {
+				background: rgba(204, 64, 64, 0.18);
+				color: #ffd0d0;
+			}
 			.card h3 {
 				overflow: hidden;
 				text-overflow: ellipsis;

@@ -154,12 +154,60 @@ function render(agent) {
 	if (agent.token) {
 		$('ad-token-body').classList.remove('ad-muted');
 		$('ad-token-body').textContent = '';
-		$('ad-token-body').appendChild(
-			el('div', { class: 'ad-row ad-row-split' }, [
-				el('span', { text: agent.token.symbol || 'TOKEN' }),
-				el('span', { class: 'ad-mono', text: shortAddr(agent.token.mint) }),
-			]),
-		);
+		const tokenRow = el('div', { class: 'ad-row ad-row-split' }, [
+			el('span', { text: agent.token.symbol || 'TOKEN' }),
+			el('span', { class: 'ad-mono', text: shortAddr(agent.token.mint) }),
+		]);
+		$('ad-token-body').appendChild(tokenRow);
+		const dashLink = agent.token.pumpfun_url
+			|| (agent.token.cluster === 'devnet'
+				? `https://explorer.solana.com/address/${agent.token.mint}?cluster=devnet`
+				: `https://pump.fun/${agent.token.mint}`);
+		const viewBtn = el('a', {
+			class: 'ad-token-cta',
+			href: dashLink,
+			target: '_blank',
+			rel: 'noopener noreferrer',
+			text: `View on ${agent.token.cluster === 'devnet' ? 'Solana Explorer' : 'pump.fun'} →`,
+		});
+		$('ad-token-body').appendChild(viewBtn);
+	} else if (agent.isOwner) {
+		$('ad-token-body').classList.remove('ad-muted');
+		$('ad-token-body').textContent = '';
+		const launchBtn = el('button', {
+			class: 'ad-token-cta',
+			type: 'button',
+			text: '🚀 Launch agent token',
+		});
+		launchBtn.addEventListener('click', async () => {
+			launchBtn.disabled = true;
+			try {
+				const { openLaunchTokenModal } = await import('/src/pump/launch-token-modal.js');
+				const rec = agent.rawMetadata || {};
+				const onchain = rec.onchain || rec.meta?.onchain || null;
+				const needsDeploy = !onchain || onchain.family !== 'solana';
+				const imageUrl =
+					rec.avatar_thumbnail_url || rec.meta?.thumbnail_url || agent.avatar || '';
+				openLaunchTokenModal({
+					agentId: agent.id,
+					agentName: agent.name,
+					imageUrl,
+					needsDeploy,
+					agentForDeploy: needsDeploy
+						? {
+								id: agent.id,
+								name: rec.name || agent.name,
+								description: rec.description || '',
+								avatar_id: rec.avatar_id || null,
+								skills: rec.skills || undefined,
+							}
+						: null,
+				});
+			} finally {
+				launchBtn.disabled = false;
+			}
+		});
+		$('ad-token-body').appendChild(launchBtn);
 	}
 
 	$('ad-rewards').textContent = String(agent.creatorRewards ?? 0);
@@ -600,6 +648,9 @@ function normalize(rec, avatar) {
 		tradeUrl: rec.token?.mint ? `https://magiceden.io/marketplace/${rec.token.mint}` : '#',
 		token: rec.token || null,
 		services,
+		// The /api/agents/:id endpoint only includes `user_id` in the response when
+		// the requester is the owner — see api/agents.js decorate(row, isOwner).
+		isOwner: !!rec.user_id,
 		rawMetadata: rec,
 	};
 }

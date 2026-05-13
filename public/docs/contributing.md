@@ -289,4 +289,4 @@ Core team response times: typically 2–3 business days on GitHub, faster in Dis
 
 ## License
 
-By contributing, you agree that your contributions will be licensed under the [MIT License](../../LICENSE).
+By contributing, you agree that your contributions will be licensed under the [Apache License 2.0](../../LICENSE).

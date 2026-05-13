@@ -8,7 +8,7 @@ The result is an agent that doesn't just respond in a chat box. It occupies a th
 
 **Key facts:**
 
-- **License:** MIT — use it, fork it, self-host it
+- **License:** Apache-2.0 — use it, fork it, self-host it
 - **Hosted platform:** [https://three.ws/](https://three.ws/)
 - **CDN library:** `https://cdn.three.wsagent-3d.js`
 - **No server required** for basic use — the viewer, agent runtime, and skill system all run in the browser via WebGL 2.0
@@ -44,7 +44,7 @@ For developers who don't need any of this, on-chain identity is entirely optiona
 
 ### Open
 
-The platform is MIT licensed. You can self-host the full application, publish the library to your own CDN, or fork and modify any layer. The manifest format, embed protocol, and agent spec are all documented in the `/specs` directory of the repository.
+The platform is Apache-2.0 licensed. You can self-host the full application, publish the library to your own CDN, or fork and modify any layer. The manifest format, embed protocol, and agent spec are all documented in the `/specs` directory of the repository.
 
 ---
 

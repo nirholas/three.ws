@@ -168,10 +168,21 @@ function buildCard(agent) {
 	card.className = 'my-agents-card';
 	card.setAttribute('aria-label', `Agent: ${agent.name}`);
 
-	const thumbSrc = agent.glbUrl || agent.image;
-	const thumbHtml = thumbSrc
-		? `<img src="${escapeHtml(thumbSrc)}" alt="${escapeHtml(agent.name)} preview" loading="lazy" />`
-		: `<span aria-hidden="true">🤖</span>`;
+	const thumbHtml = agent.glbUrl
+		? `<model-viewer
+				src="${escapeHtml(agent.glbUrl)}"
+				alt="${escapeHtml(agent.name)} 3D avatar"
+				camera-controls
+				auto-rotate
+				shadow-intensity="1"
+				exposure="1"
+				tone-mapping="aces"
+				loading="lazy"
+				reveal="auto"
+			></model-viewer>`
+		: agent.image
+			? `<img src="${escapeHtml(agent.image)}" alt="${escapeHtml(agent.name)} preview" loading="lazy" />`
+			: `<span aria-hidden="true">🤖</span>`;
 
 	card.innerHTML = `
 		<div class="my-agents-card__thumb">${thumbHtml}</div>

@@ -57,12 +57,19 @@ export async function getPumpSdk({ network = 'mainnet' } = {}) {
 	// the full surface — required by the studio launch flow.
 	const offline = new PumpSdk();
 	const online = OnlinePumpSdk ? new OnlinePumpSdk(connection) : null;
+	// Compose offline + online so callers see a unified `sdk`. Offline owns the
+	// instruction builders (createV2Instruction, …); online owns the fetch*
+	// helpers. Prefer offline for any method that exists on it — the previous
+	// `prop in target` check resolved class-prototype methods on `online` to
+	// `undefined`, surfacing as "sdk.createInstruction is not a function" at
+	// runtime even though the method existed on `offline`.
 	const sdk = online
 		? new Proxy(online, {
 				get(target, prop, receiver) {
-					if (prop in target) return Reflect.get(target, prop, receiver);
-					const fallback = offline[prop];
-					return typeof fallback === 'function' ? fallback.bind(offline) : fallback;
+					const offlineVal = offline[prop];
+					if (typeof offlineVal === 'function') return offlineVal.bind(offline);
+					if (offlineVal !== undefined) return offlineVal;
+					return Reflect.get(target, prop, receiver);
 				},
 			})
 		: offline;
