@@ -44,6 +44,7 @@ const STYLE = `
 		inset: 0;
 		display: grid;
 		grid-template-columns: 1fr 360px;
+		grid-template-rows: minmax(0, 1fr);
 		background: #0b0d10;
 		color: #f4f4f5;
 		font: 14px/1.4 system-ui, -apple-system, sans-serif;
@@ -142,6 +143,8 @@ const STYLE = `
 		border-left: 1px solid #1f2937;
 		display: flex;
 		flex-direction: column;
+		min-height: 0;
+		overflow: hidden;
 	}
 	.panel-header {
 		padding: 16px 20px;
