@@ -226,6 +226,20 @@
 				height: 100%;
 				--poster-color: transparent;
 			}
+			.card-preview--icon {
+				display: flex;
+				align-items: center;
+				justify-content: center;
+			}
+			.card-preview--icon svg {
+				width: 56px;
+				height: 56px;
+				color: rgba(255, 255, 255, 0.5);
+			}
+			.card-subtitle code {
+				font-size: 11px;
+				opacity: 0.7;
+			}
 
 			.card-icon {
 				width: 48px;
@@ -693,21 +707,22 @@
 					aria-label="Open avatar web editor (recommended)"
 				>
 					<span class="recommended-badge" aria-hidden="true">Recommended</span>
-					<div class="card-preview" aria-hidden="true">
+					<div class="card-preview">
 						<model-viewer
 							src="/avatars/default.glb"
+							alt="Default 3D avatar preview"
 							auto-rotate
 							auto-rotate-delay="0"
 							rotation-per-second="18deg"
 							interaction-prompt="none"
-							camera-controls="false"
 							disable-zoom
+							disable-pan
+							disable-tap
 							shadow-intensity="0.4"
 							shadow-softness="0.8"
 							exposure="0.95"
 							environment-image="neutral"
-							camera-orbit="20deg 80deg 2.6m"
-							field-of-view="28deg"
+							camera-orbit="15deg 80deg auto"
 							loading="eager"
 						></model-viewer>
 					</div>
@@ -759,17 +774,11 @@
 					tabindex="0"
 					aria-label="Upload a GLB file"
 				>
-					<div
-						class="card-preview"
-						aria-hidden="true"
-						style="display: flex; align-items: center; justify-content: center;"
-					>
+					<div class="card-preview card-preview--icon" aria-hidden="true">
 						<svg
 							viewBox="0 0 24 24"
-							width="56"
-							height="56"
 							fill="none"
-							stroke="rgba(255,255,255,0.5)"
+							stroke="currentColor"
 							stroke-width="1.2"
 							stroke-linecap="round"
 							stroke-linejoin="round"
@@ -798,8 +807,7 @@
 						<h2 class="card-title">Upload your own GLB</h2>
 					</div>
 					<p class="card-subtitle">
-						Drop a <code style="font-size: 11px; opacity: 0.7">.glb</code> file. Works
-						with any glTF 2.0 model.
+						Drop a <code>.glb</code> file. Works with any glTF 2.0 model.
 					</p>
 					<span class="card-cta">
 						Choose file

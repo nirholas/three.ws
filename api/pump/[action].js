@@ -559,6 +559,57 @@ async function handleBuildMetadata(req, res) {
 	return json(res, 200, { metadata_url: r2PublicUrl(jsonKey), image_url: imageUrl });
 }
 
+// ── shared launch helpers ──────────────────────────────────────────────────
+
+// Build the pump.fun launch instructions for the requested coin variant.
+// Mayhem coins go through createV2* (token-2022 + mayhem program accounts).
+// Regular / agent coins keep the legacy V1 path; agent binding (PumpAgent.create)
+// is appended by the caller when applicable.
+async function buildLaunchInstructions({
+	sdk, BN, mint, creator, name, symbol, uri, solBuyIn, isMayhem,
+}) {
+	const LAMPORTS = 1_000_000_000;
+	const hasBuy   = solBuyIn > 0;
+
+	if (isMayhem) {
+		if (hasBuy && sdk.createV2AndBuyInstructions) {
+			const global    = await sdk.fetchGlobal();
+			const solAmount = new BN(Math.floor(solBuyIn * LAMPORTS));
+			const pumpSdk   = await import('@pump-fun/pump-sdk');
+			const tokenAmount = pumpSdk.getBuyTokenAmountFromSolAmount(global, null, solAmount);
+			const ixs = await sdk.createV2AndBuyInstructions({
+				global, mint, name, symbol, uri,
+				creator, user: creator,
+				solAmount, amount: tokenAmount,
+				mayhemMode: true,
+			});
+			return Array.isArray(ixs) ? [...ixs] : [ixs];
+		}
+		const ix = await sdk.createV2Instruction({
+			mint, name, symbol, uri, creator, user: creator, mayhemMode: true,
+		});
+		return [ix];
+	}
+
+	// Regular / agent — legacy V1 path (TOKEN_PROGRAM_ID).
+	if (hasBuy && sdk.createAndBuyInstructions) {
+		const global    = await sdk.fetchGlobal();
+		const solAmount = new BN(Math.floor(solBuyIn * LAMPORTS));
+		const pumpSdk   = await import('@pump-fun/pump-sdk');
+		const tokenAmount = pumpSdk.getBuyTokenAmountFromSolAmount(global, null, solAmount);
+		const ixs = await sdk.createAndBuyInstructions({
+			global, mint, name, symbol, uri,
+			creator, user: creator,
+			solAmount, amount: tokenAmount,
+		});
+		return Array.isArray(ixs) ? [...ixs] : [ixs];
+	}
+	const ix = await sdk.createInstruction({
+		mint, name, symbol, uri, creator, user: creator,
+	});
+	return [ix];
+}
+
 // ── launch-prep ────────────────────────────────────────────────────────────
 
 const launchPrepSchema = z
@@ -577,6 +628,11 @@ const launchPrepSchema = z
 		// the server never sees the secret. When omitted, the server falls back
 		// to a fresh Keypair.generate() and returns the secret key for co-sign.
 		mint_address: z.string().min(32).max(44).optional(),
+		// Coin variant:
+		//   'agent'   — pump.fun coin + on-chain agent (buyback-bound)
+		//   'regular' — plain pump.fun coin, no agent binding
+		//   'mayhem'  — pump.fun mayhem-mode coin (V2 instruction set, token-2022)
+		coin_type: z.enum(['regular', 'mayhem', 'agent']).default('agent'),
 	})
 	.refine((v) => v.agent_id || v.avatar_id, {
 		message: 'agent_id or avatar_id required',
@@ -692,44 +748,28 @@ async function handleLaunchPrep(req, res) {
 	const { sdk, BN } = await getPumpSdk({ network: body.network });
 	const LAMPORTS_PER_SOL_LAUNCH = 1_000_000_000;
 
-	const instructions = [];
-	if (body.sol_buy_in > 0 && sdk.createAndBuyInstructions) {
-		const global = await sdk.fetchGlobal();
-		const solAmount = new BN(Math.floor(body.sol_buy_in * LAMPORTS_PER_SOL_LAUNCH));
-		const pumpSdk = await import('@pump-fun/pump-sdk');
-		const tokenAmount = pumpSdk.getBuyTokenAmountFromSolAmount(global, null, solAmount);
-		const ixs = await sdk.createAndBuyInstructions({
-			global,
-			mint,
-			name: body.name,
-			symbol: body.symbol,
-			uri: body.uri,
-			creator,
-			user: creator,
-			solAmount,
-			amount: tokenAmount,
-		});
-		instructions.push(...(Array.isArray(ixs) ? ixs : [ixs]));
-	} else {
-		const ix = await sdk.createInstruction({
-			mint,
-			name: body.name,
-			symbol: body.symbol,
-			uri: body.uri,
-			creator,
-			user: creator,
-		});
-		instructions.push(ix);
-	}
+	// Coin-variant flags:
+	//   mayhem → use createV2* (token-2022, mayhemMode=true), drop buyback binding
+	//   agent  → V1 path + on-chain agent (PumpAgent.create with buyback_bps)
+	//   regular→ V1 path, no agent binding
+	const isMayhem = body.coin_type === 'mayhem';
+	const isAgent  = body.coin_type === 'agent';
+	const effBuyback = isAgent ? body.buyback_bps : 0;
 
-	// Bind PumpAgent.create.
-	if (body.buyback_bps > 0) {
+	const instructions = await buildLaunchInstructions({
+		sdk, BN, mint, creator,
+		name: body.name, symbol: body.symbol, uri: body.uri,
+		solBuyIn: body.sol_buy_in,
+		isMayhem,
+	});
+
+	if (isAgent && effBuyback > 0) {
 		const { offline } = await getPumpAgentOffline({ network: body.network, mint });
 		const createIx = await offline.create({
 			authority: creator,
 			mint,
 			agentAuthority: creator,
-			buybackBps: body.buyback_bps,
+			buybackBps: effBuyback,
 		});
 		instructions.push(createIx);
 	}
@@ -757,7 +797,8 @@ async function handleLaunchPrep(req, res) {
 				name: body.name,
 				symbol: body.symbol,
 				network: body.network,
-				buyback_bps: body.buyback_bps,
+				buyback_bps: effBuyback,
+				coin_type: body.coin_type,
 				prep_id: prepId,
 			})}::jsonb,
 			${expiresAt}
@@ -775,7 +816,8 @@ async function handleLaunchPrep(req, res) {
 		client_supplied_mint: !mintKeypair,
 		tx_base64: txBase64,
 		network: body.network,
-		buyback_bps: body.buyback_bps,
+		buyback_bps: effBuyback,
+		coin_type: body.coin_type,
 		expires_at: expiresAt.toISOString(),
 		instructions: mintKeypair
 			? 'Decode tx_base64 as VersionedTransaction. Sign with the mint keypair (mint_secret_key_b64) AND the user wallet, submit, then POST /api/pump/launch-confirm with the tx_signature.'
@@ -926,6 +968,7 @@ const launchAgentSchema = z
 		sol_buy_in: z.number().nonnegative().max(50).default(0),
 		mint_address: z.string().min(32).max(44).optional(),
 		mint_secret_key_b64: z.string().min(20).optional(),
+		coin_type: z.enum(['regular', 'mayhem', 'agent']).default('agent'),
 	})
 	.refine((v) => v.agent_id || v.avatar_id, {
 		message: 'agent_id or avatar_id required',
@@ -958,7 +1001,7 @@ async function handleLaunchAgent(req, res) {
 
 	const loaded = await loadAgentForSigning(resolvedAgentId, user.id, {
 		reason: 'studio_pump_launch',
-		meta: { network: body.network, buyback_bps: body.buyback_bps },
+		meta: { network: body.network, buyback_bps: body.buyback_bps, coin_type: body.coin_type },
 	});
 	if (loaded.error) return error(res, loaded.error.status, loaded.error.code, loaded.error.msg);
 	const agentKeypair = loaded.keypair;
@@ -1010,43 +1053,24 @@ async function handleLaunchAgent(req, res) {
 
 	const { sdk, BN } = await getPumpSdk({ network: body.network });
 
-	const instructions = [];
-	if (body.sol_buy_in > 0 && sdk.createAndBuyInstructions) {
-		const global = await sdk.fetchGlobal();
-		const solAmount = new BN(initialBuyLamports);
-		const pumpSdk = await import('@pump-fun/pump-sdk');
-		const tokenAmount = pumpSdk.getBuyTokenAmountFromSolAmount(global, null, solAmount);
-		const ixs = await sdk.createAndBuyInstructions({
-			global,
-			mint,
-			name: body.name,
-			symbol: body.symbol,
-			uri: body.uri,
-			creator,
-			user: creator,
-			solAmount,
-			amount: tokenAmount,
-		});
-		instructions.push(...(Array.isArray(ixs) ? ixs : [ixs]));
-	} else {
-		const ix = await sdk.createInstruction({
-			mint,
-			name: body.name,
-			symbol: body.symbol,
-			uri: body.uri,
-			creator,
-			user: creator,
-		});
-		instructions.push(ix);
-	}
+	const isMayhem = body.coin_type === 'mayhem';
+	const isAgent  = body.coin_type === 'agent';
+	const effBuyback = isAgent ? body.buyback_bps : 0;
 
-	if (body.buyback_bps > 0) {
+	const instructions = await buildLaunchInstructions({
+		sdk, BN, mint, creator,
+		name: body.name, symbol: body.symbol, uri: body.uri,
+		solBuyIn: body.sol_buy_in,
+		isMayhem,
+	});
+
+	if (isAgent && effBuyback > 0) {
 		const { offline } = await getPumpAgentOffline({ network: body.network, mint });
 		const createIx = await offline.create({
 			authority: creator,
 			mint,
 			agentAuthority: creator,
-			buybackBps: body.buyback_bps,
+			buybackBps: effBuyback,
 		});
 		instructions.push(createIx);
 	}
@@ -1077,7 +1101,7 @@ async function handleLaunchAgent(req, res) {
 			(agent_id, user_id, network, mint, name, symbol, metadata_uri, agent_authority, buyback_bps)
 		values
 			(${resolvedAgentId}, ${user.id}, ${body.network}, ${mintAddr},
-			 ${body.name}, ${body.symbol}, ${body.uri}, ${creator.toBase58()}, ${body.buyback_bps})
+			 ${body.name}, ${body.symbol}, ${body.uri}, ${creator.toBase58()}, ${effBuyback})
 		on conflict (mint, network) do nothing
 		returning id, mint, network, buyback_bps, created_at
 	`;
@@ -1095,7 +1119,8 @@ async function handleLaunchAgent(req, res) {
 				signature,
 				network: body.network,
 				sol_buy_in: body.sol_buy_in || 0,
-				buyback_bps: body.buyback_bps,
+				buyback_bps: effBuyback,
+				coin_type: body.coin_type,
 				source: 'studio_agent_wallet',
 			})}::jsonb,
 			${'pumpfun'}
@@ -1108,7 +1133,8 @@ async function handleLaunchAgent(req, res) {
 		mint: mintAddr,
 		signature,
 		network: body.network,
-		buyback_bps: body.buyback_bps,
+		buyback_bps: effBuyback,
+		coin_type: body.coin_type,
 		pump_agent_mint: row || null,
 		explorer: `https://solscan.io/tx/${signature}${body.network === 'devnet' ? '?cluster=devnet' : ''}`,
 		pumpfun_url: `https://pump.fun/coin/${mintAddr}`,

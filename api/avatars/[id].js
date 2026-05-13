@@ -102,13 +102,17 @@ export default wrap(async (req, res) => {
 			return handleGlbPatch(res, auth, id, body.glbUrl);
 		}
 		const patch = parse(patchSchema, body);
-		if (patch.visibility === 'private' && !(await userHasPaidPlan(auth.userId))) {
-			return error(
-				res,
-				402,
-				'plan_required',
-				'private avatars require a Pro plan — upgrade at /dashboard/#billing or set visibility to public/unlisted',
-			);
+		if (patch.visibility === 'private') {
+			const current = await getAvatar({ id, requesterId: auth.userId });
+			const wasPrivate = current?.visibility === 'private';
+			if (!wasPrivate && !(await userHasPaidPlan(auth.userId))) {
+				return error(
+					res,
+					402,
+					'plan_required',
+					'private avatars require a Pro plan — upgrade at /dashboard/#billing or set visibility to public/unlisted',
+				);
+			}
 		}
 		const avatar = await updateAvatar({ id, userId: auth.userId, patch });
 		if (!avatar) return error(res, 404, 'not_found', 'avatar not found or not yours');

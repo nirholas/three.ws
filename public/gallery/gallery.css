@@ -416,8 +416,15 @@ body.gallery-page {
 }
 .gallery-card-meta {
 	font-size: 11px;
-	color: rgba(255, 255, 255, 0.4);
+	color: rgba(255, 255, 255, 0.45);
 	font-variant-numeric: tabular-nums;
+	display: inline-flex;
+	align-items: center;
+	gap: 6px;
+	min-width: 0;
+}
+.gallery-card-dot {
+	opacity: 0.5;
 }
 .gallery-card-actions {
 	display: inline-flex;

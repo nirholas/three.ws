@@ -1,5 +1,4 @@
 /* home-polish.js — enhances home.html with:
- *  - top scroll-progress bar
  *  - right-side chapter rail with active-section tracking
  *  - "Copy" button for the developer code snippet
  *  - cursor-tracked radial glow on bento cards
@@ -19,41 +18,10 @@
 		var main = document.querySelector('main.home-parallax');
 		if (!main) return;
 
-		mountScrollProgress();
 		mountChapterRail(main);
 		mountDevCopyButton();
 		mountBentoGlow();
 	});
-
-	/* ── Scroll progress bar ─────────────────────────────────────────────── */
-
-	function mountScrollProgress() {
-		var bar = document.createElement('div');
-		bar.className = 'h-scroll-progress';
-		bar.setAttribute('aria-hidden', 'true');
-		document.body.appendChild(bar);
-
-		var ticking = false;
-		var update = function () {
-			var doc = document.documentElement;
-			var max = doc.scrollHeight - doc.clientHeight;
-			var pct = max > 0 ? (doc.scrollTop / max) * 100 : 0;
-			bar.style.width = pct.toFixed(2) + '%';
-			ticking = false;
-		};
-
-		window.addEventListener(
-			'scroll',
-			function () {
-				if (!ticking) {
-					window.requestAnimationFrame(update);
-					ticking = true;
-				}
-			},
-			{ passive: true },
-		);
-		update();
-	}
 
 	/* ── Chapter rail with IntersectionObserver active-state ─────────────── */
 

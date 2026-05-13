@@ -6,6 +6,23 @@ import { mountAgentVanityGrinderCard } from '/src/agent-vanity-grinder.js';
 
 export const state = { user: null };
 
+const PAID_PLANS = new Set(['pro', 'team', 'enterprise']);
+function canSetPrivate() {
+	const u = state.user;
+	return Boolean(u && (PAID_PLANS.has(u.plan) || u.is_admin));
+}
+function visibilityOptionsHtml(currentValue) {
+	const allowPrivate = canSetPrivate() || currentValue === 'private';
+	const opts = [
+		{ v: 'public',   label: 'Public (discoverable)' },
+		{ v: 'unlisted', label: 'Unlisted (anyone with link)' },
+		{ v: 'private',  label: allowPrivate ? 'Private (only you)' : 'Private — Pro plan', disabled: !allowPrivate },
+	];
+	return opts
+		.map((o) => `<option value="${o.v}"${currentValue === o.v ? ' selected' : ''}${o.disabled ? ' disabled' : ''}>${o.label}</option>`)
+		.join('');
+}
+
 export const api = {
 	me: () => j('GET', '/api/auth/me'),
 	listAvatars: ({ cursor, limit = 24 } = {}) => {
@@ -29,6 +46,8 @@ export const api = {
 	createAvatarSession: (id) => j('POST', `/api/avatars/${id}/session`),
 	getAvatarVersions: (id) => j('GET', `/api/avatars/${id}/versions`),
 	patchAgent: (agentId, patch) => j('PUT', `/api/agents/${agentId}`, patch),
+	deleteAgent: (agentId) => j('DELETE', `/api/agents/${encodeURIComponent(agentId)}`),
+	createAgent: (body) => j('POST', '/api/agents', body),
 	getAgentMe: () => j('GET', '/api/agents/me'),
 	getAvatar: (id) => j('GET', `/api/avatars/${encodeURIComponent(id)}`),
 	patchAgentAnimations: (agentId, animations) =>
@@ -75,6 +94,7 @@ export function signOut() {
 }
 
 const KNOWN_TABS = [
+	'agents',
 	'avatars',
 	'create',
 	'edit',
@@ -102,25 +122,25 @@ export function currentRoute() {
 	if (m && m[1]) return m[1];
 	const hash = location.hash.slice(1);
 	if (hash) return hash;
-	return 'avatars';
+	return 'agents';
 }
 
 // Render a route into <main>. Does not touch the URL.
 function renderRoute(route) {
-	const [base, ...rest] = (route || 'avatars').split('/');
+	const [base, ...rest] = (route || 'agents').split('/');
 	document
 		.querySelectorAll('aside a')
 		.forEach((a) => a.classList.toggle('active', a.dataset.tab === base));
 	const main = document.getElementById('main');
 	main.innerHTML = '';
-	const renderer = tabs[base] || tabs.avatars;
+	const renderer = tabs[base] || tabs.agents;
 	renderer(main, rest);
 }
 
 // Programmatic navigation: pushes /dashboard/<route> into history and renders.
 // Use this instead of `location.hash = ...`.
 export function goto(route) {
-	const clean = (route || 'avatars').replace(/^#?\/+|\/+$/g, '').replace(/^#/, '');
+	const clean = (route || 'agents').replace(/^#?\/+|\/+$/g, '').replace(/^#/, '');
 	const target = '/dashboard/' + clean;
 	if (location.pathname + location.search !== target) {
 		history.pushState({ route: clean }, '', target);
@@ -179,6 +199,7 @@ export function installRouting() {
 }
 
 const tabs = {
+	agents: renderAgents,
 	avatars: renderAvatars,
 	create: renderCreate,
 	edit: renderEdit,
@@ -196,6 +217,170 @@ const tabs = {
 	earnings: renderEarnings,
 	account: renderAccount,
 };
+
+// ── Agents ──────────────────────────────────────────────────────────────────
+// On-chain agents discovered from linked wallets live at /my-agents.
+
+const AGENT_CHAIN_NAMES = {
+	1: 'Ethereum', 10: 'Optimism', 56: 'BNB Chain', 97: 'BSC Testnet',
+	100: 'Gnosis', 137: 'Polygon', 250: 'Fantom', 324: 'zkSync Era',
+	1284: 'Moonbeam', 5000: 'Mantle', 8453: 'Base', 42161: 'Arbitrum',
+	42220: 'Celo', 43113: 'Avalanche Fuji', 43114: 'Avalanche', 59144: 'Linea',
+	80002: 'Polygon Amoy', 84532: 'Base Sepolia', 421614: 'Arb Sepolia',
+	534352: 'Scroll', 11155111: 'Sepolia', 11155420: 'OP Sepolia',
+};
+
+function agentChainName(id) {
+	if (id == null) return '';
+	return AGENT_CHAIN_NAMES[Number(id)] || `Chain ${id}`;
+}
+
+async function renderAgents(root) {
+	root.innerHTML = `
+		<div class="widgets-header">
+			<div>
+				<h1>Your agents</h1>
+				<p class="sub">Agents you've created on three.ws — each has a wallet, skills, and an optional ERC-8004 on-chain identity.</p>
+			</div>
+			<button id="agents-new" class="btn-primary" type="button">New agent</button>
+		</div>
+		<div id="agents-create-host"></div>
+		<div id="agents-list" class="cards"></div>
+	`;
+
+	const list = root.querySelector('#agents-list');
+	const createHost = root.querySelector('#agents-create-host');
+	list.innerHTML = '<div class="muted">Loading…</div>';
+
+	root.querySelector('#agents-new').addEventListener('click', () => openCreateForm(createHost, list));
+
+	let agents = [];
+	try {
+		const data = await api.listAgents();
+		agents = data.agents || [];
+	} catch (e) {
+		list.innerHTML = `<div class="err">${esc(e.message || 'Failed to load agents')}</div>`;
+		return;
+	}
+
+	list.innerHTML = '';
+	if (!agents.length) {
+		renderAgentsEmpty(list, createHost);
+		return;
+	}
+
+	for (const a of agents) list.appendChild(agentCard(a, () => maybeRenderEmpty(list, createHost)));
+}
+
+function renderAgentsEmpty(list, createHost) {
+	list.innerHTML = `
+		<div class="empty" style="grid-column:1/-1; padding:48px 28px; text-align:center;">
+			<div style="font-size:48px; line-height:1; margin-bottom:14px;" aria-hidden="true">🤖</div>
+			<h2 style="margin:0 0 8px; font-size:20px; color:#eee;">No agents yet</h2>
+			<p style="margin:0 0 22px; color:#888; max-width:460px; margin-left:auto; margin-right:auto;">
+				Create your first three.ws agent — it gets a wallet, a set of skills, and can be deployed on-chain as an ERC-8004 identity.
+			</p>
+			<div style="display:flex; gap:10px; justify-content:center; flex-wrap:wrap;">
+				<button class="btn-primary" id="agents-empty-new">Create agent</button>
+				<a href="/my-agents" class="btn-primary" style="background:#222230; color:#ddd;">Import from wallet</a>
+			</div>
+		</div>`;
+	list.querySelector('#agents-empty-new').addEventListener('click', () => openCreateForm(createHost, list));
+}
+
+function maybeRenderEmpty(list, createHost) {
+	if (!list.querySelector('.card')) renderAgentsEmpty(list, createHost);
+}
+
+function agentCard(a, onRemoved) {
+	const el = document.createElement('div');
+	el.className = 'card';
+
+	const thumbSrc = a.avatar_id ? `/api/avatars/${encodeURIComponent(a.avatar_id)}/thumbnail` : null;
+	const onchainBadge = a.is_registered
+		? `<span class="tag" title="Registered on-chain (ERC-8004)" style="background:rgba(106,92,255,0.18); color:#cfc6ff;">on-chain${a.chain_id ? ' · ' + esc(agentChainName(a.chain_id)) : ''}</span>`
+		: `<span class="tag" title="Not yet registered on-chain">off-chain</span>`;
+	const skillCount = (a.skills || []).length;
+	const wallet = a.wallet_address ? `${a.wallet_address.slice(0, 6)}…${a.wallet_address.slice(-4)}` : '';
+
+	el.innerHTML = `
+		<div class="preview">
+			${thumbSrc
+				? `<img class="thumb" src="${esc(thumbSrc)}" alt="${esc(a.name)} avatar" loading="lazy">`
+				: `<div class="ph"><div style="font-size:32px;line-height:1;margin-bottom:8px" aria-hidden="true">🤖</div><div>No avatar linked</div></div>`}
+		</div>
+		<h3>${esc(a.name || 'Agent')}</h3>
+		<p class="meta">${skillCount} skill${skillCount === 1 ? '' : 's'}${wallet ? ' · ' + esc(wallet) : ''} · ${new Date(a.created_at).toLocaleDateString()}</p>
+		<div class="row" style="gap:6px; margin-bottom:10px; flex-wrap:wrap">${onchainBadge}</div>
+		${a.description ? `<p class="meta" style="white-space:normal;color:#aaa;margin:0 0 10px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden">${esc(a.description)}</p>` : ''}
+		<div class="footer">
+			<div class="actions">
+				<a class="btn sec" href="/agent/${encodeURIComponent(a.id)}">Open</a>
+				<a class="btn sec" href="/agent-edit.html?id=${encodeURIComponent(a.id)}">Edit</a>
+				${a.is_registered ? '' : `<a class="btn sec" href="/deploy${a.avatar_id ? '?avatar=' + encodeURIComponent(a.avatar_id) : ''}" title="Mint as ERC-8004 agent">Deploy on-chain</a>`}
+				<button class="btn sec danger" data-del>Delete</button>
+			</div>
+		</div>
+	`;
+
+	el.querySelector('[data-del]').addEventListener('click', async () => {
+		if (!confirm(`Delete "${a.name}"? This cannot be undone.`)) return;
+		try {
+			await api.deleteAgent(a.id);
+			el.remove();
+			toast(`Deleted "${a.name}"`);
+			onRemoved?.();
+		} catch (err) {
+			toast(err.message || 'Delete failed', true);
+		}
+	});
+
+	return el;
+}
+
+function openCreateForm(host, listEl) {
+	if (host.querySelector('input[name=agent-name]')) {
+		host.querySelector('input[name=agent-name]').focus();
+		return;
+	}
+	host.innerHTML = `
+		<div class="card" style="margin-bottom:14px">
+			<h3 style="margin:0 0 10px">New agent</h3>
+			<form id="agents-create-form" style="display:flex; gap:8px; flex-wrap:wrap; align-items:center">
+				<input name="agent-name" type="text" maxlength="100" required placeholder="Name (e.g. Sasha)" style="flex:1; min-width:180px" autofocus>
+				<input name="agent-desc" type="text" maxlength="500" placeholder="Description (optional)" style="flex:2; min-width:200px">
+				<button class="btn-primary" type="submit">Create</button>
+				<button class="btn sec" type="button" data-cancel>Cancel</button>
+			</form>
+			<div class="muted" data-err style="margin-top:8px; color:#ffb3b3; min-height:1em; font-size:12px"></div>
+		</div>`;
+	const form = host.querySelector('#agents-create-form');
+	const errEl = host.querySelector('[data-err]');
+	host.querySelector('[data-cancel]').addEventListener('click', () => { host.innerHTML = ''; });
+	form.addEventListener('submit', async (ev) => {
+		ev.preventDefault();
+		const fd = new FormData(form);
+		const name = String(fd.get('agent-name') || '').trim();
+		const description = String(fd.get('agent-desc') || '').trim();
+		if (!name) return;
+		const submitBtn = form.querySelector('button[type=submit]');
+		submitBtn.disabled = true;
+		submitBtn.textContent = 'Creating…';
+		errEl.textContent = '';
+		try {
+			const { agent } = await api.createAgent(description ? { name, description } : { name });
+			host.innerHTML = '';
+			const empty = listEl.querySelector('.empty');
+			if (empty) listEl.innerHTML = '';
+			listEl.prepend(agentCard(agent, () => maybeRenderEmpty(listEl, host)));
+			toast(`Created "${agent.name}"`);
+		} catch (e) {
+			submitBtn.disabled = false;
+			submitBtn.textContent = 'Create';
+			errEl.textContent = e.message || 'Failed to create agent';
+		}
+	});
+}
 
 // ── Avatars ─────────────────────────────────────────────────────────────────
 async function renderAvatars(root) {
@@ -272,7 +457,7 @@ function avatarCard(a) {
 		<p class="meta">${a.size_bytes ? fmtSize(a.size_bytes) : ''} · ${esc(a.visibility)} · ${new Date(a.created_at).toLocaleDateString()}</p>
 		<div class="row" style="gap:6px; margin-bottom:10px; flex-wrap:wrap">${a.tags.map((t) => `<span class="tag">${esc(t)}</span>`).join('')}</div>
 		<div class="footer">
-			<select data-vis aria-label="Visibility">${['private', 'unlisted', 'public'].map((v) => `<option ${v === a.visibility ? 'selected' : ''} value="${v}">${v}</option>`).join('')}</select>
+			<select data-vis aria-label="Visibility">${visibilityOptionsHtml(a.visibility)}</select>
 			<div class="actions">
 				<a class="btn sec" href="/dashboard/edit/${encodeURIComponent(a.id)}">Edit</a>
 				<button class="btn sec" data-replace>Replace GLB</button>
@@ -587,11 +772,7 @@ function renderUpload(root) {
 			<label style="display:block;margin-top:12px">Name<input id="name" required maxlength="120" style="width:100%"></label>
 			<label style="display:block;margin-top:12px">Description<textarea id="desc" rows="2" style="width:100%"></textarea></label>
 			<label style="display:block;margin-top:12px">Visibility
-				<select id="vis" style="width:100%">
-					<option value="public" selected>Public (discoverable)</option>
-					<option value="unlisted">Unlisted (anyone with link)</option>
-					<option value="private" data-paid>Private (Pro plan)</option>
-				</select>
+				<select id="vis" style="width:100%">${visibilityOptionsHtml('public')}</select>
 			</label>
 			<label style="display:block;margin-top:12px">Tags (comma separated)<input id="tags" style="width:100%"></label>
 			<div id="progress" class="muted" style="margin-top:12px"></div>
@@ -802,9 +983,7 @@ async function renderEdit(root, params = []) {
 				<label style="display:block">Name<input id="ename" value="${attr(avatar.name || '')}" maxlength="120" style="width:100%"></label>
 				<label style="display:block;margin-top:12px">Description<textarea id="edesc" rows="3" style="width:100%">${esc(avatar.description || '')}</textarea></label>
 				<label style="display:block;margin-top:12px">Visibility
-					<select id="evis" style="width:100%">
-						${['private', 'unlisted', 'public'].map((v) => `<option ${v === avatar.visibility ? 'selected' : ''} value="${v}">${v}</option>`).join('')}
-					</select>
+					<select id="evis" style="width:100%">${visibilityOptionsHtml(avatar.visibility)}</select>
 				</label>
 				<label style="display:block;margin-top:12px">Tags (comma separated)<input id="etags" value="${attr((avatar.tags || []).join(', '))}" style="width:100%"></label>
 				<div id="epublink" style="margin-top:16px;${avatar.visibility === 'private' ? 'display:none' : ''}">

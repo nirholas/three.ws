@@ -53,8 +53,11 @@ async function handleGlbFile(file) {
 		return;
 	}
 
+	showSaveOverlay('Checking your file…');
+
 	const header = new Uint8Array(await file.slice(0, 4).arrayBuffer());
 	if (!GLB_MAGIC.every((b, i) => header[i] === b)) {
+		hideSaveOverlay();
 		showStatus("File doesn't appear to be a valid GLB.", 'error');
 		return;
 	}
@@ -114,6 +117,7 @@ function showSaveOverlay(label, sublabel) {
 		el.id = 'save-loading';
 		el.setAttribute('role', 'status');
 		el.setAttribute('aria-live', 'polite');
+		el.setAttribute('aria-busy', 'true');
 		el.innerHTML = `
 			<img src="/three.svg" alt="" />
 			<div class="dots">...</div>
@@ -121,6 +125,8 @@ function showSaveOverlay(label, sublabel) {
 			<div class="sublabel"></div>
 		`;
 		document.body.appendChild(el);
+		document.documentElement.style.overflow = 'hidden';
+		document.body.style.overflow = 'hidden';
 	}
 	el.querySelector('.label').textContent = label;
 	el.querySelector('.sublabel').textContent = sublabel || '';
@@ -134,7 +140,11 @@ function updateSaveOverlay(label, sublabel) {
 }
 
 function hideSaveOverlay() {
-	document.getElementById('save-loading')?.remove();
+	const el = document.getElementById('save-loading');
+	if (!el) return;
+	el.remove();
+	document.documentElement.style.overflow = '';
+	document.body.style.overflow = '';
 }
 
 // Associates the uploaded avatar with the caller's default agent. POST /api/agents

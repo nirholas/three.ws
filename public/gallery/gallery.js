@@ -22,7 +22,7 @@ const els = {
 	loadMore: document.querySelector('[data-role="load-more"]'),
 	sentinel: document.querySelector('[data-role="sentinel"]'),
 	statCount: document.querySelector('[data-role="stat-count"]'),
-	statTags: document.querySelector('[data-role="stat-tags"]'),
+	statViews: document.querySelector('[data-role="stat-views"]'),
 	myAvatarsChip: document.querySelector('[data-role="my-avatars-chip"]'),
 };
 
@@ -35,6 +35,8 @@ const state = {
 	loading: false,
 	loadedTags: new Set(),
 	totalLoaded: 0,
+	total: null,
+	totalViews: null,
 };
 
 if (state.query) els.search.value = state.query;
@@ -128,6 +130,8 @@ function clearAllFilters() {
 function resetAndLoad() {
 	state.cursor = null;
 	state.totalLoaded = 0;
+	state.total = null;
+	state.totalViews = null;
 	els.grid.innerHTML = '';
 	renderSkeletons(8);
 	loadPage();
@@ -173,6 +177,7 @@ async function loadPage() {
 	if (state.tag) params.set('tag', state.tag);
 	if (state.cursor) params.set('cursor', state.cursor);
 	params.set('limit', '24');
+	if (isFirstPage) params.set('totals', '1');
 
 	try {
 		const res = await fetch(`/api/avatars/public?${params.toString()}`);
@@ -188,8 +193,11 @@ async function loadPage() {
 			for (const t of a.tags || []) state.loadedTags.add(t);
 		}
 
-		// Update stats — these are approximations (loaded so far, not corpus-wide,
-		// since the public endpoint doesn't surface totals). Show what we know.
+		if (isFirstPage) {
+			if (typeof data.total === 'number') state.total = data.total;
+			if (typeof data.total_views === 'number') state.totalViews = data.total_views;
+		}
+
 		updateStats();
 		renderTags();
 
@@ -224,13 +232,17 @@ async function loadPage() {
 }
 
 function updateStats() {
-	if (state.cursor) {
-		// More pages exist — show a "≥N" hint without lying about a total.
-		els.statCount.textContent = state.totalLoaded.toLocaleString() + '+';
-	} else {
-		els.statCount.textContent = state.totalLoaded.toLocaleString();
-	}
-	els.statTags.textContent = state.loadedTags.size.toLocaleString();
+	els.statCount.textContent =
+		state.total != null ? state.total.toLocaleString() : state.totalLoaded.toLocaleString();
+	els.statViews.textContent =
+		state.totalViews != null ? formatCompact(state.totalViews) : '—';
+}
+
+function formatCompact(n) {
+	if (n < 1000) return String(n);
+	if (n < 1_000_000) return (n / 1000).toFixed(n < 10_000 ? 1 : 0).replace(/\.0$/, '') + 'k';
+	if (n < 1_000_000_000) return (n / 1_000_000).toFixed(1).replace(/\.0$/, '') + 'M';
+	return (n / 1_000_000_000).toFixed(1).replace(/\.0$/, '') + 'B';
 }
 
 function renderTags() {
@@ -273,6 +285,7 @@ function renderCard(a) {
 		.join('');
 
 	const created = formatRelative(a.created_at);
+	const views = Number(a.view_count) || 0;
 
 	card.innerHTML = `
 		<a class="gallery-card-thumb" href="${escapeAttr(detailUrl)}" aria-label="${escapeAttr(a.name || 'Avatar')} details">
@@ -285,7 +298,11 @@ function renderCard(a) {
 			${a.description ? `<p class="gallery-card-desc">${escapeHtml(a.description)}</p>` : ''}
 			${tagChips ? `<div class="gallery-card-tags">${tagChips}</div>` : ''}
 			<div class="gallery-card-foot">
-				<span class="gallery-card-meta">${escapeHtml(created)}</span>
+				<span class="gallery-card-meta">
+					<span title="${escapeAttr(new Date(a.created_at || Date.now()).toLocaleString())}">${escapeHtml(created)}</span>
+					<span class="gallery-card-dot" aria-hidden="true">·</span>
+					<span title="${views.toLocaleString()} view${views === 1 ? '' : 's'}">${formatCompact(views)} views</span>
+				</span>
 				<div class="gallery-card-actions">
 					<a class="gallery-card-btn" href="${escapeAttr(viewerUrl)}" title="Open in viewer">View 3D</a>
 					<a class="gallery-card-btn gallery-card-btn--primary" href="${escapeAttr(studioUrl)}" title="Use in Widget Studio">Use</a>

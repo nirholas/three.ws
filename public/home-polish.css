@@ -1,8 +1,8 @@
 /* ───────────────────────────────────────────────────────────────────────────
-   home-polish.css — additive professional polish over home.css.
-   Loaded AFTER /home.css from home.html. Nothing here removes prior styles;
-   it tightens typography, adds a section rail, numbers pillars, glows
-   bento cards, refines focus rings, and adds a copy button + scroll bar.
+   home-polish.css — additive, restrained polish over home.css.
+   Loaded AFTER /home.css from home.html. Tightens typography, adds a
+   monochrome section rail, numbers the pillars, glows bento cards on
+   pointer-move, refines focus rings, and adds a copy button.
    ─────────────────────────────────────────────────────────────────────────── */
 
 /* ── Typographic polish ─────────────────────────────────────────────────── */
@@ -37,49 +37,20 @@
 	text-wrap: pretty;
 }
 
-/* ── Top scroll progress bar ────────────────────────────────────────────── */
-
-.h-scroll-progress {
-	position: fixed;
-	top: 0;
-	left: 0;
-	height: 2px;
-	width: 0%;
-	z-index: 250;
-	background: linear-gradient(
-		90deg,
-		rgba(255, 215, 106, 0.95) 0%,
-		rgba(255, 143, 77, 0.95) 50%,
-		rgba(167, 139, 250, 0.95) 100%
-	);
-	box-shadow:
-		0 0 12px rgba(255, 175, 60, 0.55),
-		0 0 24px rgba(255, 175, 60, 0.25);
-	pointer-events: none;
-	transition: width 0.08s linear;
-	border-bottom-right-radius: 2px;
-}
-
-/* ── Right-side chapter rail (anchor nav) ───────────────────────────────── */
+/* ── Right-side chapter rail (monochrome, restrained) ───────────────────── */
 
 .h-chapter-rail {
 	position: fixed;
 	top: 50%;
-	right: clamp(0.85rem, 1.5vw, 1.5rem);
-	transform: translateY(-50%);
+	right: clamp(0.9rem, 1.4vw, 1.4rem);
 	z-index: 180;
 	display: flex;
 	flex-direction: column;
-	gap: 0.85rem;
-	padding: 0.85rem 0.55rem;
-	background: rgba(10, 8, 6, 0.35);
-	border: 1px solid rgba(255, 255, 255, 0.06);
-	border-radius: 999px;
-	backdrop-filter: blur(10px) saturate(140%);
-	-webkit-backdrop-filter: blur(10px) saturate(140%);
+	gap: 0.7rem;
+	padding: 0.6rem 0.45rem;
 	pointer-events: auto;
 	opacity: 0;
-	transform: translateY(-50%) translateX(10px);
+	transform: translateY(-50%) translateX(8px);
 	transition:
 		opacity 0.4s ease,
 		transform 0.4s ease;
@@ -93,56 +64,46 @@
 .h-chapter-dot {
 	position: relative;
 	display: block;
-	width: 10px;
-	height: 10px;
+	width: 6px;
+	height: 6px;
 	border-radius: 50%;
 	background: rgba(255, 255, 255, 0.18);
-	border: 1px solid rgba(255, 255, 255, 0.08);
 	cursor: pointer;
 	transition:
 		background 0.25s ease,
-		border-color 0.25s ease,
-		transform 0.25s ease,
+		width 0.25s ease,
+		height 0.25s ease,
 		box-shadow 0.25s ease;
 }
 
 .h-chapter-dot:hover {
-	background: rgba(255, 215, 106, 0.7);
-	border-color: rgba(255, 215, 106, 0.9);
-	transform: scale(1.15);
+	background: rgba(255, 255, 255, 0.55);
 }
 
 .h-chapter-dot.is-active {
-	background: linear-gradient(135deg, #ffd76a, #ff8f4d);
-	border-color: rgba(255, 215, 106, 0.95);
-	box-shadow:
-		0 0 0 3px rgba(255, 175, 60, 0.18),
-		0 0 14px rgba(255, 143, 77, 0.55);
+	background: rgba(255, 255, 255, 0.95);
+	width: 6px;
+	height: 18px;
+	border-radius: 3px;
 }
 
 .h-chapter-dot .h-chapter-label {
 	position: absolute;
-	right: calc(100% + 0.9rem);
+	right: calc(100% + 0.75rem);
 	top: 50%;
-	transform: translateY(-50%) translateX(6px);
+	transform: translateY(-50%) translateX(4px);
 	font-family: 'Space Grotesk', 'Inter', sans-serif;
-	font-size: 0.7rem;
-	font-weight: 600;
-	letter-spacing: 0.08em;
+	font-size: 0.66rem;
+	font-weight: 500;
+	letter-spacing: 0.1em;
 	text-transform: uppercase;
 	color: rgba(255, 255, 255, 0.85);
-	background: rgba(10, 8, 6, 0.85);
-	border: 1px solid rgba(255, 255, 255, 0.08);
-	padding: 0.35rem 0.7rem;
-	border-radius: 6px;
 	white-space: nowrap;
 	pointer-events: none;
 	opacity: 0;
 	transition:
-		opacity 0.2s ease,
-		transform 0.2s ease;
-	backdrop-filter: blur(6px);
-	-webkit-backdrop-filter: blur(6px);
+		opacity 0.18s ease,
+		transform 0.18s ease;
 }
 
 .h-chapter-dot:hover .h-chapter-label,
@@ -153,12 +114,10 @@
 
 .h-chapter-dot:focus-visible {
 	outline: none;
-	box-shadow:
-		0 0 0 3px rgba(255, 175, 60, 0.35),
-		0 0 14px rgba(255, 143, 77, 0.55);
+	box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.25);
 }
 
-@media (max-width: 880px) {
+@media (max-width: 980px) {
 	.h-chapter-rail {
 		display: none;
 	}
@@ -167,80 +126,69 @@
 @media (prefers-reduced-motion: reduce) {
 	.h-chapter-rail,
 	.h-chapter-dot,
-	.h-chapter-dot .h-chapter-label,
-	.h-scroll-progress {
+	.h-chapter-dot .h-chapter-label {
 		transition: none;
 	}
 }
 
-/* ── Pillar number badges + card polish ─────────────────────────────────── */
+/* ── Pillar number labels + card polish ─────────────────────────────────── */
 
 .h-pillar {
 	position: relative;
-	padding: clamp(1.25rem, 2vw, 1.75rem);
+	padding: clamp(1.4rem, 2vw, 1.85rem);
 	border: 1px solid rgba(255, 255, 255, 0.06);
 	border-radius: 14px;
-	background:
-		linear-gradient(
-			180deg,
-			rgba(255, 215, 106, 0.04) 0%,
-			rgba(255, 255, 255, 0.012) 35%,
-			rgba(255, 255, 255, 0) 100%
-		),
-		rgba(255, 255, 255, 0.015);
+	background: rgba(255, 255, 255, 0.012);
 	overflow: hidden;
 	transition:
 		border-color 0.35s cubic-bezier(0.2, 0.9, 0.3, 1),
 		transform 0.35s cubic-bezier(0.2, 0.9, 0.3, 1),
-		box-shadow 0.35s cubic-bezier(0.2, 0.9, 0.3, 1);
+		background 0.35s cubic-bezier(0.2, 0.9, 0.3, 1);
 }
 
 .h-pillar::before {
 	content: '';
 	position: absolute;
 	top: 0;
-	left: 0;
-	right: 0;
+	left: 1.4rem;
+	right: 1.4rem;
 	height: 1px;
 	background: linear-gradient(
 		90deg,
 		transparent 0%,
-		rgba(255, 215, 106, 0.55) 50%,
+		rgba(255, 215, 106, 0.4) 50%,
 		transparent 100%
 	);
-	opacity: 0.7;
 }
 
 .h-pillar:hover {
-	border-color: rgba(255, 215, 106, 0.22);
-	transform: translateY(-3px);
-	box-shadow:
-		0 18px 40px -22px rgba(255, 143, 77, 0.35),
-		0 0 0 1px rgba(255, 215, 106, 0.08) inset;
+	border-color: rgba(255, 255, 255, 0.14);
+	background: rgba(255, 255, 255, 0.025);
+	transform: translateY(-2px);
 }
 
 .h-pillar-num {
-	display: inline-block;
+	display: inline-flex;
+	align-items: center;
+	gap: 0.55rem;
 	font-family: 'JetBrains Mono', monospace;
-	font-size: 0.7rem;
+	font-size: 0.68rem;
 	font-weight: 500;
 	letter-spacing: 0.14em;
+	text-transform: uppercase;
 	color: rgba(255, 215, 106, 0.7);
-	margin-bottom: 0.85rem;
+	margin-bottom: 0.95rem;
 }
 
 .h-pillar-num::before {
 	content: '';
 	display: inline-block;
-	width: 18px;
+	width: 16px;
 	height: 1px;
-	background: rgba(255, 215, 106, 0.45);
-	vertical-align: middle;
-	margin-right: 0.55rem;
-	transform: translateY(-1px);
+	background: rgba(255, 215, 106, 0.4);
 }
 
-/* ── Bento card hover glow ──────────────────────────────────────────────── */
+/* ── Bento card hover glow (cursor-tracked, very subtle) ─────────────────── */
 
 .h-bento-card {
 	position: relative;
@@ -253,16 +201,71 @@
 	border-radius: inherit;
 	pointer-events: none;
 	opacity: 0;
-	transition: opacity 0.35s ease;
+	transition: opacity 0.4s ease;
 	background: radial-gradient(
-		380px circle at var(--bx, 50%) var(--by, 0%),
-		rgba(255, 175, 60, 0.07) 0%,
-		transparent 60%
+		360px circle at var(--bx, 50%) var(--by, 0%),
+		rgba(255, 175, 60, 0.05) 0%,
+		transparent 55%
 	);
 }
 
 .h-bento-card:hover::after {
 	opacity: 1;
+}
+
+/* ── Bento "verifiable identity" cleanup (replaces inline styles) ────────── */
+
+.h-bento-id .h-id-dot {
+	width: 8px;
+	height: 8px;
+	border-radius: 50%;
+	flex-shrink: 0;
+}
+
+.h-bento-id .h-id-dot--mint {
+	background: #6ee7b7;
+	box-shadow: 0 0 8px rgba(110, 231, 183, 0.85);
+}
+
+.h-bento-id .h-id-addr {
+	font-family: 'JetBrains Mono', monospace;
+	font-size: 0.72rem;
+	color: rgba(255, 255, 255, 0.6);
+	letter-spacing: 0.02em;
+}
+
+/* ── Bento "six emotions" cleanup (replaces ✦ ? ♥ ! glyphs) ──────────────── */
+
+.h-bento-emotions {
+	list-style: none;
+	padding: 0;
+	margin: 0.5rem 0 0;
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.35rem;
+}
+
+.h-bento-emotions li {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.45em;
+	font-family: 'Space Grotesk', 'Inter', sans-serif;
+	font-size: 0.7rem;
+	font-weight: 500;
+	color: rgba(167, 139, 250, 0.78);
+	border: 1px solid rgba(167, 139, 250, 0.22);
+	border-radius: 999px;
+	padding: 0.25rem 0.65rem 0.25rem 0.55rem;
+	background: rgba(167, 139, 250, 0.04);
+}
+
+.h-bento-emotions .h-em-dot {
+	width: 5px;
+	height: 5px;
+	border-radius: 50%;
+	background: rgba(167, 139, 250, 0.85);
+	box-shadow: 0 0 6px rgba(167, 139, 250, 0.55);
+	flex-shrink: 0;
 }
 
 /* ── Dev code: copy button ──────────────────────────────────────────────── */
@@ -281,11 +284,11 @@
 	gap: 0.4em;
 	padding: 0.35rem 0.65rem;
 	font-family: 'Space Grotesk', 'Inter', sans-serif;
-	font-size: 0.68rem;
+	font-size: 0.66rem;
 	font-weight: 600;
-	letter-spacing: 0.08em;
+	letter-spacing: 0.1em;
 	text-transform: uppercase;
-	color: rgba(255, 255, 255, 0.6);
+	color: rgba(255, 255, 255, 0.55);
 	background: rgba(255, 255, 255, 0.04);
 	border: 1px solid rgba(255, 255, 255, 0.08);
 	border-radius: 6px;
@@ -299,8 +302,8 @@
 
 .h-dev-copy:hover {
 	color: #fff;
-	background: rgba(255, 215, 106, 0.08);
-	border-color: rgba(255, 215, 106, 0.35);
+	background: rgba(255, 255, 255, 0.06);
+	border-color: rgba(255, 255, 255, 0.18);
 }
 
 .h-dev-copy:active {
@@ -309,8 +312,8 @@
 
 .h-dev-copy.is-copied {
 	color: #6ee7b7;
-	background: rgba(110, 231, 183, 0.1);
-	border-color: rgba(110, 231, 183, 0.45);
+	background: rgba(110, 231, 183, 0.08);
+	border-color: rgba(110, 231, 183, 0.4);
 }
 
 .h-dev-copy svg {
@@ -340,12 +343,12 @@
 		0 6px 24px -8px rgba(255, 143, 77, 0.55);
 }
 
-/* ── Section anchor offset so chapter-rail jumps don't hide under header ── */
+/* ── Scroll-margin so chapter-rail jumps don't hide under sticky header ──── */
 
 #pick-animate,
 #deploy-act,
 .h-bento-section,
 .h-dev-section,
 .h-cta-section {
-	scroll-margin-top: 80px;
+	scroll-margin-top: 88px;
 }

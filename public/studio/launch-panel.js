@@ -96,6 +96,27 @@ const LP_CSS = `
 .lp-src button[disabled]{opacity:.4;cursor:not-allowed}
 .lp-src-sub{display:block;font-size:.62rem;color:rgba(255,255,255,.32);font-weight:400;margin-top:.15rem;letter-spacing:.01em}
 .lp-src button.on .lp-src-sub{color:rgba(164,240,188,.55)}
+
+/* Coin-type selector */
+.lp-coin{display:grid;grid-template-columns:repeat(4,1fr);gap:.3rem;padding:.25rem;
+  background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.07);border-radius:10px}
+.lp-coin button{padding:.5rem .35rem;border-radius:7px;cursor:pointer;background:transparent;
+  border:1px solid transparent;color:rgba(255,255,255,.5);font-size:.74rem;font-weight:600;
+  transition:all .15s;line-height:1.2;text-align:center}
+.lp-coin button:hover:not(.on):not([disabled]){color:rgba(255,255,255,.85);background:rgba(255,255,255,.03)}
+.lp-coin button.on{background:rgba(164,240,188,.12);border-color:rgba(164,240,188,.32);color:#c8f0d8}
+.lp-coin button.mayhem.on{background:rgba(246,140,80,.14);border-color:rgba(246,140,80,.38);color:#f6c498}
+.lp-coin button.usdc.on{background:rgba(120,160,240,.12);border-color:rgba(120,160,240,.34);color:#a8c4f0}
+.lp-coin button[disabled]{opacity:.42;cursor:not-allowed}
+.lp-coin-sub{display:block;font-size:.6rem;color:rgba(255,255,255,.32);font-weight:400;margin-top:.18rem;letter-spacing:.01em}
+.lp-coin button.on .lp-coin-sub{color:rgba(200,240,216,.62)}
+.lp-coin button.mayhem.on .lp-coin-sub{color:rgba(246,196,152,.72)}
+.lp-coin button.usdc.on .lp-coin-sub{color:rgba(168,196,240,.72)}
+.lp-coin-emoji{display:block;font-size:.95rem;line-height:1;margin-bottom:.18rem}
+.lp-coin-note{font-size:.7rem;color:rgba(255,255,255,.42);line-height:1.5;padding:.45rem .65rem;
+  background:rgba(255,255,255,.025);border:1px solid rgba(255,255,255,.06);border-radius:8px}
+.lp-coin-note.mayhem{color:rgba(246,196,152,.85);background:rgba(246,140,80,.07);border-color:rgba(246,140,80,.2)}
+.lp-coin-note.usdc{color:rgba(168,196,240,.85);background:rgba(120,160,240,.07);border-color:rgba(120,160,240,.22)}
 .lp-empty{text-align:center;padding:2.5rem 1rem;color:rgba(255,255,255,.3);font-size:.85rem;line-height:1.7}
 .lp-empty a{color:rgba(164,240,188,.7);text-decoration:none}
 .lp-empty a:hover{color:#a4f0bc}
@@ -335,6 +356,10 @@ export function mountLaunchPanel(container, { getAvatar, getUser, getPreviewView
 		imageFile: null, imagePreviewUrl: null,
 		_symbolEdited: false,
 
+		// coin type: 'agent' (default — buyback-bound), 'regular' (plain pump.fun coin),
+		// 'mayhem' (pump.fun mayhem mode), 'usdc' (USDC-denominated agent — coming soon)
+		coinType: 'agent',
+
 		// wallet source: 'connected' (Phantom/Backpack) or 'agent' (custodial agent wallet)
 		walletSource: 'connected',
 
@@ -525,12 +550,16 @@ export function mountLaunchPanel(container, { getAvatar, getUser, getPreviewView
 	}
 
 	async function copyAddressToClipboard(btn) {
-		if (!s.walletAddr) return;
-		try { await navigator.clipboard.writeText(s.walletAddr); } catch { return; }
-		if (!btn) return;
+		if (!s.walletAddr || !btn) return;
 		const orig = btn.textContent;
-		btn.textContent = '✓ Copied full address';
-		setTimeout(() => { btn.textContent = orig; }, 1600);
+		try {
+			await navigator.clipboard.writeText(s.walletAddr);
+			btn.textContent = '✓ Copied full address';
+		} catch (err) {
+			console.warn('[launch-panel] clipboard write failed', err);
+			btn.textContent = 'Copy failed';
+		}
+		setTimeout(() => { if (btn.isConnected) btn.textContent = orig; }, 1800);
 	}
 
 	async function openDepositModal() {
@@ -555,7 +584,9 @@ export function mountLaunchPanel(container, { getAvatar, getUser, getPreviewView
 				<button class="lp-dep-x" id="lp-dep-close" aria-label="Close">✕</button>
 			</div>
 			<span class="lp-dep-net">SOLANA · MAINNET</span>
-			<div class="lp-dep-qr" id="lp-dep-qr"><div class="lp-dep-qr-load" aria-label="Loading QR code"></div></div>
+			<div class="lp-dep-qr" id="lp-dep-qr">
+				<div class="lp-dep-qr-load" role="status" aria-live="polite" aria-label="Loading QR code"></div>
+			</div>
 			<div class="lp-dep-addr" id="lp-dep-addr" role="button" tabindex="0" aria-label="Copy wallet address">
 				<code>${esc(addr)}</code>
 				<span class="lp-dep-addr-copy" id="lp-dep-addr-label">Copy</span>
@@ -572,24 +603,44 @@ export function mountLaunchPanel(container, { getAvatar, getUser, getPreviewView
 			bd.remove();
 			document.removeEventListener('keydown', onKey);
 			document.body.style.overflow = prevOverflow;
-			if (prevActive && typeof prevActive.focus === 'function') prevActive.focus();
+			if (prevActive && prevActive.isConnected && typeof prevActive.focus === 'function') {
+				prevActive.focus();
+			}
 		};
-		const onKey = (e) => { if (e.key === 'Escape') close(); };
+
+		// Focus trap: cycle Tab/Shift+Tab between the modal's interactive elements.
+		const FOCUSABLE = '#lp-dep-close, #lp-dep-addr';
+		const onKey = (e) => {
+			if (e.key === 'Escape') { close(); return; }
+			if (e.key !== 'Tab') return;
+			const items = Array.from(bd.querySelectorAll(FOCUSABLE));
+			if (items.length === 0) return;
+			const first = items[0], last = items[items.length - 1];
+			const active = document.activeElement;
+			if (e.shiftKey && (active === first || !bd.contains(active))) {
+				e.preventDefault(); last.focus();
+			} else if (!e.shiftKey && (active === last || !bd.contains(active))) {
+				e.preventDefault(); first.focus();
+			}
+		};
 		document.addEventListener('keydown', onKey);
 		bd.addEventListener('click', (e) => { if (e.target === bd) close(); });
 		bd.querySelector('#lp-dep-close').addEventListener('click', close);
 
-		const copyAddr = async () => {
-			try { await navigator.clipboard.writeText(addr); }
-			catch {
-				const label = bd.querySelector('#lp-dep-addr-label');
-				if (label) { label.textContent = 'Copy failed'; setTimeout(() => { label.textContent = 'Copy'; }, 1800); }
-				return;
-			}
+		const setLabel = (text, restore = true) => {
 			const label = bd.querySelector('#lp-dep-addr-label');
 			if (!label) return;
-			label.textContent = '✓ Copied';
-			setTimeout(() => { if (!closed) label.textContent = 'Copy'; }, 1800);
+			label.textContent = text;
+			if (restore) setTimeout(() => { if (!closed) label.textContent = 'Copy'; }, 1800);
+		};
+		const copyAddr = async () => {
+			try {
+				await navigator.clipboard.writeText(addr);
+				setLabel('✓ Copied');
+			} catch (err) {
+				console.warn('[launch-panel] clipboard write failed', err);
+				setLabel('Copy failed');
+			}
 		};
 		const addrEl = bd.querySelector('#lp-dep-addr');
 		addrEl.addEventListener('click', copyAddr);
@@ -611,7 +662,8 @@ export function mountLaunchPanel(container, { getAvatar, getUser, getPreviewView
 			if (closed) return;
 			const slot = bd.querySelector('#lp-dep-qr');
 			if (slot) { slot.innerHTML = ''; slot.appendChild(canvas); }
-		} catch {
+		} catch (err) {
+			console.warn('[launch-panel] QR render failed', err);
 			if (closed) return;
 			const slot = bd.querySelector('#lp-dep-qr');
 			if (slot) slot.innerHTML = `<div class="lp-dep-qr-err">QR unavailable —<br>copy address below</div>`;
@@ -746,6 +798,14 @@ export function mountLaunchPanel(container, { getAvatar, getUser, getPreviewView
 		}
 	}
 
+	function switchCoinType(next) {
+		if (!['regular', 'mayhem', 'agent', 'usdc'].includes(next)) return;
+		if (next === s.coinType) return;
+		s.coinType = next;
+		s.errorMsg = '';
+		render();
+	}
+
 	// ── Image handling ─────────────────────────────────────────────────────
 
 	function handleImageFile(file) {
@@ -822,6 +882,7 @@ export function mountLaunchPanel(container, { getAvatar, getUser, getPreviewView
 	async function launch() {
 		if (!formValid() || s.phase !== 'idle') return;
 		if (!av || av.id === DEMO_ID) return;
+		if (s.coinType === 'usdc') return; // gated — USDC denomination not yet live
 		if (s.walletSource === 'connected' && !s.walletAddr) return;
 		if (s.walletSource === 'agent' && !s.agentWallet?.address) return;
 		s.errorMsg = '';
@@ -907,7 +968,8 @@ export function mountLaunchPanel(container, { getAvatar, getUser, getPreviewView
 				...(av.agent_id ? { agent_id: av.agent_id } : { avatar_id: av.id }),
 				wallet_address: payer,
 				name: nameTrim, symbol: symTrim, uri: s._metaUrl,
-				buyback_bps: s.buybackBps,
+				coin_type: s.coinType,
+				buyback_bps: s.coinType === 'agent' ? s.buybackBps : 0,
 				sol_buy_in: Math.max(0, parseFloat(s.initialBuy) || 0),
 				network: 'mainnet',
 			}),
@@ -954,7 +1016,8 @@ export function mountLaunchPanel(container, { getAvatar, getUser, getPreviewView
 		const body = {
 			...(av.agent_id ? { agent_id: av.agent_id } : { avatar_id: av.id }),
 			name: nameTrim, symbol: symTrim, uri: s._metaUrl,
-			buyback_bps: s.buybackBps,
+			coin_type: s.coinType,
+			buyback_bps: s.coinType === 'agent' ? s.buybackBps : 0,
 			sol_buy_in: Math.max(0, parseFloat(s.initialBuy) || 0),
 			network: 'mainnet',
 		};
@@ -1246,6 +1309,32 @@ export function mountLaunchPanel(container, { getAvatar, getUser, getPreviewView
 			</button>
 		</div>`;
 
+		const ct = s.coinType;
+		const coinTypeHtml = `<div class="lp-coin" role="tablist" aria-label="Coin type">
+			<button type="button" role="tab" data-coin="regular" class="regular ${ct === 'regular' ? 'on' : ''}" ${busy ? 'disabled' : ''}>
+				<span class="lp-coin-emoji">🪙</span>Regular<span class="lp-coin-sub">Plain pump.fun</span>
+			</button>
+			<button type="button" role="tab" data-coin="mayhem" class="mayhem ${ct === 'mayhem' ? 'on' : ''}" ${busy ? 'disabled' : ''}>
+				<span class="lp-coin-emoji">🔥</span>Mayhem<span class="lp-coin-sub">High-volatility</span>
+			</button>
+			<button type="button" role="tab" data-coin="agent" class="agent ${ct === 'agent' ? 'on' : ''}" ${busy ? 'disabled' : ''}>
+				<span class="lp-coin-emoji">🤖</span>Agent<span class="lp-coin-sub">SOL buyback</span>
+			</button>
+			<button type="button" role="tab" data-coin="usdc" class="usdc ${ct === 'usdc' ? 'on' : ''}" ${busy ? 'disabled' : ''} title="USDC-denominated agent payments — coming soon">
+				<span class="lp-coin-emoji">💵</span>USDC<span class="lp-coin-sub">Soon</span>
+			</button>
+		</div>`;
+
+		const coinNoteHtml = ct === 'mayhem'
+			? `<div class="lp-coin-note mayhem">Mayhem coins launch on pump.fun's high-volatility mode. No agent buyback or payments — pure speculation.</div>`
+			: ct === 'usdc'
+				? `<div class="lp-coin-note usdc">USDC-denominated agent coins are coming soon. Powered by <a href="https://github.com/nirholas/agent-payments-sdk" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline">agent-payments-sdk</a> — accept USDC payments, auto-buyback, x402 pay-gating.</div>`
+				: ct === 'regular'
+					? `<div class="lp-coin-note">Standard pump.fun launch — no on-chain buyback. Initial buy still funds bonding curve.</div>`
+					: '';
+
+		const showBuyback = ct === 'agent';
+
 		let walletHtml;
 		if (s.walletSource === 'agent') {
 			walletHtml = renderAgentWalletBar(cost);
@@ -1258,6 +1347,8 @@ export function mountLaunchPanel(container, { getAvatar, getUser, getPreviewView
 		let btnText, btnDis;
 		if (busy) {
 			btnText = s.phaseLabel || 'Working…'; btnDis = true;
+		} else if (ct === 'usdc') {
+			btnText = 'USDC coin — coming soon'; btnDis = true;
 		} else if (!signedIn) {
 			btnText = 'Sign in to launch'; btnDis = false;
 		} else if (!formValid()) {
@@ -1296,7 +1387,9 @@ export function mountLaunchPanel(container, { getAvatar, getUser, getPreviewView
 				<textarea id="lp-desc" rows="3" maxlength="500"
 					placeholder="What does this agent do?" ${dis}>${esc(s.description)}</textarea>
 			</div>
-			<div class="lp-2col">
+			${coinTypeHtml}
+			${coinNoteHtml}
+			${showBuyback ? `<div class="lp-2col">
 				<div>
 					<label for="lp-buy">Initial buy (SOL)</label>
 					<input class="lp-number" id="lp-buy" type="number" min="0" max="50" step="0.001"
@@ -1311,7 +1404,11 @@ export function mountLaunchPanel(container, { getAvatar, getUser, getPreviewView
 						min="0" max="5000" step="50" value="${s.buybackBps}" ${dis} />
 					<div class="lp-slider-hint">Of agent revenue burned back</div>
 				</div>
-			</div>
+			</div>` : `<div>
+				<label for="lp-buy">Initial buy (SOL)</label>
+				<input class="lp-number" id="lp-buy" type="number" min="0" max="50" step="0.001"
+					value="${esc(s.initialBuy)}" ${dis} />
+			</div>`}
 			${sourceToggleHtml}
 			${walletHtml}
 			${s.phase === 'error' ? `<div class="lp-err">${esc(s.errorMsg)}<div class="lp-err-sub">Fix the issue above and try again.</div></div>` : ''}
@@ -1415,6 +1512,11 @@ export function mountLaunchPanel(container, { getAvatar, getUser, getPreviewView
 		// Wallet-source toggle
 		container.querySelectorAll('.lp-src button[data-src]').forEach((btn) => {
 			btn.addEventListener('click', () => switchSource(btn.dataset.src));
+		});
+
+		// Coin-type selector
+		container.querySelectorAll('.lp-coin button[data-coin]').forEach((btn) => {
+			btn.addEventListener('click', () => switchCoinType(btn.dataset.coin));
 		});
 
 		// Agent-wallet bar

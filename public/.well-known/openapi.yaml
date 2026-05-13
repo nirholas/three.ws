@@ -130,6 +130,9 @@ components:
                     description: 64-character hex SHA-256 of the file
                 version:
                     type: integer
+                view_count:
+                    type: integer
+                    description: Number of times this avatar has been viewed (public avatars only; tracked via POST /api/avatars/view).
                 created_at:
                     type: string
                     format: date-time
@@ -678,6 +681,12 @@ paths:
                   description: Pagination cursor (ISO-8601 timestamp from previous `next_cursor`)
                   schema:
                       $ref: '#/components/schemas/Cursor'
+                - name: totals
+                  in: query
+                  description: When `1`, include `total` and `total_views` in the response. Adds a second SQL roundtrip — request only on the first page.
+                  schema:
+                      type: string
+                      enum: ['1']
             responses:
                 '200':
                     description: Paginated public avatar list
@@ -697,6 +706,12 @@ paths:
                                             $ref: '#/components/schemas/Avatar'
                                     next_cursor:
                                         $ref: '#/components/schemas/Cursor'
+                                    total:
+                                        type: integer
+                                        description: Total avatars matching the filters (only returned when `totals=1`).
+                                    total_views:
+                                        type: integer
+                                        description: Sum of `view_count` across all matching avatars (only when `totals=1`).
 
     /api/avatars/presign:
         post:
