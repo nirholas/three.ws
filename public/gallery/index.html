@@ -1,0 +1,140 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8" />
+		<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+		<title>Avatar Gallery · three.ws</title>
+		<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+		<meta
+			name="description"
+			content="Every public 3D avatar made on three.ws. Browse, preview, embed, or remix — all from one gallery."
+		/>
+		<meta name="theme-color" content="#000000" />
+		<link rel="canonical" href="https://three.ws/gallery" />
+
+		<meta property="og:type" content="website" />
+		<meta property="og:title" content="Avatar Gallery · three.ws" />
+		<meta
+			property="og:description"
+			content="Every public 3D avatar made on three.ws. Preview, embed, or remix from one place."
+		/>
+		<meta property="og:url" content="https://three.ws/gallery" />
+		<meta property="og:image" content="https://three.ws/og-image.png" />
+		<meta name="twitter:card" content="summary_large_image" />
+		<meta name="twitter:title" content="Avatar Gallery · three.ws" />
+		<meta
+			name="twitter:description"
+			content="Every public 3D avatar made on three.ws."
+		/>
+		<meta name="twitter:image" content="https://three.ws/og-image.png" />
+
+		<link rel="shortcut icon" href="/favicon.ico" />
+		<link rel="preconnect" href="https://fonts.googleapis.com" />
+		<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+		<link rel="stylesheet" href="/style.css" />
+		<link rel="stylesheet" href="/nav.css" />
+		<link rel="stylesheet" href="/gallery/gallery.css" />
+		<link
+			href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap"
+			rel="stylesheet"
+		/>
+	</head>
+	<body class="gallery-page">
+		<header>
+			<div id="nav-container"></div>
+		</header>
+		<script src="/nav.js"></script>
+
+		<main class="gallery-main">
+			<section class="gallery-hero">
+				<div class="gallery-hero-inner">
+					<div class="gallery-hero-chips">
+						<div class="gallery-hero-chip">
+							<span class="gallery-hero-dot"></span>
+							<span>Public avatar gallery</span>
+						</div>
+						<a
+							href="/dashboard/avatars"
+							class="gallery-hero-chip gallery-hero-chip--link"
+							data-role="my-avatars-chip"
+							hidden
+						>
+							<span>My avatars →</span>
+						</a>
+					</div>
+					<h1 class="gallery-title">Every avatar, ever made.</h1>
+					<p class="gallery-sub">
+						The community-made 3D avatars on three.ws. Click any card to preview in
+						the viewer, then embed it anywhere or remix into a new agent.
+					</p>
+
+					<div class="gallery-stats" data-role="stats">
+						<div class="gallery-stat">
+							<div class="gallery-stat-value" data-role="stat-count">—</div>
+							<div class="gallery-stat-label">Public avatars</div>
+						</div>
+						<div class="gallery-stat">
+							<div class="gallery-stat-value" data-role="stat-views">—</div>
+							<div class="gallery-stat-label">Total views</div>
+						</div>
+						<div class="gallery-stat">
+							<div class="gallery-stat-value">glTF</div>
+							<div class="gallery-stat-label">Format</div>
+						</div>
+					</div>
+				</div>
+			</section>
+
+			<section class="gallery-controls">
+				<div class="gallery-search">
+					<svg
+						class="gallery-search-icon"
+						viewBox="0 0 20 20"
+						fill="none"
+						aria-hidden="true"
+					>
+						<circle cx="9" cy="9" r="6" stroke="currentColor" stroke-width="1.6" />
+						<path d="m14 14 4 4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" />
+					</svg>
+					<input
+						type="search"
+						placeholder="Search by name or description…"
+						data-role="search"
+						aria-label="Search avatars"
+						autocomplete="off"
+						spellcheck="false"
+					/>
+					<button
+						type="button"
+						class="gallery-search-clear"
+						data-role="search-clear"
+						aria-label="Clear search"
+						hidden
+					>
+						×
+					</button>
+				</div>
+				<div class="gallery-tag-wrap" data-role="tag-wrap" hidden>
+					<div class="gallery-tag-label">Tags</div>
+					<div class="gallery-tags" data-role="tags"></div>
+				</div>
+			</section>
+
+			<section class="gallery-grid-wrap">
+				<div class="gallery-grid" data-role="grid"></div>
+				<div class="gallery-status" data-role="status"></div>
+				<div class="gallery-sentinel" data-role="sentinel" aria-hidden="true"></div>
+				<div class="gallery-load-more-wrap">
+					<button class="gallery-load-more" data-role="load-more" hidden>
+						Load more
+					</button>
+				</div>
+			</section>
+		</main>
+
+		<div id="footer-container"></div>
+		<script src="/footer.js"></script>
+
+		<script type="module" src="/gallery/gallery.js"></script>
+	</body>
+</html>

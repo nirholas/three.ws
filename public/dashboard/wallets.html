@@ -205,7 +205,11 @@
 				<p style="color: #666">Loading wallets…</p>
 			</div>
 
-			<button id="link-btn" class="btn" style="margin-top: 20px">Link Another Wallet</button>
+			<div class="row" style="margin-top: 20px; gap: 10px; flex-wrap: wrap">
+				<button id="link-evm-btn" class="btn">Link Ethereum Wallet</button>
+				<button id="link-solana-btn" class="btn sec">Link Solana Wallet</button>
+			</div>
+			<p class="muted" id="link-hint" style="margin-top: 10px"></p>
 		</main>
 
 		<script type="module">
@@ -238,13 +242,24 @@
 				}
 			}
 
+			function chainLabel(w) {
+				if (w.chain_type === 'solana') {
+					return w.chain_id && w.chain_id !== 'mainnet' ? `Solana (${w.chain_id})` : 'Solana';
+				}
+				if (w.chain_id) {
+					const evmNames = { 1: 'Ethereum', 8453: 'Base', 10: 'Optimism', 137: 'Polygon', 42161: 'Arbitrum', 56: 'BNB Chain' };
+					return evmNames[w.chain_id] || `Chain ${w.chain_id}`;
+				}
+				return w.chain_type === 'evm' ? 'Ethereum' : 'Unknown';
+			}
+
 			function renderWallets(wallets) {
 				const container = document.getElementById('wallets-container');
 				if (wallets.length === 0) {
 					container.innerHTML = `
 						<div class="empty">
 							<p>No wallets linked yet.</p>
-							<p class="muted">Click "Link Another Wallet" to add your first wallet.</p>
+							<p class="muted">Click a link button below to add your first wallet.</p>
 						</div>
 					`;
 					return;
@@ -266,7 +281,7 @@
 								</button>
 							</div>
 						</td>
-						<td class="meta">${w.chain_id ? `Chain ${w.chain_id}` : 'Multi-chain'}</td>
+						<td class="meta">${chainLabel(w)}</td>
 						<td class="meta">${new Date(w.created_at).toLocaleDateString()}</td>
 						<td>
 							${w.is_primary ? '<span class="pill">Primary</span>' : ''}
@@ -336,63 +351,161 @@
 				}
 			}
 
-			async function linkWallet() {
-				if (!window.ethereum) {
-					showError('MetaMask not found. Please install it to link wallets.');
+			function detectEvmProvider() {
+				if (typeof window === 'undefined') return null;
+				const eth = window.ethereum;
+				if (!eth) return null;
+				// Prefer a non-Solana EVM injection. Phantom's EVM provider works but
+				// surfaces an address-match warning when used alongside a Solana session.
+				if (Array.isArray(eth.providers)) {
+					const real = eth.providers.find((p) => !p.isPhantom) || eth.providers[0];
+					return real;
+				}
+				return eth;
+			}
+
+			function detectSolanaProvider() {
+				if (typeof window === 'undefined') return null;
+				return window.phantom?.solana || window.solana || window.backpack || window.solflare || null;
+			}
+
+			async function linkEvmWallet() {
+				const provider = detectEvmProvider();
+				if (!provider) {
+					showError('No Ethereum wallet detected. Install MetaMask, Rabby, or Coinbase Wallet to link.');
 					return;
 				}
 
+				const btn = document.getElementById('link-evm-btn');
+				btn.disabled = true;
 				try {
-					// 1. Request accounts + chain from MetaMask
-					const accounts = await window.ethereum.request({
-						method: 'eth_requestAccounts',
-					});
+					const accounts = await provider.request({ method: 'eth_requestAccounts' });
 					const address = accounts[0];
-					const chainIdHex = await window.ethereum.request({ method: 'eth_chainId' });
+					const chainIdHex = await provider.request({ method: 'eth_chainId' });
 					const chainId = parseInt(chainIdHex, 16);
 
-					// 2. Get SIWE message + nonce from server (bound to this address + chain)
 					const nonceRes = await fetch(`${apiUrl}/auth/wallets/nonce`, {
 						method: 'POST',
 						credentials: 'include',
 						headers: { 'content-type': 'application/json' },
 						body: JSON.stringify({ address, chainId }),
 					});
-					if (!nonceRes.ok) throw new Error('Failed to get nonce');
-					const { message } = await nonceRes.json();
+					const nonceData = await nonceRes.json();
+					if (!nonceRes.ok) {
+						throw new Error(nonceData.error_description || 'Failed to get nonce');
+					}
+					const { message } = nonceData;
 
-					// 3. Sign message with MetaMask
 					let signature;
 					try {
-						signature = await window.ethereum.request({
+						signature = await provider.request({
 							method: 'personal_sign',
 							params: [message, address],
 						});
 					} catch (err) {
 						if (err.code === 4001) {
-							showError('Signature cancelled by user');
+							showError('Signature cancelled');
 						} else {
 							showError(err.message || 'Signature failed');
 						}
 						return;
 					}
 
-					// 4. Send signed message to server
 					const linkRes = await fetch(`${apiUrl}/auth/wallets`, {
 						method: 'POST',
 						credentials: 'include',
 						headers: { 'content-type': 'application/json' },
 						body: JSON.stringify({ message, signature }),
 					});
+					const linkData = await linkRes.json();
 					if (!linkRes.ok) {
-						const err = await linkRes.json();
-						throw new Error(err.error_description || 'Failed to link wallet');
+						throw new Error(linkData.error_description || 'Failed to link wallet');
 					}
 
 					showError('', 'success');
 					loadWallets();
 				} catch (err) {
 					showError(err.message);
+				} finally {
+					btn.disabled = false;
+				}
+			}
+
+			async function linkSolanaWallet() {
+				const provider = detectSolanaProvider();
+				if (!provider) {
+					showError('No Solana wallet detected. Install Phantom, Backpack, or Solflare to link.');
+					return;
+				}
+
+				const btn = document.getElementById('link-solana-btn');
+				btn.disabled = true;
+				try {
+					if (!provider.isConnected) {
+						await provider.connect();
+					}
+					const address = provider.publicKey?.toBase58?.() || provider.publicKey?.toString?.();
+					if (!address) throw new Error('Could not read wallet public key.');
+
+					const nonceRes = await fetch(`${apiUrl}/auth/wallets/nonce-solana`, {
+						method: 'POST',
+						credentials: 'include',
+						headers: { 'content-type': 'application/json' },
+						body: JSON.stringify({ address, chainId: 'mainnet' }),
+					});
+					const nonceData = await nonceRes.json();
+					if (!nonceRes.ok) {
+						throw new Error(nonceData.error_description || 'Failed to get nonce');
+					}
+
+					let sigBase64;
+					try {
+						const msgBytes = new TextEncoder().encode(nonceData.message);
+						const { signature } = await provider.signMessage(msgBytes, 'utf8');
+						sigBase64 = btoa(String.fromCharCode(...signature));
+					} catch (err) {
+						if (err?.code === 4001 || /reject/i.test(err?.message || '')) {
+							showError('Signature cancelled');
+						} else {
+							showError(err.message || 'Signature failed');
+						}
+						return;
+					}
+
+					const linkRes = await fetch(`${apiUrl}/auth/wallets/link-solana`, {
+						method: 'POST',
+						credentials: 'include',
+						headers: { 'content-type': 'application/json' },
+						body: JSON.stringify({ message: nonceData.message, signature: sigBase64 }),
+					});
+					const linkData = await linkRes.json();
+					if (!linkRes.ok) {
+						throw new Error(linkData.error_description || 'Failed to link wallet');
+					}
+
+					showError('', 'success');
+					loadWallets();
+				} catch (err) {
+					showError(err.message);
+				} finally {
+					btn.disabled = false;
+				}
+			}
+
+			function refreshLinkButtons() {
+				const evmBtn = document.getElementById('link-evm-btn');
+				const solBtn = document.getElementById('link-solana-btn');
+				const hint = document.getElementById('link-hint');
+				const hasEvm = !!detectEvmProvider();
+				const hasSol = !!detectSolanaProvider();
+				evmBtn.disabled = !hasEvm;
+				solBtn.disabled = !hasSol;
+				evmBtn.title = hasEvm ? '' : 'Install MetaMask, Rabby, or Coinbase Wallet';
+				solBtn.title = hasSol ? '' : 'Install Phantom, Backpack, or Solflare';
+				if (!hasEvm && !hasSol) {
+					hint.textContent = 'Install a browser wallet extension to link.';
+				} else {
+					hint.textContent = '';
 				}
 			}
 
@@ -428,7 +541,9 @@
 				}
 			})();
 
-			document.getElementById('link-btn').addEventListener('click', linkWallet);
+			document.getElementById('link-evm-btn').addEventListener('click', linkEvmWallet);
+			document.getElementById('link-solana-btn').addEventListener('click', linkSolanaWallet);
+			refreshLinkButtons();
 		</script>
 	</body>
 </html>

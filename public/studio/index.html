@@ -92,10 +92,7 @@
 				<a href="/widgets">Widgets</a>
 				<a href="/studio" aria-current="page">Studio</a>
 				<a href="/docs">Docs</a>
-				<a href="/my-agents">My Agents</a>
-				<a href="/dashboard">Dashboard</a>
-				<a class="btn-ghost" id="signin-link" href="/login?next=/studio" hidden>Sign in</a>
-				<button class="btn-ghost" id="signout-btn" type="button" hidden>Sign out</button>
+				<div id="user-menu" class="user-menu" data-state="loading"></div>
 			</nav>
 		</header>
 
@@ -105,7 +102,7 @@
 					<h2 data-tooltip="The 3D model your widget will display. We've pre-loaded a demo agent so you can try the studio right away — sign in to use your own.">
 						1. Pick avatar
 					</h2>
-					<p class="note">To see your avatar here, make it public or unlisted in your <a href="/dashboard/avatars">avatar dashboard</a>. Or browse <a href="/discover" target="_blank" rel="noopener">community avatars</a>.</p>
+					<p class="note">To see your avatar here, make it public or unlisted in your <a href="/dashboard/avatars">avatar dashboard</a>. Or browse the <a href="/gallery" target="_blank" rel="noopener">community gallery</a>.</p>
 					<div class="avatar-list" id="avatar-list" aria-busy="true"></div>
 					<div class="browse-public">
 						<div class="browse-public-row">

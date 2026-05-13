@@ -40,8 +40,10 @@
 		<link rel="stylesheet" href="/style.css" />
 		<link rel="stylesheet" href="/nav.css" />
 		<link rel="stylesheet" href="/home.css" />
+		<link rel="stylesheet" href="/home-polish.css" />
 		<link rel="stylesheet" href="/footer.css" />
 		<script defer src="/footer-newsletter.js"></script>
+		<script defer src="/home-polish.js"></script>
 		<link
 			href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400&family=Space+Grotesk:wght@500;600;700&display=swap"
 			rel="stylesheet"
@@ -118,10 +120,6 @@
 								class="h-avatar-viewer"
 								aria-label="three.ws — interactive 3D agent. Click for surprises."
 							></canvas>
-							<div class="h-avatar-badge">
-								<span class="h-avatar-badge-label">live agent</span>
-								<span>0x3d…a9f</span>
-							</div>
 						</div>
 					</div>
 				</div>
@@ -168,6 +166,7 @@
 			<section class="h-pillars" aria-label="What you get">
 				<div class="h-pillars-inner">
 					<article class="h-pillar h-reveal">
+						<span class="h-pillar-num">01 / Identity</span>
 						<h3>A 3D body for any agent</h3>
 						<p>
 							Drop any GLB into the browser and your AI agent appears as a fully
@@ -176,6 +175,7 @@
 						</p>
 					</article>
 					<article class="h-pillar h-reveal">
+						<span class="h-pillar-num">02 / Intelligence</span>
 						<h3>Your stack, your brain</h3>
 						<p>
 							Connect any LLM via MCP or A2A — Claude, GPT, Gemini, or your own.
@@ -184,6 +184,7 @@
 						</p>
 					</article>
 					<article class="h-pillar h-reveal">
+						<span class="h-pillar-num">03 / Ownership</span>
 						<h3>Owned, on-chain, portable</h3>
 						<p>
 							Register your agent on 20+ EVM chains via ERC-8004 — a verifiable,
@@ -457,18 +458,8 @@
 								MCP client on 20+ chains.
 							</p>
 							<div class="h-bento-id">
-								<span
-									class="h-id-dot"
-									style="background: #6ee7b7; box-shadow: 0 0 8px #6ee7b7"
-								></span>
-								<span
-									style="
-										font-family: monospace;
-										font-size: 12px;
-										color: rgba(255, 255, 255, 0.6);
-									"
-									>0x3d…a9f · Base</span
-								>
+								<span class="h-id-dot h-id-dot--mint" aria-hidden="true"></span>
+								<span class="h-id-addr">0x3d…a9f · Base</span>
 							</div>
 						</div>
 					</div>
@@ -480,12 +471,12 @@
 								Built-in empathy layer. Your agent reacts — speaking, thinking,
 								succeeding, failing.
 							</p>
-							<div class="h-bento-emotions">
-								<span>✦ celebration</span>
-								<span>? curiosity</span>
-								<span>♥ empathy</span>
-								<span>! concern</span>
-							</div>
+							<ul class="h-bento-emotions" aria-label="Emotion states">
+								<li><span class="h-em-dot"></span>Celebration</li>
+								<li><span class="h-em-dot"></span>Curiosity</li>
+								<li><span class="h-em-dot"></span>Empathy</li>
+								<li><span class="h-em-dot"></span>Concern</li>
+							</ul>
 						</div>
 					</div>
 					<div class="h-bento-card h-reveal">

@@ -141,6 +141,7 @@ const appConfig = {
 				// BEGIN:DISCOVER_ROUTE
 				'my-agents': resolve(__dirname, 'public/my-agents/index.html'),
 				discover: resolve(__dirname, 'public/discover/index.html'),
+				gallery: resolve(__dirname, 'public/gallery/index.html'),
 				// END:DISCOVER_ROUTE
 				'vanity-wallet': resolve(__dirname, 'public/vanity-wallet.html'),
 				'eth-vanity': resolve(__dirname, 'public/eth-vanity.html'),
@@ -183,6 +184,8 @@ const appConfig = {
 					'/my-agents/': resolve(root, 'public/my-agents/index.html'),
 					'/discover': resolve(root, 'public/discover/index.html'),
 					'/discover/': resolve(root, 'public/discover/index.html'),
+					'/gallery': resolve(root, 'public/gallery/index.html'),
+					'/gallery/': resolve(root, 'public/gallery/index.html'),
 					'/marketplace': resolve(root, 'marketplace.html'),
 					'/marketplace/': resolve(root, 'marketplace.html'),
 					'/pay': resolve(root, 'public/pay/index.html'),
@@ -222,6 +225,7 @@ const appConfig = {
 					'/hydrate',
 					'/my-agents',
 					'/discover',
+					'/gallery',
 					'/docs',
 				]);
 				server.middlewares.use(async (req, res, next) => {
@@ -278,6 +282,16 @@ const appConfig = {
 					// /pay/calls/<base58 tx sig> → permalink for a paid x402 call
 					else if (!filePath && /^\/pay\/calls\/[1-9A-HJ-NP-Za-km-z]+\/?$/.test(path))
 						filePath = resolve(root, 'public/pay/calls/index.html');
+					// /dashboard/<tab> and /dashboard/edit/<id> → SPA index
+					else if (
+						!filePath &&
+						/^\/dashboard\/(?:agents|avatars|create|upload|animations|widgets|embed|keys|mcp|monetization|payments|subscriptions|billing|revenue|earnings|account)\/?$/.test(
+							path,
+						)
+					)
+						filePath = resolve(root, 'public/dashboard/index.html');
+					else if (!filePath && /^\/dashboard\/edit\/[^/]+\/?$/.test(path))
+						filePath = resolve(root, 'public/dashboard/index.html');
 					// Serve the rider webpack app as static files.
 					// /footer-bot.js — serve the Vite-processed src/footer-bot.js at a
 				// stable URL in dev so footer.js can load it without knowing the hash.

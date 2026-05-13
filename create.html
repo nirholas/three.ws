@@ -7,7 +7,7 @@
 		<link rel="icon" href="/favicon.ico" />
 		<meta
 			name="description"
-			content="Create a 3D avatar. Use our web editor, upload a GLB, or generate from a selfie."
+			content="Create a 3D avatar. Start from a ready-made template in our web editor or upload your own GLB."
 		/>
 		<meta name="robots" content="noindex" />
 
@@ -15,17 +15,18 @@
 		<meta property="og:site_name" content="three.ws">
 		<meta property="og:url" content="https://three.ws/create">
 		<meta property="og:title" content="Create avatar · three.ws">
-		<meta property="og:description" content="Create a 3D avatar. Use our web editor, upload a GLB, or generate from a selfie.">
+		<meta property="og:description" content="Create a 3D avatar. Start from a ready-made template in our web editor or upload your own GLB.">
 		<meta property="og:image" content="https://three.ws/assets/og-image.png">
 		<meta property="og:image:width" content="1200">
 		<meta property="og:image:height" content="630">
 		<meta name="twitter:card" content="summary_large_image">
 		<meta name="twitter:title" content="Create avatar · three.ws">
-		<meta name="twitter:description" content="Create a 3D avatar. Use our web editor, upload a GLB, or generate from a selfie.">
+		<meta name="twitter:description" content="Create a 3D avatar. Start from a ready-made template in our web editor or upload your own GLB.">
 		<meta name="twitter:image" content="https://three.ws/assets/og-image.png">
 
 		<style>
-			#page-loading {
+			#page-loading,
+			#save-loading {
 				position: fixed;
 				inset: 0;
 				z-index: 9999;
@@ -36,16 +37,32 @@
 				justify-content: center;
 				gap: 20px;
 			}
-			#page-loading img {
+			#page-loading img,
+			#save-loading img {
 				width: 64px;
 				height: 64px;
 				animation: page-loading-pulse 1.6s ease-in-out infinite;
 			}
-			#page-loading .dots {
+			#page-loading .dots,
+			#save-loading .dots {
 				color: rgba(255, 255, 255, 0.6);
 				font-size: 24px;
 				letter-spacing: 4px;
 				font-family: -apple-system, system-ui, sans-serif;
+			}
+			#save-loading .label {
+				color: rgba(255, 255, 255, 0.82);
+				font-size: 15px;
+				font-weight: 500;
+				letter-spacing: -0.005em;
+				font-family: -apple-system, system-ui, 'Segoe UI', Roboto, sans-serif;
+				margin-top: 4px;
+			}
+			#save-loading .sublabel {
+				color: rgba(255, 255, 255, 0.42);
+				font-size: 12.5px;
+				font-family: -apple-system, system-ui, 'Segoe UI', Roboto, sans-serif;
+				margin-top: -8px;
 			}
 			@keyframes page-loading-pulse {
 				0%, 100% { opacity: 0.55; transform: scale(1); }
@@ -123,12 +140,12 @@
 				margin: 0 0 48px;
 			}
 
-			/* ── 3-card grid ──────────────────────────────────────────────────── */
+			/* ── card grid ────────────────────────────────────────────────────── */
 			.card-grid {
 				display: grid;
-				grid-template-columns: repeat(3, 1fr);
+				grid-template-columns: repeat(2, 1fr);
 				gap: 20px;
-				max-width: 920px;
+				max-width: 720px;
 				margin: 0 auto;
 			}
 
@@ -136,7 +153,7 @@
 				position: relative;
 				display: flex;
 				flex-direction: column;
-				padding: 28px 24px 22px;
+				padding: 24px 24px 22px;
 				border-radius: 18px;
 				background: var(--panel);
 				border: 1.5px solid var(--border);
@@ -153,14 +170,75 @@
 				outline: 2px solid var(--accent);
 				outline-offset: 2px;
 			}
-			.create-card:hover:not([aria-disabled='true']) {
+			.create-card:hover {
 				transform: translateY(-2px);
 				border-color: #2c2d3d;
 				box-shadow: 0 14px 36px rgba(0, 0, 0, 0.45);
 			}
-			.create-card[aria-disabled='true'] {
-				cursor: default;
-				opacity: 0.52;
+
+			.create-card.is-recommended {
+				border-color: rgba(214, 255, 61, 0.35);
+				background:
+					radial-gradient(
+						420px 240px at 50% -20px,
+						rgba(214, 255, 61, 0.08) 0,
+						transparent 70%
+					),
+					var(--panel);
+			}
+			.create-card.is-recommended:hover {
+				border-color: rgba(214, 255, 61, 0.6);
+			}
+
+			.recommended-badge {
+				position: absolute;
+				top: 14px;
+				right: 14px;
+				padding: 3px 9px;
+				border-radius: 20px;
+				background: rgba(214, 255, 61, 0.12);
+				border: 1px solid rgba(214, 255, 61, 0.35);
+				font-size: 10.5px;
+				font-weight: 600;
+				letter-spacing: 0.06em;
+				color: var(--accent);
+				text-transform: uppercase;
+			}
+
+			.card-preview {
+				width: 100%;
+				height: 220px;
+				border-radius: 12px;
+				background:
+					radial-gradient(
+						circle at 50% 30%,
+						rgba(214, 255, 61, 0.08) 0,
+						transparent 60%
+					),
+					rgba(255, 255, 255, 0.02);
+				border: 1px solid var(--border);
+				margin-bottom: 18px;
+				overflow: hidden;
+				flex: 0 0 auto;
+			}
+			.card-preview model-viewer {
+				width: 100%;
+				height: 100%;
+				--poster-color: transparent;
+			}
+			.card-preview--icon {
+				display: flex;
+				align-items: center;
+				justify-content: center;
+			}
+			.card-preview--icon svg {
+				width: 56px;
+				height: 56px;
+				color: rgba(255, 255, 255, 0.5);
+			}
+			.card-subtitle code {
+				font-size: 11px;
+				opacity: 0.7;
 			}
 
 			.card-icon {
@@ -178,6 +256,24 @@
 			.card-icon svg {
 				width: 24px;
 				height: 24px;
+			}
+			.card-icon-row {
+				display: flex;
+				align-items: center;
+				gap: 14px;
+				margin-bottom: 16px;
+			}
+			.card-icon-row .card-icon {
+				margin-bottom: 0;
+				width: 40px;
+				height: 40px;
+			}
+			.card-icon-row .card-icon svg {
+				width: 20px;
+				height: 20px;
+			}
+			.card-icon-row .card-title {
+				margin: 0;
 			}
 
 			.card-title {
@@ -214,13 +310,15 @@
 					border-color 0.15s;
 				align-self: flex-start;
 			}
-			.create-card:hover:not([aria-disabled='true']) .card-cta {
+			.create-card:hover .card-cta {
 				background: var(--accent);
 				border-color: transparent;
 				color: var(--accent-ink);
 			}
-			.create-card[aria-disabled='true'] .card-cta {
-				cursor: default;
+			.create-card.is-recommended .card-cta {
+				background: var(--accent);
+				border-color: transparent;
+				color: var(--accent-ink);
 			}
 
 			.card-tooltip {
@@ -236,21 +334,6 @@
 			}
 			.card-tooltip a:hover {
 				color: var(--text);
-			}
-
-			.coming-soon-badge {
-				position: absolute;
-				top: 16px;
-				right: 16px;
-				padding: 3px 9px;
-				border-radius: 20px;
-				background: rgba(255, 255, 255, 0.06);
-				border: 1px solid var(--border);
-				font-size: 11px;
-				font-weight: 600;
-				letter-spacing: 0.04em;
-				color: var(--muted);
-				text-transform: uppercase;
 			}
 
 			/* ── Status toast ─────────────────────────────────────────────────── */
@@ -292,6 +375,9 @@
 				.card-grid {
 					grid-template-columns: 1fr;
 					max-width: 420px;
+				}
+				.card-preview {
+					height: 180px;
 				}
 			}
 
@@ -612,31 +698,54 @@
 			<p class="picker-sub">Choose how you want to create your 3D avatar.</p>
 
 			<div class="card-grid" role="group" aria-label="Choose avatar creation method">
-				<!-- Card 1: Default editor -->
+				<!-- Card 1: Default editor (recommended) -->
 				<div
-					class="create-card"
+					class="create-card is-recommended"
 					id="card-default-editor"
 					role="button"
 					tabindex="0"
-					aria-label="Open avatar web editor"
+					aria-label="Open avatar web editor (recommended)"
 				>
-					<div class="card-icon" aria-hidden="true">
-						<svg
-							viewBox="0 0 24 24"
-							fill="none"
-							stroke="currentColor"
-							stroke-width="1.7"
-							stroke-linecap="round"
-							stroke-linejoin="round"
-						>
-							<circle cx="12" cy="8" r="3.5" />
-							<path d="M5 20c0-3.87 3.13-7 7-7s7 3.13 7 7" />
-							<path d="M18 3l3 3-9 9-4 1 1-4 9-9z" />
-						</svg>
+					<span class="recommended-badge" aria-hidden="true">Recommended</span>
+					<div class="card-preview">
+						<model-viewer
+							src="/avatars/default.glb"
+							alt="Default 3D avatar preview"
+							auto-rotate
+							auto-rotate-delay="0"
+							rotation-per-second="18deg"
+							interaction-prompt="none"
+							disable-zoom
+							disable-pan
+							disable-tap
+							shadow-intensity="0.4"
+							shadow-softness="0.8"
+							exposure="0.95"
+							environment-image="neutral"
+							camera-orbit="15deg 80deg auto"
+							loading="eager"
+						></model-viewer>
 					</div>
-					<h2 class="card-title">Use default avatar</h2>
+					<div class="card-icon-row">
+						<div class="card-icon" aria-hidden="true">
+							<svg
+								viewBox="0 0 24 24"
+								fill="none"
+								stroke="currentColor"
+								stroke-width="1.7"
+								stroke-linecap="round"
+								stroke-linejoin="round"
+							>
+								<circle cx="12" cy="8" r="3.5" />
+								<path d="M5 20c0-3.87 3.13-7 7-7s7 3.13 7 7" />
+								<path d="M18 3l3 3-9 9-4 1 1-4 9-9z" />
+							</svg>
+						</div>
+						<h2 class="card-title">Start with a template</h2>
+					</div>
 					<p class="card-subtitle">
-						Edit a ready-made avatar in our web editor. No download required.
+						Pick a ready-made character and customize it in our web editor. No
+						download required.
 					</p>
 					<span class="card-cta">
 						Open editor
@@ -665,24 +774,40 @@
 					tabindex="0"
 					aria-label="Upload a GLB file"
 				>
-					<div class="card-icon" aria-hidden="true">
+					<div class="card-preview card-preview--icon" aria-hidden="true">
 						<svg
 							viewBox="0 0 24 24"
 							fill="none"
 							stroke="currentColor"
-							stroke-width="1.7"
+							stroke-width="1.2"
 							stroke-linecap="round"
 							stroke-linejoin="round"
+							aria-hidden="true"
 						>
 							<polyline points="16 16 12 12 8 16" />
 							<line x1="12" y1="12" x2="12" y2="21" />
 							<path d="M20.39 18.39A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.3" />
 						</svg>
 					</div>
-					<h2 class="card-title">Upload your own GLB</h2>
+					<div class="card-icon-row">
+						<div class="card-icon" aria-hidden="true">
+							<svg
+								viewBox="0 0 24 24"
+								fill="none"
+								stroke="currentColor"
+								stroke-width="1.7"
+								stroke-linecap="round"
+								stroke-linejoin="round"
+							>
+								<polyline points="16 16 12 12 8 16" />
+								<line x1="12" y1="12" x2="12" y2="21" />
+								<path d="M20.39 18.39A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.3" />
+							</svg>
+						</div>
+						<h2 class="card-title">Upload your own GLB</h2>
+					</div>
 					<p class="card-subtitle">
-						Drop a <code style="font-size: 11px; opacity: 0.7">.glb</code> file. Works
-						with any glTF 2.0 model.
+						Drop a <code>.glb</code> file. Works with any glTF 2.0 model.
 					</p>
 					<span class="card-cta">
 						Choose file
@@ -706,58 +831,6 @@
 						<a href="https://avaturn.me" target="_blank" rel="noopener">Avaturn</a> or
 						<a href="https://www.mixamo.com" target="_blank" rel="noopener">Mixamo</a>.
 					</p>
-				</div>
-
-				<!-- Card 3: From selfie (disabled) -->
-				<div
-					class="create-card"
-					id="card-selfie"
-					role="button"
-					aria-disabled="true"
-					aria-label="From a selfie (coming soon)"
-					tabindex="-1"
-				>
-					<span class="coming-soon-badge" aria-hidden="true">Coming Soon</span>
-					<div
-						class="card-icon"
-						aria-hidden="true"
-						style="opacity: 0.5; filter: grayscale(1)"
-					>
-						<svg
-							viewBox="0 0 24 24"
-							fill="none"
-							stroke="currentColor"
-							stroke-width="1.7"
-							stroke-linecap="round"
-							stroke-linejoin="round"
-						>
-							<path
-								d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"
-							/>
-							<circle cx="12" cy="13" r="4" />
-						</svg>
-					</div>
-					<h2 class="card-title">From a selfie</h2>
-					<p class="card-subtitle">
-						Turn a photo into a rigged 3D avatar. Powered by AI.
-					</p>
-					<span class="card-cta" aria-hidden="true">
-						Take selfie
-						<svg
-							width="13"
-							height="13"
-							viewBox="0 0 24 24"
-							fill="none"
-							stroke="currentColor"
-							stroke-width="2.2"
-							stroke-linecap="round"
-							stroke-linejoin="round"
-							aria-hidden="true"
-						>
-							<line x1="5" y1="12" x2="19" y2="12" />
-							<polyline points="12 5 19 12 12 19" />
-						</svg>
-					</span>
 				</div>
 			</div>
 		</main>

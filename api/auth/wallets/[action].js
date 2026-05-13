@@ -1,12 +1,14 @@
 // Wallet endpoints — dispatched by req.query.action.
-//   GET    /api/auth/wallets                → handleListWallets   (action undefined)
-//   POST   /api/auth/wallets                → handleLinkWallet    (action undefined)
-//   POST   /api/auth/wallets/nonce          → handleNonce         (action === 'nonce')
-//   DELETE /api/auth/wallets/<address>      → handleUnlinkWallet  (action === <address>)
+//   GET    /api/auth/wallets                  → handleListWallets   (action undefined)
+//   POST   /api/auth/wallets                  → handleLinkWallet    (action undefined)
+//   POST   /api/auth/wallets/nonce            → handleNonce         (action === 'nonce')
+//   POST   /api/auth/wallets/nonce-solana     → handleNonceSolana   (action === 'nonce-solana')
+//   POST   /api/auth/wallets/link-solana      → handleLinkSolana    (action === 'link-solana')
+//   DELETE /api/auth/wallets/<address>        → handleUnlinkWallet  (action === <address>)
 //
-// Dispatcher convention: undefined action → index (GET/POST), the literal
-// "nonce" → nonce issuance, and anything else is treated as an address for
-// DELETE. _link-nonces.js remains a separate helper (underscore-prefixed,
+// Dispatcher convention: undefined action → index (GET/POST), reserved literal
+// actions handle nonce/link flows, and anything else is treated as an address
+// for DELETE. _link-nonces.js remains a separate helper (underscore-prefixed,
 // not file-routed by Vercel).
 
 import { verifyMessage, getAddress } from 'ethers';
@@ -17,8 +19,12 @@ import { logAudit } from '../../_lib/audit.js';
 import { cors, json, method, readJson, wrap, error } from '../../_lib/http.js';
 import { parse } from '../../_lib/validate.js';
 import { parseSiweMessage } from '../../_lib/siwe.js';
+import { parseSiwsMessage, verifySiwsSignature } from '../../_lib/siws.js';
 import { env } from '../../_lib/env.js';
 import { issueNonce, consumeNonce, NONCE_TTL_SEC } from './_link-nonces.js';
+
+const SOLANA_ADDRESS_RE = /^[1-9A-HJ-NP-Za-km-z]{32,44}$/;
+const ALLOWED_SOLANA_CHAINS = new Set(['mainnet', 'devnet', 'testnet']);
 
 const linkBody = z.object({
 	message: z.string().min(64).max(4000),
@@ -38,9 +44,19 @@ export default wrap(async (req, res) => {
 		return handleIndex(req, res);
 	}
 
-	// /api/auth/wallets/nonce — issue link nonce
+	// /api/auth/wallets/nonce — issue link nonce (EVM/SIWE)
 	if (action === 'nonce') {
 		return handleNonce(req, res);
+	}
+
+	// /api/auth/wallets/nonce-solana — issue SIWS link message
+	if (action === 'nonce-solana') {
+		return handleNonceSolana(req, res);
+	}
+
+	// /api/auth/wallets/link-solana — verify SIWS + insert Solana wallet row
+	if (action === 'link-solana') {
+		return handleLinkSolana(req, res);
 	}
 
 	// /api/auth/wallets/<address> — unlink wallet (action carries the address)
@@ -65,7 +81,7 @@ async function handleIndex(req, res) {
 
 async function handleListWallets(userId, res) {
 	const rows = await sql`
-		select address, chain_id, created_at, is_primary
+		select address, chain_id, chain_type, created_at, is_primary
 		from user_wallets
 		where user_id = ${userId}
 		order by created_at asc
@@ -75,6 +91,7 @@ async function handleListWallets(userId, res) {
 		wallets: rows.map((w) => ({
 			address: w.address,
 			chain_id: w.chain_id,
+			chain_type: w.chain_type,
 			created_at: w.created_at,
 			is_primary: w.is_primary,
 		})),
@@ -214,6 +231,156 @@ async function handleNonce(req, res) {
 	].join('\n');
 
 	return json(res, 200, { nonce, message, ttl: NONCE_TTL_SEC });
+}
+
+// ── Solana: nonce ──────────────────────────────────────────────────────────
+// Issue a nonce + SIWS link message tying the wallet signature to the active
+// session's user. Mirrors handleNonce for EVM but builds a Sign-In with
+// Solana (CAIP-122 / SIP-0) message with a "Link this wallet" statement.
+
+const nonceSolanaBody = z.object({
+	address: z.string().regex(SOLANA_ADDRESS_RE),
+	chainId: z.string().optional(),
+});
+
+async function handleNonceSolana(req, res) {
+	if (cors(req, res, { methods: 'POST,OPTIONS', credentials: true })) return;
+	if (!method(req, res, ['POST'])) return;
+
+	const session = await getSessionUser(req);
+	if (!session) return error(res, 401, 'unauthorized', 'sign in required');
+
+	const { address, chainId } = parse(nonceSolanaBody, await readJson(req));
+	const chain = chainId && ALLOWED_SOLANA_CHAINS.has(chainId) ? chainId : 'mainnet';
+
+	const nonce = issueNonce(session.id);
+
+	const appOrigin = env.APP_ORIGIN;
+	const domain = new URL(appOrigin).host;
+	const issuedAt = new Date().toISOString();
+	const expirationTime = new Date(Date.now() + NONCE_TTL_SEC * 1000).toISOString();
+
+	const message = [
+		`${domain} wants you to sign in with your Solana account:`,
+		address,
+		``,
+		`Link this wallet to three.ws account ${session.email}`,
+		``,
+		`URI: ${appOrigin}`,
+		`Version: 1`,
+		`Chain ID: ${chain}`,
+		`Nonce: ${nonce}`,
+		`Issued At: ${issuedAt}`,
+		`Expiration Time: ${expirationTime}`,
+	].join('\n');
+
+	return json(res, 200, { nonce, message, ttl: NONCE_TTL_SEC });
+}
+
+// ── Solana: link ───────────────────────────────────────────────────────────
+// Verify a SIWS message+signature signed by `address`, then insert (or no-op)
+// a user_wallets row with chain_type='solana' for the session user.
+
+const linkSolanaBody = z.object({
+	message: z.string().min(32).max(4000),
+	signature: z.string().min(1).max(256),
+});
+
+async function handleLinkSolana(req, res) {
+	if (cors(req, res, { methods: 'POST,OPTIONS', credentials: true })) return;
+	if (!method(req, res, ['POST'])) return;
+
+	const session = await getSessionUser(req);
+	if (!session) return error(res, 401, 'unauthorized', 'sign in required');
+
+	const body = parse(linkSolanaBody, await readJson(req));
+
+	const fields = parseSiwsMessage(body.message);
+	if (!fields) return error(res, 400, 'invalid_message', 'malformed SIWS message');
+
+	// Domain + URI must match this deployment.
+	const appOrigin = env.APP_ORIGIN;
+	const appHost = new URL(appOrigin).host;
+	const vercelHost = process.env.VERCEL_URL || null;
+	const isLocalDev =
+		process.env.VERCEL_ENV !== 'production' && process.env.VERCEL_ENV !== 'preview';
+	const allowedHosts = new Set([appHost, vercelHost].filter(Boolean));
+	const domainOk =
+		allowedHosts.has(fields.domain) || (isLocalDev && /^localhost(:\d+)?$/.test(fields.domain));
+	if (!domainOk) return error(res, 400, 'invalid_domain', `domain must be ${appHost}`);
+
+	try {
+		const u = new URL(fields.uri);
+		const allowedOrigins = new Set(
+			[appOrigin, vercelHost ? `https://${vercelHost}` : null].filter(Boolean),
+		);
+		const originOk =
+			allowedOrigins.has(u.origin) ||
+			(isLocalDev && /^https?:\/\/localhost(:\d+)?$/.test(u.origin));
+		if (!originOk) return error(res, 400, 'invalid_uri', 'uri origin mismatch');
+	} catch {
+		return error(res, 400, 'invalid_uri', 'uri not a valid URL');
+	}
+
+	if (fields.chainId && !ALLOWED_SOLANA_CHAINS.has(fields.chainId)) {
+		return error(res, 400, 'invalid_chain', 'unknown Solana chain ID');
+	}
+
+	const now = Date.now();
+	if (fields.expirationTime && Date.parse(fields.expirationTime) < now) {
+		return error(res, 400, 'expired', 'message expired');
+	}
+	if (fields.notBefore && Date.parse(fields.notBefore) > now) {
+		return error(res, 400, 'not_yet_valid', 'message not yet valid');
+	}
+
+	// Burn the per-user link nonce.
+	const nonceData = consumeNonce(fields.nonce, session.id);
+	if (!nonceData) {
+		return error(res, 400, 'invalid_nonce', 'unknown, expired, or invalid nonce');
+	}
+
+	let valid;
+	try {
+		valid = verifySiwsSignature(body.message, body.signature, fields.address);
+	} catch {
+		return error(res, 401, 'invalid_signature', 'signature verification failed');
+	}
+	if (!valid) return error(res, 401, 'invalid_signature', 'signer does not match address');
+
+	const addr = fields.address;
+	const chain = fields.chainId || 'mainnet';
+
+	// Idempotent: already linked to this user → success.
+	const [existing] = await sql`
+		select id from user_wallets
+		where user_id = ${session.id} and address = ${addr}
+		limit 1
+	`;
+	if (existing) {
+		return json(res, 200, { wallet: { address: addr, chain_type: 'solana', chain_id: chain } });
+	}
+
+	// Conflict: linked to a different user.
+	const [conflict] = await sql`
+		select user_id from user_wallets where address = ${addr} limit 1
+	`;
+	if (conflict) {
+		return error(
+			res,
+			409,
+			'address_in_use',
+			'this address is already linked to another account',
+		);
+	}
+
+	await sql`
+		insert into user_wallets (user_id, address, chain_type, is_primary)
+		values (${session.id}, ${addr}, 'solana', false)
+	`;
+	logAudit({ userId: session.id, action: 'link_wallet_solana', resourceId: addr });
+
+	return json(res, 201, { wallet: { address: addr, chain_type: 'solana', chain_id: chain } });
 }
 
 // ── Unlink ─────────────────────────────────────────────────────────────────

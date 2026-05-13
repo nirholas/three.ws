@@ -53,8 +53,11 @@ async function handleGlbFile(file) {
 		return;
 	}
 
+	showSaveOverlay('Checking your file…');
+
 	const header = new Uint8Array(await file.slice(0, 4).arrayBuffer());
 	if (!GLB_MAGIC.every((b, i) => header[i] === b)) {
+		hideSaveOverlay();
 		showStatus("File doesn't appear to be a valid GLB.", 'error');
 		return;
 	}
@@ -82,12 +85,15 @@ async function isAtAvatarLimit() {
 }
 
 async function saveAndRedirect(blob, meta = {}) {
-	showStatus('Uploading avatar…', 'loading');
+	showSaveOverlay('Saving your avatar…', 'This usually takes a few seconds.');
 	try {
 		const avatar = await saveRemoteGlbToAccount(blob, meta);
+		updateSaveOverlay('Preparing your agent…');
 		const agent = await attachAvatarToAgent(avatar.id, meta.name);
+		updateSaveOverlay('Opening your avatar…');
 		window.location.href = '/app?agent=' + agent.id;
 	} catch (err) {
+		hideSaveOverlay();
 		if (err.code === 'not_signed_in') {
 			sessionStorage.setItem('login_redirect', '/create');
 			window.location.replace('/login');
@@ -102,6 +108,43 @@ async function saveAndRedirect(blob, meta = {}) {
 		}
 		if (!err.redirected) showStatus(err.message || 'Upload failed.', 'error');
 	}
+}
+
+function showSaveOverlay(label, sublabel) {
+	let el = document.getElementById('save-loading');
+	if (!el) {
+		el = document.createElement('div');
+		el.id = 'save-loading';
+		el.setAttribute('role', 'status');
+		el.setAttribute('aria-live', 'polite');
+		el.setAttribute('aria-busy', 'true');
+		el.innerHTML = `
+			<img src="/three.svg" alt="" />
+			<div class="dots">...</div>
+			<div class="label"></div>
+			<div class="sublabel"></div>
+		`;
+		document.body.appendChild(el);
+		document.documentElement.style.overflow = 'hidden';
+		document.body.style.overflow = 'hidden';
+	}
+	el.querySelector('.label').textContent = label;
+	el.querySelector('.sublabel').textContent = sublabel || '';
+}
+
+function updateSaveOverlay(label, sublabel) {
+	const el = document.getElementById('save-loading');
+	if (!el) return;
+	el.querySelector('.label').textContent = label;
+	if (sublabel !== undefined) el.querySelector('.sublabel').textContent = sublabel;
+}
+
+function hideSaveOverlay() {
+	const el = document.getElementById('save-loading');
+	if (!el) return;
+	el.remove();
+	document.documentElement.style.overflow = '';
+	document.body.style.overflow = '';
 }
 
 // Associates the uploaded avatar with the caller's default agent. POST /api/agents

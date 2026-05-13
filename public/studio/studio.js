@@ -146,6 +146,7 @@ const editId = params.get('edit');
 const tplId = params.get('template');
 const pickType = params.get('type');
 const preModel = params.get('model');
+const preAvatarId = params.get('avatar');
 
 if (pickType && WIDGET_TYPES[pickType]) state.type = pickType;
 if (preModel) state.preselectedModel = preModel;
@@ -164,6 +165,7 @@ if (preModel) state.preselectedModel = preModel;
 
 	if (editId) await loadForEdit(editId);
 	else if (tplId) await cloneTemplate(tplId);
+	else if (preAvatarId) await selectByAvatarId(preAvatarId);
 	else if (state.preselectedModel) selectByModelUrl(state.preselectedModel);
 	else if (!state.avatarId) selectAvatar(DEMO_AVATAR.id);
 
@@ -172,6 +174,137 @@ if (preModel) state.preselectedModel = preModel;
 
 	updatePreview(true);
 })();
+
+// ── user menu ────────────────────────────────────────────────────────────────
+function userDisplayName(u) {
+	if (!u) return '';
+	return u.display_name || u.username || (u.email ? u.email.split('@')[0] : 'Account');
+}
+
+function userInitial(u) {
+	const name = userDisplayName(u);
+	return name ? name.trim().charAt(0).toUpperCase() : '?';
+}
+
+async function signOut() {
+	await fetch('/api/auth/logout', { method: 'POST', credentials: 'include' }).catch(() => {});
+	try { localStorage.removeItem('3dagent:auth-hint'); } catch { /* ignore */ }
+	location.href = '/';
+}
+
+function renderUserMenu() {
+	const root = $('#user-menu');
+	if (!root) return;
+	root.innerHTML = '';
+
+	if (!state.user) {
+		root.dataset.state = 'signed-out';
+		const a = document.createElement('a');
+		a.className = 'user-menu-signin';
+		a.href = '/login?next=/studio';
+		a.textContent = 'Sign in';
+		root.appendChild(a);
+		return;
+	}
+
+	root.dataset.state = 'signed-in';
+	const u = state.user;
+	const name = userDisplayName(u);
+
+	const trigger = document.createElement('button');
+	trigger.type = 'button';
+	trigger.className = 'user-menu-trigger';
+	trigger.setAttribute('aria-haspopup', 'menu');
+	trigger.setAttribute('aria-expanded', 'false');
+
+	const av = document.createElement('span');
+	av.className = 'user-menu-avatar';
+	if (u.avatar_url) {
+		const img = document.createElement('img');
+		img.src = u.avatar_url;
+		img.alt = '';
+		av.appendChild(img);
+	} else {
+		av.textContent = userInitial(u);
+	}
+
+	const label = document.createElement('span');
+	label.className = 'user-menu-label';
+	label.textContent = name;
+
+	const caret = document.createElement('span');
+	caret.className = 'user-menu-caret';
+	caret.setAttribute('aria-hidden', 'true');
+	caret.textContent = '▾';
+
+	trigger.append(av, label, caret);
+
+	const menu = document.createElement('div');
+	menu.className = 'user-menu-pop';
+	menu.setAttribute('role', 'menu');
+	menu.hidden = true;
+
+	const header = document.createElement('div');
+	header.className = 'user-menu-header';
+	const headerName = document.createElement('div');
+	headerName.className = 'user-menu-header-name';
+	headerName.textContent = name;
+	header.appendChild(headerName);
+	if (u.email) {
+		const headerEmail = document.createElement('div');
+		headerEmail.className = 'user-menu-header-email';
+		headerEmail.textContent = u.email;
+		header.appendChild(headerEmail);
+	}
+	menu.appendChild(header);
+
+	const items = [
+		{ href: '/my-agents', label: 'My Agents' },
+		{ href: '/dashboard', label: 'Dashboard' },
+		{ href: '/dashboard/avatars', label: 'My Avatars' },
+	];
+	for (const it of items) {
+		const a = document.createElement('a');
+		a.className = 'user-menu-item';
+		a.href = it.href;
+		a.setAttribute('role', 'menuitem');
+		a.textContent = it.label;
+		menu.appendChild(a);
+	}
+
+	const divider = document.createElement('div');
+	divider.className = 'user-menu-divider';
+	menu.appendChild(divider);
+
+	const out = document.createElement('button');
+	out.type = 'button';
+	out.className = 'user-menu-item user-menu-signout';
+	out.setAttribute('role', 'menuitem');
+	out.textContent = 'Sign out';
+	out.addEventListener('click', signOut);
+	menu.appendChild(out);
+
+	root.append(trigger, menu);
+
+	function close() {
+		menu.hidden = true;
+		trigger.setAttribute('aria-expanded', 'false');
+	}
+	function open() {
+		menu.hidden = false;
+		trigger.setAttribute('aria-expanded', 'true');
+	}
+	trigger.addEventListener('click', (e) => {
+		e.stopPropagation();
+		menu.hidden ? open() : close();
+	});
+	document.addEventListener('click', (e) => {
+		if (!root.contains(e.target)) close();
+	});
+	document.addEventListener('keydown', (e) => {
+		if (e.key === 'Escape') close();
+	});
+}
 
 // ── data ─────────────────────────────────────────────────────────────────────
 async function fetchMe() {
@@ -471,6 +604,41 @@ function findAvatar(id) {
 	);
 }
 
+async function selectByAvatarId(id) {
+	const existing = findAvatar(id);
+	if (existing) return selectAvatar(existing.id);
+	try {
+		const res = await fetch(`/api/avatars/${encodeURIComponent(id)}`, {
+			credentials: 'include',
+		});
+		if (!res.ok) throw new Error(`avatar ${id}: ${res.status}`);
+		const { avatar } = await res.json();
+		if (!avatar?.model_url) throw new Error('avatar missing model_url');
+		const ownIds = new Set(state.avatars.map((a) => a.id));
+		if (!ownIds.has(avatar.id)) {
+			state.publicAvatars = [
+				{
+					id: avatar.id,
+					name: avatar.name,
+					slug: avatar.slug,
+					description: avatar.description,
+					tags: avatar.tags || [],
+					visibility: avatar.visibility,
+					model_url: avatar.model_url,
+					thumbnail_url: avatar.thumbnail_url || null,
+				},
+				...state.publicAvatars.filter((a) => a.id !== avatar.id),
+			];
+			renderPublicAvatarList();
+		}
+		selectAvatar(avatar.id);
+	} catch (err) {
+		console.warn('[studio] selectByAvatarId failed', err);
+		toast('Pre-selected avatar not available');
+		if (!state.avatarId) selectAvatar(DEMO_AVATAR.id);
+	}
+}
+
 function selectByModelUrl(url) {
 	const urlPath = (() => {
 		try {
@@ -533,24 +701,7 @@ function hydrateForm() {
 }
 
 function wireButtons() {
-	const signoutBtn = $('#signout-btn');
-	const signinLink = $('#signin-link');
-	if (state.user) {
-		signoutBtn.hidden = false;
-		signinLink.hidden = true;
-	} else {
-		signoutBtn.hidden = true;
-		signinLink.hidden = false;
-	}
-	signoutBtn.addEventListener('click', async () => {
-		await fetch('/api/auth/logout', { method: 'POST', credentials: 'include' }).catch(() => {});
-		try {
-			localStorage.removeItem('3dagent:auth-hint');
-		} catch {
-			/* ignore */
-		}
-		location.href = '/';
-	});
+	renderUserMenu();
 
 	captureBtn.addEventListener('click', () => {
 		try {

@@ -144,7 +144,7 @@ export async function deleteAvatar({ id, userId }) {
 	return true;
 }
 
-export async function searchPublicAvatars({ q, tag, limit = 24, cursor }) {
+export async function searchPublicAvatars({ q, tag, limit = 24, cursor, withTotals = false }) {
 	limit = Math.min(Math.max(limit, 1), 100);
 	const params = [];
 	const conds = [`deleted_at is null`, `visibility = 'public'`];
@@ -156,6 +156,8 @@ export async function searchPublicAvatars({ q, tag, limit = 24, cursor }) {
 		params.push(tag);
 		conds.push(`$${params.length} = any(tags)`);
 	}
+	const filterParams = params.slice();
+	const filterConds = conds.join(' and ');
 	if (cursor) {
 		params.push(new Date(cursor));
 		conds.push(`created_at < $${params.length}`);
@@ -163,17 +165,28 @@ export async function searchPublicAvatars({ q, tag, limit = 24, cursor }) {
 	params.push(limit + 1);
 	const rows = await sql(
 		`select id, owner_id, slug, name, description, storage_key, thumbnail_key, size_bytes,
-		        content_type, source, visibility, tags, created_at
+		        content_type, source, visibility, tags, view_count, created_at
 		 from avatars where ${conds.join(' and ')}
 		 order by created_at desc limit $${params.length}`,
 		params,
 	);
 	const hasMore = rows.length > limit;
 	const page = hasMore ? rows.slice(0, limit) : rows;
-	return {
+	const result = {
 		avatars: page.map(decorate),
 		next_cursor: hasMore ? new Date(page[page.length - 1].created_at).toISOString() : null,
 	};
+	if (withTotals) {
+		const totalsRow = await sql(
+			`select count(*)::int as total,
+			        coalesce(sum(view_count), 0)::bigint as total_views
+			 from avatars where ${filterConds}`,
+			filterParams,
+		);
+		result.total = totalsRow[0]?.total ?? 0;
+		result.total_views = Number(totalsRow[0]?.total_views ?? 0);
+	}
+	return result;
 }
 
 export async function resolveAvatarUrl(row, { expiresIn = 600 } = {}) {
@@ -235,6 +248,7 @@ function decorate(row) {
 		visibility: row.visibility,
 		tags: row.tags || [],
 		version: row.version,
+		view_count: row.view_count == null ? 0 : Number(row.view_count),
 		created_at: row.created_at,
 		updated_at: row.updated_at,
 		model_url:

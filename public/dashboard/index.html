@@ -1118,7 +1118,7 @@
 				<a href="/widgets">Widgets</a>
 				<a href="/studio">Studio</a>
 				<a href="/docs">Docs</a>
-				<a href="/my-agents">My Agents</a>
+				<a href="/my-agents" title="ERC-8004 agents controlled by your linked wallets">My Agents</a>
 				<a href="/dashboard" class="active" aria-current="page">Dashboard</a>
 			</nav>
 			<div class="dash-header-user">
@@ -1128,21 +1128,22 @@
 		</header>
 		<div class="layout">
 			<aside>
-				<a href="#avatars" class="active" data-tab="avatars">Avatars</a>
-				<a href="#create" data-tab="create">Create from selfie</a>
-				<a href="#upload" data-tab="upload">Upload</a>
-				<a href="#animations" data-tab="animations">Animations</a>
-				<a href="#widgets" data-tab="widgets">Widgets</a>
-				<a href="#embed" data-tab="embed">Embed</a>
-				<a href="#keys" data-tab="keys">API keys</a>
-				<a href="#mcp" data-tab="mcp">MCP</a>
-				<a href="#monetization" data-tab="monetization">Monetization</a>
-				<a href="#payments" data-tab="payments">Payments</a>
-				<a href="#subscriptions" data-tab="subscriptions">Subscriptions</a>
-				<a href="#billing" data-tab="billing">Plan &amp; usage</a>
-				<a href="#revenue" data-tab="revenue">Revenue</a>
-				<a href="#earnings" data-tab="earnings">Earnings</a>
-				<a href="#account" data-tab="account">Account</a>
+				<a href="/dashboard/agents" class="active" data-tab="agents">Agents</a>
+				<a href="/dashboard/avatars" data-tab="avatars">Avatars</a>
+				<a href="/dashboard/create" data-tab="create">Create from selfie</a>
+				<a href="/dashboard/upload" data-tab="upload">Upload</a>
+				<a href="/dashboard/animations" data-tab="animations">Animations</a>
+				<a href="/dashboard/widgets" data-tab="widgets">Widgets</a>
+				<a href="/dashboard/embed" data-tab="embed">Embed</a>
+				<a href="/dashboard/keys" data-tab="keys">API keys</a>
+				<a href="/dashboard/mcp" data-tab="mcp">MCP</a>
+				<a href="/dashboard/monetization" data-tab="monetization">Monetization</a>
+				<a href="/dashboard/payments" data-tab="payments">Payments</a>
+				<a href="/dashboard/subscriptions" data-tab="subscriptions">Subscriptions</a>
+				<a href="/dashboard/billing" data-tab="billing">Plan &amp; usage</a>
+				<a href="/dashboard/revenue" data-tab="revenue">Revenue</a>
+				<a href="/dashboard/earnings" data-tab="earnings">Earnings</a>
+				<a href="/dashboard/account" data-tab="account">Account</a>
 				<a href="/dashboard/wallets">Wallets</a>
 				<a href="/vanity-wallet">Vanity wallet ✦</a>
 				<a href="/eth-vanity">ETH vanity (CREATE2) ✦</a>
@@ -1151,6 +1152,9 @@
 				<a href="/reputation">Reputation</a>
 				<a href="/settings">Settings</a>
 				<a href="/admin" id="admin-link" style="display:none">Admin</a>
+				<a href="/my-agents" title="ERC-8004 agents controlled by your linked wallets"
+					>On-chain (ERC-8004) ↗</a
+				>
 				<a href="/discover" title="Browse on-chain agents across every supported chain"
 					>Discover on-chain ↗</a
 				>
@@ -1241,7 +1245,7 @@
 		</footer>
 
 		<script type="module">
-			import { state, api, navigate, signOut } from '/dashboard/dashboard.js';
+			import { state, api, navigate, installRouting, signOut } from '/dashboard/dashboard.js';
 			window.signOut = signOut;
 
 			(async () => {
@@ -1253,16 +1257,14 @@
 				}
 				if (!me?.user) {
 					location.href =
-						'/login?next=' + encodeURIComponent(location.pathname + location.hash);
+						'/login?next=' + encodeURIComponent(location.pathname + location.search + location.hash);
 					return;
 				}
 				state.user = me.user;
 				document.getElementById('user-email').textContent = me.user.email;
 				if (me.user.is_admin) document.getElementById('admin-link').style.display = '';
-				navigate(location.hash.slice(1) || 'avatars');
-				window.addEventListener('hashchange', () =>
-					navigate(location.hash.slice(1) || 'avatars'),
-				);
+				installRouting();
+				navigate();
 
 				fetch('/api/agent-3d/versions')
 					.then((r) => r.ok ? r.json() : null)

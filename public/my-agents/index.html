@@ -5,7 +5,7 @@
 		<meta name="viewport" content="width=device-width, initial-scale=1" />
 		<meta name="robots" content="noindex" />
 		<title>My Agents · three.ws</title>
-		<meta name="description" content="Your ERC-8004 agents across every supported chain." />
+		<meta name="description" content="ERC-8004 agents discovered across the wallets you've linked to three.ws." />
 		<link rel="canonical" href="https://three.ws/my-agents" />
 		<link rel="icon" href="/favicon.ico" />
 		<link rel="stylesheet" href="/my-agents/my-agents.css" />
@@ -20,14 +20,18 @@
 				<a href="/widgets">Widgets</a>
 				<a href="/studio">Studio</a>
 				<a href="/docs">Docs</a>
-				<a href="/my-agents" aria-current="page">My Agents</a>
-				<a href="/dashboard">Dashboard</a>
+				<a href="/my-agents" aria-current="page" title="ERC-8004 agents controlled by your linked wallets">My Agents</a>
+				<a href="/dashboard" title="Manage three.ws agents, avatars, widgets, billing">Dashboard</a>
 			</nav>
 		</header>
 
 		<main class="my-agents-main" id="my-agents-main">
 			<h1 class="my-agents-title">My Agents</h1>
-			<p class="my-agents-subtitle">Agents from your account and linked wallets</p>
+			<p class="my-agents-subtitle">
+				ERC-8004 agents discovered across your linked wallets. Looking for agents you
+				created on three.ws? Open the
+				<a href="/dashboard/agents">dashboard</a>.
+			</p>
 
 			<div
 				id="my-agents-error"
@@ -47,6 +51,6 @@
 			></div>
 		</main>
 
-		<script type="module" src="./my-agents.js"></script>
+		<script type="module" src="/my-agents/my-agents.js"></script>
 	</body>
 </html>
