@@ -1,0 +1,16 @@
+{
+  "name": "xspace-middleware-pipeline-example",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "start": "tsx index.ts"
+  },
+  "dependencies": {
+    "xspace-agent": "workspace:*"
+  },
+  "devDependencies": {
+    "tsx": "^4.21.0"
+  }
+}
+
+
