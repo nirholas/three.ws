@@ -1,5 +1,5 @@
-// Seeds a default draft agent for a brand-new user so they have something
-// to publish, fork from, or attach an avatar to as soon as they sign in.
+// Seeds a default published agent for a brand-new user so they have something
+// reachable, forkable, and ready to attach an avatar to as soon as they sign in.
 //
 // Idempotent: if the user already has any agent (published or draft), the
 // function is a no-op. Safe to call from any signup path (email, SIWE, SIWS).
@@ -8,7 +8,7 @@ import { sql } from './db.js';
 
 const DEFAULT_NAME = 'My First Agent';
 const DEFAULT_DESCRIPTION =
-	"A friendly starter agent. Edit the personality, attach a 3D avatar, and publish when you're ready.";
+	'A friendly starter agent. Edit the personality and attach a 3D avatar — it goes live immediately.';
 const DEFAULT_PROMPT =
 	'You are a helpful, concise assistant. Greet the user warmly, ask what they need help with, ' +
 	'and respond clearly. Avoid filler. When you do not know something, say so.';
@@ -28,7 +28,7 @@ export async function seedDefaultAgent(userId) {
 		const [agent] = await sql`
 			INSERT INTO agent_identities (
 				user_id, name, description, system_prompt, greeting,
-				category, tags, capabilities, is_published
+				category, tags, capabilities, is_published, published_at
 			) VALUES (
 				${userId},
 				${DEFAULT_NAME},
@@ -38,7 +38,8 @@ export async function seedDefaultAgent(userId) {
 				'general',
 				ARRAY['starter']::text[],
 				'{"bullets": ["Answers questions","Helps with writing","Suggests next steps"], "skills": [], "library": []}'::jsonb,
-				false
+				true,
+				now()
 			)
 			RETURNING id
 		`;

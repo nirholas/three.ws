@@ -63,7 +63,7 @@ const createAgentSchema = z.object({
 		})
 		.default({}),
 	avatar_id: z.string().uuid().optional().nullable(),
-	publish: z.boolean().default(false),
+	publish: z.boolean().default(true),
 });
 
 export default wrap(async (req, res) => {
@@ -165,7 +165,6 @@ async function handleCreate(req, res) {
 			category: j.meta?.category || 'general',
 			tags: j.meta?.tags || [],
 			capabilities: j.meta?.capabilities || {},
-			publish: false,
 		};
 	}
 
