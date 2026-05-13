@@ -198,7 +198,7 @@
 	<body data-auth-pending>
 		<header>
 			<div class="brand"><a href="/"><img src="/three.svg" alt="" class="header-logo" aria-hidden="true" />three.ws</a></div>
-			<button class="btn sec" onclick="signOut()">Sign out</button>
+			<div id="header-user-slot"></div>
 		</header>
 		<main>
 			<h1>Sessions</h1>
@@ -226,11 +226,11 @@
 			<div class="empty" id="loadingMessage">Loading sessions...</div>
 		</main>
 
+		<script type="module">
+			import { mountHeaderUser } from '/header-user.js';
+			mountHeaderUser({ slot: '#header-user-slot', activePath: '/dashboard/sessions' });
+		</script>
 		<script>
-			function signOut() {
-				location.href = '/login';
-			}
-
 			function showToast(message, isError = false) {
 				const toast = document.createElement('div');
 				toast.className = 'toast' + (isError ? ' error' : '');

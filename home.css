@@ -291,6 +291,7 @@
 	grid-column: 1;
 	grid-row: 1 / span 4;
 	display: grid;
+	grid-template-columns: minmax(0, 1fr);
 	grid-template-rows: 1fr auto auto;
 }
 

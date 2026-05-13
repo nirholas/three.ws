@@ -291,6 +291,7 @@
 	grid-column: 1;
 	grid-row: 1 / span 4;
 	display: grid;
+	grid-template-columns: minmax(0, 1fr);
 	grid-template-rows: 1fr auto auto;
 }
 
@@ -298,6 +299,8 @@
 	position: relative;
 	min-height: 360px;
 	background: rgba(255, 255, 255, 0.02);
+	/* isolate compositing layer so WebGL canvas renders correctly inside the
+	   CSS 3D perspective context on .home-parallax */
 	will-change: transform;
 	transform: translateZ(0);
 }
@@ -1703,6 +1706,7 @@
 
 .home-page a:focus-visible,
 .home-page button:focus-visible,
+.home-nav a:focus-visible,
 .h-btn-primary:focus-visible,
 .h-btn-ghost:focus-visible,
 .h-feature-link:focus-visible,
@@ -1714,6 +1718,220 @@
 
 .home-main {
 	width: 100%;
+}
+
+/* ── Nav ── */
+
+.home-nav {
+	margin-left: auto;
+	display: flex;
+	align-items: center;
+	gap: var(--space-lg);
+	-webkit-app-region: no-drag;
+}
+
+.home-nav a {
+	color: rgba(255, 255, 255, 0.6);
+	text-decoration: none;
+	font-size: 0.92rem;
+	font-weight: 500;
+	letter-spacing: 0.005em;
+	font-family: 'Space Grotesk', 'Inter', sans-serif;
+	transition: color 0.2s ease;
+}
+
+.home-nav a:hover {
+	color: #fff;
+}
+
+.home-nav .nav-cta {
+	padding: 0.5rem 1.2rem;
+	background: linear-gradient(135deg, #ffd76a 0%, #ff8f4d 100%);
+	color: #1a0f08;
+	border-radius: 6px;
+	font-weight: 600;
+	font-size: 0.9rem;
+	box-shadow: 0 4px 18px -6px rgba(255, 143, 77, 0.6);
+	transition:
+		transform 0.25s cubic-bezier(0.2, 0.9, 0.3, 1),
+		box-shadow 0.25s ease;
+}
+
+.home-nav .nav-cta:hover {
+	transform: translateY(-1px) scale(1.03);
+	box-shadow: 0 8px 24px -6px rgba(255, 143, 77, 0.8);
+	color: #1a0f08;
+}
+
+.home-nav .nav-user {
+	display: inline-flex;
+	align-items: center;
+	gap: 6px;
+	padding: 4px 10px;
+	border-radius: 20px;
+	border: 1px solid rgba(255, 255, 255, 0.1);
+	background: rgba(255, 255, 255, 0.04);
+	font-size: 0.85rem;
+	color: rgba(255, 255, 255, 0.55);
+	max-width: 140px;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.home-nav .nav-user::before {
+	content: '';
+	width: 6px;
+	height: 6px;
+	border-radius: 50%;
+	background: #4ade80;
+	flex-shrink: 0;
+}
+
+.home-nav .nav-user:hover {
+	color: rgba(255, 255, 255, 0.85);
+	border-color: rgba(255, 255, 255, 0.2);
+	background: rgba(255, 255, 255, 0.07);
+}
+
+/* ── Dropdown nav ── */
+.home-nav .nav-root,
+.home-nav .nav-menu {
+	list-style: none !important;
+	margin: 0;
+	padding: 0;
+}
+
+.home-nav .nav-root {
+	display: flex !important;
+	align-items: center;
+	gap: var(--space-lg);
+}
+
+.home-nav .nav-item {
+	position: relative;
+	display: block;
+}
+
+.home-nav .nav-item[hidden] {
+	display: none !important;
+}
+
+.home-nav .nav-menu li {
+	display: block;
+	margin: 0;
+	padding: 0;
+}
+
+.home-nav .nav-trigger {
+	display: inline-flex;
+	align-items: center;
+	gap: 4px;
+	background: none;
+	border: 0;
+	padding: 0;
+	cursor: pointer;
+	color: rgba(255, 255, 255, 0.6);
+	font: inherit;
+	font-size: 0.92rem;
+	font-weight: 500;
+	letter-spacing: 0.005em;
+	font-family: 'Space Grotesk', 'Inter', sans-serif;
+	transition: color 0.2s ease;
+}
+
+.home-nav .nav-trigger:hover,
+.home-nav .nav-trigger[aria-expanded='true'] {
+	color: #fff;
+}
+
+.home-nav .nav-caret {
+	font-size: 0.7em;
+	opacity: 0.7;
+	transition: transform 0.2s ease;
+}
+
+.home-nav .nav-trigger[aria-expanded='true'] .nav-caret {
+	transform: rotate(180deg);
+}
+
+.home-nav .nav-menu {
+	position: absolute;
+	top: calc(100% + 14px);
+	left: -12px;
+	min-width: 240px;
+	margin: 0;
+	padding: 8px;
+	list-style: none;
+	background: rgba(14, 12, 22, 0.92);
+	backdrop-filter: blur(18px) saturate(140%);
+	-webkit-backdrop-filter: blur(18px) saturate(140%);
+	border: 1px solid rgba(255, 255, 255, 0.08);
+	border-radius: 12px;
+	box-shadow:
+		0 20px 40px -12px rgba(0, 0, 0, 0.6),
+		0 4px 12px -4px rgba(0, 0, 0, 0.5);
+	opacity: 0;
+	transform: translateY(-6px);
+	pointer-events: none;
+	transition:
+		opacity 0.18s ease,
+		transform 0.18s ease;
+	z-index: 1000;
+}
+
+.home-nav .nav-trigger[aria-expanded='true'] + .nav-menu {
+	opacity: 1;
+	transform: translateY(0);
+	pointer-events: auto;
+}
+
+.home-nav .nav-menu a {
+	display: flex;
+	flex-direction: column;
+	gap: 2px;
+	padding: 10px 12px;
+	border-radius: 8px;
+	color: rgba(255, 255, 255, 0.85);
+	text-decoration: none;
+	transition:
+		background 0.15s ease,
+		color 0.15s ease;
+}
+
+.home-nav .nav-menu a:hover,
+.home-nav .nav-menu a:focus-visible {
+	background: rgba(255, 255, 255, 0.06);
+	color: #fff;
+}
+
+.home-nav .nav-mi-title {
+	font-size: 0.92rem;
+	font-weight: 500;
+	letter-spacing: 0.005em;
+}
+
+.home-nav .nav-mi-sub {
+	font-size: 0.78rem;
+	color: rgba(255, 255, 255, 0.45);
+	font-weight: 400;
+}
+
+.home-nav .nav-menu a:hover .nav-mi-sub,
+.home-nav .nav-menu a:focus-visible .nav-mi-sub {
+	color: rgba(255, 255, 255, 0.65);
+}
+
+@media (max-width: 900px) {
+	.home-nav .nav-root {
+		gap: var(--space-md);
+		flex-wrap: wrap;
+		justify-content: flex-end;
+	}
+	.home-nav .nav-menu {
+		left: auto;
+		right: 0;
+	}
 }
 
 /* ── Scroll reveal ── */
@@ -2630,7 +2848,14 @@
 	}
 }
 
+/* ── prefers-reduced-motion ──────────────────────────────────────────────── */
+/*
+ * Users who request reduced motion (vestibular disorders, slow devices, battery
+ * saver) get: no looping animations, instant transitions, no parallax.
+ * WebGL viewers are still shown but stop auto-rotating (handled in JS).
+ */
 @media (prefers-reduced-motion: reduce) {
+	/* kill ALL CSS animations and transitions site-wide */
 	*,
 	*::before,
 	*::after {
@@ -2640,28 +2865,41 @@
 		scroll-behavior: auto !important;
 	}
 
+	/* reveal elements immediately — no fade/slide in */
 	.h-reveal {
 		opacity: 1;
 		transform: none;
 	}
 
+	/* hide the star canvas entirely — it's decorative */
 	.h-star-canvas {
 		display: none;
 	}
 
+	/* flatten the CSS scroll-driven parallax layers */
 	.h-layer {
 		transform: none !important;
 	}
 
-	.h-avatar-wrap,
+	/* stop the hero avatar scroll-based float */
+	.h-avatar-wrap {
+		animation: none !important;
+	}
+
+	/* stop ambient glow / mesh drift */
 	.h-hero-mesh,
 	.h-hero-glow-a,
 	.h-hero-glow-b,
-	.h-hero-haze,
+	.h-hero-haze {
+		animation: none !important;
+	}
+
+	/* stop the floor scroll ribbon */
 	.h-floor-ribbon {
 		animation: none !important;
 	}
 
+	/* stop the status dot pulse */
 	.h-status-dot::before {
 		animation: none !important;
 	}

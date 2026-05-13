@@ -318,10 +318,7 @@
 				<a href="/dashboard">Dashboard</a>
 				<a href="/settings" class="active" aria-current="page">Settings</a>
 			</nav>
-			<div class="dash-header-user">
-				<span id="user-email" class="muted"></span>
-				<button class="btn sec" id="sign-out-btn">Sign out</button>
-			</div>
+			<div class="dash-header-user" id="header-user-slot"></div>
 		</header>
 
 		<div class="layout">
@@ -542,6 +539,7 @@
 		</div>
 
 		<script type="module">
+			import { renderHeaderUser } from '/header-user.js';
 			const API = '';
 
 			async function apiFetch(path, opts = {}) {
@@ -578,7 +576,7 @@
 					throw new Error('unauthenticated');
 				}
 				user = data.user;
-				document.getElementById('user-email').textContent = user.email || user.display_name || '';
+				renderHeaderUser(document.getElementById('header-user-slot'), user, { activePath: '/settings' });
 				document.getElementById('inp-display-name').value = user.display_name || '';
 				document.getElementById('inp-username').value = user.username || '';
 				updateProfileUrlPreview();
@@ -703,14 +701,6 @@
 				} finally {
 					btn.disabled = false;
 				}
-			});
-
-			// ── Sign out ──────────────────────────────────────────────────
-			document.getElementById('sign-out-btn').addEventListener('click', () => {
-				fetch('/api/auth/logout', { method: 'POST', credentials: 'include' }).finally(() => {
-					try { localStorage.removeItem('3dagent:auth-hint'); } catch {}
-					location.href = '/';
-				});
 			});
 
 			document.getElementById('sign-out-everywhere-btn').addEventListener('click', async () => {

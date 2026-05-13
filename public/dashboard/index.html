@@ -1121,10 +1121,7 @@
 				<a href="/my-agents" title="ERC-8004 agents controlled by your linked wallets">My Agents</a>
 				<a href="/dashboard" class="active" aria-current="page">Dashboard</a>
 			</nav>
-			<div class="dash-header-user">
-				<span id="user-email" class="muted"></span>
-				<button class="btn sec" onclick="signOut()">Sign out</button>
-			</div>
+			<div class="dash-header-user" id="header-user-slot"></div>
 		</header>
 		<div class="layout">
 			<aside>
@@ -1246,6 +1243,7 @@
 
 		<script type="module">
 			import { state, api, navigate, installRouting, signOut } from '/dashboard/dashboard.js';
+			import { renderHeaderUser } from '/header-user.js';
 			window.signOut = signOut;
 
 			(async () => {
@@ -1261,7 +1259,7 @@
 					return;
 				}
 				state.user = me.user;
-				document.getElementById('user-email').textContent = me.user.email;
+				renderHeaderUser(document.getElementById('header-user-slot'), me.user, { activePath: '/dashboard' });
 				if (me.user.is_admin) document.getElementById('admin-link').style.display = '';
 				installRouting();
 				navigate();
