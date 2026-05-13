@@ -1,0 +1,1294 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>X Space Agent</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=VT323&family=Press+Start+2P&display=swap');
+    
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    
+    html, body {
+      height: 100%;
+      overflow: hidden;
+    }
+    
+    body {
+      font-family: 'VT323', monospace;
+      background: #000;
+      color: #0f0;
+      position: relative;
+    }
+
+    body::before {
+      content: "";
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: repeating-linear-gradient(
+        0deg,
+        rgba(0, 0, 0, 0.15),
+        rgba(0, 0, 0, 0.15) 1px,
+        transparent 1px,
+        transparent 2px
+      );
+      pointer-events: none;
+      z-index: 9999;
+    }
+
+    body::after {
+      content: "";
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: radial-gradient(ellipse at center, transparent 0%, rgba(0,0,0,0.4) 100%);
+      pointer-events: none;
+      z-index: 9998;
+    }
+
+    @keyframes flicker {
+      0% { opacity: 0.97; }
+      50% { opacity: 1; }
+      100% { opacity: 0.98; }
+    }
+
+    @keyframes textGlow {
+      0%, 100% { text-shadow: 0 0 10px currentColor, 0 0 20px currentColor; }
+      50% { text-shadow: 0 0 15px currentColor, 0 0 30px currentColor, 0 0 40px currentColor; }
+    }
+
+    .crt {
+      animation: flicker 0.15s infinite;
+    }
+
+    .bg-gradient {
+      display: none;
+    }
+
+    .wave-container {
+      display: none;
+    }
+
+    .container {
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+      position: relative;
+      z-index: 1;
+      border: 3px solid #0f0;
+      margin: 10px;
+      border-radius: 5px;
+      box-shadow: 0 0 20px #0f0, inset 0 0 20px rgba(0, 255, 0, 0.1);
+    }
+
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 15px 30px;
+      flex-shrink: 0;
+      border-bottom: 2px solid #0f0;
+    }
+
+    .logo {
+      font-family: 'VT323', monospace;
+      font-size: 0.5rem;
+      line-height: 1.0;
+      color: #0f0;
+      text-shadow: 0 0 10px #0f0, 0 0 20px #0f0;
+      animation: textGlow 2s ease-in-out infinite;
+      margin: 0;
+      white-space: pre;
+    }
+
+    .nav-buttons {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+    }
+
+    .nav-btn {
+      padding: 8px 16px;
+      background: transparent;
+      border: 2px solid #0f0;
+      color: #0f0;
+      text-decoration: none;
+      font-family: 'VT323', monospace;
+      font-size: 1.2rem;
+      transition: all 0.2s ease;
+      cursor: pointer;
+      text-shadow: 0 0 5px #0f0;
+    }
+
+    .nav-btn:hover {
+      background: #0f0;
+      color: #000;
+      box-shadow: 0 0 20px #0f0;
+    }
+
+    .nav-btn.primary {
+      background: #0f0;
+      color: #000;
+    }
+
+    .nav-btn.primary:hover {
+      background: #0f0;
+      box-shadow: 0 0 30px #0f0;
+    }
+
+    .main-wrapper {
+      flex: 1;
+      display: flex;
+      min-height: 0;
+      padding: 0 20px;
+      gap: 20px;
+    }
+
+    .avatar-section {
+      flex: 1;
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    .terminal-container {
+      flex: 1;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 40px;
+      padding: 10px;
+      overflow: hidden;
+    }
+
+    .ascii-agent {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 20px;
+    }
+
+    .ascii-face {
+      background: transparent;
+      border: none;
+      padding: 10px;
+      transition: all 0.3s ease;
+    }
+
+    .ascii-face.speaking .face-art {
+      animation: textGlow 0.5s ease-in-out infinite;
+    }
+
+    .face-art {
+      font-family: 'VT323', monospace;
+      font-size: 58px;
+      line-height: 1.0;
+      color: #0f0;
+      margin: 0;
+      white-space: pre;
+      text-shadow: 0 0 10px #0f0, 0 0 20px #0f0;
+    }
+
+    #agent0Container .face-art {
+      color: #0ff;
+      text-shadow: 0 0 10px #0ff, 0 0 20px #0ff;
+    }
+
+    #agent0Container .ascii-face.speaking .face-art {
+      color: #0ff;
+      text-shadow: 0 0 15px #0ff, 0 0 30px #0ff, 0 0 45px #0ff;
+    }
+
+    #agent1Container .face-art {
+      color: #f0f;
+      text-shadow: 0 0 10px #f0f, 0 0 20px #f0f;
+    }
+
+    #agent1Container .ascii-face.speaking .face-art {
+      color: #f0f;
+      text-shadow: 0 0 15px #f0f, 0 0 30px #f0f, 0 0 45px #f0f;
+    }
+
+    .agent-label {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .speech-bubbles {
+      display: flex;
+      justify-content: center;
+      gap: 20px;
+      padding: 10px 20px;
+      border-bottom: 2px solid #0f0;
+      height: 120px;
+      min-height: 120px;
+      max-height: 120px;
+      overflow-y: auto;
+      flex-shrink: 0;
+    }
+
+    .agent-name {
+      font-family: 'Press Start 2P', monospace;
+      font-size: 1.1rem;
+      text-shadow: 0 0 10px currentColor;
+    }
+
+    #agent0Container .agent-name {
+      color: #0ff;
+    }
+
+    #agent1Container .agent-name {
+      color: #f0f;
+    }
+
+    .agent-state {
+      font-family: 'VT323', monospace;
+      font-size: 1.5rem;
+      color: #666;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+    }
+
+    .agent-state.speaking { 
+      color: #0f0; 
+      text-shadow: 0 0 10px #0f0;
+      animation: textGlow 0.5s ease-in-out infinite;
+    }
+    .agent-state.listening { 
+      color: #ff0; 
+      text-shadow: 0 0 10px #ff0;
+    }
+
+    .audio-bar {
+      width: 150px;
+      height: 12px;
+      background: #111;
+      border: 2px solid #0f0;
+      overflow: hidden;
+    }
+
+    #agent0Container .audio-bar {
+      border-color: #0ff;
+    }
+
+    #agent1Container .audio-bar {
+      border-color: #f0f;
+    }
+
+    .audio-level {
+      height: 100%;
+      width: 0%;
+      transition: width 0.05s ease;
+      background: #0f0;
+      box-shadow: 0 0 10px #0f0;
+    }
+
+    #agent0Container .audio-level {
+      background: #0ff;
+      box-shadow: 0 0 10px #0ff;
+    }
+
+    #agent1Container .audio-level {
+      background: #f0f;
+      box-shadow: 0 0 10px #f0f;
+    }
+
+    .speech-bubble {
+      flex: 1;
+      max-width: 45%;
+      height: 100%;
+      padding: 12px 15px;
+      background: #000;
+      border: 2px solid #0f0;
+      font-family: 'VT323', monospace;
+      font-size: 1.4rem;
+      line-height: 1.3;
+      color: #0f0;
+      opacity: 1;
+      overflow-y: auto;
+      word-break: break-word;
+      overflow-wrap: break-word;
+    }
+
+    .speech-bubble.agent {
+      border-color: #0ff;
+      color: #0ff;
+      text-shadow: 0 0 5px #0ff;
+    }
+
+    .speech-bubble.agent::-webkit-scrollbar-thumb {
+      background: #0ff;
+    }
+
+    .speech-bubble.agent {
+      border-color: #f0f;
+      color: #f0f;
+      text-shadow: 0 0 5px #f0f;
+    }
+
+    .speech-bubble.agent::-webkit-scrollbar-thumb {
+      background: #f0f;
+    }
+
+    .speech-bubble::-webkit-scrollbar {
+      width: 4px;
+    }
+
+    .speech-bubble::-webkit-scrollbar-track {
+      background: #000;
+    }
+
+    .speech-bubble.visible {
+      opacity: 1;
+    }
+
+    .speech-bubble .bubble-name {
+      font-family: 'Press Start 2P', monospace;
+      font-size: 0.6rem;
+      margin-bottom: 6px;
+      font-size: 0.75rem;
+    }
+
+    .speech-bubble.agent .bubble-name { color: #0ff; }
+    .speech-bubble.agent .bubble-name { color: #f0f; }
+
+    .speech-bubble .bubble-text {
+      color: inherit;
+    }
+
+    .speech-bubble .bubble-text.streaming::after {
+      content: '█';
+      animation: blink 0.5s infinite;
+    }
+
+    @keyframes blink {
+      0%, 50% { opacity: 1; }
+      51%, 100% { opacity: 0; }
+    }
+
+    .chat-section {
+      width: 350px;
+      background: #000;
+      border: 2px solid #0f0;
+      display: flex;
+      flex-direction: column;
+      flex-shrink: 0;
+      margin: 10px 0;
+    }
+
+    .chat-header {
+      padding: 15px 20px;
+      border-bottom: 2px solid #0f0;
+      font-family: 'Press Start 2P', monospace;
+      font-size: 0.9rem;
+      color: #0f0;
+      text-shadow: 0 0 10px #0f0;
+    }
+
+    .chat-messages {
+      flex: 1;
+      overflow-y: auto;
+      padding: 15px;
+      font-size: 1.4rem;
+    }
+
+    .chat-messages::-webkit-scrollbar {
+      width: 8px;
+    }
+
+    .chat-messages::-webkit-scrollbar-track {
+      background: #000;
+    }
+
+    .chat-messages::-webkit-scrollbar-thumb {
+      background: #0f0;
+    }
+
+    .message {
+      margin-bottom: 12px;
+      animation: fadeIn 0.3s ease;
+      font-family: 'VT323', monospace;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(5px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .message-line {
+      line-height: 1.5;
+    }
+
+    .msg-name {
+      font-weight: bold;
+    }
+
+    .msg-name.bob { color: #0ff; text-shadow: 0 0 5px #0ff; }
+    .msg-name.alice { color: #f0f; text-shadow: 0 0 5px #f0f; }
+    .msg-name.user { color: #ff0; text-shadow: 0 0 5px #ff0; }
+    .message {
+      padding: 8px 10px;
+      margin: 4px 0;
+      border-left: 3px solid transparent;
+    }
+
+    .message.ai-msg {
+      background: rgba(0, 255, 255, 0.05);
+      border-left-color: #0ff;
+      color: #0ff;
+    }
+
+    .message.user-msg {
+      background: rgba(255, 255, 0, 0.05);
+      border-left-color: #ff0;
+      color: #ff0;
+    }
+
+    .msg-badge {
+      font-family: 'VT323', monospace;
+      font-size: 0.9rem;
+      padding: 2px 6px;
+      border: 1px solid currentColor;
+      margin-right: 6px;
+      font-weight: 600;
+      text-transform: uppercase;
+    }
+
+    .msg-badge.ai { background: transparent; color: #0ff; border-color: #0ff; }
+    .msg-badge.web { background: transparent; color: #ff0; border-color: #ff0; }
+    .msg-you {
+      font-weight: 700;
+      color: #ff0;
+      margin-right: 4px;
+    }
+
+    .message.own-msg {
+      background: rgba(255, 255, 0, 0.1);
+      border-left-color: #ff0;
+      border-left-width: 3px;
+    }
+
+    .msg-text {
+      color: inherit;
+      word-break: break-word;
+      overflow-wrap: break-word;
+    }
+
+    .msg-text.streaming::after {
+      content: '█';
+      animation: blink 0.5s infinite;
+    }
+
+    .chat-input {
+      display: flex;
+      gap: 10px;
+      padding: 15px;
+      border-top: 2px solid #0f0;
+    }
+
+    .chat-input input {
+      flex: 1;
+      background: #000;
+      border: 2px solid #0f0;
+      padding: 12px 15px;
+      color: #0f0;
+      font-family: 'VT323', monospace;
+      font-size: 1.2rem;
+      transition: all 0.2s ease;
+    }
+
+    .chat-input input::placeholder { color: #060; }
+    .chat-input input:focus { 
+      outline: none; 
+      box-shadow: 0 0 15px #0f0;
+    }
+
+    .chat-input button {
+      background: #0f0;
+      border: none;
+      padding: 12px 20px;
+      color: #000;
+      font-family: 'VT323', monospace;
+      font-weight: bold;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      font-size: 1.2rem;
+    }
+
+    .chat-input button:hover:not(:disabled) {
+      box-shadow: 0 0 20px #0f0;
+    }
+
+    .chat-input button:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    .chat-input input:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    .input-warning {
+      position: absolute;
+      bottom: 100%;
+      left: 50%;
+      transform: translateX(-50%);
+      background: #000;
+      border: 2px solid #f00;
+      color: #f00;
+      padding: 8px 16px;
+      font-family: 'VT323', monospace;
+      font-size: 1rem;
+      white-space: nowrap;
+      opacity: 0;
+      visibility: hidden;
+      transition: all 0.3s ease;
+      margin-bottom: 8px;
+      text-shadow: 0 0 5px #f00;
+    }
+
+    .input-warning.show {
+      opacity: 1;
+      visibility: visible;
+    }
+
+    .chat-input {
+      position: relative;
+    }
+
+    ::-webkit-scrollbar { width: 8px; }
+    ::-webkit-scrollbar-track { background: #000; }
+    ::-webkit-scrollbar-thumb { background: #0f0; }
+    ::-webkit-scrollbar-thumb:hover { background: #0f0; }
+
+    @media (max-width: 1024px) {
+      .nav-buttons .nav-btn:not(.primary) {
+        padding: 6px 10px;
+        font-size: 0.7rem;
+      }
+      
+      .nav-btn.primary {
+        padding: 8px 14px;
+        font-size: 0.75rem;
+      }
+      
+      .main-wrapper {
+        flex-direction: column;
+        padding: 0 20px;
+      }
+      
+      .chat-section {
+        width: 100%;
+        height: 250px;
+        margin: 10px 0;
+        border-radius: 16px;
+      }
+      
+    }
+
+    @media (max-width: 768px) {
+      html, body {
+        overflow-y: auto;
+      }
+      
+      .container {
+        height: auto;
+        min-height: 100vh;
+      }
+      
+      .header {
+        padding: 12px 15px;
+        gap: 8px;
+      }
+      
+      .logo {
+        font-size: 0.4rem;
+      }
+      
+      .nav-buttons {
+        gap: 4px;
+      }
+      
+      .nav-buttons .nav-btn:not(.primary) {
+        padding: 6px 10px;
+        font-size: 1rem;
+      }
+      
+      .nav-btn.primary {
+        padding: 8px 14px;
+        font-size: 1.1rem;
+      }
+      
+      .main-wrapper {
+        flex-direction: column;
+        padding: 0 15px;
+        gap: 10px;
+      }
+      
+      .speech-bubbles {
+        height: 110px;
+        min-height: 110px;
+        max-height: 110px;
+        gap: 15px;
+        flex-direction: row;
+      }
+      
+      .terminal-container {
+        gap: 30px;
+        padding: 15px;
+        flex-direction: row;
+      }
+      
+      .face-art {
+        font-size: 38px;
+      }
+      
+      .agent-name {
+        font-size: 0.7rem;
+      }
+      
+      .agent-state {
+        font-size: 1.2rem;
+      }
+      
+      .audio-bar {
+        width: 100px;
+        height: 8px;
+      }
+      
+      .speech-bubble {
+        flex: 1;
+        max-width: 45%;
+        padding: 10px;
+        font-size: 1.2rem;
+      }
+      
+      .chat-section {
+        width: 100%;
+        height: 280px;
+        margin: 8px 0;
+      }
+      
+      .chat-header {
+        padding: 12px 15px;
+        font-size: 0.7rem;
+      }
+      
+      .chat-messages {
+        padding: 12px;
+        font-size: 1.3rem;
+      }
+      
+      .chat-input {
+        padding: 10px;
+        gap: 8px;
+      }
+      
+      .chat-input input {
+        padding: 10px;
+        font-size: 0.85rem;
+        border-radius: 12px;
+      }
+      
+      .chat-input button {
+        padding: 10px 16px;
+        font-size: 0.85rem;
+        border-radius: 12px;
+      }
+      
+      .wave-container {
+        display: none;
+      }
+    }
+
+    @media (max-width: 480px) {
+      .container {
+        height: 100vh;
+        max-height: 100vh;
+        overflow: hidden;
+        margin: 5px;
+      }
+      
+      .header {
+        padding: 8px 10px;
+        gap: 5px;
+        flex-shrink: 0;
+      }
+      
+      .logo {
+        font-size: 0.18rem;
+        line-height: 0.9;
+      }
+      
+      .nav-buttons {
+        gap: 4px;
+      }
+      
+      .nav-buttons .nav-btn:not(.primary) {
+        padding: 4px 6px;
+        font-size: 0.8rem;
+      }
+      
+      .nav-btn.primary {
+        padding: 5px 8px;
+        font-size: 0.85rem;
+      }
+      
+      .main-wrapper {
+        padding: 0 5px;
+        gap: 5px;
+        flex: 1;
+        min-height: 0;
+        overflow: hidden;
+      }
+      
+      .avatar-section {
+        flex: 1;
+        min-height: 0;
+        overflow: hidden;
+      }
+      
+      .speech-bubbles {
+        height: 50px;
+        min-height: 50px;
+        max-height: 50px;
+        gap: 5px;
+        padding: 3px;
+        flex-direction: row;
+        flex-shrink: 0;
+      }
+      
+      .speech-bubble {
+        flex: 1;
+        max-width: 50%;
+        padding: 4px;
+        font-size: 0.85rem;
+        line-height: 1.15;
+      }
+      
+      .speech-bubble .bubble-name {
+        font-size: 0.4rem;
+        margin-bottom: 2px;
+      }
+      
+      .terminal-container {
+        gap: 5px;
+        flex-direction: row;
+        padding: 3px;
+        flex: 0 0 auto;
+        min-height: 0;
+        overflow: hidden;
+      }
+      
+      .ascii-agent {
+        gap: 2px;
+        flex: 1;
+        min-height: 0;
+        overflow: hidden;
+      }
+      
+      .face-art {
+        font-size: 14px;
+        line-height: 0.9;
+      }
+      
+      .agent-label {
+        gap: 1px;
+        flex-shrink: 0;
+      }
+      
+      .agent-name {
+        font-size: 0.45rem;
+      }
+      
+      .agent-state {
+        font-size: 0.75rem;
+      }
+      
+      .audio-bar {
+        width: 60px;
+        height: 5px;
+      }
+      
+      .chat-section {
+        flex: 1;
+        min-height: 150px;
+        margin: 3px 0;
+        flex-shrink: 0;
+      }
+      
+      .chat-header {
+        padding: 8px 10px;
+        font-size: 0.5rem;
+      }
+      
+      .chat-messages {
+        padding: 8px;
+        font-size: 1rem;
+      }
+      
+      .chat-input {
+        padding: 8px;
+        gap: 5px;
+        margin-bottom: 20px;
+      }
+      
+      .chat-input input {
+        padding: 10px;
+        font-size: 1rem;
+      }
+      
+      .chat-input button {
+        padding: 10px 14px;
+        font-size: 1rem;
+      }
+    }
+
+  </style>
+</head>
+<body>
+  <div class="container crt">
+    <div class="header">
+      <pre class="logo ascii-logo">$$$$$$$\ $$\  $$\  $$\  $$$$$$\   $$$$$$\  $$$$$$\$$$$\   $$$$$$$\ $$\   $$\
+$$  _____|$$ | $$ | $$ | \____$$\ $$  __$$\ $$  _$$  _$$\ $$  _____|$$ |  $$ |
+\$$$$$$\  $$ | $$ | $$ | $$$$$$$ |$$ |  \__|$$ / $$ / $$ |\$$$$$$\  $$ |  $$ |
+ \____$$\ $$ | $$ | $$ |$$  __$$ |$$ |      $$ | $$ | $$ | \____$$\ $$ |  $$ |
+$$$$$$$  |\$$$$$\$$$$  |\$$$$$$$ |$$ |      $$ | $$ | $$ |$$$$$$$  |\$$$$$$$ |
+\_______/  \_____\____/  \_______|\__|      \__| \__| \__|\_______/  \____$$ |
+                                                                    $$\   $$ |
+                                                                    \$$$$$$  |
+                                                                     \______/</pre>
+      <div class="nav-buttons">
+        <a href="#" id="xLink" target="_blank" class="nav-btn">X Community</a>
+        <a href="#" id="githubLink" target="_blank" class="nav-btn">Github</a>
+      </div>
+    </div>
+
+    <div class="main-wrapper">
+      <div class="avatar-section">
+        <div class="speech-bubbles">
+          <div class="speech-bubble agent" id="bubble0">
+            <div class="bubble-name">agent</div>
+            <div class="bubble-text" id="bubbleText0"></div>
+          </div>
+          <div class="speech-bubble agent" id="bubble1">
+            <div class="bubble-name">agent</div>
+            <div class="bubble-text" id="bubbleText1"></div>
+          </div>
+        </div>
+
+        <div class="terminal-container">
+          <div class="ascii-agent" id="agent0Container">
+            <div class="ascii-face" id="asciiFace0">
+<pre class="face-art">
+       .=(((=.       
+      i;'   `:i      
+      !__   __!      
+     (~(_)-(_)~)     
+      !   n   !      
+       \  <span class="mouth" id="mouth0">-</span>  /       
+       !`---'!       
+      /`-._.-'\      
+ _.-~'\_/ |o\_/`~-._ 
+'         |o        `
+</pre>
+            </div>
+            <div class="agent-label">
+              <span class="agent-name">agent</span>
+              <span class="agent-state" id="agent0State">offline</span>
+            </div>
+            <div class="audio-bar">
+              <div class="audio-level" id="agent0Audio"></div>
+            </div>
+          </div>
+          
+          <div class="ascii-agent" id="agent1Container">
+            <div class="ascii-face" id="asciiFace1">
+<pre class="face-art">
+        (\!/)        
+      (((|||)))      
+     ((//'~`\\))     
+    ((! _   _ !))    
+    ((. O   O .))    
+     ))   J   ((     
+     ( \  <span class="mouth" id="mouth1">-</span>  / )     
+       !`._.'!       
+      /       \      
+ _.-~'         `~-._ 
+</pre>
+            </div>
+            <div class="agent-label">
+              <span class="agent-name">agent</span>
+              <span class="agent-state" id="agent1State">offline</span>
+            </div>
+            <div class="audio-bar">
+              <div class="audio-level" id="agent1Audio"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="chat-section">
+        <div class="chat-header">Live Chat</div>
+        <div class="chat-messages" id="chatMessages"></div>
+        <div class="chat-input">
+          <div class="input-warning" id="inputWarning">Minimum 3 characters required</div>
+          <input type="text" id="userInput" placeholder="Ask the AI agents...">
+          <button id="sendBtn">Ask</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="/socket.io/socket.io.js"></script>
+  <script>
+    const mouthFrames = ['-', '~', 'o', 'O', '0', 'O', 'o', '~'];
+    let mouthInterval0 = null;
+    let mouthInterval1 = null;
+
+    let audioLevels = [0, 0];
+    let speakingStates = [false, false];
+
+    function generateNick() {
+      const adj = ["Cool", "Fast", "Degen", "Based", "Alpha", "Sigma", "Anon", "Crypto", "Moon", "Ape"]
+      const noun = ["Trader", "Holder", "Chad", "King", "Whale", "Fren", "Ser", "Maxi", "Bull", "Bear"]
+      const num = Math.floor(Math.random() * 999)
+      return adj[Math.floor(Math.random() * adj.length)] + noun[Math.floor(Math.random() * noun.length)] + num
+    }
+
+    function getUserNick() {
+      let nick = localStorage.getItem("userNick")
+      if (!nick) {
+        nick = generateNick()
+        localStorage.setItem("userNick", nick)
+      }
+      return nick
+    }
+
+    const userNick = getUserNick()
+
+    async function loadConfig() {
+      try {
+        const res = await fetch("/config")
+        const config = await res.json()
+        if (!config.inputChat) {
+          const chatInput = document.querySelector(".chat-input")
+          if (chatInput) chatInput.style.display = "none"
+        }
+        if (config.xLink) {
+          document.getElementById("xLink").href = config.xLink
+          document.getElementById("modalXLink").href = config.xLink
+        }
+        if (config.githubLink) document.getElementById("githubLink").href = config.githubLink
+      } catch (e) {
+        console.log("Config load error:", e)
+      }
+    }
+
+    const socket = io("/space")
+    const chatMessages = document.getElementById("chatMessages")
+    const userInput = document.getElementById("userInput")
+    const sendBtn = document.getElementById("sendBtn")
+    
+    const streamingTexts = {}
+    const agentNames = { 0: "agent", 1: "agent" }
+    const bubbleTimeouts = {}
+
+    function startMouthAnimation(agentId) {
+      if (agentId === 0) {
+        if (mouthInterval0) return
+        let frameIdx = 0
+        mouthInterval0 = setInterval(() => {
+          const mouth = document.getElementById("mouth0")
+          if (mouth) mouth.textContent = mouthFrames[frameIdx % mouthFrames.length]
+          frameIdx++
+        }, 100)
+      } else {
+        if (mouthInterval1) return
+        let frameIdx = 0
+        mouthInterval1 = setInterval(() => {
+          const mouth1 = document.getElementById("mouth1")
+          if (mouth1) mouth1.textContent = mouthFrames[frameIdx % mouthFrames.length]
+          frameIdx++
+        }, 100)
+      }
+    }
+
+    function stopMouthAnimation(agentId) {
+      if (agentId === 0) {
+        if (mouthInterval0) {
+          clearInterval(mouthInterval0)
+          mouthInterval0 = null
+          const mouth = document.getElementById("mouth0")
+          if (mouth) mouth.textContent = '-'
+        }
+      } else {
+        if (mouthInterval1) {
+          clearInterval(mouthInterval1)
+          mouthInterval1 = null
+          const mouth1 = document.getElementById("mouth1")
+          if (mouth1) mouth1.textContent = '-'
+        }
+      }
+    }
+
+    function init() {
+      console.log("ASCII Terminal initialized")
+    }
+
+    socket.on("stateUpdate", (data) => {
+      for (const id in data.agents) {
+        updateAgentUI(parseInt(id), data.agents[id])
+      }
+    })
+
+    socket.on("agentStatus", ({ agentId, status }) => {
+      updateAgentStatus(agentId, status)
+    })
+
+    socket.on("audioLevel", ({ agentId, level }) => {
+      audioLevels[agentId] = level
+      const audioEl = document.getElementById(`agent${agentId}Audio`)
+      if (audioEl) audioEl.style.width = Math.min(level * 150, 100) + "%"
+    })
+
+    socket.on("textDelta", ({ agentId, delta, messageId }) => {
+      if (!streamingTexts[messageId]) streamingTexts[messageId] = ""
+      streamingTexts[messageId] += delta
+      updateStreamingMessage(agentId, messageId, streamingTexts[messageId])
+      updateSpeechBubble(agentId, streamingTexts[messageId], true)
+    })
+
+    socket.on("textComplete", (msg) => {
+      delete streamingTexts[msg.id]
+      finalizeMessage(msg)
+      if (msg.agentId >= 0) {
+        updateSpeechBubble(msg.agentId, msg.text, false)
+      }
+    })
+
+    socket.on("messageHistory", (messages) => {
+      chatMessages.innerHTML = ""
+      messages.forEach(msg => addMessage(msg))
+    })
+
+    function updateSpeechBubble(agentId, text, isStreaming) {
+      const bubble = document.getElementById(`bubble${agentId}`)
+      const bubbleText = document.getElementById(`bubbleText${agentId}`)
+      
+      if (!bubble || !bubbleText) return
+      
+      if (bubbleTimeouts[agentId]) {
+        clearTimeout(bubbleTimeouts[agentId])
+        bubbleTimeouts[agentId] = null
+      }
+      
+      bubbleText.textContent = text
+      
+      if (isStreaming) {
+        bubbleText.classList.add("streaming")
+      } else {
+        bubbleText.classList.remove("streaming")
+      }
+      
+      bubble.classList.add("visible")
+      bubble.scrollTop = bubble.scrollHeight
+      
+      if (!isStreaming) {
+        bubbleTimeouts[agentId] = setTimeout(() => {
+          bubble.classList.remove("visible")
+        }, 8000)
+      }
+    }
+
+    function updateAgentUI(agentId, agent) {
+      const stateEl = document.getElementById(`agent${agentId}State`)
+      const faceEl = document.getElementById(`asciiFace${agentId}`)
+      
+      if (stateEl) {
+        stateEl.textContent = agent.status
+        stateEl.className = "agent-state"
+        if (agent.status === "speaking") stateEl.classList.add("speaking")
+        if (agent.status === "listening") stateEl.classList.add("listening")
+      }
+      
+      if (faceEl) {
+        faceEl.classList.remove("speaking", "listening")
+        if (agent.status === "speaking") faceEl.classList.add("speaking")
+        if (agent.status === "listening") faceEl.classList.add("listening")
+      }
+      
+      speakingStates[agentId] = agent.status === "speaking"
+      if (agent.status === "speaking") {
+        startMouthAnimation(agentId)
+      } else {
+        stopMouthAnimation(agentId)
+      }
+    }
+
+    function updateAgentStatus(agentId, status) {
+      const stateEl = document.getElementById(`agent${agentId}State`)
+      const faceEl = document.getElementById(`asciiFace${agentId}`)
+      
+      if (stateEl) {
+        stateEl.textContent = status
+        stateEl.className = "agent-state"
+        if (status === "speaking") stateEl.classList.add("speaking")
+        if (status === "listening") stateEl.classList.add("listening")
+      }
+      
+      if (faceEl) {
+        faceEl.classList.remove("speaking", "listening")
+        if (status === "speaking") faceEl.classList.add("speaking")
+        if (status === "listening") faceEl.classList.add("listening")
+      }
+      
+      speakingStates[agentId] = status === "speaking"
+      if (status === "speaking") {
+        startMouthAnimation(agentId)
+      } else {
+        stopMouthAnimation(agentId)
+      }
+    }
+
+    function updateStreamingMessage(agentId, messageId, text) {
+      let msgEl = document.getElementById("msg-" + messageId)
+      if (!msgEl) {
+        const name = agentNames[agentId] || "Agent"
+        msgEl = document.createElement("div")
+        msgEl.className = "message ai-msg"
+        msgEl.id = "msg-" + messageId
+        msgEl.innerHTML = `<div class="message-line"><span class="msg-badge ai">AI</span><span class="msg-name ${name.toLowerCase()}">${name}:</span> <span class="msg-text streaming"></span></div>`
+        chatMessages.insertBefore(msgEl, chatMessages.firstChild)
+        chatMessages.scrollTop = 0
+      }
+      const textEl = msgEl.querySelector(".msg-text")
+      if (textEl) textEl.textContent = text
+    }
+
+    function finalizeMessage(msg) {
+      let msgEl = document.getElementById("msg-" + msg.id)
+      if (msgEl) {
+        const textEl = msgEl.querySelector(".msg-text")
+        if (textEl) {
+          textEl.classList.remove("streaming")
+          textEl.textContent = msg.text
+        }
+      } else {
+        addMessage(msg)
+      }
+    }
+
+    function isWalletAddress(str) {
+      return str && str.length >= 32 && /^[a-zA-Z0-9]+$/.test(str)
+    }
+
+    function shortenName(name) {
+      if (isWalletAddress(name)) {
+        return name.slice(0, 4) + "..." + name.slice(-4)
+      }
+      return name
+    }
+
+    function addMessage(msg) {
+      if (msg.id && document.getElementById("msg-" + msg.id)) return
+      
+      const isAI = msg.agentId === 0 || msg.agentId === 1
+
+      const rawName = msg.name || agentNames[msg.agentId] || "User"
+      const name = shortenName(rawName)
+      const isOwnMsg = rawName === userNick
+
+      let nameClass = "user"
+      let msgClass = "message"
+      let badge = ""
+      let namePrefix = ""
+
+      if (isAI) {
+        nameClass = rawName.toLowerCase()
+        msgClass += " ai-msg"
+        badge = `<span class="msg-badge ai">AI</span>`
+      } else {
+        msgClass += " user-msg"
+        badge = `<span class="msg-badge web">WEB</span>`
+        if (isOwnMsg) {
+          msgClass += " own-msg"
+          namePrefix = `<span class="msg-you">You</span> `
+        }
+      }
+      
+      const msgEl = document.createElement("div")
+      msgEl.className = msgClass
+      if (msg.id) msgEl.id = "msg-" + msg.id
+      msgEl.innerHTML = `<div class="message-line">${badge}${namePrefix}<span class="msg-name ${nameClass}">${name}:</span> <span class="msg-text">${msg.text}</span></div>`
+      chatMessages.insertBefore(msgEl, chatMessages.firstChild)
+      chatMessages.scrollTop = 0
+    }
+
+    const inputWarning = document.getElementById("inputWarning")
+    let isCooldown = false
+
+    function showWarning() {
+      inputWarning.classList.add("show")
+      setTimeout(() => inputWarning.classList.remove("show"), 2000)
+    }
+
+    function startCooldown() {
+      isCooldown = true
+      userInput.disabled = true
+      sendBtn.disabled = true
+      let seconds = 5
+      const originalText = "Ask"
+      const originalPlaceholder = userInput.placeholder
+      
+      const interval = setInterval(() => {
+        sendBtn.textContent = seconds + "s"
+        userInput.placeholder = `Wait ${seconds}s...`
+        seconds--
+        if (seconds < 0) {
+          clearInterval(interval)
+          sendBtn.textContent = originalText
+          userInput.placeholder = originalPlaceholder
+          userInput.disabled = false
+          sendBtn.disabled = false
+          isCooldown = false
+          userInput.focus()
+        }
+      }, 1000)
+    }
+
+    function sendMessage() {
+      if (isCooldown) return
+      const text = userInput.value.trim()
+      if (text.length < 3) {
+        showWarning()
+        return
+      }
+      socket.emit("userMessage", { text, from: userNick })
+      userInput.value = ""
+      startCooldown()
+    }
+
+    sendBtn.addEventListener("click", sendMessage)
+    userInput.addEventListener("keypress", (e) => {
+      if (e.key === "Enter") sendMessage()
+    })
+
+    document.addEventListener("DOMContentLoaded", async () => {
+      await loadConfig()
+      setTimeout(init, 100)
+    })
+  </script>
+</body>
+</html>
+
+
