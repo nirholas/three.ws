@@ -1,0 +1,24 @@
+# {{projectName}}
+
+A multi-agent X Space team powered by [xspace-agent](https://github.com/xspace-agent/xspace-agent).
+
+This template creates a team of two agents — a **host** and an **expert** — that collaborate in an X Space using round-robin turn management.
+
+## Setup
+
+1. Fill in your API keys in `.env`
+2. Run the team:
+
+```bash
+npm start -- https://x.com/i/spaces/YOUR_SPACE_ID
+```
+
+## Customization
+
+Edit `src/index.{{#if typescript}}ts{{else}}js{{/if}}` to:
+
+- Add more agents to the `agents` array
+- Change the turn management strategy (`queue`, `round-robin`, `director`)
+- Customize each agent's system prompt and personality
+
+
