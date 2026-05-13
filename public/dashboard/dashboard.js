@@ -74,9 +74,40 @@ export function signOut() {
 	});
 }
 
-export function navigate(tab) {
-	// Support #edit/<id> sub-routes for per-avatar edit screens.
-	const [base, ...rest] = (tab || 'avatars').split('/');
+const KNOWN_TABS = [
+	'avatars',
+	'create',
+	'edit',
+	'upload',
+	'animations',
+	'widgets',
+	'embed',
+	'keys',
+	'mcp',
+	'monetization',
+	'payments',
+	'subscriptions',
+	'billing',
+	'revenue',
+	'earnings',
+	'account',
+];
+
+// Read the current dashboard route from the URL. Path-based URLs
+// (/dashboard/<tab>[/<param>]) are canonical; legacy #hash URLs are
+// honored for back-compat and rewritten to the canonical path.
+export function currentRoute() {
+	const path = location.pathname.replace(/\/+$/, '');
+	const m = path.match(/^\/dashboard(?:\/(.+))?$/);
+	if (m && m[1]) return m[1];
+	const hash = location.hash.slice(1);
+	if (hash) return hash;
+	return 'avatars';
+}
+
+// Render a route into <main>. Does not touch the URL.
+function renderRoute(route) {
+	const [base, ...rest] = (route || 'avatars').split('/');
 	document
 		.querySelectorAll('aside a')
 		.forEach((a) => a.classList.toggle('active', a.dataset.tab === base));
@@ -84,6 +115,67 @@ export function navigate(tab) {
 	main.innerHTML = '';
 	const renderer = tabs[base] || tabs.avatars;
 	renderer(main, rest);
+}
+
+// Programmatic navigation: pushes /dashboard/<route> into history and renders.
+// Use this instead of `location.hash = ...`.
+export function goto(route) {
+	const clean = (route || 'avatars').replace(/^#?\/+|\/+$/g, '').replace(/^#/, '');
+	const target = '/dashboard/' + clean;
+	if (location.pathname + location.search !== target) {
+		history.pushState({ route: clean }, '', target);
+	}
+	renderRoute(clean);
+}
+
+// Initial-load entry: derive route from URL, rewrite legacy hash to path, render.
+export function navigate(routeOrNull) {
+	const route = routeOrNull || currentRoute();
+	if (location.hash) {
+		const clean = route.replace(/^\/+|\/+$/g, '');
+		history.replaceState({ route: clean }, '', '/dashboard/' + clean);
+	}
+	renderRoute(route);
+}
+
+// Install one-time global handlers for in-app navigation. Idempotent.
+let __dashRoutingInstalled = false;
+export function installRouting() {
+	if (__dashRoutingInstalled) return;
+	__dashRoutingInstalled = true;
+
+	// Intercept clicks on in-app links so they use pushState instead of reloading.
+	document.addEventListener('click', (e) => {
+		if (e.defaultPrevented || e.button !== 0) return;
+		if (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+		const a = e.target.closest('a');
+		if (!a) return;
+		if (a.target && a.target !== '_self') return;
+		const href = a.getAttribute('href');
+		if (!href) return;
+
+		// Legacy hash links inside the dashboard.
+		if (href.startsWith('#')) {
+			const route = href.slice(1);
+			if (route && (KNOWN_TABS.includes(route.split('/')[0]) || route === '')) {
+				e.preventDefault();
+				goto(route);
+			}
+			return;
+		}
+
+		// Same-origin /dashboard/<tab> links.
+		if (href.startsWith('/dashboard/')) {
+			const tab = href.slice('/dashboard/'.length).split(/[?#]/)[0];
+			const base = tab.split('/')[0];
+			if (KNOWN_TABS.includes(base)) {
+				e.preventDefault();
+				goto(tab);
+			}
+		}
+	});
+
+	window.addEventListener('popstate', () => renderRoute(currentRoute()));
 }
 
 const tabs = {
@@ -150,7 +242,19 @@ async function renderAvatars(root) {
 	try {
 		const data = await api.listAvatars();
 		if (!data.avatars.length) {
-			list.innerHTML = `<div class="empty">No avatars yet. <a href="#create">Take a selfie</a>, <a href="#upload">upload a .glb</a>, or <a href="/deploy">deploy a metadata-only agent on-chain</a>.</div>`;
+			list.innerHTML = `
+				<div class="empty" style="grid-column:1/-1; padding:48px 28px; text-align:center;">
+					<div style="font-size:48px; line-height:1; margin-bottom:14px;" aria-hidden="true">👤</div>
+					<h2 style="margin:0 0 8px; font-size:20px; color:#eee;">Create your first agent</h2>
+					<p style="margin:0 0 22px; color:#888; max-width:440px; margin-left:auto; margin-right:auto;">
+						Turn a selfie into a 3D avatar, upload an existing .glb, or deploy a metadata-only agent on-chain. Each gets a stable URL you can embed anywhere.
+					</p>
+					<div style="display:flex; gap:10px; justify-content:center; flex-wrap:wrap;">
+						<a href="/create" class="btn-primary">Take a selfie →</a>
+						<a href="/dashboard/upload" class="btn-primary" style="background:#222230; color:#ddd;">Upload .glb</a>
+						<a href="/deploy" class="btn-primary" style="background:#222230; color:#ddd;">Deploy on-chain</a>
+					</div>
+				</div>`;
 			return;
 		}
 		appendPage(data, true);
@@ -170,7 +274,7 @@ function avatarCard(a) {
 		<div class="footer">
 			<select data-vis aria-label="Visibility">${['private', 'unlisted', 'public'].map((v) => `<option ${v === a.visibility ? 'selected' : ''} value="${v}">${v}</option>`).join('')}</select>
 			<div class="actions">
-				<a class="btn sec" href="#edit/${encodeURIComponent(a.id)}">Edit</a>
+				<a class="btn sec" href="/dashboard/edit/${encodeURIComponent(a.id)}">Edit</a>
 				<button class="btn sec" data-replace>Replace GLB</button>
 				<a class="btn sec" href="/deploy?avatar=${encodeURIComponent(a.id)}" title="Mint as ERC-8004 agent">Deploy on-chain</a>
 				<button class="btn sec danger" data-del>Delete</button>
@@ -528,8 +632,8 @@ function renderUpload(root) {
 				source: 'upload',
 				source_meta: {},
 			});
-			progress.innerHTML = `Uploaded! <a href="#avatars">View</a>`;
-			location.hash = 'avatars';
+			progress.innerHTML = `Uploaded! <a href="/dashboard/avatars">View</a>`;
+			goto('avatars');
 		} catch (err) {
 			progress.textContent = '';
 			alert(err.message);
@@ -577,7 +681,7 @@ function renderCreate(root) {
 			<p style="margin:0 0 20px; color:#888; max-width:380px; margin-left:auto; margin-right:auto; font-size:14px">
 				Avatar creation from a selfie is under development. In the meantime you can upload an existing .glb file.
 			</p>
-			<a href="#upload" class="btn">Upload a .glb instead</a>
+			<a href="/dashboard/upload" class="btn">Upload a .glb instead</a>
 		</div>
 	`;
 }
@@ -651,7 +755,7 @@ async function attachAvatarToDefaultAgent(avatarId) {
 async function renderEdit(root, params = []) {
 	const id = params[0];
 	if (!id) {
-		location.hash = 'avatars';
+		goto('avatars');
 		return;
 	}
 
@@ -661,7 +765,7 @@ async function renderEdit(root, params = []) {
 				<h1>Edit avatar</h1>
 				<p class="sub">Update the details that appear in MCP results and the public gallery.</p>
 			</div>
-			<a class="btn sec" href="#avatars">Back</a>
+			<a class="btn sec" href="/dashboard/avatars">Back</a>
 		</div>
 		<div id="edit-body">
 			<div class="muted">Loading…</div>
@@ -951,7 +1055,7 @@ async function renderEmbed(root) {
 	if (!agent) {
 		body.innerHTML = `
 			<div class="empty">
-				You don't have an agent yet. <a href="#create">Create one from a selfie</a> first.
+				You don't have an agent yet. <a href="/dashboard/create">Create one from a selfie</a> first.
 			</div>
 		`;
 		return;
@@ -3145,7 +3249,7 @@ async function renderAnimations(root) {
 		const res = await api.getAgentMe();
 		agent = res?.agent;
 		if (!agent) {
-			body.innerHTML = `<div class="empty">No agent found. <a href="#create">Create one first.</a></div>`;
+			body.innerHTML = `<div class="empty">No agent found. <a href="/dashboard/create">Create one first.</a></div>`;
 			return;
 		}
 		if (agent.avatar_id) {

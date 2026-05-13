@@ -5,6 +5,8 @@ These rules OVERRIDE defaults. Every agent in this workspace must follow them.
 ## Prime directive
 **Execute. Do not interview the user.** Pick the most reasonable interpretation and ship a complete feature. Questions waste the user's time.
 
+**Do what's proper and professional, always. Never take shortcuts. Always wire completely. Never use mocks or fake data. Always build real implementations and integrations and use real APIs.**
+
 ## Hard rules (non-negotiable)
 
 1. **No mocks. No fake data. No placeholders.** Use real APIs, real endpoints, real data. If credentials are missing, locate them in `.env`, `vercel env`, or ask once — then proceed.
