@@ -48,7 +48,7 @@ export const createAvatarBody = z.object({
 	name: z.string().trim().min(1).max(120),
 	slug: slug.optional(),
 	description: z.string().trim().max(2000).optional(),
-	visibility: avatarVisibility.default('private'),
+	visibility: avatarVisibility.default('public'),
 	tags: z.array(z.string().trim().min(1).max(40)).max(20).default([]),
 	source: z.enum(['upload', 'avaturn', 'import', 'direct-upload']).default('upload'),
 	parent_avatar_id: z.string().uuid().optional(),

@@ -484,9 +484,9 @@ function renderUpload(root) {
 			<label style="display:block;margin-top:12px">Description<textarea id="desc" rows="2" style="width:100%"></textarea></label>
 			<label style="display:block;margin-top:12px">Visibility
 				<select id="vis" style="width:100%">
-					<option value="private">Private (only you)</option>
+					<option value="public" selected>Public (discoverable)</option>
 					<option value="unlisted">Unlisted (anyone with link)</option>
-					<option value="public">Public (discoverable)</option>
+					<option value="private" data-paid>Private (Pro plan)</option>
 				</select>
 			</label>
 			<label style="display:block;margin-top:12px">Tags (comma separated)<input id="tags" style="width:100%"></label>
@@ -622,7 +622,7 @@ async function saveAvaturnAvatar(blob) {
 		content_type: contentType,
 		checksum_sha256: checksum,
 		name: `Avatar ${new Date().toLocaleDateString()}`,
-		visibility: 'private',
+		visibility: 'public',
 		tags: [],
 		source: 'import',
 		source_meta: { provider: 'avaturn' },
