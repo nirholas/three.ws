@@ -1,0 +1,994 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Agent Builder - xspace-agent</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    :root {
+      --bg-primary: #0a0a0f;
+      --bg-secondary: #12121a;
+      --bg-tertiary: #1a1a2e;
+      --bg-hover: #252540;
+      --border: #2a2a45;
+      --text-primary: #e8e8f0;
+      --text-secondary: #8888a8;
+      --accent: #6366f1;
+      --accent-hover: #818cf8;
+      --success: #22c55e;
+      --warning: #f59e0b;
+      --error: #ef4444;
+      --node-trigger: #8b5cf6;
+      --node-listener: #3b82f6;
+      --node-processor: #f59e0b;
+      --node-responder: #22c55e;
+      --node-modifier: #ec4899;
+      --node-branch: #f97316;
+    }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif; background: var(--bg-primary); color: var(--text-primary); height: 100vh; overflow: hidden; }
+
+    /* Toolbar */
+    .toolbar { display: flex; align-items: center; justify-content: space-between; padding: 8px 16px; background: var(--bg-secondary); border-bottom: 1px solid var(--border); height: 52px; }
+    .toolbar-left { display: flex; align-items: center; gap: 12px; }
+    .toolbar-left h1 { font-size: 16px; font-weight: 600; }
+    .toolbar-left .flow-name { background: transparent; border: 1px solid transparent; color: var(--text-primary); font-size: 14px; padding: 4px 8px; border-radius: 4px; }
+    .toolbar-left .flow-name:hover { border-color: var(--border); }
+    .toolbar-left .flow-name:focus { border-color: var(--accent); outline: none; }
+    .toolbar-right { display: flex; gap: 8px; }
+    .btn { padding: 6px 14px; border-radius: 6px; border: 1px solid var(--border); background: var(--bg-tertiary); color: var(--text-primary); cursor: pointer; font-size: 13px; display: flex; align-items: center; gap: 6px; transition: all 0.15s; }
+    .btn:hover { background: var(--bg-hover); border-color: var(--accent); }
+    .btn-primary { background: var(--accent); border-color: var(--accent); color: white; }
+    .btn-primary:hover { background: var(--accent-hover); }
+    .btn-success { background: var(--success); border-color: var(--success); color: white; }
+    .btn-success:hover { opacity: 0.9; }
+
+    /* Layout */
+    .builder-layout { display: flex; height: calc(100vh - 52px); }
+
+    /* Component Library */
+    .component-library { width: 220px; background: var(--bg-secondary); border-right: 1px solid var(--border); overflow-y: auto; flex-shrink: 0; }
+    .lib-section { padding: 12px; }
+    .lib-section-title { font-size: 11px; text-transform: uppercase; letter-spacing: 1px; color: var(--text-secondary); margin-bottom: 8px; }
+    .lib-item { display: flex; align-items: center; gap: 8px; padding: 8px 10px; margin-bottom: 4px; border-radius: 6px; cursor: grab; border: 1px solid transparent; transition: all 0.15s; font-size: 13px; }
+    .lib-item:hover { background: var(--bg-hover); border-color: var(--border); }
+    .lib-item:active { cursor: grabbing; }
+    .lib-item .dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+    .lib-item[data-type="trigger"] .dot { background: var(--node-trigger); }
+    .lib-item[data-type="listener"] .dot { background: var(--node-listener); }
+    .lib-item[data-type="processor"] .dot { background: var(--node-processor); }
+    .lib-item[data-type="responder"] .dot { background: var(--node-responder); }
+    .lib-item[data-type="modifier"] .dot { background: var(--node-modifier); }
+    .lib-item[data-type="branch"] .dot { background: var(--node-branch); }
+
+    /* Canvas */
+    .canvas-container { flex: 1; position: relative; overflow: hidden; background: var(--bg-primary); }
+    .canvas { width: 100%; height: 100%; position: relative; }
+    .canvas-grid { position: absolute; inset: 0; background-image: radial-gradient(circle, var(--border) 1px, transparent 1px); background-size: 24px 24px; pointer-events: none; }
+
+    /* Canvas Nodes */
+    .canvas-node { position: absolute; min-width: 140px; background: var(--bg-secondary); border: 2px solid var(--border); border-radius: 8px; cursor: move; user-select: none; z-index: 10; }
+    .canvas-node.selected { border-color: var(--accent); box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.3); }
+    .canvas-node-header { padding: 8px 12px; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 8px; font-size: 12px; font-weight: 600; }
+    .canvas-node-header .node-color { width: 8px; height: 8px; border-radius: 50%; }
+    .canvas-node-body { padding: 8px 12px; font-size: 11px; color: var(--text-secondary); }
+    .canvas-node[data-type="trigger"] { border-color: color-mix(in srgb, var(--node-trigger) 40%, transparent); }
+    .canvas-node[data-type="trigger"] .node-color { background: var(--node-trigger); }
+    .canvas-node[data-type="listener"] { border-color: color-mix(in srgb, var(--node-listener) 40%, transparent); }
+    .canvas-node[data-type="listener"] .node-color { background: var(--node-listener); }
+    .canvas-node[data-type="processor"] { border-color: color-mix(in srgb, var(--node-processor) 40%, transparent); }
+    .canvas-node[data-type="processor"] .node-color { background: var(--node-processor); }
+    .canvas-node[data-type="responder"] { border-color: color-mix(in srgb, var(--node-responder) 40%, transparent); }
+    .canvas-node[data-type="responder"] .node-color { background: var(--node-responder); }
+    .canvas-node[data-type="modifier"] { border-color: color-mix(in srgb, var(--node-modifier) 40%, transparent); }
+    .canvas-node[data-type="modifier"] .node-color { background: var(--node-modifier); }
+    .canvas-node[data-type="branch"] { border-color: color-mix(in srgb, var(--node-branch) 40%, transparent); }
+    .canvas-node[data-type="branch"] .node-color { background: var(--node-branch); }
+
+    /* Connection ports */
+    .node-port { width: 12px; height: 12px; border-radius: 50%; background: var(--border); border: 2px solid var(--bg-secondary); position: absolute; cursor: crosshair; z-index: 20; transition: background 0.15s; }
+    .node-port:hover { background: var(--accent); }
+    .node-port.input { left: -7px; top: 50%; transform: translateY(-50%); }
+    .node-port.output { right: -7px; top: 50%; transform: translateY(-50%); }
+
+    /* SVG connections */
+    .connections-svg { position: absolute; inset: 0; pointer-events: none; z-index: 5; }
+    .connection-line { stroke: var(--border); stroke-width: 2; fill: none; }
+    .connection-line.active { stroke: var(--accent); stroke-width: 2.5; }
+
+    /* Properties Panel */
+    .properties-panel { width: 300px; background: var(--bg-secondary); border-left: 1px solid var(--border); overflow-y: auto; flex-shrink: 0; }
+    .props-header { padding: 12px 16px; border-bottom: 1px solid var(--border); font-size: 13px; font-weight: 600; }
+    .props-section { padding: 12px 16px; border-bottom: 1px solid var(--border); }
+    .props-section-title { font-size: 11px; text-transform: uppercase; letter-spacing: 1px; color: var(--text-secondary); margin-bottom: 8px; }
+    .props-field { margin-bottom: 12px; }
+    .props-field label { display: block; font-size: 12px; color: var(--text-secondary); margin-bottom: 4px; }
+    .props-field input, .props-field select, .props-field textarea { width: 100%; padding: 6px 10px; background: var(--bg-primary); border: 1px solid var(--border); border-radius: 4px; color: var(--text-primary); font-size: 13px; }
+    .props-field input:focus, .props-field select:focus, .props-field textarea:focus { border-color: var(--accent); outline: none; }
+    .props-field textarea { resize: vertical; min-height: 60px; font-family: inherit; }
+
+    /* Slider */
+    .slider-field { margin-bottom: 12px; }
+    .slider-field label { display: flex; justify-content: space-between; font-size: 12px; color: var(--text-secondary); margin-bottom: 4px; }
+    .slider-field input[type="range"] { width: 100%; accent-color: var(--accent); }
+    .slider-labels { display: flex; justify-content: space-between; font-size: 10px; color: var(--text-secondary); margin-top: 2px; }
+
+    /* Tags input */
+    .tags-container { display: flex; flex-wrap: wrap; gap: 4px; padding: 4px; background: var(--bg-primary); border: 1px solid var(--border); border-radius: 4px; min-height: 32px; }
+    .tag { display: flex; align-items: center; gap: 4px; padding: 2px 8px; background: var(--bg-tertiary); border-radius: 4px; font-size: 12px; }
+    .tag .remove { cursor: pointer; color: var(--text-secondary); font-size: 14px; line-height: 1; }
+    .tag .remove:hover { color: var(--error); }
+    .tags-input { border: none; background: transparent; color: var(--text-primary); font-size: 12px; outline: none; flex: 1; min-width: 60px; padding: 2px 4px; }
+
+    /* Empty state */
+    .empty-state { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; color: var(--text-secondary); gap: 12px; }
+    .empty-state .icon { font-size: 48px; opacity: 0.3; }
+    .empty-state p { font-size: 14px; }
+
+    /* Templates Modal */
+    .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 100; display: none; align-items: center; justify-content: center; }
+    .modal-overlay.active { display: flex; }
+    .modal { background: var(--bg-secondary); border: 1px solid var(--border); border-radius: 12px; width: 700px; max-height: 80vh; overflow: hidden; display: flex; flex-direction: column; }
+    .modal-header { padding: 16px 20px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; }
+    .modal-header h2 { font-size: 16px; }
+    .modal-close { background: none; border: none; color: var(--text-secondary); cursor: pointer; font-size: 20px; }
+    .modal-body { padding: 20px; overflow-y: auto; }
+    .template-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .template-card { padding: 16px; background: var(--bg-primary); border: 1px solid var(--border); border-radius: 8px; cursor: pointer; transition: all 0.15s; }
+    .template-card:hover { border-color: var(--accent); background: var(--bg-tertiary); }
+    .template-card h3 { font-size: 14px; margin-bottom: 4px; }
+    .template-card p { font-size: 12px; color: var(--text-secondary); margin-bottom: 8px; }
+    .template-card .meta { display: flex; gap: 12px; font-size: 11px; color: var(--text-secondary); }
+    .template-card .rating { color: var(--warning); }
+
+    /* Test Panel */
+    .test-panel { position: fixed; right: 0; top: 52px; width: 360px; height: calc(100vh - 52px); background: var(--bg-secondary); border-left: 1px solid var(--border); z-index: 50; transform: translateX(100%); transition: transform 0.3s; display: flex; flex-direction: column; }
+    .test-panel.open { transform: translateX(0); }
+    .test-header { padding: 12px 16px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; }
+    .test-messages { flex: 1; overflow-y: auto; padding: 12px; display: flex; flex-direction: column; gap: 8px; }
+    .test-msg { padding: 8px 12px; border-radius: 8px; font-size: 13px; max-width: 85%; }
+    .test-msg.user { background: var(--accent); align-self: flex-end; }
+    .test-msg.agent { background: var(--bg-tertiary); align-self: flex-start; }
+    .test-msg.system { background: transparent; color: var(--text-secondary); font-size: 11px; text-align: center; align-self: center; }
+    .test-input-row { display: flex; gap: 8px; padding: 12px; border-top: 1px solid var(--border); }
+    .test-input-row input { flex: 1; padding: 8px 12px; background: var(--bg-primary); border: 1px solid var(--border); border-radius: 6px; color: var(--text-primary); font-size: 13px; }
+    .test-input-row input:focus { border-color: var(--accent); outline: none; }
+
+    /* Toast */
+    .toast { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); padding: 10px 20px; border-radius: 8px; font-size: 13px; z-index: 200; animation: toast-in 0.3s; }
+    .toast.success { background: var(--success); color: white; }
+    .toast.error { background: var(--error); color: white; }
+    .toast.warning { background: var(--warning); color: black; }
+    @keyframes toast-in { from { opacity: 0; transform: translate(-50%, 10px); } to { opacity: 1; transform: translate(-50%, 0); } }
+
+    /* Personality Tab */
+    .tab-bar { display: flex; border-bottom: 1px solid var(--border); }
+    .tab-bar button { flex: 1; padding: 8px; background: none; border: none; color: var(--text-secondary); font-size: 12px; cursor: pointer; border-bottom: 2px solid transparent; }
+    .tab-bar button.active { color: var(--text-primary); border-bottom-color: var(--accent); }
+    .tab-content { display: none; }
+    .tab-content.active { display: block; }
+
+    /* Delete button on node */
+    .node-delete { position: absolute; top: -8px; right: -8px; width: 20px; height: 20px; border-radius: 50%; background: var(--error); color: white; border: 2px solid var(--bg-secondary); font-size: 12px; line-height: 16px; text-align: center; cursor: pointer; display: none; z-index: 30; }
+    .canvas-node:hover .node-delete { display: block; }
+  </style>
+</head>
+<body>
+  <!-- Toolbar -->
+  <div class="toolbar">
+    <div class="toolbar-left">
+      <h1>Agent Builder</h1>
+      <input class="flow-name" id="flowName" value="Untitled Agent" spellcheck="false" />
+      <span style="color:#444;margin:0 4px;">|</span>
+      <a href="/" style="font-size:12px;color:#888;text-decoration:none;">Home</a>
+      <a href="/bob" style="font-size:12px;color:#888;text-decoration:none;">Bob</a>
+      <a href="/alice" style="font-size:12px;color:#888;text-decoration:none;">Alice</a>
+      <a href="/admin" style="font-size:12px;color:#888;text-decoration:none;">Admin</a>
+    </div>
+    <div class="toolbar-right">
+      <button class="btn" id="btnTemplates">Templates</button>
+      <button class="btn" id="btnPersonality">Personality</button>
+      <button class="btn" id="btnValidate">Validate</button>
+      <button class="btn" id="btnTest">Test</button>
+      <button class="btn" id="btnSave">Save</button>
+      <button class="btn btn-success" id="btnDeploy">Deploy</button>
+    </div>
+  </div>
+
+  <!-- Builder Layout -->
+  <div class="builder-layout">
+    <!-- Component Library -->
+    <div class="component-library">
+      <div class="lib-section">
+        <div class="lib-section-title">Triggers</div>
+        <div class="lib-item" draggable="true" data-type="trigger" data-kind="always_on"><span class="dot"></span>Always On</div>
+        <div class="lib-item" draggable="true" data-type="trigger" data-kind="schedule"><span class="dot"></span>Schedule</div>
+        <div class="lib-item" draggable="true" data-type="trigger" data-kind="api_call"><span class="dot"></span>API Call</div>
+        <div class="lib-item" draggable="true" data-type="trigger" data-kind="webhook"><span class="dot"></span>Webhook</div>
+        <div class="lib-item" draggable="true" data-type="trigger" data-kind="keyword"><span class="dot"></span>Keyword</div>
+      </div>
+      <div class="lib-section">
+        <div class="lib-section-title">Listeners</div>
+        <div class="lib-item" draggable="true" data-type="listener" data-kind="speech_to_text"><span class="dot"></span>Speech to Text</div>
+        <div class="lib-item" draggable="true" data-type="listener" data-kind="keyword_detection"><span class="dot"></span>Keyword Detect</div>
+        <div class="lib-item" draggable="true" data-type="listener" data-kind="sentiment_monitor"><span class="dot"></span>Sentiment Monitor</div>
+        <div class="lib-item" draggable="true" data-type="listener" data-kind="silence_detection"><span class="dot"></span>Silence Detection</div>
+      </div>
+      <div class="lib-section">
+        <div class="lib-section-title">Processors</div>
+        <div class="lib-item" draggable="true" data-type="processor" data-kind="llm_response"><span class="dot"></span>LLM Response</div>
+        <div class="lib-item" draggable="true" data-type="processor" data-kind="knowledge_base"><span class="dot"></span>Knowledge Base</div>
+        <div class="lib-item" draggable="true" data-type="processor" data-kind="memory_recall"><span class="dot"></span>Memory Recall</div>
+        <div class="lib-item" draggable="true" data-type="processor" data-kind="tool_call"><span class="dot"></span>Tool Call</div>
+      </div>
+      <div class="lib-section">
+        <div class="lib-section-title">Responders</div>
+        <div class="lib-item" draggable="true" data-type="responder" data-kind="speak"><span class="dot"></span>Speak (TTS)</div>
+        <div class="lib-item" draggable="true" data-type="responder" data-kind="text_message"><span class="dot"></span>Text Message</div>
+        <div class="lib-item" draggable="true" data-type="responder" data-kind="action"><span class="dot"></span>Action</div>
+        <div class="lib-item" draggable="true" data-type="responder" data-kind="handoff"><span class="dot"></span>Handoff</div>
+        <div class="lib-item" draggable="true" data-type="responder" data-kind="webhook_out"><span class="dot"></span>Webhook Out</div>
+      </div>
+      <div class="lib-section">
+        <div class="lib-section-title">Modifiers</div>
+        <div class="lib-item" draggable="true" data-type="modifier" data-kind="cooldown"><span class="dot"></span>Cooldown</div>
+        <div class="lib-item" draggable="true" data-type="modifier" data-kind="rate_limit"><span class="dot"></span>Rate Limit</div>
+        <div class="lib-item" draggable="true" data-type="modifier" data-kind="priority"><span class="dot"></span>Priority</div>
+        <div class="lib-item" draggable="true" data-type="modifier" data-kind="filter"><span class="dot"></span>Filter</div>
+      </div>
+      <div class="lib-section">
+        <div class="lib-section-title">Logic</div>
+        <div class="lib-item" draggable="true" data-type="branch" data-kind="conditional_branch"><span class="dot"></span>Conditional</div>
+      </div>
+    </div>
+
+    <!-- Canvas -->
+    <div class="canvas-container" id="canvasContainer">
+      <svg class="connections-svg" id="connectionsSvg"></svg>
+      <div class="canvas" id="canvas">
+        <div class="canvas-grid"></div>
+        <div class="empty-state" id="emptyState">
+          <div class="icon">+</div>
+          <p>Drag components here to build your agent</p>
+          <p style="font-size:12px">Or start from a template</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Properties Panel -->
+    <div class="properties-panel" id="propsPanel">
+      <div class="tab-bar">
+        <button class="active" data-tab="node">Node</button>
+        <button data-tab="personality">Personality</button>
+      </div>
+
+      <!-- Node Properties Tab -->
+      <div class="tab-content active" id="tabNode">
+        <div class="props-section" id="nodeProps">
+          <div style="padding: 40px 0; text-align: center; color: var(--text-secondary); font-size: 13px;">
+            Select a node to edit its properties
+          </div>
+        </div>
+      </div>
+
+      <!-- Personality Tab -->
+      <div class="tab-content" id="tabPersonality">
+        <div class="props-section">
+          <div class="props-section-title">Identity</div>
+          <div class="props-field">
+            <label>Agent Name</label>
+            <input type="text" id="persName" value="Agent" />
+          </div>
+          <div class="props-field">
+            <label>Role</label>
+            <input type="text" id="persRole" value="AI Assistant" />
+          </div>
+        </div>
+        <div class="props-section">
+          <div class="props-section-title">Style</div>
+          <div class="slider-field">
+            <label><span>Tone</span><span id="toneVal">50</span></label>
+            <input type="range" id="persTone" min="0" max="100" value="50" />
+            <div class="slider-labels"><span>Formal</span><span>Casual</span></div>
+          </div>
+          <div class="slider-field">
+            <label><span>Energy</span><span id="energyVal">50</span></label>
+            <input type="range" id="persEnergy" min="0" max="100" value="50" />
+            <div class="slider-labels"><span>Calm</span><span>Excited</span></div>
+          </div>
+          <div class="slider-field">
+            <label><span>Detail</span><span id="detailVal">50</span></label>
+            <input type="range" id="persDetail" min="0" max="100" value="50" />
+            <div class="slider-labels"><span>Brief</span><span>Thorough</span></div>
+          </div>
+          <div class="slider-field">
+            <label><span>Humor</span><span id="humorVal">50</span></label>
+            <input type="range" id="persHumor" min="0" max="100" value="50" />
+            <div class="slider-labels"><span>Serious</span><span>Playful</span></div>
+          </div>
+        </div>
+        <div class="props-section">
+          <div class="props-section-title">Knowledge Areas</div>
+          <div class="tags-container" id="knowledgeTags">
+            <input class="tags-input" id="knowledgeInput" placeholder="Add area + Enter" />
+          </div>
+        </div>
+        <div class="props-section">
+          <div class="props-section-title">Do NOT Discuss</div>
+          <div class="tags-container" id="excludeTags">
+            <input class="tags-input" id="excludeInput" placeholder="Add topic + Enter" />
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Templates Modal -->
+  <div class="modal-overlay" id="templatesModal">
+    <div class="modal">
+      <div class="modal-header">
+        <h2>Templates Gallery</h2>
+        <button class="modal-close" id="closeTemplates">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="template-grid" id="templateGrid"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Test Panel -->
+  <div class="test-panel" id="testPanel">
+    <div class="test-header">
+      <span style="font-weight:600; font-size:14px;">Test Agent</span>
+      <button class="btn" id="closeTest" style="padding:4px 8px;">&times;</button>
+    </div>
+    <div class="test-messages" id="testMessages">
+      <div class="test-msg system">Start a conversation to test your agent</div>
+    </div>
+    <div class="test-input-row">
+      <input type="text" id="testInput" placeholder="Type a message..." />
+      <button class="btn btn-primary" id="testSend">Send</button>
+    </div>
+  </div>
+
+  <script>
+    // =========================================================================
+    // State
+    // =========================================================================
+    const state = {
+      flowId: null,
+      nodes: [],
+      connections: [],
+      selectedNodeId: null,
+      personality: {
+        name: 'Agent',
+        role: 'AI Assistant',
+        tone: 50, energy: 50, detail: 50, humor: 50,
+        knowledgeAreas: [],
+        excludeTopics: [],
+        exampleConversations: [],
+      },
+      dragging: null,
+      connecting: null,
+      dragOffset: { x: 0, y: 0 },
+      nextNodeId: 1,
+    };
+
+    // =========================================================================
+    // Canvas: Node rendering
+    // =========================================================================
+    const canvas = document.getElementById('canvas');
+    const canvasContainer = document.getElementById('canvasContainer');
+    const connectionsSvg = document.getElementById('connectionsSvg');
+    const emptyState = document.getElementById('emptyState');
+
+    function getNodeLabel(kind) {
+      const labels = {
+        always_on: 'Always On', schedule: 'Schedule', api_call: 'API Call',
+        webhook: 'Webhook', keyword: 'Keyword', speech_to_text: 'Speech to Text',
+        keyword_detection: 'Keyword Detect', sentiment_monitor: 'Sentiment',
+        silence_detection: 'Silence Detect', llm_response: 'LLM Response',
+        knowledge_base: 'Knowledge Base', conditional_branch: 'Condition',
+        memory_recall: 'Memory', tool_call: 'Tool Call', speak: 'Speak',
+        text_message: 'Text Message', action: 'Action', handoff: 'Handoff',
+        webhook_out: 'Webhook Out', cooldown: 'Cooldown', rate_limit: 'Rate Limit',
+        priority: 'Priority', filter: 'Filter',
+      };
+      return labels[kind] || kind;
+    }
+
+    function getNodeSubtext(kind) {
+      const texts = {
+        always_on: 'Continuously running', schedule: 'Cron schedule',
+        api_call: 'HTTP trigger', webhook: 'External event', keyword: 'Keyword trigger',
+        speech_to_text: 'STT provider', keyword_detection: 'Phrase trigger',
+        sentiment_monitor: 'Emotion threshold', silence_detection: 'Gap detection',
+        llm_response: 'AI model', knowledge_base: 'RAG pipeline',
+        conditional_branch: 'If / else', memory_recall: 'History lookup',
+        tool_call: 'External tool', speak: 'Text-to-speech', text_message: 'Chat message',
+        action: 'Join/Leave/Mute', handoff: 'Transfer agent', webhook_out: 'HTTP POST',
+        cooldown: 'Wait delay', rate_limit: 'Max per minute', priority: 'Interruption level',
+        filter: 'Speaker filter',
+      };
+      return texts[kind] || '';
+    }
+
+    function renderNode(node) {
+      const existing = document.getElementById('node-' + node.id);
+      if (existing) existing.remove();
+
+      const el = document.createElement('div');
+      el.className = 'canvas-node' + (state.selectedNodeId === node.id ? ' selected' : '');
+      el.id = 'node-' + node.id;
+      el.dataset.type = node.type;
+      el.dataset.nodeId = node.id;
+      el.style.left = node.position.x + 'px';
+      el.style.top = node.position.y + 'px';
+
+      el.innerHTML = `
+        <div class="node-delete" data-node-id="${node.id}">&times;</div>
+        <div class="node-port input" data-node-id="${node.id}" data-port="input"></div>
+        <div class="node-port output" data-node-id="${node.id}" data-port="output"></div>
+        <div class="canvas-node-header">
+          <span class="node-color"></span>
+          ${node.label}
+        </div>
+        <div class="canvas-node-body">${getNodeSubtext(node.kind)}</div>
+      `;
+
+      canvas.appendChild(el);
+
+      // Drag to move
+      el.addEventListener('mousedown', (e) => {
+        if (e.target.classList.contains('node-port') || e.target.classList.contains('node-delete')) return;
+        e.preventDefault();
+        state.dragging = node.id;
+        const rect = el.getBoundingClientRect();
+        state.dragOffset = { x: e.clientX - rect.left, y: e.clientY - rect.top };
+        selectNode(node.id);
+      });
+
+      // Delete button
+      el.querySelector('.node-delete').addEventListener('click', (e) => {
+        e.stopPropagation();
+        deleteNode(node.id);
+      });
+
+      // Connection ports
+      el.querySelectorAll('.node-port').forEach(port => {
+        port.addEventListener('mousedown', (e) => {
+          e.stopPropagation();
+          e.preventDefault();
+          const portType = port.dataset.port;
+          if (portType === 'output') {
+            state.connecting = { sourceNodeId: node.id, sourceOutput: 'default' };
+          }
+        });
+        port.addEventListener('mouseup', (e) => {
+          e.stopPropagation();
+          if (state.connecting && port.dataset.port === 'input' && state.connecting.sourceNodeId !== node.id) {
+            addConnection(state.connecting.sourceNodeId, 'default', node.id, 'default');
+            state.connecting = null;
+            renderConnections();
+          }
+        });
+      });
+    }
+
+    function renderAllNodes() {
+      document.querySelectorAll('.canvas-node').forEach(el => el.remove());
+      state.nodes.forEach(renderNode);
+      emptyState.style.display = state.nodes.length === 0 ? 'flex' : 'none';
+    }
+
+    // =========================================================================
+    // Canvas: Connections
+    // =========================================================================
+    function getPortPosition(nodeId, portType) {
+      const el = document.getElementById('node-' + nodeId);
+      if (!el) return { x: 0, y: 0 };
+      const containerRect = canvasContainer.getBoundingClientRect();
+      const nodeRect = el.getBoundingClientRect();
+      if (portType === 'output') {
+        return { x: nodeRect.right - containerRect.left, y: nodeRect.top + nodeRect.height / 2 - containerRect.top };
+      }
+      return { x: nodeRect.left - containerRect.left, y: nodeRect.top + nodeRect.height / 2 - containerRect.top };
+    }
+
+    function renderConnections() {
+      connectionsSvg.innerHTML = '';
+      for (const conn of state.connections) {
+        const from = getPortPosition(conn.sourceNodeId, 'output');
+        const to = getPortPosition(conn.targetNodeId, 'input');
+        const dx = Math.abs(to.x - from.x) * 0.5;
+        const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+        path.setAttribute('d', `M${from.x},${from.y} C${from.x + dx},${from.y} ${to.x - dx},${to.y} ${to.x},${to.y}`);
+        path.setAttribute('class', 'connection-line');
+        connectionsSvg.appendChild(path);
+      }
+    }
+
+    function addConnection(sourceNodeId, sourceOutput, targetNodeId, targetInput) {
+      // Prevent duplicates
+      const exists = state.connections.some(c =>
+        c.sourceNodeId === sourceNodeId && c.targetNodeId === targetNodeId
+      );
+      if (exists) return;
+      state.connections.push({
+        id: 'conn-' + Date.now(),
+        sourceNodeId, sourceOutput, targetNodeId, targetInput
+      });
+    }
+
+    // =========================================================================
+    // Canvas: Mouse events
+    // =========================================================================
+    document.addEventListener('mousemove', (e) => {
+      if (state.dragging) {
+        const node = state.nodes.find(n => n.id === state.dragging);
+        if (!node) return;
+        const containerRect = canvasContainer.getBoundingClientRect();
+        node.position.x = Math.max(0, e.clientX - containerRect.left - state.dragOffset.x);
+        node.position.y = Math.max(0, e.clientY - containerRect.top - state.dragOffset.y);
+        const el = document.getElementById('node-' + node.id);
+        if (el) {
+          el.style.left = node.position.x + 'px';
+          el.style.top = node.position.y + 'px';
+        }
+        renderConnections();
+      }
+    });
+
+    document.addEventListener('mouseup', () => {
+      state.dragging = null;
+      state.connecting = null;
+    });
+
+    canvas.addEventListener('click', (e) => {
+      if (e.target === canvas || e.target.classList.contains('canvas-grid') || e.target.id === 'emptyState') {
+        selectNode(null);
+      }
+    });
+
+    // =========================================================================
+    // Drag & Drop from library
+    // =========================================================================
+    document.querySelectorAll('.lib-item').forEach(item => {
+      item.addEventListener('dragstart', (e) => {
+        e.dataTransfer.setData('text/plain', JSON.stringify({
+          type: item.dataset.type,
+          kind: item.dataset.kind,
+        }));
+      });
+    });
+
+    canvasContainer.addEventListener('dragover', (e) => { e.preventDefault(); });
+    canvasContainer.addEventListener('drop', (e) => {
+      e.preventDefault();
+      try {
+        const data = JSON.parse(e.dataTransfer.getData('text/plain'));
+        const containerRect = canvasContainer.getBoundingClientRect();
+        const node = {
+          id: 'node-' + (state.nextNodeId++),
+          type: data.type,
+          kind: data.kind,
+          label: getNodeLabel(data.kind),
+          config: getDefaultConfig(data.kind),
+          position: {
+            x: e.clientX - containerRect.left - 70,
+            y: e.clientY - containerRect.top - 25,
+          },
+        };
+        state.nodes.push(node);
+        renderNode(node);
+        selectNode(node.id);
+        emptyState.style.display = 'none';
+      } catch {}
+    });
+
+    function getDefaultConfig(kind) {
+      const defaults = {
+        schedule: { cron: '0 14 * * 1-5' },
+        keyword: { keywords: [] },
+        speech_to_text: { provider: 'groq', language: 'en' },
+        silence_detection: { thresholdMs: 3000 },
+        sentiment_monitor: { threshold: -0.5 },
+        llm_response: { provider: 'openai', model: 'gpt-4o', maxTokens: 300 },
+        knowledge_base: { source: '' },
+        conditional_branch: { condition: '', action: '' },
+        tool_call: { tool: '' },
+        speak: { provider: 'openai', voiceId: 'alloy' },
+        handoff: { target: '' },
+        webhook_out: { url: '' },
+        cooldown: { delayMs: 1500 },
+        rate_limit: { maxPerMinute: 10 },
+        priority: { level: 5 },
+        filter: { speakers: [] },
+      };
+      return defaults[kind] || {};
+    }
+
+    // =========================================================================
+    // Node Selection & Properties
+    // =========================================================================
+    function selectNode(nodeId) {
+      state.selectedNodeId = nodeId;
+      document.querySelectorAll('.canvas-node').forEach(el => el.classList.remove('selected'));
+      if (nodeId) {
+        const el = document.getElementById('node-' + nodeId);
+        if (el) el.classList.add('selected');
+        renderNodeProps(nodeId);
+      } else {
+        document.getElementById('nodeProps').innerHTML = `
+          <div style="padding: 40px 0; text-align: center; color: var(--text-secondary); font-size: 13px;">
+            Select a node to edit its properties
+          </div>`;
+      }
+    }
+
+    function deleteNode(nodeId) {
+      state.nodes = state.nodes.filter(n => n.id !== nodeId);
+      state.connections = state.connections.filter(c => c.sourceNodeId !== nodeId && c.targetNodeId !== nodeId);
+      if (state.selectedNodeId === nodeId) selectNode(null);
+      renderAllNodes();
+      renderConnections();
+    }
+
+    function renderNodeProps(nodeId) {
+      const node = state.nodes.find(n => n.id === nodeId);
+      if (!node) return;
+      const propsEl = document.getElementById('nodeProps');
+      let html = `
+        <div class="props-section-title">${node.type.toUpperCase()} — ${node.label}</div>
+        <div class="props-field">
+          <label>Label</label>
+          <input type="text" value="${node.label}" onchange="updateNodeProp('${nodeId}', 'label', this.value)" />
+        </div>`;
+
+      // Render config fields based on kind
+      const fields = getConfigFields(node.kind);
+      for (const field of fields) {
+        const val = node.config[field.key] ?? field.default ?? '';
+        if (field.type === 'select') {
+          html += `<div class="props-field"><label>${field.label}</label>
+            <select onchange="updateNodeConfig('${nodeId}', '${field.key}', this.value)">
+              ${field.options.map(o => `<option value="${o}" ${val === o ? 'selected' : ''}>${o}</option>`).join('')}
+            </select></div>`;
+        } else if (field.type === 'textarea') {
+          html += `<div class="props-field"><label>${field.label}</label>
+            <textarea onchange="updateNodeConfig('${nodeId}', '${field.key}', this.value)">${val}</textarea></div>`;
+        } else if (field.type === 'number') {
+          html += `<div class="props-field"><label>${field.label}</label>
+            <input type="number" value="${val}" onchange="updateNodeConfig('${nodeId}', '${field.key}', parseFloat(this.value))" /></div>`;
+        } else {
+          html += `<div class="props-field"><label>${field.label}</label>
+            <input type="text" value="${val}" onchange="updateNodeConfig('${nodeId}', '${field.key}', this.value)" /></div>`;
+        }
+      }
+
+      propsEl.innerHTML = html;
+    }
+
+    function getConfigFields(kind) {
+      const fieldMap = {
+        schedule: [{ key: 'cron', label: 'Cron Expression', type: 'text', default: '0 14 * * 1-5' }],
+        keyword: [{ key: 'keywords', label: 'Keywords (comma separated)', type: 'text' }],
+        speech_to_text: [
+          { key: 'provider', label: 'STT Provider', type: 'select', options: ['groq', 'openai'] },
+          { key: 'language', label: 'Language', type: 'select', options: ['en', 'es', 'fr', 'de', 'ja', 'zh', 'auto'] },
+        ],
+        silence_detection: [{ key: 'thresholdMs', label: 'Silence Threshold (ms)', type: 'number', default: 3000 }],
+        sentiment_monitor: [{ key: 'threshold', label: 'Sentiment Threshold (-1 to 1)', type: 'number', default: -0.5 }],
+        llm_response: [
+          { key: 'provider', label: 'LLM Provider', type: 'select', options: ['openai', 'claude', 'groq'] },
+          { key: 'model', label: 'Model', type: 'text', default: 'gpt-4o' },
+          { key: 'maxTokens', label: 'Max Tokens', type: 'number', default: 300 },
+        ],
+        knowledge_base: [{ key: 'source', label: 'Knowledge Source', type: 'text' }],
+        conditional_branch: [
+          { key: 'condition', label: 'Condition', type: 'textarea' },
+          { key: 'action', label: 'Action when true', type: 'textarea' },
+        ],
+        tool_call: [{ key: 'tool', label: 'Tool Name', type: 'select', options: ['web_search', 'database', 'api_call'] }],
+        speak: [
+          { key: 'provider', label: 'TTS Provider', type: 'select', options: ['openai', 'elevenlabs', 'browser'] },
+          { key: 'voiceId', label: 'Voice ID', type: 'text', default: 'alloy' },
+          { key: 'speed', label: 'Speed', type: 'number', default: 1.0 },
+        ],
+        handoff: [{ key: 'target', label: 'Handoff Target', type: 'text' }],
+        webhook_out: [{ key: 'url', label: 'Webhook URL', type: 'text' }],
+        cooldown: [{ key: 'delayMs', label: 'Delay (ms)', type: 'number', default: 1500 }],
+        rate_limit: [{ key: 'maxPerMinute', label: 'Max per Minute', type: 'number', default: 10 }],
+        priority: [{ key: 'level', label: 'Priority (1-10)', type: 'number', default: 5 }],
+        filter: [{ key: 'speakers', label: 'Allowed Speakers (comma separated)', type: 'text' }],
+      };
+      return fieldMap[kind] || [];
+    }
+
+    window.updateNodeProp = function(nodeId, prop, value) {
+      const node = state.nodes.find(n => n.id === nodeId);
+      if (node) { node[prop] = value; renderNode(node); renderConnections(); }
+    };
+
+    window.updateNodeConfig = function(nodeId, key, value) {
+      const node = state.nodes.find(n => n.id === nodeId);
+      if (node) node.config[key] = value;
+    };
+
+    // =========================================================================
+    // Tab switching
+    // =========================================================================
+    document.querySelectorAll('.tab-bar button').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.tab-bar button').forEach(b => b.classList.remove('active'));
+        document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+        btn.classList.add('active');
+        document.getElementById('tab' + btn.dataset.tab.charAt(0).toUpperCase() + btn.dataset.tab.slice(1)).classList.add('active');
+      });
+    });
+
+    // =========================================================================
+    // Personality sliders
+    // =========================================================================
+    ['Tone', 'Energy', 'Detail', 'Humor'].forEach(name => {
+      const slider = document.getElementById('pers' + name);
+      const valEl = document.getElementById(name.toLowerCase() + 'Val');
+      slider.addEventListener('input', () => {
+        valEl.textContent = slider.value;
+        state.personality[name.toLowerCase()] = parseInt(slider.value);
+      });
+    });
+
+    document.getElementById('persName').addEventListener('input', (e) => { state.personality.name = e.target.value; });
+    document.getElementById('persRole').addEventListener('input', (e) => { state.personality.role = e.target.value; });
+
+    // Tags input
+    function setupTags(inputId, containerId, stateKey) {
+      const input = document.getElementById(inputId);
+      input.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' && input.value.trim()) {
+          e.preventDefault();
+          const val = input.value.trim();
+          state.personality[stateKey].push(val);
+          input.value = '';
+          renderTags(containerId, stateKey);
+        }
+      });
+    }
+
+    function renderTags(containerId, stateKey) {
+      const container = document.getElementById(containerId);
+      const input = container.querySelector('.tags-input');
+      container.querySelectorAll('.tag').forEach(t => t.remove());
+      state.personality[stateKey].forEach((tag, i) => {
+        const el = document.createElement('span');
+        el.className = 'tag';
+        el.innerHTML = `${tag}<span class="remove" data-idx="${i}">&times;</span>`;
+        container.insertBefore(el, input);
+        el.querySelector('.remove').addEventListener('click', () => {
+          state.personality[stateKey].splice(i, 1);
+          renderTags(containerId, stateKey);
+        });
+      });
+    }
+
+    setupTags('knowledgeInput', 'knowledgeTags', 'knowledgeAreas');
+    setupTags('excludeInput', 'excludeTags', 'excludeTopics');
+
+    // =========================================================================
+    // Templates Modal
+    // =========================================================================
+    document.getElementById('btnTemplates').addEventListener('click', () => {
+      document.getElementById('templatesModal').classList.add('active');
+      loadTemplates();
+    });
+    document.getElementById('closeTemplates').addEventListener('click', () => {
+      document.getElementById('templatesModal').classList.remove('active');
+    });
+    document.getElementById('templatesModal').addEventListener('click', (e) => {
+      if (e.target.classList.contains('modal-overlay')) {
+        document.getElementById('templatesModal').classList.remove('active');
+      }
+    });
+
+    async function loadTemplates() {
+      try {
+        const res = await fetch('/api/builder/templates');
+        const data = await res.json();
+        const grid = document.getElementById('templateGrid');
+        grid.innerHTML = data.templates.map(t => `
+          <div class="template-card" data-id="${t.id}">
+            <h3>${t.name}</h3>
+            <p>${t.description}</p>
+            <div class="meta">
+              <span class="rating">${'*'.repeat(Math.round(t.rating))} ${t.rating}</span>
+              <span>${t.usageCount.toLocaleString()} uses</span>
+              <span>${t.category}</span>
+            </div>
+          </div>
+        `).join('');
+
+        grid.querySelectorAll('.template-card').forEach(card => {
+          card.addEventListener('click', () => loadTemplate(card.dataset.id));
+        });
+      } catch {
+        document.getElementById('templateGrid').innerHTML = '<p style="color:var(--text-secondary)">Failed to load templates</p>';
+      }
+    }
+
+    async function loadTemplate(templateId) {
+      try {
+        const res = await fetch(`/api/builder/flows/from-template/${templateId}`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}' });
+        const data = await res.json();
+        if (data.flow) {
+          loadFlow(data.flow);
+          document.getElementById('templatesModal').classList.remove('active');
+          showToast('Template loaded!', 'success');
+        }
+      } catch { showToast('Failed to load template', 'error'); }
+    }
+
+    function loadFlow(flow) {
+      state.flowId = flow.id;
+      state.nodes = flow.nodes || [];
+      state.connections = flow.connections || [];
+      state.personality = flow.personality || state.personality;
+      state.nextNodeId = Math.max(...state.nodes.map(n => parseInt(n.id.split('-')[1]) || 0), 0) + 1;
+      document.getElementById('flowName').value = flow.name || 'Untitled Agent';
+
+      // Update personality UI
+      document.getElementById('persName').value = state.personality.name;
+      document.getElementById('persRole').value = state.personality.role;
+      ['tone', 'energy', 'detail', 'humor'].forEach(k => {
+        document.getElementById('pers' + k.charAt(0).toUpperCase() + k.slice(1)).value = state.personality[k];
+        document.getElementById(k + 'Val').textContent = state.personality[k];
+      });
+      renderTags('knowledgeTags', 'knowledgeAreas');
+      renderTags('excludeTags', 'excludeTopics');
+      renderAllNodes();
+      setTimeout(renderConnections, 50);
+    }
+
+    // =========================================================================
+    // Personality button
+    // =========================================================================
+    document.getElementById('btnPersonality').addEventListener('click', () => {
+      document.querySelectorAll('.tab-bar button').forEach(b => b.classList.remove('active'));
+      document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+      document.querySelector('.tab-bar button[data-tab="personality"]').classList.add('active');
+      document.getElementById('tabPersonality').classList.add('active');
+    });
+
+    // =========================================================================
+    // Save
+    // =========================================================================
+    document.getElementById('btnSave').addEventListener('click', async () => {
+      const flow = buildFlowPayload();
+      try {
+        let res;
+        if (state.flowId) {
+          res = await fetch(`/api/builder/flows/${state.flowId}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(flow) });
+        } else {
+          res = await fetch('/api/builder/flows', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(flow) });
+        }
+        const data = await res.json();
+        if (data.flow) {
+          state.flowId = data.flow.id;
+          showToast('Flow saved!', 'success');
+        }
+      } catch { showToast('Failed to save', 'error'); }
+    });
+
+    // =========================================================================
+    // Validate
+    // =========================================================================
+    document.getElementById('btnValidate').addEventListener('click', async () => {
+      const flow = buildFlowPayload();
+      try {
+        const res = await fetch('/api/builder/validate', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(flow) });
+        const data = await res.json();
+        if (data.valid) {
+          showToast('Flow is valid!', 'success');
+        } else {
+          const msgs = data.errors.map(e => e.message).join('; ');
+          showToast('Errors: ' + msgs, 'error');
+        }
+      } catch { showToast('Validation failed', 'error'); }
+    });
+
+    // =========================================================================
+    // Test
+    // =========================================================================
+    document.getElementById('btnTest').addEventListener('click', () => {
+      document.getElementById('testPanel').classList.toggle('open');
+    });
+    document.getElementById('closeTest').addEventListener('click', () => {
+      document.getElementById('testPanel').classList.remove('open');
+    });
+
+    document.getElementById('testSend').addEventListener('click', sendTestMessage);
+    document.getElementById('testInput').addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') sendTestMessage();
+    });
+
+    function sendTestMessage() {
+      const input = document.getElementById('testInput');
+      const text = input.value.trim();
+      if (!text) return;
+      input.value = '';
+
+      const messagesEl = document.getElementById('testMessages');
+      messagesEl.innerHTML += `<div class="test-msg user">${escapeHtml(text)}</div>`;
+
+      // Simulate agent response (in production this would call the backend)
+      setTimeout(() => {
+        const personality = state.personality;
+        const responses = [
+          `Thanks for your message! As ${personality.name}, I'm here to help.`,
+          `That's a great point. Let me think about that...`,
+          `I understand. Here's what I can tell you about that.`,
+          `Good question! Based on my knowledge, here's what I know.`,
+        ];
+        const response = responses[Math.floor(Math.random() * responses.length)];
+        messagesEl.innerHTML += `<div class="test-msg agent">${escapeHtml(response)}</div>`;
+        messagesEl.scrollTop = messagesEl.scrollHeight;
+      }, 800);
+
+      messagesEl.scrollTop = messagesEl.scrollHeight;
+    }
+
+    // =========================================================================
+    // Deploy
+    // =========================================================================
+    document.getElementById('btnDeploy').addEventListener('click', async () => {
+      if (!state.flowId) {
+        showToast('Save the flow first', 'warning');
+        return;
+      }
+      try {
+        const res = await fetch(`/api/builder/flows/${state.flowId}/deploy`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ platform: 'x_spaces', mode: 'always_on', credentials: {} }),
+        });
+        const data = await res.json();
+        if (data.deployment) {
+          showToast('Agent deployed!', 'success');
+        } else {
+          showToast(data.error || 'Deploy failed', 'error');
+        }
+      } catch { showToast('Deploy failed', 'error'); }
+    });
+
+    // =========================================================================
+    // Helpers
+    // =========================================================================
+    function buildFlowPayload() {
+      return {
+        name: document.getElementById('flowName').value,
+        description: '',
+        nodes: state.nodes,
+        connections: state.connections,
+        variables: [],
+        personality: state.personality,
+      };
+    }
+
+    function showToast(msg, type) {
+      const toast = document.createElement('div');
+      toast.className = 'toast ' + type;
+      toast.textContent = msg;
+      document.body.appendChild(toast);
+      setTimeout(() => toast.remove(), 3000);
+    }
+
+    function escapeHtml(str) {
+      const div = document.createElement('div');
+      div.textContent = str;
+      return div.innerHTML;
+    }
+  </script>
+</body>
+</html>
+
+
