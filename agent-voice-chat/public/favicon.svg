@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" fill="none">
+  <rect width="32" height="32" rx="8" fill="#1a1a2e"/>
+  <rect x="1" y="1" width="30" height="30" rx="7" fill="url(#grad)"/>
+  <!-- Microphone body -->
+  <rect x="12" y="7" width="8" height="12" rx="4" fill="white"/>
+  <!-- Microphone stand -->
+  <path d="M9 16c0 3.866 3.134 7 7 7s7-3.134 7-7" stroke="white" stroke-width="1.8" stroke-linecap="round" fill="none"/>
+  <line x1="16" y1="23" x2="16" y2="26" stroke="white" stroke-width="1.8" stroke-linecap="round"/>
+  <line x1="13" y1="26" x2="19" y2="26" stroke="white" stroke-width="1.8" stroke-linecap="round"/>
+  <defs>
+    <linearGradient id="grad" x1="0" y1="0" x2="32" y2="32" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#667eea"/>
+      <stop offset="100%" stop-color="#764ba2"/>
+    </linearGradient>
+  </defs>
+</svg>
