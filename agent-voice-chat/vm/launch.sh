@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Boot the full x-spaces stack on a single VM (run as user 'agent').
+# Boot the full agent-voice-chat stack on a single VM (run as user 'agent').
 #   Xvfb :99 -> PulseAudio -> Node server (systemd) -> two Chrome instances -> X-tab automation
 set -euo pipefail
 

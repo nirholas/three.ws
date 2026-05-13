@@ -1,23 +1,23 @@
 #!/usr/bin/env bash
-# x-spaces VM bootstrap — fresh Ubuntu 22.04 LTS → ready to launch.
+# agent-voice-chat VM bootstrap — fresh Ubuntu 22.04 LTS → ready to launch.
 # Idempotent: safe to re-run.
 #
 # Usage (run as root on the VM):
-#   curl -fsSL https://raw.githubusercontent.com/nirholas/three.ws/main/x-spaces/vm/setup.sh | sudo bash
+#   curl -fsSL https://raw.githubusercontent.com/nirholas/three.ws/main/agent-voice-chat/vm/setup.sh | sudo bash
 #
 # Or manually:
 #   git clone https://github.com/nirholas/three.ws.git /opt/three.ws
-#   sudo /opt/three.ws/x-spaces/vm/setup.sh
+#   sudo /opt/three.ws/agent-voice-chat/vm/setup.sh
 
 set -euo pipefail
-exec > >(tee -a /var/log/x-spaces-setup.log) 2>&1
+exec > >(tee -a /var/log/agent-voice-chat-setup.log) 2>&1
 
 REPO_URL="https://github.com/nirholas/three.ws.git"
 REPO_DIR="/opt/three.ws"
 AGENT_HOME="/home/agent"
 SERVER_DIR="$AGENT_HOME/ai-agents-x-space"
 
-echo "=== x-spaces setup starting at $(date) ==="
+echo "=== agent-voice-chat setup starting at $(date) ==="
 export DEBIAN_FRONTEND=noninteractive
 
 apt-get update
@@ -76,28 +76,28 @@ PA
 
 # Server: copy bundled code into agent's home
 sudo -u agent mkdir -p "$SERVER_DIR/public"
-sudo -u agent cp -r "$REPO_DIR/x-spaces/server/." "$SERVER_DIR/"
+sudo -u agent cp -r "$REPO_DIR/agent-voice-chat/server/." "$SERVER_DIR/"
 sudo -u agent bash -c "cd '$SERVER_DIR' && npm install --no-audit --no-fund"
 
 # Automation directory + puppeteer-core
 sudo -u agent mkdir -p "$AGENT_HOME/automation"
-sudo -u agent cp "$REPO_DIR"/x-spaces/automation/*.js "$AGENT_HOME/automation/"
-sudo -u agent cp "$REPO_DIR"/x-spaces/automation/*.py "$AGENT_HOME/automation/" 2>/dev/null || true
+sudo -u agent cp "$REPO_DIR"/agent-voice-chat/automation/*.js "$AGENT_HOME/automation/"
+sudo -u agent cp "$REPO_DIR"/agent-voice-chat/automation/*.py "$AGENT_HOME/automation/" 2>/dev/null || true
 sudo -u agent bash -c "cd '$AGENT_HOME/automation' && [ -f package.json ] || npm init -y >/dev/null; npm install --no-audit --no-fund puppeteer-core"
 
 # Helpers
-sudo -u agent cp "$REPO_DIR/x-spaces/scripts/say.sh" "$AGENT_HOME/say.sh"
+sudo -u agent cp "$REPO_DIR/agent-voice-chat/scripts/say.sh" "$AGENT_HOME/say.sh"
 sudo chmod +x "$AGENT_HOME/say.sh"
-sudo -u agent cp "$REPO_DIR/x-spaces/vm/launch.sh" "$AGENT_HOME/launch.sh"
+sudo -u agent cp "$REPO_DIR/agent-voice-chat/vm/launch.sh" "$AGENT_HOME/launch.sh"
 sudo chmod +x "$AGENT_HOME/launch.sh"
 
 # systemd service for the Node server (auto-restart)
-cp "$REPO_DIR/x-spaces/vm/swarm-server.service" /etc/systemd/system/swarm-server.service
+cp "$REPO_DIR/agent-voice-chat/vm/swarm-server.service" /etc/systemd/system/swarm-server.service
 systemctl daemon-reload
 
 cat <<MSG
 
-=== x-spaces VM setup complete at $(date) ===
+=== agent-voice-chat VM setup complete at $(date) ===
 
 Next steps:
   1. Drop your OpenAI key into the server's .env:
@@ -126,7 +126,7 @@ EOF
        sudo -u agent bash -c "cd $AGENT_HOME/automation && node unmute-only.js"
 
   7. Test audio:
-       sudo -u agent $AGENT_HOME/say.sh "hello from x-spaces"
+       sudo -u agent $AGENT_HOME/say.sh "hello from agent-voice-chat"
 
-See x-spaces/README.md for the full walkthrough.
+See agent-voice-chat/README.md for the full walkthrough.
 MSG

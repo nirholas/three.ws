@@ -1,184 +1,210 @@
-# agent-voice-chat
+# agent-voice-chat — Autonomous AI Agent for X Spaces
 
-> Add multi-agent AI voice conversations to any website in minutes
+A working setup for an AI agent that **joins an X (Twitter) Space as a speaker, holds a real-time voice conversation with humans in the room, and runs entirely in the cloud** — no audio devices, no virtual cables on your laptop, no fragile headless-browser stealth.
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
-[![Node.js](https://img.shields.io/badge/node-%3E%3D18-brightgreen)](https://nodejs.org)
+Built on:
+- **OpenAI Realtime API** (`gpt-realtime`) — continuous WebRTC voice in/out, server-side VAD and turn-taking
+- **A single GCP Compute Engine VM** running Ubuntu + Xvfb + PulseAudio + two Chrome processes
+- **Puppeteer (CDP)** driving a real (non-headless) Chrome to click through X's UI
+- **PulseAudio virtual cables** routing audio between the agent's tab and the X.com tab
 
-<!-- TODO: Add hero GIF/screenshot showing the widget in action -->
+Everything is open and reproducible. The full path from `gcloud compute instances create` to "the agent is speaking in the Space" is in this directory.
 
-Users speak into their mic. AI agents listen, think, and talk back — in real time. Multiple agents can take turns in the same conversation, each with their own personality and voice.
+## What it does
 
-## Features
+1. You start an X Space on your **host** account (e.g. from your phone).
+2. The VM logs into X as a **second account** (the agent's account, e.g. `@swarminged`) using saved cookies.
+3. The VM joins your Space as a listener, requests speaker permission.
+4. You accept the request on your phone.
+5. The VM unmutes itself and starts a continuous voice loop:
+   - **Hears** other speakers in the Space (X audio → PulseAudio cable B → agent's mic input)
+   - **Speaks** via OpenAI Realtime audio output → PulseAudio cable A → X.com mic input → broadcast as the agent's voice
 
-- **Multi-agent voice conversations** — multiple AI agents with distinct personalities in one room
-- **Multiple LLM providers** — OpenAI Realtime, OpenAI Chat, Claude, Groq
-- **Embeddable widget** — add voice chat to any site with one `<script>` tag
-- **React & Vue components** — first-class framework support
-- **Real-time voice with WebRTC** — sub-200ms latency with OpenAI Realtime
-- **Flexible audio pipeline** — STT + LLM + TTS for non-realtime providers
-- **Customizable agents** — define personality, voice, avatar, and theme per agent
-- **Room-based isolation** — multi-tenancy with independent conversation state
-- **Full REST API** — manage agents, rooms, and messages programmatically
+The system prompt and voice are configurable. The included default has the agent co-hosting a `three.ws` Space.
 
-## Quick Start
-
-### Option 1: Self-host the server
-
-```bash
-git clone https://github.com/anthropics/agent-voice-chat.git
-cd agent-voice-chat
-npm install
-cp .env.example .env   # add your API key(s)
-npm start
-```
-
-Open `http://localhost:3000` and start talking.
-
-### Option 2: Embed anywhere (no framework needed)
-
-```html
-<script
-  src="https://unpkg.com/agent-voice-chat/widget.js"
-  data-server="https://your-server.com"
-  data-agent="bob"
-></script>
-```
-
-A floating voice chat button appears on your page. That's it.
-
-### Option 3: React
-
-```tsx
-import { VoiceChat } from '@agent-voice-chat/react';
-
-function App() {
-  return <VoiceChat server="https://your-server.com" agent="bob" />;
-}
-```
-
-### Option 4: Vue
-
-```vue
-<template>
-  <VoiceChat server="https://your-server.com" agent="bob" />
-</template>
-
-<script setup>
-import { VoiceChat } from '@agent-voice-chat/vue';
-</script>
-```
-
-## Provider Comparison
-
-| Provider | Type | Latency | Quality | Cost | Voice |
-|----------|------|---------|---------|------|-------|
-| OpenAI Realtime | WebRTC | ~200ms | Excellent | $$$$ | Native (built-in) |
-| OpenAI Chat + TTS | Socket | ~800ms | Great | $$ | OpenAI TTS |
-| Claude + TTS | Socket | ~900ms | Great | $$ | OpenAI / ElevenLabs |
-| Groq + TTS | Socket | ~400ms | Good | $ | OpenAI / ElevenLabs |
-
-**WebRTC** providers stream audio directly between browser and API — lowest latency.
-**Socket** providers use a server-side pipeline: STT → LLM → TTS — more flexible, supports any LLM.
-
-## How It Works
+## Architecture
 
 ```
-User speaks → Mic capture → Voice Activity Detection
-  ├─ WebRTC path: audio stream ↔ OpenAI Realtime API (bidirectional)
-  └─ Socket path: audio → Server STT → LLM → TTS → audio playback
+              ┌──────────────┐          ┌──────────────┐
+              │  Your phone  │   ←──┐   │   Listeners  │
+              │   (host)     │      │   │  in the Space│
+              └──────┬───────┘      │   └──────▲───────┘
+                     │ Space host   │          │
+                     ▼              │          │
+         ╔═══════════════════ X.com (live Space) ═══════════════════╗
+         ║                                                          ║
+GCP VM ──╫─► [X Chrome tab]  ← @swarminged speaker                  ║
+         ║     PULSE_SINK=x_speakers (B)                            ║
+         ║     PULSE_SOURCE=x_mic (= cable A monitor)               ║
+         ║                                                          ║
+         ║     audio out (other speakers)  ──► cable B ──┐          ║
+         ║     audio in  (mic for @swarminged) ◄─ cable A│          ║
+         ║                                               │          ║
+         ║   [Agent Chrome tab → OpenAI Realtime WebRTC] │          ║
+         ║     PULSE_SINK=agent_speakers (A)             │          ║
+         ║     PULSE_SOURCE=agent_mic (= cable B monitor)│          ║
+         ║                                                          ║
+         ║     speaks  → cable A ───────────────────────┘           ║
+         ║     listens ← cable B (from X tab's output)              ║
+         ╚══════════════════════════════════════════════════════════╝
 ```
 
-Agents take turns via a server-managed turn queue, so multiple agents never talk over each other.
+Two PulseAudio null-sinks act as virtual cables. Each Chrome process is launched with `PULSE_SINK` and `PULSE_SOURCE` env vars so its audio I/O is bound to a specific cable — clean separation, no per-tab fiddling.
 
-## Configuration
-
-### Environment Variables
-
-```bash
-AI_PROVIDER=openai          # openai | openai-chat | claude | groq
-OPENAI_API_KEY=sk-...       # Required for OpenAI providers and OpenAI TTS
-ANTHROPIC_API_KEY=sk-ant-.. # Required for Claude provider
-GROQ_API_KEY=gsk_...        # Required for Groq provider and Groq STT
-STT_PROVIDER=groq           # groq | openai (for socket-based providers)
-TTS_PROVIDER=openai         # openai | elevenlabs | browser
-```
-
-See [.env.example](.env.example) for all options.
-
-### Agent Personalities
-
-Define agents in `agents.config.json`:
-
-```json
-{
-  "agents": [
-    {
-      "id": "bob",
-      "name": "Bob",
-      "personality": "You're Bob. Energetic, funny, and quick-witted.",
-      "voice": "verse",
-      "theme": { "primary": "#818cf8" }
-    }
-  ],
-  "basePrompt": "You are hanging out on a voice chat. Keep responses short and casual."
-}
-```
-
-See the [Custom Agents Guide](docs/custom-agents.md) for details.
-
-## Documentation
-
-| Guide | Description |
-|-------|-------------|
-| [Getting Started](docs/getting-started.md) | Clone, configure, and run in 5 minutes |
-| [Configuration](docs/configuration.md) | All env vars and `agents.config.json` schema |
-| [API Reference](docs/api-reference.md) | REST API endpoints |
-| [Embedding Widget](docs/embedding.md) | Add voice chat to any website |
-| [React Guide](docs/react-guide.md) | React component and hook usage |
-| [Vue Guide](docs/vue-guide.md) | Vue component and composable usage |
-| [Custom Providers](docs/custom-providers.md) | Add a new LLM, TTS, or STT provider |
-| [Custom Agents](docs/custom-agents.md) | Create agent personalities |
-| [Rooms](docs/rooms.md) | Room management and multi-tenancy |
-| [Deployment](docs/deployment.md) | Deploy to Railway, Render, Docker, VPS |
-| [Architecture](docs/architecture.md) | System diagram, data flow, protocol spec |
-| [Troubleshooting](docs/troubleshooting.md) | Common issues and fixes |
-
-## Project Structure
+## Repository layout
 
 ```
 agent-voice-chat/
-├── server.js                 # Express + Socket.IO server
-├── agents.config.json        # Agent personality definitions
-├── agent-registry.js         # Dynamic agent management
-├── room-manager.js           # Room isolation and multi-tenancy
-├── providers/
-│   ├── index.js              # Provider factory
-│   ├── openai-realtime.js    # WebRTC provider
-│   ├── openai-chat.js        # OpenAI Chat API provider
-│   ├── claude.js             # Anthropic Claude provider
-│   ├── groq.js               # Groq provider
-│   ├── stt.js                # Speech-to-text (Whisper)
-│   ├── tts.js                # Text-to-speech
-│   └── conversation-history.js
-├── public/
-│   ├── index.html            # Landing page
-│   ├── voice.html            # Dynamic agent page
-│   └── js/                   # Client-side audio + Socket.IO logic
-└── packages/
-    └── widget/               # Embeddable widget package
+├── README.md                  ← you are here
+├── server/                    ← Node + OpenAI Realtime + per-agent web pages
+│   ├── index.js               ← Express + Socket.IO; /session/:id mints ephemeral keys
+│   ├── public/agent1.html     ← Swarm — verse voice, warm/curious
+│   ├── public/agent2.html     ← Swarm2 — sage voice, drier humor
+│   ├── public/index.html      ← optional dashboard
+│   ├── package.json
+│   └── .env.example
+├── vm/
+│   ├── setup.sh               ← one-shot bootstrap for a fresh Ubuntu 22.04 VM
+│   ├── launch.sh              ← boots Xvfb, Pulse, Chromes, runs automation
+│   └── swarm-server.service   ← systemd unit (auto-restart for Node server)
+├── automation/
+│   ├── vm-automation.js       ← full flow: cookies → join Space → request speaker
+│   ├── x-join-only.js         ← just the X side (skip agent reconnect)
+│   ├── unmute-only.js         ← finds + clicks the unmute button after host accepts
+│   ├── unmute-and-greet.js    ← unmute then trigger fresh greeting via response.create
+│   ├── reconnect-agent.js     ← reloads agent tab + re-clicks Connect (greeting refires)
+│   ├── patch-realtime.py      ← historical: patches old Beta API → GA shape
+│   ├── patch-greet.py         ← historical: adds the dc.onopen greeting trigger
+│   └── .env.example
+├── scripts/
+│   └── say.sh                 ← OpenAI TTS → cable A (manual broadcast for testing)
+└── docs/
+    ├── architecture.md
+    └── troubleshooting.md
 ```
 
-## Community
+## Prerequisites
 
-- [**Discord**](https://discord.gg/YOUR_INVITE_CODE) — Ask questions, share what you've built, show off your deployments
-- [**GitHub Discussions**](https://github.com/nirholas/agent-space/discussions) — Longer-form Q&A, ideas, and show & tell
-- [**GitHub Issues**](https://github.com/nirholas/agent-space/issues) — Bug reports and feature requests
+- A GCP project with Compute Engine API enabled
+- A second X account for the agent (cannot be the host; X disallows one account being both)
+- OpenAI account with Realtime API access (`gpt-realtime` model)
 
-## Contributing
+## Setup (end to end)
 
-See [CONTRIBUTING.md](CONTRIBUTING.md) for development setup, coding standards, and how to submit a pull request.
+### 1. Spin up a VM
+
+```bash
+gcloud compute instances create swarm-agent \
+  --zone=us-central1-a \
+  --machine-type=e2-standard-2 \
+  --image-family=ubuntu-2204-lts \
+  --image-project=ubuntu-os-cloud \
+  --boot-disk-size=30GB \
+  --no-service-account --no-scopes \
+  --tags=swarm-agent
+```
+
+### 2. Bootstrap on the VM
+
+SSH in, then:
+
+```bash
+sudo bash -c "$(curl -fsSL https://raw.githubusercontent.com/nirholas/three.ws/main/agent-voice-chat/vm/setup.sh)"
+```
+
+This installs Chrome, Node 20, Xvfb, PulseAudio with the two virtual cables, puppeteer-core, the server code, and the systemd unit. Idempotent.
+
+### 3. Drop your secrets
+
+```bash
+# OpenAI key (for the Realtime API)
+sudo -u agent tee /home/agent/ai-agents-x-space/.env <<EOF
+OPENAI_API_KEY=sk-...
+PORT=3000
+EOF
+sudo chmod 600 /home/agent/ai-agents-x-space/.env
+
+# X cookies (auth_token + ct0) for the AGENT account — NOT the host account
+sudo -u agent tee /home/agent/automation/.env <<EOF
+X_AUTH_TOKEN=...
+X_CT0=...
+EOF
+sudo chmod 600 /home/agent/automation/.env
+```
+
+To grab the cookies: open x.com in a browser logged in as the agent account, DevTools → Application → Cookies → copy `auth_token` and `ct0`.
+
+### 4. Start the Node server
+
+```bash
+sudo systemctl enable --now swarm-server.service
+curl http://localhost:3000/session/0   # should return a JSON object with "value": "ek_..."
+```
+
+### 5. Start an X Space (on your phone, as the host)
+
+Get the Space URL — looks like `https://x.com/i/spaces/...`.
+
+### 6. Launch the agent into the Space
+
+```bash
+sudo -u agent /home/agent/launch.sh https://x.com/i/spaces/SPACE_ID
+```
+
+This boots Xvfb + Pulse + two Chrome processes + runs the X automation:
+- Sets the agent's X cookies via CDP
+- Navigates the X Chrome to the Space URL
+- Clicks "Start listening"
+- Clicks "Request to speak"
+- Opens the agent Chrome to `/agent1` and clicks Connect (Realtime session starts, greeting auto-fires)
+
+### 7. Accept the speaker request on your phone
+
+X notifies the host (you) that the agent's account wants to speak. Tap accept.
+
+### 8. Unmute
+
+```bash
+sudo -u agent bash -c "cd /home/agent/automation && node unmute-only.js"
+```
+
+Now the agent's voice is live in the Space. The Realtime API handles VAD automatically: when a human in the Space talks, the agent hears them (via cable B) and replies (via cable A → X mic → broadcast).
+
+### 9. Optional — test the audio path without the model
+
+```bash
+sudo -u agent /home/agent/say.sh "hello space, this is a test"
+```
+
+This synthesizes the text via OpenAI TTS and plays it through cable A. Useful for verifying routing without burning Realtime tokens.
+
+## Customization
+
+- **System prompt / personality**: edit `server/index.js`, the `prompts` and `baseInfo` constants.
+- **Voice**: edit `server/index.js`, the `voices` constant. Options: `alloy`, `ash`, `ballad`, `coral`, `echo`, `sage`, `shimmer`, `verse`.
+- **Add another agent**: copy `agent1.html` → `agentN.html`, change the `AGENT_ID` constant, add to `state.agents` / `prompts` / `voices` in `index.js`.
+
+## Cost
+
+- VM: `e2-standard-2`, ~$50/mo if left running.
+- OpenAI Realtime: ~$0.06/min input audio + $0.24/min output audio with `gpt-realtime` (subject to change).
+- For ad-hoc Spaces, stop the VM (`gcloud compute instances stop swarm-agent`) when not in use — only the disk costs ($1–2/mo) accrue while stopped.
+
+## Known limitations
+
+- **Single agent currently broadcasts**. The two-agent loop (Swarm + Swarm2 banter) is wired in the server but needs an additional event handler that forwards one agent's `response.done` text as the other's `textToAgent` input. PR welcome.
+- **X UI changes** can break the automation. Selectors in `automation/*.js` look for text/aria labels like "Start listening", "Request to speak", "Unmute" — update them if X renames.
+- **Echo / feedback** is not currently a problem because cable A and cable B are separate and X strips your own voice from playback. If you collapse them to one cable, expect feedback.
+- **The X tab sometimes drifts** off the Space view (X bumps you to `/home`). The Space audio session usually keeps running underneath via X's persistent mini-player, but the unmute selector may be on the mini player rather than the full Space UI.
+
+See [`docs/troubleshooting.md`](./docs/troubleshooting.md) for more.
+
+## Security
+
+- All secrets (`OPENAI_API_KEY`, X cookies) live in `.env` files with `chmod 600`. Never committed.
+- The VM uses ephemeral external IP and no service account — minimum blast radius if compromised.
+- X cookies are equivalent to passwords for that account; rotate (Settings → Security → Log out of all other sessions) after setup if you suspect exposure.
 
 ## License
 
-[MIT](LICENSE)
+Same as the parent repo (`nirholas/three.ws`).
