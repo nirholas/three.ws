@@ -314,6 +314,32 @@
 				min-height: 380px;
 				gap: 0;
 			}
+			.av-chat-modelbar {
+				display: flex;
+				align-items: center;
+				gap: 8px;
+				padding: 6px 0 10px;
+				border-bottom: 1px solid var(--border);
+			}
+			.av-chat-modellabel {
+				font-size: 11px;
+				letter-spacing: 0.06em;
+				text-transform: uppercase;
+				color: var(--text-3);
+			}
+			.av-chat-model {
+				flex: 1;
+				background: var(--panel);
+				border: 1px solid var(--border-2);
+				color: var(--text);
+				border-radius: 8px;
+				padding: 6px 8px;
+				font-family: inherit;
+				font-size: 13px;
+				outline: none;
+				cursor: pointer;
+			}
+			.av-chat-model:focus { border-color: var(--accent); }
 			.av-chat-log {
 				flex: 1;
 				min-height: 240px;

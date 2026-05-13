@@ -48,6 +48,35 @@ let avatar = null;
 let attachedSkills = new Set();
 let attachedPlugins = new Set();
 let chatHistory = [];
+let selectedModelId = 'auto';
+
+// Model choices surfaced in the chat dropdown. `auto` lets the server pick
+// based on which keys are configured (Anthropic → OpenRouter → Groq → OpenAI).
+const MODEL_OPTIONS = [
+	{ id: 'auto', label: 'Auto', provider: null, model: null },
+	{ id: 'anthropic:sonnet', label: 'Claude Sonnet 4.6', provider: 'anthropic', model: 'claude-sonnet-4-6' },
+	{
+		id: 'openrouter:llama-70b',
+		label: 'Llama 3.3 70B (free)',
+		provider: 'openrouter',
+		model: 'meta-llama/llama-3.3-70b-instruct:free',
+	},
+	{
+		id: 'openrouter:gpt-oss',
+		label: 'GPT-OSS 120B (free)',
+		provider: 'openrouter',
+		model: 'openai/gpt-oss-120b:free',
+	},
+	{
+		id: 'openrouter:hermes',
+		label: 'Hermes 3 405B (free)',
+		provider: 'openrouter',
+		model: 'nousresearch/hermes-3-llama-3.1-405b:free',
+	},
+	{ id: 'groq:llama-70b', label: 'Groq Llama 3.3 70B', provider: 'groq', model: 'llama-3.3-70b-versatile' },
+	{ id: 'openai:gpt-4o-mini', label: 'GPT-4o mini', provider: 'openai', model: 'gpt-4o-mini' },
+];
+const MODEL_STORAGE_KEY = 'avatar_chat_model_v1';
 
 // ── Init ──────────────────────────────────────────────────────────────
 
@@ -201,6 +230,14 @@ function renderShell(glbUrl) {
 				</div>
 				<div class="av-panel" data-panel="chat">
 					<div class="av-chat">
+						<div class="av-chat-modelbar">
+							<label class="av-chat-modellabel" for="av-chat-model">Model</label>
+							<select class="av-chat-model" id="av-chat-model">
+								${MODEL_OPTIONS.map(
+									(o) => `<option value="${o.id}">${esc(o.label)}</option>`,
+								).join('')}
+							</select>
+						</div>
 						<div class="av-chat-log" id="av-chat-log">
 							<div class="av-chat-empty">
 								<strong>Chat with ${esc(avatar.name)}</strong>
@@ -599,6 +636,19 @@ function bindChat() {
 	const mic = $('av-chat-mic');
 	if (!form || !input || !send) return;
 
+	const modelSelect = $('av-chat-model');
+	if (modelSelect) {
+		try {
+			const stored = localStorage.getItem(MODEL_STORAGE_KEY);
+			if (stored && MODEL_OPTIONS.some((o) => o.id === stored)) selectedModelId = stored;
+		} catch {}
+		modelSelect.value = selectedModelId;
+		modelSelect.addEventListener('change', () => {
+			selectedModelId = modelSelect.value;
+			try { localStorage.setItem(MODEL_STORAGE_KEY, selectedModelId); } catch {}
+		});
+	}
+
 	// Persistent memory (memory skill): replay stored history on first paint.
 	if (attachedSkills.has('memory')) hydrateChatHistory();
 
@@ -745,15 +795,20 @@ async function sendChatMessage(text) {
 	let acc = '';
 	try {
 		const systemContext = buildSystemContext();
+		const agentIdMaybe = avatar?.id || avatarId;
+		const isUuid = typeof agentIdMaybe === 'string'
+			&& /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(agentIdMaybe);
+		const choice = MODEL_OPTIONS.find((o) => o.id === selectedModelId);
 		const r = await fetch('/api/chat', {
 			method: 'POST',
 			headers: { 'content-type': 'application/json' },
 			credentials: 'include',
 			body: JSON.stringify({
 				message: text,
-				context: systemContext,
+				system_prompt: systemContext,
 				history: chatHistory.slice(-10, -1),
-				agentId: avatar?.id || avatarId,
+				...(isUuid ? { agentId: agentIdMaybe } : {}),
+				...(choice?.provider ? { provider: choice.provider, model: choice.model } : {}),
 			}),
 		});
 		if (!r.ok) {

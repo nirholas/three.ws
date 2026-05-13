@@ -97,15 +97,19 @@ export default wrap(async (req, res) => {
 		const patch = parse(patchSchema, await readJson(req));
 
 		if (patch.avatar_id) {
-			const owns = await sql`
-				select 1 from avatars where id = ${patch.avatar_id} and owner_id = ${auth.userId} and deleted_at is null limit 1
+			const allowed = await sql`
+				select 1 from avatars
+				where id = ${patch.avatar_id}
+				  and deleted_at is null
+				  and (owner_id = ${auth.userId} or visibility = 'public')
+				limit 1
 			`;
-			if (!owns[0])
+			if (!allowed[0])
 				return error(
 					res,
 					400,
 					'invalid_avatar',
-					'avatar_id not found or not owned by caller',
+					'avatar_id not found, not owned by caller, and not public',
 				);
 		}
 

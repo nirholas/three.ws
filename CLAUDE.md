@@ -32,6 +32,19 @@ If you cannot verify a step, say so explicitly. Do not claim done.
 - Before stopping on a feature task, run the **completionist** subagent to audit your changed files for the rules above. Fix every item it flags. Then stop.
 - Communication: short. State what you did, what's next. No trailing recaps.
 
+## Git: push to BOTH remotes
+
+This workspace mirrors to two GitHub repos. Every push must go to both, or one deploy target falls behind.
+
+- `origin`   → `https://github.com/nirholas/3D-Agent`
+- `threews`  → `https://github.com/nirholas/three.ws`
+
+When the user asks you to push (or to commit + push):
+1. `git push origin <branch>`
+2. `git push threews <branch>`
+
+Run both in the same step. If one fails, surface the error — do not silently leave the repos out of sync. Never push without explicit user approval, and never force-push to either remote without an explicit request.
+
 ## Stack notes
 
 - Frontend: vanilla JS modules + Vite (`npm run dev`, port 3000).

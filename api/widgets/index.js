@@ -66,11 +66,15 @@ export default wrap(async (req, res) => {
 	const body = parse(createBody, await readJson(req));
 
 	if (body.avatar_id) {
-		const owns = await sql`
-			select 1 from avatars where id = ${body.avatar_id} and owner_id = ${auth.userId} and deleted_at is null limit 1
+		const allowed = await sql`
+			select 1 from avatars
+			where id = ${body.avatar_id}
+			  and deleted_at is null
+			  and (owner_id = ${auth.userId} or visibility = 'public')
+			limit 1
 		`;
-		if (!owns[0])
-			return error(res, 400, 'invalid_avatar', 'avatar_id not found or not owned by caller');
+		if (!allowed[0])
+			return error(res, 400, 'invalid_avatar', 'avatar_id not found, not owned by caller, and not public');
 	}
 
 	const id = newWidgetId();
