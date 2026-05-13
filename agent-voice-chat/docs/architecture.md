@@ -1,322 +1,123 @@
-# Architecture
+# agent-voice-chat — Architecture
 
-This document describes the system design, data flow, and protocol of agent-voice-chat.
+## Why this setup exists
 
-## System Overview
+X Spaces don't have a public API for joining as a programmatic speaker. The only way for "an AI" to be in a Space is for a real X account, logged into a real browser, to:
+1. Navigate to the Space URL
+2. Click "Start listening"
+3. Click "Request to speak"
+4. Have the host accept the request (host-side, only on phone)
+5. Click "Unmute" / "Start speaking"
 
-```
-┌─────────────────────────────────────────────────────────────┐
-│                        Browser                               │
-│                                                              │
-│  ┌──────────────┐    ┌──────────────┐    ┌──────────────┐   │
-│  │  Mic Capture  │    │  Agent UI    │    │ Audio Player  │   │
-│  │  + VAD        │    │  + Chat      │    │ (Web Audio)   │   │
-│  └──────┬───────┘    └──────┬───────┘    └──────▲───────┘   │
-│         │                   │                   │            │
-│         │    ┌──────────────┴──────────────┐    │            │
-│         │    │     Socket.IO Client        │    │            │
-│         └────┤     or WebRTC Connection    ├────┘            │
-│              └──────────────┬──────────────┘                 │
-└─────────────────────────────┼───────────────────────────────┘
-                              │
-                    WebSocket / WebRTC
-                              │
-┌─────────────────────────────┼───────────────────────────────┐
-│                       Server (Node.js)                       │
-│                              │                               │
-│  ┌──────────────┐    ┌──────┴───────┐    ┌──────────────┐   │
-│  │ Agent        │    │  Socket.IO   │    │ Room Manager  │   │
-│  │ Registry     │    │  Handler     │    │ (Isolation)   │   │
-│  └──────────────┘    └──────┬───────┘    └──────────────┘   │
-│                             │                                │
-│              ┌──────────────┼──────────────┐                 │
-│              │              │              │                  │
-│         ┌────▼────┐   ┌────▼────┐   ┌────▼────┐            │
-│         │   STT   │   │   LLM   │   │   TTS   │            │
-│         │ Provider│   │ Provider│   │ Provider│            │
-│         └────┬────┘   └────┬────┘   └────┬────┘            │
-└──────────────┼─────────────┼─────────────┼──────────────────┘
-               │             │             │
-          ┌────▼────┐   ┌────▼────┐   ┌────▼────┐
-          │ Groq    │   │ OpenAI  │   │ OpenAI  │
-          │ Whisper │   │ Claude  │   │ 11Labs  │
-          │ OpenAI  │   │ Groq    │   │ Browser │
-          └─────────┘   └─────────┘   └─────────┘
-```
+X actively fingerprints headless browsers, so anything stealth-flagged tends to get challenged. The trick this repo uses is: **run a normal, non-headless Chrome** (just on a virtual display the user never sees) and drive it via Chrome DevTools Protocol. From X's perspective, it's a regular Chrome with a regular account.
 
-## Audio Pipelines
+For the audio, we need:
+- A way to **inject** the AI's voice as the microphone input of that Chrome.
+- A way to **capture** the Space's audio as the input that the AI listens to.
 
-There are two distinct audio paths depending on the provider type.
+PulseAudio's `module-null-sink` does both — they're virtual audio devices that work like real ones but route in software.
 
-### WebRTC Path (OpenAI Realtime)
-
-Lowest latency (~200ms). Audio flows directly between the browser and OpenAI.
+## The two-cable model
 
 ```
-User speaks
-  │
-  ▼
-Mic capture (getUserMedia)
-  │
-  ▼
-RTCPeerConnection ◄──── SDP exchange via /session/:agentId
-  │                      (ephemeral token from server)
-  ▼
-Audio stream ──────────────────────► OpenAI Realtime API
-                                          │
-Response audio ◄──────────────────────────┘
-  │
-  ▼
-Web Audio API playback
-
-Text events flow via RTCDataChannel:
-  - input_audio_buffer.speech_started/stopped
-  - response.audio_transcript.delta/done
-  - conversation.item.create (send text)
-  - response.create (trigger response)
+ cable A: agent_speakers (null sink) → x_mic (remap of agent_speakers.monitor)
+ cable B: x_speakers     (null sink) → agent_mic (remap of x_speakers.monitor)
 ```
 
-The server's role is minimal — it only provides the ephemeral session token. All audio and LLM processing happens directly between the browser and OpenAI.
+A null sink's `.monitor` source is whatever was written to the sink. The `module-remap-source` lines just give those monitors friendly names so we can `PULSE_SOURCE=x_mic` and have Chrome see a clean input device.
 
-### Socket Path (Claude, Groq, OpenAI Chat)
-
-More flexible, supports any LLM provider. Higher latency (~400–1200ms).
+Each Chrome process is launched with `PULSE_SINK` and `PULSE_SOURCE` env vars, so its outbound audio (anything it plays) and inbound audio (whatever it captures via `getUserMedia`) are bound to specific cables.
 
 ```
-User speaks
-  │
-  ▼
-Mic capture (getUserMedia)
-  │
-  ▼
-Voice Activity Detection (Web Audio AnalyserNode)
-  ├── Speech detected: start MediaRecorder
-  └── 1200ms silence: stop recording
-  │
-  ▼
-Base64-encode audio blob
-  │
-  ▼
-Socket.IO emit: audioData { agentId, audio, mimeType }
-  │
-  ▼
-Server: STT transcribe (Groq Whisper or OpenAI Whisper)
-  │
-  ▼
-Server: LLM streamResponse (async generator)
-  │
-  ├──► Socket.IO emit: textDelta { delta }  (repeated)
-  │
-  ▼
-Server: collect full text
-  │
-  ├──► Socket.IO emit: textComplete { text }
-  │
-  ▼
-Server: TTS synthesize (OpenAI / ElevenLabs)
-  │
-  ├──► Socket.IO emit: ttsAudio { audio: base64, format: "mp3" }
-  │    └── Client: decode + play via Web Audio API
-  │
-  └──► Socket.IO emit: ttsBrowser { text }  (fallback)
-       └── Client: browser speechSynthesis API
+Agent Chrome:
+  PULSE_SINK=agent_speakers   ← agent's voice (Realtime model output) writes here
+  PULSE_SOURCE=agent_mic      ← agent's "microphone" reads from cable B's monitor
+
+X.com Chrome:
+  PULSE_SINK=x_speakers       ← Space audio (other speakers) writes here
+  PULSE_SOURCE=x_mic          ← X's microphone reads from cable A's monitor
 ```
 
-## Voice Activity Detection (VAD)
+Net effect:
+- Agent says something → cable A → X reads it as mic input → broadcast to Space.
+- Other speaker says something in the Space → X plays it → cable B → agent reads it as mic input → Realtime model VAD picks it up → response.
 
-The client detects when the user is speaking using the Web Audio API:
+## Why a single Chrome with two tabs doesn't work
 
-```
-Mic stream → AudioContext → AnalyserNode (FFT size 256)
-  │
-  ▼
-Analyze frequency bins 3–25 (voice range)
-  │
-  ▼
-Calculate average energy level (0.0 – 1.0)
-  │
-  ├── level > 0.04 → speech detected → start/continue recording
-  └── level ≤ 0.04 for 1200ms → silence → stop recording, send audio
-```
+A single Chrome process has process-wide `PULSE_SINK` / `PULSE_SOURCE`. Both tabs would share the same input/output devices. You'd need to use Chrome's per-tab `setSinkId` API plus per-call `getUserMedia({audio: {deviceId}})` constraints — which is more code and more failure modes than just launching two Chrome processes.
 
-- Smoothing constant: 0.3
-- Analysis rate: 30fps (every ~33ms)
-- Speech threshold: 0.04 (4% energy)
-- Silence timeout: 1200ms (user), 500ms (agent-to-agent)
-
-## Turn Management
-
-Agents take turns to prevent overlapping speech:
+## Server (OpenAI Realtime API)
 
 ```
-Agent 0 requests turn
-  │
-  ▼
-Turn queue: [0]
-  │
-  ▼
-currentTurn = null → grant immediately
-  │
-  ▼
-Agent 0 has turn → LLM + TTS → speaks
-  │
-  ▼
-Agent 0 releases turn
-  │
-  ▼
-Check queue → Agent 1 waiting? → grant after 500ms delay
-                                    │
-                                    ▼
-                              Agent 1 speaks
+[browser tab /agent1]
+   │
+   │ GET /session/0
+   ▼
+[Node server (index.js)]
+   │
+   │ POST /v1/realtime/client_secrets
+   │   { session: { type: "realtime", model: "gpt-realtime",
+   │                audio: { output: { voice: "verse" } },
+   │                instructions: "..." } }
+   ▼
+[OpenAI]
+   │
+   │ { value: "ek_...", expires_at, session }
+   ▼
+[browser tab]
+   │ uses ek_... as ephemeral Bearer
+   │ POST /v1/realtime/calls?model=gpt-realtime (SDP exchange)
+   ▼
+[WebRTC peer connection established]
+   │ audio in: browser mic (cable B) → OpenAI
+   │ audio out: OpenAI → <audio> element (cable A)
+   │ data channel: oai-events (response.create, response.done, etc.)
 ```
 
-Rules:
-- Only one agent speaks at a time
-- If the turn is free, it's granted immediately
-- If occupied, the agent is added to the queue
-- On release, the next queued agent gets a 500ms delay (natural pacing)
-- State is broadcast to all clients after every turn change
+The data channel is how the page tells OpenAI things like "respond now" (`response.create`). We use this for the greeting: as soon as `dc.onopen` fires, the page sends a `response.create` event with `response.instructions` describing what to say, and the model generates a greeting in audio without waiting for user input.
 
-## Server Components
+## Greet-on-connect
 
-### Express Routes
+The patched `agent1.html` includes this snippet immediately after the data channel opens:
 
-| Route | Method | Purpose |
-|-------|--------|---------|
-| `/` | GET | Landing page |
-| `/agent1`, `/agent2` | GET | Hardcoded agent pages |
-| `/voice/:agentId` | GET | Dynamic agent page |
-| `/config` | GET | Client configuration |
-| `/state` | GET | Current state snapshot |
-| `/session/:agentId` | GET | WebRTC session token |
-| `/api/agents` | GET/POST | List or create agents |
-| `/api/agents/:id` | GET/PUT/DELETE | Read, update, delete agent |
-
-### Socket.IO Namespace: `/space`
-
-All real-time events are on the `/space` namespace. See [API Reference](api-reference.md) for the full event protocol.
-
-### Provider Factory
-
-```
-AI_PROVIDER env var
-  │
-  ├── "openai"      → openai-realtime.js (type: webrtc)
-  ├── "openai-chat"  → openai-chat.js    (type: socket)
-  ├── "claude"       → claude.js          (type: socket)
-  └── "groq"         → groq.js            (type: socket)
-```
-
-### Conversation History
-
-Per-agent, per-room message history:
-
-```
-ConversationHistory(maxHistory = 20)
-  │
-  ├── add(agentId, role, content) → append, trim if > max
-  ├── get(agentId) → [{ role, content }, ...]
-  └── clear(agentId) → reset
-```
-
-Maintains context for multi-turn conversations. Each agent has independent history so agents can have different "memories" of the conversation.
-
-### Room Manager
-
-Isolates state for multi-tenancy:
-
-```
-RoomManager
-  │
-  ├── createRoom(config) → new room with own state
-  ├── getOrCreateRoom(roomId) → lazy creation
-  ├── addClient(roomId, socketId) → track connection
-  ├── removeClient(roomId, socketId) → cleanup
-  └── cleanupStaleRooms() → delete empty rooms past TTL (every 5min)
-```
-
-Each room contains: agents state, turn queue, message history, client list, timestamps.
-
-## Client Components
-
-### agent-common.js
-
-Base class for all agent pages:
-
-- Socket.IO connection management
-- DOM element binding (chat panel, status, mic button)
-- Audio visualization (Web Audio API analyzer)
-- Message rendering and history
-- Status indicator management
-
-### provider-openai-realtime.js
-
-WebRTC provider client:
-
-- Fetches ephemeral session token from `/session/:agentId`
-- Creates RTCPeerConnection with STUN servers
-- Exchanges SDP offer/answer with OpenAI
-- Manages data channel for text events
-- Handles bidirectional audio streams
-
-### provider-socket.js
-
-Socket.IO provider client:
-
-- MediaRecorder for audio capture
-- VAD for speech detection
-- Base64 encoding and transmission
-- Audio playback queue (prevents overlapping agent speech)
-- Browser TTS fallback
-
-## Data Models
-
-### Message
-
-```javascript
-{
-  id: "msg_abc123",
-  agentId: 0,          // -1 for user messages
-  name: "Bob",
-  text: "Hey, what's up?",
-  isUser: false,
-  timestamp: "2026-03-23T10:05:00Z"
+```js
+dc.onopen = () => {
+  log("Data channel open", "success")
+  setTimeout(() => {
+    dc.send(JSON.stringify({
+      type: "response.create",
+      response: { instructions: "Greet the room warmly..." }
+    }))
+  }, 1500)
 }
 ```
 
-### Agent State
+The 1.5s delay gives the WebRTC stream time to stabilize before the model starts speaking.
 
-```javascript
-{
-  id: 0,
-  name: "Bob",
-  status: "idle",      // "idle" | "listening" | "speaking"
-  connected: true,
-  socketId: "socket_abc123"
-}
-```
+## API drift history
 
-### Room State
+The original `ai-agents-x-space` repo this is forked from used the **Beta** Realtime API, which OpenAI retired around 2026-02:
 
-```javascript
-{
-  id: "room-id",
-  agents: { 0: AgentState, 1: AgentState },
-  currentTurn: null,
-  turnQueue: [],
-  messages: [Message],
-  isProcessing: false,
-  clients: Set<socketId>,
-  createdAt: Date,
-  lastActivity: Date,
-  config: { agentIds, maxParticipants, ttlMinutes, isPublic }
-}
-```
+| What changed | Old (Beta) | New (GA) |
+|---|---|---|
+| Ephemeral key endpoint | `POST /v1/realtime/sessions` | `POST /v1/realtime/client_secrets` |
+| Session body wrapper | top-level fields | `{ session: { ... } }` |
+| Voice param location | `voice: "verse"` (top-level) | `audio: { output: { voice: "verse" } }` |
+| SDP exchange endpoint | `POST /v1/realtime?model=...` | `POST /v1/realtime/calls?model=...` |
+| Ephemeral key field | `data.client_secret.value` | `data.value` |
+| Model name | `gpt-4o-realtime-preview-2024-12-17` | `gpt-realtime` |
 
-## Security Model
+The patches in `automation/patch-realtime.py` and `automation/patch-greet.py` made these migrations. The server in this repo already has the GA shape baked in.
 
-- **API keys** are stored server-side only. They never reach the browser.
-- **WebRTC tokens** are ephemeral (short-lived) and scoped to a single session.
-- **Audio data** passes through the server for socket providers but is not persisted.
-- **CORS** should be configured on the server if the widget is hosted on a different domain.
-- **Microphone access** requires explicit browser permission from the user.
+## Why the VM, not the user's laptop
+
+The original `ai-agents-x-space` README assumes you run it on your Mac with BlackHole to bridge audio to an X.com browser tab. That works but requires:
+- Installing BlackHole on macOS
+- Running a Chrome tab + the Node server on your machine
+- Leaving your machine on for the duration of the Space
+
+Putting everything on a small GCP VM:
+- Zero local setup beyond a phone for accepting speaker requests
+- Runs 24/7 without your laptop
+- PulseAudio's two-cable layout works cleanly on Linux (cleaner than single-cable BlackHole)
+- The agent's X tab is a real Chrome (not headless), so X doesn't flag it

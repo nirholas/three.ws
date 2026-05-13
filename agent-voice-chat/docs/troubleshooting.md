@@ -1,166 +1,116 @@
-# Troubleshooting
+# agent-voice-chat — Troubleshooting
 
-Common issues and how to fix them.
+## "Session error: The Realtime Beta API is no longer supported"
 
-## No Audio / Can't Hear Agent
+Your `server/index.js` still has the old Beta API shape. The version in this repo is already on GA. If you've forked an older copy, run `automation/patch-realtime.py` against your `index.js` and `public/agent1.html` / `agent2.html`.
 
-**Symptom:** You can see text responses in the chat but no audio plays.
+## "Failed to execute 'setRemoteDescription': Failed to parse SessionDescription"
 
-**Causes:**
+The frontend is POSTing the SDP to the old `/v1/realtime` endpoint. The GA endpoint is `/v1/realtime/calls`. Fix:
 
-1. **TTS provider not configured.** Check that `TTS_PROVIDER` is set and the corresponding API key exists.
-   ```bash
-   # Check your .env
-   TTS_PROVIDER=openai
-   OPENAI_API_KEY=sk-...  # Must be set for openai TTS
-   ```
-
-2. **Browser blocked autoplay.** Most browsers block audio playback until the user interacts with the page. Click anywhere on the page before starting the conversation.
-
-3. **Browser TTS fallback.** If you see `ttsBrowser` in the console instead of `ttsAudio`, server-side TTS failed and the browser's built-in speech synthesis is being used. Check server logs for TTS errors.
-
-**Fix:** Check the server console for errors like `[TTS] Error:`. Verify your API key and provider setting.
-
-## Microphone Not Working
-
-**Symptom:** The mic button doesn't respond, or the agent never hears you.
-
-**Causes:**
-
-1. **HTTPS required.** Browsers require HTTPS for microphone access (except `localhost`). If you're accessing the server by IP or non-localhost hostname, you need SSL.
-
-2. **Permission denied.** The browser may have blocked mic access. Check the address bar for a blocked microphone icon. Click it to allow access.
-
-3. **Wrong input device.** Your system may be using a different mic than expected. Check your OS audio settings.
-
-**Fix:**
-- Use `https://` or `localhost`
-- Click the mic permission icon in the browser address bar
-- Check browser console for `getUserMedia` errors
-
-## "OPENAI_API_KEY not set" (or similar)
-
-**Symptom:** Server starts but logs a warning about missing API keys.
-
-**Fix:** Ensure your `.env` file exists and has the correct keys for your chosen provider:
-
-| Provider | Required Keys |
-|----------|--------------|
-| `openai` | `OPENAI_API_KEY` |
-| `openai-chat` | `OPENAI_API_KEY` + STT key |
-| `claude` | `ANTHROPIC_API_KEY` + STT key + TTS key |
-| `groq` | `GROQ_API_KEY` + TTS key |
-
-See [Configuration](configuration.md) for the full matrix.
-
-## Agent Not Responding
-
-**Symptom:** You speak or type but the agent doesn't respond.
-
-**Causes:**
-
-1. **STT failed.** If using a socket provider, check server logs for `[STT]` errors. The transcription step may have failed.
-
-2. **LLM API error.** The provider API may be down or rate-limited. Check server logs for HTTP error codes (429 = rate limit, 500 = server error).
-
-3. **Turn stuck.** If `isProcessing` is `true` in the state, a previous request may have errored without releasing the turn. Restart the server.
-
-**Fix:** Check server console output. Look for `[STT]`, `[LLM]`, or `[TTS]` error messages.
-
-## High Latency
-
-**Symptom:** Long delay between speaking and hearing the response.
-
-**Typical latencies:**
-| Provider | Expected |
-|----------|----------|
-| OpenAI Realtime | ~200ms |
-| Groq + TTS | ~400ms |
-| OpenAI Chat + TTS | ~800ms |
-| Claude + TTS | ~900ms |
-
-**If latency is much higher than expected:**
-
-1. **Network latency.** The server and APIs need good connectivity. Deploy close to your users and the API endpoints (US East for OpenAI/Anthropic).
-
-2. **Long responses.** Agents generating long text take longer for TTS. Add "Keep responses under 2 sentences" to your `basePrompt`.
-
-3. **ElevenLabs TTS.** ElevenLabs has higher latency than OpenAI TTS. Switch to `TTS_PROVIDER=openai` if speed matters more than voice quality.
-
-4. **Browser TTS fallback.** If server TTS fails, browser TTS is used, which can have unpredictable latency. Fix the server TTS issue.
-
-## WebRTC Connection Failed
-
-**Symptom:** Using `AI_PROVIDER=openai` but no audio connection is established.
-
-**Causes:**
-
-1. **Invalid API key.** The `/session/:agentId` endpoint returns a token from OpenAI. If your key is invalid, this fails silently on the client. Check server logs.
-
-2. **Firewall/NAT.** WebRTC needs UDP connectivity. Corporate firewalls may block it. Try a different network.
-
-3. **STUN server unreachable.** The client uses Google's STUN servers by default. If blocked, WebRTC can't establish the connection.
-
-**Fix:** Check the browser console for WebRTC errors. Try switching to `AI_PROVIDER=openai-chat` as a fallback (uses Socket.IO instead of WebRTC).
-
-## Socket.IO Connection Issues
-
-**Symptom:** "Connection failed" or frequent disconnects.
-
-**Causes:**
-
-1. **CORS.** If the widget is on a different domain than the server, you need proper CORS configuration on the server.
-
-2. **Reverse proxy.** Nginx or other proxies need WebSocket upgrade support:
-   ```nginx
-   proxy_http_version 1.1;
-   proxy_set_header Upgrade $http_upgrade;
-   proxy_set_header Connection "upgrade";
-   ```
-
-3. **Load balancer.** If using multiple server instances, you need sticky sessions. Socket.IO connections are stateful.
-
-**Fix:** Check that your reverse proxy supports WebSocket upgrades. See [Deployment](deployment.md) for Nginx configuration.
-
-## Port Already in Use
-
-**Symptom:** `Error: listen EADDRINUSE :::3000`
-
-**Fix:**
 ```bash
-# Find what's using port 3000
-lsof -i :3000
-
-# Kill it, or use a different port
-PORT=3001 npm start
+sed -i 's|https://api.openai.com/v1/realtime?model=|https://api.openai.com/v1/realtime/calls?model=|g' server/public/agent1.html
 ```
 
-## Agent Echoing / Hearing Itself
+## "Could not find request-to-speak button"
 
-**Symptom:** The agent responds to its own TTS audio output.
+X's UI changed labels, or the page is on the pre-join "peek" view (not yet inside the Space). The automation tries multiple labels (`request`, `request to speak`). If still failing, add the new label to the `NEEDLES` arrays in `automation/x-join-only.js` and `automation/unmute-only.js`.
 
-**Cause:** The mic is picking up the speaker output and sending it back as user input.
+To inspect what buttons are currently on the X tab:
 
-**Fix:**
-- Use headphones
-- Lower speaker volume
-- The VAD threshold (0.04) should filter out quiet speaker bleed, but close proximity can overwhelm it
-
-## Docker: Module Not Found
-
-**Symptom:** `Error: Cannot find module 'express'`
-
-**Fix:** Ensure `npm install` runs during the Docker build. Check your Dockerfile has:
-```dockerfile
-COPY package*.json ./
-RUN npm ci --production
-COPY . .
+```bash
+sudo -u agent bash -c "cd /home/agent/automation && node -e \"
+const p = require('puppeteer-core');
+(async () => {
+  const b = await p.connect({browserURL:'http://127.0.0.1:9223'});
+  const pg = (await b.pages())[0];
+  console.log(await pg.evaluate(() =>
+    Array.from(document.querySelectorAll('button, [role=button]')).map(b => ({
+      a: b.getAttribute('aria-label'),
+      t: (b.textContent||'').trim().slice(0,40)
+    }))));
+  b.disconnect();
+})();
+\""
 ```
 
-## Still Stuck?
+## The X tab navigates to `/home` instead of staying on the Space
 
-1. **Check server logs.** The server logs key events with prefixes: `[STT]`, `[TTS]`, `[LLM]`, `[Socket]`, `[Room]`. These are your first debugging tool.
-2. **Check browser console.** Open DevTools (F12) and look for errors in the Console tab.
-3. **Try text input.** Set `INPUT_CHAT=true` and type messages to isolate whether the issue is with audio or the LLM pipeline.
-4. **Try a different provider.** Switch `AI_PROVIDER` to rule out provider-specific issues.
-5. **Open an issue.** File a bug at the project's GitHub Issues with your server logs and browser console output.
+X sometimes bumps the page to the home timeline after a join click. Two possibilities:
+
+1. **The Space ended** — verify on your phone. If yes, restart with a fresh URL.
+2. **The same-account collision** — you cannot use the host's cookies on the VM. The VM's X account must be **different** from the account hosting the Space; X redirects you to `/home` if it sees you're already the host on the same account elsewhere.
+
+The persistent mini-player at the bottom-right of the X UI usually keeps the Space audio session alive even when the visible page drifts. The unmute button often appears on this mini-player.
+
+## "0 audio bytes" / agent connects but no one hears anything
+
+Check the PulseAudio routing:
+
+```bash
+sudo -u agent pactl list short sinks         # should show agent_speakers and x_speakers
+sudo -u agent pactl list short sources       # should show x_mic and agent_mic
+sudo -u agent pactl list sink-inputs         # while Chrome is playing, should show chrome sink-inputs
+```
+
+If Chrome's sink-input is connected to a different sink than expected, the `PULSE_SINK` env var didn't take effect. Verify the launch.sh export order — `PULSE_SINK=...` must be on the same command line as the Chrome invocation, not exported separately.
+
+## Phone shows the agent as a speaker, but you don't hear anything
+
+The agent is muted on its side. Run:
+
+```bash
+sudo -u agent bash -c "cd /home/agent/automation && node unmute-only.js"
+```
+
+If `unmute-only.js` can't find the button, X may have put you on `/home` with the mini-player. Check the mini-player at the bottom of the X tab in a screenshot:
+
+```bash
+sudo -u agent bash -c "cd /home/agent/automation && node -e \"
+const p = require('puppeteer-core');
+(async () => {
+  const b = await p.connect({browserURL:'http://127.0.0.1:9223'});
+  const pg = (await b.pages())[0];
+  await pg.screenshot({path:'/tmp/x-state.png', fullPage:true});
+  b.disconnect();
+})();
+\""
+sudo -u agent ls -la /tmp/x-state.png
+# scp or gcloud compute scp the file off the VM to look at it
+```
+
+## Agent never greets after Connect
+
+Check the agent tab's log in the browser. The `dc.onopen` handler should fire and you should see "Sent greet trigger" in the page log. If not:
+
+- The data channel never opened — usually means ICE didn't connect. Check `chrome-agent.log` for ICE errors.
+- The session is still using the old API shape — check `agent1.html` is on GA (see API drift table in `architecture.md`).
+
+## Realtime API returns 401 / quota errors
+
+```bash
+curl -s http://localhost:3000/session/0
+```
+
+Look at the response. If 401: your `OPENAI_API_KEY` is wrong. If `insufficient_quota`: top up. If `model_not_found`: your account doesn't have access to `gpt-realtime` yet (request access in OpenAI dashboard).
+
+## Chrome dies on launch
+
+The most common cause on a fresh VM is missing shared libraries. Re-run `setup.sh`, which `apt install`s the full set (libnss3, libgbm, libasound, libgtk-3, etc.). If you customized the VM image and stripped packages, you may need to add them back.
+
+Verify with:
+
+```bash
+ldd $(which google-chrome) | grep "not found"
+```
+
+## How to start over cleanly
+
+```bash
+sudo systemctl stop swarm-server.service
+sudo pkill -9 -f "chrome.*user-data-dir=/tmp/chrome-"
+sudo pkill -9 Xvfb
+sudo -u agent pulseaudio --kill
+rm -rf /tmp/chrome-agent /tmp/chrome-x
+sudo -u agent /home/agent/launch.sh https://x.com/i/spaces/SPACE_ID
+```
