@@ -11,7 +11,6 @@ import { cors, json, method, readJson, wrap, error } from '../_lib/http.js';
 import { parse, createAvatarBody } from '../_lib/validate.js';
 import { recordEvent } from '../_lib/usage.js';
 import { defaultStorageMode } from '../_lib/storage-mode.js';
-import { userHasPaidPlan } from '../_lib/plans.js';
 import { z } from 'zod';
 
 const createWithStorage = createAvatarBody.extend({
@@ -44,15 +43,6 @@ async function handleCreate(req, res) {
 	const auth = await resolveAuth(req, 'avatars:write');
 	if (!auth) return error(res, 401, 'unauthorized', 'avatars:write scope required');
 	const body = parse(createWithStorage, await readJson(req));
-
-	if (body.visibility === 'private' && !(await userHasPaidPlan(auth.userId))) {
-		return error(
-			res,
-			402,
-			'plan_required',
-			'private avatars require a Pro plan — upgrade at /dashboard/#billing or set visibility to public/unlisted',
-		);
-	}
 
 	// Storage keys are scoped by userId (see storageKeyFor). Enforce that the
 	// caller can only register objects under their own prefix — otherwise a

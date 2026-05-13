@@ -51,33 +51,68 @@
 				margin: 0;
 			}
 
-			.edit-tabs {
+			/* ── Layout: sidebar + main ── */
+			.edit-layout {
 				display: flex;
-				gap: 0;
-				padding: 0 1.618rem;
-				border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+				flex: 1;
+				min-height: 0;
+				align-items: stretch;
+			}
+			.edit-sidebar {
+				width: 220px;
 				flex-shrink: 0;
+				border-right: 1px solid rgba(255, 255, 255, 0.06);
+				padding: 1rem 0.75rem 2rem;
+				overflow-y: auto;
+				background: rgba(255, 255, 255, 0.015);
+			}
+			.edit-sidebar-group {
+				margin-bottom: 1rem;
+			}
+			.edit-sidebar-group:last-child {
+				margin-bottom: 0;
+			}
+			.edit-sidebar-group-title {
+				font-size: 0.618rem;
+				text-transform: uppercase;
+				letter-spacing: 0.1em;
+				color: rgba(255, 255, 255, 0.32);
+				padding: 0.5rem 0.75rem 0.382rem;
+				font-weight: 600;
 			}
 			.edit-tab {
+				display: block;
+				width: 100%;
 				background: transparent;
 				border: 0;
-				border-bottom: 2px solid transparent;
-				color: rgba(255, 255, 255, 0.4);
-				font-size: 0.764rem;
+				border-left: 2px solid transparent;
+				color: rgba(255, 255, 255, 0.55);
+				font-size: 0.875rem;
 				font-family: inherit;
-				padding: 0.75rem 1rem;
+				padding: 0.5rem 0.75rem;
 				cursor: pointer;
-				margin-bottom: -1px;
-				transition:
-					color 0.15s,
-					border-color 0.15s;
+				text-align: left;
+				border-radius: 0 6px 6px 0;
+				margin-bottom: 1px;
+				transition: color 0.12s, background 0.12s, border-color 0.12s;
 			}
 			.edit-tab:hover {
-				color: rgba(255, 255, 255, 0.7);
+				color: rgba(255, 255, 255, 0.9);
+				background: rgba(255, 255, 255, 0.03);
 			}
 			.edit-tab.active {
-				color: rgba(255, 255, 255, 0.9);
-				border-bottom-color: #3b82f6;
+				color: #fff;
+				background: rgba(59, 130, 246, 0.12);
+				border-left-color: #3b82f6;
+			}
+			.edit-tab.danger { color: rgba(252, 165, 165, 0.75); }
+			.edit-tab.danger.active { color: #fca5a5; background: rgba(220, 38, 38, 0.12); border-left-color: #dc2626; }
+
+			.edit-main {
+				flex: 1;
+				min-width: 0;
+				display: flex;
+				flex-direction: column;
 			}
 
 			.edit-panel {
@@ -86,6 +121,56 @@
 			}
 			.edit-panel.active {
 				display: flex;
+			}
+
+			/* Mobile: sidebar collapses to a horizontal-scroll top bar */
+			@media (max-width: 800px) {
+				.edit-layout {
+					flex-direction: column;
+				}
+				.edit-sidebar {
+					width: 100%;
+					box-sizing: border-box;
+					border-right: 0;
+					border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+					padding: 0.5rem 0.75rem;
+					display: flex;
+					gap: 0.382rem;
+					overflow-x: auto;
+					overflow-y: hidden;
+				}
+				.edit-sidebar-group {
+					display: flex;
+					align-items: center;
+					gap: 0.236rem;
+					margin: 0;
+					padding-right: 0.5rem;
+					border-right: 1px solid rgba(255, 255, 255, 0.06);
+					flex-shrink: 0;
+				}
+				.edit-sidebar-group:last-child { border-right: 0; padding-right: 0; }
+				.edit-sidebar-group-title {
+					padding: 0;
+					font-size: 0.55rem;
+					color: rgba(255, 255, 255, 0.28);
+					white-space: nowrap;
+				}
+				.edit-tab {
+					width: auto;
+					padding: 0.382rem 0.618rem;
+					border-radius: 6px;
+					border-left: 0;
+					border-bottom: 2px solid transparent;
+					font-size: 0.764rem;
+					margin-bottom: 0;
+					white-space: nowrap;
+				}
+				.edit-tab.active {
+					background: rgba(59, 130, 246, 0.18);
+					border-left: 0;
+					border-bottom-color: #3b82f6;
+				}
+				.edit-tab.danger.active { border-left: 0; border-bottom-color: #dc2626; }
 			}
 
 			/* ── Persona tab ── */
@@ -753,9 +838,6 @@
 			/* Danger */
 			.danger-card { border-color: rgba(220, 38, 38, 0.3); }
 
-			/* Tab bar scrolls when overflowing */
-			.edit-tabs { overflow-x: auto; flex-wrap: nowrap; scrollbar-width: thin; }
-			.edit-tab { white-space: nowrap; flex-shrink: 0; }
 		</style>
 			<link rel="stylesheet" href="/nav.css" />
 			<link rel="stylesheet" href="/footer.css" />
@@ -776,25 +858,41 @@
 			<h1 class="edit-header-title" id="agent-title">Edit Agent</h1>
 		</header>
 
-		<div class="edit-tabs" role="tablist" aria-label="Edit sections">
-			<button class="edit-tab active" data-tab="persona" role="tab" aria-selected="true" aria-controls="panel-persona" id="tab-persona">Persona</button>
-			<button class="edit-tab" data-tab="outfit" role="tab" aria-selected="false" aria-controls="panel-outfit" id="tab-outfit">Outfit</button>
-			<button class="edit-tab" data-tab="voice" role="tab" aria-selected="false" aria-controls="panel-voice" id="tab-voice">Voice</button>
-			<button class="edit-tab" data-tab="knowledge" role="tab" aria-selected="false" aria-controls="panel-knowledge" id="tab-knowledge">Knowledge</button>
-			<button class="edit-tab" data-tab="skills" role="tab" aria-selected="false" aria-controls="panel-skills" id="tab-skills">Skills</button>
-			<button class="edit-tab" data-tab="publish" role="tab" aria-selected="false" aria-controls="panel-publish" id="tab-publish">Publish</button>
-			<button class="edit-tab" data-tab="monetization" role="tab" aria-selected="false" aria-controls="panel-monetization" id="tab-monetization">Monetization</button>
-			<button class="edit-tab" data-tab="wallet" role="tab" aria-selected="false" aria-controls="panel-wallet" id="tab-wallet">Wallet</button>
-			<button class="edit-tab" data-tab="social" role="tab" aria-selected="false" aria-controls="panel-social" id="tab-social">Social</button>
-			<button class="edit-tab" data-tab="autopilot" role="tab" aria-selected="false" aria-controls="panel-autopilot" id="tab-autopilot">Autopilot</button>
-			<button class="edit-tab" data-tab="analytics" role="tab" aria-selected="false" aria-controls="panel-analytics" id="tab-analytics">Analytics</button>
-			<button class="edit-tab" data-tab="embed" role="tab" aria-selected="false" aria-controls="panel-embed" id="tab-embed">Embed</button>
-			<button class="edit-tab" data-tab="widgets" role="tab" aria-selected="false" aria-controls="panel-widgets" id="tab-widgets">Widgets</button>
-			<button class="edit-tab" data-tab="studio" role="tab" aria-selected="false" aria-controls="panel-studio" id="tab-studio">Studio</button>
-			<button class="edit-tab" data-tab="danger" role="tab" aria-selected="false" aria-controls="panel-danger" id="tab-danger">Danger</button>
-		</div>
+		<div class="edit-layout">
+			<nav class="edit-sidebar" role="tablist" aria-label="Edit sections">
+				<div class="edit-sidebar-group">
+					<div class="edit-sidebar-group-title">Identity</div>
+					<button class="edit-tab active" data-tab="persona" role="tab" aria-selected="true" aria-controls="panel-persona" id="tab-persona">Persona</button>
+					<button class="edit-tab" data-tab="outfit" role="tab" aria-selected="false" aria-controls="panel-outfit" id="tab-outfit">Outfit</button>
+					<button class="edit-tab" data-tab="voice" role="tab" aria-selected="false" aria-controls="panel-voice" id="tab-voice">Voice</button>
+				</div>
+				<div class="edit-sidebar-group">
+					<div class="edit-sidebar-group-title">Brain</div>
+					<button class="edit-tab" data-tab="knowledge" role="tab" aria-selected="false" aria-controls="panel-knowledge" id="tab-knowledge">Knowledge</button>
+					<button class="edit-tab" data-tab="skills" role="tab" aria-selected="false" aria-controls="panel-skills" id="tab-skills">Skills</button>
+					<button class="edit-tab" data-tab="autopilot" role="tab" aria-selected="false" aria-controls="panel-autopilot" id="tab-autopilot">Autopilot</button>
+				</div>
+				<div class="edit-sidebar-group">
+					<div class="edit-sidebar-group-title">Distribute</div>
+					<button class="edit-tab" data-tab="publish" role="tab" aria-selected="false" aria-controls="panel-publish" id="tab-publish">Publish</button>
+					<button class="edit-tab" data-tab="embed" role="tab" aria-selected="false" aria-controls="panel-embed" id="tab-embed">Embed</button>
+					<button class="edit-tab" data-tab="widgets" role="tab" aria-selected="false" aria-controls="panel-widgets" id="tab-widgets">Widgets</button>
+					<button class="edit-tab" data-tab="social" role="tab" aria-selected="false" aria-controls="panel-social" id="tab-social">Social</button>
+				</div>
+				<div class="edit-sidebar-group">
+					<div class="edit-sidebar-group-title">Money</div>
+					<button class="edit-tab" data-tab="monetization" role="tab" aria-selected="false" aria-controls="panel-monetization" id="tab-monetization">Monetization</button>
+					<button class="edit-tab" data-tab="wallet" role="tab" aria-selected="false" aria-controls="panel-wallet" id="tab-wallet">Wallet</button>
+					<button class="edit-tab" data-tab="analytics" role="tab" aria-selected="false" aria-controls="panel-analytics" id="tab-analytics">Analytics</button>
+				</div>
+				<div class="edit-sidebar-group">
+					<div class="edit-sidebar-group-title">Advanced</div>
+					<button class="edit-tab" data-tab="studio" role="tab" aria-selected="false" aria-controls="panel-studio" id="tab-studio">Studio</button>
+					<button class="edit-tab danger" data-tab="danger" role="tab" aria-selected="false" aria-controls="panel-danger" id="tab-danger">Danger zone</button>
+				</div>
+			</nav>
 
-		<main id="main">
+			<main id="main" class="edit-main">
 			<div id="loading" class="loading-msg" role="status" aria-live="polite">Loading…</div>
 			<div id="error" class="error-msg" style="display: none" role="alert"></div>
 
@@ -1366,7 +1464,8 @@
 					</div>
 				</div>
 			</section>
-		</main>
+			</main>
+		</div>
 
 		<div class="outfit-status" id="outfit-status" role="status" aria-live="polite"></div>
 

@@ -406,7 +406,7 @@
 		</main>
 		<script type="module">
 			const params = new URL(location.href).searchParams;
-			const agentId = params.get('agent');
+			let agentId = params.get('agent');
 			const statusEl = document.getElementById('status');
 			const modeSel = document.getElementById('mode');
 			const hostsEl = document.getElementById('hosts');
@@ -415,13 +415,13 @@
 			const urlEl = document.getElementById('embed-url');
 			const brainModeSel = document.getElementById('brain-mode');
 			const proxyWrap = document.getElementById('proxy-url-wrap');
+			const formEls = document.querySelectorAll(
+				'main > .card, main > .actions, main > hr, main > .muted',
+			);
 
-			if (!agentId) {
-				statusEl.innerHTML =
-					'<div class="err">Missing <code>?agent=ID</code> in URL.</div>';
-				throw new Error('no agent id');
+			function setFormVisible(visible) {
+				for (const el of formEls) el.style.display = visible ? '' : 'none';
 			}
-			urlEl.textContent = `/agent/${agentId}/embed`;
 
 			async function api(method, path, body) {
 				const res = await fetch(path, {
@@ -630,8 +630,65 @@
 			document.getElementById('reload').addEventListener('click', loadPolicy);
 			document.getElementById('clear').addEventListener('click', clearPolicy);
 
+			async function pickAgent() {
+				let list = [];
+				try {
+					const { agents } = await api('GET', '/api/agents');
+					list = Array.isArray(agents) ? agents : [];
+				} catch (e) {
+					setStatus(
+						`<div class="err">Could not load your agents: ${escapeHtml(e.message)}</div>`,
+					);
+					return null;
+				}
+
+				if (list.length === 0) {
+					setFormVisible(false);
+					setStatus(
+						`<div class="err">You don't have any agents yet. <a href="/dashboard/create">Create one</a> to configure an embed policy.</div>`,
+					);
+					return null;
+				}
+
+				if (list.length === 1) {
+					const u = new URL(location.href);
+					u.searchParams.set('agent', list[0].id);
+					location.replace(u.toString());
+					return null;
+				}
+
+				setFormVisible(false);
+				const opts = list
+					.map(
+						(a) =>
+							`<option value="${escapeHtml(a.id)}">${escapeHtml(a.name || a.id)}</option>`,
+					)
+					.join('');
+				setStatus(
+					`<div class="card"><label for="agent-pick">Choose an agent</label>` +
+						`<select id="agent-pick">${opts}</select>` +
+						`<div class="actions"><button class="btn" id="agent-pick-go">Continue</button></div></div>`,
+				);
+				return await new Promise((resolve) => {
+					document
+						.getElementById('agent-pick-go')
+						.addEventListener('click', () => {
+							const id = document.getElementById('agent-pick').value;
+							const u = new URL(location.href);
+							u.searchParams.set('agent', id);
+							location.replace(u.toString());
+							resolve(null);
+						});
+				});
+			}
+
 			(async () => {
 				await loadMe();
+				if (!agentId) {
+					await pickAgent();
+					return;
+				}
+				urlEl.textContent = `/agent/${agentId}/embed`;
 				await loadAgent();
 				await loadPolicy();
 			})();

@@ -6,20 +6,14 @@ import { mountAgentVanityGrinderCard } from '/src/agent-vanity-grinder.js';
 
 export const state = { user: null };
 
-const PAID_PLANS = new Set(['pro', 'team', 'enterprise']);
-function canSetPrivate() {
-	const u = state.user;
-	return Boolean(u && (PAID_PLANS.has(u.plan) || u.is_admin));
-}
 function visibilityOptionsHtml(currentValue) {
-	const allowPrivate = canSetPrivate() || currentValue === 'private';
 	const opts = [
 		{ v: 'public',   label: 'Public (discoverable)' },
 		{ v: 'unlisted', label: 'Unlisted (anyone with link)' },
-		{ v: 'private',  label: allowPrivate ? 'Private (only you)' : 'Private — Pro plan', disabled: !allowPrivate },
+		{ v: 'private',  label: 'Private (only you)' },
 	];
 	return opts
-		.map((o) => `<option value="${o.v}"${currentValue === o.v ? ' selected' : ''}${o.disabled ? ' disabled' : ''}>${o.label}</option>`)
+		.map((o) => `<option value="${o.v}"${currentValue === o.v ? ' selected' : ''}>${o.label}</option>`)
 		.join('');
 }
 

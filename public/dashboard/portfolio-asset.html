@@ -587,8 +587,16 @@
 				await ensureChart();
 				const sorted = [...points]
 					.map((p) => ({ time: Math.floor(new Date(p.t).getTime() / 1000), value: Number(p.price) }))
+					// lightweight-charts rejects NaN/null values — drop bad rows from upstream
+					.filter((d) => Number.isFinite(d.time) && Number.isFinite(d.value))
 					.sort((a, b) => a.time - b.time)
 					.filter((d, i, arr) => i === 0 || d.time !== arr[i - 1].time);
+				if (!sorted.length) {
+					$$('chart').style.display = 'none';
+					$$('chart-empty').style.display = 'flex';
+					$$('chart-change').textContent = '';
+					return;
+				}
 				series.setData(sorted);
 				chart.timeScale().fitContent();
 

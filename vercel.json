@@ -378,7 +378,7 @@
 		},
 		{
 			"src": "/api/agents/([^/]+)/pumpfun/([^/]+)",
-			"dest": "/api/agents/[id]"
+			"dest": "/api/agents/pumpfun/[action]?id=$1&action=$2"
 		},
 		{
 			"src": "/api/avatars/([^/]+)/agents",
