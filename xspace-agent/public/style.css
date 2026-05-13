@@ -1,0 +1,858 @@
+@import url('https://fonts.googleapis.com/css2?family=VT323&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Courier+Prime:wght@400;700&display=swap');
+
+:root {
+    --msdos-bg: #000000;
+    --msdos-green: #ff4500;
+    --msdos-yellow: #ffd700;
+    --msdos-white: #FFFFFF;
+    --msdos-red: #FF0000;
+    --msdos-cyan: #00FFFF;
+    --font-family: 'VT323', 'Courier New', monospace;
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+html, body {
+    height: 100%;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    font-family: var(--font-family);
+    background-color: var(--msdos-bg);
+    color: var(--msdos-white);
+    font-size: 22px;
+    line-height: 1.4;
+    overflow-x: hidden;
+    display: flex;
+    flex-direction: column;
+}
+
+body::before {
+    content: '';
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: 
+        repeating-linear-gradient(
+            0deg,
+            rgba(255, 69, 0, 0.03) 0px,
+            transparent 1px,
+            transparent 2px,
+            rgba(255, 69, 0, 0.03) 3px
+        );
+    pointer-events: none;
+    z-index: 9999;
+}
+
+#live-bars-container {
+    width: 100%;
+    display: flex;
+    flex-direction: row;
+    border-bottom: 1px solid var(--msdos-green);
+    background-color: var(--msdos-bg);
+}
+
+#live-trades-bar {
+    width: 100%;
+    background-color: var(--msdos-bg);
+    padding: 0;
+    overflow: hidden;
+    white-space: nowrap;
+    min-height: 50px;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+}
+
+#live-trades-bar .live-bar-title {
+    color: var(--msdos-yellow);
+    font-size: 22px;
+    padding: 5px 12px;
+    border-right: 1px solid var(--msdos-green);
+    margin-right: 0;
+    font-weight: normal;
+    flex-shrink: 0;
+    white-space: nowrap;
+    background-color: var(--msdos-bg);
+}
+
+#live-trades-bar ul {
+    flex: 1;
+    min-width: 0;
+    overflow-x: auto;
+    overflow-y: hidden;
+}
+
+#live-trades-bar ul::-webkit-scrollbar {
+    height: 2px;
+}
+
+#live-trades-bar ul::-webkit-scrollbar-track {
+    background: var(--msdos-bg);
+}
+
+#live-trades-bar ul::-webkit-scrollbar-thumb {
+    background-color: var(--msdos-green);
+}
+
+#live-trades-bar ul::-webkit-scrollbar-thumb:hover {
+    background-color: var(--msdos-green);
+}
+
+header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border: none;
+    border-top: 1px solid var(--msdos-green);
+    border-bottom: 1px solid var(--msdos-green);
+    padding: 3px 0;
+    background-color: var(--msdos-bg);
+    width: 100%;
+    padding: 0 20px;
+}
+
+.logo-text {
+    font-family: 'Courier Prime', 'Courier New', monospace;
+    white-space: pre;
+    color: var(--msdos-green);
+    font-size: 13px;
+    line-height: 1.3;
+    margin: 0;
+    text-shadow: 0 0 5px var(--msdos-green);
+}
+
+#price-info {
+    display: flex;
+    gap: 20px;
+    font-size: 40px;
+    align-items: center;
+    color: var(--msdos-white);
+    font-weight: normal;
+}
+
+#price-info a {
+    color: var(--msdos-white);
+    text-decoration: none;
+}
+
+#price-info a:hover {
+    color: var(--msdos-yellow);
+}
+
+.nav-buttons {
+    display: flex;
+    gap: 15px;
+    align-items: center;
+}
+
+.nav-btn {
+    font-size: 24px;
+    color: var(--msdos-green);
+    text-decoration: none;
+    border: 1px solid var(--msdos-green);
+    padding: 8px 16px;
+    transition: all 0.2s;
+}
+
+.nav-btn:hover {
+    background-color: var(--msdos-green);
+    color: var(--msdos-bg);
+}
+
+#marketcap-container.price-up span {
+    color: var(--msdos-green);
+}
+
+#marketcap-container.price-down span {
+    color: var(--msdos-red);
+}
+
+.box {
+    border: 1px solid var(--msdos-green);
+    background-color: var(--msdos-bg);
+    padding: 5px;
+    display: flex;
+    flex-direction: column;
+    position: relative;
+}
+
+.box::before {
+    content: '┌';
+    position: absolute;
+    top: 0;
+    left: 0;
+    color: var(--msdos-green);
+    font-size: 18px;
+}
+
+.box::after {
+    content: '┐';
+    position: absolute;
+    top: 0;
+    right: 0;
+    color: var(--msdos-green);
+    font-size: 18px;
+}
+
+.box-title {
+    color: var(--msdos-green);
+    margin-bottom: 8px;
+    font-size: 22px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-weight: normal;
+    padding-left: 2px;
+}
+
+.box-title.centered-title {
+    justify-content: center;
+    padding-left: 0;
+}
+
+.box-title.centered-title::before {
+    display: none;
+}
+
+.box-title::before {
+    content: '>';
+    color: var(--msdos-green);
+    margin-right: 3px;
+}
+
+#ai-cast-container-wrapper {
+    grid-area: models;
+    margin-bottom: 5px;
+    padding-bottom: 5px;
+    border-bottom: 1px solid var(--msdos-green);
+}
+
+#ai-cast-container {
+    display: flex;
+    justify-content: space-around;
+    gap: 10px;
+}
+
+.ai-member {
+    text-align: center;
+    padding: 5px;
+    border: 1px solid transparent;
+    flex-grow: 1;
+}
+
+.ai-member.speaking {
+    border-color: transparent;
+    background-color: transparent;
+}
+
+.ai-member.speaking .ascii-face,
+.ai-member.speaking h3 {
+    color: var(--msdos-green);
+}
+
+.ai-member .ascii-face {
+    font-family: 'Courier Prime', 'Courier New', monospace;
+    color: var(--msdos-white);
+    font-size: 14px;
+    margin-bottom: 5px;
+    line-height: 1.2;
+    white-space: pre;
+}
+
+.ai-member img {
+    display: none;
+}
+
+.ai-member h3 {
+    color: var(--msdos-white);
+    margin-bottom: 0;
+    font-size: 22px;
+    font-weight: normal;
+}
+
+.ai-message-box {
+    display: flex;
+    flex-direction: row;
+    gap: 12px;
+    margin-bottom: 10px;
+    padding: 10px;
+    border: 1px solid var(--msdos-green);
+    background-color: var(--msdos-bg);
+    min-height: auto;
+}
+
+.centered-title {
+    text-align: center;
+    justify-content: center;
+}
+
+.message-face-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    flex-shrink: 0;
+    width: 150px;
+}
+
+.message-face {
+    font-family: 'Courier Prime', 'Courier New', monospace;
+    color: var(--msdos-white);
+    font-size: 8px;
+    line-height: 10px;
+    margin-bottom: 5px;
+    white-space: pre;
+}
+
+
+.message-name {
+    color: var(--msdos-white);
+    font-size: 20px;
+    font-weight: normal;
+}
+
+.message-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.message-target {
+    color: var(--msdos-green);
+    font-size: 22px;
+    font-weight: normal;
+}
+
+.message-text {
+    color: var(--msdos-white);
+    font-size: 22px;
+    line-height: 1.4;
+    min-height: 20px;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+    white-space: pre-wrap;
+}
+
+.typewriter-cursor {
+    color: var(--msdos-green);
+    animation: blink 1s infinite;
+}
+
+@keyframes blink {
+    0%, 50% { opacity: 1; }
+    51%, 100% { opacity: 0; }
+}
+
+.ascii-face {
+    font-family: 'Courier Prime', 'Courier New', monospace;
+    color: var(--msdos-green);
+    font-size: 14px;
+}
+
+main {
+    display: grid;
+    grid-template-columns: 80% 20%;
+    gap: 0;
+    flex: 1;
+    min-height: 0;
+    width: 100%;
+    padding: 0;
+}
+
+#stage-container {
+    overflow: hidden;
+    height: 100%;
+    border: 1px solid var(--msdos-green);
+    background-color: var(--msdos-bg);
+    display: flex;
+    flex-direction: column;
+}
+
+#conversation {
+    list-style-type: none;
+    overflow-y: auto;
+    overflow-x: hidden;
+    font-size: 22px;
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    padding: 8px;
+}
+
+#countdown-timer {
+    color: var(--msdos-yellow);
+    font-size: 22px;
+    font-weight: normal;
+}
+
+#countdown-timer::before {
+    content: '<';
+    color: var(--msdos-green);
+}
+
+#countdown-timer::after {
+    content: '>';
+    color: var(--msdos-green);
+}
+
+#trades-list {
+    display: flex;
+    flex-direction: row;
+    list-style-type: none;
+    margin: 0;
+    padding: 0;
+    gap: 0;
+    min-height: 30px;
+    align-items: center;
+}
+
+#trades-list li {
+    display: inline-flex;
+    align-items: center;
+    padding: 0 10px;
+    font-size: 22px;
+    white-space: nowrap;
+    border-right: 1px solid var(--msdos-green);
+    color: var(--msdos-white);
+}
+
+#trades-list li::before {
+    content: '│';
+    margin-right: 4px;
+    color: var(--msdos-green);
+}
+
+#trades-list .buy {
+    color: var(--msdos-green);
+}
+
+#trades-list .buy::before {
+    content: '[+]';
+    margin-right: 2px;
+}
+
+#trades-list .sell {
+    color: var(--msdos-red);
+}
+
+#trades-list .sell::before {
+    content: '[-]';
+    margin-right: 2px;
+}
+
+#live-chat-sidebar {
+    overflow: hidden;
+    height: 100%;
+    border-left: 1px solid var(--msdos-green);
+    display: flex;
+    flex-direction: column;
+}
+
+#chat-messages {
+    list-style-type: none;
+    overflow-y: auto;
+    overflow-x: hidden;
+    font-size: 20px;
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    padding: 8px;
+    margin: 0;
+    gap: 8px;
+}
+
+#chat-messages li {
+    display: flex;
+    flex-direction: column;
+    padding: 10px;
+    font-size: 20px;
+    border-bottom: 1px solid rgba(255, 69, 0, 0.3);
+    color: var(--msdos-white);
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+    white-space: normal;
+    line-height: 1.5;
+    gap: 4px;
+}
+
+#chat-messages li:last-child {
+    border-bottom: none;
+}
+
+.chat-username-line {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+}
+
+.chat-username-line::before {
+    content: '│<';
+    color: var(--msdos-green);
+    margin-right: 4px;
+}
+
+.chat-username {
+    color: var(--msdos-yellow);
+    font-weight: normal;
+}
+
+.chat-username::after {
+    content: '>';
+    color: var(--msdos-yellow);
+}
+
+.chat-message-text {
+    color: var(--msdos-white);
+    padding-left: 0;
+    margin-top: 2px;
+}
+
+.spam-message {
+    border-left: 3px solid var(--msdos-red);
+    background-color: rgba(255, 0, 0, 0.1);
+}
+
+.spam-username-line::before {
+    color: var(--msdos-red);
+}
+
+.spam-username {
+    color: var(--msdos-red);
+}
+
+.spam-label {
+    color: var(--msdos-red);
+    font-weight: bold;
+    margin-left: 8px;
+    font-size: 18px;
+}
+
+.spam-message-text {
+    color: rgba(255, 0, 0, 0.8);
+}
+
+.chat-input-container {
+    display: flex;
+    flex-direction: row;
+    gap: 8px;
+    padding: 12px;
+    border-top: 1px solid var(--msdos-green);
+    background-color: var(--msdos-bg);
+}
+
+@media (max-width: 768px) {
+    .chat-input-container {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        z-index: 1000;
+        border-top: 1px solid var(--msdos-green);
+        border-bottom: none;
+        padding: 10px;
+    }
+    
+    #live-chat-sidebar {
+        padding-bottom: 70px;
+    }
+}
+
+.chat-input {
+    flex: 1;
+    background-color: var(--msdos-bg);
+    border: 1px solid var(--msdos-green);
+    color: var(--msdos-white);
+    font-family: var(--font-family);
+    font-size: 20px;
+    padding: 8px 12px;
+    outline: none;
+}
+
+.chat-input:focus {
+    border-color: var(--msdos-yellow);
+    box-shadow: 0 0 5px rgba(255, 215, 0, 0.3);
+}
+
+.chat-input::placeholder {
+    color: rgba(255, 69, 0, 0.5);
+}
+
+.chat-send-button {
+    background-color: var(--msdos-bg);
+    border: 1px solid var(--msdos-green);
+    color: var(--msdos-green);
+    font-family: var(--font-family);
+    font-size: 20px;
+    padding: 8px 20px;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: all 0.2s;
+}
+
+.chat-send-button:hover {
+    background-color: var(--msdos-green);
+    color: var(--msdos-bg);
+}
+
+.chat-send-button:active {
+    background-color: var(--msdos-yellow);
+    border-color: var(--msdos-yellow);
+    color: var(--msdos-bg);
+}
+
+.chat-send-button:disabled {
+    cursor: not-allowed;
+    opacity: 0.6;
+}
+
+.chat-send-button-cooldown {
+    background-color: var(--msdos-bg);
+    border-color: var(--msdos-red);
+    color: var(--msdos-red);
+}
+
+.chat-send-button-cooldown:hover {
+    background-color: var(--msdos-bg);
+    color: var(--msdos-red);
+}
+
+#allow-sound-button {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    padding: 15px 30px;
+    font-size: 24px;
+    font-weight: normal;
+    color: var(--msdos-bg);
+    background-color: var(--msdos-green);
+    border: 1px solid var(--msdos-green);
+    cursor: pointer;
+    z-index: 1000;
+    font-family: var(--font-family);
+    box-shadow: 0 0 10px var(--msdos-green);
+}
+
+#allow-sound-button::before {
+    content: '[';
+    color: var(--msdos-bg);
+}
+
+#allow-sound-button::after {
+    content: ']';
+    color: var(--msdos-bg);
+}
+
+#allow-sound-button:hover {
+    background-color: var(--msdos-yellow);
+    color: var(--msdos-bg);
+    border-color: var(--msdos-yellow);
+    box-shadow: 0 0 15px var(--msdos-yellow);
+}
+
+::-webkit-scrollbar {
+    width: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: var(--msdos-bg);
+}
+
+::-webkit-scrollbar-thumb {
+    background-color: var(--msdos-green);
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background-color: var(--msdos-yellow);
+    opacity: 0.8;
+}
+
+.new-message-highlight {
+    animation: flash-animation 0.3s ease-out;
+}
+
+@keyframes flash-animation {
+    from {
+        background-color: var(--msdos-green);
+        color: var(--msdos-bg);
+    }
+    to {
+        background-color: transparent;
+        color: var(--msdos-white);
+    }
+}
+
+@media (max-width: 1024px) {
+    main {
+        grid-template-columns: 1fr;
+    }
+    
+    #live-chat-sidebar {
+        border-left: none;
+        border-top: 1px solid var(--msdos-green);
+        max-height: 300px;
+    }
+}
+
+@media (max-width: 768px) {
+    #live-bars-container {
+        flex-direction: column;
+    }
+
+    #live-trades-bar {
+        width: 100%;
+        border-right: none;
+        border-bottom: 1px solid var(--msdos-green);
+        padding: 5px 0;
+        min-height: 40px;
+    }
+
+    #live-trades-bar .live-bar-title {
+        font-size: 16px;
+        padding: 5px 8px;
+    }
+
+    #trades-list li {
+        font-size: 16px;
+        padding: 0 8px;
+    }
+
+    #chat-messages {
+        font-size: 18px;
+    }
+    
+    #chat-messages li {
+        font-size: 18px;
+        padding: 8px;
+    }
+    
+    #countdown-timer {
+        font-size: 16px;
+    }
+    
+    body {
+        padding: 0;
+        font-size: 18px;
+    }
+
+    .logo-text {
+        font-family: 'Courier Prime', 'Courier New', monospace;
+        font-size: 6px;
+        line-height: 1.2;
+    }
+
+    header {
+        flex-direction: column;
+        gap: 5px;
+        text-align: center;
+        padding: 5px 0;
+    }
+
+    #price-info {
+        flex-direction: column;
+        gap: 5px;
+        font-size: 18px;
+        align-items: center;
+    }
+
+    .nav-buttons {
+        gap: 8px;
+    }
+
+    .nav-btn {
+        font-size: 14px;
+        padding: 6px 10px;
+    }
+
+    #ai-cast-container {
+        flex-wrap: wrap;
+        gap: 0;
+        justify-content: center;
+    }
+
+    .ai-member {
+        padding: 5px;
+        flex: 0 1 auto;
+        min-width: 60px;
+    }
+
+    .ai-member .ascii-face {
+        font-size: 5px;
+    }
+
+    .ai-member h3 {
+        font-size: 14px;
+    }
+
+    .box-title {
+        font-size: 18px;
+        flex-wrap: wrap;
+    }
+
+    #conversation {
+        font-size: 16px;
+        padding: 5px;
+        max-height: 250px;
+        overflow-y: auto;
+    }
+
+    .message-face-container {
+        width: 80px;
+    }
+
+    .message-face {
+        font-size: 6px;
+        line-height: 1.2;
+    }
+
+    .message-name {
+        font-size: 12px;
+    }
+
+    .message-target {
+        font-size: 16px;
+    }
+
+    .message-text {
+        font-size: 16px;
+    }
+
+    aside#live-feeds {
+        flex-direction: column;
+    }
+    
+    #stage-container {
+        height: auto;
+        min-height: 400px;
+        width: 100%;
+    }
+    
+    #live-chat-sidebar {
+        height: auto;
+        min-height: 300px;
+    }
+    
+    main {
+        min-height: auto;
+        height: auto;
+    }
+
+    #allow-sound-button {
+        font-size: 18px;
+        padding: 12px 24px;
+    }
+}
+
+
