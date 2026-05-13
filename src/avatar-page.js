@@ -457,7 +457,6 @@ async function startAgentWithAvatar() {
 			tags: (avatar.tags || []).slice(0, 8),
 			capabilities: { skills: skillsArr, library: [], bullets: [] },
 			avatar_id: avatar.id || avatarId,
-			publish: false,
 		};
 		const r = await fetch('/api/marketplace/agents', {
 			method: 'POST',
