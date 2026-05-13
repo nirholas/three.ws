@@ -1,0 +1,432 @@
+openapi: "3.0.3"
+info:
+  title: Agent Voice Chat API
+  description: REST API for programmatic interaction with AI voice chat agents
+  version: "1.0.0"
+servers:
+  - url: http://localhost:3000
+    description: Local development
+
+security:
+  - BearerAuth: []
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      description: Optional API key auth. Only required if API_KEY env var is set.
+
+  schemas:
+    Agent:
+      type: object
+      properties:
+        id: { type: integer }
+        name: { type: string }
+        status: { type: string, enum: [offline, idle, listening, speaking] }
+        connected: { type: boolean }
+        voice: { type: string, nullable: true }
+        theme: { type: string }
+
+    CreateAgent:
+      type: object
+      required: [name, personality]
+      properties:
+        name: { type: string, minLength: 1, maxLength: 50 }
+        personality: { type: string, minLength: 1, maxLength: 2000 }
+        voice: { type: string, default: verse }
+        theme: { type: string, default: default }
+
+    UpdateAgent:
+      type: object
+      properties:
+        name: { type: string, minLength: 1, maxLength: 50 }
+        personality: { type: string, minLength: 1, maxLength: 2000 }
+        voice: { type: string }
+        theme: { type: string }
+
+    Message:
+      type: object
+      properties:
+        id: { type: string }
+        agentId: { type: integer }
+        name: { type: string }
+        text: { type: string }
+        timestamp: { type: integer }
+        isUser: { type: boolean }
+
+    SendMessage:
+      type: object
+      required: [text]
+      properties:
+        text: { type: string, minLength: 1, maxLength: 5000 }
+        from: { type: string, default: api-user }
+
+    Room:
+      type: object
+      properties:
+        id: { type: integer }
+        name: { type: string }
+        agentIds: { type: array, items: { type: integer } }
+        messageCount: { type: integer }
+        createdAt: { type: string, format: date-time }
+
+    CreateRoom:
+      type: object
+      required: [name, agentIds]
+      properties:
+        name: { type: string, minLength: 1, maxLength: 100 }
+        agentIds: { type: array, items: { type: integer }, minItems: 1 }
+
+    RoomMessage:
+      type: object
+      required: [text]
+      properties:
+        text: { type: string, minLength: 1, maxLength: 5000 }
+        from: { type: string, default: api-user }
+        targetAgentId: { type: integer }
+
+    SuccessResponse:
+      type: object
+      properties:
+        data: {}
+        meta:
+          type: object
+          properties:
+            timestamp: { type: string, format: date-time }
+
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: object
+          properties:
+            code: { type: string }
+            message: { type: string }
+            details: { type: array, items: { type: object } }
+
+paths:
+  /api/health:
+    get:
+      tags: [System]
+      summary: Health check
+      description: Returns server health status and dependency checks
+      responses:
+        "200":
+          description: Healthy
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: object
+                    properties:
+                      status: { type: string, enum: [healthy, degraded] }
+                      checks:
+                        type: object
+                        properties:
+                          server: { type: string }
+                          provider: { type: string }
+                          providerType: { type: string }
+                          apiKeyConfigured: { type: boolean }
+                          ttsProvider: { type: string }
+                          uptime: { type: integer }
+        "503":
+          description: Degraded
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /api/config:
+    get:
+      tags: [System]
+      summary: Public configuration
+      description: Returns available providers, features, and current config
+      responses:
+        "200":
+          description: Configuration
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessResponse"
+
+  /api/agents:
+    get:
+      tags: [Agents]
+      summary: List all agents
+      description: Returns all agents with their current status
+      responses:
+        "200":
+          description: List of agents
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Agent"
+    post:
+      tags: [Agents]
+      summary: Create a new agent
+      description: Creates a new agent at runtime with the given personality and config
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateAgent"
+      responses:
+        "201":
+          description: Agent created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: "#/components/schemas/Agent"
+        "400":
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /api/agents/{id}:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema: { type: integer }
+    get:
+      tags: [Agents]
+      summary: Get agent details
+      responses:
+        "200":
+          description: Agent details
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: "#/components/schemas/Agent"
+        "404":
+          description: Agent not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    put:
+      tags: [Agents]
+      summary: Update agent config
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateAgent"
+      responses:
+        "200":
+          description: Agent updated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: "#/components/schemas/Agent"
+        "404":
+          description: Agent not found
+    delete:
+      tags: [Agents]
+      summary: Remove an agent
+      responses:
+        "200":
+          description: Agent deleted
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: object
+                    properties:
+                      deleted: { type: boolean }
+                      id: { type: integer }
+        "404":
+          description: Agent not found
+
+  /api/agents/{id}/message:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema: { type: integer }
+    post:
+      tags: [Agents]
+      summary: Send a message to an agent (SSE stream)
+      description: |
+        Sends a text message to an agent and receives a streamed response via Server-Sent Events.
+        Each event is `data: {"delta": "..."}` followed by a final `data: {"done": true, "fullText": "..."}`.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SendMessage"
+      responses:
+        "200":
+          description: SSE stream of response deltas
+          content:
+            text/event-stream:
+              schema:
+                type: string
+                description: "SSE stream: data: {delta} events, ending with data: {done: true, fullText}"
+
+  /api/agents/{id}/history:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema: { type: integer }
+      - name: limit
+        in: query
+        schema: { type: integer, default: 50, maximum: 100 }
+    get:
+      tags: [Agents]
+      summary: Get conversation history
+      description: Returns message history involving this agent
+      responses:
+        "200":
+          description: Message history
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Message"
+        "404":
+          description: Agent not found
+
+  /api/rooms:
+    get:
+      tags: [Rooms]
+      summary: List active rooms
+      responses:
+        "200":
+          description: List of rooms
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Room"
+    post:
+      tags: [Rooms]
+      summary: Create a new room
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateRoom"
+      responses:
+        "201":
+          description: Room created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: "#/components/schemas/Room"
+        "400":
+          description: Validation error
+
+  /api/rooms/{id}:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema: { type: integer }
+    get:
+      tags: [Rooms]
+      summary: Get room state
+      description: Returns room details including agents and message count
+      responses:
+        "200":
+          description: Room state
+        "404":
+          description: Room not found
+    delete:
+      tags: [Rooms]
+      summary: Close a room
+      responses:
+        "200":
+          description: Room closed
+        "404":
+          description: Room not found
+
+  /api/rooms/{id}/messages:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema: { type: integer }
+      - name: limit
+        in: query
+        schema: { type: integer, default: 50, maximum: 100 }
+    get:
+      tags: [Rooms]
+      summary: Get room message history
+      responses:
+        "200":
+          description: Room messages
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Message"
+        "404":
+          description: Room not found
+
+  /api/rooms/{id}/message:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema: { type: integer }
+    post:
+      tags: [Rooms]
+      summary: Send a message to a room
+      description: Sends a message to a room. Optionally specify targetAgentId to direct to a specific agent.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RoomMessage"
+      responses:
+        "200":
+          description: Agent response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessResponse"
+        "404":
+          description: Room not found
