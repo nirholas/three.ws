@@ -71,6 +71,12 @@ function friendlyError(msg) {
 }
 
 const PUMP_BASE_COST = 0.022; // pump.fun fee + mint rent (estimate)
+// Absolute URL — @solana/web3.js's Connection constructor calls
+// `new URL(endpoint)` to derive a WebSocket URL, which throws on a
+// relative path. We don't use subscriptions, but constructor must not throw.
+const RPC_URL = (typeof window !== 'undefined' && window.location?.origin
+	? window.location.origin
+	: 'https://three.ws') + '/api/solana-rpc';
 const SOLSCAN = (sig, net = 'mainnet') =>
 	`https://solscan.io/tx/${sig}${net === 'devnet' ? '?cluster=devnet' : ''}`;
 const PUMP_URL = (mint) => `https://pump.fun/coin/${mint}`;
@@ -141,6 +147,11 @@ const LP_CSS = `
   padding:0;outline:none;font-family:ui-monospace,monospace;letter-spacing:.05em}
 .lp-isymbol::placeholder{color:rgba(164,240,188,.28)}
 .lp-img-hint{font-size:.6rem;color:rgba(255,255,255,.2);margin-top:.3rem}
+.lp-cap-btn{margin-top:.4rem;align-self:flex-start;padding:.32rem .6rem;border-radius:6px;cursor:pointer;
+  background:rgba(164,240,188,.08);border:1px solid rgba(164,240,188,.2);color:#c8f0d8;
+  font-size:.72rem;transition:all .15s}
+.lp-cap-btn:hover:not([disabled]){background:rgba(164,240,188,.15);border-color:rgba(164,240,188,.35)}
+.lp-cap-btn[disabled]{opacity:.4;cursor:not-allowed}
 
 .lp label{font-size:.72rem;color:rgba(255,255,255,.4);display:block;margin-bottom:.22rem}
 .lp textarea,.lp-number{width:100%;padding:.5rem .7rem;border-radius:8px;outline:none;
@@ -245,7 +256,7 @@ function injectCss() {
 
 const DEMO_ID = '__demo__';
 
-export function mountLaunchPanel(container, { getAvatar, getUser } = {}) {
+export function mountLaunchPanel(container, { getAvatar, getUser, getPreviewViewer } = {}) {
 	injectCss();
 
 	let av = null;
@@ -374,7 +385,7 @@ export function mountLaunchPanel(container, { getAvatar, getUser } = {}) {
 	async function fetchBalance(addr) {
 		try {
 			const { Connection, PublicKey } = await import('https://esm.sh/@solana/web3.js@1.98.4');
-			const conn = new Connection('https://api.mainnet-beta.solana.com', 'confirmed');
+			const conn = new Connection(RPC_URL, 'confirmed');
 			s.solBalance = (await conn.getBalance(new PublicKey(addr))) / 1e9;
 		} catch { s.solBalance = null; }
 		render();
@@ -404,6 +415,38 @@ export function mountLaunchPanel(container, { getAvatar, getUser } = {}) {
 			zone.insertBefore(img, zone.firstChild);
 		};
 		reader.readAsDataURL(file);
+	}
+
+	// Capture the current 3D preview as a square PNG and use it as the token image.
+	// Renders a fresh frame first so toBlob works without preserveDrawingBuffer.
+	async function captureFromViewer() {
+		const viewer = getPreviewViewer?.();
+		const renderer = viewer?.renderer;
+		const scene    = viewer?.scene;
+		const camera   = viewer?.activeCamera || viewer?.camera;
+		const srcCanvas = renderer?.domElement;
+		if (!renderer || !scene || !camera || !srcCanvas) {
+			alert('Preview not ready yet — wait for the avatar to load.');
+			return;
+		}
+		try {
+			renderer.render(scene, camera);
+		} catch {
+			alert('Could not capture preview.');
+			return;
+		}
+		// Crop to a centered square so the token image is balanced.
+		const w = srcCanvas.width, h = srcCanvas.height;
+		const size = Math.min(w, h);
+		const sx = (w - size) >> 1, sy = (h - size) >> 1;
+		const out = document.createElement('canvas');
+		out.width = out.height = Math.min(1024, size);
+		const ctx = out.getContext('2d');
+		ctx.drawImage(srcCanvas, sx, sy, size, size, 0, 0, out.width, out.height);
+		const blob = await new Promise((r) => out.toBlob(r, 'image/png'));
+		if (!blob) { alert('Could not capture preview.'); return; }
+		const file = new File([blob], `avatar-${Date.now()}.png`, { type: 'image/png' });
+		handleImageFile(file);
 	}
 
 	// ── Confirmation polling with timeout ──────────────────────────────────
@@ -498,7 +541,7 @@ export function mountLaunchPanel(container, { getAvatar, getUser } = {}) {
 			// 4 ── Send + poll confirmation (75s timeout)
 			s.phase = 'confirming'; s.phaseLabel = 'Confirming on-chain…'; render();
 
-			const conn = new Connection('https://api.mainnet-beta.solana.com', 'confirmed');
+			const conn = new Connection(RPC_URL, 'confirmed');
 			const sig  = await conn.sendRawTransaction(signed.serialize(), { skipPreflight: false });
 
 			try {
@@ -556,7 +599,7 @@ export function mountLaunchPanel(container, { getAvatar, getUser } = {}) {
 
 	function renderEmpty() {
 		container.innerHTML = `<div class="lp">
-			<div class="lp-empty">Select one of your own avatars from the left panel to launch a token.<br><br>
+			<div class="lp-empty">Pick an avatar on the left to launch a token. Use one of your own, or browse public avatars from the community.<br><br>
 				<a href="/dashboard/avatars" target="_blank" rel="noopener">Upload an avatar →</a>
 			</div></div>`;
 	}
@@ -649,7 +692,7 @@ export function mountLaunchPanel(container, { getAvatar, getUser } = {}) {
 				if (!s.pendingConfirm) return;
 				// One more on-chain check before finalizing
 				const { Connection } = await import('https://esm.sh/@solana/web3.js@1.98.4');
-				const conn = new Connection('https://api.mainnet-beta.solana.com', 'confirmed');
+				const conn = new Connection(RPC_URL, 'confirmed');
 				const { value } = await conn.getSignatureStatuses([s.pendingConfirm.sig], { searchTransactionHistory: true });
 				const st = value?.[0];
 				if (!st) {
@@ -709,11 +752,15 @@ export function mountLaunchPanel(container, { getAvatar, getUser } = {}) {
 			</div>`;
 		}
 
+		const signedIn = !!(getUser?.());
+		const loginHref = `/login?next=${encodeURIComponent(location.pathname + location.search)}`;
+
 		let btnText, btnDis;
-		if (busy)            { btnText = s.phaseLabel || 'Working…'; btnDis = true; }
+		if (busy)              { btnText = s.phaseLabel || 'Working…'; btnDis = true; }
+		else if (!signedIn)    { btnText = 'Sign in to launch'; btnDis = false; }
 		else if (!formValid()) { btnText = 'Fill in name, symbol &amp; description'; btnDis = true; }
 		else if (!s.walletAddr){ btnText = 'Connect wallet to launch'; btnDis = true; }
-		else                  { btnText = `Launch $${esc(s.symbol.trim() || 'TOKEN')}`; btnDis = false; }
+		else                   { btnText = `Launch $${esc(s.symbol.trim() || 'TOKEN')}`; btnDis = false; }
 
 		const imgSrc = s.imagePreviewUrl || av?.thumbnail_url;
 
@@ -729,6 +776,7 @@ export function mountLaunchPanel(container, { getAvatar, getUser } = {}) {
 					<input class="lp-isymbol" id="lp-sym" type="text" maxlength="10"
 						placeholder="SYMBOL" value="${esc(s.symbol)}" ${dis} />
 					<div class="lp-img-hint">Click image to replace · drag &amp; drop</div>
+					${getPreviewViewer ? `<button type="button" class="lp-cap-btn" id="lp-capture" ${dis}>📸 Use 3D view</button>` : ''}
 				</div>
 			</div>
 			<div>
@@ -843,10 +891,17 @@ export function mountLaunchPanel(container, { getAvatar, getUser } = {}) {
 			const v = q('#lp-bps-val'); if (v) v.textContent = `${(s.buybackBps / 100).toFixed(1)}%`;
 		});
 
+		q('#lp-capture')?.addEventListener('click', captureFromViewer);
 		q('#lp-install')?.addEventListener('click', () => window.open('https://phantom.app/', '_blank', 'noopener'));
 		q('#lp-connect')?.addEventListener('click', connectWallet);
 		q('#lp-disc')?.addEventListener('click', disconnectWallet);
-		q('#lp-go')?.addEventListener('click', launch);
+		q('#lp-go')?.addEventListener('click', () => {
+			if (!getUser?.()) {
+				location.href = `/login?next=${encodeURIComponent(location.pathname + location.search)}`;
+				return;
+			}
+			launch();
+		});
 	}
 
 	// ── Public API ──────────────────────────────────────────────────────────

@@ -131,6 +131,7 @@ let launchPanel = null; // set in wireButtons, used in selectAvatar
 const state = {
 	user: null,
 	avatars: [],
+	publicAvatars: [],
 	avatarId: null,
 	type: 'turntable',
 	editingId: null,
@@ -255,33 +256,88 @@ function renderAvatarList() {
 		return;
 	}
 	list.innerHTML = '';
-	for (const a of state.avatars) {
-		const card = document.createElement('button');
-		card.type = 'button';
-		card.className =
-			'avatar-card' +
-			(a.id === state.avatarId ? ' selected' : '') +
-			(a.is_demo ? ' is-demo' : '');
-		card.dataset.id = a.id;
-		card.setAttribute('aria-pressed', String(a.id === state.avatarId));
-		if (a.is_demo) {
-			card.dataset.tooltip =
-				'A built-in demo so you can try the studio without uploading. Sign in and pick one of your own avatars to save and embed.';
-		}
-		const thumb = a.thumbnail_url
-			? `<div class="thumb"><img src="${attr(a.thumbnail_url)}" alt="" loading="lazy"></div>`
-			: `<div class="thumb">◎</div>`;
-		const badge = a.is_demo ? '<span class="badge-demo">Demo</span>' : '';
-		card.innerHTML = `${thumb}<span class="name">${escapeHtml(a.name || a.slug || a.id)}</span>${badge}`;
-		card.addEventListener('click', () => selectAvatar(a.id));
-		list.appendChild(card);
-	}
+	for (const a of state.avatars) appendAvatarCard(list, a);
 	if (!state.user) {
 		const loginHref = `/login?next=${encodeURIComponent(location.pathname + location.search)}`;
 		const note = document.createElement('div');
 		note.className = 'empty';
 		note.innerHTML = `<a href="${attr(loginHref)}">Sign in</a> to use your own avatars.`;
 		list.appendChild(note);
+	}
+}
+
+function appendAvatarCard(list, a) {
+	const card = document.createElement('button');
+	card.type = 'button';
+	card.className =
+		'avatar-card' +
+		(a.id === state.avatarId ? ' selected' : '') +
+		(a.is_demo ? ' is-demo' : '') +
+		(a.is_public_browse ? ' is-public' : '');
+	card.dataset.id = a.id;
+	card.setAttribute('aria-pressed', String(a.id === state.avatarId));
+	if (a.is_demo) {
+		card.dataset.tooltip =
+			'A built-in demo so you can try the studio without uploading. Sign in and pick one of your own avatars to save and embed.';
+	} else if (a.is_public_browse) {
+		card.dataset.tooltip = `Public avatar by another creator — you can embed it in your own widget.`;
+	}
+	const thumb = a.thumbnail_url
+		? `<div class="thumb"><img src="${attr(a.thumbnail_url)}" alt="" loading="lazy"></div>`
+		: `<div class="thumb">◎</div>`;
+	const badge = a.is_demo
+		? '<span class="badge-demo">Demo</span>'
+		: a.is_public_browse
+		? '<span class="badge-public">Public</span>'
+		: '';
+	card.innerHTML = `${thumb}<span class="name">${escapeHtml(a.name || a.slug || a.id)}</span>${badge}`;
+	card.addEventListener('click', () => selectAvatar(a.id));
+	list.appendChild(card);
+}
+
+function renderPublicAvatarList() {
+	const list = $('#public-avatar-list');
+	if (!state.publicAvatars.length) {
+		list.hidden = true;
+		list.innerHTML = '';
+		return;
+	}
+	list.hidden = false;
+	list.innerHTML = '';
+	for (const a of state.publicAvatars) appendAvatarCard(list, a);
+}
+
+async function searchPublicAvatars(q) {
+	const status = $('#public-search-status');
+	const list = $('#public-avatar-list');
+	status.hidden = false;
+	status.textContent = 'Searching…';
+	try {
+		const url = new URL('/api/avatars/public', location.origin);
+		if (q) url.searchParams.set('q', q);
+		url.searchParams.set('limit', '24');
+		const res = await fetch(url, { credentials: 'include' });
+		if (!res.ok) throw new Error(`search: ${res.status}`);
+		const { avatars = [] } = await res.json();
+		// Filter out avatars already in the user's own list (avoid duplicates).
+		const ownIds = new Set(state.avatars.map((a) => a.id));
+		state.publicAvatars = avatars
+			.filter((a) => !ownIds.has(a.id))
+			.map((a) => ({
+				id: a.id,
+				name: a.name,
+				slug: a.slug,
+				model_url: a.model_url,
+				thumbnail_url: a.thumbnail_url || null,
+				is_public_browse: true,
+			}));
+		renderPublicAvatarList();
+		status.textContent = state.publicAvatars.length
+			? `${state.publicAvatars.length} public avatar${state.publicAvatars.length === 1 ? '' : 's'}`
+			: 'No public avatars match that search.';
+	} catch (err) {
+		list.hidden = true;
+		status.textContent = `Couldn't search: ${err.message}`;
 	}
 }
 
@@ -401,9 +457,18 @@ function numberField(name, label, value, { min, max, step }) {
 function selectAvatar(id) {
 	state.avatarId = id;
 	renderAvatarList();
+	renderPublicAvatarList();
 	updatePreview(true);
 	captureBtn.disabled = false;
 	launchPanel?.avatarChanged();
+}
+
+function findAvatar(id) {
+	return (
+		state.avatars.find((a) => a.id === id) ||
+		state.publicAvatars.find((a) => a.id === id) ||
+		null
+	);
 }
 
 function selectByModelUrl(url) {
@@ -516,8 +581,12 @@ function wireButtons() {
 	const formError = $('#form-error');
 
 	launchPanel = mountLaunchPanel(panelLaunch, {
-		getAvatar: () => state.avatars.find((a) => a.id === state.avatarId) || null,
+		getAvatar: () => findAvatar(state.avatarId),
 		getUser:   () => state.user,
+		getPreviewViewer: () => {
+			try { return previewIfr?.contentWindow?.VIEWER?.viewer || null; }
+			catch { return null; }
+		},
 	});
 
 	function switchTab(active) {
@@ -544,6 +613,17 @@ function wireButtons() {
 		btn.addEventListener('click', () => copyFromSelector(btn.dataset.copy, btn));
 	}
 
+	const publicSearch = $('#public-search');
+	const publicSearchBtn = $('#public-search-btn');
+	const runPublicSearch = () => searchPublicAvatars(publicSearch.value.trim());
+	publicSearchBtn.addEventListener('click', runPublicSearch);
+	publicSearch.addEventListener('keydown', (e) => {
+		if (e.key === 'Enter') {
+			e.preventDefault();
+			runPublicSearch();
+		}
+	});
+
 	$('#embed-width').addEventListener('input', _refreshEmbedSnippet);
 	$('#embed-height').addEventListener('input', _refreshEmbedSnippet);
 
@@ -566,7 +646,7 @@ function updatePreview(forceReload) {
 		previewSt.textContent = 'Pick an avatar to preview';
 		return;
 	}
-	const avatar = state.avatars.find((a) => a.id === state.avatarId);
+	const avatar = findAvatar(state.avatarId);
 	const modelUrl = avatar?.model_url || state.preselectedModel;
 	if (!modelUrl) {
 		previewSt.textContent = 'Avatar has no public URL — make it public/unlisted to preview';

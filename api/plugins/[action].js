@@ -135,38 +135,23 @@ async function handleList(req, res, url) {
 	const cursor = url.searchParams.get('cursor') || null;
 	const limit = Math.min(40, Math.max(1, Number(url.searchParams.get('limit')) || 20));
 	const offset = cursor ? Math.max(0, Number(cursor)) : 0;
+	const qLike = q ? `%${q}%` : null;
+	const fetchLimit = limit + 1;
 
-	const sortClause =
-		sort === 'popular'
-			? 'p.install_count DESC, p.created_at DESC'
-			: sort === 'new'
-			? 'p.created_at DESC'
-			: 'p.name ASC';
-
-	const where = ['p.is_public = true', 'p.deleted_at IS NULL'];
-	const params = [];
-	if (category) {
-		params.push(category);
-		where.push(`p.category = $${params.length}`);
-	}
-	if (q) {
-		params.push(`%${q}%`);
-		where.push(`(p.name ILIKE $${params.length} OR p.description ILIKE $${params.length})`);
-	}
-	params.push(limit + 1);
-	const limitIdx = params.length;
-	params.push(offset);
-	const offsetIdx = params.length;
-
-	const text = `
+	const rows = await sql`
 		SELECT p.*, u.display_name AS author_display_name
 		FROM plugins p
 		LEFT JOIN users u ON u.id = p.author_id
-		WHERE ${where.join(' AND ')}
-		ORDER BY ${sortClause}
-		LIMIT $${limitIdx} OFFSET $${offsetIdx}
+		WHERE p.is_public = true
+		  AND p.deleted_at IS NULL
+		  AND (${category}::text IS NULL OR p.category = ${category})
+		  AND (${qLike}::text IS NULL OR p.name ILIKE ${qLike} OR p.description ILIKE ${qLike})
+		ORDER BY
+			CASE WHEN ${sort} = 'popular' THEN p.install_count END DESC NULLS LAST,
+			CASE WHEN ${sort} = 'az' THEN p.name END ASC NULLS LAST,
+			p.created_at DESC
+		LIMIT ${fetchLimit} OFFSET ${offset}
 	`;
-	const rows = await sql(text, params);
 
 	const hasMore = rows.length > limit;
 	const items = rows.slice(0, limit).map(toPlugin);

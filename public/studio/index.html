@@ -105,8 +105,22 @@
 					<h2 data-tooltip="The 3D model your widget will display. We've pre-loaded a demo agent so you can try the studio right away — sign in to use your own.">
 						1. Pick avatar
 					</h2>
-					<p class="note">To see your avatar here, make it public or unlisted in your <a href="/dashboard/avatars">avatar dashboard</a>.</p>
+					<p class="note">To see your avatar here, make it public or unlisted in your <a href="/dashboard/avatars">avatar dashboard</a>. Or browse <a href="/discover" target="_blank" rel="noopener">community avatars</a>.</p>
 					<div class="avatar-list" id="avatar-list" aria-busy="true"></div>
+					<div class="browse-public">
+						<div class="browse-public-row">
+							<input
+								type="search"
+								id="public-search"
+								placeholder="Search public avatars…"
+								autocomplete="off"
+								spellcheck="false"
+							/>
+							<button class="btn-ghost btn-sm" id="public-search-btn" type="button">Browse</button>
+						</div>
+						<div class="avatar-list" id="public-avatar-list" hidden></div>
+						<div class="muted public-search-status" id="public-search-status" hidden></div>
+					</div>
 				</div>
 				<div class="panel">
 					<h2 data-tooltip="Each widget type is a different layout — Turntable for hero banners, Talking Agent for chat, Passport for on-chain identity, etc. Click to switch and watch the preview update.">

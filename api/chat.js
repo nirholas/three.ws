@@ -83,6 +83,7 @@ const contextSchema = z
 const chatBody = z.object({
 	message: z.string().trim().min(1).max(4000),
 	context: contextSchema,
+	system_prompt: z.string().trim().min(1).max(2000).optional(),
 	agentId: z.string().uuid().optional(),
 	provider: z.enum(['anthropic', 'openrouter', 'groq', 'openai']).optional(),
 	model: z.string().min(1).max(120).optional(),
@@ -247,6 +248,7 @@ export default wrap(async (req, res) => {
 		`;
 		if (agentRow?.persona_prompt) personaPrompt = agentRow.persona_prompt;
 	}
+	if (!personaPrompt && body.system_prompt) personaPrompt = body.system_prompt;
 
 	const systemPrompt = buildSystemPrompt(body.context, personaPrompt);
 	const history = body.history.map((m) => ({ role: m.role, content: m.content }));
