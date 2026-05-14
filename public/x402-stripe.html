@@ -1,0 +1,471 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>x402 — payments, drop-in</title>
+<meta name="description" content="The simplest way to accept x402 stablecoin payments. One <script> tag, a clean modal, on-chain settlement on Base and Solana." />
+<meta name="theme-color" content="#0a0b10" />
+<meta property="og:title" content="x402 — payments, drop-in" />
+<meta property="og:description" content="One <script> tag. Clean modal. On-chain x402 settlement on Base and Solana." />
+<meta property="og:type" content="website" />
+<style>
+	:root {
+		--bg: #0a0b10;
+		--bg-2: #0f1119;
+		--panel: #14161f;
+		--panel-2: #1a1d29;
+		--border: #232636;
+		--border-strong: #2e3447;
+		--text: #f0f2f8;
+		--muted: #8a90a8;
+		--muted-2: #6b7088;
+		--accent: #ffffff;
+		--accent-blue: #60a5fa;
+		--accent-green: #4ade80;
+		--mono: ui-monospace, "JetBrains Mono", "Fira Code", Menlo, monospace;
+	}
+	* { box-sizing: border-box; }
+	html, body { margin: 0; padding: 0; background: var(--bg); color: var(--text); }
+	body {
+		font-family: -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+		font-feature-settings: 'cv11' 1, 'ss03' 1;
+		-webkit-font-smoothing: antialiased;
+		line-height: 1.5;
+	}
+	a { color: var(--accent-blue); text-decoration: none; }
+	a:hover { color: #93c5fd; }
+
+	.wrap { max-width: 1080px; margin: 0 auto; padding: 0 28px; }
+	@media (max-width: 640px) { .wrap { padding: 0 18px; } }
+
+	nav {
+		padding: 22px 0;
+		display: flex; align-items: center; justify-content: space-between;
+	}
+	nav .brand { display: flex; align-items: center; gap: 10px; font-weight: 700; font-size: 15px; letter-spacing: -0.01em; }
+	nav .brand .dot {
+		width: 24px; height: 24px;
+		background: conic-gradient(from 200deg, #ffffff, #60a5fa, #ffffff);
+		border-radius: 7px;
+	}
+	nav .links { display: flex; gap: 22px; font-size: 13px; color: var(--muted); }
+	nav .links a { color: var(--muted); }
+	nav .links a:hover { color: var(--text); }
+	@media (max-width: 540px) { nav .links { display: none; } }
+
+	/* Hero */
+	.hero { padding: 80px 0 64px; }
+	.hero h1 {
+		font-size: clamp(40px, 6vw, 64px); line-height: 1.04;
+		margin: 0 0 22px; font-weight: 800; letter-spacing: -0.03em;
+		max-width: 18ch;
+	}
+	.hero h1 .grad {
+		background: linear-gradient(120deg, #ffffff 30%, #60a5fa 60%, #4ade80 90%);
+		-webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;
+	}
+	.hero p.lede {
+		font-size: 19px; color: var(--muted); margin: 0 0 32px;
+		max-width: 60ch; line-height: 1.55;
+	}
+	.hero .cta-row { display: flex; gap: 12px; flex-wrap: wrap; }
+	.btn {
+		display: inline-flex; align-items: center; gap: 8px;
+		padding: 13px 22px;
+		background: #ffffff; color: #0a0b10;
+		border: none; border-radius: 11px;
+		font-size: 14px; font-weight: 600; font-family: inherit;
+		cursor: pointer; letter-spacing: -0.005em;
+		text-decoration: none;
+		transition: transform 0.06s, background 0.12s;
+	}
+	.btn:hover { background: #e7e9ee; color: #0a0b10; }
+	.btn:active { transform: translateY(1px); }
+	.btn.ghost {
+		background: transparent; color: var(--text);
+		border: 1px solid var(--border-strong);
+	}
+	.btn.ghost:hover { background: var(--panel); color: var(--text); }
+
+	/* Network badges row */
+	.networks {
+		display: flex; gap: 18px; flex-wrap: wrap; align-items: center;
+		margin-top: 40px;
+		padding-top: 24px; border-top: 1px solid var(--border);
+		font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em;
+	}
+	.networks .pill {
+		display: inline-flex; align-items: center; gap: 8px;
+		padding: 7px 13px; border-radius: 99px;
+		background: var(--panel); border: 1px solid var(--border);
+		font-family: var(--mono); font-size: 11px; color: var(--text);
+		text-transform: none; letter-spacing: 0;
+	}
+	.networks .pill .led {
+		width: 6px; height: 6px; border-radius: 50%;
+		background: var(--accent-green); box-shadow: 0 0 6px var(--accent-green);
+	}
+
+	/* Section heading */
+	section { padding: 56px 0; }
+	section.alt { background: linear-gradient(180deg, transparent, var(--bg-2)); }
+	section h2 {
+		font-size: 32px; font-weight: 700; letter-spacing: -0.02em;
+		margin: 0 0 14px;
+	}
+	section h2 .num { color: var(--muted-2); font-weight: 500; margin-right: 12px; font-variant-numeric: tabular-nums; }
+	section p.sub {
+		font-size: 16px; color: var(--muted); margin: 0 0 32px; max-width: 60ch;
+	}
+
+	/* Snippet */
+	.snippet {
+		background: #0d0f15; border: 1px solid var(--border); border-radius: 14px;
+		padding: 18px 22px;
+		font-family: var(--mono); font-size: 13px; line-height: 1.65;
+		color: #c8ccd4; white-space: pre;
+		overflow-x: auto;
+		position: relative;
+	}
+	.snippet .k { color: #a78bfa; }
+	.snippet .s { color: #6ee7b7; }
+	.snippet .n { color: var(--muted); }
+	.snippet .a { color: #fbbf24; }
+	.snippet .c { color: var(--muted-2); }
+	.snippet .copy-btn {
+		position: absolute; top: 10px; right: 10px;
+		background: var(--panel-2); border: 1px solid var(--border);
+		color: var(--muted); font-size: 11px;
+		padding: 5px 10px; border-radius: 6px; cursor: pointer;
+		font-family: inherit;
+	}
+	.snippet .copy-btn:hover { color: var(--text); border-color: var(--border-strong); }
+	.snippet .copy-btn.copied { color: var(--accent-green); border-color: var(--accent-green); }
+
+	/* SKU grid */
+	.sku-grid {
+		display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+		gap: 14px;
+	}
+	.sku-card {
+		background: var(--panel); border: 1px solid var(--border); border-radius: 14px;
+		padding: 22px;
+		display: flex; flex-direction: column; gap: 12px;
+		transition: border-color 0.15s, transform 0.08s;
+	}
+	.sku-card:hover { border-color: var(--border-strong); }
+	.sku-card .head {
+		display: flex; align-items: flex-start; justify-content: space-between; gap: 12px;
+	}
+	.sku-card .title { font-weight: 700; font-size: 17px; letter-spacing: -0.01em; }
+	.sku-card .price {
+		font-family: var(--mono); font-size: 13px;
+		background: var(--bg-2); border: 1px solid var(--border);
+		padding: 4px 10px; border-radius: 6px; color: var(--accent-green);
+		flex: 0 0 auto;
+	}
+	.sku-card .desc {
+		color: var(--muted); font-size: 13px; line-height: 1.55;
+		flex: 1; min-height: 56px;
+	}
+	.sku-card .net {
+		font-family: var(--mono); font-size: 11px; color: var(--muted-2);
+		display: flex; gap: 10px;
+	}
+	.sku-card .buy {
+		padding: 12px 16px;
+		background: #ffffff; color: #0a0b10;
+		border: none; border-radius: 10px;
+		font-size: 14px; font-weight: 600; font-family: inherit;
+		cursor: pointer; letter-spacing: -0.005em;
+		transition: background 0.12s, transform 0.05s;
+	}
+	.sku-card .buy:hover { background: #e7e9ee; }
+	.sku-card .buy:active { transform: translateY(1px); }
+
+	.result-panel {
+		margin-top: 12px;
+		display: none;
+		background: var(--bg-2); border: 1px solid var(--border); border-radius: 10px;
+		padding: 12px 14px;
+		font-family: var(--mono); font-size: 12px; line-height: 1.55;
+		color: var(--text); max-height: 220px; overflow: auto;
+		white-space: pre-wrap; word-break: break-word;
+	}
+	.result-panel.show { display: block; }
+	.result-panel .ok { color: var(--accent-green); font-weight: 600; }
+	.result-panel .err { color: #fca5a5; font-weight: 600; }
+
+	/* Steps */
+	.steps {
+		display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px;
+	}
+	@media (max-width: 740px) { .steps { grid-template-columns: 1fr; } }
+	.step-card {
+		background: var(--panel); border: 1px solid var(--border); border-radius: 14px;
+		padding: 22px;
+	}
+	.step-card .num {
+		display: inline-flex; width: 28px; height: 28px;
+		align-items: center; justify-content: center;
+		background: linear-gradient(135deg, #ffffff, #60a5fa); color: #0a0b10;
+		border-radius: 8px; font-weight: 700; font-size: 13px;
+		margin-bottom: 14px;
+	}
+	.step-card h3 { margin: 0 0 6px; font-size: 16px; letter-spacing: -0.01em; }
+	.step-card p { margin: 0; color: var(--muted); font-size: 13px; line-height: 1.55; }
+
+	/* Footer */
+	footer {
+		border-top: 1px solid var(--border);
+		padding: 32px 0 48px;
+		display: flex; align-items: center; justify-content: space-between;
+		font-size: 12px; color: var(--muted);
+	}
+	footer .left { display: flex; align-items: center; gap: 10px; }
+	footer .dot {
+		width: 18px; height: 18px;
+		background: conic-gradient(from 200deg, #ffffff, #60a5fa, #ffffff);
+		border-radius: 5px;
+	}
+	footer .right { display: flex; gap: 18px; }
+	footer .right a { color: var(--muted); }
+	footer .right a:hover { color: var(--text); }
+
+	.toast {
+		position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%);
+		background: var(--panel); border: 1px solid var(--border);
+		padding: 12px 18px; border-radius: 10px;
+		font-size: 13px;
+		box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+		display: none;
+	}
+	.toast.show { display: block; }
+</style>
+</head>
+<body>
+
+<div class="wrap">
+	<nav>
+		<a class="brand" href="/x402">
+			<div class="dot"></div>
+			<span>x402</span>
+		</a>
+		<div class="links">
+			<a href="#install">Install</a>
+			<a href="#demo">Demo</a>
+			<a href="/docs/x402" target="_blank">Docs</a>
+			<a href="https://www.x402scan.com/server/17cbd874-52ac-4920-a020-b22ff2489a07" target="_blank">Live activity ↗</a>
+		</div>
+	</nav>
+
+	<section class="hero">
+		<h1>x402 payments,<br /><span class="grad">drop-in.</span></h1>
+		<p class="lede">
+			One <code style="background:var(--panel);padding:2px 6px;border-radius:4px;font-family:var(--mono);font-size:0.9em;">&lt;script&gt;</code> tag. A clean modal. Stablecoin payments on Base and Solana, settled on-chain in seconds. No keys, no signup, no SDK to learn. Built on the <a href="https://x402.org" target="_blank">x402 protocol</a>.
+		</p>
+		<div class="cta-row">
+			<a class="btn" href="#install">Get the snippet</a>
+			<a class="btn ghost" href="#demo">Try a live payment</a>
+		</div>
+		<div class="networks">
+			<span>Settles on</span>
+			<span class="pill"><span class="led"></span>Base mainnet · USDC</span>
+			<span class="pill"><span class="led"></span>Solana mainnet · USDC</span>
+		</div>
+	</section>
+
+	<section id="install">
+		<h2><span class="num">01</span>Install</h2>
+		<p class="sub">Paste one line into your <code style="font-family:var(--mono);">&lt;head&gt;</code>. Then add <code style="font-family:var(--mono);">data-x402-endpoint</code> to any button. That's it.</p>
+		<div class="snippet" id="installSnippet"><button class="copy-btn" data-copy="installSnippetCode">Copy</button><span id="installSnippetCode"><span class="c">&lt;!-- 1. Load once --&gt;</span>
+<span class="k">&lt;script</span> <span class="a">type</span>=<span class="s">"module"</span> <span class="a">src</span>=<span class="s">"https://3d.irish/x402.js"</span><span class="k">&gt;&lt;/script&gt;</span>
+
+<span class="c">&lt;!-- 2. Add a button to any 402-paid endpoint --&gt;</span>
+<span class="k">&lt;button</span>
+  <span class="a">data-x402-endpoint</span>=<span class="s">"https://three.ws/api/x402/symbol-availability?ticker=AGENT"</span>
+  <span class="a">data-x402-merchant</span>=<span class="s">"three.ws"</span>
+  <span class="a">data-x402-action</span>=<span class="s">"Check ticker availability"</span><span class="k">&gt;</span>
+  Check AGENT availability · $0.001 USDC
+<span class="k">&lt;/button&gt;</span></span></div>
+	</section>
+
+	<section id="how" class="alt">
+		<h2><span class="num">02</span>How it works</h2>
+		<p class="sub">x402 is HTTP 402 Payment Required, with a manifest. The drop-in handles the entire dance — you never see it.</p>
+		<div class="steps">
+			<div class="step-card">
+				<div class="num">1</div>
+				<h3>Buyer clicks</h3>
+				<p>The modal opens. We probe your endpoint, parse the 402 challenge, and show the price + network.</p>
+			</div>
+			<div class="step-card">
+				<div class="num">2</div>
+				<h3>Wallet signs</h3>
+				<p>Phantom for Solana, MetaMask/Coinbase for Base. We build the SPL transfer or EIP-3009 authorization. One click.</p>
+			</div>
+			<div class="step-card">
+				<div class="num">3</div>
+				<h3>Facilitator settles</h3>
+				<p>PayAI or Coinbase CDP verifies and broadcasts the tx on-chain. Your endpoint runs and returns the result.</p>
+			</div>
+		</div>
+	</section>
+
+	<section id="demo">
+		<h2><span class="num">03</span>Try it live</h2>
+		<p class="sub">These are real paid endpoints. Pay $0.001 USDC with Phantom or your browser wallet and see the response stream back.</p>
+		<div class="sku-grid">
+
+			<div class="sku-card">
+				<div class="head">
+					<div class="title">Symbol availability</div>
+					<div class="price">$0.001</div>
+				</div>
+				<div class="desc">Check if a token ticker is already trading across Solana and Base. Returns exact matches, fuzzy lookalikes, and a register/skip recommendation.</div>
+				<div class="net">Base · Solana</div>
+				<button class="buy"
+					data-x402-endpoint="/api/x402/symbol-availability?ticker=AGENT&amp;network=mainnet"
+					data-x402-merchant="three.ws"
+					data-x402-action="Check ticker · AGENT"
+					data-result-target="r-symbol">
+					Buy & run · check AGENT
+				</button>
+				<div class="result-panel" id="r-symbol"></div>
+			</div>
+
+			<div class="sku-card">
+				<div class="head">
+					<div class="title">Agent reputation</div>
+					<div class="price">$0.001</div>
+				</div>
+				<div class="desc">Pull a multi-source reputation report for any on-chain agent: posting cadence, follower deltas, on-chain activity, x402 settlement stats.</div>
+				<div class="net">Base · Solana</div>
+				<button class="buy"
+					data-x402-endpoint="/api/x402/agent-reputation?address=BUrwd1nK6tFeeJMyzRHDo6AuVbnSfUULfvwq21X93nSN&amp;chain=solana"
+					data-x402-merchant="three.ws"
+					data-x402-action="Reputation report"
+					data-result-target="r-rep">
+					Buy & run · BUrwd1nK…3nSN
+				</button>
+				<div class="result-panel" id="r-rep"></div>
+			</div>
+
+			<div class="sku-card">
+				<div class="head">
+					<div class="title">Pump.fun agent audit</div>
+					<div class="price">$0.001</div>
+				</div>
+				<div class="desc">Forensic on-chain audit of a Pump.fun launch — supply curves, holder concentration, dev-wallet history, and risk flags.</div>
+				<div class="net">Base · Solana</div>
+				<button class="buy"
+					data-x402-endpoint="/api/x402/pump-agent-audit?mint=A4cFRDmiBwY3Hw2bAErr8RTfQNQ8wupTzcXocnLEpump"
+					data-x402-merchant="three.ws"
+					data-x402-action="Pump.fun audit"
+					data-result-target="r-pump">
+					Buy & run · audit launch
+				</button>
+				<div class="result-panel" id="r-pump"></div>
+			</div>
+
+			<div class="sku-card">
+				<div class="head">
+					<div class="title">Onchain identity verify</div>
+					<div class="price">$0.001</div>
+				</div>
+				<div class="desc">Verify an address claim against ENS, SNS, ERC-8004 attestations, and Solana SAS credentials. Returns linked identities + provenance.</div>
+				<div class="net">Base · Solana</div>
+				<button class="buy"
+					data-x402-endpoint="/api/x402/onchain-identity-verify?address=vitalik.eth"
+					data-x402-merchant="three.ws"
+					data-x402-action="Verify identity · vitalik.eth"
+					data-result-target="r-id">
+					Buy & run · verify vitalik.eth
+				</button>
+				<div class="result-panel" id="r-id"></div>
+			</div>
+
+		</div>
+	</section>
+
+	<section id="programmatic" class="alt">
+		<h2><span class="num">04</span>Or call it programmatically</h2>
+		<p class="sub">Same modal, called from JavaScript. The promise resolves with the API result and a settlement receipt.</p>
+		<div class="snippet" id="progSnippet"><button class="copy-btn" data-copy="progSnippetCode">Copy</button><span id="progSnippetCode"><span class="k">const</span> { result, payment } = <span class="k">await</span> window.X402.<span class="a">pay</span>({
+  <span class="a">endpoint</span>: <span class="s">'/api/x402/symbol-availability'</span>,
+  <span class="a">body</span>: { <span class="a">ticker</span>: <span class="s">'AGENT'</span> },
+  <span class="a">merchant</span>: <span class="s">'Acme'</span>,
+  <span class="a">action</span>: <span class="s">'Check ticker'</span>,
+});
+
+<span class="c">// payment.transaction → on-chain tx hash</span>
+<span class="c">// payment.payer      → buyer wallet</span>
+<span class="c">// result             → your endpoint's JSON response</span></span></div>
+	</section>
+
+	<footer>
+		<div class="left">
+			<div class="dot"></div>
+			<span>x402 · operated by three.ws</span>
+		</div>
+		<div class="right">
+			<a href="/docs/x402" target="_blank">Docs</a>
+			<a href="https://x402.org" target="_blank">Protocol ↗</a>
+			<a href="https://www.x402scan.com" target="_blank">x402scan ↗</a>
+		</div>
+	</footer>
+</div>
+
+<div class="toast" id="toast">copied</div>
+
+<script type="module" src="/x402.js"></script>
+<script>
+	// Copy buttons
+	document.querySelectorAll('.copy-btn').forEach((btn) => {
+		btn.addEventListener('click', async () => {
+			const id = btn.dataset.copy;
+			const el = document.getElementById(id);
+			if (!el) return;
+			try {
+				await navigator.clipboard.writeText(el.textContent || '');
+				btn.classList.add('copied');
+				btn.textContent = '✓ Copied';
+				const toast = document.getElementById('toast');
+				toast.classList.add('show');
+				setTimeout(() => toast.classList.remove('show'), 1600);
+				setTimeout(() => {
+					btn.classList.remove('copied');
+					btn.textContent = 'Copy';
+				}, 1800);
+			} catch (e) {
+				btn.textContent = 'copy failed';
+			}
+		});
+	});
+
+	// Wire result callbacks on every demo button
+	document.querySelectorAll('[data-result-target]').forEach((btn) => {
+		const targetId = btn.dataset.resultTarget;
+		const panel = document.getElementById(targetId);
+		btn.addEventListener('x402:result', (e) => {
+			const { result, payment } = e.detail;
+			const explorer = payment?.transaction
+				? (payment.network?.startsWith('solana') ? `https://solscan.io/tx/${payment.transaction}` : `https://basescan.org/tx/${payment.transaction}`)
+				: null;
+			panel.innerHTML = `<span class="ok">✓ Paid</span> · network=${payment?.network || '?'} · ${explorer ? `<a href="${explorer}" target="_blank">tx ↗</a>` : ''}\n\n${escapeHtml(JSON.stringify(result, null, 2).slice(0, 2400))}`;
+			panel.classList.add('show');
+		});
+		btn.addEventListener('x402:error', (e) => {
+			panel.innerHTML = `<span class="err">✗ Error</span> · ${escapeHtml(e.detail?.error || 'unknown')}`;
+			panel.classList.add('show');
+		});
+	});
+
+	function escapeHtml(s) {
+		return String(s == null ? '' : s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+	}
+</script>
+
+</body>
+</html>

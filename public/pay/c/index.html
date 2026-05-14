@@ -1,0 +1,351 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Checkout · x402</title>
+<meta name="description" content="Hosted x402 payment checkout. Pay with USDC on Base or Solana." />
+<meta name="theme-color" content="#0a0b10" />
+<style>
+	:root {
+		--bg: #fafbfc;
+		--text: #0d0f15;
+		--muted: #5a6378;
+		--muted-2: #8a90a8;
+		--border: #e2e5ec;
+		--panel: #ffffff;
+		--accent: #0a84ff;
+		--mono: ui-monospace, "JetBrains Mono", "Fira Code", Menlo, monospace;
+	}
+	@media (prefers-color-scheme: dark) {
+		:root {
+			--bg: #0a0b10;
+			--text: #f0f2f8;
+			--muted: #b0b6cc;
+			--muted-2: #6b7088;
+			--border: #232636;
+			--panel: #14161f;
+		}
+	}
+	* { box-sizing: border-box; }
+	html, body { margin: 0; padding: 0; background: var(--bg); color: var(--text); min-height: 100%; }
+	body {
+		font-family: -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+		-webkit-font-smoothing: antialiased;
+		line-height: 1.55;
+		display: flex; flex-direction: column; min-height: 100dvh;
+	}
+	.wrap {
+		flex: 1;
+		max-width: 520px; margin: 0 auto; padding: 40px 24px;
+		width: 100%;
+		display: flex; flex-direction: column; gap: 28px;
+	}
+	.card {
+		background: var(--panel); border: 1px solid var(--border); border-radius: 18px;
+		padding: 32px;
+		box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04), 0 8px 32px rgba(0, 0, 0, 0.04);
+	}
+	.head { display: flex; align-items: center; gap: 14px; margin-bottom: 24px; }
+	.logo {
+		width: 56px; height: 56px; flex: 0 0 auto;
+		border-radius: 14px;
+		background: linear-gradient(135deg, var(--accent), #60a5fa);
+		display: flex; align-items: center; justify-content: center;
+		font-weight: 700; font-size: 22px; color: #fff;
+		overflow: hidden;
+	}
+	.logo img { width: 100%; height: 100%; object-fit: cover; }
+	.head .who { min-width: 0; flex: 1; }
+	.head .merchant {
+		font-size: 13px; font-weight: 600; color: var(--muted);
+		letter-spacing: 0.02em; text-transform: uppercase;
+		margin-bottom: 4px;
+		white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+	}
+	.head .action { font-size: 22px; font-weight: 700; letter-spacing: -0.015em; }
+
+	.description {
+		color: var(--muted); font-size: 14px;
+		padding: 16px 0; border-top: 1px solid var(--border);
+		margin-top: 8px;
+		white-space: pre-wrap;
+	}
+
+	.pay-btn {
+		width: 100%; padding: 16px;
+		background: #0d0f15; color: #fff;
+		border: none; border-radius: 12px;
+		font-size: 15px; font-weight: 700; font-family: inherit;
+		cursor: pointer; letter-spacing: -0.005em;
+		transition: background 0.12s, transform 0.05s;
+		margin-top: 8px;
+	}
+	@media (prefers-color-scheme: dark) {
+		.pay-btn { background: #ffffff; color: #0d0f15; }
+		.pay-btn:hover:not(:disabled) { background: #e7e9ee; }
+	}
+	.pay-btn:hover:not(:disabled) { background: #1a1d28; }
+	.pay-btn:active:not(:disabled) { transform: translateY(1px); }
+	.pay-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+	.meta-row {
+		display: flex; justify-content: space-between; gap: 12px;
+		padding: 10px 0; font-size: 13px;
+	}
+	.meta-row + .meta-row { border-top: 1px solid var(--border); }
+	.meta-row .k { color: var(--muted); }
+	.meta-row .v { color: var(--text); font-family: var(--mono); font-size: 12px; }
+
+	.error {
+		padding: 14px; border-radius: 10px;
+		background: #fef2f2; border: 1px solid #fecaca; color: #b91c1c;
+		font-size: 13px;
+	}
+
+	.result {
+		margin-top: 16px;
+		padding: 14px; border-radius: 12px;
+		background: linear-gradient(180deg, #f0fdf4 0%, transparent 100%);
+		border: 1px solid #bbf7d0;
+		font-size: 13px;
+	}
+	@media (prefers-color-scheme: dark) {
+		.result { background: linear-gradient(180deg, #0b1f17 0%, transparent 100%); border-color: #14532d; }
+	}
+	.result h3 {
+		margin: 0 0 8px; font-size: 12px; font-weight: 700;
+		text-transform: uppercase; letter-spacing: 0.06em; color: #15803d;
+	}
+	@media (prefers-color-scheme: dark) { .result h3 { color: #4ade80; } }
+	.result pre {
+		margin: 8px 0 0; padding: 10px; border-radius: 8px;
+		background: var(--bg); border: 1px solid var(--border);
+		font-family: var(--mono); font-size: 12px; line-height: 1.5;
+		max-height: 280px; overflow: auto;
+		white-space: pre-wrap; word-break: break-word;
+	}
+
+	footer {
+		padding: 14px 24px 22px;
+		font-size: 11px; color: var(--muted-2);
+		text-align: center;
+	}
+	footer a { color: var(--muted); text-decoration: none; font-weight: 600; }
+	footer a:hover { color: var(--text); }
+
+	.skeleton {
+		background: linear-gradient(90deg, transparent, rgba(255,255,255,0.06), transparent);
+		background-size: 200% 100%;
+		animation: shimmer 1.4s linear infinite;
+	}
+	@keyframes shimmer {
+		from { background-position: 200% 0; }
+		to { background-position: -200% 0; }
+	}
+	@media (prefers-color-scheme: light) {
+		.skeleton { background: linear-gradient(90deg, transparent, rgba(0,0,0,0.06), transparent); background-size: 200% 100%; }
+	}
+</style>
+</head>
+<body>
+
+<div class="wrap">
+	<div class="card" id="card">
+		<div class="head">
+			<div class="logo" id="logo">·</div>
+			<div class="who">
+				<div class="merchant" id="merchantName">Loading…</div>
+				<div class="action" id="actionName">&nbsp;</div>
+			</div>
+		</div>
+		<div class="description" id="description" style="display:none"></div>
+		<div id="meta"></div>
+		<button class="pay-btn" id="payBtn" disabled>Loading…</button>
+		<div id="result"></div>
+	</div>
+</div>
+
+<footer>
+	Secured by x402 · on-chain settlement · <a href="/x402" target="_blank">about</a>
+</footer>
+
+<script type="module" src="/x402.js"></script>
+<script>
+	const SLUG = location.pathname.replace(/^\/pay\/c\//, '').replace(/\/$/, '');
+	const $ = (id) => document.getElementById(id);
+
+	function escapeHtml(s) {
+		return String(s == null ? '' : s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+	}
+
+	async function loadSku() {
+		if (!SLUG) {
+			renderError('No checkout link supplied. URL should be /pay/c/<slug>.');
+			return;
+		}
+		try {
+			const res = await fetch(`/api/x402-skus?slug=${encodeURIComponent(SLUG)}`);
+			if (!res.ok) {
+				const e = await res.json().catch(() => ({}));
+				throw new Error(e.error_description || `Checkout "${SLUG}" not found (${res.status}).`);
+			}
+			const { sku } = await res.json();
+			renderSku(sku);
+			await loadPrice(sku);
+		} catch (err) {
+			renderError(err.message);
+		}
+	}
+
+	function renderSku(sku) {
+		document.title = `${sku.merchant_name} · ${sku.action_name} — x402 checkout`;
+		$('merchantName').textContent = sku.merchant_name;
+		$('actionName').textContent = sku.action_name;
+		if (sku.logo_url) $('logo').innerHTML = `<img src="${escapeHtml(sku.logo_url)}" alt="" onerror="this.replaceWith(document.createTextNode('${escapeHtml(sku.merchant_name[0] || '·')}'))">`;
+		else $('logo').textContent = sku.merchant_name[0] || '·';
+		if (sku.accent_color) {
+			document.documentElement.style.setProperty('--accent', sku.accent_color);
+			$('logo').style.background = `linear-gradient(135deg, ${sku.accent_color}, ${sku.accent_color}cc)`;
+		}
+		if (sku.description) {
+			$('description').textContent = sku.description;
+			$('description').style.display = '';
+		}
+		const payBtn = $('payBtn');
+		payBtn.textContent = `Pay · ${sku.action_name}`;
+		payBtn.disabled = false;
+		payBtn.addEventListener('click', () => runCheckout(sku));
+	}
+
+	async function loadPrice(sku) {
+		// Probe the target endpoint to read the price + supported networks for
+		// display, so the buyer sees the cost before clicking Pay.
+		try {
+			const init = {
+				method: sku.target_method,
+				body: sku.target_body ? JSON.stringify(sku.target_body) : undefined,
+				headers: sku.target_body ? { 'content-type': 'application/json' } : undefined,
+			};
+			const res = await fetch(sku.target_endpoint, init);
+			if (res.status !== 402) {
+				renderMeta(`<div class="error">This SKU's endpoint did not return 402 (got ${res.status}). The endpoint may have changed.</div>`);
+				return;
+			}
+			const challenge = await res.json();
+			const accepts = challenge?.accepts || [];
+			renderMeta(metaHtml(accepts));
+		} catch (err) {
+			renderMeta(`<div class="error">Couldn't reach the endpoint: ${escapeHtml(err.message)}</div>`);
+		}
+	}
+
+	function metaHtml(accepts) {
+		const networks = accepts.map((a) => {
+			const decimals = a.extra?.decimals ?? 6;
+			const amount = Number(a.amount) / 10 ** decimals;
+			const formatted = amount < 0.01 ? amount.toFixed(6).replace(/0+$/, '').replace(/\.$/, '') : amount < 1 ? amount.toFixed(4).replace(/0+$/, '').replace(/\.$/, '') : amount.toFixed(2);
+			const netLabel = a.network.startsWith('solana') ? 'Solana' : a.network === 'eip155:8453' ? 'Base' : a.network === 'eip155:42161' ? 'Arbitrum' : a.network;
+			return `<div class="meta-row"><span class="k">${escapeHtml(netLabel)}</span><span class="v">${formatted} USDC</span></div>`;
+		}).join('');
+		return networks;
+	}
+
+	function renderMeta(html) {
+		$('meta').innerHTML = html;
+	}
+
+	function renderError(msg) {
+		$('merchantName').textContent = 'Checkout unavailable';
+		$('actionName').textContent = ' ';
+		$('logo').textContent = '!';
+		$('meta').innerHTML = `<div class="error">${escapeHtml(msg)}</div>`;
+		$('payBtn').style.display = 'none';
+	}
+
+	async function runCheckout(sku) {
+		if (!window.X402?.pay) {
+			renderError('Payment script failed to load. Refresh the page.');
+			return;
+		}
+		try {
+			const out = await window.X402.pay({
+				endpoint: sku.target_endpoint,
+				method: sku.target_method,
+				body: sku.target_body,
+				merchant: sku.merchant_name,
+				action: sku.action_name,
+			});
+			recordCall(sku, out, 200);
+			if (sku.success_url) {
+				const sep = sku.success_url.includes('?') ? '&' : '?';
+				location.href = `${sku.success_url}${sep}x402_tx=${encodeURIComponent(out.payment?.transaction || '')}&x402_payer=${encodeURIComponent(out.payment?.payer || '')}`;
+				return;
+			}
+			renderResult(out);
+		} catch (err) {
+			if (err?.code === 'cancelled') return;
+			recordCall(sku, null, 500, err?.message);
+			renderError(err?.message || String(err));
+		}
+	}
+
+	function renderResult(out) {
+		const resultStr = typeof out.result === 'string' ? out.result : JSON.stringify(out.result, null, 2);
+		const explorer = out.payment?.transaction
+			? (out.payment.network?.startsWith('solana')
+				? `https://solscan.io/tx/${out.payment.transaction}`
+				: `https://basescan.org/tx/${out.payment.transaction}`)
+			: null;
+		$('result').innerHTML = `
+			<div class="result">
+				<h3>✓ Paid</h3>
+				<div class="meta-row"><span class="k">network</span><span class="v">${escapeHtml(out.payment?.network || '—')}</span></div>
+				<div class="meta-row"><span class="k">payer</span><span class="v">${escapeHtml(out.payment?.payer ? out.payment.payer.slice(0,8) + '…' + out.payment.payer.slice(-6) : '—')}</span></div>
+				${explorer ? `<div class="meta-row"><span class="k">tx</span><span class="v"><a href="${explorer}" target="_blank" rel="noopener">view on explorer ↗</a></span></div>` : ''}
+				<pre>${escapeHtml(resultStr).slice(0, 4000)}</pre>
+			</div>`;
+	}
+
+	async function recordCall(sku, out, status, errCode) {
+		if (!sku?.id) return;
+		try {
+			// Read the original 402 challenge accepts to learn amount + asset; we
+			// have it from the loadPrice probe — refetch is cheap and decouples this
+			// from challenge state.
+			const res = await fetch(sku.target_endpoint, {
+				method: sku.target_method,
+				body: sku.target_body ? JSON.stringify(sku.target_body) : undefined,
+				headers: sku.target_body ? { 'content-type': 'application/json' } : undefined,
+			});
+			let amount = '0', asset = '';
+			if (res.status === 402) {
+				const ch = await res.json();
+				const accept = ch.accepts?.find((a) => a.network === out?.payment?.network) || ch.accepts?.[0];
+				if (accept) { amount = accept.amount; asset = accept.asset; }
+			}
+			await fetch('/api/x402-checkout-record', {
+				method: 'POST',
+				headers: { 'content-type': 'application/json' },
+				body: JSON.stringify({
+					sku_id: sku.id,
+					network: out?.payment?.network || 'unknown',
+					tx_signature: out?.payment?.transaction || undefined,
+					payer_address: out?.payment?.payer || undefined,
+					amount_atomics: amount,
+					asset,
+					response_status: status,
+					error_code: errCode || undefined,
+				}),
+			});
+		} catch (e) {
+			// Recording is best-effort — never block the buyer's success path.
+			console.warn('[x402-checkout] failed to record call:', e?.message);
+		}
+	}
+
+	loadSku();
+</script>
+
+</body>
+</html>

@@ -97,7 +97,14 @@ export function cors(
 	res.setHeader('access-control-allow-methods', methods);
 	res.setHeader(
 		'access-control-allow-headers',
-		'authorization, content-type, mcp-session-id, mcp-protocol-version',
+		'authorization, content-type, mcp-session-id, mcp-protocol-version, x-payment, payment-signature, idempotency-key',
+	);
+	// x402: clients (drop-in modal, x402-fetch) must read these to drive the
+	// 402-pay-retry flow and surface settlement receipts. Without `expose`,
+	// cross-origin readers only see CORS-safelisted response headers.
+	res.setHeader(
+		'access-control-expose-headers',
+		'payment-required, x-payment-response, x-payment-network, x-payment-tx, link',
 	);
 	res.setHeader('access-control-max-age', '86400');
 	if (req.method === 'OPTIONS') {

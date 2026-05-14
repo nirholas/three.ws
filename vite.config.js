@@ -160,6 +160,9 @@ const appConfig = {
 				'eth-vanity': resolve(__dirname, 'public/eth-vanity.html'),
 				pay: resolve(__dirname, 'public/pay/index.html'),
 				'pay-calls': resolve(__dirname, 'public/pay/calls/index.html'),
+				'pay-checkout': resolve(__dirname, 'public/pay/c/index.html'),
+				'x402-stripe': resolve(__dirname, 'public/x402-stripe.html'),
+				'x402-dashboard': resolve(__dirname, 'public/dashboard/x402.html'),
 				sitemap: resolve(__dirname, 'public/sitemap/index.html'),
 			},
 		},
@@ -206,6 +209,9 @@ const appConfig = {
 					'/pay/': resolve(root, 'public/pay/index.html'),
 					'/pay/calls': resolve(root, 'public/pay/calls/index.html'),
 					'/pay/calls/': resolve(root, 'public/pay/calls/index.html'),
+					'/x402': resolve(root, 'public/x402-stripe.html'),
+					'/x402/': resolve(root, 'public/x402-stripe.html'),
+					'/dashboard/x402': resolve(root, 'public/dashboard/x402.html'),
 					'/explore': resolve(root, 'public/discover/index.html'),
 					'/explore/': resolve(root, 'public/discover/index.html'),
 					// END:DISCOVER_ROUTE
@@ -295,6 +301,10 @@ const appConfig = {
 					// /p/<slug>  → public Launchpad Studio renderer (hydrates from /api/launchpad/get)
 					else if (!filePath && /^\/p\/[a-z0-9-]+\/?$/.test(path))
 						filePath = resolve(root, 'public/p/index.html');
+					// /pay/c/<slug>  → hosted x402 checkout page (hydrates from /api/x402-skus?slug=)
+					else if (!filePath && /^\/pay\/c\/[a-z0-9][a-z0-9-]+\/?$/.test(path))
+						filePath = resolve(root, 'public/pay/c/index.html');
+					// /dashboard/x402  → x402 SKU dashboard (already in fileMap)
 					else if (!filePath && /^\/marketplace\/agents\/[^/]+\/?$/.test(path))
 						filePath = resolve(root, 'marketplace.html');
 					else if (!filePath && /^\/marketplace\/avatars\/[^/]+\/?$/.test(path))

@@ -277,6 +277,10 @@
 			"dest": "/dashboard/tokens.html"
 		},
 		{
+			"src": "/dashboard/x402",
+			"dest": "/dashboard/x402.html"
+		},
+		{
 			"src": "/dashboard/(agents|avatars|create|upload|animations|widgets|embed|keys|mcp|monetization|payments|subscriptions|billing|revenue|earnings|account)/?",
 			"dest": "/dashboard/index.html"
 		},
@@ -1041,8 +1045,20 @@
 			"dest": "/pay/calls/index.html"
 		},
 		{
+			"src": "/pay/c/[a-z0-9][a-z0-9-]+/?",
+			"dest": "/pay/c/index.html"
+		},
+		{
 			"src": "/pay/(.*)",
 			"dest": "/pay/$1"
+		},
+		{
+			"src": "/x402",
+			"dest": "/x402-stripe.html"
+		},
+		{
+			"src": "/x402/",
+			"dest": "/x402-stripe.html"
 		},
 		{
 			"src": "/settings",
