@@ -421,14 +421,96 @@ const STYLE = `
 	}
 	.pos-btn[aria-pressed="true"] { background: #3b82f6; color: white; border-color: #3b82f6; }
 
-	.avatar-picker { margin: 4px 0 8px; }
+	/* Avatar trigger button in the panel — opens the modal. Replaces the
+	   inline grid so the panel stays light and no GLBs load on page boot. */
+	.avatar-trigger {
+		display: flex;
+		align-items: center;
+		gap: 10px;
+		width: 100%;
+		padding: 8px 10px;
+		margin: 4px 0 12px;
+		background: #111827;
+		border: 1px solid #1f2937;
+		border-radius: 10px;
+		color: #f4f4f5;
+		cursor: pointer;
+		text-align: left;
+		font: 500 13px system-ui;
+		transition: border-color 0.15s, background 0.15s;
+	}
+	.avatar-trigger:hover { border-color: #3b82f6; background: #1e293b; }
+	.avatar-trigger-thumb {
+		flex: 0 0 36px;
+		width: 36px;
+		height: 36px;
+		border-radius: 8px;
+		background: linear-gradient(135deg, #1e3a8a, #581c87);
+		background-size: cover;
+		background-position: center;
+		border: 1px solid #334155;
+	}
+	.avatar-trigger-text { flex: 1; min-width: 0; line-height: 1.25; }
+	.avatar-trigger-name { display: block; font-weight: 600; }
+	.avatar-trigger-hint { display: block; font-size: 11px; color: #9ca3af; }
+	.avatar-trigger-chev { color: #6b7280; font-size: 18px; line-height: 1; }
+
+	/* Modal — backdrop + centered card. Lazy-fetches the list when opened
+	   (not on init) and uses <model-viewer loading="lazy"> per card so only
+	   visible thumbnails actually boot a WebGL context. */
+	.avatar-modal {
+		position: fixed;
+		inset: 0;
+		z-index: 1000;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+	}
+	.avatar-modal[hidden] { display: none; }
+	.avatar-modal-backdrop {
+		position: absolute;
+		inset: 0;
+		background: rgba(2, 6, 23, 0.7);
+		backdrop-filter: blur(4px);
+	}
+	.avatar-modal-card {
+		position: relative;
+		width: min(960px, 92vw);
+		max-height: 86vh;
+		background: #0f1216;
+		border: 1px solid #1f2937;
+		border-radius: 14px;
+		box-shadow: 0 24px 60px rgba(0,0,0,0.55);
+		display: flex;
+		flex-direction: column;
+		overflow: hidden;
+	}
+	.avatar-modal-header {
+		display: flex;
+		justify-content: space-between;
+		align-items: flex-start;
+		padding: 18px 22px;
+		border-bottom: 1px solid #1f2937;
+	}
+	.avatar-modal-header h3 { font: 700 17px/1.2 system-ui; margin: 0 0 4px; color: #f4f4f5; }
+	.avatar-modal-sub { font: 13px system-ui; color: #9ca3af; margin: 0; }
+	.avatar-modal-close {
+		background: transparent;
+		border: 0;
+		color: #9ca3af;
+		font-size: 22px;
+		line-height: 1;
+		cursor: pointer;
+		padding: 4px 8px;
+		border-radius: 6px;
+	}
+	.avatar-modal-close:hover { background: #1f2937; color: #f4f4f5; }
+	.avatar-modal-body { padding: 18px 22px; overflow-y: auto; }
+
 	.avatar-picker-grid {
 		display: grid;
-		grid-template-columns: 1fr 1fr;
-		gap: 6px;
-		max-height: 180px;
-		overflow-y: auto;
-		padding-right: 4px;
+		grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+		gap: 12px;
 	}
 	.avatar-card {
 		position: relative;
@@ -437,10 +519,18 @@ const STYLE = `
 		background-size: cover;
 		background-position: center;
 		border: 1px solid #1f2937;
-		border-radius: 8px;
+		border-radius: 10px;
 		cursor: pointer;
 		overflow: hidden;
 		transition: border-color 0.15s, transform 0.1s;
+	}
+	.avatar-card model-viewer {
+		position: absolute;
+		inset: 0;
+		width: 100%;
+		height: 100%;
+		--poster-color: transparent;
+		background: transparent;
 	}
 	.avatar-card:hover { border-color: #3b82f6; transform: translateY(-1px); }
 	.avatar-card[aria-pressed="true"] { border-color: #22c55e; box-shadow: 0 0 0 2px rgba(34,197,94,0.3); }
@@ -816,11 +906,14 @@ export function mountEmbedEditor(root, options = {}) {
 						<label>src</label>
 						<input id="src-input" placeholder="agent://base/42 or ipfs://...">
 					</div>
-					<div class="avatar-picker" id="avatar-picker">
-						<div class="avatar-picker-grid" id="avatar-grid"></div>
-						<button class="avatar-picker-more" id="avatar-more" type="button" hidden>Load more</button>
-						<div class="avatar-picker-empty" id="avatar-empty" hidden>No public avatars found.</div>
-					</div>
+					<button class="avatar-trigger" id="avatar-trigger" type="button">
+						<span class="avatar-trigger-thumb" id="avatar-trigger-thumb" aria-hidden="true"></span>
+						<span class="avatar-trigger-text">
+							<span class="avatar-trigger-name" id="avatar-trigger-name">Browse avatars</span>
+							<span class="avatar-trigger-hint">Click to choose a different model</span>
+						</span>
+						<span class="avatar-trigger-chev" aria-hidden="true">›</span>
+					</button>
 
 					<div class="section-title">Mode</div>
 					<div class="mode-grid" id="mode-grid"></div>
@@ -892,6 +985,23 @@ export function mountEmbedEditor(root, options = {}) {
 				</div>
 			</aside>
 		</div>
+		<div class="avatar-modal" id="avatar-modal" hidden role="dialog" aria-modal="true" aria-labelledby="avatar-modal-title">
+			<div class="avatar-modal-backdrop" id="avatar-modal-backdrop"></div>
+			<div class="avatar-modal-card">
+				<header class="avatar-modal-header">
+					<div>
+						<h3 id="avatar-modal-title">Choose an avatar</h3>
+						<p class="avatar-modal-sub">Click any preview to load it in the embed.</p>
+					</div>
+					<button class="avatar-modal-close" id="avatar-modal-close" type="button" aria-label="Close (Esc)">✕</button>
+				</header>
+				<div class="avatar-modal-body" id="avatar-modal-body">
+					<div class="avatar-picker-grid" id="avatar-grid"></div>
+					<button class="avatar-picker-more" id="avatar-more" type="button" hidden>Load more</button>
+					<div class="avatar-picker-empty" id="avatar-empty" hidden>No public avatars found.</div>
+				</div>
+			</div>
+		</div>
 	`;
 
 	const $ = (sel) => shadow.querySelector(sel);
@@ -955,12 +1065,41 @@ export function mountEmbedEditor(root, options = {}) {
 	}
 	agentEl.addEventListener('agent:ready', renderAnimDock);
 
-	// ── Public avatar picker ──
+	// ── Avatar picker (modal) ──
+	// Behind a modal so the panel stays light. The list is fetched only when
+	// the modal first opens, and each card uses <model-viewer loading="lazy">
+	// so only thumbnails scrolled into the viewport actually boot a WebGL
+	// context. Demo set is rendered immediately; public-avatars network call
+	// is deferred until modal open.
+	const avatarTrigger = $('#avatar-trigger');
+	const avatarTriggerName = $('#avatar-trigger-name');
+	const avatarTriggerThumb = $('#avatar-trigger-thumb');
+	const avatarModal = $('#avatar-modal');
+	const avatarModalClose = $('#avatar-modal-close');
+	const avatarModalBackdrop = $('#avatar-modal-backdrop');
 	const avatarGrid = $('#avatar-grid');
 	const avatarMore = $('#avatar-more');
 	const avatarEmpty = $('#avatar-empty');
 	let avatarCursor = null;
 	let avatarLoading = false;
+	let avatarPopulated = false;
+	let modelViewerLoading = null;
+
+	// Dynamically load Google's <model-viewer> on first modal open so the
+	// editor's initial bundle stays small.
+	function ensureModelViewer() {
+		if (customElements.get('model-viewer')) return Promise.resolve();
+		if (modelViewerLoading) return modelViewerLoading;
+		modelViewerLoading = new Promise((resolve, reject) => {
+			const s = document.createElement('script');
+			s.type = 'module';
+			s.src = 'https://ajax.googleapis.com/ajax/libs/model-viewer/4.0.0/model-viewer.min.js';
+			s.onload = () => resolve();
+			s.onerror = () => reject(new Error('model-viewer failed to load'));
+			document.head.appendChild(s);
+		});
+		return modelViewerLoading;
+	}
 
 	function renderSkeletons(n) {
 		for (let i = 0; i < n; i++) {
@@ -972,13 +1111,21 @@ export function mountEmbedEditor(root, options = {}) {
 	function clearSkeletons() {
 		for (const el of avatarGrid.querySelectorAll('.skeleton')) el.remove();
 	}
+	function updateAvatarTrigger(name, modelUrl) {
+		avatarTriggerName.textContent = name || 'Browse avatars';
+		// Thumbnail in the trigger: if we know a thumbnail_url we use it,
+		// otherwise leave the gradient fallback.
+		avatarTriggerThumb.style.backgroundImage = '';
+	}
 	function pickAvatar(card, modelUrl, name) {
 		state.src = modelUrl;
 		srcInput.value = modelUrl;
 		agentEl.setAttribute('src', modelUrl);
 		for (const c of avatarGrid.querySelectorAll('.avatar-card'))
 			c.setAttribute('aria-pressed', String(c === card));
+		updateAvatarTrigger(name, modelUrl);
 		writeSnippet();
+		closeAvatarModal();
 	}
 	function renderAvatarCards(items, { pinned = false } = {}) {
 		for (const a of items) {
@@ -989,9 +1136,25 @@ export function mountEmbedEditor(root, options = {}) {
 			card.setAttribute('tabindex', '0');
 			card.dataset.id = a.id;
 			card.title = a.name || a.slug || a.id;
-			if (a.thumbnail_url) {
-				card.style.backgroundImage = `url('${a.thumbnail_url.replace(/'/g, "%27")}')`;
-			}
+
+			// Live 3D thumbnail via <model-viewer> with loading="lazy" so the
+			// underlying GLTFLoader / WebGL context only spins up when the card
+			// scrolls into the modal's viewport.
+			const mv = document.createElement('model-viewer');
+			mv.setAttribute('src', a.model_url);
+			mv.setAttribute('alt', a.name || 'Avatar preview');
+			mv.setAttribute('camera-controls', '');
+			mv.setAttribute('disable-zoom', '');
+			mv.setAttribute('interaction-prompt', 'none');
+			mv.setAttribute('auto-rotate', '');
+			mv.setAttribute('rotation-per-second', '24deg');
+			mv.setAttribute('exposure', '1.05');
+			mv.setAttribute('shadow-intensity', '0.6');
+			mv.setAttribute('loading', 'lazy');
+			mv.setAttribute('reveal', 'auto');
+			if (a.thumbnail_url) mv.setAttribute('poster', a.thumbnail_url);
+			card.appendChild(mv);
+
 			if (pinned) {
 				const tag = document.createElement('div');
 				tag.className = 'tag';
@@ -1020,7 +1183,7 @@ export function mountEmbedEditor(root, options = {}) {
 			// Pin the curated demo set first so the gallery opens to something
 			// recognisable even before the network call returns.
 			renderAvatarCards(DEMO_AVATARS, { pinned: true });
-			renderSkeletons(6);
+			renderSkeletons(8);
 		}
 		try {
 			const url = new URL(`${location.origin}/api/avatars/public`);
@@ -1044,7 +1207,23 @@ export function mountEmbedEditor(root, options = {}) {
 		}
 	}
 	avatarMore.addEventListener('click', loadAvatarPage);
-	loadAvatarPage();
+
+	async function openAvatarModal() {
+		avatarModal.hidden = false;
+		document.body.style.overflow = 'hidden';
+		if (!avatarPopulated) {
+			avatarPopulated = true;
+			try { await ensureModelViewer(); } catch (err) { console.warn('[embed-editor]', err); }
+			loadAvatarPage();
+		}
+	}
+	function closeAvatarModal() {
+		avatarModal.hidden = true;
+		document.body.style.overflow = '';
+	}
+	avatarTrigger.addEventListener('click', openAvatarModal);
+	avatarModalClose.addEventListener('click', closeAvatarModal);
+	avatarModalBackdrop.addEventListener('click', closeAvatarModal);
 
 	// If a widget id was passed, swap the bare <agent-3d> preview for an
 	// iframe loading the live widget renderer (/app#widget=<id>&kiosk=true).
@@ -1431,6 +1610,11 @@ export function mountEmbedEditor(root, options = {}) {
 		return false;
 	}
 	const onKey = (e) => {
+		if (e.key === 'Escape' && !avatarModal.hidden) {
+			e.preventDefault();
+			closeAvatarModal();
+			return;
+		}
 		if (e.key === 'Escape' && state.previewMode) {
 			e.preventDefault();
 			setPreviewMode(false);
