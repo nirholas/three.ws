@@ -88,180 +88,199 @@ const STYLE = `
 		border: 0;
 		background: white;
 	}
+	/* Dark hero-right mock landing — designed as the video-demo backdrop.
+	   Pure black + white type, Linear/Vercel vibe, single radial glow behind
+	   the avatar slot. The right half is reserved for the <agent-3d> wrap
+	   (placed via the avatar-slot guides). */
 	.stage-wrap .placeholder-site {
 		position: absolute;
 		inset: 0;
-		background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
-		color: #0f172a;
+		background: #000;
+		color: #f5f5f5;
 		overflow: auto;
-		font: 15px/1.5 ui-sans-serif, system-ui, -apple-system, sans-serif;
+		font: 15px/1.55 -apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', system-ui, sans-serif;
+		isolation: isolate;
+	}
+	/* Soft purple→cyan glow behind where the avatar will sit. Pure CSS, no
+	   fixed positioning — scales with the placeholder so it works in
+	   tablet/mobile device frames too. */
+	.placeholder-site::before {
+		content: '';
+		position: absolute;
+		top: 24%;
+		right: 8%;
+		width: 620px;
+		height: 620px;
+		border-radius: 50%;
+		background: radial-gradient(closest-side, rgba(139,92,246,0.35), rgba(34,211,238,0.08) 55%, transparent 75%);
+		filter: blur(20px);
+		pointer-events: none;
+		z-index: 0;
+	}
+	.placeholder-site::after {
+		content: '';
+		position: absolute;
+		inset: 0;
+		background:
+			radial-gradient(1px 1px at 20% 30%, rgba(255,255,255,0.18), transparent 60%),
+			radial-gradient(1px 1px at 70% 80%, rgba(255,255,255,0.10), transparent 60%),
+			radial-gradient(1px 1px at 40% 70%, rgba(255,255,255,0.10), transparent 60%);
+		pointer-events: none;
+		z-index: 0;
 	}
 	.placeholder-site .nav {
+		position: relative;
+		z-index: 2;
 		display: flex;
 		align-items: center;
 		justify-content: space-between;
-		padding: 18px 48px;
-		border-bottom: 1px solid #e5e7eb;
-		background: rgba(255,255,255,0.9);
-		backdrop-filter: blur(8px);
-		position: sticky;
-		top: 0;
-		z-index: 1;
+		padding: 22px 48px;
+		background: rgba(0,0,0,0.5);
+		backdrop-filter: blur(10px);
+		border-bottom: 1px solid rgba(255,255,255,0.06);
 	}
 	.placeholder-site .brand {
 		display: flex;
 		align-items: center;
 		gap: 10px;
-		font: 700 17px/1 system-ui;
-		color: #0f172a;
+		font: 600 16px/1 'Inter', system-ui;
+		color: #f5f5f5;
+		letter-spacing: -0.01em;
 	}
 	.placeholder-site .brand .logo {
-		width: 28px;
-		height: 28px;
-		border-radius: 8px;
-		background: linear-gradient(135deg, #6366f1, #8b5cf6);
-		box-shadow: 0 2px 8px rgba(99, 102, 241, 0.4);
+		width: 26px;
+		height: 26px;
+		border-radius: 7px;
+		background: linear-gradient(135deg, #a78bfa 0%, #22d3ee 100%);
+		box-shadow: 0 0 24px rgba(167,139,250,0.5);
 	}
 	.placeholder-site .nav-links {
 		display: flex;
-		gap: 28px;
-		font: 500 14px system-ui;
-		color: #475569;
+		gap: 32px;
+		font: 500 13.5px 'Inter', system-ui;
+		color: rgba(245,245,245,0.6);
 	}
-	.placeholder-site .nav-links span { cursor: default; }
+	.placeholder-site .nav-links span { cursor: default; transition: color 0.15s; }
+	.placeholder-site .nav-links span:hover { color: #f5f5f5; }
 	.placeholder-site .nav-cta {
-		background: #0f172a;
-		color: white;
+		background: #f5f5f5;
+		color: #000;
 		padding: 8px 16px;
 		border-radius: 8px;
-		font: 600 13px system-ui;
+		font: 600 13px 'Inter', system-ui;
 	}
-	.placeholder-site .hero-wrap {
-		max-width: 960px;
+
+	/* Two-column hero: copy on the left, avatar slot on the right. The slot
+	   itself is purely visual (just dictates where the agent-wrap should
+	   land); the wrap is positioned absolutely by the editor's mode/position
+	   logic, not by this grid. */
+	.placeholder-site .hero-grid {
+		position: relative;
+		z-index: 1;
+		display: grid;
+		grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+		align-items: center;
+		gap: 48px;
+		max-width: 1240px;
 		margin: 0 auto;
-		padding: 72px 48px 48px;
-		text-align: center;
+		padding: 96px 56px 80px;
+		min-height: calc(100vh - 80px);
 	}
+	.placeholder-site .hero-copy { max-width: 540px; }
 	.placeholder-site .pill {
-		display: inline-block;
-		padding: 6px 14px;
+		display: inline-flex;
+		align-items: center;
+		gap: 6px;
+		padding: 6px 12px;
 		border-radius: 999px;
-		background: #ede9fe;
-		color: #6d28d9;
-		font: 600 12px system-ui;
-		margin-bottom: 20px;
+		background: rgba(255,255,255,0.06);
+		border: 1px solid rgba(255,255,255,0.10);
+		color: rgba(245,245,245,0.85);
+		font: 500 12px 'Inter', system-ui;
+		letter-spacing: 0.01em;
+		margin-bottom: 28px;
+	}
+	.placeholder-site .pill .dot {
+		width: 6px;
+		height: 6px;
+		border-radius: 50%;
+		background: #22d3ee;
+		box-shadow: 0 0 10px #22d3ee;
 	}
 	.placeholder-site h1 {
-		font: 800 48px/1.1 system-ui;
-		letter-spacing: -0.02em;
-		margin-bottom: 18px;
-		color: #0f172a;
+		font: 700 58px/1.05 'Inter', system-ui;
+		letter-spacing: -0.035em;
+		margin: 0 0 22px;
+		color: #fafafa;
 	}
-	.placeholder-site h1 .accent {
-		background: linear-gradient(90deg, #6366f1, #ec4899);
-		-webkit-background-clip: text;
-		background-clip: text;
-		color: transparent;
+	.placeholder-site h1 .muted {
+		color: rgba(245,245,245,0.45);
 	}
 	.placeholder-site p.lede {
-		font-size: 18px;
-		color: #475569;
-		max-width: 640px;
-		margin: 0 auto 28px;
+		font-size: 17px;
+		color: rgba(245,245,245,0.62);
+		max-width: 460px;
+		margin: 0 0 36px;
+		line-height: 1.6;
 	}
 	.placeholder-site .cta-row {
 		display: flex;
-		gap: 12px;
-		justify-content: center;
-		margin-bottom: 56px;
+		gap: 10px;
+		align-items: center;
 	}
 	.placeholder-site .btn-primary {
-		background: #0f172a;
-		color: white;
-		padding: 12px 22px;
+		background: #f5f5f5;
+		color: #000;
+		padding: 13px 22px;
 		border-radius: 10px;
-		font: 600 14px system-ui;
-		box-shadow: 0 8px 20px rgba(15,23,42,0.18);
+		font: 600 14px 'Inter', system-ui;
+		letter-spacing: -0.005em;
+		transition: transform 0.1s;
 	}
+	.placeholder-site .btn-primary:hover { transform: translateY(-1px); }
 	.placeholder-site .btn-ghost {
-		background: white;
-		color: #0f172a;
-		padding: 12px 22px;
+		color: rgba(245,245,245,0.85);
+		padding: 13px 22px;
 		border-radius: 10px;
-		font: 600 14px system-ui;
-		border: 1px solid #e5e7eb;
-	}
-	.placeholder-site .screenshot {
-		max-width: 1080px;
-		margin: 0 auto;
-		padding: 0 48px;
-	}
-	.placeholder-site .browser {
-		background: white;
-		border: 1px solid #e5e7eb;
-		border-radius: 14px;
-		box-shadow: 0 24px 60px rgba(15,23,42,0.12);
-		overflow: hidden;
-	}
-	.placeholder-site .browser-bar {
-		display: flex;
+		font: 600 14px 'Inter', system-ui;
+		border: 1px solid rgba(255,255,255,0.14);
+		background: transparent;
+		display: inline-flex;
 		align-items: center;
 		gap: 6px;
-		padding: 10px 14px;
-		background: #f8fafc;
-		border-bottom: 1px solid #e5e7eb;
 	}
-	.placeholder-site .browser-bar .dot {
-		width: 11px;
-		height: 11px;
-		border-radius: 50%;
-		background: #e5e7eb;
-	}
-	.placeholder-site .browser-bar .dot:nth-child(1) { background: #fca5a5; }
-	.placeholder-site .browser-bar .dot:nth-child(2) { background: #fcd34d; }
-	.placeholder-site .browser-bar .dot:nth-child(3) { background: #86efac; }
-	.placeholder-site .browser-body {
-		height: 340px;
-		background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 50%, #ec4899 100%);
+	.placeholder-site .btn-ghost:hover { background: rgba(255,255,255,0.04); }
+
+	/* Empty right column — the avatar wrap floats over this area via the
+	   editor's positioning logic. Faint corner guides hint where it'll land. */
+	.placeholder-site .hero-slot {
 		position: relative;
+		height: 620px;
 	}
-	.placeholder-site .browser-body::after {
-		content: '';
-		position: absolute;
-		inset: 24px;
-		border-radius: 8px;
-		background: rgba(255,255,255,0.12);
-		backdrop-filter: blur(8px);
-	}
-	.placeholder-site .features {
-		max-width: 1080px;
-		margin: 80px auto 0;
-		padding: 0 48px 72px;
+
+	.placeholder-site .stats {
+		position: relative;
+		z-index: 1;
+		max-width: 1240px;
+		margin: 0 auto;
+		padding: 0 56px 80px;
 		display: grid;
-		grid-template-columns: repeat(3, 1fr);
-		gap: 24px;
+		grid-template-columns: repeat(4, 1fr);
+		gap: 32px;
+		border-top: 1px solid rgba(255,255,255,0.06);
+		padding-top: 56px;
 	}
-	.placeholder-site .feature {
-		padding: 24px;
-		border-radius: 12px;
-		background: white;
-		border: 1px solid #e5e7eb;
-	}
-	.placeholder-site .feature .icon {
-		width: 36px;
-		height: 36px;
-		border-radius: 9px;
-		background: linear-gradient(135deg, #ede9fe, #fce7f3);
-		margin-bottom: 14px;
-	}
-	.placeholder-site .feature h3 {
-		font: 700 16px system-ui;
+	.placeholder-site .stat .num {
+		font: 700 32px/1 'Inter', system-ui;
+		letter-spacing: -0.02em;
+		color: #fafafa;
 		margin-bottom: 6px;
-		color: #0f172a;
 	}
-	.placeholder-site .feature p {
-		font-size: 13px;
-		color: #64748b;
+	.placeholder-site .stat .label {
+		font: 500 12.5px 'Inter', system-ui;
+		color: rgba(245,245,245,0.55);
+		text-transform: uppercase;
+		letter-spacing: 0.08em;
 	}
 
 	.agent-wrap {
@@ -812,10 +831,13 @@ export function mountEmbedEditor(root, options = {}) {
 		widgetId: options.widgetId || '',
 		src: options.src || '',
 		mode: options.mode || 'floating',
-		position: options.position || 'bottom-right',
-		offset: options.offset || '24px 24px',
-		width: options.width || '320px',
-		height: options.height || '420px',
+		// Hero-right placement by default — sized for the video demo's
+		// in-editor mock landing (~40% of a 1440px viewport). Users can drag
+		// or resize from here; "Reset" returns to these dimensions.
+		position: options.position || 'top-right',
+		offset: options.offset || '120px 80px',
+		width: options.width || '440px',
+		height: options.height || '620px',
 		device: 'desktop',
 		responsivePreset: 'desktop-first',
 		voice: true,
@@ -846,29 +868,27 @@ export function mountEmbedEditor(root, options = {}) {
 					<div class="device-viewport" id="device-viewport">
 					<div class="placeholder-site" id="placeholder">
 						<nav class="nav">
-							<div class="brand"><div class="logo"></div>Acme</div>
-							<div class="nav-links"><span>Product</span><span>Pricing</span><span>Customers</span><span>Docs</span></div>
-							<div class="nav-cta">Sign in</div>
+							<div class="brand"><div class="logo"></div>three.ws</div>
+							<div class="nav-links"><span>Product</span><span>Studio</span><span>Docs</span><span>Customers</span></div>
+							<div class="nav-cta">Start</div>
 						</nav>
-						<div class="hero-wrap">
-							<div class="pill">New · Conversational agents</div>
-							<h1>Talk to your product, <span class="accent">not just click it.</span></h1>
-							<p class="lede">Drop a 3D agent on any page. Visitors ask questions, get demos, and check out — without leaving the screen.</p>
-							<div class="cta-row">
-								<div class="btn-primary">Start free</div>
-								<div class="btn-ghost">See it live</div>
+						<div class="hero-grid">
+							<div class="hero-copy">
+								<div class="pill"><span class="dot"></span> Live · Now in beta</div>
+								<h1>Your agent. <br><span class="muted">On any page.</span></h1>
+								<p class="lede">Drop a 3D agent into any site in 30 seconds. Voice, text, payments, identity — yours, wherever your visitors are.</p>
+								<div class="cta-row">
+									<div class="btn-primary">Get started →</div>
+									<div class="btn-ghost">Watch demo</div>
+								</div>
 							</div>
+							<div class="hero-slot"></div>
 						</div>
-						<div class="screenshot">
-							<div class="browser">
-								<div class="browser-bar"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div>
-								<div class="browser-body"></div>
-							</div>
-						</div>
-						<div class="features">
-							<div class="feature"><div class="icon"></div><h3>Embed anywhere</h3><p>One script tag, works in every CMS and framework.</p></div>
-							<div class="feature"><div class="icon"></div><h3>Voice + text</h3><p>Real-time speech, streaming responses, multi-language.</p></div>
-							<div class="feature"><div class="icon"></div><h3>Owned by you</h3><p>Your brand, your data, your wallet — no platform tax.</p></div>
+						<div class="stats">
+							<div class="stat"><div class="num">30s</div><div class="label">Time to embed</div></div>
+							<div class="stat"><div class="num">100%</div><div class="label">Yours, onchain</div></div>
+							<div class="stat"><div class="num">12+</div><div class="label">Animations</div></div>
+							<div class="stat"><div class="num">x402</div><div class="label">Native payments</div></div>
 						</div>
 					</div>
 					<iframe id="preview-frame" hidden></iframe>
