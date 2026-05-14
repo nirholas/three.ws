@@ -112,6 +112,8 @@ function isAllowedOrigin(origin, allowed) {
 	if (!allowed) {
 		if (origin === env.APP_ORIGIN) return true;
 		if (origin === 'https://x402scan.com') return true;
+		if (origin === 'https://agentic.market') return true;
+		if (origin === 'https://www.agentic.market') return true;
 		if (
 			process.env.NODE_ENV !== 'production' &&
 			/^https?:\/\/localhost(:\d+)?$/.test(origin)
@@ -125,10 +127,10 @@ function isAllowedOrigin(origin, allowed) {
 
 // Wrap async handlers so uncaught errors return a consistent JSON envelope.
 export function wrap(handler) {
-	return async (req, res) => {
+	return async (req, res, ...rest) => {
 		const monitored = zauthInstrument(req, res);
 		try {
-			await handler(req, res);
+			await handler(req, res, ...rest);
 		} catch (err) {
 			const status = err.status || 500;
 			if (status >= 500) {

@@ -1,5 +1,9 @@
 import { Connection, PublicKey } from '@solana/web3.js';
-import { resolve, getFavoriteDomain } from '@bonfida/spl-name-service';
+
+// `@bonfida/spl-name-service` re-exports a huge tree and trips Vercel's
+// function bundler on cold start when statically imported by serverless
+// endpoints. Load it on demand inside each call so the dispatcher modules
+// (e.g. /api/portfolio, /api/pump-fun-mcp) don't pay the cost up front.
 
 // Server-side: prefer SOLANA_RPC_URL (typically Helius). Browser-side: route
 // through our same-origin proxy because public mainnet-beta 403s most origins.
@@ -24,6 +28,7 @@ function stripSol(name) {
  */
 export async function resolveSnsName(name) {
 	try {
+		const { resolve } = await import('@bonfida/spl-name-service');
 		const pk = await resolve(makeConnection(), stripSol(name));
 		return pk.toBase58();
 	} catch {
@@ -38,6 +43,7 @@ export async function resolveSnsName(name) {
  */
 export async function reverseLookupAddress(addr) {
 	try {
+		const { getFavoriteDomain } = await import('@bonfida/spl-name-service');
 		const owner = new PublicKey(addr);
 		const { reverse } = await getFavoriteDomain(makeConnection(), owner);
 		return reverse.endsWith('.sol') ? reverse : `${reverse}.sol`;

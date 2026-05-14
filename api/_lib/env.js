@@ -149,7 +149,7 @@ export const env = {
 		);
 	},
 	get X402_PAY_TO_BASE() {
-		return opt('X402_PAY_TO_BASE', '0x0C70c0e8453C5667739E41acdF6eC5787B8ff542');
+		return opt('X402_PAY_TO_BASE', '0x4022de2d36c334e73c7a108805cea11c0564f402');
 	},
 	// USDC asset addresses per network.
 	get X402_ASSET_MINT_SOLANA() {

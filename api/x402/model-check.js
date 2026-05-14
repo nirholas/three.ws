@@ -1,86 +1,53 @@
 // GET /api/x402/model-check?url=<glb-or-gltf>
 //
 // Paid endpoint cataloged by the CDP x402 Bazaar (agentic.market). For $0.001
-// USDC on Base or Arbitrum mainnet the server fetches the model bytes, runs
-// the glTF-Transform inspector, and returns structural stats + optimization
-// hints. Buyers pay programmatically with @x402/fetch — no API keys.
+// USDC on Base mainnet the server fetches the model bytes, runs the
+// glTF-Transform inspector, and returns structural stats + optimization hints.
+// Buyers pay programmatically with @x402/fetch — no API keys.
 //
-// Wire stack (all official, all v2):
-//   • @x402/express     paymentMiddleware → Express adapter
-//   • @x402/core        x402ResourceServer + HTTPFacilitatorClient
-//   • @x402/evm         ExactEvmScheme (eip155:* networks)
-//   • @x402/extensions  declareDiscoveryExtension → bazaar discovery shape
-//   • @coinbase/x402    facilitator config with ES256 JWT auth (CDP)
-//
-// Bazaar listing requires settlement through the CDP facilitator — that's the
-// only one whose verify+settle log feeds the catalog. CDP_API_KEY_ID and
-// CDP_API_KEY_SECRET must be set in Vercel; @coinbase/x402's `facilitator`
-// reads them itself via createAuthHeaders.
+// Wire stack: plain Node handler + our internal x402-spec.js (facilitator-
+// agnostic verify/settle). The same path /api/mcp uses. Stays alive even when
+// CDP creds are absent — the 402 challenge still emits a proper bazaar
+// discovery extension so the catalog can index this endpoint. Verify+settle
+// routes to whichever facilitator X402_FACILITATOR_URL_BASE points at (PayAI
+// by default; set to CDP's URL for first-class CDP-Bazaar settlement).
 
-import express from 'express';
-import { paymentMiddleware, x402ResourceServer } from '@x402/express';
-import { ExactEvmScheme } from '@x402/evm/exact/server';
-import { HTTPFacilitatorClient } from '@x402/core/server';
-import { declareDiscoveryExtension } from '@x402/extensions/bazaar';
-import { facilitator as cdpFacilitator } from '@coinbase/x402';
-
+import { wrap, cors, error } from '../_lib/http.js';
+import {
+	NETWORK_BASE_MAINNET,
+	send402,
+	verifyPayment,
+	settlePayment,
+	encodePaymentResponseHeader,
+	resolveResourceUrl,
+} from '../_lib/x402-spec.js';
 import { env } from '../_lib/env.js';
 import { inspectModel, suggestOptimizations } from '../_lib/model-inspect.js';
 
-const NETWORK_BASE = 'eip155:8453';
-const NETWORK_ARBITRUM = 'eip155:42161';
-const USDC_BASE = '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913';
-
-const ASSET_FOR_NETWORK = {
-	[NETWORK_BASE]: USDC_BASE,
-	[NETWORK_ARBITRUM]: env.X402_ASSET_ADDRESS_ARBITRUM,
-};
-
-const PAY_TO = env.X402_PAY_TO_BASE;
-const PRICE = '$0.001';
 const ROUTE = '/api/x402/model-check';
 const MAX_FETCH_BYTES = 16 * 1024 * 1024;
-
-function buildAccepts() {
-	return env.X402_EVM_NETWORKS
-		.filter((n) => ASSET_FOR_NETWORK[n])
-		.map((network) => ({
-			scheme: 'exact',
-			network,
-			price: PRICE,
-			payTo: PAY_TO,
-			asset: ASSET_FOR_NETWORK[network],
-			extra: { name: 'USDC', version: '2', decimals: 6 },
-		}));
-}
-
-const facilitatorClient = new HTTPFacilitatorClient(cdpFacilitator);
-
-let resourceServer = new x402ResourceServer(facilitatorClient);
-for (const network of env.X402_EVM_NETWORKS) {
-	if (!ASSET_FOR_NETWORK[network]) continue;
-	resourceServer = resourceServer.register(network, new ExactEvmScheme());
-}
 
 const ROUTE_DESCRIPTION =
 	'three.ws Model Check — fetch a glTF/GLB model from a URL, run the canonical ' +
 	'glTF-Transform inspector, and return structural stats (vertices, triangles, ' +
 	'materials, textures, animations, extensions) plus a prioritized list of ' +
 	'optimization recommendations. Useful for any agent vetting a 3D asset before ' +
-	'minting, embedding, or paying for it. Pay-per-call in USDC on Base or Arbitrum mainnet.';
+	'minting, embedding, or paying for it. Pay-per-call in USDC on Base mainnet.';
 
 const DISCOVERY_INPUT_EXAMPLE = {
 	url: 'https://three.ws/avatar/character-studio/sample.glb',
 };
 
 const DISCOVERY_INPUT_SCHEMA = {
+	$schema: 'https://json-schema.org/draft/2020-12/schema',
 	type: 'object',
 	required: ['url'],
 	properties: {
 		url: {
 			type: 'string',
 			format: 'uri',
-			description: 'Public HTTPS URL of a glTF (.gltf) or binary glTF (.glb) model. Max 16 MiB.',
+			description:
+				'Public HTTPS URL of a glTF (.gltf) or binary glTF (.glb) model. Max 16 MiB.',
 		},
 	},
 };
@@ -118,6 +85,7 @@ const DISCOVERY_OUTPUT_EXAMPLE = {
 };
 
 const DISCOVERY_OUTPUT_SCHEMA = {
+	$schema: 'https://json-schema.org/draft/2020-12/schema',
 	type: 'object',
 	required: ['url', 'fetchedBytes', 'model', 'suggestions'],
 	properties: {
@@ -166,58 +134,50 @@ const DISCOVERY_OUTPUT_SCHEMA = {
 	},
 };
 
-const routeConfig = {
-	[`GET ${ROUTE}`]: {
-		accepts: buildAccepts(),
-		description: ROUTE_DESCRIPTION,
-		mimeType: 'application/json',
-		extensions: {
-			...declareDiscoveryExtension({
-				input: DISCOVERY_INPUT_EXAMPLE,
-				inputSchema: DISCOVERY_INPUT_SCHEMA,
-				output: {
-					example: DISCOVERY_OUTPUT_EXAMPLE,
-					schema: DISCOVERY_OUTPUT_SCHEMA,
-				},
-			}),
+const ROUTE_BAZAAR = {
+	discoverable: true,
+	info: {
+		input: {
+			type: 'http',
+			method: 'GET',
+			queryParams: DISCOVERY_INPUT_EXAMPLE,
+			queryParamsSchema: DISCOVERY_INPUT_SCHEMA,
 		},
+		output: { type: 'json', example: DISCOVERY_OUTPUT_EXAMPLE },
 	},
+	schema: DISCOVERY_OUTPUT_SCHEMA,
 };
 
-const app = express();
+function buildRequirements() {
+	return [
+		{
+			scheme: 'exact',
+			network: NETWORK_BASE_MAINNET,
+			amount: env.X402_MAX_AMOUNT_REQUIRED,
+			payTo: env.X402_PAY_TO_BASE,
+			asset: env.X402_ASSET_ADDRESS_BASE,
+			maxTimeoutSeconds: 60,
+			extra: { name: 'USD Coin', version: '2', decimals: 6 },
+		},
+	];
+}
 
-// Middleware initializes by hitting the CDP facilitator's /supported endpoint
-// to discover advertised scheme/network pairs. Requires CDP_API_KEY_ID and
-// CDP_API_KEY_SECRET to be set — without them the first request returns 500
-// with "Failed to initialize: no supported payment kinds loaded".
-// Lazy-construct paymentMiddleware on first request. Building it eagerly fires
-// resourceServer.initialize() at module load, and the resulting promise
-// rejection (e.g. missing CDP credentials in tests) becomes "unhandled" until
-// a request arrives to await it.
-let _paidMiddleware;
-app.use((req, res, next) => {
-	if (!_paidMiddleware) _paidMiddleware = paymentMiddleware(routeConfig, resourceServer);
-	return _paidMiddleware(req, res, next);
-});
-
-app.get(ROUTE, async (req, res) => {
-	const target = String(req.query?.url || '').trim();
-	if (!target) {
-		return res.status(400).json({ error: 'missing_url', message: 'query param "url" is required' });
-	}
+async function fetchAndInspect(targetUrl) {
 	let parsed;
 	try {
-		parsed = new URL(target);
+		parsed = new URL(targetUrl);
 	} catch {
-		return res.status(400).json({ error: 'invalid_url', message: 'url is not a valid URL' });
+		const err = new Error('url is not a valid URL');
+		err.code = 'invalid_url';
+		err.status = 400;
+		throw err;
 	}
 	if (parsed.protocol !== 'https:' && parsed.protocol !== 'http:') {
-		return res.status(400).json({
-			error: 'invalid_url',
-			message: 'url must be http(s)',
-		});
+		const err = new Error('url must be http(s)');
+		err.code = 'invalid_url';
+		err.status = 400;
+		throw err;
 	}
-
 	let upstream;
 	try {
 		upstream = await fetch(parsed.toString(), {
@@ -226,57 +186,97 @@ app.get(ROUTE, async (req, res) => {
 			signal: AbortSignal.timeout(20_000),
 		});
 	} catch (err) {
-		return res.status(502).json({
-			error: 'fetch_failed',
-			message: `could not fetch model: ${err.message}`,
-		});
+		const e = new Error(`could not fetch model: ${err.message}`);
+		e.code = 'fetch_failed';
+		e.status = 502;
+		throw e;
 	}
 	if (!upstream.ok) {
-		return res.status(502).json({
-			error: 'fetch_failed',
-			message: `upstream returned ${upstream.status} ${upstream.statusText}`,
-		});
+		const err = new Error(`upstream returned ${upstream.status} ${upstream.statusText}`);
+		err.code = 'fetch_failed';
+		err.status = 502;
+		throw err;
 	}
-
 	const contentLength = Number(upstream.headers.get('content-length') || 0);
 	if (contentLength && contentLength > MAX_FETCH_BYTES) {
-		return res.status(413).json({
-			error: 'too_large',
-			message: `model is ${contentLength} bytes; max is ${MAX_FETCH_BYTES}`,
-		});
+		const err = new Error(`model is ${contentLength} bytes; max is ${MAX_FETCH_BYTES}`);
+		err.code = 'too_large';
+		err.status = 413;
+		throw err;
 	}
-
 	const buf = new Uint8Array(await upstream.arrayBuffer());
 	if (buf.byteLength > MAX_FETCH_BYTES) {
-		return res.status(413).json({
-			error: 'too_large',
-			message: `model is ${buf.byteLength} bytes; max is ${MAX_FETCH_BYTES}`,
-		});
+		const err = new Error(`model is ${buf.byteLength} bytes; max is ${MAX_FETCH_BYTES}`);
+		err.code = 'too_large';
+		err.status = 413;
+		throw err;
 	}
-
 	let info;
 	try {
 		info = await inspectModel(buf, { fileSize: buf.byteLength });
 	} catch (err) {
-		return res.status(422).json({
-			error: 'invalid_model',
-			message: err.message || 'failed to parse model',
-		});
+		const e = new Error(err.message || 'failed to parse model');
+		e.code = 'invalid_model';
+		e.status = 422;
+		throw e;
 	}
-	const suggestions = suggestOptimizations(info);
-
-	res.setHeader('cache-control', 'no-store');
-	res.json({
+	return {
 		url: parsed.toString(),
 		fetchedBytes: buf.byteLength,
 		model: info,
-		suggestions,
-	});
-});
+		suggestions: suggestOptimizations(info),
+	};
+}
 
-app.use((err, req, res, _next) => {
-	console.error('[x402/model-check] unhandled', err);
-	res.status(500).json({ error: 'internal_error', message: err?.message || 'unknown error' });
-});
+export default wrap(async (req, res) => {
+	if (cors(req, res, { methods: 'GET,OPTIONS' })) return;
+	if (req.method !== 'GET') {
+		res.setHeader('allow', 'GET');
+		return error(res, 405, 'method_not_allowed', 'use GET');
+	}
 
-export default app;
+	const resourceUrl = resolveResourceUrl(req, ROUTE);
+	const requirements = buildRequirements();
+	const challenge = {
+		resourceUrl,
+		accepts: requirements,
+		description: ROUTE_DESCRIPTION,
+		bazaar: ROUTE_BAZAAR,
+	};
+
+	const paymentHeader = req.headers['x-payment'] || req.headers['payment-signature'];
+	if (!paymentHeader) return send402(res, challenge);
+
+	let verified;
+	try {
+		verified = await verifyPayment({ paymentHeader, requirements });
+	} catch (err) {
+		if (err.status === 402) return send402(res, { ...challenge, error: err.message });
+		return error(res, err.status || 502, err.code || 'verify_failed', err.message);
+	}
+
+	const target = String(req.query?.url || '').trim();
+	if (!target) return error(res, 400, 'missing_url', 'query param "url" is required');
+
+	let result;
+	try {
+		result = await fetchAndInspect(target);
+	} catch (err) {
+		return error(res, err.status || 500, err.code || 'internal_error', err.message);
+	}
+
+	let settled;
+	try {
+		settled = await settlePayment({
+			paymentPayload: verified.paymentPayload,
+			requirement: verified.requirement,
+		});
+	} catch (err) {
+		return error(res, err.status || 502, err.code || 'settle_failed', err.message);
+	}
+
+	res.setHeader('x-payment-response', encodePaymentResponseHeader(settled));
+	res.setHeader('cache-control', 'no-store');
+	res.setHeader('content-type', 'application/json; charset=utf-8');
+	res.end(JSON.stringify(result));
+});

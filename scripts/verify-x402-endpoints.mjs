@@ -8,7 +8,7 @@ import { createServer } from 'node:http';
 import { once } from 'node:events';
 
 process.env.X402_PAY_TO_SOLANA ??= 'BUrwd1nK6tFeeJMyzRHDo6AuVbnSfUULfvwq21X93nSN';
-process.env.X402_PAY_TO_BASE ??= '0x0C70c0e8453C5667739E41acdF6eC5787B8ff542';
+process.env.X402_PAY_TO_BASE ??= '0x4022de2d36c334e73c7a108805cea11c0564f402';
 process.env.X402_ASSET_MINT_SOLANA ??= 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v';
 process.env.X402_ASSET_ADDRESS_BASE ??= '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913';
 process.env.X402_MAX_AMOUNT_REQUIRED ??= '1000';

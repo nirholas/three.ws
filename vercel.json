@@ -573,6 +573,14 @@
 			"dest": "/api/auth/wallets/[action]?action=$1"
 		},
 		{
+			"src": "/api/auth/sessions",
+			"dest": "/api/auth/sessions/[action]"
+		},
+		{
+			"src": "/api/auth/sessions/([^/]+)",
+			"dest": "/api/auth/sessions/[action]?action=$1"
+		},
+		{
 			"src": "/api/auth/wallet/link",
 			"dest": "/api/auth/wallet/[action]?action=link"
 		},

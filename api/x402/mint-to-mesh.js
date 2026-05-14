@@ -1,67 +1,35 @@
 // GET /api/x402/mint-to-mesh?mint=<solana-mint>
 //
 // Paid endpoint cataloged by the CDP x402 Bazaar (agentic.market). For $0.01
-// USDC on Base or Arbitrum mainnet the server reads the token's on-chain
-// Metaplex metadata, resolves the off-chain JSON, fetches the image (when one
-// is exposed), and returns a themed binary glTF cube ready for any Three.js /
-// Babylon.js / model-viewer instance to render.
+// USDC on Base mainnet the server reads the token's on-chain Metaplex metadata,
+// resolves the off-chain JSON, fetches the image (when one is exposed), and
+// returns a themed binary glTF cube ready for any Three.js / Babylon.js /
+// model-viewer instance to render.
 //
 // The cube is procedurally synthesized per request via @gltf-transform — no
 // templated asset, no headless WebGL, no S3. Output ships as base64 inside a
 // JSON envelope so x402 facilitators that struggle with binary bodies still
 // receive a clean response.
 //
-// Wire stack (matches /api/x402/model-check):
-//   • @x402/express     paymentMiddleware → Express adapter
-//   • @x402/core        x402ResourceServer + HTTPFacilitatorClient
-//   • @x402/evm         ExactEvmScheme (eip155:* networks)
-//   • @x402/extensions  declareDiscoveryExtension → bazaar discovery shape
-//   • @coinbase/x402    facilitator config with ES256 JWT auth (CDP)
+// Wire stack: plain Node handler + our internal x402-spec.js (same path
+// /api/mcp uses). 402 challenge stays alive even when CDP creds are absent so
+// the bazaar can index the endpoint. Verify+settle routes via
+// X402_FACILITATOR_URL_BASE (PayAI by default).
 
-import express from 'express';
-import { paymentMiddleware, x402ResourceServer } from '@x402/express';
-import { ExactEvmScheme } from '@x402/evm/exact/server';
-import { HTTPFacilitatorClient } from '@x402/core/server';
-import { declareDiscoveryExtension } from '@x402/extensions/bazaar';
-import { facilitator as cdpFacilitator } from '@coinbase/x402';
-
+import { wrap, cors, error } from '../_lib/http.js';
+import {
+	NETWORK_BASE_MAINNET,
+	send402,
+	verifyPayment,
+	settlePayment,
+	encodePaymentResponseHeader,
+	resolveResourceUrl,
+} from '../_lib/x402-spec.js';
 import { env } from '../_lib/env.js';
 import { createThemedGLB, colorFromMint } from '../_lib/glb-themer.js';
 import { fetchTokenMeta } from '../_lib/solana-token-meta.js';
 
-const NETWORK_BASE = 'eip155:8453';
-const NETWORK_ARBITRUM = 'eip155:42161';
-const USDC_BASE = '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913';
-
-const ASSET_FOR_NETWORK = {
-	[NETWORK_BASE]: USDC_BASE,
-	[NETWORK_ARBITRUM]: env.X402_ASSET_ADDRESS_ARBITRUM,
-};
-
-const PAY_TO = env.X402_PAY_TO_BASE;
-const PRICE = '$0.01';
 const ROUTE = '/api/x402/mint-to-mesh';
-
-function buildAccepts() {
-	return env.X402_EVM_NETWORKS
-		.filter((n) => ASSET_FOR_NETWORK[n])
-		.map((network) => ({
-			scheme: 'exact',
-			network,
-			price: PRICE,
-			payTo: PAY_TO,
-			asset: ASSET_FOR_NETWORK[network],
-			extra: { name: 'USDC', version: '2', decimals: 6 },
-		}));
-}
-
-const facilitatorClient = new HTTPFacilitatorClient(cdpFacilitator);
-
-let resourceServer = new x402ResourceServer(facilitatorClient);
-for (const network of env.X402_EVM_NETWORKS) {
-	if (!ASSET_FOR_NETWORK[network]) continue;
-	resourceServer = resourceServer.register(network, new ExactEvmScheme());
-}
 
 const ROUTE_DESCRIPTION =
 	'three.ws Mint to Mesh — pass a Solana fungible-token mint, get back a binary ' +
@@ -71,13 +39,14 @@ const ROUTE_DESCRIPTION =
 	'on-chain Metaplex metadata so downstream agents can introspect mint, name, ' +
 	'symbol, and timestamp. Useful for any agent that needs an instantly renderable ' +
 	'3D representation of a token (in-game items, leaderboards, NFT-of-token, AR ' +
-	'previews). Pay-per-call in USDC on Base or Arbitrum mainnet.';
+	'previews). Pay-per-call in USDC on Base mainnet.';
 
 const DISCOVERY_INPUT_EXAMPLE = {
 	mint: 'DezXAZ8z7PnrnRJjz3wXBoRgixCa6xjnB7YaB1pPB263',
 };
 
 const DISCOVERY_INPUT_SCHEMA = {
+	$schema: 'https://json-schema.org/draft/2020-12/schema',
 	type: 'object',
 	required: ['mint'],
 	properties: {
@@ -102,12 +71,12 @@ const DISCOVERY_OUTPUT_EXAMPLE = {
 	glb: {
 		mimeType: 'model/gltf-binary',
 		bytes: 50768,
-		base64:
-			'Z2xURgIAAADQxAAA…(truncated; full GLB bytes are returned on a real call)',
+		base64: 'Z2xURgIAAADQxAAA…(truncated; full GLB bytes are returned on a real call)',
 	},
 };
 
 const DISCOVERY_OUTPUT_SCHEMA = {
+	$schema: 'https://json-schema.org/draft/2020-12/schema',
 	type: 'object',
 	required: ['mint', 'theme', 'glb'],
 	properties: {
@@ -148,62 +117,49 @@ const DISCOVERY_OUTPUT_SCHEMA = {
 	},
 };
 
-const routeConfig = {
-	[`GET ${ROUTE}`]: {
-		accepts: buildAccepts(),
-		description: ROUTE_DESCRIPTION,
-		mimeType: 'application/json',
-		extensions: {
-			...declareDiscoveryExtension({
-				input: DISCOVERY_INPUT_EXAMPLE,
-				inputSchema: DISCOVERY_INPUT_SCHEMA,
-				output: {
-					example: DISCOVERY_OUTPUT_EXAMPLE,
-					schema: DISCOVERY_OUTPUT_SCHEMA,
-				},
-			}),
+const ROUTE_BAZAAR = {
+	discoverable: true,
+	info: {
+		input: {
+			type: 'http',
+			method: 'GET',
+			queryParams: DISCOVERY_INPUT_EXAMPLE,
+			queryParamsSchema: DISCOVERY_INPUT_SCHEMA,
 		},
+		output: { type: 'json', example: DISCOVERY_OUTPUT_EXAMPLE },
 	},
+	schema: DISCOVERY_OUTPUT_SCHEMA,
 };
 
-const app = express();
-
-// Lazy-construct paymentMiddleware on first request — see model-check.js for
-// rationale (avoids unhandled init-promise rejection at module load when CDP
-// credentials are absent, e.g. during tests).
-let _paidMiddleware;
-app.use((req, res, next) => {
-	if (!_paidMiddleware) _paidMiddleware = paymentMiddleware(routeConfig, resourceServer);
-	return _paidMiddleware(req, res, next);
-});
+function buildRequirements() {
+	return [
+		{
+			scheme: 'exact',
+			network: NETWORK_BASE_MAINNET,
+			amount: env.X402_MAX_AMOUNT_REQUIRED,
+			payTo: env.X402_PAY_TO_BASE,
+			asset: env.X402_ASSET_ADDRESS_BASE,
+			maxTimeoutSeconds: 60,
+			extra: { name: 'USD Coin', version: '2', decimals: 6 },
+		},
+	];
+}
 
 // Loose Solana base58 sanity check. Real validation happens in solanaPubkey()
 // inside fetchTokenMeta — this just rejects obvious garbage early so we don't
 // pay for an RPC round trip on it.
 const BASE58_RE = /^[1-9A-HJ-NP-Za-km-z]{32,44}$/;
 
-app.get(ROUTE, async (req, res) => {
-	const mint = String(req.query?.mint || '').trim();
-	if (!mint) {
-		return res.status(400).json({ error: 'missing_mint', message: 'query param "mint" is required' });
-	}
-	if (!BASE58_RE.test(mint)) {
-		return res
-			.status(400)
-			.json({ error: 'invalid_mint', message: 'mint must be a base58 SPL address (32–44 chars)' });
-	}
-
+async function buildMesh(mint) {
 	let meta;
 	try {
 		meta = await fetchTokenMeta(mint);
 	} catch (err) {
-		const status = err.status || 502;
-		return res.status(status).json({
-			error: err.code || 'meta_fetch_failed',
-			message: err.message || 'failed to read on-chain metadata',
-		});
+		const e = new Error(err.message || 'failed to read on-chain metadata');
+		e.code = err.code || 'meta_fetch_failed';
+		e.status = err.status || 502;
+		throw e;
 	}
-
 	const color = colorFromMint(mint);
 	const glb = await createThemedGLB({
 		mint: meta.mint,
@@ -219,9 +175,7 @@ app.get(ROUTE, async (req, res) => {
 			offchainUri: meta.uri || undefined,
 		},
 	});
-
-	res.setHeader('cache-control', 'no-store');
-	res.json({
+	return {
 		mint: meta.mint,
 		theme: {
 			name: meta.name,
@@ -235,12 +189,60 @@ app.get(ROUTE, async (req, res) => {
 			bytes: glb.byteLength,
 			base64: Buffer.from(glb).toString('base64'),
 		},
-	});
-});
+	};
+}
 
-app.use((err, req, res, _next) => {
-	console.error('[x402/mint-to-mesh] unhandled', err);
-	res.status(500).json({ error: 'internal_error', message: err?.message || 'unknown error' });
-});
+export default wrap(async (req, res) => {
+	if (cors(req, res, { methods: 'GET,OPTIONS' })) return;
+	if (req.method !== 'GET') {
+		res.setHeader('allow', 'GET');
+		return error(res, 405, 'method_not_allowed', 'use GET');
+	}
 
-export default app;
+	const resourceUrl = resolveResourceUrl(req, ROUTE);
+	const requirements = buildRequirements();
+	const challenge = {
+		resourceUrl,
+		accepts: requirements,
+		description: ROUTE_DESCRIPTION,
+		bazaar: ROUTE_BAZAAR,
+	};
+
+	const paymentHeader = req.headers['x-payment'] || req.headers['payment-signature'];
+	if (!paymentHeader) return send402(res, challenge);
+
+	let verified;
+	try {
+		verified = await verifyPayment({ paymentHeader, requirements });
+	} catch (err) {
+		if (err.status === 402) return send402(res, { ...challenge, error: err.message });
+		return error(res, err.status || 502, err.code || 'verify_failed', err.message);
+	}
+
+	const mint = String(req.query?.mint || '').trim();
+	if (!mint) return error(res, 400, 'missing_mint', 'query param "mint" is required');
+	if (!BASE58_RE.test(mint))
+		return error(res, 400, 'invalid_mint', 'mint must be a base58 SPL address (32–44 chars)');
+
+	let result;
+	try {
+		result = await buildMesh(mint);
+	} catch (err) {
+		return error(res, err.status || 500, err.code || 'internal_error', err.message);
+	}
+
+	let settled;
+	try {
+		settled = await settlePayment({
+			paymentPayload: verified.paymentPayload,
+			requirement: verified.requirement,
+		});
+	} catch (err) {
+		return error(res, err.status || 502, err.code || 'settle_failed', err.message);
+	}
+
+	res.setHeader('x-payment-response', encodePaymentResponseHeader(settled));
+	res.setHeader('cache-control', 'no-store');
+	res.setHeader('content-type', 'application/json; charset=utf-8');
+	res.end(JSON.stringify(result));
+});

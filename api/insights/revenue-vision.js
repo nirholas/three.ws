@@ -1,67 +1,33 @@
 // GET /api/insights/revenue-vision
 //
 // Paid endpoint cataloged by the CDP x402 Bazaar (agentic.market). For $0.001
-// USDC on Base or Arbitrum mainnet the server hands the caller's mission_brief
-// to Claude and returns a structured { power_mode, insight, recommended_move,
-// confidence } object. Buyers pay programmatically with @x402/fetch — no API keys.
+// USDC on Base mainnet the server hands the caller's mission_brief to Claude
+// and returns a structured { power_mode, insight, recommended_move, confidence }
+// object. Buyers pay programmatically with @x402/fetch — no API keys.
 //
-// Wire stack (mirrors api/x402/model-check.js for consistency):
-//   • @x402/express     paymentMiddleware → Express adapter
-//   • @x402/core        x402ResourceServer + HTTPFacilitatorClient
-//   • @x402/evm         ExactEvmScheme (eip155:* networks)
-//   • @x402/extensions  declareDiscoveryExtension → bazaar discovery shape
-//   • @coinbase/x402    facilitator config with ES256 JWT auth (CDP)
-//
-// Bazaar listing requires settlement through the CDP facilitator — that's the
-// only one whose verify+settle log feeds the catalog. CDP_API_KEY_ID and
-// CDP_API_KEY_SECRET must be set in Vercel.
+// Wire stack: plain Node handler + our internal x402-spec.js (same path
+// /api/mcp uses). 402 challenge stays alive even when CDP creds are absent so
+// the bazaar can index the endpoint. Verify+settle routes via
+// X402_FACILITATOR_URL_BASE (PayAI by default).
 
-import express from 'express';
-import { paymentMiddleware, x402ResourceServer } from '@x402/express';
-import { ExactEvmScheme } from '@x402/evm/exact/server';
-import { HTTPFacilitatorClient } from '@x402/core/server';
-import { declareDiscoveryExtension } from '@x402/extensions/bazaar';
-import { facilitator as cdpFacilitator } from '@coinbase/x402';
-
+import { wrap, cors, error } from '../_lib/http.js';
+import {
+	NETWORK_BASE_MAINNET,
+	send402,
+	verifyPayment,
+	settlePayment,
+	encodePaymentResponseHeader,
+	resolveResourceUrl,
+} from '../_lib/x402-spec.js';
 import { env } from '../_lib/env.js';
 
-const NETWORK_BASE = 'eip155:8453';
-const NETWORK_ARBITRUM = 'eip155:42161';
-const USDC_BASE = '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913';
-
-const ASSET_FOR_NETWORK = {
-	[NETWORK_BASE]: USDC_BASE,
-	[NETWORK_ARBITRUM]: env.X402_ASSET_ADDRESS_ARBITRUM,
-};
-
-const PAY_TO = env.X402_PAY_TO_BASE;
-const PRICE = '$0.001';
 const ROUTE = '/api/insights/revenue-vision';
-
-function buildAccepts() {
-	return env.X402_EVM_NETWORKS.filter((n) => ASSET_FOR_NETWORK[n]).map((network) => ({
-		scheme: 'exact',
-		network,
-		price: PRICE,
-		payTo: PAY_TO,
-		asset: ASSET_FOR_NETWORK[network],
-		extra: { name: 'USDC', version: '2', decimals: 6 },
-	}));
-}
-
-const facilitatorClient = new HTTPFacilitatorClient(cdpFacilitator);
-
-let resourceServer = new x402ResourceServer(facilitatorClient);
-for (const network of env.X402_EVM_NETWORKS) {
-	if (!ASSET_FOR_NETWORK[network]) continue;
-	resourceServer = resourceServer.register(network, new ExactEvmScheme());
-}
 
 const ROUTE_DESCRIPTION =
 	'Revenue Vision — agentic growth analysis for AI buyers. Hand over a mission_brief ' +
 	'(a free-text growth question or hypothesis) and get back a single prioritized next-best ' +
 	'tactical move, a specific data-grounded insight, and an honestly-calibrated confidence ' +
-	'rating. Powered by Claude. Pay-per-call in USDC on Base or Arbitrum mainnet.';
+	'rating. Powered by Claude. Pay-per-call in USDC on Base mainnet.';
 
 const DISCOVERY_INPUT_EXAMPLE = {
 	agent_codename: 'ledger-bot',
@@ -70,6 +36,7 @@ const DISCOVERY_INPUT_EXAMPLE = {
 };
 
 const DISCOVERY_INPUT_SCHEMA = {
+	$schema: 'https://json-schema.org/draft/2020-12/schema',
 	type: 'object',
 	required: ['agent_codename', 'power_request', 'mission_brief'],
 	properties: {
@@ -101,6 +68,7 @@ const DISCOVERY_OUTPUT_EXAMPLE = {
 };
 
 const DISCOVERY_OUTPUT_SCHEMA = {
+	$schema: 'https://json-schema.org/draft/2020-12/schema',
 	type: 'object',
 	required: ['power_mode', 'insight', 'recommended_move', 'confidence'],
 	properties: {
@@ -117,34 +85,33 @@ const DISCOVERY_OUTPUT_SCHEMA = {
 	},
 };
 
-const routeConfig = {
-	[`GET ${ROUTE}`]: {
-		accepts: buildAccepts(),
-		description: ROUTE_DESCRIPTION,
-		mimeType: 'application/json',
-		extensions: {
-			...declareDiscoveryExtension({
-				input: DISCOVERY_INPUT_EXAMPLE,
-				inputSchema: DISCOVERY_INPUT_SCHEMA,
-				output: {
-					example: DISCOVERY_OUTPUT_EXAMPLE,
-					schema: DISCOVERY_OUTPUT_SCHEMA,
-				},
-			}),
+const ROUTE_BAZAAR = {
+	discoverable: true,
+	info: {
+		input: {
+			type: 'http',
+			method: 'GET',
+			queryParams: DISCOVERY_INPUT_EXAMPLE,
+			queryParamsSchema: DISCOVERY_INPUT_SCHEMA,
 		},
+		output: { type: 'json', example: DISCOVERY_OUTPUT_EXAMPLE },
 	},
+	schema: DISCOVERY_OUTPUT_SCHEMA,
 };
 
-const app = express();
-
-// Lazy-construct paymentMiddleware on first request — see x402/model-check.js
-// for rationale (avoids unhandled init-promise rejection at module load when
-// CDP credentials are absent, e.g. during tests).
-let _paidMiddleware;
-app.use((req, res, next) => {
-	if (!_paidMiddleware) _paidMiddleware = paymentMiddleware(routeConfig, resourceServer);
-	return _paidMiddleware(req, res, next);
-});
+function buildRequirements() {
+	return [
+		{
+			scheme: 'exact',
+			network: NETWORK_BASE_MAINNET,
+			amount: env.X402_MAX_AMOUNT_REQUIRED,
+			payTo: env.X402_PAY_TO_BASE,
+			asset: env.X402_ASSET_ADDRESS_BASE,
+			maxTimeoutSeconds: 60,
+			extra: { name: 'USD Coin', version: '2', decimals: 6 },
+		},
+	];
+}
 
 const SYSTEM_PROMPT =
 	'You are Revenue Vision, an agentic growth analyst. Reply with a single JSON object ' +
@@ -176,9 +143,10 @@ async function callClaude(missionBrief, agentCodename) {
 	});
 	if (!upstream.ok) {
 		const errText = await upstream.text();
-		const err = new Error(`Claude returned ${upstream.status}: ${errText.slice(0, 300)}`);
-		err.status = 502;
-		throw err;
+		const e = new Error(`Claude returned ${upstream.status}: ${errText.slice(0, 300)}`);
+		e.status = 502;
+		e.code = 'upstream_error';
+		throw e;
 	}
 	const data = await upstream.json();
 	const text = data?.content?.find?.((b) => b.type === 'text')?.text || '';
@@ -193,53 +161,63 @@ async function callClaude(missionBrief, agentCodename) {
 	};
 }
 
-app.get(ROUTE, async (req, res) => {
+export default wrap(async (req, res) => {
+	if (cors(req, res, { methods: 'GET,OPTIONS' })) return;
+	if (req.method !== 'GET') {
+		res.setHeader('allow', 'GET');
+		return error(res, 405, 'method_not_allowed', 'use GET');
+	}
+
+	const resourceUrl = resolveResourceUrl(req, ROUTE);
+	const requirements = buildRequirements();
+	const challenge = {
+		resourceUrl,
+		accepts: requirements,
+		description: ROUTE_DESCRIPTION,
+		bazaar: ROUTE_BAZAAR,
+	};
+
+	const paymentHeader = req.headers['x-payment'] || req.headers['payment-signature'];
+	if (!paymentHeader) return send402(res, challenge);
+
+	let verified;
+	try {
+		verified = await verifyPayment({ paymentHeader, requirements });
+	} catch (err) {
+		if (err.status === 402) return send402(res, { ...challenge, error: err.message });
+		return error(res, err.status || 502, err.code || 'verify_failed', err.message);
+	}
+
 	const agentCodename = String(req.query?.agent_codename || '').trim();
 	const powerRequest = String(req.query?.power_request || '').trim();
 	const missionBrief = String(req.query?.mission_brief || '').trim();
 
-	if (!agentCodename || agentCodename.length > 120) {
-		return res
-			.status(400)
-			.json({
-				error: 'invalid_agent_codename',
-				message: 'agent_codename is required (≤120 chars)',
-			});
-	}
-	if (powerRequest !== 'revenue-vision') {
-		return res
-			.status(400)
-			.json({
-				error: 'invalid_power_request',
-				message: 'power_request must be "revenue-vision"',
-			});
-	}
-	if (missionBrief.length < 4 || missionBrief.length > 4000) {
-		return res
-			.status(400)
-			.json({
-				error: 'invalid_mission_brief',
-				message: 'mission_brief must be 4–4000 chars',
-			});
-	}
+	if (!agentCodename || agentCodename.length > 120)
+		return error(res, 400, 'invalid_agent_codename', 'agent_codename is required (≤120 chars)');
+	if (powerRequest !== 'revenue-vision')
+		return error(res, 400, 'invalid_power_request', 'power_request must be "revenue-vision"');
+	if (missionBrief.length < 4 || missionBrief.length > 4000)
+		return error(res, 400, 'invalid_mission_brief', 'mission_brief must be 4–4000 chars');
 
 	let result;
 	try {
 		result = await callClaude(missionBrief, agentCodename);
 	} catch (err) {
-		const status = err.status || 502;
-		return res
-			.status(status)
-			.json({ error: 'upstream_error', message: err.message || 'Claude call failed' });
+		return error(res, err.status || 502, err.code || 'upstream_error', err.message);
 	}
 
+	let settled;
+	try {
+		settled = await settlePayment({
+			paymentPayload: verified.paymentPayload,
+			requirement: verified.requirement,
+		});
+	} catch (err) {
+		return error(res, err.status || 502, err.code || 'settle_failed', err.message);
+	}
+
+	res.setHeader('x-payment-response', encodePaymentResponseHeader(settled));
 	res.setHeader('cache-control', 'no-store');
-	res.json(result);
+	res.setHeader('content-type', 'application/json; charset=utf-8');
+	res.end(JSON.stringify(result));
 });
-
-app.use((err, req, res, _next) => {
-	console.error('[insights/revenue-vision] unhandled', err);
-	res.status(500).json({ error: 'internal_error', message: err?.message || 'unknown error' });
-});
-
-export default app;
