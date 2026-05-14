@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1" />
+		<title>Launchpad Studio — three.ws</title>
+		<meta
+			name="description"
+			content="Build a white-label 3D token launchpad in minutes. Fill in wallet, brand, and avatar — get a hosted page, an x402 agent skill, and a Pump.fun-powered mint flow you can resell."
+		/>
+		<style>
+			html,
+			body {
+				margin: 0;
+				padding: 0;
+				height: 100%;
+				background: #0b0d10;
+				color: #fff;
+				font-family: system-ui, sans-serif;
+			}
+			#root {
+				height: 100vh;
+			}
+		</style>
+	</head>
+	<body>
+		<div id="root"></div>
+		<script type="module">
+			import { mountLaunchpadStudio } from './src/editor/launchpad-studio.js';
+			const url = new URL(location.href);
+			mountLaunchpadStudio(document.getElementById('root'), {
+				template: url.searchParams.get('template') || 'token-launchpad',
+				slug: url.searchParams.get('slug') || '',
+				wallet: url.searchParams.get('wallet') || '',
+				website: url.searchParams.get('website') || '',
+				avatarSrc: url.searchParams.get('avatar') || '',
+			});
+		</script>
+	</body>
+</html>

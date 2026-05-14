@@ -123,6 +123,7 @@ const appConfig = {
 				tutorial: resolve(__dirname, 'tutorial.html'),
 				playground: resolve(__dirname, 'playground.html'),
 				embed: resolve(__dirname, 'embed.html'),
+				launchpad: resolve(__dirname, 'launchpad.html'),
 				create: resolve(__dirname, 'create.html'),
 				'agent-home': resolve(__dirname, 'agent-home.html'),
 				marketplace: resolve(__dirname, 'marketplace.html'),
@@ -224,6 +225,10 @@ const appConfig = {
 					'/pretext-demo/': resolve(root, 'pretext-demo.html'),
 					'/launch-week': resolve(root, 'three-ws-launch-week.html'),
 					'/launch-week/': resolve(root, 'three-ws-launch-week.html'),
+					'/launchpad': resolve(root, 'launchpad.html'),
+					'/launchpad/': resolve(root, 'launchpad.html'),
+					'/p': resolve(root, 'public/p/index.html'),
+					'/p/': resolve(root, 'public/p/index.html'),
 					'/eth-vanity': resolve(root, 'public/eth-vanity.html'),
 					'/eth-vanity/': resolve(root, 'public/eth-vanity.html'),
 					'/strategy-lab': resolve(root, 'public/strategy-lab.html'),
@@ -287,6 +292,9 @@ const appConfig = {
 					// /tutorials/<slug>  → dedicated tutorial viewer template
 					if (!filePath && /^\/tutorials\/[a-z0-9-]+\/?$/.test(path))
 						filePath = resolve(root, 'tutorial.html');
+					// /p/<slug>  → public Launchpad Studio renderer (hydrates from /api/launchpad/get)
+					else if (!filePath && /^\/p\/[a-z0-9-]+\/?$/.test(path))
+						filePath = resolve(root, 'public/p/index.html');
 					else if (!filePath && /^\/marketplace\/agents\/[^/]+\/?$/.test(path))
 						filePath = resolve(root, 'marketplace.html');
 					else if (!filePath && /^\/marketplace\/avatars\/[^/]+\/?$/.test(path))

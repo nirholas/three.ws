@@ -201,6 +201,14 @@
 			"dest": "/three-ws-launch-week.html"
 		},
 		{
+			"src": "/launchpad/?",
+			"dest": "/launchpad.html"
+		},
+		{
+			"src": "/p/([a-z0-9-]+)/?",
+			"dest": "/p/index.html"
+		},
+		{
 			"src": "/pricing/?",
 			"dest": "/pricing.html"
 		},
