@@ -145,7 +145,7 @@ export const env = {
 	get X402_PAY_TO_SOLANA() {
 		return opt(
 			'X402_PAY_TO_SOLANA',
-			opt('X402_PAY_TO', 'BUrwd1nK6tFeeJMyzRHDo6AuVbnSfUULfvwq21X93nSN'),
+			opt('X402_PAY_TO', 'wwwPqsM4N7T9J69tB82nLyzxqsH159j4orftLTQfUGV'),
 		);
 	},
 	get X402_PAY_TO_BASE() {
@@ -189,6 +189,21 @@ export const env = {
 	},
 	get X402_FACILITATOR_TOKEN_BASE() {
 		return opt('X402_FACILITATOR_TOKEN_BASE', opt('X402_FACILITATOR_TOKEN'));
+	},
+	// Coinbase Developer Platform x402 facilitator. When both keys are set,
+	// Base-mainnet payments route through CDP (required for CDP Bazaar /
+	// agentic.market listing — only endpoints whose first verify+settle is
+	// processed by CDP get cataloged). Solana keeps routing to PayAI.
+	get CDP_API_KEY_ID() {
+		return opt('CDP_API_KEY_ID');
+	},
+	get CDP_API_KEY_SECRET() {
+		return opt('CDP_API_KEY_SECRET');
+	},
+	get X402_CDP_FACILITATOR_URL() {
+		return trimSlash(
+			opt('X402_CDP_FACILITATOR_URL', 'https://api.cdp.coinbase.com/platform/v2/x402'),
+		);
 	},
 	// Solana fee payer advertised in the 402 challenge's `extra.feePayer`.
 	// Clients build the SPL transfer with this account paying SOL fees; the
