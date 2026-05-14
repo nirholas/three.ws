@@ -697,20 +697,24 @@ const STYLE = `
 		content: '🔒 ';
 	}
 
-	/* Device viewport frame — shown when simulating tablet/mobile */
-	.device-frame {
+	/* Device viewport — wraps placeholder/iframe/agent-wrap so they scale
+	   together when simulating tablet/mobile. In desktop mode fills the stage. */
+	.device-viewport {
 		position: absolute;
-		top: 50%;
-		left: 50%;
+		inset: 0;
 		transform-origin: top left;
+		transition: transform 0.2s, width 0.2s, height 0.2s;
+	}
+	.device-viewport[data-device="tablet"],
+	.device-viewport[data-device="mobile"] {
+		inset: auto;
 		background: white;
 		box-shadow: 0 0 0 2px #374151, 0 12px 40px rgba(0,0,0,0.5);
-		border-radius: 8px;
+		border-radius: 12px;
 		overflow: hidden;
-		transition: width 0.2s, height 0.2s;
 	}
-	.device-frame .placeholder-site,
-	.device-frame iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; }
+	.device-viewport .placeholder-site,
+	.device-viewport > iframe { position: absolute; inset: 0; width: 100%; height: 100%; }
 `;
 
 export function mountEmbedEditor(root, options = {}) {
@@ -749,6 +753,7 @@ export function mountEmbedEditor(root, options = {}) {
 					<span>Preview:</span>
 				</div>
 				<div class="stage-wrap" id="stage">
+					<div class="device-viewport" id="device-viewport">
 					<div class="placeholder-site" id="placeholder">
 						<nav class="nav">
 							<div class="brand"><div class="logo"></div>Acme</div>
@@ -777,7 +782,6 @@ export function mountEmbedEditor(root, options = {}) {
 						</div>
 					</div>
 					<iframe id="preview-frame" hidden></iframe>
-					<div class="anim-dock" id="anim-dock" hidden></div>
 					<div class="agent-wrap" id="agent-wrap">
 						<div class="size-readout" id="size-readout"></div>
 						<div class="widget-badge" id="widget-badge" hidden></div>
@@ -789,6 +793,8 @@ export function mountEmbedEditor(root, options = {}) {
 						<div class="resize-handle sw" data-h="sw"></div>
 						<div class="resize-handle se" data-h="se"></div>
 					</div>
+					</div>
+					<div class="anim-dock" id="anim-dock" hidden></div>
 				</div>
 			</div>
 			<button class="exit-preview" id="exit-preview" type="button">← Back to editor</button>
@@ -1179,20 +1185,26 @@ export function mountEmbedEditor(root, options = {}) {
 		$('#placeholder').hidden = false;
 	});
 
-	// Drag
+	// Drag — also handles click-to-freeze: a pointerdown→pointerup with less
+	// than TAP_THRESHOLD pixels of movement is treated as a tap on the avatar
+	// and toggles state.avatarFrozen instead of dragging.
+	const TAP_THRESHOLD = 5;
 	let dragState = null;
 	agentWrap.addEventListener('pointerdown', (e) => {
-		if (state.previewMode || state.locked) return;
 		if (e.target.closest('.resize-handle')) return;
-		const rect = stage.getBoundingClientRect();
+		// Don't intercept clicks on overlay chrome that sits over the wrap.
+		if (e.target.closest('.size-readout, .widget-badge')) return;
+		const dragAllowed = !state.previewMode && !state.locked;
 		const agentRect = agentWrap.getBoundingClientRect();
 		dragState = {
-			kind: 'move',
+			kind: dragAllowed ? 'move' : 'tap-only',
+			downX: e.clientX,
+			downY: e.clientY,
+			moved: false,
 			offsetX: e.clientX - agentRect.left,
 			offsetY: e.clientY - agentRect.top,
-			stageRect: rect,
+			stageRect: stage.getBoundingClientRect(),
 		};
-		agentWrap.classList.add('dragging');
 		agentWrap.setPointerCapture(e.pointerId);
 	});
 
@@ -1367,11 +1379,24 @@ export function mountEmbedEditor(root, options = {}) {
 	// the idle loop stops mid-frame, and OrbitControls is disabled so the
 	// camera can't be rotated/panned/zoomed. Toggling off restores both.
 	const lockToggle = $('#lock-toggle');
+	// state.avatarFrozen — true when the avatar's mixer + camera controls are
+	// paused (set by Lock button OR by click-on-avatar). state.locked is the
+	// wider Lock-button state that also freezes the wrap.
 	function applyAvatarLock() {
 		const viewer = agentEl?._viewer;
 		if (!viewer) return;
-		if (viewer.mixer) viewer.mixer.timeScale = state.locked ? 0 : 1;
-		if (viewer.controls) viewer.controls.enabled = !state.locked;
+		if (viewer.mixer) viewer.mixer.timeScale = state.avatarFrozen ? 0 : 1;
+		if (viewer.controls) viewer.controls.enabled = !state.avatarFrozen;
+		editorRoot.setAttribute('data-avatar-frozen', state.avatarFrozen ? 'true' : 'false');
+	}
+	function setAvatarFrozen(on, { silent = false } = {}) {
+		state.avatarFrozen = !!on;
+		applyAvatarLock();
+		if (!silent) {
+			showToast(state.avatarFrozen ? 'Avatar frozen — click again to play' : 'Avatar playing', {
+				kind: state.avatarFrozen ? 'warn' : 'success',
+			});
+		}
 	}
 	function setLocked(on) {
 		state.locked = !!on;
@@ -1379,13 +1404,14 @@ export function mountEmbedEditor(root, options = {}) {
 		lockToggle.setAttribute('aria-pressed', state.locked ? 'true' : 'false');
 		lockToggle.querySelector('.lock-icon').textContent = state.locked ? '🔒' : '🔓';
 		lockToggle.querySelector('.lock-label').textContent = state.locked ? 'Locked' : 'Lock';
-		applyAvatarLock();
+		// Lock button drives both the wrap and the avatar freeze.
+		setAvatarFrozen(state.locked, { silent: true });
 		showToast(state.locked ? 'Locked — drag, resize, and avatar motion frozen' : 'Unlocked', {
 			kind: state.locked ? 'warn' : 'success',
 		});
 	}
 	lockToggle.addEventListener('click', () => setLocked(!state.locked));
-	// Re-apply on each agent boot so locking persists across avatar swaps —
+	// Re-apply on each agent boot so freezing persists across avatar swaps —
 	// _viewer.mixer is rebuilt during setContent() so the timeScale would
 	// otherwise reset to 1.
 	agentEl.addEventListener('agent:ready', applyAvatarLock);
@@ -1577,17 +1603,31 @@ export function mountEmbedEditor(root, options = {}) {
 		const snippet = buildSnippet();
 		const isLocal = /^(localhost|127\.|0\.0\.0\.0|\[?::1\]?)/i.test(location.hostname);
 		const localScript = `<script type="module" src="${location.origin}/src/element.js"></` + 'script>';
-		const wireSnippet = isLocal && !state.widgetId
+		// Rewrite ALL relative URLs (src="/...", any "/...glb", etc.) inside the
+		// snippet to absolute so they resolve against the live origin instead
+		// of the blob: document we're about to open the page from. Blob URLs
+		// have no base, so a bare "/avatars/cz.glb" would otherwise hit the
+		// Failed-to-parse-URL errors the user saw in the console.
+		let wireSnippet = isLocal && !state.widgetId
 			? snippet.replace(
 					/<script[^>]*src="[^"]*agent-3d\/[^"]+\/agent-3d\.js"[^>]*><\/script>/,
 					localScript,
 				)
 			: snippet;
+		// Rewrite any remaining relative src="/foo" → src="${origin}/foo".
+		wireSnippet = wireSnippet.replace(
+			/(\s)(src|href)="\/([^"]*)"/g,
+			`$1$2="${location.origin}/$3"`,
+		);
 		const title = `Embed preview — ${state.src || state.widgetId || 'agent'}`;
 		return `<!doctype html>
 <html lang="en">
 <head>
 <meta charset="utf-8">
+<!-- Anchor relative URLs (fetches inside agent-3d, e.g. /three.svg, /avatars/*.glb)
+     against the live origin. Required because this page is served from a blob:
+     URL which has no base for resolving "/..." URLs. -->
+<base href="${location.origin}/">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>${escapeHtml(title)}</title>
 <style>
@@ -1640,50 +1680,54 @@ export function mountEmbedEditor(root, options = {}) {
 			.replace(/'/g, '&#39;');
 	}
 
+	const deviceViewport = $('#device-viewport');
 	function syncDevice() {
 		const device = DEVICES.find((d) => d.id === state.device) || DEVICES[0];
 		for (const btn of $$('.device-btn')) {
 			btn.setAttribute('aria-pressed', String(btn.dataset.device === state.device));
 		}
 
+		// Reset placeholder/iframe inline styles — earlier versions of this code
+		// scaled them individually; the viewport now owns the transform.
+		const placeholder = $('#placeholder');
+		if (placeholder) placeholder.style.cssText = '';
+		const iframe = $('#preview-frame');
+		if (iframe) iframe.style.cssText = '';
+
+		if (state.device === 'desktop') {
+			deviceViewport.style.cssText = '';
+			deviceViewport.dataset.device = 'desktop';
+			stage.removeAttribute('data-device');
+			return;
+		}
+
+		// Scale the device viewport (which contains placeholder, iframe, AND the
+		// agent wrap) so everything moves together. The wrap stays positioned
+		// relative to the viewport, so a floating bubble at bottom-right of a
+		// 768×1024 tablet appears at the tablet's bottom-right corner instead
+		// of leaking out into the stage.
 		const stageRect = stage.getBoundingClientRect();
 		const stageW = stageRect.width || stage.offsetWidth;
 		const stageH = stageRect.height || stage.offsetHeight;
+		const scaleX = stageW / device.w;
+		const scaleY = stageH / device.h;
+		const scale = Math.min(scaleX, scaleY, 1) * 0.9;
+		const frameW = device.w * scale;
+		const frameH = device.h * scale;
+		const offsetX = (stageW - frameW) / 2;
+		const offsetY = (stageH - frameH) / 2;
 
-		if (state.device === 'desktop') {
-			// No frame — fills stage normally
-			$('#placeholder').style.cssText = '';
-			const iframe = $('#preview-frame');
-			if (iframe) iframe.style.cssText = '';
-			stage.removeAttribute('data-device');
-		} else {
-			// Show device frame scaled to fit the stage
-			const scaleX = stageW / device.w;
-			const scaleY = stageH / device.h;
-			const scale = Math.min(scaleX, scaleY, 1) * 0.9;
-			const frameW = device.w * scale;
-			const frameH = device.h * scale;
-			const offsetX = (stageW - frameW) / 2;
-			const offsetY = (stageH - frameH) / 2;
-
-			const placeholder = $('#placeholder');
-			placeholder.style.cssText = `
-				width: ${device.w}px; height: ${device.h}px;
-				transform: scale(${scale}); transform-origin: top left;
-				top: ${offsetY / scale}px; left: ${offsetX / scale}px;
-				position: absolute;
-			`;
-			const iframe = $('#preview-frame');
-			if (iframe && !iframe.hidden) {
-				iframe.style.cssText = `
-					width: ${device.w}px; height: ${device.h}px;
-					transform: scale(${scale}); transform-origin: top left;
-					top: ${offsetY / scale}px; left: ${offsetX / scale}px;
-					position: absolute; border: 0;
-				`;
-			}
-			stage.setAttribute('data-device', state.device);
-		}
+		deviceViewport.style.cssText = `
+			position: absolute;
+			top: ${offsetY}px;
+			left: ${offsetX}px;
+			width: ${device.w}px;
+			height: ${device.h}px;
+			transform: scale(${scale});
+			transform-origin: top left;
+		`;
+		deviceViewport.dataset.device = state.device;
+		stage.setAttribute('data-device', state.device);
 	}
 
 	function parsePx(val) {
