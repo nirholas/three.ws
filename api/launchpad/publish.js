@@ -1,18 +1,25 @@
 // POST /api/launchpad/publish
 //
-// Persists a Launchpad Studio configuration (src/editor/launchpad-studio.js)
-// to launchpad_pages so it can be served at /p/<slug>. Anonymous publish is
-// allowed — the studio is the "Wix of 3D avatars" surface and must work for
-// drive-by creators with no account. If the request is authenticated the
-// user_id is attached so the dashboard can list owned launchpads.
+// Persists a Launchpad Studio configuration to launchpad_pages so it can be
+// served at /p/<slug> and edited later. Anonymous publish is allowed — the
+// studio is the "Wix of 3D avatars" surface and must work for drive-by
+// creators with no account.
 //
-// Slug uniqueness: insert with ON CONFLICT — anonymous re-publish is
-// rejected unless the wallet matches; authed re-publish is allowed if the
-// user already owns the slug. This stops casual squat-and-overwrite without
-// requiring a heavyweight ownership flow on day one.
+// Edit auth model:
+//   • First publish of a slug returns `ownerSecret` (random 32-byte hex).
+//     The studio stores it in localStorage keyed by slug.
+//   • Subsequent publishes that change anything must include either:
+//       (a) a matching `ownerSecret` in the request body, OR
+//       (b) an authenticated session whose user_id matches the row, OR
+//       (c) the same payout wallet as the existing row.
+//   • Without one of those, slug is treated as taken (409 slug_taken).
 //
-// Body shape mirrors mountLaunchpadStudio's state object.
+// This lets anonymous CMS-style editing work end-to-end: publish from a
+// browser → edit later from the same browser → secret travels with the
+// localStorage draft. Lose the secret AND the wallet AND the session → you
+// can't edit. That's the right tradeoff for a no-auth surface.
 
+import { createHash, randomBytes } from 'node:crypto';
 import { sql } from '../_lib/db.js';
 import { authenticateBearer, extractBearer, getSessionUser } from '../_lib/auth.js';
 import { cors, error, json, method, readJson, wrap } from '../_lib/http.js';
@@ -24,65 +31,76 @@ const SOL_RE = /^[1-9A-HJ-NP-Za-km-z]{32,44}$/;
 const EVM_RE = /^0x[a-fA-F0-9]{40}$/;
 const TEMPLATES = ['token-launchpad', 'paid-concierge', 'gated-showroom'];
 
+const skillSchema = z.object({
+	name: z.string().trim().min(1).max(80),
+	price: z.number().nonnegative(),
+	currency: z.string().trim().min(1).max(10),
+	chain: z.string().trim().min(1).max(20),
+	description: z.string().max(280).optional().default(''),
+});
+
 const bodySchema = z.object({
 	slug: z.string().regex(SLUG_RE, 'slug must be 1-40 chars, lowercase alphanumeric or hyphens'),
 	template: z.enum(TEMPLATES),
+	ownerSecret: z.string().min(32).max(128).optional(),
 	identity: z.object({
 		slug: z.string().optional(),
 		brand: z.string().max(20),
 		wallet: z.string().min(20).max(64),
 		website: z.string().max(300).optional().default(''),
 		theme: z.enum(['light', 'dark']).default('light'),
+		socials: z.object({
+			twitter:  z.string().max(200).optional().default(''),
+			telegram: z.string().max(200).optional().default(''),
+			discord:  z.string().max(200).optional().default(''),
+		}).optional(),
 	}),
 	avatar: z.object({
-		src: z.string().url().or(z.string().startsWith('/')),
+		src:  z.string().min(1).max(500),
 		name: z.string().max(80),
 	}),
 	copy: z.object({
 		headline: z.string().max(120),
-		tagline: z.string().max(280),
-		cta: z.string().max(40),
+		tagline:  z.string().max(280),
+		cta:      z.string().max(40),
 	}),
 	token: z.object({
-		name: z.string().max(80).optional().default(''),
-		ticker: z.string().max(10).optional().default(''),
-		supply: z.number().int().nonnegative().optional().default(0),
+		name:        z.string().max(80).optional().default(''),
+		ticker:      z.string().max(10).optional().default(''),
+		supply:      z.number().int().nonnegative().optional().default(0),
+		description: z.string().max(500).optional().default(''),
+		imageUrl:    z.string().max(500).optional().default(''),
+		mint:        z.string().max(64).optional().default(''),
 	}).optional(),
-	skill: z.object({
-		name: z.string().max(80).optional().default(''),
-		priceUsdc: z.number().nonnegative().optional().default(0),
-	}).optional(),
-	scene: z.object({
-		src: z.string().max(500).optional().default(''),
-	}).optional(),
+	agentSkills: z.array(skillSchema).max(20).optional().default([]),
+	scene: z.object({ src: z.string().max(500).optional().default('') }).optional(),
 	monetize: z.object({
-		kind: z.string().max(40),
-		price: z.number().nonnegative(),
+		kind:     z.string().max(40),
+		price:    z.number().nonnegative(),
 		currency: z.string().max(10),
-		chain: z.string().max(20),
+		chain:    z.string().max(20),
 	}),
 });
 
 function validateWalletForChain(wallet, chain) {
 	if (chain === 'solana') return SOL_RE.test(wallet);
 	if (chain === 'base' || chain === 'polygon' || chain === 'ethereum') return EVM_RE.test(wallet);
-	// Unknown chain — accept either format.
 	return SOL_RE.test(wallet) || EVM_RE.test(wallet);
+}
+
+function hashSecret(secret) {
+	return createHash('sha256').update(secret).digest('hex');
 }
 
 async function resolveAuth(req) {
 	try {
 		const session = await getSessionUser(req);
 		if (session) return { userId: session.id };
-	} catch {
-		// Session decode failure is non-fatal; fall through to bearer/anon.
-	}
+	} catch {}
 	try {
 		const bearer = await authenticateBearer(extractBearer(req));
 		if (bearer) return { userId: bearer.userId };
-	} catch {
-		// Same — anonymous publish remains allowed.
-	}
+	} catch {}
 	return null;
 }
 
@@ -114,48 +132,75 @@ export default wrap(async (req, res) => {
 
 	const auth = await resolveAuth(req);
 
-	// Ownership check on existing slugs.
 	const [existing] = await sql`
-		SELECT slug, owner_wallet, user_id FROM launchpad_pages WHERE slug = ${data.slug}
+		SELECT slug, owner_wallet, owner_secret_hash, user_id
+		FROM launchpad_pages WHERE slug = ${data.slug}
 	`;
-	if (existing) {
-		const wantsOwnerMatch =
-			(auth && existing.user_id && existing.user_id === auth.userId) ||
-			existing.owner_wallet?.toLowerCase() === data.identity.wallet.toLowerCase();
-		if (!wantsOwnerMatch) {
+
+	let ownerSecret = null;
+	let ownerSecretHash = null;
+
+	if (!existing) {
+		ownerSecret = randomBytes(32).toString('hex');
+		ownerSecretHash = hashSecret(ownerSecret);
+	} else {
+		// Edit auth: any of (a) matching secret, (b) same session user, (c) same wallet.
+		const secretOk = data.ownerSecret &&
+			existing.owner_secret_hash &&
+			hashSecret(data.ownerSecret) === existing.owner_secret_hash;
+		const sessionOk = auth?.userId && existing.user_id === auth.userId;
+		const walletOk = existing.owner_wallet?.toLowerCase() === data.identity.wallet.toLowerCase();
+		if (!secretOk && !sessionOk && !walletOk) {
 			return error(res, 409, 'slug_taken', 'that slug is already published — pick a different one');
+		}
+		// Existing row keeps its secret unless the publisher is rotating it.
+		ownerSecretHash = existing.owner_secret_hash;
+		// If the row was created before secrets existed, mint one on this update.
+		if (!ownerSecretHash) {
+			ownerSecret = randomBytes(32).toString('hex');
+			ownerSecretHash = hashSecret(ownerSecret);
 		}
 	}
 
 	const config = {
-		identity: data.identity,
-		avatar: data.avatar,
-		copy: data.copy,
-		token: data.token || {},
-		skill: data.skill || {},
-		scene: data.scene || {},
-		monetize: data.monetize,
+		identity:    data.identity,
+		avatar:      data.avatar,
+		copy:        data.copy,
+		token:       data.token || {},
+		agentSkills: data.agentSkills || [],
+		scene:       data.scene || {},
+		monetize:    data.monetize,
 	};
 
+	const tokenMint = data.token?.mint?.trim() || null;
+
 	await sql`
-		INSERT INTO launchpad_pages (slug, template, owner_wallet, user_id, config, updated_at)
-		VALUES (${data.slug}, ${data.template}, ${data.identity.wallet}, ${auth?.userId || null}, ${JSON.stringify(config)}::jsonb, now())
+		INSERT INTO launchpad_pages
+			(slug, template, owner_wallet, owner_secret_hash, user_id, config, token_mint, updated_at)
+		VALUES
+			(${data.slug}, ${data.template}, ${data.identity.wallet}, ${ownerSecretHash},
+			 ${auth?.userId || null}, ${JSON.stringify(config)}::jsonb, ${tokenMint}, now())
 		ON CONFLICT (slug) DO UPDATE SET
-			template     = EXCLUDED.template,
-			owner_wallet = EXCLUDED.owner_wallet,
-			user_id      = COALESCE(EXCLUDED.user_id, launchpad_pages.user_id),
-			config       = EXCLUDED.config,
-			updated_at   = now()
+			template          = EXCLUDED.template,
+			owner_wallet      = EXCLUDED.owner_wallet,
+			owner_secret_hash = COALESCE(launchpad_pages.owner_secret_hash, EXCLUDED.owner_secret_hash),
+			user_id           = COALESCE(EXCLUDED.user_id, launchpad_pages.user_id),
+			config            = EXCLUDED.config,
+			token_mint        = EXCLUDED.token_mint,
+			updated_at        = now()
 	`;
 
-	const origin =
-		req.headers['x-forwarded-host']
-			? `https://${req.headers['x-forwarded-host']}`
-			: 'https://three.ws';
+	const origin = req.headers['x-forwarded-host']
+		? `https://${req.headers['x-forwarded-host']}`
+		: 'https://three.ws';
 
-	return json(res, 200, {
+	const out = {
 		slug: data.slug,
 		url: `${origin}/p/${data.slug}`,
 		publishedAt: new Date().toISOString(),
-	});
+	};
+	// Only return the secret on first publish (or first time we minted one for
+	// a legacy row). Subsequent updates must already have it client-side.
+	if (ownerSecret) out.ownerSecret = ownerSecret;
+	return json(res, 200, out);
 });

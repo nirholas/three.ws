@@ -84,6 +84,7 @@ function renderPage(root, payload) {
 				<div class="avatar-stage">
 					<agent-3d
 						src="${esc(avatarSrc)}"
+						viewer
 						background="transparent"
 						camera-controls="auto"
 						auto-rotate
