@@ -33,6 +33,17 @@
 		<meta name="twitter:image" content="https://three.ws/og-image.png" />
 
 		<link rel="canonical" href="https://three.ws/" />
+		<script>
+			// Forward legacy /#model=… (and /#agent=, /#onchain=, /#widget=) viewer links to /app,
+			// which is where the Three.js viewer actually mounts. home.html is the marketing page
+			// and ignores these hashes, so without this redirect the user lands on home with no model.
+			(function () {
+				var h = location.hash || '';
+				if (/^#(?:model|agent|onchain|widget|kiosk|preset|brain|deploy|type)=/.test(h)) {
+					location.replace('/app' + h);
+				}
+			})();
+		</script>
 		<link rel="shortcut icon" href="/favicon.ico" />
 		<link rel="apple-touch-icon" href="/pwa-192x192.png" />
 		<link rel="stylesheet" href="/style.css" />

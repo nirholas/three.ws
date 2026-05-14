@@ -65,7 +65,7 @@ export default wrap(async (req, res) => {
 				registeredTx: r.registered_tx || null,
 				tokenExplorerUrl: tokenExplorerUrl(r.chain_id, r.agent_id),
 				ownerExplorerUrl: addressExplorerUrl(r.chain_id, r.owner),
-				viewerUrl: r.glb_url ? `/#model=${encodeURIComponent(r.glb_url)}` : null,
+				viewerUrl: r.glb_url ? `/app#model=${encodeURIComponent(r.glb_url)}` : null,
 				services: (r.services || []).map((s) => ({
 					name: s?.name || null,
 					endpoint: s?.endpoint || null,
@@ -119,7 +119,7 @@ export default wrap(async (req, res) => {
 					featured: r.featured === true || r.featured === 't',
 					viewCount: Number(r.view_count) || 0,
 					createdAt: r.created_at,
-					viewerUrl: `/#model=${encodeURIComponent(glb)}`,
+					viewerUrl: `/app#model=${encodeURIComponent(glb)}`,
 					author: handle
 						? {
 							handle,

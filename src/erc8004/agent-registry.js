@@ -336,7 +336,7 @@ export function buildRegistrationJSON({
 		});
 		baseServices.push({
 			name: '3D',
-			endpoint: `https://three.ws/#model=${encodeURIComponent(glbUrl)}`,
+			endpoint: `https://three.ws/app#model=${encodeURIComponent(glbUrl)}`,
 			version: '1.0',
 		});
 	}

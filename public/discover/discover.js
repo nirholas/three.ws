@@ -5,7 +5,7 @@
  * Filters + infinite pagination via cursor.
  * Clicking a card opens the on-chain token page on the source chain's
  * explorer; clicking the 3D preview (when present) loads the GLB in the
- * main viewer via /#model=<url>.
+ * main viewer via /app#model=<url>.
  */
 
 const CHAINS = [
@@ -595,7 +595,7 @@ function openEmbedModal({ chainId, agentId, name }) {
 function openAvatarEmbedModal({ avatarId, glbUrl, name }) {
 	document.querySelector('.embed-modal')?.remove();
 	const origin = location.origin;
-	const viewerUrl = `${origin}/#model=${encodeURIComponent(glbUrl)}`;
+	const viewerUrl = `${origin}/app#model=${encodeURIComponent(glbUrl)}`;
 	const apiUrl = `${origin}/api/avatars/${avatarId}`;
 	const displayName = name || 'Avatar';
 
