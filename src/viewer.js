@@ -829,13 +829,19 @@ export class Viewer {
 		if (this.options.cameraPosition) {
 			framedPos.fromArray(this.options.cameraPosition);
 		} else {
-			// Slight 3/4 angle — minimal lateral offset keeps the avatar large.
-			const panX = dist * 0.06;
+			// Slight 3/4 angle — minimal lateral offset keeps the avatar large
+			// when there's a chat panel on the right side. In kiosk / face-camera
+			// mode (no panel, embed previews, etc.) we want the avatar dead
+			// centered and front-on, so zero the pan out.
+			const panX = this.options.faceCamera || this.options.kiosk ? 0 : dist * 0.06;
 			framedPos.set(panX, focusY, dist);
 		}
-		const orbitalTarget = this.options.cameraPosition
-			? new Vector3()
-			: new Vector3(dist * 0.06, focusY, 0);
+		const orbitalTargetX = this.options.cameraPosition
+			? 0
+			: this.options.faceCamera || this.options.kiosk
+				? 0
+				: dist * 0.06;
+		const orbitalTarget = new Vector3(orbitalTargetX, focusY, 0);
 
 		// In kiosk / embed modes (and on subsequent loads), snap straight to
 		// the framed position. On the first interactive load we tween in from

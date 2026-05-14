@@ -38,6 +38,33 @@ const RESPONSIVE_PRESETS = [
 // generated snippet.
 const DEFAULT_PREVIEW_SRC = '/avatars/default.glb';
 
+// Pinned <agent-3d> library version emitted in the snippet. Matches package.json
+// and the production CDN path documented in /docs/web-component.md.
+const AGENT_3D_VERSION = '1.5.1';
+const AGENT_3D_HOST = 'https://three.ws';
+
+const BACKGROUNDS = [
+	{ id: '', label: 'Default' },
+	{ id: 'transparent', label: 'Transparent' },
+	{ id: 'dark', label: 'Dark' },
+	{ id: 'light', label: 'Light' },
+];
+
+// Curated demo avatars surfaced at the top of the picker. URLs match
+// api/_lib/demo-avatars.js fixtures (HEAD-checked CC-BY / MIT GLBs). The
+// picker prepends these before /api/avatars/public results so the gallery
+// always opens to something demo-worthy instead of unnamed user uploads.
+const DEMO_AVATARS = [
+	{ id: 'demo-cz', name: 'CZ', model_url: '/avatars/cz.glb' },
+	{ id: 'demo-default', name: 'Default', model_url: '/avatars/default.glb' },
+	{ id: 'demo-robot', name: 'Robot Expressive', model_url: '/animations/robotexpressive.glb' },
+	{ id: 'demo-soldier', name: 'Soldier (rigged)', model_url: '/animations/soldier.glb' },
+	{ id: 'demo-michelle', name: 'Michelle', model_url: 'https://cdn.jsdelivr.net/gh/mrdoob/three.js/examples/models/gltf/Michelle.glb' },
+	{ id: 'demo-xbot', name: 'Xbot', model_url: 'https://cdn.jsdelivr.net/gh/mrdoob/three.js/examples/models/gltf/Xbot.glb' },
+	{ id: 'demo-kira', name: 'Kira', model_url: 'https://cdn.jsdelivr.net/gh/mrdoob/three.js/examples/models/gltf/kira.glb' },
+	{ id: 'demo-cesium', name: 'Cesium Man', model_url: 'https://cdn.jsdelivr.net/gh/KhronosGroup/glTF-Sample-Assets/Models/CesiumMan/glTF-Binary/CesiumMan.glb' },
+];
+
 const STYLE = `
 	.editor-root {
 		position: fixed;
@@ -64,35 +91,205 @@ const STYLE = `
 	.stage-wrap .placeholder-site {
 		position: absolute;
 		inset: 0;
-		background:
-			linear-gradient(#ffffff, #fafbfc);
-		color: #111827;
-		padding: 64px 72px;
+		background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
+		color: #0f172a;
 		overflow: auto;
+		font: 15px/1.5 ui-sans-serif, system-ui, -apple-system, sans-serif;
 	}
-	.placeholder-site .hero { height: 280px; border-radius: 16px; background: linear-gradient(135deg, #6366f1, #8b5cf6); margin-bottom: 32px; }
-	.placeholder-site .row { height: 18px; background: #e5e7eb; border-radius: 999px; margin: 12px 0; }
-	.placeholder-site .row.short { width: 60%; }
-	.placeholder-site .row.long { width: 92%; }
-	.placeholder-site h1 { font: 700 36px/1.2 system-ui; margin-bottom: 16px; }
-	.placeholder-site p { color: #4b5563; max-width: 640px; }
+	.placeholder-site .nav {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		padding: 18px 48px;
+		border-bottom: 1px solid #e5e7eb;
+		background: rgba(255,255,255,0.9);
+		backdrop-filter: blur(8px);
+		position: sticky;
+		top: 0;
+		z-index: 1;
+	}
+	.placeholder-site .brand {
+		display: flex;
+		align-items: center;
+		gap: 10px;
+		font: 700 17px/1 system-ui;
+		color: #0f172a;
+	}
+	.placeholder-site .brand .logo {
+		width: 28px;
+		height: 28px;
+		border-radius: 8px;
+		background: linear-gradient(135deg, #6366f1, #8b5cf6);
+		box-shadow: 0 2px 8px rgba(99, 102, 241, 0.4);
+	}
+	.placeholder-site .nav-links {
+		display: flex;
+		gap: 28px;
+		font: 500 14px system-ui;
+		color: #475569;
+	}
+	.placeholder-site .nav-links span { cursor: default; }
+	.placeholder-site .nav-cta {
+		background: #0f172a;
+		color: white;
+		padding: 8px 16px;
+		border-radius: 8px;
+		font: 600 13px system-ui;
+	}
+	.placeholder-site .hero-wrap {
+		max-width: 960px;
+		margin: 0 auto;
+		padding: 72px 48px 48px;
+		text-align: center;
+	}
+	.placeholder-site .pill {
+		display: inline-block;
+		padding: 6px 14px;
+		border-radius: 999px;
+		background: #ede9fe;
+		color: #6d28d9;
+		font: 600 12px system-ui;
+		margin-bottom: 20px;
+	}
+	.placeholder-site h1 {
+		font: 800 48px/1.1 system-ui;
+		letter-spacing: -0.02em;
+		margin-bottom: 18px;
+		color: #0f172a;
+	}
+	.placeholder-site h1 .accent {
+		background: linear-gradient(90deg, #6366f1, #ec4899);
+		-webkit-background-clip: text;
+		background-clip: text;
+		color: transparent;
+	}
+	.placeholder-site p.lede {
+		font-size: 18px;
+		color: #475569;
+		max-width: 640px;
+		margin: 0 auto 28px;
+	}
+	.placeholder-site .cta-row {
+		display: flex;
+		gap: 12px;
+		justify-content: center;
+		margin-bottom: 56px;
+	}
+	.placeholder-site .btn-primary {
+		background: #0f172a;
+		color: white;
+		padding: 12px 22px;
+		border-radius: 10px;
+		font: 600 14px system-ui;
+		box-shadow: 0 8px 20px rgba(15,23,42,0.18);
+	}
+	.placeholder-site .btn-ghost {
+		background: white;
+		color: #0f172a;
+		padding: 12px 22px;
+		border-radius: 10px;
+		font: 600 14px system-ui;
+		border: 1px solid #e5e7eb;
+	}
+	.placeholder-site .screenshot {
+		max-width: 1080px;
+		margin: 0 auto;
+		padding: 0 48px;
+	}
+	.placeholder-site .browser {
+		background: white;
+		border: 1px solid #e5e7eb;
+		border-radius: 14px;
+		box-shadow: 0 24px 60px rgba(15,23,42,0.12);
+		overflow: hidden;
+	}
+	.placeholder-site .browser-bar {
+		display: flex;
+		align-items: center;
+		gap: 6px;
+		padding: 10px 14px;
+		background: #f8fafc;
+		border-bottom: 1px solid #e5e7eb;
+	}
+	.placeholder-site .browser-bar .dot {
+		width: 11px;
+		height: 11px;
+		border-radius: 50%;
+		background: #e5e7eb;
+	}
+	.placeholder-site .browser-bar .dot:nth-child(1) { background: #fca5a5; }
+	.placeholder-site .browser-bar .dot:nth-child(2) { background: #fcd34d; }
+	.placeholder-site .browser-bar .dot:nth-child(3) { background: #86efac; }
+	.placeholder-site .browser-body {
+		height: 340px;
+		background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 50%, #ec4899 100%);
+		position: relative;
+	}
+	.placeholder-site .browser-body::after {
+		content: '';
+		position: absolute;
+		inset: 24px;
+		border-radius: 8px;
+		background: rgba(255,255,255,0.12);
+		backdrop-filter: blur(8px);
+	}
+	.placeholder-site .features {
+		max-width: 1080px;
+		margin: 80px auto 0;
+		padding: 0 48px 72px;
+		display: grid;
+		grid-template-columns: repeat(3, 1fr);
+		gap: 24px;
+	}
+	.placeholder-site .feature {
+		padding: 24px;
+		border-radius: 12px;
+		background: white;
+		border: 1px solid #e5e7eb;
+	}
+	.placeholder-site .feature .icon {
+		width: 36px;
+		height: 36px;
+		border-radius: 9px;
+		background: linear-gradient(135deg, #ede9fe, #fce7f3);
+		margin-bottom: 14px;
+	}
+	.placeholder-site .feature h3 {
+		font: 700 16px system-ui;
+		margin-bottom: 6px;
+		color: #0f172a;
+	}
+	.placeholder-site .feature p {
+		font-size: 13px;
+		color: #64748b;
+	}
 
 	.agent-wrap {
 		position: absolute;
 		cursor: grab;
 		user-select: none;
 		touch-action: none;
+		overflow: hidden;
+		border-radius: 12px;
+		box-shadow: 0 8px 32px rgba(0,0,0,0.35);
+		background: transparent;
 	}
 	.agent-wrap.dragging { cursor: grabbing; }
-	.agent-wrap agent-3d { width: 100%; height: 100%; }
+	.agent-wrap agent-3d {
+		position: absolute;
+		inset: 0;
+		width: 100% !important;
+		height: 100% !important;
+		display: block;
+	}
 	.agent-wrap iframe.widget-frame {
+		position: absolute;
+		inset: 0;
 		width: 100%;
 		height: 100%;
 		border: 0;
 		display: block;
 		background: transparent;
-		border-radius: 12px;
-		box-shadow: 0 8px 32px rgba(0,0,0,0.35);
 	}
 	.widget-badge {
 		position: absolute;
@@ -128,6 +325,43 @@ const STYLE = `
 		padding: 4px 6px;
 		border-radius: 4px;
 	}
+
+	.anim-dock {
+		position: absolute;
+		left: 50%;
+		bottom: 16px;
+		transform: translateX(-50%);
+		display: flex;
+		gap: 6px;
+		padding: 6px;
+		background: rgba(15, 18, 22, 0.92);
+		border: 1px solid #1f2937;
+		border-radius: 999px;
+		backdrop-filter: blur(8px);
+		max-width: calc(100% - 32px);
+		overflow-x: auto;
+		scrollbar-width: none;
+		z-index: 5;
+	}
+	.anim-dock::-webkit-scrollbar { display: none; }
+	.anim-dock[hidden] { display: none; }
+	.anim-chip {
+		flex: 0 0 auto;
+		background: #111827;
+		color: #e5e7eb;
+		border: 1px solid #1f2937;
+		border-radius: 999px;
+		padding: 6px 12px;
+		font: 500 12px system-ui;
+		cursor: pointer;
+		white-space: nowrap;
+		display: inline-flex;
+		align-items: center;
+		gap: 4px;
+	}
+	.anim-chip:hover { background: #1e293b; border-color: #334155; }
+	.anim-chip[aria-pressed="true"] { background: #3b82f6; border-color: #3b82f6; color: white; }
+	.anim-chip .icon { font-size: 13px; }
 
 	.snapline {
 		position: absolute;
@@ -187,6 +421,79 @@ const STYLE = `
 	}
 	.pos-btn[aria-pressed="true"] { background: #3b82f6; color: white; border-color: #3b82f6; }
 
+	.avatar-picker { margin: 4px 0 8px; }
+	.avatar-picker-grid {
+		display: grid;
+		grid-template-columns: 1fr 1fr;
+		gap: 6px;
+		max-height: 180px;
+		overflow-y: auto;
+		padding-right: 4px;
+	}
+	.avatar-card {
+		position: relative;
+		aspect-ratio: 1;
+		background: linear-gradient(135deg, #1e293b, #0f172a);
+		background-size: cover;
+		background-position: center;
+		border: 1px solid #1f2937;
+		border-radius: 8px;
+		cursor: pointer;
+		overflow: hidden;
+		transition: border-color 0.15s, transform 0.1s;
+	}
+	.avatar-card:hover { border-color: #3b82f6; transform: translateY(-1px); }
+	.avatar-card[aria-pressed="true"] { border-color: #22c55e; box-shadow: 0 0 0 2px rgba(34,197,94,0.3); }
+	.avatar-card.pinned {
+		background: linear-gradient(135deg, #1e3a8a 0%, #581c87 100%);
+	}
+	.avatar-card .tag {
+		position: absolute;
+		top: 4px;
+		right: 4px;
+		padding: 2px 6px;
+		font: 600 9px system-ui;
+		color: #c7d2fe;
+		background: rgba(15,23,42,0.85);
+		border: 1px solid rgba(199,210,254,0.3);
+		border-radius: 4px;
+		letter-spacing: 0.05em;
+		text-transform: uppercase;
+	}
+	.avatar-card .name {
+		position: absolute;
+		left: 0;
+		right: 0;
+		bottom: 0;
+		padding: 4px 6px;
+		font: 500 10px/1.2 system-ui;
+		color: #f4f4f5;
+		background: linear-gradient(transparent, rgba(0,0,0,0.85));
+		white-space: nowrap;
+		overflow: hidden;
+		text-overflow: ellipsis;
+	}
+	.avatar-card.skeleton { background: #111827; animation: skeleton-pulse 1.2s ease-in-out infinite; }
+	@keyframes skeleton-pulse { 50% { opacity: 0.4; } }
+	.avatar-picker-more {
+		width: 100%;
+		margin-top: 6px;
+		background: transparent;
+		border: 1px solid #1f2937;
+		color: #9ca3af;
+		border-radius: 6px;
+		padding: 6px 8px;
+		font: 500 12px system-ui;
+		cursor: pointer;
+	}
+	.avatar-picker-more:hover { color: #f4f4f5; border-color: #334155; }
+	.avatar-picker-empty {
+		text-align: center;
+		color: #6b7280;
+		font: 12px system-ui;
+		padding: 12px;
+	}
+
 	.field-row { display: grid; grid-template-columns: 80px 1fr; gap: 8px; align-items: center; margin: 6px 0; }
 	.field-row label { color: #9ca3af; font-size: 12px; }
 	.field-row input, .field-row select {
@@ -210,10 +517,38 @@ const STYLE = `
 		word-break: break-all;
 		color: #a7f3d0;
 		margin-top: 12px;
+		max-height: 200px;
+		overflow-y: auto;
+		transition: max-height 0.2s ease;
 	}
-	.actions { display: flex; gap: 8px; margin-top: 12px; }
+	.snippet-box.collapsed {
+		max-height: 56px;
+		overflow: hidden;
+		position: relative;
+	}
+	.snippet-box.collapsed::after {
+		content: '';
+		position: absolute;
+		left: 0;
+		right: 0;
+		bottom: 0;
+		height: 24px;
+		background: linear-gradient(transparent, #0a0d12);
+		pointer-events: none;
+	}
+	.snippet-collapse {
+		background: transparent;
+		border: 0;
+		color: #6b7280;
+		font: 500 11px system-ui;
+		cursor: pointer;
+		padding: 6px 0 0;
+		text-align: left;
+	}
+	.snippet-collapse:hover { color: #e5e7eb; }
+	.actions { display: flex; gap: 8px; margin-top: 12px; flex-wrap: wrap; }
 	.btn {
-		flex: 1;
+		flex: 1 1 auto;
 		background: #3b82f6;
 		color: white;
 		border: 0;
@@ -221,10 +556,38 @@ const STYLE = `
 		padding: 10px 12px;
 		font: 600 14px system-ui;
 		cursor: pointer;
+		min-width: 0;
 	}
 	.btn.secondary { background: transparent; border: 1px solid #1f2937; color: #e5e7eb; }
 	.btn:hover { filter: brightness(1.1); }
 	.btn[data-copied="true"] { background: #22c55e; }
+
+	.toast {
+		position: fixed;
+		bottom: 24px;
+		left: 50%;
+		transform: translate(-50%, 24px);
+		background: #0f172a;
+		color: #f4f4f5;
+		padding: 10px 18px;
+		border-radius: 999px;
+		font: 600 13px system-ui;
+		box-shadow: 0 12px 32px rgba(0,0,0,0.45);
+		border: 1px solid #1f2937;
+		opacity: 0;
+		pointer-events: none;
+		transition: opacity 0.2s, transform 0.2s;
+		z-index: 100;
+	}
+	.toast.visible {
+		opacity: 1;
+		transform: translate(-50%, 0);
+	}
+	.toast[data-kind="warn"] {
+		background: #78350f;
+		border-color: #b45309;
+		color: #fef3c7;
+	}
 
 	.preview-url-row {
 		display: flex;
@@ -266,6 +629,44 @@ const STYLE = `
 	}
 	.device-btn[aria-pressed="true"] { background: #3b82f6; color: white; border-color: #3b82f6; }
 
+	/* Preview mode — hide chrome, let the wrap render where it would on a real site */
+	.editor-root[data-preview="true"] { grid-template-columns: 1fr 0; }
+	.editor-root[data-preview="true"] .panel { display: none; }
+	.editor-root[data-preview="true"] .preview-url-row,
+	.editor-root[data-preview="true"] .device-bar { display: none; }
+	.editor-root[data-preview="true"] .agent-wrap { cursor: default; }
+	.editor-root[data-preview="true"] .agent-wrap .resize-handle,
+	.editor-root[data-preview="true"] .agent-wrap .size-readout,
+	.editor-root[data-preview="true"] .agent-wrap .widget-badge { display: none; }
+	.exit-preview {
+		position: fixed;
+		top: 16px;
+		left: 16px;
+		z-index: 10;
+		background: #111827;
+		color: #f4f4f5;
+		border: 1px solid #1f2937;
+		border-radius: 999px;
+		padding: 8px 14px;
+		font: 600 13px system-ui;
+		cursor: pointer;
+		box-shadow: 0 4px 16px rgba(0,0,0,0.4);
+		display: none;
+	}
+	.editor-root[data-preview="true"] .exit-preview { display: inline-flex; align-items: center; gap: 6px; }
+	.exit-preview:hover { background: #1e293b; }
+	.preview-toggle {
+		background: #1e293b;
+		color: #a7f3d0;
+		border: 1px solid #334155;
+		border-radius: 999px;
+		padding: 4px 12px;
+		font: 600 12px system-ui;
+		cursor: pointer;
+		margin-right: 8px;
+	}
+	.preview-toggle:hover { background: #334155; }
+
 	/* Device viewport frame — shown when simulating tablet/mobile */
 	.device-frame {
 		position: absolute;
@@ -293,6 +694,10 @@ export function mountEmbedEditor(root, options = {}) {
 		height: options.height || '420px',
 		device: 'desktop',
 		responsivePreset: 'desktop-first',
+		voice: true,
+		cameraControls: false,
+		ar: false,
+		background: '',
 		...options,
 	};
 
@@ -315,16 +720,34 @@ export function mountEmbedEditor(root, options = {}) {
 				</div>
 				<div class="stage-wrap" id="stage">
 					<div class="placeholder-site" id="placeholder">
-						<h1>Your site goes here</h1>
-						<p>This is a preview of what the agent will look like placed on a real page. Paste your site URL above to see the embed on your actual content, or drag the agent around this mock page.</p>
-						<div class="hero"></div>
-						<div class="row long"></div>
-						<div class="row long"></div>
-						<div class="row short"></div>
-						<div class="row long"></div>
-						<div class="row short"></div>
+						<nav class="nav">
+							<div class="brand"><div class="logo"></div>Acme</div>
+							<div class="nav-links"><span>Product</span><span>Pricing</span><span>Customers</span><span>Docs</span></div>
+							<div class="nav-cta">Sign in</div>
+						</nav>
+						<div class="hero-wrap">
+							<div class="pill">New · Conversational agents</div>
+							<h1>Talk to your product, <span class="accent">not just click it.</span></h1>
+							<p class="lede">Drop a 3D agent on any page. Visitors ask questions, get demos, and check out — without leaving the screen.</p>
+							<div class="cta-row">
+								<div class="btn-primary">Start free</div>
+								<div class="btn-ghost">See it live</div>
+							</div>
+						</div>
+						<div class="screenshot">
+							<div class="browser">
+								<div class="browser-bar"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div>
+								<div class="browser-body"></div>
+							</div>
+						</div>
+						<div class="features">
+							<div class="feature"><div class="icon"></div><h3>Embed anywhere</h3><p>One script tag, works in every CMS and framework.</p></div>
+							<div class="feature"><div class="icon"></div><h3>Voice + text</h3><p>Real-time speech, streaming responses, multi-language.</p></div>
+							<div class="feature"><div class="icon"></div><h3>Owned by you</h3><p>Your brand, your data, your wallet — no platform tax.</p></div>
+						</div>
 					</div>
 					<iframe id="preview-frame" hidden></iframe>
+					<div class="anim-dock" id="anim-dock" hidden></div>
 					<div class="agent-wrap" id="agent-wrap">
 						<div class="size-readout" id="size-readout"></div>
 						<div class="widget-badge" id="widget-badge" hidden></div>
@@ -338,16 +761,25 @@ export function mountEmbedEditor(root, options = {}) {
 					</div>
 				</div>
 			</div>
+			<button class="exit-preview" id="exit-preview" type="button">← Back to editor</button>
 			<aside class="panel">
 				<div class="panel-header">
 					<h2>Embed editor</h2>
-					<span style="font-size:11px;color:#6b7280">beta</span>
+					<div style="display:flex;align-items:center;gap:8px">
+						<button class="preview-toggle" id="preview-toggle" type="button">Preview</button>
+						<span style="font-size:11px;color:#6b7280">beta</span>
+					</div>
 				</div>
 				<div class="panel-body">
 					<div class="section-title">Source</div>
 					<div class="field-row">
 						<label>src</label>
 						<input id="src-input" placeholder="agent://base/42 or ipfs://...">
+					</div>
+					<div class="avatar-picker" id="avatar-picker">
+						<div class="avatar-picker-grid" id="avatar-grid"></div>
+						<button class="avatar-picker-more" id="avatar-more" type="button" hidden>Load more</button>
+						<div class="avatar-picker-empty" id="avatar-empty" hidden>No public avatars found.</div>
 					</div>
 
 					<div class="section-title">Mode</div>
@@ -387,8 +819,8 @@ export function mountEmbedEditor(root, options = {}) {
 					<div class="field-row">
 						<label>Camera</label>
 						<select id="camera-select">
-							<option value="on">controls on</option>
 							<option value="off">controls off</option>
+							<option value="on">controls on</option>
 						</select>
 					</div>
 					<div class="field-row">
@@ -398,13 +830,25 @@ export function mountEmbedEditor(root, options = {}) {
 							<option value="on">on</option>
 						</select>
 					</div>
+					<div class="field-row">
+						<label>Background</label>
+						<select id="bg-select">
+							<option value="">Default</option>
+							<option value="transparent">Transparent</option>
+							<option value="dark">Dark</option>
+							<option value="light">Light</option>
+						</select>
+					</div>
 
 					<div class="section-title">Embed snippet</div>
-					<div class="snippet-box" id="snippet"></div>
+					<div class="snippet-box collapsed" id="snippet"></div>
+					<button class="snippet-collapse" id="snippet-collapse" type="button">Show full snippet ▾</button>
 					<div class="actions">
-						<button class="btn" id="copy-btn">Copy snippet</button>
-						<button class="btn secondary" id="reset-btn">Reset</button>
+						<button class="btn" id="copy-btn" type="button">Copy snippet</button>
+						<button class="btn secondary" id="open-btn" type="button" title="Render the snippet against a demo page in a new tab">Open in new tab</button>
+						<button class="btn secondary" id="reset-btn" type="button">Reset</button>
 					</div>
+					<div class="toast" id="toast" role="status" aria-live="polite"></div>
 				</div>
 			</aside>
 		</div>
@@ -443,6 +887,124 @@ export function mountEmbedEditor(root, options = {}) {
 
 	srcInput.value = state.src;
 	agentEl.setAttribute('src', state.src || DEFAULT_PREVIEW_SRC);
+
+	const animDock = $('#anim-dock');
+	function renderAnimDock() {
+		if (state.widgetId) { animDock.hidden = true; return; }
+		const clips = (typeof agentEl._listAvailableClips === 'function')
+			? agentEl._listAvailableClips()
+			: [];
+		if (!clips.length) { animDock.hidden = true; return; }
+		animDock.replaceChildren();
+		for (const clip of clips) {
+			const chip = document.createElement('button');
+			chip.type = 'button';
+			chip.className = 'anim-chip';
+			chip.dataset.name = clip.name;
+			chip.setAttribute('aria-pressed', String(state.activeClip === clip.name));
+			chip.innerHTML = `<span class="icon">${clip.icon || '✨'}</span><span>${clip.label || clip.name}</span>`;
+			chip.addEventListener('click', () => {
+				state.activeClip = clip.name;
+				agentEl.play?.(clip.name, { loop: clip.loop !== false, fade_ms: 250 });
+				for (const c of animDock.querySelectorAll('.anim-chip'))
+					c.setAttribute('aria-pressed', String(c.dataset.name === clip.name));
+			});
+			animDock.appendChild(chip);
+		}
+		animDock.hidden = false;
+	}
+	agentEl.addEventListener('agent:ready', renderAnimDock);
+
+	// ── Public avatar picker ──
+	const avatarGrid = $('#avatar-grid');
+	const avatarMore = $('#avatar-more');
+	const avatarEmpty = $('#avatar-empty');
+	let avatarCursor = null;
+	let avatarLoading = false;
+
+	function renderSkeletons(n) {
+		for (let i = 0; i < n; i++) {
+			const sk = document.createElement('div');
+			sk.className = 'avatar-card skeleton';
+			avatarGrid.appendChild(sk);
+		}
+	}
+	function clearSkeletons() {
+		for (const el of avatarGrid.querySelectorAll('.skeleton')) el.remove();
+	}
+	function pickAvatar(card, modelUrl, name) {
+		state.src = modelUrl;
+		srcInput.value = modelUrl;
+		agentEl.setAttribute('src', modelUrl);
+		for (const c of avatarGrid.querySelectorAll('.avatar-card'))
+			c.setAttribute('aria-pressed', String(c === card));
+		writeSnippet();
+	}
+	function renderAvatarCards(items, { pinned = false } = {}) {
+		for (const a of items) {
+			if (!a.model_url) continue;
+			const card = document.createElement('div');
+			card.className = 'avatar-card' + (pinned ? ' pinned' : '');
+			card.setAttribute('role', 'button');
+			card.setAttribute('tabindex', '0');
+			card.dataset.id = a.id;
+			card.title = a.name || a.slug || a.id;
+			if (a.thumbnail_url) {
+				card.style.backgroundImage = `url('${a.thumbnail_url.replace(/'/g, "%27")}')`;
+			}
+			if (pinned) {
+				const tag = document.createElement('div');
+				tag.className = 'tag';
+				tag.textContent = 'Demo';
+				card.appendChild(tag);
+			}
+			const name = document.createElement('div');
+			name.className = 'name';
+			name.textContent = a.name || a.slug || 'Avatar';
+			card.appendChild(name);
+			card.setAttribute('aria-pressed', String(state.src && state.src === a.model_url));
+			const activate = () => pickAvatar(card, a.model_url, a.name);
+			card.addEventListener('click', activate);
+			card.addEventListener('keydown', (e) => {
+				if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); activate(); }
+			});
+			avatarGrid.appendChild(card);
+		}
+	}
+	async function loadAvatarPage() {
+		if (avatarLoading) return;
+		avatarLoading = true;
+		avatarMore.hidden = true;
+		const initial = !avatarGrid.children.length;
+		if (initial) {
+			// Pin the curated demo set first so the gallery opens to something
+			// recognisable even before the network call returns.
+			renderAvatarCards(DEMO_AVATARS, { pinned: true });
+			renderSkeletons(6);
+		}
+		try {
+			const url = new URL(`${location.origin}/api/avatars/public`);
+			url.searchParams.set('limit', '24');
+			if (avatarCursor) url.searchParams.set('cursor', avatarCursor);
+			const res = await fetch(url.toString(), { credentials: 'omit' });
+			if (!res.ok) throw new Error(`avatars/public ${res.status}`);
+			const data = await res.json();
+			clearSkeletons();
+			renderAvatarCards(data.avatars || []);
+			avatarCursor = data.next_cursor || null;
+			avatarMore.hidden = !avatarCursor;
+		} catch (err) {
+			clearSkeletons();
+			if (initial && !DEMO_AVATARS.length) {
+				avatarEmpty.textContent = `Couldn't load avatars: ${err.message}`;
+				avatarEmpty.hidden = false;
+			}
+		} finally {
+			avatarLoading = false;
+		}
+	}
+	avatarMore.addEventListener('click', loadAvatarPage);
+	loadAvatarPage();
 
 	// If a widget id was passed, swap the bare <agent-3d> preview for an
 	// iframe loading the live widget renderer (/app#widget=<id>&kiosk=true).
@@ -544,14 +1106,22 @@ export function mountEmbedEditor(root, options = {}) {
 	});
 	$('#voice-select').addEventListener('change', (e) => {
 		state.voice = e.target.value === 'off' ? false : true;
+		applyAgentAttrs();
 		sync();
 	});
 	$('#camera-select').addEventListener('change', (e) => {
 		state.cameraControls = e.target.value === 'on';
+		applyAgentAttrs();
 		sync();
 	});
 	$('#ar-select').addEventListener('change', (e) => {
 		state.ar = e.target.value === 'on';
+		applyAgentAttrs();
+		sync();
+	});
+	$('#bg-select').addEventListener('change', (e) => {
+		state.background = e.target.value;
+		applyAgentAttrs();
 		sync();
 	});
 	$('#responsive-select').addEventListener('change', (e) => {
@@ -578,6 +1148,7 @@ export function mountEmbedEditor(root, options = {}) {
 	// Drag
 	let dragState = null;
 	agentWrap.addEventListener('pointerdown', (e) => {
+		if (state.previewMode) return;
 		if (e.target.closest('.resize-handle')) return;
 		const rect = stage.getBoundingClientRect();
 		const agentRect = agentWrap.getBoundingClientRect();
@@ -673,8 +1244,31 @@ export function mountEmbedEditor(root, options = {}) {
 		}
 	});
 
+	const toastEl = $('#toast');
+	let toastTimer = null;
+	function showToast(message, { kind = 'success' } = {}) {
+		toastEl.textContent = message;
+		toastEl.dataset.kind = kind;
+		toastEl.classList.add('visible');
+		clearTimeout(toastTimer);
+		toastTimer = setTimeout(() => toastEl.classList.remove('visible'), 2200);
+	}
+
 	copyBtn.addEventListener('click', async () => {
-		await navigator.clipboard.writeText(buildSnippet());
+		const snippet = buildSnippet();
+		try {
+			await navigator.clipboard.writeText(snippet);
+			showToast('Snippet copied to clipboard');
+		} catch (err) {
+			// Permissions may block clipboard in some embedded contexts. Fall back
+			// to a manual selection so the user can still grab the snippet.
+			const range = document.createRange();
+			range.selectNodeContents(snippetEl);
+			const sel = window.getSelection();
+			sel.removeAllRanges();
+			sel.addRange(range);
+			showToast('Clipboard blocked — snippet selected, press ⌘C', { kind: 'warn' });
+		}
 		copyBtn.textContent = 'Copied ✓';
 		copyBtn.dataset.copied = 'true';
 		setTimeout(() => {
@@ -683,14 +1277,82 @@ export function mountEmbedEditor(root, options = {}) {
 		}, 1500);
 	});
 
+	const snippetCollapse = $('#snippet-collapse');
+	snippetCollapse.addEventListener('click', () => {
+		const collapsed = snippetEl.classList.toggle('collapsed');
+		snippetCollapse.textContent = collapsed ? 'Show full snippet ▾' : 'Collapse snippet ▴';
+	});
+
+	$('#open-btn').addEventListener('click', () => {
+		const html = buildStandalonePage();
+		const blob = new Blob([html], { type: 'text/html' });
+		const url = URL.createObjectURL(blob);
+		const win = window.open(url, '_blank', 'noopener');
+		if (!win) {
+			showToast('Popup blocked — allow popups to open the preview', { kind: 'warn' });
+			URL.revokeObjectURL(url);
+			return;
+		}
+		// Revoke the blob URL after the new tab has had time to load it. 60s is
+		// generous — the document fully parses long before this. Without revoke,
+		// the blob lingers for the lifetime of the editor tab.
+		setTimeout(() => URL.revokeObjectURL(url), 60_000);
+	});
+
 	$('#reset-btn').addEventListener('click', () => {
 		Object.assign(state, defaults);
 		srcInput.value = state.src;
 		wInput.value = state.width;
 		hInput.value = state.height;
 		$('#responsive-select').value = state.responsivePreset;
+		$('#voice-select').value = state.voice === false ? 'off' : '';
+		$('#camera-select').value = state.cameraControls ? 'on' : 'off';
+		$('#ar-select').value = state.ar ? 'on' : 'off';
+		$('#bg-select').value = state.background || '';
 		sync();
 	});
+
+	const editorRoot = shadow.querySelector('.editor-root');
+	const previewToggle = $('#preview-toggle');
+	const exitPreview = $('#exit-preview');
+	function setPreviewMode(on) {
+		state.previewMode = !!on;
+		editorRoot.setAttribute('data-preview', state.previewMode ? 'true' : 'false');
+		previewToggle.textContent = state.previewMode ? 'Editing' : 'Preview';
+		applyToPreview();
+	}
+	previewToggle.addEventListener('click', () => setPreviewMode(!state.previewMode));
+	exitPreview.addEventListener('click', () => setPreviewMode(false));
+	previewToggle.title = 'Toggle preview (P)';
+	exitPreview.title = 'Exit preview (Esc)';
+
+	// Keyboard shortcuts — Esc exits preview, P toggles. Bound on document so
+	// they fire even when focus is on the stage. Suppressed while typing in any
+	// text field (the editor's inputs live in the shadow root; check both light
+	// DOM target and composedPath() for an editable element).
+	function isTextTarget(e) {
+		const path = e.composedPath?.() || [];
+		for (const node of path) {
+			if (!node || node.nodeType !== 1) continue;
+			const tag = node.tagName;
+			if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return true;
+			if (node.isContentEditable) return true;
+		}
+		return false;
+	}
+	const onKey = (e) => {
+		if (e.key === 'Escape' && state.previewMode) {
+			e.preventDefault();
+			setPreviewMode(false);
+			return;
+		}
+		if ((e.key === 'p' || e.key === 'P') && !e.metaKey && !e.ctrlKey && !e.altKey) {
+			if (isTextTarget(e)) return;
+			e.preventDefault();
+			setPreviewMode(!state.previewMode);
+		}
+	};
+	document.addEventListener('keydown', onKey);
 
 	// Show appropriate resize handles based on position
 	function syncPositionButtons() {
@@ -700,6 +1362,23 @@ export function mountEmbedEditor(root, options = {}) {
 	function syncModeCards() {
 		for (const card of $$('.mode-card'))
 			card.setAttribute('aria-pressed', String(card.dataset.mode === state.mode));
+	}
+
+	// Mirror toggleable agent attrs (voice/camera/AR/background) onto the live
+	// preview element so flipping the panel selects has an immediate visual effect.
+	// Snippet attrs are emitted separately in buildSnippet() — these only drive the
+	// in-editor preview agent. Skipped in widget-iframe mode (the iframe owns its
+	// own agent instance and reads its config from the widget record).
+	function applyAgentAttrs() {
+		if (state.widgetId) return;
+		if (state.voice === false) agentEl.setAttribute('voice', 'off');
+		else agentEl.removeAttribute('voice');
+		if (state.cameraControls) agentEl.setAttribute('camera-controls', '');
+		else agentEl.removeAttribute('camera-controls');
+		if (state.ar) agentEl.setAttribute('ar', '');
+		else agentEl.removeAttribute('ar');
+		if (state.background) agentEl.setAttribute('background', state.background);
+		else agentEl.removeAttribute('background');
 	}
 
 	function applyToPreview() {
@@ -799,8 +1478,13 @@ export function mountEmbedEditor(root, options = {}) {
 		if (state.voice === false) attrs.push(`voice="off"`);
 		if (state.cameraControls) attrs.push(`camera-controls`);
 		if (state.ar) attrs.push(`ar`);
+		if (state.background) attrs.push(`background="${escapeAttr(state.background)}"`);
+		// Face the camera by default — centers the avatar in the frame instead of
+		// the slight 3/4 offset that exists to make room for the chat panel in
+		// non-kiosk embeds. Users who want the offset can remove this attribute.
+		attrs.push(`face-camera`);
 
-		const script = `<script type="module" src="https://cdn.3d-agent.io/agent-3d.js"></script>`;
+		const script = `<script type="module" async src="${AGENT_3D_HOST}/agent-3d/${AGENT_3D_VERSION}/agent-3d.js"></` + 'script>';
 		const element = `<agent-3d ${attrs.join(' ')}></agent-3d>`;
 		let snippet = `${script}\n${element}`;
 
@@ -812,6 +1496,78 @@ export function mountEmbedEditor(root, options = {}) {
 
 	function writeSnippet() {
 		snippetEl.textContent = buildSnippet();
+	}
+
+	// Build a standalone HTML page that renders the current snippet against a
+	// minimal landing-page mock — opened in a new tab by "Open in new tab" so
+	// demos can show the embed working in isolation. The script tag URL is
+	// swapped to the local dev module when running on localhost so the new
+	// tab actually loads (the production CDN path is not routed by Vite).
+	function buildStandalonePage() {
+		const snippet = buildSnippet();
+		const isLocal = /^(localhost|127\.|0\.0\.0\.0|\[?::1\]?)/i.test(location.hostname);
+		const localScript = `<script type="module" src="${location.origin}/src/element.js"></` + 'script>';
+		const wireSnippet = isLocal && !state.widgetId
+			? snippet.replace(
+					/<script[^>]*src="[^"]*agent-3d\/[^"]+\/agent-3d\.js"[^>]*><\/script>/,
+					localScript,
+				)
+			: snippet;
+		const title = `Embed preview — ${state.src || state.widgetId || 'agent'}`;
+		return `<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>${escapeHtml(title)}</title>
+<style>
+	html, body { margin: 0; padding: 0; min-height: 100vh; font: 15px/1.5 ui-sans-serif, system-ui, sans-serif; color: #0f172a; background: #f8fafc; }
+	.nav { display: flex; align-items: center; justify-content: space-between; padding: 18px 48px; border-bottom: 1px solid #e5e7eb; background: rgba(255,255,255,0.92); backdrop-filter: blur(8px); position: sticky; top: 0; z-index: 1; }
+	.brand { display: flex; align-items: center; gap: 10px; font: 700 17px/1 system-ui; }
+	.logo { width: 28px; height: 28px; border-radius: 8px; background: linear-gradient(135deg, #6366f1, #8b5cf6); box-shadow: 0 2px 8px rgba(99,102,241,0.4); }
+	.hero { max-width: 960px; margin: 0 auto; padding: 80px 48px 48px; text-align: center; }
+	.pill { display: inline-block; padding: 6px 14px; border-radius: 999px; background: #ede9fe; color: #6d28d9; font: 600 12px system-ui; margin-bottom: 22px; }
+	h1 { font: 800 52px/1.1 system-ui; letter-spacing: -0.02em; margin: 0 0 18px; }
+	h1 .accent { background: linear-gradient(90deg, #6366f1, #ec4899); -webkit-background-clip: text; background-clip: text; color: transparent; }
+	.lede { font-size: 18px; color: #475569; max-width: 640px; margin: 0 auto 28px; }
+	.cta { display: flex; gap: 12px; justify-content: center; }
+	.btn-primary { background: #0f172a; color: white; padding: 12px 22px; border-radius: 10px; font: 600 14px system-ui; }
+	.btn-ghost { background: white; color: #0f172a; padding: 12px 22px; border-radius: 10px; font: 600 14px system-ui; border: 1px solid #e5e7eb; }
+	footer { padding: 48px; text-align: center; color: #94a3b8; font-size: 13px; }
+	footer code { background: #e2e8f0; padding: 2px 6px; border-radius: 4px; color: #334155; font: 12px ui-monospace, Menlo, monospace; }
+</style>
+</head>
+<body>
+	<nav class="nav">
+		<div class="brand"><div class="logo"></div>Acme</div>
+		<div class="btn-primary" style="padding: 8px 16px; font-size: 13px;">Sign in</div>
+	</nav>
+	<section class="hero">
+		<div class="pill">Preview · live snippet</div>
+		<h1>Your <span class="accent">agent embed</span><br>on a real page.</h1>
+		<p class="lede">This page renders the exact snippet from the editor. Resize, scroll, and click around to see how it behaves in production.</p>
+		<div class="cta">
+			<div class="btn-primary">Start free</div>
+			<div class="btn-ghost">See it live</div>
+		</div>
+	</section>
+	<footer>
+		Generated by the three.ws embed editor — close this tab to return.
+	</footer>
+
+	<!-- ── Embed snippet ── -->
+	${wireSnippet}
+</body>
+</html>`;
+	}
+
+	function escapeHtml(s) {
+		return String(s)
+			.replace(/&/g, '&amp;')
+			.replace(/</g, '&lt;')
+			.replace(/>/g, '&gt;')
+			.replace(/"/g, '&quot;')
+			.replace(/'/g, '&#39;');
 	}
 
 	function syncDevice() {
@@ -870,6 +1626,7 @@ export function mountEmbedEditor(root, options = {}) {
 		syncPositionButtons();
 		syncModeCards();
 		applyToPreview();
+		applyAgentAttrs();
 		syncDevice();
 		writeSnippet();
 	}

@@ -525,6 +525,7 @@ class Agent3DElement extends HTMLElement {
 			'tracked-mint',
 			'avatar-chat',
 			'avatar-walk',
+			'face-camera',
 		];
 	}
 
@@ -1251,7 +1252,10 @@ class Agent3DElement extends HTMLElement {
 			this.dispatchEvent(
 				new CustomEvent('agent:load-progress', { detail: { phase: 'body', pct: 0.45 } }),
 			);
-			const viewer = new Viewer(this._stageEl, { kiosk: this.hasAttribute('kiosk') });
+			const viewer = new Viewer(this._stageEl, {
+				kiosk: this.hasAttribute('kiosk'),
+				faceCamera: this.hasAttribute('face-camera'),
+			});
 			this._viewer = viewer;
 			viewer._afterAnimateHooks = viewer._afterAnimateHooks || [];
 			viewer._afterAnimateHooks.push(() => this._updateBubblePosition());
