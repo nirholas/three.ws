@@ -31,7 +31,7 @@
 //   5. Server POSTs facilitator /settle (same body) → { success, transaction, network, payer }
 //      Server attaches a base64 settlement object as `X-PAYMENT-RESPONSE` on the success reply.
 
-import { createAuthHeader as createCdpAuthHeader } from '@coinbase/x402';
+import { createCdpAuthHeaders } from '@coinbase/x402';
 
 import { env } from './env.js';
 
@@ -41,8 +41,18 @@ export const X402_VERSION = 2;
 // Solana mainnet's CAIP-2 namespace uses the truncated genesis-block hash.
 export const NETWORK_BASE_MAINNET = 'eip155:8453';
 export const NETWORK_BASE_SEPOLIA = 'eip155:84532';
+export const NETWORK_ARBITRUM_MAINNET = 'eip155:42161';
+export const NETWORK_OPTIMISM_MAINNET = 'eip155:10';
 export const NETWORK_SOLANA_MAINNET = 'solana:5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp';
 export const NETWORK_SOLANA_DEVNET = 'solana:EtWTRABZaYq6iMfeYKouRu166VU2xqa1';
+
+// Networks the CDP facilitator settles when credentials are configured.
+const CDP_EVM_NETWORKS = new Set([
+	NETWORK_BASE_MAINNET,
+	NETWORK_BASE_SEPOLIA,
+	NETWORK_ARBITRUM_MAINNET,
+	NETWORK_OPTIMISM_MAINNET,
+]);
 
 export class X402Error extends Error {
 	constructor(code, message, status = 402) {
@@ -92,6 +102,19 @@ export function paymentRequirements() {
 	return out;
 }
 
+// Lazy CDP auth-headers factory. createCdpAuthHeaders() returns an async fn that,
+// when invoked, returns { verify, settle, supported, list } header maps — each
+// including a Correlation-Context tag and (when keys are set) a per-operation
+// signed JWT in Authorization. We instantiate once per process; the inner fn
+// re-signs on every call (JWTs are short-lived).
+let cdpHeadersFactoryCache = null;
+function getCdpHeadersFactory() {
+	if (!cdpHeadersFactoryCache) {
+		cdpHeadersFactoryCache = createCdpAuthHeaders(env.CDP_API_KEY_ID, env.CDP_API_KEY_SECRET);
+	}
+	return cdpHeadersFactoryCache;
+}
+
 function facilitatorFor(network) {
 	if (
 		network === NETWORK_SOLANA_MAINNET ||
@@ -99,32 +122,51 @@ function facilitatorFor(network) {
 		network === 'solana'
 	)
 		return { url: env.X402_FACILITATOR_URL_SOLANA, token: env.X402_FACILITATOR_TOKEN_SOLANA };
-	if (network === NETWORK_BASE_MAINNET || network === NETWORK_BASE_SEPOLIA || network === 'base') {
-		// Route Base mainnet through Coinbase's CDP facilitator when credentials
-		// are configured — CDP Bazaar/agentic.market only catalogs endpoints
-		// whose first verify+settle is processed by CDP. Fall back to PayAI
-		// (or whatever X402_FACILITATOR_URL_BASE points at) otherwise.
+	// EVM mainnets supported by Coinbase CDP. When CDP keys are set, route all
+	// of them through CDP (required for CDP Bazaar / agentic.market — only
+	// endpoints whose first verify+settle is processed by CDP get cataloged).
+	// Base mainnet falls back to X402_FACILITATOR_URL_BASE (PayAI by default)
+	// when CDP keys are absent; other EVM chains require CDP.
+	if (CDP_EVM_NETWORKS.has(network) || network === 'base') {
 		if (env.CDP_API_KEY_ID && env.CDP_API_KEY_SECRET) {
 			return { url: env.X402_CDP_FACILITATOR_URL, cdp: true };
 		}
-		return { url: env.X402_FACILITATOR_URL_BASE, token: env.X402_FACILITATOR_TOKEN_BASE };
+		if (network === NETWORK_BASE_MAINNET || network === NETWORK_BASE_SEPOLIA || network === 'base') {
+			return { url: env.X402_FACILITATOR_URL_BASE, token: env.X402_FACILITATOR_TOKEN_BASE };
+		}
+		throw new X402Error(
+			'facilitator_unconfigured',
+			`network ${network} requires CDP credentials (set CDP_API_KEY_ID + CDP_API_KEY_SECRET)`,
+			500,
+		);
 	}
 	throw new X402Error('unsupported_network', `unsupported network: ${network}`, 400);
 }
 
-async function authHeaderFor(config, method, fullUrl) {
+// Operations the CDP SDK pre-builds headers for; map our internal path to the SDK key.
+const CDP_OP_FOR_PATH = { '/verify': 'verify', '/settle': 'settle', '/supported': 'supported' };
+
+// Return { Authorization?, Correlation-Context? } for a facilitator call. For CDP
+// we ask the SDK for per-operation headers (it adds telemetry + signed JWT);
+// for bearer-token facilitators (PayAI self-hosted) we return a static Bearer.
+// Wraps any SDK/JWT-signing error as an X402Error so the caller can map to 5xx
+// cleanly instead of leaking a raw stack.
+async function authHeadersFor(config, path) {
 	if (config.cdp) {
-		const u = new URL(fullUrl);
-		return createCdpAuthHeader(
-			env.CDP_API_KEY_ID,
-			env.CDP_API_KEY_SECRET,
-			method,
-			u.host,
-			u.pathname,
-		);
+		try {
+			const factory = getCdpHeadersFactory();
+			const all = await factory();
+			const op = CDP_OP_FOR_PATH[path];
+			return (op && all[op]) || {};
+		} catch (err) {
+			throw new X402Error(
+				'facilitator_auth_failed',
+				`CDP auth header generation failed: ${err.message}`,
+				500,
+			);
+		}
 	}
-	if (config.token) return `Bearer ${config.token}`;
-	return null;
+	return config.token ? { Authorization: `Bearer ${config.token}` } : {};
 }
 
 function decodePaymentHeader(header) {
@@ -163,9 +205,11 @@ async function callFacilitator(network, path, body) {
 	const config = facilitatorFor(network);
 	const url = `${config.url}${path}`;
 	const host = hostOf(config.url);
-	const headers = { 'content-type': 'application/json', accept: 'application/json' };
-	const auth = await authHeaderFor(config, 'POST', url);
-	if (auth) headers.authorization = auth;
+	const headers = {
+		'content-type': 'application/json',
+		accept: 'application/json',
+		...(await authHeadersFor(config, path)),
+	};
 	let res;
 	try {
 		res = await fetch(url, {
@@ -231,9 +275,10 @@ export async function probeFacilitators() {
 			entry = (async () => {
 				try {
 					const probeUrl = `${t.url}/supported`;
-					const headers = { accept: 'application/json' };
-					const auth = await authHeaderFor(t, 'GET', probeUrl);
-					if (auth) headers.authorization = auth;
+					const headers = {
+						accept: 'application/json',
+						...(await authHeadersFor(t, '/supported')),
+					};
 					const res = await fetch(probeUrl, {
 						headers,
 						signal: AbortSignal.timeout(10_000),

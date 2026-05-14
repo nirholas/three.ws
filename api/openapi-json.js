@@ -229,6 +229,129 @@ export default wrap(async (req, res) => {
 						},
 					},
 				},
+				'/api/x402/agent-reputation': {
+					get: {
+						operationId: 'x402_agent_reputation',
+						summary: 'Paid: Agent Reputation snapshot',
+						description:
+							'Pay $0.01 USDC to retrieve a three.ws agent\'s reputation snapshot synthesized from pump_agent_payments, distribute/buyback success history, and signed Solana memo attestations.',
+						parameters: [
+							{ name: 'agent_id', in: 'query', required: true, schema: { type: 'string', format: 'uuid' } },
+						],
+						responses: {
+							200: { description: 'Reputation snapshot JSON' },
+							400: { description: 'Missing or invalid agent_id' },
+							402: { description: 'Payment Required (x402)' },
+							404: { description: 'agent_id not found' },
+						},
+						'x-payment-info': { price: { mode: 'fixed', currency: 'USD', amount: '0.01' } },
+					},
+				},
+				'/api/x402/onchain-identity-verify': {
+					get: {
+						operationId: 'x402_onchain_identity_verify',
+						summary: 'Paid: Verify counterparty agent ownership claim',
+						description:
+							'Pay $0.005 USDC to verify whether a three.ws agent_id actually owns/deployed a given contract or mint on a given CAIP-2 chain, using the canonical meta.onchain unified index.',
+						parameters: [
+							{ name: 'agent_id', in: 'query', required: true, schema: { type: 'string', format: 'uuid' } },
+							{ name: 'chain', in: 'query', required: true, schema: { type: 'string' } },
+							{ name: 'contract_or_mint', in: 'query', required: true, schema: { type: 'string' } },
+						],
+						responses: {
+							200: { description: 'Verification result JSON' },
+							400: { description: 'Missing or invalid parameters' },
+							402: { description: 'Payment Required (x402)' },
+						},
+						'x-payment-info': { price: { mode: 'fixed', currency: 'USD', amount: '0.005' } },
+					},
+				},
+				'/api/x402/pump-agent-audit': {
+					get: {
+						operationId: 'x402_pump_agent_audit',
+						summary: 'Paid: Operational audit of a pump.fun agent-payments token',
+						description:
+							'Pay $0.02 USDC to retrieve a full operational audit of a pump.fun mint: USDC paid in, distinct payers, distribute/buyback success history, latest error reasons, and derived risk flags.',
+						parameters: [
+							{ name: 'mint', in: 'query', required: true, schema: { type: 'string', minLength: 32, maxLength: 44 } },
+						],
+						responses: {
+							200: { description: 'Audit JSON' },
+							400: { description: 'Missing or invalid mint' },
+							402: { description: 'Payment Required (x402)' },
+							404: { description: 'Mint not indexed' },
+						},
+						'x-payment-info': { price: { mode: 'fixed', currency: 'USD', amount: '0.02' } },
+					},
+				},
+				'/api/x402/skill-marketplace': {
+					get: {
+						operationId: 'x402_skill_marketplace',
+						summary: 'Paid: Browse the three.ws skill marketplace',
+						description:
+							'Pay $0.001 USDC to list active skill listings with prices across all three.ws agents. Optional skill filter returns the cheapest provider for that capability.',
+						parameters: [
+							{ name: 'skill', in: 'query', schema: { type: 'string' } },
+							{ name: 'limit', in: 'query', schema: { type: 'integer', minimum: 1, maximum: 200 } },
+						],
+						responses: {
+							200: { description: 'Marketplace listings JSON' },
+							402: { description: 'Payment Required (x402)' },
+						},
+						'x-payment-info': { price: { mode: 'fixed', currency: 'USD', amount: '0.001' } },
+					},
+				},
+				'/api/x402/symbol-availability': {
+					get: {
+						operationId: 'x402_symbol_availability',
+						summary: 'Paid: Check pump.fun ticker collisions before launch',
+						description:
+							'Pay $0.001 USDC to check whether a candidate ticker collides with any three.ws-indexed pump.fun mint. Returns exact matches plus trigram-similar tickers and a recommendation.',
+						parameters: [
+							{ name: 'ticker', in: 'query', required: true, schema: { type: 'string', minLength: 1, maxLength: 32 } },
+							{ name: 'network', in: 'query', schema: { type: 'string', enum: ['mainnet', 'devnet'] } },
+						],
+						responses: {
+							200: { description: 'Symbol availability JSON' },
+							400: { description: 'Missing or invalid ticker' },
+							402: { description: 'Payment Required (x402)' },
+						},
+						'x-payment-info': { price: { mode: 'fixed', currency: 'USD', amount: '0.001' } },
+					},
+				},
+				'/api/x402/mint-to-mesh-batch': {
+					post: {
+						operationId: 'x402_mint_to_mesh_batch',
+						summary: 'Paid: Batch 1–10 mints → themed binary glTF cubes',
+						description:
+							'Pay $0.05 USDC to resolve 1–10 Solana SPL mints to themed binary glTF cubes in a single call. Per-mint failures report ok:false instead of failing the whole batch.',
+						requestBody: {
+							required: true,
+							content: {
+								'application/json': {
+									schema: {
+										type: 'object',
+										required: ['mints'],
+										properties: {
+											mints: {
+												type: 'array',
+												minItems: 1,
+												maxItems: 10,
+												items: { type: 'string', minLength: 32, maxLength: 44 },
+											},
+										},
+									},
+								},
+							},
+						},
+						responses: {
+							200: { description: 'Batch mesh JSON' },
+							400: { description: 'Missing or invalid body' },
+							402: { description: 'Payment Required (x402)' },
+						},
+						'x-payment-info': { price: { mode: 'fixed', currency: 'USD', amount: '0.05' } },
+					},
+				},
 			},
 		},
 		{ 'cache-control': 'public, max-age=300' },

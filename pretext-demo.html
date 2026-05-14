@@ -37,47 +37,35 @@
       -webkit-backdrop-filter: blur(12px);
     }
 
-    .logo {
+    .site-header-brand {
       font-family: 'Space Grotesk', 'Inter', sans-serif;
       font-size: 1.1rem;
       font-weight: 700;
+      line-height: 1;
+      margin: 0;
+    }
+
+    .site-header-brand a {
       color: #fff;
-      display: flex;
+      display: inline-flex;
       align-items: center;
       gap: 0.45rem;
       text-decoration: none;
     }
 
-    .logo-dot {
-      width: 8px; height: 8px;
+    .site-header-brand .wordmark-logo {
+      width: 22px;
+      height: 22px;
+      display: inline-block;
+    }
+
+    .site-header-brand .wordmark-dot {
+      width: 8px;
+      height: 8px;
       border-radius: 50%;
       background: linear-gradient(135deg, var(--gold), #ff8f4d);
       box-shadow: 0 0 12px rgba(255,143,77,0.6);
-    }
-
-    .nav-links {
-      display: flex;
-      gap: 1.5rem;
-      align-items: center;
-      list-style: none;
-    }
-
-    .nav-links a {
-      font-size: 0.85rem;
-      font-weight: 500;
-      color: rgba(255,255,255,0.55);
-      text-decoration: none;
-      transition: color 0.2s;
-    }
-
-    .nav-links a:hover { color: #fff; }
-
-    .nav-cta {
-      background: linear-gradient(135deg, var(--gold), #ff8f4d) !important;
-      color: #000 !important;
-      padding: 0.45rem 1rem;
-      border-radius: 6px;
-      font-weight: 600 !important;
+      display: inline-block;
     }
 
     /* ── scene ── */

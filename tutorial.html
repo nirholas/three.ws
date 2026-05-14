@@ -1,0 +1,1025 @@
+<!doctype html>
+<html lang="en" class="tutorial-page">
+	<head>
+		<meta charset="utf-8" />
+		<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+		<title>three.ws — Tutorial</title>
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<meta name="author" content="nirholas" />
+		<meta name="description" content="Step-by-step tutorials for building, embedding, and shipping 3D agents with three.ws." />
+		<meta name="theme-color" content="#000000" />
+
+		<meta property="og:type" content="article" />
+		<meta property="og:site_name" content="three.ws" />
+		<meta property="og:title" content="three.ws — Tutorial" />
+		<meta property="og:description" content="Step-by-step tutorials for building, embedding, and shipping 3D agents with three.ws." />
+		<meta property="og:image" content="https://three.ws/og-image.png" />
+		<meta property="og:image:width" content="1200" />
+		<meta property="og:image:height" content="630" />
+
+		<meta name="twitter:card" content="summary_large_image" />
+		<meta name="twitter:title" content="three.ws — Tutorial" />
+		<meta name="twitter:image" content="https://three.ws/og-image.png" />
+
+		<link rel="shortcut icon" href="/favicon.ico" />
+		<link rel="apple-touch-icon" href="/pwa-192x192.png" />
+		<link rel="stylesheet" href="/style.css" />
+		<link rel="stylesheet" href="/nav.css" />
+		<link rel="stylesheet" href="/home.css" />
+		<link rel="stylesheet" href="/footer.css" />
+		<link rel="stylesheet" href="/fonts/fonts.css" />
+		<link
+			rel="stylesheet"
+			href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css"
+		/>
+		<script src="https://cdn.jsdelivr.net/npm/marked@9.1.6/marked.min.js"></script>
+		<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+		<script defer src="/footer-newsletter.js"></script>
+		<script defer src="/tutorials-manifest.js"></script>
+		<script type="module" src="https://ajax.googleapis.com/ajax/libs/model-viewer/4.0.0/model-viewer.min.js"></script>
+
+		<style>
+			html.tutorial-page,
+			html.tutorial-page body {
+				overflow: auto !important;
+				height: auto !important;
+			}
+
+			.tutorial-page body {
+				display: block;
+				background: #06070b;
+				color: rgba(224, 224, 224, 0.88);
+			}
+
+			/* ── Page shell ──────────────────────────────────────────────── */
+
+			.tut-doc-page {
+				min-height: 100vh;
+				display: flex;
+				flex-direction: column;
+			}
+
+			.tut-doc-page header {
+				position: sticky;
+				top: 0;
+				z-index: 200;
+				flex-shrink: 0;
+			}
+
+			/* ── Hero ────────────────────────────────────────────────────── */
+
+			.tdoc-hero {
+				background: linear-gradient(180deg, #0a0608 0%, #07060b 60%, #06070b 100%);
+				border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+				padding: clamp(2.5rem, 7vh, 4.5rem) clamp(1.25rem, 4vw, 2rem) clamp(2rem, 5vh, 3rem);
+				position: relative;
+				overflow: hidden;
+			}
+
+			.tdoc-hero::before {
+				content: '';
+				position: absolute;
+				inset: 0;
+				background:
+					radial-gradient(ellipse 60% 80% at 15% 50%, var(--tdoc-glow, rgba(139, 92, 246, 0.12)) 0%, transparent 60%),
+					radial-gradient(ellipse 50% 60% at 85% 20%, rgba(255, 215, 106, 0.05) 0%, transparent 55%);
+				pointer-events: none;
+			}
+
+			.tdoc-hero-inner {
+				position: relative;
+				max-width: 980px;
+				margin: 0 auto;
+				display: grid;
+				grid-template-columns: 1fr 280px;
+				gap: 2rem;
+				align-items: center;
+			}
+
+			.tdoc-back-link {
+				display: inline-flex;
+				align-items: center;
+				gap: 0.4rem;
+				font-family: 'Inter', sans-serif;
+				font-size: 0.78rem;
+				font-weight: 500;
+				color: rgba(255, 255, 255, 0.5);
+				text-decoration: none;
+				margin-bottom: 1.1rem;
+				transition: color 0.15s ease;
+			}
+
+			.tdoc-back-link:hover { color: rgba(255, 255, 255, 0.85); }
+			.tdoc-back-link svg { width: 12px; height: 12px; transition: transform 0.15s ease; }
+			.tdoc-back-link:hover svg { transform: translateX(-2px); }
+
+			.tdoc-tier-row {
+				display: flex;
+				align-items: center;
+				gap: 0.6rem;
+				margin-bottom: 1.1rem;
+				flex-wrap: wrap;
+			}
+
+			.tdoc-tier-chip {
+				display: inline-flex;
+				align-items: center;
+				gap: 0.4rem;
+				padding: 0.28rem 0.65rem;
+				border-radius: 999px;
+				background: var(--tdoc-accent-soft, rgba(167, 139, 250, 0.16));
+				border: 1px solid var(--tdoc-accent-border, rgba(167, 139, 250, 0.32));
+				font-family: 'Space Grotesk', sans-serif;
+				font-size: 0.68rem;
+				font-weight: 700;
+				color: var(--tdoc-accent, #a78bfa);
+				letter-spacing: 0.06em;
+				text-transform: uppercase;
+			}
+
+			.tdoc-tier-chip::before {
+				content: '';
+				width: 6px;
+				height: 6px;
+				border-radius: 50%;
+				background: currentColor;
+			}
+
+			.tdoc-meta-chip {
+				display: inline-flex;
+				align-items: center;
+				gap: 0.35rem;
+				padding: 0.28rem 0.6rem;
+				border-radius: 999px;
+				background: rgba(255, 255, 255, 0.04);
+				border: 1px solid rgba(255, 255, 255, 0.08);
+				font-family: 'Inter', sans-serif;
+				font-size: 0.72rem;
+				font-weight: 500;
+				color: rgba(255, 255, 255, 0.6);
+			}
+
+			.tdoc-meta-chip svg { width: 11px; height: 11px; opacity: 0.7; }
+
+			.tdoc-hero h1 {
+				font-family: 'Space Grotesk', sans-serif;
+				font-size: clamp(1.8rem, 4.4vw, 2.9rem);
+				font-weight: 700;
+				letter-spacing: -0.025em;
+				color: #fff;
+				margin: 0 0 0.7rem;
+				line-height: 1.12;
+			}
+
+			.tdoc-hero-blurb {
+				font-size: 1.02rem;
+				color: rgba(255, 255, 255, 0.55);
+				line-height: 1.6;
+				margin: 0 0 1.25rem;
+				max-width: 60ch;
+			}
+
+			.tdoc-builds {
+				display: flex;
+				align-items: flex-start;
+				gap: 0.6rem;
+				padding: 0.85rem 1rem;
+				background: rgba(255, 255, 255, 0.025);
+				border: 1px solid rgba(255, 255, 255, 0.06);
+				border-left: 2px solid var(--tdoc-accent, #a78bfa);
+				border-radius: 6px;
+				max-width: 60ch;
+			}
+
+			.tdoc-builds-label {
+				flex-shrink: 0;
+				font-family: 'Space Grotesk', sans-serif;
+				font-size: 0.66rem;
+				font-weight: 700;
+				color: rgba(255, 255, 255, 0.4);
+				letter-spacing: 0.1em;
+				text-transform: uppercase;
+				padding-top: 2px;
+			}
+
+			.tdoc-builds-text {
+				font-size: 0.88rem;
+				color: rgba(255, 255, 255, 0.78);
+				line-height: 1.55;
+			}
+
+			.tdoc-hero-viewer {
+				background: rgba(255, 255, 255, 0.02);
+				border: 1px solid rgba(255, 255, 255, 0.07);
+				border-radius: 12px;
+				overflow: hidden;
+				display: flex;
+				align-items: center;
+				justify-content: center;
+			}
+
+			.tdoc-hero-viewer model-viewer {
+				width: 100%;
+				height: 240px;
+				background: transparent;
+				--poster-color: transparent;
+			}
+
+			/* ── Body layout ─────────────────────────────────────────────── */
+
+			.tdoc-body {
+				flex: 1;
+				padding: clamp(2rem, 5vh, 3rem) clamp(1.25rem, 4vw, 2rem);
+			}
+
+			.tdoc-body-inner {
+				max-width: 980px;
+				margin: 0 auto;
+				display: grid;
+				grid-template-columns: 1fr 220px;
+				gap: 2.5rem;
+				align-items: start;
+			}
+
+			/* ── Article (markdown content) ──────────────────────────────── */
+
+			.tdoc-article {
+				min-width: 0;
+				font-family: 'Inter', system-ui, -apple-system, sans-serif;
+				font-size: 1rem;
+				line-height: 1.72;
+				color: rgba(224, 224, 224, 0.86);
+			}
+
+			.tdoc-loading {
+				display: inline-flex;
+				align-items: center;
+				gap: 0.5rem;
+				color: rgba(255, 255, 255, 0.4);
+				font-size: 0.9rem;
+			}
+
+			.tdoc-loading-dot {
+				display: inline-block;
+				width: 6px;
+				height: 6px;
+				border-radius: 50%;
+				background: currentColor;
+				animation: tdoc-pulse 1s ease-in-out infinite;
+			}
+
+			@keyframes tdoc-pulse {
+				0%, 100% { opacity: 0.3; transform: scale(0.8); }
+				50% { opacity: 1; transform: scale(1.1); }
+			}
+
+			.tdoc-article h1 {
+				display: none; /* the hero already shows the title */
+			}
+
+			.tdoc-article h2 {
+				font-family: 'Space Grotesk', sans-serif;
+				font-size: 1.5rem;
+				font-weight: 700;
+				color: #fff;
+				letter-spacing: -0.015em;
+				margin: 2.5rem 0 1rem;
+				padding-top: 1rem;
+				border-top: 1px solid rgba(255, 255, 255, 0.06);
+				line-height: 1.3;
+				scroll-margin-top: 80px;
+			}
+
+			.tdoc-article h2:first-of-type {
+				border-top: none;
+				padding-top: 0;
+				margin-top: 0;
+			}
+
+			.tdoc-article h3 {
+				font-family: 'Space Grotesk', sans-serif;
+				font-size: 1.15rem;
+				font-weight: 700;
+				color: rgba(255, 255, 255, 0.92);
+				margin: 2rem 0 0.8rem;
+				letter-spacing: -0.01em;
+				line-height: 1.35;
+				scroll-margin-top: 80px;
+			}
+
+			.tdoc-article h4 {
+				font-family: 'Space Grotesk', sans-serif;
+				font-size: 1rem;
+				font-weight: 700;
+				color: rgba(255, 255, 255, 0.85);
+				margin: 1.5rem 0 0.6rem;
+				scroll-margin-top: 80px;
+			}
+
+			.tdoc-article p { margin: 0 0 1.1rem; }
+
+			.tdoc-article a {
+				color: var(--tdoc-accent, #a78bfa);
+				text-decoration: none;
+				border-bottom: 1px solid transparent;
+				transition: border-color 0.15s ease;
+			}
+
+			.tdoc-article a:hover { border-bottom-color: currentColor; }
+
+			.tdoc-article strong { color: #fff; font-weight: 600; }
+
+			.tdoc-article ul,
+			.tdoc-article ol {
+				margin: 0 0 1.2rem;
+				padding-left: 1.4rem;
+			}
+
+			.tdoc-article li { margin-bottom: 0.4rem; }
+			.tdoc-article li > p { margin-bottom: 0.4rem; }
+
+			.tdoc-article hr {
+				border: none;
+				border-top: 1px solid rgba(255, 255, 255, 0.08);
+				margin: 2.5rem 0;
+			}
+
+			.tdoc-article blockquote {
+				margin: 1.2rem 0;
+				padding: 0.9rem 1.1rem;
+				border-left: 3px solid var(--tdoc-accent, #a78bfa);
+				background: rgba(255, 255, 255, 0.025);
+				border-radius: 0 6px 6px 0;
+				color: rgba(255, 255, 255, 0.78);
+			}
+
+			.tdoc-article blockquote p:last-child { margin-bottom: 0; }
+
+			.tdoc-article code {
+				font-family: 'JetBrains Mono', ui-monospace, monospace;
+				font-size: 0.86em;
+				padding: 0.12em 0.4em;
+				background: rgba(255, 255, 255, 0.06);
+				border: 1px solid rgba(255, 255, 255, 0.07);
+				border-radius: 4px;
+				color: #e4d4ff;
+			}
+
+			.tdoc-article pre {
+				margin: 1.25rem 0;
+				padding: 1.1rem 1.25rem;
+				background: #0b0c12;
+				border: 1px solid rgba(255, 255, 255, 0.07);
+				border-radius: 8px;
+				overflow-x: auto;
+				font-size: 0.85rem;
+				line-height: 1.65;
+				scrollbar-width: thin;
+				scrollbar-color: rgba(255, 255, 255, 0.1) transparent;
+			}
+
+			.tdoc-article pre::-webkit-scrollbar { height: 6px; }
+			.tdoc-article pre::-webkit-scrollbar-thumb { background: rgba(255,255,255,.1); border-radius: 3px; }
+
+			.tdoc-article pre code {
+				padding: 0;
+				background: none;
+				border: none;
+				font-size: inherit;
+				color: #c4b5fd;
+			}
+
+			.tdoc-article table {
+				width: 100%;
+				border-collapse: collapse;
+				margin: 1.25rem 0;
+				font-size: 0.92rem;
+			}
+
+			.tdoc-article th,
+			.tdoc-article td {
+				padding: 0.6rem 0.85rem;
+				border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+				text-align: left;
+			}
+
+			.tdoc-article th {
+				font-family: 'Space Grotesk', sans-serif;
+				font-weight: 700;
+				color: rgba(255, 255, 255, 0.85);
+				font-size: 0.85rem;
+				letter-spacing: 0.02em;
+			}
+
+			.tdoc-article img {
+				max-width: 100%;
+				height: auto;
+				border-radius: 8px;
+				border: 1px solid rgba(255, 255, 255, 0.06);
+				margin: 1.25rem 0;
+			}
+
+			/* ── Right rail TOC ──────────────────────────────────────────── */
+
+			.tdoc-toc {
+				position: sticky;
+				top: 78px;
+				align-self: start;
+				font-family: 'Inter', sans-serif;
+				border-left: 1px solid rgba(255, 255, 255, 0.06);
+				padding-left: 1.1rem;
+				max-height: calc(100vh - 100px);
+				overflow-y: auto;
+				scrollbar-width: thin;
+				scrollbar-color: rgba(255, 255, 255, 0.08) transparent;
+			}
+
+			.tdoc-toc-heading {
+				font-family: 'Space Grotesk', sans-serif;
+				font-size: 0.68rem;
+				font-weight: 700;
+				color: rgba(255, 255, 255, 0.42);
+				letter-spacing: 0.12em;
+				text-transform: uppercase;
+				margin: 0 0 0.85rem;
+			}
+
+			.tdoc-toc ol {
+				list-style: none;
+				padding: 0;
+				margin: 0;
+				display: flex;
+				flex-direction: column;
+				gap: 0.35rem;
+			}
+
+			.tdoc-toc a {
+				display: block;
+				padding: 0.3rem 0;
+				font-size: 0.82rem;
+				color: rgba(255, 255, 255, 0.52);
+				text-decoration: none;
+				line-height: 1.4;
+				transition: color 0.15s ease;
+				border-left: 2px solid transparent;
+				margin-left: -2px;
+				padding-left: 0.7rem;
+			}
+
+			.tdoc-toc a:hover { color: rgba(255, 255, 255, 0.95); }
+
+			.tdoc-toc a.is-active {
+				color: var(--tdoc-accent, #a78bfa);
+				border-left-color: var(--tdoc-accent, #a78bfa);
+			}
+
+			.tdoc-toc a.is-h3 {
+				padding-left: 1.4rem;
+				font-size: 0.78rem;
+				color: rgba(255, 255, 255, 0.42);
+			}
+
+			/* ── Pager (prev / next) ─────────────────────────────────────── */
+
+			.tdoc-pager {
+				display: grid;
+				grid-template-columns: 1fr 1fr;
+				gap: 0.85rem;
+				margin-top: 3rem;
+				padding-top: 2rem;
+				border-top: 1px solid rgba(255, 255, 255, 0.08);
+			}
+
+			.tdoc-pager-btn {
+				display: flex;
+				flex-direction: column;
+				gap: 0.25rem;
+				padding: 1rem 1.2rem;
+				background: rgba(255, 255, 255, 0.018);
+				border: 1px solid rgba(255, 255, 255, 0.07);
+				border-radius: 10px;
+				text-decoration: none;
+				transition: border-color 0.2s ease, transform 0.2s ease;
+				min-height: 70px;
+			}
+
+			.tdoc-pager-btn:hover {
+				border-color: rgba(255, 255, 255, 0.18);
+				transform: translateY(-1px);
+			}
+
+			.tdoc-pager-btn.next { text-align: right; }
+
+			.tdoc-pager-btn.placeholder {
+				background: transparent;
+				border: 1px dashed rgba(255, 255, 255, 0.05);
+				pointer-events: none;
+			}
+
+			.tdoc-pager-dir {
+				font-family: 'Space Grotesk', sans-serif;
+				font-size: 0.68rem;
+				font-weight: 600;
+				color: rgba(255, 255, 255, 0.4);
+				letter-spacing: 0.1em;
+				text-transform: uppercase;
+			}
+
+			.tdoc-pager-title {
+				font-family: 'Space Grotesk', sans-serif;
+				font-size: 0.95rem;
+				font-weight: 700;
+				color: #fff;
+				letter-spacing: -0.01em;
+				line-height: 1.3;
+			}
+
+			/* ── Responsive ──────────────────────────────────────────────── */
+
+			@media (max-width: 880px) {
+				.tdoc-hero-inner { grid-template-columns: 1fr; }
+				.tdoc-hero-viewer model-viewer { height: 200px; }
+				.tdoc-body-inner { grid-template-columns: 1fr; gap: 1.5rem; }
+				.tdoc-toc {
+					position: static;
+					max-height: none;
+					border-left: none;
+					border-top: 1px solid rgba(255, 255, 255, 0.06);
+					padding-left: 0;
+					padding-top: 1.5rem;
+					order: 99;
+				}
+				.tdoc-toc ol { flex-direction: row; flex-wrap: wrap; gap: 0.5rem 1rem; }
+				.tdoc-toc a { padding-left: 0; border-left: none; }
+				.tdoc-toc a.is-h3 { display: none; }
+				.tdoc-pager { grid-template-columns: 1fr; }
+			}
+
+			@media (max-width: 540px) {
+				.tdoc-article { font-size: 0.95rem; }
+				.tdoc-article h2 { font-size: 1.25rem; }
+				.tdoc-article pre { font-size: 0.78rem; padding: 0.9rem 1rem; }
+			}
+		</style>
+	</head>
+	<body class="home-page tutorial-page tut-doc-page">
+		<div class="cursor" id="cursor" aria-hidden="true"></div>
+		<a href="#main-content" class="h-skip-link">Skip to main content</a>
+
+		<header>
+			<h1>
+				<a href="/" aria-label="three.ws home"
+					><img class="wordmark-logo" src="/three.svg" alt="" aria-hidden="true" /><span
+						class="wordmark-dot"
+						aria-hidden="true"
+					></span
+					>three.ws</a
+				>
+			</h1>
+			<nav class="home-nav" aria-label="Primary">
+				<ul class="nav-root" role="menubar">
+					<li class="nav-item nav-has-menu" role="none">
+						<button type="button" class="nav-trigger" aria-haspopup="true" aria-expanded="false" role="menuitem">
+							Build<span class="nav-caret" aria-hidden="true">▾</span>
+						</button>
+						<ul class="nav-menu" role="menu" aria-label="Build">
+							<li role="none"><a href="/create" role="menuitem"><span class="nav-mi-title">Create agent</span><span class="nav-mi-sub">Avatar + brain wizard</span></a></li>
+							<li role="none"><a href="/app" role="menuitem"><span class="nav-mi-title">Viewer</span><span class="nav-mi-sub">Drag-and-drop GLB</span></a></li>
+							<li role="none"><a href="/validation" role="menuitem"><span class="nav-mi-title">glTF Validator</span><span class="nav-mi-sub">Khronos spec check</span></a></li>
+						</ul>
+					</li>
+					<li role="none"><a href="/discover" role="menuitem">Discover</a></li>
+					<li class="nav-item nav-has-menu" role="none">
+						<button type="button" class="nav-trigger" aria-haspopup="true" aria-expanded="false" role="menuitem">
+							Solana<span class="nav-caret" aria-hidden="true">▾</span>
+						</button>
+						<ul class="nav-menu" role="menu" aria-label="Solana">
+							<li role="none"><a href="/pumpfun" role="menuitem"><span class="nav-mi-title">Pump.fun stream</span><span class="nav-mi-sub">Mint agent tokens</span></a></li>
+							<li role="none"><a href="/vanity-wallet" role="menuitem"><span class="nav-mi-title">Vanity wallet</span><span class="nav-mi-sub">Grind a Solana address</span></a></li>
+							<li role="none"><a href="/eth-vanity" role="menuitem"><span class="nav-mi-title">ETH vanity (CREATE2)</span><span class="nav-mi-sub">Grind a smart-contract address</span></a></li>
+							<li role="none"><a href="/strategy-lab" role="menuitem"><span class="nav-mi-title">Strategy Lab</span><span class="nav-mi-sub">DCA + subscriptions</span></a></li>
+							<li role="none"><a href="/pump-live.html" role="menuitem"><span class="nav-mi-title">Live launches</span><span class="nav-mi-sub">Real-time mint feed</span></a></li>
+							<li role="none"><a href="/pump-dashboard.html" role="menuitem"><span class="nav-mi-title">Pump Dashboard</span><span class="nav-mi-sub">Watches · scanner · quotes</span></a></li>
+							<li role="none"><a href="/docs#solana" role="menuitem"><span class="nav-mi-title">Solana SDK</span><span class="nav-mi-sub">Attestations + agent-kit</span></a></li>
+						</ul>
+					</li>
+					<li class="nav-item nav-has-menu" role="none">
+						<button type="button" class="nav-trigger" aria-haspopup="true" aria-expanded="false" role="menuitem">
+							Embed<span class="nav-caret" aria-hidden="true">▾</span>
+						</button>
+						<ul class="nav-menu" role="menu" aria-label="Embed">
+							<li role="none"><a href="/studio" role="menuitem"><span class="nav-mi-title">Widget Studio</span><span class="nav-mi-sub">Pick avatar → copy snippet</span></a></li>
+							<li role="none"><a href="/artifact" role="menuitem"><span class="nav-mi-title">Artifact viewer</span><span class="nav-mi-sub">Claude artifact bundle</span></a></li>
+							<li role="none"><a href="/docs#embedding" role="menuitem"><span class="nav-mi-title">Embed docs</span><span class="nav-mi-sub">iframe + oEmbed</span></a></li>
+							<li role="none"><a href="/docs#web-component" role="menuitem"><span class="nav-mi-title">&lt;agent-3d&gt;</span><span class="nav-mi-sub">Web component reference</span></a></li>
+						</ul>
+					</li>
+					<li class="nav-item" role="none"><a href="/marketplace.html" role="menuitem">Marketplace</a></li>
+					<li class="nav-item" role="none"><a href="/chat" role="menuitem">Chat</a></li>
+					<li class="nav-item" role="none"><a href="/tutorials" role="menuitem" aria-current="page">Tutorials</a></li>
+					<li class="nav-item" id="home-nav-my-agents-li" role="none" hidden>
+						<a href="/my-agents" id="home-nav-my-agents" role="menuitem">My Agents</a>
+					</li>
+					<li class="nav-item" id="home-nav-user-li" role="none" hidden>
+						<a href="/dashboard" id="home-nav-user" class="nav-user" role="menuitem"></a>
+					</li>
+					<li class="nav-item" role="none">
+						<a href="/login" class="nav-cta" id="home-nav-cta" role="menuitem">Get started</a>
+					</li>
+				</ul>
+			</nav>
+		</header>
+
+		<main id="main-content">
+			<div class="tdoc-hero" id="tdoc-hero" hidden>
+				<div class="tdoc-hero-inner">
+					<div>
+						<a href="/tutorials" class="tdoc-back-link">
+							<svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M10 6H2M6 2 2 6l4 4"/></svg>
+							All tutorials
+						</a>
+						<div class="tdoc-tier-row">
+							<span class="tdoc-tier-chip" id="tdoc-tier-chip"></span>
+							<span class="tdoc-meta-chip">
+								<svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.4" aria-hidden="true"><circle cx="6" cy="6" r="4.5"/><path d="M6 3v3l2 1.5"/></svg>
+								<span id="tdoc-time"></span>
+							</span>
+						</div>
+						<h1 id="tdoc-title"></h1>
+						<p class="tdoc-hero-blurb" id="tdoc-blurb"></p>
+						<div class="tdoc-builds">
+							<span class="tdoc-builds-label">You'll build</span>
+							<span class="tdoc-builds-text" id="tdoc-builds"></span>
+						</div>
+					</div>
+					<div class="tdoc-hero-viewer" id="tdoc-hero-viewer"></div>
+				</div>
+			</div>
+
+			<div class="tdoc-body">
+				<div class="tdoc-body-inner">
+					<article class="tdoc-article" id="tdoc-article">
+						<span class="tdoc-loading"><span class="tdoc-loading-dot"></span> Loading tutorial…</span>
+					</article>
+					<aside class="tdoc-toc" id="tdoc-toc" hidden>
+						<p class="tdoc-toc-heading">On this page</p>
+						<ol id="tdoc-toc-list"></ol>
+					</aside>
+				</div>
+			</div>
+		</main>
+
+		<footer class="h-footer h-footer-horizon">
+			<div class="h-footer-glow-line" aria-hidden="true"></div>
+			<div class="h-footer-floor" aria-hidden="true"></div>
+			<div class="h-footer-haze" aria-hidden="true"></div>
+			<div class="h-footer-watermark" aria-hidden="true">three.ws</div>
+			<div class="h-footer-avatar" aria-hidden="true">
+				<model-viewer
+					src="/animations/robotexpressive.glb"
+					auto-rotate
+					auto-rotate-delay="0"
+					rotation-per-second="20deg"
+					interaction-prompt="none"
+					camera-controls="false"
+					disable-zoom
+					shadow-intensity="0"
+					exposure="0.7"
+					environment-image="neutral"
+					camera-orbit="0deg 80deg 9m"
+					field-of-view="45deg"
+					loading="lazy"
+				></model-viewer>
+			</div>
+			<div class="h-footer-cta">
+				<div class="h-footer-newsletter">
+					<h3>Stay in the loop</h3>
+					<p>Get updates on new features, agent tooling, and protocol changes.</p>
+					<form class="h-footer-newsletter-form" data-newsletter-form novalidate>
+						<input type="email" class="h-footer-newsletter-input" name="email" placeholder="Enter your email" aria-label="Email address" autocomplete="email" required />
+						<button type="submit" class="h-footer-newsletter-btn" aria-label="Subscribe">
+							<svg viewBox="0 0 16 16" aria-hidden="true">
+								<path fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" d="M2 8h11m0 0L9 4m4 4l-4 4" />
+							</svg>
+						</button>
+					</form>
+					<p class="h-footer-newsletter-msg" data-newsletter-msg aria-live="polite"></p>
+				</div>
+				<div class="h-footer-community">
+					<h3>Join the community</h3>
+					<p>Follow along for builds, demos, and conversations with the team.</p>
+					<a class="h-footer-community-btn" href="https://x.com/trythreews" target="_blank" rel="noopener">
+						<svg viewBox="0 0 24 24" aria-hidden="true">
+							<path fill="currentColor" d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
+						</svg>
+						Follow on X
+					</a>
+				</div>
+			</div>
+			<div class="h-footer-inner">
+				<div class="h-footer-brand-col">
+					<div class="h-footer-brand">
+						<img class="wordmark-logo" src="/three.svg" alt="" aria-hidden="true" />
+						<span class="wordmark-dot" aria-hidden="true"></span>
+						<span>three.ws</span>
+					</div>
+					<p class="h-footer-tagline">Give your AI a body.</p>
+					<div class="h-footer-socials">
+						<a class="h-footer-social" href="https://x.com/trythreews" target="_blank" rel="noopener" aria-label="three.ws on X">
+							<svg viewBox="0 0 24 24" aria-hidden="true">
+								<path fill="currentColor" d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
+							</svg>
+						</a>
+						<a class="h-footer-social" href="https://github.com/nirholas/three.ws" target="_blank" rel="noopener" aria-label="three.ws on GitHub">
+							<svg viewBox="0 0 16 16" aria-hidden="true">
+								<path fill="currentColor" d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0 0 16 8c0-4.42-3.58-8-8-8z" />
+							</svg>
+						</a>
+					</div>
+				</div>
+				<nav class="h-footer-links" aria-label="Footer">
+					<div class="h-footer-link-col">
+						<h4 class="h-footer-link-heading">Product</h4>
+						<a href="/create">Create</a>
+						<a href="/studio">Studio</a>
+						<a href="/widgets.html">Widgets</a>
+						<a href="/discover">Discover</a>
+					</div>
+					<div class="h-footer-link-col">
+						<h4 class="h-footer-link-heading">Developers</h4>
+						<a href="/docs">Docs</a>
+						<a href="https://github.com/nirholas/three.ws" target="_blank" rel="noopener">GitHub</a>
+						<a href="https://eips.ethereum.org/EIPS/eip-8004" target="_blank" rel="noopener">ERC-8004</a>
+					</div>
+					<div class="h-footer-link-col">
+						<h4 class="h-footer-link-heading">Resources</h4>
+						<a href="/tutorials" aria-current="page">Tutorials</a>
+						<a href="/dashboard">Dashboard</a>
+					</div>
+				</nav>
+			</div>
+			<div class="h-footer-bottom">
+				<p class="h-footer-legal">© 2026 three.ws — All rights reserved.</p>
+				<div class="h-footer-legal-links">
+					<a href="/legal/privacy">Privacy Policy</a>
+					<a href="/legal/tos">Terms of Use</a>
+				</div>
+			</div>
+		</footer>
+
+		<script>
+			// Custom cursor (matches the rest of the site)
+			(function () {
+				const cursor = document.getElementById('cursor');
+				if (!cursor || !window.matchMedia('(hover: hover)').matches) return;
+				let x = 0, y = 0, tx = 0, ty = 0;
+				document.addEventListener('mousemove', (e) => { tx = e.clientX; ty = e.clientY; });
+				(function loop() {
+					x += (tx - x) * 0.18;
+					y += (ty - y) * 0.18;
+					cursor.style.transform = `translate(${x - 5}px,${y - 5}px)`;
+					requestAnimationFrame(loop);
+				})();
+				document.querySelectorAll('a,button').forEach((el) => {
+					el.addEventListener('mouseenter', () => cursor.classList.add('cursor--hover'));
+					el.addEventListener('mouseleave', () => cursor.classList.remove('cursor--hover'));
+				});
+			})();
+
+			// Auth-aware nav CTA
+			(function () {
+				try {
+					const raw = localStorage.getItem('3dagent:auth-hint');
+					if (!raw) return;
+					const { authed, name } = JSON.parse(raw);
+					if (!authed) return;
+					const cta = document.getElementById('home-nav-cta');
+					if (cta) { cta.textContent = 'Dashboard'; cta.href = '/dashboard'; }
+					const myAgentsLi = document.getElementById('home-nav-my-agents-li');
+					if (myAgentsLi) myAgentsLi.hidden = false;
+					const userLi = document.getElementById('home-nav-user-li');
+					const userEl = document.getElementById('home-nav-user');
+					if (userEl && userLi && name) { userEl.textContent = name; userLi.hidden = false; }
+				} catch (_) {}
+			})();
+
+			// Dropdown nav
+			(function () {
+				const triggers = document.querySelectorAll('.home-nav .nav-trigger');
+				if (!triggers.length) return;
+				function closeAll(except) {
+					triggers.forEach((t) => { if (t !== except) t.setAttribute('aria-expanded', 'false'); });
+				}
+				triggers.forEach((trigger) => {
+					trigger.addEventListener('click', (e) => {
+						e.stopPropagation();
+						const open = trigger.getAttribute('aria-expanded') === 'true';
+						closeAll(open ? null : trigger);
+						trigger.setAttribute('aria-expanded', open ? 'false' : 'true');
+						if (!open) trigger.nextElementSibling?.querySelector('a')?.focus();
+					});
+					const menu = trigger.nextElementSibling;
+					if (!menu) return;
+					menu.addEventListener('keydown', (e) => {
+						const items = Array.from(menu.querySelectorAll('a'));
+						const idx = items.indexOf(document.activeElement);
+						if (e.key === 'ArrowDown') { e.preventDefault(); items[(idx + 1) % items.length]?.focus(); }
+						else if (e.key === 'ArrowUp') { e.preventDefault(); items[(idx - 1 + items.length) % items.length]?.focus(); }
+						else if (e.key === 'Escape') { trigger.setAttribute('aria-expanded', 'false'); trigger.focus(); }
+					});
+				});
+				document.addEventListener('click', (e) => { if (!e.target.closest('.home-nav')) closeAll(null); });
+				document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeAll(null); });
+			})();
+
+			// ── Tutorial viewer ──────────────────────────────────────────
+			function currentSlug() {
+				const m = location.pathname.match(/^\/tutorials\/([a-z0-9-]+)\/?$/);
+				return m ? m[1] : null;
+			}
+
+			function escapeHtml(s) {
+				return String(s).replace(/[&<>"']/g, (c) => ({
+					'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+				}[c]));
+			}
+
+			function renderMissing() {
+				document.title = 'Tutorial not found — three.ws';
+				const article = document.getElementById('tdoc-article');
+				article.innerHTML = `
+					<h2 style="display:block !important;border-top:none !important;padding-top:0 !important;margin-top:0 !important">Tutorial not found</h2>
+					<p>We couldn't find a tutorial at <code>${escapeHtml(location.pathname)}</code>.</p>
+					<p><a href="/tutorials">← Browse all tutorials</a></p>
+				`;
+			}
+
+			function setHeroFromManifest(entry) {
+				const tier = window.TUTORIAL_TIERS[entry.tier];
+				const root = document.documentElement;
+				root.style.setProperty('--tdoc-accent', tier.accent);
+				root.style.setProperty('--tdoc-accent-soft', tier.accentSoft);
+				root.style.setProperty('--tdoc-accent-border', tier.accentBorder);
+				root.style.setProperty('--tdoc-glow', tier.accentSoft);
+
+				document.getElementById('tdoc-tier-chip').textContent = tier.label;
+				document.getElementById('tdoc-time').textContent = entry.time;
+				document.getElementById('tdoc-title').textContent = entry.title;
+				document.getElementById('tdoc-blurb').textContent = entry.blurb;
+				document.getElementById('tdoc-builds').textContent = entry.builds;
+				document.title = `${entry.title} — three.ws tutorials`;
+				const desc = document.querySelector('meta[name="description"]');
+				if (desc) desc.setAttribute('content', entry.blurb);
+
+				const viewerHost = document.getElementById('tdoc-hero-viewer');
+				viewerHost.innerHTML = `
+					<model-viewer
+						src="${escapeHtml(entry.previewModel)}"
+						camera-controls
+						auto-rotate
+						auto-rotate-delay="1000"
+						rotation-per-second="18deg"
+						interaction-prompt="none"
+						shadow-intensity="0"
+						exposure="0.85"
+						environment-image="neutral"
+						camera-orbit="0deg 75deg 5m"
+						field-of-view="35deg"
+						loading="lazy"
+					></model-viewer>
+				`;
+
+				document.getElementById('tdoc-hero').hidden = false;
+			}
+
+			function slugifyHeading(text) {
+				return text.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+			}
+
+			function buildToc(article) {
+				const headings = article.querySelectorAll('h2, h3');
+				if (!headings.length) return;
+				const list = document.getElementById('tdoc-toc-list');
+				const seen = new Map();
+				headings.forEach((h) => {
+					let id = slugifyHeading(h.textContent);
+					if (seen.has(id)) {
+						const n = seen.get(id) + 1;
+						seen.set(id, n);
+						id = `${id}-${n}`;
+					} else {
+						seen.set(id, 1);
+					}
+					h.id = id;
+					const li = document.createElement('li');
+					const a = document.createElement('a');
+					a.href = `#${id}`;
+					a.textContent = h.textContent;
+					if (h.tagName === 'H3') a.classList.add('is-h3');
+					a.dataset.target = id;
+					li.appendChild(a);
+					list.appendChild(li);
+				});
+				document.getElementById('tdoc-toc').hidden = false;
+
+				// Scroll-spy
+				const links = list.querySelectorAll('a');
+				const linkByTarget = new Map(
+					Array.from(links).map((a) => [a.dataset.target, a]),
+				);
+				const observer = new IntersectionObserver(
+					(entries) => {
+						entries.forEach((entry) => {
+							if (entry.isIntersecting) {
+								links.forEach((a) => a.classList.remove('is-active'));
+								linkByTarget.get(entry.target.id)?.classList.add('is-active');
+							}
+						});
+					},
+					{ rootMargin: '-25% 0px -65% 0px', threshold: 0 },
+				);
+				headings.forEach((h) => observer.observe(h));
+			}
+
+			function appendPager(article, slug) {
+				const idx = window.tutorialIndex(slug);
+				if (idx === -1) return;
+				const prev = idx > 0 ? window.TUTORIALS[idx - 1] : null;
+				const next = idx < window.TUTORIALS.length - 1 ? window.TUTORIALS[idx + 1] : null;
+
+				const pager = document.createElement('div');
+				pager.className = 'tdoc-pager';
+				pager.innerHTML = `
+					${prev
+						? `<a href="/tutorials/${prev.slug}" class="tdoc-pager-btn prev"><span class="tdoc-pager-dir">← Previous</span><span class="tdoc-pager-title">${escapeHtml(prev.title)}</span></a>`
+						: '<div class="tdoc-pager-btn placeholder"></div>'}
+					${next
+						? `<a href="/tutorials/${next.slug}" class="tdoc-pager-btn next"><span class="tdoc-pager-dir">Next →</span><span class="tdoc-pager-title">${escapeHtml(next.title)}</span></a>`
+						: '<div class="tdoc-pager-btn placeholder"></div>'}
+				`;
+				article.appendChild(pager);
+			}
+
+			async function loadTutorial() {
+				const slug = currentSlug();
+				if (!slug) { renderMissing(); return; }
+				const entry = window.tutorialBySlug(slug);
+				if (!entry) { renderMissing(); return; }
+
+				setHeroFromManifest(entry);
+
+				const article = document.getElementById('tdoc-article');
+				try {
+					const res = await fetch(`/docs/tutorials/${slug}.md`);
+					if (!res.ok) throw new Error(`HTTP ${res.status}`);
+					const md = await res.text();
+
+					marked.setOptions({
+						highlight: (code, lang) => {
+							if (lang && hljs.getLanguage(lang)) {
+								return hljs.highlight(code, { language: lang }).value;
+							}
+							return hljs.highlightAuto(code).value;
+						},
+						gfm: true,
+						breaks: false,
+					});
+
+					article.innerHTML = marked.parse(md);
+					article.querySelectorAll('pre code').forEach((b) => hljs.highlightElement(b));
+
+					// Rewrite internal .md links and /docs/* refs so they navigate cleanly
+					article.querySelectorAll('a[href]').forEach((a) => {
+						const h = a.getAttribute('href');
+						if (!h || h.startsWith('http') || h.startsWith('#') || h.startsWith('mailto:')) return;
+						if (h.endsWith('.md')) {
+							const rel = h.replace(/^\/docs\//, '').replace(/\.md$/, '');
+							if (rel.startsWith('tutorials/')) {
+								a.href = '/' + rel;
+							} else {
+								a.href = '/docs/#' + rel;
+							}
+						}
+					});
+
+					buildToc(article);
+					appendPager(article, slug);
+				} catch (e) {
+					article.innerHTML = `
+						<h2 style="display:block !important;border-top:none !important;padding-top:0 !important;margin-top:0 !important">Couldn't load tutorial</h2>
+						<p>We had trouble fetching <code>/docs/tutorials/${escapeHtml(slug)}.md</code>.</p>
+						<p style="color:rgba(255,255,255,0.4);font-size:0.85rem;font-family:'JetBrains Mono',monospace">${escapeHtml(String(e))}</p>
+						<p><a href="/tutorials">← Browse all tutorials</a></p>
+					`;
+				}
+			}
+
+			// Wait for the manifest script (deferred) to expose TUTORIALS, then render.
+			if (window.TUTORIALS) {
+				loadTutorial();
+			} else {
+				window.addEventListener('DOMContentLoaded', loadTutorial);
+			}
+		</script>
+	</body>
+</html>

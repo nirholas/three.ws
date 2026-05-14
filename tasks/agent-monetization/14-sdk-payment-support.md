@@ -68,7 +68,7 @@ Callers provide their own signer implementation (Solana: use `@solana/web3.js` K
 ```ts
 import { AgentClient } from '@threews/sdk';
 
-const client = new AgentClient({ baseUrl: 'https://3d.irish' });
+const client = new AgentClient({ baseUrl: 'https://three.ws' });
 
 // Discover prices
 const prices = await client.getSkillPrices('agent-uuid');

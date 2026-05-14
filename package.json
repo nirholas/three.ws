@@ -129,6 +129,7 @@
 		"helius-sdk": "^2.2.2",
 		"jose": "^5.9.6",
 		"livekit-client": "^2.18.8",
+		"nipplejs": "^1.0.2",
 		"node-fetch": "^3.3.2",
 		"qrcode": "^1.5.4",
 		"query-string": "^8.1.0",
