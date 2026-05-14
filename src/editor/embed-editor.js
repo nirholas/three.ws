@@ -666,6 +666,36 @@ const STYLE = `
 		margin-right: 8px;
 	}
 	.preview-toggle:hover { background: #334155; }
+	.lock-toggle {
+		display: inline-flex;
+		align-items: center;
+		gap: 4px;
+		background: #1e293b;
+		color: #cbd5e1;
+		border: 1px solid #334155;
+		border-radius: 999px;
+		padding: 4px 10px 4px 8px;
+		font: 600 12px system-ui;
+		cursor: pointer;
+	}
+	.lock-toggle:hover { background: #334155; }
+	.lock-toggle[aria-pressed="true"] {
+		background: #b45309;
+		color: #fef3c7;
+		border-color: #d97706;
+	}
+	.lock-toggle .lock-icon { font-size: 13px; line-height: 1; }
+
+	/* Locked mode — disables drag/resize on the wrap and signals the state. */
+	.editor-root[data-locked="true"] .agent-wrap { cursor: not-allowed; }
+	.editor-root[data-locked="true"] .agent-wrap .resize-handle { display: none; }
+	.editor-root[data-locked="true"] .agent-wrap .size-readout {
+		background: #b45309;
+		color: #fef3c7;
+	}
+	.editor-root[data-locked="true"] .agent-wrap .size-readout::before {
+		content: '🔒 ';
+	}
 
 	/* Device viewport frame — shown when simulating tablet/mobile */
 	.device-frame {
@@ -766,6 +796,10 @@ export function mountEmbedEditor(root, options = {}) {
 				<div class="panel-header">
 					<h2>Embed editor</h2>
 					<div style="display:flex;align-items:center;gap:8px">
+						<button class="lock-toggle" id="lock-toggle" type="button" title="Lock the box and freeze avatar motion (L)" aria-pressed="false">
+							<span class="lock-icon" aria-hidden="true">🔓</span>
+							<span class="lock-label">Lock</span>
+						</button>
 						<button class="preview-toggle" id="preview-toggle" type="button">Preview</button>
 						<span style="font-size:11px;color:#6b7280">beta</span>
 					</div>
@@ -1148,7 +1182,7 @@ export function mountEmbedEditor(root, options = {}) {
 	// Drag
 	let dragState = null;
 	agentWrap.addEventListener('pointerdown', (e) => {
-		if (state.previewMode) return;
+		if (state.previewMode || state.locked) return;
 		if (e.target.closest('.resize-handle')) return;
 		const rect = stage.getBoundingClientRect();
 		const agentRect = agentWrap.getBoundingClientRect();
@@ -1165,6 +1199,7 @@ export function mountEmbedEditor(root, options = {}) {
 	// Resize handles
 	$$('.resize-handle').forEach((h) => {
 		h.addEventListener('pointerdown', (e) => {
+			if (state.locked) return;
 			e.stopPropagation();
 			const rect = stage.getBoundingClientRect();
 			const agentRect = agentWrap.getBoundingClientRect();
@@ -1326,6 +1361,35 @@ export function mountEmbedEditor(root, options = {}) {
 	previewToggle.title = 'Toggle preview (P)';
 	exitPreview.title = 'Exit preview (Esc)';
 
+	// ── Lock mode ──
+	// Freezes the wrap (drag + resize disabled, handles hidden via CSS) and the
+	// avatar itself: the Three.js animation mixer's timeScale is set to 0 so
+	// the idle loop stops mid-frame, and OrbitControls is disabled so the
+	// camera can't be rotated/panned/zoomed. Toggling off restores both.
+	const lockToggle = $('#lock-toggle');
+	function applyAvatarLock() {
+		const viewer = agentEl?._viewer;
+		if (!viewer) return;
+		if (viewer.mixer) viewer.mixer.timeScale = state.locked ? 0 : 1;
+		if (viewer.controls) viewer.controls.enabled = !state.locked;
+	}
+	function setLocked(on) {
+		state.locked = !!on;
+		editorRoot.setAttribute('data-locked', state.locked ? 'true' : 'false');
+		lockToggle.setAttribute('aria-pressed', state.locked ? 'true' : 'false');
+		lockToggle.querySelector('.lock-icon').textContent = state.locked ? '🔒' : '🔓';
+		lockToggle.querySelector('.lock-label').textContent = state.locked ? 'Locked' : 'Lock';
+		applyAvatarLock();
+		showToast(state.locked ? 'Locked — drag, resize, and avatar motion frozen' : 'Unlocked', {
+			kind: state.locked ? 'warn' : 'success',
+		});
+	}
+	lockToggle.addEventListener('click', () => setLocked(!state.locked));
+	// Re-apply on each agent boot so locking persists across avatar swaps —
+	// _viewer.mixer is rebuilt during setContent() so the timeScale would
+	// otherwise reset to 1.
+	agentEl.addEventListener('agent:ready', applyAvatarLock);
+
 	// Keyboard shortcuts — Esc exits preview, P toggles. Bound on document so
 	// they fire even when focus is on the stage. Suppressed while typing in any
 	// text field (the editor's inputs live in the shadow root; check both light
@@ -1350,6 +1414,12 @@ export function mountEmbedEditor(root, options = {}) {
 			if (isTextTarget(e)) return;
 			e.preventDefault();
 			setPreviewMode(!state.previewMode);
+			return;
+		}
+		if ((e.key === 'l' || e.key === 'L') && !e.metaKey && !e.ctrlKey && !e.altKey) {
+			if (isTextTarget(e)) return;
+			e.preventDefault();
+			setLocked(!state.locked);
 		}
 	};
 	document.addEventListener('keydown', onKey);
