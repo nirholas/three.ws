@@ -47,6 +47,8 @@ experiments/*/build
 # Reference repo clones (read-only)
 forks/*/
 .env.production
+.env.preview
+.env.development
 
 # Solana keypair files — NEVER commit
 *-vanity.json

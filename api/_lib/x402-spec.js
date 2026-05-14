@@ -31,6 +31,8 @@
 //   5. Server POSTs facilitator /settle (same body) → { success, transaction, network, payer }
 //      Server attaches a base64 settlement object as `X-PAYMENT-RESPONSE` on the success reply.
 
+import { createAuthHeader as createCdpAuthHeader } from '@coinbase/x402';
+
 import { env } from './env.js';
 
 export const X402_VERSION = 2;
@@ -97,9 +99,32 @@ function facilitatorFor(network) {
 		network === 'solana'
 	)
 		return { url: env.X402_FACILITATOR_URL_SOLANA, token: env.X402_FACILITATOR_TOKEN_SOLANA };
-	if (network === NETWORK_BASE_MAINNET || network === NETWORK_BASE_SEPOLIA || network === 'base')
+	if (network === NETWORK_BASE_MAINNET || network === NETWORK_BASE_SEPOLIA || network === 'base') {
+		// Route Base mainnet through Coinbase's CDP facilitator when credentials
+		// are configured — CDP Bazaar/agentic.market only catalogs endpoints
+		// whose first verify+settle is processed by CDP. Fall back to PayAI
+		// (or whatever X402_FACILITATOR_URL_BASE points at) otherwise.
+		if (env.CDP_API_KEY_ID && env.CDP_API_KEY_SECRET) {
+			return { url: env.X402_CDP_FACILITATOR_URL, cdp: true };
+		}
 		return { url: env.X402_FACILITATOR_URL_BASE, token: env.X402_FACILITATOR_TOKEN_BASE };
+	}
 	throw new X402Error('unsupported_network', `unsupported network: ${network}`, 400);
+}
+
+async function authHeaderFor(config, method, fullUrl) {
+	if (config.cdp) {
+		const u = new URL(fullUrl);
+		return createCdpAuthHeader(
+			env.CDP_API_KEY_ID,
+			env.CDP_API_KEY_SECRET,
+			method,
+			u.host,
+			u.pathname,
+		);
+	}
+	if (config.token) return `Bearer ${config.token}`;
+	return null;
 }
 
 function decodePaymentHeader(header) {
@@ -135,11 +160,12 @@ function hostOf(url) {
 }
 
 async function callFacilitator(network, path, body) {
-	const { url: base, token } = facilitatorFor(network);
-	const url = `${base}${path}`;
-	const host = hostOf(base);
+	const config = facilitatorFor(network);
+	const url = `${config.url}${path}`;
+	const host = hostOf(config.url);
 	const headers = { 'content-type': 'application/json', accept: 'application/json' };
-	if (token) headers.authorization = `Bearer ${token}`;
+	const auth = await authHeaderFor(config, 'POST', url);
+	if (auth) headers.authorization = auth;
 	let res;
 	try {
 		res = await fetch(url, {
@@ -206,7 +232,8 @@ export async function probeFacilitators() {
 				try {
 					const probeUrl = `${t.url}/supported`;
 					const headers = { accept: 'application/json' };
-					if (t.token) headers.authorization = `Bearer ${t.token}`;
+					const auth = await authHeaderFor(t, 'GET', probeUrl);
+					if (auth) headers.authorization = auth;
 					const res = await fetch(probeUrl, {
 						headers,
 						signal: AbortSignal.timeout(10_000),
