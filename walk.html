@@ -15,6 +15,15 @@
 		/>
 		<meta name="theme-color" content="#000000" />
 
+		<!--
+			Multiplayer server URL. Empty in dev — the page falls back to
+			ws://<host>:2567 so `npm run dev:walk-all` works out of the box.
+			In production, set this to the deployed Colyseus host once the
+			multiplayer/ workspace is live (see multiplayer/README.md):
+				<meta name="walk-server" content="wss://three-ws-multiplayer.fly.dev">
+		-->
+		<meta name="walk-server" content="" />
+
 		<link rel="shortcut icon" href="/favicon.ico" />
 		<link rel="stylesheet" href="/style.css" />
 		<link rel="stylesheet" href="/footer.css" />
@@ -247,6 +256,76 @@
 			@media (hover: hover) and (min-width: 641px) {
 				#walk-joystick { display: none; }
 			}
+
+			/* ── Multiplayer HUD ────────────────────────────────────────────── */
+			#walk-online {
+				appearance: none;
+				border: 1px solid var(--border);
+				background: var(--panel);
+				color: var(--text);
+				font: inherit;
+				font-size: 12px;
+				font-weight: 500;
+				padding: 6px 10px;
+				border-radius: 999px;
+				cursor: default;
+				backdrop-filter: blur(10px);
+				-webkit-backdrop-filter: blur(10px);
+				display: inline-flex;
+				align-items: center;
+				gap: 6px;
+				transition: background 0.12s ease;
+			}
+			#walk-online .dot {
+				width: 7px;
+				height: 7px;
+				border-radius: 50%;
+				background: var(--text-2);
+			}
+			#walk-online[data-status="online"] .dot {
+				background: #34d399;
+				box-shadow: 0 0 8px rgba(52, 211, 153, 0.7);
+			}
+			#walk-online[data-status="connecting"] .dot,
+			#walk-online[data-status="offline"] .dot {
+				background: #fde047;
+			}
+			#walk-online[data-status="failed"] {
+				cursor: pointer;
+				border-color: rgba(248, 113, 113, 0.5);
+			}
+			#walk-online[data-status="failed"] .dot {
+				background: var(--danger);
+			}
+			#walk-online .count {
+				color: var(--text-2);
+				font-variant-numeric: tabular-nums;
+				min-width: 1ch;
+				text-align: right;
+			}
+			#walk-online[data-status="online"] .count { color: var(--text); }
+
+			/* Floating name tag for remote players — positioned by walk.js
+			   from world-space → screen-space each frame. Pointer-events
+			   off so it never blocks the orbit drag. */
+			.walk-remote-label {
+				position: fixed;
+				top: 0; left: 0;
+				z-index: 3;
+				background: rgba(10, 10, 10, 0.72);
+				border: 1px solid var(--border);
+				border-radius: 999px;
+				padding: 3px 9px;
+				font-size: 11px;
+				font-weight: 500;
+				color: var(--text);
+				white-space: nowrap;
+				pointer-events: none;
+				transform: translate(-50%, -100%);
+				backdrop-filter: blur(6px);
+				-webkit-backdrop-filter: blur(6px);
+				will-change: transform;
+			}
 		</style>
 	</head>
 	<body>
@@ -260,6 +339,16 @@
 					<p>Drag to orbit. Joystick or <kbd>WASD</kbd> to move.</p>
 				</div>
 				<div class="walk-actions">
+					<button
+						type="button"
+						id="walk-online"
+						data-status="idle"
+						title="Multiplayer presence"
+					>
+						<span class="dot"></span>
+						<span data-label>solo</span>
+						<span class="count" id="walk-online-count">1</span>
+					</button>
 					<button
 						type="button"
 						class="walk-btn"

@@ -24,7 +24,8 @@
 	],
 	"workspaces": [
 		"agent-payments-sdk",
-		"character-studio"
+		"character-studio",
+		"multiplayer"
 	],
 	"main": "src/app.js",
 	"browserslist": [
@@ -42,6 +43,8 @@
 	"scripts": {
 		"postinstall": "npm run build --prefix agent-payments-sdk && node scripts/fix-pump-sdk-esm.mjs",
 		"dev": "vite --port 3000",
+		"dev:multi": "npm run dev --prefix multiplayer",
+		"dev:walk-all": "node scripts/dev-walk-all.mjs",
 		"dev:lib": "TARGET=lib vite",
 		"build:pages": "node scripts/build-page-index.mjs",
 		"prebuild": "node scripts/build-page-index.mjs",
@@ -122,6 +125,7 @@
 		"bcryptjs": "^2.4.3",
 		"bn.js": "^5.2.3",
 		"bs58": "^6.0.0",
+		"colyseus.js": "^0.16.22",
 		"dat.gui": "^0.7.9",
 		"ethers": "^6.16.0",
 		"express": "^4.22.1",

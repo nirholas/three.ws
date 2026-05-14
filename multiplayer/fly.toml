@@ -1,0 +1,40 @@
+# Fly.io deploy config for the three.ws multiplayer server.
+#
+# After `fly launch --no-deploy` reads this file once, run:
+#   fly secrets set ALLOWED_ORIGINS=https://three.ws,https://www.three.ws
+#   fly deploy
+#
+# To scale rooms across machines, bump `min_machines_running` and use
+# Fly's autoscaling. Each Colyseus room is single-process — sharding across
+# machines is handled by Colyseus's match-making + `@colyseus/redis-presence`
+# (add when you cross ~200 concurrent players).
+
+app = "three-ws-multiplayer"
+primary_region = "iad"
+
+[build]
+  dockerfile = "Dockerfile"
+
+[env]
+  PORT = "2567"
+  NODE_ENV = "production"
+
+[http_service]
+  internal_port = 2567
+  force_https = true
+  auto_stop_machines = false
+  auto_start_machines = true
+  min_machines_running = 1
+  processes = ["app"]
+
+  [[http_service.checks]]
+    grace_period = "10s"
+    interval = "30s"
+    method = "GET"
+    timeout = "5s"
+    path = "/health"
+
+[[vm]]
+  cpu_kind = "shared"
+  cpus = 1
+  memory_mb = 256
