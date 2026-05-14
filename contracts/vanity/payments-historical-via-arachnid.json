@@ -1,0 +1,72 @@
+{
+  "_comment": "ThreeWSPayments grinds via Arachnid CREATE2 proxy — pre-ThreeWSFactory era. None of these were ultimately used for the live deploy (which used ThreeWSFactory + initCodeHash 0xb55479df…). Kept for reproducibility and audit trail.",
+  "deployer": "0x4e59b44847b379578588920ca78fbf26c0b4956c",
+  "builds": [
+    {
+      "initCodeHash": "0x1673dbac3b8a45874c756bda6a1b378ef58076dc7c1d5ab8e901b767118cb68c",
+      "_note": "Earliest build (different constructor args or pre-tweak source). Three grinds, all unused.",
+      "grinds": [
+        {
+          "address": "0x0000000d88ce24fbf1574dcf26cac4ac57ad0e5c",
+          "addressChecksum": "0x0000000D88Ce24FBF1574DCF26CAC4AC57ad0E5C",
+          "salt": "0xca00008e09406a62fdad67ddcb6121ce8f25d3c0e7508e61376ce874b0bfed32",
+          "pattern": { "prefix": "000000", "leadingZeros": 7 },
+          "attempts": 8682292,
+          "durationMs": 9922.8,
+          "generatedAt": "2026-05-10T08:29:25.747Z"
+        },
+        {
+          "address": "0x000000e4c21d6df4c544fe68faa2ed8efa77efdd",
+          "addressChecksum": "0x000000E4C21D6Df4c544Fe68fAA2Ed8efA77efDD",
+          "salt": "0x0d91ded90e38659692af734593f494f8319361fde43c47bb20032f66b3af9238",
+          "pattern": { "prefix": "000000", "leadingZeros": 6 },
+          "attempts": 6159280,
+          "durationMs": 7033.2,
+          "generatedAt": "2026-05-10T08:42:29.335Z"
+        },
+        {
+          "address": "0x000000ff25f79480b406286371ce4652e0158da0",
+          "addressChecksum": "0x000000Ff25f79480B406286371ce4652e0158Da0",
+          "salt": "0xd696435fadda2da23793724a1b4bb82f63f65a0b6cd3296addb81389032c66e0",
+          "pattern": { "prefix": "000000", "leadingZeros": 6 },
+          "attempts": 20060543,
+          "durationMs": 22274.8,
+          "generatedAt": "2026-05-10T09:11:16.527Z"
+        }
+      ]
+    },
+    {
+      "initCodeHash": "0xc1c88d7de8184b5996b36c00a98e1fb3775735742fc3beabcb0663705fbc733b",
+      "_note": "Second build — corresponds to the original payments deployment at 0x4022de33fd9b8691832b8bae51f6785c69cb9b97. The four grinds below were not used for that deploy (which used a different salt).",
+      "grinds": [
+        {
+          "address": "0x00000017f600dfeb2632ae34d2a54841c9131f34",
+          "addressChecksum": "0x00000017F600dfEB2632aE34d2a54841C9131F34",
+          "salt": "0xee6fa935c469d8247401718ee18a54a050403f879dc2f6aa7595752f0847be91",
+          "pattern": { "prefix": "000000", "leadingZeros": 6 },
+          "attempts": 9423530,
+          "durationMs": 10756.9,
+          "generatedAt": "2026-05-10T10:44:19.435Z"
+        },
+        {
+          "address": "0x00000065f6655ce1aa728a881d5230ad019affab",
+          "addressChecksum": "0x00000065f6655ce1aa728A881d5230Ad019afFab",
+          "salt": "0xe142b6b643e3557900092b952b799870079c2f16be66a15fee160080ed12e6e3",
+          "pattern": { "prefix": "000000", "leadingZeros": 6 },
+          "attempts": 12050860,
+          "durationMs": 13590.1,
+          "generatedAt": "2026-05-10T10:52:37.115Z"
+        },
+        {
+          "address": "0x00000007136e9bd7ee352826245ec410a5b95a08",
+          "addressChecksum": "0x00000007136E9bD7eE352826245EC410a5b95A08",
+          "salt": "0x05bf37bfa1f9c8e789eae7855313582c7fe6cd75ff4b216862b719b0992acdcd",
+          "pattern": { "prefix": "000000", "leadingZeros": 7 },
+          "attempts": 6942243,
+          "durationMs": 7865.1,
+          "generatedAt": "2026-05-10T11:05:25.381Z"
+        }
+      ]
+    }
+  ]
+}

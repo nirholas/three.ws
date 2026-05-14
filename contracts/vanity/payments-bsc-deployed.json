@@ -1,0 +1,18 @@
+{
+  "_comment": "ThreeWSPayments — deployed via ThreeWSFactory on BSC. Constructor takes BSC USDC + owner.",
+  "address": "0x00000000381f09742a30a5a49975514aec1b72cc",
+  "addressChecksum": "0x00000000381f09742a30a5a49975514AeC1B72Cc",
+  "salt": "0x5ef7540f7c609d04ab6d3997bc8c38f0f31ce09acccff2c11bcb3909ad542cde",
+  "deployer": "0x00000000d49195ae81759cd247cfedd9d0b479df",
+  "initCodeHash": "0xb55479df540c0e4efae39a0181051754cc236a9934f03805a743f4290178569e",
+  "pattern": { "prefix": "00000000", "suffix": null, "caseSensitive": false },
+  "attempts": 2859887864,
+  "durationMs": 22309.5,
+  "generatedAt": "2026-05-10T13:58:54.285Z",
+  "status": "deployed",
+  "chains": {
+    "bsc": "0x00000000381f09742a30a5a49975514AeC1B72Cc",
+    "arbitrum": "0xed3696489490dbfAFD82996ADB11165A56c33c49",
+    "base": "0x31B13cDe47431EfcC8616C8495204e6E6C2Ded34 (tx success but bytecode missing — treat as not deployed)"
+  }
+}

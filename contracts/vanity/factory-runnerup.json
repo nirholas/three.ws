@@ -1,0 +1,13 @@
+{
+  "_comment": "ThreeWSFactory runner-up grind — 7 zeros, not used. Kept for reproducibility.",
+  "address": "0x00000007de88d96878469099532defbfd63a3bf8",
+  "addressChecksum": "0x00000007dE88D96878469099532DEFBFd63A3bF8",
+  "salt": "0x4b178b0c83d02b4be78c12c3fe4479bacbe545551dc9639ed6f74c2849d245d8",
+  "deployer": "0x4e59b44847b379578588920ca78fbf26c0b4956c",
+  "initCodeHash": "0x30f9d9020bf9622bbe7f8a1625d447efe350dfafd0a91e6dbd62d56547db835f",
+  "pattern": { "prefix": "0000000", "suffix": null, "caseSensitive": false },
+  "attempts": 190953420,
+  "durationMs": 216550.1,
+  "generatedAt": "2026-05-10T11:29:41.772Z",
+  "status": "unused"
+}

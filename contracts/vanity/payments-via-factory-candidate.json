@@ -1,0 +1,13 @@
+{
+  "_comment": "ThreeWSPayments candidate grind via ThreeWSFactory — not yet deployed. Different initCodeHash from the live BSC deploy (0xb55479df…), so this would land at a new address.",
+  "address": "0x0000000cd5c1d1f395042b2edf94cdf7e2977c0f",
+  "addressChecksum": "0x0000000CD5C1D1F395042B2eDF94cdF7E2977C0f",
+  "salt": "0xe1f421f86d6483f9b83078fa1dccb8b2d24cf1eac69d267ca4d58bc9f7f39aab",
+  "deployer": "0x00000000d49195ae81759cd247cfedd9d0b479df",
+  "initCodeHash": "0xad5ab62542aa68002b1d2e74d2f4ed2496b6614c43a2ce92c2be94c502286320",
+  "pattern": { "prefix": "0000000", "suffix": null, "caseSensitive": false },
+  "attempts": 209892350,
+  "durationMs": 240826.4,
+  "generatedAt": "2026-05-10T12:02:37.691Z",
+  "status": "candidate-not-deployed"
+}

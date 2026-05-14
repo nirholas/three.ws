@@ -1,0 +1,13 @@
+{
+  "_comment": "ThreeWSFactory — deployed via Arachnid CREATE2 proxy. Active on BSC/Base/Arbitrum.",
+  "address": "0x00000000d49195ae81759cd247cfedd9d0b479df",
+  "addressChecksum": "0x00000000D49195AE81759cd247cFeDD9D0B479df",
+  "salt": "0xfc1ecd1953bb17cf798c1eaeed287873008f3a3038f438e9e74c3b33ce370ef5",
+  "deployer": "0x4e59b44847b379578588920ca78fbf26c0b4956c",
+  "initCodeHash": "0x30f9d9020bf9622bbe7f8a1625d447efe350dfafd0a91e6dbd62d56547db835f",
+  "pattern": { "prefix": "0000000", "suffix": null, "caseSensitive": false },
+  "attempts": 96448706,
+  "durationMs": 101131.4,
+  "generatedAt": "2026-05-10T11:40:46.509Z",
+  "status": "deployed"
+}
