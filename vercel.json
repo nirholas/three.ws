@@ -189,6 +189,10 @@
 			"dest": "/avatar-artifact.html"
 		},
 		{
+			"src": "/walk/?",
+			"dest": "/walk.html"
+		},
+		{
 			"src": "/pretext-demo/?",
 			"dest": "/pretext-demo.html"
 		},
@@ -939,6 +943,22 @@
 		{
 			"src": "/docs/(.*)",
 			"dest": "/docs/$1"
+		},
+		{
+			"src": "/tutorials",
+			"dest": "/tutorials.html"
+		},
+		{
+			"src": "/tutorials/",
+			"dest": "/tutorials.html"
+		},
+		{
+			"src": "/tutorials/([a-z0-9-]+)",
+			"dest": "/tutorial.html"
+		},
+		{
+			"src": "/tutorials/([a-z0-9-]+)/",
+			"dest": "/tutorial.html"
 		},
 		{
 			"src": "/artifact",

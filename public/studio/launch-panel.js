@@ -121,6 +121,35 @@ const LP_CSS = `
 .lp-empty a{color:rgba(164,240,188,.7);text-decoration:none}
 .lp-empty a:hover{color:#a4f0bc}
 
+/* Guided onboarding (empty / pre-avatar state) */
+.lp-guide{display:flex;flex-direction:column;gap:.95rem}
+.lp-guide-h{font-size:1rem;font-weight:600;color:rgba(255,255,255,.92);margin:0;letter-spacing:-.01em}
+.lp-guide-sub{font-size:.78rem;color:rgba(255,255,255,.5);line-height:1.55;margin:0}
+.lp-guide-steps{display:flex;flex-direction:column;gap:.55rem;margin:.1rem 0}
+.lp-guide-step{display:flex;gap:.65rem;align-items:flex-start;padding:.55rem .7rem;
+  background:rgba(255,255,255,.025);border:1px solid rgba(255,255,255,.06);border-radius:9px}
+.lp-guide-num{flex-shrink:0;width:22px;height:22px;border-radius:50%;
+  background:rgba(164,240,188,.12);border:1px solid rgba(164,240,188,.3);
+  color:#a4f0bc;font-size:.72rem;font-weight:600;display:flex;align-items:center;justify-content:center;line-height:1}
+.lp-guide-step-body{font-size:.78rem;color:rgba(255,255,255,.7);line-height:1.5}
+.lp-guide-step-body b{color:rgba(255,255,255,.92);font-weight:600}
+.lp-guide-types{display:grid;grid-template-columns:1fr 1fr;gap:.45rem;font-size:.72rem;line-height:1.45}
+.lp-guide-type{padding:.45rem .55rem;background:rgba(255,255,255,.025);
+  border:1px solid rgba(255,255,255,.06);border-radius:7px;color:rgba(255,255,255,.55)}
+.lp-guide-type b{display:block;color:rgba(255,255,255,.85);font-size:.76rem;font-weight:600;margin-bottom:.15rem}
+.lp-guide-tip{display:flex;gap:.5rem;font-size:.72rem;color:rgba(255,255,255,.5);
+  line-height:1.55;padding:.55rem .65rem;background:rgba(164,240,188,.04);
+  border:1px solid rgba(164,240,188,.14);border-radius:8px}
+.lp-guide-tip-ic{flex-shrink:0;color:rgba(164,240,188,.7)}
+.lp-guide-cta{margin-top:.2rem;padding:.65rem .8rem;border-radius:9px;text-align:center;
+  font-size:.85rem;color:rgba(164,240,188,.85);background:rgba(164,240,188,.07);
+  border:1px solid rgba(164,240,188,.22);text-decoration:none;font-weight:500}
+.lp-guide-cta:hover{background:rgba(164,240,188,.12);color:#c8f0d8}
+.lp-guide-links{display:flex;gap:.5rem;font-size:.72rem;flex-wrap:wrap}
+.lp-guide-links a{color:rgba(255,255,255,.45);text-decoration:none;padding:.3rem .55rem;
+  background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.06);border-radius:6px}
+.lp-guide-links a:hover{color:rgba(255,255,255,.85);background:rgba(255,255,255,.06)}
+
 /* Existing-token card */
 .lp-existing{display:flex;flex-direction:column;gap:.75rem}
 .lp-ex-head{display:flex;align-items:center;gap:.55rem;font-size:.72rem;color:#a4f0bc;font-weight:500;letter-spacing:.03em}
@@ -1107,9 +1136,49 @@ export function mountLaunchPanel(container, { getAvatar, getUser, getPreviewView
 	}
 
 	function renderEmpty() {
+		const baseCost = PUMP_BASE_COST.toFixed(3);
 		container.innerHTML = `<div class="lp">
-			<div class="lp-empty">Pick an avatar on the left to launch a token. Use one of your own, or browse public avatars from the community.<br><br>
-				<a href="/dashboard/avatars" target="_blank" rel="noopener">Upload an avatar →</a>
+			<div class="lp-guide">
+				<p class="lp-guide-h">Launch a token for your avatar</p>
+				<p class="lp-guide-sub">This mints a <b style="color:rgba(255,255,255,.78);font-weight:500">memecoin on pump.fun</b> tied to the avatar you pick. Other people can buy your coin; if you pick an <em>Agent</em> coin, revenue from your agent's paid endpoints buys back and burns the token on-chain.</p>
+
+				<div class="lp-guide-steps">
+					<div class="lp-guide-step">
+						<div class="lp-guide-num">1</div>
+						<div class="lp-guide-step-body"><b>Pick an avatar</b> on the left — your own from the avatar dashboard, or any public one from the community gallery.</div>
+					</div>
+					<div class="lp-guide-step">
+						<div class="lp-guide-num">2</div>
+						<div class="lp-guide-step-body"><b>Set token details</b> — name, symbol (e.g. $CZ), description, and a thumbnail. We pre-fill these from the avatar.</div>
+					</div>
+					<div class="lp-guide-step">
+						<div class="lp-guide-num">3</div>
+						<div class="lp-guide-step-body"><b>Choose a coin type</b> and pay the launch cost from a connected wallet (Phantom / Backpack) or your custodial agent wallet.</div>
+					</div>
+					<div class="lp-guide-step">
+						<div class="lp-guide-num">4</div>
+						<div class="lp-guide-step-body"><b>Sign &amp; launch</b> — the token goes live on pump.fun and is permanently linked to your avatar.</div>
+					</div>
+				</div>
+
+				<div class="lp-guide-types">
+					<div class="lp-guide-type" title="Standard pump.fun memecoin. Initial buy seeds the bonding curve. No agent integration."><b>🪙 Regular</b>Plain pump.fun launch, no agent buyback.</div>
+					<div class="lp-guide-type" title="Pump.fun high-volatility mode — no agent buyback or payments. Pure speculation."><b>🔥 Mayhem</b>High-volatility mode on pump.fun.</div>
+					<div class="lp-guide-type" title="Agent revenue (SOL from paid endpoints) buys back and burns the token automatically."><b>🤖 Agent</b>SOL revenue auto-buyback &amp; burn.</div>
+					<div class="lp-guide-type" title="USDC-denominated agent payments via agent-payments-sdk. Coming soon."><b>💵 USDC</b>Stablecoin-denominated. Coming soon.</div>
+				</div>
+
+				<div class="lp-guide-tip">
+					<span class="lp-guide-tip-ic">ⓘ</span>
+					<span><b style="color:rgba(255,255,255,.78);font-weight:500">Cost:</b> ~${baseCost} SOL covers the mint &amp; pump.fun fee. Anything you add as an <em>initial buy</em> seeds the bonding curve and credits coins to your wallet. No on-chain action happens until you click <b style="color:rgba(255,255,255,.78);font-weight:500">Launch</b> and sign.</span>
+				</div>
+
+				<a class="lp-guide-cta" href="/dashboard/avatars" target="_blank" rel="noopener">Pick or upload an avatar to begin →</a>
+
+				<div class="lp-guide-links">
+					<a href="/gallery" target="_blank" rel="noopener">Browse community gallery</a>
+					<a href="https://pump.fun" target="_blank" rel="noopener" title="Pump.fun is the launchpad we use to mint and trade tokens">What is pump.fun?</a>
+				</div>
 			</div></div>`;
 	}
 
@@ -1386,75 +1455,92 @@ export function mountLaunchPanel(container, { getAvatar, getUser, getPreviewView
 
 		const signedIn = !!(getUser?.());
 
-		let btnText, btnDis;
+		let btnText, btnDis, btnAction = 'launch', btnTitle = '';
 		if (busy) {
 			btnText = s.phaseLabel || 'Working…'; btnDis = true;
 		} else if (ct === 'usdc') {
 			btnText = 'USDC coin — coming soon'; btnDis = true;
+			btnTitle = 'USDC-denominated agent coins are launching soon. Pick Regular, Mayhem, or Agent for now.';
 		} else if (!signedIn) {
-			btnText = 'Sign in to launch'; btnDis = false;
+			btnText = 'Sign in to launch'; btnDis = false; btnAction = 'sign-in';
+			btnTitle = 'You need an account to launch — click to sign in, then come right back.';
 		} else if (!formValid()) {
-			btnText = 'Fill in name, symbol &amp; description'; btnDis = true;
+			btnText = 'Add name, symbol &amp; description to launch'; btnDis = false; btnAction = 'focus-form';
+			btnTitle = 'Click to jump to the first missing field. You need a name, ticker symbol, and short description.';
 		} else if (s.walletSource === 'agent') {
 			if (s.agentWalletLoading)         { btnText = 'Preparing agent wallet…'; btnDis = true; }
-			else if (!s.agentWallet)          { btnText = 'Provision agent wallet'; btnDis = true; }
-			else if ((s.agentWallet.sol ?? 0) < cost) { btnText = `Fund agent wallet (~${cost.toFixed(3)} SOL)`; btnDis = true; }
-			else                              { btnText = `Launch $${esc(s.symbol.trim() || 'TOKEN')} from agent wallet`; btnDis = false; }
+			else if (!s.agentWallet)          { btnText = 'Retry agent wallet'; btnDis = false; btnAction = 'agent-retry';
+				btnTitle = 'Click to retry provisioning your custodial agent wallet.'; }
+			else if ((s.agentWallet.sol ?? 0) < cost) {
+				btnText = `Fund agent wallet (~${cost.toFixed(3)} SOL needed)`; btnDis = false; btnAction = 'agent-fund';
+				btnTitle = `Your agent wallet needs ~${cost.toFixed(3)} SOL to cover mint fees and your initial buy. Click to see the deposit address & QR code.`;
+			}
+			else                              { btnText = `Launch $${esc(s.symbol.trim() || 'TOKEN')} from agent wallet`; btnDis = false;
+				btnTitle = 'Signs and submits the transaction from your custodial agent wallet.'; }
 		} else {
-			if (!s.walletAddr)                 { btnText = 'Connect wallet to launch'; btnDis = true; }
+			if (!s.walletAddr)                 { btnText = 'Connect wallet to launch'; btnDis = false; btnAction = 'connect';
+				btnTitle = 'Opens Phantom or Backpack to connect your Solana wallet. No funds move until you sign the launch.'; }
 			else if (s.walletLinkChecking)     { btnText = 'Checking wallet link…';     btnDis = true; }
-			else if (s.walletLinked === false) { btnText = 'Link wallet to launch';     btnDis = true; }
-			else                               { btnText = `Launch $${esc(s.symbol.trim() || 'TOKEN')}`; btnDis = false; }
+			else if (s.walletLinked === false) { btnText = 'Link wallet to launch';     btnDis = false; btnAction = 'link';
+				btnTitle = 'Signs a free message proving you own this wallet. Required so tokens get attributed to your account.'; }
+			else                               { btnText = `Launch $${esc(s.symbol.trim() || 'TOKEN')}`; btnDis = false;
+				btnTitle = 'Signs and submits the launch transaction from your connected wallet.'; }
 		}
 
 		const imgSrc = s.imagePreviewUrl || av?.thumbnail_url;
 
 		container.innerHTML = `<div class="lp">
 			<div class="lp-card">
-				<div class="lp-img-zone" id="lp-zone">
+				<div class="lp-img-zone" id="lp-zone" title="Drop a PNG/JPG/GIF here, or click to pick a file. This becomes the token's avatar on pump.fun.">
 					${imgSrc ? `<img src="${esc(imgSrc)}" alt="" />` : `<div class="lp-img-ph">Drop image<br>or click</div>`}
 					<input type="file" class="lp-img-file" id="lp-img" accept="image/*" ${dis} />
 				</div>
 				<div class="lp-card-fields">
 					<input class="lp-iname" id="lp-name" type="text" maxlength="32"
-						placeholder="Token name" value="${esc(s.name)}" ${dis} />
+						placeholder="Token name" value="${esc(s.name)}" ${dis}
+						title="Shown on pump.fun. Up to 32 chars." />
 					<input class="lp-isymbol" id="lp-sym" type="text" maxlength="10"
-						placeholder="SYMBOL" value="${esc(s.symbol)}" ${dis} />
+						placeholder="SYMBOL" value="${esc(s.symbol)}" ${dis}
+						title="Ticker symbol (the $ in $CZ). Letters and numbers only, up to 10 chars." />
 					<div class="lp-img-hint">Click image to replace · drag &amp; drop</div>
-					${getPreviewViewer ? `<button type="button" class="lp-cap-btn" id="lp-capture" ${dis}>📸 Use 3D view</button>` : ''}
+					${getPreviewViewer ? `<button type="button" class="lp-cap-btn" id="lp-capture" ${dis} title="Snapshot the current 3D preview and use it as the token image.">📸 Use 3D view</button>` : ''}
 				</div>
 			</div>
 			<div>
 				<label for="lp-desc">Description</label>
 				<textarea id="lp-desc" rows="3" maxlength="500"
-					placeholder="What does this agent do?" ${dis}>${esc(s.description)}</textarea>
+					placeholder="What does this agent do?" ${dis}
+					title="Short pitch (up to 500 chars). Shown on pump.fun and on your agent page.">${esc(s.description)}</textarea>
 			</div>
 			${coinTypeHtml}
 			${coinNoteHtml}
 			${showBuyback ? `<div class="lp-2col">
 				<div>
-					<label for="lp-buy">Initial buy (SOL)</label>
+					<label for="lp-buy" title="Optional SOL spent on the bonding curve at launch. You receive the resulting coins. Leave at 0 for a launch-only mint.">Initial buy (SOL)</label>
 					<input class="lp-number" id="lp-buy" type="number" min="0" max="50" step="0.001"
-						value="${esc(s.initialBuy)}" ${dis} />
+						value="${esc(s.initialBuy)}" ${dis}
+						title="Optional SOL spent on the bonding curve at launch. You receive the resulting coins. Leave at 0 for a launch-only mint." />
 				</div>
 				<div>
 					<div class="lp-slider-head">
-						<label>Buyback share</label>
+						<label title="Share of your agent's paid-endpoint revenue (in SOL) that automatically buys back and burns this token on-chain.">Buyback share</label>
 						<span class="lp-bps-val" id="lp-bps-val">${(s.buybackBps / 100).toFixed(1)}%</span>
 					</div>
 					<input type="range" class="lp-slider" id="lp-bps"
-						min="0" max="5000" step="50" value="${s.buybackBps}" ${dis} />
+						min="0" max="5000" step="50" value="${s.buybackBps}" ${dis}
+						title="Share of agent revenue (in SOL) that buys back and burns this token on-chain. 0% means no buyback, 50% is the max." />
 					<div class="lp-slider-hint">Of agent revenue burned back</div>
 				</div>
 			</div>` : `<div>
-				<label for="lp-buy">Initial buy (SOL)</label>
+				<label for="lp-buy" title="Optional SOL spent on the bonding curve at launch. You receive the resulting coins. Leave at 0 for a launch-only mint.">Initial buy (SOL)</label>
 				<input class="lp-number" id="lp-buy" type="number" min="0" max="50" step="0.001"
-					value="${esc(s.initialBuy)}" ${dis} />
+					value="${esc(s.initialBuy)}" ${dis}
+					title="Optional SOL spent on the bonding curve at launch. You receive the resulting coins. Leave at 0 for a launch-only mint." />
 			</div>`}
 			${sourceToggleHtml}
 			${walletHtml}
-			${s.phase === 'error' ? `<div class="lp-err">${esc(s.errorMsg)}<div class="lp-err-sub">Fix the issue above and try again.</div></div>` : ''}
-			<button class="lp-launch${busy ? ' busy' : ''}" id="lp-go" ${btnDis ? 'disabled' : ''}>${btnText}</button>
+			${s.phase === 'error' ? `<div class="lp-err">${esc(s.errorMsg)}<div class="lp-err-sub">Adjust the details above and try again — nothing has been minted yet.</div></div>` : ''}
+			<button class="lp-launch${busy ? ' busy' : ''}" id="lp-go" data-action="${btnAction}"${btnTitle ? ` title="${esc(btnTitle)}"` : ''} ${btnDis ? 'disabled' : ''}>${btnText}</button>
 			${busy ? `<div class="lp-phase">${esc(s.phaseLabel)}</div>` : ''}
 		</div>`;
 
@@ -1567,12 +1653,29 @@ export function mountLaunchPanel(container, { getAvatar, getUser, getPreviewView
 		q('#lp-agent-deposit')?.addEventListener('click', openAgentDepositModal);
 		q('#lp-agent-addr-copy')?.addEventListener('click', (e) => copyAgentAddress(e.currentTarget));
 
-		q('#lp-go')?.addEventListener('click', () => {
-			if (!getUser?.()) {
-				location.href = `/login?next=${encodeURIComponent(location.pathname + location.search)}`;
-				return;
+		q('#lp-go')?.addEventListener('click', (e) => {
+			const action = e.currentTarget?.dataset?.action || 'launch';
+			switch (action) {
+				case 'sign-in':
+					location.href = `/login?next=${encodeURIComponent(location.pathname + location.search)}`;
+					return;
+				case 'focus-form': {
+					const target = !s.name.trim()        ? '#lp-name'
+					            :  !s.symbol.trim()      ? '#lp-sym'
+					            :  !s.description.trim() ? '#lp-desc'
+					            :  null;
+					const el = target && container.querySelector(target);
+					if (el) { el.focus(); el.scrollIntoView({ behavior: 'smooth', block: 'center' }); }
+					return;
+				}
+				case 'connect':     connectWallet(); return;
+				case 'link':        linkConnectedWallet(false); return;
+				case 'agent-fund':  openAgentDepositModal(); return;
+				case 'agent-retry': loadAgentWallet(); return;
+				case 'launch':
+				default:
+					launch();
 			}
-			launch();
 		});
 	}
 

@@ -8,7 +8,7 @@ Neon (Postgres) · Cloudflare R2 (storage) · Upstash Redis (rate limits).
 - A Vercel project linked to this repo.
 - A Neon project (free tier works for early traffic).
 - A Cloudflare R2 bucket (`3d-agent-avatars` or your own) with a public custom
-  domain (e.g. `cdn.3d.irish`) for zero-egress public delivery.
+  domain (e.g. `cdn.three.ws`) for zero-egress public delivery.
 - (Optional but recommended) An Upstash Redis database for distributed rate
   limiting. Without it, rate limits fall back to in-memory per-instance.
 

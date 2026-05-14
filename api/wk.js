@@ -180,6 +180,44 @@ const RAW_AMOUNT_TO_USDC = (raw) => {
 	return `$${trimmed}`;
 };
 
+// Build the per-endpoint `accepts` block for a given USDC atomics price.
+// Each new /api/x402/* endpoint has its own price set in its handler via
+// paidEndpoint(priceAtomics); the discovery doc has to mirror that or
+// agentic.market shows the wrong price to potential buyers.
+function acceptsForPrice(amountAtomics) {
+	const out = [];
+	const price = RAW_AMOUNT_TO_USDC(amountAtomics);
+	if (env.X402_PAY_TO_BASE) {
+		out.push({
+			scheme: 'exact',
+			network: NETWORK_BASE_MAINNET,
+			network_label: 'base-mainnet',
+			amount: String(amountAtomics),
+			price,
+			payTo: env.X402_PAY_TO_BASE,
+			asset: env.X402_ASSET_ADDRESS_BASE,
+			asset_symbol: 'USDC',
+			maxTimeoutSeconds: 60,
+			extra: { name: 'USD Coin', version: '2', decimals: 6 },
+		});
+	}
+	if (env.X402_PAY_TO_SOLANA) {
+		out.push({
+			scheme: 'exact',
+			network: NETWORK_SOLANA_MAINNET,
+			network_label: 'solana-mainnet',
+			amount: String(amountAtomics),
+			price,
+			payTo: env.X402_PAY_TO_SOLANA,
+			asset: env.X402_ASSET_MINT_SOLANA,
+			asset_symbol: 'USDC',
+			maxTimeoutSeconds: 60,
+			extra: { name: 'USDC', decimals: 6, feePayer: env.X402_FEE_PAYER_SOLANA },
+		});
+	}
+	return out;
+}
+
 function handleX402Discovery(req, res) {
 	const origin = env.APP_ORIGIN;
 	const mcpUrl = `${origin}/api/mcp`;
@@ -388,6 +426,157 @@ function handleX402Discovery(req, res) {
 						docs: `${origin}/docs/mcp`,
 						agent_card: `${origin}/.well-known/agent-card.json`,
 						payment_config: `${origin}/.well-known/x402`,
+					},
+				},
+				{
+					path: '/api/x402/agent-reputation',
+					url: `${origin}/api/x402/agent-reputation`,
+					method: 'GET',
+					description:
+						'Agent Reputation — return a reputation snapshot for a three.ws agent (USDC paid in to its pump-agent tokens, distinct payers, deployed mints, distribution success rate, Solana attestation counts). Built from three.ws\'s proprietary index of pump_agent_payments, pump_distribute_runs, and solana_attestations.',
+					mimeType: 'application/json',
+					accepts: acceptsForPrice('10000'),
+					extensions: {
+						bazaar: {
+							method: 'GET',
+							discoverable: true,
+							input: { agent_id: '7b9a4f30-2d11-4e2d-9d12-1cdb1f6a3a55' },
+							inputSchema: {
+								type: 'object',
+								required: ['agent_id'],
+								properties: { agent_id: { type: 'string', format: 'uuid' } },
+							},
+						},
+					},
+				},
+				{
+					path: '/api/x402/onchain-identity-verify',
+					url: `${origin}/api/x402/onchain-identity-verify`,
+					method: 'GET',
+					description:
+						'On-Chain Identity Verifier — given a three.ws agent_id + CAIP-2 chain + contract/mint, verify ownership from the canonical meta.onchain index and return tx_hash/wallet/deploy time evidence when verified. Trust primitive before paying counterparty agents.',
+					mimeType: 'application/json',
+					accepts: acceptsForPrice('5000'),
+					extensions: {
+						bazaar: {
+							method: 'GET',
+							discoverable: true,
+							input: {
+								agent_id: '7b9a4f30-2d11-4e2d-9d12-1cdb1f6a3a55',
+								chain: 'solana:5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp',
+								contract_or_mint: 'C3vQABCDEFGHJKLMNopqrstuvwxyZ12345abcdefghi',
+							},
+							inputSchema: {
+								type: 'object',
+								required: ['agent_id', 'chain', 'contract_or_mint'],
+								properties: {
+									agent_id: { type: 'string', format: 'uuid' },
+									chain: { type: 'string', description: 'CAIP-2 chain ID' },
+									contract_or_mint: { type: 'string' },
+								},
+							},
+						},
+					},
+				},
+				{
+					path: '/api/x402/pump-agent-audit',
+					url: `${origin}/api/x402/pump-agent-audit`,
+					method: 'GET',
+					description:
+						'Pump-Agent Audit — full operational audit of a pump.fun agent-payments token: total USDC in, unique payers, distribute/buyback success history, latest error reasons, and risk flags (never_distributed, high_distribute_failure_rate, no_buybacks_run). Backed by three.ws\'s indexed pump_distribute_runs and pump_buyback_runs tables.',
+					mimeType: 'application/json',
+					accepts: acceptsForPrice('20000'),
+					extensions: {
+						bazaar: {
+							method: 'GET',
+							discoverable: true,
+							input: { mint: 'C3vQABCDEFGHJKLMNopqrstuvwxyZ12345abcdefghi' },
+							inputSchema: {
+								type: 'object',
+								required: ['mint'],
+								properties: { mint: { type: 'string', minLength: 32, maxLength: 44 } },
+							},
+						},
+					},
+				},
+				{
+					path: '/api/x402/skill-marketplace',
+					url: `${origin}/api/x402/skill-marketplace`,
+					method: 'GET',
+					description:
+						'Skill Marketplace — list active skill listings with prices across all three.ws agents. Filter by skill name to find the cheapest provider for a given capability. Returns price atomics, chain, currency, trial offer, and time-pass terms.',
+					mimeType: 'application/json',
+					accepts: acceptsForPrice('1000'),
+					extensions: {
+						bazaar: {
+							method: 'GET',
+							discoverable: true,
+							input: { skill: 'inspect_model', limit: 20 },
+							inputSchema: {
+								type: 'object',
+								properties: {
+									skill: { type: 'string' },
+									limit: { type: 'integer', minimum: 1, maximum: 200 },
+								},
+							},
+						},
+					},
+				},
+				{
+					path: '/api/x402/symbol-availability',
+					url: `${origin}/api/x402/symbol-availability`,
+					method: 'GET',
+					description:
+						'Symbol Availability — pre-launch ticker collision check against three.ws\'s pump.fun mint index. Returns exact-symbol collisions plus trigram-similar tickers so launch agents can avoid name confusion and aggregator-search dilution.',
+					mimeType: 'application/json',
+					accepts: acceptsForPrice('1000'),
+					extensions: {
+						bazaar: {
+							method: 'GET',
+							discoverable: true,
+							input: { ticker: 'HELIO', network: 'mainnet' },
+							inputSchema: {
+								type: 'object',
+								required: ['ticker'],
+								properties: {
+									ticker: { type: 'string', minLength: 1, maxLength: 32 },
+									network: { type: 'string', enum: ['mainnet', 'devnet'] },
+								},
+							},
+						},
+					},
+				},
+				{
+					path: '/api/x402/mint-to-mesh-batch',
+					url: `${origin}/api/x402/mint-to-mesh-batch`,
+					method: 'POST',
+					description:
+						'Mint-to-Mesh (Batch) — resolve 1–10 Solana SPL mints to themed binary glTF cubes in a single paid call. Per-mint failures report ok:false individually instead of failing the whole batch. Output is base64 GLB bytes for Three.js / Babylon.js / model-viewer.',
+					mimeType: 'application/json',
+					accepts: acceptsForPrice('50000'),
+					extensions: {
+						bazaar: {
+							method: 'POST',
+							discoverable: true,
+							input: {
+								mints: [
+									'C3vQABCDEFGHJKLMNopqrstuvwxyZ12345abcdefghi',
+									'F7kXZYXWVUTSRQPONMLKJIHGFEDCba9876543210xyz',
+								],
+							},
+							inputSchema: {
+								type: 'object',
+								required: ['mints'],
+								properties: {
+									mints: {
+										type: 'array',
+										minItems: 1,
+										maxItems: 10,
+										items: { type: 'string', minLength: 32, maxLength: 44 },
+									},
+								},
+							},
+						},
 					},
 				},
 			],

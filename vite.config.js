@@ -120,6 +120,7 @@ const appConfig = {
 				home: resolve(__dirname, 'home.html'),
 				features: resolve(__dirname, 'features.html'),
 				tutorials: resolve(__dirname, 'tutorials.html'),
+				tutorial: resolve(__dirname, 'tutorial.html'),
 				playground: resolve(__dirname, 'playground.html'),
 				embed: resolve(__dirname, 'embed.html'),
 				create: resolve(__dirname, 'create.html'),
@@ -140,6 +141,7 @@ const appConfig = {
 				profile: resolve(__dirname, 'profile.html'),
 				'avatar-page': resolve(__dirname, 'avatar-page.html'),
 				'widget-studio': resolve(__dirname, 'widget-studio.html'),
+				walk: resolve(__dirname, 'walk.html'),
 				studio: resolve(__dirname, 'public/studio/index.html'),
 				reputation: resolve(__dirname, 'public/reputation/index.html'),
 				hydrate: resolve(__dirname, 'public/hydrate/index.html'),
@@ -216,6 +218,8 @@ const appConfig = {
 					'/pump-visualizer/': resolve(root, 'pump-visualizer.html'),
 					'/avatar-artifact': resolve(root, 'avatar-artifact.html'),
 					'/avatar-artifact/': resolve(root, 'avatar-artifact.html'),
+					'/walk': resolve(root, 'walk.html'),
+					'/walk/': resolve(root, 'walk.html'),
 					'/pretext-demo': resolve(root, 'pretext-demo.html'),
 					'/pretext-demo/': resolve(root, 'pretext-demo.html'),
 					'/launch-week': resolve(root, 'three-ws-launch-week.html'),
@@ -280,7 +284,10 @@ const appConfig = {
 						return res.end();
 					}
 					let filePath = fileMap[path];
-					if (!filePath && /^\/marketplace\/agents\/[^/]+\/?$/.test(path))
+					// /tutorials/<slug>  → dedicated tutorial viewer template
+					if (!filePath && /^\/tutorials\/[a-z0-9-]+\/?$/.test(path))
+						filePath = resolve(root, 'tutorial.html');
+					else if (!filePath && /^\/marketplace\/agents\/[^/]+\/?$/.test(path))
 						filePath = resolve(root, 'marketplace.html');
 					else if (!filePath && /^\/marketplace\/avatars\/[^/]+\/?$/.test(path))
 						filePath = resolve(root, 'marketplace.html');

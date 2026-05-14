@@ -6,32 +6,33 @@
 		<title>three.ws — Tutorials</title>
 		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
 		<meta name="author" content="nirholas" />
-		<meta name="description" content="Step-by-step tutorials for embedding, customizing, and deploying 3D agents with three.ws." />
+		<meta name="description" content="Tutorials for building 3D agents with three.ws — from a 30-second embed to on-chain identity and paid x402 endpoints." />
 		<meta name="theme-color" content="#000000" />
 
 		<meta property="og:type" content="website" />
 		<meta property="og:site_name" content="three.ws" />
 		<meta property="og:title" content="three.ws — Tutorials" />
-		<meta property="og:description" content="Step-by-step tutorials for embedding, customizing, and deploying 3D agents with three.ws." />
-		<meta property="og:url" content="https://three.ws/tutorials.html" />
+		<meta property="og:description" content="Tutorials for building 3D agents with three.ws — from a 30-second embed to on-chain identity and paid x402 endpoints." />
+		<meta property="og:url" content="https://three.ws/tutorials" />
 		<meta property="og:image" content="https://three.ws/og-image.png" />
 		<meta property="og:image:width" content="1200" />
 		<meta property="og:image:height" content="630" />
 
 		<meta name="twitter:card" content="summary_large_image" />
 		<meta name="twitter:title" content="three.ws — Tutorials" />
-		<meta name="twitter:description" content="Step-by-step tutorials for embedding, customizing, and deploying 3D agents with three.ws." />
+		<meta name="twitter:description" content="Tutorials for building 3D agents with three.ws — from a 30-second embed to on-chain identity and paid x402 endpoints." />
 		<meta name="twitter:image" content="https://three.ws/og-image.png" />
 
-		<link rel="canonical" href="https://three.ws/tutorials.html" />
+		<link rel="canonical" href="https://three.ws/tutorials" />
 		<link rel="shortcut icon" href="/favicon.ico" />
 		<link rel="apple-touch-icon" href="/pwa-192x192.png" />
 		<link rel="stylesheet" href="/style.css" />
 		<link rel="stylesheet" href="/nav.css" />
 		<link rel="stylesheet" href="/home.css" />
 		<link rel="stylesheet" href="/footer.css" />
-		<script defer src="/footer-newsletter.js"></script>
 		<link rel="stylesheet" href="/fonts/fonts.css" />
+		<script defer src="/footer-newsletter.js"></script>
+		<script defer src="/tutorials-manifest.js"></script>
 		<script type="module" src="https://ajax.googleapis.com/ajax/libs/model-viewer/4.0.0/model-viewer.min.js"></script>
 
 		<style>
@@ -41,11 +42,7 @@
 				height: auto !important;
 			}
 
-			.tutorials-page body {
-				display: block;
-			}
-
-			/* ── Page shell ──────────────────────────────────────────────── */
+			.tutorials-page body { display: block; }
 
 			.tut-page {
 				min-height: 100vh;
@@ -82,7 +79,8 @@
 
 			.tut-hero-inner {
 				position: relative;
-				max-width: 780px;
+				max-width: 980px;
+				margin: 0 auto;
 			}
 
 			.tut-hero-eyebrow {
@@ -108,23 +106,58 @@
 
 			.tut-hero h1 {
 				font-family: 'Space Grotesk', sans-serif;
-				font-size: clamp(2rem, 5vw, 3.25rem);
+				font-size: clamp(2.1rem, 5vw, 3.4rem);
 				font-weight: 700;
 				letter-spacing: -0.025em;
 				color: #fff;
-				margin: 0 0 0.85rem;
-				line-height: 1.12;
+				margin: 0 0 0.9rem;
+				line-height: 1.1;
 			}
 
 			.tut-hero p {
-				font-size: 1.05rem;
-				color: rgba(255, 255, 255, 0.52);
+				font-size: 1.08rem;
+				color: rgba(255, 255, 255, 0.55);
 				line-height: 1.65;
-				margin: 0;
-				max-width: 56ch;
+				margin: 0 0 1.6rem;
+				max-width: 60ch;
 			}
 
-			/* ── Content area ────────────────────────────────────────────── */
+			.tut-hero-jumps {
+				display: flex;
+				gap: 0.6rem;
+				flex-wrap: wrap;
+			}
+
+			.tut-jump {
+				display: inline-flex;
+				align-items: center;
+				gap: 0.45rem;
+				padding: 0.45rem 0.85rem;
+				border-radius: 999px;
+				background: rgba(255, 255, 255, 0.025);
+				border: 1px solid rgba(255, 255, 255, 0.08);
+				font-family: 'Inter', sans-serif;
+				font-size: 0.82rem;
+				font-weight: 500;
+				color: rgba(255, 255, 255, 0.7);
+				text-decoration: none;
+				transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+			}
+
+			.tut-jump:hover {
+				background: rgba(255, 255, 255, 0.05);
+				border-color: rgba(255, 255, 255, 0.18);
+				color: #fff;
+			}
+
+			.tut-jump-dot {
+				width: 7px;
+				height: 7px;
+				border-radius: 50%;
+				background: var(--tut-jump-color, #a78bfa);
+			}
+
+			/* ── Content ────────────────────────────────────────────────── */
 
 			.tut-content {
 				flex: 1;
@@ -133,252 +166,237 @@
 			}
 
 			.tut-content-inner {
-				max-width: 860px;
+				max-width: 1080px;
 				margin: 0 auto;
 			}
 
-			/* ── Tutorial cards ──────────────────────────────────────────── */
-
-			.tut-card {
-				background: rgba(255, 255, 255, 0.018);
-				border: 1px solid rgba(255, 255, 255, 0.07);
-				border-radius: 12px;
-				overflow: hidden;
-				transition: border-color 0.25s ease;
-				margin-bottom: 1.25rem;
+			.tut-tier-section {
+				margin-bottom: 4rem;
+				scroll-margin-top: 80px;
 			}
 
-			.tut-card:hover {
-				border-color: rgba(255, 255, 255, 0.12);
-			}
+			.tut-tier-section:last-child { margin-bottom: 0; }
 
-			.tut-card-head {
+			.tut-tier-head {
 				display: flex;
-				align-items: flex-start;
-				gap: 1.1rem;
-				padding: 1.5rem 1.75rem 1.25rem;
+				align-items: baseline;
+				gap: 1rem;
+				margin-bottom: 1.6rem;
+				flex-wrap: wrap;
 			}
 
-			.tut-step-badge {
-				flex-shrink: 0;
-				width: 28px;
-				height: 28px;
-				border-radius: 8px;
-				background: rgba(139, 92, 246, 0.15);
-				border: 1px solid rgba(139, 92, 246, 0.3);
-				display: flex;
+			.tut-tier-badge {
+				display: inline-flex;
 				align-items: center;
-				justify-content: center;
+				gap: 0.5rem;
+				padding: 0.35rem 0.85rem;
+				border-radius: 999px;
+				background: var(--tut-tier-soft, rgba(167, 139, 250, 0.16));
+				border: 1px solid var(--tut-tier-border, rgba(167, 139, 250, 0.32));
 				font-family: 'Space Grotesk', sans-serif;
 				font-size: 0.72rem;
 				font-weight: 700;
-				color: #a78bfa;
-				margin-top: 2px;
+				color: var(--tut-tier-accent, #a78bfa);
+				letter-spacing: 0.08em;
+				text-transform: uppercase;
+			}
+
+			.tut-tier-badge::before {
+				content: '';
+				width: 7px;
+				height: 7px;
+				border-radius: 50%;
+				background: currentColor;
+			}
+
+			.tut-tier-eyebrow {
+				font-family: 'Inter', sans-serif;
+				font-size: 0.84rem;
+				color: rgba(255, 255, 255, 0.45);
+			}
+
+			.tut-tier-blurb {
+				color: rgba(255, 255, 255, 0.6);
+				font-size: 0.98rem;
+				line-height: 1.6;
+				margin: 0 0 1.6rem;
+				max-width: 70ch;
+			}
+
+			.tut-grid {
+				display: grid;
+				grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+				gap: 1rem;
+			}
+
+			/* ── Card ───────────────────────────────────────────────────── */
+
+			.tut-card-link {
+				display: flex;
+				flex-direction: column;
+				background: rgba(255, 255, 255, 0.018);
+				border: 1px solid rgba(255, 255, 255, 0.07);
+				border-radius: 12px;
+				padding: 1.4rem 1.5rem 1.25rem;
+				text-decoration: none;
+				transition: border-color 0.2s ease, transform 0.2s ease, background 0.2s ease;
+				position: relative;
+				overflow: hidden;
+				min-height: 200px;
+			}
+
+			.tut-card-link::after {
+				content: '';
+				position: absolute;
+				top: 0;
+				left: 0;
+				right: 0;
+				height: 2px;
+				background: var(--tut-card-accent, #a78bfa);
+				opacity: 0;
+				transition: opacity 0.2s ease;
+			}
+
+			.tut-card-link:hover {
+				border-color: var(--tut-card-accent, rgba(255, 255, 255, 0.18));
+				transform: translateY(-2px);
+				background: rgba(255, 255, 255, 0.028);
+			}
+
+			.tut-card-link:hover::after { opacity: 1; }
+
+			.tut-card-meta {
+				display: flex;
+				align-items: center;
+				gap: 0.55rem;
+				margin-bottom: 0.85rem;
+				font-family: 'Space Grotesk', sans-serif;
+				font-size: 0.66rem;
+				font-weight: 600;
+				letter-spacing: 0.08em;
+				text-transform: uppercase;
+				color: rgba(255, 255, 255, 0.42);
+			}
+
+			.tut-card-meta-dot {
+				width: 4px;
+				height: 4px;
+				border-radius: 50%;
+				background: rgba(255, 255, 255, 0.2);
 			}
 
 			.tut-card-title {
 				font-family: 'Space Grotesk', sans-serif;
-				font-size: 1.1rem;
+				font-size: 1.08rem;
 				font-weight: 700;
 				color: #fff;
 				letter-spacing: -0.01em;
-				margin: 0 0 0.35rem;
+				margin: 0 0 0.55rem;
 				line-height: 1.3;
 			}
 
-			.tut-card-desc {
-				font-size: 0.9rem;
-				color: rgba(255, 255, 255, 0.5);
+			.tut-card-blurb {
+				font-size: 0.92rem;
+				color: rgba(255, 255, 255, 0.55);
 				line-height: 1.6;
-				margin: 0;
+				margin: 0 0 1.1rem;
+				flex: 1;
 			}
-
-			.tut-card-desc code {
-				font-family: 'JetBrains Mono', ui-monospace, monospace;
-				font-size: 0.82em;
-				color: #c4b5fd;
-			}
-
-			/* ── Two-column body ─────────────────────────────────────────── */
-
-			.tut-card-body {
-				display: grid;
-				grid-template-columns: 1fr 220px;
-				border-top: 1px solid rgba(255, 255, 255, 0.06);
-			}
-
-			.tut-card-body--full {
-				grid-template-columns: 1fr;
-			}
-
-			/* ── Code block ──────────────────────────────────────────────── */
-
-			.tut-code-wrap {
-				position: relative;
-				background: #0b0c12;
-				border-right: 1px solid rgba(255, 255, 255, 0.06);
-			}
-
-			.tut-card-body--full .tut-code-wrap {
-				border-right: none;
-			}
-
-			.tut-code-wrap pre {
-				margin: 0;
-				padding: 1.25rem 1.5rem;
-				overflow-x: auto;
-				scrollbar-width: thin;
-				scrollbar-color: rgba(255, 255, 255, 0.1) transparent;
-			}
-
-			.tut-code-wrap pre::-webkit-scrollbar { height: 4px; }
-			.tut-code-wrap pre::-webkit-scrollbar-thumb { background: rgba(255,255,255,.1); border-radius: 2px; }
-
-			.tut-code-wrap code {
-				font-family: 'JetBrains Mono', 'SF Mono', ui-monospace, monospace;
-				font-size: 0.78rem;
-				line-height: 1.7;
-				color: #c4b5fd;
-				white-space: pre;
-			}
-
-			.tut-copy-btn {
-				position: absolute;
-				top: 0.65rem;
-				right: 0.65rem;
-				display: flex;
-				align-items: center;
-				gap: 0.3rem;
-				padding: 0.3rem 0.6rem;
-				border-radius: 6px;
-				border: 1px solid rgba(255, 255, 255, 0.08);
-				background: rgba(255, 255, 255, 0.04);
-				color: rgba(255, 255, 255, 0.4);
-				font-family: 'Inter', sans-serif;
-				font-size: 0.68rem;
-				font-weight: 500;
-				cursor: pointer;
-				opacity: 0;
-				transition: opacity 0.15s ease, color 0.15s ease, background 0.15s ease, border-color 0.15s ease;
-				letter-spacing: 0.02em;
-			}
-
-			.tut-code-wrap:hover .tut-copy-btn { opacity: 1; }
-
-			.tut-copy-btn:hover {
-				color: rgba(255, 255, 255, 0.85);
-				background: rgba(255, 255, 255, 0.08);
-				border-color: rgba(255, 255, 255, 0.15);
-			}
-
-			.tut-copy-btn.copied {
-				opacity: 1;
-				color: #4ade80;
-				border-color: rgba(74, 222, 128, 0.3);
-				background: rgba(74, 222, 128, 0.06);
-			}
-
-			.tut-copy-btn svg { width: 11px; height: 11px; flex-shrink: 0; }
-
-			/* ── model-viewer panel ──────────────────────────────────────── */
-
-			.tut-viewer-panel {
-				display: flex;
-				align-items: center;
-				justify-content: center;
-				background: #080910;
-				min-height: 200px;
-			}
-
-			.tut-viewer-panel model-viewer {
-				width: 100%;
-				height: 220px;
-				background: transparent;
-				--poster-color: transparent;
-			}
-
-			/* ── CTA row ─────────────────────────────────────────────────── */
 
 			.tut-card-cta {
-				padding: 0.85rem 1.75rem;
-				border-top: 1px solid rgba(255, 255, 255, 0.05);
-				display: flex;
-				align-items: center;
-				gap: 0.75rem;
-				flex-wrap: wrap;
-			}
-
-			.tut-cta-link {
 				display: inline-flex;
 				align-items: center;
-				gap: 0.35rem;
+				gap: 0.4rem;
 				font-family: 'Inter', sans-serif;
 				font-size: 0.82rem;
 				font-weight: 500;
-				color: #a78bfa;
-				text-decoration: none;
-				transition: color 0.15s ease;
+				color: var(--tut-card-accent, #a78bfa);
+				margin-top: auto;
 			}
 
-			.tut-cta-link:hover { color: #c4b5fd; }
-			.tut-cta-link svg { width: 12px; height: 12px; transition: transform 0.15s ease; }
-			.tut-cta-link:hover svg { transform: translateX(2px); }
-
-			.tut-cta-sep { color: rgba(255, 255, 255, 0.15); font-size: 0.75rem; }
-
-			/* ── Step list (no-code tutorial) ────────────────────────────── */
-
-			.tut-steps {
-				padding: 1.25rem 1.75rem;
-				display: flex;
-				flex-direction: column;
-				gap: 0.85rem;
+			.tut-card-cta svg {
+				width: 12px;
+				height: 12px;
+				transition: transform 0.15s ease;
 			}
 
-			.tut-step-item {
-				display: flex;
-				gap: 0.9rem;
-				align-items: flex-start;
-			}
+			.tut-card-link:hover .tut-card-cta svg { transform: translateX(3px); }
 
-			.tut-step-num {
-				flex-shrink: 0;
-				width: 20px;
-				height: 20px;
-				border-radius: 50%;
-				background: rgba(139, 92, 246, 0.12);
-				border: 1px solid rgba(139, 92, 246, 0.25);
-				font-family: 'Space Grotesk', sans-serif;
-				font-size: 0.62rem;
-				font-weight: 700;
-				color: #a78bfa;
+			/* ── Bottom CTA banner ──────────────────────────────────────── */
+
+			.tut-bottom-cta {
+				margin-top: 4rem;
+				padding: 2rem;
+				background: rgba(255, 255, 255, 0.025);
+				border: 1px solid rgba(255, 255, 255, 0.07);
+				border-radius: 14px;
 				display: flex;
 				align-items: center;
-				justify-content: center;
-				margin-top: 2px;
+				gap: 1.5rem;
+				flex-wrap: wrap;
+				justify-content: space-between;
 			}
 
-			.tut-step-text {
-				font-size: 0.88rem;
-				color: rgba(255, 255, 255, 0.62);
-				line-height: 1.55;
+			.tut-bottom-cta h2 {
+				font-family: 'Space Grotesk', sans-serif;
+				font-size: 1.3rem;
+				font-weight: 700;
+				color: #fff;
+				margin: 0 0 0.35rem;
+				letter-spacing: -0.01em;
+			}
+
+			.tut-bottom-cta p {
 				margin: 0;
+				color: rgba(255, 255, 255, 0.55);
+				font-size: 0.95rem;
+				line-height: 1.55;
 			}
 
-			.tut-step-text strong { color: rgba(255, 255, 255, 0.88); font-weight: 600; }
-			.tut-step-text a { color: #a78bfa; text-decoration: none; }
-			.tut-step-text a:hover { color: #c4b5fd; }
-			.tut-step-text code { font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: 0.85em; color: #c4b5fd; }
+			.tut-bottom-cta-actions {
+				display: flex;
+				gap: 0.6rem;
+				flex-wrap: wrap;
+			}
 
-			/* ── Responsive ──────────────────────────────────────────────── */
+			.tut-bottom-btn {
+				display: inline-flex;
+				align-items: center;
+				gap: 0.4rem;
+				padding: 0.65rem 1.05rem;
+				border-radius: 8px;
+				font-family: 'Inter', sans-serif;
+				font-size: 0.87rem;
+				font-weight: 500;
+				text-decoration: none;
+				transition: background 0.15s ease, border-color 0.15s ease;
+			}
+
+			.tut-bottom-btn.primary {
+				background: rgba(167, 139, 250, 0.16);
+				border: 1px solid rgba(167, 139, 250, 0.4);
+				color: #c4b5fd;
+			}
+
+			.tut-bottom-btn.primary:hover {
+				background: rgba(167, 139, 250, 0.24);
+				border-color: rgba(167, 139, 250, 0.6);
+			}
+
+			.tut-bottom-btn.secondary {
+				background: rgba(255, 255, 255, 0.03);
+				border: 1px solid rgba(255, 255, 255, 0.1);
+				color: rgba(255, 255, 255, 0.85);
+			}
+
+			.tut-bottom-btn.secondary:hover {
+				background: rgba(255, 255, 255, 0.06);
+				border-color: rgba(255, 255, 255, 0.2);
+			}
 
 			@media (max-width: 640px) {
-				.tut-card-body { grid-template-columns: 1fr; }
-				.tut-viewer-panel {
-					border-top: 1px solid rgba(255, 255, 255, 0.06);
-					border-right: none;
-				}
-				.tut-viewer-panel model-viewer { height: 180px; }
+				.tut-grid { grid-template-columns: 1fr; }
+				.tut-bottom-cta { flex-direction: column; align-items: flex-start; }
 			}
 		</style>
 	</head>
@@ -403,15 +421,9 @@
 							Build<span class="nav-caret" aria-hidden="true">▾</span>
 						</button>
 						<ul class="nav-menu" role="menu" aria-label="Build">
-							<li role="none">
-								<a href="/create" role="menuitem"><span class="nav-mi-title">Create agent</span><span class="nav-mi-sub">Avatar + brain wizard</span></a>
-							</li>
-							<li role="none">
-								<a href="/app" role="menuitem"><span class="nav-mi-title">Viewer</span><span class="nav-mi-sub">Drag-and-drop GLB</span></a>
-							</li>
-							<li role="none">
-								<a href="/validation" role="menuitem"><span class="nav-mi-title">glTF Validator</span><span class="nav-mi-sub">Khronos spec check</span></a>
-							</li>
+							<li role="none"><a href="/create" role="menuitem"><span class="nav-mi-title">Create agent</span><span class="nav-mi-sub">Avatar + brain wizard</span></a></li>
+							<li role="none"><a href="/app" role="menuitem"><span class="nav-mi-title">Viewer</span><span class="nav-mi-sub">Drag-and-drop GLB</span></a></li>
+							<li role="none"><a href="/validation" role="menuitem"><span class="nav-mi-title">glTF Validator</span><span class="nav-mi-sub">Khronos spec check</span></a></li>
 						</ul>
 					</li>
 					<li role="none"><a href="/discover" role="menuitem">Discover</a></li>
@@ -420,27 +432,13 @@
 							Solana<span class="nav-caret" aria-hidden="true">▾</span>
 						</button>
 						<ul class="nav-menu" role="menu" aria-label="Solana">
-							<li role="none">
-								<a href="/pumpfun" role="menuitem"><span class="nav-mi-title">Pump.fun stream</span><span class="nav-mi-sub">Mint agent tokens</span></a>
-							</li>
-							<li role="none">
-								<a href="/vanity-wallet" role="menuitem"><span class="nav-mi-title">Vanity wallet</span><span class="nav-mi-sub">Grind a Solana address</span></a>
-							</li>
-							<li role="none">
-								<a href="/eth-vanity" role="menuitem"><span class="nav-mi-title">ETH vanity (CREATE2)</span><span class="nav-mi-sub">Grind a smart-contract address</span></a>
-							</li>
-							<li role="none">
-								<a href="/strategy-lab" role="menuitem"><span class="nav-mi-title">Strategy Lab</span><span class="nav-mi-sub">DCA + subscriptions</span></a>
-							</li>
-							<li role="none">
-								<a href="/pump-live.html" role="menuitem"><span class="nav-mi-title">Live launches</span><span class="nav-mi-sub">Real-time mint feed</span></a>
-							</li>
-							<li role="none">
-								<a href="/pump-dashboard.html" role="menuitem"><span class="nav-mi-title">Pump Dashboard</span><span class="nav-mi-sub">Watches · scanner · quotes</span></a>
-							</li>
-							<li role="none">
-								<a href="/docs#solana" role="menuitem"><span class="nav-mi-title">Solana SDK</span><span class="nav-mi-sub">Attestations + agent-kit</span></a>
-							</li>
+							<li role="none"><a href="/pumpfun" role="menuitem"><span class="nav-mi-title">Pump.fun stream</span><span class="nav-mi-sub">Mint agent tokens</span></a></li>
+							<li role="none"><a href="/vanity-wallet" role="menuitem"><span class="nav-mi-title">Vanity wallet</span><span class="nav-mi-sub">Grind a Solana address</span></a></li>
+							<li role="none"><a href="/eth-vanity" role="menuitem"><span class="nav-mi-title">ETH vanity (CREATE2)</span><span class="nav-mi-sub">Grind a smart-contract address</span></a></li>
+							<li role="none"><a href="/strategy-lab" role="menuitem"><span class="nav-mi-title">Strategy Lab</span><span class="nav-mi-sub">DCA + subscriptions</span></a></li>
+							<li role="none"><a href="/pump-live.html" role="menuitem"><span class="nav-mi-title">Live launches</span><span class="nav-mi-sub">Real-time mint feed</span></a></li>
+							<li role="none"><a href="/pump-dashboard.html" role="menuitem"><span class="nav-mi-title">Pump Dashboard</span><span class="nav-mi-sub">Watches · scanner · quotes</span></a></li>
+							<li role="none"><a href="/docs#solana" role="menuitem"><span class="nav-mi-title">Solana SDK</span><span class="nav-mi-sub">Attestations + agent-kit</span></a></li>
 						</ul>
 					</li>
 					<li class="nav-item nav-has-menu" role="none">
@@ -448,23 +446,15 @@
 							Embed<span class="nav-caret" aria-hidden="true">▾</span>
 						</button>
 						<ul class="nav-menu" role="menu" aria-label="Embed">
-							<li role="none">
-								<a href="/studio" role="menuitem"><span class="nav-mi-title">Widget Studio</span><span class="nav-mi-sub">Pick avatar → copy snippet</span></a>
-							</li>
-							<li role="none">
-								<a href="/artifact" role="menuitem"><span class="nav-mi-title">Artifact viewer</span><span class="nav-mi-sub">Claude artifact bundle</span></a>
-							</li>
-							<li role="none">
-								<a href="/docs#embedding" role="menuitem"><span class="nav-mi-title">Embed docs</span><span class="nav-mi-sub">iframe + oEmbed</span></a>
-							</li>
-							<li role="none">
-								<a href="/docs#web-component" role="menuitem"><span class="nav-mi-title">&lt;agent-3d&gt;</span><span class="nav-mi-sub">Web component reference</span></a>
-							</li>
+							<li role="none"><a href="/studio" role="menuitem"><span class="nav-mi-title">Widget Studio</span><span class="nav-mi-sub">Pick avatar → copy snippet</span></a></li>
+							<li role="none"><a href="/artifact" role="menuitem"><span class="nav-mi-title">Artifact viewer</span><span class="nav-mi-sub">Claude artifact bundle</span></a></li>
+							<li role="none"><a href="/docs#embedding" role="menuitem"><span class="nav-mi-title">Embed docs</span><span class="nav-mi-sub">iframe + oEmbed</span></a></li>
+							<li role="none"><a href="/docs#web-component" role="menuitem"><span class="nav-mi-title">&lt;agent-3d&gt;</span><span class="nav-mi-sub">Web component reference</span></a></li>
 						</ul>
 					</li>
 					<li class="nav-item" role="none"><a href="/marketplace.html" role="menuitem">Marketplace</a></li>
 					<li class="nav-item" role="none"><a href="/chat" role="menuitem">Chat</a></li>
-					<li class="nav-item" role="none"><a href="/tutorials.html" role="menuitem" aria-current="page">Tutorials</a></li>
+					<li class="nav-item" role="none"><a href="/tutorials" role="menuitem" aria-current="page">Tutorials</a></li>
 					<li class="nav-item" id="home-nav-my-agents-li" role="none" hidden>
 						<a href="/my-agents" id="home-nav-my-agents" role="menuitem">My Agents</a>
 					</li>
@@ -483,280 +473,14 @@
 				<div class="tut-hero-inner">
 					<p class="tut-hero-eyebrow">Tutorials</p>
 					<h1>Build with 3D agents</h1>
-					<p>From a one-liner embed to on-chain identity — everything you need to ship a 3D agent in your app.</p>
+					<p>Twenty-three step-by-step guides — from a one-line embed to a self-hosted backend with on-chain identity and paid x402 endpoints. Pick your tier.</p>
+					<div class="tut-hero-jumps" id="tut-hero-jumps"></div>
 				</div>
 			</div>
 
 			<div class="tut-content">
-				<div class="tut-content-inner">
-
-					<!-- 1. Embed in 30 seconds -->
-					<article class="tut-card">
-						<div class="tut-card-head">
-							<div class="tut-step-badge" aria-hidden="true">1</div>
-							<div>
-								<h2 class="tut-card-title">Embed in 30 seconds</h2>
-								<p class="tut-card-desc">Drop one script tag into any HTML page. Your agent loads, auto-sizes, and starts animating immediately.</p>
-							</div>
-						</div>
-						<div class="tut-card-body">
-							<div class="tut-code-wrap">
-								<button class="tut-copy-btn" aria-label="Copy code">
-									<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><rect x="4" y="4" width="9" height="11" rx="1.5"/><path d="M3 11V3a1 1 0 0 1 1-1h8"/></svg>
-									Copy
-								</button>
-								<pre><code>&lt;!-- Paste before &lt;/body&gt; on any page --&gt;
-&lt;script
-  src="https://three.ws/cdn/agent-3d.js"
-  data-agent-id="YOUR_AGENT_ID"
-&gt;&lt;/script&gt;</code></pre>
-							</div>
-							<div class="tut-viewer-panel">
-								<model-viewer
-									src="/animations/robotexpressive.glb"
-									camera-controls
-									auto-rotate
-									auto-rotate-delay="1000"
-									rotation-per-second="18deg"
-									interaction-prompt="none"
-									shadow-intensity="0"
-									exposure="0.85"
-									environment-image="neutral"
-									camera-orbit="0deg 75deg 5m"
-									field-of-view="35deg"
-									loading="lazy"
-								></model-viewer>
-							</div>
-						</div>
-						<div class="tut-card-cta">
-							<a href="/create" class="tut-cta-link">
-								Create your agent
-								<svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M2 6h8M6 2l4 4-4 4"/></svg>
-							</a>
-							<span class="tut-cta-sep">·</span>
-							<a href="/docs#embedding" class="tut-cta-link">
-								Full embedding docs
-								<svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M2 6h8M6 2l4 4-4 4"/></svg>
-							</a>
-						</div>
-					</article>
-
-					<!-- 2. Customization -->
-					<article class="tut-card">
-						<div class="tut-card-head">
-							<div class="tut-step-badge" aria-hidden="true">2</div>
-							<div>
-								<h2 class="tut-card-title">Customize appearance</h2>
-								<p class="tut-card-desc">Control size, background, corner placement, and animation speed entirely through <code>data-*</code> attributes — no JavaScript required.</p>
-							</div>
-						</div>
-						<div class="tut-card-body">
-							<div class="tut-code-wrap">
-								<button class="tut-copy-btn" aria-label="Copy code">
-									<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><rect x="4" y="4" width="9" height="11" rx="1.5"/><path d="M3 11V3a1 1 0 0 1 1-1h8"/></svg>
-									Copy
-								</button>
-								<pre><code>&lt;script
-  src="https://three.ws/cdn/agent-3d.js"
-  data-agent-id="YOUR_AGENT_ID"
-  data-size="320"
-  data-background-color="transparent"
-  data-position="bottom-right"
-  data-rotation-speed="20"
-&gt;&lt;/script&gt;</code></pre>
-							</div>
-							<div class="tut-viewer-panel">
-								<model-viewer
-									src="/animations/soldier.glb"
-									camera-controls
-									auto-rotate
-									auto-rotate-delay="800"
-									rotation-per-second="22deg"
-									interaction-prompt="none"
-									shadow-intensity="0"
-									exposure="0.9"
-									environment-image="neutral"
-									camera-orbit="0deg 80deg 4.5m"
-									field-of-view="38deg"
-									loading="lazy"
-								></model-viewer>
-							</div>
-						</div>
-						<div class="tut-card-cta">
-							<a href="/studio" class="tut-cta-link">
-								Open Widget Studio
-								<svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M2 6h8M6 2l4 4-4 4"/></svg>
-							</a>
-							<span class="tut-cta-sep">·</span>
-							<a href="/docs#web-component" class="tut-cta-link">
-								All data attributes
-								<svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M2 6h8M6 2l4 4-4 4"/></svg>
-							</a>
-						</div>
-					</article>
-
-					<!-- 3. JavaScript API -->
-					<article class="tut-card">
-						<div class="tut-card-head">
-							<div class="tut-step-badge" aria-hidden="true">3</div>
-							<div>
-								<h2 class="tut-card-title">JavaScript API</h2>
-								<p class="tut-card-desc">Listen for the <code>ready</code> event, trigger animations, and send speech — drive your agent from any app logic.</p>
-							</div>
-						</div>
-						<div class="tut-card-body">
-							<div class="tut-code-wrap">
-								<button class="tut-copy-btn" aria-label="Copy code">
-									<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><rect x="4" y="4" width="9" height="11" rx="1.5"/><path d="M3 11V3a1 1 0 0 1 1-1h8"/></svg>
-									Copy
-								</button>
-								<pre><code>&lt;script
-  src="https://three.ws/cdn/agent-3d.js"
-  data-agent-id="YOUR_AGENT_ID"
-  id="my-agent"
-&gt;&lt;/script&gt;
-
-&lt;script&gt;
-  const agent = document.getElementById('my-agent');
-
-  agent.addEventListener('ready', () => {
-    agent.playAnimation('wave');
-  });
-
-  // Trigger from anywhere in your app
-  document.querySelector('#checkout-btn')
-    .addEventListener('click', () => {
-      agent.speak('Order placed! Check your inbox.');
-      agent.playAnimation('celebrate');
-    });
-&lt;/script&gt;</code></pre>
-							</div>
-							<div class="tut-viewer-panel">
-								<model-viewer
-									src="/avatars/cz.glb"
-									camera-controls
-									auto-rotate
-									auto-rotate-delay="2000"
-									rotation-per-second="12deg"
-									interaction-prompt="auto"
-									shadow-intensity="0"
-									exposure="0.85"
-									environment-image="neutral"
-									camera-orbit="0deg 78deg 5m"
-									field-of-view="36deg"
-									loading="lazy"
-								></model-viewer>
-							</div>
-						</div>
-						<div class="tut-card-cta">
-							<a href="/docs#js-api" class="tut-cta-link">
-								Full JS API reference
-								<svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M2 6h8M6 2l4 4-4 4"/></svg>
-							</a>
-						</div>
-					</article>
-
-					<!-- 4. Widget Studio -->
-					<article class="tut-card">
-						<div class="tut-card-head">
-							<div class="tut-step-badge" aria-hidden="true">4</div>
-							<div>
-								<h2 class="tut-card-title">Widget Studio — no code</h2>
-								<p class="tut-card-desc">Pick an avatar visually, configure behavior with toggles, then copy a ready-to-paste snippet. Zero typing required.</p>
-							</div>
-						</div>
-						<div class="tut-card-body tut-card-body--full">
-							<div class="tut-steps">
-								<div class="tut-step-item">
-									<div class="tut-step-num">1</div>
-									<p class="tut-step-text">Go to <strong><a href="/studio">Widget Studio</a></strong> — browse the avatar gallery and click the one you want.</p>
-								</div>
-								<div class="tut-step-item">
-									<div class="tut-step-num">2</div>
-									<p class="tut-step-text">Use the panel on the right to set <strong>size, position, background,</strong> and the greeting message your agent will say on load.</p>
-								</div>
-								<div class="tut-step-item">
-									<div class="tut-step-num">3</div>
-									<p class="tut-step-text">Click <strong>Copy snippet</strong>. Paste the script tag before the closing <code>&lt;/body&gt;</code> of your page. Done.</p>
-								</div>
-								<div class="tut-step-item">
-									<div class="tut-step-num">4</div>
-									<p class="tut-step-text">Changes to your agent's name, avatar, or behavior sync live — no need to update the snippet on your site.</p>
-								</div>
-							</div>
-						</div>
-						<div class="tut-card-cta">
-							<a href="/studio" class="tut-cta-link">
-								Open Widget Studio
-								<svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M2 6h8M6 2l4 4-4 4"/></svg>
-							</a>
-						</div>
-					</article>
-
-					<!-- 5. On-chain identity -->
-					<article class="tut-card">
-						<div class="tut-card-head">
-							<div class="tut-step-badge" aria-hidden="true">5</div>
-							<div>
-								<h2 class="tut-card-title">On-chain agent identity</h2>
-								<p class="tut-card-desc">Give your agent a verifiable Solana identity. Mint a token on Pump.fun, link your wallet, and publish an ERC-8004 attestation — all from three.ws.</p>
-							</div>
-						</div>
-						<div class="tut-card-body">
-							<div class="tut-code-wrap">
-								<button class="tut-copy-btn" aria-label="Copy code">
-									<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><rect x="4" y="4" width="9" height="11" rx="1.5"/><path d="M3 11V3a1 1 0 0 1 1-1h8"/></svg>
-									Copy
-								</button>
-								<pre><code>// Resolve on-chain identity from the SDK
-import { resolveAgent } from 'https://three.ws/sdk/agent-resolver.js';
-
-const agent = await resolveAgent('YOUR_AGENT_ID');
-
-console.log(agent.wallet);      // Solana pubkey
-console.log(agent.tokenMint);   // Pump.fun mint address
-console.log(agent.attestation); // ERC-8004 attestation URI</code></pre>
-							</div>
-							<div class="tut-viewer-panel">
-								<model-viewer
-									src="/animations/robotexpressive.glb"
-									camera-controls
-									auto-rotate
-									auto-rotate-delay="1500"
-									rotation-per-second="15deg"
-									interaction-prompt="none"
-									shadow-intensity="0"
-									exposure="0.75"
-									environment-image="neutral"
-									camera-orbit="20deg 70deg 6m"
-									field-of-view="40deg"
-									loading="lazy"
-								></model-viewer>
-							</div>
-						</div>
-						<div class="tut-card-cta">
-							<a href="/pumpfun" class="tut-cta-link">
-								Pump.fun stream
-								<svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M2 6h8M6 2l4 4-4 4"/></svg>
-							</a>
-							<span class="tut-cta-sep">·</span>
-							<a href="/vanity-wallet" class="tut-cta-link">
-								Vanity wallet
-								<svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M2 6h8M6 2l4 4-4 4"/></svg>
-							</a>
-							<span class="tut-cta-sep">·</span>
-							<a href="/eth-vanity" class="tut-cta-link">
-								ETH vanity (CREATE2)
-								<svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M2 6h8M6 2l4 4-4 4"/></svg>
-							</a>
-							<span class="tut-cta-sep">·</span>
-							<a href="/docs#solana" class="tut-cta-link">
-								Solana SDK docs
-								<svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M2 6h8M6 2l4 4-4 4"/></svg>
-							</a>
-						</div>
-					</article>
-
+				<div class="tut-content-inner" id="tut-content-inner">
+					<!-- Tiers populated from /tutorials-manifest.js -->
 				</div>
 			</div>
 		</main>
@@ -788,15 +512,7 @@ console.log(agent.attestation); // ERC-8004 attestation URI</code></pre>
 					<h3>Stay in the loop</h3>
 					<p>Get updates on new features, agent tooling, and protocol changes.</p>
 					<form class="h-footer-newsletter-form" data-newsletter-form novalidate>
-						<input
-							type="email"
-							class="h-footer-newsletter-input"
-							name="email"
-							placeholder="Enter your email"
-							aria-label="Email address"
-							autocomplete="email"
-							required
-						/>
+						<input type="email" class="h-footer-newsletter-input" name="email" placeholder="Enter your email" aria-label="Email address" autocomplete="email" required />
 						<button type="submit" class="h-footer-newsletter-btn" aria-label="Subscribe">
 							<svg viewBox="0 0 16 16" aria-hidden="true">
 								<path fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" d="M2 8h11m0 0L9 4m4 4l-4 4" />
@@ -853,7 +569,7 @@ console.log(agent.attestation); // ERC-8004 attestation URI</code></pre>
 					</div>
 					<div class="h-footer-link-col">
 						<h4 class="h-footer-link-heading">Resources</h4>
-						<a href="/tutorials.html" aria-current="page">Tutorials</a>
+						<a href="/tutorials" aria-current="page">Tutorials</a>
 						<a href="/dashboard">Dashboard</a>
 					</div>
 				</nav>
@@ -932,20 +648,87 @@ console.log(agent.attestation); // ERC-8004 attestation URI</code></pre>
 				document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeAll(null); });
 			})();
 
-			// Copy-to-clipboard
-			document.querySelectorAll('.tut-copy-btn').forEach((btn) => {
-				btn.addEventListener('click', () => {
-					const code = btn.closest('.tut-code-wrap').querySelector('code');
-					navigator.clipboard.writeText(code.textContent.trim()).then(() => {
-						btn.classList.add('copied');
-						btn.innerHTML = `<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M2 9l4 4 8-8"/></svg> Copied`;
-						setTimeout(() => {
-							btn.classList.remove('copied');
-							btn.innerHTML = `<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><rect x="4" y="4" width="9" height="11" rx="1.5"/><path d="M3 11V3a1 1 0 0 1 1-1h8"/></svg> Copy`;
-						}, 2000);
-					});
+			// ── Tutorial index renderer ─────────────────────────────────
+			function escapeHtml(s) {
+				return String(s).replace(/[&<>"']/g, (c) => ({
+					'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+				}[c]));
+			}
+
+			function tutorialCardHtml(entry, tierMeta) {
+				return `
+					<a class="tut-card-link" href="/tutorials/${entry.slug}" style="--tut-card-accent:${tierMeta.accent}">
+						<div class="tut-card-meta">
+							<span>${escapeHtml(tierMeta.label)}</span>
+							<span class="tut-card-meta-dot"></span>
+							<span>${escapeHtml(entry.time)}</span>
+						</div>
+						<h3 class="tut-card-title">${escapeHtml(entry.title)}</h3>
+						<p class="tut-card-blurb">${escapeHtml(entry.blurb)}</p>
+						<span class="tut-card-cta">
+							Start tutorial
+							<svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M2 6h8M6 2l4 4-4 4"/></svg>
+						</span>
+					</a>
+				`;
+			}
+
+			function renderTutorials() {
+				const tiers = ['easy', 'middle', 'advanced'];
+				const root = document.getElementById('tut-content-inner');
+				const jumps = document.getElementById('tut-hero-jumps');
+				const blocks = [];
+				const jumpLinks = [];
+
+				tiers.forEach((tier) => {
+					const meta = window.TUTORIAL_TIERS[tier];
+					const list = window.tutorialsByTier(tier);
+					if (!list.length) return;
+
+					jumpLinks.push(`
+						<a href="#tier-${tier}" class="tut-jump" style="--tut-jump-color:${meta.accent}">
+							<span class="tut-jump-dot"></span>
+							${escapeHtml(meta.label)}
+							<span style="opacity:0.5;font-size:0.72rem;margin-left:0.15rem">(${list.length})</span>
+						</a>
+					`);
+
+					blocks.push(`
+						<section id="tier-${tier}" class="tut-tier-section" style="--tut-tier-accent:${meta.accent};--tut-tier-soft:${meta.accentSoft};--tut-tier-border:${meta.accentBorder}">
+							<div class="tut-tier-head">
+								<span class="tut-tier-badge">${escapeHtml(meta.label)}</span>
+								<span class="tut-tier-eyebrow">${escapeHtml(meta.eyebrow)} · ${list.length} tutorials</span>
+							</div>
+							<p class="tut-tier-blurb">${escapeHtml(meta.blurb)}</p>
+							<div class="tut-grid">
+								${list.map((t) => tutorialCardHtml(t, meta)).join('')}
+							</div>
+						</section>
+					`);
 				});
-			});
+
+				blocks.push(`
+					<div class="tut-bottom-cta">
+						<div>
+							<h2>Don't see what you need?</h2>
+							<p>The full SDK reference, REST API, and architecture deep-dives live in the docs.</p>
+						</div>
+						<div class="tut-bottom-cta-actions">
+							<a class="tut-bottom-btn primary" href="/docs">Open docs →</a>
+							<a class="tut-bottom-btn secondary" href="https://github.com/nirholas/three.ws" target="_blank" rel="noopener">Read source on GitHub</a>
+						</div>
+					</div>
+				`);
+
+				root.innerHTML = blocks.join('');
+				jumps.innerHTML = jumpLinks.join('');
+			}
+
+			if (window.TUTORIALS) {
+				renderTutorials();
+			} else {
+				window.addEventListener('DOMContentLoaded', renderTutorials);
+			}
 		</script>
 	</body>
 </html>

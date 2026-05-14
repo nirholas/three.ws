@@ -17,6 +17,7 @@
 				{ "path": "/", "title": "Home", "description": "Landing page. Pitch, live agent demos, and the front door to every flow.", "priority": 1.0, "changefreq": "weekly" },
 				{ "path": "/discover", "title": "Discover", "description": "On-chain agent directory (ERC-8004 + Solana). Browse, search, and inspect every registered agent.", "priority": 0.9, "changefreq": "daily" },
 				{ "path": "/gallery", "title": "Avatar Gallery", "description": "Every public 3D avatar in the system, browsable as a grid.", "priority": 0.8, "changefreq": "daily" },
+				{ "path": "/walk", "title": "Walk", "description": "Drive a 3D avatar around with a joystick or WASD — toggle the back camera for AR-style passthrough.", "priority": 0.7, "changefreq": "monthly" },
 				{ "path": "/marketplace", "title": "Marketplace", "description": "Buy access to agents, skills, and avatars from other creators.", "priority": 0.8, "changefreq": "daily" },
 				{ "path": "/community", "title": "Community", "description": "Featured creators, builds, and conversations from the three.ws community.", "priority": 0.6, "changefreq": "weekly" },
 				{ "path": "/sitemap", "title": "Sitemap", "description": "Human-readable index of every page on three.ws.", "priority": 0.4, "changefreq": "weekly" }

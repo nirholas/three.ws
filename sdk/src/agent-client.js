@@ -16,7 +16,7 @@ export class PaymentRequiredError extends Error {
 export class AgentClient {
 	/**
 	 * @param {object} opts
-	 * @param {string} opts.baseUrl  Base URL of the 3D agent API (e.g. https://3d.irish)
+	 * @param {string} opts.baseUrl  Base URL of the 3D agent API (e.g. https://three.ws)
 	 */
 	constructor({ baseUrl = '' } = {}) {
 		this.baseUrl = baseUrl.replace(/\/$/, '');

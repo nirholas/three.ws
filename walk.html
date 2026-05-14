@@ -1,0 +1,292 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8" />
+		<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+		<title>Walk · three.ws</title>
+		<meta
+			name="viewport"
+			content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover"
+		/>
+		<meta name="author" content="nirholas" />
+		<meta
+			name="description"
+			content="Walk a 3D avatar around with a joystick — or through your phone camera in AR. Built on three.ws."
+		/>
+		<meta name="theme-color" content="#000000" />
+
+		<link rel="shortcut icon" href="/favicon.ico" />
+		<link rel="stylesheet" href="/style.css" />
+		<link rel="stylesheet" href="/footer.css" />
+		<link rel="stylesheet" href="/nav.css" />
+		<link rel="stylesheet" href="/fonts/fonts.css" />
+
+		<meta property="og:type" content="website" />
+		<meta property="og:site_name" content="three.ws" />
+		<meta property="og:title" content="Walk · three.ws" />
+		<meta property="og:description" content="A 3D avatar you can walk around — in the browser and in AR." />
+		<meta property="og:url" content="https://three.ws/walk" />
+		<meta property="og:image" content="https://three.ws/assets/og-image.png" />
+		<meta name="twitter:card" content="summary_large_image" />
+		<meta name="twitter:title" content="Walk · three.ws" />
+		<meta name="twitter:description" content="A 3D avatar you can walk around — in the browser and in AR." />
+
+		<style>
+			:root {
+				--bg: #0a0a0a;
+				--panel: rgba(17, 17, 17, 0.72);
+				--border: rgba(255, 255, 255, 0.08);
+				--text: #fafafa;
+				--text-2: #a1a1aa;
+				--accent: #7dd3fc;
+				--danger: #f87171;
+			}
+
+			html, body {
+				margin: 0;
+				padding: 0;
+				width: 100%;
+				height: 100%;
+				overflow: hidden;
+				background: #000;
+				color: var(--text);
+				font-family: 'Inter', system-ui, -apple-system, sans-serif;
+				-webkit-font-smoothing: antialiased;
+				touch-action: none;
+				overscroll-behavior: none;
+			}
+
+			#walk-stage {
+				position: fixed;
+				inset: 0;
+				background:
+					radial-gradient(80% 60% at 50% 30%, #1a2538 0%, #0a0a0a 70%) #0a0a0a;
+			}
+
+			#walk-camera-feed {
+				position: fixed;
+				inset: 0;
+				width: 100vw;
+				height: 100vh;
+				object-fit: cover;
+				z-index: 1;
+				display: none;
+				background: #000;
+			}
+			#walk-stage.is-ar #walk-camera-feed { display: block; }
+			#walk-stage.is-ar {
+				background: transparent;
+			}
+
+			#walk-canvas {
+				position: fixed;
+				inset: 0;
+				width: 100vw;
+				height: 100vh;
+				z-index: 2;
+				display: block;
+				/* Joystick / buttons sit on the UI layer above this. The canvas
+				   accepts pointer events for the camera-orbit drag handler. */
+			}
+
+			#walk-hud {
+				position: fixed;
+				top: env(safe-area-inset-top, 0);
+				left: 0;
+				right: 0;
+				z-index: 4;
+				display: flex;
+				gap: 8px;
+				align-items: flex-start;
+				justify-content: space-between;
+				padding: 14px 16px;
+				pointer-events: none;
+			}
+			#walk-hud > * { pointer-events: auto; }
+
+			.walk-card {
+				background: var(--panel);
+				border: 1px solid var(--border);
+				border-radius: 12px;
+				padding: 10px 12px;
+				backdrop-filter: blur(10px);
+				-webkit-backdrop-filter: blur(10px);
+				font-size: 13px;
+				line-height: 1.35;
+				max-width: min(60vw, 320px);
+			}
+			.walk-card h1 {
+				margin: 0 0 2px 0;
+				font-size: 14px;
+				font-weight: 600;
+				letter-spacing: 0.01em;
+			}
+			.walk-card p {
+				margin: 0;
+				color: var(--text-2);
+				font-size: 12px;
+			}
+			.walk-card a {
+				color: var(--accent);
+				text-decoration: none;
+			}
+
+			.walk-actions {
+				display: flex;
+				flex-direction: column;
+				gap: 8px;
+				align-items: flex-end;
+			}
+
+			.walk-btn {
+				appearance: none;
+				border: 1px solid var(--border);
+				background: var(--panel);
+				color: var(--text);
+				font: inherit;
+				font-size: 13px;
+				font-weight: 500;
+				padding: 8px 12px;
+				border-radius: 999px;
+				cursor: pointer;
+				backdrop-filter: blur(10px);
+				-webkit-backdrop-filter: blur(10px);
+				display: inline-flex;
+				align-items: center;
+				gap: 6px;
+				transition: transform 0.12s ease, background 0.12s ease;
+			}
+			.walk-btn:hover { background: rgba(34, 34, 34, 0.85); }
+			.walk-btn:active { transform: scale(0.97); }
+			.walk-btn[aria-pressed="true"] {
+				background: rgba(125, 211, 252, 0.18);
+				border-color: rgba(125, 211, 252, 0.45);
+				color: #e0f2fe;
+			}
+			.walk-btn[disabled] { opacity: 0.5; cursor: not-allowed; }
+			.walk-btn .dot {
+				width: 6px;
+				height: 6px;
+				border-radius: 50%;
+				background: var(--text-2);
+			}
+			.walk-btn[aria-pressed="true"] .dot {
+				background: var(--accent);
+				box-shadow: 0 0 8px var(--accent);
+			}
+
+			#walk-joystick {
+				position: fixed;
+				z-index: 5;
+				left: 24px;
+				bottom: calc(28px + env(safe-area-inset-bottom, 0));
+				width: 140px;
+				height: 140px;
+				touch-action: none;
+				pointer-events: auto;
+			}
+
+			#walk-status {
+				position: fixed;
+				z-index: 6;
+				left: 50%;
+				bottom: calc(24px + env(safe-area-inset-bottom, 0));
+				transform: translateX(-50%);
+				background: var(--panel);
+				border: 1px solid var(--border);
+				border-radius: 999px;
+				padding: 8px 14px;
+				font-size: 12px;
+				color: var(--text-2);
+				backdrop-filter: blur(10px);
+				-webkit-backdrop-filter: blur(10px);
+				pointer-events: none;
+				transition: opacity 0.2s ease;
+			}
+			#walk-status.is-error { color: var(--danger); border-color: rgba(248, 113, 113, 0.5); }
+			#walk-status.is-hidden { opacity: 0; }
+
+			#walk-help {
+				position: fixed;
+				z-index: 5;
+				right: 16px;
+				bottom: calc(28px + env(safe-area-inset-bottom, 0));
+				display: flex;
+				flex-direction: column;
+				gap: 6px;
+				align-items: flex-end;
+				color: var(--text-2);
+				font-size: 11px;
+				pointer-events: none;
+			}
+			.walk-key {
+				display: inline-flex;
+				align-items: center;
+				gap: 4px;
+				background: var(--panel);
+				border: 1px solid var(--border);
+				border-radius: 8px;
+				padding: 4px 8px;
+				backdrop-filter: blur(10px);
+				-webkit-backdrop-filter: blur(10px);
+			}
+			.walk-key kbd {
+				font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+				font-size: 10.5px;
+				padding: 1px 5px;
+				border-radius: 4px;
+				background: rgba(255, 255, 255, 0.08);
+				border: 1px solid var(--border);
+				color: var(--text);
+			}
+
+			/* Hide help text on small/touch screens — joystick is enough */
+			@media (hover: none), (max-width: 640px) {
+				#walk-help { display: none; }
+			}
+			@media (hover: hover) and (min-width: 641px) {
+				#walk-joystick { display: none; }
+			}
+		</style>
+	</head>
+	<body>
+		<div id="walk-stage">
+			<video id="walk-camera-feed" autoplay playsinline muted></video>
+			<canvas id="walk-canvas"></canvas>
+
+			<div id="walk-hud">
+				<div class="walk-card">
+					<h1>three.ws · walk</h1>
+					<p>Drag to orbit. Joystick or <kbd>WASD</kbd> to move.</p>
+				</div>
+				<div class="walk-actions">
+					<button
+						type="button"
+						class="walk-btn"
+						id="walk-ar-toggle"
+						aria-pressed="false"
+						title="Toggle AR camera passthrough"
+					>
+						<span class="dot"></span>
+						<span data-label>AR</span>
+					</button>
+					<a class="walk-btn" href="/" title="Back to three.ws home" style="text-decoration:none">
+						<span>← home</span>
+					</a>
+				</div>
+			</div>
+
+			<div id="walk-joystick" aria-label="Movement joystick"></div>
+
+			<div id="walk-help" aria-hidden="true">
+				<span class="walk-key"><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> move</span>
+				<span class="walk-key"><kbd>shift</kbd> run</span>
+				<span class="walk-key"><kbd>drag</kbd> orbit camera</span>
+			</div>
+
+			<div id="walk-status">loading avatar…</div>
+		</div>
+
+		<script type="module" src="/src/walk.js"></script>
+	</body>
+</html>
