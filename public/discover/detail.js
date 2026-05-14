@@ -281,7 +281,7 @@ function buildEmbedPanel(item, $) {
 			{
 				label: 'iframe',
 				key: 'iframe',
-				value: `<iframe src="${origin}/#model=${encodeURIComponent(item.glbUrl)}" width="480" height="600" style="border:0;border-radius:12px" allow="autoplay; xr-spatial-tracking" title="${name}"></iframe>`,
+				value: `<iframe src="${origin}/app#model=${encodeURIComponent(item.glbUrl)}" width="480" height="600" style="border:0;border-radius:12px" allow="autoplay; xr-spatial-tracking" title="${name}"></iframe>`,
 				rows: 3,
 			},
 			{ label: 'Link', key: 'link', value: detailUrl, rows: 1 },

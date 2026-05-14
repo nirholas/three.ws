@@ -164,7 +164,7 @@ export function mountAgentEthVanityCard({ panel, identity, onAssigned }) {
 				state.record = null;
 			} else if (r.ok) {
 				const data = await r.json();
-				state.record = data.data || data;
+				state.record = data && typeof data === 'object' && 'data' in data ? data.data : data;
 			} else {
 				state.err = `load failed (${r.status})`;
 			}

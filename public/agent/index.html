@@ -811,14 +811,16 @@
 					document.getElementById('page-agent-desc').textContent = identity.description;
 				}
 
-				// Render the agent home card
-				const container = document.getElementById('agent-home-container');
-				container.innerHTML = '';
-				const home = new AgentHome(container, identity, protocol, null);
-				await home.render();
-
 				// Inject hub actions if the viewer is the owner (user_id present = owner)
 				const isOwner = Boolean(rawAgent?.user_id);
+
+				// Render the agent home card. Pass isOwner explicitly so owner-only
+				// cards (Solana wallet, ETH vanity, vanity grinder) only mount for
+				// the owner — AgentIdentity may not know ownership at render time.
+				const container = document.getElementById('agent-home-container');
+				container.innerHTML = '';
+				const home = new AgentHome(container, identity, protocol, null, { isOwner });
+				await home.render();
 
 				// Mount the $AGENT pump.fun token widget. Renders empty-state for
 				// not-yet-launched agents (with a "Launch" CTA for owners) and full

@@ -1007,7 +1007,7 @@
 		radial-gradient(ellipse at 22% 25%, rgba(255, 175, 60, 0.22) 0%, transparent 60%),
 		radial-gradient(ellipse at 78% 65%, rgba(255, 100, 180, 0.13) 0%, transparent 55%),
 		radial-gradient(ellipse at 50% 100%, rgba(140, 80, 220, 0.12) 0%, transparent 70%),
-		linear-gradient(180deg, #1a0e08 0%, #08070b 100%);
+		#000;
 }
 
 /* ── Star canvas ─────────────────────────────────────────────────────────── */
@@ -1290,7 +1290,7 @@
 	background:
 		radial-gradient(ellipse at 70% 30%, rgba(255, 180, 60, 0.15) 0%, transparent 55%),
 		radial-gradient(ellipse at 20% 75%, rgba(255, 215, 106, 0.08) 0%, transparent 55%),
-		linear-gradient(180deg, #0c0a06 0%, #06070b 100%);
+		#000;
 }
 
 .h-layer-bg--mint {
@@ -1298,7 +1298,7 @@
 		radial-gradient(ellipse at 30% 40%, rgba(110, 231, 183, 0.12) 0%, transparent 55%),
 		radial-gradient(ellipse at 70% 60%, rgba(56, 189, 248, 0.1) 0%, transparent 50%),
 		radial-gradient(ellipse at 80% 75%, rgba(255, 215, 106, 0.04) 0%, transparent 55%),
-		linear-gradient(180deg, #060e14 0%, #06070b 100%);
+		#000;
 }
 
 /* ── Act depth orbs ──────────────────────────────────────────────────────── */

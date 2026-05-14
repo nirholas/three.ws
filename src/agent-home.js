@@ -51,6 +51,7 @@ export class AgentHome {
 		this.avatar = avatar;
 		this.skills = opts.skills || null;
 		this.memory = opts.memory || null;
+		this.isOwner = typeof opts.isOwner === 'boolean' ? opts.isOwner : null;
 
 		this._panel = null;
 		this._timeline = [];
@@ -208,7 +209,11 @@ export class AgentHome {
 		// Solana wallet for the agent. On success, lazy-mount the pump.fun
 		// card if it wasn't already mounted. The vanity grinder is a sibling
 		// card so the wallet UI stays focused on identity + balance.
-		if (this.identity?.id && this.identity?.isOwner !== false) {
+		// Default-deny when ownership is unknown — visitor flows must not fire
+		// owner-only requests (/solana, /eth-vanity) and pollute the console
+		// with 401s. Caller can pass opts.isOwner to override identity state.
+		const isOwner = this.isOwner !== null ? this.isOwner : this.identity?.isOwner;
+		if (this.identity?.id && isOwner === true) {
 			let walletCard = null;
 			try {
 				walletCard = mountAgentSolanaWalletCard({

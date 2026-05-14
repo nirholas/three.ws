@@ -81,6 +81,9 @@ export class AgentIdentity {
 	get isRegistered() {
 		return Boolean(this._record?.isRegistered);
 	}
+	get isOwner() {
+		return this._record?.isOwner ?? null;
+	}
 
 	// ── Load + Save ───────────────────────────────────────────────────────────
 
@@ -340,6 +343,7 @@ function _makeDefault(existingId) {
 		meta: {},
 		createdAt: Date.now(),
 		isRegistered: false,
+		isOwner: false,
 	};
 }
 
@@ -358,6 +362,13 @@ function _normalise(apiRecord) {
 			? new Date(apiRecord.created_at).getTime()
 			: apiRecord.createdAt || Date.now(),
 		isRegistered: Boolean(apiRecord.erc8004_agent_id || apiRecord.isRegistered),
+		// Server decorates owner-only fields (user_id, wallet_address, system_prompt,
+		// etc.) only when the requester owns the agent — see api/agents.js decorate().
+		// Use user_id presence as the canonical owner signal so visitor flows don't
+		// trigger owner-only requests (e.g. /solana, /eth-vanity) and get 401s.
+		isOwner: typeof apiRecord.isOwner === 'boolean'
+			? apiRecord.isOwner
+			: Boolean(apiRecord.user_id),
 		backendConfirmed: true,
 	};
 }

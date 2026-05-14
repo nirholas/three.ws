@@ -999,7 +999,7 @@ function openAvatarModal(avatar) {
 	}
 
 	const view = $('avatar-modal-view');
-	if (view) view.href = avatar.viewerUrl || (avatar.glbUrl ? `/#model=${encodeURIComponent(avatar.glbUrl)}` : '#');
+	if (view) view.href = avatar.viewerUrl || (avatar.glbUrl ? `/app#model=${encodeURIComponent(avatar.glbUrl)}` : '#');
 	const dl = $('avatar-modal-download');
 	if (dl) { dl.href = avatar.glbUrl || '#'; dl.download = (avatar.slug || avatar.avatarId || 'avatar') + '.glb'; }
 
@@ -1691,7 +1691,7 @@ async function loadAvatarDetail(id) {
 		if (avatar.name)   p.set('avatar_name', avatar.name);
 		location.href = `/create?${p}`;
 	};
-	if (viewBtn) viewBtn.href = avatar.viewerUrl || (avatar.glbUrl ? `/#model=${encodeURIComponent(avatar.glbUrl)}` : '#');
+	if (viewBtn) viewBtn.href = avatar.viewerUrl || (avatar.glbUrl ? `/app#model=${encodeURIComponent(avatar.glbUrl)}` : '#');
 	if (dlBtn)   { dlBtn.href = avatar.glbUrl || '#'; dlBtn.setAttribute('download', (avatar.slug || avatar.avatarId || 'avatar') + '.glb'); }
 
 	// Update page title + meta for social sharing.

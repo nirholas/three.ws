@@ -20,7 +20,12 @@ import { parse } from './_lib/validate.js';
 import { recordEvent } from './_lib/usage.js';
 import { captureException } from './_lib/sentry.js';
 import { sql } from './_lib/db.js';
+import { limits, clientIp } from './_lib/rate-limit.js';
 import { z } from 'zod';
+
+// Providers anonymous (unauthenticated) callers may use. Groq's free tier is
+// the only one we expose without sign-in — paid keys stay gated behind auth.
+const ANON_PROVIDERS = new Set(['groq']);
 
 export const maxDuration = 60;
 
@@ -226,12 +231,34 @@ export default wrap(async (req, res) => {
 	if (!method(req, res, ['POST'])) return;
 
 	const auth = await resolveAuth(req);
-	if (!auth) return error(res, 401, 'unauthorized', 'sign in to chat with the agent');
-
 	const body = parse(chatBody, await readJson(req));
+
+	// Anonymous callers are restricted to Groq's free tier (no other provider
+	// keys are exposed without auth). Force-pin the provider and rate-limit by
+	// IP so abuse can't burn the host's quota.
+	let anonymous = false;
+	if (!auth) {
+		const ip = clientIp(req);
+		const rl = await limits.chatIp(ip);
+		if (!rl.success) {
+			return error(res, 429, 'rate_limited', 'too many anonymous chat requests, try again shortly');
+		}
+		if (!process.env.GROQ_API_KEY) {
+			return error(res, 401, 'unauthorized', 'sign in to chat with the agent');
+		}
+		if (body.provider && !ANON_PROVIDERS.has(body.provider)) {
+			return error(res, 401, 'unauthorized', 'sign in to use this model');
+		}
+		body.provider = 'groq';
+		anonymous = true;
+	}
+
 	const route = pickProvider(body.provider, body.model);
 	if (!route) {
 		return error(res, 503, 'chat_unavailable', 'no chat provider is configured');
+	}
+	if (anonymous && route.name !== 'groq') {
+		return error(res, 401, 'unauthorized', 'sign in to chat with the agent');
 	}
 
 	const maxTokens = clampInt(
@@ -331,9 +358,9 @@ export default wrap(async (req, res) => {
 
 	const latencyMs = Date.now() - started;
 	recordEvent({
-		userId: auth.userId,
-		apiKeyId: auth.apiKeyId,
-		clientId: auth.clientId,
+		userId: auth?.userId ?? null,
+		apiKeyId: auth?.apiKeyId,
+		clientId: auth?.clientId,
 		kind: 'chat',
 		tool: route.model,
 		latencyMs,
@@ -343,6 +370,7 @@ export default wrap(async (req, res) => {
 			output_tokens: result.outputTokens,
 			actions: result.actions.map((a) => a.type),
 			has_context: Boolean(body.context?.modelName),
+			anonymous,
 		},
 	});
 });

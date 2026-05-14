@@ -214,6 +214,14 @@ export class Viewer {
 		window.addEventListener('keydown', this._onKeyDown);
 		this.renderer.domElement.addEventListener('dblclick', this._onDblClick);
 		window.addEventListener('message', this._onMessage, false);
+
+		// Track the host element's own box (not just the window) so the canvas
+		// follows when the embed wrap is resized, the page lays out late, or a
+		// flex/grid parent reflows.
+		if (typeof ResizeObserver !== 'undefined') {
+			this._ro = new ResizeObserver(() => this._onResize());
+			this._ro.observe(this.el);
+		}
 	}
 
 
@@ -1610,6 +1618,11 @@ export class Viewer {
 		if (this._intersectionObserver) {
 			this._intersectionObserver.disconnect();
 			this._intersectionObserver = null;
+		}
+
+		if (this._ro) {
+			this._ro.disconnect();
+			this._ro = null;
 		}
 
 		this.clear();
