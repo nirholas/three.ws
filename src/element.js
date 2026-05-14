@@ -466,6 +466,11 @@ const BASE_STYLE = `
 	/* Kiosk mode: hide dat.GUI debug controls entirely */
 	:host([kiosk]) .gui-wrap,
 	:host([kiosk]) .gui-toggle { display: none !important; }
+	/* viewer mode: pure 3D canvas, no chat / input / avatar anchor / debug.
+	   Use when embedding the avatar as decoration (landing pages, launchpads). */
+	:host([viewer]) .chrome,
+	:host([viewer]) .gui-wrap,
+	:host([viewer]) .gui-toggle { display: none !important; }
 	/* avatar-chat="off" — restore original bottom-row layout, hide avatar anchor */
 	:host([avatar-chat="off"]) .chrome {
 		inset: unset;
@@ -525,7 +530,6 @@ class Agent3DElement extends HTMLElement {
 			'tracked-mint',
 			'avatar-chat',
 			'avatar-walk',
-			'face-camera',
 		];
 	}
 
@@ -1254,7 +1258,6 @@ class Agent3DElement extends HTMLElement {
 			);
 			const viewer = new Viewer(this._stageEl, {
 				kiosk: this.hasAttribute('kiosk'),
-				faceCamera: this.hasAttribute('face-camera'),
 			});
 			this._viewer = viewer;
 			viewer._afterAnimateHooks = viewer._afterAnimateHooks || [];

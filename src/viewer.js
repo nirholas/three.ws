@@ -825,23 +825,16 @@ export class Viewer {
 		const focusY = -extentV * panelFrac;
 
 		// Final framed camera (the position the user should end up at).
+		// Avatar sits dead-centered front-on by default — no lateral offset.
+		// (The legacy 6% 3/4 angle pan was an aesthetic choice; removing it so
+		// every embed opens with the character squarely facing the viewer.)
 		const framedPos = new Vector3();
 		if (this.options.cameraPosition) {
 			framedPos.fromArray(this.options.cameraPosition);
 		} else {
-			// Slight 3/4 angle — minimal lateral offset keeps the avatar large
-			// when there's a chat panel on the right side. In kiosk / face-camera
-			// mode (no panel, embed previews, etc.) we want the avatar dead
-			// centered and front-on, so zero the pan out.
-			const panX = this.options.faceCamera || this.options.kiosk ? 0 : dist * 0.06;
-			framedPos.set(panX, focusY, dist);
+			framedPos.set(0, focusY, dist);
 		}
-		const orbitalTargetX = this.options.cameraPosition
-			? 0
-			: this.options.faceCamera || this.options.kiosk
-				? 0
-				: dist * 0.06;
-		const orbitalTarget = new Vector3(orbitalTargetX, focusY, 0);
+		const orbitalTarget = new Vector3(0, focusY, 0);
 
 		// In kiosk / embed modes (and on subsequent loads), snap straight to
 		// the framed position. On the first interactive load we tween in from

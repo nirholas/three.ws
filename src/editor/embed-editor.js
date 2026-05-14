@@ -348,39 +348,125 @@ const STYLE = `
 	.anim-dock {
 		position: absolute;
 		left: 50%;
-		bottom: 16px;
+		bottom: 20px;
 		transform: translateX(-50%);
 		display: flex;
 		gap: 6px;
-		padding: 6px;
-		background: rgba(15, 18, 22, 0.92);
-		border: 1px solid #1f2937;
+		padding: 7px;
+		background: rgba(10, 12, 16, 0.78);
+		border: 1px solid rgba(255,255,255,0.08);
 		border-radius: 999px;
-		backdrop-filter: blur(8px);
-		max-width: calc(100% - 32px);
-		overflow-x: auto;
-		scrollbar-width: none;
+		backdrop-filter: blur(20px);
+		-webkit-backdrop-filter: blur(20px);
+		box-shadow: 0 20px 50px rgba(0,0,0,0.5), 0 0 0 1px rgba(255,255,255,0.02) inset;
 		z-index: 5;
+		max-width: calc(100% - 32px);
 	}
-	.anim-dock::-webkit-scrollbar { display: none; }
 	.anim-dock[hidden] { display: none; }
 	.anim-chip {
 		flex: 0 0 auto;
-		background: #111827;
-		color: #e5e7eb;
-		border: 1px solid #1f2937;
+		background: rgba(255,255,255,0.04);
+		color: rgba(245,245,245,0.85);
+		border: 1px solid transparent;
 		border-radius: 999px;
-		padding: 6px 12px;
-		font: 500 12px system-ui;
+		padding: 8px 14px;
+		font: 500 13px 'Inter', system-ui;
+		letter-spacing: -0.005em;
 		cursor: pointer;
 		white-space: nowrap;
 		display: inline-flex;
 		align-items: center;
-		gap: 4px;
+		gap: 6px;
+		transition: background 0.15s, color 0.15s, transform 0.1s;
 	}
-	.anim-chip:hover { background: #1e293b; border-color: #334155; }
-	.anim-chip[aria-pressed="true"] { background: #3b82f6; border-color: #3b82f6; color: white; }
-	.anim-chip .icon { font-size: 13px; }
+	.anim-chip:hover {
+		background: rgba(255,255,255,0.09);
+		color: #fff;
+		transform: translateY(-1px);
+	}
+	.anim-chip[aria-pressed="true"] {
+		background: linear-gradient(135deg, #a78bfa 0%, #22d3ee 100%);
+		color: #0a0c10;
+		font-weight: 600;
+		box-shadow: 0 0 24px rgba(139,92,246,0.45);
+	}
+	.anim-chip[aria-pressed="true"] .icon { transform: scale(1.15); }
+	.anim-chip[aria-pressed="true"]::after {
+		content: '';
+		width: 7px;
+		height: 7px;
+		border-radius: 50%;
+		background: #0a0c10;
+		animation: anim-chip-pulse 1.4s ease-in-out infinite;
+		margin-left: 2px;
+	}
+	@keyframes anim-chip-pulse {
+		0%, 100% { opacity: 1; transform: scale(1); }
+		50% { opacity: 0.35; transform: scale(0.7); }
+	}
+	.anim-chip .icon { font-size: 15px; line-height: 1; transition: transform 0.2s; }
+	.anim-chip .kbd {
+		font: 500 10px ui-monospace, Menlo, monospace;
+		color: rgba(245,245,245,0.4);
+		background: rgba(255,255,255,0.06);
+		padding: 1px 5px;
+		border-radius: 4px;
+		margin-left: 2px;
+	}
+	.anim-chip[aria-pressed="true"] .kbd { display: none; }
+	.anim-chip.more {
+		background: transparent;
+		color: rgba(245,245,245,0.55);
+		border-color: rgba(255,255,255,0.10);
+	}
+	.anim-chip.more:hover { color: #fff; background: rgba(255,255,255,0.05); }
+
+	/* Animation library modal — full categorized list. */
+	.anim-modal { position: fixed; inset: 0; z-index: 1000; display: flex; align-items: center; justify-content: center; }
+	.anim-modal[hidden] { display: none; }
+	.anim-modal-backdrop { position: absolute; inset: 0; background: rgba(2,6,23,0.7); backdrop-filter: blur(4px); }
+	.anim-modal-card {
+		position: relative;
+		width: min(720px, 92vw);
+		max-height: 80vh;
+		background: #0a0c10;
+		border: 1px solid rgba(255,255,255,0.08);
+		border-radius: 16px;
+		box-shadow: 0 24px 60px rgba(0,0,0,0.6);
+		display: flex;
+		flex-direction: column;
+		overflow: hidden;
+	}
+	.anim-modal-header {
+		display: flex;
+		justify-content: space-between;
+		align-items: center;
+		padding: 18px 22px;
+		border-bottom: 1px solid rgba(255,255,255,0.06);
+	}
+	.anim-modal-header h3 { font: 700 17px 'Inter', system-ui; margin: 0; color: #fafafa; }
+	.anim-modal-close {
+		background: transparent;
+		border: 0;
+		color: rgba(245,245,245,0.55);
+		font-size: 22px;
+		line-height: 1;
+		cursor: pointer;
+		padding: 4px 8px;
+		border-radius: 6px;
+	}
+	.anim-modal-close:hover { background: rgba(255,255,255,0.06); color: #fff; }
+	.anim-modal-body { padding: 20px 22px 24px; overflow-y: auto; }
+	.anim-cat-title {
+		font: 600 11px 'Inter', system-ui;
+		color: rgba(245,245,245,0.5);
+		text-transform: uppercase;
+		letter-spacing: 0.08em;
+		margin: 12px 0 10px;
+	}
+	.anim-cat-title:first-child { margin-top: 0; }
+	.anim-cat-grid { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 16px; }
+	.anim-cat-grid .anim-chip { padding: 6px 12px; font-size: 12.5px; }
 
 	.snapline {
 		position: absolute;
@@ -843,7 +929,11 @@ export function mountEmbedEditor(root, options = {}) {
 		voice: true,
 		cameraControls: false,
 		ar: false,
-		background: '',
+		// "Just the 3D avatar" is the default: kiosk on (chat hidden), background
+		// transparent. Users opt into the chat UI / coloured background via the
+		// Options panel.
+		showChat: false,
+		background: 'transparent',
 		...options,
 	};
 
@@ -963,6 +1053,13 @@ export function mountEmbedEditor(root, options = {}) {
 
 					<div class="section-title">Options</div>
 					<div class="field-row">
+						<label>Chat UI</label>
+						<select id="chat-select">
+							<option value="off">Hidden (just avatar)</option>
+							<option value="on">Show chat panel</option>
+						</select>
+					</div>
+					<div class="field-row">
 						<label>Voice</label>
 						<select id="voice-select">
 							<option value="">on (default)</option>
@@ -986,7 +1083,6 @@ export function mountEmbedEditor(root, options = {}) {
 					<div class="field-row">
 						<label>Background</label>
 						<select id="bg-select">
-							<option value="">Default</option>
 							<option value="transparent">Transparent</option>
 							<option value="dark">Dark</option>
 							<option value="light">Light</option>
@@ -1020,6 +1116,16 @@ export function mountEmbedEditor(root, options = {}) {
 					<button class="avatar-picker-more" id="avatar-more" type="button" hidden>Load more</button>
 					<div class="avatar-picker-empty" id="avatar-empty" hidden>No public avatars found.</div>
 				</div>
+			</div>
+		</div>
+		<div class="anim-modal" id="anim-modal" hidden role="dialog" aria-modal="true" aria-labelledby="anim-modal-title">
+			<div class="anim-modal-backdrop" id="anim-modal-backdrop"></div>
+			<div class="anim-modal-card">
+				<header class="anim-modal-header">
+					<h3 id="anim-modal-title">Animation library</h3>
+					<button class="anim-modal-close" id="anim-modal-close" type="button" aria-label="Close (Esc)">✕</button>
+				</header>
+				<div class="anim-modal-body" id="anim-modal-body"></div>
 			</div>
 		</div>
 	`;
@@ -1059,31 +1165,163 @@ export function mountEmbedEditor(root, options = {}) {
 	agentEl.setAttribute('src', state.src || DEFAULT_PREVIEW_SRC);
 
 	const animDock = $('#anim-dock');
+	const animModal = $('#anim-modal');
+	const animModalBody = $('#anim-modal-body');
+	const animModalBackdrop = $('#anim-modal-backdrop');
+	const animModalClose = $('#anim-modal-close');
+
+	// Curated chips visible in the always-on dock — ordered for video impact.
+	// Only ones present in the loaded model's clip list are shown; the rest
+	// of the library lives behind the "+ More" chip in the modal.
+	const FEATURED_CLIPS = ['wave', 'dance', 'thriller', 'celebrate', 'kiss', 'jump'];
+
+	// Buckets for the modal. Names not matched here fall into "Other".
+	const CLIP_CATEGORIES = [
+		{ title: 'Greetings & social', match: /^(wave|kiss|pray|sitclap|sitlaugh|taunt|silly|reaction)$/ },
+		{ title: 'Dances', match: /^(dance|rumba|thriller|capoeira|hiphop)$/ },
+		{ title: 'Reactions', match: /^(celebrate|angry|defeated|reaction)$/ },
+		{ title: 'Locomotion', match: /^(walk|jump|stepback|dodge|removing)$/ },
+		{ title: 'Falls & combat', match: /^(falling|dying|shoved|falltolanding|jumpdown|jumpdown2|jumpdown3)$/ },
+		{ title: 'Sports', match: /^(header|goalkeeper|coverstand)$/ },
+		{ title: 'Idle & standing', match: /^(idle|standup)$/ },
+	];
+
+	// Live registry of every chip rendered (dock + modal) keyed by clip name,
+	// so playing a clip can sync aria-pressed across both surfaces at once.
+	let chipsByName = new Map();
+	function setActiveClip(name) {
+		state.activeClip = name;
+		for (const [n, chips] of chipsByName) {
+			const pressed = String(n === name);
+			for (const c of chips) c.setAttribute('aria-pressed', pressed);
+		}
+	}
+	function playClip(clip) {
+		setActiveClip(clip.name);
+		agentEl.play?.(clip.name, { loop: clip.loop !== false, fade_ms: 250 });
+	}
+
+	function makeChip(clip, { shortcut, withKbd = false, extraClass = '' } = {}) {
+		const chip = document.createElement('button');
+		chip.type = 'button';
+		chip.className = 'anim-chip' + (extraClass ? ' ' + extraClass : '');
+		chip.dataset.name = clip.name;
+		chip.setAttribute('aria-pressed', String(state.activeClip === clip.name));
+		const kbdHtml = withKbd && shortcut ? `<span class="kbd">${shortcut}</span>` : '';
+		chip.innerHTML = `<span class="icon">${clip.icon || '✨'}</span><span>${clip.label || clip.name}</span>${kbdHtml}`;
+		chip.addEventListener('click', () => playClip(clip));
+		if (!chipsByName.has(clip.name)) chipsByName.set(clip.name, []);
+		chipsByName.get(clip.name).push(chip);
+		return chip;
+	}
+
+	function openAnimModal() {
+		animModal.hidden = false;
+	}
+	function closeAnimModal() {
+		animModal.hidden = true;
+	}
+	animModalClose.addEventListener('click', closeAnimModal);
+	animModalBackdrop.addEventListener('click', closeAnimModal);
+
 	function renderAnimDock() {
 		if (state.widgetId) { animDock.hidden = true; return; }
 		const clips = (typeof agentEl._listAvailableClips === 'function')
 			? agentEl._listAvailableClips()
 			: [];
 		if (!clips.length) { animDock.hidden = true; return; }
+
+		chipsByName = new Map();
 		animDock.replaceChildren();
-		for (const clip of clips) {
-			const chip = document.createElement('button');
-			chip.type = 'button';
-			chip.className = 'anim-chip';
-			chip.dataset.name = clip.name;
-			chip.setAttribute('aria-pressed', String(state.activeClip === clip.name));
-			chip.innerHTML = `<span class="icon">${clip.icon || '✨'}</span><span>${clip.label || clip.name}</span>`;
-			chip.addEventListener('click', () => {
-				state.activeClip = clip.name;
-				agentEl.play?.(clip.name, { loop: clip.loop !== false, fade_ms: 250 });
-				for (const c of animDock.querySelectorAll('.anim-chip'))
-					c.setAttribute('aria-pressed', String(c.dataset.name === clip.name));
-			});
-			animDock.appendChild(chip);
+		animModalBody.replaceChildren();
+
+		const byName = new Map(clips.map((c) => [c.name, c]));
+
+		// 1. Featured chips in the dock — in declared order, skipping any that
+		//    the current model doesn't expose.
+		let shortcutIdx = 1;
+		for (const name of FEATURED_CLIPS) {
+			const clip = byName.get(name);
+			if (!clip) continue;
+			animDock.appendChild(makeChip(clip, { shortcut: String(shortcutIdx), withKbd: true }));
+			shortcutIdx++;
+			if (shortcutIdx > 6) break;
 		}
+
+		// 2. "+ More" chip if there are clips not shown in the featured row.
+		const extraClips = clips.filter((c) => !FEATURED_CLIPS.includes(c.name));
+		if (extraClips.length || clips.length > shortcutIdx - 1) {
+			const more = document.createElement('button');
+			more.type = 'button';
+			more.className = 'anim-chip more';
+			more.innerHTML = `<span class="icon">✨</span><span>More</span>`;
+			more.title = 'Open animation library (A)';
+			more.addEventListener('click', openAnimModal);
+			animDock.appendChild(more);
+		}
+
+		// 3. Modal contents — every clip categorized.
+		for (const cat of CLIP_CATEGORIES) {
+			const inCat = clips.filter((c) => cat.match.test(c.name));
+			if (!inCat.length) continue;
+			const title = document.createElement('div');
+			title.className = 'anim-cat-title';
+			title.textContent = cat.title;
+			const grid = document.createElement('div');
+			grid.className = 'anim-cat-grid';
+			for (const clip of inCat) grid.appendChild(makeChip(clip));
+			animModalBody.appendChild(title);
+			animModalBody.appendChild(grid);
+		}
+		// Any clip not matched by a category goes into "Other".
+		const matched = new Set(
+			CLIP_CATEGORIES.flatMap((cat) => clips.filter((c) => cat.match.test(c.name)).map((c) => c.name)),
+		);
+		const other = clips.filter((c) => !matched.has(c.name));
+		if (other.length) {
+			const title = document.createElement('div');
+			title.className = 'anim-cat-title';
+			title.textContent = 'Other';
+			const grid = document.createElement('div');
+			grid.className = 'anim-cat-grid';
+			for (const clip of other) grid.appendChild(makeChip(clip));
+			animModalBody.appendChild(title);
+			animModalBody.appendChild(grid);
+		}
+
 		animDock.hidden = false;
 	}
 	agentEl.addEventListener('agent:ready', renderAnimDock);
+
+	// Number-key shortcuts (1–6) play the matching featured chip. Skipped
+	// while typing in any text field; skipped when the modal is open so the
+	// user can scroll without firing animations.
+	const onAnimKey = (e) => {
+		if (e.metaKey || e.ctrlKey || e.altKey) return;
+		if (animModal && !animModal.hidden) {
+			if (e.key === 'Escape') { e.preventDefault(); closeAnimModal(); }
+			return;
+		}
+		if (e.key >= '1' && e.key <= '6') {
+			const chips = animDock.querySelectorAll('.anim-chip:not(.more)');
+			const idx = Number(e.key) - 1;
+			if (chips[idx]) {
+				const path = e.composedPath?.() || [];
+				const inText = path.some((n) => n?.tagName === 'INPUT' || n?.tagName === 'TEXTAREA' || n?.isContentEditable);
+				if (inText) return;
+				e.preventDefault();
+				chips[idx].click();
+			}
+		} else if (e.key === 'a' || e.key === 'A') {
+			const path = e.composedPath?.() || [];
+			const inText = path.some((n) => n?.tagName === 'INPUT' || n?.tagName === 'TEXTAREA' || n?.isContentEditable);
+			if (inText) return;
+			e.preventDefault();
+			if (animModal.hidden) openAnimModal();
+			else closeAnimModal();
+		}
+	};
+	document.addEventListener('keydown', onAnimKey);
 
 	// ── Avatar picker (modal) ──
 	// Behind a modal so the panel stays light. The list is fetched only when
@@ -1343,6 +1581,11 @@ export function mountEmbedEditor(root, options = {}) {
 		state.height = hInput.value;
 		sync();
 	});
+	$('#chat-select').addEventListener('change', (e) => {
+		state.showChat = e.target.value === 'on';
+		applyAgentAttrs();
+		sync();
+	});
 	$('#voice-select').addEventListener('change', (e) => {
 		state.voice = e.target.value === 'off' ? false : true;
 		applyAgentAttrs();
@@ -1551,10 +1794,11 @@ export function mountEmbedEditor(root, options = {}) {
 		wInput.value = state.width;
 		hInput.value = state.height;
 		$('#responsive-select').value = state.responsivePreset;
+		$('#chat-select').value = state.showChat ? 'on' : 'off';
 		$('#voice-select').value = state.voice === false ? 'off' : '';
 		$('#camera-select').value = state.cameraControls ? 'on' : 'off';
 		$('#ar-select').value = state.ar ? 'on' : 'off';
-		$('#bg-select').value = state.background || '';
+		$('#bg-select').value = state.background || 'transparent';
 		sync();
 	});
 
@@ -1671,6 +1915,10 @@ export function mountEmbedEditor(root, options = {}) {
 	// own agent instance and reads its config from the widget record).
 	function applyAgentAttrs() {
 		if (state.widgetId) return;
+		// kiosk = no chat UI. Mirror state.showChat onto the live agent so the
+		// editor preview matches what the snippet will emit.
+		if (state.showChat) agentEl.removeAttribute('kiosk');
+		else agentEl.setAttribute('kiosk', '');
 		if (state.voice === false) agentEl.setAttribute('voice', 'off');
 		else agentEl.removeAttribute('voice');
 		if (state.cameraControls) agentEl.setAttribute('camera-controls', '');
@@ -1747,7 +1995,10 @@ export function mountEmbedEditor(root, options = {}) {
 		}
 
 		const attrs = [];
-		if (state.src) attrs.push(`src="${escapeAttr(state.src)}"`);
+		// Always emit a src so the snippet renders the same avatar the editor
+		// is previewing. Falls back to the default avatar when the user hasn't
+		// picked anything yet.
+		attrs.push(`src="${escapeAttr(state.src || DEFAULT_PREVIEW_SRC)}"`);
 		if (state.mode && state.mode !== 'inline') attrs.push(`mode="${state.mode}"`);
 		if (state.mode === 'floating') {
 			if (state.position !== 'bottom-right') attrs.push(`position="${state.position}"`);
@@ -1775,14 +2026,17 @@ export function mountEmbedEditor(root, options = {}) {
 			attrs.push(`responsive="false"`);
 		}
 
+		// Kiosk by default — emit it unless the user explicitly opts INTO the
+		// chat UI. This gives a clean "just the 3D avatar" embed out of the
+		// box; users who want a chat panel can flip the toggle.
+		if (!state.showChat) attrs.push(`kiosk`);
 		if (state.voice === false) attrs.push(`voice="off"`);
 		if (state.cameraControls) attrs.push(`camera-controls`);
 		if (state.ar) attrs.push(`ar`);
-		if (state.background) attrs.push(`background="${escapeAttr(state.background)}"`);
-		// Face the camera by default — centers the avatar in the frame instead of
-		// the slight 3/4 offset that exists to make room for the chat panel in
-		// non-kiosk embeds. Users who want the offset can remove this attribute.
-		attrs.push(`face-camera`);
+		// Background — default is transparent so the avatar floats over the host
+		// page without a coloured box behind it. Users can pick Dark / Light if
+		// they want a contained widget instead.
+		attrs.push(`background="${escapeAttr(state.background || 'transparent')}"`);
 
 		const script = `<script type="module" async src="${AGENT_3D_HOST}/agent-3d/${AGENT_3D_VERSION}/agent-3d.js"></` + 'script>';
 		const element = `<agent-3d ${attrs.join(' ')}></agent-3d>`;
