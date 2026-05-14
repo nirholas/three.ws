@@ -1,2107 +1,1806 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🤖</text></svg>">
-<title>three.ws · Pump Dashboard</title>
-<meta name="description" content="Multi-pane Pump.fun dashboard for 3D-Agent — live feed, watch list, claims, scanner, quoting.">
-<link rel="canonical" href="/pump-dashboard.html">
-<style>
-  :root {
-    --bg: #000;
-    --bg-card: #0d0d0d;
-    --bg-input: #161616;
-    --border: #222;
-    --border-focus: #fff;
-    --text: #ccc;
-    --text-bright: #fff;
-    --accent: #fff;
-    --accent-dim: #aaa;
-    --red: #d9d9d9;
-    --yellow: #e6e6e6;
-    --blue: #c4c4c4;
-    --purple: #b8b8b8;
-    --orange: #cfcfcf;
-    --font: 'Courier New', monospace;
-    --radius: 6px;
-  }
-  * { margin: 0; padding: 0; box-sizing: border-box; }
-  body {
-    background: var(--bg);
-    color: var(--text);
-    font-family: var(--font);
-    font-size: 13px;
-    line-height: 1.5;
-    min-height: 100vh;
-  }
+<!doctype html>
+<html lang="en" class="pump-dashboard-page">
+	<head>
+		<meta charset="UTF-8" />
+		<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<title>Pump Dashboard — three.ws</title>
+		<meta name="description" content="Real-time Pump.fun dashboard — live feed, watch list, claims, token scanner, quoting, vanity addresses." />
+		<meta name="theme-color" content="#06070b" />
+		<link rel="canonical" href="https://three.ws/pump-dashboard" />
 
-  /* ── Layout ──────────────────────────────────────────── */
-  .app { display: flex; min-height: 100vh; }
-  .sidebar {
-    width: 220px;
-    background: var(--bg-card);
-    border-right: 1px solid var(--border);
-    display: flex;
-    flex-direction: column;
-    position: fixed;
-    top: 0; left: 0; bottom: 0;
-    z-index: 20;
-    overflow-y: auto;
-  }
-  .sidebar-header {
-    padding: 16px;
-    border-bottom: 1px solid var(--border);
-  }
-  .sidebar-header h1 {
-    font-size: 14px;
-    color: var(--accent);
-    display: flex;
-    align-items: center;
-    gap: 8px;
-  }
-  .sidebar-header h1 a {
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-    color: inherit;
-    text-decoration: none;
-  }
-  .sidebar-header .wordmark-logo {
-    width: 22px;
-    height: 22px;
-    display: inline-block;
-    vertical-align: middle;
-  }
-  .sidebar-header .wordmark-dot {
-    width: 7px;
-    height: 7px;
-    border-radius: 50%;
-    background: linear-gradient(135deg, #a78bfa 0%, #6366f1 100%);
-    box-shadow: 0 0 10px rgba(139, 92, 246, 0.6);
-    display: inline-block;
-  }
-  .sidebar-header .version { font-size: 11px; color: #666; }
-  .sidebar nav { flex: 1; padding: 8px 0; }
-  .sidebar nav a {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    padding: 10px 16px;
-    color: var(--text);
-    text-decoration: none;
-    font-size: 12px;
-    border-left: 3px solid transparent;
-    transition: all 0.15s;
-  }
-  .sidebar nav a:hover { background: rgba(255,255,255,0.04); color: var(--text-bright); }
-  .sidebar nav a.active {
-    background: rgba(255,255,255,0.08);
-    color: var(--accent);
-    border-left-color: var(--accent);
-  }
-  .sidebar nav a .icon { width: 16px; text-align: center; }
-  .sidebar nav .section-label {
-    padding: 12px 16px 4px;
-    font-size: 10px;
-    color: #555;
-    text-transform: uppercase;
-    letter-spacing: 1px;
-  }
-  .sidebar-footer {
-    padding: 12px 16px;
-    border-top: 1px solid var(--border);
-    font-size: 11px;
-    color: #555;
-  }
-  .main { margin-left: 220px; flex: 1; }
+		<meta property="og:type" content="website" />
+		<meta property="og:site_name" content="three.ws" />
+		<meta property="og:title" content="Pump Dashboard — three.ws" />
+		<meta property="og:description" content="Real-time Pump.fun dashboard — live feed, watch list, claims, token scanner, quoting, vanity addresses." />
+		<meta property="og:url" content="https://three.ws/pump-dashboard" />
+		<meta property="og:image" content="https://three.ws/og-image.png" />
 
-  /* ── Top Bar ─────────────────────────────────────────── */
-  .topbar {
-    background: var(--bg-card);
-    border-bottom: 1px solid var(--border);
-    padding: 12px 24px;
-    display: flex;
-    align-items: center;
-    gap: 16px;
-    position: sticky;
-    top: 0;
-    z-index: 10;
-  }
-  .topbar .page-title { font-size: 15px; color: var(--text-bright); }
-  .topbar .spacer { flex: 1; }
-  .topbar .connection-status {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    font-size: 11px;
-  }
-  .topbar .dot {
-    width: 8px; height: 8px;
-    border-radius: 50%;
-    background: #555;
-  }
-  .topbar .dot.connected { background: var(--accent); box-shadow: 0 0 6px var(--accent); }
-  .topbar .dot.error { background: var(--red); }
-
-  /* ── Content ─────────────────────────────────────────── */
-  .content { padding: 24px; }
-
-  /* ── Dashboard Grid ────────────────────────────────── */
-  .dashboard-grid {
-    display: grid;
-    grid-template-columns: repeat(12, 1fr);
-    grid-auto-rows: minmax(200px, auto);
-    gap: 24px;
-  }
-  .dash-module {
-    background: var(--bg-card);
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    overflow: hidden;
-    display: flex;
-    flex-direction: column;
-  }
-  .module-12 { grid-column: span 12; }
-  .module-8 { grid-column: span 8; }
-  .module-6 { grid-column: span 6; }
-  .module-4 { grid-column: span 4; }
-  .module-3 { grid-column: span 3; }
-  @media (max-width: 1200px) {
-    .module-8, .module-4 { grid-column: span 12; }
-  }
-  @media (max-width: 900px) {
-    .module-6 { grid-column: span 12; }
-  }
-  @media (max-width: 600px) {
-    .module-3 { grid-column: span 6; }
-  }
-
-  .panel-header {
-    padding: 12px 16px;
-    border-bottom: 1px solid var(--border);
-    display: flex;
-    align-items: center;
-    gap: 12px;
-  }
-  .panel-header h2 {
-    font-size: 13px;
-    color: var(--text-bright);
-  }
-  .panel-header .badge {
-    background: rgba(255,255,255,0.12);
-    color: var(--accent);
-    padding: 2px 8px;
-    border-radius: 10px;
-    font-size: 10px;
-  }
-  .panel-header .spacer { flex: 1; }
-  .panel-body { padding: 16px; flex: 1; min-height: 0; }
-  .panel-body.no-pad { padding: 0; }
-  .panel-body .empty {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    height: 100%;
-  }
-
-  /* ── Featured Agent Card ───────────────────────────── */
-  .featured-agent-card {
-    display: flex;
-    gap: 16px;
-    align-items: center;
-    height: 100%;
-  }
-  .featured-agent-card .avatar {
-    width: 80px;
-    height: 80px;
-    border-radius: 50%;
-    background: #000;
-    border: 2px solid var(--border);
-    flex-shrink: 0;
-    background-size: cover;
-    background-position: center;
-    background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="80" height="80" viewBox="0 0 80 80"><rect width="80" height="80" fill="%230a0a0a"/><text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" font-family="monospace" font-size="40" fill="%23222">🤖</text></svg>');
-  }
-  .featured-agent-card .info .name {
-    font-size: 16px;
-    color: var(--text-bright);
-    font-weight: bold;
-  }
-  .featured-agent-card .info .desc {
-    font-size: 12px;
-    color: #888;
-    margin: 4px 0 8px;
-  }
-
-  /* ── Tables ───────────────────────────────────────────── */
-  table { width: 100%; border-collapse: collapse; }
-  th, td {
-    padding: 8px 12px;
-    text-align: left;
-    font-size: 12px;
-    border-bottom: 1px solid var(--border);
-  }
-  th { color: #666; font-weight: normal; text-transform: uppercase; font-size: 10px; letter-spacing: 0.5px; }
-  td { color: var(--text); }
-  tr:hover td { background: rgba(255,255,255,0.02); }
-  .mono { font-family: var(--font); }
-  .addr {
-    color: var(--blue);
-    cursor: pointer;
-    text-decoration: none;
-  }
-  .addr:hover { text-decoration: underline; }
-  .tag {
-    display: inline-block;
-    padding: 2px 6px;
-    border-radius: 3px;
-    font-size: 10px;
-    font-weight: bold;
-  }
-  .tag-buy { background: rgba(255,255,255,0.12); color: var(--accent); }
-  .tag-sell { background: rgba(255,255,255,0.08); color: var(--red); }
-  .tag-claim { background: rgba(255,255,255,0.1); color: var(--blue); }
-  .tag-grad { background: rgba(255,255,255,0.09); color: var(--purple); }
-  .tag-whale { background: rgba(255,255,255,0.11); color: var(--orange); }
-  .tag-launch { background: rgba(255,255,255,0.13); color: var(--yellow); }
-
-  /* ── Buttons ──────────────────────────────────────────── */
-  .btn {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    padding: 6px 14px;
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    background: var(--bg-input);
-    color: var(--text);
-    font-family: var(--font);
-    font-size: 12px;
-    cursor: pointer;
-    transition: all 0.15s;
-  }
-  .btn:hover { border-color: #444; color: var(--text-bright); }
-  .btn-primary { border-color: var(--accent-dim); color: var(--accent); }
-  .btn-primary:hover { background: rgba(255,255,255,0.1); }
-  .btn-danger { border-color: #555; color: var(--red); }
-  .btn-danger:hover { background: rgba(255,255,255,0.06); }
-  .btn-sm { padding: 4px 10px; font-size: 11px; }
-
-  /* ── Forms ────────────────────────────────────────────── */
-  .form-group { margin-bottom: 12px; }
-  .form-group label { display: block; font-size: 11px; color: #888; margin-bottom: 4px; text-transform: uppercase; letter-spacing: 0.5px; }
-  .form-group input, .form-group select, .form-group textarea {
-    width: 100%;
-    padding: 8px 12px;
-    background: var(--bg-input);
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    color: var(--text-bright);
-    font-family: var(--font);
-    font-size: 12px;
-    outline: none;
-  }
-  .form-group input:focus, .form-group select:focus, .form-group textarea:focus {
-    border-color: var(--accent);
-  }
-  .form-row { display: flex; gap: 12px; }
-  .form-row .form-group { flex: 1; }
-  .form-inline { display: flex; gap: 8px; align-items: flex-end; }
-
-  /* ── Feed ─────────────────────────────────────────────── */
-  .feed { max-height: 500px; overflow-y: auto; }
-  .feed-item {
-    padding: 10px 16px;
-    border-bottom: 1px solid var(--border);
-    display: flex;
-    gap: 12px;
-    align-items: flex-start;
-    transition: background 0.15s;
-  }
-  .feed-item:hover { background: rgba(255,255,255,0.02); }
-  .feed-item.new { animation: feedFlash 1s ease-out; }
-  @keyframes feedFlash {
-    0% { background: rgba(255,255,255,0.14); }
-    100% { background: transparent; }
-  }
-  .feed-item .time { color: #555; font-size: 11px; white-space: nowrap; min-width: 70px; }
-  .feed-item .body { flex: 1; }
-  .feed-item .title { color: var(--text-bright); font-size: 12px; }
-  .feed-item .detail { color: #888; font-size: 11px; margin-top: 2px; }
-
-  /* ── Modals ───────────────────────────────────────────── */
-  .modal-backdrop {
-    position: fixed;
-    inset: 0;
-    background: rgba(0,0,0,0.7);
-    z-index: 100;
-    display: none;
-    align-items: center;
-    justify-content: center;
-  }
-  .modal-backdrop.open { display: flex; }
-  .modal {
-    background: var(--bg-card);
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    width: 480px;
-    max-height: 80vh;
-    overflow-y: auto;
-    padding: 20px;
-  }
-  .modal h3 { color: var(--text-bright); font-size: 14px; margin-bottom: 16px; }
-  .modal-actions { display: flex; gap: 8px; justify-content: flex-end; margin-top: 16px; }
-
-  /* ── Toggle ───────────────────────────────────────────── */
-  .toggle {
-    position: relative;
-    width: 36px; height: 20px;
-    appearance: none;
-    background: #333;
-    border-radius: 10px;
-    cursor: pointer;
-    outline: none;
-    border: none;
-    transition: background 0.2s;
-  }
-  .toggle::before {
-    content: '';
-    position: absolute;
-    top: 2px; left: 2px;
-    width: 16px; height: 16px;
-    background: #888;
-    border-radius: 50%;
-    transition: all 0.2s;
-  }
-  .toggle:checked { background: var(--accent-dim); }
-  .toggle:checked::before { left: 18px; background: var(--accent); }
-
-  .toggle-row {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 8px 0;
-    border-bottom: 1px solid var(--border);
-  }
-  .toggle-row:last-child { border-bottom: none; }
-  .toggle-label { font-size: 12px; }
-  .toggle-label .sub { font-size: 10px; color: #666; }
-
-  /* ── Config Editor ────────────────────────────────────── */
-  .config-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 16px;
-  }
-  @media (max-width: 900px) {
-    .config-grid { grid-template-columns: 1fr; }
-    .sidebar { display: none; }
-    .main { margin-left: 0; }
-  }
-
-  /* ── Empty state ──────────────────────────────────────── */
-  .empty {
-    text-align: center;
-    padding: 40px 20px;
-    color: #555;
-  }
-  .empty .icon { font-size: 32px; margin-bottom: 12px; }
-
-  /* ── Scrollbar ────────────────────────────────────────── */
-  ::-webkit-scrollbar { width: 6px; }
-  ::-webkit-scrollbar-track { background: transparent; }
-  ::-webkit-scrollbar-thumb { background: #333; border-radius: 3px; }
-  ::-webkit-scrollbar-thumb:hover { background: #444; }
-
-  /* ── Toast ─────────────────────────────────────────────── */
-  .toast-container {
-    position: fixed;
-    bottom: 20px;
-    right: 20px;
-    z-index: 200;
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-  }
-  .toast {
-    background: var(--bg-card);
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    padding: 10px 16px;
-    font-size: 12px;
-    animation: toastIn 0.3s ease-out;
-    max-width: 360px;
-  }
-  .toast.success { border-color: var(--accent-dim); }
-  .toast.error { border-color: var(--red); }
-  @keyframes toastIn {
-    from { opacity: 0; transform: translateY(10px); }
-    to { opacity: 1; transform: translateY(0); }
-  }
-</style>
-<div id="toast-container"></div>
+		<link rel="shortcut icon" href="/favicon.ico" />
+		<link rel="apple-touch-icon" href="/pwa-192x192.png" />
+		<link rel="stylesheet" href="/style.css" />
 		<link rel="stylesheet" href="/nav.css" />
-			<link rel="stylesheet" href="/footer.css" />
-			<script defer src="/footer-newsletter.js"></script>
+		<link rel="stylesheet" href="/home.css" />
+		<link rel="stylesheet" href="/footer.css" />
+		<link rel="stylesheet" href="/fonts/fonts.css" />
+		<link rel="stylesheet" href="/pump-dashboard.css" />
+		<script defer src="/footer-newsletter.js"></script>
+		<script type="module" src="https://ajax.googleapis.com/ajax/libs/model-viewer/4.0.0/model-viewer.min.js"></script>
 	</head>
-<body>
-		<header class="site-header">
-			<h1 class="site-header-brand">
-				<a href="/" aria-label="three.ws home"><img class="wordmark-logo" src="/three.svg" alt="" aria-hidden="true" /><span class="wordmark-dot" aria-hidden="true"></span>three.ws</a>
+	<body class="home-page pump-dashboard-page">
+		<a href="#pd-main" class="h-skip-link">Skip to main content</a>
+
+		<header>
+			<h1>
+				<a href="/" aria-label="three.ws home"
+					><img class="wordmark-logo" src="/three.svg" alt="" aria-hidden="true" /><span
+						class="wordmark-dot"
+						aria-hidden="true"
+					></span
+					>three.ws</a
+				>
 			</h1>
-			<div id="nav-container"></div>
+			<nav class="home-nav" aria-label="Primary">
+				<ul class="nav-root" role="menubar">
+					<li class="nav-item nav-has-menu" role="none">
+						<button type="button" class="nav-trigger" aria-haspopup="true" aria-expanded="false" role="menuitem">
+							Build<span class="nav-caret" aria-hidden="true">▾</span>
+						</button>
+						<ul class="nav-menu" role="menu" aria-label="Build">
+							<li role="none"><a href="/create" role="menuitem"><span class="nav-mi-title">Create agent</span><span class="nav-mi-sub">Avatar + brain wizard</span></a></li>
+							<li role="none"><a href="/app" role="menuitem"><span class="nav-mi-title">Viewer</span><span class="nav-mi-sub">Drag-and-drop GLB</span></a></li>
+							<li role="none"><a href="/validation" role="menuitem"><span class="nav-mi-title">glTF Validator</span><span class="nav-mi-sub">Khronos spec check</span></a></li>
+						</ul>
+					</li>
+					<li role="none"><a href="/discover" role="menuitem">Discover</a></li>
+					<li class="nav-item nav-has-menu" role="none">
+						<button type="button" class="nav-trigger" aria-haspopup="true" aria-expanded="false" role="menuitem">
+							Solana<span class="nav-caret" aria-hidden="true">▾</span>
+						</button>
+						<ul class="nav-menu" role="menu" aria-label="Solana">
+							<li role="none"><a href="/pumpfun" role="menuitem"><span class="nav-mi-title">Pump.fun stream</span><span class="nav-mi-sub">Mint agent tokens</span></a></li>
+							<li role="none"><a href="/vanity-wallet" role="menuitem"><span class="nav-mi-title">Vanity wallet</span><span class="nav-mi-sub">Grind a Solana address</span></a></li>
+							<li role="none"><a href="/pump-live.html" role="menuitem"><span class="nav-mi-title">Live launches</span><span class="nav-mi-sub">Real-time mint feed</span></a></li>
+							<li role="none"><a href="/pump-dashboard" role="menuitem" aria-current="page"><span class="nav-mi-title">Pump Dashboard</span><span class="nav-mi-sub">Watches · scanner · quotes</span></a></li>
+							<li role="none"><a href="/docs#solana" role="menuitem"><span class="nav-mi-title">Solana SDK</span><span class="nav-mi-sub">Attestations + agent-kit</span></a></li>
+						</ul>
+					</li>
+					<li class="nav-item nav-has-menu" role="none">
+						<button type="button" class="nav-trigger" aria-haspopup="true" aria-expanded="false" role="menuitem">
+							Embed<span class="nav-caret" aria-hidden="true">▾</span>
+						</button>
+						<ul class="nav-menu" role="menu" aria-label="Embed">
+							<li role="none"><a href="/studio" role="menuitem"><span class="nav-mi-title">Widget Studio</span><span class="nav-mi-sub">Pick avatar → copy snippet</span></a></li>
+							<li role="none"><a href="/docs#embedding" role="menuitem"><span class="nav-mi-title">Embed docs</span><span class="nav-mi-sub">iframe + oEmbed</span></a></li>
+						</ul>
+					</li>
+					<li class="nav-item" role="none"><a href="/marketplace.html" role="menuitem">Marketplace</a></li>
+					<li class="nav-item" role="none"><a href="/chat" role="menuitem">Chat</a></li>
+					<li class="nav-item" role="none"><a href="/tutorials" role="menuitem">Tutorials</a></li>
+					<li class="nav-item" id="home-nav-my-agents-li" role="none" hidden>
+						<a href="/my-agents" id="home-nav-my-agents" role="menuitem">My Agents</a>
+					</li>
+					<li class="nav-item" id="home-nav-user-li" role="none" hidden>
+						<a href="/dashboard" id="home-nav-user" class="nav-user" role="menuitem"></a>
+					</li>
+					<li class="nav-item" role="none">
+						<a href="/login" class="nav-cta" id="home-nav-cta" role="menuitem">Get started</a>
+					</li>
+				</ul>
+			</nav>
 		</header>
-		<script src="/nav.js"></script>
 
-<div class="app">
-  <!-- ── Sidebar ─────────────────────────── -->
-  <aside class="sidebar">
-    <div class="sidebar-header">
-      <h1>
-        <a href="/" aria-label="three.ws home">
-          <img class="wordmark-logo" src="/three.svg" alt="" aria-hidden="true" /><span class="wordmark-dot" aria-hidden="true"></span>three.ws
-        </a>
-      </h1>
-      <div class="version">Pump Dashboard v1.0</div>
-    </div>
-    <nav>
-      <div class="section-label">Overview</div>
-      <a href="/home.html" data-page="home"><span class="icon">🏠</span> Home</a>
-      <a href="#" data-page="dashboard" class="active"><span class="icon">📊</span> Dashboard</a>
-      <a href="#" data-page="feed"><span class="icon">📡</span> Live Feed</a>
+		<div class="pd-app" id="pd-main">
+			<aside class="pd-sidebar" id="pd-sidebar">
+				<div class="pd-sidebar-head">
+					<a class="pd-sidebar-brand" href="/" aria-label="three.ws home">
+						<img class="wordmark-logo" src="/three.svg" alt="" aria-hidden="true" />three.ws
+					</a>
+					<div class="pd-sidebar-eyebrow">Pump Dashboard</div>
+				</div>
+				<nav>
+					<div class="pd-nav-section">Overview</div>
+					<a href="#" data-page="dashboard" class="is-active">
+						<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" aria-hidden="true"><rect x="2" y="2" width="5" height="5" rx="1"/><rect x="9" y="2" width="5" height="5" rx="1"/><rect x="2" y="9" width="5" height="5" rx="1"/><rect x="9" y="9" width="5" height="5" rx="1"/></svg>
+						Dashboard
+					</a>
+					<a href="#" data-page="feed">
+						<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" aria-hidden="true"><path d="M2 10c0-3.3 2.7-6 6-6"/><path d="M2 6c0-2.2 1.8-4 4-4"/><circle cx="3" cy="13" r="1.2" fill="currentColor" stroke="none"/></svg>
+						Live Feed
+					</a>
 
-      <div class="section-label">Bots</div>
-      <a href="#" data-page="watches"><span class="icon">👁</span> Watch List</a>
-      <a href="#" data-page="claims"><span class="icon">💰</span> Fee Claims</a>
-      <a href="#" data-page="alerts"><span class="icon">🚨</span> Alerts</a>
+					<div class="pd-nav-section">Tracking</div>
+					<a href="#" data-page="watches">
+						<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" aria-hidden="true"><path d="M1.5 8s2.5-5 6.5-5 6.5 5 6.5 5-2.5 5-6.5 5S1.5 8 1.5 8z"/><circle cx="8" cy="8" r="2.2"/></svg>
+						Watch List
+					</a>
+					<a href="#" data-page="claims">
+						<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" aria-hidden="true"><circle cx="8" cy="8" r="6"/><path d="M5.5 8.5l1.8 1.8L10.8 6.5"/></svg>
+						Fee Claims
+					</a>
+					<a href="#" data-page="alerts">
+						<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" aria-hidden="true"><path d="M3 11c0-3 1-7 5-7s5 4 5 7M2 11h12M7 13h2"/></svg>
+						Alerts
+					</a>
 
-      <div class="section-label">Tools</div>
-      <a href="#" data-page="scanner"><span class="icon">🔍</span> Token Scanner</a>
-      <a href="#" data-page="quoting"><span class="icon">📈</span> Quote Engine</a>
-      <a href="#" data-page="vanity"><span class="icon">🔑</span> Vanity Gen</a>
+					<div class="pd-nav-section">Tools</div>
+					<a href="#" data-page="scanner">
+						<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" aria-hidden="true"><circle cx="7" cy="7" r="4.5"/><path d="M10.5 10.5l3 3"/></svg>
+						Token Scanner
+					</a>
+					<a href="#" data-page="quoting">
+						<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" aria-hidden="true"><path d="M2 12l3-4 3 2 4-6 2 3"/></svg>
+						Quote Engine
+					</a>
+					<a href="#" data-page="vanity">
+						<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" aria-hidden="true"><circle cx="5" cy="11" r="2.5"/><path d="M7 9l6-6M11 4l2 2"/></svg>
+						Vanity Generator
+					</a>
 
-      <div class="section-label">Community</div>
-      <a href="/chat" data-page="chat"><span class="icon">💬</span> Chat</a>
-      <a href="/pumpdotfun" data-page="pumpfun"><span class="icon">🚀</span> Pump.fun</a>
-      <a href="/pump-coin-page.html"><span class="icon">🪙</span> Coin Page Demo</a>
-      <a href="#" data-page="animations"><span class="icon">🎬</span> Animations</a>
+					<div class="pd-nav-section">Agent</div>
+					<a href="#" data-page="animations">
+						<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" aria-hidden="true"><circle cx="8" cy="5" r="2.5"/><path d="M3 14c0-3 2.2-5 5-5s5 2 5 5"/></svg>
+						Default Agent
+					</a>
 
-      <div class="section-label">System</div>
-      <a href="#" data-page="config"><span class="icon">⚙️</span> Configuration</a>
-      <a href="#" data-page="api"><span class="icon">🔌</span> API Keys</a>
-			<a href="#" data-page="revenue"><span class="icon">💰</span> Revenue</a>
-    </nav>
-    <div class="sidebar-footer">
-      <div id="bot-uptime">Uptime: --</div>
-    </div>
-  </aside>
+					<div class="pd-nav-section">System</div>
+					<a href="#" data-page="config">
+						<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" aria-hidden="true"><circle cx="8" cy="8" r="2"/><path d="M8 1v2M8 13v2M1 8h2M13 8h2M3.05 3.05l1.4 1.4M11.55 11.55l1.4 1.4M3.05 12.95l1.4-1.4M11.55 4.45l1.4-1.4"/></svg>
+						Configuration
+					</a>
+					<a href="#" data-page="api">
+						<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" aria-hidden="true"><rect x="2" y="6" width="5" height="4" rx="1"/><path d="M7 8h4M11 6v4M14 6v4M11 6h3M11 10h3"/></svg>
+						API Reference
+					</a>
+				</nav>
+				<div class="pd-sidebar-foot">
+					<span id="pd-uptime">Uptime: —</span>
+				</div>
+			</aside>
 
-  <!-- ── Main ────────────────────────────── -->
-  <div class="main">
-    <div class="topbar">
-      <div class="page-title" id="page-title">Dashboard</div>
-      <div class="spacer"></div>
-      <div class="connection-status">
-        <span class="dot" id="api-dot"></span>
-        <span id="api-status">API: Connecting...</span>
-      </div>
-      <div class="connection-status">
-        <span class="dot" id="ws-dot"></span>
-        <span id="ws-status">WS: Disconnected</span>
-      </div>
-    </div>
+			<main class="pd-main">
+				<div class="pd-topbar">
+					<h1 class="pd-page-title" id="pd-page-title">Dashboard</h1>
+					<div class="pd-spacer"></div>
+					<div class="pd-status-chip" title="three.ws API health">
+						<span class="pd-dot is-warm" id="pd-api-dot"></span>
+						<span id="pd-api-status">API: connecting…</span>
+					</div>
+					<div class="pd-status-chip" title="Pump.fun realtime WebSocket">
+						<span class="pd-dot" id="pd-ws-dot"></span>
+						<span id="pd-ws-status">WS: idle</span>
+					</div>
+					<div class="pd-status-chip" id="pd-sol-chip" title="SOL spot price (via Helius/Pyth)">
+						<span class="pd-dot" id="pd-sol-dot"></span>
+						<span id="pd-sol-status">SOL: —</span>
+					</div>
+				</div>
 
-    <!-- ═══════ Dashboard Page ═══════ -->
-    <div class="content page" id="page-dashboard">
-      <div class="dashboard-grid">
-        <!-- Featured Agent -->
-        <div class="dash-module module-8">
-            <div class="panel-header"><h2>Featured Agent</h2></div>
-            <div class="panel-body">
-                <div class="featured-agent-card">
-                    <div class="avatar" id="featured-agent-avatar"></div>
-                    <div class="info">
-                        <div class="name" id="featured-agent-name">Agent CZ</div>
-                        <div class="desc" id="featured-agent-desc">The default agent, ready for action. Keeping an eye on the market.</div>
-                        <a href="/agent-detail.html?id=cz" class="btn btn-sm" id="featured-agent-link">View Profile</a>
-                    </div>
-                </div>
-            </div>
-        </div>
+				<!-- ═══════ Dashboard page ═══════ -->
+				<section class="pd-page is-active" id="page-dashboard" aria-labelledby="pd-page-title">
+					<div class="pd-dash-grid">
+						<div class="pd-panel pd-mod-8">
+							<div class="pd-panel-head"><h2>Featured agent</h2></div>
+							<div class="pd-panel-body">
+								<div class="pd-featured" id="pd-featured-card">
+									<div class="pd-featured-avatar" id="pd-featured-avatar">
+										<model-viewer
+											src="/animations/robotexpressive.glb"
+											auto-rotate
+											auto-rotate-delay="500"
+											rotation-per-second="18deg"
+											interaction-prompt="none"
+											shadow-intensity="0"
+											exposure="0.85"
+											environment-image="neutral"
+											camera-orbit="0deg 80deg 5m"
+											field-of-view="35deg"
+											loading="lazy"
+										></model-viewer>
+									</div>
+									<div class="pd-featured-info">
+										<div class="pd-featured-name" id="pd-featured-name">Loading agent…</div>
+										<p class="pd-featured-desc" id="pd-featured-desc">Fetching the featured agent for this account.</p>
+										<div class="pd-featured-stats" id="pd-featured-stats" hidden></div>
+										<div>
+											<a class="pd-btn is-primary pd-btn-sm" id="pd-featured-link" href="/my-agents">View profile</a>
+											<a class="pd-btn pd-btn-sm" href="/create">Create agent</a>
+										</div>
+									</div>
+								</div>
+							</div>
+						</div>
 
-        <!-- Wallet Snapshot -->
-        <div class="dash-module module-4">
-            <div class="panel-header"><h2>Wallet Snapshot</h2></div>
-            <div class="panel-body">
-                <div class="empty">
-                    <div class="icon">🔑</div>
-                    Connect wallet to see your holdings.
-                    <div style="margin-top: 12px;">
-                        <button class="btn btn-primary">Connect Wallet</button>
-                    </div>
-                </div>
-            </div>
-        </div>
+						<div class="pd-panel pd-mod-4">
+							<div class="pd-panel-head"><h2>Wallet snapshot</h2></div>
+							<div class="pd-panel-body" id="pd-wallet-body">
+								<div class="pd-empty">
+									<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><rect x="3" y="6" width="18" height="13" rx="2"/><path d="M3 10h18M16 14h2"/></svg>
+									<div>Sign in to view your Solana balance and token holdings.</div>
+									<div style="margin-top: 0.85rem">
+										<a class="pd-btn is-primary pd-btn-sm" href="/login">Sign in</a>
+									</div>
+								</div>
+							</div>
+						</div>
 
-        <!-- Market Chart -->
-        <div class="dash-module module-6">
-            <div class="panel-header">
-                <h2>Market Chart</h2>
-                <div class="spacer"></div>
-                <select class="btn btn-sm" style="background: var(--bg-input); border-color: var(--border);">
-                    <option>Top Token</option>
-                </select>
-            </div>
-            <div class="panel-body">
-                <div class="empty"><div class="icon">📈</div>Chart data loading...</div>
-                <!-- Chart will be rendered here by a library -->
-            </div>
-        </div>
+						<div class="pd-panel pd-mod-6">
+							<div class="pd-panel-head">
+								<h2>Network health</h2>
+								<div class="pd-spacer"></div>
+								<span class="pd-badge" id="pd-network-badge">—</span>
+							</div>
+							<div class="pd-panel-body">
+								<div class="pd-stat-grid">
+									<div class="pd-stat">
+										<div class="pd-stat-label">SOL Price</div>
+										<div class="pd-stat-value" id="pd-stat-sol">—</div>
+										<div class="pd-stat-sub" id="pd-stat-sol-sub">Cached spot</div>
+									</div>
+									<div class="pd-stat">
+										<div class="pd-stat-label">Helius RPC</div>
+										<div class="pd-stat-value" id="pd-stat-rpc">—</div>
+										<div class="pd-stat-sub" id="pd-stat-rpc-sub">Mainnet slot</div>
+									</div>
+									<div class="pd-stat">
+										<div class="pd-stat-label">Mints (24h)</div>
+										<div class="pd-stat-value" id="pd-stat-mints">—</div>
+										<div class="pd-stat-sub">Pump.fun creations</div>
+									</div>
+									<div class="pd-stat">
+										<div class="pd-stat-label">Graduations</div>
+										<div class="pd-stat-value" id="pd-stat-grads">—</div>
+										<div class="pd-stat-sub">Bonded to AMM</div>
+									</div>
+								</div>
+							</div>
+						</div>
 
-        <!-- Live Feed -->
-        <div class="dash-module module-6">
-            <div class="panel-header">
-                <h2>Live Feed</h2>
-                <span class="badge" id="activity-count">0</span>
-                <div class="spacer"></div>
-                <button class="btn btn-sm" onclick="clearFeed('dashboard-feed')">Clear</button>
-            </div>
-            <div class="panel-body no-pad">
-                <div class="feed" id="dashboard-feed" style="height: 300px;">
-                    <div class="empty"><div class="icon">📡</div>Waiting for events...</div>
-                </div>
-            </div>
-        </div>
-      </div>
-    </div>
+						<div class="pd-panel pd-mod-6">
+							<div class="pd-panel-head">
+								<h2>Live feed</h2>
+								<span class="pd-badge" id="pd-activity-count">0</span>
+								<div class="pd-spacer"></div>
+								<button class="pd-btn pd-btn-sm" id="pd-clear-dash-feed" type="button">Clear</button>
+							</div>
+							<div class="pd-panel-body no-pad">
+								<div class="pd-feed" id="pd-dashboard-feed" style="max-height: 360px">
+									<div class="pd-empty">
+										<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M3 12c0-5 4-9 9-9"/><path d="M3 8c0-3 2.4-5 5-5"/><circle cx="5" cy="19" r="1.6" fill="currentColor" stroke="none"/></svg>
+										<div>Waiting for the realtime feed…</div>
+									</div>
+								</div>
+							</div>
+						</div>
+					</div>
+				</section>
 
-		<div class="content page" id="page-revenue" style="display:none">
-				<!-- Content will be rendered here by dashboard.js -->
+				<!-- ═══════ Live Feed page ═══════ -->
+				<section class="pd-page" id="page-feed" aria-label="Live feed">
+					<div class="pd-panel">
+						<div class="pd-panel-head">
+							<h2>Realtime feed</h2>
+							<span class="pd-badge" id="pd-feed-count">0</span>
+							<div class="pd-spacer"></div>
+							<label style="display:flex;align-items:center;gap:0.4rem;font-size:0.78rem;color:var(--pd-text-muted)">
+								<input type="checkbox" class="pd-toggle" id="pd-feed-pause"> Pause
+							</label>
+							<button class="pd-btn pd-btn-sm" id="pd-clear-live-feed" type="button">Clear</button>
+						</div>
+						<div class="pd-filter-row" role="tablist">
+							<button class="pd-filter-btn is-active" data-filter="all" type="button">All</button>
+							<button class="pd-filter-btn" data-filter="launch" type="button">Launches</button>
+							<button class="pd-filter-btn" data-filter="trade" type="button">Trades</button>
+							<button class="pd-filter-btn" data-filter="whale" type="button">Whales</button>
+							<button class="pd-filter-btn" data-filter="graduation" type="button">Graduations</button>
+							<button class="pd-filter-btn" data-filter="claim" type="button">Claims</button>
+						</div>
+						<div class="pd-panel-body no-pad">
+							<div class="pd-feed" id="pd-live-feed" style="max-height: calc(100vh - 280px)">
+								<div class="pd-empty">
+									<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M3 12c0-5 4-9 9-9"/><path d="M3 8c0-3 2.4-5 5-5"/><circle cx="5" cy="19" r="1.6" fill="currentColor" stroke="none"/></svg>
+									<div>Connecting to <span class="pd-mono">wss://pumpportal.fun/api/data</span>…</div>
+								</div>
+							</div>
+						</div>
+					</div>
+				</section>
+
+				<!-- ═══════ Watch List page ═══════ -->
+				<section class="pd-page" id="page-watches" aria-label="Watch list">
+					<div style="display:flex;gap:0.5rem;margin-bottom:1rem">
+						<button class="pd-btn is-primary" id="pd-add-watch-btn" type="button">+ Add watch</button>
+						<button class="pd-btn" id="pd-refresh-watches" type="button">Refresh</button>
+					</div>
+					<div class="pd-panel">
+						<div class="pd-panel-head">
+							<h2>Active watches</h2>
+							<span class="pd-badge" id="pd-watches-count">0</span>
+						</div>
+						<div class="pd-panel-body no-pad">
+							<table class="pd-table">
+								<thead>
+									<tr><th>Wallet</th><th>Label</th><th>Token filter</th><th>Webhook</th><th>Created</th><th></th></tr>
+								</thead>
+								<tbody id="pd-watches-table">
+									<tr><td colspan="6" class="pd-empty">Open the Watch List tab to load.</td></tr>
+								</tbody>
+							</table>
+						</div>
+					</div>
+				</section>
+
+				<!-- ═══════ Claims page ═══════ -->
+				<section class="pd-page" id="page-claims" aria-label="Fee claims">
+					<div class="pd-form-inline">
+						<div class="pd-form-group" style="flex:2">
+							<label>Filter wallet</label>
+							<input class="pd-input" type="text" id="pd-claims-wallet-filter" placeholder="Solana address (optional)…" />
+						</div>
+						<div class="pd-form-group" style="flex:1">
+							<label>Type</label>
+							<select class="pd-select" id="pd-claims-type-filter">
+								<option value="">All types</option>
+								<option value="creator_fee">Creator fee</option>
+								<option value="cashback">Cashback</option>
+							</select>
+						</div>
+						<button class="pd-btn is-primary" id="pd-refresh-claims" type="button">Search</button>
+					</div>
+					<div class="pd-panel">
+						<div class="pd-panel-head">
+							<h2>Fee claims</h2>
+							<span class="pd-badge" id="pd-claims-count">0</span>
+							<div class="pd-spacer"></div>
+							<button class="pd-btn pd-btn-sm" id="pd-export-claims" type="button">Export CSV</button>
+						</div>
+						<div class="pd-panel-body no-pad">
+							<table class="pd-table">
+								<thead>
+									<tr><th>Time</th><th>Wallet</th><th>Type</th><th>Token</th><th>Amount</th><th>TX</th></tr>
+								</thead>
+								<tbody id="pd-claims-table">
+									<tr><td colspan="6" class="pd-empty">Open the Claims tab to load.</td></tr>
+								</tbody>
+							</table>
+						</div>
+					</div>
+				</section>
+
+				<!-- ═══════ Alerts page ═══════ -->
+				<section class="pd-page" id="page-alerts" aria-label="Alerts">
+					<div class="pd-config-grid">
+						<div class="pd-panel">
+							<div class="pd-panel-head"><h2>Alert settings</h2></div>
+							<div class="pd-panel-body">
+								<div class="pd-toggle-row">
+									<div class="pd-toggle-label">Graduation alerts<div class="pd-toggle-sub">Notify when tokens graduate to AMM</div></div>
+									<input class="pd-toggle" type="checkbox" id="pd-alert-graduation" checked />
+								</div>
+								<div class="pd-toggle-row">
+									<div class="pd-toggle-label">Whale trade alerts<div class="pd-toggle-sub">Large buys/sells above threshold</div></div>
+									<input class="pd-toggle" type="checkbox" id="pd-alert-whale" />
+								</div>
+								<div class="pd-toggle-row">
+									<div class="pd-toggle-label">Fee distribution alerts<div class="pd-toggle-sub">Creator fee claim events</div></div>
+									<input class="pd-toggle" type="checkbox" id="pd-alert-fees" />
+								</div>
+								<div class="pd-toggle-row">
+									<div class="pd-toggle-label">New launch alerts<div class="pd-toggle-sub">New token creation events</div></div>
+									<input class="pd-toggle" type="checkbox" id="pd-alert-launch" />
+								</div>
+							</div>
+						</div>
+
+						<div class="pd-panel">
+							<div class="pd-panel-head"><h2>Thresholds</h2></div>
+							<div class="pd-panel-body">
+								<div class="pd-form-group">
+									<label>Whale threshold (SOL)</label>
+									<input class="pd-input" type="number" id="pd-threshold-whale" value="10" min="0.1" step="0.1" />
+								</div>
+								<div class="pd-form-group">
+									<label>Min claim alert (SOL)</label>
+									<input class="pd-input" type="number" id="pd-threshold-claim" value="0.5" min="0.01" step="0.01" />
+								</div>
+								<div class="pd-form-group">
+									<label>Trade alert cooldown (s)</label>
+									<input class="pd-input" type="number" id="pd-threshold-cooldown" value="30" min="5" step="5" />
+								</div>
+								<button class="pd-btn is-primary" id="pd-save-alerts" type="button">Save settings</button>
+							</div>
+						</div>
+					</div>
+
+					<div class="pd-panel">
+						<div class="pd-panel-head">
+							<h2>Alert history</h2>
+							<div class="pd-spacer"></div>
+							<button class="pd-btn pd-btn-sm" id="pd-clear-alert-feed" type="button">Clear</button>
+						</div>
+						<div class="pd-panel-body no-pad">
+							<div class="pd-feed" id="pd-alert-feed" style="max-height: 360px">
+								<div class="pd-empty">
+									<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M5 16c0-4.5 1.5-10 7-10s7 5.5 7 10M3 16h18M10 19h4"/></svg>
+									<div>No alerts yet — enable rules above to populate this list.</div>
+								</div>
+							</div>
+						</div>
+					</div>
+				</section>
+
+				<!-- ═══════ Token Scanner page ═══════ -->
+				<section class="pd-page" id="page-scanner" aria-label="Token scanner">
+					<div class="pd-form-inline">
+						<div class="pd-form-group" style="flex:1">
+							<label>Token mint address</label>
+							<input class="pd-input" type="text" id="pd-scanner-mint" placeholder="Enter Solana token mint…" />
+						</div>
+						<button class="pd-btn is-primary" id="pd-scan-token" type="button">Scan</button>
+					</div>
+					<div id="pd-scanner-results" hidden>
+						<div class="pd-stat-grid" style="margin-bottom:1rem">
+							<div class="pd-stat">
+								<div class="pd-stat-label">Risk score</div>
+								<div class="pd-stat-value" id="pd-scan-score">—</div>
+							</div>
+							<div class="pd-stat">
+								<div class="pd-stat-label">Risk level</div>
+								<div class="pd-stat-value" id="pd-scan-level">—</div>
+							</div>
+							<div class="pd-stat">
+								<div class="pd-stat-label">Pump.fun token</div>
+								<div class="pd-stat-value" id="pd-scan-pump">—</div>
+							</div>
+							<div class="pd-stat">
+								<div class="pd-stat-label">Honeypot risk</div>
+								<div class="pd-stat-value" id="pd-scan-honeypot">—</div>
+							</div>
+						</div>
+
+						<div class="pd-panel">
+							<div class="pd-panel-head"><h2>Security checks</h2></div>
+							<div class="pd-panel-body no-pad">
+								<table class="pd-table">
+									<thead><tr><th>Check</th><th>Status</th><th>Detail</th></tr></thead>
+									<tbody id="pd-scan-checks"></tbody>
+								</table>
+							</div>
+						</div>
+					</div>
+				</section>
+
+				<!-- ═══════ Quote Engine page ═══════ -->
+				<section class="pd-page" id="page-quoting" aria-label="Quote engine">
+					<div class="pd-config-grid">
+						<div class="pd-panel">
+							<div class="pd-panel-head"><h2>Buy quote</h2></div>
+							<div class="pd-panel-body">
+								<div class="pd-form-group">
+									<label>Token mint</label>
+									<input class="pd-input" type="text" id="pd-quote-buy-mint" placeholder="Token mint address…" />
+								</div>
+								<div class="pd-form-group">
+									<label>SOL amount</label>
+									<input class="pd-input" type="number" id="pd-quote-buy-amount" value="1" min="0.001" step="0.001" />
+								</div>
+								<button class="pd-btn is-primary" id="pd-get-buy-quote" type="button">Get buy quote</button>
+								<div id="pd-quote-buy-result" style="margin-top:0.85rem"></div>
+							</div>
+						</div>
+
+						<div class="pd-panel">
+							<div class="pd-panel-head"><h2>Sell quote</h2></div>
+							<div class="pd-panel-body">
+								<div class="pd-form-group">
+									<label>Token mint</label>
+									<input class="pd-input" type="text" id="pd-quote-sell-mint" placeholder="Token mint address…" />
+								</div>
+								<div class="pd-form-group">
+									<label>Token amount</label>
+									<input class="pd-input" type="number" id="pd-quote-sell-amount" value="1000000" min="1" step="1" />
+								</div>
+								<button class="pd-btn is-primary" id="pd-get-sell-quote" type="button">Get sell quote</button>
+								<div id="pd-quote-sell-result" style="margin-top:0.85rem"></div>
+							</div>
+						</div>
+					</div>
+				</section>
+
+				<!-- ═══════ Vanity Generator page ═══════ -->
+				<section class="pd-page" id="page-vanity" aria-label="Vanity generator">
+					<div class="pd-panel">
+						<div class="pd-panel-head"><h2>Vanity address generator</h2></div>
+						<div class="pd-panel-body">
+							<div class="pd-callout" style="margin-bottom:1rem">
+								Grinds Ed25519 keypairs locally in Web Workers. The secret key never leaves your browser. For a fuller UI with worker tuning, use <a href="/vanity-wallet">/vanity-wallet</a>.
+							</div>
+							<div class="pd-form-row">
+								<div class="pd-form-group">
+									<label>Prefix (optional)</label>
+									<input class="pd-input" type="text" id="pd-vanity-prefix" placeholder="e.g. pump" maxlength="6" />
+								</div>
+								<div class="pd-form-group">
+									<label>Suffix (optional)</label>
+									<input class="pd-input" type="text" id="pd-vanity-suffix" placeholder="e.g. fun" maxlength="6" />
+								</div>
+							</div>
+							<div style="display:flex;gap:0.5rem">
+								<button class="pd-btn is-primary" id="pd-vanity-start" type="button">Generate</button>
+								<button class="pd-btn is-danger" id="pd-vanity-stop" type="button" hidden>Stop</button>
+							</div>
+							<div id="pd-vanity-status" style="margin-top:0.85rem;font-size:0.82rem;color:var(--pd-text-muted);font-family:var(--pd-font-mono)"></div>
+							<div id="pd-vanity-result" style="margin-top:0.85rem"></div>
+						</div>
+					</div>
+				</section>
+
+				<!-- ═══════ Default Agent page ═══════ -->
+				<section class="pd-page" id="page-animations" aria-label="Default agent">
+					<div class="pd-panel">
+						<div class="pd-panel-head"><h2>Default agent</h2></div>
+						<div class="pd-panel-body">
+							<div class="pd-config-grid">
+								<div id="pd-agent-view-container" style="background:#000;border:1px solid var(--pd-border);min-height:320px;display:flex;align-items:center;justify-content:center;border-radius:var(--pd-radius-sm);overflow:hidden">
+									<iframe id="pd-agent-iframe" style="width:100%;height:100%;border:none" title="Default agent preview"></iframe>
+								</div>
+								<div>
+									<div class="pd-form-group">
+										<label>Speech</label>
+										<input class="pd-input" type="text" id="pd-speech-input" placeholder="Enter text to speak…" />
+										<button class="pd-btn is-primary" id="pd-speak-btn" type="button" style="margin-top:0.5rem">Speak</button>
+									</div>
+									<div class="pd-form-group">
+										<label>Quick actions</label>
+										<div style="display:flex;gap:0.4rem;flex-wrap:wrap">
+											<button class="pd-btn" data-agent-action="emote" type="button">Emote</button>
+											<button class="pd-btn" data-agent-action="wave" type="button">Wave</button>
+											<button class="pd-btn" data-agent-action="verify" type="button">Verify model</button>
+										</div>
+									</div>
+									<div class="pd-form-group">
+										<label>Animation</label>
+										<select class="pd-select" id="pd-anim-select">
+											<option>Idle</option>
+											<option>Walk</option>
+											<option>Run</option>
+											<option>Dance</option>
+										</select>
+										<button class="pd-btn is-primary" id="pd-play-anim" type="button" style="margin-top:0.5rem">Play</button>
+									</div>
+								</div>
+							</div>
+						</div>
+					</div>
+					<div class="pd-panel">
+						<div class="pd-panel-head">
+							<h2>Your agents</h2>
+							<div class="pd-spacer"></div>
+							<a class="pd-btn is-primary pd-btn-sm" href="/create">+ New agent</a>
+						</div>
+						<div class="pd-panel-body no-pad">
+							<table class="pd-table">
+								<thead><tr><th>Name</th><th>Description</th><th>Created</th><th></th></tr></thead>
+								<tbody id="pd-custom-agents-table">
+									<tr><td colspan="4" class="pd-empty">Loading…</td></tr>
+								</tbody>
+							</table>
+						</div>
+					</div>
+				</section>
+
+				<!-- ═══════ Config page ═══════ -->
+				<section class="pd-page" id="page-config" aria-label="Configuration">
+					<div class="pd-callout" style="margin-bottom:1rem">
+						This page lets you point the dashboard at an external <a href="https://github.com/pumpkit/pumpkit" target="_blank" rel="noopener">PumpKit-style</a> backend for advanced features like watches and fee claim ingestion. By default, the dashboard uses the three.ws-hosted <span class="pd-mono">/api/pump/*</span> endpoints, which power the Live Feed, network health, quotes, and the token scanner without any setup.
+					</div>
+					<div class="pd-config-grid">
+						<div class="pd-panel">
+							<div class="pd-panel-head"><h2>Connection</h2></div>
+							<div class="pd-panel-body">
+								<div class="pd-form-group">
+									<label>API base URL</label>
+									<input class="pd-input" type="text" id="pd-cfg-api-url" placeholder="https://your-pumpkit.example" />
+								</div>
+								<div class="pd-form-group">
+									<label>WebSocket URL</label>
+									<input class="pd-input" type="text" id="pd-cfg-ws-url" />
+								</div>
+								<div class="pd-form-group">
+									<label>API key</label>
+									<input class="pd-input" type="password" id="pd-cfg-api-key" placeholder="Optional API key…" />
+								</div>
+								<button class="pd-btn is-primary" id="pd-save-config" type="button">Save &amp; reconnect</button>
+							</div>
+						</div>
+
+						<div class="pd-panel">
+							<div class="pd-panel-head"><h2>Solana RPC</h2></div>
+							<div class="pd-panel-body">
+								<div class="pd-form-group">
+									<label>RPC endpoint</label>
+									<input class="pd-input" type="text" id="pd-cfg-rpc-url" value="https://api.mainnet-beta.solana.com" />
+								</div>
+								<div class="pd-form-group">
+									<label>Commitment level</label>
+									<select class="pd-select" id="pd-cfg-commitment">
+										<option value="confirmed" selected>Confirmed</option>
+										<option value="finalized">Finalized</option>
+										<option value="processed">Processed</option>
+									</select>
+								</div>
+							</div>
+						</div>
+					</div>
+				</section>
+
+				<!-- ═══════ API page ═══════ -->
+				<section class="pd-page" id="page-api" aria-label="API reference">
+					<div class="pd-panel">
+						<div class="pd-panel-head"><h2>API endpoints</h2></div>
+						<div class="pd-panel-body">
+							<p style="color:var(--pd-text-muted);font-size:0.88rem;margin-bottom:1rem">
+								three.ws ships these Pump endpoints for free, no auth required.
+								Resolved against: <span class="pd-mono-inline" id="pd-api-endpoint-display">—</span>
+							</p>
+							<table class="pd-table">
+								<thead>
+									<tr><th>Method</th><th>Path</th><th>Description</th><th>Auth</th></tr>
+								</thead>
+								<tbody>
+									<tr><td><span class="pd-tag is-buy">GET</span></td><td class="pd-mono">/api/healthz</td><td>Health check</td><td>No</td></tr>
+									<tr><td><span class="pd-tag is-buy">GET</span></td><td class="pd-mono">/api/pump/helius-stats</td><td>SOL price, network slot, feed counts</td><td>No</td></tr>
+									<tr><td><span class="pd-tag is-buy">GET</span></td><td class="pd-mono">/api/pump/channel-feed</td><td>Recent mints, whales, claims (paginated)</td><td>No</td></tr>
+									<tr><td><span class="pd-tag is-buy">GET</span></td><td class="pd-mono">/api/pump/trades-stream</td><td>SSE live trade stream (PumpPortal proxy)</td><td>No</td></tr>
+									<tr><td><span class="pd-tag is-buy">GET</span></td><td class="pd-mono">/api/pump/curve?mint=…</td><td>Bonding curve, spot price, graduation progress</td><td>No</td></tr>
+									<tr><td><span class="pd-tag is-buy">GET</span></td><td class="pd-mono">/api/pump/quote-sdk?mint=…&amp;side=buy|sell&amp;amount=…</td><td>Buy/sell quote with price impact</td><td>No</td></tr>
+									<tr><td><span class="pd-tag is-buy">GET</span></td><td class="pd-mono">/api/pump/balances</td><td>SOL + token balances for the signed-in wallet</td><td>Session</td></tr>
+									<tr><td><span class="pd-tag is-buy">GET</span></td><td class="pd-mono">/api/agents/pumpfun?op=claims</td><td>Recent fee claim feed</td><td>Session</td></tr>
+								</tbody>
+							</table>
+							<p style="color:var(--pd-text-muted);font-size:0.82rem;margin-top:0.85rem">
+								For an OpenAPI spec, see <a href="/openapi.json">/openapi.json</a>.
+							</p>
+						</div>
+					</div>
+				</section>
+			</main>
 		</div>
 
-    <!-- ═══════ Live Feed Page ═══════ -->
-    <div class="content page" id="page-feed" style="display:none">
-      <div style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap;">
-        <button class="btn btn-sm filter-btn active" data-filter="all">All</button>
-        <button class="btn btn-sm filter-btn" data-filter="launch">🚀 Launches</button>
-        <button class="btn btn-sm filter-btn" data-filter="trade">💱 Trades</button>
-        <button class="btn btn-sm filter-btn" data-filter="whale">🐋 Whales</button>
-        <button class="btn btn-sm filter-btn" data-filter="graduation">🎓 Graduations</button>
-        <button class="btn btn-sm filter-btn" data-filter="claim">💰 Claims</button>
-      </div>
-
-      <div class="panel">
-        <div class="panel-header">
-          <h2>Real-Time Feed</h2>
-          <span class="badge" id="feed-count">0</span>
-          <div class="spacer"></div>
-          <label style="font-size:11px;color:#888;display:flex;align-items:center;gap:6px;">
-            <input type="checkbox" class="toggle" id="feed-pause">Pause
-          </label>
-          <button class="btn btn-sm" onclick="clearFeed('live-feed')">Clear</button>
-        </div>
-        <div class="panel-body no-pad">
-          <div class="feed" id="live-feed" style="max-height:calc(100vh - 220px)">
-            <div class="empty"><div class="icon">📡</div>Connect to start receiving events</div>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- ═══════ Watch List Page ═══════ -->
-    <div class="content page" id="page-watches" style="display:none">
-      <div style="display:flex;gap:8px;margin-bottom:16px;">
-        <button class="btn btn-primary" onclick="openModal('add-watch-modal')">+ Add Watch</button>
-        <button class="btn" onclick="refreshWatches()">↻ Refresh</button>
-      </div>
-
-      <div class="panel">
-        <div class="panel-header">
-          <h2>Active Watches</h2>
-          <span class="badge" id="watches-count">0</span>
-        </div>
-        <div class="panel-body no-pad">
-          <table>
-            <thead><tr><th>Wallet</th><th>Label</th><th>Token Filter</th><th>Webhook</th><th>Created</th><th>Actions</th></tr></thead>
-            <tbody id="watches-table"><tr><td colspan="6" class="empty">No watches configured</td></tr></tbody>
-          </table>
-        </div>
-      </div>
-    </div>
-
-    <!-- ═══════ Claims Page ═══════ -->
-    <div class="content page" id="page-claims" style="display:none">
-      <div class="form-inline" style="margin-bottom:16px;">
-        <div class="form-group" style="flex:2">
-          <label>Filter Wallet</label>
-          <input type="text" id="claims-wallet-filter" placeholder="Solana address...">
-        </div>
-        <div class="form-group" style="flex:1">
-          <label>Type</label>
-          <select id="claims-type-filter">
-            <option value="">All Types</option>
-            <option value="creator_fee">Creator Fee</option>
-            <option value="cashback">Cashback</option>
-          </select>
-        </div>
-        <div class="form-group" style="flex:0">
-          <label>&nbsp;</label>
-          <button class="btn btn-primary" onclick="refreshClaims()">Search</button>
-        </div>
-      </div>
-
-      <div class="panel">
-        <div class="panel-header">
-          <h2>Fee Claims</h2>
-          <span class="badge" id="claims-count">0</span>
-          <div class="spacer"></div>
-          <button class="btn btn-sm" onclick="exportClaims()">⬇ Export CSV</button>
-        </div>
-        <div class="panel-body no-pad">
-          <table>
-            <thead><tr><th>Time</th><th>Wallet</th><th>Type</th><th>Token</th><th>Amount</th><th>TX</th></tr></thead>
-            <tbody id="claims-table"><tr><td colspan="6" class="empty">No claims found</td></tr></tbody>
-          </table>
-        </div>
-      </div>
-    </div>
-
-    <!-- ═══════ Alerts Page ═══════ -->
-    <div class="content page" id="page-alerts" style="display:none">
-      <div class="config-grid">
-        <div class="panel">
-          <div class="panel-header"><h2>Alert Settings</h2></div>
-          <div class="panel-body">
-            <div class="toggle-row">
-              <div class="toggle-label">Graduation Alerts<div class="sub">Notify when tokens graduate to AMM</div></div>
-              <input type="checkbox" class="toggle" id="alert-graduation" checked>
-            </div>
-            <div class="toggle-row">
-              <div class="toggle-label">Whale Trade Alerts<div class="sub">Large buys/sells above threshold</div></div>
-              <input type="checkbox" class="toggle" id="alert-whale">
-            </div>
-            <div class="toggle-row">
-              <div class="toggle-label">Fee Distribution Alerts<div class="sub">Creator fee claim events</div></div>
-              <input type="checkbox" class="toggle" id="alert-fees">
-            </div>
-            <div class="toggle-row">
-              <div class="toggle-label">New Launch Alerts<div class="sub">New token creation events</div></div>
-              <input type="checkbox" class="toggle" id="alert-launch">
-            </div>
-          </div>
-        </div>
-
-        <div class="panel">
-          <div class="panel-header"><h2>Thresholds</h2></div>
-          <div class="panel-body">
-            <div class="form-group">
-              <label>Whale Threshold (SOL)</label>
-              <input type="number" id="threshold-whale" value="10" min="0.1" step="0.1">
-            </div>
-            <div class="form-group">
-              <label>Min Claim Alert (SOL)</label>
-              <input type="number" id="threshold-claim" value="0.5" min="0.01" step="0.01">
-            </div>
-            <div class="form-group">
-              <label>Trade Alert Cooldown (seconds)</label>
-              <input type="number" id="threshold-cooldown" value="30" min="5" step="5">
-            </div>
-            <button class="btn btn-primary" style="margin-top:8px" onclick="saveAlertConfig()">Save Settings</button>
-          </div>
-        </div>
-      </div>
-
-      <div class="panel">
-        <div class="panel-header">
-          <h2>Alert History</h2>
-          <div class="spacer"></div>
-          <button class="btn btn-sm" onclick="clearFeed('alert-feed')">Clear</button>
-        </div>
-        <div class="panel-body no-pad">
-          <div class="feed" id="alert-feed">
-            <div class="empty"><div class="icon">🔔</div>No alerts yet</div>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- ═══════ Token Scanner Page ═══════ -->
-    <div class="content page" id="page-scanner" style="display:none">
-      <div class="form-inline" style="margin-bottom:16px;">
-        <div class="form-group" style="flex:1">
-          <label>Token Mint Address</label>
-          <input type="text" id="scanner-mint" placeholder="Enter Solana token mint address...">
-        </div>
-        <div class="form-group" style="flex:0">
-          <label>&nbsp;</label>
-          <button class="btn btn-primary" onclick="scanToken()">🔍 Scan</button>
-        </div>
-      </div>
-
-      <div id="scanner-results" style="display:none">
-        <div class="stats-grid">
-          <div class="stat-card">
-            <div class="label">Risk Score</div>
-            <div class="value" id="scan-score">--</div>
-          </div>
-          <div class="stat-card">
-            <div class="label">Risk Level</div>
-            <div class="value" id="scan-level">--</div>
-          </div>
-          <div class="stat-card">
-            <div class="label">PumpFun Token</div>
-            <div class="value" id="scan-pump">--</div>
-          </div>
-          <div class="stat-card">
-            <div class="label">Honeypot Risk</div>
-            <div class="value" id="scan-honeypot">--</div>
-          </div>
-        </div>
-
-        <div class="panel">
-          <div class="panel-header"><h2>Security Checks</h2></div>
-          <div class="panel-body no-pad">
-            <table>
-              <thead><tr><th>Check</th><th>Status</th><th>Detail</th></tr></thead>
-              <tbody id="scan-checks"></tbody>
-            </table>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- ═══════ Quote Engine Page ═══════ -->
-    <div class="content page" id="page-quoting" style="display:none">
-      <div class="config-grid">
-        <div class="panel">
-          <div class="panel-header"><h2>Buy Quote</h2></div>
-          <div class="panel-body">
-            <div class="form-group">
-              <label>Token Mint</label>
-              <input type="text" id="quote-buy-mint" placeholder="Token mint address...">
-            </div>
-            <div class="form-group">
-              <label>SOL Amount</label>
-              <input type="number" id="quote-buy-amount" value="1" min="0.001" step="0.001">
-            </div>
-            <button class="btn btn-primary" onclick="getBuyQuote()">Get Buy Quote</button>
-            <div id="quote-buy-result" style="margin-top:12px"></div>
-          </div>
-        </div>
-
-        <div class="panel">
-          <div class="panel-header"><h2>Sell Quote</h2></div>
-          <div class="panel-body">
-            <div class="form-group">
-              <label>Token Mint</label>
-              <input type="text" id="quote-sell-mint" placeholder="Token mint address...">
-            </div>
-            <div class="form-group">
-              <label>Token Amount</label>
-              <input type="number" id="quote-sell-amount" value="1000000" min="1" step="1">
-            </div>
-            <button class="btn btn-primary" onclick="getSellQuote()">Get Sell Quote</button>
-            <div id="quote-sell-result" style="margin-top:12px"></div>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- ═══════ Vanity Gen Page ═══════ -->
-    <div class="content page" id="page-vanity" style="display:none">
-      <div class="panel">
-        <div class="panel-header"><h2>Vanity Address Generator</h2></div>
-        <div class="panel-body">
-          <div class="form-row">
-            <div class="form-group">
-              <label>Prefix (optional)</label>
-              <input type="text" id="vanity-prefix" placeholder="e.g. pump" maxlength="6">
-            </div>
-            <div class="form-group">
-              <label>Suffix (optional)</label>
-              <input type="text" id="vanity-suffix" placeholder="e.g. fun" maxlength="6">
-            </div>
-          </div>
-          <div style="display:flex;gap:8px;margin-top:8px">
-            <button class="btn btn-primary" id="vanity-start" onclick="startVanity()">🔑 Generate</button>
-            <button class="btn btn-danger" id="vanity-stop" onclick="stopVanity()" style="display:none">⏹ Stop</button>
-          </div>
-          <div id="vanity-status" style="margin-top:12px;font-size:12px;color:#888"></div>
-          <div id="vanity-result" style="margin-top:12px"></div>
-        </div>
-      </div>
-    </div>
-
-    <!-- ═══════ Config Page ═══════ -->
-    <div class="content page" id="page-config" style="display:none">
-      <div class="config-grid">
-        <div class="panel">
-          <div class="panel-header"><h2>Connection</h2></div>
-          <div class="panel-body">
-            <div class="form-group">
-              <label>API Base URL</label>
-              <input type="text" id="cfg-api-url" value="http://localhost:3000">
-            </div>
-            <div class="form-group">
-              <label>WebSocket URL</label>
-              <input type="text" id="cfg-ws-url" value="ws://localhost:8080">
-            </div>
-            <div class="form-group">
-              <label>API Key</label>
-              <input type="password" id="cfg-api-key" placeholder="Your API key...">
-            </div>
-            <button class="btn btn-primary" onclick="saveConfig()">Save & Reconnect</button>
-          </div>
-        </div>
-
-        <div class="panel">
-          <div class="panel-header"><h2>Solana RPC</h2></div>
-          <div class="panel-body">
-            <div class="form-group">
-              <label>RPC Endpoint</label>
-              <input type="text" id="cfg-rpc-url" value="https://api.mainnet-beta.solana.com">
-            </div>
-            <div class="form-group">
-              <label>Commitment Level</label>
-              <select id="cfg-commitment">
-                <option value="confirmed" selected>Confirmed</option>
-                <option value="finalized">Finalized</option>
-                <option value="processed">Processed</option>
-              </select>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- ═══════ API Keys Page ═══════ -->
-    <div class="content page" id="page-api" style="display:none">
-      <div class="panel">
-        <div class="panel-header">
-          <h2>API Access</h2>
-          <div class="spacer"></div>
-        </div>
-        <div class="panel-body">
-          <p style="color:#888;font-size:12px;margin-bottom:16px;">
-            API endpoint: <span class="mono" style="color:var(--blue)" id="api-endpoint-display">--</span>
-          </p>
-          <h4 style="color:var(--text-bright);font-size:12px;margin-bottom:8px;">Available Endpoints</h4>
-          <table>
-            <thead><tr><th>Method</th><th>Path</th><th>Description</th><th>Auth</th></tr></thead>
-            <tbody>
-              <tr><td><span class="tag tag-buy">GET</span></td><td>/api/healthz</td><td>Health check</td><td>No</td></tr>
-              <tr><td><span class="tag tag-buy">GET</span></td><td>/api/v1/status</td><td>Detailed status</td><td>Yes</td></tr>
-              <tr><td><span class="tag tag-buy">GET</span></td><td>/api/v1/claims</td><td>Query claims (paginated, filterable)</td><td>Yes</td></tr>
-              <tr><td><span class="tag tag-buy">GET</span></td><td>/api/v1/claims/stream</td><td>Real-time SSE claim stream</td><td>Yes</td></tr>
-              <tr><td><span class="tag tag-buy">GET</span></td><td>/api/v1/watches</td><td>List watches</td><td>Yes</td></tr>
-              <tr><td><span class="tag tag-launch">POST</span></td><td>/api/v1/watches</td><td>Create watch</td><td>Yes</td></tr>
-              <tr><td><span class="tag tag-claim">PATCH</span></td><td>/api/v1/watches/:id</td><td>Update watch</td><td>Yes</td></tr>
-              <tr><td><span class="tag tag-sell">DELETE</span></td><td>/api/v1/watches/:id</td><td>Delete watch</td><td>Yes</td></tr>
-              <tr><td><span class="tag tag-buy">GET</span></td><td>/api/v1/openapi</td><td>OpenAPI spec</td><td>No</td></tr>
-            </tbody>
-          </table>
-          <h4 style="color:var(--text-bright);font-size:12px;margin:16px 0 8px;">Authentication</h4>
-          <p style="color:#888;font-size:12px;">
-            Send your API key via <code style="color:var(--blue)">X-API-Key</code> header or
-            <code style="color:var(--blue)">Authorization: Bearer &lt;key&gt;</code>.
-          </p>
-        </div>
-      </div>
-    </div>
-
-    <!-- ═══════ Animations Page ═══════ -->
-    <div class="content page" id="page-animations" style="display:none">
-      <div class="panel">
-        <div class="panel-header">
-          <h2>Default Agent</h2>
-        </div>
-        <div class="panel-body">
-          <div class="config-grid">
-            <div id="agent-view-container" style="background:#000; border:1px solid var(--border); min-height: 300px; display:flex; align-items:center; justify-content:center; border-radius:var(--radius); overflow: hidden;">
-              <iframe id="agent-iframe" style="width: 100%; height: 100%; border: none;"></iframe>
-            </div>
-            <div>
-              <div class="form-group">
-                <label>Speech</label>
-                <input type="text" id="speech-input" placeholder="Enter text to speak...">
-                <button class="btn btn-primary" onclick="agentAction('speak')">Speak</button>
-              </div>
-              <div class="form-group">
-                <label>Actions</label>
-                <button class="btn" onclick="agentAction('emote')">Emote</button>
-                <button class="btn" onclick="agentAction('wave')">Wave</button>
-                <button class="btn" onclick="agentAction('verify')">Verify</button>
-              </div>
-
-              <div class="form-group">
-                <label>Animation</label>
-                <select id="anim-select">
-                  <option>Idle</option>
-                  <option>Walk</option>
-                  <option>Run</option>
-                  <option>Dance</option>
-                </select>
-              </div>
-              <button class="btn btn-primary" onclick="playAnimation()">Play</button>
-            </div>
-          </div>
-        </div>
-      </div>
-      <div class="panel">
-        <div class="panel-header">
-          <h2>Your Agents</h2>
-          <div class="spacer"></div>
-          <a class="btn btn-primary btn-sm" href="/agent-home.html">+ New Agent</a>
-        </div>
-        <div class="panel-body no-pad">
-          <table>
-            <thead><tr><th>Name</th><th>Description</th><th>Created</th><th>Actions</th></tr></thead>
-            <tbody id="custom-agents-table">
-              <tr><td colspan="4" class="empty">Loading…</td></tr>
-            </tbody>
-          </table>
-        </div>
-      </div>
-    </div>
-  </div>
-</div>
-
-<!-- ── Add Watch Modal ────────────────── -->
-<div class="modal-backdrop" id="add-watch-modal">
-  <div class="modal">
-    <h3>Add Watch</h3>
-    <div class="form-group">
-      <label>Wallet Address *</label>
-      <input type="text" id="watch-wallet" placeholder="Solana wallet address...">
-    </div>
-    <div class="form-group">
-      <label>Label</label>
-      <input type="text" id="watch-label" placeholder="Optional label...">
-    </div>
-    <div class="form-group">
-      <label>Token Filter (comma-separated mints)</label>
-      <input type="text" id="watch-token-filter" placeholder="Leave empty for all tokens">
-    </div>
-    <div class="form-group">
-      <label>Webhook URL</label>
-      <input type="text" id="watch-webhook" placeholder="https://your-server.com/webhook">
-    </div>
-    <div class="modal-actions">
-      <button class="btn" onclick="closeModal('add-watch-modal')">Cancel</button>
-      <button class="btn btn-primary" onclick="createWatch()">Create Watch</button>
-    </div>
-  </div>
-</div>
-
-<div class="toast-container" id="toasts"></div>
-
-<script type="module">
-// ═══════════════════════════════════════════════════════════════════════
-//  PumpFun Bot Dashboard — Client Application
-// ═══════════════════════════════════════════════════════════════════════
-
-import { grindVanity } from '/src/solana/vanity/grinder.js';
-import { validatePattern } from '/src/solana/vanity/validation.js';
-
-const state = {
-  // Defaults wire to the 3D-Agent host that's serving this page so the
-  // dashboard works out of the box with /api/pump/* and the public PumpPortal
-  // launch feed. Users can still point at a remote PumpKit-style API via the
-  // Configuration tab.
-  apiUrl: localStorage.getItem('pumpbot-api-url') || (typeof location !== 'undefined' ? location.origin : ''),
-  wsUrl: localStorage.getItem('pumpbot-ws-url') || 'wss://pumpportal.fun/api/data',
-  apiKey: localStorage.getItem('pumpbot-api-key') || '',
-  rpcUrl: localStorage.getItem('pumpbot-rpc-url') || 'https://api.mainnet-beta.solana.com',
-  currentPage: 'dashboard',
-  ws: null,
-  sse: null,
-  feedItems: [],
-  feedCount: 0,
-  activityCount: 0,
-  currentFilter: 'all',
-  feedPaused: false,
-  vanityWorker: null,
-  alertConfig: JSON.parse(localStorage.getItem('pumpbot-alerts') || '{}'),
-};
-
-// ── Init ──────────────────────────────────────────────────────────────
-
-document.addEventListener('DOMContentLoaded', () => {
-  // Load saved config into form fields
-  document.getElementById('cfg-api-url').value = state.apiUrl;
-  document.getElementById('cfg-ws-url').value = state.wsUrl;
-  document.getElementById('cfg-api-key').value = state.apiKey;
-  document.getElementById('cfg-rpc-url').value = state.rpcUrl;
-  document.getElementById('api-endpoint-display').textContent = state.apiUrl + '/api/v1';
-
-  // Restore alert config
-  const ac = state.alertConfig;
-  if (ac.graduation !== undefined) document.getElementById('alert-graduation').checked = ac.graduation;
-  if (ac.whale !== undefined) document.getElementById('alert-whale').checked = ac.whale;
-  if (ac.fees !== undefined) document.getElementById('alert-fees').checked = ac.fees;
-  if (ac.launch !== undefined) document.getElementById('alert-launch').checked = ac.launch;
-  if (ac.whaleThreshold) document.getElementById('threshold-whale').value = ac.whaleThreshold;
-  if (ac.claimThreshold) document.getElementById('threshold-claim').value = ac.claimThreshold;
-
-  // Nav click handlers
-  document.querySelectorAll('.sidebar nav a').forEach(a => {
-    a.addEventListener('click', e => {
-      e.preventDefault();
-      navigateTo(a.dataset.page);
-    });
-  });
-
-  // Filter buttons
-  document.querySelectorAll('.filter-btn').forEach(btn => {
-    btn.addEventListener('click', () => {
-      document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
-      btn.classList.add('active');
-      state.currentFilter = btn.dataset.filter;
-      applyFeedFilter();
-    });
-  });
-
-  document.getElementById('feed-pause').addEventListener('change', e => {
-    state.feedPaused = e.target.checked;
-  });
-
-  // Connect
-  connectApi();
-  connectWebSocket();
-
-  // Update uptime every second
-  setInterval(updateUptime, 1000);
-});
-
-// ── Navigation ────────────────────────────────────────────────────────
-
-function navigateTo(page) {
-  state.currentPage = page;
-  document.querySelectorAll('.page').forEach(p => p.style.display = 'none');
-  const target = document.getElementById('page-' + page);
-  if (target) target.style.display = '';
-
-  document.querySelectorAll('.sidebar nav a').forEach(a => {
-    a.classList.toggle('active', a.dataset.page === page);
-  });
-  if (page === 'animations') loadAgent();
-
-  const titles = {
-    dashboard: 'Dashboard', feed: 'Live Feed', watches: 'Watch List',
-    claims: 'Fee Claims', alerts: 'Alerts', scanner: 'Token Scanner',
-    quoting: 'Quote Engine', vanity: 'Vanity Generator',
-    config: 'Configuration', api: 'API Keys', animations: 'Animations',
-  };
-  document.getElementById('page-title').textContent = titles[page] || page;
-
-  if (page === 'watches') refreshWatches();
-  if (page === 'claims') refreshClaims();
-}
-
-// ── Agent Control ─────────────────────────────────────────────────────
-let agentId = null;
-
-async function loadAgent() {
-  try {
-    const resp = await apiFetch('/api/agents/me');
-    if (resp.ok) {
-      const { agent } = await resp.json();
-      if (agent && agent.id) {
-        agentId = agent.id;
-        const iframe = document.getElementById('agent-iframe');
-        iframe.src = `/agent-embed.html?id=${agentId}`;
-      } else {
-        document.getElementById('agent-view-container').innerHTML = '<div class="empty">Could not load agent.</div>';
-      }
-    }
-  } catch (e) {
-    document.getElementById('agent-view-container').innerHTML = '<div class="empty">Error loading agent.</div>';
-  }
-  loadCustomAgents();
-}
-
-async function loadCustomAgents() {
-  const tbody = document.getElementById('custom-agents-table');
-  if (!tbody) return;
-  try {
-    const resp = await apiFetch('/api/agents');
-    if (!resp.ok) {
-      tbody.innerHTML = '<tr><td colspan="4" class="empty">Sign in to see your agents.</td></tr>';
-      return;
-    }
-    const j = await resp.json();
-    const agents = j.agents || j.data || [];
-    if (!agents.length) {
-      tbody.innerHTML = '<tr><td colspan="4" class="empty">No agents yet — click <strong>+ New Agent</strong>.</td></tr>';
-      return;
-    }
-    tbody.innerHTML = agents.map((a) => {
-      const created = a.created_at ? new Date(a.created_at).toLocaleDateString() : '—';
-      return `<tr>
-        <td>${escapeHtml(a.name || a.id)}</td>
-        <td>${escapeHtml((a.description || '').slice(0, 80))}</td>
-        <td>${created}</td>
-        <td>
-          <a class="btn btn-sm" href="/agent-edit.html?id=${escapeHtml(a.id)}">Edit</a>
-          <a class="btn btn-sm" href="/agent/${escapeHtml(a.id)}">Open</a>
-        </td>
-      </tr>`;
-    }).join('');
-  } catch {
-    tbody.innerHTML = '<tr><td colspan="4" class="empty">Failed to load agents.</td></tr>';
-  }
-}
-
-function agentAction(type) {
-  const iframe = document.getElementById('agent-iframe');
-  if (!iframe || !iframe.contentWindow || !agentId) return;
-
-  let action;
-  switch (type) {
-    case 'speak':
-      const text = document.getElementById('speech-input').value;
-      if (!text) return;
-      action = { type: 'speak', text: text };
-      break;
-    case 'emote':
-      action = { type: 'emote', name: 'dance' };
-      break;
-    case 'wave':
-      action = { type: 'gesture', name: 'wave' };
-      break;
-    case 'verify':
-      action = { type: 'validate-model' };
-      break;
-    default:
-      return;
-  }
-
-  iframe.contentWindow.postMessage({
-    agentId: agentId,
-    type: 'agent:action',
-    action: action
-  }, '*');
-}
-
-function playAnimation() {
-    const animSelect = document.getElementById('anim-select');
-    const animationName = animSelect.value.toLowerCase();
-    const iframe = document.getElementById('agent-iframe');
-    if (!iframe || !iframe.contentWindow || !agentId) return;
-
-    const action = { type: 'gesture', name: animationName };
-
-    iframe.contentWindow.postMessage({
-        agentId: agentId,
-        type: 'agent:action',
-        action: action
-    }, '*');
-}
-
-// ── API Connection ────────────────────────────────────────────────────
-
-let healthInterval;
-
-async function connectApi() {
-  clearInterval(healthInterval);
-  updateApiStatus('connecting');
-
-  try {
-    const resp = await apiFetch('/api/healthz');
-    if (resp.ok) {
-      const data = await resp.json();
-      updateApiStatus('connected');
-      updateDashboard(data);
-      // Poll health every 10s
-      healthInterval = setInterval(pollHealth, 10000);
-    } else {
-      updateApiStatus('error');
-    }
-  } catch {
-    updateApiStatus('error');
-    // Retry in 5s
-    setTimeout(connectApi, 5000);
-  }
-}
-
-async function pollHealth() {
-  try {
-    const resp = await apiFetch('/api/healthz');
-    if (resp.ok) {
-      const data = await resp.json();
-      updateApiStatus('connected');
-      updateDashboard(data);
-    } else {
-      updateApiStatus('error');
-    }
-  } catch {
-    updateApiStatus('error');
-  }
-}
-
-function updateApiStatus(status) {
-  const dot = document.getElementById('api-dot');
-  const label = document.getElementById('api-status');
-  dot.className = 'dot ' + (status === 'connected' ? 'connected' : status === 'error' ? 'error' : '');
-  label.textContent = status === 'connected' ? 'API: Connected' : status === 'error' ? 'API: Disconnected' : 'API: Connecting...';
-}
-
-function updateDashboard(health) {
-  if (!health) return;
-  const m = health.monitor || {};
-  document.getElementById('stat-bot-status').textContent = m.running ? 'Running' : 'Stopped';
-  document.getElementById('stat-bot-status').className = 'value ' + (m.running ? 'green' : 'red');
-  document.getElementById('stat-bot-mode').textContent = 'Mode: ' + (m.mode || 'unknown');
-  document.getElementById('stat-claims').textContent = (m.claimsDetected || 0).toLocaleString();
-  const w = health.watches || {};
-  document.getElementById('stat-watches').textContent = (w.total || w.active || 0).toString();
-
-  state._uptime = health.uptime || 0;
-  state._uptimeAt = Date.now();
-}
-
-function updateUptime() {
-  if (!state._uptimeAt) return;
-  const elapsed = state._uptime + (Date.now() - state._uptimeAt);
-  const h = Math.floor(elapsed / 3600000);
-  const m = Math.floor((elapsed % 3600000) / 60000);
-  const s = Math.floor((elapsed % 60000) / 1000);
-  const str = `${h}h ${m}m ${s}s`;
-  document.getElementById('stat-uptime').textContent = str;
-  document.getElementById('bot-uptime').textContent = 'Uptime: ' + str;
-}
-
-async function apiFetch(path, options = {}) {
-  const url = state.apiUrl + path;
-  const headers = { ...options.headers };
-  if (state.apiKey) {
-    headers['X-API-Key'] = state.apiKey;
-  }
-  return fetch(url, { ...options, headers });
-}
-
-// ── WebSocket Connection ──────────────────────────────────────────────
-
-function connectWebSocket() {
-  if (state.ws) {
-    state.ws.close();
-    state.ws = null;
-  }
-
-  const wsDot = document.getElementById('ws-dot');
-  const wsLabel = document.getElementById('ws-status');
-
-  try {
-    state.ws = new WebSocket(state.wsUrl);
-
-    state.ws.onopen = () => {
-      wsDot.className = 'dot connected';
-      wsLabel.textContent = 'WS: Connected';
-      toast('WebSocket connected', 'success');
-      // Auto-subscribe to PumpPortal's new-token stream when connected to
-      // their public endpoint so the Live Feed populates without manual setup.
-      if (/pumpportal\.fun/.test(state.wsUrl)) {
-        try {
-          state.ws.send(JSON.stringify({ method: 'subscribeNewToken' }));
-          state.ws.send(JSON.stringify({ method: 'subscribeMigration' }));
-        } catch { /* socket closing race; reconnect will retry */ }
-      }
-    };
-
-    state.ws.onmessage = (event) => {
-      try {
-        const data = JSON.parse(event.data);
-        handleWsEvent(data);
-      } catch { /* ignore non-JSON */ }
-    };
-
-    state.ws.onclose = () => {
-      wsDot.className = 'dot';
-      wsLabel.textContent = 'WS: Disconnected';
-      // Reconnect after 3s
-      setTimeout(connectWebSocket, 3000);
-    };
-
-    state.ws.onerror = () => {
-      wsDot.className = 'dot error';
-      wsLabel.textContent = 'WS: Error';
-    };
-  } catch {
-    wsDot.className = 'dot error';
-    wsLabel.textContent = 'WS: Error';
-    setTimeout(connectWebSocket, 5000);
-  }
-}
-
-function handleWsEvent(data) {
-  // Normalize event types from various sources
-  const type = data.type || data.event || 'unknown';
-  const ts = data.timestamp || Date.now();
-
-  const item = {
-    type,
-    time: new Date(typeof ts === 'number' && ts < 1e12 ? ts * 1000 : ts),
-    data,
-  };
-
-  // Add to feed
-  addFeedItem('live-feed', item);
-  addFeedItem('dashboard-feed', item);
-
-  state.feedCount++;
-  document.getElementById('feed-count').textContent = state.feedCount;
-  state.activityCount++;
-  document.getElementById('activity-count').textContent = state.activityCount;
-
-  // Check alert rules
-  checkAlerts(item);
-}
-
-// ── Feed Management ───────────────────────────────────────────────────
-
-function addFeedItem(feedId, item) {
-  if (state.feedPaused && feedId === 'live-feed') return;
-
-  const feed = document.getElementById(feedId);
-  if (!feed) return;
-
-  // Remove empty state
-  const empty = feed.querySelector('.empty');
-  if (empty) empty.remove();
-
-  // Build feed item
-  const div = document.createElement('div');
-  div.className = 'feed-item new';
-  div.dataset.type = item.type;
-
-  const tagClass = {
-    launch: 'tag-launch', create: 'tag-launch',
-    trade: 'tag-buy', buy: 'tag-buy', sell: 'tag-sell',
-    whale: 'tag-whale', whale_trade: 'tag-whale',
-    graduation: 'tag-grad', complete: 'tag-grad',
-    claim: 'tag-claim', fee_claim: 'tag-claim',
-  }[item.type] || 'tag-buy';
-
-  const tagLabel = {
-    launch: 'LAUNCH', create: 'LAUNCH',
-    trade: 'TRADE', buy: 'BUY', sell: 'SELL',
-    whale: 'WHALE', whale_trade: 'WHALE',
-    graduation: 'GRAD', complete: 'GRAD',
-    claim: 'CLAIM', fee_claim: 'CLAIM',
-  }[item.type] || item.type.toUpperCase();
-
-  const d = item.data;
-  let title = '', detail = '';
-
-  if (item.type === 'launch' || item.type === 'create') {
-    title = `${d.name || d.tokenName || 'Unknown'} (${d.symbol || d.tokenSymbol || '?'})`;
-    detail = d.mint ? shortAddr(d.mint) : '';
-  } else if (item.type === 'trade' || item.type === 'buy' || item.type === 'sell') {
-    title = `${d.tokenSymbol || '?'} — ${(d.solAmount || 0).toFixed(4)} SOL`;
-    detail = d.user ? shortAddr(d.user) : '';
-  } else if (item.type === 'whale' || item.type === 'whale_trade') {
-    title = `🐋 ${(d.solAmount || 0).toFixed(2)} SOL — ${d.tokenSymbol || '?'}`;
-    detail = d.user ? shortAddr(d.user) : '';
-  } else if (item.type === 'graduation' || item.type === 'complete') {
-    title = `${d.tokenSymbol || d.name || '?'} graduated to AMM`;
-    detail = d.mint ? shortAddr(d.mint) : '';
-  } else if (item.type === 'claim' || item.type === 'fee_claim') {
-    title = `${(d.amountSol || 0).toFixed(4)} SOL claimed`;
-    detail = `${d.claimType || 'fee'} — ${d.claimerWallet ? shortAddr(d.claimerWallet) : ''}`;
-  } else {
-    title = JSON.stringify(d).slice(0, 80);
-  }
-
-  const timeStr = item.time.toLocaleTimeString('en-US', { hour12: false });
-  div.innerHTML = `
-    <div class="time">${timeStr}</div>
-    <span class="tag ${tagClass}">${tagLabel}</span>
-    <div class="body">
-      <div class="title">${escapeHtml(title)}</div>
-      <div class="detail">${escapeHtml(detail)}</div>
-    </div>
-  `;
-
-  feed.prepend(div);
-
-  // Limit feed to 500 items
-  while (feed.children.length > 500) {
-    feed.lastElementChild.remove();
-  }
-
-  // Apply filter
-  if (feedId === 'live-feed') applyFeedFilter();
-}
-
-function applyFeedFilter() {
-  const feed = document.getElementById('live-feed');
-  if (!feed) return;
-  feed.querySelectorAll('.feed-item').forEach(item => {
-    if (state.currentFilter === 'all') {
-      item.style.display = '';
-    } else {
-      const type = item.dataset.type || '';
-      const matches = {
-        launch: ['launch', 'create'],
-        trade: ['trade', 'buy', 'sell'],
-        whale: ['whale', 'whale_trade'],
-        graduation: ['graduation', 'complete'],
-        claim: ['claim', 'fee_claim'],
-      }[state.currentFilter] || [state.currentFilter];
-      item.style.display = matches.includes(type) ? '' : 'none';
-    }
-  });
-}
-
-function clearFeed(feedId) {
-  const feed = document.getElementById(feedId);
-  if (feed) feed.innerHTML = '<div class="empty"><div class="icon">📡</div>Cleared</div>';
-}
-
-// ── Alerts ────────────────────────────────────────────────────────────
-
-function checkAlerts(item) {
-  const ac = state.alertConfig;
-  const type = item.type;
-
-  if (type === 'graduation' || type === 'complete') {
-    if (ac.graduation !== false) {
-      addAlertItem(item, '🎓 Token Graduated');
-    }
-  }
-  if (type === 'whale' || type === 'whale_trade') {
-    if (ac.whale) {
-      const threshold = parseFloat(ac.whaleThreshold) || 10;
-      if ((item.data.solAmount || 0) >= threshold) {
-        addAlertItem(item, '🐋 Whale Trade Detected');
-      }
-    }
-  }
-  if (type === 'claim' || type === 'fee_claim') {
-    if (ac.fees) {
-      addAlertItem(item, '💰 Fee Claimed');
-    }
-  }
-  if (type === 'launch' || type === 'create') {
-    if (ac.launch) {
-      addAlertItem(item, '🚀 New Token Launched');
-    }
-  }
-}
-
-function addAlertItem(item, label) {
-  const feed = document.getElementById('alert-feed');
-  if (!feed) return;
-  const empty = feed.querySelector('.empty');
-  if (empty) empty.remove();
-
-  const div = document.createElement('div');
-  div.className = 'feed-item new';
-  const timeStr = item.time.toLocaleTimeString('en-US', { hour12: false });
-  const d = item.data;
-  let detail = d.tokenSymbol || d.name || d.mint || '';
-  if (d.solAmount) detail += ` — ${d.solAmount.toFixed(4)} SOL`;
-
-  div.innerHTML = `
-    <div class="time">${timeStr}</div>
-    <div class="body">
-      <div class="title" style="color:var(--yellow)">${escapeHtml(label)}</div>
-      <div class="detail">${escapeHtml(detail)}</div>
-    </div>
-  `;
-  feed.prepend(div);
-  while (feed.children.length > 200) feed.lastElementChild.remove();
-}
-
-function saveAlertConfig() {
-  state.alertConfig = {
-    graduation: document.getElementById('alert-graduation').checked,
-    whale: document.getElementById('alert-whale').checked,
-    fees: document.getElementById('alert-fees').checked,
-    launch: document.getElementById('alert-launch').checked,
-    whaleThreshold: document.getElementById('threshold-whale').value,
-    claimThreshold: document.getElementById('threshold-claim').value,
-    cooldown: document.getElementById('threshold-cooldown').value,
-  };
-  localStorage.setItem('pumpbot-alerts', JSON.stringify(state.alertConfig));
-  toast('Alert settings saved', 'success');
-}
-
-// ── Watches ───────────────────────────────────────────────────────────
-
-async function refreshWatches() {
-  // /api/v1/watches is part of the PumpKit external API surface. When the
-  // dashboard is pointed at the bundled 3D-Agent backend (default), there's
-  // no watch CRUD — surface that clearly instead of toasting an error.
-  const tbody = document.getElementById('watches-table');
-  tbody.innerHTML = '<tr><td colspan="6" class="empty">Loading…</td></tr>';
-  try {
-    const resp = await apiFetch('/api/v1/watches?limit=100');
-    if (resp.status === 404) {
-      tbody.innerHTML = '<tr><td colspan="6" class="empty">Watches require a PumpKit-style API. Point the API URL in <a href="#" onclick="navigateTo(\'config\');return false;" style="color:var(--blue)">Config</a> at your PumpKit deployment.</td></tr>';
-      document.getElementById('watches-count').textContent = '0';
-      return;
-    }
-    if (!resp.ok) {
-      tbody.innerHTML = `<tr><td colspan="6" class="empty">Upstream unavailable (${resp.status}).</td></tr>`;
-      return;
-    }
-    const data = await resp.json();
-    const watches = data.data || data.watches || [];
-    document.getElementById('watches-count').textContent = watches.length;
-
-    if (watches.length === 0) {
-      tbody.innerHTML = '<tr><td colspan="6" class="empty">No watches configured. Click "Add Watch" to create one.</td></tr>';
-      return;
-    }
-
-    tbody.innerHTML = watches.map(w => `
-      <tr>
-        <td><a class="addr" href="https://solscan.io/account/${escapeHtml(w.wallet)}" target="_blank">${shortAddr(w.wallet)}</a></td>
-        <td>${escapeHtml(w.label || '—')}</td>
-        <td>${w.tokenFilter ? w.tokenFilter.map(shortAddr).join(', ') : 'All'}</td>
-        <td>${w.webhookUrl ? '✅' : '—'}</td>
-        <td>${w.createdAt ? new Date(w.createdAt).toLocaleDateString() : '—'}</td>
-        <td>
-          <button class="btn btn-sm btn-danger" onclick="deleteWatch('${escapeHtml(w.id)}')">✕</button>
-        </td>
-      </tr>
-    `).join('');
-  } catch (e) {
-    tbody.innerHTML = `<tr><td colspan="6" class="empty">Error: ${escapeHtml(e.message || 'load failed')}</td></tr>`;
-  }
-}
-
-async function createWatch() {
-  const wallet = document.getElementById('watch-wallet').value.trim();
-  if (!wallet) { toast('Wallet address is required', 'error'); return; }
-
-  const body = {
-    wallet,
-    label: document.getElementById('watch-label').value.trim() || undefined,
-    tokenFilter: document.getElementById('watch-token-filter').value.trim()
-      ? document.getElementById('watch-token-filter').value.split(',').map(s => s.trim()).filter(Boolean)
-      : undefined,
-    webhookUrl: document.getElementById('watch-webhook').value.trim() || undefined,
-  };
-
-  try {
-    const resp = await apiFetch('/api/v1/watches', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(body),
-    });
-    if (resp.ok) {
-      toast('Watch created', 'success');
-      closeModal('add-watch-modal');
-      refreshWatches();
-      // Clear form
-      document.getElementById('watch-wallet').value = '';
-      document.getElementById('watch-label').value = '';
-      document.getElementById('watch-token-filter').value = '';
-      document.getElementById('watch-webhook').value = '';
-    } else {
-      const err = await resp.json().catch(() => ({}));
-      toast(err.error || 'Failed to create watch', 'error');
-    }
-  } catch {
-    toast('Network error creating watch', 'error');
-  }
-}
-
-async function deleteWatch(id) {
-  if (!confirm('Delete this watch?')) return;
-  try {
-    const resp = await apiFetch('/api/v1/watches/' + id, { method: 'DELETE' });
-    if (resp.ok) {
-      toast('Watch deleted', 'success');
-      refreshWatches();
-    } else {
-      toast('Failed to delete watch', 'error');
-    }
-  } catch {
-    toast('Network error', 'error');
-  }
-}
-
-// ── Claims ────────────────────────────────────────────────────────────
-// Backed by /api/agents/pumpfun?op=claims (proxy to the upstream
-// pumpfun-claims-bot MCP). Wallet/type filtering happens client-side
-// because the MCP feed is a global stream, not a per-wallet query.
-
-async function refreshClaims() {
-  const wallet = document.getElementById('claims-wallet-filter').value.trim().toLowerCase();
-  const claimType = document.getElementById('claims-type-filter').value;
-  const tbody = document.getElementById('claims-table');
-  tbody.innerHTML = '<tr><td colspan="6" class="empty">Loading…</td></tr>';
-
-  try {
-    const resp = await apiFetch('/api/agents/pumpfun?op=claims&limit=50');
-    if (resp.status === 401) {
-      tbody.innerHTML = '<tr><td colspan="6" class="empty">Sign in to view fee claims.</td></tr>';
-      return;
-    }
-    if (!resp.ok) {
-      tbody.innerHTML = `<tr><td colspan="6" class="empty">Upstream unavailable (${resp.status}).</td></tr>`;
-      return;
-    }
-    const data = await resp.json();
-    let claims = (data.items || data.claims || data.data || []).slice();
-
-    if (wallet) {
-      claims = claims.filter((c) => String(c.claimerWallet || c.wallet || '').toLowerCase().includes(wallet));
-    }
-    if (claimType) {
-      claims = claims.filter((c) => {
-        const t = (c.claimType || (c.isCashback ? 'cashback' : 'creator_fee') || '').toLowerCase();
-        return t === claimType.toLowerCase();
-      });
-    }
-
-    document.getElementById('claims-count').textContent = String(claims.length);
-
-    if (claims.length === 0) {
-      tbody.innerHTML = '<tr><td colspan="6" class="empty">No claims match this filter</td></tr>';
-      return;
-    }
-
-    tbody.innerHTML = claims.map((c) => {
-      const ts = c.timestamp || c.time || c.at;
-      const isCashback = c.isCashback || (c.claimType || '').toLowerCase() === 'cashback';
-      const typeClass = isCashback ? 'tag-claim' : 'tag-buy';
-      const typeLabel = isCashback ? 'Cashback' : (c.claimType || 'Creator Fee');
-      const wal = c.claimerWallet || c.wallet || '';
-      const tx  = c.txSignature || c.signature || '';
-      const sym = c.tokenSymbol || c.tokenName || shortAddr(c.tokenMint || '');
-      const amt = Number(c.amountSol ?? c.amount ?? 0);
-      return `
-        <tr>
-          <td>${ts ? new Date(ts).toLocaleString() : '—'}</td>
-          <td><a class="addr" href="https://solscan.io/account/${escapeHtml(wal)}" target="_blank">${shortAddr(wal)}</a></td>
-          <td><span class="tag ${typeClass}">${escapeHtml(typeLabel)}</span></td>
-          <td>${escapeHtml(sym)}</td>
-          <td style="color:var(--accent)">${amt.toFixed(4)} SOL</td>
-          <td>${tx ? `<a class="addr" href="https://solscan.io/tx/${escapeHtml(tx)}" target="_blank">${shortAddr(tx)}</a>` : '—'}</td>
-        </tr>`;
-    }).join('');
-  } catch (e) {
-    tbody.innerHTML = `<tr><td colspan="6" class="empty">Error: ${escapeHtml(e.message || 'load failed')}</td></tr>`;
-  }
-}
-
-function exportClaims() {
-  // Grab current table data and export as CSV
-  const rows = document.querySelectorAll('#claims-table tr');
-  if (rows.length === 0) return;
-  let csv = 'Time,Wallet,Type,Token,Amount SOL,TX\n';
-  rows.forEach(tr => {
-    const cells = tr.querySelectorAll('td');
-    if (cells.length >= 6) {
-      csv += Array.from(cells).map(c => '"' + c.textContent.trim().replace(/"/g, '""') + '"').join(',') + '\n';
-    }
-  });
-  const blob = new Blob([csv], { type: 'text/csv' });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = 'pumpfun-claims-' + new Date().toISOString().slice(0,10) + '.csv';
-  a.click();
-  URL.revokeObjectURL(url);
-  toast('Claims exported', 'success');
-}
-
-// ── Token Scanner ─────────────────────────────────────────────────────
-
-async function scanToken() {
-  const mint = document.getElementById('scanner-mint').value.trim();
-  if (!mint) { toast('Enter a token mint address', 'error'); return; }
-
-  document.getElementById('scanner-results').style.display = 'none';
-
-  try {
-    // Call scan-token and check-honeypot APIs in parallel
-    const [scanResp, honeypotResp] = await Promise.all([
-      fetch(state.rpcUrl, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ jsonrpc: '2.0', id: 1, method: 'getAccountInfo', params: [mint, { encoding: 'jsonParsed' }] }),
-      }),
-      fetch(state.rpcUrl, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ jsonrpc: '2.0', id: 2, method: 'getTokenLargestAccounts', params: [mint] }),
-      }),
-    ]);
-
-    const scanData = await scanResp.json();
-    const holdersData = await honeypotResp.json();
-
-    const account = scanData.result?.value;
-    if (!account) {
-      toast('Token not found on-chain', 'error');
-      return;
-    }
-
-    const info = account.data?.parsed?.info || {};
-    const holders = holdersData.result?.value || [];
-
-    // Compute checks
-    const checks = {};
-    let score = 100;
-    const flags = [];
-
-    // Program check
-    const owner = account.owner;
-    checks.program = { status: 'info', detail: owner === 'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA' ? 'SPL Token' : owner === 'TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb' ? 'Token-2022' : owner };
-
-    // Mint authority
-    if (info.mintAuthority) {
-      checks.mintAuth = { status: 'warn', detail: 'Active: ' + shortAddr(info.mintAuthority) };
-      score -= 15; flags.push('mint_authority');
-    } else {
-      checks.mintAuth = { status: 'pass', detail: 'Revoked' };
-    }
-
-    // Freeze authority
-    if (info.freezeAuthority) {
-      checks.freezeAuth = { status: 'fail', detail: 'Active: ' + shortAddr(info.freezeAuthority) };
-      score -= 25; flags.push('freeze_authority');
-    } else {
-      checks.freezeAuth = { status: 'pass', detail: 'None' };
-    }
-
-    // Top holder concentration
-    const totalSupply = Number(info.supply || 0);
-    let topConc = 0;
-    if (holders.length > 0 && totalSupply > 0) {
-      topConc = parseFloat(((Number(holders[0].amount || 0) / totalSupply) * 100).toFixed(2));
-    }
-    if (topConc > 50) {
-      checks.concentration = { status: 'warn', detail: `Top holder: ${topConc}%` };
-      score -= 10; flags.push('high_concentration');
-    } else {
-      checks.concentration = { status: 'pass', detail: `Top holder: ${topConc}%` };
-    }
-
-    // Supply
-    const decimals = info.decimals || 0;
-    const displaySupply = (Number(info.supply || 0) / Math.pow(10, decimals)).toLocaleString();
-    checks.supply = { status: 'info', detail: `${displaySupply} (${decimals} decimals)` };
-
-    // Check PumpFun bonding curve
-    let isPump = false;
-    try {
-      const bcResp = await fetch(state.rpcUrl, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ jsonrpc: '2.0', id: 3, method: 'getProgramAccounts', params: [
-          '6EF8rrecthR5Dkzon8Nwu78hRvfCKubJ14M5uBEwF6P',
-          { filters: [{ memcmp: { offset: 30, bytes: mint } }], dataSlice: { offset: 0, length: 1 } },
-        ] }),
-      });
-      const bcData = await bcResp.json();
-      isPump = bcData.result && bcData.result.length > 0;
-    } catch { /* skip */ }
-
-    if (isPump) {
-      checks.pumpfun = { status: 'pass', detail: 'Bonding curve active — sells guaranteed by AMM' };
-      score = Math.min(score + 10, 100);
-    } else {
-      checks.pumpfun = { status: 'info', detail: 'Not a PumpFun token' };
-    }
-
-    // Enrich with /api/pump/curve (price + graduation progress) when it's a Pump token.
-    if (isPump) {
-      try {
-        const curveResp = await fetch(`/api/pump/curve?mint=${encodeURIComponent(mint)}`);
-        if (curveResp.ok) {
-          const curve = await curveResp.json();
-          if (curve.price?.priceSol) {
-            checks.spot_price = { status: 'info', detail: `${Number(curve.price.priceSol).toFixed(8)} SOL/token` };
-          }
-          if (curve.price?.marketCapSol) {
-            checks.market_cap = { status: 'info', detail: `${Number(curve.price.marketCapSol).toFixed(2)} SOL` };
-          }
-          if (curve.graduation?.progressBps != null) {
-            const pct = Number(curve.graduation.progressBps) / 100;
-            checks.graduation = { status: pct >= 80 ? 'warn' : 'pass', detail: `${pct.toFixed(1)}% to graduation` };
-          }
-        }
-      } catch { /* enrichment is optional */ }
-    }
-
-    const riskLevel = score >= 80 ? 'low' : score >= 50 ? 'medium' : 'high';
-    const riskColor = score >= 80 ? 'green' : score >= 50 ? 'yellow' : 'red';
-
-    // Display results
-    document.getElementById('scan-score').textContent = score + '/100';
-    document.getElementById('scan-score').className = 'value ' + riskColor;
-    document.getElementById('scan-level').textContent = riskLevel.toUpperCase();
-    document.getElementById('scan-level').className = 'value ' + riskColor;
-    document.getElementById('scan-pump').textContent = isPump ? 'Yes ✅' : 'No';
-    document.getElementById('scan-pump').className = 'value ' + (isPump ? 'green' : '');
-    document.getElementById('scan-honeypot').textContent = (info.freezeAuthority ? 'Risk ⚠️' : 'Safe') + (isPump ? ' (AMM backed)' : '');
-    document.getElementById('scan-honeypot').className = 'value ' + (info.freezeAuthority ? 'red' : 'green');
-
-    const statusIcons = { pass: '✅', warn: '⚠️', fail: '❌', info: 'ℹ️' };
-    const tbody = document.getElementById('scan-checks');
-    tbody.innerHTML = Object.entries(checks).map(([name, c]) => `
-      <tr>
-        <td>${escapeHtml(name)}</td>
-        <td>${statusIcons[c.status] || '?'} ${c.status.toUpperCase()}</td>
-        <td>${escapeHtml(c.detail)}</td>
-      </tr>
-    `).join('');
-
-    document.getElementById('scanner-results').style.display = '';
-    toast('Scan complete: ' + riskLevel + ' risk', riskLevel === 'high' ? 'error' : 'success');
-  } catch (e) {
-    toast('Scan failed: ' + (e.message || 'Network error'), 'error');
-  }
-}
-
-// ── Quote Engine ──────────────────────────────────────────────────────
-
-async function getBuyQuote() {
-  const mint = document.getElementById('quote-buy-mint').value.trim();
-  const solAmount = parseFloat(document.getElementById('quote-buy-amount').value);
-  if (!mint) { toast('Enter token mint', 'error'); return; }
-  if (!Number.isFinite(solAmount) || solAmount <= 0) { toast('Enter a positive SOL amount', 'error'); return; }
-
-  const resultDiv = document.getElementById('quote-buy-result');
-  resultDiv.innerHTML = '<span style="color:#888">Calculating...</span>';
-
-  try {
-    const url = `/api/pump/quote-sdk?mint=${encodeURIComponent(mint)}&side=buy&amount=${solAmount}`;
-    const r = await fetch(url);
-    const data = await r.json();
-    if (!r.ok) {
-      resultDiv.innerHTML = `<span style="color:var(--red)">${escapeHtml(data.message || data.error || 'Quote failed')}</span>`;
-      return;
-    }
-    const tokensOut = Number(data.output?.tokensUi || 0);
-    const impact = Number(data.priceImpactPct || 0);
-    const mc = data.marketContext;
-    resultDiv.innerHTML = `
-      <div style="padding:12px;background:var(--bg);border-radius:var(--radius);border:1px solid var(--border);">
-        <div style="color:#888;font-size:11px">You receive</div>
-        <div style="color:var(--accent);font-size:18px;margin:4px 0">${tokensOut.toLocaleString(undefined, { maximumFractionDigits: 2 })} tokens</div>
-        <div style="color:#888;font-size:11px">For ${solAmount} SOL · price impact <span style="color:${impact > 5 ? 'var(--yellow)' : 'var(--accent)'}">${impact.toFixed(2)}%</span></div>
-        ${mc ? `<div style="color:#666;font-size:11px;margin-top:6px">Spot: ${formatPriceContext(mc)}</div>` : ''}
-      </div>
-    `;
-  } catch (e) {
-    resultDiv.innerHTML = `<span style="color:var(--red)">Error: ${escapeHtml(e.message || 'Quote failed')}</span>`;
-  }
-}
-
-function formatPriceContext(p) {
-	const parts = [];
-	if (p.priceSol) parts.push(`${(Number(p.priceSol) || 0).toFixed(8)} SOL/token`);
-	if (p.marketCapSol) parts.push(`MC ${(Number(p.marketCapSol) || 0).toFixed(2)} SOL`);
-	return parts.join(' · ');
-}
-
-async function getSellQuote() {
-  const mint = document.getElementById('quote-sell-mint').value.trim();
-  const tokenAmount = parseFloat(document.getElementById('quote-sell-amount').value);
-  if (!mint) { toast('Enter token mint', 'error'); return; }
-  if (!Number.isFinite(tokenAmount) || tokenAmount <= 0) { toast('Enter a positive token amount', 'error'); return; }
-
-  const resultDiv = document.getElementById('quote-sell-result');
-  resultDiv.innerHTML = '<span style="color:#888">Calculating...</span>';
-
-  try {
-    const url = `/api/pump/quote-sdk?mint=${encodeURIComponent(mint)}&side=sell&amount=${tokenAmount}`;
-    const r = await fetch(url);
-    const data = await r.json();
-    if (!r.ok) {
-      resultDiv.innerHTML = `<span style="color:var(--red)">${escapeHtml(data.message || data.error || 'Quote failed')}</span>`;
-      return;
-    }
-    const sol = Number(data.output?.sol || 0);
-    const impact = Number(data.priceImpactPct || 0);
-    const mc = data.marketContext;
-    resultDiv.innerHTML = `
-      <div style="padding:12px;background:var(--bg);border-radius:var(--radius);border:1px solid var(--border);">
-        <div style="color:#888;font-size:11px">You receive</div>
-        <div style="color:var(--accent);font-size:18px;margin:4px 0">${sol.toFixed(6)} SOL</div>
-        <div style="color:#888;font-size:11px">For ${tokenAmount.toLocaleString()} tokens · price impact <span style="color:${impact > 5 ? 'var(--yellow)' : 'var(--accent)'}">${impact.toFixed(2)}%</span></div>
-        ${mc ? `<div style="color:#666;font-size:11px;margin-top:6px">Spot: ${formatPriceContext(mc)}</div>` : ''}
-      </div>
-    `;
-  } catch (e) {
-    resultDiv.innerHTML = `<span style="color:var(--red)">Error: ${escapeHtml(e.message || 'Quote failed')}</span>`;
-  }
-}
-
-// ── Vanity Generator ──────────────────────────────────────────────────
-// Real Ed25519 keypair grinder. Spawns Web Workers from the shared
-// /src/solana/vanity/grinder.js so the wall-clock matches /vanity-wallet.
-
-let vanityAbort = null;
-
-async function startVanity() {
-  const prefix = document.getElementById('vanity-prefix').value.trim();
-  const suffix = document.getElementById('vanity-suffix').value.trim();
-
-  if (!prefix && !suffix) {
-    toast('Enter a prefix or suffix', 'error');
-    return;
-  }
-  if (prefix) {
-    const v = validatePattern(prefix);
-    if (!v.valid) { toast(`Prefix: ${v.errors.join('; ')}`, 'error'); return; }
-  }
-  if (suffix) {
-    const v = validatePattern(suffix);
-    if (!v.valid) { toast(`Suffix: ${v.errors.join('; ')}`, 'error'); return; }
-  }
-
-  vanityAbort = new AbortController();
-  document.getElementById('vanity-start').style.display = 'none';
-  document.getElementById('vanity-stop').style.display = '';
-  document.getElementById('vanity-status').textContent = 'Spinning up workers…';
-  document.getElementById('vanity-result').innerHTML = '';
-
-  try {
-    const result = await grindVanity({
-      prefix: prefix || undefined,
-      suffix: suffix || undefined,
-      signal: vanityAbort.signal,
-      onProgress: ({ attempts, rate, eta }) => {
-        document.getElementById('vanity-status').textContent =
-          `${attempts.toLocaleString()} tries · ${Math.round(rate).toLocaleString()}/s · eta ${eta}`;
-      },
-    });
-
-    const secretJson = JSON.stringify(Array.from(result.secretKey));
-    const seconds = (result.durationMs / 1000).toFixed(1);
-    document.getElementById('vanity-status').textContent =
-      `Found in ${seconds}s · ${result.attempts.toLocaleString()} attempts · ${result.workers} worker${result.workers > 1 ? 's' : ''}`;
-    document.getElementById('vanity-result').innerHTML = `
-      <div style="padding:12px;background:var(--bg);border-radius:var(--radius);border:1px solid var(--accent-dim);">
-        <div style="color:#888;font-size:11px">Public key</div>
-        <div style="color:var(--accent);font-size:14px;margin:4px 0;word-break:break-all">${escapeHtml(result.publicKey)}</div>
-        <button class="btn btn-sm" id="vanity-copy-pub" style="margin-right:6px">Copy address</button>
-        <button class="btn btn-sm" id="vanity-download-key">Download keypair JSON</button>
-        <div style="color:var(--yellow);font-size:10px;margin-top:8px">⚠ Secret key never leaves your browser. Save it securely or import into a wallet.</div>
-      </div>
-    `;
-    document.getElementById('vanity-copy-pub').addEventListener('click', async () => {
-      try { await navigator.clipboard.writeText(result.publicKey); toast('Address copied', 'success'); } catch {}
-    });
-    document.getElementById('vanity-download-key').addEventListener('click', () => {
-      const blob = new Blob([secretJson], { type: 'application/json' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `vanity-${result.publicKey.slice(0, 8)}.json`;
-      document.body.appendChild(a); a.click(); a.remove();
-      URL.revokeObjectURL(url);
-    });
-    toast('Vanity address found', 'success');
-  } catch (e) {
-    if (e?.name === 'AbortError') {
-      document.getElementById('vanity-status').textContent = 'Stopped';
-    } else {
-      document.getElementById('vanity-status').textContent = `Error: ${e.message || 'grind failed'}`;
-      toast('Grind failed', 'error');
-    }
-  } finally {
-    vanityAbort = null;
-    document.getElementById('vanity-start').style.display = '';
-    document.getElementById('vanity-stop').style.display = 'none';
-  }
-}
-
-function stopVanity() {
-  vanityAbort?.abort();
-  vanityAbort = null;
-  document.getElementById('vanity-start').style.display = '';
-  document.getElementById('vanity-stop').style.display = 'none';
-}
-
-// ── Config ────────────────────────────────────────────────────────────
-
-function saveConfig() {
-  state.apiUrl = document.getElementById('cfg-api-url').value.trim();
-  state.wsUrl = document.getElementById('cfg-ws-url').value.trim();
-  state.apiKey = document.getElementById('cfg-api-key').value.trim();
-  state.rpcUrl = document.getElementById('cfg-rpc-url').value.trim();
-
-  localStorage.setItem('pumpbot-api-url', state.apiUrl);
-  localStorage.setItem('pumpbot-ws-url', state.wsUrl);
-  localStorage.setItem('pumpbot-api-key', state.apiKey);
-  localStorage.setItem('pumpbot-rpc-url', state.rpcUrl);
-
-  document.getElementById('api-endpoint-display').textContent = state.apiUrl + '/api/v1';
-
-  // Reconnect
-  connectApi();
-  connectWebSocket();
-
-  toast('Configuration saved & reconnecting', 'success');
-}
-
-// ── Modals ────────────────────────────────────────────────────────────
-
-function openModal(id) {
-  document.getElementById(id).classList.add('open');
-}
-
-function closeModal(id) {
-  document.getElementById(id).classList.remove('open');
-}
-
-// Close modal on backdrop click
-document.addEventListener('click', e => {
-  if (e.target.classList.contains('modal-backdrop')) {
-    e.target.classList.remove('open');
-  }
-});
-
-// ── Toast ─────────────────────────────────────────────────────────────
-
-function toast(msg, type = '') {
-  const container = document.getElementById('toasts');
-  const div = document.createElement('div');
-  div.className = 'toast ' + type;
-  div.textContent = msg;
-  container.appendChild(div);
-  setTimeout(() => div.remove(), 4000);
-}
-
-// ── Utilities ─────────────────────────────────────────────────────────
-
-function shortAddr(addr) {
-  if (!addr || addr.length < 8) return addr || '';
-  return addr.slice(0, 4) + '…' + addr.slice(-4);
-}
-
-function escapeHtml(str) {
-  if (!str) return '';
-  return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
-}
-
-// Expose handlers used by inline `onclick=` attributes. Required because the
-// surrounding <script> is a module — module scope is not the global scope.
-Object.assign(window, {
-  navigateTo,
-  openModal, closeModal,
-  refreshWatches, createWatch, deleteWatch,
-  refreshClaims, exportClaims,
-  saveAlertConfig, clearFeed,
-  scanToken, getBuyQuote, getSellQuote,
-  startVanity, stopVanity,
-  saveConfig,
-  agentAction, playAnimation,
-});
-</script>
-
-		<div id="footer-container"></div>
-		<script src="/footer.js"></script>
-</body>
+		<!-- ── Add Watch Modal ────────────────── -->
+		<div class="pd-modal-backdrop" id="pd-add-watch-modal" role="dialog" aria-modal="true" aria-labelledby="pd-add-watch-title">
+			<div class="pd-modal">
+				<h3 id="pd-add-watch-title">Add watch</h3>
+				<div class="pd-form-group">
+					<label>Wallet address *</label>
+					<input class="pd-input" type="text" id="pd-watch-wallet" placeholder="Solana wallet address…" />
+				</div>
+				<div class="pd-form-group">
+					<label>Label</label>
+					<input class="pd-input" type="text" id="pd-watch-label" placeholder="Optional label…" />
+				</div>
+				<div class="pd-form-group">
+					<label>Token filter (comma-separated mints)</label>
+					<input class="pd-input" type="text" id="pd-watch-token-filter" placeholder="Leave empty for all tokens" />
+				</div>
+				<div class="pd-form-group">
+					<label>Webhook URL</label>
+					<input class="pd-input" type="text" id="pd-watch-webhook" placeholder="https://your-server.com/webhook" />
+				</div>
+				<div class="pd-modal-actions">
+					<button class="pd-btn" id="pd-cancel-watch" type="button">Cancel</button>
+					<button class="pd-btn is-primary" id="pd-create-watch" type="button">Create watch</button>
+				</div>
+			</div>
+		</div>
+
+		<div class="pd-toast-container" id="pd-toasts" role="status" aria-live="polite"></div>
+
+		<script type="module">
+			// ═════════════════════════════════════════════════════════════════
+			//  Pump Dashboard — site-cohesive rewrite.
+			//  Defaults to the three.ws-hosted /api/pump/* endpoints for the
+			//  Live Feed, network health, quotes, and the token scanner.
+			//  Pointing the API URL in Config at a PumpKit deployment unlocks
+			//  the optional Watches + per-wallet CRUD endpoints.
+			// ═════════════════════════════════════════════════════════════════
+
+			import { grindVanity } from '/src/solana/vanity/grinder.js';
+			import { validatePattern } from '/src/solana/vanity/validation.js';
+
+			const PAGE_TITLES = {
+				dashboard: 'Dashboard',
+				feed: 'Live Feed',
+				watches: 'Watch List',
+				claims: 'Fee Claims',
+				alerts: 'Alerts',
+				scanner: 'Token Scanner',
+				quoting: 'Quote Engine',
+				vanity: 'Vanity Generator',
+				animations: 'Default Agent',
+				config: 'Configuration',
+				api: 'API Reference',
+			};
+
+			const state = {
+				apiUrl: localStorage.getItem('pumpbot-api-url') || location.origin,
+				wsUrl: localStorage.getItem('pumpbot-ws-url') || 'wss://pumpportal.fun/api/data',
+				apiKey: localStorage.getItem('pumpbot-api-key') || '',
+				rpcUrl: localStorage.getItem('pumpbot-rpc-url') || 'https://api.mainnet-beta.solana.com',
+				currentPage: 'dashboard',
+				currentFilter: 'all',
+				ws: null,
+				feedItems: [],
+				feedCount: 0,
+				activityCount: 0,
+				feedPaused: false,
+				alertConfig: safeParseJson(localStorage.getItem('pumpbot-alerts') || '{}', {}),
+				agentId: null,
+				vanityAbort: null,
+				healthInterval: null,
+				networkInterval: null,
+				startupAt: Date.now(),
+			};
+
+			function safeParseJson(s, fallback) {
+				try { return JSON.parse(s); } catch { return fallback; }
+			}
+
+			function $(id) { return document.getElementById(id); }
+
+			function escapeHtml(s) {
+				return String(s).replace(/[&<>"']/g, (c) => ({
+					'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;',
+				}[c]));
+			}
+
+			function shortAddr(addr) {
+				if (!addr) return '';
+				const a = String(addr);
+				if (a.length <= 12) return a;
+				return `${a.slice(0, 4)}…${a.slice(-4)}`;
+			}
+
+			// ── Toasts ───────────────────────────────────────────────────
+
+			function toast(message, kind = 'info') {
+				const host = $('pd-toasts');
+				if (!host) return;
+				const div = document.createElement('div');
+				div.className = `pd-toast is-${kind}`;
+				div.textContent = message;
+				host.appendChild(div);
+				setTimeout(() => { div.style.opacity = '0'; div.style.transform = 'translateX(8px)'; }, 3500);
+				setTimeout(() => div.remove(), 4000);
+			}
+
+			// ── API fetch helper ─────────────────────────────────────────
+
+			async function apiFetch(path, options = {}) {
+				const base = path.startsWith('http') ? '' : state.apiUrl;
+				const url = base + path;
+				const headers = { ...(options.headers || {}) };
+				if (state.apiKey) headers['X-API-Key'] = state.apiKey;
+				return fetch(url, { credentials: 'include', ...options, headers });
+			}
+
+			// ── Navigation ───────────────────────────────────────────────
+
+			function navigateTo(page) {
+				state.currentPage = page;
+				document.querySelectorAll('.pd-page').forEach((p) => p.classList.remove('is-active'));
+				const target = $('page-' + page);
+				if (target) target.classList.add('is-active');
+				document.querySelectorAll('.pd-sidebar nav a').forEach((a) => {
+					a.classList.toggle('is-active', a.dataset.page === page);
+				});
+				$('pd-page-title').textContent = PAGE_TITLES[page] || page;
+
+				if (page === 'animations') loadAgent();
+				if (page === 'watches') refreshWatches();
+				if (page === 'claims') refreshClaims();
+			}
+
+			// ── API health + network ─────────────────────────────────────
+
+			async function connectApi() {
+				clearInterval(state.healthInterval);
+				updateApiStatus('connecting');
+				try {
+					const resp = await apiFetch('/api/healthz');
+					if (resp.ok) {
+						updateApiStatus('connected');
+						state.healthInterval = setInterval(pollHealth, 15000);
+					} else {
+						updateApiStatus('error');
+					}
+				} catch {
+					updateApiStatus('error');
+					setTimeout(connectApi, 5000);
+				}
+			}
+
+			async function pollHealth() {
+				try {
+					const resp = await apiFetch('/api/healthz');
+					updateApiStatus(resp.ok ? 'connected' : 'error');
+				} catch {
+					updateApiStatus('error');
+				}
+			}
+
+			function updateApiStatus(status) {
+				const dot = $('pd-api-dot');
+				const label = $('pd-api-status');
+				dot.className = 'pd-dot ' + (status === 'connected' ? 'is-on' : status === 'error' ? 'is-err' : 'is-warm');
+				label.textContent = status === 'connected' ? 'API: connected'
+					: status === 'error' ? 'API: disconnected'
+					: 'API: connecting…';
+			}
+
+			async function refreshNetworkStats() {
+				try {
+					const r = await fetch('/api/pump/helius-stats');
+					if (!r.ok) return;
+					const data = await r.json();
+
+					const sol = Number(data.sol_price || 0);
+					if (sol > 0) {
+						$('pd-stat-sol').textContent = '$' + sol.toFixed(2);
+						$('pd-sol-status').textContent = 'SOL: $' + sol.toFixed(2);
+						$('pd-sol-dot').className = 'pd-dot is-on';
+					}
+
+					const h = data.helius || {};
+					if (h.enabled) {
+						$('pd-stat-rpc').textContent = h.slot ? Number(h.slot).toLocaleString() : 'On';
+						$('pd-stat-rpc').classList.add('is-success');
+						$('pd-stat-rpc-sub').textContent = (h.network || 'mainnet') + ' · ' + (h.blockTime ? new Date(h.blockTime * 1000).toLocaleTimeString() : 'live');
+						$('pd-network-badge').textContent = 'Helius live';
+					} else {
+						$('pd-stat-rpc').textContent = 'Public RPC';
+						$('pd-stat-rpc-sub').textContent = 'Helius disabled';
+						$('pd-network-badge').textContent = 'Public RPC';
+					}
+
+					const f = data.feed || {};
+					$('pd-stat-mints').textContent = Number(f.mints || 0).toLocaleString();
+					$('pd-stat-grads').textContent = Number(f.graduations || 0).toLocaleString();
+				} catch { /* network panel is best-effort */ }
+			}
+
+			// ── Featured agent ───────────────────────────────────────────
+
+			async function loadFeaturedAgent() {
+				try {
+					const resp = await apiFetch('/api/agents/me');
+					if (resp.status === 401 || !resp.ok) {
+						$('pd-featured-name').textContent = 'Sign in to see your agents';
+						$('pd-featured-desc').textContent = 'Once you create an agent, it shows up here with live stats and a 3D preview.';
+						$('pd-featured-link').textContent = 'Sign in';
+						$('pd-featured-link').href = '/login';
+						return;
+					}
+					const { agent } = await resp.json();
+					if (!agent) {
+						$('pd-featured-name').textContent = 'No agent yet';
+						$('pd-featured-desc').textContent = 'Create your first 3D agent and it will appear here.';
+						$('pd-featured-link').textContent = 'Create agent';
+						$('pd-featured-link').href = '/create';
+						return;
+					}
+					$('pd-featured-name').textContent = agent.name || 'Untitled agent';
+					$('pd-featured-desc').textContent = agent.description || 'Your default agent. Ready to chat, speak, and embed.';
+					$('pd-featured-link').textContent = 'View profile';
+					$('pd-featured-link').href = '/agent/' + agent.id;
+
+					const stats = $('pd-featured-stats');
+					stats.hidden = false;
+					stats.innerHTML = [
+						agent.id ? `<span class="pd-featured-stat"><span class="pd-featured-stat-label">ID</span>${shortAddr(agent.id)}</span>` : '',
+						agent.created_at ? `<span class="pd-featured-stat"><span class="pd-featured-stat-label">Created</span>${new Date(agent.created_at).toLocaleDateString()}</span>` : '',
+						agent.token_mint ? `<span class="pd-featured-stat"><span class="pd-featured-stat-label">Token</span>${shortAddr(agent.token_mint)}</span>` : '',
+					].filter(Boolean).join('');
+
+					// Preview the actual agent in the avatar slot when we have its embed.
+					if (agent.id) {
+						$('pd-featured-avatar').innerHTML = `<iframe src="/agent-embed.html?id=${encodeURIComponent(agent.id)}" title="Featured agent preview"></iframe>`;
+					}
+				} catch {
+					$('pd-featured-name').textContent = 'Couldn’t load agent';
+					$('pd-featured-desc').textContent = 'Try refreshing the page, or check your connection in the Configuration tab.';
+				}
+			}
+
+			// ── Wallet snapshot ──────────────────────────────────────────
+
+			async function loadWalletSnapshot() {
+				try {
+					const resp = await apiFetch('/api/pump/balances');
+					if (resp.status === 401) return; // already shows the sign-in CTA
+					if (!resp.ok) return;
+					const data = await resp.json();
+					const body = $('pd-wallet-body');
+					const sol = Number(data.solBalance || data.sol || 0);
+					const tokens = data.tokens || data.tokenBalances || [];
+					body.innerHTML = `
+						<div class="pd-stat" style="margin-bottom:0.7rem">
+							<div class="pd-stat-label">SOL balance</div>
+							<div class="pd-stat-value">${sol.toFixed(4)}</div>
+							<div class="pd-stat-sub">${data.wallet ? shortAddr(data.wallet) : 'your wallet'}</div>
+						</div>
+						<div style="font-size:0.78rem;color:var(--pd-text-muted);margin-bottom:0.45rem;font-family:var(--pd-font-display);text-transform:uppercase;letter-spacing:0.08em">Top holdings</div>
+						${tokens.length === 0 ? '<div style="font-size:0.85rem;color:var(--pd-text-dim)">No token balances detected.</div>' : `
+							<table class="pd-table">
+								<thead><tr><th>Token</th><th style="text-align:right">Amount</th></tr></thead>
+								<tbody>
+									${tokens.slice(0, 5).map((t) => `
+										<tr>
+											<td><span class="pd-mono">${escapeHtml(t.symbol || shortAddr(t.mint || ''))}</span></td>
+											<td style="text-align:right" class="pd-mono">${Number(t.uiAmount || t.amount || 0).toLocaleString(undefined, { maximumFractionDigits: 4 })}</td>
+										</tr>
+									`).join('')}
+								</tbody>
+							</table>
+						`}
+					`;
+				} catch { /* keep the empty state */ }
+			}
+
+			// ── Custom agents list ───────────────────────────────────────
+
+			async function loadCustomAgents() {
+				const tbody = $('pd-custom-agents-table');
+				if (!tbody) return;
+				try {
+					const resp = await apiFetch('/api/agents');
+					if (!resp.ok) {
+						tbody.innerHTML = '<tr><td colspan="4" class="pd-empty">Sign in to see your agents.</td></tr>';
+						return;
+					}
+					const j = await resp.json();
+					const agents = j.agents || j.data || [];
+					if (!agents.length) {
+						tbody.innerHTML = '<tr><td colspan="4" class="pd-empty">No agents yet — click <strong>+ New agent</strong>.</td></tr>';
+						return;
+					}
+					tbody.innerHTML = agents.map((a) => {
+						const created = a.created_at ? new Date(a.created_at).toLocaleDateString() : '—';
+						return `<tr>
+							<td>${escapeHtml(a.name || a.id)}</td>
+							<td>${escapeHtml((a.description || '').slice(0, 80))}</td>
+							<td class="pd-mono">${created}</td>
+							<td>
+								<a class="pd-btn pd-btn-sm" href="/agent/${escapeHtml(a.id)}/edit">Edit</a>
+								<a class="pd-btn pd-btn-sm" href="/agent/${escapeHtml(a.id)}">Open</a>
+							</td>
+						</tr>`;
+					}).join('');
+				} catch {
+					tbody.innerHTML = '<tr><td colspan="4" class="pd-empty">Failed to load agents.</td></tr>';
+				}
+			}
+
+			// ── Agent control (postMessage to embedded iframe) ───────────
+
+			async function loadAgent() {
+				if (!state.agentId) {
+					try {
+						const resp = await apiFetch('/api/agents/me');
+						if (resp.ok) {
+							const { agent } = await resp.json();
+							if (agent && agent.id) {
+								state.agentId = agent.id;
+								$('pd-agent-iframe').src = `/agent-embed.html?id=${encodeURIComponent(agent.id)}`;
+							}
+						}
+					} catch { /* show empty state */ }
+				}
+				loadCustomAgents();
+			}
+
+			function agentAction(type) {
+				const iframe = $('pd-agent-iframe');
+				if (!iframe || !iframe.contentWindow || !state.agentId) return;
+				let action;
+				switch (type) {
+					case 'speak': {
+						const text = $('pd-speech-input').value;
+						if (!text) return;
+						action = { type: 'speak', text };
+						break;
+					}
+					case 'emote':  action = { type: 'emote',   name: 'dance' }; break;
+					case 'wave':   action = { type: 'gesture', name: 'wave'  }; break;
+					case 'verify': action = { type: 'validate-model' }; break;
+					default: return;
+				}
+				iframe.contentWindow.postMessage({ agentId: state.agentId, type: 'agent:action', action }, '*');
+			}
+
+			function playAnimation() {
+				const name = $('pd-anim-select').value.toLowerCase();
+				const iframe = $('pd-agent-iframe');
+				if (!iframe || !iframe.contentWindow || !state.agentId) return;
+				iframe.contentWindow.postMessage({
+					agentId: state.agentId,
+					type: 'agent:action',
+					action: { type: 'gesture', name },
+				}, '*');
+			}
+
+			// ── Channel feed (pre-populate Live Feed on load) ────────────
+
+			async function preloadChannelFeed() {
+				try {
+					const r = await fetch('/api/pump/channel-feed?limit=40');
+					if (!r.ok) return;
+					const data = await r.json();
+					const items = data.events || data.items || data;
+					if (!Array.isArray(items)) return;
+					items.slice().reverse().forEach((evt) => {
+						const type = evt.kind === 'mint' ? 'launch'
+							: evt.kind === 'whale' ? 'whale'
+							: evt.kind === 'claim' ? 'claim'
+							: 'trade';
+						handleWsEvent({ type, ...evt, timestamp: evt.created_at || evt.timestamp || Date.now() });
+					});
+				} catch { /* preload is best-effort */ }
+			}
+
+			// ── WebSocket (PumpPortal realtime) ──────────────────────────
+
+			function connectWebSocket() {
+				if (state.ws) { try { state.ws.close(); } catch {} state.ws = null; }
+				const wsDot = $('pd-ws-dot');
+				const wsLabel = $('pd-ws-status');
+				wsDot.className = 'pd-dot is-warm';
+				wsLabel.textContent = 'WS: connecting…';
+
+				try {
+					state.ws = new WebSocket(state.wsUrl);
+					state.ws.onopen = () => {
+						wsDot.className = 'pd-dot is-on';
+						wsLabel.textContent = 'WS: connected';
+						if (/pumpportal\.fun/.test(state.wsUrl)) {
+							try {
+								state.ws.send(JSON.stringify({ method: 'subscribeNewToken' }));
+								state.ws.send(JSON.stringify({ method: 'subscribeMigration' }));
+							} catch { /* socket race; reconnect will retry */ }
+						}
+					};
+					state.ws.onmessage = (event) => {
+						try { handleWsEvent(JSON.parse(event.data)); }
+						catch { /* ignore non-JSON */ }
+					};
+					state.ws.onclose = () => {
+						wsDot.className = 'pd-dot';
+						wsLabel.textContent = 'WS: reconnecting…';
+						setTimeout(connectWebSocket, 3000);
+					};
+					state.ws.onerror = () => {
+						wsDot.className = 'pd-dot is-err';
+						wsLabel.textContent = 'WS: error';
+					};
+				} catch {
+					wsDot.className = 'pd-dot is-err';
+					wsLabel.textContent = 'WS: error';
+					setTimeout(connectWebSocket, 5000);
+				}
+			}
+
+			function handleWsEvent(data) {
+				const type = data.type || data.event || data.kind || 'unknown';
+				const ts = data.timestamp || Date.now();
+				const item = {
+					type,
+					time: new Date(typeof ts === 'number' && ts < 1e12 ? ts * 1000 : ts),
+					data,
+				};
+				addFeedItem('pd-live-feed', item);
+				addFeedItem('pd-dashboard-feed', item);
+				state.feedCount++;
+				$('pd-feed-count').textContent = state.feedCount;
+				state.activityCount++;
+				$('pd-activity-count').textContent = state.activityCount;
+				checkAlerts(item);
+			}
+
+			function addFeedItem(feedId, item) {
+				if (state.feedPaused && feedId === 'pd-live-feed') return;
+				const feed = $(feedId);
+				if (!feed) return;
+				const empty = feed.querySelector('.pd-empty');
+				if (empty) empty.remove();
+
+				const div = document.createElement('div');
+				div.className = 'pd-feed-item';
+				div.dataset.type = item.type;
+
+				const tagInfo = {
+					launch:     { cls: 'is-launch', label: 'LAUNCH' },
+					create:     { cls: 'is-launch', label: 'LAUNCH' },
+					mint:       { cls: 'is-launch', label: 'LAUNCH' },
+					trade:      { cls: 'is-buy',    label: 'TRADE'  },
+					buy:        { cls: 'is-buy',    label: 'BUY'    },
+					sell:       { cls: 'is-sell',   label: 'SELL'   },
+					whale:      { cls: 'is-whale',  label: 'WHALE'  },
+					whale_trade:{ cls: 'is-whale',  label: 'WHALE'  },
+					graduation: { cls: 'is-grad',   label: 'GRAD'   },
+					complete:   { cls: 'is-grad',   label: 'GRAD'   },
+					claim:      { cls: 'is-claim',  label: 'CLAIM'  },
+					fee_claim:  { cls: 'is-claim',  label: 'CLAIM'  },
+				}[item.type] || { cls: '', label: item.type.toUpperCase() };
+
+				const d = item.data;
+				let title = '', detail = '';
+				if (item.type === 'launch' || item.type === 'create' || item.type === 'mint') {
+					title = `${d.name || d.tokenName || d.symbol || 'New token'} (${d.symbol || d.tokenSymbol || '?'})`;
+					detail = d.mint ? shortAddr(d.mint) : '';
+				} else if (item.type === 'trade' || item.type === 'buy' || item.type === 'sell') {
+					title = `${d.tokenSymbol || '?'} · ${(Number(d.solAmount) || 0).toFixed(4)} SOL`;
+					detail = d.user ? shortAddr(d.user) : '';
+				} else if (item.type === 'whale' || item.type === 'whale_trade') {
+					title = `${(Number(d.solAmount) || 0).toFixed(2)} SOL · ${d.tokenSymbol || '?'}`;
+					detail = d.user ? shortAddr(d.user) : '';
+				} else if (item.type === 'graduation' || item.type === 'complete') {
+					title = `${d.tokenSymbol || d.name || 'Token'} graduated to AMM`;
+					detail = d.mint ? shortAddr(d.mint) : '';
+				} else if (item.type === 'claim' || item.type === 'fee_claim') {
+					title = `${(Number(d.amountSol) || 0).toFixed(4)} SOL claimed`;
+					detail = `${d.claimType || 'fee'} · ${d.claimerWallet ? shortAddr(d.claimerWallet) : ''}`;
+				} else {
+					title = JSON.stringify(d).slice(0, 80);
+				}
+
+				const timeStr = item.time.toLocaleTimeString('en-US', { hour12: false });
+				div.innerHTML = `
+					<div class="pd-feed-time">${timeStr}</div>
+					<div class="pd-feed-tag-col"><span class="pd-tag ${tagInfo.cls}">${tagInfo.label}</span></div>
+					<div class="pd-feed-body">
+						<div class="pd-feed-title">${escapeHtml(title)}</div>
+						<div class="pd-feed-detail">${escapeHtml(detail)}</div>
+					</div>
+				`;
+				feed.prepend(div);
+				while (feed.children.length > 500) feed.lastElementChild.remove();
+
+				if (feedId === 'pd-live-feed') applyFeedFilter();
+			}
+
+			function applyFeedFilter() {
+				const feed = $('pd-live-feed');
+				if (!feed) return;
+				feed.querySelectorAll('.pd-feed-item').forEach((item) => {
+					if (state.currentFilter === 'all') { item.style.display = ''; return; }
+					const type = item.dataset.type || '';
+					const matches = ({
+						launch: ['launch', 'create', 'mint'],
+						trade:  ['trade', 'buy', 'sell'],
+						whale:  ['whale', 'whale_trade'],
+						graduation: ['graduation', 'complete'],
+						claim:  ['claim', 'fee_claim'],
+					}[state.currentFilter]) || [state.currentFilter];
+					item.style.display = matches.includes(type) ? '' : 'none';
+				});
+			}
+
+			function clearFeed(feedId) {
+				const feed = $(feedId);
+				if (!feed) return;
+				feed.innerHTML = `<div class="pd-empty">
+					<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M3 12c0-5 4-9 9-9"/><circle cx="5" cy="19" r="1.6" fill="currentColor" stroke="none"/></svg>
+					<div>Cleared.</div>
+				</div>`;
+			}
+
+			// ── Alerts ───────────────────────────────────────────────────
+
+			function checkAlerts(item) {
+				const ac = state.alertConfig;
+				const t = item.type;
+				if ((t === 'graduation' || t === 'complete') && ac.graduation !== false) addAlertItem(item, 'Token graduated');
+				if ((t === 'whale' || t === 'whale_trade') && ac.whale) {
+					const threshold = parseFloat(ac.whaleThreshold) || 10;
+					if ((Number(item.data.solAmount) || 0) >= threshold) addAlertItem(item, 'Whale trade detected');
+				}
+				if ((t === 'claim' || t === 'fee_claim') && ac.fees) addAlertItem(item, 'Fee claimed');
+				if ((t === 'launch' || t === 'create' || t === 'mint') && ac.launch) addAlertItem(item, 'New token launched');
+			}
+
+			function addAlertItem(item, label) {
+				const feed = $('pd-alert-feed');
+				if (!feed) return;
+				const empty = feed.querySelector('.pd-empty');
+				if (empty) empty.remove();
+				const d = item.data;
+				let detail = d.tokenSymbol || d.name || d.mint || '';
+				if (d.solAmount) detail += ` · ${Number(d.solAmount).toFixed(4)} SOL`;
+				const timeStr = item.time.toLocaleTimeString('en-US', { hour12: false });
+				const div = document.createElement('div');
+				div.className = 'pd-feed-item';
+				div.innerHTML = `
+					<div class="pd-feed-time">${timeStr}</div>
+					<div class="pd-feed-tag-col"></div>
+					<div class="pd-feed-body">
+						<div class="pd-feed-title" style="color:var(--pd-warn)">${escapeHtml(label)}</div>
+						<div class="pd-feed-detail">${escapeHtml(detail)}</div>
+					</div>
+				`;
+				feed.prepend(div);
+				while (feed.children.length > 200) feed.lastElementChild.remove();
+			}
+
+			function saveAlertConfig() {
+				state.alertConfig = {
+					graduation: $('pd-alert-graduation').checked,
+					whale: $('pd-alert-whale').checked,
+					fees: $('pd-alert-fees').checked,
+					launch: $('pd-alert-launch').checked,
+					whaleThreshold: $('pd-threshold-whale').value,
+					claimThreshold: $('pd-threshold-claim').value,
+					cooldown: $('pd-threshold-cooldown').value,
+				};
+				localStorage.setItem('pumpbot-alerts', JSON.stringify(state.alertConfig));
+				toast('Alert settings saved', 'success');
+			}
+
+			// ── Watches ──────────────────────────────────────────────────
+
+			async function refreshWatches() {
+				const tbody = $('pd-watches-table');
+				tbody.innerHTML = '<tr><td colspan="6" class="pd-empty">Loading…</td></tr>';
+				try {
+					const resp = await apiFetch('/api/v1/watches?limit=100');
+					if (resp.status === 404) {
+						tbody.innerHTML = `<tr><td colspan="6" class="pd-empty">Watches require a PumpKit-style API. Point the API URL in <a href="#" data-page-link="config" class="pd-mono" style="color:var(--pd-accent)">Configuration</a> at your PumpKit deployment.</td></tr>`;
+						$('pd-watches-count').textContent = '0';
+						bindPageLinks();
+						return;
+					}
+					if (!resp.ok) {
+						tbody.innerHTML = `<tr><td colspan="6" class="pd-empty">Upstream unavailable (${resp.status}).</td></tr>`;
+						return;
+					}
+					const data = await resp.json();
+					const watches = data.data || data.watches || [];
+					$('pd-watches-count').textContent = String(watches.length);
+					if (watches.length === 0) {
+						tbody.innerHTML = '<tr><td colspan="6" class="pd-empty">No watches yet. Click <strong>+ Add watch</strong> to create one.</td></tr>';
+						return;
+					}
+					tbody.innerHTML = watches.map((w) => `
+						<tr>
+							<td><a class="pd-addr" href="https://solscan.io/account/${escapeHtml(w.wallet)}" target="_blank" rel="noopener">${shortAddr(w.wallet)}</a></td>
+							<td>${escapeHtml(w.label || '—')}</td>
+							<td class="pd-mono">${w.tokenFilter ? w.tokenFilter.map(shortAddr).join(', ') : 'All'}</td>
+							<td>${w.webhookUrl ? '<span class="pd-tag is-buy">on</span>' : '—'}</td>
+							<td class="pd-mono">${w.createdAt ? new Date(w.createdAt).toLocaleDateString() : '—'}</td>
+							<td><button class="pd-btn pd-btn-sm is-danger" data-delete-watch="${escapeHtml(w.id)}" type="button">Delete</button></td>
+						</tr>
+					`).join('');
+					tbody.querySelectorAll('[data-delete-watch]').forEach((b) => {
+						b.addEventListener('click', () => deleteWatch(b.dataset.deleteWatch));
+					});
+				} catch (e) {
+					tbody.innerHTML = `<tr><td colspan="6" class="pd-empty">Error: ${escapeHtml(e.message || 'load failed')}</td></tr>`;
+				}
+			}
+
+			async function createWatch() {
+				const wallet = $('pd-watch-wallet').value.trim();
+				if (!wallet) { toast('Wallet address is required', 'error'); return; }
+				const tokenFilterRaw = $('pd-watch-token-filter').value.trim();
+				const body = {
+					wallet,
+					label: $('pd-watch-label').value.trim() || undefined,
+					tokenFilter: tokenFilterRaw ? tokenFilterRaw.split(',').map((s) => s.trim()).filter(Boolean) : undefined,
+					webhookUrl: $('pd-watch-webhook').value.trim() || undefined,
+				};
+				try {
+					const resp = await apiFetch('/api/v1/watches', {
+						method: 'POST',
+						headers: { 'Content-Type': 'application/json' },
+						body: JSON.stringify(body),
+					});
+					if (resp.ok) {
+						toast('Watch created', 'success');
+						closeModal('pd-add-watch-modal');
+						refreshWatches();
+						['pd-watch-wallet', 'pd-watch-label', 'pd-watch-token-filter', 'pd-watch-webhook'].forEach((id) => { $(id).value = ''; });
+					} else {
+						const err = await resp.json().catch(() => ({}));
+						toast(err.error || 'Failed to create watch', 'error');
+					}
+				} catch {
+					toast('Network error creating watch', 'error');
+				}
+			}
+
+			async function deleteWatch(id) {
+				if (!confirm('Delete this watch?')) return;
+				try {
+					const resp = await apiFetch('/api/v1/watches/' + encodeURIComponent(id), { method: 'DELETE' });
+					if (resp.ok) { toast('Watch deleted', 'success'); refreshWatches(); }
+					else { toast('Failed to delete watch', 'error'); }
+				} catch { toast('Network error', 'error'); }
+			}
+
+			// ── Claims ───────────────────────────────────────────────────
+
+			async function refreshClaims() {
+				const wallet = $('pd-claims-wallet-filter').value.trim().toLowerCase();
+				const claimType = $('pd-claims-type-filter').value;
+				const tbody = $('pd-claims-table');
+				tbody.innerHTML = '<tr><td colspan="6" class="pd-empty">Loading…</td></tr>';
+				try {
+					const resp = await apiFetch('/api/agents/pumpfun?op=claims&limit=50');
+					if (resp.status === 401) {
+						tbody.innerHTML = '<tr><td colspan="6" class="pd-empty">Sign in to view fee claims.</td></tr>';
+						return;
+					}
+					if (!resp.ok) {
+						tbody.innerHTML = `<tr><td colspan="6" class="pd-empty">Upstream unavailable (${resp.status}).</td></tr>`;
+						return;
+					}
+					const data = await resp.json();
+					let claims = (data.items || data.claims || data.data || []).slice();
+					if (wallet) claims = claims.filter((c) => String(c.claimerWallet || c.wallet || '').toLowerCase().includes(wallet));
+					if (claimType) claims = claims.filter((c) => {
+						const t = (c.claimType || (c.isCashback ? 'cashback' : 'creator_fee') || '').toLowerCase();
+						return t === claimType.toLowerCase();
+					});
+					$('pd-claims-count').textContent = String(claims.length);
+					if (!claims.length) {
+						tbody.innerHTML = '<tr><td colspan="6" class="pd-empty">No claims match this filter.</td></tr>';
+						return;
+					}
+					tbody.innerHTML = claims.map((c) => {
+						const ts = c.timestamp || c.time || c.at;
+						const isCashback = c.isCashback || (c.claimType || '').toLowerCase() === 'cashback';
+						const typeClass = isCashback ? 'is-claim' : 'is-buy';
+						const typeLabel = isCashback ? 'Cashback' : (c.claimType || 'Creator Fee');
+						const wal = c.claimerWallet || c.wallet || '';
+						const tx  = c.txSignature || c.signature || '';
+						const sym = c.tokenSymbol || c.tokenName || shortAddr(c.tokenMint || '');
+						const amt = Number(c.amountSol ?? c.amount ?? 0);
+						return `
+							<tr>
+								<td class="pd-mono">${ts ? new Date(ts).toLocaleString() : '—'}</td>
+								<td><a class="pd-addr" href="https://solscan.io/account/${escapeHtml(wal)}" target="_blank" rel="noopener">${shortAddr(wal)}</a></td>
+								<td><span class="pd-tag ${typeClass}">${escapeHtml(typeLabel)}</span></td>
+								<td class="pd-mono">${escapeHtml(sym)}</td>
+								<td class="pd-mono" style="color:var(--pd-success)">${amt.toFixed(4)} SOL</td>
+								<td>${tx ? `<a class="pd-addr" href="https://solscan.io/tx/${escapeHtml(tx)}" target="_blank" rel="noopener">${shortAddr(tx)}</a>` : '—'}</td>
+							</tr>
+						`;
+					}).join('');
+				} catch (e) {
+					tbody.innerHTML = `<tr><td colspan="6" class="pd-empty">Error: ${escapeHtml(e.message || 'load failed')}</td></tr>`;
+				}
+			}
+
+			function exportClaims() {
+				const rows = document.querySelectorAll('#pd-claims-table tr');
+				if (!rows.length) return;
+				let csv = 'Time,Wallet,Type,Token,Amount SOL,TX\n';
+				rows.forEach((tr) => {
+					const cells = tr.querySelectorAll('td');
+					if (cells.length >= 6) {
+						csv += Array.from(cells).map((c) => '"' + c.textContent.trim().replace(/"/g, '""') + '"').join(',') + '\n';
+					}
+				});
+				const blob = new Blob([csv], { type: 'text/csv' });
+				const url = URL.createObjectURL(blob);
+				const a = document.createElement('a');
+				a.href = url;
+				a.download = 'pumpfun-claims-' + new Date().toISOString().slice(0, 10) + '.csv';
+				document.body.appendChild(a); a.click(); a.remove();
+				URL.revokeObjectURL(url);
+				toast('Claims exported', 'success');
+			}
+
+			// ── Token Scanner ────────────────────────────────────────────
+
+			async function scanToken() {
+				const mint = $('pd-scanner-mint').value.trim();
+				if (!mint) { toast('Enter a token mint address', 'error'); return; }
+				$('pd-scanner-results').hidden = true;
+				try {
+					const [scanResp, holdersResp] = await Promise.all([
+						fetch(state.rpcUrl, {
+							method: 'POST',
+							headers: { 'Content-Type': 'application/json' },
+							body: JSON.stringify({ jsonrpc: '2.0', id: 1, method: 'getAccountInfo', params: [mint, { encoding: 'jsonParsed' }] }),
+						}),
+						fetch(state.rpcUrl, {
+							method: 'POST',
+							headers: { 'Content-Type': 'application/json' },
+							body: JSON.stringify({ jsonrpc: '2.0', id: 2, method: 'getTokenLargestAccounts', params: [mint] }),
+						}),
+					]);
+					const scanData = await scanResp.json();
+					const holdersData = await holdersResp.json();
+					const account = scanData.result?.value;
+					if (!account) { toast('Token not found on-chain', 'error'); return; }
+
+					const info = account.data?.parsed?.info || {};
+					const holders = holdersData.result?.value || [];
+					const checks = {};
+					let score = 100;
+
+					const owner = account.owner;
+					checks.program = { status: 'info', detail: owner === 'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA' ? 'SPL Token' : owner === 'TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb' ? 'Token-2022' : owner };
+
+					if (info.mintAuthority) { checks.mintAuth = { status: 'warn', detail: 'Active: ' + shortAddr(info.mintAuthority) }; score -= 15; }
+					else checks.mintAuth = { status: 'pass', detail: 'Revoked' };
+
+					if (info.freezeAuthority) { checks.freezeAuth = { status: 'fail', detail: 'Active: ' + shortAddr(info.freezeAuthority) }; score -= 25; }
+					else checks.freezeAuth = { status: 'pass', detail: 'None' };
+
+					const totalSupply = Number(info.supply || 0);
+					let topConc = 0;
+					if (holders.length > 0 && totalSupply > 0) {
+						topConc = parseFloat(((Number(holders[0].amount || 0) / totalSupply) * 100).toFixed(2));
+					}
+					if (topConc > 50) { checks.concentration = { status: 'warn', detail: `Top holder: ${topConc}%` }; score -= 10; }
+					else checks.concentration = { status: 'pass', detail: `Top holder: ${topConc}%` };
+
+					const decimals = info.decimals || 0;
+					const displaySupply = (Number(info.supply || 0) / Math.pow(10, decimals)).toLocaleString();
+					checks.supply = { status: 'info', detail: `${displaySupply} (${decimals} decimals)` };
+
+					let isPump = false;
+					try {
+						const bcResp = await fetch(state.rpcUrl, {
+							method: 'POST',
+							headers: { 'Content-Type': 'application/json' },
+							body: JSON.stringify({ jsonrpc: '2.0', id: 3, method: 'getProgramAccounts', params: ['6EF8rrecthR5Dkzon8Nwu78hRvfCKubJ14M5uBEwF6P', { filters: [{ memcmp: { offset: 30, bytes: mint } }], dataSlice: { offset: 0, length: 1 } }] }),
+						});
+						const bcData = await bcResp.json();
+						isPump = bcData.result && bcData.result.length > 0;
+					} catch { /* skip */ }
+
+					if (isPump) { checks.pumpfun = { status: 'pass', detail: 'Bonding curve active — sells guaranteed by AMM' }; score = Math.min(score + 10, 100); }
+					else checks.pumpfun = { status: 'info', detail: 'Not a Pump.fun token' };
+
+					if (isPump) {
+						try {
+							const curveResp = await fetch(`/api/pump/curve?mint=${encodeURIComponent(mint)}`);
+							if (curveResp.ok) {
+								const curve = await curveResp.json();
+								if (curve.price?.priceSol) checks.spot_price = { status: 'info', detail: `${Number(curve.price.priceSol).toFixed(8)} SOL/token` };
+								if (curve.price?.marketCapSol) checks.market_cap = { status: 'info', detail: `${Number(curve.price.marketCapSol).toFixed(2)} SOL` };
+								if (curve.graduation?.progressBps != null) {
+									const pct = Number(curve.graduation.progressBps) / 100;
+									checks.graduation = { status: pct >= 80 ? 'warn' : 'pass', detail: `${pct.toFixed(1)}% to graduation` };
+								}
+							}
+						} catch { /* curve enrichment optional */ }
+					}
+
+					const riskLevel = score >= 80 ? 'LOW' : score >= 50 ? 'MEDIUM' : 'HIGH';
+					const riskClass = score >= 80 ? 'is-success' : score >= 50 ? 'is-warn' : 'is-danger';
+
+					$('pd-scan-score').textContent = score + '/100';
+					$('pd-scan-score').className = 'pd-stat-value ' + riskClass;
+					$('pd-scan-level').textContent = riskLevel;
+					$('pd-scan-level').className = 'pd-stat-value ' + riskClass;
+					$('pd-scan-pump').textContent = isPump ? 'Yes' : 'No';
+					$('pd-scan-pump').className = 'pd-stat-value ' + (isPump ? 'is-success' : '');
+					$('pd-scan-honeypot').textContent = info.freezeAuthority ? 'Risk' : (isPump ? 'Safe (AMM)' : 'Safe');
+					$('pd-scan-honeypot').className = 'pd-stat-value ' + (info.freezeAuthority ? 'is-danger' : 'is-success');
+
+					const statusTagClass = { pass: 'is-buy', warn: 'is-whale', fail: 'is-sell', info: 'is-launch' };
+					const tbody = $('pd-scan-checks');
+					tbody.innerHTML = Object.entries(checks).map(([name, c]) => `
+						<tr>
+							<td>${escapeHtml(name)}</td>
+							<td><span class="pd-tag ${statusTagClass[c.status] || ''}">${c.status.toUpperCase()}</span></td>
+							<td class="pd-mono">${escapeHtml(c.detail)}</td>
+						</tr>
+					`).join('');
+					$('pd-scanner-results').hidden = false;
+					toast('Scan complete: ' + riskLevel.toLowerCase() + ' risk', riskLevel === 'HIGH' ? 'error' : 'success');
+				} catch (e) {
+					toast('Scan failed: ' + (e.message || 'Network error'), 'error');
+				}
+			}
+
+			// ── Quote Engine ─────────────────────────────────────────────
+
+			function formatPriceContext(p) {
+				const parts = [];
+				if (p.priceSol) parts.push(`${(Number(p.priceSol) || 0).toFixed(8)} SOL/token`);
+				if (p.marketCapSol) parts.push(`MC ${(Number(p.marketCapSol) || 0).toFixed(2)} SOL`);
+				return parts.join(' · ');
+			}
+
+			function renderQuoteResult(target, opts) {
+				const { amountLabel, amountText, impact, mc } = opts;
+				target.innerHTML = `
+					<div style="padding:0.85rem 1rem;background:var(--pd-bg-elev);border-radius:var(--pd-radius-sm);border:1px solid var(--pd-border)">
+						<div style="font-family:var(--pd-font-display);font-size:0.66rem;text-transform:uppercase;letter-spacing:0.1em;color:var(--pd-text-dim);margin-bottom:0.25rem">${escapeHtml(amountLabel)}</div>
+						<div style="font-family:var(--pd-font-mono);font-size:1.35rem;color:var(--pd-text-bright);margin-bottom:0.35rem">${escapeHtml(amountText)}</div>
+						<div style="font-size:0.78rem;color:var(--pd-text-muted)">Price impact <span style="color:${impact > 5 ? 'var(--pd-warn)' : 'var(--pd-success)'}">${impact.toFixed(2)}%</span></div>
+						${mc ? `<div style="font-size:0.74rem;color:var(--pd-text-dim);margin-top:0.35rem">Spot: ${escapeHtml(formatPriceContext(mc))}</div>` : ''}
+					</div>
+				`;
+			}
+
+			async function getBuyQuote() {
+				const mint = $('pd-quote-buy-mint').value.trim();
+				const solAmount = parseFloat($('pd-quote-buy-amount').value);
+				if (!mint) { toast('Enter token mint', 'error'); return; }
+				if (!Number.isFinite(solAmount) || solAmount <= 0) { toast('Enter a positive SOL amount', 'error'); return; }
+				const target = $('pd-quote-buy-result');
+				target.innerHTML = '<span style="color:var(--pd-text-muted)">Calculating…</span>';
+				try {
+					const r = await fetch(`/api/pump/quote-sdk?mint=${encodeURIComponent(mint)}&side=buy&amount=${solAmount}`);
+					const data = await r.json();
+					if (!r.ok) { target.innerHTML = `<span style="color:var(--pd-danger)">${escapeHtml(data.message || data.error || 'Quote failed')}</span>`; return; }
+					renderQuoteResult(target, {
+						amountLabel: 'You receive',
+						amountText: `${Number(data.output?.tokensUi || 0).toLocaleString(undefined, { maximumFractionDigits: 2 })} tokens for ${solAmount} SOL`,
+						impact: Number(data.priceImpactPct || 0),
+						mc: data.marketContext,
+					});
+				} catch (e) {
+					target.innerHTML = `<span style="color:var(--pd-danger)">Error: ${escapeHtml(e.message || 'Quote failed')}</span>`;
+				}
+			}
+
+			async function getSellQuote() {
+				const mint = $('pd-quote-sell-mint').value.trim();
+				const tokenAmount = parseFloat($('pd-quote-sell-amount').value);
+				if (!mint) { toast('Enter token mint', 'error'); return; }
+				if (!Number.isFinite(tokenAmount) || tokenAmount <= 0) { toast('Enter a positive token amount', 'error'); return; }
+				const target = $('pd-quote-sell-result');
+				target.innerHTML = '<span style="color:var(--pd-text-muted)">Calculating…</span>';
+				try {
+					const r = await fetch(`/api/pump/quote-sdk?mint=${encodeURIComponent(mint)}&side=sell&amount=${tokenAmount}`);
+					const data = await r.json();
+					if (!r.ok) { target.innerHTML = `<span style="color:var(--pd-danger)">${escapeHtml(data.message || data.error || 'Quote failed')}</span>`; return; }
+					renderQuoteResult(target, {
+						amountLabel: 'You receive',
+						amountText: `${Number(data.output?.sol || 0).toFixed(6)} SOL for ${tokenAmount.toLocaleString()} tokens`,
+						impact: Number(data.priceImpactPct || 0),
+						mc: data.marketContext,
+					});
+				} catch (e) {
+					target.innerHTML = `<span style="color:var(--pd-danger)">Error: ${escapeHtml(e.message || 'Quote failed')}</span>`;
+				}
+			}
+
+			// ── Vanity Generator ─────────────────────────────────────────
+
+			async function startVanity() {
+				const prefix = $('pd-vanity-prefix').value.trim();
+				const suffix = $('pd-vanity-suffix').value.trim();
+				if (!prefix && !suffix) { toast('Enter a prefix or suffix', 'error'); return; }
+				if (prefix) { const v = validatePattern(prefix); if (!v.valid) { toast(`Prefix: ${v.errors.join('; ')}`, 'error'); return; } }
+				if (suffix) { const v = validatePattern(suffix); if (!v.valid) { toast(`Suffix: ${v.errors.join('; ')}`, 'error'); return; } }
+				state.vanityAbort = new AbortController();
+				$('pd-vanity-start').hidden = true;
+				$('pd-vanity-stop').hidden = false;
+				$('pd-vanity-status').textContent = 'Spinning up workers…';
+				$('pd-vanity-result').innerHTML = '';
+				try {
+					const result = await grindVanity({
+						prefix: prefix || undefined,
+						suffix: suffix || undefined,
+						signal: state.vanityAbort.signal,
+						onProgress: ({ attempts, rate, eta }) => {
+							$('pd-vanity-status').textContent = `${attempts.toLocaleString()} tries · ${Math.round(rate).toLocaleString()}/s · eta ${eta}`;
+						},
+					});
+					const secretJson = JSON.stringify(Array.from(result.secretKey));
+					const seconds = (result.durationMs / 1000).toFixed(1);
+					$('pd-vanity-status').textContent = `Found in ${seconds}s · ${result.attempts.toLocaleString()} attempts · ${result.workers} worker${result.workers > 1 ? 's' : ''}`;
+					$('pd-vanity-result').innerHTML = `
+						<div style="padding:0.85rem 1rem;background:var(--pd-bg-elev);border-radius:var(--pd-radius-sm);border:1px solid var(--pd-accent-border)">
+							<div style="font-family:var(--pd-font-display);font-size:0.66rem;text-transform:uppercase;letter-spacing:0.1em;color:var(--pd-text-dim);margin-bottom:0.25rem">Public key</div>
+							<div class="pd-mono" style="font-size:0.92rem;color:var(--pd-accent-bright);word-break:break-all;margin-bottom:0.55rem">${escapeHtml(result.publicKey)}</div>
+							<button class="pd-btn pd-btn-sm" id="pd-vanity-copy-pub" type="button">Copy address</button>
+							<button class="pd-btn pd-btn-sm" id="pd-vanity-download-key" type="button">Download keypair JSON</button>
+							<div class="pd-callout" style="margin-top:0.6rem;font-size:0.78rem">Secret key never leaves your browser. Save it securely or import into a wallet.</div>
+						</div>
+					`;
+					$('pd-vanity-copy-pub').addEventListener('click', async () => {
+						try { await navigator.clipboard.writeText(result.publicKey); toast('Address copied', 'success'); } catch {}
+					});
+					$('pd-vanity-download-key').addEventListener('click', () => {
+						const blob = new Blob([secretJson], { type: 'application/json' });
+						const url = URL.createObjectURL(blob);
+						const a = document.createElement('a');
+						a.href = url;
+						a.download = `vanity-${result.publicKey.slice(0, 8)}.json`;
+						document.body.appendChild(a); a.click(); a.remove();
+						URL.revokeObjectURL(url);
+					});
+					toast('Vanity address found', 'success');
+				} catch (e) {
+					if (e?.name === 'AbortError') $('pd-vanity-status').textContent = 'Stopped';
+					else { $('pd-vanity-status').textContent = `Error: ${e.message || 'grind failed'}`; toast('Grind failed', 'error'); }
+				} finally {
+					state.vanityAbort = null;
+					$('pd-vanity-start').hidden = false;
+					$('pd-vanity-stop').hidden = true;
+				}
+			}
+
+			function stopVanity() {
+				state.vanityAbort?.abort();
+				state.vanityAbort = null;
+				$('pd-vanity-start').hidden = false;
+				$('pd-vanity-stop').hidden = true;
+			}
+
+			// ── Config ───────────────────────────────────────────────────
+
+			function saveConfig() {
+				state.apiUrl = $('pd-cfg-api-url').value.trim() || location.origin;
+				state.wsUrl = $('pd-cfg-ws-url').value.trim() || 'wss://pumpportal.fun/api/data';
+				state.apiKey = $('pd-cfg-api-key').value.trim();
+				state.rpcUrl = $('pd-cfg-rpc-url').value.trim() || 'https://api.mainnet-beta.solana.com';
+				localStorage.setItem('pumpbot-api-url', state.apiUrl);
+				localStorage.setItem('pumpbot-ws-url', state.wsUrl);
+				localStorage.setItem('pumpbot-api-key', state.apiKey);
+				localStorage.setItem('pumpbot-rpc-url', state.rpcUrl);
+				$('pd-api-endpoint-display').textContent = state.apiUrl;
+				connectApi();
+				connectWebSocket();
+				toast('Configuration saved & reconnecting', 'success');
+			}
+
+			// ── Modals ───────────────────────────────────────────────────
+
+			function openModal(id)  { $(id)?.classList.add('is-open'); }
+			function closeModal(id) { $(id)?.classList.remove('is-open'); }
+
+			// ── Uptime ───────────────────────────────────────────────────
+
+			function updateUptime() {
+				const elapsed = Date.now() - state.startupAt;
+				const h = Math.floor(elapsed / 3600000);
+				const m = Math.floor((elapsed % 3600000) / 60000);
+				const s = Math.floor((elapsed % 60000) / 1000);
+				$('pd-uptime').textContent = `Uptime: ${h}h ${m}m ${s}s`;
+			}
+
+			// ── Internal page-link binder (for #links that switch SPA tab) ─
+
+			function bindPageLinks() {
+				document.querySelectorAll('[data-page-link]').forEach((a) => {
+					a.addEventListener('click', (e) => {
+						e.preventDefault();
+						navigateTo(a.dataset.pageLink);
+					}, { once: true });
+				});
+			}
+
+			// ── Boot ─────────────────────────────────────────────────────
+
+			document.addEventListener('DOMContentLoaded', () => {
+				$('pd-cfg-api-url').value = state.apiUrl;
+				$('pd-cfg-ws-url').value = state.wsUrl;
+				$('pd-cfg-api-key').value = state.apiKey;
+				$('pd-cfg-rpc-url').value = state.rpcUrl;
+				$('pd-api-endpoint-display').textContent = state.apiUrl;
+
+				const ac = state.alertConfig;
+				if (ac.graduation !== undefined) $('pd-alert-graduation').checked = ac.graduation;
+				if (ac.whale !== undefined)      $('pd-alert-whale').checked = ac.whale;
+				if (ac.fees !== undefined)       $('pd-alert-fees').checked = ac.fees;
+				if (ac.launch !== undefined)     $('pd-alert-launch').checked = ac.launch;
+				if (ac.whaleThreshold)           $('pd-threshold-whale').value = ac.whaleThreshold;
+				if (ac.claimThreshold)           $('pd-threshold-claim').value = ac.claimThreshold;
+				if (ac.cooldown)                 $('pd-threshold-cooldown').value = ac.cooldown;
+
+				// Sidebar nav
+				document.querySelectorAll('.pd-sidebar nav a').forEach((a) => {
+					a.addEventListener('click', (e) => { e.preventDefault(); navigateTo(a.dataset.page); });
+				});
+
+				// Filter buttons
+				document.querySelectorAll('.pd-filter-btn').forEach((b) => {
+					b.addEventListener('click', () => {
+						document.querySelectorAll('.pd-filter-btn').forEach((x) => x.classList.remove('is-active'));
+						b.classList.add('is-active');
+						state.currentFilter = b.dataset.filter;
+						applyFeedFilter();
+					});
+				});
+
+				$('pd-feed-pause').addEventListener('change', (e) => { state.feedPaused = e.target.checked; });
+
+				// Dashboard & live feed clears
+				$('pd-clear-dash-feed').addEventListener('click', () => clearFeed('pd-dashboard-feed'));
+				$('pd-clear-live-feed').addEventListener('click', () => clearFeed('pd-live-feed'));
+				$('pd-clear-alert-feed').addEventListener('click', () => clearFeed('pd-alert-feed'));
+
+				// Watches
+				$('pd-add-watch-btn').addEventListener('click', () => openModal('pd-add-watch-modal'));
+				$('pd-refresh-watches').addEventListener('click', refreshWatches);
+				$('pd-cancel-watch').addEventListener('click', () => closeModal('pd-add-watch-modal'));
+				$('pd-create-watch').addEventListener('click', createWatch);
+
+				// Claims
+				$('pd-refresh-claims').addEventListener('click', refreshClaims);
+				$('pd-export-claims').addEventListener('click', exportClaims);
+
+				// Alerts
+				$('pd-save-alerts').addEventListener('click', saveAlertConfig);
+
+				// Scanner
+				$('pd-scan-token').addEventListener('click', scanToken);
+
+				// Quotes
+				$('pd-get-buy-quote').addEventListener('click', getBuyQuote);
+				$('pd-get-sell-quote').addEventListener('click', getSellQuote);
+
+				// Vanity
+				$('pd-vanity-start').addEventListener('click', startVanity);
+				$('pd-vanity-stop').addEventListener('click', stopVanity);
+
+				// Animations
+				$('pd-speak-btn').addEventListener('click', () => agentAction('speak'));
+				$('pd-play-anim').addEventListener('click', playAnimation);
+				document.querySelectorAll('[data-agent-action]').forEach((b) => {
+					b.addEventListener('click', () => agentAction(b.dataset.agentAction));
+				});
+
+				// Config
+				$('pd-save-config').addEventListener('click', saveConfig);
+
+				// Boot the data flows
+				connectApi();
+				connectWebSocket();
+				preloadChannelFeed();
+				refreshNetworkStats();
+				loadFeaturedAgent();
+				loadWalletSnapshot();
+				state.networkInterval = setInterval(refreshNetworkStats, 30000);
+				setInterval(updateUptime, 1000);
+			});
+
+			// Auth-aware nav CTA (matches the pattern used on the rest of the site)
+			(function () {
+				try {
+					const raw = localStorage.getItem('3dagent:auth-hint');
+					if (!raw) return;
+					const { authed, name } = JSON.parse(raw);
+					if (!authed) return;
+					const cta = $('home-nav-cta');
+					if (cta) { cta.textContent = 'Dashboard'; cta.href = '/dashboard'; }
+					const myAgentsLi = $('home-nav-my-agents-li');
+					if (myAgentsLi) myAgentsLi.hidden = false;
+					const userLi = $('home-nav-user-li');
+					const userEl = $('home-nav-user');
+					if (userEl && userLi && name) { userEl.textContent = name; userLi.hidden = false; }
+				} catch {}
+			})();
+
+			// Dropdown nav (same pattern as tutorials.html)
+			(function () {
+				const triggers = document.querySelectorAll('.home-nav .nav-trigger');
+				if (!triggers.length) return;
+				function closeAll(except) {
+					triggers.forEach((t) => { if (t !== except) t.setAttribute('aria-expanded', 'false'); });
+				}
+				triggers.forEach((trigger) => {
+					trigger.addEventListener('click', (e) => {
+						e.stopPropagation();
+						const open = trigger.getAttribute('aria-expanded') === 'true';
+						closeAll(open ? null : trigger);
+						trigger.setAttribute('aria-expanded', open ? 'false' : 'true');
+					});
+				});
+				document.addEventListener('click', (e) => { if (!e.target.closest('.home-nav')) closeAll(null); });
+				document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeAll(null); });
+			})();
+		</script>
+
+		<script src="/footer.js" defer></script>
+	</body>
 </html>
