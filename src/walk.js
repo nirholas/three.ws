@@ -30,9 +30,11 @@ import {
 } from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
+import { clone as cloneSkinnedScene } from 'three/addons/utils/SkeletonUtils.js';
 import nipplejs from 'nipplejs';
 
 import { AnimationManager } from './animation-manager.js';
+import { WalkNet } from './walk-net.js';
 
 const AVATAR_URL = '/avatars/default.glb';
 const ANIMATIONS_MANIFEST_URL = '/animations/manifest.json';
@@ -68,6 +70,8 @@ const video = document.getElementById('walk-camera-feed');
 const joystickEl = document.getElementById('walk-joystick');
 const arBtn = document.getElementById('walk-ar-toggle');
 const statusEl = document.getElementById('walk-status');
+const onlinePill = document.getElementById('walk-online');
+const onlineCountEl = document.getElementById('walk-online-count');
 
 function setStatus(text, { error = false, sticky = false } = {}) {
 	if (!statusEl) return;
@@ -250,12 +254,21 @@ let avatarYaw = 0; // current facing (radians); we lerp this toward movement ang
 let avatarLean = 0; // current torso pitch (radians); lerps toward target lean
 let currentMotion = 'idle'; // 'idle' | 'walk' | 'run' — drives clip crossfades
 
+// Cached gltf scene + animation manifest defs, populated by loadAvatar — the
+// multiplayer layer reuses both to spawn remote-player avatars without
+// re-fetching the .glb or the clip manifest. SkeletonUtils.clone() makes a
+// proper deep copy of skinned hierarchies; vanilla object3D.clone() would
+// share bones and corrupt the rig.
+let avatarTemplate = null;
+let animationDefs = null;
+
 async function loadAvatar() {
 	setStatus('loading avatar…', { sticky: true });
 
 	const loader = new GLTFLoader();
 	const gltf = await loader.loadAsync(AVATAR_URL);
 	avatar = gltf.scene;
+	avatarTemplate = gltf.scene;
 	avatar.traverse((n) => {
 		if (n.isMesh) {
 			n.castShadow = true;
@@ -294,6 +307,7 @@ async function loadAvatar() {
 	if (needed.length === 0) {
 		throw new Error('Animation manifest missing idle/walking/running clips');
 	}
+	animationDefs = needed;
 	animationManager.setAnimationDefs(needed);
 	await animationManager.loadAll();
 
@@ -487,6 +501,19 @@ function tick() {
 	// 3. Tick the animation mixer.
 	animationManager.update(dt);
 
+	// 4. Broadcast our state to the server (throttled inside WalkNet) and
+	//    advance every remote player's interpolated transform + animation.
+	if (net && avatar) {
+		net.sendState({
+			x: avatarRig.position.x,
+			y: avatarRig.position.y,
+			z: avatarRig.position.z,
+			yaw: avatarYaw,
+			motion: currentMotion,
+		});
+	}
+	updateRemotePlayers(dt);
+
 	renderer.render(scene, camera);
 	requestAnimationFrame(tick);
 }
@@ -498,10 +525,220 @@ function lerpAngle(a, b, t) {
 	return a + diff * t;
 }
 
+// ── Multiplayer ───────────────────────────────────────────────────────────
+//
+// The server is best-effort. /walk works fully as a single-player page if
+// the Colyseus server is unreachable — the WalkNet client emits status
+// transitions but never blocks the render loop or the local controller.
+
+const REMOTE_LERP = 0.22; // per-frame lerp factor toward the latest server state
+const REMOTE_YAW_LERP = 0.18;
+
+/** @type {Map<string, RemotePlayer>} */
+const remotePlayers = new Map();
+
+let net = null;
+let netConnected = false;
+
+class RemotePlayer {
+	constructor(sessionId, initial) {
+		this.sessionId = sessionId;
+
+		// Clone the loaded template via SkeletonUtils.clone so the skinned
+		// mesh gets its own bone hierarchy. Plain Object3D.clone() would share
+		// bones with the local avatar and produce visual chaos.
+		const root = cloneSkinnedScene(avatarTemplate);
+		root.traverse((n) => {
+			if (n.isMesh) {
+				n.castShadow = true;
+				n.receiveShadow = false;
+				// Materials are still shared with the template, which is fine
+				// for env intensity, but we tint a hue offset onto the cloned
+				// skinned mesh's emissive so each player is visually distinct.
+				if (n.material && n.material.color && initial?.color != null) {
+					n.material = n.material.clone();
+					n.material.emissive = n.material.color.clone();
+					n.material.emissive.setHex(initial.color);
+					n.material.emissiveIntensity = 0.18;
+				}
+			}
+		});
+
+		this.rig = new Group();
+		this.rig.add(root);
+		scene.add(this.rig);
+
+		this.anim = new AnimationManager();
+		this.anim.attach(root);
+		this.anim.setAnimationDefs(animationDefs);
+		// Reuse the already-fetched clips on the local manager — load asynchronously
+		// so the remote doesn't block on a second manifest fetch.
+		this.anim.loadAll().then(() => {
+			this.anim.crossfadeTo(motionToClipName(this.motion), 0.0);
+		});
+
+		// Floating name tag — rendered as a CSS-styled DOM sprite that we
+		// project onto the avatar's head each frame.
+		this.label = document.createElement('div');
+		this.label.className = 'walk-remote-label';
+		this.label.textContent = initial?.name ?? sessionId.slice(0, 6);
+		document.body.appendChild(this.label);
+
+		// Visual state — target (latest server) vs current (interpolated).
+		this.targetX = initial?.x ?? 0;
+		this.targetY = initial?.y ?? 0;
+		this.targetZ = initial?.z ?? 0;
+		this.targetYaw = initial?.yaw ?? 0;
+		this.motion = initial?.motion ?? 'idle';
+		this.currentYaw = this.targetYaw;
+		this.rig.position.set(this.targetX, this.targetY, this.targetZ);
+		this.rig.quaternion.setFromAxisAngle(new Vector3(0, 1, 0), this.targetYaw);
+	}
+
+	applyServerState(player) {
+		this.targetX = player.x;
+		this.targetY = player.y;
+		this.targetZ = player.z;
+		this.targetYaw = player.yaw;
+		if (player.motion !== this.motion) {
+			this.motion = player.motion;
+			this.anim.crossfadeTo(motionToClipName(player.motion), 0.18);
+		}
+		if (this.label.textContent !== player.name && player.name) {
+			this.label.textContent = player.name;
+		}
+	}
+
+	tick(dt) {
+		// Position lerp.
+		this.rig.position.x += (this.targetX - this.rig.position.x) * REMOTE_LERP;
+		this.rig.position.y += (this.targetY - this.rig.position.y) * REMOTE_LERP;
+		this.rig.position.z += (this.targetZ - this.rig.position.z) * REMOTE_LERP;
+		// Yaw lerp (shortest arc).
+		this.currentYaw = lerpAngle(this.currentYaw, this.targetYaw, REMOTE_YAW_LERP);
+		this.rig.quaternion.setFromAxisAngle(new Vector3(0, 1, 0), this.currentYaw);
+
+		this.anim.update(dt);
+		this._updateLabel();
+	}
+
+	_updateLabel() {
+		// Project head world-space → screen-space for the floating name tag.
+		const head = _tmpV3;
+		head.set(this.rig.position.x, this.rig.position.y + 2.05, this.rig.position.z);
+		head.project(camera);
+		const onScreen = head.z > -1 && head.z < 1;
+		if (!onScreen) {
+			this.label.style.display = 'none';
+			return;
+		}
+		const w = renderer.domElement.clientWidth;
+		const h = renderer.domElement.clientHeight;
+		const x = (head.x * 0.5 + 0.5) * w;
+		const y = (-head.y * 0.5 + 0.5) * h;
+		this.label.style.display = '';
+		this.label.style.transform = `translate(-50%, -100%) translate(${x}px, ${y}px)`;
+	}
+
+	dispose() {
+		scene.remove(this.rig);
+		this.anim.dispose();
+		this.label.remove();
+	}
+}
+
+const _tmpV3 = new Vector3();
+
+function motionToClipName(motion) {
+	if (motion === 'run') return CLIP_RUN;
+	if (motion === 'walk') return CLIP_WALK;
+	return CLIP_IDLE;
+}
+
+function updateRemotePlayers(dt) {
+	for (const r of remotePlayers.values()) r.tick(dt);
+}
+
+function setupOnlinePill() {
+	if (!onlinePill) return;
+	onlinePill.addEventListener('click', () => {
+		if (!net) return;
+		if (net.status === 'failed' || net.status === 'offline') {
+			net.retry();
+		}
+	});
+}
+
+function renderOnlineCount() {
+	if (!onlineCountEl) return;
+	// +1 for the local player — they're not in remotePlayers.
+	onlineCountEl.textContent = String(remotePlayers.size + (netConnected ? 1 : 0));
+}
+
+function setOnlineStatus(status) {
+	if (!onlinePill) return;
+	onlinePill.dataset.status = status;
+	const label = onlinePill.querySelector('[data-label]');
+	if (label) {
+		label.textContent =
+			status === 'online'
+				? 'online'
+				: status === 'connecting'
+					? 'connecting…'
+					: status === 'failed'
+						? 'offline — tap to retry'
+						: status === 'offline'
+							? 'reconnecting…'
+							: 'solo';
+	}
+}
+
+function startNet() {
+	if (!avatarTemplate || !animationDefs) return; // wait until loadAvatar finished
+	if (net) return;
+	const params = new URLSearchParams(location.search);
+	const name = (params.get('name') || `guest-${Math.random().toString(36).slice(2, 6)}`).slice(0, 24);
+	net = new WalkNet({ name });
+
+	net.on('status', ({ status }) => {
+		netConnected = status === 'online';
+		setOnlineStatus(status);
+		renderOnlineCount();
+	});
+	net.on('add', (player, sessionId) => {
+		if (sessionId === net.mySessionId) return; // skip self
+		if (remotePlayers.has(sessionId)) return;
+		remotePlayers.set(sessionId, new RemotePlayer(sessionId, {
+			x: player.x, y: player.y, z: player.z, yaw: player.yaw,
+			motion: player.motion, name: player.name, color: player.color,
+		}));
+		renderOnlineCount();
+	});
+	net.on('change', (player, sessionId) => {
+		if (sessionId === net.mySessionId) return;
+		const r = remotePlayers.get(sessionId);
+		if (r) r.applyServerState(player);
+	});
+	net.on('remove', (sessionId) => {
+		const r = remotePlayers.get(sessionId);
+		if (r) {
+			r.dispose();
+			remotePlayers.delete(sessionId);
+			renderOnlineCount();
+		}
+	});
+
+	setupOnlinePill();
+	setOnlineStatus('connecting');
+	renderOnlineCount();
+	net.connect();
+}
+
 // ── Boot ──────────────────────────────────────────────────────────────────
 loadAvatar()
 	.then(() => {
 		requestAnimationFrame(tick);
+		startNet();
 	})
 	.catch((err) => {
 		console.error('[walk] failed to load avatar:', err);
