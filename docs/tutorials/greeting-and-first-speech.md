@@ -37,7 +37,7 @@ This works. Most embed installations should ship with a greeting attribute. The 
 
 ## Step 2 — When the greeting fires
 
-The embed dispatches a `ready` event on the script element once the avatar is loaded, the camera is positioned, the lighting is set, and the voice subsystem is initialised. The greeting fires on that event automatically when the `data-greeting` attribute is set.
+The embed dispatches a `agent:ready` event on the script element once the avatar is loaded, the camera is positioned, the lighting is set, and the voice subsystem is initialised. The greeting fires on that event automatically when the `data-greeting` attribute is set.
 
 In rough terms, the timing on a typical broadband connection is:
 
@@ -45,7 +45,7 @@ In rough terms, the timing on a typical broadband connection is:
 2. **0–500 ms** — `agent-3d.js` is fetched from the CDN and starts running.
 3. **500–1500 ms** — The agent's manifest is fetched from the platform API.
 4. **1500–3500 ms** — The GLB body is downloaded and parsed.
-5. **3500–4000 ms** — The avatar appears, the scene renders, the `ready` event fires.
+5. **3500–4000 ms** — The avatar appears, the scene renders, the `agent:ready` event fires.
 6. **4000–4500 ms** — The greeting starts speaking. The speech bubble appears.
 
 On a fast connection with the bundle cached, this collapses to about two seconds total. On a slow mobile connection, it can stretch to six or seven seconds; the agent fades in gracefully and the greeting fires when ready, so visitors never see a half-loaded character.
@@ -62,7 +62,7 @@ If you want to control the timing precisely — say, wait for an extra moment be
 <script>
   const agent = document.getElementById('agent-script');
 
-  agent.addEventListener('ready', async () => {
+  agent.addEventListener('agent:ready', async () => {
     // Wait two seconds after the agent is visible before speaking
     await new Promise(r => setTimeout(r, 2000));
     agent.speak('Hi, I\'m Iris. Take your time looking around.');
@@ -220,14 +220,14 @@ For dynamic greetings, skip `data-greeting` and use the JS API:
     return `Good ${timeOfDay}. I\'m Iris. Click me to ask anything about our service.`;
   }
 
-  agent.addEventListener('ready', () => {
+  agent.addEventListener('agent:ready', () => {
     agent.speak(pickGreeting());
     localStorage.setItem('hasVisited', 'yes');
   });
 </script>
 ```
 
-The pattern is: skip the attribute, listen for `ready`, choose a greeting in JS, call `speak()`. The visitor always gets a greeting, and the greeting is tailored to what you know about them at page-load time.
+The pattern is: skip the attribute, listen for `agent:ready`, choose a greeting in JS, call `speak()`. The visitor always gets a greeting, and the greeting is tailored to what you know about them at page-load time.
 
 ### Going further: LLM-generated greetings
 
@@ -243,7 +243,7 @@ Then, in your page:
 
 ```js
 const agent = document.getElementById('agent-script');
-agent.addEventListener('ready', () => {
+agent.addEventListener('agent:ready', () => {
   // The agent will process this through its brain and the response will be spoken
   agent.speak('__greet');
 });
@@ -340,7 +340,7 @@ In practice, problems are almost always step 5 (autoplay rules) or step 6 (voice
 ## What you learned
 
 - `data-greeting` is the simplest way to give your agent a spoken first line
-- The greeting fires on the `ready` event, automatically and reliably
+- The greeting fires on the `agent:ready` event, automatically and reliably
 - Browser autoplay rules can suppress the audio on first page load; the embed handles this gracefully by always showing the speech bubble and queuing audio for the user's first interaction
 - A spoken greeting is also a readable greeting — write it to work both ways
 - The accessibility tooling is built in (ARIA live regions, automatic announcements) but you can layer your own transcript on top using the `speak` event

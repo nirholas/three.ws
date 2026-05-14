@@ -293,7 +293,7 @@ The response includes the curve account's raw fields plus computed helpers:
 
 `graduationProgress` is a float between 0 and 1; multiply by 100 for a percentage. `complete` flips to `true` after graduation and stays there. For a holder count, hit `https://three.ws/api/pump/dashboard?agent=<agentId>`.
 
-If you need raw on-chain reads, point any Solana RPC client at the Pump.fun program ID and decode the curve account with the program's published IDL. The three.ws endpoint is just a convenience layer.
+If you need raw on-chain reads, point any Solana RPC client (Helius, Triton, or the public mainnet RPC for low-volume use) at the Pump.fun program ID and decode the bonding curve account with the program's published IDL. The three.ws endpoint is just a normalized, rate-limit-friendly convenience layer over that same on-chain data — every field is derivable yourself if you don't want to depend on the platform.
 
 ---
 

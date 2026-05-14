@@ -115,7 +115,7 @@ When the browser hits this line:
 
 4. It injects a container element into the page (by default, fixed to the bottom-right corner) and renders the 3D scene inside it.
 
-5. Once the avatar is loaded, the script dispatches a `ready` event you can listen to. The agent then begins its idle animation and waits for interaction.
+5. Once the avatar is loaded, the script dispatches a `agent:ready` event you can listen to. The agent then begins its idle animation and waits for interaction.
 
 Notice what is *not* on this list:
 - No iframe. The agent renders directly in your page's DOM, which means it inherits your site's CSS scope intentionally (we'll cover styling shadows in the customisation tutorial).

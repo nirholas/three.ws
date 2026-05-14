@@ -17,7 +17,7 @@ This tutorial assumes you've built at least one agent ([first-agent](/tutorials/
 
 - Two saved agents in your dashboard at `https://three.ws/dashboard`. They can be variants of the same avatar or two completely different characters.
 - A live web page where you can drop two `<script>` tags and own the surrounding HTML/JS. A static `.html` file served by `npx serve .` is enough to get started.
-- Familiarity with the embed JS API (`speak`, `playAnimation`, events like `chat-message`, `speak-end`, `ready`). The reference is in [js-api-events](/tutorials/js-api-events) and the source of truth is `https://three.ws/cdn/agent-3d.js`.
+- Familiarity with the embed JS API (`speak`, `playAnimation`, events like `brain:message`, `voice:speech-end`, `agent:ready`). The reference is in [js-api-events](/tutorials/js-api-events) and the source of truth is `https://three.ws/cdn/agent-3d.js`.
 - Each agent has a personality configured. See [agent-personality](/tutorials/agent-personality) if either of yours doesn't yet — they need distinct voices for the handoff to feel coherent.
 
 ---
@@ -108,10 +108,10 @@ Replace `<RILEY_AGENT_ID>` and `<DEVON_AGENT_ID>` with the actual agent IDs from
 
 The coordinator is the small piece of JavaScript on the page that decides which agent speaks. It does five things:
 
-1. **Wait for both agents to be `ready`.** Until then, hold the user's input.
+1. **Wait for both agents to be `agent:ready`.** Until then, hold the user's input.
 2. **Pick a starting agent.** Default: Riley.
 3. **Route the user's message.** Pass it to the current agent.
-4. **Listen for handoff signals.** A handoff is the current agent saying "I'm going to hand you to <other agent>." We detect it from `chat-message` events.
+4. **Listen for handoff signals.** A handoff is the current agent saying "I'm going to hand you to <other agent>." We detect it from `brain:message` events.
 5. **Maintain shared scratch memory.** When a handoff happens, the new agent gets a brief that contains what the previous agent did.
 
 Create `coordinator.js`:
@@ -157,11 +157,11 @@ function onReady(name, el) {
   };
 }
 
-riley.addEventListener('ready', onReady('riley', riley));
-devon.addEventListener('ready', onReady('devon', devon));
+riley.addEventListener('agent:ready', onReady('riley', riley));
+devon.addEventListener('agent:ready', onReady('devon', devon));
 ```
 
-This boots both agents, marks both `ready`, then has Riley introduce the pair. Devon stands by silently.
+This boots both agents, marks both `agent:ready`, then has Riley introduce the pair. Devon stands by silently.
 
 ---
 
@@ -181,11 +181,11 @@ input.addEventListener('keydown', (e) => {
 });
 ```
 
-The agent's response comes back via the `chat-message` event:
+The agent's response comes back via the `brain:message` event:
 
 ```js
 function wireMessages(name, el) {
-  el.addEventListener('chat-message', (e) => {
+  el.addEventListener('brain:message', (e) => {
     const { role, content } = e.detail;
     if (role === 'assistant' && content) {
       appendLog(name, content);
@@ -304,7 +304,7 @@ function cleanForUser(text) {
 }
 
 function wireMessages(name, el) {
-  el.addEventListener('chat-message', (e) => {
+  el.addEventListener('brain:message', (e) => {
     const { role, content } = e.detail;
     if (role !== 'assistant' || !content) return;
     const cleaned = cleanForUser(content);
@@ -321,14 +321,14 @@ The `state.scratch` keeps the raw text (so the brief built in `buildBrief` is fa
 
 ## Step 8 — Speech-end synchronization
 
-The agent's `speak` method drives the 3D character's lip-sync and ambient animations. The `speak-end` event fires when the avatar finishes saying its line. Use this to gate the next user input:
+The agent's `speak` method drives the 3D character's lip-sync and ambient animations. The `voice:speech-end` event fires when the avatar finishes saying its line. Use this to gate the next user input:
 
 ```js
 let speaking = false;
 
 function wireSpeechGate(el) {
-  el.addEventListener('speak-start', () => { speaking = true; input.disabled = true; });
-  el.addEventListener('speak-end', () => { speaking = false; input.disabled = false; input.focus(); });
+  el.addEventListener('voice:speech-start', () => { speaking = true; input.disabled = true; });
+  el.addEventListener('voice:speech-end', () => { speaking = false; input.disabled = false; input.focus(); });
 }
 wireSpeechGate(riley);
 wireSpeechGate(devon);
@@ -336,7 +336,7 @@ wireSpeechGate(devon);
 
 Without this, an eager visitor types over the avatar's spoken response and the conversation tangles. With it, each turn completes cleanly.
 
-For a handoff specifically, you want the OLD agent's `speak-end` to fire *before* the NEW agent starts speaking. The event order is naturally correct because the coordinator calls `targetEl.chat(brief, ...)` immediately, but the new agent doesn't start speaking until its LLM responds — which is well after the old agent finished its last syllable. No extra coordination needed in practice.
+For a handoff specifically, you want the OLD agent's `voice:speech-end` to fire *before* the NEW agent starts speaking. The event order is naturally correct because the coordinator calls `targetEl.chat(brief, ...)` immediately, but the new agent doesn't start speaking until its LLM responds — which is well after the old agent finished its last syllable. No extra coordination needed in practice.
 
 ---
 
@@ -353,7 +353,7 @@ If any of those fail, the typical causes:
 
 - **Riley doesn't hand off.** The system prompt isn't strong enough. Make the trigger list more concrete or use few-shot examples in the prompt.
 - **Devon answers technical questions Riley should have answered.** Check that the handoff topics list in Riley's prompt is *exclusive* — explicitly say "do NOT hand off when the visitor asks X."
-- **Both agents speak at once.** The `speak-start`/`speak-end` gate isn't wired, or one of the agents is mis-receiving the chat input. Confirm `state.active` is correctly set and the `chat()` call only goes to `state.active`.
+- **Both agents speak at once.** The `voice:speech-start`/`voice:speech-end` gate isn't wired, or one of the agents is mis-receiving the chat input. Confirm `state.active` is correctly set and the `chat()` call only goes to `state.active`.
 
 ---
 
@@ -458,7 +458,7 @@ The runtime cannot fix prompts that contradict each other. Catch contradictions 
 
 ## Step 13 — Pattern: turn-taking with no human
 
-Sometimes the two agents are talking to each other, with the human watching. A debate, a roleplay, a brainstorm. This is the cleanest pattern in terms of code (no human input gate; turns alternate on `speak-end`) and the hardest pattern in terms of LLM behavior (without grounding in real user input, both agents drift into hallucinated agreement after about six turns).
+Sometimes the two agents are talking to each other, with the human watching. A debate, a roleplay, a brainstorm. This is the cleanest pattern in terms of code (no human input gate; turns alternate on `voice:speech-end`) and the hardest pattern in terms of LLM behavior (without grounding in real user input, both agents drift into hallucinated agreement after about six turns).
 
 Concrete loop:
 
@@ -479,10 +479,10 @@ async function autoplay(topic, turns = 6) {
 }
 
 function waitForSpeakEnd(el) {
-  return new Promise((res) => el.addEventListener('speak-end', () => res(), { once: true }));
+  return new Promise((res) => el.addEventListener('voice:speech-end', () => res(), { once: true }));
 }
 function waitForChatMessage(el) {
-  return new Promise((res) => el.addEventListener('chat-message', (e) => {
+  return new Promise((res) => el.addEventListener('brain:message', (e) => {
     if (e.detail?.role === 'assistant') res();
   }, { once: true }));
 }

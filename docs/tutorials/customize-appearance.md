@@ -365,7 +365,7 @@ A note for engineers: the script element itself exposes a small JS API for cases
 <script>
   const agentScript = document.getElementById('agent-script');
 
-  agentScript.addEventListener('ready', () => {
+  agentScript.addEventListener('agent:ready', () => {
     // The agent is fully loaded and visible
     agentScript.playAnimationByHint('wave');
   });

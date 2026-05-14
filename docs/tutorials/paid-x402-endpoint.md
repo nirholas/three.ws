@@ -28,7 +28,7 @@ This is one of the most consequential things you can build in 2026: an API that 
 
 x402 is HTTP 402 (the long-reserved "Payment Required" status) turned into a working protocol. The shape:
 
-1. **Client requests a resource without payment.** `GET https://example.com/api/route`
+1. **Client requests a resource without payment.** `GET https://three.ws/api/x402/model-check`
 2. **Server responds 402** with a JSON body listing what payment it will accept — scheme, network, asset, amount, recipient address, timeout. The body is also base64-encoded into a response header `payment-required` so machines that only read headers can find it.
 3. **Client signs a payment payload** matching one of the accepted methods (typically a USDC EIP-3009 `transferWithAuthorization` signature for Base) and retries the request with `X-PAYMENT: <base64 of signed payload>`.
 4. **Server verifies the payment** by calling a facilitator's `/verify` endpoint. The facilitator checks the signature and asserts (off-chain) that the buyer's wallet has the funds.
