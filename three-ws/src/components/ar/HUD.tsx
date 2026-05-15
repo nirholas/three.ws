@@ -23,7 +23,7 @@ export function HUD({ coords, onFlipCamera, facing, planLabel }: HUDProps) {
             aria-hidden
           />
           <span className="font-display text-xl">
-            POCKET <span className="text-neon">◆</span> AR
+            three<span className="text-cyan">.</span>ws
           </span>
         </div>
         <Link

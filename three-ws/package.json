@@ -1,5 +1,5 @@
 {
-  "name": "ar-creature",
+  "name": "three.ws",
   "version": "0.1.0",
   "private": true,
   "scripts": {
@@ -17,7 +17,11 @@
   "dependencies": {
     "@auth/prisma-adapter": "^2.7.4",
     "@prisma/client": "^5.22.0",
+    "@react-three/drei": "^10.7.7",
+    "@react-three/fiber": "^9.6.1",
+    "@react-three/rapier": "^2.2.0",
     "clsx": "^2.1.1",
+    "ecctrl": "^1.0.97",
     "next": "15.0.3",
     "next-auth": "5.0.0-beta.25",
     "react": "19.0.0-rc-66855b96-20241106",
@@ -25,12 +29,14 @@
     "resend": "^4.0.1",
     "stripe": "^17.4.0",
     "tailwind-merge": "^2.5.4",
+    "three": "^0.184.0",
     "zod": "^3.23.8"
   },
   "devDependencies": {
     "@types/node": "^22.9.0",
     "@types/react": "^18.3.12",
     "@types/react-dom": "^18.3.1",
+    "@types/three": "^0.184.1",
     "autoprefixer": "^10.4.20",
     "eslint": "^9.14.0",
     "eslint-config-next": "15.0.3",

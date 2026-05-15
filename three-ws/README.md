@@ -1,4 +1,4 @@
-# Pocket AR
+# three.ws
 
 A real Next.js 15 SaaS. A creature lives in the user's camera, walks around via on-screen joystick, scales with depth. Free tier with 1 creature + watermarked photo capture; Pro tier ($9/mo by default) unlocks 4 creatures, video recording, no watermark, 4K capture.
 

@@ -24,13 +24,13 @@ export default async function AccountPage({
         style={{ background: "radial-gradient(60% 60% at 50% 30%, rgba(33,241,255,.15), transparent 60%), #0b0b10" }}
       />
       <Link href="/" className="font-display text-2xl tracking-wide">
-        ← POCKET <span className="text-neon">◆</span> AR
+        ← three<span className="text-cyan">.</span>ws
       </Link>
 
       <div className="mx-auto mt-16 max-w-xl">
         {sp.checkout === "success" && (
           <div className="mb-8 rounded-2xl border border-acid/40 bg-acid/10 px-5 py-4 text-acid">
-            🎉 you&apos;re on pro. it can take a few seconds for the webhook to confirm.
+            You&apos;re on Pro. The webhook may take a few seconds to confirm.
           </div>
         )}
 
@@ -69,7 +69,7 @@ export default async function AccountPage({
           ) : (
             <>
               <p className="mt-4 text-sm text-paper/70">
-                You&apos;re on the free plan. Upgrade for more creatures, video recording, and no
+                You&apos;re on the free plan. Upgrade for more characters, video recording, and no
                 watermark.
               </p>
               <Link href="/pricing" className="btn-primary mt-6">

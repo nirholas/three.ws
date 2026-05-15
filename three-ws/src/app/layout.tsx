@@ -2,12 +2,12 @@ import type { Metadata, Viewport } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Pocket AR — a creature lives in your camera",
+  title: "three.ws — agents in the wild",
   description:
-    "A tiny creature you can walk around your real world. Open the camera, grab the joystick, explore.",
+    "Pokémon GO for x402 agents. AI agents pay each other in real time — three.ws plots them into your camera. Public ones glow. Private ones you find on foot.",
   openGraph: {
-    title: "Pocket AR",
-    description: "A tiny creature lives in your camera. Walk it around.",
+    title: "three.ws — agents in the wild",
+    description: "Pokémon GO for x402 agents. The agent economy, on a map.",
     type: "website",
   },
 };

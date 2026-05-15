@@ -37,14 +37,14 @@ export default function PricingPage() {
         }}
       />
       <Link href="/" className="font-display text-2xl tracking-wide">
-        ← POCKET <span className="text-neon">◆</span> AR
+        ← three<span className="text-cyan">.</span>ws
       </Link>
 
       <div className="mx-auto mt-16 max-w-3xl text-center">
         <h1 className="font-display text-6xl leading-none sm:text-7xl">
-          simple <span className="text-neon">pricing.</span>
+          pricing<span className="text-cyan">.</span>
         </h1>
-        <p className="mt-4 text-paper/60">free to start. upgrade when you want more creatures.</p>
+        <p className="mt-4 text-paper/60">free to roam. Pro unlocks more characters and capture.</p>
       </div>
 
       <div className="mx-auto mt-12 grid max-w-3xl grid-cols-1 gap-6 sm:grid-cols-2">
@@ -52,9 +52,9 @@ export default function PricingPage() {
           name={PLANS.free.name}
           price={PLANS.free.price}
           features={[
-            "1 creature",
+            "1 character",
             "AR camera mode",
-            "Photo capture (with watermark)",
+            "Photo capture (watermarked)",
             "Up to 1080p",
           ]}
           cta={
@@ -68,7 +68,7 @@ export default function PricingPage() {
           price={PLANS.pro.price}
           highlight
           features={[
-            "4 creatures (more coming)",
+            "4 characters",
             "Video recording",
             "No watermark",
             "Up to 4K capture",
@@ -126,7 +126,7 @@ function PlanCard({
       <ul className="mt-6 space-y-2 text-sm text-paper/80">
         {features.map((f) => (
           <li key={f} className="flex items-start gap-2">
-            <span className={highlight ? "text-neon" : "text-cyan"}>◆</span>
+            <span className={highlight ? "text-neon" : "text-cyan"}>—</span>
             <span>{f}</span>
           </li>
         ))}

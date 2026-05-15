@@ -33,10 +33,10 @@ export default function LoginPage() {
       />
       <div className="w-full max-w-sm rounded-3xl border border-white/10 bg-ink/60 p-8 backdrop-blur-md">
         <Link href="/" className="font-display text-2xl tracking-wide">
-          POCKET <span className="text-neon">◆</span> AR
+          three<span className="text-cyan">.</span>ws
         </Link>
         <h1 className="mt-6 font-display text-4xl leading-none">log in.</h1>
-        <p className="mt-2 text-sm text-paper/60">to play, save creatures, or upgrade.</p>
+        <p className="mt-2 text-sm text-paper/60">access the demo and manage your account.</p>
 
         <button
           type="button"
