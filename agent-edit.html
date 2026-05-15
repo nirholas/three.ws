@@ -517,6 +517,110 @@
 				padding: 0.15rem 0.382rem;
 				border-radius: 4px;
 			}
+			.avatar-create-tile {
+				border-style: dashed;
+				border-color: rgba(147, 197, 253, 0.4);
+				background: rgba(59, 130, 246, 0.04);
+				color: rgba(147, 197, 253, 0.85);
+			}
+			.avatar-create-tile:hover {
+				border-color: rgba(147, 197, 253, 0.85);
+				background: rgba(59, 130, 246, 0.10);
+			}
+			.avatar-create-icon {
+				font-size: 1.75rem;
+				font-weight: 300;
+				color: rgba(147, 197, 253, 0.85);
+			}
+			.avatar-create-menu {
+				position: absolute;
+				z-index: 1000;
+				min-width: 220px;
+				background: #0d0d18;
+				border: 1px solid rgba(255, 255, 255, 0.12);
+				border-radius: 8px;
+				padding: 0.382rem;
+				box-shadow: 0 10px 30px rgba(0, 0, 0, 0.45);
+				display: flex;
+				flex-direction: column;
+				gap: 0.15rem;
+			}
+			.avatar-create-menu button[role="menuitem"] {
+				display: flex;
+				flex-direction: column;
+				gap: 0.15rem;
+				text-align: left;
+				padding: 0.5rem 0.75rem;
+				background: transparent;
+				border: 0;
+				color: #eaeaf0;
+				cursor: pointer;
+				border-radius: 6px;
+				font-family: inherit;
+			}
+			.avatar-create-menu button[role="menuitem"]:hover {
+				background: rgba(255, 255, 255, 0.06);
+			}
+			.avatar-create-menu .acm-title { font-size: 0.875rem; }
+			.avatar-create-menu .acm-sub { font-size: 0.7rem; color: rgba(255, 255, 255, 0.5); }
+
+			.anims-picker-grid {
+				display: grid;
+				grid-template-columns: repeat(auto-fill, minmax(96px, 1fr));
+				gap: 0.5rem;
+			}
+			.anim-tile {
+				position: relative;
+				background: rgba(255, 255, 255, 0.04);
+				border: 1px solid rgba(255, 255, 255, 0.1);
+				border-radius: 8px;
+				padding: 0.5rem 0.382rem;
+				cursor: pointer;
+				font-family: inherit;
+				color: rgba(255, 255, 255, 0.85);
+				display: flex;
+				flex-direction: column;
+				gap: 0.15rem;
+				align-items: center;
+				text-align: center;
+				transition: border-color 0.15s, background 0.15s, transform 0.1s;
+			}
+			.anim-tile:hover { border-color: rgba(59, 130, 246, 0.5); }
+			.anim-tile:active { transform: scale(0.97); }
+			.anim-tile.selected {
+				border-color: #3b82f6;
+				background: rgba(59, 130, 246, 0.12);
+			}
+			.anim-tile-icon {
+				font-size: 1.4rem;
+				line-height: 1;
+				margin-bottom: 0.15rem;
+			}
+			.anim-tile-name {
+				font-size: 0.7rem;
+				color: rgba(255, 255, 255, 0.7);
+				overflow: hidden;
+				text-overflow: ellipsis;
+				white-space: nowrap;
+				max-width: 100%;
+			}
+			.anim-tile-check {
+				position: absolute;
+				top: 0.25rem;
+				right: 0.25rem;
+				width: 14px;
+				height: 14px;
+				border-radius: 50%;
+				background: #3b82f6;
+				color: #fff;
+				font-size: 0.55rem;
+				display: flex;
+				align-items: center;
+				justify-content: center;
+				opacity: 0;
+				transition: opacity 0.15s;
+			}
+			.anim-tile.selected .anim-tile-check { opacity: 1; }
 
 			.edit-tab:focus-visible,
 			.btn-primary:focus-visible,
@@ -950,6 +1054,18 @@
 					<div id="avatar-picker-list" class="avatar-picker-list">
 						<div class="no-named-mats">Loading avatars…</div>
 					</div>
+
+					<div class="outfit-header" style="margin-top: 2rem;">
+						<h2 class="outfit-title">Animations</h2>
+						<button type="button" class="btn-reset-all" id="anims-save" disabled>Save selection</button>
+					</div>
+					<p class="note" style="font-size: 0.764rem; color: rgba(255,255,255,0.4); margin: 0 0 1rem;">
+						Pick which Mixamo clips this agent can play. They&rsquo;re also available to skills via <code>playAnimation</code>.
+					</p>
+					<div id="anims-picker-grid" class="anims-picker-grid">
+						<div class="no-named-mats">Loading animations…</div>
+					</div>
+					<span class="form-status" id="anims-status" role="status" aria-live="polite"></span>
 				</div>
 			</section>
 			<!-- Publish tab -->

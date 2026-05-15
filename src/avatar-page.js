@@ -194,6 +194,9 @@ function renderShell(glbUrl) {
 					tone-mapping="aces"
 					environment-image="neutral"
 					reveal="auto"
+					ar
+					ar-modes="webxr scene-viewer quick-look"
+					${avatar.usdz_url ? `ios-src="${esc(avatar.usdz_url)}"` : ''}
 				></model-viewer>
 			</div>
 			<div class="av-meta-strip" id="av-meta-strip">

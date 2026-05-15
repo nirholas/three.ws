@@ -56,6 +56,37 @@ export class AgentPanel {
 }
 
 // ---------------------------------------------------------------------------
+// Avatar embed
+// ---------------------------------------------------------------------------
+
+export interface LoadAvatarOptions {
+	/** three.ws agent id (e.g. "agt_abc123") */
+	agentId: string;
+	/** Element to mount the avatar into */
+	container: HTMLElement;
+	/** 'orbit' (default) or 'none' */
+	controls?: 'orbit' | 'none';
+	/** Override the agent-3d CDN URL */
+	cdnUrl?: string;
+	/** Optional SRI integrity hash for the script tag */
+	integrity?: string;
+	/** CSS width (default: '100%') */
+	width?: string;
+	/** CSS height (default: '100%') */
+	height?: string;
+	/** Extra attributes to forward to the <agent-3d> element */
+	attrs?: Record<string, string>;
+}
+
+export interface AvatarHandle {
+	element: HTMLElement;
+	playAnimation(hint: string): unknown;
+	dispose(): void;
+}
+
+export function loadAvatar(options: LoadAvatarOptions): Promise<AvatarHandle>;
+
+// ---------------------------------------------------------------------------
 // AgentKit — the primary API
 // ---------------------------------------------------------------------------
 

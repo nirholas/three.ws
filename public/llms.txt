@@ -14,6 +14,7 @@ Entry points into the product.
 - [Home](https://three.ws/): Landing page. Pitch, live agent demos, and the front door to every flow.
 - [Discover](https://three.ws/discover): On-chain agent directory (ERC-8004 + Solana). Browse, search, and inspect every registered agent.
 - [Avatar Gallery](https://three.ws/gallery): Every public 3D avatar in the system, browsable as a grid.
+- [Walk](https://three.ws/walk): Drive a 3D avatar around with a joystick or WASD — toggle the back camera for AR-style passthrough.
 - [Marketplace](https://three.ws/marketplace): Buy access to agents, skills, and avatars from other creators.
 - [Community](https://three.ws/community): Featured creators, builds, and conversations from the three.ws community.
 - [Sitemap](https://three.ws/sitemap): Human-readable index of every page on three.ws.

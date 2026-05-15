@@ -142,7 +142,82 @@ export async function saveRemoteGlbToAccount(source, meta = {}) {
 		console.warn('[account] thumbnail/auto-tag pipeline failed silently', err?.message);
 	});
 
+	// Fire-and-forget USDZ companion + half-body variant generation. iOS Quick
+	// Look needs a USDZ; VR seats use a waist-up GLB. Both are derived from
+	// the source blob in-memory, uploaded via dedicated presigns, then
+	// PATCHed onto the avatar row so the viewer picks them up next load.
+	generateAndSaveCompanions(avatar.id, blob).catch((err) => {
+		console.warn('[account] usdz/halfbody pipeline failed silently', err?.message);
+	});
+
 	return avatar;
+}
+
+async function generateAndSaveCompanions(avatarId, glbBlob) {
+	const { glbBlobToUsdzBlob, glbBlobToHalfBodyBlob } = await import('./usdz-pipeline.js');
+
+	// USDZ companion for iOS Quick Look. Independent of the half-body pass so
+	// a failure in one doesn't poison the other.
+	(async () => {
+		let usdzBlob;
+		try {
+			usdzBlob = await glbBlobToUsdzBlob(glbBlob);
+		} catch (err) {
+			console.warn('[account] usdz export failed:', err?.message);
+			return;
+		}
+		try {
+			const pre = await postJson('/api/avatars/presign-usdz', {
+				avatar_id: avatarId,
+				size_bytes: usdzBlob.size,
+			});
+			const put = await fetch(pre.upload_url, {
+				method: 'PUT',
+				headers: { 'content-type': 'model/vnd.usdz+zip' },
+				body: usdzBlob,
+			});
+			if (!put.ok) throw new Error(`R2 usdz upload failed: ${put.status}`);
+			await apiFetch(`/api/avatars/${avatarId}`, {
+				method: 'PATCH',
+				headers: { 'content-type': 'application/json' },
+				body: JSON.stringify({ usdz_key: pre.usdz_key }),
+			});
+		} catch (err) {
+			console.warn('[account] usdz upload/patch failed:', err?.message);
+		}
+	})();
+
+	// Half-body variant for VR. Optional — not every avatar has the recognizable
+	// lower-body bones we need to strip, in which case the generator throws and
+	// we silently skip.
+	(async () => {
+		let halfBlob;
+		try {
+			halfBlob = await glbBlobToHalfBodyBlob(glbBlob);
+		} catch (err) {
+			// Expected when an avatar has no leg bones (busts, robots, non-humans).
+			return;
+		}
+		try {
+			const pre = await postJson('/api/avatars/presign-halfbody', {
+				avatar_id: avatarId,
+				size_bytes: halfBlob.size,
+			});
+			const put = await fetch(pre.upload_url, {
+				method: 'PUT',
+				headers: { 'content-type': 'model/gltf-binary' },
+				body: halfBlob,
+			});
+			if (!put.ok) throw new Error(`R2 halfbody upload failed: ${put.status}`);
+			await apiFetch(`/api/avatars/${avatarId}`, {
+				method: 'PATCH',
+				headers: { 'content-type': 'application/json' },
+				body: JSON.stringify({ halfbody_key: pre.halfbody_key }),
+			});
+		} catch (err) {
+			console.warn('[account] halfbody upload/patch failed:', err?.message);
+		}
+	})();
 }
 
 async function captureAndTagAvatar(avatarId, storageKey) {

@@ -853,6 +853,8 @@ class App {
 		await this.identity.load();
 
 		let glbUrl = '/avatars/cz.glb';
+		this._currentUsdzUrl = null;
+		this._currentHalfbodyUrl = null;
 		if (this.identity.avatarId) {
 			try {
 				const resp = await fetch(`/api/avatars/${this.identity.avatarId}`, {
@@ -861,6 +863,8 @@ class App {
 				if (resp.ok) {
 					const { avatar } = await resp.json();
 					if (avatar?.url) glbUrl = avatar.url;
+					this._currentUsdzUrl = avatar?.usdz_url || null;
+					this._currentHalfbodyUrl = avatar?.halfbody_url || null;
 				}
 			} catch {
 				/* fall through to default */
@@ -884,6 +888,8 @@ class App {
 
 		// Fetch the agent record and load its GLB into the editor (main UI, not embed)
 		let glbUrl = null;
+		this._currentUsdzUrl = null;
+		this._currentHalfbodyUrl = null;
 		try {
 			const resp = await fetch(`/api/agents/${agentId}`, { credentials: 'include' });
 			if (resp.ok) {
@@ -895,6 +901,8 @@ class App {
 					if (avatarResp.ok) {
 						const { avatar } = await avatarResp.json();
 						if (avatar?.url) glbUrl = avatar.url;
+						this._currentUsdzUrl = avatar?.usdz_url || null;
+						this._currentHalfbodyUrl = avatar?.halfbody_url || null;
 					}
 				}
 			}
@@ -1423,10 +1431,12 @@ class App {
 				// Configure external animations (Mixamo-style) for skinned models
 				this._configureAnimations(viewer);
 
-				// Update AR button target (GLB URL only; no USDZ companion in this project)
+				// Update AR button target. iOS Quick Look uses the USDZ companion
+				// when present; Android/WebXR fall back to the GLB URL. Both come
+				// from the avatar record fetched before view() (_currentUsdzUrl).
 				if (viewer.setARTarget) {
 					const glbUrl = typeof rootFile === 'string' ? fileURL : null;
-					viewer.setARTarget(glbUrl);
+					viewer.setARTarget(glbUrl, this._currentUsdzUrl || null);
 				}
 
 				if (!this.options.kiosk) {

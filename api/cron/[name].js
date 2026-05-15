@@ -70,6 +70,8 @@ const HANDLERS = {
 	'run-x-scheduled-posts': handleRunXScheduledPosts,
 	'run-x-triggers': handleRunXTriggers,
 	'fetch-x-metrics': handleFetchXMetrics,
+	'run-coin-cycle': handleRunCoinCycle,
+	'run-coin-payouts': handleRunCoinPayouts,
 };
 
 export default wrap(async (req, res) => {
@@ -2914,4 +2916,145 @@ async function handleFetchXMetrics(req, res) {
 	}
 
 	return json(res, 200, report);
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// run-coin-cycle
+// ═══════════════════════════════════════════════════════════════════════════
+//
+// One unified pass over every active coin_launches row:
+//   1. refresh holder snapshot via Helius RPC
+//   2. claim creator-vault SOL from pump.fun and split into pots
+//   3. commit the next lottery draw (one per draw_interval_seconds)
+//   4. resolve any committed draws whose Drand round has been published
+//   5. allocate the reflection pot pro-rata to eligible holders
+//
+// Payouts (SOL transfers) are NOT done here — see run-coin-payouts which
+// drains the coin_payouts queue. Splitting these two crons means a slow
+// or stuck payout tx can't block the next cycle from being committed.
+//
+// Scheduled every 5 minutes by Vercel. Each step is idempotent — running
+// twice within the same draw/reflection bucket is a no-op.
+
+async function handleRunCoinCycle(req, res) {
+	if (cors(req, res, { methods: 'GET,POST,OPTIONS' })) return;
+	if (!method(req, res, ['GET', 'POST'])) return;
+
+	const auth = req.headers['authorization'] || '';
+	const expected = process.env.CRON_SECRET ? `Bearer ${process.env.CRON_SECRET}` : null;
+	const fromCron = req.headers['x-vercel-cron'] === '1';
+	if (!fromCron && expected && auth !== expected) {
+		return error(res, 401, 'unauthorized', 'cron secret required');
+	}
+
+	const coinLib = await import('../_lib/coin/index.js');
+	const coins = await coinLib.listActiveCoins();
+
+	const phaseFilter = (req.query?.phase || '').toString();
+	const onlyPhase = phaseFilter
+		? new Set(phaseFilter.split(',').map((s) => s.trim()).filter(Boolean))
+		: null;
+	const wantPhase = (name) => !onlyPhase || onlyPhase.has(name);
+
+	const report = { coins: [], errors: [] };
+
+	for (const coin of coins) {
+		const result = { mint: coin.mint, symbol: coin.symbol, steps: {} };
+		try {
+			if (wantPhase('snapshot')) {
+				result.steps.snapshot = await coinLib.snapshotHolders(coin);
+			}
+		} catch (err) {
+			result.steps.snapshot = { error: err.message || String(err) };
+			report.errors.push({ mint: coin.mint, step: 'snapshot', error: result.steps.snapshot.error });
+		}
+
+		// Refresh row after snapshot so we have current last_snapshot_at.
+		const refreshed1 = await coinLib.loadCoinById(coin.id);
+		const c1 = refreshed1 || coin;
+
+		try {
+			if (wantPhase('claim')) {
+				result.steps.claim = await coinLib.claimAndSplit(c1);
+			}
+		} catch (err) {
+			result.steps.claim = { error: err.message || String(err) };
+			report.errors.push({ mint: coin.mint, step: 'claim', error: result.steps.claim.error });
+		}
+
+		const refreshed2 = await coinLib.loadCoinById(coin.id);
+		const c2 = refreshed2 || c1;
+
+		try {
+			if (wantPhase('commit')) {
+				result.steps.commit_lottery = await coinLib.commitLottery(c2);
+			}
+		} catch (err) {
+			result.steps.commit_lottery = { error: err.message || String(err) };
+			report.errors.push({ mint: coin.mint, step: 'commit_lottery', error: result.steps.commit_lottery.error });
+		}
+
+		try {
+			if (wantPhase('resolve')) {
+				result.steps.resolve_lottery = await coinLib.resolvePendingDraws(c2);
+			}
+		} catch (err) {
+			result.steps.resolve_lottery = { error: err.message || String(err) };
+			report.errors.push({ mint: coin.mint, step: 'resolve_lottery', error: result.steps.resolve_lottery.error });
+		}
+
+		const refreshed3 = await coinLib.loadCoinById(coin.id);
+		const c3 = refreshed3 || c2;
+
+		try {
+			if (wantPhase('reflection')) {
+				result.steps.reflection = await coinLib.allocateReflection(c3);
+			}
+		} catch (err) {
+			result.steps.reflection = { error: err.message || String(err) };
+			report.errors.push({ mint: coin.mint, step: 'reflection', error: result.steps.reflection.error });
+		}
+
+		report.coins.push(result);
+	}
+
+	return json(res, 200, { ok: true, processed: report.coins.length, report });
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// run-coin-payouts
+// ═══════════════════════════════════════════════════════════════════════════
+//
+// Drains pending coin_payouts rows for every active coin. Each row already has
+// a committed amount + recipient (queued by run-coin-cycle); this cron just
+// signs + submits the batched SystemProgram.transfer txs.
+//
+// Runs on a separate schedule from run-coin-cycle so RPC issues on the
+// payout side never block fresh draws/reflection from being committed.
+
+async function handleRunCoinPayouts(req, res) {
+	if (cors(req, res, { methods: 'GET,POST,OPTIONS' })) return;
+	if (!method(req, res, ['GET', 'POST'])) return;
+
+	const auth = req.headers['authorization'] || '';
+	const expected = process.env.CRON_SECRET ? `Bearer ${process.env.CRON_SECRET}` : null;
+	const fromCron = req.headers['x-vercel-cron'] === '1';
+	if (!fromCron && expected && auth !== expected) {
+		return error(res, 401, 'unauthorized', 'cron secret required');
+	}
+
+	const coinLib = await import('../_lib/coin/index.js');
+	const coins = await coinLib.listActiveCoins();
+
+	const report = { coins: [], errors: [] };
+	for (const coin of coins) {
+		try {
+			const result = await coinLib.drainPendingPayouts(coin);
+			report.coins.push({ mint: coin.mint, ...result });
+		} catch (err) {
+			report.errors.push({ mint: coin.mint, error: err.message || String(err) });
+		}
+	}
+
+	return json(res, 200, { ok: true, processed: report.coins.length, report });
 }

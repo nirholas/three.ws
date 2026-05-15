@@ -766,7 +766,73 @@
 					</span>
 				</div>
 
-				<!-- Card 2: Upload GLB -->
+				<!-- Card 2: Selfie via Avaturn (replaces the retired Ready Player Me flow) -->
+				<div
+					class="create-card"
+					id="card-selfie"
+					role="button"
+					tabindex="0"
+					aria-label="Create an avatar from a selfie"
+				>
+					<div class="card-preview">
+						<model-viewer
+							src="/avatars/default.glb"
+							alt="Selfie-to-avatar preview"
+							auto-rotate
+							auto-rotate-delay="0"
+							rotation-per-second="22deg"
+							interaction-prompt="none"
+							disable-zoom
+							disable-pan
+							disable-tap
+							shadow-intensity="0.4"
+							shadow-softness="0.8"
+							exposure="0.95"
+							environment-image="neutral"
+							camera-orbit="-15deg 80deg auto"
+							loading="lazy"
+						></model-viewer>
+					</div>
+					<div class="card-icon-row">
+						<div class="card-icon" aria-hidden="true">
+							<svg
+								viewBox="0 0 24 24"
+								fill="none"
+								stroke="currentColor"
+								stroke-width="1.7"
+								stroke-linecap="round"
+								stroke-linejoin="round"
+							>
+								<rect x="3" y="5" width="18" height="14" rx="2" />
+								<circle cx="12" cy="11" r="3" />
+								<path d="M7 19c0-2 2.5-3 5-3s5 1 5 3" />
+							</svg>
+						</div>
+						<h2 class="card-title">Selfie to avatar</h2>
+					</div>
+					<p class="card-subtitle">
+						Open Avaturn — snap a selfie or pick a style, get a rigged avatar.
+					</p>
+					<span class="card-cta">
+						Open creator
+						<svg
+							width="13"
+							height="13"
+							viewBox="0 0 24 24"
+							fill="none"
+							stroke="currentColor"
+							stroke-width="2.2"
+							stroke-linecap="round"
+							stroke-linejoin="round"
+							aria-hidden="true"
+						>
+							<line x1="5" y1="12" x2="19" y2="12" />
+							<polyline points="12 5 19 12 12 19" />
+						</svg>
+					</span>
+				</div>
+
+				<!-- Card 3: Upload GLB -->
 				<div
 					class="create-card"
 					id="card-upload-glb"

@@ -2,8 +2,33 @@
 //
 // Reuses the element's existing Three.js renderer by enabling XR mode on start
 // and restoring the RAF loop on end. Hit-test places the agent on tap.
+//
+// XR also enables half-body mode by scaling every lower-body bone (leg, foot,
+// toe…) to zero, collapsing the corresponding skinned geometry to the bone's
+// rest position. This mirrors what the half-body GLB variant does, but at
+// runtime, without reloading the model — so the AgentAvatar empathy bindings
+// and animation manager stay attached.
 
 import { Matrix4, Vector3 } from 'three';
+
+const LOWER_BODY_FRAGMENTS = [
+	'upleg', 'leg', 'thigh', 'knee', 'shin', 'calf',
+	'foot', 'toe', 'ankle',
+];
+
+function _normalizeBone(name) {
+	return String(name || '')
+		.toLowerCase()
+		.replace(/^mixamorig:?_?/, '')
+		.replace(/^cc_base_/, '')
+		.replace(/^armature[:_|]/, '')
+		.replace(/^rig[:_]/, '');
+}
+
+function _isLowerBody(name) {
+	const norm = _normalizeBone(name);
+	return LOWER_BODY_FRAGMENTS.some((f) => norm.includes(f));
+}
 
 export class WebXRSession {
 	constructor(viewer, { onEnd } = {}) {
@@ -17,6 +42,8 @@ export class WebXRSession {
 		this._savedBg = null;
 		this._savedPos = null;
 		this._savedRot = null;
+		/** @type {Array<{ bone: import('three').Bone, scale: Vector3 }>} */
+		this._halfBodyBones = [];
 		this._handleEnd = this._handleEnd.bind(this);
 		this._handleSelect = this._handleSelect.bind(this);
 	}
@@ -59,6 +86,10 @@ export class WebXRSession {
 		const content = viewer.content;
 		this._savedPos = content?.position.clone() ?? null;
 		this._savedRot = content?.rotation.clone() ?? null;
+
+		// Collapse lower-body bones so the avatar reads as a half-body bust in
+		// VR/AR — the user doesn't see their own legs in a passthrough rig.
+		this._enterHalfBody();
 
 		// Hand the render loop to the XR system (replaces RAF)
 		if (viewer._rafId !== null) {
@@ -148,10 +179,50 @@ export class WebXRSession {
 		if (viewer.content && this._savedPos) viewer.content.position.copy(this._savedPos);
 		if (viewer.content && this._savedRot) viewer.content.rotation.copy(this._savedRot);
 
+		// Restore full-body bone scales captured at XR start.
+		this._exitHalfBody();
+
 		viewer.controls.enabled = true;
 		viewer._needsRender = true;
 		viewer._updateRenderLoop();
 
 		this._onEnd?.();
+	}
+
+	// ── Half-body mode ────────────────────────────────────────────────────────
+
+	_enterHalfBody() {
+		const content = this._viewer.content;
+		if (!content) return;
+		this._halfBodyBones = [];
+
+		content.traverse((obj) => {
+			if (!obj.isSkinnedMesh || !obj.skeleton) return;
+			for (const bone of obj.skeleton.bones || []) {
+				if (!_isLowerBody(bone.name)) continue;
+				// Each bone may appear in multiple meshes; only record it once.
+				if (this._halfBodyBones.some((b) => b.bone === bone)) continue;
+				this._halfBodyBones.push({ bone, scale: bone.scale.clone() });
+				bone.scale.set(0.0001, 0.0001, 0.0001);
+			}
+		});
+		// Skeleton matrices need a fresh update so the zero-scale propagates
+		// to every dependent vertex on the next render.
+		content.traverse((obj) => {
+			if (obj.isSkinnedMesh && obj.skeleton) obj.skeleton.update();
+		});
+	}
+
+	_exitHalfBody() {
+		for (const { bone, scale } of this._halfBodyBones) {
+			bone.scale.copy(scale);
+		}
+		this._halfBodyBones = [];
+		const content = this._viewer.content;
+		if (content) {
+			content.traverse((obj) => {
+				if (obj.isSkinnedMesh && obj.skeleton) obj.skeleton.update();
+			});
+		}
 	}
 }

@@ -203,7 +203,7 @@ Copy `.env.example` to `.env` and fill in:
 | `ANTHROPIC_API_KEY` | Required for AI chat | LLM backend. Without it, the agent falls back to pattern matching. |
 | `VITE_PRIVY_APP_ID` | Optional | Wallet auth via [Privy](https://privy.io). Needed for on-chain identity. |
 | `UPSTASH_REDIS_REST_URL` / `UPSTASH_REDIS_REST_TOKEN` | Optional | Distributed rate limiting. Falls back to in-memory without it. |
-| `VITE_RPM_SUBDOMAIN` | Optional | Your [Ready Player Me](https://studio.readyplayer.me) subdomain for the avatar creator. Defaults to `demo`. |
+| `VITE_CHARACTER_STUDIO_URL` | Optional | Origin where the [Character Studio](https://github.com/m3-org/CharacterStudio) avatar builder iframe is hosted. Defaults to `http://localhost:5173` in dev. |
 | `AVATURN_API_KEY` | Optional | Photo-to-avatar pipeline via [Avaturn](https://avaturn.me). |
 | `PINATA_JWT` | Optional | IPFS pinning for on-chain agent registration. |
 

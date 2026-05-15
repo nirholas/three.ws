@@ -26,6 +26,7 @@
  */
 
 export { AgentPanel } from './panel.js';
+export { loadAvatar } from './avatar.js';
 export { agentRegistration, agentCard, aiPlugin } from './manifests.js';
 export {
 	connectWallet,

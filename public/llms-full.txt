@@ -31,6 +31,12 @@ URL: https://three.ws/gallery
 
 Every public 3D avatar in the system, browsable as a grid.
 
+### Walk
+
+URL: https://three.ws/walk
+
+Drive a 3D avatar around with a joystick or WASD — toggle the back camera for AR-style passthrough.
+
 ### Marketplace
 
 URL: https://three.ws/marketplace
