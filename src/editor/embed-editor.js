@@ -1173,10 +1173,15 @@ export function mountEmbedEditor(root, options = {}) {
 	// Curated chips visible in the always-on dock — ordered for video impact.
 	// Only ones present in the loaded model's clip list are shown; the rest
 	// of the library lives behind the "+ More" chip in the modal.
-	const FEATURED_CLIPS = ['wave', 'dance', 'thriller', 'celebrate', 'kiss', 'jump'];
+	const FEATURED_CLIPS = ['downdog', 'wave', 'dance', 'thriller', 'celebrate', 'kiss', 'jump'];
+
+	// Pose the avatar holds when the editor first opens — looped so the rig
+	// settles on a recognizable yoga frame instead of the procedural idle drift.
+	const DEFAULT_POSE = 'downdog';
 
 	// Buckets for the modal. Names not matched here fall into "Other".
 	const CLIP_CATEGORIES = [
+		{ title: 'Yoga & poses', match: /^(downdog)$/ },
 		{ title: 'Greetings & social', match: /^(wave|kiss|pray|sitclap|sitlaugh|taunt|silly|reaction)$/ },
 		{ title: 'Dances', match: /^(dance|rumba|thriller|capoeira|hiphop)$/ },
 		{ title: 'Reactions', match: /^(celebrate|angry|defeated|reaction)$/ },
@@ -1292,6 +1297,19 @@ export function mountEmbedEditor(root, options = {}) {
 		animDock.hidden = false;
 	}
 	agentEl.addEventListener('agent:ready', renderAnimDock);
+
+	// Hold the avatar in the default pose as soon as the rig is ready, so the
+	// editor opens on a recognizable frame instead of the procedural idle.
+	// Skipped when a saved widget is being loaded — that flow hides the dock
+	// and renders its own configured state.
+	agentEl.addEventListener('agent:ready', () => {
+		if (state.widgetId) return;
+		const clips = (typeof agentEl._listAvailableClips === 'function')
+			? agentEl._listAvailableClips()
+			: [];
+		const pose = clips.find((c) => c.name === DEFAULT_POSE);
+		if (pose) playClip(pose);
+	});
 
 	// Number-key shortcuts (1–6) play the matching featured chip. Skipped
 	// while typing in any text field; skipped when the modal is open so the
@@ -1675,7 +1693,18 @@ export function mountEmbedEditor(root, options = {}) {
 	stage.addEventListener('pointermove', (e) => {
 		if (!dragState) return;
 		const rect = dragState.stageRect;
-		if (dragState.kind === 'move') {
+		if (dragState.kind === 'move' || dragState.kind === 'tap-only') {
+			// Don't start dragging (or treat as a movement) until the pointer has
+			// travelled past TAP_THRESHOLD — anything shorter resolves as a tap on
+			// pointerup, which toggles avatar freeze.
+			if (!dragState.moved) {
+				const dx = e.clientX - dragState.downX;
+				const dy = e.clientY - dragState.downY;
+				if (dx * dx + dy * dy < TAP_THRESHOLD * TAP_THRESHOLD) return;
+				dragState.moved = true;
+				if (dragState.kind === 'move') agentWrap.classList.add('dragging');
+			}
+			if (dragState.kind !== 'move') return;
 			const x = e.clientX - rect.left - dragState.offsetX;
 			const y = e.clientY - rect.top - dragState.offsetY;
 			const snapped = snapToCorner(
@@ -1727,10 +1756,14 @@ export function mountEmbedEditor(root, options = {}) {
 	});
 
 	stage.addEventListener('pointerup', () => {
-		if (dragState) {
-			agentWrap.classList.remove('dragging');
-			dragState = null;
+		if (!dragState) return;
+		// Resize finalizes on pointerup regardless; only move/tap-only carry the
+		// tap-to-freeze intent.
+		if ((dragState.kind === 'move' || dragState.kind === 'tap-only') && !dragState.moved) {
+			setAvatarFrozen(!state.avatarFrozen);
 		}
+		agentWrap.classList.remove('dragging');
+		dragState = null;
 	});
 
 	const toastEl = $('#toast');

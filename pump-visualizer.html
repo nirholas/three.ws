@@ -8,8 +8,6 @@
 	<link rel="canonical" href="/pump-visualizer">
 	<link rel="stylesheet" href="/style.css">
 	<link rel="stylesheet" href="/nav.css" />
-	<link rel="stylesheet" href="/footer.css" />
-	<script defer src="/footer-newsletter.js"></script>
 	<style>
 		:root {
 			--vz-bg: #05060a;
@@ -89,6 +87,94 @@
 		}
 		.vz-status button:hover { background: var(--accent-soft); }
 		.vz-status button:disabled { opacity: 0.5; cursor: not-allowed; }
+		.vz-status .sep { width: 1px; height: 14px; background: rgba(255,255,255,0.1); margin: 0 4px; }
+		.vz-status .stat { color: var(--vz-muted); display: flex; align-items: center; gap: 6px; }
+		.vz-status .stat b { color: var(--vz-text); font-weight: 600; }
+		.vz-status .countdown {
+			color: var(--vz-muted); font-variant-numeric: tabular-nums;
+			min-width: 28px; text-align: right;
+		}
+
+		/* ── Controls panel (search + sort) ──────────────── */
+		.vz-controls {
+			top: calc(var(--header-h, 3.5rem) + 12px);
+			left: 50%;
+			transform: translateX(-50%);
+			display: flex;
+			gap: 8px;
+			align-items: center;
+			background: var(--vz-panel);
+			border: 1px solid var(--vz-border);
+			border-radius: 10px;
+			padding: 6px;
+			font-family: var(--font-mono);
+			font-size: 12px;
+		}
+		.vz-search {
+			position: relative;
+			display: flex;
+			align-items: center;
+		}
+		.vz-search input {
+			background: rgba(0,0,0,0.4);
+			border: 1px solid rgba(255,255,255,0.08);
+			color: var(--vz-text);
+			border-radius: 6px;
+			padding: 6px 10px 6px 28px;
+			font: inherit;
+			width: 180px;
+			outline: none;
+			transition: border-color 0.15s, width 0.2s;
+		}
+		.vz-search input:focus {
+			border-color: var(--vz-accent);
+			width: 220px;
+		}
+		.vz-search input::placeholder { color: var(--vz-muted); }
+		.vz-search::before {
+			content: '';
+			position: absolute;
+			left: 10px; top: 50%;
+			width: 12px; height: 12px;
+			border: 1.5px solid var(--vz-muted);
+			border-radius: 50%;
+			transform: translateY(-65%);
+			pointer-events: none;
+		}
+		.vz-search::after {
+			content: '';
+			position: absolute;
+			left: 19px; top: 50%;
+			width: 6px; height: 1.5px;
+			background: var(--vz-muted);
+			transform: translateY(2px) rotate(45deg);
+			pointer-events: none;
+		}
+		.vz-sort {
+			display: flex;
+			gap: 2px;
+			border-left: 1px solid rgba(255,255,255,0.08);
+			padding-left: 8px;
+			margin-left: 2px;
+		}
+		.vz-sort button {
+			background: transparent;
+			border: 1px solid transparent;
+			color: var(--vz-muted);
+			border-radius: 6px;
+			padding: 5px 10px;
+			font: inherit;
+			cursor: pointer;
+			letter-spacing: 0.04em;
+			text-transform: uppercase;
+			font-size: 10px;
+		}
+		.vz-sort button:hover { color: var(--vz-text); }
+		.vz-sort button.is-active {
+			background: rgba(139, 92, 246, 0.18);
+			border-color: var(--vz-border);
+			color: var(--vz-text);
+		}
 
 		/* ── Help / hint ──────────────────────────────── */
 		.vz-hint {
@@ -251,9 +337,9 @@
 			border: 1px solid rgba(255,255,255,0.08);
 			border-radius: 10px;
 			padding: 10px 12px;
-			max-height: 220px;
+			max-height: 260px;
 			overflow-y: auto;
-			width: 240px;
+			width: 280px;
 			font-family: var(--font-mono);
 			font-size: 12px;
 		}
@@ -273,12 +359,92 @@
 		}
 		.vz-legend li:hover { background: rgba(255,255,255,0.04); }
 		.vz-legend li.is-selected { background: var(--accent-soft); }
-		.vz-legend li .rank { color: var(--vz-muted); width: 22px; }
-		.vz-legend li .sym { color: var(--vz-accent); }
+		.vz-legend li .rank { color: var(--vz-muted); width: 22px; font-size: 10px; }
+		.vz-legend li .sym { color: var(--vz-accent); font-size: 11px; }
 		.vz-legend li .name {
 			flex: 1; min-width: 0;
 			overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
 		}
+		.vz-legend li .thumb {
+			width: 18px; height: 18px;
+			border-radius: 50%;
+			background: #111;
+			object-fit: cover;
+			flex-shrink: 0;
+			border: 1px solid rgba(255,255,255,0.06);
+		}
+		.vz-legend li .mc {
+			color: var(--vz-green);
+			font-size: 10px;
+			margin-left: auto;
+			padding-left: 6px;
+		}
+		.vz-legend li.is-live::after {
+			content: '';
+			width: 6px; height: 6px;
+			border-radius: 50%;
+			background: var(--vz-red);
+			box-shadow: 0 0 6px rgba(248, 113, 113, 0.8);
+			animation: vzPulse 1.2s ease-in-out infinite;
+			margin-left: 4px;
+			flex-shrink: 0;
+		}
+		.vz-legend.is-empty::after {
+			content: 'No matches';
+			display: block;
+			text-align: center;
+			color: var(--vz-muted);
+			font-size: 11px;
+			padding: 18px 8px;
+		}
+
+		/* ── Intro / loading overlay ──────────────────── */
+		.vz-intro {
+			position: absolute;
+			inset: 0;
+			z-index: 12;
+			display: flex;
+			flex-direction: column;
+			align-items: center;
+			justify-content: center;
+			background: radial-gradient(ellipse at center, rgba(139, 92, 246, 0.08) 0%, var(--vz-bg) 70%);
+			pointer-events: none;
+			opacity: 1;
+			transition: opacity 0.6s ease 0.2s;
+		}
+		.vz-intro.is-hidden { opacity: 0; }
+		.vz-intro .ring {
+			width: 56px; height: 56px;
+			border-radius: 50%;
+			border: 2px solid rgba(139, 92, 246, 0.18);
+			border-top-color: var(--vz-accent);
+			animation: vzSpin 1s linear infinite;
+		}
+		.vz-intro .label {
+			margin-top: 18px;
+			font-family: var(--font-mono);
+			font-size: 12px;
+			letter-spacing: 0.18em;
+			color: var(--vz-muted);
+			text-transform: uppercase;
+		}
+		@keyframes vzSpin {
+			to { transform: rotate(360deg); }
+		}
+
+		/* ── Hint (dismissible) ───────────────────────── */
+		.vz-hint button.dismiss {
+			background: transparent;
+			border: none;
+			color: var(--vz-muted);
+			font: inherit;
+			cursor: pointer;
+			margin-left: 8px;
+			padding: 0;
+			opacity: 0.6;
+		}
+		.vz-hint button.dismiss:hover { opacity: 1; color: var(--vz-text); }
+		.vz-hint.is-hidden { display: none; }
 
 		/* ── Error overlay ────────────────────────────── */
 		.vz-error {
@@ -304,10 +470,18 @@
 			cursor: pointer;
 		}
 
+		@media (max-width: 860px) {
+			.vz-controls { left: 16px; right: 16px; transform: none; }
+			.vz-search input { width: 100%; }
+			.vz-search input:focus { width: 100%; }
+		}
 		@media (max-width: 720px) {
 			.vz-hint { display: none; }
-			.vz-legend { width: 180px; max-height: 160px; bottom: 12px; left: 12px; }
+			.vz-legend { width: 200px; max-height: 180px; bottom: 12px; left: 12px; }
 			.vz-detail { width: 100%; }
+			.vz-status .stat { display: none; }
+			.vz-controls { top: calc(var(--header-h, 3.5rem) + 60px); }
+			.vz-sort { display: none; }
 		}
 	</style>
 </head>
@@ -326,11 +500,33 @@
 		<div class="vz-overlay vz-status" id="vz-status" data-state="loading" role="status" aria-live="polite">
 			<span class="dot"></span>
 			<span id="vz-status-text">Loading trending tokens…</span>
-			<button id="vz-refresh" type="button" title="Refresh data" disabled>↻ Refresh</button>
+			<span class="sep"></span>
+			<span class="stat"><b id="vz-stat-count">0</b> tokens</span>
+			<span class="sep"></span>
+			<span class="stat">total <b id="vz-stat-mcap">—</b></span>
+			<button id="vz-refresh" type="button" title="Refresh data (R)" disabled>↻ <span class="countdown" id="vz-countdown">60s</span></button>
 		</div>
 
-		<div class="vz-overlay vz-hint" aria-hidden="true">
-			<b>Drag</b> to rotate · <b>Scroll</b> to zoom · <b>Click</b> a sphere for details
+		<div class="vz-overlay vz-controls" id="vz-controls" hidden>
+			<label class="vz-search">
+				<input type="search" id="vz-search-input" placeholder="Search name, symbol, mint…" autocomplete="off" spellcheck="false" />
+			</label>
+			<div class="vz-sort" role="tablist" aria-label="Sort tokens">
+				<button type="button" data-sort="mcap" class="is-active">Mcap</button>
+				<button type="button" data-sort="live">Live</button>
+				<button type="button" data-sort="replies">Replies</button>
+				<button type="button" data-sort="recent">New</button>
+			</div>
+		</div>
+
+		<div class="vz-overlay vz-hint" id="vz-hint" aria-hidden="true">
+			<b>Drag</b> to rotate · <b>Scroll</b> to zoom · <b>Click</b> a sphere · <b>/</b> to search
+			<button type="button" class="dismiss" id="vz-hint-dismiss" aria-label="Dismiss">×</button>
+		</div>
+
+		<div class="vz-intro" id="vz-intro" aria-hidden="true">
+			<div class="ring"></div>
+			<div class="label">Loading market</div>
 		</div>
 
 		<aside class="vz-overlay vz-legend" id="vz-legend" hidden>
@@ -379,11 +575,21 @@
 		const SPHERE_RADIUS = 28;
 		const MIN_TOKEN_R = 0.9;
 		const MAX_TOKEN_R = 3.2;
+		const REFRESH_INTERVAL_MS = 60_000;
 
 		const host = document.getElementById('vz-canvas-host');
 		const statusEl = document.getElementById('vz-status');
 		const statusText = document.getElementById('vz-status-text');
 		const refreshBtn = document.getElementById('vz-refresh');
+		const countdownEl = document.getElementById('vz-countdown');
+		const statCountEl = document.getElementById('vz-stat-count');
+		const statMcapEl = document.getElementById('vz-stat-mcap');
+		const controlsEl = document.getElementById('vz-controls');
+		const searchInput = document.getElementById('vz-search-input');
+		const sortBtns = controlsEl.querySelectorAll('.vz-sort button');
+		const hintEl = document.getElementById('vz-hint');
+		const hintDismiss = document.getElementById('vz-hint-dismiss');
+		const introEl = document.getElementById('vz-intro');
 		const tooltip = document.getElementById('vz-tooltip');
 		const ttName = document.getElementById('vz-tt-name');
 		const ttMcap = document.getElementById('vz-tt-mcap');
@@ -401,7 +607,8 @@
 		scene.fog = new THREE.Fog(0x05060a, 80, 220);
 
 		const camera = new THREE.PerspectiveCamera(55, 1, 0.1, 500);
-		camera.position.set(0, 8, 70);
+		// Start far out so we can fly in once data arrives.
+		camera.position.set(0, 14, 180);
 
 		const renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: 'high-performance' });
 		renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
@@ -526,29 +733,32 @@
 
 		function buildTokenMesh(token, position, radius) {
 			const fallback = fallbackTexture(token.symbol, token.mint);
+			const isLive = !!token.is_currently_live;
 			const material = new THREE.MeshStandardMaterial({
 				map: fallback,
 				roughness: 0.45,
 				metalness: 0.25,
-				emissive: 0x000000,
-				emissiveIntensity: 0,
+				emissive: isLive ? new THREE.Color(0xf87171) : new THREE.Color(0x000000),
+				emissiveIntensity: isLive ? 0.25 : 0,
 			});
 			const geometry = new THREE.SphereGeometry(radius, 28, 28);
 			const mesh = new THREE.Mesh(geometry, material);
 			mesh.position.copy(position);
+			mesh.scale.setScalar(0.001); // grow in during spawn animation
 
 			// Selection / hover ring (hidden by default)
 			const ringGeo = new THREE.RingGeometry(radius * 1.18, radius * 1.32, 48);
 			const ringMat = new THREE.MeshBasicMaterial({
-				color: 0x8b5cf6,
+				color: isLive ? 0xf87171 : 0x8b5cf6,
 				transparent: true,
-				opacity: 0,
+				opacity: isLive ? 0.45 : 0,
 				side: THREE.DoubleSide,
 				depthWrite: false,
 			});
 			const ring = new THREE.Mesh(ringGeo, ringMat);
 			ring.position.copy(position);
 			ring.lookAt(0, 0, 0);
+			ring.scale.setScalar(0.001);
 
 			mesh.userData = { token, ring };
 
@@ -562,7 +772,7 @@
 				});
 			}
 
-			return { mesh, ring };
+			return { mesh, ring, isLive };
 		}
 
 		function placeTokens(tokens) {
@@ -584,6 +794,7 @@
 			const span = Math.max(0.0001, maxLog - minLog);
 
 			const points = fibonacciSphere(tokens.length);
+			const spawnStart = performance.now();
 
 			tokens.forEach((token, i) => {
 				const cap = caps[i];
@@ -595,10 +806,31 @@
 				const p = points[i];
 				const position = new THREE.Vector3(p.x * shellR, p.y * shellR, p.z * shellR);
 
-				const { mesh, ring } = buildTokenMesh(token, position, radius);
+				const { mesh, ring, isLive } = buildTokenMesh(token, position, radius);
 				tokensGroup.add(mesh);
 				tokensGroup.add(ring);
-				tokenMeshes.push({ mesh, ring, data: token, baseScale: 1 });
+				tokenMeshes.push({
+					mesh, ring, data: token,
+					baseScale: 1,
+					radius,
+					isLive,
+					spawnAt: spawnStart + i * 22, // ms — stagger reveals
+					spawned: false,
+					hoverScale: 1,
+					visible: true,
+				});
+			});
+		}
+
+		function applyVisibility(filteredMints) {
+			const set = filteredMints ? new Set(filteredMints) : null;
+			tokenMeshes.forEach((entry) => {
+				const show = !set || set.has(entry.data.mint);
+				entry.visible = show;
+				entry.mesh.visible = show;
+				// Ring stays hidden when filtered out, regardless of live state.
+				if (!show) entry.ring.visible = false;
+				else entry.ring.visible = true;
 			});
 		}
 
@@ -632,10 +864,13 @@
 			handleClick();
 		});
 
+		function visibleMeshes() {
+			return tokenMeshes.filter((t) => t.visible).map((t) => t.mesh);
+		}
+
 		function handleClick() {
 			raycaster.setFromCamera(pointer, camera);
-			const meshes = tokenMeshes.map((t) => t.mesh);
-			const hits = raycaster.intersectObjects(meshes, false);
+			const hits = raycaster.intersectObjects(visibleMeshes(), false);
 			if (!hits.length) return;
 			const data = hits[0].object.userData.token;
 			selectToken(data);
@@ -643,10 +878,13 @@
 
 		function setHovered(entry) {
 			if (hovered === entry) return;
-			if (hovered && hovered !== selected) hovered.ring.material.opacity = 0;
+			if (hovered && hovered !== selected) {
+				// Restore non-selected previous hover ring.
+				hovered.ring.material.opacity = hovered.isLive ? 0.45 : 0;
+			}
 			hovered = entry;
 			if (entry) {
-				if (entry !== selected) entry.ring.material.opacity = 0.55;
+				if (entry !== selected) entry.ring.material.opacity = 0.7;
 				host.classList.add('is-pointing');
 				ttName.textContent = (entry.data.name || 'Unknown') + (entry.data.symbol ? ` · $${entry.data.symbol}` : '');
 				ttMcap.textContent = formatMcap(entry.data.usd_market_cap);
@@ -660,7 +898,10 @@
 		function selectToken(token) {
 			const entry = tokenMeshes.find((t) => t.data.mint === token.mint);
 			if (!entry) return;
-			if (selected && selected !== entry) selected.ring.material.opacity = 0;
+			if (selected && selected !== entry) {
+				selected.ring.material.opacity = selected.isLive ? 0.45 : 0;
+				selected.ring.material.color.set(selected.isLive ? 0xf87171 : 0x8b5cf6);
+			}
 			selected = entry;
 			selected.ring.material.color.set(0x34d399);
 			selected.ring.material.opacity = 1;
@@ -671,8 +912,8 @@
 
 		function clearSelection() {
 			if (selected) {
-				selected.ring.material.opacity = 0;
-				selected.ring.material.color.set(0x8b5cf6);
+				selected.ring.material.opacity = selected.isLive ? 0.45 : 0;
+				selected.ring.material.color.set(selected.isLive ? 0xf87171 : 0x8b5cf6);
 				selected = null;
 			}
 			detailEl.classList.remove('is-open');
@@ -683,7 +924,24 @@
 
 		detailClose.addEventListener('click', clearSelection);
 		document.addEventListener('keydown', (ev) => {
-			if (ev.key === 'Escape') clearSelection();
+			if (ev.key === 'Escape') {
+				if (document.activeElement === searchInput) {
+					searchInput.value = '';
+					applyFilterAndRender();
+					searchInput.blur();
+				} else {
+					clearSelection();
+				}
+			} else if (ev.key === '/' && document.activeElement !== searchInput) {
+				ev.preventDefault();
+				searchInput.focus();
+				searchInput.select();
+			} else if (ev.key.toLowerCase() === 'r' && document.activeElement !== searchInput && !ev.metaKey && !ev.ctrlKey) {
+				if (!refreshBtn.disabled) {
+					clearSelection();
+					loadData();
+				}
+			}
 		});
 
 		// ── detail panel rendering ───────────────────────────────────
@@ -756,21 +1014,41 @@
 		// ── legend ───────────────────────────────────────────────────
 		function renderLegend(tokens) {
 			legendList.innerHTML = '';
+			legendEl.classList.toggle('is-empty', tokens.length === 0);
 			tokens.slice(0, 20).forEach((token, i) => {
 				const li = document.createElement('li');
 				li.dataset.mint = token.mint || '';
+				if (token.is_currently_live) li.classList.add('is-live');
+
 				const rank = document.createElement('span');
 				rank.className = 'rank';
 				rank.textContent = '#' + (i + 1);
+
+				const thumb = document.createElement('img');
+				thumb.className = 'thumb';
+				thumb.alt = '';
+				thumb.loading = 'lazy';
+				thumb.referrerPolicy = 'no-referrer';
+				thumb.src = token.image_uri || `https://api.dicebear.com/7.x/shapes/svg?seed=${encodeURIComponent(token.mint || token.symbol || 'x')}`;
+				thumb.onerror = () => { thumb.onerror = null; thumb.src = `https://api.dicebear.com/7.x/shapes/svg?seed=${encodeURIComponent(token.mint || 'x')}`; };
+
 				const name = document.createElement('span');
 				name.className = 'name';
 				name.textContent = token.name || 'Unknown';
+
 				const sym = document.createElement('span');
 				sym.className = 'sym';
 				sym.textContent = token.symbol ? '$' + token.symbol : '';
+
+				const mc = document.createElement('span');
+				mc.className = 'mc';
+				mc.textContent = formatMcap(token.usd_market_cap);
+
 				li.appendChild(rank);
+				li.appendChild(thumb);
 				li.appendChild(name);
 				li.appendChild(sym);
+				li.appendChild(mc);
 				li.addEventListener('click', () => focusToken(token));
 				legendList.appendChild(li);
 			});
@@ -782,8 +1060,8 @@
 			});
 		}
 
-		// Camera tween toward a clicked token so the user actually sees it.
-		const tween = { active: false, from: new THREE.Vector3(), to: new THREE.Vector3(), target: new THREE.Vector3(), start: 0, duration: 700 };
+		// Camera tween — used both for the intro fly-in and clicked-token focus.
+		const tween = { active: false, from: new THREE.Vector3(), to: new THREE.Vector3(), target: new THREE.Vector3(), start: 0, duration: 700, targetLerp: 0.4 };
 		function focusToken(token) {
 			selectToken(token);
 			const entry = tokenMeshes.find((t) => t.data.mint === token.mint);
@@ -795,14 +1073,31 @@
 			tween.to.copy(dest);
 			tween.target.copy(pos);
 			tween.start = performance.now();
+			tween.duration = 700;
+			tween.targetLerp = 0.4;
+			tween.active = true;
+		}
+		function startIntroFlyIn() {
+			tween.from.copy(camera.position);
+			tween.to.set(0, 8, 70);
+			tween.target.set(0, 0, 0);
+			tween.start = performance.now();
+			tween.duration = 1800;
+			tween.targetLerp = 1.0;
 			tween.active = true;
 		}
 		function easeOutCubic(t) { return 1 - Math.pow(1 - t, 3); }
+		function easeOutBack(t) {
+			const c = 1.70158;
+			return 1 + (c + 1) * Math.pow(t - 1, 3) + c * Math.pow(t - 1, 2);
+		}
 
 		// ── animation loop ───────────────────────────────────────────
+		let frameCount = 0;
 		function animate() {
 			requestAnimationFrame(animate);
 			const time = performance.now();
+			frameCount++;
 
 			core.rotation.x += 0.003;
 			core.rotation.y += 0.005;
@@ -812,24 +1107,60 @@
 				const t = Math.min(1, (time - tween.start) / tween.duration);
 				const e = easeOutCubic(t);
 				camera.position.lerpVectors(tween.from, tween.to, e);
-				controls.target.lerp(tween.target, e * 0.4);
+				controls.target.lerp(tween.target, e * tween.targetLerp);
 				if (t >= 1) tween.active = false;
 			}
 
-			// Hover raycast
-			raycaster.setFromCamera(pointer, camera);
-			const hits = raycaster.intersectObjects(tokenMeshes.map((t) => t.mesh), false);
-			if (hits.length) {
-				const hit = hits[0].object;
-				const entry = tokenMeshes.find((t) => t.mesh === hit);
-				setHovered(entry || null);
-			} else {
-				setHovered(null);
+			// Per-token: spawn animation, hover scale lerp, live pulse.
+			tokenMeshes.forEach((entry) => {
+				if (!entry.visible) return;
+				// Spawn pop-in (stagger).
+				if (!entry.spawned) {
+					const dt = time - entry.spawnAt;
+					if (dt > 0) {
+						const t = Math.min(1, dt / 600);
+						const e = easeOutBack(t);
+						entry.mesh.scale.setScalar(e);
+						entry.ring.scale.setScalar(e);
+						if (t >= 1) entry.spawned = true;
+					}
+					return;
+				}
+				// Hover scale ease.
+				const wantHover = (entry === hovered || entry === selected) ? 1.18 : 1;
+				entry.hoverScale += (wantHover - entry.hoverScale) * 0.18;
+				entry.mesh.scale.setScalar(entry.hoverScale);
+
+				// Live pulse on emissive + ring.
+				if (entry.isLive) {
+					const pulse = 0.5 + 0.5 * Math.sin(time * 0.006 + entry.spawnAt * 0.001);
+					entry.mesh.material.emissiveIntensity = 0.18 + pulse * 0.35;
+					if (entry !== selected && entry !== hovered) {
+						entry.ring.material.opacity = 0.35 + pulse * 0.35;
+					}
+					entry.ring.scale.setScalar(entry.hoverScale * (1 + pulse * 0.06));
+				} else if (entry !== selected) {
+					entry.ring.scale.setScalar(entry.hoverScale);
+				}
+			});
+
+			// Hover raycast — every 2nd frame, only against visible & spawned meshes.
+			if (frameCount % 2 === 0) {
+				raycaster.setFromCamera(pointer, camera);
+				const targets = tokenMeshes.filter((t) => t.visible && t.spawned).map((t) => t.mesh);
+				const hits = raycaster.intersectObjects(targets, false);
+				if (hits.length) {
+					const hit = hits[0].object;
+					const entry = tokenMeshes.find((t) => t.mesh === hit);
+					setHovered(entry || null);
+				} else {
+					setHovered(null);
+				}
 			}
 
-			// Subtle pulse on selected ring
+			// Subtle pulse on selected ring.
 			if (selected) {
-				const s = 1 + Math.sin(time * 0.005) * 0.06;
+				const s = (selected.hoverScale || 1) * (1 + Math.sin(time * 0.005) * 0.06);
 				selected.ring.scale.setScalar(s);
 			}
 
@@ -849,10 +1180,119 @@
 		resize();
 		animate();
 
+		// ── state, filtering, sorting ────────────────────────────────
+		const state = {
+			all: [],          // raw tokens from API
+			sortMode: 'mcap', // 'mcap' | 'live' | 'replies' | 'recent'
+			query: '',
+		};
+
+		function sortTokens(tokens, mode) {
+			const arr = tokens.slice();
+			switch (mode) {
+				case 'live':
+					arr.sort((a, b) => (Number(!!b.is_currently_live) - Number(!!a.is_currently_live)) || (Number(b.usd_market_cap || 0) - Number(a.usd_market_cap || 0)));
+					break;
+				case 'replies':
+					arr.sort((a, b) => Number(b.reply_count || 0) - Number(a.reply_count || 0));
+					break;
+				case 'recent':
+					arr.sort((a, b) => Number(b.created_timestamp || 0) - Number(a.created_timestamp || 0));
+					break;
+				default:
+					arr.sort((a, b) => Number(b.usd_market_cap || 0) - Number(a.usd_market_cap || 0));
+			}
+			return arr;
+		}
+
+		function filterTokens(tokens, query) {
+			const q = query.trim().toLowerCase();
+			if (!q) return tokens;
+			return tokens.filter((t) => {
+				const name = (t.name || '').toLowerCase();
+				const sym = (t.symbol || '').toLowerCase();
+				const mint = (t.mint || '').toLowerCase();
+				return name.includes(q) || sym.includes(q) || mint.includes(q);
+			});
+		}
+
+		function applyFilterAndRender() {
+			const sorted = sortTokens(state.all, state.sortMode);
+			const filtered = filterTokens(sorted, state.query);
+			const mints = filtered.map((t) => t.mint);
+			applyVisibility(mints);
+			renderLegend(filtered);
+		}
+
+		function updateStats() {
+			const liveTokens = state.all.filter((t) => t.is_currently_live).length;
+			statCountEl.textContent = state.all.length;
+			const total = state.all.reduce((s, t) => s + (Number(t.usd_market_cap) || 0), 0);
+			statMcapEl.textContent = formatMcap(total);
+			statusText.textContent = liveTokens > 0
+				? `${liveTokens} live · pump.fun`
+				: `live from pump.fun`;
+		}
+
+		// Search wiring (debounced).
+		let searchDebounce = null;
+		searchInput.addEventListener('input', () => {
+			clearTimeout(searchDebounce);
+			searchDebounce = setTimeout(() => {
+				state.query = searchInput.value;
+				applyFilterAndRender();
+			}, 90);
+		});
+
+		// Sort wiring.
+		sortBtns.forEach((btn) => {
+			btn.addEventListener('click', () => {
+				const mode = btn.dataset.sort;
+				if (state.sortMode === mode) return;
+				state.sortMode = mode;
+				sortBtns.forEach((b) => b.classList.toggle('is-active', b === btn));
+				applyFilterAndRender();
+			});
+		});
+
+		// Hint dismiss.
+		hintDismiss.addEventListener('click', () => {
+			hintEl.classList.add('is-hidden');
+			try { localStorage.setItem('vz-hint-dismissed', '1'); } catch {}
+		});
+		try {
+			if (localStorage.getItem('vz-hint-dismissed') === '1') hintEl.classList.add('is-hidden');
+		} catch {}
+
 		// ── data loading ─────────────────────────────────────────────
-		async function loadData() {
-			statusEl.dataset.state = 'loading';
-			statusText.textContent = 'Loading trending tokens…';
+		let refreshTimer = null;
+		let nextRefreshAt = 0;
+		let firstLoad = true;
+
+		function scheduleNextRefresh() {
+			clearInterval(refreshTimer);
+			nextRefreshAt = Date.now() + REFRESH_INTERVAL_MS;
+			updateCountdown();
+			refreshTimer = setInterval(() => {
+				const remaining = Math.max(0, nextRefreshAt - Date.now());
+				updateCountdown();
+				if (remaining <= 0) {
+					loadData(true);
+				}
+			}, 1000);
+		}
+
+		function updateCountdown() {
+			const remaining = Math.max(0, Math.ceil((nextRefreshAt - Date.now()) / 1000));
+			countdownEl.textContent = remaining + 's';
+		}
+
+		async function loadData(silent = false) {
+			if (!silent) {
+				statusEl.dataset.state = 'loading';
+				statusText.textContent = 'Loading trending tokens…';
+				countdownEl.textContent = '…';
+			}
 			refreshBtn.disabled = true;
 			errorEl.hidden = true;
 			try {
@@ -861,31 +1301,54 @@
 				const data = await resp.json();
 				if (!Array.isArray(data) || !data.length) throw new Error('No trending tokens returned');
 
-				placeTokens(data);
-				renderLegend(data);
+				state.all = data;
+				const sorted = sortTokens(state.all, state.sortMode);
+				placeTokens(sorted);
+				applyFilterAndRender();
+				updateStats();
 				statusEl.dataset.state = 'ready';
-				statusText.textContent = `${data.length} tokens · live from pump.fun`;
 				refreshBtn.disabled = false;
+				controlsEl.hidden = false;
+
+				if (firstLoad) {
+					firstLoad = false;
+					introEl.classList.add('is-hidden');
+					setTimeout(() => { introEl.remove(); }, 900);
+					startIntroFlyIn();
+				}
+
+				scheduleNextRefresh();
 			} catch (err) {
 				console.error('[pump-visualizer] load failed', err);
 				statusEl.dataset.state = 'error';
 				statusText.textContent = 'Failed to load';
 				refreshBtn.disabled = false;
+				countdownEl.textContent = '!';
 				errorMessage.textContent = err.message || 'Unknown error';
 				errorEl.hidden = false;
+				introEl.classList.add('is-hidden');
 			}
 		}
 
 		refreshBtn.addEventListener('click', () => {
+			if (refreshBtn.disabled) return;
 			clearSelection();
 			loadData();
 		});
-		errorRetry.addEventListener('click', loadData);
+		errorRetry.addEventListener('click', () => loadData());
+
+		// Pause auto-refresh when tab is hidden, resume when visible.
+		document.addEventListener('visibilitychange', () => {
+			if (document.hidden) {
+				clearInterval(refreshTimer);
+			} else if (nextRefreshAt && !firstLoad) {
+				if (Date.now() >= nextRefreshAt) loadData(true);
+				else scheduleNextRefresh();
+			}
+		});
 
 		loadData();
 	</script>
 
-	<div id="footer-container"></div>
-	<script src="/footer.js"></script>
 </body>
 </html>
