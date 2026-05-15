@@ -321,19 +321,6 @@ const STYLE = `
 		border-radius: 4px;
 		border: 1px solid #334155;
 	}
-	.resize-handle {
-		position: absolute;
-		width: 14px;
-		height: 14px;
-		background: white;
-		border: 2px solid #3b82f6;
-		border-radius: 3px;
-		z-index: 2;
-	}
-	.resize-handle.se { right: -7px; bottom: -7px; cursor: nwse-resize; }
-	.resize-handle.sw { left: -7px; bottom: -7px; cursor: nesw-resize; }
-	.resize-handle.ne { right: -7px; top: -7px; cursor: nesw-resize; }
-	.resize-handle.nw { left: -7px; top: -7px; cursor: nwse-resize; }
 	.size-readout {
 		position: absolute;
 		top: -28px;
@@ -830,7 +817,6 @@ const STYLE = `
 	.editor-root[data-preview="true"] .preview-url-row,
 	.editor-root[data-preview="true"] .device-bar { display: none; }
 	.editor-root[data-preview="true"] .agent-wrap { cursor: default; }
-	.editor-root[data-preview="true"] .agent-wrap .resize-handle,
 	.editor-root[data-preview="true"] .agent-wrap .size-readout,
 	.editor-root[data-preview="true"] .agent-wrap .widget-badge { display: none; }
 	.exit-preview {
@@ -883,7 +869,6 @@ const STYLE = `
 
 	/* Locked mode — disables drag/resize on the wrap and signals the state. */
 	.editor-root[data-locked="true"] .agent-wrap { cursor: not-allowed; }
-	.editor-root[data-locked="true"] .agent-wrap .resize-handle { display: none; }
 	.editor-root[data-locked="true"] .agent-wrap .size-readout {
 		background: #b45309;
 		color: #fef3c7;
@@ -987,11 +972,7 @@ export function mountEmbedEditor(root, options = {}) {
 						<div class="widget-badge" id="widget-badge" hidden></div>
 						<iframe class="widget-frame" id="widget-frame" hidden
 							allow="autoplay; clipboard-write; microphone; camera; xr-spatial-tracking"></iframe>
-						<agent-3d eager kiosk id="preview-agent"></agent-3d>
-						<div class="resize-handle nw" data-h="nw"></div>
-						<div class="resize-handle ne" data-h="ne"></div>
-						<div class="resize-handle sw" data-h="sw"></div>
-						<div class="resize-handle se" data-h="se"></div>
+						<agent-3d eager kiosk name-plate="off" id="preview-agent"></agent-3d>
 					</div>
 					</div>
 					<div class="anim-dock" id="anim-dock" hidden></div>
@@ -1651,7 +1632,6 @@ export function mountEmbedEditor(root, options = {}) {
 	const TAP_THRESHOLD = 5;
 	let dragState = null;
 	agentWrap.addEventListener('pointerdown', (e) => {
-		if (e.target.closest('.resize-handle')) return;
 		// Don't intercept clicks on overlay chrome that sits over the wrap.
 		if (e.target.closest('.size-readout, .widget-badge')) return;
 		const dragAllowed = !state.previewMode && !state.locked;
@@ -1666,28 +1646,6 @@ export function mountEmbedEditor(root, options = {}) {
 			stageRect: stage.getBoundingClientRect(),
 		};
 		agentWrap.setPointerCapture(e.pointerId);
-	});
-
-	// Resize handles
-	$$('.resize-handle').forEach((h) => {
-		h.addEventListener('pointerdown', (e) => {
-			if (state.locked) return;
-			e.stopPropagation();
-			const rect = stage.getBoundingClientRect();
-			const agentRect = agentWrap.getBoundingClientRect();
-			dragState = {
-				kind: 'resize',
-				handle: h.dataset.h,
-				startX: e.clientX,
-				startY: e.clientY,
-				startW: agentRect.width,
-				startH: agentRect.height,
-				startLeft: agentRect.left - rect.left,
-				startTop: agentRect.top - rect.top,
-				stageRect: rect,
-			};
-			h.setPointerCapture(e.pointerId);
-		});
 	});
 
 	stage.addEventListener('pointermove', (e) => {
