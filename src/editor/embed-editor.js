@@ -101,10 +101,11 @@ const STYLE = `
 		font: 15px/1.55 -apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', system-ui, sans-serif;
 		isolation: isolate;
 	}
-	/* Soft purple→cyan glow behind where the avatar will sit. Pure CSS, no
-	   fixed positioning — scales with the placeholder so it works in
-	   tablet/mobile device frames too. */
-	.placeholder-site::before {
+	/* Soft purple→cyan glow + sparkle layer behind where the avatar will sit.
+	   Opt-in via the Backdrop glow toggle in the panel — default is no
+	   background behind the avatar. Scales with the placeholder so it works
+	   in tablet/mobile device frames too. */
+	.placeholder-site.has-glow::before {
 		content: '';
 		position: absolute;
 		top: 24%;
@@ -117,7 +118,7 @@ const STYLE = `
 		pointer-events: none;
 		z-index: 0;
 	}
-	.placeholder-site::after {
+	.placeholder-site.has-glow::after {
 		content: '';
 		position: absolute;
 		inset: 0;
@@ -919,6 +920,10 @@ export function mountEmbedEditor(root, options = {}) {
 		// Options panel.
 		showChat: false,
 		background: 'transparent',
+		// Opt-in purple→cyan glow on the preview backdrop. Off by default so
+		// the avatar reads against the plain hero — toggle from the Backdrop
+		// glow select in the Options panel. Preview-only, not exported.
+		glow: false,
 		...options,
 	};
 
@@ -1067,6 +1072,13 @@ export function mountEmbedEditor(root, options = {}) {
 							<option value="transparent">Transparent</option>
 							<option value="dark">Dark</option>
 							<option value="light">Light</option>
+						</select>
+					</div>
+					<div class="field-row">
+						<label>Backdrop glow</label>
+						<select id="glow-select">
+							<option value="off">Off (no background)</option>
+							<option value="on">Purple → cyan glow</option>
 						</select>
 					</div>
 
@@ -1605,6 +1617,10 @@ export function mountEmbedEditor(root, options = {}) {
 		applyAgentAttrs();
 		sync();
 	});
+	$('#glow-select').addEventListener('change', (e) => {
+		state.glow = e.target.value === 'on';
+		applyGlow();
+	});
 	$('#responsive-select').addEventListener('change', (e) => {
 		state.responsivePreset = e.target.value;
 		writeSnippet();
@@ -1790,6 +1806,7 @@ export function mountEmbedEditor(root, options = {}) {
 		$('#camera-select').value = state.cameraControls ? 'on' : 'off';
 		$('#ar-select').value = state.ar ? 'on' : 'off';
 		$('#bg-select').value = state.background || 'transparent';
+		$('#glow-select').value = state.glow ? 'on' : 'off';
 		sync();
 	});
 
@@ -1904,6 +1921,15 @@ export function mountEmbedEditor(root, options = {}) {
 	// Snippet attrs are emitted separately in buildSnippet() — these only drive the
 	// in-editor preview agent. Skipped in widget-iframe mode (the iframe owns its
 	// own agent instance and reads its config from the widget record).
+	// Toggles the purple→cyan blur layer on the preview backdrop. Preview-only
+	// decoration — not exported in the snippet — so it lives outside
+	// applyAgentAttrs / writeSnippet.
+	function applyGlow() {
+		const placeholder = $('#placeholder');
+		if (!placeholder) return;
+		placeholder.classList.toggle('has-glow', !!state.glow);
+	}
+
 	function applyAgentAttrs() {
 		if (state.widgetId) return;
 		// kiosk = no chat UI. Mirror state.showChat onto the live agent so the
@@ -2190,6 +2216,7 @@ export function mountEmbedEditor(root, options = {}) {
 		syncModeCards();
 		applyToPreview();
 		applyAgentAttrs();
+		applyGlow();
 		syncDevice();
 		writeSnippet();
 	}
