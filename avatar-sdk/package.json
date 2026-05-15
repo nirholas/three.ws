@@ -1,0 +1,71 @@
+{
+	"name": "@three-ws/avatar",
+	"version": "0.1.0",
+	"description": "3D avatar viewer, creator iframe, and emotion + lipsync runtime — drop-in replacement for Ready Player Me.",
+	"keywords": [
+		"3d",
+		"avatar",
+		"three.js",
+		"webgl",
+		"webxr",
+		"ar",
+		"vr",
+		"lipsync",
+		"viseme",
+		"web-component",
+		"readyplayerme",
+		"ready-player-me"
+	],
+	"author": "three.ws",
+	"license": "Apache-2.0",
+	"homepage": "https://three.ws",
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/nirholas/three.ws.git",
+		"directory": "avatar-sdk"
+	},
+	"type": "module",
+	"main": "./dist/index.mjs",
+	"module": "./dist/index.mjs",
+	"types": "./types/index.d.ts",
+	"exports": {
+		".": {
+			"types": "./types/index.d.ts",
+			"import": "./dist/index.mjs",
+			"default": "./dist/index.mjs"
+		},
+		"./creator": {
+			"types": "./types/creator.d.ts",
+			"import": "./src/creator.js",
+			"default": "./src/creator.js"
+		},
+		"./element": {
+			"types": "./types/element.d.ts",
+			"import": "./dist/index.mjs",
+			"default": "./dist/index.mjs"
+		},
+		"./style.css": "./dist/style.css"
+	},
+	"files": [
+		"dist",
+		"src",
+		"types",
+		"README.md",
+		"LICENSE"
+	],
+	"scripts": {
+		"build": "node build.mjs",
+		"prepublishOnly": "npm run build"
+	},
+	"peerDependencies": {
+		"three": ">=0.150.0"
+	},
+	"peerDependenciesMeta": {
+		"three": {
+			"optional": false
+		}
+	},
+	"engines": {
+		"node": ">=18"
+	}
+}

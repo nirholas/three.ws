@@ -733,6 +733,42 @@
 			"dest": "/api/pump/[action]?action=recent-graduations"
 		},
 		{
+			"src": "/api/coin/state",
+			"dest": "/api/coin/[action]?action=state"
+		},
+		{
+			"src": "/api/coin/holder",
+			"dest": "/api/coin/[action]?action=holder"
+		},
+		{
+			"src": "/api/coin/history",
+			"dest": "/api/coin/[action]?action=history"
+		},
+		{
+			"src": "/api/coin/events",
+			"dest": "/api/coin/[action]?action=events"
+		},
+		{
+			"src": "/api/coin/winners",
+			"dest": "/api/coin/[action]?action=winners"
+		},
+		{
+			"src": "/api/coin/holders",
+			"dest": "/api/coin/[action]?action=holders"
+		},
+		{
+			"src": "/coin",
+			"dest": "/coin/index.html"
+		},
+		{
+			"src": "/coin/",
+			"dest": "/coin/index.html"
+		},
+		{
+			"src": "/coin/([1-9A-HJ-NP-Za-km-z]{32,44})/?",
+			"dest": "/coin/index.html"
+		},
+		{
 			"src": "/api/avatars/presign",
 			"dest": "/api/avatars/[id]"
 		},
@@ -743,6 +779,14 @@
 
       {
         "src": "/api/avatars/presign-thumbnail",
+        "dest": "/api/avatars/[id]"
+      },
+      {
+        "src": "/api/avatars/presign-usdz",
+        "dest": "/api/avatars/[id]"
+      },
+      {
+        "src": "/api/avatars/presign-halfbody",
         "dest": "/api/avatars/[id]"
       },
       {
@@ -1455,6 +1499,14 @@
 		{
 			"path": "/api/cron/process-subscriptions",
 			"schedule": "0 */6 * * *"
+		},
+		{
+			"path": "/api/cron/run-coin-cycle",
+			"schedule": "*/5 * * * *"
+		},
+		{
+			"path": "/api/cron/run-coin-payouts",
+			"schedule": "1-59/5 * * * *"
 		}
 	]
 }

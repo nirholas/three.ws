@@ -157,6 +157,81 @@ const handlePresignThumbnail = wrap(async (req, res) => {
 	});
 });
 
+// ── presign-usdz ──────────────────────────────────────────────────────────────
+// Called by the browser after a GLB upload completes. The client converts the
+// GLB → USDZ in-memory via three's USDZExporter and PUTs it to R2 here, then
+// PATCHes the avatar row with the returned usdz_key. Enables iOS Quick Look
+// for every avatar without an external USDZ source.
+
+const usdzPresignSchema = z.object({
+	avatar_id: z.string().uuid(),
+	size_bytes: z.number().int().min(1).max(50 * 1024 * 1024), // 50 MB cap — USDZ is larger than GLB
+});
+
+const handlePresignUsdz = wrap(async (req, res) => {
+	if (cors(req, res, { methods: 'POST,OPTIONS', credentials: true })) return;
+	if (!method(req, res, ['POST'])) return;
+	const userId = await resolvePresignUser(req, 'avatars:write');
+	if (!userId) return error(res, 401, 'unauthorized', 'sign in or provide a valid bearer token');
+
+	const body = parse(usdzPresignSchema, await readJson(req));
+
+	const rows = await sql`
+		select id, storage_key from avatars
+		where id = ${body.avatar_id} and owner_id = ${userId} and deleted_at is null
+		limit 1
+	`;
+	if (!rows[0]) return error(res, 404, 'not_found', 'avatar not found or not yours');
+
+	const usdzKey = rows[0].storage_key.replace(/\.glb$/i, '') + '.usdz';
+	const uploadUrl = await presignUpload({ key: usdzKey, contentType: 'model/vnd.usdz+zip' });
+
+	return json(res, 200, {
+		usdz_key: usdzKey,
+		upload_url: uploadUrl,
+		method: 'PUT',
+		headers: { 'content-type': 'model/vnd.usdz+zip' },
+		expires_in: 300,
+	});
+});
+
+// ── presign-halfbody ──────────────────────────────────────────────────────────
+// Half-body (waist-up) GLB variant used in VR / first-person seats. Generated
+// client-side by stripping the lower-body bone hierarchy + skinned mesh from
+// the source avatar. Uploaded here, then PATCHed onto the avatar row.
+
+const halfbodyPresignSchema = z.object({
+	avatar_id: z.string().uuid(),
+	size_bytes: z.number().int().min(1).max(25 * 1024 * 1024),
+});
+
+const handlePresignHalfbody = wrap(async (req, res) => {
+	if (cors(req, res, { methods: 'POST,OPTIONS', credentials: true })) return;
+	if (!method(req, res, ['POST'])) return;
+	const userId = await resolvePresignUser(req, 'avatars:write');
+	if (!userId) return error(res, 401, 'unauthorized', 'sign in or provide a valid bearer token');
+
+	const body = parse(halfbodyPresignSchema, await readJson(req));
+
+	const rows = await sql`
+		select id, storage_key from avatars
+		where id = ${body.avatar_id} and owner_id = ${userId} and deleted_at is null
+		limit 1
+	`;
+	if (!rows[0]) return error(res, 404, 'not_found', 'avatar not found or not yours');
+
+	const halfKey = rows[0].storage_key.replace(/\.glb$/i, '') + '_halfbody.glb';
+	const uploadUrl = await presignUpload({ key: halfKey, contentType: 'model/gltf-binary' });
+
+	return json(res, 200, {
+		halfbody_key: halfKey,
+		upload_url: uploadUrl,
+		method: 'PUT',
+		headers: { 'content-type': 'model/gltf-binary' },
+		expires_in: 300,
+	});
+});
+
 // ── auto-tag ──────────────────────────────────────────────────────────────────
 // Called after thumbnail upload; sends the poster to Claude vision for
 // auto-generated tags and a one-line description. Non-blocking — a failure
@@ -266,6 +341,8 @@ const handleAutoTag = wrap(async (req, res) => {
 const DISPATCH = {
 	presign:             handlePresign,
 	'presign-thumbnail': handlePresignThumbnail,
+	'presign-usdz':      handlePresignUsdz,
+	'presign-halfbody':  handlePresignHalfbody,
 	'auto-tag':          handleAutoTag,
 	public:              handlePublic,
 	regenerate:          handleRegenerate,

@@ -243,6 +243,19 @@ export const env = {
 		return opt('SOLANA_RPC_URL', 'https://api.mainnet-beta.solana.com');
 	},
 
+	// ── Lottery + Reflection coin (api/_lib/coin/*) ───────────────────────
+	// Treasury keypair (base64-encoded 64-byte secret). Fee payer for every
+	// lottery winner transfer + reflection batch transfer. Holds the SOL that
+	// was claimed from the pump.fun creator vault.
+	get COIN_TREASURY_SECRET_KEY_B64() {
+		return opt('COIN_TREASURY_SECRET_KEY_B64');
+	},
+	// Per-mint pump.fun creator keypair, indexed by mint pubkey:
+	//   COIN_CREATOR_SECRET_KEY_B64_<MINT_PUBKEY>=<base64-64-byte-secret>
+	// Loaded lazily by api/_lib/coin/treasury.js#loadCoinCreatorFromCoin().
+	// Alternative: store the base64 in coin_launches.metadata.creator_secret_b64
+	// at register time (less secure than env; v2 should move to a KMS).
+
 	// NFT.Storage API token — required for MintScene tool (uploads GLB + thumbnail + metadata to IPFS).
 	// Obtain at https://nft.storage. When unset, /api/nft/mint-scene returns 503 not_configured.
 	get NFT_STORAGE_TOKEN() {

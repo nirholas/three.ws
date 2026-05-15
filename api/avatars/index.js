@@ -111,7 +111,15 @@ async function handleCreate(req, res) {
 
 	// Auto-link selfie-derived avatars to the user's primary agent if it has no avatar yet.
 	// Fire-and-forget — if this UPDATE fails, the 201 still returns.
-	if ((body.source === 'selfie' || body.source === 'avaturn') && auth.source === 'session') {
+	const providerHint = body.source_meta && typeof body.source_meta === 'object'
+		? String(body.source_meta.provider || '').toLowerCase()
+		: '';
+	const autoLink = body.source === 'avaturn'
+		|| body.source === 'readyplayer'
+		|| providerHint === 'readyplayer'
+		|| providerHint === 'readyplayerme'
+		|| providerHint === 'avaturn';
+	if (autoLink && auth.source === 'session') {
 		queueMicrotask(async () => {
 			try {
 				await sql`

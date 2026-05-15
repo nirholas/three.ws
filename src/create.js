@@ -5,9 +5,16 @@ import { AvatarCreator } from './avatar-creator.js';
 const GLB_MAGIC = [0x67, 0x6c, 0x54, 0x46];
 
 async function boot() {
-	const creator = new AvatarCreator(document.body, (blob) =>
-		saveAndRedirect(blob, { source: 'avaturn' }),
-	);
+	const creator = new AvatarCreator(document.body, (blob, meta = {}) => {
+		const provider = meta.provider || 'avaturn';
+		// Forward-compatible source mapping:
+		//   - 'avaturn' is its own enum value (auto-links to default agent)
+		//   - 'readyplayer' uses the API's 'import' value today (older deploys reject 'readyplayer'),
+		//     with the canonical provider stored in source_meta so server-side auto-link still triggers
+		const source = provider === 'avaturn' ? 'avaturn' : 'import';
+		const source_meta = { provider, ...(meta.sourceUrl ? { source_url: meta.sourceUrl } : {}) };
+		return saveAndRedirect(blob, { source, source_meta });
+	});
 
 	document.getElementById('back-btn')?.addEventListener('click', () => {
 		if (history.length > 1) history.back();
@@ -15,6 +22,10 @@ async function boot() {
 	});
 
 	wireCard('card-default-editor', async () => {
+		if (await isAtAvatarLimit()) return;
+		creator.openDefaultEditor();
+	});
+	wireCard('card-selfie', async () => {
 		if (await isAtAvatarLimit()) return;
 		creator.openDefaultEditor();
 	});

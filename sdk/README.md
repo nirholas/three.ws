@@ -28,6 +28,44 @@ agent.mount(document.body);
 
 That's it — you now have a floating chat panel with voice I/O in the bottom-left corner.
 
+## Embed a 3D avatar
+
+Drop the avatar of any three.ws agent onto your page in two lines. Works in any
+framework or plain HTML — the helper lazy-loads the published
+[`<agent-3d>`](https://three.ws/agent-3d/latest/agent-3d.js) custom element
+from the three.ws CDN.
+
+```js
+import { loadAvatar } from '@nirholas/agent-kit';
+
+const handle = await loadAvatar({
+	agentId: 'agt_abc123',
+	container: document.getElementById('hero'),
+	controls: 'orbit',
+});
+
+handle.playAnimation('wave');
+// handle.dispose() when you're done
+```
+
+| Option      | Type                    | Description                                                     |
+| ----------- | ----------------------- | --------------------------------------------------------------- |
+| `agentId`   | `string` **(req)**      | three.ws agent id                                               |
+| `container` | `HTMLElement` **(req)** | Mount target                                                    |
+| `controls`  | `'orbit' \| 'none'`     | Camera controls (default: `'orbit'`)                            |
+| `cdnUrl`    | `string`                | Override the agent-3d script URL                                |
+| `integrity` | `string`                | Optional SRI hash for the script tag                            |
+| `width`     | `string`                | CSS width (default: `'100%'`)                                   |
+| `height`    | `string`                | CSS height (default: `'100%'`)                                  |
+| `attrs`     | `Record<string,string>` | Extra attributes forwarded to `<agent-3d>` (e.g. `bg`, `theme`) |
+
+Prefer plain HTML? Drop the script tag and element directly:
+
+```html
+<script type="module" src="https://three.ws/agent-3d/latest/agent-3d.js"></script>
+<agent-3d agent-id="agt_abc123" controls="orbit"></agent-3d>
+```
+
 ## Register on-chain
 
 ```js

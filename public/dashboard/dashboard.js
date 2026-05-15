@@ -1670,32 +1670,18 @@ function uploadToR2(url, file, onProgress) {
 }
 
 // ── Create avatar ───────────────────────────────────────────────────────────
-// Uses Avaturn SDK (same provider as /create page) instead of the defunct
-// demo.readyplayer.me iframe.
-let _avaturnSdk = null;
-async function getAvaturnSDK() {
-	if (!_avaturnSdk) {
-		const mod = await import('/dashboard/avaturn-sdk.js');
-		_avaturnSdk = mod.AvaturnSDK;
-	}
-	return _avaturnSdk;
-}
+// The dashboard "Create" entry redirects to the full creation flow at /create,
+// which exposes Avaturn (default editor), Ready Player Me (selfie → avatar),
+// and direct GLB upload.
 
 function renderCreate(root) {
 	root.innerHTML = `
 		<div>
 			<h1>Create avatar</h1>
-			<p class="sub">Design a 3D avatar from a selfie.</p>
-		</div>
-		<div class="empty" style="margin-top:24px; padding:60px 32px">
-			<div style="font-size:48px; line-height:1; margin-bottom:16px">🧍</div>
-			<div style="font-size:18px; font-weight:600; margin-bottom:8px; color:#eee">Coming soon</div>
-			<p style="margin:0 0 20px; color:#888; max-width:380px; margin-left:auto; margin-right:auto; font-size:14px">
-				Avatar creation from a selfie is under development. In the meantime you can upload an existing .glb file.
-			</p>
-			<a href="/dashboard/upload" class="btn">Upload a .glb instead</a>
+			<p class="sub">Opening the avatar creator…</p>
 		</div>
 	`;
+	location.replace('/create');
 }
 
 async function fetchGlbBlob(url, urlType) {

@@ -1,3 +1,6 @@
+import { AvatarCreator } from './avatar-creator.js';
+import { saveRemoteGlbToAccount } from './account.js';
+
 const API_BASE = '/api';
 const params = new URLSearchParams(location.search);
 const agentId = params.get('id');
@@ -286,6 +289,7 @@ async function ensureOutfitTab() {
   preview.appendChild(a3d);
 
   await renderAvatarList();
+  await renderAnimationsPicker();
 }
 
 async function renderAvatarList() {
@@ -306,7 +310,14 @@ async function renderAvatarList() {
     return;
   }
 
-  container.innerHTML = availableAvatars.map((av) => {
+  const createTile = `
+    <button type="button" class="avatar-tile avatar-create-tile" id="avatar-create-tile" title="Create a new avatar">
+      <div class="avatar-tile-ph avatar-create-icon" aria-hidden="true">+</div>
+      <span class="avatar-tile-name">Create new</span>
+    </button>
+  `;
+
+  const tiles = availableAvatars.map((av) => {
     const thumb = av.thumbnail_url || av.url || '';
     const isCurrent = av.id === agentData.avatar_id;
     return `
@@ -318,9 +329,267 @@ async function renderAvatarList() {
     `;
   }).join('');
 
-  container.querySelectorAll('.avatar-tile').forEach((btn) => {
+  container.innerHTML = createTile + tiles;
+
+  container.querySelectorAll('.avatar-tile[data-avatar-id]').forEach((btn) => {
     btn.addEventListener('click', () => selectAvatar(btn.dataset.avatarId));
   });
+  container.querySelector('#avatar-create-tile')?.addEventListener('click', () => openAvatarCreateMenu());
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Inline avatar creation
+// ─────────────────────────────────────────────────────────────────────────────
+
+let _avatarCreator = null;
+function getAvatarCreator() {
+  if (_avatarCreator) return _avatarCreator;
+  _avatarCreator = new AvatarCreator(document.body, async (blob, meta = {}) => {
+    await saveNewAvatarAndSelect(blob, meta);
+  });
+  return _avatarCreator;
+}
+
+function openAvatarCreateMenu() {
+  // Close any existing menu first.
+  document.getElementById('avatar-create-menu')?.remove();
+
+  const tile = document.getElementById('avatar-create-tile');
+  if (!tile) return;
+
+  const menu = document.createElement('div');
+  menu.id = 'avatar-create-menu';
+  menu.className = 'avatar-create-menu';
+  menu.setAttribute('role', 'menu');
+  menu.innerHTML = `
+    <button type="button" role="menuitem" data-source="characterstudio">
+      <span class="acm-title">Character Studio</span>
+      <span class="acm-sub">In-browser builder — hair, clothing, body</span>
+    </button>
+    <button type="button" role="menuitem" data-source="avaturn">
+      <span class="acm-title">Avaturn editor</span>
+      <span class="acm-sub">Selfie → photoreal avatar</span>
+    </button>
+    <button type="button" role="menuitem" data-source="upload">
+      <span class="acm-title">Upload GLB</span>
+      <span class="acm-sub">Bring your own model</span>
+    </button>
+  `;
+  document.body.appendChild(menu);
+
+  const r = tile.getBoundingClientRect();
+  menu.style.top = `${Math.round(window.scrollY + r.bottom + 8)}px`;
+  menu.style.left = `${Math.round(window.scrollX + r.left)}px`;
+
+  const close = () => {
+    menu.remove();
+    document.removeEventListener('mousedown', onDocDown, true);
+    document.removeEventListener('keydown', onKey, true);
+  };
+  const onDocDown = (e) => {
+    if (!menu.contains(e.target) && e.target !== tile) close();
+  };
+  const onKey = (e) => {
+    if (e.key === 'Escape') close();
+  };
+  document.addEventListener('mousedown', onDocDown, true);
+  document.addEventListener('keydown', onKey, true);
+
+  menu.querySelectorAll('button[data-source]').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      const src = btn.dataset.source;
+      close();
+      startAvatarCreate(src);
+    });
+  });
+}
+
+function startAvatarCreate(source) {
+  if (source === 'upload') {
+    triggerHiddenGlbInput();
+    return;
+  }
+  const creator = getAvatarCreator();
+  if (source === 'characterstudio') creator.open();
+  else if (source === 'avaturn') creator.openDefaultEditor();
+}
+
+function triggerHiddenGlbInput() {
+  let input = document.getElementById('inline-glb-input');
+  if (!input) {
+    input = document.createElement('input');
+    input.type = 'file';
+    input.accept = '.glb,model/gltf-binary';
+    input.id = 'inline-glb-input';
+    input.hidden = true;
+    document.body.appendChild(input);
+    input.addEventListener('change', async (e) => {
+      const file = e.target.files?.[0];
+      e.target.value = '';
+      if (!file) return;
+      // GLB magic-byte check before uploading.
+      const head = new Uint8Array(await file.slice(0, 4).arrayBuffer());
+      if (head[0] !== 0x67 || head[1] !== 0x6c || head[2] !== 0x54 || head[3] !== 0x46) {
+        const status = $('outfit-status');
+        if (status) { status.textContent = 'Not a valid .glb file.'; status.className = 'outfit-status err'; }
+        return;
+      }
+      const name = file.name.replace(/\.glb$/i, '').trim() || 'My Avatar';
+      await saveNewAvatarAndSelect(file, { provider: 'upload', name });
+    });
+  }
+  input.click();
+}
+
+async function saveNewAvatarAndSelect(blob, meta = {}) {
+  const status = $('outfit-status');
+  if (status) { status.textContent = 'Saving avatar…'; status.className = 'outfit-status saving'; }
+  try {
+    const provider = meta.provider || 'upload';
+    const source = provider === 'avaturn' ? 'avaturn' : provider === 'upload' ? 'upload' : 'import';
+    const source_meta = { provider, ...(meta.sourceUrl ? { source_url: meta.sourceUrl } : {}) };
+    const avatar = await saveRemoteGlbToAccount(blob, {
+      source,
+      source_meta,
+      name: meta.name,
+    });
+    if (status) { status.textContent = 'Attaching to agent…'; }
+    await selectAvatar(avatar.id);
+    // Refresh the picker so the new avatar shows up; selectAvatar already
+    // re-renders, but availableAvatars may be stale if the request raced.
+    if (!availableAvatars.some((a) => a.id === avatar.id)) {
+      availableAvatars = [avatar, ...availableAvatars];
+      await renderAvatarList();
+    }
+  } catch (err) {
+    if (status) { status.textContent = `Error: ${err.message || 'Failed to save avatar.'}`; status.className = 'outfit-status err'; }
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Animation picker
+// ─────────────────────────────────────────────────────────────────────────────
+
+const ANIMATIONS_MAX = 30;
+
+let animationLibrary = null;        // [{ name, url, label, icon, loop }]
+let selectedAnimNames = new Set();
+let originalAnimNames = new Set();
+
+async function renderAnimationsPicker() {
+  const grid = $('anims-picker-grid');
+  const status = $('anims-status');
+  const saveBtn = $('anims-save');
+  if (!grid) return;
+
+  if (!animationLibrary) {
+    try {
+      const r = await fetch('/animations/manifest.json', { credentials: 'omit' });
+      if (!r.ok) throw new Error(`HTTP ${r.status}`);
+      animationLibrary = await r.json();
+    } catch (err) {
+      grid.innerHTML = `<div class="error-msg" style="padding:1rem">Could not load animation library: ${escapeHtml(err.message)}</div>`;
+      return;
+    }
+  }
+
+  const current = Array.isArray(agentData.meta?.animations) ? agentData.meta.animations : [];
+  selectedAnimNames = new Set(current.map((a) => a.name));
+  originalAnimNames = new Set(selectedAnimNames);
+
+  grid.innerHTML = animationLibrary.map((a) => {
+    const selected = selectedAnimNames.has(a.name);
+    return `
+      <button type="button" class="anim-tile${selected ? ' selected' : ''}" data-anim-name="${escapeHtml(a.name)}" title="${escapeHtml(a.label || a.name)}">
+        <span class="anim-tile-icon" aria-hidden="true">${escapeHtml(a.icon || '🎬')}</span>
+        <span class="anim-tile-name">${escapeHtml(a.label || a.name)}</span>
+        <span class="anim-tile-check" aria-hidden="true">✓</span>
+      </button>
+    `;
+  }).join('');
+
+  grid.querySelectorAll('.anim-tile').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      const name = btn.dataset.animName;
+      if (selectedAnimNames.has(name)) {
+        selectedAnimNames.delete(name);
+        btn.classList.remove('selected');
+      } else {
+        if (selectedAnimNames.size >= ANIMATIONS_MAX) {
+          if (status) {
+            status.textContent = `Up to ${ANIMATIONS_MAX} clips per agent.`;
+            status.className = 'form-status err';
+          }
+          return;
+        }
+        selectedAnimNames.add(name);
+        btn.classList.add('selected');
+      }
+      updateAnimSaveButton();
+    });
+  });
+
+  if (saveBtn && !saveBtn.dataset.wired) {
+    saveBtn.dataset.wired = '1';
+    saveBtn.addEventListener('click', saveAnimations);
+  }
+  updateAnimSaveButton();
+}
+
+function updateAnimSaveButton() {
+  const saveBtn = $('anims-save');
+  if (!saveBtn) return;
+  const dirty = selectedAnimNames.size !== originalAnimNames.size
+    || [...selectedAnimNames].some((n) => !originalAnimNames.has(n));
+  saveBtn.disabled = !dirty;
+}
+
+async function saveAnimations() {
+  const status = $('anims-status');
+  const saveBtn = $('anims-save');
+  if (!status || !saveBtn) return;
+
+  const animations = animationLibrary
+    .filter((a) => selectedAnimNames.has(a.name))
+    .map((a) => ({
+      name: a.name,
+      url: a.url,
+      loop: a.loop !== false,
+      source: 'mixamo',
+      addedAt: new Date().toISOString(),
+    }));
+
+  saveBtn.disabled = true;
+  status.textContent = 'Saving…';
+  status.className = 'form-status';
+
+  try {
+    const r = await fetch(`${API_BASE}/agents/${agentId}/animations`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify({ animations }),
+    });
+    if (!r.ok) {
+      const j = await r.json().catch(() => ({}));
+      throw new Error(j.error_description || j.error || `HTTP ${r.status}`);
+    }
+    const j = await r.json();
+    if (!agentData.meta) agentData.meta = {};
+    agentData.meta.animations = j.animations;
+    originalAnimNames = new Set(j.animations.map((a) => a.name));
+    selectedAnimNames = new Set(originalAnimNames);
+    status.textContent = `Saved ${j.animations.length} animation${j.animations.length === 1 ? '' : 's'}.`;
+    status.className = 'form-status ok';
+    // Repaint the live preview so the new clips are available immediately.
+    reloadOutfitPreview();
+    setTimeout(() => { status.textContent = ''; status.className = 'form-status'; }, 2500);
+  } catch (err) {
+    status.textContent = `Error: ${err.message}`;
+    status.className = 'form-status err';
+  } finally {
+    updateAnimSaveButton();
+  }
 }
 
 async function selectAvatar(avatarId) {

@@ -11,23 +11,48 @@ function getStudioUrl() {
 	return 'http://localhost:5173';
 }
 
+function getReadyPlayerMeSubdomain() {
+	try {
+		if (typeof import.meta !== 'undefined' && import.meta.env?.VITE_RPM_SUBDOMAIN) {
+			return String(import.meta.env.VITE_RPM_SUBDOMAIN)
+				.trim()
+				.replace(/^https?:\/\//, '')
+				.replace(/\.readyplayer\.me.*$/, '');
+		}
+	} catch (_) {}
+	return 'demo';
+}
+
+// RPM iframe posts JSON-stringified payloads; older builds and some hosts have
+// posted raw objects too. Accept both shapes.
+function parseRpmEvent(data) {
+	if (typeof data === 'string') {
+		try { return JSON.parse(data); } catch { return null; }
+	}
+	if (data && typeof data === 'object') return data;
+	return null;
+}
+
 export class AvatarCreator {
 	/**
 	 * @param {Element} containerEl - Parent element to mount the modal into
-	 * @param {function(Blob): void} onExport - Called with the exported GLB Blob
+	 * @param {function(Blob, {provider:string, sourceUrl?:string|null}): void} onExport - Called with the exported GLB Blob and provenance
 	 * @param {object} [opts]
 	 * @param {string} [opts.studioUrl] - Override the CharacterStudio URL
+	 * @param {string} [opts.rpmSubdomain] - Override the Ready Player Me subdomain
 	 */
 	constructor(containerEl, onExport, opts = {}) {
 		this.container = containerEl;
 		this.onExport = onExport;
 		this.studioUrl = opts.studioUrl || getStudioUrl();
+		this.rpmSubdomain = opts.rpmSubdomain || getReadyPlayerMeSubdomain();
 
 		this.modal = null;
 		this.iframe = null;
 		this.sdk = null;
 		this._onMessage = null;
 		this._onKeyDown = null;
+		this._provider = null;
 	}
 
 	/**
@@ -38,8 +63,10 @@ export class AvatarCreator {
 	async open(sessionUrl) {
 		if (this.modal) return;
 		if (sessionUrl) {
+			this._provider = 'avaturn';
 			await this._openAvaturn(sessionUrl);
 		} else {
+			this._provider = 'characterstudio';
 			this._buildModal(true);
 			this._onMessage = (e) => this._handleCharacterStudioMessage(e);
 			window.addEventListener('message', this._onMessage);
@@ -53,7 +80,81 @@ export class AvatarCreator {
 	 */
 	async openDefaultEditor() {
 		if (this.modal) return;
+		this._provider = 'avaturn';
 		await this._openAvaturn();
+	}
+
+	/**
+	 * Opens the Ready Player Me avatar creator in an iframe.
+	 * Uses the Frame API: subscribes to v1 events and captures the GLB URL on export.
+	 * Subdomain comes from VITE_RPM_SUBDOMAIN, defaulting to "demo".
+	 *
+	 * @param {object} [opts]
+	 * @param {('halfbody'|'fullbody')} [opts.bodyType] - 'fullbody' (default) or 'halfbody'
+	 * @param {boolean} [opts.clearCache] - clear stored RPM session (default true)
+	 * @param {boolean} [opts.quickStart] - skip account creation prompts (default false)
+	 */
+	async openReadyPlayerMe(opts = {}) {
+		if (this.modal) return;
+		this._provider = 'readyplayer';
+		this._buildModal(true);
+
+		const bodyType = opts.bodyType || 'fullbody';
+		const clearCache = opts.clearCache !== false;
+		const quickStart = !!opts.quickStart;
+		const params = new URLSearchParams({
+			frameApi: '',
+			bodyType,
+			...(clearCache && { clearCache: 'true' }),
+			...(quickStart && { quickStart: 'true' }),
+		});
+		const url = `https://${this.rpmSubdomain}.readyplayer.me/avatar?${params.toString()}`;
+
+		this._onMessage = (e) => this._handleReadyPlayerMessage(e);
+		window.addEventListener('message', this._onMessage);
+		this.iframe.src = url;
+	}
+
+	_handleReadyPlayerMessage(event) {
+		const json = parseRpmEvent(event.data);
+		if (!json || json.source !== 'readyplayerme') return;
+
+		if (json.eventName === 'v1.frame.ready') {
+			try {
+				this.iframe?.contentWindow?.postMessage(
+					JSON.stringify({
+						target: 'readyplayerme',
+						type: 'subscribe',
+						eventName: 'v1.**',
+					}),
+					'*',
+				);
+			} catch (err) {
+				console.error('[AvatarCreator] RPM subscribe failed:', err);
+			}
+			const loading = this.modal?.querySelector('.avatar-creator-loading');
+			if (loading) loading.style.display = 'none';
+			return;
+		}
+
+		if (json.eventName === 'v1.avatar.exported') {
+			const glbUrl = json.data?.url;
+			if (!glbUrl) return;
+			(async () => {
+				try {
+					const res = await fetch(glbUrl);
+					if (!res.ok) throw new Error(`RPM GLB fetch failed: ${res.status}`);
+					const blob = await res.blob();
+					const glbBlob = blob.type
+						? blob
+						: new Blob([await blob.arrayBuffer()], { type: 'model/gltf-binary' });
+					this._fireExport(glbBlob, { sourceUrl: glbUrl });
+				} catch (err) {
+					console.error('[AvatarCreator] failed to fetch RPM GLB:', err);
+					this._showError('Failed to download the avatar. Please try again.');
+				}
+			})();
+		}
 	}
 
 	async _openAvaturn(url) {
@@ -84,7 +185,7 @@ export class AvatarCreator {
 					const glbBlob = blob.type
 						? blob
 						: new Blob([await blob.arrayBuffer()], { type: 'model/gltf-binary' });
-					this._fireExport(glbBlob);
+					this._fireExport(glbBlob, { sourceUrl: data.urlType === 'dataURL' ? null : glbUrl });
 				} catch (err) {
 					console.error('[AvatarCreator] failed to fetch Avaturn GLB:', err);
 				}
@@ -111,10 +212,10 @@ export class AvatarCreator {
 		this._fireExport(blob);
 	}
 
-	_fireExport(blob) {
+	_fireExport(blob, meta = {}) {
 		if (this.onExport) {
 			try {
-				this.onExport(blob);
+				this.onExport(blob, { provider: this._provider, ...meta });
 			} catch (err) {
 				console.error('[AvatarCreator] onExport handler threw:', err);
 			}
@@ -130,7 +231,7 @@ export class AvatarCreator {
 	}
 
 	/**
-	 * @param {boolean} withIframe - true for CharacterStudio (needs a pre-rendered iframe),
+	 * @param {boolean} withIframe - true for CharacterStudio/RPM (needs a pre-rendered iframe),
 	 *                               false for Avaturn SDK (SDK injects its own iframe).
 	 */
 	_buildModal(withIframe) {

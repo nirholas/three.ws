@@ -191,14 +191,14 @@ Both should be the same value. Get from [dashboard.privy.io](https://dashboard.p
 
 ### Avatar Pipeline
 
-#### `VITE_RPM_SUBDOMAIN`
-**Optional.** Ready Player Me subdomain for the avatar creator iframe. Defaults to `demo` (public demo builder).
+#### `VITE_CHARACTER_STUDIO_URL`
+**Optional.** Origin where the Character Studio in-browser avatar builder is hosted. Defaults to `http://localhost:5173` in dev and `https://studio.three.ws` in production.
 
 ```
-VITE_RPM_SUBDOMAIN=your-app
+VITE_CHARACTER_STUDIO_URL=https://studio.three.ws
 ```
 
-Register a subdomain at [studio.readyplayer.me](https://studio.readyplayer.me). Setting this to `your-app` yields `https://your-app.readyplayer.me`.
+Character Studio is an open-source 3D avatar editor (full body customisation — hair, clothing, accessories, skin tone, proportions). It runs as a separate Vite/React app under `character-studio/` in this monorepo and posts the exported GLB back to the parent via `postMessage`. Ready Player Me previously fulfilled this role; after its 2026 acquisition, Character Studio is the recommended replacement and is fully drop-in compatible — same humanoid skeleton naming, ARKit `viseme_*` blendshapes, and Mixamo animation support.
 
 #### `AVATURN_API_KEY`
 **Optional.** API key for the Avaturn photo-to-avatar pipeline. Used server-side by `/api/onboarding/avaturn-session` to exchange selfie photos for a session URL.

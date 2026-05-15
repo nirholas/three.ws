@@ -11,6 +11,7 @@ import {
 	resolveAvatarUrl,
 	stripOwnerFor,
 } from '../_lib/avatars.js';
+import { bakeAndUploadAppearance, isBakeable } from '../_lib/bake.js';
 import { sql } from '../_lib/db.js';
 import { logAudit } from '../_lib/audit.js';
 import { cors, json, method, readJson, wrap, error } from '../_lib/http.js';
@@ -18,7 +19,7 @@ import { headObject } from '../_lib/r2.js';
 import { limits } from '../_lib/rate-limit.js';
 import { recordEvent } from '../_lib/usage.js';
 import { z } from 'zod';
-import { avatarVisibility, parse } from '../_lib/validate.js';
+import { avatarVisibility, avatarAppearance, parse } from '../_lib/validate.js';
 import { DEMO_AVATARS } from '../_lib/demo-avatars.js';
 
 const patchSchema = z.object({
@@ -26,10 +27,24 @@ const patchSchema = z.object({
 	description: z.string().trim().max(2000).optional(),
 	visibility: avatarVisibility.optional(),
 	tags: z.array(z.string().trim().min(1).max(40)).max(20).optional(),
+	thumbnail_key: z.string().min(1).max(512).optional(),
+	usdz_key: z.string().min(1).max(512).optional(),
+	halfbody_key: z.string().min(1).max(512).optional(),
+	// `null` clears the dress-up state. Omit the field entirely to leave it untouched.
+	appearance: avatarAppearance.nullable().optional(),
 });
 
 // Action endpoints that share this file (no id needed)
-const ACTION_ENDPOINTS = new Set(['presign', 'public', 'regenerate', 'regenerate-status']);
+const ACTION_ENDPOINTS = new Set([
+	'presign',
+	'presign-thumbnail',
+	'presign-usdz',
+	'presign-halfbody',
+	'auto-tag',
+	'public',
+	'regenerate',
+	'regenerate-status',
+]);
 
 export default wrap(async (req, res) => {
 	const id = req.query?.id || new URL(req.url, 'http://x').pathname.split('/').pop();
@@ -101,8 +116,51 @@ export default wrap(async (req, res) => {
 			return handleGlbPatch(res, auth, id, body.glbUrl);
 		}
 		const patch = parse(patchSchema, body);
-		const avatar = await updateAvatar({ id, userId: auth.userId, patch });
+		const appearanceChanged = Object.prototype.hasOwnProperty.call(patch, 'appearance');
+
+		let avatar = await updateAvatar({ id, userId: auth.userId, patch });
 		if (!avatar) return error(res, 404, 'not_found', 'avatar not found or not yours');
+
+		// When the appearance just changed, run the bake synchronously so the
+		// caller sees the dressed GLB on the very next GET. A failure here is
+		// non-fatal — the appearance is already persisted; the lazy-bake path on
+		// the next read will retry. Bake of an empty appearance clears the cached
+		// baked GLB so the base is served again.
+		if (appearanceChanged) {
+			try {
+				if (isBakeable(patch.appearance)) {
+					const result = await bakeAndUploadAppearance({
+						baseStorageKey: avatar.storage_key,
+						appearance: patch.appearance,
+					});
+					if (result) {
+						avatar = await updateAvatar({
+							id,
+							userId: auth.userId,
+							patch: {
+								baked_storage_key: result.baked_storage_key,
+								appearance_hash: result.appearance_hash,
+							},
+						});
+					}
+				} else {
+					// Empty / cleared appearance — drop the stale baked pointer so the
+					// base GLB is served again.
+					avatar = await updateAvatar({
+						id,
+						userId: auth.userId,
+						patch: { baked_storage_key: null, appearance_hash: null },
+					});
+				}
+			} catch (err) {
+				console.warn('[avatars] bake failed', {
+					avatarId: id,
+					message: err?.message,
+				});
+				avatar.bake_error = err?.message || 'bake_failed';
+			}
+		}
+
 		return json(res, 200, { avatar });
 	}
 

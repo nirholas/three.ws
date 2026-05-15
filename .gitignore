@@ -64,6 +64,8 @@ scripts/pump-usdc-race.mjs
 *.b58.txt
 *-pump-wallet.json
 .fresh-pump-wallet.json
+.coin-keypair-*.json
+.coin-metadata-*.json
 wallets/
 .wallets/
 x402-test-wallets/

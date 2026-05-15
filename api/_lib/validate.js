@@ -1,6 +1,7 @@
 // Reusable zod schemas for API inputs.
 
 import { z } from 'zod';
+import { validateAppearance as _validateAppearance } from './accessories.js';
 
 export const email = z.string().trim().toLowerCase().email().max(254);
 export const password = z.string().min(10).max(200);
@@ -13,6 +14,28 @@ export const slug = z
 	.regex(/^[a-z0-9][a-z0-9_-]*$/, 'slug must be lowercase alphanumeric with - or _');
 
 export const avatarVisibility = z.enum(['private', 'unlisted', 'public']);
+
+// Appearance: outfit + bone-attached accessories + arbitrary morph overrides.
+// Shape is enforced here; preset-ID allowlist enforcement lives in
+// validateAppearance() (accessories.js) and runs as a refine so we get one
+// consolidated 400 with a clear error message.
+export const avatarAppearance = z
+	.object({
+		outfit: z.string().min(1).max(64).nullable().optional(),
+		accessories: z.array(z.string().min(1).max(64)).max(8).optional(),
+		morphs: z.record(z.number().min(0).max(1)).optional(),
+	})
+	.strict()
+	.superRefine((val, ctx) => {
+		const err = _validateAppearance(val);
+		if (err) ctx.addIssue({ code: z.ZodIssueCode.custom, message: err });
+		if (val && val.morphs && Object.keys(val.morphs).length > 32) {
+			ctx.addIssue({
+				code: z.ZodIssueCode.custom,
+				message: 'appearance.morphs max 32 keys',
+			});
+		}
+	});
 
 // Avatars are GLB/GLTF models. Lock the content-type allowlist here so both
 // the presign URL and the stored object can only ever be model binaries —
@@ -50,7 +73,7 @@ export const createAvatarBody = z.object({
 	description: z.string().trim().max(2000).optional(),
 	visibility: avatarVisibility.default('public'),
 	tags: z.array(z.string().trim().min(1).max(40)).max(20).default([]),
-	source: z.enum(['upload', 'avaturn', 'import', 'direct-upload']).default('upload'),
+	source: z.enum(['upload', 'avaturn', 'readyplayer', 'import', 'direct-upload']).default('upload'),
 	parent_avatar_id: z.string().uuid().optional(),
 	source_meta: z.record(z.any()).default({}),
 	content_type: avatarContentType.default('model/gltf-binary'),
@@ -63,6 +86,7 @@ export const createAvatarBody = z.object({
 		.string()
 		.regex(/^[a-f0-9]{64}$/)
 		.optional(),
+	appearance: avatarAppearance.optional(),
 });
 
 export const presignUploadBody = z.object({
