@@ -174,5 +174,12 @@
 		"label": "Fall to Landing",
 		"icon": "🦅",
 		"loop": false
+	},
+	{
+		"name": "downdog",
+		"source": "Plank.fbx",
+		"label": "Downward Dog",
+		"icon": "🧘",
+		"loop": true
 	}
 ]

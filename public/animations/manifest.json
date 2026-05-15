@@ -222,5 +222,12 @@
 		"label": "Fall to Landing",
 		"icon": "🦅",
 		"loop": false
+	},
+	{
+		"name": "downdog",
+		"url": "/animations/clips/downdog.json",
+		"label": "Downward Dog",
+		"icon": "🧘",
+		"loop": true
 	}
 ]

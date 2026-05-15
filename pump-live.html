@@ -31,19 +31,19 @@
     font-family: 'Roboto Mono', 'Courier New', monospace;
     font-size: 14px;
     line-height: 1.6;
-    display: flex;
-    flex-direction: column;
-    height: 100vh;
-    overflow: hidden;
   }
   a { color: var(--green); text-decoration: none; }
   a:hover { text-decoration: underline; }
 
-  /* ── Main Layout ────────────────────────────────────────── */
+  /* ── Main Layout ──────────────────────────────────────────
+     The kiosk row (3D viewer + token feed) gets a viewport-sized
+     height so it fills the screen on first paint, then the site
+     footer scrolls in below it. Mobile breakpoint stacks the row
+     vertically — see media query at the bottom of this block. */
   #main-container {
     display: flex;
-    flex: 1;
     min-height: 0;
+    height: calc(100svh - 130px);
   }
   #viewer-container {
     flex: 1;
