@@ -1,0 +1,60 @@
+@import url("https://fonts.googleapis.com/css2?family=VT323&family=Space+Mono:wght@400;700&display=swap");
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --ink: #0b0b10;
+    --paper: #f4f0e6;
+    --neon: #ff2a87;
+    --cyan: #21f1ff;
+    --acid: #d9ff3c;
+  }
+
+  html,
+  body {
+    background: #000;
+    color: var(--paper);
+    font-family: "Space Mono", ui-monospace, monospace;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  body {
+    overscroll-behavior: none;
+  }
+
+  * {
+    -webkit-tap-highlight-color: transparent;
+  }
+}
+
+@layer components {
+  .btn-primary {
+    @apply inline-flex items-center justify-center rounded-full bg-paper px-7 py-4 font-display text-2xl tracking-widest text-ink transition-transform active:translate-y-0.5;
+    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.4), inset 0 -4px 0 rgba(0, 0, 0, 0.15);
+  }
+  .btn-ghost {
+    @apply inline-flex items-center justify-center rounded-full border border-white/25 bg-transparent px-5 py-3 font-display text-lg tracking-widest text-paper transition-colors hover:bg-white/5;
+  }
+  .pill {
+    @apply inline-flex items-center gap-2 rounded-full border border-white/10 bg-ink/55 px-4 py-2 font-display text-lg tracking-wider backdrop-blur-md;
+    box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.08), 0 8px 30px rgba(0, 0, 0, 0.45);
+  }
+}
+
+/* AR-specific styles that don't fit Tailwind utilities cleanly */
+.ar-shadow {
+  background: radial-gradient(50% 60% at 50% 50%, rgba(0, 0, 0, 0.55), rgba(0, 0, 0, 0) 70%);
+}
+
+.ar-noise {
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2'/></filter><rect width='100%25' height='100%25' filter='url(%23n)' opacity='0.5'/></svg>");
+}
+
+/* SVG group transforms need fill-box for predictable rotation origins */
+.svg-pivot {
+  transform-box: fill-box;
+  transform-origin: 50% 0%;
+}
