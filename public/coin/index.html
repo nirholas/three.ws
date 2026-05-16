@@ -3,7 +3,19 @@
 <head>
 	<meta charset="utf-8" />
 	<meta name="viewport" content="width=device-width,initial-scale=1" />
-	<title>Coin · three.ws</title>
+	<title>Lottery + Reflection · three.ws</title>
+	<meta name="description" content="The three.ws lottery + SOL reflection coin. Hourly winners, passive SOL drips to every eligible holder, verifiable randomness." />
+	<meta property="og:site_name" content="three.ws" />
+	<meta property="og:title" content="Lottery + Reflection · three.ws" />
+	<meta property="og:description" content="Hourly lottery + passive SOL reflection. Every holder is a ticket. Verifiable randomness." />
+	<meta property="og:type" content="website" />
+	<meta property="og:url" content="https://three.ws/coin" />
+	<meta property="og:image" content="https://three.ws/3d.png" />
+	<meta name="twitter:card" content="summary_large_image" />
+	<meta name="twitter:site" content="@trythreews" />
+	<meta name="twitter:title" content="Lottery + Reflection · three.ws" />
+	<meta name="twitter:description" content="Hourly lottery + passive SOL reflection. Every holder is a ticket. Verifiable randomness." />
+	<meta name="twitter:image" content="https://three.ws/3d.png" />
 	<link rel="icon" href="/favicon.ico" />
 	<link rel="stylesheet" href="/style.css" />
 	<link rel="stylesheet" href="/nav.css" />
@@ -117,17 +129,36 @@
 		.transparency { font-size: 12px; color: var(--muted); padding: 12px; background: #0e0e16;
 			border: 1px dashed var(--border); border-radius: 8px; margin-top: 14px; line-height: 1.55; }
 		.transparency code { background: #1a1a24; padding: 1px 5px; border-radius: 4px; color: #cbd5e1; font-size: 11px; }
+
+		.tagline { color: var(--muted); font-size: 14px; margin: -4px 0 18px;
+			max-width: 720px; line-height: 1.5; }
+		.tagline strong { color: #eee; font-weight: 600; }
+		.brand-strip { display: flex; align-items: center; gap: 10px; font-size: 11px;
+			color: var(--muted); margin-bottom: 18px; letter-spacing: 0.04em; text-transform: uppercase; }
+		.brand-strip a { color: var(--accent); text-decoration: none; }
+		.brand-strip a:hover { text-decoration: underline; }
+		.brand-strip .dot-sep { width: 3px; height: 3px; border-radius: 50%; background: var(--muted); }
 	</style>
 	<script defer src="/nav.js"></script>
 </head>
 <body>
 	<header id="top-nav"></header>
 	<main>
+		<div class="brand-strip">
+			<a href="/">three.ws</a>
+			<span class="dot-sep"></span>
+			<span>Lottery + SOL reflection</span>
+		</div>
 		<div id="header" class="title-row">
 			<h1 id="coin-name">Loading…</h1>
 			<span id="coin-symbol" class="symbol" hidden></span>
 			<span id="coin-live" class="live-pill" hidden><span class="pulse"></span><span id="coin-live-text">LIVE</span></span>
 		</div>
+		<p class="tagline">
+			<strong>Every holder is a ticket.</strong> Hourly draws send the lottery pot in SOL to one random
+			eligible wallet. Between draws, every holder accrues a passive SOL reflection paid directly into
+			their wallet — funded entirely by trading fees on the underlying token, three.ws verifiable randomness end-to-end.
+		</p>
 		<div id="address-row" class="address-row" hidden>
 			<span id="coin-mint">—</span>
 			<button class="copy" id="copy-mint" title="Copy mint">copy</button>
@@ -200,13 +231,14 @@
 			</div>
 			<div id="tab-content"><div class="empty">Loading…</div></div>
 			<div class="transparency">
-				<strong>Verifiable randomness.</strong> Every lottery draw commits to a Drand quicknet
-				round in advance — the BLS signature for that round is published by the
-				<a href="https://drand.love" target="_blank" rel="noopener" style="color: var(--accent);">League of Entropy</a>
-				on a public 3-second cadence. We compute the winner deterministically from
-				<code>sha256(randomness ∥ weights_hash)</code> and persist the full audit trail
-				(<code>drand_round</code>, <code>drand_randomness</code>, <code>drand_signature</code>) so anyone
-				can independently re-derive the winner.
+				<strong>three.ws verifiable randomness.</strong> Every draw commits in advance to a public
+				future BLS-signed randomness round — neither three.ws nor anyone else knows the value at
+				commit time. Winners are computed deterministically from
+				<code>sha256(randomness ∥ weights_hash)</code> against the frozen holder snapshot. Every
+				field needed to independently re-derive the winner (<code>round</code>,
+				<code>randomness</code>, <code>signature</code>) is persisted into <code>coin_draws</code>
+				and surfaced on the audit row for each draw — open the API at
+				<code>/api/coin/winners</code> for the raw values. Verifiable by anyone, anywhere.
 			</div>
 		</section>
 	</main>

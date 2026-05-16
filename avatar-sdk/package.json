@@ -1,7 +1,7 @@
 {
 	"name": "@three-ws/avatar",
 	"version": "0.1.0",
-	"description": "3D avatar viewer, creator iframe, and emotion + lipsync runtime — drop-in replacement for Ready Player Me.",
+	"description": "The official three.ws SDK — 3D avatar viewer, creator iframe, AR/VR runtime, and emotion + lipsync engine. Drop-in replacement for Ready Player Me.",
 	"keywords": [
 		"3d",
 		"avatar",
@@ -16,7 +16,7 @@
 		"readyplayerme",
 		"ready-player-me"
 	],
-	"author": "three.ws",
+	"author": "three.ws <hello@three.ws> (https://three.ws)",
 	"license": "Apache-2.0",
 	"homepage": "https://three.ws",
 	"repository": {

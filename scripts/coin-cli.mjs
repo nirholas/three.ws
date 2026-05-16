@@ -132,11 +132,12 @@ async function cmdKeygen(opts) {
 	writeKeypair(outPath, kp);
 	const b64 = Buffer.from(kp.secretKey).toString('base64');
 	console.log(JSON.stringify({
+		brand: 'three.ws',
 		address: kp.publicKey.toBase58(),
 		keypair_file: outPath,
 		secret_key_b64: b64,
 		hint: {
-			next_step: 'Set COIN_TREASURY_SECRET_KEY_B64 (or COIN_CREATOR_SECRET_KEY_B64_<MINT>) to secret_key_b64.',
+			next_step: 'Set COIN_TREASURY_SECRET_KEY_B64 (or COIN_CREATOR_SECRET_KEY_B64_<MINT>) in your three.ws Vercel env to secret_key_b64.',
 			gitignore: 'Add the keypair file path to .gitignore before committing anything.',
 		},
 	}, null, 2));
@@ -147,11 +148,14 @@ async function cmdKeygen(opts) {
 async function cmdPrepare(positional, opts) {
 	const [name, symbol] = positional;
 	if (!name || !symbol) {
-		throw new Error('Usage: prepare <name> <symbol> [--description "..."] [--image <url>] [--website https://three.ws]');
+		throw new Error('Usage: prepare <name> <symbol> [--description "..."] [--image <url>] [--website https://three.ws] [--twitter https://x.com/trythreews]');
 	}
-	const description = opts.description || `Lottery + SOL reflection coin. Live dashboard: ${opts.website || 'https://three.ws'}/coin`;
 	const website = opts.website || 'https://three.ws';
+	const description =
+		opts.description ||
+		`A three.ws lottery + SOL reflection coin. Every holder is a ticket: hourly draws send the lottery pot to one random eligible wallet, and a passive SOL reflection drips to every holder between draws. Verifiable randomness end-to-end. Live dashboard: ${website}/coin`;
 	const image = opts.image || null;
+	const twitter = opts.twitter || process.env.THREEWS_TWITTER_URL || 'https://x.com/trythreews';
 
 	const metadata = {
 		name,
@@ -159,8 +163,14 @@ async function cmdPrepare(positional, opts) {
 		description,
 		...(image ? { image } : {}),
 		showName: true,
+		// pump.fun's metadata schema requires this field literally — it's how
+		// their indexer recognizes valid coin metadata. The user-facing
+		// "Website" link rendered on the coin page is `website` below.
 		createdOn: 'https://pump.fun',
 		website,
+		external_url: `${website}/coin`,
+		twitter,
+		platform: 'three.ws',
 	};
 
 	const outPath = opts.out || path.join(REPO_ROOT, `.coin-metadata-${symbol.toLowerCase()}.json`);
@@ -194,12 +204,13 @@ async function cmdPrepare(positional, opts) {
 	}
 
 	console.log(JSON.stringify({
+		brand: 'three.ws',
 		metadata,
 		metadata_file: outPath,
 		metadata_url: metadataUrl,
 		next_step: metadataUrl
-			? `Run: node scripts/coin-cli.mjs launch ${metadataUrl} --wallet <buyer.json> --creator <creator.json>`
-			: `Host ${outPath} at a public HTTPS URL, then: node scripts/coin-cli.mjs launch <URL> --wallet <buyer.json> --creator <creator.json>`,
+			? `Run: node scripts/coin-cli.mjs launch ${metadataUrl} --wallet <buyer.json> --creator <creator.json> --name "${name}" --symbol "${symbol}"`
+			: `Host ${outPath} at a public HTTPS URL (or set THREEWS_SESSION_COOKIE to auto-pin to three.ws), then: node scripts/coin-cli.mjs launch <URL> --wallet <buyer.json> --creator <creator.json> --name "${name}" --symbol "${symbol}"`,
 	}, null, 2));
 }
 
@@ -232,7 +243,7 @@ async function cmdLaunch(positional, opts) {
 	const connection = new Connection(rpc, 'confirmed');
 
 	console.error('');
-	console.error('— Launch parameters —');
+	console.error('— three.ws coin launch parameters —');
 	console.error('  network:    ', network);
 	console.error('  RPC:        ', rpc.replace(/api-key=[^&]+/, 'api-key=***'));
 	console.error('  buyer/payer:', buyer.publicKey.toBase58());
@@ -340,10 +351,10 @@ async function cmdLaunch(positional, opts) {
 		process.exit(1);
 	}
 
-	console.error('— Submitting —');
+	console.error('— Submitting on three.ws —');
 	const sig = await connection.sendRawTransaction(tx.serialize(), { skipPreflight: false, maxRetries: 5 });
-	console.error('  signature:', sig);
-	console.error('  solscan:  https://solscan.io/tx/' + sig);
+	console.error('  signature:    ', sig);
+	console.error('  solana tx:    ', 'https://solscan.io/tx/' + sig);
 
 	const conf = await connection.confirmTransaction(
 		{ signature: sig, blockhash, lastValidBlockHeight },
@@ -351,14 +362,16 @@ async function cmdLaunch(positional, opts) {
 	);
 	if (conf.value.err) throw new Error('confirmation error: ' + JSON.stringify(conf.value.err));
 
-	console.error('LAUNCHED.');
+	console.error('LAUNCHED on three.ws.');
+	const dashboardOrigin = process.env.PUBLIC_APP_ORIGIN || 'https://three.ws';
 	console.log(JSON.stringify({
 		mint: mint.publicKey.toBase58(),
 		creator_wallet: creator.publicKey.toBase58(),
 		buyer_wallet: buyer.publicKey.toBase58(),
 		tx_signature: sig,
-		solscan: `https://solscan.io/tx/${sig}`,
-		pump_fun: `https://pump.fun/coin/${mint.publicKey.toBase58()}`,
+		dashboard_url: `${dashboardOrigin}/coin/${mint.publicKey.toBase58()}`,
+		solana_tx_url: `https://solscan.io/tx/${sig}`,
+		pump_fun_url: `https://pump.fun/coin/${mint.publicKey.toBase58()}`,
 		next_step: `Run: node scripts/coin-cli.mjs register ${mint.publicKey.toBase58()} --name "${opts.name}" --symbol "${opts.symbol}" --creator-wallet ${creator.publicKey.toBase58()} --creator-secret-b64 <base64>`,
 	}, null, 2));
 }
@@ -398,6 +411,7 @@ async function cmdRegister(positional, opts) {
 	const reflection_interval = parseInt(opts['reflection-interval-seconds'] || String(draw_interval), 10);
 
 	const metadata = {
+		platform: 'three.ws',
 		notes: opts.notes || null,
 		treasury_is_creator: !!opts['treasury-is-creator'],
 	};
@@ -467,7 +481,7 @@ async function cmdActivate(positional, opts) {
 async function main() {
 	const { cmd, positional, opts } = parseArgs(process.argv);
 	if (!cmd || cmd === 'help' || cmd === '--help') {
-		console.error('coin-cli — lottery + reflection coin lifecycle');
+		console.error('three.ws coin-cli — lottery + reflection coin lifecycle');
 		console.error('');
 		console.error('  keygen [--out <path>]');
 		console.error('  prepare <name> <symbol> [--description "..."] [--image <url>] [--website https://three.ws]');

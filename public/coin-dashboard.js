@@ -150,7 +150,7 @@ function renderWinners(container, data) {
 		.map((w) => {
 			const isMe = me && w.wallet === me ? 'you' : '';
 			const explorer = w.tx_signature
-				? `<a href="https://solscan.io/tx/${w.tx_signature}" target="_blank" rel="noopener">tx</a>`
+				? `<a href="https://solscan.io/tx/${w.tx_signature}" target="_blank" rel="noopener" title="View transaction on Solana">view tx ↗</a>`
 				: w.status === 'resolved'
 					? '<span style="color:var(--muted)">pending payout</span>'
 					: '<span style="color:var(--muted)">—</span>';
@@ -158,11 +158,11 @@ function renderWinners(container, data) {
 				<td class="wallet" title="${w.wallet || ''}">${shortWallet(w.wallet)}</td>
 				<td>${lamportsToSol(w.amount_lamports)} SOL</td>
 				<td>${explorer}</td>
-				<td><span title="Drand round ${w.drand_round}; randomness ${w.drand_randomness?.slice(0, 16) || '—'}…">round ${w.drand_round}</span></td></tr>`;
+				<td><span title="Verifiable randomness round ${w.drand_round}; randomness ${w.drand_randomness?.slice(0, 16) || '—'}…">#${w.drand_round}</span></td></tr>`;
 		})
 		.join('');
 	container.innerHTML = `<table><thead><tr>
-		<th>When</th><th>Winner</th><th>Amount</th><th>Tx</th><th>Drand</th>
+		<th>When</th><th>Winner</th><th>Amount</th><th>Tx</th><th>Audit</th>
 	</tr></thead><tbody>${rows}</tbody></table>`;
 }
 

@@ -6,8 +6,8 @@
 -- into the geometry (morphs applied, accessory meshes parented to the right bones,
 -- exported as a single GLB). Every viewer that loads the avatar — model-viewer on
 -- /avatars/:id, embed iframes, third-party 3D renderers — gets the dressed avatar
--- without needing custom client code. This is the same architecture Ready Player Me
--- uses (the avatar URL you get from their API is already baked).
+-- without needing custom client code. The three.ws avatar URL is always
+-- pre-dressed; clients never need to know about the customization layer.
 --
 -- `appearance_hash` is the sha256 of the canonical appearance JSON the baked GLB
 -- was produced from. When `appearance_hash` doesn't match the current appearance's

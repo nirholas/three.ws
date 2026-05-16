@@ -136,7 +136,7 @@
 			slug: 'upload-custom-glb',
 			tier: 'middle',
 			title: 'Upload a custom GLB avatar',
-			blurb: 'Bring your own model — from Mixamo, Blender, Ready Player Me, or anywhere else. Get it validated, fixed, and live.',
+			blurb: 'Bring your own model — any glTF 2.0 .glb from Blender, three.ws Studio, or any other source. Get it validated, fixed, and live.',
 			builds: 'A fully custom avatar body running in production',
 			time: '35 min',
 			previewModel: '/animations/soldier.glb',

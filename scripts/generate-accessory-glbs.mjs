@@ -10,10 +10,10 @@
 // PBR material — small enough (< 8 KB) to commit to the repo, large enough to
 // be visibly correct when attached to a humanoid avatar's Head bone.
 //
-// Coordinates are in meters, oriented for a head bone whose +Y is up and +Z
-// is forward (the standard glTF convention used by Mixamo, RPM, and Avaturn
-// outputs). The Head bone is typically located at the top of the neck; these
-// meshes are offset to sit naturally on top of / in front of / beside it.
+// Coordinates are in meters, oriented for a head bone whose +Y is up and +Z is
+// forward (the standard glTF convention). The Head bone sits at the top of the
+// neck; these meshes are offset to sit naturally on top of / in front of /
+// beside it.
 //
 // Run with: node scripts/generate-accessory-glbs.mjs
 
