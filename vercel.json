@@ -8,10 +8,18 @@
 	},
 	"functions": {
 		"api/**/*.js": {
-			"includeFiles": "node_modules/@zauthx402/sdk/dist/**,examples/skills/pump-fun-strategy/**"
+			"includeFiles": "node_modules/@zauthx402/sdk/dist/**,examples/skills/pump-fun-strategy/**,data/archives/**,data/rss/**"
 		}
 	},
 	"routes": [
+		{
+			"src": "/rss/announcements\\.xml",
+			"dest": "/api/rss/announcements"
+		},
+		{
+			"src": "/rss\\.xml",
+			"dest": "/api/rss/announcements"
+		},
 		{
 			"src": "/openapi\\.json",
 			"dest": "/api/openapi-json"

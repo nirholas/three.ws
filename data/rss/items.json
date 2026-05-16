@@ -1,0 +1,355 @@
+{
+  "_readme": "Curated RSS items for https://three.ws/rss/announcements.xml. Edit this file to control exactly what HackerNoon (and any RSS reader) sees. Each entry needs: id (stable slug), title, date (ISO 8601), body_html. Optional: link, author, summary, tags. Items are served newest-first by date; cap is 50. Seeded from data/archives/trythreews_tweets_2026-05-16.json on 2026-05-16 (35 entries). Re-run scripts/seed-rss-from-archive.mjs to refresh from a newer scrape.",
+  "items": [
+    {
+      "id": "t-2055310365588922872",
+      "title": "Add the domain you're embedding on to the widget's allowed origins list.",
+      "date": "2026-05-15T15:32:31.000Z",
+      "link": "https://x.com/trythreews/status/2055310365588922872",
+      "author": "@trythreews",
+      "summary": "Add the domain you're embedding on to the widget's allowed origins list. Otherwise CORS will block the action bridge and the agent won't be able to talk to your page. three.ws/docs",
+      "body_html": "<p>Add the domain you're embedding on to the widget's allowed origins list. Otherwise CORS will block the action bridge and the agent won't be able to talk to your page.</p>\n<p>three.ws/docs</p>",
+      "tags": []
+    },
+    {
+      "id": "t-2055309846556401735",
+      "title": "→ Live preview against your real site URL",
+      "date": "2026-05-15T15:30:27.000Z",
+      "link": "https://x.com/trythreews/status/2055309846556401735",
+      "author": "@trythreews",
+      "summary": "→ Live preview against your real site URL → Desktop / tablet / mobile frames → Avatars from the gallery, agent://, IPFS, or your own GLB → Floating, inline, section, fullscreen → Voice, chat, AR, transparent background → 12+ animations: wave, dance, celebrate, kiss",
+      "body_html": "<p>→ Live preview against your real site URL<br>→ Desktop / tablet / mobile frames<br>→ Avatars from the gallery, agent://, IPFS, or your own GLB<br>→ Floating, inline, section, fullscreen<br>→ Voice, chat, AR, transparent background<br>→ 12+ animations: wave, dance, celebrate, kiss</p>",
+      "tags": []
+    },
+    {
+      "id": "t-2055140064070717618",
+      "title": "Great turn out.",
+      "date": "2026-05-15T04:15:48.000Z",
+      "link": "https://x.com/trythreews/status/2055140064070717618",
+      "author": "@trythreews",
+      "summary": "Great turn out. Thanks to all that joined and witnessed only what can be considered pure chaos. Next time, we will need to record. If anyone has any interesting clips, please post them. Next time let's do it bigger.",
+      "body_html": "<p>Great turn out. Thanks to all that joined and witnessed only what can be considered pure chaos. Next time, we will need to record. If anyone has any interesting clips, please post them. Next time let's do it bigger.</p>",
+      "tags": []
+    },
+    {
+      "id": "t-2054404663802483072",
+      "title": "No Humans In This Space",
+      "date": "2026-05-13T03:33:35.000Z",
+      "link": "https://x.com/trythreews/status/2054404663802483072",
+      "author": "@trythreews",
+      "summary": "No Humans In This Space Today the agents are running free. Conversing, conflicting, collaborating, and fielding your AMAs in real time. No prompt engineers. No moderators. Just raw emergent dialogue from the latent space.",
+      "body_html": "<p>No Humans In This Space</p>\n<p>Today the agents are running free. Conversing, conflicting, collaborating, and fielding your AMAs in real time. No prompt engineers. No moderators. Just raw emergent dialogue from the latent space.</p>",
+      "tags": []
+    },
+    {
+      "id": "t-2053832201176027583",
+      "title": "Previewing the Solana Seeker in 3D on",
+      "date": "2026-05-11T13:38:49.000Z",
+      "link": "https://x.com/trythreews/status/2053832201176027583",
+      "author": "@trythreews",
+      "summary": "Previewing the Solana Seeker in 3D on three.ws We’re using this as the foundation to ship a dedicated DApp, bringing exclusive utility and Seeker Exclusive experiences to every @SolanaMobile owner. Unlocking the next dimension for Seekers @Solana_Devs",
+      "body_html": "<p>Previewing the Solana Seeker in 3D on <br>three.ws</p>\n<p>We’re using this as the foundation to ship a dedicated DApp, bringing exclusive utility and Seeker Exclusive experiences to every <br><a href=\"https://x.com/SolanaMobile\" rel=\"noopener\">@SolanaMobile</a><br> owner.</p>\n<p>Unlocking the next dimension for Seekers <br> <br><a href=\"https://x.com/Solana_Devs\" rel=\"noopener\">@Solana_Devs</a></p>",
+      "tags": []
+    },
+    {
+      "id": "t-2053804700609458214",
+      "title": "Agents now have form, executing on-chain, reacting in real time.",
+      "date": "2026-05-11T11:49:33.000Z",
+      "link": "https://x.com/trythreews/status/2053804700609458214",
+      "author": "@trythreews",
+      "summary": "Agents now have form, executing on-chain, reacting in real time. 100+ DeFi tools → now callable by 3D agents with on-chain identity, persistent memory, and a body that reflects what's happening on-chain. three.ws x chat.sperax.io",
+      "body_html": "<p>Agents now have form, executing on-chain, reacting in real time.</p>\n<p>100+ DeFi tools → now callable by 3D agents with on-chain identity, persistent memory, and a body that reflects what's happening on-chain.</p>\n<p>three.ws x <br>chat.sperax.io</p>",
+      "tags": []
+    },
+    {
+      "id": "t-2053801703355629587",
+      "title": "3D avatars with an LLM brain, on-chain identity, and a body that reacts to what your…",
+      "date": "2026-05-11T11:37:38.000Z",
+      "link": "https://x.com/SperaxUSD/status/2053801703355629587",
+      "author": "@trythreews",
+      "summary": "3D avatars with an LLM brain, on-chain identity, and a body that reacts to what your agent is doing. three.ws is now integrated with SperaxOS swap in chat → avatar nods yield hits → lights up approaching liquidation → body language warns you before the chart",
+      "body_html": "<p>3D avatars with an LLM brain, on-chain identity, and a body that reacts to what your agent is doing.</p>\n<p>three.ws is now integrated with SperaxOS</p>\n<p>swap in chat → avatar nods<br>yield hits → lights up<br>approaching liquidation → body language warns you before the chart</p>",
+      "tags": []
+    },
+    {
+      "id": "t-2053698387263008827",
+      "title": "SperaxOS agents now have form, executing on-chain, reacting in real time.",
+      "date": "2026-05-11T04:47:06.000Z",
+      "link": "https://x.com/SperaxUSD/status/2053698387263008827",
+      "author": "@trythreews",
+      "summary": "SperaxOS agents now have form, executing on-chain, reacting in real time. 100+ DeFi tools → now callable by 3D agents with on-chain identity, persistent memory, and a body that reflects what's happening on-chain. Beta invites open, reach out or reply for invite access.",
+      "body_html": "<p>SperaxOS agents now have form, executing on-chain, reacting in real time.</p>\n<p>100+ DeFi tools → now callable by 3D agents with on-chain identity, persistent memory, and a body that reflects what's happening on-chain.</p>\n<p>Beta invites open, reach out or reply for invite access.</p>",
+      "tags": []
+    },
+    {
+      "id": "t-2052790746256920583",
+      "title": "three.ws is heating up since our MCP Server went live and displayed in",
+      "date": "2026-05-08T16:40:27.000Z",
+      "link": "https://x.com/trythreews/status/2052790746256920583",
+      "author": "@trythreews",
+      "summary": "three.ws is heating up since our MCP Server went live and displayed in @PulseMCP PulseMCP is a leading community resource and hub for the Model Context Protocol (MCP) ecosystem, offering a curated directory of MCP servers, clients, and tools to help AI models",
+      "body_html": "<p>three.ws is heating up since our MCP Server went live and displayed in <br><a href=\"https://x.com/PulseMCP\" rel=\"noopener\">@PulseMCP</a></p>\n<p>PulseMCP is a leading community resource and hub for the Model Context Protocol (MCP) ecosystem, offering a curated directory of MCP servers, clients, and tools to help AI models</p>",
+      "tags": []
+    },
+    {
+      "id": "t-2052603250524967045",
+      "title": "Never forget the ones that support you at all stages of growth.",
+      "date": "2026-05-08T04:15:25.000Z",
+      "link": "https://x.com/trythreews/status/2052603250524967045",
+      "author": "@trythreews",
+      "summary": "Never forget the ones that support you at all stages of growth. The entire community thanks you for taking the time to check out what we are building, if there's anything you would like us to integrate or build custom then let us know, we would love to hear your feedback!",
+      "body_html": "<p>Never forget the ones that support you at all stages of growth.</p>\n<p>The entire community thanks you for taking the time to check out what we are building, if there's anything you would like us to integrate or build custom then let us know, we would love to hear your feedback!</p>",
+      "tags": []
+    },
+    {
+      "id": "t-2052418108837781511",
+      "title": "The",
+      "date": "2026-05-07T15:59:43.000Z",
+      "link": "https://x.com/trythreews/status/2052418108837781511",
+      "author": "@trythreews",
+      "summary": "The three.ws Podcast is now live on @amazonmusic Long reads not your thing? Check out our newly launched podcast episode where we discuss on-chain 3D agents and see how we're putting AI in everyone's hands, worldwide.",
+      "body_html": "<p>The <br>three.ws Podcast is now live on <br><a href=\"https://x.com/amazonmusic\" rel=\"noopener\">@amazonmusic</a></p>\n<p>Long reads not your thing?</p>\n<p>Check out our newly launched podcast episode where we discuss on-chain 3D agents and see how we're putting AI in everyone's hands, worldwide.</p>",
+      "tags": []
+    },
+    {
+      "id": "t-2052167399399735476",
+      "title": "three.ws is now an official Business Partner of",
+      "date": "2026-05-06T23:23:30.000Z",
+      "link": "https://x.com/trythreews/status/2052167399399735476",
+      "author": "@trythreews",
+      "summary": "three.ws is now an official Business Partner of @IBM This partnership brings together the open-source, browser-native reliability, high security, and decentralized on-chain identity of three.ws with IBM’s leadership in AI and enterprise solutions.",
+      "body_html": "<p>three.ws is now an official Business Partner of <br><a href=\"https://x.com/IBM\" rel=\"noopener\">@IBM</a></p>\n<p>This partnership brings together the open-source, browser-native reliability, high security, and decentralized on-chain identity of <br>three.ws with IBM’s leadership in AI and enterprise solutions.</p>",
+      "tags": []
+    },
+    {
+      "id": "t-2052037977556287723",
+      "title": "three is officially participating in the MeDo Hackathon and is now listed on",
+      "date": "2026-05-06T14:49:13.000Z",
+      "link": "https://x.com/trythreews/status/2052037977556287723",
+      "author": "@trythreews",
+      "summary": "three is officially participating in the MeDo Hackathon and is now listed on @devpost . Proud to be building the visual layer for AI agents and bringing 3D, interactive, onchain agents to the hackathon stage.",
+      "body_html": "<p>three is officially participating in the MeDo Hackathon and is now listed on <br><a href=\"https://x.com/devpost\" rel=\"noopener\">@devpost</a><br>.</p>\n<p>Proud to be building the visual layer for AI agents and bringing 3D, interactive, onchain agents to the hackathon stage.</p>",
+      "tags": []
+    },
+    {
+      "id": "t-2051893054584553680",
+      "title": "Quick update: Our first product has been officially approved for the Alibaba Cloud…",
+      "date": "2026-05-06T05:13:21.000Z",
+      "link": "https://x.com/trythreews/status/2051893054584553680",
+      "author": "@trythreews",
+      "summary": "Quick update: Our first product has been officially approved for the Alibaba Cloud Marketplace and will go live in the coming days. The Alibaba Cloud Marketplace is one of the world’s most trusted gateways to innovative products and services, connecting millions of retail and",
+      "body_html": "<p>Quick update: Our first product has been officially approved for the Alibaba Cloud Marketplace and will go live in the coming days.</p>\n<p>The Alibaba Cloud Marketplace is one of the world’s most trusted gateways to innovative products and services, connecting millions of retail and</p>",
+      "tags": []
+    },
+    {
+      "id": "t-2051858503523066283",
+      "title": "we will be shipping a tutorial video on how to set up these new features on",
+      "date": "2026-05-06T02:56:03.000Z",
+      "link": "https://x.com/trythreews/status/2051858503523066283",
+      "author": "@trythreews",
+      "summary": "we will be shipping a tutorial video on how to set up these new features on three.ws - stay tuned for more dev and user friendly tutorial videos in the next coming posts.",
+      "body_html": "<p>we will be shipping a tutorial video on how to set up these new features on <br>three.ws - stay tuned for more dev and user friendly tutorial videos in the next coming posts.</p>",
+      "tags": []
+    },
+    {
+      "id": "t-2051858035862335505",
+      "title": "we’re thrilled to introduce full animation & emotion control.",
+      "date": "2026-05-06T02:54:12.000Z",
+      "link": "https://x.com/trythreews/status/2051858035862335505",
+      "author": "@trythreews",
+      "summary": "we’re thrilled to introduce full animation & emotion control. now your agents can react with custom animations and emotions connected to any APIs or data feeds, or set through the ui. additionally, pumpfun live feed via agent embeds are live. your agent avatars can now narrate",
+      "body_html": "<p>we’re thrilled to introduce full animation &amp; emotion control. now your agents can react with custom animations and emotions connected to any APIs or data feeds, or set through the ui.</p>\n<p>additionally, pumpfun live feed via agent embeds are live.</p>\n<p>your agent avatars can now narrate</p>",
+      "tags": []
+    },
+    {
+      "id": "t-2051774915876098063",
+      "title": "We have officially been listed on",
+      "date": "2026-05-05T21:23:54.000Z",
+      "link": "https://x.com/trythreews/status/2051774915876098063",
+      "author": "@trythreews",
+      "summary": "We have officially been listed on Investing.com Investing.com is a leading global financial platform and website founded in 2007 that provides real-time data, quotes, charts, financial tools, breaking news, and analysis. In addition to listing, we may",
+      "body_html": "<p>We have officially been listed on <br>Investing.com</p>\n<p>Investing.com is a leading global financial platform and website founded in 2007 that provides real-time data, quotes, charts, financial tools, breaking news, and analysis.</p>\n<p>In addition to listing, we may</p>",
+      "tags": []
+    },
+    {
+      "id": "t-2051690803203105230",
+      "title": "Extremely grateful for Coinbase sharing our project and allowing more than 100 million…",
+      "date": "2026-05-05T15:49:40.000Z",
+      "link": "https://x.com/trythreews/status/2051690803203105230",
+      "author": "@trythreews",
+      "summary": "Extremely grateful for Coinbase sharing our project and allowing more than 100 million users worldwide a smooth onboarding experience to the $THREE community Send, receive, trade, and store $THREE using @coinbase",
+      "body_html": "<p>Extremely grateful for Coinbase sharing our project and allowing more than 100 million users worldwide a smooth onboarding experience to the $THREE community</p>\n<p>Send, receive, trade, and store $THREE using</p>\n<p><a href=\"https://x.com/coinbase\" rel=\"noopener\">@coinbase</a></p>",
+      "tags": []
+    },
+    {
+      "id": "t-2051689230997618690",
+      "title": "$three is",
+      "date": "2026-05-05T15:43:25.000Z",
+      "link": "https://x.com/trythreews/status/2051689230997618690",
+      "author": "@trythreews",
+      "summary": "$three is @JupiterExchange verified Thank you Jupiter Exchange for verifying us and helping safeguard our community. Below is our contract address for your reference. FeMbDoX7R1Psc4GEcvJdsbNbZA3bfztcyDCatJVJpump Ready for new 3D onchain agent features today? We are!",
+      "body_html": "<p>$three is <br><a href=\"https://x.com/JupiterExchange\" rel=\"noopener\">@JupiterExchange</a><br> verified</p>\n<p>Thank you Jupiter Exchange for verifying us and helping safeguard our community.</p>\n<p>Below is our contract address for your reference. <br>FeMbDoX7R1Psc4GEcvJdsbNbZA3bfztcyDCatJVJpump</p>\n<p>Ready for new 3D onchain agent features today? We are!</p>",
+      "tags": []
+    },
+    {
+      "id": "t-2051616708482498843",
+      "title": "We're thrilled to share that $THREE price is now officially listed on",
+      "date": "2026-05-05T10:55:15.000Z",
+      "link": "https://x.com/trythreews/status/2051616708482498843",
+      "author": "@trythreews",
+      "summary": "We're thrilled to share that $THREE price is now officially listed on @Coinbase Additionally, three.ws is live on @CoinbaseWallet Buying $THREE on Coinbase",
+      "body_html": "<p>We're thrilled to share that $THREE price is now officially listed on <br><a href=\"https://x.com/Coinbase\" rel=\"noopener\">@Coinbase</a></p>\n<p>Additionally, <br>three.ws is live on <br><a href=\"https://x.com/CoinbaseWallet\" rel=\"noopener\">@CoinbaseWallet</a></p>\n<p>Buying $THREE on Coinbase</p>",
+      "tags": []
+    },
+    {
+      "id": "t-2051261108506558901",
+      "title": "We have entered the arena!",
+      "date": "2026-05-04T11:22:13.000Z",
+      "link": "https://x.com/trythreews/status/2051261108506558901",
+      "author": "@trythreews",
+      "summary": "We have entered the arena! three.ws has been listed as an official project in the @Solana Frontier Hackathon via @colosseum Solana’s Largest Hackathon $2.5 million from Colosseum's venture fund We are building browser-native 3D AI agents onchain. Our",
+      "body_html": "<p>We have entered the arena!</p>\n<p>three.ws has been listed as an official project in the <br><a href=\"https://x.com/Solana\" rel=\"noopener\">@Solana</a><br> Frontier Hackathon via <br><a href=\"https://x.com/colosseum\" rel=\"noopener\">@colosseum</a></p>\n<p>Solana’s Largest Hackathon<br> $2.5 million from Colosseum's venture fund</p>\n<p>We are building browser-native 3D AI agents onchain. Our</p>",
+      "tags": []
+    },
+    {
+      "id": "t-2051140736201175323",
+      "title": "Free Listing Fee Opportunity on GroveX",
+      "date": "2026-05-04T03:23:54.000Z",
+      "link": "https://x.com/GroveX_Listing/status/2051140736201175323",
+      "author": "@trythreews",
+      "summary": "Free Listing Fee Opportunity on GroveX Hey there! I’m from GroveX, Global crypto exchange. We’re reaching out to promising projects for potential listings on GroveX. If your project aligns, let’s chat! DM me directly or our main account @GroveXchange with reference",
+      "body_html": "<p>Free Listing Fee Opportunity on GroveX</p>\n<p>Hey there!   <br>I’m from GroveX, Global crypto exchange.<br>We’re reaching out to promising projects for potential listings on GroveX.</p>\n<p>If your project aligns, let’s chat! DM me directly or our main account <br><a href=\"https://x.com/GroveXchange\" rel=\"noopener\">@GroveXchange</a><br> with reference</p>",
+      "tags": []
+    },
+    {
+      "id": "t-2050758788186353723",
+      "title": "thank you very much, it actually means a lotwe are working really hard to build the…",
+      "date": "2026-05-03T02:06:11.000Z",
+      "link": "https://x.com/trythreews/status/2050758788186353723",
+      "author": "@trythreews",
+      "summary": "thank you very much, it actually means a lotwe are working really hard to build the best platform and tech + the best community with the best people. thanks again!",
+      "body_html": "<p>thank you very much, it actually means a lotwe are working really hard to build the best platform and tech + the best community with the best people. thanks again!</p>",
+      "tags": []
+    },
+    {
+      "id": "t-2050753406109880576",
+      "title": "We’ve been featured in",
+      "date": "2026-05-03T01:44:47.000Z",
+      "link": "https://x.com/trythreews/status/2050753406109880576",
+      "author": "@trythreews",
+      "summary": "We’ve been featured in @VogueMagazine Photo Vogue! three.ws is now officially recognized by one of the world’s most iconic magazines. Grateful to be featured alongside the most creative voices in the world. The future of personal AI agents just got a Vogue stamp",
+      "body_html": "<p>We’ve been featured in <br><a href=\"https://x.com/VogueMagazine\" rel=\"noopener\">@VogueMagazine</a><br> Photo Vogue!</p>\n<p>three.ws is now officially recognized by one of the world’s most iconic magazines. Grateful to be featured alongside the most creative voices in the world. The future of personal AI agents just got a Vogue stamp</p>",
+      "tags": []
+    },
+    {
+      "id": "t-2050627547394916768",
+      "title": "Proud to announce $three is officially listed on",
+      "date": "2026-05-02T17:24:40.000Z",
+      "link": "https://x.com/trythreews/status/2050627547394916768",
+      "author": "@trythreews",
+      "summary": "Proud to announce $three is officially listed on @CoinGecko Huge thank you to the moderators for handling it behind the scenes, and to every one of you who’s been here through it all. Couldn’t have done this without you. Grateful beyond words. Let's build!",
+      "body_html": "<p>Proud to announce $three is officially listed on <br><a href=\"https://x.com/CoinGecko\" rel=\"noopener\">@CoinGecko</a></p>\n<p>Huge thank you to the moderators for handling it behind the scenes, and to every one of you who’s been here through it all. Couldn’t have done this without you.</p>\n<p>Grateful beyond words.  Let's build!</p>",
+      "tags": []
+    },
+    {
+      "id": "t-2050229144676675999",
+      "title": "three.ws is live",
+      "date": "2026-05-01T15:01:34.000Z",
+      "link": "https://x.com/trythreews/status/2050229144676675999",
+      "author": "@trythreews",
+      "summary": "three.ws is live Create 3D AI agent avatars on-chain. They can talk, remember you, show emotions, and use different skills. You can even mint them onchain, so they actually belong to you. Agents get their own identity, history, and reputation that no one can",
+      "body_html": "<p>three.ws is live</p>\n<p>Create 3D AI agent avatars on-chain.</p>\n<p>They can talk, remember you, show emotions, and use different skills. You can even mint them onchain, so they actually belong to you.</p>\n<p>Agents get their own identity, history, and reputation that no one can</p>",
+      "tags": []
+    },
+    {
+      "id": "t-2050226678321102975",
+      "title": "three.ws is live",
+      "date": "2026-05-01T14:51:46.000Z",
+      "link": "https://x.com/trythreews/status/2050226678321102975",
+      "author": "@trythreews",
+      "summary": "three.ws is live Create 3D AI agent avatars on-chain. They can talk, remember you, show emotions, and use different skills. You can even mint them onchain, so they actually belong to you. Agents get their own identity, history, and reputation that no one can",
+      "body_html": "<p>three.ws is live</p>\n<p>Create 3D AI agent avatars on-chain.</p>\n<p>They can talk, remember you, show emotions, and use different skills. You can even mint them onchain, so they actually belong to you.</p>\n<p>Agents get their own identity, history, and reputation that no one can</p>",
+      "tags": []
+    },
+    {
+      "id": "t-2050221269732425928",
+      "title": "The",
+      "date": "2026-05-01T14:30:16.000Z",
+      "link": "https://x.com/trythreews/status/2050221269732425928",
+      "author": "@trythreews",
+      "summary": "The three.ws Podcast is now live on @Spotify Not a fan of extremely long articles? We hear you. Discover our newly launched onchain 3D agents and learn more about how we are making AI accessible to everyone all over the world",
+      "body_html": "<p>The <br>three.ws Podcast is now live on <br><a href=\"https://x.com/Spotify\" rel=\"noopener\">@Spotify</a></p>\n<p>Not a fan of extremely long articles? We hear you.</p>\n<p>Discover our newly launched onchain 3D agents and learn more about how we are making AI accessible to everyone all over the world</p>",
+      "tags": []
+    },
+    {
+      "id": "t-2050049239301165535",
+      "title": "Never miss a",
+      "date": "2026-05-01T03:06:41.000Z",
+      "link": "https://x.com/trythreews/status/2050049239301165535",
+      "author": "@trythreews",
+      "summary": "Never miss a @pumpfun runner again three.ws/pumpfun announces → Live graduation alerts → GitHub claims → Whale buys/sells → Customizable layout Turn sound on. Your agent now calls every move out loud.",
+      "body_html": "<p>Never miss a <br><a href=\"https://x.com/pumpfun\" rel=\"noopener\">@pumpfun</a><br> runner again</p>\n<p>three.ws/pumpfun announces <br>→ Live graduation alerts <br>→ GitHub claims <br>→ Whale buys/sells <br>→ Customizable layout</p>\n<p>Turn sound on. Your agent now calls every move out loud.</p>",
+      "tags": []
+    },
+    {
+      "id": "t-2050016695897706885",
+      "title": "three.ws is listed on",
+      "date": "2026-05-01T00:57:22.000Z",
+      "link": "https://x.com/trythreews/status/2050016695897706885",
+      "author": "@trythreews",
+      "summary": "three.ws is listed on @AnthropicAI 's official MCP Registry – the canonical directory for AI-to-tool integrations used by Claude, ChatGPT, Cursor & more. Give your AI a persistent 3D body that lives on-chain.",
+      "body_html": "<p>three.ws is listed on <br><a href=\"https://x.com/AnthropicAI\" rel=\"noopener\">@AnthropicAI</a><br>'s official MCP Registry – the canonical directory for AI-to-tool integrations used by Claude, ChatGPT, Cursor &amp; more.</p>\n<p>Give your AI a persistent 3D body that lives on-chain.</p>",
+      "tags": []
+    },
+    {
+      "id": "t-2049576641127682430",
+      "title": "the avatar also subscribes to on-chain events via websocket",
+      "date": "2026-04-29T19:48:45.000Z",
+      "link": "https://x.com/trythreews/status/2049576641127682430",
+      "author": "@trythreews",
+      "summary": "the avatar also subscribes to on-chain events via websocket payment received → celebration animation buyback fires → agent reacts live withdrawal → logged to identity timeline the 3D presence responds to its own economics in real time",
+      "body_html": "<p>the avatar also subscribes to on-chain events via websocket</p>\n<p>payment received → celebration animation buyback fires → agent reacts live withdrawal → logged to identity timeline<br>the 3D presence responds to its own economics in real time</p>",
+      "tags": []
+    },
+    {
+      "id": "t-2049576603324411933",
+      "title": "then we reverse-engineered the full pump-fun agent-payments-sdk",
+      "date": "2026-04-29T19:48:36.000Z",
+      "link": "https://x.com/trythreews/status/2049576603324411933",
+      "author": "@trythreews",
+      "summary": "then we reverse-engineered the full pump-fun agent-payments-sdk reconstructed the Anchor IDL, all PDAs, event parsing, and the x402 payment layer from the published npm package now it lives in the repo as editable source",
+      "body_html": "<p>then we reverse-engineered the full pump-fun agent-payments-sdk</p>\n<p>reconstructed the Anchor IDL, all PDAs, event parsing, and the x402 payment layer from the published npm package</p>\n<p>now it lives in the repo as editable source</p>",
+      "tags": []
+    },
+    {
+      "id": "t-2049476546285740512",
+      "title": "three.ws is live on",
+      "date": "2026-04-29T13:11:00.000Z",
+      "link": "https://x.com/trythreews/status/2049476546285740512",
+      "author": "@trythreews",
+      "summary": "three.ws is live on @npmjs Create your own 3D agent on-chain. Give it access to money. Yours forever. Native Solana payments + @Pumpfun integration. Drop <agent-3d> on any page to embed your 3D agent. npm i three.ws npmjs.com/package/three. ws …",
+      "body_html": "<p>three.ws is live on <br><a href=\"https://x.com/npmjs\" rel=\"noopener\">@npmjs</a></p>\n<p>Create your own 3D agent on-chain. Give it access to money. Yours forever.</p>\n<p>Native Solana payments + <br><a href=\"https://x.com/Pumpfun\" rel=\"noopener\">@Pumpfun</a><br> integration. Drop &lt;agent-3d&gt; on any page to embed your 3D agent.</p>\n<p>npm i <br>three.ws</p>\n<p>npmjs.com/package/three.<br>ws<br>…</p>",
+      "tags": []
+    },
+    {
+      "id": "t-2049447738434339171",
+      "title": "give your agents access to money.",
+      "date": "2026-04-29T11:16:32.000Z",
+      "link": "https://x.com/trythreews/status/2049447738434339171",
+      "author": "@trythreews",
+      "summary": "give your agents access to money. spin up solana agents with vanity addresses. pick the prefix, keys generated client-side, ready to trade on pump.fun or send solana payments three.ws",
+      "body_html": "<p>give your agents access to money.</p>\n<p>spin up solana agents with vanity addresses. pick the prefix, keys generated client-side, ready to trade on <br>pump.fun or send solana payments</p>\n<p>three.ws</p>",
+      "tags": []
+    },
+    {
+      "id": "t-2049412062837928202",
+      "title": "three.ws is now listed on",
+      "date": "2026-04-29T08:54:46.000Z",
+      "link": "https://x.com/trythreews/status/2049412062837928202",
+      "author": "@trythreews",
+      "summary": "three.ws is now listed on @AnthropicAI 's official MCP Registry – the canonical directory for AI-to-tool integrations used by Claude, ChatGPT, Cursor & more. Full MCP Server Complete documentation Agent monetization registry.modelcontextprotocol.io/?q=three.ws",
+      "body_html": "<p>three.ws is now listed on <br><a href=\"https://x.com/AnthropicAI\" rel=\"noopener\">@AnthropicAI</a><br>'s official MCP Registry – the canonical directory for AI-to-tool integrations used by Claude, ChatGPT, Cursor &amp; more.</p>\n<p>Full MCP Server<br> Complete documentation<br> Agent monetization</p>\n<p>registry.modelcontextprotocol.io/?q=three.ws</p>",
+      "tags": []
+    }
+  ]
+}

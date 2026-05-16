@@ -1,0 +1,41 @@
+// GET /rss/announcements.xml — RSS 2.0 feed of three.ws news/announcements.
+// Default source: data/rss/items.json (curated, hand-edited).
+// Mirror modes: ?source=trythreews | ?source=nichxbt | ?source=archive  (X scrape).
+
+import { cors, method } from '../_lib/http.js';
+import { loadCuratedItems, loadAnnouncementItems, buildRssXml } from '../_lib/rss-feed.js';
+
+const ARCHIVE_SOURCES = new Set(['archive', 'trythreews', 'nichxbt']);
+
+export default async function handler(req, res) {
+	if (cors(req, res, { origins: '*', methods: 'GET,OPTIONS', credentials: false })) return;
+	if (!method(req, res, ['GET'])) return;
+
+	const url = new URL(req.url, 'https://three.ws');
+	const sourceParam = (url.searchParams.get('source') || 'curated').toLowerCase();
+
+	try {
+		let items;
+		let source;
+		if (ARCHIVE_SOURCES.has(sourceParam)) {
+			source = sourceParam === 'archive' ? 'all' : sourceParam;
+			items = await loadAnnouncementItems({ source });
+		} else {
+			source = 'curated';
+			items = await loadCuratedItems();
+		}
+		const selfUrl = source === 'curated'
+			? 'https://three.ws/rss/announcements.xml'
+			: `https://three.ws/rss/announcements.xml?source=${sourceParam}`;
+		const xml = buildRssXml({ items, selfUrl, source });
+		res.statusCode = 200;
+		res.setHeader('content-type', 'application/rss+xml; charset=utf-8');
+		res.setHeader('cache-control', 'public, max-age=600, s-maxage=600, stale-while-revalidate=86400');
+		res.end(xml);
+	} catch (err) {
+		console.error('[rss/announcements] failed', err);
+		res.statusCode = 500;
+		res.setHeader('content-type', 'text/plain; charset=utf-8');
+		res.end('feed unavailable');
+	}
+}
