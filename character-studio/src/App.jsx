@@ -211,7 +211,7 @@ export default function App() {
   return (
     <Fragment>
       
-      <div className="generalTitle">Character Studio</div>
+      <div className="generalTitle">three.ws Studio</div>
 
       {/* <LanguageSwitch /> */}
       <MessageWindow

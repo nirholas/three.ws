@@ -35,7 +35,7 @@ export default function OnChainPublish({ onClose }) {
     setBusy(true);
     try {
       const r = await registerCharacterOnChain({
-        name: 'Character Studio Manifest',
+        name: 'three.ws Studio Manifest',
         manifestURL,
         pinataJWT: pinataJWT.trim(),
         onStatus: setStatus,

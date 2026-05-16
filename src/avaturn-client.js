@@ -165,7 +165,7 @@ export async function awaitAvatarGLB({ sessionUrl, onProgress, signal }) {
 			'sandbox',
 			'allow-scripts allow-same-origin allow-forms allow-popups allow-popups-to-escape-sandbox',
 		);
-		iframe.setAttribute('title', 'Avaturn avatar export');
+		iframe.setAttribute('title', 'three.ws avatar export');
 		iframe.setAttribute('aria-hidden', 'true');
 
 		// postMessage listener — scoped strictly to the iframe's origin.
