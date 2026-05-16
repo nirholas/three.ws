@@ -103,7 +103,7 @@ function _resetMap(map) {
 
 /**
  * Drive jaw/mouth morph targets in sync with speech text via a phoneme heuristic.
- * Supports ARKit viseme_* targets (Avaturn / Character Studio / Mixamo / VRM avatars) and jawOpen/mouthOpen fallbacks.
+ * Supports the ARKit viseme_* morph targets that three.ws avatars ship with (and the same names exported by Mixamo / VRM), plus jawOpen / mouthOpen fallbacks.
  *
  * @param {string} text — the spoken text
  * @param {import('three').Object3D} root — avatar root (or scene) to traverse for morph targets

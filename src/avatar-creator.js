@@ -1,3 +1,13 @@
+// three.ws Avatar Creator — the in-app modal that opens either the
+//   • three.ws Studio iframe (in-browser builder), or
+//   • three.ws Selfie SDK (photo-to-avatar editor),
+// and resolves the user's chosen avatar as a GLB Blob.
+//
+// Provider names ("characterstudio", "avaturn") only appear in internal
+// postMessage payloads and import paths — every user-visible surface reads
+// "three.ws". Ready Player Me was retired upstream after the 2026
+// acquisition; this module no longer references it.
+
 import { AvaturnSDK } from '@avaturn/sdk';
 
 function getStudioUrl() {
@@ -11,41 +21,17 @@ function getStudioUrl() {
 	return 'http://localhost:5173';
 }
 
-function getReadyPlayerMeSubdomain() {
-	try {
-		if (typeof import.meta !== 'undefined' && import.meta.env?.VITE_RPM_SUBDOMAIN) {
-			return String(import.meta.env.VITE_RPM_SUBDOMAIN)
-				.trim()
-				.replace(/^https?:\/\//, '')
-				.replace(/\.readyplayer\.me.*$/, '');
-		}
-	} catch (_) {}
-	return 'demo';
-}
-
-// RPM iframe posts JSON-stringified payloads; older builds and some hosts have
-// posted raw objects too. Accept both shapes.
-function parseRpmEvent(data) {
-	if (typeof data === 'string') {
-		try { return JSON.parse(data); } catch { return null; }
-	}
-	if (data && typeof data === 'object') return data;
-	return null;
-}
-
 export class AvatarCreator {
 	/**
 	 * @param {Element} containerEl - Parent element to mount the modal into
 	 * @param {function(Blob, {provider:string, sourceUrl?:string|null}): void} onExport - Called with the exported GLB Blob and provenance
 	 * @param {object} [opts]
-	 * @param {string} [opts.studioUrl] - Override the CharacterStudio URL
-	 * @param {string} [opts.rpmSubdomain] - Override the Ready Player Me subdomain
+	 * @param {string} [opts.studioUrl] - Override the three.ws Studio URL
 	 */
 	constructor(containerEl, onExport, opts = {}) {
 		this.container = containerEl;
 		this.onExport = onExport;
 		this.studioUrl = opts.studioUrl || getStudioUrl();
-		this.rpmSubdomain = opts.rpmSubdomain || getReadyPlayerMeSubdomain();
 
 		this.modal = null;
 		this.iframe = null;
@@ -56,108 +42,34 @@ export class AvatarCreator {
 	}
 
 	/**
-	 * Opens the avatar creator modal.
-	 * @param {string} [sessionUrl] - When provided, opens Avaturn SDK in edit mode.
-	 *                                When omitted, opens CharacterStudio.
+	 * Opens the three.ws Avatar Creator modal.
+	 * @param {string} [sessionUrl] - When provided, opens the three.ws Selfie editor in edit mode.
+	 *                                When omitted, opens three.ws Studio.
 	 */
 	async open(sessionUrl) {
 		if (this.modal) return;
 		if (sessionUrl) {
-			this._provider = 'avaturn';
-			await this._openAvaturn(sessionUrl);
+			this._provider = 'three-ws-selfie';
+			await this._openSelfie(sessionUrl);
 		} else {
-			this._provider = 'characterstudio';
+			this._provider = 'three-ws-studio';
 			this._buildModal(true);
-			this._onMessage = (e) => this._handleCharacterStudioMessage(e);
+			this._onMessage = (e) => this._handleStudioMessage(e);
 			window.addEventListener('message', this._onMessage);
 			this.iframe.src = this.studioUrl;
 		}
 	}
 
 	/**
-	 * Opens the Avaturn default hosted editor via the Avaturn SDK.
-	 * No URL passed → SDK uses its own default public editor (no developer ID needed).
+	 * Opens the default three.ws Selfie editor (no session URL required).
 	 */
 	async openDefaultEditor() {
 		if (this.modal) return;
-		this._provider = 'avaturn';
-		await this._openAvaturn();
+		this._provider = 'three-ws-selfie';
+		await this._openSelfie();
 	}
 
-	/**
-	 * Opens the Ready Player Me avatar creator in an iframe.
-	 * Uses the Frame API: subscribes to v1 events and captures the GLB URL on export.
-	 * Subdomain comes from VITE_RPM_SUBDOMAIN, defaulting to "demo".
-	 *
-	 * @param {object} [opts]
-	 * @param {('halfbody'|'fullbody')} [opts.bodyType] - 'fullbody' (default) or 'halfbody'
-	 * @param {boolean} [opts.clearCache] - clear stored RPM session (default true)
-	 * @param {boolean} [opts.quickStart] - skip account creation prompts (default false)
-	 */
-	async openReadyPlayerMe(opts = {}) {
-		if (this.modal) return;
-		this._provider = 'readyplayer';
-		this._buildModal(true);
-
-		const bodyType = opts.bodyType || 'fullbody';
-		const clearCache = opts.clearCache !== false;
-		const quickStart = !!opts.quickStart;
-		const params = new URLSearchParams({
-			frameApi: '',
-			bodyType,
-			...(clearCache && { clearCache: 'true' }),
-			...(quickStart && { quickStart: 'true' }),
-		});
-		const url = `https://${this.rpmSubdomain}.readyplayer.me/avatar?${params.toString()}`;
-
-		this._onMessage = (e) => this._handleReadyPlayerMessage(e);
-		window.addEventListener('message', this._onMessage);
-		this.iframe.src = url;
-	}
-
-	_handleReadyPlayerMessage(event) {
-		const json = parseRpmEvent(event.data);
-		if (!json || json.source !== 'readyplayerme') return;
-
-		if (json.eventName === 'v1.frame.ready') {
-			try {
-				this.iframe?.contentWindow?.postMessage(
-					JSON.stringify({
-						target: 'readyplayerme',
-						type: 'subscribe',
-						eventName: 'v1.**',
-					}),
-					'*',
-				);
-			} catch (err) {
-				console.error('[AvatarCreator] RPM subscribe failed:', err);
-			}
-			const loading = this.modal?.querySelector('.avatar-creator-loading');
-			if (loading) loading.style.display = 'none';
-			return;
-		}
-
-		if (json.eventName === 'v1.avatar.exported') {
-			const glbUrl = json.data?.url;
-			if (!glbUrl) return;
-			(async () => {
-				try {
-					const res = await fetch(glbUrl);
-					if (!res.ok) throw new Error(`RPM GLB fetch failed: ${res.status}`);
-					const blob = await res.blob();
-					const glbBlob = blob.type
-						? blob
-						: new Blob([await blob.arrayBuffer()], { type: 'model/gltf-binary' });
-					this._fireExport(glbBlob, { sourceUrl: glbUrl });
-				} catch (err) {
-					console.error('[AvatarCreator] failed to fetch RPM GLB:', err);
-					this._showError('Failed to download the avatar. Please try again.');
-				}
-			})();
-		}
-	}
-
-	async _openAvaturn(url) {
+	async _openSelfie(url) {
 		this._buildModal(false);
 		try {
 			this.sdk = new AvaturnSDK();
@@ -187,16 +99,16 @@ export class AvatarCreator {
 						: new Blob([await blob.arrayBuffer()], { type: 'model/gltf-binary' });
 					this._fireExport(glbBlob, { sourceUrl: data.urlType === 'dataURL' ? null : glbUrl });
 				} catch (err) {
-					console.error('[AvatarCreator] failed to fetch Avaturn GLB:', err);
+					console.error('[three.ws Avatar Creator] failed to fetch selfie GLB:', err);
 				}
 			});
 		} catch (err) {
-			console.error('[AvatarCreator] Failed to initialize Avaturn SDK:', err);
-			this._showError('Failed to load avatar creator. Please try again.');
+			console.error('[three.ws Avatar Creator] Failed to initialize selfie SDK:', err);
+			this._showError('Failed to load the avatar creator. Please try again.');
 		}
 	}
 
-	_handleCharacterStudioMessage(event) {
+	_handleStudioMessage(event) {
 		try {
 			const csOrigin = new URL(this.studioUrl).origin;
 			if (event.origin !== csOrigin) return;
@@ -205,6 +117,8 @@ export class AvatarCreator {
 		}
 
 		const msg = event.data;
+		// Studio iframe uses the `characterstudio` postMessage source for backwards
+		// compatibility with the upstream open-source builder we forked.
 		if (!msg || msg.source !== 'characterstudio' || msg.type !== 'export') return;
 		if (!(msg.glb instanceof ArrayBuffer)) return;
 
@@ -217,7 +131,7 @@ export class AvatarCreator {
 			try {
 				this.onExport(blob, { provider: this._provider, ...meta });
 			} catch (err) {
-				console.error('[AvatarCreator] onExport handler threw:', err);
+				console.error('[three.ws Avatar Creator] onExport handler threw:', err);
 			}
 		}
 		this.close();
@@ -231,11 +145,11 @@ export class AvatarCreator {
 	}
 
 	/**
-	 * @param {boolean} withIframe - true for CharacterStudio/RPM (needs a pre-rendered iframe),
-	 *                               false for Avaturn SDK (SDK injects its own iframe).
+	 * @param {boolean} withIframe - true for three.ws Studio (pre-rendered iframe),
+	 *                               false for three.ws Selfie SDK (SDK injects its own iframe).
 	 */
 	_buildModal(withIframe) {
-		const title = withIframe ? 'Create Your Avatar' : 'Edit Your Avatar';
+		const title = withIframe ? 'three.ws · Create your avatar' : 'three.ws · Edit your avatar';
 		this.modal = document.createElement('div');
 		this.modal.className = 'avatar-creator-overlay';
 
@@ -250,7 +164,7 @@ export class AvatarCreator {
 						withIframe
 							? `<iframe
 						class="avatar-creator-iframe"
-						title="Avatar Creator"
+						title="three.ws · Avatar Creator"
 						allow="camera *; microphone *; clipboard-write"
 						sandbox="allow-scripts allow-same-origin allow-forms allow-popups"
 					></iframe>`
@@ -258,7 +172,7 @@ export class AvatarCreator {
 					}</div>
 					<div class="avatar-creator-loading">
 						<div class="spinner"></div>
-						<span>Loading avatar creator...</span>
+						<span>Loading three.ws Avatar Creator…</span>
 					</div>
 				</div>
 			</div>

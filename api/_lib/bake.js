@@ -7,10 +7,11 @@
 //
 // The output is a single glTF 2.0 binary — every viewer (three.js, model-viewer,
 // Babylon.js, Unreal/Unity importers) sees the fully dressed avatar with no
-// special runtime code. Mirrors Ready Player Me's "baked URL" output model.
+// special runtime code. three.ws serves the baked URL directly so consumers
+// never have to know about the customization layer.
 //
-// Bone name matching is tolerant of mixamorig:, CC_Base_, and rig_ prefixes so
-// avatars from Mixamo / Character Creator / custom rigs all work.
+// Bone-name matching tolerates the common `mixamorig:`, `CC_Base_`, and `rig_`
+// prefixes so avatars produced by any upstream rigger work without rename.
 
 import { NodeIO } from '@gltf-transform/core';
 import { ALL_EXTENSIONS } from '@gltf-transform/extensions';

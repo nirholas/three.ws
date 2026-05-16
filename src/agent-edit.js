@@ -363,12 +363,12 @@ function openAvatarCreateMenu() {
   menu.setAttribute('role', 'menu');
   menu.innerHTML = `
     <button type="button" role="menuitem" data-source="characterstudio">
-      <span class="acm-title">Character Studio</span>
+      <span class="acm-title">three.ws Studio</span>
       <span class="acm-sub">In-browser builder — hair, clothing, body</span>
     </button>
     <button type="button" role="menuitem" data-source="avaturn">
-      <span class="acm-title">Avaturn editor</span>
-      <span class="acm-sub">Selfie → photoreal avatar</span>
+      <span class="acm-title">three.ws Selfie</span>
+      <span class="acm-sub">Photo → photoreal avatar</span>
     </button>
     <button type="button" role="menuitem" data-source="upload">
       <span class="acm-title">Upload GLB</span>

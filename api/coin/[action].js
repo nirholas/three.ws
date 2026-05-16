@@ -73,6 +73,7 @@ async function handleState(req, res) {
 	const nextDrawAt = new Date(Math.ceil(nowMs / interval) * interval).toISOString();
 
 	return json(res, 200, {
+		platform: 'three.ws',
 		mint: coin.mint,
 		name: coin.name,
 		symbol: coin.symbol,

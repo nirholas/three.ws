@@ -2,6 +2,20 @@
   "_readme": "Curated RSS items for https://three.ws/rss/announcements.xml. Edit this file to control exactly what HackerNoon (and any RSS reader) sees. Each entry needs: id (stable slug), title, date (ISO 8601), body_html. Optional: link, author, summary, tags. Items are served newest-first by date; cap is 50. Seeded from data/archives/trythreews_tweets_2026-05-16.json on 2026-05-16 (35 entries). Re-run scripts/seed-rss-from-archive.mjs to refresh from a newer scrape.",
   "items": [
     {
+      "id": "live-on-alibaba-cloud-marketplace",
+      "title": "three.ws is live on the Alibaba Cloud Marketplace",
+      "date": "2026-05-16T04:00:00.000Z",
+      "link": "https://marketplace.alibabacloud.com/products/56724001/sgcmfw00036800.html",
+      "author": "three.ws",
+      "summary": "three.ws is now live on the Alibaba Cloud Marketplace — find the product listing and our storefront below.",
+      "body_html": "<p>three.ws is officially live on the <a href=\"https://marketplace.alibabacloud.com/products/56724001/sgcmfw00036800.html\" rel=\"noopener\">Alibaba Cloud Marketplace</a>.</p>\n<p>Browse the listing or visit our <a href=\"https://marketplace.alibabacloud.com/store/3247293.html\" rel=\"noopener\">storefront</a> on Alibaba Cloud.</p>\n<p>Visit <a href=\"https://three.ws\" rel=\"noopener\">three.ws</a> to get started.</p>",
+      "tags": [
+        "listing",
+        "marketplace",
+        "alibaba-cloud"
+      ]
+    },
+    {
       "id": "t-2055310365588922872",
       "title": "Add the domain you're embedding on to the widget's allowed origins list.",
       "date": "2026-05-15T15:32:31.000Z",

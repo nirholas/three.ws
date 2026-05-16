@@ -1451,7 +1451,7 @@ function replaceGlbFlow(a, cardEl) {
 	warn.style.cssText =
 		'margin:8px 0; padding:10px; background:rgba(255,165,0,.08); border:1px solid rgba(255,165,0,.25); border-radius:8px; font-size:12px; color:#d4aa44';
 	warn.innerHTML = `
-		<p style="margin:0 0 8px">&#9888; This bypasses Avaturn &#8212; your avatar may not animate correctly if not rigged to the Mixamo skeleton.</p>
+		<p style="margin:0 0 8px">&#9888; This bypasses the three.ws creator &#8212; your avatar may not animate correctly if it isn&rsquo;t rigged to the three.ws humanoid skeleton.</p>
 		<div class="row" style="gap:6px">
 			<button class="btn" data-glb-pick style="font-size:12px;padding:6px 10px">Choose .glb file</button>
 			<button class="btn sec" data-glb-cancel style="font-size:12px;padding:6px 10px">Cancel</button>
@@ -1542,7 +1542,7 @@ async function doReplaceUpload(a, file, warnEl, cardEl) {
 
 		if (boneMatch !== null && boneMatch < 0.5) {
 			say(
-				`Uploaded. \u26a0 Animations may not play \u2014 skeleton mismatch (${Math.round(boneMatch * 100)}% Mixamo bone match).`,
+				`Uploaded. \u26a0 Animations may not play \u2014 skeleton mismatch (${Math.round(boneMatch * 100)}% three.ws humanoid bone match).`,
 			);
 		} else {
 			say('Replaced! Your agent now uses the new GLB.');
