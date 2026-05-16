@@ -479,7 +479,7 @@ export async function mintAsset(avatar, screenshot, model, name, needCheckOT){
         }
         const metadata = {
             name: name || "Avatars",
-            description: "Character Studio Avatars.",
+            description: "three.ws Avatars.",
             image: `ipfs://${imageHash.IpfsHash}`,
             animation_url: `ipfs://${glbHash.IpfsHash}`,
             attributes: getAvatarTraits(avatar)
