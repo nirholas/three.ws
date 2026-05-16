@@ -220,7 +220,7 @@ If you want to support the project — compute credits, grants, partnerships, or
 - OAuth 2.1 server (RFC 6749 + PKCE, RFC 7591 dynamic registration, RFC 7009 revocation, RFC 7662 introspection, RFC 8414 discovery)
 - Developer API keys with scope and expiry
 - MCP (Model Context Protocol) over HTTP with JSON-RPC 2.0 for tool-calling from external AI systems
-- three.ws Selfie (photo-to-avatar), three.ws Studio (in-browser builder), and Privy (embedded wallet) integrations
+- Avaturn (photo-to-avatar), Character Studio (in-browser builder), and Privy (embedded wallet) integrations
 - DCA strategy execution and on-chain subscription scheduling via cron jobs
 - OpenAPI 3.1 spec generated at `/openapi.json`
 
@@ -1363,7 +1363,7 @@ WEB3_STORAGE_TOKEN=...                       # Fallback
 ### Optional (Frontend, prefixed `VITE_`)
 
 ```env
-VITE_CHARACTER_STUDIO_URL=https://studio.three.ws  # three.ws Studio iframe origin
+VITE_CHARACTER_STUDIO_URL=https://studio.three.ws  # Avatar builder iframe origin
 VITE_PRIVY_APP_ID=...
 VITE_AVATURN_EDITOR_URL=https://editor.avaturn.me/
 VITE_AVATURN_DEVELOPER_ID=...

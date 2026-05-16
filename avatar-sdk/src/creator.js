@@ -1,5 +1,5 @@
 // Programmatic Avatar Creator — opens an iframe modal where the user builds
-// or photographs an avatar via the three.ws pipelines, listens for the
+// or photographs an avatar via Character Studio or Avaturn, listens for the
 // `export` postMessage, and resolves with the GLB Blob.
 //
 // This is the thin client-only wrapper. Apps that already have their own
@@ -19,8 +19,8 @@ export class AvatarCreator {
 	/**
 	 * @param {object} opts
 	 * @param {HTMLElement} [opts.container] — DOM node to mount the modal into. Defaults to document.body.
-	 * @param {string} [opts.studioUrl] — origin of the three.ws Studio iframe. Defaults to studio.three.ws.
-	 * @param {string} [opts.avaturnSessionUrl] — edit-mode session URL (issued by three.ws via /api/avatars/:id/session).
+	 * @param {string} [opts.studioUrl] — origin of the Character Studio iframe. Defaults to studio.three.ws.
+	 * @param {string} [opts.avaturnSessionUrl] — if provided, opens Avaturn in edit mode for that session.
 	 * @param {(blob: Blob) => any} [opts.onExport] — called with the GLB Blob when the user exports.
 	 * @param {() => any} [opts.onClose] — called when the user closes without exporting.
 	 */
@@ -82,7 +82,7 @@ export class AvatarCreator {
 		].join(';');
 
 		this._iframe = document.createElement('iframe');
-		this._iframe.title = 'three.ws · Avatar Creator';
+		this._iframe.title = 'Avatar Creator';
 		this._iframe.allow = 'camera *; microphone *; clipboard-write';
 		this._iframe.style.cssText = 'width:100%;height:100%;border:0;display:block';
 		card.appendChild(this._iframe);
@@ -114,8 +114,8 @@ export class AvatarCreator {
 	}
 
 	_handleMessage(event) {
-		// three.ws Studio:    { source:'characterstudio', type:'export', glb: ArrayBuffer }
-		// three.ws Selfie:    { source:'avaturn',        eventName:'export', data:{ url, urlType } }
+		// Character Studio:  { source:'characterstudio', type:'export', glb: ArrayBuffer }
+		// Avaturn:           { source:'avaturn', eventName:'export', data:{ url, urlType } }
 		const msg = event.data;
 		if (!msg || typeof msg !== 'object') return;
 

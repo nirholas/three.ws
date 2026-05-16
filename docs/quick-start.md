@@ -203,8 +203,8 @@ Copy `.env.example` to `.env` and fill in:
 | `ANTHROPIC_API_KEY` | Required for AI chat | LLM backend. Without it, the agent falls back to pattern matching. |
 | `VITE_PRIVY_APP_ID` | Optional | Wallet auth via [Privy](https://privy.io). Needed for on-chain identity. |
 | `UPSTASH_REDIS_REST_URL` / `UPSTASH_REDIS_REST_TOKEN` | Optional | Distributed rate limiting. Falls back to in-memory without it. |
-| `VITE_CHARACTER_STUDIO_URL` | Optional | Origin where the three.ws Studio avatar-builder iframe is hosted. Defaults to `http://localhost:5173` in dev and `https://studio.three.ws` in production. |
-| `AVATURN_API_KEY` | Optional | API key for the three.ws Selfie (photo-to-avatar) backend. |
+| `VITE_CHARACTER_STUDIO_URL` | Optional | Origin where the [Character Studio](https://github.com/m3-org/CharacterStudio) avatar builder iframe is hosted. Defaults to `http://localhost:5173` in dev. |
+| `AVATURN_API_KEY` | Optional | Photo-to-avatar pipeline via [Avaturn](https://avaturn.me). |
 | `PINATA_JWT` | Optional | IPFS pinning for on-chain agent registration. |
 
 For a local-only dev environment with no uploads or on-chain features, only `DATABASE_URL`, `JWT_SECRET`, and `ANTHROPIC_API_KEY` are strictly needed.
