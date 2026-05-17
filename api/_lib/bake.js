@@ -22,8 +22,10 @@ import {
 	unpartition,
 	weld,
 	quantize,
+	meshopt,
 	textureCompress,
 } from '@gltf-transform/functions';
+import { MeshoptEncoder } from 'meshoptimizer';
 import sharp from 'sharp';
 import { readFile } from 'node:fs/promises';
 import path from 'node:path';
@@ -171,6 +173,9 @@ export async function bakeAppearance(baseGlbBytes, appearance) {
 	//   textureCompress → re-encode base-color / normal / roughness textures via
 	//                   sharp to WebP at a 1024px cap. WebP is supported by every
 	//                   browser model-viewer ships in and by three.js since r136.
+	//   meshopt        →  KHR_mesh_quantization + KHR_meshopt_compression encoding.
+	//                   Adds 2–3× further size reduction on top of weld+quantize.
+	//                   Natively decoded by three.js; no separate decoder bundle needed.
 	//
 	// All operations are conservative: defaults chosen so the same bake works on
 	// arbitrary user-uploaded GLBs without visible artifacts. If a transform
@@ -178,6 +183,7 @@ export async function bakeAppearance(baseGlbBytes, appearance) {
 	// transform group is wrapped — a failure in compression is logged and we
 	// fall back to the unoptimized but correct output.
 	try {
+		await MeshoptEncoder.ready;
 		await doc.transform(
 			unpartition(),
 			prune(),
@@ -191,6 +197,7 @@ export async function bakeAppearance(baseGlbBytes, appearance) {
 				quantizeWeight: 8,
 				quantizeGeneric: 12,
 			}),
+			meshopt({ encoder: MeshoptEncoder }),
 			textureCompress({
 				encoder: sharp,
 				targetFormat: 'webp',

@@ -256,6 +256,70 @@
 			const $ = (sel, root = document) => root.querySelector(sel);
 			const $$ = (sel, root = document) => Array.from(root.querySelectorAll(sel));
 
+			// ── Face quality scoring ─────────────────────────────────────────────
+			// Blur:  variance of the 4-neighbour Laplacian on a 64×64 face crop.
+			//        Scores below BLUR_MIN indicate the frame is too blurry to use.
+			// Luma:  mean luminance of the face crop. Below LUMA_MIN = too dark,
+			//        above LUMA_MAX = overexposed.
+			const BLUR_MIN  = 3.5;   // tune: lower → more permissive
+			const LUMA_MIN  = 40;    // 0–255 scale
+			const LUMA_MAX  = 218;
+
+			let _qCanvas = null, _qCtx = null;
+			function computeFaceQuality(video, lms) {
+				const SIZE = 64;
+				if (!_qCanvas) {
+					_qCanvas = document.createElement('canvas');
+					_qCanvas.width = _qCanvas.height = SIZE;
+					_qCtx = _qCanvas.getContext('2d', { willReadFrequently: true });
+				}
+				// Bounding box of landmarks in normalised [0,1] coords
+				let minX = 1, minY = 1, maxX = 0, maxY = 0;
+				for (const lm of lms) {
+					if (lm.x < minX) minX = lm.x;
+					if (lm.y < minY) minY = lm.y;
+					if (lm.x > maxX) maxX = lm.x;
+					if (lm.y > maxY) maxY = lm.y;
+				}
+				const pad = 0.05;
+				const vw = video.videoWidth, vh = video.videoHeight;
+				const fx = Math.max(0, (minX - pad)) * vw;
+				const fy = Math.max(0, (minY - pad)) * vh;
+				const fw = Math.min(vw - fx, (maxX - minX + 2 * pad) * vw);
+				const fh = Math.min(vh - fy, (maxY - minY + 2 * pad) * vh);
+				if (fw < 4 || fh < 4) return { luma: 0, blur: 0 };
+
+				// Draw face crop at SIZE×SIZE (note: video is displayed mirrored in CSS
+				// but the raw pixel data is un-mirrored — same as landmark coords).
+				_qCtx.drawImage(video, fx, fy, fw, fh, 0, 0, SIZE, SIZE);
+				const { data: d } = _qCtx.getImageData(0, 0, SIZE, SIZE);
+				const n = SIZE * SIZE;
+				const grays = new Float32Array(n);
+				let lumaSum = 0;
+				for (let i = 0, j = 0; i < d.length; i += 4, j++) {
+					const g = 0.299 * d[i] + 0.587 * d[i + 1] + 0.114 * d[i + 2];
+					grays[j] = g;
+					lumaSum += g;
+				}
+				const luma = lumaSum / n;
+				// 4-neighbour Laplacian variance (blur estimator)
+				let ls = 0, ls2 = 0, ln = 0;
+				for (let row = 1; row < SIZE - 1; row++) {
+					for (let col = 1; col < SIZE - 1; col++) {
+						const c = grays[row * SIZE + col];
+						const lap = 4 * c
+							- grays[(row - 1) * SIZE + col]
+							- grays[(row + 1) * SIZE + col]
+							- grays[row * SIZE + (col - 1)]
+							- grays[row * SIZE + (col + 1)];
+						ls += lap; ls2 += lap * lap; ln++;
+					}
+				}
+				const mean = ls / ln;
+				const blur = Math.sqrt(Math.max(0, ls2 / ln - mean * mean));
+				return { luma, blur };
+			}
+
 			// ── Log helper ──────────────────────────────────────────────────────
 			const logEl = $('#log');
 			logEl.textContent = '';
@@ -531,8 +595,14 @@
 					const nose = lms[1] || lms[4];
 					centered = nose && Math.abs(nose.x - 0.5) < 0.22 && Math.abs(nose.y - 0.5) < 0.28;
 
+					// Blur + lighting quality gates (sampled every frame; cheap at 64px)
+					const q = computeFaceQuality(video, lms);
+					state._quality = q;
+
 					const yawOk = yawDeg >= slotCfg.min && yawDeg <= slotCfg.max;
-					pass = yawOk && centered;
+					const blurOk = q.blur >= BLUR_MIN;
+					const lumaOk = q.luma >= LUMA_MIN && q.luma <= LUMA_MAX;
+					pass = yawOk && centered && blurOk && lumaOk;
 				}
 
 				// Throttled log: only when state changes
@@ -554,8 +624,12 @@
 				const chips = [];
 				chips.push(makeChip(faceFound ? 'face' : 'no face', faceFound ? 'ok' : 'bad'));
 				if (faceFound) {
+					const q = state._quality || { blur: 0, luma: 0 };
 					chips.push(makeChip(`yaw ${yawDeg.toFixed(0)}°`, (yawDeg >= slotCfg.min && yawDeg <= slotCfg.max) ? 'ok' : 'bad'));
 					chips.push(makeChip(centered ? 'centered' : 'recenter', centered ? 'ok' : 'bad'));
+					chips.push(makeChip(q.blur < BLUR_MIN ? 'blurry' : 'sharp', q.blur >= BLUR_MIN ? 'ok' : 'bad'));
+					const lumaLabel = q.luma < LUMA_MIN ? 'too dark' : q.luma > LUMA_MAX ? 'overexposed' : 'lit ✓';
+					chips.push(makeChip(lumaLabel, (q.luma >= LUMA_MIN && q.luma <= LUMA_MAX) ? 'ok' : 'bad'));
 				}
 				chips.forEach((c) => state.badgeEl.appendChild(c));
 
@@ -872,6 +946,48 @@
 				ctx.drawImage(bitmap, 0, 0, w, h);
 				try { bitmap.close?.(); } catch (_) {}
 				return c.toDataURL('image/jpeg', 0.85);
+			}
+
+			// ── Avaturn export handler ───────────────────────────────────────────
+			// When the user finishes editing in the Avaturn iframe and taps Export,
+			// Avaturn posts a message: { source:'avaturn', eventName:'export', data:{ url, urlType } }
+			// We close the modal and show the "Mint as agent" CTA with the GLB URL.
+			window.addEventListener('message', (event) => {
+				if (!event.data || typeof event.data !== 'object') return;
+				if (event.data.source !== 'avaturn' || event.data.eventName !== 'export') return;
+				const glbUrl = event.data.data?.url;
+				if (!glbUrl) return;
+				log('Export received from Avaturn editor.', 'ok');
+				log('GLB URL: ' + glbUrl, 'ok');
+				// Close the iframe modal
+				$('#iframe-modal')?.classList.remove('open');
+				const iframeSrc = $('#session-iframe');
+				if (iframeSrc) iframeSrc.src = 'about:blank';
+				// Show mint CTA
+				showExportReady(glbUrl);
+			});
+
+			function showExportReady(glbUrl) {
+				const card = $('#result-card');
+				card.classList.add('show');
+				// Encode the GLB URL so /create can pre-fill it
+				const createHref = '/create?avatarUrl=' + encodeURIComponent(glbUrl);
+				card.innerHTML = `
+					<h2 style="margin:0 0 8px;font-size:17px;font-weight:600">Your avatar is ready</h2>
+					<p style="margin:0 0 16px;color:#8a8d98;font-size:14px;line-height:1.55">
+						Your 3D avatar was exported from the three.ws Selfie editor.<br>
+						Next: mint it on-chain as a three.ws agent with an ERC-8004 identity.
+					</p>
+					<div style="display:flex;gap:10px;flex-wrap:wrap">
+						<a href="${createHref}" class="submit" style="text-decoration:none;display:inline-flex;align-items:center;gap:6px">
+							Mint as agent →
+						</a>
+						<a href="${glbUrl}" target="_blank" rel="noopener"
+							class="submit" style="text-decoration:none;display:inline-flex;align-items:center;gap:6px;background:#1e1f2b;color:#eee">
+							Download GLB ↓
+						</a>
+					</div>
+				`;
 			}
 
 			log('demo ready. click a slot to begin.', 'ok');
