@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Persona Hub demo · three.ws</title>
+<link rel="icon" href="/favicon.ico" />
+<meta name="description" content="Demonstration page for the three.ws Persona Hub — embed <three-ws-signin> on any site, get a token + the user's avatar URL." />
+<meta name="robots" content="noindex" />
+<style>
+	:root {
+		color-scheme: dark;
+		--bg: #05060a;
+		--panel: #0f1018;
+		--panel-elev: #15171f;
+		--border: #1e1f2b;
+		--border-strong: #2a2c3a;
+		--text: #eee;
+		--muted: #8a8d98;
+		--accent: #6aa6ff;
+	}
+	* { box-sizing: border-box; }
+	html, body { margin: 0; padding: 0; }
+	body {
+		font: 15px/1.55 -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+		background: var(--bg);
+		color: var(--text);
+		min-height: 100vh;
+	}
+	main {
+		max-width: 720px;
+		margin: 0 auto;
+		padding: 40px 22px 80px;
+	}
+	.brand {
+		font-size: 12px;
+		letter-spacing: 0.06em;
+		text-transform: uppercase;
+		color: var(--muted);
+		margin-bottom: 18px;
+	}
+	.brand strong { color: var(--text); font-weight: 600; }
+	h1 {
+		font-size: 30px;
+		line-height: 1.2;
+		margin: 0 0 10px;
+		font-weight: 600;
+	}
+	.lede {
+		color: var(--muted);
+		font-size: 16px;
+		line-height: 1.6;
+		margin: 0 0 28px;
+	}
+	.lede code {
+		background: var(--panel);
+		border: 1px solid var(--border);
+		border-radius: 5px;
+		padding: 1px 6px;
+		font-size: 13px;
+	}
+	.demo-card {
+		background: var(--panel);
+		border: 1px solid var(--border);
+		border-radius: 14px;
+		padding: 26px 24px;
+		margin: 0 0 22px;
+	}
+	.demo-card h2 {
+		font-size: 14px;
+		letter-spacing: 0.06em;
+		text-transform: uppercase;
+		color: var(--muted);
+		margin: 0 0 14px;
+		font-weight: 600;
+	}
+	.row {
+		display: flex;
+		gap: 12px;
+		align-items: center;
+		flex-wrap: wrap;
+	}
+	.token-display {
+		margin-top: 18px;
+		padding: 14px 16px;
+		background: var(--panel-elev);
+		border: 1px solid var(--border);
+		border-radius: 10px;
+		font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+		font-size: 12px;
+		color: var(--muted);
+		word-break: break-all;
+		max-height: 130px;
+		overflow: auto;
+	}
+	.token-display.empty { color: var(--muted); font-family: inherit; font-size: 14px; }
+	.avatar-preview {
+		display: none;
+		margin-top: 18px;
+		padding: 16px;
+		background: var(--panel-elev);
+		border: 1px solid var(--border);
+		border-radius: 10px;
+		align-items: center;
+		gap: 14px;
+	}
+	.avatar-preview.show { display: flex; }
+	.avatar-preview img {
+		width: 64px;
+		height: 64px;
+		border-radius: 10px;
+		object-fit: cover;
+		background: #1d2026;
+	}
+	.avatar-preview .info { flex: 1; min-width: 0; }
+	.avatar-preview .name { font-size: 15px; font-weight: 600; }
+	.avatar-preview .url {
+		font-size: 12px;
+		color: var(--muted);
+		word-break: break-all;
+		margin-top: 3px;
+	}
+	.viewer-wrap {
+		display: none;
+		margin-top: 18px;
+		background: var(--panel-elev);
+		border: 1px solid var(--border);
+		border-radius: 10px;
+		overflow: hidden;
+		aspect-ratio: 4 / 3;
+		max-height: 360px;
+	}
+	.viewer-wrap.show { display: block; }
+	model-viewer { width: 100%; height: 100%; --poster-color: transparent; background: transparent; }
+	.code-block {
+		margin: 16px 0 0;
+		padding: 14px 16px;
+		background: var(--panel-elev);
+		border: 1px solid var(--border);
+		border-radius: 10px;
+		font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+		font-size: 12.5px;
+		line-height: 1.55;
+		overflow-x: auto;
+		color: var(--text);
+		white-space: pre;
+	}
+	.log {
+		margin-top: 18px;
+		padding: 12px 14px;
+		background: var(--panel-elev);
+		border: 1px solid var(--border);
+		border-radius: 10px;
+		font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+		font-size: 12px;
+		max-height: 200px;
+		overflow: auto;
+		color: var(--muted);
+	}
+	.log .ok { color: #7bd17b; }
+	.log .err { color: #ef6b6b; }
+	.log .info { color: var(--accent); }
+	a { color: var(--accent); text-decoration: none; }
+	a:hover { text-decoration: underline; }
+	.footer-links {
+		display: flex;
+		gap: 20px;
+		font-size: 14px;
+		margin-top: 30px;
+	}
+</style>
+</head>
+<body>
+<main>
+	<div class="brand"><strong>three.ws</strong> · Persona Hub demo</div>
+	<h1>Sign in with three.ws</h1>
+	<p class="lede">
+		This page imitates a third-party tenant site. Clicking the button below opens a popup to the
+		three.ws consent screen and — on approval — receives a 24-hour token plus the user's avatar
+		URL via <code>postMessage</code>. The token's audience is bound to this origin so it cannot be
+		replayed against another <code>*.three.ws</code> site.
+	</p>
+
+	<div class="demo-card">
+		<h2>1. Trigger the flow</h2>
+		<div class="row">
+			<three-ws-signin id="signin"></three-ws-signin>
+			<span class="muted" style="color: var(--muted); font-size: 13.5px;">
+				Opens <code style="background: var(--panel-elev); padding: 1px 4px; border-radius: 4px;">/persona/authorize.html</code>
+			</span>
+		</div>
+	</div>
+
+	<div class="demo-card">
+		<h2>2. Received token</h2>
+		<div id="token-display" class="token-display empty">No token yet — click the button above.</div>
+		<div id="avatar-preview" class="avatar-preview">
+			<img id="avatar-thumb" alt="" />
+			<div class="info">
+				<div class="name" id="avatar-name"></div>
+				<div class="url" id="avatar-url"></div>
+			</div>
+		</div>
+		<div id="viewer-wrap" class="viewer-wrap">
+			<model-viewer id="model-view"
+				camera-controls
+				auto-rotate
+				auto-rotate-delay="0"
+				rotation-per-second="22deg"
+				exposure="1.0"
+				environment-image="neutral"
+				shadow-intensity="0.4"
+				shadow-softness="0.8"
+				interaction-prompt="none">
+			</model-viewer>
+		</div>
+	</div>
+
+	<div class="demo-card">
+		<h2>3. Server-side verification (snippet)</h2>
+		<p style="color: var(--muted); margin: 0 0 6px; font-size: 13.5px;">
+			Tenants verify tokens before trusting them. Audience is enforced to prevent cross-tenant replay.
+		</p>
+<pre class="code-block">const audience = location.origin;
+const res = await fetch(
+  `https://three.ws/api/auth/persona/verify?token=${encodeURIComponent(token)}` +
+  `&amp;audience=${encodeURIComponent(audience)}`,
+);
+const claims = await res.json();
+if (!res.ok) throw new Error(claims.error_description);
+// claims.sub        → three.ws user id
+// claims.avatar     → { id, url, thumbnail_url, name }
+// claims.scope      → "persona:read avatar:read"</pre>
+		<div id="verify-result" class="log" hidden></div>
+	</div>
+
+	<div class="demo-card">
+		<h2>4. Event log</h2>
+		<div id="log" class="log">Waiting for events…</div>
+	</div>
+
+	<div class="footer-links">
+		<a href="/docs/persona-hub">Documentation</a>
+		<a href="/persona/widget.js">widget.js source</a>
+		<a href="/persona/authorize.html">Consent screen</a>
+	</div>
+</main>
+
+<script type="module" src="https://ajax.googleapis.com/ajax/libs/model-viewer/4.0.0/model-viewer.min.js"></script>
+<script src="/persona/widget.js" defer></script>
+<script>
+	const $log = document.getElementById('log');
+	const $token = document.getElementById('token-display');
+	const $preview = document.getElementById('avatar-preview');
+	const $thumb = document.getElementById('avatar-thumb');
+	const $name = document.getElementById('avatar-name');
+	const $url = document.getElementById('avatar-url');
+	const $viewer = document.getElementById('viewer-wrap');
+	const $model = document.getElementById('model-view');
+	const $verify = document.getElementById('verify-result');
+
+	function log(level, msg) {
+		const span = document.createElement('div');
+		span.className = level;
+		span.textContent = `[${new Date().toLocaleTimeString()}] ${msg}`;
+		$log.appendChild(span);
+		$log.scrollTop = $log.scrollHeight;
+	}
+
+	function clearWaiting() {
+		if ($log.textContent === 'Waiting for events…') $log.textContent = '';
+	}
+
+	const signin = document.getElementById('signin');
+
+	signin.addEventListener('three-ws:authorized', async (e) => {
+		clearWaiting();
+		const { token, avatar, expires_in } = e.detail;
+		log('ok', `Authorized — got ${avatar?.name ? `avatar "${avatar.name}"` : 'an avatar'}, token TTL ${expires_in}s`);
+
+		$token.classList.remove('empty');
+		$token.textContent = token;
+
+		$thumb.src = avatar.thumbnail_url || '';
+		$name.textContent = avatar.name || 'Untitled';
+		$url.textContent = avatar.url;
+		$preview.classList.add('show');
+
+		$model.src = avatar.url;
+		$viewer.classList.add('show');
+
+		// Verify server-side
+		try {
+			log('info', 'Verifying token via /api/auth/persona/verify…');
+			const res = await fetch(
+				`/api/auth/persona/verify?token=${encodeURIComponent(token)}&audience=${encodeURIComponent(location.origin)}`,
+			);
+			const data = await res.json();
+			if (!res.ok) throw new Error(data.error_description || `http ${res.status}`);
+			log('ok', `Verified — sub=${data.sub}, aud=${data.aud}, expires=${new Date(data.exp * 1000).toLocaleString()}`);
+			$verify.hidden = false;
+			$verify.innerHTML = `<div class="ok">Verified.</div>` +
+				`<div>sub: ${data.sub}</div>` +
+				`<div>aud: ${data.aud}</div>` +
+				`<div>scope: ${data.scope}</div>` +
+				`<div>exp: ${new Date(data.exp * 1000).toLocaleString()}</div>`;
+		} catch (err) {
+			log('err', `Verification failed: ${err.message}`);
+			$verify.hidden = false;
+			$verify.innerHTML = `<div class="err">Verification failed: ${err.message}</div>`;
+		}
+	});
+
+	signin.addEventListener('three-ws:cancelled', (e) => {
+		clearWaiting();
+		log('err', `Cancelled${e.detail?.code ? ` (${e.detail.code})` : ''}`);
+	});
+
+	signin.addEventListener('three-ws:error', (e) => {
+		clearWaiting();
+		log('err', `Error: ${e.detail?.message || 'unknown'}`);
+	});
+</script>
+</body>
+</html>

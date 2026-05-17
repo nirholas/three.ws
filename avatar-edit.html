@@ -1,0 +1,271 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8" />
+		<title>Customize Avatar · three.ws</title>
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<meta name="robots" content="noindex" />
+		<meta name="theme-color" content="#000000" />
+		<link rel="shortcut icon" href="/favicon.ico" />
+		<link rel="stylesheet" href="/style.css" />
+		<link rel="stylesheet" href="/fonts/fonts.css" />
+
+		<style>
+			:root {
+				--bg: #0a0a0a;
+				--panel: #111;
+				--panel-2: #161616;
+				--border: #1f1f1f;
+				--border-2: #2a2a2a;
+				--text: #fafafa;
+				--text-2: #a1a1aa;
+				--text-3: #71717a;
+				--accent: #7dd3fc;
+				--accent-2: #a78bfa;
+				--success: #34d399;
+				--danger: #f43f5e;
+				--radius: 14px;
+			}
+			html, body {
+				margin: 0;
+				background: var(--bg);
+				color: var(--text);
+				font-family: 'Inter', system-ui, sans-serif;
+				-webkit-font-smoothing: antialiased;
+			}
+			body {
+				display: flex;
+				flex-direction: column;
+				min-height: 100vh;
+			}
+
+			.ae-bar {
+				display: flex;
+				align-items: center;
+				justify-content: space-between;
+				gap: 12px;
+				padding: 12px 24px;
+				border-bottom: 1px solid var(--border);
+				background: rgba(10, 10, 10, 0.85);
+				backdrop-filter: blur(8px);
+				position: sticky;
+				top: 0;
+				z-index: 20;
+			}
+			.ae-back {
+				display: inline-flex;
+				align-items: center;
+				gap: 8px;
+				color: var(--text-2);
+				text-decoration: none;
+				font-size: 13px;
+			}
+			.ae-back:hover { color: var(--text); }
+			.ae-bar-title {
+				font-family: 'Space Grotesk', sans-serif;
+				font-size: 14px;
+				font-weight: 600;
+				letter-spacing: -0.01em;
+				color: var(--text);
+				text-align: center;
+				flex: 1;
+			}
+			.ae-actions { display: flex; gap: 8px; }
+			.ae-btn {
+				background: transparent;
+				border: 1px solid var(--border-2);
+				color: var(--text-2);
+				padding: 7px 14px;
+				border-radius: 8px;
+				cursor: pointer;
+				font-size: 13px;
+				font-family: inherit;
+				font-weight: 500;
+				transition: color 0.15s, border-color 0.15s, background 0.15s;
+			}
+			.ae-btn:hover { color: var(--text); border-color: var(--text-3); }
+			.ae-btn[disabled] { opacity: 0.4; cursor: default; }
+			.ae-btn.primary {
+				background: var(--text);
+				color: #000;
+				border-color: var(--text);
+				font-weight: 600;
+			}
+			.ae-btn.primary:hover { transform: translateY(-1px); }
+			.ae-btn.primary[disabled] { transform: none; opacity: 0.4; }
+
+			.ae-shell {
+				display: grid;
+				grid-template-columns: minmax(0, 1.5fr) minmax(320px, 1fr);
+				flex: 1;
+				min-height: 0;
+			}
+			.ae-stage {
+				border-right: 1px solid var(--border);
+				background:
+					radial-gradient(ellipse at 50% 35%, rgba(125, 211, 252, 0.06), transparent 60%),
+					radial-gradient(ellipse at 70% 80%, rgba(167, 139, 250, 0.04), transparent 50%),
+					var(--bg);
+				position: relative;
+				min-height: 500px;
+			}
+			.ae-stage-loading {
+				position: absolute;
+				inset: 0;
+				display: flex;
+				align-items: center;
+				justify-content: center;
+				color: var(--text-3);
+				font-size: 13px;
+				pointer-events: none;
+			}
+
+			.ae-side {
+				display: flex;
+				flex-direction: column;
+				min-height: 0;
+			}
+			.ae-tabs {
+				display: flex;
+				border-bottom: 1px solid var(--border);
+				background: var(--panel);
+				padding: 0 8px;
+				overflow-x: auto;
+			}
+			.ae-tab {
+				background: transparent;
+				border: 0;
+				color: var(--text-3);
+				padding: 12px 14px;
+				font-size: 13px;
+				font-weight: 500;
+				cursor: pointer;
+				font-family: inherit;
+				border-bottom: 2px solid transparent;
+				transition: color 0.15s, border-color 0.15s;
+				white-space: nowrap;
+			}
+			.ae-tab:hover { color: var(--text-2); }
+			.ae-tab.active { color: var(--text); border-color: var(--text); }
+
+			.ae-panel {
+				flex: 1;
+				min-height: 0;
+				overflow-y: auto;
+				padding: 16px;
+			}
+			.ae-grid {
+				display: grid;
+				grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+				gap: 10px;
+			}
+			.ae-tile {
+				background: var(--panel);
+				border: 1px solid var(--border);
+				border-radius: 12px;
+				padding: 10px 10px 8px;
+				cursor: pointer;
+				transition: border-color 0.15s, transform 0.15s, background 0.15s;
+				color: inherit;
+				text-align: left;
+				font-family: inherit;
+			}
+			.ae-tile:hover {
+				border-color: var(--border-2);
+				transform: translateY(-1px);
+			}
+			.ae-tile.selected {
+				border-color: var(--accent);
+				background: rgba(125, 211, 252, 0.06);
+			}
+			.ae-tile-preview {
+				aspect-ratio: 1 / 1;
+				border-radius: 8px;
+				background:
+					radial-gradient(ellipse at center, rgba(255,255,255,0.05), transparent 70%),
+					var(--panel-2);
+				margin-bottom: 8px;
+				display: flex;
+				align-items: center;
+				justify-content: center;
+				font-size: 36px;
+			}
+			.ae-tile-name {
+				font-size: 12px;
+				font-weight: 600;
+				color: var(--text);
+				white-space: nowrap;
+				overflow: hidden;
+				text-overflow: ellipsis;
+			}
+			.ae-tile-kind {
+				font-size: 10px;
+				color: var(--text-3);
+				text-transform: uppercase;
+				letter-spacing: 0.06em;
+				margin-top: 1px;
+			}
+
+			.ae-tile-none {
+				/* "Remove" tile for clearing a slot */
+				background: transparent;
+				border-style: dashed;
+			}
+
+			.ae-status {
+				padding: 10px 16px;
+				border-top: 1px solid var(--border);
+				background: var(--panel);
+				font-size: 12px;
+				color: var(--text-3);
+				display: flex;
+				align-items: center;
+				gap: 8px;
+				min-height: 36px;
+			}
+			.ae-status.ok { color: var(--success); }
+			.ae-status.err { color: var(--danger); }
+			.ae-status .spin {
+				width: 11px; height: 11px;
+				border-radius: 50%;
+				border: 2px solid rgba(255,255,255,0.2);
+				border-top-color: var(--accent);
+				animation: ae-spin 0.9s linear infinite;
+			}
+			@keyframes ae-spin { to { transform: rotate(360deg); } }
+
+			.ae-error {
+				padding: 80px 24px;
+				text-align: center;
+				color: var(--text-3);
+				font-size: 14px;
+			}
+
+			@media (max-width: 980px) {
+				.ae-shell { grid-template-columns: 1fr; }
+				.ae-stage { border-right: 0; border-bottom: 1px solid var(--border); min-height: 380px; }
+			}
+		</style>
+	</head>
+	<body>
+		<header class="ae-bar">
+			<a class="ae-back" id="ae-back" href="/">← Back</a>
+			<div class="ae-bar-title" id="ae-title">Customize</div>
+			<div class="ae-actions">
+				<button class="ae-btn" id="ae-reset" type="button" disabled>Discard</button>
+				<button class="ae-btn primary" id="ae-save" type="button" disabled>Save</button>
+			</div>
+		</header>
+		<main class="ae-shell" id="ae-shell">
+			<div class="ae-stage" id="ae-stage">
+				<div class="ae-stage-loading" id="ae-loading">Loading avatar…</div>
+			</div>
+			<aside class="ae-side">
+				<nav class="ae-tabs" id="ae-tabs" role="tablist"></nav>
+				<div class="ae-panel" id="ae-panel"></div>
+				<div class="ae-status" id="ae-status">Pick a preset to preview it live.</div>
+			</aside>
+		</main>
+		<script src="/src/avatar-edit.js" type="module"></script>
+	</body>
+</html>
