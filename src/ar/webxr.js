@@ -3,11 +3,10 @@
 // Reuses the element's existing Three.js renderer by enabling XR mode on start
 // and restoring the RAF loop on end. Hit-test places the agent on tap.
 //
-// XR also enables half-body mode by scaling every lower-body bone (leg, foot,
-// toe…) to zero, collapsing the corresponding skinned geometry to the bone's
-// rest position. This mirrors what the half-body GLB variant does, but at
-// runtime, without reloading the model — so the AgentAvatar empathy bindings
-// and animation manager stay attached.
+// Half-body XR mode (collapse lower-body bones) is opt-in via the `halfBody`
+// constructor option — only the demo page under /demos/halfbody passes it.
+// The live AR button on the main viewer enters XR with the full body, exactly
+// as it did before the half-body work was added.
 
 import { Matrix4, Vector3 } from 'three';
 
@@ -31,8 +30,9 @@ function _isLowerBody(name) {
 }
 
 export class WebXRSession {
-	constructor(viewer, { onEnd } = {}) {
+	constructor(viewer, { onEnd, halfBody = false } = {}) {
 		this._viewer = viewer;
+		this._halfBody = halfBody;
 		this._onEnd = onEnd;
 		this._session = null;
 		this._hitTestSource = null;
@@ -87,9 +87,9 @@ export class WebXRSession {
 		this._savedPos = content?.position.clone() ?? null;
 		this._savedRot = content?.rotation.clone() ?? null;
 
-		// Collapse lower-body bones so the avatar reads as a half-body bust in
-		// VR/AR — the user doesn't see their own legs in a passthrough rig.
-		this._enterHalfBody();
+		// Half-body mode is opt-in. The live AR button never sets it; only the
+		// /demos/halfbody preview passes halfBody:true.
+		if (this._halfBody) this._enterHalfBody();
 
 		// Hand the render loop to the XR system (replaces RAF)
 		if (viewer._rafId !== null) {
@@ -179,7 +179,8 @@ export class WebXRSession {
 		if (viewer.content && this._savedPos) viewer.content.position.copy(this._savedPos);
 		if (viewer.content && this._savedRot) viewer.content.rotation.copy(this._savedRot);
 
-		// Restore full-body bone scales captured at XR start.
+		// Restore full-body bone scales captured at XR start (no-op when halfBody
+		// mode was never entered — _halfBodyBones is empty).
 		this._exitHalfBody();
 
 		viewer.controls.enabled = true;

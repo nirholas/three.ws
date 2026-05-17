@@ -321,6 +321,34 @@
 			"dest": "/studio/$1"
 		},
 		{
+			"src": "/demos",
+			"dest": "/demos/index.html"
+		},
+		{
+			"src": "/demos/",
+			"dest": "/demos/index.html"
+		},
+		{
+			"src": "/demos/(.*)\\.html",
+			"dest": "/demos/$1.html"
+		},
+		{
+			"src": "/demos/([^/.]+)",
+			"dest": "/demos/$1.html"
+		},
+		{
+			"src": "/demo/avatar-os",
+			"dest": "/demo/avatar-os/index.html"
+		},
+		{
+			"src": "/demo/avatar-os/",
+			"dest": "/demo/avatar-os/index.html"
+		},
+		{
+			"src": "/demo/avatar-os/(.*)",
+			"dest": "/demo/avatar-os/$1"
+		},
+		{
 			"src": "/api/dashboard/prefs",
 			"dest": "/api/dashboard/prefs"
 		},
@@ -741,40 +769,40 @@
 			"dest": "/api/pump/[action]?action=recent-graduations"
 		},
 		{
-			"src": "/api/coin/state",
-			"dest": "/api/coin/[action]?action=state"
+			"src": "/api/demo/coin/state",
+			"dest": "/api/demo/coin/[action]?action=state"
 		},
 		{
-			"src": "/api/coin/holder",
-			"dest": "/api/coin/[action]?action=holder"
+			"src": "/api/demo/coin/holder",
+			"dest": "/api/demo/coin/[action]?action=holder"
 		},
 		{
-			"src": "/api/coin/history",
-			"dest": "/api/coin/[action]?action=history"
+			"src": "/api/demo/coin/history",
+			"dest": "/api/demo/coin/[action]?action=history"
 		},
 		{
-			"src": "/api/coin/events",
-			"dest": "/api/coin/[action]?action=events"
+			"src": "/api/demo/coin/events",
+			"dest": "/api/demo/coin/[action]?action=events"
 		},
 		{
-			"src": "/api/coin/winners",
-			"dest": "/api/coin/[action]?action=winners"
+			"src": "/api/demo/coin/winners",
+			"dest": "/api/demo/coin/[action]?action=winners"
 		},
 		{
-			"src": "/api/coin/holders",
-			"dest": "/api/coin/[action]?action=holders"
+			"src": "/api/demo/coin/holders",
+			"dest": "/api/demo/coin/[action]?action=holders"
 		},
 		{
-			"src": "/coin",
-			"dest": "/coin/index.html"
+			"src": "/demo/coin",
+			"dest": "/demo/coin/index.html"
 		},
 		{
-			"src": "/coin/",
-			"dest": "/coin/index.html"
+			"src": "/demo/coin/",
+			"dest": "/demo/coin/index.html"
 		},
 		{
-			"src": "/coin/([1-9A-HJ-NP-Za-km-z]{32,44})/?",
-			"dest": "/coin/index.html"
+			"src": "/demo/coin/([1-9A-HJ-NP-Za-km-z]{32,44})/?",
+			"dest": "/demo/coin/index.html"
 		},
 		{
 			"src": "/api/avatars/presign",

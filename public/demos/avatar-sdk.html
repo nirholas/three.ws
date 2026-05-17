@@ -1,0 +1,137 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1" />
+		<title>@three-ws/avatar SDK · three.ws lab</title>
+		<meta name="robots" content="noindex" />
+		<link rel="stylesheet" href="/style.css" />
+		<link rel="stylesheet" href="/nav.css" />
+		<style>
+			:root { color-scheme: dark; }
+			body { background: #05060a; color: #eee; font: 15px/1.5 -apple-system, system-ui, sans-serif; margin: 0; }
+			.stage { max-width: 1000px; margin: 0 auto; padding: 48px 24px 80px; }
+			.crumb a { color: #8a8d98; text-decoration: none; }
+			.crumb a:hover { color: #d6ff3d; }
+			h1 { font-size: 28px; font-weight: 600; letter-spacing: -0.015em; margin: 14px 0 8px; }
+			.sub { color: #8a8d98; max-width: 64ch; margin: 0 0 30px; }
+			pre {
+				background: #07080d; border: 1px solid #1e1f2b; border-radius: 9px;
+				padding: 14px 16px; font-family: ui-monospace, monospace; font-size: 12.5px;
+				color: #d6ff3d; overflow-x: auto;
+			}
+			.card {
+				background: #0f1018; border: 1.5px solid #1e1f2b; border-radius: 14px;
+				padding: 22px; margin: 16px 0;
+			}
+			.viewer-host {
+				min-height: 460px;
+				background: #0a0b12; border-radius: 10px; overflow: hidden;
+				margin-top: 14px;
+			}
+			.viewer-host agent-3d { width: 100%; height: 460px; display: block; }
+			button {
+				background: #d6ff3d; color: #0a0a0a; border: 0; border-radius: 9px;
+				padding: 10px 14px; font-weight: 600; cursor: pointer; font: inherit;
+			}
+			.log {
+				margin-top: 14px;
+				background: #07080d; border: 1px solid #1e1f2b; border-radius: 9px;
+				padding: 12px; font-family: ui-monospace, monospace; font-size: 12px;
+				color: #8a8d98; max-height: 200px; overflow: auto; white-space: pre-wrap;
+			}
+			.log .ok { color: #d6ff3d; }
+			.log .err { color: #ff6b6b; }
+			.log .info { color: #66d9ef; }
+		</style>
+	</head>
+	<body>
+		<header><div id="nav-container"></div></header>
+
+		<main class="stage">
+			<p class="crumb"><a href="/demos">← lab</a></p>
+			<h1>@three-ws/avatar SDK</h1>
+			<p class="sub">
+				The npm SDK bundle loaded from <code>/avatar-sdk/dist/index.mjs</code>
+				(what consumers would get from <code>npm install @three-ws/avatar</code>
+				once it's published). On mount it registers <code>&lt;agent-3d&gt;</code>
+				as a custom element. The Creator section opens the iframe modal that
+				resolves with a GLB Blob — the same flow third-party sites would use.
+			</p>
+
+			<section class="card">
+				<h2 style="margin-top:0;font-size:18px">1. Drop-in web component</h2>
+				<pre>&lt;script type="module" src="/avatar-sdk/dist/index.mjs"&gt;&lt;/script&gt;
+&lt;agent-3d src="/avatars/default.glb"&gt;&lt;/agent-3d&gt;</pre>
+				<div class="viewer-host" id="sdk-viewer-host">
+					<!-- the agent-3d element is injected after the SDK loads -->
+				</div>
+				<div class="log" id="component-log">waiting for SDK to register the custom element…</div>
+			</section>
+
+			<section class="card">
+				<h2 style="margin-top:0;font-size:18px">2. Programmatic Creator</h2>
+				<pre>import { AvatarCreator } from '/avatar-sdk/src/creator.js';
+
+const creator = new AvatarCreator({
+  onExport: (glbBlob) =&gt; { /* save it */ },
+});
+creator.open();</pre>
+				<button id="open-creator-btn">Open three.ws Avatar Creator</button>
+				<div class="log" id="creator-log">click to open the modal.</div>
+			</section>
+		</main>
+
+		<script src="/nav.js" defer></script>
+
+		<!-- Load the prebuilt SDK bundle -->
+		<script type="module" src="/avatar-sdk/dist/index.mjs"></script>
+
+		<script type="module">
+			const $ = (id) => document.getElementById(id);
+			const componentLog = $('component-log');
+			const creatorLog = $('creator-log');
+			const stamp = () => new Date().toTimeString().slice(0, 8);
+			const line = (el, msg, cls = '') => {
+				el.innerHTML += `\n<span class="${cls}">[${stamp()}] ${msg}</span>`;
+			};
+
+			// Wait until the custom element registers (the SDK self-registers on load).
+			const start = performance.now();
+			const check = () => {
+				if (customElements.get('agent-3d')) {
+					const el = document.createElement('agent-3d');
+					el.setAttribute('src', '/avatars/default.glb');
+					$('sdk-viewer-host').appendChild(el);
+					line(componentLog, `✓ &lt;agent-3d&gt; registered in ${Math.round(performance.now() - start)} ms`, 'ok');
+					line(componentLog, '✓ mounted with src=/avatars/default.glb', 'ok');
+				} else if (performance.now() - start < 8000) {
+					setTimeout(check, 100);
+				} else {
+					line(componentLog, '✗ SDK bundle did not register &lt;agent-3d&gt; within 8s — check /avatar-sdk/dist/index.mjs', 'err');
+				}
+			};
+			check();
+
+			// Programmatic Creator demo. Imports from the SDK source so we don't
+			// rebuild the whole bundle every time creator.js changes.
+			$('open-creator-btn').addEventListener('click', async () => {
+				try {
+					const mod = await import('/avatar-sdk/src/creator.js');
+					line(creatorLog, 'opening three.ws Avatar Creator iframe modal…', 'info');
+					const creator = new mod.AvatarCreator({
+						onExport: (glbBlob) => {
+							line(creatorLog, `✓ export received (${glbBlob.size} bytes)`, 'ok');
+						},
+						onClose: () => {
+							line(creatorLog, 'modal closed without export', 'info');
+						},
+					});
+					await creator.open();
+				} catch (err) {
+					line(creatorLog, 'creator failed: ' + err.message, 'err');
+				}
+			});
+		</script>
+	</body>
+</html>

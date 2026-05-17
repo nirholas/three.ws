@@ -2,6 +2,23 @@
   "_readme": "Curated RSS items for https://three.ws/rss/announcements.xml. Edit this file to control exactly what HackerNoon (and any RSS reader) sees. Each entry needs: id (stable slug), title, date (ISO 8601), body_html. Optional: link, author, summary, tags. Items are served newest-first by date; cap is 50. Seeded from data/archives/trythreews_tweets_2026-05-16.json on 2026-05-16 (35 entries). Re-run scripts/seed-rss-from-archive.mjs to refresh from a newer scrape.",
   "items": [
     {
+      "id": "listed-on-bnb-chain-dappbay",
+      "title": "three.ws Listed on BNB Chain's Dappbay Directory",
+      "date": "2026-05-17T18:00:00.000Z",
+      "link": "https://three.ws/blog/three-ws-on-bnb-chain-dappbay.html",
+      "author": "three.ws",
+      "summary": "three.ws is now listed on Dappbay, BNB Chain's official dApp directory, under AI Agent Launchpad, AI Data, and AI Infra. The listing puts <agent-3d> — the one-tag deploy for Solana-minted, ERC-8004-walleted, x402-native 3D agents — in front of the BNB Chain ecosystem's discovery surface for AI dApps.",
+      "body_html": "<p><strong>three.ws is now listed on <a href=\"https://dappbay.bnbchain.org/detail/three\" rel=\"noopener\">Dappbay</a>, BNB Chain's official dApp directory.</strong> The listing is live under the categories <em>AI Agent Launchpad</em>, <em>AI Data</em>, and <em>AI Infra</em>, with a current rank of <strong>AI #121</strong>.</p>\n<ul>\n<li>Dappbay listing: <a href=\"https://dappbay.bnbchain.org/detail/three\" rel=\"noopener\">dappbay.bnbchain.org/detail/three</a></li>\n<li>Open source: <a href=\"https://github.com/nirholas/three.ws\" rel=\"noopener\">github.com/nirholas/three.ws</a></li>\n<li>Project site: <a href=\"https://three.ws\" rel=\"noopener\">three.ws</a></li>\n</ul>\n<h2>What three.ws ships</h2>\n<p>three.ws is the platform for 3D AI agents on-chain. Every <code>&lt;agent-3d&gt;</code> tag deploys an autonomous 3D character with:</p>\n<ul>\n<li><strong>A Solana NFT identity.</strong> Each agent is minted as a transferable on-chain asset.</li>\n<li><strong>An ERC-8004 wallet.</strong> The emerging cross-chain agent-identity standard, baked in.</li>\n<li><strong>A browser-native 3D body.</strong> Rendered in WebGL &mdash; no plugins, no native install.</li>\n<li><strong>Native x402 / HTTP 402 payments.</strong> Creators monetize through time-passes, trials, and per-session payments in USDC, with earnings settled on-chain.</li>\n</ul>\n<h2>Why Dappbay matters</h2>\n<p>Dappbay is BNB Chain's official discovery layer for decentralized applications &mdash; the dApp directory that BNB Chain itself publishes and that the wider BSC ecosystem uses to find, vet, and rank projects. A Dappbay listing puts three.ws inside that discovery flow and surfaces it to the BNB Chain community looking for AI agent infrastructure, launchpads, and tooling.</p>\n<p>three.ws settles agent payments on Solana, Base, and Polygon today; the Dappbay presence is about distribution and reach into BNB Chain's AI dApp audience, not a chain migration. The underlying x402 protocol is chain-agnostic, and we're open to expanding payment rails wherever agent demand lives.</p>\n<h2>What gets listed</h2>\n<ul>\n<li><strong>Project:</strong> three &mdash; <em>The platform for 3D AI agents on-chain.</em></li>\n<li><strong>Categories:</strong> AI Agent Launchpad &middot; AI Data &middot; AI Infra</li>\n<li><strong>Current rank:</strong> AI #121</li>\n<li><strong>Payment chains:</strong> Solana, Base, Polygon (USDC via x402)</li>\n</ul>\n<h2>Links</h2>\n<ul>\n<li>Dappbay listing: <a href=\"https://dappbay.bnbchain.org/detail/three\" rel=\"noopener\">dappbay.bnbchain.org/detail/three</a></li>\n<li>Project site: <a href=\"https://three.ws\" rel=\"noopener\">three.ws</a></li>\n<li>Open source: <a href=\"https://github.com/nirholas/three.ws\" rel=\"noopener\">github.com/nirholas/three.ws</a></li>\n</ul>",
+      "tags": [
+        "listing",
+        "directory",
+        "bnb-chain",
+        "dappbay",
+        "x402",
+        "agent-economy"
+      ]
+    },
+    {
       "id": "live-on-alibaba-cloud-marketplace",
       "title": "three.ws Launches on Alibaba Cloud Marketplace, Bringing Native x402 Agent Payments to Hyperscale",
       "date": "2026-05-17T12:00:00.000Z",

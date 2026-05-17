@@ -150,6 +150,15 @@ export class TalkController {
 		this._setState('idle');
 	}
 
+	/**
+	 * Invalidate the cached voice lookup so the next turn re-checks the agent
+	 * for a (possibly newly cloned) voice_id. Call after the user finishes a
+	 * voice-clone flow inside the overlay.
+	 */
+	refreshVoice() {
+		this._voicePromise = null;
+	}
+
 	// ── pipeline ─────────────────────────────────────────────────────────
 
 	async _handleTranscript(transcript) {

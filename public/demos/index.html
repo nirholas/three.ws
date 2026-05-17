@@ -1,0 +1,104 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1" />
+		<title>three.ws · Lab demos</title>
+		<meta name="robots" content="noindex" />
+		<link rel="stylesheet" href="/style.css" />
+		<link rel="stylesheet" href="/nav.css" />
+		<style>
+			:root { color-scheme: dark; }
+			body {
+				background: #05060a;
+				color: #eee;
+				font: 15px/1.5 -apple-system, system-ui, 'Segoe UI', Roboto, sans-serif;
+				margin: 0;
+			}
+			.demos-stage { max-width: 920px; margin: 0 auto; padding: 56px 24px 80px; }
+			.demos-eyebrow { color: #d6ff3d; font-size: 12px; letter-spacing: 0.18em; text-transform: uppercase; margin: 0 0 12px; }
+			.demos-title { font-size: 32px; font-weight: 600; letter-spacing: -0.015em; margin: 0 0 8px; }
+			.demos-sub { color: #8a8d98; max-width: 60ch; margin: 0 0 40px; }
+			.demos-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+			@media (max-width: 640px) { .demos-grid { grid-template-columns: 1fr; } }
+			.demo-card {
+				display: block;
+				padding: 22px 22px 20px;
+				border-radius: 16px;
+				background: #0f1018;
+				border: 1.5px solid #1e1f2b;
+				text-decoration: none;
+				color: inherit;
+				transition: transform 0.15s, border-color 0.15s, box-shadow 0.15s;
+			}
+			.demo-card:hover { transform: translateY(-2px); border-color: #2c2d3d; box-shadow: 0 14px 30px rgba(0,0,0,0.4); }
+			.demo-card h2 { margin: 0 0 6px; font-size: 17px; font-weight: 600; letter-spacing: -0.005em; }
+			.demo-card p { margin: 0; color: #8a8d98; font-size: 13.5px; line-height: 1.55; }
+			.demo-status {
+				display: inline-block;
+				margin-top: 10px;
+				padding: 2px 9px;
+				border-radius: 999px;
+				font-size: 10.5px;
+				font-weight: 600;
+				letter-spacing: 0.05em;
+				text-transform: uppercase;
+			}
+			.demo-status.live { background: rgba(214,255,61,0.12); color: #d6ff3d; border: 1px solid rgba(214,255,61,0.35); }
+			.demo-status.beta { background: rgba(255,184,77,0.12); color: #ffb84d; border: 1px solid rgba(255,184,77,0.35); }
+			.warning {
+				margin: 32px 0 0;
+				padding: 14px 16px;
+				border-radius: 12px;
+				background: rgba(255,184,77,0.06);
+				border: 1px solid rgba(255,184,77,0.25);
+				color: #ffb84d;
+				font-size: 13px;
+				line-height: 1.55;
+			}
+		</style>
+	</head>
+	<body>
+		<header><div id="nav-container"></div></header>
+
+		<main class="demos-stage">
+			<p class="demos-eyebrow">three.ws · lab</p>
+			<h1 class="demos-title">Demo pages</h1>
+			<p class="demos-sub">
+				Pre-release features wired end-to-end so we can test them before they
+				replace anything on the live site. Everything on these pages hits real
+				APIs and real storage — no mocks.
+			</p>
+
+			<div class="demos-grid">
+				<a class="demo-card" href="/demos/usdz-ar.html">
+					<h2>USDZ &amp; AR Quick Look</h2>
+					<p>Load an avatar, generate a USDZ companion in-browser, push it to R2, and confirm iOS Quick Look opens the result.</p>
+					<span class="demo-status beta">Beta</span>
+				</a>
+				<a class="demo-card" href="/demos/halfbody-xr.html">
+					<h2>Half-body XR</h2>
+					<p>Enter WebXR with lower-body bones collapsed — the seated/VR variant Ready Player Me used to ship.</p>
+					<span class="demo-status beta">Beta</span>
+				</a>
+				<a class="demo-card" href="/demos/avatar-sdk.html">
+					<h2>@three-ws/avatar SDK</h2>
+					<p>Drop-in <code>&lt;agent-3d&gt;</code> web component loaded from the npm SDK bundle, plus the programmatic <code>AvatarCreator</code> iframe.</p>
+					<span class="demo-status beta">Beta</span>
+				</a>
+				<a class="demo-card" href="/demos/lipsync-mic.html">
+					<h2>Audio-driven lipsync</h2>
+					<p>Feed live mic audio through the viseme analyser and watch the avatar's mouth track your voice in real time.</p>
+					<span class="demo-status live">Live</span>
+				</a>
+			</div>
+
+			<p class="warning">
+				These pages are unlisted and noindex. They share the same backend as
+				the live site but are intentionally separate from <a href="/create" style="color:#ffb84d">/create</a> and <a href="/avatars" style="color:#ffb84d">/avatars/:id</a> so the production flow keeps working while we test.
+			</p>
+		</main>
+
+		<script src="/nav.js" defer></script>
+	</body>
+</html>

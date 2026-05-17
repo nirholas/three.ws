@@ -239,6 +239,12 @@
 		<priority>0.8</priority>
 	</url>
 	<url>
+		<loc>https://three.ws/news/listed-on-bnb-chain-dappbay</loc>
+		<lastmod>2026-05-17</lastmod>
+		<changefreq>yearly</changefreq>
+		<priority>0.6</priority>
+	</url>
+	<url>
 		<loc>https://three.ws/news/live-on-alibaba-cloud-marketplace</loc>
 		<lastmod>2026-05-17</lastmod>
 		<changefreq>yearly</changefreq>

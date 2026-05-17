@@ -357,6 +357,14 @@ three.ws is available on major cloud marketplaces and open to infrastructure par
 | **Alibaba Cloud** | Live: [product listing →](https://marketplace.alibabacloud.com/products/56724001/sgcmfw00036800.html) · [storefront →](https://marketplace.alibabacloud.com/store/3247293.html) |
 | **Google Cloud** | three.ws runs on WebGL, Vercel edge, and EVM — a natural fit for GCP's AI infrastructure, Vertex AI, and global CDN. Open to co-listing, credits, and joint GTM. |
 
+## Ecosystem Directories
+
+three.ws is indexed in chain-ecosystem dApp directories so the community can discover, vet, and rank it.
+
+| Directory | Status |
+|---|---|
+| **BNB Chain · Dappbay** | Live: [dappbay.bnbchain.org/detail/three →](https://dappbay.bnbchain.org/detail/three) — categories: AI Agent Launchpad · AI Data · AI Infra |
+
 ---
 
 ## Screenshots

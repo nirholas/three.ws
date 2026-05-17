@@ -2947,6 +2947,13 @@ async function handleRunCoinCycle(req, res) {
 		return error(res, 401, 'unauthorized', 'cron secret required');
 	}
 
+	// Demo gate: cron is wired in vercel.json but stays a no-op until the
+	// operator opts in by setting COIN_DEMO_ENABLED=true in env. Until then
+	// neither Vercel cron nor a manual call can touch any coin_launches row.
+	if (process.env.COIN_DEMO_ENABLED !== 'true') {
+		return json(res, 200, { ok: true, disabled: true, hint: 'set COIN_DEMO_ENABLED=true to enable' });
+	}
+
 	const coinLib = await import('../_lib/coin/index.js');
 	const coins = await coinLib.listActiveCoins();
 
@@ -3041,6 +3048,12 @@ async function handleRunCoinPayouts(req, res) {
 	const fromCron = req.headers['x-vercel-cron'] === '1';
 	if (!fromCron && expected && auth !== expected) {
 		return error(res, 401, 'unauthorized', 'cron secret required');
+	}
+
+	// Demo gate — see handleRunCoinCycle. Until COIN_DEMO_ENABLED=true is set,
+	// the payout drainer cannot fire even if rows are pending.
+	if (process.env.COIN_DEMO_ENABLED !== 'true') {
+		return json(res, 200, { ok: true, disabled: true, hint: 'set COIN_DEMO_ENABLED=true to enable' });
 	}
 
 	const coinLib = await import('../_lib/coin/index.js');

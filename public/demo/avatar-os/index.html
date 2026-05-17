@@ -1,0 +1,126 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8" />
+		<title>OSS Avatar Pipeline · three.ws</title>
+		<meta name="viewport" content="width=device-width, initial-scale=1" />
+		<meta name="robots" content="noindex" />
+		<meta name="theme-color" content="#0a0a0a" />
+		<link rel="icon" href="/favicon.ico" />
+		<link rel="stylesheet" href="/demo/avatar-os/shared.css" />
+	</head>
+	<body>
+		<header class="os-header">
+			<div class="brand">
+				three.ws<span class="tag">avatar-os demo</span>
+			</div>
+			<nav>
+				<a href="/demo/avatar-os/" class="active">overview</a>
+				<a href="/demo/avatar-os/studio.html">studio</a>
+				<a href="/demo/avatar-os/selfie.html">selfie</a>
+				<a href="/demo/avatar-os/combined.html">combined</a>
+			</nav>
+		</header>
+		<main class="os-main">
+			<div class="banner">
+				<strong>Isolated demo workspace.</strong> Nothing here touches the
+				production Avaturn pipeline. Goal: prove out a fully open-source
+				replacement before promoting it.
+			</div>
+
+			<h1 style="margin: 0 0 8px; font-size: 28px">Open-source avatar pipeline</h1>
+			<p style="color: var(--text-2); max-width: 720px; line-height: 1.6">
+				Three parallel paths replace what we currently get from Avaturn. Each
+				demo is end-to-end functional — capture, generate, preview, export GLB.
+				No mocks, no fake data.
+			</p>
+
+			<div class="tile-grid">
+				<a class="tile" href="/demo/avatar-os/studio.html">
+					<h3>Studio · customization editor</h3>
+					<p>
+						Embeds the open-source CharacterStudio (M3-org / Apache-2.0)
+						editor. Pick a base avatar, customize traits, export GLB. Replaces
+						the Avaturn iframe editor.
+					</p>
+					<div class="meta">
+						stack: @m3-org/characterstudio · @pixiv/three-vrm · three.js
+					</div>
+				</a>
+				<a class="tile" href="/demo/avatar-os/selfie.html">
+					<h3>Selfie · photo → 3D face mesh</h3>
+					<p>
+						MediaPipe Face Landmarker (Apache-2.0) runs entirely in-browser to
+						build a textured 3D mesh from one selfie. Replaces the Avaturn
+						photo-to-avatar API.
+					</p>
+					<div class="meta">
+						stack: @mediapipe/tasks-vision · three.js · WebGL
+					</div>
+				</a>
+				<a class="tile" href="/demo/avatar-os/combined.html">
+					<h3>Combined · selfie face + Studio body</h3>
+					<p>
+						Stitches the selfie face mesh onto a Studio body GLB and exports
+						a single merged GLB. Closest analogue to the Avaturn end product.
+					</p>
+					<div class="meta">stack: all of the above + GLTFExporter</div>
+				</a>
+			</div>
+
+			<section style="margin-top: 48px">
+				<h2 style="font-size: 18px; margin: 0 0 12px">What's wired</h2>
+				<ul style="color: var(--text-2); line-height: 1.8; font-size: 14px">
+					<li>
+						MediaPipe Tasks Vision pulled via npm
+						(<code>@mediapipe/tasks-vision</code>). WASM + model files
+						fetch from Google's CDN at runtime.
+					</li>
+					<li>
+						Triangulation indices from
+						<a
+							href="https://github.com/tensorflow/tfjs-models/blob/master/face-landmarks-detection/demos/shared/triangulation.js"
+							>tfjs-models</a
+						>
+						(Apache-2.0) — vendored at <code>src/demo/triangulation.js</code>.
+					</li>
+					<li>
+						CharacterStudio is the existing
+						<code>character-studio/</code> workspace (M3-org, AGPL — under
+						review). Demo expects the dev server at
+						<code>http://localhost:5173</code>; run
+						<code>npm --prefix character-studio run dev</code> in a second
+						terminal.
+					</li>
+					<li>
+						GLB export uses three.js's
+						<code>GLTFExporter</code> from <code>three/addons</code>.
+					</li>
+				</ul>
+			</section>
+
+			<section style="margin-top: 32px">
+				<h2 style="font-size: 18px; margin: 0 0 12px">Status</h2>
+				<div id="status-grid" class="tile-grid">
+					<div class="tile">
+						<h3>MediaPipe wasm</h3>
+						<div class="status" id="mp-status">checking…</div>
+					</div>
+					<div class="tile">
+						<h3>Triangulation</h3>
+						<div class="status" id="tri-status">checking…</div>
+					</div>
+					<div class="tile">
+						<h3>Base body GLB</h3>
+						<div class="status" id="glb-status">checking…</div>
+					</div>
+					<div class="tile">
+						<h3>CharacterStudio dev server</h3>
+						<div class="status" id="cs-status">checking…</div>
+					</div>
+				</div>
+			</section>
+		</main>
+		<script type="module" src="/src/demo/os-hub.js"></script>
+	</body>
+</html>

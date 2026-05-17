@@ -3,18 +3,19 @@
 <head>
 	<meta charset="utf-8" />
 	<meta name="viewport" content="width=device-width,initial-scale=1" />
-	<title>Lottery + Reflection · three.ws</title>
-	<meta name="description" content="The three.ws lottery + SOL reflection coin. Hourly winners, passive SOL drips to every eligible holder, verifiable randomness." />
+	<title>Demo · Lottery + Reflection · three.ws</title>
+	<meta name="description" content="DEMO — the three.ws lottery + SOL reflection mechanic, under test. Not yet a production launch." />
+	<meta name="robots" content="noindex,nofollow" />
 	<meta property="og:site_name" content="three.ws" />
-	<meta property="og:title" content="Lottery + Reflection · three.ws" />
-	<meta property="og:description" content="Hourly lottery + passive SOL reflection. Every holder is a ticket. Verifiable randomness." />
+	<meta property="og:title" content="Demo · Lottery + Reflection · three.ws" />
+	<meta property="og:description" content="Under test on three.ws — hourly lottery + passive SOL reflection. Production launch TBD." />
 	<meta property="og:type" content="website" />
-	<meta property="og:url" content="https://three.ws/coin" />
+	<meta property="og:url" content="https://three.ws/demo/coin" />
 	<meta property="og:image" content="https://three.ws/3d.png" />
 	<meta name="twitter:card" content="summary_large_image" />
 	<meta name="twitter:site" content="@trythreews" />
-	<meta name="twitter:title" content="Lottery + Reflection · three.ws" />
-	<meta name="twitter:description" content="Hourly lottery + passive SOL reflection. Every holder is a ticket. Verifiable randomness." />
+	<meta name="twitter:title" content="Demo · Lottery + Reflection · three.ws" />
+	<meta name="twitter:description" content="Under test on three.ws — hourly lottery + passive SOL reflection. Production launch TBD." />
 	<meta name="twitter:image" content="https://three.ws/3d.png" />
 	<link rel="icon" href="/favicon.ico" />
 	<link rel="stylesheet" href="/style.css" />
@@ -138,6 +139,13 @@
 		.brand-strip a { color: var(--accent); text-decoration: none; }
 		.brand-strip a:hover { text-decoration: underline; }
 		.brand-strip .dot-sep { width: 3px; height: 3px; border-radius: 50%; background: var(--muted); }
+		.brand-strip .demo-tag { background: rgba(255,186,46,0.12); color: var(--accent-3);
+			padding: 2px 8px; border-radius: 999px; font-weight: 700; letter-spacing: 0.08em;
+			border: 1px solid rgba(255,186,46,0.3); }
+		.demo-banner { background: linear-gradient(180deg, rgba(255,186,46,0.10), rgba(255,186,46,0.02));
+			border: 1px solid rgba(255,186,46,0.3); border-radius: 10px; padding: 12px 16px;
+			margin-bottom: 18px; font-size: 13px; color: #f1c870; line-height: 1.5; }
+		.demo-banner strong { color: var(--accent-3); }
 	</style>
 	<script defer src="/nav.js"></script>
 </head>
@@ -148,6 +156,14 @@
 			<a href="/">three.ws</a>
 			<span class="dot-sep"></span>
 			<span>Lottery + SOL reflection</span>
+			<span class="dot-sep"></span>
+			<span class="demo-tag">DEMO</span>
+		</div>
+		<div class="demo-banner" role="note">
+			<strong>This is a three.ws demo surface.</strong> The mechanic is implemented end-to-end —
+			pump.fun creator-vault claim, verifiable randomness, batched SOL payouts — but is not yet
+			serving a production launch. Nothing here is a public offering. If a coin appears below, it
+			is operating in test mode (dry-run cron, no on-chain payouts until explicitly activated).
 		</div>
 		<div id="header" class="title-row">
 			<h1 id="coin-name">Loading…</h1>
@@ -238,11 +254,11 @@
 				field needed to independently re-derive the winner (<code>round</code>,
 				<code>randomness</code>, <code>signature</code>) is persisted into <code>coin_draws</code>
 				and surfaced on the audit row for each draw — open the API at
-				<code>/api/coin/winners</code> for the raw values. Verifiable by anyone, anywhere.
+				<code>/api/demo/coin/winners</code> for the raw values. Verifiable by anyone, anywhere.
 			</div>
 		</section>
 	</main>
 	<footer id="site-footer"></footer>
-	<script type="module" src="/coin-dashboard.js"></script>
+	<script type="module" src="/demo/coin/dashboard.js"></script>
 </body>
 </html>
