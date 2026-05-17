@@ -349,24 +349,23 @@ async function ensureDir(dir) {
 	await mkdir(dir, { recursive: true });
 }
 
-async function main() {
-	const items = await loadCuratedItems();
-	if (!items.length) {
-		console.warn('No curated items found — skipping news page generation.');
-		return;
-	}
-	await ensureDir(OUT_DIR);
-	await ensureDir(path.dirname(ROUTES_FILE));
+// Write all permalink HTML pages + listing index + sitemap routes file
+// from a pre-loaded items array. Exported so the admin handler can
+// regenerate output on save without spawning a subprocess.
+export async function writeAllPages(items, { outDir = OUT_DIR, routesFile = ROUTES_FILE } = {}) {
+	if (!items.length) return { written: 0, routes: 0 };
+	await ensureDir(outDir);
+	await ensureDir(path.dirname(routesFile));
 
 	let written = 0;
 	for (const item of items) {
 		const html = renderArticlePage(item);
-		await writeFile(path.join(OUT_DIR, `${item.slug}.html`), html, 'utf8');
+		await writeFile(path.join(outDir, `${item.slug}.html`), html, 'utf8');
 		written++;
 	}
 
 	const indexHtml = renderIndexPage(items);
-	await writeFile(path.join(OUT_DIR, 'index.html'), indexHtml, 'utf8');
+	await writeFile(path.join(outDir, 'index.html'), indexHtml, 'utf8');
 
 	const routes = [
 		{
@@ -386,13 +385,29 @@ async function main() {
 			changefreq: 'yearly',
 		})),
 	];
-	await writeFile(ROUTES_FILE, JSON.stringify(routes, null, 2) + '\n', 'utf8');
+	await writeFile(routesFile, JSON.stringify(routes, null, 2) + '\n', 'utf8');
 
-	console.log(`Wrote ${written} article page(s) + index to ${OUT_DIR}`);
-	console.log(`Wrote ${routes.length} route(s) to ${ROUTES_FILE}`);
+	return { written, routes: routes.length };
 }
 
-main().catch((err) => {
-	console.error('[build-news] failed:', err);
-	process.exit(1);
-});
+export { renderArticlePage, renderIndexPage };
+
+async function main() {
+	const items = await loadCuratedItems();
+	if (!items.length) {
+		console.warn('No curated items found — skipping news page generation.');
+		return;
+	}
+	const { written, routes } = await writeAllPages(items);
+	console.log(`Wrote ${written} article page(s) + index to ${OUT_DIR}`);
+	console.log(`Wrote ${routes} route(s) to ${ROUTES_FILE}`);
+}
+
+// Run main() only when invoked as a script (preserves CLI behavior;
+// admin handler imports writeAllPages without triggering this).
+if (import.meta.url === `file://${process.argv[1]}`) {
+	main().catch((err) => {
+		console.error('[build-news] failed:', err);
+		process.exit(1);
+	});
+}
