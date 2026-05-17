@@ -1,23 +1,24 @@
-// Public read-only API for the lottery + reflection coin.
+// three.ws demo coin API — public read-only.
 //
-// Routes (via vercel.json rewrites):
-//   GET  /api/coin/state?mint=XXX
-//   GET  /api/coin/holder?mint=XXX&wallet=YYY
-//   GET  /api/coin/history?mint=XXX&limit=20
-//   GET  /api/coin/events?mint=XXX&limit=50&kind=<event_kind>
-//   GET  /api/coin/winners?mint=XXX&limit=20
-//   GET  /api/coin/holders?mint=XXX&limit=50
+// Routes (via vercel.json rewrites, all under the /demo/* namespace until
+// graduation to a production path):
+//   GET  /api/demo/coin/state?mint=XXX
+//   GET  /api/demo/coin/holder?mint=XXX&wallet=YYY
+//   GET  /api/demo/coin/history?mint=XXX&limit=20
+//   GET  /api/demo/coin/events?mint=XXX&limit=50&kind=<event_kind>
+//   GET  /api/demo/coin/winners?mint=XXX&limit=20
+//   GET  /api/demo/coin/holders?mint=XXX&limit=50
 //
 // Caller may omit `mint` when exactly one active coin exists — the API picks
-// it automatically so the public dashboard can run on /coin without any
-// query parameter for the common single-launch case.
+// it automatically so /demo/coin works without any query parameter for the
+// common single-launch case.
 //
 // All `*_lamports` values are returned as strings to preserve precision on
 // the JSON wire (Number can't safely represent values > 2^53).
 
-import { sql } from '../_lib/db.js';
-import { cors, error, json, method, wrap } from '../_lib/http.js';
-import { listActiveCoins, loadCoinByMint } from '../_lib/coin/index.js';
+import { sql } from '../../_lib/db.js';
+import { cors, error, json, method, wrap } from '../../_lib/http.js';
+import { listActiveCoins, loadCoinByMint } from '../../_lib/coin/index.js';
 
 function bigStr(v) {
 	if (v === null || v === undefined) return null;

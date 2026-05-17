@@ -142,18 +142,20 @@ export async function saveRemoteGlbToAccount(source, meta = {}) {
 		console.warn('[account] thumbnail/auto-tag pipeline failed silently', err?.message);
 	});
 
-	// Fire-and-forget USDZ companion + half-body variant generation. iOS Quick
-	// Look needs a USDZ; VR seats use a waist-up GLB. Both are derived from
-	// the source blob in-memory, uploaded via dedicated presigns, then
-	// PATCHed onto the avatar row so the viewer picks them up next load.
-	generateAndSaveCompanions(avatar.id, blob).catch((err) => {
-		console.warn('[account] usdz/halfbody pipeline failed silently', err?.message);
-	});
+	// USDZ + half-body companion generation is opt-in (the demo page at
+	// /demos/usdz-ar passes generateCompanions:true). The live /create flow
+	// stays untouched — those derivations run client-side and add several
+	// seconds of CPU on every save, so they don't ship to all users yet.
+	if (meta.generateCompanions) {
+		generateAndSaveCompanions(avatar.id, blob).catch((err) => {
+			console.warn('[account] usdz/halfbody pipeline failed silently', err?.message);
+		});
+	}
 
 	return avatar;
 }
 
-async function generateAndSaveCompanions(avatarId, glbBlob) {
+export async function generateAndSaveCompanions(avatarId, glbBlob) {
 	const { glbBlobToUsdzBlob, glbBlobToHalfBodyBlob } = await import('./usdz-pipeline.js');
 
 	// USDZ companion for iOS Quick Look. Independent of the half-body pass so

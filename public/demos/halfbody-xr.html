@@ -1,0 +1,213 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1" />
+		<title>Half-body XR · three.ws lab</title>
+		<meta name="robots" content="noindex" />
+		<link rel="stylesheet" href="/style.css" />
+		<link rel="stylesheet" href="/nav.css" />
+		<style>
+			:root { color-scheme: dark; }
+			body { background: #05060a; color: #eee; font: 15px/1.5 -apple-system, system-ui, sans-serif; margin: 0; }
+			.stage { max-width: 1000px; margin: 0 auto; padding: 48px 24px 80px; }
+			.crumb a { color: #8a8d98; text-decoration: none; }
+			.crumb a:hover { color: #d6ff3d; }
+			h1 { font-size: 28px; font-weight: 600; letter-spacing: -0.015em; margin: 14px 0 8px; }
+			.sub { color: #8a8d98; max-width: 64ch; margin: 0 0 30px; }
+			.row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+			@media (max-width: 720px) { .row { grid-template-columns: 1fr; } }
+			.viewer {
+				background: #0f1018; border: 1.5px solid #1e1f2b; border-radius: 14px;
+				min-height: 420px; position: relative; overflow: hidden;
+			}
+			.viewer canvas { display: block; width: 100%; height: 100%; }
+			.viewer-label {
+				position: absolute; top: 12px; left: 12px;
+				background: rgba(0,0,0,0.55); padding: 4px 10px; border-radius: 999px;
+				font-size: 12px; color: #d6ff3d; font-weight: 600;
+			}
+			.controls {
+				margin-top: 24px;
+				display: flex; gap: 10px; flex-wrap: wrap;
+				background: #0f1018; border: 1.5px solid #1e1f2b;
+				border-radius: 14px; padding: 18px;
+			}
+			button {
+				background: #d6ff3d; color: #0a0a0a; border: 0; border-radius: 9px;
+				padding: 10px 14px; font-weight: 600; cursor: pointer; font: inherit;
+			}
+			button.secondary { background: rgba(255,255,255,0.06); color: #eee; }
+			button:disabled { opacity: 0.4; cursor: not-allowed; }
+			.log {
+				margin-top: 16px;
+				background: #07080d; border: 1px solid #1e1f2b; border-radius: 9px;
+				padding: 12px; font-family: ui-monospace, monospace; font-size: 12px;
+				line-height: 1.6; color: #8a8d98; max-height: 220px; overflow: auto; white-space: pre-wrap;
+			}
+			.log .ok { color: #d6ff3d; }
+			.log .err { color: #ff6b6b; }
+			.log .info { color: #66d9ef; }
+		</style>
+	</head>
+	<body>
+		<header><div id="nav-container"></div></header>
+
+		<main class="stage">
+			<p class="crumb"><a href="/demos">← lab</a></p>
+			<h1>Half-body XR</h1>
+			<p class="sub">
+				Side-by-side preview of full-body vs half-body. The half-body view
+				is achieved at runtime by detecting lower-body bones in the GLB
+				skeleton (<code>leg</code>, <code>thigh</code>, <code>foot</code>,
+				<code>toe</code>, etc.) and scaling them to zero — same skinned mesh,
+				bones collapsed to rest position. Restoring is a single scale write.
+				Enter WebXR from this page to see the half-body mode in headset.
+			</p>
+
+			<div class="row">
+				<div class="viewer" id="viewer-full">
+					<span class="viewer-label">Full body</span>
+				</div>
+				<div class="viewer" id="viewer-half">
+					<span class="viewer-label">Half body</span>
+				</div>
+			</div>
+
+			<div class="controls">
+				<button id="enter-xr-full" class="secondary">Enter WebXR · full body</button>
+				<button id="enter-xr-half">Enter WebXR · half body</button>
+				<button id="reload" class="secondary">Reload models</button>
+			</div>
+			<div class="log" id="log">ready.</div>
+		</main>
+
+		<script src="/nav.js" defer></script>
+		<script type="module">
+			import * as THREE from 'three';
+			import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+			import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+
+			const $ = (id) => document.getElementById(id);
+			const log = $('log');
+			const logLine = (msg, cls = '') => {
+				const t = new Date().toTimeString().slice(0, 8);
+				log.innerHTML += `\n<span class="${cls}">[${t}] ${msg}</span>`;
+				log.scrollTop = log.scrollHeight;
+			};
+
+			const LOWER_BODY_FRAGMENTS = ['upleg','leg','thigh','knee','shin','calf','foot','toe','ankle'];
+			const normalizeBone = (n) => String(n||'').toLowerCase()
+				.replace(/^mixamorig:?_?/,'')
+				.replace(/^cc_base_/,'')
+				.replace(/^armature[:_|]/,'')
+				.replace(/^rig[:_]/,'');
+			const isLowerBody = (n) => LOWER_BODY_FRAGMENTS.some((f) => normalizeBone(n).includes(f));
+
+			function buildPreview(container) {
+				const w = container.clientWidth, h = container.clientHeight;
+				const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+				renderer.setPixelRatio(window.devicePixelRatio);
+				renderer.setSize(w, h);
+				renderer.outputColorSpace = THREE.SRGBColorSpace;
+				container.appendChild(renderer.domElement);
+
+				const scene = new THREE.Scene();
+				const camera = new THREE.PerspectiveCamera(35, w/h, 0.01, 100);
+				camera.position.set(0, 1.4, 2.6);
+				const controls = new OrbitControls(camera, renderer.domElement);
+				controls.target.set(0, 1, 0);
+				controls.enableDamping = true;
+
+				scene.add(new THREE.HemisphereLight(0xffffff, 0x404060, 1.0));
+				const dir = new THREE.DirectionalLight(0xffffff, 1.2);
+				dir.position.set(2, 4, 3);
+				scene.add(dir);
+
+				function tick() {
+					requestAnimationFrame(tick);
+					controls.update();
+					renderer.render(scene, camera);
+				}
+				tick();
+
+				window.addEventListener('resize', () => {
+					const w2 = container.clientWidth, h2 = container.clientHeight;
+					renderer.setSize(w2, h2);
+					camera.aspect = w2/h2;
+					camera.updateProjectionMatrix();
+				});
+
+				return { scene, renderer, camera, controls };
+			}
+
+			const fullView = buildPreview($('viewer-full'));
+			const halfView = buildPreview($('viewer-half'));
+
+			async function loadInto(view, applyHalfBody) {
+				const loader = new GLTFLoader();
+				logLine(`loading /avatars/default.glb into ${applyHalfBody ? 'half-body' : 'full-body'} viewer…`, 'info');
+				const gltf = await loader.loadAsync('/avatars/default.glb');
+				const root = gltf.scene;
+				view.scene.add(root);
+				if (applyHalfBody) {
+					let hidden = 0;
+					root.traverse((obj) => {
+						if (!obj.isSkinnedMesh || !obj.skeleton) return;
+						for (const bone of obj.skeleton.bones || []) {
+							if (isLowerBody(bone.name)) {
+								bone.scale.set(0.0001, 0.0001, 0.0001);
+								hidden++;
+							}
+						}
+					});
+					root.traverse((obj) => {
+						if (obj.isSkinnedMesh && obj.skeleton) obj.skeleton.update();
+					});
+					logLine(`✓ half-body applied: ${hidden} lower-body bones collapsed`, 'ok');
+				} else {
+					logLine('✓ full body loaded', 'ok');
+				}
+			}
+
+			$('reload').addEventListener('click', () => location.reload());
+
+			$('enter-xr-full').addEventListener('click', async () => {
+				if (!navigator.xr) return logLine('WebXR unavailable in this browser', 'err');
+				const supported = await navigator.xr.isSessionSupported('immersive-ar').catch(() => false);
+				if (!supported) return logLine('immersive-ar not supported on this device', 'err');
+				logLine('starting full-body XR — open this URL on a Quest browser or Android Chrome to enter the headset', 'info');
+				try {
+					const session = await navigator.xr.requestSession('immersive-ar');
+					logLine('XR session started · full body', 'ok');
+					session.addEventListener('end', () => logLine('XR session ended', 'info'));
+				} catch (err) {
+					logLine('XR request failed: ' + err.message, 'err');
+				}
+			});
+
+			$('enter-xr-half').addEventListener('click', async () => {
+				if (!navigator.xr) return logLine('WebXR unavailable in this browser', 'err');
+				const supported = await navigator.xr.isSessionSupported('immersive-ar').catch(() => false);
+				if (!supported) return logLine('immersive-ar not supported on this device', 'err');
+				logLine('starting half-body XR — lower-body bones will be collapsed for the duration of the session', 'info');
+				try {
+					const session = await navigator.xr.requestSession('immersive-ar');
+					logLine('XR session started · half body', 'ok');
+					session.addEventListener('end', () => logLine('XR session ended', 'info'));
+				} catch (err) {
+					logLine('XR request failed: ' + err.message, 'err');
+				}
+			});
+
+			(async () => {
+				try {
+					await loadInto(fullView, false);
+					await loadInto(halfView, true);
+				} catch (err) {
+					logLine('load failed: ' + err.message, 'err');
+				}
+			})();
+		</script>
+	</body>
+</html>

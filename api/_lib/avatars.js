@@ -26,9 +26,12 @@ export async function listAvatars({
 		conds.push(`a.created_at < $${params.length}`);
 	}
 	params.push(limit + 1);
+	// usdz_key / halfbody_key are intentionally NOT selected here yet — the
+	// 20260515 migration adds them but is rolled out separately. The decorate()
+	// helper falls back to null if the columns are missing from the row, so
+	// listAvatars stays safe on prod before the migration runs.
 	const rows = await sql(
 		`select a.id, a.owner_id, a.slug, a.name, a.description, a.storage_key, a.thumbnail_key,
-		        a.usdz_key, a.halfbody_key,
 		        a.appearance, a.appearance_hash, a.baked_storage_key, a.baked_at,
 		        a.size_bytes, a.content_type, a.source, a.visibility, a.tags, a.version,
 		        a.created_at, a.updated_at, a.parent_avatar_id,
@@ -150,6 +153,13 @@ export async function updateAvatar({ id, userId, patch }) {
 	// Coalesce-style update keeps the statement static and safe against dynamic composition.
 	// `appearance` uses the explicit `hasAppearance` flag because null is a valid value
 	// (means "clear the dress-up state"); coalesce would let null fall through unchanged.
+	//
+	// NOTE on usdz_key / halfbody_key: the 20260515 migration adds those columns
+	// but ships separately. Referencing them in this static UPDATE would crash
+	// every avatar edit on prod before the migration runs. Until the migration
+	// is rolled out, those PATCH fields are silently dropped here; the demo
+	// pages under /demos/ write them via a separate code path that no-ops on
+	// "column does not exist".
 	const [row] = await sql`
 		update avatars set
 			name          = coalesce(${patch.name ?? null}, name),
@@ -157,8 +167,6 @@ export async function updateAvatar({ id, userId, patch }) {
 			visibility    = coalesce(${patch.visibility ?? null}, visibility),
 			tags          = coalesce(${patch.tags ?? null}::text[], tags),
 			thumbnail_key = coalesce(${patch.thumbnail_key ?? null}, thumbnail_key),
-			usdz_key      = coalesce(${patch.usdz_key ?? null}, usdz_key),
-			halfbody_key  = coalesce(${patch.halfbody_key ?? null}, halfbody_key),
 			appearance    = case when ${hasAppearance}::bool
 			                     then ${patch.appearance ? JSON.stringify(patch.appearance) : null}::jsonb
 			                     else appearance end,
@@ -211,9 +219,11 @@ export async function searchPublicAvatars({ q, tag, limit = 24, cursor, withTota
 		conds.push(`created_at < $${params.length}`);
 	}
 	params.push(limit + 1);
+	// usdz_key / halfbody_key are intentionally NOT selected here yet — see the
+	// matching comment in listAvatars(). decorate() returns null for both when
+	// the columns are absent from the row.
 	const rows = await sql(
 		`select id, owner_id, slug, name, description, storage_key, thumbnail_key,
-		        usdz_key, halfbody_key,
 		        appearance, appearance_hash, baked_storage_key, baked_at,
 		        size_bytes,
 		        content_type, source, visibility, tags, view_count, created_at

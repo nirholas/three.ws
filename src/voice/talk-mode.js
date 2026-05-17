@@ -18,6 +18,7 @@
 import { TalkScene } from './talk-scene.js';
 import { AvatarMouthTarget } from './avatar-morph-target.js';
 import { TalkController } from './talk-controller.js';
+import { openVoiceCloneModal } from './voice-clone-modal.js';
 
 let activeSession = null;
 

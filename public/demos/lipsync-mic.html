@@ -1,0 +1,220 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1" />
+		<title>Audio-driven lipsync · three.ws lab</title>
+		<meta name="robots" content="noindex" />
+		<link rel="stylesheet" href="/style.css" />
+		<link rel="stylesheet" href="/nav.css" />
+		<style>
+			:root { color-scheme: dark; }
+			body { background: #05060a; color: #eee; font: 15px/1.5 -apple-system, system-ui, sans-serif; margin: 0; }
+			.stage { max-width: 1000px; margin: 0 auto; padding: 48px 24px 80px; }
+			.crumb a { color: #8a8d98; text-decoration: none; }
+			.crumb a:hover { color: #d6ff3d; }
+			h1 { font-size: 28px; font-weight: 600; letter-spacing: -0.015em; margin: 14px 0 8px; }
+			.sub { color: #8a8d98; max-width: 64ch; margin: 0 0 30px; }
+			.row { display: grid; grid-template-columns: 1fr 320px; gap: 24px; }
+			@media (max-width: 800px) { .row { grid-template-columns: 1fr; } }
+			.viewer-host {
+				background: #0f1018; border: 1.5px solid #1e1f2b; border-radius: 14px;
+				min-height: 460px; position: relative; overflow: hidden;
+			}
+			.viewer-host canvas { width: 100%; height: 100%; display: block; }
+			.panel {
+				background: #0f1018; border: 1.5px solid #1e1f2b; border-radius: 14px;
+				padding: 20px; display: flex; flex-direction: column; gap: 12px;
+			}
+			button {
+				background: #d6ff3d; color: #0a0a0a; border: 0; border-radius: 9px;
+				padding: 10px 14px; font-weight: 600; cursor: pointer; font: inherit;
+			}
+			button.secondary { background: rgba(255,255,255,0.06); color: #eee; }
+			button:disabled { opacity: 0.4; cursor: not-allowed; }
+			.meter {
+				display: flex; gap: 4px; height: 16px; align-items: end;
+			}
+			.meter .bar {
+				flex: 1; height: 0%; background: linear-gradient(180deg, #d6ff3d, #5a7a1a);
+				border-radius: 2px; transition: height 0.05s linear;
+			}
+			.viseme-row { display: flex; justify-content: space-between; font-size: 12px; color: #8a8d98; }
+			.viseme-row code { color: #d6ff3d; font-weight: 600; }
+			.log {
+				background: #07080d; border: 1px solid #1e1f2b; border-radius: 9px;
+				padding: 12px; font-family: ui-monospace, monospace; font-size: 12px;
+				color: #8a8d98; line-height: 1.6;
+			}
+		</style>
+	</head>
+	<body>
+		<header><div id="nav-container"></div></header>
+
+		<main class="stage">
+			<p class="crumb"><a href="/demos">← lab</a></p>
+			<h1>Audio-driven lipsync</h1>
+			<p class="sub">
+				Real-time test of the three.ws viseme analyser
+				(<code>src/lip-sync-analyser.js</code>). Hit <strong>Start</strong>,
+				allow mic access, and speak — the analyser hands per-viseme weights
+				to the avatar's morph targets every frame. This is the exact pipeline
+				that drives ElevenLabs-streamed TTS in the live chat, just sourced
+				from your mic so you can verify the mouth shapes against your speech.
+			</p>
+
+			<div class="row">
+				<div class="viewer-host" id="viewer-host"></div>
+				<div class="panel">
+					<button id="start">Start mic</button>
+					<button id="stop" class="secondary" disabled>Stop</button>
+
+					<div class="meter" id="meter">
+						<div class="bar"></div><div class="bar"></div><div class="bar"></div>
+						<div class="bar"></div><div class="bar"></div><div class="bar"></div>
+						<div class="bar"></div><div class="bar"></div><div class="bar"></div>
+					</div>
+
+					<div id="visemes" style="display:flex;flex-direction:column;gap:4px;margin-top:6px"></div>
+
+					<div class="log">
+						The avatar's <code>viseme_aa / E / O / SS / PP …</code> morph
+						targets are driven by frequency-band energy from the mic. Your
+						audio never leaves the browser — analysis is all
+						<code>AnalyserNode</code> + <code>requestAnimationFrame</code>.
+					</div>
+				</div>
+			</div>
+		</main>
+
+		<script src="/nav.js" defer></script>
+		<script type="module">
+			import * as THREE from 'three';
+			import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+			import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+			import { LipSyncAnalyser } from '/src/lip-sync-analyser.js';
+
+			const $ = (id) => document.getElementById(id);
+			const host = $('viewer-host');
+
+			// ── three.js scene ─────────────────────────────────────────────
+			const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+			renderer.setPixelRatio(window.devicePixelRatio);
+			renderer.setSize(host.clientWidth, host.clientHeight);
+			renderer.outputColorSpace = THREE.SRGBColorSpace;
+			host.appendChild(renderer.domElement);
+
+			const scene = new THREE.Scene();
+			const camera = new THREE.PerspectiveCamera(28, host.clientWidth / host.clientHeight, 0.01, 100);
+			camera.position.set(0, 1.55, 0.85);
+			const controls = new OrbitControls(camera, renderer.domElement);
+			controls.target.set(0, 1.55, 0);
+			controls.enableDamping = true;
+
+			scene.add(new THREE.HemisphereLight(0xffffff, 0x404060, 1.1));
+			const dir = new THREE.DirectionalLight(0xffffff, 1.4);
+			dir.position.set(2, 4, 3);
+			scene.add(dir);
+
+			window.addEventListener('resize', () => {
+				const w = host.clientWidth, h = host.clientHeight;
+				renderer.setSize(w, h);
+				camera.aspect = w / h;
+				camera.updateProjectionMatrix();
+			});
+
+			// ── Load the default avatar ────────────────────────────────────
+			let visemeMorphs = new Map(); // viseme_name -> [{ mesh, index }]
+			const VISEMES = [
+				'viseme_aa', 'viseme_O', 'viseme_E', 'viseme_I', 'viseme_nn',
+				'viseme_SS', 'viseme_FF', 'viseme_CH', 'viseme_PP',
+			];
+
+			const loader = new GLTFLoader();
+			loader.load('/avatars/default.glb', (gltf) => {
+				scene.add(gltf.scene);
+				gltf.scene.traverse((node) => {
+					if (!node.isMesh || !node.morphTargetDictionary || !node.morphTargetInfluences) return;
+					for (const v of VISEMES) {
+						const idx = node.morphTargetDictionary[v];
+						if (idx === undefined) continue;
+						if (!visemeMorphs.has(v)) visemeMorphs.set(v, []);
+						visemeMorphs.get(v).push({ mesh: node, index: idx });
+					}
+				});
+
+				const row = $('visemes');
+				for (const v of VISEMES) {
+					const found = visemeMorphs.has(v);
+					const el = document.createElement('div');
+					el.className = 'viseme-row';
+					el.innerHTML = `<span>${v}</span><code data-v="${v}">${found ? '0.00' : 'n/a'}</code>`;
+					row.appendChild(el);
+				}
+			});
+
+			// ── Animation loop ─────────────────────────────────────────────
+			let analyser = null;
+			let stream = null;
+			const bars = document.querySelectorAll('#meter .bar');
+
+			function tick() {
+				requestAnimationFrame(tick);
+				controls.update();
+
+				if (analyser) {
+					const visemes = analyser.sample();
+					if (visemes) {
+						let i = 0;
+						for (const [name, targets] of visemeMorphs.entries()) {
+							const w = visemes[name] ?? 0;
+							for (const { mesh, index } of targets) {
+								mesh.morphTargetInfluences[index] = w;
+							}
+							const code = document.querySelector(`code[data-v="${name}"]`);
+							if (code) code.textContent = w.toFixed(2);
+							if (bars[i]) bars[i].style.height = `${Math.min(100, w * 100)}%`;
+							i++;
+						}
+					}
+				}
+
+				renderer.render(scene, camera);
+			}
+			tick();
+
+			// ── Mic wiring ─────────────────────────────────────────────────
+			$('start').addEventListener('click', async () => {
+				try {
+					stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+					const ctx = new (window.AudioContext || window.webkitAudioContext)();
+					const src = ctx.createMediaStreamSource(stream);
+					const an = ctx.createAnalyser();
+					an.fftSize = 256;
+					an.smoothingTimeConstant = 0.7;
+					src.connect(an);
+					// We deliberately do NOT connect an → ctx.destination — keeps mic from
+					// echoing back through the speakers.
+					analyser = new LipSyncAnalyser();
+					analyser.connect(an);
+
+					$('start').disabled = true;
+					$('stop').disabled = false;
+				} catch (err) {
+					alert('mic access failed: ' + err.message);
+				}
+			});
+
+			$('stop').addEventListener('click', () => {
+				if (analyser) { analyser.disconnect(); analyser = null; }
+				if (stream) { stream.getTracks().forEach((t) => t.stop()); stream = null; }
+				$('start').disabled = false;
+				$('stop').disabled = true;
+				// Reset morph values to zero.
+				for (const targets of visemeMorphs.values()) {
+					for (const { mesh, index } of targets) mesh.morphTargetInfluences[index] = 0;
+				}
+			});
+		</script>
+	</body>
+</html>

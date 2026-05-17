@@ -164,6 +164,10 @@ const appConfig = {
 				'x402-stripe': resolve(__dirname, 'public/x402-stripe.html'),
 				'x402-dashboard': resolve(__dirname, 'public/dashboard/x402.html'),
 				sitemap: resolve(__dirname, 'public/sitemap/index.html'),
+				'avatar-os-hub': resolve(__dirname, 'public/demo/avatar-os/index.html'),
+				'avatar-os-studio': resolve(__dirname, 'public/demo/avatar-os/studio.html'),
+				'avatar-os-selfie': resolve(__dirname, 'public/demo/avatar-os/selfie.html'),
+				'avatar-os-combined': resolve(__dirname, 'public/demo/avatar-os/combined.html'),
 			},
 		},
 	},
@@ -241,6 +245,8 @@ const appConfig = {
 					'/strategy-lab/': resolve(root, 'public/strategy-lab.html'),
 					'/sitemap': resolve(root, 'public/sitemap/index.html'),
 					'/sitemap/': resolve(root, 'public/sitemap/index.html'),
+					'/demo/avatar-os': resolve(root, 'public/demo/avatar-os/index.html'),
+					'/demo/avatar-os/': resolve(root, 'public/demo/avatar-os/index.html'),
 					'/': resolve(root, 'home.html'),
 					'/home': resolve(root, 'home.html'),
 					'/features': resolve(root, 'features.html'),
@@ -265,6 +271,7 @@ const appConfig = {
 					'/discover',
 					'/gallery',
 					'/docs',
+					'/demo/avatar-os',
 				]);
 				server.middlewares.use(async (req, res, next) => {
 					const url = req.url || '/';
@@ -451,6 +458,15 @@ const appConfig = {
 				cpSync(resolve(__dirname, 'docs'), resolve(__dirname, 'dist/docs'), {
 					recursive: true,
 				});
+			},
+		},
+		{
+			name: 'copy-blog',
+			closeBundle() {
+				const blogSrc = resolve(__dirname, 'blog');
+				if (existsSync(blogSrc)) {
+					cpSync(blogSrc, resolve(__dirname, 'dist/blog'), { recursive: true });
+				}
 			},
 		},
 		{

@@ -1,16 +1,17 @@
-// Coin dashboard — vanilla module, no framework.
+// three.ws coin demo dashboard — vanilla module, no framework.
 //
 // Lifecycle:
-//   1. Parse mint from /coin/<mint>/ URL or query, fall back to "first active
-//      coin" from /api/coin/state.
+//   1. Parse mint from /demo/coin/<mint>/ URL or ?mint= query, fall back to
+//      "first active coin" returned by /api/demo/coin/state.
 //   2. Fetch state every 10s; render pots, KPIs, countdown.
 //   3. Tabs (winners | holders | claims | reflections) lazy-fetch their
 //      data on first open and refresh on the same 10s tick.
-//   4. Wallet input (persisted to localStorage) fetches /api/coin/holder and
-//      renders per-wallet stats + recent payouts.
+//   4. Wallet input (persisted to localStorage) fetches /api/demo/coin/holder
+//      and renders per-wallet stats + recent payouts.
 
 const POLL_MS = 10_000;
-const LS_KEY = 'coin-dashboard-wallet';
+const LS_KEY = 'threews-coin-demo-wallet';
+const API_BASE = '/api/demo/coin';
 
 const $ = (sel) => document.querySelector(sel);
 
@@ -23,7 +24,7 @@ const state = {
 };
 
 function pickMintFromUrl() {
-	const m = window.location.pathname.match(/^\/coin\/([1-9A-HJ-NP-Za-km-z]{32,44})\/?$/);
+	const m = window.location.pathname.match(/^\/demo\/coin\/([1-9A-HJ-NP-Za-km-z]{32,44})\/?$/);
 	if (m) return m[1];
 	const q = new URLSearchParams(window.location.search);
 	return q.get('mint');
@@ -81,7 +82,7 @@ async function fetchJson(url) {
 function apiUrl(action, params = {}) {
 	const q = new URLSearchParams(params);
 	if (state.mint) q.set('mint', state.mint);
-	return `/api/coin/${action}?${q.toString()}`;
+	return `${API_BASE}/${action}?${q.toString()}`;
 }
 
 async function refreshState() {

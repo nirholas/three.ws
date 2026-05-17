@@ -1,0 +1,377 @@
+<!doctype html>
+<html lang="en">
+<head>
+	<meta charset="utf-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
+	<title>Selfie to avatar · three.ws</title>
+	<link rel="icon" href="/favicon.ico" />
+	<meta name="description" content="Snap three photos — three.ws builds you a rigged 3D avatar in about a minute." />
+	<meta name="robots" content="noindex" />
+
+	<meta property="og:type" content="website" />
+	<meta property="og:site_name" content="three.ws" />
+	<meta property="og:url" content="https://three.ws/create/selfie" />
+	<meta property="og:title" content="Selfie to avatar · three.ws" />
+	<meta property="og:description" content="Snap three photos — three.ws builds you a rigged 3D avatar in about a minute." />
+	<meta property="og:image" content="https://three.ws/assets/og-image.png" />
+
+	<style>
+		:root {
+			color-scheme: dark;
+			--bg: #05060a;
+			--panel: #0f1018;
+			--panel-elev: #15171f;
+			--border: #1e1f2b;
+			--border-strong: #2a2c3a;
+			--text: #eee;
+			--muted: #8a8d98;
+			--accent: #d6ff3d;
+			--accent-ink: #0a0a0a;
+			--danger: #ef4d4d;
+			--danger-dim: #6a1f1f;
+		}
+		* { box-sizing: border-box; }
+		html, body { margin: 0; padding: 0; }
+		body {
+			font: 15px/1.55 -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+			color: var(--text);
+			background: var(--bg);
+			min-height: 100vh;
+			overflow-x: hidden;
+		}
+		body::before {
+			content: '';
+			position: fixed;
+			inset: 0;
+			z-index: -1;
+			pointer-events: none;
+			background:
+				radial-gradient(800px 500px at 50% -100px, rgba(106, 92, 255, 0.10) 0, transparent 70%),
+				radial-gradient(600px 400px at 50% 110%, rgba(214, 255, 61, 0.04) 0, transparent 70%),
+				#05060a;
+		}
+		main.stage {
+			max-width: 720px;
+			margin: 0 auto;
+			padding: 32px 20px 96px;
+		}
+		.topbar {
+			display: flex;
+			align-items: center;
+			gap: 14px;
+			margin-bottom: 28px;
+		}
+		.topbar button.back {
+			background: var(--panel);
+			border: 1px solid var(--border);
+			color: var(--text);
+			width: 36px;
+			height: 36px;
+			border-radius: 9px;
+			font: inherit;
+			cursor: pointer;
+			display: inline-flex;
+			align-items: center;
+			justify-content: center;
+		}
+		.topbar button.back:hover { border-color: var(--border-strong); }
+		.topbar .label {
+			font-size: 12px;
+			letter-spacing: 0.06em;
+			text-transform: uppercase;
+			color: var(--muted);
+		}
+		.topbar .label strong { color: var(--text); font-weight: 600; }
+		h1 {
+			font-size: 28px;
+			line-height: 1.25;
+			margin: 0 0 8px;
+		}
+		.sub {
+			color: var(--muted);
+			margin: 0 0 28px;
+			line-height: 1.55;
+		}
+		.step { display: none; }
+		.step.active { display: block; }
+		.unsupported {
+			display: none;
+			padding: 12px 14px;
+			background: rgba(239, 77, 77, 0.08);
+			border: 1px solid var(--danger-dim);
+			border-radius: 9px;
+			color: #f4b5b5;
+			font-size: 13.5px;
+			margin: 0 0 20px;
+		}
+		.unsupported.show { display: block; }
+
+		.choice-grid {
+			display: grid;
+			grid-template-columns: 1fr 1fr;
+			gap: 14px;
+		}
+		@media (max-width: 560px) { .choice-grid { grid-template-columns: 1fr; } }
+		.choice {
+			padding: 22px 18px;
+			background: var(--panel);
+			border: 1px solid var(--border);
+			border-radius: 12px;
+			color: var(--text);
+			font: inherit;
+			text-align: left;
+			cursor: pointer;
+			transition: border-color 120ms, transform 120ms, background 120ms;
+		}
+		.choice:hover:not(:disabled) { border-color: var(--accent); transform: translateY(-1px); }
+		.choice:disabled { opacity: 0.45; cursor: not-allowed; }
+		.choice .icon { font-size: 26px; margin-bottom: 10px; display: block; }
+		.choice .title { font-size: 16px; font-weight: 600; margin: 0 0 4px; }
+		.choice .desc { color: var(--muted); font-size: 13px; line-height: 1.5; margin: 0; }
+
+		.slots {
+			display: grid;
+			grid-template-columns: repeat(3, 1fr);
+			gap: 12px;
+			margin: 8px 0 24px;
+		}
+		@media (max-width: 560px) { .slots { grid-template-columns: 1fr; } }
+		.slot-frame {
+			aspect-ratio: 3 / 4;
+			background: var(--panel);
+			border: 1.5px dashed var(--border-strong);
+			border-radius: 11px;
+			position: relative;
+			overflow: hidden;
+			cursor: pointer;
+			display: flex;
+			flex-direction: column;
+			align-items: center;
+			justify-content: center;
+			gap: 6px;
+			color: var(--muted);
+			transition: border-color 120ms, background 120ms;
+		}
+		.slot-frame:hover, .slot-frame:focus-visible { border-color: var(--accent); color: var(--text); outline: none; }
+		.slot-frame.drag { border-color: var(--accent); background: rgba(214, 255, 61, 0.05); }
+		.slot-frame.filled { border-style: solid; border-color: var(--border); padding: 0; }
+		.slot-frame .slot-label { font-size: 11.5px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); }
+		.slot-frame .slot-hint { font-size: 13px; color: var(--text); font-weight: 500; }
+		.slot-frame img { width: 100%; height: 100%; object-fit: cover; display: block; }
+		.slot-frame .retake-btn {
+			position: absolute;
+			top: 8px;
+			right: 8px;
+			background: rgba(0, 0, 0, 0.7);
+			border: 1px solid rgba(255, 255, 255, 0.2);
+			color: var(--text);
+			border-radius: 7px;
+			padding: 4px 9px;
+			font: 600 11px/1 inherit;
+			cursor: pointer;
+		}
+
+		.opts {
+			display: grid;
+			grid-template-columns: 1fr 1fr;
+			gap: 18px;
+			margin: 0 0 22px;
+		}
+		@media (max-width: 560px) { .opts { grid-template-columns: 1fr; } }
+		.opt-group .opt-label {
+			font-size: 12px;
+			letter-spacing: 0.06em;
+			text-transform: uppercase;
+			color: var(--muted);
+			margin: 0 0 8px;
+		}
+		.toggle {
+			display: inline-flex;
+			background: var(--panel);
+			border: 1px solid var(--border);
+			border-radius: 9px;
+			padding: 3px;
+			gap: 2px;
+		}
+		.toggle button {
+			background: transparent;
+			border: none;
+			color: var(--muted);
+			font: 600 13px/1 inherit;
+			padding: 8px 14px;
+			border-radius: 7px;
+			cursor: pointer;
+		}
+		.toggle button[aria-pressed="true"] {
+			background: var(--panel-elev);
+			color: var(--text);
+		}
+		.toggle button:hover { color: var(--text); }
+		.opt-hint { font-size: 12px; color: var(--muted); margin: 6px 0 0; }
+
+		.submit-bar {
+			margin-top: 6px;
+		}
+		.submit-bar[hidden] { display: none; }
+		#submit-btn {
+			width: 100%;
+			padding: 14px 18px;
+			background: var(--panel);
+			color: var(--muted);
+			border: 1px solid var(--border);
+			border-radius: 10px;
+			font: 600 15px/1 inherit;
+			cursor: not-allowed;
+			transition: background 120ms, color 120ms, border-color 120ms;
+		}
+		#submit-btn.ready {
+			background: var(--accent);
+			color: var(--accent-ink);
+			border-color: var(--accent);
+			cursor: pointer;
+		}
+		#submit-btn.ready:hover { filter: brightness(1.04); }
+
+		.camera-overlay {
+			position: fixed;
+			inset: 0;
+			background: #000;
+			z-index: 1000;
+			display: flex;
+			flex-direction: column;
+		}
+		.camera-overlay video {
+			width: 100%;
+			height: 100%;
+			object-fit: cover;
+		}
+		.camera-overlay .cam-bar {
+			position: absolute;
+			left: 0;
+			right: 0;
+			bottom: 0;
+			padding: 18px 20px 32px;
+			background: linear-gradient(to top, rgba(0, 0, 0, 0.7), transparent);
+			display: flex;
+			align-items: center;
+			justify-content: space-between;
+		}
+		.camera-overlay button {
+			background: var(--panel);
+			color: var(--text);
+			border: 1px solid var(--border);
+			border-radius: 9px;
+			padding: 10px 14px;
+			font: 600 14px/1 inherit;
+			cursor: pointer;
+		}
+		.camera-overlay button.shutter {
+			width: 72px;
+			height: 72px;
+			border-radius: 50%;
+			background: var(--accent);
+			color: var(--accent-ink);
+			border: none;
+		}
+		.camera-overlay .cam-prompt {
+			position: absolute;
+			top: 24px;
+			left: 0;
+			right: 0;
+			text-align: center;
+			color: rgba(255, 255, 255, 0.92);
+			font-size: 14px;
+			letter-spacing: 0.04em;
+			text-transform: uppercase;
+		}
+	</style>
+</head>
+<body>
+	<main class="stage">
+		<div class="topbar">
+			<button class="back" id="back-btn" aria-label="Back" type="button">
+				<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+					<line x1="19" y1="12" x2="5" y2="12" />
+					<polyline points="12 19 5 12 12 5" />
+				</svg>
+			</button>
+			<div class="label"><strong>three.ws</strong> · Selfie to avatar</div>
+		</div>
+
+		<p id="unsupported-msg" class="unsupported">
+			Your browser can't open the camera here — use Upload instead, or open this page in Safari / Chrome on a device with a camera.
+		</p>
+
+		<!-- Step 1: pick method -->
+		<section class="step active" data-step="method">
+			<h1>How do you want to give us 3 photos?</h1>
+			<p class="sub">Frontal, left, and right shots of your face. Good light, plain background. We'll downscale them locally before upload.</p>
+
+			<div class="choice-grid" role="group" aria-label="Choose capture method">
+				<button type="button" class="choice" data-method="camera">
+					<span class="icon" aria-hidden="true">📷</span>
+					<span class="title">Use camera</span>
+					<p class="desc">Snap three live photos in your browser. Best if you're on a phone.</p>
+				</button>
+				<button type="button" class="choice" data-method="upload">
+					<span class="icon" aria-hidden="true">🖼️</span>
+					<span class="title">Upload files</span>
+					<p class="desc">Pick three JPEG / PNG files from your device. Drag-and-drop works too.</p>
+				</button>
+			</div>
+		</section>
+
+		<!-- Step 2: capture slots + selectors -->
+		<section class="step" data-step="capture">
+			<h1>Three photos of your face</h1>
+			<p class="sub">Frontal, left (head turned ~45° left), right (~45° right). Tap a slot to start.</p>
+
+			<div class="slots">
+				<div class="slot-frame" data-slot="frontal" role="button" tabindex="0" aria-label="Frontal photo slot">
+					<span class="slot-label">Frontal</span>
+					<span class="slot-hint">Face the camera</span>
+				</div>
+				<div class="slot-frame" data-slot="left" role="button" tabindex="0" aria-label="Left photo slot">
+					<span class="slot-label">Left</span>
+					<span class="slot-hint">Turn 45° left</span>
+				</div>
+				<div class="slot-frame" data-slot="right" role="button" tabindex="0" aria-label="Right photo slot">
+					<span class="slot-label">Right</span>
+					<span class="slot-hint">Turn 45° right</span>
+				</div>
+			</div>
+
+			<input type="file" data-slot-input="frontal" accept="image/jpeg,image/png" hidden />
+			<input type="file" data-slot-input="left" accept="image/jpeg,image/png" hidden />
+			<input type="file" data-slot-input="right" accept="image/jpeg,image/png" hidden />
+
+			<div class="opts">
+				<div class="opt-group">
+					<p class="opt-label">Body</p>
+					<div class="toggle" role="group" aria-label="Body type">
+						<button type="button" data-body="male" aria-pressed="true">Male</button>
+						<button type="button" data-body="female" aria-pressed="false">Female</button>
+					</div>
+				</div>
+				<div class="opt-group">
+					<p class="opt-label">Style</p>
+					<div class="toggle" role="group" aria-label="Avatar style">
+						<button type="button" data-type="v1" aria-pressed="true">Photoreal</button>
+						<button type="button" data-type="v2" aria-pressed="false">Stylized</button>
+					</div>
+					<p class="opt-hint">Stylized renders as a cleaner cartoon-leaning look.</p>
+				</div>
+			</div>
+
+			<div id="submit-bar" class="submit-bar" hidden>
+				<button id="submit-btn" type="button" disabled>Add 3 photos to continue</button>
+			</div>
+		</section>
+	</main>
+
+	<script type="module">
+		import '/src/selfie-capture.js';
+		import '/src/selfie-pipeline.js';
+	</script>
+</body>
+</html>

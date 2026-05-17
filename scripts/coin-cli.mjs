@@ -153,7 +153,7 @@ async function cmdPrepare(positional, opts) {
 	const website = opts.website || 'https://three.ws';
 	const description =
 		opts.description ||
-		`A three.ws lottery + SOL reflection coin. Every holder is a ticket: hourly draws send the lottery pot to one random eligible wallet, and a passive SOL reflection drips to every holder between draws. Verifiable randomness end-to-end. Live dashboard: ${website}/coin`;
+		`A three.ws lottery + SOL reflection coin. Every holder is a ticket: hourly draws send the lottery pot to one random eligible wallet, and a passive SOL reflection drips to every holder between draws. Verifiable randomness end-to-end. Live dashboard: ${website}/demo/coin`;
 	const image = opts.image || null;
 	const twitter = opts.twitter || process.env.THREEWS_TWITTER_URL || 'https://x.com/trythreews';
 
@@ -168,7 +168,7 @@ async function cmdPrepare(positional, opts) {
 		// "Website" link rendered on the coin page is `website` below.
 		createdOn: 'https://pump.fun',
 		website,
-		external_url: `${website}/coin`,
+		external_url: `${website}/demo/coin`,
 		twitter,
 		platform: 'three.ws',
 	};
@@ -369,7 +369,7 @@ async function cmdLaunch(positional, opts) {
 		creator_wallet: creator.publicKey.toBase58(),
 		buyer_wallet: buyer.publicKey.toBase58(),
 		tx_signature: sig,
-		dashboard_url: `${dashboardOrigin}/coin/${mint.publicKey.toBase58()}`,
+		dashboard_url: `${dashboardOrigin}/demo/coin/${mint.publicKey.toBase58()}`,
 		solana_tx_url: `https://solscan.io/tx/${sig}`,
 		pump_fun_url: `https://pump.fun/coin/${mint.publicKey.toBase58()}`,
 		next_step: `Run: node scripts/coin-cli.mjs register ${mint.publicKey.toBase58()} --name "${opts.name}" --symbol "${opts.symbol}" --creator-wallet ${creator.publicKey.toBase58()} --creator-secret-b64 <base64>`,
@@ -453,7 +453,7 @@ async function cmdRegister(positional, opts) {
 		mint: row.mint,
 		is_live: row.is_live,
 		is_active: row.is_active,
-		dashboard: `${process.env.PUBLIC_APP_ORIGIN || 'https://three.ws'}/coin/${row.mint}`,
+		dashboard: `${process.env.PUBLIC_APP_ORIGIN || 'https://three.ws'}/demo/coin/${row.mint}`,
 		next_step: opts['creator-secret-b64']
 			? `Run: node scripts/coin-cli.mjs activate ${mint} --enable  (after verifying the dry-run cron output)`
 			: `Set COIN_CREATOR_SECRET_KEY_B64_${mint} in Vercel env, then activate with --enable.`,

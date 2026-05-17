@@ -428,6 +428,12 @@ URL: https://three.ws/news/
 
 Product launches, integrations, and announcements from three.ws.
 
+### three.ws Listed on BNB Chain's Dappbay Directory
+
+URL: https://three.ws/news/listed-on-bnb-chain-dappbay
+
+three.ws is now listed on Dappbay, BNB Chain's official dApp directory, under AI Agent Launchpad, AI Data, and AI Infra. The listing puts <agent-3d> — the one-tag deploy for Solana-minted, ERC-8004-walleted, x402-native 3D agents — in front of the BNB Chain ecosystem's discovery surface for AI dApps.
+
 ### three.ws Launches on Alibaba Cloud Marketplace, Bringing Native x402 Agent Payments to Hyperscale
 
 URL: https://three.ws/news/live-on-alibaba-cloud-marketplace
