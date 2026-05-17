@@ -331,11 +331,45 @@ URL: https://three.ws/docs/sdk
 
 JavaScript / Node SDK for three.ws.
 
+### Docs · Listings & Distribution
+
+URL: https://three.ws/docs/listings
+
+Cloud marketplaces and ecosystem directories where three.ws is listed (Alibaba Cloud, BNB Chain Dappbay, and more).
+
 ### Tutorials
 
 URL: https://three.ws/tutorials
 
 Step-by-step build guides.
+
+## Blog
+
+Long-form announcements, launches, and writing from three.ws.
+
+### Blog
+
+URL: https://three.ws/blog
+
+Editorial index of three.ws launches and long-form posts.
+
+### three.ws Launches on Alibaba Cloud Marketplace
+
+URL: https://three.ws/blog/three-ws-on-alibaba-cloud-marketplace
+
+three.ws is live on the Alibaba Cloud International Marketplace. The first deployment of on-chain agents with native HTTP 402 / x402 payment capability inside the procurement flow of a top-four cloud provider.
+
+### three.ws Listed on BNB Chain's Dappbay Directory
+
+URL: https://three.ws/blog/three-ws-on-bnb-chain-dappbay
+
+three.ws is now in BNB Chain's official dApp directory under AI Agent Launchpad, AI Data, and AI Infra.
+
+### How to Embed 3D On-Chain Agents on Your Site
+
+URL: https://three.ws/blog/how-to-embed-3d-onchain-agents
+
+A short walkthrough for embedding a three.ws agent on any website using the <agent-3d> tag.
 
 ## Legal
 

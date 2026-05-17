@@ -1478,8 +1478,7 @@ class App {
 				if (tts.analyserNode) avatar.connectLipSync(tts.analyserNode);
 			};
 			tts.onEnd = () => {
-				avatar._lipSync?.disconnect();
-				avatar._lipSync = null;
+				avatar.disconnectLipSync();
 			};
 		}
 	}

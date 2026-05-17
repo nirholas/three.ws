@@ -125,6 +125,7 @@ const appConfig = {
 				embed: resolve(__dirname, 'embed.html'),
 				launchpad: resolve(__dirname, 'launchpad.html'),
 				create: resolve(__dirname, 'create.html'),
+				'create-selfie': resolve(__dirname, 'create-selfie.html'),
 				'agent-home': resolve(__dirname, 'agent-home.html'),
 				marketplace: resolve(__dirname, 'marketplace.html'),
 				'agent-edit': resolve(__dirname, 'agent-edit.html'),
@@ -184,6 +185,8 @@ const appConfig = {
 					'/agents': resolve(root, 'public/agents/index.html'),
 					'/agents/': resolve(root, 'public/agents/index.html'),
 					'/create': resolve(root, 'create.html'),
+					'/create/selfie': resolve(root, 'create-selfie.html'),
+					'/create/selfie/': resolve(root, 'create-selfie.html'),
 					'/dashboard': resolve(root, 'public/dashboard/index.html'),
 					'/studio': resolve(root, 'public/studio/index.html'),
 					'/studio/': resolve(root, 'public/studio/index.html'),
@@ -245,6 +248,8 @@ const appConfig = {
 					'/strategy-lab/': resolve(root, 'public/strategy-lab.html'),
 					'/sitemap': resolve(root, 'public/sitemap/index.html'),
 					'/sitemap/': resolve(root, 'public/sitemap/index.html'),
+					'/blog': resolve(root, 'blog/index.html'),
+					'/blog/': resolve(root, 'blog/index.html'),
 					'/demo/avatar-os': resolve(root, 'public/demo/avatar-os/index.html'),
 					'/demo/avatar-os/': resolve(root, 'public/demo/avatar-os/index.html'),
 					'/': resolve(root, 'home.html'),
@@ -302,8 +307,13 @@ const appConfig = {
 						return res.end();
 					}
 					let filePath = fileMap[path];
+					// /blog/<slug>  → resolves to blog/<slug>.html on disk
+					if (!filePath && /^\/blog\/[a-z0-9-]+\/?$/.test(path)) {
+						const slug = path.replace(/^\/blog\//, '').replace(/\/$/, '');
+						filePath = resolve(root, `blog/${slug}.html`);
+					}
 					// /tutorials/<slug>  → dedicated tutorial viewer template
-					if (!filePath && /^\/tutorials\/[a-z0-9-]+\/?$/.test(path))
+					else if (!filePath && /^\/tutorials\/[a-z0-9-]+\/?$/.test(path))
 						filePath = resolve(root, 'tutorial.html');
 					// /p/<slug>  → public Launchpad Studio renderer (hydrates from /api/launchpad/get)
 					else if (!filePath && /^\/p\/[a-z0-9-]+\/?$/.test(path))

@@ -23,8 +23,8 @@ import { ACTION_TYPES } from './agent-protocol.js';
 import { Vector3, Box3, MathUtils, PositionalAudio } from 'three';
 import { resolveSlot, DEFAULT_ANIMATION_MAP } from './runtime/animation-slots.js';
 import { ElevenLabsTTS } from './runtime/speech.js';
-import { LipSyncAnalyser } from './lip-sync-analyser.js';
-import { resolveMorphTargets, MORPH_ALIASES } from './runtime/arkit52.js';
+import { LipSyncAnalyser, VISEMES as LIPSYNC_VISEMES } from './lip-sync-analyser.js';
+import { resolveMorphTargets, MORPH_ALIASES, ARKIT_VISEMES } from './runtime/arkit52.js';
 // BEGIN:IDLE_LOOP_IMPORT
 import { IdleAnimation } from './idle-animation.js';
 // END:IDLE_LOOP_IMPORT
@@ -321,6 +321,24 @@ export class AgentAvatar {
 		this._lipSync?.disconnect();
 		this._lipSync = new LipSyncAnalyser();
 		this._lipSync.connect(audioSource);
+	}
+
+	/**
+	 * Tear down the active LipSyncAnalyser and zero every morph target the
+	 * lipsync path writes so the lerp pulls the face back to neutral over the
+	 * next few frames. Without this the mouth would freeze at the last viseme
+	 * weight when TTS ends or is interrupted mid-word.
+	 */
+	disconnectLipSync() {
+		this._lipSync?.disconnect();
+		this._lipSync = null;
+		// Zero every viseme the analyser ever writes plus the talk-hint slots
+		// that the amplitude-only fallback path drives.
+		for (const name of LIPSYNC_VISEMES) {
+			if (name in this._morphTarget) this._morphTarget[name] = 0;
+		}
+		this._morphTarget['mouthOpen'] = 0;
+		this._morphTarget['jawOpen']   = 0;
 	}
 
 	/**
@@ -677,17 +695,28 @@ export class AgentAvatar {
 		// Stage 4: Apply emotion to avatar
 		this._applyEmotionToAvatar(dt);
 
-		// Stage 5: Frequency-based viseme lipsync (ElevenLabs path)
-		// Samples the live audio AnalyserNode and overrides the blunt mouthOpen
-		// with per-viseme morph weights. No-ops when _lipSync is null.
+		// Stage 5: Live-audio lipsync (ElevenLabs path).
+		// Sample the AnalyserNode once and branch on the avatar's detected
+		// lipsync mode so non-ARKit rigs (no viseme morphs) still move the jaw.
 		if (this._lipSync) {
 			const visemes = this._lipSync.sample();
 			if (visemes) {
-				for (const [name, weight] of Object.entries(visemes)) {
-					this._setMorphTarget(name, weight);
+				if (this._lipsyncMode === 'visemes') {
+					for (const [name, weight] of Object.entries(visemes)) {
+						this._setMorphTarget(name, weight);
+					}
+					// Suppress the flat mouthOpen talk-hint while real visemes drive the mouth.
+					this._setMorphTarget('mouthOpen', 0);
+				} else if (this._lipsyncMode === 'jaw') {
+					// No visemes on this rig — drive jawOpen straight from the
+					// smoothed amplitude so the mouth still moves to speech.
+					// 1.8x to push 0..~0.55 average speech amplitude up to a
+					// visible open; clamped in _setMorphTarget.
+					const amp = this._lipSync.getAmplitude();
+					this._setMorphTarget('jawOpen', amp * 1.8);
 				}
-				// Suppress the flat mouthOpen talk-hint while real visemes are active
-				this._setMorphTarget('mouthOpen', 0);
+				// _lipsyncMode === 'none' → no morph path available; the existing
+				// talk-hint mouthOpen on _onSpeak is the best we can do for this rig.
 			}
 		}
 
@@ -788,8 +817,20 @@ export class AgentAvatar {
 	 */
 	_buildMorphCache() {
 		this._morphResolved = new Map();
+		this._lipsyncMode = 'none';
 		if (!this.viewer?.content) return;
 		this._morphResolved = resolveMorphTargets(this.viewer.content);
+
+		// Determine the best lipsync rendering path for this avatar:
+		//   'visemes' — at least one ARKit viseme morph exists; drive per-viseme
+		//               weights from the spectral analyser
+		//   'jaw'     — no visemes but jawOpen (or aliased mouthOpen) exists;
+		//               drive a single morph from overall amplitude
+		//   'none'    — neither; lipsync is a no-op on this rig
+		const hasVisemes = ARKIT_VISEMES.some((n) => this._morphResolved.has(n));
+		if (hasVisemes) this._lipsyncMode = 'visemes';
+		else if (this._morphResolved.has('jawOpen')) this._lipsyncMode = 'jaw';
+		else this._lipsyncMode = 'none';
 	}
 
 	/**

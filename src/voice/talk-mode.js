@@ -54,7 +54,16 @@ export function openTalkMode({ avatar, systemPromptFn }) {
 	const transcriptEl = overlay.querySelector('.tws-talk-transcript');
 	const errEl = overlay.querySelector('.tws-talk-error');
 	const nameEl = overlay.querySelector('.tws-talk-name');
+	const cloneBtn = overlay.querySelector('.tws-talk-clone');
 	nameEl.textContent = avatar.name || 'Avatar';
+
+	// Owner-only affordance: `owner_id` is stripped from the API response for
+	// non-owners (see api/_lib/avatars.js stripOwnerFor), so its presence
+	// is the signal that the current session owns this avatar.
+	const isOwner = !!avatar.owner_id;
+	if (isOwner && avatar.agent_id) {
+		cloneBtn.hidden = false;
+	}
 
 	const scene = new TalkScene();
 	const mouthTarget = new AvatarMouthTarget();
@@ -125,6 +134,20 @@ export function openTalkMode({ avatar, systemPromptFn }) {
 
 	closeBtn.addEventListener('click', () => close());
 
+	if (cloneBtn) {
+		cloneBtn.addEventListener('click', () => {
+			openVoiceCloneModal({
+				agentId: avatar.agent_id,
+				agentName: avatar.name || 'Avatar',
+				onClose: () => {
+					// User may have completed a clone — invalidate the cache so the
+					// next turn picks up the new voice_id from the agent record.
+					controller?.refreshVoice();
+				},
+			});
+		});
+	}
+
 	function close() {
 		if (unloading) return;
 		unloading = true;
@@ -155,8 +178,13 @@ export function closeTalkMode() {
 const TEMPLATE = `
 	<button class="tws-talk-close" aria-label="Exit talk mode" title="Exit (Esc)">✕</button>
 	<div class="tws-talk-header">
-		<span class="tws-talk-eyebrow">Talking to</span>
-		<span class="tws-talk-name"></span>
+		<div>
+			<span class="tws-talk-eyebrow">Talking to</span>
+			<span class="tws-talk-name"></span>
+		</div>
+		<button class="tws-talk-clone" type="button" hidden aria-label="Clone your voice for this avatar">
+			<span aria-hidden="true">🎙️</span> Use my voice
+		</button>
 	</div>
 	<div class="tws-talk-stage"></div>
 	<div class="tws-talk-transcript" aria-live="polite"></div>
@@ -240,7 +268,29 @@ const TALK_CSS = `
 .tws-talk-close:hover { background: rgba(255,255,255,0.12); border-color: rgba(255,255,255,0.25); }
 .tws-talk-header {
 	padding: 16px 24px 0;
-	display: flex; flex-direction: column; gap: 2px;
+	display: flex;
+	align-items: flex-start;
+	justify-content: space-between;
+	gap: 12px;
+}
+.tws-talk-header > div { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.tws-talk-clone {
+	background: rgba(255,255,255,0.06);
+	border: 1px solid rgba(255,255,255,0.14);
+	color: #fafafa;
+	font-family: inherit;
+	font-size: 12px;
+	font-weight: 600;
+	padding: 7px 12px;
+	border-radius: 999px;
+	cursor: pointer;
+	transition: background 0.15s, border-color 0.15s, transform 0.1s;
+	flex-shrink: 0;
+}
+.tws-talk-clone:hover {
+	background: rgba(255,255,255,0.10);
+	border-color: rgba(255,255,255,0.25);
+	transform: translateY(-1px);
 }
 .tws-talk-eyebrow {
 	font-family: 'Space Grotesk', sans-serif;

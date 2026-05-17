@@ -232,58 +232,93 @@
 		}
 		#submit-btn.ready:hover { filter: brightness(1.04); }
 
-		.camera-overlay {
+		#cam-overlay {
 			position: fixed;
 			inset: 0;
 			background: #000;
 			z-index: 1000;
-			display: flex;
+			display: none;
 			flex-direction: column;
 		}
-		.camera-overlay video {
+		#cam-overlay.open { display: flex; }
+		#cam-stage {
+			position: relative;
+			flex: 1;
+			min-height: 0;
+			overflow: hidden;
+		}
+		#cam-stage video,
+		#cam-stage img.preview {
 			width: 100%;
 			height: 100%;
 			object-fit: cover;
 		}
-		.camera-overlay .cam-bar {
+		#cam-stage video { transform: scaleX(-1); }
+		.cam-prompt {
 			position: absolute;
+			top: env(safe-area-inset-top, 18px);
 			left: 0;
 			right: 0;
-			bottom: 0;
-			padding: 18px 20px 32px;
-			background: linear-gradient(to top, rgba(0, 0, 0, 0.7), transparent);
+			text-align: center;
+			color: rgba(255, 255, 255, 0.92);
+			font-size: 13px;
+			letter-spacing: 0.06em;
+			text-transform: uppercase;
+			padding: 16px 18px;
+			background: linear-gradient(to bottom, rgba(0, 0, 0, 0.5), transparent);
+			pointer-events: none;
+		}
+		.cam-prompt strong { font-weight: 600; color: var(--accent); }
+		#cam-error {
+			position: absolute;
+			top: 60px;
+			left: 16px;
+			right: 16px;
+			padding: 10px 14px;
+			background: rgba(239, 77, 77, 0.92);
+			color: white;
+			border-radius: 9px;
+			font-size: 13.5px;
+			text-align: center;
+		}
+		.cam-bar {
+			padding: 16px 22px calc(env(safe-area-inset-bottom, 18px) + 18px);
+			background: rgba(0, 0, 0, 0.7);
 			display: flex;
 			align-items: center;
 			justify-content: space-between;
+			gap: 16px;
 		}
-		.camera-overlay button {
-			background: var(--panel);
+		.cam-bar button {
+			background: rgba(255, 255, 255, 0.08);
 			color: var(--text);
-			border: 1px solid var(--border);
+			border: 1px solid rgba(255, 255, 255, 0.18);
 			border-radius: 9px;
-			padding: 10px 14px;
+			padding: 10px 16px;
 			font: 600 14px/1 inherit;
 			cursor: pointer;
+			min-width: 88px;
 		}
-		.camera-overlay button.shutter {
+		.cam-bar button.shutter {
 			width: 72px;
 			height: 72px;
 			border-radius: 50%;
 			background: var(--accent);
 			color: var(--accent-ink);
 			border: none;
+			padding: 0;
+			min-width: 72px;
 		}
-		.camera-overlay .cam-prompt {
-			position: absolute;
-			top: 24px;
-			left: 0;
-			right: 0;
-			text-align: center;
-			color: rgba(255, 255, 255, 0.92);
-			font-size: 14px;
-			letter-spacing: 0.04em;
-			text-transform: uppercase;
+		.cam-bar button.shutter::before {
+			content: '';
+			display: block;
+			width: 56px;
+			height: 56px;
+			border-radius: 50%;
+			border: 3px solid var(--accent-ink);
+			margin: 0 auto;
 		}
+		.cam-bar .spacer { flex: 1; }
 	</style>
 </head>
 <body>
@@ -368,6 +403,28 @@
 			</div>
 		</section>
 	</main>
+
+	<!-- Camera overlay (driven by selfie-capture.js) -->
+	<div id="cam-overlay" role="dialog" aria-modal="true" aria-label="Camera capture">
+		<div id="cam-stage">
+			<video id="cam-video" autoplay playsinline muted></video>
+		</div>
+		<div class="cam-prompt">
+			Take your <strong id="cam-slot-name">photo</strong>
+		</div>
+		<div id="cam-error" hidden></div>
+		<div class="cam-bar">
+			<div id="cam-actions-live" style="display: contents;">
+				<button type="button" data-cam-action="cancel">Cancel</button>
+				<button type="button" class="shutter" data-cam-action="shoot" aria-label="Take photo"></button>
+				<div class="spacer"></div>
+			</div>
+			<div id="cam-actions-review" hidden style="display: contents;">
+				<button type="button" data-cam-action="retake">Retake</button>
+				<button type="button" data-cam-action="use">Use this</button>
+			</div>
+		</div>
+	</div>
 
 	<script type="module">
 		import '/src/selfie-capture.js';
