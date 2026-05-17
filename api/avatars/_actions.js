@@ -2,7 +2,7 @@
 // presign, public, regenerate, regenerate-status
 
 import { getSessionUser, authenticateBearer, extractBearer, hasScope } from '../_lib/auth.js';
-import { presignUpload, headObject, r2 } from '../_lib/r2.js';
+import { presignUpload, headObject, r2, publicUrl } from '../_lib/r2.js';
 import { storageKeyFor, enforceQuotas, searchPublicAvatars, stripOwnerFor } from '../_lib/avatars.js';
 import { listAvatars, createAvatar } from '../_lib/avatars.js';
 import { HeadObjectCommand } from '@aws-sdk/client-s3';
@@ -14,6 +14,35 @@ import { recordEvent } from '../_lib/usage.js';
 import { limits, clientIp } from '../_lib/rate-limit.js';
 import { z } from 'zod';
 import { randomUUID } from 'crypto';
+
+// ── regen provider loader ─────────────────────────────────────────────────────
+// Dynamically import a provider module by name so we don't pay the cost of
+// loading e.g. the Replicate SDK on every request when regeneration is unused.
+// Cached per-process after first load.
+let _regenProviderCache = null;
+let _regenProviderName = null;
+async function getRegenProvider() {
+	const name = (env.AVATAR_REGEN_PROVIDER || 'none').trim().toLowerCase();
+	if (name === 'none' || !name) return { name, instance: null };
+	if (_regenProviderCache && _regenProviderName === name) {
+		return { name, instance: _regenProviderCache };
+	}
+	if (name === 'stub') {
+		_regenProviderCache = null;
+		_regenProviderName = name;
+		return { name, instance: null };
+	}
+	if (name === 'replicate') {
+		const mod = await import('../_providers/replicate.js');
+		_regenProviderCache = mod.createRegenProvider();
+		_regenProviderName = name;
+		return { name, instance: _regenProviderCache };
+	}
+	throw Object.assign(new Error(`unknown AVATAR_REGEN_PROVIDER: ${name}`), {
+		code: 'regen_provider_unknown',
+		status: 501,
+	});
+}
 
 // ── presign ───────────────────────────────────────────────────────────────────
 
@@ -86,14 +115,69 @@ const handleRegenerate = wrap(async (req, res) => {
 	const body = parse(regenerateSchema, await readJson(req));
 	const rows = await sql`select id, name, storage_key from avatars where id = ${body.sourceAvatarId} and owner_id = ${userId} and deleted_at is null limit 1`;
 	if (!rows[0]) return error(res, 404, 'not_found', 'source avatar not found or not owned');
-	const provider = (env.AVATAR_REGEN_PROVIDER || 'none').trim().toLowerCase();
-	if (provider === 'none' || !provider) return error(res, 501, 'regen_unconfigured', 'Avatar regeneration is not yet wired to an ML backend. Set AVATAR_REGEN_PROVIDER env var.');
-	if (provider === 'stub') {
+
+	let provider;
+	try {
+		provider = await getRegenProvider();
+	} catch (err) {
+		return error(res, err.status || 501, err.code || 'regen_provider_error', err.message);
+	}
+
+	if (provider.name === 'none') {
+		return error(
+			res,
+			501,
+			'regen_unconfigured',
+			'Avatar regeneration is not yet wired to an ML backend. Set AVATAR_REGEN_PROVIDER env var.',
+		);
+	}
+
+	if (provider.name === 'stub') {
 		const jobId = `stub-${randomUUID()}`;
-		await sql`insert into avatar_regen_jobs (job_id, user_id, source_avatar_id, mode, params, status, created_at) values (${jobId}, ${userId}, ${body.sourceAvatarId}, ${body.mode}, ${JSON.stringify(body.params ?? {})}, 'queued', now())`;
+		await sql`
+			insert into avatar_regen_jobs
+				(job_id, user_id, source_avatar_id, mode, params, status, provider, created_at, updated_at)
+			values
+				(${jobId}, ${userId}, ${body.sourceAvatarId}, ${body.mode}, ${JSON.stringify(body.params ?? {})}, 'queued', 'stub', now(), now())
+		`;
 		return json(res, 202, { ok: true, jobId, status: 'queued', eta: null });
 	}
-	return error(res, 501, 'regen_provider_error', `Unknown provider: ${provider}`);
+
+	// Real provider — submit the job, persist the external id.
+	const sourceUrl = publicUrl(rows[0].storage_key);
+	let submission;
+	try {
+		submission = await provider.instance.submit({
+			userId,
+			sourceAvatarId: body.sourceAvatarId,
+			mode: body.mode,
+			params: body.params ?? {},
+			sourceUrl,
+			sourceStorageKey: rows[0].storage_key,
+		});
+	} catch (err) {
+		return error(
+			res,
+			err.status || 502,
+			err.code || 'regen_provider_error',
+			err.message || 'provider rejected submission',
+		);
+	}
+
+	const jobId = `${provider.name}-${randomUUID()}`;
+	await sql`
+		insert into avatar_regen_jobs
+			(job_id, user_id, source_avatar_id, mode, params, status, provider, ext_job_id, created_at, updated_at)
+		values
+			(${jobId}, ${userId}, ${body.sourceAvatarId}, ${body.mode}, ${JSON.stringify(body.params ?? {})}, 'queued', ${provider.name}, ${submission.extJobId ?? null}, now(), now())
+	`;
+	return json(res, 202, {
+		ok: true,
+		jobId,
+		status: 'queued',
+		eta: submission.eta ?? null,
+		provider: provider.name,
+	});
 });
 
 // ── regenerate-status ─────────────────────────────────────────────────────────
@@ -109,12 +193,59 @@ const handleRegenerateStatus = wrap(async (req, res) => {
 	const url = new URL(req.url, 'http://x');
 	const jobId = url.searchParams.get('jobId');
 	if (!jobId) return error(res, 400, 'invalid_request', 'jobId required');
-	const rows = await sql`select job_id, status, result_avatar_id, error, created_at from avatar_regen_jobs where job_id = ${jobId} and user_id = ${userId} limit 1`;
+	const rows = await sql`
+		select job_id, status, result_avatar_id, result_glb_url, error, provider, ext_job_id, created_at
+		from avatar_regen_jobs
+		where job_id = ${jobId} and user_id = ${userId}
+		limit 1
+	`;
 	if (!rows[0]) return error(res, 404, 'not_found', 'job not found');
-	const job = rows[0];
+	let job = rows[0];
+
+	// Pull a fresh status from the provider when the job is still in flight
+	// and we have an external id to query. The status endpoint serves as our
+	// poll trigger — no separate cron needed for short-lived jobs.
+	if ((job.status === 'queued' || job.status === 'running') && job.provider && job.provider !== 'stub' && job.ext_job_id) {
+		try {
+			const provider = await getRegenProvider();
+			if (provider.instance) {
+				const update = await provider.instance.status(job.ext_job_id);
+				const nextStatus = update.status;
+				const nextResultUrl = update.resultGlbUrl ?? null;
+				const nextError = update.error ?? null;
+				if (
+					nextStatus !== job.status ||
+					nextResultUrl !== job.result_glb_url ||
+					nextError !== job.error
+				) {
+					await sql`
+						update avatar_regen_jobs
+						set status = ${nextStatus},
+							result_glb_url = ${nextResultUrl},
+							error = ${nextError},
+							updated_at = now()
+						where job_id = ${jobId} and user_id = ${userId}
+					`;
+					job = {
+						...job,
+						status: nextStatus,
+						result_glb_url: nextResultUrl,
+						error: nextError,
+					};
+				}
+			}
+		} catch (err) {
+			// Surface the polling error but don't fail the request — the job
+			// row stays as-is and the client can retry later.
+			job = { ...job, error: job.error || `provider poll failed: ${err?.message}` };
+		}
+	}
+
 	const response = { ok: true, jobId: job.job_id, status: job.status };
 	if (job.result_avatar_id) response.resultAvatarId = job.result_avatar_id;
+	if (job.result_glb_url) response.resultGlbUrl = job.result_glb_url;
 	if (job.error) response.error = job.error;
+	if (job.provider) response.provider = job.provider;
 	return json(res, 200, response);
 });
 
