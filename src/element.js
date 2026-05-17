@@ -16,6 +16,7 @@ import { attachTradeReactions } from './pump/trade-reactions.js';
 // BEGIN:EMBED_BRIDGES_IMPORT
 import { EmbedActionBridge } from './embed-action-bridge.js';
 import { protocol, ACTION_TYPES } from './agent-protocol.js';
+import { AgentAvatar } from './agent-avatar.js';
 // END:EMBED_BRIDGES_IMPORT
 import { AgentNotifier } from './agent-notifier.js';
 
@@ -541,6 +542,7 @@ class Agent3DElement extends HTMLElement {
 		this._runtime = null;
 		this._memory = null;
 		this._skills = null;
+		this._avatar = null; // empathy + lipsync layer; attached after runtime mounts
 		this._manifest = null;
 		this._mounted = false;
 		this._booting = false;
@@ -1397,6 +1399,35 @@ class Agent3DElement extends HTMLElement {
 				agentId: _backendId || undefined,
 				skillAccess: _skillAccess,
 			});
+
+			// ── Empathy + lipsync layer ───────────────────────────────────────
+			// AgentAvatar subscribes to the agent-protocol bus, runs the emotion
+			// blend on the viewer's per-frame hook, and drives viseme morphs from
+			// the live TTS AnalyserNode when audio plays. Without this the embed
+			// would render the mesh but show a dead face while speaking.
+			try {
+				const _identity = { id: manifest.id?.agentId || manifest.name || 'embed' };
+				this._avatar = new AgentAvatar(this._viewer, protocol, _identity);
+				this._avatar.attach();
+
+				if (this._runtime.tts) {
+					const tts    = this._runtime.tts;
+					const avatar = this._avatar;
+					tts.onStart = () => {
+						if (tts.analyserNode) avatar.connectLipSync(tts.analyserNode);
+					};
+					tts.onEnd = () => {
+						avatar._lipSync?.disconnect();
+						avatar._lipSync = null;
+					};
+				}
+			} catch (e) {
+				// Empathy is non-essential — embed still works without it. Log so
+				// integrators can see the failure during development.
+				console.warn('[agent-3d] AgentAvatar attach failed; continuing without empathy/lipsync', e);
+				this._avatar = null;
+			}
+
 			// Re-dispatch runtime events on the host
 			for (const ev of [
 				'brain:thinking',
@@ -2294,11 +2325,14 @@ class Agent3DElement extends HTMLElement {
 			this._runtime?.destroy();
 		} catch {}
 		try {
+			this._avatar?.detach();
+		} catch {}
+		try {
 			this._viewer?.dispose?.();
 		} catch {}
 		this._mounted = false;
 		this._pillActive = false;
-		this._runtime = this._viewer = this._scene = this._memory = this._skills = null;
+		this._runtime = this._viewer = this._scene = this._memory = this._skills = this._avatar = null;
 	}
 
 	// --- Public JS API ---

@@ -228,6 +228,44 @@
 				color: rgba(167, 139, 250, 0.9);
 			}
 
+			.av-cta-talk-row {
+				padding: 16px 24px 0;
+			}
+			.av-cta-talk {
+				width: 100%;
+				background: linear-gradient(135deg, #7dd3fc 0%, #a78bfa 100%);
+				color: #050505;
+				border: 0;
+				border-radius: 12px;
+				padding: 14px 18px;
+				font-family: inherit;
+				font-size: 15px;
+				font-weight: 700;
+				letter-spacing: -0.01em;
+				cursor: pointer;
+				display: inline-flex;
+				align-items: center;
+				justify-content: center;
+				gap: 10px;
+				transition: transform 0.1s, box-shadow 0.2s;
+				box-shadow: 0 6px 24px -8px rgba(125, 211, 252, 0.45);
+			}
+			.av-cta-talk:hover {
+				transform: translateY(-1px);
+				box-shadow: 0 10px 32px -8px rgba(167, 139, 250, 0.5);
+			}
+			.av-cta-talk-dot {
+				display: inline-block;
+				width: 8px; height: 8px;
+				border-radius: 999px;
+				background: #ef4444;
+				box-shadow: 0 0 0 4px rgba(239, 68, 68, 0.18);
+				animation: av-cta-talk-pulse 2s ease-in-out infinite;
+			}
+			@keyframes av-cta-talk-pulse {
+				0%, 100% { transform: scale(1); }
+				50%       { transform: scale(1.25); }
+			}
 			.av-cta-row {
 				display: grid;
 				grid-template-columns: repeat(3, 1fr);

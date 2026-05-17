@@ -24,6 +24,7 @@ import { Vector3, Box3, MathUtils, PositionalAudio } from 'three';
 import { resolveSlot, DEFAULT_ANIMATION_MAP } from './runtime/animation-slots.js';
 import { ElevenLabsTTS } from './runtime/speech.js';
 import { LipSyncAnalyser } from './lip-sync-analyser.js';
+import { resolveMorphTargets, MORPH_ALIASES } from './runtime/arkit52.js';
 // BEGIN:IDLE_LOOP_IMPORT
 import { IdleAnimation } from './idle-animation.js';
 // END:IDLE_LOOP_IMPORT
@@ -778,28 +779,50 @@ export class AgentAvatar {
 		if (!(name in this._morphCurrent)) this._morphCurrent[name] = 0;
 	}
 
-	/** Collect all meshes with morph targets once per content load. */
+	/**
+	 * Resolve canonical ARKit-52 names to their concrete mesh slots once per
+	 * content load. The resolver understands the canonical names plus the
+	 * MORPH_ALIASES synonyms (snake_case, _L/_R suffixes, combined shapes),
+	 * so emotion code can refer to `mouthSmileLeft` and have it work on RPM,
+	 * Avaturn, Mixamo, and custom Blender exports alike.
+	 */
 	_buildMorphCache() {
-		this._morphMeshes = [];
+		this._morphResolved = new Map();
 		if (!this.viewer?.content) return;
-		this.viewer.content.traverse((node) => {
-			if (node.isMesh && node.morphTargetDictionary && node.morphTargetInfluences) {
-				this._morphMeshes.push(node);
-			}
-		});
+		this._morphResolved = resolveMorphTargets(this.viewer.content);
 	}
 
-	/** Lerp all tracked morph target influences toward their targets */
+	/**
+	 * Lerp all tracked morph target influences toward their targets. Names in
+	 * `_morphTarget` are canonical ARKit-52 (or one of the recognized aliases);
+	 * the resolver mapped each to one or more concrete mesh slots at load time.
+	 */
 	_lerpMorphTargets(speed) {
-		if (!this._morphMeshes?.length) return;
-		for (const node of this._morphMeshes) {
-			for (const [name, target] of Object.entries(this._morphTarget)) {
-				const idx = node.morphTargetDictionary[name];
-				if (idx === undefined) continue;
-				const current = node.morphTargetInfluences[idx] || 0;
-				const next = _lerp(current, target, speed);
-				node.morphTargetInfluences[idx] = next;
-				this._morphCurrent[name] = next;
+		if (!this._morphResolved || this._morphResolved.size === 0) return;
+		for (const [name, target] of Object.entries(this._morphTarget)) {
+			const canonical = MORPH_ALIASES[name] || name;
+			const slots = this._morphResolved.get(canonical);
+			if (!slots) continue;
+			let current = this._morphCurrent[name] ?? 0;
+			const next = _lerp(current, target, speed);
+			for (const { mesh, index } of slots) {
+				mesh.morphTargetInfluences[index] = next;
+			}
+			this._morphCurrent[name] = next;
+
+			// Mirror to the symmetric pair when the canonical name carries a
+			// 'Left' suffix and emotion code didn't explicitly set the right
+			// side — common for combined-shape models.
+			if (canonical.endsWith('Left')) {
+				const right = canonical.slice(0, -4) + 'Right';
+				if (!(right in this._morphTarget)) {
+					const rSlots = this._morphResolved.get(right);
+					if (rSlots) {
+						for (const { mesh, index } of rSlots) {
+							mesh.morphTargetInfluences[index] = next;
+						}
+					}
+				}
 			}
 		}
 	}

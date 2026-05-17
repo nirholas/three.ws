@@ -36,14 +36,14 @@
       "name": "ON1FORCE",
       "description": "Demon",
       "portrait": "./assets/portraitImages/0n1.jpg",
-      "manifest":"https://m3-org.github.io/loot-assets/0N1/manifest.json",
+      "manifest":"/api/studio-assets/0N1/manifest.json",
       "format": "vrm"
     },
     {
       "name": "TUBBY CAT",
       "description": "Cute",
       "portrait": "./assets/portraitImages/tubby.jpg",
-      "manifest":"https://m3-org.github.io/loot-assets/tubbycats/manifest.json",
+      "manifest":"/api/studio-assets/tubbycats/manifest.json",
       "format": "vrm"
     }
   ],

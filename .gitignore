@@ -34,6 +34,10 @@ public/chat/assets/
 public/chat/index.html
 public/chat/index.html.gz
 
+# Generated news permalink pages (rebuilt from data/rss/items.json by scripts/build-news.mjs)
+public/news/
+data/_generated/
+
 # Animation build cache
 public/animations/clips/.input-hashes.json
 Handshake

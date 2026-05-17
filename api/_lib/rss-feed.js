@@ -13,12 +13,41 @@ const CURATED_FILE = path.join(DATA_ROOT, 'rss', 'items.json');
 const MIN_LENGTH = 140;
 const MAX_ITEMS = 50;
 
+export const SITE_ORIGIN = 'https://three.ws';
+export const NEWS_PATH_PREFIX = '/news';
+
+// Derive a URL-safe slug from a curated item. Honors an explicit `slug` if
+// the editor set one; otherwise falls back to the id (with a leading `t-`
+// from tweet-derived seeds stripped). Output is lowercase, only [a-z0-9-].
+export function deriveSlug(item) {
+	const explicit = typeof item?.slug === 'string' ? item.slug : '';
+	const raw = explicit || String(item?.id || '').replace(/^t-/, '');
+	return raw
+		.toLowerCase()
+		.normalize('NFKD')
+		.replace(/[̀-ͯ]/g, '')
+		.replace(/[^a-z0-9]+/g, '-')
+		.replace(/^-+|-+$/g, '')
+		.slice(0, 80) || 'item';
+}
+
+// Treat any non-three.ws URL as the external/original source link.
+function isExternalLink(url) {
+	if (typeof url !== 'string' || !url) return false;
+	try {
+		const u = new URL(url);
+		return u.hostname !== 'three.ws' && u.hostname !== 'www.three.ws';
+	} catch {
+		return false;
+	}
+}
+
 const ACCOUNTS = {
 	trythreews: { handle: '@trythreews', display: 'three.ws', url: 'https://x.com/trythreews' },
 	nichxbt: { handle: '@nichxbt', display: 'Nicholas (three.ws)', url: 'https://x.com/nichxbt' },
 };
 
-export async function loadCuratedItems() {
+export async function loadCuratedItems({ includeDrafts = false } = {}) {
 	const raw = await readFile(CURATED_FILE, 'utf8');
 	const data = JSON.parse(raw);
 	const entries = Array.isArray(data?.items) ? data.items : [];
@@ -26,17 +55,31 @@ export async function loadCuratedItems() {
 	for (const e of entries) {
 		if (!e || typeof e !== 'object') continue;
 		if (!e.id || !e.title || !e.date || !e.body_html) continue;
+		if (!includeDrafts && e.published === false) continue;
 		const ts = new Date(e.date);
 		if (Number.isNaN(ts.getTime())) continue;
+		const slug = deriveSlug(e);
+		const rawLink = typeof e.link === 'string' && e.link ? e.link : '';
+		const explicitExternal = typeof e.external_link === 'string' && e.external_link ? e.external_link : '';
+		const externalLink = explicitExternal || (isExternalLink(rawLink) ? rawLink : '');
 		items.push({
 			id: String(e.id),
+			slug,
+			permalink: `${SITE_ORIGIN}${NEWS_PATH_PREFIX}/${slug}`,
+			externalLink,
 			title: String(e.title),
-			link: typeof e.link === 'string' && e.link ? e.link : 'https://three.ws',
 			author: typeof e.author === 'string' && e.author ? e.author : 'three.ws',
 			summary: typeof e.summary === 'string' ? e.summary : deriveSummary(e.body_html),
 			bodyHtml: String(e.body_html),
+			image: typeof e.image === 'string' && e.image ? e.image : '',
+			imageAlt: typeof e.image_alt === 'string' && e.image_alt ? e.image_alt : '',
+			imageWidth: Number.isFinite(e.image_width) ? Math.trunc(e.image_width) : 0,
+			imageHeight: Number.isFinite(e.image_height) ? Math.trunc(e.image_height) : 0,
+			ogTitle: typeof e.og_title === 'string' && e.og_title ? e.og_title : '',
+			ogDescription: typeof e.og_description === 'string' && e.og_description ? e.og_description : '',
 			tags: Array.isArray(e.tags) ? e.tags.filter((t) => typeof t === 'string') : [],
 			timestamp: ts,
+			published: e.published !== false,
 		});
 	}
 	items.sort((a, b) => b.timestamp - a.timestamp);
@@ -46,6 +89,22 @@ export async function loadCuratedItems() {
 function deriveSummary(html) {
 	const text = String(html).replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
 	return text.length > 280 ? text.slice(0, 277) + '…' : text;
+}
+
+function absoluteUrl(url) {
+	if (typeof url !== 'string' || !url) return '';
+	if (/^https?:\/\//i.test(url)) return url;
+	return `${SITE_ORIGIN}${url.startsWith('/') ? '' : '/'}${url}`;
+}
+
+function guessMime(url) {
+	const ext = (url.split('?')[0].split('.').pop() || '').toLowerCase();
+	if (ext === 'jpg' || ext === 'jpeg') return 'image/jpeg';
+	if (ext === 'png') return 'image/png';
+	if (ext === 'webp') return 'image/webp';
+	if (ext === 'gif') return 'image/gif';
+	if (ext === 'svg') return 'image/svg+xml';
+	return 'application/octet-stream';
 }
 
 export async function loadAnnouncementItems({ source = 'all' } = {}) {
@@ -179,7 +238,8 @@ export function buildRssXml({ items, selfUrl, source = 'curated' }) {
 <rss version="2.0"
 \txmlns:content="http://purl.org/rss/1.0/modules/content/"
 \txmlns:dc="http://purl.org/dc/elements/1.1/"
-\txmlns:atom="http://www.w3.org/2005/Atom">
+\txmlns:atom="http://www.w3.org/2005/Atom"
+\txmlns:media="http://search.yahoo.com/mrss/">
 \t<channel>
 \t\t<title>${escapeXml(channelTitle)}</title>
 \t\t<link>https://three.ws</link>
@@ -199,14 +259,33 @@ function renderItemXml(item) {
 		const tagsXml = (item.tags || [])
 			.map((t) => `\n\t\t\t<category>${escapeXml(t)}</category>`)
 			.join('');
+		const sourceXml = item.externalLink
+			? `\n\t\t\t<source url="${escapeAttr(item.externalLink)}">original post</source>`
+			: '';
+		let enclosureXml = '';
+		let mediaXml = '';
+		if (item.image) {
+			const imgUrl = absoluteUrl(item.image);
+			const mime = guessMime(item.image);
+			enclosureXml = `\n\t\t\t<enclosure url="${escapeAttr(imgUrl)}" type="${escapeAttr(mime)}" length="0"/>`;
+			const dimAttrs = item.imageWidth && item.imageHeight
+				? ` width="${item.imageWidth}" height="${item.imageHeight}"`
+				: '';
+			const mediaTitle = item.imageAlt ? `\n\t\t\t\t<media:title type="plain">${escapeXml(item.imageAlt)}</media:title>` : '';
+			mediaXml = `\n\t\t\t<media:content url="${escapeAttr(imgUrl)}" type="${escapeAttr(mime)}" medium="image"${dimAttrs}>${mediaTitle}
+\t\t\t</media:content>`;
+		}
+		const bodyWithAttribution = item.externalLink
+			? `${item.bodyHtml}\n<p><em>Originally shared on <a href="${escapeAttr(item.externalLink)}" rel="noopener">X</a> — follow more updates at <a href="https://three.ws" rel="noopener">three.ws</a>.</em></p>`
+			: item.bodyHtml;
 		return `\t\t<item>
 \t\t\t<title>${escapeXml(item.title)}</title>
-\t\t\t<link>${escapeXml(item.link)}</link>
-\t\t\t<guid isPermaLink="false">three-ws:${escapeXml(item.id)}</guid>
+\t\t\t<link>${escapeXml(item.permalink)}</link>
+\t\t\t<guid isPermaLink="true">${escapeXml(item.permalink)}</guid>
 \t\t\t<pubDate>${rfc822(item.timestamp)}</pubDate>
-\t\t\t<dc:creator>${escapeXml(item.author)}</dc:creator>${tagsXml}
+\t\t\t<dc:creator>${escapeXml(item.author)}</dc:creator>${tagsXml}${sourceXml}${enclosureXml}${mediaXml}
 \t\t\t<description>${escapeXml(item.summary)}</description>
-\t\t\t<content:encoded><![CDATA[${item.bodyHtml}]]></content:encoded>
+\t\t\t<content:encoded><![CDATA[${bodyWithAttribution}]]></content:encoded>
 \t\t</item>`;
 	}
 	const account = ACCOUNTS[item.account] || { handle: '@' + item.account };

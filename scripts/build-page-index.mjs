@@ -9,7 +9,7 @@
  *
  * Run via `npm run build:pages` or automatically before `vite build`.
  */
-import { readFileSync, writeFileSync, mkdirSync } from 'node:fs';
+import { readFileSync, writeFileSync, mkdirSync, existsSync } from 'node:fs';
 import { resolve, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -17,9 +17,33 @@ const here = dirname(fileURLToPath(import.meta.url));
 const root = resolve(here, '..');
 const dataFile = resolve(root, 'data/pages.json');
 const publicDir = resolve(root, 'public');
+const newsRoutesFile = resolve(root, 'data/_generated/news-routes.json');
 
 const data = JSON.parse(readFileSync(dataFile, 'utf8'));
-const { site, sections } = data;
+const { site } = data;
+const sections = [...data.sections];
+
+// Splice in a "News" section if scripts/build-news.mjs has written its
+// routes file. Keeps news entries in the sitemap, llms.txt, and the
+// human-readable /sitemap page without requiring manual edits.
+if (existsSync(newsRoutesFile)) {
+	const newsRoutes = JSON.parse(readFileSync(newsRoutesFile, 'utf8'));
+	if (Array.isArray(newsRoutes) && newsRoutes.length) {
+		sections.push({
+			id: 'news',
+			title: 'News',
+			description: 'Product launches, integrations, and announcements from three.ws.',
+			pages: newsRoutes.map((r) => ({
+				path: r.path,
+				title: r.title,
+				description: r.description,
+				priority: r.priority,
+				changefreq: r.changefreq,
+				lastmod: r.lastmod,
+			})),
+		});
+	}
+}
 const baseUrl = site.url.replace(/\/$/, '');
 const today = new Date().toISOString().slice(0, 10);
 
@@ -54,7 +78,7 @@ function buildSitemap() {
 	const urls = allPages.filter(indexable).map((p) => {
 		const lines = [
 			`\t\t<loc>${escapeXml(baseUrl + p.path)}</loc>`,
-			`\t\t<lastmod>${today}</lastmod>`,
+			`\t\t<lastmod>${p.lastmod || today}</lastmod>`,
 		];
 		if (p.changefreq) lines.push(`\t\t<changefreq>${p.changefreq}</changefreq>`);
 		if (p.priority != null) lines.push(`\t\t<priority>${p.priority.toFixed(1)}</priority>`);

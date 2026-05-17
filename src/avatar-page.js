@@ -7,6 +7,8 @@
  * same code path serves both real and seeded avatars.
  */
 
+import { openTalkMode } from './voice/talk-mode.js';
+
 const ATTACHED_KEY_PREFIX = 'avatar_attached_v1:';
 
 const $ = (id) => document.getElementById(id);
@@ -225,6 +227,12 @@ function renderShell(glbUrl) {
 				${byLine}
 				${tagsHtml ? `<div class="av-tags">${tagsHtml}</div>` : ''}
 			</div>
+			<div class="av-cta-talk-row">
+				<button class="av-cta-talk" id="av-talk" type="button" aria-label="Talk to ${esc(avatar.name)}">
+					<span class="av-cta-talk-dot" aria-hidden="true"></span>
+					<span>Talk to ${esc(avatar.name)}</span>
+				</button>
+			</div>
 			<div class="av-cta-row">
 				<button class="av-cta" id="av-use">Start an agent</button>
 				<a class="av-cta-sec" href="/studio?avatar=${encodeURIComponent(avatar.id || avatarId)}" title="Use this avatar in Widget Studio">Open in Studio</a>
@@ -301,6 +309,7 @@ function renderShell(glbUrl) {
 	});
 
 	$('av-use')?.addEventListener('click', startAgentWithAvatar);
+	$('av-talk')?.addEventListener('click', () => enterTalkMode());
 }
 
 function renderAttribution() {
@@ -897,6 +906,17 @@ function buildSystemContext() {
 	}
 	parts.push('Respond in character, keep replies under 3 short paragraphs.');
 	return parts.filter(Boolean).join('\n');
+}
+
+// ── Talk mode entry ──────────────────────────────────────────────────
+//
+// Opens the live-voice overlay: three.js renderer + lipsync + push-to-talk.
+// Implementation lives in src/voice/talk-mode.js so this page only needs the
+// click handler and a system-prompt provider.
+
+function enterTalkMode() {
+	if (!avatar) return;
+	openTalkMode({ avatar, systemPromptFn: buildSystemContext });
 }
 
 // ── Agents wearing this avatar ────────────────────────────────────────
