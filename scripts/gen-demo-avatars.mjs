@@ -181,7 +181,7 @@ const THREEJS_META = {
 	'steampunk_camera': { tags: ['object', 'steampunk', 'pbr'], desc: 'Steampunk-style camera with brass fittings and leather wrap.' },
 	'rolex': { tags: ['object', 'watch', 'luxury', 'pbr'], desc: 'Detailed Rolex-style timepiece with metallic finish.' },
 	'godrays_demo': { tags: ['scene', 'lighting', 'demo'], desc: 'God rays / volumetric lighting demonstration scene.' },
-	'readyplayer.me': { tags: ['humanoid', 'avatar', 'character'], desc: 'Ready Player Me avatar sample — humanoid character ready for VR/AR.' },
+	'readyplayer.me': { tags: ['humanoid', 'avatar', 'character'], desc: 'Humanoid avatar sample — three.ws-compatible character ready for VR/AR.', displayName: 'Humanoid Avatar', slug: 'demo-humanoid-avatar' },
 	'bath_day': { tags: ['scene', 'animated', 'character'], desc: 'Bath day animated scene — quirky character moment.' },
 	'coffeeMug': { tags: ['object', 'pbr'], desc: 'Ceramic coffee mug.' },
 	'coffeemat': { tags: ['object', 'machine', 'pbr'], desc: 'Coffee machine with detailed dispenser.' },
