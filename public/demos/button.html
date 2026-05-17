@@ -1,0 +1,452 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1" />
+		<title>button · three.ws</title>
+		<meta name="robots" content="noindex" />
+		<style>
+			*, *::before, *::after { box-sizing: border-box; }
+			html, body { height: 100%; margin: 0; background: #02030a; overflow: hidden; }
+			canvas { display: block; width: 100%; height: 100%; }
+			.hint {
+				position: fixed; bottom: 22px; left: 50%;
+				transform: translateX(-50%);
+				color: #1e2030; font: 12px/1 -apple-system, system-ui, sans-serif;
+				letter-spacing: 0.08em; pointer-events: none; z-index: 2;
+			}
+		</style>
+	</head>
+	<body>
+		<canvas id="c"></canvas>
+		<div class="hint">drag to orbit · scroll to zoom</div>
+
+		<script type="module">
+			import * as THREE from 'three';
+			import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+			import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
+			import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+
+			// ── Renderer ─────────────────────────────────────────────────────────
+			const canvas = document.getElementById('c');
+			const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
+			renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+			renderer.outputColorSpace = THREE.SRGBColorSpace;
+			renderer.toneMapping = THREE.ACESFilmicToneMapping;
+			renderer.toneMappingExposure = 1.1;
+			renderer.shadowMap.enabled = true;
+			renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+
+			const scene = new THREE.Scene();
+			scene.fog = new THREE.FogExp2(0x02030a, 0.022);
+
+			const pmrem = new THREE.PMREMGenerator(renderer);
+			scene.environment = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
+
+			// ── Camera & controls ─────────────────────────────────────────────────
+			const camera = new THREE.PerspectiveCamera(42, 1, 0.05, 120);
+			camera.position.set(1.2, 3.2, 9.0);
+
+			const controls = new OrbitControls(camera, canvas);
+			controls.target.set(0, 1.0, -1.0);
+			controls.enableDamping = true;
+			controls.dampingFactor = 0.07;
+			controls.minDistance = 2;
+			controls.maxDistance = 40;
+			controls.maxPolarAngle = Math.PI / 2 - 0.02;
+			controls.update();
+
+			function resize() {
+				renderer.setSize(window.innerWidth, window.innerHeight, false);
+				camera.aspect = window.innerWidth / window.innerHeight;
+				camera.updateProjectionMatrix();
+			}
+			window.addEventListener('resize', resize);
+			resize();
+
+			// ── Star-field skybox sphere ──────────────────────────────────────────
+			const skyC = document.createElement('canvas');
+			skyC.width = 2048; skyC.height = 1024;
+			const skyCtx = skyC.getContext('2d');
+			skyCtx.fillStyle = '#02030b';
+			skyCtx.fillRect(0, 0, 2048, 1024);
+			// Nebula smear
+			const neb = skyCtx.createRadialGradient(900, 400, 0, 900, 400, 600);
+			neb.addColorStop(0,   'rgba(40,20,90,0.18)');
+			neb.addColorStop(0.5, 'rgba(10,5,40,0.08)');
+			neb.addColorStop(1,   'rgba(0,0,0,0)');
+			skyCtx.fillStyle = neb; skyCtx.fillRect(0, 0, 2048, 1024);
+			const neb2 = skyCtx.createRadialGradient(1600, 700, 0, 1600, 700, 400);
+			neb2.addColorStop(0,   'rgba(0,40,80,0.12)');
+			neb2.addColorStop(1,   'rgba(0,0,0,0)');
+			skyCtx.fillStyle = neb2; skyCtx.fillRect(0, 0, 2048, 1024);
+			// Stars
+			for (let i = 0; i < 2400; i++) {
+				const x = Math.random() * 2048, y = Math.random() * 1024;
+				const r = Math.random() * 1.3 + 0.2;
+				const a = Math.random() * 0.85 + 0.15;
+				const tint = Math.random();
+				const col = tint > 0.75
+					? `rgba(160,200,255,${a})`  // blue
+					: tint > 0.5
+						? `rgba(255,220,180,${a})` // warm
+						: `rgba(255,255,255,${a})`;
+				skyCtx.fillStyle = col;
+				skyCtx.beginPath(); skyCtx.arc(x, y, r, 0, Math.PI * 2); skyCtx.fill();
+			}
+			const skyTex = new THREE.CanvasTexture(skyC);
+			scene.add(new THREE.Mesh(
+				new THREE.SphereGeometry(80, 32, 16),
+				new THREE.MeshBasicMaterial({ map: skyTex, side: THREE.BackSide }),
+			));
+			scene.background = new THREE.Color(0x02030b);
+
+			// ── Lights ───────────────────────────────────────────────────────────
+			scene.add(new THREE.AmbientLight(0x4050aa, 0.2));
+
+			const key = new THREE.DirectionalLight(0xfff4dc, 2.2);
+			key.position.set(4, 9, 6);
+			key.castShadow = true;
+			key.shadow.mapSize.setScalar(2048);
+			key.shadow.camera.left = -10; key.shadow.camera.right  =  10;
+			key.shadow.camera.top  =  10; key.shadow.camera.bottom = -3;
+			key.shadow.camera.near = 1;   key.shadow.camera.far    = 25;
+			scene.add(key);
+
+			const rim = new THREE.DirectionalLight(0x2040ff, 1.2);
+			rim.position.set(-6, 4, -6);
+			scene.add(rim);
+
+			const glow = new THREE.PointLight(0xd6ff3d, 0.8, 10);
+			glow.position.set(0, 1.5, 0);
+			scene.add(glow);
+
+			// Coloured accent fill lights
+			const pinkFill = new THREE.PointLight(0xff2060, 0.6, 18);
+			pinkFill.position.set(-8, 2, 2);
+			scene.add(pinkFill);
+
+			const cyanFill = new THREE.PointLight(0x00e5ff, 0.5, 18);
+			cyanFill.position.set(8, 2, -4);
+			scene.add(cyanFill);
+
+			// ── Reflective tron-grid floor ────────────────────────────────────────
+			const gridC = document.createElement('canvas');
+			gridC.width = gridC.height = 512;
+			const gc = gridC.getContext('2d');
+			gc.fillStyle = '#04050f';
+			gc.fillRect(0, 0, 512, 512);
+			// Fine grid
+			gc.strokeStyle = '#0d0f22'; gc.lineWidth = 1;
+			for (let i = 0; i <= 512; i += 32) {
+				gc.beginPath(); gc.moveTo(i,0); gc.lineTo(i,512); gc.stroke();
+				gc.beginPath(); gc.moveTo(0,i); gc.lineTo(512,i); gc.stroke();
+			}
+			// Neon accent lines every 128px
+			gc.lineWidth = 2;
+			gc.strokeStyle = '#1a2a6c';
+			for (let i = 0; i <= 512; i += 128) {
+				gc.beginPath(); gc.moveTo(i,0); gc.lineTo(i,512); gc.stroke();
+				gc.beginPath(); gc.moveTo(0,i); gc.lineTo(512,i); gc.stroke();
+			}
+			const gridTex = new THREE.CanvasTexture(gridC);
+			gridTex.wrapS = gridTex.wrapT = THREE.RepeatWrapping;
+			gridTex.repeat.set(18, 18);
+
+			const floor = new THREE.Mesh(
+				new THREE.PlaneGeometry(40, 40),
+				new THREE.MeshStandardMaterial({
+					map: gridTex, roughness: 0.08, metalness: 0.6, envMapIntensity: 1.4,
+				}),
+			);
+			floor.rotation.x = -Math.PI / 2;
+			floor.receiveShadow = true;
+			scene.add(floor);
+
+			// Glowing floor perimeter strips
+			const stripMat = new THREE.MeshStandardMaterial({
+				color: 0x2040ff, emissive: 0x2040ff, emissiveIntensity: 1.2,
+				roughness: 0.1, metalness: 0,
+			});
+			[[0, -12, 20, 0], [0, 12, 20, 0], [-10, 0, 0, 20], [10, 0, 0, 20]].forEach(([x, z, w, h]) => {
+				const m = new THREE.Mesh(new THREE.PlaneGeometry(w || 0.06, h || 0.06), stripMat);
+				m.rotation.x = -Math.PI / 2; m.position.set(x, 0.005, z); scene.add(m);
+			});
+
+			// ── Background arches / rings ──────────────────────────────────────────
+			const ringMat = new THREE.MeshStandardMaterial({
+				color: 0x1a2050, emissive: 0x1a2050, emissiveIntensity: 0.6,
+				roughness: 0.3, metalness: 0.8, wireframe: false,
+			});
+			[
+				{ r: 5.5, tube: 0.06, x: 0,   y: 5,  z: -9,  ry: 0 },
+				{ r: 3.5, tube: 0.05, x: -7,  y: 4,  z: -6,  ry: 0.5 },
+				{ r: 2.8, tube: 0.04, x:  8,  y: 3.5,z: -5,  ry: -0.4 },
+			].forEach(({ r, tube, x, y, z, ry }) => {
+				const ring = new THREE.Mesh(new THREE.TorusGeometry(r, tube, 8, 80), ringMat.clone());
+				ring.position.set(x, y, z); ring.rotation.y = ry;
+				scene.add(ring);
+			});
+
+			// Floating shard panels (translucent dark rectangles)
+			const shardMat = new THREE.MeshStandardMaterial({
+				color: 0x0a0d20, roughness: 0.1, metalness: 0.5,
+				transparent: true, opacity: 0.35, side: THREE.DoubleSide,
+			});
+			[
+				{ x: -10, y: 4, z: -7, ry:  0.6, w: 3, h: 5 },
+				{ x:  10, y: 3, z: -6, ry: -0.5, w: 2.5, h: 4 },
+				{ x:   3, y: 6, z: -11, ry: 0.1, w: 6, h: 3 },
+			].forEach(({ x, y, z, ry, w, h }) => {
+				const s = new THREE.Mesh(new THREE.PlaneGeometry(w, h), shardMat.clone());
+				s.position.set(x, y, z); s.rotation.y = ry;
+				scene.add(s);
+			});
+
+			// ── Helper: build a physical 3D button ───────────────────────────────
+			function makeCapTex(l1, l2, accent) {
+				const c = document.createElement('canvas');
+				c.width = c.height = 512;
+				const ctx = c.getContext('2d');
+				const isMain = accent === 0xd6ff3d;
+				const fg = isMain ? '#d6ff3d' : (accent === 0x3060ff ? '#3060ff' : '#ff3060');
+				const g = ctx.createRadialGradient(256,256,0,256,256,222);
+				g.addColorStop(0, isMain ? '#eeff66' : (accent === 0x3060ff ? '#4070ff' : '#ff4070'));
+				g.addColorStop(0.65, fg);
+				g.addColorStop(1, isMain ? '#aecf20' : (accent === 0x3060ff ? '#1030aa' : '#aa1030'));
+				ctx.fillStyle = g;
+				ctx.beginPath(); ctx.arc(256,256,222,0,Math.PI*2); ctx.fill();
+				ctx.fillStyle = 'rgba(4,5,15,0.85)';
+				ctx.font = 'bold 58px -apple-system, system-ui, sans-serif';
+				ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+				ctx.fillText(l1, 256, l2 ? 210 : 256);
+				if (l2) ctx.fillText(l2, 256, 290);
+				return new THREE.CanvasTexture(c);
+			}
+
+			function buildButton({ x, z, ry = 0, l1, l2, accent, sc = 1 }) {
+				const g = new THREE.Group();
+				g.position.set(x, 0, z); g.rotation.y = ry; g.scale.setScalar(sc);
+				const baseMesh = new THREE.Mesh(
+					new THREE.CylinderGeometry(2.05, 2.25, 0.85, 64),
+					new THREE.MeshStandardMaterial({ color: 0x0a0b1a, roughness: 0.25, metalness: 0.92 }),
+				);
+				baseMesh.position.y = 0.425; baseMesh.castShadow = true; baseMesh.receiveShadow = true;
+				g.add(baseMesh);
+
+				const ledColor = new THREE.Color(accent);
+				const ledRing = new THREE.Mesh(
+					new THREE.TorusGeometry(1.88, 0.045, 8, 80),
+					new THREE.MeshStandardMaterial({
+						color: ledColor, emissive: ledColor, emissiveIntensity: 1.0,
+						roughness: 0.2, metalness: 0,
+					}),
+				);
+				ledRing.position.y = 0.84; ledRing.rotation.x = Math.PI / 2;
+				g.add(ledRing);
+
+				const CAP_H = 0.38, CAP_HALF = 0.19, BASE_TOP = 0.85;
+				const capTex = makeCapTex(l1, l2, accent);
+				const sideMat = new THREE.MeshStandardMaterial({
+					color: new THREE.Color(accent).multiplyScalar(0.8),
+					emissive: new THREE.Color(accent), emissiveIntensity: 0.1,
+					roughness: 0.4, metalness: 0,
+				});
+				const topMat = new THREE.MeshStandardMaterial({
+					map: capTex, emissive: new THREE.Color(accent), emissiveIntensity: 0.07,
+					roughness: 0.35, metalness: 0,
+				});
+				const cap = new THREE.Mesh(
+					new THREE.CylinderGeometry(1.74, 1.74, CAP_H, 64),
+					[sideMat, topMat, sideMat],
+				);
+				cap.position.y = BASE_TOP + CAP_HALF;
+				cap.castShadow = true; cap.receiveShadow = true;
+				g.add(cap);
+				scene.add(g);
+				return { group: g, cap, ledRing, sideMat, topMat, CAP_H, CAP_HALF, BASE_TOP };
+			}
+
+			// ── Buttons ──────────────────────────────────────────────────────────
+			const gs = buildButton({ x:0,   z:0,   l1:'GET', l2:'STARTED', accent:0xd6ff3d });
+			buildButton({ x:6.5, z:-5,  ry:-0.4, l1:'LEARN', l2:'MORE',    accent:0x3060ff, sc:0.78 });
+			buildButton({ x:-5.5,z:-4,  ry: 0.4, l1:'SIGN',  l2:'UP',      accent:0xff3060, sc:0.68 });
+
+			const CAP_REST = gs.BASE_TOP + gs.CAP_HALF;
+			const BTN_TOP  = gs.BASE_TOP + gs.CAP_H;
+
+			// ── Spring physics ────────────────────────────────────────────────────
+			let springY = 0, springV = 0, springing = false;
+
+			function triggerSpring() {
+				springY = -0.88; springV = 0; springing = true;
+				gs.sideMat.emissiveIntensity = 0.8;
+				gs.topMat.emissiveIntensity  = 0.6;
+				gs.ledRing.material.emissiveIntensity = 3.5;
+				glow.intensity = 7.0;
+			}
+
+			function updateSpring(dt) {
+				if (!springing) return;
+				// Lower damping (9 vs 15) for more elastic overshoot
+				springV += (-270 * springY - 9 * springV) * dt;
+				springY += springV * dt;
+				const s = Math.max(0.04, 1 + springY);
+
+				// Volume preservation: Y compression → XZ bulge, Y overshoot → XZ pinch
+				// Factor 0.19 gives ~1.16x bulge at full squish, ~0.98x pinch at overshoot
+				const xz = 1 + (1 - s) * 0.19;
+
+				gs.cap.scale.set(xz, s, xz);
+				gs.cap.position.y = gs.BASE_TOP + gs.CAP_HALF * s;
+
+				const mag = Math.abs(springY);
+				gs.sideMat.emissiveIntensity        = 0.10 + mag * 0.6;
+				gs.topMat.emissiveIntensity          = 0.07 + mag * 0.45;
+				gs.ledRing.material.emissiveIntensity = 1.0  + mag * 3.0;
+				glow.intensity                       = 0.8  + mag * 6.0;
+				if (mag < 0.003 && Math.abs(springV) < 0.003) {
+					springing = false; springY = 0; springV = 0;
+					gs.cap.scale.set(1, 1, 1); gs.cap.position.y = CAP_REST;
+					gs.sideMat.emissiveIntensity = 0.10; gs.topMat.emissiveIntensity = 0.07;
+					gs.ledRing.material.emissiveIntensity = 1.0; glow.intensity = 0.8;
+				}
+			}
+
+			// ── Particles ─────────────────────────────────────────────────────────
+			const pool = [];
+			function burst(y) {
+				const N = 100;
+				const pos = new Float32Array(N * 3);
+				const vel = [];
+				for (let i = 0; i < N; i++) {
+					const a = Math.random() * Math.PI * 2;
+					pos[i*3] = Math.cos(a) * Math.random() * 0.4;
+					pos[i*3+1] = y;
+					pos[i*3+2] = Math.sin(a) * Math.random() * 0.4;
+					vel.push({
+						x: Math.cos(a) * (1.5 + Math.random() * 3.5),
+						y: 1.5 + Math.random() * 5.0,
+						z: Math.sin(a) * (1.5 + Math.random() * 3.5),
+					});
+				}
+				const geo = new THREE.BufferGeometry();
+				geo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+				const mat = new THREE.PointsMaterial({ color: 0xd6ff3d, size: 0.08, transparent: true });
+				const pts = new THREE.Points(geo, mat);
+				scene.add(pts);
+				pool.push({ pts, geo, mat, vel, age: 0, life: 1.5 });
+			}
+
+			function updateParticles(dt) {
+				for (let i = pool.length - 1; i >= 0; i--) {
+					const p = pool[i]; p.age += dt;
+					if (p.age >= p.life) {
+						scene.remove(p.pts); p.geo.dispose(); p.mat.dispose();
+						pool.splice(i, 1); continue;
+					}
+					const buf = p.geo.attributes.position.array;
+					for (let j = 0; j < p.vel.length; j++) {
+						buf[j*3]   += p.vel[j].x * dt;
+						buf[j*3+1] += p.vel[j].y * dt;
+						buf[j*3+2] += p.vel[j].z * dt;
+						p.vel[j].y -= 9.8 * dt;
+					}
+					p.geo.attributes.position.needsUpdate = true;
+					p.mat.opacity = 1 - p.age / p.life;
+				}
+			}
+
+			// ── Avatar ────────────────────────────────────────────────────────────
+			const gltfLoader = new GLTFLoader();
+			let avatar = null, mixer = null, rootBone = null, baseRootPos = null;
+			let fallAction = null;
+
+			async function boot() {
+				const gltf = await new Promise((ok, fail) =>
+					gltfLoader.load('/avatars/cz.glb', ok, undefined, fail));
+				avatar = gltf.scene;
+				avatar.traverse(n => {
+					if (n.isMesh) { n.castShadow = true; n.receiveShadow = true; }
+					if (!rootBone && /^(Hips|Root|mixamorig:?Hips)$/i.test(n.name))
+						rootBone = n;
+				});
+				avatar.rotation.y = Math.PI;
+				scene.add(avatar);
+
+				mixer = new THREE.AnimationMixer(avatar);
+				const r = await fetch('/animations/clips/jumpdown3.json');
+				const clip = THREE.AnimationClip.parse(await r.json());
+				fallAction = mixer.clipAction(clip);
+				fallAction.setLoop(THREE.LoopOnce, 1);
+				fallAction.clampWhenFinished = true;
+
+				// Pin root bone before each draw so root motion can't fight our Y path
+				if (rootBone) baseRootPos = rootBone.position.clone();
+				const _render = renderer.render.bind(renderer);
+				renderer.render = (sc, cam) => {
+					try { if (rootBone && baseRootPos) rootBone.position.copy(baseRootPos); } catch (_) {}
+					_render(sc, cam);
+				};
+
+				runSequence();
+			}
+
+			// ── Sequence ──────────────────────────────────────────────────────────
+			const FALL_DUR  = 2.933;
+			const LAND_AT   = 2.35;   // seconds into clip when feet visually touch the cap
+			const DROP_FROM = BTN_TOP + 3.8;
+			let seqT = 0, landed = false;
+
+			function runSequence() {
+				seqT = 0; landed = false;
+				if (avatar) avatar.position.set(0, DROP_FROM, 0);
+				fallAction.reset().play();
+			}
+
+			function updateSeq(dt) {
+				if (!avatar) return;
+				seqT += dt;
+
+				if (seqT <= LAND_AT) {
+					// Accelerating fall — quadratic ease-in so it feels like gravity
+					const p = seqT / LAND_AT;
+					avatar.position.y = DROP_FROM + (BTN_TOP - DROP_FROM) * (p * p);
+				} else {
+					// Feet on the button — track the squishing cap
+					avatar.position.y = gs.cap.position.y + gs.CAP_HALF * gs.cap.scale.y;
+					if (!landed) {
+						landed = true;
+						triggerSpring();
+						burst(BTN_TOP);
+					}
+				}
+
+				if (seqT >= FALL_DUR + 1.2) runSequence();
+			}
+
+			// ── Render loop ───────────────────────────────────────────────────────
+			const clock = new THREE.Clock();
+			let elapsed = 0;
+			(function animate() {
+				requestAnimationFrame(animate);
+				const dt = Math.min(clock.getDelta(), 0.05);
+				elapsed += dt;
+				controls.update();
+				mixer?.update(dt);
+				updateSpring(dt);
+				updateSeq(dt);
+				updateParticles(dt);
+				// Slowly rotate background rings for atmosphere
+				scene.children.forEach(c => {
+					if (c.geometry?.type === 'TorusGeometry' && c !== gs.ledRing) {
+						c.rotation.z += dt * 0.08;
+					}
+				});
+				renderer.render(scene, camera);
+			})();
+
+			boot().catch(console.error);
+		</script>
+	</body>
+</html>

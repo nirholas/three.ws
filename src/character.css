@@ -1,0 +1,459 @@
+/* Character page — charms-style consumer profile */
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+	font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+	min-height: 100vh;
+	background: linear-gradient(160deg, #c8dff7 0%, #e8f4ff 40%, #f0f8ff 100%);
+	color: #1a1a2e;
+}
+
+/* ── Nav ──────────────────────────────────────────────── */
+.ch-nav {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	padding: 16px 20px;
+	position: sticky;
+	top: 0;
+	z-index: 10;
+	background: rgba(200, 223, 247, 0.6);
+	backdrop-filter: blur(12px);
+}
+
+.ch-nav-brand {
+	font-size: 22px;
+	font-weight: 700;
+	color: #1a1a2e;
+	text-decoration: none;
+	letter-spacing: -0.5px;
+}
+
+.ch-nav-actions {
+	display: flex;
+	gap: 8px;
+}
+
+.ch-btn-ghost {
+	background: transparent;
+	border: 1.5px solid rgba(26, 26, 46, 0.3);
+	border-radius: 24px;
+	padding: 8px 18px;
+	font-size: 14px;
+	font-weight: 500;
+	color: #1a1a2e;
+	cursor: pointer;
+	text-decoration: none;
+}
+
+.ch-btn-primary {
+	background: linear-gradient(135deg, #2563eb, #1d4ed8);
+	border: none;
+	border-radius: 24px;
+	padding: 8px 18px;
+	font-size: 14px;
+	font-weight: 600;
+	color: #fff;
+	cursor: pointer;
+	text-decoration: none;
+}
+
+/* ── Hero ─────────────────────────────────────────────── */
+.ch-hero {
+	padding: 32px 20px 0;
+	display: flex;
+	flex-direction: column;
+	align-items: flex-start;
+	gap: 16px;
+}
+
+.ch-hero-top {
+	display: flex;
+	align-items: flex-start;
+	gap: 20px;
+	width: 100%;
+}
+
+.ch-avatar {
+	width: 96px;
+	height: 96px;
+	border-radius: 50%;
+	object-fit: cover;
+	box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+	background: #cbd5e1;
+	flex-shrink: 0;
+}
+
+.ch-avatar-placeholder {
+	width: 96px;
+	height: 96px;
+	border-radius: 50%;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	font-size: 36px;
+	font-weight: 700;
+	color: #fff;
+	flex-shrink: 0;
+	box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+}
+
+.ch-hero-info {
+	flex: 1;
+	min-width: 0;
+}
+
+.ch-name {
+	font-size: 26px;
+	font-weight: 700;
+	letter-spacing: -0.5px;
+	line-height: 1.1;
+	margin-bottom: 6px;
+}
+
+.ch-creator {
+	display: flex;
+	align-items: center;
+	gap: 6px;
+	font-size: 13px;
+	color: #4b5563;
+}
+
+.ch-creator-avatar {
+	width: 20px;
+	height: 20px;
+	border-radius: 50%;
+	object-fit: cover;
+}
+
+.ch-creator a {
+	color: #2563eb;
+	text-decoration: none;
+	font-weight: 500;
+}
+
+.ch-stats {
+	display: flex;
+	gap: 12px;
+	margin-left: auto;
+	flex-shrink: 0;
+}
+
+.ch-stat-bubble {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	width: 72px;
+	height: 72px;
+	border-radius: 50%;
+	background: rgba(255, 255, 255, 0.7);
+	box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+	gap: 2px;
+}
+
+.ch-stat-num {
+	font-size: 18px;
+	font-weight: 700;
+	line-height: 1;
+	color: #1a1a2e;
+}
+
+.ch-stat-label {
+	font-size: 11px;
+	color: #6b7280;
+	font-weight: 500;
+}
+
+.ch-desc {
+	font-size: 14px;
+	line-height: 1.6;
+	color: #374151;
+	max-width: 480px;
+}
+
+.ch-cta {
+	display: flex;
+	align-items: center;
+	gap: 10px;
+}
+
+.ch-chat-btn {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	background: linear-gradient(135deg, #2563eb, #1d4ed8);
+	color: #fff;
+	border: none;
+	border-radius: 32px;
+	padding: 13px 40px;
+	font-size: 16px;
+	font-weight: 600;
+	cursor: pointer;
+	text-decoration: none;
+	box-shadow: 0 4px 16px rgba(37, 99, 235, 0.35);
+	transition: transform 0.15s, box-shadow 0.15s;
+}
+
+.ch-chat-btn:hover {
+	transform: translateY(-1px);
+	box-shadow: 0 6px 20px rgba(37, 99, 235, 0.45);
+}
+
+/* ── Token card ──────────────────────────────────────── */
+.ch-section {
+	padding: 20px 16px 0;
+}
+
+.ch-token-card {
+	background: rgba(255, 255, 255, 0.5);
+	backdrop-filter: blur(10px);
+	border-radius: 20px;
+	padding: 18px 20px;
+	box-shadow: 0 2px 16px rgba(0, 0, 0, 0.06);
+}
+
+.ch-token-header {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	margin-bottom: 4px;
+}
+
+.ch-token-name {
+	font-size: 16px;
+	font-weight: 700;
+	color: #1a1a2e;
+}
+
+.ch-token-dot {
+	width: 14px;
+	height: 14px;
+	border-radius: 3px;
+	background: #2563eb;
+	flex-shrink: 0;
+}
+
+.ch-token-price {
+	display: flex;
+	align-items: baseline;
+	gap: 10px;
+	margin-bottom: 14px;
+}
+
+.ch-price-main {
+	font-size: 28px;
+	font-weight: 700;
+	color: #1a1a2e;
+}
+
+.ch-price-change {
+	font-size: 13px;
+	font-weight: 600;
+	display: flex;
+	align-items: center;
+	gap: 3px;
+}
+
+.ch-price-change.up { color: #16a34a; }
+.ch-price-change.down { color: #dc2626; }
+
+.ch-token-actions {
+	display: flex;
+	gap: 10px;
+	align-items: center;
+}
+
+.ch-trade-btn {
+	flex: 1;
+	background: #0f172a;
+	color: #fff;
+	border: none;
+	border-radius: 32px;
+	padding: 13px 20px;
+	font-size: 15px;
+	font-weight: 600;
+	cursor: pointer;
+	text-align: center;
+	text-decoration: none;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	transition: background 0.15s;
+}
+
+.ch-trade-btn:hover { background: #1e293b; }
+
+.ch-chart-btn {
+	width: 44px;
+	height: 44px;
+	border-radius: 50%;
+	border: 1.5px solid rgba(0, 0, 0, 0.12);
+	background: rgba(255, 255, 255, 0.6);
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	cursor: pointer;
+	flex-shrink: 0;
+	text-decoration: none;
+	color: #374151;
+}
+
+.ch-token-meta {
+	display: flex;
+	gap: 16px;
+	margin-top: 12px;
+	padding-top: 12px;
+	border-top: 1px solid rgba(0, 0, 0, 0.06);
+}
+
+.ch-token-meta-item {
+	display: flex;
+	flex-direction: column;
+	gap: 2px;
+}
+
+.ch-token-meta-label {
+	font-size: 11px;
+	color: #9ca3af;
+	font-weight: 500;
+	text-transform: uppercase;
+	letter-spacing: 0.5px;
+}
+
+.ch-token-meta-val {
+	font-size: 13px;
+	font-weight: 600;
+	color: #1a1a2e;
+}
+
+/* no token state */
+.ch-no-token {
+	font-size: 13px;
+	color: #9ca3af;
+	text-align: center;
+	padding: 12px 0;
+}
+
+/* ── Memes gallery ───────────────────────────────────── */
+.ch-gallery-title {
+	font-size: 20px;
+	font-weight: 700;
+	margin-bottom: 14px;
+	color: #1a1a2e;
+}
+
+.ch-gallery-grid {
+	display: grid;
+	grid-template-columns: 1fr 1fr;
+	gap: 10px;
+}
+
+.ch-gallery-grid .ch-meme-create {
+	grid-column: span 1;
+	background: rgba(255, 255, 255, 0.7);
+	border-radius: 16px;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	gap: 8px;
+	padding: 28px 12px;
+	cursor: pointer;
+	border: 2px dashed rgba(37, 99, 235, 0.3);
+	text-decoration: none;
+	transition: border-color 0.15s, background 0.15s;
+	min-height: 140px;
+}
+
+.ch-gallery-grid .ch-meme-create:hover {
+	border-color: #2563eb;
+	background: rgba(219, 234, 254, 0.5);
+}
+
+.ch-meme-create-icon {
+	width: 36px;
+	height: 36px;
+	border-radius: 8px;
+	overflow: hidden;
+}
+
+.ch-meme-create-icon img {
+	width: 100%;
+	height: 100%;
+	object-fit: cover;
+}
+
+.ch-meme-create-label {
+	font-size: 14px;
+	font-weight: 600;
+	color: #2563eb;
+}
+
+.ch-meme-item {
+	position: relative;
+	border-radius: 16px;
+	overflow: hidden;
+	aspect-ratio: 1;
+	background: #e2e8f0;
+}
+
+.ch-meme-item img {
+	width: 100%;
+	height: 100%;
+	object-fit: cover;
+}
+
+.ch-meme-author {
+	position: absolute;
+	bottom: 0;
+	left: 0;
+	right: 0;
+	padding: 6px 8px;
+	background: linear-gradient(transparent, rgba(0,0,0,0.5));
+	font-size: 11px;
+	color: #fff;
+	font-weight: 500;
+}
+
+.ch-memes-empty {
+	grid-column: span 2;
+	text-align: center;
+	color: #9ca3af;
+	font-size: 13px;
+	padding: 20px 0;
+}
+
+/* ── Bottom padding ──────────────────────────────────── */
+.ch-bottom-pad { height: 48px; }
+
+/* ── Error / loading ─────────────────────────────────── */
+.ch-error {
+	text-align: center;
+	padding: 60px 20px;
+	color: #6b7280;
+}
+
+.ch-error h2 { font-size: 20px; margin-bottom: 8px; }
+
+.ch-skeleton {
+	background: linear-gradient(90deg, rgba(255,255,255,0.4) 25%, rgba(255,255,255,0.7) 50%, rgba(255,255,255,0.4) 75%);
+	background-size: 200% 100%;
+	animation: ch-shimmer 1.4s infinite;
+	border-radius: 8px;
+}
+
+@keyframes ch-shimmer {
+	0% { background-position: 200% 0; }
+	100% { background-position: -200% 0; }
+}
+
+.ch-loading .ch-avatar { opacity: 0.4; }
+
+/* ── Desktop ─────────────────────────────────────────── */
+@media (min-width: 600px) {
+	.ch-hero { padding: 40px 32px 0; max-width: 560px; margin: 0 auto; }
+	.ch-section { padding: 20px 32px 0; max-width: 560px; margin: 0 auto; }
+	.ch-nav { padding: 16px 32px; }
+}

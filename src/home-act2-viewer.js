@@ -125,11 +125,13 @@ export class Act2Viewer {
 	 */
 	listAvailableClips() {
 		const IDLE_RE = /idle/i;
-		const glbGoodNames = [...this.clips.keys()].filter((n) => !IDLE_RE.test(n));
+		const glbNames = [...this.clips.keys()];
+		const glbGoodNames = glbNames.filter((n) => !IDLE_RE.test(n));
+		const glbIdleName = glbNames.find((n) => IDLE_RE.test(n));
 
 		/* Model has its own animations — skip manifest entirely */
 		if (glbGoodNames.length >= 3) {
-			return [...this.clips.keys()].map((name) => ({
+			return glbNames.map((name) => ({
 				name,
 				label: name,
 				icon: '✨',
@@ -140,15 +142,23 @@ export class Act2Viewer {
 
 		const out = [];
 		const seen = new Set();
-		/* manifest first (humanoid / Mixamo models like CZ) */
+		/* manifest first (humanoid / Mixamo models like CZ). When the GLB
+		 * ships its own idle clip, swap it in for the manifest idle — the
+		 * baked clip is authored for this exact rig and plays cleaner than
+		 * the retargeted Mixamo one. */
 		for (const def of this._manifest) {
-			if (!seen.has(def.name)) {
+			if (seen.has(def.name)) continue;
+			if (def.name === 'idle' && glbIdleName) {
+				out.push({ ...def, name: glbIdleName, source: 'glb' });
+				seen.add(def.name);
+				seen.add(glbIdleName);
+			} else {
 				out.push({ ...def, source: 'manifest' });
 				seen.add(def.name);
 			}
 		}
 		/* then any extra GLB clips not already in manifest */
-		for (const name of this.clips.keys()) {
+		for (const name of glbNames) {
 			if (seen.has(name)) continue;
 			seen.add(name);
 			out.push({ name, label: name, icon: '✨', loop: true, source: 'glb' });

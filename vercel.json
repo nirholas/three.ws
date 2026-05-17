@@ -903,6 +903,22 @@
 			"dest": "/avatar-page.html"
 		},
 		{
+			"src": "/api/characters",
+			"dest": "/api/characters.js"
+		},
+		{
+			"src": "/characters",
+			"dest": "/characters.html"
+		},
+		{
+			"src": "/characters/",
+			"dest": "/characters.html"
+		},
+		{
+			"src": "/character/([^/]+)",
+			"dest": "/character.html"
+		},
+		{
 			"src": "/api/users/me/earnings",
 			"dest": "/api/users/earnings.js"
 		},

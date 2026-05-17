@@ -2,6 +2,22 @@
   "_readme": "Curated RSS items for https://three.ws/rss/announcements.xml. Edit this file to control exactly what HackerNoon (and any RSS reader) sees. Each entry needs: id (stable slug), title, date (ISO 8601), body_html. Optional: link, author, summary, tags. Items are served newest-first by date; cap is 50. Seeded from data/archives/trythreews_tweets_2026-05-16.json on 2026-05-16 (35 entries). Re-run scripts/seed-rss-from-archive.mjs to refresh from a newer scrape.",
   "items": [
     {
+      "id": "partnered-with-hackernoon",
+      "title": "three.ws Partners with HackerNoon",
+      "date": "2026-05-17T21:00:00.000Z",
+      "link": "https://three.ws/news/partnered-with-hackernoon",
+      "author": "three.ws",
+      "summary": "three.ws has partnered with HackerNoon, bringing on-chain 3D agent coverage to one of the world's largest tech publications. Every three.ws announcement now auto-imports into HackerNoon via our RSS feed at https://three.ws/rss/announcements.xml.",
+      "body_html": "<p><strong>three.ws has partnered with <a href=\"https://hackernoon.com/u/three-ws\" rel=\"noopener\">HackerNoon</a></strong>, making HackerNoon the canonical media home for three.ws updates, technical write-ups, and product announcements.</p>\n<p>HackerNoon is one of the world's largest independent tech publications, read by millions of developers, founders, and builders monthly. The partnership gives three.ws a direct publishing channel into that audience without relying on social-media algorithms.</p>\n<h2>How it works</h2>\n<p>HackerNoon pulls every new post automatically from the three.ws RSS feed at <a href=\"https://three.ws/rss/announcements.xml\" rel=\"noopener\">three.ws/rss/announcements.xml</a>. Each item lands in the three.ws HackerNoon drafts queue, is reviewed, then published — all with canonical URLs pointing back to <a href=\"https://three.ws\" rel=\"noopener\">three.ws</a> so search attribution stays with the source.</p>\n<h2>Read us on HackerNoon</h2>\n<ul>\n<li>HackerNoon profile: <a href=\"https://hackernoon.com/u/three-ws\" rel=\"noopener\">hackernoon.com/u/three-ws</a></li>\n<li>RSS feed: <a href=\"https://three.ws/rss/announcements.xml\" rel=\"noopener\">three.ws/rss/announcements.xml</a></li>\n<li>News index: <a href=\"https://three.ws/news/\" rel=\"noopener\">three.ws/news/</a></li>\n</ul>\n<h2>About three.ws</h2>\n<p>three.ws is the open-source platform for 3D AI agents on-chain. A single <code>&lt;agent-3d&gt;</code> tag deploys a browser-native 3D character with a Solana NFT identity, an ERC-8004 wallet, and native x402 / HTTP 402 payments in USDC. The full stack is at <a href=\"https://github.com/nirholas/three.ws\" rel=\"noopener\">github.com/nirholas/three.ws</a>.</p>\n<h2>Related</h2>\n<ul>\n<li><a href=\"https://three.ws/docs/syndication\">News-feed syndication &amp; partners</a></li>\n<li><a href=\"https://three.ws/docs/listings\">All listings &amp; distribution channels</a></li>\n</ul>",
+      "tags": [
+        "partnership",
+        "media",
+        "hackernoon",
+        "content",
+        "press"
+      ]
+    },
+    {
       "id": "listed-on-bnb-chain-dappbay",
       "title": "three.ws Listed on BNB Chain's Dappbay Directory",
       "date": "2026-05-17T18:00:00.000Z",

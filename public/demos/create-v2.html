@@ -1,0 +1,486 @@
+<!doctype html>
+<html lang="en">
+<head>
+	<meta charset="utf-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1" />
+	<title>Create avatar v2 demo · three.ws</title>
+	<meta name="robots" content="noindex" />
+	<script type="module" src="https://ajax.googleapis.com/ajax/libs/model-viewer/4.0.0/model-viewer.min.js"></script>
+	<style>
+		:root {
+			color-scheme: dark;
+			--accent: #d6ff3d;
+			--accent-ink: #0a0a0a;
+			--bg: #05060a;
+			--panel: #0f1018;
+			--border: #1e1f2b;
+			--text: #eee;
+			--muted: #8a8d98;
+		}
+		* { box-sizing: border-box; }
+		html, body { margin: 0; padding: 0; }
+		body {
+			font: 15px/1.55 -apple-system, system-ui, 'Segoe UI', Roboto, sans-serif;
+			color: var(--text);
+			background: var(--bg);
+			min-height: 100vh;
+		}
+		body::before {
+			content: '';
+			position: fixed;
+			inset: 0;
+			z-index: -1;
+			pointer-events: none;
+			background:
+				radial-gradient(800px 500px at 50% -100px, rgba(106,92,255,.12) 0, transparent 70%),
+				radial-gradient(600px 400px at 50% 110%, rgba(214,255,61,.05) 0, transparent 70%),
+				#05060a;
+		}
+
+		/* ── demo banner ─────────────────────────────────────────────── */
+		.demo-banner {
+			background: rgba(214,255,61,.08);
+			border-bottom: 1px solid rgba(214,255,61,.2);
+			padding: 8px 20px;
+			text-align: center;
+			font-size: 12px;
+			color: rgba(214,255,61,.8);
+			letter-spacing: 0.03em;
+		}
+		.demo-banner a { color: inherit; text-underline-offset: 2px; }
+
+		/* ── stage ───────────────────────────────────────────────────── */
+		main.stage {
+			max-width: 1100px;
+			margin: 0 auto;
+			padding: 52px 24px 80px;
+		}
+
+		/* ── hero heading ────────────────────────────────────────────── */
+		.hero {
+			text-align: center;
+			margin-bottom: 40px;
+		}
+		.hero h1 {
+			font-size: clamp(22px, 4vw, 30px);
+			font-weight: 600;
+			letter-spacing: -0.02em;
+			margin: 0 0 10px;
+		}
+		.hero-sub {
+			color: var(--muted);
+			font-size: 14px;
+			margin: 0 0 24px;
+			max-width: 52ch;
+			margin-left: auto;
+			margin-right: auto;
+			line-height: 1.6;
+		}
+
+		/* ── stats strip ─────────────────────────────────────────────── */
+		.stats-strip {
+			display: flex;
+			justify-content: center;
+			gap: 28px;
+			flex-wrap: wrap;
+			margin-bottom: 44px;
+		}
+		.stat {
+			display: flex;
+			flex-direction: column;
+			align-items: center;
+			gap: 2px;
+		}
+		.stat-num {
+			font-size: 20px;
+			font-weight: 700;
+			letter-spacing: -0.03em;
+			color: var(--text);
+			font-variant-numeric: tabular-nums;
+		}
+		.stat-num.loading { color: var(--muted); font-size: 16px; }
+		.stat-label {
+			font-size: 11px;
+			color: var(--muted);
+			text-transform: uppercase;
+			letter-spacing: 0.08em;
+		}
+		.stats-divider {
+			width: 1px;
+			height: 32px;
+			background: var(--border);
+			align-self: center;
+		}
+
+		/* ── layout: featured + row ──────────────────────────────────── */
+		.create-layout {
+			display: grid;
+			grid-template-columns: 1fr 1fr;
+			grid-template-rows: auto auto;
+			gap: 16px;
+			max-width: 840px;
+			margin: 0 auto;
+		}
+
+		/* ── base card ───────────────────────────────────────────────── */
+		.create-card {
+			position: relative;
+			display: flex;
+			flex-direction: column;
+			padding: 22px 22px 20px;
+			border-radius: 18px;
+			background: var(--panel);
+			border: 1.5px solid var(--border);
+			cursor: pointer;
+			text-align: left;
+			color: inherit;
+			font: inherit;
+			transition: border-color .18s, transform .18s, box-shadow .18s;
+		}
+		.create-card:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+		.create-card:hover {
+			transform: translateY(-2px);
+			border-color: #2c2d3d;
+			box-shadow: 0 14px 36px rgba(0,0,0,.45);
+		}
+
+		/* featured card spans both columns in row 1 */
+		.create-card.featured {
+			grid-column: 1 / -1;
+			flex-direction: row;
+			gap: 28px;
+			padding: 28px;
+			border-color: rgba(214,255,61,.35);
+			background:
+				radial-gradient(500px 260px at 20% -20px, rgba(214,255,61,.07) 0, transparent 70%),
+				var(--panel);
+		}
+		.create-card.featured:hover { border-color: rgba(214,255,61,.6); }
+
+		.create-card.featured .card-preview {
+			width: 220px;
+			height: 220px;
+			flex-shrink: 0;
+		}
+		.create-card.featured .card-body {
+			flex: 1;
+			display: flex;
+			flex-direction: column;
+			justify-content: center;
+		}
+
+		/* small card: no separate .card-body wrapper needed */
+		.card-preview {
+			width: 100%;
+			height: 180px;
+			border-radius: 12px;
+			background: radial-gradient(circle at 50% 30%, rgba(214,255,61,.06) 0, transparent 60%), rgba(255,255,255,.02);
+			border: 1px solid var(--border);
+			margin-bottom: 16px;
+			overflow: hidden;
+			flex-shrink: 0;
+		}
+		.card-preview model-viewer {
+			width: 100%;
+			height: 100%;
+			--poster-color: transparent;
+		}
+		.card-preview--icon {
+			display: flex;
+			align-items: center;
+			justify-content: center;
+		}
+		.card-preview--icon svg {
+			width: 48px;
+			height: 48px;
+			color: rgba(255,255,255,.35);
+		}
+
+		/* ── badges row ──────────────────────────────────────────────── */
+		.card-badges {
+			display: flex;
+			gap: 6px;
+			align-items: center;
+			margin-bottom: 10px;
+			flex-wrap: wrap;
+		}
+		.badge {
+			padding: 2px 8px;
+			border-radius: 20px;
+			font-size: 10.5px;
+			font-weight: 600;
+			letter-spacing: 0.05em;
+		}
+		.badge-recommended {
+			background: rgba(214,255,61,.12);
+			border: 1px solid rgba(214,255,61,.35);
+			color: var(--accent);
+			text-transform: uppercase;
+		}
+		.badge-time {
+			background: rgba(255,255,255,.05);
+			border: 1px solid var(--border);
+			color: var(--muted);
+		}
+
+		/* ── card text ───────────────────────────────────────────────── */
+		.card-title {
+			font-size: 17px;
+			font-weight: 600;
+			margin: 0 0 6px;
+			letter-spacing: -0.01em;
+			line-height: 1.25;
+		}
+		.featured .card-title { font-size: 20px; }
+
+		.card-subtitle {
+			font-size: 13px;
+			color: var(--muted);
+			margin: 0 0 6px;
+			line-height: 1.55;
+			flex: 1;
+		}
+
+		.card-destination {
+			font-size: 12px;
+			color: rgba(214,255,61,.65);
+			margin: 0 0 16px;
+			display: flex;
+			align-items: center;
+			gap: 5px;
+		}
+		.card-destination::before {
+			content: '→';
+			font-size: 11px;
+		}
+
+		/* ── CTA button ──────────────────────────────────────────────── */
+		.card-cta {
+			display: inline-flex;
+			align-items: center;
+			gap: 6px;
+			padding: 9px 16px;
+			border-radius: 10px;
+			background: rgba(255,255,255,.06);
+			border: 1px solid var(--border);
+			color: var(--text);
+			font: inherit;
+			font-size: 13px;
+			font-weight: 500;
+			cursor: pointer;
+			transition: background .15s, border-color .15s;
+			align-self: flex-start;
+			text-decoration: none;
+		}
+		.create-card:hover .card-cta,
+		.create-card.featured .card-cta {
+			background: var(--accent);
+			border-color: transparent;
+			color: var(--accent-ink);
+		}
+
+		/* ── integrations strip ──────────────────────────────────────── */
+		.integrations {
+			max-width: 840px;
+			margin: 28px auto 0;
+			display: flex;
+			align-items: center;
+			gap: 8px;
+			flex-wrap: wrap;
+			justify-content: center;
+		}
+		.integrations-label {
+			font-size: 11px;
+			color: var(--muted);
+			letter-spacing: 0.05em;
+			text-transform: uppercase;
+			margin-right: 4px;
+		}
+		.int-badge {
+			padding: 4px 12px;
+			border-radius: 20px;
+			font-size: 11.5px;
+			font-weight: 500;
+			border: 1px solid var(--border);
+			color: var(--muted);
+			background: rgba(255,255,255,.025);
+		}
+
+		/* ── mobile ──────────────────────────────────────────────────── */
+		@media (max-width: 640px) {
+			main.stage { padding: 32px 16px 60px; }
+			.create-layout { grid-template-columns: 1fr; }
+			.create-card.featured {
+				flex-direction: column;
+				grid-column: auto;
+			}
+			.create-card.featured .card-preview {
+				width: 100%;
+				height: 200px;
+			}
+			.stats-strip { gap: 16px; }
+			.stats-divider { display: none; }
+		}
+	</style>
+</head>
+<body>
+	<div class="demo-banner">
+		Design demo — <a href="/create">view current /create page</a> · <a href="/demos">all demos</a>
+	</div>
+
+	<main class="stage">
+		<div class="hero">
+			<h1>Create your avatar</h1>
+			<p class="hero-sub">Pick a path — you'll have a rigged, talking 3D avatar ready to embed, speak, or deploy as an AI agent.</p>
+		</div>
+
+		<div class="stats-strip" id="stats-strip">
+			<div class="stat">
+				<span class="stat-num loading" id="stat-avatars">—</span>
+				<span class="stat-label">avatars created</span>
+			</div>
+			<div class="stats-divider"></div>
+			<div class="stat">
+				<span class="stat-num loading" id="stat-agents">—</span>
+				<span class="stat-label">AI agents embodied</span>
+			</div>
+			<div class="stats-divider"></div>
+			<div class="stat">
+				<span class="stat-num">190+</span>
+				<span class="stat-label">countries</span>
+			</div>
+		</div>
+
+		<div class="create-layout" role="group" aria-label="Choose avatar creation method">
+
+			<!-- Featured: Template (recommended) -->
+			<div class="create-card featured" id="card-template" role="button" tabindex="0" aria-label="Start with a template — recommended">
+				<div class="card-preview">
+					<model-viewer
+						src="/avatars/default.glb"
+						alt="Customizable 3D avatar template"
+						auto-rotate
+						auto-rotate-delay="0"
+						rotation-per-second="18deg"
+						interaction-prompt="none"
+						disable-zoom disable-pan disable-tap
+						shadow-intensity="0.5"
+						shadow-softness="0.8"
+						exposure="0.95"
+						environment-image="neutral"
+						camera-orbit="10deg 78deg auto"
+						loading="eager"
+					></model-viewer>
+				</div>
+				<div class="card-body">
+					<div class="card-badges">
+						<span class="badge badge-recommended">Recommended</span>
+						<span class="badge badge-time">~5 min</span>
+					</div>
+					<h2 class="card-title">Start with a template</h2>
+					<p class="card-subtitle">Choose a ready-made character and customize skin, hair, outfit, and accessories in the browser. No download required.</p>
+					<p class="card-destination">Talk in realtime · embed in any site · export as GLB</p>
+					<span class="card-cta">
+						Open editor
+						<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+					</span>
+				</div>
+			</div>
+
+			<!-- Selfie to avatar -->
+			<div class="create-card" id="card-selfie" role="button" tabindex="0" aria-label="Create from a selfie">
+				<div class="card-preview">
+					<model-viewer
+						src="/avatars/cz.glb"
+						alt="Photo-realistic selfie avatar"
+						auto-rotate
+						auto-rotate-delay="0"
+						rotation-per-second="22deg"
+						interaction-prompt="none"
+						disable-zoom disable-pan disable-tap
+						shadow-intensity="0.4"
+						shadow-softness="0.8"
+						exposure="0.95"
+						environment-image="neutral"
+						camera-orbit="-10deg 80deg auto"
+						loading="lazy"
+					></model-viewer>
+				</div>
+				<div class="card-badges">
+					<span class="badge badge-time">~1 min</span>
+				</div>
+				<h2 class="card-title">Selfie to avatar</h2>
+				<p class="card-subtitle">Three photos — front, left, right. three.ws generates a rigged avatar that looks like you.</p>
+				<p class="card-destination">Photorealistic · fully rigged · lip-sync ready</p>
+				<span class="card-cta">
+					Take 3 photos
+					<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+				</span>
+			</div>
+
+			<!-- Upload GLB -->
+			<div class="create-card" id="card-upload" role="button" tabindex="0" aria-label="Upload a GLB file">
+				<div class="card-preview card-preview--icon">
+					<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+						<polyline points="16 16 12 12 8 16"/>
+						<line x1="12" y1="12" x2="12" y2="21"/>
+						<path d="M20.39 18.39A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.3"/>
+					</svg>
+				</div>
+				<div class="card-badges">
+					<span class="badge badge-time">Instant</span>
+				</div>
+				<h2 class="card-title">Upload your GLB</h2>
+				<p class="card-subtitle">Drop any glTF 2.0 <code style="font-size:11px;opacity:.7">.glb</code> file. Works with Blender, Unity, or any 3D tool export.</p>
+				<p class="card-destination">Import · animate · deploy</p>
+				<span class="card-cta">
+					Choose file
+					<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+				</span>
+			</div>
+
+		</div>
+
+		<!-- integrations strip -->
+		<div class="integrations">
+			<span class="integrations-label">Works with</span>
+			<span class="int-badge">OpenAI Realtime</span>
+			<span class="int-badge">ERC-8004 agents</span>
+			<span class="int-badge">Solana</span>
+			<span class="int-badge">WebGL / Three.js</span>
+			<span class="int-badge">Unreal Engine</span>
+		</div>
+	</main>
+
+	<script type="module">
+		// Fetch real totals from /api/explore
+		try {
+			const res = await fetch('/api/explore?limit=1');
+			if (res.ok) {
+				const data = await res.json();
+				const t = data.totals;
+				if (t) {
+					const fmt = n => n >= 1000 ? `${(n/1000).toFixed(1)}k+` : `${n}+`;
+					const avatarEl = document.getElementById('stat-avatars');
+					const agentEl  = document.getElementById('stat-agents');
+					if (avatarEl && t.avatars != null) {
+						avatarEl.textContent = fmt(t.avatars);
+						avatarEl.classList.remove('loading');
+					}
+					if (agentEl && t.agents != null) {
+						agentEl.textContent = fmt(t.agents);
+						agentEl.classList.remove('loading');
+					}
+				}
+			}
+		} catch (_) {}
+
+		// Keyboard nav for cards
+		document.querySelectorAll('.create-card').forEach(card => {
+			card.addEventListener('keydown', e => {
+				if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); card.click(); }
+			});
+		});
+	</script>
+</body>
+</html>

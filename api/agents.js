@@ -250,6 +250,13 @@ export async function handleGetOne(req, res, id) {
 
 		await healStaleAvatarId(row);
 
+		const [chatRow] = await sql`
+			SELECT COUNT(*)::int AS total
+			FROM usage_events
+			WHERE agent_id = ${id} AND kind = 'llm'
+		`;
+		row.chat_count = chatRow?.total ?? 0;
+
 		// Public fields if not owner; full record if owner. Auth on a public GET
 		// is best-effort — anonymous viewers still get the public projection.
 		const auth = await resolveAuth(req).catch(() => null);
@@ -431,6 +438,9 @@ function decorate(row, isOwner = true) {
 		id: row.id,
 		name: row.name,
 		description: row.description,
+		author_name: row.author_name || null,
+		author_avatar: row.author_avatar || null,
+		chat_count: row.chat_count ?? 0,
 		avatar_id: row.avatar_id,
 		avatar_visibility: avatarVisibility,
 		avatar_model_url: avatarModelUrl,

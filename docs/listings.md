@@ -31,6 +31,16 @@ Dappbay is BNB Chain's official dApp directory. The listing is about distributio
 
 ---
 
+## Media & Content Partners
+
+| Partner | Status | Links |
+|---|---|---|
+| **HackerNoon** | Live | [hackernoon.com/u/three-ws](https://hackernoon.com/u/three-ws) — three.ws posts auto-import from the RSS feed. Announcement: [three.ws Partners with HackerNoon](/news/partnered-with-hackernoon) |
+
+HackerNoon is one of the world's largest independent tech publications, read by millions of developers and founders monthly. Every three.ws announcement is pulled automatically from [`three.ws/rss/announcements.xml`](https://three.ws/rss/announcements.xml) into the HackerNoon drafts queue, then published with canonical URLs pointing back to three.ws. See [syndication setup](/docs/syndication#hackernoon) for technical details.
+
+---
+
 ## Open Source
 
 The full stack is on GitHub:

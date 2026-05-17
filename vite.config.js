@@ -137,7 +137,6 @@ const appConfig = {
 				'pump-dashboard': resolve(__dirname, 'pump-dashboard.html'),
 				'pump-visualizer': resolve(__dirname, 'pump-visualizer.html'),
 				'avatar-artifact': resolve(__dirname, 'avatar-artifact.html'),
-				'pretext-demo': resolve(__dirname, 'pretext-demo.html'),
 				'launch-week': resolve(__dirname, 'three-ws-launch-week.html'),
 				community: resolve(__dirname, 'community.html'),
 				profile: resolve(__dirname, 'profile.html'),
@@ -173,6 +172,9 @@ const appConfig = {
 				'demos-lipsync-tts': resolve(__dirname, 'public/demos/lipsync-tts.html'),
 				'demos-walkaround': resolve(__dirname, 'public/demos/walkaround.html'),
 				'demos-erc8004': resolve(__dirname, 'public/demos/erc8004.html'),
+				'demos-button-jump': resolve(__dirname, 'public/demos/button-jump.html'),
+				'demos-button': resolve(__dirname, 'public/demos/button.html'),
+				'demos-3d-home': resolve(__dirname, 'public/demos/3d-home.html'),
 			},
 		},
 	},
@@ -318,9 +320,9 @@ const appConfig = {
 						const slug = path.replace(/^\/blog\//, '').replace(/\/$/, '');
 						filePath = resolve(root, `blog/${slug}.html`);
 					}
-					// /demos/<slug>  → resolves to public/demos/<slug>.html on disk
-					else if (!filePath && /^\/demos\/[a-z0-9-]+\/?$/.test(path)) {
-						const slug = path.replace(/^\/demos\//, '').replace(/\/$/, '');
+					// /demos/<slug> or /demos/<slug>.html → resolves to public/demos/<slug>.html on disk
+					else if (!filePath && /^\/demos\/[a-z0-9-]+(\.html)?\/?$/.test(path)) {
+						const slug = path.replace(/^\/demos\//, '').replace(/\.html$/, '').replace(/\/$/, '');
 						filePath = resolve(root, `public/demos/${slug}.html`);
 					}
 					// /tutorials/<slug>  → dedicated tutorial viewer template
@@ -346,6 +348,10 @@ const appConfig = {
 						filePath = resolve(root, 'agent-embed.html');
 					else if (!filePath && /^\/agent\/[^/]+$/.test(path))
 						filePath = resolve(root, 'agent-home.html');
+					else if (!filePath && /^\/character\/[^/]+\/?$/.test(path))
+						filePath = resolve(root, 'public/character.html');
+					else if (!filePath && (path === '/characters' || path === '/characters/'))
+						filePath = resolve(root, 'public/characters.html');
 					// /a/<chainId>/<agentId>/edit  → chain-edit page
 					else if (!filePath && /^\/a\/[^/]+(?:\/[^/]+){1,2}\/edit\/?$/.test(path))
 						filePath = resolve(root, 'a-edit.html');
@@ -521,6 +527,9 @@ const appConfig = {
 					['dist/public/demos/lipsync-tts.html', 'dist/demos/lipsync-tts.html'],
 					['dist/public/demos/walkaround.html', 'dist/demos/walkaround.html'],
 					['dist/public/demos/erc8004.html', 'dist/demos/erc8004.html'],
+					['dist/public/demos/button-jump.html', 'dist/demos/button-jump.html'],
+					['dist/public/demos/button.html', 'dist/demos/button.html'],
+					['dist/public/demos/3d-home.html', 'dist/demos/3d-home.html'],
 				];
 				for (const [from, to] of pairs) {
 					const src = resolve(__dirname, from);

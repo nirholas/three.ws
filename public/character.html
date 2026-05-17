@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
+	<title>Character — three.ws</title>
+	<meta name="description" content="Character profile on three.ws" />
+	<link rel="icon" href="/favicon.ico" />
+	<link rel="stylesheet" href="/src/character.css" />
+</head>
+<body>
+
+<nav class="ch-nav">
+	<a class="ch-nav-brand" href="/">three.ws</a>
+	<div class="ch-nav-actions">
+		<a class="ch-btn-ghost" href="/login">Log in</a>
+		<a class="ch-btn-primary" href="/login?signup=1">Sign up</a>
+	</div>
+</nav>
+
+<div class="ch-shell ch-loading">
+
+	<!-- Hero -->
+	<section class="ch-hero">
+		<div class="ch-hero-top">
+			<!-- Avatar -->
+			<img id="ch-avatar-img" class="ch-avatar" src="" alt="" style="display:none" />
+			<div id="ch-avatar-ph" class="ch-avatar-placeholder" style="display:none"></div>
+
+			<!-- Name + creator + stats -->
+			<div class="ch-hero-info">
+				<h1 id="ch-name" class="ch-name ch-skeleton" style="min-width:140px;min-height:28px">&nbsp;</h1>
+				<div id="ch-creator" class="ch-creator" style="margin-top:6px"></div>
+			</div>
+
+			<div class="ch-stats">
+				<div class="ch-stat-bubble">
+					<span id="ch-stat-chats" class="ch-stat-num">—</span>
+					<span class="ch-stat-label">Chats</span>
+				</div>
+				<div class="ch-stat-bubble">
+					<span id="ch-stat-holders" class="ch-stat-num">—</span>
+					<span class="ch-stat-label">Holders</span>
+				</div>
+			</div>
+		</div>
+
+		<p id="ch-desc" class="ch-desc"></p>
+
+		<div class="ch-cta">
+			<a id="ch-chat-btn" class="ch-chat-btn" href="#">Chat</a>
+		</div>
+	</section>
+
+	<!-- Token card -->
+	<section class="ch-section">
+		<div class="ch-token-card">
+			<div id="ch-token-section">
+				<p class="ch-no-token">Loading…</p>
+			</div>
+		</div>
+	</section>
+
+	<!-- Memes gallery -->
+	<section class="ch-section">
+		<h2 class="ch-gallery-title">Memes Gallery</h2>
+		<div id="ch-memes-grid" class="ch-gallery-grid"></div>
+	</section>
+
+	<div class="ch-bottom-pad"></div>
+</div>
+
+<script type="module" src="/src/character.js"></script>
+</body>
+</html>

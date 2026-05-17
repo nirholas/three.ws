@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
+	<title>Characters — three.ws</title>
+	<meta name="description" content="Discover AI characters on three.ws. Chat, trade, and create." />
+	<link rel="icon" href="/favicon.ico" />
+	<link rel="canonical" href="https://three.ws/characters" />
+	<meta property="og:title" content="Characters — three.ws" />
+	<meta property="og:description" content="Discover AI characters. Chat, trade, create." />
+	<meta property="og:url" content="https://three.ws/characters" />
+	<meta property="og:image" content="https://three.ws/og-image.png" />
+	<link rel="stylesheet" href="/src/characters.css" />
+</head>
+<body>
+
+<nav class="chs-nav">
+	<a class="chs-nav-brand" href="/">three.ws</a>
+	<div class="chs-nav-right">
+		<a class="chs-btn-ghost" href="/login">Log in</a>
+		<a class="chs-btn-primary" href="/login?signup=1">Sign up</a>
+	</div>
+</nav>
+
+<div class="chs-header">
+	<h1 class="chs-title">Characters</h1>
+	<div class="chs-controls">
+		<input id="chs-search" class="chs-search" type="search" placeholder="Search characters…" autocomplete="off" />
+		<div class="chs-sort">
+			<button class="chs-sort-btn active" data-sort="new">New</button>
+			<button class="chs-sort-btn" data-sort="chats">Top</button>
+		</div>
+	</div>
+</div>
+
+<div id="chs-grid" class="chs-grid">
+	<!-- cards injected by characters.js -->
+</div>
+
+<div id="chs-load-more" class="chs-load-more" style="display:none">
+	<button id="chs-load-btn" class="chs-load-btn">Load more</button>
+</div>
+
+<div class="chs-bottom-pad"></div>
+
+<script type="module" src="/src/characters.js"></script>
+</body>
+</html>
