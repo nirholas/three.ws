@@ -171,10 +171,10 @@ three.ws ships in four phases. Each phase closes a specific gap between the curr
 | Phase | Theme | Status |
 |---|---|---|
 | **0** | Platform foundations (viewer, runtime, ERC-8004, embed layer) | ✅ Shipped |
-| **1** | Selfie → Avatar engine (3-photo capture, hosted inference) | 🟡 In progress |
-| **2** | Agent personalization + voice cloning | ⏳ Next |
-| **3** | Onchain economy (agent tokens, reputation markets, royalties) | ⏳ Next |
-| **4** | Open inference network (decentralized GPU layer) | 🔮 Future |
+| **1** | Selfie → Avatar engine (3-photo capture, hosted inference) | 🟡 In progress — capture UX + quality gates shipped; GPU reconstruction backend wiring |
+| **2** | Agent personalization + voice cloning | 🟡 In progress — voice clone, persona, memory seeds shipped behind `/demos`; main-flow integration next |
+| **3** | Onchain economy (agent tokens, reputation markets, royalties) | 🟡 Scaffolding — bonding-curve sim, EAS-reputation viewer, 0xsplits + EAS SDKs landed; contracts + audits next |
+| **4** | Open inference network (decentralized GPU layer) | 🔮 Future — livepeer dep landed for early experimentation |
 
 ---
 

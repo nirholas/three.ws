@@ -8,11 +8,25 @@
 // returns a regenerated GLB asset. The choice of model is configurable via
 // env so the provider can be tuned without code changes:
 //
-//   REPLICATE_API_TOKEN          — required, from replicate.com/account
-//   REPLICATE_RESTYLE_MODEL      — version hash for text-to-3D (Hunyuan3D, Tripo, etc.)
-//   REPLICATE_REMESH_MODEL       — version hash for mesh cleanup
-//   REPLICATE_RETEX_MODEL        — version hash for re-texturing
-//   REPLICATE_RERIG_MODEL        — version hash for rig regeneration
+//   REPLICATE_API_TOKEN              — required, from replicate.com/account
+//   REPLICATE_RECONSTRUCT_MODEL      — version hash for image-to-3D (Phase 1 selfie pipeline)
+//   REPLICATE_RESTYLE_MODEL          — version hash for text-to-3D / style transfer
+//   REPLICATE_REMESH_MODEL           — version hash for mesh cleanup
+//   REPLICATE_RETEX_MODEL            — version hash for re-texturing
+//   REPLICATE_RERIG_MODEL            — version hash for rig regeneration (skeleton + skinning)
+//
+// ── Recommended commercial-OK models (2026-05) ──────────────────────────────
+// Set REPLICATE_RECONSTRUCT_MODEL and REPLICATE_RESTYLE_MODEL to the version
+// hash of `tencent/hunyuan-3d-3.1` (visit replicate.com/tencent/hunyuan-3d-3.1
+// and copy the latest version id). Commercially licensed, image-to-textured-GLB
+// in ~30-60s, best quality/price as of writing.
+//
+// For REPLICATE_RERIG_MODEL, deploy VAST-AI-Research/UniRig (MIT, SIGGRAPH 2025
+// SOTA auto-rigging, weights on Hugging Face) via cog when it lands on
+// Replicate, or run it on a dedicated GPU and proxy through the same protocol.
+//
+// Cheaper TripoSR fallback for reconstruct mode: `camenduru/tripo-sr` (~$0.0023
+// per run, single-image, faster but no PBR textures).
 //
 // At submit time the provider POSTs to the Replicate predictions API. The
 // returned prediction id is stored as `ext_job_id`. The status endpoint
@@ -27,6 +41,7 @@ function readEnv(name) {
 }
 
 const MODE_TO_ENV = Object.freeze({
+	reconstruct: 'REPLICATE_RECONSTRUCT_MODEL',
 	restyle: 'REPLICATE_RESTYLE_MODEL',
 	remesh: 'REPLICATE_REMESH_MODEL',
 	retex: 'REPLICATE_RETEX_MODEL',
@@ -39,11 +54,26 @@ function modelForMode(mode) {
 	return readEnv(envName);
 }
 
-// Map our 4 modes onto the input shape each model expects. The exact shape
-// depends on the model; we default to a generic { source_url, prompt, mode }
-// payload and let provider-side models pick the fields they care about.
-// Caller-supplied params override the default shape.
+// Map our 5 modes onto the input shape each model expects. The exact shape
+// depends on the model; we default to a generic payload and let provider-side
+// models pick the fields they care about. Caller-supplied params always win.
+//
+// For `reconstruct` (image-to-3D, no source GLB) we feed `image` from the
+// caller's first photo and pass the full list through as `images` for models
+// that accept multi-view. This matches the input contracts of the Hunyuan3D
+// family and TripoSR — both ignore unrecognized fields.
 function buildInput({ mode, sourceUrl, params }) {
+	if (mode === 'reconstruct') {
+		const photos = Array.isArray(params?.images) ? params.images : [];
+		const primary = photos[0] || params?.image || sourceUrl;
+		const base = {
+			mode,
+			image: primary,
+			images: photos.length ? photos : undefined,
+			prompt: typeof params?.prompt === 'string' ? params.prompt : undefined,
+		};
+		return { ...base, ...(params || {}) };
+	}
 	const base = {
 		mode,
 		source_url: sourceUrl,

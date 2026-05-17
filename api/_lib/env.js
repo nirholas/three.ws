@@ -339,6 +339,14 @@ export const env = {
 		return opt('X_OAUTH_CLIENT_SECRET');
 	},
 
+	// Livepeer AI Gateway — optional. When set, /api/inference/livepeer routes
+	// to https://livepeer.studio/api/generate/llm with bearer auth (higher quota).
+	// When unset, the demo falls back to the public dream gateway at
+	// https://dream-gateway.livepeer.cloud/llm (no key, rate-limited).
+	get LIVEPEER_API_KEY() {
+		return opt('LIVEPEER_API_KEY');
+	},
+
 	// Dev.to syndication — required for the news admin's "Publish to Dev.to"
 	// hook to do anything. Generate at https://dev.to/settings/extensions
 	// (look for "Generate API Key"). When unset, syndication is skipped

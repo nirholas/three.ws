@@ -17,6 +17,7 @@
 import { describe, it, expect, beforeAll } from 'vitest';
 import { Document, NodeIO } from '@gltf-transform/core';
 import { ALL_EXTENSIONS } from '@gltf-transform/extensions';
+import { MeshoptDecoder } from 'meshoptimizer';
 import { readFile } from 'node:fs/promises';
 import path from 'node:path';
 
@@ -112,7 +113,12 @@ beforeAll(async () => {
 // ── Helpers ────────────────────────────────────────────────────────────────
 
 async function inspect(glbBytes) {
-	const io = new NodeIO().registerExtensions(ALL_EXTENSIONS);
+	// bakeAppearance now ships meshopt-compressed buffers, so the test reader
+	// must register the meshopt decoder dependency to round-trip them.
+	await MeshoptDecoder.ready;
+	const io = new NodeIO()
+		.registerExtensions(ALL_EXTENSIONS)
+		.registerDependencies({ 'meshopt.decoder': MeshoptDecoder });
 	return io.readBinary(new Uint8Array(glbBytes));
 }
 

@@ -1,0 +1,824 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1" />
+		<title>three.ws · Skill royalty distribution</title>
+		<meta
+			name="description"
+			content="Create an on-chain royalty split that pays skill authors automatically. Pull split contract on Base Sepolia testnet, real wallet signing, no mocks."
+		/>
+		<meta name="robots" content="noindex" />
+		<link rel="stylesheet" href="/style.css" />
+		<link rel="stylesheet" href="/nav.css" />
+		<style>
+			:root { color-scheme: dark; }
+			body { background: #05060a; color: #eee; font: 15px/1.5 -apple-system, system-ui, sans-serif; margin: 0; }
+			.stage { max-width: 1080px; margin: 0 auto; padding: 48px 24px 80px; }
+			.crumb a { color: #8a8d98; text-decoration: none; }
+			.crumb a:hover { color: #d6ff3d; }
+			h1 { font-size: 28px; font-weight: 600; letter-spacing: -0.015em; margin: 14px 0 8px; }
+			.sub { color: #8a8d98; max-width: 72ch; margin: 0 0 26px; }
+			.sub code { background: #0f1018; padding: 1px 6px; border-radius: 5px; font-size: 12.5px; color: #d6ff3d; }
+			h2 { font-size: 18px; font-weight: 600; margin: 0 0 14px; letter-spacing: -0.01em; }
+			.card { background: #0f1018; border: 1.5px solid #1e1f2b; border-radius: 14px; padding: 22px; margin: 0 0 22px; }
+			.row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+			label { display: flex; flex-direction: column; gap: 4px; font-size: 11px; color: #8a8d98; text-transform: uppercase; letter-spacing: 0.08em; flex: 1 1 240px; }
+			input[type=text], input[type=number] {
+				background: #07080d; border: 1px solid #1e1f2b; color: #eee;
+				padding: 9px 11px; border-radius: 9px; font: inherit;
+			}
+			button {
+				background: #d6ff3d; color: #0a0a0a; border: 0; border-radius: 9px;
+				padding: 9px 16px; font-weight: 600; cursor: pointer; font: inherit;
+			}
+			button.secondary { background: rgba(255,255,255,0.06); color: #eee; border: 1px solid #1e1f2b; }
+			button.tiny { padding: 5px 9px; font-size: 12px; border-radius: 7px; }
+			button:disabled { opacity: 0.35; cursor: not-allowed; }
+			.pill {
+				display: inline-flex; align-items: center; gap: 6px;
+				font-family: ui-monospace, monospace; font-size: 11.5px;
+				padding: 4px 9px; border-radius: 999px;
+				background: rgba(214,255,61,0.08); color: #d6ff3d;
+				border: 1px solid rgba(214,255,61,0.2);
+				cursor: pointer;
+			}
+			.pill.bad { background: rgba(255,138,138,0.08); color: #ff8a8a; border-color: rgba(255,138,138,0.25); }
+			.pill.muted { background: rgba(255,255,255,0.04); color: #8a8d98; border-color: #1e1f2b; cursor: default; }
+			.notice {
+				padding: 11px 14px; border-radius: 10px; font-size: 13px; margin: 12px 0;
+				background: rgba(154,212,255,0.06); border: 1px solid rgba(154,212,255,0.2); color: #9ad4ff;
+			}
+			.notice.warn { background: rgba(255,196,87,0.07); border-color: rgba(255,196,87,0.3); color: #ffc457; }
+			.notice.err { background: rgba(255,138,138,0.07); border-color: rgba(255,138,138,0.3); color: #ff8a8a; }
+			.notice.ok { background: rgba(214,255,61,0.07); border-color: rgba(214,255,61,0.3); color: #d6ff3d; }
+			.log {
+				background: #07080d; border: 1px solid #1e1f2b; border-radius: 9px;
+				padding: 12px; font-family: ui-monospace, monospace; font-size: 12px;
+				line-height: 1.6; color: #8a8d98; max-height: 280px; overflow: auto; white-space: pre-wrap;
+			}
+			.log .ok { color: #d6ff3d; }
+			.log .err { color: #ff6b6b; }
+			.log .info { color: #66d9ef; }
+			.kv { display: grid; grid-template-columns: 160px 1fr; gap: 4px 14px; font-size: 12.5px; }
+			.kv dt { color: #8a8d98; font-size: 11px; text-transform: uppercase; letter-spacing: 0.07em; }
+			.kv dd { margin: 0; font-family: ui-monospace, monospace; color: #ddd; word-break: break-all; }
+			.kv dd a { color: #9ad4ff; }
+			table { width: 100%; border-collapse: collapse; font-size: 12.5px; }
+			th, td { text-align: left; padding: 9px 10px; border-bottom: 1px solid #1e1f2b; vertical-align: middle; }
+			th { color: #8a8d98; font-weight: 500; text-transform: uppercase; font-size: 10.5px; letter-spacing: 0.08em; }
+			td { font-family: ui-monospace, monospace; color: #ddd; word-break: break-word; }
+			td input[type=text] { width: 100%; }
+			td input[type=number] { width: 90px; }
+			td.actions { width: 60px; text-align: right; }
+			.sum-row { display: flex; justify-content: space-between; align-items: center; margin-top: 12px; font-size: 13px; }
+			.sum-row .sum-good { color: #d6ff3d; }
+			.sum-row .sum-bad { color: #ff8a8a; }
+			.copy-addr { cursor: pointer; color: #9ad4ff; text-decoration: none; }
+			.copy-addr:hover { color: #d6ff3d; }
+			.full { flex-basis: 100%; }
+			footer.foot { color: #5b5d6b; font-size: 11.5px; margin-top: 30px; text-align: center; }
+			footer.foot a { color: #8a8d98; }
+		</style>
+		<script type="importmap">
+			{
+				"imports": {
+					"@0xsplits/splits-sdk": "https://esm.sh/@0xsplits/splits-sdk@6.5.0?bundle-deps",
+					"@0xsplits/splits-sdk/constants": "https://esm.sh/@0xsplits/splits-sdk@6.5.0/constants?bundle-deps",
+					"viem": "https://esm.sh/viem@2",
+					"viem/chains": "https://esm.sh/viem@2/chains"
+				}
+			}
+		</script>
+	</head>
+	<body>
+		<header><div id="nav-container"></div></header>
+
+		<main class="stage">
+			<p class="crumb"><a href="/demos/">&larr; lab</a></p>
+			<h1>three.ws &middot; Skill royalty distribution</h1>
+			<p class="sub">
+				A royalty primitive for skill authors: deploy a single
+				<b>pull-split contract</b> on <b>Base Sepolia</b> (testnet, chainId
+				<code>84532</code>) that automatically slices every incoming ETH
+				payment by your configured percentages. Fund it once, then call
+				<code>distribute</code> &mdash; each author can withdraw their
+				share whenever. No backend, no custodial keys; you sign every
+				write yourself. The contract is immutable (no owner).
+			</p>
+
+			<section class="card">
+				<h2>1. Wallet</h2>
+				<div class="row" id="wallet-row">
+					<button id="connect-btn">Connect wallet</button>
+					<span id="wallet-pill" class="pill muted" title="click to copy">not connected</span>
+					<span id="chain-pill" class="pill muted">no chain</span>
+					<button id="switch-btn" class="secondary" style="display:none">Switch to Base Sepolia</button>
+				</div>
+				<p class="notice">
+					You need a few drops of Base Sepolia ETH. Free at the
+					<a href="https://portal.cdp.coinbase.com/products/faucet" target="_blank" rel="noopener">Coinbase Base Sepolia faucet</a>,
+					the <a href="https://www.alchemy.com/faucets/base-sepolia" target="_blank" rel="noopener">Alchemy faucet</a>,
+					or the <a href="https://faucets.chain.link/base-sepolia" target="_blank" rel="noopener">Chainlink faucet</a>.
+				</p>
+				<p class="notice warn" id="wallet-warn" style="display:none"></p>
+			</section>
+
+			<section class="card">
+				<h2>2. Configure skill-author recipients</h2>
+				<p style="margin:0 0 10px;color:#8a8d98;font-size:13px">
+					Up to 10 rows. Percentages must sum to <b>100</b>. Distributor fee
+					is fixed at <code>0%</code> &mdash; nobody skims the pot.
+				</p>
+				<table id="recipients-tbl">
+					<thead>
+						<tr>
+							<th style="width:60px">#</th>
+							<th>Skill-author address (0x&hellip;)</th>
+							<th style="width:130px">Share %</th>
+							<th class="actions"></th>
+						</tr>
+					</thead>
+					<tbody id="recipients-body"></tbody>
+				</table>
+				<div class="sum-row">
+					<button id="add-row" class="secondary tiny" type="button">+ Add recipient</button>
+					<div id="sum-display">Sum: <span id="sum-val" class="sum-good">100.00</span> %</div>
+				</div>
+			</section>
+
+			<section class="card">
+				<h2>3. Create Split contract</h2>
+				<p style="margin:0 0 10px;color:#8a8d98;font-size:13px">
+					Calls <code>SplitV2Client.createSplit({ splitType: 'pull', ownerAddress: 0x0 })</code>
+					on the official Split V2 factory at
+					<code id="factory-addr">…</code>.
+				</p>
+				<div class="row">
+					<button id="create-btn" disabled>Deploy immutable pull split</button>
+					<button id="forget-btn" class="secondary" style="display:none">Forget this split</button>
+				</div>
+				<div id="split-info" style="margin-top:14px"></div>
+			</section>
+
+			<section class="card" id="fund-card" style="display:none">
+				<h2>4. Fund the split (test payment)</h2>
+				<div class="row">
+					<label>
+						ETH amount
+						<input type="number" id="fund-amount" value="0.001" step="0.0001" min="0" />
+					</label>
+					<label>
+						Recipient
+						<input type="text" id="fund-target" readonly />
+					</label>
+					<button id="fund-btn">Send test payment</button>
+				</div>
+				<div id="fund-result" style="margin-top:12px"></div>
+			</section>
+
+			<section class="card" id="inspect-card" style="display:none">
+				<h2>5. Inspect &amp; distribute</h2>
+				<div class="row">
+					<button id="refresh-btn" class="secondary">Refresh balance</button>
+					<button id="distribute-btn">Distribute to recipients</button>
+					<button id="withdraw-btn" class="secondary" style="display:none">Withdraw your share</button>
+				</div>
+				<div id="inspect-body" style="margin-top:14px"></div>
+			</section>
+
+			<section class="card">
+				<h2>Log</h2>
+				<div class="log" id="log">ready.</div>
+			</section>
+
+			<footer class="foot">
+				Powered by <a href="https://docs.splits.org/sdk/splits-v2" target="_blank" rel="noopener">0xSplits V2</a>
+				&middot; Pull-split contract address per chain documented at
+				<a href="https://docs.splits.org/sdk/splits-v2#supported-chains" target="_blank" rel="noopener">docs.splits.org/sdk/splits-v2#supported-chains</a>.
+			</footer>
+		</main>
+
+		<script src="/nav.js" defer></script>
+		<script type="module">
+			import {
+				createPublicClient,
+				createWalletClient,
+				custom,
+				http,
+				isAddress,
+				getAddress,
+				parseEther,
+				formatEther,
+				zeroAddress,
+			} from 'viem';
+			import { baseSepolia } from 'viem/chains';
+			import { SplitV2Client } from '@0xsplits/splits-sdk';
+			import { NATIVE_TOKEN_ADDRESS, getSplitV2FactoryAddress } from '@0xsplits/splits-sdk/constants';
+
+			// --- constants ---
+			const BASE_SEPOLIA_CHAIN_ID = 84532;
+			const BASE_SEPOLIA_HEX = '0x14a34';
+			const BASE_SEPOLIA_RPC = 'https://sepolia.base.org';
+			const BASESCAN_BASE = 'https://sepolia.basescan.org';
+			const SPLITS_APP_BASE = 'https://app.splits.org';
+			const STORAGE_KEY = 'three-ws.skill-royalty.v1';
+			const MAX_RECIPIENTS = 10;
+
+			// SDK exports the canonical native-token sentinel; fall back to zero
+			// address only if (somehow) absent.
+			const NATIVE = NATIVE_TOKEN_ADDRESS || '0x0000000000000000000000000000000000000000';
+
+			const $ = (id) => document.getElementById(id);
+			const log = $('log');
+			const logLine = (msg, cls = '') => {
+				const t = new Date().toTimeString().slice(0, 8);
+				log.innerHTML += `\n<span class="${cls}">[${t}] ${msg}</span>`;
+				log.scrollTop = log.scrollHeight;
+			};
+
+			const escapeHtml = (s) =>
+				String(s ?? '').replace(/[&<>"']/g, (c) => ({
+					'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;',
+				})[c]);
+
+			const shortAddr = (a) => (a ? `${a.slice(0, 6)}…${a.slice(-4)}` : '—');
+
+			// Three deterministic example addresses for the default rows. These
+			// are well-known burn / vanity addresses on testnets; users should
+			// replace them before deploying anything meaningful.
+			const DEFAULT_RECIPIENTS = [
+				{ address: '0x000000000000000000000000000000000000dEaD', percentAllocation: 50 },
+				{ address: '0x000000000000000000000000000000000000bEEF', percentAllocation: 30 },
+				{ address: '0x00000000000000000000000000000000DeaDBeef', percentAllocation: 20 },
+			];
+
+			// --- state ---
+			let publicClient = createPublicClient({ chain: baseSepolia, transport: http(BASE_SEPOLIA_RPC) });
+			let walletClient = null;
+			let splitsClient = null;
+			let connectedAddress = null;
+			let connectedChainId = null;
+			let recipients = [...DEFAULT_RECIPIENTS];
+			let splitAddress = null; // cached/created
+
+			// Factory address — used only for the on-page display.
+			try {
+				const factoryAddr = getSplitV2FactoryAddress(BASE_SEPOLIA_CHAIN_ID, 'pull');
+				$('factory-addr').textContent = factoryAddr;
+			} catch (_) {
+				$('factory-addr').textContent = '(pull factory)';
+			}
+
+			// --- localStorage cache ---
+			function loadCache() {
+				try {
+					const raw = localStorage.getItem(STORAGE_KEY);
+					if (!raw) return null;
+					return JSON.parse(raw);
+				} catch { return null; }
+			}
+			function saveCache(obj) {
+				localStorage.setItem(STORAGE_KEY, JSON.stringify(obj));
+			}
+			function clearCache() {
+				localStorage.removeItem(STORAGE_KEY);
+			}
+
+			// --- recipients UI ---
+			function renderRecipients() {
+				const tbody = $('recipients-body');
+				tbody.innerHTML = recipients.map((r, i) => `
+					<tr>
+						<td>${i + 1}</td>
+						<td><input type="text" data-i="${i}" data-f="address" value="${escapeHtml(r.address)}" spellcheck="false" placeholder="0x…" /></td>
+						<td><input type="number" data-i="${i}" data-f="percentAllocation" value="${r.percentAllocation}" min="0" max="100" step="0.01" /></td>
+						<td class="actions">
+							<button class="secondary tiny remove-row" data-i="${i}" type="button" ${recipients.length <= 1 ? 'disabled' : ''}>×</button>
+						</td>
+					</tr>
+				`).join('');
+				tbody.querySelectorAll('input').forEach((el) => {
+					el.addEventListener('input', (e) => {
+						const i = Number(e.target.dataset.i);
+						const f = e.target.dataset.f;
+						const v = f === 'percentAllocation' ? Number(e.target.value) : e.target.value.trim();
+						recipients[i] = { ...recipients[i], [f]: v };
+						updateSum();
+					});
+				});
+				tbody.querySelectorAll('.remove-row').forEach((btn) => {
+					btn.addEventListener('click', () => {
+						const i = Number(btn.dataset.i);
+						recipients.splice(i, 1);
+						renderRecipients();
+						updateSum();
+					});
+				});
+				updateSum();
+			}
+
+			function updateSum() {
+				const sum = recipients.reduce((a, r) => a + (Number(r.percentAllocation) || 0), 0);
+				const el = $('sum-val');
+				const rounded = Math.round(sum * 100) / 100;
+				el.textContent = rounded.toFixed(2);
+				el.className = Math.abs(sum - 100) < 0.001 ? 'sum-good' : 'sum-bad';
+				updateCreateBtn();
+			}
+
+			function updateCreateBtn() {
+				const sum = recipients.reduce((a, r) => a + (Number(r.percentAllocation) || 0), 0);
+				const allValid = recipients.every((r) => isAddress(r.address) && Number(r.percentAllocation) > 0);
+				const sumOk = Math.abs(sum - 100) < 0.001;
+				const chainOk = connectedChainId === BASE_SEPOLIA_CHAIN_ID;
+				$('create-btn').disabled = !(allValid && sumOk && chainOk && walletClient);
+			}
+
+			$('add-row').addEventListener('click', () => {
+				if (recipients.length >= MAX_RECIPIENTS) {
+					logLine(`max ${MAX_RECIPIENTS} recipients`, 'err');
+					return;
+				}
+				recipients.push({ address: '', percentAllocation: 0 });
+				renderRecipients();
+			});
+
+			renderRecipients();
+
+			// --- wallet ---
+			function updateWalletUI() {
+				const pill = $('wallet-pill');
+				const chainPill = $('chain-pill');
+				const switchBtn = $('switch-btn');
+				const warn = $('wallet-warn');
+
+				if (connectedAddress) {
+					pill.textContent = shortAddr(connectedAddress);
+					pill.className = 'pill';
+					pill.title = `${connectedAddress} — click to copy`;
+					$('connect-btn').textContent = 'Reconnect';
+				} else {
+					pill.textContent = 'not connected';
+					pill.className = 'pill muted';
+				}
+
+				if (connectedChainId === BASE_SEPOLIA_CHAIN_ID) {
+					chainPill.textContent = 'Base Sepolia · 84532';
+					chainPill.className = 'pill';
+					switchBtn.style.display = 'none';
+					warn.style.display = 'none';
+				} else if (connectedChainId != null) {
+					chainPill.textContent = `wrong chain · ${connectedChainId}`;
+					chainPill.className = 'pill bad';
+					switchBtn.style.display = '';
+					warn.textContent = `Your wallet is on chain ${connectedChainId}. This demo refuses to write on any chain other than Base Sepolia (84532). Click "Switch" above.`;
+					warn.style.display = '';
+				} else {
+					chainPill.textContent = 'no chain';
+					chainPill.className = 'pill muted';
+					switchBtn.style.display = 'none';
+					warn.style.display = 'none';
+				}
+
+				updateCreateBtn();
+				renderWithdrawButton();
+			}
+
+			async function rebuildClients() {
+				if (!window.ethereum || !connectedAddress) {
+					walletClient = null;
+					splitsClient = null;
+					return;
+				}
+				walletClient = createWalletClient({
+					chain: baseSepolia,
+					transport: custom(window.ethereum),
+					account: connectedAddress,
+				});
+				splitsClient = new SplitV2Client({
+					chainId: BASE_SEPOLIA_CHAIN_ID,
+					publicClient,
+					walletClient,
+				});
+			}
+
+			async function connect() {
+				if (!window.ethereum) {
+					logLine('no injected wallet found — install MetaMask, Rabby, or similar.', 'err');
+					return;
+				}
+				try {
+					logLine('requesting accounts…', 'info');
+					const accts = await window.ethereum.request({ method: 'eth_requestAccounts' });
+					connectedAddress = accts[0] ? getAddress(accts[0]) : null;
+					const chainHex = await window.ethereum.request({ method: 'eth_chainId' });
+					connectedChainId = parseInt(chainHex, 16);
+					await rebuildClients();
+					logLine(`connected ${connectedAddress} on chain ${connectedChainId}`, 'ok');
+					if (connectedChainId !== BASE_SEPOLIA_CHAIN_ID) {
+						logLine(`wrong chain (${connectedChainId}) — switch to Base Sepolia (84532) to continue.`, 'err');
+					}
+					updateWalletUI();
+					hydrateFromCache();
+				} catch (err) {
+					logLine(`connect failed: ${err.shortMessage || err.message}`, 'err');
+				}
+			}
+
+			async function switchChain() {
+				if (!window.ethereum) return;
+				try {
+					await window.ethereum.request({
+						method: 'wallet_switchEthereumChain',
+						params: [{ chainId: BASE_SEPOLIA_HEX }],
+					});
+				} catch (err) {
+					if (err.code === 4902 || /Unrecognized chain/i.test(err.message || '')) {
+						try {
+							await window.ethereum.request({
+								method: 'wallet_addEthereumChain',
+								params: [{
+									chainId: BASE_SEPOLIA_HEX,
+									chainName: 'Base Sepolia',
+									nativeCurrency: { name: 'Ether', symbol: 'ETH', decimals: 18 },
+									rpcUrls: [BASE_SEPOLIA_RPC],
+									blockExplorerUrls: [BASESCAN_BASE],
+								}],
+							});
+						} catch (addErr) {
+							logLine(`add chain failed: ${addErr.message}`, 'err');
+							return;
+						}
+					} else {
+						logLine(`switch chain failed: ${err.message}`, 'err');
+						return;
+					}
+				}
+				const chainHex = await window.ethereum.request({ method: 'eth_chainId' });
+				connectedChainId = parseInt(chainHex, 16);
+				await rebuildClients();
+				logLine(`now on chain ${connectedChainId}`, connectedChainId === BASE_SEPOLIA_CHAIN_ID ? 'ok' : 'err');
+				updateWalletUI();
+			}
+
+			if (window.ethereum) {
+				window.ethereum.on?.('chainChanged', async (hex) => {
+					connectedChainId = parseInt(hex, 16);
+					await rebuildClients();
+					updateWalletUI();
+					logLine(`chainChanged → ${connectedChainId}`, 'info');
+				});
+				window.ethereum.on?.('accountsChanged', async (accts) => {
+					connectedAddress = accts[0] ? getAddress(accts[0]) : null;
+					await rebuildClients();
+					updateWalletUI();
+					renderWithdrawButton();
+					logLine(`accountsChanged → ${connectedAddress || 'none'}`, 'info');
+				});
+			}
+
+			$('connect-btn').addEventListener('click', connect);
+			$('switch-btn').addEventListener('click', switchChain);
+			$('wallet-pill').addEventListener('click', () => {
+				if (!connectedAddress) return;
+				navigator.clipboard.writeText(connectedAddress);
+				logLine(`copied ${connectedAddress}`, 'info');
+			});
+
+			// --- create split ---
+			$('create-btn').addEventListener('click', async () => {
+				if (connectedChainId !== BASE_SEPOLIA_CHAIN_ID) {
+					logLine('refusing to write — wallet is not on Base Sepolia.', 'err');
+					return;
+				}
+				if (!splitsClient) {
+					logLine('no splits client — connect wallet first.', 'err');
+					return;
+				}
+				try {
+					const checksummed = recipients.map((r) => ({
+						address: getAddress(r.address),
+						percentAllocation: Number(r.percentAllocation),
+					}));
+					logLine(`creating pull split with ${checksummed.length} recipient(s)…`, 'info');
+					$('create-btn').disabled = true;
+					$('create-btn').textContent = 'Waiting for wallet…';
+
+					const result = await splitsClient.createSplit({
+						recipients: checksummed,
+						distributorFeePercent: 0,
+						totalAllocationPercent: 100,
+						splitType: 'pull',
+						ownerAddress: zeroAddress, // immutable — no owner can update recipients
+						creatorAddress: connectedAddress,
+					});
+
+					splitAddress = getAddress(result.splitAddress);
+					logLine(`✓ split deployed at ${splitAddress}`, 'ok');
+					saveCache({
+						splitAddress,
+						recipients: checksummed,
+						chainId: BASE_SEPOLIA_CHAIN_ID,
+						creator: connectedAddress,
+						createdAt: Date.now(),
+					});
+					renderSplitInfo();
+					showFundCard();
+					showInspectCard();
+					await refreshBalance();
+				} catch (err) {
+					logLine(`create split failed: ${err.shortMessage || err.message}`, 'err');
+				} finally {
+					$('create-btn').textContent = 'Deploy immutable pull split';
+					updateCreateBtn();
+				}
+			});
+
+			$('forget-btn').addEventListener('click', () => {
+				clearCache();
+				splitAddress = null;
+				$('split-info').innerHTML = '';
+				$('forget-btn').style.display = 'none';
+				$('fund-card').style.display = 'none';
+				$('inspect-card').style.display = 'none';
+				logLine('forgot cached split — you can deploy a new one.', 'info');
+			});
+
+			function renderSplitInfo() {
+				if (!splitAddress) {
+					$('split-info').innerHTML = '';
+					$('forget-btn').style.display = 'none';
+					return;
+				}
+				$('forget-btn').style.display = '';
+				const baseScanUrl = `${BASESCAN_BASE}/address/${splitAddress}`;
+				const splitsUrl = `${SPLITS_APP_BASE}/accounts/${splitAddress}/?chainId=${BASE_SEPOLIA_CHAIN_ID}`;
+				$('split-info').innerHTML = `
+					<div class="notice ok">
+						Split contract is live and <b>immutable</b> on Base Sepolia.
+					</div>
+					<dl class="kv">
+						<dt>Address</dt>
+						<dd>
+							<a class="copy-addr" href="${baseScanUrl}" target="_blank" rel="noopener">${splitAddress}</a>
+							&middot; <a href="${splitsUrl}" target="_blank" rel="noopener">view on app.splits.org</a>
+						</dd>
+						<dt>Type</dt>
+						<dd>pull · distributorFee 0% · owner ${zeroAddress}</dd>
+						<dt>Recipients</dt>
+						<dd>${recipients.length} address(es) — sum 100%</dd>
+					</dl>
+				`;
+				$('fund-target').value = splitAddress;
+			}
+
+			// --- fund ---
+			function showFundCard() { $('fund-card').style.display = ''; }
+
+			$('fund-btn').addEventListener('click', async () => {
+				if (connectedChainId !== BASE_SEPOLIA_CHAIN_ID) {
+					logLine('refusing to write — wallet is not on Base Sepolia.', 'err');
+					return;
+				}
+				if (!walletClient || !splitAddress) {
+					logLine('connect wallet and create a split first.', 'err');
+					return;
+				}
+				const raw = $('fund-amount').value;
+				let valueWei;
+				try { valueWei = parseEther(String(raw)); } catch {
+					logLine(`invalid ETH amount: ${raw}`, 'err');
+					return;
+				}
+				if (valueWei <= 0n) {
+					logLine('amount must be > 0', 'err');
+					return;
+				}
+				try {
+					$('fund-btn').disabled = true;
+					$('fund-btn').textContent = 'Waiting for wallet…';
+					logLine(`sending ${raw} ETH → ${splitAddress}…`, 'info');
+					const hash = await walletClient.sendTransaction({
+						to: splitAddress,
+						value: valueWei,
+					});
+					logLine(`tx submitted: ${hash}`, 'info');
+					$('fund-result').innerHTML = `
+						<div class="notice">
+							Tx submitted &middot;
+							<a href="${BASESCAN_BASE}/tx/${hash}" target="_blank" rel="noopener">${hash.slice(0, 14)}…</a>
+							&middot; waiting 1 confirmation…
+						</div>
+					`;
+					const receipt = await publicClient.waitForTransactionReceipt({ hash });
+					logLine(`✓ funded (block ${receipt.blockNumber}, status ${receipt.status})`, 'ok');
+					$('fund-result').innerHTML = `
+						<div class="notice ok">
+							✓ ${escapeHtml(raw)} ETH sent to split &middot;
+							<a href="${BASESCAN_BASE}/tx/${hash}" target="_blank" rel="noopener">${hash.slice(0, 14)}…</a>
+						</div>
+					`;
+					showInspectCard();
+					await refreshBalance();
+				} catch (err) {
+					logLine(`fund failed: ${err.shortMessage || err.message}`, 'err');
+					$('fund-result').innerHTML = `<div class="notice err">${escapeHtml(err.shortMessage || err.message)}</div>`;
+				} finally {
+					$('fund-btn').disabled = false;
+					$('fund-btn').textContent = 'Send test payment';
+				}
+			});
+
+			// --- inspect & distribute ---
+			function showInspectCard() { $('inspect-card').style.display = ''; }
+
+			$('refresh-btn').addEventListener('click', () => refreshBalance());
+
+			async function refreshBalance() {
+				if (!splitAddress) return;
+				try {
+					const bal = await publicClient.getBalance({ address: splitAddress });
+					renderInspect(bal);
+				} catch (err) {
+					logLine(`balance read failed: ${err.shortMessage || err.message}`, 'err');
+				}
+			}
+
+			function renderInspect(balanceWei) {
+				const ethStr = formatEther(balanceWei);
+				const cells = recipients.map((r) => {
+					const pct = Number(r.percentAllocation) || 0;
+					// projected payout = balance × pct / 100, integer division on bigint
+					const projWei = (balanceWei * BigInt(Math.round(pct * 1e6))) / BigInt(1e8);
+					const isUser = connectedAddress && r.address.toLowerCase() === connectedAddress.toLowerCase();
+					return `
+						<tr>
+							<td title="${escapeHtml(r.address)}">${shortAddr(r.address)}${isUser ? ' <span class="pill" style="font-size:10px;padding:1px 6px">you</span>' : ''}</td>
+							<td>${pct.toFixed(2)} %</td>
+							<td>${formatEther(projWei)} ETH</td>
+						</tr>
+					`;
+				}).join('');
+				$('inspect-body').innerHTML = `
+					<dl class="kv">
+						<dt>Split address</dt>
+						<dd><a class="copy-addr" href="${BASESCAN_BASE}/address/${splitAddress}" target="_blank" rel="noopener">${splitAddress}</a></dd>
+						<dt>Current balance</dt>
+						<dd>${ethStr} ETH (${balanceWei.toString()} wei)</dd>
+					</dl>
+					<table style="margin-top:14px">
+						<thead><tr><th>Recipient</th><th>Share</th><th>Projected payout</th></tr></thead>
+						<tbody>${cells}</tbody>
+					</table>
+					<p style="margin-top:10px;color:#8a8d98;font-size:12px">
+						Pull splits route funds through the Splits Warehouse. After you
+						click <b>Distribute</b>, each recipient must call
+						<code>warehouse.withdraw</code> to claim. If your connected
+						wallet matches a recipient, a <b>Withdraw your share</b> button
+						appears below.
+					</p>
+				`;
+				renderWithdrawButton();
+			}
+
+			function renderWithdrawButton() {
+				const btn = $('withdraw-btn');
+				if (!btn || !splitAddress) return;
+				const isRecipient = connectedAddress && recipients.some(
+					(r) => isAddress(r.address) && r.address.toLowerCase() === connectedAddress.toLowerCase(),
+				);
+				btn.style.display = isRecipient ? '' : 'none';
+			}
+
+			$('distribute-btn').addEventListener('click', async () => {
+				if (connectedChainId !== BASE_SEPOLIA_CHAIN_ID) {
+					logLine('refusing to write — wallet is not on Base Sepolia.', 'err');
+					return;
+				}
+				if (!splitsClient || !splitAddress) {
+					logLine('connect wallet and create a split first.', 'err');
+					return;
+				}
+				try {
+					$('distribute-btn').disabled = true;
+					$('distribute-btn').textContent = 'Waiting for wallet…';
+					logLine('calling splitV2.distribute(NATIVE_TOKEN_ADDRESS)…', 'info');
+					const checksummed = recipients.map((r) => ({
+						address: getAddress(r.address),
+						percentAllocation: Number(r.percentAllocation),
+					}));
+					// We pass `splitFields` so the SDK does not need to query a
+					// subgraph (Base Sepolia subgraph requires an API key). The
+					// on-chain `ownership` is the bigint allocation; for total
+					// = 100% and PERCENTAGE_SCALE = 1e6, each recipient's
+					// ownership = pct * 1e4.
+					const PERCENTAGE_SCALE = 1_000_000n;
+					const splitFields = {
+						distributorFeePercent: 0,
+						recipients: checksummed.map((r) => ({
+							recipient: { address: r.address },
+							ownership: BigInt(Math.round(r.percentAllocation * 1e4)),
+							percentAllocation: r.percentAllocation,
+						})),
+					};
+					// sanity-check totals match PERCENTAGE_SCALE
+					const total = splitFields.recipients.reduce((a, x) => a + x.ownership, 0n);
+					if (total !== PERCENTAGE_SCALE) {
+						throw new Error(`internal: allocations ${total} ≠ 1e6 scale`);
+					}
+					const res = await splitsClient.distribute({
+						splitAddress,
+						tokenAddress: NATIVE,
+						distributorAddress: connectedAddress,
+						splitFields,
+					});
+					logLine(`✓ distribute event emitted in tx ${res?.event?.transactionHash || ''}`.trim(), 'ok');
+					await refreshBalance();
+				} catch (err) {
+					logLine(`distribute failed: ${err.shortMessage || err.message}`, 'err');
+				} finally {
+					$('distribute-btn').disabled = false;
+					$('distribute-btn').textContent = 'Distribute to recipients';
+				}
+			});
+
+			$('withdraw-btn').addEventListener('click', async () => {
+				if (connectedChainId !== BASE_SEPOLIA_CHAIN_ID) {
+					logLine('refusing to write — wallet is not on Base Sepolia.', 'err');
+					return;
+				}
+				if (!walletClient || !connectedAddress) {
+					logLine('connect wallet first.', 'err');
+					return;
+				}
+				try {
+					$('withdraw-btn').disabled = true;
+					$('withdraw-btn').textContent = 'Waiting for wallet…';
+					logLine('calling warehouse.withdraw(self, NATIVE)…', 'info');
+					// Lazy-load WarehouseClient — keeps the createSplit happy
+					// path lean for users who never withdraw on this device.
+					const { WarehouseClient } = await import('@0xsplits/splits-sdk');
+					const wh = new WarehouseClient({
+						chainId: BASE_SEPOLIA_CHAIN_ID,
+						publicClient,
+						walletClient,
+					});
+					const res = await wh.withdraw({
+						ownerAddress: connectedAddress,
+						tokenAddress: NATIVE,
+					});
+					logLine(`✓ withdraw event ${res?.event?.transactionHash || ''}`.trim(), 'ok');
+				} catch (err) {
+					logLine(`withdraw failed: ${err.shortMessage || err.message}`, 'err');
+				} finally {
+					$('withdraw-btn').disabled = false;
+					$('withdraw-btn').textContent = 'Withdraw your share';
+				}
+			});
+
+			// --- cache hydration ---
+			function hydrateFromCache() {
+				const c = loadCache();
+				if (!c || c.chainId !== BASE_SEPOLIA_CHAIN_ID || !isAddress(c.splitAddress)) return;
+				splitAddress = getAddress(c.splitAddress);
+				if (Array.isArray(c.recipients) && c.recipients.length) {
+					recipients = c.recipients.map((r) => ({
+						address: r.address,
+						percentAllocation: Number(r.percentAllocation),
+					}));
+					renderRecipients();
+				}
+				logLine(`restored cached split ${splitAddress}`, 'info');
+				renderSplitInfo();
+				showFundCard();
+				showInspectCard();
+				refreshBalance();
+			}
+
+			// Try to silently pre-detect an already-permitted account so the
+			// "Connect" button shows the connected state on page refresh.
+			(async () => {
+				if (!window.ethereum) return;
+				try {
+					const accts = await window.ethereum.request({ method: 'eth_accounts' });
+					if (accts && accts[0]) {
+						connectedAddress = getAddress(accts[0]);
+						const chainHex = await window.ethereum.request({ method: 'eth_chainId' });
+						connectedChainId = parseInt(chainHex, 16);
+						await rebuildClients();
+						updateWalletUI();
+						hydrateFromCache();
+						logLine(`auto-restored session: ${connectedAddress} on chain ${connectedChainId}`, 'info');
+					} else {
+						// No connected account — still try to hydrate so the
+						// user can see their previous split address.
+						hydrateFromCache();
+					}
+				} catch {
+					hydrateFromCache();
+				}
+			})();
+		</script>
+	</body>
+</html>

@@ -2,7 +2,7 @@
 // presign, public, regenerate, regenerate-status
 
 import { getSessionUser, authenticateBearer, extractBearer, hasScope } from '../_lib/auth.js';
-import { presignUpload, headObject, r2, publicUrl } from '../_lib/r2.js';
+import { presignUpload, headObject, r2, publicUrl, putObject } from '../_lib/r2.js';
 import { storageKeyFor, enforceQuotas, searchPublicAvatars, stripOwnerFor } from '../_lib/avatars.js';
 import { listAvatars, createAvatar } from '../_lib/avatars.js';
 import { HeadObjectCommand } from '@aws-sdk/client-s3';
@@ -98,7 +98,7 @@ const handlePublic = wrap(async (req, res) => {
 
 const regenerateSchema = z.object({
 	sourceAvatarId: z.string().trim().min(1).max(100),
-	mode: z.enum(['remesh', 'retex', 'rerig', 'restyle']),
+	mode: z.enum(['remesh', 'retex', 'rerig', 'restyle', 'reconstruct']),
 	params: z.record(z.unknown()).optional(),
 });
 
@@ -199,7 +199,8 @@ const handleRegenerateStatus = wrap(async (req, res) => {
 	const jobId = url.searchParams.get('jobId');
 	if (!jobId) return error(res, 400, 'invalid_request', 'jobId required');
 	const rows = await sql`
-		select job_id, status, result_avatar_id, result_glb_url, error, provider, ext_job_id, created_at
+		select job_id, status, result_avatar_id, result_glb_url, error, provider, ext_job_id, created_at,
+		       mode, params, source_avatar_id
 		from avatar_regen_jobs
 		where job_id = ${jobId} and user_id = ${userId}
 		limit 1
@@ -243,6 +244,61 @@ const handleRegenerateStatus = wrap(async (req, res) => {
 			// Surface the polling error but don't fail the request — the job
 			// row stays as-is and the client can retry later.
 			job = { ...job, error: job.error || `provider poll failed: ${err?.message}` };
+		}
+	}
+
+	// Materialize the avatar row when a reconstruct job finishes successfully
+	// but hasn't yet been materialized. We copy the result GLB from the
+	// provider's URL into our R2 bucket so the avatar is durable, then create
+	// the avatars row with the user-supplied name/description.
+	if (
+		job.status === 'done' &&
+		job.mode === 'reconstruct' &&
+		!job.result_avatar_id &&
+		!job.source_avatar_id &&
+		job.result_glb_url
+	) {
+		try {
+			const params = job.params || {};
+			const name = (params.name || 'My selfie avatar').toString().slice(0, 120);
+			const description = params.description ? String(params.description).slice(0, 500) : null;
+			const visibility = ['private', 'unlisted', 'public'].includes(params.visibility) ? params.visibility : 'private';
+			const glbResp = await fetch(job.result_glb_url);
+			if (!glbResp.ok) throw new Error(`fetch result_glb_url: ${glbResp.status}`);
+			const glbBuf = Buffer.from(await glbResp.arrayBuffer());
+			const slug = `selfie-${Math.random().toString(36).slice(2, 8)}`;
+			const key = storageKeyFor({ userId, slug });
+			await putObject({
+				key,
+				body: glbBuf,
+				contentType: 'model/gltf-binary',
+				metadata: { source: 'reconstruct', job_id: jobId },
+			});
+			const avatar = await createAvatar({
+				userId,
+				storageKey: key,
+				input: {
+					slug,
+					name,
+					description,
+					size_bytes: glbBuf.length,
+					content_type: 'model/gltf-binary',
+					source: 'reconstruct',
+					source_meta: { jobId, provider: job.provider, replicateGlb: job.result_glb_url },
+					visibility,
+					tags: ['selfie'],
+					checksum_sha256: null,
+					parent_avatar_id: null,
+				},
+			});
+			await sql`
+				update avatar_regen_jobs
+				set result_avatar_id = ${avatar.id}, updated_at = now()
+				where job_id = ${jobId} and user_id = ${userId}
+			`;
+			job = { ...job, result_avatar_id: avatar.id };
+		} catch (err) {
+			job = { ...job, error: job.error || `materialize failed: ${err?.message}` };
 		}
 	}
 
@@ -472,6 +528,95 @@ const handleAutoTag = wrap(async (req, res) => {
 	return json(res, 200, { ok: true, tags: newTags, description: desc });
 });
 
+// ── reconstruct (Phase 1 — Selfie → Avatar engine) ────────────────────────────
+// Submits a Replicate reconstruct job from selfie photos. No source avatar
+// exists yet; the avatar row is materialized when the status handler observes
+// a successful result and copies the generated GLB into R2.
+
+// Photos may be either:
+//   • http(s):// URL — typically an R2 object URL the client uploaded first
+//   • data:image/...;base64,... — inline base64 (Replicate accepts these natively)
+const photoUrlOrDataUri = z
+	.string()
+	.max(8 * 1024 * 1024) // generous cap to allow inline JPEGs up to ~6 MB pre-base64
+	.refine(
+		(v) =>
+			/^https?:\/\//i.test(v) ||
+			/^data:image\/(png|jpe?g|webp|heic|heif);base64,/i.test(v),
+		'must be an http(s) URL or a data:image/* base64 URI',
+	);
+
+const reconstructSchema = z.object({
+	name: z.string().trim().min(1).max(120),
+	description: z.string().trim().max(500).optional(),
+	photos: z.array(photoUrlOrDataUri).min(1).max(6),
+	visibility: z.enum(['private', 'unlisted', 'public']).optional(),
+	params: z.record(z.unknown()).optional(),
+});
+
+const handleReconstruct = wrap(async (req, res) => {
+	if (cors(req, res, { methods: 'POST,OPTIONS', credentials: true })) return;
+	if (!method(req, res, ['POST'])) return;
+	const userId = await resolveRegenUser(req);
+	if (!userId) return error(res, 401, 'unauthorized', 'sign in or provide a valid bearer token');
+	const rl = await limits.upload(userId);
+	if (!rl.success) return error(res, 429, 'rate_limited', 'too many requests');
+	const body = parse(reconstructSchema, await readJson(req));
+
+	let provider;
+	try {
+		provider = await getRegenProvider();
+	} catch (err) {
+		return error(res, err.status || 501, err.code || 'regen_provider_error', err.message);
+	}
+	if (provider.name === 'none') {
+		return error(
+			res,
+			501,
+			'regen_unconfigured',
+			'Avatar reconstruction is not yet wired to an ML backend. Set AVATAR_REGEN_PROVIDER env var.',
+		);
+	}
+
+	let submission;
+	try {
+		submission = await provider.instance.submit({
+			userId,
+			mode: 'reconstruct',
+			params: { ...(body.params ?? {}), images: body.photos, name: body.name },
+			sourceUrl: body.photos[0],
+		});
+	} catch (err) {
+		return error(
+			res,
+			err.status || 502,
+			err.code || 'regen_provider_error',
+			err.message || 'provider rejected submission',
+		);
+	}
+
+	const jobId = `${provider.name}-${randomUUID()}`;
+	const params = {
+		images: body.photos,
+		name: body.name,
+		description: body.description ?? null,
+		visibility: body.visibility ?? 'private',
+	};
+	await sql`
+		insert into avatar_regen_jobs
+			(job_id, user_id, source_avatar_id, mode, params, status, provider, ext_job_id, created_at, updated_at)
+		values
+			(${jobId}, ${userId}, ${null}, ${'reconstruct'}, ${JSON.stringify(params)}, 'queued', ${provider.name}, ${submission.extJobId ?? null}, now(), now())
+	`;
+	return json(res, 202, {
+		ok: true,
+		jobId,
+		status: 'queued',
+		eta: submission.eta ?? null,
+		provider: provider.name,
+	});
+});
+
 // ── dispatcher ────────────────────────────────────────────────────────────────
 
 const DISPATCH = {
@@ -481,6 +626,7 @@ const DISPATCH = {
 	'presign-halfbody':  handlePresignHalfbody,
 	'auto-tag':          handleAutoTag,
 	public:              handlePublic,
+	reconstruct:         handleReconstruct,
 	regenerate:          handleRegenerate,
 	'regenerate-status': handleRegenerateStatus,
 };

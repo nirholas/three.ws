@@ -25,7 +25,7 @@ import {
 	meshopt,
 	textureCompress,
 } from '@gltf-transform/functions';
-import { MeshoptEncoder } from 'meshoptimizer';
+import { MeshoptDecoder, MeshoptEncoder } from 'meshoptimizer';
 import sharp from 'sharp';
 import { readFile } from 'node:fs/promises';
 import path from 'node:path';
@@ -66,7 +66,18 @@ export function isBakeable(appearance) {
  * @returns {Promise<Uint8Array>}
  */
 export async function bakeAppearance(baseGlbBytes, appearance) {
-	const io = new NodeIO().registerExtensions(ALL_EXTENSIONS);
+	// `meshopt({ encoder })` configures the EXT_meshopt_compression extension on
+	// the document, but the writer also needs the encoder when serializing the
+	// compressed buffers, and the reader needs the decoder when re-baking a
+	// previously-baked GLB that already carries meshopt-compressed buffers.
+	// Register both as io-level dependencies.
+	await Promise.all([MeshoptEncoder.ready, MeshoptDecoder.ready]);
+	const io = new NodeIO()
+		.registerExtensions(ALL_EXTENSIONS)
+		.registerDependencies({
+			'meshopt.encoder': MeshoptEncoder,
+			'meshopt.decoder': MeshoptDecoder,
+		});
 	const doc = await io.readBinary(toUint8(baseGlbBytes));
 
 	const presets = await loadPresets();

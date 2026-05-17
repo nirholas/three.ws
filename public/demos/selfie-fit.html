@@ -877,11 +877,42 @@
 						(photos.frontal.length + photos.left.length + photos.right.length) / 1024,
 					);
 					log(`photos encoded (${totalKb} KB total base64). submitting...`, 'info');
-					submitBtn.textContent = 'Submitting…';
 
-					// The live API contract uses { body_type, avatar_type }. We map
-					// the UI's "style" radio to avatar_type since the upstream
-					// endpoint expects that key.
+					// 1) Try the native three.ws reconstruction pipeline first.
+					//    Falls back to the in-browser editor path on 501 (provider
+					//    unconfigured) — that lets us ship the new path safely
+					//    even before REPLICATE_RECONSTRUCT_MODEL is populated.
+					submitBtn.textContent = 'Generating 3D model…';
+					const nativeRes = await fetch('/api/avatars/_actions?action=reconstruct', {
+						method: 'POST',
+						credentials: 'include',
+						headers: { 'content-type': 'application/json' },
+						body: JSON.stringify({
+							name: `Selfie ${new Date().toISOString().slice(0, 10)}`,
+							photos: [photos.frontal, photos.left, photos.right],
+							visibility: 'private',
+							params: { body_type: state.bodyType, avatar_type: state.style },
+						}),
+					});
+					if (nativeRes.status === 501) {
+						const why = await nativeRes.json().catch(() => ({}));
+						log(`native pipeline unavailable (${why?.error || '501'}); using editor path…`, 'info');
+					} else if (nativeRes.ok) {
+						const job = await nativeRes.json();
+						log(`✓ reconstruction job queued: ${job.jobId}`, 'ok');
+						const avatarId = await pollReconstructJob(job.jobId);
+						const createHref = `/create?avatarId=${encodeURIComponent(avatarId)}`;
+						log(`✓ avatar materialized → /create?avatarId=${avatarId}`, 'ok');
+						showResult(createHref, { native: true, avatarId });
+						submitBtn.textContent = 'Done ✓';
+						return;
+					} else {
+						const text = await nativeRes.text();
+						log(`native pipeline error ${nativeRes.status}: ${text.slice(0, 200)}; falling back…`, 'err');
+					}
+
+					// 2) Fallback: existing in-browser editor path.
+					submitBtn.textContent = 'Opening editor…';
 					const res = await fetch('/api/onboarding/avaturn-session', {
 						method: 'POST',
 						credentials: 'include',
@@ -909,11 +940,58 @@
 				}
 			});
 
-			function showResult(url) {
+			// Poll the regenerate-status endpoint until the reconstruct job either
+			// materializes the avatar (resultAvatarId set) or fails. Uses real
+			// exponential backoff capped at 8s between polls; gives up after ~5
+			// minutes (sub-60s is the Phase 1 verification target but Replicate
+			// cold-starts can occasionally exceed that).
+			async function pollReconstructJob(jobId) {
+				const start = Date.now();
+				const TIMEOUT_MS = 5 * 60 * 1000;
+				let delay = 1500;
+				for (;;) {
+					if (Date.now() - start > TIMEOUT_MS) {
+						throw new Error('reconstruct job timed out after 5 min');
+					}
+					const r = await fetch(
+						`/api/avatars/_actions?action=regenerate-status&jobId=${encodeURIComponent(jobId)}`,
+						{ credentials: 'include' },
+					);
+					if (!r.ok) {
+						const text = await r.text();
+						throw new Error(`status HTTP ${r.status}: ${text.slice(0, 200)}`);
+					}
+					const data = await r.json();
+					if (data.error) log(`provider note: ${data.error}`, 'info');
+					if (data.status === 'failed') {
+						throw new Error(`reconstruct failed: ${data.error || 'unknown'}`);
+					}
+					if (data.status === 'done' && data.resultAvatarId) {
+						return data.resultAvatarId;
+					}
+					await new Promise((r) => setTimeout(r, delay));
+					delay = Math.min(delay * 1.4, 8000);
+				}
+			}
+
+			function showResult(url, opts = {}) {
 				const card = $('#result-card');
 				card.classList.add('show');
 				$('#result-url').textContent = url;
-				$('#open-session-btn').onclick = () => openIframeModal(url);
+				const btn = $('#open-session-btn');
+				const heading = card.querySelector('h2');
+				const blurb = card.querySelector('div[style*="8a8d98"]');
+				if (opts.native) {
+					if (heading) heading.textContent = 'Your three.ws avatar is ready';
+					if (blurb) blurb.textContent = 'Reconstructed from your three selfies. Continue to mint it on-chain.';
+					btn.textContent = 'Mint as agent →';
+					btn.onclick = () => { window.location.href = url; };
+				} else {
+					if (heading) heading.textContent = 'three.ws Selfie session ready';
+					if (blurb) blurb.textContent = 'Open the editor to refine and export your avatar.';
+					btn.textContent = 'Open three.ws Selfie editor';
+					btn.onclick = () => openIframeModal(url);
+				}
 			}
 
 			function openIframeModal(url) {

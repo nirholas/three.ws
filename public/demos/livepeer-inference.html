@@ -1,0 +1,394 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1" />
+		<title>Decentralized inference · three.ws lab</title>
+		<meta
+			name="description"
+			content="Same prompt, two providers. Compare three.ws default inference against a decentralized AI gateway side-by-side: latency, token counts, and the full reply from each."
+		/>
+		<meta name="robots" content="noindex" />
+		<link rel="stylesheet" href="/style.css" />
+		<link rel="stylesheet" href="/nav.css" />
+		<style>
+			:root { color-scheme: dark; }
+			body { background: #05060a; color: #eee; font: 15px/1.5 -apple-system, system-ui, 'Segoe UI', Roboto, sans-serif; margin: 0; }
+			.stage { max-width: 1100px; margin: 0 auto; padding: 48px 24px 80px; }
+			.crumb a { color: #8a8d98; text-decoration: none; }
+			.crumb a:hover { color: #d6ff3d; }
+			h1 { font-size: 28px; font-weight: 600; letter-spacing: -0.015em; margin: 14px 0 6px; }
+			.sub { color: #8a8d98; max-width: 70ch; margin: 0 0 26px; }
+
+			.composer {
+				display: flex; flex-direction: column; gap: 12px;
+				background: #0f1018; border: 1.5px solid #1e1f2b; border-radius: 14px;
+				padding: 18px; margin-bottom: 18px;
+			}
+			.composer textarea {
+				width: 100%; min-height: 96px; resize: vertical;
+				padding: 12px 14px; background: #07080d; border: 1px solid #1e1f2b;
+				border-radius: 10px; color: #eee; font: inherit; line-height: 1.5;
+			}
+			.row {
+				display: flex; gap: 10px; align-items: center; flex-wrap: wrap;
+			}
+			.row label { font-size: 12px; color: #8a8d98; text-transform: uppercase; letter-spacing: 0.08em; }
+			.row select, .row input[type="text"] {
+				background: #07080d; border: 1px solid #1e1f2b; color: #eee;
+				padding: 8px 10px; border-radius: 9px; font: inherit;
+			}
+			button {
+				background: #d6ff3d; color: #0a0a0a; border: 0; border-radius: 9px;
+				padding: 10px 16px; font-weight: 600; cursor: pointer; font: inherit;
+			}
+			button.secondary { background: rgba(255,255,255,0.06); color: #eee; }
+			button:disabled { opacity: 0.4; cursor: not-allowed; }
+
+			details.drawer {
+				background: #0f1018; border: 1.5px solid #1e1f2b; border-radius: 14px;
+				padding: 0; margin-bottom: 18px;
+			}
+			details.drawer > summary {
+				padding: 12px 18px; cursor: pointer; user-select: none;
+				font-size: 13px; color: #c5c8d3; letter-spacing: 0.01em;
+				list-style: none;
+			}
+			details.drawer > summary::-webkit-details-marker { display: none; }
+			details.drawer > summary::before {
+				content: '▸'; color: #8a8d98; margin-right: 8px; display: inline-block;
+				transition: transform 0.12s ease;
+			}
+			details.drawer[open] > summary::before { transform: rotate(90deg); }
+			details.drawer > .drawer-body { padding: 0 18px 18px; display: flex; gap: 14px; flex-wrap: wrap; align-items: center; }
+
+			.grid {
+				display: grid; grid-template-columns: 1fr 1fr; gap: 14px;
+			}
+			@media (max-width: 820px) { .grid { grid-template-columns: 1fr; } }
+
+			.card {
+				background: #0f1018; border: 1.5px solid #1e1f2b; border-radius: 14px;
+				padding: 18px; display: flex; flex-direction: column; min-height: 320px;
+			}
+			.card.claude { border-color: #2c3a5a; }
+			.card.livepeer { border-color: #3a2c5a; }
+			.card-head {
+				display: flex; justify-content: space-between; align-items: baseline;
+				gap: 8px; margin-bottom: 8px;
+			}
+			.card-title { font-size: 15px; font-weight: 600; letter-spacing: -0.005em; margin: 0; }
+			.chip {
+				font-size: 10.5px; color: #8a8d98; text-transform: uppercase; letter-spacing: 0.06em;
+				padding: 3px 8px; background: rgba(255,255,255,0.05); border-radius: 999px;
+				border: 1px solid rgba(255,255,255,0.08);
+			}
+			.card.claude .chip { color: #aab8ff; border-color: rgba(170,184,255,0.25); background: rgba(170,184,255,0.08); }
+			.card.livepeer .chip { color: #d6a8ff; border-color: rgba(214,168,255,0.25); background: rgba(214,168,255,0.08); }
+
+			.stats {
+				display: flex; gap: 14px; flex-wrap: wrap;
+				margin: 6px 0 10px; font-size: 11.5px;
+				color: #8a8d98; font-family: ui-monospace, 'SF Mono', Menlo, monospace;
+			}
+			.stats span { display: inline-flex; gap: 5px; align-items: baseline; }
+			.stats strong { color: #d6ff3d; font-weight: 600; font-size: 12px; }
+
+			.card-body {
+				flex: 1; padding: 14px; background: #07080d; border: 1px solid #1e1f2b;
+				border-radius: 9px; font-size: 13.5px; line-height: 1.6; color: #ddd;
+				white-space: pre-wrap; min-height: 160px; max-height: 380px; overflow-y: auto;
+			}
+			.card-body.empty { color: #565762; font-style: italic; }
+			.card-body.error { color: #ff8a8a; }
+
+			.card-footer {
+				margin-top: 10px; font-size: 11px; color: #565762;
+				font-family: ui-monospace, monospace;
+			}
+
+			.spinner {
+				display: inline-block; width: 10px; height: 10px; border-radius: 50%;
+				background: #d6ff3d; animation: pulse 1s ease-in-out infinite;
+				vertical-align: middle; margin-left: 8px;
+			}
+			@keyframes pulse { 0%, 100% { opacity: 0.3; } 50% { opacity: 1; } }
+
+			.log {
+				background: #07080d; border: 1px solid #1e1f2b; border-radius: 10px;
+				padding: 12px 14px; font-family: ui-monospace, 'SF Mono', Menlo, monospace;
+				font-size: 12px; line-height: 1.65; color: #8a8d98;
+				max-height: 240px; overflow: auto; white-space: pre-wrap;
+				margin-top: 18px;
+			}
+			.log .ok { color: #d6ff3d; }
+			.log .err { color: #ff8a8a; }
+			.log .info { color: #66d9ef; }
+			.log .dim { color: #565762; }
+
+			.footnote {
+				margin-top: 28px; padding-top: 16px; border-top: 1px solid #1e1f2b;
+				color: #565762; font-size: 12px;
+			}
+			.footnote a { color: #8a8d98; text-decoration: none; }
+			.footnote a:hover { color: #d6ff3d; }
+		</style>
+	</head>
+	<body>
+		<header><div id="nav-container"></div></header>
+
+		<main class="stage">
+			<p class="crumb"><a href="/demos/">← lab</a></p>
+			<h1>three.ws · Decentralized inference</h1>
+			<p class="sub">
+				Same prompt, two providers, real responses. The left card hits
+				three.ws's default inference (Claude). The right card routes the
+				identical request through a decentralized AI gateway whose
+				orchestrators run open-weight models on commodity GPUs. Phase 4
+				of the roadmap: decoupling inference from any single vendor so
+				agents stay online when one provider doesn't.
+			</p>
+
+			<section class="composer">
+				<div>
+					<label for="prompt" style="font-size:12px;color:#8a8d98;text-transform:uppercase;letter-spacing:0.08em;">Prompt</label>
+					<textarea id="prompt">In one paragraph, explain why decentralized inference matters for AI agents.</textarea>
+				</div>
+				<div class="row">
+					<label>Max tokens</label>
+					<input type="text" id="max-tokens" value="512" inputmode="numeric" style="width: 80px;" />
+					<label>Temperature</label>
+					<input type="text" id="temperature" value="0.7" inputmode="decimal" style="width: 70px;" />
+					<div style="flex: 1"></div>
+					<button class="secondary" id="clear-btn">Clear</button>
+					<button id="run-btn">Compare</button>
+				</div>
+			</section>
+
+			<details class="drawer" id="settings">
+				<summary>Settings · decentralized gateway model</summary>
+				<div class="drawer-body">
+					<label for="livepeer-model" style="font-size:12px;color:#8a8d98;text-transform:uppercase;letter-spacing:0.08em;">Open-weight model</label>
+					<select id="livepeer-model">
+						<option value="meta-llama/Meta-Llama-3.1-8B-Instruct" selected>Meta-Llama-3.1-8B-Instruct</option>
+						<option value="mistralai/Mistral-Nemo-Instruct-2407">Mistral-Nemo-Instruct-2407</option>
+						<option value="Qwen/Qwen2.5-7B-Instruct">Qwen2.5-7B-Instruct</option>
+					</select>
+					<span id="gateway-info" style="font-size:11.5px;color:#565762;font-family:ui-monospace,monospace;"></span>
+				</div>
+			</details>
+
+			<div class="grid">
+				<section class="card claude" id="card-claude">
+					<div class="card-head">
+						<h2 class="card-title">three.ws default</h2>
+						<span class="chip">Claude · Anthropic</span>
+					</div>
+					<div class="stats">
+						<span>latency <strong id="claude-latency">—</strong></span>
+						<span>in <strong id="claude-prompt-tokens">—</strong></span>
+						<span>out <strong id="claude-completion-tokens">—</strong></span>
+					</div>
+					<div class="card-body empty" id="claude-body">awaiting prompt…</div>
+					<div class="card-footer" id="claude-footer">model · —</div>
+				</section>
+
+				<section class="card livepeer" id="card-livepeer">
+					<div class="card-head">
+						<h2 class="card-title">three.ws decentralized</h2>
+						<span class="chip">Open-weight · decentralized</span>
+					</div>
+					<div class="stats">
+						<span>latency <strong id="livepeer-latency">—</strong></span>
+						<span>in <strong id="livepeer-prompt-tokens">—</strong></span>
+						<span>out <strong id="livepeer-completion-tokens">—</strong></span>
+					</div>
+					<div class="card-body empty" id="livepeer-body">awaiting prompt…</div>
+					<div class="card-footer" id="livepeer-footer">model · — · gateway · —</div>
+				</section>
+			</div>
+
+			<div class="log" id="log">ready.</div>
+
+			<p class="footnote">
+				Powered by <a href="https://livepeer.org" target="_blank" rel="noopener">Livepeer</a> AI Gateway
+				on the decentralized side. Claude reply provided by Anthropic. The
+				public decentralized gateway is rate-limited and occasionally
+				slow — typical p50 latency is 2–10 s for an 8B-param model.
+			</p>
+		</main>
+
+		<script src="/nav.js"></script>
+		<script type="module">
+			const $ = (id) => document.getElementById(id);
+			const log = $('log');
+
+			function logLine(msg, cls = '') {
+				const t = new Date().toTimeString().slice(0, 8);
+				const span = document.createElement('span');
+				if (cls) span.className = cls;
+				span.textContent = `[${t}] ${msg}\n`;
+				log.appendChild(span);
+				log.scrollTop = log.scrollHeight;
+			}
+
+			function setBody(id, text, cls = '') {
+				const el = $(id);
+				el.textContent = text;
+				el.classList.remove('empty', 'error');
+				if (cls) el.classList.add(cls);
+			}
+
+			function setText(id, text) { $(id).textContent = text; }
+
+			function fmtMs(ms) {
+				if (ms == null) return '—';
+				if (ms < 1000) return ms + 'ms';
+				return (ms / 1000).toFixed(2) + 's';
+			}
+
+			function fmtTok(n) {
+				if (n == null) return '—';
+				return String(n);
+			}
+
+			// Load gateway info on page load so we can show whether we're hitting
+			// studio (auth'd) or the public dream gateway. Pure cosmetic.
+			(async function loadGatewayInfo() {
+				try {
+					const r = await fetch('/api/inference/livepeer');
+					if (!r.ok) throw new Error('GET /api/inference/livepeer ' + r.status);
+					const info = await r.json();
+					$('gateway-info').textContent =
+						`gateway · ${info.gateway} · ${info.gateway_url}`;
+					if (Array.isArray(info.models) && info.models.length) {
+						const sel = $('livepeer-model');
+						const current = sel.value;
+						sel.innerHTML = '';
+						for (const m of info.models) {
+							const opt = document.createElement('option');
+							opt.value = m;
+							opt.textContent = m.split('/').pop();
+							if (m === current || m === info.default_model) opt.selected = true;
+							sel.appendChild(opt);
+						}
+					}
+				} catch (err) {
+					$('gateway-info').textContent = 'gateway · unavailable';
+					logLine('gateway info fetch failed: ' + err.message, 'err');
+				}
+			})();
+
+			function resetCards() {
+				for (const id of [
+					'claude-latency', 'claude-prompt-tokens', 'claude-completion-tokens',
+					'livepeer-latency', 'livepeer-prompt-tokens', 'livepeer-completion-tokens',
+				]) setText(id, '—');
+				const cb = $('claude-body');
+				cb.textContent = 'streaming…';
+				cb.className = 'card-body empty';
+				const lb = $('livepeer-body');
+				lb.textContent = 'streaming…';
+				lb.className = 'card-body empty';
+				setText('claude-footer', 'model · —');
+				setText('livepeer-footer', 'model · — · gateway · —');
+			}
+
+			function renderClaude(c) {
+				setText('claude-latency', fmtMs(c.latency_ms));
+				setText('claude-prompt-tokens', fmtTok(c.prompt_tokens));
+				setText('claude-completion-tokens', fmtTok(c.completion_tokens));
+				setText('claude-footer', `model · ${c.model || '—'}`);
+				if (c.ok) {
+					setBody('claude-body', c.reply || '(empty)');
+				} else {
+					const msg = c.upstream_body
+						? `${c.error || 'error'} (${c.upstream_status || '?'}):\n${c.upstream_body}`
+						: c.error_message || c.error || 'unknown error';
+					setBody('claude-body', msg, 'error');
+				}
+			}
+
+			function renderLivepeer(lp) {
+				setText('livepeer-latency', fmtMs(lp.latency_ms));
+				setText('livepeer-prompt-tokens', fmtTok(lp.prompt_tokens));
+				setText('livepeer-completion-tokens', fmtTok(lp.completion_tokens));
+				setText(
+					'livepeer-footer',
+					`model · ${lp.model || '—'} · gateway · ${lp.gateway || '—'}`,
+				);
+				if (lp.ok) {
+					setBody('livepeer-body', lp.reply || '(empty)');
+				} else {
+					const msg = lp.upstream_body
+						? `${lp.error || 'error'} (${lp.upstream_status || '?'}):\n${lp.upstream_body}`
+						: lp.error_message || lp.error || 'unknown error';
+					setBody('livepeer-body', msg, 'error');
+				}
+			}
+
+			$('clear-btn').addEventListener('click', () => {
+				$('prompt').value = '';
+				resetCards();
+				$('claude-body').textContent = 'awaiting prompt…';
+				$('livepeer-body').textContent = 'awaiting prompt…';
+				log.innerHTML = 'ready.\n';
+			});
+
+			$('run-btn').addEventListener('click', async () => {
+				const prompt = $('prompt').value.trim();
+				if (!prompt) {
+					logLine('prompt is empty', 'err');
+					return;
+				}
+				const max_tokens = Math.max(32, Math.min(2048, parseInt($('max-tokens').value, 10) || 512));
+				const temperature = Math.max(0, Math.min(2, parseFloat($('temperature').value) || 0.7));
+				const model = $('livepeer-model').value;
+
+				$('run-btn').disabled = true;
+				$('run-btn').innerHTML = 'Comparing<span class="spinner"></span>';
+				resetCards();
+				logLine(`POST /api/inference/livepeer · model=${model} · max=${max_tokens} · t=${temperature}`, 'info');
+
+				const t0 = performance.now();
+				try {
+					const r = await fetch('/api/inference/livepeer', {
+						method: 'POST',
+						credentials: 'include',
+						headers: { 'content-type': 'application/json' },
+						body: JSON.stringify({ prompt, model, max_tokens, temperature }),
+					});
+					const data = await r.json();
+					const totalMs = Math.round(performance.now() - t0);
+					if (!r.ok) {
+						logLine(`server ${r.status}: ${data.error_description || data.error || 'error'}`, 'err');
+						$('claude-body').textContent = 'request failed';
+						$('claude-body').className = 'card-body error';
+						$('livepeer-body').textContent = 'request failed';
+						$('livepeer-body').className = 'card-body error';
+						return;
+					}
+					renderClaude(data.claude);
+					renderLivepeer(data.livepeer);
+
+					const cMs = data.claude?.latency_ms;
+					const lMs = data.livepeer?.latency_ms;
+					logLine(`done in ${totalMs}ms · claude ${fmtMs(cMs)} (${data.claude?.ok ? 'ok' : 'fail'}) · livepeer ${fmtMs(lMs)} (${data.livepeer?.ok ? 'ok' : 'fail'})`, 'ok');
+
+					if (!data.livepeer?.ok) {
+						const reason = data.livepeer?.error || 'unknown';
+						const detail = data.livepeer?.upstream_status
+							? ` (upstream ${data.livepeer.upstream_status})`
+							: '';
+						logLine(`livepeer leg failed: ${reason}${detail} — public gateway often has no orchestrators online for a given model. Try another model in settings.`, 'dim');
+					}
+				} catch (err) {
+					logLine('fetch failed: ' + err.message, 'err');
+				} finally {
+					$('run-btn').disabled = false;
+					$('run-btn').textContent = 'Compare';
+				}
+			});
+		</script>
+	</body>
+</html>
