@@ -70,6 +70,18 @@ textarea { resize: vertical; min-height: 220px; font-family: 'SF Mono', Menlo, m
 .preview blockquote { border-left: 3px solid #ffd76a; padding: 6px 14px; background: rgba(255,215,106,.04); color: #aaa; margin: 12px 0; }
 .image-controls { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
 .image-preview { width: 80px; height: 50px; border-radius: 4px; background: #0a0a14; border: 1px solid #1e1e2e; object-fit: cover; }
+.syndication-block { background: #0a0a14; border: 1px solid #1e1e2e; border-radius: 8px; padding: 12px 14px; margin-bottom: 16px; }
+.synd-rows { display: flex; flex-direction: column; gap: 6px; margin-bottom: 10px; }
+.synd-row { display: flex; align-items: center; gap: 10px; font-size: 12px; }
+.synd-target { width: 70px; color: #aaa; font-weight: 500; }
+.synd-status { padding: 1px 8px; border-radius: 4px; font-size: 11px; font-weight: 500; }
+.synd-ok { background: rgba(20,241,149,.14); color: #14f195; }
+.synd-skip { background: rgba(255,166,77,.12); color: #ffa64d; }
+.synd-err { background: rgba(255,92,92,.14); color: #ff5c5c; }
+.synd-none { background: #1a1a26; color: #666; }
+.synd-meta { color: #666; font-size: 11px; }
+.synd-meta a { color: #9a8cff; }
+.synd-actions { display: flex; gap: 8px; }
 .actions { display: flex; gap: 10px; justify-content: space-between; padding-top: 14px; border-top: 1px solid #1e1e2e; margin-top: 22px; }
 .actions-left, .actions-right { display: flex; gap: 8px; }
 .toast { position: fixed; bottom: 20px; right: 20px; padding: 10px 14px; border-radius: 8px; font-size: 13px; z-index: 100;
@@ -315,6 +327,7 @@ function renderEditor(p) {
 \t\t\t<div class="field">
 \t\t\t\t<label class="toggle"><input id="f-published" type="checkbox" ${p.published !== false ? 'checked' : ''}/> <span>Published</span></label>
 \t\t\t</div>
+\t\t\t${activeId !== null ? renderSyndicationBlock(p) : ''}
 \t\t\t<div class="actions">
 \t\t\t\t<div class="actions-left">
 \t\t\t\t\t${activeId !== null ? '<button type="button" class="btn btn-danger" id="delete-btn">Delete</button>' : ''}
@@ -328,6 +341,60 @@ function renderEditor(p) {
 \t`;
 \tupdatePreview();
 \twireEditor();
+\twireSyndication(p);
+}
+
+function renderSyndicationBlock(p) {
+\tconst s = p.syndication || {};
+\tfunction badge(target) {
+\t\tconst v = s[target];
+\t\tif (!v) return `<span class="synd-status synd-none">never</span>`;
+\t\tif (v.status === 'published' || v.status === 'updated' || v.status === 'pinged') {
+\t\t\tconst link = v.url ? ` &middot; <a href="${escapeAttr(v.url)}" target="_blank" rel="noopener">view</a>` : '';
+\t\t\treturn `<span class="synd-status synd-ok">${escapeHtml(v.status)}</span><span class="synd-meta">${escapeHtml((v.published_at || v.pinged_at || '').slice(0,10))}${link}</span>`;
+\t\t}
+\t\tif (v.status === 'skipped') return `<span class="synd-status synd-skip">skipped</span><span class="synd-meta">${escapeHtml(v.reason || '')}</span>`;
+\t\treturn `<span class="synd-status synd-err">error</span><span class="synd-meta">${escapeHtml(v.error || v.reason || '')}</span>`;
+\t}
+\treturn `
+\t\t<div class="field syndication-block">
+\t\t\t<label>Syndication <span class="hint">live state per target</span></label>
+\t\t\t<div class="synd-rows">
+\t\t\t\t<div class="synd-row"><span class="synd-target">WebSub</span> ${badge('websub')}</div>
+\t\t\t\t<div class="synd-row"><span class="synd-target">Dev.to</span> ${badge('devto')}</div>
+\t\t\t\t<div class="synd-row"><span class="synd-target">Medium</span> ${badge('medium')}</div>
+\t\t\t</div>
+\t\t\t<div class="synd-actions">
+\t\t\t\t<button type="button" class="btn" id="resyndicate-btn">Re-syndicate now</button>
+\t\t\t\t<button type="button" class="btn" id="cmc-btn">Copy for CMC&hellip;</button>
+\t\t\t</div>
+\t\t</div>
+\t`;
+}
+
+function wireSyndication(p) {
+\tconst rb = document.getElementById('resyndicate-btn');
+\tconst cb = document.getElementById('cmc-btn');
+\tif (rb) rb.addEventListener('click', async () => {
+\t\trb.disabled = true; rb.textContent = 'Syndicating…';
+\t\ttry {
+\t\t\tconst { syndication } = await api('resyndicate', { id: p.id });
+\t\t\tconst summary = syndication.map(s => `${s.target}: ${s.status}`).join(' · ');
+\t\t\ttoast(summary || 'Done');
+\t\t\tawait refresh();
+\t\t\tloadEditor(p.id);
+\t\t} catch (e) { toast('Re-syndicate failed: ' + e.message, 'err'); }
+\t\tfinally { rb.disabled = false; rb.textContent = 'Re-syndicate now'; }
+\t});
+\tif (cb) cb.addEventListener('click', async () => {
+\t\ttry {
+\t\t\tconst r = await fetch(`${API}/cmc-copy?id=${encodeURIComponent(p.id)}`);
+\t\t\tconst j = await r.json();
+\t\t\tif (!r.ok) throw new Error(j?.error_description || 'failed');
+\t\t\tawait navigator.clipboard.writeText(j.markdown);
+\t\t\ttoast('Markdown copied to clipboard — paste into CMC');
+\t\t} catch (e) { toast('Copy failed: ' + e.message, 'err'); }
+\t});
 }
 
 function updatePreview() {

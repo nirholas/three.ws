@@ -244,6 +244,7 @@ export function buildRssXml({ items, selfUrl, source = 'curated' }) {
 \t\t<title>${escapeXml(channelTitle)}</title>
 \t\t<link>https://three.ws</link>
 \t\t<atom:link href="${escapeAttr(selfUrl)}" rel="self" type="application/rss+xml"/>
+\t\t<atom:link href="https://pubsubhubbub.appspot.com" rel="hub"/>
 \t\t<description>${escapeXml(channelDescription)}</description>
 \t\t<language>en-us</language>
 \t\t<lastBuildDate>${rfc822(lastBuildDate)}</lastBuildDate>

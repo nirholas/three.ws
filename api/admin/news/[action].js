@@ -16,6 +16,7 @@ import { fileURLToPath } from 'node:url';
 import { json, error, method, cors, readJson, wrap } from '../../_lib/http.js';
 import { loadCuratedItems } from '../../_lib/rss-feed.js';
 import { writeAllPages } from '../../../scripts/build-news.mjs';
+import { syndicateAll, cmcCopyBlock } from '../../_lib/syndicate.js';
 
 const ROOT = path.resolve(fileURLToPath(import.meta.url), '..', '..', '..', '..');
 const ITEMS_FILE = path.join(ROOT, 'data', 'rss', 'items.json');
@@ -68,7 +69,51 @@ const VALID_FIELDS = new Set([
 	'id', 'slug', 'title', 'date', 'body_html', 'summary', 'author', 'tags',
 	'image', 'image_alt', 'image_width', 'image_height',
 	'og_title', 'og_description', 'external_link', 'link', 'published',
+	'syndication',
 ]);
+
+// Inflate a raw items.json entry into the loadCuratedItems-shaped object the
+// syndicator expects (slug, permalink, bodyHtml, etc.). Mirrors the logic in
+// rss-feed.js loadCuratedItems but for a single passed-in entry — used after
+// save when we want syndication based on the just-written state.
+function loadCuratedItem(e) {
+	const slug = e.slug || String(e.id || '').replace(/^t-/, '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
+	return {
+		id: e.id,
+		slug,
+		title: e.title,
+		bodyHtml: e.body_html,
+		summary: e.summary || '',
+		author: e.author || 'three.ws',
+		tags: e.tags || [],
+		image: e.image || '',
+		imageAlt: e.image_alt || '',
+		published: e.published !== false,
+		timestamp: new Date(e.date),
+	};
+}
+
+// Combine prior syndication state with fresh results.
+// Keeps existing IDs/URLs (for Dev.to update keys) and overwrites with new
+// success records. Errors don't overwrite a previously-successful entry.
+function mergeSyndication(prior = {}, results = []) {
+	const merged = { ...(prior || {}) };
+	for (const r of results || []) {
+		if (!r || !r.target || r.target === 'all') continue;
+		if (r.status === 'error' || r.status === 'skipped') {
+			// keep prior success record if there is one, otherwise record the latest state
+			if (!merged[r.target]) merged[r.target] = { status: r.status, reason: r.reason || r.error };
+			continue;
+		}
+		merged[r.target] = {
+			status: r.status,
+			id: r.id,
+			url: r.url,
+			published_at: r.published_at || r.pinged_at,
+		};
+	}
+	return merged;
+}
 
 function sanitizeItem(input) {
 	const out = {};
@@ -133,12 +178,63 @@ export default wrap(async (req, res) => {
 		const data = await readItemsFile();
 		const items = Array.isArray(data.items) ? data.items : [];
 		const i = items.findIndex((e) => e.id === item.id);
+		const existingSyndication = i >= 0 ? items[i]?.syndication : undefined;
+		// Preserve syndication state across saves (don't clobber Dev.to/Medium IDs)
+		if (existingSyndication) item.syndication = existingSyndication;
 		if (i >= 0) items[i] = item;
 		else items.unshift(item);
 		data.items = items;
 		await writeItemsFile(data);
 		const stats = await regeneratePages();
-		return json(res, 200, { ok: true, item, rebuild: stats });
+
+		// Syndicate (fire all configured targets; per-target errors are captured)
+		const skipSyndication = body?.skip_syndication === true || item.published === false;
+		const syndication = skipSyndication
+			? [{ target: 'all', status: 'skipped', reason: item.published === false ? 'draft' : 'requested' }]
+			: await syndicateAll(loadCuratedItem(item), { existing: existingSyndication });
+
+		// Merge new syndication results into the item (publishedAt URLs etc.)
+		const merged = mergeSyndication(existingSyndication, syndication);
+		if (Object.keys(merged).length > 0) {
+			item.syndication = merged;
+			items[items.findIndex((e) => e.id === item.id)] = item;
+			data.items = items;
+			await writeItemsFile(data);
+		}
+
+		return json(res, 200, { ok: true, item, rebuild: stats, syndication });
+	}
+
+	if (action === 'resyndicate') {
+		if (!method(req, res, ['POST'])) return;
+		const body = await readJson(req);
+		const id = String(body?.id || '').trim();
+		if (!id) return error(res, 400, 'missing_id', 'id is required');
+		const data = await readItemsFile();
+		const items = Array.isArray(data.items) ? data.items : [];
+		const idx = items.findIndex((e) => e.id === id);
+		if (idx < 0) return error(res, 404, 'not_found', `no item with id "${id}"`);
+		const raw = items[idx];
+		const existing = raw?.syndication;
+		const syndication = await syndicateAll(loadCuratedItem(raw), { existing });
+		const merged = mergeSyndication(existing, syndication);
+		raw.syndication = merged;
+		items[idx] = raw;
+		data.items = items;
+		await writeItemsFile(data);
+		return json(res, 200, { ok: true, id, syndication });
+	}
+
+	if (action === 'cmc-copy') {
+		if (!method(req, res, ['GET'])) return;
+		const id = String(req.query?.id || '').trim();
+		if (!id) return error(res, 400, 'missing_id', 'id query param is required');
+		const data = await readItemsFile();
+		const items = Array.isArray(data.items) ? data.items : [];
+		const raw = items.find((e) => e.id === id);
+		if (!raw) return error(res, 404, 'not_found', `no item with id "${id}"`);
+		const block = cmcCopyBlock(loadCuratedItem(raw));
+		return json(res, 200, { ok: true, id, markdown: block });
 	}
 
 	if (action === 'delete') {

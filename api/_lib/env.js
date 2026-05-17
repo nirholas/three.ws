@@ -326,6 +326,26 @@ export const env = {
 		return opt('X_OAUTH_CLIENT_SECRET');
 	},
 
+	// Dev.to syndication — required for the news admin's "Publish to Dev.to"
+	// hook to do anything. Generate at https://dev.to/settings/extensions
+	// (look for "Generate API Key"). When unset, syndication is skipped
+	// silently and the admin shows "skipped: DEV_TO_API_KEY not set".
+	get DEV_TO_API_KEY() {
+		return opt('DEV_TO_API_KEY');
+	},
+
+	// Medium syndication — generate an integration token at
+	// https://medium.com/me/settings/security (note: Medium's API is
+	// deprecated for new accounts as of 2024 but still functions for
+	// accounts that had API access enabled). MEDIUM_AUTHOR_ID is optional;
+	// the syndicator auto-discovers it via /v1/me and caches in-memory.
+	get MEDIUM_INTEGRATION_TOKEN() {
+		return opt('MEDIUM_INTEGRATION_TOKEN');
+	},
+	get MEDIUM_AUTHOR_ID() {
+		return opt('MEDIUM_AUTHOR_ID');
+	},
+
 	getRpcUrl(chainId) {
 		return (
 			opt(`RPC_URL_${chainId}`) ||
