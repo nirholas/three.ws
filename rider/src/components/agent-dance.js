@@ -1,7 +1,7 @@
 const CLIPS = [
   'dance', 'rumba', 'capoeira', 'thriller', 'wave', 'celebrate', 'taunt',
   'silly', 'jump', 'pray', 'reaction', 'sitclap', 'sitlaugh', 'kiss',
-  'angry', 'defeated', 'falling', 'dying', 'idle'
+  'angry', 'defeated', 'falling', 'dying', 'idle', 'sitidle'
 ];
 
 AFRAME.registerComponent('agent-dance', {

@@ -243,8 +243,8 @@
 					const stage = document.getElementById('stage');
 					const viewer = new Viewer(stage, { kiosk: true, postToParent });
 					if (bg === 'transparent') {
-						viewer.renderer?.setClearAlpha(0);
-						if (viewer.scene) viewer.scene.background = null;
+						viewer.state.transparentBg = true;
+						viewer.updateBackground();
 					}
 
 					if (plateOn && a?.name) {
@@ -303,8 +303,8 @@
 				const stage = document.getElementById('stage');
 				const viewer = new Viewer(stage, { kiosk: true, postToParent });
 				if (bg === 'transparent') {
-					viewer.renderer?.setClearAlpha(0);
-					if (viewer.scene) viewer.scene.background = null;
+					viewer.state.transparentBg = true;
+					viewer.updateBackground();
 				}
 
 				const candidates = resolveUrlCandidates(bodyURI);

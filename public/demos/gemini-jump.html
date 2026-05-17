@@ -22,12 +22,23 @@
 			.crumb a { color: #8a8d98; text-decoration: none; }
 			.crumb a:hover { color: #d6ff3d; }
 
+			.hero {
+				max-width: 760px;
+				margin: 0 auto;
+				padding: 8px 24px 56px;
+				display: flex;
+				flex-direction: column;
+				align-items: center;
+				text-align: center;
+			}
+
 			.stage-wrap {
 				position: relative;
-				width: 100vw;
-				height: calc(100vh - 60px);
-				min-height: 540px;
+				width: 100%;
+				height: clamp(360px, 58vh, 560px);
 				overflow: hidden;
+				border-radius: 18px;
+				background: radial-gradient(ellipse at center bottom, #0d1018 0%, #05060a 70%);
 			}
 			#stage-canvas {
 				display: block;
@@ -58,41 +69,35 @@
 				pointer-events: none;
 			}
 
-			/* Floating headline + CTA */
-			.overlay {
-				position: absolute;
-				inset: 0;
+			.text-block {
+				margin-top: 32px;
 				display: flex;
 				flex-direction: column;
-				justify-content: center;
-				align-items: flex-start;
-				padding: 0 8vw;
-				pointer-events: none;
+				align-items: center;
+				gap: 14px;
 			}
 			.eyebrow {
 				display: inline-flex; align-items: center; gap: 8px;
 				font-size: 11.5px; letter-spacing: 0.15em; text-transform: uppercase;
-				color: #d6ff3d; margin-bottom: 14px;
+				color: #d6ff3d;
 			}
 			.eyebrow-dot {
 				display: inline-block; width: 6px; height: 6px;
 				border-radius: 50%; background: #d6ff3d;
 			}
 			.title {
-				font-size: clamp(34px, 5.4vw, 64px);
+				font-size: clamp(40px, 6vw, 72px);
 				font-weight: 700; letter-spacing: -0.025em;
-				line-height: 1.04; margin: 0 0 18px;
-				max-width: 14ch;
+				line-height: 1.04; margin: 0;
 			}
 			.title em { color: #d6ff3d; font-style: normal; }
 			.sub {
 				color: #8a8d98; font-size: 16px; line-height: 1.55;
-				max-width: 42ch; margin: 0 0 28px;
+				max-width: 44ch; margin: 0;
 			}
 
-			/* Heavy CTA with DOM-side depth (matches the 3D button feel) */
 			#trigger-btn {
-				pointer-events: auto;
+				margin-top: 10px;
 				background: #d6ff3d;
 				color: #0a0b0f;
 				border: none;
@@ -110,10 +115,7 @@
 			}
 
 			.hint {
-				position: absolute;
-				bottom: 18px;
-				left: 0; right: 0;
-				text-align: center;
+				margin-top: 8px;
 				font-size: 12px;
 				color: #4a4b5a;
 			}
@@ -123,31 +125,30 @@
 		<header><div id="nav-container"></div></header>
 		<p class="crumb"><a href="/demos/">← lab</a></p>
 
-		<div class="stage-wrap">
-			<canvas id="stage-canvas"></canvas>
+		<section class="hero">
+			<div class="stage-wrap">
+				<canvas id="stage-canvas"></canvas>
+				<div class="loading-veil" id="loading-veil">
+					<div class="spinner"></div>
+					<span>loading avatar…</span>
+				</div>
+				<div class="status-pill" id="status"></div>
+			</div>
 
-			<div class="overlay">
+			<div class="text-block">
 				<div class="eyebrow">
 					<span class="eyebrow-dot"></span>
 					<span>three.ws · tactile concept</span>
 				</div>
-				<h1 class="title">Click. <em>Watch it land.</em></h1>
+				<h1 class="title">Give your AI<br />a <em>body.</em></h1>
 				<p class="sub">
-					A heavy 3D button, a real avatar with a real jump clip, and a
-					volume-preserving squish on impact. Shockwave ring optional —
-					but it's there.
+					Click the button. The avatar leaps onto a heavy 3D target, with
+					a volume-preserving squish on impact and an elastic recoil.
 				</p>
 				<button id="trigger-btn" type="button">Trigger jump →</button>
+				<p class="hint">Click to send the avatar in</p>
 			</div>
-
-			<div class="loading-veil" id="loading-veil">
-				<div class="spinner"></div>
-				<span>loading avatar…</span>
-			</div>
-			<div class="status-pill" id="status"></div>
-
-			<p class="hint">Click the button to send the avatar in</p>
-		</div>
+		</section>
 
 		<script src="/nav.js" defer></script>
 		<script type="module" src="/src/gemini-jump.js"></script>

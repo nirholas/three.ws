@@ -9,33 +9,27 @@
 		<style>
 			:root { color-scheme: dark; }
 			*, *::before, *::after { box-sizing: border-box; }
-			html, body { height: 100%; margin: 0; overflow: hidden; }
-			body {
-				background: #04050d;
-				color: #eee;
-				font: 15px/1.5 'Inter', -apple-system, system-ui, sans-serif;
+			html, body { height: 100%; margin: 0; background: #04050d; color: #eee; font: 15px/1.5 'Inter', -apple-system, system-ui, sans-serif; }
+
+			/* Canvas sits above all HTML — pointer-events:none so clicks pass through */
+			#avatar-canvas {
+				position: fixed;
+				top: 0; left: 0;
+				width: 100vw; height: 100vh;
+				pointer-events: none;
+				z-index: 999;
 			}
 
-			/* ── Layout ──────────────────────────────────────────────── */
-			.hero {
-				display: grid;
-				grid-template-columns: 1fr 1.15fr;
-				height: 100vh;
-			}
-			@media (max-width: 768px) {
-				.hero { grid-template-columns: 1fr; grid-template-rows: auto 1fr; }
-				.scene-col { min-height: 55vw; }
-			}
-
-			/* ── Left column ─────────────────────────────────────────── */
-			.text-col {
+			/* Page content — left column, visible through transparent canvas */
+			.page {
+				position: relative;
+				z-index: 10;
+				min-height: 100vh;
 				display: flex;
 				flex-direction: column;
 				justify-content: center;
-				padding: 60px 52px 60px 56px;
-				position: relative;
-				z-index: 2;
-				background: linear-gradient(to right, #04050d 70%, transparent);
+				padding: 100px 56px 60px;
+				max-width: 520px;
 			}
 
 			.eyebrow {
@@ -47,42 +41,35 @@
 			}
 			.eyebrow-dot {
 				width: 7px; height: 7px; border-radius: 50%;
-				background: #d6ff3d;
-				box-shadow: 0 0 8px rgba(214,255,61,0.7);
+				background: #d6ff3d; box-shadow: 0 0 8px rgba(214,255,61,0.7);
 				animation: blink 2.2s ease-in-out infinite;
 			}
-			@keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.25} }
+			@keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.2} }
 
 			.hero-title {
 				font-family: 'Space Grotesk', 'Inter', sans-serif;
-				font-size: clamp(36px, 4.2vw, 66px);
-				font-weight: 800;
-				letter-spacing: -0.03em;
-				line-height: 1.04;
-				margin: 0 0 20px;
-				color: #fff;
+				font-size: clamp(38px, 4.5vw, 68px);
+				font-weight: 800; letter-spacing: -0.03em;
+				line-height: 1.04; margin: 0 0 20px; color: #fff;
 			}
 			.hero-title em { color: #d6ff3d; font-style: normal; }
 
 			.hero-sub {
-				color: #5a5d72;
-				font-size: 15.5px;
-				line-height: 1.68;
-				max-width: 40ch;
-				margin: 0 0 44px;
+				color: #555870; font-size: 15.5px; line-height: 1.7;
+				max-width: 38ch; margin: 0 0 44px;
 			}
 
-			/* ── 3D physical CTA buttons ─────────────────────────────── */
+			/* Physical 3D buttons */
 			.cta-row { display: flex; flex-direction: column; gap: 14px; align-items: flex-start; }
 
-			.btn-3d {
+			.btn {
 				display: inline-flex; align-items: center; gap: 10px;
 				padding: 16px 32px; border: none; border-radius: 14px;
-				font: 700 15px/1 'Inter', inherit;
-				cursor: pointer; text-decoration: none;
-				transform: translateY(0);
-				transition: filter 0.12s;
+				font: 700 15px/1 'Inter', inherit; cursor: pointer; text-decoration: none;
 				user-select: none;
+				/* GSAP squishes downward into the page, not into its own center */
+				transform-origin: bottom center;
+				will-change: transform;
 			}
 			.btn-primary {
 				background: linear-gradient(160deg, #e2ff5a, #c8ef2c);
@@ -91,304 +78,326 @@
 			}
 			.btn-primary:hover { filter: brightness(1.07); }
 			.btn-ghost {
-				background: rgba(255,255,255,0.05);
-				color: #bbb;
+				background: rgba(255,255,255,0.05); color: #bbb;
 				border: 1.5px solid rgba(255,255,255,0.1);
-				box-shadow: 0 5px 0 0 rgba(255,255,255,0.04), 0 7px 18px rgba(0,0,0,0.4);
-			}
-
-			/* Physical landing animation — fired from JS when avatar touches 3D button */
-			@keyframes btn-land {
-				0%   { transform: translateY(0);    box-shadow: 0 8px 0 0 #7a9600, 0 10px 28px rgba(214,255,61,0.28); }
-				13%  { transform: translateY(9px);  box-shadow: 0 0   0 0 #7a9600, 0 4px  14px rgba(214,255,61,0.50); }
-				30%  { transform: translateY(-3px); box-shadow: 0 11px 0 0 #7a9600, 0 14px 32px rgba(214,255,61,0.26); }
-				50%  { transform: translateY(2px);  box-shadow: 0 6px  0 0 #7a9600, 0 8px  22px rgba(214,255,61,0.20); }
-				68%  { transform: translateY(-1px); box-shadow: 0 9px  0 0 #7a9600, 0 11px 26px rgba(214,255,61,0.24); }
-				84%  { transform: translateY(0.5px); box-shadow: 0 7.5px 0 0 #7a9600, 0 10px 27px rgba(214,255,61,0.26); }
-				100% { transform: translateY(0);    box-shadow: 0 8px  0 0 #7a9600, 0 10px 28px rgba(214,255,61,0.28); }
-			}
-			.btn-primary.landed {
-				animation: btn-land 0.78s cubic-bezier(0.22, 1, 0.36, 1) forwards;
-			}
-
-			/* ── Right column: 3D scene ──────────────────────────────── */
-			.scene-col { position: relative; }
-			.scene-col canvas {
-				display: block; width: 100%; height: 100%;
+				box-shadow: 0 5px 0 0 rgba(255,255,255,0.04);
 			}
 
 			/* Nav */
-			.nav-bar {
+			.nav {
 				position: fixed; top: 0; left: 0; right: 0; z-index: 20;
-				display: flex; align-items: center; gap: 16px;
-				padding: 14px 28px;
-				background: rgba(4,5,13,0.6); backdrop-filter: blur(14px);
+				display: flex; align-items: center; gap: 16px; padding: 14px 28px;
+				background: rgba(4,5,13,0.55); backdrop-filter: blur(14px);
 				border-bottom: 1px solid rgba(255,255,255,0.04);
 			}
-			.nav-bar .brand {
-				font: 700 15px/1 'Space Grotesk', 'Inter', sans-serif;
-				color: #fff; text-decoration: none;
-				display: flex; align-items: center; gap: 7px;
-			}
-			.brand-dot {
-				width: 8px; height: 8px; border-radius: 50%;
-				background: linear-gradient(135deg, #d6ff3d, #aacc00);
-				box-shadow: 0 0 10px rgba(214,255,61,0.6);
-			}
-			.nav-bar a.nav-link { color: #5a5d72; text-decoration: none; font-size: 13px; }
-			.nav-bar a.nav-link:hover { color: #d6ff3d; }
-			.nav-spacer { flex: 1; }
+			.nav .brand { font: 700 15px/1 'Space Grotesk','Inter',sans-serif; color:#fff; text-decoration:none; display:flex; align-items:center; gap:7px; }
+			.brand-dot { width:8px; height:8px; border-radius:50%; background:linear-gradient(135deg,#d6ff3d,#aacc00); box-shadow:0 0 10px rgba(214,255,61,0.6); }
+			.nav a.link { color:#555870; text-decoration:none; font-size:13px; margin-left:auto; }
+			.nav a.link:hover { color:#d6ff3d; }
 		</style>
 	</head>
 	<body>
-		<div class="nav-bar">
+		<div class="nav">
 			<a href="/" class="brand">
 				<img src="/three.svg" width="20" height="20" alt="" />
 				<span class="brand-dot"></span>
 				three.ws
 			</a>
-			<div class="nav-spacer"></div>
-			<a href="/demos/" class="nav-link">← lab</a>
+			<a href="/demos/" class="link">← lab</a>
 		</div>
 
-		<section class="hero" style="padding-top: 52px;">
-			<!-- Left: copy + CTAs -->
-			<div class="text-col">
-				<div class="eyebrow">
-					<span class="eyebrow-dot"></span>
-					<span>The 3D layer for onchain AI agents</span>
-				</div>
-				<h1 class="hero-title">
-					Give your AI<br />a <em>body.</em>
-				</h1>
-				<p class="hero-sub">
-					Born in 3D. Raised on-chain. Yours forever.
-					Your AI has been a chatbox long enough —
-					give it a body, a personality, and a permanent home.
-				</p>
-				<div class="cta-row">
-					<a href="/create" class="btn-3d btn-primary" id="cta-primary">
-						<span>Build your agent — free</span>
-						<span>→</span>
-					</a>
-					<a href="#" class="btn-3d btn-ghost">
-						<span>Watch it live</span>
-						<span style="opacity:.4">↓</span>
-					</a>
-				</div>
+		<div class="page">
+			<div class="eyebrow">
+				<span class="eyebrow-dot"></span>
+				<span>The 3D layer for onchain AI agents</span>
 			</div>
+			<h1 class="hero-title"><span id="sit-line">Give your AI</span><br />a <em>body.</em></h1>
+			<p class="hero-sub">
+				Born in 3D. Raised on-chain. Yours forever.
+				Your AI has been a chatbox long enough — give it a body,
+				a personality, and a permanent home.
+			</p>
+			<div class="cta-row">
+				<a href="/create" class="btn btn-primary" id="cta-btn">
+					<span>Build your agent — free</span>
+					<span>→</span>
+				</a>
+				<a href="#" class="btn btn-ghost">
+					<span>Watch it live</span>
+					<span style="opacity:.4">↓</span>
+				</a>
+			</div>
+		</div>
 
-			<!-- Right: WebGL scene -->
-			<div class="scene-col">
-				<canvas id="c"></canvas>
-			</div>
-		</section>
+		<!-- Transparent overlay canvas — avatar renders above all HTML -->
+		<canvas id="avatar-canvas"></canvas>
 
 		<script type="module">
 			import * as THREE from 'three';
 			import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
-			import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
-			import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+			import { gsap } from 'https://cdn.jsdelivr.net/npm/gsap@3.12.5/+esm';
 
-			const canvas   = document.getElementById('c');
-			const ctaPrimary = document.getElementById('cta-primary');
+			const canvas  = document.getElementById('avatar-canvas');
+			const ctaBtn  = document.getElementById('cta-btn');
+			const sitLine = document.getElementById('sit-line');
 
-			// ── Renderer ──────────────────────────────────────────────────────
+			// ── Renderer: alpha:true → transparent background ─────────────────
 			const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
 			renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
 			renderer.outputColorSpace = THREE.SRGBColorSpace;
 			renderer.toneMapping = THREE.ACESFilmicToneMapping;
 			renderer.toneMappingExposure = 1.1;
-			renderer.shadowMap.enabled = true;
-			renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 
 			const scene = new THREE.Scene();
-			scene.fog = new THREE.FogExp2(0x02030a, 0.024);
+			// scene.background intentionally NOT set → transparent
 
-			const pmrem = new THREE.PMREMGenerator(renderer);
-			scene.environment = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
+			// ── OrthographicCamera: 1 world unit = PX_PER_UNIT pixels ────────
+			// This makes screen→world mapping trivially exact: no perspective math.
+			const PX_PER_UNIT = 120; // avatar (1.8u tall) = 216px on screen
 
-			// ── Camera ────────────────────────────────────────────────────────
-			const camera = new THREE.PerspectiveCamera(40, 1, 0.05, 80);
-			camera.position.set(0.5, 2.8, 8.0);
-			camera.lookAt(0, 0.9, 0);
+			const camera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0.1, 100);
+			camera.position.z = 10;
 
-			const controls = new OrbitControls(camera, canvas);
-			controls.target.set(0, 0.9, 0);
-			controls.enableDamping = true;
-			controls.dampingFactor = 0.07;
-			controls.minDistance = 2;
-			controls.maxDistance = 22;
-			controls.maxPolarAngle = Math.PI / 2 - 0.02;
-			controls.update();
-
-			function resize() {
-				const w = canvas.clientWidth, h = canvas.clientHeight;
-				if (!w || !h) return;
-				renderer.setSize(w, h, false);
-				camera.aspect = w / h;
+			function updateFrustum() {
+				const hw = window.innerWidth  / PX_PER_UNIT / 2;
+				const hh = window.innerHeight / PX_PER_UNIT / 2;
+				camera.left   = -hw; camera.right  = hw;
+				camera.top    =  hh; camera.bottom = -hh;
 				camera.updateProjectionMatrix();
 			}
-			new ResizeObserver(resize).observe(canvas);
+
+			// Screen pixel → world unit (exact, no approximation)
+			function px2world(screenX, screenY) {
+				const hw = window.innerWidth  / PX_PER_UNIT / 2;
+				const hh = window.innerHeight / PX_PER_UNIT / 2;
+				return {
+					x:  (screenX / window.innerWidth  - 0.5) * hw * 2,
+					y: -(screenY / window.innerHeight - 0.5) * hh * 2,
+				};
+			}
+
+			function resize() {
+				renderer.setSize(window.innerWidth, window.innerHeight, false);
+				updateFrustum();
+			}
+			window.addEventListener('resize', () => { resize(); placeAtStart(); });
 			resize();
 
-			// ── Star skybox ───────────────────────────────────────────────────
-			const skyC = document.createElement('canvas');
-			skyC.width = 2048; skyC.height = 1024;
-			const sc = skyC.getContext('2d');
-			sc.fillStyle = '#02030b'; sc.fillRect(0, 0, 2048, 1024);
-			const neb = sc.createRadialGradient(900,400,0,900,400,600);
-			neb.addColorStop(0,'rgba(40,20,90,0.15)'); neb.addColorStop(1,'rgba(0,0,0,0)');
-			sc.fillStyle = neb; sc.fillRect(0,0,2048,1024);
-			for (let i=0;i<2000;i++){
-				const x=Math.random()*2048,y=Math.random()*1024,r=Math.random()*1.2+0.2,a=Math.random()*0.8+0.15;
-				const t=Math.random();
-				sc.fillStyle=t>0.7?`rgba(160,200,255,${a})`:t>0.45?`rgba(255,220,180,${a})`:`rgba(255,255,255,${a})`;
-				sc.beginPath();sc.arc(x,y,r,0,Math.PI*2);sc.fill();
-			}
-			scene.add(new THREE.Mesh(
-				new THREE.SphereGeometry(70,32,16),
-				new THREE.MeshBasicMaterial({map:new THREE.CanvasTexture(skyC),side:THREE.BackSide})
-			));
-
 			// ── Lights ────────────────────────────────────────────────────────
-			scene.add(new THREE.AmbientLight(0x4050aa, 0.18));
-			const key = new THREE.DirectionalLight(0xfff4dc, 2.2);
-			key.position.set(4,9,6); key.castShadow=true;
-			key.shadow.mapSize.setScalar(2048);
-			key.shadow.camera.left=-7;key.shadow.camera.right=7;
-			key.shadow.camera.top=7;key.shadow.camera.bottom=-2;
-			key.shadow.camera.near=1;key.shadow.camera.far=22;
+			scene.add(new THREE.AmbientLight(0xffffff, 0.6));
+			const key = new THREE.DirectionalLight(0xfff4dc, 2.0);
+			key.position.set(3, 6, 5);
 			scene.add(key);
-			const rim=new THREE.DirectionalLight(0x2040ff,1.1);rim.position.set(-5,3,-5);scene.add(rim);
-			const glow=new THREE.PointLight(0xd6ff3d,0.8,9);glow.position.set(0,1.5,0);scene.add(glow);
-			const pf=new THREE.PointLight(0xff2060,0.5,16);pf.position.set(-7,2,2);scene.add(pf);
-			const cf=new THREE.PointLight(0x00e5ff,0.4,16);cf.position.set(7,2,-3);scene.add(cf);
-
-			// ── Tron floor ────────────────────────────────────────────────────
-			const gC=document.createElement('canvas');gC.width=gC.height=512;
-			const gx=gC.getContext('2d');
-			gx.fillStyle='#04050f';gx.fillRect(0,0,512,512);
-			gx.strokeStyle='#0d0f22';gx.lineWidth=1;
-			for(let i=0;i<=512;i+=32){gx.beginPath();gx.moveTo(i,0);gx.lineTo(i,512);gx.stroke();gx.beginPath();gx.moveTo(0,i);gx.lineTo(512,i);gx.stroke();}
-			gx.strokeStyle='#1a2a6c';gx.lineWidth=2;
-			for(let i=0;i<=512;i+=128){gx.beginPath();gx.moveTo(i,0);gx.lineTo(i,512);gx.stroke();gx.beginPath();gx.moveTo(0,i);gx.lineTo(512,i);gx.stroke();}
-			const gTex=new THREE.CanvasTexture(gC);
-			gTex.wrapS=gTex.wrapT=THREE.RepeatWrapping;gTex.repeat.set(14,14);
-			const floor=new THREE.Mesh(new THREE.PlaneGeometry(32,32),new THREE.MeshStandardMaterial({map:gTex,roughness:0.08,metalness:0.6}));
-			floor.rotation.x=-Math.PI/2;floor.receiveShadow=true;scene.add(floor);
-
-			// ── 3D Button ─────────────────────────────────────────────────────
-			const base=new THREE.Mesh(new THREE.CylinderGeometry(2.05,2.25,0.85,64),new THREE.MeshStandardMaterial({color:0x0a0b1a,roughness:0.25,metalness:0.92}));
-			base.position.y=0.425;base.castShadow=true;base.receiveShadow=true;scene.add(base);
-
-			const ledRing=new THREE.Mesh(new THREE.TorusGeometry(1.88,0.045,8,80),new THREE.MeshStandardMaterial({color:0xd6ff3d,emissive:0xd6ff3d,emissiveIntensity:1.0,roughness:0.2,metalness:0}));
-			ledRing.position.y=0.84;ledRing.rotation.x=Math.PI/2;scene.add(ledRing);
-
-			// Cap texture: "GET STARTED"
-			const cc=document.createElement('canvas');cc.width=cc.height=512;
-			const cx2=cc.getContext('2d');
-			const cg=cx2.createRadialGradient(256,256,0,256,256,222);
-			cg.addColorStop(0,'#eeff66');cg.addColorStop(0.65,'#d6ff3d');cg.addColorStop(1,'#aecf20');
-			cx2.fillStyle=cg;cx2.beginPath();cx2.arc(256,256,222,0,Math.PI*2);cx2.fill();
-			cx2.fillStyle='rgba(8,9,15,0.88)';cx2.font='bold 58px -apple-system,system-ui,sans-serif';
-			cx2.textAlign='center';cx2.textBaseline='middle';
-			cx2.fillText('GET',256,210);cx2.fillText('STARTED',256,290);
-
-			const CAP_H=0.38,CAP_HALF=0.19,BASE_TOP=0.85;
-			const CAP_REST=BASE_TOP+CAP_HALF,BTN_TOP=BASE_TOP+CAP_H;
-			const capSide=new THREE.MeshStandardMaterial({color:0xc8ef38,emissive:0xd6ff3d,emissiveIntensity:0.12,roughness:0.4,metalness:0});
-			const capTop=new THREE.MeshStandardMaterial({map:new THREE.CanvasTexture(cc),emissive:0xd6ff3d,emissiveIntensity:0.08,roughness:0.35,metalness:0});
-			const cap=new THREE.Mesh(new THREE.CylinderGeometry(1.74,1.74,CAP_H,64),[capSide,capTop,capSide]);
-			cap.position.y=CAP_REST;cap.castShadow=true;cap.receiveShadow=true;scene.add(cap);
-
-			// ── Spring physics + squash-stretch ───────────────────────────────
-			let sY=0,sV=0,springing=false;
-			function triggerSpring(){
-				sY=-0.88;sV=0;springing=true;
-				capSide.emissiveIntensity=0.8;capTop.emissiveIntensity=0.6;
-				ledRing.material.emissiveIntensity=3.5;glow.intensity=7.0;
-				// Sync DOM CTA button
-				ctaPrimary.classList.remove('landed');
-				void ctaPrimary.offsetWidth;
-				ctaPrimary.classList.add('landed');
-			}
-			function updateSpring(dt){
-				if(!springing)return;
-				sV+=(-270*sY-9*sV)*dt;sY+=sV*dt;
-				const s=Math.max(0.04,1+sY),xz=1+(1-s)*0.19;
-				cap.scale.set(xz,s,xz);cap.position.y=BASE_TOP+CAP_HALF*s;
-				const m=Math.abs(sY);
-				capSide.emissiveIntensity=0.12+m*0.55;capTop.emissiveIntensity=0.08+m*0.4;
-				ledRing.material.emissiveIntensity=1.0+m*2.5;glow.intensity=0.8+m*5.5;
-				if(m<0.003&&Math.abs(sV)<0.003){
-					springing=false;sY=0;sV=0;cap.scale.set(1,1,1);cap.position.y=CAP_REST;
-					capSide.emissiveIntensity=0.12;capTop.emissiveIntensity=0.08;
-					ledRing.material.emissiveIntensity=1.0;glow.intensity=0.8;
-				}
-			}
-
-			// ── Particles ─────────────────────────────────────────────────────
-			const pool=[];
-			function burst(y){
-				const N=90,pos=new Float32Array(N*3),vel=[];
-				for(let i=0;i<N;i++){const a=Math.random()*Math.PI*2;pos[i*3]=Math.cos(a)*Math.random()*0.4;pos[i*3+1]=y;pos[i*3+2]=Math.sin(a)*Math.random()*0.4;vel.push({x:Math.cos(a)*(1.5+Math.random()*3),y:1.5+Math.random()*4.5,z:Math.sin(a)*(1.5+Math.random()*3)});}
-				const geo=new THREE.BufferGeometry();geo.setAttribute('position',new THREE.BufferAttribute(pos,3));
-				const mat=new THREE.PointsMaterial({color:0xd6ff3d,size:0.07,transparent:true});
-				const pts=new THREE.Points(geo,mat);scene.add(pts);pool.push({pts,geo,mat,vel,age:0,life:1.4});
-			}
-			function updateParticles(dt){
-				for(let i=pool.length-1;i>=0;i--){
-					const p=pool[i];p.age+=dt;
-					if(p.age>=p.life){scene.remove(p.pts);p.geo.dispose();p.mat.dispose();pool.splice(i,1);continue;}
-					const buf=p.geo.attributes.position.array;
-					for(let j=0;j<p.vel.length;j++){buf[j*3]+=p.vel[j].x*dt;buf[j*3+1]+=p.vel[j].y*dt;buf[j*3+2]+=p.vel[j].z*dt;p.vel[j].y-=9.8*dt;}
-					p.geo.attributes.position.needsUpdate=true;p.mat.opacity=1-p.age/p.life;
-				}
-			}
+			const rim = new THREE.DirectionalLight(0x4060ff, 0.6);
+			rim.position.set(-4, 3, -2);
+			scene.add(rim);
+			const fill = new THREE.DirectionalLight(0xffeedd, 0.4);
+			fill.position.set(0, 2, 7);
+			scene.add(fill);
 
 			// ── Avatar ────────────────────────────────────────────────────────
-			let avatar=null,mixer=null,rootBone=null,baseRootPos=null,fallAction=null;
-			const FALL_DUR=2.933,LAND_AT=2.35,DROP_FROM=BTN_TOP+3.8;
-			let seqT=0,landed=false;
+			let avatar = null, mixer = null, rootBone = null, baseRootPos = null;
+			let sitAction = null, standupAction = null, fallAction = null;
+			let phase = 'loading';                   // loading → sitting → standingUp → jumping → resting
+			let startW = { x: 0, y: 0 };             // sit/stand anchor (above the text)
+			let seqT = 0, landed = false, jumpTarget = { x: 0, y: 0 };
 
-			function runSeq(){seqT=0;landed=false;if(avatar)avatar.position.set(0,DROP_FROM,0);fallAction?.reset().play();}
-			function updateSeq(dt){
-				if(!avatar)return;seqT+=dt;
-				if(seqT<=LAND_AT){const p=seqT/LAND_AT;avatar.position.y=DROP_FROM+(BTN_TOP-DROP_FROM)*(p*p);}
-				else{avatar.position.y=cap.position.y+CAP_HALF*cap.scale.y;if(!landed){landed=true;triggerSpring();burst(BTN_TOP);}}
-				if(seqT>=FALL_DUR+1.2)runSeq();
+			const SIT_S    = 1.0;     // sitidle loops at 1s
+			const STAND_S  = 2.566;   // standup duration
+			const JUMP_S   = 2.933;   // jumpdown3 duration
+			const SIT_DWELL_S = 2.4;  // how long he sits before standing
+			const LAND_P   = 0.84;    // jump fraction where feet make contact
+			const PEAK_U   = 0.55;    // arc peak in world units
+			// Sit pose: avatar root (floor reference) sits below the seat by ~half a body.
+			// Nudge the floor reference down so his butt visually rests ON the text.
+			const SIT_OFFSET_PX = 60;
+
+			function smoothstep(t) { return t * t * (3 - 2 * t); }
+
+			// Anchor the avatar above the "Give your AI" text line
+			function placeAtStart() {
+				if (!avatar) return;
+				const rect = sitLine.getBoundingClientRect();
+				// Horizontally: end of the text line (perched on the right edge of "AI")
+				const sx = rect.right - rect.height * 0.4;
+				// Vertically: text top - offset, so butt rests on the text after sit animation
+				const sy = rect.top + SIT_OFFSET_PX;
+				startW = px2world(sx, sy);
+				if (phase === 'sitting' || phase === 'loading') {
+					avatar.position.set(startW.x, startW.y, 0);
+				}
 			}
 
-			new GLTFLoader().load('/avatars/cz.glb',gltf=>{
-				avatar=gltf.scene;
-				avatar.traverse(n=>{if(n.isMesh){n.castShadow=true;n.receiveShadow=true;}if(!rootBone&&/^(Hips|Root|mixamorig:?Hips)$/i.test(n.name))rootBone=n;});
-				avatar.rotation.y=Math.PI;scene.add(avatar);
-				mixer=new THREE.AnimationMixer(avatar);
-				fetch('/animations/clips/jumpdown3.json').then(r=>r.json()).then(json=>{
-					fallAction=mixer.clipAction(THREE.AnimationClip.parse(json));
-					fallAction.setLoop(THREE.LoopOnce,1);fallAction.clampWhenFinished=true;
-					if(rootBone)baseRootPos=rootBone.position.clone();
-					const _r=renderer.render.bind(renderer);
-					renderer.render=(sc,cam)=>{
-						try{if(rootBone&&baseRootPos)rootBone.position.copy(baseRootPos);}catch(_){}
-						_r(sc,cam);
+			function fireSquish() {
+				// Kill any in-flight tween so rapid re-fires don't stack
+				gsap.killTweensOf(ctaBtn);
+				// Compress: fast slam downward, transform-origin:bottom center → squishes into page
+				gsap.to(ctaBtn, {
+					scaleY: 0.7,
+					scaleX: 1.05,
+					duration: 0.1,
+					ease: 'power4.out',
+					onComplete: () => {
+						// Recoil: elastic bounce back to rest
+						gsap.to(ctaBtn, {
+							scaleY: 1,
+							scaleX: 1,
+							duration: 0.8,
+							ease: 'elastic.out(1.2, 0.3)',
+						});
+					},
+				});
+			}
+
+			function startSit() {
+				if (!sitAction) return;
+				phase = 'sitting';
+				placeAtStart();
+				fallAction?.stop();
+				standupAction?.stop();
+				// Reset yaw: facing the camera while seated
+				gsap.killTweensOf(avatar.rotation);
+				avatar.rotation.y = 0;
+				sitAction.reset().play();
+				setTimeout(startStandup, SIT_DWELL_S * 1000);
+			}
+
+			function startStandup() {
+				if (!standupAction || phase !== 'sitting') return;
+				phase = 'standingUp';
+				// Crossfade sit → standup
+				standupAction.reset();
+				standupAction.crossFadeFrom(sitAction, 0.2, false).play();
+				// As he stands, rotate to face the jump direction (toward the button)
+				gsap.to(avatar.rotation, {
+					y: Math.PI,
+					duration: STAND_S - 0.3,
+					ease: 'power2.inOut',
+				});
+				// Trigger jump just before standup finishes so motion blends into takeoff
+				setTimeout(triggerJump, (STAND_S - 0.15) * 1000);
+			}
+
+			function triggerJump() {
+				if (!avatar || !fallAction || phase === 'jumping') return;
+
+				// Feet land precisely on the top edge of the button
+				const rect = ctaBtn.getBoundingClientRect();
+				jumpTarget = px2world(rect.left + rect.width / 2, rect.top);
+
+				phase = 'jumping'; seqT = 0; landed = false;
+				fallAction.reset();
+				fallAction.crossFadeFrom(standupAction, 0.15, false).play();
+			}
+
+			function updateSeq(dt) {
+				if (phase !== 'jumping' || !avatar) return;
+				seqT += dt;
+				const p    = Math.min(seqT / JUMP_S, 1);
+				const ease = smoothstep(p);
+
+				// Linear interpolation in screen space (ortho camera = exact pixel mapping)
+				const x   = startW.x + (jumpTarget.x - startW.x) * ease;
+				const arc = PEAK_U * 4 * p * (1 - p);
+				const y   = startW.y + (jumpTarget.y - startW.y) * ease + arc;
+
+				avatar.position.set(x, y, 0);
+
+				if (!landed && p >= LAND_P) {
+					landed = true;
+					fireSquish();
+				}
+
+				if (p >= 1) {
+					phase = 'resting';
+					// Hold 1.6s on the button, then return to sit-on-text and loop
+					setTimeout(() => {
+						const fromX = avatar.position.x;
+						const fromY = avatar.position.y;
+						// Re-read text position (resize-safe)
+						const rect = sitLine.getBoundingClientRect();
+						const back = px2world(rect.right - rect.height * 0.4, rect.top + SIT_OFFSET_PX);
+						startW = back;
+						// Turn back to face the camera as he slides up to re-sit
+						gsap.killTweensOf(avatar.rotation);
+						gsap.to(avatar.rotation, { y: 0, duration: 0.7, ease: 'power2.inOut' });
+						const t0 = performance.now();
+						(function slide(now) {
+							const sp = Math.min((now - t0) / 700, 1);
+							avatar.position.x = fromX + (back.x - fromX) * smoothstep(sp);
+							avatar.position.y = fromY + (back.y - fromY) * smoothstep(sp);
+							if (sp < 1) requestAnimationFrame(slide);
+							else {
+								avatar.position.set(back.x, back.y, 0);
+								startSit();
+							}
+						})(performance.now());
+					}, 1600);
+				}
+			}
+
+			// Click skips straight to the jump (still must crossfade from current pose)
+			ctaBtn.addEventListener('click', e => {
+				e.preventDefault();
+				if (phase === 'sitting' || phase === 'standingUp') triggerJump();
+			});
+
+			// ── Load avatar + animations ──────────────────────────────────────
+			new GLTFLoader().load('/avatars/cz.glb', gltf => {
+				avatar = gltf.scene;
+				avatar.traverse(n => {
+					if (!rootBone && /^(Hips|Root|mixamorig:?Hips)$/i.test(n.name))
+						rootBone = n;
+				});
+				// Yaw is choreographed per-phase: facing camera while seated, rotates
+				// toward the jump direction during standup.
+				avatar.rotation.y = 0;
+				scene.add(avatar);
+
+				mixer = new THREE.AnimationMixer(avatar);
+
+				Promise.all([
+					fetch('/animations/clips/sitidle.json').then(r => r.json()),
+					fetch('/animations/clips/standup.json').then(r => r.json()),
+					fetch('/animations/clips/jumpdown3.json').then(r => r.json()),
+				]).then(([sitJson, standJson, jumpJson]) => {
+					sitAction = mixer.clipAction(THREE.AnimationClip.parse(sitJson));
+					sitAction.setLoop(THREE.LoopRepeat, Infinity);
+
+					standupAction = mixer.clipAction(THREE.AnimationClip.parse(standJson));
+					standupAction.setLoop(THREE.LoopOnce, 1);
+					standupAction.clampWhenFinished = true;
+
+					fallAction = mixer.clipAction(THREE.AnimationClip.parse(jumpJson));
+					fallAction.setLoop(THREE.LoopOnce, 1);
+					fallAction.clampWhenFinished = true;
+
+					if (rootBone) baseRootPos = rootBone.position.clone();
+
+					// Lock root bone every frame so animation root motion never drifts the avatar
+					const _r = renderer.render.bind(renderer);
+					renderer.render = (sc, cam) => {
+						try {
+							if (rootBone && baseRootPos) rootBone.position.copy(baseRootPos);
+						} catch (_) {}
+						_r(sc, cam);
 					};
-					runSeq();
+
+					// Begin the cycle: sit on the text, stand up, jump to the button
+					startSit();
 				});
 			});
 
 			// ── Render loop ───────────────────────────────────────────────────
-			const clock=new THREE.Clock();
-			(function tick(){
+			const clock = new THREE.Clock();
+			(function tick() {
 				requestAnimationFrame(tick);
 				try {
-					const dt=Math.min(clock.getDelta(),0.05);
-					controls.update();
+					const dt = Math.min(clock.getDelta(), 0.05);
 					mixer?.update(dt);
-					updateSpring(dt);updateSeq(dt);updateParticles(dt);
-					renderer.render(scene,camera);
-				} catch(_) {}
+					updateSeq(dt);
+					renderer.render(scene, camera);
+				} catch (_) {}
 			})();
 		</script>
 	</body>
