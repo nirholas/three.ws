@@ -580,11 +580,19 @@ async function handleBuildMetadata(req, res) {
 // createAndBuyInstructions paths returned tokens the pump.fun program rejected.
 // mayhemMode toggles the high-volatility curve; agent binding is appended by
 // the caller when applicable.
+//
+// creator is the on-chain "creator" (recipient of creator rewards / royalties).
+// signer is the wallet that signs the tx, pays fees, and (if solBuyIn>0) funds
+// the initial buy. When the caller omits signer it defaults to creator —
+// preserving the legacy single-wallet semantics — but split mode is supported
+// so a treasury / DAO wallet can be the creator while a contributor wallet
+// signs and pays.
 async function buildLaunchInstructions({
-	sdk, BN, mint, creator, name, symbol, uri, solBuyIn, isMayhem,
+	sdk, BN, mint, creator, signer, name, symbol, uri, solBuyIn, isMayhem,
 }) {
 	const LAMPORTS = 1_000_000_000;
 	const hasBuy   = solBuyIn > 0;
+	const user     = signer || creator;
 
 	if (hasBuy) {
 		const global    = await sdk.fetchGlobal();
@@ -599,7 +607,7 @@ async function buildLaunchInstructions({
 		});
 		const ixs = await sdk.createV2AndBuyInstructions({
 			global, mint, name, symbol, uri,
-			creator, user: creator,
+			creator, user,
 			solAmount, amount: tokenAmount,
 			mayhemMode: !!isMayhem,
 		});
@@ -607,7 +615,7 @@ async function buildLaunchInstructions({
 	}
 
 	const ix = await sdk.createV2Instruction({
-		mint, name, symbol, uri, creator, user: creator, mayhemMode: !!isMayhem,
+		mint, name, symbol, uri, creator, user, mayhemMode: !!isMayhem,
 	});
 	return [ix];
 }
@@ -618,13 +626,20 @@ const launchPrepSchema = z
 	.object({
 		agent_id: z.string().uuid().optional(),
 		avatar_id: z.string().uuid().optional(),
-		wallet_address: z.string().min(32).max(44),
+		wallet_address: z.string().min(32).max(44), // the SIGNER — signs the tx, pays fees, funds initial buy
+		// Optional on-chain creator address (the recipient of pump.fun creator
+		// rewards / royalties). When omitted, defaults to wallet_address —
+		// preserving the legacy single-wallet flow. When provided and different,
+		// it must be another Solana wallet linked to the same user account
+		// (validated at /api/pump/launch-prep). Enables team/DAO launches where
+		// a treasury wallet is the creator and a contributor wallet pays gas.
+		creator_address: z.string().min(32).max(44).optional(),
 		name: z.string().trim().min(1).max(32),
 		symbol: z.string().trim().min(1).max(10),
 		uri: z.string().url(),
 		network: z.enum(['mainnet', 'devnet']).default('mainnet'),
 		buyback_bps: z.number().int().min(0).max(10_000).default(0),
-		sol_buy_in: z.number().nonnegative().max(50).default(0), // optional creator initial buy, capped 50 SOL
+		sol_buy_in: z.number().nonnegative().max(50).default(0), // optional initial buy by the signer, capped 50 SOL
 		// Optional client-ground vanity mint address. When provided, the client
 		// already holds the secret key locally and will co-sign in the wallet —
 		// the server never sees the secret. When omitted, the server falls back
@@ -714,16 +729,35 @@ async function handleLaunchPrep(req, res) {
 	if (!rl.success) return error(res, 429, 'rate_limited', 'too many requests');
 
 	const body = parse(launchPrepSchema, await readJson(req));
-	const creator = solanaPubkey(body.wallet_address);
-	if (!creator) return error(res, 400, 'validation_error', 'invalid wallet_address');
+	const signer = solanaPubkey(body.wallet_address);
+	if (!signer) return error(res, 400, 'validation_error', 'invalid wallet_address');
 
-	// Verify wallet linked to user.
+	// Verify signer wallet linked to user.
 	const [walletRow] = await sql`
 		select id from user_wallets
 		where user_id=${user.id} and address=${body.wallet_address} and chain_type='solana'
 		limit 1
 	`;
 	if (!walletRow) return error(res, 403, 'forbidden', 'wallet not linked to your account');
+
+	// Resolve the on-chain creator (creator-reward recipient). When omitted,
+	// the signer IS the creator (legacy single-wallet flow). When provided,
+	// validate it's a valid Solana pubkey AND linked to the same user
+	// account so callers can't launch tokens "as" arbitrary wallets.
+	let creator = signer;
+	if (body.creator_address && body.creator_address !== body.wallet_address) {
+		const creatorPk = solanaPubkey(body.creator_address);
+		if (!creatorPk) return error(res, 400, 'validation_error', 'invalid creator_address');
+		const [creatorWallet] = await sql`
+			select id from user_wallets
+			where user_id=${user.id} and address=${body.creator_address} and chain_type='solana'
+			limit 1
+		`;
+		if (!creatorWallet) {
+			return error(res, 403, 'forbidden', 'creator_address must be a solana wallet linked to your account');
+		}
+		creator = creatorPk;
+	}
 
 	// Resolve agent_identities.id from either agent_id or avatar_id.
 	// /studio sends avatar_id; the dashboard/vanity flows send agent_id.
@@ -759,7 +793,7 @@ async function handleLaunchPrep(req, res) {
 	const effBuyback = isAgent ? body.buyback_bps : 0;
 
 	const instructions = await buildLaunchInstructions({
-		sdk, BN, mint, creator,
+		sdk, BN, mint, creator, signer,
 		name: body.name, symbol: body.symbol, uri: body.uri,
 		solBuyIn: body.sol_buy_in,
 		isMayhem,
@@ -776,9 +810,11 @@ async function handleLaunchPrep(req, res) {
 		instructions.push(createIx);
 	}
 
+	// Signer pays gas + funds the initial buy. Creator stays on-chain as the
+	// reward recipient regardless of who paid.
 	const txBase64 = await buildUnsignedTxBase64({
 		network: body.network,
-		payer: creator,
+		payer: signer,
 		instructions,
 	});
 
@@ -794,7 +830,8 @@ async function handleLaunchPrep(req, res) {
 			${JSON.stringify({
 				kind: 'pump_launch',
 				agent_id: resolvedAgentId,
-				wallet_address: body.wallet_address,
+				wallet_address: body.wallet_address,    // signer (pays gas, funds initial buy)
+				creator_address: creator.toBase58(),    // on-chain creator (royalty recipient)
 				mint: mint.toBase58(),
 				name: body.name,
 				symbol: body.symbol,
@@ -874,12 +911,16 @@ async function handleLaunchConfirm(req, res) {
 	`;
 	if (existing) return error(res, 409, 'conflict', 'mint already registered');
 
+	// agent_authority is the on-chain creator (royalty recipient + governance
+	// authority), not the signer. p.creator_address is set by launch-prep;
+	// fall back to wallet_address for prep rows written before the split landed.
+	const agentAuthority = p.creator_address || p.wallet_address;
 	const [row] = await sql`
 		insert into pump_agent_mints
 			(agent_id, user_id, network, mint, name, symbol, agent_authority, buyback_bps)
 		values
 			(${p.agent_id}, ${user.id}, ${p.network}, ${p.mint},
-			 ${p.name}, ${p.symbol}, ${p.wallet_address}, ${p.buyback_bps})
+			 ${p.name}, ${p.symbol}, ${agentAuthority}, ${p.buyback_bps})
 		returning id, mint, network, buyback_bps, created_at
 	`;
 
