@@ -1,0 +1,698 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1" />
+		<title>Bonding curve simulator · three.ws lab</title>
+		<meta name="robots" content="noindex" />
+		<link rel="stylesheet" href="/style.css" />
+		<link rel="stylesheet" href="/nav.css" />
+		<style>
+			:root { color-scheme: dark; }
+			body { background: #05060a; color: #eee; font: 15px/1.5 -apple-system, system-ui, sans-serif; margin: 0; }
+			.stage { max-width: 1200px; margin: 0 auto; padding: 48px 24px 80px; }
+			.crumb a { color: #8a8d98; text-decoration: none; }
+			.crumb a:hover { color: #d6ff3d; }
+			h1 { font-size: 28px; font-weight: 600; letter-spacing: -0.015em; margin: 14px 0 8px; }
+			h2 { font-size: 17px; font-weight: 600; margin: 0 0 12px; letter-spacing: -0.01em; }
+			.sub { color: #8a8d98; max-width: 76ch; margin: 0 0 30px; }
+			.row { display: grid; grid-template-columns: 1fr 360px; gap: 24px; }
+			@media (max-width: 980px) { .row { grid-template-columns: 1fr; } }
+			.row3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; margin-top: 24px; }
+			@media (max-width: 820px) { .row3 { grid-template-columns: 1fr; } }
+			.panel {
+				background: #0f1018; border: 1.5px solid #1e1f2b; border-radius: 14px;
+				padding: 20px; display: flex; flex-direction: column; gap: 14px;
+			}
+			.chart-card {
+				background: #0f1018; border: 1.5px solid #1e1f2b; border-radius: 14px;
+				padding: 16px; display: flex; flex-direction: column; gap: 10px;
+			}
+			canvas.chart { width: 100%; height: 400px; background: #07080d; border-radius: 9px; display: block; }
+			label { font-size: 12.5px; color: #8a8d98; text-transform: uppercase; letter-spacing: 0.06em; }
+			.field { display: flex; flex-direction: column; gap: 6px; }
+			.field-row { display: grid; grid-template-columns: 1fr 110px; gap: 8px; align-items: center; }
+			input[type=number], input[type=text] {
+				width: 100%; padding: 9px 11px; border-radius: 9px;
+				background: #07080d; color: #eee; border: 1px solid #1e1f2b;
+				font: inherit; box-sizing: border-box;
+			}
+			input[type=range] { width: 100%; accent-color: #d6ff3d; }
+			.radios { display: flex; gap: 6px; flex-wrap: wrap; }
+			.radios label.opt {
+				flex: 1; min-width: 60px; text-align: center; padding: 8px 4px;
+				background: #07080d; border: 1px solid #1e1f2b; border-radius: 8px;
+				color: #8a8d98; cursor: pointer; text-transform: none; letter-spacing: 0;
+				font-size: 13px;
+			}
+			.radios input { display: none; }
+			.radios input:checked + label.opt { background: #d6ff3d; color: #0a0a0a; border-color: #d6ff3d; font-weight: 600; }
+			button {
+				background: #d6ff3d; color: #0a0a0a; border: 0; border-radius: 9px;
+				padding: 10px 14px; font-weight: 600; cursor: pointer;
+				font: inherit;
+			}
+			button.secondary { background: rgba(255,255,255,0.06); color: #eee; }
+			button.danger { background: rgba(255,107,107,0.18); color: #ff9a9a; }
+			.stats { display: grid; grid-template-columns: 1fr 1fr; gap: 8px 16px; font-size: 13px; }
+			.stats div { color: #8a8d98; }
+			.stats div b { color: #eee; font-weight: 600; display: block; font-size: 14px; margin-top: 2px; }
+			.badge {
+				display: inline-block; padding: 3px 8px; border-radius: 999px;
+				background: rgba(214,255,61,0.18); color: #d6ff3d; font-size: 11px;
+				font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase;
+			}
+			.badge.warn { background: rgba(255,193,7,0.16); color: #ffce4d; }
+			.badge.live { background: rgba(102,217,239,0.15); color: #66d9ef; }
+			.log {
+				background: #07080d; border: 1px solid #1e1f2b; border-radius: 9px;
+				padding: 12px; font-family: ui-monospace, monospace; font-size: 12px;
+				line-height: 1.6; color: #8a8d98; max-height: 320px; overflow: auto; white-space: pre-wrap;
+			}
+			.log .ok { color: #d6ff3d; }
+			.log .err { color: #ff6b6b; }
+			.log .info { color: #66d9ef; }
+			.log .grad { color: #d6ff3d; font-weight: 700; }
+			.trade-row { display: grid; grid-template-columns: 1fr auto; gap: 8px; align-items: end; }
+			.trade-result { font-size: 12px; color: #8a8d98; font-family: ui-monospace, monospace; line-height: 1.55; }
+			.trade-result b { color: #eee; }
+			.divider { height: 1px; background: #1e1f2b; margin: 4px 0; }
+			.mini-chart { width: 100%; height: 160px; background: #07080d; border-radius: 9px; display: block; }
+			.compare-card { display: flex; flex-direction: column; gap: 8px; padding: 14px; background: #0f1018; border: 1.5px solid #1e1f2b; border-radius: 12px; }
+			.compare-card h3 { margin: 0; font-size: 14px; color: #d6ff3d; }
+			.compare-card .meta { font-size: 12px; color: #8a8d98; font-family: ui-monospace, monospace; }
+			.kbd { font-family: ui-monospace, monospace; font-size: 12px; padding: 1px 5px; background: #07080d; border: 1px solid #1e1f2b; border-radius: 4px; color: #d6ff3d; }
+		</style>
+	</head>
+	<body>
+		<header><div id="nav-container"></div></header>
+
+		<main class="stage">
+			<p class="crumb"><a href="/demos">← lab</a></p>
+			<h1>three.ws · Agent token bonding curve</h1>
+			<p class="sub">
+				Interactive Bancor V1 simulator (the same formula pump.fun uses). Everything runs
+				in the browser — no wallet, no on-chain writes, no RPC. Move the sliders, simulate
+				buys and sells against a virtual reserve, and watch the spot price respond. Useful
+				for sizing the reserve ratio and graduation threshold before deploying real agent
+				tokens.
+			</p>
+
+			<div class="row">
+				<div class="chart-card">
+					<div style="display:flex; justify-content:space-between; align-items:center;">
+						<h2>Spot price vs supply</h2>
+						<span id="grad-badge" class="badge warn" style="display:none">GRADUATED ✓</span>
+					</div>
+					<canvas id="chart" class="chart" width="1200" height="800"></canvas>
+					<div class="stats">
+						<div>Current supply<b id="cur-supply">—</b></div>
+						<div>Reserve<b id="cur-reserve">—</b></div>
+						<div>Spot price<b id="cur-price">—</b></div>
+						<div>Market cap<b id="cur-mcap">—</b></div>
+						<div>% of max supply<b id="cur-pct">—</b></div>
+						<div>Reserve / graduation<b id="cur-grad">—</b></div>
+					</div>
+				</div>
+
+				<div class="panel">
+					<h2>Curve parameters</h2>
+
+					<div class="field">
+						<label>Initial reserve (ETH)</label>
+						<div class="field-row">
+							<input type="range" id="r-init-reserve" min="0.1" max="20" step="0.1" value="1" />
+							<input type="number" id="n-init-reserve" min="0.001" step="0.1" value="1" />
+						</div>
+					</div>
+
+					<div class="field">
+						<label>Initial supply (tokens)</label>
+						<div class="field-row">
+							<input type="range" id="r-init-supply" min="100000" max="100000000" step="100000" value="1000000" />
+							<input type="number" id="n-init-supply" min="1" step="100000" value="1000000" />
+						</div>
+					</div>
+
+					<div class="field">
+						<label>Reserve ratio (Bancor ppm)</label>
+						<div class="radios">
+							<input type="radio" name="rr" id="rr10" value="100000" />
+							<label class="opt" for="rr10">10%</label>
+							<input type="radio" name="rr" id="rr25" value="250000" checked />
+							<label class="opt" for="rr25">25%</label>
+							<input type="radio" name="rr" id="rr50" value="500000" />
+							<label class="opt" for="rr50">50%</label>
+							<input type="radio" name="rr" id="rr80" value="800000" />
+							<label class="opt" for="rr80">80%</label>
+						</div>
+					</div>
+
+					<div class="field">
+						<label>Max supply cap (graduation)</label>
+						<div class="field-row">
+							<input type="range" id="r-max-supply" min="10000000" max="10000000000" step="10000000" value="1000000000" />
+							<input type="number" id="n-max-supply" min="1" step="1000000" value="1000000000" />
+						</div>
+					</div>
+
+					<div class="field">
+						<label>Graduation reserve (ETH)</label>
+						<div class="field-row">
+							<input type="range" id="r-grad-reserve" min="1" max="500" step="1" value="85" />
+							<input type="number" id="n-grad-reserve" min="0.001" step="1" value="85" />
+						</div>
+					</div>
+
+					<button id="reset-btn" class="secondary">Reset curve state</button>
+				</div>
+			</div>
+
+			<div class="row3">
+				<div class="panel">
+					<h2>Simulate buy</h2>
+					<div class="field">
+						<label>Deposit (ETH)</label>
+						<div class="trade-row">
+							<input type="number" id="buy-amount" min="0" step="0.01" value="1" />
+							<button id="buy-preview" class="secondary">Preview</button>
+						</div>
+					</div>
+					<div class="trade-result" id="buy-result">Tap Preview to see the trade output.</div>
+					<button id="buy-exec">Execute buy</button>
+				</div>
+
+				<div class="panel">
+					<h2>Simulate sell</h2>
+					<div class="field">
+						<label>Sell amount (tokens)</label>
+						<div class="trade-row">
+							<input type="number" id="sell-amount" min="0" step="1" value="10000" />
+							<button id="sell-preview" class="secondary">Preview</button>
+						</div>
+					</div>
+					<div class="trade-result" id="sell-result">Tap Preview to see the trade output.</div>
+					<button id="sell-exec" class="danger">Execute sell</button>
+				</div>
+
+				<div class="panel">
+					<h2>Trade log</h2>
+					<div class="log" id="log">ready.</div>
+				</div>
+			</div>
+
+			<h2 style="margin-top:32px">Reserve-ratio comparison <span class="badge live">static</span></h2>
+			<p class="sub">
+				Same starting state, same cumulative ETH deposited — three different reserve ratios.
+				Lower ratio = steeper curve = faster price discovery + more aggressive
+				front-runner advantage. Pump.fun ships ~25% by default.
+			</p>
+			<div class="row3" id="compare-row"></div>
+		</main>
+
+		<script src="/nav.js" defer></script>
+		<script>
+			'use strict';
+
+			// ------------------------- BANCOR MATH ------------------------- //
+			const MAX_RATIO = 1_000_000; // ppm
+
+			function spotPrice(supply, reserve, ratioPpm) {
+				if (supply <= 0 || ratioPpm <= 0) return 0;
+				const ratio = ratioPpm / MAX_RATIO;
+				return reserve / (supply * ratio);
+			}
+
+			// purchaseReturn = supply * ((1 + deposit / reserve) ^ (ratio / MAX) - 1)
+			function purchaseReturn(supply, reserve, ratioPpm, deposit) {
+				if (deposit <= 0 || supply <= 0 || reserve <= 0 || ratioPpm <= 0) return 0;
+				if (ratioPpm === MAX_RATIO) {
+					return (supply * deposit) / reserve;
+				}
+				const base = 1 + deposit / reserve;
+				const exp = ratioPpm / MAX_RATIO;
+				return supply * (Math.pow(base, exp) - 1);
+			}
+
+			// saleReturn = reserve * (1 - (1 - sellAmount / supply) ^ (MAX / ratio))
+			function saleReturn(supply, reserve, ratioPpm, sellAmount) {
+				if (sellAmount <= 0 || supply <= 0 || reserve <= 0 || ratioPpm <= 0) return 0;
+				if (sellAmount >= supply) return reserve;
+				if (ratioPpm === MAX_RATIO) {
+					return (reserve * sellAmount) / supply;
+				}
+				const base = 1 - sellAmount / supply;
+				const exp = MAX_RATIO / ratioPpm;
+				return reserve * (1 - Math.pow(base, exp));
+			}
+
+			function marketCap(supply, reserve, ratioPpm) {
+				return supply * spotPrice(supply, reserve, ratioPpm);
+			}
+
+			// ------------------------- STATE ------------------------- //
+			const params = {
+				initReserve: 1,
+				initSupply: 1_000_000,
+				ratioPpm: 250_000,
+				maxSupply: 1_000_000_000,
+				gradReserve: 85,
+			};
+			const state = {
+				supply: params.initSupply,
+				reserve: params.initReserve,
+				graduated: false,
+			};
+
+			// ------------------------- DOM ------------------------- //
+			const $ = (id) => document.getElementById(id);
+			const log = $('log');
+			function logLine(msg, cls = '') {
+				const t = new Date().toTimeString().slice(0, 8);
+				log.innerHTML += `\n<span class="${cls}">[${t}] ${msg}</span>`;
+				log.scrollTop = log.scrollHeight;
+			}
+
+			function fmt(n, digits = 4) {
+				if (!isFinite(n)) return '—';
+				if (n === 0) return '0';
+				const abs = Math.abs(n);
+				if (abs >= 1e9) return (n / 1e9).toFixed(2) + 'B';
+				if (abs >= 1e6) return (n / 1e6).toFixed(2) + 'M';
+				if (abs >= 1e3) return (n / 1e3).toFixed(2) + 'K';
+				if (abs < 1e-6) return n.toExponential(3);
+				return n.toFixed(digits);
+			}
+			function fmtEth(n) { return fmt(n, 6) + ' ETH'; }
+			function fmtTok(n) { return fmt(n, 2) + ' tok'; }
+			function pct(n) { return (n * 100).toFixed(3) + '%'; }
+
+			// ------------------------- CHART ------------------------- //
+			const chart = $('chart');
+			const ctx = chart.getContext('2d');
+
+			function resizeChart() {
+				const dpr = window.devicePixelRatio || 1;
+				const w = chart.clientWidth;
+				const h = chart.clientHeight;
+				chart.width = Math.round(w * dpr);
+				chart.height = Math.round(h * dpr);
+				ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+			}
+
+			function drawChart() {
+				const w = chart.clientWidth;
+				const h = chart.clientHeight;
+				ctx.clearRect(0, 0, w, h);
+
+				const padL = 64, padR = 16, padT = 18, padB = 38;
+				const innerW = w - padL - padR;
+				const innerH = h - padT - padB;
+
+				// Compute curve: keep ratio + reserve fixed at current state. Vary supply
+				// from initSupply down? No — vary x from initSupply up to maxSupply, recompute
+				// what the reserve WOULD be if curve was bought up from (initSupply,initReserve)
+				// at this ratio. That is the true bonding curve trajectory.
+				const N = 240;
+				const xs = [], ys = [];
+				const r = params.ratioPpm / MAX_RATIO;
+				for (let i = 0; i <= N; i++) {
+					const s = params.initSupply + (params.maxSupply - params.initSupply) * (i / N);
+					// reserve_at(s) = initReserve * (s/initSupply)^(1/r)
+					const reserveAtS = params.initReserve * Math.pow(s / params.initSupply, 1 / r);
+					const price = spotPrice(s, reserveAtS, params.ratioPpm);
+					xs.push(s);
+					ys.push(price);
+				}
+				const xMin = xs[0], xMax = xs[xs.length - 1];
+				const yMin = 0;
+				let yMax = 0;
+				for (const v of ys) if (v > yMax) yMax = v;
+				if (yMax === 0) yMax = 1;
+				yMax *= 1.08;
+
+				const X = (x) => padL + ((x - xMin) / (xMax - xMin)) * innerW;
+				const Y = (y) => padT + innerH - ((y - yMin) / (yMax - yMin)) * innerH;
+
+				// grid
+				ctx.strokeStyle = '#16182260';
+				ctx.lineWidth = 1;
+				ctx.font = '11px ui-monospace, monospace';
+				ctx.fillStyle = '#5a5d6a';
+				for (let i = 0; i <= 5; i++) {
+					const y = padT + (innerH * i) / 5;
+					ctx.beginPath(); ctx.moveTo(padL, y); ctx.lineTo(padL + innerW, y); ctx.stroke();
+					const val = yMax - (yMax * i) / 5;
+					ctx.textAlign = 'right'; ctx.textBaseline = 'middle';
+					ctx.fillText(fmt(val, 6), padL - 6, y);
+				}
+				for (let i = 0; i <= 6; i++) {
+					const x = padL + (innerW * i) / 6;
+					ctx.beginPath(); ctx.moveTo(x, padT); ctx.lineTo(x, padT + innerH); ctx.stroke();
+					const val = xMin + ((xMax - xMin) * i) / 6;
+					ctx.textAlign = 'center'; ctx.textBaseline = 'top';
+					ctx.fillText(fmt(val, 0), x, padT + innerH + 6);
+				}
+
+				// axis labels
+				ctx.fillStyle = '#8a8d98';
+				ctx.font = '11px -apple-system, system-ui, sans-serif';
+				ctx.textAlign = 'center';
+				ctx.fillText('supply (tokens)', padL + innerW / 2, h - 6);
+				ctx.save();
+				ctx.translate(14, padT + innerH / 2);
+				ctx.rotate(-Math.PI / 2);
+				ctx.fillText('spot price (ETH / token)', 0, 0);
+				ctx.restore();
+
+				// curve
+				ctx.strokeStyle = '#d6ff3d';
+				ctx.lineWidth = 2;
+				ctx.beginPath();
+				for (let i = 0; i < xs.length; i++) {
+					const x = X(xs[i]), y = Y(ys[i]);
+					if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+				}
+				ctx.stroke();
+
+				// fill under curve
+				ctx.lineTo(X(xs[xs.length - 1]), Y(0));
+				ctx.lineTo(X(xs[0]), Y(0));
+				ctx.closePath();
+				ctx.fillStyle = 'rgba(214,255,61,0.06)';
+				ctx.fill();
+
+				// graduation marker: supply where reserve == gradReserve
+				// reserveAtS = initReserve * (s/initSupply)^(1/r) => s = initSupply * (gradReserve/initReserve)^r
+				if (params.gradReserve > params.initReserve) {
+					const sGrad = params.initSupply * Math.pow(params.gradReserve / params.initReserve, r);
+					if (sGrad >= xMin && sGrad <= xMax) {
+						const xg = X(sGrad);
+						ctx.strokeStyle = '#ffce4d';
+						ctx.setLineDash([4, 4]);
+						ctx.lineWidth = 1.5;
+						ctx.beginPath();
+						ctx.moveTo(xg, padT); ctx.lineTo(xg, padT + innerH);
+						ctx.stroke();
+						ctx.setLineDash([]);
+						ctx.fillStyle = '#ffce4d';
+						ctx.font = '11px ui-monospace, monospace';
+						ctx.textAlign = 'left';
+						ctx.fillText(` graduation @ ${fmt(params.gradReserve)} ETH`, xg + 4, padT + 12);
+					}
+				}
+
+				// current state marker
+				const curX = X(state.supply);
+				const curY = Y(spotPrice(state.supply, state.reserve, params.ratioPpm));
+				ctx.fillStyle = '#66d9ef';
+				ctx.strokeStyle = '#0a0a0a';
+				ctx.lineWidth = 2;
+				ctx.beginPath();
+				ctx.arc(curX, curY, 5, 0, Math.PI * 2);
+				ctx.fill();
+				ctx.stroke();
+				ctx.fillStyle = '#66d9ef';
+				ctx.font = '11px ui-monospace, monospace';
+				ctx.textAlign = 'left';
+				ctx.fillText(` now`, curX + 8, curY - 6);
+			}
+
+			// ------------------------- STATS PANEL ------------------------- //
+			function updateStats() {
+				const price = spotPrice(state.supply, state.reserve, params.ratioPpm);
+				const mcap = marketCap(state.supply, state.reserve, params.ratioPpm);
+				$('cur-supply').textContent = fmt(state.supply, 0);
+				$('cur-reserve').textContent = fmtEth(state.reserve);
+				$('cur-price').textContent = fmt(price, 9) + ' ETH';
+				$('cur-mcap').textContent = fmtEth(mcap);
+				$('cur-pct').textContent = ((state.supply / params.maxSupply) * 100).toFixed(3) + '%';
+				$('cur-grad').textContent = `${fmt(state.reserve, 3)} / ${fmt(params.gradReserve, 0)} ETH`;
+				if (state.reserve >= params.gradReserve && !state.graduated) {
+					state.graduated = true;
+					$('grad-badge').style.display = 'inline-block';
+					logLine(`★ GRADUATED — reserve crossed ${params.gradReserve} ETH`, 'grad');
+				}
+				if (state.reserve < params.gradReserve && state.graduated) {
+					state.graduated = false;
+					$('grad-badge').style.display = 'none';
+				}
+			}
+
+			function rerender() {
+				drawChart();
+				updateStats();
+				drawCompare();
+			}
+
+			// ------------------------- INPUT BINDING ------------------------- //
+			function bindPair(rangeId, numId, key, onChange) {
+				const r = $(rangeId), n = $(numId);
+				const set = (v) => {
+					params[key] = +v;
+					r.value = v; n.value = v;
+					if (onChange) onChange();
+					rerender();
+				};
+				r.addEventListener('input', () => set(r.value));
+				n.addEventListener('change', () => set(n.value));
+			}
+
+			bindPair('r-init-reserve', 'n-init-reserve', 'initReserve', () => {
+				state.reserve = params.initReserve;
+			});
+			bindPair('r-init-supply', 'n-init-supply', 'initSupply', () => {
+				state.supply = params.initSupply;
+			});
+			bindPair('r-max-supply', 'n-max-supply', 'maxSupply', null);
+			bindPair('r-grad-reserve', 'n-grad-reserve', 'gradReserve', null);
+
+			document.querySelectorAll('input[name=rr]').forEach((el) => {
+				el.addEventListener('change', () => {
+					params.ratioPpm = +el.value;
+					rerender();
+				});
+			});
+
+			$('reset-btn').addEventListener('click', () => {
+				state.supply = params.initSupply;
+				state.reserve = params.initReserve;
+				state.graduated = false;
+				$('grad-badge').style.display = 'none';
+				logLine('curve state reset.', 'info');
+				rerender();
+			});
+
+			// ------------------------- TRADE PREVIEW + EXECUTE ------------------------- //
+			function previewBuy(deposit) {
+				const tokensOut = purchaseReturn(state.supply, state.reserve, params.ratioPpm, deposit);
+				const pBefore = spotPrice(state.supply, state.reserve, params.ratioPpm);
+				const newSupply = state.supply + tokensOut;
+				const newReserve = state.reserve + deposit;
+				const pAfter = spotPrice(newSupply, newReserve, params.ratioPpm);
+				const effPrice = deposit / Math.max(tokensOut, 1e-30);
+				const slippage = pBefore > 0 ? (effPrice - pBefore) / pBefore : 0;
+				const mcapAfter = marketCap(newSupply, newReserve, params.ratioPpm);
+				const pctMinted = newSupply / params.maxSupply;
+				return { tokensOut, pBefore, pAfter, effPrice, slippage, mcapAfter, newSupply, newReserve, pctMinted };
+			}
+			function previewSell(amount) {
+				const ethOut = saleReturn(state.supply, state.reserve, params.ratioPpm, amount);
+				const pBefore = spotPrice(state.supply, state.reserve, params.ratioPpm);
+				const newSupply = state.supply - amount;
+				const newReserve = state.reserve - ethOut;
+				const pAfter = spotPrice(newSupply, newReserve, params.ratioPpm);
+				const effPrice = ethOut / Math.max(amount, 1e-30);
+				const slippage = pBefore > 0 ? (pBefore - effPrice) / pBefore : 0;
+				return { ethOut, pBefore, pAfter, effPrice, slippage, newSupply, newReserve };
+			}
+
+			function showBuyPreview() {
+				const d = +$('buy-amount').value;
+				if (!(d > 0)) { $('buy-result').textContent = 'enter a positive ETH amount.'; return null; }
+				const p = previewBuy(d);
+				$('buy-result').innerHTML =
+					`tokens out: <b>${fmt(p.tokensOut, 2)}</b>\n` +
+					`eff. price: <b>${fmt(p.effPrice, 9)}</b> ETH/tok\n` +
+					`spot after: <b>${fmt(p.pAfter, 9)}</b> ETH/tok\n` +
+					`slippage:   <b>${pct(p.slippage)}</b>\n` +
+					`mcap after: <b>${fmtEth(p.mcapAfter)}</b>\n` +
+					`supply %:   <b>${pct(p.pctMinted)}</b>`;
+				return p;
+			}
+			function showSellPreview() {
+				const a = +$('sell-amount').value;
+				if (!(a > 0)) { $('sell-result').textContent = 'enter a positive token amount.'; return null; }
+				if (a > state.supply - params.initSupply + 1e-9) {
+					$('sell-result').textContent = `cannot sell more than minted supply (${fmt(state.supply - params.initSupply, 2)} tokens above floor).`;
+					return null;
+				}
+				const p = previewSell(a);
+				$('sell-result').innerHTML =
+					`ETH out:    <b>${fmt(p.ethOut, 6)}</b>\n` +
+					`eff. price: <b>${fmt(p.effPrice, 9)}</b> ETH/tok\n` +
+					`spot after: <b>${fmt(p.pAfter, 9)}</b> ETH/tok\n` +
+					`slippage:   <b>${pct(p.slippage)}</b>`;
+				return p;
+			}
+
+			$('buy-preview').addEventListener('click', showBuyPreview);
+			$('sell-preview').addEventListener('click', showSellPreview);
+
+			$('buy-exec').addEventListener('click', () => {
+				const p = showBuyPreview(); if (!p) return;
+				state.supply = p.newSupply;
+				state.reserve = p.newReserve;
+				logLine(
+					`BUY  ${fmt(+$('buy-amount').value, 4)} ETH → ${fmt(p.tokensOut, 2)} tok @ ${fmt(p.effPrice, 9)} ETH (slip ${pct(p.slippage)})`,
+					'info'
+				);
+				rerender();
+			});
+
+			$('sell-exec').addEventListener('click', () => {
+				const p = showSellPreview(); if (!p) return;
+				state.supply = p.newSupply;
+				state.reserve = p.newReserve;
+				logLine(
+					`SELL ${fmt(+$('sell-amount').value, 2)} tok → ${fmt(p.ethOut, 6)} ETH @ ${fmt(p.effPrice, 9)} (slip ${pct(p.slippage)})`,
+					'err'
+				);
+				rerender();
+			});
+
+			// ------------------------- COMPARISON PANEL ------------------------- //
+			const COMPARE_RATIOS = [
+				{ ppm: 100_000, label: '10% reserve ratio' },
+				{ ppm: 250_000, label: '25% reserve ratio (pump.fun)' },
+				{ ppm: 800_000, label: '80% reserve ratio' },
+			];
+
+			function drawCompare() {
+				const wrap = $('compare-row');
+				wrap.innerHTML = '';
+				const totalEth = 10; // fixed cumulative deposit to compare
+				const steps = 50;
+				const stepEth = totalEth / steps;
+
+				COMPARE_RATIOS.forEach((c) => {
+					const card = document.createElement('div');
+					card.className = 'compare-card';
+					const title = document.createElement('h3');
+					title.textContent = c.label;
+					card.appendChild(title);
+
+					const cv = document.createElement('canvas');
+					cv.className = 'mini-chart';
+					cv.width = 600; cv.height = 320;
+					card.appendChild(cv);
+
+					// simulate
+					let s = params.initSupply, r = params.initReserve;
+					const ptsX = [], ptsY = [];
+					ptsX.push(s); ptsY.push(spotPrice(s, r, c.ppm));
+					for (let i = 0; i < steps; i++) {
+						const tok = purchaseReturn(s, r, c.ppm, stepEth);
+						s += tok; r += stepEth;
+						ptsX.push(s); ptsY.push(spotPrice(s, r, c.ppm));
+					}
+					const finalPrice = ptsY[ptsY.length - 1];
+					const initPrice = ptsY[0];
+					const mult = initPrice > 0 ? finalPrice / initPrice : 0;
+
+					const meta = document.createElement('div');
+					meta.className = 'meta';
+					meta.innerHTML =
+						`deposit ${totalEth} ETH → supply <b style="color:#eee">${fmt(s, 0)}</b>\n` +
+						`spot ${fmt(initPrice, 9)} → <b style="color:#d6ff3d">${fmt(finalPrice, 9)}</b>\n` +
+						`<b style="color:#eee">${fmt(mult, 1)}×</b> price multiple`;
+					meta.style.whiteSpace = 'pre-line';
+					card.appendChild(meta);
+					wrap.appendChild(card);
+
+					// draw mini chart
+					const cctx = cv.getContext('2d');
+					const dpr = window.devicePixelRatio || 1;
+					cv.width = Math.round(cv.clientWidth * dpr);
+					cv.height = Math.round(cv.clientHeight * dpr);
+					cctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+					const W = cv.clientWidth, H = cv.clientHeight;
+					cctx.clearRect(0, 0, W, H);
+					const pad = 6;
+					const xMin = ptsX[0], xMax = ptsX[ptsX.length - 1];
+					let yMax = 0; for (const v of ptsY) if (v > yMax) yMax = v;
+					if (yMax === 0) yMax = 1;
+					const X = (x) => pad + ((x - xMin) / (xMax - xMin)) * (W - pad * 2);
+					const Y = (y) => H - pad - (y / yMax) * (H - pad * 2);
+					cctx.strokeStyle = '#d6ff3d';
+					cctx.lineWidth = 1.5;
+					cctx.beginPath();
+					for (let i = 0; i < ptsX.length; i++) {
+						const x = X(ptsX[i]), y = Y(ptsY[i]);
+						if (i === 0) cctx.moveTo(x, y); else cctx.lineTo(x, y);
+					}
+					cctx.stroke();
+					cctx.lineTo(X(ptsX[ptsX.length - 1]), Y(0));
+					cctx.lineTo(X(ptsX[0]), Y(0));
+					cctx.closePath();
+					cctx.fillStyle = 'rgba(214,255,61,0.07)';
+					cctx.fill();
+				});
+			}
+
+			// ------------------------- TESTS ------------------------- //
+			function runTests() {
+				const tests = [];
+				const assert = (name, cond, detail) => tests.push({ name, ok: !!cond, detail: detail || '' });
+
+				// 1. deposit=0 returns 0 tokens
+				const t1 = purchaseReturn(1_000_000, 1, 250_000, 0);
+				assert('purchaseReturn(deposit=0) ≈ 0', Math.abs(t1) < 1e-12, `got ${t1}`);
+
+				// 2. sellAmount=0 returns 0 eth
+				const t2 = saleReturn(1_000_000, 1, 250_000, 0);
+				assert('saleReturn(amount=0) ≈ 0', Math.abs(t2) < 1e-12, `got ${t2}`);
+
+				// 3. round-trip conservation (buy then immediately sell those tokens)
+				const s0 = 1_000_000, r0 = 1, rr = 250_000, dep = 0.5;
+				const tokOut = purchaseReturn(s0, r0, rr, dep);
+				const ethBack = saleReturn(s0 + tokOut, r0 + dep, rr, tokOut);
+				const err = Math.abs(ethBack - dep) / dep;
+				assert(`round-trip buy→sell within 1e-9 (err=${err.toExponential(2)})`, err < 1e-9, `dep=${dep} back=${ethBack}`);
+
+				// 4. spot price formula: at ratio=100%, price === reserve/supply
+				const sp100 = spotPrice(1_000_000, 1, 1_000_000);
+				assert('spotPrice @ 100% ratio = reserve/supply', Math.abs(sp100 - 1e-6) < 1e-18, `got ${sp100}`);
+
+				// 5. price increases after a buy (monotonic on buy)
+				const pBefore = spotPrice(s0, r0, rr);
+				const pAfter = spotPrice(s0 + tokOut, r0 + dep, rr);
+				assert('spot price strictly increases after buy', pAfter > pBefore, `${pBefore} → ${pAfter}`);
+
+				// 6. lower reserve ratio → steeper curve (higher final price for same deposit)
+				const buy25 = purchaseReturn(s0, r0, 250_000, dep);
+				const buy80 = purchaseReturn(s0, r0, 800_000, dep);
+				const price25 = spotPrice(s0 + buy25, r0 + dep, 250_000);
+				const price80 = spotPrice(s0 + buy80, r0 + dep, 800_000);
+				assert('25% ratio yields higher post-buy spot than 80%', price25 > price80, `25%→${price25.toExponential(3)} 80%→${price80.toExponential(3)}`);
+
+				logLine('— self-tests —', 'info');
+				for (const t of tests) {
+					logLine((t.ok ? '✓ ' : '✗ ') + t.name + (t.detail ? '  ' + t.detail : ''), t.ok ? 'ok' : 'err');
+				}
+				const okN = tests.filter((t) => t.ok).length;
+				logLine(`${okN}/${tests.length} passed`, okN === tests.length ? 'ok' : 'err');
+			}
+
+			// ------------------------- BOOT ------------------------- //
+			window.addEventListener('resize', () => { resizeChart(); drawChart(); drawCompare(); });
+			resizeChart();
+			rerender();
+			runTests();
+
+			// Seed the buy result with the default 1 ETH buy so investors see it immediately.
+			showBuyPreview();
+			showSellPreview();
+		</script>
+	</body>
+</html>

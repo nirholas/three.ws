@@ -166,14 +166,17 @@
 				camera.updateProjectionMatrix();
 			}
 
-			// Screen pixel → world unit (exact, no approximation)
-			function px2world(screenX, screenY) {
-				const hw = window.innerWidth  / PX_PER_UNIT / 2;
-				const hh = window.innerHeight / PX_PER_UNIT / 2;
-				return {
-					x:  (screenX / window.innerWidth  - 0.5) * hw * 2,
-					y: -(screenY / window.innerHeight - 0.5) * hh * 2,
-				};
+			// DOM rect → world position (standard NDC + unproject pipeline)
+			// Works for any DOM element regardless of camera type.
+			const _v3 = new THREE.Vector3();
+			function domToWorld(screenX, screenY) {
+				_v3.set(
+					 (screenX / window.innerWidth)  * 2 - 1,
+					-(screenY / window.innerHeight) * 2 + 1,
+					0
+				);
+				_v3.unproject(camera);
+				return { x: _v3.x, y: _v3.y };
 			}
 
 			function resize() {
@@ -202,27 +205,39 @@
 			let startW = { x: 0, y: 0 };             // sit/stand anchor (above the text)
 			let seqT = 0, landed = false, jumpTarget = { x: 0, y: 0 };
 
-			const SIT_S    = 1.0;     // sitidle loops at 1s
-			const STAND_S  = 2.566;   // standup duration
-			const JUMP_S   = 2.933;   // jumpdown3 duration
-			const SIT_DWELL_S = 2.4;  // how long he sits before standing
-			const LAND_P   = 0.84;    // jump fraction where feet make contact
-			const PEAK_U   = 0.55;    // arc peak in world units
-			// Sit pose: avatar root (floor reference) sits below the seat by ~half a body.
-			// Nudge the floor reference down so his butt visually rests ON the text.
-			const SIT_OFFSET_PX = 60;
+			const STAND_S     = 2.566;  // standup clip duration
+			const JUMP_S      = 2.933;  // jumpdown3 clip duration
+			const SIT_DWELL_S = 2.4;    // how long he sits before standing
+			const LAND_P      = 0.84;   // jump fraction where feet make contact
+			const PEAK_U      = 0.55;   // arc peak in world units
+			const JUMP_YAW    = 0.22;   // ~12° peak yaw mid-flight (face-forward at both ends)
+			// cz.glb origin is at the feet (verified in /demos/button-jump.html), so
+			// these stay 0 by default. Bump them if the visible feet/butt sit off.
+			const FEET_OFFSET_PX = 0;
+			const SIT_OFFSET_PX  = 0;
 
 			function smoothstep(t) { return t * t * (3 - 2 * t); }
 
-			// Anchor the avatar above the "Give your AI" text line
+			// Sit anchor: perched on the right edge of "Give your AI".
+			// SIT_OFFSET_PX shifts the GLB origin DOWN in screen px so the visible
+			// butt rests on the text rather than the origin landing on the text.
+			function getSitWorld() {
+				const rect = sitLine.getBoundingClientRect();
+				const sx = rect.right - rect.height * 0.4;
+				const sy = rect.top + SIT_OFFSET_PX;
+				return domToWorld(sx, sy);
+			}
+			// Jump target: visible feet land on the top edge of the button.
+			// FEET_OFFSET_PX shifts the origin DOWN so feet (which sit above origin
+			// for this GLB) align to rect.top instead of clearing it.
+			function getButtonWorld() {
+				const rect = ctaBtn.getBoundingClientRect();
+				return domToWorld(rect.left + rect.width / 2, rect.top + FEET_OFFSET_PX);
+			}
+
 			function placeAtStart() {
 				if (!avatar) return;
-				const rect = sitLine.getBoundingClientRect();
-				// Horizontally: end of the text line (perched on the right edge of "AI")
-				const sx = rect.right - rect.height * 0.4;
-				// Vertically: text top - offset, so butt rests on the text after sit animation
-				const sy = rect.top + SIT_OFFSET_PX;
-				startW = px2world(sx, sy);
+				startW = getSitWorld();
 				if (phase === 'sitting' || phase === 'loading') {
 					avatar.position.set(startW.x, startW.y, 0);
 				}
@@ -255,9 +270,9 @@
 				placeAtStart();
 				fallAction?.stop();
 				standupAction?.stop();
-				// Reset yaw: facing the camera while seated
+				// Face the camera the entire cycle — no turning around
 				gsap.killTweensOf(avatar.rotation);
-				avatar.rotation.y = 0;
+				avatar.rotation.set(0, 0, 0);
 				sitAction.reset().play();
 				setTimeout(startStandup, SIT_DWELL_S * 1000);
 			}
@@ -265,25 +280,18 @@
 			function startStandup() {
 				if (!standupAction || phase !== 'sitting') return;
 				phase = 'standingUp';
-				// Crossfade sit → standup
+				// Crossfade sit → standup, no rotation change
 				standupAction.reset();
 				standupAction.crossFadeFrom(sitAction, 0.2, false).play();
-				// As he stands, rotate to face the jump direction (toward the button)
-				gsap.to(avatar.rotation, {
-					y: Math.PI,
-					duration: STAND_S - 0.3,
-					ease: 'power2.inOut',
-				});
-				// Trigger jump just before standup finishes so motion blends into takeoff
 				setTimeout(triggerJump, (STAND_S - 0.15) * 1000);
 			}
 
 			function triggerJump() {
 				if (!avatar || !fallAction || phase === 'jumping') return;
 
-				// Feet land precisely on the top edge of the button
-				const rect = ctaBtn.getBoundingClientRect();
-				jumpTarget = px2world(rect.left + rect.width / 2, rect.top);
+				// Re-read both endpoints fresh so the trajectory is always layout-correct
+				startW     = getSitWorld();      // where we ACTUALLY jump from (avatar's current rest)
+				jumpTarget = getButtonWorld();   // where the feet need to land
 
 				phase = 'jumping'; seqT = 0; landed = false;
 				fallAction.reset();
@@ -296,31 +304,39 @@
 				const p    = Math.min(seqT / JUMP_S, 1);
 				const ease = smoothstep(p);
 
-				// Linear interpolation in screen space (ortho camera = exact pixel mapping)
+				// Animate BOTH axes between startW (sit anchor) and jumpTarget (button)
 				const x   = startW.x + (jumpTarget.x - startW.x) * ease;
 				const arc = PEAK_U * 4 * p * (1 - p);
 				const y   = startW.y + (jumpTarget.y - startW.y) * ease + arc;
 
 				avatar.position.set(x, y, 0);
 
+				// Subtle in-flight yaw — peaks mid-arc, returns to 0 by landing.
+				// Sign follows horizontal travel direction so he looks where he's going.
+				const dir = Math.sign(jumpTarget.x - startW.x);
+				avatar.rotation.y = JUMP_YAW * dir * Math.sin(Math.PI * p);
+
+				// Only squish when the avatar is actually CLOSE to the button (in screen px).
+				// Belt-and-braces: if the trajectory math is ever wrong, the squish stays silent
+				// instead of "telekinetically" firing from across the screen.
 				if (!landed && p >= LAND_P) {
-					landed = true;
-					fireSquish();
+					const dxPx = Math.abs(avatar.position.x - jumpTarget.x) * PX_PER_UNIT;
+					const dyPx = Math.abs(avatar.position.y - jumpTarget.y) * PX_PER_UNIT;
+					if (dxPx < 80 && dyPx < 80) {
+						landed = true;
+						fireSquish();
+					}
 				}
 
 				if (p >= 1) {
 					phase = 'resting';
-					// Hold 1.6s on the button, then return to sit-on-text and loop
 					setTimeout(() => {
 						const fromX = avatar.position.x;
 						const fromY = avatar.position.y;
-						// Re-read text position (resize-safe)
-						const rect = sitLine.getBoundingClientRect();
-						const back = px2world(rect.right - rect.height * 0.4, rect.top + SIT_OFFSET_PX);
+						const back  = getSitWorld();
 						startW = back;
-						// Turn back to face the camera as he slides up to re-sit
-						gsap.killTweensOf(avatar.rotation);
-						gsap.to(avatar.rotation, { y: 0, duration: 0.7, ease: 'power2.inOut' });
+						// Settle yaw back to 0 just in case the trajectory ended mid-arc
+						avatar.rotation.y = 0;
 						const t0 = performance.now();
 						(function slide(now) {
 							const sp = Math.min((now - t0) / 700, 1);

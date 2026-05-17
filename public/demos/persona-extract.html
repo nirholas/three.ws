@@ -1,0 +1,491 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1" />
+		<title>three.ws · Persona extraction</title>
+		<meta name="robots" content="noindex" />
+		<link rel="stylesheet" href="/style.css" />
+		<link rel="stylesheet" href="/nav.css" />
+		<style>
+			:root { color-scheme: dark; }
+			body { background: #05060a; color: #eee; font: 15px/1.5 -apple-system, system-ui, sans-serif; margin: 0; }
+			.stage { max-width: 1080px; margin: 0 auto; padding: 48px 24px 80px; }
+			.crumb a { color: #8a8d98; text-decoration: none; }
+			.crumb a:hover { color: #d6ff3d; }
+			h1 { font-size: 28px; font-weight: 600; letter-spacing: -0.015em; margin: 14px 0 8px; }
+			h2 {
+				font-size: 13px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase;
+				color: #8a8d98; margin: 0 0 14px;
+			}
+			.sub { color: #8a8d98; max-width: 68ch; margin: 0 0 30px; }
+
+			.grid { display: grid; grid-template-columns: 1fr 360px; gap: 24px; }
+			@media (max-width: 900px) { .grid { grid-template-columns: 1fr; } }
+
+			.col-main { display: flex; flex-direction: column; gap: 20px; }
+			.col-side { display: flex; flex-direction: column; gap: 20px; }
+
+			.panel {
+				background: #0f1018; border: 1.5px solid #1e1f2b; border-radius: 14px;
+				padding: 20px; display: flex; flex-direction: column; gap: 14px;
+			}
+
+			.qa { display: flex; flex-direction: column; gap: 6px; }
+			.qa label {
+				font-size: 13px; color: #cfd2dc; font-weight: 500;
+			}
+			.qa textarea {
+				width: 100%; min-height: 70px; resize: vertical;
+				padding: 10px 12px; border-radius: 9px;
+				background: #07080d; color: #eee; border: 1px solid #1e1f2b;
+				font: inherit;
+			}
+			.qa textarea:focus { outline: none; border-color: #d6ff3d; }
+
+			button {
+				background: #d6ff3d; color: #0a0a0a; border: 0; border-radius: 9px;
+				padding: 10px 14px; font-weight: 600; cursor: pointer;
+				font: inherit;
+			}
+			button:disabled { opacity: 0.4; cursor: not-allowed; }
+			button.secondary { background: rgba(255,255,255,0.06); color: #eee; }
+			button.ghost { background: transparent; color: #8a8d98; border: 1px solid #1e1f2b; }
+
+			.row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+
+			/* Persona card */
+			.persona-card { display: none; flex-direction: column; gap: 16px; }
+			.persona-card.show { display: flex; }
+			.persona-field { display: flex; flex-direction: column; gap: 6px; }
+			.persona-field .k {
+				font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; color: #8a8d98;
+			}
+			.persona-field .v { color: #eee; }
+			.chips { display: flex; flex-wrap: wrap; gap: 6px; }
+			.chip {
+				background: rgba(214, 255, 61, 0.10); color: #d6ff3d;
+				border: 1px solid rgba(214, 255, 61, 0.35);
+				border-radius: 999px; padding: 4px 10px; font-size: 12.5px;
+			}
+			.chip.warn {
+				background: rgba(255, 107, 107, 0.10); color: #ff8a8a;
+				border-color: rgba(255, 107, 107, 0.35);
+			}
+			.chip.muted {
+				background: rgba(255,255,255,0.05); color: #cfd2dc;
+				border-color: #1e1f2b;
+			}
+			.badge {
+				display: inline-block;
+				background: #1a1f12; color: #d6ff3d;
+				border: 1px solid rgba(214,255,61,0.35);
+				border-radius: 6px;
+				padding: 2px 8px; font-size: 12px; font-weight: 600;
+				text-transform: lowercase; letter-spacing: 0.02em;
+			}
+			.greet {
+				font-style: italic; color: #cfd2dc;
+				border-left: 2px solid #d6ff3d;
+				padding: 4px 0 4px 12px;
+			}
+
+			pre.raw {
+				background: #07080d; border: 1px solid #1e1f2b; border-radius: 9px;
+				padding: 12px; font-family: ui-monospace, monospace; font-size: 12px;
+				color: #cfd2dc; max-height: 320px; overflow: auto;
+				white-space: pre-wrap; word-break: break-word;
+				display: none;
+			}
+			pre.raw.show { display: block; }
+
+			/* Chat */
+			.chat-stream {
+				display: flex; flex-direction: column; gap: 10px;
+				min-height: 80px; max-height: 380px; overflow-y: auto;
+				padding: 4px;
+			}
+			.bubble {
+				max-width: 80%; padding: 10px 14px; border-radius: 14px;
+				font-size: 14px; line-height: 1.45;
+				word-wrap: break-word;
+			}
+			.bubble.user {
+				align-self: flex-end;
+				background: #d6ff3d; color: #0a0a0a;
+				border-bottom-right-radius: 4px;
+			}
+			.bubble.agent {
+				align-self: flex-start;
+				background: #1e1f2b; color: #eee;
+				border-bottom-left-radius: 4px;
+			}
+			.bubble.meta {
+				align-self: flex-start;
+				background: transparent; color: #8a8d98;
+				font-size: 12px; padding: 4px 0;
+			}
+
+			.chat-input { display: flex; gap: 8px; }
+			.chat-input input {
+				flex: 1; padding: 10px 12px; border-radius: 9px;
+				background: #07080d; color: #eee; border: 1px solid #1e1f2b;
+				font: inherit;
+			}
+			.chat-input input:focus { outline: none; border-color: #d6ff3d; }
+
+			.log {
+				background: #07080d; border: 1px solid #1e1f2b; border-radius: 9px;
+				padding: 12px; font-family: ui-monospace, monospace; font-size: 12px;
+				line-height: 1.6; color: #8a8d98; max-height: 320px; overflow: auto; white-space: pre-wrap;
+			}
+			.log .ok { color: #d6ff3d; }
+			.log .err { color: #ff6b6b; }
+			.log .info { color: #66d9ef; }
+
+			.step-marker {
+				display: inline-block; width: 22px; height: 22px;
+				background: #1e1f2b; color: #d6ff3d;
+				border-radius: 50%;
+				text-align: center; line-height: 22px;
+				font-size: 12px; font-weight: 700;
+				margin-right: 8px;
+			}
+
+			.disabled-step { opacity: 0.4; pointer-events: none; }
+		</style>
+	</head>
+	<body>
+		<header><div id="nav-container"></div></header>
+
+		<main class="stage">
+			<p class="crumb"><a href="/demos">← lab</a></p>
+			<h1>three.ws · Persona extraction</h1>
+			<p class="sub">
+				Answer six onboarding questions. three.ws synthesizes a structured
+				<code>persona.json</code> — tone, vocabulary, interests, communication
+				style — then lets you chat with an agent that wears that voice. Nothing
+				here writes to your account; the persona lives in this tab only.
+			</p>
+
+			<div class="grid">
+				<div class="col-main">
+					<section class="panel" id="step-1">
+						<h2><span class="step-marker">1</span>Interview</h2>
+						<div id="questions"></div>
+						<div class="row">
+							<button id="synthesize-btn" disabled>Synthesize persona</button>
+							<button id="example-btn" class="ghost">Fill with example answers</button>
+						</div>
+					</section>
+
+					<section class="panel disabled-step" id="step-2">
+						<h2><span class="step-marker">2</span>Persona card</h2>
+						<div class="persona-card" id="persona-card">
+							<div class="persona-field">
+								<div class="k">Tone</div>
+								<div class="v" id="p-tone"></div>
+							</div>
+							<div class="persona-field">
+								<div class="k">Communication style</div>
+								<div class="v"><span class="badge" id="p-style"></span></div>
+							</div>
+							<div class="persona-field">
+								<div class="k">Vocabulary</div>
+								<div class="chips" id="p-vocab"></div>
+							</div>
+							<div class="persona-field">
+								<div class="k">Interests</div>
+								<div class="chips" id="p-interests"></div>
+							</div>
+							<div class="persona-field">
+								<div class="k">Don't say</div>
+								<div class="chips" id="p-dont"></div>
+							</div>
+							<div class="persona-field">
+								<div class="k">Sample greeting</div>
+								<div class="greet" id="p-greet"></div>
+							</div>
+							<div class="row">
+								<button id="toggle-raw" class="ghost">Show raw JSON</button>
+								<button id="copy-raw" class="secondary">Copy JSON</button>
+							</div>
+							<pre class="raw" id="raw-json"></pre>
+						</div>
+						<div id="persona-empty" style="color:#8a8d98">
+							Answer all six questions, then press Synthesize to generate a persona.
+						</div>
+					</section>
+
+					<section class="panel disabled-step" id="step-3">
+						<h2><span class="step-marker">3</span>Preview chat</h2>
+						<div class="chat-stream" id="chat-stream">
+							<div class="bubble meta">
+								Try a few messages — ask a question, request a recommendation, push back on something. The agent replies in your persona's voice.
+							</div>
+						</div>
+						<form class="chat-input" id="chat-form">
+							<input
+								type="text"
+								id="chat-input"
+								placeholder="Say something to the agent…"
+								autocomplete="off"
+								disabled
+							/>
+							<button type="submit" id="chat-send" disabled>Send</button>
+						</form>
+					</section>
+				</div>
+
+				<div class="col-side">
+					<section class="panel">
+						<h2>Log</h2>
+						<div class="log" id="log">ready.</div>
+					</section>
+
+					<section class="panel">
+						<h2>How it works</h2>
+						<p style="color:#cfd2dc; font-size: 13.5px; margin:0">
+							<strong>POST /api/persona/extract</strong> takes your Q&amp;A and
+							returns a structured persona JSON.<br /><br />
+							<strong>POST /api/persona/preview</strong> takes that persona plus
+							a user message and returns a 1-2 sentence reply in voice.<br /><br />
+							Both routes run server-side on three.ws.
+						</p>
+					</section>
+				</div>
+			</div>
+		</main>
+
+		<script src="/nav.js" defer></script>
+		<script type="module">
+			const QUESTIONS = [
+				'Describe yourself in three words.',
+				'What do you spend most of your time on?',
+				"What's a topic you can talk about for an hour?",
+				"What's a phrase friends know you for?",
+				'What kind of humor do you have?',
+				"What's something you'd never say?",
+			];
+
+			const EXAMPLES = [
+				'Curious, blunt, late.',
+				'Building small tools for crypto traders — Solana RPC, indexers, dashboards. Some skateboarding when the rain stops.',
+				'Why most token launches fail in the first 90 minutes. The mechanics, the wallet patterns, the bot dynamics.',
+				'"ship it ugly, fix it Friday"',
+				'Dry. Self-deprecating. I laugh at my own bugs before anyone else can.',
+				'"Per my last email." or anything that sounds like a LinkedIn post.',
+			];
+
+			const $ = (id) => document.getElementById(id);
+			const log = $('log');
+			const logLine = (msg, cls = '') => {
+				const t = new Date().toTimeString().slice(0, 8);
+				log.innerHTML += `\n<span class="${cls}">[${t}] ${msg}</span>`;
+				log.scrollTop = log.scrollHeight;
+			};
+
+			let currentPersona = null;
+			const chatHistory = [];
+
+			// ── render questions ─────────────────────────────────────────────────
+			const qContainer = $('questions');
+			QUESTIONS.forEach((q, i) => {
+				const wrap = document.createElement('div');
+				wrap.className = 'qa';
+				const label = document.createElement('label');
+				label.textContent = `${i + 1}. ${q}`;
+				label.setAttribute('for', `q-${i}`);
+				const ta = document.createElement('textarea');
+				ta.id = `q-${i}`;
+				ta.rows = 2;
+				ta.dataset.idx = String(i);
+				ta.addEventListener('input', updateSynthesizeButton);
+				wrap.appendChild(label);
+				wrap.appendChild(ta);
+				qContainer.appendChild(wrap);
+			});
+
+			function collectAnswers() {
+				return QUESTIONS.map((q, i) => ({
+					question: q,
+					answer: ($(`q-${i}`).value || '').trim(),
+				}));
+			}
+
+			function updateSynthesizeButton() {
+				const all = collectAnswers().every((a) => a.answer.length > 0);
+				$('synthesize-btn').disabled = !all;
+			}
+
+			$('example-btn').addEventListener('click', () => {
+				EXAMPLES.forEach((v, i) => {
+					$(`q-${i}`).value = v;
+				});
+				updateSynthesizeButton();
+				logLine('filled example answers', 'info');
+			});
+
+			// ── synthesize persona ───────────────────────────────────────────────
+			$('synthesize-btn').addEventListener('click', async () => {
+				const answers = collectAnswers();
+				const btn = $('synthesize-btn');
+				btn.disabled = true;
+				const oldText = btn.textContent;
+				btn.textContent = 'Synthesizing…';
+				logLine(`POST /api/persona/extract  (${answers.length} answers)`, 'info');
+				const t0 = performance.now();
+				try {
+					const r = await fetch('/api/persona/extract', {
+						method: 'POST',
+						credentials: 'include',
+						headers: { 'content-type': 'application/json' },
+						body: JSON.stringify({ answers }),
+					});
+					const ms = Math.round(performance.now() - t0);
+					const data = await r.json();
+					if (!r.ok) {
+						throw new Error(`${r.status} ${data.error_description || data.error || 'error'}`);
+					}
+					currentPersona = data.persona;
+					logLine(
+						`✓ persona extracted in ${ms} ms · ${data.tokens_used} tokens (${data.tokens_in} in / ${data.tokens_out} out) · ${data.model}`,
+						'ok',
+					);
+					renderPersona(data.persona);
+					enableChat();
+				} catch (err) {
+					logLine(`extract failed: ${err.message}`, 'err');
+				} finally {
+					btn.textContent = oldText;
+					btn.disabled = false;
+				}
+			});
+
+			function renderPersona(p) {
+				$('persona-empty').style.display = 'none';
+				$('persona-card').classList.add('show');
+				$('step-2').classList.remove('disabled-step');
+
+				$('p-tone').textContent = p.tone || '—';
+				$('p-style').textContent = p.communication_style || '—';
+
+				renderChips($('p-vocab'), p.vocabulary, 'chip muted');
+				renderChips($('p-interests'), p.interests, 'chip');
+				renderChips($('p-dont'), p.dont_say, 'chip warn');
+
+				$('p-greet').textContent = p.sample_greeting
+					? `"${p.sample_greeting}"`
+					: '—';
+
+				$('raw-json').textContent = JSON.stringify(p, null, 2);
+			}
+
+			function renderChips(container, list, cls) {
+				container.innerHTML = '';
+				if (!list || !list.length) {
+					const span = document.createElement('span');
+					span.style.color = '#8a8d98';
+					span.style.fontSize = '13px';
+					span.textContent = '—';
+					container.appendChild(span);
+					return;
+				}
+				for (const item of list) {
+					const span = document.createElement('span');
+					span.className = cls;
+					span.textContent = item;
+					container.appendChild(span);
+				}
+			}
+
+			$('toggle-raw').addEventListener('click', () => {
+				const pre = $('raw-json');
+				const showing = pre.classList.toggle('show');
+				$('toggle-raw').textContent = showing ? 'Hide raw JSON' : 'Show raw JSON';
+			});
+
+			$('copy-raw').addEventListener('click', async () => {
+				if (!currentPersona) return;
+				try {
+					await navigator.clipboard.writeText(JSON.stringify(currentPersona, null, 2));
+					logLine('persona JSON copied to clipboard', 'ok');
+				} catch (err) {
+					logLine(`copy failed: ${err.message}`, 'err');
+				}
+			});
+
+			// ── preview chat ─────────────────────────────────────────────────────
+			function enableChat() {
+				$('step-3').classList.remove('disabled-step');
+				$('chat-input').disabled = false;
+				$('chat-send').disabled = false;
+				$('chat-input').focus();
+			}
+
+			$('chat-form').addEventListener('submit', async (e) => {
+				e.preventDefault();
+				if (!currentPersona) return;
+				const inputEl = $('chat-input');
+				const msg = inputEl.value.trim();
+				if (!msg) return;
+				inputEl.value = '';
+				appendBubble('user', msg);
+				chatHistory.push({ role: 'user', content: msg });
+
+				const sendBtn = $('chat-send');
+				sendBtn.disabled = true;
+				inputEl.disabled = true;
+
+				const thinkingId = appendBubble('agent', '…');
+				logLine(`POST /api/persona/preview  ("${msg.slice(0, 60)}${msg.length > 60 ? '…' : ''}")`, 'info');
+				const t0 = performance.now();
+				try {
+					const r = await fetch('/api/persona/preview', {
+						method: 'POST',
+						credentials: 'include',
+						headers: { 'content-type': 'application/json' },
+						body: JSON.stringify({ persona: currentPersona, user_message: msg }),
+					});
+					const ms = Math.round(performance.now() - t0);
+					const data = await r.json();
+					if (!r.ok) {
+						throw new Error(`${r.status} ${data.error_description || data.error || 'error'}`);
+					}
+					updateBubble(thinkingId, data.reply || '(empty reply)');
+					chatHistory.push({ role: 'agent', content: data.reply });
+					logLine(
+						`✓ reply in ${ms} ms · ${data.tokens_used} tokens (${data.tokens_in} in / ${data.tokens_out} out)`,
+						'ok',
+					);
+				} catch (err) {
+					updateBubble(thinkingId, `(error: ${err.message})`);
+					logLine(`preview failed: ${err.message}`, 'err');
+				} finally {
+					sendBtn.disabled = false;
+					inputEl.disabled = false;
+					inputEl.focus();
+				}
+			});
+
+			let bubbleCounter = 0;
+			function appendBubble(kind, text) {
+				const id = `b-${++bubbleCounter}`;
+				const div = document.createElement('div');
+				div.className = `bubble ${kind}`;
+				div.id = id;
+				div.textContent = text;
+				const stream = $('chat-stream');
+				stream.appendChild(div);
+				stream.scrollTop = stream.scrollHeight;
+				return id;
+			}
+			function updateBubble(id, text) {
+				const el = document.getElementById(id);
+				if (el) el.textContent = text;
+				const stream = $('chat-stream');
+				stream.scrollTop = stream.scrollHeight;
+			}
+		</script>
+	</body>
+</html>

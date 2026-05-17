@@ -87,6 +87,7 @@
 		"claude": "./claude.sh"
 	},
 	"dependencies": {
+		"@0xsplits/splits-sdk": "^6.5.0",
 		"@ai-sdk/anthropic": "^3.0.78",
 		"@ai-sdk/openai": "^3.0.64",
 		"@avaturn/sdk": "^1.1.4",
@@ -97,6 +98,7 @@
 		"@coinbase/x402": "^2.1.0",
 		"@coral-xyz/anchor": "^0.31.1",
 		"@dimforge/rapier3d-compat": "^0.19.3",
+		"@ethereum-attestation-service/eas-sdk": "^2.9.0",
 		"@gltf-transform/core": "^4.3.0",
 		"@gltf-transform/extensions": "^4.3.0",
 		"@huggingface/inference": "^2.7.0",
@@ -152,6 +154,7 @@
 		"helius-sdk": "^2.2.2",
 		"jose": "^5.9.6",
 		"livekit-client": "^2.18.8",
+		"livepeer": "^3.5.0",
 		"meshoptimizer": "^1.1.1",
 		"nipplejs": "^1.0.2",
 		"node-fetch": "^3.3.2",

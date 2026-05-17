@@ -1,0 +1,443 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1" />
+		<title>Voice cloning · three.ws lab</title>
+		<meta name="robots" content="noindex" />
+		<link rel="stylesheet" href="/style.css" />
+		<link rel="stylesheet" href="/nav.css" />
+		<style>
+			:root { color-scheme: dark; }
+			body { background: #05060a; color: #eee; font: 15px/1.5 -apple-system, system-ui, sans-serif; margin: 0; }
+			.stage { max-width: 1000px; margin: 0 auto; padding: 48px 24px 80px; }
+			.crumb a { color: #8a8d98; text-decoration: none; }
+			.crumb a:hover { color: #d6ff3d; }
+			h1 { font-size: 28px; font-weight: 600; letter-spacing: -0.015em; margin: 14px 0 8px; }
+			.sub { color: #8a8d98; max-width: 64ch; margin: 0 0 30px; }
+			.row { display: grid; grid-template-columns: 1fr 360px; gap: 24px; }
+			@media (max-width: 820px) { .row { grid-template-columns: 1fr; } }
+			.recorder-card {
+				background: #0f1018; border: 1.5px solid #1e1f2b; border-radius: 14px;
+				padding: 20px; min-height: 400px; display: flex; flex-direction: column; gap: 14px;
+			}
+			.wave-wrap {
+				background: #07080d; border: 1px solid #1e1f2b; border-radius: 9px;
+				height: 140px; position: relative; overflow: hidden;
+			}
+			canvas#wave { display: block; width: 100%; height: 100%; }
+			.rec-dot {
+				position: absolute; top: 10px; left: 12px; width: 10px; height: 10px;
+				background: #ff4f4f; border-radius: 50%; opacity: 0; transition: opacity 0.15s;
+			}
+			.rec-dot.on { opacity: 1; animation: pulse 1s infinite; }
+			.rec-time {
+				position: absolute; top: 8px; right: 12px; font: 600 13px ui-monospace, monospace;
+				color: #d6ff3d;
+			}
+			@keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.35; } }
+			.panel {
+				background: #0f1018; border: 1.5px solid #1e1f2b; border-radius: 14px;
+				padding: 20px; display: flex; flex-direction: column; gap: 14px;
+			}
+			label { font-size: 12.5px; color: #8a8d98; text-transform: uppercase; letter-spacing: 0.06em; }
+			input[type=text], textarea {
+				width: 100%; padding: 10px 12px; border-radius: 9px;
+				background: #07080d; color: #eee; border: 1px solid #1e1f2b;
+				font: inherit; box-sizing: border-box;
+			}
+			textarea { min-height: 90px; resize: vertical; }
+			button {
+				background: #d6ff3d; color: #0a0a0a; border: 0; border-radius: 9px;
+				padding: 10px 14px; font-weight: 600; cursor: pointer; font: inherit;
+			}
+			button:disabled { opacity: 0.4; cursor: not-allowed; }
+			button.secondary { background: rgba(255,255,255,0.06); color: #eee; }
+			button.danger { background: #ff4f4f; color: #fff; }
+			.btn-row { display: flex; gap: 8px; flex-wrap: wrap; }
+			.btn-row button { flex: 1; min-width: 120px; }
+			audio { width: 100%; height: 38px; }
+			.log {
+				background: #07080d; border: 1px solid #1e1f2b; border-radius: 9px;
+				padding: 12px; font-family: ui-monospace, monospace; font-size: 12px;
+				line-height: 1.6; color: #8a8d98; max-height: 280px; overflow: auto; white-space: pre-wrap;
+			}
+			.log .ok { color: #d6ff3d; }
+			.log .err { color: #ff6b6b; }
+			.log .info { color: #66d9ef; }
+			.hint { font-size: 12.5px; color: #8a8d98; line-height: 1.55; }
+			.hint code { color: #d6ff3d; }
+			.voice-pill {
+				display: inline-flex; align-items: center; gap: 6px;
+				background: rgba(214,255,61,0.08); border: 1px solid rgba(214,255,61,0.35);
+				color: #d6ff3d; padding: 6px 10px; border-radius: 999px;
+				font: 600 12.5px ui-monospace, monospace; word-break: break-all;
+			}
+			section.synth { margin-top: 24px; opacity: 0.4; pointer-events: none; transition: opacity 0.2s; }
+			section.synth.ready { opacity: 1; pointer-events: auto; }
+		</style>
+	</head>
+	<body>
+		<header><div id="nav-container"></div></header>
+
+		<main class="stage">
+			<p class="crumb"><a href="/demos">← lab</a></p>
+			<h1>three.ws · Voice cloning</h1>
+			<p class="sub">
+				Record a short voice sample in your browser, ship it to the three.ws
+				instant-cloning endpoint, and synthesize fresh speech with the cloned
+				voice. For best fidelity record 20–30 seconds of clear, dry speech
+				with consistent volume. Audio never leaves your machine until you tap
+				<strong>Submit to clone</strong>.
+			</p>
+
+			<div class="row">
+				<div class="recorder-card">
+					<label>1. Record a sample</label>
+					<div class="wave-wrap">
+						<div class="rec-dot" id="rec-dot"></div>
+						<div class="rec-time" id="rec-time">00:00</div>
+						<canvas id="wave"></canvas>
+					</div>
+					<div class="btn-row">
+						<button id="rec-start">Record</button>
+						<button id="rec-stop" class="danger" disabled>Stop</button>
+						<button id="rec-reset" class="secondary" disabled>Re-record</button>
+					</div>
+
+					<label>2. Playback</label>
+					<audio id="playback" controls></audio>
+
+					<label>3. Voice label</label>
+					<input type="text" id="voice-name" placeholder="e.g. Sample Voice Mar 17" maxlength="64" />
+					<input type="text" id="voice-desc" placeholder="Optional description" maxlength="500" />
+
+					<button id="submit-clone" disabled>Submit to clone</button>
+				</div>
+
+				<div class="panel">
+					<label>Cloned voice</label>
+					<div id="voice-id-out" class="hint">No voice yet — record + submit to receive a <code>voice_id</code>.</div>
+
+					<label>Log</label>
+					<div class="log" id="log">ready. waiting for mic permission.</div>
+
+					<p class="hint">
+						Internal pipeline: <code>MediaRecorder</code> → <code>POST /api/tts/eleven-clone</code>
+						(multipart) → ElevenLabs <code>voices.add</code> via the
+						<code>elevenlabs</code> SDK. Instant Voice Cloning is a paid-tier
+						feature; the free tier will return
+						<code>can_not_use_instant_voice_cloning</code>.
+					</p>
+				</div>
+			</div>
+
+			<section class="synth" id="synth-section">
+				<h2 style="font-size:20px;font-weight:600;margin:0 0 10px;">4. Synthesize with the cloned voice</h2>
+				<div class="row">
+					<div class="panel">
+						<label>Text to speak (≤ 500 chars)</label>
+						<textarea id="synth-text" maxlength="500">Hi, I'm a three.ws agent. Nice to meet you.</textarea>
+						<button id="synth-speak" disabled>Speak</button>
+
+						<label>Output</label>
+						<audio id="synth-audio" controls></audio>
+					</div>
+					<div class="panel">
+						<label>Sample lines</label>
+						<button class="secondary" data-sample="Welcome to three.ws — the home of agentic 3D characters.">Welcome line</button>
+						<button class="secondary" data-sample="Numbers test: one, two, three, four, five, six, seven, eight, nine, ten.">Numbers</button>
+						<button class="secondary" data-sample="The quick brown fox jumps over the lazy dog. She sells seashells by the seashore.">Diction</button>
+						<p class="hint">
+							These hit the existing <code>/api/tts/eleven</code> endpoint with
+							the freshly minted <code>voice_id</code>. Same caching + rate
+							limit as the production TTS proxy.
+						</p>
+					</div>
+				</div>
+			</section>
+		</main>
+
+		<script src="/nav.js" defer></script>
+		<script type="module">
+			const $ = (id) => document.getElementById(id);
+			const log = $('log');
+			const logLine = (msg, cls = '') => {
+				const t = new Date().toTimeString().slice(0, 8);
+				log.innerHTML += `\n<span class="${cls}">[${t}] ${msg}</span>`;
+				log.scrollTop = log.scrollHeight;
+			};
+
+			// ── recorder state ────────────────────────────────────────────
+			const MAX_RECORD_MS = 30_000; // soft cap, matches the 20-30s recommendation
+			const MIN_RECORD_MS = 3_000;
+			let mediaStream = null;
+			let recorder = null;
+			let audioCtx = null;
+			let analyser = null;
+			let recordedBlob = null;
+			let recordedUrl = null;
+			let startTs = 0;
+			let stopTimer = null;
+			let rafId = 0;
+			let voiceId = null;
+
+			const wave = $('wave');
+			const wctx = wave.getContext('2d');
+			function fitCanvas() {
+				const dpr = window.devicePixelRatio || 1;
+				wave.width = wave.clientWidth * dpr;
+				wave.height = wave.clientHeight * dpr;
+				wctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+			}
+			fitCanvas();
+			window.addEventListener('resize', fitCanvas);
+
+			function drawIdle() {
+				wctx.clearRect(0, 0, wave.clientWidth, wave.clientHeight);
+				wctx.strokeStyle = '#1e1f2b';
+				wctx.lineWidth = 1;
+				wctx.beginPath();
+				wctx.moveTo(0, wave.clientHeight / 2);
+				wctx.lineTo(wave.clientWidth, wave.clientHeight / 2);
+				wctx.stroke();
+			}
+			drawIdle();
+
+			function drawWave() {
+				rafId = requestAnimationFrame(drawWave);
+				if (!analyser) return;
+				const buf = new Uint8Array(analyser.fftSize);
+				analyser.getByteTimeDomainData(buf);
+				const w = wave.clientWidth, h = wave.clientHeight;
+				wctx.fillStyle = '#07080d';
+				wctx.fillRect(0, 0, w, h);
+				wctx.strokeStyle = '#d6ff3d';
+				wctx.lineWidth = 1.6;
+				wctx.beginPath();
+				const slice = w / buf.length;
+				for (let i = 0; i < buf.length; i++) {
+					const v = buf[i] / 128.0;
+					const y = (v * h) / 2;
+					if (i === 0) wctx.moveTo(0, y);
+					else wctx.lineTo(i * slice, y);
+				}
+				wctx.stroke();
+
+				// Update timer.
+				const elapsed = Math.floor((performance.now() - startTs) / 1000);
+				const mm = String(Math.floor(elapsed / 60)).padStart(2, '0');
+				const ss = String(elapsed % 60).padStart(2, '0');
+				$('rec-time').textContent = `${mm}:${ss}`;
+			}
+
+			function pickRecorderMime() {
+				const candidates = [
+					'audio/webm;codecs=opus',
+					'audio/webm',
+					'audio/ogg;codecs=opus',
+					'audio/mp4',
+				];
+				for (const m of candidates) {
+					if (window.MediaRecorder && MediaRecorder.isTypeSupported(m)) return m;
+				}
+				return ''; // browser default
+			}
+
+			async function startRecording() {
+				try {
+					mediaStream = await navigator.mediaDevices.getUserMedia({
+						audio: {
+							channelCount: 1,
+							echoCancellation: true,
+							noiseSuppression: true,
+							autoGainControl: true,
+						},
+					});
+				} catch (err) {
+					logLine(`mic access failed: ${err.message}`, 'err');
+					return;
+				}
+
+				audioCtx = new (window.AudioContext || window.webkitAudioContext)({ sampleRate: 48000 });
+				const src = audioCtx.createMediaStreamSource(mediaStream);
+				analyser = audioCtx.createAnalyser();
+				analyser.fftSize = 1024;
+				src.connect(analyser);
+
+				const mime = pickRecorderMime();
+				const chunks = [];
+				try {
+					recorder = new MediaRecorder(mediaStream, mime ? { mimeType: mime } : undefined);
+				} catch (err) {
+					logLine(`MediaRecorder init failed: ${err.message}`, 'err');
+					return;
+				}
+				recorder.ondataavailable = (e) => { if (e.data && e.data.size) chunks.push(e.data); };
+				recorder.onstop = () => {
+					const blobMime = recorder.mimeType || mime || 'audio/webm';
+					recordedBlob = new Blob(chunks, { type: blobMime });
+					if (recordedUrl) URL.revokeObjectURL(recordedUrl);
+					recordedUrl = URL.createObjectURL(recordedBlob);
+					$('playback').src = recordedUrl;
+					$('submit-clone').disabled = false;
+					$('rec-reset').disabled = false;
+					logLine(`recording captured: ${(recordedBlob.size / 1024).toFixed(1)} KB (${blobMime})`, 'ok');
+				};
+
+				recorder.start();
+				startTs = performance.now();
+				$('rec-dot').classList.add('on');
+				$('rec-start').disabled = true;
+				$('rec-stop').disabled = false;
+				$('rec-reset').disabled = true;
+				$('submit-clone').disabled = true;
+				drawWave();
+				logLine(`recording started (${mime || 'browser default'}, cap ${MAX_RECORD_MS / 1000}s)`, 'info');
+
+				stopTimer = setTimeout(() => {
+					logLine(`hit ${MAX_RECORD_MS / 1000}s cap — auto-stopping`, 'info');
+					stopRecording();
+				}, MAX_RECORD_MS);
+			}
+
+			function stopRecording() {
+				if (stopTimer) { clearTimeout(stopTimer); stopTimer = null; }
+				const elapsed = performance.now() - startTs;
+				if (recorder && recorder.state === 'recording') recorder.stop();
+				if (mediaStream) mediaStream.getTracks().forEach((t) => t.stop());
+				if (audioCtx) audioCtx.close().catch(() => {});
+				cancelAnimationFrame(rafId);
+				analyser = null;
+				audioCtx = null;
+				mediaStream = null;
+				$('rec-dot').classList.remove('on');
+				$('rec-start').disabled = false;
+				$('rec-stop').disabled = true;
+				drawIdle();
+
+				if (elapsed < MIN_RECORD_MS) {
+					logLine(`recording too short (${(elapsed / 1000).toFixed(1)}s) — please record at least 3 seconds`, 'err');
+				}
+			}
+
+			function resetRecording() {
+				recordedBlob = null;
+				if (recordedUrl) { URL.revokeObjectURL(recordedUrl); recordedUrl = null; }
+				$('playback').removeAttribute('src');
+				$('playback').load?.();
+				$('submit-clone').disabled = true;
+				$('rec-reset').disabled = true;
+				$('rec-time').textContent = '00:00';
+				drawIdle();
+				logLine('recording cleared. ready to re-record.', 'info');
+			}
+
+			$('rec-start').addEventListener('click', startRecording);
+			$('rec-stop').addEventListener('click', stopRecording);
+			$('rec-reset').addEventListener('click', resetRecording);
+
+			// ── submit to clone ───────────────────────────────────────────
+			$('submit-clone').addEventListener('click', async () => {
+				if (!recordedBlob) return;
+				const name = $('voice-name').value.trim();
+				if (!name) {
+					logLine('voice label required — pick a memorable name first', 'err');
+					$('voice-name').focus();
+					return;
+				}
+
+				$('submit-clone').disabled = true;
+				const sizeKB = (recordedBlob.size / 1024).toFixed(1);
+				logLine(`uploading ${sizeKB}KB sample (name="${name}") to /api/tts/eleven-clone…`, 'info');
+
+				const ext = recordedBlob.type.includes('mp4') ? 'm4a'
+					: recordedBlob.type.includes('ogg') ? 'ogg'
+					: recordedBlob.type.includes('wav') ? 'wav'
+					: 'webm';
+				const fd = new FormData();
+				fd.append('audio', recordedBlob, `sample.${ext}`);
+				fd.append('name', name);
+				const desc = $('voice-desc').value.trim();
+				if (desc) fd.append('description', desc);
+
+				let res;
+				try {
+					res = await fetch('/api/tts/eleven-clone', {
+						method: 'POST',
+						credentials: 'include',
+						body: fd,
+					});
+				} catch (err) {
+					logLine(`network error: ${err.message}`, 'err');
+					$('submit-clone').disabled = false;
+					return;
+				}
+
+				let body;
+				try {
+					body = await res.json();
+				} catch {
+					body = { error_description: await res.text().catch(() => '') };
+				}
+
+				if (!res.ok) {
+					const upstream = body.upstream_body ? `\n  upstream: ${body.upstream_body}` : '';
+					logLine(
+						`clone failed: HTTP ${res.status} ${body.error || ''} — ${body.error_description || ''}${upstream}`,
+						'err',
+					);
+					$('submit-clone').disabled = false;
+					return;
+				}
+
+				voiceId = body.voice_id;
+				logLine(`✓ ElevenLabs returned voice_id=${voiceId} (status: ${body.status})`, 'ok');
+				$('voice-id-out').innerHTML = `<span class="voice-pill">${voiceId}</span>`;
+				$('synth-section').classList.add('ready');
+				$('synth-speak').disabled = false;
+				$('submit-clone').disabled = false;
+			});
+
+			// ── synthesize ────────────────────────────────────────────────
+			$('synth-speak').addEventListener('click', async () => {
+				if (!voiceId) return;
+				const text = $('synth-text').value.trim();
+				if (!text) { logLine('text is required', 'err'); return; }
+				$('synth-speak').disabled = true;
+				logLine(`synthesizing ${text.length} chars via /api/tts/eleven (voiceId=${voiceId})…`, 'info');
+				try {
+					const r = await fetch('/api/tts/eleven', {
+						method: 'POST',
+						credentials: 'include',
+						headers: { 'content-type': 'application/json' },
+						body: JSON.stringify({ voiceId, text }),
+					});
+					if (!r.ok) {
+						const body = await r.text().catch(() => '');
+						throw new Error(`HTTP ${r.status}: ${body.slice(0, 200)}`);
+					}
+					const cacheHit = r.headers.get('x-tts-cache') === 'hit';
+					const buf = await r.arrayBuffer();
+					const blob = new Blob([buf], { type: 'audio/mpeg' });
+					const url = URL.createObjectURL(blob);
+					const audio = $('synth-audio');
+					if (audio.src) URL.revokeObjectURL(audio.src);
+					audio.src = url;
+					audio.play().catch(() => { /* autoplay blocked — controls still work */ });
+					logLine(`✓ synthesized ${(buf.byteLength / 1024).toFixed(1)} KB MP3 (${cacheHit ? 'cache hit' : 'cache miss'})`, 'ok');
+				} catch (err) {
+					logLine(`synth failed: ${err.message}`, 'err');
+				} finally {
+					$('synth-speak').disabled = false;
+				}
+			});
+
+			document.querySelectorAll('button[data-sample]').forEach((b) => {
+				b.addEventListener('click', () => {
+					$('synth-text').value = b.dataset.sample;
+				});
+			});
+		</script>
+	</body>
+</html>

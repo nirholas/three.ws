@@ -462,6 +462,12 @@ URL: https://three.ws/news/
 
 Product launches, integrations, and announcements from three.ws.
 
+### three.ws Partners with HackerNoon
+
+URL: https://three.ws/news/partnered-with-hackernoon
+
+three.ws has partnered with HackerNoon, bringing on-chain 3D agent coverage to one of the world's largest tech publications. Every three.ws announcement now auto-imports into HackerNoon via our RSS feed at https://three.ws/rss/announcements.xml.
+
 ### three.ws Listed on BNB Chain's Dappbay Directory
 
 URL: https://three.ws/news/listed-on-bnb-chain-dappbay

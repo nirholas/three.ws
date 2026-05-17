@@ -1,0 +1,423 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1" />
+		<title>three.ws · Memory seeding</title>
+		<meta name="description" content="Paste a public handle from one or more of your connected accounts. three.ws fetches your public footprint, distils a memory seed with Claude, and shows you exactly what your agent would be ingesting on first sign-in." />
+		<meta name="robots" content="noindex" />
+		<link rel="stylesheet" href="/style.css" />
+		<link rel="stylesheet" href="/nav.css" />
+		<style>
+			:root { color-scheme: dark; }
+			body { background: #05060a; color: #eee; font: 15px/1.5 -apple-system, system-ui, sans-serif; margin: 0; }
+			.stage { max-width: 1080px; margin: 0 auto; padding: 48px 24px 80px; }
+			.crumb a { color: #8a8d98; text-decoration: none; }
+			.crumb a:hover { color: #d6ff3d; }
+			h1 { font-size: 28px; font-weight: 600; letter-spacing: -0.015em; margin: 14px 0 8px; }
+			.sub { color: #8a8d98; max-width: 64ch; margin: 0 0 30px; }
+			h2 { font-size: 16px; font-weight: 600; margin: 0 0 12px; letter-spacing: -0.005em; }
+			.row { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; }
+			@media (max-width: 920px) { .row { grid-template-columns: 1fr; } }
+
+			.card {
+				background: #0f1018; border: 1.5px solid #1e1f2b; border-radius: 14px;
+				padding: 16px; display: flex; flex-direction: column; gap: 12px; min-height: 100%;
+			}
+			.card .chip {
+				display: inline-flex; align-items: center; gap: 6px;
+				background: rgba(214,255,61,0.08); color: #d6ff3d;
+				padding: 3px 10px; border-radius: 999px;
+				font-size: 11.5px; font-weight: 600; letter-spacing: 0.04em;
+				text-transform: uppercase; align-self: flex-start;
+			}
+			.card .chip.muted { background: rgba(255,255,255,0.05); color: #8a8d98; }
+			input[type=text] {
+				width: 100%; padding: 10px 12px; border-radius: 9px;
+				background: #07080d; color: #eee; border: 1px solid #1e1f2b;
+				font: inherit; box-sizing: border-box;
+			}
+			input[type=text]:focus { outline: none; border-color: #2a2b3a; }
+			.input-row { display: flex; gap: 8px; }
+			.input-row input { flex: 1; }
+			button {
+				background: #d6ff3d; color: #0a0a0a; border: 0; border-radius: 9px;
+				padding: 10px 14px; font-weight: 600; cursor: pointer; font: inherit;
+				white-space: nowrap;
+			}
+			button:disabled { opacity: 0.4; cursor: not-allowed; }
+			button.secondary { background: rgba(255,255,255,0.06); color: #eee; }
+			button.wide { width: 100%; padding: 12px 16px; font-size: 15px; }
+
+			.connector-detail {
+				display: flex; flex-direction: column; gap: 10px;
+				padding: 12px; background: #07080d; border-radius: 9px;
+				border: 1px solid #1e1f2b;
+			}
+			.connector-detail.empty { color: #555866; font-style: italic; padding: 24px 12px; text-align: center; }
+			.profile-head { display: flex; gap: 12px; align-items: center; }
+			.profile-head img { width: 44px; height: 44px; border-radius: 50%; object-fit: cover; background: #1e1f2b; }
+			.profile-head .name { font-weight: 600; }
+			.profile-head .sub-text { color: #8a8d98; font-size: 12.5px; }
+			.bio { color: #c8cad6; font-size: 13.5px; line-height: 1.45; }
+			.bio:empty { display: none; }
+			.stats { display: flex; gap: 14px; font-size: 12px; color: #8a8d98; }
+			.stats b { color: #d6ff3d; font-weight: 600; }
+			.items { display: flex; flex-direction: column; gap: 6px; font-size: 12.5px; }
+			.items .item { padding: 8px 10px; background: #0a0b12; border-radius: 7px; border: 1px solid #1e1f2b; }
+			.items .item b { color: #d6ff3d; font-weight: 600; }
+			.items .item .meta { color: #8a8d98; font-size: 11.5px; margin-top: 2px; }
+
+			.synth-section {
+				margin-top: 32px; background: #0f1018; border: 1.5px solid #1e1f2b;
+				border-radius: 14px; padding: 22px; display: flex; flex-direction: column; gap: 16px;
+			}
+			.synth-actions { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+			.synth-output {
+				background: #07080d; border: 1px solid #1e1f2b; border-radius: 9px;
+				padding: 20px; min-height: 80px;
+				font-family: ui-serif, Georgia, serif; font-size: 14.5px; line-height: 1.65;
+				color: #e8ebf0; white-space: pre-wrap;
+			}
+			.synth-output:empty::before {
+				content: 'The synthesised memory seed will appear here once at least one connector returns data.';
+				color: #555866; font-style: italic; font-family: -apple-system, system-ui, sans-serif;
+			}
+			.synth-output h1, .synth-output h2, .synth-output h3 { font-family: -apple-system, system-ui, sans-serif; color: #fff; margin: 14px 0 6px; }
+			.synth-output strong { color: #fff; }
+			.synth-output em { color: #d6ff3d; font-style: normal; }
+			.meta-line { color: #8a8d98; font-size: 12px; }
+			.meta-line b { color: #d6ff3d; font-weight: 600; }
+
+			.log {
+				margin-top: 32px;
+				background: #07080d; border: 1px solid #1e1f2b; border-radius: 9px;
+				padding: 12px; font-family: ui-monospace, monospace; font-size: 12px;
+				line-height: 1.6; color: #8a8d98; max-height: 220px; overflow: auto; white-space: pre-wrap;
+			}
+			.log .ok { color: #d6ff3d; }
+			.log .err { color: #ff8a8a; }
+			.log .info { color: #9ad4ff; }
+		</style>
+	</head>
+	<body>
+		<header><div id="nav-container"></div></header>
+
+		<main class="stage">
+			<p class="crumb"><a href="/demos/">← lab</a></p>
+			<h1>three.ws · Memory seeding</h1>
+			<p class="sub">
+				Paste a public handle from one or more of your connected accounts.
+				three.ws pulls the public footprint, then asks Claude to distil a
+				200–300 word memory seed — exactly the markdown your agent would
+				ingest as durable context on first sign-in. Nothing here is stored
+				server-side; the synthesised seed lives only in your browser tab.
+			</p>
+
+			<div class="row">
+				<!-- GitHub connector -->
+				<section class="card" id="card-github">
+					<h2><span class="chip">GitHub</span></h2>
+					<div class="input-row">
+						<input type="text" id="in-github" placeholder="e.g. torvalds" autocomplete="off" spellcheck="false" />
+						<button data-fetch="github">Fetch</button>
+					</div>
+					<div class="connector-detail empty" id="detail-github">No data yet</div>
+				</section>
+
+				<!-- X connector -->
+				<section class="card" id="card-x">
+					<h2><span class="chip">X</span></h2>
+					<div class="input-row">
+						<input type="text" id="in-x" placeholder="e.g. @jack" autocomplete="off" spellcheck="false" />
+						<button data-fetch="x">Fetch</button>
+					</div>
+					<div class="connector-detail empty" id="detail-x">No data yet</div>
+				</section>
+
+				<!-- Farcaster connector -->
+				<section class="card" id="card-farcaster">
+					<h2><span class="chip">Farcaster</span></h2>
+					<div class="input-row">
+						<input type="text" id="in-farcaster" placeholder="username or fid" autocomplete="off" spellcheck="false" />
+						<button data-fetch="farcaster">Fetch</button>
+					</div>
+					<div class="connector-detail empty" id="detail-farcaster">No data yet</div>
+				</section>
+			</div>
+
+			<section class="synth-section">
+				<h2 style="margin:0">Memory seed</h2>
+				<div class="synth-actions">
+					<button id="synth-btn" class="wide" disabled>Synthesise memory seed</button>
+					<button id="copy-btn" class="secondary" disabled>Copy seed</button>
+					<span class="meta-line" id="synth-meta"></span>
+				</div>
+				<div class="synth-output" id="synth-output"></div>
+			</section>
+
+			<div class="log" id="log">ready.</div>
+		</main>
+
+		<script src="/nav.js" defer></script>
+		<script type="module">
+			const $ = (id) => document.getElementById(id);
+			const logEl = $('log');
+			const logLine = (msg, cls = '') => {
+				const t = new Date().toTimeString().slice(0, 8);
+				logEl.innerHTML += `\n<span class="${cls}">[${t}] ${msg}</span>`;
+				logEl.scrollTop = logEl.scrollHeight;
+			};
+
+			const escapeHtml = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({
+				'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;',
+			}[c]));
+
+			// Minimal markdown → HTML (headings, bold, italics, bullets, paragraphs).
+			// Sufficient for the constrained shape we ask Claude to emit.
+			function renderMarkdown(md) {
+				const lines = md.split('\n');
+				const out = [];
+				let inList = false;
+				const flushList = () => { if (inList) { out.push('</ul>'); inList = false; } };
+				for (let raw of lines) {
+					const line = raw.replace(/\s+$/, '');
+					if (!line.trim()) { flushList(); continue; }
+					let m;
+					if ((m = line.match(/^(#{1,3})\s+(.*)$/))) {
+						flushList();
+						const level = m[1].length + 1; // ## → h3 to keep visual hierarchy
+						out.push(`<h${level}>${formatInline(m[2])}</h${level}>`);
+						continue;
+					}
+					if ((m = line.match(/^[-*]\s+(.*)$/))) {
+						if (!inList) { out.push('<ul>'); inList = true; }
+						out.push(`<li>${formatInline(m[1])}</li>`);
+						continue;
+					}
+					flushList();
+					out.push(`<p>${formatInline(line)}</p>`);
+				}
+				flushList();
+				return out.join('\n');
+			}
+			function formatInline(s) {
+				return escapeHtml(s)
+					.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>')
+					.replace(/\*([^*]+)\*/g, '<em>$1</em>')
+					.replace(/`([^`]+)`/g, '<code>$1</code>');
+			}
+
+			// In-memory store of connector payloads, keyed by name.
+			const store = { github: null, x: null, farcaster: null };
+			let lastSeedMarkdown = '';
+
+			function renderProfileHead(avatarUrl, name, sub) {
+				const img = avatarUrl
+					? `<img src="${escapeHtml(avatarUrl)}" alt="" referrerpolicy="no-referrer" />`
+					: `<div style="width:44px;height:44px;border-radius:50%;background:#1e1f2b"></div>`;
+				return `
+					<div class="profile-head">
+						${img}
+						<div>
+							<div class="name">${escapeHtml(name || '')}</div>
+							<div class="sub-text">${escapeHtml(sub || '')}</div>
+						</div>
+					</div>
+				`;
+			}
+
+			function renderGithub(d) {
+				const repos = (d.top_repos || []).slice(0, 3);
+				const repoItems = repos.length
+					? repos.map((r) => `
+						<div class="item">
+							<b>${escapeHtml(r.name)}</b>${r.language ? ` · ${escapeHtml(r.language)}` : ''}
+							<div class="meta">★ ${r.stars} — ${escapeHtml(r.description || 'no description')}</div>
+						</div>
+					`).join('')
+					: '<div class="item meta">no public repos found</div>';
+				return `
+					${renderProfileHead(d.avatar_url, d.name || d.handle, '@' + d.handle + (d.location ? ' · ' + d.location : ''))}
+					<div class="bio">${escapeHtml(d.bio || '')}</div>
+					<div class="stats">
+						<span><b>${d.public_repos}</b> repos</span>
+						<span><b>${d.followers}</b> followers</span>
+						<span><b>${d.following}</b> following</span>
+					</div>
+					<div class="items">${repoItems}</div>
+				`;
+			}
+
+			function renderX(d) {
+				const tweets = (d.recent_tweets || []).slice(0, 3);
+				const items = tweets.length
+					? tweets.map((t) => `
+						<div class="item">
+							${escapeHtml((t.text || '').slice(0, 220))}
+							<div class="meta">♡ ${t.likes} · ↻ ${t.retweets}</div>
+						</div>
+					`).join('')
+					: '<div class="item meta">no recent posts available</div>';
+				return `
+					${renderProfileHead(d.avatar_url, d.name || d.handle, '@' + d.handle + (d.location ? ' · ' + d.location : ''))}
+					<div class="bio">${escapeHtml(d.bio || '')}</div>
+					<div class="stats">
+						<span><b>${d.follower_count}</b> followers</span>
+						<span><b>${d.tweet_count}</b> posts</span>
+						${d.top_topics?.length ? `<span><b>${escapeHtml(d.top_topics.slice(0, 3).map((t) => t.topic).join(', '))}</b></span>` : ''}
+					</div>
+					<div class="items">${items}</div>
+				`;
+			}
+
+			function renderFarcaster(d) {
+				const casts = (d.recent_casts || []).slice(0, 3);
+				const items = casts.length
+					? casts.map((c) => `
+						<div class="item">
+							${escapeHtml((c.text || '').slice(0, 220))}
+							<div class="meta">♡ ${c.likes} · ↻ ${c.recasts} · 💬 ${c.replies}</div>
+						</div>
+					`).join('')
+					: '<div class="item meta">no recent casts available</div>';
+				return `
+					${renderProfileHead(d.avatar_url, d.display_name || d.handle, '@' + d.handle + ' · fid ' + d.fid)}
+					<div class="bio">${escapeHtml(d.bio || '')}</div>
+					<div class="stats">
+						<span><b>${d.follower_count}</b> followers</span>
+						<span><b>${d.recent_casts?.length || 0}</b> recent casts</span>
+					</div>
+					<div class="items">${items}</div>
+				`;
+			}
+
+			function renderNotConfigured(name, reason) {
+				const target = $('detail-' + name);
+				target.classList.remove('empty');
+				target.innerHTML = `
+					<div class="bio" style="color:#8a8d98">
+						<b style="color:#ff8a8a">Connector not configured.</b><br/>
+						${escapeHtml(reason || 'The server is missing credentials for this provider.')}
+					</div>
+				`;
+			}
+
+			async function fetchConnector(name) {
+				const input = $('in-' + name);
+				const handle = (input.value || '').trim();
+				if (!handle) { logLine(`${name}: handle required`, 'err'); return; }
+
+				const btn = document.querySelector(`button[data-fetch="${name}"]`);
+				btn.disabled = true;
+				btn.textContent = '…';
+				logLine(`fetching ${name} "${handle}"…`, 'info');
+
+				try {
+					const url = `/api/seed/${name}?handle=${encodeURIComponent(handle)}`;
+					const r = await fetch(url, { credentials: 'include' });
+					if (!r.ok) {
+						const body = await r.json().catch(() => ({}));
+						logLine(`${name} fetch failed (${r.status}): ${body.error_description || body.error || 'unknown'}`, 'err');
+						return;
+					}
+					const data = await r.json();
+
+					if (data.ok === false) {
+						renderNotConfigured(name, data.detail || data.reason);
+						logLine(`${name}: ${data.reason}`, 'err');
+						store[name] = null;
+					} else {
+						store[name] = data;
+						const target = $('detail-' + name);
+						target.classList.remove('empty');
+						if (name === 'github') target.innerHTML = renderGithub(data);
+						if (name === 'x') target.innerHTML = renderX(data);
+						if (name === 'farcaster') target.innerHTML = renderFarcaster(data);
+						logLine(`${name} ok — @${data.handle || handle}`, 'ok');
+					}
+					updateSynthEnabled();
+				} catch (err) {
+					logLine(`${name} fetch error: ${err.message}`, 'err');
+				} finally {
+					btn.disabled = false;
+					btn.textContent = 'Fetch';
+				}
+			}
+
+			function updateSynthEnabled() {
+				const have = Object.values(store).some((v) => v != null);
+				$('synth-btn').disabled = !have;
+			}
+
+			document.querySelectorAll('button[data-fetch]').forEach((btn) => {
+				btn.addEventListener('click', () => fetchConnector(btn.dataset.fetch));
+			});
+			// Enter-to-fetch convenience.
+			['github', 'x', 'farcaster'].forEach((name) => {
+				$('in-' + name).addEventListener('keydown', (e) => {
+					if (e.key === 'Enter') { e.preventDefault(); fetchConnector(name); }
+				});
+			});
+
+			$('synth-btn').addEventListener('click', async () => {
+				const btn = $('synth-btn');
+				const copyBtn = $('copy-btn');
+				const meta = $('synth-meta');
+				const out = $('synth-output');
+
+				const connectors = {};
+				for (const name of ['github', 'x', 'farcaster']) {
+					if (store[name]) connectors[name] = store[name];
+				}
+				if (!Object.keys(connectors).length) {
+					logLine('synthesise: no connector data yet', 'err');
+					return;
+				}
+
+				btn.disabled = true;
+				btn.textContent = 'Synthesising…';
+				meta.textContent = '';
+				logLine(`synthesise: sending ${Object.keys(connectors).join(', ')} → /api/seed/synthesize`, 'info');
+
+				try {
+					const r = await fetch('/api/seed/synthesize', {
+						method: 'POST',
+						credentials: 'include',
+						headers: { 'content-type': 'application/json' },
+						body: JSON.stringify({ connectors }),
+					});
+					const body = await r.json();
+					if (!r.ok || body.ok === false) {
+						logLine(`synthesise failed (${r.status}): ${body.error_description || body.error || 'unknown'}`, 'err');
+						return;
+					}
+					lastSeedMarkdown = body.memory_seed || '';
+					out.innerHTML = renderMarkdown(lastSeedMarkdown);
+					meta.innerHTML = `Sources: <b>${body.sources_used.join(' + ')}</b> · Tokens used: <b>${body.tokens_used}</b> (${body.usage.input_tokens} in / ${body.usage.output_tokens} out) · Model: <b>${escapeHtml(body.model || '')}</b>`;
+					copyBtn.disabled = false;
+					logLine(`synthesise ok — ${body.tokens_used} tokens (${body.usage.input_tokens} in / ${body.usage.output_tokens} out)`, 'ok');
+				} catch (err) {
+					logLine(`synthesise error: ${err.message}`, 'err');
+				} finally {
+					btn.disabled = false;
+					btn.textContent = 'Synthesise memory seed';
+				}
+			});
+
+			$('copy-btn').addEventListener('click', async () => {
+				if (!lastSeedMarkdown) return;
+				try {
+					await navigator.clipboard.writeText(lastSeedMarkdown);
+					logLine(`copied ${lastSeedMarkdown.length} chars to clipboard`, 'ok');
+					const b = $('copy-btn');
+					const t = b.textContent;
+					b.textContent = 'Copied';
+					setTimeout(() => { b.textContent = t; }, 1200);
+				} catch (err) {
+					logLine(`copy failed: ${err.message}`, 'err');
+				}
+			});
+		</script>
+	</body>
+</html>

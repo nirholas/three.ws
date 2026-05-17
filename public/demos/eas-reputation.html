@@ -1,0 +1,507 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1" />
+		<title>three.ws · Reputation attestations on Base</title>
+		<meta name="description" content="Read and write reputation attestations for any agent address on Base Sepolia testnet. Real Ethereum Attestation Service contract, real wallet signing — no mocks." />
+		<meta name="robots" content="noindex" />
+		<link rel="stylesheet" href="/style.css" />
+		<link rel="stylesheet" href="/nav.css" />
+		<style>
+			:root { color-scheme: dark; }
+			body { background: #05060a; color: #eee; font: 15px/1.5 -apple-system, system-ui, sans-serif; margin: 0; }
+			.stage { max-width: 1080px; margin: 0 auto; padding: 48px 24px 80px; }
+			.crumb a { color: #8a8d98; text-decoration: none; }
+			.crumb a:hover { color: #d6ff3d; }
+			h1 { font-size: 28px; font-weight: 600; letter-spacing: -0.015em; margin: 14px 0 8px; }
+			.sub { color: #8a8d98; max-width: 72ch; margin: 0 0 26px; }
+			.sub code { background: #0f1018; padding: 1px 6px; border-radius: 5px; font-size: 12.5px; color: #d6ff3d; }
+			h2 { font-size: 18px; font-weight: 600; margin: 0 0 14px; letter-spacing: -0.01em; }
+			.card { background: #0f1018; border: 1.5px solid #1e1f2b; border-radius: 14px; padding: 22px; margin: 0 0 22px; }
+			.row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+			label { display: flex; flex-direction: column; gap: 4px; font-size: 11px; color: #8a8d98; text-transform: uppercase; letter-spacing: 0.08em; flex: 1 1 240px; }
+			input[type=text], input[type=number] {
+				background: #07080d; border: 1px solid #1e1f2b; color: #eee;
+				padding: 9px 11px; border-radius: 9px; font: inherit;
+			}
+			button {
+				background: #d6ff3d; color: #0a0a0a; border: 0; border-radius: 9px;
+				padding: 9px 16px; font-weight: 600; cursor: pointer; font: inherit;
+			}
+			button.secondary { background: rgba(255,255,255,0.06); color: #eee; border: 1px solid #1e1f2b; }
+			button:disabled { opacity: 0.35; cursor: not-allowed; }
+			.pill {
+				display: inline-flex; align-items: center; gap: 6px;
+				font-family: ui-monospace, monospace; font-size: 11.5px;
+				padding: 4px 9px; border-radius: 999px;
+				background: rgba(214,255,61,0.08); color: #d6ff3d;
+				border: 1px solid rgba(214,255,61,0.2);
+			}
+			.pill.bad { background: rgba(255,138,138,0.08); color: #ff8a8a; border-color: rgba(255,138,138,0.25); }
+			.pill.muted { background: rgba(255,255,255,0.04); color: #8a8d98; border-color: #1e1f2b; }
+			.notice {
+				padding: 11px 14px; border-radius: 10px; font-size: 13px; margin: 12px 0;
+				background: rgba(154,212,255,0.06); border: 1px solid rgba(154,212,255,0.2); color: #9ad4ff;
+			}
+			.notice.warn { background: rgba(255,196,87,0.07); border-color: rgba(255,196,87,0.3); color: #ffc457; }
+			.notice.err { background: rgba(255,138,138,0.07); border-color: rgba(255,138,138,0.3); color: #ff8a8a; }
+			table { width: 100%; border-collapse: collapse; font-size: 12.5px; }
+			th, td { text-align: left; padding: 9px 10px; border-bottom: 1px solid #1e1f2b; vertical-align: top; }
+			th { color: #8a8d98; font-weight: 500; text-transform: uppercase; font-size: 10.5px; letter-spacing: 0.08em; }
+			td { font-family: ui-monospace, monospace; color: #ddd; word-break: break-word; }
+			td .score { color: #d6ff3d; font-weight: 600; }
+			td a { color: #9ad4ff; }
+			.log {
+				background: #07080d; border: 1px solid #1e1f2b; border-radius: 9px;
+				padding: 12px; font-family: ui-monospace, monospace; font-size: 12px;
+				line-height: 1.6; color: #8a8d98; max-height: 280px; overflow: auto; white-space: pre-wrap;
+			}
+			.log .ok { color: #d6ff3d; }
+			.log .err { color: #ff6b6b; }
+			.log .info { color: #66d9ef; }
+			.kv { display: grid; grid-template-columns: 130px 1fr; gap: 4px 14px; font-size: 12.5px; }
+			.kv dt { color: #8a8d98; font-size: 11px; text-transform: uppercase; letter-spacing: 0.07em; }
+			.kv dd { margin: 0; font-family: ui-monospace, monospace; color: #ddd; word-break: break-all; }
+			.kv dd a { color: #9ad4ff; }
+			.full { flex-basis: 100%; }
+			details summary { cursor: pointer; color: #8a8d98; font-size: 12px; padding: 4px 0; }
+			details pre { background: #07080d; border: 1px solid #1e1f2b; border-radius: 8px; padding: 12px; font-size: 11.5px; color: #b6b6cf; overflow-x: auto; }
+		</style>
+		<script type="importmap">
+			{
+				"imports": {
+					"@ethereum-attestation-service/eas-sdk": "https://esm.sh/@ethereum-attestation-service/eas-sdk@2.9.0?bundle-deps",
+					"ethers": "https://esm.sh/ethers@6.13.4"
+				}
+			}
+		</script>
+	</head>
+	<body>
+		<header><div id="nav-container"></div></header>
+
+		<main class="stage">
+			<p class="crumb"><a href="/demos/">&larr; lab</a></p>
+			<h1>three.ws &middot; Reputation attestations on Base</h1>
+			<p class="sub">
+				A reputation primitive for autonomous agents: read and write on-chain
+				attestations for any address. This demo runs entirely on
+				<b>Base Sepolia</b> (testnet, chainId <code>84532</code>) and talks
+				directly to the Ethereum Attestation Service contract at
+				<code>0x4200000000000000000000000000000000000021</code>.
+				No backend, no custodial keys &mdash; you sign every write yourself.
+			</p>
+
+			<section class="card">
+				<h2>1. Wallet</h2>
+				<div class="row" id="wallet-row">
+					<button id="connect-btn">Connect wallet</button>
+					<span id="wallet-pill" class="pill muted">not connected</span>
+					<span id="chain-pill" class="pill muted">no chain</span>
+					<button id="switch-btn" class="secondary" style="display:none">Switch to Base Sepolia</button>
+				</div>
+				<p class="notice" id="wallet-hint">
+					You need a few drops of Base Sepolia ETH to write an attestation.
+					Get it free at the
+					<a href="https://portal.cdp.coinbase.com/products/faucet" target="_blank" rel="noopener">Coinbase Base Sepolia faucet</a>
+					(under "Base Sepolia"), or the
+					<a href="https://www.alchemy.com/faucets/base-sepolia" target="_blank" rel="noopener">Alchemy faucet</a>.
+				</p>
+			</section>
+
+			<section class="card">
+				<h2>2. Read attestations for an agent</h2>
+				<div class="row">
+					<label class="full">
+						Agent address (recipient)
+						<input type="text" id="query-addr" placeholder="0x…" spellcheck="false" />
+					</label>
+					<label>
+						Schema UID (optional filter)
+						<input type="text" id="query-schema" placeholder="leave blank for all schemas" spellcheck="false" />
+					</label>
+					<button id="fetch-btn">Fetch attestations</button>
+				</div>
+				<div id="results-wrap" style="margin-top:16px"></div>
+			</section>
+
+			<section class="card">
+				<h2>3. Create an attestation</h2>
+				<div class="row">
+					<label class="full">
+						Schema UID
+						<input type="text" id="attest-schema" value="0xf58b8b212ef75ee8cd7e8d803c37c03e0519890502d5e99ee2412aae1456cafe" spellcheck="false" />
+					</label>
+					<label class="full">
+						Recipient (the agent being attested about)
+						<input type="text" id="attest-recipient" placeholder="0x…" spellcheck="false" />
+					</label>
+					<label style="flex:0 0 130px">
+						Score (0&ndash;100)
+						<input type="number" id="attest-score" min="0" max="100" value="85" />
+					</label>
+					<label>
+						Comment
+						<input type="text" id="attest-comment" value="Worked as advertised." />
+					</label>
+					<button id="attest-btn" disabled>Sign &amp; submit</button>
+				</div>
+				<details style="margin-top:12px">
+					<summary>Schema details &middot; <code>address agent, uint8 score, string comment</code></summary>
+					<pre>schemaString  : address agent, uint8 score, string comment
+chain         : Base Sepolia (84532)
+EAS contract  : 0x4200000000000000000000000000000000000021
+explorer      : https://base-sepolia.easscan.org/schema/view/&lt;UID&gt;
+
+If the default schema UID has not been registered on Base Sepolia, register
+your own at https://base-sepolia.easscan.org/schema/create with the schema
+string above, then paste the new UID here.</pre>
+				</details>
+				<div id="attest-result" style="margin-top:14px"></div>
+			</section>
+
+			<section class="card">
+				<h2>Log</h2>
+				<div class="log" id="log">ready.</div>
+			</section>
+		</main>
+
+		<script src="/nav.js" defer></script>
+		<script type="module">
+			import { BrowserProvider, isAddress, getAddress } from 'ethers';
+			import { EAS, SchemaEncoder } from '@ethereum-attestation-service/eas-sdk';
+
+			// --- constants ---
+			const BASE_SEPOLIA_CHAIN_ID = 84532;
+			const BASE_SEPOLIA_HEX = '0x14a34';
+			const EAS_ADDRESS = '0x4200000000000000000000000000000000000021';
+			const GRAPHQL_URL = 'https://base-sepolia.easscan.org/graphql';
+			const EASSCAN_BASE = 'https://base-sepolia.easscan.org';
+			const BASESCAN_BASE = 'https://sepolia.basescan.org';
+			const SCHEMA_STRING = 'address agent, uint8 score, string comment';
+
+			const $ = (id) => document.getElementById(id);
+			const log = $('log');
+			const logLine = (msg, cls = '') => {
+				const t = new Date().toTimeString().slice(0, 8);
+				log.innerHTML += `\n<span class="${cls}">[${t}] ${msg}</span>`;
+				log.scrollTop = log.scrollHeight;
+			};
+
+			let provider = null;
+			let signer = null;
+			let connectedAddress = null;
+			let connectedChainId = null;
+
+			// --- wallet plumbing ---
+			function updateWalletUI() {
+				const pill = $('wallet-pill');
+				const chainPill = $('chain-pill');
+				const switchBtn = $('switch-btn');
+				const attestBtn = $('attest-btn');
+
+				if (connectedAddress) {
+					pill.textContent = connectedAddress.slice(0, 6) + '…' + connectedAddress.slice(-4);
+					pill.className = 'pill';
+					$('connect-btn').textContent = 'Reconnect';
+				} else {
+					pill.textContent = 'not connected';
+					pill.className = 'pill muted';
+				}
+
+				if (connectedChainId === BASE_SEPOLIA_CHAIN_ID) {
+					chainPill.textContent = 'Base Sepolia · 84532';
+					chainPill.className = 'pill';
+					switchBtn.style.display = 'none';
+				} else if (connectedChainId != null) {
+					chainPill.textContent = `wrong chain · ${connectedChainId}`;
+					chainPill.className = 'pill bad';
+					switchBtn.style.display = '';
+				} else {
+					chainPill.textContent = 'no chain';
+					chainPill.className = 'pill muted';
+					switchBtn.style.display = 'none';
+				}
+
+				attestBtn.disabled = !(connectedAddress && connectedChainId === BASE_SEPOLIA_CHAIN_ID);
+			}
+
+			async function connect() {
+				if (!window.ethereum) {
+					logLine('no injected wallet found — install MetaMask, Rabby, or similar.', 'err');
+					return;
+				}
+				try {
+					logLine('requesting accounts…', 'info');
+					provider = new BrowserProvider(window.ethereum, 'any');
+					await provider.send('eth_requestAccounts', []);
+					signer = await provider.getSigner();
+					connectedAddress = await signer.getAddress();
+					const net = await provider.getNetwork();
+					connectedChainId = Number(net.chainId);
+					logLine(`connected ${connectedAddress} on chain ${connectedChainId}`, 'ok');
+					if (connectedChainId !== BASE_SEPOLIA_CHAIN_ID) {
+						logLine(`wrong chain (${connectedChainId}) — switch to Base Sepolia (84532) to write.`, 'err');
+					}
+					updateWalletUI();
+				} catch (err) {
+					logLine(`connect failed: ${err.shortMessage || err.message}`, 'err');
+				}
+			}
+
+			async function switchChain() {
+				if (!window.ethereum) return;
+				try {
+					await window.ethereum.request({
+						method: 'wallet_switchEthereumChain',
+						params: [{ chainId: BASE_SEPOLIA_HEX }],
+					});
+				} catch (err) {
+					if (err.code === 4902) {
+						// chain not added — add it
+						try {
+							await window.ethereum.request({
+								method: 'wallet_addEthereumChain',
+								params: [{
+									chainId: BASE_SEPOLIA_HEX,
+									chainName: 'Base Sepolia',
+									nativeCurrency: { name: 'Ether', symbol: 'ETH', decimals: 18 },
+									rpcUrls: ['https://sepolia.base.org'],
+									blockExplorerUrls: [BASESCAN_BASE],
+								}],
+							});
+						} catch (addErr) {
+							logLine(`add chain failed: ${addErr.message}`, 'err');
+							return;
+						}
+					} else {
+						logLine(`switch chain failed: ${err.message}`, 'err');
+						return;
+					}
+				}
+				// re-bind signer after switch
+				provider = new BrowserProvider(window.ethereum, 'any');
+				signer = await provider.getSigner();
+				connectedAddress = await signer.getAddress();
+				const net = await provider.getNetwork();
+				connectedChainId = Number(net.chainId);
+				logLine(`now on chain ${connectedChainId}`, connectedChainId === BASE_SEPOLIA_CHAIN_ID ? 'ok' : 'err');
+				updateWalletUI();
+			}
+
+			if (window.ethereum) {
+				window.ethereum.on?.('chainChanged', async (hex) => {
+					connectedChainId = parseInt(hex, 16);
+					if (provider) {
+						provider = new BrowserProvider(window.ethereum, 'any');
+						signer = await provider.getSigner().catch(() => null);
+					}
+					updateWalletUI();
+					logLine(`chainChanged → ${connectedChainId}`, 'info');
+				});
+				window.ethereum.on?.('accountsChanged', async (accts) => {
+					connectedAddress = accts[0] ? getAddress(accts[0]) : null;
+					if (provider && connectedAddress) {
+						signer = await provider.getSigner().catch(() => null);
+					} else {
+						signer = null;
+					}
+					updateWalletUI();
+					logLine(`accountsChanged → ${connectedAddress || 'none'}`, 'info');
+				});
+			}
+
+			$('connect-btn').addEventListener('click', connect);
+			$('switch-btn').addEventListener('click', switchChain);
+
+			// --- READ: GraphQL query against EASScan ---
+			async function fetchAttestations() {
+				const raw = $('query-addr').value.trim();
+				const schemaFilter = $('query-schema').value.trim();
+				const wrap = $('results-wrap');
+				if (!isAddress(raw)) {
+					wrap.innerHTML = '<div class="notice err">Enter a valid 0x address.</div>';
+					return;
+				}
+				const recipient = getAddress(raw);
+				wrap.innerHTML = '<div class="notice">Querying EAS GraphQL…</div>';
+				logLine(`GET attestations recipient=${recipient}${schemaFilter ? ` schema=${schemaFilter}` : ''}`, 'info');
+
+				const where = { recipient: { equals: recipient } };
+				if (schemaFilter) where.schemaId = { equals: schemaFilter };
+
+				const query = `
+					query Attestations($where: AttestationWhereInput!) {
+						attestations(
+							where: $where
+							orderBy: [{ time: desc }]
+							take: 50
+						) {
+							id
+							attester
+							recipient
+							schemaId
+							time
+							revoked
+							txid
+							data
+							decodedDataJson
+						}
+					}
+				`;
+				try {
+					const res = await fetch(GRAPHQL_URL, {
+						method: 'POST',
+						headers: { 'content-type': 'application/json' },
+						body: JSON.stringify({ query, variables: { where } }),
+					});
+					if (!res.ok) throw new Error(`GraphQL ${res.status}: ${await res.text()}`);
+					const body = await res.json();
+					if (body.errors) throw new Error(body.errors.map((e) => e.message).join('; '));
+					const rows = body.data?.attestations || [];
+					logLine(`got ${rows.length} attestation(s)`, 'ok');
+					renderResults(rows, recipient);
+				} catch (err) {
+					logLine(`fetch failed: ${err.message}`, 'err');
+					wrap.innerHTML = `<div class="notice err">Query failed: ${escapeHtml(err.message)}</div>`;
+				}
+			}
+
+			function renderResults(rows, recipient) {
+				const wrap = $('results-wrap');
+				if (!rows.length) {
+					wrap.innerHTML = `<div class="notice">No attestations found for <code>${recipient}</code> on Base Sepolia. Create one below — you'll be the first attester.</div>`;
+					return;
+				}
+				const trs = rows.map((r) => {
+					let score = '—';
+					let comment = '';
+					try {
+						const decoded = JSON.parse(r.decodedDataJson || '[]');
+						for (const f of decoded) {
+							if (f.name === 'score') score = String(f.value?.value ?? f.value);
+							if (f.name === 'comment') comment = String(f.value?.value ?? f.value);
+						}
+					} catch { /* schema may differ */ }
+					const ts = new Date(Number(r.time) * 1000).toISOString().replace('T', ' ').slice(0, 19);
+					const shortAttester = r.attester ? r.attester.slice(0, 6) + '…' + r.attester.slice(-4) : '—';
+					const txLink = r.txid ? `<a href="${BASESCAN_BASE}/tx/${r.txid}" target="_blank" rel="noopener">${r.txid.slice(0, 10)}…</a>` : '—';
+					const uidLink = `<a href="${EASSCAN_BASE}/attestation/view/${r.id}" target="_blank" rel="noopener">${r.id.slice(0, 10)}…</a>`;
+					const revoked = r.revoked ? ' <span class="pill bad" style="font-size:10px;padding:1px 6px">revoked</span>' : '';
+					return `<tr>
+						<td>${ts}</td>
+						<td title="${r.attester}">${shortAttester}</td>
+						<td><span class="score">${escapeHtml(score)}</span></td>
+						<td>${escapeHtml(comment)}</td>
+						<td>${txLink}</td>
+						<td>${uidLink}${revoked}</td>
+					</tr>`;
+				}).join('');
+				wrap.innerHTML = `
+					<table>
+						<thead>
+							<tr><th>Time (UTC)</th><th>Attester</th><th>Score</th><th>Comment</th><th>Tx</th><th>UID</th></tr>
+						</thead>
+						<tbody>${trs}</tbody>
+					</table>
+				`;
+			}
+
+			// --- WRITE: sign & submit attestation ---
+			async function submitAttestation() {
+				if (!signer) {
+					logLine('connect a wallet first', 'err');
+					return;
+				}
+				if (connectedChainId !== BASE_SEPOLIA_CHAIN_ID) {
+					logLine('switch to Base Sepolia first', 'err');
+					return;
+				}
+				const schemaUID = $('attest-schema').value.trim();
+				const recipientRaw = $('attest-recipient').value.trim();
+				const scoreRaw = $('attest-score').value.trim();
+				const comment = $('attest-comment').value;
+				const out = $('attest-result');
+
+				if (!/^0x[0-9a-fA-F]{64}$/.test(schemaUID)) {
+					out.innerHTML = '<div class="notice err">Schema UID must be a 0x-prefixed 32-byte hex string.</div>';
+					return;
+				}
+				if (!isAddress(recipientRaw)) {
+					out.innerHTML = '<div class="notice err">Recipient must be a valid 0x address.</div>';
+					return;
+				}
+				const score = Number(scoreRaw);
+				if (!Number.isInteger(score) || score < 0 || score > 100) {
+					out.innerHTML = '<div class="notice err">Score must be an integer 0–100.</div>';
+					return;
+				}
+				const recipient = getAddress(recipientRaw);
+
+				out.innerHTML = '<div class="notice">Encoding attestation data…</div>';
+				$('attest-btn').disabled = true;
+
+				try {
+					const encoder = new SchemaEncoder(SCHEMA_STRING);
+					const encodedData = encoder.encodeData([
+						{ name: 'agent',   value: recipient, type: 'address' },
+						{ name: 'score',   value: score,     type: 'uint8'   },
+						{ name: 'comment', value: comment,   type: 'string'  },
+					]);
+					logLine(`encoded ${encodedData.length / 2 - 1} bytes of data`, 'info');
+
+					const eas = new EAS(EAS_ADDRESS);
+					eas.connect(signer);
+
+					out.innerHTML = '<div class="notice">Awaiting wallet signature…</div>';
+					logLine('calling EAS.attest() — wallet popup should appear', 'info');
+
+					const tx = await eas.attest({
+						schema: schemaUID,
+						data: {
+							recipient,
+							expirationTime: 0n,
+							revocable: true,
+							data: encodedData,
+						},
+					});
+					const txHash = tx.tx?.hash || tx.hash;
+					logLine(`tx submitted: ${txHash}`, 'ok');
+					out.innerHTML = `<div class="notice">Tx submitted: <a href="${BASESCAN_BASE}/tx/${txHash}" target="_blank" rel="noopener">${txHash}</a> &middot; waiting for confirmation…</div>`;
+
+					const newAttestationUID = await tx.wait();
+					logLine(`confirmed. attestation UID = ${newAttestationUID}`, 'ok');
+					out.innerHTML = `
+						<div class="notice">
+							Confirmed. <br>
+							Attestation UID: <a href="${EASSCAN_BASE}/attestation/view/${newAttestationUID}" target="_blank" rel="noopener">${newAttestationUID}</a><br>
+							Tx: <a href="${BASESCAN_BASE}/tx/${txHash}" target="_blank" rel="noopener">${txHash}</a>
+						</div>
+					`;
+
+					// auto-prefill the read query
+					$('query-addr').value = recipient;
+					$('query-schema').value = schemaUID;
+				} catch (err) {
+					const msg = err.shortMessage || err.reason || err.message || String(err);
+					logLine(`attest failed: ${msg}`, 'err');
+					out.innerHTML = `<div class="notice err">Attestation failed: ${escapeHtml(msg)}</div>`;
+				} finally {
+					updateWalletUI();
+				}
+			}
+
+			$('fetch-btn').addEventListener('click', fetchAttestations);
+			$('attest-btn').addEventListener('click', submitAttestation);
+
+			function escapeHtml(s) {
+				return String(s).replace(/[&<>"']/g, (c) => ({
+					'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;',
+				}[c]));
+			}
+
+			updateWalletUI();
+			logLine(`EAS contract: ${EAS_ADDRESS} on Base Sepolia (84532). Read works without a wallet; write requires testnet ETH.`, 'info');
+		</script>
+	</body>
+</html>
