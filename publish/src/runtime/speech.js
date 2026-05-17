@@ -180,6 +180,21 @@ export class ElevenLabsTTS {
 		this._audio = null; // current <audio> element
 		this._mediaSourceURL = null; // for revocation
 		this._onEnd = null; // pending resolve
+
+		// Web Audio nodes wired so LipSyncAnalyser can read frequency data
+		// directly from the TTS audio stream without spinning a private context.
+		this._audioCtx     = null;
+		this._analyserNode = null;
+		this._mediaSource  = null;
+
+		// Settable hooks for global wiring (AgentAvatar uses these to drive lipsync).
+		this.onStart = null;
+		this.onEnd   = null;
+	}
+
+	/** Expose the shared AnalyserNode so LipSyncAnalyser can read frequency data. */
+	get analyserNode() {
+		return this._analyserNode;
 	}
 
 	async speak(text, { onStart, onEnd } = {}) {
@@ -250,6 +265,7 @@ export class ElevenLabsTTS {
 			this._onEnd = () => {
 				this._speaking = false;
 				this._cleanupAudio();
+				this.onEnd?.();
 				onEnd?.();
 				this._onEnd = null;
 				resolve();
@@ -259,10 +275,15 @@ export class ElevenLabsTTS {
 				if (this._onEnd) this._onEnd();
 			};
 
+			const fireStart = () => {
+				this.onStart?.();
+				onStart?.();
+			};
+
 			if (supportsMSE && resp.body) {
-				this._playStreamingMSE(resp.body, () => playStarted(onStart), finishOnError);
+				this._playStreamingMSE(resp.body, () => playStarted(fireStart), finishOnError);
 			} else {
-				this._playBuffered(resp, () => playStarted(onStart), finishOnError);
+				this._playBuffered(resp, () => playStarted(fireStart), finishOnError);
 			}
 		});
 	}
@@ -284,6 +305,29 @@ export class ElevenLabsTTS {
 		return this._speaking;
 	}
 
+	// ── Internal: Web Audio analyser for LipSyncAnalyser ──────────────────
+	// Creates a shared AudioContext + AnalyserNode and wires the freshly minted
+	// <audio> element through it. Idempotent across speak() calls.
+	_setupAnalyser(audio) {
+		const AC = window.AudioContext || window.webkitAudioContext;
+		if (!AC) return;
+		try {
+			if (!this._audioCtx || this._audioCtx.state === 'closed') {
+				this._audioCtx     = new AC();
+				this._analyserNode = this._audioCtx.createAnalyser();
+				this._analyserNode.fftSize               = 256;
+				this._analyserNode.smoothingTimeConstant = 0.7;
+				this._analyserNode.connect(this._audioCtx.destination);
+			}
+			try { this._mediaSource?.disconnect(); } catch {}
+			this._mediaSource = this._audioCtx.createMediaElementSource(audio);
+			this._mediaSource.connect(this._analyserNode);
+			this._audioCtx.resume().catch(() => {});
+		} catch {
+			// Degrade silently — CORS, autoplay policy, or element already captured
+		}
+	}
+
 	// ── Internal: streaming via MediaSource ────────────────────────────────
 
 	_playStreamingMSE(stream, onStart, onError) {
@@ -292,6 +336,9 @@ export class ElevenLabsTTS {
 		const audio = new Audio(this._mediaSourceURL);
 		this._audio = audio;
 		audio.preload = 'auto';
+		// Wire Web Audio analyser before playback starts so analyserNode is ready
+		// when the 'playing' event fires (which triggers onStart → avatar.connectLipSync).
+		this._setupAnalyser(audio);
 
 		audio.addEventListener('playing', onStart, { once: true });
 		audio.addEventListener('ended', () => this._onEnd?.(), { once: true });
@@ -363,6 +410,7 @@ export class ElevenLabsTTS {
 			this._mediaSourceURL = url;
 			const audio = new Audio(url);
 			this._audio = audio;
+			this._setupAnalyser(audio);
 			audio.addEventListener('playing', onStart, { once: true });
 			audio.addEventListener('ended', () => this._onEnd?.(), { once: true });
 			audio.addEventListener('error', () => onError?.(), { once: true });
