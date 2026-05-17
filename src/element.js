@@ -1417,8 +1417,7 @@ class Agent3DElement extends HTMLElement {
 						if (tts.analyserNode) avatar.connectLipSync(tts.analyserNode);
 					};
 					tts.onEnd = () => {
-						avatar._lipSync?.disconnect();
-						avatar._lipSync = null;
+						avatar.disconnectLipSync();
 					};
 				}
 			} catch (e) {

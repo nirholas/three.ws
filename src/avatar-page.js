@@ -229,6 +229,7 @@ function renderShell(glbUrl) {
 					<span class="av-cta-talk-dot" aria-hidden="true"></span>
 					<span>Talk to ${esc(avatar.name)}</span>
 				</button>
+				${avatar.owner_id ? `<a class="av-cta-edit-link" href="/avatars/${encodeURIComponent(avatar.id || avatarId)}/edit">Customize appearance →</a>` : ''}
 			</div>
 			<div class="av-cta-row">
 				<button class="av-cta" id="av-use">Start an agent</button>

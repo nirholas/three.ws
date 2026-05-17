@@ -41,6 +41,10 @@
 			"dest": "/api/wk?name=agent-attestation-schemas"
 		},
 		{
+			"src": "/\\.well-known/jwks\\.json",
+			"dest": "/api/auth/persona/[action]?action=jwks"
+		},
+		{
 			"src": "/\\.well-known/oauth-authorization-server",
 			"dest": "/api/wk?name=oauth-authorization-server"
 		},
@@ -919,6 +923,10 @@
 			"dest": "/agent-edit.html"
 		},
 		{
+			"src": "/avatars/([^/]+)/edit",
+			"dest": "/avatar-edit.html?id=$1"
+		},
+		{
 			"src": "/agent/([^/]+)/embed",
 			"headers": {
 				"content-security-policy": "frame-ancestors *",
@@ -1349,6 +1357,18 @@
 			"dest": "/sitemap/index.html"
 		},
 		{
+			"src": "/blog",
+			"dest": "/blog/index.html"
+		},
+		{
+			"src": "/blog/",
+			"dest": "/blog/index.html"
+		},
+		{
+			"src": "/blog/([a-z0-9-]+)/?",
+			"dest": "/blog/$1.html"
+		},
+		{
 			"src": "/llms.txt",
 			"headers": { "content-type": "text/plain; charset=utf-8", "cache-control": "public, max-age=3600" },
 			"dest": "/llms.txt"
@@ -1377,6 +1397,14 @@
 		{
 			"src": "/chat/(.*)",
 			"dest": "/chat/$1"
+		},
+		{
+			"src": "/create/selfie",
+			"dest": "/create-selfie.html"
+		},
+		{
+			"src": "/create/selfie/",
+			"dest": "/create-selfie.html"
 		},
 		{
 			"src": "/create",
@@ -1417,6 +1445,20 @@
 			"status": 301,
 			"headers": {
 				"Location": "/discover"
+			}
+		},
+		{
+			"src": "/dappbay",
+			"status": 302,
+			"headers": {
+				"Location": "https://dappbay.bnbchain.org/detail/three"
+			}
+		},
+		{
+			"src": "/dappbay/",
+			"status": 302,
+			"headers": {
+				"Location": "https://dappbay.bnbchain.org/detail/three"
 			}
 		},
 		{

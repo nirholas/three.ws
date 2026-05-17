@@ -4,6 +4,21 @@ import { AvatarCreator } from './avatar-creator.js';
 // GLB magic bytes: ASCII "glTF"
 const GLB_MAGIC = [0x67, 0x6c, 0x54, 0x46];
 
+// Surface ARKit-52 conformance results to the user. The companions pipeline
+// dispatches `three-ws:arkit-report` on document once the GLB has been
+// inspected. Avatars with full coverage are silent — we only nudge when a
+// rig is missing morphs, since that's the actionable case.
+document.addEventListener('three-ws:arkit-report', (event) => {
+	const detail = /** @type {CustomEvent} */ (event).detail || {};
+	const coverage = Math.round((detail.coverage || 0) * 100);
+	const implemented = detail.implemented?.length ?? 0;
+	if (coverage >= 100) return;
+	showStatus(
+		`Avatar saved · ${coverage}% ARKit blendshape coverage (${implemented}/52). Missing morphs render flatter — see docs/avatar-creation.md.`,
+		'info',
+	);
+});
+
 async function boot() {
 	const creator = new AvatarCreator(document.body, (blob, meta = {}) => {
 		const provider = meta.provider || 'avaturn';
@@ -27,7 +42,10 @@ async function boot() {
 	});
 	wireCard('card-selfie', async () => {
 		if (await isAtAvatarLimit()) return;
-		creator.openDefaultEditor();
+		// Real 3-photo flow lives at /create/selfie. Pulls camera or upload,
+		// posts to /api/onboarding/avaturn-session, then redirects back to /
+		// with #avatarSession so the main viewer's AvatarCreator picks it up.
+		window.location.href = '/create/selfie';
 	});
 	wireCard('card-upload-glb', (e) => {
 		// Tooltip anchors live inside the card; let them navigate normally.

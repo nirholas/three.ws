@@ -6,7 +6,7 @@
 //   High (2k–8k Hz)   → sibilants + fricatives:   viseme_SS, viseme_FF, viseme_CH
 //   Amplitude dip     → bilabial closure:          viseme_PP
 
-const VISEMES = [
+export const VISEMES = [
 	'viseme_aa', 'viseme_O', 'viseme_E', 'viseme_I', 'viseme_nn',
 	'viseme_SS', 'viseme_FF', 'viseme_CH', 'viseme_PP',
 ];
@@ -32,6 +32,11 @@ export class LipSyncAnalyser {
 		this._out  = {};
 		this._prev = {};
 		for (const n of VISEMES) this._out[n] = this._prev[n] = 0;
+
+		// Smoothed overall amplitude (0..1) — exposed via getAmplitude() so
+		// non-ARKit avatars (no viseme morphs) can drive a single jaw morph.
+		this._amplitude     = 0;
+		this._prevAmplitude = 0;
 	}
 
 	/**
@@ -92,6 +97,19 @@ export class LipSyncAnalyser {
 		}
 		this._ctx = this._analyser = this._source = this._freqBuf = null;
 		for (const n of VISEMES) this._out[n] = this._prev[n] = 0;
+		this._amplitude = this._prevAmplitude = 0;
+	}
+
+	/**
+	 * Last sampled overall amplitude (0..1), smoothed by the same EMA as the
+	 * viseme weights. Updated by every call to sample(). Returns 0 before the
+	 * first sample or after disconnect.
+	 *
+	 * Non-ARKit avatars (no viseme morphs) can drive jawOpen/mouthOpen directly
+	 * from this without re-running spectral analysis.
+	 */
+	getAmplitude() {
+		return this._amplitude;
 	}
 
 	/**
@@ -117,6 +135,7 @@ export class LipSyncAnalyser {
 				this._prev[k] = n;
 				this._out[k]  = n;
 			}
+			this._prevAmplitude = this._amplitude = this._prevAmplitude * 0.75;
 			return this._out;
 		}
 
@@ -138,6 +157,9 @@ export class LipSyncAnalyser {
 			this._prev[k] = n;
 			this._out[k]  = n;
 		}
+		// Smoothed amplitude tracks the same EMA so the jaw fallback feels
+		// in-step with the viseme weights instead of leading or lagging them.
+		this._prevAmplitude = this._amplitude = this._prevAmplitude + (overall - this._prevAmplitude) * 0.25;
 		return this._out;
 	}
 }

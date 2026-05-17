@@ -217,8 +217,38 @@
 		<lastmod>2026-05-17</lastmod>
 	</url>
 	<url>
+		<loc>https://three.ws/docs/listings</loc>
+		<lastmod>2026-05-17</lastmod>
+		<changefreq>monthly</changefreq>
+		<priority>0.5</priority>
+	</url>
+	<url>
 		<loc>https://three.ws/tutorials</loc>
 		<lastmod>2026-05-17</lastmod>
+	</url>
+	<url>
+		<loc>https://three.ws/blog</loc>
+		<lastmod>2026-05-17</lastmod>
+		<changefreq>weekly</changefreq>
+		<priority>0.7</priority>
+	</url>
+	<url>
+		<loc>https://three.ws/blog/three-ws-on-alibaba-cloud-marketplace</loc>
+		<lastmod>2026-05-17</lastmod>
+		<changefreq>monthly</changefreq>
+		<priority>0.6</priority>
+	</url>
+	<url>
+		<loc>https://three.ws/blog/three-ws-on-bnb-chain-dappbay</loc>
+		<lastmod>2026-05-17</lastmod>
+		<changefreq>monthly</changefreq>
+		<priority>0.6</priority>
+	</url>
+	<url>
+		<loc>https://three.ws/blog/how-to-embed-3d-onchain-agents</loc>
+		<lastmod>2026-05-15</lastmod>
+		<changefreq>monthly</changefreq>
+		<priority>0.5</priority>
 	</url>
 	<url>
 		<loc>https://three.ws/legal/privacy</loc>

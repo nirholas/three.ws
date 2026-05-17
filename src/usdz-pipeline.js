@@ -11,6 +11,7 @@
 // without any external converter or hosted RPM endpoint.
 
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+import { conformanceReport } from './runtime/arkit52.js';
 import { GLTFExporter } from 'three/addons/exporters/GLTFExporter.js';
 import { USDZExporter } from 'three/addons/exporters/USDZExporter.js';
 import { MeshStandardMaterial, Color, DoubleSide } from 'three';
@@ -154,4 +155,21 @@ export async function glbBlobToHalfBodyBlob(glbBlob) {
 		);
 	});
 	return new Blob([buffer], { type: 'model/gltf-binary' });
+}
+
+/**
+ * Inspect a GLB Blob and report which of the 52 canonical ARKit blendshapes
+ * the avatar implements (including via known aliases — snake_case, _L/_R
+ * suffixes, combined-shape fanout). Used by the upload pipeline to attach
+ * coverage metadata so the editor can surface gaps to the user and the
+ * Empathy Layer knows up-front what it can drive.
+ *
+ * @param {Blob} glbBlob
+ * @returns {Promise<{ implemented: string[], missing: string[], coverage: number }>}
+ */
+export async function glbBlobToArkitReport(glbBlob) {
+	const gltf = await _loadGlbBlob(glbBlob);
+	const scene = gltf.scene || gltf.scenes?.[0];
+	if (!scene) throw new Error('arkit: glb contained no scene');
+	return conformanceReport(scene);
 }

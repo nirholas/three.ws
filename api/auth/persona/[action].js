@@ -31,7 +31,7 @@
 //     Returns the user's avatar catalog so the consent UI can render a
 //     picker without a second round trip.
 
-import { SignJWT, jwtVerify } from 'jose';
+import { SignJWT, jwtVerify, importPKCS8, importSPKI, exportJWK } from 'jose';
 import { getSessionUser } from '../../_lib/auth.js';
 import { sql } from '../../_lib/db.js';
 import { env } from '../../_lib/env.js';
@@ -41,10 +41,61 @@ import { cors, json, error, method, readJson, wrap } from '../../_lib/http.js';
 
 const PERSONA_TTL_SEC = 60 * 60 * 24; // 24h
 
-let _jwtKey;
-function jwtKey() {
-	if (!_jwtKey) _jwtKey = new TextEncoder().encode(env.JWT_SECRET);
-	return _jwtKey;
+// Persona Hub supports two signing modes:
+//   - ES256 (preferred): when PERSONA_JWKS_PRIVATE_KEY_PEM is set, persona
+//     tokens are signed with that EC P-256 private key and the public key is
+//     published at /.well-known/jwks.json so tenants can verify offline.
+//     Generate one with: `node scripts/generate-persona-key.mjs`.
+//   - HS256 (fallback): JWT_SECRET shared secret; tenants must hit the
+//     /verify endpoint since the secret can't be published.
+//
+// Verification accepts both, so existing tokens keep working through a key
+// rollover.
+
+let _hsKey;
+function hsKey() {
+	if (!_hsKey) _hsKey = new TextEncoder().encode(env.JWT_SECRET);
+	return _hsKey;
+}
+
+let _esKeys = null; // { kid, alg, privateKey, publicKey, publicJwk }
+async function esKeys() {
+	if (_esKeys) return _esKeys;
+	const pem = process.env.PERSONA_JWKS_PRIVATE_KEY_PEM;
+	if (!pem) return null;
+	const pkcs8 = pem.replace(/\\n/g, '\n');
+	const privateKey = await importPKCS8(pkcs8, 'ES256');
+	const publicPem = process.env.PERSONA_JWKS_PUBLIC_KEY_PEM
+		? process.env.PERSONA_JWKS_PUBLIC_KEY_PEM.replace(/\\n/g, '\n')
+		: null;
+	let publicKey;
+	if (publicPem) {
+		publicKey = await importSPKI(publicPem, 'ES256');
+	} else {
+		// Without the explicit public key we derive a JWK from the private key's
+		// public bits (jose's exportJWK on a private CryptoKey returns the public
+		// JWK fields plus `d`; we drop `d` for publication).
+		publicKey = privateKey;
+	}
+	const fullJwk = await exportJWK(publicKey);
+	delete fullJwk.d;
+	const publicJwk = {
+		kty: fullJwk.kty,
+		crv: fullJwk.crv,
+		x: fullJwk.x,
+		y: fullJwk.y,
+		alg: 'ES256',
+		use: 'sig',
+		kid: process.env.PERSONA_JWKS_KID || 'persona-es256-1',
+	};
+	_esKeys = {
+		kid: publicJwk.kid,
+		alg: 'ES256',
+		privateKey,
+		publicKey,
+		publicJwk,
+	};
+	return _esKeys;
 }
 
 // Tenant origin must be a valid https URL on a three.ws subdomain, or a
@@ -104,25 +155,31 @@ async function handleIssue(req, res) {
 	}
 
 	const now = Math.floor(Date.now() / 1000);
+	const es = await esKeys();
+	const alg = es ? 'ES256' : 'HS256';
+	const kid = es ? es.kid : env.JWT_KID;
+	const signingKey = es ? es.privateKey : hsKey();
+
 	const token = await new SignJWT({
 		scope: 'persona:read avatar:read',
 		token_use: 'persona',
 		avatar,
 	})
-		.setProtectedHeader({ alg: 'HS256', kid: env.JWT_KID, typ: 'JWT' })
+		.setProtectedHeader({ alg, kid, typ: 'JWT' })
 		.setIssuer(env.ISSUER)
 		.setSubject(user.id)
 		.setAudience(tenantOrigin)
 		.setIssuedAt(now)
 		.setExpirationTime(now + PERSONA_TTL_SEC)
 		.setJti(randomToken(16))
-		.sign(jwtKey());
+		.sign(signingKey);
 
 	return json(res, 200, {
 		token,
 		expires_in: PERSONA_TTL_SEC,
 		avatar,
 		tenant_origin: tenantOrigin,
+		alg,
 	});
 }
 
@@ -136,15 +193,34 @@ async function handleVerify(req, res) {
 	if (!token) return error(res, 400, 'invalid_request', 'token query param required');
 	if (!audience) return error(res, 400, 'invalid_request', 'audience query param required');
 
+	// Try ES256 first when configured, then fall back to HS256 so tokens
+	// minted with the legacy shared-secret signer still verify during a key
+	// rotation.
 	let payload;
-	try {
-		({ payload } = await jwtVerify(token, jwtKey(), {
-			issuer: env.ISSUER,
-			audience,
-			algorithms: ['HS256'],
-		}));
-	} catch (err) {
-		return error(res, 401, 'invalid_token', err?.message || 'verification failed');
+	const es = await esKeys();
+	let lastErr = null;
+	if (es) {
+		try {
+			({ payload } = await jwtVerify(token, es.publicKey, {
+				issuer: env.ISSUER,
+				audience,
+				algorithms: ['ES256'],
+			}));
+		} catch (err) {
+			lastErr = err;
+		}
+	}
+	if (!payload) {
+		try {
+			({ payload } = await jwtVerify(token, hsKey(), {
+				issuer: env.ISSUER,
+				audience,
+				algorithms: ['HS256'],
+			}));
+		} catch (hsErr) {
+			const reason = (lastErr ?? hsErr)?.message || 'verification failed';
+			return error(res, 401, 'invalid_token', reason);
+		}
 	}
 
 	if (payload.token_use !== 'persona') {
@@ -159,6 +235,24 @@ async function handleVerify(req, res) {
 		exp: payload.exp,
 		avatar: payload.avatar,
 	});
+}
+
+async function handleJwks(req, res) {
+	if (cors(req, res, { methods: 'GET,OPTIONS', credentials: false })) return;
+	if (!method(req, res, ['GET'])) return;
+	const es = await esKeys();
+	const keys = es ? [es.publicJwk] : [];
+	res.setHeader('content-type', 'application/jwk-set+json; charset=utf-8');
+	res.setHeader('cache-control', 'public, max-age=3600, s-maxage=86400');
+	res.setHeader('access-control-allow-origin', '*');
+	if (!keys.length) {
+		res.setHeader(
+			'x-three-ws-status',
+			'no PERSONA_JWKS_PRIVATE_KEY_PEM configured; persona tokens are HS256, verify via /api/auth/persona/verify',
+		);
+	}
+	res.statusCode = 200;
+	res.end(JSON.stringify({ keys }));
 }
 
 async function handleMe(req, res) {
@@ -193,5 +287,6 @@ export default wrap(async (req, res) => {
 	if (action === 'issue') return handleIssue(req, res);
 	if (action === 'verify') return handleVerify(req, res);
 	if (action === 'me') return handleMe(req, res);
+	if (action === 'jwks') return handleJwks(req, res);
 	return error(res, 404, 'not_found', `unknown persona action: ${action}`);
 });

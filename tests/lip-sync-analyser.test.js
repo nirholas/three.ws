@@ -158,4 +158,42 @@ describe('LipSyncAnalyser', () => {
 		analyser.connect({ totally: 'not an audio node' });
 		expect(analyser.sample()).toBeNull();
 	});
+
+	it('getAmplitude() reports 0 before connect, tracks signal level after sampling, decays on silence', () => {
+		expect(analyser.getAmplitude()).toBe(0);
+
+		const fake = new FakeAnalyserNode({ spectrum: () => 220 });
+		analyser.connect(fake);
+		// Single frame: amplitude rises from 0 but does not snap to the full target (EMA).
+		analyser.sample();
+		const first = analyser.getAmplitude();
+		expect(first).toBeGreaterThan(0);
+		expect(first).toBeLessThan(220 / 255);
+
+		// Settle.
+		for (let i = 0; i < 60; i++) analyser.sample();
+		const stable = analyser.getAmplitude();
+		expect(stable).toBeGreaterThan(0.7); // ~220/255 ≈ 0.86
+		expect(stable).toBeLessThan(0.95);
+
+		// Silence — amplitude decays monotonically.
+		fake.setSpectrum(() => 0);
+		let prev = stable;
+		for (let i = 0; i < 30; i++) {
+			analyser.sample();
+			const now = analyser.getAmplitude();
+			expect(now).toBeLessThanOrEqual(prev + 1e-9);
+			prev = now;
+		}
+		expect(prev).toBeLessThan(stable * 0.1);
+	});
+
+	it('disconnect() resets amplitude to 0', () => {
+		const fake = new FakeAnalyserNode({ spectrum: () => 220 });
+		analyser.connect(fake);
+		for (let i = 0; i < 30; i++) analyser.sample();
+		expect(analyser.getAmplitude()).toBeGreaterThan(0);
+		analyser.disconnect();
+		expect(analyser.getAmplitude()).toBe(0);
+	});
 });

@@ -108,7 +108,35 @@ if (!res.ok) throw new Error(claims.error_description);
 // claims.exp        — Unix timestamp
 ```
 
-Tokens are HS256-signed with `JWT_SECRET`. Tenants that prefer offline verification can use the JWKS endpoint at `/.well-known/jwks.json` (not yet shipped — use `/verify` for now).
+### Two signing modes
+
+| Mode | Algorithm | When | Verification |
+|---|---|---|---|
+| **ES256** (preferred) | EC P-256 asymmetric | `PERSONA_JWKS_PRIVATE_KEY_PEM` env var set | Offline via [JWKS endpoint](https://three.ws/.well-known/jwks.json), or `/verify` |
+| **HS256** (fallback) | HMAC-SHA256 with `JWT_SECRET` | No persona keypair configured | Must hit `/verify` — secret can't be published |
+
+Generate an ES256 keypair with:
+
+```bash
+node scripts/generate-persona-key.mjs
+```
+
+then paste the output into Vercel env. The verify endpoint accepts both algorithms during rotation so tokens minted before key install keep working until they expire.
+
+### Offline verification (ES256 only)
+
+```js
+import { jwtVerify, createRemoteJWKSet } from 'jose';
+
+const JWKS = createRemoteJWKSet(new URL('https://three.ws/.well-known/jwks.json'));
+
+const { payload } = await jwtVerify(token, JWKS, {
+  issuer: 'https://three.ws',
+  audience: 'https://coolgame.three.ws',
+  algorithms: ['ES256'],
+});
+// payload.sub, payload.avatar, etc.
+```
 
 ---
 

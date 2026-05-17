@@ -156,7 +156,33 @@ export async function saveRemoteGlbToAccount(source, meta = {}) {
 }
 
 export async function generateAndSaveCompanions(avatarId, glbBlob) {
-	const { glbBlobToUsdzBlob, glbBlobToHalfBodyBlob } = await import('./usdz-pipeline.js');
+	const { glbBlobToUsdzBlob, glbBlobToHalfBodyBlob, glbBlobToArkitReport } = await import(
+		'./usdz-pipeline.js'
+	);
+
+	// ARKit-52 conformance check — runs in the background, dispatches a
+	// `three-ws:arkit-report` CustomEvent so pages can show coverage to the
+	// user. Independent of usdz / halfbody passes so a failure here doesn't
+	// block them.
+	(async () => {
+		let report;
+		try {
+			report = await glbBlobToArkitReport(glbBlob);
+		} catch (err) {
+			console.warn('[account] arkit report failed:', err?.message);
+			return;
+		}
+		console.info(
+			`[account] avatar ${avatarId} ARKit-52 coverage: ${Math.round(report.coverage * 100)}% (${report.implemented.length}/52)`,
+		);
+		try {
+			document.dispatchEvent(
+				new CustomEvent('three-ws:arkit-report', {
+					detail: { avatarId, ...report },
+				}),
+			);
+		} catch (_) {}
+	})();
 
 	// USDZ companion for iOS Quick Look. Independent of the half-body pass so
 	// a failure in one doesn't poison the other.
