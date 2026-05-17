@@ -131,7 +131,7 @@ const ROUTE_BAZAAR = {
 	schema: DISCOVERY_OUTPUT_SCHEMA,
 };
 
-function buildRequirements() {
+function buildRequirements(resourceUrl) {
 	return [
 		{
 			scheme: 'exact',
@@ -140,6 +140,7 @@ function buildRequirements() {
 			payTo: env.X402_PAY_TO_BASE,
 			asset: env.X402_ASSET_ADDRESS_BASE,
 			maxTimeoutSeconds: 60,
+			resource: resourceUrl,
 			extra: { name: 'USD Coin', version: '2', decimals: 6 },
 		},
 	];
@@ -193,14 +194,14 @@ async function buildMesh(mint) {
 }
 
 export default wrap(async (req, res) => {
-	if (cors(req, res, { methods: 'GET,OPTIONS' })) return;
+	if (cors(req, res, { methods: 'GET,OPTIONS', origins: '*' })) return;
 	if (req.method !== 'GET') {
 		res.setHeader('allow', 'GET');
 		return error(res, 405, 'method_not_allowed', 'use GET');
 	}
 
 	const resourceUrl = resolveResourceUrl(req, ROUTE);
-	const requirements = buildRequirements();
+	const requirements = buildRequirements(resourceUrl);
 	const challenge = {
 		resourceUrl,
 		accepts: requirements,

@@ -68,11 +68,12 @@ export class X402Error extends Error {
 //
 // In v2, `resource` / `description` / `mimeType` are top-level on the 402 body
 // (not per-accepts), and the price field is `amount` (not `maxAmountRequired`).
-export function paymentRequirements() {
+export function paymentRequirements(resourceUrl) {
 	const common = {
 		scheme: 'exact',
 		amount: env.X402_MAX_AMOUNT_REQUIRED,
 		maxTimeoutSeconds: 60,
+		...(resourceUrl ? { resource: resourceUrl } : {}),
 	};
 	const out = [];
 	if (env.X402_PAY_TO_BASE) {

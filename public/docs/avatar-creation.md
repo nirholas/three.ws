@@ -192,7 +192,7 @@ Open the editor for your avatar and click the **Regenerate** button. The regener
 
 Each mode accepts optional parameters as a JSON object. The job runs asynchronously and the panel polls for completion every 3 seconds.
 
-**Note:** Avatar regeneration is in limited availability. If your deployment shows a waitlist banner in this panel, email hello@3dagent.ai to join the early access list.
+**Note:** Avatar regeneration is in limited availability. If your deployment shows a waitlist banner in this panel, email support@three.ws to join the early access list.
 
 ---
 
@@ -313,4 +313,4 @@ Apply Draco compression in Blender (File → Export glTF → Compression) or wit
 Your browser or device doesn't support `getUserMedia`. This is common on HTTP (non-HTTPS) connections and some desktop browsers. Use the Upload option instead.
 
 **The regeneration panel shows a waitlist message**
-The ML regeneration backend is not enabled on this deployment. Join the early access list via hello@3dagent.ai.
+The ML regeneration backend is not enabled on this deployment. Join the early access list via support@three.ws.

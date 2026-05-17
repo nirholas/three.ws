@@ -334,7 +334,7 @@ Self-hosters should either pin the CDN URL with an SRI hash, or mirror the bundl
 
 Found a vulnerability? Report it privately:
 
-- **Email:** hello@three.ws
+- **Email:** support@three.ws
 - **Security policy:** [https://three.ws/.well-known/security.txt](https://three.ws/.well-known/security.txt)
 
 We aim to acknowledge reports within 48 hours and ship patches for critical issues within 7 days. Please do not publicly disclose a vulnerability before a fix is available. We ask that you give us a reasonable window to address the issue before disclosure.

@@ -151,7 +151,7 @@ function handleOauthProtectedResource(req, res) {
 
 function handleX402(req, res) {
 	const mcpResource = `${env.APP_ORIGIN}/api/mcp`;
-	const body = build402Body({ resourceUrl: mcpResource, accepts: paymentRequirements() });
+	const body = build402Body({ resourceUrl: mcpResource, accepts: paymentRequirements(mcpResource) });
 	return json(
 		res,
 		200,

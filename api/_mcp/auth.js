@@ -44,7 +44,7 @@ export async function authenticateRequest(req, res) {
 	}
 
 	const resourceUrl = resolveResourceUrl(req, '/api/mcp');
-	const requirements = paymentRequirements();
+	const requirements = paymentRequirements(resourceUrl);
 
 	if (paymentHeader) {
 		try {
@@ -89,9 +89,10 @@ export async function handleSse(req, res) {
 	// so x402scan / x402 clients can discover the price. Invalid bearers still
 	// get 401 with WWW-Authenticate so OAuth clients can re-auth correctly.
 	if (!bearer && !req.headers['x-payment']) {
+		const sseResourceUrl = resolveResourceUrl(req, '/api/mcp');
 		return send402(res, {
-			resourceUrl: resolveResourceUrl(req, '/api/mcp'),
-			accepts: paymentRequirements(),
+			resourceUrl: sseResourceUrl,
+			accepts: paymentRequirements(sseResourceUrl),
 		});
 	}
 	const auth = await authenticateBearer(bearer, { audience: env.MCP_RESOURCE });

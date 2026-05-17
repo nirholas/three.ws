@@ -3265,7 +3265,7 @@ async function renderBilling(root) {
 				<div class="row" style="justify-content:space-between;padding:10px 0">
 					<span class="muted">MCP calls today</span><strong>${esc(String(usage.mcp_calls_24h ?? 0))}</strong>
 				</div>
-				${plan === 'free' ? `<div style="margin-top:16px;padding-top:16px;border-top:1px solid var(--border)"><a class="btn" href="mailto:support@cryptocurrency.cv?subject=Upgrade" style="display:block;text-align:center">Upgrade plan →</a></div>` : ''}
+				${plan === 'free' ? `<div style="margin-top:16px;padding-top:16px;border-top:1px solid var(--border)"><a class="btn" href="mailto:support@three.ws?subject=Upgrade" style="display:block;text-align:center">Upgrade plan →</a></div>` : ''}
 			</div>
 		</div>
 	`;

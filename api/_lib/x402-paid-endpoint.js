@@ -36,11 +36,12 @@ function resolveNetwork(name) {
 	return NETWORK_ALIASES[name] || name;
 }
 
-function buildAccept(network, priceAtomics) {
+function buildAccept(network, priceAtomics, resourceUrl) {
 	const common = {
 		scheme: 'exact',
 		amount: String(priceAtomics),
 		maxTimeoutSeconds: 60,
+		resource: resourceUrl,
 	};
 	if (network === NETWORK_BASE_MAINNET) {
 		return {
@@ -66,13 +67,13 @@ function buildAccept(network, priceAtomics) {
 	throw new X402Error('unsupported_network', `paidEndpoint: unsupported network ${network}`, 500);
 }
 
-function buildRequirements({ priceAtomics, networks }) {
+function buildRequirements({ priceAtomics, networks, resourceUrl }) {
 	const out = [];
 	for (const name of networks) {
 		const net = resolveNetwork(name);
 		if (net === NETWORK_BASE_MAINNET && !env.X402_PAY_TO_BASE) continue;
 		if (net === NETWORK_SOLANA_MAINNET && !env.X402_PAY_TO_SOLANA) continue;
-		out.push(buildAccept(net, priceAtomics));
+		out.push(buildAccept(net, priceAtomics, resourceUrl));
 	}
 	if (!out.length) {
 		throw new X402Error(
@@ -110,7 +111,7 @@ export function paidEndpoint(spec) {
 	const allowMethods = `${method.toUpperCase()},OPTIONS`;
 
 	return async function paidHandler(req, res) {
-		if (cors(req, res, { methods: allowMethods })) return;
+		if (cors(req, res, { methods: allowMethods, origins: '*' })) return;
 		if (req.method !== method.toUpperCase()) {
 			res.setHeader('allow', method.toUpperCase());
 			return error(res, 405, 'method_not_allowed', `use ${method.toUpperCase()}`);
@@ -119,7 +120,7 @@ export function paidEndpoint(spec) {
 		const resourceUrl = resolveResourceUrl(req, route);
 		let requirements;
 		try {
-			requirements = buildRequirements({ priceAtomics, networks });
+			requirements = buildRequirements({ priceAtomics, networks, resourceUrl });
 		} catch (err) {
 			return error(
 				res,

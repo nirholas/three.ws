@@ -167,7 +167,7 @@ class RegeneratePanel {
 		banner.style.color = '#856404';
 		banner.innerHTML = `
 			<strong>Avatar regeneration is not yet live.</strong>
-			Join the waitlist: <a href="mailto:hello@3dagent.ai" style="color: #0066ff;">hello@3dagent.ai</a><br/>
+			Join the waitlist: <a href="mailto:support@three.ws" style="color: #0066ff;">support@three.ws</a><br/>
 			<small style="display: block; margin-top: 6px;">
 				ML backend integration is in progress. We'll notify you when it's ready.
 			</small>
