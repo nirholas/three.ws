@@ -157,9 +157,16 @@ article em { color: var(--fg-dim); }
 .post-list { list-style: none; padding: 0; margin: 0; }
 .post-list li { padding: 24px 0; border-bottom: 1px solid var(--border); }
 .post-list li:last-child { border-bottom: none; }
-.post-list a.post-link { display: block; color: var(--fg); }
+.post-list a.post-link { display: flex; gap: 20px; color: var(--fg); align-items: flex-start; }
 .post-list a.post-link:hover { text-decoration: none; }
 .post-list a.post-link:hover .post-title { color: var(--accent); }
+.post-list .post-thumb { flex-shrink: 0; width: 140px; height: 88px; border-radius: 8px; overflow: hidden; background: var(--bg-soft); border: 1px solid var(--border); }
+.post-list .post-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.post-list .post-body { flex: 1; min-width: 0; }
+@media (max-width: 600px) {
+\t.post-list a.post-link { flex-direction: column; gap: 14px; }
+\t.post-list .post-thumb { width: 100%; height: 180px; }
+}
 .post-date { color: var(--fg-faint); font-size: 13px; text-transform: uppercase; letter-spacing: 0.06em; }
 .post-title { font-size: 24px; margin: 6px 0 8px; letter-spacing: -0.01em; font-weight: 600; transition: color .15s; }
 .post-summary { color: var(--fg-dim); margin: 0 0 8px; font-size: 16px; }
@@ -284,14 +291,22 @@ ${siteFooterHtml()}
 
 function renderIndexPage(items) {
 	const postsHtml = items
-		.map((item) => `\t\t<li>
+		.map((item) => {
+			const thumb = item.image
+				? `\t\t\t\t<div class="post-thumb"><img src="${escapeAttr(item.image)}" alt="${escapeAttr(item.imageAlt || item.title)}" loading="lazy"/></div>`
+				: '';
+			return `\t\t<li class="${item.image ? 'has-thumb' : ''}">
 \t\t\t<a class="post-link" href="${escapeAttr(NEWS_PATH_PREFIX)}/${escapeAttr(item.slug)}">
-\t\t\t\t<div class="post-date"><time datetime="${item.timestamp.toISOString()}">${escapeHtml(formatDate(item.timestamp))}</time></div>
-\t\t\t\t<h2 class="post-title">${escapeHtml(item.title)}</h2>
-\t\t\t\t<p class="post-summary">${escapeHtml(item.summary)}</p>
-${item.tags?.length ? `\t\t\t\t<div class="tag-list">${item.tags.map((t) => `<span class="tag">${escapeHtml(t)}</span>`).join('')}</div>` : ''}
+${thumb}
+\t\t\t\t<div class="post-body">
+\t\t\t\t\t<div class="post-date"><time datetime="${item.timestamp.toISOString()}">${escapeHtml(formatDate(item.timestamp))}</time></div>
+\t\t\t\t\t<h2 class="post-title">${escapeHtml(item.title)}</h2>
+\t\t\t\t\t<p class="post-summary">${escapeHtml(item.summary)}</p>
+${item.tags?.length ? `\t\t\t\t\t<div class="tag-list">${item.tags.map((t) => `<span class="tag">${escapeHtml(t)}</span>`).join('')}</div>` : ''}
+\t\t\t\t</div>
 \t\t\t</a>
-\t\t</li>`)
+\t\t</li>`;
+		})
 		.join('\n');
 	return `<!DOCTYPE html>
 <html lang="en">
