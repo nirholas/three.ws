@@ -28,6 +28,10 @@ export default wrap(async (req, res) => {
 
 	const cursorDate = cursor ? new Date(cursor) : null;
 
+	const qLike = q ? '%' + q + '%' : null;
+	const cursorIso = cursorDate ? cursorDate.toISOString() : null;
+	const sortByChats = sort === 'chats';
+
 	const rows = await sql`
 		SELECT
 			i.id,
@@ -53,10 +57,11 @@ export default wrap(async (req, res) => {
 		  AND i.is_published = true
 		  AND i.description IS NOT NULL
 		  AND length(trim(i.name)) > 0
-		  ${q ? sql`AND (i.name ILIKE ${'%' + q + '%'} OR i.description ILIKE ${'%' + q + '%'})` : sql``}
-		  ${cursorDate ? sql`AND i.created_at < ${cursorDate}` : sql``}
+		  AND (${qLike}::text IS NULL OR (i.name ILIKE ${qLike} OR i.description ILIKE ${qLike}))
+		  AND (${cursorIso}::timestamptz IS NULL OR i.created_at < ${cursorIso}::timestamptz)
 		ORDER BY
-			${sort === 'chats' ? sql`chat_count DESC, i.created_at DESC` : sql`i.created_at DESC`}
+			CASE WHEN ${sortByChats}::boolean THEN chat_count ELSE 0 END DESC,
+			i.created_at DESC
 		LIMIT ${limit + 1}
 	`;
 
