@@ -22,7 +22,6 @@ const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecogni
  * @property {string}  [title]                  Override identity.name in the panel header.
  * @property {{accent?:string, background?:string, caption?:string}} [theme]
  *                                              CSS custom-property overrides (--nich-accent, --nich-bg, --nich-fg).
- * @property {boolean} [showPoweredBy]          Show "powered by three.ws" footer link.
  * @property {boolean} [voiceInput]             Enable mic button (default true).
  * @property {boolean} [voiceOutput]            Speak replies via speechSynthesis (default true).
  * @property {(text:string)=>Promise<{reply?:string,actions?:any[]}>} [onSend]
@@ -176,7 +175,6 @@ export class NichAgent {
 			`
 					: ''
 			}
-			${this.options.showPoweredBy ? '<a class="nich-powered-by" href="https://three.ws/" target="_blank" rel="noopener noreferrer">powered by three.ws</a>' : ''}
 		`;
 
 		// Apply theme overrides via CSS custom properties scoped to the panel.
