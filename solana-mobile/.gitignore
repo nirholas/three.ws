@@ -1,0 +1,17 @@
+# Bubblewrap output — regenerated on every build, do not commit.
+build/
+
+# Release keystore. NEVER commit. Back this up to a password manager and to
+# the SEEKER_RELEASE_KEYSTORE_BASE64 GitHub secret instead.
+*.keystore
+*.jks
+
+# Local Bubblewrap state.
+twa-manifest.json.bak
+.bubblewrap/
+
+# Captured screenshots that haven't been triaged yet.
+publish/media/_drafts/
+
+# Publishing API key cached by the CLI.
+publish/.dapp-store-api-key

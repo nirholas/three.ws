@@ -1,9 +1,21 @@
+// Seeker / Saga boot: on Solana Mobile devices the page runs inside our TWA
+// and window.solana is NOT injected by Phantom. The import below detects the
+// TWA at runtime and, when present, installs an MWA-backed wallet at
+// window.solana that signs through the on-device Seed Vault. On every other
+// platform the import is a no-op (it checks display-mode + UA + referrer).
+import '../solana-mobile/src/index.js';
+
 let connectedWalletAddress = null;
 let listenersBound = false;
 
 function getPhantom() {
 	const provider = typeof window !== 'undefined' ? window.solana : null;
-	return provider && provider.isPhantom ? provider : null;
+	if (!provider) return null;
+	// Phantom on web, or our MWA wallet on Seeker — both expose .connect /
+	// .signMessage with the same shape, so the rest of this file works
+	// unchanged.
+	if (provider.isPhantom || provider.isThreeWs) return provider;
+	return null;
 }
 
 function bindPhantomListeners(provider) {
@@ -22,6 +34,8 @@ function bindPhantomListeners(provider) {
 async function onConnectWallet() {
 	const provider = getPhantom();
 	if (!provider) {
+		// No injected wallet AND not running inside the Seeker TWA — point
+		// the user at Phantom, which is the most common web fallback.
 		window.open('https://phantom.app/', '_blank', 'noopener');
 		return;
 	}

@@ -1,0 +1,67 @@
+publisher:
+  name: three.ws
+  address:
+  website: https://three.ws
+  email: hello@three.ws
+
+app:
+  name: three.ws
+  address:
+  android_package: ws.three.app
+  urls:
+    license_url: https://three.ws/legal/eula
+    copyright_url: https://three.ws/legal
+    privacy_policy_url: https://three.ws/legal/privacy
+    website: https://three.ws
+
+release:
+  address:
+  media:
+    - purpose: icon
+      uri: media/icon.png
+    - purpose: banner
+      uri: media/banner.png
+    - purpose: feature_graphic
+      uri: media/feature.png
+    - purpose: screenshot
+      uri: media/screen-1.png
+    - purpose: screenshot
+      uri: media/screen-2.png
+    - purpose: screenshot
+      uri: media/screen-3.png
+    - purpose: screenshot
+      uri: media/screen-4.png
+    - purpose: screenshot
+      uri: media/screen-5.png
+
+  catalog:
+    en-US:
+      name: three.ws
+      short_description: |
+        Mint a 3D agent to your Seed Vault. On-chain, Solana-native, signed by Seeker.
+      long_description: !include listing/description.md
+      new_in_version: !include listing/new-in-version.txt
+      saga_features: !include listing/saga-features.md
+      copyright: "© 2026 three.ws"
+
+  files:
+    - purpose: install
+      uri: ../build/three-ws-release.apk
+
+solana_mobile_dapp_publisher_portal:
+  google_store_package: ""
+  testing_instructions: |
+    1. Open the app on a Seeker or Saga.
+    2. Tap "Discover" — the agent grid should load from https://three.ws/api/marketplace/agents.
+    3. Tap any agent → "Open" — a 3D viewer renders the agent in the WebGL canvas.
+    4. Tap "Create" → grant camera permission → capture 3 selfies. The app uploads to
+       https://three.ws/api/avatar/selfie and returns a job id.
+    5. Tap "Connect wallet" — the Seed Vault sheet appears. Approve.
+    6. Tap "Sign in" — the app produces a SIWS message; approve in Seed Vault.
+       The app then logs you in via POST /api/auth/siws/verify.
+    7. To mint, fund the connected wallet with at least 0.01 SOL on mainnet.
+       Tap "Mint to wallet" on any draft agent; Seed Vault approves the tx.
+    No off-chain test accounts are required — auth is wallet-only.
+
+  alpha_testers:
+    - "@solana_mobile"

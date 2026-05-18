@@ -33,6 +33,12 @@ function detect(preferred) {
 	if (preferred === 'phantom') return window.phantom?.solana || window.solana || null;
 	if (preferred === 'backpack') return window.backpack?.solana || null;
 	if (preferred === 'solflare') return window.solflare || null;
+	// Seeker / Saga: solana-mobile/src/index.js installs an MWA-backed wallet
+	// at window.threeWsWallet (and mirrors it onto window.solana). It has
+	// isThreeWs=true and isPhantom=false, so we check for it first when no
+	// specific provider was requested.
+	if (window.threeWsWallet?.isThreeWs) return window.threeWsWallet;
+	if (window.solana?.isThreeWs) return window.solana;
 	if (window.phantom?.solana?.isPhantom) return window.phantom.solana;
 	if (window.solana?.isPhantom) return window.solana;
 	if (window.backpack?.solana) return window.backpack.solana;

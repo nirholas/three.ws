@@ -1,0 +1,20 @@
+{
+  "name": "@threews/solana-mobile",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "description": "Solana Mobile (Seeker / Saga) integration layer for three.ws — MWA wallet wrapper, TWA detection, and dApp Store boot.",
+  "main": "./index.js",
+  "exports": {
+    ".": "./index.js",
+    "./mwa-wallet": "./mwa-wallet.js",
+    "./seeker-detect": "./seeker-detect.js"
+  },
+  "peerDependencies": {
+    "@solana/web3.js": "^1.95.0"
+  },
+  "dependencies": {
+    "@solana-mobile/mobile-wallet-adapter-protocol-web3js": "^2.2.2",
+    "@solana-mobile/mobile-wallet-adapter-protocol": "^2.2.2"
+  }
+}
