@@ -85,3 +85,8 @@ threews-launch-week-case-study.html
 *.glb.bak
 .secrets/
 .env.vercel
+scripts/pump-vanity-grind.mjs
+scripts/pump-usdc-status.mjs
+
+# Scratch screenshot output (see scratch/walk-*.tmp.mjs)
+scratch/screenshots/

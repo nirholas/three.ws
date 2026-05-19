@@ -1,7 +1,10 @@
 import { chromium } from 'playwright';
+import { mkdirSync } from 'fs';
 
 const VITE = 'http://localhost:3000';
 const TIMEOUT = 25_000;
+
+mkdirSync('scratch/screenshots', { recursive: true });
 
 const browser = await chromium.launch();
 
@@ -78,8 +81,8 @@ const aSawB = await a.page.evaluate(() => {
 });
 
 // Screenshots for visual confirmation.
-await a.page.screenshot({ path: 'walk-multi-A.png' });
-await b.page.screenshot({ path: 'walk-multi-B.png' });
+await a.page.screenshot({ path: 'scratch/screenshots/walk-multi-A.png' });
+await b.page.screenshot({ path: 'scratch/screenshots/walk-multi-B.png' });
 
 await browser.close();
 

@@ -1,8 +1,10 @@
 import { chromium } from 'playwright';
-import { readFileSync } from 'fs';
+import { readFileSync, mkdirSync } from 'fs';
 
 const URL = 'http://localhost:3003/walk';
 const TIMEOUT = 25_000;
+
+mkdirSync('scratch/screenshots', { recursive: true });
 
 const browser = await chromium.launch();
 const context = await browser.newContext({ viewport: { width: 1024, height: 768 } });
@@ -26,7 +28,7 @@ await page.waitForFunction(
 // Allow one extra second so idle clip settles into a deterministic pose.
 await page.waitForTimeout(800);
 
-const beforeBuf = await page.screenshot({ path: 'walk-before.png', fullPage: false });
+const beforeBuf = await page.screenshot({ path: 'scratch/screenshots/walk-before.png', fullPage: false });
 
 await page.evaluate(async () => {
 	const wait = (ms) => new Promise((r) => setTimeout(r, ms));
@@ -39,7 +41,7 @@ await page.evaluate(async () => {
 	await wait(400);
 });
 
-const afterBuf = await page.screenshot({ path: 'walk-after.png', fullPage: false });
+const afterBuf = await page.screenshot({ path: 'scratch/screenshots/walk-after.png', fullPage: false });
 
 // Quick byte-level diff — if the avatar moved at all, the PNGs will differ.
 // PNGs are deterministic for identical pixel input, so equal length+content
