@@ -196,14 +196,16 @@ export async function verifySignature({ network, signature }) {
 	return tx;
 }
 
-// Resolve the canonical pump.fun AMM pool for `mint` (post-graduation) and
+// Resolve the canonical pump.fun AMM pool for `mint` (post-graduation). Pass
+// `quoteMint` for USDC-paired coins — uses canonicalPumpPoolPdaWithQuote instead
+// of the default WSOL PDA. Omit (or pass null) for SOL-paired coins.
 // return everything `buyQuoteInput` / `sellBaseInput` need to price a swap.
 // Quote currency is WSOL on the canonical pool.
 //
 // Throws { status: 404, code: 'pool_not_found' } if no pool exists yet.
-export async function getAmmPoolState({ network = 'mainnet', mint } = {}) {
+export async function getAmmPoolState({ network = 'mainnet', mint, quoteMint = null } = {}) {
 	if (!mint) throw Object.assign(new Error('mint required'), { status: 400 });
-	const [{ canonicalPumpPoolPda, OnlinePumpAmmSdk, PumpAmmSdk }, web3, BN, spl] =
+	const [{ canonicalPumpPoolPda, canonicalPumpPoolPdaWithQuote, OnlinePumpAmmSdk, PumpAmmSdk }, web3, BN, spl] =
 		await Promise.all([
 			import('@pump-fun/pump-swap-sdk'),
 			import('@solana/web3.js'),
@@ -212,7 +214,10 @@ export async function getAmmPoolState({ network = 'mainnet', mint } = {}) {
 		]);
 	const connection = getConnection({ network });
 	const mintPk = mint instanceof PublicKey ? mint : new PublicKey(mint);
-	const poolKey = canonicalPumpPoolPda(mintPk);
+	const quoteMintPk = quoteMint instanceof PublicKey ? quoteMint : (quoteMint ? new PublicKey(quoteMint) : null);
+	const poolKey = quoteMintPk
+		? canonicalPumpPoolPdaWithQuote(mintPk, quoteMintPk)
+		: canonicalPumpPoolPda(mintPk);
 
 	const online = new OnlinePumpAmmSdk(connection);
 	let pool;

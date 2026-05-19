@@ -193,6 +193,14 @@
 			"dest": "/eth-vanity.html"
 		},
 		{
+			"src": "/strategy-lab",
+			"dest": "/strategy-lab.html"
+		},
+		{
+			"src": "/strategy-lab/",
+			"dest": "/strategy-lab.html"
+		},
+		{
 			"src": "/pump-visualizer/?",
 			"dest": "/pump-visualizer.html"
 		},

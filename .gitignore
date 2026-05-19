@@ -84,3 +84,4 @@ threews-launch-week-case-study.html
 # GLB optimization backups (see scripts/optimize-glb.mjs)
 *.glb.bak
 .secrets/
+.env.vercel

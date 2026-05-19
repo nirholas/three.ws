@@ -496,4 +496,52 @@
 		<changefreq>yearly</changefreq>
 		<priority>0.6</priority>
 	</url>
+	<url>
+		<loc>https://three.ws/features</loc>
+		<lastmod>2026-05-19</lastmod>
+		<changefreq>monthly</changefreq>
+		<priority>0.8</priority>
+	</url>
+	<url>
+		<loc>https://three.ws/launchpad</loc>
+		<lastmod>2026-05-19</lastmod>
+		<changefreq>weekly</changefreq>
+		<priority>0.7</priority>
+	</url>
+	<url>
+		<loc>https://three.ws/walkaround</loc>
+		<lastmod>2026-05-19</lastmod>
+		<changefreq>weekly</changefreq>
+		<priority>0.7</priority>
+	</url>
+	<url>
+		<loc>https://three.ws/brain</loc>
+		<lastmod>2026-05-19</lastmod>
+		<changefreq>weekly</changefreq>
+		<priority>0.7</priority>
+	</url>
+	<url>
+		<loc>https://three.ws/lipsync</loc>
+		<lastmod>2026-05-19</lastmod>
+		<changefreq>weekly</changefreq>
+		<priority>0.6</priority>
+	</url>
+	<url>
+		<loc>https://three.ws/lipsync/mic</loc>
+		<lastmod>2026-05-19</lastmod>
+		<changefreq>weekly</changefreq>
+		<priority>0.6</priority>
+	</url>
+	<url>
+		<loc>https://three.ws/avatar-artifact</loc>
+		<lastmod>2026-05-19</lastmod>
+		<changefreq>monthly</changefreq>
+		<priority>0.5</priority>
+	</url>
+	<url>
+		<loc>https://three.ws/pump-visualizer</loc>
+		<lastmod>2026-05-19</lastmod>
+		<changefreq>daily</changefreq>
+		<priority>0.7</priority>
+	</url>
 </urlset>

@@ -28,6 +28,9 @@
 //   strategy-run             -> handleStrategyRun (SSE; bypasses wrap())
 //   strategy-validate        -> handleStrategyValidate
 //   live-stream              -> handleLiveStream  (SSE; bypasses wrap())
+//   collect-creator-fee-prep -> handleCollectCreatorFeePrep
+//   distribute-creator-fees-prep -> handleDistributeCreatorFeesPrep
+//   create-fee-sharing-prep  -> handleCreateFeeSharingPrep
 
 import { z } from 'zod';
 import { Keypair, PublicKey, LAMPORTS_PER_SOL } from '@solana/web3.js';
@@ -42,6 +45,7 @@ import { randomToken } from '../_lib/crypto.js';
 import {
 	getConnection,
 	getPumpSdk,
+	getPumpSdkV2,
 	getPumpAgent,
 	getPumpAgentOffline,
 	getAmmPoolState,
@@ -49,6 +53,9 @@ import {
 	verifySignature,
 	solanaPubkey,
 } from '../_lib/pump.js';
+
+// Wrapped SOL mint — required as the quoteMint for SOL-paired V2 instructions
+const WSOL_MINT = 'So11111111111111111111111111111111111111112';
 import { solanaConnection, loadAgentForSigning } from '../_lib/agent-pumpfun.js';
 import { connectPumpFunFeed } from '../_lib/pumpfun-ws-feed.js';
 import { makeRuntime } from '../_lib/skill-runtime.js';
@@ -103,9 +110,12 @@ const wrapped = wrap(async (req, res) => {
 		case 'channel-feed':            return handleChannelFeed(req, res);
 		case 'deliver-telegram':        return handleDeliverTelegram(req, res);
 		case 'first-claims':            return handleFirstClaims(req, res);
-		case 'recent-graduations':      return handleRecentGraduations(req, res);
-		case 'trending':                return handleTrending(req, res);
-		case 'search':                  return handleSearch(req, res);
+		case 'recent-graduations':            return handleRecentGraduations(req, res);
+		case 'trending':                      return handleTrending(req, res);
+		case 'search':                        return handleSearch(req, res);
+		case 'collect-creator-fee-prep':      return handleCollectCreatorFeePrep(req, res);
+		case 'distribute-creator-fees-prep':  return handleDistributeCreatorFeesPrep(req, res);
+		case 'create-fee-sharing-prep':       return handleCreateFeeSharingPrep(req, res);
 		default:
 			return error(res, 404, 'not_found', 'unknown pump action');
 	}
@@ -172,9 +182,18 @@ async function handleBalances(req, res) {
 const buyPrepSchema = z.object({
 	mint: z.string().min(32).max(44),
 	network: z.enum(['mainnet', 'devnet']).default('mainnet'),
-	sol: z.number().positive().max(50),
+	// For SOL-paired coins pass `sol`; for USDC-paired coins pass `usdc_amount`.
+	// Exactly one must be provided — validation enforced below.
+	sol: z.number().positive().max(50).optional(),
+	usdc_amount: z.number().positive().max(1_000_000).optional(),
+	// Optional explicit quote mint. When omitted the server auto-detects from
+	// the on-chain bonding curve (quote_mint field added in pump.fun V2).
+	quote_mint: z.string().min(32).max(44).optional(),
 	slippage_bps: z.number().int().min(0).max(5000).default(100),
 	wallet_address: z.string().min(32).max(44),
+}).refine((v) => v.sol != null || v.usdc_amount != null, {
+	message: 'sol or usdc_amount required',
+	path: ['sol'],
 });
 
 async function handleBuyPrep(req, res) {
@@ -194,10 +213,10 @@ async function handleBuyPrep(req, res) {
 
 	try {
 		const { sdk, BN, web3 } = await getPumpSdk({ network: body.network });
-		const lamports = new BN(Math.floor(body.sol * web3.LAMPORTS_PER_SOL));
+		const { isLegacyQuoteMint } = await import('@pump-fun/pump-sdk');
 		const slippage = body.slippage_bps / 10_000;
 
-		// Try bonding curve.
+		// Fetch bonding curve state — also gives us the on-chain quote_mint.
 		let buyState = null;
 		try {
 			if (sdk.fetchBuyState) buyState = await sdk.fetchBuyState(mintPk, userPk);
@@ -205,8 +224,51 @@ async function handleBuyPrep(req, res) {
 			buyState = null;
 		}
 
+		// Resolve quoteMint: explicit override > on-chain curve > WSOL fallback.
+		let quoteMintPk = body.quote_mint
+			? solanaPubkey(body.quote_mint)
+			: (buyState?.bondingCurve?.quoteMint ?? solanaPubkey(WSOL_MINT));
+		if (!quoteMintPk) quoteMintPk = solanaPubkey(WSOL_MINT);
+
+		const isUsdcQuote = !isLegacyQuoteMint(quoteMintPk);
+
 		if (buyState && buyState.bondingCurve && !buyState.bondingCurve.complete) {
 			const global = await sdk.fetchGlobal();
+			let tx_base64;
+			if (isUsdcQuote) {
+				if (body.usdc_amount == null)
+					return error(res, 400, 'validation_error', 'usdc_amount required for USDC-paired coin');
+				const quoteAtomics = new BN(Math.round(body.usdc_amount * 1_000_000));
+				const ixs = await sdk.buyV2Instructions({
+					global,
+					bondingCurveAccountInfo: buyState.bondingCurveAccountInfo,
+					bondingCurve: buyState.bondingCurve,
+					associatedUserAccountInfo: buyState.associatedUserAccountInfo,
+					mint: mintPk,
+					user: userPk,
+					amount: new BN(0),
+					quoteAmount: quoteAtomics,
+					slippage,
+					quoteMint: quoteMintPk,
+				});
+				tx_base64 = await buildUnsignedTxBase64({
+					network: body.network, payer: userPk, instructions: ixs,
+				});
+				return json(res, 201, {
+					route: 'bonding_curve',
+					mint: body.mint,
+					network: body.network,
+					quote_mint: quoteMintPk.toString(),
+					usdc_in: body.usdc_amount,
+					slippage_bps: body.slippage_bps,
+					tx_base64,
+				});
+			}
+
+			// SOL-paired (legacy)
+			if (body.sol == null)
+				return error(res, 400, 'validation_error', 'sol required for SOL-paired coin');
+			const lamports = new BN(Math.floor(body.sol * web3.LAMPORTS_PER_SOL));
 			const ixs = await sdk.buyInstructions({
 				global,
 				bondingCurveAccountInfo: buyState.bondingCurveAccountInfo,
@@ -218,39 +280,46 @@ async function handleBuyPrep(req, res) {
 				solAmount: lamports,
 				slippage,
 			});
-			const tx_base64 = await buildUnsignedTxBase64({
-				network: body.network,
-				payer: userPk,
-				instructions: ixs,
+			tx_base64 = await buildUnsignedTxBase64({
+				network: body.network, payer: userPk, instructions: ixs,
 			});
 			return json(res, 201, {
 				route: 'bonding_curve',
 				mint: body.mint,
 				network: body.network,
+				quote_mint: quoteMintPk.toString(),
 				sol_in: body.sol,
 				slippage_bps: body.slippage_bps,
 				tx_base64,
 			});
 		}
 
-		// AMM
-		const amm = await getAmmPoolState({ network: body.network, mint: mintPk });
+		// AMM (post-graduation)
+		const amm = await getAmmPoolState({ network: body.network, mint: mintPk, quoteMint: isUsdcQuote ? quoteMintPk : null });
 		const ammMod = await import('@pump-fun/pump-swap-sdk');
 		const offline = new ammMod.PumpAmmSdk();
 		const onlineAmm = new ammMod.OnlinePumpAmmSdk(getConnection({ network: body.network }));
 		const swapState = await onlineAmm.swapSolanaState(amm.poolKey, userPk);
-		const ixs = await offline.buyQuoteInput(swapState, lamports, slippage);
+
+		const quoteIn = isUsdcQuote
+			? new BN(Math.round(body.usdc_amount * 1_000_000))
+			: new BN(Math.floor(body.sol * web3.LAMPORTS_PER_SOL));
+		if (body.usdc_amount == null && isUsdcQuote)
+			return error(res, 400, 'validation_error', 'usdc_amount required for USDC AMM pool');
+		if (body.sol == null && !isUsdcQuote)
+			return error(res, 400, 'validation_error', 'sol required for SOL AMM pool');
+
+		const ixs = await offline.buyQuoteInput(swapState, quoteIn, slippage);
 		const tx_base64 = await buildUnsignedTxBase64({
-			network: body.network,
-			payer: userPk,
-			instructions: ixs,
+			network: body.network, payer: userPk, instructions: ixs,
 		});
 		return json(res, 201, {
 			route: 'amm',
 			pool: amm.poolKey.toString(),
 			mint: body.mint,
 			network: body.network,
-			sol_in: body.sol,
+			quote_mint: quoteMintPk.toString(),
+			...(isUsdcQuote ? { usdc_in: body.usdc_amount } : { sol_in: body.sol }),
 			slippage_bps: body.slippage_bps,
 			tx_base64,
 		});
@@ -334,6 +403,8 @@ const sellPrepSchema = z.object({
 	tokens: z.string().regex(/^\d+$/, 'tokens must be a base-units integer string'),
 	slippage_bps: z.number().int().min(0).max(5000).default(100),
 	wallet_address: z.string().min(32).max(44),
+	// Optional — auto-detected from on-chain bonding curve when omitted.
+	quote_mint: z.string().min(32).max(44).optional(),
 });
 
 async function handleSellPrep(req, res) {
@@ -353,6 +424,7 @@ async function handleSellPrep(req, res) {
 
 	try {
 		const { sdk, BN } = await getPumpSdk({ network: body.network });
+		const { isLegacyQuoteMint } = await import('@pump-fun/pump-sdk');
 		const tokens = new BN(body.tokens);
 		const slippage = body.slippage_bps / 10_000;
 
@@ -363,18 +435,41 @@ async function handleSellPrep(req, res) {
 			sellState = null;
 		}
 
+		// Resolve quoteMint from explicit override > on-chain curve > WSOL fallback.
+		let quoteMintPk = body.quote_mint
+			? solanaPubkey(body.quote_mint)
+			: (sellState?.bondingCurve?.quoteMint ?? solanaPubkey(WSOL_MINT));
+		if (!quoteMintPk) quoteMintPk = solanaPubkey(WSOL_MINT);
+
+		const isUsdcQuote = !isLegacyQuoteMint(quoteMintPk);
+
 		if (sellState && sellState.bondingCurve && !sellState.bondingCurve.complete) {
 			const global = await sdk.fetchGlobal();
-			const ixs = await sdk.sellInstructions({
-				global,
-				bondingCurveAccountInfo: sellState.bondingCurveAccountInfo,
-				bondingCurve: sellState.bondingCurve,
-				mint: mintPk,
-				user: userPk,
-				amount: tokens,
-				solAmount: new BN(0),
-				slippage,
-			});
+			let ixs;
+			if (isUsdcQuote) {
+				ixs = await sdk.sellV2Instructions({
+					global,
+					bondingCurveAccountInfo: sellState.bondingCurveAccountInfo,
+					bondingCurve: sellState.bondingCurve,
+					mint: mintPk,
+					user: userPk,
+					amount: tokens,
+					quoteAmount: new BN(0),
+					slippage,
+					quoteMint: quoteMintPk,
+				});
+			} else {
+				ixs = await sdk.sellInstructions({
+					global,
+					bondingCurveAccountInfo: sellState.bondingCurveAccountInfo,
+					bondingCurve: sellState.bondingCurve,
+					mint: mintPk,
+					user: userPk,
+					amount: tokens,
+					solAmount: new BN(0),
+					slippage,
+				});
+			}
 			const tx_base64 = await buildUnsignedTxBase64({
 				network: body.network,
 				payer: userPk,
@@ -384,13 +479,14 @@ async function handleSellPrep(req, res) {
 				route: 'bonding_curve',
 				mint: body.mint,
 				network: body.network,
+				quote_mint: quoteMintPk.toString(),
 				tokens_in: body.tokens,
 				slippage_bps: body.slippage_bps,
 				tx_base64,
 			});
 		}
 
-		const amm = await getAmmPoolState({ network: body.network, mint: mintPk });
+		const amm = await getAmmPoolState({ network: body.network, mint: mintPk, quoteMint: isUsdcQuote ? quoteMintPk : null });
 		const ammMod = await import('@pump-fun/pump-swap-sdk');
 		const offline = new ammMod.PumpAmmSdk();
 		const onlineAmm = new ammMod.OnlinePumpAmmSdk(getConnection({ network: body.network }));
@@ -406,6 +502,7 @@ async function handleSellPrep(req, res) {
 			pool: amm.poolKey.toString(),
 			mint: body.mint,
 			network: body.network,
+			quote_mint: quoteMintPk.toString(),
 			tokens_in: body.tokens,
 			slippage_bps: body.slippage_bps,
 			tx_base64,
@@ -588,12 +685,40 @@ async function handleBuildMetadata(req, res) {
 // so a treasury / DAO wallet can be the creator while a contributor wallet
 // signs and pays.
 async function buildLaunchInstructions({
-	sdk, BN, mint, creator, signer, name, symbol, uri, solBuyIn, isMayhem,
+	sdk, BN, mint, creator, signer, name, symbol, uri, solBuyIn, usdcBuyIn, quoteMint, isMayhem,
 }) {
 	const LAMPORTS = 1_000_000_000;
-	const hasBuy   = solBuyIn > 0;
 	const user     = signer || creator;
+	const { isLegacyQuoteMint } = await import('@pump-fun/pump-sdk');
+	const isUsdcQuote = quoteMint && !isLegacyQuoteMint(quoteMint);
 
+	if (isUsdcQuote) {
+		// USDC-paired: use V2 buy path regardless of whether there's an initial buy.
+		const hasBuy   = usdcBuyIn > 0;
+		const global   = await sdk.fetchGlobal();
+		const pumpSdk  = await import('@pump-fun/pump-sdk');
+		if (hasBuy) {
+			const quoteAmount   = new BN(Math.round(usdcBuyIn * 1_000_000));
+			const tokenAmount   = pumpSdk.getBuyTokenAmountFromSolAmount({
+				global, feeConfig: null, mintSupply: null, bondingCurve: null, amount: quoteAmount,
+			});
+			const ixs = await sdk.createV2AndBuyV2Instructions({
+				global, mint, name, symbol, uri,
+				creator, user,
+				quoteAmount, amount: tokenAmount,
+				mayhemMode: !!isMayhem,
+				quoteMint,
+			});
+			return Array.isArray(ixs) ? [...ixs] : [ixs];
+		}
+		const ix = await sdk.createV2Instruction({
+			mint, name, symbol, uri, creator, user, mayhemMode: !!isMayhem, quoteMint,
+		});
+		return [ix];
+	}
+
+	// SOL-paired (original behaviour)
+	const hasBuy = solBuyIn > 0;
 	if (hasBuy) {
 		const global    = await sdk.fetchGlobal();
 		const solAmount = new BN(Math.floor(solBuyIn * LAMPORTS));
@@ -639,7 +764,12 @@ const launchPrepSchema = z
 		uri: z.string().url(),
 		network: z.enum(['mainnet', 'devnet']).default('mainnet'),
 		buyback_bps: z.number().int().min(0).max(10_000).default(0),
-		sol_buy_in: z.number().nonnegative().max(50).default(0), // optional initial buy by the signer, capped 50 SOL
+		sol_buy_in: z.number().nonnegative().max(50).default(0), // SOL-paired initial buy, capped 50 SOL
+		usdc_buy_in: z.number().nonnegative().max(1_000_000).default(0), // USDC-paired initial buy
+		// Optional quote mint — when provided and non-WSOL (e.g. USDC), the coin
+		// is created as a USDC-paired V2 coin using createV2AndBuyV2Instructions.
+		// When omitted, the coin is SOL-paired (existing behaviour).
+		quote_mint: z.string().min(32).max(44).optional(),
 		// Optional client-ground vanity mint address. When provided, the client
 		// already holds the secret key locally and will co-sign in the wallet —
 		// the server never sees the secret. When omitted, the server falls back
@@ -792,10 +922,13 @@ async function handleLaunchPrep(req, res) {
 	const isAgent  = body.coin_type === 'agent';
 	const effBuyback = isAgent ? body.buyback_bps : 0;
 
+	const launchQuoteMint = body.quote_mint ? solanaPubkey(body.quote_mint) : null;
 	const instructions = await buildLaunchInstructions({
 		sdk, BN, mint, creator, signer,
 		name: body.name, symbol: body.symbol, uri: body.uri,
 		solBuyIn: body.sol_buy_in,
+		usdcBuyIn: body.usdc_buy_in,
+		quoteMint: launchQuoteMint,
 		isMayhem,
 	});
 
@@ -1633,7 +1766,9 @@ async function handleQuote(req, res) {
 	const network = url.searchParams.get('network') === 'devnet' ? 'devnet' : 'mainnet';
 	const direction = url.searchParams.get('direction') === 'sell' ? 'sell' : 'buy';
 	const solRaw = url.searchParams.get('sol');
+	const usdcRaw = url.searchParams.get('usdc');
 	const tokenRaw = url.searchParams.get('token');
+	const quoteMintRaw = url.searchParams.get('quote_mint');
 	const slippageRaw = url.searchParams.get('slippage_bps');
 	const slippageBps = Number.isFinite(Number(slippageRaw))
 		? Math.max(0, Math.min(5000, Number(slippageRaw)))
@@ -1644,14 +1779,16 @@ async function handleQuote(req, res) {
 	if (!mint) return error(res, 400, 'validation_error', 'invalid mint');
 
 	try {
-		// Try bonding curve first.
 		const { sdk, BN, web3 } = await getPumpSdk({ network });
+		const { isLegacyQuoteMint, getBuyTokenAmountFromSolAmount, getSellSolAmountFromTokenAmount } =
+			await import('@pump-fun/pump-sdk');
 		const LAMPORTS_PER_SOL_Q = web3.LAMPORTS_PER_SOL || 1_000_000_000;
 
+		// Fetch bonding curve — exposes on-chain quote_mint for V2 coins.
 		let curve = null;
 		try {
 			if (sdk.fetchBuyState) {
-				const state = await sdk.fetchBuyState(mint, mint); // any pubkey works for read
+				const state = await sdk.fetchBuyState(mint, mint);
 				curve = state.bondingCurve;
 			} else if (sdk.fetchBondingCurve) {
 				curve = await sdk.fetchBondingCurve(mint);
@@ -1660,47 +1797,52 @@ async function handleQuote(req, res) {
 			curve = null;
 		}
 
+		// Resolve quoteMint: explicit param > on-chain curve field > WSOL fallback.
+		let quoteMintPk = quoteMintRaw
+			? solanaPubkey(quoteMintRaw)
+			: (curve?.quoteMint ?? solanaPubkey(WSOL_MINT));
+		if (!quoteMintPk) quoteMintPk = solanaPubkey(WSOL_MINT);
+		const isUsdcQuote = !isLegacyQuoteMint(quoteMintPk);
+		const USDC_DECIMALS = 1_000_000;
+
 		if (curve && !curve.complete) {
 			const global = typeof sdk.fetchGlobal === 'function' ? await sdk.fetchGlobal() : null;
-			const pumpSdk = await import('@pump-fun/pump-sdk');
 			let quote = null;
 
-			if (direction === 'buy' && solRaw) {
-				const sol = Number(solRaw);
-				if (!(sol > 0)) return error(res, 400, 'validation_error', 'sol must be > 0');
-				const lamports = new BN(Math.floor(sol * LAMPORTS_PER_SOL_Q));
-				const tokens = pumpSdk.getBuyTokenAmountFromSolAmount({
-					global,
-					feeConfig: null,
-					mintSupply: null,
-					bondingCurve: curve,
-					amount: lamports,
-				});
-				quote = { sol_in: sol, tokens_out: tokens.toString(), source: 'bonding_curve' };
+			if (direction === 'buy') {
+				const quoteAmountRaw = isUsdcQuote ? usdcRaw : solRaw;
+				if (quoteAmountRaw) {
+					const quoteNum = Number(quoteAmountRaw);
+					if (!(quoteNum > 0)) return error(res, 400, 'validation_error', `${isUsdcQuote ? 'usdc' : 'sol'} must be > 0`);
+					const atomics = new BN(isUsdcQuote
+						? Math.round(quoteNum * USDC_DECIMALS)
+						: Math.floor(quoteNum * LAMPORTS_PER_SOL_Q));
+					const tokens = getBuyTokenAmountFromSolAmount({
+						global, feeConfig: null, mintSupply: null, bondingCurve: curve, amount: atomics,
+					});
+					quote = isUsdcQuote
+						? { usdc_in: quoteNum, tokens_out: tokens.toString(), source: 'bonding_curve' }
+						: { sol_in: quoteNum, tokens_out: tokens.toString(), source: 'bonding_curve' };
+				}
 			} else if (direction === 'sell' && tokenRaw) {
 				const tokens = new BN(tokenRaw);
-				const lamports = pumpSdk.getSellSolAmountFromTokenAmount({
-					global,
-					feeConfig: null,
-					mintSupply: null,
-					bondingCurve: curve,
-					amount: tokens,
+				const atomicsOut = getSellSolAmountFromTokenAmount({
+					global, feeConfig: null, mintSupply: null, bondingCurve: curve, amount: tokens,
 				});
-				quote = {
-					tokens_in: tokenRaw,
-					sol_out: Number(lamports.toString()) / LAMPORTS_PER_SOL_Q,
-					source: 'bonding_curve',
-				};
+				quote = isUsdcQuote
+					? { tokens_in: tokenRaw, usdc_out: Number(atomicsOut.toString()) / USDC_DECIMALS, source: 'bonding_curve' }
+					: { tokens_in: tokenRaw, sol_out: Number(atomicsOut.toString()) / LAMPORTS_PER_SOL_Q, source: 'bonding_curve' };
 			}
 
 			return json(res, 200, {
 				mint: mintStr,
 				network,
 				graduated: false,
+				quote_mint: quoteMintPk.toString(),
 				bonding_curve: {
-					real_sol_reserves: curve.realSolReserves?.toString?.() ?? null,
+					real_quote_reserves: curve.realQuoteReserves?.toString?.() ?? curve.realSolReserves?.toString?.() ?? null,
 					real_token_reserves: curve.realTokenReserves?.toString?.() ?? null,
-					virtual_sol_reserves: curve.virtualSolReserves?.toString?.() ?? null,
+					virtual_quote_reserves: curve.virtualQuoteReserves?.toString?.() ?? curve.virtualSolReserves?.toString?.() ?? null,
 					virtual_token_reserves: curve.virtualTokenReserves?.toString?.() ?? null,
 					complete: curve.complete ?? false,
 				},
@@ -1708,10 +1850,10 @@ async function handleQuote(req, res) {
 			});
 		}
 
-		// Post-graduation: AMM via canonical pump.fun pool (quote = WSOL).
+		// Post-graduation: canonical AMM pool. For USDC pairs use the quote-keyed PDA.
 		let amm;
 		try {
-			amm = await getAmmPoolState({ network, mint });
+			amm = await getAmmPoolState({ network, mint, quoteMint: isUsdcQuote ? quoteMintPk : null });
 		} catch (e) {
 			if (e.code === 'pool_not_found') {
 				return json(res, 200, {
@@ -1726,66 +1868,54 @@ async function handleQuote(req, res) {
 			throw e;
 		}
 
-		const {
-			pool,
-			poolKey,
-			baseReserve,
-			quoteReserve,
-			baseMintAccount,
-			globalConfig,
-			feeConfig,
-		} = amm;
-		const LAMPORTS_PER_SOL_AMM = 1_000_000_000;
+		const { pool, poolKey, baseReserve, quoteReserve, baseMintAccount, globalConfig, feeConfig } = amm;
 		const ammSdk = await import('@pump-fun/pump-swap-sdk');
+		// Resolved pool quoteMint tells us the definitive quote currency.
+		const resolvedQuoteMintStr = pool.quoteMint?.toString?.() ?? quoteMintPk.toString();
+		const resolvedIsUsdc = resolvedQuoteMintStr !== WSOL_MINT;
+		const QUOTE_UNIT = resolvedIsUsdc ? USDC_DECIMALS : 1_000_000_000;
 		let quote = null;
 
-		if (direction === 'buy' && solRaw) {
-			const sol = Number(solRaw);
-			if (!(sol > 0)) return error(res, 400, 'validation_error', 'sol must be > 0');
-			const lamports = new BN(Math.floor(sol * LAMPORTS_PER_SOL_AMM));
-			const r = ammSdk.buyQuoteInput({
-				quote: lamports,
-				slippage,
-				baseReserve,
-				quoteReserve,
-				globalConfig,
-				baseMintAccount,
-				baseMint: pool.baseMint,
-				coinCreator: pool.coinCreator,
-				creator: pool.creator,
-				feeConfig,
-			});
-			quote = {
-				sol_in: sol,
-				tokens_out: r.base?.toString?.() ?? null,
-				min_tokens_out: r.uiBase?.toString?.() ?? r.minBase?.toString?.() ?? null,
-				slippage_bps: slippageBps,
-				source: 'amm',
-			};
+		if (direction === 'buy') {
+			const quoteRaw = resolvedIsUsdc ? usdcRaw : solRaw;
+			if (quoteRaw) {
+				const quoteNum = Number(quoteRaw);
+				if (!(quoteNum > 0)) return error(res, 400, 'validation_error', `${resolvedIsUsdc ? 'usdc' : 'sol'} must be > 0`);
+				const atomics = new BN(Math.round(quoteNum * QUOTE_UNIT));
+				const r = ammSdk.buyQuoteInput({
+					quote: atomics, slippage, baseReserve, quoteReserve,
+					globalConfig, baseMintAccount,
+					baseMint: pool.baseMint,
+					coinCreator: pool.coinCreator,
+					creator: pool.creator,
+					feeConfig,
+				});
+				quote = {
+					...(resolvedIsUsdc ? { usdc_in: quoteNum } : { sol_in: quoteNum }),
+					tokens_out: r.base?.toString?.() ?? null,
+					min_tokens_out: r.uiBase?.toString?.() ?? r.minBase?.toString?.() ?? null,
+					slippage_bps: slippageBps,
+					source: 'amm',
+				};
+			}
 		} else if (direction === 'sell' && tokenRaw) {
 			const tokens = new BN(tokenRaw);
 			const r = ammSdk.sellBaseInput({
-				base: tokens,
-				slippage,
-				baseReserve,
-				quoteReserve,
-				globalConfig,
-				baseMintAccount,
+				base: tokens, slippage, baseReserve, quoteReserve,
+				globalConfig, baseMintAccount,
 				baseMint: pool.baseMint,
 				coinCreator: pool.coinCreator,
 				creator: pool.creator,
 				feeConfig,
 			});
-			const lamportsOut = r.quote ?? r.uiQuote ?? r.minQuote;
+			const atomicsOut = r.quote ?? r.uiQuote ?? r.minQuote;
+			const minAtomicsOut = r.minQuote ?? r.uiQuote;
+			const toUnit = (v) => v != null ? Number(v.toString()) / QUOTE_UNIT : null;
 			quote = {
 				tokens_in: tokenRaw,
-				sol_out:
-					lamportsOut != null
-						? Number(lamportsOut.toString()) / LAMPORTS_PER_SOL_AMM
-						: null,
-				min_sol_out: (r.minQuote ?? r.uiQuote)?.toString
-					? Number((r.minQuote ?? r.uiQuote).toString()) / LAMPORTS_PER_SOL_AMM
-					: null,
+				...(resolvedIsUsdc
+					? { usdc_out: toUnit(atomicsOut), min_usdc_out: toUnit(minAtomicsOut) }
+					: { sol_out: toUnit(atomicsOut), min_sol_out: toUnit(minAtomicsOut) }),
 				slippage_bps: slippageBps,
 				source: 'amm',
 			};
@@ -1795,10 +1925,11 @@ async function handleQuote(req, res) {
 			mint: mintStr,
 			network,
 			graduated: true,
+			quote_mint: resolvedQuoteMintStr,
 			pool: {
 				address: poolKey.toString(),
 				base: pool.baseMint.toString(),
-				quote: pool.quoteMint.toString(),
+				quote: resolvedQuoteMintStr,
 				base_reserve: baseReserve.toString(),
 				quote_reserve: quoteReserve.toString(),
 				lp_supply: pool.lpSupply?.toString?.() ?? null,
@@ -2517,5 +2648,162 @@ async function handleVanityKeygen(req, res) {
 		clearTimeout(timeout); clearInterval(progressInterval);
 		if (!res.writableEnded) _sse(res, 'error', { error: 'internal_error', error_description: err.message || 'unexpected error' });
 	} finally { if (!res.writableEnded) res.end(); }
+}
+
+// ── collect-creator-fee-prep ───────────────────────────────────────────────
+// Builds the tx for the coin creator to collect accrued creator fees from the
+// pump.fun fee vault into their own wallet.
+// Docs: https://github.com/pump-fun/pump-public-docs/blob/main/docs/instructions/COLLECT_CREATOR_FEE.md
+
+const collectCreatorFeePrepSchema = z.object({
+	// The on-chain creator address registered for the coin.
+	creator_address: z.string().min(32).max(44),
+	// The wallet that will sign (and receive fees). Must match creator_address.
+	wallet_address: z.string().min(32).max(44),
+	network: z.enum(['mainnet', 'devnet']).default('mainnet'),
+});
+
+async function handleCollectCreatorFeePrep(req, res) {
+	if (cors(req, res, { methods: 'POST,OPTIONS', credentials: true })) return;
+	if (!method(req, res, ['POST'])) return;
+
+	const user = await getSessionUser(req);
+	if (!user) return error(res, 401, 'unauthorized', 'sign in required');
+
+	const rl = await limits.authIp(clientIp(req));
+	if (!rl.success) return error(res, 429, 'rate_limited', 'too many requests');
+
+	const body = parse(collectCreatorFeePrepSchema, await readJson(req));
+	const creatorPk = solanaPubkey(body.creator_address);
+	const feePayer  = solanaPubkey(body.wallet_address);
+	if (!creatorPk || !feePayer) return error(res, 400, 'validation_error', 'invalid pubkeys');
+
+	try {
+		const { sdk, connection } = await getPumpSdk({ network: body.network });
+		const { OnlinePumpSdk } = await import('@pump-fun/pump-sdk');
+		const onlineSdk = new OnlinePumpSdk(connection);
+		const ixs = await onlineSdk.collectCoinCreatorFeeInstructions(creatorPk, feePayer);
+		const tx_base64 = await buildUnsignedTxBase64({
+			network: body.network,
+			payer: feePayer,
+			instructions: Array.isArray(ixs) ? ixs : [ixs],
+		});
+		return json(res, 201, {
+			creator: body.creator_address,
+			network: body.network,
+			tx_base64,
+		});
+	} catch (e) {
+		return error(res, e.status || 502, e.code || 'pump_sdk_error', e.message || 'failed to build collect-creator-fee tx');
+	}
+}
+
+// ── distribute-creator-fees-prep ──────────────────────────────────────────
+// Builds the tx that distributes accumulated AMM creator fees to shareholders
+// defined in the coin's fee-sharing config.
+// Docs: https://github.com/pump-fun/pump-public-docs/blob/main/docs/instructions/CREATOR_FEE_SHARING.md
+
+const distributeCreatorFeesPrepSchema = z.object({
+	mint: z.string().min(32).max(44),
+	wallet_address: z.string().min(32).max(44), // fee payer / signer
+	network: z.enum(['mainnet', 'devnet']).default('mainnet'),
+});
+
+async function handleDistributeCreatorFeesPrep(req, res) {
+	if (cors(req, res, { methods: 'POST,OPTIONS', credentials: true })) return;
+	if (!method(req, res, ['POST'])) return;
+
+	const user = await getSessionUser(req);
+	if (!user) return error(res, 401, 'unauthorized', 'sign in required');
+
+	const rl = await limits.authIp(clientIp(req));
+	if (!rl.success) return error(res, 429, 'rate_limited', 'too many requests');
+
+	const body = parse(distributeCreatorFeesPrepSchema, await readJson(req));
+	const mintPk  = solanaPubkey(body.mint);
+	const payerPk = solanaPubkey(body.wallet_address);
+	if (!mintPk || !payerPk) return error(res, 400, 'validation_error', 'invalid pubkeys');
+
+	try {
+		const { connection } = await getPumpSdk({ network: body.network });
+		const { OnlinePumpSdk } = await import('@pump-fun/pump-sdk');
+		const onlineSdk = new OnlinePumpSdk(connection);
+		const ixs = await onlineSdk.buildDistributeCreatorFeesInstructions(mintPk);
+		const tx_base64 = await buildUnsignedTxBase64({
+			network: body.network,
+			payer: payerPk,
+			instructions: Array.isArray(ixs) ? ixs : [ixs],
+		});
+		return json(res, 201, {
+			mint: body.mint,
+			network: body.network,
+			tx_base64,
+		});
+	} catch (e) {
+		return error(res, e.status || 502, e.code || 'pump_sdk_error', e.message || 'failed to build distribute-creator-fees tx');
+	}
+}
+
+// ── create-fee-sharing-prep ────────────────────────────────────────────────
+// Builds the tx to create a fee-sharing config for a graduated coin, enabling
+// the coin creator to split AMM creator fees among multiple shareholders.
+// Docs: https://github.com/pump-fun/pump-public-docs/blob/main/docs/instructions/CREATOR_FEE_SHARING.md
+
+const createFeeSharingPrepSchema = z.object({
+	mint: z.string().min(32).max(44),
+	creator_address: z.string().min(32).max(44),
+	wallet_address: z.string().min(32).max(44), // signer / fee payer
+	network: z.enum(['mainnet', 'devnet']).default('mainnet'),
+});
+
+async function handleCreateFeeSharingPrep(req, res) {
+	if (cors(req, res, { methods: 'POST,OPTIONS', credentials: true })) return;
+	if (!method(req, res, ['POST'])) return;
+
+	const user = await getSessionUser(req);
+	if (!user) return error(res, 401, 'unauthorized', 'sign in required');
+
+	const rl = await limits.authIp(clientIp(req));
+	if (!rl.success) return error(res, 429, 'rate_limited', 'too many requests');
+
+	const body = parse(createFeeSharingPrepSchema, await readJson(req));
+	const mintPk    = solanaPubkey(body.mint);
+	const creatorPk = solanaPubkey(body.creator_address);
+	const payerPk   = solanaPubkey(body.wallet_address);
+	if (!mintPk || !creatorPk || !payerPk) return error(res, 400, 'validation_error', 'invalid pubkeys');
+
+	try {
+		const { canonicalPumpPoolPda, canonicalPumpPoolPdaWithQuote } = await import('@pump-fun/pump-swap-sdk');
+		const { bondingCurvePda } = await import('@pump-fun/pump-sdk');
+		const { isLegacyQuoteMint } = await getPumpSdkV2({ network: body.network });
+		const { sdk, connection } = await getPumpSdk({ network: body.network });
+		
+		const bcPda = bondingCurvePda(mintPk);
+		const bcInfo = await connection.getAccountInfo(bcPda);
+		const bc = bcInfo ? sdk.decodeBondingCurve(bcInfo) : null;
+		
+		let poolPk;
+		if (bc && bc.quoteMint && !isLegacyQuoteMint(bc.quoteMint)) {
+			poolPk = canonicalPumpPoolPdaWithQuote(mintPk, bc.quoteMint);
+		} else {
+			poolPk = canonicalPumpPoolPda(mintPk);
+		}
+		
+		const ix = await sdk.createFeeSharingConfig({ creator: creatorPk, mint: mintPk, pool: poolPk });
+		const tx_base64 = await buildUnsignedTxBase64({
+			network: body.network,
+			payer: payerPk,
+			instructions: [ix],
+		});
+		return json(res, 201, {
+			mint: body.mint,
+			creator: body.creator_address,
+			pool: poolPk.toString(),
+			network: body.network,
+			tx_base64,
+		});
+	} catch (e) {
+		return error(res, e.status || 502, e.code || 'pump_sdk_error', e.message || 'failed to build create-fee-sharing tx');
+	}
 }
 function _sse(res, event, data) { res.write(`event: ${event}\ndata: ${JSON.stringify(data)}\n\n`); }
