@@ -185,6 +185,14 @@
 			"dest": "/vanity-wallet.html"
 		},
 		{
+			"src": "/eth-vanity",
+			"dest": "/eth-vanity.html"
+		},
+		{
+			"src": "/eth-vanity/",
+			"dest": "/eth-vanity.html"
+		},
+		{
 			"src": "/pump-visualizer/?",
 			"dest": "/pump-visualizer.html"
 		},
@@ -203,6 +211,22 @@
 		{
 			"src": "/walk/?",
 			"dest": "/walk.html"
+		},
+		{
+			"src": "/walkaround/?",
+			"dest": "/demos/walkaround.html"
+		},
+		{
+			"src": "/brain/?",
+			"dest": "/demos/brain.html"
+		},
+		{
+			"src": "/lipsync/mic/?",
+			"dest": "/demos/lipsync-mic.html"
+		},
+		{
+			"src": "/lipsync/?",
+			"dest": "/demos/lipsync-tts.html"
 		},
 		{
 			"src": "/pretext-demo/?",

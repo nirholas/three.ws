@@ -34,6 +34,14 @@
 import { createCdpAuthHeaders } from '@coinbase/x402';
 
 import { env } from './env.js';
+import { X402Error } from './x402-errors.js';
+import {
+	PAYMENT_EVENT_TOPIC as BSC_PAYMENT_EVENT_TOPIC,
+	settleDirectPayment,
+	verifyDirectPayment,
+} from './x402-bsc-direct.js';
+
+export { X402Error };
 
 export const X402_VERSION = 2;
 
@@ -43,6 +51,7 @@ export const NETWORK_BASE_MAINNET = 'eip155:8453';
 export const NETWORK_BASE_SEPOLIA = 'eip155:84532';
 export const NETWORK_ARBITRUM_MAINNET = 'eip155:42161';
 export const NETWORK_OPTIMISM_MAINNET = 'eip155:10';
+export const NETWORK_BSC_MAINNET = 'eip155:56';
 export const NETWORK_SOLANA_MAINNET = 'solana:5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp';
 export const NETWORK_SOLANA_DEVNET = 'solana:EtWTRABZaYq6iMfeYKouRu166VU2xqa1';
 
@@ -54,13 +63,10 @@ const CDP_EVM_NETWORKS = new Set([
 	NETWORK_OPTIMISM_MAINNET,
 ]);
 
-export class X402Error extends Error {
-	constructor(code, message, status = 402) {
-		super(message);
-		this.code = code;
-		this.status = status;
-	}
-}
+// Networks that settle via on-chain pay(bytes32) calls rather than a
+// facilitator (see x402-bsc-direct.js). The accept entry uses scheme='direct'
+// and the client is responsible for broadcasting the tx + paying gas.
+const DIRECT_NETWORKS = new Set([NETWORK_BSC_MAINNET]);
 
 // One v2 PaymentRequirements entry per supported network. Base mainnet first
 // — agentic.market's validator inspects the first entry for its supported-network
@@ -100,6 +106,25 @@ export function paymentRequirements(resourceUrl) {
 			extra: { name: 'USDC', decimals: 6, feePayer: env.X402_FEE_PAYER_SOLANA },
 		});
 	}
+	if (env.X402_PAY_TO_BSC) {
+		// BSC uses the contract-mediated "direct" scheme — see x402-bsc-direct.js
+		// for the wire flow. Clients call ThreeWSPayments.pay(ref) themselves and
+		// hand back the resulting tx hash via the X-PAYMENT header.
+		out.push({
+			...common,
+			scheme: 'direct',
+			network: NETWORK_BSC_MAINNET,
+			payTo: env.X402_PAY_TO_BSC,
+			asset: env.X402_ASSET_ADDRESS_BSC,
+			extra: {
+				name: 'Binance-Peg USD Coin',
+				decimals: 6,
+				contract: env.X402_PAY_TO_BSC,
+				method: 'pay(bytes32)',
+				eventTopic: BSC_PAYMENT_EVENT_TOPIC,
+			},
+		});
+	}
 	return out;
 }
 
@@ -123,6 +148,12 @@ function facilitatorFor(network) {
 		network === 'solana'
 	)
 		return { url: env.X402_FACILITATOR_URL_SOLANA, token: env.X402_FACILITATOR_TOKEN_SOLANA };
+	// BSC settles via on-chain pay() — no facilitator needed. The {direct:true}
+	// marker tells verifyPayment/settlePayment to bypass HTTP entirely and call
+	// the local verifier in x402-bsc-direct.js.
+	if (DIRECT_NETWORKS.has(network) || network === 'bsc') {
+		return { direct: true };
+	}
 	// EVM mainnets supported by Coinbase CDP. When CDP keys are set, route all
 	// of them through CDP (required for CDP Bazaar / agentic.market — only
 	// endpoints whose first verify+settle is processed by CDP get cataloged).
@@ -339,11 +370,24 @@ function selectRequirement(paymentPayload, allRequirements) {
 }
 
 // Verify a base64 X-PAYMENT header against the offered requirements.
-// Returns { paymentPayload, requirement, payer } on success.
+// Returns { paymentPayload, requirement, payer, directVerified? } on success.
+// For direct-scheme networks (BSC), the on-chain verification result is stashed
+// on `directVerified` so settlePayment can synthesise a response without
+// re-hitting the RPC.
 export async function verifyPayment({ paymentHeader, requirements }) {
 	const all = Array.isArray(requirements) ? requirements : [requirements];
 	const paymentPayload = decodePaymentHeader(paymentHeader);
 	const requirement = selectRequirement(paymentPayload, all);
+	const config = facilitatorFor(requirement.network);
+	if (config.direct) {
+		const directVerified = await verifyDirectPayment({ paymentPayload, requirement });
+		return {
+			paymentPayload,
+			requirement,
+			payer: directVerified.payer,
+			directVerified,
+		};
+	}
 	const result = await callFacilitator(requirement.network, '/verify', {
 		x402Version: X402_VERSION,
 		paymentPayload,
@@ -360,7 +404,20 @@ export async function verifyPayment({ paymentHeader, requirements }) {
 }
 
 // Settle the verified payment on-chain via the matching facilitator.
-export async function settlePayment({ paymentPayload, requirement }) {
+// For direct-scheme networks (BSC), the user already broadcast the tx during
+// verifyPayment — settle just synthesises the response shape callers expect.
+export async function settlePayment({ paymentPayload, requirement, directVerified }) {
+	const config = facilitatorFor(requirement.network);
+	if (config.direct) {
+		if (!directVerified) {
+			throw new X402Error(
+				'settle_failed',
+				'direct-scheme settle requires the verify step to run first',
+				500,
+			);
+		}
+		return settleDirectPayment({ verified: directVerified, requirement });
+	}
 	const result = await callFacilitator(requirement.network, '/settle', {
 		x402Version: X402_VERSION,
 		paymentPayload,

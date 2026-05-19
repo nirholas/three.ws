@@ -14,8 +14,10 @@
 
 import { cors, error } from './http.js';
 import { env } from './env.js';
+import { PAYMENT_EVENT_TOPIC as BSC_PAYMENT_EVENT_TOPIC } from './x402-bsc-direct.js';
 import {
 	NETWORK_BASE_MAINNET,
+	NETWORK_BSC_MAINNET,
 	NETWORK_SOLANA_MAINNET,
 	X402Error,
 	encodePaymentResponseHeader,
@@ -28,6 +30,8 @@ import {
 const NETWORK_ALIASES = {
 	base: NETWORK_BASE_MAINNET,
 	'base-mainnet': NETWORK_BASE_MAINNET,
+	bsc: NETWORK_BSC_MAINNET,
+	'bsc-mainnet': NETWORK_BSC_MAINNET,
 	solana: NETWORK_SOLANA_MAINNET,
 	'solana-mainnet': NETWORK_SOLANA_MAINNET,
 };
@@ -64,6 +68,24 @@ function buildAccept(network, priceAtomics, resourceUrl) {
 			extra: { name: 'USDC', decimals: 6, feePayer: env.X402_FEE_PAYER_SOLANA },
 		};
 	}
+	if (network === NETWORK_BSC_MAINNET) {
+		// Contract-mediated "direct" scheme — the client calls
+		// ThreeWSPayments.pay(bytes32) from their own wallet (see x402-bsc-direct.js).
+		return {
+			...common,
+			scheme: 'direct',
+			network: NETWORK_BSC_MAINNET,
+			payTo: env.X402_PAY_TO_BSC,
+			asset: env.X402_ASSET_ADDRESS_BSC,
+			extra: {
+				name: 'Binance-Peg USD Coin',
+				decimals: 6,
+				contract: env.X402_PAY_TO_BSC,
+				method: 'pay(bytes32)',
+				eventTopic: BSC_PAYMENT_EVENT_TOPIC,
+			},
+		};
+	}
 	throw new X402Error('unsupported_network', `paidEndpoint: unsupported network ${network}`, 500);
 }
 
@@ -73,6 +95,7 @@ function buildRequirements({ priceAtomics, networks, resourceUrl }) {
 		const net = resolveNetwork(name);
 		if (net === NETWORK_BASE_MAINNET && !env.X402_PAY_TO_BASE) continue;
 		if (net === NETWORK_SOLANA_MAINNET && !env.X402_PAY_TO_SOLANA) continue;
+		if (net === NETWORK_BSC_MAINNET && !env.X402_PAY_TO_BSC) continue;
 		out.push(buildAccept(net, priceAtomics, resourceUrl));
 	}
 	if (!out.length) {
@@ -167,6 +190,7 @@ export function paidEndpoint(spec) {
 			settled = await settlePayment({
 				paymentPayload: verified.paymentPayload,
 				requirement: verified.requirement,
+				directVerified: verified.directVerified,
 			});
 		} catch (err) {
 			return error(res, err.status || 502, err.code || 'settle_failed', err.message);

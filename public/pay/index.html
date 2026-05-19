@@ -579,6 +579,91 @@
   .gen-modal .cancel { color: var(--muted); margin-top: 8px; font-size: 12px; text-align: center; cursor: pointer; }
   .gen-modal .cancel:hover { color: var(--text); }
   .gen-modal .spinner { font-size: 18px; animation: spin 1.2s linear infinite; }
+
+  /* Chain tabs — Solana (default) vs BNB Chain. Toggles which payment surface
+     the .chat section renders. */
+  .chain-tabs {
+    display: flex; gap: 8px;
+    padding: 10px 28px 0;
+    border-bottom: 1px solid var(--border);
+  }
+  .chain-tab {
+    background: transparent; border: 1px solid transparent;
+    color: var(--muted); font-size: 13px; font-weight: 600;
+    padding: 8px 14px; border-radius: 8px 8px 0 0;
+    cursor: pointer; transition: color .15s, background .15s, border-color .15s;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: -1px;
+  }
+  .chain-tab:hover { color: var(--text); }
+  .chain-tab.active {
+    color: var(--text);
+    background: var(--panel);
+    border-color: var(--border-strong) var(--border-strong) var(--panel);
+  }
+  .chain-tab .chip {
+    font-family: var(--mono); font-size: 10px; color: var(--muted);
+    margin-left: 6px; opacity: .7;
+  }
+
+  /* BSC panel — sits inside section.chat as a sibling of .conv + .composer.
+     Hidden by default; .active flips display:flex when the BSC tab is chosen. */
+  .bsc-panel { display: none; flex-direction: column; min-height: 0; flex: 1; }
+  .bsc-panel.active { display: flex; }
+  .bsc-panel .bsc-header {
+    display: flex; align-items: center; justify-content: space-between;
+    gap: 16px; padding: 18px 28px 8px;
+  }
+  .bsc-panel .bsc-header strong { font-size: 15px; }
+  .bsc-panel .bsc-sub { font-size: 12px; color: var(--muted); margin-top: 4px; }
+  .bsc-connect {
+    background: linear-gradient(135deg, #F3BA2F, #E89C0C);
+    color: #1a1d29; font-weight: 700; font-size: 13px;
+    padding: 9px 16px; border-radius: 8px; border: none;
+    cursor: pointer; transition: filter .15s;
+    white-space: nowrap;
+  }
+  .bsc-connect:hover { filter: brightness(1.08); }
+  .bsc-connect:disabled { opacity: .5; cursor: not-allowed; }
+  .bsc-info {
+    display: flex; flex-wrap: wrap; gap: 18px;
+    padding: 6px 28px 12px;
+    font-size: 12px; color: var(--muted);
+  }
+  .bsc-info code { color: var(--text); font-family: var(--mono); }
+  .bsc-quick {
+    display: flex; flex-wrap: wrap; gap: 8px;
+    padding: 4px 28px 14px;
+    border-bottom: 1px solid var(--border);
+  }
+  .bsc-chip {
+    background: var(--panel-2); color: var(--text);
+    border: 1px solid var(--border); border-radius: 999px;
+    padding: 6px 12px; font-size: 12px; font-family: var(--mono);
+    cursor: pointer; transition: border-color .15s;
+  }
+  .bsc-chip:hover { border-color: var(--accent-2); }
+  .bsc-log {
+    flex: 1; overflow-y: auto;
+    padding: 18px 28px;
+    display: flex; flex-direction: column; gap: 10px;
+  }
+  .bsc-step {
+    font-size: 13px; line-height: 1.55;
+    padding: 10px 14px;
+    background: var(--panel); border: 1px solid var(--border);
+    border-radius: 10px;
+    word-break: break-all;
+  }
+  .bsc-step.muted { color: var(--muted); border-style: dashed; }
+  .bsc-step.err { border-color: var(--red); color: #fca5a5; }
+  .bsc-step.result { background: var(--bg-2); }
+  .bsc-step.result pre {
+    margin: 0; font-size: 11.5px; line-height: 1.5;
+    color: var(--text); white-space: pre-wrap; word-break: break-all;
+  }
+  .bsc-step code { font-family: var(--mono); font-size: 11.5px; }
+  .bsc-step a { color: var(--accent-2); }
 </style>
 </head>
 <body>
@@ -611,6 +696,10 @@
 
 <main>
   <section class="chat">
+    <div class="chain-tabs" id="chainTabs">
+      <button class="chain-tab active" data-chain="solana">⚡ Solana <span class="chip">USDC</span></button>
+      <button class="chain-tab" data-chain="bsc">⛓ BNB Chain <span class="chip">USDC</span></button>
+    </div>
     <div class="agent-bar" id="agentBar">
       <span class="label">agent wallet</span>
       <div class="agent-list" id="agentList">
@@ -631,7 +720,7 @@
         </div>
       </div>
     </div>
-    <div class="composer">
+    <div class="composer" id="composer">
       <div class="quick" id="quick">
         <button data-cmd="tools/list">/list_tools</button>
         <button data-cmd="validate_model:demo">/validate DamagedHelmet.glb</button>
@@ -642,6 +731,31 @@
       <div class="input-row">
         <input id="prompt" placeholder='Try: validate https://example.com/model.glb' autocomplete="off" />
         <button id="send" class="send">Pay & Run</button>
+      </div>
+    </div>
+
+    <div class="bsc-panel" id="bscPanel">
+      <div class="bsc-header">
+        <div>
+          <strong>Pay on BNB Smart Chain</strong>
+          <div class="bsc-sub">You sign the payment in MetaMask. <code>ThreeWSPayments.pay($0.001 USDC)</code> on-chain — no facilitator, no server-held key.</div>
+        </div>
+        <button class="bsc-connect" id="bscConnect">Connect MetaMask</button>
+      </div>
+      <div class="bsc-info" id="bscInfo" style="display:none">
+        <span>wallet <code id="bscAddr">…</code></span>
+        <span>USDC <code id="bscBal">…</code></span>
+        <span>allowance <code id="bscAllow">…</code></span>
+        <span>contract <a target="_blank" rel="noopener" href="https://bscscan.com/address/0x00000000381f09742a30a5a49975514AeC1B72Cc"><code>0x00000000…1B72Cc</code></a></span>
+      </div>
+      <div class="bsc-quick">
+        <button class="bsc-chip" data-bsctool="validate_model">/validate DamagedHelmet.glb</button>
+        <button class="bsc-chip" data-bsctool="inspect_model">/inspect DamagedHelmet.glb</button>
+        <button class="bsc-chip" data-bsctool="search_public_avatars">/search_avatars</button>
+        <button class="bsc-chip" data-bsctool="tools_list">/list_tools</button>
+      </div>
+      <div class="bsc-log" id="bscLog">
+        <div class="bsc-step muted">Connect MetaMask, then click a tool above. You'll sign two transactions: one <code>approve</code> (once per wallet) and one <code>pay(bytes32)</code> per MCP call. The page then POSTs <code>/api/mcp</code> with an <code>X-PAYMENT</code> header proving the on-chain payment.</div>
       </div>
     </div>
   </section>
@@ -1328,6 +1442,256 @@ for (const [tool, alias] of [
 if (params.get('list') === '1') queueMicrotask(() => run({ tool: 'tools/list', args: {} }));
 
 promptEl.focus();
+</script>
+
+<script type="module">
+// ---- BNB Smart Chain x402 "direct" flow --------------------------------
+//
+// The Solana script above pays from a server-held demo wallet. On BSC the
+// browser user is the payer: MetaMask signs USDC.approve + ThreeWSPayments.pay,
+// then the page POSTs /api/mcp with the resulting tx as an X-PAYMENT header.
+// Server-side verification happens in api/_lib/x402-bsc-direct.js.
+
+const BSC_CHAIN_HEX = '0x38'; // 56
+const BSC_USDC      = '0x8AC76a51cc950d9822D68b83fE1Ad97B32Cd580d';
+const BSC_PAYMENTS  = '0x00000000381f09742a30a5a49975514AeC1B72Cc';
+const PRICE         = 1000n; // $0.001 USDC (6 decimals)
+
+const $b = (id) => document.getElementById(id);
+const conv_       = $b('conv');
+const composer_   = $b('composer');
+const agentBar_   = $b('agentBar');
+const bscPanel_   = $b('bscPanel');
+
+function activateChain(chain) {
+  document.querySelectorAll('.chain-tab').forEach((b) => {
+    b.classList.toggle('active', b.dataset.chain === chain);
+  });
+  const bsc = chain === 'bsc';
+  if (agentBar_) agentBar_.style.display = bsc ? 'none' : '';
+  if (conv_)     conv_.style.display     = bsc ? 'none' : '';
+  if (composer_) composer_.style.display = bsc ? 'none' : '';
+  bscPanel_.classList.toggle('active', bsc);
+}
+
+document.querySelectorAll('.chain-tab').forEach((btn) => {
+  btn.addEventListener('click', () => activateChain(btn.dataset.chain));
+});
+
+// ---- low-level wallet helpers -----------------------------------------
+
+let bscAccount = null;
+
+async function eth(method, params = []) {
+  if (!window.ethereum) {
+    throw new Error('MetaMask not detected. Install it at metamask.io or use a wallet extension that exposes window.ethereum.');
+  }
+  return await window.ethereum.request({ method, params });
+}
+
+async function ensureBscNetwork() {
+  try {
+    await eth('wallet_switchEthereumChain', [{ chainId: BSC_CHAIN_HEX }]);
+  } catch (err) {
+    // 4902 = chain not added to the wallet.
+    if (err && (err.code === 4902 || err.code === -32603)) {
+      await eth('wallet_addEthereumChain', [{
+        chainId: BSC_CHAIN_HEX,
+        chainName: 'BNB Smart Chain',
+        nativeCurrency: { name: 'BNB', symbol: 'BNB', decimals: 18 },
+        rpcUrls: ['https://bsc-dataseed.binance.org'],
+        blockExplorerUrls: ['https://bscscan.com'],
+      }]);
+    } else {
+      throw err;
+    }
+  }
+}
+
+function pad32Addr(addr) {
+  return addr.toLowerCase().replace(/^0x/, '').padStart(64, '0');
+}
+
+async function readUsdcBalance(account) {
+  const data = '0x70a08231' + pad32Addr(account);
+  const raw = await eth('eth_call', [{ to: BSC_USDC, data }, 'latest']);
+  return BigInt(raw && raw !== '0x' ? raw : '0x0');
+}
+
+async function readUsdcAllowance(owner, spender) {
+  const data = '0xdd62ed3e' + pad32Addr(owner) + pad32Addr(spender);
+  const raw = await eth('eth_call', [{ to: BSC_USDC, data }, 'latest']);
+  return BigInt(raw && raw !== '0x' ? raw : '0x0');
+}
+
+function fmtUsdc(n) {
+  const s = n.toString().padStart(7, '0');
+  return s.slice(0, -6) + '.' + s.slice(-6, -2);
+}
+
+async function refreshBalances() {
+  if (!bscAccount) return;
+  try {
+    const [bal, allow] = await Promise.all([
+      readUsdcBalance(bscAccount),
+      readUsdcAllowance(bscAccount, BSC_PAYMENTS),
+    ]);
+    $b('bscBal').textContent   = '$' + fmtUsdc(bal) + ' USDC';
+    $b('bscAllow').textContent = allow >= PRICE ? '✓ ready' : 'needs approve';
+  } catch (err) {
+    $b('bscBal').textContent   = '—';
+    $b('bscAllow').textContent = '—';
+  }
+}
+
+function logStep(html, kind = 'info') {
+  const div = document.createElement('div');
+  div.className = 'bsc-step' + (kind !== 'info' ? ' ' + kind : '');
+  div.innerHTML = html;
+  $b('bscLog').appendChild(div);
+  div.scrollIntoView({ behavior: 'smooth', block: 'end' });
+  return div;
+}
+
+async function waitForReceipt(txHash, timeoutMs = 60000) {
+  const started = Date.now();
+  while (Date.now() - started < timeoutMs) {
+    const rcpt = await eth('eth_getTransactionReceipt', [txHash]);
+    if (rcpt) {
+      if (rcpt.status !== '0x1') throw new Error(`tx ${txHash} reverted on-chain`);
+      return rcpt;
+    }
+    await new Promise((r) => setTimeout(r, 1500));
+  }
+  throw new Error(`tx ${txHash} did not confirm within ${timeoutMs / 1000}s — check BscScan.`);
+}
+
+async function bscConnect() {
+  const accts = await eth('eth_requestAccounts');
+  bscAccount = accts && accts[0];
+  if (!bscAccount) throw new Error('No account returned from wallet');
+  await ensureBscNetwork();
+  const short = bscAccount.slice(0, 6) + '…' + bscAccount.slice(-4);
+  $b('bscAddr').textContent = short;
+  $b('bscConnect').style.display = 'none';
+  $b('bscInfo').style.display = '';
+  logStep(`🔗 Connected as <code>${short}</code> on BNB Smart Chain.`);
+  await refreshBalances();
+}
+
+async function approveIfNeeded() {
+  const allow = await readUsdcAllowance(bscAccount, BSC_PAYMENTS);
+  if (allow >= PRICE) return false;
+  logStep('🔑 Approving USDC for ThreeWSPayments (one-time per wallet)…');
+  // approve(spender, type(uint256).max)
+  const data = '0x095ea7b3' + pad32Addr(BSC_PAYMENTS) + 'f'.repeat(64);
+  const txHash = await eth('eth_sendTransaction', [{
+    from: bscAccount, to: BSC_USDC, data,
+  }]);
+  logStep(`📝 Approve tx: <a target="_blank" rel="noopener" href="https://bscscan.com/tx/${txHash}"><code>${txHash}</code></a>`);
+  await waitForReceipt(txHash);
+  logStep('✅ Approval confirmed.');
+  return true;
+}
+
+function randomRef() {
+  const bytes = crypto.getRandomValues(new Uint8Array(32));
+  return '0x' + Array.from(bytes).map((b) => b.toString(16).padStart(2, '0')).join('');
+}
+
+async function payOnChain(ref) {
+  logStep(`💳 Calling <code>ThreeWSPayments.pay(${ref.slice(0, 10)}…)</code> — sign in MetaMask.`);
+  const data = '0x8609cad1' + ref.replace(/^0x/, '');
+  const txHash = await eth('eth_sendTransaction', [{
+    from: bscAccount, to: BSC_PAYMENTS, data,
+  }]);
+  const rowDiv = logStep(`📝 Pay tx: <a target="_blank" rel="noopener" href="https://bscscan.com/tx/${txHash}"><code>${txHash}</code></a> — waiting for confirmation…`);
+  const rcpt = await waitForReceipt(txHash);
+  rowDiv.innerHTML = `✅ Payment confirmed in block ${parseInt(rcpt.blockNumber, 16)}: <a target="_blank" rel="noopener" href="https://bscscan.com/tx/${txHash}"><code>${txHash}</code></a>`;
+  return txHash;
+}
+
+async function callMcp(toolName, toolArgs, txHash, ref) {
+  const payload = {
+    scheme:  'direct',
+    network: 'eip155:56',
+    txHash,
+    ref,
+    payer:   bscAccount,
+  };
+  const xPayment = btoa(JSON.stringify(payload));
+  logStep(`🚀 POST <code>/api/mcp</code> with <code>X-PAYMENT</code> proving the BSC tx…`);
+
+  const isToolsList = toolName === 'tools/list';
+  const body = isToolsList
+    ? { jsonrpc: '2.0', id: 1, method: 'tools/list' }
+    : { jsonrpc: '2.0', id: 1, method: 'tools/call', params: { name: toolName, arguments: toolArgs } };
+
+  const res = await fetch('/api/mcp', {
+    method: 'POST',
+    headers: {
+      'content-type': 'application/json',
+      'accept':       'application/json',
+      'x-payment':    xPayment,
+    },
+    body: JSON.stringify(body),
+  });
+  if (!res.ok) {
+    const text = await res.text();
+    throw new Error(`MCP ${res.status}: ${text.slice(0, 300)}`);
+  }
+  const data = await res.json();
+  if (data.error) throw new Error(`MCP error: ${data.error.message || JSON.stringify(data.error)}`);
+  return data;
+}
+
+const BSC_TOOL_PRESETS = {
+  validate_model:        { name: 'validate_model',        args: { url: 'https://modelviewer.dev/shared-assets/models/DamagedHelmet/glTF-Binary/DamagedHelmet.glb' } },
+  inspect_model:         { name: 'inspect_model',         args: { url: 'https://modelviewer.dev/shared-assets/models/DamagedHelmet/glTF-Binary/DamagedHelmet.glb' } },
+  search_public_avatars: { name: 'search_public_avatars', args: { limit: 5 } },
+  tools_list:            { name: 'tools/list',            args: {} },
+};
+
+async function runBscFlow(toolKey) {
+  try {
+    if (!bscAccount) await bscConnect();
+    if (!bscAccount) return;
+    const preset = BSC_TOOL_PRESETS[toolKey];
+    if (!preset) throw new Error('Unknown tool: ' + toolKey);
+
+    await approveIfNeeded();
+    const ref = randomRef();
+    const txHash = await payOnChain(ref);
+    const result = await callMcp(preset.name, preset.args, txHash, ref);
+
+    const pretty = JSON.stringify(result, null, 2);
+    const truncated = pretty.length > 4000 ? pretty.slice(0, 4000) + '\n…(truncated)' : pretty;
+    logStep(`📦 MCP result:<pre>${escapeHtml(truncated)}</pre>`, 'result');
+    await refreshBalances();
+  } catch (err) {
+    const msg = err && (err.shortMessage || err.message) ? (err.shortMessage || err.message) : String(err);
+    logStep('❌ ' + escapeHtml(msg), 'err');
+  }
+}
+
+function escapeHtml(s) {
+  return String(s)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;');
+}
+
+$b('bscConnect').addEventListener('click', () => {
+  bscConnect().catch((err) => logStep('❌ ' + escapeHtml(err.message || String(err)), 'err'));
+});
+document.querySelectorAll('[data-bsctool]').forEach((btn) => {
+  btn.addEventListener('click', () => runBscFlow(btn.dataset.bsctool));
+});
+
+// Auto-switch into the BSC tab when navigated as /pay?chain=bsc — used by
+// the DappBay listing link so visitors land directly on the BNB-Chain flow.
+const bscParams = new URLSearchParams(location.search);
+if (bscParams.get('chain') === 'bsc') activateChain('bsc');
 </script>
 
 </body>

@@ -226,6 +226,25 @@ export const env = {
 	get X402_ASSET_ADDRESS_ARBITRUM() {
 		return opt('X402_ASSET_ADDRESS_ARBITRUM', '0xaf88d065e77c8cC2239327C5EDb3A432268e5831');
 	},
+	// Binance-Peg USD Coin (USDC) on BSC mainnet. Standard ERC-20; does NOT
+	// implement EIP-3009 transferWithAuthorization, which is why BSC x402
+	// payments use the contract-mediated "direct" scheme (see x402-bsc-direct.js).
+	get X402_ASSET_ADDRESS_BSC() {
+		return opt('X402_ASSET_ADDRESS_BSC', '0x8AC76a51cc950d9822D68b83fE1Ad97B32Cd580d');
+	},
+	// ThreeWSPayments x402 receiver contract on BSC. Client calls
+	// pay(bytes32 ref) after approving USDC; the contract pulls pricePerCall
+	// (1000 base units = $0.001) and emits Payment(payer, amount, ref).
+	// Source + deploy tx: contracts/DEPLOYMENTS.md
+	get X402_PAY_TO_BSC() {
+		return opt('X402_PAY_TO_BSC', '0x00000000381f09742a30a5a49975514AeC1B72Cc');
+	},
+	// Optional operator EOA private key for scripts/erc8004-mint-bsc.mjs.
+	// Used to register marketplace agents on the BSC IdentityRegistry. Never
+	// referenced by request handlers — keep it out of the serverless surface.
+	get BSC_OPERATOR_KEY() {
+		return opt('BSC_OPERATOR_KEY');
+	},
 
 	// zauthx402 SDK — optional telemetry for x402 endpoints. When unset,
 	// the SDK is not initialized and request monitoring is skipped.

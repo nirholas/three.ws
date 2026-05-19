@@ -46,6 +46,7 @@
 			}
 			.demo-status.live { background: rgba(214,255,61,0.12); color: #d6ff3d; border: 1px solid rgba(214,255,61,0.35); }
 			.demo-status.beta { background: rgba(255,184,77,0.12); color: #ffb84d; border: 1px solid rgba(255,184,77,0.35); }
+			.demo-status.prod { background: rgba(154,212,255,0.12); color: #9ad4ff; border: 1px solid rgba(154,212,255,0.35); }
 			.warning {
 				margin: 32px 0 0;
 				padding: 14px 16px;
@@ -86,25 +87,25 @@
 					<p>Drop-in <code>&lt;agent-3d&gt;</code> web component loaded from the npm SDK bundle, plus the programmatic <code>AvatarCreator</code> iframe.</p>
 					<span class="demo-status beta">Beta</span>
 				</a>
-				<a class="demo-card" href="/demos/lipsync-mic.html">
-					<h2>Audio-driven lipsync</h2>
+				<a class="demo-card" href="/lipsync/mic">
+					<h2>Audio-driven lipsync → <code>/lipsync/mic</code></h2>
 					<p>Feed live mic audio through the viseme analyser and watch the avatar's mouth track your voice in real time.</p>
-					<span class="demo-status live">Live</span>
+					<span class="demo-status prod">In prod</span>
 				</a>
-				<a class="demo-card" href="/demos/brain.html">
-					<h2>Multi-LLM brain</h2>
+				<a class="demo-card" href="/brain">
+					<h2>Multi-LLM brain → <code>/brain</code></h2>
 					<p>Send the same prompt to Claude, GPT, Qwen on Alibaba DashScope, Qwen3-Coder on ModelScope, and Llama on Groq. Side-by-side streaming, latency, and token usage.</p>
-					<span class="demo-status live">Live</span>
+					<span class="demo-status prod">In prod</span>
 				</a>
-				<a class="demo-card" href="/demos/lipsync-tts.html">
-					<h2>TTS-driven lipsync</h2>
+				<a class="demo-card" href="/lipsync">
+					<h2>TTS-driven lipsync → <code>/lipsync</code></h2>
 					<p>Type any text, stream it through OpenAI TTS, and the avatar's mouth animates in real time via <code>wawa-lipsync</code> viseme detection.</p>
-					<span class="demo-status live">Live</span>
+					<span class="demo-status prod">In prod</span>
 				</a>
-				<a class="demo-card" href="/demos/walkaround.html">
-					<h2>3D walkaround</h2>
+				<a class="demo-card" href="/walkaround">
+					<h2>3D walkaround → <code>/walkaround</code></h2>
 					<p>WASD + mobile joystick navigation with real <strong>Rapier</strong> physics and <strong>Recast</strong> navmesh. Click the ground to autopilot your agent there.</p>
-					<span class="demo-status live">Live</span>
+					<span class="demo-status prod">In prod</span>
 				</a>
 				<a class="demo-card" href="/demos/erc8004.html">
 					<h2>ERC-8004 registry browser</h2>
