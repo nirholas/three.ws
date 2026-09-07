@@ -11,6 +11,18 @@ import { defineConfig } from '@playwright/test';
 // the cold transform finishes and bring down the next two tests with it.
 export default defineConfig({
 	testDir: 'tests/e2e',
+	// The home lane's live journeys (the specs that import ./home-support.js)
+	// drive a real Home Assistant and two provisioned accounts, which only
+	// playwright.home.config.js sets up (`npm run test:home:e2e`). Under this
+	// config they have no stack to read and die on the first sign-in, so they
+	// stay out of the general run. The stub-driven home specs (home-connect,
+	// home-whose-fault) need no stack and still run here.
+	testIgnore: [
+		'**/home-confirmation.spec.js',
+		'**/home-control.spec.js',
+		'**/home-floorplan.spec.js',
+		'**/home-scene.spec.js',
+	],
 	// 300s, not 120s: the a11y floor spec runs axe over every top-30 page, and
 	// axe's colour-contrast pass is O(rendered nodes). /marketplace renders a
 	// ~77-card grid and legitimately takes ~4.3 min against the dev server

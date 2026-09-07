@@ -298,8 +298,8 @@ test.describe('/smart-home connect flow', () => {
 		// And it offers the way back up, because a deep link is often the first
 		// page somebody lands on.
 		await expect(page.getByRole('link', { name: /all your homes/i })).toHaveAttribute('href', '/smart-home');
-		// No link to the page we are already on.
-		await expect(page.getByRole('link', { name: /^open/i })).toHaveCount(0);
+		// "Open" leads into the house itself, never back to the card we are on.
+		await expect(page.getByRole('link', { name: /^open/i })).toHaveAttribute('href', `/smart-home/${HOME.id}`);
 	});
 
 	test('a deep link to a home that is not yours reveals nothing', async ({ page }) => {

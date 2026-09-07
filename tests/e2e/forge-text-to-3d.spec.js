@@ -103,7 +103,12 @@ test.describe('Forge — text → 3D', () => {
 
 		// Catalog-driven engine picker renders the free NVIDIA lane with a FREE pill.
 		const freeEngine = page.locator('#engine button', { has: page.locator('.eng-free') });
-		await expect(freeEngine).toBeVisible({ timeout: 30_000 });
+		// The picker is built after the page's module graph finishes loading and
+		// the catalog answers. On a cold Vite dev server that graph transform is
+		// the 30-60s budget playwright.config.js documents, and 30s here flaked
+		// exactly there (first attempt red, retry green). Same ceiling as the
+		// cold-start budget, so a genuinely missing picker still fails.
+		await expect(freeEngine).toBeVisible({ timeout: 60_000 });
 		await expect(freeEngine).toHaveAttribute('data-backend', 'nvidia');
 		await freeEngine.click();
 		await expect(freeEngine).toHaveAttribute('aria-pressed', 'true');
