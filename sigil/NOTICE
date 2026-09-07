@@ -1,0 +1,27 @@
+Sigil
+Copyright 2026 nirholas
+
+The open multi-chain vanity address foundry.
+https://github.com/nirholas/sigil
+
+Licensed under the Apache License, Version 2.0. See the LICENSE file in the
+root of this repository for the full terms.
+
+Portions of this project were first developed inside the three.ws monorepo
+(https://github.com/nirholas/three.ws) and are re-licensed here under the same
+Apache License, Version 2.0:
+
+  packages/core/src/difficulty.js   base58 leading-character distribution model
+  packages/solana/src/*             ed25519 grinding and BIP-39 mnemonic search
+  packages/evm/src/*                secp256k1 EOA and CREATE2 salt grinding
+  packages/splitkey/src/ed25519.js  trustless split-key grinding for Ed25519
+  packages/attest/src/*             proof-of-grind certificate format
+
+Third-party dependencies keep their own licenses:
+
+  @noble/curves, @noble/hashes      MIT, Paul Miller
+  bs58, base-x                      MIT
+  three                             MIT, three.js authors
+  hono                              MIT, Yusuke Wada
+
+Nothing in this NOTICE modifies the terms of the Apache License, Version 2.0.

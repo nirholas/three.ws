@@ -1,0 +1,22 @@
+{
+  "name": "@three-ws/sigil-core",
+  "version": "1.0.0",
+  "description": "Exact vanity-address difficulty math for Base58 (Solana) and hex (EVM) address spaces: pattern parsing, probability, expected attempts, ETA, and rarity tiers.",
+  "type": "module",
+  "main": "./src/index.js",
+  "exports": {
+    ".": "./src/index.js",
+    "./base58": "./src/base58.js",
+    "./hex": "./src/hex.js",
+    "./package.json": "./package.json"
+  },
+  "files": ["src", "README.md"],
+  "keywords": ["vanity-address", "base58", "solana", "ethereum", "evm", "difficulty", "probability", "rarity", "sigil"],
+  "license": "Apache-2.0",
+  "author": "nirholas <support@three.ws>",
+  "homepage": "https://three.ws/sigil",
+  "repository": { "type": "git", "url": "git+https://github.com/nirholas/sigil.git", "directory": "packages/core" },
+  "engines": { "node": ">=20" },
+  "publishConfig": { "access": "public" },
+  "scripts": { "test": "node --test test/*.test.js" }
+}
