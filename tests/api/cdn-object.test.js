@@ -10,7 +10,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 vi.mock('../../api/_lib/zauth.js', () => ({ instrument: () => false, drain: async () => {} }));
 vi.mock('../../api/_lib/sentry.js', () => ({ captureException: () => {} }));
 vi.mock('../../api/_lib/alerts.js', () => ({ sendOpsAlert: async () => {} }));
-vi.mock('../../api/_lib/env.js', () => ({ env: { S3_BUCKET: 'test-bucket' } }));
+vi.mock('../../api/_lib/env.js', () => ({ env: { S3_BUCKET: 'test-bucket', S3_PUBLIC_DOMAIN: 'https://pub-test.r2.dev' } }));
 
 let sendImpl = async () => {
 	throw new Error('r2.send not stubbed for this test');
@@ -152,4 +152,33 @@ describe('GET /cdn/<key> — error mapping', () => {
 		const res = await invoke({ key: 'u/owner/a.glb' });
 		expect(res.statusCode).toBe(502);
 	});
+
+	// A rejected credential takes the signed read down for every object at once
+	// while the public bucket domain keeps serving those same keys, so this route
+	// hands the caller there rather than 502ing every avatar, thumbnail and GLB on
+	// the site. Live on 2026-09-07, which is what the fallback was written for.
+	// Both wordings are covered because the SDK reports the same rejection two
+	// ways and the compact code was all the predicate used to match.
+	for (const [label, build] of [
+		['the compact SDK code', () => Object.assign(new Error('signature mismatch'), { name: 'SignatureDoesNotMatch' })],
+		[
+			'the sentence the SDK writes instead',
+			() =>
+				new Error(
+					'The request signature we calculated does not match the signature you provided. Check your secret access key and signing method.',
+				),
+		],
+	]) {
+		it(`serves the public bucket domain when the credential is rejected, reported as ${label}`, async () => {
+			sendImpl = async () => {
+				throw build();
+			};
+			const res = await invoke({ key: 'u/owner/a.glb' });
+			expect(res.statusCode).toBe(302);
+			expect(res.getHeader('location')).toBe('https://pub-test.r2.dev/u/owner/a.glb');
+			// Never cached: the moment the credential is healthy again, traffic
+			// returns to the signed path instead of a stale hop pinned at the edge.
+			expect(res.getHeader('cache-control')).toBe('no-store');
+		});
+	}
 });
