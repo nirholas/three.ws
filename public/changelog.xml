@@ -87,6 +87,14 @@
 			<description>A new MCP server drives the Blender you already have installed, with no GUI open and no add-on to install first. An assistant can now read a 3D file and tell you what is actually in it (objects, triangle counts, materials, bones, animations, real-world size), convert between GLB, glTF, FBX, OBJ, STL, PLY, Collada, Alembic, USD and .blend in either direction, render a preview image of a bare asset file that arrives with no camera or lighting of its own, and run a Blender Python script to do the things no single tool covers, like halving a mesh's triangle count and exporting the result in one step. It also reaches back into three.ws: describe something in a sentence and the free text-to-3D lane generates it and opens it in Blender. Blender runs in the background, one process per request, so it works the same on a laptop, a server, or in CI.</description>
 		</item>
 		<item>
+			<title>Reference-image upload now tells you to paste a URL instead of failing with a network error</title>
+			<link>https://three.ws/forge</link>
+			<guid isPermaLink="false">2026-09-07:Reference-image upload now tells you to paste a URL instead of failing with a network error</guid>
+			<pubDate>Mon, 07 Sep 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>When the image storage credentials are rejected, /forge used to hand the browser an upload address that the storage service refused. The refusal arrives without the header a browser needs to read it, so the page could only say &quot;Network error during upload&quot; and the reference image was lost. The upload endpoint now checks storage the same way the rest of the site does, so it says up front that direct upload is unavailable and points you at the paste-a-URL field, which keeps working through the outage.</description>
+		</item>
+		<item>
 			<title>Shared avatar and agent links now show a real page to Google, not a loading spinner</title>
 			<link>https://three.ws/changelog</link>
 			<guid isPermaLink="false">2026-09-07:Shared avatar and agent links now show a real page to Google, not a loading spinner</guid>
