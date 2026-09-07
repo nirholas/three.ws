@@ -1,11 +1,21 @@
 {
-	"generated_at": "2026-09-07T20:01:21.224Z",
+	"generated_at": "2026-09-07T20:35:47.680Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
 		"url": "https://three.ws"
 	},
 	"entries": [
+		{
+			"date": "2026-09-07",
+			"type": "launch",
+			"title": "Docs · SEO and crawler rendering",
+			"summary": "How a JavaScript site is served to search engines: the four server-side render paths, the contract that keeps a page and its sitemap entry agreeing, and how to audit the live origin.",
+			"link": "/docs/seo",
+			"tags": [
+				"launch"
+			]
+		},
 		{
 			"date": "2026-09-07",
 			"type": "launch",
@@ -186,6 +196,17 @@
 			"tags": [
 				"feature",
 				"sdk"
+			]
+		},
+		{
+			"date": "2026-09-07",
+			"type": "update",
+			"title": "Tutorials and walkthroughs are now readable by search engines, and pages we never wanted indexed stopped asking to be",
+			"summary": "The 76 tutorial and walkthrough pages loaded their content after the page opened, which meant a search engine reading the raw page found no text at all, and on tutorials found the words 'Tutorial not found' sitting under an empty heading. Those pages now arrive with their full text already in them, so they can finally be found by the questions they answer. Separately, eighteen pages were being submitted to Google while telling Google not to index them: sign-in surfaces, viewers that need a link to work, and one endpoint that returns data rather than a page. They have been withdrawn from the sitemap, and a new check refuses to let a page ask for indexing and refuse it at the same time. Two documentation pages that shared a title with the product page they described have been retitled.",
+			"link": "/tutorials",
+			"tags": [
+				"improvement",
+				"docs"
 			]
 		},
 		{
@@ -1877,16 +1898,6 @@
 		{
 			"date": "2026-09-01",
 			"type": "launch",
-			"title": "3D Drops",
-			"summary": "How generative 3D collections work on three.ws: weighted trait layers, a supply rolled from a published seed, rarity scored from the actual distribution, art forged per item on reveal, and a verify endpoint anyone can recompute the roll with.",
-			"link": "/docs/drops",
-			"tags": [
-				"launch"
-			]
-		},
-		{
-			"date": "2026-09-01",
-			"type": "launch",
 			"title": "Agent Spotlight",
 			"summary": "The three.ws community showcase: agents people actually built something with, written up by the builder and ranked by community upvotes. Filter by category, open any entry in 3D, upvote what you like, and submit your own.",
 			"link": "/spotlight",
@@ -1910,6 +1921,16 @@
 			"title": "Filming three.ws on a Seeker without a Seeker",
 			"summary": "How to record a Seeker screen recording of the app with no device: why the Trusted Web Activity makes a browser capture at the real panel geometry a genuine capture, and which moments still have to come from an Android emulator.",
 			"link": "/docs/seeker-video",
+			"tags": [
+				"launch"
+			]
+		},
+		{
+			"date": "2026-09-01",
+			"type": "launch",
+			"title": "How 3D Drops collections work",
+			"summary": "How generative 3D collections work on three.ws: weighted trait layers, a supply rolled from a published seed, rarity scored from the actual distribution, art forged per item on reveal, and a verify endpoint anyone can recompute the roll with.",
+			"link": "/docs/drops",
 			"tags": [
 				"launch"
 			]
@@ -2387,6 +2408,16 @@
 		{
 			"date": "2026-08-28",
 			"type": "launch",
+			"title": "How Portal builds a 3D world from a URL",
+			"summary": "Paste a web address and Portal builds a place out of it: sections become buildings sized by what they say, links become doors you step through, images become billboards. The API, the world spec, the npm package, the CLI and the MCP server behind /portal.",
+			"link": "/docs/portal",
+			"tags": [
+				"launch"
+			]
+		},
+		{
+			"date": "2026-08-28",
+			"type": "launch",
 			"title": "Knock",
 			"summary": "Put a price on reaching you. Anyone, a person or an agent, can pay it to get exactly one message through, and your 3D companion walks on screen and delivers it out loud with their name and what they paid. The USDC settles straight to your wallet.",
 			"link": "/knock",
@@ -2420,16 +2451,6 @@
 			"title": "Portal",
 			"summary": "Paste any web address and walk through it in 3D. Portal reads the page's real structure and builds a place from it: sections become buildings sized by what they say, links become doors you step into, images become billboards. Download the world as a GLB or embed it in your own site.",
 			"link": "/portal",
-			"tags": [
-				"launch"
-			]
-		},
-		{
-			"date": "2026-08-28",
-			"type": "launch",
-			"title": "Portal: walk any website in 3D",
-			"summary": "Paste a web address and Portal builds a place out of it: sections become buildings sized by what they say, links become doors you step through, images become billboards. The API, the world spec, the npm package, the CLI and the MCP server behind /portal.",
-			"link": "/docs/portal",
 			"tags": [
 				"launch"
 			]

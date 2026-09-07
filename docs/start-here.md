@@ -180,6 +180,7 @@ Deeper references that don't fit a track above but answer real questions:
 - [Docs World](./docs-world.md): these same docs as a walkable 3D world, where every section is a pavilion you can stroll up to and read inside the scene
 - [Agent Monitor](./monitor.md): the ops room at [/monitor](https://three.ws/monitor), twelve live panels covering fleet activity, money, revenue, creations and uptime, plus how to add a panel
 - [Agent Spotlight](./spotlight.md): the community showcase at [/spotlight](https://three.ws/spotlight), what an entry stores versus what it reads live off the agent, the trending decay formula, and the full showcase API
+- [How three.ws is served to search engines](./seo.md): the four server-side render paths behind a JavaScript site, the two contracts that keep a page and its sitemap entry agreeing, and how to audit the live origin
 - [Design tokens](./DESIGN-TOKENS.md): the canonical design vocabulary (colors, spacing, type, motion) every surface builds from
 - [NVIDIA models on three.ws](./nvidia-models.md): the free hosted inference layer model by model, one key behind text-to-3D, chat, vision, embeddings, safety, and speech
 - [Run an inference node](./inference-node-operator.md): join the supply side of the open inference network with your own hardware, from clone to a signed, verified result, on CPU or an NVIDIA GPU

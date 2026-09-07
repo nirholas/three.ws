@@ -191,8 +191,8 @@
 			"script": "scripts/audit-page-index.mjs",
 			"npm": "audit:pages",
 			"title": "Route documentation",
-			"protects": "Every human-facing route in vercel.json is documented in data/pages.json.",
-			"why": "data/pages.json feeds the sitemap, llms.txt, features.json, and the changelog. A page missing from it is invisible to crawlers and to the changelog, so it ships without ever being announced.",
+			"protects": "Every human-facing route in vercel.json is documented in data/pages.json, and every page submitted for indexing is crawlable and index-allowed.",
+			"why": "data/pages.json feeds the sitemap, llms.txt, features.json, and the changelog. A page missing from it is invisible to crawlers and to the changelog, so it ships without ever being announced. It also cross-checks indexability, because the manifest decides what gets submitted while the page itself decides what a crawler may do with it: seventeen pages were being submitted while answering noindex, plus a JSON endpoint submitted as a page while robots.txt disallowed its path. Search Console files that difference as an error against us, and neither half looks wrong on its own.",
 			"stages": [
 				"prebuild",
 				"gate"

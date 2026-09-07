@@ -105,7 +105,7 @@ Run `npm run audit:guards` to print the current count and per-stage breakdown. T
 
 | Guard | Command | Protects |
 |---|---|---|
-| Route documentation | `npm run audit:pages` | Every human-facing route is documented in `data/pages.json`. |
+| Route documentation | `npm run audit:pages` | Every human-facing route is documented in `data/pages.json`, and no page is submitted for indexing while its own HTML answers noindex or robots.txt disallows its path. |
 | Declared pages resolve | `npm run check:pages` | Every page declared in `data/pages.json` is actually reachable. |
 | Routing and 404 model | `npm run audit:routes` | Catalog pages reachable, unknown paths reach the designed 404, no shadowed routes. |
 | Route shadowing | `npm run audit:route-shadowing` | Every handler under `api/` that looks routed can actually be reached through the production router's walk of `vercel.json`. |

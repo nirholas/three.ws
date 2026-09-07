@@ -37,6 +37,7 @@ import path from 'node:path';
 import { pathToFileURL, fileURLToPath } from 'node:url';
 import { isSsrRoute, renderSsrPage } from './ssr-pages.mjs';
 import { hasSeoRoute, renderSeoHead } from './seo-head.mjs';
+import { renderCrawlerBody } from './crawler-body.mjs';
 import { isMissingShellPage } from './shell-pages.mjs';
 import { hardenHeaderBag } from './csp-hashes.mjs';
 import { cronEdgeAuth } from './cron-edge-auth.mjs';
@@ -514,7 +515,11 @@ app.use(async (req, res) => {
 			// canonical, title, social card and JSON-LD. Uses the ORIGINAL request
 			// path: currentPath is already the dest rewrite (/docs/index.html).
 			if (req.method === 'GET' && file.endsWith('.html') && hasSeoRoute(url.pathname)) {
-				const html = renderSeoHead(url.pathname, file);
+				const head = renderSeoHead(url.pathname, file);
+				// /tutorials/* and /walkthroughs/* fetch their content client-side,
+				// so the shell alone carries no text for a crawler to read. Render
+				// the body too; the player replaces it on load.
+				const html = renderCrawlerBody(url.pathname, head) || head;
 				if (html) {
 					// The rewritten head swaps in this route's own JSON-LD block, so
 					// the policy has to describe the rewritten bytes.

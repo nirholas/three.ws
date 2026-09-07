@@ -88,7 +88,7 @@
 	<main class="sm-wrap">
 		<div class="sm-hero">
 			<h1>Sitemap</h1>
-			<p>All 915 pages on three.ws, grouped by purpose. Looking for the machine-readable versions?</p>
+			<p>All 916 pages on three.ws, grouped by purpose. Looking for the machine-readable versions?</p>
 			<div class="sm-formats">
 				<a href="/sitemap.xml"><code>sitemap.xml</code> · for search engines</a>
 				<a href="/llms.txt"><code>llms.txt</code> · for AI agents</a>
@@ -100,7 +100,7 @@
 		</div>
 		<div class="sm-filter">
 			<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
-			<input id="sm-filter-input" type="search" placeholder="Filter 915 pages by name, path, or description…" aria-label="Filter pages" autocomplete="off" spellcheck="false" />
+			<input id="sm-filter-input" type="search" placeholder="Filter 916 pages by name, path, or description…" aria-label="Filter pages" autocomplete="off" spellcheck="false" />
 			<kbd aria-hidden="true">/</kbd>
 		</div>
 		<p class="sm-filter-count" id="sm-filter-count" role="status" aria-live="polite"></p>
@@ -108,6 +108,14 @@
 			<h2 id="sm-new-title">Newest<a class="sm-new-more" href="/changelog">full changelog &rarr;</a></h2>
 			<p class="sm-section-desc">The 9 most recently launched pages, straight to the live surface.</p>
 			<ul class="sm-list">
+				<li>
+					<a href="/docs/seo">
+						<span class="sm-new-date">Sep 7, 2026</span>
+						<span class="sm-title">Docs · SEO and crawler rendering</span>
+						<span class="sm-path">/docs/seo</span>
+						<span class="sm-desc">How a JavaScript site is served to search engines: the four server-side render paths, the contract that keeps a page and its sitemap entry agreeing, and how to audit the live origin.</span>
+					</a>
+				</li>
 				<li>
 					<a href="/irl/sign">
 						<span class="sm-new-date">Sep 5, 2026</span>
@@ -170,14 +178,6 @@
 						<span class="sm-title">three.ws Drive</span>
 						<span class="sm-path">/drive</span>
 						<span class="sm-desc">Your 3D agent in the car: voice-first, glanceable, and built to the rules CarPlay and Android Auto enforce. Runs on a head unit, a phone in the cradle, or inside the native car shell.</span>
-					</a>
-				</li>
-				<li>
-					<a href="/voice/home">
-						<span class="sm-new-date">Sep 3, 2026</span>
-						<span class="sm-title">Hands-free voice for your home</span>
-						<span class="sm-path">/voice/home</span>
-						<span class="sm-desc">Talk to your house without finding a phone: a wake word matched on your own device, real barge-in mid-sentence, and a spoken confirmation that a background yes can never satisfy.</span>
 					</a>
 				</li>
 			</ul>
@@ -406,7 +406,7 @@
 				</li>
 				<li>
 					<a href="/collection">
-						<span class="sm-title">My Collection</span>
+						<span class="sm-title">My Collection<span class="sm-badge sm-badge-internal">internal</span></span>
 						<span class="sm-path">/collection</span>
 						<span class="sm-desc">View all the skills and subscriptions you've unlocked on three.ws.</span>
 					</a>
@@ -441,7 +441,7 @@
 				</li>
 				<li>
 					<a href="/notifications">
-						<span class="sm-title">Notifications</span>
+						<span class="sm-title">Notifications<span class="sm-badge sm-badge-internal">internal</span></span>
 						<span class="sm-path">/notifications</span>
 						<span class="sm-desc">Every payment, sale, remix, follow, quest, and royalty notification on three.ws: all in one place, filterable by category.</span>
 					</a>
@@ -546,7 +546,7 @@
 				</li>
 				<li>
 					<a href="/feed">
-						<span class="sm-title">Feed</span>
+						<span class="sm-title">Feed<span class="sm-badge sm-badge-internal">internal</span></span>
 						<span class="sm-path">/feed</span>
 						<span class="sm-desc">Live avatars, agents, 3D models, worlds, and launches across three.ws: filter to everyone or just the people you follow.</span>
 					</a>
@@ -595,7 +595,7 @@
 				</li>
 				<li>
 					<a href="/demos">
-						<span class="sm-title">Lab Demos</span>
+						<span class="sm-title">Lab Demos<span class="sm-badge sm-badge-internal">internal</span></span>
 						<span class="sm-path">/demos</span>
 						<span class="sm-desc">Index of live demos across the platform: viewers, agents, payments, and experiments.</span>
 					</a>
@@ -828,7 +828,7 @@
 				</li>
 				<li>
 					<a href="/studio">
-						<span class="sm-title">Widget Studio</span>
+						<span class="sm-title">Widget Studio<span class="sm-badge sm-badge-internal">internal</span></span>
 						<span class="sm-path">/studio</span>
 						<span class="sm-desc">Build an embeddable 3D widget: pick an avatar (or your own model URL), pick a widget type, tune it live, and copy the snippet. No account needed for the URL-based embeds.</span>
 					</a>
@@ -856,7 +856,7 @@
 				</li>
 				<li>
 					<a href="/docs/portal">
-						<span class="sm-title">Portal: walk any website in 3D</span>
+						<span class="sm-title">How Portal builds a 3D world from a URL</span>
 						<span class="sm-path">/docs/portal</span>
 						<span class="sm-desc">Paste a web address and Portal builds a place out of it: sections become buildings sized by what they say, links become doors you step through, images become billboards. The API, the world spec, the npm package, the CLI and the MCP server behind /portal.</span>
 					</a>
@@ -989,7 +989,7 @@
 				</li>
 				<li>
 					<a href="/import/rpm">
-						<span class="sm-title">Import an avatar URL</span>
+						<span class="sm-title">Import an avatar URL<span class="sm-badge sm-badge-internal">internal</span></span>
 						<span class="sm-path">/import/rpm</span>
 						<span class="sm-desc">Import any GLB or glTF avatar into three.ws and give it an agent brain.</span>
 					</a>
@@ -1038,7 +1038,7 @@
 				</li>
 				<li>
 					<a href="/nim-forge">
-						<span class="sm-title">TRELLIS NIM Forge</span>
+						<span class="sm-title">TRELLIS NIM Forge<span class="sm-badge sm-badge-internal">internal</span></span>
 						<span class="sm-path">/nim-forge</span>
 						<span class="sm-desc">Drop in a photo, get a textured 3D model, reconstructed on a self-hosted Microsoft TRELLIS NIM. Single-hop image to GLB.</span>
 					</a>
@@ -1059,7 +1059,7 @@
 				</li>
 				<li>
 					<a href="/smart-home/join">
-						<span class="sm-title">Join a home</span>
+						<span class="sm-title">Join a home<span class="sm-badge sm-badge-internal">internal</span></span>
 						<span class="sm-path">/smart-home/join</span>
 						<span class="sm-desc">Accept an invitation to somebody's connected home. The link says which home it is, exactly what your role would let you do there and what it would never let you do, before you sign in. It works once and it expires.</span>
 					</a>
@@ -1208,14 +1208,14 @@
 				</li>
 				<li>
 					<a href="/viewer">
-						<span class="sm-title">glTF / GLB Viewer</span>
+						<span class="sm-title">glTF / GLB Viewer<span class="sm-badge sm-badge-internal">internal</span></span>
 						<span class="sm-path">/viewer</span>
 						<span class="sm-desc">Preview any public glTF/GLB inline, then take it further: pose and animate it, restyle the material, build a scene, place it in AR, embed it on your site, or launch it as a pump.fun coin.</span>
 					</a>
 				</li>
 				<li>
 					<a href="/watch">
-						<span class="sm-title">Generation Watch</span>
+						<span class="sm-title">Generation Watch<span class="sm-badge sm-badge-internal">internal</span></span>
 						<span class="sm-path">/watch</span>
 						<span class="sm-desc">Live progress page for a running text-to-3D generation: real countdown, the painted concept art, and an automatic hand-off into the interactive viewer the moment the model is ready.</span>
 					</a>
@@ -1236,7 +1236,7 @@
 				</li>
 				<li>
 					<a href="/ar/view">
-						<span class="sm-title">View in AR</span>
+						<span class="sm-title">View in AR<span class="sm-badge sm-badge-internal">internal</span></span>
 						<span class="sm-path">/ar/view</span>
 						<span class="sm-desc">Place any three.ws GLB in your real space from a plain link: real ARKit Quick Look on iPhone (a genuine on-device USDZ conversion, not a camera overlay), Scene Viewer or WebXR on Android. The shared landing page behind /api/ar and every AR hand-off across the site.</span>
 					</a>
@@ -1532,7 +1532,7 @@
 				</li>
 				<li>
 					<a href="/launcher">
-						<span class="sm-title">Memetic Launcher</span>
+						<span class="sm-title">Memetic Launcher<span class="sm-badge sm-badge-internal">internal</span></span>
 						<span class="sm-path">/launcher</span>
 						<span class="sm-desc">Your personal autonomous coin launcher: set your mode (trend, meme, hybrid, random), pick trend sources, tune your cadence, preview what your agents would mint, then go live: real pump.fun launches on your schedule, self-funded from your own agents' wallets under a hard daily SOL cap.</span>
 					</a>
@@ -1588,7 +1588,7 @@
 				</li>
 				<li>
 					<a href="/dashboard/capabilities">
-						<span class="sm-title">Capabilities: Alpha Hunt, Launcher, Auto-Claim &amp; Market Maker</span>
+						<span class="sm-title">Capabilities: Alpha Hunt, Launcher, Auto-Claim &amp; Market Maker<span class="sm-badge sm-badge-internal">internal</span></span>
 						<span class="sm-path">/dashboard/capabilities</span>
 						<span class="sm-desc">Live command center for all 4 autonomous agent capabilities: Alpha Hunt smart-money scoring, autonomous Coin Launcher on schedule, Creator Auto-Claim for fee harvesting, and Market Maker with Jito execution.</span>
 					</a>
@@ -2141,7 +2141,7 @@
 				</li>
 				<li>
 					<a href="/avatar-wallet-chat">
-						<span class="sm-title">Avatar Wallet</span>
+						<span class="sm-title">Avatar Wallet<span class="sm-badge sm-badge-internal">internal</span></span>
 						<span class="sm-path">/avatar-wallet-chat</span>
 						<span class="sm-desc">An embeddable 3D AI avatar that holds a Solana wallet, chats, and can autonomously send SOL.</span>
 					</a>
@@ -2204,7 +2204,7 @@
 				</li>
 				<li>
 					<a href="/markets/news/article">
-						<span class="sm-title">Crypto News Reader</span>
+						<span class="sm-title">Crypto News Reader<span class="sm-badge sm-badge-internal">internal</span></span>
 						<span class="sm-path">/markets/news/article</span>
 						<span class="sm-desc">Rich article reader for crypto news: full story extraction with AI summary, key points, sentiment, detected tickers, and related coverage from across the industry.</span>
 					</a>
@@ -2274,14 +2274,14 @@
 				</li>
 				<li>
 					<a href="/agent-wallet">
-						<span class="sm-title">Agent Wallet</span>
+						<span class="sm-title">Agent Wallet<span class="sm-badge sm-badge-internal">internal</span></span>
 						<span class="sm-path">/agent-wallet</span>
 						<span class="sm-desc">The wallet surface for your agents: balances, funding, and activity.</span>
 					</a>
 				</li>
 				<li>
 					<a href="/wallet">
-						<span class="sm-title">Your master wallet</span>
+						<span class="sm-title">Your master wallet<span class="sm-badge sm-badge-internal">internal</span></span>
 						<span class="sm-path">/wallet</span>
 						<span class="sm-desc">One custodial wallet for your account, separate from your agents'. Hold SOL and USDC across Solana and Base, top up any agent you own, send to any Solana address, and read every transaction straight from chain.</span>
 					</a>
@@ -2505,7 +2505,7 @@
 
 		<section class="sm-section" id="learn">
 			<header>
-				<h2>Learn<span class="sm-count" data-count>421</span></h2>
+				<h2>Learn<span class="sm-count" data-count>422</span></h2>
 				<p class="sm-section-desc">Docs, tutorials, and reference.</p>
 			</header>
 			<ul class="sm-list">
@@ -2840,7 +2840,7 @@
 				</li>
 				<li>
 					<a href="/docs/drops">
-						<span class="sm-title">3D Drops</span>
+						<span class="sm-title">How 3D Drops collections work</span>
 						<span class="sm-path">/docs/drops</span>
 						<span class="sm-desc">How generative 3D collections work on three.ws: weighted trait layers, a supply rolled from a published seed, rarity scored from the actual distribution, art forged per item on reveal, and a verify endpoint anyone can recompute the roll with.</span>
 					</a>
@@ -4236,6 +4236,13 @@
 						<span class="sm-title">Docs · Repository guards</span>
 						<span class="sm-path">/docs/guards</span>
 						<span class="sm-desc">The local guards that protect this codebase in place of CI: what each one blocks, which stage runs it, and how to add a new one.</span>
+					</a>
+				</li>
+				<li>
+					<a href="/docs/seo">
+						<span class="sm-title">Docs · SEO and crawler rendering</span>
+						<span class="sm-path">/docs/seo</span>
+						<span class="sm-desc">How a JavaScript site is served to search engines: the four server-side render paths, the contract that keeps a page and its sitemap entry agreeing, and how to audit the live origin.</span>
 					</a>
 				</li>
 				<li>
@@ -5814,7 +5821,7 @@
 				</li>
 				<li>
 					<a href="/api/mcp-policy">
-						<span class="sm-title">MCP trust policy</span>
+						<span class="sm-title">MCP trust policy<span class="sm-badge sm-badge-internal">internal</span></span>
 						<span class="sm-path">/api/mcp-policy</span>
 						<span class="sm-desc">A ready-to-paste allowlist telling an AI client which three.ws MCP tools it may run without asking you. Three profiles from strict to open, in Claude, VS Code, or portable format, derived from the tool safety labels that are verified against each handler on every build.</span>
 					</a>

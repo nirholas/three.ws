@@ -3,6 +3,13 @@
 	"entries": [
 		{
 			"date": "2026-09-07",
+			"title": "Tutorials and walkthroughs are now readable by search engines, and pages we never wanted indexed stopped asking to be",
+			"summary": "The 76 tutorial and walkthrough pages loaded their content after the page opened, which meant a search engine reading the raw page found no text at all, and on tutorials found the words 'Tutorial not found' sitting under an empty heading. Those pages now arrive with their full text already in them, so they can finally be found by the questions they answer. Separately, eighteen pages were being submitted to Google while telling Google not to index them: sign-in surfaces, viewers that need a link to work, and one endpoint that returns data rather than a page. They have been withdrawn from the sitemap, and a new check refuses to let a page ask for indexing and refuse it at the same time. Two documentation pages that shared a title with the product page they described have been retitled.",
+			"tags": ["improvement", "docs"],
+			"link": "/tutorials"
+		},
+		{
+			"date": "2026-09-07",
 			"title": "Reference-image upload now tells you to paste a URL instead of failing with a network error",
 			"summary": "When the image storage credentials are rejected, /forge used to hand the browser an upload address that the storage service refused. The refusal arrives without the header a browser needs to read it, so the page could only say \"Network error during upload\" and the reference image was lost. The upload endpoint now checks storage the same way the rest of the site does, so it says up front that direct upload is unavailable and points you at the paste-a-URL field, which keeps working through the outage.",
 			"tags": ["fix"],

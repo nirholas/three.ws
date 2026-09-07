@@ -266,7 +266,8 @@
 					"description": "View all the skills and subscriptions you've unlocked on three.ws.",
 					"priority": 0.5,
 					"changefreq": "weekly",
-					"added": "2026-06-17"
+					"added": "2026-06-17",
+					"indexable": false
 				},
 				{
 					"path": "/portal",
@@ -310,7 +311,8 @@
 					"description": "Every payment, sale, remix, follow, quest, and royalty notification on three.ws: all in one place, filterable by category.",
 					"priority": 0.5,
 					"changefreq": "daily",
-					"added": "2026-07-12"
+					"added": "2026-07-12",
+					"indexable": false
 				},
 				{
 					"path": "/skills",
@@ -431,7 +433,8 @@
 					"description": "Live avatars, agents, 3D models, worlds, and launches across three.ws: filter to everyone or just the people you follow.",
 					"priority": 0.6,
 					"changefreq": "daily",
-					"added": "2026-06-21"
+					"added": "2026-06-21",
+					"indexable": false
 				},
 				{
 					"path": "/partners",
@@ -484,7 +487,8 @@
 					"title": "Lab Demos",
 					"description": "Index of live demos across the platform: viewers, agents, payments, and experiments.",
 					"priority": 0.6,
-					"changefreq": "weekly"
+					"changefreq": "weekly",
+					"indexable": false
 				},
 				{
 					"path": "/demos/agents",
@@ -754,7 +758,8 @@
 					"description": "Build an embeddable 3D widget: pick an avatar (or your own model URL), pick a widget type, tune it live, and copy the snippet. No account needed for the URL-based embeds.",
 					"priority": 0.8,
 					"changefreq": "weekly",
-					"added": "2026-05-24"
+					"added": "2026-05-24",
+					"indexable": false
 				},
 				{
 					"path": "/artifact",
@@ -782,7 +787,7 @@
 				},
 				{
 					"path": "/docs/portal",
-					"title": "Portal: walk any website in 3D",
+					"title": "How Portal builds a 3D world from a URL",
 					"description": "Paste a web address and Portal builds a place out of it: sections become buildings sized by what they say, links become doors you step through, images become billboards. The API, the world spec, the npm package, the CLI and the MCP server behind /portal.",
 					"priority": 0.6,
 					"changefreq": "monthly",
@@ -938,7 +943,8 @@
 					"description": "Import any GLB or glTF avatar into three.ws and give it an agent brain.",
 					"priority": 0.6,
 					"changefreq": "monthly",
-					"added": "2026-05-25"
+					"added": "2026-05-25",
+					"indexable": false
 				},
 				{
 					"path": "/threews/claim",
@@ -993,7 +999,8 @@
 					"title": "TRELLIS NIM Forge",
 					"description": "Drop in a photo, get a textured 3D model, reconstructed on a self-hosted Microsoft TRELLIS NIM. Single-hop image to GLB.",
 					"priority": 0.6,
-					"changefreq": "weekly"
+					"changefreq": "weekly",
+					"indexable": false
 				},
 				{
 					"path": "/avatar-sdk",
@@ -1016,7 +1023,8 @@
 					"description": "Accept an invitation to somebody's connected home. The link says which home it is, exactly what your role would let you do there and what it would never let you do, before you sign in. It works once and it expires.",
 					"priority": 0.4,
 					"changefreq": "yearly",
-					"added": "2026-09-03"
+					"added": "2026-09-03",
+					"indexable": false
 				},
 				{
 					"path": "/smart-home/privacy",
@@ -1188,7 +1196,8 @@
 					"description": "Preview any public glTF/GLB inline, then take it further: pose and animate it, restyle the material, build a scene, place it in AR, embed it on your site, or launch it as a pump.fun coin.",
 					"priority": 0.5,
 					"changefreq": "monthly",
-					"added": "2026-07-08"
+					"added": "2026-07-08",
+					"indexable": false
 				},
 				{
 					"path": "/watch",
@@ -1196,7 +1205,8 @@
 					"description": "Live progress page for a running text-to-3D generation: real countdown, the painted concept art, and an automatic hand-off into the interactive viewer the moment the model is ready.",
 					"priority": 0.4,
 					"changefreq": "monthly",
-					"added": "2026-07-29"
+					"added": "2026-07-29",
+					"indexable": false
 				},
 				{
 					"path": "/ar",
@@ -1222,7 +1232,8 @@
 					"description": "Place any three.ws GLB in your real space from a plain link: real ARKit Quick Look on iPhone (a genuine on-device USDZ conversion, not a camera overlay), Scene Viewer or WebXR on Android. The shared landing page behind /api/ar and every AR hand-off across the site.",
 					"priority": 0.3,
 					"changefreq": "monthly",
-					"added": "2026-08-19"
+					"added": "2026-08-19",
+					"indexable": false
 				},
 				{
 					"path": "/daily",
@@ -1563,7 +1574,8 @@
 					"description": "Your personal autonomous coin launcher: set your mode (trend, meme, hybrid, random), pick trend sources, tune your cadence, preview what your agents would mint, then go live: real pump.fun launches on your schedule, self-funded from your own agents' wallets under a hard daily SOL cap.",
 					"priority": 0.8,
 					"changefreq": "daily",
-					"added": "2026-06-27"
+					"added": "2026-06-27",
+					"indexable": false
 				},
 				{
 					"path": "/clash",
@@ -1629,7 +1641,8 @@
 					"description": "Live command center for all 4 autonomous agent capabilities: Alpha Hunt smart-money scoring, autonomous Coin Launcher on schedule, Creator Auto-Claim for fee harvesting, and Market Maker with Jito execution.",
 					"priority": 0.7,
 					"changefreq": "daily",
-					"added": "2026-06-27"
+					"added": "2026-06-27",
+					"indexable": false
 				},
 				{
 					"path": "/arena",
@@ -2273,7 +2286,8 @@
 					"description": "An embeddable 3D AI avatar that holds a Solana wallet, chats, and can autonomously send SOL.",
 					"priority": 0.5,
 					"changefreq": "weekly",
-					"added": "2026-06-02"
+					"added": "2026-06-02",
+					"indexable": false
 				},
 				{
 					"path": "/demo",
@@ -2345,7 +2359,8 @@
 					"description": "Rich article reader for crypto news: full story extraction with AI summary, key points, sentiment, detected tickers, and related coverage from across the industry.",
 					"priority": 0.5,
 					"changefreq": "hourly",
-					"added": "2026-07-10"
+					"added": "2026-07-10",
+					"indexable": false
 				},
 				{
 					"path": "/markets/archive",
@@ -2418,7 +2433,8 @@
 					"title": "Agent Wallet",
 					"description": "The wallet surface for your agents: balances, funding, and activity.",
 					"priority": 0.6,
-					"changefreq": "weekly"
+					"changefreq": "weekly",
+					"indexable": false
 				},
 				{
 					"path": "/wallet",
@@ -2426,7 +2442,8 @@
 					"description": "One custodial wallet for your account, separate from your agents'. Hold SOL and USDC across Solana and Base, top up any agent you own, send to any Solana address, and read every transaction straight from chain.",
 					"priority": 0.6,
 					"changefreq": "weekly",
-					"added": "2026-07-30"
+					"added": "2026-07-30",
+					"indexable": false
 				},
 				{
 					"path": "/trading",
@@ -3065,7 +3082,7 @@
 				},
 				{
 					"path": "/docs/drops",
-					"title": "3D Drops",
+					"title": "How 3D Drops collections work",
 					"description": "How generative 3D collections work on three.ws: weighted trait layers, a supply rolled from a published seed, rarity scored from the actual distribution, art forged per item on reveal, and a verify endpoint anyone can recompute the roll with.",
 					"priority": 0.6,
 					"changefreq": "monthly",
@@ -3673,7 +3690,7 @@
 				},
 				{
 					"path": "/docs/vscode",
-					"title": "Docs \u00b7 three.ws in VS Code",
+					"title": "Docs · three.ws in VS Code",
 					"description": "The VS Code extension that renders .glb and .gltf files in an editor tab, reports on them, generates and rigs new models on the free lane, and writes a pinned <agent-3d> embed.",
 					"added": "2026-09-05"
 				},
@@ -4493,6 +4510,14 @@
 					"priority": 0.5,
 					"changefreq": "monthly",
 					"added": "2026-07-30"
+				},
+				{
+					"path": "/docs/seo",
+					"title": "Docs · SEO and crawler rendering",
+					"description": "How a JavaScript site is served to search engines: the four server-side render paths, the contract that keeps a page and its sitemap entry agreeing, and how to audit the live origin.",
+					"priority": 0.5,
+					"changefreq": "monthly",
+					"added": "2026-09-07"
 				},
 				{
 					"path": "/tutorials/wallet-sign-in",
@@ -6227,7 +6252,8 @@
 					"description": "A ready-to-paste allowlist telling an AI client which three.ws MCP tools it may run without asking you. Three profiles from strict to open, in Claude, VS Code, or portable format, derived from the tool safety labels that are verified against each handler on every build.",
 					"priority": 0.5,
 					"changefreq": "weekly",
-					"added": "2026-07-31"
+					"added": "2026-07-31",
+					"indexable": false
 				},
 				{
 					"path": "/llms.txt",

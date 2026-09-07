@@ -1387,8 +1387,13 @@
 					// Turn `figure:` directives into inert slots BEFORE parsing. Left as
 					// <img src="figure:…">, the browser fires a request the moment the
 					// markup lands and logs ERR_UNKNOWN_URL_SCHEME for every figure.
+					// Drop the markdown's own `# Title`: the hero above already renders
+					// it as the page's <h1>, so parsing it again gives the document
+					// two competing top-level headings. server/crawler-body.mjs
+					// strips the same line, so the crawler and the reader agree.
+					const mdBody = md.replace(/^\s*#\s+.+?[ \t]*(?:\r?\n|$)/, '');
 					article.innerHTML = marked.parse(
-						window.tutorialFigures ? window.tutorialFigures.preprocess(md) : md,
+						window.tutorialFigures ? window.tutorialFigures.preprocess(mdBody) : mdBody,
 					);
 
 					// Freshness: a tutorial is a promise that these steps still work,

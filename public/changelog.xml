@@ -7,6 +7,14 @@
 		<description>What's new on three.ws: features, improvements, and releases, newest first.</description>
 		<language>en</language>
 		<item>
+			<title>Docs · SEO and crawler rendering</title>
+			<link>https://three.ws/docs/seo</link>
+			<guid isPermaLink="false">2026-09-07:Docs · SEO and crawler rendering</guid>
+			<pubDate>Mon, 07 Sep 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>How a JavaScript site is served to search engines: the four server-side render paths, the contract that keeps a page and its sitemap entry agreeing, and how to audit the live origin.</description>
+		</item>
+		<item>
 			<title>My Creations</title>
 			<link>https://three.ws/mine</link>
 			<guid isPermaLink="false">2026-09-07:My Creations</guid>
@@ -141,6 +149,14 @@
 			<pubDate>Mon, 07 Sep 2026 12:00:00 GMT</pubDate>
 			<category>feature</category>
 			<description>The Blender tools could already build a model from a written description. They now build one from a picture too: point at an image on your machine or a link to one, add a few words to steer it if you like, and the finished model opens in Blender. It runs on the same free lane as the text version and takes about as long.</description>
+		</item>
+		<item>
+			<title>Tutorials and walkthroughs are now readable by search engines, and pages we never wanted indexed stopped asking to be</title>
+			<link>https://three.ws/tutorials</link>
+			<guid isPermaLink="false">2026-09-07:Tutorials and walkthroughs are now readable by search engines, and pages we never wanted indexed stopped asking to be</guid>
+			<pubDate>Mon, 07 Sep 2026 12:00:00 GMT</pubDate>
+			<category>improvement</category>
+			<description>The 76 tutorial and walkthrough pages loaded their content after the page opened, which meant a search engine reading the raw page found no text at all, and on tutorials found the words 'Tutorial not found' sitting under an empty heading. Those pages now arrive with their full text already in them, so they can finally be found by the questions they answer. Separately, eighteen pages were being submitted to Google while telling Google not to index them: sign-in surfaces, viewers that need a link to work, and one endpoint that returns data rather than a page. They have been withdrawn from the sitemap, and a new check refuses to let a page ask for indexing and refuse it at the same time. Two documentation pages that shared a title with the product page they described have been retitled.</description>
 		</item>
 		<item>
 			<title>World tiles show their artwork again</title>
@@ -1415,14 +1431,6 @@
 			<description>Launch a supply-capped collection of AI-forged 3D characters. Pick a style, define weighted trait layers, and three.ws rolls the whole supply from a published seed: verifiable rarity, rigged animation-ready art, forged on reveal.</description>
 		</item>
 		<item>
-			<title>3D Drops</title>
-			<link>https://three.ws/docs/drops</link>
-			<guid isPermaLink="false">2026-09-01:3D Drops</guid>
-			<pubDate>Tue, 01 Sep 2026 12:00:00 GMT</pubDate>
-			<category>launch</category>
-			<description>How generative 3D collections work on three.ws: weighted trait layers, a supply rolled from a published seed, rarity scored from the actual distribution, art forged per item on reveal, and a verify endpoint anyone can recompute the roll with.</description>
-		</item>
-		<item>
 			<title>Agent Spotlight</title>
 			<link>https://three.ws/spotlight</link>
 			<guid isPermaLink="false">2026-09-01:Agent Spotlight</guid>
@@ -1445,6 +1453,14 @@
 			<pubDate>Tue, 01 Sep 2026 12:00:00 GMT</pubDate>
 			<category>launch</category>
 			<description>How to record a Seeker screen recording of the app with no device: why the Trusted Web Activity makes a browser capture at the real panel geometry a genuine capture, and which moments still have to come from an Android emulator.</description>
+		</item>
+		<item>
+			<title>How 3D Drops collections work</title>
+			<link>https://three.ws/docs/drops</link>
+			<guid isPermaLink="false">2026-09-01:How 3D Drops collections work</guid>
+			<pubDate>Tue, 01 Sep 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>How generative 3D collections work on three.ws: weighted trait layers, a supply rolled from a published seed, rarity scored from the actual distribution, art forged per item on reveal, and a verify endpoint anyone can recompute the roll with.</description>
 		</item>
 		<item>
 			<title>Page performance: the rules a three.ws page plays by</title>
@@ -1807,6 +1823,14 @@
 			<description>Deliver a message in person: a 3D character walks onto your page and tells the user what happened. Open SDK, one line of code, an accessible fallback, and a CLI that announces when your build finishes.</description>
 		</item>
 		<item>
+			<title>How Portal builds a 3D world from a URL</title>
+			<link>https://three.ws/docs/portal</link>
+			<guid isPermaLink="false">2026-08-28:How Portal builds a 3D world from a URL</guid>
+			<pubDate>Fri, 28 Aug 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>Paste a web address and Portal builds a place out of it: sections become buildings sized by what they say, links become doors you step through, images become billboards. The API, the world spec, the npm package, the CLI and the MCP server behind /portal.</description>
+		</item>
+		<item>
 			<title>Knock</title>
 			<link>https://three.ws/knock</link>
 			<guid isPermaLink="false">2026-08-28:Knock</guid>
@@ -1837,14 +1861,6 @@
 			<pubDate>Fri, 28 Aug 2026 12:00:00 GMT</pubDate>
 			<category>launch</category>
 			<description>Paste any web address and walk through it in 3D. Portal reads the page's real structure and builds a place from it: sections become buildings sized by what they say, links become doors you step into, images become billboards. Download the world as a GLB or embed it in your own site.</description>
-		</item>
-		<item>
-			<title>Portal: walk any website in 3D</title>
-			<link>https://three.ws/docs/portal</link>
-			<guid isPermaLink="false">2026-08-28:Portal: walk any website in 3D</guid>
-			<pubDate>Fri, 28 Aug 2026 12:00:00 GMT</pubDate>
-			<category>launch</category>
-			<description>Paste a web address and Portal builds a place out of it: sections become buildings sized by what they say, links become doors you step through, images become billboards. The API, the world spec, the npm package, the CLI and the MCP server behind /portal.</description>
 		</item>
 		<item>
 			<title>Progressive Avatars</title>
