@@ -3,6 +3,16 @@
 	"entries": [
 		{
 			"date": "2026-09-07",
+			"title": "Keyboard focus is visible again on every /play HUD button, and the AGI filter counts clear AA contrast",
+			"summary": "Six buttons on the /play world HUD (friends, jobs, avatar, wardrobe, shop and buy) had lost their keyboard focus ring: the page never defined the shared focus-ring colour those buttons outline with, so the browser dropped the outline entirely and a keyboard player could not see where they were. The ring is back. On /agi, the count inside a selected filter chip measured 4.37:1 against its background at 11px, just under the 4.5:1 AA floor; it now uses the primary ink and clears it comfortably.",
+			"tags": [
+				"fix",
+				"improvement"
+			],
+			"link": "/play"
+		},
+		{
+			"date": "2026-09-07",
 			"title": "The AgenC task embed now loads even when it is inlined or served from a blob",
 			"summary": "The <three-ws-agent> element that shows a 3D avatar reacting to an on-chain AgenC task resolves its mesh decoder relative to its own script address. A copy that had been pasted inline, bundled, or loaded from a blob: or data: URL has no address to resolve against, and the element failed to register before it drew anything. It now falls back to the decoder on three.ws in that case and keeps the same-origin path everywhere else, so the embed works wherever the snippet ends up.",
 			"tags": [

@@ -218,7 +218,10 @@ body {
 .agi-chip:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
 .agi-chip[aria-pressed='true'] { border-color: var(--ink-bright); color: var(--ink-bright); background: var(--surface-3); }
 .agi-chip-n { color: var(--ink-faint); font-variant-numeric: tabular-nums; }
-.agi-chip[aria-pressed='true'] .agi-chip-n { color: var(--ink-dim); }
+/* The pressed chip sits on --surface-3, where --ink-dim measures 4.37:1 at this
+   11px size (AA needs 4.5). --ink clears it with room and still reads as the
+   secondary figure next to the --ink-bright label. */
+.agi-chip[aria-pressed='true'] .agi-chip-n { color: var(--ink); }
 .agi-stream { display: flex; flex-direction: column; gap: var(--space-sm); }
 .agi-thought {
 	border: 1px solid var(--stroke);

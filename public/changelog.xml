@@ -39,6 +39,14 @@
 			<description>Most three.ws avatars are delivered in a compressed form that Blender flatly cannot read: point stock Blender at one and it refuses the file. That made the new Blender tools useless on exactly the models this platform produces. Compressed models are now unpacked automatically before Blender opens them, for both of the common compression schemes, with nothing extra to install and your original file left untouched. The answer tells you when it happened.</description>
 		</item>
 		<item>
+			<title>Keyboard focus is visible again on every /play HUD button, and the AGI filter counts clear AA contrast</title>
+			<link>https://three.ws/play</link>
+			<guid isPermaLink="false">2026-09-07:Keyboard focus is visible again on every /play HUD button, and the AGI filter counts clear AA contrast</guid>
+			<pubDate>Mon, 07 Sep 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>Six buttons on the /play world HUD (friends, jobs, avatar, wardrobe, shop and buy) had lost their keyboard focus ring: the page never defined the shared focus-ring colour those buttons outline with, so the browser dropped the outline entirely and a keyboard player could not see where they were. The ring is back. On /agi, the count inside a selected filter chip measured 4.37:1 against its background at 11px, just under the 4.5:1 AA floor; it now uses the primary ink and clears it comfortably.</description>
+		</item>
+		<item>
 			<title>My Creations: one button that takes you back to everything you made</title>
 			<link>https://three.ws/mine</link>
 			<guid isPermaLink="false">2026-09-07:My Creations: one button that takes you back to everything you made</guid>
