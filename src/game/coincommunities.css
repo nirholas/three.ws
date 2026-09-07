@@ -28,6 +28,12 @@
 	   copy and empty-state text failed AA everywhere they appeared. */
 	--cc-faint: #8f8f96;
 	--cc-accent: #ffffff;        /* light is the only "colour" */
+	/* /play loads this sheet alone, never public/tokens.css, so the shared
+	   focus-ring token the HUD buttons outline with has to exist here too. When
+	   it did not, `outline: 2px solid var(--focus-ring-color)` was an invalid
+	   declaration, the browser dropped the whole outline, and six HUD buttons
+	   had no visible keyboard focus at all. */
+	--focus-ring-color: var(--cc-accent);
 	--cc-ink: #060607;           /* text on white surfaces */
 	--cc-live: #ffffff;          /* presence / live signal */
 	--cc-warn: #b9b9bf;          /* connecting / transitional */
