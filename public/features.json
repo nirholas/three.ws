@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-09-07T21:42:43.055Z",
+	"generated_at": "2026-09-07T21:48:14.162Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json",
 	"site": {
 		"name": "three.ws",
@@ -2842,6 +2842,16 @@
 					"title": "Robinhood Chain",
 					"description": "The 24/7 tokenized-equity board for Robinhood Chain (4663): live Chainlink NAV vs DEX premium for every Stock Token, a memecoin screener across NOXA and The Odyssey launchpads, recent launches, and chain TVL, plus a real wallet-connect buy flow for its coins.",
 					"added": "2026-07-12",
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false
+				},
+				{
+					"path": "/markets/robinhood/desk",
+					"title": "Hood Desk",
+					"description": "A live onchain trading desk for any Robinhood Chain (4663) wallet: book value, native balance history rebuilt from the indexer, an activity tape of swaps and transfers, positions priced against Chainlink NAV and the deepest Uniswap pool, the NAV premium ridge layered by pool depth, counterparty flow, and memecoin movers.",
+					"added": "2026-09-07",
 					"auth": null,
 					"indexable": true,
 					"tags": [],

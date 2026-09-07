@@ -23,6 +23,14 @@
 			<description>How a JavaScript site is served to search engines: the four server-side render paths, the contract that keeps a page and its sitemap entry agreeing, and how to audit the live origin.</description>
 		</item>
 		<item>
+			<title>Hood Desk</title>
+			<link>https://three.ws/markets/robinhood/desk</link>
+			<guid isPermaLink="false">2026-09-07:Hood Desk</guid>
+			<pubDate>Mon, 07 Sep 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>A live onchain trading desk for any Robinhood Chain (4663) wallet: book value, native balance history rebuilt from the indexer, an activity tape of swaps and transfers, positions priced against Chainlink NAV and the deepest Uniswap pool, the NAV premium ridge layered by pool depth, counterparty flow, and memecoin movers.</description>
+		</item>
+		<item>
 			<title>My Creations</title>
 			<link>https://three.ws/mine</link>
 			<guid isPermaLink="false">2026-09-07:My Creations</guid>
@@ -77,6 +85,14 @@
 			<pubDate>Mon, 07 Sep 2026 12:00:00 GMT</pubDate>
 			<category>fix</category>
 			<description>Most three.ws avatars are delivered in a compressed form that Blender flatly cannot read: point stock Blender at one and it refuses the file. That made the new Blender tools useless on exactly the models this platform produces. Compressed models are now unpacked automatically before Blender opens them, for both of the common compression schemes, with nothing extra to install and your original file left untouched. The answer tells you when it happened.</description>
+		</item>
+		<item>
+			<title>Hood Desk: a live onchain trading desk for any Robinhood Chain wallet</title>
+			<link>https://three.ws/markets/robinhood/desk</link>
+			<guid isPermaLink="false">2026-09-07:Hood Desk: a live onchain trading desk for any Robinhood Chain wallet</guid>
+			<pubDate>Mon, 07 Sep 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>Paste a Robinhood Chain address (or connect a wallet) at three.ws/markets/robinhood/desk and the whole book loads: total value in USD, every token you hold priced against its Chainlink NAV feed or its deepest Uniswap pool, a native balance curve rebuilt from the chain's own history, and a live tape of your swaps, transfers and mints that folds each trade into one readable line instead of three. The centrepiece is the NAV premium ridge: the spread between what every tokenized stock is worth and what it actually trades for on the DEX, redrawn once per liquidity floor, so a dislocation that survives to the back rows is one you could really size into. Under it, the widest tradeable gaps, ranked. Reading any wallet is free, keyless and signature-free, so a desk link is a view anyone can open.</description>
 		</item>
 		<item>
 			<title>Keyboard focus is visible again on every /play HUD button, and the AGI filter counts clear AA contrast</title>
