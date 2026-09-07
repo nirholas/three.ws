@@ -21,7 +21,7 @@ import { createRegenProvider } from './_providers/gcp.js';
 // Provider job ids are base64url JSON envelopes (packJobId in _providers/gcp.js)
 // and run several hundred chars — a 64-char cap 400s every poll.
 const JOB_ID_RE = /^[A-Za-z0-9_-]{20,600}$/;
-const VALID_MODELS = new Set(['rmbg2', 'u2net', 'isnet', 'u2net_human_seg', 'silueta']);
+const VALID_MODELS = new Set(['rmbg2', 'birefnet', 'u2net', 'isnet', 'u2net_human_seg', 'silueta']);
 
 function unconfigured(res) {
 	return json(res, 503, {

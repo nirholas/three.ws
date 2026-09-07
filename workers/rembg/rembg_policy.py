@@ -16,12 +16,29 @@ from typing import Iterable
 # Canonical rembg model names. The friendly aliases keep the public API contract
 # stable for callers that still send "rmbg2" / "isnet" (names this service
 # advertised before it ran on rembg); both resolve to rembg's general-purpose
-# model. api/forge-rembg.js still accepts and forwards them.
-CANONICAL_MODELS = ("u2net", "isnet-general-use", "u2net_human_seg", "silueta")
+# model. api/forge-rembg.js still accepts and forwards them, and "birefnet" is
+# the short name for the BiRefNet quality tier below.
+CANONICAL_MODELS = (
+    "u2net",
+    "isnet-general-use",
+    "u2net_human_seg",
+    "silueta",
+    "birefnet-general-lite",
+)
 DEFAULT_MODEL = "isnet-general-use"
+
+# birefnet-general-lite is the quality tier, not the default. BiRefNet resolves
+# hair strands and thin silhouette edges that the DIS/U2Net family smears into a
+# halo, which is exactly what the image-to-3D lanes reconstruct geometry from.
+# It costs real time on a CPU instance: measured on 4 threads with the pinned
+# onnxruntime, one 677x1024 removal takes 6.0 s against isnet-general-use's
+# 1.0 s, and its weights are 214 MB against isnet's 170 MB. Callers that care
+# about the edge (a person, fur, foliage, anything with a soft boundary) ask for
+# it by name; everything else keeps the fast default.
 MODEL_ALIASES = {
     "rmbg2": DEFAULT_MODEL,
     "isnet": DEFAULT_MODEL,
+    "birefnet": "birefnet-general-lite",
 }
 
 # A task is terminal once it reaches one of these; anything else is still in

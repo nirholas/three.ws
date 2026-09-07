@@ -26892,6 +26892,15 @@
 			"tags": [
 				"fix"
 			]
+		},
+		{
+			"date": "2026-09-07",
+			"title": "A sharper cutout for images with hair, fur, or fine edges",
+			"summary": "Background removal now offers BiRefNet as an optional model alongside the fast default. The default model smears wispy boundaries into a soft halo, and because every image-to-3D lane rebuilds geometry from the cut-out subject, that halo turned into real polygons on the finished mesh. BiRefNet keeps hair strands, fur, foliage, and thin straps intact. It takes about six seconds against the default's one, so it stays opt-in: pass model \"birefnet\" on the background-removal endpoint or pick it from the MCP tool when the edge is what matters.",
+			"tags": [
+				"improvement",
+				"feature"
+			]
 		}
 	]
 }

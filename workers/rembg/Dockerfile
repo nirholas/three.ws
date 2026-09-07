@@ -13,8 +13,9 @@ RUN pip install -r /app/requirements.txt
 
 # rembg downloads ONNX model weights on first use; pre-cache the two the service
 # can warm at startup so cold starts never hit the network. Models live in
-# /root/.u2net/. u2net_human_seg and silueta stay lazy: they are rarely asked
-# for, and baking all four would add ~350 MB to every pull.
+# /root/.u2net/. u2net_human_seg, silueta and birefnet-general-lite stay lazy:
+# they are rarely asked for, and baking all five would add ~570 MB to every
+# pull. The first birefnet request therefore pays a one-time 214 MB download.
 RUN python -c "import rembg; rembg.new_session('u2net')" && \
     python -c "import rembg; rembg.new_session('isnet-general-use')"
 

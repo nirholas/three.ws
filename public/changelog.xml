@@ -31,6 +31,14 @@
 			<description>When an agent pays one of our x402 endpoints and the payment header arrives mangled (truncated in transit, double-encoded, wrapped by a proxy), the answer used to be a plain 400 error with no prices in it, so the agent had nothing left to work from and no way to retry. Every rejected payment now returns the ordinary 402 with the full list of accepted rails, tokens and amounts attached, exactly as it does when a payment is simply missing. That is what the x402 spec and the OKX seller SDK both do, and it means a paying agent can always read the quote again and try once more. Only a real server fault answers without a quote.</description>
 		</item>
 		<item>
+			<title>A sharper cutout for images with hair, fur, or fine edges</title>
+			<link>https://three.ws/changelog</link>
+			<guid isPermaLink="false">2026-09-07:A sharper cutout for images with hair, fur, or fine edges</guid>
+			<pubDate>Mon, 07 Sep 2026 12:00:00 GMT</pubDate>
+			<category>improvement</category>
+			<description>Background removal now offers BiRefNet as an optional model alongside the fast default. The default model smears wispy boundaries into a soft halo, and because every image-to-3D lane rebuilds geometry from the cut-out subject, that halo turned into real polygons on the finished mesh. BiRefNet keeps hair strands, fur, foliage, and thin straps intact. It takes about six seconds against the default's one, so it stays opt-in: pass model &quot;birefnet&quot; on the background-removal endpoint or pick it from the MCP tool when the edge is what matters.</description>
+		</item>
+		<item>
 			<title>Archived news stories with emoji in their summary keep their search listing</title>
 			<link>https://three.ws/markets/news</link>
 			<guid isPermaLink="false">2026-09-07:Archived news stories with emoji in their summary keep their search listing</guid>

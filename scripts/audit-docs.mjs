@@ -339,6 +339,7 @@ const UNPUBLISHED_DOCS = new Map([
 	['openai-community-3d-studio-post', 'internal: forum post drafted for an external developer community'],
 	['openai-community-physical-world-post', 'internal: forum post drafted for an external developer community'],
 	['open-source-friday-plan', 'internal: program application plan and stream runsheet, not a reader-facing product doc'],
+	['oss-adoption-2026-09', 'internal: engineering adoption plan naming unshipped lanes, sibling of popular-3d-github-repos'],
 	['oracle-trading-mcp-plan', 'internal: build order for the Oracle and trading-agent MCP servers, not a reader-facing product doc'],
 	['nvidia-apps-catalog-listing', 'internal: paste-ready listing copy and portal steps for the NVIDIA Inception catalog'],
 	['nvidia-apps-catalog-request', 'internal: outbound email asking NVIDIA to publish the catalog listing'],

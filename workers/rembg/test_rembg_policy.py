@@ -50,6 +50,14 @@ for name in CANONICAL_MODELS:
 
 check("legacy alias rmbg2 resolves", canonical_model("rmbg2") == "isnet-general-use")
 check("legacy alias isnet resolves", canonical_model("isnet") == "isnet-general-use")
+check("birefnet alias resolves to the lite weights",
+      canonical_model("birefnet") == "birefnet-general-lite")
+# The BiRefNet tier is opt-in: it costs about 6x the CPU time of the default, so
+# a regression that promoted it to the default would quietly six-times the
+# latency of every forge cutout. Pin the default explicitly.
+check("the default stays the fast model", DEFAULT_MODEL == "isnet-general-use")
+check("birefnet is reachable but not the default",
+      "birefnet-general-lite" in CANONICAL_MODELS and DEFAULT_MODEL != "birefnet-general-lite")
 check("whitespace is trimmed", canonical_model("  u2net  ") == "u2net")
 check("unknown name falls back", canonical_model("segment-anything") == DEFAULT_MODEL)
 check("empty name falls back", canonical_model("") == DEFAULT_MODEL)

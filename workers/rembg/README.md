@@ -3,9 +3,11 @@
 FastAPI service that **strips the background from an image and returns a
 transparent PNG**. It wraps the [`rembg`](https://github.com/danielgatis/rembg)
 library (MIT) and its ONNX salient-object-detection models: `u2net`,
-`isnet-general-use`, `u2net_human_seg`, and `silueta`. The default model is
-`isnet-general-use`; the legacy aliases `rmbg2` and `isnet` resolve to it, so
-older callers keep working. Every mesh backend reconstructs better geometry from
+`isnet-general-use`, `u2net_human_seg`, `silueta`, and
+[`birefnet-general-lite`](https://github.com/ZhengPeng7/BiRefNet) (MIT). The
+default model is `isnet-general-use`; the legacy aliases `rmbg2` and `isnet`
+resolve to it, so older callers keep working, and `birefnet` is the short name
+for the BiRefNet tier. Every mesh backend reconstructs better geometry from
 a cleanly cut-out subject, so this runs ahead of the image-to-3D models (except
 [model-triposg](../model-triposg/), which removes backgrounds in-process).
 
@@ -44,9 +46,35 @@ Request (`RemoveRequest`):
   `three.ws-rembg/1.0 (background removal worker; +https://three.ws)`, which is
   what hosts like Wikimedia require before they will serve a bot.
 - `model`: optional, default `"rmbg2"`. One of `u2net`, `isnet-general-use`,
-  `u2net_human_seg`, `silueta`, or the aliases `rmbg2` / `isnet`
-  (which resolve to `isnet-general-use`). Unknown names fall back to the default
-  model. Pick `u2net_human_seg` for people: it is trained on human matting.
+  `u2net_human_seg`, `silueta`, `birefnet-general-lite`, or the aliases
+  `rmbg2` / `isnet` (which resolve to `isnet-general-use`) and `birefnet`
+  (which resolves to `birefnet-general-lite`). Unknown names fall back to the
+  default model. Pick `u2net_human_seg` for people: it is trained on human
+  matting. Pick `birefnet` when the edge is the point: see
+  [Choosing a model](#choosing-a-model).
+
+### Choosing a model
+
+| Model | Weights | One 677x1024 removal | Use it for |
+|---|---|---|---|
+| `isnet-general-use` (default, alias `rmbg2` / `isnet`) | 170 MB | 1.0 s | Everything by default. Fast, and good enough for a hard-edged subject |
+| `u2net` | 168 MB | ~1 s | The older general model, kept for callers that pinned it |
+| `u2net_human_seg` | lazy download | ~1 s | People, when you want a body silhouette rather than the most salient object |
+| `silueta` | lazy download | ~1 s | A small-footprint U2Net variant |
+| `birefnet-general-lite` (alias `birefnet`) | 214 MB, lazy download | 6.0 s | Hair, fur, foliage, thin straps: any soft or wispy boundary the DIS/U2Net family turns into a halo |
+
+The two exact figures (1.0 s and 6.0 s) were measured on this repo's pinned
+`onnxruntime==1.28.0` with ONNX Runtime capped to 4 threads, matching the
+deployed service's 4 vCPUs, best of three runs on a warm session at 677x1024.
+The `~1 s` rows are the U2Net-family figures this README already documented
+above and were not re-measured.
+
+Why the tier exists: every image-to-3D lane reconstructs geometry from the
+matted subject, so a halo of leftover background around the hair becomes real
+polygons in the mesh. BiRefNet's bilateral reference architecture keeps that
+boundary, which is worth six seconds on a hero image and is not worth it on a
+batch. It stays opt-in for exactly that reason, and the policy tests pin the
+default so a future edit cannot promote it silently.
 
 Response (the returned `model` is the resolved canonical name):
 
@@ -93,7 +121,7 @@ finished task stays pollable for an hour, and the map is capped at 2000 entries
 	"gpu_available": false,
 	"execution_providers": ["AzureExecutionProvider", "CPUExecutionProvider"],
 	"models_loaded": ["isnet-general-use"],
-	"models_available": ["u2net", "isnet-general-use", "u2net_human_seg", "silueta"],
+	"models_available": ["u2net", "isnet-general-use", "u2net_human_seg", "silueta", "birefnet-general-lite"],
 	"default_model": "isnet-general-use",
 	"tasks_tracked": 0,
 	"task_retention_s": 3600.0,
@@ -117,7 +145,9 @@ finished task stays pollable for an hour, and the map is capped at 2000 entries
 Weights for the two startup-capable models are **baked into the image** at build
 time (the Dockerfile pre-caches `u2net` and `isnet-general-use` into
 `/root/.u2net/`), so no GCS weights volume is mounted and cold starts do not hit
-the network. `u2net_human_seg` and `silueta` download on first request.
+the network. `u2net_human_seg`, `silueta` and `birefnet-general-lite` download on
+first request; BiRefNet's weights are 214 MB, so its very first call on a fresh
+instance pays that download once before it answers.
 
 ## Run locally
 

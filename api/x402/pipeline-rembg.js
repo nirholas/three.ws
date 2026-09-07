@@ -30,7 +30,7 @@ import pipelineRembgListing from '../_lib/service-catalog/services/pipeline-remb
 const ROUTE = '/api/x402/pipeline-rembg';
 const SLUG = 'pipeline-rembg';
 
-const VALID_MODELS = new Set(['rmbg2', 'u2net', 'isnet', 'u2net_human_seg', 'silueta']);
+const VALID_MODELS = new Set(['rmbg2', 'birefnet', 'u2net', 'isnet', 'u2net_human_seg', 'silueta']);
 
 // Single source of truth: api/_lib/service-catalog/services/pipeline-rembg.js is
 // the storefront listing copy — importing it here keeps the live 402 challenge
@@ -52,7 +52,7 @@ export const INPUT_SCHEMA = {
 			type: 'string',
 			enum: [...VALID_MODELS],
 			default: 'rmbg2',
-			description: 'Segmentation model — rmbg2 (default, general), u2net_human_seg (people), isnet, u2net, silueta.',
+			description: 'Segmentation model. rmbg2 (default, general, ~1s), birefnet (BiRefNet, cleanest hair and thin edges, ~6s), u2net_human_seg (people), isnet, u2net, silueta.',
 		},
 	},
 };

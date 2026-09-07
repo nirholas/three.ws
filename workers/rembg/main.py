@@ -5,8 +5,9 @@ transparent PNG, using rembg (MIT) and its ONNX salient-object-detection models.
 API contract:
   POST /remove   { image: data-uri|url, model?: name }
               →  202 { task_id, status: "queued", model }
-       model is one of u2net | isnet-general-use | u2net_human_seg | silueta.
-       The legacy aliases "rmbg2" and "isnet" resolve to isnet-general-use.
+       model is one of u2net | isnet-general-use | u2net_human_seg | silueta |
+       birefnet-general-lite. The legacy aliases "rmbg2" and "isnet" resolve to
+       isnet-general-use; "birefnet" resolves to birefnet-general-lite.
 
   GET  /tasks/:id → { task_id, status, result_url?, error? }
 
@@ -14,8 +15,10 @@ API contract:
                       gpu_available, execution_providers }
 
 No GPU required: the models run on ONNX Runtime's CPU provider in ~1-2 s for the
-inference step. Only the default model is loaded at startup (the rest load
-lazily on first use) so cold starts stay fast and /remove returns instantly.
+inference step, except birefnet-general-lite, which trades about 6 s per image
+for a markedly cleaner edge. Only the default model is loaded at startup (the
+rest load lazily on first use) so cold starts stay fast and /remove returns
+instantly.
 
 Environment variables:
   API_KEY           shared bearer secret (required)

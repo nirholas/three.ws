@@ -10,6 +10,10 @@ A sweep of 22 3D-related GitHub topics and keyword queries (`3d`, `threejs`, `we
 
 ## Quick read for three.ws
 
+> This file ranks the ecosystem by stars. For what three.ws should actually
+> adopt out of it, with licenses verified and the file each candidate lands
+> in, see [oss-adoption-2026-09.md](oss-adoption-2026-09.md).
+
 - **three.js (#1, ~113k)** dwarfs everything else in web 3D — it is the foundation this platform is built on.
 - The **pmndrs / React ecosystem** dominates the React side: `react-three-fiber` (#5), `drei` (#42), `uikit` (#179). Framework wrappers exist for every stack: `troisjs/trois` + `Tresjs/tres` (Vue), `threlte` (Svelte), `gre/gl-react` (React shaders).
 - The fastest-growing cluster is **NeRF + Gaussian Splatting** — `gaussian-splatting` (#10), `instant-ngp` (#16), `nerfstudio` (#33), `supersplat` (#48), `gsplat` (#96), plus generative 3D (`TRELLIS`, `Hunyuan3D`, `stable-dreamfusion`). This is where web-3D capture is heading and worth tracking for the platform roadmap.

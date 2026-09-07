@@ -34,7 +34,7 @@ export default {
 			},
 			model: {
 				type: 'string',
-				enum: ['rmbg2', 'u2net', 'isnet', 'u2net_human_seg', 'silueta'],
+				enum: ['rmbg2', 'birefnet', 'u2net', 'isnet', 'u2net_human_seg', 'silueta'],
 				default: 'rmbg2',
 			},
 		},

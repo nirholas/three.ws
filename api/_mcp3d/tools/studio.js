@@ -1211,10 +1211,10 @@ export const toolDefs = [
 				},
 				model: {
 					type: 'string',
-					enum: ['rmbg2', 'u2net', 'isnet', 'u2net_human_seg', 'silueta'],
+					enum: ['rmbg2', 'birefnet', 'u2net', 'isnet', 'u2net_human_seg', 'silueta'],
 					default: 'rmbg2',
 					description:
-						'Background removal model. rmbg2 is highest quality; u2net_human_seg is optimised for people.',
+						'Background removal model. rmbg2 is the fast default; birefnet (BiRefNet) keeps hair and thin edges intact at about six times the compute; u2net_human_seg is optimised for people.',
 				},
 			},
 			required: ['image_url'],
