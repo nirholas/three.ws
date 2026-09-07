@@ -2,10 +2,18 @@
 // -------------------------
 // Public, read-only. Picks ONE real agent to feature on the pump dashboard,
 // chosen deterministically from real data — never a hardcoded id or sample:
-//   1. The public, non-deleted agent with the highest aggregate
+//   1. The published, public, non-deleted agent with the highest aggregate
 //      agent_revenue_events.net_amount over the last 30 days.
 //   2. If no revenue events fall in that window, the most-recently-created
-//      public, non-deleted agent.
+//      published, public, non-deleted agent.
+//
+// Both `is_public` and `is_published` are required, and the second one is not
+// redundant. Every signup is seeded a starter agent (api/_lib/seed-default-agent.js)
+// that is public but deliberately unpublished, so a visibility test that reads
+// `is_public` alone can feature a draft its owner never published. Downstream
+// readers gate on `is_published` (api/agents/alpha.js, the marketplace), so such
+// a pick answers 404 to every follow-up call: on 2026-09-07 that is what put
+// /alpha-copilot into its "Live feed hiccup" error state for every visitor.
 // Both rules collapse into a single ORDER BY (net_total DESC, created_at DESC)
 // so a zero-revenue platform still surfaces the newest agent.
 //
@@ -47,6 +55,7 @@ export default wrap(async (req, res) => {
 		LEFT JOIN avatars a ON a.id = i.avatar_id AND a.deleted_at IS NULL
 		WHERE i.deleted_at IS NULL
 		  AND i.is_public = true
+		  AND i.is_published = true
 		ORDER BY net_total DESC, i.created_at DESC
 		LIMIT 1
 	`;

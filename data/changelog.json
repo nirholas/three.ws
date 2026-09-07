@@ -26869,6 +26869,14 @@
 			"tags": [
 				"fix"
 			]
+		},
+		{
+			"date": "2026-09-07",
+			"title": "The featured agent is one you can actually open",
+			"summary": "The agent we spotlight is picked automatically from real activity, but the pick only checked whether an agent was public, not whether its owner had published it. That let a brand new starter agent, the draft every account is given on signup, take the spot, and every panel that tried to read it came back empty with a live feed error. The pick now requires a published agent, so the spotlight lands on one that every part of the site can open.",
+			"tags": [
+				"fix"
+			]
 		}
 	]
 }
