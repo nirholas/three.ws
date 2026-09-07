@@ -66,9 +66,9 @@ Add `"env": { "BLENDER_PATH": "/path/to/blender" }` if Blender is not on `PATH`.
 | Tool | What it does |
 |---|---|
 | `blender_info` | Reports the Blender being driven: path, version, bundled Python, usable render engines, and the import/export formats this build actually supports. Read-only. |
-| `blender_scene_info` | Opens a 3D file and describes it: objects with types, parents, dimensions and modifiers; evaluated triangle and vertex counts; materials; armature bone names; animation actions with frame ranges; world-space bounds. Read-only. |
+| `blender_scene_info` | Opens a 3D file and describes it: objects with types, parents, dimensions and modifiers; evaluated triangle and vertex counts; materials; a texture inventory with each image's resolution and byte size; armature bone names; animation actions with frame ranges; world-space bounds. Read-only. |
 | `blender_convert` | Imports one format and exports another, chosen by the file extensions. Applies modifiers by default and can bake in a uniform unit scale. The exact format list depends on the build (some Linux packages ship without USD, Collada, or Alembic), and `blender_info` reports what yours actually has. |
-| `blender_render` | Renders a still PNG. If the file has no camera, one is created and framed to the model's bounding sphere; if it has no light, a key light and a lit world are added. A scene that already has its own camera and lighting renders as authored. |
+| `blender_render` | Renders a still PNG and returns it **inline**, so the assistant can actually see the model in one call even with no filesystem access. If the file has no camera, one is created and framed to the model's bounding sphere; if it has no light, a key light and a lit world are added. A scene that already has its own camera and lighting renders as authored. |
 | `blender_run_python` | Runs a `bpy` script against a scene, optionally opening a file first and exporting the result afterwards. The escape hatch for anything the other tools do not cover. |
 | `blender_forge_import` | Generates a model from a text prompt on the public three.ws Forge pipeline and brings it into Blender, converting on the way in if the output asks for another format. The default image lane is free. |
 
@@ -119,7 +119,7 @@ Every tool call spawns `blender -b --factory-startup --python src/py/runner.py -
 - **The runner writes its payload to a file, never to stdout.** Blender prints progress, add-on chatter, and render statistics on stdout, and picking a payload out of that stream is guesswork. A missing result file therefore means Blender died, and the error carries the log tail that says why.
 - **One process per call.** A crashed job cannot corrupt the next one, and nothing stays resident between calls.
 
-Failures come back as structured tool errors (`input_not_found`, `format_unsupported`, `engine_unavailable`, `timeout`, `blender_not_found`, `blender_crashed`), each with a message that says what to do about it.
+Failures come back as structured tool errors (`input_not_found`, `format_unsupported`, `engine_unavailable`, `timeout`, `blender_not_found`, `blender_unusable`, `blender_crashed`), each with a message that says what to do about it. `blender_not_found` means no candidate exists; `blender_unusable` means one exists but would not run, and carries the per-candidate diagnostics, because on a loaded machine a failed probe is transient and telling you to install software you already have is the wrong answer.
 
 ## Environment variables
 
@@ -129,6 +129,9 @@ Failures come back as structured tool errors (`input_not_found`, `format_unsuppo
 | `BLENDER_MCP_TIMEOUT_MS` | `300000` | Ceiling for one Blender job. |
 | `BLENDER_MCP_WORKDIR` | `<tmpdir>/three-ws-blender-mcp` | Where outputs land when a tool is called without an explicit output path. |
 | `BLENDER_MCP_ALLOW_PYTHON` | `1` | Set to `0` to withdraw `blender_run_python` from the advertised tool list entirely. |
+| `BLENDER_MCP_MAX_CONCURRENCY` | `2` | Blender processes allowed at once. Further calls queue rather than compete for memory. |
+| `BLENDER_MCP_INLINE_IMAGE_PX` | `768` | Longest edge of the render copy returned inline. The full-resolution PNG always goes to disk. |
+| `BLENDER_MCP_INLINE_IMAGE_BYTES` | `1500000` | Past this the image stays on disk and the response says so. |
 | `THREE_WS_BASE` | `https://three.ws` | Deployment backing `blender_forge_import`. |
 | `THREE_WS_FORGE_TIMEOUT_MS` | `600000` | Ceiling for one text-to-3D generation. |
 | `THREE_WS_FORGE_PROVIDER_KEY` | unset | Meshy/Tripo key for the bring-your-own-key geometry lane. The default image lane is free and needs no key. |

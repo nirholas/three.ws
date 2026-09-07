@@ -18,12 +18,12 @@
 		"source": "github",
 		"subfolder": "packages/blender-mcp"
 	},
-	"version": "0.1.0",
+	"version": "0.2.0",
 	"packages": [
 		{
 			"registryType": "npm",
 			"identifier": "@three-ws/blender-mcp",
-			"version": "0.1.0",
+			"version": "0.2.0",
 			"runtimeHint": "npx",
 			"transport": {
 				"type": "stdio"
@@ -54,6 +54,27 @@
 					"format": "string",
 					"isRequired": false,
 					"default": "1"
+				},
+				{
+					"name": "BLENDER_MCP_INLINE_IMAGE_BYTES",
+					"description": "Ceiling on inlined image bytes. Past this the image stays on disk and the response says where.",
+					"format": "number",
+					"isRequired": false,
+					"default": "1500000"
+				},
+				{
+					"name": "BLENDER_MCP_INLINE_IMAGE_PX",
+					"description": "Longest edge of the render copy returned inline in a tool result. The full-resolution PNG is always written to disk.",
+					"format": "number",
+					"isRequired": false,
+					"default": "768"
+				},
+				{
+					"name": "BLENDER_MCP_MAX_CONCURRENCY",
+					"description": "How many Blender processes may run at once. Further calls queue rather than compete for memory.",
+					"format": "number",
+					"isRequired": false,
+					"default": "2"
 				},
 				{
 					"name": "THREE_WS_BASE",

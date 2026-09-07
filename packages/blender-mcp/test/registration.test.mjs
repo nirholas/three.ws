@@ -92,6 +92,11 @@ test('BLENDER_MCP_ALLOW_PYTHON=0 withdraws the script tool', () => {
 	assert.equal(names.length, 5);
 });
 
+test('blender_render is the tool that returns extra content blocks', () => {
+	const withAttachments = TOOLS.filter((t) => typeof t.attachments === 'function').map((t) => t.name);
+	assert.deepEqual(withAttachments, ['blender_render'], 'only the render tool inlines an image today');
+});
+
 test('buildServer registers without Blender or network access', () => {
 	const server = buildServer();
 	assert.ok(server, 'buildServer() must return an McpServer');

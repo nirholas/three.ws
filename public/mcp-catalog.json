@@ -4604,7 +4604,7 @@
 		{
 			"name": "blender_render",
 			"title": "Render a preview image of a 3D file",
-			"description": "Render a still PNG of any 3D file Blender can open (.blend, .glb, .fbx, .obj, .usd and the rest). If the scene has no camera, one is created and framed to the model; if it has no light, a key light and a lit world are added, so a bare asset file renders as a usable preview with no setup. A scene that already has its own camera and lighting is rendered as authored. Returns the image path, the engine used, and whether a camera or lights had to be added. Use it to see a model, check a conversion, or produce a thumbnail.",
+			"description": "Render a still PNG of any 3D file Blender can open (.blend, .glb, .fbx, .obj, .usd and the rest). If the scene has no camera, one is created and framed to the model; if it has no light, a key light and a lit world are added, so a bare asset file renders as a usable preview with no setup. A scene that already has its own camera and lighting is rendered as authored. The rendered image is returned INLINE alongside the JSON, so you can actually look at the model in this one call without needing filesystem access, while the full-resolution PNG is written to disk. Use it to see a model, check a conversion, or produce a thumbnail.",
 			"server": {
 				"id": "blender-mcp",
 				"title": "@three-ws/blender-mcp",
@@ -4654,6 +4654,10 @@
 					"transparent": {
 						"type": "boolean",
 						"description": "Render with a transparent background instead of the world. Default false."
+					},
+					"inline_image": {
+						"type": "boolean",
+						"description": "Return the image inline so you can see it, downscaled to fit the context. Default true."
 					}
 				},
 				"required": [
@@ -4716,7 +4720,7 @@
 		{
 			"name": "blender_scene_info",
 			"title": "Describe a 3D file with Blender",
-			"description": "Open a 3D file with Blender and report what is inside it: object list with types, parents, dimensions and modifiers; evaluated triangle and vertex counts; materials; armature bone names; animation actions with their frame ranges; and world-space bounds. Accepts .blend plus every format this Blender can import (.glb, .gltf, .fbx, .obj, .stl, .ply, .dae, .abc, .usd*, .x3d). Read-only: the file is never modified.",
+			"description": "Open a 3D file with Blender and report what is inside it: object list with types, parents, dimensions and modifiers; evaluated triangle and vertex counts; materials; armature bone names; animation actions with their frame ranges; a texture inventory with each image's resolution and byte size plus the total, which is usually what decides whether an asset is deliverable; and world-space bounds. Accepts .blend plus every format this Blender can import (.glb, .gltf, .fbx, .obj, .stl, .ply, .dae, .abc, .usd*, .x3d). Counts describe the file AS LOADED, so a GLB reports more vertices than the .blend it came from (glTF splits vertices at UV and normal seams) while the triangle count is identical. Read-only: the file is never modified.",
 			"server": {
 				"id": "blender-mcp",
 				"title": "@three-ws/blender-mcp",

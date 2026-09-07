@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-09-07T05:11:40.027Z",
+	"generated_at": "2026-09-07T05:17:15.845Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -14,6 +14,17 @@
 			"link": "/mine",
 			"tags": [
 				"launch"
+			]
+		},
+		{
+			"date": "2026-09-07",
+			"type": "update",
+			"title": "3D generation and the whole site keep working when our asset storage does not",
+			"summary": "Early on 2026-09-07 our object storage stopped accepting the platform's credential, and because every generation parks its reference image there, 3D generation stopped on the website and in ChatGPT at the same time, agent registration could not store its manifest, and images loaded through our CDN stopped resolving. Three things changed so that a storage fault is never again a blank page. Avatars, thumbnails and models now fall back to the bucket's public domain automatically, so the site keeps rendering. When generation genuinely cannot run you get a plain message saying storage is recovering and to try again shortly, instead of a raw error from the storage vendor. And our own health checks now watch the storage credential directly and treat a silent forge as an outage rather than a quiet hour, so we hear about this class of failure before you do.",
+			"link": null,
+			"tags": [
+				"fix",
+				"infra"
 			]
 		},
 		{
@@ -47,6 +58,17 @@
 			"tags": [
 				"feature",
 				"sdk"
+			]
+		},
+		{
+			"date": "2026-09-07",
+			"type": "update",
+			"title": "The Blender tools now show you the render instead of describing it",
+			"summary": "Asking an assistant to render a 3D model used to hand back a file path, which is useless if the assistant cannot open files on your disk. The rendered image now comes back with the answer, scaled to fit, while the full-resolution PNG still lands on disk. That turns a look at this model into one step, so an assistant can render, spot the problem, fix it and render again. Reading a file also reports its texture budget now: every image with its resolution and byte size, plus the total, which is usually what actually decides whether a model is small enough to ship, and it was previously reported as nothing more than a count. Two reliability fixes came out of real use: several requests at once now queue instead of all starting Blender at the same moment and exhausting the machine, and when Blender is installed but momentarily will not start you get a message saying exactly that, with the details, rather than being told to install software you already have.",
+			"link": null,
+			"tags": [
+				"improvement",
+				"feature"
 			]
 		},
 		{

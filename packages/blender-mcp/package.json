@@ -1,6 +1,6 @@
 {
 	"name": "@three-ws/blender-mcp",
-	"version": "0.1.0",
+	"version": "0.2.0",
 	"mcpName": "io.github.nirholas/blender-mcp",
 	"description": "Drive the Blender on your machine from any AI agent, headless. Inspect a 3D file, convert between GLB/glTF/FBX/OBJ/STL/PLY/DAE/USD/Alembic/.blend, render an auto-framed and auto-lit preview PNG, run a bpy script against a scene, and generate a model from a text prompt on the free three.ws Forge lane. No GUI, no add-on to install, no key.",
 	"type": "module",

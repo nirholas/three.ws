@@ -421,7 +421,7 @@
       "transport": "stdio",
       "connect": "npx -y @three-ws/blender-mcp",
       "npmPackage": "@three-ws/blender-mcp",
-      "version": "0.1.0",
+      "version": "0.2.0",
       "description": "Drive a local Blender headlessly: inspect, convert, render and script 3D files.",
       "tagline": "Drive the Blender on your own machine: inspect, convert, render and script 3D files, headless.",
       "category": "3d",

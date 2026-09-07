@@ -82,7 +82,9 @@ Call it first whenever anything else fails: it separates "Blender is missing" fr
 | `input` | string, required | Path to the file. Absolute, or relative to the server's working directory. |
 | `include_objects` | boolean | Include the per-object breakdown. Set `false` on huge scenes for totals only. Default `true`. |
 
-Opens a `.blend`, or imports any supported format into an empty scene, and describes it: objects with type, parent, dimensions, modifiers, materials and UV layers; **evaluated** triangle and vertex counts, so a subdivision modifier is counted as what it renders, not what it stores; armature bone names; animation actions with frame ranges; and world-space bounds. The file is never modified.
+Opens a `.blend`, or imports any supported format into an empty scene, and describes it: objects with type, parent, dimensions, modifiers, materials and UV layers; **evaluated** triangle and vertex counts, so a subdivision modifier is counted as what it renders, not what it stores; a texture inventory giving each image's resolution, format and byte size plus `counts.texture_bytes`, which against `input_bytes` is what tells you whether an asset is mesh-heavy or texture-heavy; armature bone names; animation actions with frame ranges; and world-space bounds. The file is never modified.
+
+Counts describe the file **as loaded**. A GLB reports more vertices than the `.blend` it was exported from, because glTF splits vertices at UV and normal seams; the triangle count is identical either way.
 
 ```
 blender_scene_info { "input": "~/assets/character.fbx" }
@@ -113,6 +115,9 @@ blender_convert { "input": "character.fbx", "output": "character.glb", "scale": 
 | `samples` | integer | Default `32`, enough for a preview. |
 | `resolution` | `[width, height]` | Default `[960, 960]`. |
 | `transparent` | boolean | Transparent background instead of the world. Default `false`. |
+| `inline_image` | boolean | Return the image inline so the assistant can see it. Default `true`. |
+
+The rendered image comes back **inline** as an MCP image block, downscaled to fit the caller's context, while the full-resolution PNG is written to disk. That is what makes a see-and-fix loop possible in one call, and it is the only way the render is reachable at all from a client with no filesystem access.
 
 An asset file usually carries no camera and no lights, which is why rendering one straight out of a converter normally produces a black square. This tool fills both in: it creates a camera and frames it to the geometry's bounding sphere, and adds a key light and a lit world. A scene that already has its own camera and lighting is rendered exactly as authored, and the response says which of the two happened (`camera_created`, `lights_created`).
 
@@ -188,6 +193,7 @@ Failures come back as structured tool errors, each naming a fix:
 | `format_unsupported` | This build has no importer or exporter for that extension. The message lists the ones it does have. |
 | `engine_unavailable` | The requested render engine is not in this build. |
 | `timeout` | The job passed `BLENDER_MCP_TIMEOUT_MS` and was killed. |
+| `blender_unusable` | A Blender executable exists but would not run. Carries per-candidate diagnostics; on a loaded machine this is usually transient and the call is worth retrying. |
 | `blender_crashed` | Blender exited without writing a result. The error carries its log tail. |
 
 ---
@@ -200,6 +206,9 @@ Failures come back as structured tool errors, each naming a fix:
 | `BLENDER_MCP_TIMEOUT_MS` | `300000` | Ceiling for one Blender job. |
 | `BLENDER_MCP_WORKDIR` | `<tmpdir>/three-ws-blender-mcp` | Where outputs land with no explicit output path. |
 | `BLENDER_MCP_ALLOW_PYTHON` | `1` | `0` withdraws `blender_run_python` from the tool list entirely. |
+| `BLENDER_MCP_MAX_CONCURRENCY` | `2` | Blender processes allowed at once; further calls queue. |
+| `BLENDER_MCP_INLINE_IMAGE_PX` | `768` | Longest edge of the render copy returned inline. |
+| `BLENDER_MCP_INLINE_IMAGE_BYTES` | `1500000` | Past this the image stays on disk and the response says so. |
 | `THREE_WS_BASE` | `https://three.ws` | Deployment backing `blender_forge_import`. |
 | `THREE_WS_FORGE_TIMEOUT_MS` | `600000` | Ceiling for one generation. |
 | `THREE_WS_FORGE_PROVIDER_KEY` | unset | Meshy/Tripo key for the bring-your-own-key geometry lane. |
