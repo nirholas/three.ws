@@ -13,7 +13,8 @@ That makes it the piece that sits under the three.ws pipeline rather than beside
 | Know what is actually inside a file a client sent you | `blender_scene_info` |
 | Turn an FBX or a USD into a web-ready GLB (or the reverse) | `blender_convert` |
 | See a model without opening anything | `blender_render` |
-| Do something no single tool covers: decimate, join, rename bones, bake | `blender_run_python` |
+| Make a model small enough to ship, and see what it cost | `blender_optimize` |
+| Do something no single tool covers: join, rename bones, bake | `blender_run_python` |
 | Generate an asset from a sentence and open it | `blender_forge_import` |
 | Find out why one of the above failed | `blender_info` |
 
@@ -105,6 +106,26 @@ Both sides accept `.glb`, `.gltf`, `.fbx`, `.obj`, `.stl`, `.ply`, `.dae`, `.abc
 blender_convert { "input": "character.fbx", "output": "character.glb", "scale": 0.01 }
 ```
 
+### `blender_optimize`
+
+| Argument | Type | Notes |
+|---|---|---|
+| `input` | string, required | Model to optimize. |
+| `output` | string | Destination. The extension picks the format. Defaults to a `.glb` in the workdir. |
+| `max_triangles` | integer | Triangle budget for the whole scene. Omit to leave geometry alone. |
+| `max_texture_px` | integer | Longest edge any texture may keep. Omit to leave textures alone. |
+| `compress` | enum | `meshopt` (default), `draco`, or `none`. Applies to glTF output only. |
+
+The delivery pass, in one call. Decimation is collapse-based and applies **one ratio across the whole scene**, so meshes keep their relative density: a per-object budget is what flattens a face while leaving a wall at full resolution. Textures are scaled and repacked, unreferenced datablocks are dropped, and the mesh streams are compressed on the way out.
+
+Compression runs outside Blender because Blender's exporter offers Draco only, and only on builds shipping the library, while meshopt is what the three.ws runtime and every major web viewer decode.
+
+```
+blender_optimize { "input": "character.glb", "output": "character-web.glb", "max_triangles": 30000, "max_texture_px": 1024 }
+```
+
+The response carries `before` and `after` counts, `saved_bytes`, `saved_percent`, and a `steps` array saying what each stage did, so the trade is visible instead of guessed. Vertex groups survive decimation, but check a heavily decimated skinned mesh with `blender_render` before shipping it.
+
 ### `blender_render`
 
 | Argument | Type | Notes |
@@ -115,7 +136,10 @@ blender_convert { "input": "character.fbx", "output": "character.glb", "scale": 
 | `samples` | integer | Default `32`, enough for a preview. |
 | `resolution` | `[width, height]` | Default `[960, 960]`. |
 | `transparent` | boolean | Transparent background instead of the world. Default `false`. |
+| `views` | integer | How many angles to render, orbiting the model, 1 to 6. Default 1. |
 | `inline_image` | boolean | Return the image inline so the assistant can see it. Default `true`. |
+
+Asking for several `views` orbits the model and renders every angle in the **same** Blender launch, one import for the whole set, and returns them all inline. Four views is what answers questions a single angle hides: whether the back is modelled at all, whether a texture only reads from the front. A multi-view set always orbits its own camera, so an authored camera is honoured only when `views` is 1.
 
 The rendered image comes back **inline** as an MCP image block, downscaled to fit the caller's context, while the full-resolution PNG is written to disk. That is what makes a see-and-fix loop possible in one call, and it is the only way the render is reachable at all from a client with no filesystem access.
 

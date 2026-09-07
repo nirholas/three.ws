@@ -26,6 +26,7 @@ test('exactly the expected tools are registered', () => {
 			'blender_info',
 			'blender_scene_info',
 			'blender_convert',
+			'blender_optimize',
 			'blender_render',
 			'blender_forge_import',
 			'blender_run_python',
@@ -89,7 +90,7 @@ test('BLENDER_MCP_ALLOW_PYTHON=0 withdraws the script tool', () => {
 	assert.equal(child.status, 0, child.stderr);
 	const names = child.stdout.trim().split(',');
 	assert.ok(!names.includes('blender_run_python'), 'blender_run_python must not be advertised when the gate is off');
-	assert.equal(names.length, 5);
+	assert.equal(names.length, 6);
 });
 
 test('blender_render is the tool that returns extra content blocks', () => {

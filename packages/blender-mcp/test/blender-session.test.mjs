@@ -91,6 +91,7 @@ test('the session advertises every tool with a schema', { skip: SKIP }, async ()
 		'blender_convert',
 		'blender_forge_import',
 		'blender_info',
+		'blender_optimize',
 		'blender_render',
 		'blender_run_python',
 		'blender_scene_info',
@@ -294,4 +295,77 @@ test('a meshopt-compressed GLB reads correctly, which Blender alone cannot do', 
 test('an uncompressed file is passed through untouched', { skip: SKIP }, async () => {
 	const { payload } = await callTool('blender_scene_info', { input: fixture, include_objects: false });
 	assert.equal(payload.decoded_compression, undefined, 'nothing to decode must mean no decode step');
+});
+
+test('blender_optimize hits the budget and reports an honest before/after', { skip: SKIP }, async () => {
+	// A textured fixture, so the texture half of the pass has something to do.
+	const source = path.join(workdir, 'heavy.glb');
+	await callTool('blender_run_python', {
+		output: source,
+		code: [
+			'import bpy',
+			'bpy.ops.mesh.primitive_monkey_add(size=2)',
+			"bpy.context.object.modifiers.new('Subd', 'SUBSURF').levels = 2",
+			"image = bpy.data.images.new('Albedo', width=1024, height=1024)",
+			"image.generated_type = 'COLOR_GRID'",
+			"material = bpy.data.materials.new('Heavy')",
+			'material.use_nodes = True',
+			"node = material.node_tree.nodes.new('ShaderNodeTexImage')",
+			'node.image = image',
+			"material.node_tree.links.new(node.outputs['Color'], material.node_tree.nodes['Principled BSDF'].inputs['Base Color'])",
+			'bpy.context.object.data.materials.append(material)',
+		].join('\n'),
+	});
+
+	const output = path.join(workdir, 'optimized.glb');
+	const { isError, payload } = await callTool('blender_optimize', {
+		input: source,
+		output,
+		max_triangles: 2000,
+		max_texture_px: 256,
+	});
+
+	assert.equal(isError, false, JSON.stringify(payload));
+	assert.ok(payload.after.triangles <= 2000, `triangle budget not met: ${payload.after.triangles}`);
+	assert.ok(payload.after.triangles > 0, 'the pass must not delete the geometry');
+	assert.ok(payload.after.texture_bytes < payload.before.texture_bytes, 'textures must shrink');
+	assert.ok(payload.output_bytes < payload.input_bytes, 'the delivered file must be smaller');
+	assert.ok(payload.saved_percent > 0);
+	assert.deepEqual(
+		payload.steps.map((step) => step.step),
+		['decimate', 'resize_textures', 'purge', 'compress'],
+	);
+
+	// The compressed result must still be readable, which is the whole point.
+	const reread = await callTool('blender_scene_info', { input: output, include_objects: false });
+	assert.equal(reread.isError, false);
+	assert.deepEqual(reread.payload.decoded_compression, ['EXT_meshopt_compression']);
+	assert.equal(reread.payload.counts.triangles, payload.after.triangles);
+});
+
+test('blender_optimize honours compress: none', { skip: SKIP }, async () => {
+	const output = path.join(workdir, 'uncompressed.glb');
+	const { payload } = await callTool('blender_optimize', { input: fixture, output, max_triangles: 500, compress: 'none' });
+	assert.ok(!payload.steps.some((step) => step.step === 'compress'));
+	const reread = await callTool('blender_scene_info', { input: output, include_objects: false });
+	assert.equal(reread.payload.decoded_compression, undefined, 'nothing should need decoding');
+});
+
+test('blender_render returns one image per view from a single launch', { skip: SKIP }, async () => {
+	const result = await client.callTool({
+		name: 'blender_render',
+		arguments: { input: fixture, output: path.join(workdir, 'orbit.png'), samples: 4, resolution: [128, 128], views: 4 },
+	});
+	const images = result.content.filter((block) => block.type === 'image');
+	assert.equal(images.length, 4, 'every view must come back inline');
+
+	const payload = payloadOf(result);
+	assert.equal(payload.views, 4);
+	assert.equal(payload.outputs.length, 4);
+	for (const file of payload.outputs) {
+		assert.ok((await stat(file)).size > 0, `${file} must exist on disk`);
+	}
+	// The four angles must differ; identical bytes would mean the camera never moved.
+	const [first, second] = await Promise.all(payload.outputs.slice(0, 2).map((file) => readFile(file)));
+	assert.ok(!first.equals(second), 'the orbit must actually move the camera');
 });

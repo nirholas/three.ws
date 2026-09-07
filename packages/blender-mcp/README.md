@@ -68,7 +68,8 @@ Add `"env": { "BLENDER_PATH": "/path/to/blender" }` if Blender is not on `PATH`.
 | `blender_info` | Reports the Blender being driven: path, version, bundled Python, usable render engines, and the import/export formats this build actually supports. Read-only. |
 | `blender_scene_info` | Opens a 3D file and describes it: objects with types, parents, dimensions and modifiers; evaluated triangle and vertex counts; materials; a texture inventory with each image's resolution and byte size; armature bone names; animation actions with frame ranges; world-space bounds. Read-only. |
 | `blender_convert` | Imports one format and exports another, chosen by the file extensions. Applies modifiers by default and can bake in a uniform unit scale. The exact format list depends on the build (some Linux packages ship without USD, Collada, or Alembic), and `blender_info` reports what yours actually has. |
-| `blender_render` | Renders a still PNG and returns it **inline**, so the assistant can actually see the model in one call even with no filesystem access. If the file has no camera, one is created and framed to the model's bounding sphere; if it has no light, a key light and a lit world are added. A scene that already has its own camera and lighting renders as authored. |
+| `blender_optimize` | The delivery pass in one call: decimate to a triangle budget, scale oversized textures, purge unreferenced datablocks, and compress the mesh streams with meshopt or Draco. Reports before and after triangles, texture bytes and file size. |
+| `blender_render` | Renders a still PNG and returns it **inline**, so the assistant can actually see the model in one call even with no filesystem access. Ask for several views and it orbits the model, every angle in the same launch. If the file has no camera, one is created and framed to the model's bounding sphere; if it has no light, a key light and a lit world are added. A scene that already has its own camera and lighting renders as authored. |
 | `blender_run_python` | Runs a `bpy` script against a scene, optionally opening a file first and exporting the result afterwards. The escape hatch for anything the other tools do not cover. |
 | `blender_forge_import` | Generates a model from a text prompt on the public three.ws Forge pipeline and brings it into Blender, converting on the way in if the output asks for another format. The default image lane is free. |
 
@@ -81,6 +82,19 @@ Describe a file before touching it:
 
 blender_scene_info { "input": "~/assets/character.fbx" }
 → 4 meshes, 41,208 triangles, 1 armature (67 bones), 3 actions, bounds 1.78m tall
+```
+
+Make a model shippable and see what it cost:
+
+```
+blender_optimize { "input": "character.glb", "output": "character-web.glb", "max_triangles": 30000, "max_texture_px": 1024 }
+→ 4.1 MB to 780 KB (81% saved): 96,412 to 30,000 triangles, textures 2048 to 1024, meshopt compressed
+```
+
+Look at it from four sides at once:
+
+```
+blender_render { "input": "character-web.glb", "views": 4 }
 ```
 
 Convert a client's FBX into a web-ready GLB, in metres:

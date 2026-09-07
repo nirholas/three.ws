@@ -47,6 +47,14 @@
 			<description>A creator told us the making part was intuitive and the finding part was not: they built an agent, closed the tab, and had no obvious way back to it. There is now a My creations button in the header, and it opens a single page holding everything you have made, newest first: your agents, the 3D avatars saved to your account, and every model you forged, with Open, Edit and Copy link on each one. Signed out it still finds the models forged in this browser, so work made before you had an account is not lost. Filter by type, search by name or prompt, and hover any card to spin it in 3D. The create wizard and the Forge now point here too, so you are told where your work lives at the moment you make it.</description>
 		</item>
 		<item>
+			<title>One command makes a 3D model small enough to ship, and shows you all four sides</title>
+			<link>https://three.ws/changelog</link>
+			<guid isPermaLink="false">2026-09-07:One command makes a 3D model small enough to ship, and shows you all four sides</guid>
+			<pubDate>Mon, 07 Sep 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>Getting a model down to a size a web page can load used to mean writing a Blender script by hand every time: cut the polygon count, shrink the textures, throw away what nothing uses, compress the result. That is now a single request with a budget, and it answers with an honest before and after, so you can see what the size actually cost you in detail. On a test model it went from 1.3 MB to 282 KB. Previews can also orbit the model now: ask for four angles and you get four pictures from one pass, which is what tells you whether the back of a model was ever finished, or whether a texture only looks right from the front.</description>
+		</item>
+		<item>
 			<title>Point an AI agent at the Blender on your own machine</title>
 			<link>https://three.ws/changelog</link>
 			<guid isPermaLink="false">2026-09-07:Point an AI agent at the Blender on your own machine</guid>

@@ -18,12 +18,12 @@
 		"source": "github",
 		"subfolder": "packages/blender-mcp"
 	},
-	"version": "0.3.0",
+	"version": "0.4.0",
 	"packages": [
 		{
 			"registryType": "npm",
 			"identifier": "@three-ws/blender-mcp",
-			"version": "0.3.0",
+			"version": "0.4.0",
 			"runtimeHint": "npx",
 			"transport": {
 				"type": "stdio"

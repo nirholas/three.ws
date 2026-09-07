@@ -5,6 +5,7 @@
 //   • blender_info:          what this Blender build is and can do
 //   • blender_scene_info:    read a 3D file and describe what is inside it
 //   • blender_convert:       import one format, export another
+//   • blender_optimize:      decimate, resize textures, compress for delivery
 //   • blender_render:        render a still preview, auto-framed and auto-lit
 //   • blender_run_python:    run a bpy script against a scene
 //   • blender_forge_import:  three.ws text-to-3D, brought into Blender
@@ -30,6 +31,7 @@ import { ALLOW_PYTHON } from './config.js';
 import { def as blenderInfo } from './tools/info.js';
 import { def as sceneInfo } from './tools/scene-info.js';
 import { def as convert } from './tools/convert.js';
+import { def as optimize } from './tools/optimize.js';
 import { def as render } from './tools/render.js';
 import { def as runPython } from './tools/run-python.js';
 import { def as forgeImport } from './tools/forge-import.js';
@@ -41,7 +43,7 @@ const { version: PKG_VERSION } = require('../package.json');
 // blender_run_python executes caller-supplied code. It is advertised by default
 // because scripted scene edits are most of what an agent needs Blender for, and
 // withdrawn entirely when BLENDER_MCP_ALLOW_PYTHON=0.
-export const TOOLS = [blenderInfo, sceneInfo, convert, render, forgeImport, ...(ALLOW_PYTHON ? [runPython] : [])];
+export const TOOLS = [blenderInfo, sceneInfo, convert, optimize, render, forgeImport, ...(ALLOW_PYTHON ? [runPython] : [])];
 
 /**
  * Construct a fully-registered McpServer without connecting a transport.
@@ -60,7 +62,8 @@ export function buildServer() {
 				'fails. blender_scene_info opens a 3D file and describes it (objects, evaluated triangle counts, ' +
 				'materials, armature bones, animations, world bounds). blender_convert bridges formats in both ' +
 				'directions (.glb .gltf .fbx .obj .stl .ply .dae .abc .usd .x3d .blend), applying modifiers and an ' +
-				'optional unit scale. blender_render produces a still PNG, adding a framed camera and a key light when ' +
+				'optional unit scale. blender_optimize is the delivery pass: a triangle budget, a texture ceiling, a purge ' +
+				'and meshopt compression in one call, with an honest before/after. blender_render produces a still PNG, adding a framed camera and a key light when ' +
 				'the file has none, so a bare asset previews with no setup. blender_run_python runs a bpy script for ' +
 				'edits the other tools do not cover and can export the result in the same call. blender_forge_import ' +
 				'generates a model from a text prompt on the free public three.ws Forge lane and brings it in. Blender ' +

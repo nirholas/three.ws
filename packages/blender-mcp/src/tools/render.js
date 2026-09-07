@@ -27,7 +27,8 @@ export const def = {
 		'world are added, so a bare asset file renders as a usable preview with no setup. A scene that already has ' +
 		'its own camera and lighting is rendered as authored. The rendered image is returned INLINE alongside the ' +
 		'JSON, so you can actually look at the model in this one call without needing filesystem access, while the ' +
-		'full-resolution PNG is written to disk. Use it to see a model, check a conversion, or produce a thumbnail.',
+		'full-resolution PNG is written to disk. Ask for several views and it orbits the model, rendering every angle ' +
+		'in the same Blender launch. Use it to see a model, check a conversion, or produce a thumbnail.',
 	inputSchema: {
 		input: z.string().min(1).describe('Path to the 3D file to render.'),
 		output: z.string().optional().describe('Destination PNG path. Defaults to a .png in the server workdir.'),
@@ -45,6 +46,17 @@ export const def = {
 			.optional()
 			.describe('Output size as [width, height]. Default [960, 960].'),
 		transparent: z.boolean().optional().describe('Render with a transparent background instead of the world. Default false.'),
+		views: z
+			.number()
+			.int()
+			.min(1)
+			.max(6)
+			.optional()
+			.describe(
+				'How many angles to render, orbiting the model, all in one Blender launch and all returned inline. ' +
+					'Default 1. Use 4 to see whether the back of a model is modelled at all. A set always orbits its own ' +
+					'camera, so an authored camera is only honoured when views is 1.',
+			),
 		inline_image: z
 			.boolean()
 			.optional()
@@ -61,31 +73,46 @@ export const def = {
 			samples: args?.samples ?? 32,
 			resolution: args?.resolution ?? [960, 960],
 			transparent: args?.transparent === true,
+			views: args?.views ?? 1,
 			inline_max_px: args?.inline_image === false ? 0 : INLINE_IMAGE_MAX_PX,
 		});
 		return { ...payload, ok: true, inline_image: args?.inline_image !== false };
 	},
 
 	/**
-	 * Hand the rendered image back as an MCP image block.
+	 * Hand every rendered view back as an MCP image block.
 	 *
-	 * The scaled copy is read and then deleted: it exists only to travel in this
-	 * response, and leaving it beside the real output would be litter the caller
-	 * has to reason about. An image too large to inline is reported in the JSON
-	 * rather than silently dropped, so the caller knows to read the file.
+	 * Scaled copies exist only to travel in this response, so they are read and
+	 * then deleted; leaving them beside the real outputs would be litter the
+	 * caller has to reason about. Images too large to inline are reported in the
+	 * JSON rather than silently dropped, so the caller knows to read the files.
 	 */
 	async attachments(result) {
 		if (!result?.inline_image) return [];
-		const path = result.preview || result.output;
-		const bytes = result.preview ? result.preview_bytes : result.output_bytes;
-		if (!path || !bytes) return [];
-		if (bytes > INLINE_IMAGE_MAX_BYTES) {
-			result.inline_image_skipped = `the image is ${bytes} bytes, over the ${INLINE_IMAGE_MAX_BYTES} inline limit; read it from ${result.output}`;
-			if (result.preview) await rm(path, { force: true });
-			return [];
+		const outputs = result.outputs || (result.output ? [result.output] : []);
+		const previews = result.previews || [];
+		const blocks = [];
+		let budget = INLINE_IMAGE_MAX_BYTES;
+
+		for (let index = 0; index < outputs.length; index += 1) {
+			const preview = previews[index];
+			const source = preview || outputs[index];
+			let data;
+			try {
+				data = await readFile(source);
+			} catch {
+				continue;
+			}
+			if (preview) await rm(preview, { force: true });
+			if (data.length > budget) {
+				result.inline_image_skipped =
+					`${outputs.length - blocks.length} view(s) exceeded the ${INLINE_IMAGE_MAX_BYTES} byte inline budget; ` +
+					`read them from ${outputs.slice(blocks.length).join(', ')}`;
+				break;
+			}
+			budget -= data.length;
+			blocks.push({ type: 'image', data: data.toString('base64'), mimeType: 'image/png' });
 		}
-		const data = await readFile(path);
-		if (result.preview) await rm(path, { force: true });
-		return [{ type: 'image', data: data.toString('base64'), mimeType: 'image/png' }];
+		return blocks;
 	},
 };

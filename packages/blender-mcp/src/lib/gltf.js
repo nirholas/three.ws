@@ -96,3 +96,45 @@ export async function decodeForBlender(inputPath, scratchDir) {
 	await writeFile(output, Buffer.from(await io.writeBinary(document)));
 	return { path: output, decoded: compression };
 }
+
+/**
+ * Re-encode a GLB with a mesh compression extension, in place.
+ *
+ * This is the last step of a delivery pass: meshopt typically halves what the
+ * exporter wrote, and every runtime that matters (three.js, model-viewer,
+ * Babylon) decodes it. It runs here rather than in Blender because Blender's
+ * exporter offers Draco only, and only on builds that ship the library.
+ *
+ * @param {string} glbPath  File to rewrite.
+ * @param {'meshopt'|'draco'} method
+ * @returns {Promise<{method: string, before_bytes: number, after_bytes: number}>}
+ */
+export async function compressGlb(glbPath, method) {
+	const before = (await readFile(glbPath)).length;
+	const [{ NodeIO }, extensions, meshopt, draco] = await Promise.all([
+		import('@gltf-transform/core'),
+		import('@gltf-transform/extensions'),
+		import('meshoptimizer'),
+		import('draco3dgltf'),
+	]);
+
+	await meshopt.MeshoptEncoder.ready;
+	const io = new NodeIO().registerExtensions(extensions.ALL_EXTENSIONS).registerDependencies({
+		'meshopt.decoder': meshopt.MeshoptDecoder,
+		'meshopt.encoder': meshopt.MeshoptEncoder,
+		'draco3d.decoder': await draco.default.createDecoderModule(),
+		'draco3d.encoder': await draco.default.createEncoderModule(),
+	});
+
+	const document = await io.read(glbPath);
+	if (method === 'draco') {
+		document.createExtension(extensions.KHRDracoMeshCompression).setRequired(true);
+	} else {
+		document
+			.createExtension(extensions.EXTMeshoptCompression)
+			.setRequired(true)
+			.setEncoderOptions({ method: extensions.EXTMeshoptCompression.EncoderMethod.QUANTIZE });
+	}
+	await io.write(glbPath, document);
+	return { method, before_bytes: before, after_bytes: (await readFile(glbPath)).length };
+}

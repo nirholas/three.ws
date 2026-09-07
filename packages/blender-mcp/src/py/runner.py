@@ -357,6 +357,88 @@ def op_convert(job):
     }
 
 
+def decimate_to_budget(max_triangles):
+    """Collapse-decimate every mesh proportionally to land under a triangle budget.
+
+    One ratio across the whole scene rather than per object: decimating each
+    mesh to the same ratio keeps their relative density, which is what stops a
+    budget pass from flattening a face while leaving a wall at full resolution.
+    """
+    depsgraph = bpy.context.evaluated_depsgraph_get()
+    meshes = mesh_objects()
+    before = sum(triangle_count(obj, depsgraph)[0] for obj in meshes)
+    if not meshes or before <= max_triangles:
+        return {"step": "decimate", "skipped": "already within budget", "triangles": before}
+
+    ratio = max(max_triangles / float(before), 0.005)
+    for obj in meshes:
+        modifier = obj.modifiers.new("three_ws_budget", "DECIMATE")
+        modifier.decimate_type = "COLLAPSE"
+        modifier.ratio = ratio
+        modifier.use_collapse_triangulate = True
+
+    bpy.context.view_layer.update()
+    depsgraph = bpy.context.evaluated_depsgraph_get()
+    after = sum(triangle_count(obj, depsgraph)[0] for obj in meshes)
+    return {"step": "decimate", "ratio": round(ratio, 5), "triangles_before": before, "triangles_after": after}
+
+
+def resize_textures(max_px):
+    """Scale every image whose longest edge exceeds the budget, in place.
+
+    Texture data is usually the larger half of a delivered asset, so this is
+    where the bytes actually are. Scaled images are repacked so the exporter
+    writes the smaller pixels rather than re-reading the original file.
+    """
+    resized = []
+    for image in bpy.data.images:
+        width, height = image.size
+        if not width or not height or max(width, height) <= max_px:
+            continue
+        ratio = max_px / float(max(width, height))
+        target = (max(int(width * ratio), 1), max(int(height * ratio), 1))
+        image.scale(*target)
+        if image.packed_file is not None:
+            image.pack()
+        resized.append({"name": image.name, "from": [width, height], "to": list(target)})
+    return {"step": "resize_textures", "resized": resized}
+
+
+def purge_orphans():
+    """Drop datablocks nothing references, which importers leave behind."""
+    removed = bpy.data.orphans_purge(do_local_ids=True, do_linked_ids=True, do_recursive=True)
+    return {"step": "purge", "datablocks_removed": removed}
+
+
+def op_optimize(job):
+    load_input(job["input"])
+    before = scene_summary(include_objects=False)
+    steps = []
+
+    max_triangles = job.get("max_triangles")
+    if max_triangles:
+        steps.append(decimate_to_budget(int(max_triangles)))
+
+    max_texture_px = job.get("max_texture_px")
+    if max_texture_px:
+        steps.append(resize_textures(int(max_texture_px)))
+
+    steps.append(purge_orphans())
+
+    output = export_to(job["output"], apply_modifiers=True)
+    after = scene_summary(include_objects=False)
+    return {
+        "input": os.path.abspath(job["input"]),
+        "output": output,
+        "output_bytes": os.path.getsize(output),
+        "input_bytes": os.path.getsize(os.path.abspath(job["input"])),
+        "before": before["counts"],
+        "after": after["counts"],
+        "steps": steps,
+        "textures": after.get("textures", []),
+    }
+
+
 # Engines worth probing for, best first. The static RNA enum is not a reliable
 # list: on some distro builds Cycles is assignable while absent from the enum,
 # so capability is decided by whether the assignment actually takes.
@@ -509,6 +591,41 @@ def write_inline_preview(rendered_path, max_px):
         bpy.data.images.remove(image)
 
 
+def orbit_camera(scene, target_objects, index, total):
+    """Place a camera on an orbit around the model and aim it at the centre.
+
+    Several angles answer a question one angle cannot: whether the back of a
+    model is modelled at all, whether a texture is only right from the front.
+    Rendering them in this one process costs one Blender start and one import
+    for the whole set instead of one of each per view.
+    """
+    bounds = world_bounds(target_objects)
+    camera = scene.camera
+    if camera is None or camera.name != "three_ws_camera":
+        camera_data = bpy.data.cameras.new("three_ws_camera")
+        camera = bpy.data.objects.new("three_ws_camera", camera_data)
+        scene.collection.objects.link(camera)
+        scene.camera = camera
+
+    # Start at the same three-quarter view a single render uses, so view 1 of a
+    # set is the same image a views=1 call would have produced.
+    base = math.atan2(-1.35, 1.0)
+    angle = base + (2.0 * math.pi * index) / total
+    if bounds is None:
+        center = Vector((0.0, 0.0, 0.0))
+        distance = 6.0
+    else:
+        _lo, _hi, center, radius = bounds
+        radius = max(radius, 1e-4)
+        distance = (radius / math.sin(camera.data.angle / 2.0)) * 1.05
+        camera.data.clip_start = max(distance / 1000.0, 1e-4)
+        camera.data.clip_end = distance * 10.0
+    direction = Vector((math.cos(angle), math.sin(angle), 0.62)).normalized()
+    camera.location = center + direction * distance
+    camera.rotation_euler = (center - camera.location).to_track_quat("-Z", "Y").to_euler()
+    return camera
+
+
 def op_render(job):
     load_input(job["input"])
     scene = bpy.context.scene
@@ -531,28 +648,57 @@ def op_render(job):
     scene.render.image_settings.color_mode = "RGBA" if job.get("transparent", False) else "RGB"
     scene.render.film_transparent = bool(job.get("transparent", False))
 
-    camera, camera_added = ensure_camera(scene, mesh_objects())
+    views = max(int(job.get("views", 1)), 1)
     lights_added = ensure_lighting(scene)
 
     output = os.path.abspath(job["output"])
     parent = os.path.dirname(output)
     if parent:
         os.makedirs(parent, exist_ok=True)
-    scene.render.filepath = output
-    denoised = render_still(scene)
-    if not os.path.isfile(output):
-        raise JobError(f"Blender rendered but wrote no image at {output}", code="render_failed")
-    preview = write_inline_preview(output, int(job.get("inline_max_px", 0)))
+
+    if views == 1:
+        camera, camera_added = ensure_camera(scene, mesh_objects())
+        targets = [(output, camera)]
+    else:
+        # A multi-view set always orbits its own camera: an authored camera
+        # frames one composition, which is not what a set of angles is for.
+        camera_added = True
+        stem, ext = os.path.splitext(output)
+        targets = []
+        for index in range(views):
+            camera = orbit_camera(scene, mesh_objects(), index, views)
+            targets.append((f"{stem}-{index + 1:02d}{ext}", camera))
+
+    inline_max_px = int(job.get("inline_max_px", 0))
+    outputs = []
+    previews = []
+    denoised = False
+    for index, (path_for_view, _camera) in enumerate(targets):
+        if views > 1:
+            orbit_camera(scene, mesh_objects(), index, views)
+        scene.render.filepath = path_for_view
+        denoised = render_still(scene)
+        if not os.path.isfile(path_for_view):
+            raise JobError(f"Blender rendered but wrote no image at {path_for_view}", code="render_failed")
+        outputs.append(path_for_view)
+        preview_for_view = write_inline_preview(path_for_view, inline_max_px)
+        if preview_for_view:
+            previews.append(preview_for_view)
+
+    preview = previews[0] if previews else None
     return {
         "input": os.path.abspath(job["input"]),
-        "output": output,
-        "output_bytes": os.path.getsize(output),
+        "output": outputs[0],
+        "outputs": outputs,
+        "output_bytes": os.path.getsize(outputs[0]),
+        "views": views,
         "preview": preview,
+        "previews": previews,
         "preview_bytes": os.path.getsize(preview) if preview else None,
         "engine": engine,
         "samples": samples,
         "resolution": [scene.render.resolution_x, scene.render.resolution_y],
-        "camera": camera.name,
+        "camera": scene.camera.name if scene.camera else None,
         "denoised": denoised,
         "camera_created": camera_added,
         "lights_created": lights_added,
@@ -597,6 +743,7 @@ def op_probe(job):
 
 OPS = {
     "probe": op_probe,
+    "optimize": op_optimize,
     "scene_info": op_scene_info,
     "convert": op_convert,
     "render": op_render,

@@ -26833,6 +26833,15 @@
 				"fix",
 				"sdk"
 			]
+		},
+		{
+			"date": "2026-09-07",
+			"title": "One command makes a 3D model small enough to ship, and shows you all four sides",
+			"summary": "Getting a model down to a size a web page can load used to mean writing a Blender script by hand every time: cut the polygon count, shrink the textures, throw away what nothing uses, compress the result. That is now a single request with a budget, and it answers with an honest before and after, so you can see what the size actually cost you in detail. On a test model it went from 1.3 MB to 282 KB. Previews can also orbit the model now: ask for four angles and you get four pictures from one pass, which is what tells you whether the back of a model was ever finished, or whether a texture only looks right from the front.",
+			"tags": [
+				"feature",
+				"sdk"
+			]
 		}
 	]
 }

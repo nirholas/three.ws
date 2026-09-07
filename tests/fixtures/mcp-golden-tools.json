@@ -2219,6 +2219,21 @@
 			"schemaHash": "44136fa355b3"
 		}
 	],
+	"packages/blender-mcp/src/tools/optimize.js": [
+		{
+			"name": "blender_optimize",
+			"title": "Shrink a 3D model for delivery",
+			"descHead": "dynamic",
+			"descHash": "dynamic",
+			"annotations": {
+				"readOnlyHint": false,
+				"destructiveHint": false,
+				"idempotentHint": true,
+				"openWorldHint": false
+			},
+			"schemaHash": "afe6634b5555"
+		}
+	],
 	"packages/blender-mcp/src/tools/render.js": [
 		{
 			"name": "blender_render",
@@ -2231,7 +2246,7 @@
 				"idempotentHint": true,
 				"openWorldHint": false
 			},
-			"schemaHash": "c949ad89b18d"
+			"schemaHash": "0254e6d0070d"
 		}
 	],
 	"packages/blender-mcp/src/tools/run-python.js": [

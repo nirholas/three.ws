@@ -1,6 +1,6 @@
 {
 	"name": "@three-ws/blender-mcp",
-	"version": "0.3.0",
+	"version": "0.4.0",
 	"mcpName": "io.github.nirholas/blender-mcp",
 	"description": "Drive the Blender on your machine from any AI agent, headless. Inspect a 3D file, convert between GLB/glTF/FBX/OBJ/STL/PLY/DAE/USD/Alembic/.blend, render a preview that comes back inline so the assistant can see it, run a bpy script against a scene, and generate a model from a text prompt on the free three.ws Forge lane. Meshopt- and Draco-compressed glTF is decoded automatically. No GUI, no add-on to install, no key.",
 	"type": "module",
@@ -20,6 +20,7 @@
 		"ai-agent",
 		"blender",
 		"bpy",
+		"decimate",
 		"draco",
 		"fbx",
 		"glb",
@@ -28,6 +29,7 @@
 		"mcp",
 		"meshopt",
 		"model-context-protocol",
+		"optimization",
 		"render",
 		"three.ws",
 		"usd"
