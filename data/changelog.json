@@ -3,6 +3,15 @@
 	"entries": [
 		{
 			"date": "2026-09-07",
+			"title": "The AgenC task embed now loads even when it is inlined or served from a blob",
+			"summary": "The <three-ws-agent> element that shows a 3D avatar reacting to an on-chain AgenC task resolves its mesh decoder relative to its own script address. A copy that had been pasted inline, bundled, or loaded from a blob: or data: URL has no address to resolve against, and the element failed to register before it drew anything. It now falls back to the decoder on three.ws in that case and keeps the same-origin path everywhere else, so the embed works wherever the snippet ends up.",
+			"tags": [
+				"fix"
+			],
+			"link": "/agenc/embodied"
+		},
+		{
+			"date": "2026-09-07",
 			"title": "Shared avatar and agent links now show a real page to Google, not a loading spinner",
 			"summary": "Search engines were shown a different version of every /avatars/... and /agents/... page than people were, and that version had nothing on it: the name and description were hidden in a fallback block that a crawler removes before reading, the rest was a spinner, and the last line of the page sent the crawler straight back to the URL it was already on. Tens of thousands of avatar and agent pages therefore looked identical to Google and were filed as duplicates instead of being listed. Crawlers now get the same content a visitor sees: the name, the description, the rendered card, the creator, the tags, the skills, the on-chain identity, and links onward into the gallery and the directory. A link to an avatar or agent that no longer exists now says so honestly instead of quietly bouncing to a listing page, an id that belongs to the other side of the platform redirects to where it actually lives, and a private agent is no longer readable by anything sending a crawler's name. Signed-in surfaces were also unblocked in robots.txt so their existing no-index instruction can finally be read and obeyed.",
 			"tags": [

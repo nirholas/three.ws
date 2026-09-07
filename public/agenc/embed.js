@@ -40,7 +40,23 @@ const MODEL_VIEWER_CDN = 'https://cdn.jsdelivr.net/npm/@google/model-viewer@4.0.
 // Served from three.ws rather than a public CDN: the decoder is a hard
 // dependency of every compressed avatar, so it must have the same availability
 // as the embed script itself.
-const MESHOPT_DECODER_CDN = new URL('/vendor/meshopt_decoder.js', import.meta.url).href;
+function meshoptDecoderUrl() {
+	// On a normal site import.meta.url is this script's own http(s) address, so
+	// the decoder resolves same-origin. A copy that was inlined or loaded from a
+	// blob: or data: URL has no origin to resolve against (new URL throws
+	// "Invalid URL", and at module level that killed the whole embed before the
+	// element could register), so that copy reads the decoder from three.ws.
+	try {
+		const base = new URL(import.meta.url);
+		if (base.protocol === 'http:' || base.protocol === 'https:') {
+			return new URL('/vendor/meshopt_decoder.js', base).href;
+		}
+	} catch {
+		// no usable base URL; use the canonical origin below
+	}
+	return 'https://three.ws/vendor/meshopt_decoder.js';
+}
+const MESHOPT_DECODER_CDN = meshoptDecoderUrl();
 
 // Register the EXT_meshopt_compression decoder with <model-viewer> before it
 // begins loading. Server-baked avatars (the /api/avatars/<id>/glb lane and Forge
