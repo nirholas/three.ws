@@ -239,6 +239,7 @@
 		"audit:tour-atlas": "node scripts/build-tour-atlas.mjs --check",
 		"audit:tour-global": "node scripts/sync-tour-global.mjs --check",
 		"audit:console": "node scripts/audit-console.mjs",
+		"audit:seo": "node scripts/audit-seo.mjs",
 		"audit:play-failures": "node scripts/audit-play-failure-modes.mjs",
 		"audit:links": "node scripts/audit-links.mjs",
 		"audit:rig-coverage": "node scripts/audit-rig-coverage.mjs",

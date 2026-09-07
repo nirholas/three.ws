@@ -112,6 +112,7 @@ Run `npm run audit:guards` to print the current count and per-stage breakdown. T
 | API handlers export a body | `npm run audit:handlers` | No API handler ships empty or without an export. |
 | The `[hidden]` guard | `npm run audit:hidden-guard` | Every page resolves the CSS that makes `hidden` actually hide. |
 | Site link integrity | `npm run audit:links` | Every navigable target resolves to a real route or file. |
+| On-page SEO | `npm run audit:seo` | Across the pages we ask Google to index: no duplicate title or description, every canonical self-referential, no sitemap entry answering noindex or a non-200, and structured data that parses. Reads a live origin, so `--base` points it at a preview. |
 
 ### Docs and contracts
 

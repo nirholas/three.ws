@@ -1,5 +1,5 @@
 {
-	"updated": "2026-09-04",
+	"updated": "2026-09-07",
 	"summary": "Every mechanical guard that protects this repository, and the stage each one runs in. This file is the single source of truth: scripts/audit-guards.mjs proves every entry is real and every stage claim is true, docs/guards.md explains them, and /guards renders them.",
 	"stages": [
 		{
@@ -1201,6 +1201,22 @@
 					}
 				},
 				"expect": "guard-proof.example.com"
+			}
+		},
+		{
+			"id": "audit-seo",
+			"script": "scripts/audit-seo.mjs",
+			"npm": "audit:seo",
+			"title": "On-page SEO",
+			"protects": "No duplicate title or meta description across indexed pages, every canonical pointing at the page itself, no sitemap entry that answers noindex or a non-200, and structured data that parses.",
+			"why": "Every one of these fails silently: nothing errors, the pages just stop appearing in search. A canonical pointing elsewhere hands a page's ranking away, and structured data that does not parse is dropped whole, which is how the news archive lost its rich result on 2026-09-06.",
+			"stages": [
+				"manual"
+			],
+			"needs": "network",
+			"proof": {
+				"kind": "live",
+				"reason": "Reads the served response from a live origin, because only that proves what a crawler receives after routing, the shell rewrite and the CDN. A local fixture cannot show a canonical or a sitemap status the CDN produced."
 			}
 		},
 		{
