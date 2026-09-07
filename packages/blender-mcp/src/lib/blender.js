@@ -13,7 +13,7 @@
 
 import { spawn } from 'node:child_process';
 import { access, mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
-import { constants } from 'node:fs';
+import { constants, readdirSync } from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -46,10 +46,20 @@ function candidatePaths() {
 		found.push('/Applications/Blender.app/Contents/MacOS/Blender');
 		found.push(path.join(os.homedir(), 'Applications/Blender.app/Contents/MacOS/Blender'));
 	} else if (process.platform === 'win32') {
+		// Scanned, not enumerated: a hardcoded version list silently stops
+		// finding Blender the moment a new release ships. Newest first, so an
+		// upgraded machine picks the current install.
 		for (const root of ['C:\\Program Files\\Blender Foundation', 'C:\\Program Files (x86)\\Blender Foundation']) {
-			for (const version of ['4.5', '4.4', '4.3', '4.2', '4.1', '4.0', '3.6']) {
-				found.push(path.join(root, `Blender ${version}`, 'blender.exe'));
+			let entries = [];
+			try {
+				entries = readdirSync(root);
+			} catch {
+				continue;
 			}
+			const versions = entries
+				.filter((name) => /^Blender\s+\d+\.\d+/i.test(name))
+				.sort((a, b) => b.localeCompare(a, undefined, { numeric: true }));
+			for (const name of versions) found.push(path.join(root, name, 'blender.exe'));
 		}
 	} else {
 		found.push('/usr/bin/blender', '/usr/local/bin/blender', '/snap/bin/blender', '/opt/blender/blender');

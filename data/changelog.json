@@ -26842,6 +26842,15 @@
 				"feature",
 				"sdk"
 			]
+		},
+		{
+			"date": "2026-09-07",
+			"title": "Turn a photo into a 3D model without leaving your editor",
+			"summary": "The Blender tools could already build a model from a written description. They now build one from a picture too: point at an image on your machine or a link to one, add a few words to steer it if you like, and the finished model opens in Blender. It runs on the same free lane as the text version and takes about as long.",
+			"tags": [
+				"feature",
+				"sdk"
+			]
 		}
 	]
 }

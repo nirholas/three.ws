@@ -87,6 +87,14 @@
 			<description>Asking an assistant to render a 3D model used to hand back a file path, which is useless if the assistant cannot open files on your disk. The rendered image now comes back with the answer, scaled to fit, while the full-resolution PNG still lands on disk. That turns a look at this model into one step, so an assistant can render, spot the problem, fix it and render again. Reading a file also reports its texture budget now: every image with its resolution and byte size, plus the total, which is usually what actually decides whether a model is small enough to ship, and it was previously reported as nothing more than a count. Two reliability fixes came out of real use: several requests at once now queue instead of all starting Blender at the same moment and exhausting the machine, and when Blender is installed but momentarily will not start you get a message saying exactly that, with the details, rather than being told to install software you already have.</description>
 		</item>
 		<item>
+			<title>Turn a photo into a 3D model without leaving your editor</title>
+			<link>https://three.ws/changelog</link>
+			<guid isPermaLink="false">2026-09-07:Turn a photo into a 3D model without leaving your editor</guid>
+			<pubDate>Mon, 07 Sep 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>The Blender tools could already build a model from a written description. They now build one from a picture too: point at an image on your machine or a link to one, add a few words to steer it if you like, and the finished model opens in Blender. It runs on the same free lane as the text version and takes about as long.</description>
+		</item>
+		<item>
 			<title>Docs · Pocket Console</title>
 			<link>https://three.ws/docs/pocket</link>
 			<guid isPermaLink="false">2026-09-05:Docs · Pocket Console</guid>

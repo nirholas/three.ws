@@ -98,6 +98,24 @@ test('blender_render is the tool that returns extra content blocks', () => {
 	assert.deepEqual(withAttachments, ['blender_render'], 'only the render tool inlines an image today');
 });
 
+test('blender_forge_import needs a prompt or an image, and says so offline', async () => {
+	const forge = TOOLS.find((t) => t.name === 'blender_forge_import');
+	await assert.rejects(
+		() => forge.handler({}),
+		(err) => err.code === 'invalid_input' && /prompt|image/i.test(err.message),
+		'an empty call must fail locally rather than sending a doomed request',
+	);
+});
+
+test('blender_forge_import rejects an image type the pipeline cannot read', async () => {
+	const forge = TOOLS.find((t) => t.name === 'blender_forge_import');
+	await assert.rejects(
+		() => forge.handler({ image: fileURLToPath(import.meta.url) }),
+		(err) => ['invalid_content_type', 'input_not_found'].includes(err.code),
+		'a .mjs is not a reference image',
+	);
+});
+
 test('buildServer registers without Blender or network access', () => {
 	const server = buildServer();
 	assert.ok(server, 'buildServer() must return an McpServer');

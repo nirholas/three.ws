@@ -11,8 +11,8 @@ import { z } from 'zod';
 import path from 'node:path';
 
 import { runJob } from '../lib/blender.js';
-import { downloadGlb, submitTextTo3d, waitForGlb } from '../lib/forge.js';
-import { resolveOutput } from '../lib/paths.js';
+import { downloadGlb, submitImageTo3d, submitTextTo3d, uploadReferenceImage, waitForGlb } from '../lib/forge.js';
+import { resolveInput, resolveOutput } from '../lib/paths.js';
 import { FORGE_TIMEOUT_MS } from '../config.js';
 
 function slug(prompt) {
@@ -30,13 +30,27 @@ export const def = {
 	title: 'Generate a 3D model with three.ws and open it in Blender',
 	annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: false, openWorldHint: true },
 	description:
-		'Generate a 3D model from a text prompt on the public three.ws Forge pipeline, then bring it into Blender. ' +
+		'Generate a 3D model from a text prompt OR a reference image on the public three.ws Forge pipeline, then ' +
+		'bring it into Blender. Pass "prompt" to describe it, "image" for a local PNG/JPEG/WebP, or "image_url" for ' +
+		'one already public; an image plus a prompt uses the prompt to steer the reconstruction. ' +
 		'The default image lane (FLUX to TRELLIS) is free and needs no key, wallet, or account. The GLB is saved ' +
 		'locally, and if the output path asks for another format (.blend, .fbx, .obj, .usd) Blender converts it on ' +
 		'the way in. Returns the local path, the hosted GLB URL, and the geometry counts. Generation runs on a ' +
 		'shared GPU lane and typically takes tens of seconds to a couple of minutes. Describe ONE subject per call.',
 	inputSchema: {
-		prompt: z.string().min(3).describe('What to generate. One subject, e.g. "a weathered brass diving helmet".'),
+		prompt: z
+			.string()
+			.min(3)
+			.optional()
+			.describe('What to generate. One subject, e.g. "a weathered brass diving helmet". Required unless an image is given.'),
+		image: z
+			.string()
+			.optional()
+			.describe('Local PNG, JPEG or WebP to reconstruct from. Uploaded straight to storage on a presigned PUT.'),
+		image_url: z
+			.string()
+			.optional()
+			.describe('A public https image to reconstruct from, instead of uploading one.'),
 		output: z
 			.string()
 			.optional()
@@ -51,16 +65,26 @@ export const def = {
 	},
 	async handler(args) {
 		const prompt = String(args?.prompt ?? '').trim();
-		const submitted = await submitTextTo3d({
-			prompt,
-			tier: args?.tier || 'standard',
-			backend: args?.backend,
-			aspect_ratio: args?.aspect_ratio || '1:1',
-			lane: args?.lane || 'image',
-		});
+		const shared = { tier: args?.tier || 'standard', backend: args?.backend, lane: args?.lane || 'image' };
+
+		let uploaded = null;
+		let imageUrl = String(args?.image_url ?? '').trim();
+		if (args?.image) {
+			uploaded = await uploadReferenceImage(await resolveInput(args.image, 'image'));
+			imageUrl = uploaded.url;
+		}
+		if (!imageUrl && prompt.length < 3) {
+			throw Object.assign(new Error('Give a prompt of at least 3 characters, an "image", or an "image_url".'), {
+				code: 'invalid_input',
+			});
+		}
+
+		const submitted = imageUrl
+			? await submitImageTo3d({ imageUrls: [imageUrl], prompt, ...shared })
+			: await submitTextTo3d({ prompt, aspect_ratio: args?.aspect_ratio || '1:1', ...shared });
 		const finished = await waitForGlb(submitted.job_id, { timeoutMs: FORGE_TIMEOUT_MS });
 
-		const output = await resolveOutput(args?.output, slug(prompt), '.glb');
+		const output = await resolveOutput(args?.output, slug(prompt || 'reference-image'), '.glb');
 		const keepsOriginalBytes = output.toLowerCase().endsWith('.glb');
 		// When the caller asked for another format, the untouched GLB is kept
 		// beside it: conversion is lossy for some targets, and the original is
@@ -74,7 +98,10 @@ export const def = {
 
 		return {
 			ok: true,
-			prompt,
+			prompt: prompt || null,
+			source: imageUrl ? 'image' : 'text',
+			reference_image: imageUrl || null,
+			uploaded_bytes: uploaded ? uploaded.bytes : null,
 			job_id: submitted.job_id,
 			backend: finished.backend || submitted.backend,
 			glb_url: finished.glb_url,

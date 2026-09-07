@@ -9,7 +9,8 @@
 // ComfyUI nodes speak (integrations/_pyclient/three_ws_client.py).
 
 import { createWriteStream } from 'node:fs';
-import { mkdir, stat } from 'node:fs/promises';
+import { mkdir, readFile, stat } from 'node:fs/promises';
+import { createHash } from 'node:crypto';
 import path from 'node:path';
 import { pipeline } from 'node:stream/promises';
 import { Readable } from 'node:stream';
@@ -79,6 +80,95 @@ export async function catalog() {
 	return forgeRequest('/api/forge', { query: { catalog: '1' } });
 }
 
+const CONTENT_TYPES = {
+	'.png': 'image/png',
+	'.jpg': 'image/jpeg',
+	'.jpeg': 'image/jpeg',
+	'.webp': 'image/webp',
+};
+
+/**
+ * Presign, upload, and return the public URL of a local reference image.
+ *
+ * The bytes go straight to object storage on a presigned PUT, so the image
+ * never travels through the API and never through this conversation. A
+ * deployment without storage configured says so, and the caller can pass a
+ * public URL instead.
+ *
+ * @param {string} filePath  Local PNG, JPEG, or WebP.
+ * @returns {Promise<{url: string, bytes: number, content_type: string}>}
+ */
+export async function uploadReferenceImage(filePath) {
+	const extension = path.extname(filePath).toLowerCase();
+	const contentType = CONTENT_TYPES[extension];
+	if (!contentType) {
+		throw Object.assign(
+			new Error(`Unsupported image type "${extension}". Use PNG, JPEG, or WebP.`),
+			{ code: 'invalid_content_type' },
+		);
+	}
+
+	const bytes = await readFile(filePath);
+	if (bytes.length === 0) {
+		throw Object.assign(new Error(`${filePath} is empty.`), { code: 'invalid_size' });
+	}
+
+	const presign = await forgeRequest('/api/forge-upload', {
+		method: 'POST',
+		body: {
+			content_type: contentType,
+			size_bytes: bytes.length,
+			checksum_sha256: createHash('sha256').update(bytes).digest('hex'),
+		},
+	});
+	if (!presign.upload_url || !presign.public_url) {
+		throw Object.assign(
+			new Error(
+				presign.message ||
+					'This deployment has no object storage configured for image upload. Pass a public https image URL instead.',
+			),
+			{ code: 'presign_failed' },
+		);
+	}
+
+	const put = await fetch(presign.upload_url, {
+		method: 'PUT',
+		headers: presign.headers || { 'content-type': contentType },
+		body: bytes,
+	});
+	if (!put.ok) {
+		// The presigned PUT goes straight to object storage, so a failure here is
+		// the deployment's storage, not the caller's file. Naming the way around
+		// it matters: image-to-3D still works from a public URL, and a bare HTTP
+		// status would leave the caller thinking the whole lane is down.
+		throw Object.assign(
+			new Error(
+				`Uploading the reference image to the deployment's object storage failed with HTTP ${put.status}. ` +
+					'Pass a public https image as "image_url" instead, which does not use the upload path.',
+			),
+			{ code: 'upload_failed', status: put.status },
+		);
+	}
+	return { url: presign.public_url, bytes: bytes.length, content_type: contentType };
+}
+
+/**
+ * Submit reference images for image-to-3D and return the queued job.
+ * @returns {Promise<{job_id: string, backend?: string}>}
+ */
+export async function submitImageTo3d({ imageUrls, prompt = '', tier = 'standard', backend, lane = 'image' }) {
+	const urls = imageUrls.filter((url) => typeof url === 'string' && url.startsWith('https://'));
+	if (urls.length === 0) {
+		throw Object.assign(new Error('Image-to-3D needs at least one public https image URL.'), {
+			code: 'invalid_image_urls',
+		});
+	}
+	const body = { image_urls: urls, tier, path: lane };
+	if (prompt.trim()) body.prompt = prompt.trim();
+	if (backend) body.backend = backend;
+	return submitted(await forgeRequest('/api/forge', { method: 'POST', body }));
+}
+
 /**
  * Submit a text prompt for generation and return the queued job.
  * @returns {Promise<{job_id: string, backend?: string}>}
@@ -86,8 +176,10 @@ export async function catalog() {
 export async function submitTextTo3d({ prompt, tier = 'standard', backend, aspect_ratio = '1:1', lane = 'image' }) {
 	const body = { prompt, tier, path: lane, aspect_ratio };
 	if (backend) body.backend = backend;
-	const result = await forgeRequest('/api/forge', { method: 'POST', body });
+	return submitted(await forgeRequest('/api/forge', { method: 'POST', body }));
+}
 
+function submitted(result) {
 	if (result.error === 'needs_key') {
 		throw Object.assign(
 			new Error(

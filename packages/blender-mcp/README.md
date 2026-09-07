@@ -71,7 +71,7 @@ Add `"env": { "BLENDER_PATH": "/path/to/blender" }` if Blender is not on `PATH`.
 | `blender_optimize` | The delivery pass in one call: decimate to a triangle budget, scale oversized textures, purge unreferenced datablocks, and compress the mesh streams with meshopt or Draco. Reports before and after triangles, texture bytes and file size. |
 | `blender_render` | Renders a still PNG and returns it **inline**, so the assistant can actually see the model in one call even with no filesystem access. Ask for several views and it orbits the model, every angle in the same launch. If the file has no camera, one is created and framed to the model's bounding sphere; if it has no light, a key light and a lit world are added. A scene that already has its own camera and lighting renders as authored. |
 | `blender_run_python` | Runs a `bpy` script against a scene, optionally opening a file first and exporting the result afterwards. The escape hatch for anything the other tools do not cover. |
-| `blender_forge_import` | Generates a model from a text prompt on the public three.ws Forge pipeline and brings it into Blender, converting on the way in if the output asks for another format. The default image lane is free. |
+| `blender_forge_import` | Generates a model from a text prompt **or a reference image** on the public three.ws Forge pipeline and brings it into Blender, converting on the way in if the output asks for another format. The default lane is free. |
 
 ### Examples
 
@@ -123,6 +123,12 @@ Generate an asset and open it as a `.blend`:
 
 ```
 blender_forge_import { "prompt": "a weathered brass diving helmet", "output": "helmet.blend" }
+```
+
+Or reconstruct one from a reference image:
+
+```
+blender_forge_import { "image": "./reference.png", "prompt": "a brass diving helmet", "output": "helmet.glb" }
 ```
 
 ## Compressed glTF
