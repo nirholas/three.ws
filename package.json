@@ -223,7 +223,7 @@
 		"audit:route-shadowing": "node scripts/audit-route-shadowing.mjs",
 		"audit:handlers": "node scripts/audit-empty-handlers.mjs",
 		"audit:x402-catalog": "node scripts/audit-x402-catalog.mjs",
-		"gate": "npm run check:conflicts && npm run check:claude && npm run check:vendored && npm run check:model-viewer && npm run check:gcloudignore && npm run check:fetch-timeouts && npm run check:tdz-bootstrap && npm run check:event && npm run check:cron-syntax && npm run check:studio-openapi && npm run test:gate && npm run test:gate-3d && npm run audit:mcp && npm run audit:mcp-golden && npm run audit:mcp-safety && npm run audit:mcp-catalog && npm run audit:mcp-listing && npm run audit:routes && npm run audit:handlers && npm run audit:pages && npm run audit:links && npm run audit:docs && npm run audit:upstreams && npm run check:tutorials && npm run audit:hidden-guard && npm run audit:inline-handlers && npm run audit:x402-catalog && npm run audit:tokens && npm run audit:guards && npm run audit:tour-atlas && npm run check:ios-icons && npm run check:macos-icon && npm run check:apple-widget",
+		"gate": "npm run check:conflicts && npm run check:claude && npm run check:vendored && npm run check:model-viewer && npm run check:gcloudignore && npm run check:fetch-timeouts && npm run check:tdz-bootstrap && npm run check:event && npm run check:cron-syntax && npm run check:studio-openapi && npm run test:gate && npm run test:gate-3d && npm run audit:mcp && npm run audit:mcp-golden && npm run audit:mcp-safety && npm run audit:mcp-catalog && npm run audit:mcp-listing && npm run audit:routes && npm run audit:handlers && npm run audit:pages && npm run audit:links && npm run check:awesome && npm run audit:docs && npm run audit:upstreams && npm run check:tutorials && npm run audit:hidden-guard && npm run audit:inline-handlers && npm run audit:x402-catalog && npm run audit:tokens && npm run audit:guards && npm run audit:tour-atlas && npm run check:ios-icons && npm run check:macos-icon && npm run check:apple-widget",
 		"test:gate-3d": "vitest run tests/glb-canonicalize.test.js tests/animation-retarget.test.js tests/animation-retarget-rest-pollution.test.js tests/viewer-framing.test.js",
 		"audit:mcp-golden": "node scripts/audit-mcp-golden.mjs",
 		"audit:mcp-safety": "node scripts/audit-mcp-safety.mjs",
@@ -274,7 +274,7 @@
 		"triage:gcp:deep": "node scripts/gcp-triage.mjs --deep --since 6h",
 		"snapshot": "node scripts/page-snapshot.mjs",
 		"build:news": "node scripts/build-news.mjs",
-		"prebuild": "node scripts/copy-three-decoders.mjs && node scripts/copy-voice-models.mjs && (node scripts/build-news.mjs & node scripts/build-skill-metadata.mjs & node scripts/build-local-skill-packs.mjs & node scripts/build-discovery-cards.mjs & node scripts/build-guards.mjs & node scripts/build-atlas-index.mjs & node scripts/build-mcp-catalog.mjs & npm run build:examples & npm run build:docs-search & npm run build:club-assets & npm run build:walk-environments & wait) && node scripts/inject-blog-seo.mjs --write && node scripts/inject-hidden-guard.mjs --write && (node scripts/build-page-index.mjs && node scripts/audit-page-index.mjs --strict && node scripts/audit-empty-handlers.mjs && node scripts/audit-hidden-guard.mjs) && node scripts/i18n-annotate.mjs --apply --pages=\"public/news/*.html\" && node scripts/inject-seo-meta.mjs --write && node scripts/inject-theme-boot.mjs --write",
+		"prebuild": "node scripts/copy-three-decoders.mjs && node scripts/copy-voice-models.mjs && (node scripts/build-news.mjs & node scripts/build-skill-metadata.mjs & node scripts/build-local-skill-packs.mjs & node scripts/build-discovery-cards.mjs & node scripts/build-guards.mjs & node scripts/build-atlas-index.mjs & node scripts/build-mcp-catalog.mjs & node scripts/build-awesome.mjs & npm run build:examples & npm run build:docs-search & npm run build:club-assets & npm run build:walk-environments & wait) && node scripts/inject-blog-seo.mjs --write && node scripts/inject-hidden-guard.mjs --write && (node scripts/build-page-index.mjs && node scripts/audit-page-index.mjs --strict && node scripts/audit-empty-handlers.mjs && node scripts/audit-hidden-guard.mjs) && node scripts/i18n-annotate.mjs --apply --pages=\"public/news/*.html\" && node scripts/inject-seo-meta.mjs --write && node scripts/inject-theme-boot.mjs --write",
 		"seo:meta": "node scripts/inject-blog-seo.mjs --write && node scripts/build-page-index.mjs && node scripts/inject-seo-meta.mjs --write",
 		"build": "NODE_OPTIONS='--no-deprecation --max-old-space-size=6144' vite build && node scripts/strip-sw-from-embeds.mjs && node scripts/inject-tour-boot.mjs && node scripts/inject-atlas.mjs && node scripts/inject-inline-behaviors.mjs",
 		"build:wasm": "node scripts/build-wasm.mjs",
@@ -454,7 +454,10 @@
 		"test:home:live": "HOME_LIVE=1 vitest run packages/home-bridge tests/home-store.test.js",
 		"home:matrix": "node scripts/home-version-matrix.mjs",
 		"test:home:e2e": "node --env-file=.env.local ./node_modules/@playwright/test/cli.js test --config=playwright.home.config.js",
-		"deck:inception": "node scripts/build-inception-deck.mjs"
+		"deck:inception": "node scripts/build-inception-deck.mjs",
+		"build:awesome": "node scripts/build-awesome.mjs",
+		"check:awesome": "node scripts/build-awesome.mjs --check",
+		"awesome:links": "node scripts/check-awesome-links.mjs"
 	},
 	"dependencies": {
 		"@0xsplits/splits-sdk": "^6.5.0",

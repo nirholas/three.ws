@@ -589,6 +589,7 @@ const appConfig = {
 				'tour-builder': resolve(__dirname, 'pages/tour-builder.html'),
 				'agent-identities': resolve(__dirname, 'pages/agent-identities.html'),
 				'mcp-tools': resolve(__dirname, 'pages/mcp-tools.html'),
+				awesome: resolve(__dirname, 'pages/awesome.html'),
 				'render-lab': resolve(__dirname, 'pages/render-lab.html'),
 				holo: resolve(__dirname, 'pages/holo.html'),
 				bundles: resolve(__dirname, 'pages/bundles.html'),
@@ -1344,6 +1345,8 @@ const appConfig = {
 					'/tour-builder/': resolve(root, 'pages/tour-builder.html'),
 					'/agent-identities': resolve(root, 'pages/agent-identities.html'),
 					'/agent-identities/': resolve(root, 'pages/agent-identities.html'),
+					'/awesome': resolve(root, 'pages/awesome.html'),
+					'/awesome/': resolve(root, 'pages/awesome.html'),
 					// Production routes /app to the Next viewer and leaves app.html
 					// reachable only at /app-classic (vercel.json). Dev has to mirror
 					// that, or every /app change gets exercised against the wrong page.

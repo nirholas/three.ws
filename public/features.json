@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-09-07T20:35:47.664Z",
+	"generated_at": "2026-09-07T21:42:43.055Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json",
 	"site": {
 		"name": "three.ws",
@@ -7497,6 +7497,16 @@
 					"indexable": true,
 					"tags": [],
 					"showcase": false
+				},
+				{
+					"path": "/awesome",
+					"title": "Awesome 3D Agents",
+					"description": "A curated, link-checked list of everything you need to give an AI agent a body: text-to-3D models, capture and Gaussian splatting, avatars, rigging, motion generation, lipsync and voice, web renderers, asset pipelines, and the agent frameworks that drive them. Searchable and filterable, and published as an awesome list on GitHub.",
+					"added": "2026-09-07",
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": true
 				}
 			]
 		},

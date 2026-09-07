@@ -5651,6 +5651,14 @@
 			"dest": "/bundles.html"
 		},
 		{
+			"src": "/awesome",
+			"dest": "/awesome.html"
+		},
+		{
+			"src": "/awesome/",
+			"dest": "/awesome.html"
+		},
+		{
 			"src": "/mcp-tools",
 			"dest": "/mcp-tools.html"
 		},

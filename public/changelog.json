@@ -1,11 +1,21 @@
 {
-	"generated_at": "2026-09-07T20:49:20.490Z",
+	"generated_at": "2026-09-07T21:42:43.066Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
 		"url": "https://three.ws"
 	},
 	"entries": [
+		{
+			"date": "2026-09-07",
+			"type": "launch",
+			"title": "Awesome 3D Agents",
+			"summary": "A curated, link-checked list of everything you need to give an AI agent a body: text-to-3D models, capture and Gaussian splatting, avatars, rigging, motion generation, lipsync and voice, web renderers, asset pipelines, and the agent frameworks that drive them. Searchable and filterable, and published as an awesome list on GitHub.",
+			"link": "/awesome",
+			"tags": [
+				"launch"
+			]
+		},
 		{
 			"date": "2026-09-07",
 			"type": "launch",
@@ -68,6 +78,17 @@
 			"tags": [
 				"fix",
 				"infra"
+			]
+		},
+		{
+			"date": "2026-09-07",
+			"type": "update",
+			"title": "Awesome 3D Agents: a curated list of everything you need to give an AI a body",
+			"summary": "Giving an agent a body means assembling a pipeline out of a dozen separate fields, and the map of that pipeline did not exist anywhere. There is now one: 134 hand-picked projects across 13 sections, covering text-to-3D generation, photo and video capture, avatars, rigging, motion generation, lipsync and voice, web renderers, asset pipelines, physics and networking, agent frameworks, datasets, free assets, and where to learn all of it. Each entry says in one sentence what the thing does and why you would reach for it instead of the alternative. The list is searchable and filterable by tag at /awesome, copyable as Markdown, and published in the standard awesome-list format on GitHub so it can be read, forked, and contributed to there. Every link is fetched and verified before it ships.",
+			"link": "/awesome",
+			"tags": [
+				"feature",
+				"docs"
 			]
 		},
 		{

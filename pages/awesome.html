@@ -1,0 +1,592 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<script>/* three.ws theme boot: no-flash */(function(){try{var m=localStorage.getItem('twx_theme');var l=m==='auto'?(window.matchMedia&&window.matchMedia('(prefers-color-scheme: light)').matches):m==='light';document.documentElement.setAttribute('data-theme',l?'light':'dark');}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();</script>
+	<meta charset="utf-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+	<title>Awesome 3D Agents · three.ws</title>
+	<meta name="description" content="A curated list of everything you need to give an AI agent a body: text-to-3D models, capture and splatting, avatars, rigging, motion generation, lipsync and voice, web renderers, asset pipelines, and the agent frameworks that drive them. Searchable, filterable, and link-checked." />
+	<link rel="canonical" href="https://three.ws/awesome" />
+	<link rel="icon" href="/favicon.ico" sizes="any" />
+	<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+	<link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+	<link rel="manifest" href="/manifest.webmanifest" />
+	<link rel="stylesheet" href="/style.css" />
+	<link rel="stylesheet" href="/nav.css" />
+	<link rel="stylesheet" href="/mobile.css" />
+	<meta property="og:type" content="website" />
+	<meta property="og:title" content="Awesome 3D Agents · three.ws" />
+	<meta property="og:description" content="Everything you need to give an AI agent a body: generation, capture, avatars, rigging, motion, voice, renderers, pipelines, and agent frameworks. Curated and link-checked." />
+	<meta property="og:url" content="https://three.ws/awesome" />
+	<meta property="og:image" content="https://three.ws/api/page-og?s=learn&amp;t=Awesome+3D+Agents&amp;d=Everything+you+need+to+give+an+AI+agent+a+body%3A+generation%2C+capture%2C+avatars%2C+rigging%2C+motion%2C+voice%2C+renderers+and+the+frameworks+that+drive+them&amp;p=%2Fawesome" />
+	<meta name="twitter:card" content="summary_large_image" />
+	<meta name="twitter:title" content="Awesome 3D Agents · three.ws" />
+	<meta name="twitter:description" content="A curated, link-checked list of everything you need to give an AI agent a body." />
+	<meta name="twitter:image" content="https://three.ws/api/page-og?s=learn&amp;t=Awesome+3D+Agents&amp;d=Everything+you+need+to+give+an+AI+agent+a+body%3A+generation%2C+capture%2C+avatars%2C+rigging%2C+motion%2C+voice%2C+renderers+and+the+frameworks+that+drive+them&amp;p=%2Fawesome" />
+	<meta name="twitter:site" content="@trythreews" />
+	<meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1" />
+	<meta property="og:locale" content="en_US" />
+	<meta property="og:image:alt" content="Awesome 3D Agents / three.ws" />
+	<style>
+		:root {
+			--aw-maxw: 1280px;
+			--aw-rail: 216px;
+		}
+		* { box-sizing: border-box; }
+		html, body { margin: 0; background: var(--bg-0); color: var(--ink); }
+		body { font-family: var(--font-body, 'Inter', system-ui, sans-serif); min-height: 100vh; }
+		.site-header { position: sticky; top: 0; z-index: 50; background: color-mix(in srgb, var(--bg-0) 82%, transparent); backdrop-filter: blur(10px); }
+		:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 4px; }
+
+		.aw-wrap { max-width: var(--aw-maxw); margin: 0 auto; padding: 0 18px 120px; }
+
+		/* hero */
+		.aw-hero { padding: 40px 0 6px; }
+		.aw-eyebrow {
+			display: inline-flex; align-items: center; gap: 8px; margin: 0 0 14px;
+			padding: 5px 11px; border: 1px solid var(--stroke); border-radius: var(--radius-pill, 999px);
+			font-size: 0.72rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-dim);
+			background: var(--surface-1, rgba(255,255,255,0.03));
+		}
+		.aw-eyebrow b { color: var(--ink-bright, var(--ink)); font-weight: 650; letter-spacing: 0.04em; }
+		.aw-hero h1 {
+			font-size: clamp(2rem, 6vw, 3.4rem); line-height: 1.05; margin: 0 0 12px;
+			letter-spacing: -0.03em; color: var(--ink-bright, var(--ink));
+			font-family: var(--font-display, inherit);
+		}
+		.aw-lede { margin: 0 0 10px; font-size: clamp(1.05rem, 2vw, 1.25rem); color: var(--ink-bright, var(--ink)); max-width: 46ch; line-height: 1.4; }
+		.aw-intro { margin: 0; max-width: 70ch; color: var(--ink-dim); line-height: 1.65; }
+		.aw-hero-actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 22px; }
+
+		.aw-btn {
+			display: inline-flex; align-items: center; gap: 7px; padding: 9px 15px;
+			font: inherit; font-size: 0.9rem; font-weight: 550; cursor: pointer;
+			color: var(--ink); background: var(--surface-2, rgba(255,255,255,0.05));
+			border: 1px solid var(--stroke); border-radius: var(--radius-md, 10px);
+			text-decoration: none; transition: border-color 0.15s ease, background 0.15s ease, transform 0.1s ease;
+		}
+		.aw-btn:hover { border-color: var(--stroke-strong); background: var(--surface-3, rgba(255,255,255,0.08)); color: var(--ink-bright, var(--ink)); }
+		.aw-btn:active { transform: translateY(1px); }
+		.aw-btn-primary { background: var(--accent); border-color: transparent; color: var(--btn-primary-fg, #05070d); }
+		.aw-btn-primary:hover { background: var(--btn-primary-bg-hover, var(--accent)); color: var(--btn-primary-fg, #05070d); filter: brightness(1.08); }
+		.aw-btn svg { width: 15px; height: 15px; }
+
+		/* stats */
+		.aw-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 10px; margin: 30px 0 4px; padding: 0; }
+		.aw-stat { border: 1px solid var(--stroke); background: var(--surface-1, rgba(255,255,255,0.03)); border-radius: var(--radius-md, 10px); padding: 13px 15px; }
+		.aw-stat dt { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.07em; color: var(--ink-dim); margin: 0 0 5px; }
+		.aw-stat dd { margin: 0; font-size: 1.5rem; font-weight: 650; font-variant-numeric: tabular-nums; color: var(--ink-bright, var(--ink)); line-height: 1; }
+
+		/* controls */
+		.aw-controls {
+			position: sticky; top: 56px; z-index: 20; padding: 14px 0 12px; margin-bottom: 6px;
+			background: color-mix(in srgb, var(--bg-0) 93%, transparent); backdrop-filter: blur(8px);
+			border-bottom: 1px solid var(--hairline);
+		}
+		.aw-search { position: relative; display: flex; align-items: center; }
+		.aw-search svg { position: absolute; left: 12px; width: 16px; height: 16px; color: var(--ink-dim); pointer-events: none; }
+		.aw-search input {
+			width: 100%; padding: 11px 60px 11px 36px; font: inherit; font-size: 0.95rem;
+			color: var(--ink); background: var(--surface-2, rgba(255,255,255,0.05));
+			border: 1px solid var(--stroke); border-radius: var(--radius-md, 10px);
+			transition: border-color 0.15s ease, background 0.15s ease;
+		}
+		.aw-search input::placeholder { color: var(--ink-dim); }
+		.aw-search input:hover { border-color: var(--stroke-strong); }
+		.aw-search input:focus-visible { outline: none; border-color: var(--accent); background: var(--surface-3, rgba(255,255,255,0.07)); }
+		.aw-kbd {
+			position: absolute; right: 11px; pointer-events: none;
+			padding: 2px 7px; font-size: 0.72rem; font-family: var(--font-mono, ui-monospace, monospace);
+			color: var(--ink-dim); border: 1px solid var(--stroke); border-radius: 5px;
+			background: var(--surface-1, rgba(255,255,255,0.04));
+		}
+		.aw-chips { display: flex; flex-wrap: wrap; align-items: center; gap: 7px; margin-top: 11px; }
+		.aw-chips-label { font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.07em; color: var(--ink-dim); margin-right: 2px; }
+		.aw-chip {
+			padding: 5px 11px; font: inherit; font-size: 0.8rem; cursor: pointer;
+			color: var(--ink-dim); background: transparent; border: 1px solid var(--stroke);
+			border-radius: var(--radius-pill, 999px); transition: all 0.14s ease;
+		}
+		.aw-chip:hover { color: var(--ink-bright, var(--ink)); border-color: var(--stroke-strong); }
+		.aw-chip[aria-pressed="true"] { color: var(--btn-primary-fg, #05070d); background: var(--accent); border-color: transparent; font-weight: 600; }
+		.aw-chip small { opacity: 0.6; margin-left: 4px; font-variant-numeric: tabular-nums; }
+		.aw-reset { margin-left: auto; }
+
+		/* layout */
+		.aw-layout { display: grid; grid-template-columns: 1fr; gap: 34px; margin-top: 26px; align-items: start; }
+		@media (min-width: 1080px) { .aw-layout { grid-template-columns: var(--aw-rail) 1fr; } }
+
+		.aw-rail { display: none; position: sticky; top: 132px; }
+		@media (min-width: 1080px) { .aw-rail { display: block; } }
+		.aw-rail h2 { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--ink-dim); margin: 0 0 10px; }
+		.aw-rail ol { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 1px; }
+		.aw-rail a {
+			display: flex; justify-content: space-between; gap: 8px; padding: 6px 9px;
+			font-size: 0.85rem; color: var(--ink-dim); text-decoration: none;
+			border-radius: 7px; border-left: 2px solid transparent; transition: all 0.14s ease;
+		}
+		.aw-rail a:hover { color: var(--ink-bright, var(--ink)); background: var(--surface-1, rgba(255,255,255,0.04)); }
+		.aw-rail a[aria-current="true"] { color: var(--ink-bright, var(--ink)); border-left-color: var(--accent); background: var(--surface-1, rgba(255,255,255,0.04)); }
+		.aw-rail a span { font-variant-numeric: tabular-nums; opacity: 0.55; }
+
+		/* sections */
+		.aw-section { margin: 0 0 46px; scroll-margin-top: 140px; }
+		.aw-section-head { margin-bottom: 16px; }
+		.aw-section-head h2 { font-size: clamp(1.15rem, 2.4vw, 1.5rem); margin: 0 0 6px; letter-spacing: -0.015em; color: var(--ink-bright, var(--ink)); }
+		.aw-anchor { color: var(--ink-dim); text-decoration: none; opacity: 0; margin-left: 8px; font-weight: 400; transition: opacity 0.14s ease; }
+		.aw-section-head h2:hover .aw-anchor, .aw-anchor:focus-visible { opacity: 1; }
+		.aw-section-head p { margin: 0; max-width: 74ch; color: var(--ink-dim); line-height: 1.6; font-size: 0.94rem; }
+
+		.aw-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(268px, 1fr)); gap: 12px; }
+		.aw-card {
+			display: flex; flex-direction: column; gap: 8px; padding: 15px 16px;
+			border: 1px solid var(--stroke); border-radius: var(--radius-md, 10px);
+			background: var(--surface-1, rgba(255,255,255,0.025)); text-decoration: none; color: inherit;
+			transition: border-color 0.16s ease, background 0.16s ease, transform 0.16s ease;
+		}
+		.aw-card:hover { border-color: var(--stroke-strong); background: var(--surface-2, rgba(255,255,255,0.05)); transform: translateY(-2px); }
+		.aw-card:active { transform: translateY(0); }
+		.aw-card-top { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; }
+		.aw-name { font-size: 0.98rem; font-weight: 620; color: var(--ink-bright, var(--ink)); letter-spacing: -0.01em; }
+		.aw-host { font-size: 0.72rem; color: var(--ink-faint, var(--ink-dim)); font-family: var(--font-mono, ui-monospace, monospace); white-space: nowrap; }
+		.aw-desc { margin: 0; font-size: 0.87rem; line-height: 1.55; color: var(--ink-dim); }
+		.aw-tags { display: flex; flex-wrap: wrap; gap: 5px; margin-top: auto; padding-top: 4px; }
+		.aw-tag {
+			padding: 2px 7px; font-size: 0.68rem; letter-spacing: 0.02em;
+			color: var(--ink-dim); border: 1px solid var(--hairline); border-radius: var(--radius-pill, 999px);
+		}
+		.aw-card mark { background: color-mix(in srgb, var(--accent) 30%, transparent); color: var(--ink-bright, var(--ink)); border-radius: 3px; padding: 0 1px; }
+
+		/* states */
+		.aw-count { margin: 0 0 18px; font-size: 0.85rem; color: var(--ink-dim); font-variant-numeric: tabular-nums; }
+		.aw-skeleton { border: 1px solid var(--hairline); border-radius: var(--radius-md, 10px); padding: 15px 16px; display: flex; flex-direction: column; gap: 9px; }
+		.aw-shimmer { height: 10px; border-radius: 5px; background: var(--skeleton-base, rgba(255,255,255,0.07)); animation: aw-pulse 1.4s ease-in-out infinite; }
+		.aw-shimmer.w60 { width: 60%; } .aw-shimmer.w85 { width: 85%; } .aw-shimmer.w40 { width: 40%; }
+		@keyframes aw-pulse { 0%, 100% { opacity: 0.45; } 50% { opacity: 0.9; } }
+		@media (prefers-reduced-motion: reduce) {
+			.aw-shimmer { animation: none; }
+			.aw-card:hover { transform: none; }
+			* { scroll-behavior: auto !important; }
+		}
+		.aw-empty, .aw-error {
+			border: 1px dashed var(--stroke); border-radius: var(--radius-lg, 14px);
+			padding: 34px 24px; text-align: center; background: var(--surface-1, rgba(255,255,255,0.02));
+		}
+		.aw-error { border-style: solid; border-color: color-mix(in srgb, var(--danger) 45%, var(--stroke)); }
+		.aw-empty h2, .aw-error h2 { margin: 0 0 8px; font-size: 1.05rem; color: var(--ink-bright, var(--ink)); }
+		.aw-empty p, .aw-error p { margin: 0 auto 16px; max-width: 52ch; color: var(--ink-dim); line-height: 1.6; font-size: 0.9rem; }
+
+		/* contribute */
+		.aw-cta {
+			margin-top: 20px; padding: 26px 24px; border: 1px solid var(--stroke);
+			border-radius: var(--radius-lg, 14px); background: var(--surface-1, rgba(255,255,255,0.03));
+		}
+		.aw-cta h2 { margin: 0 0 8px; font-size: 1.15rem; color: var(--ink-bright, var(--ink)); letter-spacing: -0.015em; }
+		.aw-cta p { margin: 0 0 16px; max-width: 68ch; color: var(--ink-dim); line-height: 1.6; font-size: 0.92rem; }
+		.aw-cta code { font-family: var(--font-mono, ui-monospace, monospace); font-size: 0.85em; padding: 1px 5px; border-radius: 4px; background: var(--surface-3, rgba(255,255,255,0.07)); }
+		.aw-cta-actions { display: flex; flex-wrap: wrap; gap: 10px; }
+
+		.aw-toast {
+			position: fixed; left: 50%; bottom: 26px; transform: translate(-50%, 14px);
+			padding: 10px 16px; border-radius: var(--radius-pill, 999px); font-size: 0.85rem;
+			color: var(--ink-bright, var(--ink)); background: var(--surface-3, rgba(20,20,26,0.95));
+			border: 1px solid var(--stroke-strong); box-shadow: var(--shadow-2, 0 8px 30px rgba(0,0,0,0.4));
+			opacity: 0; pointer-events: none; transition: opacity 0.2s ease, transform 0.2s ease; z-index: 90;
+		}
+		.aw-toast[data-show="true"] { opacity: 1; transform: translate(-50%, 0); }
+	</style>
+</head>
+<body>
+	<header class="site-header"><div id="nav-container"></div></header>
+	<script src="/nav.js"></script>
+
+	<main class="aw-wrap">
+		<section class="aw-hero">
+			<p class="aw-eyebrow"><b>Awesome list</b> curated by three.ws</p>
+			<h1 id="aw-title">Awesome 3D Agents</h1>
+			<p class="aw-lede" id="aw-tagline">Everything you need to give an AI agent a body.</p>
+			<p class="aw-intro" id="aw-intro">
+				A curated list of the models, engines, formats, and research that turn a language model
+				into something you can see, animate, talk to, and put on a web page.
+			</p>
+			<div class="aw-hero-actions">
+				<a class="aw-btn aw-btn-primary" id="aw-repo" href="https://github.com/nirholas/three.ws/tree/main/awesome">
+					<svg viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82a7.4 7.4 0 0 1 2-.27c.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8Z"/></svg>
+					Star it on GitHub
+				</a>
+				<button type="button" class="aw-btn" id="aw-copy">
+					<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><rect x="5.5" y="5.5" width="8" height="9" rx="1.5"/><path d="M10.5 3.5h-7a1 1 0 0 0-1 1v8"/></svg>
+					Copy as Markdown
+				</button>
+				<a class="aw-btn" id="aw-suggest" href="https://github.com/nirholas/three.ws/issues/new?title=Awesome%203D%20Agents%3A%20add%20%3Cproject%3E&amp;body=Project%20url%3A%0ASection%3A%0AOne-sentence%20description%3A%0AWhy%20it%20belongs%3A">
+					Suggest an entry
+				</a>
+			</div>
+			<dl class="aw-stats" id="aw-stats" hidden></dl>
+		</section>
+
+		<div class="aw-controls">
+			<div class="aw-search">
+				<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><circle cx="7" cy="7" r="4.5"/><path d="M10.5 10.5 14 14"/></svg>
+				<label class="sr-only" for="aw-q">Search the list</label>
+				<input id="aw-q" type="search" autocomplete="off" spellcheck="false" placeholder="Search the list…" />
+				<span class="aw-kbd" aria-hidden="true">/</span>
+			</div>
+			<div class="aw-chips" id="aw-tagbar" role="group" aria-label="Filter by tag">
+				<span class="aw-chips-label">Filter</span>
+			</div>
+		</div>
+
+		<p class="aw-count" id="aw-count" role="status" aria-live="polite"></p>
+
+		<div class="aw-layout">
+			<nav class="aw-rail" id="aw-rail" aria-label="Sections">
+				<h2>Sections</h2>
+				<ol id="aw-rail-list"></ol>
+			</nav>
+			<div id="aw-sections"></div>
+		</div>
+
+		<section class="aw-cta">
+			<h2>Something missing?</h2>
+			<p>
+				Entries live in <code>data/awesome.json</code>, and the list you are reading is generated
+				from it, so a pull request never touches a Markdown file by hand. Every link here is
+				fetched and classified by <code>npm run awesome:links</code> before it ships.
+			</p>
+			<div class="aw-cta-actions">
+				<a class="aw-btn" href="https://github.com/nirholas/three.ws/blob/main/awesome/CONTRIBUTING.md">How to contribute</a>
+				<a class="aw-btn" href="https://github.com/nirholas/three.ws/blob/main/data/awesome.json">Edit the source</a>
+				<a class="aw-btn" href="/forge">Try the free text-to-3D lane</a>
+			</div>
+		</section>
+	</main>
+
+	<div class="aw-toast" id="aw-toast" role="status" aria-live="polite"></div>
+
+	<script src="/brand.js" defer></script>
+	<script type="module">
+		const sectionsEl = document.getElementById('aw-sections');
+		const railList = document.getElementById('aw-rail-list');
+		const countEl = document.getElementById('aw-count');
+		const statsEl = document.getElementById('aw-stats');
+		const tagbar = document.getElementById('aw-tagbar');
+		const qEl = document.getElementById('aw-q');
+		const toastEl = document.getElementById('aw-toast');
+
+		const state = { q: '', tags: new Set() };
+		let data = null;
+
+		const esc = (s) =>
+			String(s ?? '').replace(/[&<>"']/g, (c) =>
+				({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c],
+			);
+
+		const hostOf = (url) => {
+			try {
+				return new URL(url).hostname.replace(/^www\./, '');
+			} catch {
+				return '';
+			}
+		};
+
+		// Highlight the matched terms so a search result explains itself instead of
+		// leaving the reader to scan the card for why it survived the filter.
+		function highlight(text, terms) {
+			const safe = esc(text);
+			if (!terms.length) return safe;
+			const pattern = terms
+				.map((t) => t.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'))
+				.filter(Boolean)
+				.join('|');
+			if (!pattern) return safe;
+			return safe.replace(new RegExp(`(${pattern})`, 'gi'), '<mark>$1</mark>');
+		}
+
+		let toastTimer;
+		function toast(message) {
+			toastEl.textContent = message;
+			toastEl.dataset.show = 'true';
+			clearTimeout(toastTimer);
+			toastTimer = setTimeout(() => {
+				toastEl.dataset.show = 'false';
+			}, 2400);
+		}
+
+		function terms() {
+			return state.q ? state.q.split(/\s+/).filter(Boolean) : [];
+		}
+
+		function matches(item, section) {
+			for (const tag of state.tags) {
+				if (!item.tags.includes(tag)) return false;
+			}
+			const list = terms();
+			if (!list.length) return true;
+			const hay = `${item.name} ${item.description} ${item.tags.join(' ')} ${section.title} ${hostOf(item.url)}`.toLowerCase();
+			return list.every((t) => hay.includes(t));
+		}
+
+		function cardHtml(item, list) {
+			return (
+				`<a class="aw-card" href="${esc(item.url)}" target="_blank" rel="noopener">` +
+				'<span class="aw-card-top">' +
+				`<span class="aw-name">${highlight(item.name, list)}</span>` +
+				`<span class="aw-host">${esc(hostOf(item.url))}</span>` +
+				'</span>' +
+				`<p class="aw-desc">${highlight(item.description, list)}</p>` +
+				(item.tags.length
+					? `<span class="aw-tags">${item.tags.map((t) => `<span class="aw-tag">${esc(t)}</span>`).join('')}</span>`
+					: '') +
+				'</a>'
+			);
+		}
+
+		function renderSkeleton() {
+			countEl.textContent = 'Loading the list…';
+			sectionsEl.innerHTML =
+				'<div class="aw-grid">' +
+				Array.from({ length: 9 })
+					.map(
+						() =>
+							'<div class="aw-skeleton" aria-hidden="true"><div class="aw-shimmer w60"></div>' +
+							'<div class="aw-shimmer w85"></div><div class="aw-shimmer"></div>' +
+							'<div class="aw-shimmer w40"></div></div>',
+					)
+					.join('') +
+				'</div>';
+		}
+
+		function renderError(message) {
+			countEl.textContent = '';
+			statsEl.hidden = true;
+			sectionsEl.innerHTML =
+				'<div class="aw-error"><h2>The list could not be loaded</h2>' +
+				`<p>${esc(message)}</p>` +
+				'<button type="button" class="aw-btn" id="aw-retry">Try again</button>' +
+				'<p style="margin-top:14px">It is also readable on ' +
+				'<a href="https://github.com/nirholas/three.ws/blob/main/awesome/README.md">GitHub</a>.</p></div>';
+			document.getElementById('aw-retry').addEventListener('click', load);
+		}
+
+		function renderStats() {
+			const cells = [
+				['Entries', data.counts.items, 'Curated projects, tools, specs, and papers'],
+				['Sections', data.counts.sections, 'One per stage of the pipeline'],
+				['Free to use', data.sections.flatMap((s) => s.items).filter((i) => i.tags.includes('oss') || i.tags.includes('free')).length, 'Open source or free to use'],
+				['Tags', data.counts.tags, 'Searchable facets across the list'],
+			];
+			statsEl.innerHTML = cells
+				.map(
+					([label, value, hint]) =>
+						`<div class="aw-stat" title="${esc(hint)}"><dt>${esc(label)}</dt><dd>${value}</dd></div>`,
+				)
+				.join('');
+			statsEl.hidden = false;
+		}
+
+		function renderTagbar() {
+			const chips = data.tags
+				.slice(0, 18)
+				.map(
+					(t) =>
+						`<button type="button" class="aw-chip" data-tag="${esc(t.id)}" aria-pressed="false">` +
+						`${esc(t.id)}<small>${t.count}</small></button>`,
+				)
+				.join('');
+			tagbar.insertAdjacentHTML(
+				'beforeend',
+				chips + '<button type="button" class="aw-btn aw-reset" id="aw-reset" hidden>Clear</button>',
+			);
+			tagbar.addEventListener('click', (event) => {
+				const chip = event.target.closest('.aw-chip');
+				if (chip) {
+					const tag = chip.dataset.tag;
+					if (state.tags.has(tag)) state.tags.delete(tag);
+					else state.tags.add(tag);
+					syncChips();
+					syncUrl();
+					render();
+					return;
+				}
+				if (event.target.closest('#aw-reset')) clearFilters();
+			});
+		}
+
+		function syncChips() {
+			for (const chip of tagbar.querySelectorAll('.aw-chip')) {
+				chip.setAttribute('aria-pressed', String(state.tags.has(chip.dataset.tag)));
+			}
+			const reset = document.getElementById('aw-reset');
+			if (reset) reset.hidden = !state.q && !state.tags.size;
+		}
+
+		function clearFilters() {
+			state.q = '';
+			state.tags.clear();
+			qEl.value = '';
+			syncChips();
+			syncUrl();
+			render();
+			qEl.focus();
+		}
+
+		function syncUrl() {
+			const params = new URLSearchParams();
+			if (state.q) params.set('q', state.q);
+			if (state.tags.size) params.set('tag', [...state.tags].join(','));
+			const qs = params.toString();
+			history.replaceState(null, '', qs ? `?${qs}${location.hash}` : `${location.pathname}${location.hash}`);
+		}
+
+		function readUrl() {
+			const params = new URLSearchParams(location.search);
+			state.q = (params.get('q') ?? '').trim().toLowerCase();
+			for (const t of (params.get('tag') ?? '').split(',').filter(Boolean)) state.tags.add(t);
+			qEl.value = params.get('q') ?? '';
+		}
+
+		function render() {
+			const list = terms();
+			const visible = data.sections
+				.map((section) => ({ section, items: section.items.filter((i) => matches(i, section)) }))
+				.filter((group) => group.items.length);
+
+			const shown = visible.reduce((n, g) => n + g.items.length, 0);
+			const filtering = Boolean(state.q || state.tags.size);
+			countEl.textContent = filtering
+				? `${shown} of ${data.counts.items} entries`
+				: `${data.counts.items} entries across ${data.counts.sections} sections`;
+
+			if (!shown) {
+				sectionsEl.innerHTML =
+					'<div class="aw-empty"><h2>Nothing matches those filters</h2>' +
+					'<p>Every entry in the list is shown by default, so an empty result means the filters are ' +
+					'too narrow rather than the list being short. Try one term instead of two, or drop a tag.</p>' +
+					'<button type="button" class="aw-btn" id="aw-clear">Clear filters</button></div>';
+				document.getElementById('aw-clear').addEventListener('click', clearFilters);
+				railList.innerHTML = '';
+				return;
+			}
+
+			sectionsEl.innerHTML = visible
+				.map(
+					({ section, items }) =>
+						`<section class="aw-section" id="${esc(section.id)}">` +
+						'<div class="aw-section-head">' +
+						`<h2>${esc(section.title)}<a class="aw-anchor" href="#${esc(section.id)}" aria-label="Link to ${esc(section.title)}">#</a></h2>` +
+						`<p>${esc(section.description)}</p></div>` +
+						`<div class="aw-grid">${items.map((i) => cardHtml(i, list)).join('')}</div>` +
+						'</section>',
+				)
+				.join('');
+
+			railList.innerHTML = visible
+				.map(
+					({ section, items }) =>
+						`<li><a href="#${esc(section.id)}">${esc(section.title)}<span>${items.length}</span></a></li>`,
+				)
+				.join('');
+			observeSections();
+		}
+
+		// Mark the section the reader is actually in, so the rail is a position
+		// indicator rather than a plain table of contents.
+		let observer = null;
+		function observeSections() {
+			observer?.disconnect();
+			const links = new Map(
+				[...railList.querySelectorAll('a')].map((a) => [a.getAttribute('href').slice(1), a]),
+			);
+			observer = new IntersectionObserver(
+				(entries) => {
+					for (const entry of entries) {
+						if (!entry.isIntersecting) continue;
+						for (const a of links.values()) a.removeAttribute('aria-current');
+						links.get(entry.target.id)?.setAttribute('aria-current', 'true');
+					}
+				},
+				{ rootMargin: '-140px 0px -70% 0px', threshold: 0 },
+			);
+			for (const section of sectionsEl.querySelectorAll('.aw-section')) observer.observe(section);
+		}
+
+		function toMarkdown() {
+			const lines = [`# ${data.title}`, '', `> ${data.tagline}`, '', data.intro, ''];
+			for (const section of data.sections) {
+				const items = section.items.filter((i) => matches(i, section));
+				if (!items.length) continue;
+				lines.push(`## ${section.title}`, '');
+				for (const item of items) lines.push(`- [${item.name}](${item.url}) - ${item.description}`);
+				lines.push('');
+			}
+			lines.push(`Source: ${location.origin}/awesome`);
+			return lines.join('\n');
+		}
+
+		document.getElementById('aw-copy').addEventListener('click', async () => {
+			try {
+				await navigator.clipboard.writeText(toMarkdown());
+				const filtering = Boolean(state.q || state.tags.size);
+				toast(filtering ? 'Copied the filtered list as Markdown' : 'Copied the whole list as Markdown');
+			} catch {
+				toast('Your browser blocked the clipboard. Use the GitHub copy instead.');
+			}
+		});
+
+		let debounce;
+		qEl.addEventListener('input', () => {
+			clearTimeout(debounce);
+			debounce = setTimeout(() => {
+				state.q = qEl.value.trim().toLowerCase();
+				syncChips();
+				syncUrl();
+				render();
+			}, 110);
+		});
+
+		document.addEventListener('keydown', (event) => {
+			if (event.key === '/' && document.activeElement !== qEl && !event.metaKey && !event.ctrlKey) {
+				event.preventDefault();
+				qEl.focus();
+				qEl.select();
+			} else if (event.key === 'Escape' && document.activeElement === qEl) {
+				clearFilters();
+			}
+		});
+
+		async function load() {
+			renderSkeleton();
+			try {
+				const res = await fetch('/awesome.json', {
+					headers: { accept: 'application/json' },
+					signal: AbortSignal.timeout(15000),
+				});
+				if (!res.ok) throw new Error(`the server returned ${res.status}`);
+				data = await res.json();
+			} catch (error) {
+				renderError(
+					`${error.message}. The list is a static file at /awesome.json, so this is usually a network problem.`,
+				);
+				return;
+			}
+
+			document.getElementById('aw-title').textContent = data.title;
+			document.getElementById('aw-tagline').textContent = data.tagline;
+			document.getElementById('aw-intro').textContent = data.intro;
+			document.getElementById('aw-repo').href = data.repo;
+			qEl.placeholder = `Search ${data.counts.items} entries by name, tag, or what they do…`;
+
+			renderStats();
+			renderTagbar();
+			readUrl();
+			syncChips();
+			render();
+
+			if (location.hash) document.getElementById(location.hash.slice(1))?.scrollIntoView();
+		}
+
+		load();
+	</script>
+</body>
+</html>

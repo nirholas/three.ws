@@ -3,6 +3,13 @@
 	"entries": [
 		{
 			"date": "2026-09-07",
+			"title": "Awesome 3D Agents: a curated list of everything you need to give an AI a body",
+			"summary": "Giving an agent a body means assembling a pipeline out of a dozen separate fields, and the map of that pipeline did not exist anywhere. There is now one: 134 hand-picked projects across 13 sections, covering text-to-3D generation, photo and video capture, avatars, rigging, motion generation, lipsync and voice, web renderers, asset pipelines, physics and networking, agent frameworks, datasets, free assets, and where to learn all of it. Each entry says in one sentence what the thing does and why you would reach for it instead of the alternative. The list is searchable and filterable by tag at /awesome, copyable as Markdown, and published in the standard awesome-list format on GitHub so it can be read, forked, and contributed to there. Every link is fetched and verified before it ships.",
+			"tags": ["feature", "docs"],
+			"link": "/awesome"
+		},
+		{
+			"date": "2026-09-07",
 			"title": "Tutorials and walkthroughs are now readable by search engines, and pages we never wanted indexed stopped asking to be",
 			"summary": "The 76 tutorial and walkthrough pages loaded their content after the page opened, which meant a search engine reading the raw page found no text at all, and on tutorials found the words 'Tutorial not found' sitting under an empty heading. Those pages now arrive with their full text already in them, so they can finally be found by the questions they answer. Separately, eighteen pages were being submitted to Google while telling Google not to index them: sign-in surfaces, viewers that need a link to work, and one endpoint that returns data rather than a page. They have been withdrawn from the sitemap, and a new check refuses to let a page ask for indexing and refuse it at the same time. Two documentation pages that shared a title with the product page they described have been retitled.",
 			"tags": ["improvement", "docs"],

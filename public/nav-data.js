@@ -736,6 +736,11 @@ export const NAV_GROUPS = [
 					{ title: 'Tutorials', href: '/tutorials', desc: 'Step-by-step guides' },
 					{ title: 'Examples', href: '/examples', desc: 'Runnable copy-paste code' },
 					{ title: 'Cookbook', href: '/cookbook', desc: 'Recipes you download and run' },
+					{
+						title: 'Awesome 3D Agents',
+						href: '/awesome',
+						desc: 'The curated list of tools for giving an AI a body',
+					},
 					{ title: 'Chat', href: '/chat', desc: 'Talk to your agent' },
 				],
 			},

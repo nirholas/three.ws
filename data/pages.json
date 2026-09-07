@@ -5818,6 +5818,15 @@
 					"priority": 0.6,
 					"changefreq": "monthly",
 					"added": "2026-09-05"
+				},
+				{
+					"path": "/awesome",
+					"title": "Awesome 3D Agents",
+					"description": "A curated, link-checked list of everything you need to give an AI agent a body: text-to-3D models, capture and Gaussian splatting, avatars, rigging, motion generation, lipsync and voice, web renderers, asset pipelines, and the agent frameworks that drive them. Searchable and filterable, and published as an awesome list on GitHub.",
+					"priority": 0.8,
+					"changefreq": "weekly",
+					"added": "2026-09-07",
+					"showcase": true
 				}
 			]
 		},

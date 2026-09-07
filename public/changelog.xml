@@ -7,6 +7,14 @@
 		<description>What's new on three.ws: features, improvements, and releases, newest first.</description>
 		<language>en</language>
 		<item>
+			<title>Awesome 3D Agents</title>
+			<link>https://three.ws/awesome</link>
+			<guid isPermaLink="false">2026-09-07:Awesome 3D Agents</guid>
+			<pubDate>Mon, 07 Sep 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>A curated, link-checked list of everything you need to give an AI agent a body: text-to-3D models, capture and Gaussian splatting, avatars, rigging, motion generation, lipsync and voice, web renderers, asset pipelines, and the agent frameworks that drive them. Searchable and filterable, and published as an awesome list on GitHub.</description>
+		</item>
+		<item>
 			<title>Docs · SEO and crawler rendering</title>
 			<link>https://three.ws/docs/seo</link>
 			<guid isPermaLink="false">2026-09-07:Docs · SEO and crawler rendering</guid>
@@ -53,6 +61,14 @@
 			<pubDate>Mon, 07 Sep 2026 12:00:00 GMT</pubDate>
 			<category>fix</category>
 			<description>Google Search Console flagged an archived story page for unparsable structured data. The cause: the archive trims a publisher summary to a fixed length before serving it, and the cut landed in the middle of an emoji, leaving half a character in the page data that search engines read. Trimming is now character-aware, so it never splits an emoji, a flag, or an accented letter, and the page data is checked for half characters before it is written. Around one archived story in seven thousand carried the flaw; all of them serve a valid listing now. The same fix covers the story summaries shown in link previews and the shared page descriptions across the site.</description>
+		</item>
+		<item>
+			<title>Awesome 3D Agents: a curated list of everything you need to give an AI a body</title>
+			<link>https://three.ws/awesome</link>
+			<guid isPermaLink="false">2026-09-07:Awesome 3D Agents: a curated list of everything you need to give an AI a body</guid>
+			<pubDate>Mon, 07 Sep 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>Giving an agent a body means assembling a pipeline out of a dozen separate fields, and the map of that pipeline did not exist anywhere. There is now one: 134 hand-picked projects across 13 sections, covering text-to-3D generation, photo and video capture, avatars, rigging, motion generation, lipsync and voice, web renderers, asset pipelines, physics and networking, agent frameworks, datasets, free assets, and where to learn all of it. Each entry says in one sentence what the thing does and why you would reach for it instead of the alternative. The list is searchable and filterable by tag at /awesome, copyable as Markdown, and published in the standard awesome-list format on GitHub so it can be read, forked, and contributed to there. Every link is fetched and verified before it ships.</description>
 		</item>
 		<item>
 			<title>Blender tools now open three.ws avatars, which Blender alone cannot</title>

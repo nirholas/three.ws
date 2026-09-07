@@ -4546,6 +4546,12 @@ URL: https://three.ws/docs/pocket
 
 How the /pocket handheld works: the D-pad and gamepad controls, the three cartridges, the URL params that make a share link, and the one iframe that puts a live 3D agent console on any site.
 
+### Awesome 3D Agents
+
+URL: https://three.ws/awesome
+
+A curated, link-checked list of everything you need to give an AI agent a body: text-to-3D models, capture and Gaussian splatting, avatars, rigging, motion generation, lipsync and voice, web renderers, asset pipelines, and the agent frameworks that drive them. Searchable and filterable, and published as an awesome list on GitHub.
+
 ## Blog
 
 Long-form announcements, launches, and writing from three.ws.

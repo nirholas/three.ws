@@ -1,0 +1,1616 @@
+{
+	"title": "Awesome 3D Agents",
+	"tagline": "Everything you need to give an AI agent a body.",
+	"intro": "A curated list of the models, engines, formats, and research that turn a language model into something you can see, animate, talk to, and put on a web page. Generation, rigging, motion, faces, voice, renderers, and the agent frameworks that drive them.",
+	"repo": "https://github.com/nirholas/three.ws/tree/main/awesome",
+	"markdown": "https://github.com/nirholas/three.ws/blob/main/awesome/README.md",
+	"counts": {
+		"items": 134,
+		"sections": 13,
+		"tags": 92
+	},
+	"tags": [
+		{
+			"id": "oss",
+			"count": 88
+		},
+		{
+			"id": "python",
+			"count": 40
+		},
+		{
+			"id": "js",
+			"count": 29
+		},
+		{
+			"id": "free",
+			"count": 21
+		},
+		{
+			"id": "research",
+			"count": 20
+		},
+		{
+			"id": "foundational",
+			"count": 15
+		},
+		{
+			"id": "service",
+			"count": 11
+		},
+		{
+			"id": "cpp",
+			"count": 8
+		},
+		{
+			"id": "spec",
+			"count": 8
+		},
+		{
+			"id": "dataset",
+			"count": 6
+		},
+		{
+			"id": "threejs",
+			"count": 6
+		},
+		{
+			"id": "cc0",
+			"count": 4
+		},
+		{
+			"id": "desktop",
+			"count": 4
+		},
+		{
+			"id": "framework",
+			"count": 4
+		},
+		{
+			"id": "models",
+			"count": 4
+		},
+		{
+			"id": "textures",
+			"count": 4
+		},
+		{
+			"id": "tts",
+			"count": 4
+		},
+		{
+			"id": "compression",
+			"count": 3
+		},
+		{
+			"id": "fast",
+			"count": 3
+		},
+		{
+			"id": "gltf",
+			"count": 3
+		},
+		{
+			"id": "minimal",
+			"count": 3
+		},
+		{
+			"id": "physics",
+			"count": 3
+		},
+		{
+			"id": "stt",
+			"count": 3
+		},
+		{
+			"id": "webrtc",
+			"count": 3
+		},
+		{
+			"id": "api",
+			"count": 2
+		},
+		{
+			"id": "cli",
+			"count": 2
+		},
+		{
+			"id": "edge",
+			"count": 2
+		},
+		{
+			"id": "editor",
+			"count": 2
+		},
+		{
+			"id": "engine",
+			"count": 2
+		},
+		{
+			"id": "hosted",
+			"count": 2
+		},
+		{
+			"id": "lipsync",
+			"count": 2
+		},
+		{
+			"id": "mobile",
+			"count": 2
+		},
+		{
+			"id": "multi-agent",
+			"count": 2
+		},
+		{
+			"id": "pipeline",
+			"count": 2
+		},
+		{
+			"id": "react",
+			"count": 2
+		},
+		{
+			"id": "realtime",
+			"count": 2
+		},
+		{
+			"id": "reference",
+			"count": 2
+		},
+		{
+			"id": "rust",
+			"count": 2
+		},
+		{
+			"id": "sdk",
+			"count": 2
+		},
+		{
+			"id": "simulator",
+			"count": 2
+		},
+		{
+			"id": "small",
+			"count": 2
+		},
+		{
+			"id": "vrm",
+			"count": 2
+		},
+		{
+			"id": "wasm",
+			"count": 2
+		},
+		{
+			"id": "webcomponent",
+			"count": 2
+		},
+		{
+			"id": "webgpu",
+			"count": 2
+		},
+		{
+			"id": "webxr",
+			"count": 2
+		}
+	],
+	"sections": [
+		{
+			"id": "text-to-3d",
+			"title": "Text and image to 3D",
+			"description": "Generate a mesh from a prompt or a single photo. This is the front door of the pipeline: the fastest way to get geometry that did not exist an hour ago.",
+			"items": [
+				{
+					"name": "TRELLIS",
+					"url": "https://github.com/microsoft/TRELLIS",
+					"description": "Structured latent generation that emits meshes, radiance fields, and Gaussians from the same model. Currently the strongest open text and image to 3D quality.",
+					"tags": [
+						"oss",
+						"python",
+						"image-to-3d"
+					]
+				},
+				{
+					"name": "Hunyuan3D 2",
+					"url": "https://github.com/Tencent-Hunyuan/Hunyuan3D-2",
+					"description": "Shape generation plus a separate texture synthesis stage, so the mesh and its material are not fighting for the same capacity. Ships usable PBR maps.",
+					"tags": [
+						"oss",
+						"python",
+						"textures"
+					]
+				},
+				{
+					"name": "TripoSR",
+					"url": "https://github.com/VAST-AI-Research/TripoSR",
+					"description": "Single image to 3D in well under a second on one GPU. The reference point for fast feed-forward reconstruction.",
+					"tags": [
+						"oss",
+						"python",
+						"fast"
+					]
+				},
+				{
+					"name": "InstantMesh",
+					"url": "https://github.com/TencentARC/InstantMesh",
+					"description": "Multi-view diffusion into a large reconstruction model, tuned for clean topology rather than the blobby output that plagues earlier feed-forward work.",
+					"tags": [
+						"oss",
+						"python"
+					]
+				},
+				{
+					"name": "Stable Fast 3D",
+					"url": "https://github.com/Stability-AI/stable-fast-3d",
+					"description": "Image to UV-unwrapped, textured mesh in roughly half a second, with material parameter prediction built in.",
+					"tags": [
+						"oss",
+						"python",
+						"fast"
+					]
+				},
+				{
+					"name": "LGM",
+					"url": "https://github.com/3DTopia/LGM",
+					"description": "Large multi-view Gaussian model. High-resolution 3D from text or a single image, then converted to a mesh.",
+					"tags": [
+						"oss",
+						"python",
+						"gaussians"
+					]
+				},
+				{
+					"name": "Wonder3D",
+					"url": "https://github.com/xxlong0/Wonder3D",
+					"description": "Cross-domain diffusion that generates consistent normal maps and colour views together, which is why its surfaces hold up under relighting.",
+					"tags": [
+						"oss",
+						"python",
+						"research"
+					]
+				},
+				{
+					"name": "CRM",
+					"url": "https://github.com/thu-ml/CRM",
+					"description": "Convolutional reconstruction model. Single image to a textured mesh in about ten seconds without per-object optimisation.",
+					"tags": [
+						"oss",
+						"python"
+					]
+				},
+				{
+					"name": "Zero-1-to-3",
+					"url": "https://github.com/cvlab-columbia/zero123",
+					"description": "The novel-view-synthesis paper most of this section is built on. Learn what your favourite generator is actually doing by reading this one.",
+					"tags": [
+						"oss",
+						"research",
+						"foundational"
+					]
+				},
+				{
+					"name": "threestudio",
+					"url": "https://github.com/threestudio-project/threestudio",
+					"description": "One framework, many text-to-3D methods (DreamFusion, Magic3D, ProlificDreamer, and more) behind a shared config system. The right place to compare approaches honestly.",
+					"tags": [
+						"oss",
+						"python",
+						"framework"
+					]
+				},
+				{
+					"name": "Shap-E",
+					"url": "https://github.com/openai/shap-e",
+					"description": "Generates implicit functions that render as both meshes and neural radiance fields. Old now, but small, permissive, and easy to run.",
+					"tags": [
+						"oss",
+						"python"
+					]
+				},
+				{
+					"name": "Point-E",
+					"url": "https://github.com/openai/point-e",
+					"description": "Text to point cloud on a single GPU in a minute or two. Still the cheapest way to get rough 3D structure from a prompt.",
+					"tags": [
+						"oss",
+						"python",
+						"fast"
+					]
+				},
+				{
+					"name": "three.ws Forge",
+					"url": "https://three.ws/forge",
+					"description": "A free hosted text-to-3D lane with no key and no account. Returns a GLB you can download, embed, or rig.",
+					"tags": [
+						"hosted",
+						"free",
+						"glb"
+					]
+				},
+				{
+					"name": "Meshy",
+					"url": "https://www.meshy.ai",
+					"description": "Commercial text and image to 3D with quad remeshing and PBR texturing. Good API, generous enough free tier to evaluate properly.",
+					"tags": [
+						"service",
+						"api"
+					]
+				},
+				{
+					"name": "Tripo",
+					"url": "https://www.tripo3d.ai",
+					"description": "The hosted product from the TripoSR authors. Fast previews, refined high-poly output, and a documented API.",
+					"tags": [
+						"service",
+						"api"
+					]
+				},
+				{
+					"name": "Rodin",
+					"url": "https://hyper3d.ai",
+					"description": "Generation aimed at production assets: clean topology options, PBR materials, and part-level control.",
+					"tags": [
+						"service"
+					]
+				}
+			]
+		},
+		{
+			"id": "scan-to-3d",
+			"title": "Photos and video to 3D",
+			"description": "Capture reality instead of inventing it. Photogrammetry, neural fields, and Gaussian splatting, plus the viewers that get the result onto the web.",
+			"items": [
+				{
+					"name": "3D Gaussian Splatting",
+					"url": "https://github.com/graphdeco-inria/gaussian-splatting",
+					"description": "The original INRIA implementation that made radiance fields real-time. Everything in this section is downstream of it.",
+					"tags": [
+						"oss",
+						"research",
+						"foundational"
+					]
+				},
+				{
+					"name": "gsplat",
+					"url": "https://github.com/nerfstudio-project/gsplat",
+					"description": "A CUDA-accelerated splatting library with a clean Python API, faster and far less memory-hungry than the reference code.",
+					"tags": [
+						"oss",
+						"python",
+						"cuda"
+					]
+				},
+				{
+					"name": "Nerfstudio",
+					"url": "https://github.com/nerfstudio-project/nerfstudio",
+					"description": "A modular pipeline for neural radiance fields and splats, with a real-time web viewer and a sane data-processing story.",
+					"tags": [
+						"oss",
+						"python",
+						"framework"
+					]
+				},
+				{
+					"name": "Spark",
+					"url": "https://github.com/sparkjsdev/spark",
+					"description": "A Gaussian splatting renderer that drops into an existing three.js scene as ordinary objects, so splats and meshes light and sort together.",
+					"tags": [
+						"oss",
+						"js",
+						"threejs"
+					]
+				},
+				{
+					"name": "SuperSplat",
+					"url": "https://github.com/playcanvas/supersplat",
+					"description": "A browser-based editor for cleaning, cropping, and compressing splat captures before you publish them.",
+					"tags": [
+						"oss",
+						"js",
+						"editor"
+					]
+				},
+				{
+					"name": "Brush",
+					"url": "https://github.com/ArthurBrussee/brush",
+					"description": "A splatting engine in Rust and wgpu that trains and renders on the web, macOS, Linux, Windows, and Android from one codebase.",
+					"tags": [
+						"oss",
+						"rust",
+						"webgpu"
+					]
+				},
+				{
+					"name": "OpenSplat",
+					"url": "https://github.com/WebODM/OpenSplat",
+					"description": "Splat training on CPU as well as CUDA and Metal, which makes it the practical option on machines without an NVIDIA card.",
+					"tags": [
+						"oss",
+						"cpp"
+					]
+				},
+				{
+					"name": "COLMAP",
+					"url": "https://github.com/colmap/colmap",
+					"description": "Structure from motion and multi-view stereo. The camera poses almost every method above expects as input come from here.",
+					"tags": [
+						"oss",
+						"cpp",
+						"foundational"
+					]
+				},
+				{
+					"name": "DUSt3R",
+					"url": "https://github.com/naver/dust3r",
+					"description": "Dense 3D reconstruction from unconstrained image pairs with no camera calibration at all. It quietly deleted a whole preprocessing stage.",
+					"tags": [
+						"oss",
+						"python",
+						"research"
+					]
+				},
+				{
+					"name": "VGGT",
+					"url": "https://github.com/facebookresearch/vggt",
+					"description": "A single feed-forward transformer that predicts camera poses, depth, and point maps together in seconds.",
+					"tags": [
+						"oss",
+						"python",
+						"research"
+					]
+				},
+				{
+					"name": "Meshroom",
+					"url": "https://github.com/alicevision/Meshroom",
+					"description": "A node-graph photogrammetry application on top of AliceVision. The friendliest free path from a folder of photos to a textured mesh.",
+					"tags": [
+						"oss",
+						"gui"
+					]
+				},
+				{
+					"name": "splat",
+					"url": "https://github.com/antimatter15/splat",
+					"description": "A WebGL splat viewer in a few hundred readable lines. Read it once and you will understand the whole rendering technique.",
+					"tags": [
+						"oss",
+						"js",
+						"minimal"
+					]
+				},
+				{
+					"name": "Luma AI",
+					"url": "https://lumalabs.ai",
+					"description": "Phone capture to a shareable splat, with an embed and a web SDK.",
+					"tags": [
+						"service",
+						"mobile"
+					]
+				},
+				{
+					"name": "Polycam",
+					"url": "https://poly.cam",
+					"description": "LiDAR and photo capture on phones with mesh, splat, and glTF export. The fastest route from a real object to a file you can use.",
+					"tags": [
+						"service",
+						"mobile"
+					]
+				}
+			]
+		},
+		{
+			"id": "avatars",
+			"title": "Avatars and characters",
+			"description": "Humanoid bodies that arrive already rigged, already skinned, and ready to be driven. Building one from scratch is rarely the right first move.",
+			"items": [
+				{
+					"name": "Avaturn",
+					"url": "https://avaturn.me",
+					"description": "Photorealistic avatars from a phone photo, exported as GLB or FBX with a standard humanoid skeleton.",
+					"tags": [
+						"service",
+						"gltf"
+					]
+				},
+				{
+					"name": "VRoid Studio",
+					"url": "https://vroid.com/en/studio",
+					"description": "A free desktop editor for anime-style VRM characters, with hair, clothing, and expression authoring built in.",
+					"tags": [
+						"free",
+						"vrm",
+						"editor"
+					]
+				},
+				{
+					"name": "three-vrm",
+					"url": "https://github.com/pixiv/three-vrm",
+					"description": "The VRM runtime for three.js: spring bones, look-at, expressions, and material handling that a plain glTF loader will not give you.",
+					"tags": [
+						"oss",
+						"js",
+						"threejs",
+						"vrm"
+					]
+				},
+				{
+					"name": "VRM specification",
+					"url": "https://github.com/vrm-c/vrm-specification",
+					"description": "The glTF extension that standardises humanoid bones, expressions, look-at, and licence metadata. Read it before you invent your own avatar format.",
+					"tags": [
+						"spec",
+						"gltf"
+					]
+				},
+				{
+					"name": "MakeHuman",
+					"url": "http://www.makehumancommunity.org",
+					"description": "An open parametric human generator with a full skeleton and topology you can actually edit. Old-fashioned, and still unmatched for free anatomically-driven bodies.",
+					"tags": [
+						"oss",
+						"free"
+					]
+				},
+				{
+					"name": "SMPL-X",
+					"url": "https://smpl-x.is.tue.mpg.de",
+					"description": "A parametric body model with articulated hands and an expressive face. The shared coordinate system that most human motion research speaks.",
+					"tags": [
+						"research",
+						"model",
+						"foundational"
+					]
+				},
+				{
+					"name": "Character Creator",
+					"url": "https://www.reallusion.com/character-creator/",
+					"description": "Commercial character authoring with production-grade topology, morphs, and direct export to game engines.",
+					"tags": [
+						"service",
+						"desktop"
+					]
+				},
+				{
+					"name": "three.ws Avatar Studio",
+					"url": "https://three.ws/avatar-studio",
+					"description": "Generate, rig, dress, and pose an avatar in the browser, then embed it anywhere with one script tag.",
+					"tags": [
+						"hosted",
+						"free",
+						"gltf"
+					]
+				}
+			]
+		},
+		{
+			"id": "rigging",
+			"title": "Rigging and retargeting",
+			"description": "A mesh without a skeleton is a statue. This is the layer that decides whether an avatar can be animated at all.",
+			"items": [
+				{
+					"name": "Mixamo",
+					"url": "https://www.mixamo.com",
+					"description": "Free automatic humanoid rigging plus a large motion-capture library. Its bone naming has become an informal industry convention.",
+					"tags": [
+						"free",
+						"service",
+						"animations"
+					]
+				},
+				{
+					"name": "UniRig",
+					"url": "https://github.com/VAST-AI-Research/UniRig",
+					"description": "An autoregressive model that rigs humans, animals, and objects from one checkpoint, predicting the skeleton and the skin weights together.",
+					"tags": [
+						"oss",
+						"python",
+						"research"
+					]
+				},
+				{
+					"name": "RigNet",
+					"url": "https://github.com/zhan-xu/RigNet",
+					"description": "The neural rigging paper this field grew out of: joint prediction, skeleton connectivity, and skinning learned end to end.",
+					"tags": [
+						"oss",
+						"python",
+						"research",
+						"foundational"
+					]
+				},
+				{
+					"name": "AccuRIG",
+					"url": "https://actorcore.reallusion.com/auto-rig",
+					"description": "A free desktop auto-rigger for static humanoid meshes, with clean weight painting and direct export to standard skeletons.",
+					"tags": [
+						"free",
+						"desktop"
+					]
+				},
+				{
+					"name": "Rigify",
+					"url": "https://docs.blender.org/manual/en/4.5/addons/rigging/rigify/index.html",
+					"description": "Blender's bundled meta-rig system. Free, scriptable, and the practical fallback when an automatic rigger gets a character wrong.",
+					"tags": [
+						"free",
+						"blender"
+					]
+				},
+				{
+					"name": "SkeletonUtils",
+					"url": "https://threejs.org/docs/#examples/en/utils/SkeletonUtils",
+					"description": "three.js retargeting helpers that map a clip authored for one skeleton onto another at runtime. Small, unglamorous, and load-bearing.",
+					"tags": [
+						"oss",
+						"js",
+						"threejs"
+					]
+				}
+			]
+		},
+		{
+			"id": "motion",
+			"title": "Motion and animation",
+			"description": "Generated motion, captured motion, and the datasets both are trained on. A body that only idles is a prop.",
+			"items": [
+				{
+					"name": "Motion Diffusion Model",
+					"url": "https://github.com/GuyTevet/motion-diffusion-model",
+					"description": "Text to human motion via a lightweight diffusion model. The reference implementation nearly every later method compares against.",
+					"tags": [
+						"oss",
+						"python",
+						"research",
+						"foundational"
+					]
+				},
+				{
+					"name": "MoMask",
+					"url": "https://github.com/EricGuo5513/momask-codes",
+					"description": "Generative masked modelling of motion tokens. Faster and sharper than diffusion baselines, with editing and in-betweening for free.",
+					"tags": [
+						"oss",
+						"python",
+						"research"
+					]
+				},
+				{
+					"name": "MotionGPT",
+					"url": "https://github.com/OpenMotionLab/MotionGPT",
+					"description": "Treats motion as a language, so one model generates, captions, predicts, and in-betweens with the same interface.",
+					"tags": [
+						"oss",
+						"python",
+						"research"
+					]
+				},
+				{
+					"name": "T2M-GPT",
+					"url": "https://github.com/Mael-zys/T2M-GPT",
+					"description": "VQ-VAE plus a transformer for text-driven motion. A clean, readable codebase to learn the tokenised-motion approach from.",
+					"tags": [
+						"oss",
+						"python",
+						"research"
+					]
+				},
+				{
+					"name": "OmniControl",
+					"url": "https://github.com/neu-vi/OmniControl",
+					"description": "Adds spatial control signals to motion diffusion, so you can pin a hand to a location instead of hoping the prompt lands.",
+					"tags": [
+						"oss",
+						"python",
+						"research"
+					]
+				},
+				{
+					"name": "HumanML3D",
+					"url": "https://github.com/EricGuo5513/HumanML3D",
+					"description": "The text-and-motion dataset behind most of this section. If you are benchmarking, you are benchmarking on this.",
+					"tags": [
+						"dataset",
+						"research"
+					]
+				},
+				{
+					"name": "AMASS",
+					"url": "https://amass.is.tue.mpg.de",
+					"description": "Fifteen-plus motion capture datasets unified onto one SMPL body. The reason cross-dataset motion training is possible at all.",
+					"tags": [
+						"dataset",
+						"research",
+						"foundational"
+					]
+				},
+				{
+					"name": "Cascadeur",
+					"url": "https://cascadeur.com",
+					"description": "Keyframe animation software with physics-aware assistance and AutoPosing, usable free for individuals under a revenue threshold.",
+					"tags": [
+						"desktop",
+						"free-tier"
+					]
+				},
+				{
+					"name": "Rokoko",
+					"url": "https://www.rokoko.com",
+					"description": "Motion capture suits and a free video-to-motion tool, plus a Blender plugin that handles retargeting.",
+					"tags": [
+						"service",
+						"mocap"
+					]
+				}
+			]
+		},
+		{
+			"id": "face-voice",
+			"title": "Faces, lipsync, and voice",
+			"description": "The difference between a model standing there and an agent talking to you. Speech in, speech out, and a mouth that agrees with the audio.",
+			"items": [
+				{
+					"name": "TalkingHead",
+					"url": "https://github.com/met4citizen/TalkingHead",
+					"description": "A three.js class that turns a glTF humanoid avatar into a talking head with visemes, gaze, and mood. The most complete open reference for this exact problem.",
+					"tags": [
+						"oss",
+						"js",
+						"threejs",
+						"lipsync"
+					]
+				},
+				{
+					"name": "Rhubarb Lip Sync",
+					"url": "https://github.com/DanielSWolf/rhubarb-lip-sync",
+					"description": "Offline audio to mouth-shape timings as a plain command line tool. No model to host, no API to pay for.",
+					"tags": [
+						"oss",
+						"cli",
+						"lipsync"
+					]
+				},
+				{
+					"name": "MediaPipe",
+					"url": "https://github.com/google-ai-edge/mediapipe",
+					"description": "Face landmarks and blendshape coefficients in the browser at video rate, which is enough to drive an avatar's face from a webcam.",
+					"tags": [
+						"oss",
+						"js",
+						"python",
+						"tracking"
+					]
+				},
+				{
+					"name": "ARKit blendshapes",
+					"url": "https://developer.apple.com/documentation/arkit/arfaceanchor/blendshapelocation",
+					"description": "The 52-coefficient facial vocabulary that avatar formats, capture tools, and generators have all standardised on.",
+					"tags": [
+						"spec",
+						"reference"
+					]
+				},
+				{
+					"name": "Whisper",
+					"url": "https://github.com/openai/whisper",
+					"description": "Robust multilingual speech recognition that made self-hosted transcription the default rather than the exception.",
+					"tags": [
+						"oss",
+						"python",
+						"stt",
+						"foundational"
+					]
+				},
+				{
+					"name": "faster-whisper",
+					"url": "https://github.com/SYSTRAN/faster-whisper",
+					"description": "A CTranslate2 reimplementation of Whisper that is several times faster at the same accuracy. Use this in production, not the reference code.",
+					"tags": [
+						"oss",
+						"python",
+						"stt"
+					]
+				},
+				{
+					"name": "whisper.cpp",
+					"url": "https://github.com/ggml-org/whisper.cpp",
+					"description": "Whisper in plain C and C++ with no dependencies, running on phones, browsers via WebAssembly, and Raspberry Pis.",
+					"tags": [
+						"oss",
+						"cpp",
+						"stt",
+						"edge"
+					]
+				},
+				{
+					"name": "Kokoro",
+					"url": "https://github.com/hexgrad/kokoro",
+					"description": "An 82M-parameter text to speech model with quality that embarrasses far larger ones, small enough to run in a browser tab.",
+					"tags": [
+						"oss",
+						"tts",
+						"small"
+					]
+				},
+				{
+					"name": "Piper",
+					"url": "https://github.com/rhasspy/piper",
+					"description": "Fast local neural text to speech built for low-power devices, with a large set of pretrained voices.",
+					"tags": [
+						"oss",
+						"tts",
+						"edge"
+					]
+				},
+				{
+					"name": "F5-TTS",
+					"url": "https://github.com/SWivid/F5-TTS",
+					"description": "Flow-matching text to speech with convincing zero-shot voice cloning from a few seconds of reference audio.",
+					"tags": [
+						"oss",
+						"tts",
+						"cloning"
+					]
+				},
+				{
+					"name": "Coqui TTS",
+					"url": "https://github.com/coqui-ai/TTS",
+					"description": "A deep-learning toolkit covering dozens of text to speech and voice-conversion models, including XTTS multilingual cloning.",
+					"tags": [
+						"oss",
+						"python",
+						"tts"
+					]
+				},
+				{
+					"name": "Silero VAD",
+					"url": "https://github.com/snakers4/silero-vad",
+					"description": "Voice activity detection in under a millisecond per chunk. The unglamorous component that decides whether a voice agent feels responsive.",
+					"tags": [
+						"oss",
+						"vad",
+						"small"
+					]
+				},
+				{
+					"name": "Pipecat",
+					"url": "https://github.com/pipecat-ai/pipecat",
+					"description": "A Python framework for real-time voice and multimodal agents: pipelines, interruption handling, and transport out of the box.",
+					"tags": [
+						"oss",
+						"python",
+						"realtime"
+					]
+				},
+				{
+					"name": "LiveKit Agents",
+					"url": "https://github.com/livekit/agents",
+					"description": "Build voice agents that join a WebRTC room, with turn detection and telephony handled for you.",
+					"tags": [
+						"oss",
+						"python",
+						"realtime",
+						"webrtc"
+					]
+				},
+				{
+					"name": "Web Speech API",
+					"url": "https://developer.mozilla.org/en-US/docs/Web/API/Web_Speech_API",
+					"description": "Recognition and synthesis already in the browser, with zero bytes shipped. Always check this before adding a model.",
+					"tags": [
+						"spec",
+						"browser",
+						"free"
+					]
+				}
+			]
+		},
+		{
+			"id": "renderers",
+			"title": "Rendering on the web",
+			"description": "The runtime that actually puts the body on a page. Everything above is upstream of a choice made here.",
+			"items": [
+				{
+					"name": "three.js",
+					"url": "https://github.com/mrdoob/three.js",
+					"description": "The default WebGL and WebGPU library for the web, with the deepest ecosystem of loaders, controls, and examples anywhere.",
+					"tags": [
+						"oss",
+						"js",
+						"foundational"
+					]
+				},
+				{
+					"name": "React Three Fiber",
+					"url": "https://github.com/pmndrs/react-three-fiber",
+					"description": "three.js as a React renderer. Scene graphs become components, and the reconciler handles the mutation you would otherwise write by hand.",
+					"tags": [
+						"oss",
+						"js",
+						"react",
+						"threejs"
+					]
+				},
+				{
+					"name": "drei",
+					"url": "https://github.com/pmndrs/drei",
+					"description": "The helper library that makes React Three Fiber practical: controls, loaders, staging, text, and effects you would otherwise rebuild every project.",
+					"tags": [
+						"oss",
+						"js",
+						"react"
+					]
+				},
+				{
+					"name": "Babylon.js",
+					"url": "https://github.com/BabylonJS/Babylon.js",
+					"description": "A batteries-included web engine with a built-in physics layer, node material editor, and an inspector that is genuinely better than the alternatives.",
+					"tags": [
+						"oss",
+						"js",
+						"engine"
+					]
+				},
+				{
+					"name": "PlayCanvas",
+					"url": "https://github.com/playcanvas/engine",
+					"description": "A lightweight engine tuned hard for load time and mobile, backed by a collaborative browser editor.",
+					"tags": [
+						"oss",
+						"js",
+						"engine"
+					]
+				},
+				{
+					"name": "model-viewer",
+					"url": "https://github.com/google/model-viewer",
+					"description": "One custom element that renders a glTF with sensible defaults, accessibility, and AR on both phone platforms. The lowest-effort correct answer.",
+					"tags": [
+						"oss",
+						"js",
+						"webcomponent",
+						"ar"
+					]
+				},
+				{
+					"name": "A-Frame",
+					"url": "https://github.com/aframevr/aframe",
+					"description": "Declarative HTML for WebXR scenes, with an entity-component system underneath. Still the shortest path from markup to headset.",
+					"tags": [
+						"oss",
+						"js",
+						"webxr"
+					]
+				},
+				{
+					"name": "Threlte",
+					"url": "https://github.com/threlte/threlte",
+					"description": "three.js for Svelte, with a component library, physics bindings, and a preprocessor that keeps bundles small.",
+					"tags": [
+						"oss",
+						"js",
+						"svelte"
+					]
+				},
+				{
+					"name": "TresJS",
+					"url": "https://github.com/Tresjs/tres",
+					"description": "three.js as Vue components, with reactivity mapped onto scene-graph updates.",
+					"tags": [
+						"oss",
+						"js",
+						"vue"
+					]
+				},
+				{
+					"name": "OGL",
+					"url": "https://github.com/oframe/ogl",
+					"description": "A minimal WebGL library that stays close to the API instead of hiding it. The right tool when three.js is more engine than you need.",
+					"tags": [
+						"oss",
+						"js",
+						"minimal"
+					]
+				},
+				{
+					"name": "Needle Engine",
+					"url": "https://needle.tools",
+					"description": "Author in Unity or Blender, ship a small web build. A pragmatic bridge for teams whose content pipeline already exists.",
+					"tags": [
+						"service",
+						"js",
+						"pipeline"
+					]
+				},
+				{
+					"name": "agent-3d",
+					"url": "https://github.com/nirholas/three.ws/tree/main/avatar-sdk",
+					"description": "A web component that drops a rigged, animated, lip-syncing agent avatar onto any page in one tag, with a JS API for moods and gestures.",
+					"tags": [
+						"oss",
+						"js",
+						"webcomponent",
+						"avatars"
+					]
+				}
+			]
+		},
+		{
+			"id": "formats",
+			"title": "Formats and asset pipeline",
+			"description": "Getting the asset small, valid, and loadable. Most 3D-on-the-web failures are pipeline failures, not rendering failures.",
+			"items": [
+				{
+					"name": "glTF",
+					"url": "https://github.com/KhronosGroup/glTF",
+					"description": "The transmission format for 3D on the web, plus its extension registry. If you are choosing a format, this is the answer.",
+					"tags": [
+						"spec",
+						"foundational"
+					]
+				},
+				{
+					"name": "glTF-Transform",
+					"url": "https://github.com/donmccurdy/glTF-Transform",
+					"description": "Read, edit, optimise, and validate glTF from Node or the CLI. Deduplicate, resize textures, weld, and compress in a scripted pipeline.",
+					"tags": [
+						"oss",
+						"js",
+						"cli",
+						"pipeline"
+					]
+				},
+				{
+					"name": "meshoptimizer",
+					"url": "https://github.com/zeux/meshoptimizer",
+					"description": "Vertex cache optimisation, simplification, and the meshopt compression that glTF files use. Its gltfpack CLI is the single highest-leverage step in most pipelines.",
+					"tags": [
+						"oss",
+						"cpp",
+						"compression",
+						"foundational"
+					]
+				},
+				{
+					"name": "Draco",
+					"url": "https://github.com/google/draco",
+					"description": "Geometry compression that shrinks meshes and point clouds hard, with decoders for the browser.",
+					"tags": [
+						"oss",
+						"cpp",
+						"compression"
+					]
+				},
+				{
+					"name": "KTX-Software",
+					"url": "https://github.com/KhronosGroup/KTX-Software",
+					"description": "Basis Universal texture transcoding. GPU-compressed textures that stay compressed in memory, which is usually the real budget problem.",
+					"tags": [
+						"oss",
+						"textures",
+						"compression"
+					]
+				},
+				{
+					"name": "glTF-Validator",
+					"url": "https://github.com/KhronosGroup/glTF-Validator",
+					"description": "Tells you whether a file is actually valid before a user's browser does. Wire it into CI and stop guessing.",
+					"tags": [
+						"oss",
+						"validation",
+						"ci"
+					]
+				},
+				{
+					"name": "glTF Sample Assets",
+					"url": "https://github.com/KhronosGroup/glTF-Sample-Assets",
+					"description": "The official test models, including deliberately awkward ones. Your loader is not done until these render correctly.",
+					"tags": [
+						"assets",
+						"testing"
+					]
+				},
+				{
+					"name": "Blender",
+					"url": "https://www.blender.org",
+					"description": "Free, scriptable in Python, and headless-capable, which makes it the workhorse of automated 3D pipelines as much as an authoring tool.",
+					"tags": [
+						"oss",
+						"free",
+						"desktop",
+						"python"
+					]
+				},
+				{
+					"name": "trimesh",
+					"url": "https://github.com/mikedh/trimesh",
+					"description": "The Python library for loading, repairing, measuring, and booleaning meshes. Nearly every 3D backend service has this in it somewhere.",
+					"tags": [
+						"oss",
+						"python",
+						"foundational"
+					]
+				},
+				{
+					"name": "Assimp",
+					"url": "https://github.com/assimp/assimp",
+					"description": "Imports roughly fifty 3D formats into one data structure. The escape hatch when someone sends you a file nothing else opens.",
+					"tags": [
+						"oss",
+						"cpp",
+						"conversion"
+					]
+				},
+				{
+					"name": "OpenUSD",
+					"url": "https://github.com/PixarAnimationStudios/OpenUSD",
+					"description": "Pixar's scene description for large, layered, collaboratively edited worlds. Heavier than glTF, and the right answer above a certain scale.",
+					"tags": [
+						"oss",
+						"cpp",
+						"spec"
+					]
+				},
+				{
+					"name": "three-mesh-bvh",
+					"url": "https://github.com/gkjohnson/three-mesh-bvh",
+					"description": "Bounding volume hierarchies for three.js geometry, turning raycasts against dense meshes from unusable into instant.",
+					"tags": [
+						"oss",
+						"js",
+						"threejs",
+						"performance"
+					]
+				}
+			]
+		},
+		{
+			"id": "worlds",
+			"title": "Physics, networking, and shared worlds",
+			"description": "One avatar in a viewer is a demo. Several avatars in a place, with gravity and collisions, is a product.",
+			"items": [
+				{
+					"name": "Rapier",
+					"url": "https://github.com/dimforge/rapier",
+					"description": "A Rust physics engine with deterministic cross-platform simulation and first-class WebAssembly bindings.",
+					"tags": [
+						"oss",
+						"rust",
+						"wasm",
+						"physics"
+					]
+				},
+				{
+					"name": "Jolt Physics",
+					"url": "https://github.com/jrouwe/JoltPhysics",
+					"description": "The multi-core physics engine used in shipped AAA titles, with a WebAssembly build that runs in the browser.",
+					"tags": [
+						"oss",
+						"cpp",
+						"wasm",
+						"physics"
+					]
+				},
+				{
+					"name": "cannon-es",
+					"url": "https://github.com/pmndrs/cannon-es",
+					"description": "A maintained fork of cannon.js in modern JavaScript. Small and readable, and enough for character controllers and props.",
+					"tags": [
+						"oss",
+						"js",
+						"physics"
+					]
+				},
+				{
+					"name": "Colyseus",
+					"url": "https://github.com/colyseus/colyseus",
+					"description": "Authoritative multiplayer rooms with automatic state synchronisation and delta encoding, in Node.",
+					"tags": [
+						"oss",
+						"js",
+						"multiplayer"
+					]
+				},
+				{
+					"name": "Yjs",
+					"url": "https://github.com/yjs/yjs",
+					"description": "CRDTs for shared editable state, with providers for WebRTC, WebSocket, and IndexedDB persistence.",
+					"tags": [
+						"oss",
+						"js",
+						"crdt",
+						"collaboration"
+					]
+				},
+				{
+					"name": "LiveKit",
+					"url": "https://github.com/livekit/livekit",
+					"description": "An open WebRTC server for real-time audio and video, with SDKs everywhere and a self-hostable path.",
+					"tags": [
+						"oss",
+						"go",
+						"webrtc"
+					]
+				},
+				{
+					"name": "mediasoup",
+					"url": "https://github.com/versatica/mediasoup",
+					"description": "A selective forwarding unit as a Node library rather than a service, for teams that want to own the media path.",
+					"tags": [
+						"oss",
+						"js",
+						"webrtc"
+					]
+				},
+				{
+					"name": "geckos.io",
+					"url": "https://github.com/geckosio/geckos.io",
+					"description": "Unreliable UDP-like messaging in the browser over WebRTC data channels, which is what fast-moving avatar positions actually want.",
+					"tags": [
+						"oss",
+						"js",
+						"networking"
+					]
+				},
+				{
+					"name": "WebXR Device API",
+					"url": "https://immersive-web.github.io/webxr/",
+					"description": "The specification behind every headset and phone AR session on the open web. Read the spec, not just a framework's wrapper.",
+					"tags": [
+						"spec",
+						"webxr"
+					]
+				}
+			]
+		},
+		{
+			"id": "brains",
+			"title": "Agent frameworks and protocols",
+			"description": "The mind that drives the body. Listed here because embodiment is a rendering problem bolted onto an agent problem, and most teams underestimate the second one.",
+			"items": [
+				{
+					"name": "Model Context Protocol",
+					"url": "https://github.com/modelcontextprotocol",
+					"description": "The open protocol for giving a model tools, resources, and prompts from an external server. The cleanest way to let an agent act on a 3D pipeline.",
+					"tags": [
+						"spec",
+						"oss",
+						"tools"
+					]
+				},
+				{
+					"name": "Claude Agent SDK",
+					"url": "https://github.com/anthropics/claude-agent-sdk-python",
+					"description": "Build agents on the same harness Claude Code runs on: tool loops, subagents, permissions, and session state.",
+					"tags": [
+						"oss",
+						"python",
+						"sdk"
+					]
+				},
+				{
+					"name": "OpenAI Agents SDK",
+					"url": "https://github.com/openai/openai-agents-python",
+					"description": "A small framework for multi-agent handoffs, guardrails, and tracing, with a deliberately thin abstraction layer.",
+					"tags": [
+						"oss",
+						"python",
+						"sdk"
+					]
+				},
+				{
+					"name": "LangGraph",
+					"url": "https://github.com/langchain-ai/langgraph",
+					"description": "Agents as explicit stateful graphs, with checkpointing and human-in-the-loop pauses. The right shape when a flow must be resumable.",
+					"tags": [
+						"oss",
+						"python",
+						"js",
+						"framework"
+					]
+				},
+				{
+					"name": "Vercel AI SDK",
+					"url": "https://github.com/vercel/ai",
+					"description": "One TypeScript interface across model providers, with streaming, structured output, and tool calls that work in the browser.",
+					"tags": [
+						"oss",
+						"js",
+						"streaming"
+					]
+				},
+				{
+					"name": "smolagents",
+					"url": "https://github.com/huggingface/smolagents",
+					"description": "Agents that write Python to call their tools instead of emitting JSON, in about a thousand lines of library code.",
+					"tags": [
+						"oss",
+						"python",
+						"minimal"
+					]
+				},
+				{
+					"name": "CrewAI",
+					"url": "https://github.com/crewAIInc/crewAI",
+					"description": "Role-based multi-agent orchestration with an emphasis on readable task delegation.",
+					"tags": [
+						"oss",
+						"python",
+						"multi-agent"
+					]
+				},
+				{
+					"name": "AutoGen",
+					"url": "https://github.com/microsoft/autogen",
+					"description": "A research-grade framework for conversational multi-agent systems, with an event-driven core and a visual builder.",
+					"tags": [
+						"oss",
+						"python",
+						"multi-agent"
+					]
+				},
+				{
+					"name": "Mastra",
+					"url": "https://github.com/mastra-ai/mastra",
+					"description": "A TypeScript agent framework with workflows, memory, and evals, aimed at shipping rather than research.",
+					"tags": [
+						"oss",
+						"js",
+						"framework"
+					]
+				},
+				{
+					"name": "Letta",
+					"url": "https://github.com/letta-ai/letta",
+					"description": "Agents with persistent memory as a first-class server concept, out of the MemGPT research line.",
+					"tags": [
+						"oss",
+						"python",
+						"memory"
+					]
+				},
+				{
+					"name": "A2A",
+					"url": "https://github.com/a2aproject/A2A",
+					"description": "An open protocol for agents built by different vendors to discover each other and collaborate over a common envelope.",
+					"tags": [
+						"spec",
+						"interop"
+					]
+				},
+				{
+					"name": "Generative Agents",
+					"url": "https://github.com/joonspk-research/generative_agents",
+					"description": "The Stanford simulation where twenty-five agents with memory, reflection, and planning produced emergent social behaviour. Still the clearest demonstration of why memory architecture matters.",
+					"tags": [
+						"research",
+						"foundational",
+						"simulation"
+					]
+				},
+				{
+					"name": "Voyager",
+					"url": "https://github.com/MineDojo/Voyager",
+					"description": "An embodied agent that plays Minecraft by writing and saving its own skills as code, then composing them. The best existing argument for embodiment as a learning signal.",
+					"tags": [
+						"research",
+						"embodied",
+						"foundational"
+					]
+				}
+			]
+		},
+		{
+			"id": "datasets",
+			"title": "Datasets and simulators",
+			"description": "What the models in this list were trained and evaluated on, and where embodied agents go to practise.",
+			"items": [
+				{
+					"name": "Objaverse",
+					"url": "https://objaverse.allenai.org",
+					"description": "Around 800,000 annotated 3D objects, and the XL release pushes past ten million. The dataset that made open 3D generation viable.",
+					"tags": [
+						"dataset",
+						"free",
+						"foundational"
+					]
+				},
+				{
+					"name": "Objaverse-XL",
+					"url": "https://github.com/allenai/objaverse-xl",
+					"description": "The download and processing tooling for the ten-million-object release, including deduplication and rendering scripts.",
+					"tags": [
+						"dataset",
+						"python"
+					]
+				},
+				{
+					"name": "ShapeNet",
+					"url": "https://huggingface.co/datasets/ShapeNet/ShapeNetCore",
+					"description": "The categorised CAD-model dataset that anchored 3D deep learning for a decade, mirrored on Hugging Face while its original site is unreliable.",
+					"tags": [
+						"dataset",
+						"research"
+					]
+				},
+				{
+					"name": "Habitat",
+					"url": "https://github.com/facebookresearch/habitat-lab",
+					"description": "A fast photorealistic simulator for training embodied agents to navigate and manipulate in indoor scenes.",
+					"tags": [
+						"oss",
+						"python",
+						"simulator"
+					]
+				},
+				{
+					"name": "AI2-THOR",
+					"url": "https://github.com/allenai/ai2thor",
+					"description": "Interactive 3D rooms where objects have state: doors open, eggs break, appliances turn on. Built for agents that change the world rather than tour it.",
+					"tags": [
+						"oss",
+						"python",
+						"simulator"
+					]
+				},
+				{
+					"name": "BEHAVIOR",
+					"url": "https://behavior.stanford.edu",
+					"description": "A benchmark of a thousand everyday household activities defined in a logic language, with simulated physics and states.",
+					"tags": [
+						"benchmark",
+						"research"
+					]
+				},
+				{
+					"name": "ScanNet",
+					"url": "http://www.scan-net.org",
+					"description": "Richly annotated RGB-D scans of real indoor spaces, and the benchmark most scene-understanding work still reports on.",
+					"tags": [
+						"dataset",
+						"research"
+					]
+				}
+			]
+		},
+		{
+			"id": "assets",
+			"title": "Free assets",
+			"description": "Models, textures, and lighting you can ship without a lawyer. Every project in this list looks better with a real HDRI behind it.",
+			"items": [
+				{
+					"name": "Poly Haven",
+					"url": "https://polyhaven.com",
+					"description": "HDRIs, PBR textures, and models, all CC0, all high quality, with no account required. Start here.",
+					"tags": [
+						"free",
+						"cc0",
+						"hdri",
+						"textures"
+					]
+				},
+				{
+					"name": "ambientCG",
+					"url": "https://ambientcg.com",
+					"description": "Thousands of CC0 PBR material sets at multiple resolutions, downloadable in bulk.",
+					"tags": [
+						"free",
+						"cc0",
+						"textures"
+					]
+				},
+				{
+					"name": "Kenney",
+					"url": "https://kenney.nl",
+					"description": "Tens of thousands of CC0 game assets, including clean low-poly 3D kits that prototype beautifully.",
+					"tags": [
+						"free",
+						"cc0",
+						"models"
+					]
+				},
+				{
+					"name": "Quaternius",
+					"url": "https://quaternius.com",
+					"description": "Stylised CC0 model packs with consistent proportions across sets, so a scene assembled from several packs still looks intentional.",
+					"tags": [
+						"free",
+						"cc0",
+						"models"
+					]
+				},
+				{
+					"name": "Sketchfab",
+					"url": "https://sketchfab.com",
+					"description": "The largest 3D model library on the web, with a downloadable Creative Commons subset and glTF export.",
+					"tags": [
+						"service",
+						"models"
+					]
+				},
+				{
+					"name": "OpenGameArt",
+					"url": "https://opengameart.org",
+					"description": "A long-running community archive of openly licensed art. Uneven, and it holds things that exist nowhere else.",
+					"tags": [
+						"free",
+						"models",
+						"community"
+					]
+				}
+			]
+		},
+		{
+			"id": "learn",
+			"title": "Learning",
+			"description": "How to get good at this. Read in roughly this order.",
+			"items": [
+				{
+					"name": "three.js manual",
+					"url": "https://threejs.org/manual/",
+					"description": "The official guide, rewritten around real problems rather than API surface. The fastest correct start.",
+					"tags": [
+						"free",
+						"docs"
+					]
+				},
+				{
+					"name": "Discover three.js",
+					"url": "https://discoverthreejs.com",
+					"description": "A free book that teaches the concepts underneath the library, including colour management and performance work most tutorials skip.",
+					"tags": [
+						"free",
+						"book"
+					]
+				},
+				{
+					"name": "Three.js Journey",
+					"url": "https://threejs-journey.com",
+					"description": "Bruno Simon's paid course, and the most thorough path from nothing to shaders and production scenes.",
+					"tags": [
+						"course",
+						"paid"
+					]
+				},
+				{
+					"name": "The Book of Shaders",
+					"url": "https://thebookofshaders.com",
+					"description": "An interactive introduction to fragment shaders. Work through it once and materials stop being magic.",
+					"tags": [
+						"free",
+						"shaders",
+						"interactive"
+					]
+				},
+				{
+					"name": "WebGL Fundamentals",
+					"url": "https://webglfundamentals.org",
+					"description": "What every abstraction in this list is hiding, explained from first principles with runnable examples.",
+					"tags": [
+						"free",
+						"webgl"
+					]
+				},
+				{
+					"name": "WebGPU Fundamentals",
+					"url": "https://webgpufundamentals.org",
+					"description": "The same treatment for WebGPU, which is where the web's rendering stack is heading.",
+					"tags": [
+						"free",
+						"webgpu"
+					]
+				},
+				{
+					"name": "Real-Time Rendering resources",
+					"url": "https://www.realtimerendering.com",
+					"description": "The companion site to the standard reference text, with a maintained portal into graphics literature.",
+					"tags": [
+						"free",
+						"reference",
+						"graphics"
+					]
+				}
+			]
+		}
+	]
+}

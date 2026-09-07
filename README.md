@@ -8752,6 +8752,7 @@ A map of every user-facing route. [`STRUCTURE.md`](STRUCTURE.md) maps each produ
 | **Integrations**     | `/cz`, `/lobehub/iframe`                                                                        | CZ demo, LobeHub plugin                                                                                         |
 | **IBM / Granite**    | `/galaxy`, `/ibm/x402-demo`, `/ibm/hello`                                                       | Granite on watsonx.ai: semantic agent galaxy, pay-per-call Granite demo, hello-world embed                      |
 | **Docs**             | `/docs`, `/docs/widgets`                                                                        | Developer documentation                                                                                         |
+| **Awesome list**     | `/awesome`                                                                                      | Awesome 3D Agents: a curated, link-checked list of the tools for giving an AI a body                            |
 | **Legal**            | `/legal/privacy`, `/legal/tos`                                                                  | Privacy policy and terms                                                                                        |
 
 ---
