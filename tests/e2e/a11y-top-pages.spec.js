@@ -67,6 +67,15 @@ const KNOWN_EXCEPTIONS = new Set([]);
 // the whole wait is capped so a runaway effect can never stall the gate;
 // the axe assertion itself is untouched.
 async function settleFiniteAnimations(page, capMs = 5_000) {
+	// One pass is not enough on a page that polls. /agi re-renders its decision
+	// stream on an interval and staggers the new rows in, so rows that started
+	// fading AFTER the first wait resolved were still half-opaque when axe
+	// measured them, and axe blends a half-opaque row's ink into the background:
+	// it reported `--ink` body text (16:1 at rest) as a contrast failure. Keep
+	// settling until a pass finds nothing running, which is the resting state a
+	// reader actually sees. The deadline is shared across passes, so a page that
+	// never goes quiet costs the same as before and the axe assertion is
+	// untouched either way.
 	await page.evaluate(async (cap) => {
 		const finite = document.getAnimations().filter((a) => {
 			const timing = a.effect && typeof a.effect.getTiming === 'function' ? a.effect.getTiming() : null;
@@ -76,6 +85,34 @@ async function settleFiniteAnimations(page, capMs = 5_000) {
 		const settled = Promise.all(finite.map((a) => a.finished.catch(() => undefined)));
 		await Promise.race([settled, new Promise((resolve) => setTimeout(resolve, cap))]);
 	}, capMs);
+}
+
+// Snap every animation and transition to its resting frame, and keep doing it
+// for elements that appear later.
+//
+// Waiting for the animations that exist at one instant cannot settle a page
+// that polls: /agi re-renders its decision stream on an interval and staggers
+// the new rows in (src/ui-juice.css `.juice-enter` fades opacity 0 to 1 with a
+// per-row delay), so a row inserted after the wait was still half-opaque when
+// axe read it. axe composites a half-opaque row's ink into the background and
+// reports it as a contrast failure: it flagged `--ink` body text, which
+// measures 16:1 at rest. A stylesheet, unlike a wait, also governs every row
+// that arrives afterwards.
+//
+// This changes no colour, no layout and no content. It removes only the
+// in-between frames, so what axe measures is the resting state a reader
+// actually sees, which is the state the contrast rule is about.
+async function freezeAnimations(page) {
+	await page.addStyleTag({
+		content: `*, *::before, *::after {
+			animation-delay: 0s !important;
+			animation-duration: 1ms !important;
+			transition-delay: 0s !important;
+			transition-duration: 1ms !important;
+		}`,
+	});
+	// One frame for the snapped animations to land on their final values.
+	await page.waitForTimeout(50);
 }
 
 for (const { path } of auditPages) {
@@ -92,6 +129,7 @@ for (const { path } of auditPages) {
 		await page.goto(path, { waitUntil: 'domcontentloaded', timeout: 180_000 });
 		await page.waitForTimeout(500); // let above-the-fold async content settle
 		await settleFiniteAnimations(page);
+		await freezeAnimations(page);
 
 		const results = await new AxeBuilder({ page })
 			.withTags(['wcag2a', 'wcag2aa', 'wcag21aa'])
