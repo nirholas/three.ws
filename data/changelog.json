@@ -26861,6 +26861,14 @@
 				"feature",
 				"sdk"
 			]
+		},
+		{
+			"date": "2026-09-07",
+			"title": "The partner-hosted demo page loads all of its pieces again",
+			"summary": "Our partnership page is published once onto a partner's own website, so everything it loads comes from three.ws across origins. Two of its scripts were being refused by the browser there, which quietly cost the page its in-editor map and its iOS handoff. Both are now served with the same cross-origin permission the rest of the page already had, and an audit that loads the page from a foreign origin now passes end to end.",
+			"tags": [
+				"fix"
+			]
 		}
 	]
 }

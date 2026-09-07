@@ -240,7 +240,15 @@
 			"continue": true
 		},
 		{
-			"src": "/(x402|risk-ack|load-module|x402-discover|x402-pay-core|x402-paywall|i18n)\\.js",
+			"src": "/(x402|risk-ack|load-module|x402-discover|x402-pay-core|x402-paywall|i18n|atlas)\\.js",
+			"headers": {
+				"access-control-allow-origin": "*",
+				"cross-origin-resource-policy": "cross-origin"
+			},
+			"continue": true
+		},
+		{
+			"src": "/ios-bridge\\.[0-9a-f]+\\.js",
 			"headers": {
 				"access-control-allow-origin": "*",
 				"cross-origin-resource-policy": "cross-origin"
