@@ -1,0 +1,240 @@
+<!doctype html>
+<html lang="en" class="cv-page" data-shell>
+	<head>
+		<script>
+			/* three.ws theme boot, no-flash; runtime in /theme-switcher.js */ (function () {
+				try {
+					var m = localStorage.getItem('twx_theme');
+					var l =
+						m === 'auto'
+							? window.matchMedia &&
+								window.matchMedia('(prefers-color-scheme: light)').matches
+							: m === 'light';
+					document.documentElement.setAttribute('data-theme', l ? 'light' : 'dark');
+				} catch (e) {
+					document.documentElement.setAttribute('data-theme', 'dark');
+				}
+			})();
+		</script>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<title>Robinhood Portfolios: describe a portfolio, hold it on-chain · three.ws</title>
+		<meta
+			name="description"
+			content="Describe a portfolio in a sentence and get a real basket of Robinhood Chain assets: tokenized equities, crypto majors and chain-native tokens in one index. Weights are committed on-chain as a signed manifest, held in kind, and rebalanced on a published schedule."
+		/>
+		<meta property="og:type" content="website" />
+		<meta property="og:site_name" content="three.ws" />
+		<meta property="og:url" content="https://three.ws/markets/robinhood/portfolios" />
+		<meta property="og:title" content="Robinhood Portfolios: describe a portfolio, hold it on-chain · three.ws" />
+		<meta
+			property="og:description"
+			content="A sentence in, a portfolio out. Tokenized equities, majors and memecoins in one index on Robinhood Chain, with the weights committed on-chain and rebalanced on schedule."
+		/>
+		<meta
+			property="og:image"
+			content="https://three.ws/api/page-og?s=crypto&amp;t=Robinhood+Portfolios&amp;d=Describe+a+portfolio+in+a+sentence+and+hold+it+on+Robinhood+Chain%3A+tokenized+equities%2C+majors+and+chain-native+tokens+in+one+index&amp;p=%2Fmarkets%2Frobinhood%2Fportfolios"
+		/>
+		<meta property="og:image:width" content="1200" />
+		<meta property="og:image:height" content="630" />
+		<meta property="og:image:alt" content="Robinhood Portfolios · three.ws" />
+		<meta property="og:locale" content="en_US" />
+		<meta name="twitter:card" content="summary_large_image" />
+		<meta name="twitter:site" content="@trythreews" />
+		<meta name="twitter:title" content="Robinhood Portfolios · three.ws" />
+		<meta
+			name="twitter:description"
+			content="Describe a portfolio in a sentence. Get a real basket of tokenized equities, majors and memecoins on Robinhood Chain."
+		/>
+		<meta
+			name="twitter:image"
+			content="https://three.ws/api/page-og?s=crypto&amp;t=Robinhood+Portfolios&amp;d=Describe+a+portfolio+in+a+sentence+and+hold+it+on+Robinhood+Chain&amp;p=%2Fmarkets%2Frobinhood%2Fportfolios"
+		/>
+		<meta name="theme-color" content="#09090b" />
+		<link rel="icon" href="/favicon.ico" sizes="any" />
+		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+		<link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+		<link rel="manifest" href="/manifest.webmanifest" />
+		<link rel="stylesheet" href="/fonts/fonts.css" />
+		<link rel="stylesheet" href="/nav.css" />
+		<link rel="stylesheet" href="/src/coin-pages.css" />
+		<link rel="stylesheet" href="/src/hood-portfolios.css" />
+		<link rel="stylesheet" href="/footer.css" />
+		<link rel="canonical" href="https://three.ws/markets/robinhood/portfolios" />
+		<meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1" />
+		<script type="application/ld+json">
+			{
+				"@context": "https://schema.org",
+				"@graph": [
+					{
+						"@type": "WebApplication",
+						"name": "Robinhood Portfolios",
+						"applicationCategory": "FinanceApplication",
+						"operatingSystem": "Web",
+						"url": "https://three.ws/markets/robinhood/portfolios",
+						"description": "Describe a portfolio in a sentence and get a real basket of Robinhood Chain assets: tokenized equities, crypto majors and chain-native tokens, with the weights committed on-chain as a signed manifest and rebalanced on a published schedule.",
+						"offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" },
+						"isPartOf": { "@type": "WebSite", "name": "three.ws", "url": "https://three.ws" }
+					},
+					{
+						"@type": "FAQPage",
+						"mainEntity": [
+							{
+								"@type": "Question",
+								"name": "What can a Robinhood Portfolio hold?",
+								"acceptedAnswer": {
+									"@type": "Answer",
+									"text": "Anything on Robinhood Chain with real on-chain liquidity: tokenized equities and ETFs such as NVDA, SPY and GLD, crypto majors, and chain-native tokens including memecoins. A single portfolio can span all three at once."
+								}
+							},
+							{
+								"@type": "Question",
+								"name": "How does rebalancing work?",
+								"acceptedAnswer": {
+									"@type": "Answer",
+									"text": "The manifest publishes a schedule and target weights. When a rebalance comes due it is proposed, waits out a timelock, then opens as a descending-price offer any address can fill: deliver what the vault is short, receive what it is long. Nobody can trade the fund's assets at a price of their choosing."
+								}
+							},
+							{
+								"@type": "Question",
+								"name": "What happens when a tokenized equity is halted?",
+								"acceptedAnswer": {
+									"@type": "Answer",
+									"text": "Every tokenized equity on Robinhood Chain can be paused by its issuer, and while it is, transfers revert. Issuance, redemption and rebalancing all stop until it resumes, exactly as creation and redemption of a physical ETF stop when its underlying stops."
+								}
+							}
+						]
+					}
+				]
+			}
+		</script>
+	</head>
+	<body>
+		<header><div id="nav-container"></div></header>
+		<script src="/nav.js"></script>
+
+		<main class="cv-container">
+			<nav class="cv-crumbs" aria-label="Breadcrumb">
+				<a href="/markets">Markets</a>
+				<span class="sep" aria-hidden="true">/</span>
+				<a href="/markets/robinhood">Robinhood Chain</a>
+				<span class="sep" aria-hidden="true">/</span>
+				<span class="here">Portfolios</span>
+			</nav>
+
+			<section class="hp-hero">
+				<span class="hp-eyebrow" id="hp-badge" data-live="0">
+					<span class="dot" aria-hidden="true"></span>
+					<span id="hp-badge-text">Connecting to Robinhood Chain…</span>
+				</span>
+
+				<h1 class="hp-h1">Describe a portfolio. Hold it on-chain.</h1>
+				<p class="hp-lede">
+					Robinhood Chain is the one place where <strong>tokenized equities</strong>, <strong>crypto
+					majors</strong> and <strong>memecoins</strong> trade against each other on the same chain. Write a
+					sentence and a screen ranks that whole universe against it. What comes back is a real basket with
+					target weights, held in kind by a vault that rebalances on a published schedule.
+				</p>
+
+				<form id="hp-form" class="hp-composer" autocomplete="off">
+					<label for="hp-prompt">What do you want exposure to?</label>
+					<textarea
+						id="hp-prompt"
+						name="prompt"
+						maxlength="600"
+						placeholder="e.g. AI infrastructure: the chip makers plus the crypto compute tokens, weighted toward whatever is most liquid"
+						aria-describedby="hp-counter hp-status"
+					></textarea>
+					<div class="hp-composer-foot">
+						<span class="hp-counter" id="hp-counter" aria-live="off">0 / 500</span>
+						<button type="submit" class="hp-btn hp-btn-primary" id="hp-submit" disabled>
+							Generate portfolio
+						</button>
+					</div>
+				</form>
+
+				<div class="hp-examples" id="hp-examples" aria-label="Example prompts"></div>
+				<p class="hp-status" id="hp-status" role="status" aria-live="polite"></p>
+			</section>
+
+			<div id="hp-output"></div>
+
+			<dl class="hp-stats" id="hp-stats" aria-label="Universe at a glance"></dl>
+
+			<section class="hp-section">
+				<h2>How it works</h2>
+				<p>
+					Four steps, and only one of them involves a model. The interesting decisions are made before
+					anything touches the chain; what happens on-chain is deliberately the least clever part.
+				</p>
+				<ol class="hp-steps">
+					<li>
+						<h3>The screen runs</h3>
+						<p>
+							Your prompt and the chain's holdable universe go to the model. Every token it returns is
+							checked back against that universe, so anything invented is dropped, never repaired into
+							something plausible.
+						</p>
+					</li>
+					<li>
+						<h3>The manifest is committed</h3>
+						<p>
+							Constituents, weights, schedule, the originating prompt and the universe snapshot are
+							hashed and signed. The hash goes on-chain; the document is content-addressed. It is
+							immutable, so what you bought cannot change underneath you.
+						</p>
+					</li>
+					<li>
+						<h3>The vault holds it in kind</h3>
+						<p>
+							Deliver every constituent to mint, receive every constituent to redeem. The fund never
+							sells anything to let somebody in or out, so it eats no slippage and needs no price
+							oracle to operate.
+						</p>
+					</li>
+					<li>
+						<h3>It rebalances on schedule</h3>
+						<p>
+							When the published interval comes due, the move is offered as a descending-price auction
+							any address can fill. There is no function that lets a manager trade the fund's assets.
+						</p>
+					</li>
+				</ol>
+			</section>
+
+			<section class="hp-section">
+				<h2>Refining mints a new version, it never edits the old one</h2>
+				<p>
+					Elsewhere, refining an index with a follow-up prompt changes the index you already hold. On-chain
+					that is not a feature, it is the definition of a rug: the manifest is the only thing a holder
+					relies on. So a refinement publishes a new portfolio whose parent pointer is the old one. Holders
+					of the original keep exactly what they bought, and the fork pays its lineage a fixed slice of its
+					fees. It is a budget, not a rule, so forking your own portfolio fifty times cannot pay out more than
+					forking it once.
+				</p>
+				<div class="hp-actions">
+					<a class="hp-btn hp-btn-ghost" href="/markets/robinhood/portfolios/universe">Browse the universe</a>
+					<a class="hp-btn hp-btn-ghost" href="/docs/robinhood-portfolios">Read the protocol docs</a>
+					<a class="hp-btn hp-btn-ghost" href="/markets/robinhood">Robinhood Chain market data</a>
+				</div>
+			</section>
+
+			<section class="hp-section">
+				<h2>What this is not</h2>
+				<p>
+					Nothing here is investment advice, and a generated basket is not a recommendation. Tokenized
+					equities on Robinhood Chain are tokenized debt securities issued by Robinhood Assets (Jersey) Ltd
+					and may not be offered, sold or delivered to US persons; this page is display and tooling only.
+					A portfolio holding chain-native tokens can lose all of its value, and a halted equity leg
+					suspends redemption for everyone until its issuer resumes it.
+				</p>
+			</section>
+		</main>
+
+		<script type="module" src="/src/hood-portfolios.js"></script>
+		<script src="/brand.js" defer></script>
+		<div id="footer-container"></div>
+		<script src="/footer.js"></script>
+		<script type="module" src="/i18n.js"></script>
+	</body>
+</html>

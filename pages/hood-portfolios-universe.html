@@ -1,0 +1,152 @@
+<!doctype html>
+<html lang="en" class="cv-page" data-shell>
+	<head>
+		<script>
+			/* three.ws theme boot, no-flash; runtime in /theme-switcher.js */ (function () {
+				try {
+					var m = localStorage.getItem('twx_theme');
+					var l =
+						m === 'auto'
+							? window.matchMedia &&
+								window.matchMedia('(prefers-color-scheme: light)').matches
+							: m === 'light';
+					document.documentElement.setAttribute('data-theme', l ? 'light' : 'dark');
+				} catch (e) {
+					document.documentElement.setAttribute('data-theme', 'dark');
+				}
+			})();
+		</script>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<title>Portfolio universe: every asset a Robinhood Chain index may hold · three.ws</title>
+		<meta
+			name="description"
+			content="The full selectable universe for Robinhood Chain portfolios: every tokenized equity, crypto major and chain-native token with live on-chain liquidity, priced now. Sort and filter by asset class, liquidity, 24h volume and NAV premium."
+		/>
+		<meta property="og:type" content="website" />
+		<meta property="og:site_name" content="three.ws" />
+		<meta property="og:url" content="https://three.ws/markets/robinhood/portfolios/universe" />
+		<meta property="og:title" content="Portfolio universe · Robinhood Chain · three.ws" />
+		<meta
+			property="og:description"
+			content="Every asset a Robinhood Chain portfolio may hold, with live liquidity, volume and NAV premium."
+		/>
+		<meta
+			property="og:image"
+			content="https://three.ws/api/page-og?s=crypto&amp;t=Portfolio+universe&amp;d=Every+asset+a+Robinhood+Chain+portfolio+may+hold%2C+with+live+liquidity%2C+volume+and+NAV+premium&amp;p=%2Fmarkets%2Frobinhood%2Fportfolios%2Funiverse"
+		/>
+		<meta property="og:image:width" content="1200" />
+		<meta property="og:image:height" content="630" />
+		<meta property="og:image:alt" content="Robinhood Chain portfolio universe · three.ws" />
+		<meta property="og:locale" content="en_US" />
+		<meta name="twitter:card" content="summary_large_image" />
+		<meta name="twitter:site" content="@trythreews" />
+		<meta name="twitter:title" content="Portfolio universe · three.ws" />
+		<meta
+			name="twitter:description"
+			content="Every asset a Robinhood Chain portfolio may hold, priced live."
+		/>
+		<meta
+			name="twitter:image"
+			content="https://three.ws/api/page-og?s=crypto&amp;t=Portfolio+universe&amp;d=Every+asset+a+Robinhood+Chain+portfolio+may+hold&amp;p=%2Fmarkets%2Frobinhood%2Fportfolios%2Funiverse"
+		/>
+		<meta name="theme-color" content="#09090b" />
+		<link rel="icon" href="/favicon.ico" sizes="any" />
+		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+		<link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+		<link rel="manifest" href="/manifest.webmanifest" />
+		<link rel="stylesheet" href="/fonts/fonts.css" />
+		<link rel="stylesheet" href="/nav.css" />
+		<link rel="stylesheet" href="/src/coin-pages.css" />
+		<link rel="stylesheet" href="/src/hood-portfolios.css" />
+		<link rel="stylesheet" href="/footer.css" />
+		<link rel="canonical" href="https://three.ws/markets/robinhood/portfolios/universe" />
+		<meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1" />
+		<script type="application/ld+json">
+			{
+				"@context": "https://schema.org",
+				"@graph": [
+					{
+						"@type": "WebPage",
+						"name": "Portfolio universe",
+						"description": "Every asset a Robinhood Chain portfolio may hold, with live on-chain liquidity, 24h volume and NAV premium.",
+						"url": "https://three.ws/markets/robinhood/portfolios/universe",
+						"isPartOf": { "@type": "WebSite", "name": "three.ws", "url": "https://three.ws" }
+					}
+				]
+			}
+		</script>
+	</head>
+	<body>
+		<header><div id="nav-container"></div></header>
+		<script src="/nav.js"></script>
+
+		<main class="cv-container">
+			<nav class="cv-crumbs" aria-label="Breadcrumb">
+				<a href="/markets">Markets</a>
+				<span class="sep" aria-hidden="true">/</span>
+				<a href="/markets/robinhood">Robinhood Chain</a>
+				<span class="sep" aria-hidden="true">/</span>
+				<a href="/markets/robinhood/portfolios">Portfolios</a>
+				<span class="sep" aria-hidden="true">/</span>
+				<span class="here">Universe</span>
+			</nav>
+
+			<h1 class="hp-h1" style="font-size:clamp(1.75rem,4vw,2.5rem)">The universe</h1>
+			<p class="hp-lede">
+				Every asset a portfolio may hold, and the numbers that decide whether it may hold it. A token needs a
+				live pool and a readable price to be selectable, because a constituent that cannot be bought cannot
+				be issued into a basket or rebalanced out of one, however large its market cap.
+			</p>
+
+			<div class="hp-toolbar">
+				<div class="hp-examples" id="hp-filters" style="margin:0" role="group" aria-label="Filter by asset class"></div>
+				<input
+					type="search"
+					class="hp-search"
+					id="hp-search"
+					placeholder="Search symbol, name or address"
+					aria-label="Search the universe"
+				/>
+			</div>
+
+			<p class="hp-status" id="hp-count" aria-live="polite"></p>
+
+			<div class="hp-table-wrap">
+				<table class="hp-table" id="hp-table">
+					<thead>
+						<tr>
+							<th scope="col" data-sort="symbol" aria-sort="none">Asset</th>
+							<th scope="col" data-sort="name" aria-sort="none">Name</th>
+							<th scope="col" class="num" data-sort="priceUsd" aria-sort="none">Price</th>
+							<th scope="col" class="num" data-sort="liquidityUsd" aria-sort="descending">Liquidity</th>
+							<th scope="col" class="num" data-sort="volume24hUsd" aria-sort="none">24h volume</th>
+							<th scope="col" class="num" data-sort="change24hPct" aria-sort="none">24h</th>
+							<th scope="col" class="num" data-sort="premiumPct" aria-sort="none">NAV premium</th>
+						</tr>
+					</thead>
+					<tbody id="hp-tbody"></tbody>
+				</table>
+			</div>
+
+			<p class="hp-note" id="hp-meta" style="margin-top:1rem"></p>
+			<p class="hp-note">
+				<strong>NAV premium</strong> is how far a tokenized equity's on-chain price sits from its Chainlink
+				reference. It is blank for anything without a feed, which is most of the chain: 34 of the 95
+				registry equities carry one, and no memecoin does. A portfolio never depends on a feed to operate,
+				because issuance and redemption are in kind.
+			</p>
+
+			<div class="hp-actions">
+				<a class="hp-btn hp-btn-primary" href="/markets/robinhood/portfolios">Generate a portfolio</a>
+				<a class="hp-btn hp-btn-ghost" href="/docs/robinhood-portfolios">Protocol docs</a>
+			</div>
+		</main>
+
+		<script type="module" src="/src/hood-portfolios-universe.js"></script>
+		<script src="/brand.js" defer></script>
+		<div id="footer-container"></div>
+		<script src="/footer.js"></script>
+		<script type="module" src="/i18n.js"></script>
+	</body>
+</html>

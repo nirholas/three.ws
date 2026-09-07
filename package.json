@@ -157,6 +157,7 @@
 		"build:docs-search": "node scripts/build-docs-search-index.mjs",
 		"check:docs-search": "node scripts/build-docs-search-index.mjs --check",
 		"build:pages": "node scripts/build-page-index.mjs",
+		"hood:universe": "node scripts/build-hood-portfolios-universe.mjs --verbose",
 		"ship": "node packages/shipfeed/bin/shipfeed.mjs --local --changelog data/changelog.json --site https://three.ws",
 		"build:guards": "node scripts/build-guards.mjs",
 		"build:tour-atlas": "node scripts/build-tour-atlas.mjs",

@@ -468,6 +468,10 @@
 				{
 					"label": "The autonomous trading experiment",
 					"path": "trading-experiment"
+				},
+				{
+					"label": "Robinhood Portfolios",
+					"path": "robinhood-portfolios"
 				}
 			]
 		},

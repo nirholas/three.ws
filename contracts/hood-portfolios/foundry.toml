@@ -1,0 +1,54 @@
+# Fletcher reuses the vendored dependencies of the parent `contracts/` project
+# (`../lib`) rather than committing a second copy of forge-std and OpenZeppelin.
+# It keeps its own profile so the parent project's `solc_version`/`evm_version`,
+# which its already-deployed contracts' bytecode depends on, are never changed
+# on Fletcher's behalf.
+[profile.default]
+src = 'src'
+test = 'test'
+script = 'script'
+out = 'out'
+libs = ['../lib']
+solc = '0.8.26'
+evm_version = 'cancun'
+optimizer = true
+optimizer_runs = 800
+via_ir = false
+bytecode_hash = 'none'
+remappings = [
+    '@openzeppelin/contracts/=../lib/openzeppelin-contracts/contracts/',
+    'forge-std/=../lib/forge-std/src/',
+]
+
+[profile.default.fuzz]
+runs = 512
+seed = '0x666c6574'
+
+[profile.ci.fuzz]
+runs = 5000
+
+[profile.default.invariant]
+runs = 32
+depth = 200
+fail_on_revert = false
+
+[lint]
+# Every `block.timestamp` comparison in `src` is a day-scale schedule: a rebalance interval, a
+# proposal timelock, an auction window, a fee accrual. A sequencer nudging the clock by seconds
+# cannot change any of their outcomes, so the warning is noise here and silencing it keeps `src`
+# at a genuine zero so a real finding is visible.
+exclude_lints = ['block-timestamp']
+# The unsafe-cast rule fires on every `address(uint160(0x1000 + i))` that builds a
+# throwaway test actor, where truncation is impossible and annotating each one
+# buries the signal. Tests are excluded and `src` is held to a real zero-warning
+# standard, so a warning there always means something.
+ignore = ['test/**/*.sol']
+
+[fmt]
+line_length = 120
+tab_width = 4
+bracket_spacing = false
+int_types = 'long'
+
+[rpc_endpoints]
+robinhood = "${ROBINHOOD_RPC_URL}"
