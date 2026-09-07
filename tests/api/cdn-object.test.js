@@ -15,7 +15,13 @@ vi.mock('../../api/_lib/env.js', () => ({ env: { S3_BUCKET: 'test-bucket' } }));
 let sendImpl = async () => {
 	throw new Error('r2.send not stubbed for this test');
 };
-vi.mock('../../api/_lib/r2.js', () => ({
+// Only the S3 client is stubbed. The rest of the module stays real, so the
+// handler's fallback branch is judged by the SAME `isStorageInfrastructureError`
+// production runs; a factory that returned `r2` alone left that import
+// undefined and turned every upstream 502 into a 500 the moment cdn-object.js
+// started importing it.
+vi.mock('../../api/_lib/r2.js', async (importOriginal) => ({
+	...(await importOriginal()),
 	r2: { send: (...args) => sendImpl(...args) },
 }));
 
