@@ -64,6 +64,24 @@ re-issue the quotation:
   predates that window. Nothing has ever settled on this rail, including OKX's 2026-08-27 QA
   visit.
 
+### The fix is built and staged for deploy, waiting only on a gcloud login
+
+`/workspaces/.deploy-wt-okx4` holds a clean deploy worktree at `b2231dc20` (which carries the
+fix), fully built: `npm run build:gcp` exited 0 through `check:dist` and `check:pages`, and
+both submit gates are green from inside it (`db:status` reports all migrations applied,
+`check:gcloudignore` reports 2394 reachable modules present and no secrets in the upload).
+The submit itself cannot run from this session: `gcloud` answers
+`Reauthentication failed. cannot prompt during non-interactive execution`, which needs a
+browser login only the owner can complete. After `gcloud auth login`:
+
+```bash
+cd /workspaces/.deploy-wt-okx4 && npm run deploy:gcp:submit && npm run deploy:gcp:purge-cdn
+curl -s https://three.ws/api/version          # expect a SHA at or after b2231dc20
+git worktree remove --force /workspaces/.deploy-wt-okx4
+```
+
+Owner decision 2026-09-07: ship the fix first, hold the resubmission until it is live.
+
 ### Still the only open step, still owner-gated
 
 ```bash
