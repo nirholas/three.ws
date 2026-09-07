@@ -47,6 +47,14 @@
 			<description>A new MCP server drives the Blender you already have installed, with no GUI open and no add-on to install first. An assistant can now read a 3D file and tell you what is actually in it (objects, triangle counts, materials, bones, animations, real-world size), convert between GLB, glTF, FBX, OBJ, STL, PLY, Collada, Alembic, USD and .blend in either direction, render a preview image of a bare asset file that arrives with no camera or lighting of its own, and run a Blender Python script to do the things no single tool covers, like halving a mesh's triangle count and exporting the result in one step. It also reaches back into three.ws: describe something in a sentence and the free text-to-3D lane generates it and opens it in Blender. Blender runs in the background, one process per request, so it works the same on a laptop, a server, or in CI.</description>
 		</item>
 		<item>
+			<title>Shared avatar and agent links now show a real page to Google, not a loading spinner</title>
+			<link>https://three.ws/changelog</link>
+			<guid isPermaLink="false">2026-09-07:Shared avatar and agent links now show a real page to Google, not a loading spinner</guid>
+			<pubDate>Mon, 07 Sep 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>Search engines were shown a different version of every /avatars/... and /agents/... page than people were, and that version had nothing on it: the name and description were hidden in a fallback block that a crawler removes before reading, the rest was a spinner, and the last line of the page sent the crawler straight back to the URL it was already on. Tens of thousands of avatar and agent pages therefore looked identical to Google and were filed as duplicates instead of being listed. Crawlers now get the same content a visitor sees: the name, the description, the rendered card, the creator, the tags, the skills, the on-chain identity, and links onward into the gallery and the directory. A link to an avatar or agent that no longer exists now says so honestly instead of quietly bouncing to a listing page, an id that belongs to the other side of the platform redirects to where it actually lives, and a private agent is no longer readable by anything sending a crawler's name. Signed-in surfaces were also unblocked in robots.txt so their existing no-index instruction can finally be read and obeyed.</description>
+		</item>
+		<item>
 			<title>The Blender tools now show you the render instead of describing it</title>
 			<link>https://three.ws/changelog</link>
 			<guid isPermaLink="false">2026-09-07:The Blender tools now show you the render instead of describing it</guid>

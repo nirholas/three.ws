@@ -3,6 +3,15 @@
 	"entries": [
 		{
 			"date": "2026-09-07",
+			"title": "Shared avatar and agent links now show a real page to Google, not a loading spinner",
+			"summary": "Search engines were shown a different version of every /avatars/... and /agents/... page than people were, and that version had nothing on it: the name and description were hidden in a fallback block that a crawler removes before reading, the rest was a spinner, and the last line of the page sent the crawler straight back to the URL it was already on. Tens of thousands of avatar and agent pages therefore looked identical to Google and were filed as duplicates instead of being listed. Crawlers now get the same content a visitor sees: the name, the description, the rendered card, the creator, the tags, the skills, the on-chain identity, and links onward into the gallery and the directory. A link to an avatar or agent that no longer exists now says so honestly instead of quietly bouncing to a listing page, an id that belongs to the other side of the platform redirects to where it actually lives, and a private agent is no longer readable by anything sending a crawler's name. Signed-in surfaces were also unblocked in robots.txt so their existing no-index instruction can finally be read and obeyed.",
+			"tags": [
+				"fix",
+				"infra"
+			]
+		},
+		{
+			"date": "2026-09-07",
 			"title": "3D generation and the whole site keep working when our asset storage does not",
 			"summary": "Early on 2026-09-07 our object storage stopped accepting the platform's credential, and because every generation parks its reference image there, 3D generation stopped on the website and in ChatGPT at the same time, agent registration could not store its manifest, and images loaded through our CDN stopped resolving. Three things changed so that a storage fault is never again a blank page. Avatars, thumbnails and models now fall back to the bucket's public domain automatically, so the site keeps rendering. When generation genuinely cannot run you get a plain message saying storage is recovering and to try again shortly, instead of a raw error from the storage vendor. And our own health checks now watch the storage credential directly and treat a silent forge as an outage rather than a quiet hour, so we hear about this class of failure before you do.",
 			"tags": [
