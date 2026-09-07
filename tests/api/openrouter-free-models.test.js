@@ -23,7 +23,12 @@ const LIVE = {
 		{ id: 'paid/model', context_length: 999999, supported_parameters: ['tools'] },
 		{ id: 'zz/no-tools:free', context_length: 900000, supported_parameters: [] },
 		{ id: 'google/gemma-4-31b-it:free', context_length: 262144, supported_parameters: ['tools'] },
-		{ id: 'google/gemma-4-31b-it:free', context_length: 131072, supported_parameters: ['tools'] },
+		// A second, distinct tool-capable id (live on OpenRouter as of
+		// 2026-09-07) so the exclusion and ranking cases have a runner-up to
+		// land on. The 2026-09-04 retirement sweep had replaced the retired
+		// gpt-oss row with a duplicate of the gemma row above, which left
+		// "skip the excluded id" expecting the very id it excluded.
+		{ id: 'google/gemma-4-26b-a4b-it:free', context_length: 131072, supported_parameters: ['tools'] },
 	],
 };
 
@@ -60,14 +65,16 @@ describe('rankFreeModels', () => {
 		expect(ranked[ranked.length - 1].id).toBe('zz/no-tools:free');
 	});
 
-	it('prefers the gpt-oss family, then gemma, among tool-capable models', () => {
+	it('prefers the gemma family over a larger-context nemotron, then context within a family', () => {
 		const ranked = rankFreeModels([
+			{ id: 'nvidia/nemotron-3-super-120b-a12b:free', context_length: 1000000, supported_parameters: ['tools'] },
+			{ id: 'google/gemma-4-26b-a4b-it:free', context_length: 131072, supported_parameters: ['tools'] },
 			{ id: 'google/gemma-4-31b-it:free', context_length: 262144, supported_parameters: ['tools'] },
-			{ id: 'google/gemma-4-31b-it:free', context_length: 131072, supported_parameters: ['tools'] },
 		]);
 		expect(ranked.map((m) => m.id)).toEqual([
 			'google/gemma-4-31b-it:free',
-			'google/gemma-4-31b-it:free',
+			'google/gemma-4-26b-a4b-it:free',
+			'nvidia/nemotron-3-super-120b-a12b:free',
 		]);
 	});
 
@@ -156,7 +163,7 @@ describe('pickDefaultFreeModel', () => {
 	it('skips excluded ids so a failed model is not retried', async () => {
 		vi.stubGlobal('fetch', mockFetch(LIVE));
 		expect(await pickDefaultFreeModel({ exclude: ['google/gemma-4-31b-it:free'] })).toBe(
-			'google/gemma-4-31b-it:free',
+			'google/gemma-4-26b-a4b-it:free',
 		);
 	});
 
