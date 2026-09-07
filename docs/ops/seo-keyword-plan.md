@@ -2,7 +2,7 @@
 
 Verified keyword landscape and content calendar for three.ws across its product clusters: 3D generation, AI agents/MCP, Solana/x402/crypto, and enterprise AI (watsonx/Granite). Built 2026-07-17 from a deep-research pass (24 sources fetched, 25 claims adversarially verified, 23 confirmed) plus a live audit of the IBM Community publishing surface. Every SERP observation is dated 2026-07-17; re-verify before acting on this doc more than a quarter later.
 
-Related: [page-audit.md](./page-audit.md) covers on-site quality; this doc covers what to write and where to publish it.
+Related: [page-audit.md](./page-audit.md) covers on-site quality and [search-indexing.md](./search-indexing.md) covers whether a crawler can read a page at all; this doc covers what to write and where to publish it.
 
 ---
 

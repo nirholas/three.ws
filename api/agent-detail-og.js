@@ -1,148 +1,229 @@
 /**
- * SSR OG page for agent detail (/agents/:id)
+ * Crawler page for agent detail (/agents/:id)
  * -------------------------------------------
  * GET /api/agent-detail-og?id=<agentId>
  *
- * Wired via vercel.json: when a social crawler hits /agents/<uuid>,
- * a User-Agent "has" condition rewrites to this endpoint. Returns a minimal
- * HTML page with OG + Twitter Card + Farcaster Frame meta so shared agent
- * links unfurl with a real image and description.
+ * Wired via vercel.json: when a crawler User-Agent hits /agents/<uuid>, a
+ * "has" condition rewrites to this endpoint. Real browsers never reach it, so
+ * this is the only version of the page a search engine or a link unfurler ever
+ * sees, and it has to carry the agent's real content rather than meta tags over
+ * a spinner. See the header of api/_lib/crawler-page.js.
  *
- * Real browsers never reach this route — the rewrite only fires for known
- * bot User-Agents. Mirrors the pattern in api/app-og.js.
+ * Mirrors api/avatar-detail-og.js.
  */
 
 import { sql } from './_lib/db.js';
 import { cors, method, wrap } from './_lib/http.js';
 import { env } from './_lib/env.js';
 import { isUuid } from './_lib/validate.js';
+import { esc, isSearchCrawler, renderCrawlerPage, renderCrawlerNotFound } from './_lib/crawler-page.js';
+import { isIndexableAgent } from './_lib/indexable-entity.js';
 
 export default wrap(async (req, res) => {
 	if (cors(req, res, { methods: 'GET,OPTIONS' })) return;
-	// Crawler-only SSR read. Without this, a POST answered with the 302
-	// passthrough instead of the 405 the advertised Allow set promises.
+	// Crawler-only SSR read. Without this, a POST answered with a page instead
+	// of the 405 the advertised Allow set promises.
 	if (!method(req, res, ['GET'])) return;
 
 	const url = new URL(req.url, 'http://x');
 	const agentId = url.searchParams.get('id');
 	const origin = env.APP_ORIGIN || 'https://three.ws';
+	const ua = req.headers?.['user-agent'];
+	// Only a non-indexing scraper gets bounced to the app. An indexing crawler
+	// runs that script, lands back on this same URL behind the same UA branch,
+	// and loops on an identical response.
+	const redirect = !isSearchCrawler(ua);
 
 	if (!agentId || !isUuid(agentId)) {
-		return passthrough(res, origin);
+		return generic(res, origin, agentId, redirect);
 	}
 
 	let agent;
 	try {
 		[agent] = await sql`
-			SELECT i.id, i.name, i.description, i.skills
+			SELECT i.id, i.name, i.description, i.skills, i.home_url,
+			       i.erc8004_agent_id, i.chain_id, i.created_at, i.updated_at
 			FROM agent_identities i
-			WHERE i.id = ${agentId} AND i.deleted_at IS NULL
+			WHERE i.id = ${agentId} AND i.deleted_at IS NULL AND i.is_public = true
 			LIMIT 1
 		`;
 	} catch {
-		return passthrough(res, origin);
+		// A read failure is ours, not the URL's. 503 asks the crawler to come
+		// back; a 404 or a redirect here would drop a live page from the index.
+		return unavailable(res, origin);
 	}
 
-	if (!agent) return passthrough(res, origin);
+	if (!agent) {
+		// Agents and avatars have separate uuid spaces and links cross over
+		// (see resolveEntity in src/avatar-page.js). Send the crawler to the
+		// path that actually holds the entity instead of reporting nothing.
+		let avatar = null;
+		try {
+			[avatar] = await sql`
+				SELECT id FROM avatars
+				WHERE id = ${agentId} AND deleted_at IS NULL AND visibility = 'public' LIMIT 1
+			`;
+		} catch {
+			return unavailable(res, origin);
+		}
+		if (avatar) {
+			res.statusCode = 301;
+			res.setHeader('location', `${origin}/avatars/${agentId}`);
+			res.setHeader('cache-control', 'public, max-age=300');
+			res.end();
+			return;
+		}
+		return gone(res, origin);
+	}
 
 	const title = agent.name || 'Agent';
-	const baseDesc = agent.description || 'An AI agent on three.ws — with a body, a place, and an identity.';
-	const skills = agent.skills || [];
+	const baseDesc =
+		agent.description || 'An AI agent on three.ws, with a body, a place, and an identity.';
+	const skills = Array.isArray(agent.skills) ? agent.skills : [];
 	const skillSuffix = skills.length
 		? ` Skills: ${skills.slice(0, 4).join(', ')}${skills.length > 4 ? '…' : ''}.`
 		: '';
 	const desc = baseDesc + skillSuffix;
 
-	// Unfurl with the dynamic wallet TRADING CARD (api/og/agent.js) — the same
+	// Unfurl with the dynamic wallet TRADING CARD (api/og/agent.js) - the same
 	// living card shown on the page (avatar, vanity address, live net worth, P&L,
 	// reputation tier, finish), rendered from real data. The card embeds the
 	// avatar itself, so a shared link previews with identity + wallet, not a bare
 	// thumbnail. The card endpoint falls back to the brand image if it can't render.
 	const ogImage = `${origin}/api/og/agent?id=${encodeURIComponent(agentId)}`;
-
 	const pageUrl = `${origin}/agents/${agentId}`;
+
+	const facts = [];
+	if (skills.length) {
+		facts.push({
+			term: 'Skills',
+			detail: skills.slice(0, 12).map((s) => esc(s)).join(', '),
+		});
+	}
+	if (agent.erc8004_agent_id) {
+		facts.push({
+			term: 'On-chain identity',
+			detail: `ERC-8004 agent #${esc(agent.erc8004_agent_id)}${agent.chain_id ? ` on chain ${esc(agent.chain_id)}` : ''}`,
+		});
+	}
+	if (agent.home_url && /^https?:\/\//i.test(agent.home_url)) {
+		const h = esc(agent.home_url);
+		facts.push({ term: 'Home', detail: `<a href="${h}" rel="nofollow noopener">${h}</a>` });
+	}
+	if (agent.created_at) facts.push({ term: 'Registered', detail: isoDay(agent.created_at) });
 
 	res.statusCode = 200;
 	res.setHeader('content-type', 'text/html; charset=utf-8');
 	res.setHeader('cache-control', 'public, max-age=60, s-maxage=600, stale-while-revalidate=3600');
-	res.end(renderHtml({ agentId, title, desc, pageUrl, ogImage, origin }));
+	res.end(
+		renderCrawlerPage({
+			title,
+			desc,
+			pageUrl,
+			ogImage,
+			origin,
+			ogType: 'profile',
+			frameButton: `Meet ${title}`,
+			redirect,
+			// An untouched onboarding row is identical to every other one, so it
+			// unfurls and renders but never asks to be indexed.
+			noindex: !isIndexableAgent(agent),
+			trail: [
+				{ name: 'Home', path: '/' },
+				{ name: 'Agents', path: '/agents' },
+				{ name: title, path: `/agents/${agentId}` },
+			],
+			facts,
+			// No skill chips: the directory filters on ?q= over name and
+			// description, not on a skill facet, so a chip would look like a
+			// filter and return an unfiltered list. The skills are in the facts
+			// row and in featureList below.
+			actions: [
+				{ label: 'View in AR', href: `/agents/${agentId}/ar`, primary: true },
+				{ label: 'Agent directory', href: '/agents' },
+				{ label: 'Build an agent', href: '/create' },
+			],
+			related: [
+				{ label: 'Agent directory', href: '/agents' },
+				{ label: 'Agent economy', href: '/agent-economy' },
+				{ label: 'Agent marketplace', href: '/marketplace' },
+				{ label: 'Avatar gallery', href: '/gallery' },
+			],
+			jsonLd: {
+				'@type': 'SoftwareApplication',
+				'@id': pageUrl,
+				name: title,
+				description: desc,
+				url: pageUrl,
+				image: ogImage,
+				applicationCategory: 'AI agent',
+				operatingSystem: 'Web',
+				...(skills.length ? { featureList: skills.slice(0, 12) } : {}),
+				...(agent.created_at ? { dateCreated: isoDay(agent.created_at) } : {}),
+				...(agent.updated_at ? { dateModified: isoDay(agent.updated_at) } : {}),
+				publisher: { '@type': 'Organization', name: 'three.ws', url: origin },
+			},
+		}),
+	);
 });
 
-function passthrough(res, origin) {
-	res.statusCode = 302;
-	res.setHeader('location', `${origin}/agents`);
-	res.setHeader('cache-control', 'no-cache');
-	res.end();
-}
-
-function renderHtml({ agentId, title, desc, pageUrl, ogImage, origin }) {
-	const t = esc(title);
-	const d = esc(desc);
-	const agentUrl = `/agents/${agentId}`;
-	return `<!doctype html>
-<html lang="en">
-<head>
-	<meta charset="utf-8">
-	<meta http-equiv="X-UA-Compatible" content="IE=edge">
-	<title>${t} — three.ws</title>
-	<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-	<meta name="description" content="${d}">
-	<meta name="theme-color" content="#06070a">
-
-	<meta property="og:type" content="profile">
-	<meta property="og:site_name" content="three.ws">
-	<meta property="og:title" content="${t} — three.ws">
-	<meta property="og:description" content="${d}">
-	<meta property="og:url" content="${esc(pageUrl)}">
-	<meta property="og:image" content="${esc(ogImage)}">
-	<meta property="og:image:width" content="1200">
-	<meta property="og:image:height" content="630">
-	<meta property="og:image:alt" content="${t} on three.ws">
-
-	<meta name="twitter:card" content="summary_large_image">
-	<meta name="twitter:title" content="${t} — three.ws">
-	<meta name="twitter:description" content="${d}">
-	<meta name="twitter:image" content="${esc(ogImage)}">
-	<meta name="twitter:creator" content="@trythreews">
-
-	<meta property="fc:frame" content="vNext">
-	<meta property="fc:frame:image" content="${esc(ogImage)}">
-	<meta property="fc:frame:image:aspect_ratio" content="1.91:1">
-	<meta property="fc:frame:button:1" content="Meet ${t}">
-	<meta property="fc:frame:button:1:action" content="link">
-	<meta property="fc:frame:button:1:target" content="${esc(pageUrl)}">
-
-	<link rel="canonical" href="${esc(pageUrl)}">
-	<link rel="shortcut icon" href="/favicon.ico">
-
-	<style>
-		html,body{margin:0;padding:0;background:#06070a;color:#e0e0e0;font-family:Inter,system-ui,sans-serif;height:100%}
-		.shell{display:grid;place-items:center;min-height:100vh;text-align:center;padding:2rem;gap:1rem}
-		.shell a{color:#e0e0e0;text-decoration:underline;text-underline-offset:3px}
-		.spinner{width:28px;height:28px;border:2px solid rgba(255,255,255,0.1);border-top-color:rgba(255,255,255,0.6);border-radius:50%;animation:spin 0.9s linear infinite;margin:0 auto}
-		@keyframes spin{to{transform:rotate(360deg)}}
-		p{margin:0;color:rgba(255,255,255,0.5);font-size:14px}
-	</style>
-</head>
-<body>
-	<noscript>
-		<div class="shell">
-			<h1>${t}</h1>
-			<p>${d}</p>
-			<p><a href="${esc(pageUrl)}">View agent</a> · <a href="${esc(origin)}/agents">Browse agents</a></p>
-		</div>
-	</noscript>
-	<div class="shell" aria-live="polite">
-		<div class="spinner" aria-hidden="true"></div>
-		<p>Loading ${t}…</p>
-	</div>
-	<script>(function(){window.location.replace(${JSON.stringify(agentUrl)});})()</script>
-</body>
-</html>`;
-}
-
-function esc(s) {
-	return String(s ?? '').replace(/[&<>"']/g, (c) =>
-		({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c],
+/** An id we cannot read: keep the unfurl useful, keep the URL out of the index. */
+function generic(res, origin, agentId, redirect) {
+	const target = agentId ? `/agents/${encodeURIComponent(agentId)}` : '/agents';
+	res.statusCode = 200;
+	res.setHeader('content-type', 'text/html; charset=utf-8');
+	res.setHeader('cache-control', 'public, max-age=60, s-maxage=600');
+	res.end(
+		renderCrawlerNotFound({
+			heading: 'Agent on three.ws',
+			message: 'Open this agent on three.ws to see its body, its wallet, and what it can do.',
+			origin,
+			actions: [
+				{ label: 'Open the agent', href: target },
+				{ label: 'Agent directory', href: '/agents' },
+			],
+			redirect: redirect ? target : '',
+		}),
 	);
+}
+
+/** Nothing public lives at this id. 404 so the URL leaves the index cleanly. */
+function gone(res, origin) {
+	res.statusCode = 404;
+	res.setHeader('content-type', 'text/html; charset=utf-8');
+	res.setHeader('cache-control', 'public, max-age=300');
+	res.end(
+		renderCrawlerNotFound({
+			heading: 'This agent is not public',
+			message:
+				'The agent behind this link was retired, or its owner keeps it private. The directory lists the ones that are live.',
+			origin,
+			actions: [
+				{ label: 'Agent directory', href: '/agents' },
+				{ label: 'Build an agent', href: '/create' },
+			],
+		}),
+	);
+}
+
+/** Our read failed. Ask the crawler to retry rather than losing the page. */
+function unavailable(res, origin) {
+	res.statusCode = 503;
+	res.setHeader('content-type', 'text/html; charset=utf-8');
+	res.setHeader('retry-after', '120');
+	res.setHeader('cache-control', 'no-store');
+	res.end(
+		renderCrawlerNotFound({
+			heading: 'Agent temporarily unavailable',
+			message: 'three.ws could not load this agent just now. Please try again in a moment.',
+			origin,
+			actions: [{ label: 'Agent directory', href: '/agents' }],
+		}),
+	);
+}
+
+/** YYYY-MM-DD, the only precision a crawler page needs. */
+function isoDay(v) {
+	const t = v instanceof Date ? v : new Date(v);
+	return Number.isNaN(t.getTime()) ? '' : t.toISOString().slice(0, 10);
 }

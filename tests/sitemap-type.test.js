@@ -88,8 +88,14 @@ beforeEach(() => {
 	db.queries = [];
 	db.fail = null;
 	db.rows = new Map([
-		['agent_identities', [{ id: 'agent-1', updated_at: AT, created_at: AT }]],
-		['avatars', [{ id: 'avatar-1', updated_at: null, created_at: AT }]],
+		[
+			'agent_identities',
+			[{ id: 'agent-1', name: 'Atlas', description: 'Watches markets.', updated_at: AT, created_at: AT }],
+		],
+		[
+			'avatars',
+			[{ id: 'avatar-1', name: 'Nova', description: 'A chrome scout.', alt_text: null, updated_at: null, created_at: AT }],
+		],
 		['widgets', [{ id: 'widget-1', updated_at: AT, created_at: AT }]],
 		['users u', [{ username: 'realhuman', updated_at: AT, created_at: AT }]],
 	]);
@@ -139,6 +145,32 @@ describe('GET /sitemap/<type>.xml: the six real types', () => {
 		const res = await call('profiles');
 		expectWellFormed(res.body);
 		expect(res.body).toContain('<loc>https://three.ws/u/a&amp;b&lt;c&gt;d&quot;e&apos;f</loc>');
+	});
+
+	it('leaves untouched onboarding rows out of the agents and avatars files', async () => {
+		// Same name, same description, different uuid: nothing a crawler can use
+		// to tell one from the next, so neither belongs in a sitemap.
+		db.rows.set('agent_identities', [
+			{ id: 'real-1', name: 'Atlas', description: 'Watches markets.', updated_at: AT, created_at: AT },
+			{
+				id: 'starter-1',
+				name: 'My First Agent',
+				description:
+					'A friendly starter agent. Edit the personality and attach a 3D avatar \u2014 it goes live immediately.',
+				updated_at: AT,
+				created_at: AT,
+			},
+		]);
+		db.rows.set('avatars', [
+			{ id: 'real-2', name: 'Nova', description: 'A chrome scout.', alt_text: null, updated_at: AT, created_at: AT },
+			{ id: 'blank-2', name: 'Avatar', description: null, alt_text: null, updated_at: AT, created_at: AT },
+		]);
+
+		const agents = locs((await call('agents')).body);
+		expect(agents).toEqual(['https://three.ws/agents/real-1']);
+
+		const avatars = locs((await call('avatars')).body);
+		expect(avatars).toEqual(['https://three.ws/avatars/real-2']);
 	});
 
 	it('drains the news archive newest month first', async () => {

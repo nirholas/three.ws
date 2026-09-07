@@ -10,6 +10,7 @@
 
 import { apiFetch } from './api.js';
 import { escapeHtml, fmtPct, compact, identicon } from './trader-format.js';
+import { markNoindex } from './seo-meta.js';
 
 const $ = (s, r = document) => r.querySelector(s);
 
@@ -257,6 +258,8 @@ function wireSubscribe() {
 }
 
 function errorState(msg) {
+	// A 200 with "not found" in the body is a soft 404 to a crawler. Say so.
+	markNoindex();
 	const root = $('#sd-root');
 	root.setAttribute('aria-busy', 'false');
 	root.innerHTML = `<div class="sm-empty"><h1 id="sd-title" class="sd-error-title">${escapeHtml(msg)}</h1><p>This feed may have been paused, made unlisted, or never existed.</p><div class="sm-empty-actions"><a class="sm-cta" href="/signals">Browse all feeds →</a></div></div>`;

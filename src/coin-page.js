@@ -18,6 +18,7 @@ import {
 	timeAgo,
 	escapeHtml as esc,
 } from './shared/coin-format.js';
+import { markNoindex } from './seo-meta.js';
 
 const TIME_RANGES = [
 	{ label: '24H', days: 1 },
@@ -1046,6 +1047,8 @@ async function loadMarkets(coin) {
 // ── Not found / error states ────────────────────────────────────────────────
 
 function renderNotFound(id) {
+	// A 200 with "not found" in the body is a soft 404 to a crawler. Say so.
+	markNoindex();
 	const mintish = MINT_RE.test(id);
 	$('cv-head').innerHTML = `
 		<h1 class="cv-h1">Coin not found</h1>

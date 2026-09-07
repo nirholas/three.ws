@@ -24,6 +24,7 @@ import {
 	embedSnippet,
 	chipsFor,
 } from './model-lib.js';
+import { markNoindex, setCanonical } from './seo-meta.js';
 
 const log = createLogger('model-page');
 const $ = (id) => document.getElementById(id);
@@ -131,8 +132,7 @@ function patchMeta() {
 	set('meta[property="og:url"]', `https://three.ws/m/${c.id}`);
 	set('meta[property="og:image"]', `https://three.ws/api/forge/${c.id}/og`);
 	set('meta[name="twitter:image"]', `https://three.ws/api/forge/${c.id}/og`);
-	const canonical = document.querySelector('link[rel="canonical"]');
-	if (canonical) canonical.setAttribute('href', `https://three.ws/m/${c.id}`);
+	setCanonical(`/m/${c.id}`);
 }
 
 // ── viewer hero ──────────────────────────────────────────────────────────────
@@ -764,6 +764,8 @@ function renderSuggested() {
 // ── error states ─────────────────────────────────────────────────────────────
 
 function renderMissing(msg) {
+	// A 200 with "not found" in the body is a soft 404 to a crawler. Say so.
+	markNoindex();
 	const shell = $('mp-shell');
 	if (!shell) return;
 	shell.setAttribute('aria-busy', 'false');

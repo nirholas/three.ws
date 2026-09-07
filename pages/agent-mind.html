@@ -6,6 +6,10 @@
 		<title data-i18n="agent_mind.meta_title">Mind Palace — three.ws</title>
 		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
 		<meta name="theme-color" content="#06080f" />
+		<!-- One agent, one indexable page: /agents/:id. This view is reachable at
+		     both /agents/:id/mind and /agent/:id/mind and renders the same shell for
+		     every agent, so indexing it would file thousands of identical URLs. -->
+		<meta name="robots" content="noindex, follow" />
 		<meta name="description" content="Walk through your agent's mind — every memory as a tangible object you can see, search, pin, and forget."  data-i18n-attr="content:agent_mind.meta_description"/>
 
 		<meta property="og:type" content="website">

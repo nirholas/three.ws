@@ -17,6 +17,7 @@ import { reportServerError, redactUrl } from '../_lib/http.js';
 import { getMonths, loadMonth } from '../_lib/news-archive-store.js';
 import { storyPath } from '../../src/shared/news-links.js';
 import { isSuppressed } from '../_lib/news-rights.js';
+import { isIndexableAgent, isIndexableAvatar } from '../_lib/indexable-entity.js';
 
 const ORIGIN = env.APP_ORIGIN;
 const MAX_URLS = 45_000;
@@ -155,35 +156,54 @@ async function coreSitemap() {
 }
 
 async function agentsSitemap() {
+	// Drop the untouched onboarding rows: 1,359 of the 3,397 public agents still
+	// carried the starter name and description on 2026-09-07, and they are
+	// duplicates of each other by construction (api/_lib/indexable-entity.js).
+	// The filter runs in JS rather than SQL so one definition of "indexable"
+	// serves both this file and the crawler page, which must agree. The
+	// predicate only tests whether the prose is empty and whether it opens with
+	// the starter copy, so a prefix is all it needs and the row stays small.
 	const rows = await sql`
-		select id, updated_at, created_at
+		select id, name, left(description, 64) as description, updated_at, created_at
 		from agent_identities
 		where deleted_at is null and is_public = true
 		order by coalesce(updated_at, created_at) desc
 		limit ${MAX_URLS}
 	`;
-	return rows.map((r) => ({
-		loc: `${ORIGIN}/agents/${r.id}`,
-		lastmod: fmtDate(r.updated_at || r.created_at),
-		changefreq: 'weekly',
-		priority: '0.7',
-	}));
+	return rows
+		.filter(isIndexableAgent)
+		.map((r) => ({
+			loc: `${ORIGIN}/agents/${r.id}`,
+			lastmod: fmtDate(r.updated_at || r.created_at),
+			changefreq: 'weekly',
+			priority: '0.7',
+		}));
 }
 
 async function avatarsSitemap() {
+	// Same filter as agentsSitemap: an avatar still carrying its default name with
+	// nothing written about it cannot be told apart from the next one. It removes
+	// far less here (170 of 67,164 on 2026-09-07) because a generated avatar
+	// still gets its own description and tags. Filtering after the cap rather
+	// than widening the fetch is deliberate: the public set is already half again
+	// larger than the 45k ceiling, so the file is truncated either way and
+	// pulling 90k rows into memory to reclaim 0.25% of the slots is not a trade.
 	const rows = await sql`
-		select id, updated_at, created_at
+		select id, name, left(description, 64) as description, left(alt_text, 64) as alt_text,
+		       updated_at, created_at
 		from avatars
 		where deleted_at is null and visibility = 'public'
 		order by coalesce(updated_at, created_at) desc
 		limit ${MAX_URLS}
 	`;
-	return rows.map((r) => ({
-		loc: `${ORIGIN}/avatars/${r.id}`,
-		lastmod: fmtDate(r.updated_at || r.created_at),
-		changefreq: 'weekly',
-		priority: '0.6',
-	}));
+	return rows
+		.filter(isIndexableAvatar)
+		.map((r) => ({
+			loc: `${ORIGIN}/avatars/${r.id}`,
+			lastmod: fmtDate(r.updated_at || r.created_at),
+			changefreq: 'weekly',
+			priority: '0.6',
+		}));
 }
 
 async function widgetsSitemap() {

@@ -1,10 +1,14 @@
 User-agent: *
 Allow: /
-Disallow: /my-agents
-Disallow: /dashboard
-Disallow: /settings
 Disallow: /api/
 Disallow: /studio-deposit-harness*
+
+# /dashboard, /settings and /my-agents are signed-in surfaces and every one of
+# their pages carries <meta name="robots" content="noindex">. A Disallow here
+# would hide that tag from the crawler that needs to read it: Google kept them
+# in the index as bare URLs ("Indexed, though blocked by robots.txt") precisely
+# because it was never allowed to fetch the page and see the noindex. Crawling
+# is what removes them, so leave these open.
 
 # Embed routes serve raw runtime, not human content; keep them out of SERPs.
 Disallow: /agent/*/embed
