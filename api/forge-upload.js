@@ -18,7 +18,7 @@
 import { randomUUID } from 'node:crypto';
 import { cors, json, method, readJson, wrap, rateLimited } from './_lib/http.js';
 import { limits, clientIp } from './_lib/rate-limit.js';
-import { presignUpload, publicUrl } from './_lib/r2.js';
+import { presignUpload, publicUrl, objectStorageConfigured } from './_lib/r2.js';
 import { hashClient } from './_lib/forge-store.js';
 
 // Accepted reference-image types → file extension for the storage key.
@@ -30,16 +30,15 @@ const CONTENT_TYPE_EXT = Object.freeze({
 
 const MAX_IMAGE_BYTES = 8 * 1024 * 1024; // matches forge-store's preview copy cap
 
-// Upload needs object storage (R2/S3). Detect from raw env so a deployment
-// without storage degrades to the "paste a URL" path rather than 500-ing.
+// Upload needs object storage (R2/S3), and the check lives in r2.js so this
+// route cannot drift from it. That module trims before testing: a credential
+// that is only a trailing newline reads truthy through a raw `process.env`
+// test, so an untrimmed copy here would call storage healthy and hand the
+// browser a presigned URL that answers 403 SignatureDoesNotMatch. The 403
+// carries no CORS header, so the page reports "Network error during upload"
+// instead of the designed "paste a URL" fallback below.
 function storageConfigured() {
-	return Boolean(
-		process.env.S3_ENDPOINT &&
-			process.env.S3_BUCKET &&
-			process.env.S3_PUBLIC_DOMAIN &&
-			process.env.S3_ACCESS_KEY_ID &&
-			process.env.S3_SECRET_ACCESS_KEY,
-	);
+	return objectStorageConfigured();
 }
 
 function clientKeyFrom(req) {

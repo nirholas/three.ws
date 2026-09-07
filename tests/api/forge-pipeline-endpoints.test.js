@@ -113,9 +113,14 @@ vi.mock('../../api/_lib/forge-store.js', () => ({
 }));
 
 const presignMock = vi.fn(async ({ key }) => `https://r2.example/${key}?sig=abc`);
+// Storage config is read through r2.js so the route cannot drift from the
+// trimmed check; default configured, flipped per test for the 503 fallback.
+const storageState = { configured: true };
+
 vi.mock('../../api/_lib/r2.js', () => ({
 	presignUpload: (...a) => presignMock(...a),
 	publicUrl: (key) => `https://cdn.example/${key}`,
+	objectStorageConfigured: () => storageState.configured,
 }));
 
 vi.mock('../../api/_lib/auth.js', () => ({
@@ -307,6 +312,27 @@ describe('forge-upload', () => {
 		expect(out.method).toBe('PUT');
 		expect(out.headers['content-type']).toBe('image/png');
 		expect(out.upload_url).toContain(out.storage_key);
+	});
+
+	// A rejected or whitespace-only R2 credential must degrade to the designed
+	// "paste a URL" 503. Before the route shared r2.js's trimmed check it would
+	// hand out a presigned URL that answers 403 with no CORS header, which the
+	// page can only report as "Network error during upload".
+	it('503s to the paste-a-URL fallback when object storage is unconfigured', async () => {
+		storageState.configured = false;
+		try {
+			const res = await call(upload, {
+				method: 'POST',
+				url: '/api/forge-upload',
+				headers: { 'x-forge-client': 'browser-1' },
+				body: { content_type: 'image/png', size_bytes: 1_000 },
+			});
+			expect(res.statusCode).toBe(503);
+			expect(parse(res).error).toBe('unconfigured');
+			expect(presignMock).not.toHaveBeenCalled();
+		} finally {
+			storageState.configured = true;
+		}
 	});
 
 	it('rejects a prototype key as a content type', async () => {
