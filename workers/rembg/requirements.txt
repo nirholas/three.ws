@@ -6,7 +6,11 @@ uvicorn[standard]==0.32.1
 # made every rebuild a different inference runtime.
 rembg==2.0.59
 onnxruntime==1.28.0
-Pillow==11.0.0
+# Pillow 12.3.0, not 11.x: every 11.x release carries open advisories, and this
+# service decodes an image the caller supplied, which is the exact path the heap
+# out-of-bounds writes in Image.paste/crop and the PSD and font loaders live on.
+# `npm run audit:deps` is what surfaces the next one.
+Pillow==12.3.0
 google-cloud-storage==2.19.0
 httpx==0.27.2
 pydantic==2.10.3

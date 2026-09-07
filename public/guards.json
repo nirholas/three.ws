@@ -1255,6 +1255,22 @@
 				},
 				"expect": "9.9.9"
 			}
+		},
+		{
+			"id": "check-deps",
+			"script": "scripts/check-deps.mjs",
+			"npm": "audit:deps",
+			"title": "Python worker dependencies",
+			"protects": "No pinned Python dependency in workers/, services/ or packages/ carries a known vulnerability in the OSV database.",
+			"why": "npm audit covers the JavaScript tree and nothing covered the other half of the platform. Twenty requirements files pin the runtime of every GPU and CPU worker, and a pinned version never gets a security bump unless somebody goes looking. The workers that decode caller-supplied images and meshes are exactly where an image-parsing overflow matters.",
+			"stages": [
+				"manual"
+			],
+			"needs": "network",
+			"proof": {
+				"kind": "live",
+				"reason": "Queries the OSV database over its public API for every pinned requirement, so the answer changes as advisories are published and there is nothing offline to mutate. The requirement parsing it depends on is covered by tests/check-deps.test.js instead."
+			}
 		}
 	],
 	"exempt": [

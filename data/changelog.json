@@ -26948,6 +26948,15 @@
 				"improvement"
 			],
 			"link": "/forge-studio"
+		},
+		{
+			"date": "2026-09-07",
+			"title": "Security: the image and mesh workers now run patched libraries",
+			"summary": "The services that strip a background, convert a mesh, and paint a texture all decode a file you upload, and they were pinned to an image library with a long list of published flaws, including several that let a crafted image corrupt memory. Those three services now run the patched release, and the mesh converter's 3D-format library was moved off a version with a critical flaw of its own. There is also a new check that scans every pinned Python dependency across the whole worker fleet against the public vulnerability database, so the next one gets found rather than waited for.",
+			"tags": [
+				"security",
+				"infra"
+			]
 		}
 	]
 }

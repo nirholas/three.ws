@@ -213,6 +213,7 @@
 		"audit:pages": "node scripts/audit-page-index.mjs --strict",
 		"audit:meetup": "node scripts/meetup-audit.mjs",
 		"audit:docs": "node scripts/audit-docs.mjs",
+		"audit:deps": "node scripts/check-deps.mjs",
 		"audit:upstreams": "node scripts/audit-upstreams.mjs",
 		"audit:upstreams:map": "node scripts/audit-upstreams.mjs --map",
 		"docs:freshness": "node scripts/doc-freshness.mjs",

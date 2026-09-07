@@ -6,14 +6,21 @@ numpy==1.26.4
 # Quad/low-poly UV atlas generation (re-unwrap before texture re-bake). MIT.
 xatlas==0.0.9
 # Texture atlas read/write for the re-bake step.
-Pillow==11.0.0
+# Pillow 12.3.0, not 11.x: every 11.x release carries open advisories, several of
+# them heap out-of-bounds writes reachable from a decoded image. `npm run
+# audit:deps` surfaces the next one.
+Pillow==12.3.0
 google-cloud-storage==2.19.0
 httpx==0.27.2
 pydantic==2.10.3
 # FBX/DAE input loading via the assimp python bindings (trimesh backend).
 pyassimp==5.2.5
 # USD / USDZ support
-usd-core==24.11
+# usd-core 25.11, not 24.11: 24.11 carries a CRITICAL Sdf_PathNode use-after-free
+# (GHSA-58p5-r2f6-g2cj) and a file-parsing use-after-free, both RCE-class. This
+# worker only authors USD, it never parses a caller's, so the exposure was
+# narrow, but a pinned CRITICAL is not a thing to keep.
+usd-core==25.11
 # FBX *export* with skeletons via headless Blender (io_scene_fbx). trimesh/assimp
 # can't write a rigged FBX; Blender 4.2 LTS ships the Python 3.11 ABI this image
 # uses. See blender_fbx.py and output_format=fbx.
