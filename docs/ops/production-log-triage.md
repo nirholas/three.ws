@@ -100,11 +100,31 @@ rejected the manifest`, or `object_storage: down` in `/api/healthz`.
 recognized (that would be `InvalidAccessKeyId`); the SECRET is wrong. Every signed
 operation fails at once, read and write.
 
-**Blast radius, which is the whole product.** 3D generation dies before it writes a
-row: the reference image cannot be parked, so text→3D fails on the website AND on
-the ChatGPT surfaces (they share the bucket, not the endpoint). Uploads cannot land.
-Agent registration cannot store its manifest. `/cdn/*` cannot read an object, so
-every avatar, thumbnail and GLB on the site falls back to the public bucket domain.
+**Blast radius.** Re-probed live on 2026-09-07 15:44-16:05 UTC, because the lanes do
+NOT all fail the same way and treating them as one outage sends you after the wrong
+thing:
+
+- **text→3D is dead.** `POST /api/forge {"prompt":...}` answers `502
+  generation_failed` and surfaces R2's `SignatureDoesNotMatch` sentence verbatim to
+  the caller. The reference image cannot be parked, so the run dies before it starts.
+  Same on the ChatGPT surfaces (they share the bucket, not the endpoint).
+- **image→3D from a pasted URL still works, non-durably.** It reaches `status:"done"`
+  with a real GLB on the GCS raw-mesh bucket (`storage.googleapis.com/
+  three-ws-avatar-reconstructions/`, verified 200 `model/gltf-binary`), because that
+  hop never touches R2. But `materializeCreation` cannot copy it, so the reply carries
+  `durable:false`: no R2 copy, no DB creation row, no gallery entry, and the mesh is
+  only as long-lived as the raw bucket. This is the workaround to give users.
+- **Uploads cannot land**, which is what users actually report. `POST
+  /api/forge-upload` presigns fine (200) and the R2 CORS preflight passes, then the
+  browser's `PUT` answers `403 SignatureDoesNotMatch` with NO
+  `Access-Control-Allow-Origin` on the 403 itself. The browser therefore hides the
+  status, `fetch` throws, and `/forge` can only say **"Network error during upload"**
+  (`src/forge.js`), never the `Storage rejected the file (403)` branch beside it. Treat
+  that phrase in a user report as this outage until proven otherwise.
+- **Agent registration** cannot store its manifest. **`/cdn/*`** cannot read an object
+  and answers `502 upstream_error` until the public-bucket fallback (`36b67b8a8`,
+  `99c521446`, `2ab1cb56a`) is actually deployed; those commits sat on `main` unshipped
+  while production ran `8770c06c2`.
 
 **First seen 2026-09-07**, ~00:19 UTC: generation stopped dead for nearly five hours
 and was reported by users in Telegram, not by us, because nothing here had a signal
