@@ -437,6 +437,12 @@ function render() {
 	const grid = $('mn-grid');
 	const items = visibleItems();
 
+	// innerHTML detaches the previous cards, so drop the observer and viewer
+	// bookkeeping that still points at them. Without this a few filter switches
+	// leave the budget spent on nodes that are no longer on the page.
+	posterlessObserver.disconnect();
+	while (liveViewers.length) disposeViewer(liveViewers[liveViewers.length - 1]);
+
 	if (!items.length) {
 		grid.dataset.state = 'empty';
 		grid.innerHTML = emptyHTML();
