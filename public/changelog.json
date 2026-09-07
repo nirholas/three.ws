@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-09-07T05:34:13.612Z",
+	"generated_at": "2026-09-07T05:35:32.758Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -36,6 +36,17 @@
 			"tags": [
 				"fix",
 				"improvement"
+			]
+		},
+		{
+			"date": "2026-09-07",
+			"type": "update",
+			"title": "Blender tools now open three.ws avatars, which Blender alone cannot",
+			"summary": "Most three.ws avatars are delivered in a compressed form that Blender flatly cannot read: point stock Blender at one and it refuses the file. That made the new Blender tools useless on exactly the models this platform produces. Compressed models are now unpacked automatically before Blender opens them, for both of the common compression schemes, with nothing extra to install and your original file left untouched. The answer tells you when it happened.",
+			"link": null,
+			"tags": [
+				"fix",
+				"sdk"
 			]
 		},
 		{

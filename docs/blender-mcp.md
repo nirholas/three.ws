@@ -165,6 +165,22 @@ blender_forge_import { "prompt": "a weathered brass diving helmet", "output": "h
 
 ---
 
+## Compressed glTF is decoded for you
+
+Blender's glTF importer has no decoder for `EXT_meshopt_compression`. That matters more than it sounds: meshopt is what `gltfpack` emits and what most three.ws avatars ship as, so the platform's own primary delivery format fails in raw Blender with *"Extension EXT_meshopt_compression is not available on this addon version"*. Draco is nominally supported, but only on builds that ship `libextern_draco`, which several Linux distribution packages omit.
+
+Every tool that takes an `input` therefore decodes first, in process, using the same glTF libraries the rest of the repo depends on ([`@gltf-transform/core`](https://gltf-transform.dev), `meshoptimizer`, `draco3dgltf`). There is no external binary to install, unlike the `gltfpack` path the GPU workers use ([`workers/rig/gltf_meshopt.py`](https://github.com/nirholas/three.ws/blob/main/workers/rig/gltf_meshopt.py)), because an npm package cannot assume one is present.
+
+The response names what was decoded:
+
+```json
+{ "decoded_compression": ["EXT_meshopt_compression"], "counts": { "triangles": 15744 } }
+```
+
+An uncompressed file is passed through untouched and the field is absent. Your file is never modified: the decoded copy lives in the job's scratch directory and dies with it.
+
+---
+
 ## How a call works
 
 Every tool call spawns one process:

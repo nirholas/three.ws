@@ -261,3 +261,37 @@ test('parallel calls queue instead of exhausting the machine', { skip: SKIP }, a
 		'every queued call must succeed',
 	);
 });
+
+test('a meshopt-compressed GLB reads correctly, which Blender alone cannot do', { skip: SKIP }, async () => {
+	// Most three.ws avatars are delivered meshopt-compressed, and Blender's
+	// importer has no decoder for it: without the decode step this call fails
+	// with "Extension EXT_meshopt_compression is not available on this addon
+	// version". The fixture is encoded here with the same library the platform
+	// uses, so the test breaks if the decode is ever dropped.
+	const { NodeIO } = await import('@gltf-transform/core');
+	const extensions = await import('@gltf-transform/extensions');
+	const meshopt = await import('meshoptimizer');
+
+	const io = new NodeIO()
+		.registerExtensions(extensions.ALL_EXTENSIONS)
+		.registerDependencies({ 'meshopt.decoder': meshopt.MeshoptDecoder, 'meshopt.encoder': meshopt.MeshoptEncoder });
+	const doc = await io.read(fixture);
+	doc
+		.createExtension(extensions.EXTMeshoptCompression)
+		.setRequired(true)
+		.setEncoderOptions({ method: extensions.EXTMeshoptCompression.EncoderMethod.QUANTIZE });
+	const compressed = path.join(workdir, 'compressed.glb');
+	await io.write(compressed, doc);
+
+	const plain = await callTool('blender_scene_info', { input: fixture, include_objects: false });
+	const packed = await callTool('blender_scene_info', { input: compressed, include_objects: false });
+
+	assert.equal(packed.isError, false, JSON.stringify(packed.payload));
+	assert.deepEqual(packed.payload.decoded_compression, ['EXT_meshopt_compression']);
+	assert.equal(packed.payload.counts.triangles, plain.payload.counts.triangles);
+});
+
+test('an uncompressed file is passed through untouched', { skip: SKIP }, async () => {
+	const { payload } = await callTool('blender_scene_info', { input: fixture, include_objects: false });
+	assert.equal(payload.decoded_compression, undefined, 'nothing to decode must mean no decode step');
+});

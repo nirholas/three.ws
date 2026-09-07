@@ -19,6 +19,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import { BLENDER_PATH, JOB_TIMEOUT_MS, MAX_CONCURRENCY, WORKDIR } from '../config.js';
+import { decodeForBlender } from './gltf.js';
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 export const RUNNER_PATH = path.join(HERE, '..', 'py', 'runner.py');
@@ -247,6 +248,19 @@ export async function runJob(job, { timeoutMs } = {}) {
 	const limit = Number.isFinite(timeoutMs) && timeoutMs > 0 ? timeoutMs : JOB_TIMEOUT_MS;
 
 	try {
+		// Compressed glTF is decoded here, at the single choke point every tool
+		// passes through, so no tool can forget. Blender cannot read meshopt at
+		// all and reads Draco only on builds that ship the library, and meshopt
+		// is what most three.ws avatars are delivered as. The decoded copy lives
+		// in this job's scratch directory and dies with it; the caller's file is
+		// never touched.
+		let decoded = [];
+		if (typeof job.input === 'string' && job.input) {
+			const prepared = await decodeForBlender(job.input, dir);
+			decoded = prepared.decoded;
+			job = { ...job, input: prepared.path };
+		}
+
 		await writeFile(jobPath, JSON.stringify(job), 'utf8');
 
 		const args = ['-b', '--factory-startup', '-noaudio', '--python', RUNNER_PATH, '--', jobPath, resultPath];
@@ -305,7 +319,11 @@ export async function runJob(job, { timeoutMs } = {}) {
 				log: outcome.log,
 			});
 		}
-		return { ...payload, blender_path: blender.path };
+		return {
+			...payload,
+			...(decoded.length > 0 ? { decoded_compression: decoded } : {}),
+			blender_path: blender.path,
+		};
 	} finally {
 		releaseSlot();
 		await rm(dir, { recursive: true, force: true });

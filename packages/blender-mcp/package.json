@@ -1,8 +1,8 @@
 {
 	"name": "@three-ws/blender-mcp",
-	"version": "0.2.0",
+	"version": "0.3.0",
 	"mcpName": "io.github.nirholas/blender-mcp",
-	"description": "Drive the Blender on your machine from any AI agent, headless. Inspect a 3D file, convert between GLB/glTF/FBX/OBJ/STL/PLY/DAE/USD/Alembic/.blend, render an auto-framed and auto-lit preview PNG, run a bpy script against a scene, and generate a model from a text prompt on the free three.ws Forge lane. No GUI, no add-on to install, no key.",
+	"description": "Drive the Blender on your machine from any AI agent, headless. Inspect a 3D file, convert between GLB/glTF/FBX/OBJ/STL/PLY/DAE/USD/Alembic/.blend, render a preview that comes back inline so the assistant can see it, run a bpy script against a scene, and generate a model from a text prompt on the free three.ws Forge lane. Meshopt- and Draco-compressed glTF is decoded automatically. No GUI, no add-on to install, no key.",
 	"type": "module",
 	"author": "nirholas <support@three.ws>",
 	"license": "Apache-2.0",
@@ -16,19 +16,21 @@
 		"url": "https://github.com/nirholas/three.ws/issues"
 	},
 	"keywords": [
-		"mcp",
-		"model-context-protocol",
+		"3d",
+		"ai-agent",
 		"blender",
 		"bpy",
-		"three.ws",
-		"3d",
+		"draco",
+		"fbx",
 		"glb",
 		"gltf",
-		"fbx",
-		"usd",
-		"render",
 		"headless",
-		"ai-agent"
+		"mcp",
+		"meshopt",
+		"model-context-protocol",
+		"render",
+		"three.ws",
+		"usd"
 	],
 	"publishConfig": {
 		"access": "public"
@@ -55,7 +57,11 @@
 		"inspect": "npx -y @modelcontextprotocol/inspector node src/index.js"
 	},
 	"dependencies": {
+		"@gltf-transform/core": "^4.4.0",
+		"@gltf-transform/extensions": "^4.4.0",
 		"@modelcontextprotocol/sdk": "^1.29.0",
+		"draco3dgltf": "^1.5.7",
+		"meshoptimizer": "^1.1.1",
 		"zod": "^3.23.8"
 	}
 }

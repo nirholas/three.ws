@@ -15,7 +15,7 @@
 
 ---
 
-> A [Model Context Protocol](https://modelcontextprotocol.io) server that hands an AI assistant a real Blender over stdio. Inspect a 3D file, convert between GLB, glTF, FBX, OBJ, STL, PLY, Collada, Alembic, USD and `.blend`, render an auto-framed and auto-lit preview PNG, run a `bpy` script against a scene, and generate a model from a text prompt on the free three.ws Forge lane.
+> A [Model Context Protocol](https://modelcontextprotocol.io) server that hands an AI assistant a real Blender over stdio. Inspect a 3D file, convert between GLB, glTF, FBX, OBJ, STL, PLY, Collada, Alembic, USD and `.blend`, render an auto-framed and auto-lit preview that comes back **inline** so the assistant can see it, run a `bpy` script against a scene, and generate a model from a text prompt on the free three.ws Forge lane.
 
 Blender runs in background mode (`blender -b`), one process per call. That means it works on a server, in CI, and inside a container with no display, no GUI session to keep alive, and no add-on to install into Blender first. Everything is real: each tool drives the Blender installed on the machine, and `blender_forge_import` calls the live public three.ws generation pipeline.
 
@@ -110,6 +110,12 @@ Generate an asset and open it as a `.blend`:
 ```
 blender_forge_import { "prompt": "a weathered brass diving helmet", "output": "helmet.blend" }
 ```
+
+## Compressed glTF
+
+Meshopt- and Draco-compressed assets are decoded automatically before Blender opens them, in process, with no external binary to install.
+
+This is not a nicety. Blender's glTF importer has **no** decoder for `EXT_meshopt_compression`, which is what `gltfpack` emits and what most three.ws avatars are delivered as; handed one it fails outright with *"Extension EXT_meshopt_compression is not available on this addon version"*. Draco is nominally supported but only on builds that ship `libextern_draco`, which several Linux distribution packages do not. Every tool that takes an `input` goes through the same decode, and the response names what was decoded in `decoded_compression`. Your file is never modified: the decoded copy lives in the job's scratch directory and is deleted with it.
 
 ## How a call works
 
