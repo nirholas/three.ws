@@ -2202,7 +2202,7 @@
 				"idempotentHint": false,
 				"openWorldHint": true
 			},
-			"schemaHash": "d01f6cc958ef"
+			"schemaHash": "a51f9d90b54d"
 		}
 	],
 	"packages/blender-mcp/src/tools/info.js": [

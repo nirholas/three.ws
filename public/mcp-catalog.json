@@ -4501,7 +4501,7 @@
 		{
 			"name": "blender_forge_import",
 			"title": "Generate a 3D model with three.ws and open it in Blender",
-			"description": "Generate a 3D model from a text prompt on the public three.ws Forge pipeline, then bring it into Blender. The default image lane (FLUX to TRELLIS) is free and needs no key, wallet, or account. The GLB is saved locally, and if the output path asks for another format (.blend, .fbx, .obj, .usd) Blender converts it on the way in. Returns the local path, the hosted GLB URL, and the geometry counts. Generation runs on a shared GPU lane and typically takes tens of seconds to a couple of minutes. Describe ONE subject per call.",
+			"description": "Generate a 3D model from a text prompt OR a reference image on the public three.ws Forge pipeline, then bring it into Blender. Pass \"prompt\" to describe it, \"image\" for a local PNG/JPEG/WebP, or \"image_url\" for one already public; an image plus a prompt uses the prompt to steer the reconstruction. The default image lane (FLUX to TRELLIS) is free and needs no key, wallet, or account. The GLB is saved locally, and if the output path asks for another format (.blend, .fbx, .obj, .usd) Blender converts it on the way in. Returns the local path, the hosted GLB URL, and the geometry counts. Generation runs on a shared GPU lane and typically takes tens of seconds to a couple of minutes. Describe ONE subject per call.",
 			"server": {
 				"id": "blender-mcp",
 				"title": "@three-ws/blender-mcp",
@@ -4526,7 +4526,15 @@
 					"prompt": {
 						"type": "string",
 						"minLength": 3,
-						"description": "What to generate. One subject, e.g. \"a weathered brass diving helmet\"."
+						"description": "What to generate. One subject, e.g. \"a weathered brass diving helmet\". Required unless an image is given."
+					},
+					"image": {
+						"type": "string",
+						"description": "Local PNG, JPEG or WebP to reconstruct from. Uploaded straight to storage on a presigned PUT."
+					},
+					"image_url": {
+						"type": "string",
+						"description": "A public https image to reconstruct from, instead of uploading one."
 					},
 					"output": {
 						"type": "string",
@@ -4566,9 +4574,6 @@
 						"description": "Reference image aspect ratio. Default \"1:1\"."
 					}
 				},
-				"required": [
-					"prompt"
-				],
 				"additionalProperties": false
 			},
 			"source": "packages/blender-mcp/src/tools/forge-import.js"

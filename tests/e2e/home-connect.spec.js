@@ -287,7 +287,9 @@ test.describe('/smart-home connect flow', () => {
 		// the defect this asserts against.
 		const other = { ...HOME, id: '9c8b7a65-4321-4dcb-a987-0123456789ab', label: 'The office' };
 		await stub(page, { homes: [HOME, other] });
-		await page.goto(`/smart-home/${HOME.id}`);
+		// `/smart-home/<id>` is the 3D house now; the one-home settings card that
+		// this flow is about lives at `/smart-home/<id>/settings`.
+		await page.goto(`/smart-home/${HOME.id}/settings`);
 		await expect(state(page)).toHaveAttribute('data-state', 'one_home', { timeout: SLOW });
 
 		await expect(page.locator('.hm-card')).toHaveCount(1);
@@ -302,7 +304,7 @@ test.describe('/smart-home connect flow', () => {
 
 	test('a deep link to a home that is not yours reveals nothing', async ({ page }) => {
 		await stub(page, { homes: [HOME] });
-		await page.goto('/smart-home/11111111-2222-4333-8444-555555555555');
+		await page.goto('/smart-home/11111111-2222-4333-8444-555555555555/settings');
 		await expect(state(page)).toHaveAttribute('data-state', 'not_found', { timeout: SLOW });
 
 		await expect(page.getByText(/not on this account/i)).toBeVisible();
