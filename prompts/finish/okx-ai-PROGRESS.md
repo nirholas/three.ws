@@ -64,9 +64,31 @@ re-issue the quotation:
   predates that window. Nothing has ever settled on this rail, including OKX's 2026-08-27 QA
   visit.
 
+### The deploy worktree was restaged at `d7e5e5277` (2026-09-07 07:20 UTC), and what it now carries
+
+`/workspaces/.deploy-wt-okx5` (at `b2231dc20`) was removed and `/workspaces/.deploy-wt-okx5`
+staged at `main`'s tip `d7e5e5277`, because 33 commits had landed on top of the first build
+and several of them matter to production more than the x402 fix does:
+
+- **Production 3D generation is down right now** on a wrong R2 secret: `POST /api/forge`
+  answers `generation_failed: The request signature we calculated does not match the
+  signature you provided`, and every `/cdn/*` object answers 502 `upstream_error`
+  (`docs/ops/production-log-triage.md`, "rejected credential"). No code fixes the secret;
+  the owner re-sets `S3_SECRET_ACCESS_KEY` on the Cloud Run service (command in that doc).
+  This deploy carries the three storage commits (`36b67b8a8`, `99c521446`, `2ab1cb56a`) that
+  make `/cdn/*` fall back to the public bucket domain and give the outage its own health
+  signal, so the site degrades instead of 502ing while the credential is fixed.
+- The `npm test` sweep: vitest is green (1988 files, 28,827 tests) after nine test fixes and
+  three product fixes (`/play` HUD focus ring, `/agi` chip contrast, the AgenC embed's
+  decoder URL). Playwright is green except the three `spatial-mcp-render` specs, which fetch
+  the real production GLB behind `/cdn` and will pass once the secret is fixed or this
+  deploy's fallback is live.
+
+Everything in the section below still holds for the new path; substitute `okx5` for `okx4`.
+
 ### The fix is built and staged for deploy, waiting only on a gcloud login
 
-`/workspaces/.deploy-wt-okx4` holds a clean deploy worktree at `b2231dc20` (which carries the
+`/workspaces/.deploy-wt-okx5` holds a clean deploy worktree at `d7e5e5277` (which carries the
 fix), fully built: `npm run build:gcp` exited 0 through `check:dist` and `check:pages`, and
 both submit gates are green from inside it (`db:status` reports all migrations applied,
 `check:gcloudignore` reports 2394 reachable modules present and no secrets in the upload).
@@ -75,9 +97,9 @@ The submit itself cannot run from this session: `gcloud` answers
 browser login only the owner can complete. After `gcloud auth login`:
 
 ```bash
-cd /workspaces/.deploy-wt-okx4 && npm run deploy:gcp:submit && npm run deploy:gcp:purge-cdn
+cd /workspaces/.deploy-wt-okx5 && npm run deploy:gcp:submit && npm run deploy:gcp:purge-cdn
 curl -s https://three.ws/api/version          # expect a SHA at or after b2231dc20
-git worktree remove --force /workspaces/.deploy-wt-okx4
+git worktree remove --force /workspaces/.deploy-wt-okx5
 ```
 
 Owner decision 2026-09-07: ship the fix first, hold the resubmission until it is live.
