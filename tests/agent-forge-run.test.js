@@ -19,9 +19,10 @@ import { describe, it, expect } from 'vitest';
 import { runForge } from '../workers/agent-forge/forge-run.js';
 import { forgeStageNarration } from '../src/shared/forge-frames.js';
 
-// The narration strings under test are produced by src/shared/forge-frames.js and
-// contain an em-dash. This repo bans that character in authored source, so the
-// expectations name it by code point instead of pasting the glyph.
+// The terminal line src/shared/forge-frames.js produces still carries an
+// em-dash. This repo bans that character in authored source, so the expectation
+// names it by code point instead of pasting the glyph. The in-flight lines
+// moved to a plain "(~Ns left)" suffix, so they are spelled out as-is.
 const DASH = '\u2014';
 const READY_LINE = `Model ready ${DASH} loading into the cam`;
 
@@ -112,8 +113,8 @@ describe('runForge poll walk', () => {
 		expect(result.glbUrl).toBe(GLB);
 		// queued → running → done; the repeated 'running' poll narrates nothing new.
 		expect(lines).toEqual([
-			`Queued on the TRELLIS lane ${DASH} ~40s`,
-			`Building geometry & texturing ${DASH} ~20s`,
+			'Queued on the TRELLIS lane (~40s left)',
+			'Building geometry & texturing (~20s left)',
 			READY_LINE,
 		]);
 		expect(fetchImpl.calls[1].url).toBe(`${BASE}/api/forge?job=job-1`);

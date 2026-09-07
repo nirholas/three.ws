@@ -86,9 +86,11 @@ afterEach(() => {
 });
 
 describe('materializeCreation — quality + compression (additive, opt-in)', () => {
-	it('defaults run the geometry cleanup pass, shrinking the delivered mesh', async () => {
-		// cleanup defaults ON: every forge mesh is raw marching-cubes geometry that
-		// dedup/join/weld/simplify improves. quality + compression stay opt-in.
+	it('defaults run geometry cleanup, then material completion, and ship the completed mesh', async () => {
+		// cleanup and derivePbr default ON: every forge mesh is raw marching-cubes
+		// geometry that dedup/join/weld/simplify improves, and a lane bakes albedo
+		// only, so the material pass adds the derived maps a viewer needs. quality
+		// + compression stay opt-in.
 		stubFetch(FOX_GLB);
 		const out = await materializeCreation({
 			replicateJobId: 'job-1',
@@ -98,23 +100,31 @@ describe('materializeCreation — quality + compression (additive, opt-in)', () 
 		expect(out.glbUrl).toBe(`https://cdn.example.com/forge/client-1/${existingRow.id}.glb`);
 		expect(out.quality).toBeNull();
 		expect(out.compression).toBeNull();
-		// The cleaned mesh is what ships, and it's smaller than the raw input.
+		// The geometry pass shrank the raw input.
 		expect(out.cleaned).not.toBeNull();
 		expect(out.cleaned.tris_after).toBeLessThanOrEqual(out.cleaned.tris_before);
+		expect(out.cleaned.output_bytes).toBeLessThan(FOX_GLB.length);
+		// The material pass then wrote its derived maps onto the cleaned geometry,
+		// so the file grows again by exactly what those maps weigh.
+		expect(out.pbr).not.toBeNull();
+		expect(out.pbr.input_bytes).toBe(out.cleaned.output_bytes);
+		expect(out.pbr.output_bytes).toBeGreaterThan(out.pbr.input_bytes);
+		// What ships is the completed mesh, nothing in between.
 		const written = putObjectMock.mock.calls[0][0];
-		expect(written.body.length).toBeLessThan(FOX_GLB.length);
-		expect(written.body.length).toBe(out.cleaned.output_bytes);
+		expect(written.body.length).toBe(out.pbr.output_bytes);
 	});
 
-	it('cleanup:false delivers the provider bytes verbatim', async () => {
+	it('cleanup:false + derivePbr:false delivers the provider bytes verbatim', async () => {
 		stubFetch(FOX_GLB);
 		const out = await materializeCreation({
 			replicateJobId: 'job-1b',
 			clientKey: 'client-1',
 			glbUrl: 'https://provider.example/fox.glb',
 			cleanup: false,
+			derivePbr: false,
 		});
 		expect(out.cleaned).toBeNull();
+		expect(out.pbr).toBeNull();
 		const written = putObjectMock.mock.calls[0][0];
 		expect(written.body.length).toBe(FOX_GLB.length);
 	});
