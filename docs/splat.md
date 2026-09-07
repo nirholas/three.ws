@@ -1,21 +1,30 @@
 # Splat Viewer: photoreal Gaussian-splat avatars in the browser
 
-The Splat Viewer renders Gaussian-splat and radiance-field scenes right in your browser, the photoreal output of capture engines like GaussianAvatars and HumanGaussian. Load a `.ply`, `.splat`, or `.ksplat` by URL, drop a file in, or try a built-in sample, and orbit a photoreal avatar or scene with no plugin, no upload to a server, and no account. All decoding happens client-side.
+The Splat Viewer renders Gaussian-splat and radiance-field scenes right in your browser, the photoreal output of capture engines like GaussianAvatars and HumanGaussian. Load a `.ply` (plain or compressed), `.spz`, `.splat`, `.ksplat`, or `.sog` by URL, drop a file in, or try a built-in sample, and orbit a photoreal avatar or scene with no plugin, no upload to a server, and no account. All decoding happens client-side.
 
 Page: [/splat](https://three.ws/splat)
 
 ## Why it exists
 
-Mesh avatars (GLB) are lightweight, riggable, and universal, and that is what most of three.ws generates. But the photoreal frontier of avatar capture is radiance fields: Gaussian splatting reconstructs a person or a scene as millions of tiny anisotropic blobs that render with real skin, hair, and lighting no polygon budget can match. Those captures ship as `.ply`, `.splat`, or `.ksplat` files, and most tools to view them are desktop apps. The Splat Viewer is the browser front door: a place to open any splat scene, evaluate a capture engine's output, and share a photoreal avatar with a link. It complements [/avatar-engines](https://three.ws/avatar-engines), which surveys the capture methods; the viewer is where their output actually renders.
+Mesh avatars (GLB) are lightweight, riggable, and universal, and that is what most of three.ws generates. But the photoreal frontier of avatar capture is radiance fields: Gaussian splatting reconstructs a person or a scene as millions of tiny anisotropic blobs that render with real skin, hair, and lighting no polygon budget can match. Those captures ship as `.ply`, `.spz`, `.splat`, `.ksplat`, or `.sog` files, and most tools to view them are desktop apps. The compressed containers matter: the same scene that is a 1 GB PLY is roughly 100 MB as SPZ and roughly 42 MB as SOG, which is the difference between a scene you can share as a link and one you cannot. The Splat Viewer is the browser front door: a place to open any splat scene, evaluate a capture engine's output, and share a photoreal avatar with a link. It complements [/avatar-engines](https://three.ws/avatar-engines), which surveys the capture methods; the viewer is where their output actually renders.
 
 ## How it works
 
-The viewer (`src/splat-viewer.js`) is entirely client-side. It uses `@mkkellogg/gaussian-splats-3d`, already a platform dependency (the same library the Forge Studio Lab uses), lazy-loaded on first render so the page shell paints instantly. Format is detected from the filename extension: `.ply` maps to the PLY scene format, `.ksplat` to the compressed KSplat format, and everything else to the antimatter15 `.splat` layout (32 bytes per splat). The decoded buffer is handed to a `GS.Viewer` with built-in orbit controls, and every state is designed: idle, fetching, decoding, error, and a live HUD showing the scene label.
+The viewer (`src/splat-viewer.js`) is entirely client-side. It runs on [Spark](https://github.com/sparkjsdev/spark) (`@sparkjsdev/spark`, MIT, by World Labs), lazy-loaded on first render so the page shell paints instantly.
+
+Spark renders splats as ordinary objects inside a normal three.js scene rather than inside a viewer of its own, which is what makes the rest of this page's behaviour possible:
+
+- **The format is read from the bytes, not the filename.** A URL that ends in a query string, a redirect, or no extension at all still decodes. Only two containers fall back to the name: `.splat` is a raw 32-byte-per-splat array with no header to sniff, and a bundled `.sog` is a zip.
+- **The camera frames the scene it actually loaded**, from the splat centres in world space. Splat scenes are authored at wildly different scales, and a fixed camera distance is right for exactly one of them.
+- **The live state waits for the first sorted frame.** Spark sorts splats on a worker and paints once that lands, so the stage holds a "Sorting splats" state rather than going live over an empty canvas on a slow GPU.
+- **The canvas is opaque.** Spark accumulates colour with premultiplied alpha and leaves destination alpha at zero, so a transparent canvas would composite a fully rendered scene away to nothing.
+
+Every state is designed: idle, fetching, decoding, sorting, error, and a live HUD showing the scene label and its real splat count.
 
 There are three ways to load a scene:
 
 - **By URL.** Paste a link and the viewer fetches the bytes and decodes them. To survive cross-origin blocks, it rewrites the human-facing URLs of common asset hosts to their CORS-enabled raw form: GitHub `raw`/`blob` links become `raw.githubusercontent.com`, Hugging Face `/blob/` becomes `/resolve/`, and Dropbox links are forced to a direct download. When a host still blocks the browser fetch, the error state tells you to download the file and upload it instead. Because the bytes are already in memory once a remote scene renders, the download control offers them back, so a scene you reached by URL is as saveable as one you uploaded.
-- **By file.** Pick a file or drag and drop a `.ply`/`.splat`/`.ksplat` onto the stage. The file is read locally and never leaves your machine; a download button is offered for the loaded buffer.
+- **By file.** Pick a file or drag and drop a `.ply`/`.spz`/`.splat`/`.ksplat`/`.sog` onto the stage. The file is read locally and never leaves your machine; a download button is offered for the loaded buffer.
 - **Samples.** Two procedurally generated scenes ship in the page: a radiance shell (6,000 splats) and a synthetic head-and-shoulders bust (14,000 splats) that evokes what a real GaussianAvatars capture looks like in the viewer. These are synthetic, generated in-browser, and downloadable.
 
 A deep link, `?src=<url>&name=<label>`, loads a scene straight from the URL on page load, so a photoreal avatar is shareable with a single link. A recenter control resets the camera on the live viewer, so it snaps back without dropping and rebuilding the WebGL context. Teardown is explicit: the renderer's graphics context is released by hand on every scene swap and when the page is hidden, because the splat library's own dispose stops short of that. If the browser drops the context anyway, after a GPU reset or under memory pressure, the stage reports it and offers a reload rather than freezing on the last frame.
@@ -24,7 +33,7 @@ A deep link, `?src=<url>&name=<label>`, loads a scene straight from the URL on p
 
 1. Open [/splat](https://three.ws/splat).
 2. Try a sample first: click the radiance shell or the head bust to see the viewer in action.
-3. Load your own scene: paste a `.ply`/`.splat`/`.ksplat` URL and click Render, or drop a file onto the stage, or pick one from disk.
+3. Load your own scene: paste a `.ply`/`.spz`/`.splat`/`.ksplat`/`.sog` URL and click Render, or drop a file onto the stage, or pick one from disk.
 4. Orbit, zoom, and pan with the built-in controls. The HUD shows the scene label and splat count.
 5. Recenter if the camera drifts. Download the loaded buffer, whether the scene came from a file, a sample, or a URL.
 6. Share a scene by appending `?src=<url>` to the page URL.
@@ -43,7 +52,9 @@ https://three.ws/splat?src=https://github.com/<user>/<repo>/blob/main/scene.spla
 
 Supported inputs at a glance:
 
-- `.ply`: Gaussian-splat point cloud in PLY format.
+- `.ply`: Gaussian-splat point cloud in PLY format, plain or in PlayCanvas's compressed variant.
+- `.spz`: [Niantic's compressed container](https://github.com/nianticlabs/spz), about a tenth the size of the equivalent PLY. The broadest delivery format in the ecosystem.
+- `.sog`: [PlayCanvas Spatially Ordered Gaussians](https://developer.playcanvas.com/user-manual/gaussian-splatting/formats/sog/), roughly 15 to 20 times smaller than the PLY. What SuperSplat exports.
 - `.splat`: the antimatter15 layout (32 bytes per splat).
 - `.ksplat`: the compressed KSplat format for faster loads.
 

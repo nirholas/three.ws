@@ -143,6 +143,14 @@
 			<description>Our partnership page is published once onto a partner's own website, so everything it loads comes from three.ws across origins. Two of its scripts were being refused by the browser there, which quietly cost the page its in-editor map and its iOS handoff. Both are now served with the same cross-origin permission the rest of the page already had, and an audit that loads the page from a foreign origin now passes end to end.</description>
 		</item>
 		<item>
+			<title>The splat viewer opens the compressed formats captures actually ship</title>
+			<link>https://three.ws/splat</link>
+			<guid isPermaLink="false">2026-09-07:The splat viewer opens the compressed formats captures actually ship</guid>
+			<pubDate>Mon, 07 Sep 2026 12:00:00 GMT</pubDate>
+			<category>improvement</category>
+			<description>Gaussian-splat scenes used to arrive as enormous PLY files, and the tools that make them now export compressed containers instead: the same capture that is a gigabyte of PLY is about 100 MB as SPZ and about 42 MB as SOG. The viewer could not open either. It now reads .spz and .sog alongside .ply, .splat, and .ksplat, works out the format from the file contents instead of trusting the filename, and frames the camera on the scene it actually loaded rather than a fixed distance that suited one file in ten. It also shows the real splat count, and waits for the first sorted frame before going live so a slow machine no longer shows an empty stage.</description>
+		</item>
+		<item>
 			<title>Turn a photo into a 3D model without leaving your editor</title>
 			<link>https://three.ws/changelog</link>
 			<guid isPermaLink="false">2026-09-07:Turn a photo into a 3D model without leaving your editor</guid>

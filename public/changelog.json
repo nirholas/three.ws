@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-09-07T20:35:47.680Z",
+	"generated_at": "2026-09-07T20:49:20.490Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -185,6 +185,17 @@
 			"link": null,
 			"tags": [
 				"fix"
+			]
+		},
+		{
+			"date": "2026-09-07",
+			"type": "update",
+			"title": "The splat viewer opens the compressed formats captures actually ship",
+			"summary": "Gaussian-splat scenes used to arrive as enormous PLY files, and the tools that make them now export compressed containers instead: the same capture that is a gigabyte of PLY is about 100 MB as SPZ and about 42 MB as SOG. The viewer could not open either. It now reads .spz and .sog alongside .ply, .splat, and .ksplat, works out the format from the file contents instead of trusting the filename, and frames the camera on the scene it actually loaded rather than a fixed distance that suited one file in ten. It also shows the real splat count, and waits for the first sorted frame before going live so a slow machine no longer shows an empty stage.",
+			"link": "/splat",
+			"tags": [
+				"improvement",
+				"feature"
 			]
 		},
 		{
