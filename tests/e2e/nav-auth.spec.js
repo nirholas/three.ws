@@ -14,6 +14,21 @@ const SIGN_IN = '.nav-end a[data-auth="out"]';
 const MY_AGENTS = '.nav-end a[data-auth="in"]';
 const CONSOLE_PILL = '.nav-end a[data-auth-name]';
 
+// The signed-in entry points are a SET (Dashboard, My creations, whatever the
+// nav grows next), so the check runs over every one of them. A single strict
+// locator here failed the moment a second data-auth="in" link landed in the
+// nav, which is exactly the kind of drift this spec is meant to survive.
+async function expectAuthedLinks(page, { visible }) {
+	const links = page.locator(MY_AGENTS);
+	await expect(links.first()).toBeAttached();
+	const count = await links.count();
+	expect(count, 'the nav declares at least one signed-in entry point').toBeGreaterThan(0);
+	for (let i = 0; i < count; i++) {
+		if (visible) await expect(links.nth(i)).toBeVisible();
+		else await expect(links.nth(i)).toBeHidden();
+	}
+}
+
 function stubMe(page, body, status = 200) {
 	return page.route('**/api/auth/me', (route) =>
 		route.fulfill({
@@ -41,7 +56,7 @@ for (const path of PAGES) {
 			await page.goto(path, { waitUntil: 'domcontentloaded' });
 
 			await expect(page.locator(SIGN_IN)).toBeVisible();
-			await expect(page.locator(MY_AGENTS)).toBeHidden();
+			await expectAuthedLinks(page, { visible: false });
 		});
 
 		test('signed-in visitor sees account entry points and their name', async ({ page }) => {
@@ -51,7 +66,7 @@ for (const path of PAGES) {
 			await page.goto(path, { waitUntil: 'domcontentloaded' });
 
 			await expect(page.locator(SIGN_IN)).toBeHidden();
-			await expect(page.locator(MY_AGENTS)).toBeVisible();
+			await expectAuthedLinks(page, { visible: true });
 			await expect(page.locator(CONSOLE_PILL)).toHaveText('Catherine Maerial');
 		});
 
@@ -65,7 +80,7 @@ for (const path of PAGES) {
 			await page.goto(path, { waitUntil: 'domcontentloaded' });
 
 			await expect(page.locator(SIGN_IN)).toBeHidden();
-			await expect(page.locator(MY_AGENTS)).toBeVisible();
+			await expectAuthedLinks(page, { visible: true });
 		});
 
 		test('a stale hint is corrected when the server reports no session', async ({ page }) => {
@@ -76,7 +91,7 @@ for (const path of PAGES) {
 			await page.goto(path, { waitUntil: 'domcontentloaded' });
 
 			await expect(page.locator(SIGN_IN)).toBeVisible();
-			await expect(page.locator(MY_AGENTS)).toBeHidden();
+			await expectAuthedLinks(page, { visible: false });
 		});
 	});
 }
