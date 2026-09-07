@@ -26877,6 +26877,14 @@
 			"tags": [
 				"fix"
 			]
+		},
+		{
+			"date": "2026-09-07",
+			"title": "World tiles show their artwork again",
+			"summary": "The picker that lets you choose a community world was loading each world's artwork straight from a public storage gateway, and browsers now refuse to draw images served that way. Nine tiles on the page failed silently every visit. The artwork is now fetched through our own image service, so tiles paint their real picture, and a world whose artwork has gone missing falls back to its lettered tile instead of an empty square.",
+			"tags": [
+				"fix"
+			]
 		}
 	]
 }

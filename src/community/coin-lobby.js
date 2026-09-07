@@ -7,6 +7,7 @@
 // enter. Designed loading / empty / error states.
 
 import { fetchWorlds } from './town-client.js';
+import { proxiedImageURL } from '../ipfs.js';
 
 let _stylesInjected = false;
 
@@ -140,9 +141,16 @@ export class CoinLobby {
 		card.type = 'button';
 		card.setAttribute('aria-label', `Enter ${w.symbol ? '$' + w.symbol : 'world'}`);
 		const img = el('div', 'cw__img');
-		if (w.image) {
+		// Coin art is pinned on decentralised storage, and the public gateways
+		// answer with `cross-origin-resource-policy: same-origin`, so painting
+		// the gateway URL straight into an <img> is refused by the browser
+		// before onerror can run. /api/img reads it server-side and answers
+		// with open CORS; `fallback: 'none'` makes a dead pin a 204, which
+		// still fires onerror so the card lands on its own initials tile.
+		const art = w.image ? proxiedImageURL(w.image, '', { fallback: 'none' }) : '';
+		if (art) {
 			const i = el('img');
-			i.src = w.image;
+			i.src = art;
 			i.alt = '';
 			i.loading = 'lazy';
 			i.onerror = () => {

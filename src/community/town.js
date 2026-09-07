@@ -13,6 +13,7 @@
 import { fetchCapabilities, fetchMessages, connectRealtime } from './town-client.js';
 import { getSession, signInWithX, ensureSolanaWallet, postAsUser, logout } from './town-auth.js';
 import { log } from '../shared/log.js';
+import { proxiedImageURL } from '../ipfs.js';
 
 const MAX_BUBBLES = 4;
 const BUBBLE_TTL_MS = 7000;
@@ -88,9 +89,12 @@ export class Town {
 		// Header — coin identity, live status, counts, collapse toggle.
 		const header = el('header', 'town__header');
 		const badge = el('div', 'town__badge');
-		if (this.meta.image) {
+		// Same gateway CORP rule as the lobby: proxy the pinned art so the
+		// browser is allowed to paint it (see coin-lobby.js).
+		const headerArt = this.meta.image ? proxiedImageURL(this.meta.image, '', { fallback: 'none' }) : '';
+		if (headerArt) {
 			const img = el('img', 'town__coin-img');
-			img.src = this.meta.image;
+			img.src = headerArt;
 			img.alt = '';
 			img.loading = 'lazy';
 			img.onerror = () => img.remove();
@@ -484,9 +488,10 @@ export class Town {
 		const sym = this.root.querySelector('.town__symbol');
 		if (sym && this.meta.symbol) sym.textContent = `$${this.meta.symbol}`;
 		const ph = this.root.querySelector('.town__coin-img--ph');
-		if (ph && this.meta.image) {
+		const badgeArt = this.meta.image ? proxiedImageURL(this.meta.image, '', { fallback: 'none' }) : '';
+		if (ph && badgeArt) {
 			const img = el('img', 'town__coin-img');
-			img.src = this.meta.image;
+			img.src = badgeArt;
 			img.alt = '';
 			img.loading = 'lazy';
 			img.onerror = () => img.remove();
