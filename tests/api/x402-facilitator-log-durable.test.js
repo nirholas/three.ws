@@ -19,7 +19,12 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 // SELECT → [] (no prior credit for this signature); INSERT → one row (the claim
 // is ours). That is the real granted-credit path, which is what the assertion
 // below is about.
-let pendingResolvers = [];
+// Hoisted alongside the vi.mock registrations: the db.js factory below runs
+// when the handler import (itself hoisted above this module body) first loads
+// db.js, so a plain module-level `let` was still in its temporal dead zone
+// under full-suite load and the factory threw "Cannot access 'pendingResolvers'
+// before initialization".
+const pendingResolvers = vi.hoisted(() => []);
 function rowsFor(query) {
 	return /INSERT/i.test(query) ? [{ id: 1 }] : [];
 }
@@ -59,7 +64,7 @@ const REQ_BODY = {
 	paymentRequirements: { network: 'solana:x', payTo: 'PAYTO', asset: 'MINT', amount: '10000' },
 };
 
-beforeEach(() => { pendingResolvers = []; });
+beforeEach(() => { pendingResolvers.length = 0; });
 
 describe('self-facilitator log durability', () => {
 	it('verify does not respond until the audit-log write resolves', async () => {
