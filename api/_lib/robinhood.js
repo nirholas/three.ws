@@ -330,9 +330,17 @@ export async function bestDexPair(address) {
 
 /**
  * Batched DEX snapshot for many token addresses at once → { [lower-addr]:
- * bestRobinhoodPair }. DexScreener's /tokens/ endpoint accepts up to 30
- * addresses per call, so the whole 95-token board is 4 calls, not 95 — the
- * anti-fan-out requirement. Cached 30s per address-chunk.
+ * bestRobinhoodPair }, 30 addresses per call. Cached 30s per address-chunk.
+ *
+ * Uses `/tokens/v1/{chain}/{addresses}`, which returns ONE best pair per token.
+ * The older `/latest/dex/tokens/` endpoint caps its RESPONSE at 30 *pairs*
+ * rather than 30 tokens, so a 30-address batch came back describing only the
+ * first two or three of them: a single deep name like NVDA has 30 pairs of its
+ * own and crowded out the rest of its batch. Nothing errored: the tokens that
+ * were squeezed out simply read as having no pair, no price and no liquidity,
+ * which is indistinguishable from a token that genuinely has none. Verified
+ * 2026-09-07: a 3-address call to the old endpoint returned 30 pairs split
+ * 19/8/3, while the same call to this one returns exactly 3.
  */
 export async function dexSnapshot(addresses) {
 	const list = (Array.isArray(addresses) ? addresses : [])
@@ -342,15 +350,15 @@ export async function dexSnapshot(addresses) {
 	const CHUNK = 30;
 	for (let i = 0; i < list.length; i += CHUNK) {
 		const chunk = list.slice(i, i + CHUNK);
-		const key = `rh:dex:multi:${chunk[0]}:${chunk.length}`;
+		const key = `rh:dex:v1:${chunk[0]}:${chunk.length}`;
 		const data = await fetchJson(
-			`https://api.dexscreener.com/latest/dex/tokens/${chunk.join(',')}`,
+			`https://api.dexscreener.com/tokens/v1/robinhood/${chunk.join(',')}`,
 			30,
 			key,
 		);
-		const pairs = Array.isArray(data?.pairs) ? data.pairs : [];
+		const pairs = Array.isArray(data) ? data : [];
 		for (const p of pairs) {
-			if (p.chainId !== 'robinhood') continue;
+			if (p?.chainId !== 'robinhood') continue;
 			const base = String(p.baseToken?.address || '').toLowerCase();
 			if (!chunk.includes(base)) continue;
 			const cur = out[base];
