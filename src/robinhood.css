@@ -350,3 +350,22 @@
 .rh-bridge-link:focus-visible {
 	text-decoration: underline;
 }
+
+/* Cross-link from the hub to the Hood Desk (/markets/robinhood/desk). */
+.rh-desk-cta {
+	display: flex;
+	align-items: baseline;
+	flex-wrap: wrap;
+	gap: 0.5rem 0.75rem;
+	margin: 0 0 1.25rem;
+	padding: 0.75rem 0.875rem;
+	border: 1px solid var(--cv-border);
+	border-radius: var(--cv-radius-lg);
+	background: var(--cv-surface-2);
+}
+
+.rh-desk-cta span {
+	color: var(--cv-text-2);
+	font-size: 0.8125rem;
+	line-height: 1.5;
+}

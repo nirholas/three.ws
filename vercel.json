@@ -1232,6 +1232,10 @@
 			"dest": "/markets-robinhood.html"
 		},
 		{
+			"src": "/markets/robinhood/desk/?",
+			"dest": "/hood-desk.html"
+		},
+		{
 			"src": "/markets/robinhood/stock/([A-Za-z0-9.-]{1,10})/?",
 			"dest": "/robinhood-stock.html"
 		},

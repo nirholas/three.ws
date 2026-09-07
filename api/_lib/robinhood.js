@@ -261,20 +261,49 @@ export async function feedRoundHistory(feed, count = 24) {
 	});
 }
 
+// ── Shared cached JSON fetch ───────────────────────────────────────────────
+// Blockscout sits behind Cloudflare bot protection that answers any request
+// carrying a non-browser User-Agent with a 403 interstitial (undici's default
+// UA and a descriptive "three.ws/1.0" UA are both refused; the same URL with a
+// browser UA returns JSON). Every Blockscout-backed field on the Robinhood
+// surfaces (gas prices, ETH price, holders, transfers, wallet balances) read as
+// permanently unavailable until the request identifies as a browser, so the UA
+// is attached here, once, for that host only.
+const BLOCKSCOUT_UA =
+	'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36';
+
 // ── DexScreener (chainId "robinhood") ──────────────────────────────────────
 async function fetchJson(url, ttl, key, { headers } = {}) {
 	return cacheWrap(key, ttl, async () => {
-		const ctrl = new AbortController();
-		const timer = setTimeout(() => ctrl.abort(), 12_000);
-		try {
-			const res = await fetch(url, { signal: ctrl.signal, headers: { accept: 'application/json', ...headers } });
-			if (!res.ok) return { __error: `upstream ${res.status}` };
-			return await res.json();
-		} catch (err) {
-			return { __error: err?.name === 'AbortError' ? 'upstream timeout' : String(err?.message || err) };
-		} finally {
-			clearTimeout(timer);
+		// Two retries on a 5xx or a transport error before giving up. Blockscout's
+		// address endpoints answer ~1 request in 3 with a bare 500 under load, and
+		// a failure that reaches the cache is pinned for the whole TTL, so the
+		// retry happens INSIDE the cached callback: only a genuinely persistent
+		// outage stores an error.
+		const isBlockscout = String(url).startsWith(BLOCKSCOUT_BASE);
+		const hostHeaders = isBlockscout ? { 'user-agent': BLOCKSCOUT_UA } : {};
+		// Blockscout answers in well under a second when it answers at all, so a
+		// slow attempt there is a dead one: cutting it at 6s keeps three tries
+		// cheaper than a single 12s wait. The other upstreams keep the long
+		// timeout they were tuned for.
+		const perAttemptMs = isBlockscout ? 6_000 : 12_000;
+		let last = { __error: 'upstream unavailable' };
+		for (let attempt = 0; attempt < 3; attempt++) {
+			if (attempt) await new Promise((r) => setTimeout(r, 200 * attempt));
+			const ctrl = new AbortController();
+			const timer = setTimeout(() => ctrl.abort(), perAttemptMs);
+			try {
+				const res = await fetch(url, { signal: ctrl.signal, headers: { accept: 'application/json', ...hostHeaders, ...headers } });
+				if (res.ok) return await res.json();
+				last = { __error: `upstream ${res.status}` };
+				if (res.status < 500) return last; // 4xx is an answer, not an outage
+			} catch (err) {
+				last = { __error: err?.name === 'AbortError' ? 'upstream timeout' : String(err?.message || err) };
+			} finally {
+				clearTimeout(timer);
+			}
 		}
+		return last;
 	});
 }
 
@@ -398,6 +427,115 @@ export async function blockscoutTransfers(address, limit = 25) {
 		decimals: t.total?.decimals || null,
 		timestamp: t.timestamp || null,
 	}));
+}
+
+// ── Blockscout address reads (the Hood Desk's wallet lane) ─────────────────
+// Address-scoped counterparts to the token-scoped readers above. Blockscout is
+// the only lane that can answer these: the public sequencer RPC is not an
+// archive node (eth_getBalance at a past block answers "metadata is not
+// found"), so a wallet's balance history has to come from the indexer.
+
+/** ERC-20 balances held by an address (raw atomic `value` per token). */
+export async function blockscoutAddressTokens(address) {
+	const addr = String(address || '').toLowerCase();
+	if (!/^0x[0-9a-f]{40}$/.test(addr)) return [];
+	const data = await fetchJson(
+		`${BLOCKSCOUT_BASE}/api/v2/addresses/${addr}/token-balances`,
+		20,
+		`rh:bs:addr:tokens:${addr}`,
+	);
+	return Array.isArray(data) ? data : [];
+}
+
+/** Native-balance points, one per balance-changing transaction (newest first). */
+export async function blockscoutCoinHistory(address) {
+	const addr = String(address || '').toLowerCase();
+	if (!/^0x[0-9a-f]{40}$/.test(addr)) return [];
+	const data = await fetchJson(
+		`${BLOCKSCOUT_BASE}/api/v2/addresses/${addr}/coin-balance-history`,
+		20,
+		`rh:bs:addr:coinhist:${addr}`,
+	);
+	return Array.isArray(data?.items) ? data.items : [];
+}
+
+/** Daily native-balance closes for the long windows (Blockscout keeps ~10 days). */
+export async function blockscoutCoinHistoryByDay(address) {
+	const addr = String(address || '').toLowerCase();
+	if (!/^0x[0-9a-f]{40}$/.test(addr)) return [];
+	const data = await fetchJson(
+		`${BLOCKSCOUT_BASE}/api/v2/addresses/${addr}/coin-balance-history-by-day`,
+		60,
+		`rh:bs:addr:coinday:${addr}`,
+	);
+	return Array.isArray(data?.items) ? data.items : [];
+}
+
+/** Recent transactions sent or received by an address (newest first). */
+export async function blockscoutAddressTxs(address, limit = 40) {
+	const addr = String(address || '').toLowerCase();
+	if (!/^0x[0-9a-f]{40}$/.test(addr)) return [];
+	const data = await fetchJson(
+		`${BLOCKSCOUT_BASE}/api/v2/addresses/${addr}/transactions`,
+		15,
+		`rh:bs:addr:txs:${addr}`,
+	);
+	const items = Array.isArray(data?.items) ? data.items : [];
+	return items.slice(0, limit);
+}
+
+/** Recent token transfers touching an address (newest first). */
+export async function blockscoutAddressTokenTransfers(address, limit = 40) {
+	const addr = String(address || '').toLowerCase();
+	if (!/^0x[0-9a-f]{40}$/.test(addr)) return [];
+	const data = await fetchJson(
+		`${BLOCKSCOUT_BASE}/api/v2/addresses/${addr}/token-transfers`,
+		15,
+		`rh:bs:addr:transfers:${addr}`,
+	);
+	const items = Array.isArray(data?.items) ? data.items : [];
+	return items.slice(0, limit);
+}
+
+const ERC20_META_ABI = [
+	{ type: 'function', name: 'decimals', stateMutability: 'view', inputs: [], outputs: [{ type: 'uint8' }] },
+	{ type: 'function', name: 'symbol', stateMutability: 'view', inputs: [], outputs: [{ type: 'string' }] },
+	{ type: 'function', name: 'name', stateMutability: 'view', inputs: [], outputs: [{ type: 'string' }] },
+];
+
+/**
+ * On-chain decimals/symbol/name for tokens the indexer has no metadata for.
+ * Unverified launchpad coins are indexed with `decimals: null`, and a balance
+ * divided by a guessed 1e18 is a wrong number on the screen, so the desk asks
+ * the contract itself (one multicall for every unknown token, never one call
+ * per token).
+ */
+export async function erc20Metadata(addresses) {
+	const list = (Array.isArray(addresses) ? addresses : [])
+		.map((a) => String(a || '').toLowerCase())
+		.filter((a, i, arr) => /^0x[0-9a-f]{40}$/.test(a) && arr.indexOf(a) === i);
+	if (!list.length) return {};
+	const client = publicClient(false);
+	const results = await client
+		.multicall({
+			contracts: list.flatMap((address) => [
+				{ address, abi: ERC20_META_ABI, functionName: 'decimals' },
+				{ address, abi: ERC20_META_ABI, functionName: 'symbol' },
+				{ address, abi: ERC20_META_ABI, functionName: 'name' },
+			]),
+			allowFailure: true,
+		})
+		.catch(() => []);
+	const out = {};
+	for (let i = 0; i < list.length; i++) {
+		const [dec, sym, nam] = [results[i * 3], results[i * 3 + 1], results[i * 3 + 2]];
+		out[list[i]] = {
+			decimals: dec?.status === 'success' ? Number(dec.result) : null,
+			symbol: sym?.status === 'success' ? String(sym.result) : null,
+			name: nam?.status === 'success' ? String(nam.result) : null,
+		};
+	}
+	return out;
 }
 
 // ── DefiLlama chain TVL ────────────────────────────────────────────────────

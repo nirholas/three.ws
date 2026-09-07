@@ -2346,6 +2346,14 @@
 					"added": "2026-07-12"
 				},
 				{
+					"path": "/markets/robinhood/desk",
+					"title": "Hood Desk",
+					"description": "A live onchain trading desk for any Robinhood Chain (4663) wallet: book value, native balance history rebuilt from the indexer, an activity tape of swaps and transfers, positions priced against Chainlink NAV and the deepest Uniswap pool, the NAV premium ridge layered by pool depth, counterparty flow, and memecoin movers.",
+					"priority": 0.7,
+					"changefreq": "hourly",
+					"added": "2026-09-07"
+				},
+				{
 					"path": "/markets/news",
 					"title": "Crypto News",
 					"description": "Live crypto news aggregated natively from 192 publisher feeds in 18 languages: filter by category (Bitcoin, DeFi, security, regulation, and more), pick a language, search headlines, and open any story in a rich reader with summary, key points, sentiment, and related coverage.",

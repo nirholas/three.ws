@@ -1,0 +1,157 @@
+<!doctype html>
+<html lang="en" class="cv-page" data-shell>
+	<head>
+		<script>
+			/* three.ws theme boot - no-flash; runtime in /theme-switcher.js */ (function () {
+				try {
+					var m = localStorage.getItem('twx_theme');
+					var l =
+						m === 'auto'
+							? window.matchMedia &&
+								window.matchMedia('(prefers-color-scheme: light)').matches
+							: m === 'light';
+					document.documentElement.setAttribute('data-theme', l ? 'light' : 'dark');
+				} catch (e) {
+					document.documentElement.setAttribute('data-theme', 'dark');
+				}
+			})();
+		</script>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<title>Hood Desk · live onchain trading desk for Robinhood Chain · three.ws</title>
+		<meta
+			name="description"
+			content="A live trading desk for any Robinhood Chain (4663) wallet: book value, native balance history, an onchain activity tape, positions priced against Chainlink NAV and Uniswap, the NAV premium ridge, counterparty flow, and memecoin movers. Real onchain data, no API key, no signature."
+		/>
+		<meta property="og:type" content="website" />
+		<meta property="og:site_name" content="three.ws" />
+		<meta property="og:url" content="https://three.ws/markets/robinhood/desk" />
+		<meta property="og:title" content="Hood Desk · live onchain trading desk for Robinhood Chain" />
+		<meta
+			property="og:description"
+			content="Paste any Robinhood Chain address and get its whole book: balance history, activity tape, priced positions, NAV premium ridge and counterparty flow."
+		/>
+		<meta
+			property="og:image"
+			content="https://three.ws/api/page-og?s=crypto&amp;t=Hood+Desk&amp;d=A+live+onchain+trading+desk+for+Robinhood+Chain+%284663%29%3A+book+value%2C+balance+history%2C+activity+tape%2C+priced+positions+and+the+NAV+premium+ridge&amp;p=%2Fmarkets%2Frobinhood%2Fdesk"
+		/>
+		<meta property="og:image:width" content="1200" />
+		<meta property="og:image:height" content="630" />
+		<meta name="twitter:card" content="summary_large_image" />
+		<meta name="twitter:site" content="@trythreews" />
+		<meta name="twitter:title" content="Hood Desk · three.ws" />
+		<meta
+			name="twitter:description"
+			content="A live onchain trading desk for Robinhood Chain: book, tape, positions, NAV premium ridge."
+		/>
+		<meta
+			name="twitter:image"
+			content="https://three.ws/api/page-og?s=crypto&amp;t=Hood+Desk&amp;d=A+live+onchain+trading+desk+for+Robinhood+Chain+%284663%29%3A+book+value%2C+balance+history%2C+activity+tape%2C+priced+positions+and+the+NAV+premium+ridge&amp;p=%2Fmarkets%2Frobinhood%2Fdesk"
+		/>
+		<meta name="theme-color" content="#09090b" />
+		<link rel="icon" href="/favicon.ico" sizes="any" />
+		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+		<link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+		<link rel="manifest" href="/manifest.webmanifest" />
+		<link rel="stylesheet" href="/fonts/fonts.css" />
+		<link rel="stylesheet" href="/nav.css" />
+		<link rel="stylesheet" href="/src/coin-pages.css" />
+		<link rel="stylesheet" href="/src/robinhood.css" />
+		<link rel="stylesheet" href="/src/hood-desk.css" />
+		<link rel="stylesheet" href="/footer.css" />
+		<link rel="canonical" href="https://three.ws/markets/robinhood/desk" />
+		<meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1" />
+		<meta property="og:locale" content="en_US" />
+		<meta property="og:image:alt" content="Hood Desk, the live onchain trading desk for Robinhood Chain - three.ws" />
+		<script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"WebApplication","name":"Hood Desk","applicationCategory":"FinanceApplication","operatingSystem":"Any","description":"A live onchain trading desk for Robinhood Chain (4663): wallet book value, native balance history, activity tape, positions priced against Chainlink NAV and Uniswap, the NAV premium ridge and counterparty flow.","url":"https://three.ws/markets/robinhood/desk","offers":{"@type":"Offer","price":"0","priceCurrency":"USD"},"isPartOf":{"@type":"WebSite","name":"three.ws","url":"https://three.ws"}}]}</script>
+	</head>
+	<body>
+		<header><div id="nav-container"></div></header>
+		<script src="/nav.js"></script>
+
+		<main class="hd-main" id="hd-main">
+			<nav class="cv-crumbs" aria-label="Breadcrumb">
+				<a href="/markets">Markets</a>
+				<span class="sep" aria-hidden="true">/</span>
+				<a href="/markets/robinhood">Robinhood Chain</a>
+				<span class="sep" aria-hidden="true">/</span>
+				<span class="here">Desk</span>
+			</nav>
+
+			<section class="hd-bar" aria-label="Desk status">
+				<h1 class="hd-brand">
+					<span class="hd-brand-mark" aria-hidden="true">◆</span>
+					HOOD DESK
+					<span class="hd-brand-sub" id="hd-brand-sub">/ no wallet</span>
+				</h1>
+				<div class="hd-bar-spacer"></div>
+				<form class="hd-wallet-form" id="hd-wallet-form">
+					<label class="cv-sr-only" for="hd-address">Robinhood Chain wallet address</label>
+					<input
+						class="hd-input"
+						id="hd-address"
+						name="address"
+						type="text"
+						spellcheck="false"
+						autocomplete="off"
+						placeholder="0x… paste any wallet to load its book"
+						aria-describedby="hd-address-help"
+					/>
+					<button class="hd-btn hd-btn-accent" type="submit">Load book</button>
+					<button class="hd-btn hd-btn-ghost" type="button" id="hd-connect">Connect wallet</button>
+				</form>
+				<span class="hd-live" id="hd-live" data-state="stale" role="status">
+					<span class="hd-live-dot" aria-hidden="true"></span>
+					<span id="hd-live-text">booting</span>
+				</span>
+				<span class="hd-clock hd-mono" id="hd-clock" aria-label="Session clock">00:00</span>
+			</section>
+			<p class="cv-sr-only" id="hd-address-help">
+				Read-only. Any Robinhood Chain address can be loaded; nothing is signed and no key is
+				needed.
+			</p>
+
+			<div id="hd-alert" hidden></div>
+
+			<section class="hd-stats" id="hd-stats" aria-label="Desk vitals"></section>
+
+			<div class="hd-grid hd-grid-2">
+				<section class="hd-card" id="hd-balance" aria-label="Balance history"></section>
+				<section class="hd-card" id="hd-tape-card" aria-label="Activity tape"></section>
+			</div>
+
+			<section class="hd-card" id="hd-ridge" aria-label="NAV premium ridge"></section>
+
+			<div class="hd-grid hd-grid-2">
+				<section class="hd-card" id="hd-book" aria-label="Positions"></section>
+				<section class="hd-card" id="hd-flow" aria-label="Counterparty flow"></section>
+			</div>
+
+			<section class="hd-card" id="hd-movers" aria-label="Memecoin movers"></section>
+
+			<p class="hd-note" id="hd-updated">
+				Every number on this desk is read live from Robinhood Chain (4663): balances and history
+				from the chain RPC and the Blockscout indexer, Stock Token NAV from the tokens' Chainlink
+				feeds on-chain, coin prices from the deepest Uniswap pool. Stock Tokens are tokenized debt
+				securities issued by Robinhood Assets (Jersey) Ltd and may not be offered, sold, or
+				delivered to US persons; the desk displays them and never routes an order into one.
+				Nothing here is investment advice.
+			</p>
+		</main>
+
+		<dialog class="hd-drawer" id="hd-trade-dialog" aria-labelledby="hd-trade-title">
+			<div class="hd-drawer-head">
+				<h2 id="hd-trade-title">Trade ticket</h2>
+				<div class="hd-bar-spacer"></div>
+				<button class="hd-btn hd-btn-sm hd-btn-ghost" type="button" id="hd-trade-close">Close</button>
+			</div>
+			<div class="hd-drawer-body" id="hd-trade-body"></div>
+		</dialog>
+
+		<script type="module" src="/src/hood-desk.js"></script>
+		<script src="/brand.js" defer></script>
+		<div id="footer-container"></div>
+		<script src="/footer.js"></script>
+		<script type="module" src="/i18n.js"></script>
+	</body>
+</html>

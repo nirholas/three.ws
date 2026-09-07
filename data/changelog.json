@@ -3,6 +3,13 @@
 	"entries": [
 		{
 			"date": "2026-09-07",
+			"title": "Hood Desk: a live onchain trading desk for any Robinhood Chain wallet",
+			"summary": "Paste a Robinhood Chain address (or connect a wallet) at three.ws/markets/robinhood/desk and the whole book loads: total value in USD, every token you hold priced against its Chainlink NAV feed or its deepest Uniswap pool, a native balance curve rebuilt from the chain's own history, and a live tape of your swaps, transfers and mints that folds each trade into one readable line instead of three. The centrepiece is the NAV premium ridge: the spread between what every tokenized stock is worth and what it actually trades for on the DEX, redrawn once per liquidity floor, so a dislocation that survives to the back rows is one you could really size into. Under it, the widest tradeable gaps, ranked. Reading any wallet is free, keyless and signature-free, so a desk link is a view anyone can open.",
+			"tags": ["feature"],
+			"link": "/markets/robinhood/desk"
+		},
+		{
+			"date": "2026-09-07",
 			"title": "Awesome 3D Agents: a curated list of everything you need to give an AI a body",
 			"summary": "Giving an agent a body means assembling a pipeline out of a dozen separate fields, and the map of that pipeline did not exist anywhere. There is now one: 134 hand-picked projects across 13 sections, covering text-to-3D generation, photo and video capture, avatars, rigging, motion generation, lipsync and voice, web renderers, asset pipelines, physics and networking, agent frameworks, datasets, free assets, and where to learn all of it. Each entry says in one sentence what the thing does and why you would reach for it instead of the alternative. The list is searchable and filterable by tag at /awesome, copyable as Markdown, and published in the standard awesome-list format on GitHub so it can be read, forked, and contributed to there. Every link is fetched and verified before it ships.",
 			"tags": ["feature", "docs"],
