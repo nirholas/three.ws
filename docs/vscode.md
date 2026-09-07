@@ -52,7 +52,7 @@ library: 2,800 clips, the same ones the `/animations` gallery and the
 Behind that, the clip (authored on the platform's canonical humanoid skeleton)
 is retargeted onto the model's own bones inside the viewer by
 [`src/animation-retarget.js`](../src/animation-retarget.js), the retargeter
-that runs on three.ws itself, so Mixamo, Avaturn, VRM/VRoid, Unreal, Daz,
+that runs on three.ws itself, so Mixamo, VRM/VRoid, Unreal, Daz,
 MakeHuman, Blender `.L/.R`, and simple `shoulderL` rigs all work. A rig it
 cannot drive gets a message with how many bones matched and an offer to rig it.
 

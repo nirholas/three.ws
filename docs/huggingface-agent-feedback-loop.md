@@ -86,7 +86,7 @@ Together with the grade, this is what turns a refine loop into something you can
 
 The other half of "agentic 3D" is that the asset has to *do* something, and animation is where pipelines quietly fail.
 
-Our constraint is that we never see the model first. It might come from our own lanes, from Mixamo, VRoid, Daz, Unreal, or a Blender export from 2019. So instead of a curated allowlist of supported rigs, we canonicalise bone names, then retarget onto the canonical set. The mapping covers Mixamo, Avaturn, Unreal, VRM and VRoid, VRM 1.0, Daz/Genesis, MakeHuman, Blender `.L`/`.R` and simple `shoulderL` conventions, and a new convention is one mapping entry plus a test, not a new code path. A model that genuinely cannot be skeleton-driven falls back to a default rig rather than a bind-pose T-pose, because a T-pose reads as a bug to every user and as "unsupported" to none of them.
+Our constraint is that we never see the model first. It might come from our own lanes, from Mixamo, VRoid, Daz, Unreal, or a Blender export from 2019. So instead of a curated allowlist of supported rigs, we canonicalise bone names, then retarget onto the canonical set. The mapping covers Mixamo, Unreal, VRM and VRoid, VRM 1.0, Daz/Genesis, MakeHuman, Blender `.L`/`.R` and simple `shoulderL` conventions, and a new convention is one mapping entry plus a test, not a new code path. A model that genuinely cannot be skeleton-driven falls back to a default rig rather than a bind-pose T-pose, because a T-pose reads as a bug to every user and as "unsupported" to none of them.
 
 It is published on its own as `@three-ws/retarget`.
 

@@ -240,7 +240,7 @@ Four verdicts, and the useful distinction is between `needs_scale` (geometry is 
 
 There are wrappers for React, a floating concierge widget, a page narrator that reads the page it lives on, a walk companion, and a guided-tour agent, all as paste-in snippets. If you would rather scaffold the whole thing locally, `npx @three-ws/create-agent` goes from a sentence to a rigged, animated agent in one command.
 
-A note on animation, because it is the step people underestimate: **there is no rig allowlist.** Bone names are canonicalised across Mixamo, Avaturn, Unreal, VRM and VRoid, VRM 1.0, Daz/Genesis, MakeHuman, Blender `.L`/`.R`, and simple `shoulderL` conventions, then clips are retargeted onto whatever came in, legs included. A model that genuinely cannot be skeleton-driven falls back to a default rig rather than standing in a bind-pose T-pose. That logic is published on its own as [`@three-ws/retarget`](https://www.npmjs.com/package/@three-ws/retarget).
+A note on animation, because it is the step people underestimate: **there is no rig allowlist.** Bone names are canonicalised across Mixamo, Unreal, VRM and VRoid, VRM 1.0, Daz/Genesis, MakeHuman, Blender `.L`/`.R`, and simple `shoulderL` conventions, then clips are retargeted onto whatever came in, legs included. A model that genuinely cannot be skeleton-driven falls back to a default rig rather than standing in a bind-pose T-pose. That logic is published on its own as [`@three-ws/retarget`](https://www.npmjs.com/package/@three-ws/retarget).
 
 ---
 

@@ -28,7 +28,7 @@ Use a real agent from your account, not the anonymous companion. The card's wall
 - Check the agent's profile page (`/agents/<id>`): if it shows a Solana wallet chip there, the IRL card will show the same chip and the tip QR.
 - **An agent wallet is provisioned on demand, not automatically.** A brand-new agent has none, and `GET /api/agents/<id>/solana` answers `"wallet": null` for it. The IRL card then renders with no wallet chip and no tip QR, which removes the part of the demo people react to most. Create one from the agent's wallet panel (or `POST /api/agents/<id>/solana` while signed in as the owner) and confirm the same endpoint returns an address before you print anything.
 - If you want a paid interaction in the demo, give the agent a priced service from `/dashboard/monetize`. It appears on the card as a **Pay via x402** action.
-- A humanoid rigged body plays the idle animation and gaze in the camera view. Any of the rigs the universal retargeter maps work (Mixamo, VRM, Avaturn, and the rest); a non-humanoid prop stands still.
+- A humanoid rigged body plays the idle animation and gaze in the camera view. Any of the rigs the universal retargeter maps work (Mixamo, VRM, and the rest); a non-humanoid prop stands still.
 
 ### 2. Pick the spot
 

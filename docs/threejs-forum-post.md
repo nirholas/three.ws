@@ -22,7 +22,7 @@ Five pieces fell out of that, each published on its own so you can use them with
 
 The usual approach to "animate any humanoid" is a curated list of supported rigs. It works until the eleventh rig, and every asset marketplace produces new ones faster than you can add them.
 
-Instead we canonicalise bone names first, then retarget onto the canonical set. The mapping covers Mixamo, Avaturn, Unreal, VRM and VRoid, VRM 1.0, Daz/Genesis, MakeHuman, Blender `.L`/`.R` suffixes, and the simple `shoulderL` style rigs, and adding a new convention is one mapping entry plus a test case rather than a new code path.
+Instead we canonicalise bone names first, then retarget onto the canonical set. The mapping covers Mixamo, Unreal, VRM and VRoid, VRM 1.0, Daz/Genesis, MakeHuman, Blender `.L`/`.R` suffixes, and the simple `shoulderL` style rigs, and adding a new convention is one mapping entry plus a test case rather than a new code path.
 
 Two details that took us longer than they should have:
 
