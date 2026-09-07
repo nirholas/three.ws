@@ -72,8 +72,10 @@ Verified in a real browser against `butterfly.spz` (177,132 splats) and both
 procedural samples: correct framing, correct orientation, live splat counts in
 the HUD, no console errors.
 
-`@mkkellogg/gaussian-splats-3d` stays a dependency: the Forge Studio Lab still
-uses it, and moving that surface is separate work.
+Both splat surfaces now share one engine, [src/splat-stage.js](../src/splat-stage.js):
+the viewer and the Forge Studio Lab need the same scene and the same three
+gotchas above, and having them in one module is what stops one copy from
+rotting. `@mkkellogg/gaussian-splats-3d` was removed from the dependency tree.
 
 ### 2. BiRefNet as an optional background-removal model
 

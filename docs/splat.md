@@ -10,7 +10,7 @@ Mesh avatars (GLB) are lightweight, riggable, and universal, and that is what mo
 
 ## How it works
 
-The viewer (`src/splat-viewer.js`) is entirely client-side. It runs on [Spark](https://github.com/sparkjsdev/spark) (`@sparkjsdev/spark`, MIT, by World Labs), lazy-loaded on first render so the page shell paints instantly.
+The viewer (`src/splat-viewer.js`) is entirely client-side. Rendering lives in `src/splat-stage.js`, a shared module on top of [Spark](https://github.com/sparkjsdev/spark) (`@sparkjsdev/spark`, MIT, by World Labs), lazy-loaded on first render so the page shell paints instantly. The Forge Studio Lab's splat tools render through the same module, so both surfaces read the same formats and behave the same way.
 
 Spark renders splats as ordinary objects inside a normal three.js scene rather than inside a viewer of its own, which is what makes the rest of this page's behaviour possible:
 

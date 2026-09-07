@@ -1,67 +1,35 @@
-// Splat Viewer — render Gaussian-splat / radiance-field avatars in the browser.
-//
-// Runs on Spark (`@sparkjsdev/spark`, MIT, World Labs), which renders splats as
-// ordinary objects inside a normal three.js scene rather than inside a private
-// viewer of its own. Two things follow from that, and both are the reason this
-// page moved off `@mkkellogg/gaussian-splats-3d`:
-//
-//   1. It reads the formats real captures actually ship. A scene that is a 1 GB
-//      PLY is roughly a 42 MB SOG or a 100 MB SPZ, and those are the files
-//      people are handed today. Extension-sniffing is also gone: the format is
-//      read from the bytes, so a URL with no extension (or the wrong one) still
-//      decodes.
-//   2. The camera can frame the scene it actually loaded. The old viewer parked
-//      the camera at a fixed z=3.2 for every file, which is correct for a scene
-//      authored at unit scale and nothing else.
+// Splat Viewer - render Gaussian-splat / radiance-field avatars in the browser.
 //
 // Loads a .ply (plain or compressed), .spz, .splat, .ksplat, or .sog from a URL
 // (?src=), a file upload, or a procedurally generated sample. Every state is
-// designed: idle, loading, error, and the live HUD.
+// designed: idle, fetching, decoding, sorting, error, and the live HUD.
+//
+// The renderer itself lives in `src/splat-stage.js`, shared with the Forge
+// Studio Lab, which needs the same scene and the same three non-obvious Spark
+// behaviours. This file is the page: fetching, format plumbing, and the states.
 
-import { Box3, Color, PerspectiveCamera, Scene, Vector3, WebGLRenderer } from 'three';
-import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { Color } from 'three';
+import { loadSpark, detectSplatFormat, mountSplatScene, SPLAT_EXTENSIONS_LABEL } from './splat-stage.js';
 
 const $ = (s, r = document) => r.querySelector(s);
 
 const STAGE = () => $('#sp-stage');
 const HOST = () => $('#sp-host');
 
-// ── Splat lib (lazy) ─────────────────────────────────────────────────────────
-let _spark = null;
-async function loadSplatLib() {
-	if (!_spark) _spark = await import('@sparkjsdev/spark');
-	return _spark;
-}
-
-// ── Active scene lifecycle ───────────────────────────────────────────────────
-let _stage = null; // { renderer, scene, camera, controls, spark, mesh, frame }
+// -- Active scene lifecycle ---------------------------------------------------
+let _scene = null; // handle from mountSplatScene
+let _token = 0; // guards a slow load finishing after a newer one started
 let _downloadUrl = null; // blob URL backing the download button
-let _lastRender = null; // { buffer, fileType, label, flip }, for recenter / re-render
+let _lastRender = null; // { buffer, fileType, fileName, label, flip }, for recenter
 
 function teardown() {
-	const s = _stage;
-	if (!s) return;
-	_stage = null;
-	if (s.frame) cancelAnimationFrame(s.frame);
-	// Order matters: drop the splat data, then the Spark renderer that holds GPU
-	// buffers for it, then the controls' listeners, then the context itself.
-	try { s.mesh?.dispose?.(); } catch { /* already torn down */ }
-	try { s.spark?.dispose?.(); } catch { /* already torn down */ }
-	try { s.controls?.dispose?.(); } catch { /* already torn down */ }
-	// renderer.dispose() frees the three.js caches and leaves the WebGL context
-	// alive. Without an explicit release, every scene swap leaks a live context,
-	// and a browser only grants a page a handful before it starts reclaiming the
-	// oldest ones out from under a running scene.
-	try {
-		s.renderer?.forceContextLoss?.();
-		s.renderer?.dispose?.();
-	} catch { /* context already lost */ }
-	s.resize && window.removeEventListener('resize', s.resize);
-	const host = HOST();
-	if (host) host.innerHTML = '';
+	_token++;
+	if (!_scene) return;
+	_scene.dispose();
+	_scene = null;
 }
 
-// ── State overlays ───────────────────────────────────────────────────────────
+// -- State overlays -----------------------------------------------------------
 function showOnly(id) {
 	for (const k of ['sp-idle', 'sp-loading', 'sp-error']) {
 		const node = $(`#${k}`);
@@ -112,166 +80,49 @@ function setDownload(url, filename) {
 	btn.hidden = false;
 }
 
-// ── Format detection ─────────────────────────────────────────────────────────
-// Spark sniffs the container from its magic bytes, which is the reliable answer
-// and the only one available for a URL that ends in a query string or no
-// extension at all. Two formats it cannot sniff fall back to the name: `.splat`
-// is a raw 32-byte-per-splat array with no header, and a bundled `.sog` is a zip
-// whose signature it does not claim.
-function formatFor(name, bytes, SPARK) {
-	const sniffed = SPARK.getSplatFileType(new Uint8Array(bytes.slice(0, 1024)));
-	if (sniffed) return sniffed;
-	const n = (name || '').toLowerCase();
-	if (n.endsWith('.sog')) return SPARK.SplatFileType.PCSOGSZIP;
-	if (n.endsWith('meta.json')) return SPARK.SplatFileType.PCSOGS;
-	if (n.endsWith('.ksplat')) return SPARK.SplatFileType.KSPLAT;
-	if (n.endsWith('.spz')) return SPARK.SplatFileType.SPZ;
-	if (n.endsWith('.ply')) return SPARK.SplatFileType.PLY;
-	return SPARK.SplatFileType.SPLAT;
-}
-
-const ACCEPTED = '.ply, .spz, .splat, .ksplat, or .sog';
-
-// ── Core render ──────────────────────────────────────────────────────────────
-const FOV = 55;
-const FIRST_PAINT_TIMEOUT_MS = 8000;
-
-// Fit the camera to whatever came out of the file. `centers_only` ignores the
-// per-splat radii, so one stray oversized splat cannot blow the frame out to
-// nothing, which is the usual failure of naive splat framing.
-//
-// getBoundingBox reports the mesh's OWN coordinates, and a loaded capture wears
-// the 180-degree flip below. Framing the local box would aim the camera at the
-// mirror image of where the scene actually is, which is invisible for anything
-// not centred on the origin, so push the box through the world matrix first.
-function frameCamera(camera, controls, mesh) {
-	let box;
-	try { box = mesh.getBoundingBox(true); } catch { box = null; }
-	if (!box || box.isEmpty()) box = new Box3(new Vector3(-1, -1, -1), new Vector3(1, 1, 1));
-	mesh.updateMatrixWorld(true);
-	box.applyMatrix4(mesh.matrixWorld);
-	const center = box.getCenter(new Vector3());
-	const radius = Math.max(box.getSize(new Vector3()).length() / 2, 0.001);
-	const distance = (radius / Math.sin((FOV * Math.PI) / 360)) * 1.15;
-	camera.near = Math.max(distance / 1000, 0.001);
-	camera.far = distance * 100;
-	camera.updateProjectionMatrix();
-	camera.position.set(center.x, center.y, center.z + distance);
-	controls.target.copy(center);
-	controls.update();
-	return { center: center.clone(), position: camera.position.clone() };
-}
-
+// -- Core render --------------------------------------------------------------
 async function renderBuffer(buffer, { label, fileType, fileName, flip = true }) {
 	_lastRender = { buffer, fileType, fileName, label, flip };
-	setLoading('Decoding radiance field…', `${(buffer.byteLength / 1024 / 1024).toFixed(1)} MB`);
-	const SPARK = await loadSplatLib();
+	setLoading('Decoding radiance field\u2026', `${(buffer.byteLength / 1024 / 1024).toFixed(1)} MB`);
 	teardown();
-	const host = HOST();
-	host.innerHTML = '';
+	const token = _token;
 
-	// Opaque, and antialias off on Spark's own advice: MSAA does nothing for
-	// splats and costs real frame time. Opaque is not a style choice either.
-	// Spark accumulates splat colour with premultiplied alpha and leaves the
-	// destination alpha at zero, so on a transparent canvas the browser
-	// composites a fully rendered scene away to nothing. The clear colour stands
-	// in for the stage's own gradient, which the canvas covers.
-	const renderer = new WebGLRenderer({ antialias: false });
-	renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-	renderer.setSize(host.clientWidth || 640, host.clientHeight || 420);
-	host.appendChild(renderer.domElement);
-
-	const scene = new Scene();
-	scene.background = new Color(0x0f0e16);
-	const camera = new PerspectiveCamera(FOV, (host.clientWidth || 640) / (host.clientHeight || 420), 0.01, 1000);
-	const controls = new OrbitControls(camera, renderer.domElement);
-	controls.enableDamping = true;
-	// Spark sorts the splats on a worker and only paints once that first sort
-	// lands, which on a weak GPU is a visible second or more. Without this the
-	// stage would go live over an empty canvas and read as a broken page, so
-	// hold the loading state until Spark says it has something to draw. The
-	// timeout is the safety net: a scene that never reports back still gets
-	// handed to the user rather than hanging on the overlay forever.
-	let onFirstPaint;
-	const firstPaint = new Promise((resolve) => { onFirstPaint = resolve; });
-	const spark = new SPARK.SparkRenderer({ renderer, onDirty: () => onFirstPaint() });
-	scene.add(spark);
-
-	const stage = { renderer, scene, camera, controls, spark, mesh: null, frame: 0, home: null };
-	_stage = stage;
-
-	let mesh;
+	let scene;
 	try {
-		mesh = new SPARK.SplatMesh({ fileBytes: buffer, fileType, fileName });
-		// 3DGS captures are authored Y-down, so every viewer in the ecosystem
-		// flips them 180 degrees about X to stand them up. Our procedural samples
-		// are authored Y-up and pass flip:false.
-		if (flip) mesh.quaternion.set(1, 0, 0, 0);
-		await mesh.initialized;
+		scene = await mountSplatScene(HOST(), buffer, {
+			fileType,
+			fileName,
+			flip,
+			onSorting: (count) => {
+				if (token !== _token) return;
+				setLoading('Sorting splats\u2026', count ? `${count.toLocaleString()} splats` : '');
+			},
+			onContextLost: () => {
+				if (token !== _token) return;
+				_scene = null;
+				setError('The 3D context was lost', 'Your browser released the WebGL context, usually after a GPU reset or heavy memory pressure. Load the scene again to restore it.');
+			},
+		});
 	} catch (err) {
-		teardown();
-		setError('That file isn’t a valid splat', `Expected a ${ACCEPTED} Gaussian-splat scene. Check the file and try again.`);
+		if (token !== _token) return false;
+		setError('That file isn\u2019t a valid splat', `Expected a ${SPLAT_EXTENSIONS_LABEL} Gaussian-splat scene. Check the file and try again.`);
 		console.error('[splat] decode failed', err);
 		return false;
 	}
-	if (_stage !== stage) { try { mesh.dispose(); } catch { /* superseded mid-decode */ } return false; }
+	// A newer load started while this one was decoding: throw this one away rather
+	// than letting it paint over the scene the user is now waiting on.
+	if (token !== _token) { scene.dispose(); return false; }
 
-	stage.mesh = mesh;
-	scene.add(mesh);
-	stage.home = frameCamera(camera, controls, mesh);
-
-	const resize = () => {
-		const w = host.clientWidth || 640;
-		const h = host.clientHeight || 420;
-		renderer.setSize(w, h);
-		camera.aspect = w / h;
-		camera.updateProjectionMatrix();
-	};
-	stage.resize = resize;
-	window.addEventListener('resize', resize);
-	resize();
-
-	const tick = () => {
-		if (_stage !== stage) return;
-		stage.frame = requestAnimationFrame(tick);
-		controls.update();
-		renderer.render(scene, camera);
-	};
-	stage.frame = requestAnimationFrame(tick);
-
-	watchContextLoss(stage);
-	const count = mesh.packedSplats?.numSplats;
-	setLoading('Sorting splats…', count ? `${count.toLocaleString()} splats` : '');
-	await Promise.race([firstPaint, new Promise((r) => setTimeout(r, FIRST_PAINT_TIMEOUT_MS))]);
-	if (_stage !== stage) return false;
-	setLive(count ? `${label} · ${count.toLocaleString()} splats` : label);
+	_scene = scene;
+	setLive(scene.count ? `${label} \u00b7 ${scene.count.toLocaleString()} splats` : label);
 	return true;
-}
-
-// A GPU driver reset or a browser-reclaimed context leaves a live canvas painting
-// nothing. Say so instead of showing a frozen frame, and offer the way back.
-function watchContextLoss(stage) {
-	const canvas = stage.renderer?.domElement;
-	if (!canvas) return;
-	canvas.addEventListener('webglcontextlost', (e) => {
-		e.preventDefault();
-		if (_stage !== stage) return;
-		teardown();
-		setError('The 3D context was lost', 'Your browser released the WebGL context, usually after a GPU reset or heavy memory pressure. Load the scene again to restore it.');
-	}, { once: true });
 }
 
 // Reset the camera on the live scene. Rebuilding from the cached buffer also
 // works, but it drops and recreates a WebGL context for what is a two-line
 // transform change, and the stage flashes through the loading overlay.
 function recenter() {
-	const s = _stage;
-	if (s?.home) {
-		s.camera.position.copy(s.home.position);
-		s.controls.target.copy(s.home.center);
-		s.controls.update();
-		return;
-	}
+	if (_scene) { _scene.recenter(); return; }
 	if (_lastRender) renderBuffer(_lastRender.buffer, _lastRender);
 }
 
@@ -309,7 +160,7 @@ async function loadFromUrl(url, label) {
 	try { parsed = new URL(url, location.href); } catch { setError('That doesn’t look like a URL', url); return; }
 	parsed = normalizeAssetUrl(parsed);
 	setLoading('Fetching splat…', parsed.hostname);
-	const SPARK = await loadSplatLib();
+	const SPARK = await loadSpark();
 	let buffer;
 	try {
 		const res = await fetch(parsed.href);
@@ -321,7 +172,7 @@ async function loadFromUrl(url, label) {
 		return;
 	}
 	const name = parsed.pathname.split('/').pop() || 'remote.splat';
-	const ok = await renderBuffer(buffer, { label: label || name, fileName: name, fileType: formatFor(name, buffer, SPARK) });
+	const ok = await renderBuffer(buffer, { label: label || name, fileName: name, fileType: detectSplatFormat(name, buffer, SPARK) });
 	// The bytes are already in memory, so a remote scene is as saveable as an
 	// uploaded one. Handing back the fetched buffer also spares the user a second
 	// round trip to a host that may not allow one.
@@ -329,12 +180,12 @@ async function loadFromUrl(url, label) {
 }
 
 async function loadFromFile(file) {
-	const SPARK = await loadSplatLib();
+	const SPARK = await loadSpark();
 	setLoading('Reading file…', file.name);
 	let buffer;
 	try { buffer = await file.arrayBuffer(); }
 	catch (err) { setError('Couldn’t read that file', err.message); return; }
-	const ok = await renderBuffer(buffer, { label: file.name, fileName: file.name, fileType: formatFor(file.name, buffer, SPARK) });
+	const ok = await renderBuffer(buffer, { label: file.name, fileName: file.name, fileType: detectSplatFormat(file.name, buffer, SPARK) });
 	setDownload(ok ? URL.createObjectURL(new Blob([buffer], { type: 'application/octet-stream' })) : null, file.name);
 }
 
@@ -410,7 +261,7 @@ function sampleBust(count = 14000) {
 }
 
 async function loadSample(kind) {
-	const SPARK = await loadSplatLib();
+	const SPARK = await loadSpark();
 	const isBust = kind === 'bust';
 	const buffer = isBust ? sampleBust() : sampleShell();
 	const label = isBust ? 'Synthetic head bust' : 'Radiance shell';

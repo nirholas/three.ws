@@ -496,7 +496,6 @@
 		"@metaplex-foundation/umi": "^1.5.1",
 		"@metaplex-foundation/umi-bundle-defaults": "^1.5.1",
 		"@meteora-ag/dynamic-bonding-curve-sdk": "^1.5.10",
-		"@mkkellogg/gaussian-splats-3d": "^0.4.7",
 		"@modelcontextprotocol/sdk": "^1.29.0",
 		"@neondatabase/serverless": "^0.10.1",
 		"@neynar/nodejs-sdk": "^3.176.0",

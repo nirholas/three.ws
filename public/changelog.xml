@@ -143,6 +143,14 @@
 			<description>Search engines were shown a different version of every /avatars/... and /agents/... page than people were, and that version had nothing on it: the name and description were hidden in a fallback block that a crawler removes before reading, the rest was a spinner, and the last line of the page sent the crawler straight back to the URL it was already on. Tens of thousands of avatar and agent pages therefore looked identical to Google and were filed as duplicates instead of being listed. Crawlers now get the same content a visitor sees: the name, the description, the rendered card, the creator, the tags, the skills, the on-chain identity, and links onward into the gallery and the directory. A link to an avatar or agent that no longer exists now says so honestly instead of quietly bouncing to a listing page, an id that belongs to the other side of the platform redirects to where it actually lives, and a private agent is no longer readable by anything sending a crawler's name. Signed-in surfaces were also unblocked in robots.txt so their existing no-index instruction can finally be read and obeyed.</description>
 		</item>
 		<item>
+			<title>Studio Lab reads the same splat formats as the viewer</title>
+			<link>https://three.ws/forge-studio</link>
+			<guid isPermaLink="false">2026-09-07:Studio Lab reads the same splat formats as the viewer</guid>
+			<pubDate>Mon, 07 Sep 2026 12:00:00 GMT</pubDate>
+			<category>improvement</category>
+			<description>The Lab's Gaussian-splat tools ran on a different rendering engine from the Splat Viewer, so the two disagreed about which files they would open: the viewer had just gained .spz and .sog and the Lab had not. Both now share one engine, so anything one of them opens the other opens too, the Lab works out a dropped file's format from its contents instead of its name, and its camera frames the scene it loaded.</description>
+		</item>
+		<item>
 			<title>The AgenC task embed now loads even when it is inlined or served from a blob</title>
 			<link>https://three.ws/agenc/embodied</link>
 			<guid isPermaLink="false">2026-09-07:The AgenC task embed now loads even when it is inlined or served from a blob</guid>

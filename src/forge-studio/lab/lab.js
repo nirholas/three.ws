@@ -9,9 +9,10 @@
  *   - Mesh → Gaussian-splat conversion (mesh-to-splat.js): our own splat
  *     generation lane — resamples any mesh (a Lab model or an uploaded GLB) into
  *     a Gaussian-splat radiance field, downloadable as a real .splat file.
- *   - A Gaussian-splat / radiance-field viewer from the npm package
- *     `@mkkellogg/gaussian-splats-3d` — a 3D representation the platform didn't
- *     have. Loads a .splat/.ply (or a generated sample) into its own renderer.
+ *   - A Gaussian-splat / radiance-field viewer on the shared splat stage
+ *     (`src/splat-stage.js`, Spark), a 3D representation the platform didn't
+ *     have. Loads a .ply / .spz / .splat / .ksplat / .sog, or a generated
+ *     sample, into a real three.js scene.
  *
  * Nothing here calls a paid API or the network; every model is computed in the
  * browser, so it is fully self-contained and testable.
@@ -23,6 +24,7 @@ import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { getMeshoptDecoder } from '../../viewer/internal.js';
 import { GENERATORS } from './generators.js';
 import { meshToSplatBuffer } from './mesh-to-splat.js';
+import { loadSpark, detectSplatFormat, mountSplatScene, SPLAT_EXTENSIONS, SPLAT_EXTENSIONS_LABEL } from '../../splat-stage.js';
 import { launchTalk } from '../talk-launch.js';
 
 let _inited = false;
@@ -32,7 +34,7 @@ let _lastGlbBlob = null; // last mesh GLB blob (for "Bring it alive")
 let _lastLabel = '';
 let _lastSplatUrl = null;
 let _lastObject = null; // live Object3D from the last mesh gen (for splat conversion)
-let _splat = null; // lazy { viewer, url }
+let _splat = null; // handle from mountSplatScene
 
 const MESHSPLAT_TOOL = {
 	id: 'meshsplat',
@@ -56,10 +58,10 @@ const MESHSPLAT_TOOL = {
 const SPLAT_TOOL = {
 	id: 'splat',
 	label: 'Splat Viewer',
-	blurb: 'View a Gaussian-splat / radiance-field capture (.splat / .ply) — the photoreal 3D format. Drop a file, or render the built-in sample.',
+	blurb: 'View a Gaussian-splat / radiance-field capture (.ply, .spz, .splat, .ksplat, .sog) - the photoreal 3D format. Drop a file, or render the built-in sample.',
 	kind: 'splat',
 	controls: [
-		{ key: 'file', label: 'Splat file (.splat / .ply / .ksplat)', type: 'splatfile', default: null },
+		{ key: 'file', label: 'Splat file (.ply, .spz, .splat, .ksplat, .sog)', type: 'splatfile', default: null },
 	],
 };
 
@@ -176,7 +178,7 @@ function renderControls() {
 			wrap.appendChild(labelRow);
 			wrap.appendChild(input);
 		} else if (f.type === 'image' || f.type === 'splatfile' || f.type === 'glbfile') {
-			const accept = f.type === 'image' ? 'image/*' : f.type === 'glbfile' ? '.glb,.gltf,model/gltf-binary' : '.splat,.ply,.ksplat';
+			const accept = f.type === 'image' ? 'image/*' : f.type === 'glbfile' ? '.glb,.gltf,model/gltf-binary' : SPLAT_EXTENSIONS.join(',');
 			input = el('input', { type: 'file', id: `lab-field-${f.key}`, accept });
 			const hintText = f.type === 'image' ? 'optional — uses a sample if empty' : f.type === 'glbfile' ? 'pick a .glb / .gltf' : 'optional — renders a sample if empty';
 			const hint = el('span', { class: 'lab-field-out', text: hintText });
@@ -352,7 +354,7 @@ async function convertToSplats() {
 	});
 	if (params.source === 'upload') disposeObject(source); // free the uploaded scene
 	const colorNote = textured ? ' · textured' : '';
-	await renderSplatBuffer(buffer, `${count.toLocaleString()} splats from ${sourceLabel}${colorNote}`);
+	await renderSplatBuffer(buffer, `${count.toLocaleString()} splats from ${sourceLabel}${colorNote}`, undefined, false);
 	// .splat download
 	if (_lastSplatUrl) URL.revokeObjectURL(_lastSplatUrl);
 	_lastSplatUrl = URL.createObjectURL(new Blob([buffer], { type: 'application/octet-stream' }));
@@ -394,54 +396,47 @@ function sampleSplatBuffer(count = 4000) {
 async function renderSplatFile() {
 	const fileField = $('#lab-field-file');
 	const uploaded = fileField?._fileData || null;
-	let buffer, format, label;
-	const GS = await loadSplatLib();
+	let buffer, format, label, flip;
+	const SPARK = await loadSpark();
 	if (uploaded) {
 		buffer = uploaded.buffer;
-		format =
-			uploaded.name.endsWith('.ply') ? GS.SceneFormat.Ply :
-			uploaded.name.endsWith('.ksplat') ? GS.SceneFormat.KSplat :
-			GS.SceneFormat.Splat;
+		// Read the container from the bytes, not the name: an upload called
+		// "scene" or "capture.bin" is still a capture we can decode.
+		format = detectSplatFormat(uploaded.name, buffer, SPARK);
 		label = `Loaded ${uploaded.name}`;
+		flip = true;
 	} else {
 		buffer = sampleSplatBuffer();
-		format = GS.SceneFormat.Splat;
+		format = SPARK.SplatFileType.SPLAT;
 		label = 'Sample radiance field · 4,000 splats';
+		flip = false; // authored Y-up, unlike a real capture
 	}
-	await renderSplatBuffer(buffer, label, format);
+	await renderSplatBuffer(buffer, label, format, flip);
 	// Allow re-downloading the loaded/sample splat.
 	if (_lastSplatUrl) URL.revokeObjectURL(_lastSplatUrl);
 	_lastSplatUrl = URL.createObjectURL(new Blob([buffer], { type: 'application/octet-stream' }));
 	setDownload(_lastSplatUrl, uploaded ? uploaded.name : 'sample.splat', 'Download .splat');
 }
 
-let _GS = null;
-async function loadSplatLib() {
-	if (!_GS) _GS = await import('@mkkellogg/gaussian-splats-3d');
-	return _GS;
-}
-
-async function renderSplatBuffer(buffer, label, format) {
+async function renderSplatBuffer(buffer, label, format, flip = false) {
 	status('Loading splat engine…');
-	const GS = await loadSplatLib();
+	const SPARK = await loadSpark();
+	// A buffer we generated ourselves carries no header for Spark to sniff, so
+	// name the container rather than letting detection guess at raw floats.
+	if (!format) format = SPARK.SplatFileType.SPLAT;
 	await teardownSplat();
-	const host = $('#lab-splat');
-	host.innerHTML = '';
-	const url = URL.createObjectURL(new Blob([buffer]));
-	const viewer = new GS.Viewer({
-		rootElement: host,
-		sharedMemoryForWorkers: false,
-		dynamicScene: false,
-		useBuiltInControls: true,
-		gpuAcceleratedSort: false,
-		cameraUp: [0, 1, 0],
-		initialCameraPosition: [0, 0, 4],
-		initialCameraLookAt: [0, 0, 0],
-	});
-	_splat = { viewer, url };
 	status('Rendering splats…');
-	await viewer.addSplatScene(url, { format: format ?? GS.SceneFormat.Splat, showLoadingUI: false, progressiveLoad: false });
-	viewer.start();
+	try {
+		_splat = await mountSplatScene($('#lab-splat'), buffer, {
+			fileType: format,
+			flip,
+			onSorting: (count) => status(`Sorting ${count.toLocaleString()} splats…`),
+			onContextLost: () => { _splat = null; status('The 3D context was lost. Render again to restore it.', 'err'); },
+		});
+	} catch (err) {
+		console.error('[lab] splat decode failed', err);
+		throw new Error(`That file isn't a splat scene this build can read. Expected a ${SPLAT_EXTENSIONS_LABEL}.`);
+	}
 	status(label, 'ok');
 }
 
@@ -449,17 +444,7 @@ async function teardownSplat() {
 	if (!_splat) return;
 	const s = _splat;
 	_splat = null;
-	try {
-		s.viewer.stop?.();
-		// dispose() cleans up the renderer + its canvas first, then tries to
-		// document.body.removeChild(rootElement) — which throws because our root
-		// (#lab-splat) is nested, not a direct child of body. Everything we care
-		// about is already torn down by then, so we await and swallow that one.
-		await s.viewer.dispose?.();
-	} catch { /* harmless nested-root removeChild from the splat lib */ }
-	if (s.url) URL.revokeObjectURL(s.url);
-	const host = document.getElementById('lab-splat');
-	if (host) host.innerHTML = '';
+	s.dispose();
 }
 
 // ── Misc ──────────────────────────────────────────────────────────────────────

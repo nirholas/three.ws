@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-09-07T21:48:14.180Z",
+	"generated_at": "2026-09-07T21:49:42.100Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -185,6 +185,16 @@
 			"tags": [
 				"fix",
 				"infra"
+			]
+		},
+		{
+			"date": "2026-09-07",
+			"type": "update",
+			"title": "Studio Lab reads the same splat formats as the viewer",
+			"summary": "The Lab's Gaussian-splat tools ran on a different rendering engine from the Splat Viewer, so the two disagreed about which files they would open: the viewer had just gained .spz and .sog and the Lab had not. Both now share one engine, so anything one of them opens the other opens too, the Lab works out a dropped file's format from its contents instead of its name, and its camera frames the scene it loaded.",
+			"link": "/forge-studio",
+			"tags": [
+				"improvement"
 			]
 		},
 		{
