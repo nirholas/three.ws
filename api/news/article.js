@@ -32,6 +32,7 @@ import { extractArticle } from '../_lib/article-extract.js';
 import { enrichTickers } from '../_lib/news-coins.js';
 import { recordExtraction, getExtraction } from '../_lib/news-knowledge-store.js';
 import { suppression, excerptParagraphs, excerptText } from '../_lib/news-rights.js';
+import { truncateChars } from '../_lib/safe-text.js';
 
 const CACHE_TTL_MS = 30 * 60_000;
 
@@ -54,9 +55,9 @@ async function llmAnalyze(content, title, source) {
 		});
 		const parsed = JSON.parse(stripJsonFence(text));
 		if (!parsed.summary) return null;
-		const list = (v, n, cap) => (Array.isArray(v) ? v : []).map((p) => String(p).slice(0, cap)).filter(Boolean).slice(0, n);
+		const list = (v, n, cap) => (Array.isArray(v) ? v : []).map((p) => truncateChars(p, cap)).filter(Boolean).slice(0, n);
 		return {
-			summary: String(parsed.summary).slice(0, 1200),
+			summary: truncateChars(parsed.summary, 1200),
 			key_points: list(parsed.key_points, 5, 300),
 			entities: list(parsed.entities, 12, 80),
 			topics: list(parsed.topics, 8, 40),
@@ -98,7 +99,7 @@ function heuristicAnalyze(paragraphs, title) {
 	for (const { s } of scored) {
 		if (key_points.length >= HEURISTIC_KEY_POINTS) break;
 		if (key_points.some((k) => k.slice(0, 60) === s.slice(0, 60))) continue;
-		key_points.push(s.length > HEURISTIC_POINT_CHARS ? `${s.slice(0, HEURISTIC_POINT_CHARS).trimEnd()}…` : s);
+		key_points.push(s.length > HEURISTIC_POINT_CHARS ? `${truncateChars(s, HEURISTIC_POINT_CHARS).trimEnd()}…` : s);
 	}
 	const lex = lexiconSentiment(`${title} ${lead}`);
 	const sentiment = lex.label.includes('positive') ? 'bullish' : lex.label.includes('negative') ? 'bearish' : 'neutral';

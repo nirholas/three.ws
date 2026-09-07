@@ -13,6 +13,7 @@
 // meta/stats.json (last_article_date), which the appender keeps current.
 
 import { createCache } from './mem-cache.js';
+import { truncateChars } from './safe-text.js';
 import { fetchUpstream, fetchUpstreamJson, lastGood } from './upstream-fetch.js';
 
 const GCS_BASE = 'https://storage.googleapis.com/three-ws-news-archive';
@@ -20,6 +21,8 @@ const GCS_LIST =
 	'https://storage.googleapis.com/storage/v1/b/three-ws-news-archive/o?prefix=articles/&fields=items(name)&maxResults=500';
 
 const MONTH_CACHE_MAX = 5;
+// Serving cap on the quoted publisher description carried in a compact record.
+const DESCRIPTION_MAX_CHARS = 240;
 const META_TTL_MS = 3600_000;
 // The hourly archiver keeps appending to the last two month files; a cached
 // copy of those must expire or a long-lived instance never sees new stories
@@ -42,7 +45,10 @@ export function compact(a) {
 		id: a.id,
 		title: a.title,
 		link: str(a.link) || str(a.canonical_link),
-		description: str(a.description) ? a.description.slice(0, 240) : null,
+		// truncateChars, never slice: a raw cut at 240 code units splits an
+		// emoji's surrogate pair, and the half character it leaves behind makes
+		// the story page's JSON-LD unparsable for search crawlers.
+		description: str(a.description) ? truncateChars(a.description, DESCRIPTION_MAX_CHARS) : null,
 		image: str(a.image),
 		author: str(a.author),
 		source: a.source || a.source_key || 'unknown',

@@ -23,6 +23,7 @@
 import { readFileSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { truncateChars } from '../api/_lib/safe-text.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ORIGIN = 'https://three.ws';
@@ -39,7 +40,10 @@ function htmlEscape(s) {
 // ends mid-word. Mirrors inject-seo-meta.mjs.
 function truncateAtWord(s, max) {
 	if (s.length <= max) return s;
-	const cut = s.slice(0, max);
+	// truncateChars, not slice: a raw cut at `max` code units can split a
+	// surrogate pair and leave half a character in the OG card and the meta
+	// description.
+	const cut = truncateChars(s, max);
 	const space = cut.lastIndexOf(' ');
 	return (space > max * 0.6 ? cut.slice(0, space) : cut).replace(/[\s,;:]+$/, '');
 }

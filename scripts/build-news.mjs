@@ -10,6 +10,7 @@ import { readFile, writeFile, mkdir } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { loadCuratedItems, SITE_ORIGIN, NEWS_PATH_PREFIX } from '../api/_lib/rss-feed.js';
+import { scriptJson } from '../api/_lib/safe-text.js';
 
 const ROOT = path.resolve(fileURLToPath(import.meta.url), '..', '..');
 const OUT_DIR = path.join(ROOT, 'public', 'news');
@@ -216,7 +217,7 @@ function jsonLdArticle(item) {
 	if (item.image) ld.image = [absoluteUrl(item.image)];
 	if (item.tags?.length) ld.keywords = item.tags.join(', ');
 	if (item.externalLink) ld.sameAs = [item.externalLink];
-	return JSON.stringify(ld, null, 2);
+	return scriptJson(ld, 2);
 }
 
 function renderArticlePage(item) {

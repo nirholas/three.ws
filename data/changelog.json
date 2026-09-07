@@ -3,6 +3,13 @@
 	"entries": [
 		{
 			"date": "2026-09-07",
+			"title": "Archived news stories with emoji in their summary keep their search listing",
+			"summary": "Google Search Console flagged an archived story page for unparsable structured data. The cause: the archive trims a publisher summary to a fixed length before serving it, and the cut landed in the middle of an emoji, leaving half a character in the page data that search engines read. Trimming is now character-aware, so it never splits an emoji, a flag, or an accented letter, and the page data is checked for half characters before it is written. Around one archived story in seven thousand carried the flaw; all of them serve a valid listing now. The same fix covers the story summaries shown in link previews and the shared page descriptions across the site.",
+			"tags": ["fix", "infra"],
+			"link": "/markets/news"
+		},
+		{
+			"date": "2026-09-07",
 			"title": "Keyboard focus is visible again on every /play HUD button, and the AGI filter counts clear AA contrast",
 			"summary": "Six buttons on the /play world HUD (friends, jobs, avatar, wardrobe, shop and buy) had lost their keyboard focus ring: the page never defined the shared focus-ring colour those buttons outline with, so the browser dropped the outline entirely and a keyboard player could not see where they were. The ring is back. On /agi, the count inside a selected filter chip measured 4.37:1 against its background at 11px, just under the 4.5:1 AA floor; it now uses the primary ink and clears it comfortably.",
 			"tags": [

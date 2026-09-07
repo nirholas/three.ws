@@ -20,6 +20,8 @@
 // Rule 2 is the one that matters long-term. Rule 1 only ever cleans up after
 // rule 2 was missing.
 
+import { truncateChars } from './safe-text.js';
+
 /**
  * Articles removed at a rightsholder's demand, keyed by the content-addressed
  * 16-hex story id (the same id that appears in /markets/news/<month>/<id>).
@@ -149,10 +151,13 @@ export function excerptParagraphs(paragraphs) {
 	}
 
 	if (!out.length) {
-		const first = all[0].slice(0, EXCERPT_MAX_CHARS);
-		// Prefer a sentence boundary; fall back to a word boundary.
+		const first = truncateChars(all[0], EXCERPT_MAX_CHARS);
+		// Prefer a sentence boundary; fall back to a word boundary. A paragraph
+		// with no space at all (CJK, a long URL) keeps the whole budget rather
+		// than losing its last character to `slice(0, -1)`.
 		const lastStop = Math.max(first.lastIndexOf('. '), first.lastIndexOf('! '), first.lastIndexOf('? '));
-		const cut = lastStop > EXCERPT_MAX_CHARS * 0.5 ? first.slice(0, lastStop + 1) : first.slice(0, first.lastIndexOf(' '));
+		const lastSpace = first.lastIndexOf(' ');
+		const cut = lastStop > EXCERPT_MAX_CHARS * 0.5 ? first.slice(0, lastStop + 1) : lastSpace > 0 ? first.slice(0, lastSpace) : first;
 		out.push(`${cut.trim()}…`);
 	}
 
@@ -174,5 +179,5 @@ export function excerptText(text) {
 	const s = String(text || '').trim();
 	if (!s) return '';
 	if (s.length <= EXCERPT_MAX_CHARS) return s;
-	return excerptParagraphs([s]).paragraphs[0] || s.slice(0, EXCERPT_MAX_CHARS);
+	return excerptParagraphs([s]).paragraphs[0] || truncateChars(s, EXCERPT_MAX_CHARS);
 }

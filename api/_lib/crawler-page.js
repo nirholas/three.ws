@@ -30,6 +30,8 @@
  * shows, minus the WebGL viewport it cannot run.
  */
 
+import { stripLoneSurrogates, scriptJson } from './safe-text.js';
+
 // Crawlers that index (and, for the big three, render JS before indexing).
 // These must never be handed a self-redirect or a content-free body.
 const SEARCH_CRAWLERS =
@@ -48,7 +50,10 @@ export function isSearchCrawler(ua) {
 
 /** HTML-escape a value for use in text or a double-quoted attribute. */
 export function esc(s) {
-	return String(s ?? '').replace(
+	// Drop unpaired surrogates first: entity names arrive from user input and a
+	// half character is served as a replacement glyph in the body and breaks the
+	// page's JSON-LD for search crawlers.
+	return stripLoneSurrogates(s).replace(
 		/[&<>"']/g,
 		(c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c],
 	);
@@ -207,7 +212,7 @@ export function renderCrawlerPage({
 	${noindex ? '' : `<link rel="canonical" href="${esc(pageUrl)}">`}
 	<link rel="shortcut icon" href="/favicon.ico">
 	<style>${STYLES}</style>
-	<script type="application/ld+json">${JSON.stringify({ '@context': 'https://schema.org', '@graph': graph }).replace(/</g, '\\u003c')}</script>
+	<script type="application/ld+json">${scriptJson({ '@context': 'https://schema.org', '@graph': graph })}</script>
 </head>
 <body>
 	<main>

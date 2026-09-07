@@ -27,6 +27,7 @@ import { XMLParser } from 'fast-xml-parser';
 import { NEWS_SOURCES, sourcesForCategory, sourcesForLanguage, sourcePriority, isFeaturedSource } from './news-sources.js';
 import { isSuppressed, excerptText } from './news-rights.js';
 import { isDisplayable } from './news-curation.js';
+import { truncateChars } from './safe-text.js';
 
 const FEED_TIMEOUT_MS = 7000;
 const FRESH_MS = 300_000; // refetch a source after 5 min
@@ -103,7 +104,7 @@ export function truncateWords(text, max) {
 	const t = String(text || '').trim();
 	if (!t) return null;
 	if (t.length <= max) return t;
-	const cut = t.slice(0, max);
+	const cut = truncateChars(t, max);
 	const lastSpace = cut.lastIndexOf(' ');
 	return `${(lastSpace > max * 0.6 ? cut.slice(0, lastSpace) : cut).replace(/[\s,;:—–-]+$/, '')}…`;
 }

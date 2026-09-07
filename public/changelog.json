@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-09-07T06:40:26.871Z",
+	"generated_at": "2026-09-07T15:50:24.725Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -36,6 +36,17 @@
 			"tags": [
 				"fix",
 				"improvement"
+			]
+		},
+		{
+			"date": "2026-09-07",
+			"type": "update",
+			"title": "Archived news stories with emoji in their summary keep their search listing",
+			"summary": "Google Search Console flagged an archived story page for unparsable structured data. The cause: the archive trims a publisher summary to a fixed length before serving it, and the cut landed in the middle of an emoji, leaving half a character in the page data that search engines read. Trimming is now character-aware, so it never splits an emoji, a flag, or an accented letter, and the page data is checked for half characters before it is written. Around one archived story in seven thousand carried the flaw; all of them serve a valid listing now. The same fix covers the story summaries shown in link previews and the shared page descriptions across the site.",
+			"link": "/markets/news",
+			"tags": [
+				"fix",
+				"infra"
 			]
 		},
 		{
@@ -128,12 +139,42 @@
 		{
 			"date": "2026-09-07",
 			"type": "update",
+			"title": "The featured agent is one you can actually open",
+			"summary": "The agent we spotlight is picked automatically from real activity, but the pick only checked whether an agent was public, not whether its owner had published it. That let a brand new starter agent, the draft every account is given on signup, take the spot, and every panel that tried to read it came back empty with a live feed error. The pick now requires a published agent, so the spotlight lands on one that every part of the site can open.",
+			"link": null,
+			"tags": [
+				"fix"
+			]
+		},
+		{
+			"date": "2026-09-07",
+			"type": "update",
+			"title": "The partner-hosted demo page loads all of its pieces again",
+			"summary": "Our partnership page is published once onto a partner's own website, so everything it loads comes from three.ws across origins. Two of its scripts were being refused by the browser there, which quietly cost the page its in-editor map and its iOS handoff. Both are now served with the same cross-origin permission the rest of the page already had, and an audit that loads the page from a foreign origin now passes end to end.",
+			"link": null,
+			"tags": [
+				"fix"
+			]
+		},
+		{
+			"date": "2026-09-07",
+			"type": "update",
 			"title": "Turn a photo into a 3D model without leaving your editor",
 			"summary": "The Blender tools could already build a model from a written description. They now build one from a picture too: point at an image on your machine or a link to one, add a few words to steer it if you like, and the finished model opens in Blender. It runs on the same free lane as the text version and takes about as long.",
 			"link": null,
 			"tags": [
 				"feature",
 				"sdk"
+			]
+		},
+		{
+			"date": "2026-09-07",
+			"type": "update",
+			"title": "World tiles show their artwork again",
+			"summary": "The picker that lets you choose a community world was loading each world's artwork straight from a public storage gateway, and browsers now refuse to draw images served that way. Nine tiles on the page failed silently every visit. The artwork is now fetched through our own image service, so tiles paint their real picture, and a world whose artwork has gone missing falls back to its lettered tile instead of an empty square.",
+			"link": null,
+			"tags": [
+				"fix"
 			]
 		},
 		{

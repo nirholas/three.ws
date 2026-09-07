@@ -20,6 +20,7 @@ import { env } from '../_lib/env.js';
 import { resolveStory, validStoryKey } from '../_lib/news-story.js';
 import { suppression, excerptParagraphs, excerptText } from '../_lib/news-rights.js';
 import { storyPath, tickerHref, TICKER_COIN_IDS } from '../../src/shared/news-links.js';
+import { truncateChars, stripLoneSurrogates, scriptJson } from '../_lib/safe-text.js';
 
 const ORIGIN = env.APP_ORIGIN || 'https://three.ws';
 const CACHE_TTL_MS = 10 * 60_000;
@@ -29,7 +30,10 @@ const _pages = new Map(); // `${month}/${id}` → { html, status, expiresAt }
 let _shell = null;
 
 function esc(s) {
-	return String(s ?? '')
+	// stripLoneSurrogates first: an unpaired surrogate reaching a meta tag is
+	// served as a replacement glyph, and the same value in JSON-LD is what
+	// Search Console rejects as a truncated Unicode character.
+	return stripLoneSurrogates(s)
 		.replace(/&/g, '&amp;')
 		.replace(/</g, '&lt;')
 		.replace(/>/g, '&gt;')
@@ -123,7 +127,7 @@ function jsonLd(a, canonicalAbs, ogImage) {
 			},
 		],
 	};
-	return JSON.stringify(graph).replace(/</g, '\\u003c');
+	return scriptJson(graph);
 }
 
 function marketContextHtml(mc) {
@@ -175,8 +179,8 @@ function crawlerBodyHtml(a) {
 export function renderStoryHtml(shell, a) {
 	const canonical = storyPath(a);
 	const canonicalAbs = `${ORIGIN}${canonical}`;
-	const description = (a.description || `${a.title}. ${a.source} coverage on the three.ws crypto news reader.`).slice(0, 300);
-	const ogFallback = `${ORIGIN}/api/page-og?s=crypto&t=${encodeURIComponent(a.title.slice(0, 80))}&d=${encodeURIComponent(description.slice(0, 160))}&p=${encodeURIComponent(canonical)}`;
+	const description = truncateChars(a.description || `${a.title}. ${a.source} coverage on the three.ws crypto news reader.`, 300);
+	const ogFallback = `${ORIGIN}/api/page-og?s=crypto&t=${encodeURIComponent(truncateChars(a.title, 80))}&d=${encodeURIComponent(truncateChars(description, 160))}&p=${encodeURIComponent(canonical)}`;
 	const ogImage = a.image || ogFallback;
 	const date = fmtDate(a.pub_date);
 	const title = `${a.title} (${a.source}${date ? `, ${date}` : ''}) · three.ws`;
@@ -225,7 +229,7 @@ export function renderStoryHtml(shell, a) {
 	html = html.replace(
 		/<article id="art-root"[^>]*>[\s\S]*?<\/article>/,
 		() =>
-			`<script type="application/json" id="art-seed">${JSON.stringify(seed).replace(/</g, '\\u003c')}</script>\n` +
+			`<script type="application/json" id="art-seed">${scriptJson(seed)}</script>\n` +
 			`\t\t\t<article id="art-root" aria-live="polite">${crawlerBodyHtml(a)}</article>`,
 	);
 	return html;

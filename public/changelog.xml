@@ -31,6 +31,14 @@
 			<description>When an agent pays one of our x402 endpoints and the payment header arrives mangled (truncated in transit, double-encoded, wrapped by a proxy), the answer used to be a plain 400 error with no prices in it, so the agent had nothing left to work from and no way to retry. Every rejected payment now returns the ordinary 402 with the full list of accepted rails, tokens and amounts attached, exactly as it does when a payment is simply missing. That is what the x402 spec and the OKX seller SDK both do, and it means a paying agent can always read the quote again and try once more. Only a real server fault answers without a quote.</description>
 		</item>
 		<item>
+			<title>Archived news stories with emoji in their summary keep their search listing</title>
+			<link>https://three.ws/markets/news</link>
+			<guid isPermaLink="false">2026-09-07:Archived news stories with emoji in their summary keep their search listing</guid>
+			<pubDate>Mon, 07 Sep 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>Google Search Console flagged an archived story page for unparsable structured data. The cause: the archive trims a publisher summary to a fixed length before serving it, and the cut landed in the middle of an emoji, leaving half a character in the page data that search engines read. Trimming is now character-aware, so it never splits an emoji, a flag, or an accented letter, and the page data is checked for half characters before it is written. Around one archived story in seven thousand carried the flaw; all of them serve a valid listing now. The same fix covers the story summaries shown in link previews and the shared page descriptions across the site.</description>
+		</item>
+		<item>
 			<title>Blender tools now open three.ws avatars, which Blender alone cannot</title>
 			<link>https://three.ws/changelog</link>
 			<guid isPermaLink="false">2026-09-07:Blender tools now open three.ws avatars, which Blender alone cannot</guid>
@@ -95,12 +103,36 @@
 			<description>Asking an assistant to render a 3D model used to hand back a file path, which is useless if the assistant cannot open files on your disk. The rendered image now comes back with the answer, scaled to fit, while the full-resolution PNG still lands on disk. That turns a look at this model into one step, so an assistant can render, spot the problem, fix it and render again. Reading a file also reports its texture budget now: every image with its resolution and byte size, plus the total, which is usually what actually decides whether a model is small enough to ship, and it was previously reported as nothing more than a count. Two reliability fixes came out of real use: several requests at once now queue instead of all starting Blender at the same moment and exhausting the machine, and when Blender is installed but momentarily will not start you get a message saying exactly that, with the details, rather than being told to install software you already have.</description>
 		</item>
 		<item>
+			<title>The featured agent is one you can actually open</title>
+			<link>https://three.ws/changelog</link>
+			<guid isPermaLink="false">2026-09-07:The featured agent is one you can actually open</guid>
+			<pubDate>Mon, 07 Sep 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>The agent we spotlight is picked automatically from real activity, but the pick only checked whether an agent was public, not whether its owner had published it. That let a brand new starter agent, the draft every account is given on signup, take the spot, and every panel that tried to read it came back empty with a live feed error. The pick now requires a published agent, so the spotlight lands on one that every part of the site can open.</description>
+		</item>
+		<item>
+			<title>The partner-hosted demo page loads all of its pieces again</title>
+			<link>https://three.ws/changelog</link>
+			<guid isPermaLink="false">2026-09-07:The partner-hosted demo page loads all of its pieces again</guid>
+			<pubDate>Mon, 07 Sep 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>Our partnership page is published once onto a partner's own website, so everything it loads comes from three.ws across origins. Two of its scripts were being refused by the browser there, which quietly cost the page its in-editor map and its iOS handoff. Both are now served with the same cross-origin permission the rest of the page already had, and an audit that loads the page from a foreign origin now passes end to end.</description>
+		</item>
+		<item>
 			<title>Turn a photo into a 3D model without leaving your editor</title>
 			<link>https://three.ws/changelog</link>
 			<guid isPermaLink="false">2026-09-07:Turn a photo into a 3D model without leaving your editor</guid>
 			<pubDate>Mon, 07 Sep 2026 12:00:00 GMT</pubDate>
 			<category>feature</category>
 			<description>The Blender tools could already build a model from a written description. They now build one from a picture too: point at an image on your machine or a link to one, add a few words to steer it if you like, and the finished model opens in Blender. It runs on the same free lane as the text version and takes about as long.</description>
+		</item>
+		<item>
+			<title>World tiles show their artwork again</title>
+			<link>https://three.ws/changelog</link>
+			<guid isPermaLink="false">2026-09-07:World tiles show their artwork again</guid>
+			<pubDate>Mon, 07 Sep 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>The picker that lets you choose a community world was loading each world's artwork straight from a public storage gateway, and browsers now refuse to draw images served that way. Nine tiles on the page failed silently every visit. The artwork is now fetched through our own image service, so tiles paint their real picture, and a world whose artwork has gone missing falls back to its lettered tile instead of an empty square.</description>
 		</item>
 		<item>
 			<title>Docs · Pocket Console</title>
