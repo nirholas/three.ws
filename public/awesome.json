@@ -5,46 +5,46 @@
 	"repo": "https://github.com/nirholas/three.ws/tree/main/awesome",
 	"markdown": "https://github.com/nirholas/three.ws/blob/main/awesome/README.md",
 	"counts": {
-		"items": 134,
-		"sections": 13,
-		"tags": 92
+		"items": 152,
+		"sections": 15,
+		"tags": 97
 	},
 	"tags": [
 		{
 			"id": "oss",
-			"count": 88
+			"count": 100
 		},
 		{
 			"id": "python",
-			"count": 40
+			"count": 45
 		},
 		{
 			"id": "js",
-			"count": 29
+			"count": 31
 		},
 		{
 			"id": "free",
-			"count": 21
+			"count": 24
 		},
 		{
 			"id": "research",
-			"count": 20
+			"count": 24
 		},
 		{
 			"id": "foundational",
-			"count": 15
+			"count": 18
 		},
 		{
 			"id": "service",
-			"count": 11
-		},
-		{
-			"id": "cpp",
-			"count": 8
+			"count": 14
 		},
 		{
 			"id": "spec",
-			"count": 8
+			"count": 10
+		},
+		{
+			"id": "cpp",
+			"count": 9
 		},
 		{
 			"id": "dataset",
@@ -53,6 +53,10 @@
 		{
 			"id": "threejs",
 			"count": 6
+		},
+		{
+			"id": "ar",
+			"count": 4
 		},
 		{
 			"id": "cc0",
@@ -79,6 +83,22 @@
 			"count": 4
 		},
 		{
+			"id": "vrm",
+			"count": 4
+		},
+		{
+			"id": "webxr",
+			"count": 4
+		},
+		{
+			"id": "api",
+			"count": 3
+		},
+		{
+			"id": "blender",
+			"count": 3
+		},
+		{
 			"id": "compression",
 			"count": 3
 		},
@@ -99,6 +119,10 @@
 			"count": 3
 		},
 		{
+			"id": "reference",
+			"count": 3
+		},
+		{
 			"id": "stt",
 			"count": 3
 		},
@@ -107,7 +131,7 @@
 			"count": 3
 		},
 		{
-			"id": "api",
+			"id": "animations",
 			"count": 2
 		},
 		{
@@ -124,6 +148,10 @@
 		},
 		{
 			"id": "engine",
+			"count": 2
+		},
+		{
+			"id": "gui",
 			"count": 2
 		},
 		{
@@ -155,10 +183,6 @@
 			"count": 2
 		},
 		{
-			"id": "reference",
-			"count": 2
-		},
-		{
 			"id": "rust",
 			"count": 2
 		},
@@ -175,7 +199,7 @@
 			"count": 2
 		},
 		{
-			"id": "vrm",
+			"id": "tracking",
 			"count": 2
 		},
 		{
@@ -188,10 +212,6 @@
 		},
 		{
 			"id": "webgpu",
-			"count": 2
-		},
-		{
-			"id": "webxr",
 			"count": 2
 		}
 	],
@@ -580,6 +600,55 @@
 						"free",
 						"gltf"
 					]
+				},
+				{
+					"name": "MetaHuman",
+					"url": "https://dev.epicgames.com/documentation/en-us/metahuman/metahuman-documentation",
+					"description": "Epic's photorealistic human creator, free to use, with a browser editor and export into Unreal or Maya. The quality ceiling for a digital human.",
+					"tags": [
+						"free",
+						"service"
+					]
+				},
+				{
+					"name": "VRM Add-on for Blender",
+					"url": "https://github.com/saturday06/VRM-Addon-for-Blender",
+					"description": "Import, edit, and export VRM avatars in Blender, including spring bones and expressions. The missing link between an authoring tool and the avatar format.",
+					"tags": [
+						"oss",
+						"blender",
+						"vrm"
+					]
+				},
+				{
+					"name": "PIFuHD",
+					"url": "https://github.com/facebookresearch/pifuhd",
+					"description": "Reconstructs a clothed 3D human from one photo at a resolution that captures fabric folds. The paper that made single-image humans plausible.",
+					"tags": [
+						"oss",
+						"python",
+						"research",
+						"foundational"
+					]
+				},
+				{
+					"name": "ECON",
+					"url": "https://github.com/YuliangXiu/ECON",
+					"description": "Clothed human reconstruction that stays robust on loose garments and unusual poses, where implicit-only methods fall apart.",
+					"tags": [
+						"oss",
+						"python",
+						"research"
+					]
+				},
+				{
+					"name": "Meshcapade",
+					"url": "https://meshcapade.com",
+					"description": "Commercial bodies and motion built on the SMPL family, so what you buy speaks the same parameter space as the research above.",
+					"tags": [
+						"service",
+						"api"
+					]
 				}
 			]
 		},
@@ -640,11 +709,31 @@
 				{
 					"name": "SkeletonUtils",
 					"url": "https://threejs.org/docs/#examples/en/utils/SkeletonUtils",
-					"description": "three.js retargeting helpers that map a clip authored for one skeleton onto another at runtime. Small, unglamorous, and load-bearing.",
+					"description": "Retargeting helpers in three.js that map a clip authored for one skeleton onto another at runtime. Small, unglamorous, and load-bearing.",
 					"tags": [
 						"oss",
 						"js",
 						"threejs"
+					]
+				},
+				{
+					"name": "Ossos",
+					"url": "https://github.com/sketchpunklabs/ossos",
+					"description": "A TypeScript skeletal animation library with inverse kinematics and retargeting written to be read, not just imported.",
+					"tags": [
+						"oss",
+						"js",
+						"ik"
+					]
+				},
+				{
+					"name": "mixamo_converter",
+					"url": "https://github.com/enziop/mixamo_converter",
+					"description": "Batch-converts Mixamo clips to in-place root motion in Blender, which is the conversion every game and web project needs and Mixamo does not do.",
+					"tags": [
+						"oss",
+						"blender",
+						"animations"
 					]
 				}
 			]
@@ -740,6 +829,75 @@
 					"tags": [
 						"service",
 						"mocap"
+					]
+				},
+				{
+					"name": "Kalidokit",
+					"url": "https://github.com/yeemachine/kalidokit",
+					"description": "Turns MediaPipe face, hand, and pose landmarks into VRM rotations in the browser, so a webcam drives an avatar with no capture suit.",
+					"tags": [
+						"oss",
+						"js",
+						"vrm",
+						"tracking"
+					]
+				}
+			]
+		},
+		{
+			"id": "texturing",
+			"title": "Texturing and materials",
+			"description": "Geometry is half the asset. These are the tools that decide whether it looks like a surface or like grey clay.",
+			"items": [
+				{
+					"name": "TEXTure",
+					"url": "https://github.com/TEXTurePaper/TEXTurePaper",
+					"description": "Text-guided texturing of an existing mesh through iterative depth-conditioned diffusion. The paper that started this category.",
+					"tags": [
+						"oss",
+						"python",
+						"research",
+						"foundational"
+					]
+				},
+				{
+					"name": "Text2Tex",
+					"url": "https://github.com/daveredrum/Text2Tex",
+					"description": "Generates high-resolution textures for a mesh from a prompt, with a view-selection pass that reduces the seams these methods usually leave.",
+					"tags": [
+						"oss",
+						"python",
+						"research"
+					]
+				},
+				{
+					"name": "Paint3D",
+					"url": "https://github.com/OpenTexture/Paint3D",
+					"description": "Produces lighting-free texture maps, so the result can be relit properly instead of baking one scene's shadows into the albedo.",
+					"tags": [
+						"oss",
+						"python",
+						"pbr"
+					]
+				},
+				{
+					"name": "xatlas",
+					"url": "https://github.com/jpcy/xatlas",
+					"description": "Mesh parameterisation and UV atlas generation. A generated mesh with no UVs cannot be textured, and this is what fixes that.",
+					"tags": [
+						"oss",
+						"cpp",
+						"foundational"
+					]
+				},
+				{
+					"name": "Material Maker",
+					"url": "https://github.com/RodZill4/material-maker",
+					"description": "A free node-based procedural material authoring tool built on Godot, in the shape of Substance Designer.",
+					"tags": [
+						"oss",
+						"free",
+						"gui"
 					]
 				}
 			]
@@ -923,7 +1081,7 @@
 				{
 					"name": "React Three Fiber",
 					"url": "https://github.com/pmndrs/react-three-fiber",
-					"description": "three.js as a React renderer. Scene graphs become components, and the reconciler handles the mutation you would otherwise write by hand.",
+					"description": "A React renderer for three.js. Scene graphs become components, and the reconciler handles the mutation you would otherwise write by hand.",
 					"tags": [
 						"oss",
 						"js",
@@ -985,7 +1143,7 @@
 				{
 					"name": "Threlte",
 					"url": "https://github.com/threlte/threlte",
-					"description": "three.js for Svelte, with a component library, physics bindings, and a preprocessor that keeps bundles small.",
+					"description": "Svelte components for three.js, with a component library, physics bindings, and a preprocessor that keeps bundles small.",
 					"tags": [
 						"oss",
 						"js",
@@ -995,7 +1153,7 @@
 				{
 					"name": "TresJS",
 					"url": "https://github.com/Tresjs/tres",
-					"description": "three.js as Vue components, with reactivity mapped onto scene-graph updates.",
+					"description": "Vue components for three.js, with reactivity mapped onto scene-graph updates.",
 					"tags": [
 						"oss",
 						"js",
@@ -1165,6 +1323,71 @@
 			]
 		},
 		{
+			"id": "xr",
+			"title": "AR and XR",
+			"description": "Getting the body off the page and into the room. The web is the only platform where this needs no install.",
+			"items": [
+				{
+					"name": "WebXR Device API",
+					"url": "https://immersive-web.github.io/webxr/",
+					"description": "The specification behind every headset and phone AR session on the open web. Read the spec, not just a framework's wrapper.",
+					"tags": [
+						"spec",
+						"webxr"
+					]
+				},
+				{
+					"name": "WebXR Samples",
+					"url": "https://immersive-web.github.io/webxr-samples/",
+					"description": "The working group's own runnable examples, from a bare session to hit testing and layers. Read these before any framework tutorial.",
+					"tags": [
+						"free",
+						"webxr",
+						"reference"
+					]
+				},
+				{
+					"name": "Immersive Web Emulator",
+					"url": "https://github.com/meta-quest/immersive-web-emulator",
+					"description": "A browser extension that emulates a headset and controllers, so WebXR can be developed and debugged without putting a device on.",
+					"tags": [
+						"oss",
+						"webxr",
+						"tooling"
+					]
+				},
+				{
+					"name": "AR Quick Look",
+					"url": "https://developer.apple.com/documentation/arkit/previewing-a-model-with-ar-quick-look",
+					"description": "Apple's system AR viewer. A USDZ behind a link opens full-screen AR on any iPhone with no app and no permission prompt.",
+					"tags": [
+						"spec",
+						"ar",
+						"ios"
+					]
+				},
+				{
+					"name": "Scene Viewer",
+					"url": "https://developers.google.com/ar/develop/scene-viewer",
+					"description": "The Android equivalent, launched from an intent URL with a glTF. Together with AR Quick Look it is why model-viewer can offer AR everywhere.",
+					"tags": [
+						"spec",
+						"ar",
+						"android"
+					]
+				},
+				{
+					"name": "8th Wall",
+					"url": "https://8thwall.org/",
+					"description": "Markerless AR that runs in the mobile browser rather than an app, with world tracking and face effects.",
+					"tags": [
+						"service",
+						"ar"
+					]
+				}
+			]
+		},
+		{
 			"id": "worlds",
 			"title": "Physics, networking, and shared worlds",
 			"description": "One avatar in a viewer is a demo. Several avatars in a place, with gravity and collisions, is a product.",
@@ -1250,15 +1473,6 @@
 						"oss",
 						"js",
 						"networking"
-					]
-				},
-				{
-					"name": "WebXR Device API",
-					"url": "https://immersive-web.github.io/webxr/",
-					"description": "The specification behind every headset and phone AR session on the open web. Read the spec, not just a framework's wrapper.",
-					"tags": [
-						"spec",
-						"webxr"
 					]
 				}
 			]

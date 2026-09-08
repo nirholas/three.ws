@@ -45,6 +45,15 @@ describe('Awesome 3D Agents source', () => {
 		}
 	});
 
+	it('writes descriptions the way awesome-lint requires: capitalised, and ended', () => {
+		for (const item of allItems) {
+			expect(item.description[0], `${item.name} starts lowercase`).toBe(
+				item.description[0].toUpperCase(),
+			);
+			expect(item.description.endsWith('.'), `${item.name} has no closing period`).toBe(true);
+		}
+	});
+
 	it('honours the repository-wide ban on em-dash and en-dash characters', () => {
 		const banned = /[\u2014\u2013]/;
 		for (const item of allItems) {
@@ -101,7 +110,21 @@ describe('Awesome 3D Agents generated outputs', () => {
 		for (const item of allItems) {
 			expect(readme, `${item.name} in README`).toContain(`- [${item.name}](${item.url}) - `);
 		}
-		expect(readme).toContain('[![Awesome](https://awesome.re/badge-flat2.svg)](https://awesome.re)');
+		// awesome-lint's awesome-badge rule wants this exact asset, on the
+		// heading line. A cosmetic change here silently ends eligibility for the
+		// awesome.re index, so it is pinned.
+		expect(readme.split('\n')[0]).toBe(
+			'# Awesome 3D Agents [![Awesome](https://awesome.re/badge.svg)](https://awesome.re)',
+		);
+	});
+
+	it('keeps the sections awesome-lint forbids out of the README', () => {
+		// awesome-lint's awesome-license rule rejects a License section outright;
+		// the license belongs in a license file.
+		expect(readme).not.toContain('\n## License');
+		// Its awesome-toc rule rejects Contributing appearing in the contents.
+		const contents = readme.slice(readme.indexOf('## Contents'), readme.indexOf('\n## ', readme.indexOf('## Contents') + 5));
+		expect(contents).not.toContain('- [Contributing]');
 	});
 
 	it('lists every section in the README contents', () => {
