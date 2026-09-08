@@ -820,3 +820,193 @@
 		height: 44px;
 	}
 }
+
+/* ── Tap-target floor, round 3 (touch only) ────────────────────────────
+ * Measured by `npm run audit:mobile-touch` on a real Pixel 5 against
+ * production on 2026-09-08; every size in a comment below is that run's
+ * measured box. Same technique as round 2: raise the box to a 44px floor
+ * and centre the existing content in it, gated on pointer type so a
+ * desktop mouse keeps the designed compact sizing.
+ *
+ * The largest single finding of that run is not in this block, because it
+ * was not a missing rule: 392 of the site's 584 stylesheet-bearing pages
+ * never loaded this file at all. Everything under public/ is copied to
+ * dist/ verbatim and bypassed the injector in vite.config.js, so /docs
+ * (296 sidebar links at 267x30), /changelog and /ar were measuring rules
+ * that had already been written for them. The post-build sweep in
+ * vite.config.js's `mobile-ergonomics` plugin closes that.
+ */
+@media (hover: none) and (pointer: coarse) {
+	/* Shared site footer link columns. 29 links measured at 165x20 on the
+	   home page, stacked 9px apart in a grid that goes two-up at 460px, so
+	   the hit areas were both short and adjacent. */
+	.foot-col a {
+		min-height: 44px;
+		display: inline-flex;
+		align-items: center;
+	}
+
+	/* Home hero forge bar and its example chips: the site's primary call to
+	   action. Input 186x36, submit 110x38, tries 101x27. */
+	.hero-forge-input,
+	.hero-forge-go,
+	.hero-try {
+		min-height: 44px;
+	}
+	.hero-try,
+	.hero-forge-go {
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+	}
+
+	/* Home mini-forge dock. Prompt 140x35, prompt chips 110x27, the enhance
+	   icon 30x30, Forge 81x37, the options disclosure 96x26. */
+	.hf-prompt,
+	.hf-chip,
+	.hf-forge-btn,
+	.hf-opts-toggle {
+		min-height: 44px;
+	}
+	.hf-chip,
+	.hf-forge-btn,
+	.hf-opts-toggle {
+		display: inline-flex;
+		align-items: center;
+	}
+	.hf-icon-mini {
+		min-width: 44px;
+		min-height: 44px;
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+	}
+
+	/* Home partner strip (88x21 wordmarks), the embed playground's format
+	   tabs and toolbar (52x25, 59x27, 26x26), the animation bar's stop
+	   button (14x14, the smallest control measured anywhere in the run) and
+	   the community-forge header controls (64x28, 151x40, 120x39). */
+	.press-logo,
+	.pg-tab,
+	.pg-copy,
+	.hcf-tab,
+	.hcf-cta,
+	.hcf-more,
+	.hero-chip {
+		min-height: 44px;
+		display: inline-flex;
+		align-items: center;
+	}
+	.pg-color-trigger,
+	.wyg-anim-stop {
+		min-width: 44px;
+		min-height: 44px;
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+	}
+
+	/* /markets. Every row's name cell is one 225x24 link inside a 49px cell,
+	   so the link fills its cell rather than floating in the middle of it,
+	   and the whole row becomes the target. News headlines are 19-39px. */
+	td.name-cell > a {
+		min-height: 44px;
+		display: flex;
+		align-items: center;
+	}
+	.nw-title a {
+		min-height: 44px;
+		display: inline-flex;
+		align-items: center;
+	}
+
+	/* The walk companion's own controls: 22x22, 22x22 and 20x21, floating
+	   over whatever page summoned it. */
+	.walk-companion-trail,
+	.walk-companion-c2w,
+	.walk-companion-feedback {
+		min-width: 44px;
+		min-height: 44px;
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+	}
+
+	/* /coin. Market rows (104x22 and 103x17 pair links), the chart range
+	   segments (49x27) and the header pills (87x36). */
+	.cv-mkt-x,
+	.cv-mkt-pair,
+	.cv-range-btn,
+	.cv-pill {
+		min-height: 44px;
+		display: inline-flex;
+		align-items: center;
+	}
+	.cv-mkt-pair {
+		display: flex;
+	}
+
+	/* /ar. Mode chips 165x29, the brand link 98x19, the back-to-top 81x15. */
+	.chip,
+	a.brand,
+	a.top {
+		min-height: 44px;
+		display: inline-flex;
+		align-items: center;
+	}
+
+	/* /forge showcase. Round 2 gave these a height floor and they are still
+	   too NARROW: the vote button measured 43x44 and the view-all link
+	   25x48, both one axis short. The sort segments (61x22) and the refresh
+	   icon (26x26) were missed entirely. */
+	.showcase-vote,
+	.showcase-view-all,
+	.showcase-refresh {
+		min-width: 44px;
+		justify-content: center;
+	}
+	.showcase-sort-btn,
+	.showcase-view-all {
+		min-height: 44px;
+		display: inline-flex;
+		align-items: center;
+	}
+	.showcase-refresh {
+		min-height: 44px;
+		display: inline-flex;
+		align-items: center;
+	}
+
+	/* /news is its own standalone shell: a 26px topbar nav and a 165x42
+	   subscribe button. */
+	header.topbar nav a,
+	a.subscribe {
+		min-height: 44px;
+		display: inline-flex;
+		align-items: center;
+	}
+
+	/* /changelog filter chips (28px) and /irl's onboarding link (142x32). */
+	.cl-filter,
+	.irl-ob-learn {
+		min-height: 44px;
+		display: inline-flex;
+		align-items: center;
+	}
+
+	/* Consent and preference checkboxes. A 22x22 box is a miss on a thumb;
+	   giving the surrounding label the floor makes the whole row tappable,
+	   which is what a checkbox row should have been all along. */
+	label:has(> #irl-consent-dontshow) {
+		min-height: 44px;
+		display: flex;
+		align-items: center;
+	}
+
+	/* Buttons that measured 43px on one axis are not a rounding artefact to
+	   wave through: a 43px box IS under the floor. Pin them to 44. */
+	.tws-disc-cta,
+	.tws-es-btn {
+		min-height: 44px;
+	}
+}
