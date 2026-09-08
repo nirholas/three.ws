@@ -604,3 +604,4 @@ data/announcements.json
 # re-include the vendored copies explicitly. Scoped to third_party/ so the
 # TRELLIS rule keeps working everywhere else.
 !third_party/**/demo/
+generated-assets-onchain-claude-code-prompt.md
