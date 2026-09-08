@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-09-07T21:48:14.162Z",
+	"generated_at": "2026-09-08T01:53:55.812Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json",
 	"site": {
 		"name": "three.ws",
@@ -1368,6 +1368,16 @@
 					"title": "Generated animation seeding",
 					"description": "How three.ws generates its own animation clips: the text-to-motion GPU lane, the world-space quality gate that judges joint positions instead of raw rotations, the resumable bulk runner, and the rotating free subset.",
 					"added": "2026-09-02",
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false
+				},
+				{
+					"path": "/docs/robinhood-portfolios",
+					"title": "Docs · Robinhood Portfolios",
+					"description": "How Robinhood Portfolios works: the manifest that makes a generated basket binding, in-kind issuance that needs no price oracle, the descending-price rebalance auction nobody can front-run, what happens when a tokenized equity is halted, and the lineage fee budget that leaves sybils nothing to farm.",
+					"added": "2026-09-07",
 					"auth": null,
 					"indexable": true,
 					"tags": [],
@@ -2858,6 +2868,26 @@
 					"showcase": false
 				},
 				{
+					"path": "/markets/robinhood/portfolios",
+					"title": "Robinhood Portfolios",
+					"description": "Describe a portfolio in a sentence and get a real basket of Robinhood Chain assets: tokenized equities, crypto majors and chain-native tokens in one index. A screen ranks the whole 700-asset universe against the prompt, the weights are committed on-chain as a signed immutable manifest, and a vault holds the basket in kind and rebalances it back to target on a published schedule.",
+					"added": "2026-09-07",
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false
+				},
+				{
+					"path": "/markets/robinhood/portfolios/universe",
+					"title": "Portfolio universe",
+					"description": "Every asset a Robinhood Chain portfolio may hold, priced live: tokenized equities, crypto majors and chain-native tokens with on-chain liquidity, 24h volume, price change and the NAV premium against each equity's Chainlink feed. Sortable and filterable by asset class.",
+					"added": "2026-09-07",
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false
+				},
+				{
 					"path": "/markets/news",
 					"title": "Crypto News",
 					"description": "Live crypto news aggregated natively from 192 publisher feeds in 18 languages: filter by category (Bitcoin, DeFi, security, regulation, and more), pick a language, search headlines, and open any story in a rich reader with summary, key points, sentiment, and related coverage.",
@@ -3493,6 +3523,16 @@
 					"title": "Docs · Run an inference node",
 					"description": "Join the open inference network: the node-operator client registers your machine, claims inference jobs, executes them with a real open model, and returns Ed25519-signed results anyone can verify. Covers install, config, the wire contract, GPU Docker, and the local end-to-end proof.",
 					"added": "2026-08-12",
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false
+				},
+				{
+					"path": "/docs/trader-wrapped",
+					"title": "Docs · Trader Wrapped",
+					"description": "How the shareable season recap for a pump.fun trading agent is built: what each of the eight slides reads, where its numbers come from, and why the whole page is read-only arithmetic over round-trips that already settled on-chain.",
+					"added": "2026-09-04",
 					"auth": null,
 					"indexable": true,
 					"tags": [],
