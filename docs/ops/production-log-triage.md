@@ -93,12 +93,19 @@ guard env violated:
 
 **Signature.** Any of: a 502 from `POST /api/forge` or `/api/gpt-forge` carrying that
 sentence, `[cdn-object] signed read failed, serving public bucket domain`,
-`[forge] object storage rejected the generation`, `[register/prep] object storage
-rejected the manifest`, or `object_storage: down` in `/api/healthz`.
+`[avatars/glb] signed read failed, streaming public bucket domain`, `[forge] object
+storage rejected the generation`, `[register/prep] object storage rejected the
+manifest`, or `object_storage: down` in `/api/healthz`.
 
-**What it is.** Cloudflare R2 is refusing our signed requests. The access key id is
-recognized (that would be `InvalidAccessKeyId`); the SECRET is wrong. Every signed
-operation fails at once, read and write.
+**What it is.** Cloudflare R2 is refusing our signed requests, and the SECRET is
+wrong. Every signed operation fails at once, read and write.
+
+A REVOKED or deleted access key id is a different fault with the same blast radius,
+and it does not say `InvalidAccessKeyId`: R2 answers a bare `Unauthorized` (measured
+2026-09-08 against an unknown key id). Read the code off the error, not the sentence.
+`isStorageInfrastructureError` matches both shapes, so the failovers below fire either
+way; before 2026-09-08 it matched only the rotated-secret shape and a revoked key
+reached every caller as `502 upstream_error` instead.
 
 **Blast radius.** Re-probed live on 2026-09-07 15:44-16:05 UTC, because the lanes do
 NOT all fail the same way and treating them as one outage sends you after the wrong
@@ -125,6 +132,16 @@ thing:
   which the page renders as "Uploads are down right now. Try again shortly."
   `api/print/upload.js` does the same. Treat **either** phrase in a user report as this
   outage until proven otherwise: the old one means the fix is not deployed yet.
+- **Every avatar on the site disappears for signed-in users**, which is the widest
+  symptom and the one an anonymous check cannot see. `GET /api/avatars/:id/glb` 502s,
+  so the avatar widget that rides along on nearly every page swaps the user's model for
+  the `robot` placeholder and logs `[walk] avatar "<id>" failed to load`. The
+  authenticated page sweep (`npm run audit:web:login`, then `npm run audit:web`) found
+  this on 2026-09-08 as a confirmed error on page after page; it was the only real
+  error class in that sweep. That route now streams the public bucket domain through
+  itself rather than redirecting, because it exists precisely to add the wildcard CORS
+  header that the public r2.dev domain does not send, so a 302 there would turn the 502
+  into a CORS failure for the embed SDK and every cross-origin `GLTFLoader`.
 - **Agent registration** cannot store its manifest. **`/cdn/*`** cannot read an object
   and answers `502 upstream_error` until the public-bucket fallback (`36b67b8a8`,
   `99c521446`, `2ab1cb56a`) is actually deployed; those commits sat on `main` unshipped
@@ -157,9 +174,10 @@ Two traps that produce this exact error and look like a correct value:
 Verify with `curl -s https://three.ws/api/healthz | jq '.subsystems.subsystems[]
 | select(.name=="object_storage")'`, then one `POST /api/forge {"prompt":"cube"}`.
 
-**No code change routes around it.** The read path fails over to the public bucket
-domain (rate-limited, so it is a degradation, not a fix) and writes cannot fail over
-at all.
+**No code change routes around it.** The read paths fail over to the public bucket
+domain (`/cdn/*` by redirect, `/api/avatars/:id/glb` by streaming it through), which
+is rate-limited and uncached, so it is a degradation and not a fix. Writes cannot fail
+over at all.
 
 ---
 
