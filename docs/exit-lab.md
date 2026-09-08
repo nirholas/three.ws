@@ -223,6 +223,26 @@ to the nearest legal one rather than throwing.
 
 ---
 
+## When the corpus is not there
+
+Every section of the console is derived from `/api/sniper/exit-lab`, so the page
+has three honest states beside the populated one and reaches all of them from
+real conditions rather than a flag:
+
+| Condition | What the page does |
+|---|---|
+| The request is in flight | The verdict card shows a skeleton of the layout that is coming, the results and trades regions carry `aria-busy`, and the search says what it is waiting for. |
+| The request fails, or the handler answers `503 corpus_unavailable` | The results card states the reason the endpoint gave and offers **Try again**, which re-runs the same fetch. The attribution, per-trade and search sections say the corpus did not load rather than sitting empty under a heading. |
+| The corpus loads with no replayable position | The page says so and points at the [agent arena](https://three.ws/play/arena) and the [sniper docs](https://three.ws/docs/agent-sniper), which are the two places the first trade becomes visible. |
+
+**Run the search** is disabled until a corpus with at least one replayable trade
+is loaded, and its `title` says which of the two reasons applies. The search
+replays the corpus in the browser, so with no corpus there is nothing for it to
+do, and a live button that answers a click with silence is worse than a disabled
+one that explains itself.
+
+---
+
 ## Related
 
 - [Agent Sniper](agent-sniper.md), the worker whose positions this replays

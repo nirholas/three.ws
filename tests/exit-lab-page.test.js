@@ -132,6 +132,40 @@ describe('page structure', () => {
 	it('scrolls a wide table inside its own container rather than the page body', () => {
 		expect(css).toMatch(/\.xl-table-scroll\s*\{[^}]*overflow-x:\s*auto/);
 	});
+
+	it('raises every control this page draws to the 44px touch floor on a coarse pointer', () => {
+		// scripts/mobile-touch-audit.mjs measured 49 targets under the WCAG 2.5.5
+		// floor on a Pixel 5, and the two that mattered most were the help dot and
+		// the drag track the whole console is operated through.
+		const block = css.slice(css.indexOf('@media (hover: none) and (pointer: coarse)'));
+		expect(block, 'no coarse-pointer block in exit-lab.css').not.toBe('');
+		for (const sel of ['.xl-btn', '.xl-chip', '.xl-help', '.xl-range', '.xl-toggle', '.xl-coin-agent']) {
+			expect(block, `${sel} has no coarse-pointer rule`).toContain(sel);
+		}
+		expect(block).toMatch(/min-height:\s*44px/);
+	});
+});
+
+describe('dead paths', () => {
+	it('gates the search button on a loaded corpus instead of answering a click with silence', () => {
+		expect(js).toContain('function syncSweepAvailability()');
+		expect(js).toMatch(/btn\.disabled\s*=\s*!ready/);
+		// runSweep's early return is the branch the gate exists to make unreachable.
+		expect(js).toMatch(/if \(!state\.corpus\?\.trades\?\.length\) return;/);
+	});
+
+	it('fills the reasons, trades and search sections when the corpus fails to load', () => {
+		// A heading over a permanently aria-busy empty div reads as a broken page.
+		const failure = js.slice(js.indexOf('} catch (err) {', js.indexOf('async function load()')));
+		for (const fn of ['renderReasons()', 'renderTrades()', 'renderSweepIdle()']) {
+			expect(failure.slice(0, 400), `${fn} is not called on the failure path`).toContain(fn);
+		}
+	});
+
+	it('clears aria-busy once the corpus settles, either way', () => {
+		expect(js).toContain('function setBusy(');
+		expect(js).toMatch(/setBusy\(el, !state\.corpus && !state\.error\)/);
+	});
 });
 
 describe('honesty', () => {

@@ -1,11 +1,11 @@
 {
-	"generated_at": "2026-09-08T19:08:16.148Z",
+	"generated_at": "2026-09-08T21:34:12.155Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
 		"url": "https://three.ws"
 	},
-	"total": 3572,
+	"total": 3573,
 	"complete": false,
 	"full_feed": "/changelog.json",
 	"entries": [
@@ -104,6 +104,17 @@
 			"link": "/tutorials/text-to-3d",
 			"tags": [
 				"docs",
+				"improvement"
+			]
+		},
+		{
+			"date": "2026-09-08",
+			"type": "update",
+			"title": "Exit Lab is usable with a thumb, and it no longer goes quiet when the trade corpus is missing",
+			"summary": "A full audit of the Exit Lab console found 49 controls below the 44px touch floor on a phone: the 18px help dots, the 16px-tall policy sliders and the agent link on every row of the trade table were all but untappable. All of them are now full-size targets on touch devices, and the desktop layout keeps its density. Two dead ends went with them. The Run the search button used to sit there live and answer a click with nothing when no trades had loaded; it is now disabled and says which of the two reasons applies. And when the corpus fails to load, the attribution, trade-by-trade and search sections say so instead of leaving three headings over blank space, with the trade table stuck announcing itself as still loading forever.",
+			"link": "/exit-lab",
+			"tags": [
+				"fix",
 				"improvement"
 			]
 		},
@@ -1588,17 +1599,6 @@
 			"link": "/radar",
 			"tags": [
 				"feature"
-			]
-		},
-		{
-			"date": "2026-09-03",
-			"type": "update",
-			"title": "Live Trading Theater: the tape opens full and the connection light tells the truth",
-			"summary": "The theater got a pass over every state it can be in. The connection light in the top bar used to say Connecting for the whole visit even after the live feed had connected seconds earlier, because the page's translation pass ran last and put the placeholder wording back; it now reports the connection it actually has, and the same fix stops the sound button telling a screen reader the sound is off while it is on. The Live tape used to be a blank column until something happened on-chain: it now opens seeded with real recent activity, shows placeholder rows while that is loading, and says what it is waiting for when the feed is genuinely quiet. A slow roster response no longer dumps you straight onto the error card; the page tries again with more room and says it is still assembling. Recent-activity entries that had nowhere to link are plain text now instead of links that went nowhere, and the ones that do link to a three.ws page stay in your tab instead of opening a new one. The nameplates over each 3D trader were invisible to screen readers even though they are the only keyboard route into a trader's wallet and reputation panel; they are now reachable, and every remaining control on the page has a visible focus ring.",
-			"link": "/theater",
-			"tags": [
-				"fix",
-				"improvement"
 			]
 		}
 	]

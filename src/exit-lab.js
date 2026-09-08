@@ -295,10 +295,16 @@ function curvePath(series, w, h) {
 	};
 }
 
+/** Mark a live region busy exactly while the corpus is in flight. */
+function setBusy(el, busy) {
+	if (busy) el.setAttribute('aria-busy', 'true');
+	else el.removeAttribute('aria-busy');
+}
+
 function renderResults() {
 	const el = $('xl-results');
 	if (!el) return;
-	el.removeAttribute('aria-busy');
+	setBusy(el, !state.corpus && !state.error);
 
 	if (state.error) {
 		el.innerHTML = `<div class="xl-state xl-state-error" role="alert">
@@ -408,7 +414,13 @@ function renderReasons() {
 	if (!el) return;
 	const r = state.current;
 	if (!r || r.trades === 0) {
-		el.innerHTML = '';
+		// A heading over an empty div reads as a broken section. Say why it is
+		// empty, in the same words the results card is already using.
+		el.innerHTML = state.error
+			? `<p class="xl-note">Attribution needs the corpus, and the corpus did not load.</p>`
+			: state.corpus
+				? `<p class="xl-note">Nothing to attribute yet: no closed position in the corpus is replayable.</p>`
+				: '';
 		return;
 	}
 	const rows = exitReasons()
@@ -435,11 +447,41 @@ function renderReasons() {
 
 // ── the grid search ──────────────────────────────────────────────────────────
 
+/**
+ * The search can only run against a loaded corpus. Keeping the button live with
+ * nothing behind it makes a click answer with silence, so the button states what
+ * it is waiting for instead.
+ */
+function syncSweepAvailability() {
+	const btn = $('xl-sweep-run');
+	if (!btn) return;
+	const ready = (state.corpus?.trades?.length ?? 0) > 0;
+	btn.disabled = !ready;
+	if (ready) btn.removeAttribute('title');
+	else btn.setAttribute('title', state.error ? 'The trade corpus did not load' : 'No replayable trades to search yet');
+}
+
 function renderSweepIdle() {
 	const el = $('xl-sweep');
 	if (!el) return;
+	syncSweepAvailability();
 	const combos = Object.values(SWEEP_AXES).reduce((acc, g) => acc * g.length, 1);
+	if (state.error) {
+		el.innerHTML = `<p class="xl-note">The search replays the corpus locally, so it has nothing to search until
+			the corpus loads. Retry it above and this section comes back.</p>`;
+		return;
+	}
+	if (!state.corpus) {
+		el.innerHTML = `<p class="xl-note">Waiting on the corpus. The search unlocks as soon as the fleet's closed
+			trades land, then compares ${combos.toLocaleString()} policies against every one of them.</p>`;
+		return;
+	}
 	const trades = state.current?.trades ?? 0;
+	if (!trades) {
+		el.innerHTML = `<p class="xl-note">The search needs closed positions to replay. It unlocks with the first
+			replayable trade, then compares ${combos.toLocaleString()} policies against every one of them.</p>`;
+		return;
+	}
 	el.innerHTML = `<p class="xl-note">${combos.toLocaleString()} policies against ${trades.toLocaleString()} real
 		trades, replayed exactly. Nothing is sampled and nothing is estimated.</p>`;
 }
@@ -539,8 +581,8 @@ async function runSweep() {
 	};
 	renderSweepResults();
 	if (btn) {
-		btn.disabled = false;
 		btn.textContent = 'Run the search again';
+		syncSweepAvailability();
 	}
 }
 
@@ -551,10 +593,14 @@ const TRADE_LIMIT = 25;
 function renderTrades() {
 	const el = $('xl-trades');
 	if (!el) return;
-	el.removeAttribute('aria-busy');
+	setBusy(el, !state.corpus && !state.error);
 	const r = state.current;
 	if (!r || !r.rows.length) {
-		el.innerHTML = '';
+		el.innerHTML = state.error
+			? `<p class="xl-note">Per-trade rows need the corpus, and the corpus did not load.</p>`
+			: state.corpus
+				? `<p class="xl-note">No replayable trade to list yet. The first closed position fills this table.</p>`
+				: '';
 		return;
 	}
 	const meta = new Map((state.corpus?.trades || []).map((t) => [t.mint, t]));
@@ -700,7 +746,12 @@ function recompute() {
 async function load() {
 	state.error = null;
 	state.corpus = null;
+	state.current = null;
+	state.sweep = null;
 	renderResults();
+	renderReasons();
+	renderTrades();
+	renderSweepIdle();
 	try {
 		const res = await fetch(CORPUS_URL, { headers: { accept: 'application/json' } });
 		const body = await res.json().catch(() => null);
@@ -717,6 +768,9 @@ async function load() {
 		state.error = err?.message || 'the request failed';
 		renderPill();
 		renderResults();
+		renderReasons();
+		renderTrades();
+		renderSweepIdle();
 		renderHonesty();
 	}
 }
@@ -728,6 +782,7 @@ function init() {
 	renderControls();
 	bindControls();
 	renderResults();
+	renderSweepIdle();
 	load();
 }
 

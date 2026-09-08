@@ -79,6 +79,14 @@
 			<description>Twenty screenshots of the real product had been captured for the tutorials and then never put on the page: the tutorials described the Forge, Avatar Studio, Voice Lab, Scene Studio, Widget Studio and the rest entirely in words, while the pictures sat unused. All twenty are now embedded where they belong, each with a caption and a link straight to the live page, so you can see what you are about to open before you open it. The sign-language reference gained its two figures as well, and the missing Scene Studio capture was taken.</description>
 		</item>
 		<item>
+			<title>Exit Lab is usable with a thumb, and it no longer goes quiet when the trade corpus is missing</title>
+			<link>https://three.ws/exit-lab</link>
+			<guid isPermaLink="false">2026-09-08:Exit Lab is usable with a thumb, and it no longer goes quiet when the trade corpus is missing</guid>
+			<pubDate>Tue, 08 Sep 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>A full audit of the Exit Lab console found 49 controls below the 44px touch floor on a phone: the 18px help dots, the 16px-tall policy sliders and the agent link on every row of the trade table were all but untappable. All of them are now full-size targets on touch devices, and the desktop layout keeps its density. Two dead ends went with them. The Run the search button used to sit there live and answer a click with nothing when no trades had loaded; it is now disabled and says which of the two reasons applies. And when the corpus fails to load, the attribution, trade-by-trade and search sections say so instead of leaving three headings over blank space, with the trade table stuck announcing itself as still loading forever.</description>
+		</item>
+		<item>
 			<title>Forge tells you when uploads are down, instead of blaming your connection</title>
 			<link>https://three.ws/forge</link>
 			<guid isPermaLink="false">2026-09-08:Forge tells you when uploads are down, instead of blaming your connection</guid>

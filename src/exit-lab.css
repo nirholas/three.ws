@@ -967,3 +967,79 @@
 .xl-param-label:hover { color: var(--color-accent); }
 .xl-range:hover:not([disabled]) { transform: scaleY(1.3); }
 .xl-toggle:hover { color: var(--color-text); }
+
+/* ── touch targets ─────────────────────────────────────────────────────────
+   Measured on a Pixel 5 with scripts/mobile-touch-audit.mjs: the console shipped
+   49 controls under the 44px WCAG 2.5.5 floor, and the two worst were the ones
+   the page is actually built around. The 18px help dot and the 16px-tall drag
+   track are unusable with a thumb, and the per-trade agent links stacked 25 rows
+   of 20px targets. Raised only where the pointer is coarse, so the desktop
+   console keeps its density. */
+@media (hover: none) and (pointer: coarse) {
+	.xl-btn,
+	.xl-chip {
+		min-height: 44px;
+	}
+
+	.xl-btn-small {
+		min-width: 44px;
+	}
+
+	/* The help dot keeps its 1.15rem look and grows its hit box to 44px: the
+	   circle moves to a pseudo-element so the button box can be a plain
+	   transparent square around it. */
+	.xl-help {
+		position: relative;
+		width: 44px;
+		height: 44px;
+		border-color: transparent;
+	}
+
+	.xl-help::before {
+		content: '';
+		position: absolute;
+		top: 50%;
+		left: 50%;
+		width: 1.15rem;
+		height: 1.15rem;
+		transform: translate(-50%, -50%);
+		border: 1px solid var(--color-border);
+		border-radius: var(--radius-pill);
+		transition: border-color var(--duration-fast) var(--ease-standard);
+	}
+
+	.xl-help[aria-expanded='true']::before {
+		border-color: var(--color-border-strong);
+	}
+
+	/* A 44px head row also makes each range's own <label> clear the floor, which
+	   is what turns tapping the label into a way to reach the slider. */
+	.xl-param-head {
+		min-height: 44px;
+		margin-bottom: 0;
+	}
+
+	.xl-range {
+		height: 44px;
+	}
+
+	.xl-toggle {
+		min-height: 44px;
+	}
+
+	.xl-toggle input {
+		width: 22px;
+		height: 22px;
+	}
+
+	.xl-coin-agent,
+	.xl-proof a {
+		display: inline-flex;
+		align-items: center;
+		min-height: 44px;
+	}
+
+	.xl-proof a {
+		padding: 0 var(--space-2);
+	}
+}

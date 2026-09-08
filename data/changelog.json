@@ -27244,6 +27244,16 @@
 				"docs"
 			],
 			"link": "/docs/agent-vitals"
+		},
+		{
+			"date": "2026-09-08",
+			"title": "Exit Lab is usable with a thumb, and it no longer goes quiet when the trade corpus is missing",
+			"summary": "A full audit of the Exit Lab console found 49 controls below the 44px touch floor on a phone: the 18px help dots, the 16px-tall policy sliders and the agent link on every row of the trade table were all but untappable. All of them are now full-size targets on touch devices, and the desktop layout keeps its density. Two dead ends went with them. The Run the search button used to sit there live and answer a click with nothing when no trades had loaded; it is now disabled and says which of the two reasons applies. And when the corpus fails to load, the attribution, trade-by-trade and search sections say so instead of leaving three headings over blank space, with the trade table stuck announcing itself as still loading forever.",
+			"tags": [
+				"fix",
+				"improvement"
+			],
+			"link": "/exit-lab"
 		}
 	]
 }
