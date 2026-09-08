@@ -10,8 +10,9 @@
 //   2. The settle path records the observed floor state, readable
 //      synchronously via sponsorKnownBelowFloor().
 //   3. While the floor state is fresh, the 402 challenge builder stops
-//      advertising the Solana accept (and classifies an all-dropped accepts
-//      list as 503, never the 500 no_payto_configured misconfig error).
+//      advertising the SPONSORED Solana accept. It no longer drops Solana
+//      outright: it falls back to self-pay (see tests/x402-selfpay-fallback),
+//      so a receiving endpoint keeps taking money on an empty sponsor wallet.
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
@@ -47,10 +48,6 @@ describe('settlePayment floor classification', () => {
 		expect(err).toMatchObject({ code: 'settlement_unavailable', status: 503 });
 	});
 
-	// The wallet fee governor refuses for the same reason class and was missed by
-	// the floor branch, so it kept answering 502 long after the floor stopped:
-	// 15,619 of the autonomous loop's 20,030 `http_502` rows in the 48h to
-	// 2026-08-06 were this one refusal wearing a server-fault status.
 	// A wallet that clears the floor but cannot afford this settle's ATA rent is
 	// the same transient funding gap, and must not read as a broken endpoint.
 	it('maps fee_wallet_cannot_cover_settle to 503 settlement_unavailable', async () => {
@@ -58,6 +55,21 @@ describe('settlePayment floor classification', () => {
 		expect(err).toMatchObject({ code: 'settlement_unavailable', status: 503 });
 	});
 
+	// Self-pay puts the buyer's own wallet on the hook for the network fee, so a
+	// shortfall there is the buyer's to fix. Reporting it as our sponsor being
+	// refunded would send them away to wait for something that never helps.
+	it('maps buyer_cannot_cover_fee to a 402 the buyer can act on', async () => {
+		const err = await settleAgainst('buyer_cannot_cover_fee:1200<5000');
+		expect(err).toMatchObject({ code: 'insufficient_fee_balance', status: 402 });
+		expect(err.message).toMatch(/enough SOL/i);
+		// It must not be mistaken for the platform-side pause.
+		expect(err.code).not.toBe('settlement_unavailable');
+	});
+
+	// The wallet fee governor refuses for the same reason class and was missed by
+	// the floor branch, so it kept answering 502 long after the floor stopped:
+	// 15,619 of the autonomous loop's 20,030 `http_502` rows in the 48h to
+	// 2026-08-06 were this one refusal wearing a server-fault status.
 	it('maps fee_runway_exhausted to 503 settlement_unavailable', async () => {
 		const err = await settleAgainst('fee_runway_exhausted:10132243+10000>10000000');
 		expect(err).toMatchObject({ code: 'settlement_unavailable', status: 503 });

@@ -74,6 +74,9 @@ import {
 	selfFacilitatorEnabled,
 	selfFacilitatorUrl,
 } from './x402/ring-config.js';
+// Safe to import here: self-facilitator.js pulls in env + the Solana connection
+// only, never this module, so there is no cycle.
+import { sponsorKnownBelowFloor } from './x402/self-facilitator.js';
 
 export { X402Error };
 // Re-export both gas-sponsoring declarators together so callers building 402
@@ -184,7 +187,17 @@ export function paymentRequirements(resourceUrl, { amount } = {}) {
 	// Solana-first platform default: the Solana accept leads so first-accept
 	// clients and the payment modal settle on Solana unless the caller picks
 	// another network explicitly. Base/BSC follow as alternatives.
-	if (env.X402_PAY_TO_SOLANA && solanaSettleable()) {
+	// Sponsoring the buyer's Solana fee is a convenience, not a precondition for
+	// being paid. When we settle in-house and the sponsor cannot co-sign (no key
+	// loaded, or the wallet under its SOL floor), advertise the accept WITHOUT a
+	// feePayer: the buyer signs as their own fee payer and the facilitator only
+	// broadcasts. Mirrors the same fallback in x402-paid-endpoint.js, so the 17
+	// hand-rolled paid endpoints on this builder keep receiving on an empty
+	// sponsor wallet instead of going dark with it.
+	const solanaSelfPayOnly =
+		resolveSolanaFacilitator().self &&
+		(!env.X402_FEE_PAYER_SOLANA || !solanaSettleable() || sponsorKnownBelowFloor());
+	if (env.X402_PAY_TO_SOLANA && (solanaSettleable() || solanaSelfPayOnly)) {
 		out.push({
 			...common,
 			network: NETWORK_SOLANA_MAINNET,
@@ -192,22 +205,31 @@ export function paymentRequirements(resourceUrl, { amount } = {}) {
 			asset: env.X402_ASSET_MINT_SOLANA,
 			// PayAI's Solana facilitator requires clients to build the SPL transfer
 			// with this account as fee payer; without it, /verify rejects with
-			// `missing_fee_payer`.
-			extra: { name: 'USDC', decimals: 6, feePayer: env.X402_FEE_PAYER_SOLANA },
+			// `missing_fee_payer`. Omitted only in self-pay mode, which the guard
+			// above restricts to the self-routed facilitator for exactly that reason.
+			extra: {
+				name: 'USDC',
+				decimals: 6,
+				...(solanaSelfPayOnly ? {} : { feePayer: env.X402_FEE_PAYER_SOLANA }),
+			},
 		});
 		// $THREE alongside USDC on the same Solana rail (opt-in via
 		// X402_ACCEPT_THREE_SOLANA, see env.js). Pushed AFTER the USDC entry so
 		// clients that pick the first Solana accept keep settling USDC; the modal
 		// surfaces both as a token chooser. Same fee-payer co-sign path, the
 		// checkout server transfers any SPL mint, so no extra wiring is needed.
-		if (env.X402_ACCEPT_THREE_SOLANA && env.X402_FEE_PAYER_SOLANA) {
+		if (env.X402_ACCEPT_THREE_SOLANA && (env.X402_FEE_PAYER_SOLANA || solanaSelfPayOnly)) {
 			out.push({
 				...common,
 				...(env.X402_THREE_AMOUNT_SOLANA ? { amount: String(env.X402_THREE_AMOUNT_SOLANA) } : {}),
 				network: NETWORK_SOLANA_MAINNET,
 				payTo: env.X402_PAY_TO_SOLANA,
 				asset: env.THREE_TOKEN_MINT,
-				extra: { name: 'THREE', decimals: env.THREE_TOKEN_DECIMALS, feePayer: env.X402_FEE_PAYER_SOLANA },
+				extra: {
+					name: 'THREE',
+					decimals: env.THREE_TOKEN_DECIMALS,
+					...(solanaSelfPayOnly ? {} : { feePayer: env.X402_FEE_PAYER_SOLANA }),
+				},
 			});
 		}
 	}
@@ -1184,6 +1206,18 @@ export async function settlePayment(args) {
 		// this refusal wearing a server-fault status code. Same treatment: 503 +
 		// retryable code, so buyers back off instead of reading a funding cap as an
 		// outage. Genuinely unexplained settle failures still stay 502.
+		// Self-pay: the BUYER's wallet cannot cover the Solana network fee. Nothing
+		// is wrong on our side and no top-up of ours will help, so this must not
+		// wear the "we are refunding our wallet, retry later" message. It is a
+		// 402: the buyer adds a little SOL and pays again.
+		if (/^buyer_cannot_cover_fee/.test(reason)) {
+			throw new X402Error(
+				'insufficient_fee_balance',
+				'your wallet does not have enough SOL to cover the Solana network fee for this payment; ' +
+					`add a small amount of SOL and try again (${reason})`,
+				402,
+			);
+		}
 		if (/^fee_runway_exhausted/.test(reason)) {
 			throw new X402Error(
 				'settlement_unavailable',

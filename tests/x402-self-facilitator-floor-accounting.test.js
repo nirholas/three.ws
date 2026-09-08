@@ -202,7 +202,7 @@ describe('self-pay: a dry sponsor must not close a receiving endpoint', () => {
 			conn,
 		});
 
-		expect(res.reason || '').not.toMatch(/fee_wallet_below_floor|fee_wallet_cannot_cover_settle/);
+		expect(res.reason || '').not.toMatch(/fee_wallet_below_floor|cannot_cover/);
 	});
 
 	it('still refuses a self-pay buyer who cannot cover the fee', async () => {
@@ -217,7 +217,9 @@ describe('self-pay: a dry sponsor must not close a receiving endpoint', () => {
 		});
 
 		expect(res.success).toBe(false);
-		expect(res.reason).toMatch(/^fee_wallet_cannot_cover_settle:/);
+		// Self-pay names the buyer, not us: a shortfall in their wallet must never
+		// be reported as our sponsor needing a top-up.
+		expect(res.reason).toMatch(/^buyer_cannot_cover_fee:/);
 	});
 
 	it('leaves the sponsor reserve fully in force for sponsored settles', async () => {

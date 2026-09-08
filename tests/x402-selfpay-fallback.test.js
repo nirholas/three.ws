@@ -133,3 +133,36 @@ describe('a dry sponsor keeps the endpoint payable via self-pay', () => {
 		});
 	});
 });
+
+// The same fallback on the OTHER accept builder. paymentRequirements() serves
+// the 17 hand-rolled paid endpoints (asset-download, skill-call, print-order,
+// cosmetic-purchase, knock and friends) that do not go through paidEndpoint,
+// and it had the identical flaw: no sponsor meant no Solana accept at all.
+describe('paymentRequirements shares the self-pay fallback', () => {
+	async function requirements({ belowFloor }) {
+		vi.doMock('../api/_lib/x402/self-facilitator.js', () => ({
+			sponsorKnownBelowFloor: () => belowFloor,
+			refreshSponsorFloorState: () => {},
+		}));
+		const { paymentRequirements } = await import('../api/_lib/x402-spec.js');
+		return paymentRequirements('https://three.ws/api/x402/asset-download', { amount: '1000' });
+	}
+
+	it('keeps advertising Solana without a feePayer when the sponsor is dry', async () => {
+		const accepts = solanaAccepts(await requirements({ belowFloor: true }));
+		expect(accepts.length).toBeGreaterThan(0);
+		for (const accept of accepts) {
+			expect(accept.extra.feePayer).toBeUndefined();
+		}
+		// $THREE survives the sponsor going dry here too.
+		expect(accepts.map((a) => a.asset)).toContain(THREE);
+	});
+
+	it('keeps sponsoring gas while the sponsor is healthy', async () => {
+		const accepts = solanaAccepts(await requirements({ belowFloor: false }));
+		expect(accepts.length).toBeGreaterThan(0);
+		for (const accept of accepts) {
+			expect(accept.extra.feePayer).toBe(SPONSOR);
+		}
+	});
+});

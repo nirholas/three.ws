@@ -110,7 +110,7 @@ describe('settleRingPayment minimum-settle guard', () => {
 		// A self-pay buyer is not held to the sponsor's reserve (that floor exists
 		// to stop OUR wallet draining), only to affording the fee they are about
 		// to pay. So the refusal is the affordability one against a zero floor.
-		expect(res.reason).toMatch(/^fee_wallet_cannot_cover_settle:0-\d+<0$/);
+		expect(res.reason).toMatch(/^buyer_cannot_cover_fee:0<\d+$/);
 		expect(res.selfPay).toBe(true);
 	});
 });

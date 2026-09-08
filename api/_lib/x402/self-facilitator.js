@@ -606,7 +606,14 @@ export async function settleRingPayment({ paymentPayload, requirement, conn, fee
 	if (solLamports - estFeeLamports < floorFor) {
 		return {
 			success: false,
-			reason: `fee_wallet_cannot_cover_settle:${solLamports}-${estFeeLamports}<${floorFor}`,
+			// Distinct reason per mode, because the two mean opposite things to the
+			// person reading the error. In sponsor mode WE are short and the buyer
+			// should retry later; in self-pay the BUYER's own wallet cannot cover
+			// the network fee, and telling them we are topping up our wallet would
+			// send them away waiting for something that will never help.
+			reason: selfPay
+				? `buyer_cannot_cover_fee:${solLamports}<${estFeeLamports}`
+				: `fee_wallet_cannot_cover_settle:${solLamports}-${estFeeLamports}<${floorFor}`,
 			sponsorSolLamports: solLamports,
 			estFeeLamports,
 			feePayer: decoded.feePayer,
