@@ -16031,7 +16031,21 @@
 		"next_sessions_d": "Turn the recommended policy into a real budget envelope with a bearer token.",
 		"next_tutorial": "Full walkthrough",
 		"next_tutorial_d": "From first session to a running agent, end to end.",
-		"policy_heading": "Na-achọcha aka policy you are considering"
+		"policy_heading": "Na-achọcha aka policy you are considering",
+		"preset_mixed": "Ndị ọbịa agwakọtara",
+		"preset_poller": "Onye na-enyocha ọnụahịa",
+		"preset_research": "Onye nnọchi anya nyocha",
+		"preset_tight": "Amụma siri ike karịa",
+		"presets_label": "Malite site na",
+		"run": "Gbaa nnwale akọrọ ahụ",
+		"skip_to_main_content": "Wụga na isi ọdịnaya",
+		"tag": "Nnwale akọrọ. Ọ dịghị ihe a bịanyere aka na ya, ọ dịghị ihe e mefuru.",
+		"tip_budget": "Ngụkọta ihe onye nnọchi anya nwere ike imefu na nnọkọ a. A na-ewepụ ya na kredit gị mgbe e mepụtara nnọkọ ahụ ma weghachi ya ma ị kagbuo.",
+		"tip_calls": "Otu https URL n'ahịrị ọ bụla. Tinye \"x12\" iji kpọọ oku ugboro iri na abụọ, na \"@0.05\" iji were ọnụahịa kama inyocha nke dị ndụ. A na-enyocha njedebe pụrụ iche ọ bụla otu ugboro, n'akwụghị ụgwọ.",
+		"tip_hosts": "Naanị ndị ọbịa ndị a ka a ga-akwụ ụgwọ. A na-anabata subdomain nke ngalaba edepụtara; ngalaba yiri ya adịghị. Hapụ ya efu ka onye ọbịa ọ bụla nwee ike.",
+		"tip_network": "Yinye ebe obere akpa nyiwe na-akwụ ụgwọ site na ya. Solana bụ ndabara. Njedebe na-adịghị enye ụzọ na netwọk a enweghị ike ịnata ụgwọ site na nnọkọ a.",
+		"tip_pertx": "Oke n'elu ụgwọ ọ bụla. Ọ na-egbochi otu njedebe dị oke ọnụ ịkwụsị mmefu niile n'otu oku. Hapụ ya efu maka enweghị oke.",
+		"tip_ttl": "Ogologo oge tokin ahụ ga-adị mmefu. Mgbe oge ahụ gafere, nnọkọ ahụ akwụsị ịnabata ụgwọ, a na-eweghachikwa mmefu ọ bụla a na-emefughị na-akpaghị aka."
 	},
 	"payments": {
 		"0_10quick_test_15_min": "<span class=\"tpl-price\">$0.10</span><span class=\"tpl-desc\">Nnwale ngwa ngwa · Nkeji iri na ise</span>",
@@ -16851,7 +16865,8 @@
 		"meta_og_description": "Gbakọọ Merkle leaf gị ọzọ, gaa n'ụzọ, ma kwado ya megide mgbọrọgwụ dị na chain — kpamkpam n'ime ihe nchọgharị gị.",
 		"meta_og_title": "Nyochaa Njide · three.ws",
 		"meta_title": "Nyochaa Njide · three.ws",
-		"verify_your_custody": "Nyochaa njide gị"
+		"verify_your_custody": "Nyochaa njide gị",
+		"your_wallet_s_balance_and_authorized_state": "A na-etinye nguzozi obere akpa gị na ọnọdụ ikike ya n'ime osisi Merkle nke mgbọrọgwụ ya na-arapara na Solana. Ibe a na-agbakọghachi akwụkwọ gị, na-eje ije n'ụzọ ruo mgbọrọgwụ ahụ, ma na-agụ arapado ahụ ozugbo site na blockchain, ihe niile n'ime ihe nchọgharị gị. Anyị anaghị agwa gị na ọ dị mma; ị na-enyocha ya n'onwe gị."
 	},
 	"protocol": {
 		"defi": "DeFi",
@@ -17311,7 +17326,8 @@
 		"show_more": "Gosi ihe ọzọ",
 		"trader_leaderboard": "Bọọdụ ndị isi ahịa →",
 		"walk_distance": "Anya e jere",
-		"walk_leaderboard": "Bọọdụ ndị isi ije →"
+		"walk_leaderboard": "Bọọdụ ndị isi ije →",
+		"your_rank": "Ọkwa gị"
 	},
 	"reasoning_ledger": {
 		"meta_description": "Mkpebi ọ bụla dị mkpa onye nnọchi anya mere — ihe o kpebiri, ihe kpatara ya, ihe o buru n'amụma, na ihe mere n'ezie — edekọrọ ya na akwụkwọ ndekọ ego enweghị ike ịgbanwe, nke enwere ike nyochaa n'onwe ya. Ndekọ ị nwere ike nyochaa, ọ bụghị ịtụkwasị obi.",
@@ -17323,13 +17339,18 @@
 	},
 	"register": {
 		"3_30_characters_letters_numbers_or": "mkpụrụedemede 3–30, mkpụrụedemede, nọmba, _ ma ọ bụ -",
+		"6_digit_code_arialabel": "Koodu nwere ọnụọgụ isii",
+		"6_digit_code_placeholder": "Koodu nwere ọnụọgụ isii",
 		"already_have_an_account_sign_in": "Ị nweela akaụntụ? <a href=\"/login\">Banye</a>",
 		"back": "← Laghachi",
 		"by_creating_an_account_including_with_privy": "Site n'ịmepụta akaụntụ (gụnyere na Privy ma ọ bụ obere akpa ejikọrọ) ị kwenyere na <a href=\"/legal/tos\" target=\"_blank\" rel=\"noopener\">Usoro Ọrụ</a> na <a href=\"/legal/privacy\" target=\"_blank\" rel=\"noopener\">Amụma Nzuzo</a>.",
 		"caps_lock_is_on": "Caps Lock dị na ya",
 		"connect_wallet": "Jikọọ obere akpa",
+		"continue_with_privy": "Gaa n'ihu na Privy",
 		"create_account": "Mepụta akaụntụ",
 		"create_account_2": "Mepụta akaụntụ",
+		"email_address_arialabel": "Adreesị ozi-e",
+		"email_address_placeholder": "Adreesị ozi-e",
 		"evm": "EVM",
 		"get_started_free_no_wallet_needed": "Bido n'efu. <span class=\"badge\">✓ Enweghị obere akpa achọrọ</span>",
 		"i_have_read_and_agree_to_the": "Agụọla m ma kwenyere m na <a href=\"/legal/tos\" target=\"_blank\" rel=\"noopener\">Usoro Ọrụ</a> na <a href=\"/legal/privacy\" target=\"_blank\" rel=\"noopener\">Amụma Nzuzo</a>.",
@@ -17365,6 +17386,7 @@
 		"give_your_ai_a_body": "Nye AI gị ahụ.",
 		"join_the_community": "Soro obodo",
 		"loading": "Na-ebu…",
+		"market_link": "Ahịa Ịkwado Aha Ọma: jiri SOL edobere kwado onye nnọchi anya ma nweta ego site na akụkọ omume ya e gosipụtara.",
 		"meta_description": "Lelee ma nyefee nyocha dị na blockchain maka onye nnọchi anya AI ọ bụla ma ọ bụ adreesị Ethereum.",
 		"meta_og_description": "Nyochaa akara aha dị na blockchain na nkwenye maka onye nnọchi anya ọ bụla.",
 		"meta_og_title": "Onye Nchọpụta Aha · three.ws",
@@ -17400,6 +17422,7 @@
 	},
 	"restyle": {
 		"ai_restyle": "Ndozigharị AI",
+		"describe_the_look": "Kọwaa ụdị ọdịdị ahụ",
 		"emissive": "Na-enwu enwu",
 		"every_ai_restyle_mints_a_real_durable": "Ndozigharị AI ọ bụla na-emepụta GLB dị adị, nke na-adịgide adịgide — anaghị ehichapụ nke bu ya ụzọ. \"Chekwa ụdị\" na-echekwa mgbanwe gị dị ugbu a/nhazi gị n'otu aka ahụ. Pịa ụdị iji laghachi na ya; nke mbụ bụ mgbe niile ụdị 1.",
 		"export_glb": "Bupụ GLB",
@@ -17418,6 +17441,7 @@
 		"meta_twitter_description": "Gbanwee ọdịdị ihe nlereanya 3D ọ bụla na ihe nchọgharị: tinye nhazi ihe eji eme ihe PBR (chrome, ọlaedo, iko, osisi…), dozigharịa site na ntụziaka AI asụsụ dị mfe, gbasaa ụdị agba dị iche iche eburu ụzọ hazie dị ka ụdị na-adịgide adịgide, hazie ịdị nchara na ịdị ike nke ọma ozugbo, ma bupụ GLB akwadoro — n'ụzọ na-adịghị emebi ihe, na usoro ụdị dị adị nke enwere ike ịlaghachi azụ.",
 		"meta_twitter_title": "Ụlọ Ọrụ Ndozigharị — nhazi ihe eji eme ihe mbụ, ndozigharị AI na ụdị dị iche iche · three.ws",
 		"metalness": "Ịdị ka ígwè",
+		"model_url": "URL ụdị",
 		"re_skin_any_3d_model_in_your": "Gbanwee akpụkpọ ahụ nke ihe nlereanya 3D ọ bụla n'ime ihe nchọgharị gị — tinye nhazi ihe PBR eburu ụzọ mee, kọwaa ọdịdị n'asụsụ dị mfe maka AI ka ọ gbanwee ya, gbasaa ụdị agba dị iche iche sitere na mkpụrụ, hazie ịdị ka ígwè na ịdị njọ n'oge ahụ, wee bupụ GLB akwadoro. Emetụghị nke mbụ gị aka; Ntọgharị na-eweghachi ya ozugbo.",
 		"reset_to_original": "Tọgharia na nke mbụ",
 		"restyle": "Gbanwee ụdị",
