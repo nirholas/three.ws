@@ -42,15 +42,15 @@ git history (`git log --diff-filter=D -- docs/openai-pr/`). What each closed:
 | 03 | `forge_free` tier story true everywhere | `api/_mcp-studio/tools.js` defaults to `standard`; the live tool description, the answer sheet and `forge-free-tier-evidence.json` agree |
 | 04 | Test coverage on the ChatGPT-facing surface | `tests/api/ar-endpoint.test.js` (20), `tests/api/embodiment-embed-page.test.js` (7), `tests/api/3d-studio-actions-contract.test.js`, `tests/e2e/embodiment-embed.spec.js` (6); production `/api/ar` matches per user agent |
 | 05 | Custom-GPT OpenAPI served, legal URLs aligned | `https://three.ws/.well-known/3d-studio-openapi.yaml` 200, two paths, `security: []`, Redocly lint clean; `/legal/privacy` and `/legal/tos` 200 |
+| 06 | Doc accuracy + the tool-count story | Count reconciled at **eleven** everywhere (live `tools/list`, `docs/mcp-studio.md`, `openai-submission.md`, `TRACKER.md`, the `/openai` page, the partnership brief, `tools.js`, `tests/mcp-studio.test.js`, which pins it); model-viewer single-sourced at 4.0.0 across 110 references in 94 files with `check:model-viewer` tightened to catch semver RANGES; every link, path, `ui://` URI, env var and sample in the four ChatGPT-surface docs verified against live |
 
 Open:
 
-| # | Brief | Priority | State (measured 2026-09-01) |
+| # | Brief | Priority | State (measured 2026-09-08) |
 | --- | --- | --- | --- |
-| 06 | [Fix doc accuracy and reconcile the tool-count story](../014-openai-pr-06-docs-accuracy-reconciliation.md) | P1 | Partial. The 2026-08-06 reconciliation shipped and `docs/mcp-studio.md` says eleven, but `api/_mcp-studio/tools.js:3`, `openai-submission.md`, `live-tools-list.json`, `TRACKER.md`, the `/openai` page copy and its locale key, and the partnership brief still say ten or nine. |
 | 07 | [Final live verification and submit checklist](../915-openai-pr-07-final-verification-and-submit.md) | P2 (runs last) | Never run. Its "exactly 10 tools" check must read 11; `initialize`, `tools/list`, `resources/list`, the served manifests and `/api/ar` pass today; the live `forge_free` and `POST /api/3d/studio` runs and the kit refresh remain. |
 
-Run 06 first, then 07. The human steps at the end of 07 (partner-portal submit, deleting the
+07 is the last brief. The human steps at its end (partner-portal submit, deleting the
 draft GPT) stay with the owner.
 
 ## Rules every task must follow (from `CLAUDE.md`)

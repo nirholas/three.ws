@@ -1,11 +1,11 @@
 {
-	"generated_at": "2026-09-08T17:19:34.218Z",
+	"generated_at": "2026-09-08T17:31:12.489Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
 		"url": "https://three.ws"
 	},
-	"total": 3551,
+	"total": 3557,
 	"complete": false,
 	"full_feed": "/changelog.json",
 	"entries": [
@@ -18,6 +18,17 @@
 			"tags": [
 				"improvement",
 				"fix"
+			]
+		},
+		{
+			"date": "2026-09-08",
+			"type": "update",
+			"title": "Agent Galaxy no longer strands you when the star map cannot be built",
+			"summary": "When the embedding service behind the 3D agent map is unreachable, the page showed a sentence of explanation and nothing to click. It now offers the same agents as a browsable list plus a link to how the map is built. The keyboard experience was rebuilt too: every control on the page has a visible focus ring, and the search box and Money-Cam button drop out of the tab order while an overlay covers the map, so you can no longer tab into a search that has nothing to search. An agent card's Chat button now opens that agent's chat panel instead of repeating the View agent link.",
+			"link": "/galaxy",
+			"tags": [
+				"fix",
+				"improvement"
 			]
 		},
 		{
@@ -55,6 +66,17 @@
 		{
 			"date": "2026-09-08",
 			"type": "update",
+			"title": "Launch Studio reads in light mode, and a recipe's reward routing now reaches the launch",
+			"summary": "Launch Studio, the catalog of 50 coin-launch recipes, was written entirely in white text and never flipped for the light theme, so on a light background its title, its recipe cards and its preview drawer were white on white with a dark strip painted across the top. The whole surface now draws from the site's colour system and reads in both themes. The bigger fix sits behind the Launch this coin button: every reward recipe promises that a coin's creator fees route to its subject, and that choice was being dropped the moment you left the studio, so the launch form opened with no recipient at all. The routing now travels with the coin, shows on the launch form before you mint, and opens the fee split pre-filled with that recipient the moment the coin is live, ready to review and sign. Two planner options no launch could ever apply were removed rather than left promising a payout. The preview drawer also behaves as a real dialog now: focus moves into it, Tab stays inside it, and closing it returns you to the card you opened.",
+			"link": "/launch-studio",
+			"tags": [
+				"fix",
+				"improvement"
+			]
+		},
+		{
+			"date": "2026-09-08",
+			"type": "update",
 			"title": "Robinhood Portfolios can now show you what a basket would have done, and what the rebalancing did to it",
 			"summary": "Every generated portfolio now comes with a backtest, and it runs the basket twice: once rebalanced on the schedule it published, and once left alone. The gap between those two lines is the whole reason to pick one schedule over another, and it goes both ways, since rebalancing quietly harvests the swings in a basket whose holdings move against each other and quietly gives up gains in one where a single holding keeps winning. Coverage is stated rather than glossed over: a holding with no price history is named and left out, the window shown is only the stretch where every remaining holding has real observations, and nothing is filled in to close a gap. Getting that history at all took some doing, because this chain keeps no price archive and produces about 864,000 blocks a day, so reading a month of prices back off the chain is not something a page can do while you wait. Tokenized stocks are covered from their price feeds going back weeks, and a nightly snapshot now records the whole market so coverage keeps growing for everything else, memecoins included. Sharing a portfolio also got fixed: a link now carries the portfolio itself rather than the sentence that produced it, so what you send is exactly what the other person opens, where before the wording was re-run and could quietly come back as a different basket. There is a new endpoint for checking that a portfolio document really is the one a portfolio was published under, and a client library for developers who want the market, the generator, the backtest and that check from their own code. Along the way two data bugs were fixed that were quietly under-reporting the market: the tokenized-stock board had been describing only a couple of tokens per batch instead of all thirty, and the price-history reads had been silently returning less history the more of it you asked for.",
 			"link": "/markets/robinhood/portfolios",
@@ -66,9 +88,53 @@
 		{
 			"date": "2026-09-08",
 			"type": "update",
+			"title": "Text to 3D no longer stops when our image storage does",
+			"summary": "Turning a written prompt into a model takes one step you never see: we paint a reference picture of what you asked for, save it somewhere our sculpting engines can read, and hand them the link. If that save failed, the whole thing was over before a graphics card was ever asked for anything, and the error you got back was our storage provider's own wording about signatures and access keys, which told you nothing you could act on. Making a model from a photo you upload was unaffected, because it brings its own picture, so half the feature could look perfectly healthy while the other half was completely down. Our own engines never needed that saved copy: they accept the picture itself, sent along with the request. So when storage will not take the write, the reference view now travels inside the job and your model still gets built. The engines that genuinely need a link, the outside ones you can pick by name, now say so in plain language and point you at the ones still running, instead of failing with a message about our secret keys. Generations that take this route lose the extra angles we normally paint to fill in a subject's back, so they are built from the single front view.",
+			"link": "/forge",
+			"tags": [
+				"fix",
+				"improvement"
+			]
+		},
+		{
+			"date": "2026-09-08",
+			"type": "update",
+			"title": "The Agent Economy page is readable on a phone, and its x402 services finally have names",
+			"summary": "On a narrow screen the page laid itself out at desktop width and the browser quietly cut off two thirds of every section, so most of the content was simply unreachable on a phone. It now fits the screen at every size. The live x402 service list was also close to useless: every one of the ninety endpoints was labelled \"Service\", the price sat next to a raw token contract address, and the network read \"eip155:8453\" instead of \"Base\". Each row now carries a real name, its endpoint address, a clean price and a readable chain, an endpoint that takes path parameters no longer pretends to be a clickable page, and the list opens with a screenful you can expand to all of them. The three empty states tell you where to go next, and the services counter reports the true number instead of \"40+\".",
+			"link": "/economy",
+			"tags": [
+				"fix",
+				"improvement"
+			]
+		},
+		{
+			"date": "2026-09-08",
+			"type": "update",
+			"title": "The ChatGPT and AR docs now describe the AR launcher that actually runs",
+			"summary": "Three corrections to the documentation for the ChatGPT surfaces and augmented reality. The AR reference still said the one-tap launcher at /api/ar draws the model itself in Google's model-viewer, which stopped being true when the launcher became a pure router: it now sends Android straight into Scene Viewer and everyone else to a bundled page that builds a real USDZ on the device, which is what iPhone's Quick Look needs. The pages are named correctly throughout, including which one does the file conversion, so nobody debugging an iPhone handoff starts in the wrong file. The ChatGPT AR page also credited a single generation engine for every model, when the connector actually tries the free engines in turn and steps down to a slower one if the first is cold, which is why generation keeps working when one lane is down. And the paid studio server's page promised that anyone can browse its tool catalogue without credentials, without mentioning that a connector client is deliberately answered with a sign-in challenge instead, as the connector standard requires; both paths are now written down, with a command that works. That page's tool tables also describe nine tools that were previously only named in its price list, so no tool appears with a price and no explanation.",
+			"link": "/docs/ar",
+			"tags": [
+				"docs",
+				"fix"
+			]
+		},
+		{
+			"date": "2026-09-08",
+			"type": "update",
 			"title": "The club now takes $THREE at the door and at the stage, not just USDC",
 			"summary": "The club has always advertised two ways to pay: USDC or $THREE, on Solana, for both the cover charge and every dance tip. Only one of them was reachable. The checkout window picked the first token a service offered and gave you no way to choose the other, so $THREE was quoted on every paid page and payable on none of them. Across every club tip ever settled, not one was paid in $THREE, which is what you would expect from a menu with a hidden second item. The checkout now shows a token picker whenever a service quotes more than one, with each token's real price on it, so you can compare 0.001 USDC against its $THREE equivalent before you approve anything, and the price at the top of the window follows what you pick. If you have agent wallets, they still pay in USDC only, and the window now says so instead of quietly hiding them when you switch tokens. Two settlement bugs behind the door were fixed at the same time. The first would have hit the very first person to pay in $THREE: sending a token to a wallet that has never held it requires opening an account for it on-chain, and the check that decides whether we can afford to sponsor a payment was ignoring that cost, so the payment would have been accepted and then failed on-chain for a reason that looked like something else entirely. The second was making the club look open when it was not: a healthy payer covering their own fees could reset a shared 'we can still sponsor payments' flag that belonged to a different wallet, so the door kept quoting prices it could not actually take. Finally, when payments are paused because the wallet that settles them needs topping up, the checkout now says that in a sentence and tells you nothing was charged, instead of showing you the raw error envelope it used to paste in, which read like a broken link.",
 			"link": "/club",
+			"tags": [
+				"fix",
+				"improvement"
+			]
+		},
+		{
+			"date": "2026-09-08",
+			"type": "update",
+			"title": "The Launch a Coin button now works once you have filled the form",
+			"summary": "On the Launch a Coin page we fill in your token name and ticker from the agent you pick, but never the description, because only you can write that. The launch button read \"Add name, symbol & description to launch\" until all three were there, and that label was worked out once when the page drew itself and then never again. So the moment you typed your description the button was describing a form that no longer existed: it still said something was missing, and pressing it did nothing whatsoever, because it went looking for an empty field and found none. The button now keeps up with what you type, turning into \"Connect wallet to launch\" or the real launch action the instant the last field is filled, and back again if you clear one. Pressing it while something is genuinely missing now says which field it is, instead of silently moving your cursor there. Separately, if we cannot reach your agent list, the page now says so and offers a Try again button that recovers in place; it used to tell owners of a dozen agents that they had none yet and send them off to create a duplicate. The agent picker also fits a phone screen now instead of running off both edges.",
+			"link": "/launch",
 			"tags": [
 				"fix",
 				"improvement"
@@ -1534,70 +1600,6 @@
 			"link": "/smart-home",
 			"tags": [
 				"improvement",
-				"fix"
-			]
-		},
-		{
-			"date": "2026-09-03",
-			"type": "update",
-			"title": "The Showcase directory is back after a stray change emptied it",
-			"summary": "Showcase lists every ERC-8004 agent that carries a 3D body, discovered across 22 chains and indexed from the canonical registries, and any card opens that agent in the live viewer. An unrelated change had emptied the file behind it, so for a while the page loaded and then showed nothing at all. It is restored and browsing again. While it was open we also gave the page a single real heading instead of two competing ones, which matters to anyone reading the site with a screen reader, and rewrote its description, which had been advertising a drag-and-drop model viewer rather than the agent directory it actually is.",
-			"link": "/showcase",
-			"tags": [
-				"fix"
-			]
-		},
-		{
-			"date": "2026-09-03",
-			"type": "update",
-			"title": "The signal marketplace tells you how to get on it, and reads correctly to a screen reader",
-			"summary": "No verified trader has published a paid feed yet, so the marketplace's empty state is what everyone actually sees, and it only pointed at the leaderboard. It now also points at the place you publish from: the Signals tab of your agent wallet. The rank and network filters used to announce themselves as tabs, which promises a screen-reader user a panel to arrow between that this page does not have; they are now announced as the pressed toggles they really are, wired to the board they re-rank. The Retry button on a failed load and both empty-state buttons had no hover or keyboard-focus styling at all, so a keyboard user could not see where they were; all three now light up on hover and show a focus ring. Landing on the page with a stale or misspelled sort in the address bar rewrites it to the board you are actually looking at, so a shared link always opens the view it names. And a feed link that no longer resolves now gets a real page heading instead of a floating error message.",
-			"link": "/signals",
-			"tags": [
-				"improvement",
-				"fix"
-			]
-		},
-		{
-			"date": "2026-09-03",
-			"type": "update",
-			"title": "The sniper scoreboard reads correctly in the light theme, and tells you what it is doing while it loads",
-			"summary": "The strategy board was building a second copy of its own stylesheet in JavaScript and appending it to the page, so those rules won every tie and quietly reverted the real one. In the light theme that meant profit figures and the LLM badges rendered in a near-white green and lavender on white paper, close to invisible; they now use the same colours as every other crypto page and read properly in both themes. Loading is no longer a blank space under the headline: the board paints a skeleton in the exact shape of the table while it reads each agent's live wallet balance off the chain. If the feed cannot be reached you now get a plain sentence about what went wrong plus a button to try again, instead of a raw browser error and a silent 30-second wait, and a refresh that fails on top of a board that already has numbers keeps the numbers, says they are the last good read, and offers the same retry. Switching the time window while a slower request is still in flight can no longer paint the wrong window's figures. The judgment ledger says so when there are no LLM verdicts in the window rather than disappearing. And the table stopped showing a hand cursor over rows and headers that were never clickable or sortable.",
-			"link": "/sniper/experiments",
-			"tags": [
-				"fix",
-				"improvement"
-			]
-		},
-		{
-			"date": "2026-09-03",
-			"type": "update",
-			"title": "The splat viewer lets go of the graphics card between scenes",
-			"summary": "Every scene the viewer opened built a fresh WebGL renderer, and tearing the old one down freed its memory but never released the graphics context itself. The library we use for splat rendering ends its own cleanup by removing an element from the page that was never there, which throws and skips the last of its teardown, so the contexts stacked up across a session of opening one capture after another. The viewer now releases each context by hand on every swap and when you leave the page. Recentering the camera no longer rebuilds the whole scene either: it moves the camera on the running viewer, so the stage snaps back instantly instead of flashing through the loading screen. If the browser does take the graphics context back, after a GPU reset or under memory pressure, the stage now says so and offers a way to reload rather than sitting on a frozen frame. Two smaller things while we were in there: a scene you opened by URL can be downloaded from the viewer, the same as an upload or a sample, and the drop zone now has a real button for keyboard users with a labelled URL field for screen readers.",
-			"link": "/splat",
-			"tags": [
-				"fix",
-				"improvement"
-			]
-		},
-		{
-			"date": "2026-09-03",
-			"type": "update",
-			"title": "The status page can tell one dark house from an outage",
-			"summary": "Connected homes now report on the public status page at /status, and the hard part was making that number honest. If your Home Assistant is switched off, your token expired or your internet dropped, that is your house: it shows up in your own home view, not as a three.ws outage and not as an alert to anyone. It takes at least ten homes failing at once before the platform will call it a problem on our side, because with three homes connected one holiday cottage losing power would look like a third of everything being broken. One thing is treated as an emergency at a count of one: an action that can open a building (a lock, a garage door, an alarm) recorded as having run without someone saying yes. That has no acceptable rate.",
-			"link": "/status",
-			"tags": [
-				"infra",
-				"improvement"
-			]
-		},
-		{
-			"date": "2026-09-03",
-			"type": "update",
-			"title": "The tour atlas counts its stops correctly again",
-			"summary": "The atlas at /tour/atlas is the map of the guided tour: one card per stop, numbered in the order you would walk them. Two hundred and three of those cards were still carrying numbers from an older version of the tour, so the grid showed duplicate stop numbers, skipped others, and put cards out of order, under a heading that claimed one more stop than the grid actually held. Every card is now numbered by its real position in the tour and the count above the grid matches what is under it. Nothing about the stops themselves changed: same pages, same screenshots, same highlights.",
-			"link": "/tour/atlas",
-			"tags": [
 				"fix"
 			]
 		}
