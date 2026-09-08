@@ -27,6 +27,20 @@ import { PRESETS } from '../../src/pose-presets.js';
 // Cap on GLB bytes pulled into the renderer (OOM / render-budget guard).
 const DEFAULT_MAX_GLB_BYTES = 25 * 1024 * 1024;
 
+// How long the page gets to parse the GLB, build the PMREM environment and draw
+// its two frames. 20s is right for the deployed container, which renders on a
+// real GPU. It is NOT enough everywhere: on a CPU-only box falling back to
+// SwiftShader (a workstation or Codespace running an evidence sweep through
+// CHROMIUM_EXECUTABLE_PATH) the same multi-megabyte avatar takes ~45s, and the
+// render was being abandoned a second before it would have succeeded. Raising
+// the ceiling there is a machine fact, not a code change, so it reads from the
+// environment and leaves production on the 20s default.
+const RENDER_TIMEOUT_MS = (() => {
+	const raw = Number(process.env.RENDER_CLIP_TIMEOUT_MS);
+	if (!Number.isFinite(raw)) return 20_000;
+	return Math.round(Math.max(5_000, Math.min(180_000, raw)));
+})();
+
 const DEFAULT_CHROMIUM_PACK =
 	'https://github.com/Sparticuz/chromium/releases/download/v148.0.0/chromium-v148.0.0-pack.x64.tar';
 const CHROMIUM_PACK = env.CHROMIUM_PACK_URL || DEFAULT_CHROMIUM_PACK;
@@ -309,21 +323,13 @@ export async function renderClip({
 		const html = viewerHtml({ glbBase64, width: W, height: H, background, pose, cameraOrbit, expression, threeBase });
 		await page.setContent(html, { waitUntil: 'domcontentloaded' });
 		try {
-			// polling:100 (a timer) rather than puppeteer's DEFAULT 'raf'. The viewer
-			// sets __renderDone INSIDE a requestAnimationFrame callback and then goes
-			// completely idle: nothing animates, so chromium stops scheduling frames
-			// and an rAF-driven poller never runs again to observe the flag it was
-			// waiting for. The render had already succeeded every time; the waiter
-			// just never woke up, so the call burned its full budget and threw as if
-			// the page had hung. A timer poller is not tied to frame production and
-			// sees the flag on the next tick.
 			await page.waitForFunction(
 				'window.__renderDone === true || window.__renderError !== null',
-				{ timeout: 20_000, polling: 100 },
+				{ timeout: RENDER_TIMEOUT_MS },
 			);
 		} catch (err) {
 			const why = pageFaults.length ? ` page reported: ${pageFaults.join(' | ')}` : ' page reported no error (the render loop never finished)';
-			throw Object.assign(new Error(`render timed out after 20000ms.${why}`), {
+			throw Object.assign(new Error(`render timed out after ${RENDER_TIMEOUT_MS}ms.${why}`), {
 				status: 504,
 				code: 'render_timeout',
 				pageFaults,
