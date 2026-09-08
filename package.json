@@ -384,6 +384,7 @@
 		"check:evm-rpc": "node --env-file=.env scripts/probe-evm-rpc.mjs --chain 1 --ens",
 		"awal:pin": "node scripts/update-awal-version.mjs",
 		"smoke:prod": "node scripts/check-pages.mjs --base https://three.ws",
+		"probe:generation": "node scripts/probe-generation-suite.mjs --base https://three.ws",
 		"event:watch": "node scripts/event-watch.mjs",
 		"event:capacity": "node scripts/play-capacity-smoke.mjs",
 		"event:failover": "node --env-file=.env scripts/event-dependency-failover.mjs",
