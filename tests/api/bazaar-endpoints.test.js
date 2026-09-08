@@ -129,7 +129,7 @@ const { default: searchHandler } = await import('../../api/bazaar/search.js');
 const { default: providersHandler } = await import('../../api/bazaar/providers.js');
 const { default: arbitrageHandler } = await import('../../api/bazaar/arbitrage.js');
 const { default: contextHandler } = await import('../../api/bazaar/context.js');
-const { Bazaar, clearCatalogCache } = await import('../../api/_lib/x402/bazaar-client.js');
+const { Bazaar, clearCatalogCache, normalizeItem } = await import('../../api/_lib/x402/bazaar-client.js');
 
 let ipCounter = 0;
 function makeReq({ url, method = 'GET' } = {}) {
@@ -480,5 +480,66 @@ describe('bazaar-client paging bounds', () => {
 		// than the 250 round trips the unbounded loop used to make.
 		expect(fetchCalls).toHaveLength(2);
 		expect(items).toHaveLength(2);
+	});
+});
+
+// The v1 ListDiscoveryResourcesResponse puts the human-facing fields on
+// `metadata`, which is exactly where our own facilitator publishes them
+// (api/_lib/x402/discovery-resources.js toV1Item). normalizeItem only read the
+// v2 bazaar extension, so every listing that carried metadata normalized to an
+// empty name, no tags and no icon: /economy rendered seventeen three.ws
+// services as an anonymous row called "Service".
+describe('bazaar-client v1 metadata', () => {
+	const v1Item = {
+		resource: 'https://three.ws/api/x402/analytics',
+		type: 'http',
+		x402Version: 1,
+		accepts: [
+			{
+				scheme: 'exact',
+				network: 'solana',
+				maxAmountRequired: '5000',
+				payTo: 'wwwwwDxFWRn7grgr3Esrsg5C6NvDoDHSA4gaCffccrU',
+				asset: 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v',
+			},
+		],
+		metadata: {
+			serviceName: 'three.ws Economy Analytics',
+			tags: ['analytics', 'economy'],
+			iconUrl: 'https://three.ws/favicon.ico',
+			method: 'POST',
+			path: '/api/x402/analytics',
+		},
+	};
+
+	it('reads serviceName, tags, iconUrl and method off metadata', () => {
+		const n = normalizeItem(v1Item, FAC_A);
+		expect(n.serviceName).toBe('three.ws Economy Analytics');
+		expect(n.tags).toEqual(['analytics', 'economy']);
+		expect(n.iconUrl).toBe('https://three.ws/favicon.ico');
+		expect(n.method).toBe('POST');
+		expect(n.minPriceLabel).toBe('0.005 USDC');
+	});
+
+	it('keeps a v2 bazaar extension authoritative over metadata', () => {
+		const n = normalizeItem(
+			{
+				...v1Item,
+				extensions: { bazaar: { name: 'Extension name', info: { service: { name: 'Service block name' } } } },
+			},
+			FAC_A,
+		);
+		// resource/serviceMeta names still win, so the fix adds a fallback rung
+		// rather than reordering the existing ones.
+		expect(n.serviceName).toBe('three.ws Economy Analytics');
+	});
+
+	it('leaves a listing with no metadata untouched', () => {
+		const { metadata, ...bare } = v1Item;
+		expect(metadata).toBeTruthy();
+		const n = normalizeItem(bare, FAC_A);
+		expect(n.serviceName).toBe('');
+		expect(n.tags).toEqual([]);
+		expect(n.method).toBe('');
 	});
 });

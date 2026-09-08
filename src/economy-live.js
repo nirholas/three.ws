@@ -36,8 +36,27 @@ function esc(s) {
 	return String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 }
 
+// Facilitator listings report the network as a CAIP-2 id ("eip155:8453"), which
+// the page used to print raw because the old substring test only matched the
+// friendly names. Resolve the chain id first, then fall back to the name.
+const EVM_CHAIN_NAMES = {
+	1: 'Ethereum',
+	10: 'Optimism',
+	56: 'BNB Chain',
+	137: 'Polygon',
+	8453: 'Base',
+	42161: 'Arbitrum',
+	43114: 'Avalanche',
+	84532: 'Base Sepolia',
+	196: 'X Layer',
+};
+
 function chainLabel(chain) {
 	const c = String(chain || '').toLowerCase();
+	if (!c) return '';
+	const eip155 = c.match(/^eip155:(\d+)$/);
+	if (eip155) return EVM_CHAIN_NAMES[Number(eip155[1])] || `EVM chain ${eip155[1]}`;
+	if (c.startsWith('solana')) return c.includes('devnet') || c.includes('etwtrabzayq') ? 'Solana devnet' : 'Solana';
 	if (c.includes('sol')) return 'Solana';
 	if (c.includes('base')) return 'Base';
 	if (c.includes('eth')) return 'Ethereum';
@@ -61,8 +80,13 @@ function skeleton(host, n, kind) {
 	}
 }
 
-function emptyState(host, title, hint) {
-	host.innerHTML = `<div class="ae-empty"><p class="ae-empty-title">${esc(title)}</p><p class="ae-muted">${esc(hint)}</p></div>`;
+// An empty feed is a real state, so it says what the visitor can do next rather
+// than only that there is nothing here. `action` is an internal path.
+function emptyState(host, title, hint, action) {
+	const cta = action
+		? `<p class="ae-empty-cta"><a href="${esc(action.href)}">${esc(action.label)}</a></p>`
+		: '';
+	host.innerHTML = `<div class="ae-empty"><p class="ae-empty-title">${esc(title)}</p><p class="ae-muted">${esc(hint)}</p>${cta}</div>`;
 }
 
 function errorState(host, retryFn) {
@@ -110,20 +134,31 @@ function agentCard(a) {
 		</a>`;
 }
 
+// Changing the sort twice inside one round trip can land the older response
+// last and paint a list the select no longer says. Only the newest request may
+// write.
+let _agentsRequest = 0;
+
 async function loadAgents({ quiet = false } = {}) {
 	const host = $('#ae-agents');
 	if (!host) return;
 	if (!quiet) skeleton(host, 6, 'card');
+	const token = ++_agentsRequest;
 	try {
 		const sort = $('#ae-sort')?.value || 'top_rated';
 		const params = new URLSearchParams({ sort, limit: '24' });
 		const r = await fetch(`/api/marketplace/agents?${params}`, { credentials: 'include' });
 		if (!r.ok) throw new Error(`status ${r.status}`);
 		const j = await r.json();
+		if (token !== _agentsRequest) return;
 		const items = j?.data?.items || j?.items || [];
 		if (!items.length) {
-			emptyState(host, 'No published agents yet', 'Be the first — build an agent and price a skill.');
+			emptyState(host, 'No published agents yet', 'Nobody has published an agent to the marketplace yet.', {
+				href: '/create-agent',
+				label: 'Build the first one',
+			});
 			setStat('#ae-stat-agents', '0');
+			setStat('#ae-stat-earning', '0');
 			return;
 		}
 		host.innerHTML = items.map(agentCard).join('');
@@ -131,59 +166,170 @@ async function loadAgents({ quiet = false } = {}) {
 		const earners = items.filter((a) => (Number(a.buyers_total) || 0) > 0).length;
 		setStat('#ae-stat-earning', String(earners));
 	} catch (err) {
-		errorState(host, loadAgents);
+		if (token === _agentsRequest) errorState(host, () => loadAgents());
 		// eslint-disable-next-line no-console
 		console.error('[economy-live] agents', err);
 	}
 }
 
-// ── Section: live x402 services ───────────────────────────────────────────────
+// ── Section: live x402 services ──────────────────────────────────
+
+// A path segment a facilitator publishes as a placeholder rather than a value:
+// "/inboxes/:inbox_id/messages", "/block/{number}". An endpoint carrying one is
+// a template, not a fetchable page, so the row never links to it.
+function isTemplateSegment(seg) {
+	return /^[:{<]/.test(seg) || /^%7B/i.test(seg);
+}
+
+function parseEndpoint(resource) {
+	try {
+		const u = new URL(String(resource || ''));
+		return u.protocol === 'https:' || u.protocol === 'http:' ? u : null;
+	} catch {
+		return null;
+	}
+}
+
+// "erc20-balance" -> "Erc20 balance", "html-to-json" -> "Html to json".
+function humanizeSegment(seg) {
+	let out = seg;
+	try {
+		out = decodeURIComponent(seg);
+	} catch {
+		out = seg;
+	}
+	return out
+		.replace(/\.[a-z0-9]{1,5}$/i, '')
+		.replace(/[-_+]+/g, ' ')
+		.replace(/([a-z0-9])([A-Z])/g, '$1 $2')
+		.trim()
+		.replace(/^./, (c) => c.toUpperCase());
+}
+
+// Every listing on the live catalog today reaches us with an empty serviceName:
+// most facilitators simply do not collect one. Rendering the fallback made the
+// whole section ninety identical rows called "Service", so derive a readable
+// label from the one field every listing does have, its endpoint URL.
+const GENERIC_PATH_SEGMENTS = new Set(['api', 'rest', 'public', 'x402', 'v', 'endpoint', 'endpoints']);
+
+export function deriveServiceLabel(resource) {
+	const u = parseEndpoint(resource);
+	if (!u) return 'Service';
+	const segs = u.pathname
+		.split('/')
+		.filter(Boolean)
+		.filter((seg) => !isTemplateSegment(seg) && !/^v\d+(\.\d+)?$/i.test(seg) && !GENERIC_PATH_SEGMENTS.has(seg.toLowerCase()));
+	if (!segs.length) return u.hostname.replace(/^www\./, '');
+	const tail = segs.slice(-2).map(humanizeSegment);
+	const label = tail.length > 1 && tail[1].length < 14 ? tail.join(' ') : tail[tail.length - 1];
+	return label.length > 46 ? `${label.slice(0, 45)}\u2026` : label;
+}
+
+// The endpoint itself, shown under the name: it is what a buyer actually pays,
+// and it is what tells two rows named "Inboxes messages" apart.
+export function endpointText(resource) {
+	const u = parseEndpoint(resource);
+	if (!u) return '';
+	const path = u.pathname === '/' ? '' : u.pathname.replace(/\/$/, '');
+	return `${u.host}${path}`;
+}
+
+// "0.1 USDC" from the facilitator already carries the symbol; the old row
+// appended `price.currency` after it, which is the token CONTRACT ADDRESS, so
+// every price read "0.1 USDC 0x833589...". Free is free.
+export function servicePriceLabel(price) {
+	if (!price) return 'Free';
+	if (price.amountAtomic != null && /^0+$/.test(String(price.amountAtomic))) return 'Free';
+	const label = String(price.amountLabel || '').trim();
+	if (!label) return 'Free';
+	return /^0(\.0+)?( |$)/.test(label) ? 'Free' : label;
+}
 
 function serviceRow(t) {
-	const price = t.price?.amountLabel
-		? `${esc(t.price.amountLabel)}${t.price.currency ? ` ${esc(t.price.currency)}` : ''}`
-		: 'Free';
+	const price = servicePriceLabel(t.price);
+	const free = price === 'Free';
 	const net = t.price?.network ? chainLabel(t.price.network) : '';
 	const method = t.method ? `<span class="ae-svc-method">${esc(t.method)}</span>` : '';
+	const name = t.serviceName || t.toolName || deriveServiceLabel(t.resource);
+	const endpoint = endpointText(t.resource);
+	const templated = endpoint.split('/').some(isTemplateSegment);
 	const tags = (t.tags || []).slice(0, 3).map((x) => `<span class="ae-tag">${esc(x)}</span>`).join('');
 	// t.resource is an x402 endpoint URL sourced from third-party facilitator
-	// discovery listings (PayAI / Coinbase CDP / etc.) — any operator can
-	// register one, so it's untrusted external input. esc() only guards
-	// attribute-breakout; sanitizeUrl() gates the scheme so a malicious
-	// `javascript:`/`data:` listing can't execute when clicked.
-	return `
-		<a class="ae-svc" href="${esc(sanitizeUrl(t.resource || '#'))}" rel="noopener" target="_blank">
+	// discovery listings (PayAI / Coinbase CDP / etc.). Any operator can register
+	// one, so it is untrusted external input. esc() only guards attribute
+	// breakout; sanitizeUrl() gates the scheme so a malicious `javascript:` or
+	// `data:` listing cannot execute when clicked.
+	const href = sanitizeUrl(t.resource || '');
+	// A template endpoint 404s and a rejected scheme collapses to "#", and both
+	// are dead links. Those rows render as plain rows instead: the endpoint is
+	// still readable and copyable, it just is not pretending to be a page.
+	const linkable = !templated && href !== '#';
+	const body = `
 			<div class="ae-svc-main">
-				<span class="ae-svc-name">${method}${esc(t.serviceName || t.toolName || 'Service')}</span>
-				<span class="ae-svc-desc ae-muted">${esc((t.description || '').slice(0, 120))}</span>
-				<span class="ae-svc-tags">${tags}</span>
+				<span class="ae-svc-name">${method}${esc(name)}</span>
+				${endpoint ? `<span class="ae-svc-ep" title="${esc(endpoint)}">${esc(endpoint)}</span>` : ''}
+				<span class="ae-svc-desc ae-muted">${esc((t.description || '').slice(0, 140))}</span>
+				<span class="ae-svc-tags">${tags}${templated ? '<span class="ae-tag" title="This endpoint takes path parameters, so there is no page to open">path template</span>' : ''}</span>
 			</div>
 			<div class="ae-svc-price">
-				<span class="ae-chip ae-chip-price">${price}</span>
+				<span class="ae-chip ${free ? 'ae-chip-free' : 'ae-chip-price'}">${esc(price)}</span>
 				${net ? `<span class="ae-muted ae-svc-net">${esc(net)}</span>` : ''}
-			</div>
-		</a>`;
+			</div>`;
+	return linkable
+		? `<a class="ae-svc" href="${esc(href)}" rel="noopener noreferrer" target="_blank" title="Open ${esc(endpoint)} in a new tab">${body}</a>`
+		: `<div class="ae-svc ae-svc-static">${body}</div>`;
+}
+
+// The catalog runs to about ninety live endpoints. Rendering all of them made a
+// page fourteen thousand pixels tall, so show a first screenful and let the
+// visitor open the rest.
+const SERVICES_PREVIEW = 24;
+let _services = [];
+let _servicesExpanded = false;
+
+function renderServices() {
+	const host = $('#ae-services');
+	const more = $('#ae-services-more');
+	if (!host) return;
+	if (!_services.length) {
+		emptyState(
+			host,
+			'No live x402 services right now',
+			'Agents publish pay-per-call endpoints here as they come online.',
+			{ href: '/docs/x402', label: 'Read how to publish one' },
+		);
+		if (more) more.hidden = true;
+		setStat('#ae-stat-services', '0');
+		return;
+	}
+	const shown = _servicesExpanded ? _services : _services.slice(0, SERVICES_PREVIEW);
+	host.innerHTML = shown.map(serviceRow).join('');
+	setStat('#ae-stat-services', String(_services.length));
+	if (!more) return;
+	const hidden = _services.length - shown.length;
+	more.hidden = _services.length <= SERVICES_PREVIEW;
+	more.textContent = _servicesExpanded ? 'Show fewer services' : `Show all ${_services.length} services`;
+	more.setAttribute('aria-expanded', _servicesExpanded ? 'true' : 'false');
+	more.title = _servicesExpanded ? `Collapse back to ${SERVICES_PREVIEW}` : `${hidden} more live endpoints`;
 }
 
 async function loadServices({ quiet = false } = {}) {
 	const host = $('#ae-services');
 	if (!host) return;
-	if (!quiet) skeleton(host, 5, 'row');
+	if (!quiet && !_services.length) skeleton(host, 5, 'row');
 	try {
 		const params = new URLSearchParams({ type: 'http', maxItems: '40' });
 		const r = await fetch(`/api/agenc/x402-services?${params}`);
 		if (!r.ok) throw new Error(`status ${r.status}`);
 		const j = await r.json();
-		const tasks = j?.tasks || [];
-		if (!tasks.length) {
-			emptyState(host, 'No live x402 services right now', 'Agents publish pay-per-call endpoints here as they come online.');
-			setStat('#ae-stat-services', '0');
-			return;
-		}
-		host.innerHTML = tasks.map(serviceRow).join('');
-		setStat('#ae-stat-services', tasks.length >= 40 ? '40+' : String(tasks.length));
+		_services = Array.isArray(j?.tasks) ? j.tasks : [];
+		renderServices();
 	} catch (err) {
-		errorState(host, loadServices);
+		if (!_services.length) {
+			errorState(host, () => loadServices());
+			const more = $('#ae-services-more');
+			if (more) more.hidden = true;
+		}
 		// eslint-disable-next-line no-console
 		console.error('[economy-live] services', err);
 	}
@@ -271,7 +417,12 @@ function renderOffers() {
 	const host = $('#ae-offers');
 	if (!host) return;
 	if (!_offers.length) {
-		emptyState(host, 'No agent services listed yet', 'When an owner prices one of their agent\'s skills, it appears here for other agents to hire.');
+		emptyState(
+			host,
+			'No agent services listed yet',
+			'When an owner prices one of their agent\'s skills, it appears here for other agents to hire.',
+			{ href: '/agents', label: 'Open your agents and price a skill' },
+		);
 		setStat('#ae-stat-hires', '0');
 		return;
 	}
@@ -349,6 +500,14 @@ export function initEconomyLive() {
 	if (sortEl) sortEl.addEventListener('change', () => loadAgents());
 	const offerSortEl = $('#ae-offer-sort');
 	if (offerSortEl) offerSortEl.addEventListener('change', () => renderOffers());
+	const moreEl = $('#ae-services-more');
+	if (moreEl) {
+		moreEl.addEventListener('click', () => {
+			_servicesExpanded = !_servicesExpanded;
+			renderServices();
+			if (!_servicesExpanded) moreEl.scrollIntoView({ block: 'nearest' });
+		});
+	}
 	scheduleRefresh();
 }
 

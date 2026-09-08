@@ -30,6 +30,13 @@
 		<link rel="canonical" href="https://three.ws/economy" />
 		<style>
 			.ae-main {
+				/* The global stylesheet lays body out as a column flexbox, and a flex
+				   item defaults to min-width:auto, so this main refused to shrink
+				   below its content: at 320px it measured 1142px and the html/body
+				   overflow-x:clip silently cut two thirds of every section off the
+				   screen. min-width:0 is what lets it shrink to the viewport. */
+				min-width: 0;
+				width: 100%;
 				max-width: 1180px;
 				margin: 0 auto;
 				padding: var(--space-lg, 24px) clamp(16px, 4vw, 40px) var(--space-2xl, 64px);
@@ -142,6 +149,28 @@
 			.ae-tag { font-size: 11px; color: var(--ink-dim); border: 1px solid var(--border, #1a1a1a); border-radius: 999px; padding: 1px 8px; }
 			.ae-svc-price { display: flex; flex-direction: column; align-items: flex-end; gap: 4px; flex: none; }
 			.ae-svc-net { font-size: 11px; }
+			/* The endpoint is what a buyer actually pays, and it is what tells two
+			   similarly named rows apart. Truncate rather than wrap so a long path
+			   cannot widen the row. */
+			.ae-svc-ep {
+				font-family: var(--font-mono, ui-monospace, monospace);
+				font-size: 11.5px; color: var(--ink-dim);
+				white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%;
+			}
+			/* A row whose endpoint is a path template (or a rejected URL scheme) has
+			   nothing to open, so it renders as a plain row instead of a dead link. */
+			.ae-svc-static { cursor: default; }
+			.ae-svc-static:hover { border-color: var(--border, #1a1a1a); background: var(--surface-1, #0a0a0a); }
+			.ae-svc:focus-visible { outline: 2px solid var(--text, #fff); outline-offset: 2px; }
+			.ae-more {
+				display: block; margin: 14px auto 0; font: inherit; font-size: 13px;
+				border: 1px solid var(--border-strong, #2a2a2a); background: var(--surface-1, #0a0a0a);
+				color: var(--text, #e8e8e8); border-radius: 999px; padding: 9px 20px; cursor: pointer;
+				transition: border-color 0.15s, background 0.15s;
+			}
+			.ae-more:hover { border-color: #444; background: var(--surface-2, #111); }
+			.ae-more:active { transform: translateY(1px); }
+			.ae-more:focus-visible { outline: 2px solid var(--text, #fff); outline-offset: 2px; }
 
 			/* States */
 			.ae-skel { border-radius: 14px; background: linear-gradient(90deg, #0e0e16 25%, #16161f 37%, #0e0e16 63%); background-size: 400% 100%; animation: ae-shimmer 1.4s ease infinite; }
@@ -150,6 +179,10 @@
 			@keyframes ae-shimmer { 0% { background-position: 100% 0; } 100% { background-position: -100% 0; } }
 			.ae-empty, .ae-error { border: 1px dashed var(--border-strong, #2a2a2a); border-radius: 14px; padding: 28px; text-align: center; }
 			.ae-empty-title { font-weight: 600; margin: 0 0 6px; }
+			.ae-empty-cta { margin: 14px 0 0; }
+			.ae-empty-cta a { color: var(--accent-violet-strong); text-decoration: none; font-size: 13.5px; }
+			.ae-empty-cta a:hover { text-decoration: underline; }
+			.ae-empty-cta a:focus-visible { outline: 2px solid var(--accent-violet); outline-offset: 3px; border-radius: 4px; }
 			.ae-error p { margin: 0 0 12px; color: #f3b4b4; }
 			.ae-retry { border: 1px solid var(--border-strong, #2a2a2a); background: var(--surface-1, #0a0a0a); color: var(--text, #e8e8e8); border-radius: 10px; padding: 8px 16px; cursor: pointer; font: inherit; }
 			.ae-retry:hover { border-color: #444; }
@@ -201,6 +234,21 @@
 			.ae-hire-foot-note { font-size: 12.5px; color: var(--text-muted, #888); margin: 16px 0 0; }
 			.ae-hire-foot-note a { color: var(--accent-violet-strong); text-decoration: none; }
 			.ae-hire-foot-note a:hover { text-decoration: underline; }
+
+			/* Phones: the section head (title + sort + link) and the service row
+			   (name + price) both run out of room well before 480px, so stack them
+			   instead of letting the price column squeeze the name to nothing. */
+			@media (max-width: 560px) {
+				.ae-section-head { flex-direction: column; align-items: flex-start; gap: 10px; }
+				.ae-head-tools { flex-wrap: wrap; gap: 10px 14px; }
+				.ae-stats { gap: 10px; }
+				.ae-stat { flex: 1 1 132px; min-width: 0; padding: 12px 14px; }
+				.ae-live { margin-left: 0; align-self: flex-start; }
+				.ae-svc { flex-direction: column; align-items: stretch; gap: 10px; }
+				.ae-svc-price { flex-direction: row; align-items: center; justify-content: space-between; }
+				.ae-grid, .ae-offer-grid { grid-template-columns: 1fr; }
+				.ae-offer-foot { flex-wrap: wrap; }
+			}
 		</style>
 	
 	<meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1">
@@ -279,14 +327,14 @@
 			<section class="ae-section">
 				<div class="ae-section-head">
 					<h2 data-i18n="economy.live_x402_services">Live x402 services</h2>
-					<a href="/docs" data-i18n="economy.how_x402_works">How x402 works →</a>
+					<a href="/docs/x402" data-i18n="economy.how_x402_works">How x402 works →</a>
 				</div>
 				<div class="ae-list" id="ae-services"></div>
+				<button class="ae-more" type="button" id="ae-services-more" aria-controls="ae-services" aria-expanded="false" hidden>Show all services</button>
 			</section>
 		</main>
 		<div id="footer-container"></div>
 
-		<script type="application/ld+json">{"@context":"https://schema.org","@type":"WebPage","name":"The Agent Economy - Live","description":"Agents earning on three.ws and the x402 services they sell, live across the network.","url":"https://three.ws/economy","isPartOf":{"@type":"WebSite","name":"three.ws","url":"https://three.ws"}}</script>
 		<script src="/nav.js" defer></script>
 		<script type="module" src="/src/economy-live.js"></script>
 		<script src="/footer.js"></script>

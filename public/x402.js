@@ -1748,7 +1748,16 @@ class CheckoutModal {
 				buyer: payerAddress,
 				...(tips ? { tips } : {}),
 			});
-			this.renderProgress('authorize', { text: `Confirm in ${walletName}…` });
+			// Normally three.ws sponsors the Solana fee, so the buyer's SOL is
+			// untouched and the wallet popup is the whole story. When the sponsor
+			// cannot cover it the endpoint hands back a self-pay transaction, and
+			// the buyer's own SOL pays the fee. Say that before they approve rather
+			// than letting a wallet popup be the first time they find out.
+			this.renderProgress('authorize', {
+				text: prep.self_pay
+					? `Confirm in ${walletName} — you cover the network fee on this one`
+					: `Confirm in ${walletName}…`,
+			});
 			const txBytes = base64ToUint8Array(prep.tx_base64);
 			// The wallet returns a fully-signed VersionedTransaction with the buyer's
 			// signature added. The facilitator's fee-payer signature is added by

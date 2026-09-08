@@ -99,17 +99,34 @@ export function normalizeItem(item, facilitator) {
 
 	const resourceMeta = typeof item.resource === 'object' ? item.resource : {};
 	const serviceMeta = bazaarInfo?.service || {};
+	// The v1 ListDiscoveryResourcesResponse carries the human-facing fields on
+	// `metadata`, which is where our own facilitator publishes them and where
+	// the legacy DiscoveredResource schema puts them. Reading only the bazaar
+	// extension left every metadata-carrying listing nameless, tagless and
+	// iconless in every consumer of this client: /economy rendered seventeen
+	// three.ws services as an anonymous row called "Service".
+	const listMeta = item.metadata && typeof item.metadata === 'object' ? item.metadata : {};
 	const description =
-		item.description || resourceMeta.description || serviceMeta.description || bazaarExt?.description || primary?.description || '';
+		item.description ||
+		resourceMeta.description ||
+		listMeta.description ||
+		serviceMeta.description ||
+		bazaarExt?.description ||
+		primary?.description ||
+		'';
 	const serviceName =
 		resourceMeta.serviceName ||
 		resourceMeta.name ||
+		listMeta.serviceName ||
+		listMeta.name ||
 		serviceMeta.name ||
 		bazaarExt?.name ||
 		'';
 	const iconUrl =
 		resourceMeta.iconUrl ||
 		resourceMeta.icon ||
+		listMeta.iconUrl ||
+		listMeta.icon ||
 		serviceMeta.icon ||
 		serviceMeta.iconUrl ||
 		bazaarExt?.icon ||
@@ -118,10 +135,11 @@ export function normalizeItem(item, facilitator) {
 	const rawTags =
 		(Array.isArray(resourceMeta.tags) && resourceMeta.tags) ||
 		(Array.isArray(item.tags) && item.tags) ||
+		(Array.isArray(listMeta.tags) && listMeta.tags) ||
 		(Array.isArray(serviceMeta.tags) && serviceMeta.tags) ||
 		(Array.isArray(bazaarExt?.tags) && bazaarExt.tags) ||
 		[];
-	const category = bazaarExt?.category || serviceMeta.category || resourceMeta.category;
+	const category = bazaarExt?.category || serviceMeta.category || listMeta.category || resourceMeta.category;
 	const tags = category && !rawTags.includes(category) ? [category, ...rawTags] : rawTags;
 
 	const normalizedAccepts = accepts.map((a) => {
@@ -149,6 +167,7 @@ export function normalizeItem(item, facilitator) {
 	const method =
 		item.method ||
 		input?.method ||
+		listMeta.method ||
 		primary?.method ||
 		(isMcp ? 'MCP' : '');
 

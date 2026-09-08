@@ -33,12 +33,20 @@ const ENV = {
 	X402_FEE_PAYER_SECRET_BASE58: 'test-cosigning-key-present',
 };
 
+// Cleared per test so facilitator routing is decided by X402_SELF_FACILITATOR_ENABLED
+// rather than by whatever the ambient environment happens to point at.
+const CLEARED = ['X402_FACILITATOR_URL_SOLANA', 'X402_RING_SELF_PAY'];
+
 let saved;
 beforeEach(() => {
 	saved = {};
 	for (const [k, v] of Object.entries(ENV)) {
 		saved[k] = process.env[k];
 		process.env[k] = v;
+	}
+	for (const k of CLEARED) {
+		saved[k] = process.env[k];
+		delete process.env[k];
 	}
 	vi.resetModules();
 });
@@ -101,6 +109,17 @@ describe('a dry sponsor keeps the endpoint payable via self-pay', () => {
 		expect(accepts.length).toBeGreaterThan(0);
 		for (const accept of accepts) {
 			expect(accept.extra.feePayer).toBeUndefined();
+		}
+	});
+
+	it('keeps the sponsor as fee payer when an EXTERNAL facilitator settles', async () => {
+		// PayAI and friends pin the sponsor as fee payer and reject a challenge
+		// without one at /verify, so the self-pay fallback must not apply there:
+		// it would trade a retryable 503 for a hard verify failure.
+		process.env.X402_FACILITATOR_URL_SOLANA = 'https://facilitator.payai.network';
+		const accepts = solanaAccepts(await requirementsWith({ belowFloor: true }));
+		for (const accept of accepts) {
+			expect(accept.extra.feePayer).toBe(SPONSOR);
 		}
 	});
 
