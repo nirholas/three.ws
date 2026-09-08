@@ -32,7 +32,11 @@ const AVATARS = [
 		id: 'launch-test-avatar-1',
 		name: 'Overlay Knight',
 		slug: 'overlay-knight',
-		description: 'A knight that answers lore questions for a fee.',
+		// Deliberately blank: the panel prefills the token description from the
+		// avatar's, so an avatar WITH one opens on an already-valid form and
+		// hides the exact bug these tests exist for. A freshly forged avatar has
+		// no description, which is the case that shipped broken.
+		description: '',
 		thumbnail_url: null,
 		visibility: 'public',
 	},
@@ -47,6 +51,9 @@ function stubSession(page, { avatars = AVATARS } = {}) {
 	return Promise.all([
 		page.route('**/api/auth/me', (route) => route.fulfill(json({ user: USER }))),
 		page.route(isAvatarList, (route) => route.fulfill(json({ avatars }))),
+		// The panel blocks on this check before it will paint the form: a synthetic
+		// agent id has no launch record, so answer the real "no token yet" shape.
+		page.route('**/api/pump/by-agent**', (route) => route.fulfill(json({ data: null }))),
 	]);
 }
 
@@ -115,6 +122,7 @@ test.describe('/launch · Launch a Coin', () => {
 		test.setTimeout(120_000);
 		let failing = true;
 		await page.route('**/api/auth/me', (route) => route.fulfill(json({ user: USER })));
+		await page.route('**/api/pump/by-agent**', (route) => route.fulfill(json({ data: null })));
 		await page.route(isAvatarList, (route) =>
 			failing
 				? route.fulfill({ status: 503, contentType: 'application/json', body: '{"error":"unavailable"}' })
