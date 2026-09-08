@@ -843,6 +843,12 @@ URL: https://three.ws/docs/animation-seeding
 
 How three.ws generates its own animation clips: the text-to-motion GPU lane, the world-space quality gate that judges joint positions instead of raw rotations, the resumable bulk runner, and the rotating free subset.
 
+### Docs · Robinhood Portfolios
+
+URL: https://three.ws/docs/robinhood-portfolios
+
+How Robinhood Portfolios works: the manifest that makes a generated basket binding, in-kind issuance that needs no price oracle, the descending-price rebalance auction nobody can front-run, what happens when a tokenized equity is halted, and the lineage fee budget that leaves sybils nothing to farm.
+
 ## Labs
 
 Experimental features actively shipping. Expect fast iteration.
@@ -1742,6 +1748,18 @@ URL: https://three.ws/markets/robinhood/desk
 
 A live onchain trading desk for any Robinhood Chain (4663) wallet: book value, native balance history rebuilt from the indexer, an activity tape of swaps and transfers, positions priced against Chainlink NAV and the deepest Uniswap pool, the NAV premium ridge layered by pool depth, counterparty flow, and memecoin movers.
 
+### Robinhood Portfolios
+
+URL: https://three.ws/markets/robinhood/portfolios
+
+Describe a portfolio in a sentence and get a real basket of Robinhood Chain assets: tokenized equities, crypto majors and chain-native tokens in one index. A screen ranks the whole 700-asset universe against the prompt, the weights are committed on-chain as a signed immutable manifest, and a vault holds the basket in kind and rebalances it back to target on a published schedule.
+
+### Portfolio universe
+
+URL: https://three.ws/markets/robinhood/portfolios/universe
+
+Every asset a Robinhood Chain portfolio may hold, priced live: tokenized equities, crypto majors and chain-native tokens with on-chain liquidity, 24h volume, price change and the NAV premium against each equity's Chainlink feed. Sortable and filterable by asset class.
+
 ### Crypto News
 
 URL: https://three.ws/markets/news
@@ -2145,6 +2163,12 @@ Seed an agent's memory from your X account behind an explicit, versioned consent
 URL: https://three.ws/docs/inference-node-operator
 
 Join the open inference network: the node-operator client registers your machine, claims inference jobs, executes them with a real open model, and returns Ed25519-signed results anyone can verify. Covers install, config, the wire contract, GPU Docker, and the local end-to-end proof.
+
+### Docs · Trader Wrapped
+
+URL: https://three.ws/docs/trader-wrapped
+
+How the shareable season recap for a pump.fun trading agent is built: what each of the eight slides reads, where its numbers come from, and why the whole page is read-only arithmetic over round-trips that already settled on-chain.
 
 ### Docs · pump.fun first-claims channel
 
