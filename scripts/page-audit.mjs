@@ -82,6 +82,25 @@ const MOBILE_ONLY = flag('mobile-only');
 const STRICT = flag('strict');
 const CONCURRENCY = Math.max(1, Number(opt('concurrency', 5)) || 5);
 
+// The sweep's own navigation budget, and the wider one the solo re-check gets.
+//
+// The solo pass removes the contention THIS run creates, but it cannot remove
+// the load every other process on the box creates, and a starved browser misses
+// a 25 s navigation on a page that is perfectly healthy. On 2026-09-08, with
+// three sweeps and two Playwright suites sharing one machine, /dashboard/avatars
+// timed out at 25 s in the sweep AND again in the solo re-check, so it was
+// published as the run's only confirmed error. The same route, loaded by itself
+// moments later, reached domcontentloaded in 769 ms and logged nothing.
+//
+// Re-checking a timeout with the budget that produced it just reproduces the
+// starvation, so the solo pass navigates with a wider one: a page that loads
+// fine given room emits no nav-failed, and the original finding demotes as the
+// artifact it was. A genuinely dead route still fails at 60 s and stays an
+// error. This only widens the re-check; the sweep itself is unchanged, so a
+// slow route is still flagged by the first pass.
+const NAV_TIMEOUT_MS = 25000;
+const REVERIFY_NAV_TIMEOUT_MS = 60000;
+
 // Which engine renders the sweep. Chromium is the default because it is the
 // only browser every machine here already has, but it cannot see a whole class
 // of bug on its own: JavaScriptCore and V8 disagree about when a temporal dead
@@ -388,7 +407,7 @@ function inPageAudit() {
 }
 
 // ── Per-route audit ───────────────────────────────────────────────────────────
-async function auditRoute(ctx, route, viewport) {
+async function auditRoute(ctx, route, viewport, { navTimeoutMs = NAV_TIMEOUT_MS } = {}) {
 	const page = await ctx.newPage();
 	const findings = [];
 	const push = (type, severity, detail) => {
@@ -436,14 +455,14 @@ async function auditRoute(ctx, route, viewport) {
 	try {
 		const resp = await page.goto(`${BASE_URL}${route}`, {
 			waitUntil: 'networkidle',
-			timeout: 25000,
+			timeout: navTimeoutMs,
 		});
 		navStatus = resp?.status() ?? null;
 	} catch {
 		try {
 			const resp = await page.goto(`${BASE_URL}${route}`, {
 				waitUntil: 'domcontentloaded',
-				timeout: 25000,
+				timeout: navTimeoutMs,
 			});
 			navStatus = resp?.status() ?? null;
 		} catch (e) {
@@ -621,7 +640,9 @@ async function reverify(browser, results, viewports, authed) {
 		}
 		let solo;
 		try {
-			solo = await auditRoute(ctx, suspect.route, viewport);
+			solo = await auditRoute(ctx, suspect.route, viewport, {
+				navTimeoutMs: REVERIFY_NAV_TIMEOUT_MS,
+			});
 		} catch {
 			solo = null; // a crashed re-check proves nothing; leave the finding as-is
 		}

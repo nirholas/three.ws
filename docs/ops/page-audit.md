@@ -173,6 +173,18 @@ is audited again **on its own**, in a fresh context, with nothing else running:
   uuids, base58 addresses, query strings and bare numbers, so the same defect
   matches even though its ids differ every load.
 
+The solo re-check also navigates with a wider budget than the sweep: 60 s
+against the sweep's 25 s. The pass removes the contention *this run* creates,
+but it cannot remove the load every other process on the box creates, and a
+starved browser misses a 25 s navigation on a page that is perfectly healthy.
+On 2026-09-08, with three sweeps and two Playwright suites sharing one machine,
+`/dashboard/avatars` timed out at 25 s in the sweep and again in the re-check,
+and was published as that run's only confirmed error; loaded by itself moments
+later it reached `domcontentloaded` in 769 ms with nothing logged. Re-checking a
+timeout with the budget that produced it only reproduces the starvation. A
+genuinely dead route still fails at 60 s and stays an error, and the sweep's own
+budget is unchanged, so a slow page is still caught by the first pass.
+
 Errors that survive this pass reproduced on a page loaded by itself, which is
 what makes the error count worth acting on. `--reverify-cap N` bounds how many
 pairs get re-checked (default 60, `0` disables the pass); anything past the cap
