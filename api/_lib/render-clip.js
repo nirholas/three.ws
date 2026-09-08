@@ -321,7 +321,13 @@ export async function renderClip({
 		// back blank.
 		const { base: threeBase } = await resolveThreeCdn(THREE_VERSION);
 		const html = viewerHtml({ glbBase64, width: W, height: H, background, pose, cameraOrbit, expression, threeBase });
-		await page.setContent(html, { waitUntil: 'domcontentloaded' });
+		// The GLB rides into the page as base64 inside this HTML, so `html` is
+		// routinely several megabytes. Puppeteer's default 30s cap on setContent
+		// applied to that payload on its own budget, and on a loaded machine it was
+		// the first thing to blow, reporting "Navigation timeout of 30000 ms
+		// exceeded" for a page that never navigates anywhere. It gets the same
+		// budget as the render it is part of.
+		await page.setContent(html, { waitUntil: 'domcontentloaded', timeout: RENDER_TIMEOUT_MS });
 		try {
 			await page.waitForFunction(
 				'window.__renderDone === true || window.__renderError !== null',

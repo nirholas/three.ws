@@ -2069,15 +2069,24 @@ async function startJob(req, res) {
 						// texture resolution) instead of only a bigger advertised polycount.
 						quality: selfhostQualityForTier(tier.id),
 						// Background pre-matting via the worker's sibling rembg service
-						// (RMBG-2/isnet), for real user photos only. A photo carries a
-						// busy background (the classroom behind the subject) that TRELLIS's
-						// internal cutout separates poorly, bleeding the backdrop into the
-						// fused geometry; a clean alpha cutout of every view before fusion
-						// removes that. Skipped for text→3D, whose FLUX/Vertex reference is
-						// already synthesized on a plain background. Worker-side it's
-						// best-effort: a rembg miss falls back to the original image, never
-						// failing the generation. draft stays fast (single view, no matte).
-						matte: isImageMode && tier.id !== 'draft',
+						// (RMBG-2/isnet). A busy background (the classroom behind the
+						// subject) separates poorly in TRELLIS's internal cutout and bleeds
+						// into the fused geometry; a clean alpha cutout of every view before
+						// fusion removes that.
+						//
+						// This used to be gated to real user photos, on the reasoning that a
+						// text→3D reference is "already synthesized on a plain background".
+						// Measured on 2026-09-08, that premise is false: plain is not
+						// transparent, and the reconstruction happily fuses the plain
+						// backdrop in as geometry. Six text personas rendered through this
+						// exact path produced a figure standing on a full-footprint slab of
+						// reconstructed backdrop in four of six cases, twice losing the
+						// figure entirely (bbox 0.966 x 0.01 x 1: a bare plane, no person).
+						// Evidence: prompts/quality-bar/_generated/10/pass-2026-09-08/.
+						// So text→3D gets the same cutout; draft stays fast (single view,
+						// no matte). Worker-side it is best-effort either way: a rembg miss
+						// falls back to the original image, never failing the generation.
+						matte: tier.id !== 'draft',
 					},
 				});
 			} catch (err) {
