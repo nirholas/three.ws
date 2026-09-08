@@ -283,6 +283,23 @@ export async function renderClip({
 	}
 	const browser = await getBrowser();
 	const page = await browser.newPage();
+	// The viewer sets window.__renderError from its own try/catch, but a failure
+	// that stops the module from EXECUTING at all (a bad import specifier, a CDN
+	// 404, a syntax error in an inlined pose module) never reaches that catch:
+	// neither flag is ever written, so the wait below expired and the caller saw
+	// only "Waiting failed: 20000ms exceeded" with the actual cause discarded.
+	// Recording the page's own error channels here is what turns that opaque
+	// timeout into the real reason.
+	const pageFaults = [];
+	const noteFault = (text) => {
+		const line = String(text || '').replace(/\s+/g, ' ').trim().slice(0, 300);
+		if (line && pageFaults.length < 5 && !pageFaults.includes(line)) pageFaults.push(line);
+	};
+	page.on('pageerror', (err) => noteFault(err?.message || err));
+	page.on('console', (msg) => {
+		if (msg.type() === 'error') noteFault(msg.text());
+	});
+	page.on('requestfailed', (req) => noteFault(`${req.url().slice(0, 120)} ${req.failure()?.errorText || 'request failed'}`));
 	try {
 		await page.setViewport({ width: W, height: H, deviceScaleFactor: 1 });
 		// Pick a live three.js CDN first: an unpkg outage would otherwise hang
@@ -291,10 +308,27 @@ export async function renderClip({
 		const { base: threeBase } = await resolveThreeCdn(THREE_VERSION);
 		const html = viewerHtml({ glbBase64, width: W, height: H, background, pose, cameraOrbit, expression, threeBase });
 		await page.setContent(html, { waitUntil: 'domcontentloaded' });
-		await page.waitForFunction(
-			'window.__renderDone === true || window.__renderError !== null',
-			{ timeout: 20_000 },
-		);
+		try {
+			// polling:100 (a timer) rather than puppeteer's DEFAULT 'raf'. The viewer
+			// sets __renderDone INSIDE a requestAnimationFrame callback and then goes
+			// completely idle: nothing animates, so chromium stops scheduling frames
+			// and an rAF-driven poller never runs again to observe the flag it was
+			// waiting for. The render had already succeeded every time; the waiter
+			// just never woke up, so the call burned its full budget and threw as if
+			// the page had hung. A timer poller is not tied to frame production and
+			// sees the flag on the next tick.
+			await page.waitForFunction(
+				'window.__renderDone === true || window.__renderError !== null',
+				{ timeout: 20_000, polling: 100 },
+			);
+		} catch (err) {
+			const why = pageFaults.length ? ` page reported: ${pageFaults.join(' | ')}` : ' page reported no error (the render loop never finished)';
+			throw Object.assign(new Error(`render timed out after 20000ms.${why}`), {
+				status: 504,
+				code: 'render_timeout',
+				pageFaults,
+			});
+		}
 		const err = await page.evaluate(() => window.__renderError);
 		if (err) {
 			throw Object.assign(new Error(`render failed: ${err}`), { status: 502, code: 'render_failed' });

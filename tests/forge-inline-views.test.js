@@ -1,4 +1,4 @@
-// backendAcceptsInlineViews — api/_lib/forge-tiers.js.
+// backendAcceptsInlineViews in api/_lib/forge-tiers.js.
 //
 // The predicate that makes the object-storage failover safe. When the bucket
 // refuses to park a synthesized reference view, _lib/image-persist.js hands back

@@ -449,7 +449,7 @@ async function probeX402() {
 	});
 	const accepts = r.json?.accepts || [];
 	const ok = r.status === 402 && Array.isArray(accepts) && accepts.length > 0;
-	record('x402 challenge', 'POST /api/x402/forge', ok, ok ? `402 with ${accepts.length} accept(s): ${accepts.map((a) => `${a.network}/${a.maxAmountRequired}`).join(', ')}` : `HTTP ${r.status}: ${r.text.slice(0, 160)}`);
+	record('x402 challenge', 'POST /api/x402/forge', ok, ok ? `402 with ${accepts.length} accept(s): ${accepts.map((a) => `${a.network}/${a.amount ?? a.maxAmountRequired ?? '?'}`).join(', ')}` : `HTTP ${r.status}: ${r.text.slice(0, 160)}`);
 	const wk = await req('/.well-known/x402.json');
 	const items = wk.json?.items || wk.json?.resources || [];
 	const gen = items.filter((i) => String(i.resource || i.url || '').includes('forge') || String(i.resource || i.url || '').includes('mcp-3d'));
@@ -469,17 +469,56 @@ async function probeMcp(path, label) {
 	// Call a tool the server itself advertises as FREE, so a probe never bills a
 	// generation just to prove the JSON-RPC surface answers. mcp-3d marks its
 	// free tools in the description; fall back to a read-only-sounding name.
-	const readOnly =
-		tools.find((t) => /\bFREE\b/.test(t.description || '')) ||
-		tools.find((t) => /catalog|list|capabilit|health|search|browse/i.test(t.name));
-	if (!readOnly) return record(`${label} tools/call`, `POST ${path}`, 'skip', 'no read-only tool advertised');
+	//
+	// Prefer one that needs no arguments, and only then a free tool whose required
+	// arguments we can honestly satisfy from our own reference assets. Calling a
+	// required-argument tool with `{}` proves nothing: the server correctly answers
+	// -32602 invalid params, which this leg then reported as a broken MCP surface.
+	// That false red is what mcp-studio showed on 2026-09-08, where the first FREE
+	// tool is look_at_model and it requires glb_url.
+	const free = tools.filter((t) => /\bFREE\b/.test(t.description || ''));
+	const named = tools.filter((t) => /catalog|list|capabilit|health|search|browse/i.test(t.name));
+	const candidates = [...free, ...named];
+	const argsFor = (tool) => {
+		const schema = tool?.inputSchema || {};
+		const required = Array.isArray(schema.required) ? schema.required : [];
+		if (!required.length) return {};
+		const args = {};
+		for (const key of required) {
+			if (/glb|mesh|model/i.test(key)) args[key] = REF_MESH;
+			else if (/image|photo|view/i.test(key)) args[key] = REF_IMAGE;
+			else return null; // cannot satisfy it honestly; try the next tool
+		}
+		return args;
+	};
+	let readOnly = null;
+	let callArgs = null;
+	for (const tool of candidates) {
+		const a = argsFor(tool);
+		if (a) {
+			readOnly = tool;
+			callArgs = a;
+			break;
+		}
+	}
+	if (!readOnly) return record(`${label} tools/call`, `POST ${path}`, 'skip', 'no free tool this probe can call honestly');
 	const call = await req(path, {
 		method: 'POST',
-		body: { jsonrpc: '2.0', id: 2, method: 'tools/call', params: { name: readOnly.name, arguments: {} } },
-		timeoutMs: 60_000,
+		body: { jsonrpc: '2.0', id: 2, method: 'tools/call', params: { name: readOnly.name, arguments: callArgs } },
+		timeoutMs: 120_000,
 	});
 	const content = call.json?.result?.content || [];
-	record(`${label} tools/call`, `${readOnly.name}`, call.status === 200 && content.length > 0 && !call.json?.result?.isError, call.status === 200 ? `${readOnly.name} → ${content.length} content block(s)` : `HTTP ${call.status}: ${call.text.slice(0, 140)}`);
+	const rpcError = call.json?.error?.message;
+	record(
+		`${label} tools/call`,
+		`${readOnly.name}`,
+		call.status === 200 && !rpcError && content.length > 0 && !call.json?.result?.isError,
+		rpcError
+			? `${readOnly.name} → JSON-RPC error: ${String(rpcError).slice(0, 120)}`
+			: call.status === 200
+				? `${readOnly.name} → ${content.length} content block(s)`
+				: `HTTP ${call.status}: ${call.text.slice(0, 140)}`,
+	);
 }
 
 // The talking-avatar lane (workers/longcat). Its own README records the worker

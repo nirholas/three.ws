@@ -42,6 +42,17 @@ overrides the set without a deploy). A lane id in that override that matches no
 known lane comes back in the tick's `unknown_lanes` and drops its `ok` to false,
 so a typo in the env var fails visibly instead of quietly warming nothing.
 
+Every routed lane that scales to zero must appear in that registry even when it
+is not warmed by default, because the registry is what the override can reach: a
+lane missing from it is unwarmable at any quota, and its absence is invisible
+(the tick's `skipped_for_quota` simply lists one fewer deferred lane and still
+reads healthy). `model-hunyuan3d` sat outside it that way despite carrying the
+fleet's longest spin-up. `tests/cron-forge-lane-guards.test.js` now pins the
+registry against `BACKENDS`: every `provider: 'gcp'` lane with a
+`coldStartSeconds` budget must be listed, under the same URL env var the router
+itself resolves that worker from, so a typo'd `urlEnv` (which would report
+`unconfigured` forever without ever throwing) fails the suite instead.
+
 `us-east4` has its own grant of 3 L4s and the same arithmetic applies there. It
 runs standbys of `model-trellis` (pinned at min 1), `model-hunyuan3d`,
 `model-triposr`, and `model-text2motion`, which is that region's production lane
