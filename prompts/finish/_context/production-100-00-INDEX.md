@@ -83,7 +83,6 @@ run in parallel, H waits on owner gates, I is anytime, J is the parallel swarm.
 |---|---|
 | [../quality-bar/03-gpu-fleet-scaleout.md](../006-quality-bar-03-gpu-fleet-scaleout.md) | Partial: cold-start UX and keep-warm shipped; load test and scale ceilings open. |
 | [../quality-bar/04-pbr-texture-material-realism.md](../003-quality-bar-04-pbr-texture-material-realism.md) | Mostly open; `api/_lib/glb-pbr-derive.js` exists and is imported but never called. |
-| [../quality-bar/06-forge-ux-flow.md](../004-quality-bar-06-forge-ux-flow.md) | Partial: the result-moment click-through table and the audits are still owed. |
 | [../quality-bar/07-design-system-sweep.md](../002-quality-bar-07-design-system-sweep.md) | Open and regressed: raw-hex count 4,787 to 5,426 since 2026-08-02; `audit:tokens` 10 vs a baseline of 0. |
 | [../quality-bar/08-mobile-performance.md](../005-quality-bar-08-mobile-performance.md) | Partial: touch targets shipped; the after-table, default GLB compression and the WebGL budget are open. |
 | [../quality-bar/10-avatar-likeness-irl-people.md](../007-quality-bar-10-avatar-likeness-irl-people.md) | Partial: animation dignity 10/10 rigs; the likeness audit's only complete run shows no improvement. |

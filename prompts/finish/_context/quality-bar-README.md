@@ -20,17 +20,19 @@ special case.
 |---|------|------|-------|
 | 03 | [03-gpu-fleet-scaleout.md](../006-quality-bar-03-gpu-fleet-scaleout.md) | Scale ceilings, cold-start honesty, keep-warm, load test | Partial. Cold-start honesty (task 2) and keep-warm (task 3) are DONE and verified; do not redo them. Scale ceilings (task 1) need one `gcloud auth login`. The load test (tasks 4-5) is blocked by a production outage, not by capacity: every `/api/forge` generation fails on a rejected object-storage credential, so nothing can be measured until it is rotated and the pending commits deploy. |
 | 04 | [04-pbr-texture-material-realism.md](../003-quality-bar-04-pbr-texture-material-realism.md) | Full PBR sets, measured presets, skin/eye/hair | Partial. Everything but the bench delta is verified: the channel matrix, the derive pass wired opt-out into `forge-store.js`, the presets rendered under all four shipped HDRIs (`docs/assets/material-presets/`), the avatar skin/eye/hair readback at 320/768/1440 (the check had been aimed at `/viewer`, which never runs that pass, and had been reporting zero meshes), and the mobile payload gate with measured 4K byte sizes (`npm run check:glb:payload`). The quality-bench comparison needs Vertex, and this Codespace's gcloud credentials have expired: `gcloud auth application-default login` unblocks it. |
-| 06 | [06-forge-ux-flow.md](../004-quality-bar-06-forge-ux-flow.md) | The `/forge` flagship experience | Partial. History, compare mode and starters shipped; the result-moment click-through and the clean audit sweep are open. |
 | 07 | [07-design-system-sweep.md](../002-quality-bar-07-design-system-sweep.md) | Tokens, states, microinteractions sitewide | Open |
 | 08 | [08-mobile-performance.md](../005-quality-bar-08-mobile-performance.md) | Mobile excellence, GLB delivery | Partial. A measured baseline exists in `_generated/08/`; the fixes and the re-measure are open. |
 | 10 | [10-avatar-likeness-irl-people.md](../007-quality-bar-10-avatar-likeness-irl-people.md) | IRL people: likeness, hands, rig, AR | Partial. Animation dignity is proven across ten rig conventions; one runtime-lane defect plus the likeness audit are open. |
 
 Retired after verification (readable in git history): 01 photoreal reference pipeline, 02 the
-Hunyuan3D flagship lane, 05 cinematic viewers, 09 the realism eval harness (now
-`scripts/quality-bench.mjs` plus the weekly cron).
+Hunyuan3D flagship lane, 05 cinematic viewers, 06 the `/forge` generation flow (the pre-submit
+progress channel, `api/_lib/forge-progress.js`, so the reference view appears while the POST is
+still open; the stacked-layout reveal; the designed storage-outage state; reduced-motion and the
+result-moment click-through), 09 the realism eval harness (now `scripts/quality-bench.mjs` plus
+the weekly cron).
 
 Suggested order: 04, 07 and 08 have no dependencies and can run in parallel. 03 unblocks
-throughput. 06 and 10 land best after 04.
+throughput. 10 lands best after 04.
 
 ## Ground rules recap (full versions in `quality-bar-_shared.md` and `CLAUDE.md`)
 

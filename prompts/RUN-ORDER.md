@@ -73,7 +73,6 @@ Run in this order; each is one session. This tier is what a visitor actually jud
 |---|---|
 | [finish/quality-bar-07-design-system-sweep.md](finish/quality-bar-07-design-system-sweep.md) | Actively regressing: raw hex went 4,787 to 5,426 since 2026-08-02 and `audit:tokens` reports 10 against a baseline of 0. Every day this waits, more surfaces are built off-token. |
 | [finish/quality-bar-04-pbr-texture-material-realism.md](finish/quality-bar-04-pbr-texture-material-realism.md) | `api/_lib/glb-pbr-derive.js` is imported and never called, so every generated model ships without derived PBR. This is the single biggest quality delta available on the core product. |
-| [finish/quality-bar-06-forge-ux-flow.md](finish/quality-bar-06-forge-ux-flow.md) | The forge is the front door. The result-moment click-through table and the audits are still owed. |
 | [finish/quality-bar-08-mobile-performance.md](finish/quality-bar-08-mobile-performance.md) | Touch targets shipped; the after-table, default GLB compression and the WebGL budget are open. Mobile is where 3D fails first. |
 | [finish/swarm-100-sweep-perf.md](finish/swarm-100-sweep-perf.md) | Eight pages measured 2026-08-15, three under 80, no re-measure since the 2026-09-01 fixes. Cheap once P0 ships. |
 | [finish/quality-bar-03-gpu-fleet-scaleout.md](finish/quality-bar-03-gpu-fleet-scaleout.md) | Cold-start UX shipped; the load test and scale ceilings are open. Credits are pre-approved, so nothing here is gated. |
