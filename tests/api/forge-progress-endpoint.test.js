@@ -1,5 +1,5 @@
 /**
- * GET /api/forge?progress=<id> — the read side of the pre-submit progress
+ * GET /api/forge?progress=<id>: the read side of the pre-submit progress
  * channel /forge polls while its own POST is still open.
  *
  * These pin the route itself (the crumb store is covered by
