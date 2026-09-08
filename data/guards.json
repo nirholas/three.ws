@@ -1,5 +1,5 @@
 {
-	"updated": "2026-09-07",
+	"updated": "2026-09-08",
 	"summary": "Every mechanical guard that protects this repository, and the stage each one runs in. This file is the single source of truth: scripts/audit-guards.mjs proves every entry is real and every stage claim is true, docs/guards.md explains them, and /guards renders them.",
 	"stages": [
 		{
@@ -1201,6 +1201,43 @@
 					}
 				},
 				"expect": "guard-proof.example.com"
+			}
+		},
+		{
+			"id": "check-awesome",
+			"script": "scripts/build-awesome.mjs",
+			"npm": "check:awesome",
+			"title": "Awesome list freshness",
+			"protects": "awesome/README.md and public/awesome.json match data/awesome.json, which is the single source both are generated from.",
+			"why": "The list is published in two places that people read separately, the GitHub README and the /awesome page. Editing either by hand, or adding an entry to the source without regenerating, ships two versions of the same list that disagree about what is on it.",
+			"stages": [
+				"gate"
+			],
+			"needs": "none",
+			"proof": {
+				"summary": "A generated output edited by hand, so it no longer matches data/awesome.json.",
+				"violation": {
+					"write": {
+						"awesome/README.md": "# Awesome 3D Agents\n\nHand-edited inside the guard sandbox, so this no longer matches data/awesome.json.\n"
+					}
+				},
+				"expect": "out of date"
+			}
+		},
+		{
+			"id": "check-awesome-links",
+			"script": "scripts/check-awesome-links.mjs",
+			"npm": "awesome:links",
+			"title": "Awesome list link health",
+			"protects": "Every url in the Awesome 3D Agents list (data/awesome.json) still answers, and no url is listed twice.",
+			"why": "An awesome list is only worth publishing if its links resolve, and they rot silently as projects move or disappear. Deliberately manual: it calls a hundred-odd third-party hosts, so a flaky CDN must never turn somebody else's deploy red. It separates a bot-filter 403 from a genuinely dead link, because those need different reactions.",
+			"stages": [
+				"manual"
+			],
+			"needs": "network",
+			"proof": {
+				"kind": "live",
+				"reason": "Fetches every listed url from the real hosts, so only the live answer distinguishes a moved link, a bot filter and a dead one. A static fixture cannot produce any of the three."
 			}
 		},
 		{

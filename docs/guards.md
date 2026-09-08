@@ -114,6 +114,8 @@ Run `npm run audit:guards` to print the current count and per-stage breakdown. T
 | The `[hidden]` guard | `npm run audit:hidden-guard` | Every page resolves the CSS that makes `hidden` actually hide. |
 | Site link integrity | `npm run audit:links` | Every navigable target resolves to a real route or file. |
 | On-page SEO | `npm run audit:seo` | Across the pages we ask Google to index: no duplicate title or description, every canonical self-referential, no sitemap entry answering noindex or a non-200, and structured data that parses. Reads a live origin, so `--base` points it at a preview. |
+| Awesome list freshness | `npm run check:awesome` | `awesome/README.md` and `public/awesome.json` still match `data/awesome.json`, the source both are generated from. |
+| Awesome list link health | `npm run awesome:links` | Every url in the Awesome 3D Agents list still answers, and none is listed twice. Manual on purpose: it calls a hundred-odd third-party hosts, and it tells a bot-filter 403 apart from a dead link. |
 
 ### Docs and contracts
 
