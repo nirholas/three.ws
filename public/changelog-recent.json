@@ -1,14 +1,24 @@
 {
-	"generated_at": "2026-09-08T18:48:15.939Z",
+	"generated_at": "2026-09-08T19:08:16.148Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
 		"url": "https://three.ws"
 	},
-	"total": 3567,
+	"total": 3572,
 	"complete": false,
 	"full_feed": "/changelog.json",
 	"entries": [
+		{
+			"date": "2026-09-08",
+			"type": "update",
+			"title": "3D pages send a phone a phone-sized world",
+			"summary": "The lighting environment behind our 3D scenes is a high dynamic range image, and every device was fetching the same 1.4 MB copy of it. On /play that was more than a quarter of everything the page downloaded, and on a slow connection it is seven seconds before the world is properly lit. Phones now get a 512-pixel copy at about 360 KB, which carries the same light energy to within half a percent, and desktops keep the full-resolution original where the sharper reflections are actually visible. The coin artwork in the flagship /play world was being fetched at its full 581 KB to texture something a few hundred pixels tall, and now arrives at the size it is drawn; the same was true of the coin art in the community lobby. Marketplace card thumbnails now come through the image resizer at the size the card paints them instead of at full resolution.",
+			"link": "/play",
+			"tags": [
+				"improvement"
+			]
+		},
 		{
 			"date": "2026-09-08",
 			"type": "update",
@@ -121,6 +131,28 @@
 		{
 			"date": "2026-09-08",
 			"type": "update",
+			"title": "Pages stop jumping around while they load",
+			"summary": "Three separate things were shifting the layout under you. The marketplace hero rotates through featured avatars every few seconds and wrote each one's name and description into boxes sized to whatever the previous one had been, so the buttons, the dots and the entire grid below moved on every rotation, forever; both boxes now hold the same space whichever avatar is showing. The helper cards that float in the bottom-right corner slid themselves up and out of the way by animating their position, which the browser counts as the page moving even though nothing on the page did; they glide now instead. And the prompt tip under the forge box appeared a moment after the page did, pushing the quality options and the Generate button down; it is there from the first frame.",
+			"link": "/marketplace",
+			"tags": [
+				"fix",
+				"improvement"
+			]
+		},
+		{
+			"date": "2026-09-08",
+			"type": "update",
+			"title": "Pages stop re-announcing text they had already shown",
+			"summary": "The translation layer walks the page when its dictionary arrives and writes the right words into every labelled element. On English, which is what the page already shipped, almost every one of those writes put back exactly the text that was there. Browsers do not treat that as nothing: replacing text is a new paint, and the measurement browsers report for how quickly a page shows its main content was being reset to whenever the dictionary happened to land. The home page's headline had painted in 2.3 seconds and was being scored at 10.2. The pass now checks before it writes, so a page that is already correct is left alone.",
+			"link": "/",
+			"tags": [
+				"fix",
+				"improvement"
+			]
+		},
+		{
+			"date": "2026-09-08",
+			"type": "update",
 			"title": "Paying for something no longer depends on our wallet having gas in it",
 			"summary": "Every Solana payment on three.ws was quietly gasless: we paid the tiny network fee on your behalf so you could pay with USDC or $THREE without owning any SOL. That is a convenience, but it had been wired as a requirement, so when the wallet we pay those fees from ran empty, every paid page stopped accepting money altogether. The club door and its dance tips returned an error for four days, and sixteen other paid endpoints (asset downloads, skill calls, print orders, cosmetic purchases and the rest) were in the same state, all of them sitting on a perfectly good account that was ready to receive. Receiving money never actually needed our wallet to have anything in it. When we cannot cover the fee, the payment now simply asks you to cover it yourself, which is a fraction of a cent and what most wallets do everywhere else, and the checkout tells you before you approve rather than letting your wallet be the first to mention it. Gasless comes back on its own the moment our wallet is topped up. Two related things got clearer: paying in $THREE stays available in that mode instead of disappearing, and if your own wallet is short on SOL the message now says so and tells you to add a little, instead of claiming we were the ones with the problem.",
 			"link": "/club",
@@ -176,6 +208,16 @@
 		{
 			"date": "2026-09-08",
 			"type": "update",
+			"title": "The changelog page no longer downloads three and a half thousand entries to show you this week",
+			"summary": "Opening the changelog fetched the entire history, every entry since the site existed, and wrote all of it into the page in one go: 870 KB over the wire and, on a mid-range phone over a slow connection, eleven seconds where the page would not respond to anything. It now paints the newest 150 entries from a small feed and pages in the rest only when you filter or ask for older updates, so the thing you came for is on screen almost immediately and the full history is one tap away. Entry pages, the What's New strip on the features page and the Walk changelog read the small feed too. The complete feed at /changelog.json is unchanged and still the one to use if you are building on it.",
+			"link": "/changelog",
+			"tags": [
+				"improvement"
+			]
+		},
+		{
+			"date": "2026-09-08",
+			"type": "update",
 			"title": "The ChatGPT and AR docs now describe the AR launcher that actually runs",
 			"summary": "Three corrections to the documentation for the ChatGPT surfaces and augmented reality. The AR reference still said the one-tap launcher at /api/ar draws the model itself in Google's model-viewer, which stopped being true when the launcher became a pure router: it now sends Android straight into Scene Viewer and everyone else to a bundled page that builds a real USDZ on the device, which is what iPhone's Quick Look needs. The pages are named correctly throughout, including which one does the file conversion, so nobody debugging an iPhone handoff starts in the wrong file. The ChatGPT AR page also credited a single generation engine for every model, when the connector actually tries the free engines in turn and steps down to a slower one if the first is cold, which is why generation keeps working when one lane is down. And the paid studio server's page promised that anyone can browse its tool catalogue without credentials, without mentioning that a connector client is deliberately answered with a sign-in challenge instead, as the connector standard requires; both paths are now written down, with a command that works. That page's tool tables also describe nine tools that were previously only named in its price list, so no tool appears with a price and no explanation.",
 			"link": "/docs/ar",
@@ -226,6 +268,17 @@
 			"tags": [
 				"fix",
 				"improvement"
+			]
+		},
+		{
+			"date": "2026-09-08",
+			"type": "update",
+			"title": "Two thirds of the site was missing its mobile stylesheet, and every page it reached got bigger buttons",
+			"summary": "three.ws keeps one stylesheet for phones: it sets a 44px minimum on anything you tap, keeps 3D viewers from fighting the page scroll, and holds bottom bars clear of the iPhone home indicator. It was reaching 192 of the 584 pages that carry a stylesheet at all. The build injected it, and the injector only ever saw pages built through the bundler, so everything served as a plain HTML file quietly went without: the whole documentation site, this changelog, /ar and hundreds of others. The documentation sidebar was the clearest case, 296 links measured at 30 pixels tall on a Pixel 5, against a rule sizing them to 44 that had been sitting in that stylesheet unused. The build now sweeps every page it produces, which added the stylesheet to 210 more of them, and the same sweep switches on the setting iOS needs before safe-area spacing does anything at all. On top of that, the controls the audit still found short have been raised across the home page, the marketplace, /coin, /play, /launches, /forge, /markets, /news, /irl, /walk and the docs shell.",
+			"link": "/docs/start-here",
+			"tags": [
+				"improvement",
+				"fix"
 			]
 		},
 		{
@@ -1543,60 +1596,6 @@
 			"title": "Live Trading Theater: the tape opens full and the connection light tells the truth",
 			"summary": "The theater got a pass over every state it can be in. The connection light in the top bar used to say Connecting for the whole visit even after the live feed had connected seconds earlier, because the page's translation pass ran last and put the placeholder wording back; it now reports the connection it actually has, and the same fix stops the sound button telling a screen reader the sound is off while it is on. The Live tape used to be a blank column until something happened on-chain: it now opens seeded with real recent activity, shows placeholder rows while that is loading, and says what it is waiting for when the feed is genuinely quiet. A slow roster response no longer dumps you straight onto the error card; the page tries again with more room and says it is still assembling. Recent-activity entries that had nowhere to link are plain text now instead of links that went nowhere, and the ones that do link to a three.ws page stay in your tab instead of opening a new one. The nameplates over each 3D trader were invisible to screen readers even though they are the only keyboard route into a trader's wallet and reputation panel; they are now reachable, and every remaining control on the page has a visible focus ring.",
 			"link": "/theater",
-			"tags": [
-				"fix",
-				"improvement"
-			]
-		},
-		{
-			"date": "2026-09-03",
-			"type": "update",
-			"title": "Older Home Assistant houses get their agent tools back",
-			"summary": "If your house runs a Home Assistant release from 2025, three.ws was telling you the Model Context Protocol Server integration was not enabled even when it was, and your agent lost the curated tool list you had set up for it. Home Assistant moved that endpoint between releases: the older ones serve it over one connection style and the newer ones over another, and we were only asking for the newer one. three.ws now asks your house which one it speaks and uses that, instead of guessing from a version number. Nothing to change on your side. We also now test every release we support on a real Home Assistant before we say we support it, so the supported range is a measurement rather than a promise: 2025.10 and newer, with everything working across all of it.",
-			"link": "/smart-home",
-			"tags": [
-				"fix"
-			]
-		},
-		{
-			"date": "2026-09-03",
-			"type": "update",
-			"title": "One unreachable home can no longer take the others down with it",
-			"summary": "Homes connect over a live socket, and a house whose broadband keeps dropping in and out was able to crash the server process that held it, which meant every other connected home on that server went quiet at the same time. The cause was in the open-source Home Assistant client we build on: it reconnects a subscription after a drop without handling the case where the connection dies again mid-reconnect. That is now handled on our side, the failure is reported instead of being lost, and the connection recovers on its own. We have written the problem up for the upstream project too. Found by deliberately flapping a real house on and off every five seconds for two minutes.",
-			"link": null,
-			"tags": [
-				"fix",
-				"infra"
-			]
-		},
-		{
-			"date": "2026-09-03",
-			"type": "update",
-			"title": "Refine now returns the same model at higher quality, not a different one",
-			"summary": "Refine bumps a finished model up a quality tier. It replayed your prompt but never pinned the randomness, so on the text path it painted a brand new reference image and reconstructed a different object: you asked for this model, better, and got another model, better. Every generation is now stamped with a seed that rides along on Refine, Retry and an automatic engine switch, so the tier is the only thing that changes. Starting a fresh generation still explores, so Make another on the same prompt keeps giving you something new. Two related fixes came with it: requests that differed only by their seed were being collapsed into a single job and handed back the identical file, and the force-a-fresh-run flag skipped the result cache but not that collapsing.",
-			"link": "/forge",
-			"tags": [
-				"fix",
-				"improvement"
-			]
-		},
-		{
-			"date": "2026-09-03",
-			"type": "update",
-			"title": "Restyle Studio: upload works from the keyboard, and reverting a version really rewinds the source",
-			"summary": "Two things on the Restyle Studio page were quietly broken. \"Upload GLB\" was a styled label wrapped around a hidden file input, so it could not be reached by keyboard or by a screen reader at all: the only way to bring your own model in was a mouse click. It is now a real button, in the tab order, with the same look. Separately, clicking an older entry in the Versions strip reloaded that model on the stage but left every following action pointed at the newest checkpoint, so an AI restyle or a Save right after a revert quietly re-skinned the wrong model and filed the result under the version you had gone back to. Reverting now re-anchors the source, so restyle, Save version, and \"Save all as versions\" all branch from the version you are actually looking at. The rest of the sweep is smaller but adds up: the metalness, roughness and emissive sliders and the model-URL and instruction fields now have real labels; every async result note is announced instead of silently changing; a successful save reads as success rather than as another grey hint; clicking \"Load URL\" with an empty box tells you what it wants instead of doing nothing; dropping a file on the stage highlights the target and says so when the file is not a model; picking the same file twice in a row works; and \"Load the sample model\" clears the failing ?url= so a reload does not land straight back in the error state.",
-			"link": "/restyle",
-			"tags": [
-				"fix",
-				"improvement"
-			]
-		},
-		{
-			"date": "2026-09-03",
-			"type": "update",
-			"title": "Scene Studio stops hiding its own menu bar, and tells a new scene what to do next",
-			"summary": "The 3D scene editor was pinning itself 13 pixels too high, so the site header covered the top of the File, Edit, Add, View, Render and Help row and sliced the tops off the letters at every window size; the autosave checkbox was hidden entirely. It now sits below the header. The Import, Export and Share buttons were parked on top of the Scene, Project and Settings tabs, which made those tabs unreadable and unclickable on any desktop window; they now dock beside the sidebar and follow it when you drag it wider or narrower. At phone width the menu bar used to spill Help onto a second row that the layout could not show, and it now keeps all six on one line. A brand-new scene is no longer a silent black grid: a card explains the three ways to start and disappears the moment you add anything. Importing a model by URL now happens in a proper dialog that checks the link and explains what is wrong inline, instead of a bare browser prompt, and a failed import, export or share now says what went wrong and what to try next in the same notification style as the rest of the site rather than a browser alert box. Sharing a scene labels it with the scene's own name instead of the page's title. The translate, rotate and scale buttons are icon-only and had no names at all for screen readers; they now announce both their name and which one is active. The page also gained the heading every other page on the site has.",
-			"link": "/scene",
 			"tags": [
 				"fix",
 				"improvement"

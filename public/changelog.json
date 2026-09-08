@@ -1,11 +1,21 @@
 {
-	"generated_at": "2026-09-08T18:48:15.840Z",
+	"generated_at": "2026-09-08T19:08:16.107Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
 		"url": "https://three.ws"
 	},
 	"entries": [
+		{
+			"date": "2026-09-08",
+			"type": "update",
+			"title": "3D pages send a phone a phone-sized world",
+			"summary": "The lighting environment behind our 3D scenes is a high dynamic range image, and every device was fetching the same 1.4 MB copy of it. On /play that was more than a quarter of everything the page downloaded, and on a slow connection it is seven seconds before the world is properly lit. Phones now get a 512-pixel copy at about 360 KB, which carries the same light energy to within half a percent, and desktops keep the full-resolution original where the sharper reflections are actually visible. The coin artwork in the flagship /play world was being fetched at its full 581 KB to texture something a few hundred pixels tall, and now arrives at the size it is drawn; the same was true of the coin art in the community lobby. Marketplace card thumbnails now come through the image resizer at the size the card paints them instead of at full resolution.",
+			"link": "/play",
+			"tags": [
+				"improvement"
+			]
+		},
 		{
 			"date": "2026-09-08",
 			"type": "update",
@@ -118,6 +128,28 @@
 		{
 			"date": "2026-09-08",
 			"type": "update",
+			"title": "Pages stop jumping around while they load",
+			"summary": "Three separate things were shifting the layout under you. The marketplace hero rotates through featured avatars every few seconds and wrote each one's name and description into boxes sized to whatever the previous one had been, so the buttons, the dots and the entire grid below moved on every rotation, forever; both boxes now hold the same space whichever avatar is showing. The helper cards that float in the bottom-right corner slid themselves up and out of the way by animating their position, which the browser counts as the page moving even though nothing on the page did; they glide now instead. And the prompt tip under the forge box appeared a moment after the page did, pushing the quality options and the Generate button down; it is there from the first frame.",
+			"link": "/marketplace",
+			"tags": [
+				"fix",
+				"improvement"
+			]
+		},
+		{
+			"date": "2026-09-08",
+			"type": "update",
+			"title": "Pages stop re-announcing text they had already shown",
+			"summary": "The translation layer walks the page when its dictionary arrives and writes the right words into every labelled element. On English, which is what the page already shipped, almost every one of those writes put back exactly the text that was there. Browsers do not treat that as nothing: replacing text is a new paint, and the measurement browsers report for how quickly a page shows its main content was being reset to whenever the dictionary happened to land. The home page's headline had painted in 2.3 seconds and was being scored at 10.2. The pass now checks before it writes, so a page that is already correct is left alone.",
+			"link": "/",
+			"tags": [
+				"fix",
+				"improvement"
+			]
+		},
+		{
+			"date": "2026-09-08",
+			"type": "update",
 			"title": "Paying for something no longer depends on our wallet having gas in it",
 			"summary": "Every Solana payment on three.ws was quietly gasless: we paid the tiny network fee on your behalf so you could pay with USDC or $THREE without owning any SOL. That is a convenience, but it had been wired as a requirement, so when the wallet we pay those fees from ran empty, every paid page stopped accepting money altogether. The club door and its dance tips returned an error for four days, and sixteen other paid endpoints (asset downloads, skill calls, print orders, cosmetic purchases and the rest) were in the same state, all of them sitting on a perfectly good account that was ready to receive. Receiving money never actually needed our wallet to have anything in it. When we cannot cover the fee, the payment now simply asks you to cover it yourself, which is a fraction of a cent and what most wallets do everywhere else, and the checkout tells you before you approve rather than letting your wallet be the first to mention it. Gasless comes back on its own the moment our wallet is topped up. Two related things got clearer: paying in $THREE stays available in that mode instead of disappearing, and if your own wallet is short on SOL the message now says so and tells you to add a little, instead of claiming we were the ones with the problem.",
 			"link": "/club",
@@ -173,6 +205,16 @@
 		{
 			"date": "2026-09-08",
 			"type": "update",
+			"title": "The changelog page no longer downloads three and a half thousand entries to show you this week",
+			"summary": "Opening the changelog fetched the entire history, every entry since the site existed, and wrote all of it into the page in one go: 870 KB over the wire and, on a mid-range phone over a slow connection, eleven seconds where the page would not respond to anything. It now paints the newest 150 entries from a small feed and pages in the rest only when you filter or ask for older updates, so the thing you came for is on screen almost immediately and the full history is one tap away. Entry pages, the What's New strip on the features page and the Walk changelog read the small feed too. The complete feed at /changelog.json is unchanged and still the one to use if you are building on it.",
+			"link": "/changelog",
+			"tags": [
+				"improvement"
+			]
+		},
+		{
+			"date": "2026-09-08",
+			"type": "update",
 			"title": "The ChatGPT and AR docs now describe the AR launcher that actually runs",
 			"summary": "Three corrections to the documentation for the ChatGPT surfaces and augmented reality. The AR reference still said the one-tap launcher at /api/ar draws the model itself in Google's model-viewer, which stopped being true when the launcher became a pure router: it now sends Android straight into Scene Viewer and everyone else to a bundled page that builds a real USDZ on the device, which is what iPhone's Quick Look needs. The pages are named correctly throughout, including which one does the file conversion, so nobody debugging an iPhone handoff starts in the wrong file. The ChatGPT AR page also credited a single generation engine for every model, when the connector actually tries the free engines in turn and steps down to a slower one if the first is cold, which is why generation keeps working when one lane is down. And the paid studio server's page promised that anyone can browse its tool catalogue without credentials, without mentioning that a connector client is deliberately answered with a sign-in challenge instead, as the connector standard requires; both paths are now written down, with a command that works. That page's tool tables also describe nine tools that were previously only named in its price list, so no tool appears with a price and no explanation.",
 			"link": "/docs/ar",
@@ -223,6 +265,17 @@
 			"tags": [
 				"fix",
 				"improvement"
+			]
+		},
+		{
+			"date": "2026-09-08",
+			"type": "update",
+			"title": "Two thirds of the site was missing its mobile stylesheet, and every page it reached got bigger buttons",
+			"summary": "three.ws keeps one stylesheet for phones: it sets a 44px minimum on anything you tap, keeps 3D viewers from fighting the page scroll, and holds bottom bars clear of the iPhone home indicator. It was reaching 192 of the 584 pages that carry a stylesheet at all. The build injected it, and the injector only ever saw pages built through the bundler, so everything served as a plain HTML file quietly went without: the whole documentation site, this changelog, /ar and hundreds of others. The documentation sidebar was the clearest case, 296 links measured at 30 pixels tall on a Pixel 5, against a rule sizing them to 44 that had been sitting in that stylesheet unused. The build now sweeps every page it produces, which added the stylesheet to 210 more of them, and the same sweep switches on the setting iOS needs before safe-area spacing does anything at all. On top of that, the controls the audit still found short have been raised across the home page, the marketplace, /coin, /play, /launches, /forge, /markets, /news, /irl, /walk and the docs shell.",
+			"link": "/docs/start-here",
+			"tags": [
+				"improvement",
+				"fix"
 			]
 		},
 		{
