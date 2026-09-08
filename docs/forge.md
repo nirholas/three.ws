@@ -50,6 +50,49 @@ Health is real. The UI fetches `/api/forge?health=1` after load and disables any
 
 Generation is a job. `POST /api/forge` returns a `job_id`; the client polls `GET /api/forge?job=<id>` until the status is `done` or `failed`. The lanes that complete inline within one request (free NVIDIA NIM, HuggingFace Spaces, BYOK-sync) can instead answer the POST directly with `status:'done'`, the `glb_url`, and a null `job_id`, and they retry once automatically on a failed result. Because the in-flight job id is written to `localStorage`, closing the tab or navigating away does not lose the generation: returning to Forge within a 30-minute window resumes polling the same job. Finished models for your browser are surfaced from a gallery on load, and a share link always wins over a resume.
 
+### Watching a generation happen
+
+`POST /api/forge` is one long request, and most of the wait lives inside it: the
+art-director pass rewrites your prompt, a text-to-image model paints the
+photoreal reference view the mesh is reconstructed from, and the fusing lane
+paints turnaround views around it. All of that finishes before the response can
+carry a job id, so a page with nothing but the response to go on could only say
+"art-directing your prompt" for the whole window and then reveal the reference
+image at the very end, when it had in fact existed for half a minute.
+
+So the generation records a crumb the instant each of those milestones genuinely
+finishes, and the page reads them while its own POST is still open:
+
+```bash
+# 1. Mint any url-safe id, 16 to 64 characters, and send it with the request.
+TRACE=$(uuidgen | tr -d '-')
+curl -sS -X POST https://three.ws/api/forge \
+  -H 'content-type: application/json' \
+  -d "{\"prompt\":\"a brass sundial on a stone base\",\"progress_id\":\"$TRACE\"}" &
+
+# 2. While that runs, read what the pipeline has already finished.
+curl -sS "https://three.ws/api/forge?progress=$TRACE"
+# → {"progress":[
+#      {"stage":"directed","at":1757345001000,"directed_prompt":"a brass sundial on a weathered limestone base, aged patina, studio softbox lighting, plain seamless backdrop"},
+#      {"stage":"reference","at":1757345013000,"preview_image_url":"https://…/ref.jpg","text_to_image_model":"vertex-gemini-2.5-flash-image"},
+#      {"stage":"views","at":1757345024000,"view_count":3},
+#      {"stage":"submitting","at":1757345027000}
+#    ]}
+```
+
+The four stages are `directed` (the art-director pass is over, and
+`directed_prompt` is null when it left your words alone), `reference` (the view
+the mesh is reconstructed from now exists), `views` (the turnaround views the
+fusing lane adds, only when the lane painted any), and `submitting` (every image
+is stored and the job is going to a GPU). Nothing here is predicted: a crumb is
+written after the work it names returned, never on a timer.
+
+The channel is optional in every direction. Omit `progress_id` and the request
+behaves exactly as it always has. Poll a trace with no crumbs yet and you get an
+empty list, which is indistinguishable from "not there yet" on purpose. Crumbs
+expire after five minutes, and they only ever hold what the response itself
+carries moments later, so a trace id grants no access to anything.
+
 ### Comparing two engines on one prompt
 
 The engine grid is only useful if you can see what choosing an engine actually
@@ -223,6 +266,7 @@ console.log(job.glb_url); // downloadable, textured GLB
 
 - **Loading**: a real elapsed counter driven by the catalog ETA for the resolved path, tier, and engine. Cold self-host GPU workers add an honest spin-up estimate rather than a stalled bar.
 - **Down lane**: disabled engine button with the real upstream reason; routing skips it via the circuit-breaker cooldown.
+- **Storage outage**: when object storage rejects us, no engine can finish a generation (every lane has to park a reference image or a finished mesh), so switching engines is not offered. The page says plainly that the fault is ours, that nothing was charged, and points at what still works: every model you already forged is served from the public CDN and still opens, downloads and refines. Retry re-enables itself on a live countdown, because a repaired credential recovers without a redeploy.
 - **Unconfigured backend**: a clean `backend_unconfigured` error, never a mock.
 - **Resume**: an interrupted job is pollable again for 30 minutes from the same browser.
 - **Every result** reports the path, tier, and backend that produced it, so you always know which engine ran.
