@@ -40,7 +40,7 @@ const ENV_KEYS = ['NVIDIA_API_KEY', 'OPENAI_API_KEY', 'GOOGLE_CLOUD_PROJECT'];
 const ORIGINAL_ENV = Object.fromEntries(ENV_KEYS.map((k) => [k, process.env[k]]));
 
 // Route a mocked fetch by URL substring so one test can exercise the full
-// chain (NIM nemotron → NIM llama → OpenAI) and assert which lanes were hit.
+// chain (free NIM llama → paid OpenAI backstop) and assert which lanes were hit.
 function stubFetch(routes) {
 	const calls = [];
 	globalThis.fetch = vi.fn(async (url, opts = {}) => {
@@ -66,7 +66,6 @@ function httpErr(status, body = 'err') {
 
 // Every lane key describeImage can cool, so a test never inherits another's bench.
 const VISION_LANE_KEYS = [
-	'vision:nvidia:nvidia/nemotron-nano-12b-v2-vl',
 	'vision:nvidia:meta/llama-3.2-11b-vision-instruct',
 	'vision:vertex-gemini:gemini-2.5-flash',
 	'vision:openai:gpt-5.4-nano',
@@ -112,12 +111,12 @@ describe('vision helper — provider chain', () => {
 		expect(visionConfigured()).toBe(true);
 	});
 
-	it('serves from the free NIM nemotron lane first and records a free (zero-cost) vision event', async () => {
+	it('serves from the free NIM lane first and records a free (zero-cost) vision event', async () => {
 		const calls = stubFetch([['integrate.api.nvidia.com', () => chatOk('Gray')]]);
 		const r = await describeImage({ prompt: 'color?', imageUrl: 'https://cdn/x.jpg' });
 		expect(r.text).toBe('Gray');
 		expect(r.provider).toBe('nvidia');
-		expect(r.model).toBe('nvidia/nemotron-nano-12b-v2-vl');
+		expect(r.model).toBe('meta/llama-3.2-11b-vision-instruct');
 		// One call, to the OpenAI-compatible chat host, multimodal user content.
 		expect(calls).toHaveLength(1);
 		const userMsg = calls[0].body.messages.at(-1);
@@ -155,19 +154,23 @@ describe('vision helper — provider chain', () => {
 		expect(part.image_url.url).toBe('https://cdn.example/x.png');
 	});
 
-	it('falls over from the first NIM lane to the second on a 5xx', async () => {
-		let n = 0;
+	it('falls over from the free NIM lane to the paid backstop on a 5xx', async () => {
+		// The chain carries ONE free rung since nvidia/nemotron-nano-12b-v2-vl was
+		// retired (410 Gone, end of life 2026-08-26), so a 5xx there lands on the
+		// paid backstop rather than a sibling free model.
+		process.env.OPENAI_API_KEY = 'sk-x';
 		const calls = stubFetch([
-			['integrate.api.nvidia.com', () => (++n === 1 ? httpErr(500, 'boom') : chatOk('ok'))],
+			['integrate.api.nvidia.com', () => httpErr(500, 'boom')],
+			['api.openai.com', () => chatOk('ok')],
 		]);
 		const r = await describeImage({ prompt: 'p', imageUrl: 'https://cdn/x.jpg' });
 		expect(calls).toHaveLength(2);
-		expect(calls[0].body.model).toBe('nvidia/nemotron-nano-12b-v2-vl');
-		expect(calls[1].body.model).toBe('meta/llama-3.2-11b-vision-instruct');
+		expect(calls[0].body.model).toBe('meta/llama-3.2-11b-vision-instruct');
+		expect(calls[1].url).toContain('openai.com');
 		expect(r.text).toBe('ok');
 	});
 
-	it('appends the paid OpenAI backstop last, after both free lanes fail', async () => {
+	it('appends the paid OpenAI backstop last, after the free lane fails', async () => {
 		process.env.OPENAI_API_KEY = 'sk-x';
 		const calls = stubFetch([
 			['integrate.api.nvidia.com', () => httpErr(500)],
@@ -175,8 +178,8 @@ describe('vision helper — provider chain', () => {
 		]);
 		const r = await describeImage({ prompt: 'p', imageBase64: 'AAAA', mimeType: 'image/png' });
 		expect(r.provider).toBe('openai');
-		// Two NIM lanes tried, then OpenAI.
-		expect(calls.map((c) => c.url.includes('openai.com'))).toEqual([false, false, true]);
+		// The free NIM lane tried, then OpenAI.
+		expect(calls.map((c) => c.url.includes('openai.com'))).toEqual([false, true]);
 		// base64 inlined as a data URI.
 		expect(calls[0].body.messages.at(-1).content[1].image_url.url).toBe('data:image/png;base64,AAAA');
 		// Paid model priced > 0.
@@ -189,17 +192,19 @@ describe('vision helper — provider chain', () => {
 			status: 502,
 			code: 'invalid_key',
 		});
-		expect(calls).toHaveLength(2); // both NIM lanes attempted
+		expect(calls).toHaveLength(1); // the one free NIM lane attempted
 		expect(usageState.events).toHaveLength(0); // nothing succeeded → no spend
 	});
 
 	it('treats a fetch throw (timeout) as a lane failure and moves on', async () => {
 		let n = 0;
+		process.env.OPENAI_API_KEY = 'sk-x';
 		stubFetch([
 			['integrate.api.nvidia.com', () => {
 				if (++n === 1) throw new Error('aborted');
-				return chatOk('recovered');
+				return chatOk('nim');
 			}],
+			['api.openai.com', () => chatOk('recovered')],
 		]);
 		const r = await describeImage({ prompt: 'p', imageUrl: 'https://cdn/x.jpg' });
 		expect(r.text).toBe('recovered');
