@@ -65,6 +65,9 @@ const STAGE_SOURCES = {
 	prebuild: { kind: 'path', chain: scripts.prebuild || '', label: 'the prebuild chain' },
 	gate: { kind: 'npm', chain: scripts.gate || '', label: 'the gate chain' },
 	'build:gcp': { kind: 'npm', chain: scripts['build:gcp'] || '', label: 'the build:gcp chain' },
+	// The submit step is its own stage: a guard that can only judge a finished
+	// artifact runs after build:gcp has produced dist/ and before the upload.
+	'deploy:submit': { kind: 'npm', chain: scripts['deploy:gcp:submit'] || '', label: 'the deploy:gcp:submit chain' },
 	'pre-push': { kind: 'hook', label: 'the pre-push hook template' },
 	manual: { kind: 'none', label: 'nothing (on demand)' },
 };

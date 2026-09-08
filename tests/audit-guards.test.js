@@ -55,6 +55,7 @@ function makeRepo(name, { guards, exempt = [], stages, scripts, extraScripts = [
 			{ id: 'prebuild', title: 'Prebuild', when: 'x', description: 'y' },
 			{ id: 'gate', title: 'Gate', when: 'x', description: 'y' },
 			{ id: 'build:gcp', title: 'Deploy build', when: 'x', description: 'y' },
+			{ id: 'deploy:submit', title: 'Deploy submit', when: 'x', description: 'y' },
 			{ id: 'pre-push', title: 'Pre-push', when: 'x', description: 'y' },
 			{ id: 'manual', title: 'On demand', when: 'x', description: 'y' },
 		],

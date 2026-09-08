@@ -54,6 +54,14 @@ Guards that can only judge a finished artifact: whether a Node-only module leake
 
 The order inside this chain is load-bearing. The frontend build empties `dist/`, so everything that writes into it must come after. `build:gcp` already encodes the correct order, and `npm run check:claude` verifies that the runbook in `CLAUDE.md` still describes it accurately.
 
+### Deploy submit
+
+```bash
+npm run deploy:gcp:submit
+```
+
+The last gate before code leaves the machine, and the only one that can see the finished artifact and the database it is about to ship over at the same time. It checks that no migration is pending, that nothing the server imports at runtime would be excluded from the build context, and that the decoder assets `dist/` must carry are really there. A failure here is still cheap: nothing has been deployed.
+
 ### Pre-push
 
 Runs automatically on `git push`. Installed into `.git/hooks` by [`scripts/setup-git-hooks.mjs`](https://github.com/nirholas/three.ws/blob/main/scripts/setup-git-hooks.mjs), which `postinstall` runs on every `npm install`, so a fresh clone is covered without a setup step.
@@ -94,6 +102,8 @@ Run `npm run audit:guards` to print the current count and per-stage breakdown. T
 | No unbounded outbound call | `npm run check:fetch-timeouts` | Every fetch to a third-party host carries a deadline, so one stalled upstream cannot hold a request until the platform kills it. |
 | Hard rules, diff scoped | `npm run check:rules` | The CLAUDE.md hard rules on the lines you changed. |
 | The guard registry | `npm run audit:guards` | Every guard is registered and every stage claim is true. |
+| Skills seed drift | `npm run check:skills-seed` | `data/skills/seed.json` still matches the SKILL.md files it is generated from, so a skill cannot read one way on disk and another in the marketplace. |
+| Motion signature index | `npm run audit:motion` | `public/animations/signatures.json` describes the clips that are actually baked, so a rebake cannot leave `/gestures` and the walk-layer tables describing motion that no longer exists. |
 | One `<model-viewer>` build | `npm run check:model-viewer` | Every `<model-viewer>` reference in tracked source names one version, no version is served under two integrity hashes, and the vendored copy matches. |
 | Design-token ratchet | `npm run audit:tokens` | Hardcoded colour hexes cannot creep back past a committed baseline. |
 | Interactive-state ratchet | `npm run audit:states` | A selector that declares cursor:pointer cannot ship without a hover rule behind it. |
@@ -129,6 +139,7 @@ Run `npm run audit:guards` to print the current count and per-stage breakdown. T
 | Runnable doc samples | `npm run check:runnable-docs` | Every sample a reader can press Run on still returns what the doc says it returns. |
 | Doc figures | `npm run check:doc-media` | Every figure a doc points at was really captured, still matches its recipe, and carries alt text. |
 | Announcement packs | `npm run check:announce` | Every announcement pack ships captured media with alt text, a post inside X's real weighted limit, an opening no other pack reuses, and no reference to a crypto project other than $THREE. |
+| Tour bundle copy | `npm run audit:tour-global` | `public/tour-builder/tour.global.js` is the bundle this repo's tour-sdk actually builds, so the Tour Builder preview cannot drift from the package a reader installs. |
 | Tour atlas truth | `npm run audit:tour-atlas` | `public/tour/atlas.json` matches a fresh render: every stop resolves, every promised screenshot exists, and the page's own copy (`data/pages.json`, `pages/tour-atlas.html`) advertises the number of stops the atlas actually has. |
 | x402 endpoint catalog | `npm run audit:x402-catalog` | Every paid endpoint is documented, so a buyer can find it. |
 | MCP manifests | `npm run audit:mcp` | Every MCP manifest satisfies the official registry's rules, offline. |
