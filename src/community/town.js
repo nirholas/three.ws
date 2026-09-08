@@ -91,7 +91,8 @@ export class Town {
 		const badge = el('div', 'town__badge');
 		// Same gateway CORP rule as the lobby: proxy the pinned art so the
 		// browser is allowed to paint it (see coin-lobby.js).
-		const headerArt = this.meta.image ? proxiedImageURL(this.meta.image, '', { fallback: 'none' }) : '';
+		// .town__coin-img paints at 38x38; 96px covers it at DPR 2.5.
+		const headerArt = this.meta.image ? proxiedImageURL(this.meta.image, '', { width: 96, fallback: 'none' }) : '';
 		if (headerArt) {
 			const img = el('img', 'town__coin-img');
 			img.src = headerArt;
@@ -488,7 +489,7 @@ export class Town {
 		const sym = this.root.querySelector('.town__symbol');
 		if (sym && this.meta.symbol) sym.textContent = `$${this.meta.symbol}`;
 		const ph = this.root.querySelector('.town__coin-img--ph');
-		const badgeArt = this.meta.image ? proxiedImageURL(this.meta.image, '', { fallback: 'none' }) : '';
+		const badgeArt = this.meta.image ? proxiedImageURL(this.meta.image, '', { width: 96, fallback: 'none' }) : '';
 		if (ph && badgeArt) {
 			const img = el('img', 'town__coin-img');
 			img.src = badgeArt;
