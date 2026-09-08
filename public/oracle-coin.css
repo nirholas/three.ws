@@ -511,3 +511,17 @@ a.oc-atx-agent:hover { color: var(--cv-accent); }
 	animation: spin 0.9s linear infinite; margin: 30px auto;
 }
 @media (prefers-reduced-motion: reduce) { .oc-spinner, .tape-dot.live { animation: none; } }
+
+/* ── Interactive states (QB-07) ────────────────────────────────────────────
+   The range pills switch the chart. Only the pressed one was ever styled, so
+   the other pills gave no sign they could be pressed at all. */
+.cv-pills button.cv-pill {
+	transition:
+		color var(--duration-fast) var(--ease-standard),
+		border-color var(--duration-fast) var(--ease-standard);
+}
+
+.cv-pills button.cv-pill:hover:not([aria-pressed='true']) {
+	color: var(--cv-accent);
+	border-color: var(--cv-accent);
+}

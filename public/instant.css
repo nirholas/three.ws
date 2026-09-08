@@ -724,3 +724,21 @@
 [hidden] {
 	display: none !important;
 }
+
+/* ── Interactive states (QB-07) ────────────────────────────────────────────
+   The send button is the only action on this surface. It had a disabled state
+   and no hover, so when it was live it looked exactly as static as when it
+   was not. */
+.ia-send {
+	transition:
+		background var(--duration-fast) var(--ease-standard),
+		transform var(--duration-fast) var(--ease-standard);
+}
+
+.ia-send:hover:not(:disabled) {
+	background: var(--btn-primary-bg-hover);
+}
+
+.ia-send:active:not(:disabled) {
+	transform: translateY(1px);
+}

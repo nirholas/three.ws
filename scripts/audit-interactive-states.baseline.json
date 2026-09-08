@@ -1,5 +1,5 @@
 {
-	"total": 42,
+	"total": 36,
 	"perFile": {
 		"src/character-creator.css": 1,
 		"src/character.css": 1,
@@ -25,19 +25,13 @@
 		"src/trader.css": 1,
 		"src/vault.css": 1,
 		"src/watchlist.css": 1,
-		"public/app-next.css": 1,
 		"public/avatar-sdk.css": 1,
 		"public/brain-studio.css": 1,
 		"public/dashboard-next/shell.css": 1,
 		"public/docs/walk/docs.css": 1,
 		"public/docs-freshness.css": 1,
 		"public/docs-live.css": 1,
-		"public/gallery/gallery.css": 1,
-		"public/home.css": 1,
-		"public/instant.css": 1,
-		"public/master-wallet.css": 1,
 		"public/model-diff.css": 2,
-		"public/oracle-coin.css": 1,
 		"public/pipeline-studio.css": 1
 	}
 }

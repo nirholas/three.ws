@@ -1382,3 +1382,10 @@ body.gallery-page {
 	.surprise-panel { padding: 18px; gap: 14px; }
 	.surprise-name { font-size: 1.3rem; }
 }
+
+/* ── Interactive states (QB-07) ────────────────────────────────────────────
+   The sort select already had its border-color transition and nothing ever
+   changed the border, so the transition had no trigger. */
+.gallery-sort-select select:hover {
+	border-color: var(--stroke-strong);
+}

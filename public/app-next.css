@@ -2232,3 +2232,17 @@ html[data-app-mode="object"] #nxt-visitor-card,
 html[data-app-mode="object"] #nxt-first-hint {
 	display: none !important;
 }
+
+/* ── Interactive states (QB-07) ────────────────────────────────────────────
+   The account button is in the dashboard shell on every dashboard page, and it
+   was the one chrome control that did not answer the pointer. */
+.nxt-user-btn {
+	transition:
+		background var(--duration-fast) var(--ease-standard),
+		border-color var(--duration-fast) var(--ease-standard);
+}
+
+.nxt-user-btn:hover {
+	background: var(--surface-3);
+	border-color: var(--nxt-stroke-strong);
+}

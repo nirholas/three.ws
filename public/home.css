@@ -486,6 +486,14 @@
 			color: var(--text-3); background: transparent; border: 0; cursor: pointer;
 		}
 		.pane-head .tab.active { background: var(--surface-2); color: var(--text); }
+		/* QB-07: the tabs set cursor: pointer and only the active one was styled,
+		   so on the homepage the inactive tabs gave no sign they were pressable. */
+		.pane-head .tab {
+			transition:
+				background var(--duration-fast) var(--ease-standard),
+				color var(--duration-fast) var(--ease-standard);
+		}
+		.pane-head .tab:hover:not(.active) { color: var(--text-2); background: var(--surface-1); }
 		.code-pane pre {
 			margin: 0; padding: 28px;
 			font-family: var(--font-mono); font-size: 13px; line-height: 1.75;

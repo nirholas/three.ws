@@ -1161,3 +1161,17 @@ input.wlt-input {
 		align-items: flex-start;
 	}
 }
+
+/* ── Interactive states (QB-07) ────────────────────────────────────────────
+   An underlined button styled as a link, on the wallet page, with no hover:
+   the one place a visitor most wants to be sure what they are about to click. */
+.wlt-linkbtn {
+	transition:
+		color var(--duration-fast) var(--ease-standard),
+		text-decoration-thickness var(--duration-fast) var(--ease-standard);
+}
+
+.wlt-linkbtn:hover {
+	color: var(--wallet-accent-strong);
+	text-decoration-thickness: 2px;
+}
