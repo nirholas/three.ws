@@ -1594,7 +1594,9 @@
 		/* "Approximately" is styled identically to "exactly" — equal weight, no dark pattern */
 		#irl-consent-approx { border-color: rgba(96,165,250,0.4); background: rgba(96,165,250,0.16); color: #93c5fd; }
 		#irl-consent-approx:hover { background: rgba(96,165,250,0.26); }
-		.irl-consent-dontshow { display: flex; align-items: center; gap: 8px; font-size: 13px; color: #9ca3af; cursor: pointer; margin-bottom: 14px; }
+		/* The label is the target: tapping it toggles the box, so the row carries
+		   the 44px floor and the 16px box stays the size it was designed. */
+		.irl-consent-dontshow { display: flex; align-items: center; gap: 8px; min-height: 44px; font-size: 13px; color: #9ca3af; cursor: pointer; margin-bottom: 14px; }
 		.irl-consent-dontshow input { width: 16px; height: 16px; accent-color: #60a5fa; cursor: pointer; }
 		.irl-consent-cancel {
 			display: block; width: 100%; padding: 11px; border-radius: 12px;

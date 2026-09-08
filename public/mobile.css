@@ -1010,3 +1010,120 @@
 		min-height: 44px;
 	}
 }
+
+/* ── Tap-target floor, round 4 (touch only) ────────────────────────────
+ * The residue of the 2026-09-08 run, re-measured against a local production
+ * build once rounds 1-3 and the delivery fix above were in place. Two
+ * shapes dominate it, and both are worth recognising because neither is
+ * "we forgot a rule":
+ *
+ *   - One axis short. A control that already carries a height floor can
+ *     still be 23px wide (a two-letter wordmark, an icon-only action).
+ *     `min-height` alone never catches those, so these get `min-width`.
+ *   - A component that declares its own floor BELOW 44. `min-height` beats
+ *     `height`, so a page that sets a height loses to this file; a page
+ *     that sets its own `min-height: 32px` in a runtime-injected <style>
+ *     wins on equal specificity and later order. Those are fixed where they
+ *     are declared instead of being fought from here (see
+ *     src/irl/onboarding.js), which is why they are not in this list.
+ */
+@media (hover: none) and (pointer: coarse) {
+	/* Home: partner wordmarks measured 23x44 and 28x44, the contract-address
+	   copy button 353x26, and the floating brand chip 34x34 (public/brand.js
+	   sizes it explicitly under 560px). */
+	.press-logo {
+		min-width: 44px;
+		justify-content: center;
+	}
+	.foot-ca {
+		min-height: 44px;
+	}
+	.brand-mark-chip {
+		min-width: 44px;
+		min-height: 44px;
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+	}
+
+	/* /forge BYOK key field, 296x39. */
+	.byok-input {
+		min-height: 44px;
+	}
+
+	/* /news topbar links reach the height floor and stop at 38px wide. */
+	header.topbar nav a {
+		min-width: 44px;
+		justify-content: center;
+	}
+
+	/* /coin: breadcrumbs (38x22), the narrow chart ranges (37x44 and 40x44)
+	   and the copy-contract button (38x19). */
+	.cv-crumbs a,
+	.cv-contract button {
+		min-height: 44px;
+		display: inline-flex;
+		align-items: center;
+	}
+	.cv-range-btn {
+		min-width: 44px;
+		justify-content: center;
+	}
+
+	/* /walk's skip link, 201x36. */
+	.h-skip-link {
+		min-height: 44px;
+		display: inline-flex;
+		align-items: center;
+	}
+
+	/* /play lobby: the identity disclosure and its field (both 315x40), the
+	   feed sort segments (40px) and the footer links (43x44, 40x44). */
+	.cc-id-toggle,
+	.cc-sort,
+	.cc-avatar-custom input {
+		min-height: 44px;
+	}
+	.cc-foot-links a {
+		min-width: 44px;
+		min-height: 44px;
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+	}
+
+	/* /launches: the hero CTAs (39px), the pulse-strip label (14px), the
+	   network toggle (28px) and the oracle filter (27px); plus the two
+	   round-2 controls that were short on the OTHER axis, 37x43 and 43x57. */
+	.lx-btn,
+	.lx-pulse-label,
+	.lx-net-btn,
+	.lx-of-btn {
+		min-height: 44px;
+		display: inline-flex;
+		align-items: center;
+	}
+	.twc-make,
+	.lx-action-watch,
+	.lx-of-btn,
+	.lx-net-btn {
+		min-width: 44px;
+		justify-content: center;
+	}
+
+	/* Docs shell: the world link is 35px wide, the header CTA 58x30, and the
+	   sidebar search field 247x36. */
+	.docs-world-link {
+		min-width: 44px;
+		justify-content: center;
+	}
+	.docs-header-right .btn-primary,
+	.sidebar-search input {
+		min-height: 44px;
+		display: inline-flex;
+		align-items: center;
+	}
+	.sidebar-search input {
+		display: block;
+	}
+}

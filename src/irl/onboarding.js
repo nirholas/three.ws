@@ -555,7 +555,11 @@ const ONBOARD_CSS = `
 .irl-ob-sub { margin: 0; font-size: 13px; line-height: 1.5; color: #93a1b5; }
 .irl-ob-learn {
 	display: inline-flex; align-items: center; gap: 5px;
-	min-height: 32px; margin: 5px -6px 0; padding: 0 6px;
+	/* 44px, not 32: this stylesheet is injected into <head> at runtime, so it
+	   lands after /mobile.css and wins the tap-target floor on equal
+	   specificity and later order. A component that declares its own
+	   min-height owns it, so the floor is declared here. */
+	min-height: 44px; margin: 5px -6px 0; padding: 0 6px;
 	font: 500 12px/1 var(--font-body, system-ui, sans-serif);
 	color: #7dd3fc; text-decoration: none;
 	transition: color .15s;
