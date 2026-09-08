@@ -1046,3 +1046,76 @@ a.gx-flow-explorer:hover { background: rgba(120, 169, 255, 0.18); }
 	.gx-loading-orbit span { animation: none; }
 	.gx-card, .gx-results, .gx-moneycam, .gx-flow { animation: none; }
 }
+
+/* ── Interactive states (QB-07) ────────────────────────────────────────────
+   The mission-control scrubber promised it was draggable (cursor: pointer on
+   the track and both vendor thumbs) and gave no feedback until you actually
+   dragged it. The track lifts and the thumb grows under the pointer now, on
+   the platform ladder. The canvas is excluded on purpose: it is a 3D viewport,
+   not a control, and its feedback is the scene reacting. */
+.gx-mc-scrub {
+	transition: background var(--duration-fast) var(--ease-standard);
+}
+
+.gx-mc-scrub:hover {
+	background: var(--stroke-strong);
+}
+
+.gx-mc-scrub::-webkit-slider-thumb {
+	transition: transform var(--duration-fast) var(--ease-standard);
+}
+
+.gx-mc-scrub::-moz-range-thumb {
+	transition: transform var(--duration-fast) var(--ease-standard);
+}
+
+.gx-mc-scrub:hover::-webkit-slider-thumb {
+	transform: scale(1.15);
+}
+
+.gx-mc-scrub:hover::-moz-range-thumb {
+	transform: scale(1.15);
+}
+
+/* ── Overlay actions ────────────────────────────────────────────────────── */
+/* A failed or empty galaxy still offers somewhere to go, so the overlay needs a
+   row that wraps on a narrow viewport instead of forcing a horizontal scroll. */
+.gx-overlay-actions {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	justify-content: center;
+	gap: 10px;
+	margin-top: 8px;
+}
+.gx-overlay-actions .gx-btn { margin-top: 0; }
+.gx-btn-ghost:active { transform: translateY(1px); }
+
+/* ── Focus states ───────────────────────────────────────────────────────── */
+/* The site reset clears the UA outline, which left every control on this page
+   with a hover state and no keyboard-visible focus at all. One ring, applied to
+   everything the visitor can tab to. */
+.gx-btn:focus-visible,
+.gx-search-input:focus-visible,
+.gx-search-clear:focus-visible,
+.gx-search-go:focus-visible,
+.gx-moneycam-toggle:focus-visible,
+.gx-legend-toggle:focus-visible,
+.gx-legend-item:focus-visible,
+.gx-card-close:focus-visible,
+.gx-results-close:focus-visible,
+.gx-result:focus-visible,
+.gx-mc-close:focus-visible,
+.gx-mc-mode:focus-visible,
+.gx-mc-play:focus-visible,
+.gx-mc-speed:focus-visible,
+.gx-mc-scrub:focus-visible,
+.gx-mc-filter:focus-visible,
+.gx-mc-row:focus-visible,
+.gx-flow-close:focus-visible,
+.gx-flow-link:focus-visible,
+.gx-footnote-link:focus-visible {
+	outline: 2px solid var(--brand-blue-light, #78a9ff);
+	outline-offset: 2px;
+	border-radius: 8px;
+}
