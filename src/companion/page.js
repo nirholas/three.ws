@@ -151,7 +151,7 @@ function renderStageFace(event) {
 	if (viewer.dataset.fallback !== '1' || !event) return;
 	const name = event.contact_name || event.sender || 'Your companion';
 	viewer.innerHTML = event.contact_avatar_image_url
-		? `<img class="stage-face" src="${esc(event.contact_avatar_image_url)}" alt="${esc(name)}" />`
+		? `<img class="stage-face" src="${esc(event.contact_avatar_image_url)}" alt="${esc(name)}" loading="eager" decoding="async" />`
 		: `<div class="stage-face stage-face-initial" aria-hidden="true">${esc(name.slice(0, 1).toUpperCase())}</div>`;
 	const caption = document.createElement('div');
 	caption.className = 'stage-empty';

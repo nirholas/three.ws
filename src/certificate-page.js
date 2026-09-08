@@ -93,7 +93,7 @@ function stage(cert) {
 		</div>`;
 	}
 	if (poster) {
-		return `<div class="ct-stage"><img src="${esc(poster)}" alt="The model this print was made from" />${badge}</div>`;
+		return `<div class="ct-stage"><img src="${esc(poster)}" alt="The model this print was made from" loading="eager" decoding="async" />${badge}</div>`;
 	}
 	// The source model was deleted or was never a stored creation. The
 	// certificate is still fully valid: the hash and the attestation are what it

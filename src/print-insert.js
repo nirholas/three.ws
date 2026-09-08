@@ -115,7 +115,7 @@ function renderCard(payload) {
 			<div class="pi-qr-block">
 				${
 					cert.qr_url
-						? `<img class="pi-qr" src="${esc(cert.qr_url)}" alt="QR code to this certificate" />`
+						? `<img class="pi-qr" src="${esc(cert.qr_url)}" alt="QR code to this certificate" loading="eager" decoding="async" />`
 						: '<div class="pi-qr" style="border:0.3mm dashed #999;display:flex;align-items:center;justify-content:center;font-size:2.6mm;color:#666">QR pending</div>'
 				}
 				<p class="pi-qr-caption">${esc(cert.certificate_url.replace(/^https?:\/\//, ''))}</p>
