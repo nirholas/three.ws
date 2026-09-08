@@ -173,7 +173,7 @@
 }
 .agp-tag.active {
 	background: var(--accent, #ffffff);
-	color: #000;
+	color: var(--on-accent);
 	border-color: var(--accent, #ffffff);
 }
 
@@ -375,7 +375,7 @@
 
 .agp-cta {
 	background: var(--accent, #ffffff);
-	color: #000;
+	color: var(--on-accent);
 	border: 0;
 	border-radius: 9px;
 	padding: 10px 14px;
@@ -558,4 +558,26 @@
 		grid-template-columns: repeat(2, minmax(0, 1fr));
 		gap: 8px;
 	}
+}
+
+/* ── Interactive states (QB-07) ────────────────────────────────────────────
+   Same as the agent picker: a primary CTA with a transition and nothing to
+   trigger it, plus the mode labels that switch the gallery. */
+.agp-cta:hover:not(:disabled) {
+	background: var(--btn-primary-bg-hover, #ffffff);
+}
+
+.agp-cta:active:not(:disabled) {
+	transform: translateY(1px);
+}
+
+.agp-modes label {
+	transition:
+		background var(--duration-fast) var(--ease-standard),
+		color var(--duration-fast) var(--ease-standard);
+}
+
+.agp-modes label:hover {
+	color: var(--ink-bright);
+	background: var(--surface-1);
 }

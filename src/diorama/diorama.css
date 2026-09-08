@@ -622,3 +622,19 @@
 		transform: none;
 	}
 }
+
+/* ── Interactive states (QB-07) ────────────────────────────────────────────
+   A retry button appears only after a load already failed. With no hover it
+   reads as part of the failure rather than the way out of it. */
+.dio-object__retry {
+	transition:
+		color var(--duration-fast) var(--ease-standard),
+		text-decoration-thickness var(--duration-fast) var(--ease-standard);
+	text-decoration: underline;
+	text-decoration-thickness: 1px;
+}
+
+.dio-object__retry:hover {
+	color: var(--ink-bright);
+	text-decoration-thickness: 2px;
+}

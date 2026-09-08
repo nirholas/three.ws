@@ -812,3 +812,26 @@ a:hover {
 	font-size: 14px;
 }
 
+/* ── Interactive states (QB-07) ────────────────────────────────────────────
+   The preview button sits on top of a card thumbnail, so without a hover it
+   was indistinguishable from a label printed on the image. */
+.my-agents-card__preview-btn {
+	transition:
+		background var(--duration-fast) var(--ease-standard),
+		border-color var(--duration-fast) var(--ease-standard),
+		color var(--duration-fast) var(--ease-standard);
+}
+
+.my-agents-card__preview-btn:hover {
+	background: var(--scrim-strong);
+	border-color: var(--stroke-strong);
+	color: var(--ink-bright);
+}
+
+.my-agents-sort select {
+	transition: border-color var(--duration-fast) var(--ease-standard);
+}
+
+.my-agents-sort select:hover {
+	border-color: var(--stroke-strong);
+}

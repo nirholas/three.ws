@@ -186,3 +186,22 @@ textarea.bcard__input { resize: vertical; }
 	.bcard.is-pulse, .bcard.is-busy .bcard__dot { animation: none; }
 	.bcard.is-active { box-shadow: 0 0 0 1px var(--accent); }
 }
+
+/* ── Interactive states (QB-07) ────────────────────────────────────────────
+   The modal close and the toggle track: both promised they were clickable and
+   neither reacted. The track already had its transition, it just had no hover
+   to run it. */
+.brainstudio__modal-x {
+	transition:
+		color var(--duration-fast) var(--ease-standard),
+		transform var(--duration-fast) var(--ease-standard);
+}
+
+.brainstudio__modal-x:hover {
+	color: var(--ink-bright);
+	transform: rotate(90deg);
+}
+
+.brainstudio__toggle:hover span {
+	background: var(--stroke-strong);
+}

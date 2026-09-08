@@ -969,3 +969,25 @@ body {
 		animation: none;
 	}
 }
+
+/* ── Interactive states (QB-07) ────────────────────────────────────────────
+   The floating prompt and the search-open control both set cursor: pointer
+   with no hover. The prompt is the page's own instruction to click it, which
+   made the missing feedback especially confusing. */
+.dw-prompt,
+.dw-sr-open {
+	transition:
+		background var(--duration-fast) var(--ease-standard),
+		border-color var(--duration-fast) var(--ease-standard),
+		color var(--duration-fast) var(--ease-standard);
+}
+
+.dw-prompt:hover {
+	border-color: var(--accent-violet);
+	color: var(--ink-bright);
+}
+
+.dw-sr-open:hover {
+	color: var(--ink-bright);
+	border-color: var(--stroke-strong);
+}

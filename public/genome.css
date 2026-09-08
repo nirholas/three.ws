@@ -294,3 +294,23 @@
 .gn-pick:disabled { opacity: 0.4; cursor: not-allowed; }
 .gn-pick-sub { font-size: var(--text-xs); color: var(--ink-dim); }
 .gn-empty-list { padding: var(--space-lg); text-align: center; color: var(--ink-dim); }
+
+/* ── Interactive states (QB-07) ────────────────────────────────────────────
+   The modal close and the switch track set cursor: pointer and answered
+   nothing. A close button with no hover is the one control a visitor hunts for
+   when they want out. */
+.gn-modal-close {
+	transition:
+		color var(--duration-fast) var(--ease-standard),
+		transform var(--duration-fast) var(--ease-standard);
+}
+
+.gn-modal-close:hover {
+	color: var(--ink-bright);
+	transform: rotate(90deg);
+}
+
+.gn-switch:hover .gn-switch-track {
+	background: var(--stroke-strong);
+	border-color: var(--stroke-strong);
+}

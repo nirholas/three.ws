@@ -185,3 +185,17 @@
 	.kg-spin-card.kg-spin-flash { animation: none; box-shadow: var(--cc-shadow), 0 0 0 2px var(--cc-edge-hi); }
 	.kg-spin-btn, .kg-spin-close { transition: none; }
 }
+
+/* ── Interactive states (QB-07) ────────────────────────────────────────────
+   Same reasoning as every other retry on the platform: it is the recovery
+   action, so it has to answer the pointer. */
+.kg-spin-retry {
+	transition:
+		color var(--duration-fast) var(--ease-standard),
+		text-decoration-thickness var(--duration-fast) var(--ease-standard);
+}
+
+.kg-spin-retry:hover {
+	color: var(--ink-bright);
+	text-decoration-thickness: 2px;
+}
