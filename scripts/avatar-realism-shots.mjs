@@ -2,8 +2,15 @@
 /**
  * Avatar material realism, proven in the real viewer at real breakpoints.
  *
- * Loads an avatar GLB in the actual /viewer page, waits for the model, and
- * screenshots it at 320, 768 and 1440 px wide. Alongside each shot it reports
+ * Loads an avatar GLB in the actual /avatar-embed page, waits for the model,
+ * and screenshots it at 320, 768 and 1440 px wide. That page is the shipped
+ * surface every embedded three.ws avatar renders through, and it is the one
+ * that runs src/viewer.js's Viewer. /viewer is a different page entirely: it
+ * hands the model to `<model-viewer>`, which brings its own three.js and never
+ * calls the realism pass, and it rejects any ?src= that is not an absolute
+ * https URL, so pointing this script there measured nothing at all.
+ *
+ * Alongside each shot it reports
  * what `src/shared/avatar-material-realism.js` actually did to the loaded
  * scene: how many skin / eye / hair / teeth materials it upgraded, and the
  * physical values that landed on each class. A screenshot alone cannot tell
@@ -20,6 +27,8 @@
  *   node scripts/avatar-realism-shots.mjs
  *   node scripts/avatar-realism-shots.mjs --src=/avatars/selfie-girl.glb
  *   node scripts/avatar-realism-shots.mjs --base=http://localhost:3000 --out=docs/assets/avatar-realism
+ *   node scripts/avatar-realism-shots.mjs --bg=light      # light backdrop
+ *   node scripts/avatar-realism-shots.mjs --src=/avatars/realistic-halfbody.glb --name=avatar-realism-halfbody
  *
  * Exits nonzero when no skin or eye material was upgraded: that means the pass
  * did not reach the model, which is exactly the regression worth failing on.
@@ -41,10 +50,31 @@ const args = Object.fromEntries(
 
 const BASE = args.base || 'http://localhost:3000';
 const SRC = args.src || '/avatars/realistic-male.glb';
+// /avatar-embed understands three backdrops and nothing else: dark, light, and
+// transparent. Transparent is its default and screenshots as pure black, which
+// hides the rim light, so the shots are taken on the dark backdrop.
+const BG = args.bg || 'dark';
+// File-name stem, so a second subject can be captured into the same folder
+// without overwriting the first one's shots.
+const NAME = args.name || 'avatar-realism';
 const OUT_DIR = path.resolve(args.out || 'docs/assets/avatar-realism');
 // SwiftShader has to rasterize a skinned avatar under IBL; a cold first paint
 // on the 1440px viewport is the slow case.
 const LOAD_TIMEOUT = Number(args.timeout || 240_000);
+
+// Vite's HMR client cannot open its websocket through a Codespaces port
+// forward, so every dev-server page logs the same three lines regardless of what
+// the page itself does. Recording them as page errors buries the ones that
+// matter, so they are dropped here and the count of dropped lines is kept.
+const DEV_SERVER_NOISE = [
+	/\[vite\] failed to connect to websocket/i,
+	/WebSocket connection to '.*' failed/i,
+	/WebSocket closed without opened/i,
+];
+
+function isDevServerNoise(text) {
+	return DEV_SERVER_NOISE.some((re) => re.test(text));
+}
 
 const BREAKPOINTS = [
 	{ label: '320', width: 320, height: 640 },
@@ -63,9 +93,15 @@ window.__THREE_DEVTOOLS__.addEventListener('observe', (event) => {
 });
 `;
 
-// Runs in the page: walks every observed scene and reports the physical values
-// the realism pass leaves behind, per class.
-const READBACK = `(() => {
+// Installed alongside the hook so it exists before any page script: walks every
+// observed scene and reports the physical values the realism pass leaves behind,
+// per class. It lives on `window` rather than being passed as a string because
+// Playwright treats a string argument that PARSES as an arrow function as the
+// function itself, so `waitForFunction('() => ...')` resolves on the first poll
+// with the function object as its truthy result and never waits for anything.
+// A named page function sidesteps that entirely.
+const READBACK_HOOK = `
+window.__qb04_readback = () => {
 	const SKIN = /(^|[_\\s-])(skin|body|face|head|torso|arm|leg|hand|feet|foot)(?=[_\\s-]|$)/i;
 	const WOLF = /wolf3d_(skin|body|head)/i;
 	const EYE = /(^|[_\\s-])(eye|cornea|iris|sclera)(left|right)?(?=[_\\s-]|$)/i;
@@ -102,7 +138,8 @@ const READBACK = `(() => {
 		});
 	}
 	return out;
-})()`;
+};
+`;
 
 async function main() {
 	await mkdir(OUT_DIR, { recursive: true });
@@ -115,28 +152,44 @@ async function main() {
 	for (const bp of BREAKPOINTS) {
 		const page = await browser.newPage({ viewport: { width: bp.width, height: bp.height }, deviceScaleFactor: 1 });
 		await page.addInitScript(DEVTOOLS_HOOK);
+		await page.addInitScript(READBACK_HOOK);
 		const consoleErrors = [];
+		let suppressedNoise = 0;
+		const record = (text) => {
+			if (isDevServerNoise(text)) suppressedNoise++;
+			else consoleErrors.push(text);
+		};
 		page.on('console', (msg) => {
-			if (msg.type() === 'error') consoleErrors.push(msg.text());
+			if (msg.type() === 'error') record(msg.text());
 		});
-		page.on('pageerror', (err) => consoleErrors.push(String(err?.message || err)));
+		page.on('pageerror', (err) => record(String(err?.message || err)));
 
-		const url = `${BASE}/viewer?src=${encodeURIComponent(SRC)}`;
+		// hide-chrome drops the name plate and the animation picker, so the frame
+		// is the avatar and nothing else.
+		const url = `${BASE}/avatar-embed?model=${encodeURIComponent(SRC)}&hide-chrome=1&bg=${encodeURIComponent(BG)}`;
 		await page.goto(url, { waitUntil: 'load', timeout: LOAD_TIMEOUT });
 		// The realism pass runs inside setContent(), right after the GLB loads, so
-		// poll the scene graph rather than guessing at a fixed delay.
+		// poll the scene graph rather than guessing at a fixed delay. Poll for a
+		// CLASSIFIED mesh, not merely any mesh: the viewer builds its shadow
+		// catcher and a stack of post-processing fullscreen quads before the GLB
+		// is fetched, so "some mesh exists" is true within a frame of page load
+		// and reading back there reports an empty avatar every time.
 		await page
-			.waitForFunction(
-				`() => (window.__qb04_scenes || []).some((s) => { let hit = false; s.traverse((n) => { if (n.isMesh) hit = true; }); return hit; })`,
-				{ timeout: LOAD_TIMEOUT },
-			)
+			.waitForFunction(() => (window.__qb04_readback?.()?.meshes || 0) > 0, null, { timeout: LOAD_TIMEOUT })
 			.catch(() => {});
-		const readback = await page.evaluate(READBACK);
+		const readback = await page.evaluate(() => window.__qb04_readback());
 		if ((readback.classes.skin?.length || 0) + (readback.classes.eye?.length || 0) > 0) sawUpgrade = true;
 
-		const file = path.join(OUT_DIR, `avatar-realism-${bp.label}.png`);
+		const file = path.join(OUT_DIR, `${NAME}-${bp.label}.png`);
 		await page.screenshot({ path: file });
-		report.shots.push({ breakpoint: bp.label, viewport: `${bp.width}x${bp.height}`, file: path.relative(process.cwd(), file), readback, consoleErrors });
+		report.shots.push({
+			breakpoint: bp.label,
+			viewport: `${bp.width}x${bp.height}`,
+			file: path.relative(process.cwd(), file),
+			readback,
+			consoleErrors,
+			suppressedDevServerNoise: suppressedNoise,
+		});
 		console.log(
 			`✓ ${String(bp.label).padEnd(5)} ${readback.meshes} classified mesh(es); ` +
 				Object.entries(readback.classes)
@@ -148,7 +201,7 @@ async function main() {
 	}
 
 	await browser.close();
-	const jsonFile = path.join(OUT_DIR, 'avatar-realism-readback.json');
+	const jsonFile = path.join(OUT_DIR, `${NAME}-readback.json`);
 	await writeFile(jsonFile, `${JSON.stringify(report, null, '\t')}\n`);
 	console.log(`\nReadback → ${path.relative(process.cwd(), jsonFile)}`);
 	if (!sawUpgrade) {

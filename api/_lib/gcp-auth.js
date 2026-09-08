@@ -6,9 +6,14 @@
 // forgiving service-account-JSON parser, and the token cache live in exactly
 // one place instead of being copied per Vertex surface.
 //
-// Two auth paths, in priority order:
+// Three auth paths, in priority order:
 //   1. GCP_SERVICE_ACCOUNT_JSON  — service account JSON string (Vercel-friendly)
-//   2. Metadata server           — works on Cloud Run / GCE with attached SA
+//   2. Metadata server: works on Cloud Run / GCE with attached SA
+//   3. Application Default Credentials: the file `gcloud auth application-default
+//      login` writes, so a developer box runs the Vertex-backed local scripts
+//      (scripts/quality-bench.mjs and friends) on the credentials it already has
+//      instead of copying a service-account key onto disk. Last on purpose: it
+//      must never answer in place of a metadata server that is merely blipping.
 //
 // The exchange uses the Web Crypto API (crypto.subtle), so it runs unchanged on
 // Node 18+ and the Vercel edge runtime — no `google-auth-library` dependency.
@@ -98,14 +103,100 @@ async function _mintToken(now) {
 
 	// A metadata server that answered before (a token is cached) but failed now
 	// is an outage, not a misconfiguration: surface it so the stale-token grace
-	// applies instead of the unconfigured branch.
+	// applies instead of the unconfigured branch. Checked BEFORE Application
+	// Default Credentials below, because an outage must stay an outage: letting
+	// ADC answer here would silently swap the identity mid-flight and swallow the
+	// grace path that keeps a still-valid token in service.
 	if (_tokenCache.token && metaErr) {
 		throw Object.assign(new Error(`GCP metadata token refresh failed: ${metaErr.message}`), { code: 'metadata_unavailable' });
 	}
+
+	// Last resort: Application Default Credentials, the refresh token that
+	// `gcloud auth application-default login` leaves on disk. This is what makes
+	// the Vertex-backed local scripts run on a developer box without a
+	// service-account key file. It sits last on purpose. Production sets
+	// GCP_SERVICE_ACCOUNT_JSON and Cloud Run answers from the metadata server, so
+	// neither ever reaches this line, and a machine with no ADC file falls
+	// through to the same `unconfigured` error as before.
+	try {
+		const adc = await _loadAdc();
+		if (adc) return await _tokenFromAdc(adc, now);
+	} catch (err) {
+		// A stale ADC file must not mask "no credentials here": say which it was.
+		throw Object.assign(new Error(`Application Default Credentials failed: ${err?.message || err}`), {
+			code: 'adc_unusable',
+		});
+	}
+
 	throw Object.assign(
-		new Error('No GCP credentials found. Set GCP_SERVICE_ACCOUNT_JSON or run on GCE/Cloud Run.'),
+		new Error(
+			'No GCP credentials found. Set GCP_SERVICE_ACCOUNT_JSON, run `gcloud auth application-default login`, or run on GCE/Cloud Run.',
+		),
 		{ code: 'unconfigured' },
 	);
+}
+
+// Read the Application Default Credentials file, if one exists. Returns null on
+// any miss so the caller falls through to the metadata server. The `node:fs`
+// import is dynamic on purpose: this module is bundled for edge runtimes too,
+// where there is no filesystem and this branch is never reached.
+async function _loadAdc() {
+	const explicit = readEnv('GOOGLE_APPLICATION_CREDENTIALS');
+	const home = readEnv('HOME') || readEnv('USERPROFILE');
+	const wellKnown = home ? `${home}/.config/gcloud/application_default_credentials.json` : null;
+	const candidates = [explicit, wellKnown].filter(Boolean);
+	if (!candidates.length) return null;
+	let fs;
+	try {
+		fs = await import('node:fs/promises');
+	} catch {
+		return null; // no filesystem in this runtime
+	}
+	for (const file of candidates) {
+		let parsed;
+		try {
+			parsed = JSON.parse(await fs.readFile(file, 'utf8'));
+		} catch {
+			continue;
+		}
+		// A service-account key placed at GOOGLE_APPLICATION_CREDENTIALS is the
+		// other shape this file legitimately takes; mint from it directly.
+		if (parsed?.client_email && parsed?.private_key) return { kind: 'service_account', sa: parsed };
+		if (parsed?.client_id && parsed?.client_secret && parsed?.refresh_token) return { kind: 'authorized_user', creds: parsed };
+	}
+	return null;
+}
+
+// Exchange an ADC entry for an access token. The authorized_user shape is a
+// plain OAuth refresh-token grant; the service_account shape reuses the JWT
+// exchange the primary path already implements.
+async function _tokenFromAdc(adc, now) {
+	if (adc.kind === 'service_account') return _tokenFromServiceAccount(adc.sa);
+	const body = new URLSearchParams({
+		client_id: adc.creds.client_id,
+		client_secret: adc.creds.client_secret,
+		refresh_token: adc.creds.refresh_token,
+		grant_type: 'refresh_token',
+	});
+	// fetchUpstream rejects on any non-2xx, so there is no `res.ok` branch to
+	// write here. Its rejection carries a body excerpt, and the token endpoint's
+	// failure body is the OAuth error code rather than any credential material,
+	// so it is reduced to that code instead of being passed through whole: a
+	// stale `gcloud auth application-default login` reports `invalid_grant`, which
+	// is the one word that tells a reader to log in again.
+	let res;
+	try {
+		res = await fetchUpstream(
+			'https://oauth2.googleapis.com/token',
+			{ method: 'POST', headers: { 'content-type': 'application/x-www-form-urlencoded' }, body: body.toString() },
+			{ name: 'gcp-adc-token', timeoutMs: 10_000, attempts: 2 },
+		);
+	} catch (err) {
+		const code = /"error"\s*:\s*"([a-z_]+)"/i.exec(String(err?.message || ''))?.[1];
+		throw new Error(code ? `token endpoint refused the refresh (${code})` : 'token endpoint refused the refresh');
+	}
+	const data = await res.json();
+	return rememberToken(data.access_token, data.expires_in, now);
 }
 
 // Escape raw control characters (newline, carriage return, tab) that appear

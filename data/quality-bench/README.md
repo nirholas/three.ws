@@ -71,8 +71,18 @@ and the bench submits as an internal seed request, which the gate exempts.
 Scoring needs
 `GOOGLE_CLOUD_PROJECT` set and GCP credentials resolvable the same way every
 other Vertex Gemini caller in this repo resolves them (`GCP_SERVICE_ACCOUNT_JSON`
-env var, or the ambient Cloud Run/GCE metadata server) — see
-`api/_lib/gcp-auth.js`. Without those, the script still runs real generations
+env var, Application Default Credentials, or the ambient Cloud Run/GCE metadata
+server). See `api/_lib/gcp-auth.js`. On a developer machine the ADC path is the
+one to use, because it needs no service-account key on disk:
+
+```sh
+gcloud auth application-default login
+export GOOGLE_CLOUD_PROJECT=aerial-vehicle-466722-p5
+```
+
+An ADC file that has gone stale fails the token exchange with `invalid_grant` /
+`invalid_rapt`, which means "reauthenticate", not "misconfigured": run that same
+login command again. Without those, the script still runs real generations
 and renders, but every view's score comes back as an error (never a fabricated
 number) and that (prompt, lane, tier) combo is recorded with `status:
 "scoring_failed"`.

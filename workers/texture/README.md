@@ -330,3 +330,91 @@ size follows the tier (`TIER_DERIVED_SIZE`: draft 1024, standard 2048, high
 4096); the packed occlusion/roughness/metallic texture is written at half that,
 which is standard practice for a low-frequency channel and is why the table above
 shows a 1024 ORM beside a 2048 normal at the standard tier.
+
+## Payload: what a complete 4K PBR set costs on a phone
+
+Completing the material set is not free, and the bill lands on the slowest
+device that will ever open the model. `scripts/glb-mobile-payload.mjs` measures
+that bill end to end on a real asset: it runs the real derive pass, then the real
+compression chain (`scripts/compress-glbs.mjs`), then loads the finished GLB in
+the shipped `/avatar-embed` page under WebKit and under Android Chrome
+emulation, throttled to the Lighthouse mobile profile (1.6 Mbps, 150 ms RTT, 4x
+CPU). "Rendered" means a mesh from the model is live in the scene graph, not that
+a request returned 200, and the transfer figure is CDP `encodedDataLength`, not a
+content-length guess.
+
+```bash
+npm run dev
+npm run check:glb:payload -- --tier=high public/avatars/dancing-twerk.glb
+npm run check:glb:payload -- --tier=high --max-texture=2048 public/avatars/dancing-twerk.glb
+```
+
+`--max-texture=<px>` is the tiered-delivery lever, and it lives in
+`compress-glbs.mjs` as one more option on the chain that is already there rather
+than a second encoder: it caps every texture's longest edge through
+`textureCompress`'s own resize step, so the viewer's copy and the full-res
+download come out of one code path.
+
+The measured cost of the high tier is the reason that lever exists. Measured
+2026-09-08 on `public/avatars/dancing-twerk.glb`, a real 4096-textured avatar,
+derived at `--tier=high`:
+
+| Delivery | compressed GLB | WebKit (iPhone 13) | Android Chrome (Pixel 5), slow 4G + 4x CPU |
+| --- | --- | --- | --- |
+| full 4K | 10633 KiB | rendered | rendered, 10633 KiB over the wire, 218969 ms |
+| capped at 2048px | 6309 KiB | rendered | rendered, 6309 KiB over the wire, 205207 ms |
+
+The input was 3505 KiB; the derive pass takes it to 12114 KiB before compression,
+because a complete set is three maps where there was one. Every leg rendered, so
+nothing here is a hard failure. Two things in that table are worth reading
+carefully.
+
+The first is the 219 seconds. A complete 4K set is a DOWNLOAD format, not a
+viewer format, and a phone should be served the capped copy. That is not a new
+endpoint to build, it is
+`/api/avatar/optimize?src=...&textureSize=1024` (or 2048), which the embed page
+already routes through when a `textureSize`, `lod`, `morphs` or `draco` parameter
+is present (`optimizedUrl()` in `src/avatar-embed.js`), and whose own ceiling is
+2048 by construction. The raw GLB URL stays the full-res download.
+
+The second is that halving the payload barely moved the clock: 41% fewer bytes
+bought 6% less time. So on this harness the wall clock is not network-bound at
+all, it is bound by SwiftShader decoding textures and rasterizing a skinned mesh
+under a 4x CPU throttle, and a real phone with a real GPU will not reproduce
+these seconds. Treat the transfer column as the honest, portable number (it is
+CDP `encodedDataLength`, so it is what a real device would actually download) and
+the millisecond column as a ceiling measured on the slowest renderer available,
+useful for catching a regression against itself rather than as a field budget.
+The same caveat applies doubly to the WebKit timings, which additionally have no
+network throttling available through Playwright: read those as "it opens".
+
+The practical consequence is that texture size is the lever for bytes, and the
+lever for time is somewhere else (mesh complexity, texture COUNT, and the decode
+format). That is worth knowing before anyone spends a week tuning resolutions to
+fix a load time.
+
+## Reproducing the avatar material readback
+
+`workers/texture` finishes the material on a generated mesh. The viewer finishes
+it again at load time for avatars specifically, where skin, eyes and hair each
+need a different physical answer than a generic dielectric
+(`src/shared/avatar-material-realism.js`). `scripts/avatar-realism-shots.mjs`
+proves that pass ran, rather than assuming it:
+
+```bash
+npm run dev
+npm run shots:avatar-realism
+```
+
+It screenshots the avatar at 320, 768 and 1440 px and writes
+`docs/assets/avatar-realism/avatar-realism-readback.json`, which records the
+physical values that actually landed per class. On
+`/avatars/realistic-male.glb` that is 6 classified meshes at every breakpoint:
+both eyes physical with clearcoat 1 and IOR 1.376, both skin meshes at roughness
+0.6 with sheen 0.35 and specular 0.6, hair at 0.55 with sheen 0.5, teeth at 0.25.
+The script exits nonzero when no skin or eye material was upgraded.
+
+It loads `/avatar-embed`, NOT `/viewer`. Those are different pages: `/viewer`
+hands the model to `<model-viewer>`, which brings its own three.js and never runs
+this pass, and it rejects any `?src=` that is not an absolute https URL. A
+readback taken there reports zero meshes no matter what the pass does.
