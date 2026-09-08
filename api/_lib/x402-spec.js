@@ -1164,7 +1164,11 @@ export async function settlePayment(args) {
 		// (tens of thousands of 502 settle_failed rows during the July 2026 dry
 		// spells). 503 + the retryable code tells callers to back off and retry;
 		// genuinely unexplained settle failures stay 502.
-		if (/^(fee_wallet_below_floor|sponsor_sol_floor|sol_floor)/.test(reason)) {
+		// `fee_wallet_cannot_cover_settle` is the same class: the wallet clears the
+		// floor but not by this settle's own cost (an ATA-create for a mint the
+		// recipient has never held carries ~0.00204 SOL of rent). Same cure, a
+		// top-up, so it must not read as a broken endpoint either.
+		if (/^(fee_wallet_below_floor|fee_wallet_cannot_cover_settle|sponsor_sol_floor|sol_floor)/.test(reason)) {
 			throw new X402Error(
 				'settlement_unavailable',
 				`settlement temporarily unavailable: ${reason} (sponsor wallet below its SOL floor; retry after it is refunded)`,

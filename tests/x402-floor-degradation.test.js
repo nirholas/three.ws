@@ -51,6 +51,13 @@ describe('settlePayment floor classification', () => {
 	// the floor branch, so it kept answering 502 long after the floor stopped:
 	// 15,619 of the autonomous loop's 20,030 `http_502` rows in the 48h to
 	// 2026-08-06 were this one refusal wearing a server-fault status.
+	// A wallet that clears the floor but cannot afford this settle's ATA rent is
+	// the same transient funding gap, and must not read as a broken endpoint.
+	it('maps fee_wallet_cannot_cover_settle to 503 settlement_unavailable', async () => {
+		const err = await settleAgainst('fee_wallet_cannot_cover_settle:2100000-2049281<2000000');
+		expect(err).toMatchObject({ code: 'settlement_unavailable', status: 503 });
+	});
+
 	it('maps fee_runway_exhausted to 503 settlement_unavailable', async () => {
 		const err = await settleAgainst('fee_runway_exhausted:10132243+10000>10000000');
 		expect(err).toMatchObject({ code: 'settlement_unavailable', status: 503 });
@@ -65,20 +72,50 @@ describe('settlePayment floor classification', () => {
 describe('sponsorKnownBelowFloor', () => {
 	beforeEach(() => vi.resetModules());
 
-	it('reflects the last balance the settle path observed', async () => {
+	it('reflects the last balance the settle path observed for the sponsor', async () => {
+		// The state gates the SPONSORED accept, so only the advertised fee payer
+		// may write it. A read of any other wallet is somebody else's balance.
+		const SPONSOR = 'SponsorSponsorSponsorSponsorSponsorSponsor1';
+		process.env.X402_FEE_PAYER_SOLANA = SPONSOR;
 		const { sponsorSolLamports, sponsorKnownBelowFloor } = await import('../api/_lib/x402/self-facilitator.js');
-		const pubkey = { toBase58: () => 'SponsorSponsorSponsorSponsorSponsorSponsor1' };
+		const pubkey = { toBase58: () => SPONSOR };
 
 		// Fresh module: no observation yet, must fail open (not paused).
 		expect(sponsorKnownBelowFloor()).toBe(false);
 
-		await sponsorSolLamports({ getBalance: async () => 19_000_000 }, pubkey);
-		expect(sponsorKnownBelowFloor()).toBe(true);
+		const t0 = Date.now();
+		await sponsorSolLamports({ getBalance: async () => 19_000_000 }, pubkey, t0);
+		expect(sponsorKnownBelowFloor(t0)).toBe(true);
 
-		// A later healthy read clears it. Fresh pubkey defeats the balance cache.
-		const pubkey2 = { toBase58: () => 'SponsorSponsorSponsorSponsorSponsorSponsor2' };
-		await sponsorSolLamports({ getBalance: async () => 500_000_000 }, pubkey2);
-		expect(sponsorKnownBelowFloor()).toBe(false);
+		// A later healthy read of the SAME wallet clears it. The read is dated
+		// past the balance cache TTL so it actually re-reads rather than
+		// replaying the dry observation.
+		const t1 = t0 + 10 * 60_000;
+		await sponsorSolLamports({ getBalance: async () => 500_000_000 }, pubkey, t1);
+		expect(sponsorKnownBelowFloor(t1)).toBe(false);
+	});
+
+	it('ignores a healthy balance read for a wallet that is not the sponsor', async () => {
+		// A self-pay buyer pays its own fee, so its balance says nothing about
+		// whether the sponsor can still settle. Letting it write the shared state
+		// re-advertised sponsored accepts that were guaranteed to fail.
+		process.env.X402_FEE_PAYER_SOLANA = 'SponsorSponsorSponsorSponsorSponsorSponsor1';
+		const { sponsorSolLamports, sponsorKnownBelowFloor } = await import('../api/_lib/x402/self-facilitator.js');
+
+		const t0 = Date.now();
+		await sponsorSolLamports(
+			{ getBalance: async () => 19_000_000 },
+			{ toBase58: () => 'SponsorSponsorSponsorSponsorSponsorSponsor1' },
+			t0,
+		);
+		expect(sponsorKnownBelowFloor(t0)).toBe(true);
+
+		await sponsorSolLamports(
+			{ getBalance: async () => 500_000_000 },
+			{ toBase58: () => 'BuyerBuyerBuyerBuyerBuyerBuyerBuyerBuyer22' },
+			t0,
+		);
+		expect(sponsorKnownBelowFloor(t0)).toBe(true);
 	});
 
 	it('warms itself on instances that never settle', async () => {
@@ -113,8 +150,10 @@ describe('sponsorKnownBelowFloor', () => {
 	});
 
 	it('expires: a stale observation stops pausing the challenge', async () => {
+		const SPONSOR = 'SponsorSponsorSponsorSponsorSponsorSponsor3';
+		process.env.X402_FEE_PAYER_SOLANA = SPONSOR;
 		const { sponsorSolLamports, sponsorKnownBelowFloor } = await import('../api/_lib/x402/self-facilitator.js');
-		const pubkey = { toBase58: () => 'SponsorSponsorSponsorSponsorSponsorSponsor3' };
+		const pubkey = { toBase58: () => SPONSOR };
 		await sponsorSolLamports({ getBalance: async () => 19_000_000 }, pubkey);
 
 		expect(sponsorKnownBelowFloor(Date.now())).toBe(true);

@@ -123,6 +123,33 @@ function isEvmNetwork(net) {
 	return typeof net === 'string' && net.startsWith('eip155:');
 }
 
+/** Display symbol for an accept's asset, normalizing the long USDC name. */
+function assetSymbol(accept) {
+	return String(accept?.extra?.name || 'USDC').replace(/^USD Coin$/, 'USDC');
+}
+
+/**
+ * Every Solana accept the challenge offers, one per distinct asset mint and in
+ * advertised order (so the server's preferred token stays first / default).
+ *
+ * A resource may price itself in several tokens on the same network: three.ws
+ * advertises USDC and $THREE on every paid endpoint. The modal used to take the
+ * first Solana accept and offer no way to reach the rest, so a second token was
+ * advertised in the 402 but unpayable in the browser.
+ */
+function solanaAcceptsOf(challenge) {
+	const seen = new Set();
+	const out = [];
+	for (const accept of challenge?.accepts || []) {
+		if (!isSolanaNetwork(accept.network)) continue;
+		const key = accept.asset || assetSymbol(accept);
+		if (seen.has(key)) continue;
+		seen.add(key);
+		out.push(accept);
+	}
+	return out;
+}
+
 // Resolve the active injected Solana wallet provider. Priority mirrors
 // src/onchain/adapters/solana.js so the drop-in modal recognizes the SAME
 // wallets the rest of three.ws does — most importantly the platform's own
@@ -841,6 +868,33 @@ const STYLES = `
 	margin: 4px 0 0;
 }
 
+/* Token chooser: shown only when one network advertises the same resource in
+   more than one asset (e.g. USDC and $THREE on Solana). Without it the modal
+   silently settled the first accept and a second advertised token was
+   unreachable no matter what the buyer held. */
+.x402-token-choice {
+	display: flex; gap: 6px; margin: 0 0 10px;
+}
+.x402-token-btn {
+	flex: 1 1 0; min-width: 0; padding: 8px 10px;
+	background: #ffffff; border: 1.5px solid #e2e5ec; border-radius: 10px;
+	font-family: inherit; cursor: pointer; text-align: center;
+	transition: border-color 0.12s, background 0.12s, transform 0.05s;
+}
+.x402-token-btn:hover:not(:disabled) { border-color: #0a84ff; background: #f7faff; }
+.x402-token-btn:active:not(:disabled) { transform: translateY(1px); }
+.x402-token-btn[aria-checked="true"] { border-color: #0a84ff; background: #f0f7ff; }
+.x402-token-btn:focus-visible { outline: 2px solid #0a84ff; outline-offset: 2px; }
+.x402-token-sym {
+	display: block; font-size: 13px; font-weight: 700; color: #0f0f0f;
+	overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.x402-token-amt {
+	display: block; font-size: 11px; font-weight: 500; color: #8a90a8;
+	margin-top: 1px; font-feature-settings: 'tnum' 1;
+	overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+
 .x402-pay-btn {
 	width: 100%; padding: 14px 16px;
 	background: #0f0f0f; color: #fff; border: none;
@@ -1008,6 +1062,11 @@ const STYLES = `
 	.x402-wallet-meta { color: #6b7088; }
 	.x402-wallet-sub { color: #6b7088; }
 	.x402-wallet-group-label { color: #6b7088; }
+	.x402-token-btn { background: #1d1d1d; border-color: #2e2e2e; }
+	.x402-token-btn:hover:not(:disabled) { background: #252525; border-color: #0a84ff; }
+	.x402-token-btn[aria-checked="true"] { background: #10243a; border-color: #0a84ff; }
+	.x402-token-sym { color: #e6e8f0; }
+	.x402-token-amt { color: #6b7088; }
 	.x402-pay-btn { background: #ffffff; color: #0f0f0f; }
 	.x402-pay-btn:hover:not(:disabled) { background: #e7e9ee; }
 	.x402-pay-btn:disabled { background: #2e2e2e; color: #5a6378; }
@@ -1225,9 +1284,49 @@ class CheckoutModal {
 	setPrice(accept) {
 		const decimals = accept.extra?.decimals ?? 6;
 		const amount = formatAmount(accept.amount, decimals);
-		const sym = (accept.extra?.name || 'USDC').replace(/^USD Coin$/, 'USDC');
+		const sym = assetSymbol(accept);
 		this.priceEl.innerHTML = `${amount}<span class="x402-currency"> ${sym}</span>`;
 		this.networkEl.textContent = networkLabel(accept.network, accept);
+	}
+
+	/**
+	 * The Solana accept the buyer is currently paying with: their explicit token
+	 * choice when they made one, otherwise the first token the server advertised.
+	 */
+	pickedSolanaAccept() {
+		// Derive lazily too: renderConnect is reachable from retry paths that may
+		// not have gone through start() on this challenge object.
+		if (!this.solanaAccepts) this.solanaAccepts = solanaAcceptsOf(this.challenge);
+		const list = this.solanaAccepts;
+		if (!list.length) return undefined;
+		const picked = this.solanaAssetKey
+			? list.find((a) => (a.asset || assetSymbol(a)) === this.solanaAssetKey)
+			: null;
+		return picked || list[0];
+	}
+
+	/**
+	 * Token chooser for a resource priced in more than one Solana asset. Renders
+	 * nothing for the single-token case, so the common checkout is unchanged.
+	 */
+	renderTokenChoice() {
+		const list = this.solanaAccepts || [];
+		if (list.length < 2) return '';
+		const active = this.pickedSolanaAccept();
+		const options = list.map((accept) => {
+			const key = accept.asset || assetSymbol(accept);
+			const sym = assetSymbol(accept);
+			const amount = formatAmount(accept.amount, accept.extra?.decimals ?? 6);
+			const on = accept === active;
+			return `
+				<button class="x402-token-btn" role="radio" aria-checked="${on ? 'true' : 'false'}"
+					data-token="${escapeHtml(key)}" title="${escapeHtml(`Pay ${amount} ${sym}`)}">
+					<span class="x402-token-sym">${escapeHtml(sym)}</span>
+					<span class="x402-token-amt">${escapeHtml(amount)}</span>
+				</button>
+			`;
+		}).join('');
+		return `<div class="x402-token-choice" role="radiogroup" aria-label="Pay with">${options}</div>`;
 	}
 
 	renderConnect() {
@@ -1235,8 +1334,10 @@ class CheckoutModal {
 		const solanaProvider = detectSolanaProvider();
 		const phantomDetected = !!solanaProvider;
 		const evmDetected = typeof window !== 'undefined' && window.ethereum;
-		const solanaAccept = this.challenge?.accepts.find((a) => isSolanaNetwork(a.network));
+		const solanaAccept = this.pickedSolanaAccept();
 		const evmAccept = this.challenge?.accepts.find(isEip3009Accept);
+		// Keep the header price in step with the chosen token.
+		if (solanaAccept) { this.accept = solanaAccept; this.setPrice(solanaAccept); }
 
 		// Charity / round-up giving — only when the merchant configured it and the
 		// cause wallet is reachable on this Solana checkout. Default-included, but
@@ -1266,7 +1367,12 @@ class CheckoutModal {
 		// is actually detected. Zero wallets (must install) or two (must choose)
 		// still fall through to the picker, as does the SIWX "you haven't paid"
 		// fallback, which needs to explain itself. One-shot via autoConnectTried.
-		if (this.opts.autoConnect && !this.autoConnectTried && !this.siwxFallbackNotice) {
+		// A multi-token resource always shows the picker at least once: skipping
+		// straight to the signature would silently commit the buyer to the first
+		// advertised token and hide the fact that the other one is payable at all.
+		// Once they pick, the choice is explicit and autoConnect is moot.
+		const mustChooseToken = (this.solanaAccepts?.length || 0) > 1 && !this.solanaAssetKey;
+		if (this.opts.autoConnect && !this.autoConnectTried && !this.siwxFallbackNotice && !mustChooseToken) {
 			this.autoConnectTried = true;
 			const solanaViable = !!(solanaAccept && phantomDetected);
 			const evmViable = !!(evmAccept && evmDetected);
@@ -1289,8 +1395,14 @@ class CheckoutModal {
 		// Solana accept charges USDC, matching the server-side mint pin in
 		// api/x402-pay (it refuses to sign any other SPL asset from an agent key).
 		const agentButtons = [];
-		const agentSym = (solanaAccept?.extra?.name || 'USDC').replace(/^USD Coin$/, 'USDC');
-		if (solanaAccept && agentSym === 'USDC' && Array.isArray(this.agentWallets) && this.agentWallets.length) {
+		const agentSym = solanaAccept ? assetSymbol(solanaAccept) : 'USDC';
+		const hasAgents = Array.isArray(this.agentWallets) && this.agentWallets.length > 0;
+		// Say WHY the agent wallets went away when the buyer switches to a token
+		// they cannot sign, instead of letting the list silently disappear.
+		const agentNote = hasAgents && solanaAccept && agentSym !== 'USDC'
+			? `<div class="x402-trust">Your agent wallets pay in USDC only: switch to USDC to use them, or pay ${escapeHtml(agentSym)} from a browser wallet.</div>`
+			: '';
+		if (solanaAccept && agentSym === 'USDC' && hasAgents) {
 			const decimals = Number(solanaAccept.extra?.decimals ?? 6);
 			const priceUsdc = Number(solanaAccept.amount) / 10 ** decimals;
 			for (const agent of this.agentWallets.slice(0, 4)) {
@@ -1343,12 +1455,32 @@ class CheckoutModal {
 			${this.renderSteps('connect', { discover: 'done' })}
 			${payeeBox}
 			${fallbackBox}
+			${this.renderTokenChoice()}
 			${givingBox}
 			<div class="x402-wallet-buttons">${walletList}</div>
+			${agentNote}
 			<div class="x402-trust">${trustLine}</div>
 		`;
 		const giveEl = this.bodyEl.querySelector('[data-giving]');
 		if (giveEl) giveEl.addEventListener('change', (e) => { this.includeDonation = !!e.target.checked; });
+		// Token chooser: re-render so the price row, the giving box (its round-up
+		// is denominated in the paying asset) and the agent-wallet list all follow
+		// the newly chosen token.
+		this.bodyEl.querySelectorAll('[data-token]').forEach((b) => {
+			b.addEventListener('click', () => {
+				const key = b.dataset.token;
+				if (this.solanaAssetKey === key) return;
+				this.solanaAssetKey = key;
+				this.renderConnect();
+				// Keep focus on the token the buyer just chose. Matched by walking
+				// the fresh buttons rather than by selector: a mint is caller-shaped
+				// text, so building a selector out of it needs escaping the modal
+				// should not depend on.
+				const again = [...this.bodyEl.querySelectorAll('[data-token]')]
+					.find((el) => el.dataset.token === key);
+				try { again?.focus(); } catch { /* focus is best-effort */ }
+			});
+		});
 		const onClick = (e) => {
 			const btn = e.target.closest('[data-wallet]');
 			if (!btn || btn.disabled) return;
@@ -1381,7 +1513,7 @@ class CheckoutModal {
 		this.bodyEl.innerHTML = `
 			${this.renderSteps('connect', { discover: 'done' })}
 			<button class="x402-pay-btn" data-action="siwx">${siwxLabel}</button>
-			<button class="x402-pay-secondary" data-action="pay">Pay ${priceText} USDC instead</button>
+			<button class="x402-pay-secondary" data-action="pay">Pay ${priceText} ${escapeHtml(assetSymbol(this.accept))} instead</button>
 			<div class="x402-siwx-hint">Already paid for this once? Sign in to re-enter without paying again.</div>
 		`;
 		const siwxBtn = this.bodyEl.querySelector('[data-action="siwx"]');
@@ -1551,7 +1683,12 @@ class CheckoutModal {
 			// first), so EVM users simply click the EVM option. Falls back to the
 			// first EIP-3009 EVM entry (skipping Permit2 siblings the modal can't
 			// sign for), then the first accept.
-			const solana = challenge.accepts.find((a) => isSolanaNetwork(a.network));
+			// A resource can price itself in several Solana tokens (USDC and
+			// $THREE). Default to the first advertised one and let renderConnect
+			// offer the rest through the token chooser.
+			this.solanaAccepts = solanaAcceptsOf(challenge);
+			this.solanaAssetKey = null;
+			const solana = this.pickedSolanaAccept();
 			const evm = challenge.accepts.find(isEip3009Accept);
 			this.accept = solana || evm || challenge.accepts[0];
 			this.setPrice(this.accept);
@@ -2324,6 +2461,22 @@ async function discoverChallenge(opts) {
 		// case, surface a clear error — accidentally pointing the modal at a
 		// free endpoint should not silently succeed.
 		const txt = await res.text();
+		// A paid endpoint that cannot settle right now answers 503
+		// settlement_unavailable (the sponsor wallet is under its SOL floor, or
+		// the fee budget is spent). That is a temporary funding gap on our side,
+		// not a broken link or a buyer mistake, so say so in a sentence instead
+		// of pasting a JSON envelope at someone trying to walk through a door.
+		let parsed = null;
+		try { parsed = JSON.parse(txt); } catch { /* not JSON: fall through */ }
+		if (res.status === 503 || parsed?.error === 'settlement_unavailable') {
+			const err = new Error(
+				'Payments are temporarily paused while we top up the wallet that settles them. ' +
+				'Nothing was charged. Try again shortly.',
+			);
+			err.code = 'settlement_unavailable';
+			err.retryable = true;
+			throw err;
+		}
 		throw new Error(`Endpoint did not return 402 (got ${res.status}). Body: ${txt.slice(0, 120)}`);
 	}
 

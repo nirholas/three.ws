@@ -400,6 +400,19 @@ function noteFloorState(lamports, now) {
 }
 
 /**
+ * Record floor state only for the wallet the 402 challenge actually advertises.
+ *
+ * `_floorState` gates whether buildRequirements keeps offering the SPONSORED
+ * Solana accept, so it is only meaningful for X402_FEE_PAYER_SOLANA. Recording
+ * it from any fee wallet let a healthy self-pay buyer stamp `below:false` and
+ * re-advertise a starved sponsor for the full FLOOR_STATE_MS, which is how a
+ * dry sponsor kept handing out accepts that could not settle (2026-09).
+ */
+function noteFloorStateFor(pubkeyB58, lamports, now) {
+	if (pubkeyB58 === env.X402_FEE_PAYER_SOLANA) noteFloorState(lamports, now);
+}
+
+/**
  * Is this simulation error the chain saying the FEE PAYER cannot afford the fee
  * without dropping below rent exemption?
  *
@@ -491,7 +504,7 @@ export async function sponsorSolLamports(conn, feePayerPubkey, now = Date.now())
 	if (hit && hit.lamports != null && now - hit.at < SOL_CACHE_MS) return hit.lamports;
 	const lamports = await conn.getBalance(feePayerPubkey, 'confirmed');
 	_solCache.set(key, { lamports, at: now });
-	noteFloorState(lamports, now);
+	noteFloorStateFor(key, lamports, now);
 	return lamports;
 }
 
@@ -501,7 +514,7 @@ function bumpSolCache(pubkeyB58, deltaLamports) {
 	const hit = _solCache.get(pubkeyB58);
 	if (hit && hit.lamports != null) {
 		hit.lamports = Math.max(0, hit.lamports - deltaLamports);
-		noteFloorState(hit.lamports, Date.now());
+		noteFloorStateFor(pubkeyB58, hit.lamports, Date.now());
 	}
 }
 
@@ -572,6 +585,24 @@ export async function settleRingPayment({ paymentPayload, requirement, conn, fee
 			success: false,
 			reason: `fee_wallet_below_floor:${solLamports}<${SPONSOR_SOL_FLOOR_LAMPORTS}`,
 			sponsorSolLamports: solLamports,
+			feePayer: decoded.feePayer,
+			selfPay,
+		};
+	}
+
+	// The floor is a reserve that must SURVIVE this settle, so the wallet has to
+	// clear it by the cost of the settle itself, not merely sit above it.
+	// estFeeLamports carries the ATA-create rent (~0.00204 SOL) when the recipient
+	// has no token account for this mint yet, which is the normal state the first
+	// time a resource is paid in a new token. Comparing the bare balance let such
+	// a settle pass the gate and then die on chain with InsufficientFundsForRent,
+	// a confusing failure at exactly the moment a new payment token goes live.
+	if (solLamports - estFeeLamports < SPONSOR_SOL_FLOOR_LAMPORTS) {
+		return {
+			success: false,
+			reason: `fee_wallet_cannot_cover_settle:${solLamports}-${estFeeLamports}<${SPONSOR_SOL_FLOOR_LAMPORTS}`,
+			sponsorSolLamports: solLamports,
+			estFeeLamports,
 			feePayer: decoded.feePayer,
 			selfPay,
 		};

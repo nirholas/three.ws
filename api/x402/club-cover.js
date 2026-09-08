@@ -31,9 +31,10 @@ import clubCoverListing from '../_lib/service-catalog/services/club-cover.js';
 
 const ROUTE = '/api/x402/club-cover';
 
-// PASS_TTL_SEC + the bouncer (ban/tier/pass) live in ../_lib/club/cover-pass.js
-// so the USDC door here and the $THREE door (api/club/cover-three.js) issue an
-// identical pass.
+// PASS_TTL_SEC + the bouncer (ban/tier/pass) live in ../_lib/club/cover-pass.js.
+// There is one door, not two: this route's 402 advertises both the USDC and the
+// $THREE accept (see X402_ACCEPT_THREE_SOLANA in api/_lib/env.js), so whichever
+// token the buyer picks in the checkout issues the same pass.
 
 // Single source of truth: api/_lib/service-catalog/services/club-cover.js is
 // the storefront listing copy — importing it here keeps the live 402 challenge
@@ -103,8 +104,8 @@ const BAZAAR = {
 };
 
 // normalizeWallet / findBan / visitsFor / tierFor live in
-// ../_lib/club/cover-pass.js so the USDC door here and the $THREE door share
-// one bouncer (and one DB-backed ban/tier lookup). Imported above.
+// ../_lib/club/cover-pass.js, so the bouncer (and its DB-backed ban/tier
+// lookup) is one implementation regardless of which token paid. Imported above.
 
 export const BAZAAR_SCHEMA = BAZAAR;
 
