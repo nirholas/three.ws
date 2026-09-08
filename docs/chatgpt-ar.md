@@ -120,7 +120,7 @@ Everything above is public plumbing:
 - **Any MCP client:** the connector at `/api/mcp-studio` works in Claude and every other MCP host, not just ChatGPT. Every generation it returns already carries `arUrl` (and `irlUrl` for rigged avatars) plus a [Spatial MCP](./spatial-mcp.md) artifact, so no extra tool call is needed to get the AR link. To build that link set for a GLB the connector did **not** generate, use the read-only `export_ar` tool on the separate [`/api/mcp-3d` server](./mcp-3d-studio.md), which returns `arLaunchUrl`, `sceneViewerUrl`, `viewerUrl`, and `irlUrl`. That server is account- or payment-gated and is not part of the free connector.
 - **By hand:** the `arUrl` format is stable. If you have a public GLB, you can construct `https://three.ws/api/ar?src=<encoded GLB>&title=<name>` yourself and it will route correctly on every device.
 
-The generation lane is operator-funded (NVIDIA NIM running Microsoft TRELLIS for text-to-3D), so the end user pays nothing and needs no account; real per-IP rate limits apply and are documented per endpoint.
+The generation lane is operator-funded, so the end user pays nothing and needs no account. No backend is pinned: the health-aware router in [api/gpt-forge.js](../api/gpt-forge.js) walks the free lanes first (the self-hosted TRELLIS worker, the free NVIDIA NIM text→3D lane, the Hugging Face Spaces image→3D lane) and keeps the platform-keyed Replicate lane as a failover rung, so a cold or throttled free worker degrades to the next healthy engine instead of failing the request. Either way the cost lands on the platform. Real per-IP rate limits apply and are documented per endpoint (see [Funding & limits](./mcp-studio.md#funding--limits)).
 
 ---
 

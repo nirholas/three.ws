@@ -5,8 +5,11 @@
 //
 //   • Android  → Google Scene Viewer via an ARCore intent:// URL (the GLB is the
 //                Scene Viewer source), with a browser fallback to the WebGL viewer.
-//   • iOS / desktop / any live avatar → a 302 to /ar/view (pages/ar-view.html,
-//                src/ar-view.js), a Vite-bundled page that generates a real USDZ
+//   • iOS / desktop / any live avatar → /ar/view (pages/ar-view.html,
+//                src/ar-view.js), reached through the Open-Graph interstitial
+//                api/ar.js serves so a pasted link still unfurls (a bare 302
+//                would drop the unfurl; crawlers do not follow its JS). That
+//                Vite-bundled page generates a real USDZ
 //                from the GLB on the device (three.js USDZExporter) and sets it
 //                as <model-viewer>'s ios-src before Quick Look is offered.
 //                <model-viewer> does NOT convert GLB to USDZ on its own: an

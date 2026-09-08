@@ -54,7 +54,7 @@ You do not add an attribute to enable AR; you link to (or embed) one of the AR s
 | AR Forge | `/ar` | Generate a model from a prompt and place it immediately |
 | Living-agent AR | `/irl?avatar=<glbUrl>` | A rigged avatar that walks and talks in your room (WebXR) |
 
-The avatar AR page and the `/api/ar` launch page render the model in Google's `<model-viewer>` element with `ar ar-modes="webxr scene-viewer quick-look"`, so the same page covers Quick Look, Scene Viewer, and WebXR. The **Place in your space** button appears only when the device exposes a usable AR mode (model-viewer's `canActivateAR`); on desktop the page shows a QR code handoff instead.
+The avatar AR page and `/ar/view` (the page `/api/ar` redirects to) render the model in Google's `<model-viewer>` element with `ar ar-modes="webxr scene-viewer quick-look"`, so the same page covers Quick Look, Scene Viewer, and WebXR. The **Place in your space** button appears only when the device exposes a usable AR mode (model-viewer's `canActivateAR`); on desktop the page shows a QR code handoff instead. `/api/ar` itself renders no 3D: it is a server-side router that either 302s into a Scene Viewer intent (plain Android) or serves a tiny Open-Graph interstitial that hands off to `/ar/view` (see [the launcher section](#one-tap-ar-for-any-glb--get-apiar--export_ar)).
 
 ### Allow XR in iframes
 
@@ -73,7 +73,7 @@ Without `xr-spatial-tracking`, the browser blocks `navigator.xr` inside the fram
 
 ## Programmatic API
 
-On pages that render the model with `<model-viewer>` (the avatar AR page at `/avatars/<id>/ar`, the `/api/ar` launch page, Forge results), AR is driven through model-viewer's API. This is exactly what [src/ar-page.js](../src/ar-page.js) does:
+On pages that render the model with `<model-viewer>` (the avatar AR page at `/avatars/<id>/ar`, the `/ar/view` launch page, Forge results), AR is driven through model-viewer's API. This is exactly what [src/ar-page.js](../src/ar-page.js) does:
 
 ```js
 const viewer = document.querySelector('model-viewer');
@@ -424,9 +424,9 @@ The endpoint branches on the request's **User-Agent**, server-side:
 
 | Device | What happens |
 |---|---|
-| **iOS** (iPhone/iPad) | Launch page → Apple **Quick Look**. The USDZ is generated from the GLB on the fly by model-viewer (three.js `USDZExporter`) — a real conversion, no server USD tooling. |
+| **iOS** (iPhone/iPad) | An Open-Graph interstitial that hands off to the `/ar/view` launch page → Apple **Quick Look**. That page converts the GLB to a real USDZ on the device with three.js `USDZExporter` and sets it as model-viewer's `ios-src`; `<model-viewer>` does **not** do that conversion itself, which is why the launcher redirects to a Vite-bundled page instead of writing HTML inline. No server USD tooling. |
 | **Android** | `302` → Google **Scene Viewer** ARCore intent (the GLB is the source), with a browser fallback to the WebGL viewer. |
-| **Desktop** | Launch page → interactive **WebGL** viewer (no AR hardware). |
+| **Desktop** | The same interstitial into the `/ar/view` launch page, which falls back to the interactive **WebGL** viewer (no AR hardware). |
 
 **`kind=avatar`: the living-agent lane.** AR on three.ws is not a prop viewer; it is how agents cross into physical space. When the GLB is a rigged avatar (an agent's body), add `kind=avatar`: the launch page then leads with a **Bring it to life** handoff into [`/irl?avatar=<glbUrl>`](/irl), where the avatar walks, animates, and talks with the user through their camera in their real room. Static placement stays available alongside it, and Android serves the launch page instead of the blind Scene Viewer redirect so the living path is always visible.
 
