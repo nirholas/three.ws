@@ -15,6 +15,14 @@
 			<description>Every avatar the platform loads gets its skin, eyes, hair and teeth re-shaded with real-world material values the moment it appears: skin at the roughness bare skin actually has with a warm scattering layer, a wet cornea that catches a highlight, and hair that reads as strands rather than a helmet. That pass was already running, but the check meant to prove it was pointed at the wrong page and had been quietly reporting nothing at all, so it could not have caught the day it broke. It now runs against the same embed page your visitors see, at phone, tablet and desktop widths, and records exactly which materials it upgraded and to what values. Alongside it, a new check loads a full 4K-textured model on an emulated iPhone and Android phone over a slow mobile connection and measures the real bytes and load time, so a model that would not open on a phone is caught before it ships rather than after.</description>
 		</item>
 		<item>
+			<title>Buttons that looked dead now respond, and the whole site paints from one palette</title>
+			<link>https://three.ws/marketplace</link>
+			<guid isPermaLink="false">2026-09-08:Buttons that looked dead now respond, and the whole site paints from one palette</guid>
+			<pubDate>Tue, 08 Sep 2026 12:00:00 GMT</pubDate>
+			<category>improvement</category>
+			<description>A consistency pass across the platform. Fifty controls set the clickable cursor but had no hover styling at all, so the pointer changed shape and the button did not, which made working controls read as broken; the marketplace, Widget Studio, the brain workspace, the pump dashboard, agent detail and the on-chain deploy panel now all answer under the pointer, on the same timing. The retry buttons on an agent page were the worst case, because they only appear after something already failed. Separately, 73 colours were still typed in by hand across 24 stylesheets instead of coming from the shared palette, which is why a handful of panels stayed dark when you switched to the light theme and why some captions drifted a shade off everywhere else; they now all read from one source. Eight standalone pages that had quietly grown their own private palette (the demos, Widget Studio, the dashboard sub-pages, the print insert, agent detail) were folded back onto the shared one, so they also pick up the site-wide keyboard focus ring and the reduced-motion setting for the first time. Two new checks keep both from creeping back.</description>
+		</item>
+		<item>
 			<title>Forge tells you when uploads are down, instead of blaming your connection</title>
 			<link>https://three.ws/forge</link>
 			<guid isPermaLink="false">2026-09-08:Forge tells you when uploads are down, instead of blaming your connection</guid>
