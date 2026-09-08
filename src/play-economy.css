@@ -116,9 +116,9 @@
 	text-decoration: none;
 	cursor: pointer;
 	transition:
-		background 0.18s ease,
-		border-color 0.18s ease,
-		transform 0.18s ease;
+		background var(--duration-fast) var(--ease-standard),
+		border-color var(--duration-fast) var(--ease-standard),
+		transform var(--duration-fast) var(--ease-standard);
 }
 .pe-btn:hover {
 	background: var(--surface-2, rgba(255, 255, 255, 0.06));
@@ -212,8 +212,8 @@
 	border-radius: var(--radius-lg, 14px);
 	background: var(--surface-1, rgba(255, 255, 255, 0.03));
 	transition:
-		border-color 0.18s ease,
-		transform 0.18s ease;
+		border-color var(--duration-fast) var(--ease-standard),
+		transform var(--duration-fast) var(--ease-standard);
 }
 .pe-cur::before {
 	content: '';
@@ -309,7 +309,7 @@
 	border-bottom: 0;
 }
 .pe-table tbody tr {
-	transition: background 0.14s ease;
+	transition: background var(--duration-fast) var(--ease-standard);
 }
 .pe-table tbody tr:hover {
 	background: var(--surface-1, rgba(255, 255, 255, 0.03));
@@ -394,9 +394,9 @@
 	border-radius: var(--radius-md, 10px);
 	background: var(--surface-1, rgba(255, 255, 255, 0.03));
 	transition:
-		transform 0.18s ease,
-		border-color 0.18s ease,
-		background 0.18s ease;
+		transform var(--duration-fast) var(--ease-standard),
+		border-color var(--duration-fast) var(--ease-standard),
+		background var(--duration-fast) var(--ease-standard);
 }
 .pe-fit:hover {
 	transform: translateY(-2px);

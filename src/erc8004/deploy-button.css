@@ -49,9 +49,9 @@
 	font-weight: 500;
 	cursor: pointer;
 	transition:
-		background-color 0.15s,
-		border-color 0.15s,
-		color 0.15s;
+		background-color var(--duration-fast),
+		border-color var(--duration-fast),
+		color var(--duration-fast);
 	max-width: 12em;
 }
 
@@ -97,9 +97,9 @@
 	font-weight: 600;
 	cursor: pointer;
 	transition:
-		background 0.15s,
-		color 0.15s,
-		border-color 0.15s;
+		background var(--duration-fast),
+		color var(--duration-fast),
+		border-color var(--duration-fast);
 	white-space: nowrap;
 }
 
@@ -138,7 +138,7 @@
 	font-weight: 600;
 	text-decoration: none;
 	white-space: nowrap;
-	transition: opacity 0.15s;
+	transition: opacity var(--duration-fast);
 }
 
 .deploy-chip--success {
@@ -170,8 +170,8 @@
 	padding: 0.2em 0.5em;
 	border-radius: 6px;
 	transition:
-		color 0.2s,
-		background 0.2s;
+		color var(--duration-base),
+		background var(--duration-base);
 }
 
 .progress-step--pending {
@@ -238,9 +238,9 @@
 	font-family: inherit;
 	cursor: pointer;
 	transition:
-		background 0.15s,
-		border-color 0.15s,
-		color 0.15s;
+		background var(--duration-fast),
+		border-color var(--duration-fast),
+		color var(--duration-fast);
 }
 
 .deploy-action-btn:hover {

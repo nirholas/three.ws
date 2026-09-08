@@ -39,7 +39,7 @@
 	color: var(--ink, var(--text, #e8e8e8));
 	opacity: 0;
 	transform: translateY(12px) scale(0.98);
-	transition: opacity 0.22s ease, transform 0.22s cubic-bezier(0.22, 1, 0.36, 1);
+	transition: opacity var(--duration-base) var(--ease-standard), transform var(--duration-base) cubic-bezier(0.22, 1, 0.36, 1);
 }
 .tws-disc-card.is-in {
 	opacity: 1;
@@ -62,7 +62,7 @@
 	border: 1px solid transparent;
 	border-radius: var(--radius-pill, 999px);
 	cursor: pointer;
-	transition: color 0.15s ease, background 0.15s ease, border-color 0.15s ease;
+	transition: color var(--duration-fast) var(--ease-standard), background var(--duration-fast) var(--ease-standard), border-color var(--duration-fast) var(--ease-standard);
 }
 .tws-disc-x:hover { color: var(--ink, var(--text, #e8e8e8)); background: var(--surface-2, rgba(255, 255, 255, 0.05)); }
 .tws-disc-x:active { background: var(--surface-3, rgba(255, 255, 255, 0.08)); }
@@ -105,7 +105,7 @@
 	background: var(--surface-2, rgba(255, 255, 255, 0.05));
 	border: 1px solid var(--stroke-strong, rgba(255, 255, 255, 0.14));
 	border-radius: var(--radius-control, 10px);
-	transition: background 0.15s ease, border-color 0.15s ease, transform 0.1s ease;
+	transition: background var(--duration-fast) var(--ease-standard), border-color var(--duration-fast) var(--ease-standard), transform var(--duration-instant) var(--ease-standard);
 }
 .tws-disc-cta:hover { background: var(--surface-3, rgba(255, 255, 255, 0.08)); border-color: var(--stroke-strong, rgba(255, 255, 255, 0.2)); }
 .tws-disc-cta:active { transform: translateY(1px); }
@@ -130,6 +130,6 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-	.tws-disc-card { transition: opacity 0.001s linear; transform: none; }
+	.tws-disc-card { transition: opacity var(--duration-instant) linear; transform: none; }
 	.tws-disc-card.is-in { transform: none; }
 }

@@ -110,7 +110,7 @@
 	font-weight: 550;
 	text-decoration: none;
 	cursor: pointer;
-	transition: transform 0.16s ease, background 0.16s ease, border-color 0.16s ease, opacity 0.16s ease;
+	transition: transform var(--duration-fast) var(--ease-standard), background var(--duration-fast) var(--ease-standard), border-color var(--duration-fast) var(--ease-standard), opacity var(--duration-fast) var(--ease-standard);
 }
 .gv-btn:hover {
 	background: var(--gv-surface-3);
@@ -308,7 +308,7 @@
 	color: inherit;
 	font-size: 12px;
 	cursor: pointer;
-	transition: background 0.16s ease, transform 0.16s ease, opacity 0.16s ease;
+	transition: background var(--duration-fast) var(--ease-standard), transform var(--duration-fast) var(--ease-standard), opacity var(--duration-fast) var(--ease-standard);
 }
 .gv-icon-btn:hover:not([disabled]) {
 	background: var(--gv-surface-3);
@@ -503,7 +503,7 @@
 	text-align: left;
 	cursor: pointer;
 	overflow: hidden;
-	transition: transform 0.16s ease, border-color 0.16s ease, background 0.16s ease;
+	transition: transform var(--duration-fast) var(--ease-standard), border-color var(--duration-fast) var(--ease-standard), background var(--duration-fast) var(--ease-standard);
 }
 .gv-card:hover {
 	transform: translateY(-2px);
@@ -541,7 +541,7 @@
 	width: 100%;
 	height: 100%;
 	object-fit: contain;
-	transition: transform 0.25s ease;
+	transition: transform var(--duration-base) var(--ease-standard);
 }
 .gv-card:hover .gv-card-thumb img {
 	transform: scale(1.04);
@@ -1031,7 +1031,7 @@
 	font: inherit;
 	font-size: 12px;
 	cursor: pointer;
-	transition: background 0.16s ease, border-color 0.16s ease, transform 0.16s ease;
+	transition: background var(--duration-fast) var(--ease-standard), border-color var(--duration-fast) var(--ease-standard), transform var(--duration-fast) var(--ease-standard);
 }
 .gv-chip:hover,
 .gv-pill:hover {
@@ -1114,7 +1114,7 @@
 	stroke: var(--gv-region, var(--gv-accent));
 	stroke-width: 1;
 	cursor: pointer;
-	transition: fill-opacity 0.16s ease, stroke-width 0.16s ease;
+	transition: fill-opacity var(--duration-fast) var(--ease-standard), stroke-width var(--duration-fast) var(--ease-standard);
 }
 .gv-atlas-dot:hover {
 	fill-opacity: 0.95;

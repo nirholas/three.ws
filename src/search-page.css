@@ -22,14 +22,14 @@ body {
 
 /* Search bar + type filters */
 .sr-controls { margin: var(--space-lg, 24px) auto 0; max-width: 760px; display: flex; flex-direction: column; gap: 12px; }
-.sr-search { display: flex; align-items: center; gap: 10px; background: var(--surface-1, rgba(255,255,255,.03)); border: 1px solid var(--stroke, rgba(255,255,255,.1)); border-radius: var(--radius-pill, 999px); padding: 12px 20px; transition: border-color .14s ease; }
+.sr-search { display: flex; align-items: center; gap: 10px; background: var(--surface-1, rgba(255,255,255,.03)); border: 1px solid var(--stroke, rgba(255,255,255,.1)); border-radius: var(--radius-pill, 999px); padding: 12px 20px; transition: border-color var(--duration-fast) var(--ease-standard); }
 .sr-search:focus-within { border-color: var(--ink-bright, #fff); box-shadow: 0 0 0 2px var(--bg-0, #0a0a0a), 0 0 0 4px var(--ink-bright, #fff); }
 .sr-search svg { flex: 0 0 auto; color: var(--ink-faint, #666); }
 .sr-search input { flex: 1; border: none; background: transparent; outline: none; font: inherit; font-size: var(--text-lg, 1rem); color: var(--ink-bright, #fff); min-width: 0; }
 .sr-search input::placeholder { color: var(--ink-faint, #666); }
 
 .sr-types { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; }
-.sr-type-btn { appearance: none; font: inherit; font-size: var(--text-sm, .82rem); font-weight: 600; cursor: pointer; color: var(--ink-dim, #888); background: var(--surface-1, rgba(255,255,255,.03)); border: 1px solid var(--stroke, rgba(255,255,255,.08)); border-radius: var(--radius-pill, 999px); padding: 7px 16px; transition: color .14s ease, background .14s ease, border-color .14s ease; }
+.sr-type-btn { appearance: none; font: inherit; font-size: var(--text-sm, .82rem); font-weight: 600; cursor: pointer; color: var(--ink-dim, #888); background: var(--surface-1, rgba(255,255,255,.03)); border: 1px solid var(--stroke, rgba(255,255,255,.08)); border-radius: var(--radius-pill, 999px); padding: 7px 16px; transition: color var(--duration-fast) var(--ease-standard), background var(--duration-fast) var(--ease-standard), border-color var(--duration-fast) var(--ease-standard); }
 .sr-type-btn:hover { color: var(--ink, #e8e8e8); }
 .sr-type-btn.active { color: var(--bg-0, #0a0a0a); background: var(--ink-bright, #fff); border-color: var(--ink-bright, #fff); }
 .sr-type-btn:focus-visible { outline: 2px solid var(--accent, #fff); outline-offset: 2px; }
@@ -44,7 +44,7 @@ body {
 
 /* Card grid */
 .sr-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: var(--space-md, 16px); }
-.sr-card { position: relative; display: flex; flex-direction: column; background: var(--surface-1, rgba(255,255,255,.03)); border: 1px solid var(--stroke, rgba(255,255,255,.07)); border-radius: var(--radius-lg, 14px); overflow: hidden; transition: border-color .14s ease, transform .14s ease, background .14s ease; animation: sr-in .3s ease both; }
+.sr-card { position: relative; display: flex; flex-direction: column; background: var(--surface-1, rgba(255,255,255,.03)); border: 1px solid var(--stroke, rgba(255,255,255,.07)); border-radius: var(--radius-lg, 14px); overflow: hidden; transition: border-color var(--duration-fast) var(--ease-standard), transform var(--duration-fast) var(--ease-standard), background var(--duration-fast) var(--ease-standard); animation: sr-in .3s ease both; }
 @keyframes sr-in { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
 .sr-card:hover { border-color: var(--stroke-strong, rgba(255,255,255,.18)); background: var(--surface-2, rgba(255,255,255,.05)); transform: translateY(-2px); }
 
@@ -68,7 +68,7 @@ a.sr-card-creator:focus-visible { outline: 2px solid var(--ink-bright, #fff); ou
 .sr-card-followers { font-size: var(--text-2xs, .64rem); color: var(--ink-faint, #666); }
 
 .sr-card-actions { margin-top: auto; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
-.sr-card-btn { appearance: none; font: inherit; font-size: var(--text-2xs, .72rem); font-weight: 600; cursor: pointer; color: var(--ink, #e8e8e8); background: var(--surface-2, rgba(255,255,255,.05)); border: 1px solid var(--stroke, rgba(255,255,255,.1)); border-radius: var(--radius-sm, 8px); padding: 6px 10px; transition: background .14s ease, border-color .14s ease; text-decoration: none; }
+.sr-card-btn { appearance: none; font: inherit; font-size: var(--text-2xs, .72rem); font-weight: 600; cursor: pointer; color: var(--ink, #e8e8e8); background: var(--surface-2, rgba(255,255,255,.05)); border: 1px solid var(--stroke, rgba(255,255,255,.1)); border-radius: var(--radius-sm, 8px); padding: 6px 10px; transition: background var(--duration-fast) var(--ease-standard), border-color var(--duration-fast) var(--ease-standard); text-decoration: none; }
 .sr-card-btn:hover { background: var(--surface-3, rgba(255,255,255,.08)); border-color: var(--stroke-strong, rgba(255,255,255,.18)); }
 .sr-card-btn:focus-visible { outline: 2px solid var(--accent, #fff); outline-offset: 2px; }
 .sr-card-btn--remix { color: var(--bg-0, #0a0a0a); background: var(--ink-bright, #fff); border-color: var(--ink-bright, #fff); }
@@ -99,7 +99,7 @@ a.sr-card-creator:focus-visible { outline: 2px solid var(--ink-bright, #fff); ou
 
 /* Suggested-when-idle quick links (no query yet) */
 .sr-quicklinks { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: var(--space-sm, 12px); margin-top: var(--space-lg, 24px); }
-.sr-quicklink { display: flex; flex-direction: column; gap: 4px; padding: 14px 16px; background: var(--surface-1, rgba(255,255,255,.03)); border: 1px solid var(--stroke, rgba(255,255,255,.07)); border-radius: var(--radius-lg, 14px); text-decoration: none; transition: border-color .14s ease, background .14s ease, transform .14s ease; }
+.sr-quicklink { display: flex; flex-direction: column; gap: 4px; padding: 14px 16px; background: var(--surface-1, rgba(255,255,255,.03)); border: 1px solid var(--stroke, rgba(255,255,255,.07)); border-radius: var(--radius-lg, 14px); text-decoration: none; transition: border-color var(--duration-fast) var(--ease-standard), background var(--duration-fast) var(--ease-standard), transform var(--duration-fast) var(--ease-standard); }
 .sr-quicklink:focus-visible { outline: 2px solid var(--ink-bright, #fff); outline-offset: 2px; }
 .sr-quicklink:hover { border-color: var(--stroke-strong, rgba(255,255,255,.18)); background: var(--surface-2, rgba(255,255,255,.05)); transform: translateY(-2px); }
 .sr-quicklink-title { font-size: var(--text-sm, .85rem); font-weight: 600; color: var(--ink-bright, #fff); }

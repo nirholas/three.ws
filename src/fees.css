@@ -39,8 +39,8 @@
 	border-radius: calc(var(--cv-radius-md) - 0.25rem);
 	cursor: pointer;
 	transition:
-		background 0.15s,
-		color 0.15s;
+		background var(--duration-fast),
+		color var(--duration-fast);
 }
 .fx-toggle-btn:hover {
 	color: var(--cv-text);
@@ -91,9 +91,9 @@
 	text-decoration: none;
 	white-space: nowrap;
 	transition:
-		border-color 0.15s,
-		color 0.15s,
-		background 0.15s;
+		border-color var(--duration-fast),
+		color var(--duration-fast),
+		background var(--duration-fast);
 }
 .fx-chip:hover,
 .fx-chip:focus-visible {
@@ -126,7 +126,7 @@
 	border-radius: var(--cv-radius-sm);
 }
 .fx-name-link .nm {
-	transition: color 0.15s;
+	transition: color var(--duration-fast);
 }
 .fx-name-link:hover .nm,
 .fx-name-link:focus-visible .nm {

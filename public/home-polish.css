@@ -52,8 +52,8 @@
 	opacity: 0;
 	transform: translateY(-50%) translateX(8px);
 	transition:
-		opacity 0.4s ease,
-		transform 0.4s ease;
+		opacity var(--duration-slow) var(--ease-standard),
+		transform var(--duration-slow) var(--ease-standard);
 }
 
 .h-chapter-rail.is-visible {
@@ -70,10 +70,10 @@
 	background: rgba(255, 255, 255, 0.18);
 	cursor: pointer;
 	transition:
-		background 0.25s ease,
-		width 0.25s ease,
-		height 0.25s ease,
-		box-shadow 0.25s ease;
+		background var(--duration-base) var(--ease-standard),
+		width var(--duration-base) var(--ease-standard),
+		height var(--duration-base) var(--ease-standard),
+		box-shadow var(--duration-base) var(--ease-standard);
 }
 
 .h-chapter-dot:hover {
@@ -102,8 +102,8 @@
 	pointer-events: none;
 	opacity: 0;
 	transition:
-		opacity 0.18s ease,
-		transform 0.18s ease;
+		opacity var(--duration-fast) var(--ease-standard),
+		transform var(--duration-fast) var(--ease-standard);
 }
 
 .h-chapter-dot:hover .h-chapter-label,
@@ -141,9 +141,9 @@
 	background: rgba(255, 255, 255, 0.012);
 	overflow: hidden;
 	transition:
-		border-color 0.35s cubic-bezier(0.2, 0.9, 0.3, 1),
-		transform 0.35s cubic-bezier(0.2, 0.9, 0.3, 1),
-		background 0.35s cubic-bezier(0.2, 0.9, 0.3, 1);
+		border-color var(--duration-slow) cubic-bezier(0.2, 0.9, 0.3, 1),
+		transform var(--duration-slow) cubic-bezier(0.2, 0.9, 0.3, 1),
+		background var(--duration-slow) cubic-bezier(0.2, 0.9, 0.3, 1);
 }
 
 .h-pillar::before {
@@ -201,7 +201,7 @@
 	border-radius: inherit;
 	pointer-events: none;
 	opacity: 0;
-	transition: opacity 0.4s ease;
+	transition: opacity var(--duration-slow) var(--ease-standard);
 	background: radial-gradient(
 		360px circle at var(--bx, 50%) var(--by, 0%),
 		rgba(255, 255, 255, 0.05) 0%,
@@ -294,10 +294,10 @@
 	border-radius: 6px;
 	cursor: pointer;
 	transition:
-		color 0.2s ease,
-		background 0.2s ease,
-		border-color 0.2s ease,
-		transform 0.2s ease;
+		color var(--duration-base) var(--ease-standard),
+		background var(--duration-base) var(--ease-standard),
+		border-color var(--duration-base) var(--ease-standard),
+		transform var(--duration-base) var(--ease-standard);
 }
 
 .h-dev-copy:hover {
@@ -421,10 +421,10 @@
 	text-decoration: none;
 	color: inherit;
 	transition:
-		border-color 0.22s ease,
-		background 0.22s ease,
-		transform 0.22s ease,
-		box-shadow 0.22s ease;
+		border-color var(--duration-base) var(--ease-standard),
+		background var(--duration-base) var(--ease-standard),
+		transform var(--duration-base) var(--ease-standard),
+		box-shadow var(--duration-base) var(--ease-standard);
 	position: relative;
 	overflow: hidden;
 }
@@ -435,7 +435,7 @@
 	inset: 0;
 	background: radial-gradient(circle at 30% 20%, rgba(255, 255, 255, 0.06) 0%, transparent 70%);
 	opacity: 0;
-	transition: opacity 0.3s ease;
+	transition: opacity var(--duration-base) var(--ease-standard);
 	pointer-events: none;
 }
 
@@ -467,7 +467,7 @@
 	place-items: center;
 	color: rgba(255, 255, 255, 0.9);
 	flex-shrink: 0;
-	transition: background 0.2s ease, border-color 0.2s ease;
+	transition: background var(--duration-base) var(--ease-standard), border-color var(--duration-base) var(--ease-standard);
 }
 
 .h-journey-card:hover .h-jc-icon {
@@ -513,7 +513,7 @@
 	font-weight: 600;
 	color: rgba(255, 255, 255, 0.7);
 	margin-top: auto;
-	transition: color 0.18s ease;
+	transition: color var(--duration-fast) var(--ease-standard);
 }
 
 .h-journey-card:hover .h-jc-cta { color: rgba(255, 255, 255, 1); }
@@ -533,7 +533,7 @@
 }
 
 .h-traction-stat {
-	transition: transform 0.4s cubic-bezier(0.2, 0.9, 0.3, 1);
+	transition: transform var(--duration-slow) cubic-bezier(0.2, 0.9, 0.3, 1);
 }
 
 .h-traction-stat:hover {
@@ -541,7 +541,7 @@
 }
 
 .h-traction-val {
-	transition: opacity 0.4s, filter 0.4s, color 0.4s;
+	transition: opacity var(--duration-slow), filter var(--duration-slow), color var(--duration-slow);
 }
 
 .h-traction-val:not(.is-loading) {

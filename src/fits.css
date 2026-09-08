@@ -205,9 +205,9 @@
 	text-decoration: none;
 	color: inherit;
 	transition:
-		border-color 0.15s ease,
-		transform 0.15s ease,
-		box-shadow 0.15s ease;
+		border-color var(--duration-fast) var(--ease-standard),
+		transform var(--duration-fast) var(--ease-standard),
+		box-shadow var(--duration-fast) var(--ease-standard);
 	animation: ft-enter 0.25s ease both;
 }
 a.ft-card:hover {
@@ -307,7 +307,7 @@ a.ft-card:focus-visible {
 	background: color-mix(in srgb, var(--panel, #131318) 80%, transparent);
 	padding: 10px 14px;
 	font-size: 0.88rem;
-	transition: border-color 0.15s ease;
+	transition: border-color var(--duration-fast) var(--ease-standard);
 	animation: ft-enter 0.25s ease both;
 }
 .ft-row:hover {
@@ -361,8 +361,8 @@ a.ft-row-main:hover {
 	padding: 0.2em 0.65em;
 	cursor: pointer;
 	transition:
-		border-color 0.15s ease,
-		color 0.15s ease;
+		border-color var(--duration-fast) var(--ease-standard),
+		color var(--duration-fast) var(--ease-standard);
 }
 .ft-mini:hover {
 	border-color: var(--ft-accent);
@@ -407,7 +407,7 @@ a.ft-row-main:hover {
 	font-size: 0.9rem;
 	font-family: var(--font-mono, ui-monospace, monospace);
 	padding: 0.6em 0.9em;
-	transition: border-color 0.15s ease;
+	transition: border-color var(--duration-fast) var(--ease-standard);
 }
 .ft-input:focus {
 	outline: none;
@@ -423,8 +423,8 @@ a.ft-row-main:hover {
 	color: #14100b;
 	cursor: pointer;
 	transition:
-		transform 0.15s ease,
-		box-shadow 0.15s ease;
+		transform var(--duration-fast) var(--ease-standard),
+		box-shadow var(--duration-fast) var(--ease-standard);
 }
 .ft-btn:hover {
 	transform: translateY(-1px);

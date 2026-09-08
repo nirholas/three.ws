@@ -26,10 +26,10 @@
 	padding: 0.375rem 0.875rem;
 	font-variant-numeric: tabular-nums;
 	transition:
-		background 0.15s,
-		color 0.15s,
-		border-color 0.15s,
-		transform 0.1s;
+		background var(--duration-fast),
+		color var(--duration-fast),
+		border-color var(--duration-fast),
+		transform var(--duration-instant);
 }
 .cvt-preset:hover {
 	background: var(--cv-surface-3);
@@ -88,7 +88,7 @@
 	border: 1px solid var(--cv-border);
 	border-radius: var(--cv-radius-lg);
 	padding: 1rem 1.125rem;
-	transition: border-color 0.15s;
+	transition: border-color var(--duration-fast);
 }
 /* The amount input is deliberately borderless, so the side card carries its
    focus indicator. A border shade alone was too faint to read as focus; this
@@ -230,8 +230,8 @@
 	border-radius: 999px;
 	padding: 0.375rem 0.625rem 0.375rem 0.5rem;
 	transition:
-		border-color 0.15s,
-		background 0.15s;
+		border-color var(--duration-fast),
+		background var(--duration-fast);
 }
 .cvt-asset:hover {
 	border-color: var(--cv-border-hover);
@@ -311,10 +311,10 @@
 	border: 1px solid var(--cv-border);
 	box-shadow: var(--cv-shadow-card);
 	transition:
-		color 0.15s,
-		border-color 0.15s,
-		transform 0.2s,
-		background 0.15s;
+		color var(--duration-fast),
+		border-color var(--duration-fast),
+		transform var(--duration-base),
+		background var(--duration-fast);
 }
 .cvt-swap:hover {
 	color: var(--cv-accent);
@@ -377,9 +377,9 @@
 	border-radius: 999px;
 	padding: 0.3125rem 0.75rem;
 	transition:
-		background 0.15s,
-		color 0.15s,
-		border-color 0.15s;
+		background var(--duration-fast),
+		color var(--duration-fast),
+		border-color var(--duration-fast);
 }
 .cvt-copy:hover {
 	color: var(--cv-text);
@@ -427,7 +427,7 @@
 	border: 0;
 	border-radius: var(--cv-radius-md);
 	padding: 0.5rem 1.25rem;
-	transition: background 0.15s;
+	transition: background var(--duration-fast);
 }
 .cvt-retry:hover {
 	background: var(--cv-accent-hover);
@@ -498,8 +498,8 @@
 	font-size: 0.875rem;
 	padding: 0.5rem 0.75rem 0.5rem 2.125rem;
 	transition:
-		border-color 0.15s,
-		box-shadow 0.15s;
+		border-color var(--duration-fast),
+		box-shadow var(--duration-fast);
 }
 .cvt-pick-search input::placeholder {
 	color: var(--cv-text-3);
@@ -544,7 +544,7 @@
 	border: 0;
 	border-radius: var(--cv-radius-md);
 	padding: 0.4375rem 0.5rem;
-	transition: background 0.12s;
+	transition: background var(--duration-fast);
 }
 .cvt-pick-item:hover,
 .cvt-pick-item:focus-visible,

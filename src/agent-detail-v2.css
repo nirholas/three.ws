@@ -67,7 +67,7 @@
 	color: var(--ad-dim);
 	border-bottom: 1px dotted var(--ad-line-2);
 	padding-bottom: 1px;
-	transition: color 0.15s;
+	transition: color var(--duration-fast);
 }
 .adv2-classic-link:hover {
 	color: var(--ad-text);
@@ -271,7 +271,7 @@
 	font-size: 13px;
 	color: var(--ad-muted);
 	border-bottom: 2px solid transparent;
-	transition: color 0.15s, border-color 0.15s;
+	transition: color var(--duration-fast), border-color var(--duration-fast);
 	white-space: nowrap;
 }
 .adv2-tab:hover {
@@ -408,7 +408,7 @@
 	cursor: pointer;
 	text-align: left;
 	width: 100%;
-	transition: background 0.12s;
+	transition: background var(--duration-fast);
 }
 .adv2-more-item:hover {
 	background: rgba(255, 255, 255, 0.06);
@@ -697,7 +697,7 @@
 	   showing the card through. */
 	color-scheme: light;
 	background: transparent;
-	transition: opacity 0.4s ease;
+	transition: opacity var(--duration-slow) var(--ease-standard);
 }
 .ad-walk-skeleton {
 	position: absolute;
@@ -708,7 +708,7 @@
 	justify-content: center;
 	gap: 14px;
 	pointer-events: none;
-	transition: opacity 0.3s ease;
+	transition: opacity var(--duration-base) var(--ease-standard);
 }
 .ad-walk-skeleton.is-hidden {
 	opacity: 0;

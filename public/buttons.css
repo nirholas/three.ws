@@ -95,12 +95,12 @@
 	position: relative;
 	overflow: hidden;
 	transition:
-		background var(--duration-fast, 140ms) var(--ease-standard, ease),
-		border-color var(--duration-fast, 140ms) var(--ease-standard, ease),
-		color var(--duration-fast, 140ms) var(--ease-standard, ease),
-		opacity var(--duration-fast, 140ms) var(--ease-standard, ease),
-		transform var(--duration-instant, 80ms) var(--ease-standard, ease),
-		box-shadow var(--duration-fast, 140ms) var(--ease-standard, ease);
+		background var(--duration-fast, var(--duration-fast)) var(--ease-standard, var(--ease-standard)),
+		border-color var(--duration-fast, var(--duration-fast)) var(--ease-standard, var(--ease-standard)),
+		color var(--duration-fast, var(--duration-fast)) var(--ease-standard, var(--ease-standard)),
+		opacity var(--duration-fast, var(--duration-fast)) var(--ease-standard, var(--ease-standard)),
+		transform var(--duration-instant, var(--duration-instant)) var(--ease-standard, var(--ease-standard)),
+		box-shadow var(--duration-fast, var(--duration-fast)) var(--ease-standard, var(--ease-standard));
 }
 
 /* ── Hover ────────────────────────────────────────────────────────────────── */
@@ -270,7 +270,7 @@
 }
 
 /* ── Optional arrow microinteraction — a trailing → that slides on hover ───── */
-.btn .arrow { transition: transform var(--duration-fast, 140ms) var(--ease-standard, ease); }
+.btn .arrow { transition: transform var(--duration-fast, var(--duration-fast)) var(--ease-standard, var(--ease-standard)); }
 .btn:hover .arrow { transform: translateX(3px); }
 
 @media (prefers-reduced-motion: reduce) {

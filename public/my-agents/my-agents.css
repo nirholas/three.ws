@@ -160,8 +160,8 @@ a:hover {
 	font-weight: 600;
 	white-space: nowrap;
 	transition:
-		filter 0.12s ease,
-		transform 0.12s ease;
+		filter var(--duration-fast) var(--ease-standard),
+		transform var(--duration-fast) var(--ease-standard);
 }
 .my-agents-new:hover {
 	text-decoration: none;
@@ -244,7 +244,7 @@ a:hover {
 	font: inherit;
 	font-size: 14px;
 	padding: 9px 12px 9px 34px;
-	transition: border-color 0.15s ease;
+	transition: border-color var(--duration-fast) var(--ease-standard);
 }
 .my-agents-search input::placeholder {
 	color: #666;
@@ -281,7 +281,7 @@ a:hover {
 	background-image: url("data:image/svg+xml,%3Csvg width='10' height='6' viewBox='0 0 10 6' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%23888' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
 	background-repeat: no-repeat;
 	background-position: right 12px center;
-	transition: border-color 0.15s ease;
+	transition: border-color var(--duration-fast) var(--ease-standard);
 }
 .my-agents-sort select:focus {
 	outline: none;
@@ -316,9 +316,9 @@ a:hover {
 	flex-direction: column;
 	overflow: hidden;
 	transition:
-		border-color 0.15s ease,
-		transform 0.15s ease,
-		box-shadow 0.15s ease;
+		border-color var(--duration-fast) var(--ease-standard),
+		transform var(--duration-fast) var(--ease-standard),
+		box-shadow var(--duration-fast) var(--ease-standard);
 }
 
 .my-agents-card:hover {
@@ -343,7 +343,7 @@ a:hover {
 	height: 100%;
 	object-fit: cover;
 	display: block;
-	transition: opacity 0.25s ease;
+	transition: opacity var(--duration-base) var(--ease-standard);
 }
 .my-agents-card__thumb.is-live .my-agents-card__poster,
 .my-agents-card__thumb.is-live .my-agents-card__badge3d {
@@ -380,7 +380,7 @@ a:hover {
 	background: rgba(0, 0, 0, 0.55);
 	color: #ddd;
 	backdrop-filter: blur(4px);
-	transition: opacity 0.2s ease;
+	transition: opacity var(--duration-base) var(--ease-standard);
 }
 
 /* Touch preview button */
@@ -431,7 +431,7 @@ a:hover {
 	white-space: nowrap;
 	overflow: hidden;
 	text-overflow: ellipsis;
-	transition: color 0.12s ease;
+	transition: color var(--duration-fast) var(--ease-standard);
 }
 
 .my-agents-card__row {
@@ -551,8 +551,8 @@ a:hover {
 	border: 1px solid #2a2a2a;
 	color: #aaa;
 	transition:
-		border-color 0.15s ease,
-		color 0.15s ease;
+		border-color var(--duration-fast) var(--ease-standard),
+		color var(--duration-fast) var(--ease-standard);
 }
 .my-agents-card--new:hover .my-agents-card--new__icon {
 	border-color: #555;
@@ -582,9 +582,9 @@ a:hover {
 	flex: 1;
 	text-align: center;
 	transition:
-		filter 0.12s ease,
-		background 0.12s ease,
-		border-color 0.12s ease;
+		filter var(--duration-fast) var(--ease-standard),
+		background var(--duration-fast) var(--ease-standard),
+		border-color var(--duration-fast) var(--ease-standard);
 }
 
 .my-agents-btn:hover:not(:disabled) {
@@ -757,9 +757,9 @@ a:hover {
 	color: var(--ink, #e8e8e8);
 	text-decoration: none;
 	transition:
-		background 0.15s ease,
-		border-color 0.15s ease,
-		transform 0.12s ease;
+		background var(--duration-fast) var(--ease-standard),
+		border-color var(--duration-fast) var(--ease-standard),
+		transform var(--duration-fast) var(--ease-standard);
 }
 .tws-es-btn:hover {
 	background: rgba(255, 255, 255, 0.12);
@@ -785,8 +785,8 @@ a:hover {
 	text-decoration: none;
 	border-bottom: 1px solid transparent;
 	transition:
-		color 0.15s ease,
-		border-color 0.15s ease;
+		color var(--duration-fast) var(--ease-standard),
+		border-color var(--duration-fast) var(--ease-standard);
 }
 .my-agents-secondary:hover,
 .my-agents-secondary:focus-visible {

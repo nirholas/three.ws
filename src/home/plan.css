@@ -87,7 +87,7 @@
 	background: var(--quota);
 	/* Animated so a bar that moved after an action is visibly the thing that
 	   moved, rather than a number that was different the next time you looked. */
-	transition: width 320ms cubic-bezier(0.22, 1, 0.36, 1), background-color 200ms ease;
+	transition: width var(--duration-slow) cubic-bezier(0.22, 1, 0.36, 1), background-color var(--duration-base) var(--ease-standard);
 }
 
 /* A ceiling that is simply set, rather than a quota being consumed. Neutral on

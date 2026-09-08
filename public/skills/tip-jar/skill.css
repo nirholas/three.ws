@@ -45,9 +45,9 @@
 	cursor: pointer;
 	font-size: 0.9rem;
 	transition:
-		background 0.15s,
-		color 0.15s,
-		border-color 0.15s;
+		background var(--duration-fast),
+		color var(--duration-fast),
+		border-color var(--duration-fast);
 }
 
 .tip-jar-btn:hover {
@@ -91,7 +91,7 @@
 	color: #ffffff;
 	cursor: pointer;
 	font-size: 0.9rem;
-	transition: background 0.15s;
+	transition: background var(--duration-fast);
 }
 
 .tip-jar-send:hover:not(:disabled) {
@@ -111,7 +111,7 @@
 	color: #aaaacc;
 	cursor: pointer;
 	font-size: 0.9rem;
-	transition: background 0.15s;
+	transition: background var(--duration-fast);
 }
 
 .tip-jar-cancel:hover {

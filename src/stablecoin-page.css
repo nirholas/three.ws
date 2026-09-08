@@ -199,7 +199,7 @@
 	color: var(--cv-text);
 	text-decoration: none;
 	font-weight: 500;
-	transition: color 0.15s;
+	transition: color var(--duration-fast);
 }
 .sc-chain-link:hover,
 .sc-chain-link:focus-visible {
@@ -263,8 +263,8 @@
 	border-radius: var(--cv-radius-md);
 	padding: 0.5rem 1.125rem;
 	transition:
-		border-color 0.15s,
-		background 0.15s;
+		border-color var(--duration-fast),
+		background var(--duration-fast);
 }
 .sc-retry:hover {
 	border-color: var(--cv-border-hover);

@@ -146,7 +146,7 @@ a:hover {
 	font-size: 13px;
 	font-family: inherit;
 	cursor: pointer;
-	transition: all 0.15s;
+	transition: all var(--duration-fast);
 }
 .btn:hover:not([disabled]) {
 	background: #1d1d1d;
@@ -269,7 +269,7 @@ a:hover {
 	border: 1px solid var(--border);
 	border-radius: 12px;
 	color: inherit;
-	transition: all 0.2s;
+	transition: all var(--duration-base);
 }
 .tile:hover {
 	border-color: var(--accent-2);

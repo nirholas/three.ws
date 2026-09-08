@@ -70,7 +70,7 @@
 	box-shadow: var(--cc-shadow);
 	backdrop-filter: blur(10px);
 	filter: grayscale(1);
-	transition: transform 0.1s ease, background 0.14s ease, border-color 0.14s ease, filter 0.16s ease;
+	transition: transform var(--duration-instant) var(--ease-standard), background var(--duration-fast) var(--ease-standard), border-color var(--duration-fast) var(--ease-standard), filter var(--duration-fast) var(--ease-standard);
 }
 .ps-rail-btn:hover { background: rgba(255, 255, 255, 0.12); border-color: var(--cc-edge-hi); transform: translateX(-3px); filter: grayscale(0); }
 .ps-rail-btn:active { transform: translateX(-1px) scale(0.96); }
@@ -101,7 +101,7 @@
 	background: rgba(255, 255, 255, 0.04);
 	border: 1px solid transparent;
 	border-radius: var(--cc-radius-sm);
-	transition: transform 0.08s ease, background 0.12s ease, border-color 0.12s ease;
+	transition: transform var(--duration-instant) var(--ease-standard), background var(--duration-fast) var(--ease-standard), border-color var(--duration-fast) var(--ease-standard);
 }
 .ps-slot:hover { background: rgba(255, 255, 255, 0.12); border-color: var(--cc-edge); transform: translateY(-2px); }
 .ps-slot.is-active { border-color: #fff; background: rgba(255, 255, 255, 0.16); box-shadow: var(--cc-glow); }
@@ -142,7 +142,7 @@
 	border: 1px solid #fff;
 	border-radius: var(--cc-radius);
 	box-shadow: var(--cc-shadow), var(--cc-glow);
-	transition: transform 0.1s ease, filter 0.12s ease, opacity 0.12s ease;
+	transition: transform var(--duration-instant) var(--ease-standard), filter var(--duration-fast) var(--ease-standard), opacity var(--duration-fast) var(--ease-standard);
 	animation: ps-rise 0.18s ease both;
 }
 /* Contextual-action stacking contract. Three independent systems mount a
@@ -218,7 +218,7 @@
 	border-radius: var(--cc-radius-sm);
 	color: var(--cc-dim);
 	font-size: 12px;
-	transition: color 0.12s ease, border-color 0.12s ease, background 0.12s ease;
+	transition: color var(--duration-fast) var(--ease-standard), border-color var(--duration-fast) var(--ease-standard), background var(--duration-fast) var(--ease-standard);
 }
 .ps-x:hover { color: var(--cc-text); background: rgba(255, 255, 255, 0.08); border-color: var(--cc-edge); }
 
@@ -238,7 +238,7 @@
 	background: rgba(255, 255, 255, 0.04);
 	border: 1px solid var(--cc-edge-soft);
 	border-radius: var(--cc-radius-sm);
-	transition: transform 0.08s ease, background 0.12s ease, border-color 0.12s ease;
+	transition: transform var(--duration-instant) var(--ease-standard), background var(--duration-fast) var(--ease-standard), border-color var(--duration-fast) var(--ease-standard);
 }
 .ps-cell:hover { background: rgba(255, 255, 255, 0.12); border-color: var(--cc-edge); transform: translateY(-2px); }
 .ps-cell.is-empty { background: rgba(255, 255, 255, 0.02); border-style: dashed; cursor: default; pointer-events: none; }
@@ -276,7 +276,7 @@
 .ps-skill-name { font-size: 12px; color: var(--cc-text); }
 .ps-skill-lvl { font-size: 11px; color: var(--cc-dim); font-variant-numeric: tabular-nums; }
 .ps-skill-bar { height: 5px; background: rgba(255, 255, 255, 0.08); border-radius: 99px; overflow: hidden; }
-.ps-skill-fill { display: block; height: 100%; background: #fff; border-radius: 99px; transition: width 0.4s ease; }
+.ps-skill-fill { display: block; height: 100%; background: #fff; border-radius: 99px; transition: width var(--duration-slow) var(--ease-standard); }
 .ps-skill-next { margin-top: 3px; font-size: 10.5px; color: var(--cc-faint); font-variant-numeric: tabular-nums; }
 
 /* What the five bars are working toward. Blank until the server states the gate,
@@ -316,7 +316,7 @@
 	border: 1px solid var(--cc-edge-soft);
 	border-radius: var(--cc-radius-sm);
 	padding: 2px 8px;
-	transition: color 0.12s ease, border-color 0.12s ease, background 0.12s ease;
+	transition: color var(--duration-fast) var(--ease-standard), border-color var(--duration-fast) var(--ease-standard), background var(--duration-fast) var(--ease-standard);
 }
 .ps-cos-remove:hover { color: var(--cc-text); border-color: var(--cc-edge); background: rgba(255, 255, 255, 0.08); }
 .ps-cos-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 7px; }
@@ -329,7 +329,7 @@
 	border: 1px solid var(--cc-edge-soft);
 	border-radius: var(--cc-radius-sm);
 	cursor: pointer;
-	transition: transform 0.09s ease, background 0.12s ease, border-color 0.12s ease, box-shadow 0.14s ease;
+	transition: transform var(--duration-instant) var(--ease-standard), background var(--duration-fast) var(--ease-standard), border-color var(--duration-fast) var(--ease-standard), box-shadow var(--duration-fast) var(--ease-standard);
 }
 .ps-cos-card[role="button"]:hover { background: rgba(255, 255, 255, 0.1); border-color: var(--cc-edge); transform: translateY(-2px); }
 .ps-cos-card[role="button"]:focus-visible { outline: 2px solid var(--focus-ring-color); outline-offset: 1px; }
@@ -436,7 +436,7 @@
 	box-shadow: var(--cc-shadow);
 	pointer-events: none;
 	opacity: 0;
-	transition: transform 1s ease, opacity 1s ease;
+	transition: transform var(--duration-slow) var(--ease-standard), opacity var(--duration-slow) var(--ease-standard);
 }
 .ps-xp-float.is-up { transform: translate(-50%, -42px); opacity: 1; }
 
@@ -455,7 +455,7 @@
 	backdrop-filter: blur(14px);
 	pointer-events: none;
 	opacity: 0;
-	transition: transform 0.4s cubic-bezier(0.2, 0.9, 0.3, 1.2), opacity 0.4s ease;
+	transition: transform var(--duration-slow) cubic-bezier(0.2, 0.9, 0.3, 1.2), opacity var(--duration-slow) var(--ease-standard);
 }
 .ps-levelup.is-show { transform: translate(-50%, -50%) scale(1); opacity: 1; }
 .ps-levelup-mark { font-size: 11px; font-weight: 800; letter-spacing: 0.28em; color: var(--cc-dim); }

@@ -112,7 +112,7 @@
 	background: var(--surface-1);
 	color: var(--ink-dim);
 	cursor: pointer;
-	transition: color 0.15s ease, border-color 0.15s ease, transform 0.15s ease, background 0.15s ease;
+	transition: color var(--duration-fast) var(--ease-standard), border-color var(--duration-fast) var(--ease-standard), transform var(--duration-fast) var(--ease-standard), background var(--duration-fast) var(--ease-standard);
 }
 
 .dx-swap:hover { color: var(--ink); border-color: var(--stroke-strong); background: var(--surface-2); }
@@ -127,7 +127,7 @@
 	border: 1px solid var(--hairline);
 	border-radius: var(--radius-lg);
 	padding: var(--space-md);
-	transition: border-color 0.18s ease, background 0.18s ease;
+	transition: border-color var(--duration-fast) var(--ease-standard), background var(--duration-fast) var(--ease-standard);
 }
 
 .dx-slot[data-state='dragging'] {
@@ -178,7 +178,7 @@
 	cursor: pointer;
 	text-align: center;
 	padding: var(--space-sm);
-	transition: border-color 0.15s ease, color 0.15s ease, background 0.15s ease;
+	transition: border-color var(--duration-fast) var(--ease-standard), color var(--duration-fast) var(--ease-standard), background var(--duration-fast) var(--ease-standard);
 }
 
 .dx-drop:hover { border-color: var(--stroke-strong); color: var(--ink); background: var(--surface-1); }
@@ -196,7 +196,7 @@
 	color: var(--ink);
 	font: var(--weight-regular) var(--text-sm) / 1.4 var(--font-mono);
 	padding: var(--space-sm);
-	transition: border-color 0.15s ease;
+	transition: border-color var(--duration-fast) var(--ease-standard);
 }
 
 .dx-url:focus { outline: none; border-color: var(--stroke-strong); }
@@ -211,7 +211,7 @@
 	font: var(--weight-medium) var(--text-sm) / 1 var(--font-body);
 	padding: var(--space-sm) var(--space-md);
 	cursor: pointer;
-	transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease, transform 0.12s ease;
+	transition: background var(--duration-fast) var(--ease-standard), border-color var(--duration-fast) var(--ease-standard), color var(--duration-fast) var(--ease-standard), transform var(--duration-fast) var(--ease-standard);
 	white-space: nowrap;
 }
 
@@ -251,7 +251,7 @@
 	font: var(--weight-medium) var(--text-sm) / 1 var(--font-body);
 	padding: var(--space-sm) var(--space-md);
 	cursor: pointer;
-	transition: color 0.15s ease, border-color 0.15s ease, background 0.15s ease;
+	transition: color var(--duration-fast) var(--ease-standard), border-color var(--duration-fast) var(--ease-standard), background var(--duration-fast) var(--ease-standard);
 }
 
 .dx-example:hover { color: var(--ink); border-color: var(--stroke-strong); background: var(--surface-2); }
@@ -331,7 +331,7 @@
 	font: var(--weight-medium) var(--text-sm) / 1 var(--font-body);
 	padding: var(--space-sm) var(--space-md);
 	cursor: pointer;
-	transition: background 0.15s ease, color 0.15s ease;
+	transition: background var(--duration-fast) var(--ease-standard), color var(--duration-fast) var(--ease-standard);
 }
 
 .dx-seg button:hover { color: var(--ink); }
@@ -464,14 +464,14 @@
 	cursor: pointer;
 	list-style: none;
 	font-size: var(--text-md);
-	transition: background 0.15s ease;
+	transition: background var(--duration-fast) var(--ease-standard);
 }
 
 .dx-section > summary::-webkit-details-marker { display: none; }
 .dx-section > summary:hover { background: var(--surface-2); }
 .dx-section > summary:focus-visible { outline: 2px solid var(--accent-soft); outline-offset: -2px; }
 
-.dx-caret { transition: transform 0.18s ease; color: var(--ink-dim); flex: none; }
+.dx-caret { transition: transform var(--duration-fast) var(--ease-standard); color: var(--ink-dim); flex: none; }
 .dx-section[open] .dx-caret { transform: rotate(90deg); }
 
 .dx-section-name { font-weight: var(--weight-medium); }
@@ -497,7 +497,7 @@ button.dx-row {
 	color: inherit;
 	font: inherit;
 	cursor: pointer;
-	transition: background 0.12s ease;
+	transition: background var(--duration-fast) var(--ease-standard);
 }
 
 button.dx-row:hover { background: var(--surface-2); }

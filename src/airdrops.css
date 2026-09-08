@@ -99,7 +99,7 @@
 	border: 1px solid var(--cv-border, #27272a);
 	border-radius: var(--cv-radius-md, 8px);
 	padding: 0.65rem 0.85rem;
-	transition: border-color var(--duration-fast, 140ms) var(--ease-standard, ease);
+	transition: border-color var(--duration-fast, var(--duration-fast)) var(--ease-standard, var(--ease-standard));
 }
 .ad-input:hover { border-color: var(--cv-border-hover, #3f3f46); }
 .ad-input:focus-visible {
@@ -118,8 +118,8 @@
 	padding: 0.65rem 1.1rem;
 	cursor: pointer;
 	transition:
-		background var(--duration-fast, 140ms) var(--ease-standard, ease),
-		transform var(--duration-fast, 140ms) var(--ease-standard, ease);
+		background var(--duration-fast, var(--duration-fast)) var(--ease-standard, var(--ease-standard)),
+		transform var(--duration-fast, var(--duration-fast)) var(--ease-standard, var(--ease-standard));
 }
 .ad-go:hover { background: var(--cv-accent-hover, #2563eb); }
 .ad-go:active { transform: translateY(1px); }
@@ -157,8 +157,8 @@
 	padding: 0.25rem 0.7rem;
 	cursor: pointer;
 	transition:
-		border-color var(--duration-fast, 140ms) var(--ease-standard, ease),
-		color var(--duration-fast, 140ms) var(--ease-standard, ease);
+		border-color var(--duration-fast, var(--duration-fast)) var(--ease-standard, var(--ease-standard)),
+		color var(--duration-fast, var(--duration-fast)) var(--ease-standard, var(--ease-standard));
 }
 .ad-recent-chip:hover { border-color: var(--cv-accent, #60a5fa); color: var(--cv-text, #fafafa); }
 
@@ -271,8 +271,8 @@
 	cursor: pointer;
 	text-decoration: none;
 	transition:
-		color var(--duration-fast, 140ms) var(--ease-standard, ease),
-		border-color var(--duration-fast, 140ms) var(--ease-standard, ease);
+		color var(--duration-fast, var(--duration-fast)) var(--ease-standard, var(--ease-standard)),
+		border-color var(--duration-fast, var(--duration-fast)) var(--ease-standard, var(--ease-standard));
 }
 .ad-chip-btn:hover { color: var(--cv-text, #fafafa); border-color: var(--cv-border-hover, #3f3f46); }
 .ad-chip-btn.ad-chip-ok {
@@ -307,8 +307,8 @@
 	border-radius: var(--cv-radius-md, 8px);
 	padding: 0.6rem 0.8rem;
 	transition:
-		transform var(--duration-fast, 140ms) var(--ease-standard, ease),
-		border-color var(--duration-fast, 140ms) var(--ease-standard, ease);
+		transform var(--duration-fast, var(--duration-fast)) var(--ease-standard, var(--ease-standard)),
+		border-color var(--duration-fast, var(--duration-fast)) var(--ease-standard, var(--ease-standard));
 }
 .ad-count:hover { transform: translateY(-2px); border-color: var(--cv-border-hover, #3f3f46); }
 .ad-count dt {
@@ -340,8 +340,8 @@
 	border-radius: var(--cv-radius-md, 8px);
 	padding: 0.75rem 0.9rem;
 	transition:
-		transform var(--duration-fast, 140ms) var(--ease-standard, ease),
-		border-color var(--duration-fast, 140ms) var(--ease-standard, ease);
+		transform var(--duration-fast, var(--duration-fast)) var(--ease-standard, var(--ease-standard)),
+		border-color var(--duration-fast, var(--duration-fast)) var(--ease-standard, var(--ease-standard));
 }
 .ad-stat:hover { transform: translateY(-2px); border-color: var(--cv-border-hover, #3f3f46); }
 .ad-stat .k {
@@ -372,9 +372,9 @@
 	padding: 0.3rem 0.85rem;
 	cursor: pointer;
 	transition:
-		color var(--duration-fast, 140ms) var(--ease-standard, ease),
-		border-color var(--duration-fast, 140ms) var(--ease-standard, ease),
-		background var(--duration-fast, 140ms) var(--ease-standard, ease);
+		color var(--duration-fast, var(--duration-fast)) var(--ease-standard, var(--ease-standard)),
+		border-color var(--duration-fast, var(--duration-fast)) var(--ease-standard, var(--ease-standard)),
+		background var(--duration-fast, var(--duration-fast)) var(--ease-standard, var(--ease-standard));
 }
 .ad-filter:hover { color: var(--cv-text, #fafafa); border-color: var(--cv-border-hover, #3f3f46); }
 .ad-filter.active {
@@ -403,9 +403,9 @@
 	border-radius: var(--cv-radius-lg, 10px);
 	padding: 1rem 1.1rem;
 	transition:
-		transform var(--duration-fast, 140ms) var(--ease-standard, ease),
-		border-color var(--duration-fast, 140ms) var(--ease-standard, ease),
-		box-shadow var(--duration-fast, 140ms) var(--ease-standard, ease);
+		transform var(--duration-fast, var(--duration-fast)) var(--ease-standard, var(--ease-standard)),
+		border-color var(--duration-fast, var(--duration-fast)) var(--ease-standard, var(--ease-standard)),
+		box-shadow var(--duration-fast, var(--duration-fast)) var(--ease-standard, var(--ease-standard));
 }
 .ad-card:hover {
 	transform: translateY(-2px);

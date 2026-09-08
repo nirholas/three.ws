@@ -99,7 +99,7 @@
 	font-weight: 600;
 	padding: 0.62rem 1.05rem;
 	cursor: pointer;
-	transition: background 140ms ease, border-color 140ms ease, transform 140ms ease;
+	transition: background var(--duration-fast) var(--ease-standard), border-color var(--duration-fast) var(--ease-standard), transform var(--duration-fast) var(--ease-standard);
 }
 
 .hs-btn:hover:not(:disabled) {
@@ -208,7 +208,7 @@
 	border-radius: 12px;
 	background: var(--surface-2, #1a1d23);
 	padding: 0.8rem 1rem;
-	transition: border-color 140ms ease;
+	transition: border-color var(--duration-fast) var(--ease-standard);
 }
 
 .hs-item:hover {
@@ -329,7 +329,7 @@
 	background: rgb(11 13 16 / 72%);
 	border: 1px solid var(--border, #23262d);
 	backdrop-filter: blur(8px);
-	transition: opacity 200ms ease, transform 200ms ease;
+	transition: opacity var(--duration-base) var(--ease-standard), transform var(--duration-base) var(--ease-standard);
 }
 
 .hs-badge[data-state="listening"] { border-color: #2f6f4f; color: #86e2b0; }
@@ -412,7 +412,7 @@
 	width: 0;
 	background: #3ddc84;
 	transform-origin: left center;
-	transition: width 80ms linear;
+	transition: width var(--duration-instant) linear;
 }
 
 .hs-asleep {

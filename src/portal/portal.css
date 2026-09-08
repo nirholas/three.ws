@@ -98,7 +98,7 @@
 	font-size: var(--text-sm);
 	font-weight: var(--weight-medium);
 	cursor: pointer;
-	transition: background 140ms ease, border-color 140ms ease, transform 140ms ease;
+	transition: background var(--duration-fast) var(--ease-standard), border-color var(--duration-fast) var(--ease-standard), transform var(--duration-fast) var(--ease-standard);
 }
 .pt-btn:hover { background: var(--surface-3); border-color: var(--accent); }
 .pt-btn:active { transform: translateY(1px); }
@@ -154,7 +154,7 @@
 	align-items: center;
 	gap: var(--space-sm);
 	opacity: 0;
-	transition: opacity 160ms ease, transform 160ms ease;
+	transition: opacity var(--duration-fast) var(--ease-standard), transform var(--duration-fast) var(--ease-standard);
 	pointer-events: none;
 	max-width: min(560px, 92vw);
 }
@@ -192,7 +192,7 @@
 	border-radius: 50%;
 	background: var(--accent);
 	opacity: 0.85;
-	transition: transform 60ms linear;
+	transition: transform var(--duration-instant) linear;
 }
 @media (pointer: coarse) {
 	.pt-stick { display: grid; }
@@ -266,7 +266,7 @@
 	width: 8px; height: 8px; border-radius: 50%;
 	background: var(--stroke-strong);
 	flex: none;
-	transition: background 200ms ease, box-shadow 200ms ease;
+	transition: background var(--duration-base) var(--ease-standard), box-shadow var(--duration-base) var(--ease-standard);
 }
 .pt-step[data-state='active'] { color: var(--ink); }
 .pt-step[data-state='active'] .pt-step__dot { background: var(--accent); box-shadow: 0 0 0 4px var(--accent-soft); animation: pt-pulse 1.2s ease-in-out infinite; }
@@ -290,7 +290,7 @@
 	padding: var(--space-sm) var(--space-md);
 	font-size: var(--text-sm);
 	opacity: 0;
-	transition: opacity 160ms ease, transform 160ms ease;
+	transition: opacity var(--duration-fast) var(--ease-standard), transform var(--duration-fast) var(--ease-standard);
 	pointer-events: none;
 }
 .pt-toast[data-open='1'] { opacity: 1; transform: translateX(-50%) translateY(0); }

@@ -51,7 +51,7 @@
 .qb-lb-row {
 	display: flex; align-items: center; gap: 10px; padding: 8px 10px;
 	background: rgba(255, 255, 255, 0.03); border: 1px solid var(--cc-edge-soft);
-	border-radius: var(--cc-radius-sm); transition: border-color 0.14s ease, background 0.14s ease;
+	border-radius: var(--cc-radius-sm); transition: border-color var(--duration-fast) var(--ease-standard), background var(--duration-fast) var(--ease-standard);
 }
 .qb-lb-row.is-you { border-color: rgba(255, 206, 110, 0.55); background: rgba(255, 206, 110, 0.07); }
 .qb-lb-rank {

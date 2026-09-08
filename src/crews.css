@@ -119,7 +119,7 @@
 	text-decoration: none;
 	color: inherit;
 	border-radius: var(--radius-md, 12px);
-	transition: transform 0.18s ease;
+	transition: transform var(--duration-fast) var(--ease-standard);
 }
 .cw-standee:hover,
 .cw-standee:focus-visible {
@@ -281,7 +281,7 @@
 	padding: 9px 10px;
 	border: 1px solid transparent;
 	border-radius: var(--radius-md, 10px);
-	transition: background 0.15s ease, border-color 0.15s ease;
+	transition: background var(--duration-fast) var(--ease-standard), border-color var(--duration-fast) var(--ease-standard);
 }
 .cw-row:hover {
 	background: var(--surface-2, rgba(255, 255, 255, 0.05));
@@ -353,7 +353,7 @@
 	background: var(--surface-2, rgba(255, 255, 255, 0.05));
 	border: 1px solid var(--stroke);
 	border-radius: var(--radius-md, 10px);
-	transition: border-color 0.15s ease, background 0.15s ease;
+	transition: border-color var(--duration-fast) var(--ease-standard), background var(--duration-fast) var(--ease-standard);
 }
 .cw-field input::placeholder { color: var(--ink-dim); }
 .cw-field input:hover { border-color: var(--stroke-strong); }
@@ -382,7 +382,7 @@
 	border: 1px solid var(--btn-secondary-border, var(--stroke-strong));
 	background: var(--btn-secondary-bg, var(--surface-3));
 	color: var(--btn-secondary-fg, var(--ink));
-	transition: background 0.15s ease, border-color 0.15s ease, transform 0.1s ease, opacity 0.15s ease;
+	transition: background var(--duration-fast) var(--ease-standard), border-color var(--duration-fast) var(--ease-standard), transform var(--duration-instant) var(--ease-standard), opacity var(--duration-fast) var(--ease-standard);
 	white-space: nowrap;
 }
 .cw-btn:hover:not(:disabled) { background: var(--btn-secondary-bg-hover, rgba(255, 255, 255, 0.12)); }
@@ -446,7 +446,7 @@
 	border: 1px solid var(--stroke);
 	border-radius: var(--radius-lg, 14px);
 	background: var(--surface-1, rgba(255, 255, 255, 0.03));
-	transition: border-color 0.15s ease, background 0.15s ease, transform 0.12s ease;
+	transition: border-color var(--duration-fast) var(--ease-standard), background var(--duration-fast) var(--ease-standard), transform var(--duration-fast) var(--ease-standard);
 }
 .cw-dir-card:hover {
 	border-color: var(--stroke-strong);
@@ -519,7 +519,7 @@
 	opacity: 0;
 	transform: translateY(8px);
 	pointer-events: none;
-	transition: opacity 0.2s ease, transform 0.2s ease;
+	transition: opacity var(--duration-base) var(--ease-standard), transform var(--duration-base) var(--ease-standard);
 }
 .cw-toast[data-show='true'] { opacity: 1; transform: translateY(0); }
 .cw-toast[data-tone='bad'] { border-color: var(--badge-danger-border); color: var(--danger); }

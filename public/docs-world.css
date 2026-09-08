@@ -61,7 +61,7 @@ body {
 	cursor: pointer;
 	backdrop-filter: blur(12px);
 	-webkit-backdrop-filter: blur(12px);
-	transition: border-color 0.15s ease, background 0.15s ease, transform 0.15s ease;
+	transition: border-color var(--duration-fast) var(--ease-standard), background var(--duration-fast) var(--ease-standard), transform var(--duration-fast) var(--ease-standard);
 }
 .dw-chip:hover {
 	border-color: rgba(139, 92, 246, 0.5);
@@ -85,7 +85,7 @@ body {
 	font-weight: 600;
 	cursor: pointer;
 	text-decoration: none;
-	transition: background 0.15s ease, color 0.15s ease;
+	transition: background var(--duration-fast) var(--ease-standard), color var(--duration-fast) var(--ease-standard);
 }
 .dw-btn:hover {
 	background: rgba(139, 92, 246, 0.28);
@@ -241,7 +241,7 @@ body {
 	flex-direction: column;
 	opacity: 0;
 	transform: translateX(14px);
-	transition: opacity 0.2s ease, transform 0.2s ease;
+	transition: opacity var(--duration-base) var(--ease-standard), transform var(--duration-base) var(--ease-standard);
 }
 .dw-panel.open {
 	opacity: 1;
@@ -276,7 +276,7 @@ body {
 	color: var(--dw-text-muted);
 	font-size: 16px;
 	cursor: pointer;
-	transition: color 0.15s, background 0.15s;
+	transition: color var(--duration-fast), background var(--duration-fast);
 }
 .dw-close:hover {
 	color: #fff;
@@ -298,7 +298,7 @@ body {
 	color: var(--dw-text-muted);
 	font-size: 13.5px;
 	text-decoration: none;
-	transition: color 0.12s, background 0.12s;
+	transition: color var(--duration-fast), background var(--duration-fast);
 }
 .dw-panel-link:hover,
 .dw-panel-link:focus-visible {
@@ -338,7 +338,7 @@ body {
 	font-family: inherit;
 	text-align: left;
 	cursor: pointer;
-	transition: color 0.12s, background 0.12s;
+	transition: color var(--duration-fast), background var(--duration-fast);
 }
 .dw-index-item:hover,
 .dw-index-item:focus-visible {
@@ -400,7 +400,7 @@ body {
 	justify-content: flex-end;
 	background: rgba(5, 5, 10, 0.45);
 	opacity: 0;
-	transition: opacity 0.22s ease;
+	transition: opacity var(--duration-base) var(--ease-standard);
 }
 .dw-reader.open {
 	opacity: 1;
@@ -412,7 +412,7 @@ body {
 	background: rgba(11, 11, 18, 0.97);
 	border-left: 1px solid var(--dw-border);
 	transform: translateX(24px);
-	transition: transform 0.22s ease;
+	transition: transform var(--duration-base) var(--ease-standard);
 }
 .dw-reader.open .dw-reader-card {
 	transform: none;
@@ -628,7 +628,7 @@ body {
 	background: rgba(6, 6, 12, 0.62);
 	backdrop-filter: blur(6px);
 	opacity: 0;
-	transition: opacity 0.16s ease;
+	transition: opacity var(--duration-fast) var(--ease-standard);
 }
 .dw-search.open {
 	opacity: 1;
@@ -646,8 +646,8 @@ body {
 	overflow: hidden;
 	transform: translateY(-8px) scale(0.985);
 	transition:
-		transform 0.18s cubic-bezier(0.2, 0.8, 0.3, 1),
-		opacity 0.18s ease;
+		transform var(--duration-fast) cubic-bezier(0.2, 0.8, 0.3, 1),
+		opacity var(--duration-fast) var(--ease-standard);
 }
 .dw-search.open .dw-search-card {
 	transform: none;
@@ -765,9 +765,9 @@ body {
 	cursor: pointer;
 	opacity: 0;
 	transition:
-		opacity 0.14s ease,
-		color 0.14s ease,
-		border-color 0.14s ease;
+		opacity var(--duration-fast) var(--ease-standard),
+		color var(--duration-fast) var(--ease-standard),
+		border-color var(--duration-fast) var(--ease-standard);
 }
 /* Revealed on the active row and on hover, so the palette stays quiet while
    scanning but the second action is never more than one keystroke away. Always
@@ -885,7 +885,7 @@ body {
 	font: inherit;
 	font-size: 12.5px;
 	cursor: pointer;
-	transition: background 0.14s ease;
+	transition: background var(--duration-fast) var(--ease-standard);
 }
 .dw-way-act:hover {
 	background: rgba(139, 92, 246, 0.26);

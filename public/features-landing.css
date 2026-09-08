@@ -138,7 +138,7 @@
 	padding: var(--space-sm) var(--space-lg);
 	cursor: pointer;
 	text-decoration: none;
-	transition: opacity 0.15s ease, transform 0.15s ease;
+	transition: opacity var(--duration-fast) var(--ease-standard), transform var(--duration-fast) var(--ease-standard);
 }
 
 .fl-btn-primary:hover {
@@ -171,7 +171,7 @@
 	padding: var(--space-sm) var(--space-lg);
 	cursor: pointer;
 	text-decoration: none;
-	transition: background 0.15s ease, border-color 0.15s ease, transform 0.15s ease;
+	transition: background var(--duration-fast) var(--ease-standard), border-color var(--duration-fast) var(--ease-standard), transform var(--duration-fast) var(--ease-standard);
 }
 
 .fl-btn-ghost:hover {
@@ -230,7 +230,7 @@
 
 .fl-hero-preview model-viewer {
 	opacity: 0;
-	transition: opacity 0.45s ease;
+	transition: opacity var(--duration-slow) var(--ease-standard);
 	--poster-color: transparent;
 	--progress-bar-color: var(--ink-dim);
 }
@@ -327,7 +327,7 @@
 	display: flex;
 	flex-direction: column;
 	gap: var(--space-sm);
-	transition: border-color 0.2s ease, background 0.2s ease;
+	transition: border-color var(--duration-base) var(--ease-standard), background var(--duration-base) var(--ease-standard);
 }
 
 .fl-step:hover {
@@ -388,7 +388,7 @@
 	display: flex;
 	flex-direction: column;
 	gap: var(--space-sm);
-	transition: border-color 0.2s ease;
+	transition: border-color var(--duration-base) var(--ease-standard);
 }
 
 .fl-card:hover {
@@ -517,7 +517,7 @@
 	align-items: center;
 	justify-content: space-between;
 	gap: var(--space-md);
-	transition: background 0.15s ease;
+	transition: background var(--duration-fast) var(--ease-standard);
 }
 
 .fl-faq-q:hover {
@@ -538,7 +538,7 @@
 	width: 16px;
 	height: 16px;
 	color: var(--ink-dim);
-	transition: transform 0.2s ease;
+	transition: transform var(--duration-base) var(--ease-standard);
 }
 
 .fl-faq-q[aria-expanded="true"] .fl-faq-chevron {
@@ -635,7 +635,7 @@
 .fl-breadcrumb a {
 	color: var(--ink-dim);
 	text-decoration: none;
-	transition: color 0.15s;
+	transition: color var(--duration-fast);
 }
 
 .fl-breadcrumb a:hover {

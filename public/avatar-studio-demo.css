@@ -15,7 +15,7 @@
 	--as-danger:       var(--danger,         var(--danger));
 	--as-radius:       var(--radius-card,    12px);
 	--as-radius-sm:    var(--radius-lg,      8px);
-	--as-transition:   180ms ease;
+	--as-transition:   var(--duration-fast) var(--ease-standard);
 }
 
 html, body {
@@ -140,7 +140,7 @@ html, body {
 	color: var(--as-text-2);
 	font-size: 13px;
 	z-index: 5;
-	transition: opacity 300ms ease;
+	transition: opacity var(--duration-base) var(--ease-standard);
 }
 .as-viewport-loader.hidden {
 	opacity: 0;
@@ -487,7 +487,7 @@ html, body {
 	border-bottom: 1.5px solid var(--as-text-3);
 	transform: rotate(-45deg);
 	margin-right: 10px;
-	transition: transform 180ms ease;
+	transition: transform var(--duration-fast) var(--ease-standard);
 }
 .as-sculpt-group[open] > summary::before {
 	transform: rotate(45deg);

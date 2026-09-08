@@ -49,8 +49,8 @@
 	background-repeat: no-repeat;
 	background-position: right 0.5rem center;
 	transition:
-		border-color 0.15s,
-		box-shadow 0.15s;
+		border-color var(--duration-fast),
+		box-shadow var(--duration-fast);
 	max-width: 14rem;
 }
 .defi-select:hover {

@@ -120,7 +120,7 @@
 	font-weight: 600;
 	white-space: nowrap;
 	border-bottom: 1px solid color-mix(in srgb, var(--accent) 45%, transparent);
-	transition: color 0.15s ease, border-color 0.15s ease;
+	transition: color var(--duration-fast) var(--ease-standard), border-color var(--duration-fast) var(--ease-standard);
 }
 .cl-demo-note a:hover { color: var(--ink-bright); border-color: var(--ink-bright); }
 .cl-demo-note a:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; border-radius: 3px; }
@@ -415,7 +415,7 @@
 	user-select: none;
 	-webkit-user-select: none;
 	touch-action: manipulation;
-	transition: transform 70ms var(--ease-standard), box-shadow 70ms var(--ease-standard);
+	transition: transform var(--duration-instant) var(--ease-standard), box-shadow var(--duration-instant) var(--ease-standard);
 	box-shadow: 0 0 0 0 color-mix(in srgb, var(--danger) 40%, transparent);
 }
 .cl-tap:active, .cl-tap.is-hit { transform: scale(0.94); box-shadow: 0 0 36px 2px color-mix(in srgb, var(--danger) 45%, transparent); }

@@ -82,7 +82,7 @@
 	display: flex;
 	flex-direction: column;
 	gap: var(--space-xs);
-	transition: border-color 0.2s ease, background 0.2s ease, transform 0.2s ease;
+	transition: border-color var(--duration-base) var(--ease-standard), background var(--duration-base) var(--ease-standard), transform var(--duration-base) var(--ease-standard);
 }
 
 .ac-stage:hover {
@@ -291,7 +291,7 @@
 	border-radius: var(--radius-card);
 	padding: var(--space-lg);
 	text-decoration: none;
-	transition: border-color 0.2s ease, background 0.2s ease, transform 0.2s ease;
+	transition: border-color var(--duration-base) var(--ease-standard), background var(--duration-base) var(--ease-standard), transform var(--duration-base) var(--ease-standard);
 }
 
 .ac-surface:hover {
@@ -409,7 +409,7 @@
 	text-decoration: underline;
 	text-underline-offset: 2px;
 	text-decoration-color: var(--stroke-strong);
-	transition: text-decoration-color 0.15s ease;
+	transition: text-decoration-color var(--duration-fast) var(--ease-standard);
 }
 
 .ac-block p a:hover,

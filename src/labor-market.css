@@ -156,9 +156,9 @@
 	font: 600 14px/1 var(--font-body, sans-serif);
 	cursor: pointer;
 	white-space: nowrap;
-	transition: transform var(--duration-fast, 140ms) var(--ease-out, ease),
-		background var(--duration-fast, 140ms) ease, border-color var(--duration-fast, 140ms) ease,
-		box-shadow var(--duration-fast, 140ms) ease;
+	transition: transform var(--duration-fast, var(--duration-fast)) var(--ease-out, var(--ease-standard)),
+		background var(--duration-fast, var(--duration-fast)) var(--ease-standard), border-color var(--duration-fast, var(--duration-fast)) var(--ease-standard),
+		box-shadow var(--duration-fast, var(--duration-fast)) var(--ease-standard);
 }
 .lm-btn:hover { background: var(--surface-3, rgba(255, 255, 255, 0.09)); transform: translateY(-1px); }
 .lm-btn:active { transform: translateY(0); }
@@ -180,7 +180,7 @@
 	display: inline-flex; align-items: center; justify-content: center;
 	width: 34px; height: 34px; border: 0; border-radius: 50%;
 	background: var(--surface-3, rgba(255, 255, 255, 0.08)); color: var(--ink-dim, #9aa);
-	cursor: pointer; transition: background 140ms ease, color 140ms ease;
+	cursor: pointer; transition: background var(--duration-fast) var(--ease-standard), color var(--duration-fast) var(--ease-standard);
 }
 .lm-icon-btn:hover { background: var(--surface-2, rgba(255, 255, 255, 0.14)); color: var(--ink-bright, #fff); }
 .lm-icon-btn:focus-visible { outline: 2px solid var(--lm-accent); outline-offset: 2px; }
@@ -239,7 +239,7 @@
 	padding: 8px 16px; border: 0; border-radius: var(--radius-pill, 999px);
 	background: transparent; color: var(--ink-dim, #9aa);
 	font: 600 13px/1 var(--font-body, sans-serif); cursor: pointer;
-	transition: color var(--duration-fast, 140ms) ease, background var(--duration-fast, 140ms) ease;
+	transition: color var(--duration-fast, var(--duration-fast)) var(--ease-standard), background var(--duration-fast, var(--duration-fast)) var(--ease-standard);
 }
 .lm-tab:hover { color: var(--ink-bright, #fff); }
 .lm-tab.is-active { background: var(--surface-3, rgba(255, 255, 255, 0.12)); color: var(--ink-bright, #fff); }
@@ -256,7 +256,7 @@
 	border-radius: var(--radius-pill, 999px);
 	background: var(--surface-1, rgba(255, 255, 255, 0.04));
 	color: var(--ink-faint, #778);
-	transition: border-color 140ms ease;
+	transition: border-color var(--duration-fast) var(--ease-standard);
 }
 .lm-search:focus-within { border-color: var(--lm-accent); }
 .lm-search input { border: 0; background: transparent; color: var(--ink-bright, #fff); font: 500 14px/1 var(--font-body, sans-serif); width: 180px; outline: none; }
@@ -281,7 +281,7 @@
 	border: 1px solid var(--stroke, rgba(255, 255, 255, 0.12)); border-radius: var(--radius-pill, 999px);
 	background: var(--surface-1, rgba(255, 255, 255, 0.04)); color: var(--ink-dim, #9aa);
 	font: 600 13px/1 var(--font-body, sans-serif); cursor: pointer; user-select: none;
-	transition: color 140ms ease, background 140ms ease, border-color 140ms ease;
+	transition: color var(--duration-fast) var(--ease-standard), background var(--duration-fast) var(--ease-standard), border-color var(--duration-fast) var(--ease-standard);
 }
 .lm-toggle:hover { color: var(--ink-bright, #fff); }
 .lm-toggle.is-on { background: var(--lm-accent-soft); border-color: color-mix(in srgb, var(--lm-accent) 40%, transparent); color: var(--lm-accent); }
@@ -326,13 +326,13 @@
 .lm-card::before {
 	content: ''; position: absolute; inset: 0 0 auto; height: 2px;
 	background: linear-gradient(90deg, transparent, var(--lm-accent), transparent);
-	opacity: 0; transition: opacity var(--duration-fast, 140ms) ease;
+	opacity: 0; transition: opacity var(--duration-fast, var(--duration-fast)) var(--ease-standard);
 }
 .lm-card-btn {
 	cursor: pointer; color: inherit; font: inherit; width: 100%;
-	transition: transform var(--duration-fast, 140ms) var(--ease-out, ease),
-		border-color var(--duration-fast, 140ms) ease, background var(--duration-fast, 140ms) ease,
-		box-shadow var(--duration-fast, 140ms) ease;
+	transition: transform var(--duration-fast, var(--duration-fast)) var(--ease-out, var(--ease-standard)),
+		border-color var(--duration-fast, var(--duration-fast)) var(--ease-standard), background var(--duration-fast, var(--duration-fast)) var(--ease-standard),
+		box-shadow var(--duration-fast, var(--duration-fast)) var(--ease-standard);
 }
 .lm-card-btn:hover { transform: translateY(-3px); border-color: color-mix(in srgb, var(--lm-accent) 34%, var(--stroke-strong, rgba(255, 255, 255, 0.22))); background: var(--surface-2, rgba(255, 255, 255, 0.05)); box-shadow: 0 14px 34px -18px rgba(0, 0, 0, 0.7); }
 .lm-card-btn:hover::before { opacity: 1; }
@@ -419,7 +419,7 @@
 	border-radius: var(--radius-sm, 6px);
 	background: var(--surface-2, rgba(255, 255, 255, 0.04));
 	color: var(--ink-bright, #fff); font: 500 14px/1.4 var(--font-body, sans-serif);
-	transition: border-color var(--duration-fast, 140ms) ease;
+	transition: border-color var(--duration-fast, var(--duration-fast)) var(--ease-standard);
 }
 .lm-field textarea { resize: vertical; }
 .lm-field input:focus-visible, .lm-field textarea:focus-visible, .lm-field select:focus-visible, .lm-form select:focus-visible { outline: none; border-color: var(--lm-accent); }
@@ -474,7 +474,7 @@
 .lm-step { position: relative; flex: 1; display: flex; flex-direction: column; align-items: center; gap: 7px; text-align: center; }
 .lm-step::before { content: ''; position: absolute; top: 6px; left: -50%; width: 100%; height: 2px; background: var(--surface-3, rgba(255, 255, 255, 0.1)); z-index: 0; }
 .lm-step:first-child::before { display: none; }
-.lm-step-dot { position: relative; z-index: 1; width: 14px; height: 14px; border-radius: 50%; background: var(--surface-3, rgba(255, 255, 255, 0.12)); border: 2px solid var(--surface-1, #14151a); transition: background 240ms ease; }
+.lm-step-dot { position: relative; z-index: 1; width: 14px; height: 14px; border-radius: 50%; background: var(--surface-3, rgba(255, 255, 255, 0.12)); border: 2px solid var(--surface-1, #14151a); transition: background var(--duration-base) var(--ease-standard); }
 .lm-step-label { font: 600 10px/1.2 var(--font-mono, monospace); text-transform: uppercase; letter-spacing: 0.03em; color: var(--ink-faint, #778); }
 .lm-step.is-done .lm-step-dot { background: var(--lm-accent); }
 .lm-step.is-done::before { background: var(--lm-accent); }
@@ -519,7 +519,7 @@
 	color: var(--ink-bright, #fff); font-size: 13.5px; line-height: 1.4;
 	pointer-events: auto; cursor: pointer;
 	opacity: 0; transform: translateY(10px) scale(0.98);
-	transition: opacity 0.24s ease, transform 0.24s var(--ease-emphasized, cubic-bezier(0.2, 0.8, 0.2, 1));
+	transition: opacity var(--duration-base) var(--ease-standard), transform var(--duration-base) var(--ease-emphasized, var(--ease-standard));
 }
 .lm-toast.is-in { opacity: 1; transform: none; }
 .lm-toast.is-out { opacity: 0; transform: translateY(6px) scale(0.98); }

@@ -45,8 +45,8 @@
 	text-decoration: none;
 	border: 1px solid currentColor;
 	transition:
-		transform 0.16s ease,
-		opacity 0.16s ease;
+		transform var(--duration-fast) var(--ease-standard),
+		opacity var(--duration-fast) var(--ease-standard);
 }
 .glance-main .btn.primary {
 	background: #f6f7fb;
@@ -208,7 +208,7 @@ button.copy {
 	background: transparent;
 	color: inherit;
 	cursor: pointer;
-	transition: border-color 0.15s ease;
+	transition: border-color var(--duration-fast) var(--ease-standard);
 }
 button.copy:hover {
 	border-color: currentColor;
@@ -290,9 +290,9 @@ button.copy[data-state='done'] {
 	border-radius: 999px;
 	cursor: pointer;
 	transition:
-		transform 0.15s ease,
-		box-shadow 0.15s ease,
-		opacity 0.15s ease;
+		transform var(--duration-fast) var(--ease-standard),
+		box-shadow var(--duration-fast) var(--ease-standard),
+		opacity var(--duration-fast) var(--ease-standard);
 }
 .glance-btn:hover {
 	transform: translateY(-1px);
@@ -350,7 +350,7 @@ button.copy[data-state='done'] {
 	border: 1px solid var(--line, #262842);
 	border-radius: 14px;
 	background: var(--panel, #15162a);
-	transition: opacity 0.2s ease;
+	transition: opacity var(--duration-base) var(--ease-standard);
 }
 .glance-device.is-going {
 	opacity: 0.4;

@@ -18,7 +18,7 @@
 	place-items: center;
 	padding: 20px;
 	opacity: 0;
-	transition: opacity 180ms ease;
+	transition: opacity var(--duration-fast) var(--ease-standard);
 }
 .agp-overlay.agp-open { opacity: 1; }
 
@@ -36,7 +36,7 @@
 	overflow: hidden;
 	box-shadow: 0 24px 80px rgba(0, 0, 0, 0.6);
 	transform: translateY(8px);
-	transition: transform 180ms ease;
+	transition: transform var(--duration-fast) var(--ease-standard);
 }
 .agp-open .agp-shell { transform: translateY(0); }
 
@@ -80,7 +80,7 @@
 	cursor: pointer;
 	font-size: 16px;
 	line-height: 1;
-	transition: background 120ms ease, color 120ms ease, border-color 120ms ease;
+	transition: background var(--duration-fast) var(--ease-standard), color var(--duration-fast) var(--ease-standard), border-color var(--duration-fast) var(--ease-standard);
 	flex-shrink: 0;
 }
 .agp-close:hover {
@@ -107,7 +107,7 @@
 	background: var(--surface-1, rgba(255, 255, 255, 0.03));
 	border: 1px solid var(--stroke, rgba(255, 255, 255, 0.08));
 	border-radius: 10px;
-	transition: border-color 150ms ease, background 150ms ease;
+	transition: border-color var(--duration-fast) var(--ease-standard), background var(--duration-fast) var(--ease-standard);
 }
 .agp-search:focus-within {
 	border-color: var(--stroke-strong, rgba(255, 255, 255, 0.14));
@@ -136,7 +136,7 @@
 	padding: 2px 4px;
 	font-size: 14px;
 	line-height: 1;
-	transition: color 120ms ease;
+	transition: color var(--duration-fast) var(--ease-standard);
 }
 .agp-search-clear:hover { color: var(--ink, #e8e8e8); }
 .agp-status {
@@ -165,7 +165,7 @@
 	font: inherit;
 	font-size: 11.5px;
 	cursor: pointer;
-	transition: all 120ms ease;
+	transition: all var(--duration-fast) var(--ease-standard);
 }
 .agp-tag:hover {
 	border-color: var(--stroke-strong, rgba(255, 255, 255, 0.14));
@@ -215,7 +215,7 @@
 	color: inherit;
 	font: inherit;
 	padding: 0;
-	transition: border-color 120ms ease, transform 120ms ease, box-shadow 120ms ease;
+	transition: border-color var(--duration-fast) var(--ease-standard), transform var(--duration-fast) var(--ease-standard), box-shadow var(--duration-fast) var(--ease-standard);
 }
 .agp-card:hover {
 	border-color: var(--stroke-strong, rgba(255, 255, 255, 0.14));
@@ -364,7 +364,7 @@
 	border-radius: 7px;
 	font-size: 11.5px;
 	color: var(--ink-dim, #888888);
-	transition: background 120ms ease, color 120ms ease;
+	transition: background var(--duration-fast) var(--ease-standard), color var(--duration-fast) var(--ease-standard);
 }
 .agp-modes input:checked + span {
 	background: var(--surface-2, rgba(255, 255, 255, 0.05));
@@ -385,7 +385,7 @@
 	font-weight: 600;
 	cursor: pointer;
 	width: 100%;
-	transition: opacity 120ms ease;
+	transition: opacity var(--duration-fast) var(--ease-standard);
 }
 .agp-cta:disabled { opacity: 0.35; cursor: not-allowed; }
 .agp-cta.copied { background: var(--success, #4ade80); }
@@ -455,7 +455,7 @@
 	font: inherit;
 	font-size: 12.5px;
 	cursor: pointer;
-	transition: border-color 120ms ease, background 120ms ease;
+	transition: border-color var(--duration-fast) var(--ease-standard), background var(--duration-fast) var(--ease-standard);
 }
 .agp-loadmore-btn:hover {
 	border-color: var(--stroke-strong, rgba(255, 255, 255, 0.14));
@@ -509,7 +509,7 @@
 	background: transparent;
 	border: 0;
 	cursor: pointer;
-	transition: background 120ms ease, color 120ms ease;
+	transition: background var(--duration-fast) var(--ease-standard), color var(--duration-fast) var(--ease-standard);
 	white-space: nowrap;
 }
 .agp-source-btn.active {

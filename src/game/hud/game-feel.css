@@ -44,7 +44,7 @@
 	text-shadow: 0 2px 6px rgba(0, 0, 0, 0.8);
 	pointer-events: none;
 	opacity: 0;
-	transition: transform 1s cubic-bezier(0.1, 0.7, 0.2, 1), opacity 1s ease;
+	transition: transform var(--duration-slow) cubic-bezier(0.1, 0.7, 0.2, 1), opacity var(--duration-slow) var(--ease-standard);
 }
 .wh-feel-money.is-up { color: #8effa6; }
 .wh-feel-money.is-down { color: #ff9b9b; }
@@ -73,7 +73,7 @@
 	from { opacity: 0; transform: translate(-50%, -50%) scale(0.86); }
 	to { opacity: 1; transform: translate(-50%, -50%) scale(1); }
 }
-.wh-feel-flourish:not(.is-show) { transition: opacity 0.4s ease, transform 0.4s ease; }
+.wh-feel-flourish:not(.is-show) { transition: opacity var(--duration-slow) var(--ease-standard), transform var(--duration-slow) var(--ease-standard); }
 .wh-feel-flourish-title {
 	font: 800 22px/1.1 ui-sans-serif, system-ui, sans-serif;
 	letter-spacing: 0.06em;
@@ -96,6 +96,6 @@
 		opacity: 1;
 		transform: translate(-50%, -50%) scale(1);
 	}
-	.wh-feel-money { transition: opacity 0.3s ease; }
+	.wh-feel-money { transition: opacity var(--duration-base) var(--ease-standard); }
 	.wh-feel-money.is-go { transform: translate(-50%, 0); }
 }

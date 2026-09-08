@@ -69,8 +69,8 @@
 	background: var(--cv-green-soft);
 	border: 1px solid color-mix(in srgb, var(--cv-green) 30%, transparent);
 	transition:
-		border-color 0.15s,
-		background 0.15s;
+		border-color var(--duration-fast),
+		background var(--duration-fast);
 }
 .pr-audit svg {
 	flex-shrink: 0;
@@ -139,7 +139,7 @@ a.pr-audit:focus-visible {
 	cursor: help;
 }
 .pr-hallmark polygon {
-	transition: opacity 0.15s;
+	transition: opacity var(--duration-fast);
 }
 .pr-hallmark:hover polygon {
 	opacity: 0.75;
@@ -151,7 +151,7 @@ a.pr-audit:focus-visible {
 	color: var(--cv-text);
 	text-decoration: none;
 	font-weight: 500;
-	transition: color 0.15s;
+	transition: color var(--duration-fast);
 }
 .pr-chain-link:hover,
 .pr-chain-link:focus-visible {
@@ -182,7 +182,7 @@ a.pr-audit:focus-visible {
 	border-radius: 999px;
 	background: var(--cv-accent);
 	min-width: 2px;
-	transition: width 0.4s ease;
+	transition: width var(--duration-slow) var(--ease-standard);
 }
 .pr-share-num {
 	color: var(--cv-text-2);
@@ -276,8 +276,8 @@ a.pr-audit:focus-visible {
 	border-radius: var(--cv-radius-md);
 	padding: 0.5rem 1.125rem;
 	transition:
-		border-color 0.15s,
-		background 0.15s;
+		border-color var(--duration-fast),
+		background var(--duration-fast);
 }
 .pr-retry:hover {
 	border-color: var(--cv-border-hover);

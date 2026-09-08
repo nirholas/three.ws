@@ -134,7 +134,7 @@ h1 {
 	font-size: 15px;
 	font-weight: 700;
 	cursor: pointer;
-	transition: opacity 0.15s;
+	transition: opacity var(--duration-fast);
 	align-self: flex-start;
 }
 
@@ -156,7 +156,7 @@ h1 {
 	font-size: 14px;
 	cursor: pointer;
 	align-self: flex-start;
-	transition: border-color 0.15s;
+	transition: border-color var(--duration-fast);
 }
 
 .btn-secondary:hover {

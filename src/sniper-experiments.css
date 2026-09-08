@@ -31,7 +31,7 @@
 	color: var(--cv-accent);
 	text-decoration: none;
 	border-radius: var(--cv-radius-sm);
-	transition: color 0.15s ease;
+	transition: color var(--duration-fast) var(--ease-standard);
 }
 
 .xp-agent a:hover { color: var(--cv-accent-hover); text-decoration: underline; }
@@ -229,7 +229,7 @@
 .xp-table td:nth-child(n + 4) { white-space: nowrap; text-align: right; }
 .xp-table td:nth-child(n + 4) { font-variant-numeric: tabular-nums; }
 
-.xp-table tbody tr { transition: background 0.15s ease; }
+.xp-table tbody tr { transition: background var(--duration-fast) var(--ease-standard); }
 .xp-table tbody tr:hover { background: var(--cv-surface-2); }
 .xp-off { opacity: 0.55; }
 
@@ -254,7 +254,7 @@
 	padding: 5px 12px;
 	border-radius: var(--cv-radius);
 	cursor: pointer;
-	transition: background 0.15s ease, color 0.15s ease;
+	transition: background var(--duration-fast) var(--ease-standard), color var(--duration-fast) var(--ease-standard);
 }
 
 .xp-seg-btn:hover { background: var(--cv-surface-3); color: var(--cv-text); }

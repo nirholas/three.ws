@@ -43,8 +43,8 @@
 	background-position: right 0.5rem center;
 	background-size: 1rem;
 	transition:
-		border-color 0.15s,
-		box-shadow 0.15s;
+		border-color var(--duration-fast),
+		box-shadow var(--duration-fast);
 }
 .scr-field select:hover {
 	border-color: var(--cv-border-hover);
@@ -67,9 +67,9 @@
 	border-radius: var(--cv-radius-md);
 	padding: 0.5rem 1rem;
 	transition:
-		background 0.15s,
-		color 0.15s,
-		border-color 0.15s;
+		background var(--duration-fast),
+		color var(--duration-fast),
+		border-color var(--duration-fast);
 }
 .scr-reset:hover {
 	background: var(--cv-surface-2);

@@ -140,10 +140,10 @@
 	font: 600 14px/1 "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
 	text-decoration: none;
 	cursor: pointer;
-	transition: background 0.15s cubic-bezier(0.4, 0.14, 0.3, 1),
-		border-color 0.15s cubic-bezier(0.4, 0.14, 0.3, 1),
-		filter 0.15s cubic-bezier(0.4, 0.14, 0.3, 1),
-		transform 0.15s cubic-bezier(0.4, 0.14, 0.3, 1);
+	transition: background var(--duration-fast) cubic-bezier(0.4, 0.14, 0.3, 1),
+		border-color var(--duration-fast) cubic-bezier(0.4, 0.14, 0.3, 1),
+		filter var(--duration-fast) cubic-bezier(0.4, 0.14, 0.3, 1),
+		transform var(--duration-fast) cubic-bezier(0.4, 0.14, 0.3, 1);
 }
 .ibm-btn:hover { background: var(--surface-3); border-color: var(--stroke-strong); }
 .ibm-btn:active { transform: translateY(1px); }
@@ -169,9 +169,9 @@
 	color: var(--ink-dim);
 	font: 500 12px/1 "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
 	cursor: pointer;
-	transition: color 0.15s cubic-bezier(0.4, 0.14, 0.3, 1),
-		border-color 0.15s cubic-bezier(0.4, 0.14, 0.3, 1),
-		background 0.15s cubic-bezier(0.4, 0.14, 0.3, 1);
+	transition: color var(--duration-fast) cubic-bezier(0.4, 0.14, 0.3, 1),
+		border-color var(--duration-fast) cubic-bezier(0.4, 0.14, 0.3, 1),
+		background var(--duration-fast) cubic-bezier(0.4, 0.14, 0.3, 1);
 }
 .ibm-chip:hover, .ibm-chip[aria-selected="true"] {
 	color: var(--ink); border-color: var(--stroke-strong);
@@ -190,7 +190,7 @@
 }
 .card--interactive {
 	cursor: pointer;
-	transition: border-color 0.15s ease, transform 0.15s ease, box-shadow 0.15s ease;
+	transition: border-color var(--duration-fast) var(--ease-standard), transform var(--duration-fast) var(--ease-standard), box-shadow var(--duration-fast) var(--ease-standard);
 }
 .card--interactive:hover {
 	border-color: var(--card-border-hover);
@@ -326,7 +326,7 @@ textarea:focus-visible,
 	*, *::before, *::after {
 		animation-duration: 0.001ms !important;
 		animation-iteration-count: 1 !important;
-		transition-duration: 0.001ms !important;
+		transition-duration: var(--duration-instant) !important;
 		scroll-behavior: auto !important;
 	}
 }

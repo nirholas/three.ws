@@ -27,7 +27,7 @@
 	font-size: var(--text-sm, 13px);
 	color: var(--ink-dim, rgba(255, 255, 255, 0.55));
 	text-decoration: none;
-	transition: color 0.15s ease;
+	transition: color var(--duration-fast) var(--ease-standard);
 }
 .ct-back:hover,
 .ct-back:focus-visible {
@@ -235,9 +235,9 @@
 	cursor: pointer;
 	text-decoration: none;
 	transition:
-		background 0.15s ease,
-		border-color 0.15s ease,
-		transform 0.1s ease;
+		background var(--duration-fast) var(--ease-standard),
+		border-color var(--duration-fast) var(--ease-standard),
+		transform var(--duration-instant) var(--ease-standard);
 }
 .ct-btn:hover {
 	background: var(--surface-2, rgba(255, 255, 255, 0.06));

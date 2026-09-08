@@ -70,8 +70,8 @@
 	border-radius: var(--cv-radius);
 	color: var(--cv-text-3);
 	transition:
-		color 0.15s,
-		background 0.15s;
+		color var(--duration-fast),
+		background var(--duration-fast);
 }
 .ex-link:hover,
 .ex-link:focus-visible {

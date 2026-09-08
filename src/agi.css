@@ -102,7 +102,7 @@ body {
 	border: 1px solid var(--stroke-strong);
 	color: var(--ink);
 	background: var(--surface-2);
-	transition: border-color 0.15s ease, background 0.15s ease, transform 0.1s ease;
+	transition: border-color var(--duration-fast) var(--ease-standard), background var(--duration-fast) var(--ease-standard), transform var(--duration-instant) var(--ease-standard);
 }
 .agi-btn:hover { border-color: var(--ink-dim); background: var(--surface-3); }
 .agi-btn:active { transform: translateY(1px); }
@@ -129,7 +129,7 @@ body {
 	position: absolute; inset: 0;
 	background: radial-gradient(60% 55% at 50% 62%, var(--agi-aura, rgba(124, 147, 179, 0.28)), transparent 70%);
 	opacity: var(--agi-aura-strength, 0.5);
-	transition: background 1.2s ease, opacity 1.2s ease;
+	transition: background var(--duration-slow) var(--ease-standard), opacity var(--duration-slow) var(--ease-standard);
 	pointer-events: none;
 }
 .agi-stage agent-3d {
@@ -138,7 +138,7 @@ body {
 	flex: 1;
 	width: 100%;
 	opacity: 0;
-	transition: opacity 0.6s ease;
+	transition: opacity var(--duration-slow) var(--ease-standard);
 }
 .agi-stage agent-3d.agi-loaded { opacity: 1; }
 .agi-stage-floor {
@@ -154,7 +154,7 @@ body {
 	letter-spacing: 0.08em; text-transform: uppercase;
 	color: var(--ink);
 }
-.agi-state-pill .agi-spark { width: 6px; height: 6px; border-radius: 50%; background: var(--agi-aura-solid, var(--ink-dim)); transition: background 1s ease; }
+.agi-state-pill .agi-spark { width: 6px; height: 6px; border-radius: 50%; background: var(--agi-aura-solid, var(--ink-dim)); transition: background var(--duration-slow) var(--ease-standard); }
 .agi-conviction { font-family: var(--font-mono); font-size: var(--text-2xs); color: var(--ink-dim); }
 .agi-stage-boot {
 	position: absolute; inset: 0; z-index: 3;
@@ -211,7 +211,7 @@ body {
 	font-size: var(--text-2xs);
 	letter-spacing: 0.04em;
 	cursor: pointer;
-	transition: border-color 0.15s ease, background 0.15s ease, color 0.15s ease;
+	transition: border-color var(--duration-fast) var(--ease-standard), background var(--duration-fast) var(--ease-standard), color var(--duration-fast) var(--ease-standard);
 }
 .agi-chip:hover { border-color: var(--ink-dim); color: var(--ink); background: var(--surface-3); }
 .agi-chip:active { transform: translateY(1px); }

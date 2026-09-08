@@ -73,7 +73,7 @@ button {
 	color: var(--btn-primary-fg, #0a0a0a);
 	cursor: pointer;
 	font-weight: 600;
-	transition: background-color 0.2s;
+	transition: background-color var(--duration-base);
 }
 
 button:hover {

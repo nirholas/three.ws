@@ -163,7 +163,7 @@
 	border-radius: var(--radius-lg);
 	background: var(--surface-1);
 	cursor: pointer;
-	transition: border-color 0.18s ease, background 0.18s ease, transform 0.18s ease, box-shadow 0.18s ease;
+	transition: border-color var(--duration-fast) var(--ease-standard), background var(--duration-fast) var(--ease-standard), transform var(--duration-fast) var(--ease-standard), box-shadow var(--duration-fast) var(--ease-standard);
 }
 
 .rd-drop:hover {
@@ -207,7 +207,7 @@
 
 .rd-drop-icon {
 	color: var(--ink-faint);
-	transition: color 0.18s ease, transform 0.18s ease;
+	transition: color var(--duration-fast) var(--ease-standard), transform var(--duration-fast) var(--ease-standard);
 }
 
 .rd-drop:hover .rd-drop-icon,
@@ -270,7 +270,7 @@
 	font-family: var(--font-body);
 	font-size: var(--text-md);
 	cursor: pointer;
-	transition: border-color 0.15s ease, background 0.15s ease, color 0.15s ease;
+	transition: border-color var(--duration-fast) var(--ease-standard), background var(--duration-fast) var(--ease-standard), color var(--duration-fast) var(--ease-standard);
 }
 
 .rd-sample:hover {
@@ -458,7 +458,7 @@
 	font-weight: var(--weight-medium);
 	white-space: nowrap;
 	cursor: pointer;
-	transition: background 0.15s ease, transform 0.12s ease;
+	transition: background var(--duration-fast) var(--ease-standard), transform var(--duration-fast) var(--ease-standard);
 }
 
 .rd-action-primary:hover {
@@ -589,7 +589,7 @@
 	text-align: center;
 	font-size: var(--text-md);
 	color: var(--ink-dim);
-	transition: opacity 0.3s ease;
+	transition: opacity var(--duration-base) var(--ease-standard);
 }
 
 /* Fading the status to zero opacity leaves "Building the scene" in the
@@ -600,7 +600,7 @@
 	opacity: 0;
 	visibility: hidden;
 	pointer-events: none;
-	transition: opacity 0.3s ease, visibility 0s linear 0.3s;
+	transition: opacity var(--duration-base) var(--ease-standard), visibility 0s linear var(--duration-base);
 }
 
 .rd-spinner {
@@ -640,7 +640,7 @@
 	font-family: var(--font-body);
 	font-size: var(--text-md);
 	cursor: pointer;
-	transition: border-color 0.15s ease, background 0.15s ease, color 0.15s ease;
+	transition: border-color var(--duration-fast) var(--ease-standard), background var(--duration-fast) var(--ease-standard), color var(--duration-fast) var(--ease-standard);
 }
 
 .rd-clip:hover {
@@ -755,7 +755,7 @@
 	border-radius: var(--radius-md);
 	background: var(--surface-1);
 	cursor: default;
-	transition: border-color 0.15s ease;
+	transition: border-color var(--duration-fast) var(--ease-standard);
 }
 
 .rd-stat:hover {
@@ -852,7 +852,7 @@
 	font-family: var(--font-body);
 	font-size: var(--text-md);
 	cursor: pointer;
-	transition: background 0.15s ease, color 0.15s ease;
+	transition: background var(--duration-fast) var(--ease-standard), color var(--duration-fast) var(--ease-standard);
 }
 
 .rd-tab:hover {
@@ -895,7 +895,7 @@
 	font-family: var(--font-body);
 	font-size: var(--text-md);
 	cursor: pointer;
-	transition: border-color 0.15s ease, color 0.15s ease;
+	transition: border-color var(--duration-fast) var(--ease-standard), color var(--duration-fast) var(--ease-standard);
 }
 
 .rd-copy:hover {
@@ -1012,7 +1012,7 @@
 	border-radius: var(--radius-lg);
 	background: var(--bg-0);
 	text-decoration: none;
-	transition: border-color 0.15s ease, transform 0.15s ease;
+	transition: border-color var(--duration-fast) var(--ease-standard), transform var(--duration-fast) var(--ease-standard);
 }
 
 .rd-next-card:hover {
@@ -1051,7 +1051,7 @@
 	letter-spacing: 0.04em;
 	text-transform: uppercase;
 	color: var(--ink-faint);
-	transition: color 0.15s ease, gap 0.15s ease;
+	transition: color var(--duration-fast) var(--ease-standard), gap var(--duration-fast) var(--ease-standard);
 }
 
 .rd-next-card:hover .rd-next-go {

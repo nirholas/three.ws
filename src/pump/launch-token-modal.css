@@ -9,7 +9,7 @@
 	justify-content: center;
 	z-index: 9999;
 	opacity: 0;
-	transition: opacity 0.18s ease;
+	transition: opacity var(--duration-fast) var(--ease-standard);
 }
 .ltm-overlay.ltm-open { opacity: 1; }
 
@@ -42,7 +42,7 @@
 .ltm-step-dot {
 	width: 6px; height: 6px; border-radius: 50%;
 	background: rgba(255, 255, 255, 0.12);
-	transition: background 0.2s;
+	transition: background var(--duration-base);
 }
 .ltm-step-dot.active { background: rgba(120, 200, 140, 0.9); }
 .ltm-step-dot.done { background: rgba(120, 200, 140, 0.35); }
@@ -51,7 +51,7 @@
 	color: rgba(255, 255, 255, 0.4);
 	font-size: 1.2rem; line-height: 1;
 	cursor: pointer; padding: 0.2rem 0.35rem;
-	border-radius: 4px; transition: color 0.15s;
+	border-radius: 4px; transition: color var(--duration-fast);
 }
 .ltm-close:hover { color: rgba(255, 255, 255, 0.8); }
 
@@ -99,7 +99,7 @@
 	font-family: inherit;
 	width: 100%;
 	box-sizing: border-box;
-	transition: border-color 0.15s;
+	transition: border-color var(--duration-fast);
 }
 .ltm-textarea { resize: vertical; min-height: 60px; }
 .ltm-input:focus, .ltm-textarea:focus {
@@ -135,7 +135,7 @@
 	padding: 0.22rem 0.65rem;
 	cursor: pointer; font-size: 0.7rem;
 	font-family: inherit;
-	transition: background 0.12s, color 0.12s;
+	transition: background var(--duration-fast), color var(--duration-fast);
 }
 .ltm-toggle-btn.active {
 	background: rgba(255, 255, 255, 0.1);
@@ -160,7 +160,7 @@
 	color: rgba(255, 255, 255, 0.75);
 	cursor: pointer; font-size: 0.8rem;
 	font-family: inherit;
-	transition: background 0.15s, border-color 0.15s;
+	transition: background var(--duration-fast), border-color var(--duration-fast);
 	white-space: nowrap;
 }
 .ltm-btn:hover:not(:disabled) {

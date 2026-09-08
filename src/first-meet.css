@@ -15,7 +15,7 @@
 	inset: 0;
 	background: #000;
 	opacity: 1;
-	transition: opacity 0.4s ease;
+	transition: opacity var(--duration-slow) var(--ease-standard);
 }
 
 .fm-fade-overlay.fm-faded {
@@ -38,7 +38,7 @@
 	border-radius: 8px;
 	white-space: nowrap;
 	opacity: 0;
-	transition: opacity 0.5s ease;
+	transition: opacity var(--duration-slow) var(--ease-standard);
 	backdrop-filter: blur(4px);
 }
 
@@ -56,7 +56,7 @@
 	display: flex;
 	gap: 12px;
 	opacity: 0;
-	transition: opacity 0.45s ease;
+	transition: opacity var(--duration-slow) var(--ease-standard);
 	pointer-events: none;
 }
 
@@ -73,8 +73,8 @@
 	cursor: pointer;
 	border: none;
 	transition:
-		background 0.15s,
-		transform 0.1s;
+		background var(--duration-fast),
+		transform var(--duration-instant);
 }
 
 .fm-btn:active {
@@ -148,11 +148,11 @@
 	z-index: 9820;
 	opacity: 0;
 	transition:
-		opacity 0.2s ease,
-		top 0.22s ease,
-		left 0.22s ease,
-		width 0.22s ease,
-		height 0.22s ease;
+		opacity var(--duration-base) var(--ease-standard),
+		top var(--duration-base) var(--ease-standard),
+		left var(--duration-base) var(--ease-standard),
+		width var(--duration-base) var(--ease-standard),
+		height var(--duration-base) var(--ease-standard);
 }
 
 .fm-spotlight.fm-spotlight-on {
@@ -222,7 +222,7 @@
 	font-weight: 500;
 	cursor: pointer;
 	font-family: inherit;
-	transition: background 0.14s, color 0.14s;
+	transition: background var(--duration-fast), color var(--duration-fast);
 	line-height: 1;
 }
 
@@ -251,7 +251,7 @@
 	cursor: pointer;
 	font-family: inherit;
 	line-height: 1;
-	transition: background 0.14s, transform 0.1s;
+	transition: background var(--duration-fast), transform var(--duration-instant);
 }
 
 .fm-tour-primary:hover {
@@ -284,7 +284,7 @@
 	color: var(--ink);
 	opacity: 0;
 	transform: translateY(10px);
-	transition: opacity 0.28s ease, transform 0.28s ease;
+	transition: opacity var(--duration-base) var(--ease-standard), transform var(--duration-base) var(--ease-standard);
 }
 
 .fm-checklist-panel.fm-cl-visible {
@@ -316,7 +316,7 @@
 	line-height: 1;
 	cursor: pointer;
 	padding: 0 2px;
-	transition: color 0.14s;
+	transition: color var(--duration-fast);
 	font-family: inherit;
 }
 
@@ -351,7 +351,7 @@
 	align-items: center;
 	justify-content: center;
 	margin-top: 1px;
-	transition: border-color 0.15s, background 0.15s;
+	transition: border-color var(--duration-fast), background var(--duration-fast);
 	color: var(--success);
 }
 
@@ -444,7 +444,7 @@
 	width: 10px;
 	height: 10px;
 	flex-shrink: 0;
-	transition: transform 0.18s ease;
+	transition: transform var(--duration-fast) var(--ease-standard);
 	opacity: 0.45;
 }
 
@@ -455,7 +455,7 @@
 .fm-cl-collapse {
 	overflow: hidden;
 	max-height: 0;
-	transition: max-height 0.2s ease;
+	transition: max-height var(--duration-base) var(--ease-standard);
 }
 
 .fm-cl-collapse.open {
@@ -486,7 +486,7 @@
 	padding: 3px 10px;
 	cursor: pointer;
 	font-family: inherit;
-	transition: background 0.14s, color 0.14s;
+	transition: background var(--duration-fast), color var(--duration-fast);
 	line-height: 1.5;
 }
 

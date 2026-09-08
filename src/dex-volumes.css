@@ -38,9 +38,9 @@
 	text-decoration: none;
 	white-space: nowrap;
 	transition:
-		border-color 0.15s,
-		color 0.15s,
-		background 0.15s;
+		border-color var(--duration-fast),
+		color var(--duration-fast),
+		background var(--duration-fast);
 }
 .dx-chip:hover,
 .dx-chip:focus-visible {
@@ -62,7 +62,7 @@
 	border-radius: var(--cv-radius-sm);
 }
 .dx-name-link .nm {
-	transition: color 0.15s;
+	transition: color var(--duration-fast);
 }
 .dx-name-link:hover .nm,
 .dx-name-link:focus-visible .nm {
@@ -110,7 +110,7 @@
 		var(--cv-accent),
 		color-mix(in srgb, var(--cv-accent) 55%, transparent)
 	);
-	transition: width 0.4s ease;
+	transition: width var(--duration-slow) var(--ease-standard);
 }
 .dx-share-num {
 	font-size: 0.75rem;

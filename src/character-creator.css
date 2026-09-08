@@ -64,7 +64,7 @@ body {
 	cursor: pointer;
 	display: inline-flex; align-items: center; justify-content: center;
 	text-decoration: none;
-	transition: border-color 120ms;
+	transition: border-color var(--duration-fast);
 }
 .cc-topbar .back:hover { border-color: var(--border-strong); }
 .cc-topbar .brand { font-size: 12px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); }
@@ -165,7 +165,7 @@ body {
 	cursor: pointer;
 	font: inherit;
 	text-align: center;
-	transition: border-color 120ms, transform 120ms, background 120ms;
+	transition: border-color var(--duration-fast), transform var(--duration-fast), background var(--duration-fast);
 }
 .cc-source:hover { border-color: var(--accent); transform: translateY(-1px); }
 .cc-source:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
@@ -190,7 +190,7 @@ body {
 .cc-import-url button {
 	background: var(--panel); border: 1px solid var(--border); color: var(--text);
 	border-radius: 9px; padding: 0 14px; font: 600 13px/1 inherit; cursor: pointer;
-	transition: border-color 120ms;
+	transition: border-color var(--duration-fast);
 }
 .cc-import-url button:hover { border-color: var(--border-strong); }
 
@@ -208,7 +208,7 @@ body {
 	padding: 10px 8px 9px;
 	cursor: pointer;
 	display: flex; flex-direction: column; align-items: center; gap: 7px;
-	transition: border-color 120ms, transform 120ms, background 120ms;
+	transition: border-color var(--duration-fast), transform var(--duration-fast), background var(--duration-fast);
 }
 .cc-chip:hover { border-color: var(--border-strong); transform: translateY(-1px); }
 .cc-chip:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
@@ -258,7 +258,7 @@ body {
 	color: var(--text);
 	font: 15px/1 inherit;
 	outline: none;
-	transition: border-color 120ms;
+	transition: border-color var(--duration-fast);
 }
 .cc-name-input:focus { border-color: var(--accent); }
 .cc-name-input::placeholder { color: var(--muted); }
@@ -270,7 +270,7 @@ body {
 	font: 600 14.5px/1 inherit;
 	cursor: pointer;
 	border: 1px solid var(--border);
-	transition: filter 120ms, border-color 120ms, color 120ms;
+	transition: filter var(--duration-fast), border-color var(--duration-fast), color var(--duration-fast);
 }
 .cc-btn--primary { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); flex: 1.6; }
 .cc-btn--primary:hover { filter: brightness(0.92); }
@@ -317,7 +317,7 @@ body {
 	font-size: 13.5px;
 	max-width: 88vw;
 	opacity: 0; pointer-events: none;
-	transition: opacity 200ms, transform 200ms;
+	transition: opacity var(--duration-base), transform var(--duration-base);
 	z-index: 1100;
 	box-shadow: 0 12px 40px -10px rgba(0,0,0,0.7);
 }

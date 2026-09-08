@@ -110,7 +110,7 @@ html.pump-dashboard-page body {
 	text-decoration: none;
 	font-size: 0.85rem;
 	font-weight: 500;
-	transition: background 0.12s ease, color 0.12s ease;
+	transition: background var(--duration-fast) var(--ease-standard), color var(--duration-fast) var(--ease-standard);
 }
 
 .pd-sidebar nav a svg {
@@ -118,7 +118,7 @@ html.pump-dashboard-page body {
 	height: 14px;
 	opacity: 0.7;
 	flex-shrink: 0;
-	transition: opacity 0.12s ease;
+	transition: opacity var(--duration-fast) var(--ease-standard);
 }
 
 .pd-sidebar nav a:hover {
@@ -156,7 +156,7 @@ html.pump-dashboard-page body {
 	font-size: 0.78rem;
 	color: var(--ink-dim);
 	text-decoration: none;
-	transition: color 0.15s ease;
+	transition: color var(--duration-fast) var(--ease-standard);
 }
 
 .pd-sidebar-back:hover { color: var(--accent); }
@@ -213,7 +213,7 @@ html.pump-dashboard-page body {
 	height: 6px;
 	border-radius: 50%;
 	background: var(--ink-dim);
-	transition: background 0.2s ease, box-shadow 0.2s ease;
+	transition: background var(--duration-base) var(--ease-standard), box-shadow var(--duration-base) var(--ease-standard);
 }
 
 .pd-status-chip .pd-dot.is-on {
@@ -442,7 +442,7 @@ html.pump-dashboard-page body {
 }
 
 .pd-table tbody tr {
-	transition: background 0.12s ease;
+	transition: background var(--duration-fast) var(--ease-standard);
 }
 
 .pd-table tbody tr:hover { background: rgba(255, 255, 255, 0.02); }
@@ -619,7 +619,7 @@ html.pump-dashboard-page body {
 	color: var(--accent);
 	font-family: var(--font-mono);
 	font-size: 0.82rem;
-	transition: border-color 0.15s ease, background 0.15s ease;
+	transition: border-color var(--duration-fast) var(--ease-standard), background var(--duration-fast) var(--ease-standard);
 }
 
 .pd-input:focus,
@@ -653,7 +653,7 @@ html.pump-dashboard-page body {
 	font-weight: 500;
 	text-decoration: none;
 	cursor: pointer;
-	transition: background 0.12s ease, border-color 0.12s ease, transform 0.12s ease;
+	transition: background var(--duration-fast) var(--ease-standard), border-color var(--duration-fast) var(--ease-standard), transform var(--duration-fast) var(--ease-standard);
 	white-space: nowrap;
 }
 
@@ -760,7 +760,7 @@ html.pump-dashboard-page body {
 	border: 1px solid var(--stroke);
 	position: relative;
 	cursor: pointer;
-	transition: background 0.15s ease;
+	transition: background var(--duration-fast) var(--ease-standard);
 	flex-shrink: 0;
 	margin-top: 2px;
 }
@@ -775,7 +775,7 @@ html.pump-dashboard-page body {
 	border-radius: 50%;
 	background: var(--ink-dim);
 	transform: translateY(-50%);
-	transition: left 0.15s ease, background 0.15s ease;
+	transition: left var(--duration-fast) var(--ease-standard), background var(--duration-fast) var(--ease-standard);
 }
 
 .pd-toggle:checked {
@@ -810,7 +810,7 @@ html.pump-dashboard-page body {
 	letter-spacing: 0.04em;
 	text-transform: uppercase;
 	cursor: pointer;
-	transition: background 0.12s ease, border-color 0.12s ease, color 0.12s ease;
+	transition: background var(--duration-fast) var(--ease-standard), border-color var(--duration-fast) var(--ease-standard), color var(--duration-fast) var(--ease-standard);
 }
 
 .pd-filter-btn:hover {
@@ -964,7 +964,7 @@ code, .pd-mono-inline {
 @media (max-width: 760px) {
 	.pd-sidebar {
 		transform: translateX(-100%);
-		transition: transform 0.2s ease;
+		transition: transform var(--duration-base) var(--ease-standard);
 	}
 	.pd-sidebar.is-open { transform: translateX(0); }
 	.pd-main { margin-left: 0; padding: 1rem; }
@@ -1034,7 +1034,7 @@ code, .pd-mono-inline {
 	flex-direction: column;
 	gap: 0.6rem;
 	padding: 0.75rem;
-	transition: opacity 0.15s ease;
+	transition: opacity var(--duration-fast) var(--ease-standard);
 }
 .pd-rules-list[aria-busy='true'] { opacity: 0.5; }
 .pd-rules-empty strong { color: var(--ink); }
@@ -1048,7 +1048,7 @@ code, .pd-mono-inline {
 	border: 1px solid var(--stroke);
 	border-radius: var(--radius-md);
 	background: rgba(255, 255, 255, 0.025);
-	transition: border-color 0.12s ease, background 0.12s ease, opacity 0.12s ease;
+	transition: border-color var(--duration-fast) var(--ease-standard), background var(--duration-fast) var(--ease-standard), opacity var(--duration-fast) var(--ease-standard);
 }
 .pd-rule-card:hover { border-color: var(--stroke-strong); background: rgba(255, 255, 255, 0.04); }
 .pd-rule-card.is-disabled { opacity: 0.55; }
@@ -1145,7 +1145,7 @@ code, .pd-mono-inline {
 	border-radius: 999px;
 	background: rgba(255, 255, 255, 0.12);
 	border: 1px solid var(--stroke);
-	transition: background 0.15s ease;
+	transition: background var(--duration-fast) var(--ease-standard);
 	display: inline-flex;
 	align-items: center;
 	padding: 0 2px;
@@ -1155,7 +1155,7 @@ code, .pd-mono-inline {
 	height: 13px;
 	border-radius: 50%;
 	background: var(--ink);
-	transition: transform 0.15s ease;
+	transition: transform var(--duration-fast) var(--ease-standard);
 }
 .pd-switch input:checked + .pd-switch-track { background: var(--accent); }
 .pd-switch input:checked + .pd-switch-track .pd-switch-thumb { transform: translateX(15px); }

@@ -36,7 +36,7 @@
 	font: 600 12.5px/1 var(--font-body, 'Inter', system-ui, sans-serif);
 	cursor: pointer;
 	box-shadow: 0 4px 20px rgba(0, 0, 0, 0.45), 0 1px 0 rgba(255, 255, 255, 0.05) inset;
-	transition: transform 0.16s ease, border-color 0.16s ease, box-shadow 0.16s ease, color 0.16s ease;
+	transition: transform var(--duration-fast) var(--ease-standard), border-color var(--duration-fast) var(--ease-standard), box-shadow var(--duration-fast) var(--ease-standard), color var(--duration-fast) var(--ease-standard);
 }
 .twg-pill:hover {
 	transform: translateY(-2px);
@@ -60,7 +60,7 @@
 	display: grid;
 	place-items: center;
 	background: conic-gradient(rgba(255, 255, 255, 0.7) calc(var(--twg-pct, 0) * 1%), rgba(255, 255, 255, 0.12) 0);
-	transition: background 0.5s ease;
+	transition: background var(--duration-slow) var(--ease-standard);
 }
 .twg-pill-ring::after {
 	content: '';
@@ -151,7 +151,7 @@
 	font-size: 17px;
 	line-height: 1;
 	cursor: pointer;
-	transition: background 0.15s ease, color 0.15s ease;
+	transition: background var(--duration-fast) var(--ease-standard), color var(--duration-fast) var(--ease-standard);
 }
 .twg-close:hover { background: rgba(255, 255, 255, 0.07); color: rgba(255, 255, 255, 0.80); }
 .twg-close:focus-visible { outline: 2px solid var(--accent, #fff); outline-offset: 1px; }
@@ -167,7 +167,7 @@
 	width: 0;
 	background: rgba(255, 255, 255, 0.5);
 	border-radius: 0 2px 2px 0;
-	transition: width 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+	transition: width var(--duration-slow) cubic-bezier(0.16, 1, 0.3, 1);
 }
 .twg-panel.is-complete .twg-bar-fill { background: var(--success, #4ade80); }
 
@@ -210,7 +210,7 @@
 	text-align: left;
 	text-decoration: none;
 	cursor: pointer;
-	transition: background 0.14s ease, border-color 0.14s ease;
+	transition: background var(--duration-fast) var(--ease-standard), border-color var(--duration-fast) var(--ease-standard);
 }
 .twg-step:hover {
 	background: rgba(255, 255, 255, 0.04);
@@ -230,7 +230,7 @@
 	font-size: 10px;
 	font-weight: 700;
 	color: rgba(255, 255, 255, 0.3);
-	transition: background 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+	transition: background var(--duration-base) var(--ease-standard), border-color var(--duration-base) var(--ease-standard), color var(--duration-base) var(--ease-standard);
 }
 .twg-step-body { flex: 1; min-width: 0; }
 .twg-step-title {
@@ -253,7 +253,7 @@
 	color: rgba(255, 255, 255, 0.28);
 	opacity: 0;
 	transform: translateX(-4px);
-	transition: opacity 0.14s ease, transform 0.14s ease;
+	transition: opacity var(--duration-fast) var(--ease-standard), transform var(--duration-fast) var(--ease-standard);
 }
 .twg-step:hover .twg-step-arrow { opacity: 1; transform: translateX(0); }
 
@@ -409,7 +409,7 @@
 	cursor: pointer;
 	text-decoration: none;
 	border: 1px solid transparent;
-	transition: transform 0.15s ease, background 0.15s ease, border-color 0.15s ease, opacity 0.15s ease;
+	transition: transform var(--duration-fast) var(--ease-standard), background var(--duration-fast) var(--ease-standard), border-color var(--duration-fast) var(--ease-standard), opacity var(--duration-fast) var(--ease-standard);
 }
 .twg-btn:focus-visible { outline: 2px solid var(--accent, #fff); outline-offset: 2px; }
 .twg-btn-primary {

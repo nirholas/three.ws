@@ -27,8 +27,8 @@
 	cursor: pointer;
 	white-space: nowrap;
 	transition:
-		color 0.15s ease,
-		border-color 0.15s ease;
+		color var(--duration-fast) var(--ease-standard),
+		border-color var(--duration-fast) var(--ease-standard);
 }
 
 .rh-tab:hover {
@@ -93,9 +93,9 @@
 	padding: 0.375rem 0.75rem;
 	cursor: pointer;
 	transition:
-		background 0.15s ease,
-		color 0.15s ease,
-		border-color 0.15s ease;
+		background var(--duration-fast) var(--ease-standard),
+		color var(--duration-fast) var(--ease-standard),
+		border-color var(--duration-fast) var(--ease-standard);
 }
 
 .rh-sort-btn:hover {
@@ -245,8 +245,8 @@
 	padding: 0.75rem 1rem;
 	cursor: pointer;
 	transition:
-		background 0.15s ease,
-		transform 0.1s ease;
+		background var(--duration-fast) var(--ease-standard),
+		transform var(--duration-instant) var(--ease-standard);
 }
 
 .rh-buy-btn:hover {
@@ -281,8 +281,8 @@
 	cursor: pointer;
 	margin-top: 0.5rem;
 	transition:
-		border-color 0.15s ease,
-		color 0.15s ease;
+		border-color var(--duration-fast) var(--ease-standard),
+		color var(--duration-fast) var(--ease-standard);
 }
 
 .rh-buy-secondary:hover {

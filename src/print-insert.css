@@ -101,9 +101,9 @@ body {
 	text-decoration: none;
 	cursor: pointer;
 	transition:
-		background 0.15s ease,
-		border-color 0.15s ease,
-		transform 0.1s ease;
+		background var(--duration-fast) var(--ease-standard),
+		border-color var(--duration-fast) var(--ease-standard),
+		transform var(--duration-instant) var(--ease-standard);
 }
 .pi-btn:hover {
 	background: var(--pi-surface);

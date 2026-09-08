@@ -16,8 +16,8 @@
 	border-radius: var(--radius-lg, 14px);
 	background: var(--surface-1, rgba(255, 255, 255, 0.03));
 	transition:
-		border-color 0.2s ease,
-		box-shadow 0.25s ease;
+		border-color var(--duration-base) var(--ease-standard),
+		box-shadow var(--duration-base) var(--ease-standard);
 }
 
 /* A thin status rail on the leading edge: idle is quiet, a result is not. */
@@ -28,7 +28,7 @@
 	width: 2px;
 	border-radius: var(--radius-lg, 14px) 0 0 var(--radius-lg, 14px);
 	background: var(--stroke-strong, rgba(255, 255, 255, 0.14));
-	transition: background 0.25s ease;
+	transition: background var(--duration-base) var(--ease-standard);
 }
 .ls-card[data-state='running']::before {
 	background: var(--ls-accent);
@@ -143,9 +143,9 @@
 	font-size: 0.7rem;
 	text-decoration: none;
 	transition:
-		color 0.16s,
-		border-color 0.16s,
-		background 0.16s;
+		color var(--duration-fast),
+		border-color var(--duration-fast),
+		background var(--duration-fast);
 }
 .ls-ref:hover {
 	color: var(--ink-bright, #fff);
@@ -210,8 +210,8 @@
 	font-family: var(--font-mono, monospace);
 	font-size: 0.78rem;
 	transition:
-		border-color 0.16s,
-		background 0.16s;
+		border-color var(--duration-fast),
+		background var(--duration-fast);
 }
 .ls-input:hover {
 	border-color: var(--stroke-strong, rgba(255, 255, 255, 0.14));
@@ -251,10 +251,10 @@
 	font-weight: 600;
 	cursor: pointer;
 	transition:
-		transform 0.14s ease,
-		background 0.16s,
-		border-color 0.16s,
-		opacity 0.16s;
+		transform var(--duration-fast) var(--ease-standard),
+		background var(--duration-fast),
+		border-color var(--duration-fast),
+		opacity var(--duration-fast);
 }
 .ls-run:hover:not(:disabled) {
 	background: color-mix(in srgb, var(--ls-accent) 14%, transparent);
@@ -390,9 +390,9 @@
 	cursor: pointer;
 	opacity: 0;
 	transition:
-		opacity 0.16s ease,
-		color 0.16s,
-		border-color 0.16s;
+		opacity var(--duration-fast) var(--ease-standard),
+		color var(--duration-fast),
+		border-color var(--duration-fast);
 }
 .ls-body:hover .ls-copy,
 .ls-copy:focus-visible {

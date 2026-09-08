@@ -123,7 +123,7 @@
 	display: inline-flex; align-items: center; gap: 8px;
 	padding: 6px 12px; border-radius: 999px; font: 600 12px/1 var(--rl-mono);
 	border: 1px solid var(--rl-line); cursor: pointer; background: transparent; color: var(--rl-muted);
-	transition: border-color .15s, color .15s, background .15s;
+	transition: border-color var(--duration-fast), color var(--duration-fast), background var(--duration-fast);
 }
 .rl-verify:hover { border-color: var(--rl-line-2); }
 .rl-verify .rl-vdot { width: 8px; height: 8px; border-radius: 50%; background: currentColor; flex: none; }
@@ -176,7 +176,7 @@
 .rl-entry {
 	background: var(--rl-card); border: 1px solid var(--rl-line); border-radius: 12px;
 	padding: 14px 16px; border-left: 3px solid var(--rl-line-2);
-	transition: border-color .15s, transform .15s;
+	transition: border-color var(--duration-fast), transform var(--duration-fast);
 }
 .rl-entry.win { border-left-color: var(--rl-green); }
 .rl-entry.loss { border-left-color: var(--rl-red); }

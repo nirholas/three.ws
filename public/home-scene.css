@@ -79,7 +79,7 @@
 	height: 7px;
 	border-radius: 50%;
 	background: var(--ink-dim);
-	transition: background 220ms ease, box-shadow 220ms ease;
+	transition: background var(--duration-base) var(--ease-standard), box-shadow var(--duration-base) var(--ease-standard);
 }
 .hs-pill[data-status='live']::before { background: var(--success); box-shadow: 0 0 0 3px rgba(74, 222, 128, 0.18); }
 .hs-pill[data-status='stale']::before { background: var(--warn); box-shadow: 0 0 0 3px rgba(251, 191, 36, 0.16); }
@@ -102,7 +102,7 @@
 	font-size: var(--text-md);
 	font-weight: var(--weight-medium);
 	cursor: pointer;
-	transition: background 160ms ease, border-color 160ms ease, transform 120ms ease;
+	transition: background var(--duration-fast) var(--ease-standard), border-color var(--duration-fast) var(--ease-standard), transform var(--duration-fast) var(--ease-standard);
 }
 .hs-btn:hover:not(:disabled) { background: var(--surface-3); border-color: var(--stroke-strong); }
 .hs-btn:active:not(:disabled) { transform: translateY(1px); }
@@ -145,8 +145,8 @@
 
 /* Stale is a first-class state: the house greys out and says how old it is.
  * It never empties. */
-.hs-stage.is-stale canvas { filter: grayscale(0.72) brightness(0.72); transition: filter 700ms ease; }
-.hs-stage canvas { transition: filter 700ms ease; }
+.hs-stage.is-stale canvas { filter: grayscale(0.72) brightness(0.72); transition: filter var(--duration-slow) var(--ease-standard); }
+.hs-stage canvas { transition: filter var(--duration-slow) var(--ease-standard); }
 
 .hs-age {
 	position: absolute;
@@ -200,7 +200,7 @@
 	font-size: var(--text-md);
 	text-align: start;
 	cursor: pointer;
-	transition: background 150ms ease, border-color 150ms ease;
+	transition: background var(--duration-fast) var(--ease-standard), border-color var(--duration-fast) var(--ease-standard);
 }
 .hs-room:hover { background: var(--surface-2); }
 .hs-room:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
@@ -211,7 +211,7 @@
 	border-radius: 50%;
 	background: var(--room-dot, rgba(255, 255, 255, 0.14));
 	box-shadow: 0 0 var(--room-halo, 0px) var(--room-dot, transparent);
-	transition: background 400ms ease, box-shadow 400ms ease;
+	transition: background var(--duration-slow) var(--ease-standard), box-shadow var(--duration-slow) var(--ease-standard);
 }
 .hs-room-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .hs-room-meta { font-size: var(--text-2xs); color: var(--ink-dim); font-variant-numeric: tabular-nums; }
@@ -323,7 +323,7 @@
 	background:
 		radial-gradient(120% 90% at 50% 0%, color-mix(in srgb, var(--room-light, #fff) calc(var(--room-glow, 0) * 100%), transparent), transparent 70%),
 		var(--surface-1);
-	transition: border-color 200ms ease, background 600ms ease, opacity 500ms ease;
+	transition: border-color var(--duration-base) var(--ease-standard), background var(--duration-slow) var(--ease-standard), opacity var(--duration-slow) var(--ease-standard);
 }
 .hs-card.is-focused { border-color: var(--stroke-strong); box-shadow: 0 0 0 2px var(--accent-soft); }
 .hs-card.is-stale { opacity: 0.62; filter: grayscale(0.6); }
@@ -364,7 +364,7 @@
 	height: 10px;
 	border-radius: 50%;
 	background: var(--dot);
-	transition: background 400ms ease;
+	transition: background var(--duration-slow) var(--ease-standard);
 }
 .hs-item-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .hs-item-state { font-size: var(--text-2xs); color: var(--ink-dim); font-variant-numeric: tabular-nums; }
@@ -379,7 +379,7 @@
 	font-size: var(--text-2xs);
 	font-weight: var(--weight-semibold);
 	cursor: pointer;
-	transition: background 150ms ease, border-color 150ms ease;
+	transition: background var(--duration-fast) var(--ease-standard), border-color var(--duration-fast) var(--ease-standard);
 }
 .hs-item-act:hover:not(:disabled) { background: var(--surface-3); border-color: var(--stroke-strong); }
 .hs-item-act:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }

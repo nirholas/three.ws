@@ -152,7 +152,7 @@ body {
 	padding: 6px 12px;
 	border-radius: 8px;
 	cursor: pointer;
-	transition: background 0.18s var(--fm-ease), color 0.18s var(--fm-ease);
+	transition: background var(--duration-fast) var(--fm-ease), color var(--duration-fast) var(--fm-ease);
 }
 
 .fm-seg button:hover {
@@ -180,7 +180,7 @@ body {
 	color: var(--fm-text);
 	font: inherit;
 	font-size: 13.5px;
-	transition: border-color 0.18s var(--fm-ease), background 0.18s var(--fm-ease);
+	transition: border-color var(--duration-fast) var(--fm-ease), background var(--duration-fast) var(--fm-ease);
 }
 
 .fm-search input::placeholder {
@@ -225,7 +225,7 @@ body {
 	font-size: 13px;
 	font-weight: 600;
 	cursor: pointer;
-	transition: border-color 0.18s var(--fm-ease), background 0.18s var(--fm-ease), transform 0.12s var(--fm-ease);
+	transition: border-color var(--duration-fast) var(--fm-ease), background var(--duration-fast) var(--fm-ease), transform var(--duration-fast) var(--fm-ease);
 }
 
 .fm-btn:hover {
@@ -451,7 +451,7 @@ body {
 	font: 600 16px/1 var(--fm-mono);
 	cursor: pointer;
 	backdrop-filter: blur(6px);
-	transition: background 0.16s var(--fm-ease), border-color 0.16s var(--fm-ease);
+	transition: background var(--duration-fast) var(--fm-ease), border-color var(--duration-fast) var(--fm-ease);
 }
 
 .fm-zoom button:hover {
@@ -483,7 +483,7 @@ body {
 	font: 600 11.5px/1 inherit;
 	cursor: pointer;
 	backdrop-filter: blur(6px);
-	transition: color 0.16s var(--fm-ease), border-color 0.16s var(--fm-ease), opacity 0.16s var(--fm-ease);
+	transition: color var(--duration-fast) var(--fm-ease), border-color var(--duration-fast) var(--fm-ease), opacity var(--duration-fast) var(--fm-ease);
 }
 
 .fm-legend button:hover {
@@ -524,7 +524,7 @@ body {
 	backdrop-filter: blur(8px);
 	opacity: 0;
 	transform: translateY(4px);
-	transition: opacity 0.14s var(--fm-ease), transform 0.14s var(--fm-ease);
+	transition: opacity var(--duration-fast) var(--fm-ease), transform var(--duration-fast) var(--fm-ease);
 }
 
 .fm-tip.is-on {
@@ -677,7 +677,7 @@ body {
 
 .fm-split i {
 	display: block;
-	transition: width 0.4s var(--fm-ease);
+	transition: width var(--duration-slow) var(--fm-ease);
 }
 
 .fm-split .in { background: var(--fm-sink); }
@@ -717,7 +717,7 @@ body {
 	font-size: 12.5px;
 	font-weight: 600;
 	text-decoration: none;
-	transition: border-color 0.16s var(--fm-ease), transform 0.14s var(--fm-ease);
+	transition: border-color var(--duration-fast) var(--fm-ease), transform var(--duration-fast) var(--fm-ease);
 }
 
 .fm-links a:hover {
@@ -749,7 +749,7 @@ body {
 	font-size: 13px;
 	text-align: left;
 	cursor: pointer;
-	transition: background 0.14s var(--fm-ease);
+	transition: background var(--duration-fast) var(--fm-ease);
 }
 
 .fm-peer:hover {
@@ -870,7 +870,7 @@ body {
 	height: 100%;
 	border-radius: 999px;
 	background: linear-gradient(90deg, var(--fm-accent), var(--fm-accent-2));
-	transition: width 0.5s var(--fm-ease);
+	transition: width var(--duration-slow) var(--fm-ease);
 }
 
 .fm-table-shell {
@@ -917,7 +917,7 @@ body {
 
 .fm-table tbody tr {
 	cursor: pointer;
-	transition: background 0.14s var(--fm-ease);
+	transition: background var(--duration-fast) var(--fm-ease);
 }
 
 .fm-table tbody tr:hover,
@@ -1012,6 +1012,6 @@ body {
 	.fm-wrap *::after {
 		animation-duration: 0.001ms !important;
 		animation-iteration-count: 1 !important;
-		transition-duration: 0.001ms !important;
+		transition-duration: var(--duration-instant) !important;
 	}
 }

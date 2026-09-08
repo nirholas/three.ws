@@ -135,7 +135,7 @@
 	padding: 10px 18px;
 	border-radius: 999px;
 	cursor: pointer;
-	transition: transform 0.15s ease, background 0.15s ease;
+	transition: transform var(--duration-fast) var(--ease-standard), background var(--duration-fast) var(--ease-standard);
 }
 .fc-btn:hover { background: color-mix(in srgb, var(--fc-cyan) 26%, transparent); }
 .fc-btn:active { transform: scale(0.97); }

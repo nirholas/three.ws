@@ -145,9 +145,9 @@ body {
 	padding: 14px 16px;
 	color: var(--ink, #e8e8e8);
 	transition:
-		border-color var(--duration-fast, 140ms) var(--ease-standard, ease),
-		background var(--duration-fast, 140ms) var(--ease-standard, ease),
-		transform var(--duration-fast, 140ms) var(--ease-standard, ease);
+		border-color var(--duration-fast, var(--duration-fast)) var(--ease-standard, var(--ease-standard)),
+		background var(--duration-fast, var(--duration-fast)) var(--ease-standard, var(--ease-standard)),
+		transform var(--duration-fast, var(--duration-fast)) var(--ease-standard, var(--ease-standard));
 }
 .gx-tab:hover {
 	background: var(--surface-2);
@@ -209,7 +209,7 @@ select.gx-input {
 	padding: 12px 14px;
 	font: inherit;
 	resize: vertical;
-	transition: border-color var(--duration-fast, 140ms) ease;
+	transition: border-color var(--duration-fast, var(--duration-fast)) var(--ease-standard);
 }
 textarea.gx-input {
 	min-height: 96px;
@@ -248,7 +248,7 @@ textarea.gx-input {
 	border: 1px solid var(--stroke);
 	border-radius: var(--radius-pill, 999px);
 	padding: 5px 11px;
-	transition: all var(--duration-fast, 140ms) ease;
+	transition: all var(--duration-fast, var(--duration-fast)) var(--ease-standard);
 }
 .gx-chip:hover {
 	color: #fff;
@@ -263,7 +263,7 @@ textarea.gx-input {
 	padding: 28px 16px;
 	text-align: center;
 	cursor: pointer;
-	transition: border-color var(--duration-fast, 140ms) ease, background var(--duration-fast, 140ms) ease;
+	transition: border-color var(--duration-fast, var(--duration-fast)) var(--ease-standard), background var(--duration-fast, var(--duration-fast)) var(--ease-standard);
 }
 .gx-drop:hover,
 .gx-drop.is-drag {
@@ -320,7 +320,7 @@ textarea.gx-input {
 	background: var(--surface-1);
 	aspect-ratio: 1;
 	position: relative;
-	transition: border-color var(--duration-fast, 140ms) ease, transform var(--duration-fast, 140ms) ease;
+	transition: border-color var(--duration-fast, var(--duration-fast)) var(--ease-standard), transform var(--duration-fast, var(--duration-fast)) var(--ease-standard);
 }
 .gx-remix-tile:hover {
 	transform: translateY(-2px);
@@ -379,7 +379,7 @@ textarea.gx-input {
 	border: 1px solid var(--stroke-strong);
 	background: var(--surface-2);
 	color: var(--ink-bright, #fff);
-	transition: all var(--duration-fast, 140ms) ease;
+	transition: all var(--duration-fast, var(--duration-fast)) var(--ease-standard);
 	display: inline-flex;
 	align-items: center;
 	justify-content: center;
@@ -459,7 +459,7 @@ textarea.gx-input {
 	border-radius: var(--radius-md);
 	border: 1px solid var(--stroke);
 	background: var(--surface-1);
-	transition: border-color var(--duration-base, 220ms) ease, background var(--duration-base, 220ms) ease;
+	transition: border-color var(--duration-base, var(--duration-base)) var(--ease-standard), background var(--duration-base, var(--duration-base)) var(--ease-standard);
 }
 .gx-step[data-state='active'] {
 	border-color: rgb(var(--gold-rgb));
@@ -526,7 +526,7 @@ textarea.gx-input {
 	width: 0;
 	background: linear-gradient(90deg, rgb(var(--gold-rgb)), #ffe680);
 	border-radius: 999px;
-	transition: width var(--duration-slow, 420ms) var(--ease-out, ease);
+	transition: width var(--duration-slow, var(--duration-slow)) var(--ease-out, var(--ease-standard));
 }
 
 .gx-stage-preview {
@@ -674,7 +674,7 @@ textarea.gx-input {
 	border-radius: var(--radius-sm, 6px);
 	padding: 5px 9px;
 	font-size: 11px;
-	transition: all var(--duration-fast, 140ms) ease;
+	transition: all var(--duration-fast, var(--duration-fast)) var(--ease-standard);
 }
 .gx-copy:hover {
 	border-color: rgb(var(--gold-rgb));
@@ -736,7 +736,7 @@ textarea.gx-input {
 	border: 1px solid var(--stroke);
 	background: var(--surface-1);
 	color: var(--ink-bright, #fff);
-	transition: all var(--duration-fast, 140ms) ease;
+	transition: all var(--duration-fast, var(--duration-fast)) var(--ease-standard);
 }
 .gx-cta:hover {
 	border-color: rgb(var(--gold-rgb));

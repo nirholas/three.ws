@@ -183,9 +183,9 @@
 	cursor: pointer;
 	text-decoration: none;
 	transition:
-		background 0.14s,
-		border-color 0.14s,
-		transform 0.1s;
+		background var(--duration-fast),
+		border-color var(--duration-fast),
+		transform var(--duration-instant);
 	margin-left: auto;
 }
 .vlt-btn:hover {
@@ -304,9 +304,9 @@ a.vlt-btn {
 	font-family: inherit;
 	color: inherit;
 	transition:
-		border-color 0.18s,
-		transform 0.18s,
-		box-shadow 0.18s;
+		border-color var(--duration-fast),
+		transform var(--duration-fast),
+		box-shadow var(--duration-fast);
 }
 .vlt-card:hover,
 .vlt-card:focus-visible {
@@ -498,7 +498,7 @@ a.vlt-btn {
 	z-index: 200;
 	opacity: 0;
 	pointer-events: none;
-	transition: opacity 0.2s;
+	transition: opacity var(--duration-base);
 }
 .vlt-drawer-backdrop[data-open='true'] {
 	opacity: 1;
@@ -521,8 +521,8 @@ a.vlt-btn {
 	visibility: hidden;
 	pointer-events: none;
 	transition:
-		transform 0.24s cubic-bezier(0.2, 0.8, 0.2, 1),
-		visibility 0s linear 0.24s;
+		transform var(--duration-base) var(--ease-standard),
+		visibility 0s linear var(--duration-base);
 	overflow-y: auto;
 }
 .vlt-drawer[data-open='true'] {
@@ -530,7 +530,7 @@ a.vlt-btn {
 	visibility: visible;
 	pointer-events: auto;
 	transition:
-		transform 0.24s cubic-bezier(0.2, 0.8, 0.2, 1),
+		transform var(--duration-base) var(--ease-standard),
 		visibility 0s linear 0s;
 }
 .vlt-drawer-head {

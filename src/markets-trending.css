@@ -92,7 +92,7 @@
 	background: var(--cv-surface);
 	text-decoration: none;
 	color: var(--cv-text);
-	transition: border-color 0.15s ease, background 0.15s ease, transform 0.15s ease;
+	transition: border-color var(--duration-fast) var(--ease-standard), background var(--duration-fast) var(--ease-standard), transform var(--duration-fast) var(--ease-standard);
 }
 .trd-coin:hover {
 	border-color: var(--cv-border-hover);
@@ -184,7 +184,7 @@
 	background: var(--cv-surface);
 	color: var(--cv-text);
 	text-decoration: none;
-	transition: border-color 0.15s ease, background 0.15s ease, transform 0.15s ease, box-shadow 0.15s ease;
+	transition: border-color var(--duration-fast) var(--ease-standard), background var(--duration-fast) var(--ease-standard), transform var(--duration-fast) var(--ease-standard), box-shadow var(--duration-fast) var(--ease-standard);
 }
 .trd-card-link:hover {
 	border-color: var(--cv-border-hover);

@@ -137,10 +137,10 @@
 	text-decoration: none;
 	cursor: pointer;
 	transition:
-		transform 0.16s ease,
-		background 0.16s ease,
-		border-color 0.16s ease,
-		opacity 0.16s ease;
+		transform var(--duration-fast) var(--ease-standard),
+		background var(--duration-fast) var(--ease-standard),
+		border-color var(--duration-fast) var(--ease-standard),
+		opacity var(--duration-fast) var(--ease-standard);
 }
 .ch-btn:hover {
 	background: var(--ch-surface-3);
@@ -184,10 +184,10 @@
 	line-height: 1;
 	cursor: pointer;
 	transition:
-		background 0.16s ease,
-		border-color 0.16s ease,
-		transform 0.16s ease,
-		opacity 0.16s ease;
+		background var(--duration-fast) var(--ease-standard),
+		border-color var(--duration-fast) var(--ease-standard),
+		transform var(--duration-fast) var(--ease-standard),
+		opacity var(--duration-fast) var(--ease-standard);
 }
 .ch-icon-btn:hover:not([disabled]) {
 	background: var(--ch-surface-3);
@@ -402,8 +402,8 @@
 	cursor: pointer;
 	overflow: hidden;
 	transition:
-		background 0.18s ease,
-		color 0.18s ease;
+		background var(--duration-fast) var(--ease-standard),
+		color var(--duration-fast) var(--ease-standard);
 }
 .ch-seg:last-child {
 	border-right: 0;
@@ -516,9 +516,9 @@
 	text-align: left;
 	cursor: pointer;
 	transition:
-		background 0.16s ease,
-		border-color 0.16s ease,
-		transform 0.16s ease;
+		background var(--duration-fast) var(--ease-standard),
+		border-color var(--duration-fast) var(--ease-standard),
+		transform var(--duration-fast) var(--ease-standard);
 }
 .ch-preset:hover {
 	background: var(--ch-surface-2);
@@ -649,9 +649,9 @@
 	border-radius: 11px;
 	background: var(--ch-surface);
 	transition:
-		border-color 0.16s ease,
-		background 0.16s ease,
-		opacity 0.16s ease;
+		border-color var(--duration-fast) var(--ease-standard),
+		background var(--duration-fast) var(--ease-standard),
+		opacity var(--duration-fast) var(--ease-standard);
 }
 .ch-step:hover {
 	border-color: var(--ch-border-strong);
@@ -803,9 +803,9 @@
 	cursor: pointer;
 	text-align: center;
 	transition:
-		background 0.16s ease,
-		border-color 0.16s ease,
-		transform 0.16s ease;
+		background var(--duration-fast) var(--ease-standard),
+		border-color var(--duration-fast) var(--ease-standard),
+		transform var(--duration-fast) var(--ease-standard);
 }
 .ch-chip:hover {
 	background: var(--ch-surface-2);
@@ -859,9 +859,9 @@
 	color: var(--ch-muted);
 	opacity: 0;
 	transition:
-		opacity 0.16s ease,
-		background 0.16s ease,
-		color 0.16s ease;
+		opacity var(--duration-fast) var(--ease-standard),
+		background var(--duration-fast) var(--ease-standard),
+		color var(--duration-fast) var(--ease-standard);
 }
 .ch-chip:hover .ch-chip-add,
 .ch-chip:focus-visible .ch-chip-add {
@@ -941,8 +941,8 @@
 	text-align: left;
 	cursor: pointer;
 	transition:
-		background 0.16s ease,
-		border-color 0.16s ease;
+		background var(--duration-fast) var(--ease-standard),
+		border-color var(--duration-fast) var(--ease-standard);
 }
 .ch-saved-chip:hover {
 	background: var(--ch-surface-3);

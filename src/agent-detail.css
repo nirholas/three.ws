@@ -207,7 +207,7 @@ a {
 	cursor: pointer;
 	display: inline-flex;
 	align-items: center;
-	transition: border-color 0.15s, transform 0.1s;
+	transition: border-color var(--duration-fast), transform var(--duration-instant);
 }
 .ad-btn:hover {
 	border-color: var(--ad-line-2);
@@ -282,7 +282,7 @@ a {
 	align-items: center;
 	justify-content: center;
 	opacity: 0;
-	transition: opacity .18s;
+	transition: opacity var(--duration-fast);
 	z-index: 2;
 }
 .ad-hero-avatar-overlay svg { color: #fff; }
@@ -400,7 +400,7 @@ div.ad-hero-avatar canvas {
 	display: flex; align-items: center; justify-content: center;
 	cursor: pointer;
 	color: var(--ad-muted);
-	transition: background .15s, color .15s;
+	transition: background var(--duration-fast), color var(--duration-fast);
 }
 .ad-hero-share-float:hover {
 	background: rgba(255,255,255,.12);
@@ -453,7 +453,7 @@ div.ad-hero-avatar canvas {
 	font-size: 13px; font-weight: 600;
 	text-decoration: none;
 	backdrop-filter: blur(8px);
-	transition: background .15s, transform .15s;
+	transition: background var(--duration-fast), transform var(--duration-fast);
 }
 .ad-3d-modal-world:hover {
 	background: rgba(255,255,255,.18);
@@ -471,7 +471,7 @@ div.ad-hero-avatar canvas {
 }
 .ad-embed-disclosure summary::-webkit-details-marker { display: none; }
 .ad-embed-disclosure summary::before {
-	content: '›'; font-size: 16px; transition: transform .2s;
+	content: '›'; font-size: 16px; transition: transform var(--duration-base);
 }
 .ad-embed-disclosure[open] summary::before { transform: rotate(90deg); }
 .ad-embed-disclosure summary:hover { color: var(--ad-text); }
@@ -548,9 +548,9 @@ div.ad-hero-avatar canvas {
 	text-decoration: none;
 	cursor: pointer;
 	transition:
-		background 0.15s,
-		border-color 0.15s,
-		color 0.15s;
+		background var(--duration-fast),
+		border-color var(--duration-fast),
+		color var(--duration-fast);
 }
 .ad-token-cta:hover:not(:disabled) {
 	background: rgba(120, 200, 140, 0.26);
@@ -980,7 +980,7 @@ div.ad-hero-avatar canvas {
 	height: 100%;
 	background: var(--ad-amber);
 	border-radius: 3px;
-	transition: width 0.4s ease;
+	transition: width var(--duration-slow) var(--ease-standard);
 }
 .ad-reviews-bar-count {
 	min-width: 20px;
@@ -991,7 +991,7 @@ div.ad-hero-avatar canvas {
 .ad-star {
 	font-size: 16px;
 	color: rgba(255, 255, 255, 0.2);
-	transition: color 0.1s;
+	transition: color var(--duration-instant);
 	user-select: none;
 }
 .ad-star.filled {
@@ -1024,8 +1024,8 @@ div.ad-hero-avatar canvas {
 	font-size: 24px;
 	cursor: pointer;
 	transition:
-		transform 0.1s,
-		color 0.1s;
+		transform var(--duration-instant),
+		color var(--duration-instant);
 }
 .ad-review-star-picker .ad-star:hover {
 	transform: scale(1.15);
@@ -1042,7 +1042,7 @@ div.ad-hero-avatar canvas {
 	resize: vertical;
 	min-height: 80px;
 	box-sizing: border-box;
-	transition: border-color 0.15s;
+	transition: border-color var(--duration-fast);
 }
 .ad-review-textarea:focus {
 	outline: none;
@@ -1072,7 +1072,7 @@ div.ad-hero-avatar canvas {
 	font-size: 13px;
 	font-weight: 600;
 	cursor: pointer;
-	transition: opacity 0.15s;
+	transition: opacity var(--duration-fast);
 }
 .ad-review-submit:disabled {
 	opacity: 0.45;
@@ -1544,8 +1544,8 @@ div.ad-hero-avatar canvas {
 	font-weight: 600;
 	cursor: pointer;
 	transition:
-		background 0.15s,
-		border-color 0.15s;
+		background var(--duration-fast),
+		border-color var(--duration-fast);
 }
 .ad-skill-btn:hover {
 	background: rgba(255, 255, 255, 0.06);
@@ -1586,8 +1586,8 @@ div.ad-hero-avatar canvas {
 	border-radius: 12px;
 	background: var(--ad-bg-2);
 	transition:
-		border-color 0.15s,
-		transform 0.15s;
+		border-color var(--duration-fast),
+		transform var(--duration-fast);
 }
 .ad-tier:hover {
 	border-color: rgba(167, 139, 250, 0.5);
@@ -1652,8 +1652,8 @@ div.ad-hero-avatar canvas {
 	font-weight: 700;
 	cursor: pointer;
 	transition:
-		background 0.15s,
-		transform 0.1s;
+		background var(--duration-fast),
+		transform var(--duration-instant);
 }
 .ad-tier-btn:hover {
 	background: #b9a4fb;
@@ -1854,8 +1854,8 @@ div.ad-hero-avatar canvas {
 	background: var(--ad-bg-2);
 	border: 1px solid var(--ad-line);
 	transition:
-		border-color 0.15s,
-		transform 0.15s;
+		border-color var(--duration-fast),
+		transform var(--duration-fast);
 }
 .ad-similar-item:hover {
 	border-color: var(--ad-line-2);
@@ -1899,7 +1899,7 @@ div.ad-hero-avatar canvas {
 	padding: 20px;
 	background: rgba(0, 0, 0, 0.7);
 	opacity: 0;
-	transition: opacity 0.2s;
+	transition: opacity var(--duration-base);
 	-webkit-backdrop-filter: blur(4px);
 	backdrop-filter: blur(4px);
 }
@@ -2006,8 +2006,8 @@ div.ad-hero-avatar canvas {
 	border: 1px solid var(--ad-line);
 	cursor: pointer;
 	transition:
-		border-color 0.15s,
-		transform 0.15s;
+		border-color var(--duration-fast),
+		transform var(--duration-fast);
 }
 .creator-mini-card:hover {
 	border-color: var(--ad-line-2);
@@ -2344,7 +2344,7 @@ div.ad-hero-avatar canvas {
 	color: var(--ad-text);
 	border: 1px solid var(--ad-green);
 	text-align: left;
-	transition: background 0.12s ease, border-color 0.12s ease;
+	transition: background var(--duration-fast) var(--ease-standard), border-color var(--duration-fast) var(--ease-standard);
 }
 .agent-wallet-pick:hover:not(:disabled) {
 	background: rgba(74, 222, 128, 0.12);
@@ -2426,7 +2426,7 @@ div.ad-hero-avatar canvas {
 	color: var(--ad-muted);
 	text-decoration: underline;
 	cursor: pointer;
-	transition: color 0.15s ease, background 0.15s ease;
+	transition: color var(--duration-fast) var(--ease-standard), background var(--duration-fast) var(--ease-standard);
 }
 .payment-qr-swap:hover {
 	color: var(--ad-text);
@@ -2605,7 +2605,7 @@ div.ad-hero-avatar canvas {
 	height: 100%;
 	border-radius: inherit;
 	background: linear-gradient(90deg, var(--ad-cyan), var(--ad-green));
-	transition: width 0.5s ease;
+	transition: width var(--duration-slow) var(--ease-standard);
 }
 .ad-cohort-val {
 	color: var(--ad-muted);
@@ -2681,8 +2681,8 @@ div.ad-hero-avatar canvas {
 	font-size: 11px;
 	cursor: pointer;
 	transition:
-		background 0.15s,
-		border-color 0.15s;
+		background var(--duration-fast),
+		border-color var(--duration-fast);
 }
 .ad-cohorts-retry:hover {
 	background: rgba(255, 255, 255, 0.04);
@@ -2752,8 +2752,8 @@ div.ad-hero-avatar canvas {
 	color: var(--ad-text);
 	font-size: 13px;
 	transition:
-		background 0.15s,
-		border-color 0.15s;
+		background var(--duration-fast),
+		border-color var(--duration-fast);
 }
 .ad-launch-row:hover {
 	background: rgba(255, 255, 255, 0.04);
@@ -2792,7 +2792,7 @@ div.ad-hero-avatar canvas {
 	font-size: 12.5px;
 	color: var(--ad-muted);
 	text-decoration: none;
-	transition: color 0.15s;
+	transition: color var(--duration-fast);
 }
 .ad-launch-feed-link:hover {
 	color: var(--ad-text);
@@ -2813,7 +2813,7 @@ div.ad-hero-avatar canvas {
 	display: flex; align-items: center; gap: 10px;
 	padding: 8px 10px; border-radius: 10px; text-decoration: none;
 	border: 1px solid var(--ad-stroke, #23262f); color: var(--ad-ink, #e8eaf0);
-	transition: border-color 0.16s ease, transform 0.16s ease;
+	transition: border-color var(--duration-fast) var(--ease-standard), transform var(--duration-fast) var(--ease-standard);
 }
 .ad-lineage-node:hover { border-color: var(--accent-violet-strong); transform: translateX(2px); }
 .ad-lineage-role { font-size: 0.66rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--ad-muted, #8a8f9c); min-width: 58px; }
@@ -2850,7 +2850,7 @@ div.ad-hero-avatar canvas {
 	font-size: 13px;
 	color: var(--ad-muted);
 	opacity: 0;
-	transition: opacity 0.5s ease;
+	transition: opacity var(--duration-slow) var(--ease-standard);
 	min-height: 18px;
 }
 .ad-hot-take--in {
@@ -2878,7 +2878,7 @@ div.ad-hero-avatar canvas {
 	padding: 5px 12px;
 	font-size: 12px;
 	cursor: pointer;
-	transition: color 0.15s, border-color 0.15s, background 0.15s;
+	transition: color var(--duration-fast), border-color var(--duration-fast), background var(--duration-fast);
 }
 .ad-mcp-tab:hover {
 	color: var(--ad-text);

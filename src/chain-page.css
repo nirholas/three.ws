@@ -61,7 +61,7 @@
 .ch-back a {
 	color: var(--cv-text-3);
 	text-decoration: none;
-	transition: color 0.15s;
+	transition: color var(--duration-fast);
 }
 .ch-back a:hover,
 .ch-back a:focus-visible {
@@ -107,7 +107,7 @@
 	color: var(--cv-text);
 	text-decoration: none;
 	font-weight: 500;
-	transition: color 0.15s;
+	transition: color var(--duration-fast);
 	min-width: 0;
 }
 .ch-proto-link:hover,
@@ -147,7 +147,7 @@
 	cursor: pointer;
 	user-select: none;
 	white-space: nowrap;
-	transition: color 0.15s;
+	transition: color var(--duration-fast);
 }
 .ch-sortable:hover {
 	color: var(--cv-text);
@@ -174,8 +174,8 @@
 	border-radius: var(--cv-radius-md);
 	padding: 0.5rem 1.125rem;
 	transition:
-		border-color 0.15s,
-		background 0.15s;
+		border-color var(--duration-fast),
+		background var(--duration-fast);
 }
 .ch-retry:hover {
 	border-color: var(--cv-border-hover);

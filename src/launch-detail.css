@@ -407,7 +407,7 @@ body {
 	color: var(--ink-dim, #8a8a9c);
 	text-decoration: none;
 	white-space: nowrap;
-	transition: color .15s ease, border-color .15s ease, background-color .15s ease;
+	transition: color var(--duration-fast) var(--ease-standard), border-color var(--duration-fast) var(--ease-standard), background-color var(--duration-fast) var(--ease-standard);
 }
 .ld-chart-terminal:hover,
 .ld-chart-terminal:focus-visible {
@@ -430,7 +430,7 @@ body {
 	border: 0;
 	display: block;
 	opacity: 0;
-	transition: opacity var(--duration-base) ease;
+	transition: opacity var(--duration-base) var(--ease-standard);
 }
 .ld-dex-wrap .ld-skel-chart { position: absolute; inset: 0; height: 100%; border-radius: 0; }
 .ld-dex-ready .ld-dex-frame { opacity: 1; }
@@ -557,13 +557,13 @@ body {
 		linear-gradient(180deg, var(--surface-2), var(--surface-3));
 	isolation: isolate;
 }
-.ld-agent-3d { position: absolute; inset: 0; width: 100%; height: 100%; display: block; opacity: 0; transition: opacity var(--duration-base) ease; z-index: 1; }
+.ld-agent-3d { position: absolute; inset: 0; width: 100%; height: 100%; display: block; opacity: 0; transition: opacity var(--duration-base) var(--ease-standard); z-index: 1; }
 .ld-agent-stage[data-state='ready'] .ld-agent-3d { opacity: 1; }
 .ld-agent-stage-poster {
 	position: absolute; inset: 0; z-index: 0;
 	background-size: cover; background-position: center top;
 	filter: blur(18px) saturate(1.1); transform: scale(1.18);
-	opacity: 0.45; transition: opacity var(--duration-base) ease;
+	opacity: 0.45; transition: opacity var(--duration-base) var(--ease-standard);
 	pointer-events: none;
 }
 .ld-agent-stage[data-state='ready'] .ld-agent-stage-poster,
@@ -587,7 +587,7 @@ body {
 	display: flex; align-items: center; justify-content: space-between; gap: var(--space-sm);
 	padding: var(--space-xs) var(--space-sm);
 	background: linear-gradient(0deg, color-mix(in srgb, var(--surface-1) 86%, transparent), transparent);
-	opacity: 0; transition: opacity var(--duration-fast) ease;
+	opacity: 0; transition: opacity var(--duration-fast) var(--ease-standard);
 }
 .ld-agent-stage[data-state='ready'] .ld-agent-stage-bar { opacity: 1; }
 .ld-agent-stage:hover .ld-agent-stage-bar { opacity: 1; }
@@ -667,7 +667,7 @@ body {
 .ld-btn-accent { background: color-mix(in srgb, var(--accent) 15%, transparent); color: var(--accent); border-color: color-mix(in srgb, var(--accent) 40%, transparent); }
 .ld-btn-accent:hover { background: color-mix(in srgb, var(--accent) 22%, transparent); color: var(--accent); border-color: var(--accent); }
 .ld-btn-buy { position: relative; overflow: hidden; }
-.ld-btn-buy::after { content: ''; position: absolute; inset: 0; background: linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.12) 50%, transparent 100%); transform: translateX(-100%); transition: transform 0.4s ease; }
+.ld-btn-buy::after { content: ''; position: absolute; inset: 0; background: linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.12) 50%, transparent 100%); transform: translateX(-100%); transition: transform var(--duration-slow) var(--ease-standard); }
 .ld-btn-buy:hover::after { transform: translateX(100%); }
 .ld-watch-on { color: var(--warn); border-color: var(--warn); }
 
@@ -693,7 +693,7 @@ body {
 .ld-oracle-pillar { display: grid; grid-template-columns: 68px 1fr 28px; align-items: center; gap: var(--space-xs); }
 .ld-oracle-pillar-label { font-size: 10.5px; text-transform: uppercase; letter-spacing: .06em; color: var(--ink-dim); }
 .ld-oracle-pillar-bar { height: 5px; border-radius: 99px; background: var(--surface-2); overflow: hidden; }
-.ld-oracle-pillar-fill { height: 100%; border-radius: 99px; transition: width .6s var(--ease-out); }
+.ld-oracle-pillar-fill { height: 100%; border-radius: 99px; transition: width var(--duration-slow) var(--ease-out); }
 .ld-oracle-pillar-val { font: 600 11px/1 var(--font-mono); text-align: right; color: var(--ink-dim); }
 .ld-oracle-actions { margin-top: var(--space-2xs); }
 

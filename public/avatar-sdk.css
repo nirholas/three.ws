@@ -23,8 +23,8 @@ body {
 	opacity: 0;
 	transform: translateY(28px);
 	transition:
-		opacity 0.7s cubic-bezier(0.16, 1, 0.3, 1),
-		transform 0.7s cubic-bezier(0.16, 1, 0.3, 1);
+		opacity var(--duration-slow) cubic-bezier(0.16, 1, 0.3, 1),
+		transform var(--duration-slow) cubic-bezier(0.16, 1, 0.3, 1);
 }
 .sdk-reveal.revealed {
 	opacity: 1;
@@ -175,7 +175,7 @@ body {
 	font-size: 13.5px;
 	color: var(--ink);
 	cursor: pointer;
-	transition: border-color 0.2s, box-shadow 0.2s;
+	transition: border-color var(--duration-base), box-shadow var(--duration-base);
 	flex: 1;
 	min-width: 0;
 }
@@ -193,7 +193,7 @@ body {
 	padding: 2px 4px;
 	font-family: inherit;
 	font-size: 11px;
-	transition: color 0.15s;
+	transition: color var(--duration-fast);
 	flex-shrink: 0;
 }
 .sdk-install-copy:hover { color: var(--ink); }
@@ -217,7 +217,7 @@ body {
 	font: 600 14px/1 'Inter', sans-serif;
 	cursor: pointer;
 	text-decoration: none;
-	transition: opacity 0.15s, transform 0.1s, box-shadow 0.2s;
+	transition: opacity var(--duration-fast), transform var(--duration-instant), box-shadow var(--duration-base);
 	box-shadow: 0 4px 24px rgba(160, 160, 160, 0.25);
 }
 .sdk-btn-primary:hover {
@@ -237,7 +237,7 @@ body {
 	font: 600 14px/1 'Inter', sans-serif;
 	cursor: pointer;
 	text-decoration: none;
-	transition: color 0.15s, border-color 0.15s;
+	transition: color var(--duration-fast), border-color var(--duration-fast);
 }
 .sdk-btn-ghost:hover { color: #fff; border-color: rgba(255, 255, 255, 0.25); }
 
@@ -407,7 +407,7 @@ body {
 	border: 1.5px solid var(--stroke);
 	border-radius: var(--radius-card);
 	padding: 28px;
-	transition: border-color 0.25s, box-shadow 0.25s, transform 0.25s;
+	transition: border-color var(--duration-base), box-shadow var(--duration-base), transform var(--duration-base);
 	position: relative;
 	overflow: hidden;
 }
@@ -418,7 +418,7 @@ body {
 	height: 2px;
 	background: linear-gradient(90deg, transparent, var(--card-accent, var(--accent)), transparent);
 	opacity: 0;
-	transition: opacity 0.3s;
+	transition: opacity var(--duration-base);
 }
 .sdk-feat-card:hover {
 	border-color: var(--stroke-strong);
@@ -509,7 +509,7 @@ body {
 	cursor: pointer;
 	font: 11px/1 'Inter', sans-serif;
 	padding: 4px 10px;
-	transition: color 0.15s, border-color 0.15s, background 0.15s;
+	transition: color var(--duration-fast), border-color var(--duration-fast), background var(--duration-fast);
 }
 .sdk-copy-btn:hover {
 	color: var(--ink);
@@ -565,7 +565,7 @@ pre.sdk-pre .t-op  { color: #a1a1a1; }
 	font: 12px/1.4 'Inter', sans-serif;
 	padding: 7px 14px 9px;
 	border-radius: 5px 5px 0 0;
-	transition: color 0.15s, background 0.15s;
+	transition: color var(--duration-fast), background var(--duration-fast);
 	white-space: nowrap;
 	position: relative;
 }
@@ -738,7 +738,7 @@ pre.sdk-pre .t-op  { color: #a1a1a1; }
 	font: 13px/1.4 'Inter', sans-serif;
 	color: var(--ink);
 	outline: none;
-	transition: border-color 0.15s;
+	transition: border-color var(--duration-fast);
 }
 .sdk-pg-field select:focus,
 .sdk-pg-field input[type="text"]:focus {
@@ -762,7 +762,7 @@ pre.sdk-pre .t-op  { color: #a1a1a1; }
 	background: rgba(255, 255, 255, 0.1);
 	border: none;
 	cursor: pointer;
-	transition: background 0.2s;
+	transition: background var(--duration-base);
 	padding: 0;
 }
 .sdk-pg-toggle::after {
@@ -772,7 +772,7 @@ pre.sdk-pre .t-op  { color: #a1a1a1; }
 	width: 16px; height: 16px;
 	border-radius: 50%;
 	background: #fff;
-	transition: transform 0.2s;
+	transition: transform var(--duration-base);
 }
 .sdk-pg-toggle.active {
 	background: var(--accent);
@@ -927,7 +927,7 @@ table.sdk-table {
 	border: 1.5px solid var(--stroke);
 	border-radius: var(--radius-card);
 	overflow: hidden;
-	transition: border-color 0.25s, transform 0.25s;
+	transition: border-color var(--duration-base), transform var(--duration-base);
 }
 .sdk-api-card:hover {
 	border-color: var(--stroke-strong);

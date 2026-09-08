@@ -101,7 +101,7 @@
 	border: 1px solid var(--cv-border, #27272a);
 	border-radius: var(--cv-radius-md, 8px);
 	padding: 0.65rem 0.85rem;
-	transition: border-color var(--duration-fast, 140ms) var(--ease-standard, ease);
+	transition: border-color var(--duration-fast, var(--duration-fast)) var(--ease-standard, var(--ease-standard));
 }
 .pf-input:hover { border-color: var(--cv-border-hover, #3f3f46); }
 .pf-input:focus-visible {
@@ -118,7 +118,7 @@
 	border-radius: var(--cv-radius-md, 8px);
 	padding: 0.65rem 0.85rem;
 	cursor: pointer;
-	transition: border-color var(--duration-fast, 140ms) var(--ease-standard, ease);
+	transition: border-color var(--duration-fast, var(--duration-fast)) var(--ease-standard, var(--ease-standard));
 }
 .pf-select:hover { border-color: var(--cv-border-hover, #3f3f46); }
 .pf-go {
@@ -132,8 +132,8 @@
 	padding: 0.65rem 1.1rem;
 	cursor: pointer;
 	transition:
-		background var(--duration-fast, 140ms) var(--ease-standard, ease),
-		transform var(--duration-fast, 140ms) var(--ease-standard, ease);
+		background var(--duration-fast, var(--duration-fast)) var(--ease-standard, var(--ease-standard)),
+		transform var(--duration-fast, var(--duration-fast)) var(--ease-standard, var(--ease-standard));
 }
 .pf-go:hover { background: var(--cv-accent-hover, #2563eb); }
 .pf-go:active { transform: translateY(1px); }
@@ -171,8 +171,8 @@
 	padding: 0.25rem 0.7rem;
 	cursor: pointer;
 	transition:
-		border-color var(--duration-fast, 140ms) var(--ease-standard, ease),
-		color var(--duration-fast, 140ms) var(--ease-standard, ease);
+		border-color var(--duration-fast, var(--duration-fast)) var(--ease-standard, var(--ease-standard)),
+		color var(--duration-fast, var(--duration-fast)) var(--ease-standard, var(--ease-standard));
 }
 .pf-recent-chip:hover {
 	border-color: var(--cv-accent, #60a5fa);
@@ -192,8 +192,8 @@
 	border-radius: var(--cv-radius-lg, 10px);
 	padding: 1.1rem 1.2rem;
 	transition:
-		transform var(--duration-fast, 140ms) var(--ease-standard, ease),
-		border-color var(--duration-fast, 140ms) var(--ease-standard, ease);
+		transform var(--duration-fast, var(--duration-fast)) var(--ease-standard, var(--ease-standard)),
+		border-color var(--duration-fast, var(--duration-fast)) var(--ease-standard, var(--ease-standard));
 }
 .pf-intro-card:hover {
 	transform: translateY(-2px);
@@ -284,8 +284,8 @@
 	cursor: pointer;
 	text-decoration: none;
 	transition:
-		color var(--duration-fast, 140ms) var(--ease-standard, ease),
-		border-color var(--duration-fast, 140ms) var(--ease-standard, ease);
+		color var(--duration-fast, var(--duration-fast)) var(--ease-standard, var(--ease-standard)),
+		border-color var(--duration-fast, var(--duration-fast)) var(--ease-standard, var(--ease-standard));
 }
 .pf-chip-btn:hover {
 	color: var(--cv-text, #fafafa);
@@ -349,8 +349,8 @@
 	padding: 0.8rem 0.9rem 0.8rem 1.05rem;
 	overflow: hidden;
 	transition:
-		transform var(--duration-fast, 140ms) var(--ease-standard, ease),
-		border-color var(--duration-fast, 140ms) var(--ease-standard, ease);
+		transform var(--duration-fast, var(--duration-fast)) var(--ease-standard, var(--ease-standard)),
+		border-color var(--duration-fast, var(--duration-fast)) var(--ease-standard, var(--ease-standard));
 }
 .pf-sum-card:hover {
 	transform: translateY(-2px);
@@ -463,7 +463,7 @@
 	color: var(--cv-text-3, #64748b);
 }
 #pf-donut path {
-	transition: opacity var(--duration-fast, 140ms) var(--ease-standard, ease);
+	transition: opacity var(--duration-fast, var(--duration-fast)) var(--ease-standard, var(--ease-standard));
 	cursor: pointer;
 }
 #pf-donut.pf-donut-focus path { opacity: 0.35; }
@@ -486,7 +486,7 @@
 	font-size: 0.8rem;
 	padding: 0.25rem 0.4rem;
 	border-radius: var(--cv-radius-sm, 4px);
-	transition: background var(--duration-fast, 140ms) var(--ease-standard, ease);
+	transition: background var(--duration-fast, var(--duration-fast)) var(--ease-standard, var(--ease-standard));
 }
 .pf-legend li:hover { background: var(--cv-surface-3, #1c1c21); }
 .pf-legend i {
@@ -579,7 +579,7 @@
 .pf-table td:nth-child(2) { text-align: left; min-width: 7.5rem; }
 .pf-table tbody tr:last-child td { border-bottom: none; }
 .pf-table tbody tr {
-	transition: background var(--duration-fast, 140ms) var(--ease-standard, ease);
+	transition: background var(--duration-fast, var(--duration-fast)) var(--ease-standard, var(--ease-standard));
 }
 .pf-table tbody tr:hover td { background: var(--cv-surface-3, #1c1c21); }
 .pf-asset {
@@ -675,8 +675,8 @@
 	margin-top: 0.8rem;
 	cursor: pointer;
 	transition:
-		color var(--duration-fast, 140ms) var(--ease-standard, ease),
-		border-color var(--duration-fast, 140ms) var(--ease-standard, ease);
+		color var(--duration-fast, var(--duration-fast)) var(--ease-standard, var(--ease-standard)),
+		border-color var(--duration-fast, var(--duration-fast)) var(--ease-standard, var(--ease-standard));
 }
 .pf-small-banner:hover {
 	color: var(--cv-text, #fafafa);

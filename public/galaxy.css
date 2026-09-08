@@ -142,7 +142,7 @@
 	border-radius: 13px;
 	padding: 7px 7px 7px 13px;
 	box-shadow: 0 18px 60px rgba(0, 0, 0, 0.55);
-	transition: border-color 0.18s, box-shadow 0.18s;
+	transition: border-color var(--duration-fast), box-shadow var(--duration-fast);
 }
 .gx-search:focus-within {
 	border-color: rgba(120, 169, 255, 0.55);
@@ -174,7 +174,7 @@
 	line-height: 1;
 	cursor: pointer;
 	padding: 0 4px;
-	transition: color 0.15s;
+	transition: color var(--duration-fast);
 }
 .gx-search-clear:hover { color: var(--ink); }
 .gx-search-go {
@@ -188,7 +188,7 @@
 	font-family: inherit;
 	padding: 8px 15px;
 	cursor: pointer;
-	transition: filter 0.15s, transform 0.1s;
+	transition: filter var(--duration-fast), transform var(--duration-instant);
 }
 .gx-search-go:hover { filter: brightness(1.12); }
 .gx-search-go:active { transform: translateY(1px); }
@@ -236,7 +236,7 @@
 	width: 22px;
 	height: 22px;
 	border-radius: 6px;
-	transition: background 0.15s, color 0.15s;
+	transition: background var(--duration-fast), color var(--duration-fast);
 }
 .gx-legend-toggle:hover { background: rgba(255, 255, 255, 0.06); color: var(--ink); }
 .gx-legend-list {
@@ -260,7 +260,7 @@
 	text-align: left;
 	color: var(--ink);
 	font-family: inherit;
-	transition: background 0.14s;
+	transition: background var(--duration-fast);
 }
 .gx-legend-item:hover { background: rgba(255, 255, 255, 0.05); }
 .gx-legend-item.gx-active { background: rgba(15, 98, 254, 0.16); }
@@ -316,7 +316,7 @@
 	cursor: pointer;
 	pointer-events: auto;
 	will-change: transform, opacity;
-	transition: opacity 0.25s, background 0.15s, border-color 0.15s;
+	transition: opacity var(--duration-base), background var(--duration-fast), border-color var(--duration-fast);
 }
 .gx-clabel:hover {
 	background: rgba(15, 98, 254, 0.22);
@@ -348,7 +348,7 @@
 	max-width: 260px;
 	box-shadow: 0 18px 60px rgba(0, 0, 0, 0.55);
 	transform: translate(-50%, calc(-100% - 14px));
-	transition: opacity 0.12s;
+	transition: opacity var(--duration-fast);
 }
 .gx-tip-name {
 	font-size: 13px;
@@ -398,7 +398,7 @@
 	font-size: 20px;
 	line-height: 1;
 	cursor: pointer;
-	transition: color 0.15s;
+	transition: color var(--duration-fast);
 }
 .gx-card-close:hover { color: var(--ink); }
 .gx-card-top {
@@ -489,7 +489,7 @@
 	padding: 9px 16px;
 	border: 0;
 	cursor: pointer;
-	transition: filter 0.15s, background 0.15s, transform 0.1s;
+	transition: filter var(--duration-fast), background var(--duration-fast), transform var(--duration-instant);
 }
 .gx-btn-primary { background: var(--brand-blue); color: #fff; }
 .gx-btn-primary:hover { filter: brightness(1.12); }
@@ -528,7 +528,7 @@
 }
 .gx-results-close {
 	background: none; border: 0; color: var(--ink-dim);
-	font-size: 18px; line-height: 1; cursor: pointer; transition: color 0.15s;
+	font-size: 18px; line-height: 1; cursor: pointer; transition: color var(--duration-fast);
 }
 .gx-results-close:hover { color: var(--ink); }
 .gx-results-list {
@@ -548,7 +548,7 @@
 	border-radius: 11px;
 	padding: 9px 13px 9px 9px;
 	cursor: pointer;
-	transition: background 0.14s, border-color 0.14s;
+	transition: background var(--duration-fast), border-color var(--duration-fast);
 	max-width: 260px;
 }
 .gx-result:hover { background: rgba(15, 98, 254, 0.14); border-color: rgba(120, 169, 255, 0.4); }
@@ -636,7 +636,7 @@
 	pointer-events: auto;
 	color: var(--ink-dim);
 	text-decoration: none;
-	transition: color 0.15s;
+	transition: color var(--duration-fast);
 }
 .gx-footnote-link:hover { color: var(--brand-blue-light); }
 
@@ -658,7 +658,7 @@
 	color: var(--ink);
 	font-family: inherit;
 	box-shadow: 0 18px 60px rgba(0, 0, 0, 0.45);
-	transition: border-color 0.18s, box-shadow 0.18s, transform 0.1s, background 0.18s;
+	transition: border-color var(--duration-fast), box-shadow var(--duration-fast), transform var(--duration-instant), background var(--duration-fast);
 }
 .gx-moneycam-toggle:hover:not(:disabled) {
 	border-color: rgba(196, 181, 253, 0.5);
@@ -731,7 +731,7 @@
 	border-radius: 50%;
 	background: var(--ink-dim);
 	flex: none;
-	transition: background 0.2s, box-shadow 0.2s;
+	transition: background var(--duration-base), box-shadow var(--duration-base);
 }
 .gx-mc-live-dot.gx-mc-on {
 	background: var(--success);
@@ -746,7 +746,7 @@
 	font-size: 20px;
 	line-height: 1;
 	cursor: pointer;
-	transition: color 0.15s;
+	transition: color var(--duration-fast);
 }
 .gx-mc-close:hover { color: var(--ink); }
 
@@ -770,7 +770,7 @@
 	padding: 5px 14px;
 	border-radius: 7px;
 	cursor: pointer;
-	transition: background 0.15s, color 0.15s;
+	transition: background var(--duration-fast), color var(--duration-fast);
 }
 .gx-mc-mode:hover { color: var(--ink); }
 .gx-mc-mode.gx-active { background: rgba(196, 181, 253, 0.18); color: #d6cbff; }
@@ -802,7 +802,7 @@
 	border-radius: 8px;
 	cursor: pointer;
 	flex: none;
-	transition: background 0.15s, border-color 0.15s;
+	transition: background var(--duration-fast), border-color var(--duration-fast);
 }
 .gx-mc-play { width: 34px; height: 30px; font-size: 11px; }
 .gx-mc-speed { height: 30px; padding: 0 9px; font-variant-numeric: tabular-nums; }
@@ -857,7 +857,7 @@
 	padding: 4px 11px;
 	border-radius: 99px;
 	cursor: pointer;
-	transition: background 0.14s, color 0.14s, border-color 0.14s;
+	transition: background var(--duration-fast), color var(--duration-fast), border-color var(--duration-fast);
 }
 .gx-mc-filter:hover { color: var(--ink); border-color: var(--stroke-strong, rgba(255, 255, 255, 0.2)); }
 .gx-mc-filter.gx-active { background: rgba(196, 181, 253, 0.18); color: #d6cbff; border-color: rgba(196, 181, 253, 0.4); }
@@ -882,7 +882,7 @@
 	text-align: left;
 	color: var(--ink);
 	font-family: inherit;
-	transition: background 0.13s;
+	transition: background var(--duration-fast);
 }
 .gx-mc-row:hover { background: rgba(255, 255, 255, 0.05); }
 .gx-mc-row-dot { width: 9px; height: 9px; border-radius: 50%; flex: none; }
@@ -959,7 +959,7 @@
 	font-size: 19px;
 	line-height: 1;
 	cursor: pointer;
-	transition: color 0.15s;
+	transition: color var(--duration-fast);
 }
 .gx-flow-close:hover { color: var(--ink); }
 .gx-flow-head { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; }
@@ -993,7 +993,7 @@
 	border: 1px solid var(--brand-blue-stroke);
 	border-radius: 9px;
 	text-align: center;
-	transition: background 0.15s;
+	transition: background var(--duration-fast);
 }
 a.gx-flow-explorer:hover { background: rgba(120, 169, 255, 0.18); }
 .gx-flow-pending { color: var(--ink-dim); background: rgba(255, 255, 255, 0.04); border-color: var(--stroke); cursor: default; }

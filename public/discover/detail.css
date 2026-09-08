@@ -73,7 +73,7 @@ body.detail-page {
 	font-size: 13px;
 	color: rgba(255, 255, 255, 0.45);
 	text-decoration: none;
-	transition: color 0.15s;
+	transition: color var(--duration-fast);
 }
 
 .detail-breadcrumb-link:hover {
@@ -199,7 +199,7 @@ body.detail-page {
 	text-decoration: none;
 	cursor: pointer;
 	border: none;
-	transition: background 0.15s, color 0.15s;
+	transition: background var(--duration-fast), color var(--duration-fast);
 }
 
 .detail-error-actions {
@@ -403,7 +403,7 @@ body.detail-page {
 	align-items: baseline;
 	padding: 8px 10px;
 	border-radius: 8px;
-	transition: background 0.15s ease;
+	transition: background var(--duration-fast) var(--ease-standard);
 }
 
 .detail-history-row:hover {
@@ -560,7 +560,7 @@ body.detail-page {
 	background: transparent;
 	color: rgba(255, 255, 255, 0.45);
 	cursor: pointer;
-	transition: background 0.12s, color 0.12s;
+	transition: background var(--duration-fast), color var(--duration-fast);
 }
 
 .detail-embed-tab:hover {
@@ -604,7 +604,7 @@ body.detail-page {
 	background: rgba(255, 255, 255, 0.06);
 	color: rgba(255, 255, 255, 0.7);
 	cursor: pointer;
-	transition: background 0.12s;
+	transition: background var(--duration-fast);
 }
 
 .detail-embed-copy:hover {

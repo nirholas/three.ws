@@ -13,7 +13,7 @@
 	padding: 7px 12px;
 	backdrop-filter: blur(8px);
 	cursor: pointer;
-	transition: border-color 0.2s ease, box-shadow 0.2s ease, transform 0.15s ease;
+	transition: border-color var(--duration-base) var(--ease-standard), box-shadow var(--duration-base) var(--ease-standard), transform var(--duration-fast) var(--ease-standard);
 	animation: cc-fade 0.25s ease;
 	max-width: calc(100vw - 24px);
 }
@@ -49,7 +49,7 @@
 	color: #fff; padding: 18px 40px; border-radius: 16px;
 	box-shadow: 0 0 50px rgba(255, 206, 92, 0.4);
 	opacity: 0;
-	transition: opacity 0.25s ease, transform 0.25s cubic-bezier(0.22, 1.2, 0.36, 1);
+	transition: opacity var(--duration-base) var(--ease-standard), transform var(--duration-base) cubic-bezier(0.22, 1.2, 0.36, 1);
 	max-width: min(88vw, 560px);
 }
 #cc-meetup-banner.cc-meetup-banner--show { opacity: 1; transform: translateX(-50%) scale(1); }
@@ -66,7 +66,7 @@
 	border-left: 1px solid var(--cc-edge);
 	box-shadow: var(--cc-shadow);
 	transform: translateX(102%);
-	transition: transform 0.28s cubic-bezier(0.22, 1, 0.36, 1);
+	transition: transform var(--duration-base) cubic-bezier(0.22, 1, 0.36, 1);
 }
 #cc-meetup-panel.cc-meetup-panel--open { transform: translateX(0); }
 .cc-meetup-panel-head {
@@ -80,7 +80,7 @@
 	flex: none; width: 26px; height: 26px; border-radius: var(--cc-radius-sm);
 	background: transparent; border: 1px solid var(--cc-edge); color: var(--cc-dim);
 	font-size: 13px; line-height: 1; cursor: pointer;
-	transition: color 0.15s ease, border-color 0.15s ease, background 0.15s ease;
+	transition: color var(--duration-fast) var(--ease-standard), border-color var(--duration-fast) var(--ease-standard), background var(--duration-fast) var(--ease-standard);
 }
 .cc-meetup-close:hover { color: var(--cc-text); border-color: var(--cc-edge-hi); background: rgba(255, 255, 255, 0.06); }
 .cc-meetup-close:focus-visible { outline: 2px solid #ffce5c; outline-offset: 1px; }
@@ -90,7 +90,7 @@
 	display: grid; grid-template-columns: 26px 1fr auto; gap: 10px; align-items: start;
 	padding: 9px 10px; border-radius: var(--cc-radius);
 	border: 1px solid transparent;
-	transition: background 0.18s ease, border-color 0.18s ease;
+	transition: background var(--duration-fast) var(--ease-standard), border-color var(--duration-fast) var(--ease-standard);
 }
 .cc-meetup-seg-ico { font-size: 16px; line-height: 1.2; text-align: center; }
 .cc-meetup-seg-title { font-size: 12.5px; font-weight: 700; color: var(--cc-text); line-height: 1.35; }
@@ -119,7 +119,7 @@
 	display: flex; align-items: center; justify-content: center; gap: 8px;
 	width: 100%; padding: 9px 12px; border-radius: var(--cc-radius);
 	font-size: 12px; font-weight: 800; letter-spacing: 0.04em;
-	cursor: pointer; transition: transform 0.12s ease, box-shadow 0.2s ease, background 0.2s ease;
+	cursor: pointer; transition: transform var(--duration-fast) var(--ease-standard), box-shadow var(--duration-base) var(--ease-standard), background var(--duration-base) var(--ease-standard);
 }
 .cc-meetup-photo-btn {
 	background: rgba(255, 255, 255, 0.06); color: var(--cc-text);

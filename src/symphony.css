@@ -74,7 +74,7 @@ body {
 	background: var(--ink-bright); color: #000;
 	border: 1px solid var(--ink-bright);
 	font-size: 15px; font-weight: 600; cursor: pointer;
-	transition: transform 0.15s ease, box-shadow 0.15s ease;
+	transition: transform var(--duration-fast) var(--ease-standard), box-shadow var(--duration-fast) var(--ease-standard);
 }
 .sy-play:hover { transform: translateY(-1px); box-shadow: 0 6px 24px rgba(255, 255, 255, 0.18); }
 .sy-play:active { transform: translateY(0); }
@@ -85,7 +85,7 @@ body {
 	padding: 9px 16px; border-radius: 999px;
 	background: transparent; color: var(--ink-dim);
 	border: 1px solid var(--stroke); font-size: 13px; cursor: pointer;
-	transition: color 0.15s ease, border-color 0.15s ease;
+	transition: color var(--duration-fast) var(--ease-standard), border-color var(--duration-fast) var(--ease-standard);
 }
 .sy-ctl:hover { color: var(--ink); border-color: var(--stroke-strong); }
 .sy-ctl:focus-visible { outline: 2px solid var(--sym-money); outline-offset: 2px; }
@@ -108,7 +108,7 @@ input[type="range"].sy-volume { accent-color: var(--sym-money); width: 120px; }
 	padding: 7px 13px; border-radius: 999px;
 	background: var(--surface-1); border: 1px solid var(--stroke);
 	color: var(--ink-dim); font-size: 12.5px; cursor: pointer;
-	transition: color 0.15s ease, border-color 0.15s ease, opacity 0.15s ease;
+	transition: color var(--duration-fast) var(--ease-standard), border-color var(--duration-fast) var(--ease-standard), opacity var(--duration-fast) var(--ease-standard);
 }
 .sy-voice::before {
 	content: ""; width: 8px; height: 8px; border-radius: 50%;
@@ -137,7 +137,7 @@ input[type="range"].sy-volume { accent-color: var(--sym-money); width: 120px; }
 	padding: 5px 12px; border-radius: 999px;
 	background: transparent; color: var(--ink-dim);
 	border: 1px solid var(--stroke-strong); font-size: 12.5px; cursor: pointer;
-	transition: color 0.15s ease, border-color 0.15s ease;
+	transition: color var(--duration-fast) var(--ease-standard), border-color var(--duration-fast) var(--ease-standard);
 }
 .sy-solo-clear:hover { color: var(--ink-bright); border-color: var(--ink-bright); }
 .sy-solo-clear:focus-visible { outline: 2px solid var(--sym-money); outline-offset: 2px; }
@@ -149,7 +149,7 @@ input[type="range"].sy-volume { accent-color: var(--sym-money); width: 120px; }
 	background: transparent; color: var(--ink-dim);
 	border: 1px solid var(--stroke); font-size: 11px; letter-spacing: 0.06em;
 	text-transform: uppercase; cursor: pointer;
-	opacity: 0; transition: opacity 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+	opacity: 0; transition: opacity var(--duration-fast) var(--ease-standard), color var(--duration-fast) var(--ease-standard), border-color var(--duration-fast) var(--ease-standard);
 }
 .sy-row:hover .sy-solo, .sy-solo:focus-visible { opacity: 1; }
 .sy-solo:hover { color: var(--sym-money); border-color: var(--sym-money); }
@@ -203,7 +203,7 @@ body.sy-soloing .sy-solo { display: none; }
 	padding: 10px 8px; border-bottom: 1px solid var(--stroke);
 	color: inherit;
 	animation: sy-enter 0.35s ease;
-	transition: background 0.15s ease;
+	transition: background var(--duration-fast) var(--ease-standard);
 }
 .sy-row:hover { background: var(--surface-2); }
 .sy-row-link {
@@ -243,7 +243,7 @@ a.sy-row-link:focus-visible { outline: 2px solid var(--sym-money); outline-offse
 	padding: 8px 18px; border-radius: 999px;
 	background: transparent; color: var(--ink-bright);
 	border: 1px solid var(--stroke-strong); font: inherit; font-size: 13px; cursor: pointer;
-	transition: color 0.15s ease, border-color 0.15s ease, background 0.15s ease;
+	transition: color var(--duration-fast) var(--ease-standard), border-color var(--duration-fast) var(--ease-standard), background var(--duration-fast) var(--ease-standard);
 }
 .sy-retry:hover { color: var(--sym-money); border-color: var(--sym-money); background: rgba(67, 217, 163, 0.08); }
 .sy-retry:active { transform: translateY(1px); }

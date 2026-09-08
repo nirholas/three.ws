@@ -107,9 +107,9 @@ img {
 	font-size: 13px;
 	font-weight: 600;
 	transition:
-		opacity 0.15s,
-		transform 0.1s,
-		background 0.15s;
+		opacity var(--duration-fast),
+		transform var(--duration-instant),
+		background var(--duration-fast);
 }
 .btn:active {
 	transform: scale(0.97);
@@ -239,8 +239,8 @@ img {
 	color: var(--muted);
 	border-radius: 8px;
 	transition:
-		color 0.14s,
-		background 0.14s;
+		color var(--duration-fast),
+		background var(--duration-fast);
 }
 .seg button:hover {
 	color: var(--text);
@@ -266,8 +266,8 @@ img {
 	border: 1px solid var(--border);
 	border-radius: 10px;
 	transition:
-		border-color 0.15s,
-		background 0.15s;
+		border-color var(--duration-fast),
+		background var(--duration-fast);
 }
 .search:focus-within {
 	border-color: rgba(124, 92, 255, 0.5);
@@ -307,8 +307,8 @@ img {
 	justify-content: center;
 	flex-shrink: 0;
 	transition:
-		background 0.14s,
-		color 0.14s;
+		background var(--duration-fast),
+		color var(--duration-fast);
 }
 .q-clear:hover {
 	background: var(--panel-hover);
@@ -361,9 +361,9 @@ img {
 	display: flex;
 	flex-direction: column;
 	transition:
-		border-color 0.15s,
-		transform 0.12s,
-		box-shadow 0.15s;
+		border-color var(--duration-fast),
+		transform var(--duration-fast),
+		box-shadow var(--duration-fast);
 	cursor: pointer;
 }
 .card:hover {
@@ -528,7 +528,7 @@ img {
 	color: var(--text);
 	background: var(--panel);
 	border: 1px solid var(--border);
-	transition: background 0.15s;
+	transition: background var(--duration-fast);
 }
 .load-more:hover {
 	background: var(--panel-hover);

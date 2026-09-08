@@ -53,7 +53,7 @@ body {
 	padding: 5px 11px;
 	font-size: 12px;
 	cursor: pointer;
-	transition: all 0.15s;
+	transition: all var(--duration-fast);
 }
 .br-side-new:hover { background: #1d1d1d; color: #b0b0b0; }
 
@@ -72,7 +72,7 @@ body {
 	align-items: center;
 	gap: 8px;
 	border: 1px solid transparent;
-	transition: all 0.12s;
+	transition: all var(--duration-fast);
 	margin-bottom: 2px;
 }
 .br-sess:hover { background: #0e0e0e; color: #b0b0b0; }
@@ -101,7 +101,7 @@ body {
 	font-size: 14px;
 	border-radius: 4px;
 	opacity: 0;
-	transition: all 0.1s;
+	transition: all var(--duration-instant);
 	line-height: 1;
 }
 .br-sess:hover .br-sess-del { opacity: 1; }
@@ -182,7 +182,7 @@ body {
 	font-weight: 600;
 	cursor: pointer;
 	border-bottom: 2px solid transparent;
-	transition: all 0.15s;
+	transition: all var(--duration-fast);
 	position: relative;
 }
 .br-tab:hover { color: #8a8a8a; }
@@ -217,7 +217,7 @@ body {
 	font: inherit;
 	font-size: 12px;
 	cursor: pointer;
-	transition: all 0.12s;
+	transition: all var(--duration-fast);
 	text-decoration: none;
 }
 .br-topbar-btn:hover { background: #1d1d1d; color: #b0b0b0; }
@@ -257,7 +257,7 @@ body {
 	padding: 18px 18px;
 	cursor: pointer;
 	text-align: left;
-	transition: border-color 0.15s, background 0.15s, transform 0.1s, box-shadow 0.15s;
+	transition: border-color var(--duration-fast), background var(--duration-fast), transform var(--duration-instant), box-shadow var(--duration-fast);
 	display: flex;
 	flex-direction: column;
 	gap: 5px;
@@ -331,7 +331,7 @@ body {
 	color: #4a4a6a;
 	text-decoration: none;
 	white-space: nowrap;
-	transition: color 0.15s;
+	transition: color var(--duration-fast);
 }
 .br-agent-bar-manage:hover { color: #9090c0; }
 
@@ -388,7 +388,7 @@ body {
 	padding: 16px 18px;
 	resize: none;
 	outline: none;
-	transition: border-color 0.15s;
+	transition: border-color var(--duration-fast);
 	line-height: 1.55;
 }
 .br-describe-input:focus { border-color: #3050a0; }
@@ -443,7 +443,7 @@ body {
 	font-size: 12px;
 	padding: 5px 11px;
 	cursor: pointer;
-	transition: all 0.15s;
+	transition: all var(--duration-fast);
 	white-space: nowrap;
 }
 .br-status-btn:hover { background: rgba(255,255,255,0.1); color: #dde0f0; }
@@ -471,7 +471,7 @@ body {
 	font-size: 14px;
 	font-weight: 600;
 	cursor: pointer;
-	transition: all 0.15s;
+	transition: all var(--duration-fast);
 	display: inline-flex;
 	align-items: center;
 	gap: 8px;
@@ -614,7 +614,7 @@ body {
 	font-size: 13px;
 	padding: 9px 12px;
 	outline: none;
-	transition: border-color 0.15s;
+	transition: border-color var(--duration-fast);
 }
 .br-edit-input:focus { border-color: #3050a0; }
 .br-edit-textarea {
@@ -629,7 +629,7 @@ body {
 	outline: none;
 	resize: vertical;
 	min-height: 60px;
-	transition: border-color 0.15s;
+	transition: border-color var(--duration-fast);
 }
 .br-edit-textarea:focus { border-color: #3050a0; }
 .br-edit-hint { font-size: 11px; color: #3d3d3d; }
@@ -682,7 +682,7 @@ body {
 	font-size: 12.5px;
 	font-weight: 600;
 	cursor: pointer;
-	transition: all 0.12s;
+	transition: all var(--duration-fast);
 }
 .br-mode-btn + .br-mode-btn { border-left: 1px solid var(--bg-1); }
 .br-mode-btn.active { background: #161616; color: #dde0f0; }
@@ -719,7 +719,7 @@ body {
 	font-size: 12px;
 	cursor: pointer;
 	user-select: none;
-	transition: all 0.12s;
+	transition: all var(--duration-fast);
 }
 .br-pill.on { border-color: var(--pc); color: var(--pc); }
 /* Disabled rather than pointer-events:none, so the tooltip explaining WHY the
@@ -829,7 +829,7 @@ body {
 	padding: 3px 6px;
 	border-radius: 5px;
 	font-size: 11px;
-	transition: all 0.1s;
+	transition: all var(--duration-instant);
 }
 .br-col-copy:hover { color: #b0b0b0; background: #161616; }
 .br-col-msgs {
@@ -974,7 +974,7 @@ body {
 	gap: 8px;
 	align-items: flex-end;
 	padding-right: var(--br-corner-gutter, 0px);
-	transition: padding-right 0.2s ease;
+	transition: padding-right var(--duration-base) var(--ease-standard);
 }
 /* When the widget is wide enough that a gutter would leave no room to type,
    Send moves to its own line on the left instead, clear of the corner either
@@ -995,7 +995,7 @@ body {
 	min-height: 46px;
 	max-height: 160px;
 	outline: none;
-	transition: border-color 0.15s;
+	transition: border-color var(--duration-fast);
 	field-sizing: content;
 }
 .br-prompt:focus { border-color: #2a3060; }
@@ -1010,7 +1010,7 @@ body {
 	font-weight: 700;
 	cursor: pointer;
 	flex-shrink: 0;
-	transition: all 0.12s;
+	transition: all var(--duration-fast);
 }
 .br-send:hover { background: #5dccff; }
 .br-send:disabled { opacity: 0.35; cursor: not-allowed; }
@@ -1086,7 +1086,7 @@ body {
 	font-weight: 500;
 	z-index: 9999;
 	opacity: 0;
-	transition: all 0.3s ease;
+	transition: all var(--duration-base) var(--ease-standard);
 	pointer-events: none;
 }
 .br-toast.show {
@@ -1213,7 +1213,7 @@ body {
 		z-index: 40;
 		width: min(280px, 84vw);
 		transform: translateX(-100%);
-		transition: transform 0.22s ease;
+		transition: transform var(--duration-base) var(--ease-standard);
 	}
 	.br-side.open { transform: translateX(0); }
 	body.br-side-open .br-side-backdrop { display: block; }

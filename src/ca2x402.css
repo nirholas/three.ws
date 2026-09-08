@@ -60,7 +60,7 @@
 	border-radius: var(--radius-md);
 	padding: 0 var(--space-md);
 	height: 52px;
-	transition: border-color 0.15s ease, box-shadow 0.15s ease;
+	transition: border-color var(--duration-fast) var(--ease-standard), box-shadow var(--duration-fast) var(--ease-standard);
 }
 .cx-input::placeholder { color: var(--ink-faint); font-family: var(--font-body); }
 .cx-input:focus {
@@ -84,7 +84,7 @@
 	border: none;
 	border-radius: var(--radius-md);
 	cursor: pointer;
-	transition: transform 0.12s ease, opacity 0.15s ease, filter 0.15s ease;
+	transition: transform var(--duration-fast) var(--ease-standard), opacity var(--duration-fast) var(--ease-standard), filter var(--duration-fast) var(--ease-standard);
 	white-space: nowrap;
 }
 .cx-go:hover:not(:disabled) { filter: brightness(1.08); transform: translateY(-1px); }
@@ -109,7 +109,7 @@
 	border-radius: var(--radius-pill);
 	padding: 3px 12px;
 	cursor: pointer;
-	transition: border-color 0.15s ease, background 0.15s ease;
+	transition: border-color var(--duration-fast) var(--ease-standard), background var(--duration-fast) var(--ease-standard);
 }
 .cx-chip:hover { border-color: var(--accent); background: var(--accent-soft); }
 .cx-chip-hint { font-family: var(--font-mono); }
@@ -177,7 +177,7 @@
 	font-family: var(--font-mono); font-size: var(--text-2xs);
 	color: var(--ink-faint); background: none; border: none; padding: 0;
 	cursor: pointer; display: inline-flex; align-items: center; gap: 5px;
-	transition: color 0.15s ease;
+	transition: color var(--duration-fast) var(--ease-standard);
 }
 .cx-mint:hover { color: var(--accent); }
 .cx-mint-ic { opacity: 0.7; }
@@ -315,7 +315,7 @@
 	background: var(--surface-2); border: 1px solid var(--stroke);
 	border-radius: var(--radius-md); padding: var(--space-sm) var(--space-md);
 	cursor: pointer; color: var(--ink-bright);
-	transition: border-color 0.15s ease;
+	transition: border-color var(--duration-fast) var(--ease-standard);
 }
 .cx-endpoint:hover { border-color: var(--accent); }
 .cx-method { color: var(--accent); font-weight: 700; flex: none; }
@@ -343,7 +343,7 @@
 	font-family: var(--font-body); font-size: var(--text-2xs); font-weight: 600;
 	color: var(--ink-dim); background: none;
 	border: 1px solid transparent; border-radius: var(--radius-md);
-	padding: 5px 12px; cursor: pointer; transition: all 0.15s ease;
+	padding: 5px 12px; cursor: pointer; transition: all var(--duration-fast) var(--ease-standard);
 }
 .cx-tab:hover { color: var(--ink-bright); }
 .cx-tab-on { color: var(--ink-bright); background: var(--surface-2); border-color: var(--stroke); }
@@ -360,7 +360,7 @@
 	font-family: var(--font-body); font-size: var(--text-2xs); font-weight: 600;
 	color: var(--ink-dim); background: var(--surface-1);
 	border: 1px solid var(--stroke); border-radius: var(--radius-md);
-	padding: 3px 10px; cursor: pointer; transition: all 0.15s ease;
+	padding: 3px 10px; cursor: pointer; transition: all var(--duration-fast) var(--ease-standard);
 }
 .cx-copy:hover { color: var(--ink-bright); border-color: var(--accent); }
 .cx-copied { color: var(--success) !important; border-color: var(--success) !important; }
@@ -371,7 +371,7 @@
 	font-family: var(--font-body); font-size: var(--text-2xs); font-weight: 600;
 	color: var(--accent); background: var(--accent-soft);
 	border: 1px solid var(--brand-blue-stroke, var(--stroke)); border-radius: var(--radius-md);
-	padding: 7px 14px; cursor: pointer; transition: all 0.15s ease;
+	padding: 7px 14px; cursor: pointer; transition: all var(--duration-fast) var(--ease-standard);
 }
 .cx-challenge-btn:hover:not(:disabled) { filter: brightness(1.1); }
 .cx-challenge-btn:disabled { opacity: 0.6; cursor: progress; }
@@ -396,7 +396,7 @@
 	font-family: var(--font-body); font-size: var(--text-sm); font-weight: 600;
 	color: var(--ink-bright); background: var(--surface-2);
 	border: 1px solid var(--stroke); border-radius: var(--radius-md);
-	padding: 9px 18px; cursor: pointer; transition: all 0.15s ease;
+	padding: 9px 18px; cursor: pointer; transition: all var(--duration-fast) var(--ease-standard);
 }
 .cx-retry:hover { border-color: var(--accent); }
 

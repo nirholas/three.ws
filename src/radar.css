@@ -592,7 +592,7 @@
 .rd-oracle-pillar { display: grid; grid-template-columns: 68px 1fr 28px; align-items: center; gap: 8px; }
 .rd-oracle-pillar-label { font-size: 10.5px; text-transform: uppercase; letter-spacing: .05em; color: var(--ink-faint); }
 .rd-oracle-pillar-bar { height: 5px; border-radius: 99px; background: var(--surface-2); overflow: hidden; }
-.rd-oracle-pillar-fill { height: 100%; border-radius: 99px; transition: width .6s ease-out; }
+.rd-oracle-pillar-fill { height: 100%; border-radius: 99px; transition: width var(--duration-slow) var(--ease-out); }
 .rd-oracle-pillar-val { font: 600 11px/1 var(--font-mono); text-align: right; color: var(--ink-dim); }
 .rd-oracle-link { display: inline-block; align-self: flex-start; }
 

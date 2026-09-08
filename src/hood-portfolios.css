@@ -32,7 +32,7 @@
 	height: 6px;
 	border-radius: 50%;
 	background: var(--cv-text-3);
-	transition: background 0.3s ease;
+	transition: background var(--duration-base) var(--ease-standard);
 }
 
 .hp-eyebrow[data-live='1'] .dot {
@@ -71,8 +71,8 @@
 	border-radius: var(--cv-radius-xl);
 	padding: 1rem;
 	transition:
-		border-color 0.18s ease,
-		box-shadow 0.18s ease;
+		border-color var(--duration-fast) var(--ease-standard),
+		box-shadow var(--duration-fast) var(--ease-standard);
 }
 
 .hp-composer:focus-within {
@@ -143,10 +143,10 @@
 	border: 1px solid transparent;
 	cursor: pointer;
 	transition:
-		background 0.16s ease,
-		border-color 0.16s ease,
-		color 0.16s ease,
-		transform 0.08s ease;
+		background var(--duration-fast) var(--ease-standard),
+		border-color var(--duration-fast) var(--ease-standard),
+		color var(--duration-fast) var(--ease-standard),
+		transform var(--duration-instant) var(--ease-standard);
 }
 
 .hp-btn:active:not(:disabled) {
@@ -224,9 +224,9 @@
 	padding: 0.4rem 0.85rem;
 	cursor: pointer;
 	transition:
-		color 0.16s ease,
-		border-color 0.16s ease,
-		background 0.16s ease;
+		color var(--duration-fast) var(--ease-standard),
+		border-color var(--duration-fast) var(--ease-standard),
+		background var(--duration-fast) var(--ease-standard);
 }
 
 .hp-chip:hover {
@@ -390,7 +390,7 @@
 }
 
 .hp-alloc tbody tr {
-	transition: background 0.14s ease;
+	transition: background var(--duration-fast) var(--ease-standard);
 }
 
 .hp-alloc tbody tr:hover {
@@ -690,9 +690,9 @@
 	padding: 0.4rem 0.9rem;
 	cursor: pointer;
 	transition:
-		color 0.16s ease,
-		border-color 0.16s ease,
-		background 0.16s ease;
+		color var(--duration-fast) var(--ease-standard),
+		border-color var(--duration-fast) var(--ease-standard),
+		background var(--duration-fast) var(--ease-standard);
 }
 
 .hp-filter:hover {
@@ -794,7 +794,7 @@
 }
 
 .hp-table tbody tr {
-	transition: background 0.14s ease;
+	transition: background var(--duration-fast) var(--ease-standard);
 }
 
 .hp-table tbody tr:hover {

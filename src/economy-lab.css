@@ -144,7 +144,7 @@
 	border-left-width: 4px;
 	border-radius: var(--el-r);
 	background: var(--el-surface);
-	transition: border-color 0.25s ease, background 0.25s ease;
+	transition: border-color var(--duration-base) var(--ease-standard), background var(--duration-base) var(--ease-standard);
 }
 .el-verdict[data-state='healthy'] { border-left-color: var(--el-accent); }
 .el-verdict[data-state='throttled'] { border-left-color: var(--el-warn); }
@@ -197,7 +197,7 @@
 	font-size: 0.82rem;
 	font-weight: 600;
 	cursor: pointer;
-	transition: background 0.16s ease, color 0.16s ease;
+	transition: background var(--duration-fast) var(--ease-standard), color var(--duration-fast) var(--ease-standard);
 }
 .el-retry:hover { background: var(--el-danger); color: var(--el-bg); }
 .el-retry:active { transform: translateY(1px); }
@@ -323,7 +323,7 @@
 	font-size: 0.79rem;
 	font-weight: 600;
 	cursor: pointer;
-	transition: border-color 0.16s ease, color 0.16s ease, background 0.16s ease;
+	transition: border-color var(--duration-fast) var(--ease-standard), color var(--duration-fast) var(--ease-standard), background var(--duration-fast) var(--ease-standard);
 }
 .el-reset:hover:not(:disabled) { color: var(--el-ink); border-color: var(--el-accent); }
 .el-reset:active:not(:disabled) { transform: translateY(1px); }
@@ -404,7 +404,7 @@
 	background: var(--el-accent);
 	border: 2px solid var(--el-bg);
 	box-shadow: 0 1px 6px rgba(0, 0, 0, 0.35);
-	transition: transform 0.14s ease;
+	transition: transform var(--duration-fast) var(--ease-standard);
 }
 .el-field input[type='range']::-moz-range-thumb {
 	width: 17px;
@@ -413,7 +413,7 @@
 	background: var(--el-accent);
 	border: 2px solid var(--el-bg);
 	box-shadow: 0 1px 6px rgba(0, 0, 0, 0.35);
-	transition: transform 0.14s ease;
+	transition: transform var(--duration-fast) var(--ease-standard);
 }
 .el-field input[type='range']:hover::-webkit-slider-thumb { transform: scale(1.14); }
 .el-field input[type='range']:hover::-moz-range-thumb { transform: scale(1.14); }
@@ -450,7 +450,7 @@
 	border-radius: 999px;
 	background: var(--el-line-2);
 	position: relative;
-	transition: background 0.2s ease;
+	transition: background var(--duration-base) var(--ease-standard);
 	flex: none;
 }
 .el-switch-thumb {
@@ -461,7 +461,7 @@
 	height: 15px;
 	border-radius: 50%;
 	background: var(--el-bg);
-	transition: transform 0.2s cubic-bezier(0.3, 1.4, 0.5, 1);
+	transition: transform var(--duration-base) cubic-bezier(0.3, 1.4, 0.5, 1);
 }
 .el-switch input:checked + .el-switch-track { background: var(--el-accent); }
 .el-switch input:checked + .el-switch-track .el-switch-thumb { transform: translateX(17px); }
@@ -486,7 +486,7 @@
 	font-weight: 700;
 	line-height: 1;
 	cursor: help;
-	transition: color 0.16s ease, border-color 0.16s ease;
+	transition: color var(--duration-fast) var(--ease-standard), border-color var(--duration-fast) var(--ease-standard);
 }
 .el-help:hover,
 .el-help[aria-expanded='true'] {
@@ -508,7 +508,7 @@
 	box-shadow: 0 12px 34px rgba(0, 0, 0, 0.4);
 	opacity: 0;
 	transform: translateY(4px);
-	transition: opacity 0.14s ease, transform 0.14s ease;
+	transition: opacity var(--duration-fast) var(--ease-standard), transform var(--duration-fast) var(--ease-standard);
 	pointer-events: none;
 }
 .el-tip[data-open='true'] { opacity: 1; transform: translateY(0); }
@@ -626,7 +626,7 @@
 	border: 1px solid var(--el-line);
 	border-radius: var(--el-r);
 	background: var(--el-surface);
-	transition: border-color 0.18s ease, transform 0.18s ease;
+	transition: border-color var(--duration-fast) var(--ease-standard), transform var(--duration-fast) var(--ease-standard);
 }
 .el-lever[data-usable='true']:hover { border-color: var(--el-accent); transform: translateY(-2px); }
 .el-lever[data-usable='false'] { opacity: 0.6; }
@@ -656,7 +656,7 @@
 	font-size: 0.79rem;
 	font-weight: 600;
 	cursor: pointer;
-	transition: background 0.16s ease, color 0.16s ease, border-color 0.16s ease;
+	transition: background var(--duration-fast) var(--ease-standard), color var(--duration-fast) var(--ease-standard), border-color var(--duration-fast) var(--ease-standard);
 }
 .el-lever-apply:hover { background: var(--el-accent); color: var(--el-accent-ink); border-color: var(--el-accent); }
 .el-lever-apply:active { transform: translateY(1px); }
@@ -706,7 +706,7 @@
 	font-size: 0.74rem;
 	font-weight: 600;
 	cursor: pointer;
-	transition: color 0.16s ease, border-color 0.16s ease;
+	transition: color var(--duration-fast) var(--ease-standard), border-color var(--duration-fast) var(--ease-standard);
 }
 .el-copy:hover { color: var(--el-accent); border-color: var(--el-accent); }
 .el-copy[data-copied='true'] { color: var(--el-accent); border-color: var(--el-accent); }
@@ -838,7 +838,7 @@
 	.el-tip {
 		animation-duration: 0.01ms !important;
 		animation-iteration-count: 1 !important;
-		transition-duration: 0.01ms !important;
+		transition-duration: var(--duration-instant) !important;
 	}
 }
 

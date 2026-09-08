@@ -56,7 +56,7 @@
 /* ── The slotted premium UI ──────────────────────────────────────────────── */
 
 .tg-content {
-	transition: opacity 0.32s var(--tg-ease), filter 0.32s var(--tg-ease);
+	transition: opacity var(--duration-slow) var(--tg-ease), filter var(--duration-slow) var(--tg-ease);
 }
 
 /* While loading / locked / errored, the real UI is dimmed and frosted behind the
@@ -295,7 +295,7 @@
 	height: 100%;
 	border-radius: 999px;
 	background: linear-gradient(90deg, var(--tg-green), var(--tg-green-2));
-	transition: width 0.5s var(--tg-ease);
+	transition: width var(--duration-slow) var(--tg-ease);
 }
 /* Grow the fill in from the left to its real, balance-driven width without
    touching the inline width (scaleX, transform-origin left). */
@@ -340,8 +340,8 @@
 	border: 1px solid var(--tg-line-2);
 	background: #13131a;
 	color: var(--tg-ink);
-	transition: transform 0.15s var(--tg-ease), background 0.15s ease, border-color 0.15s ease,
-		box-shadow 0.15s ease;
+	transition: transform var(--duration-fast) var(--tg-ease), background var(--duration-fast) var(--ease-standard), border-color var(--duration-fast) var(--ease-standard),
+		box-shadow var(--duration-fast) var(--ease-standard);
 }
 .tg-btn--sm {
 	padding: 8px 13px;
@@ -408,7 +408,7 @@
 	font-weight: 600;
 	color: var(--tg-muted);
 	text-decoration: none;
-	transition: color 0.15s ease;
+	transition: color var(--duration-fast) var(--ease-standard);
 }
 .tg-perks:hover {
 	color: var(--tg-ink);

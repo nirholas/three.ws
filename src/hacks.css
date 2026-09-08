@@ -56,8 +56,8 @@
 	padding: 0.4375rem 0.75rem 0.4375rem 2.125rem;
 	width: min(20rem, 62vw);
 	transition:
-		border-color 0.15s,
-		box-shadow 0.15s;
+		border-color var(--duration-fast),
+		box-shadow var(--duration-fast);
 }
 .hacks-search::placeholder {
 	color: var(--cv-text-3);
@@ -168,7 +168,7 @@
 	color: var(--cv-accent);
 	text-decoration: none;
 	white-space: nowrap;
-	transition: color 0.15s;
+	transition: color var(--duration-fast);
 }
 .hacks-src:hover {
 	color: var(--cv-accent-hover);
@@ -202,9 +202,9 @@
 	padding: 0.5rem 1.125rem;
 	cursor: pointer;
 	transition:
-		border-color 0.15s,
-		background 0.15s,
-		transform 0.05s;
+		border-color var(--duration-fast),
+		background var(--duration-fast),
+		transform var(--duration-instant);
 }
 .hacks-load-more:hover:not(:disabled) {
 	border-color: var(--cv-border-hover);

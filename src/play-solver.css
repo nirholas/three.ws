@@ -121,9 +121,9 @@
 	text-decoration: none;
 	cursor: pointer;
 	transition:
-		background 0.16s ease,
-		border-color 0.16s ease,
-		transform 0.16s ease;
+		background var(--duration-fast) var(--ease-standard),
+		border-color var(--duration-fast) var(--ease-standard),
+		transform var(--duration-fast) var(--ease-standard);
 }
 .ps-btn:hover {
 	background: var(--surface-3, rgba(255, 255, 255, 0.08));
@@ -220,7 +220,7 @@
 	border: 2px solid var(--ps-accent);
 	background: var(--bg, #0a0a0a);
 	box-shadow: 0 2px 10px rgba(0, 0, 0, 0.35);
-	transition: transform 0.14s ease;
+	transition: transform var(--duration-fast) var(--ease-standard);
 }
 .ps-slider::-moz-range-thumb {
 	width: 20px;
@@ -229,7 +229,7 @@
 	border: 2px solid var(--ps-accent);
 	background: var(--bg, #0a0a0a);
 	box-shadow: 0 2px 10px rgba(0, 0, 0, 0.35);
-	transition: transform 0.14s ease;
+	transition: transform var(--duration-fast) var(--ease-standard);
 }
 .ps-slider:hover::-webkit-slider-thumb,
 .ps-slider:active::-webkit-slider-thumb {
@@ -273,9 +273,9 @@
 	font-variant-numeric: tabular-nums;
 	cursor: pointer;
 	transition:
-		background 0.14s ease,
-		color 0.14s ease,
-		border-color 0.14s ease;
+		background var(--duration-fast) var(--ease-standard),
+		color var(--duration-fast) var(--ease-standard),
+		border-color var(--duration-fast) var(--ease-standard);
 }
 .ps-chip:hover {
 	color: var(--ink-bright, #fff);
@@ -302,7 +302,7 @@
 .ps-stale .ps-stats,
 .ps-stale .ps-section:not(#curves) {
 	opacity: 0.55;
-	transition: opacity 0.18s ease;
+	transition: opacity var(--duration-fast) var(--ease-standard);
 }
 
 /* --- stat tiles ---------------------------------------------------------- */
@@ -322,8 +322,8 @@
 	border-radius: var(--radius-md, 10px);
 	background: var(--surface-1, rgba(255, 255, 255, 0.03));
 	transition:
-		border-color 0.16s ease,
-		transform 0.16s ease;
+		border-color var(--duration-fast) var(--ease-standard),
+		transform var(--duration-fast) var(--ease-standard);
 }
 .ps-stat:hover {
 	border-color: var(--stroke-strong, rgba(255, 255, 255, 0.14));
@@ -425,8 +425,8 @@
 	background: var(--surface-1, rgba(255, 255, 255, 0.03));
 	overflow: hidden;
 	transition:
-		border-color 0.16s ease,
-		transform 0.16s ease;
+		border-color var(--duration-fast) var(--ease-standard),
+		transform var(--duration-fast) var(--ease-standard);
 }
 .ps-finding::before {
 	content: '';
@@ -506,8 +506,8 @@
 	font-weight: var(--weight-medium, 500);
 	cursor: pointer;
 	transition:
-		background 0.14s ease,
-		color 0.14s ease;
+		background var(--duration-fast) var(--ease-standard),
+		color var(--duration-fast) var(--ease-standard);
 }
 .ps-toggle-btn:hover {
 	color: var(--ink-bright, #fff);
@@ -649,7 +649,7 @@
 	align-items: center;
 	justify-content: center;
 	min-width: 0;
-	transition: width 0.24s cubic-bezier(0.4, 0, 0.2, 1);
+	transition: width var(--duration-base) cubic-bezier(0.4, 0, 0.2, 1);
 }
 .ps-split-fish {
 	background: color-mix(in srgb, var(--ps-fish) 32%, transparent);
@@ -717,7 +717,7 @@
 	border-bottom: 0;
 }
 .ps-table tbody tr {
-	transition: background 0.14s ease;
+	transition: background var(--duration-fast) var(--ease-standard);
 }
 .ps-table tbody tr:hover {
 	background: var(--surface-1, rgba(255, 255, 255, 0.03));

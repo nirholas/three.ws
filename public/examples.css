@@ -159,9 +159,9 @@
 	background: transparent;
 	color: var(--text-dim, #9a9aa4);
 	transition:
-		border-color 0.15s ease,
-		color 0.15s ease,
-		background 0.15s ease;
+		border-color var(--duration-fast) var(--ease-standard),
+		color var(--duration-fast) var(--ease-standard),
+		background var(--duration-fast) var(--ease-standard);
 }
 
 .exg-chip:hover {
@@ -235,9 +235,9 @@
 	text-decoration: none;
 	font-size: 14px;
 	transition:
-		border-color 0.15s ease,
-		background 0.15s ease,
-		transform 0.1s ease;
+		border-color var(--duration-fast) var(--ease-standard),
+		background var(--duration-fast) var(--ease-standard),
+		transform var(--duration-instant) var(--ease-standard);
 }
 
 .exg-lane-link:hover {
@@ -313,8 +313,8 @@
 	padding: 24px;
 	background: var(--surface, rgba(255, 255, 255, 0.02));
 	transition:
-		border-color 0.2s ease,
-		transform 0.2s ease;
+		border-color var(--duration-base) var(--ease-standard),
+		transform var(--duration-base) var(--ease-standard);
 }
 
 .exg-card:hover {
@@ -392,9 +392,9 @@
 	display: inline-flex;
 	align-items: center;
 	transition:
-		background 0.15s ease,
-		border-color 0.15s ease,
-		transform 0.1s ease;
+		background var(--duration-fast) var(--ease-standard),
+		border-color var(--duration-fast) var(--ease-standard),
+		transform var(--duration-instant) var(--ease-standard);
 }
 
 .exg-btn:hover {
@@ -482,8 +482,8 @@
 	text-decoration: none;
 	color: inherit;
 	transition:
-		border-color 0.15s ease,
-		transform 0.15s ease;
+		border-color var(--duration-fast) var(--ease-standard),
+		transform var(--duration-fast) var(--ease-standard);
 }
 
 .exg-more-card:hover {
@@ -545,8 +545,8 @@
 	font-size: 14px;
 	outline: none;
 	transition:
-		border-color 0.15s ease,
-		box-shadow 0.15s ease;
+		border-color var(--duration-fast) var(--ease-standard),
+		box-shadow var(--duration-fast) var(--ease-standard);
 }
 
 .exi-search:hover {
@@ -585,9 +585,9 @@
 	font: inherit;
 	font-size: 13px;
 	transition:
-		border-color 0.15s ease,
-		color 0.15s ease,
-		background 0.15s ease;
+		border-color var(--duration-fast) var(--ease-standard),
+		color var(--duration-fast) var(--ease-standard),
+		background var(--duration-fast) var(--ease-standard);
 }
 
 .exi-chip:hover {
@@ -628,8 +628,8 @@
 	border-radius: 12px;
 	padding: 16px;
 	transition:
-		border-color 0.15s ease,
-		transform 0.15s ease;
+		border-color var(--duration-fast) var(--ease-standard),
+		transform var(--duration-fast) var(--ease-standard);
 }
 
 .exi-card:hover {
@@ -746,8 +746,8 @@
 	background: transparent;
 	color: var(--text-dim, #9a9aa4);
 	transition:
-		color 0.15s ease,
-		border-color 0.15s ease;
+		color var(--duration-fast) var(--ease-standard),
+		border-color var(--duration-fast) var(--ease-standard);
 }
 
 .exi-copy:hover {
@@ -788,8 +788,8 @@
 	background: var(--text, #ececf1);
 	color: var(--bg, #0b0b0f);
 	transition:
-		filter 0.15s ease,
-		border-color 0.15s ease;
+		filter var(--duration-fast) var(--ease-standard),
+		border-color var(--duration-fast) var(--ease-standard);
 }
 
 .exi-btn:hover {

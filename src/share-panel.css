@@ -103,8 +103,8 @@
 	padding: 6px 12px;
 	white-space: nowrap;
 	transition:
-		background 0.12s,
-		color 0.12s;
+		background var(--duration-fast),
+		color var(--duration-fast);
 }
 
 .share-panel-btn:hover {
@@ -189,9 +189,9 @@
 	white-space: nowrap;
 	text-align: center;
 	transition:
-		background 0.12s,
-		color 0.12s,
-		border-color 0.12s;
+		background var(--duration-fast),
+		color var(--duration-fast),
+		border-color var(--duration-fast);
 }
 
 .share-panel-segment:hover {

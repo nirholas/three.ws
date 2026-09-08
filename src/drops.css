@@ -84,7 +84,7 @@
 	font-weight: var(--weight-medium, 500);
 	text-decoration: none;
 	cursor: pointer;
-	transition: background 140ms ease, border-color 140ms ease, transform 140ms ease;
+	transition: background var(--duration-fast) var(--ease-standard), border-color var(--duration-fast) var(--ease-standard), transform var(--duration-fast) var(--ease-standard);
 }
 
 .dr-btn:hover:not(:disabled) {
@@ -162,7 +162,7 @@
 	overflow: hidden;
 	text-decoration: none;
 	color: inherit;
-	transition: border-color 160ms ease, transform 160ms ease, background 160ms ease;
+	transition: border-color var(--duration-fast) var(--ease-standard), transform var(--duration-fast) var(--ease-standard), background var(--duration-fast) var(--ease-standard);
 }
 
 .dr-card:hover {
@@ -240,7 +240,7 @@
 	height: 100%;
 	border-radius: inherit;
 	background: linear-gradient(90deg, var(--accent, #fff), color-mix(in srgb, var(--accent, #fff) 45%, transparent));
-	transition: width 320ms ease;
+	transition: width var(--duration-slow) var(--ease-standard);
 }
 
 /* ── rarity pills ─────────────────────────────────────────────────────── */
@@ -429,7 +429,7 @@
 	cursor: pointer;
 	font: inherit;
 	line-height: 1;
-	transition: color 140ms ease, border-color 140ms ease;
+	transition: color var(--duration-fast) var(--ease-standard), border-color var(--duration-fast) var(--ease-standard);
 }
 
 .dr-icon-btn:hover {
@@ -575,7 +575,7 @@
 	text-align: left;
 	color: inherit;
 	font: inherit;
-	transition: border-color 150ms ease, transform 150ms ease;
+	transition: border-color var(--duration-fast) var(--ease-standard), transform var(--duration-fast) var(--ease-standard);
 }
 
 .dr-item:hover { border-color: var(--border-hover, rgba(255, 255, 255, 0.26)); transform: translateY(-2px); }
@@ -621,7 +621,7 @@
 	font: inherit;
 	font-size: var(--text-md, 13px);
 	cursor: pointer;
-	transition: color 140ms ease, border-color 140ms ease, background 140ms ease;
+	transition: color var(--duration-fast) var(--ease-standard), border-color var(--duration-fast) var(--ease-standard), background var(--duration-fast) var(--ease-standard);
 }
 
 .dr-chip:hover { color: var(--text-1, #fff); border-color: var(--border-hover, rgba(255, 255, 255, 0.3)); }

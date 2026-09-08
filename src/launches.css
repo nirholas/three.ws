@@ -1019,7 +1019,7 @@ body {
 	text-decoration: none;
 	backdrop-filter: blur(4px);
 	pointer-events: all;
-	transition: background 0.12s, border-color 0.12s;
+	transition: background var(--duration-fast), border-color var(--duration-fast);
 }
 .lx-ob-link:hover { background: rgba(0, 0, 0, 0.85); border-color: rgba(255, 255, 255, 0.22); }
 .lx-ob-score { font: 700 12px/1 var(--font-mono); font-variant-numeric: tabular-nums; }
@@ -1075,7 +1075,7 @@ body {
 	text-decoration: none;
 	line-height: 1;
 	backdrop-filter: blur(5px);
-	transition: background 0.13s, border-color 0.13s, transform 0.13s;
+	transition: background var(--duration-fast), border-color var(--duration-fast), transform var(--duration-fast);
 }
 .lx-ob-link:hover { background: rgba(0,0,0,0.72); border-color: rgba(255,255,255,0.2); transform: scale(1.06); }
 .lx-ob-score {
@@ -1113,7 +1113,7 @@ body {
 	color: var(--wallet-accent, #c4b5fd);
 	text-decoration: none;
 	white-space: nowrap;
-	transition: color .14s ease;
+	transition: color var(--duration-fast) var(--ease-standard);
 }
 .lx-pulse-label:hover { color: var(--ink-bright, #fff); }
 .lx-pulse-ticker { flex: 1 1 auto; min-width: 0; }

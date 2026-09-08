@@ -27,7 +27,7 @@ html, body {
 	display: flex; align-items: center; justify-content: center;
 	background: #060607;
 	z-index: 100;
-	transition: opacity 0.5s ease;
+	transition: opacity var(--duration-slow) var(--ease-standard);
 }
 
 #city-loading.hidden {
@@ -68,7 +68,7 @@ html, body {
 	width: 0%;
 	background: rgba(255, 255, 255, 0.45);
 	border-radius: 2px;
-	transition: width 0.35s ease;
+	transition: width var(--duration-slow) var(--ease-standard);
 }
 
 /* ── HUD ─────────────────────────────────────────────────────────────────────── */

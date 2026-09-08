@@ -34,7 +34,7 @@
 		var(--cv-accent),
 		color-mix(in srgb, var(--cv-accent) 55%, transparent)
 	);
-	transition: width 0.4s ease;
+	transition: width var(--duration-slow) var(--ease-standard);
 }
 
 @media (prefers-reduced-motion: reduce) {

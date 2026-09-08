@@ -57,7 +57,7 @@
 	border: none;
 	border-radius: 0;
 	opacity: 0;
-	transition: opacity 0.45s ease;
+	transition: opacity var(--duration-slow) var(--ease-standard);
 }
 
 .tfig-frame.is-ready .tfig-img {
@@ -105,7 +105,7 @@
 	text-decoration: none;
 	background:
 		radial-gradient(ellipse 60% 100% at 0% 50%, var(--tdoc-accent-soft, rgba(255, 255, 255, 0.1)) 0%, transparent 70%);
-	transition: background 0.2s ease;
+	transition: background var(--duration-base) var(--ease-standard);
 }
 
 .tfig-card:hover {
@@ -165,9 +165,9 @@
 	opacity: 0;
 	transform: translateY(-4px);
 	transition:
-		opacity 0.18s ease,
-		transform 0.18s ease,
-		color 0.18s ease;
+		opacity var(--duration-fast) var(--ease-standard),
+		transform var(--duration-fast) var(--ease-standard),
+		color var(--duration-fast) var(--ease-standard);
 }
 
 .tfig-body:hover .tfig-zoom,
@@ -321,8 +321,8 @@ html.tfig-lb-open body {
 	color: rgba(255, 255, 255, 0.8);
 	cursor: pointer;
 	transition:
-		color 0.15s ease,
-		border-color 0.15s ease;
+		color var(--duration-fast) var(--ease-standard),
+		border-color var(--duration-fast) var(--ease-standard);
 }
 
 .tfig-lb-close {

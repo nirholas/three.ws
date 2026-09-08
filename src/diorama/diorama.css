@@ -84,7 +84,7 @@
 	background: var(--dio-panel);
 	border: 1px solid var(--dio-stroke-strong);
 	border-radius: var(--radius-control, 0.7rem);
-	transition: border-color 0.18s ease, box-shadow 0.18s ease, background 0.18s ease;
+	transition: border-color var(--duration-fast) var(--ease-standard), box-shadow var(--duration-fast) var(--ease-standard), background var(--duration-fast) var(--ease-standard);
 }
 .dio-compose__input::placeholder {
 	color: var(--dio-dim);
@@ -126,7 +126,7 @@
 	border-radius: var(--radius-pill, 999px);
 	padding: 0.42rem 0.85rem;
 	cursor: pointer;
-	transition: color 0.16s ease, border-color 0.16s ease, transform 0.16s ease, background 0.16s ease;
+	transition: color var(--duration-fast) var(--ease-standard), border-color var(--duration-fast) var(--ease-standard), transform var(--duration-fast) var(--ease-standard), background var(--duration-fast) var(--ease-standard);
 }
 .dio-chip:hover {
 	color: var(--dio-ink);
@@ -182,7 +182,7 @@
 	align-items: center;
 	justify-content: center;
 	gap: 1.2rem;
-	transition: opacity 0.5s ease;
+	transition: opacity var(--duration-slow) var(--ease-standard);
 }
 .dio-stage__loader[hidden] {
 	display: none;
@@ -321,7 +321,7 @@
 	width: 0%;
 	border-radius: 999px;
 	background: linear-gradient(90deg, var(--dio-glow), color-mix(in srgb, var(--dio-glow) 40%, #fff));
-	transition: width 0.5s cubic-bezier(0.22, 1, 0.36, 1);
+	transition: width var(--duration-slow) cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 .dio-objects {
@@ -345,7 +345,7 @@
 	border: 1px solid var(--dio-stroke);
 	font-size: 0.88rem;
 	color: var(--dio-ink);
-	transition: border-color 0.2s ease, opacity 0.3s ease;
+	transition: border-color var(--duration-base) var(--ease-standard), opacity var(--duration-base) var(--ease-standard);
 }
 .dio-object__dot {
 	width: 8px;
@@ -522,7 +522,7 @@
 	cursor: pointer;
 	text-align: left;
 	color: inherit;
-	transition: border-color 0.18s ease, transform 0.18s ease, box-shadow 0.18s ease;
+	transition: border-color var(--duration-fast) var(--ease-standard), transform var(--duration-fast) var(--ease-standard), box-shadow var(--duration-fast) var(--ease-standard);
 }
 .dio-card:hover {
 	border-color: var(--dio-stroke-strong);

@@ -71,7 +71,7 @@ button { font: inherit; color: inherit; cursor: pointer; }
 	font: 600 11px/1.5 Inter, system-ui, sans-serif;
 	white-space: nowrap;
 	will-change: transform;
-	transition: opacity 0.2s ease;
+	transition: opacity var(--duration-base) var(--ease-standard);
 }
 
 .war-tag-a { border-color: color-mix(in srgb, var(--war-us) 45%, var(--war-line)); color: var(--war-us); }
@@ -279,7 +279,7 @@ button { font: inherit; color: inherit; cursor: pointer; }
 	background: linear-gradient(180deg, rgba(127, 216, 255, 0.26), rgba(127, 216, 255, 0.1));
 	color: #eaf7ff;
 	font: 800 16px/1 Inter, system-ui, sans-serif;
-	transition: transform 90ms ease, opacity 140ms ease, background 140ms ease;
+	transition: transform var(--duration-instant) var(--ease-standard), opacity var(--duration-fast) var(--ease-standard), background var(--duration-fast) var(--ease-standard);
 }
 
 .war-attack small { color: var(--war-muted); font: 600 10px/1 Inter, system-ui, sans-serif; }
@@ -296,7 +296,7 @@ button { font: inherit; color: inherit; cursor: pointer; }
 	background: rgba(12, 14, 20, 0.6);
 	color: var(--war-muted);
 	font: 600 12px/1 Inter, system-ui, sans-serif;
-	transition: color 120ms ease, border-color 120ms ease;
+	transition: color var(--duration-fast) var(--ease-standard), border-color var(--duration-fast) var(--ease-standard);
 }
 
 .war-leave:hover { color: var(--war-ink); border-color: rgba(255, 255, 255, 0.24); }
@@ -364,7 +364,7 @@ button { font: inherit; color: inherit; cursor: pointer; }
 	background: linear-gradient(180deg, rgba(127, 216, 255, 0.24), rgba(127, 216, 255, 0.1));
 	color: #eaf7ff;
 	font: 700 15px/1 Inter, system-ui, sans-serif;
-	transition: background 140ms ease, transform 90ms ease;
+	transition: background var(--duration-fast) var(--ease-standard), transform var(--duration-instant) var(--ease-standard);
 }
 
 .war-modal-btn:hover { background: linear-gradient(180deg, rgba(127, 216, 255, 0.34), rgba(127, 216, 255, 0.15)); }

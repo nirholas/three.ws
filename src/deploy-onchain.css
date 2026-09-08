@@ -68,7 +68,7 @@
 	border: 1px solid var(--stroke, rgba(255,255,255,.07));
 	border-radius: var(--radius-lg, 14px);
 	padding: var(--space-lg, 22px);
-	transition: border-color .14s ease;
+	transition: border-color var(--duration-fast) var(--ease-standard);
 }
 .do-card:focus-within { border-color: var(--stroke-strong, rgba(255,255,255,.14)); }
 .do-card-head { display: flex; align-items: center; gap: 10px; margin-bottom: var(--space-md, 16px); }
@@ -88,7 +88,7 @@
 	cursor: pointer; border-radius: var(--radius-md, 10px); padding: 10px 18px;
 	border: 1px solid var(--stroke, rgba(255,255,255,.1));
 	background: var(--surface-2, rgba(255,255,255,.05)); color: var(--ink, #e8e8e8);
-	transition: transform .12s ease, filter .14s ease, border-color .14s ease, background .14s ease;
+	transition: transform var(--duration-fast) var(--ease-standard), filter var(--duration-fast) var(--ease-standard), border-color var(--duration-fast) var(--ease-standard), background var(--duration-fast) var(--ease-standard);
 }
 .do-btn:hover { border-color: var(--stroke-strong, rgba(255,255,255,.18)); }
 .do-btn:active { transform: translateY(1px); }
@@ -126,7 +126,7 @@
 	appearance: none; font: inherit; font-size: var(--text-xs, .78rem); font-weight: 500; cursor: pointer;
 	color: var(--ink-dim, #888); background: transparent; border: none;
 	border-radius: var(--radius-pill, 999px); padding: 6px 14px;
-	transition: color .14s ease, background .14s ease;
+	transition: color var(--duration-fast) var(--ease-standard), background var(--duration-fast) var(--ease-standard);
 }
 .do-net-btn:hover { color: var(--ink, #e8e8e8); }
 .do-net-btn.active { color: #0a0a12; background: var(--do-grad); font-weight: 600; }
@@ -139,7 +139,7 @@
 	background: var(--surface-2, rgba(255,255,255,.05));
 	border: 1px solid var(--stroke, rgba(255,255,255,.08));
 	border-radius: var(--radius-md, 10px); padding: 8px;
-	transition: border-color .14s ease, transform .14s ease;
+	transition: border-color var(--duration-fast) var(--ease-standard), transform var(--duration-fast) var(--ease-standard);
 	color: inherit; font: inherit; appearance: none;
 }
 .do-agent-tile:hover { border-color: var(--stroke-strong, rgba(255,255,255,.18)); transform: translateY(-2px); }
@@ -170,7 +170,7 @@
 	background: var(--surface-0, rgba(0,0,0,.25));
 	border: 1px solid var(--stroke, rgba(255,255,255,.1));
 	border-radius: var(--radius-md, 10px); padding: 10px 12px;
-	transition: border-color .14s ease;
+	transition: border-color var(--duration-fast) var(--ease-standard);
 }
 .do-field input:hover, .do-field textarea:hover { border-color: var(--stroke-strong, rgba(255,255,255,.16)); }
 .do-field input:focus-visible, .do-field textarea:focus-visible { outline: none; border-color: var(--do-a1); }
@@ -206,12 +206,12 @@
 .do-stages li {
 	display: flex; align-items: center; gap: 10px;
 	font-size: var(--text-sm, .82rem); color: var(--ink-faint, #777);
-	transition: color .2s ease;
+	transition: color var(--duration-base) var(--ease-standard);
 }
 .do-stages li::before {
 	content: ''; width: 8px; height: 8px; border-radius: 50%; flex: none;
 	background: var(--surface-3, rgba(255,255,255,.12));
-	transition: background .2s ease, box-shadow .2s ease;
+	transition: background var(--duration-base) var(--ease-standard), box-shadow var(--duration-base) var(--ease-standard);
 }
 .do-stages li.active { color: var(--ink-bright, #fff); }
 .do-stages li.active::before { background: var(--do-grad); animation: do-ping 1.6s ease infinite; }
@@ -240,7 +240,7 @@
 	text-transform: uppercase; letter-spacing: .06em; cursor: pointer;
 	color: var(--ink-dim, #999); background: var(--surface-2, rgba(255,255,255,.05));
 	border: 1px solid var(--stroke, rgba(255,255,255,.1)); border-radius: 6px; padding: 3px 8px;
-	transition: color .14s ease, border-color .14s ease;
+	transition: color var(--duration-fast) var(--ease-standard), border-color var(--duration-fast) var(--ease-standard);
 }
 .do-copy:hover { color: var(--ink-bright, #fff); border-color: var(--stroke-strong, rgba(255,255,255,.2)); }
 .do-copy:focus-visible { outline: 2px solid var(--do-a1); outline-offset: 1px; }
@@ -249,7 +249,7 @@
 .do-success-links a {
 	font-size: var(--text-xs, .78rem); font-weight: 600; color: var(--ink, #ddd); text-decoration: none;
 	padding: 7px 14px; border: 1px solid var(--stroke, rgba(255,255,255,.1)); border-radius: var(--radius-pill, 999px);
-	transition: border-color .14s ease, color .14s ease;
+	transition: border-color var(--duration-fast) var(--ease-standard), color var(--duration-fast) var(--ease-standard);
 }
 .do-success-links a:hover { color: var(--ink-bright, #fff); border-color: var(--do-a1); }
 
@@ -293,7 +293,7 @@
 .do-genesis h4 { margin: 0 0 10px; font-size: var(--text-xs, .78rem); text-transform: uppercase; letter-spacing: .08em; color: var(--ink-dim, #999); }
 .do-genesis ul { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 7px; }
 .do-genesis li { display: flex; align-items: center; gap: 9px; font-size: var(--text-sm, .8rem); color: var(--ink-faint, #777); }
-.do-genesis li::before { content: ''; width: 7px; height: 7px; border-radius: 50%; flex: none; background: var(--surface-3, rgba(255,255,255,.12)); transition: background .2s ease; }
+.do-genesis li::before { content: ''; width: 7px; height: 7px; border-radius: 50%; flex: none; background: var(--surface-3, rgba(255,255,255,.12)); transition: background var(--duration-base) var(--ease-standard); }
 .do-genesis li.on { color: var(--ink, #ddd); }
 .do-genesis li.on::before { background: var(--do-a2); }
 

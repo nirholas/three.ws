@@ -34,7 +34,7 @@
 	background: rgba(4, 4, 6, 0.55);
 	backdrop-filter: blur(2px);
 	opacity: 0;
-	transition: opacity 180ms ease;
+	transition: opacity var(--duration-fast) var(--ease-standard);
 	pointer-events: auto;
 }
 
@@ -53,7 +53,7 @@
 	font: 400 14px/1.5 Inter, system-ui, sans-serif;
 	transform: translateY(18px);
 	opacity: 0;
-	transition: transform 200ms cubic-bezier(0.2, 0.8, 0.3, 1), opacity 200ms ease;
+	transition: transform var(--duration-base) cubic-bezier(0.2, 0.8, 0.3, 1), opacity var(--duration-base) var(--ease-standard);
 	pointer-events: auto;
 }
 
@@ -105,7 +105,7 @@
 	color: #c9c9cf;
 	font-size: 14px;
 	cursor: pointer;
-	transition: background 120ms ease, color 120ms ease, transform 120ms ease;
+	transition: background var(--duration-fast) var(--ease-standard), color var(--duration-fast) var(--ease-standard), transform var(--duration-fast) var(--ease-standard);
 }
 
 .wp-x:hover { background: rgba(255, 255, 255, 0.1); color: #fff; }
@@ -136,7 +136,7 @@
 	color: #eaf6ff;
 	font: 700 15px/1 Inter, system-ui, sans-serif;
 	cursor: pointer;
-	transition: background 140ms ease, transform 100ms ease, border-color 140ms ease;
+	transition: background var(--duration-fast) var(--ease-standard), transform var(--duration-instant) var(--ease-standard), border-color var(--duration-fast) var(--ease-standard);
 }
 
 .wp-cta:hover:not(:disabled) { background: linear-gradient(180deg, rgba(143, 208, 255, 0.32), rgba(143, 208, 255, 0.16)); }
@@ -189,7 +189,7 @@
 	color: #eaeaf0;
 	font: 600 13px/1 Inter, system-ui, sans-serif;
 	cursor: pointer;
-	transition: background 120ms ease, transform 100ms ease;
+	transition: background var(--duration-fast) var(--ease-standard), transform var(--duration-instant) var(--ease-standard);
 }
 
 .wp-retry-btn:hover { background: rgba(255, 255, 255, 0.11); }

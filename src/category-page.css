@@ -132,8 +132,8 @@
 	opacity: 0;
 	pointer-events: none;
 	transition:
-		opacity 0.15s ease,
-		transform 0.15s ease;
+		opacity var(--duration-fast) var(--ease-standard),
+		transform var(--duration-fast) var(--ease-standard);
 	z-index: 5;
 }
 .cat-info:hover::after,
@@ -177,8 +177,8 @@
 	border-radius: var(--cv-radius-md);
 	padding: 0.5rem 1.125rem;
 	transition:
-		border-color 0.15s,
-		background 0.15s;
+		border-color var(--duration-fast),
+		background var(--duration-fast);
 }
 .cat-table-error button:hover {
 	border-color: var(--cv-border-hover);
@@ -217,9 +217,9 @@
 	box-shadow: var(--cv-shadow-card);
 	text-decoration: none;
 	transition:
-		box-shadow 0.2s,
-		border-color 0.2s,
-		transform 0.2s;
+		box-shadow var(--duration-base),
+		border-color var(--duration-base),
+		transform var(--duration-base);
 }
 .cat-rel-card:hover {
 	box-shadow: var(--cv-shadow-card-hover);

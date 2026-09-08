@@ -57,7 +57,7 @@ body.market-page > #footer-container {
    renderDetailModelStage). */
 .market-detail-avatar[role='button'] {
 	cursor: pointer;
-	transition: transform 0.15s ease, box-shadow 0.15s ease;
+	transition: transform var(--duration-fast) var(--ease-standard), box-shadow var(--duration-fast) var(--ease-standard);
 }
 .market-detail-avatar[role='button']:hover {
 	transform: scale(1.04);
@@ -124,7 +124,7 @@ body.market-page > #footer-container {
 	cursor: pointer;
 	text-decoration: none;
 	white-space: nowrap;
-	transition: border-color 0.15s ease, background 0.15s ease, color 0.15s ease;
+	transition: border-color var(--duration-fast) var(--ease-standard), background var(--duration-fast) var(--ease-standard), color var(--duration-fast) var(--ease-standard);
 }
 .d-model-btn:hover {
 	border-color: rgba(255, 255, 255, 0.35);
@@ -178,7 +178,7 @@ body.market-page > #footer-container {
 	text-decoration: underline;
 	text-decoration-color: rgba(255, 255, 255, 0.18);
 	text-underline-offset: 3px;
-	transition: text-decoration-color 0.15s ease, color 0.15s ease;
+	transition: text-decoration-color var(--duration-fast) var(--ease-standard), color var(--duration-fast) var(--ease-standard);
 }
 .market-author-btn:hover {
 	text-decoration-color: #fafafa;
@@ -319,7 +319,7 @@ body.market-page > #footer-container {
 	justify-content: center;
 	padding: 24px;
 	opacity: 0;
-	transition: opacity 0.2s ease;
+	transition: opacity var(--duration-base) var(--ease-standard);
 }
 .creator-modal-overlay.show {
 	opacity: 1;
@@ -445,7 +445,7 @@ body.market-page > #footer-container {
 	border-radius: 12px;
 	padding: 12px;
 	cursor: pointer;
-	transition: border-color 0.15s ease, transform 0.15s ease;
+	transition: border-color var(--duration-fast) var(--ease-standard), transform var(--duration-fast) var(--ease-standard);
 }
 .creator-mini-card:hover {
 	border-color: #2a2a2a;
@@ -534,7 +534,7 @@ body.market-page > #footer-container {
 	height: 100%;
 	background: #f59e0b;
 	border-radius: 3px;
-	transition: width 0.35s ease;
+	transition: width var(--duration-slow) var(--ease-standard);
 }
 .breakdown-count {
 	width: 18px;
@@ -563,7 +563,7 @@ body.market-page > #footer-container {
 	cursor: pointer;
 	padding: 2px;
 	line-height: 1;
-	transition: color 0.1s, transform 0.1s;
+	transition: color var(--duration-instant), transform var(--duration-instant);
 }
 .star-pick.active,
 .star-pick.hover {
@@ -588,7 +588,7 @@ body.market-page > #footer-container {
 	min-height: 80px;
 	box-sizing: border-box;
 	outline: none;
-	transition: border-color 0.15s;
+	transition: border-color var(--duration-fast);
 }
 #d-rating-input textarea:focus,
 #d-review-body:focus,
@@ -605,7 +605,7 @@ body.market-page > #footer-container {
 	font-size: 13px;
 	font-weight: 600;
 	cursor: pointer;
-	transition: opacity 0.15s;
+	transition: opacity var(--duration-fast);
 }
 .submit-review:disabled {
 	opacity: 0.35;
@@ -643,7 +643,7 @@ body.market-page > #footer-container {
 	border-radius: 6px;
 	font-size: 12px;
 	cursor: pointer;
-	transition: border-color 0.15s, color 0.15s;
+	transition: border-color var(--duration-fast), color var(--duration-fast);
 }
 .review-edit-btn:hover { border-color: #4a4a4a; color: #fafafa; }
 .review-delete-btn:hover { border-color: #7f1d1d; color: var(--danger); }
@@ -785,8 +785,8 @@ body.market-page > #footer-container {
 /* Chat preview send — transition the hover lift it already had, add press. */
 .market-preview-send {
 	transition:
-		transform var(--duration-fast, 140ms) var(--ease-standard, ease),
-		opacity var(--duration-fast, 140ms) var(--ease-standard, ease);
+		transform var(--duration-fast, var(--duration-fast)) var(--ease-standard, var(--ease-standard)),
+		opacity var(--duration-fast, var(--duration-fast)) var(--ease-standard, var(--ease-standard));
 }
 .market-preview-send:active:not(:disabled) { transform: translateY(0) scale(0.97); }
 .market-author-btn:active { color: rgba(255, 255, 255, 0.7); }
@@ -795,15 +795,15 @@ body.market-page > #footer-container {
 .creator-modal {
 	transform: translateY(10px) scale(0.98);
 	transition:
-		transform var(--duration-base, 220ms) var(--ease-emphasized, cubic-bezier(0.22, 1, 0.36, 1)),
-		opacity var(--duration-base, 220ms) var(--ease-standard, ease);
+		transform var(--duration-base, var(--duration-base)) var(--ease-emphasized, cubic-bezier(0.22, 1, 0.36, 1)),
+		opacity var(--duration-base, var(--duration-base)) var(--ease-standard, var(--ease-standard));
 }
 .creator-modal-overlay.show .creator-modal { transform: translateY(0) scale(1); }
 .creator-modal-close {
 	transition:
-		background var(--duration-instant, 80ms) var(--ease-standard, ease),
-		border-color var(--duration-instant, 80ms) var(--ease-standard, ease),
-		color var(--duration-instant, 80ms) var(--ease-standard, ease);
+		background var(--duration-instant, var(--duration-instant)) var(--ease-standard, var(--ease-standard)),
+		border-color var(--duration-instant, var(--duration-instant)) var(--ease-standard, var(--ease-standard)),
+		color var(--duration-instant, var(--duration-instant)) var(--ease-standard, var(--ease-standard));
 }
 .creator-modal-close:hover { background: rgba(255, 255, 255, 0.1); border-color: #2a2a2a; }
 .creator-modal-close:active { background: rgba(255, 255, 255, 0.16); }
@@ -884,7 +884,7 @@ body.market-sidebar-open .market-sidebar-backdrop {
 		height: 100dvh;
 		background: var(--bg-0);
 		z-index: 45;
-		transition: left 0.2s ease;
+		transition: left var(--duration-base) var(--ease-standard);
 		overflow-y: auto;
 		padding-bottom: env(safe-area-inset-bottom, 0);
 	}
@@ -923,8 +923,8 @@ body.market-sidebar-open .market-sidebar-backdrop {
    (the backdrop is display-toggled, so it animates in via keyframe). */
 .market-sidebar-toggle {
 	transition:
-		background var(--duration-instant, 80ms) var(--ease-standard, ease),
-		border-color var(--duration-instant, 80ms) var(--ease-standard, ease);
+		background var(--duration-instant, var(--duration-instant)) var(--ease-standard, var(--ease-standard)),
+		border-color var(--duration-instant, var(--duration-instant)) var(--ease-standard, var(--ease-standard));
 }
 .market-sidebar-toggle:hover { background: #181818; border-color: #3a3a3a; }
 .market-sidebar-toggle:active { background: #222; }

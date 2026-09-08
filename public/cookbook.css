@@ -148,9 +148,9 @@ html.cookbook-page body {
 	padding: 0.42rem 0.95rem;
 	cursor: pointer;
 	transition:
-		background var(--duration-fast, 140ms) ease,
-		border-color var(--duration-fast, 140ms) ease,
-		color var(--duration-fast, 140ms) ease;
+		background var(--duration-fast, var(--duration-fast)) var(--ease-standard),
+		border-color var(--duration-fast, var(--duration-fast)) var(--ease-standard),
+		color var(--duration-fast, var(--duration-fast)) var(--ease-standard);
 }
 
 .cb-filter:hover {
@@ -198,9 +198,9 @@ html.cookbook-page body {
 	border-radius: var(--radius-lg, 14px);
 	overflow: hidden;
 	transition:
-		transform var(--duration-base, 220ms) var(--ease-standard, ease),
-		border-color var(--duration-base, 220ms) ease,
-		box-shadow var(--duration-base, 220ms) ease;
+		transform var(--duration-base, var(--duration-base)) var(--ease-standard, var(--ease-standard)),
+		border-color var(--duration-base, var(--duration-base)) var(--ease-standard),
+		box-shadow var(--duration-base, var(--duration-base)) var(--ease-standard);
 }
 
 .cb-card:hover,
@@ -325,7 +325,7 @@ html.cookbook-page body {
 	text-decoration: none;
 	border-bottom: 1px solid var(--stroke-strong);
 	padding-bottom: 1px;
-	transition: color var(--duration-fast, 140ms) ease;
+	transition: color var(--duration-fast, var(--duration-fast)) var(--ease-standard);
 }
 
 .cb-dl:hover,
@@ -414,7 +414,7 @@ html.cookbook-page body {
 	border: 1px solid var(--btn-secondary-border);
 	background: var(--btn-secondary-bg);
 	color: var(--btn-secondary-fg);
-	transition: background var(--duration-fast, 140ms) ease;
+	transition: background var(--duration-fast, var(--duration-fast)) var(--ease-standard);
 }
 
 .cb-btn:hover {
@@ -603,8 +603,8 @@ html.cookbook-page body {
 	padding: 0.25rem 0.55rem;
 	opacity: 0;
 	transition:
-		opacity var(--duration-fast, 140ms) ease,
-		color var(--duration-fast, 140ms) ease;
+		opacity var(--duration-fast, var(--duration-fast)) var(--ease-standard),
+		color var(--duration-fast, var(--duration-fast)) var(--ease-standard);
 }
 
 .cb-article pre:hover .cb-copy,
@@ -678,8 +678,8 @@ html.cookbook-page body {
 	border-left: 2px solid transparent;
 	padding-left: 0.6rem;
 	transition:
-		color var(--duration-fast, 140ms) ease,
-		border-color var(--duration-fast, 140ms) ease;
+		color var(--duration-fast, var(--duration-fast)) var(--ease-standard),
+		border-color var(--duration-fast, var(--duration-fast)) var(--ease-standard);
 }
 
 .cb-toc a:hover,
@@ -715,8 +715,8 @@ html.cookbook-page body {
 	text-decoration: none;
 	color: var(--ink);
 	transition:
-		border-color var(--duration-fast, 140ms) ease,
-		background var(--duration-fast, 140ms) ease;
+		border-color var(--duration-fast, var(--duration-fast)) var(--ease-standard),
+		background var(--duration-fast, var(--duration-fast)) var(--ease-standard);
 }
 
 .cb-pager a:hover,

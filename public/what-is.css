@@ -51,7 +51,7 @@
 	padding: var(--space-md);
 	text-decoration: none;
 	color: var(--ink);
-	transition: border-color 0.18s ease, background 0.18s ease, transform 0.18s ease;
+	transition: border-color var(--duration-fast) var(--ease-standard), background var(--duration-fast) var(--ease-standard), transform var(--duration-fast) var(--ease-standard);
 }
 
 .wi-piece:hover {
@@ -130,7 +130,7 @@
 	border: 1px solid var(--stroke);
 	border-radius: var(--radius-card);
 	padding: var(--space-lg);
-	transition: border-color 0.2s ease, background 0.2s ease;
+	transition: border-color var(--duration-base) var(--ease-standard), background var(--duration-base) var(--ease-standard);
 }
 
 .wi-case:hover {

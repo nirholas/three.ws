@@ -86,8 +86,8 @@
 	position: relative;
 	cursor: pointer;
 	transition:
-		background 0.15s,
-		border-color 0.15s;
+		background var(--duration-fast),
+		border-color var(--duration-fast);
 	flex-shrink: 0;
 }
 .yl-toggle input::after {
@@ -100,8 +100,8 @@
 	border-radius: 50%;
 	background: var(--cv-text-3);
 	transition:
-		transform 0.18s ease,
-		background 0.15s;
+		transform var(--duration-fast) var(--ease-standard),
+		background var(--duration-fast);
 }
 .yl-toggle input:checked {
 	background: color-mix(in srgb, var(--cv-accent) 30%, transparent);
@@ -141,7 +141,7 @@
 	cursor: pointer;
 }
 .yl-row td {
-	transition: background 0.12s;
+	transition: background var(--duration-fast);
 }
 .yl-row.is-open td {
 	background: var(--cv-surface-2);
@@ -174,7 +174,7 @@
 .yl-pool .chev {
 	color: var(--cv-text-3);
 	font-size: 0.7rem;
-	transition: transform 0.18s ease;
+	transition: transform var(--duration-fast) var(--ease-standard);
 	transform: translateY(-1px);
 }
 .yl-row.is-open .yl-pool .chev {
@@ -440,8 +440,8 @@
 	border-radius: var(--cv-radius-md);
 	padding: 0.625rem 1.5rem;
 	transition:
-		background 0.15s,
-		border-color 0.15s;
+		background var(--duration-fast),
+		border-color var(--duration-fast);
 }
 .yl-more:hover:not(:disabled) {
 	background: var(--cv-surface-2);
@@ -467,7 +467,7 @@
 	border: 0;
 	border-radius: var(--cv-radius-md);
 	padding: 0.5rem 1.25rem;
-	transition: background 0.15s;
+	transition: background var(--duration-fast);
 }
 .yl-retry:hover {
 	background: var(--cv-accent-hover);
@@ -511,7 +511,7 @@
 	color: var(--cv-text);
 	text-decoration: none;
 	border-bottom: 1px solid transparent;
-	transition: color 0.15s, border-color 0.15s;
+	transition: color var(--duration-fast), border-color var(--duration-fast);
 }
 .yl-link:hover,
 .yl-link:focus-visible {

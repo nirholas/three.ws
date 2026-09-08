@@ -85,10 +85,10 @@
 	line-height: 1.2;
 	cursor: pointer;
 	transition:
-		background-color 0.14s ease,
-		border-color 0.14s ease,
-		color 0.14s ease,
-		transform 0.12s ease;
+		background-color var(--duration-fast) var(--ease-standard),
+		border-color var(--duration-fast) var(--ease-standard),
+		color var(--duration-fast) var(--ease-standard),
+		transform var(--duration-fast) var(--ease-standard);
 }
 
 .dlive-btn:hover:not(:disabled) {

@@ -24,7 +24,7 @@
 .combat-mob-hpfill {
 	display: block; height: 100%; width: 100%;
 	background: linear-gradient(90deg, #ff5a4d, #ffcf5c);
-	transition: width 0.18s ease;
+	transition: width var(--duration-fast) var(--ease-standard);
 }
 
 .combat-prompt, .combat-zone-label {
@@ -33,7 +33,7 @@
 	background: var(--cc-panel-solid, #0c0c0e); border: 1px solid var(--cc-edge, rgba(255, 255, 255, 0.12));
 	color: var(--cc-text, #f5f5f6); font-size: 12px; font-weight: 700; letter-spacing: 0.04em;
 	padding: 6px 11px; border-radius: var(--cc-radius, 4px); box-shadow: var(--cc-glow, 0 0 14px rgba(255, 255, 255, 0.25));
-	text-transform: uppercase; transition: opacity 0.18s ease; opacity: 0; display: none;
+	text-transform: uppercase; transition: opacity var(--duration-fast) var(--ease-standard); opacity: 0; display: none;
 }
 .combat-prompt.combat-show, .combat-zone-label.combat-show { opacity: 1; }
 .combat-prompt .combat-key {
@@ -51,7 +51,7 @@
 	padding: 11px 18px; font-size: 13px; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase;
 	color: #fff; background: rgba(178, 30, 24, 0.88); border: 1px solid rgba(255, 120, 108, 0.6);
 	border-radius: var(--cc-radius, 4px); box-shadow: var(--cc-shadow, 0 16px 50px rgba(0, 0, 0, 0.7)), 0 0 14px rgba(255, 60, 48, 0.35);
-	cursor: pointer; transition: transform 0.1s ease, filter 0.12s ease;
+	cursor: pointer; transition: transform var(--duration-instant) var(--ease-standard), filter var(--duration-fast) var(--ease-standard);
 }
 .combat-attack-btn:hover { filter: brightness(1.1); transform: translateY(-2px); }
 .combat-attack-btn:active { transform: scale(0.96); }
@@ -72,7 +72,7 @@
 .combat-death {
 	position: fixed; inset: 0; z-index: 50; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px;
 	background: rgba(6, 6, 7, 0.72); backdrop-filter: blur(2px);
-	opacity: 0; transition: opacity 0.35s ease;
+	opacity: 0; transition: opacity var(--duration-slow) var(--ease-standard);
 }
 .combat-death.is-in { opacity: 1; }
 .combat-death-title {
@@ -84,7 +84,7 @@
 .combat-dmg {
 	position: fixed; left: 0; top: 0; z-index: 17; pointer-events: none;
 	transform: translate(-50%, -100%); font-size: 15px; font-weight: 800;
-	text-shadow: 0 1px 4px rgba(0, 0, 0, 0.85); transition: opacity 0.1s linear;
+	text-shadow: 0 1px 4px rgba(0, 0, 0, 0.85); transition: opacity var(--duration-instant) linear;
 }
 .combat-dmg.is-dealt { color: #ffcf5c; }
 .combat-dmg.is-taken { color: #ff5a4d; font-size: 17px; }

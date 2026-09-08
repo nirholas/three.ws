@@ -14,7 +14,7 @@
 	-webkit-backdrop-filter: blur(18px);
 	backdrop-filter: blur(18px);
 	opacity: 0;
-	transition: opacity 0.18s ease;
+	transition: opacity var(--duration-fast) var(--ease-standard);
 }
 .twtpl-overlay.twtpl-open {
 	opacity: 1;
@@ -32,7 +32,7 @@
 	box-shadow: 0 24px 80px rgba(0, 0, 0, 0.6);
 	overflow: hidden;
 	transform: translateY(8px) scale(0.99);
-	transition: transform 0.2s ease;
+	transition: transform var(--duration-base) var(--ease-standard);
 	font:
 		15px/1.5 -apple-system, system-ui, 'Segoe UI', Roboto, sans-serif;
 	color: var(--text, #e8e8e8);
@@ -73,7 +73,7 @@
 	line-height: 1;
 	cursor: pointer;
 	padding: 0 4px;
-	transition: color 0.15s ease;
+	transition: color var(--duration-fast) var(--ease-standard);
 }
 .twtpl-close:hover,
 .twtpl-close:focus-visible {
@@ -103,9 +103,9 @@
 	cursor: pointer;
 	overflow: hidden;
 	transition:
-		border-color 0.16s ease,
-		transform 0.16s ease,
-		box-shadow 0.16s ease;
+		border-color var(--duration-fast) var(--ease-standard),
+		transform var(--duration-fast) var(--ease-standard),
+		box-shadow var(--duration-fast) var(--ease-standard);
 }
 .twtpl-card:hover,
 .twtpl-card:focus-visible {
@@ -172,7 +172,7 @@
 	font-size: 12.5px;
 	font-weight: 600;
 	color: var(--muted, #888);
-	transition: color 0.16s ease;
+	transition: color var(--duration-fast) var(--ease-standard);
 }
 .twtpl-card:hover .twtpl-card-cta,
 .twtpl-card:focus-visible .twtpl-card-cta {
@@ -202,7 +202,7 @@
 	cursor: pointer;
 	padding: 6px 8px;
 	border-radius: 8px;
-	transition: background 0.15s ease;
+	transition: background var(--duration-fast) var(--ease-standard);
 }
 .twtpl-browse:hover,
 .twtpl-browse:focus-visible {
@@ -228,7 +228,7 @@
 	font:
 		15px/1.5 -apple-system, system-ui, 'Segoe UI', Roboto, sans-serif;
 	opacity: 0;
-	transition: opacity 0.18s ease;
+	transition: opacity var(--duration-fast) var(--ease-standard);
 }
 .twtpl-stage-overlay.twtpl-open {
 	opacity: 1;
@@ -273,8 +273,8 @@
 	box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
 	opacity: 0;
 	transition:
-		opacity 0.22s ease,
-		transform 0.22s ease;
+		opacity var(--duration-base) var(--ease-standard),
+		transform var(--duration-base) var(--ease-standard);
 	max-width: min(440px, calc(100vw - 32px));
 }
 .twtpl-toast--show {

@@ -12,7 +12,7 @@
 	background: rgba(0, 0, 0, 0.55);
 	backdrop-filter: blur(6px);
 	opacity: 0;
-	transition: opacity 0.18s ease;
+	transition: opacity var(--duration-fast) var(--ease-standard);
 	padding: 16px;
 }
 .ec-overlay.ec-on { opacity: 1; }
@@ -28,7 +28,7 @@
 	box-shadow: var(--cc-shadow);
 	color: var(--cc-text);
 	transform: translateY(10px) scale(0.98);
-	transition: transform 0.18s ease;
+	transition: transform var(--duration-fast) var(--ease-standard);
 	overflow: hidden;
 }
 .ec-overlay.ec-on .ec-card { transform: none; }
@@ -45,7 +45,7 @@
 .ec-x {
 	width: 28px; height: 28px; display: grid; place-items: center;
 	background: transparent; border: 1px solid var(--cc-edge); border-radius: var(--cc-radius-sm);
-	color: var(--cc-dim); cursor: pointer; transition: color 0.14s ease, background 0.14s ease, border-color 0.14s ease;
+	color: var(--cc-dim); cursor: pointer; transition: color var(--duration-fast) var(--ease-standard), background var(--duration-fast) var(--ease-standard), border-color var(--duration-fast) var(--ease-standard);
 }
 .ec-x:hover { color: var(--cc-text); background: rgba(255, 255, 255, 0.08); border-color: var(--cc-edge-hi); }
 .ec-x:focus-visible { outline: 2px solid var(--cc-edge-hi); outline-offset: 2px; }
@@ -54,7 +54,7 @@
 .ec-tab {
 	flex: 1; padding: 8px 0; text-align: center; font-size: 12px; font-weight: 700; letter-spacing: 0.03em;
 	text-transform: uppercase; color: var(--cc-dim); background: transparent; border: 1px solid var(--cc-edge);
-	border-radius: var(--cc-radius-sm); cursor: pointer; transition: color 0.14s ease, background 0.14s ease, border-color 0.14s ease;
+	border-radius: var(--cc-radius-sm); cursor: pointer; transition: color var(--duration-fast) var(--ease-standard), background var(--duration-fast) var(--ease-standard), border-color var(--duration-fast) var(--ease-standard);
 }
 .ec-tab:hover { color: var(--cc-text); border-color: var(--cc-edge-hi); }
 .ec-tab.ec-on { color: var(--cc-ink); background: #fff; border-color: #fff; }
@@ -83,7 +83,7 @@
 .ec-row-btn {
 	flex: none; padding: 7px 12px; font-size: 12px; font-weight: 700; letter-spacing: 0.02em;
 	background: #fff; color: var(--cc-ink); border: none; border-radius: var(--cc-radius-sm); cursor: pointer;
-	transition: transform 0.1s ease, opacity 0.14s ease;
+	transition: transform var(--duration-instant) var(--ease-standard), opacity var(--duration-fast) var(--ease-standard);
 }
 .ec-row-btn:hover:not(:disabled) { transform: translateY(-1px); }
 .ec-row-btn:active:not(:disabled) { transform: translateY(0) scale(0.97); }
@@ -102,7 +102,7 @@
 .ec-bank-presets { display: flex; gap: 6px; margin-bottom: 10px; }
 .ec-bank-preset {
 	flex: 1; padding: 6px 0; font-size: 11px; font-weight: 700; background: transparent; color: var(--cc-dim);
-	border: 1px solid var(--cc-edge); border-radius: var(--cc-radius-sm); cursor: pointer; transition: color 0.14s ease, border-color 0.14s ease;
+	border: 1px solid var(--cc-edge); border-radius: var(--cc-radius-sm); cursor: pointer; transition: color var(--duration-fast) var(--ease-standard), border-color var(--duration-fast) var(--ease-standard);
 }
 .ec-bank-preset:hover:not(:disabled) { color: var(--cc-text); border-color: var(--cc-edge-hi); }
 .ec-bank-preset:active:not(:disabled) { transform: scale(0.97); }

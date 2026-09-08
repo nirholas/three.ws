@@ -26,7 +26,7 @@
 	padding: var(--space-2xs) var(--space-md); border-radius: var(--radius-md);
 	border: 1px solid var(--surface-3); background: var(--surface-1); color: var(--ink);
 	font-size: var(--text-sm); font-weight: var(--weight-medium); cursor: pointer; text-decoration: none;
-	transition: background .15s, border-color .15s, transform .1s; font-family: inherit;
+	transition: background var(--duration-fast), border-color var(--duration-fast), transform var(--duration-instant); font-family: inherit;
 }
 .studio__btn:hover { background: var(--surface-3); }
 .studio__btn:active { transform: translateY(1px); }
@@ -47,7 +47,7 @@
 .brainstudio__tpl {
 	text-align: left; padding: var(--space-md); border-radius: var(--radius-lg); cursor: pointer;
 	border: 1px solid var(--surface-3); background: var(--surface-1); color: var(--ink);
-	display: flex; flex-direction: column; gap: var(--space-2xs); transition: transform .12s, border-color .15s, background .15s;
+	display: flex; flex-direction: column; gap: var(--space-2xs); transition: transform var(--duration-fast), border-color var(--duration-fast), background var(--duration-fast);
 }
 .brainstudio__tpl:hover { transform: translateY(-2px); background: var(--surface-2); }
 .brainstudio__tpl::before { content: ''; width: 26px; height: 4px; border-radius: 2px; background: var(--accent); }
@@ -76,7 +76,7 @@
 .bcard {
 	box-sizing: border-box; border-radius: var(--radius-lg);
 	border: 1px solid var(--surface-2); background: var(--surface-1);
-	transition: box-shadow .15s, border-color .15s;
+	transition: box-shadow var(--duration-fast), border-color var(--duration-fast);
 }
 .bcard.is-active { border-color: var(--accent); }
 .bcard.is-pulse { animation: bpulse .7s ease-out; }
@@ -94,7 +94,7 @@
 .bcard__dot--output { background: var(--node-output); }
 .bcard__title { margin: 0; font-size: var(--text-md); font-weight: var(--weight-semibold); color: var(--ink-bright); }
 .bcard__stat { font-size: var(--text-2xs); color: var(--node-model); margin-left: var(--space-2xs); }
-.bcard__remove { margin-left: auto; border: 1px solid transparent; background: transparent; color: var(--ink-faint); cursor: pointer; font-size: var(--text-sm); padding: 2px 8px; border-radius: var(--radius-md); transition: color .15s, background .15s; font-family: inherit; }
+.bcard__remove { margin-left: auto; border: 1px solid transparent; background: transparent; color: var(--ink-faint); cursor: pointer; font-size: var(--text-sm); padding: 2px 8px; border-radius: var(--radius-md); transition: color var(--duration-fast), background var(--duration-fast); font-family: inherit; }
 .bcard__remove:hover { color: var(--node-output); background: var(--surface-2); }
 .bcard__hint { margin: 0 var(--space-md) var(--space-2xs); font-size: var(--text-sm); color: var(--ink-dim); }
 .bcard--add { border-style: dashed; }
@@ -118,8 +118,8 @@ textarea.bcard__input { resize: vertical; }
 /* ── Toggle (shared by composer cards) ──────────────────────────────────── */
 .brainstudio__toggle { position: relative; display: inline-block; width: 38px; height: 22px; flex: none; }
 .brainstudio__toggle input { opacity: 0; width: 0; height: 0; }
-.brainstudio__toggle span { position: absolute; inset: 0; background: var(--surface-3); border-radius: var(--radius-pill); transition: background .15s; cursor: pointer; }
-.brainstudio__toggle span::before { content: ''; position: absolute; width: 16px; height: 16px; left: 3px; top: 3px; background: var(--ink); border-radius: 50%; transition: transform .15s; }
+.brainstudio__toggle span { position: absolute; inset: 0; background: var(--surface-3); border-radius: var(--radius-pill); transition: background var(--duration-fast); cursor: pointer; }
+.brainstudio__toggle span::before { content: ''; position: absolute; width: 16px; height: 16px; left: 3px; top: 3px; background: var(--ink); border-radius: 50%; transition: transform var(--duration-fast); }
 .brainstudio__toggle input:checked + span { background: var(--accent); }
 .brainstudio__toggle input:checked + span::before { transform: translateX(16px); background: var(--bg-0); }
 .brainstudio__toggle input:focus-visible + span { outline: 2px solid var(--accent); outline-offset: 2px; }
@@ -168,7 +168,7 @@ textarea.bcard__input { resize: vertical; }
 .brainstudio__footer-save {
 	margin-right: auto;
 	font-size: var(--text-sm); color: var(--ink-faint);
-	transition: color .2s;
+	transition: color var(--duration-base);
 }
 .brainstudio__footer-exit { padding: 8px 16px; }
 .brainstudio__footer-save[data-state="saving"] { color: var(--warn, #fbbf24); }

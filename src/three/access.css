@@ -136,7 +136,7 @@
 	border-radius: 99px;
 	background: var(--tg-accent);
 	box-shadow: 0 0 10px -1px var(--tg-accent);
-	transition: width 0.5s var(--tg-ease);
+	transition: width var(--duration-slow) var(--tg-ease);
 }
 .tg-gate .tg-gap {
 	margin: 0 0 0.7rem;
@@ -178,7 +178,7 @@
 	cursor: pointer;
 	text-decoration: underline;
 	text-underline-offset: 3px;
-	transition: color 0.15s;
+	transition: color var(--duration-fast);
 }
 .tg-gate .tg-pay-btn strong {
 	color: var(--tg-accent);
@@ -245,12 +245,12 @@
 	white-space: nowrap;
 	cursor: pointer;
 	transition:
-		transform 0.16s var(--tg-ease),
-		background 0.16s,
-		border-color 0.16s,
-		color 0.16s,
-		filter 0.16s,
-		opacity 0.16s;
+		transform var(--duration-fast) var(--tg-ease),
+		background var(--duration-fast),
+		border-color var(--duration-fast),
+		color var(--duration-fast),
+		filter var(--duration-fast),
+		opacity var(--duration-fast);
 }
 .tg-gate .tg-btn:hover {
 	transform: translateY(-1px);

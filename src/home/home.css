@@ -104,7 +104,7 @@
 	color: var(--ink);
 	font: inherit; font-size: var(--text-ui);
 	padding: 0.7rem 0.85rem;
-	transition: border-color 140ms ease, box-shadow 140ms ease, background 140ms ease;
+	transition: border-color var(--duration-fast) var(--ease-standard), box-shadow var(--duration-fast) var(--ease-standard), background var(--duration-fast) var(--ease-standard);
 }
 .hm-input::placeholder { color: var(--hm-ink-3); }
 .hm-input:hover:not(:disabled) { border-color: var(--hm-line-strong); }
@@ -127,7 +127,7 @@
 	background: var(--hm-panel-2); border: 1px solid var(--hm-line);
 	border-radius: var(--radius-sm); color: var(--hm-ink-2);
 	font: inherit; font-size: var(--text-sm); padding: 0.3rem 0.55rem;
-	cursor: pointer; transition: color 140ms ease, border-color 140ms ease, background 140ms ease;
+	cursor: pointer; transition: color var(--duration-fast) var(--ease-standard), border-color var(--duration-fast) var(--ease-standard), background var(--duration-fast) var(--ease-standard);
 }
 .hm-reveal:hover { color: var(--ink); border-color: var(--hm-line-strong); }
 .hm-reveal:focus-visible { outline: none; border-color: var(--hm-focus); box-shadow: 0 0 0 3px rgba(124, 92, 255, 0.22); }
@@ -163,7 +163,7 @@
 	/* An <a> styled as a button is a button: the browser's link underline reads as
 	   a second, competing affordance inside the same control. */
 	text-decoration: none;
-	transition: background 140ms ease, border-color 140ms ease, transform 90ms ease, opacity 140ms ease;
+	transition: background var(--duration-fast) var(--ease-standard), border-color var(--duration-fast) var(--ease-standard), transform var(--duration-instant) var(--ease-standard), opacity var(--duration-fast) var(--ease-standard);
 }
 .hm-btn:hover:not(:disabled) { background: var(--hm-panel); border-color: var(--hm-focus); }
 .hm-btn:active:not(:disabled) { transform: translateY(1px); }
@@ -231,7 +231,7 @@
 	display: flex; align-items: center; gap: 0.6rem;
 	padding: 0.5rem 0; font-size: var(--text-md); color: var(--hm-ink-3);
 	border-bottom: 1px solid var(--hm-line);
-	transition: color 200ms ease;
+	transition: color var(--duration-base) var(--ease-standard);
 }
 .hm-step:last-child { border-bottom: 0; }
 .hm-step[data-state='active'] { color: var(--ink); }
@@ -291,7 +291,7 @@
 	border: 1px solid var(--hm-line);
 	border-radius: var(--radius-md);
 	padding: 0.9rem 1rem;
-	transition: border-color 140ms ease, background 140ms ease;
+	transition: border-color var(--duration-fast) var(--ease-standard), background var(--duration-fast) var(--ease-standard);
 }
 .hm-card:hover { border-color: var(--hm-line-strong); }
 .hm-card:focus-within { border-color: var(--hm-focus); }
@@ -497,7 +497,7 @@
 	outline-offset: 2px;
 }
 @media (prefers-reduced-motion: no-preference) {
-	.hm-disclosure-more { transition: color 120ms ease; }
+	.hm-disclosure-more { transition: color var(--duration-fast) var(--ease-standard); }
 }
 
 /* ── The privacy centre (/smart-home/privacy) ────────────────────────────────
@@ -655,7 +655,7 @@
 	appearance: none; font: inherit; font-size: var(--text-sm);
 	padding: 0.45rem 0.8rem; border-radius: var(--radius-sm);
 	border: 1px solid var(--hm-line); background: var(--hm-panel-2); color: var(--ink);
-	cursor: pointer; transition: background 120ms ease, border-color 120ms ease, opacity 120ms ease;
+	cursor: pointer; transition: background var(--duration-fast) var(--ease-standard), border-color var(--duration-fast) var(--ease-standard), opacity var(--duration-fast) var(--ease-standard);
 	/* A thumb needs 44px even when the label does not. */
 	min-height: 44px;
 }
@@ -685,7 +685,7 @@
 	border: 1.5px solid var(--hm-ink-3); border-radius: var(--radius-sm);
 	background: var(--hm-panel-2); color: var(--ink);
 	cursor: grab; touch-action: none; text-align: center; overflow: hidden;
-	transition: border-color 120ms ease, background 120ms ease, box-shadow 120ms ease;
+	transition: border-color var(--duration-fast) var(--ease-standard), background var(--duration-fast) var(--ease-standard), box-shadow var(--duration-fast) var(--ease-standard);
 }
 .hm-plan-room:hover { border-color: var(--ink); }
 .hm-plan-room:active { cursor: grabbing; }

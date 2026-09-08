@@ -155,7 +155,7 @@ body {
 	cursor: pointer;
 	text-decoration: none;
 	box-shadow: 0 4px 16px rgba(37, 99, 235, 0.35);
-	transition: transform 0.15s, box-shadow 0.15s;
+	transition: transform var(--duration-fast), box-shadow var(--duration-fast);
 }
 
 .ch-chat-btn:hover {
@@ -242,7 +242,7 @@ body {
 	display: inline-flex;
 	align-items: center;
 	justify-content: center;
-	transition: background 0.15s;
+	transition: background var(--duration-fast);
 }
 
 .ch-trade-btn:hover { background: #282828; }
@@ -325,7 +325,7 @@ body {
 	cursor: pointer;
 	border: 2px dashed rgba(37, 99, 235, 0.3);
 	text-decoration: none;
-	transition: border-color 0.15s, background 0.15s;
+	transition: border-color var(--duration-fast), background var(--duration-fast);
 	min-height: 140px;
 }
 

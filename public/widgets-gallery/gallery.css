@@ -119,9 +119,9 @@ body.gallery-body {
 	border: 1px solid transparent;
 	cursor: pointer;
 	transition:
-		transform 0.15s,
-		background 0.15s,
-		border-color 0.15s;
+		transform var(--duration-fast),
+		background var(--duration-fast),
+		border-color var(--duration-fast);
 }
 
 .btn:focus-visible {
@@ -172,9 +172,9 @@ body.gallery-body {
 	font-weight: 500;
 	cursor: pointer;
 	transition:
-		background 0.15s,
-		border-color 0.15s,
-		color 0.15s;
+		background var(--duration-fast),
+		border-color var(--duration-fast),
+		color var(--duration-fast);
 	white-space: nowrap;
 }
 
@@ -265,9 +265,9 @@ body.gallery-body {
 	opacity: 0;
 	transform: translateY(28px);
 	transition:
-		opacity 0.45s ease,
-		transform 0.45s ease,
-		border-color 0.2s;
+		opacity var(--duration-slow) var(--ease-standard),
+		transform var(--duration-slow) var(--ease-standard),
+		border-color var(--duration-base);
 }
 
 .showcase.sc-visible {
@@ -350,7 +350,7 @@ body.gallery-body {
 		radial-gradient(ellipse at 30% 40%, rgba(255, 255, 255, 0.04) 0%, transparent 70%),
 		radial-gradient(ellipse at 75% 70%, rgba(255, 255, 255, 0.02) 0%, transparent 60%),
 		#050505;
-	transition: opacity 0.3s ease;
+	transition: opacity var(--duration-base) var(--ease-standard);
 }
 
 .frame-placeholder--loading {
@@ -378,9 +378,9 @@ body.gallery-body {
 	justify-content: center;
 	cursor: pointer;
 	transition:
-		background 0.15s,
-		transform 0.15s,
-		border-color 0.15s;
+		background var(--duration-fast),
+		transform var(--duration-fast),
+		border-color var(--duration-fast);
 }
 
 .play-btn:hover,
@@ -520,9 +520,9 @@ body.gallery-body {
 	text-decoration: none;
 	font-family: var(--font-body);
 	transition:
-		background 0.15s,
-		border-color 0.15s,
-		color 0.15s;
+		background var(--duration-fast),
+		border-color var(--duration-fast),
+		color var(--duration-fast);
 }
 
 /* The Copy split-button is no longer styled via :first-child — see .split-btn-main below. */
@@ -605,9 +605,9 @@ body.gallery-body {
 	background: rgba(255, 80, 80, 0.12);
 	color: #ffe4e4;
 	transition:
-		background 0.18s ease,
-		border-color 0.18s ease,
-		transform 0.18s ease;
+		background var(--duration-fast) var(--ease-standard),
+		border-color var(--duration-fast) var(--ease-standard),
+		transform var(--duration-fast) var(--ease-standard);
 }
 
 .error-retry:hover {
@@ -784,7 +784,7 @@ body.gallery-body {
 	border-radius: calc(var(--radius-md) - 4px);
 	cursor: pointer;
 	letter-spacing: 0.02em;
-	transition: background 0.15s, color 0.15s;
+	transition: background var(--duration-fast), color var(--duration-fast);
 }
 
 .frame-tab:hover {
@@ -857,7 +857,7 @@ body.gallery-body {
 }
 
 .customize > summary svg {
-	transition: transform 0.2s;
+	transition: transform var(--duration-base);
 }
 
 .customize[open] > summary svg {
@@ -985,7 +985,7 @@ body.gallery-body {
 	overflow: visible;
 	border: 1px solid var(--type-color, var(--blue));
 	background: var(--type-color, var(--blue));
-	transition: filter 0.15s;
+	transition: filter var(--duration-fast);
 }
 
 .snippet-row .split-btn:hover {

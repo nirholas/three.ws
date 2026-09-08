@@ -9,7 +9,7 @@
 	place-items: center;
 	background: radial-gradient(circle at center, rgba(0, 0, 0, 0.42), rgba(0, 0, 0, 0.72));
 	opacity: 0;
-	transition: opacity 0.16s ease;
+	transition: opacity var(--duration-fast) var(--ease-standard);
 	-webkit-backdrop-filter: blur(2px);
 	backdrop-filter: blur(2px);
 }
@@ -20,7 +20,7 @@
 	width: min(78vw, 78vh, 460px);
 	aspect-ratio: 1;
 	transform: scale(0.86);
-	transition: transform 0.18s cubic-bezier(0.2, 0.9, 0.25, 1);
+	transition: transform var(--duration-fast) cubic-bezier(0.2, 0.9, 0.25, 1);
 }
 .wh-radial.is-open .wh-radial-stage { transform: scale(1); }
 
@@ -41,7 +41,7 @@
 	stroke: rgba(255, 255, 255, 0.1);
 	stroke-width: 1.2;
 	cursor: pointer;
-	transition: fill 0.12s ease, stroke 0.12s ease, opacity 0.12s ease;
+	transition: fill var(--duration-fast) var(--ease-standard), stroke var(--duration-fast) var(--ease-standard), opacity var(--duration-fast) var(--ease-standard);
 }
 .wh-radial-wedge:hover { fill: rgba(34, 34, 40, 0.9); }
 .wh-radial-wedge.is-focus {
@@ -51,7 +51,7 @@
 }
 .wh-radial-wedge.is-disabled { opacity: 0.4; cursor: not-allowed; pointer-events: none; }
 
-.wh-radial-glabel { pointer-events: none; transition: transform 0.12s ease; }
+.wh-radial-glabel { pointer-events: none; transition: transform var(--duration-fast) var(--ease-standard); }
 .wh-radial-icon {
 	font-size: 30px;
 	text-anchor: middle;
@@ -64,7 +64,7 @@
 	text-anchor: middle;
 	dominant-baseline: middle;
 	fill: var(--cc-dim, #9a9aa2);
-	transition: fill 0.12s ease;
+	transition: fill var(--duration-fast) var(--ease-standard);
 }
 .wh-radial-glabel.is-focus .wh-radial-text { fill: var(--cc-text, #fff); }
 .wh-radial-glabel.is-focus { transform: scale(1.04); transform-origin: center; transform-box: fill-box; }

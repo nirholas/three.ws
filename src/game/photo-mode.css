@@ -27,7 +27,7 @@
 	display: grid; place-items: center; padding: 20px;
 	background: rgba(4, 4, 5, 0.42);
 	-webkit-backdrop-filter: blur(2px); backdrop-filter: blur(2px);
-	opacity: 0; transition: opacity 0.2s ease;
+	opacity: 0; transition: opacity var(--duration-base) var(--ease-standard);
 }
 #cc-photo.cc-on { opacity: 1; }
 /* A sheet on its way out (or not yet in) must never catch a click: during the
@@ -42,7 +42,7 @@
 	border-radius: var(--cc-radius, 4px);
 	box-shadow: var(--cc-shadow, 0 16px 50px rgba(0, 0, 0, 0.7));
 	padding: 20px; color: var(--cc-text, #f5f5f6);
-	transform: translateY(24px); transition: transform 0.24s cubic-bezier(0.2, 0.8, 0.3, 1);
+	transform: translateY(24px); transition: transform var(--duration-base) cubic-bezier(0.2, 0.8, 0.3, 1);
 }
 #cc-photo.cc-on .cc-photo-card { transform: none; }
 
@@ -52,7 +52,7 @@
 	border: 1px solid var(--cc-edge, rgba(255, 255, 255, 0.12));
 	background: rgba(255, 255, 255, 0.04);
 	color: var(--cc-dim, #8c8c92); cursor: pointer; font-size: 14px; line-height: 1;
-	transition: color 0.12s ease, background 0.12s ease, border-color 0.12s ease;
+	transition: color var(--duration-fast) var(--ease-standard), background var(--duration-fast) var(--ease-standard), border-color var(--duration-fast) var(--ease-standard);
 }
 .cc-photo-close:hover { color: var(--cc-text, #f5f5f6); border-color: var(--cc-edge-hi, rgba(255, 255, 255, 0.55)); background: rgba(255, 255, 255, 0.1); }
 .cc-photo-close:active { background: rgba(255, 255, 255, 0.16); }
@@ -82,7 +82,7 @@
 	border: 1px solid var(--cc-edge, rgba(255, 255, 255, 0.12));
 	background: rgba(255, 255, 255, 0.04); color: var(--cc-text, #f5f5f6);
 	font: inherit; font-size: 13px; font-weight: 600; text-decoration: none; white-space: nowrap;
-	transition: border-color 0.12s ease, background 0.12s ease, transform 0.12s ease, box-shadow 0.12s ease;
+	transition: border-color var(--duration-fast) var(--ease-standard), background var(--duration-fast) var(--ease-standard), transform var(--duration-fast) var(--ease-standard), box-shadow var(--duration-fast) var(--ease-standard);
 }
 .cc-photo-btn:hover { border-color: var(--cc-edge-hi, rgba(255, 255, 255, 0.55)); background: rgba(255, 255, 255, 0.09); }
 .cc-photo-btn:active { transform: translateY(1px); }

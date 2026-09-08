@@ -69,9 +69,9 @@ body {
 	font-weight: var(--weight-semibold);
 	text-decoration: none;
 	transition:
-		background var(--duration-fast, 0.14s) var(--ease-standard),
-		border-color var(--duration-fast, 0.14s) var(--ease-standard),
-		transform var(--duration-fast, 0.14s) var(--ease-standard);
+		background var(--duration-fast, var(--duration-fast)) var(--ease-standard),
+		border-color var(--duration-fast, var(--duration-fast)) var(--ease-standard),
+		transform var(--duration-fast, var(--duration-fast)) var(--ease-standard);
 }
 
 .chs-create:hover {
@@ -131,8 +131,8 @@ body {
 	color: var(--ink-dim);
 	cursor: pointer;
 	transition:
-		background var(--duration-fast, 0.14s) var(--ease-standard),
-		color var(--duration-fast, 0.14s) var(--ease-standard);
+		background var(--duration-fast, var(--duration-fast)) var(--ease-standard),
+		color var(--duration-fast, var(--duration-fast)) var(--ease-standard);
 }
 
 .chs-sort-btn:hover { color: var(--ink); }
@@ -196,9 +196,9 @@ body {
 	gap: var(--space-sm);
 	cursor: pointer;
 	transition:
-		border-color var(--duration-fast, 0.15s) var(--ease-standard),
-		background    var(--duration-fast, 0.15s) var(--ease-standard),
-		transform     var(--duration-fast, 0.15s) var(--ease-standard);
+		border-color var(--duration-fast, var(--duration-fast)) var(--ease-standard),
+		background    var(--duration-fast, var(--duration-fast)) var(--ease-standard),
+		transform     var(--duration-fast, var(--duration-fast)) var(--ease-standard);
 }
 
 .chs-card:hover {
@@ -358,7 +358,7 @@ body {
 	font-weight: var(--weight-semibold);
 	color: var(--ink);
 	cursor: pointer;
-	transition: background var(--duration-fast, 0.14s) var(--ease-standard);
+	transition: background var(--duration-fast, var(--duration-fast)) var(--ease-standard);
 }
 
 .chs-load-btn:hover { background: var(--surface-3); }

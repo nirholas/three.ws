@@ -491,7 +491,7 @@
 	background: var(--surface-1);
 	border-radius: var(--radius-md);
 	padding: 0.6rem 0.8rem;
-	transition: transform 0.45s cubic-bezier(0.2, 0.9, 0.25, 1),
+	transition: transform var(--duration-slow) cubic-bezier(0.2, 0.9, 0.25, 1),
 		border-color var(--duration-base) var(--ease-standard),
 		background var(--duration-base) var(--ease-standard);
 	cursor: pointer;
@@ -843,7 +843,7 @@
 	background: var(--surface-2);
 	color: inherit;
 	text-decoration: none;
-	transition: transform 0.16s ease, border-color 0.16s ease, background 0.16s ease;
+	transition: transform var(--duration-fast) var(--ease-standard), border-color var(--duration-fast) var(--ease-standard), background var(--duration-fast) var(--ease-standard);
 }
 .me-row:hover,
 .me-row:focus-visible {
@@ -1637,7 +1637,7 @@
 	min-width: 6px;
 	border-radius: var(--radius-pill);
 	background: linear-gradient(90deg, rgba(var(--gold-rgb), 0.9), var(--success));
-	transition: width 1s linear;
+	transition: width var(--duration-slow) linear;
 }
 .wt-upcoming .wt-fill {
 	min-width: 0;

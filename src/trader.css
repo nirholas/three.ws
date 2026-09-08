@@ -270,7 +270,7 @@
 	background: var(--surface-2);
 }
 .cp-drip strong { color: var(--ink-bright); }
-.cp-drip a { color: var(--accent); text-decoration: none; border-bottom: 1px solid transparent; transition: border-color .14s ease; }
+.cp-drip a { color: var(--accent); text-decoration: none; border-bottom: 1px solid transparent; transition: border-color var(--duration-fast) var(--ease-standard); }
 .cp-drip a:hover { border-bottom-color: currentColor; }
 .cp-drip a:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 2px; }
 .cp-drip-sub { display: inline-block; margin-top: 2px; color: var(--ink-faint); }

@@ -62,7 +62,7 @@
 	cursor: pointer;
 	padding: 0.1rem 0.35rem;
 	font-size: 0.8rem;
-	transition: background 0.12s, color 0.12s, border-color 0.12s;
+	transition: background var(--duration-fast), color var(--duration-fast), border-color var(--duration-fast);
 }
 .bo-copy:hover { color: var(--ink-bright, #fff); border-color: var(--stroke-strong, rgba(255, 255, 255, 0.14)); background: var(--surface-2, rgba(255, 255, 255, 0.05)); }
 .bo-copy:focus-visible { outline: 2px solid var(--focus-ring-color, #fff); outline-offset: 2px; }
@@ -82,7 +82,7 @@
 	border-radius: var(--radius-md, 10px);
 	background: var(--surface-1, rgba(255, 255, 255, 0.03));
 	cursor: default;
-	transition: border-color 0.12s, background 0.12s;
+	transition: border-color var(--duration-fast), background var(--duration-fast);
 }
 .bo-stat:hover { border-color: var(--stroke-strong, rgba(255, 255, 255, 0.14)); background: var(--surface-2, rgba(255, 255, 255, 0.05)); }
 .bo-stat__value { font-size: 1.3rem; font-weight: 700; color: var(--ink-bright, #fff); font-variant-numeric: tabular-nums; }
@@ -174,7 +174,7 @@
 	font: inherit;
 	font-size: 0.82rem;
 	cursor: pointer;
-	transition: background 0.12s, border-color 0.12s, transform 0.06s;
+	transition: background var(--duration-fast), border-color var(--duration-fast), transform var(--duration-instant);
 }
 .bo-btn:hover { background: var(--surface-3, rgba(255, 255, 255, 0.08)); }
 .bo-btn:active { transform: translateY(1px); }

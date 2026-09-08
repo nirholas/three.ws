@@ -63,7 +63,7 @@
 	border: 1.5px dashed var(--stroke-strong);
 	border-radius: var(--radius-lg);
 	cursor: pointer;
-	transition: border-color 0.18s ease, background 0.18s ease, transform 0.18s ease;
+	transition: border-color var(--duration-fast) var(--ease-standard), background var(--duration-fast) var(--ease-standard), transform var(--duration-fast) var(--ease-standard);
 }
 
 .dad-drop:hover,
@@ -283,7 +283,7 @@
 	padding: var(--space-xs) var(--space-md);
 	border-radius: var(--radius-pill);
 	cursor: pointer;
-	transition: background 0.16s ease, opacity 0.16s ease, color 0.16s ease;
+	transition: background var(--duration-fast) var(--ease-standard), opacity var(--duration-fast) var(--ease-standard), color var(--duration-fast) var(--ease-standard);
 }
 
 .dad-chip:hover { opacity: 1; background: var(--surface-3); }
