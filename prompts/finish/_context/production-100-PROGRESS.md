@@ -527,6 +527,12 @@ Did:
   fails if a newly unwired guard has no row in the doc. Doc linked from `docs/ops/README.md`.
   Wiring commit f8058bc64. Changelog 798c0f692.
 
+- **The registry had to move with the wiring.** `data/guards.json` records the stage each guard
+  runs in and is what `/guards` renders, so wiring seven guards into `gate` left four of them
+  publicly claiming they run on demand. Fixed, plus `audit:deploy` had no honest stage to claim:
+  `deploy:gcp:submit` was not a stage `scripts/audit-guards.mjs` could verify. `deploy:submit`
+  is now a real, verified stage described in the registry and in `docs/guards.md` (9989c6356).
+
 Left:
 - **Nothing deleted.** `audit:deploy` was the only delete candidate and moved to the deploy path
   instead; `check:docs-search` looked like a decoy but three open `prompts/finish/` orders invoke

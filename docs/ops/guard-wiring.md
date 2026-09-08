@@ -68,6 +68,26 @@ functions, so `npm test` runs them. The fourth, `findMissingDistAssets()`, retur
 in `gate`. It only means anything after a build, so it is wired into `deploy:gcp:submit` ahead
 of the upload, where a missing decoder asset (the /scene Draco outage) is still cheap to fix.
 
+## Wiring a guard is three edits, not one
+
+`data/guards.json` is the registry that `/guards` and [../guards.md](../guards.md) render, and
+it records the stage each guard runs in. Wiring a guard into `gate` without updating its
+`stages` leaves the public answer wrong in the confident direction: four guards went on
+claiming they were on-demand while the gate was already running them.
+`scripts/audit-guards.mjs` verifies a claim against the real npm chain, and
+[tests/audit-guards.test.js](../../tests/audit-guards.test.js) fails if a gate step has no
+registry entry at all. So:
+
+1. Wire it into the chain in `package.json`.
+2. Set its `stages` in `data/guards.json`, then `npm run build:guards` to refresh
+   `public/guards.json`.
+3. Add a wiring assertion in [tests/guard-wiring.test.js](../../tests/guard-wiring.test.js).
+
+`audit:deploy` needed a fourth: it runs in `deploy:gcp:submit`, which was not a stage the
+auditor could verify (it knew only `prebuild`, `gate`, `build:gcp` and `pre-push`).
+`deploy:submit` is now a real stage, checked against the real chain and described for readers
+in both the registry and the runbook.
+
 ## Reds fixed in this pass
 
 | Guard | Finding | Fix |
