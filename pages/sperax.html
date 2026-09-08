@@ -177,10 +177,10 @@
 				cursor: pointer;
 				text-decoration: none;
 				transition:
-					transform 0.15s ease,
-					background 0.15s ease,
-					border-color 0.15s ease,
-					box-shadow 0.15s ease;
+					transform var(--duration-fast) var(--ease-standard),
+					background var(--duration-fast) var(--ease-standard),
+					border-color var(--duration-fast) var(--ease-standard),
+					box-shadow var(--duration-fast) var(--ease-standard);
 			}
 			.spx-btn:focus-visible {
 				outline: var(--focus-ring-width) solid var(--focus-ring-color);
@@ -365,10 +365,10 @@
 				color: var(--ink);
 				cursor: pointer;
 				transition:
-					background 0.15s ease,
-					border-color 0.15s ease,
-					color 0.15s ease,
-					transform 0.15s ease;
+					background var(--duration-fast) var(--ease-standard),
+					border-color var(--duration-fast) var(--ease-standard),
+					color var(--duration-fast) var(--ease-standard),
+					transform var(--duration-fast) var(--ease-standard);
 			}
 			.spx-copy:hover {
 				background: var(--surface-3);
@@ -406,8 +406,8 @@
 				border: 1px solid var(--stroke);
 				background: var(--surface-1);
 				transition:
-					border-color 0.15s ease,
-					transform 0.15s ease;
+					border-color var(--duration-fast) var(--ease-standard),
+					transform var(--duration-fast) var(--ease-standard);
 			}
 			.spx-card:hover {
 				border-color: var(--stroke-strong);
@@ -512,7 +512,7 @@
 				content: '+';
 				font-family: var(--font-mono);
 				color: var(--ink-dim);
-				transition: transform 0.2s ease;
+				transition: transform var(--duration-base) var(--ease-standard);
 			}
 			.spx-faq details[open] summary::after {
 				transform: rotate(45deg);

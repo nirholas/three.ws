@@ -13,10 +13,17 @@
  * they notice is that the site does not feel like one product.
  *
  * This counts literal times and literal easings inside `transition` and
- * `transition-duration` / `transition-timing-function` declarations. It does
- * NOT touch @keyframes or `animation`, whose durations are usually intrinsic to
- * the effect (a 2s shimmer loop is not a control response), and it ignores
- * vendored third-party CSS.
+ * `transition-duration` / `transition-timing-function` declarations, in every
+ * stylesheet under src/ and public/ AND in the <style> blocks of HTML pages
+ * that load the token vocabulary. That last half is where most of the drift
+ * lived: 400 pages style themselves inline, and leaving them out measured a
+ * third of the problem. A page that does NOT load the vocabulary is out of
+ * scope on purpose, because var(--duration-fast) there resolves to nothing and
+ * drops the whole declaration, which is worse than the literal.
+ *
+ * It does NOT touch @keyframes or `animation`, whose durations are usually
+ * intrinsic to the effect (a 2s shimmer loop is not a control response), and it
+ * ignores vendored third-party CSS.
  *
  * The count may only go DOWN. Migrate a value to the nearest rung of the
  * ladder rather than adding a token for it: the point of a ladder is that the
@@ -75,9 +82,49 @@ function countDrift(css) {
 	return n;
 }
 
+function collectPages(dir) {
+	const out = [];
+	for (const entry of readdirSync(dir)) {
+		const p = join(dir, entry);
+		if (statSync(p).isDirectory()) {
+			if (SKIP_DIRS.has(entry)) continue;
+			out.push(...collectPages(p));
+		} else if (entry.endsWith('.html')) {
+			out.push(p);
+		}
+	}
+	return out;
+}
+
+const STYLE_BLOCK = /<style[^>]*>([\s\S]*?)<\/style>/gi;
+
+/** A page is in scope only if var(--duration-*) actually resolves on it, either
+ * from a linked token-carrying sheet or from a local definition. */
+function resolvesVocabulary(html, css) {
+	return (
+		/href=["'][^"']*\/(tokens|style|nav)\.css/.test(html) ||
+		/--duration-fast\s*:/.test(css) ||
+		/@import[^;]*tokens\.css/.test(css)
+	);
+}
+
 function audit() {
 	const perFile = {};
 	let total = 0;
+	for (const page of [
+		...collectPages(join(ROOT, 'pages')),
+		...collectPages(join(ROOT, 'public')),
+	]) {
+		const html = readFileSync(page, 'utf8');
+		let css = '';
+		for (const m of html.matchAll(STYLE_BLOCK)) css += m[1];
+		if (!css || !resolvesVocabulary(html, css)) continue;
+		const n = countDrift(css);
+		if (n > 0) {
+			perFile[relative(ROOT, page)] = n;
+			total += n;
+		}
+	}
 	for (const sheet of [
 		...collectStylesheets(join(ROOT, 'src')),
 		...collectStylesheets(join(ROOT, 'public')),

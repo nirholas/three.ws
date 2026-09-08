@@ -135,7 +135,7 @@
 			font: inherit;
 			width: 180px;
 			outline: none;
-			transition: border-color 0.15s, width 0.2s;
+			transition: border-color var(--duration-fast), width var(--duration-base);
 		}
 		.vz-search input:focus {
 			border-color: var(--vz-accent);
@@ -304,7 +304,7 @@
 			letter-spacing: 0.04em;
 			text-transform: uppercase;
 			white-space: nowrap;
-			transition: color 0.15s;
+			transition: color var(--duration-fast);
 		}
 		.vz-links a:hover { color: var(--vz-text); }
 		.vz-links a:focus-visible {
@@ -343,7 +343,7 @@
 			color: var(--vz-text);
 			transform: translate(12px, 12px);
 			opacity: 0;
-			transition: opacity 0.12s ease;
+			transition: opacity var(--duration-fast) var(--ease-standard);
 			white-space: nowrap;
 		}
 		.vz-tooltip.is-visible { opacity: 1; }
@@ -365,7 +365,7 @@
 			padding: calc(var(--header-h, 3.5rem) + 20px) 20px 20px;
 			overflow-y: auto;
 			transform: translateX(100%);
-			transition: transform 0.28s cubic-bezier(0.2, 0.8, 0.2, 1);
+			transition: transform var(--duration-base) cubic-bezier(0.2, 0.8, 0.2, 1);
 			display: flex;
 			flex-direction: column;
 			gap: 14px;
@@ -466,7 +466,7 @@
 			text-decoration: none;
 			background: rgba(255, 255, 255, 0.08);
 			font: inherit; line-height: 1; cursor: pointer;
-			transition: background 0.15s, transform 0.12s, box-shadow 0.15s;
+			transition: background var(--duration-fast), transform var(--duration-fast), box-shadow var(--duration-fast);
 		}
 		.vz-detail .links a:hover,
 		.vz-detail .links button:hover { background: var(--accent-soft); }
@@ -505,7 +505,7 @@
 		.vz-detail .live-badge.is-grad::before { background: var(--vz-green); }
 
 		/* ── Oracle conviction badge in detail panel ───── */
-		.vz-oracle { display: flex; align-items: center; gap: 8px; padding: 10px 12px; background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.07); border-radius: 8px; margin: 10px 0 0; text-decoration: none; color: inherit; transition: background .12s; }
+		.vz-oracle { display: flex; align-items: center; gap: 8px; padding: 10px 12px; background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.07); border-radius: 8px; margin: 10px 0 0; text-decoration: none; color: inherit; transition: background var(--duration-fast); }
 		.vz-oracle:hover { background: rgba(255,255,255,0.07); }
 		.vz-oracle-label { font-size: 10px; text-transform: uppercase; letter-spacing: .07em; color: var(--vz-muted); }
 		.vz-oracle-score { font-size: 22px; font-weight: 700; line-height: 1; }
@@ -718,7 +718,7 @@
 			background: radial-gradient(ellipse at center, rgba(255, 255, 255, 0.08) 0%, var(--vz-bg) 70%);
 			pointer-events: none;
 			opacity: 1;
-			transition: opacity 0.6s ease 0.2s;
+			transition: opacity var(--duration-slow) var(--ease-standard) var(--duration-base);
 		}
 		.vz-intro.is-hidden { opacity: 0; }
 		.vz-intro .ring {

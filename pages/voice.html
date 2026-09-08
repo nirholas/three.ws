@@ -114,7 +114,7 @@
 				color: var(--ink);
 				letter-spacing: 0.02em;
 				opacity: 0;
-				transition: opacity 0.2s;
+				transition: opacity var(--duration-base);
 			}
 			.vl-recorder[data-state="recording"] .vl-timer { opacity: 1; }
 			.vl-timer-sub {
@@ -122,7 +122,7 @@
 				color: #808080;
 				margin-top: 4px;
 				opacity: 0;
-				transition: opacity 0.2s;
+				transition: opacity var(--duration-base);
 			}
 			.vl-recorder[data-state="recording"] .vl-timer-sub { opacity: 1; }
 
@@ -134,7 +134,7 @@
 				height: 3px;
 				background: linear-gradient(90deg, #ffffff, #cccccc);
 				width: 0%;
-				transition: width 0.3s linear;
+				transition: width var(--duration-base) linear;
 				z-index: 2;
 			}
 
@@ -147,7 +147,7 @@
 				align-items: center;
 				gap: 8px;
 				opacity: 0;
-				transition: opacity 0.15s;
+				transition: opacity var(--duration-fast);
 				z-index: 2;
 			}
 			.vl-rec-dot-circle {
@@ -184,7 +184,7 @@
 				align-items: flex-end;
 				height: 20px;
 				opacity: 0;
-				transition: opacity 0.15s;
+				transition: opacity var(--duration-fast);
 				z-index: 2;
 			}
 			.vl-recorder[data-state="recording"] .vl-level { opacity: 1; }
@@ -192,7 +192,7 @@
 				width: 3px;
 				border-radius: 1.5px;
 				background: #ffffff;
-				transition: height 0.08s ease-out;
+				transition: height var(--duration-instant) var(--ease-out);
 				min-height: 3px;
 			}
 
@@ -215,7 +215,7 @@
 				font: 600 14px/1 system-ui, sans-serif;
 				cursor: pointer;
 				text-decoration: none;
-				transition: opacity 0.12s, transform 0.1s, background 0.15s, box-shadow 0.15s;
+				transition: opacity var(--duration-fast), transform var(--duration-instant), background var(--duration-fast), box-shadow var(--duration-fast);
 				white-space: nowrap;
 			}
 			.vl-btn:disabled { opacity: 0.35; cursor: not-allowed; transform: none !important; }
@@ -328,7 +328,7 @@
 				height: 6px;
 				border-radius: 50%;
 				background: #212121;
-				transition: background 0.2s;
+				transition: background var(--duration-base);
 			}
 			.vl-script-dot.active {
 				background: #ffffff;
@@ -341,7 +341,7 @@
 				cursor: pointer;
 				padding: 4px 8px;
 				border-radius: 6px;
-				transition: color 0.12s, background 0.12s;
+				transition: color var(--duration-fast), background var(--duration-fast);
 			}
 			.vl-script-next:hover { color: #c8cadf; background: rgba(255,255,255,0.05); }
 
@@ -389,7 +389,7 @@
 				font: inherit;
 				font-size: 14px;
 				outline: none;
-				transition: border-color 0.15s;
+				transition: border-color var(--duration-fast);
 			}
 			.vl-review-field input:focus { border-color: #ffffff; }
 			.vl-review-actions {
@@ -521,7 +521,7 @@
 				display: flex;
 				flex-direction: column;
 				gap: 10px;
-				transition: border-color 0.15s;
+				transition: border-color var(--duration-fast);
 			}
 			.vl-voice-card:hover { border-color: #252525; }
 			.vl-voice-name {
@@ -617,7 +617,7 @@
 				line-height: 1.55;
 				resize: vertical;
 				outline: none;
-				transition: border-color 0.15s;
+				transition: border-color var(--duration-fast);
 			}
 			.vl-pg-textarea:focus { border-color: #ffffff; }
 			.vl-pg-samples {
@@ -634,7 +634,7 @@
 				border-radius: 999px;
 				font: 500 12px system-ui, sans-serif;
 				cursor: pointer;
-				transition: background 0.12s, color 0.12s, border-color 0.12s;
+				transition: background var(--duration-fast), color var(--duration-fast), border-color var(--duration-fast);
 			}
 			.vl-pg-sample:hover {
 				background: rgba(255,255,255,0.08);
@@ -684,7 +684,7 @@
 				font: inherit;
 				font-size: 14px;
 				outline: none;
-				transition: border-color 0.15s;
+				transition: border-color var(--duration-fast);
 			}
 			.vl-byok-row input:focus { border-color: #ffffff; }
 
@@ -717,7 +717,7 @@
 				font: inherit;
 				font-size: 14px;
 				outline: none;
-				transition: border-color 0.15s;
+				transition: border-color var(--duration-fast);
 			}
 			.vb-filters input[type="search"]:focus { border-color: #ffffff; }
 			.vb-filters select {
@@ -749,7 +749,7 @@
 				border-radius: 999px;
 				font: 500 12.5px system-ui, sans-serif;
 				cursor: pointer;
-				transition: background 0.12s, color 0.12s, border-color 0.12s;
+				transition: background var(--duration-fast), color var(--duration-fast), border-color var(--duration-fast);
 			}
 			.vb-pill:hover:not(.disabled) {
 				background: rgba(255,255,255,0.08);
@@ -814,7 +814,7 @@
 				flex-direction: column;
 				gap: 8px;
 				cursor: pointer;
-				transition: border-color 0.15s, transform 0.15s, background 0.15s;
+				transition: border-color var(--duration-fast), transform var(--duration-fast), background var(--duration-fast);
 			}
 			.vb-card:hover { border-color: #303030; background: #0b0b0b; transform: translateY(-1px); }
 			.vb-card.selected { border-color: #ffffff; background: #0d0d0d; }
@@ -894,7 +894,7 @@
 				font: inherit;
 				font-size: 14px;
 				outline: none;
-				transition: border-color 0.15s;
+				transition: border-color var(--duration-fast);
 			}
 			.vl-pg-field input[type="text"]:focus { border-color: #ffffff; }
 			.vl-pg-field input[type="range"] { width: 100%; accent-color: #ffffff; }

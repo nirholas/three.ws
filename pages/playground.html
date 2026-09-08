@@ -91,7 +91,7 @@
 				color: rgba(255, 255, 255, 0.4);
 				text-decoration: none;
 				font-size: 0.8rem;
-				transition: color 0.15s;
+				transition: color var(--duration-fast);
 			}
 			.pg-header-nav a:hover {
 				color: rgba(255, 255, 255, 0.85);
@@ -161,7 +161,7 @@
 				justify-content: center;
 				gap: 0.75rem;
 				pointer-events: none;
-				transition: opacity 0.2s;
+				transition: opacity var(--duration-base);
 			}
 			.drop-overlay.hidden {
 				opacity: 0;
@@ -259,9 +259,9 @@
 				font-size: 12.5px;
 				cursor: pointer;
 				transition:
-					color 0.15s,
-					border-color 0.15s,
-					background 0.15s;
+					color var(--duration-fast),
+					border-color var(--duration-fast),
+					background var(--duration-fast);
 				width: 100%;
 				box-sizing: border-box;
 			}
@@ -290,9 +290,9 @@
 				font-size: 12px;
 				cursor: pointer;
 				transition:
-					color 0.12s,
-					border-color 0.12s,
-					background 0.12s;
+					color var(--duration-fast),
+					border-color var(--duration-fast),
+					background var(--duration-fast);
 			}
 			.pill:hover {
 				color: var(--text);
@@ -352,7 +352,7 @@
 				background: var(--border-2);
 				border-radius: 20px;
 				cursor: pointer;
-				transition: background 0.2s;
+				transition: background var(--duration-base);
 			}
 			.toggle-slider::before {
 				content: '';
@@ -364,8 +364,8 @@
 				background: var(--text-2);
 				border-radius: 50%;
 				transition:
-					transform 0.2s,
-					background 0.2s;
+					transform var(--duration-base),
+					background var(--duration-base);
 			}
 			.toggle input:checked + .toggle-slider {
 				background: var(--accent);
@@ -409,9 +409,9 @@
 				cursor: pointer;
 				flex-shrink: 0;
 				transition:
-					color 0.12s,
-					border-color 0.12s,
-					background 0.12s;
+					color var(--duration-fast),
+					border-color var(--duration-fast),
+					background var(--duration-fast);
 			}
 			.anim-btn:hover {
 				color: var(--text);
@@ -477,9 +477,9 @@
 				font-size: 12px;
 				cursor: pointer;
 				transition:
-					color 0.12s,
-					border-color 0.12s,
-					background 0.12s;
+					color var(--duration-fast),
+					border-color var(--duration-fast),
+					background var(--duration-fast);
 				text-decoration: none;
 			}
 			.pg-btn:hover {

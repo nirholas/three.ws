@@ -199,8 +199,8 @@
 				border-radius: var(--radius-sm);
 				cursor: pointer;
 				transition:
-					background 0.15s,
-					color 0.15s;
+					background var(--duration-fast),
+					color var(--duration-fast);
 			}
 			.aspect button:hover {
 				color: var(--ink);
@@ -248,7 +248,7 @@
 				margin-left: 0.42em;
 				vertical-align: -0.13em;
 				opacity: 0.5;
-				transition: opacity 0.15s;
+				transition: opacity var(--duration-fast);
 			}
 			.aspect button:hover .eng-key,
 			.aspect button[aria-pressed='true'] .eng-key {
@@ -347,9 +347,9 @@
 				padding: 0.6rem 1.2rem;
 				cursor: pointer;
 				transition:
-					transform 0.12s ease,
-					opacity 0.15s,
-					box-shadow 0.15s;
+					transform var(--duration-fast) var(--ease-standard),
+					opacity var(--duration-fast),
+					box-shadow var(--duration-fast);
 			}
 			.btn:hover {
 				box-shadow: 0 0 0 4px var(--accent-soft);
@@ -441,9 +441,9 @@
 				padding: 0.32rem 0.72rem;
 				cursor: pointer;
 				transition:
-					color 0.15s,
-					border-color 0.15s,
-					background 0.15s;
+					color var(--duration-fast),
+					border-color var(--duration-fast),
+					background var(--duration-fast);
 			}
 			.ptool:hover {
 				color: var(--ink);
@@ -493,8 +493,8 @@
 				background: var(--ink-dim);
 				flex: none;
 				transition:
-					background 0.2s,
-					box-shadow 0.2s;
+					background var(--duration-base),
+					box-shadow var(--duration-base);
 			}
 			.prompt-coach[data-grade='strong'] {
 				color: var(--success);
@@ -534,9 +534,9 @@
 				padding: 0.4rem 0.85rem;
 				cursor: pointer;
 				transition:
-					color 0.15s,
-					border-color 0.15s,
-					transform 0.4s ease;
+					color var(--duration-fast),
+					border-color var(--duration-fast),
+					transform var(--duration-slow) var(--ease-standard);
 			}
 			.chips-more:hover {
 				color: var(--ink);
@@ -640,9 +640,9 @@
 				background: rgba(245, 196, 81, 0.12);
 				border: 1px solid rgba(245, 196, 81, 0.32);
 				transition:
-					color 0.15s,
-					background 0.15s,
-					border-color 0.15s;
+					color var(--duration-fast),
+					background var(--duration-fast),
+					border-color var(--duration-fast);
 			}
 			.tier-lock-ico {
 				width: 0.92em;
@@ -684,7 +684,7 @@
 				text-decoration: none;
 				font-weight: 500;
 				white-space: nowrap;
-				transition: opacity 0.15s;
+				transition: opacity var(--duration-fast);
 			}
 			.fq-holder-note a:hover {
 				text-decoration: underline;
@@ -755,7 +755,7 @@
 				border-radius: var(--radius-pill);
 				padding: 5px 12px;
 				cursor: pointer;
-				transition: border-color 0.15s, transform 0.15s, background 0.15s;
+				transition: border-color var(--duration-fast), transform var(--duration-fast), background var(--duration-fast);
 			}
 			.fq-connect-btn:hover {
 				border-color: var(--accent);
@@ -843,9 +843,9 @@
 				padding: 0.5rem 0.7rem;
 				outline: none;
 				transition:
-					border-color 0.15s,
-					box-shadow 0.15s,
-					background 0.15s;
+					border-color var(--duration-fast),
+					box-shadow var(--duration-fast),
+					background var(--duration-fast);
 			}
 			.byok-input:hover {
 				border-color: var(--stroke-strong);
@@ -869,7 +869,7 @@
 				text-decoration: none;
 				font-weight: 500;
 				white-space: nowrap;
-				transition: opacity 0.15s;
+				transition: opacity var(--duration-fast);
 			}
 			.byok-hint a:hover {
 				text-decoration: underline;
@@ -923,8 +923,8 @@
 				border-radius: 0;
 				cursor: pointer;
 				transition:
-					color 0.15s,
-					border-color 0.15s;
+					color var(--duration-fast),
+					border-color var(--duration-fast);
 				margin-bottom: -1px;
 			}
 			.mode-switch button:hover {
@@ -971,9 +971,9 @@
 				place-items: center;
 				cursor: pointer;
 				transition:
-					border-color 0.15s,
-					background 0.15s,
-					transform 0.12s;
+					border-color var(--duration-fast),
+					background var(--duration-fast),
+					transform var(--duration-fast);
 			}
 			.view-slot:hover {
 				border-color: var(--accent);
@@ -1070,7 +1070,7 @@
 				line-height: 1;
 				cursor: pointer;
 				backdrop-filter: blur(4px);
-				transition: background 0.15s;
+				transition: background var(--duration-fast);
 			}
 			.vs-remove:hover {
 				background: var(--danger);
@@ -1144,9 +1144,9 @@
 				border: 1px solid var(--stroke-strong);
 				background: transparent;
 				transition:
-					background 0.2s ease,
-					border-color 0.2s ease,
-					transform 0.2s ease;
+					background var(--duration-base) var(--ease-standard),
+					border-color var(--duration-base) var(--ease-standard),
+					transform var(--duration-base) var(--ease-standard);
 			}
 			.views-pips i[data-filled='true'] {
 				background: var(--accent);
@@ -1182,9 +1182,9 @@
 				padding: 1px 6px;
 				vertical-align: 0.1em;
 				transition:
-					color 0.15s,
-					border-color 0.15s,
-					background 0.15s;
+					color var(--duration-fast),
+					border-color var(--duration-fast),
+					background var(--duration-fast);
 			}
 			.image-prompt[aria-invalid='true'] {
 				border-color: var(--danger);
@@ -1284,10 +1284,10 @@
 				padding: 0.4rem 0.85rem;
 				cursor: pointer;
 				transition:
-					color 0.15s,
-					border-color 0.15s,
-					background 0.15s,
-					opacity 0.18s ease;
+					color var(--duration-fast),
+					border-color var(--duration-fast),
+					background var(--duration-fast),
+					opacity var(--duration-fast) var(--ease-standard);
 			}
 			.chip:hover {
 				color: var(--ink);
@@ -1492,7 +1492,7 @@
 				border: 1px solid var(--stroke);
 				background: var(--surface-1);
 				display: block;
-				transition: border-color 0.18s ease, transform 0.18s ease;
+				transition: border-color var(--duration-fast) var(--ease-standard), transform var(--duration-fast) var(--ease-standard);
 			}
 			.step-thumb img {
 				width: 100%;
@@ -1667,7 +1667,7 @@
 					color-mix(in srgb, var(--accent) 70%, transparent),
 					var(--accent)
 				);
-				transition: width 0.9s cubic-bezier(0.33, 1, 0.68, 1), background 0.4s ease;
+				transition: width var(--duration-slow) cubic-bezier(0.33, 1, 0.68, 1), background var(--duration-slow) var(--ease-standard);
 			}
 			/* Moving sheen reads as live work without implying a known finish. */
 			.gen-progress-fill::after {
@@ -1829,7 +1829,7 @@
 				height: min(62vh, 600px);
 				background: radial-gradient(120% 120% at 50% 0%, #1a1612 0%, #0b0a09 70%);
 				--poster-color: transparent;
-				transition: opacity 0.45s ease;
+				transition: opacity var(--duration-slow) var(--ease-standard);
 			}
 			html[data-theme='light'] .result model-viewer {
 				background: radial-gradient(120% 120% at 50% 0%, #f3eee9 0%, #e7e2dc 70%);
@@ -1841,7 +1841,7 @@
 				inset: 0;
 				z-index: 2;
 				pointer-events: none;
-				transition: opacity 0.42s ease;
+				transition: opacity var(--duration-slow) var(--ease-standard);
 			}
 			.forge-reveal-overlay canvas {
 				display: block;
@@ -1889,7 +1889,7 @@
 				border-top: none;
 				background: linear-gradient(transparent, rgba(0, 0, 0, 0.6));
 				opacity: 0;
-				transition: opacity 0.3s ease;
+				transition: opacity var(--duration-base) var(--ease-standard);
 			}
 			.result.is-cinema .result-bar:hover,
 			.result.is-cinema .result-bar:focus-within {
@@ -1980,7 +1980,7 @@
 				list-style: none;
 				font-size: var(--text-sm);
 				color: var(--ink-dim);
-				transition: color 0.18s ease, background 0.18s ease;
+				transition: color var(--duration-fast) var(--ease-standard), background var(--duration-fast) var(--ease-standard);
 			}
 			.directed-summary::-webkit-details-marker {
 				display: none;
@@ -2015,7 +2015,7 @@
 			.directed-caret {
 				flex: none;
 				margin-left: auto;
-				transition: transform 0.2s ease;
+				transition: transform var(--duration-base) var(--ease-standard);
 			}
 			.directed[open] .directed-caret {
 				transform: rotate(180deg);
@@ -2120,7 +2120,7 @@
 				box-shadow: 0 0 0 3px var(--accent-soft);
 			}
 			.btn-refine .refine-arrow {
-				transition: transform 0.18s ease;
+				transition: transform var(--duration-fast) var(--ease-standard);
 			}
 			.btn-refine:hover .refine-arrow {
 				transform: translateY(-2px);
@@ -2201,7 +2201,7 @@
 				font-family: var(--font-mono);
 				padding: 0.25rem 0.7rem;
 				cursor: pointer;
-				transition: background 0.15s, color 0.15s, border-color 0.15s;
+				transition: background var(--duration-fast), color var(--duration-fast), border-color var(--duration-fast);
 			}
 			.forge-cat-btn:hover {
 				color: var(--ink);
@@ -2261,8 +2261,8 @@
 				border-radius: var(--radius-sm);
 				cursor: pointer;
 				transition:
-					background 0.15s,
-					color 0.15s;
+					background var(--duration-fast),
+					color var(--duration-fast);
 			}
 			.verdict button:hover {
 				color: var(--ink);
@@ -2307,7 +2307,7 @@
 				outline-offset: -2px;
 			}
 			.optimize-toggle .chev {
-				transition: transform 0.18s ease;
+				transition: transform var(--duration-fast) var(--ease-standard);
 				color: var(--ink-dim);
 			}
 			.optimize[data-open='true'] .optimize-toggle .chev {
@@ -2354,8 +2354,8 @@
 				border-radius: var(--radius-sm);
 				cursor: pointer;
 				transition:
-					background 0.15s,
-					color 0.15s;
+					background var(--duration-fast),
+					color var(--duration-fast);
 			}
 			.seg button:hover {
 				color: var(--ink);
@@ -2461,10 +2461,10 @@
 				color: var(--ink);
 				font: inherit;
 				transition:
-					border-color 0.15s,
-					transform 0.12s,
-					box-shadow 0.15s,
-					background 0.15s;
+					border-color var(--duration-fast),
+					transform var(--duration-fast),
+					box-shadow var(--duration-fast),
+					background var(--duration-fast);
 			}
 			.stylize-card:hover {
 				border-color: var(--stroke-strong);
@@ -2497,8 +2497,8 @@
 				background: radial-gradient(120% 120% at 50% 0%, #161616 0%, #0c0c0c 75%);
 				color: var(--ink-dim);
 				transition:
-					color 0.15s,
-					transform 0.2s ease;
+					color var(--duration-fast),
+					transform var(--duration-base) var(--ease-standard);
 			}
 			.stylize-thumb svg {
 				width: 58%;
@@ -2605,7 +2605,7 @@
 				color: var(--ink-dim);
 				text-decoration: none;
 				border-bottom: 1px solid transparent;
-				transition: color 0.14s ease, border-color 0.14s ease;
+				transition: color var(--duration-fast) var(--ease-standard), border-color var(--duration-fast) var(--ease-standard);
 			}
 			.creations-head .creations-all:hover {
 				color: var(--ink-bright);
@@ -2632,9 +2632,9 @@
 				font-size: var(--text-xs);
 				cursor: pointer;
 				transition:
-					color 0.15s,
-					border-color 0.15s,
-					background 0.15s;
+					color var(--duration-fast),
+					border-color var(--duration-fast),
+					background var(--duration-fast);
 			}
 			.compare-toggle:hover {
 				color: var(--ink);
@@ -2852,9 +2852,9 @@
 				color: inherit;
 				font: inherit;
 				transition:
-					border-color 0.15s,
-					transform 0.15s,
-					box-shadow 0.15s;
+					border-color var(--duration-fast),
+					transform var(--duration-fast),
+					box-shadow var(--duration-fast);
 			}
 			.creation:hover {
 				border-color: var(--stroke-strong);
@@ -2894,10 +2894,10 @@
 				cursor: pointer;
 				opacity: 0;
 				transition:
-					opacity 0.15s,
-					color 0.15s,
-					border-color 0.15s,
-					background 0.15s;
+					opacity var(--duration-fast),
+					color var(--duration-fast),
+					border-color var(--duration-fast),
+					background var(--duration-fast);
 			}
 			.creation-wrap:hover .creation-del,
 			.creation-wrap:focus-within .creation-del {
@@ -3016,9 +3016,9 @@
 				color: var(--ink-dim);
 				cursor: pointer;
 				transition:
-					color 0.15s,
-					border-color 0.15s,
-					transform 0.3s ease;
+					color var(--duration-fast),
+					border-color var(--duration-fast),
+					transform var(--duration-base) var(--ease-standard);
 			}
 			.showcase-refresh:hover {
 				color: var(--ink);
@@ -3043,7 +3043,7 @@
 				color: var(--ink-dim);
 				text-decoration: none;
 				letter-spacing: 0.03em;
-				transition: color 0.15s;
+				transition: color var(--duration-fast);
 			}
 			.showcase-view-all:hover { color: var(--ink); }
 			/* Card footer: time-ago on the left, Remix on the right. */
@@ -3097,9 +3097,9 @@
 				color: var(--ink-dim);
 				cursor: pointer;
 				transition:
-					color 0.15s,
-					border-color 0.15s,
-					background 0.15s;
+					color var(--duration-fast),
+					border-color var(--duration-fast),
+					background var(--duration-fast);
 			}
 			.showcase-card:hover .showcase-remix,
 			.showcase-remix:hover {
@@ -3131,7 +3131,7 @@
 				background: var(--bg-1, #1a1a1a);
 				opacity: 0;
 				pointer-events: none;
-				transition: opacity 0.25s ease;
+				transition: opacity var(--duration-base) var(--ease-standard);
 			}
 			.showcase-card.is-previewing .showcase-preview {
 				opacity: 1;
@@ -3197,7 +3197,7 @@
 				gap: 0.45rem;
 				box-shadow: 0 4px 24px rgba(0, 0, 0, 0.4);
 				animation: toast-enter 0.3s cubic-bezier(0.22, 1, 0.36, 1) forwards;
-				transition: opacity 0.35s ease, transform 0.35s ease;
+				transition: opacity var(--duration-slow) var(--ease-standard), transform var(--duration-slow) var(--ease-standard);
 			}
 			.remix-toast .toast-dot {
 				width: 6px;
@@ -3252,7 +3252,7 @@
 				margin-top: var(--space-2xs);
 			}
 			.forge-roll .roll-die {
-				transition: transform var(--duration-base, 220ms) var(--ease-emphasized, ease);
+				transition: transform var(--duration-base, var(--duration-base)) var(--ease-emphasized, var(--ease-standard));
 			}
 			.forge-roll:hover .roll-die {
 				transform: rotate(24deg);

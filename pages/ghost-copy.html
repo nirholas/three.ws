@@ -59,14 +59,14 @@
 			.gc-budget:focus-within { border-color: var(--gc-accent); }
 			.gc-budget span { color: var(--gc-faint); font-weight: 600; font-size: 14px; }
 			.gc-seg { display: inline-flex; background: var(--gc-panel-2); border: 1px solid var(--gc-line); border-radius: 10px; padding: 4px; gap: 4px; width: 100%; }
-			.gc-seg button { flex: 1; appearance: none; border: none; background: transparent; color: var(--gc-dim); font: inherit; font-weight: 600; font-size: 13px; padding: 9px 8px; border-radius: 7px; cursor: pointer; transition: background .15s, color .15s; }
+			.gc-seg button { flex: 1; appearance: none; border: none; background: transparent; color: var(--gc-dim); font: inherit; font-weight: 600; font-size: 13px; padding: 9px 8px; border-radius: 7px; cursor: pointer; transition: background var(--duration-fast), color var(--duration-fast); }
 			.gc-seg button:hover { color: var(--gc-text); }
 			.gc-seg button[aria-pressed='true'] { background: var(--gc-accent); color: #fff; }
 			.gc-seg button:focus-visible { outline: 2px solid var(--gc-accent-2); outline-offset: 2px; }
 
 			/* ── leader picker ────────────────────────────────────────── */
 			.gc-leaders { display: grid; grid-template-columns: repeat(auto-fill, minmax(216px, 1fr)); gap: 10px; margin-bottom: 22px; }
-			.gc-leader { display: flex; align-items: center; gap: 10px; text-align: left; width: 100%; background: var(--gc-panel); border: 1px solid var(--gc-line); border-radius: 12px; padding: 10px 12px; cursor: pointer; font: inherit; color: var(--gc-text); transition: border-color .15s, transform .15s, background .15s; }
+			.gc-leader { display: flex; align-items: center; gap: 10px; text-align: left; width: 100%; background: var(--gc-panel); border: 1px solid var(--gc-line); border-radius: 12px; padding: 10px 12px; cursor: pointer; font: inherit; color: var(--gc-text); transition: border-color var(--duration-fast), transform var(--duration-fast), background var(--duration-fast); }
 			.gc-leader:hover { border-color: var(--gc-accent); transform: translateY(-2px); }
 			.gc-leader:focus-visible { outline: 2px solid var(--gc-accent-2); outline-offset: 2px; }
 			.gc-leader[aria-pressed='true'] { border-color: var(--gc-accent); background: var(--gc-panel-2); box-shadow: inset 0 0 0 1px var(--gc-accent); }
@@ -98,7 +98,7 @@
 
 			/* ── actions ──────────────────────────────────────────────── */
 			.gc-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 18px; }
-			.gc-btn { appearance: none; font: inherit; font-weight: 600; font-size: 13.5px; padding: 10px 16px; border-radius: 10px; border: 1px solid var(--gc-line); background: var(--gc-panel-2); color: var(--gc-text); text-decoration: none; cursor: pointer; transition: background .15s, border-color .15s, transform .15s; }
+			.gc-btn { appearance: none; font: inherit; font-weight: 600; font-size: 13.5px; padding: 10px 16px; border-radius: 10px; border: 1px solid var(--gc-line); background: var(--gc-panel-2); color: var(--gc-text); text-decoration: none; cursor: pointer; transition: background var(--duration-fast), border-color var(--duration-fast), transform var(--duration-fast); }
 			.gc-btn:hover { border-color: var(--gc-accent); transform: translateY(-1px); }
 			.gc-btn:focus-visible { outline: 2px solid var(--gc-accent-2); outline-offset: 2px; }
 			.gc-btn.primary { background: var(--gc-accent); border-color: var(--gc-accent); color: #fff; }
@@ -120,7 +120,7 @@
 			.gc-coin small { display: block; font-weight: 500; color: var(--gc-faint); font-size: 11px; }
 			/* Fork: the one live action on this page. Opens the real trade panel at
 			   your ghost size (src/fork-trade.js), your wallet signs it. */
-			.gc-fork { appearance: none; font: inherit; font-weight: 700; font-size: 12px; padding: 6px 12px; border-radius: 8px; cursor: pointer; border: 1px solid color-mix(in srgb, var(--gc-accent) 45%, var(--gc-line)); background: color-mix(in srgb, var(--gc-accent) 14%, transparent); color: var(--gc-text); transition: background .15s, border-color .15s, transform .15s; }
+			.gc-fork { appearance: none; font: inherit; font-weight: 700; font-size: 12px; padding: 6px 12px; border-radius: 8px; cursor: pointer; border: 1px solid color-mix(in srgb, var(--gc-accent) 45%, var(--gc-line)); background: color-mix(in srgb, var(--gc-accent) 14%, transparent); color: var(--gc-text); transition: background var(--duration-fast), border-color var(--duration-fast), transform var(--duration-fast); }
 			.gc-fork:hover { background: var(--gc-accent); border-color: var(--gc-accent); color: #fff; transform: translateY(-1px); }
 			.gc-fork:active { transform: none; }
 			.gc-fork:focus-visible { outline: 2px solid var(--gc-accent-2); outline-offset: 2px; }
@@ -150,7 +150,7 @@
 			@keyframes gc-sh { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
 			@media (prefers-reduced-motion: reduce) { .gc-skel-block, .gc-leader, .gc-btn { animation: none; transition: none; } }
 			.sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); border: 0; }
-			.gc-toast { position: fixed; left: 50%; bottom: 24px; transform: translateX(-50%) translateY(8px); background: var(--gc-text); color: var(--gc-bg); font-size: 13px; font-weight: 600; padding: 10px 18px; border-radius: 999px; opacity: 0; pointer-events: none; transition: opacity .2s, transform .2s; z-index: 60; }
+			.gc-toast { position: fixed; left: 50%; bottom: 24px; transform: translateX(-50%) translateY(8px); background: var(--gc-text); color: var(--gc-bg); font-size: 13px; font-weight: 600; padding: 10px 18px; border-radius: 999px; opacity: 0; pointer-events: none; transition: opacity var(--duration-base), transform var(--duration-base); z-index: 60; }
 			.gc-toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
 		</style>
 	

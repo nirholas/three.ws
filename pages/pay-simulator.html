@@ -32,7 +32,7 @@
 			/* ── Presets ─────────────────────────────────────────────── */
 			.ps-presets { display: flex; gap: 0.5rem; flex-wrap: wrap; margin-top: 1.35rem; align-items: center; }
 			.ps-presets-label { font-size: 11px; text-transform: uppercase; letter-spacing: 0.08em; color: rgba(255,255,255,0.38); font-weight: 600; margin-right: 0.25rem; }
-			.chip { font: inherit; font-size: 12.5px; font-weight: 500; padding: 6px 13px; border-radius: 99px; border: 1px solid rgba(255,255,255,0.14); background: rgba(255,255,255,0.04); color: rgba(255,255,255,0.72); cursor: pointer; transition: background .15s, border-color .15s, color .15s; }
+			.chip { font: inherit; font-size: 12.5px; font-weight: 500; padding: 6px 13px; border-radius: 99px; border: 1px solid rgba(255,255,255,0.14); background: rgba(255,255,255,0.04); color: rgba(255,255,255,0.72); cursor: pointer; transition: background var(--duration-fast), border-color var(--duration-fast), color var(--duration-fast); }
 			.chip:hover { background: rgba(255,255,255,0.1); color: #fff; border-color: rgba(255,255,255,0.24); }
 			.chip:focus-visible { outline: 2px solid #7c5cff; outline-offset: 2px; }
 			.chip[aria-pressed='true'] { background: rgba(124,92,255,0.18); border-color: rgba(124,92,255,0.45); color: var(--accent-violet); }
@@ -50,7 +50,7 @@
 			.field:last-child { margin-bottom: 0; }
 			.field label { display: flex; align-items: center; gap: 6px; font-size: 12.5px; font-weight: 600; color: rgba(255,255,255,0.8); margin-bottom: 0.4rem; }
 			.field .hint { font-size: 11.5px; color: rgba(255,255,255,0.4); margin-top: 0.35rem; line-height: 1.5; }
-			.field input, .field select, .field textarea { width: 100%; font: inherit; font-size: 13.5px; padding: 9px 12px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.14); background: rgba(0,0,0,0.25); color: #fff; transition: border-color .15s, box-shadow .15s; }
+			.field input, .field select, .field textarea { width: 100%; font: inherit; font-size: 13.5px; padding: 9px 12px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.14); background: rgba(0,0,0,0.25); color: #fff; transition: border-color var(--duration-fast), box-shadow var(--duration-fast); }
 			.field textarea { min-height: 128px; resize: vertical; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12.5px; line-height: 1.65; }
 			.field input:hover, .field textarea:hover, .field select:hover { border-color: rgba(255,255,255,0.24); }
 			.field input:focus, .field textarea:focus, .field select:focus { outline: none; border-color: #7c5cff; box-shadow: 0 0 0 3px rgba(124,92,255,0.2); }
@@ -59,20 +59,20 @@
 
 			/* Tooltip: an accessible "what is this?" affordance on every control. */
 			.tip { position: relative; display: inline-flex; }
-			.tip > button { width: 15px; height: 15px; padding: 0; border-radius: 50%; border: 1px solid rgba(255,255,255,0.25); background: transparent; color: rgba(255,255,255,0.5); font-size: 10px; font-weight: 700; line-height: 1; cursor: help; display: inline-flex; align-items: center; justify-content: center; transition: background .15s, color .15s, border-color .15s; }
+			.tip > button { width: 15px; height: 15px; padding: 0; border-radius: 50%; border: 1px solid rgba(255,255,255,0.25); background: transparent; color: rgba(255,255,255,0.5); font-size: 10px; font-weight: 700; line-height: 1; cursor: help; display: inline-flex; align-items: center; justify-content: center; transition: background var(--duration-fast), color var(--duration-fast), border-color var(--duration-fast); }
 			.tip > button:hover, .tip > button:focus-visible { background: rgba(124,92,255,0.2); border-color: #7c5cff; color: #fff; }
 			.tip > button:focus-visible { outline: 2px solid #7c5cff; outline-offset: 2px; }
-			.tip .bubble { position: absolute; bottom: calc(100% + 8px); left: 50%; transform: translateX(-50%) translateY(4px); width: max-content; max-width: 260px; padding: 8px 11px; border-radius: 9px; background: #17171f; border: 1px solid rgba(255,255,255,0.16); box-shadow: 0 8px 28px rgba(0,0,0,0.55); font-size: 11.5px; line-height: 1.55; font-weight: 400; color: rgba(255,255,255,0.85); text-transform: none; letter-spacing: 0; opacity: 0; visibility: hidden; transition: opacity .16s ease, transform .16s ease, visibility .16s; z-index: 40; pointer-events: none; }
+			.tip .bubble { position: absolute; bottom: calc(100% + 8px); left: 50%; transform: translateX(-50%) translateY(4px); width: max-content; max-width: 260px; padding: 8px 11px; border-radius: 9px; background: #17171f; border: 1px solid rgba(255,255,255,0.16); box-shadow: 0 8px 28px rgba(0,0,0,0.55); font-size: 11.5px; line-height: 1.55; font-weight: 400; color: rgba(255,255,255,0.85); text-transform: none; letter-spacing: 0; opacity: 0; visibility: hidden; transition: opacity var(--duration-fast) var(--ease-standard), transform var(--duration-fast) var(--ease-standard), visibility var(--duration-fast); z-index: 40; pointer-events: none; }
 			.tip > button:hover + .bubble, .tip > button:focus-visible + .bubble { opacity: 1; visibility: visible; transform: translateX(-50%) translateY(0); }
 			@media (prefers-reduced-motion: reduce) { .tip .bubble { transition: none; } }
 
 			/* ── Run button ──────────────────────────────────────────── */
-			.btn-primary { font: inherit; font-size: 13.5px; font-weight: 600; padding: 11px 20px; border-radius: 10px; border: none; background: linear-gradient(135deg, #7c5cff, #6144e0); color: #fff; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; gap: 8px; transition: opacity .15s, transform .1s; box-shadow: 0 2px 12px rgba(124,92,255,0.3); }
+			.btn-primary { font: inherit; font-size: 13.5px; font-weight: 600; padding: 11px 20px; border-radius: 10px; border: none; background: linear-gradient(135deg, #7c5cff, #6144e0); color: #fff; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; gap: 8px; transition: opacity var(--duration-fast), transform var(--duration-instant); box-shadow: 0 2px 12px rgba(124,92,255,0.3); }
 			.btn-primary:hover:not(:disabled) { opacity: 0.92; transform: translateY(-1px); }
 			.btn-primary:active:not(:disabled) { transform: translateY(0); }
 			.btn-primary:focus-visible { outline: 2px solid var(--accent-violet); outline-offset: 2px; }
 			.btn-primary:disabled { opacity: 0.5; cursor: default; transform: none; }
-			.btn-ghost { font: inherit; font-size: 12.5px; font-weight: 500; padding: 8px 14px; border-radius: 9px; border: 1px solid rgba(255,255,255,0.15); background: rgba(255,255,255,0.04); color: rgba(255,255,255,0.72); cursor: pointer; display: inline-flex; align-items: center; gap: 6px; transition: background .15s, color .15s; }
+			.btn-ghost { font: inherit; font-size: 12.5px; font-weight: 500; padding: 8px 14px; border-radius: 9px; border: 1px solid rgba(255,255,255,0.15); background: rgba(255,255,255,0.04); color: rgba(255,255,255,0.72); cursor: pointer; display: inline-flex; align-items: center; gap: 6px; transition: background var(--duration-fast), color var(--duration-fast); }
 			.btn-ghost:hover { background: rgba(255,255,255,0.1); color: #fff; }
 			.btn-ghost:focus-visible { outline: 2px solid #7c5cff; outline-offset: 2px; }
 			.ps-run { display: flex; gap: 0.6rem; align-items: center; margin-top: 1.35rem; }
@@ -130,7 +130,7 @@
 
 			/* ── Timeline ────────────────────────────────────────────── */
 			.tl { display: flex; flex-direction: column; gap: 0.5rem; }
-			.tl-row { display: grid; grid-template-columns: 34px 1fr auto; gap: 0.85rem; align-items: center; padding: 0.7rem 0.9rem; border-radius: 11px; border: 1px solid rgba(255,255,255,0.07); background: rgba(255,255,255,0.02); transition: border-color .15s, background .15s; }
+			.tl-row { display: grid; grid-template-columns: 34px 1fr auto; gap: 0.85rem; align-items: center; padding: 0.7rem 0.9rem; border-radius: 11px; border: 1px solid rgba(255,255,255,0.07); background: rgba(255,255,255,0.02); transition: border-color var(--duration-fast), background var(--duration-fast); }
 			.tl-row:hover { border-color: rgba(255,255,255,0.16); background: rgba(255,255,255,0.04); }
 			.tl-idx { font-size: 11px; font-variant-numeric: tabular-nums; color: rgba(255,255,255,0.3); text-align: right; }
 			.tl-main { min-width: 0; }
@@ -177,14 +177,14 @@
 
 			/* ── Footer links ────────────────────────────────────────── */
 			.ps-next { margin-top: 2.5rem; display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 0.9rem; }
-			.ps-next a { display: block; padding: 1rem 1.15rem; border-radius: 13px; border: 1px solid rgba(255,255,255,0.09); background: rgba(255,255,255,0.022); text-decoration: none; transition: border-color .18s, transform .18s, background .18s; }
+			.ps-next a { display: block; padding: 1rem 1.15rem; border-radius: 13px; border: 1px solid rgba(255,255,255,0.09); background: rgba(255,255,255,0.022); text-decoration: none; transition: border-color var(--duration-fast), transform var(--duration-fast), background var(--duration-fast); }
 			.ps-next a:hover { border-color: rgba(124,92,255,0.45); background: rgba(124,92,255,0.06); transform: translateY(-2px); }
 			.ps-next a:focus-visible { outline: 2px solid #7c5cff; outline-offset: 2px; }
 			@media (prefers-reduced-motion: reduce) { .ps-next a:hover { transform: none; } }
 			.ps-next .t { font-size: 13.5px; font-weight: 650; color: #fff; margin-bottom: 0.25rem; }
 			.ps-next .d { font-size: 12px; color: rgba(255,255,255,0.45); line-height: 1.55; }
 
-			.toast { position: fixed; bottom: 1.5rem; left: 50%; transform: translateX(-50%) translateY(8px); background: #17171f; border: 1px solid rgba(255,255,255,0.16); padding: 10px 18px; border-radius: 10px; font-size: 13px; opacity: 0; visibility: hidden; transition: opacity .2s, transform .2s, visibility .2s; z-index: 90; box-shadow: 0 8px 32px rgba(0,0,0,0.5); }
+			.toast { position: fixed; bottom: 1.5rem; left: 50%; transform: translateX(-50%) translateY(8px); background: #17171f; border: 1px solid rgba(255,255,255,0.16); padding: 10px 18px; border-radius: 10px; font-size: 13px; opacity: 0; visibility: hidden; transition: opacity var(--duration-base), transform var(--duration-base), visibility var(--duration-base); z-index: 90; box-shadow: 0 8px 32px rgba(0,0,0,0.5); }
 			.toast.on { opacity: 1; visibility: visible; transform: translateX(-50%) translateY(0); }
 
 			/* Light theme adjustments */

@@ -110,7 +110,7 @@
 			font-family: inherit;
 			font-size: 13px;
 			cursor: pointer;
-			transition: background .14s, border-color .14s, color .14s;
+			transition: background var(--duration-fast), border-color var(--duration-fast), color var(--duration-fast);
 		}
 		.labs-filter:hover {
 			background: var(--surface-2, rgba(255,255,255,.05));
@@ -155,7 +155,7 @@
 			border-radius: var(--radius-card, 14px);
 			background: var(--surface-1, rgba(255,255,255,.03));
 			overflow: hidden;
-			transition: border-color .18s, transform .18s, box-shadow .18s;
+			transition: border-color var(--duration-fast), transform var(--duration-fast), box-shadow var(--duration-fast);
 		}
 		.gem-card:hover {
 			border-color: var(--stroke-strong, rgba(255,255,255,.14));
@@ -311,7 +311,7 @@
 			color: var(--ink, #e8e8e8);
 			font-size: 13px;
 			font-weight: 500;
-			transition: background .14s, border-color .14s;
+			transition: background var(--duration-fast), border-color var(--duration-fast);
 			align-self: flex-start;
 		}
 		.gem-cta:hover {
@@ -384,7 +384,7 @@
 			font-family: inherit;
 			font-size: 13px;
 			cursor: pointer;
-			transition: background .14s;
+			transition: background var(--duration-fast);
 		}
 		.labs-retry:hover { background: rgba(255,255,255,.1); }
 		.labs-retry:active { background: rgba(255,255,255,.14); transform: translateY(1px); }

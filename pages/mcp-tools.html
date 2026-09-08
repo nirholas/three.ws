@@ -71,7 +71,7 @@
 			width: 100%; padding: 11px 84px 11px 36px; font: inherit; font-size: 0.95rem;
 			color: var(--ink); background: var(--surface-2, rgba(255,255,255,0.05));
 			border: 1px solid var(--stroke); border-radius: var(--radius-md, 10px);
-			transition: border-color 0.15s ease, background 0.15s ease;
+			transition: border-color var(--duration-fast) var(--ease-standard), background var(--duration-fast) var(--ease-standard);
 		}
 		.mc-search input::placeholder { color: var(--ink-dim); }
 		.mc-search input:hover { border-color: var(--stroke-strong); }
@@ -91,7 +91,7 @@
 			font: inherit; font-size: 0.82rem; padding: 6px 11px; cursor: pointer;
 			color: var(--ink-dim); background: transparent;
 			border: 1px solid var(--stroke); border-radius: 999px;
-			transition: color 0.15s ease, border-color 0.15s ease, background 0.15s ease, transform 0.1s ease;
+			transition: color var(--duration-fast) var(--ease-standard), border-color var(--duration-fast) var(--ease-standard), background var(--duration-fast) var(--ease-standard), transform var(--duration-instant) var(--ease-standard);
 		}
 		.mc-chip:hover { color: var(--ink); border-color: var(--stroke-strong); background: var(--surface-1, rgba(255,255,255,0.04)); }
 		.mc-chip:active { transform: translateY(1px); }
@@ -124,7 +124,7 @@
 			display: flex; flex-direction: column; gap: 5px; text-align: left; font: inherit; cursor: pointer;
 			padding: 13px 14px; color: var(--ink); background: var(--surface-1, rgba(255,255,255,0.03));
 			border: 1px solid var(--stroke); border-radius: var(--radius-md, 10px);
-			transition: border-color 0.15s ease, background 0.15s ease;
+			transition: border-color var(--duration-fast) var(--ease-standard), background var(--duration-fast) var(--ease-standard);
 		}
 		.mc-prof:hover { border-color: var(--stroke-strong); background: var(--surface-2, rgba(255,255,255,0.06)); }
 		.mc-prof:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
@@ -138,7 +138,7 @@
 		.mc-tab {
 			font: inherit; font-size: 0.8rem; padding: 5px 12px; cursor: pointer; color: var(--ink-dim);
 			background: transparent; border: 1px solid var(--stroke); border-radius: 999px;
-			transition: color 0.15s ease, border-color 0.15s ease, background 0.15s ease;
+			transition: color var(--duration-fast) var(--ease-standard), border-color var(--duration-fast) var(--ease-standard), background var(--duration-fast) var(--ease-standard);
 		}
 		.mc-tab:hover { color: var(--ink); border-color: var(--stroke-strong); }
 		.mc-tab:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
@@ -159,7 +159,7 @@
 			padding: 15px 16px; font: inherit; cursor: pointer;
 			background: var(--surface-1, rgba(255,255,255,0.03));
 			border: 1px solid var(--stroke); border-radius: var(--radius-lg, 14px);
-			transition: border-color 0.15s ease, background 0.15s ease, transform 0.12s ease;
+			transition: border-color var(--duration-fast) var(--ease-standard), background var(--duration-fast) var(--ease-standard), transform var(--duration-fast) var(--ease-standard);
 		}
 		.mc-card:hover { border-color: var(--stroke-strong); background: var(--surface-2, rgba(255,255,255,0.055)); transform: translateY(-1px); }
 		.mc-card:active { transform: translateY(0); }
@@ -206,7 +206,7 @@
 			font: inherit; font-size: 0.85rem; font-weight: 600; padding: 8px 16px; cursor: pointer;
 			color: var(--btn-secondary-fg, var(--ink)); background: var(--btn-secondary-bg, var(--surface-3));
 			border: 1px solid var(--btn-secondary-border, var(--stroke-strong)); border-radius: var(--radius-md, 10px);
-			transition: background 0.15s ease;
+			transition: background var(--duration-fast) var(--ease-standard);
 		}
 		.mc-btn:hover { background: var(--btn-secondary-bg-hover, rgba(255,255,255,0.12)); }
 		.mc-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }

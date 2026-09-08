@@ -93,7 +93,7 @@
 
 		/* segmented control */
 		.seg { display: inline-flex; width: 100%; background: rgba(255,255,255,0.03); border: 1px solid var(--line); border-radius: var(--r-sm); padding: 3px; gap: 3px; }
-		.seg button { flex: 1; padding: 9px 8px; border-radius: 8px; border: none; background: none; color: var(--muted); font: 600 12.5px/1.2 var(--mono); transition: background .16s, color .16s; text-align: center; }
+		.seg button { flex: 1; padding: 9px 8px; border-radius: 8px; border: none; background: none; color: var(--muted); font: 600 12.5px/1.2 var(--mono); transition: background var(--duration-fast), color var(--duration-fast); text-align: center; }
 		.seg button small { display: block; font-size: 10px; color: var(--faint); margin-top: 3px; font-weight: 600; }
 		.seg button.on { background: color-mix(in srgb, var(--cyan) 20%, transparent); color: var(--ink); }
 		.seg button.on small { color: var(--cyan); }
@@ -105,8 +105,8 @@
 		.toggle:first-of-type { border-top: none; }
 		.toggle .t-lab b { display: block; font-size: 13.5px; }
 		.toggle .t-lab span { font-size: 12px; color: var(--muted); }
-		.sw { width: 46px; height: 26px; border-radius: 999px; background: rgba(255,255,255,0.1); border: 1px solid var(--line); position: relative; transition: background .2s; flex: none; }
-		.sw::after { content: ""; position: absolute; top: 2px; left: 2px; width: 20px; height: 20px; border-radius: 50%; background: #fff; transition: transform .2s; }
+		.sw { width: 46px; height: 26px; border-radius: 999px; background: rgba(255,255,255,0.1); border: 1px solid var(--line); position: relative; transition: background var(--duration-base); flex: none; }
+		.sw::after { content: ""; position: absolute; top: 2px; left: 2px; width: 20px; height: 20px; border-radius: 50%; background: #fff; transition: transform var(--duration-base); }
 		.sw.on { background: var(--up); } .sw.on::after { transform: translateX(20px); }
 		.sw:focus-visible { outline: 2px solid var(--cyan); outline-offset: 2px; }
 		/* big arm switch */
@@ -116,7 +116,7 @@
 
 		/* chips */
 		.chips { display: flex; flex-wrap: wrap; gap: 6px; }
-		.cchip { padding: 6px 11px; border-radius: 999px; border: 1px solid var(--line); background: rgba(255,255,255,0.03); font: 600 12px/1 var(--mono); color: var(--muted); transition: background .15s, color .15s, border-color .15s; }
+		.cchip { padding: 6px 11px; border-radius: 999px; border: 1px solid var(--line); background: rgba(255,255,255,0.03); font: 600 12px/1 var(--mono); color: var(--muted); transition: background var(--duration-fast), color var(--duration-fast), border-color var(--duration-fast); }
 		.cchip:hover { color: var(--ink); border-color: var(--stroke-strong); }
 		.cchip.on { border-color: color-mix(in srgb, var(--violet) 50%, var(--line)); color: var(--ink); background: color-mix(in srgb, var(--violet) 15%, transparent); }
 
@@ -131,7 +131,7 @@
 
 		/* buttons */
 		.btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; padding: 10px 16px; border-radius: 999px; border: 1px solid var(--line);
-			background: var(--panel); color: var(--ink); font-weight: 600; font-size: 13.5px; transition: transform .14s, border-color .18s, background .18s; }
+			background: var(--panel); color: var(--ink); font-weight: 600; font-size: 13.5px; transition: transform var(--duration-fast), border-color var(--duration-fast), background var(--duration-fast); }
 		.btn:hover { transform: translateY(-1px); border-color: color-mix(in srgb, var(--cyan) 50%, var(--line)); }
 		.btn:disabled { opacity: .5; cursor: not-allowed; transform: none; }
 		.btn.sm { padding: 9px 13px; font-size: 12.5px; white-space: nowrap; flex-shrink: 0; }
@@ -174,7 +174,7 @@
 		.foot { margin-top: 34px; padding-top: 22px; border-top: 1px solid var(--line); color: var(--faint); font-size: 12px; line-height: 1.6; }
 
 		/* wallet pill (control bar) */
-		.walletpill { display: flex; align-items: center; gap: 11px; padding: 9px 14px; border-radius: var(--r-sm); background: rgba(255,255,255,0.03); border: 1px solid var(--line); transition: border-color .18s; }
+		.walletpill { display: flex; align-items: center; gap: 11px; padding: 9px 14px; border-radius: var(--r-sm); background: rgba(255,255,255,0.03); border: 1px solid var(--line); transition: border-color var(--duration-fast); }
 		.walletpill .wp-lab { font: 600 10px/1 var(--mono); text-transform: uppercase; letter-spacing: .08em; color: var(--faint); }
 		.walletpill .wp-bal { font: 800 15px/1 var(--mono); color: var(--ink); }
 		.walletpill .wp-run { font: 600 11px/1 var(--mono); color: var(--muted); }

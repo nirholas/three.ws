@@ -91,7 +91,7 @@
 				border-radius: 10px;
 				overflow: hidden;
 				background: var(--surface-1, rgba(255, 255, 255, 0.03));
-				transition: border-color 0.15s ease, box-shadow 0.15s ease;
+				transition: border-color var(--duration-fast) var(--ease-standard), box-shadow var(--duration-fast) var(--ease-standard);
 			}
 			.tw-input-row:focus-within {
 				border-color: var(--focus-ring-color, #ffffff);
@@ -171,7 +171,7 @@
 				text-decoration: none;
 				cursor: pointer;
 				margin-top: 1rem;
-				transition: background-color 0.15s ease, border-color 0.15s ease, transform 0.1s ease, opacity 0.15s ease;
+				transition: background-color var(--duration-fast) var(--ease-standard), border-color var(--duration-fast) var(--ease-standard), transform var(--duration-instant) var(--ease-standard), opacity var(--duration-fast) var(--ease-standard);
 			}
 			.tw-btn:hover { background: var(--btn-primary-bg-hover, rgba(255, 255, 255, 0.88)); }
 			.tw-btn:active { background: var(--btn-primary-bg-active, rgba(255, 255, 255, 0.76)); transform: translateY(1px); }

@@ -29,16 +29,16 @@
 			.pw-hero-tag { display: inline-flex; align-items: center; gap: 6px; font-size: 11.5px; font-weight: 600; color: rgba(47,191,113,0.9); background: rgba(47,191,113,0.1); border: 1px solid rgba(47,191,113,0.25); border-radius: 99px; padding: 4px 12px; margin-bottom: 0.85rem; }
 			.pw-hero-tag svg { width: 8px; height: 8px; fill: #2fbf71; border-radius: 50%; }
 			.pw-hero-actions { display: flex; gap: 0.75rem; flex-wrap: wrap; align-items: center; }
-			.btn-primary { font: inherit; font-size: 13.5px; font-weight: 600; padding: 10px 20px; border-radius: 10px; border: none; background: linear-gradient(135deg, #7c5cff, #6144e0); color: #fff; cursor: pointer; display: inline-flex; align-items: center; gap: 7px; transition: opacity .15s, transform .1s; box-shadow: 0 2px 12px rgba(124,92,255,0.3); white-space: nowrap; }
+			.btn-primary { font: inherit; font-size: 13.5px; font-weight: 600; padding: 10px 20px; border-radius: 10px; border: none; background: linear-gradient(135deg, #7c5cff, #6144e0); color: #fff; cursor: pointer; display: inline-flex; align-items: center; gap: 7px; transition: opacity var(--duration-fast), transform var(--duration-instant); box-shadow: 0 2px 12px rgba(124,92,255,0.3); white-space: nowrap; }
 			.btn-primary:hover { opacity: 0.9; transform: translateY(-1px); }
 			.btn-primary:active { transform: translateY(0); }
 			.btn-primary:disabled { opacity: 0.45; cursor: default; transform: none; }
-			.btn-ghost { font: inherit; font-size: 13px; font-weight: 500; padding: 9px 16px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.15); background: rgba(255,255,255,0.05); color: rgba(255,255,255,0.7); cursor: pointer; display: inline-flex; align-items: center; gap: 6px; transition: background .15s, color .15s; white-space: nowrap; }
+			.btn-ghost { font: inherit; font-size: 13px; font-weight: 500; padding: 9px 16px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.15); background: rgba(255,255,255,0.05); color: rgba(255,255,255,0.7); cursor: pointer; display: inline-flex; align-items: center; gap: 6px; transition: background var(--duration-fast), color var(--duration-fast); white-space: nowrap; }
 			.btn-ghost:hover { background: rgba(255,255,255,0.1); color: #fff; }
 
 			/* ── Stats row ───────────────────────────────────────────── */
 			.pw-stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1rem; margin-bottom: 2rem; }
-			.pw-stat { border: 1px solid rgba(255,255,255,0.08); border-radius: 14px; padding: 1.1rem 1.25rem 1rem; background: rgba(255,255,255,0.025); position: relative; overflow: hidden; transition: border-color .2s; }
+			.pw-stat { border: 1px solid rgba(255,255,255,0.08); border-radius: 14px; padding: 1.1rem 1.25rem 1rem; background: rgba(255,255,255,0.025); position: relative; overflow: hidden; transition: border-color var(--duration-base); }
 			.pw-stat::after { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px; border-radius: 14px 14px 0 0; }
 			.pw-stat.s-active::after { background: linear-gradient(90deg, #2fbf71, #52e89a); }
 			.pw-stat.s-budget::after { background: linear-gradient(90deg, #7c5cff, var(--accent-violet-strong)); }
@@ -60,7 +60,7 @@
 			/* ── Toolbar ─────────────────────────────────────────────── */
 			.pw-toolbar { display: flex; align-items: center; gap: 0.75rem; margin-bottom: 1.25rem; flex-wrap: wrap; }
 			.pw-filters { display: flex; border: 1px solid rgba(255,255,255,0.1); border-radius: 10px; overflow: hidden; }
-			.pw-filters button { font: inherit; font-size: 13px; font-weight: 500; padding: 7px 14px; background: transparent; border: none; color: rgba(255,255,255,0.5); cursor: pointer; transition: color .15s, background .15s; border-right: 1px solid rgba(255,255,255,0.07); }
+			.pw-filters button { font: inherit; font-size: 13px; font-weight: 500; padding: 7px 14px; background: transparent; border: none; color: rgba(255,255,255,0.5); cursor: pointer; transition: color var(--duration-fast), background var(--duration-fast); border-right: 1px solid rgba(255,255,255,0.07); }
 			.pw-filters button:last-child { border-right: none; }
 			.pw-filters button:hover { color: rgba(255,255,255,0.85); background: rgba(255,255,255,0.06); }
 			.pw-filters button.on { color: #fff; background: rgba(255,255,255,0.11); }
@@ -71,7 +71,7 @@
 			.pw-list { display: flex; flex-direction: column; gap: 0.875rem; }
 
 			/* ── Session card ────────────────────────────────────────── */
-			.sc { border: 1px solid rgba(255,255,255,0.09); border-radius: 16px; background: rgba(255,255,255,0.02); overflow: hidden; transition: border-color .2s, background .2s; }
+			.sc { border: 1px solid rgba(255,255,255,0.09); border-radius: 16px; background: rgba(255,255,255,0.02); overflow: hidden; transition: border-color var(--duration-base), background var(--duration-base); }
 			.sc:hover { border-color: rgba(255,255,255,0.17); background: rgba(255,255,255,0.035); }
 			.sc.open { border-color: rgba(255,255,255,0.18); background: rgba(255,255,255,0.04); }
 			.sc-head { display: flex; align-items: center; gap: 0.875rem; padding: 1rem 1.125rem; cursor: pointer; user-select: none; }
@@ -91,13 +91,13 @@
 			.sc-remain.r { color: var(--danger); }
 			.sc-remain.d { color: rgba(255,255,255,0.3); }
 			.sc-total { font-size: 13px; color: rgba(255,255,255,0.35); }
-			.sc-chevron { font-size: 16px; color: rgba(255,255,255,0.25); transition: transform .2s; flex-shrink: 0; }
+			.sc-chevron { font-size: 16px; color: rgba(255,255,255,0.25); transition: transform var(--duration-base); flex-shrink: 0; }
 			.sc.open .sc-chevron { transform: rotate(180deg); }
 
 			/* Budget bar */
 			.sc-bar { padding: 0 1.125rem 1rem; display: flex; align-items: center; gap: 0.75rem; }
 			.sc-bar-track { flex: 1; height: 4px; border-radius: 99px; background: rgba(255,255,255,0.07); overflow: hidden; }
-			.sc-bar-fill { height: 100%; border-radius: 99px; transition: width .5s cubic-bezier(0.16,1,0.3,1); }
+			.sc-bar-fill { height: 100%; border-radius: 99px; transition: width var(--duration-slow) cubic-bezier(0.16,1,0.3,1); }
 			.sc-bar-fill.g { background: linear-gradient(90deg, #2fbf71, var(--success)); }
 			.sc-bar-fill.y { background: linear-gradient(90deg, #f59e0b, #fcd34d); }
 			.sc-bar-fill.r { background: linear-gradient(90deg, #ef4444, var(--danger)); }
@@ -114,15 +114,15 @@
 			.sc-meta { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 0.6rem 1.25rem; margin-bottom: 1.25rem; }
 			.sc-mi .k { font-size: 10.5px; text-transform: uppercase; letter-spacing: 0.07em; color: rgba(255,255,255,0.38); font-weight: 600; margin-bottom: 3px; }
 			.sc-mi .v { font-size: 13px; font-weight: 500; word-break: break-all; display: flex; align-items: center; gap: 6px; }
-			.sc-mi .v code { font-family: monospace; font-size: 11.5px; background: rgba(255,255,255,0.07); padding: 2px 6px; border-radius: 5px; cursor: pointer; transition: background .15s; }
+			.sc-mi .v code { font-family: monospace; font-size: 11.5px; background: rgba(255,255,255,0.07); padding: 2px 6px; border-radius: 5px; cursor: pointer; transition: background var(--duration-fast); }
 			.sc-mi .v code:hover { background: rgba(255,255,255,0.14); }
 			.sc-mi .v.muted { color: rgba(255,255,255,0.45); }
-			.sc-mi .copy-icon { width: 13px; height: 13px; opacity: 0.35; cursor: pointer; transition: opacity .15s; flex-shrink: 0; }
+			.sc-mi .copy-icon { width: 13px; height: 13px; opacity: 0.35; cursor: pointer; transition: opacity var(--duration-fast); flex-shrink: 0; }
 			.sc-mi .copy-icon:hover { opacity: 0.8; }
 
 			/* Action bar */
 			.sc-actions { display: flex; gap: 0.625rem; margin-bottom: 1.25rem; flex-wrap: wrap; }
-			.sc-act { font: inherit; font-size: 12px; font-weight: 600; padding: 6px 13px; border-radius: 8px; cursor: pointer; transition: opacity .15s, background .15s; display: inline-flex; align-items: center; gap: 5px; border: 1px solid transparent; }
+			.sc-act { font: inherit; font-size: 12px; font-weight: 600; padding: 6px 13px; border-radius: 8px; cursor: pointer; transition: opacity var(--duration-fast), background var(--duration-fast); display: inline-flex; align-items: center; gap: 5px; border: 1px solid transparent; }
 			.sc-act.danger { background: rgba(248,113,113,0.1); border-color: rgba(248,113,113,0.22); color: var(--danger); }
 			.sc-act.danger:hover { opacity: 0.8; }
 			.sc-act.copy { background: rgba(167,139,250,0.1); border-color: rgba(167,139,250,0.22); color: var(--accent-violet); }
@@ -133,7 +133,7 @@
 			/* MCP snippet box */
 			.mcp-box { background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.1); border-radius: 10px; padding: 0.875rem 1rem; font-family: 'SF Mono', 'Fira Code', monospace; font-size: 11.5px; color: var(--accent-violet-strong); line-height: 1.65; word-break: break-all; display: none; margin-bottom: 1rem; position: relative; }
 			.mcp-box.show { display: block; }
-			.mcp-copy-btn { position: absolute; top: 0.6rem; right: 0.6rem; font: inherit; font-size: 11px; font-weight: 600; padding: 4px 10px; border-radius: 6px; border: 1px solid rgba(167,139,250,0.3); background: rgba(167,139,250,0.12); color: var(--accent-violet); cursor: pointer; transition: background .15s; }
+			.mcp-copy-btn { position: absolute; top: 0.6rem; right: 0.6rem; font: inherit; font-size: 11px; font-weight: 600; padding: 4px 10px; border-radius: 6px; border: 1px solid rgba(167,139,250,0.3); background: rgba(167,139,250,0.12); color: var(--accent-violet); cursor: pointer; transition: background var(--duration-fast); }
 			.mcp-copy-btn:hover { background: rgba(167,139,250,0.22); }
 
 			/* Executions section */
@@ -162,12 +162,12 @@
 			/* Secondary route out of an empty state: someone who cannot sign in yet
 			   still needs somewhere to go, or the page is a dead end for them. */
 			.pw-empty-alt { margin-top: 1.25rem; font-size: 13.5px; color: rgba(255,255,255,0.42); }
-			.pw-empty-alt a { color: rgba(167,139,250,0.95); text-decoration: none; border-bottom: 1px solid rgba(167,139,250,0.28); padding-bottom: 1px; transition: color .16s ease, border-color .16s ease; }
+			.pw-empty-alt a { color: rgba(167,139,250,0.95); text-decoration: none; border-bottom: 1px solid rgba(167,139,250,0.28); padding-bottom: 1px; transition: color var(--duration-fast) var(--ease-standard), border-color var(--duration-fast) var(--ease-standard); }
 			.pw-empty-alt a:hover { color: #fff; border-bottom-color: rgba(255,255,255,0.6); }
 			.pw-empty-alt a:focus-visible { outline: 2px solid rgba(167,139,250,0.9); outline-offset: 3px; border-radius: 3px; }
 
 			/* ── Create modal ────────────────────────────────────────── */
-			.modal-bg { position: fixed; inset: 0; z-index: 1000; background: rgba(0,0,0,0.75); backdrop-filter: blur(8px); display: flex; align-items: center; justify-content: center; padding: 1rem; opacity: 0; pointer-events: none; transition: opacity .2s; }
+			.modal-bg { position: fixed; inset: 0; z-index: 1000; background: rgba(0,0,0,0.75); backdrop-filter: blur(8px); display: flex; align-items: center; justify-content: center; padding: 1rem; opacity: 0; pointer-events: none; transition: opacity var(--duration-base); }
 			.modal-bg.show { opacity: 1; pointer-events: auto; }
 			.modal { background: #0f0f0f; border: 1px solid rgba(255,255,255,0.14); border-radius: 22px; padding: 1.75rem; width: 100%; max-width: 500px; max-height: 92vh; overflow-y: auto; box-shadow: 0 24px 80px rgba(0,0,0,0.7), 0 0 0 1px rgba(255,255,255,0.03) inset; }
 			.modal-hd { margin-bottom: 1.5rem; }
@@ -176,7 +176,7 @@
 
 			/* Templates */
 			.tpl-row { display: flex; gap: 0.5rem; margin-bottom: 1.5rem; }
-			.tpl-btn { flex: 1; font: inherit; font-size: 12px; font-weight: 600; padding: 8px 6px; border-radius: 9px; border: 1px solid rgba(255,255,255,0.1); background: rgba(255,255,255,0.04); color: rgba(255,255,255,0.65); cursor: pointer; transition: border-color .15s, background .15s, color .15s; text-align: center; line-height: 1.3; }
+			.tpl-btn { flex: 1; font: inherit; font-size: 12px; font-weight: 600; padding: 8px 6px; border-radius: 9px; border: 1px solid rgba(255,255,255,0.1); background: rgba(255,255,255,0.04); color: rgba(255,255,255,0.65); cursor: pointer; transition: border-color var(--duration-fast), background var(--duration-fast), color var(--duration-fast); text-align: center; line-height: 1.3; }
 			.tpl-btn:hover { border-color: rgba(124,92,255,0.5); background: rgba(124,92,255,0.08); color: #fff; }
 			.tpl-btn.on { border-color: rgba(124,92,255,0.6); background: rgba(124,92,255,0.14); color: var(--accent-violet); }
 			.tpl-btn .tpl-price { display: block; font-size: 14px; font-weight: 800; color: inherit; margin-bottom: 2px; }
@@ -186,7 +186,7 @@
 			.f-row { margin-bottom: 1rem; }
 			.f-row label { display: flex; align-items: center; justify-content: space-between; font-size: 12px; font-weight: 600; color: rgba(255,255,255,0.55); margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.06em; }
 			.f-row label span { font-size: 11px; color: rgba(255,255,255,0.3); text-transform: none; letter-spacing: 0; font-weight: 400; }
-			.f-row input, .f-row select, .f-row textarea { width: 100%; font: inherit; font-size: 14px; padding: 10px 12px; border: 1px solid rgba(255,255,255,0.12); border-radius: 10px; background: rgba(255,255,255,0.04); color: #fff; transition: border-color .15s, background .15s; box-sizing: border-box; }
+			.f-row input, .f-row select, .f-row textarea { width: 100%; font: inherit; font-size: 14px; padding: 10px 12px; border: 1px solid rgba(255,255,255,0.12); border-radius: 10px; background: rgba(255,255,255,0.04); color: #fff; transition: border-color var(--duration-fast), background var(--duration-fast); box-sizing: border-box; }
 			.f-row input:focus, .f-row select:focus, .f-row textarea:focus { outline: none; border-color: rgba(124,92,255,0.6); background: rgba(124,92,255,0.05); }
 			.f-row select option { background: var(--bg-1); }
 			.f-hint { font-size: 11.5px; color: rgba(255,255,255,0.35); margin-top: 5px; line-height: 1.45; }
@@ -199,7 +199,7 @@
 
 			/* Modal actions */
 			.modal-footer { display: flex; gap: 0.75rem; margin-top: 1.5rem; }
-			.modal-footer button { flex: 1; font: inherit; font-weight: 600; font-size: 14px; padding: 11px; border-radius: 11px; border: none; cursor: pointer; transition: opacity .15s; }
+			.modal-footer button { flex: 1; font: inherit; font-weight: 600; font-size: 14px; padding: 11px; border-radius: 11px; border: none; cursor: pointer; transition: opacity var(--duration-fast); }
 			.modal-footer .f-primary { background: linear-gradient(135deg, #7c5cff, #6144e0); color: #fff; box-shadow: 0 2px 12px rgba(124,92,255,0.3); }
 			.modal-footer .f-primary:hover { opacity: 0.88; }
 			.modal-footer .f-primary:disabled { opacity: 0.4; cursor: default; }
@@ -213,7 +213,7 @@
 			.token-env { font-family: 'SF Mono', 'Fira Code', monospace; font-size: 11.5px; color: rgba(255,255,255,0.55); margin-top: 0.5rem; }
 			.token-env span { color: #86efac; }
 			.token-actions { display: flex; gap: 0.625rem; margin-top: 0.875rem; }
-			.token-btn { font: inherit; font-size: 12.5px; font-weight: 600; padding: 7px 14px; border-radius: 8px; cursor: pointer; transition: opacity .15s, background .15s; display: inline-flex; align-items: center; gap: 6px; }
+			.token-btn { font: inherit; font-size: 12.5px; font-weight: 600; padding: 7px 14px; border-radius: 8px; cursor: pointer; transition: opacity var(--duration-fast), background var(--duration-fast); display: inline-flex; align-items: center; gap: 6px; }
 			.token-btn.copy { background: rgba(124,92,255,0.18); border: 1px solid rgba(124,92,255,0.3); color: var(--accent-violet); }
 			.token-btn.copy:hover { background: rgba(124,92,255,0.28); }
 			.token-btn.env { background: rgba(134,239,172,0.1); border: 1px solid rgba(134,239,172,0.22); color: #86efac; }
@@ -224,7 +224,7 @@
 			.edit-modal h3 { margin: 0 0 1rem; font-size: 1.05rem; }
 
 			/* ── Toast ───────────────────────────────────────────────── */
-			.toast { position: fixed; bottom: 2rem; left: 50%; transform: translateX(-50%) translateY(8px); background: #1c1c1e; border: 1px solid rgba(255,255,255,0.12); border-radius: 11px; padding: 10px 18px; font-size: 13.5px; z-index: 3000; transition: opacity .2s, transform .2s; pointer-events: none; white-space: nowrap; box-shadow: 0 8px 32px rgba(0,0,0,0.5); opacity: 0; }
+			.toast { position: fixed; bottom: 2rem; left: 50%; transform: translateX(-50%) translateY(8px); background: #1c1c1e; border: 1px solid rgba(255,255,255,0.12); border-radius: 11px; padding: 10px 18px; font-size: 13.5px; z-index: 3000; transition: opacity var(--duration-base), transform var(--duration-base); pointer-events: none; white-space: nowrap; box-shadow: 0 8px 32px rgba(0,0,0,0.5); opacity: 0; }
 			.toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
 			.toast.ok { border-color: rgba(47,191,113,0.3); }
 			.toast.err { border-color: rgba(248,113,113,0.3); color: #fca5a5; }

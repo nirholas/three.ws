@@ -257,10 +257,10 @@
 				font-weight: 600;
 				color: var(--muted);
 				transition:
-					background 0.2s,
-					border-color 0.2s,
-					color 0.2s,
-					transform 0.2s;
+					background var(--duration-base),
+					border-color var(--duration-base),
+					color var(--duration-base),
+					transform var(--duration-base);
 				flex: 0 0 auto;
 			}
 			.step-pip[data-state='active'] .step-pip-btn {
@@ -404,9 +404,9 @@
 				font-size: 14px;
 				padding: 11px 13px;
 				transition:
-					border-color 0.16s,
-					box-shadow 0.16s,
-					background 0.16s;
+					border-color var(--duration-fast),
+					box-shadow var(--duration-fast),
+					background var(--duration-fast);
 				outline: none;
 			}
 			.textarea {
@@ -515,7 +515,7 @@
 				resize: none;
 				min-height: 46px;
 				line-height: 1.45;
-				transition: border-color 0.16s, box-shadow 0.16s;
+				transition: border-color var(--duration-fast), box-shadow var(--duration-fast);
 				outline: none;
 			}
 			.magic-input:focus {
@@ -541,7 +541,7 @@
 				font-size: 13.5px;
 				font-weight: 600;
 				cursor: pointer;
-				transition: transform 0.12s, opacity 0.16s, box-shadow 0.16s;
+				transition: transform var(--duration-fast), opacity var(--duration-fast), box-shadow var(--duration-fast);
 			}
 			.magic-go svg {
 				width: 15px;
@@ -602,7 +602,7 @@
 				font-size: 12px;
 				padding: 5px 11px;
 				cursor: pointer;
-				transition: color 0.14s, border-color 0.14s, background 0.14s;
+				transition: color var(--duration-fast), border-color var(--duration-fast), background var(--duration-fast);
 			}
 			.magic-chip:hover {
 				color: var(--text);
@@ -665,7 +665,7 @@
 				border: 1px solid var(--border-strong);
 				border-radius: 10px;
 				padding: 8px 10px;
-				transition: border-color 0.16s;
+				transition: border-color var(--duration-fast);
 			}
 			.tagbox:focus-within {
 				border-color: rgba(255, 255, 255, 0.5);
@@ -696,8 +696,8 @@
 				line-height: 1;
 				padding: 0;
 				transition:
-					background 0.14s,
-					color 0.14s;
+					background var(--duration-fast),
+					color var(--duration-fast);
 			}
 			.tag button:hover {
 				background: rgba(255, 255, 255, 0.12);
@@ -743,9 +743,9 @@
 				font: inherit;
 				cursor: pointer;
 				transition:
-					border-color 0.16s,
-					background 0.16s,
-					transform 0.16s;
+					border-color var(--duration-fast),
+					background var(--duration-fast),
+					transform var(--duration-fast);
 			}
 			.opt:hover {
 				border-color: rgba(255, 255, 255, 0.3);
@@ -850,8 +850,8 @@
 				padding: 8px;
 				cursor: pointer;
 				transition:
-					border-color 0.16s,
-					transform 0.16s;
+					border-color var(--duration-fast),
+					transform var(--duration-fast);
 				display: flex;
 				flex-direction: column;
 				gap: 6px;
@@ -910,8 +910,8 @@
 				text-align: center;
 				cursor: pointer;
 				transition:
-					border-color 0.16s,
-					background 0.16s;
+					border-color var(--duration-fast),
+					background var(--duration-fast);
 				color: var(--muted);
 			}
 			.dropzone:hover,
@@ -958,8 +958,8 @@
 				border-bottom: 2px solid transparent;
 				margin-bottom: -1px;
 				transition:
-					color 0.16s,
-					border-color 0.16s;
+					color var(--duration-fast),
+					border-color var(--duration-fast);
 			}
 			.model-tab:hover {
 				color: var(--text);
@@ -985,7 +985,7 @@
 				border-radius: 11px;
 				background: var(--panel-2);
 				margin-bottom: 9px;
-				transition: border-color 0.16s;
+				transition: border-color var(--duration-fast);
 			}
 			.skill-row.locked {
 				opacity: 0.85;
@@ -1039,7 +1039,7 @@
 				border-radius: 999px;
 				background: #2a2a2a;
 				border: 1px solid var(--border-strong);
-				transition: background 0.18s;
+				transition: background var(--duration-fast);
 			}
 			.toggle .knob {
 				position: absolute;
@@ -1050,8 +1050,8 @@
 				border-radius: 50%;
 				background: var(--ink-dim);
 				transition:
-					transform 0.18s,
-					background 0.18s;
+					transform var(--duration-fast),
+					background var(--duration-fast);
 			}
 			.toggle input:checked ~ .track {
 				background: rgba(255, 255, 255, 0.9);
@@ -1209,9 +1209,9 @@
 				padding: 8px 16px;
 				cursor: pointer;
 				transition:
-					box-shadow 0.16s,
-					transform 0.12s,
-					opacity 0.16s;
+					box-shadow var(--duration-fast),
+					transform var(--duration-fast),
+					opacity var(--duration-fast);
 			}
 			.interview-toggle:hover {
 				box-shadow: 0 0 0 4px rgba(255, 255, 255, 0.08);
@@ -1253,9 +1253,9 @@
 				padding: 9px 16px;
 				cursor: pointer;
 				transition:
-					box-shadow 0.16s,
-					transform 0.12s,
-					opacity 0.16s;
+					box-shadow var(--duration-fast),
+					transform var(--duration-fast),
+					opacity var(--duration-fast);
 			}
 			.interview-generate:hover:not(:disabled) {
 				box-shadow: 0 0 0 4px rgba(255, 255, 255, 0.08);
@@ -1293,7 +1293,7 @@
 				text-decoration: underline;
 				text-underline-offset: 2px;
 				cursor: pointer;
-				transition: color 0.15s;
+				transition: color var(--duration-fast);
 			}
 			.interview-skip:hover {
 				color: var(--text);
@@ -1351,7 +1351,7 @@
 				text-decoration: underline;
 				text-underline-offset: 2px;
 				cursor: pointer;
-				transition: opacity 0.15s ease;
+				transition: opacity var(--duration-fast) var(--ease-standard);
 			}
 			.foot-msg .msg-link:hover,
 			.foot-msg .msg-link:active {

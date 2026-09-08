@@ -94,7 +94,7 @@
 			.aa-opt {
 				appearance: none; border: 0; background: transparent; color: var(--ink-dim);
 				font: inherit; font-size: 12px; font-weight: 600; padding: 5px 12px; border-radius: 999px;
-				cursor: pointer; transition: color .14s ease, background .14s ease;
+				cursor: pointer; transition: color var(--duration-fast) var(--ease-standard), background var(--duration-fast) var(--ease-standard);
 			}
 			.aa-opt:hover { color: var(--ink); }
 			.aa-opt:focus-visible { outline: 2px solid rgba(56,189,248,.9); outline-offset: 1px; }
@@ -111,7 +111,7 @@
 				appearance: none; cursor: pointer; font: inherit; font-weight: 600; font-size: 20px;
 				aspect-ratio: 1 / 1; border-radius: 14px; color: var(--ink-dim);
 				border: 1px solid var(--stroke); background: var(--surface-2);
-				transition: color .14s ease, border-color .14s ease, background .14s ease, transform .14s ease;
+				transition: color var(--duration-fast) var(--ease-standard), border-color var(--duration-fast) var(--ease-standard), background var(--duration-fast) var(--ease-standard), transform var(--duration-fast) var(--ease-standard);
 			}
 			.aa-key:hover { color: var(--ink); border-color: rgba(56,189,248,.6); transform: translateY(-2px); }
 			.aa-key:active { transform: translateY(0) scale(.97); }
@@ -145,7 +145,7 @@
 				flex: 0 0 auto; appearance: none; border: 1px solid rgba(56,189,248,.5);
 				background: rgba(56,189,248,.16); color: var(--ink); font: inherit; font-weight: 600;
 				font-size: 15px; padding: 11px 18px; border-radius: 12px; cursor: pointer;
-				transition: background .12s ease, border-color .12s ease;
+				transition: background var(--duration-fast) var(--ease-standard), border-color var(--duration-fast) var(--ease-standard);
 			}
 			.aa-btn:hover:not(:disabled) { background: rgba(56,189,248,.3); border-color: rgba(56,189,248,.8); }
 			.aa-btn:active:not(:disabled) { transform: scale(.98); }
@@ -175,7 +175,7 @@
 				min-width: 26px; padding: 3px 0; text-align: center; border-radius: 7px;
 				font-family: var(--font-mono); font-size: 14px; font-weight: 600;
 				border: 1px solid var(--stroke); background: var(--surface-2); color: var(--ink-dim);
-				transition: color .12s ease, background .12s ease, border-color .12s ease;
+				transition: color var(--duration-fast) var(--ease-standard), background var(--duration-fast) var(--ease-standard), border-color var(--duration-fast) var(--ease-standard);
 			}
 			.aa-trail-ch[data-live='true'] { color: #04121c; background: #38bdf8; border-color: #38bdf8; }
 			.aa-trail-ch[data-space='true'] { border-color: transparent; background: transparent; }

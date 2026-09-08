@@ -127,7 +127,7 @@
 				text-decoration: none;
 				border: none;
 				cursor: pointer;
-				transition: opacity 0.15s, background 0.15s, transform 0.15s;
+				transition: opacity var(--duration-fast), background var(--duration-fast), transform var(--duration-fast);
 			}
 			.ag-btn:focus-visible {
 				outline: 2px solid var(--focus-ring-color, currentColor);
@@ -179,7 +179,7 @@
 				font-size: 13px;
 				outline: none;
 				box-sizing: border-box;
-				transition: border-color 0.15s;
+				transition: border-color var(--duration-fast);
 			}
 			.ag-search:focus { border-color: var(--ag-border-strong); }
 			.ag-search::placeholder { color: var(--text-3, #71717a); }
@@ -216,7 +216,7 @@
 				border: none;
 				color: var(--text-2, #a1a1aa);
 				cursor: pointer;
-				transition: background 0.15s, color 0.15s;
+				transition: background var(--duration-fast), color var(--duration-fast);
 			}
 			.ag-seg button + button { border-left: 1px solid var(--ag-border); }
 			.ag-seg button:hover { background: var(--ag-surface-2); color: var(--text, #fafafa); }
@@ -268,7 +268,7 @@
 				background: transparent;
 				color: var(--text-2, #a1a1aa);
 				cursor: pointer;
-				transition: background 0.15s, border-color 0.15s, color 0.15s;
+				transition: background var(--duration-fast), border-color var(--duration-fast), color var(--duration-fast);
 				white-space: nowrap;
 			}
 			.ag-chip:hover { background: var(--ag-surface-2); color: var(--text, #fafafa); }
@@ -304,7 +304,7 @@
 				overflow: hidden;
 				display: flex;
 				flex-direction: column;
-				transition: border-color 0.2s, transform 0.2s, box-shadow 0.2s;
+				transition: border-color var(--duration-base), transform var(--duration-base), box-shadow var(--duration-base);
 				content-visibility: auto;
 				contain-intrinsic-size: 240px 420px;
 			}
@@ -335,7 +335,7 @@
 				height: 100%;
 				object-fit: cover;
 				display: block;
-				transition: opacity 0.25s, transform 0.35s ease;
+				transition: opacity var(--duration-base), transform var(--duration-slow) var(--ease-standard);
 			}
 			.ag-card:hover .ag-card-thumb { transform: scale(1.03); }
 			.ag-card-thumb-fallback {
@@ -351,7 +351,7 @@
 				position: absolute;
 				inset: 0;
 				opacity: 0;
-				transition: opacity 0.25s;
+				transition: opacity var(--duration-base);
 				pointer-events: none;
 			}
 			.ag-card.is-live .ag-card-live { opacity: 1; }
@@ -422,7 +422,7 @@
 				padding: 3px 8px;
 				border-radius: 5px;
 				cursor: pointer;
-				transition: background 0.15s, color 0.15s;
+				transition: background var(--duration-fast), color var(--duration-fast);
 				white-space: nowrap;
 				overflow: hidden;
 				text-overflow: ellipsis;
@@ -449,7 +449,7 @@
 				background: var(--ag-surface);
 				color: var(--text-2, #a1a1aa);
 				cursor: pointer;
-				transition: background 0.15s, color 0.15s;
+				transition: background var(--duration-fast), color var(--duration-fast);
 			}
 			.ag-card-btn:hover { background: var(--ag-surface-3); color: var(--text, #fafafa); }
 			.ag-card-btn:focus-visible {
@@ -596,7 +596,7 @@
 				background: rgba(255, 255, 255, 0.12);
 				color: #fff;
 				cursor: pointer;
-				transition: background 0.15s;
+				transition: background var(--duration-fast);
 				flex: 0 0 auto;
 			}
 			.ag-modal-transport button:hover { background: rgba(255, 255, 255, 0.22); }
@@ -698,7 +698,7 @@
 				background: var(--ag-surface-2);
 				color: var(--text, #fafafa);
 				cursor: pointer;
-				transition: background 0.15s;
+				transition: background var(--duration-fast);
 				z-index: 2;
 			}
 			.ag-modal-close:hover { background: var(--ag-surface-3); }

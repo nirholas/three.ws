@@ -69,7 +69,7 @@
 		@keyframes ciPing { 0%{box-shadow:0 0 0 0 rgba(52,211,153,0.55);} 70%{box-shadow:0 0 0 12px rgba(52,211,153,0);} 100%{box-shadow:0 0 0 0 rgba(52,211,153,0);} }
 		@keyframes ciPingWarn { 0%{box-shadow:0 0 0 0 rgba(251,191,36,0.5);} 70%{box-shadow:0 0 0 12px rgba(251,191,36,0);} 100%{box-shadow:0 0 0 0 rgba(251,191,36,0);} }
 		.ci-hero p { margin: 0; color: var(--ci-muted); font-size: 14px; max-width: 640px; line-height: 1.5; }
-		.ci-hero .lead-link { color: var(--ci-neutral); text-decoration: none; border-bottom: 1px solid transparent; transition: border-color .15s; }
+		.ci-hero .lead-link { color: var(--ci-neutral); text-decoration: none; border-bottom: 1px solid transparent; transition: border-color var(--duration-fast); }
 		.ci-hero .lead-link:hover { border-bottom-color: var(--ci-neutral); }
 
 		.ci-stats { display: flex; gap: 10px; flex-wrap: wrap; }
@@ -87,7 +87,7 @@
 			background: none; border: none; color: var(--ci-muted);
 			font: inherit; font-size: 13.5px; font-weight: 500;
 			padding: 12px 14px; cursor: pointer; position: relative; white-space: nowrap;
-			border-bottom: 2px solid transparent; transition: color .15s;
+			border-bottom: 2px solid transparent; transition: color var(--duration-fast);
 		}
 		.ci-tab:hover { color: var(--ci-text); }
 		.ci-tab.is-active { color: var(--ci-text); border-bottom-color: var(--ci-accent); }
@@ -99,7 +99,7 @@
 		.ci-search input {
 			width: 100%; background: rgba(0,0,0,0.35); border: 1px solid var(--ci-border);
 			color: var(--ci-text); border-radius: 9px; padding: 9px 12px 9px 32px;
-			font: inherit; font-size: 13px; outline: none; transition: border-color .15s;
+			font: inherit; font-size: 13px; outline: none; transition: border-color var(--duration-fast);
 		}
 		.ci-search input:focus { border-color: var(--ci-accent); }
 		.ci-search input:focus-visible { outline: 2px solid var(--ci-accent); outline-offset: 1px; }
@@ -108,7 +108,7 @@
 		.ci-chip {
 			background: var(--ci-panel-2); border: 1px solid var(--ci-border); color: var(--ci-muted);
 			border-radius: 999px; padding: 6px 12px; font: inherit; font-size: 12px; cursor: pointer;
-			text-transform: capitalize; transition: all .14s; display: inline-flex; align-items: center; gap: 6px;
+			text-transform: capitalize; transition: all var(--duration-fast); display: inline-flex; align-items: center; gap: 6px;
 		}
 		.ci-chip:hover { color: var(--ci-text); border-color: var(--ci-border-strong); }
 		.ci-chip.is-active { background: rgba(139,92,246,0.18); border-color: rgba(139,92,246,0.5); color: #fff; }
@@ -125,7 +125,7 @@
 		.ci-card {
 			background: var(--ci-panel); border: 1px solid var(--ci-border); border-radius: 14px;
 			padding: 15px; cursor: pointer; position: relative; overflow: hidden;
-			transition: transform .16s cubic-bezier(.2,.8,.2,1), border-color .16s, box-shadow .16s;
+			transition: transform var(--duration-fast) cubic-bezier(.2,.8,.2,1), border-color var(--duration-fast), box-shadow var(--duration-fast);
 			animation: ciFadeIn .4s ease both;
 		}
 		@keyframes ciFadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
@@ -153,7 +153,7 @@
 		.ring { --pct: 0; --col: var(--ci-neutral); width: 52px; height: 52px; flex-shrink: 0; position: relative; }
 		.ring svg { transform: rotate(-90deg); display: block; }
 		.ring .track { stroke: rgba(255,255,255,0.08); }
-		.ring .val { stroke: var(--col); stroke-linecap: round; transition: stroke-dashoffset .6s cubic-bezier(.2,.8,.2,1); }
+		.ring .val { stroke: var(--col); stroke-linecap: round; transition: stroke-dashoffset var(--duration-slow) cubic-bezier(.2,.8,.2,1); }
 		.ring .label { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; }
 		.ring .label .n { font-family: var(--font-mono, monospace); font-size: 14px; font-weight: 700; line-height: 1; }
 		.ring .label .t { font-size: 7px; letter-spacing: 0.08em; color: var(--ci-faint); text-transform: uppercase; margin-top: 1px; }
@@ -204,7 +204,7 @@
 		.ci-empty p { color: var(--ci-muted); font-size: 13.5px; max-width: 520px; margin: 0 auto 8px; line-height: 1.55; }
 		.ci-empty .how { display: inline-flex; gap: 8px; flex-wrap: wrap; justify-content: center; margin-top: 14px; }
 		.ci-empty .how span { font-size: 11px; color: var(--ci-muted); background: var(--ci-panel); border: 1px solid var(--ci-border); border-radius: 999px; padding: 5px 11px; }
-		.ci-retry { margin-top: 16px; background: var(--ci-accent); color: #fff; border: none; border-radius: 9px; padding: 9px 20px; font: inherit; cursor: pointer; transition: background .14s; }
+		.ci-retry { margin-top: 16px; background: var(--ci-accent); color: #fff; border: none; border-radius: 9px; padding: 9px 20px; font: inherit; cursor: pointer; transition: background var(--duration-fast); }
 		.ci-retry:hover { background: #7c4ded; }
 		.ci-retry:active { background: #6d3fd6; }
 		.ci-retry:focus-visible { outline: 2px solid var(--ci-text); outline-offset: 2px; }
@@ -215,7 +215,7 @@
 		.ci-skel-row .sh { height: 11px; border-radius: 6px; background: linear-gradient(90deg, rgba(255,255,255,0.04), rgba(255,255,255,0.09), rgba(255,255,255,0.04)); background-size: 200% 100%; animation: ciShimmer 1.4s infinite; }
 
 		/* ── detail drawer ─────────────────────────────── */
-		.ci-scrim { position: fixed; inset: 0; background: rgba(0,0,0,0.55); opacity: 0; pointer-events: none; transition: opacity .25s; z-index: 90; backdrop-filter: blur(2px); }
+		.ci-scrim { position: fixed; inset: 0; background: rgba(0,0,0,0.55); opacity: 0; pointer-events: none; transition: opacity var(--duration-base); z-index: 90; backdrop-filter: blur(2px); }
 		.ci-scrim.is-open { opacity: 1; pointer-events: auto; }
 		.ci-drawer {
 			position: fixed; top: 0; right: 0; bottom: 0;
@@ -223,7 +223,7 @@
 			   sprawling, and stays edge-to-edge-safe on narrow viewports. */
 			width: clamp(360px, 34vw, 560px); max-width: 94vw;
 			background: var(--ci-panel); border-left: 1px solid var(--ci-border); z-index: 91;
-			transform: translateX(100%); transition: transform .3s cubic-bezier(.2,.8,.2,1);
+			transform: translateX(100%); transition: transform var(--duration-base) cubic-bezier(.2,.8,.2,1);
 			overflow-y: auto; backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
 		}
 		.ci-drawer.is-open { transform: none; }
@@ -240,7 +240,7 @@
 		.d-section { margin-top: 22px; }
 		.d-section > h4 { font-size: 10.5px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--ci-faint); margin: 0 0 11px; font-weight: 600; }
 		.d-links { display: flex; gap: 7px; flex-wrap: wrap; margin-top: 14px; }
-		.d-links a { font-size: 12px; padding: 7px 12px; border-radius: 8px; border: 1px solid var(--ci-border); color: var(--ci-text); text-decoration: none; background: rgba(255,255,255,0.05); transition: background .14s; }
+		.d-links a { font-size: 12px; padding: 7px 12px; border-radius: 8px; border: 1px solid var(--ci-border); color: var(--ci-text); text-decoration: none; background: rgba(255,255,255,0.05); transition: background var(--duration-fast); }
 		.d-links a:hover { background: rgba(255,255,255,0.12); }
 		.d-links a.primary { background: var(--ci-accent); border-color: var(--ci-accent); color: #fff; }
 		.d-tags { display: flex; gap: 6px; flex-wrap: wrap; }
@@ -249,7 +249,7 @@
 		.sig-row { display: flex; align-items: center; gap: 10px; margin-bottom: 9px; }
 		.sig-row .sname { font-size: 11.5px; color: var(--ci-muted); width: 132px; flex-shrink: 0; }
 		.sig-row .sbar { flex: 1; height: 7px; border-radius: 4px; background: rgba(255,255,255,0.06); overflow: hidden; }
-		.sig-row .sbar i { display: block; height: 100%; border-radius: 4px; transition: width .5s; }
+		.sig-row .sbar i { display: block; height: 100%; border-radius: 4px; transition: width var(--duration-slow); }
 		.sig-row .sval { font-family: var(--font-mono, monospace); font-size: 11.5px; width: 42px; text-align: right; font-variant-numeric: tabular-nums; flex-shrink: 0; }
 
 		.d-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 9px; }
@@ -324,7 +324,7 @@
 			border-radius: 8px; border: 1px solid rgba(255,255,255,0.09);
 			background: rgba(0,0,0,0.3); color: rgba(255,255,255,0.45);
 			font-size: 14px; cursor: pointer;
-			transition: color .15s, border-color .15s, background .15s; opacity: 0;
+			transition: color var(--duration-fast), border-color var(--duration-fast), background var(--duration-fast); opacity: 0;
 		}
 		.ci-card:hover .ci-watch, .ci-watch.ci-watched, .ci-watch:focus-visible { opacity: 1; }
 		.ci-watch.ci-watched { color: #7c83ff; border-color: #7c83ff; background: rgba(124,131,255,.12); }
@@ -335,7 +335,7 @@
 		.d-links button {
 			font-size: 12px; padding: 7px 12px; border-radius: 8px;
 			border: 1px solid var(--ci-border); color: var(--ci-text);
-			background: rgba(255,255,255,0.05); transition: background .14s, color .14s, border-color .14s;
+			background: rgba(255,255,255,0.05); transition: background var(--duration-fast), color var(--duration-fast), border-color var(--duration-fast);
 			cursor: pointer; font: inherit;
 		}
 		.d-links button:hover { background: rgba(255,255,255,0.12); }

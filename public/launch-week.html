@@ -243,7 +243,7 @@
     color: var(--accent);
     text-decoration: none;
     border-bottom: 1px solid transparent;
-    transition: border-color 0.2s;
+    transition: border-color var(--duration-base);
   }
 
   a:hover { border-bottom-color: var(--accent); }
@@ -377,7 +377,7 @@
   }
 
   .data-card {
-    transition: background 0.25s, transform 0.25s;
+    transition: background var(--duration-base), transform var(--duration-base);
     position: relative;
     overflow: hidden;
   }
@@ -388,7 +388,7 @@
     inset: 0;
     background: radial-gradient(circle at 100% 0%, rgba(20,241,149,0.08), transparent 60%);
     opacity: 0;
-    transition: opacity 0.3s;
+    transition: opacity var(--duration-base);
     pointer-events: none;
   }
 
@@ -498,7 +498,7 @@
     border-radius: 8px;
     font-size: 0.82rem;
     color: var(--text-muted);
-    transition: all 0.2s;
+    transition: all var(--duration-base);
   }
 
   .tech-item:hover {
@@ -539,7 +539,7 @@
     border: 1px solid var(--border);
     border-radius: 10px;
     text-decoration: none;
-    transition: all 0.2s;
+    transition: all var(--duration-base);
   }
 
   .repo-link:hover {
@@ -653,7 +653,7 @@
     height: 100%;
     background: linear-gradient(90deg, var(--accent), var(--solana));
     border-radius: 3px;
-    transition: width 0.6s ease;
+    transition: width var(--duration-slow) var(--ease-standard);
   }
 
   .chart-row .bar-fill.peak {
@@ -678,7 +678,7 @@
     margin: 1.5rem 0;
     position: relative;
     overflow: hidden;
-    transition: border-color 0.25s, transform 0.25s;
+    transition: border-color var(--duration-base), transform var(--duration-base);
   }
 
   .phase-block:hover {
@@ -720,7 +720,7 @@
     border: 1px solid var(--border);
     border-radius: 14px;
     padding: 1rem 1rem 0.75rem;
-    transition: border-color 0.25s, transform 0.25s;
+    transition: border-color var(--duration-base), transform var(--duration-base);
     position: relative;
   }
 
@@ -840,7 +840,7 @@
     display: grid;
     grid-template-columns: 200px 1fr;
     gap: 2.5rem;
-    transition: background 0.3s ease;
+    transition: background var(--duration-base) var(--ease-standard);
   }
   .layer:hover { background: var(--bg-card-hover); }
   .layer-id {
@@ -899,7 +899,7 @@
     border: 1px solid var(--border);
     border-radius: 6px;
     color: var(--text-muted);
-    transition: all 0.2s ease;
+    transition: all var(--duration-base) var(--ease-standard);
   }
   .pill:hover { border-color: var(--accent-dim); color: var(--accent); }
   .pill.solana { border-color: rgba(153,69,255,0.4); color: var(--solana); }
@@ -1038,7 +1038,7 @@
     border-radius: 12px;
     padding: 2rem;
     position: relative;
-    transition: border-color 0.25s, transform 0.25s;
+    transition: border-color var(--duration-base), transform var(--duration-base);
   }
   .next-card:hover { border-color: var(--border-accent); transform: translateY(-2px); }
   .next-card .phase {
@@ -1073,7 +1073,7 @@
   .reveal {
     opacity: 0;
     transform: translateY(28px);
-    transition: opacity 0.8s ease-out, transform 0.8s ease-out;
+    transition: opacity var(--duration-slow) var(--ease-out), transform var(--duration-slow) var(--ease-out);
   }
   .reveal.in { opacity: 1; transform: translateY(0); }
 
@@ -1094,7 +1094,7 @@
     border: 1px solid var(--border);
     border-radius: 14px;
     padding: 1rem;
-    transition: border-color 0.25s, transform 0.25s;
+    transition: border-color var(--duration-base), transform var(--duration-base);
     position: relative;
   }
 

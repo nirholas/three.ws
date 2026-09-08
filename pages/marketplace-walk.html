@@ -202,7 +202,7 @@
 				display: inline-flex;
 				align-items: center;
 				gap: 6px;
-				transition: transform 0.12s ease, background 0.12s ease;
+				transition: transform var(--duration-fast) var(--ease-standard), background var(--duration-fast) var(--ease-standard);
 			}
 			.walk-btn:hover { background: rgba(34, 34, 34, 0.85); }
 			.walk-btn:active { transform: scale(0.97); }
@@ -288,7 +288,7 @@
 				-webkit-backdrop-filter: blur(10px);
 				touch-action: manipulation;
 				-webkit-tap-highlight-color: transparent;
-				transition: transform 0.08s ease, background 0.15s ease, border-color 0.15s ease;
+				transition: transform var(--duration-instant) var(--ease-standard), background var(--duration-fast) var(--ease-standard), border-color var(--duration-fast) var(--ease-standard);
 			}
 			.walk-touch-btn:active { transform: scale(0.92); background: rgba(255,255,255,0.12); }
 			.walk-touch-btn.is-jump {
@@ -315,7 +315,7 @@
 				backdrop-filter: blur(10px);
 				-webkit-backdrop-filter: blur(10px);
 				pointer-events: none;
-				transition: opacity 0.2s ease;
+				transition: opacity var(--duration-base) var(--ease-standard);
 			}
 			#walk-status.is-error { color: var(--danger); border-color: rgba(248, 113, 113, 0.5); }
 			#walk-status.is-hidden { opacity: 0; }
@@ -380,7 +380,7 @@
 				display: inline-flex;
 				align-items: center;
 				gap: 6px;
-				transition: background 0.12s ease;
+				transition: background var(--duration-fast) var(--ease-standard);
 			}
 			#walk-online .dot {
 				width: 7px;
@@ -466,7 +466,7 @@
 				backdrop-filter: blur(10px);
 				-webkit-backdrop-filter: blur(10px);
 				opacity: 0;
-				transition: opacity 0.25s ease, transform 0.25s ease;
+				transition: opacity var(--duration-base) var(--ease-standard), transform var(--duration-base) var(--ease-standard);
 				white-space: nowrap;
 				max-width: calc(100vw - 32px);
 			}
@@ -514,7 +514,7 @@
 				display: flex;
 				align-items: center;
 				justify-content: center;
-				transition: opacity 0.4s ease;
+				transition: opacity var(--duration-slow) var(--ease-standard);
 			}
 			.walk-loading.is-done {
 				opacity: 0;
@@ -557,7 +557,7 @@
 				width: 100%;
 				max-width: 180px;
 				outline: none;
-				transition: border-color 0.15s;
+				transition: border-color var(--duration-fast);
 			}
 			.walk-name-input:focus {
 				border-color: var(--accent);
@@ -664,7 +664,7 @@
 				display: flex;
 				align-items: center;
 				justify-content: center;
-				transition: transform 0.1s, border-color 0.1s, background 0.1s;
+				transition: transform var(--duration-instant), border-color var(--duration-instant), background var(--duration-instant);
 				position: relative;
 			}
 			.walk-emote-btn:hover {
@@ -687,7 +687,7 @@
 				white-space: nowrap;
 				pointer-events: none;
 				opacity: 0;
-				transition: opacity 0.15s;
+				transition: opacity var(--duration-fast);
 			}
 			.walk-emote-btn:hover .emote-label { opacity: 1; }
 
@@ -715,7 +715,7 @@
 				transform: translate(-50%, -50%) scale(0.85);
 				opacity: 0;
 				pointer-events: none;
-				transition: opacity 0.16s ease, transform 0.16s ease;
+				transition: opacity var(--duration-fast) var(--ease-standard), transform var(--duration-fast) var(--ease-standard);
 			}
 			.walk-gesture-wheel.is-open {
 				opacity: 1;
@@ -750,7 +750,7 @@
 				align-items: center;
 				justify-content: center;
 				gap: 1px;
-				transition: transform 0.1s ease, background 0.1s ease, border-color 0.1s ease;
+				transition: transform var(--duration-instant) var(--ease-standard), background var(--duration-instant) var(--ease-standard), border-color var(--duration-instant) var(--ease-standard);
 			}
 			.walk-gesture-wheel .wheel-seg .wheel-ico { font-size: 22px; line-height: 1; }
 			.walk-gesture-wheel .wheel-seg .wheel-lbl {
@@ -784,7 +784,7 @@
 			}
 
 			/* ── Recording UI ──────────────────────────────────────────── */
-			#walk-record-btn .dot { transition: background 0.15s ease, box-shadow 0.15s ease; }
+			#walk-record-btn .dot { transition: background var(--duration-fast) var(--ease-standard), box-shadow var(--duration-fast) var(--ease-standard); }
 			#walk-record-btn[data-recording="true"] .dot {
 				background: var(--danger);
 				box-shadow: 0 0 8px rgba(248, 113, 113, 0.8);
@@ -883,7 +883,7 @@
 				font: inherit;
 				font-size: 13px;
 				text-align: left;
-				transition: background 0.12s;
+				transition: background var(--duration-fast);
 				width: 100%;
 			}
 			.walk-avatar-opt:hover { background: rgba(255,255,255,0.06); }
@@ -968,7 +968,7 @@
 				outline: none;
 				backdrop-filter: blur(10px);
 				-webkit-backdrop-filter: blur(10px);
-				transition: border-color 0.15s;
+				transition: border-color var(--duration-fast);
 			}
 			.walk-chat-input:focus { border-color: rgba(255,255,255,0.25); }
 			.walk-chat-input::placeholder { color: var(--text-2); }
@@ -985,7 +985,7 @@
 				justify-content: center;
 				backdrop-filter: blur(10px);
 				-webkit-backdrop-filter: blur(10px);
-				transition: background 0.12s;
+				transition: background var(--duration-fast);
 				flex-shrink: 0;
 			}
 			.walk-chat-send:hover { background: rgba(255,255,255,0.12); }
@@ -1023,7 +1023,7 @@
 				padding: 3px 12px;
 				backdrop-filter: blur(8px);
 				-webkit-backdrop-filter: blur(8px);
-				transition: color 0.2s ease, opacity 0.2s ease;
+				transition: color var(--duration-base) var(--ease-standard), opacity var(--duration-base) var(--ease-standard);
 			}
 			.walk-voice[data-state="listening"] .walk-voice-status { color: var(--text); }
 			.walk-voice[data-state="thinking"] .walk-voice-status,
@@ -1034,7 +1034,7 @@
 				height: 28px;
 				opacity: 0;
 				transform: scaleY(0.6);
-				transition: opacity 0.2s ease, transform 0.2s ease;
+				transition: opacity var(--duration-base) var(--ease-standard), transform var(--duration-base) var(--ease-standard);
 			}
 			.walk-voice[data-state="listening"] .walk-voice-wave {
 				opacity: 1;
@@ -1056,7 +1056,7 @@
 				touch-action: none;
 				-webkit-user-select: none;
 				user-select: none;
-				transition: transform 0.12s ease, background 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+				transition: transform var(--duration-fast) var(--ease-standard), background var(--duration-base) var(--ease-standard), border-color var(--duration-base) var(--ease-standard), color var(--duration-base) var(--ease-standard);
 			}
 			.walk-voice-mic:hover { background: color-mix(in srgb, var(--accent) 12%, var(--panel)); }
 			.walk-voice-mic:active { transform: scale(0.94); }
@@ -1130,7 +1130,7 @@
 				border-radius: 8px;
 				padding: 4px 14px;
 				cursor: pointer;
-				transition: background 0.2s ease;
+				transition: background var(--duration-base) var(--ease-standard);
 			}
 			.walk-voice-retry:hover { background: rgba(255,255,255,0.14); }
 			/* Touch devices have no T key — promote the key hint to hidden and
@@ -1160,7 +1160,7 @@
 				word-break: break-word;
 				white-space: pre-wrap;
 				animation: walk-chat-in 0.2s ease;
-				transition: opacity 0.3s;
+				transition: opacity var(--duration-base);
 			}
 
 			/* ── Walk HUD overflow scroll on small screens ──────────────── */
@@ -1200,7 +1200,7 @@
 			   The hint bar auto-hides via JS; opacity lets it fade before the
 			   display:none removes it from layout. */
 			#walk-help {
-				transition: opacity 0.4s ease;
+				transition: opacity var(--duration-slow) var(--ease-standard);
 			}
 
 			/* ── Prefers-reduced-motion ─────────────────────────────────────
@@ -1276,7 +1276,7 @@
 				backdrop-filter: blur(10px);
 				-webkit-backdrop-filter: blur(10px);
 				opacity: 0;
-				transition: opacity 0.3s ease, color 0.15s ease, background 0.15s ease;
+				transition: opacity var(--duration-base) var(--ease-standard), color var(--duration-fast) var(--ease-standard), background var(--duration-fast) var(--ease-standard);
 			}
 			body.is-zen #walk-zen-exit { display: inline-flex; }
 			body.is-zen.zen-revealed #walk-zen-exit { opacity: 0.85; }

@@ -13,7 +13,7 @@
 	:root { color-scheme: dark; }
 	body { margin: 0; background: #000000; color: #e7e7e7; font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; -webkit-font-smoothing: antialiased; }
 	.ce-wrap { max-width: 720px; margin: 0 auto; padding: 96px 24px 80px; }
-	.ce-back { display: inline-flex; align-items: center; gap: 6px; color: #777777; font-size: 13px; text-decoration: none; margin-bottom: 40px; transition: color .15s; }
+	.ce-back { display: inline-flex; align-items: center; gap: 6px; color: #777777; font-size: 13px; text-decoration: none; margin-bottom: 40px; transition: color var(--duration-fast); }
 	.ce-back:hover { color: #ffffff; }
 	.ce-back svg { width: 14px; height: 14px; }
 	.ce-meta { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 16px; }
@@ -29,12 +29,12 @@
 	.ce-tag-docs { color: #c0c0c0; border-color: #3a3a3a; background: #111111; }
 	h1.ce-title { font-size: clamp(24px, 4vw, 38px); font-weight: 700; letter-spacing: -0.02em; line-height: 1.2; margin: 0 0 28px; color: #ffffff; }
 	.ce-summary { font-size: 17px; line-height: 1.7; color: #c8c8c8; white-space: pre-line; }
-	.ce-link { display: inline-flex; align-items: center; gap: 8px; margin-top: 36px; padding: 11px 20px; background: #0d0d0d; border: 1px solid #2a2a2a; border-radius: 10px; color: #e7e7e7; font-size: 14px; font-weight: 600; text-decoration: none; transition: border-color .15s, transform .15s; }
+	.ce-link { display: inline-flex; align-items: center; gap: 8px; margin-top: 36px; padding: 11px 20px; background: #0d0d0d; border: 1px solid #2a2a2a; border-radius: 10px; color: #e7e7e7; font-size: 14px; font-weight: 600; text-decoration: none; transition: border-color var(--duration-fast), transform var(--duration-fast); }
 	.ce-link:hover { border-color: #ffffff; transform: translateY(-1px); }
 	.ce-link svg { width: 14px; height: 14px; opacity: .6; }
 	.ce-share { margin-top: 48px; padding-top: 32px; border-top: 1px solid #1d1d1d; display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
 	.ce-share-label { font-size: 13px; color: #555555; }
-	.ce-share-btn { display: inline-flex; align-items: center; gap: 6px; padding: 7px 14px; background: #0d0d0d; border: 1px solid #1d1d1d; border-radius: 8px; color: #b6b6b6; font-size: 13px; font-weight: 500; text-decoration: none; cursor: pointer; transition: border-color .15s, color .15s; }
+	.ce-share-btn { display: inline-flex; align-items: center; gap: 6px; padding: 7px 14px; background: #0d0d0d; border: 1px solid #1d1d1d; border-radius: 8px; color: #b6b6b6; font-size: 13px; font-weight: 500; text-decoration: none; cursor: pointer; transition: border-color var(--duration-fast), color var(--duration-fast); }
 	.ce-share-btn:hover { border-color: #555555; color: #ffffff; }
 	.ce-share-btn svg { width: 13px; height: 13px; }
 	.ce-copy-btn.copied { color: #66ffaa; border-color: #1f4a3f; }

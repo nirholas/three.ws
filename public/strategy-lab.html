@@ -65,7 +65,7 @@
 		textarea.invalid { border-color: var(--red); box-shadow: 0 0 0 3px color-mix(in srgb, var(--red) 18%, transparent); }
 		select option { background: var(--panel); color: var(--text); }
 
-		button { font: inherit; font-size: 13px; padding: .5rem .85rem; border: 1px solid var(--border-strong); background: var(--panel-2); color: var(--text); border-radius: 8px; cursor: pointer; transition: background .12s, border-color .12s, transform .06s; }
+		button { font: inherit; font-size: 13px; padding: .5rem .85rem; border: 1px solid var(--border-strong); background: var(--panel-2); color: var(--text); border-radius: 8px; cursor: pointer; transition: background var(--duration-fast), border-color var(--duration-fast), transform var(--duration-instant); }
 		button:hover:not(:disabled) { border-color: var(--blue); }
 		button:active:not(:disabled) { transform: translateY(1px); }
 		button:focus-visible { outline: none; box-shadow: 0 0 0 3px color-mix(in srgb, var(--blue) 30%, transparent); }
@@ -97,7 +97,7 @@
 		details.palette-wrap { margin-top: .65rem; }
 		details.palette-wrap > summary { cursor: pointer; font-size: 11px; color: var(--muted); list-style: none; user-select: none; display: inline-flex; align-items: center; gap: 6px; }
 		details.palette-wrap > summary::-webkit-details-marker { display: none; }
-		details.palette-wrap > summary::before { content: '▸'; transition: transform .12s; display: inline-block; }
+		details.palette-wrap > summary::before { content: '▸'; transition: transform var(--duration-fast); display: inline-block; }
 		details.palette-wrap[open] > summary::before { transform: rotate(90deg); }
 
 		/* ── Status & issues ──────────────────────────────────── */
@@ -196,9 +196,9 @@
 		.empty .d { font-size: 12px; max-width: 320px; margin: 0 auto; }
 
 		/* ── Modal ────────────────────────────────────────────── */
-		.modal-backdrop { position: fixed; inset: 0; z-index: 100; display: flex; align-items: center; justify-content: center; padding: 1rem; background: rgba(0,0,0,.6); opacity: 0; transition: opacity .14s; }
+		.modal-backdrop { position: fixed; inset: 0; z-index: 100; display: flex; align-items: center; justify-content: center; padding: 1rem; background: rgba(0,0,0,.6); opacity: 0; transition: opacity var(--duration-fast); }
 		.modal-backdrop.open { opacity: 1; }
-		.modal { background: var(--panel); border: 1px solid var(--border-strong); border-radius: 14px; width: 100%; max-width: 460px; padding: 1.25rem 1.35rem; box-shadow: var(--shadow); transform: translateY(8px) scale(.985); transition: transform .14s; }
+		.modal { background: var(--panel); border: 1px solid var(--border-strong); border-radius: 14px; width: 100%; max-width: 460px; padding: 1.25rem 1.35rem; box-shadow: var(--shadow); transform: translateY(8px) scale(.985); transition: transform var(--duration-fast); }
 		.modal-backdrop.open .modal { transform: none; }
 		.modal h3 { margin: 0 0 .5rem; font-size: 1.05rem; }
 		.modal p { margin: 0 0 .65rem; color: var(--muted); line-height: 1.5; font-size: 13px; }
@@ -207,7 +207,7 @@
 
 		/* ── Toast ────────────────────────────────────────────── */
 		#toasts { position: fixed; bottom: 18px; left: 50%; transform: translateX(-50%); z-index: 200; display: flex; flex-direction: column; gap: 8px; align-items: center; pointer-events: none; }
-		.toast { background: var(--panel); border: 1px solid var(--border-strong); color: var(--text); padding: .55rem .85rem; border-radius: 999px; font-size: 12.5px; box-shadow: var(--shadow); opacity: 0; transform: translateY(8px); transition: opacity .18s, transform .18s; }
+		.toast { background: var(--panel); border: 1px solid var(--border-strong); color: var(--text); padding: .55rem .85rem; border-radius: 999px; font-size: 12.5px; box-shadow: var(--shadow); opacity: 0; transform: translateY(8px); transition: opacity var(--duration-fast), transform var(--duration-fast); }
 		.toast.show { opacity: 1; transform: none; }
 	</style>
 

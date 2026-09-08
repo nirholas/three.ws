@@ -230,7 +230,7 @@
 				   embed's transparent background showing the card through. */
 				color-scheme: light;
 				background: transparent;
-				transition: opacity 0.4s ease;
+				transition: opacity var(--duration-slow) var(--ease-standard);
 			}
 			.ad-walk-skeleton {
 				position: absolute;
@@ -241,7 +241,7 @@
 				justify-content: center;
 				gap: 14px;
 				pointer-events: none;
-				transition: opacity 0.3s ease;
+				transition: opacity var(--duration-base) var(--ease-standard);
 			}
 			.ad-walk-skeleton.is-hidden { opacity: 0; }
 			.ad-walk-skeleton-pulse {

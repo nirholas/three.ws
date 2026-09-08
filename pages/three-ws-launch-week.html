@@ -344,7 +344,7 @@
     display: grid;
     grid-template-columns: 200px 1fr;
     gap: 2.5rem;
-    transition: background 0.3s ease;
+    transition: background var(--duration-base) var(--ease-standard);
   }
 
   .layer:hover { background: var(--bg-card-hover); }
@@ -395,7 +395,7 @@
     border: 1px solid var(--border);
     border-radius: 6px;
     color: var(--text-muted);
-    transition: all 0.2s ease;
+    transition: all var(--duration-base) var(--ease-standard);
   }
 
   .pill:hover {
@@ -441,7 +441,7 @@
     padding: 1.8rem;
     position: relative;
     overflow: hidden;
-    transition: all 0.3s ease;
+    transition: all var(--duration-base) var(--ease-standard);
   }
 
   .metric-card:hover {
@@ -458,7 +458,7 @@
     height: 1px;
     background: linear-gradient(90deg, transparent, var(--accent), transparent);
     opacity: 0;
-    transition: opacity 0.3s ease;
+    transition: opacity var(--duration-base) var(--ease-standard);
   }
 
   .metric-card:hover::before { opacity: 0.6; }
@@ -728,7 +728,7 @@
   .reveal {
     opacity: 0;
     transform: translateY(28px);
-    transition: opacity 0.8s ease-out, transform 0.8s ease-out;
+    transition: opacity var(--duration-slow) var(--ease-out), transform var(--duration-slow) var(--ease-out);
   }
   .reveal.in {
     opacity: 1;

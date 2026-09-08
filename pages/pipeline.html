@@ -48,11 +48,11 @@
 		.pl-sub { color: var(--ink-dim, #888); font-size: 0.9rem; max-width: 56ch; margin: 6px 0 0; line-height: 1.5; }
 		.pl-controls { display: flex; align-items: center; gap: 10px; margin-left: auto; }
 		.pl-net { display: inline-flex; border: 1px solid var(--stroke, rgba(255,255,255,0.08)); border-radius: var(--radius-pill, 999px); overflow: hidden; }
-		.pl-net button { appearance: none; background: transparent; border: 0; color: var(--ink-dim, #888); font: inherit; font-size: 0.78rem; padding: 6px 13px; cursor: pointer; transition: color .14s, background .14s; }
+		.pl-net button { appearance: none; background: transparent; border: 0; color: var(--ink-dim, #888); font: inherit; font-size: 0.78rem; padding: 6px 13px; cursor: pointer; transition: color var(--duration-fast), background var(--duration-fast); }
 		.pl-net button[aria-pressed="true"] { background: var(--surface-3, rgba(255,255,255,0.08)); color: var(--ink-bright, #fff); }
 		.pl-net button:hover { color: var(--ink, #e8e8e8); }
 		.pl-net button:focus-visible { outline: 2px solid var(--stroke-strong, rgba(255,255,255,0.14)); outline-offset: -2px; }
-		.pl-refresh { appearance: none; background: var(--surface-1, rgba(255,255,255,0.03)); border: 1px solid var(--stroke, rgba(255,255,255,0.08)); border-radius: var(--radius-md, 10px); color: var(--ink-dim, #888); width: 34px; height: 34px; display: grid; place-items: center; cursor: pointer; transition: color .14s, border-color .14s, transform .3s; }
+		.pl-refresh { appearance: none; background: var(--surface-1, rgba(255,255,255,0.03)); border: 1px solid var(--stroke, rgba(255,255,255,0.08)); border-radius: var(--radius-md, 10px); color: var(--ink-dim, #888); width: 34px; height: 34px; display: grid; place-items: center; cursor: pointer; transition: color var(--duration-fast), border-color var(--duration-fast), transform var(--duration-base); }
 		.pl-refresh:hover { color: var(--ink-bright, #fff); border-color: var(--stroke-strong, rgba(255,255,255,0.14)); }
 		.pl-refresh.spin svg { animation: pl-spin .6s var(--ease-standard, cubic-bezier(.2,.8,.2,1)); }
 		@keyframes pl-spin { to { transform: rotate(360deg); } }
@@ -82,7 +82,7 @@
 		@media (max-width: 620px)  { .pl-flow { grid-template-columns: repeat(2, 1fr); } }
 		@media (max-width: 400px)  { .pl-flow { grid-template-columns: 1fr; } }
 
-		.pl-stage { position: relative; display: flex; flex-direction: column; min-height: 158px; padding: 14px; border: 1px solid var(--stroke, rgba(255,255,255,0.08)); border-radius: var(--radius-lg, 14px); background: var(--surface-1, rgba(255,255,255,0.03)); transition: border-color .2s var(--ease-standard, ease), background .2s, transform .2s; opacity: 0; transform: translateY(8px); animation: pl-in .42s var(--ease-standard, cubic-bezier(.2,.8,.2,1)) forwards; }
+		.pl-stage { position: relative; display: flex; flex-direction: column; min-height: 158px; padding: 14px; border: 1px solid var(--stroke, rgba(255,255,255,0.08)); border-radius: var(--radius-lg, 14px); background: var(--surface-1, rgba(255,255,255,0.03)); transition: border-color var(--duration-base) var(--ease-standard, var(--ease-standard)), background var(--duration-base), transform var(--duration-base); opacity: 0; transform: translateY(8px); animation: pl-in .42s var(--ease-standard, cubic-bezier(.2,.8,.2,1)) forwards; }
 		.pl-stage:hover { border-color: var(--stroke-strong, rgba(255,255,255,0.14)); background: var(--surface-2, rgba(255,255,255,0.05)); }
 		.pl-stage.s-live, .pl-stage.s-active { border-color: var(--stroke-strong, rgba(255,255,255,0.18)); }
 		.pl-stage.s-live::before { content: ""; position: absolute; inset: 0; border-radius: inherit; box-shadow: inset 0 0 0 1px rgba(255,255,255,0.10); pointer-events: none; }
@@ -110,7 +110,7 @@
 		/* stage cards are links into each surface's detail view */
 		a.pl-stage { text-decoration: none; color: inherit; cursor: pointer; }
 		a.pl-stage:focus-visible { outline: 2px solid var(--ink-bright, #fff); outline-offset: 2px; }
-		.pl-stage-go { position: absolute; right: 12px; bottom: 11px; font-size: 0.82rem; color: var(--ink-faint, rgba(255,255,255,0.45)); opacity: 0; transform: translateX(-3px); transition: opacity .18s, transform .18s, color .18s; }
+		.pl-stage-go { position: absolute; right: 12px; bottom: 11px; font-size: 0.82rem; color: var(--ink-faint, rgba(255,255,255,0.45)); opacity: 0; transform: translateX(-3px); transition: opacity var(--duration-fast), transform var(--duration-fast), color var(--duration-fast); }
 		a.pl-stage:hover .pl-stage-go, a.pl-stage:focus-visible .pl-stage-go { opacity: 1; transform: none; color: var(--ink-bright, #fff); }
 
 		/* ── Skeleton + error ────────────────────────────────────────── */
@@ -119,7 +119,7 @@
 		.pl-error { grid-column: 1 / -1; text-align: center; padding: 48px 22px; border: 1px solid var(--stroke, rgba(255,255,255,0.08)); border-radius: var(--radius-lg, 14px); background: var(--surface-1, rgba(255,255,255,0.03)); }
 		.pl-error h3 { margin: 0 0 6px; color: var(--ink-bright, #fff); font-size: 1rem; }
 		.pl-error p { margin: 0 0 16px; color: var(--ink-dim, #888); font-size: 0.85rem; }
-		.pl-btn { appearance: none; background: var(--ink-bright, #fff); color: var(--bg-0, #0a0a0a); border: 0; border-radius: var(--radius-md, 10px); font: inherit; font-weight: 600; font-size: 0.82rem; padding: 9px 18px; cursor: pointer; transition: opacity .14s, transform .14s; }
+		.pl-btn { appearance: none; background: var(--ink-bright, #fff); color: var(--bg-0, #0a0a0a); border: 0; border-radius: var(--radius-md, 10px); font: inherit; font-weight: 600; font-size: 0.82rem; padding: 9px 18px; cursor: pointer; transition: opacity var(--duration-fast), transform var(--duration-fast); }
 		.pl-btn:hover { opacity: 0.9; }
 		.pl-btn:active { transform: translateY(1px); }
 

@@ -198,7 +198,7 @@
 				color: var(--text);
 				background: rgba(255, 138, 59, 0.12);
 				border: 1px solid rgba(255, 138, 59, 0.32);
-				transition: filter 0.12s ease, background 0.12s ease;
+				transition: filter var(--duration-fast) var(--ease-standard), background var(--duration-fast) var(--ease-standard);
 			}
 			.club-pill-toggle:hover { filter: brightness(1.1); }
 			.club-pill-toggle[aria-pressed="true"] {
@@ -257,7 +257,7 @@
 				padding: 3px 7px;
 				font-size: 16px;
 				cursor: pointer;
-				transition: transform 0.1s, background 0.12s;
+				transition: transform var(--duration-instant), background var(--duration-fast);
 				line-height: 1;
 			}
 			.club-react-btn:hover { background: rgba(255,255,255,0.12); transform: scale(1.15); }
@@ -340,7 +340,7 @@
 				backdrop-filter: blur(10px);
 				-webkit-backdrop-filter: blur(10px);
 				z-index: 5;
-				transition: filter 0.12s ease, transform 0.08s ease;
+				transition: filter var(--duration-fast) var(--ease-standard), transform var(--duration-instant) var(--ease-standard);
 			}
 			#club-free-cam:hover { filter: brightness(1.15); }
 			#club-free-cam:active { transform: translateX(-50%) translateY(1px); }
@@ -430,7 +430,7 @@
 				line-height: 1;
 				color: var(--text);
 				cursor: pointer;
-				transition: filter 0.12s ease, transform 0.08s ease;
+				transition: filter var(--duration-fast) var(--ease-standard), transform var(--duration-instant) var(--ease-standard);
 			}
 			.club-cam-btn:hover { filter: brightness(1.2); border-color: var(--border-strong); }
 			.club-cam-btn:active { transform: translateY(1px); }
@@ -557,7 +557,7 @@
 				cursor: pointer;
 				letter-spacing: 0.04em;
 				text-transform: uppercase;
-				transition: filter 0.12s ease, color 0.12s ease;
+				transition: filter var(--duration-fast) var(--ease-standard), color var(--duration-fast) var(--ease-standard);
 			}
 			.club-lb-tab:hover { color: var(--text); }
 			.club-lb-tab.is-active {
@@ -623,7 +623,7 @@
 				padding: 5px 14px;
 				min-height: 32px;
 				cursor: pointer;
-				transition: background .15s ease, border-color .15s ease, transform .1s ease;
+				transition: background var(--duration-fast) var(--ease-standard), border-color var(--duration-fast) var(--ease-standard), transform var(--duration-instant) var(--ease-standard);
 			}
 			.club-lb-retry:hover { background: rgba(255,255,255,.12); border-color: rgba(255,255,255,.28); }
 			.club-lb-retry:active { transform: scale(.97); }
@@ -655,7 +655,7 @@
 				font-weight: 700;
 				border-radius: 0 0 8px 8px;
 				text-decoration: none;
-				transition: top 0.15s ease;
+				transition: top var(--duration-fast) var(--ease-standard);
 			}
 			.club-skip-link:focus {
 				top: 0;
@@ -719,7 +719,7 @@
 				padding: 24px;
 				background: #080808;
 				opacity: 1;
-				transition: opacity 0.7s ease;
+				transition: opacity var(--duration-slow) var(--ease-standard);
 			}
 			/* Once faded, the splash must leave the accessibility tree too, not just
 			   stop taking clicks: a full-screen `opacity:0` overlay is still read by
@@ -729,7 +729,7 @@
 				opacity: 0;
 				pointer-events: none;
 				visibility: hidden;
-				transition: opacity 0.7s ease, visibility 0s linear 0.7s;
+				transition: opacity var(--duration-slow) var(--ease-standard), visibility 0s linear var(--duration-slow);
 			}
 			.club-loader-inner { max-width: 420px; width: 100%; }
 			.club-loader-kicker {
@@ -778,7 +778,7 @@
 				border-radius: 999px;
 				background: rgba(255, 255, 255, 0.85);
 				box-shadow: none;
-				transition: width 0.35s cubic-bezier(0.22, 1, 0.36, 1);
+				transition: width var(--duration-slow) cubic-bezier(0.22, 1, 0.36, 1);
 			}
 			.club-loader-status {
 				margin-top: 16px;
@@ -807,7 +807,7 @@
 				box-shadow: 0 10px 34px -14px rgba(0, 0, 0, 0.85);
 				pointer-events: none;
 				opacity: 0;
-				transition: opacity 0.6s ease, transform 0.6s ease;
+				transition: opacity var(--duration-slow) var(--ease-standard), transform var(--duration-slow) var(--ease-standard);
 			}
 			.club-journey.is-visible { opacity: 1; transform: translateX(-50%) translateY(0); }
 			.club-journey-steps {
@@ -825,7 +825,7 @@
 				font: 600 11px/1 'Inter', system-ui, sans-serif;
 				letter-spacing: 0.08em;
 				text-transform: uppercase;
-				transition: color 0.5s ease;
+				transition: color var(--duration-slow) var(--ease-standard);
 			}
 			.club-journey-step:not(:first-child) { margin-left: 10px; }
 			.club-journey-step:not(:first-child)::before {
@@ -840,7 +840,7 @@
 				height: 8px;
 				border-radius: 50%;
 				background: rgba(255, 255, 255, 0.14);
-				transition: background 0.5s ease, box-shadow 0.5s ease;
+				transition: background var(--duration-slow) var(--ease-standard), box-shadow var(--duration-slow) var(--ease-standard);
 			}
 			.club-journey-step.is-done { color: var(--text-2, #c2a8d8); }
 			.club-journey-step.is-done .cj-dot { background: rgba(255, 59, 214, 0.5); }
@@ -861,7 +861,7 @@
 			}
 			@media (prefers-reduced-motion: reduce) {
 				.club-journey-step.is-active .cj-dot { animation: none; }
-				.club-journey { transition: opacity 0.6s ease; }
+				.club-journey { transition: opacity var(--duration-slow) var(--ease-standard); }
 			}
 
 			/* Agent switcher — pick which avatar you walk in as, swappable live at
@@ -890,7 +890,7 @@
 				   the walk-in, a keyboard user would otherwise tab into an agent
 				   picker they cannot see. Flipped after the fade so it still plays. */
 				visibility: hidden;
-				transition: opacity 0.6s ease, transform 0.6s ease, visibility 0s linear 0.6s;
+				transition: opacity var(--duration-slow) var(--ease-standard), transform var(--duration-slow) var(--ease-standard), visibility 0s linear var(--duration-slow);
 			}
 			.club-agent-switch.is-visible {
 				opacity: 1;
@@ -919,7 +919,7 @@
 				font: 600 12px/1 'Inter', system-ui, sans-serif;
 				cursor: pointer;
 				text-overflow: ellipsis;
-				transition: border-color 0.2s ease, box-shadow 0.2s ease, opacity 0.2s ease;
+				transition: border-color var(--duration-base) var(--ease-standard), box-shadow var(--duration-base) var(--ease-standard), opacity var(--duration-base) var(--ease-standard);
 			}
 			.club-agent-select:hover { border-color: rgba(255, 59, 214, 0.5); }
 			.club-agent-select:focus-visible { outline: none; border-color: #ff3bd6; box-shadow: 0 0 0 3px rgba(255, 59, 214, 0.25); }
@@ -937,7 +937,7 @@
 				font: 600 12px/1 'Inter', system-ui, sans-serif;
 				cursor: pointer;
 				white-space: nowrap;
-				transition: border-color 0.2s ease, background 0.2s ease, color 0.2s ease, box-shadow 0.2s ease;
+				transition: border-color var(--duration-base) var(--ease-standard), background var(--duration-base) var(--ease-standard), color var(--duration-base) var(--ease-standard), box-shadow var(--duration-base) var(--ease-standard);
 			}
 			.club-agent-browse svg { flex: none; }
 			.club-agent-browse:hover { border-color: rgba(255, 59, 214, 0.7); background: rgba(255, 59, 214, 0.2); color: #fff; }
@@ -969,7 +969,7 @@
 				pointer-events: none;
 				opacity: 0;
 				transform: translateY(-10px);
-				transition: opacity 0.6s ease, transform 0.6s ease;
+				transition: opacity var(--duration-slow) var(--ease-standard), transform var(--duration-slow) var(--ease-standard);
 			}
 			.club-minimap.is-visible { opacity: 1; transform: translateY(0); }
 			.club-minimap-head {
@@ -1019,7 +1019,7 @@
 				letter-spacing: 0.01em;
 				pointer-events: none;
 				opacity: 0;
-				transition: opacity 0.5s ease, transform 0.5s ease;
+				transition: opacity var(--duration-slow) var(--ease-standard), transform var(--duration-slow) var(--ease-standard);
 			}
 			.club-controls-hint.is-visible { opacity: 1; transform: translateX(-50%) translateY(0); }
 
@@ -1047,7 +1047,7 @@
 				   a tab stop, so "Enter the club" must leave the tab order until the
 				   walk-in actually puts you at the door. */
 				visibility: hidden;
-				transition: opacity 0.25s ease, transform 0.25s ease, visibility 0s linear 0.25s;
+				transition: opacity var(--duration-base) var(--ease-standard), transform var(--duration-base) var(--ease-standard), visibility 0s linear var(--duration-base);
 			}
 			.club-door-prompt.is-visible {
 				opacity: 1;
@@ -1085,7 +1085,7 @@
 				pointer-events: none;
 				display: none;
 				opacity: 0;
-				transition: opacity 0.3s ease;
+				transition: opacity var(--duration-base) var(--ease-standard);
 				left: -200px;
 				top: -200px;
 			}
@@ -1122,7 +1122,7 @@
 				cursor: pointer;
 				padding: 6px 10px;
 				border-radius: 8px;
-				transition: color 0.15s ease, background 0.15s ease;
+				transition: color var(--duration-fast) var(--ease-standard), background var(--duration-fast) var(--ease-standard);
 			}
 			.club-door-back:hover { color: #fff; background: rgba(255, 255, 255, 0.06); }
 			.club-door-back:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
@@ -1147,7 +1147,7 @@
 					radial-gradient(120% 90% at 50% 110%, rgba(74, 214, 255, 0.16), transparent 55%),
 					radial-gradient(125% 125% at 50% 50%, transparent 32%, rgba(4, 3, 8, 0.74) 100%);
 				opacity: 1;
-				transition: opacity 0.7s ease, visibility 0.7s ease;
+				transition: opacity var(--duration-slow) var(--ease-standard), visibility var(--duration-slow) var(--ease-standard);
 			}
 			.club-door.is-open {
 				opacity: 0;
@@ -1191,7 +1191,7 @@
 				border-radius: 0 0 60% 60% / 0 0 100% 100%;
 				margin: 0 -4px;
 				box-shadow: 0 6px 10px -6px var(--accent);
-				transition: transform 0.5s ease, opacity 0.5s ease;
+				transition: transform var(--duration-slow) var(--ease-standard), opacity var(--duration-slow) var(--ease-standard);
 			}
 			.club-door[data-state='admitted'] .club-rope-chain {
 				transform: translateY(-26px) scaleY(0.2);
@@ -1236,7 +1236,7 @@
 				font-weight: 800;
 				letter-spacing: 0.02em;
 				cursor: pointer;
-				transition: transform 0.12s ease, box-shadow 0.18s ease, filter 0.18s ease;
+				transition: transform var(--duration-fast) var(--ease-standard), box-shadow var(--duration-fast) var(--ease-standard), filter var(--duration-fast) var(--ease-standard);
 				box-shadow: 0 0 24px -6px var(--accent);
 			}
 			.club-door-pay:hover { filter: brightness(1.06); box-shadow: 0 0 34px -4px var(--accent); }
@@ -1326,7 +1326,7 @@
 				display: flex;
 				flex-direction: column;
 				gap: 6px;
-				transition: border-color 0.18s ease, box-shadow 0.18s ease;
+				transition: border-color var(--duration-fast) var(--ease-standard), box-shadow var(--duration-fast) var(--ease-standard);
 				cursor: pointer;
 				position: relative;
 			}
@@ -1398,7 +1398,7 @@
 				height: 100%;
 				border-radius: 3px;
 				background: linear-gradient(90deg, var(--accent), var(--accent-2));
-				transition: width 0.3s linear;
+				transition: width var(--duration-base) linear;
 				will-change: width;
 			}
 			.club-pole-stats {
@@ -1420,7 +1420,7 @@
 				box-shadow:
 					0 4px 12px rgba(255, 59, 214, 0.32),
 					inset 0 1px 0 rgba(255, 255, 255, 0.2);
-				transition: transform 0.08s ease, filter 0.12s ease, box-shadow 0.18s ease;
+				transition: transform var(--duration-instant) var(--ease-standard), filter var(--duration-fast) var(--ease-standard), box-shadow var(--duration-fast) var(--ease-standard);
 				position: relative;
 				overflow: hidden;
 			}
@@ -1430,7 +1430,7 @@
 				inset: 0;
 				background: linear-gradient(135deg, transparent 40%, rgba(255, 255, 255, 0.15) 100%);
 				opacity: 0;
-				transition: opacity 0.18s ease;
+				transition: opacity var(--duration-fast) var(--ease-standard);
 				pointer-events: none;
 			}
 			.club-tip-btn:hover::after { opacity: 1; }
@@ -1495,7 +1495,7 @@
 				padding: 7px 8px;
 				border-radius: 7px;
 				background: rgba(255, 255, 255, 0.02);
-				transition: transform 0.2s ease, opacity 0.2s ease;
+				transition: transform var(--duration-base) var(--ease-standard), opacity var(--duration-base) var(--ease-standard);
 			}
 			.club-lb-row.is-entering {
 				animation: lbRowEnter 0.35s ease forwards;
@@ -1690,7 +1690,7 @@
 					   240px keeps the Poles section visible above the fold. */
 					--club-sheet-peek: 240px;
 					transform: translateY(calc(85dvh - var(--club-sheet-peek) + env(safe-area-inset-bottom, 0px)));
-					transition: transform 0.28s cubic-bezier(0.2, 0.7, 0.2, 1);
+					transition: transform var(--duration-base) cubic-bezier(0.2, 0.7, 0.2, 1);
 					box-shadow: 0 -12px 32px rgba(0, 0, 0, 0.55);
 					z-index: 12;
 					padding-bottom: env(safe-area-inset-bottom, 0px);
@@ -1776,7 +1776,7 @@
 				.club-lb-details > summary::after {
 					content: '▾';
 					font-size: 14px;
-					transition: transform 0.18s ease;
+					transition: transform var(--duration-fast) var(--ease-standard);
 				}
 				.club-lb-details[open] > summary::after {
 					transform: rotate(180deg);
@@ -1802,7 +1802,7 @@
 				font: inherit;
 				cursor: pointer;
 				text-align: left;
-				transition: border-color 0.15s ease, background 0.15s ease, transform 0.08s ease;
+				transition: border-color var(--duration-fast) var(--ease-standard), background var(--duration-fast) var(--ease-standard), transform var(--duration-instant) var(--ease-standard);
 			}
 			.club-avatar-btn:hover {
 				border-color: var(--border-strong);
@@ -1898,7 +1898,7 @@
 				display: grid;
 				place-items: center;
 				cursor: pointer;
-				transition: border-color 0.15s ease, color 0.15s ease;
+				transition: border-color var(--duration-fast) var(--ease-standard), color var(--duration-fast) var(--ease-standard);
 			}
 			.club-pick-x:hover { border-color: var(--accent); color: var(--text); }
 			.club-pick-x:focus-visible { outline: 2px solid var(--accent-2); outline-offset: 2px; }
@@ -1929,7 +1929,7 @@
 				background: rgba(255, 255, 255, 0.02);
 				color: var(--text);
 				cursor: pointer;
-				transition: transform 0.12s ease, border-color 0.15s ease, background 0.15s ease;
+				transition: transform var(--duration-fast) var(--ease-standard), border-color var(--duration-fast) var(--ease-standard), background var(--duration-fast) var(--ease-standard);
 			}
 			.club-pick-tile:hover { transform: translateY(-2px); border-color: var(--border-strong); background: rgba(255, 59, 214, 0.06); }
 			.club-pick-tile:focus-visible { outline: 2px solid var(--accent-2); outline-offset: 2px; }

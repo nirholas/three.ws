@@ -226,7 +226,7 @@
 				font-family: inherit;
 				font-size: 13px;
 				cursor: pointer;
-				transition: background 0.14s;
+				transition: background var(--duration-fast);
 				flex-shrink: 0;
 			}
 			.bnbl-retry:hover {
@@ -288,7 +288,7 @@
 				border: 1px solid var(--stroke, rgba(255, 255, 255, 0.08));
 				border-radius: var(--radius-card, 14px);
 				background: var(--surface-1, rgba(255, 255, 255, 0.03));
-				transition: border-color 0.18s, box-shadow 0.18s;
+				transition: border-color var(--duration-fast), box-shadow var(--duration-fast);
 			}
 			.bnbl-lane[data-state='live'] {
 				border-color: rgba(74, 222, 128, 0.22);
@@ -441,7 +441,7 @@
 				min-width: 2px;
 				background: var(--ink-faint, rgba(255, 255, 255, 0.22));
 				border-radius: 1px;
-				transition: height 0.3s ease-out;
+				transition: height var(--duration-base) var(--ease-out);
 			}
 			@media (prefers-reduced-motion: reduce) {
 				.bnbl-bar {

@@ -58,12 +58,12 @@
 		.lede { font-size: clamp(17px, 2vw, 19px); color: var(--muted); line-height: 1.55; max-width: 660px; margin-bottom: 36px; }
 		.lede strong { color: var(--text); font-weight: 500; }
 
-		.badge-plate { display: inline-block; background: #ffffff; border-radius: 20px; padding: 18px 22px; margin-bottom: 36px; transition: transform .18s ease, box-shadow .18s ease; box-shadow: 0 0 0 1px rgba(255,255,255,.08); }
+		.badge-plate { display: inline-block; background: #ffffff; border-radius: 20px; padding: 18px 22px; margin-bottom: 36px; transition: transform var(--duration-fast) var(--ease-standard), box-shadow var(--duration-fast) var(--ease-standard); box-shadow: 0 0 0 1px rgba(255,255,255,.08); }
 		.badge-plate:hover { transform: translateY(-2px); box-shadow: 0 12px 40px rgba(16,163,127,.22), 0 0 0 1px rgba(255,255,255,.16); }
 		.badge-plate img { display: block; width: 260px; max-width: 100%; height: auto; }
 
 		.cta-row { display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 88px; }
-		.btn { display: inline-flex; align-items: center; gap: 8px; padding: 13px 22px; border-radius: 11px; border: 0; font-size: 14px; font-weight: 600; text-decoration: none; cursor: pointer; transition: filter .15s, background .15s, transform .15s; }
+		.btn { display: inline-flex; align-items: center; gap: 8px; padding: 13px 22px; border-radius: 11px; border: 0; font-size: 14px; font-weight: 600; text-decoration: none; cursor: pointer; transition: filter var(--duration-fast), background var(--duration-fast), transform var(--duration-fast); }
 		.btn-primary { background: var(--accent); color: #000; }
 		.btn-primary:hover { filter: brightness(.9); }
 		.btn-primary:active { transform: translateY(1px); }
@@ -78,7 +78,7 @@
 
 		/* ── Surfaces ─────────────────────────────────────────── */
 		.surface-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 16px; }
-		.surface { background: var(--panel); border: 1px solid var(--border); border-radius: 14px; padding: 22px; transition: border-color .15s, background .15s, transform .15s; }
+		.surface { background: var(--panel); border: 1px solid var(--border); border-radius: 14px; padding: 22px; transition: border-color var(--duration-fast), background var(--duration-fast), transform var(--duration-fast); }
 		a.surface { text-decoration: none; display: block; }
 		a.surface:hover { border-color: #2f4d45; background: var(--panel2); transform: translateY(-2px); }
 		.surface .icon { width: 36px; height: 36px; border-radius: 9px; background: rgba(16,163,127,.1); border: 1px solid rgba(16,163,127,.32); display: flex; align-items: center; justify-content: center; margin-bottom: 14px; }

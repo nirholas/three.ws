@@ -42,7 +42,7 @@
 			}
 			.meter .bar {
 				flex: 1; height: 0%; background: linear-gradient(180deg, #3dc1ff, #5a7a1a);
-				border-radius: 2px; transition: height 0.05s linear;
+				border-radius: 2px; transition: height var(--duration-instant) linear;
 			}
 			.viseme-row { display: flex; justify-content: space-between; font-size: 12px; color: #8a8d98; }
 			.viseme-row code { color: #3dc1ff; font-weight: 600; }
@@ -71,7 +71,7 @@
 				align-self: flex-start; cursor: pointer; font: inherit; font-weight: 600;
 				color: #fff; background: rgba(255, 255, 255, 0.08);
 				border: 1px solid rgba(255, 255, 255, 0.18); border-radius: 7px;
-				padding: 6px 12px; transition: background 0.16s ease, transform 0.16s ease;
+				padding: 6px 12px; transition: background var(--duration-fast) var(--ease-standard), transform var(--duration-fast) var(--ease-standard);
 			}
 			.mic-status .retry:hover { background: rgba(255, 255, 255, 0.16); }
 			.mic-status .retry:active { transform: translateY(1px); }

@@ -58,12 +58,12 @@
 		.lede { font-size: clamp(17px, 2vw, 19px); color: var(--muted); line-height: 1.55; max-width: 680px; margin-bottom: 36px; }
 		.lede strong { color: var(--text); font-weight: 500; }
 
-		.badge-plate { display: inline-block; background: #ffffff; border-radius: 20px; padding: 18px 22px; margin-bottom: 36px; transition: transform .18s ease, box-shadow .18s ease; box-shadow: 0 0 0 1px rgba(255,255,255,.08); }
+		.badge-plate { display: inline-block; background: #ffffff; border-radius: 20px; padding: 18px 22px; margin-bottom: 36px; transition: transform var(--duration-fast) var(--ease-standard), box-shadow var(--duration-fast) var(--ease-standard); box-shadow: 0 0 0 1px rgba(255,255,255,.08); }
 		.badge-plate:hover { transform: translateY(-2px); box-shadow: 0 12px 40px rgba(118,185,0,.22), 0 0 0 1px rgba(255,255,255,.16); }
 		.badge-plate img { display: block; width: 250px; max-width: 100%; height: auto; }
 
 		.cta-row { display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 88px; }
-		.btn { display: inline-flex; align-items: center; gap: 8px; padding: 13px 22px; border-radius: 11px; border: 0; font-size: 14px; font-weight: 600; text-decoration: none; cursor: pointer; transition: filter .15s, background .15s, transform .15s, border-color .15s; }
+		.btn { display: inline-flex; align-items: center; gap: 8px; padding: 13px 22px; border-radius: 11px; border: 0; font-size: 14px; font-weight: 600; text-decoration: none; cursor: pointer; transition: filter var(--duration-fast), background var(--duration-fast), transform var(--duration-fast), border-color var(--duration-fast); }
 		.btn-primary { background: var(--nv); color: #06210a; }
 		.btn-primary:hover { filter: brightness(1.12); }
 		.btn-primary:active { transform: translateY(1px); }
@@ -113,7 +113,7 @@
 
 		/* Read-next cards */
 		.reads { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 16px; }
-		a.read { display: block; text-decoration: none; background: var(--panel); border: 1px solid var(--border); border-radius: 14px; padding: 22px; transition: border-color .15s, background .15s, transform .15s; }
+		a.read { display: block; text-decoration: none; background: var(--panel); border: 1px solid var(--border); border-radius: 14px; padding: 22px; transition: border-color var(--duration-fast), background var(--duration-fast), transform var(--duration-fast); }
 		a.read:hover { border-color: #35471f; background: var(--panel2); transform: translateY(-2px); }
 		a.read .kind { font-size: 11px; text-transform: uppercase; letter-spacing: .09em; color: var(--nv-soft); margin-bottom: 9px; display: block; }
 		a.read h3 { font-size: 15.5px; font-weight: 600; letter-spacing: -0.01em; margin-bottom: 7px; line-height: 1.35; }

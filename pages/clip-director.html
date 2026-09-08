@@ -74,13 +74,13 @@
 			.cd-featstat .gesture { font-size: 26px; line-height: 1; }
 			.cd-featstat .num { font-size: 24px; font-weight: 800; letter-spacing: -.02em; background: linear-gradient(90deg, var(--cd-accent), var(--cd-accent-2)); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; }
 			.cd-text { font-size: 13.5px; color: var(--cd-dim); line-height: 1.5; }
-			.cd-cta { align-self: flex-start; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .06em; color: var(--cd-accent-2); text-decoration: none; border-bottom: 1px solid transparent; padding-bottom: 2px; transition: border-color .15s, color .15s; }
+			.cd-cta { align-self: flex-start; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .06em; color: var(--cd-accent-2); text-decoration: none; border-bottom: 1px solid transparent; padding-bottom: 2px; transition: border-color var(--duration-fast), color var(--duration-fast); }
 			.cd-cta:hover { border-bottom-color: var(--cd-accent-2); }
 			.cd-cta:active { color: var(--cd-accent); }
 			.cd-cta:focus-visible { outline: 2px solid var(--cd-accent-2); outline-offset: 3px; border-radius: 3px; }
 			.cd-alt { font-size: 11.5px; color: var(--cd-faint); border-top: 1px dashed var(--cd-line); padding-top: 10px; line-height: 1.45; }
 			.cd-alt b { color: var(--cd-dim); }
-			.cd-copy { margin-top: auto; appearance: none; border: 1px solid var(--cd-line); background: var(--cd-panel-2); color: var(--cd-text); font: inherit; font-weight: 600; font-size: 13px; padding: 9px; border-radius: 9px; cursor: pointer; transition: background .15s, border-color .15s; }
+			.cd-copy { margin-top: auto; appearance: none; border: 1px solid var(--cd-line); background: var(--cd-panel-2); color: var(--cd-text); font: inherit; font-weight: 600; font-size: 13px; padding: 9px; border-radius: 9px; cursor: pointer; transition: background var(--duration-fast), border-color var(--duration-fast); }
 			.cd-copy:hover { border-color: var(--cd-accent); background: var(--cd-panel); }
 			.cd-copy:focus-visible { outline: 2px solid var(--cd-accent); outline-offset: 2px; }
 			.cd-copy.done { color: var(--cd-green); border-color: var(--cd-green); }
@@ -89,7 +89,7 @@
 			.cd-empty, .cd-error { text-align: center; padding: 48px 20px; border: 1px dashed var(--cd-line); border-radius: 16px; background: var(--cd-panel); }
 			.cd-empty h3, .cd-error h3 { margin: 0 0 8px; font-size: 18px; }
 			.cd-empty p, .cd-error p { color: var(--cd-dim); margin: 0 auto 16px; max-width: 46ch; font-size: 14px; line-height: 1.55; }
-			.cd-empty a, .cd-error button { display: inline-block; background: var(--cd-accent); color: #06232b; border: none; text-decoration: none; padding: 10px 18px; border-radius: 10px; font: inherit; font-weight: 700; cursor: pointer; transition: filter .15s, transform .15s; }
+			.cd-empty a, .cd-error button { display: inline-block; background: var(--cd-accent); color: #06232b; border: none; text-decoration: none; padding: 10px 18px; border-radius: 10px; font: inherit; font-weight: 700; cursor: pointer; transition: filter var(--duration-fast), transform var(--duration-fast); }
 			.cd-empty a:hover, .cd-error button:hover { filter: brightness(1.12); }
 			.cd-empty a:active, .cd-error button:active { transform: translateY(1px); }
 			.cd-empty a:focus-visible, .cd-error button:focus-visible { outline: 2px solid var(--cd-accent); outline-offset: 3px; }

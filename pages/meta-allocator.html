@@ -55,7 +55,7 @@
 			.ma-budget input { flex: 1; width: 100%; background: transparent; border: none; color: var(--ma-text); font-size: 18px; font-weight: 700; padding: 12px 0; outline: none; }
 			.ma-budget span { color: var(--ma-faint); font-weight: 600; font-size: 14px; }
 			.ma-seg { display: inline-flex; background: var(--ma-panel-2); border: 1px solid var(--ma-line); border-radius: 10px; padding: 4px; gap: 4px; width: 100%; }
-			.ma-seg button { flex: 1; appearance: none; border: none; background: transparent; color: var(--ma-dim); font: inherit; font-weight: 600; font-size: 13px; padding: 9px 8px; border-radius: 7px; cursor: pointer; transition: background .15s, color .15s; text-transform: capitalize; }
+			.ma-seg button { flex: 1; appearance: none; border: none; background: transparent; color: var(--ma-dim); font: inherit; font-weight: 600; font-size: 13px; padding: 9px 8px; border-radius: 7px; cursor: pointer; transition: background var(--duration-fast), color var(--duration-fast); text-transform: capitalize; }
 			.ma-seg button:hover { color: var(--ma-text); }
 			.ma-seg button[aria-pressed='true'] { background: var(--ma-accent); color: #fff; }
 			.ma-seg button:focus-visible { outline: 2px solid var(--ma-accent-2); outline-offset: 2px; }
@@ -65,7 +65,7 @@
 			.ma-bar i { display: block; height: 100%; }
 			.ma-grid { display: grid; grid-template-columns: 1fr; gap: 14px; }
 			@media (min-width: 720px) { .ma-grid { grid-template-columns: 1fr 1fr; } }
-			.ma-card { background: var(--ma-panel); border: 1px solid var(--ma-line); border-radius: 14px; padding: 16px; display: flex; flex-direction: column; gap: 10px; transition: transform .15s, border-color .15s; }
+			.ma-card { background: var(--ma-panel); border: 1px solid var(--ma-line); border-radius: 14px; padding: 16px; display: flex; flex-direction: column; gap: 10px; transition: transform var(--duration-fast), border-color var(--duration-fast); }
 			.ma-card:hover { transform: translateY(-2px); border-color: var(--ma-accent); }
 			.ma-card-top { display: flex; align-items: center; gap: 12px; }
 			.ma-ava { width: 42px; height: 42px; border-radius: 50%; object-fit: cover; background: var(--ma-panel-2); border: 1px solid var(--ma-line); flex: none; display: grid; place-items: center; font-weight: 700; color: var(--ma-accent); }
@@ -82,7 +82,7 @@
 			.ma-why { font-size: 12.5px; color: var(--ma-faint); line-height: 1.45; border-top: 1px solid var(--ma-line); padding-top: 9px; }
 			.ma-warn { font-size: 12px; color: var(--ma-amber); display: flex; gap: 6px; align-items: center; }
 			.ma-links { display: flex; gap: 8px; margin-top: 2px; }
-			.ma-links a { flex: 1; text-align: center; font-size: 12.5px; font-weight: 600; text-decoration: none; padding: 8px; border-radius: 8px; border: 1px solid var(--ma-line); color: var(--ma-text); transition: background .15s, border-color .15s; }
+			.ma-links a { flex: 1; text-align: center; font-size: 12.5px; font-weight: 600; text-decoration: none; padding: 8px; border-radius: 8px; border: 1px solid var(--ma-line); color: var(--ma-text); transition: background var(--duration-fast), border-color var(--duration-fast); }
 			.ma-links a:hover { background: var(--ma-panel-2); border-color: var(--ma-accent); }
 			.ma-links a.primary { background: var(--ma-accent); border-color: var(--ma-accent); color: #fff; }
 			.ma-note { background: var(--ma-panel); border: 1px solid var(--ma-line); border-left: 3px solid var(--ma-accent); border-radius: 10px; padding: 14px 16px; margin: 22px 0; font-size: 13.5px; color: var(--ma-dim); line-height: 1.55; }

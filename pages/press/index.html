@@ -61,7 +61,7 @@
 		.prs-asset-body { padding: 14px 16px 16px; display: flex; flex-direction: column; gap: 10px; flex: 1; }
 		.prs-file { font-family: var(--font-mono, ui-monospace, monospace); font-size: .76rem; color: var(--ink, #e8e8e8); word-break: break-all; line-height: 1.5; }
 		.prs-when { font-size: .82rem; color: var(--ink-dim, #888); line-height: 1.5; flex: 1; }
-		.prs-dl { display: inline-flex; align-items: center; gap: 7px; align-self: flex-start; font-size: .8rem; font-weight: 500; text-decoration: none; padding: 8px 13px; border-radius: var(--radius-md, 10px); border: 1px solid var(--stroke-strong, rgba(255,255,255,.14)); color: var(--ink-bright, #fff); background: var(--surface-2, rgba(255,255,255,.05)); transition: background .15s ease, border-color .15s ease, transform .12s ease; }
+		.prs-dl { display: inline-flex; align-items: center; gap: 7px; align-self: flex-start; font-size: .8rem; font-weight: 500; text-decoration: none; padding: 8px 13px; border-radius: var(--radius-md, 10px); border: 1px solid var(--stroke-strong, rgba(255,255,255,.14)); color: var(--ink-bright, #fff); background: var(--surface-2, rgba(255,255,255,.05)); transition: background var(--duration-fast) var(--ease-standard), border-color var(--duration-fast) var(--ease-standard), transform var(--duration-fast) var(--ease-standard); }
 		.prs-dl:hover { background: var(--surface-3, rgba(255,255,255,.08)); border-color: var(--ink-dim, #888); }
 		.prs-dl:active { transform: translateY(1px); }
 		.prs-dl:focus-visible { outline: 2px solid var(--ink-bright, #fff); outline-offset: 2px; }
@@ -82,7 +82,7 @@
 		.prs-quote { border: 1px solid var(--stroke, rgba(255,255,255,.08)); border-radius: var(--radius-lg, 14px); background: var(--surface-1, rgba(255,255,255,.03)); overflow: hidden; margin-bottom: 12px; }
 		.prs-quote-bar { display: flex; align-items: center; justify-content: space-between; gap: 14px; padding: 11px 16px; border-bottom: 1px solid var(--stroke, rgba(255,255,255,.08)); flex-wrap: wrap; }
 		.prs-quote-k { font-family: var(--font-mono, ui-monospace, monospace); font-size: .7rem; letter-spacing: .08em; text-transform: uppercase; color: var(--ink-dim, #888); }
-		.prs-copy { font: inherit; font-size: .78rem; cursor: pointer; padding: 7px 12px; border-radius: var(--radius-md, 10px); border: 1px solid var(--stroke-strong, rgba(255,255,255,.14)); background: var(--surface-2, rgba(255,255,255,.05)); color: var(--ink-bright, #fff); transition: background .15s ease; }
+		.prs-copy { font: inherit; font-size: .78rem; cursor: pointer; padding: 7px 12px; border-radius: var(--radius-md, 10px); border: 1px solid var(--stroke-strong, rgba(255,255,255,.14)); background: var(--surface-2, rgba(255,255,255,.05)); color: var(--ink-bright, #fff); transition: background var(--duration-fast) var(--ease-standard); }
 		.prs-copy:hover { background: var(--surface-3, rgba(255,255,255,.08)); }
 		.prs-copy:focus-visible { outline: 2px solid var(--ink-bright, #fff); outline-offset: 2px; }
 		.prs-quote-body { padding: 16px 18px 18px; color: var(--ink, #e8e8e8); font-size: .94rem; line-height: 1.7; margin: 0; }

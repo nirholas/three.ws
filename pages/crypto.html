@@ -132,7 +132,7 @@
 				font: var(--weight-medium) var(--text-sm) / 1 var(--font-mono);
 				color: var(--ink-dim); background: transparent; border: 1px solid transparent;
 				padding: 0.55em 0.9em; border-radius: var(--radius-md); cursor: pointer;
-				transition: background var(--dur-fast, 120ms) ease, color var(--dur-fast, 120ms) ease;
+				transition: background var(--dur-fast, var(--duration-fast)) var(--ease-standard), color var(--dur-fast, var(--duration-fast)) var(--ease-standard);
 			}
 			.cx-tab:hover { color: var(--ink); background: var(--surface-1); }
 			.cx-tab[aria-selected="true"] { color: var(--ink-bright); background: var(--surface-2); border-color: var(--stroke); }
@@ -155,7 +155,7 @@
 				color: var(--ink-dim); background: var(--surface-2); border: 1px solid var(--stroke);
 				padding: 0.5em 0.75em; border-radius: var(--radius-sm); cursor: pointer;
 				display: inline-flex; align-items: center; gap: 0.5ch;
-				transition: color var(--dur-fast, 120ms) ease, border-color var(--dur-fast, 120ms) ease;
+				transition: color var(--dur-fast, var(--duration-fast)) var(--ease-standard), border-color var(--dur-fast, var(--duration-fast)) var(--ease-standard);
 			}
 			.cx-copy:hover { color: var(--ink-bright); border-color: var(--stroke-strong); }
 			.cx-copy:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
@@ -177,7 +177,7 @@
 			}
 			.cx-table td { padding: var(--space-sm) var(--space-md); border-bottom: 1px solid var(--stroke); vertical-align: top; }
 			.cx-table tr:last-child td { border-bottom: 0; }
-			.cx-table tbody tr { transition: background var(--dur-fast, 120ms) ease; }
+			.cx-table tbody tr { transition: background var(--dur-fast, var(--duration-fast)) var(--ease-standard); }
 			.cx-table tbody tr:hover { background: var(--surface-2); }
 			.cx-table a.cx-ep-link { color: var(--ink-bright); font-weight: var(--weight-medium); text-decoration: none; }
 			.cx-table a.cx-ep-link:hover { text-decoration: underline; }
@@ -239,7 +239,7 @@
 				display: flex; flex-direction: column; gap: var(--space-2xs);
 				background: var(--surface-1); border: 1px solid var(--stroke); border-radius: var(--radius-lg);
 				padding: var(--space-lg); text-decoration: none; color: inherit;
-				transition: transform var(--dur-fast, 120ms) ease, border-color var(--dur-fast, 120ms) ease, background var(--dur-fast, 120ms) ease;
+				transition: transform var(--dur-fast, var(--duration-fast)) var(--ease-standard), border-color var(--dur-fast, var(--duration-fast)) var(--ease-standard), background var(--dur-fast, var(--duration-fast)) var(--ease-standard);
 			}
 			.cx-cta-card:hover { transform: translateY(-2px); border-color: var(--stroke-strong); background: var(--surface-2); }
 			.cx-cta-card:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }

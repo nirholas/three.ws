@@ -131,7 +131,7 @@
 			font-weight: 600;
 			color: var(--al-muted);
 			text-decoration: none;
-			transition: color 0.12s;
+			transition: color var(--duration-fast);
 		}
 		.al-nav-link:hover { color: var(--al-text); }
 		.al-nav-logo:focus-visible,
@@ -155,7 +155,7 @@
 			font-size: 13px;
 			font-weight: 700;
 			text-decoration: none;
-			transition: background 0.12s, border-color 0.12s;
+			transition: background var(--duration-fast), border-color var(--duration-fast);
 		}
 		.al-nav-cta:hover { background: rgba(255,255,255,0.12); border-color: var(--al-text); }
 
@@ -323,7 +323,7 @@
 			font-size: 16px;
 			line-height: 1;
 			cursor: pointer;
-			transition: background 0.12s, border-color 0.12s, transform 0.12s;
+			transition: background var(--duration-fast), border-color var(--duration-fast), transform var(--duration-fast);
 		}
 		.al-spot-nav:hover { background: rgba(255,255,255,0.13); border-color: var(--al-text); }
 		.al-spot-nav:active { transform: scale(0.92); }
@@ -341,7 +341,7 @@
 			border-radius: 50%;
 			background: var(--al-faint);
 			cursor: pointer;
-			transition: background 0.15s, transform 0.15s;
+			transition: background var(--duration-fast), transform var(--duration-fast);
 		}
 		.al-spot-dot:hover { background: var(--al-muted); }
 		.al-spot-dot.is-active { background: var(--al-text); transform: scale(1.35); }
@@ -358,7 +358,7 @@
 			border-radius: 16px;
 			overflow: hidden;
 			box-shadow: 0 18px 60px rgba(0,0,0,0.5);
-			transition: opacity 0.26s ease;
+			transition: opacity var(--duration-base) var(--ease-standard);
 		}
 		.al-spot-screen.is-fading { opacity: 0; }
 		/* A promoted grid card fills the stage; its own screen/info/overlay come
@@ -471,7 +471,7 @@
 			border: 1px solid var(--al-border);
 			border-radius: 12px;
 			overflow: hidden;
-			transition: border-color 0.18s, box-shadow 0.18s;
+			transition: border-color var(--duration-fast), box-shadow var(--duration-fast);
 			cursor: pointer;
 			text-decoration: none;
 			display: flex;
@@ -561,7 +561,7 @@
 			pointer-events: none;
 			opacity: 0;
 			transform: translateY(4px);
-			transition: opacity 0.28s ease, transform 0.28s ease;
+			transition: opacity var(--duration-base) var(--ease-standard), transform var(--duration-base) var(--ease-standard);
 		}
 		.al-card-warming.is-visible {
 			opacity: 1;
@@ -590,7 +590,7 @@
 		}
 		/* Reduced motion: no expanding ring, just a steady dot + the honest text. */
 		@media (prefers-reduced-motion: reduce) {
-			.al-card-warming { transition: opacity 0.28s ease; transform: none; }
+			.al-card-warming { transition: opacity var(--duration-base) var(--ease-standard); transform: none; }
 			.al-warming-pulse { animation: none; opacity: 1; transform: none; }
 		}
 		.al-card-expand {
@@ -607,7 +607,7 @@
 			color: rgba(255,255,255,0.5);
 			z-index: 2;
 			opacity: 0;
-			transition: opacity 0.18s;
+			transition: opacity var(--duration-fast);
 		}
 		.al-card:hover .al-card-expand { opacity: 1; }
 		.al-card-info {
@@ -707,7 +707,7 @@
 			font-size: 11px; font-weight: 800; font-variant-numeric: tabular-nums; letter-spacing: -0.01em;
 			background: rgba(0,0,0,0.55); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
 			border: 1px solid rgba(255,255,255,0.1); color: rgba(255,255,255,0.6);
-			z-index: 2; transition: transform 0.14s ease, border-color 0.14s ease;
+			z-index: 2; transition: transform var(--duration-fast) var(--ease-standard), border-color var(--duration-fast) var(--ease-standard);
 		}
 		.al-card-networth[hidden] { display: none; }
 		.al-card-networth .al-nw-arrow { font-size: 8px; }
@@ -728,7 +728,7 @@
 			font-size: 11px;
 			font-weight: 700;
 			text-decoration: none;
-			transition: background 0.12s, color 0.12s;
+			transition: background var(--duration-fast), color var(--duration-fast);
 		}
 		.al-card-watch-btn:hover { background: rgba(255,255,255,0.14); color: #fff; }
 
@@ -770,7 +770,7 @@
 			font-size: 13px;
 			font-weight: 700;
 			text-decoration: none;
-			transition: opacity 0.12s;
+			transition: opacity var(--duration-fast);
 		}
 		.al-empty-cta:hover { opacity: 0.85; }
 		.al-empty-cta:focus-visible,
@@ -825,7 +825,7 @@
 			color: var(--al-bg);
 			font: 700 13px/1 var(--al-font);
 			cursor: pointer;
-			transition: opacity 0.12s;
+			transition: opacity var(--duration-fast);
 		}
 		.al-error-retry:hover:not(:disabled) { opacity: 0.85; }
 		.al-error-retry:active:not(:disabled) { transform: translateY(1px); }
@@ -838,7 +838,7 @@
 			font-size: 13px;
 			font-weight: 600;
 			text-decoration: none;
-			transition: background 0.12s;
+			transition: background var(--duration-fast);
 		}
 		.al-error-alt:hover { background: var(--al-surface-2); }
 		.al-error-next {
@@ -975,7 +975,7 @@
 			color: var(--al-muted);
 			text-decoration: none;
 			border-right: 1px solid var(--al-border);
-			transition: background 0.12s, color 0.12s;
+			transition: background var(--duration-fast), color var(--duration-fast);
 		}
 		a.al-ticker-item:hover, a.al-ticker-item:focus-visible {
 			background: rgba(255,255,255,0.05);

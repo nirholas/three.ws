@@ -127,7 +127,7 @@
 				border-radius: var(--radius-pill);
 				background: var(--dr-ink-dim);
 				flex: none;
-				transition: background 180ms ease, box-shadow 180ms ease;
+				transition: background var(--duration-fast) var(--ease-standard), box-shadow var(--duration-fast) var(--ease-standard);
 			}
 			.dr[data-state='listening'] .dr-dot { background: var(--dr-live); box-shadow: 0 0 calc(14px * var(--dr-scale)) var(--dr-live); }
 			.dr[data-state='transcribing'] .dr-dot,
@@ -167,7 +167,7 @@
 				font-weight: 600;
 				cursor: pointer;
 				white-space: nowrap;
-				transition: background 140ms ease, border-color 140ms ease, transform 140ms ease;
+				transition: background var(--duration-fast) var(--ease-standard), border-color var(--duration-fast) var(--ease-standard), transform var(--duration-fast) var(--ease-standard);
 			}
 			.dr-pill:hover { background: var(--dr-fill-hi); }
 			.dr-pill:active { transform: scale(0.97); }
@@ -190,7 +190,7 @@
 				text-overflow: ellipsis;
 				white-space: nowrap;
 				opacity: 0;
-				transition: opacity 200ms ease;
+				transition: opacity var(--duration-base) var(--ease-standard);
 			}
 			.dr-heard.is-on { opacity: 1; }
 			.dr-said {
@@ -268,7 +268,7 @@
 				overflow: hidden;
 				white-space: nowrap;
 				text-overflow: ellipsis;
-				transition: background 140ms ease, opacity 140ms ease, transform 140ms ease;
+				transition: background var(--duration-fast) var(--ease-standard), opacity var(--duration-fast) var(--ease-standard), transform var(--duration-fast) var(--ease-standard);
 			}
 			.dr-act:hover:not(:disabled) { background: var(--dr-fill-hi); }
 			.dr-act:active:not(:disabled) { transform: scale(0.97); }
@@ -294,7 +294,7 @@
 				display: flex;
 				align-items: center;
 				justify-content: center;
-				transition: transform 140ms ease, border-color 180ms ease, background 180ms ease;
+				transition: transform var(--duration-fast) var(--ease-standard), border-color var(--duration-fast) var(--ease-standard), background var(--duration-fast) var(--ease-standard);
 			}
 			.dr-talk:focus-visible { outline: 3px solid var(--dr-ink); outline-offset: 4px; }
 			.dr-talk:active { transform: scale(0.96); }
@@ -307,7 +307,7 @@
 				border: 2px solid var(--dr-live);
 				opacity: calc(0.25 + var(--dr-mic, 0) * 0.75);
 				transform: scale(calc(1 + var(--dr-mic, 0) * 0.09));
-				transition: transform 90ms linear, opacity 90ms linear;
+				transition: transform var(--duration-instant) linear, opacity var(--duration-instant) linear;
 				pointer-events: none;
 			}
 			.dr[data-state='idle'] .dr-talk::before,
@@ -375,7 +375,7 @@
 				gap: calc(var(--space-sm) * var(--dr-scale));
 				text-align: left;
 				font: inherit;
-				transition: background 140ms ease, transform 140ms ease;
+				transition: background var(--duration-fast) var(--ease-standard), transform var(--duration-fast) var(--ease-standard);
 			}
 			.dr-card:hover { background: var(--dr-fill-hi); }
 			.dr-card:active { transform: scale(0.985); }

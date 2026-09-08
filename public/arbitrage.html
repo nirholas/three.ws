@@ -89,7 +89,7 @@
 		font-family: inherit;
 		border-radius: 999px;
 		cursor: pointer;
-		transition: color 0.15s ease, border-color 0.15s ease, background 0.15s ease, transform 0.1s ease;
+		transition: color var(--duration-fast) var(--ease-standard), border-color var(--duration-fast) var(--ease-standard), background var(--duration-fast) var(--ease-standard), transform var(--duration-instant) var(--ease-standard);
 	}
 	.chip:hover { color: var(--text); border-color: var(--accent-blue); }
 	.chip:active { transform: translateY(1px); }
@@ -160,7 +160,7 @@
 		border-radius: 12px;
 		padding: 16px;
 		display: flex; flex-direction: column; gap: 12px;
-		transition: border-color 0.15s ease;
+		transition: border-color var(--duration-fast) var(--ease-standard);
 	}
 	.arb:hover { border-color: var(--border-strong); }
 	.arb .top {
@@ -264,7 +264,7 @@
 		border: 1px solid var(--border);
 		border-radius: 8px;
 		font-size: 12.5px;
-		transition: border-color 0.15s ease;
+		transition: border-color var(--duration-fast) var(--ease-standard);
 	}
 	a.provider:hover { border-color: var(--accent-blue); }
 	a.provider:active { border-color: var(--accent-blue); background: var(--panel); }
@@ -313,7 +313,7 @@
 		cursor: pointer;
 		font-weight: 600;
 		font-family: inherit;
-		transition: background 0.15s ease, transform 0.1s ease;
+		transition: background var(--duration-fast) var(--ease-standard), transform var(--duration-instant) var(--ease-standard);
 	}
 	.arb .actions button:active, .arb .actions a:active { transform: translateY(1px); }
 	.arb .actions button[disabled] { cursor: progress; opacity: 0.75; transform: none; }
@@ -398,7 +398,7 @@
 		*, *::before, *::after {
 			animation-duration: 0.01ms !important;
 			animation-iteration-count: 1 !important;
-			transition-duration: 0.01ms !important;
+			transition-duration: var(--duration-instant) !important;
 		}
 	}
 </style>

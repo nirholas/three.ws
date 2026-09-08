@@ -36,16 +36,16 @@
 			.pf-sub code { font-size: .86em; padding: 1px 5px; border-radius: 4px; background: var(--surface-2, #1a1a1a); }
 
 			.pf-form { display: flex; gap: 10px; margin: 26px 0 8px; flex-wrap: wrap; }
-			.pf-input { flex: 1 1 320px; min-width: 0; padding: 11px 14px; border-radius: 10px; font: inherit; font-size: .95rem; color: var(--ink-bright, #fff); background: var(--surface-1, #121212); border: 1px solid var(--line, #2a2a2a); transition: border-color .16s ease, box-shadow .16s ease; }
+			.pf-input { flex: 1 1 320px; min-width: 0; padding: 11px 14px; border-radius: 10px; font: inherit; font-size: .95rem; color: var(--ink-bright, #fff); background: var(--surface-1, #121212); border: 1px solid var(--line, #2a2a2a); transition: border-color var(--duration-fast) var(--ease-standard), box-shadow var(--duration-fast) var(--ease-standard); }
 			.pf-input:hover { border-color: var(--line-bright, #3a3a3a); }
 			.pf-input:focus-visible { outline: none; border-color: var(--accent, #6ea8fe); box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent, #6ea8fe) 25%, transparent); }
-			.pf-go { padding: 11px 20px; border-radius: 10px; font: inherit; font-weight: 600; font-size: .92rem; cursor: pointer; color: #06121f; background: var(--accent, #6ea8fe); border: 1px solid transparent; transition: transform .12s ease, filter .16s ease; }
+			.pf-go { padding: 11px 20px; border-radius: 10px; font: inherit; font-weight: 600; font-size: .92rem; cursor: pointer; color: #06121f; background: var(--accent, #6ea8fe); border: 1px solid transparent; transition: transform var(--duration-fast) var(--ease-standard), filter var(--duration-fast) var(--ease-standard); }
 			.pf-go:hover { filter: brightness(1.08); }
 			.pf-go:active { transform: translateY(1px); }
 			.pf-go:focus-visible { outline: none; box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent, #6ea8fe) 35%, transparent); }
 			.pf-go[disabled] { opacity: .55; cursor: progress; }
 			.pf-examples { display: flex; gap: 8px; flex-wrap: wrap; font-size: .8rem; color: var(--ink-dim, #888); align-items: center; }
-			.pf-chip { padding: 3px 9px; border-radius: 999px; cursor: pointer; font: inherit; font-size: .78rem; color: var(--ink, #ddd); background: var(--surface-2, #1a1a1a); border: 1px solid var(--line, #2a2a2a); transition: border-color .16s ease, color .16s ease; }
+			.pf-chip { padding: 3px 9px; border-radius: 999px; cursor: pointer; font: inherit; font-size: .78rem; color: var(--ink, #ddd); background: var(--surface-2, #1a1a1a); border: 1px solid var(--line, #2a2a2a); transition: border-color var(--duration-fast) var(--ease-standard), color var(--duration-fast) var(--ease-standard); }
 			.pf-chip:hover { border-color: var(--accent, #6ea8fe); color: var(--ink-bright, #fff); }
 			.pf-chip:focus-visible { outline: none; box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent, #6ea8fe) 30%, transparent); }
 

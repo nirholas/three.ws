@@ -56,7 +56,7 @@
 
 		/* sibling vanity surfaces, so the shelf is not a dead end */
 		.related { display:flex; flex-wrap:wrap; gap:.45rem; margin:.9rem 0 0; }
-		.related a { font-size:.76rem; font-weight:600; text-decoration:none; color:var(--muted); border:1px solid var(--border); border-radius:999px; padding:.32rem .75rem; transition:color .15s, border-color .15s, transform .12s; }
+		.related a { font-size:.76rem; font-weight:600; text-decoration:none; color:var(--muted); border:1px solid var(--border); border-radius:999px; padding:.32rem .75rem; transition:color var(--duration-fast), border-color var(--duration-fast), transform var(--duration-fast); }
 		.related a:hover { color:var(--fg); border-color:var(--field-border-active); transform:translateY(-1px); }
 
 		/* custody notice: required, prominent */
@@ -77,7 +77,7 @@
 		.controls input[type=text] { flex:1; min-width:140px; }
 		.controls select:hover, .controls input[type=text]:hover { border-color:var(--field-border-active); }
 		.controls label { font-size:.72rem; color:var(--dim); text-transform:uppercase; letter-spacing:.04em; }
-		.controls .clear { font:inherit; font-size:.78rem; font-weight:600; color:var(--muted); background:none; border:1px solid var(--border); border-radius:8px; padding:.45rem .8rem; cursor:pointer; transition:color .15s, border-color .15s; }
+		.controls .clear { font:inherit; font-size:.78rem; font-weight:600; color:var(--muted); background:none; border:1px solid var(--border); border-radius:8px; padding:.45rem .8rem; cursor:pointer; transition:color var(--duration-fast), border-color var(--duration-fast); }
 		.controls .clear:hover { color:var(--fg); border-color:var(--field-border-active); }
 		.controls .clear[hidden] { display:none; }
 
@@ -88,7 +88,7 @@
 
 		/* grid */
 		.grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(280px,1fr)); gap:.9rem; }
-		.gcard { border:1px solid var(--border); border-radius:var(--radius); background:var(--card-bg); padding:1.1rem; position:relative; overflow:hidden; transition:transform .14s ease, border-color .15s ease; opacity:0; animation:fadein .4s ease forwards; }
+		.gcard { border:1px solid var(--border); border-radius:var(--radius); background:var(--card-bg); padding:1.1rem; position:relative; overflow:hidden; transition:transform var(--duration-fast) var(--ease-standard), border-color var(--duration-fast) var(--ease-standard); opacity:0; animation:fadein .4s ease forwards; }
 		.gcard:hover { transform:translateY(-2px); border-color:var(--field-border-active); }
 		.gcard::before { content:''; position:absolute; inset:0 auto 0 0; width:4px; background:var(--accent,#888); }
 		.gcard .badge { display:inline-flex; align-items:center; gap:.35rem; font-size:.68rem; font-weight:800; text-transform:uppercase; letter-spacing:.06em; padding:.25rem .6rem; border-radius:999px; color:#000; }
@@ -98,7 +98,7 @@
 		.gcard .meta b { color:var(--meta-strong); font-weight:700; display:block; font-size:.95rem; font-family:var(--font-display); }
 		.gcard .price { font-family:var(--font-display); font-size:1.5rem; font-weight:900; color:var(--fg); }
 		.gcard .acts { display:flex; gap:.5rem; margin-top:.95rem; }
-		.gcard .acts a, .gcard .acts button { font:inherit; font-size:.76rem; font-weight:600; text-decoration:none; color:var(--muted); background:none; border:1px solid var(--border); border-radius:7px; padding:.4rem .65rem; cursor:pointer; transition:color .15s, border-color .15s, transform .12s; }
+		.gcard .acts a, .gcard .acts button { font:inherit; font-size:.76rem; font-weight:600; text-decoration:none; color:var(--muted); background:none; border:1px solid var(--border); border-radius:7px; padding:.4rem .65rem; cursor:pointer; transition:color var(--duration-fast), border-color var(--duration-fast), transform var(--duration-fast); }
 		.gcard .acts a:hover, .gcard .acts button:hover { transform:translateY(-1px); color:var(--fg); border-color:var(--field-border-active); }
 		.gcard .acts .buy { color:var(--btn-fg); background:var(--btn-bg); border-color:var(--btn-bg); font-weight:700; }
 		.gcard .acts .buy:hover { color:var(--btn-fg); border-color:var(--btn-bg); }
@@ -108,7 +108,7 @@
 		.pager { display:flex; gap:.8rem; align-items:center; justify-content:center; flex-wrap:wrap; margin:1.4rem 0 0; }
 		.pager[hidden] { display:none; }
 		.pager .shown { font-size:.78rem; color:var(--dim); }
-		.pager button { font:inherit; font-size:.82rem; font-weight:700; color:var(--btn-fg); background:var(--btn-bg); border:1px solid var(--btn-bg); border-radius:8px; padding:.55rem 1.2rem; cursor:pointer; transition:transform .12s, opacity .15s; }
+		.pager button { font:inherit; font-size:.82rem; font-weight:700; color:var(--btn-fg); background:var(--btn-bg); border:1px solid var(--btn-bg); border-radius:8px; padding:.55rem 1.2rem; cursor:pointer; transition:transform var(--duration-fast), opacity var(--duration-fast); }
 		.pager button:hover:not(:disabled) { transform:translateY(-1px); }
 		.pager button:disabled { opacity:.55; cursor:progress; }
 		.pager .pager-error { font-size:.78rem; color:var(--custody-strong); }
@@ -120,7 +120,7 @@
 		.state .ctas { display:flex; gap:.6rem; justify-content:center; flex-wrap:wrap; margin-top:1rem; }
 		/* Matches the anchor AND the button form: the retry control is a <button>,
 		   and an `a.cta` selector left it rendering as raw browser chrome. */
-		.state .cta { display:inline-block; font:inherit; color:var(--btn-fg); background:var(--btn-bg); border:1px solid var(--btn-bg); text-decoration:none; font-weight:700; border-radius:8px; padding:.55rem 1.1rem; cursor:pointer; transition:transform .12s; }
+		.state .cta { display:inline-block; font:inherit; color:var(--btn-fg); background:var(--btn-bg); border:1px solid var(--btn-bg); text-decoration:none; font-weight:700; border-radius:8px; padding:.55rem 1.1rem; cursor:pointer; transition:transform var(--duration-fast); }
 		.state .cta:hover { transform:translateY(-1px); }
 		.state .cta.ghost { color:var(--muted); background:none; border-color:var(--border); }
 		.state .cta.ghost:hover { color:var(--fg); border-color:var(--field-border-active); }

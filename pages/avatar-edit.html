@@ -88,7 +88,7 @@
 				font-size: 13px;
 				font-family: inherit;
 				font-weight: 500;
-				transition: color 0.15s, border-color 0.15s, background 0.15s;
+				transition: color var(--duration-fast), border-color var(--duration-fast), background var(--duration-fast);
 			}
 			.ae-btn:hover { color: var(--text); border-color: var(--text-3); }
 			.ae-btn[disabled] { opacity: 0.4; cursor: default; }
@@ -149,7 +149,7 @@
 				cursor: pointer;
 				font-family: inherit;
 				border-bottom: 2px solid transparent;
-				transition: color 0.15s, border-color 0.15s;
+				transition: color var(--duration-fast), border-color var(--duration-fast);
 				white-space: nowrap;
 			}
 			.ae-tab:hover { color: var(--text-2); }
@@ -228,7 +228,7 @@
 				font-size: 13px;
 				font-family: inherit;
 				outline: none;
-				transition: border-color 0.15s;
+				transition: border-color var(--duration-fast);
 			}
 			.ae-search:focus { border-color: var(--accent); }
 			.ae-search::placeholder { color: var(--text-3); }
@@ -249,7 +249,7 @@
 				border-radius: 12px;
 				padding: 10px 10px 8px;
 				cursor: pointer;
-				transition: border-color 0.15s, transform 0.15s, background 0.15s;
+				transition: border-color var(--duration-fast), transform var(--duration-fast), background var(--duration-fast);
 				color: inherit;
 				text-align: left;
 				font-family: inherit;
@@ -396,7 +396,7 @@
 				display: flex;
 				align-items: center;
 				justify-content: space-between;
-				transition: background 0.12s;
+				transition: background var(--duration-fast);
 				user-select: none;
 			}
 			.ae-sculpt-group summary::-webkit-details-marker { display: none; }
@@ -406,7 +406,7 @@
 				font-size: 11px;
 				margin-right: 8px;
 				display: inline-block;
-				transition: transform 0.18s;
+				transition: transform var(--duration-fast);
 			}
 			.ae-sculpt-group[open] summary::before { transform: rotate(90deg); }
 			.ae-sculpt-group summary:hover { background: var(--panel-2); }
@@ -567,7 +567,7 @@
 				cursor: grab;
 				touch-action: none;
 				z-index: 2;
-				transition: box-shadow 0.12s;
+				transition: box-shadow var(--duration-fast);
 			}
 			.ae-blend-puck:active { cursor: grabbing; box-shadow: 0 0 0 5px rgba(255, 255, 255, 0.35), 0 3px 12px rgba(0,0,0,0.6); }
 			.ae-blend-desc {

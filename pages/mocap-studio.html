@@ -255,7 +255,7 @@
 				margin: 0 0 16px;
 				text-align: center;
 				line-height: 1;
-				transition: color 0.2s;
+				transition: color var(--duration-base);
 			}
 			.timer.recording {
 				color: var(--rec);
@@ -296,7 +296,7 @@
 				min-width: 0;
 				min-height: 44px;
 				outline: none;
-				transition: border-color 0.15s;
+				transition: border-color var(--duration-fast);
 			}
 			.field-row input:focus,
 			.field-row select:focus,
@@ -325,7 +325,7 @@
 				font-family: var(--font-body);
 				border: 0;
 				cursor: pointer;
-				transition: opacity 0.15s, transform 0.1s, background 0.15s;
+				transition: opacity var(--duration-fast), transform var(--duration-instant), background var(--duration-fast);
 				min-height: 44px;
 				white-space: nowrap;
 			}
@@ -381,7 +381,7 @@
 				display: flex;
 				align-items: center;
 				gap: 10px;
-				transition: border-color 0.15s, background 0.15s;
+				transition: border-color var(--duration-fast), background var(--duration-fast);
 			}
 			.clip:hover { border-color: var(--hairline-strong); background: rgba(255,255,255,0.04); }
 			.clip .meta { flex: 1; min-width: 0; }
@@ -426,7 +426,7 @@
 				font-size: 11.5px;
 				cursor: pointer;
 				font-family: var(--font-body);
-				transition: color 0.15s, border-color 0.15s;
+				transition: color var(--duration-fast), border-color var(--duration-fast);
 			}
 			.clip-btn:hover { color: var(--text); border-color: var(--hairline-strong); }
 

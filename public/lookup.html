@@ -105,7 +105,7 @@
 				color: var(--fg);
 				border-radius: 6px;
 				cursor: pointer;
-				transition: background 0.15s ease, border-color 0.15s ease;
+				transition: background var(--duration-fast) var(--ease-standard), border-color var(--duration-fast) var(--ease-standard);
 			}
 			.row button:hover {
 				background: var(--surface-3);
@@ -273,7 +273,7 @@
 				background: var(--surface-2);
 				color: var(--fg);
 				border-radius: 4px;
-				transition: background 0.15s ease;
+				transition: background var(--duration-fast) var(--ease-standard);
 			}
 			.copy-btn:hover {
 				background: var(--surface-3);
@@ -297,8 +297,8 @@
 				color: var(--fg);
 				background: var(--bg);
 				transition:
-					background 0.15s ease,
-					border-color 0.15s ease;
+					background var(--duration-fast) var(--ease-standard),
+					border-color var(--duration-fast) var(--ease-standard);
 			}
 			.links a:hover {
 				background: var(--surface-3);

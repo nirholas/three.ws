@@ -70,7 +70,7 @@
 
 			.ms-dropzone {
 				border: 1.5px dashed var(--hairline-2, #2c2c2c); border-radius: 12px;
-				padding: 42px 32px; cursor: pointer; transition: border-color 0.18s, background 0.18s;
+				padding: 42px 32px; cursor: pointer; transition: border-color var(--duration-fast), background var(--duration-fast);
 				display: flex; flex-direction: column; align-items: center; gap: 10px; width: min(520px, 90%);
 			}
 			.ms-dropzone:hover, .ms-dropzone:focus-visible, .ms-dropzone.is-drag {
@@ -104,7 +104,7 @@
 				appearance: none; border: 1px solid var(--hairline-2, #2c2c2c); border-radius: 8px;
 				background: var(--surface-1, #151515); color: var(--text, #f6f6f6);
 				padding: 8px 14px; font-size: 13px; cursor: pointer;
-				transition: background 0.15s, border-color 0.15s, transform 0.08s;
+				transition: background var(--duration-fast), border-color var(--duration-fast), transform var(--duration-instant);
 			}
 			.ms-btn:hover { background: var(--surface-2, #1d1d1d); border-color: var(--text-3, #555); }
 			.ms-btn:active { transform: translateY(1px); }
@@ -120,7 +120,7 @@
 			.ms-avatar-chip {
 				appearance: none; border: 1px solid var(--hairline-2, #2c2c2c); border-radius: 18px;
 				background: var(--surface-1, #141414); color: var(--text-2, #b4b4b4);
-				padding: 6px 13px; font-size: 12.5px; cursor: pointer; transition: all 0.15s;
+				padding: 6px 13px; font-size: 12.5px; cursor: pointer; transition: all var(--duration-fast);
 			}
 			.ms-avatar-chip:hover { color: var(--text, #f6f6f6); border-color: var(--text-3, #555); }
 			.ms-avatar-chip[aria-pressed='true'] { background: var(--text, #f6f6f6); color: var(--bg, #060606); border-color: var(--text, #f6f6f6); font-weight: 600; }

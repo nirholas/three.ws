@@ -123,7 +123,7 @@
     font-weight: bold;
     color: var(--green);
     font-variant-numeric: tabular-nums;
-    transition: color 0.3s;
+    transition: color var(--duration-base);
   }
   .stat-value.flash { color: #fff; }
 
@@ -147,7 +147,7 @@
     display: flex;
     gap: 12px;
     animation: fadeIn 0.5s ease;
-    transition: transform 0.2s, box-shadow 0.2s;
+    transition: transform var(--duration-base), box-shadow var(--duration-base);
   }
   .token-card:hover {
     transform: translateY(-2px);
@@ -172,7 +172,7 @@
   .token-meta { margin-top: 2px; font-size: 11px; color: #777; }
   .token-links { margin-top: 8px; font-size: 11px; display: flex; gap: 10px; align-items: center; }
   .token-watch { background: none; border: 1px solid var(--medium-grey); border-radius: 6px; color: #666;
-    font-size: 14px; line-height: 1; padding: 2px 7px; cursor: pointer; transition: color .15s, border-color .15s; }
+    font-size: 14px; line-height: 1; padding: 2px 7px; cursor: pointer; transition: color var(--duration-fast), border-color var(--duration-fast); }
   .token-watch.watched { color: #7c83ff; border-color: #7c83ff; }
   .token-watch:hover { color: #fff; border-color: #aaa; }
   .pl-oracle-badge { margin-left: auto; flex-shrink: 0; }
@@ -180,7 +180,7 @@
     display: inline-flex; align-items: center; gap: 4px;
     background: rgba(0,0,0,0.5); border: 1px solid rgba(255,255,255,0.1);
     border-radius: 6px; padding: 2px 7px; text-decoration: none;
-    transition: background 0.12s, border-color 0.12s;
+    transition: background var(--duration-fast), border-color var(--duration-fast);
   }
   .pl-ob-link:hover { background: rgba(255,255,255,0.07); border-color: rgba(255,255,255,0.22); }
   .pl-ob-score { font: 700 11px/1 monospace; font-variant-numeric: tabular-nums; }
@@ -213,7 +213,7 @@
     font-size: 11px;
     font-family: inherit;
     cursor: pointer;
-    transition: color .13s, border-color .13s, background .13s;
+    transition: color var(--duration-fast), border-color var(--duration-fast), background var(--duration-fast);
     white-space: nowrap;
   }
   .fb-btn:hover { color: #aaa; border-color: #444; }
@@ -308,7 +308,7 @@
     font-size: 13px;
     font-weight: bold;
     cursor: pointer;
-    transition: transform 0.15s, box-shadow 0.15s, filter 0.15s;
+    transition: transform var(--duration-fast), box-shadow var(--duration-fast), filter var(--duration-fast);
   }
   .feed-error button:hover { filter: brightness(1.1); box-shadow: 0 0 14px var(--glow-color); }
   .feed-error button:active { transform: translateY(1px); }

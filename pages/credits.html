@@ -174,8 +174,8 @@
 				border-radius: 8px;
 				cursor: pointer;
 				transition:
-					background 0.15s,
-					color 0.15s;
+					background var(--duration-fast),
+					color var(--duration-fast);
 			}
 			.seg button[aria-pressed='true'] {
 				background: var(--btn-primary-bg, var(--accent, #6c8cff));
@@ -260,8 +260,8 @@
 				background: var(--btn-primary-bg, var(--accent, #6c8cff));
 				color: var(--btn-primary-fg, #0a0a0a);
 				transition:
-					background 0.15s,
-					opacity 0.15s;
+					background var(--duration-fast),
+					opacity var(--duration-fast);
 			}
 			.btn:not(.secondary):hover:not(:disabled) {
 				background: var(--btn-primary-bg-hover, rgba(255, 255, 255, 0.88));
@@ -468,8 +468,8 @@
 				font-weight: 600;
 				cursor: pointer;
 				transition:
-					color 0.15s,
-					border-color 0.15s;
+					color var(--duration-fast),
+					border-color var(--duration-fast);
 			}
 			.copy-addr:hover:not(:disabled) {
 				color: var(--ink, #e8ebf2);

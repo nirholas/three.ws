@@ -272,7 +272,7 @@
 				font-family: inherit;
 				font-size: 12.5px;
 				cursor: pointer;
-				transition: background 0.14s;
+				transition: background var(--duration-fast);
 			}
 			.bnb-retry:hover {
 				background: rgba(255, 255, 255, 0.1);
@@ -322,9 +322,9 @@
 				border-radius: var(--radius-card, 14px);
 				background: var(--surface-1, rgba(255, 255, 255, 0.03));
 				transition:
-					border-color 0.18s,
-					transform 0.18s,
-					box-shadow 0.18s;
+					border-color var(--duration-fast),
+					transform var(--duration-fast),
+					box-shadow var(--duration-fast);
 			}
 			.bnb-card:hover {
 				border-color: var(--stroke-strong, rgba(255, 255, 255, 0.14));
@@ -456,8 +456,8 @@
 				font-size: 13px;
 				font-weight: 500;
 				transition:
-					background 0.14s,
-					border-color 0.14s;
+					background var(--duration-fast),
+					border-color var(--duration-fast);
 			}
 			.bnb-cta:hover {
 				background: rgba(255, 255, 255, 0.12);

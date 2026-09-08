@@ -68,7 +68,7 @@
 				font-size: 13px;
 				font-weight: 600;
 				text-decoration: none;
-				transition: top 0.15s ease;
+				transition: top var(--duration-fast) var(--ease-standard);
 			}
 			.skip-link:focus,
 			.skip-link:focus-visible {
@@ -144,8 +144,8 @@
 				overflow: hidden;
 				cursor: pointer;
 				transition:
-					border-color 0.15s ease,
-					transform 0.15s ease;
+					border-color var(--duration-fast) var(--ease-standard),
+					transform var(--duration-fast) var(--ease-standard);
 			}
 			.market-card-avatar:hover {
 				border-color: var(--stroke-strong);
@@ -297,7 +297,7 @@
 				--poster-color: transparent;
 				background: transparent;
 				opacity: 0;
-				transition: opacity 0.4s ease;
+				transition: opacity var(--duration-slow) var(--ease-standard);
 			}
 			.market-hero-slide.mv-loaded model-viewer,
 			.market-hero-slide.mv-poster-ready model-viewer {
@@ -321,7 +321,7 @@
 				color: rgba(244, 244, 245, 0.85);
 				font-family: var(--font-display);
 				pointer-events: none;
-				transition: opacity 0.5s ease;
+				transition: opacity var(--duration-slow) var(--ease-standard);
 			}
 			.market-hero-placeholder::after {
 				content: '';
@@ -455,8 +455,8 @@
 				font-size: 13px;
 				cursor: pointer;
 				transition:
-					transform 0.15s ease,
-					box-shadow 0.15s ease;
+					transform var(--duration-fast) var(--ease-standard),
+					box-shadow var(--duration-fast) var(--ease-standard);
 			}
 			.market-hero-cta:hover {
 				transform: translateY(-1px);
@@ -500,7 +500,7 @@
 				border: 0;
 				background-color: rgba(255, 255, 255, 0.12);
 				cursor: pointer;
-				transition: background 0.2s ease;
+				transition: background var(--duration-base) var(--ease-standard);
 			}
 			.market-hero-dots button.active {
 				/* background-color, not the shorthand: the shorthand resets
@@ -537,7 +537,7 @@
 				font-size: 12px;
 				cursor: pointer;
 				font-weight: 500;
-				transition: all 0.15s ease;
+				transition: all var(--duration-fast) var(--ease-standard);
 			}
 			.market-chip:hover {
 				border-color: #2a2a2a;
@@ -556,7 +556,7 @@
 				--poster-color: transparent;
 				background: transparent;
 				opacity: 0;
-				transition: opacity 0.35s ease;
+				transition: opacity var(--duration-slow) var(--ease-standard);
 			}
 			.market-card-avatar.mv-loaded .thumb model-viewer,
 			.market-card-avatar.mv-poster-ready .thumb model-viewer {
@@ -579,7 +579,7 @@
 					radial-gradient(circle at 50% 95%, rgba(255, 255, 255, 0.05), transparent 70%),
 					linear-gradient(180deg, var(--stage), var(--stage-black));
 				pointer-events: none;
-				transition: opacity 0.4s ease;
+				transition: opacity var(--duration-slow) var(--ease-standard);
 			}
 			.market-card-avatar.mv-loaded .thumb .mv-placeholder {
 				opacity: 0;
@@ -675,7 +675,7 @@
 				border: 1px solid rgba(255, 255, 255, 0.14);
 				font-size: 22px;
 				cursor: pointer;
-				transition: background 0.15s ease;
+				transition: background var(--duration-fast) var(--ease-standard);
 				font-family: inherit;
 			}
 			.market-lobby-close:hover {
@@ -750,7 +750,7 @@
 				font-size: 12px;
 				font-weight: 600;
 				cursor: pointer;
-				transition: background 0.15s ease;
+				transition: background var(--duration-fast) var(--ease-standard);
 			}
 			.market-theme-strip .market-theme-cta:hover {
 				background: rgba(255, 255, 255, 0.14);
@@ -786,9 +786,9 @@
 				cursor: pointer;
 				scroll-snap-align: start;
 				transition:
-					border-color 0.18s ease,
-					transform 0.18s ease,
-					box-shadow 0.18s ease;
+					border-color var(--duration-fast) var(--ease-standard),
+					transform var(--duration-fast) var(--ease-standard),
+					box-shadow var(--duration-fast) var(--ease-standard);
 				text-align: left;
 				appearance: none;
 				color: inherit;
@@ -880,7 +880,7 @@
 				font-size: 30px;
 				font-weight: 700;
 				color: rgba(255, 255, 255, 0.16);
-				transition: opacity 0.4s ease;
+				transition: opacity var(--duration-slow) var(--ease-standard);
 				pointer-events: none;
 			}
 			.market-theme-pick.mv-loaded .market-theme-pick-placeholder {
@@ -907,7 +907,7 @@
 			}
 			@media (prefers-reduced-motion: reduce) {
 				.market-theme-pick {
-					transition: border-color 0.18s ease;
+					transition: border-color var(--duration-fast) var(--ease-standard);
 				}
 				.market-theme-pick:hover,
 				.market-theme-pick:focus-visible {
@@ -964,9 +964,9 @@
 				cursor: pointer;
 				font-family: inherit;
 				transition:
-					background 0.15s ease,
-					color 0.15s ease,
-					border-color 0.15s ease;
+					background var(--duration-fast) var(--ease-standard),
+					color var(--duration-fast) var(--ease-standard),
+					border-color var(--duration-fast) var(--ease-standard);
 			}
 			.market-card-avatar .card-tags .tag-pill:hover {
 				background: rgba(255, 255, 255, 0.18);
@@ -1095,8 +1095,8 @@
 				font-size: 11px;
 				opacity: 0.6;
 				transition:
-					opacity 0.15s ease,
-					transform 0.15s ease;
+					opacity var(--duration-fast) var(--ease-standard),
+					transform var(--duration-fast) var(--ease-standard);
 			}
 			.market-card-avatar:hover .footer .open-cta {
 				opacity: 1;
@@ -1120,7 +1120,7 @@
 				position: absolute;
 				inset: 0;
 				opacity: 0;
-				transition: opacity 0.6s ease;
+				transition: opacity var(--duration-slow) var(--ease-standard);
 				pointer-events: none;
 			}
 			.market-hero-slide.active {
@@ -1144,7 +1144,7 @@
 				justify-content: center;
 				padding: 24px;
 				opacity: 0;
-				transition: opacity 0.2s ease;
+				transition: opacity var(--duration-base) var(--ease-standard);
 			}
 			.avatar-modal-overlay.show {
 				opacity: 1;
@@ -1273,7 +1273,7 @@
 				font-size: 13px;
 				font-family: inherit;
 				outline: none;
-				transition: border-color 0.15s;
+				transition: border-color var(--duration-fast);
 			}
 			.avatar-modal-sale input[type='number']:focus,
 			.avatar-modal-sale input[type='text']:focus {
@@ -1307,7 +1307,7 @@
 				font-size: 13px;
 				cursor: pointer;
 				font-family: inherit;
-				transition: transform 0.15s;
+				transition: transform var(--duration-fast);
 			}
 			.avatar-modal-sale button.sale-save {
 				background: #fafafa;
@@ -1362,8 +1362,8 @@
 				text-decoration: none;
 				display: block;
 				transition:
-					transform 0.15s ease,
-					background 0.15s ease;
+					transform var(--duration-fast) var(--ease-standard),
+					background var(--duration-fast) var(--ease-standard);
 			}
 			.avatar-modal-actions .btn-primary {
 				background: #fafafa;
@@ -1645,8 +1645,8 @@
 				gap: 10px;
 				cursor: pointer;
 				transition:
-					border-color 0.15s ease,
-					transform 0.15s ease;
+					border-color var(--duration-fast) var(--ease-standard),
+					transform var(--duration-fast) var(--ease-standard);
 			}
 			.market-skill-card:hover {
 				border-color: var(--stroke-strong);
@@ -1666,11 +1666,11 @@
 				color: #fafafa;
 				font-weight: 500;
 				opacity: 0.55;
-				transition: opacity 0.15s ease;
+				transition: opacity var(--duration-fast) var(--ease-standard);
 			}
 			.market-skill-card .open-cta-arrow {
 				display: inline-block;
-				transition: transform 0.15s ease;
+				transition: transform var(--duration-fast) var(--ease-standard);
 			}
 			.market-skill-card:hover .open-cta,
 			.market-skill-card:focus-visible .open-cta {
@@ -1780,8 +1780,8 @@
 				font-size: 13px;
 				cursor: pointer;
 				transition:
-					background 0.15s ease,
-					border-color 0.15s ease;
+					background var(--duration-fast) var(--ease-standard),
+					border-color var(--duration-fast) var(--ease-standard);
 				font-family: inherit;
 			}
 			.market-empty-cta-btn:hover {
@@ -1946,7 +1946,7 @@
 				border-radius: 999px;
 				font-size: 12px;
 				cursor: pointer;
-				transition: all 0.15s;
+				transition: all var(--duration-fast);
 			}
 			.payment-chain-pill:hover {
 				border-color: #404040;
@@ -2249,7 +2249,7 @@
 				color: var(--text-1, #e6e6e6);
 				font-size: 12.5px;
 				text-decoration: none;
-				transition: border-color 0.15s ease, transform 0.15s ease;
+				transition: border-color var(--duration-fast) var(--ease-standard), transform var(--duration-fast) var(--ease-standard);
 			}
 			.market-pulse-item:hover {
 				border-color: color-mix(in srgb, var(--accent) 55%, var(--stroke));
@@ -2336,7 +2336,7 @@
 				font-size: 12px;
 				color: var(--text-3);
 				text-decoration: none;
-				transition: color 0.15s;
+				transition: color var(--duration-fast);
 			}
 			.mkt-top-see-all:hover { color: var(--text); }
 			.mkt-top-podium {
@@ -2356,7 +2356,7 @@
 				cursor: pointer;
 				position: relative;
 				overflow: hidden;
-				transition: border-color 0.18s, transform 0.18s, box-shadow 0.18s;
+				transition: border-color var(--duration-fast), transform var(--duration-fast), box-shadow var(--duration-fast);
 				gap: 2px;
 				/* The skeleton card and the loaded card have to be the same box, or
 				   the swap moves the whole page. Measured against production on
@@ -2602,9 +2602,9 @@
 				gap: 12px;
 				cursor: pointer;
 				transition:
-					border-color 0.15s ease,
-					transform 0.15s ease,
-					box-shadow 0.15s ease;
+					border-color var(--duration-fast) var(--ease-standard),
+					transform var(--duration-fast) var(--ease-standard),
+					box-shadow var(--duration-fast) var(--ease-standard);
 			}
 			.market-anim-card:hover {
 				border-color: rgba(255, 255, 255, 0.18);
@@ -2671,7 +2671,7 @@
 				font-size: 11px;
 				color: #fafafa;
 				opacity: 0;
-				transition: opacity 0.15s ease;
+				transition: opacity var(--duration-fast) var(--ease-standard);
 				flex: 0 0 auto;
 				font-weight: 500;
 			}
@@ -2770,8 +2770,8 @@
 				font-size: 13px;
 				text-decoration: none;
 				transition:
-					transform 0.15s ease,
-					box-shadow 0.15s ease;
+					transform var(--duration-fast) var(--ease-standard),
+					box-shadow var(--duration-fast) var(--ease-standard);
 				white-space: nowrap;
 			}
 			.market-memory-cta-btn:hover {
@@ -2800,8 +2800,8 @@
 				display: flex;
 				gap: 14px;
 				transition:
-					border-color 0.15s ease,
-					transform 0.15s ease;
+					border-color var(--duration-fast) var(--ease-standard),
+					transform var(--duration-fast) var(--ease-standard);
 			}
 			.market-memory-type-card:hover {
 				border-color: rgba(255, 255, 255, 0.15);
@@ -2891,7 +2891,7 @@
 				gap: 16px;
 				padding: 18px 20px;
 				background: var(--surface-1);
-				transition: background 0.15s ease;
+				transition: background var(--duration-fast) var(--ease-standard);
 			}
 			.memory-step:hover {
 				background: #141414;
@@ -3099,7 +3099,7 @@
 				.market-page *::after {
 					animation-duration: 0.001ms !important;
 					animation-iteration-count: 1 !important;
-					transition-duration: 0.001ms !important;
+					transition-duration: var(--duration-instant) !important;
 					scroll-behavior: auto !important;
 				}
 				.market-hero-placeholder::after,

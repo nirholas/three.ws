@@ -55,7 +55,7 @@
 
 		/* ── Difficulty meter ── */
 		.meter { display: flex; gap: 4px; margin-top: .65rem; }
-		.meter .seg { flex: 1; height: 7px; border-radius: 4px; background: #2a2a2a; transition: background .15s; }
+		.meter .seg { flex: 1; height: 7px; border-radius: 4px; background: #2a2a2a; transition: background var(--duration-fast); }
 		.lit-1, .lit-2, .lit-3, .lit-4 { background: #4caf50 !important; }
 		.lit-5 { background: #fb8c00 !important; }
 		.lit-6 { background: #d32f2f !important; }
@@ -78,7 +78,7 @@
 		.cores-row input[type=range]::-webkit-slider-thumb {
 			-webkit-appearance: none; appearance: none; width: 18px; height: 18px; border-radius: 50%;
 			background: #fff; cursor: pointer; border: 3px solid #000; box-shadow: 0 0 0 1px rgba(255,255,255,0.2);
-			transition: transform .1s;
+			transition: transform var(--duration-instant);
 		}
 		.cores-row input[type=range]::-webkit-slider-thumb:hover { transform: scale(1.15); }
 		.cores-row input[type=range]::-moz-range-thumb {

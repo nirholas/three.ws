@@ -37,7 +37,7 @@
 			.viewer-label { position: absolute; top: 12px; left: 12px; background: rgba(0,0,0,0.6); padding: 5px 11px; border-radius: 999px; font-size: 11.5px; color: #76e0a1; font-weight: 600; letter-spacing: 0.02em; }
 			.viewer-badge { position: absolute; top: 12px; right: 12px; background: rgba(0,0,0,0.6); padding: 5px 11px; border-radius: 999px; font-size: 11.5px; color: #8a8d98; font-weight: 600; }
 			.viewer-badge b { color: #cfeede; }
-			.viewer-loading { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; flex-direction: column; gap: 12px; color: #8a8d98; font-size: 13px; transition: opacity 0.3s ease; }
+			.viewer-loading { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; flex-direction: column; gap: 12px; color: #8a8d98; font-size: 13px; transition: opacity var(--duration-base) var(--ease-standard); }
 			.viewer-loading[hidden] { display: none; }
 			.spinner { width: 30px; height: 30px; border-radius: 50%; border: 3px solid #1c241d; border-top-color: #76e0a1; animation: spin 0.8s linear infinite; }
 			@keyframes spin { to { transform: rotate(360deg); } }
@@ -50,7 +50,7 @@
 			.field { display: flex; flex-direction: column; gap: 5px; }
 			.grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
 			.btns { display: flex; gap: 8px; }
-			.panel button { background: #76e0a1; color: #06140c; border: 0; border-radius: 9px; padding: 11px 14px; font-weight: 700; cursor: pointer; font: inherit; transition: filter 0.15s ease, transform 0.1s ease; flex: 1; display: inline-flex; align-items: center; justify-content: center; gap: 8px; }
+			.panel button { background: #76e0a1; color: #06140c; border: 0; border-radius: 9px; padding: 11px 14px; font-weight: 700; cursor: pointer; font: inherit; transition: filter var(--duration-fast) var(--ease-standard), transform var(--duration-instant) var(--ease-standard); flex: 1; display: inline-flex; align-items: center; justify-content: center; gap: 8px; }
 			.panel button:hover:not(:disabled) { filter: brightness(1.07); }
 			.panel button:active:not(:disabled) { transform: translateY(1px); }
 			.panel button:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
@@ -67,7 +67,7 @@
 			.shapes { display: flex; flex-direction: column; gap: 6px; }
 			.shape-row { display: grid; grid-template-columns: 96px 1fr; gap: 8px; align-items: center; font-size: 11.5px; color: #8a8d98; font-family: ui-monospace, monospace; }
 			.meter { height: 7px; border-radius: 4px; background: rgba(118,224,161,0.12); overflow: hidden; }
-			.meter > span { display: block; height: 100%; width: 0%; background: linear-gradient(90deg,#3aa873,#76e0a1); border-radius: 4px; transition: width 0.05s linear; }
+			.meter > span { display: block; height: 100%; width: 0%; background: linear-gradient(90deg,#3aa873,#76e0a1); border-radius: 4px; transition: width var(--duration-instant) linear; }
 			.a2f-error { background: rgba(255, 120, 86, 0.08); border: 1px solid rgba(255, 120, 86, 0.3); color: #ffc6ad; border-radius: 9px; padding: 11px 13px; font-size: 13px; line-height: 1.5; display: flex; align-items: center; gap: 10px; justify-content: space-between; }
 			.a2f-error[hidden] { display: none; }
 			.a2f-error span { flex: 1; }

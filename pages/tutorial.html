@@ -151,7 +151,7 @@
 				color: rgba(255, 255, 255, 0.5);
 				text-decoration: none;
 				margin-bottom: 1.1rem;
-				transition: color 0.15s ease;
+				transition: color var(--duration-fast) var(--ease-standard);
 			}
 
 			.tdoc-back-link:hover {
@@ -160,7 +160,7 @@
 			.tdoc-back-link svg {
 				width: 12px;
 				height: 12px;
-				transition: transform 0.15s ease;
+				transition: transform var(--duration-fast) var(--ease-standard);
 			}
 			.tdoc-back-link:hover svg {
 				transform: translateX(-2px);
@@ -392,7 +392,7 @@
 				color: var(--tdoc-accent, #ffffff);
 				text-decoration: none;
 				border-bottom: 1px solid transparent;
-				transition: border-color 0.15s ease;
+				transition: border-color var(--duration-fast) var(--ease-standard);
 			}
 
 			.tdoc-article a:hover {
@@ -546,7 +546,7 @@
 				color: rgba(255, 255, 255, 0.52);
 				text-decoration: none;
 				line-height: 1.4;
-				transition: color 0.15s ease;
+				transition: color var(--duration-fast) var(--ease-standard);
 				border-left: 2px solid transparent;
 				margin-left: -2px;
 				padding-left: 0.7rem;
@@ -588,8 +588,8 @@
 				border-radius: 10px;
 				text-decoration: none;
 				transition:
-					border-color 0.2s ease,
-					transform 0.2s ease;
+					border-color var(--duration-base) var(--ease-standard),
+					transform var(--duration-base) var(--ease-standard);
 				min-height: 70px;
 			}
 
@@ -696,7 +696,7 @@
 				width: 0;
 				background: var(--tdoc-accent, #ffffff);
 				box-shadow: 0 0 10px var(--tdoc-accent, #ffffff);
-				transition: width 0.1s linear;
+				transition: width var(--duration-instant) linear;
 			}
 
 			/* Hero CTA — the manifest's primary action, themed to the tier. */
@@ -715,9 +715,9 @@
 				text-decoration: none;
 				border: 1px solid var(--tdoc-accent, #ffffff);
 				transition:
-					transform 0.14s ease,
-					box-shadow 0.18s ease,
-					filter 0.18s ease;
+					transform var(--duration-fast) var(--ease-standard),
+					box-shadow var(--duration-fast) var(--ease-standard),
+					filter var(--duration-fast) var(--ease-standard);
 			}
 			.tdoc-hero-cta:hover {
 				transform: translateY(-1px);
@@ -759,11 +759,11 @@
 				opacity: 0;
 				transform: translateY(-2px);
 				transition:
-					opacity 0.16s ease,
-					transform 0.16s ease,
-					color 0.16s,
-					border-color 0.16s,
-					background 0.16s;
+					opacity var(--duration-fast) var(--ease-standard),
+					transform var(--duration-fast) var(--ease-standard),
+					color var(--duration-fast),
+					border-color var(--duration-fast),
+					background var(--duration-fast);
 			}
 			.tdoc-article pre:hover .tdoc-copy-btn,
 			.tdoc-copy-btn:focus-visible {
@@ -807,7 +807,7 @@
 				color: var(--tdoc-accent, #ffffff);
 				opacity: 0;
 				text-decoration: none;
-				transition: opacity 0.15s ease;
+				transition: opacity var(--duration-fast) var(--ease-standard);
 			}
 			.tdoc-anchor svg {
 				width: 0.78em;
@@ -845,10 +845,10 @@
 				transform: translateY(8px);
 				pointer-events: none;
 				transition:
-					opacity 0.2s ease,
-					transform 0.2s ease,
-					color 0.15s,
-					border-color 0.15s;
+					opacity var(--duration-base) var(--ease-standard),
+					transform var(--duration-base) var(--ease-standard),
+					color var(--duration-fast),
+					border-color var(--duration-fast);
 			}
 			.tdoc-top.is-visible {
 				opacity: 1;

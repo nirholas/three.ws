@@ -107,7 +107,7 @@
 				padding: 16px;
 				text-decoration: none;
 				color: var(--text, #e8e8e8);
-				transition: border-color 0.15s, transform 0.12s, background 0.15s;
+				transition: border-color var(--duration-fast), transform var(--duration-fast), background var(--duration-fast);
 			}
 			.ae-card:hover { border-color: #3a3a3a; background: var(--surface-2, #111); transform: translateY(-2px); }
 			.ae-card-top { display: flex; align-items: center; gap: 12px; }
@@ -138,7 +138,7 @@
 				display: flex; align-items: center; justify-content: space-between; gap: 16px;
 				border: 1px solid var(--border, #1a1a1a); background: var(--surface-1, #0a0a0a);
 				border-radius: 14px; padding: 14px 16px; text-decoration: none; color: var(--text, #e8e8e8);
-				transition: border-color 0.15s, background 0.15s;
+				transition: border-color var(--duration-fast), background var(--duration-fast);
 			}
 			.ae-svc:hover { border-color: #3a3a3a; background: var(--surface-2, #111); }
 			.ae-svc-main { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
@@ -166,7 +166,7 @@
 				display: block; margin: 14px auto 0; font: inherit; font-size: 13px;
 				border: 1px solid var(--border-strong, #2a2a2a); background: var(--surface-1, #0a0a0a);
 				color: var(--text, #e8e8e8); border-radius: 999px; padding: 9px 20px; cursor: pointer;
-				transition: border-color 0.15s, background 0.15s;
+				transition: border-color var(--duration-fast), background var(--duration-fast);
 			}
 			.ae-more:hover { border-color: #444; background: var(--surface-2, #111); }
 			.ae-more:active { transform: translateY(1px); }
@@ -202,7 +202,7 @@
 					radial-gradient(120% 140% at 100% 0%, rgba(124, 92, 255, 0.07), transparent 55%),
 					var(--surface-1, #0a0a0a);
 				border-radius: 16px; padding: 16px;
-				transition: border-color 0.15s, transform 0.12s, background 0.15s;
+				transition: border-color var(--duration-fast), transform var(--duration-fast), background var(--duration-fast);
 			}
 			.ae-offer:hover { border-color: rgba(124, 92, 255, 0.4); transform: translateY(-2px); }
 			.ae-offer-top { display: flex; align-items: center; gap: 12px; }
@@ -225,7 +225,7 @@
 				flex: 1; border-radius: 11px; padding: 9px 14px; cursor: pointer;
 				border: 1px solid transparent; color: #0b0b14;
 				background: linear-gradient(135deg, var(--accent-violet-strong), #7c5cff);
-				transition: transform 0.1s ease, background 0.15s ease;
+				transition: transform var(--duration-instant) var(--ease-standard), background var(--duration-fast) var(--ease-standard);
 			}
 			.ae-hire-btn:hover { background: linear-gradient(135deg, #b6a0ff, #8c6dff); }
 			.ae-hire-btn:active { transform: translateY(1px); }

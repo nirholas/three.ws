@@ -48,7 +48,7 @@
 				margin: 0;
 				color: #fff;
 				text-shadow: var(--agent-shadow, none);
-				transition: text-shadow 90ms linear;
+				transition: text-shadow var(--duration-instant) linear;
 				user-select: none;
 			}
 			.bignum em { color: #666; font-style: normal; }
@@ -102,7 +102,7 @@
 				border: 1.5px solid rgba(255,255,255,0.12); border-radius: 9px;
 				background: rgba(255,255,255,0.04); color: #bbb;
 				font: 700 12px/1 'Inter', inherit; cursor: pointer;
-				transition: color 120ms, border-color 120ms, background 120ms, transform 90ms;
+				transition: color var(--duration-fast), border-color var(--duration-fast), background var(--duration-fast), transform var(--duration-instant);
 			}
 			.copy-btn:hover { color: #fff; border-color: rgba(255,255,255,0.3); background: rgba(255,255,255,0.08); }
 			.copy-btn:active { transform: scale(0.94); }
@@ -118,7 +118,7 @@
 				user-select: none;
 				transform-origin: bottom center;
 				will-change: transform;
-				transition: background 120ms, color 120ms, border-color 120ms, transform 90ms, box-shadow 90ms;
+				transition: background var(--duration-fast), color var(--duration-fast), border-color var(--duration-fast), transform var(--duration-instant), box-shadow var(--duration-instant);
 			}
 			.btn:active { transform: translateY(2px); }
 			.btn:focus-visible { outline: 2px solid #4dd2ff; outline-offset: 3px; }

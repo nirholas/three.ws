@@ -98,7 +98,7 @@
 			background: var(--surface-1, rgba(255,255,255,0.03));
 			border: 1px solid var(--stroke, rgba(255,255,255,0.08));
 			border-radius: var(--radius-lg, 14px);
-			transition: border-color 0.18s ease, transform 0.18s ease, background 0.18s ease;
+			transition: border-color var(--duration-fast) var(--ease-standard), transform var(--duration-fast) var(--ease-standard), background var(--duration-fast) var(--ease-standard);
 		}
 		.ip-card:hover { border-color: var(--stroke-strong, rgba(255,255,255,0.16)); transform: translateY(-1px); }
 		.ip-card .ip-ic {
@@ -211,7 +211,7 @@
 			padding: 12px 18px;
 			border-radius: var(--radius-md, 10px);
 			text-decoration: none;
-			transition: background 0.15s ease, border-color 0.15s ease, transform 0.12s ease, color 0.15s ease;
+			transition: background var(--duration-fast) var(--ease-standard), border-color var(--duration-fast) var(--ease-standard), transform var(--duration-fast) var(--ease-standard), color var(--duration-fast) var(--ease-standard);
 		}
 		.ip-btn--primary { background: var(--accent); color: var(--bg-0); border: 1px solid var(--accent); }
 		.ip-btn--primary:hover { background: rgba(255,255,255,0.88); }
@@ -221,7 +221,7 @@
 		.ip-btn:focus-visible { outline: 2px solid #7ec8e3; outline-offset: 2px; }
 
 		/* ── Inline links ── */
-		.ip-link { color: #7ec8e3; text-decoration: none; border-bottom: 1px solid rgba(126,200,227,0.4); transition: border-color 0.15s ease, color 0.15s ease; }
+		.ip-link { color: #7ec8e3; text-decoration: none; border-bottom: 1px solid rgba(126,200,227,0.4); transition: border-color var(--duration-fast) var(--ease-standard), color var(--duration-fast) var(--ease-standard); }
 		.ip-link:hover { border-bottom-color: #7ec8e3; }
 		.ip-link:focus-visible { outline: 2px solid #7ec8e3; outline-offset: 2px; border-radius: 2px; }
 

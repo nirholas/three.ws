@@ -127,7 +127,7 @@
 				padding: var(--space-md);
 				font: inherit;
 				line-height: 1.5;
-				transition: border-color 0.18s ease;
+				transition: border-color var(--duration-fast) var(--ease-standard);
 			}
 			.composer textarea:focus {
 				outline: none;
@@ -146,7 +146,7 @@
 				border-radius: 999px;
 				padding: 0.35em 0.8em;
 				cursor: pointer;
-				transition: border-color 0.16s ease, color 0.16s ease, transform 0.16s ease;
+				transition: border-color var(--duration-fast) var(--ease-standard), color var(--duration-fast) var(--ease-standard), transform var(--duration-fast) var(--ease-standard);
 			}
 			.chip:hover { border-color: var(--accent, #6c8cff); color: var(--text, #eee); }
 			.chip:active { transform: translateY(1px); }
@@ -161,7 +161,7 @@
 				color: #07070f;
 				background: linear-gradient(135deg, #8ad0ff, #76e0a0);
 				cursor: pointer;
-				transition: filter 0.16s ease, transform 0.16s ease;
+				transition: filter var(--duration-fast) var(--ease-standard), transform var(--duration-fast) var(--ease-standard);
 			}
 			.generate-btn:hover { filter: brightness(1.06); }
 			.generate-btn:active { transform: translateY(1px); }
@@ -185,7 +185,7 @@
 				border: 1px solid var(--border, #23233a);
 				border-radius: var(--radius, 12px);
 				color: var(--text-muted, #8a8aa0);
-				transition: border-color 0.2s ease, color 0.2s ease, background 0.2s ease;
+				transition: border-color var(--duration-base) var(--ease-standard), color var(--duration-base) var(--ease-standard), background var(--duration-base) var(--ease-standard);
 			}
 			.stage .num {
 				width: 26px; height: 26px;
@@ -264,7 +264,7 @@
 				padding: 0.45em 0.95em;
 				background: transparent;
 				cursor: pointer;
-				transition: border-color 0.16s ease;
+				transition: border-color var(--duration-fast) var(--ease-standard);
 			}
 			.viewer-actions a:hover, .viewer-actions button:hover { border-color: var(--accent, #6c8cff); }
 			.error-note {
@@ -290,7 +290,7 @@
 				border-radius: 999px;
 				padding: 0.35em 0.95em;
 				cursor: pointer;
-				transition: border-color 0.16s ease, background 0.16s ease;
+				transition: border-color var(--duration-fast) var(--ease-standard), background var(--duration-fast) var(--ease-standard);
 			}
 			.error-retry:hover { border-color: #ff9a9a; background: color-mix(in srgb, #ff6b6b 14%, transparent); }
 			.error-retry:active { transform: translateY(1px); }

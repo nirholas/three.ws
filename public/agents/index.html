@@ -55,7 +55,7 @@
 		.hero p { max-width: 580px; font-size: 15.5px; color: var(--muted); margin: 0 0 22px; }
 		.hero-ctas { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
 		.btn { display: inline-flex; align-items: center; gap: 6px; padding: 9px 18px; border-radius: 8px;
-			font-weight: 600; font-size: 14px; border: 1px solid rgba(255,255,255,0.14); transition: all .16s; cursor: pointer; }
+			font-weight: 600; font-size: 14px; border: 1px solid rgba(255,255,255,0.14); transition: all var(--duration-fast); cursor: pointer; }
 		.btn-primary { background: linear-gradient(135deg, var(--cyan), var(--violet)); border-color: transparent; color: #050610; }
 		.btn-primary:hover { opacity: .88; }
 		.btn-ghost { background: rgba(255,255,255,0.05); color: var(--ink); }
@@ -67,7 +67,7 @@
 		/* source chips */
 		.src-chips { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 14px; }
 		.chip { padding: 7px 15px; border-radius: 999px; font: 600 13px/1 inherit;
-			background: var(--panel); border: 1px solid var(--line); color: var(--muted); transition: all .16s; }
+			background: var(--panel); border: 1px solid var(--line); color: var(--muted); transition: all var(--duration-fast); }
 		.chip:hover { color: var(--ink); border-color: color-mix(in srgb, var(--cyan) 30%, var(--line)); }
 		.chip.is-active { color: #050610; background: linear-gradient(135deg, var(--cyan), var(--violet)); border-color: transparent; }
 		.chip:focus-visible { outline: 2px solid var(--cyan); outline-offset: 2px; }
@@ -77,7 +77,7 @@
 		.search-wrap { flex: 1; min-width: 200px; position: relative; }
 		.search-wrap input { width: 100%; background: var(--panel); border: 1px solid var(--line);
 			border-radius: 8px; padding: 9px 14px 9px 36px; font: 14px/1 inherit; color: var(--ink); outline: none;
-			transition: border-color .16s; }
+			transition: border-color var(--duration-fast); }
 		.search-wrap input:focus { border-color: color-mix(in srgb, var(--cyan) 50%, var(--line)); }
 		.search-wrap svg { position: absolute; left: 11px; top: 50%; transform: translateY(-50%); width: 16px; height: 16px; stroke: var(--muted); }
 		select.ctrl { background: var(--panel); border: 1px solid var(--line); border-radius: 8px;
@@ -96,7 +96,7 @@
 
 		/* agent card */
 		.ag-card { background: var(--panel); border: 1px solid var(--line); border-radius: var(--r);
-			padding: 18px; display: flex; flex-direction: column; gap: 12px; transition: border-color .18s, transform .18s; position: relative; overflow: hidden; }
+			padding: 18px; display: flex; flex-direction: column; gap: 12px; transition: border-color var(--duration-fast), transform var(--duration-fast); position: relative; overflow: hidden; }
 		.ag-card:hover { border-color: color-mix(in srgb, var(--cyan) 35%, var(--line)); transform: translateY(-2px); }
 		/* The card's link is a transparent overlay, so its own focus ring would be
 		   invisible: promote it to the card itself for keyboard users. */

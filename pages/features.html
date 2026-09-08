@@ -187,7 +187,7 @@
 			background:
 				radial-gradient(120% 80% at 50% 18%, rgba(99, 102, 241, 0.16), transparent 70%),
 				rgba(12, 13, 18, 0.6);
-			transition: opacity 0.4s ease;
+			transition: opacity var(--duration-slow) var(--ease-standard);
 			pointer-events: none;
 		}
 
@@ -228,7 +228,7 @@
 			border: 1px solid rgba(255, 255, 255, 0.1);
 			pointer-events: none;
 			opacity: 0;
-			transition: opacity 0.4s ease;
+			transition: opacity var(--duration-slow) var(--ease-standard);
 		}
 
 		.feat-walk-demo-stage[data-ready='true'] .feat-walk-demo-hint {
@@ -256,9 +256,9 @@
 			text-decoration: none;
 			cursor: pointer;
 			transition:
-				background 0.18s ease,
-				border-color 0.18s ease,
-				transform 0.18s ease;
+				background var(--duration-fast) var(--ease-standard),
+				border-color var(--duration-fast) var(--ease-standard),
+				transform var(--duration-fast) var(--ease-standard);
 			text-align: left;
 			font-family: inherit;
 		}

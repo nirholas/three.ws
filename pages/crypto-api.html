@@ -96,7 +96,7 @@
 			.ca-code { position: relative; background: var(--bg-1); border: 1px solid var(--stroke); border-radius: var(--radius-lg); overflow: hidden; }
 			.ca-code pre { margin: 0; padding: var(--space-md) var(--space-md); overflow-x: auto; font: var(--weight-regular) var(--text-sm) / 1.6 var(--font-mono); color: var(--ink); tab-size: 2; }
 			.ca-code code { font: inherit; color: inherit; background: none; white-space: pre; }
-			.ca-copy { position: absolute; top: var(--space-2xs); right: var(--space-2xs); font: var(--weight-medium) var(--text-2xs) / 1 var(--font-mono); color: var(--ink-dim); background: var(--surface-2); border: 1px solid var(--stroke); padding: 0.5em 0.75em; border-radius: var(--radius-sm); cursor: pointer; display: inline-flex; align-items: center; gap: 0.5ch; transition: color var(--dur-fast, 120ms) ease, border-color var(--dur-fast, 120ms) ease; }
+			.ca-copy { position: absolute; top: var(--space-2xs); right: var(--space-2xs); font: var(--weight-medium) var(--text-2xs) / 1 var(--font-mono); color: var(--ink-dim); background: var(--surface-2); border: 1px solid var(--stroke); padding: 0.5em 0.75em; border-radius: var(--radius-sm); cursor: pointer; display: inline-flex; align-items: center; gap: 0.5ch; transition: color var(--dur-fast, var(--duration-fast)) var(--ease-standard), border-color var(--dur-fast, var(--duration-fast)) var(--ease-standard); }
 			.ca-copy:hover { color: var(--ink-bright); border-color: var(--stroke-strong); }
 			.ca-copy:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 			.ca-copy.is-done { color: var(--success); border-color: color-mix(in srgb, var(--success) 40%, var(--stroke)); }
@@ -116,7 +116,7 @@
 			.ca-table th { text-align: left; font: var(--weight-semibold) var(--text-2xs) / 1 var(--font-mono); text-transform: uppercase; letter-spacing: 0.08em; color: var(--ink-faint); padding: var(--space-sm) var(--space-md); border-bottom: 1px solid var(--stroke); white-space: nowrap; }
 			.ca-table td { padding: var(--space-sm) var(--space-md); border-bottom: 1px solid var(--stroke); vertical-align: top; }
 			.ca-table tr:last-child td { border-bottom: 0; }
-			.ca-table tbody tr { transition: background var(--dur-fast, 120ms) ease; }
+			.ca-table tbody tr { transition: background var(--dur-fast, var(--duration-fast)) var(--ease-standard); }
 			.ca-table tbody tr:hover { background: var(--surface-2); }
 			.ca-provider { font-weight: var(--weight-semibold); color: var(--ink-bright); }
 			.ca-purpose { color: var(--ink-dim); }
@@ -144,7 +144,7 @@
 			/* ── CTA cards ────────────────────────────────────────────── */
 			.ca-cta-grid { display: grid; gap: var(--space-md); grid-template-columns: repeat(3, 1fr); }
 			@media (max-width: 860px) { .ca-cta-grid { grid-template-columns: 1fr; } }
-			.ca-cta-card { display: flex; flex-direction: column; gap: var(--space-2xs); background: var(--surface-1); border: 1px solid var(--stroke); border-radius: var(--radius-lg); padding: var(--space-lg); text-decoration: none; color: inherit; transition: transform var(--dur-fast, 120ms) ease, border-color var(--dur-fast, 120ms) ease, background var(--dur-fast, 120ms) ease; }
+			.ca-cta-card { display: flex; flex-direction: column; gap: var(--space-2xs); background: var(--surface-1); border: 1px solid var(--stroke); border-radius: var(--radius-lg); padding: var(--space-lg); text-decoration: none; color: inherit; transition: transform var(--dur-fast, var(--duration-fast)) var(--ease-standard), border-color var(--dur-fast, var(--duration-fast)) var(--ease-standard), background var(--dur-fast, var(--duration-fast)) var(--ease-standard); }
 			.ca-cta-card:hover { transform: translateY(-2px); border-color: var(--stroke-strong); background: var(--surface-2); }
 			.ca-cta-card:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 			.ca-cta-tag { font: var(--weight-semibold) var(--text-2xs)/1 var(--font-mono); text-transform: uppercase; letter-spacing: 0.08em; color: var(--accent); }

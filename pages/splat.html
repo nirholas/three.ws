@@ -85,7 +85,7 @@
 			@keyframes sp-spin { to { transform: rotate(360deg); } }
 			.sp-overlay h3 { font-family: var(--font-display, 'Space Grotesk', sans-serif); font-size: 17px; margin: 0; color: var(--text, #f6f6f6); }
 			.sp-overlay p { font-size: 13px; color: var(--text-3, #8a8a8a); margin: 0; max-width: 360px; line-height: 1.5; }
-			.sp-overlay--drop { pointer-events: auto; cursor: pointer; transition: background 0.15s; }
+			.sp-overlay--drop { pointer-events: auto; cursor: pointer; transition: background var(--duration-fast); }
 			.sp-overlay--drop:hover, .sp-stage.is-dragover .sp-overlay--drop { background: rgba(124,93,243,0.08); }
 			.sp-glyph {
 				width: 54px; height: 54px; border-radius: 14px;
@@ -111,7 +111,7 @@
 				width: 32px; height: 32px; display: grid; place-items: center;
 				background: rgba(0,0,0,0.55); border: 1px solid var(--hairline, #1c1c1c);
 				border-radius: 8px; color: var(--text-2, #cfcfcf); cursor: pointer;
-				backdrop-filter: blur(6px); transition: color 0.15s, border-color 0.15s;
+				backdrop-filter: blur(6px); transition: color var(--duration-fast), border-color var(--duration-fast);
 			}
 			.sp-icon-btn:hover { color: #fff; border-color: var(--hairline-strong, #2a2a2a); }
 			.sp-icon-btn:focus-visible { outline: 2px solid var(--accent, #fff); outline-offset: 2px; }
@@ -129,7 +129,7 @@
 				width: 100%; background: var(--surface-0, #0b0b0b);
 				border: 1px solid var(--hairline, #1c1c1c); border-radius: 9px;
 				color: var(--text, #f6f6f6); font-size: 13px; font-family: inherit;
-				padding: 9px 11px; outline: none; transition: border-color 0.15s; box-sizing: border-box;
+				padding: 9px 11px; outline: none; transition: border-color var(--duration-fast); box-sizing: border-box;
 			}
 			.sp-input:focus { border-color: var(--hairline-strong, #2a2a2a); }
 			.sp-input::placeholder { color: var(--text-4, #6e6e6e); }
@@ -138,7 +138,7 @@
 				width: 100%; padding: 10px 14px; border-radius: 9px; font-size: 13px; font-weight: 600;
 				border: 1px solid var(--hairline-strong, #2a2a2a); background: transparent;
 				color: var(--text, #f6f6f6); cursor: pointer; font-family: inherit;
-				transition: background 0.15s, border-color 0.15s, opacity 0.15s;
+				transition: background var(--duration-fast), border-color var(--duration-fast), opacity var(--duration-fast);
 			}
 			.sp-btn:hover { background: var(--surface-2, #181818); }
 			.sp-btn:focus-visible { outline: 2px solid var(--accent, #fff); outline-offset: 2px; }
@@ -153,7 +153,7 @@
 				display: flex; align-items: center; gap: 9px; text-align: left;
 				padding: 9px 11px; border-radius: 9px; cursor: pointer; font-family: inherit;
 				background: var(--surface-0, #0b0b0b); border: 1px solid var(--hairline, #1c1c1c);
-				color: var(--text-2, #a8a8a8); font-size: 12.5px; transition: border-color 0.15s, color 0.15s;
+				color: var(--text-2, #a8a8a8); font-size: 12.5px; transition: border-color var(--duration-fast), color var(--duration-fast);
 			}
 			.sp-sample:hover { border-color: var(--hairline-strong, #2a2a2a); color: var(--text, #f6f6f6); }
 			.sp-sample:active { border-color: var(--accent, #fff); }

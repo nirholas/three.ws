@@ -77,7 +77,7 @@
 				flex: 0 0 auto; appearance: none; border: 1px solid rgba(167,139,250,.5);
 				background: rgba(167,139,250,.16); color: var(--ink); font: inherit; font-weight: 600;
 				font-size: 15px; padding: 12px 20px; border-radius: 12px; cursor: pointer;
-				transition: background .12s ease, border-color .12s ease;
+				transition: background var(--duration-fast) var(--ease-standard), border-color var(--duration-fast) var(--ease-standard);
 			}
 			.sl-btn:hover:not(:disabled) { background: rgba(167,139,250,.28); border-color: rgba(167,139,250,.75); }
 			.sl-btn:active:not(:disabled) { transform: scale(.98); background: rgba(167,139,250,.34); }
@@ -87,7 +87,7 @@
 			.sl-phrase-chip {
 				appearance: none; border: 1px solid var(--stroke); background: var(--surface-2);
 				color: var(--ink-dim); font: inherit; font-size: 13px; padding: 6px 12px; border-radius: 999px; cursor: pointer;
-				transition: border-color .12s ease, color .12s ease;
+				transition: border-color var(--duration-fast) var(--ease-standard), color var(--duration-fast) var(--ease-standard);
 			}
 			.sl-phrase-chip:hover { border-color: rgba(167,139,250,.6); color: var(--ink); }
 			.sl-phrase-chip:active { transform: scale(.97); background: rgba(167,139,250,.14); }
@@ -126,7 +126,7 @@
 			.sl-opt {
 				appearance: none; border: 0; background: transparent; color: var(--ink-dim);
 				font: inherit; font-size: 12px; font-weight: 600; padding: 5px 12px; border-radius: 999px;
-				cursor: pointer; transition: color .14s ease, background .14s ease;
+				cursor: pointer; transition: color var(--duration-fast) var(--ease-standard), background var(--duration-fast) var(--ease-standard);
 			}
 			.sl-opt:hover { color: var(--ink); }
 			.sl-opt:focus-visible { outline: 2px solid rgba(167,139,250,.9); outline-offset: 1px; }
@@ -143,7 +143,7 @@
 				border: 1px solid var(--stroke); border-radius: 999px;
 				background: var(--surface-2); color: var(--ink-dim);
 				padding: 7px 14px; font-size: 13px; font-weight: 600; letter-spacing: .01em;
-				cursor: pointer; transition: color .16s ease, border-color .16s ease, transform .16s ease, background .16s ease;
+				cursor: pointer; transition: color var(--duration-fast) var(--ease-standard), border-color var(--duration-fast) var(--ease-standard), transform var(--duration-fast) var(--ease-standard), background var(--duration-fast) var(--ease-standard);
 			}
 			.sl-vocab-chip::before { content: '🤟'; font-size: 12px; opacity: .65; }
 			.sl-vocab-chip:hover { color: var(--ink); border-color: rgba(167,139,250,.6); transform: translateY(-1px); }
@@ -192,7 +192,7 @@
 				display: flex; flex-direction: column; justify-content: space-between; gap: 6px;
 				border: 1px solid rgba(167,139,250,.35); border-radius: 10px; padding: 9px 8px 7px;
 				background: rgba(167,139,250,.10); color: var(--ink); font: inherit; text-align: left;
-				transition: background .14s ease, border-color .14s ease, transform .14s ease;
+				transition: background var(--duration-fast) var(--ease-standard), border-color var(--duration-fast) var(--ease-standard), transform var(--duration-fast) var(--ease-standard);
 			}
 			.sl-api-seg[data-kind='spelled'] { border-color: var(--stroke); background: var(--surface-2); }
 			.sl-api-seg:hover { transform: translateY(-2px); border-color: rgba(167,139,250,.75); }

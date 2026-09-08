@@ -60,7 +60,7 @@
 			display: inline-flex; align-items: center; gap: 8px; padding: 9px 15px; border-radius: 9px;
 			border: 1px solid var(--lab-border-strong); background: var(--lab-panel-2); color: var(--lab-text);
 			font-size: 13.5px; font-weight: 550; text-decoration: none; cursor: pointer;
-			transition: background .16s ease, border-color .16s ease, transform .16s ease;
+			transition: background var(--duration-fast) var(--ease-standard), border-color var(--duration-fast) var(--ease-standard), transform var(--duration-fast) var(--ease-standard);
 		}
 		.btn:hover { background: rgba(139, 92, 246, 0.14); border-color: var(--lab-accent); transform: translateY(-1px); }
 		.btn:focus-visible { outline: 2px solid var(--lab-accent); outline-offset: 2px; }
@@ -85,7 +85,7 @@
 		table { width: 100%; border-collapse: collapse; font-size: 13.5px; }
 		th, td { text-align: left; padding: 9px 12px; border-bottom: 1px solid var(--lab-border); white-space: nowrap; }
 		th { font-size: 11.5px; text-transform: uppercase; letter-spacing: .08em; color: var(--lab-faint); font-weight: 600; }
-		tbody tr { transition: background .12s ease; }
+		tbody tr { transition: background var(--duration-fast) var(--ease-standard); }
 		tbody tr:hover { background: var(--lab-panel-2); }
 		td.num, th.num { text-align: right; font-family: var(--lab-mono); font-variant-numeric: tabular-nums; }
 		.pos { color: var(--lab-good); }
@@ -94,7 +94,7 @@
 
 		/* bar in a cell */
 		.bar { position: relative; height: 6px; border-radius: 3px; background: var(--lab-panel-2); min-width: 90px; overflow: hidden; }
-		.bar > i { position: absolute; top: 0; bottom: 0; border-radius: 3px; transition: width .3s ease; }
+		.bar > i { position: absolute; top: 0; bottom: 0; border-radius: 3px; transition: width var(--duration-base) var(--ease-standard); }
 		.bar > i.up { background: var(--lab-good); left: 50%; }
 		.bar > i.down { background: var(--lab-bad); right: 50%; }
 
@@ -122,7 +122,7 @@
 		.risk .lbl { color: var(--lab-muted); }
 		.risk .val { font-family: var(--lab-mono); font-weight: 600; }
 		.risk .track { grid-column: 1 / -1; height: 5px; border-radius: 3px; background: var(--lab-panel-2); overflow: hidden; }
-		.risk .track > i { display: block; height: 100%; border-radius: 3px; transition: width .28s ease; }
+		.risk .track > i { display: block; height: 100%; border-radius: 3px; transition: width var(--duration-base) var(--ease-standard); }
 		.why { margin-top: 16px; border-top: 1px solid var(--lab-border); padding-top: 14px; }
 		.why h4 { margin: 0 0 9px; font-size: 11.5px; text-transform: uppercase; letter-spacing: .09em; color: var(--lab-faint); }
 		.why ol { margin: 0; padding: 0; list-style: none; display: grid; gap: 8px; }

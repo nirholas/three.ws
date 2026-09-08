@@ -138,8 +138,8 @@
 				font: inherit;
 				font-size: var(--text-base);
 				transition:
-					border-color 120ms,
-					background 120ms;
+					border-color var(--duration-fast),
+					background var(--duration-fast);
 			}
 
 			.field input:focus,
@@ -187,8 +187,8 @@
 				font-size: var(--text-base);
 				cursor: pointer;
 				transition:
-					transform 80ms,
-					filter 120ms;
+					transform var(--duration-instant),
+					filter var(--duration-fast);
 			}
 
 			button.btn:hover {
@@ -282,9 +282,9 @@
 				font-size: var(--text-sm);
 				cursor: pointer;
 				transition:
-					border-color 120ms,
-					background 120ms,
-					transform 80ms;
+					border-color var(--duration-fast),
+					background var(--duration-fast),
+					transform var(--duration-instant);
 			}
 
 			.picker-item:hover {
@@ -401,7 +401,7 @@
 				background: rgba(8, 8, 20, 0.92);
 				color: rgba(255, 255, 255, 0.85);
 				font-size: var(--text-sm);
-				transition: opacity 200ms;
+				transition: opacity var(--duration-base);
 				text-align: center;
 				padding: 24px;
 			}
@@ -515,7 +515,7 @@
 
 			details.snippet > summary::before {
 				content: '›';
-				transition: transform 150ms;
+				transition: transform var(--duration-fast);
 				color: var(--accent);
 				font-size: 1.2em;
 			}
@@ -579,8 +579,8 @@
 				font-weight: 500;
 				opacity: 0;
 				transition:
-					opacity 180ms,
-					transform 180ms;
+					opacity var(--duration-fast),
+					transform var(--duration-fast);
 				pointer-events: none;
 				z-index: 50;
 				box-shadow: 0 12px 32px rgba(0, 0, 0, 0.4);

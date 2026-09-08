@@ -106,7 +106,7 @@
     display:inline-flex;align-items:center;gap:8px;cursor:pointer;
     font-size:var(--text-ui, 14px);font-weight:var(--weight-semibold, 600);
     padding:12px 20px;border-radius:var(--radius-md, 10px);
-    border:1px solid transparent;transition:transform .15s ease, background .15s ease, border-color .15s ease;
+    border:1px solid transparent;transition:transform var(--duration-fast) var(--ease-standard), background var(--duration-fast) var(--ease-standard), border-color var(--duration-fast) var(--ease-standard);
   }
   .btn:focus-visible{outline:2px solid var(--accent, #fff);outline-offset:2px}
   .btn-primary{background:var(--ink-bright, #fff);color:var(--bg-0, #0a0a0b)}
@@ -140,7 +140,7 @@
   .sec-lede{font-size:var(--text-base, 16px);color:var(--ink-dim, #8a8a96);max-width:60ch}
 
   .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:var(--space-md, 16px);margin-top:var(--space-xl, 32px)}
-  .card{border:1px solid var(--stroke, #2a2a2a);border-radius:var(--radius-lg, 14px);padding:var(--space-lg, 24px);background:var(--surface-1, rgba(255,255,255,.03));transition:border-color .15s ease, transform .15s ease}
+  .card{border:1px solid var(--stroke, #2a2a2a);border-radius:var(--radius-lg, 14px);padding:var(--space-lg, 24px);background:var(--surface-1, rgba(255,255,255,.03));transition:border-color var(--duration-fast) var(--ease-standard), transform var(--duration-fast) var(--ease-standard)}
   .card:hover{border-color:var(--stroke-strong, #3e3e3e);transform:translateY(-2px)}
   .card .num{font-family:var(--font-mono, monospace);font-size:var(--text-xs, 12px);color:var(--ink-faint, #5c5c66)}
   .card h3{font-family:var(--font-display, sans-serif);font-size:var(--text-lg, 18px);font-weight:var(--weight-semibold, 600);color:var(--ink-bright, #fff);margin:8px 0}
@@ -168,7 +168,7 @@
   .rsvp .fine{margin-top:var(--space-sm, 12px);font-size:var(--text-2xs, 11px);color:var(--ink-faint, #5c5c66)}
 
   /* ── reveal ── */
-  .reveal{opacity:0;transform:translateY(16px);transition:opacity .6s ease, transform .6s ease}
+  .reveal{opacity:0;transform:translateY(16px);transition:opacity var(--duration-slow) var(--ease-standard), transform var(--duration-slow) var(--ease-standard)}
   .reveal.in{opacity:1;transform:none}
   @media (prefers-reduced-motion:reduce){.reveal{opacity:1;transform:none;transition:none}}
 

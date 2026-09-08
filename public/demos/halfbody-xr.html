@@ -36,7 +36,7 @@
 			button {
 				background: #3dc1ff; color: #0a0a0a; border: 0; border-radius: 9px;
 				padding: 10px 14px; font-weight: 600; cursor: pointer; font: inherit;
-				transition: opacity 0.15s;
+				transition: opacity var(--duration-fast);
 			}
 			button.secondary { background: rgba(255,255,255,0.06); color: #eee; }
 			button:disabled { opacity: 0.4; cursor: not-allowed; }
@@ -56,7 +56,7 @@
 				border: 1.5px solid rgba(61,193,255,0.3); border-radius: 12px;
 				padding: 14px 20px; text-decoration: none; color: #3dc1ff;
 				font-weight: 600; font-size: 14px; margin-top: 4px;
-				transition: border-color 0.15s, box-shadow 0.15s;
+				transition: border-color var(--duration-fast), box-shadow var(--duration-fast);
 			}
 			.xr-link:hover { border-color: rgba(61,193,255,0.6); box-shadow: 0 0 20px rgba(61,193,255,0.12); }
 			.xr-link svg { flex-shrink: 0; }

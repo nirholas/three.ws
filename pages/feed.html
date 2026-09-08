@@ -61,7 +61,7 @@
 				border: 1px solid rgba(255, 255, 255, 0.12);
 				border-radius: 999px;
 				padding: 0.35rem 0.85rem;
-				transition: border-color 0.15s ease, color 0.15s ease;
+				transition: border-color var(--duration-fast) var(--ease-standard), color var(--duration-fast) var(--ease-standard);
 			}
 			.feed-tip:hover {
 				border-color: rgba(255, 255, 255, 0.3);
@@ -133,7 +133,7 @@
 				border-radius: 12px;
 				text-decoration: none;
 				color: inherit;
-				transition: border-color 0.15s ease, background 0.15s ease;
+				transition: border-color var(--duration-fast) var(--ease-standard), background var(--duration-fast) var(--ease-standard);
 				align-items: center;
 			}
 			.feed-card:hover {
@@ -187,7 +187,7 @@
 				font-size: 0.9rem;
 				padding: 0.65rem 1.3rem;
 				border-radius: 10px;
-				transition: opacity 0.15s ease;
+				transition: opacity var(--duration-fast) var(--ease-standard);
 			}
 			.feed-btn:hover { opacity: 0.85; }
 
@@ -224,7 +224,7 @@
 				border-radius: 999px;
 				padding: 0.4rem 0.95rem;
 				cursor: pointer;
-				transition: border-color 0.15s ease, color 0.15s ease, background 0.15s ease;
+				transition: border-color var(--duration-fast) var(--ease-standard), color var(--duration-fast) var(--ease-standard), background var(--duration-fast) var(--ease-standard);
 			}
 			.feed-scope button:hover { color: rgba(255, 255, 255, 0.85); border-color: rgba(255, 255, 255, 0.3); }
 			.feed-scope button:focus-visible { outline: 2px solid var(--focus-ring-color); outline-offset: 2px; }
@@ -264,7 +264,7 @@
 				font-size: 0.85rem;
 				cursor: pointer;
 				margin-top: 0.6rem;
-				transition: border-color 0.15s ease, color 0.15s ease;
+				transition: border-color var(--duration-fast) var(--ease-standard), color var(--duration-fast) var(--ease-standard);
 			}
 			.feed-more:hover { color: #fff; border-color: rgba(255, 255, 255, 0.3); }
 			.feed-more:disabled { opacity: 0.5; cursor: default; }

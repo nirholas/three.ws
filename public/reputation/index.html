@@ -70,7 +70,7 @@
 				border: 1px solid rgba(124, 124, 255, 0.35);
 				border-radius: 12px;
 				background: rgba(124, 124, 255, 0.08);
-				transition: background 0.15s ease, border-color 0.15s ease;
+				transition: background var(--duration-fast) var(--ease-standard), border-color var(--duration-fast) var(--ease-standard);
 			}
 			.rep-market-link:hover { background: rgba(124, 124, 255, 0.14); border-color: rgba(124, 124, 255, 0.55); }
 			.rep-market-link span { font-size: 0.875rem; color: rgba(232, 233, 240, 0.72); }
@@ -110,7 +110,7 @@
 				font-size: 0.8rem;
 				font-weight: 500;
 				cursor: pointer;
-				transition: background 0.15s, color 0.15s, border-color 0.15s;
+				transition: background var(--duration-fast), color var(--duration-fast), border-color var(--duration-fast);
 				text-decoration: none;
 				white-space: nowrap;
 			}
@@ -163,7 +163,7 @@
 				color: #e8e9f0;
 				font-size: 0.9375rem;
 				font-family: inherit;
-				transition: border-color 0.15s, background 0.15s;
+				transition: border-color var(--duration-fast), background var(--duration-fast);
 			}
 			.rep-search-input:focus { outline: none; border-color: rgba(255,255,255,0.5); background: rgba(255,255,255,0.07); }
 			.rep-search-input::placeholder { color: rgba(232,233,240,0.3); }
@@ -216,7 +216,7 @@
 				font-size: 0.9375rem;
 				font-weight: 600;
 				cursor: pointer;
-				transition: background 0.15s;
+				transition: background var(--duration-fast);
 			}
 			.rep-search-btn:hover { background: #e0e0e0; }
 
@@ -230,7 +230,7 @@
 				color: rgba(255,255,255,0.55);
 				font-size: 0.8rem;
 				cursor: pointer;
-				transition: background 0.15s, color 0.15s;
+				transition: background var(--duration-fast), color var(--duration-fast);
 				font-family: inherit;
 			}
 			.rep-example-chip:hover { background: rgba(255,255,255,0.14); color: var(--ink-dim); }
@@ -248,7 +248,7 @@
 			.rep-ens-name { font-size: 1.375rem; font-weight: 700; letter-spacing: -0.02em; }
 			.rep-address-display { display: flex; align-items: center; gap: 0.5rem; margin-top: 0.25rem; }
 			.rep-address-code { font-size: 0.8rem; color: rgba(232,233,240,0.5); font-family: 'JetBrains Mono', ui-monospace, monospace; overflow-wrap: break-word; word-break: break-all; }
-			.rep-copy-addr { background: none; border: none; color: rgba(232,233,240,0.35); cursor: pointer; padding: 0 0.25rem; transition: color 0.15s; flex-shrink: 0; }
+			.rep-copy-addr { background: none; border: none; color: rgba(232,233,240,0.35); cursor: pointer; padding: 0 0.25rem; transition: color var(--duration-fast); flex-shrink: 0; }
 			.rep-copy-addr:hover { color: rgba(232,233,240,0.8); }
 			.rep-profile-meta { display: flex; align-items: center; gap: 0.5rem; margin-top: 0.5rem; flex-wrap: wrap; }
 			.rep-agent-tag { font-size: 0.75rem; padding: 0.2rem 0.6rem; background: rgba(255,255,255,0.12); border: 1px solid rgba(255,255,255,0.25); border-radius: 999px; color: #ffffff; }
@@ -270,7 +270,7 @@
 			.rep-dist-mini { display: flex; flex-direction: column; gap: 0.35rem; margin-top: 0.25rem; }
 			.rep-dist-row { display: flex; align-items: center; gap: 0.5rem; font-size: 0.6875rem; }
 			.rep-dist-bar-wrap { flex: 1; height: 5px; background: rgba(255,255,255,0.07); border-radius: 3px; overflow: hidden; }
-			.rep-dist-bar-fill { height: 100%; background: #ffffff; border-radius: 3px; transition: width 0.6s ease; }
+			.rep-dist-bar-fill { height: 100%; background: #ffffff; border-radius: 3px; transition: width var(--duration-slow) var(--ease-standard); }
 			.rep-dist-num { color: rgba(232,233,240,0.4); min-width: 16px; text-align: right; }
 
 			/* ── ERC-8004 badge ── */
@@ -280,14 +280,14 @@
 			/* ── Reviews section ── */
 			.rep-reviews-section { display: flex; flex-direction: column; gap: 1rem; }
 			.rep-tabs { display: flex; gap: 0; border-bottom: 1px solid rgba(255,255,255,0.07); margin-bottom: 0; }
-			.rep-tab { padding: 0.5rem 1rem; background: none; border: none; border-bottom: 2px solid transparent; color: rgba(232,233,240,0.45); font-size: 0.875rem; font-weight: 500; cursor: pointer; transition: color 0.15s; margin-bottom: -1px; display: flex; align-items: center; gap: 0.4rem; font-family: inherit; }
+			.rep-tab { padding: 0.5rem 1rem; background: none; border: none; border-bottom: 2px solid transparent; color: rgba(232,233,240,0.45); font-size: 0.875rem; font-weight: 500; cursor: pointer; transition: color var(--duration-fast); margin-bottom: -1px; display: flex; align-items: center; gap: 0.4rem; font-family: inherit; }
 			.rep-tab:hover { color: rgba(232,233,240,0.8); }
 			.rep-tab.active { color: #e8e9f0; border-bottom-color: #ffffff; }
 			.rep-tab-badge { font-size: 0.7rem; background: rgba(255,255,255,0.07); border-radius: 20px; padding: 0.05rem 0.4rem; font-weight: 600; }
 			.rep-tab.active .rep-tab-badge { background: rgba(255,255,255,0.25); color: var(--ink-dim); }
 
 			.rep-review-list { display: flex; flex-direction: column; gap: 0.625rem; margin-top: 0.5rem; }
-			.rep-review-card { padding: 1rem 1.125rem; background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.06); border-radius: 10px; transition: background 0.15s, border-color 0.15s; }
+			.rep-review-card { padding: 1rem 1.125rem; background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.06); border-radius: 10px; transition: background var(--duration-fast), border-color var(--duration-fast); }
 			.rep-review-card:hover { background: rgba(255,255,255,0.035); border-color: rgba(255,255,255,0.1); }
 			.rep-review-top { display: flex; justify-content: space-between; align-items: center; gap: 0.75rem; }
 			.rep-reviewer-row { display: flex; align-items: center; gap: 0.5rem; min-width: 0; }
@@ -310,7 +310,7 @@
 			.rep-submit-title { font-size: 1.125rem; margin-bottom: 0.25rem; }
 			.rep-submit-sub { font-size: 0.8125rem; color: rgba(232,233,240,0.4); margin: 0.25rem 0 0; }
 
-			.rep-connect-btn { width: 100%; padding: 0.875rem; background: rgba(255,255,255,0.12); border: 1.5px dashed rgba(255,255,255,0.3); border-radius: 10px; color: #ffffff; font-size: 0.9375rem; font-weight: 600; cursor: pointer; transition: background 0.15s; display: flex; align-items: center; justify-content: center; gap: 0.5rem; font-family: inherit; }
+			.rep-connect-btn { width: 100%; padding: 0.875rem; background: rgba(255,255,255,0.12); border: 1.5px dashed rgba(255,255,255,0.3); border-radius: 10px; color: #ffffff; font-size: 0.9375rem; font-weight: 600; cursor: pointer; transition: background var(--duration-fast); display: flex; align-items: center; justify-content: center; gap: 0.5rem; font-family: inherit; }
 			.rep-connect-btn:hover { background: rgba(255,255,255,0.18); }
 			.rep-connect-btn:disabled { opacity: 0.5; cursor: not-allowed; }
 
@@ -323,13 +323,13 @@
 			.rep-optional { font-weight: 400; color: rgba(232,233,240,0.35); font-size: 0.8125rem; }
 
 			.rep-star-picker { display: grid; grid-template-columns: repeat(5,1fr); gap: 0.5rem; }
-			.rep-star-btn { display: flex; flex-direction: column-reverse; align-items: center; gap: 0.375rem; padding: 0.75rem 0.5rem; background: rgba(255,255,255,0.03); border: 1.5px solid rgba(255,255,255,0.08); border-radius: 8px; cursor: pointer; transition: background 0.15s, border-color 0.15s; }
+			.rep-star-btn { display: flex; flex-direction: column-reverse; align-items: center; gap: 0.375rem; padding: 0.75rem 0.5rem; background: rgba(255,255,255,0.03); border: 1.5px solid rgba(255,255,255,0.08); border-radius: 8px; cursor: pointer; transition: background var(--duration-fast), border-color var(--duration-fast); }
 			.rep-star-btn:hover { background: rgba(251,191,36,0.06); border-color: rgba(251,191,36,0.2); }
 			.rep-star-btn.selected { background: rgba(251,191,36,0.09); border-color: rgba(251,191,36,0.35); }
 			.rep-star-btn-label { font-size: 0.625rem; color: rgba(232,233,240,0.4); font-weight: 500; white-space: nowrap; text-align: center; }
 			.rep-star-btn.selected .rep-star-btn-label { color: #fbbf24; }
 
-			.rep-textarea { width: 100%; padding: 0.75rem; background: rgba(255,255,255,0.04); border: 1.5px solid rgba(255,255,255,0.09); border-radius: 8px; color: #e8e9f0; font-family: inherit; font-size: 0.9375rem; line-height: 1.55; resize: vertical; transition: border-color 0.15s; }
+			.rep-textarea { width: 100%; padding: 0.75rem; background: rgba(255,255,255,0.04); border: 1.5px solid rgba(255,255,255,0.09); border-radius: 8px; color: #e8e9f0; font-family: inherit; font-size: 0.9375rem; line-height: 1.55; resize: vertical; transition: border-color var(--duration-fast); }
 			.rep-textarea:focus { outline: none; border-color: rgba(255,255,255,0.45); background: rgba(255,255,255,0.06); }
 			.rep-char-count { font-size: 0.75rem; color: rgba(232,233,240,0.3); text-align: right; margin-top: 0.375rem; }
 
@@ -337,7 +337,7 @@
 			.rep-form-status--info { background: rgba(61,193,255,0.07); border: 1px solid rgba(61,193,255,0.2); color: #9ad4ff; }
 			.rep-form-status--error { background: rgba(255,90,90,0.07); border: 1px solid rgba(255,90,90,0.2); color: #fca5a5; }
 
-			.rep-submit-btn-primary { width: 100%; padding: 0.875rem; background: #ffffff; border: none; border-radius: 9px; color: #000000; font-size: 0.9375rem; font-weight: 700; cursor: pointer; transition: background 0.15s; font-family: inherit; }
+			.rep-submit-btn-primary { width: 100%; padding: 0.875rem; background: #ffffff; border: none; border-radius: 9px; color: #000000; font-size: 0.9375rem; font-weight: 700; cursor: pointer; transition: background var(--duration-fast); font-family: inherit; }
 			.rep-submit-btn-primary:hover:not(:disabled) { background: #e0e0e0; }
 			.rep-submit-btn-primary:disabled { opacity: 0.4; cursor: not-allowed; }
 			.rep-submit-note { font-size: 0.8rem; color: rgba(232,233,240,0.35); margin: 0.75rem 0 0; text-align: center; }

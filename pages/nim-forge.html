@@ -28,7 +28,7 @@
 				border: 1px solid var(--stroke, rgba(255,255,255,0.1)); border-radius: 999px;
 				background: var(--surface-2, rgba(255,255,255,0.03));
 			}
-			.nf-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--ink-dim, #9aa0b5); transition: background 0.3s; }
+			.nf-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--ink-dim, #9aa0b5); transition: background var(--duration-base); }
 			.nf-eyebrow[data-state="up"] .nf-dot { background: #36d399; box-shadow: 0 0 10px #36d39988; }
 			.nf-eyebrow[data-state="down"] .nf-dot { background: #f87272; }
 			.nf-head h1 { font: 700 clamp(28px, 5vw, 44px)/1.05 var(--font-display, system-ui); margin: 14px 0 8px; letter-spacing: -0.02em; }
@@ -48,7 +48,7 @@
 			.nf-drop {
 				position: relative; border: 1.5px dashed var(--stroke-strong, rgba(255,255,255,0.18)); border-radius: 14px;
 				aspect-ratio: 1 / 1; display: grid; place-items: center; text-align: center; cursor: pointer;
-				overflow: hidden; transition: border-color 0.2s, background 0.2s; background: var(--surface-2, rgba(255,255,255,0.03));
+				overflow: hidden; transition: border-color var(--duration-base), background var(--duration-base); background: var(--surface-2, rgba(255,255,255,0.03));
 			}
 			.nf-drop:hover, .nf-drop.is-over { border-color: var(--accent, #7c9cff); background: color-mix(in srgb, var(--accent, #7c9cff) 8%, transparent); }
 			.nf-drop img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; background: #0a0a12; }
@@ -60,17 +60,17 @@
 			.nf-drop.has-image .nf-drop-hint { display: none; }
 
 			.nf-mode { display: inline-flex; padding: 3px; gap: 3px; background: var(--surface-2, rgba(255,255,255,0.03)); border: 1px solid var(--stroke, rgba(255,255,255,0.1)); border-radius: 10px; margin-bottom: 12px; }
-			.nf-mode button { border: none; background: transparent; color: var(--ink-dim, #9aa0b5); padding: 7px 14px; border-radius: 7px; cursor: pointer; font: 600 13px var(--font-body, system-ui); transition: all 0.15s; }
+			.nf-mode button { border: none; background: transparent; color: var(--ink-dim, #9aa0b5); padding: 7px 14px; border-radius: 7px; cursor: pointer; font: 600 13px var(--font-body, system-ui); transition: all var(--duration-fast); }
 			.nf-mode button[aria-pressed="true"] { background: var(--surface-3, rgba(255,255,255,0.08)); color: var(--ink, #eef0ff); }
 
 			.nf-textarea { width: 100%; min-height: 84px; resize: vertical; background: var(--surface-2, rgba(255,255,255,0.03)); border: 1px solid var(--stroke, rgba(255,255,255,0.1)); border-radius: 10px; padding: 11px 13px; color: var(--ink, #eef0ff); font: 14px/1.5 var(--font-body, system-ui); }
 			.nf-textarea:focus { outline: none; border-color: var(--accent, #7c9cff); }
 
 			.nf-tiers { display: flex; gap: 6px; }
-			.nf-tiers button { flex: 1; border: 1px solid var(--stroke, rgba(255,255,255,0.1)); background: var(--surface-2, rgba(255,255,255,0.03)); color: var(--ink-dim, #9aa0b5); padding: 9px; border-radius: 9px; cursor: pointer; font: 600 13px var(--font-body, system-ui); transition: all 0.15s; }
+			.nf-tiers button { flex: 1; border: 1px solid var(--stroke, rgba(255,255,255,0.1)); background: var(--surface-2, rgba(255,255,255,0.03)); color: var(--ink-dim, #9aa0b5); padding: 9px; border-radius: 9px; cursor: pointer; font: 600 13px var(--font-body, system-ui); transition: all var(--duration-fast); }
 			.nf-tiers button[aria-pressed="true"] { border-color: var(--accent, #7c9cff); color: var(--ink, #eef0ff); background: color-mix(in srgb, var(--accent, #7c9cff) 12%, transparent); }
 
-			.nf-btn { width: 100%; border: none; border-radius: 12px; padding: 14px; font: 700 15px var(--font-body, system-ui); cursor: pointer; background: var(--accent, #7c9cff); color: #08080f; transition: filter 0.15s, transform 0.1s; }
+			.nf-btn { width: 100%; border: none; border-radius: 12px; padding: 14px; font: 700 15px var(--font-body, system-ui); cursor: pointer; background: var(--accent, #7c9cff); color: #08080f; transition: filter var(--duration-fast), transform var(--duration-instant); }
 			.nf-btn:hover:not(:disabled) { filter: brightness(1.08); }
 			.nf-btn:active:not(:disabled) { transform: translateY(1px); }
 			.nf-btn:disabled { opacity: 0.5; cursor: not-allowed; }
@@ -78,7 +78,7 @@
 			.nf-foot { font: 500 11.5px/1.5 var(--font-mono, monospace); color: var(--ink-dim, #9aa0b5); text-align: center; }
 
 			.nf-stage { position: relative; min-height: 520px; border: 1px solid var(--stroke, rgba(255,255,255,0.1)); border-radius: 18px; background: radial-gradient(120% 120% at 50% 0%, var(--surface-2, rgba(255,255,255,0.03)), var(--surface-1, rgba(0,0,0,0.1))); overflow: hidden; display: grid; }
-			.nf-panel { grid-area: 1 / 1; display: grid; place-items: center; padding: 24px; text-align: center; opacity: 0; visibility: hidden; transition: opacity 0.4s; }
+			.nf-panel { grid-area: 1 / 1; display: grid; place-items: center; padding: 24px; text-align: center; opacity: 0; visibility: hidden; transition: opacity var(--duration-slow); }
 			.nf-panel.is-active { opacity: 1; visibility: visible; }
 			.nf-empty-art { width: 90px; height: 90px; border-radius: 22px; background: conic-gradient(from 210deg, var(--accent, #7c9cff), #c084fc, #7c9cff); opacity: 0.85; margin: 0 auto 18px; filter: blur(0.3px); animation: nf-float 5s ease-in-out infinite; }
 			@keyframes nf-float { 0%,100% { transform: translateY(0) rotate(0); } 50% { transform: translateY(-10px) rotate(8deg); } }
@@ -90,7 +90,7 @@
 			.nf-elapsed { font: 600 28px var(--font-mono, monospace); color: var(--ink, #eef0ff); }
 			.nf-substep { color: var(--ink-dim, #9aa0b5); font-size: 13px; margin-top: 6px; }
 
-			model-viewer { grid-area: 1 / 1; width: 100%; height: 100%; min-height: 520px; --poster-color: transparent; background: transparent; opacity: 0; visibility: hidden; transition: opacity 0.5s; }
+			model-viewer { grid-area: 1 / 1; width: 100%; height: 100%; min-height: 520px; --poster-color: transparent; background: transparent; opacity: 0; visibility: hidden; transition: opacity var(--duration-slow); }
 			model-viewer.is-active { opacity: 1; visibility: visible; }
 			.nf-resultbar { position: absolute; left: 0; right: 0; bottom: 0; z-index: 3; display: none; align-items: center; gap: 12px; padding: 14px 18px; background: linear-gradient(0deg, rgba(0,0,0,0.55), transparent); }
 			.nf-resultbar.is-active { display: flex; }

@@ -74,7 +74,7 @@
 		.btn {
 			border: 1px solid var(--border); background: var(--surface-2); color: var(--text);
 			border-radius: 10px; padding: 9px 14px; font-size: 13px; font-weight: 600;
-			cursor: pointer; transition: border-color .15s, background .15s, transform .05s;
+			cursor: pointer; transition: border-color var(--duration-fast), background var(--duration-fast), transform var(--duration-instant);
 		}
 		.btn:hover:not(:disabled) { border-color: var(--accent); }
 		.btn:active:not(:disabled) { transform: translateY(1px); }
@@ -97,7 +97,7 @@
 		.suggestion {
 			text-align: left; background: var(--surface); border: 1px solid var(--border);
 			border-radius: 12px; padding: 14px 16px; cursor: pointer; color: var(--text-dim);
-			font-size: 13.5px; line-height: 1.45; transition: border-color .15s, color .15s, transform .05s;
+			font-size: 13.5px; line-height: 1.45; transition: border-color var(--duration-fast), color var(--duration-fast), transform var(--duration-instant);
 		}
 		.suggestion:hover { border-color: var(--accent); color: var(--text); }
 		.suggestion:active { transform: translateY(1px); }
@@ -130,7 +130,7 @@
 		.notice-retry {
 			display: inline-block; margin-top: 10px; background: transparent; color: var(--accent-2);
 			border: 1px solid var(--border); border-radius: 8px; padding: 6px 12px; font: inherit;
-			font-size: 13px; font-weight: 600; cursor: pointer; transition: border-color .15s, color .15s;
+			font-size: 13px; font-weight: 600; cursor: pointer; transition: border-color var(--duration-fast), color var(--duration-fast);
 		}
 		.notice-retry:hover { border-color: var(--accent); color: var(--text); }
 
@@ -159,7 +159,7 @@
 			   shrinking the layout viewport. --kb-offset (set from the VisualViewport
 			   API in tutor.js) lifts the composer above the keyboard when focused. */
 			transform: translateY(calc(-1 * var(--kb-offset, 0px)));
-			transition: transform .18s ease;
+			transition: transform var(--duration-fast) var(--ease-standard);
 			padding-bottom: calc(22px + env(safe-area-inset-bottom, 0px));
 			will-change: transform;
 		}
@@ -174,7 +174,7 @@
 			font: inherit; font-size: 15px; line-height: 1.5; max-height: 180px; padding: 6px 0;
 		}
 		.controls { display: flex; align-items: center; gap: 8px; }
-		.q-count { font-family: var(--mono); font-size: 11px; color: var(--text-faint); min-width: 62px; text-align: right; font-variant-numeric: tabular-nums; transition: color .15s; }
+		.q-count { font-family: var(--mono); font-size: 11px; color: var(--text-faint); min-width: 62px; text-align: right; font-variant-numeric: tabular-nums; transition: color var(--duration-fast); }
 		.q-count.warn { color: #f1c21b; }
 		.q-count.max { color: #fa4d56; }
 		select#level {

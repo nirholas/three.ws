@@ -28,7 +28,7 @@
 			canvas#wave { display: block; width: 100%; height: 100%; }
 			.rec-dot {
 				position: absolute; top: 10px; left: 12px; width: 10px; height: 10px;
-				background: #ff4f4f; border-radius: 50%; opacity: 0; transition: opacity 0.15s;
+				background: #ff4f4f; border-radius: 50%; opacity: 0; transition: opacity var(--duration-fast);
 			}
 			.rec-dot.on { opacity: 1; animation: pulse 1s infinite; }
 			.rec-time {
@@ -73,7 +73,7 @@
 				color: #3dc1ff; padding: 6px 10px; border-radius: 999px;
 				font: 600 12.5px ui-monospace, monospace; word-break: break-all;
 			}
-			section.synth { margin-top: 24px; opacity: 0.4; pointer-events: none; transition: opacity 0.2s; }
+			section.synth { margin-top: 24px; opacity: 0.4; pointer-events: none; transition: opacity var(--duration-base); }
 			section.synth.ready { opacity: 1; pointer-events: auto; }
 		</style>
 	</head>

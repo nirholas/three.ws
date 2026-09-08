@@ -84,7 +84,7 @@
 		.combo-warn { color: var(--bad-fg); font-size: .76rem; margin-top: .6rem; min-height: 1em; }
 
 		.meter { display: flex; gap: 4px; margin-top: .65rem; }
-		.meter .seg { flex: 1; height: 7px; border-radius: 4px; background: #2a2a2a; transition: background .15s; }
+		.meter .seg { flex: 1; height: 7px; border-radius: 4px; background: #2a2a2a; transition: background var(--duration-fast); }
 		.lit-1, .lit-2, .lit-3, .lit-4 { background: #4caf50 !important; }
 		.lit-5 { background: #fb8c00 !important; }
 		.lit-6 { background: #d32f2f !important; }
@@ -111,7 +111,7 @@
 		.cores-row input[type=range]::-webkit-slider-thumb {
 			-webkit-appearance: none; appearance: none; width: 18px; height: 18px; border-radius: 50%;
 			background: #fff; cursor: pointer; border: 3px solid #000; box-shadow: 0 0 0 1px rgba(255,255,255,0.2);
-			transition: transform .1s;
+			transition: transform var(--duration-instant);
 		}
 		.cores-row input[type=range]::-webkit-slider-thumb:hover { transform: scale(1.15); }
 		.cores-row input[type=range]::-moz-range-thumb {
@@ -201,7 +201,7 @@
 		.qrcap { font-size: .72rem; color: #666; }
 		details > summary { cursor: pointer; font-size: .82rem; color: #999; }
 		details p.note { font-size: .78rem; color: #666; margin: .5rem 0 0; }
-		#drop-toast.toast { position: fixed; left: 50%; bottom: 1.5rem; transform: translateX(-50%) translateY(120%); background: #1a1a1a; border: 1px solid var(--border); color: #fff; padding: .6rem 1rem; border-radius: 8px; font-size: .85rem; transition: transform .3s ease; z-index: 50; max-width: 90vw; }
+		#drop-toast.toast { position: fixed; left: 50%; bottom: 1.5rem; transform: translateX(-50%) translateY(120%); background: #1a1a1a; border: 1px solid var(--border); color: #fff; padding: .6rem 1rem; border-radius: 8px; font-size: .85rem; transition: transform var(--duration-base) var(--ease-standard); z-index: 50; max-width: 90vw; }
 		#drop-toast.toast.show { transform: translateX(-50%) translateY(0); }
 		.spin { width: 14px; height: 14px; border: 2px solid rgba(255,255,255,.2); border-top-color: #fff; border-radius: 50%; display: inline-block; animation: rot .7s linear infinite; vertical-align: -2px; }
 		@keyframes rot { to { transform: rotate(360deg); } }
@@ -221,7 +221,7 @@
 		/* sealed-drops.js renders bare .primary/.ghost buttons (not .btn-prefixed
 		   like the grinder above) — matching /vanity/bounties' own button pattern
 		   so the two sibling pages read as one design language. */
-		button.primary, button.ghost, a.primary, a.ghost { appearance: none; font: inherit; font-weight: 700; border-radius: 6px; cursor: pointer; text-decoration: none; display: inline-flex; align-items: center; gap: .4rem; transition: transform .1s, background .15s, border-color .15s; }
+		button.primary, button.ghost, a.primary, a.ghost { appearance: none; font: inherit; font-weight: 700; border-radius: 6px; cursor: pointer; text-decoration: none; display: inline-flex; align-items: center; gap: .4rem; transition: transform var(--duration-instant), background var(--duration-fast), border-color var(--duration-fast); }
 		button.primary, a.primary { background: #fff; color: #000; border: 1px solid #fff; padding: .55rem 1.1rem; }
 		button.primary:hover, a.primary:hover { transform: translateY(-1px); background: #e8e8e8; }
 		button.primary:active:not(:disabled), a.primary:active { transform: translateY(0); background: #dcdcdc; }

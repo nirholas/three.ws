@@ -69,7 +69,7 @@
 		.mz-btn {
 			font: inherit; font-size: 13px; font-weight: 620; padding: 9px 16px; border-radius: 10px; cursor: pointer;
 			border: 1px solid var(--mz-line-strong); background: var(--mz-panel-2); color: inherit;
-			transition: background 0.16s ease, border-color 0.16s ease, transform 0.12s ease, box-shadow 0.16s ease;
+			transition: background var(--duration-fast) var(--ease-standard), border-color var(--duration-fast) var(--ease-standard), transform var(--duration-fast) var(--ease-standard), box-shadow var(--duration-fast) var(--ease-standard);
 		}
 		.mz-btn:hover:not(:disabled) { background: var(--mz-panel-2); border-color: currentColor; transform: translateY(-1px); }
 		.mz-btn:active:not(:disabled) { transform: translateY(0); }
@@ -85,7 +85,7 @@
 		.mz-drop {
 			border: 1.5px dashed var(--mz-line-strong); border-radius: 16px; background: var(--mz-panel);
 			padding: 1.9rem 1.4rem; text-align: center;
-			transition: border-color 0.18s ease, background 0.18s ease, transform 0.18s ease;
+			transition: border-color var(--duration-fast) var(--ease-standard), background var(--duration-fast) var(--ease-standard), transform var(--duration-fast) var(--ease-standard);
 		}
 		.mz-drop.is-over { border-color: var(--mz-great); background: rgba(47, 191, 113, 0.09); transform: scale(1.006); }
 		.mz-drop h2 { font-size: 15px; font-weight: 650; margin: 0 0 0.3rem; }
@@ -101,7 +101,7 @@
 		.mz-rail-card {
 			position: relative; border: 1px solid var(--mz-line); border-radius: 12px; overflow: hidden;
 			background: var(--mz-panel); cursor: pointer; padding: 0; aspect-ratio: 1; color: inherit; font: inherit;
-			transition: border-color 0.16s ease, transform 0.16s ease;
+			transition: border-color var(--duration-fast) var(--ease-standard), transform var(--duration-fast) var(--ease-standard);
 		}
 		.mz-rail-card:hover, .mz-rail-card:focus-visible { border-color: var(--mz-accent); transform: translateY(-2px); }
 		.mz-rail-card:focus-visible { outline: 2px solid var(--mz-accent); outline-offset: 2px; }
@@ -135,9 +135,9 @@
 		.mz-scale-col { display: flex; flex-direction: column; align-items: center; gap: 5px; }
 		.mz-scale-bar {
 			width: 26px; border-radius: 4px 4px 2px 2px; background: var(--mz-accent); opacity: 0.85;
-			transition: height 0.28s cubic-bezier(0.22, 0.61, 0.36, 1);
+			transition: height var(--duration-base) cubic-bezier(0.22, 0.61, 0.36, 1);
 		}
-		.mz-scale-ref { width: 26px; color: var(--mz-ink-3); transition: height 0.28s cubic-bezier(0.22, 0.61, 0.36, 1); }
+		.mz-scale-ref { width: 26px; color: var(--mz-ink-3); transition: height var(--duration-base) cubic-bezier(0.22, 0.61, 0.36, 1); }
 		.mz-scale-ref svg { width: 100%; height: 100%; display: block; }
 		.mz-scale-tag { font-size: 10px; font-weight: 650; letter-spacing: 0.03em; color: var(--mz-ink-2); white-space: nowrap; }
 		.mz-scale-caption {
@@ -169,7 +169,7 @@
 		.mz-score-dial svg { transform: rotate(-90deg); width: 100%; height: 100%; }
 		.mz-score-dial circle { fill: none; stroke-width: 5; stroke-linecap: round; }
 		.mz-score-track { stroke: var(--mz-line); }
-		.mz-score-fill { transition: stroke-dashoffset 0.5s cubic-bezier(0.22, 0.61, 0.36, 1); }
+		.mz-score-fill { transition: stroke-dashoffset var(--duration-slow) cubic-bezier(0.22, 0.61, 0.36, 1); }
 		.mz-score-num {
 			position: absolute; inset: 0; display: grid; place-content: center; font-size: 16px; font-weight: 750; letter-spacing: -0.02em;
 		}
@@ -198,7 +198,7 @@
 		.mz-mat {
 			position: relative; text-align: left; font: inherit; color: inherit; cursor: pointer; padding: 0.7rem 0.75rem 0.8rem;
 			border: 1px solid var(--mz-line); border-radius: 13px; background: var(--mz-panel);
-			transition: border-color 0.16s ease, transform 0.14s ease, background 0.16s ease;
+			transition: border-color var(--duration-fast) var(--ease-standard), transform var(--duration-fast) var(--ease-standard), background var(--duration-fast) var(--ease-standard);
 		}
 		.mz-mat:hover:not(:disabled) { transform: translateY(-2px); border-color: var(--mz-line-strong); }
 		.mz-mat:focus-visible { outline: 2px solid var(--mz-accent); outline-offset: 2px; }
@@ -219,7 +219,7 @@
 		.mz-chip {
 			font: inherit; font-size: 12px; font-weight: 600; padding: 6px 11px; border-radius: 999px; cursor: pointer;
 			border: 1px solid var(--mz-line); background: transparent; color: var(--mz-ink-2);
-			transition: border-color 0.15s ease, color 0.15s ease, background 0.15s ease;
+			transition: border-color var(--duration-fast) var(--ease-standard), color var(--duration-fast) var(--ease-standard), background var(--duration-fast) var(--ease-standard);
 		}
 		.mz-chip:hover:not(:disabled) { color: inherit; border-color: var(--mz-line-strong); }
 		.mz-chip[aria-pressed='true'] { border-color: var(--mz-accent); color: inherit; background: var(--mz-panel-2); }

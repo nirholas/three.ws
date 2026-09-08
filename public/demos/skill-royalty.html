@@ -56,7 +56,7 @@
 				text-decoration: none;
 				font-size: 12px;
 				letter-spacing: 0.04em;
-				transition: color 0.15s;
+				transition: color var(--duration-fast);
 			}
 			.page-header .crumb a:hover { color: var(--accent); }
 			.page-header h1 {
@@ -118,7 +118,7 @@
 				font-weight: 500;
 				cursor: default;
 				white-space: nowrap;
-				transition: background 0.2s, color 0.2s;
+				transition: background var(--duration-base), color var(--duration-base);
 				flex: 1;
 				justify-content: center;
 			}
@@ -141,7 +141,7 @@
 				align-items: center;
 				justify-content: center;
 				flex-shrink: 0;
-				transition: background 0.2s, color 0.2s;
+				transition: background var(--duration-base), color var(--duration-base);
 			}
 			.step-btn.active .num {
 				background: var(--accent);
@@ -209,7 +209,7 @@
 				font-size: 13px;
 				font-weight: 600;
 				cursor: pointer;
-				transition: opacity 0.15s, background 0.15s;
+				transition: opacity var(--duration-fast), background var(--duration-fast);
 				white-space: nowrap;
 			}
 			.btn:disabled { opacity: 0.35; cursor: not-allowed; }
@@ -284,8 +284,8 @@
 			}
 			.donut-svg { flex-shrink: 0; }
 			.donut-svg circle {
-				transition: stroke-dashoffset 0.4s cubic-bezier(0.4,0,0.2,1),
-				            stroke-dasharray 0.4s cubic-bezier(0.4,0,0.2,1);
+				transition: stroke-dashoffset var(--duration-slow) cubic-bezier(0.4,0,0.2,1),
+				            stroke-dasharray var(--duration-slow) cubic-bezier(0.4,0,0.2,1);
 			}
 			.chart-legend {
 				flex: 1;
@@ -303,7 +303,7 @@
 				cursor: pointer;
 				padding: 4px 6px;
 				border-radius: 6px;
-				transition: background 0.15s;
+				transition: background var(--duration-fast);
 			}
 			.legend-item:hover { background: rgba(255,255,255,0.04); }
 			.legend-item.highlighted { background: rgba(255,255,255,0.06); color: var(--text); }
@@ -348,7 +348,7 @@
 				height: 100%;
 				border-radius: 99px;
 				background: var(--accent);
-				transition: width 0.35s cubic-bezier(0.4,0,0.2,1), background 0.25s;
+				transition: width var(--duration-slow) cubic-bezier(0.4,0,0.2,1), background var(--duration-base);
 			}
 			.sum-bar-fill.overage { background: var(--red); }
 			.sum-bar-fill.perfect { background: var(--green); }
@@ -384,7 +384,7 @@
 				flex-shrink: 0;
 				display: block;
 				margin: 0 auto;
-				transition: transform 0.2s;
+				transition: transform var(--duration-base);
 			}
 			tr.row-highlighted .r-dot { transform: scale(1.4); }
 			.r-addr-cell { min-width: 200px; }
@@ -396,7 +396,7 @@
 				padding: 7px 10px;
 				border-radius: 8px;
 				font: 13px/1 ui-monospace, monospace;
-				transition: border-color 0.15s;
+				transition: border-color var(--duration-fast);
 			}
 			.r-addr-cell input:focus { outline: none; border-color: var(--accent); }
 			.r-addr-cell input.invalid { border-color: rgba(248,113,113,0.5); }
@@ -421,7 +421,7 @@
 				border-radius: 50%;
 				background: var(--accent);
 				cursor: pointer;
-				transition: transform 0.15s;
+				transition: transform var(--duration-fast);
 			}
 			.r-pct-wrap input[type=range]::-webkit-slider-thumb:hover { transform: scale(1.2); }
 			.r-pct-wrap input[type=number] {
@@ -445,7 +445,7 @@
 				line-height: 1;
 				padding: 4px;
 				border-radius: 5px;
-				transition: color 0.15s, background 0.15s;
+				transition: color var(--duration-fast), background var(--duration-fast);
 			}
 			.r-remove-btn:hover:not(:disabled) { color: var(--red); background: rgba(248,113,113,0.1); }
 			.r-remove-btn:disabled { opacity: 0.3; cursor: not-allowed; }
@@ -531,7 +531,7 @@
 				border-radius: 6px;
 				font-size: 11px;
 				cursor: pointer;
-				transition: background 0.15s, color 0.15s;
+				transition: background var(--duration-fast), color var(--duration-fast);
 			}
 			.copy-btn:hover { background: var(--border); color: var(--text); }
 			.immutable-note {
@@ -571,7 +571,7 @@
 				padding: 8px 12px;
 				border-radius: 8px;
 				font: 13px/1 ui-monospace, monospace;
-				transition: border-color 0.15s;
+				transition: border-color var(--duration-fast);
 			}
 			.form-field input:focus { outline: none; border-color: var(--accent); }
 
@@ -645,10 +645,10 @@
 				font-size: 12px;
 				color: var(--text-3);
 				user-select: none;
-				transition: background 0.15s, border-color 0.15s;
+				transition: background var(--duration-fast), border-color var(--duration-fast);
 			}
 			.log-toggle:hover { background: var(--surface-2); border-color: var(--border-2); color: var(--text-2); }
-			.log-toggle .chevron { transition: transform 0.2s; font-size: 10px; }
+			.log-toggle .chevron { transition: transform var(--duration-base); font-size: 10px; }
 			.log-toggle.open .chevron { transform: rotate(180deg); }
 			.log-body {
 				margin-top: 8px;
@@ -657,7 +657,7 @@
 				border-radius: 10px;
 				overflow: hidden;
 				max-height: 0;
-				transition: max-height 0.3s ease;
+				transition: max-height var(--duration-base) var(--ease-standard);
 			}
 			.log-body.open { max-height: 320px; }
 			.log-inner {

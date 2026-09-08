@@ -83,7 +83,7 @@
 				overflow: hidden;
 				display: flex;
 				flex-direction: column;
-				transition: transform 0.18s ease, border-color 0.18s ease, box-shadow 0.18s ease;
+				transition: transform var(--duration-fast) var(--ease-standard), border-color var(--duration-fast) var(--ease-standard), box-shadow var(--duration-fast) var(--ease-standard);
 			}
 			.ai-card:hover {
 				transform: translateY(-3px);
@@ -108,7 +108,7 @@
 			}
 			.ai-stage img {
 				object-fit: contain;
-				transition: opacity 0.25s ease;
+				transition: opacity var(--duration-base) var(--ease-standard);
 			}
 			.ai-stage model-viewer {
 				--poster-color: transparent;
@@ -232,7 +232,7 @@
 				background: #10141d;
 				overflow: hidden;
 				cursor: pointer;
-				transition: border-color 0.15s ease, transform 0.15s ease;
+				transition: border-color var(--duration-fast) var(--ease-standard), transform var(--duration-fast) var(--ease-standard);
 			}
 			.ai-shots button:hover,
 			.ai-shots button:focus-visible {
@@ -266,7 +266,7 @@
 				background: var(--surface-2);
 				text-decoration: none;
 				cursor: pointer;
-				transition: border-color 0.15s ease, background 0.15s ease;
+				transition: border-color var(--duration-fast) var(--ease-standard), background var(--duration-fast) var(--ease-standard);
 			}
 			.ai-actions a:hover,
 			.ai-actions button:hover,

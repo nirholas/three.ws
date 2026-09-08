@@ -142,7 +142,7 @@
 				background: var(--surface-1, #111);
 				border: 1px solid var(--hairline, #1c1c1c);
 				border-radius: 9px;
-				transition: border-color 0.15s;
+				transition: border-color var(--duration-fast);
 			}
 			.ae-search:focus-within {
 				border-color: var(--hairline-strong, #2a2a2a);
@@ -170,7 +170,7 @@
 				font-family: inherit;
 				padding: 9px 30px 9px 12px;
 				cursor: pointer;
-				transition: border-color 0.15s;
+				transition: border-color var(--duration-fast);
 			}
 			.ae-select:hover { border-color: var(--hairline-strong, #2a2a2a); }
 			.ae-select:focus-visible { outline: 2px solid var(--accent, #fff); outline-offset: 2px; }
@@ -185,7 +185,7 @@
 				font-size: 13px;
 				color: var(--text-2, #a8a8a8);
 				cursor: pointer;
-				transition: border-color 0.15s, color 0.15s, background 0.15s;
+				transition: border-color var(--duration-fast), color var(--duration-fast), background var(--duration-fast);
 				user-select: none;
 			}
 			.ae-toggle:hover { border-color: var(--hairline-strong, #2a2a2a); color: var(--text, #f6f6f6); }
@@ -230,7 +230,7 @@
 				border: 1px solid var(--hairline, #1c1c1c);
 				border-radius: 13px;
 				padding: 18px;
-				transition: border-color 0.18s, transform 0.18s, background 0.18s;
+				transition: border-color var(--duration-fast), transform var(--duration-fast), background var(--duration-fast);
 			}
 			.ae-card:hover { border-color: var(--hairline-strong, #2a2a2a); transform: translateY(-2px); background: var(--surface-2, #181818); }
 			.ae-card-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; }
@@ -291,7 +291,7 @@
 				display: inline-flex; align-items: center; gap: 6px;
 				padding: 8px 14px; border-radius: 8px; font-size: 12.5px; font-weight: 500;
 				text-decoration: none; border: 1px solid var(--hairline-strong, #2a2a2a);
-				color: var(--text, #f6f6f6); cursor: pointer; transition: background 0.15s, border-color 0.15s, opacity 0.15s;
+				color: var(--text, #f6f6f6); cursor: pointer; transition: background var(--duration-fast), border-color var(--duration-fast), opacity var(--duration-fast);
 				background: transparent;
 			}
 			.ae-btn:hover { background: var(--surface-2, #181818); border-color: var(--text-4, #6e6e6e); }

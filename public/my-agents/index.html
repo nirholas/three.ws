@@ -54,7 +54,7 @@
 		.hero-text .hero-alt a { color: var(--ink); font-weight: 600; text-decoration: underline; text-underline-offset: 3px; }
 		.hero-text .hero-alt a:hover { color: var(--cyan); }
 		.btn { display: inline-flex; align-items: center; gap: 6px; padding: 9px 18px; border-radius: 8px;
-			font-weight: 600; font-size: 14px; border: 1px solid rgba(255,255,255,0.14); transition: all .16s; cursor: pointer; text-decoration: none; }
+			font-weight: 600; font-size: 14px; border: 1px solid rgba(255,255,255,0.14); transition: all var(--duration-fast); cursor: pointer; text-decoration: none; }
 		.btn-primary { background: linear-gradient(135deg, var(--cyan), var(--violet)); border-color: transparent; color: #050610; }
 		.btn-primary:hover { opacity: .88; }
 		.btn:active { transform: translateY(1px); }
@@ -74,7 +74,7 @@
 		.ag-list { display: flex; flex-direction: column; gap: 12px; }
 		.ag-row { background: var(--panel); border: 1px solid var(--line); border-radius: var(--r);
 			padding: 16px 18px; display: grid; grid-template-columns: 52px 1fr auto; gap: 14px; align-items: center;
-			transition: border-color .18s; }
+			transition: border-color var(--duration-fast); }
 		.ag-row:hover { border-color: color-mix(in srgb, var(--cyan) 30%, var(--line)); }
 		.ag-avatar { width: 52px; height: 52px; border-radius: 11px; object-fit: cover;
 			background: rgba(255,255,255,0.07); border: 1px solid var(--line); }
@@ -91,7 +91,7 @@
 		.ag-actions { display: flex; gap: 8px; align-items: center; flex-shrink: 0; }
 		.ag-action { font-size: 13px; font-weight: 600; color: var(--ink); padding: 6px 12px;
 			border: 1px solid var(--line); border-radius: 7px; background: rgba(255,255,255,0.05);
-			transition: all .14s; white-space: nowrap; text-decoration: none; }
+			transition: all var(--duration-fast); white-space: nowrap; text-decoration: none; }
 		.ag-action:hover { background: rgba(255,255,255,0.1); border-color: rgba(255,255,255,0.2); }
 		.ag-action:active { transform: translateY(1px); }
 		.ag-action.primary { color: var(--cyan); border-color: color-mix(in srgb, var(--cyan) 30%, var(--line)); }

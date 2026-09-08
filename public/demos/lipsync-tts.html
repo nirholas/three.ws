@@ -35,7 +35,7 @@
 			.viseme-row { display: flex; justify-content: space-between; font-size: 12px; color: #8a8d98; font-family: ui-monospace, monospace; }
 			.viseme-row code { color: #3dc1ff; font-weight: 600; }
 			.bar { display: inline-block; height: 6px; vertical-align: middle; border-radius: 3px; background: rgba(61, 193, 255,0.18); margin-left: 8px; }
-			.bar > span { display: block; height: 100%; background: #3dc1ff; border-radius: 3px; transition: width 0.04s linear; }
+			.bar > span { display: block; height: 100%; background: #3dc1ff; border-radius: 3px; transition: width var(--duration-instant) linear; }
 			.log { background: #080808; border: 1px solid #202020; border-radius: 9px; padding: 12px; font-family: ui-monospace, monospace; font-size: 11.5px; color: #8a8d98; line-height: 1.55; min-height: 60px; max-height: 140px; overflow-y: auto; }
 			.log .ok { color: #3dc1ff; }
 			.log .err { color: #ff8a8a; }
@@ -51,7 +51,7 @@
 			.tts-error .retry {
 				flex: 0 0 auto; cursor: pointer; font: inherit; font-weight: 600; color: #0a0a0a;
 				background: #ff8a8a; border: 0; border-radius: 7px; padding: 7px 13px;
-				transition: filter 0.16s ease, transform 0.16s ease;
+				transition: filter var(--duration-fast) var(--ease-standard), transform var(--duration-fast) var(--ease-standard);
 			}
 			.tts-error .retry:hover { filter: brightness(1.08); }
 			.tts-error .retry:active { transform: translateY(1px); }

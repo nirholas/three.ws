@@ -138,7 +138,7 @@
 			padding: 10px 20px;
 			border-radius: 8px;
 			text-decoration: none;
-			transition: opacity 0.15s;
+			transition: opacity var(--duration-fast);
 		}
 		.btn-primary:hover { opacity: 0.88; }
 		.btn-ghost {
@@ -152,7 +152,7 @@
 			border-radius: 8px;
 			border: 1px solid var(--border-2);
 			text-decoration: none;
-			transition: color 0.15s, border-color 0.15s;
+			transition: color var(--duration-fast), border-color var(--duration-fast);
 		}
 		.btn-ghost:hover { color: var(--text); border-color: #444; }
 
@@ -214,7 +214,7 @@
 			display: flex;
 			flex-direction: column;
 			gap: 16px;
-			transition: border-color 0.2s, transform 0.2s, box-shadow 0.2s;
+			transition: border-color var(--duration-base), transform var(--duration-base), box-shadow var(--duration-base);
 			text-decoration: none;
 			color: inherit;
 		}
@@ -316,7 +316,7 @@
 			font-size: 13px;
 			font-weight: 500;
 			color: var(--text-2);
-			transition: color 0.15s;
+			transition: color var(--duration-fast);
 			margin-top: auto;
 		}
 		.partner-card:hover .partner-link { color: var(--text); }

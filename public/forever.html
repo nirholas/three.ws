@@ -162,7 +162,7 @@
 		border: 1px solid var(--line-strong);
 		border-radius: 18px;
 		padding: 28px 28px 22px;
-		transition: border-color 220ms ease, box-shadow 220ms ease, transform 220ms ease;
+		transition: border-color var(--duration-base) var(--ease-standard), box-shadow var(--duration-base) var(--ease-standard), transform var(--duration-base) var(--ease-standard);
 	}
 	.composer-frame:focus-within {
 		border-color: var(--btc);
@@ -225,7 +225,7 @@
 		font-family: var(--mono);
 		font-size: 13px;
 		outline: 0;
-		transition: border-color 200ms ease;
+		transition: border-color var(--duration-base) var(--ease-standard);
 	}
 	.options input:focus, .options select:focus { border-color: var(--btc); }
 	.options input::placeholder { color: var(--ink-4); }
@@ -263,7 +263,7 @@
 		border-radius: 12px;
 		border: 0;
 		cursor: pointer;
-		transition: transform 140ms ease, box-shadow 220ms ease, background 140ms ease;
+		transition: transform var(--duration-fast) var(--ease-standard), box-shadow var(--duration-base) var(--ease-standard), background var(--duration-fast) var(--ease-standard);
 		box-shadow: 0 12px 40px -12px var(--btc-glow);
 	}
 	.cta:hover { transform: translateY(-1px); box-shadow: 0 18px 60px -10px var(--btc-glow); background: #ffa84d; }
@@ -434,7 +434,7 @@
 		letter-spacing: 0.06em;
 		text-transform: uppercase;
 		cursor: pointer;
-		transition: border-color 160ms ease, color 160ms ease;
+		transition: border-color var(--duration-fast) var(--ease-standard), color var(--duration-fast) var(--ease-standard);
 	}
 	.btn:hover { border-color: var(--btc); color: var(--ink); }
 	.btn.primary {
@@ -542,7 +542,7 @@
 		align-items: center;
 		gap: 10px;
 		cursor: pointer;
-		transition: border-color 160ms ease, transform 140ms ease;
+		transition: border-color var(--duration-fast) var(--ease-standard), transform var(--duration-fast) var(--ease-standard);
 	}
 	.share-x:hover { border-color: #fff; transform: translateY(-1px); }
 	.share-x svg { width: 16px; height: 16px; }

@@ -144,9 +144,9 @@
 				cursor: pointer;
 				font-family: inherit;
 				transition:
-					color 0.15s,
-					border-color 0.15s,
-					background 0.15s;
+					color var(--duration-fast),
+					border-color var(--duration-fast),
+					background var(--duration-fast);
 			}
 
 			.up-chain-pill:hover {
@@ -191,8 +191,8 @@
 				border-radius: 12px;
 				overflow: hidden;
 				transition:
-					border-color 0.15s,
-					background 0.15s;
+					border-color var(--duration-fast),
+					background var(--duration-fast);
 				display: flex;
 				flex-direction: column;
 			}
@@ -225,7 +225,7 @@
 				font-size: 11px;
 				cursor: pointer;
 				opacity: 0;
-				transition: opacity 0.15s, color 0.15s, border-color 0.15s;
+				transition: opacity var(--duration-fast), color var(--duration-fast), border-color var(--duration-fast);
 			}
 			.up-card-wrap:hover .up-copy-prompt,
 			.up-copy-prompt:focus-visible {
@@ -329,7 +329,7 @@
 				font-size: 0.618rem;
 				color: rgba(255, 215, 0, 0.4);
 				text-decoration: none;
-				transition: color 0.15s;
+				transition: color var(--duration-fast);
 			}
 
 			.up-card-edit:hover {
@@ -388,7 +388,7 @@
 				font-size: 0.95rem;
 				font-family: inherit;
 				width: min(220px, 55vw);
-				transition: border-color 0.15s;
+				transition: border-color var(--duration-fast);
 			}
 			.up-claim-row input:focus {
 				outline: none;
@@ -404,7 +404,7 @@
 				font-weight: 600;
 				font-family: inherit;
 				cursor: pointer;
-				transition: opacity 0.15s;
+				transition: opacity var(--duration-fast);
 			}
 			.up-claim-row button:hover {
 				opacity: 0.88;
@@ -443,8 +443,8 @@
 				cursor: pointer;
 				font-family: inherit;
 				transition:
-					color 0.15s,
-					border-color 0.15s;
+					color var(--duration-fast),
+					border-color var(--duration-fast);
 			}
 
 			.profile-copy-btn:hover {
@@ -632,7 +632,7 @@
 				font-weight: 500;
 				color: rgba(255, 255, 255, 0.75);
 				cursor: default;
-				transition: border-color 0.15s, background 0.15s;
+				transition: border-color var(--duration-fast), background var(--duration-fast);
 			}
 
 			.up-badge-chip:hover {
@@ -659,8 +659,8 @@
 				padding: 0.618rem 1rem;
 				cursor: pointer;
 				transition:
-					color 0.15s,
-					border-color 0.15s;
+					color var(--duration-fast),
+					border-color var(--duration-fast);
 				display: inline-flex;
 				align-items: center;
 				gap: 0.382rem;
@@ -707,8 +707,8 @@
 				border: 1px solid rgba(255, 255, 255, 0.07);
 				border-radius: 12px;
 				transition:
-					border-color 0.15s,
-					background 0.15s;
+					border-color var(--duration-fast),
+					background var(--duration-fast);
 				text-decoration: none;
 				color: inherit;
 			}
@@ -943,7 +943,7 @@
 				border: 1px solid rgba(255, 255, 255, 0.18);
 				background: transparent;
 				color: rgba(255, 255, 255, 0.9);
-				transition: background 0.15s ease, border-color 0.15s ease, opacity 0.15s ease;
+				transition: background var(--duration-fast) var(--ease-standard), border-color var(--duration-fast) var(--ease-standard), opacity var(--duration-fast) var(--ease-standard);
 			}
 			.up-action-btn:hover { border-color: rgba(255, 255, 255, 0.4); }
 			.up-action-btn--primary {
@@ -1035,7 +1035,7 @@
 				font-size: 0.92rem;
 				font-family: inherit;
 				box-sizing: border-box;
-				transition: border-color 0.15s ease;
+				transition: border-color var(--duration-fast) var(--ease-standard);
 			}
 			.up-field input:focus,
 			.up-field textarea:focus {
@@ -1113,7 +1113,7 @@
 				font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
 				font-size: 0.68rem;
 				color: rgba(255, 255, 255, 0.6);
-				transition: border-color 0.15s, background 0.15s;
+				transition: border-color var(--duration-fast), background var(--duration-fast);
 			}
 			.up-wallet-chip:hover { border-color: rgba(255, 255, 255, 0.2); }
 			.up-wallet-chip .up-chain-dot {
@@ -1131,7 +1131,7 @@
 				padding: 0.15rem;
 				display: inline-flex;
 				border-radius: 5px;
-				transition: color 0.15s, background 0.15s;
+				transition: color var(--duration-fast), background var(--duration-fast);
 			}
 			.up-wallet-copy:hover, .up-wallet-link:hover {
 				color: #fff;
@@ -1154,7 +1154,7 @@
 				flex-direction: column;
 				text-decoration: none;
 				color: inherit;
-				transition: border-color 0.15s, transform 0.15s;
+				transition: border-color var(--duration-fast), transform var(--duration-fast);
 			}
 			.up-nft-card:hover { border-color: rgba(255, 255, 255, 0.16); transform: translateY(-2px); }
 			.up-nft-media {
@@ -1265,7 +1265,7 @@
 				padding: 0.22rem 0.55rem;
 				border-radius: 999px;
 				cursor: pointer;
-				transition: border-color 0.15s, color 0.15s, background 0.15s;
+				transition: border-color var(--duration-fast), color var(--duration-fast), background var(--duration-fast);
 			}
 			.up-fork-btn:hover { border-color: rgba(154, 140, 255, 0.5); color: #9a8cff; }
 			.up-fork-btn[disabled] { opacity: 0.5; cursor: default; }
@@ -1295,7 +1295,7 @@
 				padding: 0.22rem 0.55rem;
 				border-radius: 999px;
 				cursor: pointer;
-				transition: border-color 0.15s, color 0.15s, background 0.15s;
+				transition: border-color var(--duration-fast), color var(--duration-fast), background var(--duration-fast);
 			}
 			.up-agent-fork-btn:hover { border-color: rgba(154, 140, 255, 0.5); color: #9a8cff; }
 			.up-agent-fork-btn[disabled] { opacity: 0.5; cursor: default; }
@@ -1331,7 +1331,7 @@
 				cursor: pointer;
 				text-align: left;
 				text-decoration: none;
-				transition: background 0.12s;
+				transition: background var(--duration-fast);
 			}
 			.profile-share-item:hover { background: rgba(255, 255, 255, 0.06); }
 			.profile-share-item svg { width: 15px; height: 15px; flex-shrink: 0; opacity: 0.75; }
@@ -1350,7 +1350,7 @@
 				font-size: 0.85rem;
 				z-index: 10000;
 				opacity: 0;
-				transition: opacity 0.2s ease, transform 0.2s ease;
+				transition: opacity var(--duration-base) var(--ease-standard), transform var(--duration-base) var(--ease-standard);
 				box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
 				display: flex;
 				align-items: center;

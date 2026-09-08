@@ -55,7 +55,7 @@
 
 		/* reading progress */
 		#progress { position: fixed; top: 0; left: 0; height: 2px; width: 0; z-index: 60;
-			background: linear-gradient(90deg, var(--p-nar), var(--up)); transition: width .1s linear; }
+			background: linear-gradient(90deg, var(--p-nar), var(--up)); transition: width var(--duration-instant) linear; }
 
 		.wrap { max-width: var(--maxw); margin: 0 auto; padding: 0 22px 120px; }
 
@@ -82,7 +82,7 @@
 		nav.toc::-webkit-scrollbar { width: 6px; } nav.toc::-webkit-scrollbar-thumb { background: var(--line); border-radius: 8px; }
 		.toc-h { font-family: var(--mono); font-size: 10.5px; letter-spacing: .16em; text-transform: uppercase; color: var(--faint); margin: 18px 0 9px; padding-left: 12px; }
 		.toc-h:first-child { margin-top: 0; }
-		nav.toc a { display: block; padding: 5px 12px; border-left: 2px solid transparent; color: var(--muted); border-radius: 0 6px 6px 0; transition: color .12s, border-color .12s, background .12s; }
+		nav.toc a { display: block; padding: 5px 12px; border-left: 2px solid transparent; color: var(--muted); border-radius: 0 6px 6px 0; transition: color var(--duration-fast), border-color var(--duration-fast), background var(--duration-fast); }
 		nav.toc a:hover { color: var(--ink); background: var(--panel-2); }
 		nav.toc a.on { color: var(--ink); border-left-color: var(--up); background: linear-gradient(90deg, color-mix(in srgb, var(--up) 8%, transparent), transparent); }
 		main { min-width: 0; }
@@ -128,7 +128,7 @@
 		details.dive { border: 1px solid var(--line); border-radius: var(--r-sm); background: var(--panel-2); margin: 16px 0; overflow: hidden; }
 		details.dive > summary { list-style: none; cursor: pointer; padding: 13px 16px; display: flex; align-items: center; gap: 11px; font-weight: 600; color: var(--ink); user-select: none; }
 		details.dive > summary::-webkit-details-marker { display: none; }
-		details.dive > summary .chev { margin-left: auto; color: var(--muted); transition: transform .2s; }
+		details.dive > summary .chev { margin-left: auto; color: var(--muted); transition: transform var(--duration-base); }
 		details.dive[open] > summary .chev { transform: rotate(90deg); }
 		details.dive > summary:hover { background: var(--panel); }
 		details.dive .body { padding: 4px 16px 16px; border-top: 1px solid var(--line-2); }
@@ -139,12 +139,12 @@
 		.cards.c3 { grid-template-columns: repeat(3, 1fr); }
 		.cards.c2 { grid-template-columns: repeat(2, 1fr); }
 		.cards.c4 { grid-template-columns: repeat(4, 1fr); }
-		.card { border: 1px solid var(--line); background: var(--panel); border-radius: var(--r); padding: 17px 18px; backdrop-filter: var(--blur); transition: transform .14s, border-color .14s; }
+		.card { border: 1px solid var(--line); background: var(--panel); border-radius: var(--r); padding: 17px 18px; backdrop-filter: var(--blur); transition: transform var(--duration-fast), border-color var(--duration-fast); }
 		.card:hover { transform: translateY(-3px); border-color: var(--stroke-strong); }
 		.card h4 { margin: 0 0 6px; }
 		.card p { margin: 0; font-size: 13.5px; }
 		.card .ic { font-family: var(--mono); font-size: 11px; color: var(--faint); letter-spacing: .12em; text-transform: uppercase; }
-		.card.link::after { content: "→"; float: right; color: var(--muted); transition: transform .14s; }
+		.card.link::after { content: "→"; float: right; color: var(--muted); transition: transform var(--duration-fast); }
 		.card.link:hover::after { transform: translateX(3px); color: var(--ink); }
 
 		/* stat strip */
@@ -207,7 +207,7 @@
 		.foot .links { display: flex; gap: 18px; flex-wrap: wrap; }
 
 		.controls { display: flex; gap: 10px; flex-wrap: wrap; margin: 6px 0 2px; }
-		.btn { display: inline-flex; align-items: center; gap: 8px; border: 1px solid var(--line); background: var(--panel); border-radius: var(--r-sm); padding: 9px 15px; font-size: 13.5px; font-weight: 600; transition: transform .12s, border-color .12s; }
+		.btn { display: inline-flex; align-items: center; gap: 8px; border: 1px solid var(--line); background: var(--panel); border-radius: var(--r-sm); padding: 9px 15px; font-size: 13.5px; font-weight: 600; transition: transform var(--duration-fast), border-color var(--duration-fast); }
 		.btn:hover { transform: translateY(-1px); border-color: var(--stroke-strong); }
 		.btn.primary { background: var(--up); color: #06070d; border-color: transparent; }
 

@@ -57,7 +57,7 @@
 			details.drawer > summary::-webkit-details-marker { display: none; }
 			details.drawer > summary::before {
 				content: '▸'; color: #8a8d98; margin-right: 8px; display: inline-block;
-				transition: transform 0.12s ease;
+				transition: transform var(--duration-fast) var(--ease-standard);
 			}
 			details.drawer[open] > summary::before { transform: rotate(90deg); }
 			details.drawer > .drawer-body { padding: 0 18px 18px; display: flex; gap: 14px; flex-wrap: wrap; align-items: center; }

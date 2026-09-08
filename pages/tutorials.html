@@ -187,9 +187,9 @@
 				color: rgba(255, 255, 255, 0.7);
 				text-decoration: none;
 				transition:
-					background 0.15s ease,
-					border-color 0.15s ease,
-					color 0.15s ease;
+					background var(--duration-fast) var(--ease-standard),
+					border-color var(--duration-fast) var(--ease-standard),
+					color var(--duration-fast) var(--ease-standard);
 			}
 
 			.tut-jump:hover {
@@ -290,9 +290,9 @@
 				padding: 1.4rem 1.5rem 1.25rem;
 				text-decoration: none;
 				transition:
-					border-color 0.2s ease,
-					transform 0.2s ease,
-					background 0.2s ease;
+					border-color var(--duration-base) var(--ease-standard),
+					transform var(--duration-base) var(--ease-standard),
+					background var(--duration-base) var(--ease-standard);
 				position: relative;
 				overflow: hidden;
 				min-height: 200px;
@@ -307,7 +307,7 @@
 				height: 2px;
 				background: var(--tut-card-accent, #ffffff);
 				opacity: 0;
-				transition: opacity 0.2s ease;
+				transition: opacity var(--duration-base) var(--ease-standard);
 			}
 
 			.tut-card-link:hover {
@@ -372,7 +372,7 @@
 			.tut-card-cta svg {
 				width: 12px;
 				height: 12px;
-				transition: transform 0.15s ease;
+				transition: transform var(--duration-fast) var(--ease-standard);
 			}
 
 			.tut-card-link:hover .tut-card-cta svg {
@@ -427,8 +427,8 @@
 				font-weight: 500;
 				text-decoration: none;
 				transition:
-					background 0.15s ease,
-					border-color 0.15s ease;
+					background var(--duration-fast) var(--ease-standard),
+					border-color var(--duration-fast) var(--ease-standard);
 			}
 
 			.tut-bottom-btn.primary {

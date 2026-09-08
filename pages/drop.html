@@ -44,10 +44,10 @@
 		.mono { font-family: ui-monospace, monospace; word-break: break-all; }
 		.note { font-size: .8rem; color: var(--muted); margin: .4rem 0 0; }
 
-		button.primary, a.primary { appearance: none; font: inherit; font-weight: 700; border-radius: 8px; cursor: pointer; text-decoration: none; display: inline-flex; align-items: center; justify-content: center; gap: .4rem; background: #fff; color: #000; border: 1px solid #fff; padding: .55rem 1.1rem; transition: transform .1s, background .15s; }
+		button.primary, a.primary { appearance: none; font: inherit; font-weight: 700; border-radius: 8px; cursor: pointer; text-decoration: none; display: inline-flex; align-items: center; justify-content: center; gap: .4rem; background: #fff; color: #000; border: 1px solid #fff; padding: .55rem 1.1rem; transition: transform var(--duration-instant), background var(--duration-fast); }
 		button.primary:hover, a.primary:hover { transform: translateY(-1px); background: var(--ink); }
 		button.primary:disabled { opacity: .5; cursor: not-allowed; transform: none; }
-		button.ghost, a.ghost { appearance: none; font: inherit; font-weight: 700; border-radius: 8px; cursor: pointer; text-decoration: none; background: transparent; color: var(--fg); border: 1px solid rgba(255,255,255,.12); padding: .5rem .9rem; transition: border-color .15s; }
+		button.ghost, a.ghost { appearance: none; font: inherit; font-weight: 700; border-radius: 8px; cursor: pointer; text-decoration: none; background: transparent; color: var(--fg); border: 1px solid rgba(255,255,255,.12); padding: .5rem .9rem; transition: border-color var(--duration-fast); }
 		button.ghost:hover, a.ghost:hover { border-color: rgba(255,255,255,.3); }
 		button.small, a.small { font-size: .78rem; padding: .4rem .7rem; }
 		button.big { font-size: 1rem; padding: .8rem 1.4rem; width: 100%; }
@@ -80,7 +80,7 @@
 		button.ghost .spin { border-color: rgba(255,255,255,.2); border-top-color: #fff; }
 		@keyframes rot { to { transform: rotate(360deg); } }
 
-		#drop-toast.toast { position: fixed; left: 50%; bottom: 1.5rem; transform: translateX(-50%) translateY(120%); background: var(--bg-1); border: 1px solid var(--border); color: #fff; padding: .6rem 1rem; border-radius: 8px; font-size: .85rem; transition: transform .3s ease; z-index: 50; max-width: 90vw; }
+		#drop-toast.toast { position: fixed; left: 50%; bottom: 1.5rem; transform: translateX(-50%) translateY(120%); background: var(--bg-1); border: 1px solid var(--border); color: #fff; padding: .6rem 1rem; border-radius: 8px; font-size: .85rem; transition: transform var(--duration-base) var(--ease-standard); z-index: 50; max-width: 90vw; }
 		#drop-toast.toast.show { transform: translateX(-50%) translateY(0); }
 	</style>
 

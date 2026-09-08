@@ -67,7 +67,7 @@
 				background: var(--surface-glass);
 				font-family: var(--font-display);
 				font-size: 1.05rem;
-				transition: border-color 0.3s ease;
+				transition: border-color var(--duration-base) var(--ease-standard);
 			}
 			.st-banner .st-dot {
 				width: 12px;
@@ -95,7 +95,7 @@
 				border-radius: 50%;
 				background: var(--ink-dim);
 				flex: none;
-				transition: background 0.3s ease;
+				transition: background var(--duration-base) var(--ease-standard);
 			}
 			.st-dot[data-state='ok'] {
 				background: var(--ink);
@@ -127,7 +127,7 @@
 			.st-kpi {
 				background: var(--surface-1);
 				padding: 0.9rem 1.1rem;
-				transition: background 0.2s ease;
+				transition: background var(--duration-base) var(--ease-standard);
 			}
 			.st-kpi:hover {
 				background: var(--surface-2);
@@ -169,8 +169,8 @@
 				padding: 1rem 1.25rem;
 				margin-bottom: var(--space-md);
 				transition:
-					border-color 0.2s ease,
-					background 0.2s ease;
+					border-color var(--duration-base) var(--ease-standard),
+					background var(--duration-base) var(--ease-standard);
 			}
 			.st-card:hover {
 				border-color: var(--stroke-strong);
@@ -211,7 +211,7 @@
 				flex: 1 1 0;
 				border-radius: 2px;
 				background: var(--surface-3);
-				transition: transform 0.12s ease;
+				transition: transform var(--duration-fast) var(--ease-standard);
 			}
 			.st-cell:hover,
 			.st-cell:focus-visible {

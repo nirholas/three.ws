@@ -43,18 +43,18 @@
 			.sp-safety b { color: #ccc; }
 			.sp-bar { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin: var(--space-lg, 24px) 0 var(--space-md, 16px); }
 			.sp-seg { display: inline-flex; gap: 4px; background: rgba(255,255,255,.03); padding: 4px; border-radius: var(--radius-pill, 999px); border: 1px solid rgba(255,255,255,.1); }
-			.sp-seg button { font: inherit; font-size: var(--text-2xs, .68rem); padding: 6px 14px; border-radius: 999px; border: none; background: transparent; color: var(--ink-dim); cursor: pointer; transition: background .15s, color .15s; }
+			.sp-seg button { font: inherit; font-size: var(--text-2xs, .68rem); padding: 6px 14px; border-radius: 999px; border: none; background: transparent; color: var(--ink-dim); cursor: pointer; transition: background var(--duration-fast), color var(--duration-fast); }
 			.sp-seg button[aria-pressed="true"] { background: var(--accent); color: var(--bg-0); font-weight: 700; }
 			.sp-seg button:focus-visible { outline: 2px solid rgba(255,255,255,.6); outline-offset: 2px; }
 			.sp-spacer { flex: 1 1 auto; }
-			.sp-new { font: inherit; font-size: var(--text-2xs, .72rem); font-weight: 700; padding: 9px 16px; border-radius: var(--radius-pill, 999px); border: none; background: var(--accent); color: var(--bg-0); cursor: pointer; transition: background .15s; }
+			.sp-new { font: inherit; font-size: var(--text-2xs, .72rem); font-weight: 700; padding: 9px 16px; border-radius: var(--radius-pill, 999px); border: none; background: var(--accent); color: var(--bg-0); cursor: pointer; transition: background var(--duration-fast); }
 			.sp-new:hover { background: #d4d4d4; }
 			.sp-new:focus-visible { outline: 2px solid rgba(255,255,255,.5); outline-offset: 2px; }
 			.sp-search { flex: 1 1 180px; min-width: 140px; font: inherit; font-size: var(--text-sm, .82rem); padding: 8px 12px; border-radius: var(--radius-pill, 999px); border: 1px solid rgba(255,255,255,.1); background: rgba(255,255,255,.03); color: #fff; }
 			.sp-search:focus { outline: none; border-color: rgba(255,255,255,.35); }
 			.sp-search:focus-visible { outline: 2px solid rgba(255,255,255,.5); outline-offset: 2px; }
 			.sp-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: var(--space-md, 14px); }
-			.sp-card { display: flex; flex-direction: column; gap: 8px; border: 1px solid rgba(255,255,255,.08); border-radius: var(--radius-lg, 14px); background: rgba(255,255,255,.025); padding: var(--space-md, 16px); transition: border-color .18s, transform .18s; }
+			.sp-card { display: flex; flex-direction: column; gap: 8px; border: 1px solid rgba(255,255,255,.08); border-radius: var(--radius-lg, 14px); background: rgba(255,255,255,.025); padding: var(--space-md, 16px); transition: border-color var(--duration-fast), transform var(--duration-fast); }
 			.sp-card:hover { border-color: rgba(255,255,255,.25); transform: translateY(-1px); }
 			.sp-card-top { display: flex; align-items: flex-start; gap: 8px; }
 			.sp-card-name { flex: 1 1 auto; min-width: 0; font-family: var(--font-display, inherit); font-size: var(--text-md, 1rem); font-weight: 700; color: #fff; }
@@ -70,7 +70,7 @@
 			.sp-meta a { color: #aaa; text-decoration: none; }
 			.sp-meta a:hover { color: #fff; }
 			.sp-actions { display: flex; gap: 6px; margin-top: 2px; }
-			.sp-btn { flex: 1; font: inherit; font-size: var(--text-2xs, .7rem); padding: 8px 10px; border-radius: var(--radius-sm, 8px); border: 1px solid rgba(255,255,255,.14); background: rgba(255,255,255,.05); color: var(--ink); cursor: pointer; transition: border-color .16s, color .16s, background .16s; white-space: nowrap; }
+			.sp-btn { flex: 1; font: inherit; font-size: var(--text-2xs, .7rem); padding: 8px 10px; border-radius: var(--radius-sm, 8px); border: 1px solid rgba(255,255,255,.14); background: rgba(255,255,255,.05); color: var(--ink); cursor: pointer; transition: border-color var(--duration-fast), color var(--duration-fast), background var(--duration-fast); white-space: nowrap; }
 			.sp-btn:hover { border-color: rgba(255,255,255,.35); color: #fff; }
 			.sp-btn:focus-visible { outline: 2px solid rgba(255,255,255,.5); outline-offset: 2px; }
 			.sp-btn-primary { background: var(--accent); color: var(--bg-0); border-color: transparent; font-weight: 700; }

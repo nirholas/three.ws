@@ -69,7 +69,7 @@
 			.card {
 				background: #101010; border: 1.5px solid #202020; border-radius: 12px;
 				overflow: hidden; cursor: pointer; display: flex; flex-direction: column;
-				transition: border-color 120ms ease, transform 120ms ease;
+				transition: border-color var(--duration-fast) var(--ease-standard), transform var(--duration-fast) var(--ease-standard);
 				text-align: left;
 				color: inherit; font: inherit; padding: 0;
 			}
@@ -127,7 +127,7 @@
 			.mode-radio label {
 				flex: 1; text-align: center; padding: 7px 4px;
 				font-size: 12px; color: #8a8d98; cursor: pointer;
-				border-radius: 7px; transition: background 120ms ease, color 120ms ease;
+				border-radius: 7px; transition: background var(--duration-fast) var(--ease-standard), color var(--duration-fast) var(--ease-standard);
 			}
 			.mode-radio input { display: none; }
 			.mode-radio input:checked + span { background: #202020; color: #eee; }

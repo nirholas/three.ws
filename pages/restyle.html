@@ -46,7 +46,7 @@
 			.rs-presets { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; }
 			.rs-preset { display: flex; align-items: center; gap: 9px; padding: 8px 10px; border-radius: 10px; cursor: pointer;
 				border: 1px solid var(--border, #23252d); background: transparent; color: var(--text); font-size: 13px; text-align: left;
-				transition: border-color 0.15s ease, background 0.15s ease, transform 0.05s ease; }
+				transition: border-color var(--duration-fast) var(--ease-standard), background var(--duration-fast) var(--ease-standard), transform var(--duration-instant) var(--ease-standard); }
 			.rs-preset:hover { border-color: color-mix(in srgb, var(--text) 40%, transparent); background: color-mix(in srgb, var(--text) 5%, transparent); }
 			.rs-preset:active { transform: translateY(1px); }
 			.rs-preset:focus-visible { outline: 2px solid var(--accent, #7aa2ff); outline-offset: 2px; }
@@ -65,12 +65,12 @@
 			.rs-input { width: 66px; padding: 6px 8px; border-radius: 8px; border: 1px solid var(--border, #23252d); background: var(--bg, #000); color: var(--text); font: inherit; }
 			.rs-strip { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
 			.rs-swatch { width: 40px; height: 40px; border-radius: 9px; cursor: pointer; border: 1px solid color-mix(in srgb, var(--text) 22%, transparent);
-				transition: transform 0.08s ease; }
+				transition: transform var(--duration-instant) var(--ease-standard); }
 			.rs-swatch:hover { transform: scale(1.08); }
 			.rs-swatch:focus-visible { outline: 2px solid var(--accent, #7aa2ff); outline-offset: 2px; }
 
 			.rs-btn { padding: 9px 14px; border-radius: 10px; border: 1px solid var(--border, #23252d); background: transparent;
-				color: var(--text); font: inherit; font-size: 13px; cursor: pointer; transition: background 0.15s ease, border-color 0.15s ease; }
+				color: var(--text); font: inherit; font-size: 13px; cursor: pointer; transition: background var(--duration-fast) var(--ease-standard), border-color var(--duration-fast) var(--ease-standard); }
 			.rs-btn:hover { background: color-mix(in srgb, var(--text) 6%, transparent); }
 			.rs-btn:focus-visible { outline: 2px solid var(--accent, #7aa2ff); outline-offset: 2px; }
 			.rs-btn--primary { background: var(--text); color: var(--bg, #000); border-color: var(--text); font-weight: 600; }

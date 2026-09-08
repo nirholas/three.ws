@@ -19,7 +19,7 @@
 
 		.lk-controls { display: flex; gap: 0.75rem; margin-bottom: 1.75rem; flex-wrap: wrap; align-items: center; }
 		.lk-controls label { font-size: 12px; color: rgba(255,255,255,0.45); }
-		.lk-controls select { font: inherit; font-size: 13px; padding: 8px 12px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.12); background: rgba(255,255,255,0.05); color: #e2e8f0; cursor: pointer; transition: border-color .15s ease, background .15s ease; }
+		.lk-controls select { font: inherit; font-size: 13px; padding: 8px 12px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.12); background: rgba(255,255,255,0.05); color: #e2e8f0; cursor: pointer; transition: border-color var(--duration-fast) var(--ease-standard), background var(--duration-fast) var(--ease-standard); }
 		.lk-controls select:hover { border-color: rgba(255,255,255,0.24); background: rgba(255,255,255,0.08); }
 		.lk-controls select:focus-visible { outline: 2px solid rgba(124,92,255,0.7); outline-offset: 2px; }
 
@@ -41,7 +41,7 @@
 		.lk-bar-row { display: grid; grid-template-columns: 76px 1fr 56px; gap: 0.85rem; align-items: center; font-size: 12.5px; }
 		.lk-bar-label { color: rgba(255,255,255,0.55); font-variant-numeric: tabular-nums; }
 		.lk-bar-track { height: 22px; border-radius: 6px; background: rgba(255,255,255,0.04); overflow: hidden; }
-		.lk-bar-fill { height: 100%; border-radius: 6px; background: linear-gradient(90deg, rgba(124,92,255,0.85), rgba(124,92,255,0.45)); transition: width .35s cubic-bezier(.4,0,.2,1); }
+		.lk-bar-fill { height: 100%; border-radius: 6px; background: linear-gradient(90deg, rgba(124,92,255,0.85), rgba(124,92,255,0.45)); transition: width var(--duration-slow) cubic-bezier(.4,0,.2,1); }
 		.lk-bar-row.gate .lk-bar-fill { background: linear-gradient(90deg, rgba(47,191,113,0.9), rgba(47,191,113,0.45)); }
 		.lk-bar-count { text-align: right; font-variant-numeric: tabular-nums; color: rgba(255,255,255,0.7); }
 
@@ -52,7 +52,7 @@
 		.lk-table { width: 100%; border-collapse: collapse; font-size: 12.5px; }
 		.lk-table th, .lk-table td { text-align: left; padding: 0.55rem 0.75rem; border-bottom: 1px solid rgba(255,255,255,0.06); white-space: nowrap; }
 		.lk-table th { color: rgba(255,255,255,0.4); font-weight: 600; text-transform: uppercase; font-size: 10.5px; letter-spacing: 0.06em; }
-		.lk-table tbody tr { transition: background .12s ease; }
+		.lk-table tbody tr { transition: background var(--duration-fast) var(--ease-standard); }
 		.lk-table tbody tr:hover { background: rgba(255,255,255,0.035); }
 		.lk-table td.num { font-variant-numeric: tabular-nums; }
 		.lk-table-wrap { overflow-x: auto; border-radius: 12px; border: 1px solid rgba(255,255,255,0.07); margin-bottom: 2.5rem; }

@@ -92,7 +92,7 @@
 			.pc-overlay h3, .pc-overlay-title { font-family: var(--font-display, 'Space Grotesk', sans-serif); font-size: 17px; font-weight: 700; margin: 0; color: var(--text, #f6f6f6); }
 			.pc-overlay p, .pc-overlay-sub { font-size: 13px; color: var(--text-3, #8a8a8a); margin: 0; max-width: 380px; line-height: 1.5; }
 			.pc-overlay--drop {
-				pointer-events: auto; cursor: pointer; transition: background 0.15s;
+				pointer-events: auto; cursor: pointer; transition: background var(--duration-fast);
 				width: 100%; border: 0; background: transparent; font: inherit; color: inherit;
 			}
 			.pc-overlay--drop:hover, .pc-stage.is-dragover .pc-overlay--drop { background: rgba(255,255,255,0.03); }
@@ -126,7 +126,7 @@
 				width: 32px; height: 32px; display: grid; place-items: center;
 				background: rgba(0,0,0,0.6); border: 1px solid var(--hairline, #1f1f1f);
 				border-radius: 8px; color: var(--text-2, #cfcfcf); cursor: pointer;
-				backdrop-filter: blur(6px); transition: color 0.15s, border-color 0.15s;
+				backdrop-filter: blur(6px); transition: color var(--duration-fast), border-color var(--duration-fast);
 			}
 			.pc-icon-btn:hover { color: #fff; border-color: var(--hairline-strong, #2a2a2a); }
 			.pc-icon-btn:focus-visible { outline: 2px solid var(--text, #fff); outline-offset: 2px; }
@@ -147,7 +147,7 @@
 				width: 100%; background: var(--surface-0, #0b0b0b);
 				border: 1px solid var(--hairline, #1f1f1f); border-radius: 9px;
 				color: var(--text, #f6f6f6); font-size: 13px; font-family: inherit;
-				padding: 9px 11px; outline: none; transition: border-color 0.15s; box-sizing: border-box;
+				padding: 9px 11px; outline: none; transition: border-color var(--duration-fast); box-sizing: border-box;
 			}
 			.pc-input:focus, .pc-select:focus { border-color: var(--text, #f6f6f6); }
 			/* `outline: none` above kills the ring a keyboard user needs, and a 1px
@@ -161,7 +161,7 @@
 				width: 100%; padding: 10px 14px; border-radius: 9px; font-size: 13px; font-weight: 600;
 				border: 1px solid var(--hairline-strong, #2a2a2a); background: transparent;
 				color: var(--text, #f6f6f6); cursor: pointer; font-family: inherit;
-				transition: background 0.15s, border-color 0.15s, opacity 0.15s;
+				transition: background var(--duration-fast), border-color var(--duration-fast), opacity var(--duration-fast);
 			}
 			.pc-btn:hover { background: var(--surface-2, #1a1a1a); }
 			.pc-btn:focus-visible { outline: 2px solid var(--text, #fff); outline-offset: 2px; }
@@ -184,7 +184,7 @@
 				display: flex; align-items: center; gap: 9px; text-align: left; width: 100%;
 				padding: 9px 11px; border-radius: 9px; cursor: pointer; font-family: inherit;
 				background: var(--surface-0, #0b0b0b); border: 1px solid var(--hairline, #1f1f1f);
-				color: var(--text-2, #a8a8a8); font-size: 12.5px; transition: border-color 0.15s, color 0.15s;
+				color: var(--text-2, #a8a8a8); font-size: 12.5px; transition: border-color var(--duration-fast), color var(--duration-fast);
 			}
 			.pc-sample-btn:hover { border-color: var(--hairline-strong, #2a2a2a); color: var(--text, #f6f6f6); }
 			.pc-sample-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--text, #f6f6f6); flex: 0 0 auto; }

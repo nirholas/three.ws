@@ -101,7 +101,7 @@
 			.ch-card {
 				border: 1px solid var(--stroke); border-radius: var(--radius-lg);
 				background: var(--surface-glass); overflow: hidden;
-				transition: border-color .18s ease, transform .18s ease, box-shadow .18s ease;
+				transition: border-color var(--duration-fast) var(--ease-standard), transform var(--duration-fast) var(--ease-standard), box-shadow var(--duration-fast) var(--ease-standard);
 				display: flex; flex-direction: column;
 			}
 			.ch-card:hover { border-color: var(--stroke-strong); transform: translateY(-3px); box-shadow: var(--shadow-2); }
@@ -112,7 +112,7 @@
 			.ch-card-mv { width: 100%; height: 100%; --poster-color: transparent; background: transparent; }
 			.ch-card-poster {
 				width: 100%; height: 100%; object-fit: contain; display: block;
-				pointer-events: none; transition: opacity .35s ease;
+				pointer-events: none; transition: opacity var(--duration-slow) var(--ease-standard);
 			}
 			model-viewer[data-loaded="1"] .ch-card-poster { opacity: 0; }
 			.ch-card-pill {
@@ -123,7 +123,7 @@
 			}
 			.ch-card-play {
 				position: absolute; inset: 0; display: grid; place-items: center; z-index: 1;
-				font-size: 30px; color: rgba(255,255,255,.0); transition: color .18s ease; pointer-events: none;
+				font-size: 30px; color: rgba(255,255,255,.0); transition: color var(--duration-fast) var(--ease-standard); pointer-events: none;
 			}
 			.ch-card-thumb:hover .ch-card-play,
 			.ch-card-thumb:focus-visible .ch-card-play { color: rgba(255,255,255,.85); }
@@ -136,7 +136,7 @@
 			.ch-btn {
 				flex: 1; text-align: center; padding: 7px 8px; border-radius: var(--radius-md);
 				font-size: 12.5px; font-weight: 600; text-decoration: none; cursor: pointer;
-				border: 1px solid var(--stroke); transition: background .15s ease, border-color .15s ease;
+				border: 1px solid var(--stroke); transition: background var(--duration-fast) var(--ease-standard), border-color var(--duration-fast) var(--ease-standard);
 				white-space: nowrap;
 			}
 			.ch-btn--primary { background: var(--accent); color: var(--accent-ink, #0b0b0f); border-color: transparent; }

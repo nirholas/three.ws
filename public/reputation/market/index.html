@@ -81,7 +81,7 @@
 				font-size: 0.8rem;
 				font-weight: 600;
 				cursor: pointer;
-				transition: background 0.15s ease, color 0.15s ease;
+				transition: background var(--duration-fast) var(--ease-standard), color var(--duration-fast) var(--ease-standard);
 			}
 			.rsm-net button:hover { color: #e8e9f0; background: rgba(255, 255, 255, 0.06); }
 			.rsm-net button[aria-pressed='true'] { background: rgba(124, 124, 255, 0.22); color: #fff; }
@@ -103,7 +103,7 @@
 			.rsm-table th, .rsm-table td { padding: 0.8rem 1rem; text-align: right; white-space: nowrap; }
 			.rsm-table th:first-child, .rsm-table td:first-child { text-align: left; }
 			.rsm-table thead th { font-size: 0.66rem; text-transform: uppercase; letter-spacing: 0.09em; color: rgba(232, 233, 240, 0.45); background: rgba(255, 255, 255, 0.03); font-weight: 600; }
-			.rsm-table tbody tr { border-top: 1px solid rgba(255, 255, 255, 0.06); transition: background 0.15s ease; }
+			.rsm-table tbody tr { border-top: 1px solid rgba(255, 255, 255, 0.06); transition: background var(--duration-fast) var(--ease-standard); }
 			.rsm-table tbody tr:hover { background: rgba(255, 255, 255, 0.035); }
 			.rsm-agent { display: flex; flex-direction: column; gap: 0.1rem; }
 			.rsm-agent-name { font-weight: 600; }
@@ -114,7 +114,7 @@
 
 			/* ── Weight bar ── */
 			.rsm-bar { display: inline-block; width: 74px; height: 6px; border-radius: 3px; background: rgba(255, 255, 255, 0.08); overflow: hidden; vertical-align: middle; margin-left: 0.5rem; }
-			.rsm-bar > span { display: block; height: 100%; background: linear-gradient(90deg, #7c7cff, #4ade80); border-radius: 3px; transition: width 0.4s ease; }
+			.rsm-bar > span { display: block; height: 100%; background: linear-gradient(90deg, #7c7cff, #4ade80); border-radius: 3px; transition: width var(--duration-slow) var(--ease-standard); }
 
 			/* ── Buttons ── */
 			.rsm-btn {
@@ -129,7 +129,7 @@
 				font-size: 0.83rem;
 				font-weight: 600;
 				cursor: pointer;
-				transition: background 0.15s ease, border-color 0.15s ease, transform 0.1s ease;
+				transition: background var(--duration-fast) var(--ease-standard), border-color var(--duration-fast) var(--ease-standard), transform var(--duration-instant) var(--ease-standard);
 			}
 			.rsm-btn:hover:not(:disabled) { background: rgba(255, 255, 255, 0.1); border-color: rgba(255, 255, 255, 0.2); }
 			.rsm-btn:active:not(:disabled) { transform: translateY(1px); }
@@ -149,7 +149,7 @@
 				color: #e8e9f0;
 				font-family: 'Space Grotesk', ui-monospace, monospace;
 				font-size: 0.85rem;
-				transition: border-color 0.15s ease, background 0.15s ease;
+				transition: border-color var(--duration-fast) var(--ease-standard), background var(--duration-fast) var(--ease-standard);
 			}
 			.rsm-input::placeholder { color: rgba(232, 233, 240, 0.3); }
 			.rsm-input:hover { background: rgba(255, 255, 255, 0.06); }
@@ -157,7 +157,7 @@
 
 			/* ── Cards ── */
 			.rsm-cards { display: grid; gap: 0.7rem; }
-			.rsm-card { border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 12px; padding: 1rem 1.15rem; background: rgba(255, 255, 255, 0.015); transition: border-color 0.15s ease; }
+			.rsm-card { border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 12px; padding: 1rem 1.15rem; background: rgba(255, 255, 255, 0.015); transition: border-color var(--duration-fast) var(--ease-standard); }
 			.rsm-card:hover { border-color: rgba(255, 255, 255, 0.16); }
 			.rsm-card-top { display: flex; flex-wrap: wrap; gap: 0.75rem; align-items: baseline; justify-content: space-between; }
 			.rsm-card-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 0.75rem; margin-top: 0.8rem; }

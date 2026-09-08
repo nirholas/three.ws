@@ -129,7 +129,7 @@
 				font-weight: 600;
 				font-size: var(--text-base);
 				text-decoration: none;
-				transition: transform 0.15s ease, filter 0.15s ease, border-color 0.15s ease;
+				transition: transform var(--duration-fast) var(--ease-standard), filter var(--duration-fast) var(--ease-standard), border-color var(--duration-fast) var(--ease-standard);
 			}
 			.cl-btn:hover { transform: translateY(-1px); }
 			.cl-btn-primary { background: var(--btn-primary-bg, var(--accent)); color: var(--btn-primary-fg, #0a0a0a); }
@@ -170,7 +170,7 @@
 				border-radius: var(--radius-lg);
 				padding: var(--space-md);
 				background: var(--bg-1);
-				transition: border-color 0.2s ease, transform 0.2s ease;
+				transition: border-color var(--duration-base) var(--ease-standard), transform var(--duration-base) var(--ease-standard);
 			}
 			.cl-card:hover { border-color: var(--accent); transform: translateY(-2px); }
 			.cl-card h3 { margin: 0 0 var(--space-2); font-size: var(--text-base); }
@@ -193,7 +193,7 @@
 				background: none;
 				color: var(--ink-dim);
 				cursor: pointer;
-				transition: border-color 0.15s ease, color 0.15s ease;
+				transition: border-color var(--duration-fast) var(--ease-standard), color var(--duration-fast) var(--ease-standard);
 			}
 			.cl-tab:hover { border-color: var(--accent); }
 			.cl-tab[aria-selected='true'] { border-color: var(--accent); color: var(--ink-bright); background: var(--bg-1); }
@@ -225,7 +225,7 @@
 				background: var(--bg-0);
 				color: var(--ink-dim);
 				cursor: pointer;
-				transition: color 0.15s ease, border-color 0.15s ease;
+				transition: color var(--duration-fast) var(--ease-standard), border-color var(--duration-fast) var(--ease-standard);
 			}
 			.cl-copy:hover { color: var(--ink-bright); border-color: var(--accent); }
 			.cl-panel[hidden] { display: none; }

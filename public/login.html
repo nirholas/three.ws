@@ -163,7 +163,7 @@
 				color: #666;
 				margin: 16px 0 6px;
 				text-transform: uppercase;
-				transition: color 0.1s ease;
+				transition: color var(--duration-instant) var(--ease-standard);
 			}
 			label.lit {
 				color: #bbb;
@@ -176,7 +176,7 @@
 				border-radius: 10px;
 				color: #f0f0f0;
 				font-size: 15px;
-				transition: border-color 0.08s ease, box-shadow 0.08s ease, background 0.08s ease;
+				transition: border-color var(--duration-instant) var(--ease-standard), box-shadow var(--duration-instant) var(--ease-standard), background var(--duration-instant) var(--ease-standard);
 			}
 			input::placeholder {
 				color: #333;
@@ -202,7 +202,7 @@
 				font-size: 15px;
 				cursor: pointer;
 				letter-spacing: -0.01em;
-				transition: background 0.15s, opacity 0.15s;
+				transition: background var(--duration-fast), opacity var(--duration-fast);
 			}
 			button:hover:not(:disabled) {
 				background: #e6e6e6;
@@ -250,7 +250,7 @@
 				text-decoration: none;
 				display: inline-block;
 				opacity: 0.85;
-				transition: opacity 0.15s;
+				transition: opacity var(--duration-fast);
 			}
 			.brand img {
 				height: 40px;
@@ -324,7 +324,7 @@
 				background: #fff; color: #000; border-radius: 10px;
 				font-size: 14px; font-weight: 600; border: none; cursor: pointer;
 				white-space: nowrap; flex-shrink: 0;
-				transition: background 0.12s, opacity 0.12s;
+				transition: background var(--duration-fast), opacity var(--duration-fast);
 			}
 			.privy-row-btn:hover:not(:disabled) { background: #e6e6e6; }
 			.privy-row-btn:disabled { opacity: 0.4; cursor: default; }
@@ -343,7 +343,7 @@
 				background: transparent; border: 1px solid rgba(255,255,255,0.12);
 				border-radius: 10px; color: #ccc; font-size: 13px; font-weight: 500;
 				cursor: pointer; display: flex; align-items: center; justify-content: center;
-				gap: 7px; transition: background 0.12s, border-color 0.12s, color 0.12s;
+				gap: 7px; transition: background var(--duration-fast), border-color var(--duration-fast), color var(--duration-fast);
 				white-space: nowrap;
 			}
 			.privy-chain-btn:hover:not(:disabled) { background: rgba(255,255,255,0.06); border-color: rgba(255,255,255,0.22); color: #fff; }
@@ -393,7 +393,7 @@
 				font-size: 12px;
 				font-weight: 500;
 				cursor: pointer;
-				transition: color 0.15s, border-color 0.15s, background 0.15s;
+				transition: color var(--duration-fast), border-color var(--duration-fast), background var(--duration-fast);
 				letter-spacing: 0.01em;
 			}
 			.onchain-toggle-btn:hover:not(:disabled) {
@@ -410,7 +410,7 @@
 				overflow: hidden;
 				max-height: 0;
 				opacity: 0;
-				transition: max-height 0.3s ease, opacity 0.22s ease, margin-top 0.22s ease;
+				transition: max-height var(--duration-base) var(--ease-standard), opacity var(--duration-base) var(--ease-standard), margin-top var(--duration-base) var(--ease-standard);
 				margin-top: 0;
 			}
 			.onchain-section.open {
@@ -439,7 +439,7 @@
 				font-size: 13px;
 				font-weight: 500;
 				cursor: pointer;
-				transition: background 0.1s ease, color 0.1s ease, transform 0.08s cubic-bezier(0.34, 1.56, 0.64, 1);
+				transition: background var(--duration-instant) var(--ease-standard), color var(--duration-instant) var(--ease-standard), transform var(--duration-instant) cubic-bezier(0.34, 1.56, 0.64, 1);
 				margin-top: 0;
 				width: auto;
 				letter-spacing: 0.01em;
@@ -479,7 +479,7 @@
 			#submit {
 				position: relative;
 				overflow: hidden;
-				transition: background 0.1s ease, transform 0.12s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.15s;
+				transition: background var(--duration-instant) var(--ease-standard), transform var(--duration-fast) cubic-bezier(0.34, 1.56, 0.64, 1), opacity var(--duration-fast);
 			}
 			#submit:active:not(:disabled) {
 				transform: scale(0.965);
@@ -493,7 +493,7 @@
 			}
 			#submit:hover:not(:disabled)::after {
 				transform: translateX(150%);
-				transition: transform 0.55s ease;
+				transition: transform var(--duration-slow) var(--ease-standard);
 			}
 
 			@keyframes err-shake {

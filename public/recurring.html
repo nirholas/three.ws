@@ -57,7 +57,7 @@
 		.tab {
 			appearance: none; background: none; border: 0; border-bottom: 2px solid transparent;
 			color: var(--muted); font: inherit; font-weight: 600; padding: .6rem .9rem; cursor: pointer;
-			transition: color .14s, border-color .14s;
+			transition: color var(--duration-fast), border-color var(--duration-fast);
 		}
 		.tab:hover { color: var(--text); }
 		.tab[aria-selected='true'] { color: var(--text); border-bottom-color: var(--purple); }
@@ -77,7 +77,7 @@
 		.cards { display: flex; flex-direction: column; gap: .7rem; }
 		.card {
 			border: 1px solid var(--border); border-radius: 13px; background: var(--panel);
-			padding: .9rem 1rem; transition: border-color .14s, transform .14s;
+			padding: .9rem 1rem; transition: border-color var(--duration-fast), transform var(--duration-fast);
 		}
 		.card:hover { border-color: var(--border-strong); }
 		.card-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 1rem; flex-wrap: wrap; }
@@ -112,7 +112,7 @@
 		button, .btn {
 			appearance: none; font: inherit; font-size: 12.5px; font-weight: 600; cursor: pointer;
 			border: 1px solid var(--border-strong); background: var(--panel-2); color: var(--text);
-			padding: .42rem .8rem; border-radius: 9px; transition: background .13s, border-color .13s, transform .08s, opacity .13s;
+			padding: .42rem .8rem; border-radius: 9px; transition: background var(--duration-fast), border-color var(--duration-fast), transform var(--duration-instant), opacity var(--duration-fast);
 		}
 		button:hover:not(:disabled), .btn:hover { background: var(--panel); border-color: var(--blue); text-decoration: none; }
 		button:active:not(:disabled) { transform: translateY(1px); }
@@ -136,7 +136,7 @@
 		select, input[type='number'] {
 			width: 100%; font: inherit; font-size: 13px; background: var(--bg-2); color: var(--text);
 			border: 1px solid var(--border-strong); border-radius: 9px; padding: .45rem .6rem;
-			transition: border-color .13s;
+			transition: border-color var(--duration-fast);
 		}
 		select:hover, input[type='number']:hover { border-color: var(--blue); }
 		.field-note { font-size: 11.5px; color: var(--muted-2); margin-top: .35rem; }
@@ -153,9 +153,9 @@
 		.skel-card { height: 108px; margin-bottom: .7rem; }
 
 		/* ── Modal ────────────────────────────────────────────── */
-		.modal-backdrop { position: fixed; inset: 0; background: rgba(0,0,0,.62); display: flex; align-items: center; justify-content: center; padding: 1.2rem; z-index: 120; opacity: 0; pointer-events: none; transition: opacity .15s; }
+		.modal-backdrop { position: fixed; inset: 0; background: rgba(0,0,0,.62); display: flex; align-items: center; justify-content: center; padding: 1.2rem; z-index: 120; opacity: 0; pointer-events: none; transition: opacity var(--duration-fast); }
 		.modal-backdrop.open { opacity: 1; pointer-events: auto; }
-		.modal { background: var(--panel); border: 1px solid var(--border-strong); border-radius: 14px; width: 100%; max-width: 440px; padding: 1.25rem 1.35rem; box-shadow: var(--shadow); transform: translateY(8px) scale(.985); transition: transform .15s; }
+		.modal { background: var(--panel); border: 1px solid var(--border-strong); border-radius: 14px; width: 100%; max-width: 440px; padding: 1.25rem 1.35rem; box-shadow: var(--shadow); transform: translateY(8px) scale(.985); transition: transform var(--duration-fast); }
 		.modal-backdrop.open .modal { transform: none; }
 		.modal h3 { margin: 0 0 .5rem; font-size: 1.05rem; }
 		.modal p { margin: 0 0 .65rem; color: var(--muted); line-height: 1.55; font-size: 13px; }
@@ -163,7 +163,7 @@
 
 		/* ── Toast ────────────────────────────────────────────── */
 		#toasts { position: fixed; bottom: 18px; left: 50%; transform: translateX(-50%); z-index: 200; display: flex; flex-direction: column; gap: 8px; align-items: center; pointer-events: none; }
-		.toast { background: var(--panel); border: 1px solid var(--border-strong); color: var(--text); padding: .55rem .9rem; border-radius: 999px; font-size: 12.5px; box-shadow: var(--shadow); opacity: 0; transform: translateY(8px); transition: opacity .18s, transform .18s; max-width: 90vw; }
+		.toast { background: var(--panel); border: 1px solid var(--border-strong); color: var(--text); padding: .55rem .9rem; border-radius: 999px; font-size: 12.5px; box-shadow: var(--shadow); opacity: 0; transform: translateY(8px); transition: opacity var(--duration-fast), transform var(--duration-fast); max-width: 90vw; }
 		.toast.show { opacity: 1; transform: none; }
 		.toast.bad { border-color: color-mix(in srgb, var(--red) 45%, transparent); }
 		.hidden { display: none !important; }

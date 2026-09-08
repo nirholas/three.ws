@@ -80,14 +80,14 @@
 			transform: translateX(calc(-50% + var(--bd-tip-dx, 0px))) translateY(4px);
 			width: max-content; max-width: min(260px, calc(100vw - 24px)); padding: 8px 10px; border-radius: 8px; border: 1px solid var(--stroke);
 			background: var(--bg-1, #14161c); color: var(--ink); font-size: 0.78rem; font-weight: 400; line-height: 1.45; text-align: left;
-			opacity: 0; pointer-events: none; transition: opacity 140ms ease, transform 140ms ease; z-index: 60; box-shadow: 0 8px 26px rgba(0,0,0,0.32);
+			opacity: 0; pointer-events: none; transition: opacity var(--duration-fast) var(--ease-standard), transform var(--duration-fast) var(--ease-standard); z-index: 60; box-shadow: 0 8px 26px rgba(0,0,0,0.32);
 		}
 		.bd-tip:hover::after, .bd-tip:focus-visible::after { opacity: 1; transform: translateX(calc(-50% + var(--bd-tip-dx, 0px))) translateY(0); }
 		@media (prefers-reduced-motion: reduce) { .bd-tip::after { transition: none; } }
 
 		/* ── skill picker ───────────────────────────────────────────────── */
 		.bd-skills { display: flex; flex-direction: column; gap: 6px; max-height: 460px; overflow-y: auto; margin: 0 -4px; padding: 0 4px; }
-		.bd-skill { display: flex; align-items: center; gap: 11px; padding: 11px 12px; border: 1px solid var(--hairline, var(--stroke)); border-radius: 9px; cursor: pointer; transition: border-color 130ms ease, background 130ms ease; }
+		.bd-skill { display: flex; align-items: center; gap: 11px; padding: 11px 12px; border: 1px solid var(--hairline, var(--stroke)); border-radius: 9px; cursor: pointer; transition: border-color var(--duration-fast) var(--ease-standard), background var(--duration-fast) var(--ease-standard); }
 		.bd-skill:hover { border-color: var(--ink-dim); background: color-mix(in srgb, var(--ink) 4%, transparent); }
 		.bd-skill:focus-within { outline: 2px solid var(--accent, #6d8cff); outline-offset: 2px; }
 		.bd-skill input { width: 16px; height: 16px; accent-color: var(--accent, #6d8cff); cursor: pointer; flex: none; }
@@ -135,7 +135,7 @@
 		.bd-tile dd[data-pending] { opacity: 0.45; }
 
 		/* ── buttons ────────────────────────────────────────────────────── */
-		.bd-btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; padding: 11px 18px; border-radius: 9px; border: 1px solid var(--stroke); background: var(--surface-2, rgba(255,255,255,0.05)); color: var(--ink); font-size: 0.92rem; font-weight: 600; cursor: pointer; transition: background 130ms ease, border-color 130ms ease, transform 90ms ease; }
+		.bd-btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; padding: 11px 18px; border-radius: 9px; border: 1px solid var(--stroke); background: var(--surface-2, rgba(255,255,255,0.05)); color: var(--ink); font-size: 0.92rem; font-weight: 600; cursor: pointer; transition: background var(--duration-fast) var(--ease-standard), border-color var(--duration-fast) var(--ease-standard), transform var(--duration-instant) var(--ease-standard); }
 		.bd-btn:hover:not(:disabled) { background: color-mix(in srgb, var(--ink) 9%, transparent); border-color: var(--ink-dim); }
 		.bd-btn:active:not(:disabled) { transform: translateY(1px); }
 		.bd-btn:focus-visible { outline: 2px solid var(--accent, #6d8cff); outline-offset: 2px; }

@@ -81,7 +81,7 @@
 			font-family: var(--pl-mono); font-size: 11px; letter-spacing: 0.04em; color: var(--pl-muted);
 		}
 		.pl-activity .bar { flex: 1; height: 6px; border-radius: 3px; background: rgba(255,255,255,0.08); overflow: hidden; position: relative; }
-		.pl-activity .bar .fill { position: absolute; top: 0; bottom: 0; left: 0; width: 0; background: linear-gradient(90deg, var(--pl-accent), var(--pl-green)); transition: width 0.5s ease; border-radius: 3px; }
+		.pl-activity .bar .fill { position: absolute; top: 0; bottom: 0; left: 0; width: 0; background: linear-gradient(90deg, var(--pl-accent), var(--pl-green)); transition: width var(--duration-slow) var(--ease-standard); border-radius: 3px; }
 		.pl-activity .reading { font-weight: 600; color: var(--pl-text); min-width: 64px; text-align: right; }
 
 		/* Failure notice: stays up for as long as the feed is actually down. */
@@ -98,7 +98,7 @@
 			font-family: var(--pl-mono); font-size: 11px; letter-spacing: 0.05em;
 			color: var(--pl-text); background: rgba(255, 255, 255, 0.07);
 			border: 1px solid var(--pl-border); border-radius: 7px; padding: 5px 10px;
-			transition: background 0.18s ease, border-color 0.18s ease, transform 0.12s ease;
+			transition: background var(--duration-fast) var(--ease-standard), border-color var(--duration-fast) var(--ease-standard), transform var(--duration-fast) var(--ease-standard);
 		}
 		.pl-retry:hover { background: rgba(255, 255, 255, 0.14); border-color: rgba(255, 255, 255, 0.28); }
 		.pl-retry:active { transform: translateY(1px); }
@@ -182,7 +182,7 @@
 			position: absolute; inset: 0; z-index: 12; display: flex; flex-direction: column;
 			align-items: center; justify-content: center; pointer-events: none;
 			background: radial-gradient(ellipse at center, rgba(139,123,255,0.10) 0%, var(--pl-bg) 72%);
-			opacity: 1; transition: opacity 0.7s ease 0.15s;
+			opacity: 1; transition: opacity var(--duration-slow) var(--ease-standard) var(--duration-fast);
 		}
 		.pl-intro.is-hidden { opacity: 0; }
 		.pl-intro .ring { width: 54px; height: 54px; border-radius: 50%; border: 2px solid rgba(255,255,255,0.15); border-top-color: var(--pl-accent); animation: plSpin 1s linear infinite; }
@@ -193,7 +193,7 @@
 			position: absolute; top: calc(var(--header-h, 3.5rem) + 16px); left: 50%; transform: translateX(-50%) translateY(-8px);
 			background: rgba(40, 12, 18, 0.92); border: 1px solid rgba(255,93,115,0.4); color: #ffb8c2;
 			border-radius: 10px; padding: 8px 14px; font-family: var(--pl-mono); font-size: 12px;
-			opacity: 0; transition: opacity 0.3s, transform 0.3s; pointer-events: none;
+			opacity: 0; transition: opacity var(--duration-base), transform var(--duration-base); pointer-events: none;
 		}
 		.pl-toast.is-visible { opacity: 1; transform: translateX(-50%) translateY(0); }
 

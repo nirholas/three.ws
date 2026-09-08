@@ -67,7 +67,7 @@
       color: #161616;
       font-size: 0.9rem;
       font-family: inherit;
-      transition: border-color 0.15s;
+      transition: border-color var(--duration-fast);
     }
     .agents-search input::placeholder { color: #a8a8a8; }
     .agents-search input:focus { outline: none; border-color: #0f62fe; }
@@ -81,7 +81,7 @@
       font-size: 0.82rem;
       font-family: inherit;
       color: #525252;
-      transition: background 0.15s, border-color 0.15s, color 0.15s;
+      transition: background var(--duration-fast), border-color var(--duration-fast), color var(--duration-fast);
     }
     .filter-chip:hover { border-color: #161616; color: #161616; }
     .filter-chip.active { background: #0f62fe; border-color: #0f62fe; color: #fff; font-weight: 600; }
@@ -111,7 +111,7 @@
       display: flex;
       flex-direction: column;
       cursor: pointer;
-      transition: background 0.15s;
+      transition: background var(--duration-fast);
     }
     .agent-card:hover { background: rgba(15,98,254,0.04); }
     .card-head { display: flex; align-items: center; gap: 0.75rem; }
@@ -140,7 +140,7 @@
       display: inline-flex; align-items: center; gap: 0.3rem;
       padding: 0.3rem 0.6rem; font-size: 0.74rem; font-weight: 600;
       color: #0f62fe; background: transparent; border: 1px solid #0f62fe;
-      text-decoration: none; transition: background 0.15s;
+      text-decoration: none; transition: background var(--duration-fast);
     }
     .card-see3d:hover { background: rgba(15,98,254,0.06); }
 
@@ -158,13 +158,13 @@
     .agents-empty h2 { font-size: 1.25rem; font-weight: 600; color: #161616; margin-bottom: 0.5rem; }
     .agents-empty p { font-size: 0.9rem; color: #525252; margin-bottom: 1.5rem; max-width: 440px; margin-inline: auto; }
     .agents-empty-actions { display: flex; gap: 0.75rem; justify-content: center; flex-wrap: wrap; }
-    .btn-primary { padding: 0.6rem 1.25rem; background: #0f62fe; border: none; color: #fff; font-weight: 600; font-size: 0.88rem; cursor: pointer; text-decoration: none; display: inline-block; transition: background 0.15s; }
+    .btn-primary { padding: 0.6rem 1.25rem; background: #0f62fe; border: none; color: #fff; font-weight: 600; font-size: 0.88rem; cursor: pointer; text-decoration: none; display: inline-block; transition: background var(--duration-fast); }
     .btn-primary:hover { background: #0353e9; }
-    .btn-ghost { padding: 0.6rem 1.25rem; background: transparent; border: 1px solid #e0e0e0; color: #161616; font-weight: 500; font-size: 0.88rem; cursor: pointer; text-decoration: none; display: inline-block; transition: border-color 0.15s; }
+    .btn-ghost { padding: 0.6rem 1.25rem; background: transparent; border: 1px solid #e0e0e0; color: #161616; font-weight: 500; font-size: 0.88rem; cursor: pointer; text-decoration: none; display: inline-block; transition: border-color var(--duration-fast); }
     .btn-ghost:hover { border-color: #161616; }
 
     .agents-pagination { display: flex; justify-content: center; align-items: center; gap: 1rem; padding: 2rem 0; flex-wrap: wrap; }
-    .pag-btn { padding: 0.45rem 0.9rem; background: transparent; border: 1px solid #e0e0e0; color: #161616; cursor: pointer; font-size: 0.85rem; font-family: inherit; transition: border-color 0.15s, color 0.15s; }
+    .pag-btn { padding: 0.45rem 0.9rem; background: transparent; border: 1px solid #e0e0e0; color: #161616; cursor: pointer; font-size: 0.85rem; font-family: inherit; transition: border-color var(--duration-fast), color var(--duration-fast); }
     .pag-btn:hover:not(:disabled) { border-color: #0f62fe; color: #0f62fe; }
     .pag-btn:disabled { opacity: 0.3; cursor: not-allowed; }
     .pag-info { font-size: 0.85rem; color: #525252; }

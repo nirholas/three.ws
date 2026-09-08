@@ -69,7 +69,7 @@
 				font-weight: 500;
 				text-decoration: none;
 				cursor: pointer;
-				transition: border-color 150ms, color 150ms, background 150ms;
+				transition: border-color var(--duration-fast), color var(--duration-fast), background var(--duration-fast);
 				-webkit-tap-highlight-color: transparent;
 			}
 			.back-link:hover {
@@ -236,7 +236,7 @@
 				gap: 8px;
 				background: var(--panel);
 				z-index: 3;
-				transition: opacity 0.25s ease;
+				transition: opacity var(--duration-base) var(--ease-standard);
 			}
 			.viewer-loading.is-hidden {
 				opacity: 0;
@@ -313,7 +313,7 @@
 				border-radius: 9px;
 				padding: 10px 12px;
 				font: inherit;
-				transition: border-color 0.15s, background 0.15s;
+				transition: border-color var(--duration-fast), background var(--duration-fast);
 			}
 			.panel input::placeholder { color: #4a4d5a; }
 			.panel input:focus {
@@ -343,7 +343,7 @@
 				padding: 2px 8px;
 				border-radius: 6px;
 				cursor: pointer;
-				transition: color 0.15s, border-color 0.15s;
+				transition: color var(--duration-fast), border-color var(--duration-fast);
 				text-transform: uppercase;
 				letter-spacing: 0.04em;
 			}
@@ -392,7 +392,7 @@
 				background: rgba(255, 255, 255, 0.025);
 				border: 1px solid transparent;
 				border-radius: 9px;
-				transition: background 0.15s, border-color 0.15s, transform 0.15s, box-shadow 0.15s;
+				transition: background var(--duration-fast), border-color var(--duration-fast), transform var(--duration-fast), box-shadow var(--duration-fast);
 				cursor: pointer;
 				color: var(--text);
 				text-align: left;
@@ -433,7 +433,7 @@
 				color: var(--accent);
 				opacity: 0;
 				transform: translateX(-3px);
-				transition: opacity 0.15s, transform 0.15s;
+				transition: opacity var(--duration-fast), transform var(--duration-fast);
 				font-weight: 600;
 				letter-spacing: 0.02em;
 			}
@@ -506,7 +506,7 @@
 				display: inline-flex;
 				align-items: center;
 				justify-content: center;
-				transition: background 0.15s, border-color 0.15s;
+				transition: background var(--duration-fast), border-color var(--duration-fast);
 			}
 			.fm-close:hover { background: rgba(255, 255, 255, 0.1); border-color: #2e2e2e; }
 			.fm-body { display: flex; flex-direction: column; gap: 14px; }
@@ -553,7 +553,7 @@
 				font-size: 10.5px;
 				cursor: pointer;
 				font-family: inherit;
-				transition: color 0.15s, border-color 0.15s;
+				transition: color var(--duration-fast), border-color var(--duration-fast);
 			}
 			.fm-copy:hover { color: var(--text); border-color: rgba(255, 255, 255, 0.3); }
 			.fm-copy.copied { color: var(--text); }
@@ -593,7 +593,7 @@
 				font: inherit;
 				font-weight: 600;
 				cursor: pointer;
-				transition: filter 0.15s;
+				transition: filter var(--duration-fast);
 			}
 			.fm-cta:hover { filter: brightness(1.05); }
 			.fm-cta.ghost {
@@ -653,7 +653,7 @@
 				font-size: 12px;
 				font-weight: 500;
 				cursor: pointer;
-				transition: background 0.15s, color 0.15s;
+				transition: background var(--duration-fast), color var(--duration-fast);
 			}
 			.fm-tab:hover { color: var(--text); }
 			.fm-tab.is-active {
@@ -762,7 +762,7 @@
 				border-radius: 8px;
 				padding: 10px 12px;
 				text-decoration: none;
-				transition: border-color 0.15s, background 0.15s;
+				transition: border-color var(--duration-fast), background var(--duration-fast);
 				cursor: pointer;
 			}
 			.fm-id-addr-link:hover,
@@ -785,7 +785,7 @@
 				white-space: nowrap;
 				flex-shrink: 0;
 				opacity: 0.7;
-				transition: opacity 0.15s;
+				transition: opacity var(--duration-fast);
 			}
 			.fm-id-addr-link:hover .fm-id-explorer-hint { opacity: 1; }
 			.fm-id-card[data-state='loading'] .fm-id-addr-link { pointer-events: none; }
@@ -1120,7 +1120,7 @@
 				flex-direction: column;
 				gap: 4px;
 				cursor: pointer;
-				transition: background 0.15s, border-color 0.15s, transform 0.1s;
+				transition: background var(--duration-fast), border-color var(--duration-fast), transform var(--duration-instant);
 			}
 			.fm-download-row:hover:not([data-busy='1']) {
 				background: rgba(255, 255, 255, 0.05);
@@ -1343,7 +1343,7 @@
 				overflow-x: auto;
 				scrollbar-width: none;
 				opacity: 0;
-				transition: opacity 0.2s, transform 0.2s;
+				transition: opacity var(--duration-base), transform var(--duration-base);
 				pointer-events: none;
 			}
 			.emote-strip::-webkit-scrollbar { display: none; }
@@ -1367,7 +1367,7 @@
 				align-items: center;
 				justify-content: center;
 				flex-shrink: 0;
-				transition: background 0.15s, border-color 0.15s, transform 0.15s;
+				transition: background var(--duration-fast), border-color var(--duration-fast), transform var(--duration-fast);
 			}
 			.emote-chip:hover { background: rgba(255, 255, 255, 0.1); border-color: rgba(255, 255, 255, 0.3); transform: scale(1.05); }
 			.emote-chip.is-active { background: rgba(255, 255, 255, 0.15); border-color: rgba(255, 255, 255, 0.4); }
@@ -1397,7 +1397,7 @@
 				font: inherit;
 				font-weight: 600;
 				cursor: pointer;
-				transition: filter 0.15s, opacity 0.15s;
+				transition: filter var(--duration-fast), opacity var(--duration-fast);
 			}
 			.cta:hover { filter: brightness(1.04); }
 			.cta:disabled { opacity: 0.45; cursor: not-allowed; }
@@ -1415,7 +1415,7 @@
 				align-items: center;
 				justify-content: center;
 				gap: 6px;
-				transition: border-color 0.15s, color 0.15s;
+				transition: border-color var(--duration-fast), color var(--duration-fast);
 			}
 			.secondary:hover { border-color: #2e2e2e; color: var(--text); }
 
@@ -1447,7 +1447,7 @@
 				font-size: 13px;
 				font-weight: 500;
 				cursor: pointer;
-				transition: border-color 0.15s, color 0.15s, background 0.15s;
+				transition: border-color var(--duration-fast), color var(--duration-fast), background var(--duration-fast);
 				text-align: center;
 			}
 			.type-btn:hover { border-color: #2e2e2e; color: var(--text); }
@@ -1521,7 +1521,7 @@
 				cursor: pointer;
 				white-space: nowrap;
 				align-self: center;
-				transition: border-color 0.15s, color 0.15s, background 0.15s;
+				transition: border-color var(--duration-fast), color var(--duration-fast), background var(--duration-fast);
 			}
 			.item-nudge-promote:hover {
 				border-color: var(--accent);
@@ -1580,7 +1580,7 @@
 				width: 0%;
 				background: var(--accent);
 				border-radius: 999px;
-				transition: width 0.18s ease-out;
+				transition: width var(--duration-fast) var(--ease-out);
 			}
 			#save-loading .abort-btn {
 				margin-top: 6px;
@@ -1592,7 +1592,7 @@
 				font: inherit;
 				font-size: 12px;
 				cursor: pointer;
-				transition: border-color 0.15s, color 0.15s;
+				transition: border-color var(--duration-fast), color var(--duration-fast);
 			}
 			#save-loading .abort-btn[hidden] { display: none; }
 			#save-loading .abort-btn:hover {
@@ -1614,7 +1614,7 @@
 				font: inherit;
 				font-weight: 600;
 				cursor: pointer;
-				transition: filter 0.15s;
+				transition: filter var(--duration-fast);
 			}
 			#save-loading .retry-btn:hover { filter: brightness(1.06); }
 			#save-loading .cancel-btn {
@@ -1625,7 +1625,7 @@
 				padding: 10px 16px;
 				font: inherit;
 				cursor: pointer;
-				transition: border-color 0.15s, color 0.15s;
+				transition: border-color var(--duration-fast), color var(--duration-fast);
 			}
 			#save-loading .cancel-btn:hover {
 				border-color: rgba(255, 255, 255, 0.32);
