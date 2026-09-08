@@ -20,11 +20,11 @@ no other protection ever gets a turn.
 
 ## Totals
 
-224 outbound call sites across 79 upstreams.
+227 outbound call sites across 79 upstreams.
 
 | A | B | C | D | F |
 |---|---|---|---|---|
-| 0 | 54 | 91 | 79 | 0 |
+| 0 | 54 | 93 | 80 | 0 |
 
 ## Weakest upstreams
 
@@ -33,18 +33,18 @@ the list to work down, worst first.
 
 | Upstream | Call sites | Worst grade |
 |---|---|---|
-| `api.telegram.org` | 13 | D |
+| `api.telegram.org` | 14 | D |
 | `lite-api.jup.ag` | 12 | D |
 | `api.dexscreener.com` | 9 | D |
 | `storage.googleapis.com` | 8 | D |
 | `api.coinpaprika.com` | 8 | D |
 | `api.coingecko.com` | 8 | D |
 | `api.github.com` | 7 | D |
+| `openrouter.ai` | 6 | D |
 | `frontend-api-v3.pump.fun` | 6 | D |
 | `api.replicate.com` | 5 | D |
 | `api.elevenlabs.io` | 5 | D |
 | `api.pinata.cloud` | 5 | D |
-| `openrouter.ai` | 5 | D |
 | `api.geckoterminal.com` | 5 | D |
 | `ai.api.nvidia.com` | 4 | D |
 | `api.web3.storage` | 4 | D |
@@ -63,18 +63,18 @@ the list to work down, worst first.
 
 | Upstream | Call sites | Worst grade | A | B | C | D | F |
 |---|---|---|---|---|---|---|---|
-| `api.telegram.org` | 13 | D | 0 | 0 | 10 | 3 | 0 |
+| `api.telegram.org` | 14 | D | 0 | 0 | 11 | 3 | 0 |
 | `lite-api.jup.ag` | 12 | D | 0 | 5 | 2 | 5 | 0 |
 | `api.dexscreener.com` | 9 | D | 0 | 4 | 2 | 3 | 0 |
 | `storage.googleapis.com` | 8 | D | 0 | 1 | 2 | 5 | 0 |
 | `api.coinpaprika.com` | 8 | D | 0 | 0 | 0 | 8 | 0 |
 | `api.coingecko.com` | 8 | D | 0 | 7 | 0 | 1 | 0 |
 | `api.github.com` | 7 | D | 0 | 0 | 5 | 2 | 0 |
+| `openrouter.ai` | 6 | D | 0 | 0 | 0 | 6 | 0 |
 | `frontend-api-v3.pump.fun` | 6 | D | 0 | 0 | 5 | 1 | 0 |
 | `api.replicate.com` | 5 | D | 0 | 0 | 2 | 3 | 0 |
 | `api.elevenlabs.io` | 5 | D | 0 | 0 | 2 | 3 | 0 |
 | `api.pinata.cloud` | 5 | D | 0 | 0 | 3 | 2 | 0 |
-| `openrouter.ai` | 5 | D | 0 | 0 | 0 | 5 | 0 |
 | `api.geckoterminal.com` | 5 | D | 0 | 3 | 0 | 2 | 0 |
 | `ai.api.nvidia.com` | 4 | D | 0 | 0 | 0 | 4 | 0 |
 | `api.web3.storage` | 4 | D | 0 | 0 | 3 | 1 | 0 |
@@ -108,13 +108,13 @@ the list to work down, worst first.
 | `api.hyper3d.com` | 3 | C | 0 | 0 | 3 | 0 | 0 |
 | `api.tripo3d.ai` | 3 | C | 0 | 0 | 3 | 0 | 0 |
 | `yields.llama.fi` | 3 | C | 0 | 0 | 3 | 0 | 0 |
+| `oauth2.googleapis.com` | 2 | C | 0 | 0 | 2 | 0 | 0 |
 | `api.meshy.ai__expr__` | 2 | C | 0 | 0 | 2 | 0 | 0 |
 | `stablecoins.llama.fi` | 2 | C | 0 | 0 | 2 | 0 | 0 |
 | `api.duckduckgo.com` | 1 | C | 0 | 0 | 1 | 0 | 0 |
 | `api.blockchair.com__expr__` | 1 | C | 0 | 0 | 1 | 0 | 0 |
 | `blockstream.info` | 1 | C | 0 | 0 | 1 | 0 | 0 |
 | `metadata.google.internal` | 1 | C | 0 | 0 | 1 | 0 | 0 |
-| `oauth2.googleapis.com` | 1 | C | 0 | 0 | 1 | 0 | 0 |
 | `api.github.com__expr__` | 1 | C | 0 | 0 | 1 | 0 | 0 |
 | `sns-api.bonfida.com` | 1 | C | 0 | 0 | 1 | 0 | 0 |
 | `auth.privy.io` | 1 | C | 0 | 0 | 1 | 0 | 0 |
