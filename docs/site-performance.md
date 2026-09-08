@@ -317,6 +317,149 @@ Deferring it also fixes an ordering bug nobody had filed. The footer bot reserve
 
 ---
 
+# The phone
+
+Everything above was written from desktop traces. On 2026-09-08 the same site
+was measured on a Pixel 5 over slow 4G with `scripts/mobile-perf.mjs` and
+`scripts/mobile-touch-audit.mjs` (Playwright field metrics, **not** Lighthouse
+scores; see the harness header before quoting a number). The full run is in
+[prompts/quality-bar/_generated/08/](../prompts/quality-bar/_generated/08/).
+
+Four of the five costs that run found were not slow code. They were a rule that
+never reached the page, a property that should never have been animated, a write
+that should never have happened, and an asset with only one size. Each is a rule
+now.
+
+## 9. A stylesheet only applies to pages that link it
+
+**Invariant: anything that has to apply site-wide is injected by the build, not
+hand-linked, and the injector covers `public/` as well as Rollup's inputs.**
+
+`public/mobile.css` carries the site's tap-target floor, its canvas scroll
+posture and its safe-area rules. It was reaching **192 of the 584 pages that
+carry a stylesheet at all.** The `mobile-ergonomics` plugin in
+[vite.config.js](../vite.config.js) already injected it, and `transformIndexHtml`
+only ever sees Rollup's HTML *inputs*: every file under `public/` is copied into
+`dist/` byte-for-byte and never passes through that hook. Three of the fifteen
+pages the mobile audit samples were in that blind spot, `/changelog`, `/ar` and
+the entire `/docs` shell.
+
+The measured cost is the part worth remembering. `/docs/start-here` reported
+**308 undersized touch targets, 296 of them sidebar links at 267x30**, and
+`public/mobile.css` had *already* contained a rule sizing `.sidebar-link` to 44px
+for months. Nothing was wrong with the rule. It was not on the page. The audit
+that found it could not tell the difference, and neither could anyone reading the
+CSS.
+
+The same plugin now also runs as a post-build sweep over every HTML file in
+`dist/`, which is the one place both kinds of page meet. Both of its rewrites
+(the stylesheet link and `viewport-fit=cover`) are idempotent, so a page that
+went through `transformIndexHtml` is unchanged by the second pass. The build
+prints how many static pages it patched; on the first run that was **210**.
+
+**When you add something that must be true of every page, check `dist/`, not
+`pages/`.** A grep over the source directory that produced the page you were
+thinking of will agree with you and be wrong.
+
+## 10. Never animate a layout property
+
+**Invariant: a persistent overlay that moves, moves with `transform`.**
+
+`#tws-corner-stack` (public/corner-stack.js) is `position: fixed`, and it lifts
+itself clear of a page's own bottom chrome by transitioning `bottom` and `right`.
+Those are layout properties: the element is re-laid-out on every frame of the
+transition, and every one of those frames is reported to the layout-instability
+API. A fixed overlay that no page content is attached to was therefore charging
+real CLS to the page underneath it, once per dock re-measure, and the stack
+re-measures on a settle timer and on every body mutation.
+
+Measured on a Pixel 5 against production: **0.0764 twice on `/marketplace`
+(0.153 of that page's 0.4381 total, the worst CLS on the site), 0.0810 on
+`/launches`, 0.0764 on `/agents/:id`, 0.0601 on `/walk`.**
+
+The fix lands on the same pixels: one `transform: translate3d()` driven by the
+same custom properties, transitioned instead of the offsets. A composited
+transform generates no layout shift at all. It also collapsed two rules into one,
+because the phone breakpoint no longer has to restate the offsets, and it forced
+one real change: the narrow layout can no longer pin the stack to both edges,
+since a box anchored left AND right slides its left edge off screen when the
+transform moves it. Room to grow leftward is a `max-width` now.
+[tests/corner-stack.test.js](../tests/corner-stack.test.js) pins both halves.
+
+## 11. Writing a value a node already holds re-dates the page's LCP
+
+**Invariant: a pass that walks the DOM writing values compares before it writes.**
+
+`applyCatalog` in [src/i18n.js](../src/i18n.js) walks every `[data-i18n]`,
+`[data-i18n-html]` and `[data-i18n-attr]` node and writes the catalog's value
+into it. On the default locale nearly every one of those writes is a no-op: the
+markup ships the English source and the English catalog hands the same string
+back.
+
+It is not a no-op to the browser. Replacing an element's text destroys its text
+node and creates a new one, and Chrome scores that as a **fresh LCP candidate at
+the moment it happens**. The catalog arrives after an async fetch, several
+seconds into a page on a phone, so every annotated page's LCP was re-dated to the
+i18n pass. Measured on a Pixel 5 over slow 4G against production: `/` reported
+**LCP 10,188 ms on `h1.hero-h`**, a static heading that had painted at an FCP of
+**2,336 ms**; `/docs/start-here` reported 5,168 ms on a `<p>`. Not one pixel
+changed at either moment.
+
+The guard is an identity check before each write. Markup needs normalising first,
+because the browser rewrites attribute quoting, entity forms and self-closing
+tags on the way in and a raw catalog string never equals the `innerHTML` it
+produced; round-tripping the candidate through a detached element puts both sides
+in the same normal form.
+[tests/i18n-idempotent-writes.test.js](../tests/i18n-idempotent-writes.test.js)
+asserts on **node identity**, not on the resulting text, because surviving is the
+only thing the browser's LCP bookkeeping cares about.
+
+**Any pass that rewrites a lot of nodes deserves the same question**: how many of
+those writes change anything?
+
+## 12. A curated asset gets a size per tier, not one size
+
+**Invariant: a large static asset chosen by us ships in a phone-sized copy, and
+the tier table decides which one is fetched.**
+
+Two of the three largest downloads on `/play` were assets nobody had ever chosen
+a size for.
+
+`/hdri/outdoor.hdr` was **1,435 KB of that page's 5,470 KB**. The environment map
+is PMREM-prefiltered into irradiance before it lights anything, so nearly all of
+its resolution is discarded on the way in; only its energy has to survive.
+`QUALITY_TIERS` in [src/shared/cinematic-render.js](../src/shared/cinematic-render.js)
+already had a tier that opted out of HDRIs entirely, and that tier is the *weakest*
+one. A real mid-tier phone (coarse pointer, 4 GB of RAM, which is not "low") lands
+on `medium` and was pulling the full file. `medium` now reads a 512x256 copy,
+about 360 KB, and `loadEnvironment` defaults its tier from the same capability
+probe the renderer uses, so every existing call site improved without an edit.
+
+[scripts/build-hdri-mobile.mjs](../scripts/build-hdri-mobile.mjs) regenerates and
+verifies those copies, and its two hard-won details are the transferable part:
+
+- **`zscale`, not `scale`.** swscale runs float input through a 16-bit
+  fixed-point intermediate and clamps to 1.0, which takes `outdoor.hdr`'s peak
+  radiance from **61,408 to exactly 1.00** and halves its mean. The output still
+  loads, still looks like an image, and lights a scene completely wrong.
+- **`bilinear`, not `lanczos`.** Image-based lighting cares about energy, not
+  edges, and a windowed-sinc kernel rings around a sun disc with 60,000:1
+  contrast. Mean radiance against the original: bilinear **-0.3%**, bicubic
+  +4.8%, lanczos +12.0%.
+
+The other one was a URL. `HOME_TOWN.image` in
+[src/game/home-town.js](../src/game/home-town.js) is the coin art for the world
+every first-time `/play` visitor lands in, and it was a literal `/api/img?url=…`
+with no `w=`, so the proxy handed back all **581 KB** of the pinned original to
+texture a totem a few hundred pixels tall. `mapCoins()` had asked for `w=512` for
+exactly this reason since the feed path was written; the hand-written literal
+predated it. Two more call sites in the community lobby had the same gap.
+
+**A proxy that can resize only resizes when asked.** If you write an image URL by
+hand, write the width with it.
+
+---
+
 ## Open: three costs the 2026-08-15 sweep measured and did not fix
 
 Each of these is the largest remaining number on the page it belongs to, and each one lands in a surface the sweep that found it had no business rewriting. They are recorded here with the measurement so the next pass starts from a number rather than a hunch.
@@ -326,6 +469,18 @@ Each of these is the largest remaining number on the page it belongs to, and eac
 **`/forge` showcase thumbnails are full-size renders.** Twelve images from `pub-*.r2.dev` account for **6,273 KiB of the page's 8,339 KiB**, averaging 520 KB each. They are the 768x768 PNGs that [api/\_lib/forge-thumbs.js](../api/_lib/forge-thumbs.js) generates (`THUMB_SIZE = 768`), painted into a 200px-tall box. `loading="lazy"` and `decoding="async"` are already set per rule 5, so this is not a scheduling problem, it is a format and size problem: the same renders as WebP at a display-appropriate size are roughly a tenth of the bytes. The fix has to change the generator, re-run the backfill cron over existing rows, and handle the `forge/thumb/<id>.png` key extension that `forgeThumbKeyFor()` and the stored `preview_image_url` values both encode. One outlier in the same trace is a data-freshness artifact rather than a bug: a 2,358 KiB `forge/<clientKey>/<id>.png` is the untouched original for a row the backfill has not reached yet.
 
 **The brand mark is an 85 KB SVG rendered at 22 pixels.** `public/three.svg` and the byte-identical `public/favicon.svg` are 85,257-byte SVGs wrapping two 800x436 PNGs behind `feColorMatrix` filters. They are referenced from 171 files, cost 62 KiB over the wire per page, and no call site in the repo renders the mark above 64 CSS px. Re-encoding the embedded rasters at exactly half resolution (800 to 400, lanczos3, no palette quantization) takes the file to 36,913 bytes and is visually indistinguishable at every size the site uses, with a maximum channel delta of 4 at 22px and 10 at 64px. It is not free above that: at 192px, which some platforms use for an SVG favicon, the delta reaches 105. Fractional downscales are much worse than the exact half (320px wide measured a delta of 78 at 22px), so this is a brand-asset decision with a measured cost attached, not a mechanical resize, and it needs the owner rather than a sweep.
+
+**`/marketplace`'s hero was the site's worst CLS, and is closed as of 2026-09-08.**
+Not through the GLB budget guessed at below, which is still worth doing: through
+the meta column. The hero rotates every 6.5s and `updateHeroMeta()` writes each
+avatar's name and blurb into the same two boxes, which are different lengths for
+every slide, so the actions row, the dots and the whole grid below moved on every
+rotation, forever. Measured on a Pixel 5 against production, `section#market-hero`
+was **0.1094 + 0.2045 of the page's 0.4381 CLS**. Both boxes are now clamped AND
+floored to the same line count, so every slide occupies identical space; the
+"Start an agent" button ships in the markup at its final label instead of being
+revealed into a `flex-wrap` row after first paint. Clamping without a floor is
+only half a fix: it caps the tall case and lets the short case collapse.
 
 **`/marketplace` was not touched by the 2026-09-04 sweep and is the worst page on the list.** It measured **38 desktop at a `benchmarkIndex` of 1,183**, with 22,560ms of blocking time, an LCP of 3,272ms and **11,790 KiB transferred**, which is more than the other seven pages put together. Its viewers already obey rule 4's `data-src` contract and its podium already obeys rule 5, and the page still mounts a hero carousel, a six-item themed strip and a card grid, all of them above the fold at 1350x940, so the contract has nothing left to defer. A single hero GLB was 3,341 KiB in that trace, which is rule 7's problem in a second place: `renderHero()` in [src/marketplace.js](../src/marketplace.js) takes whatever `state.featured` returns without asking how heavy it is. Applying rule 7's budget there is the obvious next move and it needs its own measurement, because unlike the homepage this page shows three avatars at once and the budget has to be shared.
 
@@ -343,6 +498,23 @@ What makes it non-trivial is that `thumbnailUrl()` in [api/\_lib/r2.js](../api/_
 - The same helper feeds the image baked into on-chain token metadata via `api/_lib/draft-mint.js`, which is written once and cannot be corrected afterwards.
 
 The shape of the fix is therefore a second helper, absolute rather than relative, applied only to first-party page feeds and never to the metadata writer, plus an addition to [tests/thumbnail-url-guard.test.js](../tests/thumbnail-url-guard.test.js) so the split stays honest. Sizing the thumbnails is worth doing in the same pass: they are stored at 768x768 and painted into a 293px box.
+
+## Half-closed on 2026-09-08: `/forge`'s composer growth
+
+The coach half is fixed. `.prompt-coach` shipped EMPTY at `min-height: 1.2em` and
+`updateCoach()` wrote `grade('')`'s message into it, which does not fit beside
+its neighbours in the `flex-wrap` `.prompt-tools` row, so the row wrapped onto a
+second line and grew. `pages/forge.html` now ships that exact message, with
+`data-no-i18n` per rule 6, and
+[tests/forge-prompt-coach.test.js](../tests/forge-prompt-coach.test.js) reads
+both `pages/forge.html` and `src/forge-prompt-studio.js` so the two copies cannot
+drift back apart.
+
+The engine-pill half below is unchanged and still open. It is the harder one:
+the settled height is a function of how many lanes the catalog returns and how
+they wrap, which is between 29px and 219px across viewport widths, so there is no
+constant to reserve. The shape that would work is the one rule 5 used on the
+podium, rendering the lane set the server already knows about into the markup.
 
 ## Open: `/forge`'s composer grows 95px after first paint, and rule 6 does not cover it
 
