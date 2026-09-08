@@ -351,10 +351,10 @@ ${items}
 \t.sm-hero h1 { font-size: clamp(34px, 5vw, 56px); margin: 0 0 12px; letter-spacing: -0.02em; }
 \t.sm-hero p { color: #b6b6cf; font-size: 17px; max-width: 64ch; margin: 0; line-height: 1.55; }
 \t.sm-formats { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 20px; }
-\t.sm-formats a { padding: 6px 12px; border: 1px solid rgba(255,255,255,.12); border-radius: 999px; color: #d8d8ee; text-decoration: none; font-size: 13px; background: rgba(255,255,255,.02); transition: background .15s, border-color .15s; }
+\t.sm-formats a { padding: 6px 12px; border: 1px solid rgba(255,255,255,.12); border-radius: 999px; color: #d8d8ee; text-decoration: none; font-size: 13px; background: rgba(255,255,255,.02); transition: background var(--duration-fast), border-color var(--duration-fast); }
 \t.sm-formats a:hover { background: rgba(255,255,255,.06); border-color: rgba(255,255,255,.24); }
 \t.sm-formats code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12px; color: #9ad4ff; }
-\t.sm-filter { position: sticky; top: 12px; z-index: 5; display: flex; align-items: center; gap: 10px; padding: 12px 16px; border: 1px solid rgba(255,255,255,.12); border-radius: 14px; background: rgba(9,9,22,.88); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); margin-bottom: 12px; transition: border-color .15s, box-shadow .15s; }
+\t.sm-filter { position: sticky; top: 12px; z-index: 5; display: flex; align-items: center; gap: 10px; padding: 12px 16px; border: 1px solid rgba(255,255,255,.12); border-radius: 14px; background: rgba(9,9,22,.88); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); margin-bottom: 12px; transition: border-color var(--duration-fast), box-shadow var(--duration-fast); }
 \t.sm-filter:focus-within { border-color: rgba(150,170,255,.45); box-shadow: 0 0 0 3px rgba(120,140,255,.12); }
 \t.sm-filter svg { width: 16px; height: 16px; color: #7a85a8; flex-shrink: 0; }
 \t.sm-filter input { flex: 1; min-width: 0; background: none; border: none; outline: none; color: #e7e7f5; font: inherit; font-size: 15px; }
@@ -366,7 +366,7 @@ ${items}
 \t.sm-empty p { margin: 0; color: #b6b6cf; font-size: 15px; }
 \t.sm-empty .sm-empty-hint { color: #7a85a8; font-size: 13px; }
 \t.sm-empty-actions { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; margin-top: 6px; }
-\t.sm-empty-actions button, .sm-empty-actions a { font: inherit; font-size: 13px; padding: 8px 14px; border-radius: 999px; border: 1px solid rgba(255,255,255,.14); background: rgba(255,255,255,.03); color: #d8d8ee; text-decoration: none; cursor: pointer; transition: background .15s, border-color .15s, color .15s; }
+\t.sm-empty-actions button, .sm-empty-actions a { font: inherit; font-size: 13px; padding: 8px 14px; border-radius: 999px; border: 1px solid rgba(255,255,255,.14); background: rgba(255,255,255,.03); color: #d8d8ee; text-decoration: none; cursor: pointer; transition: background var(--duration-fast), border-color var(--duration-fast), color var(--duration-fast); }
 \t.sm-empty-actions button:hover, .sm-empty-actions a:hover { background: rgba(120,140,255,.10); border-color: rgba(150,170,255,.38); color: #fff; }
 \t.sm-empty-actions button:active, .sm-empty-actions a:active { transform: translateY(1px); }
 \t.sm-empty-actions :focus-visible { outline: 2px solid #9ad4ff; outline-offset: 2px; }
@@ -381,7 +381,7 @@ ${items}
 \t.sm-section-desc { color: #9b9bb7; margin: 0 0 18px; font-size: 14px; }
 \t.sm-list { list-style: none; padding: 0; margin: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 10px; }
 \t.sm-list li { display: block; }
-\t.sm-list a { display: flex; flex-direction: column; gap: 4px; padding: 14px 16px; border: 1px solid rgba(255,255,255,.08); border-radius: 12px; background: rgba(255,255,255,.015); color: inherit; text-decoration: none; transition: background .15s, border-color .15s, transform .15s; }
+\t.sm-list a { display: flex; flex-direction: column; gap: 4px; padding: 14px 16px; border: 1px solid rgba(255,255,255,.08); border-radius: 12px; background: rgba(255,255,255,.015); color: inherit; text-decoration: none; transition: background var(--duration-fast), border-color var(--duration-fast), transform var(--duration-fast); }
 \t.sm-list a:hover { background: rgba(120,140,255,.06); border-color: rgba(150,170,255,.30); transform: translateY(-1px); }
 \t.sm-title { font-weight: 600; font-size: 15px; display: flex; align-items: center; gap: 8px; }
 \t.sm-path { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12px; color: #7a85a8; }
