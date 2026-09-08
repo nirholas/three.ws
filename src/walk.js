@@ -250,7 +250,14 @@ function setLoadingText(text) {
 function dismissLoading() {
 	if (!loadingOverlay) return;
 	loadingOverlay.classList.add('is-done');
-	loadingOverlay.addEventListener('transitionend', () => loadingOverlay.remove(), { once: true });
+	// transitionend is the fast path, but it never fires when the fade is
+	// suppressed (prefers-reduced-motion sets `transition: none`) or when the
+	// browser skips the transition entirely, which would leave a full-screen
+	// div parked over the scene forever. The timer guarantees the removal; the
+	// listener just makes it prompt.
+	const drop = () => loadingOverlay.remove();
+	loadingOverlay.addEventListener('transitionend', drop, { once: true });
+	setTimeout(drop, 600);
 }
 
 // ── Name persistence ─────────────────────────────────────────────────────
@@ -4917,17 +4924,22 @@ if (import.meta.env?.DEV) {
 			net?.sendChat(text);
 		});
 
+	// Enter opens the chat composer, but only while the player is "in the scene".
+	// Any focused control owns its own Enter activation, and swallowing it there
+	// made every HUD button keyboard-dead: tab to Avatar, Scene, AR or Hide UI,
+	// press Enter, and the chat box stole the key instead of the button firing.
+	const ENTER_OWNERS = /^(INPUT|TEXTAREA|SELECT|BUTTON|A|SUMMARY|OPTION|LABEL)$/;
+	function ownsEnterKey(el) {
+		if (!el || el === document.body) return false;
+		if (el.isContentEditable) return true;
+		return ENTER_OWNERS.test(el.tagName);
+	}
+
 	window.addEventListener('keydown', (e) => {
-		if (
-			e.key === 'Enter' &&
-			!e.shiftKey &&
-			document.activeElement !== chatInput &&
-			document.activeElement?.tagName !== 'INPUT' &&
-			document.activeElement?.tagName !== 'TEXTAREA'
-		) {
-			e.preventDefault();
-			chatInput?.focus();
-		}
+		if (e.key !== 'Enter' || e.shiftKey) return;
+		if (ownsEnterKey(document.activeElement) || ownsEnterKey(e.target)) return;
+		e.preventDefault();
+		chatInput?.focus();
 	});
 
 	window._walkChat = { addChatMessage };

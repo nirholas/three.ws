@@ -3,6 +3,16 @@
 	"entries": [
 		{
 			"date": "2026-09-08",
+			"title": "Every button on Drive Your Avatar is reachable again, by mouse and by keyboard",
+			"summary": "Two things were quietly breaking the controls on Drive Your Avatar. The gesture tray grew up the right-hand edge until it sat on top of the HUD column beside it, so Photo, Record, Map and the help button silently stopped taking clicks; the tray now keeps to the lower band and wraps into a second column instead of climbing into the buttons. Separately, pressing Enter anywhere on the page jumped straight to the chat box, which meant a keyboard user could tab to any control and never activate it. Enter now belongs to whatever you have focused, and only opens chat when you are looking at the scene. Along the way: the radar moved off the crowded bottom edge on phones, the chat box no longer pushes its send button off a narrow screen, the avatar list tells you when it could not load instead of always saying you are signed out, and the coin-world picker closes on Escape.",
+			"tags": [
+				"fix",
+				"improvement"
+			],
+			"link": "/temporary"
+		},
+		{
+			"date": "2026-09-08",
 			"title": "Avatars of people now come off the stronger lane, and stop standing on a slab of their own backdrop",
 			"summary": "Two things were quietly holding avatars back. The first: our own docs said that asking for a 3D person always ran on the strongest engine we host, the one that is best at faces and bodies. The code was still sending those requests to the faster, weaker engine, so every avatar came back off the wrong lane. Side by side on the same six descriptions, the weaker lane returned smeared, faceless figures with mitten hands and once no figure at all, while the stronger one returned people you can recognise. Avatars now go where the docs always said they did. The second: when you describe a person in words, we paint a reference picture first and sculpt the model from it. That picture has a plain background, and we had assumed plain was harmless. It is not. The sculptor was treating the backdrop as part of the scene and building it in, so four of six test figures came out standing on a full-size slab of their own background and two were swallowed by it entirely. Written descriptions now get the same background cutout that uploaded photos already got.",
 			"tags": [

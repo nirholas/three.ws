@@ -653,7 +653,24 @@
 				flex-direction: column;
 				gap: 6px;
 				align-items: flex-end;
+				/* The HUD action column owns the same right rail and paints below
+				   this tray, so a tray taller than the gap grew straight up
+				   through it and swallowed the clicks for Photo, Record, Map and
+				   the help button. Two rules keep both reachable: the tray is
+				   capped to the band left under the HUD column (which needs
+				   ~580px from the top of the viewport), and anything past that
+				   wraps into a second column growing leftward into open scene
+				   rather than upward into the HUD. The floor keeps a usable two
+				   rows of gestures on a short window. */
+				max-height: max(132px, calc(100vh - 612px));
+				flex-wrap: wrap-reverse;
+				align-content: flex-end;
+				overflow-y: auto;
+				overscroll-behavior: contain;
+				-ms-overflow-style: none;
+				scrollbar-width: none;
 			}
+			.walk-emote-tray::-webkit-scrollbar { display: none; }
 			.walk-emote-btn {
 				appearance: none;
 				width: 44px;
@@ -711,9 +728,27 @@
 					align-items: center;
 					max-width: calc(100vw - 24px);
 					gap: 8px;
+					/* The row wraps across the screen instead of stacking up the
+					   right rail, so the desktop band cap does not apply. */
+					max-height: none;
+					align-content: center;
+					overflow: visible;
 				}
 				.walk-emote-btn { width: 40px; height: 40px; font-size: 18px; }
 				.walk-emote-btn .emote-label { display: none; }
+
+				/* On a phone the bottom band is already carrying the joysticks,
+				   the touch action cluster, the chat composer and the gesture
+				   row, and the radar's own corner was the one that lost: it sat
+				   on top of the chat input and the first three gestures. Moving
+				   it to the free left edge below the identity card gives it the
+				   corner of its own the desktop layout assumes. walk.js positions
+				   the element with an inline style attribute, so this override
+				   has to outrank it. */
+				#walk-minimap {
+					top: calc(env(safe-area-inset-top, 0) + 180px) !important;
+					bottom: auto !important;
+				}
 			}
 
 			/* ── Gesture wheel (radial picker — hold G / long-press) ────── */
@@ -1201,8 +1236,14 @@
 
 			/* ── Walk HUD overflow scroll on small screens ──────────────── */
 			.walk-actions {
-				max-height: calc(100vh - 180px);
+				/* Reserves the bottom band for the emote tray and the bottom-right
+				   page chrome, which paint above this column: without the reserve
+				   the last buttons landed under them and stopped taking clicks.
+				   At a normal window height the full column still fits inside the
+				   ceiling, so nothing scrolls; a short window scrolls the tail. */
+				max-height: calc(100vh - 240px);
 				overflow-y: auto;
+				overscroll-behavior: contain;
 				-ms-overflow-style: none;
 				scrollbar-width: none;
 			}
