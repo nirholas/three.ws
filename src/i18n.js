@@ -101,6 +101,31 @@ function scriptOwns(el) {
 	return el.getAttribute('data-i18n-owned') === '1';
 }
 
+// Writing a value a node already holds is not free, and on the default locale
+// almost every write is exactly that: the markup ships the English source and
+// the English catalog hands the same string back. The cost is not the assignment
+// but what it does to Largest Contentful Paint. Replacing an element's text
+// destroys the text node and creates a new one, and Chrome scores that as a
+// fresh LCP candidate at the moment it happens, so the catalog pass (which lands
+// after an async /api/locale fetch, several seconds in on a phone) re-dated
+// every page's LCP to itself. Measured on a Pixel 5 over slow 4G against
+// production on 2026-09-08: `/` reported LCP 10,188 ms on `h1.hero-h`, a static
+// heading, against an FCP of 2,336 ms; `/docs/start-here` 5,168 ms on a `<p>`.
+// The pixels never changed. Skipping identical writes leaves the original text
+// node in place, so LCP stays where the paint actually was.
+//
+// Markup needs a normalizing pass before it can be compared: the browser rewrites
+// attribute quoting, entity forms and self-closing tags on the way in, so a raw
+// catalog string never equals the innerHTML it produced. Round-tripping the
+// candidate through a detached element puts both sides in the same normal form.
+let htmlNormalizer = null;
+function normalizedHtml(value) {
+	if (!hasDOM) return value;
+	if (!htmlNormalizer) htmlNormalizer = document.createElement('div');
+	htmlNormalizer.innerHTML = value;
+	return htmlNormalizer.innerHTML;
+}
+
 export function applyCatalog(root, t) {
 	if (!root) return;
 	root.querySelectorAll?.('[data-i18n]').forEach((el) => {
@@ -119,6 +144,7 @@ export function applyCatalog(root, t) {
 			el.dataset.authNameOriginal = v;
 			if (el.dataset.authNamed === '1') return;
 		}
+		if (el.textContent === v) return;
 		el.textContent = v;
 	});
 	root.querySelectorAll?.('[data-i18n-html]').forEach((el) => {
@@ -132,7 +158,9 @@ export function applyCatalog(root, t) {
 			el.dataset.authNameOriginal = v;
 			if (el.dataset.authNamed === '1') return;
 		}
-		el.innerHTML = v;
+		const normalized = normalizedHtml(v);
+		if (el.innerHTML === normalized) return;
+		el.innerHTML = normalized;
 	});
 	root.querySelectorAll?.('[data-i18n-attr]').forEach((el) => {
 		if (scriptOwns(el)) return;
@@ -141,8 +169,12 @@ export function applyCatalog(root, t) {
 			if (!attr || !key) continue;
 			const v = t(key);
 			if (v != null && v !== key) {
-				el.setAttribute(attr, v);
-				if (attr === 'data-i18n-title' || attr === 'title-text') document.title = v;
+				// Same identity guard as the two loops above. An attribute write is
+				// cheaper than a text-node swap, but it still produces a mutation
+				// record, and public/corner-stack.js re-measures the page's bottom
+				// chrome on every one of those.
+				if (el.getAttribute(attr) !== v) el.setAttribute(attr, v);
+				if ((attr === 'data-i18n-title' || attr === 'title-text') && document.title !== v) document.title = v;
 			}
 		}
 	});
