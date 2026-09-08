@@ -200,3 +200,37 @@ describe('x402-checkout getRecentBlockhash — fail-open on a total RPC outage',
 		).rejects.toThrow(/all solana rpc endpoints failed/);
 	});
 });
+
+// Self-pay: an accept with no `extra.feePayer` means the buyer covers their own
+// Solana fee. That is what a paid endpoint advertises when the sponsor wallet
+// is empty, and it is the difference between still taking money and answering
+// 503 on an endpoint whose whole purpose is receiving crypto.
+describe('x402-checkout self-pay accepts', () => {
+	it('accepts a challenge with no feePayer', () => {
+		const { extra, ...rest } = challengeAccept();
+		const parsed = acceptSchema.parse({
+			...rest,
+			extra: { name: extra.name, decimals: extra.decimals },
+		});
+		expect(parsed.extra.feePayer).toBeUndefined();
+		// Everything else still has to be there: self-pay changes who pays gas,
+		// not where the money goes.
+		expect(parsed.payTo).toBe(PAY_TO);
+		expect(parsed.asset).toBe(USDC);
+	});
+
+	it('still validates feePayer when one IS supplied', () => {
+		expect(() =>
+			acceptSchema.parse(
+				challengeAccept({ extra: { name: 'USDC', decimals: 6, feePayer: 'not-an-address' } }),
+			),
+		).toThrow();
+	});
+
+	it('still requires payTo and asset on a self-pay accept', () => {
+		const { extra, payTo, ...rest } = challengeAccept();
+		expect(() =>
+			acceptSchema.parse({ ...rest, extra: { name: 'USDC', decimals: 6 } }),
+		).toThrow();
+	});
+});

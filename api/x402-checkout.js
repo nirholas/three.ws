@@ -91,7 +91,11 @@ export const acceptSchema = z.object({
 		.object({
 			name: z.string().optional(),
 			decimals: z.number().int().nonnegative().optional(),
-			feePayer: solanaAddress,
+			// Optional on purpose: an accept with no feePayer is the self-pay
+			// contract, where the buyer signs as their own fee payer and no
+			// sponsor is involved. Requiring it here would reject the very
+			// challenge a paid endpoint issues when its sponsor wallet is empty.
+			feePayer: solanaAddress.optional(),
 		})
 		.passthrough(),
 });

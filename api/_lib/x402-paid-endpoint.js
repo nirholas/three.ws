@@ -51,6 +51,7 @@ import {
 } from './x402-spec.js';
 import { declareBuilderCodeExtension } from './x402-builder-code.js';
 import { sponsorKnownBelowFloor, refreshSponsorFloorState } from './x402/self-facilitator.js';
+import { resolveSolanaFacilitator } from './x402/ring-config.js';
 import {
 	PAYMENT_IDENTIFIER,
 	checkCache,
@@ -183,29 +184,31 @@ export function buildRequirements({ priceAtomics, networks, resourceUrl, payToOv
 			(!baseTo || !env.X402_ASSET_ADDRESS_BASE || !baseSettleable())
 		)
 			continue;
-		// Solana also needs a fee payer to be co-signable — skip the network
-		// rather than advertise an accept the facilitator will reject. The pay-to,
-		// USDC mint and advertised sponsor PUBKEY must all be present AND settlement
-		// must be fulfillable: solanaSettleable() confirms the self-facilitator can
-		// actually co-sign (its X402_FEE_PAYER_SECRET_BASE58 is loaded), so a deploy
-		// that advertises a sponsor it can't sign for drops Solana here instead of
-		// handing the buyer an accept that 502s at settle. Self-heals when the
-		// secret is set. See solanaSettleable() in x402-spec.js.
+		// Solana needs somewhere to send the money and a mint to send. Those are
+		// the only hard requirements: without them there is nothing to advertise.
 		if (
 			net === NETWORK_SOLANA_MAINNET &&
 			(!solTo || !env.X402_ASSET_MINT_SOLANA)
 		)
 			continue;
-		// Sponsoring the buyer's gas is a convenience, not a precondition for
-		// taking money. When the sponsor cannot co-sign (no key loaded, or the
-		// wallet is under its SOL settle floor) we used to drop Solana entirely
-		// and answer 503 on a paid endpoint whose whole job is RECEIVING crypto.
-		// Advertise the accept without a feePayer instead: that is the self-pay
-		// contract, where the buyer signs as their own fee payer and the
-		// facilitator only broadcasts, spending none of our SOL. Sponsored mode
-		// resumes on its own the moment the wallet is topped up.
+		// Who pays the Solana fee is a SEPARATE question from whether we can be
+		// paid. Sponsoring the buyer's gas is a convenience we offer so a buyer
+		// holding only USDC needs no SOL; it is not a precondition for receiving.
+		// This used to drop Solana whenever the sponsor could not co-sign (no
+		// X402_FEE_PAYER_SECRET_BASE58 loaded, or the wallet under its SOL floor),
+		// which 503'd a paid endpoint whose entire job is RECEIVING crypto while
+		// the payTo wallet sat there perfectly able to receive. Advertise the
+		// accept without a feePayer instead: that is the self-pay contract, where
+		// the buyer signs as their own fee payer and the facilitator only
+		// broadcasts, spending none of our SOL. Sponsored mode resumes by itself
+		// the moment the wallet is topped up.
+		//
+		// Only when WE settle. An external facilitator (PayAI) pins the sponsor as
+		// fee payer and rejects a challenge without one at /verify, so dropping
+		// feePayer there would trade a retryable 503 for a hard verify failure.
 		const solanaSelfPayOnly =
 			net === NETWORK_SOLANA_MAINNET &&
+			resolveSolanaFacilitator().self &&
 			(!env.X402_FEE_PAYER_SOLANA || !solanaSettleable() || sponsorKnownBelowFloor());
 		if (net === NETWORK_BSC_MAINNET && (!bscTo || !env.X402_ASSET_ADDRESS_BSC)) continue;
 		const accept = buildAccept(net, priceAtomics, resourceUrl, payToOverride, solanaSelfPayOnly);
