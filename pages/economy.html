@@ -177,7 +177,10 @@
 			.ae-skel-card { height: 168px; }
 			.ae-skel-row { height: 64px; }
 			@keyframes ae-shimmer { 0% { background-position: 100% 0; } 100% { background-position: -100% 0; } }
-			.ae-empty, .ae-error { border: 1px dashed var(--border-strong, #2a2a2a); border-radius: 14px; padding: 28px; text-align: center; }
+			/* Both hosts that take these states are grids, where a bare child lands in
+			   one 280px track and reads as a broken card rather than as the section's
+			   state. Span the row. */
+			.ae-empty, .ae-error { border: 1px dashed var(--border-strong, #2a2a2a); border-radius: 14px; padding: 28px; text-align: center; grid-column: 1 / -1; }
 			.ae-empty-title { font-weight: 600; margin: 0 0 6px; }
 			.ae-empty-cta { margin: 14px 0 0; }
 			.ae-empty-cta a { color: var(--accent-violet-strong); text-decoration: none; font-size: 13.5px; }
