@@ -45,6 +45,7 @@ analyze:  inspect_model · optimize_model        preview:  preview_3d
 | `animation_signature(clip, slot?)`                       | A clip's measured motion: energy, tempo, leading region, loop seam, travel. Pass `slot` for an ok/warn fit verdict against a runtime slot. |
 | `find_similar_animations(clip, limit?)`                  | The library ranked by measured-motion distance from a reference clip: "more like this" for animations.                              |
 | `apply_animation(model_url, animation, format?, speed?)` | Retarget a preset clip onto a rigged GLB — returns the retargeted `AnimationClip` JSON (or a baked animated GLB).                    |
+| `text_to_animation(prompt, model_url?, duration_seconds?, format?, speed?)` | Generate a brand-new motion from a prompt ("waving confidently", "a slow tai-chi sweep") with a motion-diffusion model, then retarget it onto a rigged humanoid GLB with the same engine `apply_animation` uses. |
 | `pose_model(prompt)`                                     | Map a pose description to a deterministic seed + full Euler joint-rotation map from the in-repo preset library. Deterministic: the same prompt always returns the same seed. Priced at $0.01 (see the table below). |
 
 ### Edit & process the mesh
@@ -57,6 +58,7 @@ analyze:  inspect_model · optimize_model        preview:  preview_3d
 | `retexture_model(mesh_url, prompt, num_views?, texture_size?)`      | Paint a fresh texture from a prompt (SDXL + ControlNet depth, multi-view back-projection).           |
 | `retexture_region(mesh_url, mask_url, prompt?, color?, …)`          | Magic-brush: repaint only a masked UV region, feathering the seam.                                   |
 | `generate_material(description, name?)`                             | IBM Granite → a glTF 2.0 PBR material (base color, metallic, roughness, emissive).                   |
+| `remove_background(image_url, model?)` | Strip the background from a photo or illustration, returning a transparent PNG: a clean input for `image_to_3d`. |
 
 ### Assist, analyze & preview
 
@@ -67,6 +69,13 @@ analyze:  inspect_model · optimize_model        preview:  preview_3d
 | `optimize_model(url)`         | Actionable size/perf suggestions: Draco/Meshopt, KTX2, triangle budget.                                                        |
 | `preview_3d(glb_url, …)`      | Render any public GLB as an interactive `<model-viewer>` artifact (orbit, AR, auto-rotate).                                    |
 | `export_ar(glb_url, title?, kind?)` | Read-only: turn any public GLB into the device-aware AR link set (`arLaunchUrl`, `sceneViewerUrl`, `viewerUrl`, plus `irlUrl` when `kind: "avatar"`) and a [Spatial MCP](./spatial-mcp.md) artifact. Free. See [AR & WebXR](./ar.md#one-tap-ar-for-any-glb--get-apiar--export_ar). |
+| `getting_started(section?)` | Free, no credentials: an overview of every tool, how to get access, and the useful links. Call it first to orient. |
+| `save_avatar(glb_url, name, visibility?, source_prompt?, tags?)` | Copy a generated GLB into three.ws storage (so it survives the provider URL expiring) and register it as a named avatar you own. Free. |
+| `capture_scene(video_url, mode?, fps?, …)` | Reconstruct a real space from a video walkaround into an explorable 3D point cloud (LingBot-Map streaming reconstructor, drift-corrected across the clip). |
+| `grade_sim_readiness(glb_url, hash?)` | Free: can this GLB be dropped into a physics simulator (MuJoCo, Isaac, Bullet, a game engine) and behave? Returns `simulation_ready`, `needs_scale`, `needs_repair`, or `unusable`, plus the measurements behind the verdict. |
+| `anchor_provenance(glb_url, creator?, prompt?, …)` | Issue a signed content credential for a generated GLB and anchor its hash on Solana, so anyone can later check authenticity for free. |
+| `verify_provenance(glb_url, hash?)` | Free: recompute the model’s content hash, check the signed credential and its on-chain anchor, and answer `verified`, `tampered`, or `unknown`. |
+| `validate_spatial_response(artifact)` | Free: check a structured-content payload against the open [Spatial MCP](./spatial-mcp.md) artifact shape before you ship it. |
 | `x402_preflight(origin, network?)` | Read-only, free: fetch an x402 seller's signed payability attestation from `<origin>/.well-known/x402-preflight`, verify its ed25519 signature, expiry, and subject, and answer whether that seller can actually settle before you pay it. An attestation that does not verify is reported as unverified, never as health. Spec: [`specs/x402-preflight.md`](../specs/x402-preflight.md). |
 
 Generation, rigging, and most mesh ops are **asynchronous**: the tool returns a
@@ -155,9 +164,26 @@ key per poll.
 
 ## Access & pricing
 
-Discovery is free for everyone: `initialize`, `tools/list`, `ping`, and the
-`getting_started` tool answer with no credentials, so any agent or crawler can
-read the catalog before deciding to pay.
+Discovery is free: a discovery-only batch (`initialize`, `tools/list`, `ping`)
+and the public `getting_started` tool answer with no credentials, so any x402
+agent, registry validator, or crawler can read the catalog before deciding to
+pay.
+
+```bash
+curl -s https://three.ws/api/mcp-3d \
+  -H 'content-type: application/json' \
+  -d '{"jsonrpc":"2.0","id":1,"method":"tools/list"}'
+```
+
+One deliberate exception: an **MCP protocol client** still gets `401` on
+discovery. A request carrying `mcp-protocol-version`, `mcp-session-id`, or an
+`Accept` of `text/event-stream` (the MCP TS SDK, the Inspector, the claude.ai
+connector) is answered with a `WWW-Authenticate` challenge instead, because the
+MCP authorization spec (RFC 9728) requires a 401 for the client to find the
+protected-resource metadata and start the OAuth flow. That branch is
+`isMcpProtocolClient` in [`api/_mcp/auth.js`](../api/_mcp/auth.js). So adding the
+connector and signing in works; a plain `curl` that sets the SSE accept header
+sees a challenge rather than the catalog, and should drop that header to browse.
 
 For tool calls there are two lanes:
 

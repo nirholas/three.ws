@@ -109,9 +109,41 @@ async function uploadReferenceImage(file, { onStatus, signal } = {}) {
 	return grant.public_url;
 }
 
-function statusLine(state, etaSeconds) {
-	const eta = Number.isFinite(etaSeconds) && etaSeconds > 0 ? ` (~${Math.round(etaSeconds)}s)` : '';
-	return state === 'queued' ? `Forging: waiting for a slot${eta}…` : `Forging your model${eta}…`;
+// One progress line from a real /api/forge frame. Every number here is read off
+// the payload; nothing is timed locally, so a slow job reports its own age
+// rather than the tab's.
+//
+// Two states this used to flatten into "waiting for a slot":
+//   • A scale-to-zero GPU worker booting. That is a nameable wait with a stated
+//     budget (`cold_start` + `cold_start_seconds`), not an anonymous queue.
+//   • The countdown. It printed `eta_seconds`, the lane's static TOTAL, on every
+//     frame, so a two-minute wait read as a bar stuck at the same "~60s" the
+//     whole time. `eta_remaining_seconds` is the live figure and leads now.
+function statusLine(job = {}) {
+	const num = (v) => (Number.isFinite(Number(v)) && Number(v) > 0 ? Math.round(Number(v)) : null);
+	const remaining = num(job.eta_remaining_seconds) ?? num(job.eta_seconds);
+	const elapsed = num(job.elapsed_seconds);
+	// Elapsed is only worth showing once it means something; under 5s it just
+	// flickers as the first polls land.
+	const notes = [elapsed && elapsed >= 5 ? `${elapsed}s in` : null, remaining ? `~${remaining}s left` : null].filter(
+		Boolean,
+	);
+	const suffix = notes.length ? ` (${notes.join(', ')})` : '';
+	if (job.cold_start) {
+		const budget = num(job.cold_start_seconds);
+		const bootLeft = budget != null && elapsed != null ? budget - elapsed : null;
+		if (bootLeft != null && bootLeft > 0) {
+			return `Waking up a GPU: about ${bootLeft}s of boot left${elapsed >= 5 ? ` (${elapsed}s in)` : ''}…`;
+		}
+		// Past the stated budget: say so rather than counting into negatives.
+		if (bootLeft != null) {
+			return `Still waking the GPU${elapsed >= 5 ? ` (${elapsed}s in)` : ''}. Forging starts the moment it answers…`;
+		}
+		return budget ? `Waking up a GPU (about ${budget}s), then forging…` : 'Waking up a GPU, then forging…';
+	}
+	return job.status === 'queued'
+		? `Forging: waiting for a slot${suffix}…`
+		: `Forging your model${suffix}…`;
 }
 
 /**
@@ -157,7 +189,7 @@ export async function forgeWorldProp({ prompt = '', file = null, onStatus, signa
 	}
 	if (!data.job_id) throw new ForgeError('The forge did not accept that request. Try rephrasing it.');
 
-	onStatus?.(statusLine('queued', data.eta_seconds));
+	onStatus?.(statusLine({ ...data, status: 'queued' }));
 	const deadline = Date.now() + MAX_WAIT_MS;
 	while (Date.now() < deadline) {
 		throwIfAborted(signal);
@@ -182,7 +214,7 @@ export async function forgeWorldProp({ prompt = '', file = null, onStatus, signa
 			const detail = typeof job.error === 'string' && job.error.length < 200 ? job.error : '';
 			throw new ForgeError(detail ? `The forge could not build that: ${detail}` : 'The forge could not build that. Try different wording.');
 		}
-		onStatus?.(statusLine(job.status === 'queued' ? 'queued' : 'running', job.eta_seconds));
+		onStatus?.(statusLine(job));
 	}
 	throw new ForgeError('The forge is taking too long. Your item may still finish in the /forge gallery.');
 }

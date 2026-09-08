@@ -1467,6 +1467,24 @@ async function startJob({ prompt, imageUrls, skipValidation, payment }) {
 	return data;
 }
 
+// A queued job on a scale-to-zero GPU worker is a container boot, not a queue,
+// and the two deserve different words: "In line for a GPU" tells someone their
+// job is behind other work, which is wrong and unfixable-sounding, when in fact
+// nothing is ahead of them and the wait has a known end. Returns null when the
+// API does not report a cold start, so the caller keeps its queue wording.
+// Every number comes off the poll payload; nothing is timed locally.
+function coldStartLabel(job) {
+	if (!job?.cold_start) return null;
+	const num = (v) => (Number.isFinite(Number(v)) && Number(v) > 0 ? Math.round(Number(v)) : null);
+	const budget = num(job.cold_start_seconds);
+	const elapsed = num(job.elapsed_seconds);
+	const bootLeft = budget != null && elapsed != null ? budget - elapsed : null;
+	if (bootLeft != null && bootLeft > 0) return `Waking up a GPU: about ${bootLeft}s of boot left`;
+	// Past the stated budget: say so rather than counting into negatives.
+	if (bootLeft != null) return 'Still waking the GPU: it starts the moment the worker answers';
+	return budget ? `Waking up a GPU (about ${budget}s)` : 'Waking up a GPU';
+}
+
 async function pollUntilDone(jobId) {
 	let deadline = performance.now() + MAX_POLL_MS;
 	// Queue-state tracking: a job waiting for a GPU is alive, so say so (after a
@@ -1503,7 +1521,18 @@ async function pollUntilDone(jobId) {
 			setStep('mesh', 'active');
 			deadline = performance.now() + MAX_POLL_MS;
 			queuedPolls += 1;
-			if (!inQueue && queuedPolls >= 3) {
+			// A cold start is stated by the API, not guessed from how long we have
+			// been waiting, so it skips the 3-poll grace and names itself on the
+			// first frame that reports it. The label is rewritten every poll, so the
+			// boot countdown actually moves instead of freezing on its first value.
+			const coldLabel = coldStartLabel(data);
+			if (coldLabel) {
+				if (!inQueue) {
+					inQueue = true;
+					preQueueMeshLabel = els.steps?.mesh?.querySelector('span:last-child')?.textContent || null;
+				}
+				setStepLabel('mesh', coldLabel);
+			} else if (!inQueue && queuedPolls >= 3) {
 				inQueue = true;
 				preQueueMeshLabel = els.steps?.mesh?.querySelector('span:last-child')?.textContent || null;
 				setStepLabel('mesh', 'In line for a GPU');

@@ -171,6 +171,29 @@ const NIM_TRELLIS_COOLDOWN_KEY = 'forge-nim-trellis';
 const NIM_FORGE_COOLDOWN_SECONDS = 120;
 const NIM_FORGE_GATEWAY_COOLDOWN_SECONDS = 30;
 
+// Honest cold-start signal for a self-host lane: true only when the liveness
+// probe reached the worker but it answered slowly (a scale-to-zero container
+// spinning up). Reuses the cached lane-health snapshot, so the common path pays
+// no extra probe. Used to widen the ETA + flag `cold_start`, never to fabricate
+// progress; the client's real polling still drives actual status.
+//
+// Module-level because BOTH ends of a job need it, exactly as in api/forge.js.
+// This lived only as a closure inside the submit handler until now, so only the
+// submit response could say a worker was booting. ChatGPT and every other MCP
+// client sees ONLY poll frames after submit, which meant the one surface that
+// depends entirely on polling was the one surface that could never explain a
+// container boot: it showed "still rendering" for the whole spin-up.
+async function laneColdStart(backendId) {
+	if (!backendId || !isSelfHostBackend(backendId) || !coldStartSecondsFor(backendId)) return false;
+	try {
+		const snap = await laneHealthSnapshot([backendId]);
+		const rec = snap.byId[backendId];
+		return Boolean(rec && rec.status === 'ok' && rec.warm === false);
+	} catch {
+		return false;
+	}
+}
+
 // The platform-keyed paid reconstruct lane (Replicate TRELLIS) recorded as down.
 // Set only on an out-of-credit/billing failure: which won't self-heal until ops
 // tops the account up, so the window is long (reason 'auth'). The NIM-cooldown
@@ -1171,21 +1194,10 @@ async function startJob(req, res) {
 		}
 	}
 
-	// Honest cold-start signal for a chosen self-host lane: true only when the
-	// liveness probe reached the worker but it answered slowly (a scale-to-zero
-	// container spinning up). Reuses the cached snapshot, so the common path pays no
-	// extra probe. Used to widen the ETA + flag `cold_start` in the response, never
-	// to fabricate progress; the client's real polling still drives actual status.
-	const coldStartFor = async (id) => {
-		if (!isSelfHostBackend(id) || !coldStartSecondsFor(id)) return false;
-		try {
-			const snap = await laneHealthSnapshot([id]);
-			const rec = snap.byId[id];
-			return Boolean(rec && rec.status === 'ok' && rec.warm === false);
-		} catch {
-			return false;
-		}
-	};
+	// Honest cold-start signal for a chosen self-host lane. The implementation is
+	// the module-level laneColdStart above, so the submit and poll ends of a job
+	// answer this question identically instead of drifting.
+	const coldStartFor = laneColdStart;
 
 	// Content-addressed result cache (see _lib/forge-cache.js): a text→3D request
 	// on a platform-keyed lane (never BYOK: that spends the caller's own account,
@@ -3053,9 +3065,17 @@ async function pollJob(req, res, jobId) {
 		? Math.max(0, Math.round((Date.now() - Date.parse(meta.created_at)) / 1000))
 		: null;
 	const etaSeconds = meta?.backend ? estimateEtaSeconds({ backendId: meta.backend, tier: meta.tier }) : null;
+	// A job still QUEUED on a scale-to-zero self-host worker is waiting on a
+	// container boot, and that is the one wait a client can explain instead of
+	// showing an unmoving "still rendering". Resolved from the cached lane-health
+	// snapshot (one probe per 20s per instance, shared across every concurrent
+	// poll), and only while queued: a worker that answered "running" is up by
+	// definition, so the flag clears on a real signal rather than on a timer.
+	const pendingStatus = result.status || 'running';
+	const cold = pendingStatus === 'queued' ? await laneColdStart(meta?.backend) : false;
 	return json(res, 200, {
 		job_id: jobId,
-		status: result.status || 'running',
+		status: pendingStatus,
 		...metaFields,
 		...(elapsedSeconds != null ? { elapsed_seconds: elapsedSeconds } : {}),
 		...(etaSeconds != null
@@ -3065,6 +3085,7 @@ async function pollJob(req, res, jobId) {
 						elapsedSeconds != null ? Math.max(5, etaSeconds - elapsedSeconds) : etaSeconds,
 				}
 			: {}),
+		...(cold ? { cold_start: true, cold_start_seconds: coldStartSecondsFor(meta?.backend) } : {}),
 	});
 }
 

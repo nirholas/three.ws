@@ -227,6 +227,11 @@
 					<div class="hf-step" data-hf-step="mesh" data-state="pending"><span class="dot" aria-hidden="true"></span><span data-i18n="home.reconstructing_textured_mesh">Reconstructing textured mesh</span></div>
 					<div class="hf-step" data-hf-step="finish" data-state="pending"><span class="dot" aria-hidden="true"></span><span data-i18n="home.finalizing_glb">Finalizing GLB</span></div>
 				</div>
+				<!-- Cold-start honesty: shown only while /api/forge reports cold_start
+				     for the chosen self-hosted GPU lane, and cleared by the first real
+				     "running" poll, never by a timer. Its text is written from the
+				     poll payload's own numbers (see src/home-forge.js). -->
+				<p class="hf-warming" data-hf-warming role="status" hidden></p>
 				<button type="button" class="hf-btn" data-hf-cancel data-i18n="home.cancel">Cancel</button>
 			</div>
 
@@ -1883,6 +1888,15 @@ import { attendRotation } from '/src/shared/attended-rotation.js';
 	#home-forge .hf-step[data-state='done'] { color: var(--text-2); }
 	#home-forge .hf-step[data-state='done'] .dot { background: #58d68d; border-color: #58d68d; }
 	@keyframes hf-spin { to { transform: rotate(360deg); } }
+	/* Cold start: a GPU booting is a nameable wait, so it reads as information
+	   rather than as an error. Sits under the steps it explains. */
+	#home-forge .hf-warming { display: flex; align-items: center; gap: 8px; margin: 10px 0 0; max-width: 34ch; font-family: var(--font-mono); font-size: 11px; line-height: 1.5; letter-spacing: 0.03em; color: var(--text-2); }
+	#home-forge .hf-warming[hidden] { display: none; }
+	#home-forge .hf-warming::before { content: ''; width: 7px; height: 7px; border-radius: 50%; background: #ffb454; flex: none; animation: hf-warm-pulse 1.6s ease-in-out infinite; }
+	@keyframes hf-warm-pulse { 0%, 100% { opacity: 0.35; transform: scale(0.85); } 50% { opacity: 1; transform: scale(1); } }
+	@media (prefers-reduced-motion: reduce) {
+		#home-forge .hf-warming::before { animation: none; opacity: 1; }
+	}
 	#home-forge .hf-preview { width: 132px; aspect-ratio: 1 / 1; border-radius: 12px; border: 1px solid var(--hairline); overflow: hidden; display: none; }
 	#home-forge .hf-preview img { width: 100%; height: 100%; object-fit: cover; display: block; }
 	#home-forge .hf-preview.is-on { display: block; }

@@ -1,10 +1,11 @@
 // three.ws 3D Studio (free) — tool catalog + handlers.
 //
-// This module holds eight of the connector's eleven tools: five generators +
-// refine_model + check_job + look_at_model. The other three
-// (create_agent_persona, get_agent_persona, persona_say) live in
+// This module holds eight of the connector's eleven tools: the six generation
+// tools (five generators plus refine_model) + check_job + look_at_model. The
+// other three (create_agent_persona, get_agent_persona, persona_say) live in
 // ./persona-tools.js, and dispatch.js merges both catalogs into the single
-// tools/list the endpoint serves.
+// tools/list the endpoint serves. docs/mcp-studio.md splits the catalog the
+// same way, and tests/mcp-studio.test.js pins the total at eleven.
 //
 // All eight are FREE (no x402, no
 // wallet, no API key): the platform's server-side keys cover provider cost via
@@ -141,6 +142,20 @@ function toolError(message) {
 	};
 }
 
+// Lift the timing/warmth facts a poll payload carries into the shape
+// pendingResult() reads. One helper rather than seven inline spreads, so a new
+// field reaches every tool at once instead of the six that got remembered.
+// Every value is passed straight through; nothing here is derived from a local
+// clock, so a job handed back after a client reconnect reports the JOB's age.
+function pendingTiming(job) {
+	return {
+		etaRemainingSeconds: job?.eta_remaining_seconds,
+		coldStart: Boolean(job?.cold_start),
+		coldStartSeconds: job?.cold_start_seconds ?? null,
+		elapsedSeconds: job?.elapsed_seconds ?? null,
+	};
+}
+
 // Success envelope for a job that outlived the inline wait budget but IS still
 // running. This used to be an error, which threw away real work: with the
 // self-host TRELLIS lane as forge primary a generation takes 4-6 minutes, the
@@ -148,15 +163,56 @@ function toolError(message) {
 // quietly finished minutes later and the caller never learned. The job handle
 // is public (the free /api/forge poll endpoint takes it with no auth), so hand
 // it over and let the caller collect the result.
-function pendingResult({ base, jobId, what, prompt, etaRemainingSeconds, stage = 'mesh' }) {
+function pendingResult({
+	base,
+	jobId,
+	what,
+	prompt,
+	etaRemainingSeconds,
+	stage = 'mesh',
+	coldStart = false,
+	coldStartSeconds = null,
+	elapsedSeconds = null,
+}) {
 	// The ChatGPT pipeline's own endpoint, not /api/forge: the whole point of
 	// the clone is that this surface can evolve independently.
 	const pollUrl = `${base}/api/gpt-forge?job=${encodeURIComponent(jobId)}`;
-	const eta = Number.isFinite(etaRemainingSeconds) && etaRemainingSeconds > 0 ? Math.round(etaRemainingSeconds) : null;
+	const num = (v) => (Number.isFinite(Number(v)) && Number(v) > 0 ? Math.round(Number(v)) : null);
+	const eta = num(etaRemainingSeconds);
+	// Guard the null BEFORE the numeric compare: Number(null) is 0, which passes
+	// `>= 0` and would report a job with no known age as "0s in".
+	const elapsed =
+		elapsedSeconds == null || !Number.isFinite(Number(elapsedSeconds)) || Number(elapsedSeconds) < 0
+			? null
+			: Math.round(Number(elapsedSeconds));
+	const coldTotal = num(coldStartSeconds);
+	// A queued job on a scale-to-zero worker is a container boot, not a slow
+	// render, and saying so is the difference between a client that waits and a
+	// client that retries into the same boot. Every number here comes off the
+	// poll payload; when the API reports the boot without a budget we name the
+	// state and promise no time rather than inventing one.
+	const bootLeft = coldStart && coldTotal != null && elapsed != null ? coldTotal - elapsed : null;
+	let head;
+	if (coldStart) {
+		const budget =
+			bootLeft != null
+				? bootLeft > 0
+					? ` (about ${bootLeft}s of boot left`
+					: ` (past its usual ${coldTotal}s boot`
+				: coldTotal != null
+					? ` (about ${coldTotal}s`
+					: '';
+		const elapsedNote = budget && elapsed != null && elapsed >= 5 ? `, ${elapsed}s in)` : budget ? ')' : '';
+		head =
+			`The GPU worker for this ${what} is waking up${budget}${elapsedNote}. ` +
+			'The job is accepted and rendering starts the moment it answers';
+	} else {
+		head = `The ${what} is still rendering (heavier scenes take a few minutes)${eta ? ` (roughly ${eta}s to go)` : ''}`;
+	}
+	const retryIn = coldStart && bootLeft != null && bootLeft > 0 ? bootLeft : eta;
 	const message =
-		`The ${what} is still rendering (heavier scenes take a few minutes)` +
-		`${eta ? ` (roughly ${eta}s to go)` : ''}. ` +
-		`It keeps running: call the check_job tool with this job_id${eta ? ` in ~${eta}s` : ' shortly'} to collect it, ` +
+		`${head}. ` +
+		`It keeps running: call the check_job tool with this job_id${retryIn ? ` in ~${retryIn}s` : ' shortly'} to collect it, ` +
 		`or poll ${pollUrl} until status is "done", then use its glb_url ` +
 		`(view at ${base}/viewer?src=<glb_url>).`;
 	return {
@@ -171,6 +227,16 @@ function pendingResult({ base, jobId, what, prompt, etaRemainingSeconds, stage =
 			// costs the data-minimization rule nothing.
 			stage,
 			...(eta ? { etaRemainingSeconds: eta } : {}),
+			// Machine-readable twin of the sentence above, so a client can render
+			// its own "waking up" state instead of parsing prose.
+			...(coldStart
+				? {
+						coldStart: true,
+						...(coldTotal != null ? { coldStartSeconds: coldTotal } : {}),
+						...(bootLeft != null && bootLeft > 0 ? { coldStartRemainingSeconds: bootLeft } : {}),
+					}
+				: {}),
+			...(elapsed != null ? { elapsedSeconds: elapsed } : {}),
 			...(prompt ? { prompt } : {}),
 		},
 	};
@@ -320,7 +386,7 @@ async function handleForgeFree(args, _auth, req) {
 	} catch (err) {
 		return toolError(failureMessage(err));
 	}
-	if (job._timedOut && job.job_id) return pendingResult({ base, jobId: job.job_id, what: 'model', prompt, etaRemainingSeconds: job.eta_remaining_seconds });
+	if (job._timedOut && job.job_id) return pendingResult({ base, jobId: job.job_id, what: 'model', prompt, ...pendingTiming(job) });
 	if (job._timedOut || !job.glb_url) return toolError('Generation is taking longer than expected. Please try again.');
 	return ok({ glbUrl: job.glb_url, base, kind: 'model', prompt, referenceImageUrl: job.preview_image_url });
 }
@@ -358,7 +424,7 @@ async function handleTextToAvatar(args, _auth, req) {
 	} catch (err) {
 		return toolError(failureMessage(err));
 	}
-	if (job._timedOut && job.job_id) return pendingResult({ base, jobId: job.job_id, what: 'avatar', prompt: prompt || undefined, etaRemainingSeconds: job.eta_remaining_seconds });
+	if (job._timedOut && job.job_id) return pendingResult({ base, jobId: job.job_id, what: 'avatar', prompt: prompt || undefined, ...pendingTiming(job) });
 	if (job._timedOut || !job.glb_url) return toolError('Generation is taking longer than expected. Please try again.');
 	return ok({ glbUrl: job.glb_url, base, kind: 'avatar', prompt: prompt || undefined, referenceImageUrl: job.preview_image_url });
 }
@@ -410,7 +476,7 @@ async function handleMeshForge(args, _auth, req) {
 	} catch (err) {
 		return toolError(failureMessage(err));
 	}
-	if (job._timedOut && job.job_id) return pendingResult({ base, jobId: job.job_id, what: 'mesh', prompt: prompt || undefined, etaRemainingSeconds: job.eta_remaining_seconds });
+	if (job._timedOut && job.job_id) return pendingResult({ base, jobId: job.job_id, what: 'mesh', prompt: prompt || undefined, ...pendingTiming(job) });
 	if (job._timedOut || !job.glb_url) return toolError('Generation is taking longer than expected. Please try again.');
 	return ok({ glbUrl: job.glb_url, base, kind: 'mesh', prompt: prompt || undefined, referenceImageUrl: job.preview_image_url });
 }
@@ -430,7 +496,7 @@ async function handleRigMesh(args, _auth, req) {
 	} catch (err) {
 		return toolError(failureMessage(err));
 	}
-	if (job._timedOut && job.job_id) return pendingResult({ base, jobId: job.job_id, what: 'rigged model', etaRemainingSeconds: job.eta_remaining_seconds, stage: 'rig' });
+	if (job._timedOut && job.job_id) return pendingResult({ base, jobId: job.job_id, what: 'rigged model', ...pendingTiming(job), stage: 'rig' });
 	if (job._timedOut || !job.glb_url) return toolError('Rigging is taking longer than expected. Please try again.');
 	return ok({ glbUrl: job.glb_url, base, kind: 'rigged model', rigged: true });
 }
@@ -471,7 +537,7 @@ async function handleForgeAvatar(args, _auth, req) {
 	} catch (err) {
 		return toolError(failureMessage(err));
 	}
-	if (gen._timedOut && gen.job_id) return pendingResult({ base, jobId: gen.job_id, what: 'avatar mesh (rig it with rig_mesh once done)', prompt: prompt || undefined, etaRemainingSeconds: gen.eta_remaining_seconds, stage: 'mesh' });
+	if (gen._timedOut && gen.job_id) return pendingResult({ base, jobId: gen.job_id, what: 'avatar mesh (rig it with rig_mesh once done)', prompt: prompt || undefined, ...pendingTiming(gen), stage: 'mesh' });
 	if (gen._timedOut || !gen.glb_url) return toolError('Generation is taking longer than expected. Please try again.');
 
 	// Stage 2 — auto-rig the generated mesh.
@@ -500,7 +566,7 @@ async function handleForgeAvatar(args, _auth, req) {
 			],
 		};
 	}
-	if (rigged._timedOut && rigged.job_id) return pendingResult({ base, jobId: rigged.job_id, what: 'avatar rig', prompt: prompt || undefined, etaRemainingSeconds: rigged.eta_remaining_seconds, stage: 'rig' });
+	if (rigged._timedOut && rigged.job_id) return pendingResult({ base, jobId: rigged.job_id, what: 'avatar rig', prompt: prompt || undefined, ...pendingTiming(rigged), stage: 'rig' });
 	if (rigged._timedOut || !rigged.glb_url) return toolError('Rigging is taking longer than expected. Please try again.');
 	return ok({ glbUrl: rigged.glb_url, base, kind: 'avatar', prompt: prompt || undefined, rigged: true, referenceImageUrl: gen.preview_image_url });
 }
@@ -590,7 +656,7 @@ async function handleRefineModel(args, _auth, req) {
 			jobId: job.job_id,
 			what: 'refined model',
 			prompt: composed || undefined,
-			etaRemainingSeconds: job.eta_remaining_seconds,
+			...pendingTiming(job),
 		});
 	if (job._timedOut || !job.glb_url) return toolError('Refinement is taking longer than expected. Please try again.');
 
@@ -638,7 +704,7 @@ async function handleCheckJob(args, _auth, req) {
 		jobId,
 		what: 'model',
 		prompt: typeof data.prompt === 'string' && data.prompt ? data.prompt : undefined,
-		etaRemainingSeconds: data.eta_remaining_seconds,
+		...pendingTiming(data),
 	});
 }
 

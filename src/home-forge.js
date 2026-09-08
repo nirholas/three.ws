@@ -97,6 +97,7 @@ const els = root && {
 		finish: root.querySelector('[data-hf-step="finish"]'),
 	},
 	elapsed: root.querySelector('[data-hf-elapsed]'),
+	warming: root.querySelector('[data-hf-warming]'),
 	cancel: root.querySelector('[data-hf-cancel]'),
 	resultRegion: root.querySelector('[data-hf-result-region]'),
 	resultMeta: root.querySelector('[data-hf-result-meta]'),
@@ -206,6 +207,40 @@ function showState(name) {
 
 function setStep(name, state) {
 	els.steps[name].dataset.state = state;
+}
+
+// Cold-start line, written from a real /api/forge poll frame and nothing else.
+// A queued job on a scale-to-zero worker is a container boot: the one wait the
+// page can name instead of showing a step that spins with no explanation. The
+// API states both the flag and the lane's boot budget (`cold_start`,
+// `cold_start_seconds`), and `elapsed_seconds` is the JOB's age, so a page
+// resumed mid-generation counts from the submit, not from the reload.
+// Passing a frame that is not cold clears the line: it is dismissed by the
+// first real "running" poll, never by a timer.
+function setWarming(job) {
+	if (!els.warming) return;
+	if (!job?.cold_start) {
+		els.warming.hidden = true;
+		els.warming.textContent = '';
+		return;
+	}
+	const num = (v) => (Number.isFinite(Number(v)) && Number(v) > 0 ? Math.round(Number(v)) : null);
+	const budget = num(job.cold_start_seconds);
+	const elapsed = num(job.elapsed_seconds);
+	const bootLeft = budget != null && elapsed != null ? budget - elapsed : null;
+	let text;
+	if (bootLeft != null && bootLeft > 0) {
+		text = `Waking up a GPU: about ${bootLeft}s of boot left. Sculpting starts the moment it answers.`;
+	} else if (bootLeft != null) {
+		// Past the stated budget: say so rather than counting into negatives.
+		text = `Still waking the GPU (${elapsed}s in). Your job is accepted and starts the moment it answers.`;
+	} else if (budget != null) {
+		text = `Waking up a GPU (about ${budget}s), then sculpting starts.`;
+	} else {
+		text = 'Waking up a GPU, then sculpting starts.';
+	}
+	els.warming.textContent = text;
+	els.warming.hidden = false;
 }
 
 function startElapsed() {
@@ -468,12 +503,20 @@ async function pollUntilDone(jobId, seq) {
 				// A queued job is alive and waiting for a GPU: keep the step live and
 				// never spend the run budget on line time.
 				setStep('mesh', 'active');
+				setWarming(data);
 				deadline = runNow() + MAX_POLL_MS;
 			}
-			if (data.status === 'running') setStep('mesh', 'active');
+			if (data.status === 'running') {
+				setStep('mesh', 'active');
+				// The worker answered: the boot is over by definition.
+				setWarming(null);
+			}
 		}
 	} finally {
 		hidden.stop();
+		// Never leave the boot line standing over a finished, failed, cancelled or
+		// timed-out run.
+		setWarming(null);
 	}
 	if (pollAbort || seq !== runSeq) return null;
 	throw new Error('Generation timed out — try a simpler, single-subject prompt.');
