@@ -31,8 +31,17 @@ import { execFileSync } from 'node:child_process';
 const VENDORED = 'pages/ibm/vendor/model-viewer.min.js';
 
 // Both URL shapes in use: Google's hosted path form and the npm CDN form.
+//
+// The version is captured as "everything up to the next path separator or
+// quote", NOT as \d+\.\d+\.\d+, so a semver RANGE is caught rather than
+// skipped. An earlier digits-only pattern silently ignored
+// `@google/model-viewer@^3.5.0` on the published cookbook page, which therefore
+// served 3.5.0 to real visitors for as long as the guard reported the tree
+// clean. A range is never a valid pin here anyway: the whole point is that every
+// surface loads one identical build, and `^3.5.0` resolves to whatever the CDN
+// last published. Anything that is not exactly the pinned version now fails.
 const URL_RE =
-	/(?:ajax\.googleapis\.com\/ajax\/libs\/model-viewer\/(\d+\.\d+\.\d+)|@google\/model-viewer@(\d+\.\d+\.\d+))/g;
+	/(?:ajax\.googleapis\.com\/ajax\/libs\/model-viewer\/([^/"'`\s]+)|@google\/model-viewer@([^/"'`\s]+))/g;
 // Integrity is read per <script> TAG, never from a character window around the
 // URL: pages routinely load model-viewer next to another SRI-pinned CDN script
 // (highlight.js on /tutorial), and a window wide enough to reach the attribute
@@ -50,7 +59,21 @@ const SCANNED = /\.(js|mjs|cjs|jsx|ts|tsx|html|htm|md|json|svelte|vue|py|ipynb)$
 //                (a deliberately wrong version the harness writes to a temp file
 //                and expects us to reject). Reading it back as a real reference
 //                would make the guard fail on its own proof, forever.
-const SKIPPED = [/\/_generated\//, /\.min\.js$/, /^node_modules\//, /(^|\/)guards\.json$/];
+//   this file    the guard's own source spells the URL shapes it looks for, so
+//                scanning itself would report its own regex as a reference.
+const SKIPPED = [
+	/\/_generated\//,
+	/\.min\.js$/,
+	/^node_modules\//,
+	/(^|\/)guards\.json$/,
+	/(^|\/)check-model-viewer-version\.mjs$/,
+];
+
+// A reference whose version is a template interpolation (`@google/model-viewer@
+// ${VERSION}`) IS the single-sourcing this guard exists to encourage: the value
+// comes from one constant. Read past it rather than reporting "${VERSION}" as a
+// rogue sixth version.
+const INTERPOLATED = /^\$\{/;
 
 function trackedFiles() {
 	const listed = (args) => execFileSync('git', args, { encoding: 'utf8', maxBuffer: 1 << 28 }).split('\n');
@@ -81,6 +104,7 @@ for (const file of trackedFiles()) {
 
 	for (const match of text.matchAll(URL_RE)) {
 		const version = match[1] || match[2];
+		if (INTERPOLATED.test(version)) continue;
 		refs += 1;
 		if (!versions.has(version)) versions.set(version, new Set());
 		versions.get(version).add(file);
@@ -91,6 +115,7 @@ for (const file of trackedFiles()) {
 		const url = URL_RE.exec(tag);
 		if (!url) continue;
 		const version = url[1] || url[2];
+		if (INTERPOLATED.test(version)) continue;
 		const integrity = tag.match(INTEGRITY_RE)?.[1];
 		if (!integrity) continue;
 		if (!integrities.has(version)) integrities.set(version, new Map());
