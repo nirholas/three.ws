@@ -181,3 +181,19 @@
 	.lc-act { grid-template-columns: auto 1fr auto; }
 	.lc-act__detail { grid-column: 1 / -1; grid-row: 2; }
 }
+
+/* ── Interactive states (QB-07) ────────────────────────────────────────────
+   Mode and radio cards styled only their active state, so the options you
+   could switch to looked like static panels. */
+.lc-mode__opt,
+.lc-radio {
+	transition:
+		background var(--duration-fast) var(--ease-standard),
+		border-color var(--duration-fast) var(--ease-standard);
+}
+
+.lc-mode__opt:hover:not(.is-active),
+.lc-radio:hover:not(.is-active) {
+	border-color: var(--stroke-strong);
+	background: var(--surface-2);
+}

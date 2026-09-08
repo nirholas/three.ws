@@ -163,10 +163,7 @@ export class CoinLobby {
 		// before onerror can run. /api/img reads it server-side and answers
 		// with open CORS; `fallback: 'none'` makes a dead pin a 204, which
 		// still fires onerror so the card lands on its own initials tile.
-		// The card's art box is a square that tops out around 190 CSS px in this
-		// grid, so ask the proxy for a 320px WebP rather than the pinned original:
-		// pump.fun art is routinely 500 KB-1 MB of full-resolution PNG.
-		const art = w.image ? proxiedImageURL(w.image, '', { width: 320, fallback: 'none' }) : '';
+		const art = w.image ? proxiedImageURL(w.image, '', { fallback: 'none' }) : '';
 		if (art) {
 			const i = el('img');
 			i.src = art;

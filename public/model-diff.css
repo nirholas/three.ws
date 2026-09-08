@@ -607,3 +607,16 @@ button.dx-row[aria-pressed='true'] { background: var(--surface-3); }
 	.dx-swap { transform: rotate(90deg); justify-self: center; }
 	.dx-swap:active { transform: rotate(90deg) scale(0.94); }
 }
+
+/* ── Interactive states (QB-07) ────────────────────────────────────────────
+   The compare toggles set cursor: pointer on both the label and its box and
+   neither reacted. */
+.dx-toggle,
+.dx-toggle input {
+	transition:
+		color var(--duration-fast) var(--ease-standard),
+		transform var(--duration-fast) var(--ease-standard);
+}
+
+.dx-toggle:hover { color: var(--ink); }
+.dx-toggle input:hover { transform: scale(1.12); }

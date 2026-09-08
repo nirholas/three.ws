@@ -326,3 +326,18 @@
 	.wd-main h1 { font-size: var(--text-xl); }
 	.wd-lede { font-size: var(--text-base); }
 }
+
+/* ── Interactive states (QB-07) ────────────────────────────────────────────
+   The sidebar toggle is the only way back to the nav on a phone,
+   and it gave no feedback when you pressed toward it. */
+
+.wd-side-toggle {
+	transition:
+		background var(--duration-fast) var(--ease-standard),
+		border-color var(--duration-fast) var(--ease-standard);
+}
+
+.wd-side-toggle:hover {
+	background: var(--surface-2);
+	border-color: var(--stroke-strong);
+}

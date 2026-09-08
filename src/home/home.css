@@ -778,3 +778,18 @@
 	.hm-plan-canvas { max-height: 55vh; }
 	.hm-plan-skeleton { grid-template-columns: 1fr; }
 }
+
+/* ── Interactive states (QB-07) ────────────────────────────────────────────
+   The file-menu items are the whole menu; they had a 44px target
+   and no hover, so nothing tracked which one you were on. */
+
+.hm-plan-filemenu-item {
+	transition:
+		background var(--duration-fast) var(--ease-standard),
+		border-color var(--duration-fast) var(--ease-standard);
+}
+
+.hm-plan-filemenu-item:hover {
+	background: var(--surface-2);
+	border-color: var(--stroke-strong);
+}

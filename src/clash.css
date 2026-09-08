@@ -476,3 +476,19 @@
 	.cl-row { grid-template-columns: 28px 1fr auto; }
 	.cl-wr { display: none; }
 }
+
+/* ── Interactive states (QB-07) ────────────────────────────────────────────
+   The tap target is the whole game loop on this surface and it
+   never acknowledged the pointer resting on it. */
+
+.cl-tap {
+	transition: transform var(--duration-fast) var(--ease-standard);
+}
+
+.cl-tap:hover {
+	transform: scale(1.03);
+}
+
+.cl-tap:active {
+	transform: scale(0.97);
+}

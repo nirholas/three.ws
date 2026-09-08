@@ -216,3 +216,15 @@ body { font-family: var(--font-body, 'Inter', system-ui, sans-serif); min-height
 /* ── toast ──────────────────────────────────────────────────────────── */
 .rl-toast { position: fixed; bottom: 22px; left: 50%; transform: translate(-50%, 12px); background: var(--bg-1); color: var(--ink); border: 1px solid var(--stroke-strong); border-radius: 999px; padding: 9px 18px; font-size: 0.8rem; box-shadow: var(--shadow-3); opacity: 0; transition: opacity 180ms ease, transform 180ms ease; pointer-events: none; z-index: 90; }
 .rl-toast.is-on { opacity: 1; transform: translate(-50%, 0); }
+
+/* ── Interactive states (QB-07) ────────────────────────────────────────────
+   A colour swatch input with no hover reads as a filled rectangle
+   rather than a picker. */
+
+.rl-color {
+	transition: border-color var(--duration-fast) var(--ease-standard);
+}
+
+.rl-color:hover {
+	border-color: var(--accent);
+}

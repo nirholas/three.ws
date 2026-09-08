@@ -418,3 +418,18 @@ body {
 	.ch-hero { padding: 40px 32px 0; max-width: 560px; margin: 0 auto; }
 	.ch-section { padding: 20px 32px 0; max-width: 560px; margin: 0 auto; }
 }
+
+/* ── Interactive states (QB-07) ────────────────────────────────────────────
+   The chart button is a 44px circle over a light card; without a
+   hover it read as a printed icon. */
+
+.ch-chart-btn {
+	transition:
+		background var(--duration-fast) var(--ease-standard),
+		border-color var(--duration-fast) var(--ease-standard);
+}
+
+.ch-chart-btn:hover {
+	background: var(--on-scrim-bright);
+	border-color: var(--scrim-soft);
+}

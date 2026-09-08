@@ -218,3 +218,17 @@
 	.rl-entry { transition: none; }
 	.rl-score-arc { transition: none; }
 }
+
+/* ── Interactive states (QB-07) ────────────────────────────────────────────
+   The drill-down disclosure and the filter select both promised a click and
+   answered nothing. */
+.rl-drill summary,
+.rl-select {
+	transition:
+		color var(--duration-fast) var(--ease-standard),
+		border-color var(--duration-fast) var(--ease-standard);
+}
+
+.rl-drill summary:hover { color: var(--ink-bright); }
+.rl-drill summary:hover::before { color: var(--rl-cyan); }
+.rl-select:hover { border-color: var(--stroke-strong); }

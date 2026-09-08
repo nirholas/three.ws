@@ -168,3 +168,17 @@ a.cr-lb-row:focus-visible { outline: 2px solid var(--accent, #fff); outline-offs
 	.cr-grid { grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); }
 	.cr-publish-form { grid-template-columns: 1fr; }
 }
+
+/* ── Interactive states (QB-07) ────────────────────────────────────────────
+   The filter select promised a click and answered nothing. */
+
+.cr-select {
+	transition:
+		border-color var(--duration-fast) var(--ease-standard),
+		background var(--duration-fast) var(--ease-standard);
+}
+
+.cr-select:hover {
+	border-color: var(--stroke-strong);
+	background: var(--surface-2);
+}

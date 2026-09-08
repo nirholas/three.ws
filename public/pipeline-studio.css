@@ -923,3 +923,14 @@
 		transform: none;
 	}
 }
+
+/* ── Interactive states (QB-07) ────────────────────────────────────────────
+   The step checkboxes set cursor: pointer and did not react. */
+
+.pl-check input {
+	transition: transform var(--duration-fast) var(--ease-standard);
+}
+
+.pl-check input:hover {
+	transform: scale(1.12);
+}

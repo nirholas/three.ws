@@ -197,6 +197,9 @@
 	width: 16px; height: 16px; border-radius: 50%; background: var(--accent);
 	border: 2px solid var(--bg-0); cursor: pointer;
 }
+/* QB-07: the webkit thumb grew on hover and the Firefox twin did not, so the
+   same slider answered the pointer on Chrome and ignored it on Firefox. */
+.radar-slider::-moz-range-thumb:hover { transform: scale(1.15); }
 .radar-slider:focus-visible { outline: var(--focus-ring-width) solid var(--focus-ring-color); outline-offset: 4px; }
 
 .radar-toggle {

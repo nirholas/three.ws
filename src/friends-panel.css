@@ -604,3 +604,16 @@
 @media (pointer: coarse) {
 	.kg-fr-btn { min-height: 40px; }
 }
+
+/* ── Interactive states (QB-07) ────────────────────────────────────────────
+   A friend row opens a profile on click and looked like a static
+   list item. */
+
+.kg-fr-rowmain {
+	transition: background var(--duration-fast) var(--ease-standard);
+	border-radius: var(--radius-sm);
+}
+
+.kg-fr-rowmain:hover {
+	background: var(--surface-1);
+}

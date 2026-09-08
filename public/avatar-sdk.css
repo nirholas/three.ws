@@ -1087,3 +1087,11 @@ table.sdk-table {
 	pre.sdk-pre { font-size: 11.5px; padding: 14px; }
 	.sdk-stats { flex-direction: column; gap: 16px; }
 }
+
+/* ── Interactive states (QB-07) ────────────────────────────────────────────
+   The playground toggle track never reacted before it was flipped. */
+
+.sdk-pg-toggle:hover {
+	border-color: var(--stroke-strong);
+	background: var(--surface-3);
+}

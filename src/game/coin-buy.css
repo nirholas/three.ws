@@ -219,3 +219,17 @@
 }
 .cc-buy-pumplink:hover { color: var(--cc-text); }
 .cc-buy-pumplink:focus-visible { outline: 2px solid var(--focus-ring-color); outline-offset: 2px; }
+
+/* ── Interactive states (QB-07) ────────────────────────────────────────────
+   A button dressed as an underlined link, with no hover. */
+
+.cc-buy-link {
+	transition:
+		color var(--duration-fast) var(--ease-standard),
+		text-decoration-thickness var(--duration-fast) var(--ease-standard);
+}
+
+.cc-buy-link:hover {
+	color: var(--ink-bright);
+	text-decoration-thickness: 2px;
+}

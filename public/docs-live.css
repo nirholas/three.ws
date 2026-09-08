@@ -587,3 +587,14 @@
 		background: none;
 	}
 }
+
+/* ── Interactive states (QB-07) ────────────────────────────────────────────
+   The header disclosure looked like a caption rather than a control. */
+
+.dlive-headers > summary {
+	transition: color var(--duration-fast) var(--ease-standard);
+}
+
+.dlive-headers > summary:hover {
+	color: var(--ink-bright);
+}

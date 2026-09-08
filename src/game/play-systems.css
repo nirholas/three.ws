@@ -499,3 +499,14 @@
 	.ps-rail { top: auto; bottom: 232px; transform: none; right: 10px; }
 	.ps-panel { right: 10px; left: 10px; width: auto; max-width: none; }
 }
+
+/* ── Interactive states (QB-07) ────────────────────────────────────────────
+   The HUD buttons are the only chrome in the world view and none of them
+   reacted to the pointer. */
+#ps-hud button {
+	transition: color var(--duration-fast) var(--ease-standard);
+}
+
+#ps-hud button:hover {
+	color: var(--ink-bright);
+}

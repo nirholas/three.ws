@@ -841,3 +841,20 @@
 		transition-duration: 0.01ms !important;
 	}
 }
+
+/* ── Interactive states (QB-07) ────────────────────────────────────────────
+   The field label and the switch beside it are both click targets that gave
+   no feedback. The track had its own transition and nothing to trigger it. */
+.el-field-head label,
+.el-switch {
+	transition: color var(--duration-fast) var(--ease-standard);
+}
+
+.el-field-head label:hover,
+.el-switch:hover {
+	color: var(--ink-bright);
+}
+
+.el-switch:hover .el-switch-track {
+	border-color: var(--stroke-strong);
+}

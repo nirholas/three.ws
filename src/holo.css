@@ -119,3 +119,14 @@ body { font-family: var(--font-body, 'Inter', system-ui, sans-serif); min-height
 @media (prefers-reduced-motion: reduce) {
 	.hs-stage canvas, .hs-hint, .hs-chip, .hs-btn, .hs-next-card { transition: none; }
 }
+
+/* ── Interactive states (QB-07) ────────────────────────────────────────────
+   A range with no hover gives no sign the track is the target. */
+
+.hs-range {
+	transition: transform var(--duration-fast) var(--ease-standard);
+}
+
+.hs-range:hover {
+	transform: scaleY(1.4);
+}

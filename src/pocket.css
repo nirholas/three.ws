@@ -1227,3 +1227,14 @@ body[data-chrome='off'] .pk-stage {
 		font-size: var(--text-2xl, 42px);
 	}
 }
+
+/* ── Interactive states (QB-07) ────────────────────────────────────────────
+   A roster row selects a character on click and gave no sign of it. */
+
+.pk-roster-item {
+	transition: background var(--duration-fast) var(--ease-standard);
+}
+
+.pk-roster-item:hover {
+	background: var(--surface-1);
+}

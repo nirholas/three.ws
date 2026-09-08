@@ -225,3 +225,13 @@
 @media (prefers-reduced-motion: reduce) {
 	.sm-card, .sm-live-dot, .sm-skel::after, .sm-edge-fill, .sd-mode, .sd-btn { animation: none; transition: none; }
 }
+
+/* ── Interactive states (QB-07) ────────────────────────────────────────────
+   The mode cards styled only their selected state, so the options
+   you could switch to looked inert. The existing `transition: all`
+   already covers these properties. */
+
+.sd-mode:hover:not(.active) {
+	border-color: var(--stroke-strong);
+	color: var(--ink);
+}

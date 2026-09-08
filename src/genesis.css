@@ -842,3 +842,15 @@ textarea.gx-input {
 		grid-template-columns: 1fr;
 	}
 }
+
+/* ── Interactive states (QB-07) ────────────────────────────────────────────
+   The advanced disclosure was a dim label that happened to be
+   clickable, with nothing to say so. */
+
+.gx-adv summary {
+	transition: color var(--duration-fast) var(--ease-standard);
+}
+
+.gx-adv summary:hover {
+	color: var(--ink);
+}

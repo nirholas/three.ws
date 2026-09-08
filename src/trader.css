@@ -707,3 +707,14 @@ a.tp-pp-fact:focus-visible { border-color: var(--stroke-strong); background: var
 	.tp-pp-facts { flex-direction: column; }
 	.tp-pp-table { font-size: var(--text-xs); }
 }
+
+/* ── Interactive states (QB-07) ────────────────────────────────────────────
+   A checkbox row label that was clickable and silent. */
+
+.cp-check {
+	transition: color var(--duration-fast) var(--ease-standard);
+}
+
+.cp-check:hover {
+	color: var(--ink);
+}

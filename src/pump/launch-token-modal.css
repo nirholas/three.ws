@@ -386,3 +386,11 @@
 	vertical-align: middle;
 	margin-right: 0.4rem;
 }
+
+/* ── Interactive states (QB-07) ────────────────────────────────────────────
+   The toggle had its own transition and no hover to run it. */
+
+.ltm-toggle-btn:hover {
+	color: var(--ink);
+	background: var(--surface-2);
+}

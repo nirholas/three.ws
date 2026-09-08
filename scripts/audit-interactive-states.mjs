@@ -97,7 +97,13 @@ const escapeRe = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 /** A rule that paints nothing: only the cursor plus inherited typography or
  * appearance resets. Matched against the whole declaration block. */
 const RESET_ONLY =
-	/^(?:\s*(?:cursor|font|font-family|font-size|appearance|-webkit-appearance|-moz-appearance|user-select|-webkit-user-select|touch-action)\s*:[^;]*;?\s*)+$/;
+	/^(?:\s*(?:cursor|font|font-family|font-size|appearance|-webkit-appearance|-moz-appearance|user-select|-webkit-user-select|touch-action)\s*:[^;]*;?\s*|\s*(?:color|background|background-color|border|outline|padding|margin)\s*:\s*(?:inherit|none|transparent|0|unset|initial)\s*;?\s*)+$/;
+
+/** `position: absolute` pinned to all four edges: a stretched link overlay. */
+const STRETCHED_LINK = /position:\s*absolute/;
+/** Any declaration that actually paints something the pointer could see change. */
+const PAINTS =
+	/(?:^|;)\s*(?:background(?:-color|-image)?|border(?:-color|-width|-style)?|color|box-shadow|opacity|filter|transform)\s*:/;
 
 function gapsIn(css) {
 	const sheet = normalize(css);
@@ -114,6 +120,10 @@ function gapsIn(css) {
 		// component, and a hover rule at that selector would stack on top of
 		// every real component instead of filling a gap.
 		if (RESET_ONLY.test(body)) continue;
+		// A stretched link: `position: absolute; inset: 0` with nothing painted.
+		// It is a transparent hit layer over a card, and the card owns the
+		// feedback, exactly like the opacity:0 case above.
+		if (STRETCHED_LINK.test(body) && !PAINTS.test(body)) continue;
 		for (const selector of selectorList.split(',').map((s) => s.trim()).filter(Boolean)) {
 			if (!selector || selector.startsWith('@')) continue;
 			// A selector that already names a state is not the thing being audited.
@@ -141,10 +151,25 @@ function gapsIn(css) {
 				new RegExp(
 					`${escapeRe(selector.slice(0, pseudoAt))}:hover${escapeRe(selector.slice(pseudoAt))}`,
 				).test(sheet);
+			// `.a b` is also covered by `.a:hover b`, where the :hover is spliced
+			// into the middle of the selector rather than at either end. Try
+			// every compound boundary.
+			const compounds = selector.split(/(\s+|\s*[>+~]\s*)/);
+			let hoverMidSelector = false;
+			for (let i = 0; i < compounds.length; i += 2) {
+				const spliced = compounds
+					.map((part, j) => (j === i ? `${part}:hover` : part))
+					.join('');
+				if (new RegExp(escapeRe(spliced)).test(sheet)) {
+					hoverMidSelector = true;
+					break;
+				}
+			}
 			const covered =
 				new RegExp(`${escaped}:hover`).test(sheet) ||
 				inSameSelector.test(sheet) ||
 				hoverBeforePseudo ||
+				hoverMidSelector ||
 				(lastCompound !== selector &&
 					// Only when the compound is specific enough to name one
 					// component. A bare `button` or `summary` tail would match

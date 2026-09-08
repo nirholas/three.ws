@@ -566,3 +566,14 @@ body {
 		white-space: normal;
 	}
 }
+
+/* ── Interactive states (QB-07) ────────────────────────────────────────────
+   The sort select promised a click and answered nothing. */
+
+.df-sort {
+	transition: border-color var(--duration-fast) var(--ease-standard);
+}
+
+.df-sort:hover {
+	border-color: var(--stroke-strong);
+}

@@ -252,3 +252,10 @@
 	.ml-dot.is-armed, .ml-run, .ml-savebar, .ml-toast, .ml-modal, .ml-skel { animation: none; }
 	.ml-narr-bar { transition: none; }
 }
+
+/* ── Interactive states (QB-07) ────────────────────────────────────────────
+   The switch track had its own transition and no hover to run it. */
+
+.ml-switch:hover .ml-switch-ui {
+	background: var(--stroke-strong);
+}

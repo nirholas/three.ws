@@ -322,3 +322,18 @@ body {
 	box-shadow: 0 12px 40px -10px rgba(0,0,0,0.7);
 }
 .cc-toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+/* ── Interactive states (QB-07) ────────────────────────────────────────────
+   A modal close with no hover is the control a visitor hunts for
+   when they want out, and it was the one giving no feedback. */
+
+.cc-modal__close {
+	transition:
+		background var(--duration-fast) var(--ease-standard),
+		border-color var(--duration-fast) var(--ease-standard);
+}
+
+.cc-modal__close:hover {
+	background: var(--scrim-strong);
+	border-color: var(--stroke-strong);
+}

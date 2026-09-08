@@ -792,10 +792,7 @@ export class CoinCommunities {
 				// proxiedImageURL drops anything that is not a renderable image
 				// source (javascript:, data:text/html, an oversized URL), so a hostile
 				// `image=` resolves to '' and the world takes its generated art path.
-				// Same COIN_ART_WIDTH the feed path uses: a share link can carry a
-				// raw gateway URL, and without a width the world downloads the
-				// creator's full-size upload to texture a totem.
-				image: proxiedImageURL(p.get('image') || '', mint, { width: COIN_ART_WIDTH }),
+				image: proxiedImageURL(p.get('image') || '', mint),
 			}, { tier })
 				.catch((err) => this._onEnterFailed(err));
 		}
