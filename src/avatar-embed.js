@@ -112,8 +112,27 @@ const DEFAULT_HOTKEYS = Object.freeze({
 });
 
 main().catch((err) => {
-	showError(err?.message || 'Could not load avatar');
+	showError(viewerErrorText(err));
 });
+
+// GLTFLoader rejects with the raw transport string, e.g. `fetch for
+// "https://host/x.glb" responded with 502: Bad Gateway`. That names an internal
+// URL and tells the viewer nothing they can act on. Map the failures a visitor
+// can actually hit onto plain language; anything unrecognised keeps its own
+// message, which is already written for a person (resolveAvatar throws
+// "avatar <id> not found").
+function viewerErrorText(err) {
+	const msg = String(err?.message || err || '');
+	if (/responded with 4\d\d/.test(msg)) {
+		return /40[13]/.test(msg)
+			? 'This avatar is private. Sign in with the account that owns it.'
+			: 'This avatar is no longer available.';
+	}
+	if (/responded with 5\d\d/.test(msg)) return 'The avatar service is unavailable. Refresh to try again.';
+	if (/Failed to fetch|NetworkError|Load failed/i.test(msg)) return 'Connection lost. Check your network and refresh.';
+	if (/glTF|JSON|Unsupported|Unexpected token/i.test(msg)) return "This avatar's 3D file could not be read.";
+	return msg || 'Could not load avatar.';
+}
 
 async function main() {
 	const params = new URL(location.href).searchParams;

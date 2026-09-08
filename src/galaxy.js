@@ -30,7 +30,8 @@ function cacheEls() {
 		'gxTip', 'gxCard', 'gxCardClose', 'gxCardThumb', 'gxCardName', 'gxCardConstellation',
 		'gxCardDesc', 'gxCardMeta', 'gxCardView', 'gxCardChat',
 		'gxResults', 'gxResultsList', 'gxResultsClose', 'gxResultsLabel',
-		'gxLoading', 'gxEmpty', 'gxEmptySub', 'gxError', 'gxErrorSub', 'gxRetry', 'gxHint',
+		'gxLoading', 'gxEmpty', 'gxEmptySub', 'gxError', 'gxErrorSub', 'gxRetry', 'gxErrorBrowse',
+		'gxHint', 'gxFootnote',
 		// Money-Cam
 		'gxMoneyToggle', 'gxMoneyCam', 'gxMcLiveDot', 'gxMcClose',
 		'gxMcModeLive', 'gxMcModeReplay', 'gxMcStats', 'gxMcReplay', 'gxMcPlay',
@@ -229,7 +230,12 @@ function renderGalaxy(data) {
 	loadNetWorth(data.agents);
 	loadLineageEdges();
 
-	// Stats
+	// Stats. Both spans declare a data-i18n key whose declared copy is the "0
+	// agents" placeholder, and the i18n runtime re-applies the catalog after this
+	// render, so they must claim ownership or the real counts get reset to zero.
+	// `data-i18n-owned="1"` is that runtime's documented opt-out (src/i18n.js).
+	els.gxStatAgents.setAttribute('data-i18n-owned', '1');
+	els.gxStatClusters.setAttribute('data-i18n-owned', '1');
 	els.gxStatAgents.innerHTML = `<strong>${n.toLocaleString()}</strong> agents`;
 	els.gxStatClusters.innerHTML = `<strong>${data.clusters.length}</strong> constellations`;
 	els.gxStats.hidden = false;
@@ -399,6 +405,12 @@ function toggleClusterFocus(clusterId) {
 
 // ── Semantic search (Granite) ───────────────────────────────────────────────
 let searchSeq = 0;
+// The search button's resting label is translated copy, so it is read off the
+// button rather than hardcoded. `SEARCH_BUSY` marks the in-flight state and is
+// never mistaken for the label, which keeps overlapping searches from restoring
+// the spinner glyph as the button's text.
+const SEARCH_BUSY = '\u2026';
+let searchGoLabel = '';
 async function runSearch(query) {
 	const q = String(query || '').trim();
 	if (!q) {
@@ -406,8 +418,9 @@ async function runSearch(query) {
 		return;
 	}
 	const seq = ++searchSeq;
+	if (els.gxSearchGo.textContent !== SEARCH_BUSY) searchGoLabel = els.gxSearchGo.textContent;
 	els.gxSearchGo.disabled = true;
-	els.gxSearchGo.textContent = '…';
+	els.gxSearchGo.textContent = SEARCH_BUSY;
 	try {
 		const res = await fetch('/api/galaxy', {
 			method: 'POST',
@@ -441,7 +454,7 @@ async function runSearch(query) {
 	} finally {
 		if (seq === searchSeq) {
 			els.gxSearchGo.disabled = false;
-			els.gxSearchGo.textContent = 'Search';
+			els.gxSearchGo.textContent = searchGoLabel;
 		}
 	}
 }
@@ -540,7 +553,9 @@ function selectAgent(index, fly = false) {
 	wireWalletChips(els.gxCardMeta);
 
 	els.gxCardView.href = `/agents/${a.id}`;
-	els.gxCardChat.href = `/agents/${a.id}`;
+	// The agent page renders its Chat panel from ?view=chat, so the two actions
+	// lead somewhere different instead of both opening the 3D overview.
+	els.gxCardChat.href = `/agents/${a.id}?view=chat`;
 	els.gxCard.hidden = false;
 
 	if (fly) flyToTarget(new THREE.Vector3(...a.coords), 120);
@@ -846,15 +861,26 @@ function bindUI() {
 }
 
 // ── Overlays ─────────────────────────────────────────────────────────────────
+// An overlay covers the whole stage and eats pointer events, so the HUD, legend and
+// footnote under it must leave the tab order too. Without this a keyboard visitor
+// can still reach the search box while there is no galaxy to search, submit it, and
+// get results rendered underneath an opaque panel.
+function setStageInert(inert) {
+	for (const el of [els.gxHud, els.gxLegend, els.gxFootnote]) {
+		if (el) el.inert = inert;
+	}
+}
 function showOverlay(which) {
 	els.gxLoading.hidden = which !== 'loading';
 	els.gxEmpty.hidden = which !== 'empty';
 	els.gxError.hidden = which !== 'error';
+	setStageInert(true);
 }
 function hideOverlays() {
 	els.gxLoading.hidden = true;
 	els.gxEmpty.hidden = true;
 	els.gxError.hidden = true;
+	setStageInert(false);
 }
 function showError(title, sub, retryable = true) {
 	dbg.status = 'error';
@@ -862,6 +888,9 @@ function showError(title, sub, retryable = true) {
 	$('gxErrorTitle').textContent = title;
 	els.gxErrorSub.textContent = sub;
 	els.gxRetry.hidden = !retryable;
+	// Retrying a configuration gap just fails again, so an unretryable failure
+	// hands the visitor the same agents as a list instead of a dead end.
+	els.gxErrorBrowse.hidden = retryable;
 	showOverlay('error');
 }
 

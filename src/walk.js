@@ -4781,11 +4781,34 @@ if (import.meta.env?.DEV) {
 			if (pickerPanel) pickerPanel.hidden = true;
 		});
 
+	// Distinguish the two ways the list can come up empty. A 401/403 means the
+	// visitor has no account yet, so the useful action is signing in; anything
+	// else (5xx, offline, a parse failure) is a transient fault, and telling a
+	// signed-in walker to "sign in" there is both wrong and unactionable, so
+	// that branch offers a retry instead.
+	function renderPickerNotice(kind) {
+		if (!pickerList) return;
+		if (kind === 'unauthenticated') {
+			pickerList.innerHTML =
+				'<div class="walk-avatar-picker-loading"><a href="/login" style="color:#fff;text-decoration:underline">Sign in</a> to use your avatars</div>';
+			return;
+		}
+		pickerList.innerHTML =
+			'<div class="walk-avatar-picker-loading">Could not load your avatars. <button type="button" class="walk-avatar-picker-retry" data-avatar-retry>Try again</button></div>';
+	}
+
 	async function loadAvatarList() {
 		pickerLoaded = true;
+		if (pickerList)
+			pickerList.innerHTML =
+				'<div class="walk-avatar-picker-loading">Loading your avatars...</div>';
 		try {
 			const res = await fetch('/api/avatars?limit=20', { credentials: 'include' });
-			if (!res.ok) throw new Error('not signed in');
+			if (res.status === 401 || res.status === 403) {
+				renderPickerNotice('unauthenticated');
+				return;
+			}
+			if (!res.ok) throw new Error(`avatars request failed: ${res.status}`);
 			const data = await res.json();
 			const avatars = data?.avatars ?? [];
 			if (!avatars.length) {
@@ -4810,14 +4833,18 @@ if (import.meta.env?.DEV) {
 					})
 					.join('')}
 			`;
-		} catch {
-			pickerList.innerHTML =
-				'<div class="walk-avatar-picker-loading"><a href="/login" style="color:#fff;text-decoration:underline">Sign in</a> to use your avatars</div>';
+		} catch (err) {
+			log.error('[walk] avatar list failed:', err);
+			renderPickerNotice('error');
 		}
 	}
 
 	if (pickerList)
 		pickerList.addEventListener('click', async (e) => {
+			if (e.target.closest('[data-avatar-retry]')) {
+				loadAvatarList();
+				return;
+			}
 			const btn = e.target.closest('.walk-avatar-opt');
 			if (!btn) return;
 			const url = btn.dataset.avatarUrl;

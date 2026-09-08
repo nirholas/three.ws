@@ -1,59 +1,54 @@
 /**
- * IBM Granite Agent Galaxy — Playwright e2e spec.
+ * Agent Galaxy (/galaxy): the Playwright e2e spec.
  *
- * Every test intercepts /api/ibm/galaxy with a fixture built from the REAL
- * production pipeline (api/_lib/embedding-math.js), so the coordinates and
- * cluster assignments that render are identical to what prod would produce
- * for that agent set. No fabricated positions.
+ * Every test intercepts /api/galaxy with a payload built by the REAL production
+ * assembler (api/_lib/galaxy.js → assembleGalaxy, which runs the same PCA
+ * projection and k-means clustering prod runs), so the coordinates, cluster
+ * assignments and payload shape that reach the viewer are what prod would emit
+ * for that agent set. Nothing about the render path is faked.
  *
  * State coverage:
- *   • watsonx unavailable  → shows the unavailable overlay
- *   • no agents            → shows the empty overlay
- *   • populated galaxy     → full interaction suite
- *   • deep link ?agent=    → opens the targeted star on first paint
- *   • deep link ?q=        → runs semantic search on first paint
+ *   - populated galaxy   -> stars render, legend + stats fill in
+ *   - no agents          -> empty overlay, with a way to create one
+ *   - watsonx 503        -> unretryable error overlay, with a way onward
+ *   - transport failure  -> retryable error overlay, retry recovers
  *
  * Interaction coverage:
- *   • loading steps animate
- *   • 3D scene reaches "ready" (WebGL runs under swiftshader)
- *   • legend lists Granite-named themes
- *   • cluster labels in 3D space
- *   • stats panel shows dims/model
- *   • search box present + chip hints
- *   • semantic search → ranked results → result click → detail panel
- *   • detail panel: Granite cosine % on neighbors, constellation links drawn
- *   • shareable URL updates on select + search
- *   • guided tour starts/stops, isolates a theme
- *   • legend row click → fly-to + isolate
- *   • Escape closes panel; / focuses search; R resets
+ *   - semantic search -> ranked results -> result click -> agent card
+ *   - card actions point at the agent page and its chat panel
+ *   - legend row flies to a constellation and isolates it
+ *   - Escape closes the card
+ *   - overlays take the HUD out of the tab order
  */
 
-import { createRequire } from 'module';
 import { test, expect } from '@playwright/test';
-import { fileURLToPath } from 'url';
+import { fileURLToPath, pathToFileURL } from 'url';
 import { dirname, resolve } from 'path';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
-// Resolve relative to the repo root so the path is absolute regardless of cwd.
 const repoRoot = resolve(__dirname, '..', '..');
-const require = createRequire(import.meta.url);
 
-// Build the fixture lazily so Playwright workers don't pay the import cost for
-// specs that don't need it.
+// Build the fixture lazily so workers don't pay the import cost for specs that
+// don't need it.
 let _fixture = null;
-function buildFixture() {
+async function buildFixture() {
 	if (_fixture) return _fixture;
-	const { makeRng, unit, cosineSimilarity, projectTo3D, kmeans, suggestClusterCount } =
-		require(resolve(repoRoot, 'api/_lib/embedding-math.js'));
+	const mathUrl = pathToFileURL(resolve(repoRoot, 'api/_lib/embedding-math.js')).href;
+	const galaxyUrl = pathToFileURL(resolve(repoRoot, 'api/_lib/galaxy.js')).href;
+	const { makeRng, unit, cosineSimilarity } = await import(mathUrl);
+	const { assembleGalaxy, rankBySimilarity } = await import(galaxyUrl);
 
 	const DIMS = 32;
 	const AXES = [0, 9, 18, 27];
 	const PER = 11;
-	const COLORS = ['#4589ff', '#08bdba', '#a56eff', '#ff7eb6', '#fa4d56', '#f1c21b', '#42be65', '#82cfff'];
 	const THEMES = ['Crypto Trading', 'Customer Support', 'Creative Writing', 'Wellness Coaching'];
 	const rng = makeRng(2026);
 
-	const agents = [], vectors = [];
+	// Four well-separated directions in a 32-dim space stand in for four genuinely
+	// different agent themes. The vectors are the only synthetic input; every
+	// coordinate and cluster below is computed by the production assembler.
+	const agents = [];
+	const vectors = [];
 	AXES.forEach((axis, theme) => {
 		for (let i = 0; i < PER; i++) {
 			const v = new Array(DIMS).fill(0).map(() => (rng() - 0.5) * 0.18);
@@ -63,127 +58,82 @@ function buildFixture() {
 				id: `aaaaaaaa-aaaa-4aaa-8aaa-${String(theme).padStart(2, '0')}${String(i).padStart(10, '0')}`,
 				name: `${THEMES[theme]} Agent ${i + 1}`,
 				description: `A ${THEMES[theme].toLowerCase()} specialist, agent ${i + 1}.`,
+				chat_count: (theme + 1) * (i + 1),
 			});
 		}
 	});
 
-	const u = vectors.map(unit);
-	const coords = projectTo3D(u, { radius: 100 });
-	const k = suggestClusterCount(agents.length);
-	const { assignments, k: realK } = kmeans(u, k);
-	const groups = Array.from({ length: realK }, () => []);
-	agents.forEach((_, i) => groups[assignments[i]].push(i));
-	const round = (n) => Math.round(n * 100) / 100;
-
-	const neighborsFor = (i) =>
-		u.map((v, j) => ({ j, s: cosineSimilarity(u[i], v) }))
-			.filter((x) => x.j !== i)
-			.sort((a, b) => b.s - a.s)
-			.slice(0, 6);
-
-	const outAgents = agents.map((a, i) => ({
-		...a,
-		url: `/agent/${a.id}`,
-		image: null,
-		cluster: assignments[i],
-		x: round(coords[i][0]),
-		y: round(coords[i][1]),
-		z: round(coords[i][2]),
-		neighbors: neighborsFor(i).map((nb) => ({ id: agents[nb.j].id, score: round(nb.s) })),
-	}));
-
-	const clusters = groups.map((members, ci) => {
-		const c = [0, 0, 0];
-		members.forEach((i) => { c[0] += coords[i][0]; c[1] += coords[i][1]; c[2] += coords[i][2]; });
-		const n = members.length || 1;
-		return {
-			id: ci,
-			label: THEMES[ci] || `Theme ${ci + 1}`,
-			labelSource: 'granite',
-			color: COLORS[ci % COLORS.length],
-			size: members.length,
-			x: round(c[0] / n),
-			y: round(c[1] / n),
-			z: round(c[2] / n),
-		};
+	const model = 'ibm/granite-embedding-278m-multilingual';
+	const payload = await assembleGalaxy(agents, vectors, {
+		dims: DIMS,
+		model,
+		// Mirror the prod namer's contract: it returns one {name, theme} per
+		// cluster, aligned by index.
+		nameClusters: (clusters) =>
+			clusters.map((c) => ({ name: THEMES[c.id] || `Theme ${c.id + 1}`, theme: 'test' })),
 	});
 
-	const searchResults = (queryTheme = 0) => {
-		const qAxis = AXES[queryTheme];
+	const byId = new Map(agents.map((a, i) => [a.id, unit(vectors[i])]));
+	const searchFor = (theme = 0) => {
 		const q = new Array(DIMS).fill(0);
-		q[qAxis] = 1;
-		const ranked = outAgents.map((a, i) => ({ id: a.id, score: round(cosineSimilarity(q, u[i])) }))
-			.sort((b, a) => a.score - b.score).slice(0, 16);
-		return { query: 'test', model: 'ibm/granite-embedding-278m-multilingual', count: ranked.length, best: ranked[0], results: ranked };
+		q[AXES[theme]] = 1;
+		const results = rankBySimilarity(q, byId, { topK: 12 });
+		return { query: THEMES[theme], model, count: results.length, results };
 	};
 
-	_fixture = {
-		payload: {
-			available: true,
-			agents: outAgents,
-			clusters,
-			meta: {
-				count: outAgents.length,
-				totalPublic: outAgents.length,
-				truncated: false,
-				model: 'ibm/granite-embedding-278m-multilingual',
-				dims: DIMS,
-				clusterCount: realK,
-				generatedAt: new Date().toISOString(),
-			},
-		},
-		agents: outAgents,
-		searchResults,
-	};
+	_fixture = { payload, agents: payload.agents, searchFor, cosineSimilarity };
 	return _fixture;
 }
 
-// Route helper — intercept galaxy endpoint with the right response per method.
-async function mockGalaxy(page, mode = 'success') {
-	const fx = buildFixture();
-	await page.route('**/api/ibm/galaxy', async (route) => {
-		const method = route.request().method();
-		if (method === 'POST') {
-			return route.fulfill({ json: fx.searchResults(0) });
+// Intercept the galaxy endpoint. `mode` picks which state the page lands in.
+async function routeGalaxy(page, mode = 'success') {
+	const fx = await buildFixture();
+	await page.route('**/api/galaxy', async (route) => {
+		if (route.request().method() === 'POST') {
+			if (mode === 'unavailable') {
+				return route.fulfill({ status: 503, json: watsonx503() });
+			}
+			return route.fulfill({ json: fx.searchFor(0) });
 		}
-		if (mode === 'success') return route.fulfill({ json: fx.payload });
-		if (mode === 'unavailable') return route.fulfill({
-			json: { available: false, reason: 'watsonx_not_configured', message: 'Set WATSONX_API_KEY.' },
-		});
-		if (mode === 'empty') return route.fulfill({
-			json: { available: true, agents: [], clusters: [], meta: { count: 0, reason: 'no_agents' } },
-		});
+		if (mode === 'success') {
+			return route.fulfill({ json: { ...fx.payload, cached: false, generated_at: new Date().toISOString() } });
+		}
+		if (mode === 'empty') {
+			return route.fulfill({
+				json: { count: 0, dims: 0, model: null, clusters: [], agents: [], cached: false },
+			});
+		}
+		if (mode === 'unavailable') return route.fulfill({ status: 503, json: watsonx503() });
+		if (mode === 'down') return route.abort('failed');
 		return route.fallback();
 	});
+	// The galaxy lights its stars from real wallet net worth and draws lineage
+	// edges; neither is under test here and both are best-effort in the viewer.
+	await page.route('**/api/agents/networth**', (r) => r.fulfill({ json: { data: { items: [] } } }));
+	await page.route('**/api/genome/edges**', (r) => r.fulfill({ json: { edges: [] } }));
 }
 
-// Shared helper: navigate and wait for a given body state.
-async function gotoGalaxy(page, { mode = 'success', path = '/ibm/galaxy', expectState } = {}) {
-	await mockGalaxy(page, mode);
-	await page.goto(path);
-	const target = expectState || (mode === 'success' ? 'ready' : mode);
-	await page.waitForFunction(
-		(s) => document.body.dataset.galaxyState === s,
-		target,
-		{ timeout: 20_000 },
-	);
+function watsonx503() {
+	return {
+		error: 'watsonx_unavailable',
+		error_description:
+			'The Agent Galaxy is positioned by IBM Granite embeddings on watsonx.ai. ' +
+			'Set WATSONX_API_KEY and WATSONX_PROJECT_ID (or WATSONX_SPACE_ID) to build it.',
+	};
 }
 
-// ── Tests ─────────────────────────────────────────────────────────────────────
+async function gotoGalaxy(page, mode = 'success') {
+	await routeGalaxy(page, mode);
+	await page.goto('/galaxy');
+	const want = { success: 'ready', empty: 'empty' }[mode] || 'error';
+	await page.waitForFunction((s) => window.__galaxy?.status === s, want, { timeout: 60_000 });
+}
 
-// reason: the IBM-branded galaxy page (pages/ibm/galaxy.html → src/ibm-galaxy.js,
-// route /ibm/galaxy, endpoint /api/ibm/galaxy, body.dataset.galaxyState markers)
-// was deleted in the concurrent site overhaul (commits 7af4f0b3 "delete IBM pages",
-// 2d34e80f "Site overhaul", 9664ef4b "Wire orphaned pages into router"). The galaxy
-// product now lives at top-level /galaxy via src/galaxy.js fetching /api/galaxy with
-// a different response shape and no galaxyState dataset — none of the locators or
-// the fixture below match it. Skipped (not deleted) until the new /galaxy page's
-// router wiring stabilizes and this spec is rewritten against src/galaxy.js.
-test.describe.skip('IBM Agent Galaxy', () => {
-	// Throw on any real uncaught page error. Vite's HMR websocket emits a
-	// "WebSocket closed without opened." error in headless Codespace environments
-	// (the HMR client targets the :3000 forwarded domain, not the test port) —
-	// that's dev-server noise and not a product bug, so filter it out.
+test.describe('Agent Galaxy', () => {
+	// Fail on any real uncaught page error. Vite's HMR websocket emits
+	// "WebSocket closed without opened." in headless Codespace runs (the HMR
+	// client targets the forwarded :3000 domain, not the test port). That is dev-server
+	// noise, not a product bug.
 	test.beforeEach(async ({ page }) => {
 		page.on('pageerror', (err) => {
 			if (/websocket|hmr|wss:|failed to connect/i.test(err.message)) return;
@@ -191,245 +141,144 @@ test.describe.skip('IBM Agent Galaxy', () => {
 		});
 	});
 
-	// ── State: watsonx unconfigured ──────────────────────────────────────────
-	test('shows unavailable overlay when watsonx is not configured', async ({ page }) => {
-		test.setTimeout(60_000);
-		await gotoGalaxy(page, { mode: 'unavailable', expectState: 'unavailable' });
-		await expect(page.locator('#unavailableState')).toBeVisible();
-		await expect(page.locator('#unavailableState h2')).toContainText('not configured');
-		// The /ibm link is present so users know what to do.
-		await expect(page.locator('#unavailableState a[href="/ibm"]')).toBeVisible();
+	test('renders every agent as a star, with stats and a named legend', async ({ page }) => {
+		const fx = await buildFixture();
+		await gotoGalaxy(page, 'success');
+
+		const dbg = await page.evaluate(() => ({
+			ready: window.__galaxy.ready,
+			agents: window.__galaxy.agentCount,
+			clusters: window.__galaxy.clusterCount,
+			points: window.__galaxy.pointCount,
+		}));
+		expect(dbg.ready).toBe(true);
+		expect(dbg.agents).toBe(fx.agents.length);
+		expect(dbg.points).toBe(fx.agents.length);
+		expect(dbg.clusters).toBe(fx.payload.clusters.length);
+
+		await expect(page.locator('#gxStats')).toBeVisible();
+		await expect(page.locator('#gxStatAgents')).toContainText(String(fx.agents.length));
+		await expect(page.locator('#gxLegend')).toBeVisible();
+		expect(await page.locator('#gxLegendList .gx-legend-item').count()).toBe(
+			fx.payload.clusters.length,
+		);
+
+		// No overlay is left covering a rendered galaxy, and the HUD is usable again.
+		for (const id of ['gxLoading', 'gxEmpty', 'gxError']) {
+			expect(await page.locator(`#${id}`).isVisible()).toBe(false);
+		}
+		await expect(page.locator('#gxSearchInput')).toBeEnabled();
+		await expect(page.locator('#gxMoneyToggle')).toBeEnabled();
 	});
 
-	// ── State: no agents ────────────────────────────────────────────────────
-	test('shows empty state when no public agents exist', async ({ page }) => {
-		test.setTimeout(60_000);
-		await gotoGalaxy(page, { mode: 'empty', expectState: 'empty' });
-		await expect(page.locator('#emptyState')).toBeVisible();
-		await expect(page.locator('#emptyState a[href="/create"]')).toBeVisible();
+	test('semantic search ranks agents, and a result opens its card', async ({ page }) => {
+		await gotoGalaxy(page, 'success');
+
+		await page.fill('#gxSearchInput', 'crypto trading');
+		await page.click('#gxSearchGo');
+		await expect(page.locator('#gxResults')).toBeVisible();
+		const results = page.locator('#gxResultsList .gx-result');
+		await expect(results.first()).toBeVisible();
+		expect(await results.count()).toBeGreaterThan(0);
+		// Every match is a real agent in the rendered galaxy, scored as a percentage.
+		await expect(results.first()).toContainText('%');
+
+		await results.first().click();
+		await expect(page.locator('#gxCard')).toBeVisible();
+		await expect(page.locator('#gxCardName')).not.toBeEmpty();
+
+		// The two card actions lead somewhere different: the agent page, and its
+		// chat panel.
+		const view = await page.getAttribute('#gxCardView', 'href');
+		const chat = await page.getAttribute('#gxCardChat', 'href');
+		expect(view).toMatch(/^\/agents\/[0-9a-f-]+$/i);
+		expect(chat).toBe(`${view}?view=chat`);
+
+		await page.keyboard.press('Escape');
+		await expect(page.locator('#gxCard')).toBeHidden();
 	});
 
-	// ── Populated galaxy ─────────────────────────────────────────────────────
-	test.describe('populated galaxy', () => {
-		test('renders stars, legend, stats, search', async ({ page }) => {
-			test.setTimeout(90_000);
-			await gotoGalaxy(page);
-
-			const g = () => page.evaluate(() => window.__ibmGalaxy);
-
-			// WebGL actually rendered something.
-			const info = await page.evaluate(() => window.__ibmGalaxy.rendererInfo());
-			expect(info.calls).toBeGreaterThan(0);
-			expect(info.points).toBeGreaterThan(0);
-
-			// Star count matches payload.
-			const stars = await page.evaluate(() => window.__ibmGalaxy.starCount());
-			expect(stars).toBe(buildFixture().payload.agents.length);
-
-			// Legend with correct cluster count.
-			const fx = buildFixture();
-			const legendRows = page.locator('#legendRows .row');
-			await expect(legendRows).toHaveCount(fx.payload.meta.clusterCount);
-			// Each row has a theme label.
-			const firstLabel = await legendRows.first().locator('.name').textContent();
-			expect(firstLabel.length).toBeGreaterThan(0);
-
-			// 3D cluster labels rendered in the overlay.
-			const clusterLabels = page.locator('#clusterLabels .clabel');
-			await expect(clusterLabels).toHaveCount(fx.payload.meta.clusterCount);
-
-			// Stats panel visible with model name.
-			await expect(page.locator('#stats')).toBeVisible();
-			await expect(page.locator('#stats')).toContainText(String(fx.payload.meta.dims));
-
-			// Search bar and example chips visible.
-			await expect(page.locator('#searchWrap')).toBeVisible();
-			await expect(page.locator('#searchHint .chip').first()).toBeVisible();
-		});
-
-		test('semantic search ranks results and highlights stars', async ({ page }) => {
-			test.setTimeout(90_000);
-			await gotoGalaxy(page);
-
-			// Type and submit a search.
-			await page.fill('#searchInput', 'crypto trading assistant');
-			await page.keyboard.press('Enter');
-
-			// Results panel appears with ranked items.
-			await expect(page.locator('#results')).toBeVisible();
-			const items = page.locator('#results .ritem');
-			await expect(items).toHaveCount(8); // top 8 shown
-
-			// Each result has a score bar.
-			await expect(items.first().locator('.r-bar')).toBeVisible();
-			await expect(items.first().locator('.r-score')).toContainText('%');
-
-			// Ranked by header says Granite.
-			await expect(page.locator('#results .r-head')).toContainText('Granite');
-
-			// Search active state is set.
-			const active = await page.evaluate(() => window.__ibmGalaxy.state.searchActive);
-			expect(active).toBe(true);
-
-			// URL has ?q= param.
-			expect(page.url()).toContain('q=');
-
-			// Clear button appears.
-			await expect(page.locator('#searchClear')).toBeVisible();
-
-			// Clearing hides results — the element stays in DOM but loses the "show"
-			// class (opacity→0, pointer-events→none), so check class not visibility.
-			await page.click('#searchClear');
-			await expect(page.locator('#results')).not.toHaveClass(/show/, { timeout: 3_000 });
-			expect(page.url()).not.toContain('q=');
-		});
-
-		test('clicking a result opens detail panel with Granite cosine neighbors', async ({ page }) => {
-			test.setTimeout(90_000);
-			await gotoGalaxy(page);
-
-			await page.fill('#searchInput', 'crypto trading');
-			await page.keyboard.press('Enter');
-			await expect(page.locator('#results .ritem').first()).toBeVisible();
-
-			// Click top result via in-page click (avoids transition timing issues).
-			await page.evaluate(() => document.querySelector('#results .ritem').click());
-			await expect(page.locator('#panel')).toHaveClass(/open/);
-
-			// Panel shows agent name.
-			await expect(page.locator('#panelHead .p-name')).toBeVisible();
-			const name = await page.locator('#panelHead .p-name').textContent();
-			expect(name.length).toBeGreaterThan(0);
-
-			// Theme badge with color.
-			await expect(page.locator('#panelHead .p-theme')).toBeVisible();
-
-			// Neighbors section with Granite cosine label.
-			await expect(page.locator('#panelBody .neighbors h4')).toContainText('Nearest');
-			const nbs = page.locator('#panelBody .nb');
-			await expect(nbs).toHaveCount(5);
-			// Each neighbor has a cosine % score (new markup uses .nb-pct).
-			await expect(nbs.first().locator('.nb-pct')).toContainText('%');
-
-			// Constellation links drawn in 3D.
-			const links = await page.evaluate(() => window.__ibmGalaxy.linkCount());
-			expect(links).toBeGreaterThan(0);
-
-			// Open-agent CTA link.
-			await expect(page.locator('#panelBody .p-cta')).toBeVisible();
-			await expect(page.locator('#panelBody .p-cta')).toContainText('Open');
-
-			// URL has ?agent= param.
-			expect(page.url()).toContain('agent=');
-
-			// Copy-link button present (new UX feature).
-			await expect(page.locator('#panelBody .p-copy-link')).toBeVisible();
-		});
-
-		test('closing panel clears links and URL agent param', async ({ page }) => {
-			test.setTimeout(90_000);
-			await gotoGalaxy(page);
-
-			// Open a panel directly.
-			await page.evaluate(() => document.querySelector('#results .ritem')?.click() || window.__ibmGalaxy.state.agents[0]);
-			// Select first star via keyboard shortcut (/ then first result click).
-			await page.fill('#searchInput', 'test');
-			await page.keyboard.press('Enter');
-			await expect(page.locator('#results .ritem').first()).toBeVisible();
-			await page.evaluate(() => document.querySelector('#results .ritem').click());
-			await expect(page.locator('#panel')).toHaveClass(/open/);
-
-			// Escape closes.
-			await page.keyboard.press('Escape');
-			await expect(page.locator('#panel')).not.toHaveClass(/open/);
-			const links = await page.evaluate(() => window.__ibmGalaxy.linkCount());
-			expect(links).toBe(0);
-			expect(page.url()).not.toContain('agent=');
-		});
-
-		test('guided tour visits each theme and stops on toggle', async ({ page }) => {
-			test.setTimeout(90_000);
-			await gotoGalaxy(page);
-
-			await page.click('#tourBtn');
-			await expect(page.locator('#tourBtn')).toHaveClass(/active/);
-
-			// Tour isolates a cluster.
-			await page.waitForFunction(() => window.__ibmGalaxy.tourActive() === true, { timeout: 5_000 });
-			const isolated = await page.evaluate(() => window.__ibmGalaxy.state.isolatedCluster);
-			expect(isolated).not.toBeNull();
-
-			// Stop.
-			await page.click('#tourBtn');
-			await expect(page.locator('#tourBtn')).not.toHaveClass(/active/);
-			const afterStop = await page.evaluate(() => window.__ibmGalaxy.state.isolatedCluster);
-			expect(afterStop).toBeNull();
-		});
-
-		test('legend row click isolates theme and flies camera', async ({ page }) => {
-			test.setTimeout(90_000);
-			await gotoGalaxy(page);
-
-			const firstRow = page.locator('#legendRows .row').first();
-			await firstRow.click();
-
-			// Clicked row stays unmuted; others become muted.
-			await expect(firstRow).not.toHaveClass(/muted/);
-			const secondRow = page.locator('#legendRows .row').nth(1);
-			await expect(secondRow).toHaveClass(/muted/);
-
-			// Isolated cluster is set.
-			const isolated = await page.evaluate(() => window.__ibmGalaxy.state.isolatedCluster);
-			expect(isolated).not.toBeNull();
-
-			// Click same row again → deselect.
-			await firstRow.click();
-			const afterDeselect = await page.evaluate(() => window.__ibmGalaxy.state.isolatedCluster);
-			expect(afterDeselect).toBeNull();
-		});
-
-		test('keyboard shortcuts: / focuses search, R resets, ? toggles help', async ({ page }) => {
-			test.setTimeout(90_000);
-			await gotoGalaxy(page);
-
-			// / should focus search input.
-			await page.keyboard.press('/');
-			await expect(page.locator('#searchInput')).toBeFocused();
-
-			// Blur first.
-			await page.keyboard.press('Escape');
-			await page.locator('#scene').click({ position: { x: 640, y: 400 } });
-
-			// R resets (no error thrown).
-			await page.keyboard.press('r');
-
-			// ? opens keyboard shortcut overlay.
-			await page.keyboard.press('?');
-			await expect(page.locator('#shortcutsOverlay')).toBeVisible();
-			// Dismiss.
-			await page.keyboard.press('Escape');
-			await expect(page.locator('#shortcutsOverlay')).not.toBeVisible();
-		});
+	test('a legend row isolates its constellation', async ({ page }) => {
+		await gotoGalaxy(page, 'success');
+		const row = page.locator('#gxLegendList .gx-legend-item').first();
+		await row.click();
+		await expect(row).toHaveClass(/gx-active/);
+		expect(await page.evaluate(() => window.__galaxy && document.querySelectorAll('.gx-legend-item.gx-active').length)).toBe(1);
+		await row.click();
+		await expect(row).not.toHaveClass(/gx-active/);
 	});
 
-	// ── Deep links ───────────────────────────────────────────────────────────
-	test('?agent= deep link opens targeted agent on first paint', async ({ page }) => {
-		test.setTimeout(90_000);
-		const fx = buildFixture();
-		const target = fx.agents[20];
-		await gotoGalaxy(page, { path: `/ibm/galaxy?agent=${encodeURIComponent(target.id)}` });
-
-		await expect(page.locator('#panel')).toHaveClass(/open/, { timeout: 10_000 });
-		await expect(page.locator('#panelHead .p-name')).toContainText(target.name);
+	test('an empty galaxy explains itself and offers a way to fill it', async ({ page }) => {
+		await gotoGalaxy(page, 'empty');
+		await expect(page.locator('#gxEmpty')).toBeVisible();
+		await expect(page.locator('#gxEmpty .gx-overlay-title')).not.toBeEmpty();
+		await expect(page.locator('#gxEmpty a[href="/create"]')).toBeVisible();
+		await expect(page.locator('#gxEmpty a[href="/agents/"]')).toBeVisible();
 	});
 
-	test('?q= deep link runs search on first paint', async ({ page }) => {
-		test.setTimeout(90_000);
-		await gotoGalaxy(page, { path: '/ibm/galaxy?q=trading+assistant' });
+	test('an unconfigured embedder is a dead end for nobody', async ({ page }) => {
+		await gotoGalaxy(page, 'unavailable');
+		await expect(page.locator('#gxError')).toBeVisible();
+		await expect(page.locator('#gxErrorTitle')).toContainText('Granite');
+		await expect(page.locator('#gxErrorSub')).toContainText('watsonx');
+		// Retrying a configuration gap just fails again, so the retry is hidden and
+		// two real onward paths take its place.
+		await expect(page.locator('#gxRetry')).toBeHidden();
+		await expect(page.locator('#gxErrorBrowse')).toBeVisible();
+		await expect(page.locator('#gxError a[href="/docs/ibm"]')).toBeVisible();
 
-		await expect(page.locator('#results')).toBeVisible({ timeout: 15_000 });
-		await expect(page.locator('#results .ritem').first()).toBeVisible();
-		// Input is pre-filled.
-		await expect(page.locator('#searchInput')).toHaveValue(/trading/);
+		// Nothing behind the overlay stays reachable by keyboard.
+		const reachable = await page.evaluate(() =>
+			[...document.querySelectorAll('#gxHud button, #gxHud input, #gxFootnote a')].filter(
+				(el) => !el.closest('[inert]'),
+			).length,
+		);
+		expect(reachable).toBe(0);
+	});
+
+	test('a transport failure is retryable, and the retry recovers', async ({ page }) => {
+		await gotoGalaxy(page, 'down');
+		await expect(page.locator('#gxError')).toBeVisible();
+		await expect(page.locator('#gxRetry')).toBeVisible();
+
+		// Swap the endpoint back to a working galaxy, then use the button the page
+		// offered. It must recover in place, with no reload.
+		await page.unroute('**/api/galaxy');
+		await routeGalaxy(page, 'success');
+		await page.click('#gxRetry');
+		await page.waitForFunction(() => window.__galaxy?.status === 'ready', null, { timeout: 60_000 });
+		await expect(page.locator('#gxError')).toBeHidden();
+		await expect(page.locator('#gxLegend')).toBeVisible();
+	});
+
+	test('every control the page offers has a visible keyboard focus ring', async ({ page }) => {
+		await gotoGalaxy(page, 'success');
+		// Establish keyboard modality so :focus-visible matches.
+		await page.keyboard.press('Tab');
+		const ids = ['gxSearchInput', 'gxSearchGo', 'gxMoneyToggle'];
+		for (const id of ids) {
+			const ring = await page.evaluate((i) => {
+				const el = document.getElementById(i);
+				el.focus();
+				const cs = getComputedStyle(el);
+				return { fv: el.matches(':focus-visible'), outline: cs.outlineStyle, width: cs.outlineWidth };
+			}, id);
+			expect(ring.fv, `${id} should match :focus-visible`).toBe(true);
+			expect(ring.outline, `${id} needs a focus outline`).not.toBe('none');
+			expect(parseFloat(ring.width), `${id} focus outline must be visible`).toBeGreaterThan(0);
+		}
+	});
+
+	test('lays out without horizontal overflow at 320, 768 and 1440', async ({ page }) => {
+		await gotoGalaxy(page, 'success');
+		for (const width of [320, 768, 1440]) {
+			await page.setViewportSize({ width, height: 800 });
+			await page.waitForTimeout(400);
+			const m = await page.evaluate(() => ({
+				scrollW: document.documentElement.scrollWidth,
+				clientW: document.documentElement.clientWidth,
+			}));
+			expect(m.scrollW, `no horizontal page scroll at ${width}px`).toBeLessThanOrEqual(m.clientW + 1);
+		}
 	});
 });

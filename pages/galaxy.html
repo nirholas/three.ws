@@ -203,7 +203,10 @@
 				<div class="gx-overlay-glyph" aria-hidden="true">✦</div>
 				<div class="gx-overlay-title" id="gxEmptyTitle">The galaxy is still forming</div>
 				<div class="gx-overlay-sub" id="gxEmptySub">No published agents to map yet. Create and publish an agent to place the first star.</div>
-				<a class="gx-btn gx-btn-primary" href="/create" data-i18n="galaxy.create_an_agent">Create an agent</a>
+				<div class="gx-overlay-actions">
+					<a class="gx-btn gx-btn-primary" href="/create" data-i18n="galaxy.create_an_agent">Create an agent</a>
+					<a class="gx-btn gx-btn-ghost" href="/agents/" data-i18n="galaxy.browse_every_agent">Browse every agent</a>
+				</div>
 			</div>
 
 			<!-- Error overlay -->
@@ -211,11 +214,15 @@
 				<div class="gx-overlay-glyph" aria-hidden="true">✦</div>
 				<div class="gx-overlay-title" id="gxErrorTitle">Couldn't reach the stars</div>
 				<div class="gx-overlay-sub" id="gxErrorSub"></div>
-				<button class="gx-btn gx-btn-primary" id="gxRetry" type="button" data-i18n="galaxy.try_again">Try again</button>
+				<div class="gx-overlay-actions">
+					<button class="gx-btn gx-btn-primary" id="gxRetry" type="button" data-i18n="galaxy.try_again">Try again</button>
+					<a class="gx-btn gx-btn-primary" id="gxErrorBrowse" href="/agents/" hidden data-i18n="galaxy.browse_every_agent">Browse every agent</a>
+					<a class="gx-btn gx-btn-ghost" href="/docs/ibm" data-i18n="galaxy.how_the_galaxy_is_built">How the galaxy is built</a>
+				</div>
 			</div>
 
 			<!-- Footer attribution / controls hint -->
-			<div class="gx-footnote">
+			<div class="gx-footnote" id="gxFootnote">
 				<span class="gx-footnote-hint" id="gxHint" data-i18n="galaxy.drag_to_orbit_scroll_to_zoom_click">Drag to orbit · scroll to zoom · click a star</span>
 				<a class="gx-footnote-link" href="/docs/ibm" data-i18n="galaxy.three_ws_ibm_watsonx">three.ws × IBM watsonx →</a>
 			</div>
