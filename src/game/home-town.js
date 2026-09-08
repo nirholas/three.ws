@@ -18,8 +18,17 @@ export const HOME_TOWN = {
 	symbol: 'three',
 	// Served through the same-origin /api/img proxy (multi-gateway IPFS retry +
 	// immutable edge cache) so the front-door art never depends on one gateway.
+	//
+	// `w=512` matters: the pinned original is a 567 KB PNG, and without a width
+	// the proxy hands back every one of those bytes. mapCoins() asks for 512 for
+	// exactly this reason (COIN_ART_WIDTH in coincommunities.js) but this literal
+	// predates it, so the ONE world every first-time visitor lands in was the one
+	// paying full price. Measured on a Pixel 5 over slow 4G against production on
+	// 2026-09-08, that single image was 581 KB of /play's 5,470 KB, second only to
+	// the HDRI. It becomes a texture a few hundred pixels tall on the totem and
+	// the jumbotron, so 512 is already generous.
 	image: '/api/img?url=' + encodeURIComponent('https://ipfs.io/ipfs/bafybeihe22b5sxr3ihnxt7pregfieyteqvubqhik3j3y4bbx243xlqjw3q')
-		+ '&seed=FeMbDoX7R1Psc4GEcvJdsbNbZA3bfztcyDCatJVJpump',
+		+ '&seed=FeMbDoX7R1Psc4GEcvJdsbNbZA3bfztcyDCatJVJpump&w=512',
 	// The signature look for the home town: Dust Gulch, an old-west frontier town —
 	// a packed-dirt square ringed by false-front storefronts (saloon, bank,
 	// sheriff…) under a low golden-hour sun, with a water tower on the skyline and

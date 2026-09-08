@@ -31,10 +31,35 @@ export const HDRI_PRESETS = {
 	sunset: '/hdri/sunset.hdr',
 };
 
+/**
+ * The same three environments at 512x256, about 360 KB each instead of 1.4 MB.
+ *
+ * The full-size files are the largest asset any 3D page downloads: on a Pixel 5
+ * over slow 4G, `/hdri/outdoor.hdr` was 1,435 KB of `/play`'s 5,470 KB, which is
+ * seven seconds of radio time before the world is lit. The map is PMREM-
+ * prefiltered into irradiance before it lights anything, so almost all of that
+ * resolution is discarded on the way in; what has to survive the downscale is
+ * the light's ENERGY, and it does, to within 0.4% of the original's mean
+ * radiance (see scripts/build-hdri-mobile.mjs, which regenerates and verifies
+ * these). What is genuinely lost is the peak of the sun disc, so the sharpest
+ * mirror highlight on a metal is softer here. That is the right thing to trade
+ * on a phone and the wrong thing to trade on a desktop, which is why this is a
+ * tier choice rather than a replacement.
+ */
+export const HDRI_PRESETS_MOBILE = {
+	studio: '/hdri/studio-mobile.hdr',
+	outdoor: '/hdri/outdoor-mobile.hdr',
+	sunset: '/hdri/sunset-mobile.hdr',
+};
+
 /** Render quality tiers a viewer can request. 'mobile' matches the low-end /club profile. */
 export const QUALITY_TIERS = {
 	high: { pixelRatioCap: 2, shadows: true, hdri: true },
-	medium: { pixelRatioCap: 1.5, shadows: true, hdri: true },
+	// `hdriMobile` picks the 512x256 copy. 'medium' is where a real mid-tier
+	// phone lands (coarse pointer, 4 GB of RAM is not "low"), and it was pulling
+	// the full 1.4 MB file; only the weakest tier opted out, and opting out
+	// entirely is a worse answer than a smaller map.
+	medium: { pixelRatioCap: 1.5, shadows: true, hdri: true, hdriMobile: true },
 	mobile: { pixelRatioCap: 1, shadows: false, hdri: false },
 };
 
@@ -99,14 +124,20 @@ const _envCache = new Map();
  * @param {import('three').WebGLRenderer} renderer
  * @param {import('three').Scene} scene
  * @param {'studio'|'outdoor'|'sunset'|null} preset
+ * @param {object} [opts]
+ * @param {'high'|'medium'|'mobile'} [opts.tier] - which copy of the HDRI to
+ *   fetch. Defaults to the same capability probe applyCinematicDefaults uses, so
+ *   a caller that never passed a tier still stops sending a phone 1.4 MB.
  */
-export async function loadEnvironment(renderer, scene, preset = 'studio') {
+export async function loadEnvironment(renderer, scene, preset = 'studio', opts = {}) {
+	const tier = QUALITY_TIERS[opts.tier] ? opts.tier : detectQualityTier();
+	const sources = QUALITY_TIERS[tier].hdriMobile ? HDRI_PRESETS_MOBILE : HDRI_PRESETS;
 	const pmrem = new PMREMGenerator(renderer);
 	pmrem.compileEquirectangularShader();
 	const roomTarget = pmrem.fromScene(new RoomEnvironment(), 0.04);
 	scene.environment = roomTarget.texture;
 	scene.environmentIntensity ??= 1;
-	if (!preset || !HDRI_PRESETS[preset]) {
+	if (!preset || !sources[preset]) {
 		// PMREMGenerator holds its own materials and LOD planes; the render target
 		// it just handed back stays valid after the generator is disposed, so this
 		// frees the scratch without touching the environment map itself.
@@ -114,13 +145,17 @@ export async function loadEnvironment(renderer, scene, preset = 'studio') {
 		return scene.environment;
 	}
 	try {
-		let hdrTexture = _envCache.get(preset);
+		// Keyed by URL, not by preset name: the same preset resolves to a different
+		// file per tier, and caching by name alone would hand a page that switched
+		// tiers the wrong resolution back.
+		const url = sources[preset];
+		let hdrTexture = _envCache.get(url);
 		if (!hdrTexture) {
 			// HDRLoader is the same decoder RGBELoader wraps; RGBELoader is a
 			// deprecated alias since three r180 and logs a warning on every use.
 			const { HDRLoader } = await import('three/addons/loaders/HDRLoader.js');
-			hdrTexture = await new HDRLoader().loadAsync(HDRI_PRESETS[preset]);
-			_envCache.set(preset, hdrTexture);
+			hdrTexture = await new HDRLoader().loadAsync(url);
+			_envCache.set(url, hdrTexture);
 		}
 		const envTarget = pmrem.fromEquirectangular(hdrTexture);
 		// Another loadEnvironment call (a coin switch rebuilding the world, a stage
