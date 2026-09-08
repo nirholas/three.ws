@@ -144,6 +144,13 @@ export const NAV_GROUPS = [
 						href: '/asl-alphabet',
 						badge: 'New',
 						badgeTone: 'live',
+						// Advanced like the rest of its cluster: /sign-language and
+						// /sign-mirror are both deferred, and a letter-by-letter reading
+						// drill is the most specialised of the three. A newcomer has to
+						// already want ASL to want this, which is the line this file
+						// draws, and My Creations landing in the lite tier had pushed it
+						// to 31 links where the scannable ceiling is 30.
+						tier: 'advanced',
 						desc: 'Every letter and number on a live 3D hand, with the look-alikes named and a drill for reading it',
 					},
 					{
