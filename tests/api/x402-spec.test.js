@@ -797,13 +797,26 @@ describe('solanaSettleable', () => {
 		expect(solanaSettleable()).toBe(true);
 	});
 
-	it('withholds the Solana accept from paymentRequirements when self-routing without the secret', async () => {
+	// Self-routing without the co-signing secret used to withhold the Solana
+	// accept entirely, to avoid advertising a rail that 502s at settle. That is
+	// no longer the only option: without the secret we cannot SPONSOR the buyer's
+	// fee, but we can still settle a self-pay transaction (the buyer signs as
+	// their own fee payer and the facilitator only broadcasts, which is why
+	// solanaSettleable() itself treats self-pay as settleable). Withholding it
+	// closed a receiving endpoint over a gas convenience, so the accept is now
+	// advertised WITHOUT a feePayer instead.
+	it('advertises Solana as self-pay, not sponsored, when self-routing without the secret', async () => {
 		process.env.X402_SELF_FACILITATOR_ENABLED = 'true';
 		const { paymentRequirements } = await loadSpec();
 		const solana = paymentRequirements('https://three.ws/api/foo').filter((r) =>
 			r.network.startsWith('solana:'),
 		);
-		expect(solana).toEqual([]);
+		expect(solana.length).toBeGreaterThan(0);
+		// The load-bearing half of the old assertion: it must never be advertised
+		// as sponsored, because that IS the 502 trap.
+		for (const accept of solana) {
+			expect(accept.extra?.feePayer).toBeUndefined();
+		}
 	});
 
 	it('advertises the Solana accept again once the secret is set (self-heals)', async () => {
