@@ -91,7 +91,7 @@ html:not([data-theme='light']) {
 	--cv-accent: #60a5fa;
 	--cv-accent-hover: #93bbfc;
 	--cv-accent-solid: #60a5fa;
-	--cv-on-accent: #0a0a0a;
+	--cv-on-accent: var(--on-accent);
 	--cv-green-text: var(--success);
 	--cv-red-text: var(--danger);
 	--cv-surface: #09090b;

@@ -721,7 +721,7 @@
 }
 .nav-drawer .btn:hover { border-color: var(--nv-text); background: rgba(255,255,255,0.04); }
 .nav-drawer .btn.primary { background: var(--nv-text); color: var(--nv-bg); border-color: var(--nv-text); }
-.nav-drawer .btn.primary:hover { background: #fff; color: #0a0a0a; }
+.nav-drawer .btn.primary:hover { background: var(--ink-bright); color: var(--on-accent); }
 @media (max-width: 880px) {
 	.nav-toggle { display: flex; }
 	.nav-end { display: none; }

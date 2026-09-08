@@ -1,4 +1,20 @@
-:root {
+/* Dark-only theme layer (QB-07). The page loads /nav.css, so the canonical
+   vocabulary resolves here; the --ad-* names are aliases of it, not a second
+   palette. The card radius, elevation and skeleton values below used to be
+   hand-copied literals of the canonical tokens, which meant a change to
+   public/tokens.css never reached this page. The [data-theme='light'] half of
+   the selector keeps a globally-chosen light theme from half-flipping a surface
+   whose remaining literals are dark. */
+:root,
+/* Doubled :root is a deliberate specificity bump (0,3,0): the token sheet's own
+   [data-theme='light'] block would otherwise win on document order and half-flip
+   this dark-only surface. */
+:root:root[data-theme='light'] {
+	color-scheme: dark;
+	--bg-1: #1a1a1a;
+	--ink-dim: #888888;
+	--accent-violet: #c4b5fd;
+
 	--ad-bg: #0d0d0d;
 	--ad-bg-2: #141414;
 	--ad-card: #181818;
@@ -7,19 +23,15 @@
 	--ad-text: #e7e9ee;
 	--ad-muted: rgba(231, 233, 238, 0.55);
 	--ad-dim: rgba(231, 233, 238, 0.35);
-	--ad-violet: #888888;
+	/* Named violet, painted grey: the platform violet is a token now, so this
+	   alias carries the identity hue the name always promised (and lifts inline
+	   links off 4.6:1 grey). */
+	--ad-violet: var(--accent-violet);
 	--ad-green: var(--success);
 	--ad-amber: #f5a524;
 	--ad-cyan: #57c7ff;
 
-	/* Shared B04 surface vocabulary — this page is standalone (no style.css),
-	   so mirror the canonical card radius / elevation / skeleton tokens here
-	   to keep cards and loading states consistent with the rest of the site. */
-	--radius-card: 14px;
-	--shadow-1: 0 1px 3px rgba(0, 0, 0, 0.3);
-	--shadow-2: 0 4px 24px rgba(0, 0, 0, 0.4), 0 1px 4px rgba(0, 0, 0, 0.2);
-	--skeleton-base: rgba(255, 255, 255, 0.04);
-	--skeleton-sheen: rgba(255, 255, 255, 0.08);
+	--radius-card: var(--radius-lg);
 	--skeleton-radius: 5px;
 }
 
@@ -142,7 +154,7 @@ a {
 }
 
 .ad-banner {
-	background: linear-gradient(90deg, #1a1a1a, #222222);
+	background: linear-gradient(90deg, var(--bg-1), #222222);
 	color: var(--ad-text);
 	font-size: 12px;
 	text-align: center;

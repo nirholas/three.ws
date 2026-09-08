@@ -1,16 +1,37 @@
+@import url('/tokens.css');
+
+/* A standalone surface: it loads no nav and no /style.css, so before this import
+   it resolved none of the platform vocabulary and had forked its own
+   --panel/--text palette. Importing the token sheet also brings the platform
+   floors (focus ring, disabled affordance, reduced motion) to this page. */
+
 [hidden] {
 	display: none !important;
 }
 
-:root {
+/* Dark-only theme layer. This page has no theme switcher, so it pins the
+   canonical primitives to their dark values (the [data-theme='light'] half of
+   the selector keeps a globally-chosen light theme from half-flipping a surface
+   whose remaining literals are dark) and then aliases its local names to them,
+   rather than forking a second palette (B02). */
+:root,
+/* Doubled :root is a deliberate specificity bump (0,3,0): the token sheet's own
+   [data-theme='light'] block would otherwise win on document order and half-flip
+   this dark-only surface. */
+:root:root[data-theme='light'] {
 	color-scheme: dark;
 	--accent: #ffffff;
-	--border: #1a1a1a;
+	--bg-0: #0a0a0a;
+	--bg-1: #1a1a1a;
+	--ink: #e8e8e8;
+	--ink-dim: #888888;
+
+	--border: var(--bg-1);
 	--bg: #000000;
-	--panel: #0a0a0a;
-	--text: #e8e8e8;
+	--panel: var(--bg-0);
+	--text: var(--ink);
 	--text-dim: #555555;
-	--radius: 12px;
+	--radius: var(--radius-lg);
 }
 
 * {

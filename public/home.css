@@ -201,7 +201,7 @@
 			flex: 0 0 auto; display: inline-flex; align-items: center; gap: 8px;
 			padding: 10px 16px; border-radius: 9px; cursor: pointer;
 			font-family: var(--font-display); font-weight: 600; font-size: 14px; letter-spacing: -0.01em;
-			color: #0a0a0a; border: 0;
+			color: var(--on-bright); border: 0;
 			background: linear-gradient(120deg, #ffb454, #ff6ad5 40%, #8b5cf6 66%, #4fc3ff);
 			background-size: 160% 160%; background-position: 0% 50%;
 			transition: background-position .5s ease, box-shadow .25s ease, transform .12s ease, opacity .2s ease;

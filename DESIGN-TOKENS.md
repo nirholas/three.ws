@@ -73,6 +73,20 @@ Pair scrims with `--on-scrim*`, never with `--ink*` (which flips to near-black
 on light and would vanish). These four values replaced a cluster of 400+
 hand-typed `rgba(0, 0, 0, …)` overlays that had drifted across ~12 alphas.
 
+### Colour: ink on a fill (QB-07)
+Two names for the text that sits *on* a filled control, so nobody hand-types
+`#0a0a0a` again:
+
+| Token | Use |
+|-------|-----|
+| `--on-accent` | ink on `var(--accent)` (primary CTA, accent chip). **Flips**: near-black on dark, white on light, because `--accent` itself is white on dark and blue on light. |
+| `--on-bright` | ink on a fill that is bright in *both* themes (a white dock button, a vivid gradient CTA, a light backdrop swatch). **Theme-invariant**, like the scrim family. |
+
+Picking the wrong one is a light-theme bug, not a nit: `--on-accent` on a
+permanently white pill renders white-on-white, and a hardcoded `#0a0a0a` on
+`var(--accent)` renders black-on-blue at 2.2:1. If the fill flips, so does the
+ink: `--on-accent`. If the fill never flips, neither does the ink: `--on-bright`.
+
 ### Spacing (φ = 1.618 scale)
 `--space-3xs` `--space-2xs` `--space-xs` `--space-sm` `--space-md` (16px base)
 `--space-lg` `--space-xl` `--space-2xl`. Use for padding, gap, margin.
@@ -198,15 +212,59 @@ hardcoded values to tokens is tracked under **B08**.
 ### Enforcement: the token-drift ratchet (B13)
 
 `npm run audit:tokens` (part of `npm run gate`) runs
-[scripts/audit-token-drift.mjs](scripts/audit-token-drift.mjs): it counts
-hardcoded hexes that literally equal a canonical token value (`#4ade80` =
-`--success`, `#f87171` = `--danger`, `#fbbf24` = `--warn`) inside `<style>`
-blocks of `pages/` files that load the token vocabulary. The count may only go
-**down** — the baseline (`scripts/audit-token-drift.baseline.json`, currently
-**0**) fails the build if a new hardcoded status hex lands. Pages that
-deliberately re-theme a status token (they define their own `--success` etc.)
-are exempt for that token; JS/canvas literals are out of scope. When you
-eliminate drift, lock it in with `node scripts/audit-token-drift.mjs --update`.
+[scripts/audit-token-drift.mjs](scripts/audit-token-drift.mjs) and enforces two
+things.
+
+**1. The drift ratchet.** It counts hardcoded hexes that literally equal a
+canonical token value (the three status hexes `#4ade80` / `#f87171` / `#fbbf24`,
+and the base palette `#0a0a0a` / `#1a1a1a` / `#e8e8e8` / `#888888`) in three
+places: `<style>` blocks of `pages/` files that load the token vocabulary, and
+every stylesheet under `src/` and `public/`. The count may only go **down**: the
+baseline (`scripts/audit-token-drift.baseline.json`, currently **0**) fails the
+build if a new hardcoded token-hex lands. A file that deliberately re-themes a
+token (it defines its own `--success`, `--bg-0`, … locally) is exempt for that
+token, and a hex inside a `var(--token, #hex)` fallback is not drift because the
+var resolves first. JS/canvas literals are out of scope. When you eliminate
+drift, lock it in with `node scripts/audit-token-drift.mjs --update`.
+
+**2. Vocabulary integrity.** Every bare `var(--x)` naming a canonical token
+family must actually resolve, either from `public/tokens.css` or locally in the
+same file. A bare `var()` that resolves to nothing drops the whole declaration at
+computed-value time and the element silently inherits, which is how a page can
+reference a token a refactor removed. This half has no baseline: it is always
+zero.
+
+### Dark-only surfaces declare themselves (QB-07)
+
+Several standalone surfaces (`/cz`, `/studio`, `/demo/avatar-os`, the dashboard
+sub-shells, the print insert, agent detail, the character creator) are built dark
+and have no theme switcher. They used to express that by forking a parallel
+`--panel` / `--border` / `--text` / `--muted` palette out of raw hexes, which is
+the fork B02 removed everywhere else. The sanctioned shape is a **declared theme
+layer**: import the token sheet, pin the primitives you rely on to their dark
+values, then alias the local names to them.
+
+```css
+@import url('/tokens.css');
+
+:root,
+/* Doubled :root is a deliberate specificity bump (0,3,0): the token sheet's own
+   [data-theme='light'] block would otherwise win on document order. */
+:root:root[data-theme='light'] {
+	color-scheme: dark;
+	--bg-0: #0a0a0a;
+	--ink-dim: #888888;
+
+	--panel: var(--bg-0);
+	--muted: var(--ink-dim);
+}
+```
+
+Pinning both selectors is what stops a globally-chosen light theme from
+*half*-flipping the surface: the tokens would go light while the sheet's
+remaining literals stayed dark, which is worse than either theme. Importing the
+sheet is also how these pages get the platform floors (focus ring, disabled
+affordance, reduced motion) for the first time.
 
 ## Brand themes
 

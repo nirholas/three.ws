@@ -69,7 +69,7 @@
 
 	/* Primary — white fill, dark ink (use for the main CTA per surface) */
 	--btn-primary-bg:        var(--accent);
-	--btn-primary-fg:        #0a0a0a;
+	--btn-primary-fg:        var(--on-accent);
 	--btn-primary-border:    transparent;
 	--btn-primary-bg-hover:  rgba(255, 255, 255, 0.88);
 	--btn-primary-bg-active: rgba(255, 255, 255, 0.76);
@@ -1291,7 +1291,7 @@ footer:not([class*="h-footer"]) .separator {
 	font-size: 1.05rem;
 	margin: var(--space-md) 0 var(--space-xs);
 	padding-left: var(--space-md);
-	border-left: 4px solid #888;
+	border-left: 4px solid var(--ink-dim);
 }
 
 .report-count {
@@ -4995,7 +4995,7 @@ body.deploy-page {
 .save-to-account-btn svg     { color: var(--ink-dim); }
 .make-widget-btn svg         { color: #5eead4; } /* teal   */
 .view-public-profile-btn svg { color: #fcd34d; } /* gold   */
-.deploy-onchain-btn svg      { color: #888888; } /* indigo */
+.deploy-onchain-btn svg      { color: var(--ink-dim); } /* neutral */
 
 /* Deploy on-chain — primary CTA, slightly stronger to pull the eye */
 .deploy-onchain-btn {
@@ -6461,7 +6461,7 @@ body[data-viewer-mode='explore'] #layout-switch {
 .scene-node__expander {
 	display: inline-block;
 	width: 12px;
-	color: #888;
+	color: var(--ink-dim);
 	text-align: center;
 	font-size: 10px;
 	flex-shrink: 0;
@@ -6480,7 +6480,7 @@ body[data-viewer-mode='explore'] #layout-switch {
 .scene-node__visibility {
 	background: none;
 	border: none;
-	color: #888;
+	color: var(--ink-dim);
 	font-size: 10px;
 	cursor: pointer;
 	padding: 0 4px;
@@ -6518,7 +6518,7 @@ body[data-viewer-mode='explore'] #layout-switch {
 	font-size: 10px;
 	text-transform: uppercase;
 	letter-spacing: 0.08em;
-	color: #888;
+	color: var(--ink-dim);
 	border-bottom: 1px solid #232323;
 	padding-bottom: 2px;
 }
@@ -6531,7 +6531,7 @@ body[data-viewer-mode='explore'] #layout-switch {
 	font-size: 11px;
 }
 .inspector__label {
-	color: #888;
+	color: var(--ink-dim);
 	flex-shrink: 0;
 	min-width: 40px;
 }
@@ -6673,7 +6673,7 @@ body[data-viewer-mode='explore'] #layout-switch {
 }
 .texture-card__meta {
 	font-size: 10px;
-	color: #888;
+	color: var(--ink-dim);
 	font-family: monospace;
 }
 .texture-card__mats {
@@ -6718,7 +6718,7 @@ body[data-viewer-mode='explore'] #layout-switch {
 .texture-lightbox__dim {
 	font-family: monospace;
 	font-size: 10px;
-	color: #888;
+	color: var(--ink-dim);
 }
 .texture-lightbox__channels {
 	display: flex;
@@ -6808,7 +6808,7 @@ body[data-viewer-mode='explore'] #layout-switch {
 	padding: var(--space-xs) var(--space-md);
 	background: #0c0c0c;
 	border-top: 1px solid #2b2b2b;
-	color: #888;
+	color: var(--ink-dim);
 	font-size: 11px;
 	font-family: monospace;
 }
@@ -7141,14 +7141,14 @@ body[data-viewer-mode='main'][data-authed='false'] .auth-gate {
 
 .auth-gate__btn--primary {
 	background: linear-gradient(180deg, #fff, #e8e8ef);
-	color: #0a0a0a;
+	color: var(--on-bright);
 	border-color: rgba(255, 255, 255, 0.9);
 	font-weight: 600;
 }
 
 .auth-gate__btn--primary:hover {
 	background: #fff;
-	color: #0a0a0a;
+	color: var(--on-bright);
 	border-color: #fff;
 }
 
@@ -7340,7 +7340,7 @@ body[data-viewer-mode='main'][data-authed='false'] .auth-gate {
 	margin: 0 var(--space-md) var(--space-md);
 }
 .note a {
-	color: #888888;
+	color: var(--ink-dim);
 }
 
 
@@ -8408,7 +8408,7 @@ textarea.erc8004-code {
 	position: relative;
 	display: block;
 	aspect-ratio: 1 / 1;
-	background: linear-gradient(135deg, #111 0%, #1a1a1a 100%);
+	background: linear-gradient(135deg, var(--stage-lift) 0%, var(--stage-glow) 100%);
 	overflow: hidden;
 	text-decoration: none;
 }
@@ -9834,7 +9834,7 @@ body[data-layout='next'] .next-drawer__body .dg.main {
 	align-items: center;
 	justify-content: center;
 	background: rgba(255, 255, 255, 0.95);
-	color: #0a0a0a;
+	color: var(--on-bright);
 	border: 0;
 	border-radius: 50%;
 	cursor: pointer;
@@ -11031,7 +11031,7 @@ a.pill--devnet:hover {
 	border-radius: var(--radius-sm);
 	border: 1px solid rgba(255, 255, 255, 0.22);
 	background: rgba(255, 255, 255, 0.06);
-	color: #888888;
+	color: var(--ink-dim);
 	font-size: 12px;
 	font-weight: 600;
 	cursor: pointer;
@@ -11066,7 +11066,7 @@ a.pill--devnet:hover {
 	border-radius: var(--radius-sm);
 	border: 1px solid rgba(255, 255, 255, 0.25);
 	background: rgba(255, 255, 255, 0.07);
-	color: #888888;
+	color: var(--ink-dim);
 	font-size: 13px;
 	font-weight: 600;
 	cursor: pointer;

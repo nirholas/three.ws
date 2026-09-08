@@ -1,9 +1,24 @@
 /* Shared shell styling for /dashboard sub-pages. Dark theme to match dashboard. */
-:root {
+@import url('/tokens.css');
+
+/* Dark-only theme layer (QB-07): the sub-pages pin the canonical primitives to
+   their dark values and alias the local names to them, rather than forking a
+   second palette (B02). The [data-theme='light'] half keeps a globally-chosen
+   light theme from half-flipping a surface whose remaining literals are dark. */
+:root,
+/* Doubled :root is a deliberate specificity bump (0,3,0): the token sheet's own
+   [data-theme='light'] block would otherwise win on document order and half-flip
+   this dark-only surface. */
+:root:root[data-theme='light'] {
 	color-scheme: dark;
+	--bg-0: #0a0a0a;
+	--bg-1: #1a1a1a;
+	--ink: #e8e8e8;
+	--ink-dim: #888888;
+
 	--accent: #ffffff;
 	--accent2: #ffffff;
-	--border: #1a1a1a;
+	--border: var(--bg-1);
 	--bg: #000000;
 	--panel: #111111;
 }

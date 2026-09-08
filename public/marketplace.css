@@ -306,7 +306,7 @@ body.market-page > header {
 	background:
 		radial-gradient(circle at 50% 40%, rgba(255, 255, 255, 0.12), transparent 65%),
 		radial-gradient(circle at 50% 95%, rgba(255, 255, 255, 0.08), transparent 70%),
-		linear-gradient(180deg, #0a0a0a, #050505) center/cover no-repeat;
+		linear-gradient(180deg, var(--stage), var(--stage-deep)) center/cover no-repeat;
 	border-bottom: 1px solid var(--card-border);
 	border-top-left-radius: var(--card-radius);
 	border-top-right-radius: var(--card-radius);
@@ -325,7 +325,7 @@ body.market-page > header {
 	background:
 		radial-gradient(circle at 50% 40%, rgba(255, 255, 255, 0.1), transparent 65%),
 		radial-gradient(circle at 50% 95%, rgba(255, 255, 255, 0.06), transparent 70%),
-		linear-gradient(180deg, #0a0a0a, #050505);
+		linear-gradient(180deg, var(--stage), var(--stage-deep));
 }
 .market-card-agent .thumb .mv-placeholder-initial {
 	font-family: var(--font-display);
@@ -534,7 +534,7 @@ body.market-page > header {
 }
 .market-avatar-detail-stage {
 	position: relative;
-	background: linear-gradient(180deg, #0a0a0a 0%, #0d0d0d 100%);
+	background: linear-gradient(180deg, var(--stage) 0%, var(--stage-lift) 100%);
 	border: 1px solid var(--stroke);
 	border-radius: var(--radius-lg);
 	overflow: hidden;
@@ -1077,7 +1077,7 @@ body.market-page > header {
 /* Onchain agent detail */
 .onchain-detail-stage {
 	position: relative;
-	background: linear-gradient(180deg, #0a0a0a 0%, #0d0d0d 100%);
+	background: linear-gradient(180deg, var(--stage) 0%, var(--stage-lift) 100%);
 	border: 1px solid var(--stroke);
 	border-radius: var(--radius-lg);
 	min-height: 380px;
@@ -3691,7 +3691,7 @@ body.market-page > header {
 	width: 100%;
 	height: 100%;
 	background: transparent;
-	--poster-color: #0a0a0a;
+	--poster-color: var(--stage);
 	opacity: 0;
 	transition: opacity 0.4s ease;
 	z-index: 0;
@@ -4053,7 +4053,7 @@ body.market-page > header {
 	justify-content: center;
 	background:
 		radial-gradient(circle at 50% 40%, rgba(255, 255, 255, 0.08), transparent 65%),
-		linear-gradient(180deg, #0a0a0a, #050505);
+		linear-gradient(180deg, var(--stage), var(--stage-deep));
 }
 .market-card-agent .card-img-fallback::after {
 	content: '◎';
@@ -5029,7 +5029,7 @@ body.market-page > header {
 	aspect-ratio: 4 / 3;
 	background:
 		radial-gradient(circle at 50% 55%, rgba(255, 255, 255, 0.06), transparent 70%),
-		linear-gradient(180deg, #0a0a0a, #060606);
+		linear-gradient(180deg, var(--stage), var(--stage-deep));
 }
 .anim-listing-thumb { width: 100%; height: 100%; object-fit: cover; display: block; }
 .anim-listing-thumb-empty {
@@ -5113,7 +5113,7 @@ body.market-page > header {
 	position: relative;
 	background:
 		radial-gradient(circle at 50% 55%, rgba(255, 255, 255, 0.06), transparent 70%),
-		linear-gradient(180deg, #0a0a0a, #050505);
+		linear-gradient(180deg, var(--stage), var(--stage-deep));
 	border-radius: 20px 0 0 20px;
 	min-height: 320px;
 }

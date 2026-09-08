@@ -242,7 +242,7 @@
 
 .fm-tour-primary {
 	background: #ffffff;
-	color: #0a0a0a;
+	color: var(--on-bright);
 	border: none;
 	border-radius: 8px;
 	padding: 6px 14px;

@@ -701,7 +701,7 @@ body.app-next-body {
 }
 
 .nxt-backdrop-swatch.is-light .nxt-backdrop-swatch__label {
-	color: #1a1a1a;
+	color: var(--on-bright);
 	background: linear-gradient(to top, rgba(255, 255, 255, 0.7), rgba(255, 255, 255, 0));
 }
 

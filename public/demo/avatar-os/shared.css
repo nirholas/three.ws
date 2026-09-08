@@ -1,16 +1,37 @@
 /* Shared chrome for the OSS avatar pipeline demos. */
-:root {
+@import url('/tokens.css');
+
+/* Dark-only theme layer (QB-07). These demo pages load no nav and no
+   /style.css, so before this import they resolved none of the platform
+   vocabulary (var(--success) below was resolving to nothing) and had forked
+   their own --panel/--text palette. The sheet pins the canonical primitives to
+   their dark values, then aliases the local names to them. The
+   [data-theme='light'] half keeps a globally-chosen light theme from
+   half-flipping a surface whose remaining literals are dark. */
+:root,
+/* Doubled :root is a deliberate specificity bump (0,3,0): the token sheet's own
+   [data-theme='light'] block would otherwise win on document order and half-flip
+   this dark-only surface. */
+:root:root[data-theme='light'] {
+	color-scheme: dark;
+	--bg-0: #0a0a0a;
+	--bg-1: #1a1a1a;
+	--ink: #e8e8e8;
+	--ink-dim: #888888;
+	--success: #4ade80;
+	--danger: #f87171;
+	--warn: #fbbf24;
+
 	--bg: #000000;
-	--panel: #0a0a0a;
+	--panel: var(--bg-0);
 	--panel-2: #111111;
-	--border: #1a1a1a;
+	--border: var(--bg-1);
 	--border-2: #2a2a2a;
-	--text: #e8e8e8;
-	--text-2: #888888;
+	--text: var(--ink);
+	--text-2: var(--ink-dim);
 	--text-3: #555555;
 	--accent: #ffffff;
 	--accent-2: #ffffff;
-	--danger: #f87171;
 	--ok: var(--success);
 }
 

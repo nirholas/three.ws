@@ -1,20 +1,38 @@
 /* Widget Studio — three-column layout. */
 
-:root {
+@import url('/tokens.css');
+
+/* Dark-only theme layer (QB-07). Widget Studio loads no nav and no /style.css,
+   so before this import it resolved none of the platform vocabulary and had
+   forked its own --panel/--text palette (its --radius-* trio was a hand-typed
+   copy of the canonical scale). It pins the canonical primitives to their dark
+   values, then aliases the local names to them. The [data-theme='light'] half
+   keeps a globally-chosen light theme from half-flipping a surface whose
+   remaining literals are dark. */
+:root,
+/* Doubled :root is a deliberate specificity bump (0,3,0): the token sheet's own
+   [data-theme='light'] block would otherwise win on document order and half-flip
+   this dark-only surface. */
+:root:root[data-theme='light'] {
+	color-scheme: dark;
+	--bg-0: #0a0a0a;
+	--bg-1: #1a1a1a;
+	--ink: #e8e8e8;
+	--ink-dim: #888888;
+	--success: #4ade80;
+	--danger: #f87171;
+	--warn: #fbbf24;
+
 	--accent: #ffffff;
-	--accent-strong: #e8e8e8;
+	--accent-strong: var(--ink);
 	--border: #2a2a2a;
 	--border-soft: rgba(255, 255, 255, 0.08);
 	--bg: #000000;
 	--panel: #111111;
-	--panel-soft: #1a1a1a;
-	--muted: #888888;
-	--text: #e8e8e8;
-	--danger: #f87171;
+	--panel-soft: var(--bg-1);
+	--muted: var(--ink-dim);
+	--text: var(--ink);
 	--header-h: 60px;
-	--radius-sm: 6px;
-	--radius-md: 10px;
-	--radius-lg: 14px;
 	--neutral-tint: rgba(255, 255, 255, 0.06);
 	--neutral-tint-strong: rgba(255, 255, 255, 0.1);
 	--neutral-icon-bg: rgba(255, 255, 255, 0.07);
@@ -1408,7 +1426,7 @@ a:hover {
 
 .bonding-curve-fill {
 	height: 100%;
-	background: linear-gradient(90deg, #555, #888);
+	background: linear-gradient(90deg, #555, var(--ink-dim));
 	transition: width 0.25s ease;
 	border-radius: 999px;
 }

@@ -39,7 +39,7 @@
 .share-panel-close {
 	background: none;
 	border: none;
-	color: #888;
+	color: var(--ink-dim);
 	font-size: 22px;
 	line-height: 1;
 	cursor: pointer;
@@ -61,7 +61,7 @@
 	font-weight: 600;
 	text-transform: uppercase;
 	letter-spacing: 0.07em;
-	color: #888;
+	color: var(--ink-dim);
 	margin-bottom: 6px;
 }
 
@@ -166,7 +166,7 @@
 	font-weight: 600;
 	text-transform: uppercase;
 	letter-spacing: 0.06em;
-	color: #888;
+	color: var(--ink-dim);
 	padding: 0 4px;
 }
 

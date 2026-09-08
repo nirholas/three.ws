@@ -571,7 +571,7 @@
 	background: #ff4545;
 }
 .ad-trade-outcome.flat {
-	background: #888;
+	background: var(--ink-dim);
 }
 .ad-trade-outcome.open {
 	background: #fbbe00;

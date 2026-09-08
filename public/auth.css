@@ -184,7 +184,7 @@ body {
 	gap: 8px;
 	margin-top: 14px;
 	font-size: 13px;
-	color: #888;
+	color: var(--ink-dim);
 	user-select: none;
 }
 .remember-row label {
@@ -193,7 +193,7 @@ body {
 	gap: 8px;
 	margin: 0;
 	font-size: 13px;
-	color: #888;
+	color: var(--ink-dim);
 	text-transform: none;
 	letter-spacing: normal;
 	font-weight: 400;

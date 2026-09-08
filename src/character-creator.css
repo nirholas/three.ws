@@ -3,18 +3,37 @@
    responsive down to a single column on phones. Mirrors the monochrome surface
    tokens the rest of the platform uses. */
 
-:root {
+@import url('/tokens.css');
+
+/* Dark-only theme layer (QB-07). The studio pins the canonical primitives to
+   their dark values, then aliases its local names to them instead of forking a
+   second palette (B02). The [data-theme='light'] half of the selector keeps a
+   globally-chosen light theme from half-flipping a surface whose remaining
+   literals are dark. Importing the token sheet also brings the platform floors
+   (focus ring, disabled affordance, reduced motion) to this page. */
+:root,
+/* Doubled :root is a deliberate specificity bump (0,3,0): the token sheet's own
+   [data-theme='light'] block would otherwise win on document order and half-flip
+   this dark-only surface. */
+:root:root[data-theme='light'] {
 	color-scheme: dark;
-	--bg: #000000;
-	--panel: #0a0a0a;
-	--panel-elev: #111114;
-	--border: #1a1a1a;
-	--border-strong: #2a2a2a;
-	--text: #e8e8e8;
-	--muted: #888888;
-	--accent: #ffffff;
-	--accent-ink: #000000;
+	--bg-0: #0a0a0a;
+	--bg-1: #1a1a1a;
+	--ink: #e8e8e8;
+	--ink-dim: #888888;
+	--success: #4ade80;
 	--danger: #f87171;
+	--warn: #fbbf24;
+
+	--bg: #000000;
+	--panel: var(--bg-0);
+	--panel-elev: #111114;
+	--border: var(--bg-1);
+	--border-strong: #2a2a2a;
+	--text: var(--ink);
+	--muted: var(--ink-dim);
+	--accent: #ffffff;
+	--accent-ink: var(--on-accent);
 }
 * { box-sizing: border-box; }
 html, body { margin: 0; padding: 0; height: 100%; }

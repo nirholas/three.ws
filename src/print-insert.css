@@ -4,13 +4,27 @@
    nothing here uses a screen-only trick (dark surfaces, backdrop filters) that
    a printer renders as a slab of toner.
 
-   The palette is local rather than pulled from public/tokens.css on purpose:
-   this page loads no nav and no footer (it is a print target, not a site page),
-   so a token reference here would silently fall back to its light-on-light
-   default and hide the toolbar. */
+   The palette is local because this page loads no nav and no footer (it is a
+   print target, not a site page). It now imports the token sheet directly, so a
+   canonical reference resolves here instead of falling back to a light-on-light
+   default, and the platform floors (focus ring, disabled affordance, reduced
+   motion) reach the on-screen toolbar. */
 
-:root {
-	--pi-bg: #0a0a0a;
+@import url('/tokens.css');
+
+/* Dark-only on screen: the sheet pins the canonical primitives to their dark
+   values so a globally-chosen light theme cannot half-flip a surface whose
+   remaining literals are dark. The @media print block below overrides all of
+   this for paper. */
+:root,
+/* Doubled :root is a deliberate specificity bump (0,3,0): the token sheet's own
+   [data-theme='light'] block would otherwise win on document order and half-flip
+   this dark-only surface. */
+:root:root[data-theme='light'] {
+	color-scheme: dark;
+	--bg-0: #0a0a0a;
+
+	--pi-bg: var(--bg-0);
 	--pi-ink: #f4f4f5;
 	--pi-dim: #a1a1aa;
 	--pi-line: rgba(255, 255, 255, 0.16);

@@ -277,6 +277,19 @@
 	--stage-lift:  #0d0d0d;
 	--stage-glow:  #242424;
 
+	/* Ink ON the accent fill (QB-07). A primary CTA paints var(--accent) and needs
+	   the opposite ink; every surface that wanted one hand-typed #0a0a0a, which
+	   stayed black when the light theme remaps --accent to a real blue, giving
+	   black-on-blue at 2.2:1. The value is always the page ground, so it flips
+	   with the theme and one name serves buttons, chips, badges and pills. */
+	--on-accent: #0a0a0a;
+
+	/* Ink on a permanently BRIGHT fill (QB-07). The mirror of the --on-scrim
+	   family, and theme-invariant for the same reason: a white dock button or a
+	   vivid gradient CTA stays bright in both themes, so its ink must stay dark.
+	   Distinct from --on-accent, which sits on var(--accent) and DOES flip. */
+	--on-bright: #0a0a0a;
+
 	/* Motion (B01) — one duration ladder + named easings. Compose as
 	   `transition: <prop> var(--duration-fast) var(--ease-standard);`
 	   Respect prefers-reduced-motion at the component level. */
@@ -481,6 +494,7 @@
 	/* Accent — white is invisible on light, so light gets a real accent. */
 	--accent: #2563eb;
 	--accent-soft: rgba(37, 99, 235, 0.10);
+	--on-accent: #ffffff;
 
 	/* Elevation — softer, cooler shadows on a light canvas */
 	--shadow-1: 0 1px 3px rgba(15, 18, 28, 0.08);

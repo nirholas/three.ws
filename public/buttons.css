@@ -28,7 +28,7 @@
 :root {
 	/* Primary — white fill, dark ink (the main CTA per surface) */
 	--btn-primary-bg:        var(--accent, #ffffff);
-	--btn-primary-fg:        #0a0a0a;
+	--btn-primary-fg:        var(--on-accent, #0a0a0a);
 	--btn-primary-border:    transparent;
 	--btn-primary-bg-hover:  rgba(255, 255, 255, 0.88);
 	--btn-primary-bg-active: rgba(255, 255, 255, 0.76);

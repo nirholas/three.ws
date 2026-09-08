@@ -70,7 +70,7 @@ body {
 .sw-btn:hover { background: var(--surface-3); transform: translateY(-1px); }
 .sw-btn:active { transform: translateY(0); }
 .sw-btn:focus-visible { outline: 2px solid var(--wallet-accent); outline-offset: 2px; }
-.sw-btn--primary { background: var(--ink-bright); color: #0a0a0a; border-color: transparent; }
+.sw-btn--primary { background: var(--ink-bright); color: var(--on-accent); border-color: transparent; }
 .sw-btn--primary:hover { background: #fff; }
 .sw-btn--danger { background: rgba(248, 113, 113, 0.12); border-color: rgba(248, 113, 113, 0.4); color: var(--danger); }
 .sw-btn--danger:hover { background: rgba(248, 113, 113, 0.2); }

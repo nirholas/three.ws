@@ -12,11 +12,14 @@
 
 :root {
 	/* Background ramp — dashboard runs a darker, pure-black base than the
-	   site-wide --bg-0/--bg-1 (which start at #0a0a0a). Kept explicit on purpose. */
+	   site-wide --bg-0/--bg-1. The two rungs that ARE the canonical values now
+	   say so with var() instead of a copy, per this sheet's own rule (alias when
+	   identical, explicit when deliberately different); the pure-black floor and
+	   the #111 mid rung have no canonical equivalent and stay explicit. */
 	--nxt-bg-0: #000000;
-	--nxt-bg-1: #0a0a0a; /* == canonical --bg-0 */
+	--nxt-bg-1: var(--bg-0);
 	--nxt-bg-2: #111111;
-	--nxt-bg-3: #1a1a1a; /* == canonical --bg-1 */
+	--nxt-bg-3: var(--bg-1);
 
 	/* Ink / accent / stroke / state — aliased to canonical (identical values) */
 	--nxt-ink:           var(--ink);            /* #e8e8e8 */

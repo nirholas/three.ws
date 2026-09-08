@@ -4,12 +4,26 @@
 	display: none !important;
 }
 
-/* ── Design tokens (mirrored from dashboard) ─────────────────────────── */
-:root {
+/* ── Design tokens ───────────────────────────────────────────────────────
+   Dark-only theme layer (QB-07). The --d-* names were a hand-copied mirror of
+   the dashboard palette; they are now aliases of the canonical primitives,
+   which this sheet pins to their dark values because the page has no theme
+   switcher. The [data-theme='light'] half keeps a globally-chosen light theme
+   from half-flipping a surface whose remaining literals are dark. */
+:root,
+/* Doubled :root is a deliberate specificity bump (0,3,0): the token sheet's own
+   [data-theme='light'] block would otherwise win on document order and half-flip
+   this dark-only surface. */
+:root:root[data-theme='light'] {
 	color-scheme: dark;
+	--bg-0: #0a0a0a;
+	--bg-1: #1a1a1a;
+	--ink: #e8e8e8;
+	--ink-dim: #888888;
+
 	--d-accent: #ffffff;
 	--d-accent2: #ffffff;
-	--d-border: #1a1a1a;
+	--d-border: var(--bg-1);
 	--d-bg: #000000;
 	--d-panel: #111111;
 }
