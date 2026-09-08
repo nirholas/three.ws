@@ -102,7 +102,7 @@ let pickerEl = null;
 
 // Parse the ?reward= deep-link value Launch Studio (and any other recipe surface)
 // hands to /launch. Returns a normalized routing target, or null when the param
-// is absent or malformed — a bad value never blocks a launch, it just means the
+// is absent or malformed. A bad value never blocks a launch, it just means the
 // coin routes creator fees the default way.
 //   github:<login> | x:<handle> → a social account, resolved to its three.ws
 //                                 payout wallet when the fee split is saved.

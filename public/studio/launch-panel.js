@@ -2358,7 +2358,14 @@ export function mountLaunchPanel(container, { getAvatar, getUser, getPreviewView
 		if (prefill.description) s.description = String(prefill.description).slice(0, 500);
 		const buy = Number(prefill.initialBuy);
 		if (isFinite(buy) && buy > 0) s.initialBuy = String(buy);
-		if (prefill.reward && (prefill.reward.login || prefill.reward.address)) s.rewardTarget = prefill.reward;
+		if (prefill.reward && (prefill.reward.login || prefill.reward.address)) {
+			s.rewardTarget = prefill.reward;
+			// A coin whose fees are promised to somebody IS the 'reward' coin type:
+			// a plain pump.fun launch whose creator fees are delegated as a split
+			// afterwards. Leaving it on the 'agent' default would have shipped a
+			// buyback-bound coin instead, which routes agent revenue, not fees.
+			s.coinType = 'reward';
+		}
 	}
 
 	// Pull a prefilled token image (a hosted URL from the launchpad config) into a

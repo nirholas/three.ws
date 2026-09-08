@@ -62,7 +62,7 @@ export const newsUseCases = [
 		id: 'news-hn-zeitgeist',
 		title: 'Hacker News front-page zeitgeist',
 		description:
-			'The tech and internet conversation as it happens — invent an original coin for whatever is climbing the Hacker News front page right now. Themes only, never the source verbatim.',
+			'The tech and internet conversation as it happens: invent an original coin for whatever is climbing the Hacker News front page right now. Themes only, never the source verbatim.',
 		tags: ['hackernews', 'tech', 'zeitgeist'],
 		sources: ['hackernews'],
 		limit: 12,
@@ -81,7 +81,7 @@ export const newsUseCases = [
 		id: 'news-wikipedia-top-events',
 		title: 'Wikipedia top events',
 		description:
-			'What the world is actually reading up on — coins invented from the most-viewed Wikipedia pages of the moment. The deepest, least-noisy signal of public attention.',
+			'What the world is actually reading up on, as coins invented from the most-viewed Wikipedia pages of the moment. The deepest, least-noisy signal of public attention.',
 		tags: ['wikipedia', 'pageviews', 'events'],
 		sources: ['wikipedia'],
 		limit: 12,
@@ -91,7 +91,7 @@ export const newsUseCases = [
 		id: 'news-search-and-read',
 		title: 'Search-and-read blend',
 		description:
-			'Where what people search meets what they read — a blend of Google Trends surges and Wikipedia top pageviews, distilled into original coin names with real staying power.',
+			'Where what people search meets what they read: a blend of Google Trends surges and Wikipedia top pageviews, distilled into original coin names with real staying power.',
 		tags: ['googletrends', 'wikipedia', 'blend'],
 		sources: ['googletrends', 'wikipedia'],
 		limit: 16,
@@ -100,7 +100,7 @@ export const newsUseCases = [
 		id: 'news-tech-meets-mainstream',
 		title: 'Tech meets mainstream',
 		description:
-			'The crossover stories breaking out of the tech bubble into mass attention — Hacker News momentum blended with Google search surges, named as fresh coins.',
+			'The crossover stories breaking out of the tech bubble into mass attention: Hacker News momentum blended with Google search surges, named as fresh coins.',
 		tags: ['hackernews', 'googletrends', 'crossover'],
 		sources: ['hackernews', 'googletrends'],
 		limit: 16,
@@ -110,7 +110,7 @@ export const newsUseCases = [
 		id: 'news-builder-attention',
 		title: 'Builder attention radar',
 		description:
-			'What technical people are reading and looking up — Hacker News front-page themes paired with Wikipedia top pageviews to surface durable, builder-relevant narratives.',
+			'What technical people are reading and looking up: Hacker News front-page themes paired with Wikipedia top pageviews to surface durable, builder-relevant narratives.',
 		tags: ['hackernews', 'wikipedia', 'builders'],
 		sources: ['hackernews', 'wikipedia'],
 		limit: 14,
@@ -120,7 +120,7 @@ export const newsUseCases = [
 		id: 'news-everything-trending',
 		title: 'Everything trending right now',
 		description:
-			'The widest possible read on public attention — Hacker News, Google Trends, and Wikipedia fused into one ranked feed of invented coin names. The full pulse of the moment.',
+			'The widest possible read on public attention: Hacker News, Google Trends, and Wikipedia fused into one ranked feed of invented coin names. The full pulse of the moment.',
 		tags: ['hackernews', 'googletrends', 'wikipedia', 'firehose'],
 		sources: ['hackernews', 'googletrends', 'wikipedia'],
 		limit: 24,
@@ -129,7 +129,7 @@ export const newsUseCases = [
 		id: 'news-front-page-picks',
 		title: 'Front-page picks',
 		description:
-			'A tight, high-conviction shortlist from the broadest attention sources — the top handful of trending themes across HN, Google, and Wikipedia, each minted as an original coin.',
+			'A tight, high-conviction shortlist from the broadest attention sources: the top handful of trending themes across HN, Google, and Wikipedia, each minted as an original coin.',
 		tags: ['hackernews', 'googletrends', 'wikipedia', 'curated'],
 		sources: ['hackernews', 'googletrends', 'wikipedia'],
 		limit: 8,
