@@ -47,6 +47,23 @@ export const KEEPWARM_LANES = [
 		safeByDefault: false,
 		reason: 'us-central1 L4 grant is 3 and trellis+rig floors hold 2; warming this would cap the trellis lane at its floor',
 	},
+	{
+		id: 'hunyuan3d',
+		urlEnv: 'GCP_HUNYUAN3D_URL',
+		region: 'us-central1',
+		accelerator: 'nvidia-l4',
+		safeByDefault: false,
+		// The fleet's largest spin-up (75s, BACKENDS.hunyuan3d.coldStartSeconds) and
+		// the `high` image tier's default engine, so it is the lane whose cold start
+		// costs a user the most. It has run minScale=0 since 2026-07-26, when its
+		// warm L4 was measured serving zero jobs in three days while starving
+		// model-text2motion (docs/ops/gcp-credits-plan.md). It was missing from this
+		// registry entirely, which meant the tick's `skipped_for_quota` reported one
+		// deferred lane when there were two: the flag existed to make the warm set
+		// changeable without a deploy, and the biggest cold start in the fleet was
+		// not reachable through it.
+		reason: 'us-central1 L4 grant is 3 and trellis+rig floors hold 2; a warm floor here starved text2motion on 2026-07-26',
+	},
 ];
 
 const PING_TIMEOUT_MS = 8_000;

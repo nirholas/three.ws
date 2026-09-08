@@ -26,6 +26,7 @@ import { test, expect, afterEach, vi } from 'vitest';
 import { runGeneration, GENERATION_BUDGET_MS } from '../api/cron/forge-smoke.js';
 import { gateFaultOutcome } from '../api/cron/forge-seed-cron.js';
 import { resolveKeepwarmLanes, KEEPWARM_LANES } from '../api/cron/gpu-keepwarm.js';
+import { BACKENDS } from '../api/_lib/forge-tiers.js';
 
 const realFetch = globalThis.fetch;
 afterEach(() => {
@@ -155,4 +156,33 @@ test('an override of nothing but typos leaves no lane warm and says so', () => {
 	const { lanes, unknown } = resolveKeepwarmLanes('nope,alsonope');
 	expect(lanes).toEqual([]);
 	expect(unknown).toEqual(['nope', 'alsonope']);
+});
+
+// Every scale-to-zero self-host lane the forge ROUTES to must be reachable
+// through this registry, and its urlEnv must be the env var the router itself
+// resolves that worker from. Two failures this pins:
+//   • A routed min-0 lane missing from the registry is unwarmable at any quota,
+//     and its absence is invisible: the tick reports a shorter
+//     `skipped_for_quota` list and looks complete. hunyuan3d (75s spin-up, the
+//     `high` image tier default) sat outside the registry exactly this way.
+//   • A typo'd urlEnv never throws. pingLane() reads process.env[urlEnv], finds
+//     nothing, and reports `unconfigured` forever, so the cron answers ok:true
+//     while warming nothing.
+test('every routed scale-to-zero lane is in the keepwarm registry under its real url env', () => {
+	const registry = new Map(KEEPWARM_LANES.map((l) => [l.id, l]));
+	const coldRoutedLanes = Object.values(BACKENDS).filter(
+		(b) => b.provider === 'gcp' && Number(b.coldStartSeconds) > 0,
+	);
+	expect(coldRoutedLanes.length).toBeGreaterThan(0);
+	for (const backend of coldRoutedLanes) {
+		// A lane with a warm floor (minScale >= 1) needs no keepwarm ping; the ones
+		// that scale to zero are the whole point of this cron. trellis carries the
+		// floor, so it is the single documented exclusion.
+		if (backend.id === 'trellis_selfhost') continue;
+		const lane = registry.get(backend.id);
+		expect(lane, `${backend.id} is a routed scale-to-zero lane but is not in KEEPWARM_LANES`).toBeTruthy();
+		expect(lane.urlEnv, `${backend.id} keepwarm urlEnv must match the router's own env var`).toBe(
+			backend.requiresEnv[0],
+		);
+	}
 });
