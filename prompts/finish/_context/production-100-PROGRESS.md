@@ -497,6 +497,58 @@ moving 2007 -> 2010 between them, and every named file passes in isolation: conc
 are editing sources mid-run. The Playwright stage was deliberately not run, because another
 session's headless browser and `:3000` dev server were live.
 
+## 2026-09-08: 05 unwired guards (classified all 35, wired 8, fixed 5 reds)
+
+Measured: the step-0 command reported **80 guards, 43 unwired** (the order's 73/39 had drifted;
+peers added guards since). After this pass: **80 guards, 35 unwired**, and every one of the 35
+has a measured row in `docs/ops/guard-wiring.md` (exit code, wall-clock runtime, verdict).
+Nothing was inferred from a script name: 34 of the 35 were executed, the exception being
+`audit:web:provision`, which registers a real production account, so measuring it would have
+created one. That is recorded as the reason.
+
+Did:
+- **Wired into `gate`** (all seven measured green, repo-only and fast, solo timings):
+  `check:announce` 3.5s, `check:skills-seed` 3.7s, `audit:motion` 2.4s, `audit:tour-global` 4.4s,
+  `check:doc-media` 6.3s, `check:images` 10.6s, `audit:route-shadowing` 9.3s. Full `npm run gate`
+  re-run after wiring: **exit 0**.
+- **Wired into `deploy:gcp:submit`**: `audit:deploy`, ahead of the upload. Three of its four
+  checks are already covered by `tests/deploy-artifacts.test.js`, but `findMissingDistAssets()`
+  returns `{skipped:true}` with no `dist/`, so it means nothing in vitest or in `gate` and
+  everything after a build (the /scene Draco outage class).
+- **Reds fixed**, each in its own topical commit: `audit:tour-global` (stale CDN bundle,
+  ccb137a5929), `check:images` (3 `<img>` with no `loading`, eb5366446), `audit:route-shadowing`
+  (`GET /api/agents/vitals` was answered by `api/agents/[id].js`; the endpoint is documented and
+  was announced in the changelog, 31f18493d), `check:doc-media` (30 problems: `scene-studio`
+  never captured, and 29 `usedBy` claims naming docs that embedded no figure at all, so all 20
+  captured figures are now embedded in the 27 docs that claimed them, 303c17ce3),
+  `check:runnable-docs` (7 of 8 samples declared their real contract, ba91edd53).
+- `check:docs-search` told you to "commit the result" for a file `.gitignore` excludes on
+  purpose; message corrected. Guard wiring pinned by `tests/guard-wiring.test.js`, which also
+  fails if a newly unwired guard has no row in the doc. Doc linked from `docs/ops/README.md`.
+  Wiring commit f8058bc64. Changelog 798c0f692.
+
+Left:
+- **Nothing deleted.** `audit:deploy` was the only delete candidate and moved to the deploy path
+  instead; `check:docs-search` looked like a decoy but three open `prompts/finish/` orders invoke
+  it, so its message was fixed rather than the script removed.
+- **Recorded reds, not hidden ones.** `check:docs-freshness` is over its budget by 70 docs;
+  `audit:deps` reports 285 OSV advisories across 17 pinned Python versions (two are RCE in
+  `transformers`, fixed in 5.0.0 / 5.3.0), each a pin bump plus a worker image rebuild;
+  `audit:garments` has 1 hard failure and 4 review flags out of 59, and `check:cron-drift` needs
+  live gcloud, both of which belong to
+  [905-fix-queue-03](../905-fix-queue-03-cron-drift-garment-sweep.md). None were wired, because
+  wiring a red guard into `gate` blocks every concurrent session.
+- **One `check:runnable-docs` finding survives on purpose**: `/api/v1/hood-portfolios/universe`
+  404s because its handler landed 2026-09-07 and production runs the 2026-09-05 image
+  (`/api/version` = 8770c06c2). Declaring `404` would be wrong the moment it deploys. Re-run
+  after the next deploy. That deploy lag is exactly why the guard is classified post-deploy
+  rather than `gate`.
+- **A commit of mine reverted 9 files of peer work** (ba91edd53) through a race in my own
+  private-index helper: it read the tree from one HEAD and took the parent from a later one.
+  Repaired forward; a peer had already re-landed most of it in ff3144f78 / c6f3f78e6, and the
+  remaining paths were checked back out and verified byte-identical to theirs. No reset, no
+  amend. The helper now pins `$PARENT` before `read-tree`.
+
 ## Retire this file when the campaign is done (required)
 
 This file is shared context rather than a single order, so it outlives the
