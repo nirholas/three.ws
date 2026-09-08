@@ -160,6 +160,33 @@ is per-region separation, either by having the mesh lane emit named submeshes or
 routing through `workers/segment` before the material pass. Filed here rather than
 forced, because a wrong fix degrades every generated avatar.
 
+## Verification
+
+Green, run this session:
+
+- `tests/mcp-studio.test.js` 32 passed (includes the three new tier-routing cases)
+- `tests/api/vision.test.js` 29 passed, `tests/api/vision-lane-health.test.js` 12 passed
+- `tests/glb-canonicalize.test.js` + `tests/animation-retarget.test.js` 543 passed
+- `tests/forge-avatar-rig-degrade.test.js`, `forge-avatar-humanoid`,
+  `forge-humanoid`, `api/mcp-studio-safety` 101 passed
+- `npm run check:rules -- --paths <every file touched>` clean
+- `npm run audit:rig-coverage` clean
+- `node scripts/animation-dignity-sweep.mjs` 10/10, re-run AFTER these changes
+
+A whole-suite `vitest run` in this worktree is **not** a clean signal right now:
+21 concurrent vitest processes from other agents share the same repo, and tests
+that touch shared files race. `tests/version-endpoint.test.js` ("trusts a
+pre-build snapshot ... then consumes it"), `tests/build-asset-paths.test.js` and
+`tests/server-404-routes.test.js` each failed in the shared run and each pass in
+isolation, verified individually.
+
+One genuine failure remains and is **not** from this work:
+`tests/audit-guards.test.js` reports that `data/guards.json` never describes the
+gate steps `check:skills-seed`, `audit:motion` and `audit:tour-global`, and that a
+`check-thing` fixture edits a `public/gone.json` that does not exist. That file and
+`package.json` are untouched by this pass; the recent commits there belong to
+another agent's in-flight guards registration.
+
 ## What is still open
 
 The two shipped fixes cannot be demonstrated on new generations from this session:
