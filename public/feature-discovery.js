@@ -348,7 +348,9 @@
 		// content until manually closed (on mobile it's a full-width bottom bar).
 		// After a reveal window it gracefully dismisses itself — paused while the
 		// pointer is over it or keyboard focus is inside, so it never vanishes
-		// mid-read or mid-interaction. Contextual cards omit autoDismissMs and stay.
+		// mid-read or mid-interaction. A card that omits autoDismissMs stays until
+		// it is dismissed, which is only right when nothing underneath it needs the
+		// corner (see showCrossLinks for why the handoff card no longer does that).
 		if (spec.autoDismissMs) {
 			var arm = function () {
 				clearTimeout(card._fdKill);
@@ -463,6 +465,17 @@
 			title: carried && modelLabel ? modelLabel : null,
 			desc: carried ? 'Each tool opens with this model already loaded.' : null,
 			links: links,
+			// This card used to stay pinned until dismissed. The page it lands on
+			// has just finished something, which is exactly when it fills the
+			// bottom-right with its OWN next-step actions: on /forge the result bar
+			// (Download, Share, Rig, AR, Place IRL) reaches the same corner, and a
+			// permanent card sat on top of it at every width below ~1500px. So the
+			// handoff behaves like the passive suggestion it sits beside: it
+			// announces the destinations the page does not already offer, then
+			// retracts. Longer than the passive window because there is more to
+			// read here, and the same hover/focus pause applies, so it never
+			// vanishes mid-read or mid-click.
+			autoDismissMs: 22000,
 		});
 	}
 

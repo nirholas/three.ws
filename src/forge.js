@@ -1075,7 +1075,7 @@ function applyHighAffordances(access) {
 		note.dataset.state = state;
 		note.innerHTML = eligible
 			? '<span class="fq-holder-ico" aria-hidden="true">◆</span> High quality is unlocked — you hold <a href="/three-token">$THREE</a>.'
-			: '<span class="fq-holder-ico" aria-hidden="true">◆</span> High quality is a <a href="/three-token">$THREE holder</a> feature — hold to unlock, or pay per generation.';
+			: '<span class="fq-holder-ico" aria-hidden="true">◆</span> High quality is a <a href="/three-token">$THREE holder</a> feature: hold to unlock, or pay per generation.';
 	}
 }
 
@@ -2181,6 +2181,11 @@ function showResult(glbUrl, label, meta, { autoSaved = false, downloadUrl = null
 	els.viewerShell?.classList.add('is-loading');
 	els.viewer.setAttribute('src', glbUrl);
 	els.viewer.setAttribute('alt', `3D model: ${label}`);
+	// A turntable that never stops is exactly the motion prefers-reduced-motion
+	// exists to silence, and it is the largest moving thing on the page. Drop it
+	// for a reader who asked for less motion: camera-controls stays, so the model
+	// is still fully inspectable by drag, pinch and arrow key, on their terms.
+	if (REDUCED_MOTION) els.viewer.removeAttribute('auto-rotate');
 	lastShownGlb = glbUrl;
 	els.resultLabel.textContent = label;
 	// Real, opt-in attribution only: a byline + link to the creator's public
