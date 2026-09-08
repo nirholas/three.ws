@@ -207,12 +207,25 @@ describe('corner stack — reservations', () => {
 });
 
 describe('corner stack — stylesheet contract', () => {
-	it('drives both the desktop and the narrow-viewport offset from the reserve', () => {
-		// Two rules set `bottom`: the base rule and the <=640px rule that goes
-		// full-width. A reservation honoured by only one of them still buries the
-		// cards on the other, which is exactly how this shipped broken before.
-		const bottoms = SOURCE.match(/bottom:calc\([^)]*var\(--tws-corner-reserve[^)]*\)[^)]*\)/g) || [];
-		expect(bottoms.length).toBe(2);
+	it('drives the offset from the reserve on one rule that both viewports share', () => {
+		// The reservation used to be spelled into `bottom` twice, once on the base
+		// rule and once on the <=640px rule, and a reservation honoured by only
+		// one of them buried the cards on the other. One transform on the base
+		// rule covers both viewports, so the two can no longer disagree.
+		const lifts = SOURCE.match(/transform:translate3d\([^;]*--tws-corner-reserve[^;]*\);/g) || [];
+		expect(lifts.length).toBe(1);
+		expect(lifts[0]).toContain('--tws-corner-reserve-w');
+		expect(lifts[0]).toContain('--tws-corner-dock');
+	});
+
+	it('never animates a layout property, because that is reported as a layout shift', () => {
+		// `bottom` and `right` are layout properties: transitioning them re-lays
+		// the element out per frame and every one of those frames reaches the
+		// layout-instability API, even though the stack is fixed and no page
+		// content moved. Docks are re-measured on a settle timer and on body
+		// mutations, so each re-measure cost a real CLS entry on production.
+		expect(SOURCE).toContain('transition:transform .35s');
+		expect(SOURCE).not.toMatch(/transition:[^;]*\b(bottom|right|left|top|width|height)\b/);
 	});
 
 	it('caps its height against the reserve so a tall stack cannot overflow', () => {
@@ -221,13 +234,12 @@ describe('corner stack — stylesheet contract', () => {
 		);
 	});
 
-	it('offsets both rules by the measured page dock as well as the reserve', () => {
+	it('offsets by the measured page dock as well as the reserve', () => {
 		// A page's own bottom chrome (the /app chat composer, a viewer action
 		// bar) is not a reservation (nobody declares it), so the stack measures
-		// it. Both the desktop and the narrow rule have to honour that lift or
-		// the phone layout keeps parking helper widgets on the composer.
-		const docked = SOURCE.match(/bottom:calc\([^;]*--tws-corner-dock/g) || [];
-		expect(docked.length).toBe(2);
+		// it. The narrow rule inherits the base rule's transform, so honouring
+		// the dock in one place now covers the phone layout too.
+		expect(SOURCE).toMatch(/transform:translate3d\([^;]*--tws-corner-dock,0px\)/);
 	});
 
 	it('sizes members to their content on a phone instead of stretching them', () => {
@@ -236,9 +248,15 @@ describe('corner stack — stylesheet contract', () => {
 		expect(SOURCE).not.toContain('align-items:stretch');
 	});
 
-	it('offsets both rules horizontally too, so stepping aside works at any width', () => {
-		const rights = SOURCE.match(/right:calc\([^)]*var\(--tws-corner-reserve-w[^)]*\)[^)]*\)/g) || [];
-		expect(rights.length).toBe(2);
+	it('steps aside horizontally at any width, and stays on screen when it does', () => {
+		// The step-aside is the X half of the same transform, so it applies at
+		// every width. It also means the phone rule can no longer pin the stack
+		// to BOTH edges: a box anchored left and right slides its left edge off
+		// screen when the transform moves it, taking a wide card with it. The
+		// room to grow leftward is a max-width instead.
+		expect(SOURCE).toMatch(/transform:translate3d\(calc\(-1 \* var\(--tws-corner-reserve-w,0px\)\)/);
+		expect(SOURCE).not.toMatch(/left:12px/);
+		expect(SOURCE).toContain('max-width:calc(100vw - 24px)');
 	});
 
 	it('honours prefers-reduced-motion for the lift', () => {

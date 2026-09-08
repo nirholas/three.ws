@@ -62,15 +62,25 @@
 		'--z-overlay-modal:2147483600;',
 		'}',
 		'#' + STACK_ID + '{',
-		'position:fixed;right:calc(18px + var(--tws-corner-reserve-w,0px));',
-		'bottom:calc(18px + var(--tws-corner-reserve,0px) + var(--tws-corner-dock,0px));',
+		'position:fixed;right:18px;bottom:18px;',
+		/* Reservations move the stack with a TRANSFORM, never with `bottom` or
+		   `right`. Those two are layout properties: animating them re-lays the
+		   element out on every frame, and the browser reports each of those
+		   frames to the layout-instability API even though the stack is fixed
+		   and nothing on the page moved. Docks are re-measured on a settle timer
+		   and on every body mutation, so a page that mounts anything late paid
+		   one shift per re-measure: 0.076 on /marketplace (twice), 0.081 on
+		   /launches, 0.076 on /agents/:id and 0.060 on /walk, measured on a
+		   Pixel 5 against production on 2026-09-08. A transform is composited,
+		   generates no layout shift at all, and lands on the same pixels. */
+		'transform:translate3d(calc(-1 * var(--tws-corner-reserve-w,0px)),calc(-1 * (var(--tws-corner-reserve,0px) + var(--tws-corner-dock,0px))),0);',
 		'z-index:var(--z-corner-stack,2147482500);',
 		'display:flex;flex-direction:column;align-items:flex-end;',
 		'gap:12px;max-width:min(380px,calc(100vw - 24px));',
 		'max-height:calc(100dvh - 36px - var(--tws-corner-reserve,0px) - var(--tws-corner-dock,0px));overflow:visible;',
 		/* Clicks fall through the gaps; members re-enable pointer events. */
 		'pointer-events:none;',
-		'transition:bottom .35s cubic-bezier(.22,1,.36,1),right .35s cubic-bezier(.22,1,.36,1);',
+		'transition:transform .35s cubic-bezier(.22,1,.36,1);',
 		'}',
 		'@media (prefers-reduced-motion:reduce){#' + STACK_ID + '{transition:none;}}',
 		'#' + STACK_ID + ':empty{display:none;}',
@@ -81,13 +91,18 @@
 		'position:relative;inset:auto;margin:0;pointer-events:auto;',
 		'}',
 		'@media (max-width:640px){',
-		/* Phone layout: the stack still spans the width so a wide card can grow
-		   leftward, but members size to their content and hug the right edge.
+		/* Phone layout: a wide card can still grow leftward across the whole
+		   viewport, but members size to their content and hug the right edge.
 		   Stretching every member edge-to-edge turned a 44px language control
-		   into a full-width bar laid over the page's own bottom controls. */
+		   into a full-width bar laid over the page's own bottom controls.
+		   The room to grow is a `max-width` rather than a `left` anchor: the
+		   base rule's step-aside transform slides the whole box left, and a box
+		   pinned to both edges would have slid its LEFT edge off screen with a
+		   wide card inside it. Shrink-to-fit from the right does the same job
+		   and stays on screen. */
 		'#' +
 			STACK_ID +
-			'{right:calc(12px + var(--tws-corner-reserve-w,0px));bottom:calc(12px + var(--tws-corner-reserve,0px) + var(--tws-corner-dock,0px));left:12px;align-items:flex-end;gap:10px;max-width:none;}',
+			'{right:12px;bottom:12px;align-items:flex-end;gap:10px;max-width:calc(100vw - 24px);}',
 		'#' + STACK_ID + '>.' + ITEM_CLASS + '{max-width:100%;}',
 		'}'
 	].join('');

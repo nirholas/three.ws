@@ -515,7 +515,8 @@
 		min-width: 44px;
 		justify-content: center;
 	}
-	/* The ticker span carries a click handler, so it is a real target. */
+	/* The wallet pill's identity run carries the popover handler, so the pill is a
+	   real target; the run stretches through the pill's padding to match it. */
 	span.twc {
 		min-height: 44px;
 		display: inline-flex;

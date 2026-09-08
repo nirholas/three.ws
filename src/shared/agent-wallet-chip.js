@@ -241,25 +241,41 @@ export function ensureWalletChipStyles() {
 	const style = document.createElement('style');
 	style.id = STYLE_ID;
 	style.textContent = `
-.twc{display:inline-flex;align-items:center;gap:7px;padding:3px 9px;border-radius:999px;
+.twc{--twc-pad-y:3px;display:inline-flex;align-items:center;gap:7px;padding:var(--twc-pad-y) 9px;border-radius:999px;
 	font:600 11px/1 ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif;
 	color:var(--wallet-accent,#c4b5fd);background:var(--wallet-accent-soft,rgba(139,92,246,.1));
 	border:1px solid var(--wallet-stroke,rgba(139,92,246,.3));
 	white-space:nowrap;vertical-align:middle;max-width:100%;cursor:default;
 	transition:border-color .18s ease,background .18s ease,box-shadow .25s ease;}
-.twc[data-twc-trigger]{cursor:pointer;}
-.twc[data-twc-trigger]:hover,.twc[data-twc-trigger]:focus-visible{border-color:var(--wallet-stroke-strong,rgba(139,92,246,.5));background:var(--wallet-accent-fill,rgba(139,92,246,.15));}
-.twc:focus-visible{outline:none;box-shadow:0 0 0 2px var(--wallet-glow,rgba(139,92,246,.45));}
+/* Identity run: the popover trigger. Inline-flex with the pill's own gap so the
+   grouping is invisible, and the pill still tints as one unit on hover/focus.
+   flex-wrap:inherit keeps it wrapping wherever a surface wraps the pill (dense
+   card footers, the /trending wallet column) instead of going atomic and pushing
+   a 320px row into a horizontal scroll. The negative block margin cancels the
+   pill's own vertical padding so the trigger's hit area is the pill's full
+   height, not the text height inside it. */
+.twc-id{display:inline-flex;align-items:center;align-self:stretch;column-gap:7px;row-gap:5px;
+	flex-wrap:inherit;min-width:0;max-width:100%;
+	margin-block:calc(-1 * var(--twc-pad-y));padding-block:var(--twc-pad-y);}
+.twc-id[data-twc-trigger]{cursor:pointer;}
+.twc:has(.twc-id[data-twc-trigger]):hover,
+.twc:has(.twc-id[data-twc-trigger]:focus-visible){border-color:var(--wallet-stroke-strong,rgba(139,92,246,.5));background:var(--wallet-accent-fill,rgba(139,92,246,.15));}
+.twc-id:focus-visible{outline:none;border-radius:999px;box-shadow:0 0 0 2px var(--wallet-glow,rgba(139,92,246,.45));}
 .twc[data-vanity="true"]{color:var(--wallet-accent-strong,#a78bfa);background:var(--wallet-accent-fill,rgba(139,92,246,.15));border-color:var(--wallet-stroke-strong,rgba(139,92,246,.5));}
 .twc[data-owner="1"]{border-color:var(--wallet-stroke-strong,rgba(139,92,246,.5));}
 /* Dense mode: fill a narrow card footer and wrap badges onto a second line inside
    the same rounded container instead of overflowing the card into its neighbours. */
-.twc[data-dense="1"]{display:flex;flex-wrap:wrap;width:100%;max-width:100%;box-sizing:border-box;white-space:normal;
-	border-radius:12px;column-gap:7px;row-gap:5px;padding:6px 10px;align-items:center;}
+.twc[data-dense="1"]{--twc-pad-y:6px;display:flex;flex-wrap:wrap;width:100%;max-width:100%;box-sizing:border-box;white-space:normal;
+	border-radius:12px;column-gap:7px;row-gap:5px;padding:var(--twc-pad-y) 10px;align-items:center;}
 .twc[data-dense="1"] .twc-addr{min-width:0;overflow:hidden;text-overflow:ellipsis;}
 .twc[data-dense="1"] .twc-bal,
 .twc[data-dense="1"] .twc-make,
 .twc[data-dense="1"] button.twc-make{border-left:0;padding-left:0;margin-left:0;}
+/* Screen-reader-only label. The balance and trust slots are plain spans, and
+   aria-label is prohibited on a generic element, so they carry their name as
+   real text instead of an attribute assistive tech is told to ignore. */
+.twc-sr{position:absolute;width:1px;height:1px;margin:-1px;padding:0;overflow:hidden;
+	clip:rect(0 0 0 0);clip-path:inset(50%);white-space:nowrap;border:0;}
 .twc-ico{width:11px;height:11px;flex:none;opacity:.8;}
 .twc-addr{font-family:var(--font-mono,ui-monospace,SFMono-Regular,Menlo,monospace);letter-spacing:.01em;display:inline-flex;gap:1px;}
 .twc-hi{color:var(--ink-bright,#fff);font-weight:700;}
@@ -444,14 +460,14 @@ export function walletChipHTML(agent, opts = {}) {
 	// from the real reputation score. Only meaningful for a real agent row.
 	const repSlot =
 		reputation && isRealAgent
-			? `<span class="rep-badge-slot" data-rep-aid="${esc(status.agentId)}"${link ? '' : ' data-rep-embedded="1"'} data-twc-rep aria-label="Wallet trust score loading"></span>`
+			? `<span class="rep-badge-slot" data-rep-aid="${esc(status.agentId)}"${link ? '' : ' data-rep-embedded="1"'} data-twc-rep aria-hidden="true"></span>`
 			: '';
 
 	// Live balance slot — renders a skeleton, then hydrates to "$1.2K +2.3%" on
 	// viewport-enter via POST /api/agents/balances. Read-only display, safe inside
 	// card anchors (it's a <span>, no nested <a>).
 	const balanceSlot = wantBalance
-		? `<span class="twc-bal" data-twc-bal aria-label="Wallet value loading"><span class="twc-bal-sk"></span></span>`
+		? `<span class="twc-bal" data-twc-bal aria-hidden="true"><span class="twc-bal-sk"></span></span>`
 		: '';
 
 	const copyBtn = link
@@ -498,11 +514,20 @@ export function walletChipHTML(agent, opts = {}) {
 		: '';
 
 	const title = `Agent wallet ${status.address}${status.isVanity ? ' (vanity)' : ''}`;
+	// The popover trigger sits on the identity run (icon + address + owner badge),
+	// never on the outer pill. Everything after it (trust badge, rarity tag,
+	// explorer link, copy, vanity, tip) is focusable in its own right, and a
+	// role="button" wrapping those is a nested interactive control: assistive tech
+	// announces one button and hides the ones inside it. Keeping the trigger to the
+	// non-focusable run leaves every action independently reachable, and the pill
+	// still lights up as a whole on hover/focus through the :has() rules below.
 	return (
-		`<span class="twc" data-vanity="${status.isVanity}" data-owner="${isOwner ? '1' : '0'}"${dense ? ' data-dense="1"' : ''}${triggerAttrs}${hydrateAttrs} title="${esc(title)}">` +
+		`<span class="twc" data-vanity="${status.isVanity}" data-owner="${isOwner ? '1' : '0'}"${dense ? ' data-dense="1"' : ''}${hydrateAttrs} title="${esc(title)}">` +
+		`<span class="twc-id"${triggerAttrs}>` +
 		WALLET_SVG +
 		addressLabelHTML(status) +
 		ownerBadge +
+		`</span>` +
 		repSlot +
 		vanityTag +
 		balanceSlot +
@@ -538,7 +563,7 @@ export function walletChipEl(agent, opts = {}) {
 export function wireWalletChips(root) {
 	if (!root || typeof root.querySelectorAll !== 'function') return;
 	const chips = new Set();
-	for (const el of root.querySelectorAll('.twc[data-twc-aid],.twc[data-twc-trigger],[data-twc-rep],[data-twc-copy],[data-twc-stop],[data-twc-tip]')) {
+	for (const el of root.querySelectorAll('.twc[data-twc-aid],.twc-id[data-twc-trigger],[data-twc-rep],[data-twc-copy],[data-twc-stop],[data-twc-tip]')) {
 		chips.add(el.classList?.contains('twc') ? el : el.closest('.twc'));
 	}
 	for (const chip of chips) if (chip) wireWalletChip(chip);
@@ -575,8 +600,10 @@ function wireWalletChip(node) {
 
 	// Live balance hydration: register with the shared observer/poller.
 	if (node.hasAttribute?.('data-twc-aid')) registerForHydration(node);
-	// Rich preview popover.
-	if (node.hasAttribute?.('data-twc-trigger')) wirePopoverTrigger(node);
+	// Rich preview popover. The trigger is the chip's identity run, not the chip
+	// itself, so accept either as the entry point.
+	const trigger = node.matches?.('[data-twc-trigger]') ? node : node.querySelector?.('[data-twc-trigger]');
+	if (trigger) wirePopoverTrigger(trigger);
 	// Wallet-trust badge: lazily hydrate the placeholder from the real score.
 	const repSlot = node.querySelector?.('[data-twc-rep]');
 	if (repSlot && !repSlot.__repObserved) {
@@ -730,8 +757,11 @@ function applyHydration(agentId, entry) {
 				? `<span class="twc-tierdot" style="--twc-tier:${esc(computeWalletVisual({ usdTotal: entry.usd, mix: { sol: 1 }, hasThree: false }).accent)}" title="${esc(tier.label)} tier"></span>`
 				: '';
 			node.dataset.tier = tier.key;
-			slot.innerHTML = `${dot}<span class="twc-usd">${esc(usdLabel)}</span>${chg}`;
-			slot.setAttribute('aria-label', `Wallet value ${usdLabel}${pct != null ? `, ${formatPct(pct)} over ${entry.pnl?.windowHours || 24} hours` : ''}`);
+			const winH = entry.pnl?.windowHours || 24;
+			const winLabel = winH < 1 ? `${Math.max(1, Math.round(winH * 60))} minutes` : `${Math.round(winH)} hours`;
+			const srLabel = `Wallet value${pct != null ? `, ${formatPct(pct)} over ${winLabel}` : ''}`;
+			slot.innerHTML = `<span class="twc-sr">${esc(srLabel)}</span>${dot}<span class="twc-usd">${esc(usdLabel)}</span>${chg}`;
+			slot.removeAttribute('aria-hidden');
 		}
 		if (increased) pulseChip(node, entry.usd - prev);
 	}
@@ -745,8 +775,8 @@ function markBalanceUnavailable(agentId) {
 	for (const node of set) {
 		const slot = node.querySelector?.('.twc-bal');
 		if (slot && slot.querySelector('.twc-bal-sk')) {
-			slot.innerHTML = '<span class="twc-bal-na" title="Balance temporarily unavailable">—</span>';
-			slot.setAttribute('aria-label', 'Wallet value unavailable');
+			slot.innerHTML = '<span class="twc-sr">Wallet value unavailable</span><span class="twc-bal-na" title="Balance temporarily unavailable" aria-hidden="true">\u2014</span>';
+			slot.removeAttribute('aria-hidden');
 		}
 	}
 }
@@ -815,10 +845,9 @@ function wirePopoverTrigger(node) {
 	});
 	// Touch: a standalone chip (not embedded in a clickable card, not inside an
 	// anchor) toggles the popover. Embedded/card chips leave the tap to the card's
-	// own navigation — the popover stays a hover/focus enhancement there.
+	// own navigation, where the popover stays a hover/focus enhancement.
 	if (!node.closest('a') && !node.hasAttribute('data-twc-embedded')) {
 		node.addEventListener('click', (e) => {
-			if (e.target.closest('[data-twc-stop],[data-twc-copy],[data-twc-tip]')) return;
 			e.preventDefault();
 			e.stopPropagation();
 			_openPopover?.trigger === node ? closePopover(node) : open();

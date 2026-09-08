@@ -396,8 +396,11 @@ function renderCard(coin, opts) {
 		);
 	}
 
-	// Market-cap progress bar mirrors the graduation ring as a wider readout.
-	const bar = el('div', { class: 'csc-bar', role: 'progressbar', 'aria-valuemin': '0', 'aria-valuemax': '100', 'aria-valuenow': String(Math.round(coin.graduationPct || 0)) }, [
+	// Market-cap progress bar mirrors the graduation ring as a wider readout. The
+	// bar names itself and its value in words: a bare progressbar reads as an
+	// unlabelled percentage, and a feed of them reads as a wall of them.
+	const gradPct = Math.round(coin.graduationPct || 0);
+	const bar = el('div', { class: 'csc-bar', role: 'progressbar', 'aria-valuemin': '0', 'aria-valuemax': '100', 'aria-valuenow': String(gradPct), 'aria-valuetext': `${gradPct}% to graduation`, 'aria-label': `Bonding curve progress for ${coin.symbol ? `$${coin.symbol}` : coin.name || 'this coin'}` }, [
 		el('div', { class: 'csc-bar-fill', style: `width:${Math.min(100, coin.graduationPct || 0).toFixed(1)}%` }),
 	]);
 

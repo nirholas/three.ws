@@ -142,6 +142,7 @@ function injectStyles() {
 /* Ticker variant */
 .mp-ticker { --mp-accent: var(--wallet-accent, #c4b5fd); position: relative; overflow: hidden; mask-image: linear-gradient(90deg, transparent, #000 6%, #000 94%, transparent); -webkit-mask-image: linear-gradient(90deg, transparent, #000 6%, #000 94%, transparent); }
 .mp-ticker-track { display: inline-flex; gap: 26px; white-space: nowrap; will-change: transform; animation: mp-marquee var(--mp-dur, 60s) linear infinite; }
+.mp-tick-item { display: inline-flex; align-items: center; }
 .mp-ticker:hover .mp-ticker-track { animation-play-state: paused; }
 @keyframes mp-marquee { from { transform: translateX(0); } to { transform: translateX(-50%); } }
 .mp-tick { display: inline-flex; align-items: center; gap: 7px; font-size: var(--text-sm,.8rem); color: var(--ink-dim,#9aa); text-decoration: none; }
@@ -388,7 +389,14 @@ function tickEl(ev) {
 		tradeTok +
 		(amt ? ` <span class="mp-amount">${esc(amt)}</span>` : '') +
 		(ev.kind === 'launch' && ev.symbol ? ` <span class="mp-amount">$${esc(ev.symbol)}</span>` : '');
-	return a;
+	// The track is a role="list", which reports nothing unless every child is a
+	// listitem. The role goes on a wrapper rather than on the anchor itself, so
+	// each tick stays a link assistive tech can follow.
+	const item = document.createElement('span');
+	item.className = 'mp-tick-item';
+	item.setAttribute('role', 'listitem');
+	item.appendChild(a);
+	return item;
 }
 
 // A tiny, opt-in "money sound": a soft two-note chime synthesized on the fly.

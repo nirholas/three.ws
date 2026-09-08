@@ -289,6 +289,15 @@ function boot() {
 	initCompanionAutoStart();
 	const navContainer = document.getElementById('nav-container');
 	if (!navContainer) return;
+	// nav.html opens with its own <header class="nav">, which is the page's banner
+	// landmark. Most pages additionally wrap the mount point in a bare <header>,
+	// and two banners on one page make the landmark ambiguous: assistive tech
+	// offers "banner" twice and neither is named. The wrapper carries no content
+	// of its own, so demote it to a plain box and leave exactly one banner.
+	const wrapper = navContainer.parentElement;
+	if (wrapper && wrapper.tagName === 'HEADER' && wrapper.childElementCount === 1) {
+		wrapper.setAttribute('role', 'presentation');
+	}
 	Promise.all([
 		fetch('/nav.html').then((response) => response.text()),
 		import('/nav-data.js'),

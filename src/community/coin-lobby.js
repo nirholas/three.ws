@@ -62,8 +62,21 @@ export class CoinLobby {
 	_build() {
 		const root = el('div', 'clobby');
 		root.setAttribute('role', 'dialog');
+		root.setAttribute('aria-modal', 'true');
 		root.setAttribute('aria-labelledby', 'clobby-title');
+		root.tabIndex = -1;
 		this.root = root;
+
+		// The lobby covers the whole viewport over a live 3D scene, so keyboard
+		// users need the same one-key exit a mouse user gets from "Walk solo".
+		// Escape dismisses it into the default world rather than stranding them
+		// on an overlay they cannot reach past.
+		this._onKeydown = (e) => {
+			if (e.key !== 'Escape') return;
+			e.preventDefault();
+			this._skip();
+		};
+		document.addEventListener('keydown', this._onKeydown);
 
 		const inner = el('div', 'clobby__inner');
 		const head = el('header', 'clobby__head');
@@ -107,6 +120,9 @@ export class CoinLobby {
 		inner.appendChild(this.grid);
 		root.appendChild(inner);
 		document.body.appendChild(root);
+		// Move focus into the dialog so the first Tab lands on the search field
+		// and skip button, not on the page chrome buried behind the overlay.
+		root.focus({ preventScroll: true });
 		this._renderSkeleton();
 	}
 
@@ -278,6 +294,10 @@ export class CoinLobby {
 	}
 
 	destroy() {
+		if (this._onKeydown) {
+			document.removeEventListener('keydown', this._onKeydown);
+			this._onKeydown = null;
+		}
 		this.root?.remove();
 	}
 }

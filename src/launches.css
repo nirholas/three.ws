@@ -564,8 +564,11 @@ body {
 }
 
 /* Whole-card link to the coin's rich profile. Sits above the cursor-light
-   layer but below the genuinely-interactive children (agent chip, external
-   actions), which are raised in turn so they keep their own click targets. */
+   layer but below the genuinely-interactive children (agent chip, wallet chip,
+   external actions), which are raised in turn so they keep their own click
+   targets. The wallet chip belongs in that list: it carries a Tip button and a
+   focusable wallet preview, and while it sat under the stretched link both were
+   dead, every tap on them opening the coin profile instead. */
 .lx-card-link {
 	position: absolute;
 	inset: 0;
@@ -579,6 +582,7 @@ body {
 }
 .lx-card .lx-agent-row,
 .lx-card .lx-card-actions,
+.lx-card .twc,
 .lx-card .lx-mint {
 	position: relative;
 	z-index: 2;

@@ -104,7 +104,10 @@ function badgeInner(rep) {
 export function reputationBadgeHTML(agentId, opts = {}) {
 	if (!agentId || !UUID_RE.test(String(agentId))) return '';
 	const embedded = opts.embedded ? ' data-rep-embedded="1"' : '';
-	return `<span class="rep-badge-slot" data-rep-aid="${esc(agentId)}"${embedded} aria-label="Wallet trust score loading"></span>`;
+	// An empty placeholder is not content: hide it until the real badge lands.
+	// (aria-label is prohibited on a generic span anyway, and the hydrated badge
+	// carries its own name through its role and title.)
+	return `<span class="rep-badge-slot" data-rep-aid="${esc(agentId)}"${embedded} aria-hidden="true"></span>`;
 }
 
 export function reputationBadgeEl(agentId, opts = {}) {
@@ -172,7 +175,7 @@ function fillBadge(el, rep) {
 		return;
 	}
 	el.innerHTML = inner;
-	el.removeAttribute('aria-label');
+	el.removeAttribute('aria-hidden');
 	const aid = el.getAttribute('data-rep-aid');
 	const badge = el.firstElementChild;
 	if (badge && aid) {

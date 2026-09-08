@@ -882,6 +882,23 @@
 				color: var(--text-2);
 				font-size: 12px;
 			}
+			/* Retry affordance inside the picker's error notice. Styled as an
+			   inline control so it reads as part of the sentence, not a form. */
+			.walk-avatar-picker-retry {
+				display: inline-block;
+				margin-top: 8px;
+				padding: 5px 12px;
+				border: 1px solid var(--border);
+				border-radius: 999px;
+				background: var(--panel);
+				color: var(--text);
+				font: inherit;
+				font-size: 12px;
+				cursor: pointer;
+				transition: background 0.12s, border-color 0.12s;
+			}
+			.walk-avatar-picker-retry:hover { background: rgba(255,255,255,0.12); }
+			.walk-avatar-picker-retry:active { background: rgba(255,255,255,0.18); }
 			.walk-avatar-opt {
 				display: flex;
 				align-items: center;
@@ -923,7 +940,10 @@
 				left: 50%;
 				transform: translateX(-50%);
 				z-index: 8;
-				width: min(420px, calc(100vw - 200px));
+				/* Never let the 200px side-gutter reserve collapse the chat below a
+				   usable width: under ~460px of viewport the subtraction wins and the
+				   form's send button lands off-screen. The 260px floor keeps it on. */
+				width: min(420px, max(260px, calc(100vw - 200px)));
 				display: flex;
 				flex-direction: column;
 				gap: 6px;
@@ -970,6 +990,10 @@
 			}
 			.walk-chat-input {
 				flex: 1;
+				/* A flex item's automatic minimum size is its intrinsic width, which
+				   for a text input is ~20 characters. Without this the input refuses
+				   to shrink and pushes the send button past the viewport edge. */
+				min-width: 0;
 				padding: 8px 12px;
 				border: 1px solid var(--border);
 				border-radius: 999px;
@@ -1197,6 +1221,7 @@
 			.walk-touch-btn:focus-visible,
 			.walk-emote-btn:focus-visible,
 			.walk-avatar-opt:focus-visible,
+			.walk-avatar-picker-retry:focus-visible,
 			.walk-chat-send:focus-visible,
 			.walk-voice-mic:focus-visible,
 			.walk-voice-retry:focus-visible,
