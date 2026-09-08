@@ -4102,6 +4102,10 @@
 			"dest": "/api/agents/8004/search"
 		},
 		{
+			"src": "/api/agents/vitals",
+			"dest": "/api/agents/vitals"
+		},
+		{
 			"src": "/api/agents/([^/]+)(?:/.*)?",
 			"dest": "/api/agents/[id]"
 		},
