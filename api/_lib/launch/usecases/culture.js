@@ -66,7 +66,7 @@ export const cultureUseCases = [
 	cultureUseCase({
 		id: 'culture-reddit-hot',
 		title: 'Reddit hot culture',
-		description: 'What the front page is laughing at right now — the community pulse, ranked. Ride the joke before it leaves the feed.',
+		description: 'What the front page is laughing at right now: the community pulse, ranked. Ride the joke before it leaves the feed.',
 		tags: ['reddit', 'community'],
 		sources: ['reddit'],
 		limit: 12,
@@ -82,7 +82,7 @@ export const cultureUseCases = [
 	cultureUseCase({
 		id: 'culture-kym-reddit-blend',
 		title: 'Named memes meeting the front page',
-		description: 'Memes confirmed on Know Your Meme cross-checked against what Reddit is actually upvoting — named energy with community heat behind it.',
+		description: 'Memes confirmed on Know Your Meme cross-checked against what Reddit is actually upvoting: named energy with community heat behind it.',
 		tags: ['knowyourmeme', 'reddit', 'blend'],
 		sources: ['knowyourmeme', 'reddit'],
 		limit: 12,
@@ -90,7 +90,7 @@ export const cultureUseCases = [
 	cultureUseCase({
 		id: 'culture-broad-meme-mix',
 		title: 'The broad meme mix',
-		description: 'Every culture source at once — Know Your Meme, Reddit, and X blended into one ranked feed of the strongest themes across the internet.',
+		description: 'Every culture source at once: Know Your Meme, Reddit, and X blended into one ranked feed of the strongest themes across the internet.',
 		tags: ['knowyourmeme', 'reddit', 'x', 'broad'],
 		sources: ['knowyourmeme', 'reddit', 'x'],
 		limit: 16,
@@ -98,7 +98,7 @@ export const cultureUseCases = [
 	cultureUseCase({
 		id: 'culture-x-reddit-breakouts',
 		title: 'Cross-platform breakouts',
-		description: 'Themes spiking on both X and Reddit at the same time — the strongest signal a meme is genuinely breaking out, not just one corner of the web.',
+		description: 'Themes spiking on both X and Reddit at the same time: the strongest signal a meme is genuinely breaking out, not just one corner of the web.',
 		tags: ['x', 'reddit', 'breakout'],
 		sources: ['x', 'reddit'],
 		limit: 12,
@@ -106,7 +106,7 @@ export const cultureUseCases = [
 	cultureUseCase({
 		id: 'culture-kym-x-confirmed',
 		title: 'Confirmed and still spiking',
-		description: 'Memes that have a Know Your Meme entry and are still trending on X — proven format, live momentum. The sweet spot for a coin.',
+		description: 'Memes that have a Know Your Meme entry and are still trending on X: proven format, live momentum. The sweet spot for a coin.',
 		tags: ['knowyourmeme', 'x', 'confirmed'],
 		sources: ['knowyourmeme', 'x'],
 		limit: 12,
@@ -114,7 +114,7 @@ export const cultureUseCases = [
 	cultureUseCase({
 		id: 'culture-reddit-deep-cuts',
 		title: 'Reddit deep cuts',
-		description: 'A wider pull from Reddit for the niche jokes and emerging in-group memes that have not gone mainstream yet — early on the long tail.',
+		description: 'A wider pull from Reddit for the niche jokes and emerging in-group memes that have not gone mainstream yet. Early on the long tail.',
 		tags: ['reddit', 'niche', 'early'],
 		sources: ['reddit'],
 		limit: 20,
@@ -122,7 +122,7 @@ export const cultureUseCases = [
 	cultureUseCase({
 		id: 'culture-x-rapid-fire',
 		title: 'X rapid-fire',
-		description: 'A tight, fast feed of the very top X spikes — the few entities the timeline cannot stop posting. Built for launching while a moment is peaking.',
+		description: 'A tight, fast feed of the very top X spikes: the few entities the timeline cannot stop posting. Built for launching while a moment is peaking.',
 		tags: ['x', 'fast', 'peak'],
 		sources: ['x'],
 		limit: 6,
@@ -130,7 +130,7 @@ export const cultureUseCases = [
 	cultureUseCase({
 		id: 'culture-everything-deep',
 		title: 'Whole-internet deep scan',
-		description: 'The widest possible culture pull — Know Your Meme, Reddit, and X with a deep limit — to surface emerging themes the tighter feeds miss.',
+		description: 'The widest possible culture pull (Know Your Meme, Reddit, and X with a deep limit) to surface emerging themes the tighter feeds miss.',
 		tags: ['knowyourmeme', 'reddit', 'x', 'deep'],
 		sources: ['knowyourmeme', 'reddit', 'x'],
 		limit: 24,
