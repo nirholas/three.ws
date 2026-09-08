@@ -1,6 +1,6 @@
 {
 	"generatedBy": "scripts/capture-doc-media.mjs",
-	"generatedAt": "2026-07-31T19:25:22.123Z",
+	"generatedAt": "2026-09-08T17:25:34.474Z",
 	"shots": {
 		"animation-studio": {
 			"id": "animation-studio",
@@ -177,6 +177,23 @@
 			"commit": "b06fc2cf2",
 			"sha256": "c72f468e64385b7eabbf7b93fd677fee8e3b26e6e9109e58cb75cb8626385d42",
 			"bytes": 65548,
+			"width": 1800,
+			"height": 1125
+		},
+		"scene-studio": {
+			"id": "scene-studio",
+			"src": "/docs/img/scene-studio.webp",
+			"alt": "Scene Studio with a 3D scene in the viewport and the object rail",
+			"caption": "Scene Studio composes objects and avatars into one shareable scene.",
+			"route": "/scene",
+			"viewport": "desktop",
+			"animated": false,
+			"authenticated": false,
+			"capturedAt": "2026-09-08T17:25:32.557Z",
+			"capturedFrom": "https://three.ws",
+			"commit": "7f812445c",
+			"sha256": "e81750217c6d3850efe7d9a0e73f135599d8a83935d7b33e27f6193a1a8ad96c",
+			"bytes": 59536,
 			"width": 1800,
 			"height": 1125
 		},

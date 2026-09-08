@@ -6,6 +6,10 @@ Type a sentence, get a downloadable 3D model. That's the whole tutorial. By the 
 
 **Prerequisites:** none. No account, no wallet, no code. Just a browser.
 
+[![The three.ws prompt-to-3D page with the description field and quality tier picker](/docs/img/forge-prompt-panel.webp)](/create/prompt)
+
+*Describe it to 3D: the prompt field and the tier picker are the whole interface.*
+
 ---
 
 ## Step 1 — Open the Forge

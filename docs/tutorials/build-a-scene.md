@@ -6,6 +6,10 @@ Along the way you'll learn how the editor's panels fit together, why the scene a
 
 **Prerequisites:** a desktop browser (the editor is keyboard- and gizmo-driven). At least one GLB or glTF model to import — generate one for free from text at [/forge](/forge), or use any GLB file you already have. No account required.
 
+[![Scene Studio with a 3D scene in the viewport and the object rail](/docs/img/scene-studio.webp)](/scene)
+
+*Scene Studio composes objects and avatars into one shareable scene.*
+
 ---
 
 ## What you're building

@@ -12,6 +12,10 @@ This tutorial covers the whole pipeline. Where compatible GLBs come from, what m
 
 **Prerequisites:** Comfort with a file manager and the command line. Some familiarity with Blender helps for the optional baking step but is not required. You should have an existing agent in [three.ws/my-agents](https://three.ws/my-agents) to swap a body into.
 
+[![The public avatar gallery grid](/docs/img/gallery-grid.webp)](/gallery)
+
+*Every avatar in the gallery is a real GLB with a public render URL.*
+
 ---
 
 ## Step 1: Understand what the runtime expects

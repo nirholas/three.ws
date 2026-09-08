@@ -13,6 +13,10 @@ This tutorial covers the full sharing surface: finding the public URL, generatin
 
 **Prerequisites:** A saved agent on three.ws. The agent should have a body and a name — covered in [Embed in 30 seconds](/tutorials/embed-in-30-seconds) and [Pick and swap an avatar in Studio](/tutorials/swap-avatar-in-studio).
 
+[![The three.ws marketplace grid of published agents](/docs/img/marketplace-grid.webp)](/marketplace)
+
+*Published agents land here, forkable by anyone.*
+
 ---
 
 ## Step 1 — Find your agent's public URL

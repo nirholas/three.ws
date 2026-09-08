@@ -6,6 +6,14 @@ Along the way you'll see what the [/walk](/walk) product offers, live demos acro
 
 **Prerequisites:** a website you can edit and a WebGL-capable browser. The iframe path needs no tooling at all; the npm path assumes light JavaScript familiarity and that you already bundle [Three.js](https://threejs.org) (>= 0.150).
 
+[![The Walk experience on a phone-sized viewport with the avatar on screen](/docs/img/walk-mobile.webp)](/walk)
+
+*Walk on a phone: the same rig, the same clips, thumb-sized controls.*
+
+[![Animated loop of a three.ws avatar walking in the Walk experience](/docs/img/walk-loop.webp)](/walk)
+
+*Captured live: the default rig running the canonical walk clip.*
+
 ---
 
 ## What you're building

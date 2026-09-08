@@ -15,6 +15,10 @@ This tutorial covers the greeting flow end to end: waiting for the `agent:ready`
 
 **Prerequisites:** A page with the embed working from [Embed in 30 seconds](/tutorials/embed-in-30-seconds). Your agent should already be saved with a brain configured.
 
+[![The Voice Lab page with the voice catalogue and preview controls](/docs/img/voice-lab.webp)](/voice)
+
+*Voice Lab previews every voice the speech and lipsync stack can drive.*
+
 ---
 
 ## Step 1 — The minimal greeting

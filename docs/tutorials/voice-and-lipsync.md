@@ -6,6 +6,10 @@ Along the way you'll understand why three.ws extracts visemes from the audio its
 
 **Prerequisites:** a three.ws account with at least one agent ([create one](/create)), a browser with Web Audio + WebGL (any modern desktop browser), and a microphone if you want to clone a voice or try the mic lab. No code is required for the labs; the live-agent step assumes light JavaScript familiarity.
 
+[![The Voice Lab page with the voice catalogue and preview controls](/docs/img/voice-lab.webp)](/voice)
+
+*Voice Lab previews every voice the speech and lipsync stack can drive.*
+
 ---
 
 ## What you're building

@@ -10,6 +10,10 @@ By the end of this tutorial you will have a live, talking 3D character on a page
 
 **Prerequisites:** Basic HTML and JavaScript. You don't need to know Three.js, WebGL, or anything 3D-specific.
 
+[![The three.ws getting-started checklist showing the first setup steps](/docs/img/start-checklist.webp)](/start)
+
+*The getting-started checklist is the shortest path from account to first agent.*
+
 ---
 
 ## Step 1 — Pick a 3D avatar

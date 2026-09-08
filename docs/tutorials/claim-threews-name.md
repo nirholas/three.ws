@@ -6,6 +6,10 @@ Along the way you'll understand what the subdomain points at on-chain, why the m
 
 **Prerequisites:** a signed-in three.ws account with a **username set** (the subdomain label must match it) and at least one agent — creating an agent provisions the Solana wallet that receives the name ([create one](/create)). Light JavaScript familiarity for the pay-by-name section; the claim itself is no-code.
 
+[![The threews.sol subdomain claim page with the name availability field](/docs/img/names-claim.webp)](/threews/claim)
+
+*Claiming a name is one field and one signature.*
+
 ---
 
 ## What you're building

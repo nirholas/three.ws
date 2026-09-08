@@ -12,6 +12,10 @@ This tutorial covers both halves of that. You swap the body in the agent editor'
 
 **Prerequisites:** A saved agent on three.ws. If you've worked through [Embed in 30 seconds](/tutorials/embed-in-30-seconds), you already have one.
 
+[![The three.ws Avatar Studio with a rigged avatar in the viewport and the customisation rail](/docs/img/avatar-studio.webp)](/avatar-studio)
+
+*Avatar Studio: the rig on the left, every appearance control on the right.*
+
 ---
 
 ## Step 1: Know which surface does what

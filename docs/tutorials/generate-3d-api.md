@@ -6,6 +6,10 @@ Everything the [Forge](/forge) does in the browser is available as a plain HTTP 
 
 **Prerequisites:** comfortable with `fetch` or `curl`. Examples use Node.js 18+ (built-in `fetch`), but any language with an HTTP client works the same way.
 
+[![The Forge page showing text and image to 3D generation options](/docs/img/forge-hero.webp)](/forge)
+
+*The Forge accepts a sentence or an image and returns a textured GLB.*
+
 ---
 
 ## The flow in one picture

@@ -2,6 +2,10 @@
 
 Time: about 5 minutes. You need a browser and nothing else. By the end you will have walked the documentation, read a page inside the scene, and entered the world wearing a custom avatar.
 
+[![Animated loop of the 3D Docs World with the guide avatar on the plaza](/docs/img/docs-world-loop.webp)](/docs/world)
+
+*The documentation as a place you can walk through.*
+
 ## 1. Enter the world
 
 Open [three.ws/docs/world](https://three.ws/docs/world).

@@ -6,6 +6,10 @@ Along the way you'll understand the skill bundle format, how the LLM decides whe
 
 **Prerequisites:** JavaScript familiarity, a text editor, and a place to host static files (a free GitHub Pages or Vercel account works fine).
 
+[![The skills marketplace listing paid and free agent skills](/docs/img/skills-marketplace.webp)](/skills)
+
+*Skills are sold, trialled and installed from this catalogue.*
+
 ---
 
 ## What you're building

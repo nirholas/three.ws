@@ -6,6 +6,10 @@ This is the easiest entry point on the platform. Everything you do here is edita
 
 **Prerequisites:** a modern browser (Chrome, Firefox, or Safari) and an email address. No coding experience, no 3D files, and no crypto required. You'll sign in once, partway through, to save your work.
 
+[![The three.ws getting-started checklist showing the first setup steps](/docs/img/start-checklist.webp)](/start)
+
+*The getting-started checklist is the shortest path from account to first agent.*
+
 ---
 
 ## What you're building

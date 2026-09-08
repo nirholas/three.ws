@@ -11,6 +11,10 @@ Type one sentence into ChatGPT and get a real, textured 3D model back: spin it i
 
 **Prerequisites:** A ChatGPT account. A smartphone (iPhone or Android) for the AR step; every other step works on a computer.
 
+[![The three.ws prompt-to-3D page with the description field and quality tier picker](/docs/img/forge-prompt-panel.webp)](/create/prompt)
+
+*Describe it to 3D: the prompt field and the tier picker are the whole interface.*
+
 ---
 
 ## Step 1: Add the 3D Studio to ChatGPT

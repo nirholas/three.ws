@@ -4,6 +4,10 @@ By the end of this tutorial you'll be able to take any rigged avatar, browse the
 
 **Prerequisites:** a three.ws account and at least one rigged avatar ([create one](/create), or load any public avatar). No code required, everything here happens in the browser. Light JavaScript familiarity helps only for the optional "how retargeting works" section.
 
+[![The Animation Studio timeline with an avatar mid-clip](/docs/img/animation-studio.webp)](/pose)
+
+*Animation Studio drives the same canonical clip library the embeds use.*
+
 ---
 
 ## What you're building

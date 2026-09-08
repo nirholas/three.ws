@@ -11,6 +11,10 @@ This tutorial walks you through every step of seeing a three.ws model in augment
 
 **Prerequisites:** A smartphone (iPhone or Android). For the embedding section, a basic HTML file you can edit.
 
+[![The Walk experience on a phone-sized viewport with the avatar on screen](/docs/img/walk-mobile.webp)](/walk)
+
+*Walk on a phone: the same rig, the same clips, thumb-sized controls.*
+
 ---
 
 ## Step 1 — Get a 3D model

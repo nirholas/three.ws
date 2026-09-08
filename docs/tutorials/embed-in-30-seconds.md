@@ -12,6 +12,10 @@ This tutorial walks through those two lines end to end. By the time you finish, 
 
 **Prerequisites:** A text editor and a browser. You do not need Node, npm, a framework, or any 3D experience.
 
+[![The Widget Studio configurator with a live avatar preview and generated embed code](/docs/img/widget-studio.webp)](/studio)
+
+*Widget Studio writes the embed snippet while you watch the result.*
+
 ---
 
 ## Step 1 — Get an agent ID

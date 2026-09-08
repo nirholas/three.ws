@@ -6,6 +6,10 @@ By the end of this tutorial your agent will move on its own: nod when a model fi
 
 **Time:** about 12 minutes.
 
+[![The Animation Studio timeline with an avatar mid-clip](/docs/img/animation-studio.webp)](/pose)
+
+*Animation Studio drives the same canonical clip library the embeds use.*
+
 ---
 
 ## What you're building

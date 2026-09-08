@@ -8,6 +8,10 @@ The interesting part is not the listing. It is the middle. A free trial that nev
 
 **Time:** about 15 minutes.
 
+[![The skills marketplace listing paid and free agent skills](/docs/img/skills-marketplace.webp)](/skills)
+
+*Skills are sold, trialled and installed from this catalogue.*
+
 ---
 
 ## What you're building

@@ -4,6 +4,10 @@ three.ws avatars communicate in American Sign Language. Words that have a sign a
 
 New here? The step-by-step walkthrough is [Tutorial: make your avatar sign](https://three.ws/tutorials/sign-with-your-avatar). This page is the reference: every surface, the developer API, and how the engine works.
 
+[![A rigged 3D avatar mid-sign on the three.ws sign-language page, beside the phrase input and the speed and signing-hand controls](/docs/img/sign-language-hero.webp)](/sign-language)
+
+*Type anything: the avatar signs the words it has signs for and spells the rest.*
+
 ## Start here
 
 | I want to | Go here | What happens |
@@ -101,6 +105,10 @@ Another 41 everyday spellings route to those same signs, so ordinary sentences w
 ## Learn the alphabet on /asl-alphabet
 
 [/asl-alphabet](https://three.ws/asl-alphabet) is the reference for the manual alphabet itself. Every letter A-Z and digit 0-9 is formed by a live rig you can orbit, so you see the handshape from any angle rather than from one photographed side.
+
+[![A rigged 3D avatar forming a letter of the American manual alphabet, beside that letter's description and the speed and signing-hand controls](/docs/img/asl-alphabet-hero.webp)](/asl-alphabet)
+
+*Every letter of the manual alphabet on a hand you can turn around.*
 
 - **Click a key, or press it.** Typing `q` signs a Q. A single letter holds its pose so you can study it; a word settles back to rest the way a signer finishes.
 - **Every letter is described**, with the letters it is confused with named explicitly (F against 9, M against N, K against V, G against Q). Look-alikes are where reading breaks down, so they are called out rather than left to be discovered.

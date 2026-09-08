@@ -6,6 +6,10 @@ This tutorial walks the URL-import path end to end. It's the sibling of [Upload 
 
 **Prerequisites:** a three.ws account (the importer redirects you to sign in if you're not), and a live, publicly reachable URL to a glTF 2.0 `.glb` file. No command line, no Blender, no local tooling required — the whole flow runs in the browser.
 
+[![The public avatar gallery grid](/docs/img/gallery-grid.webp)](/gallery)
+
+*Every avatar in the gallery is a real GLB with a public render URL.*
+
 ---
 
 ## What you're building

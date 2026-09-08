@@ -9,6 +9,10 @@ This tutorial walks you through every path for adding a three.ws agent to your s
 - Add it to Webflow, WordPress, or Squarespace
 - Show or hide the agent based on scroll position, page URL, or a timer
 
+[![The Widget Studio configurator with a live avatar preview and generated embed code](/docs/img/widget-studio.webp)](/studio)
+
+*Widget Studio writes the embed snippet while you watch the result.*
+
 ---
 
 ## Before you start

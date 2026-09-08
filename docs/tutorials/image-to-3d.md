@@ -6,6 +6,10 @@ Have a real object you want in 3D? Photograph it from a few angles, drop the pho
 
 **Prerequisites:** none. A phone camera is plenty.
 
+[![The image-to-3D page with its upload dropzone](/docs/img/image-to-3d-page.webp)](/image-to-3d)
+
+*Drop a photo here and the same pipeline returns a mesh instead of a render.*
+
 ---
 
 ## Step 1 — Take good photos

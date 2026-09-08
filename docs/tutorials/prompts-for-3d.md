@@ -16,6 +16,10 @@ a sci-fi combat helmet, brushed metal
 
 If you haven't generated your first model yet, do the five-minute [text-to-3D tutorial](/tutorials/text-to-3d) first, then come back here for ideas.
 
+[![The Forge page showing text and image to 3D generation options](/docs/img/forge-hero.webp)](/forge)
+
+*The Forge accepts a sentence or an image and returns a textured GLB.*
+
 ---
 
 ## The four rules

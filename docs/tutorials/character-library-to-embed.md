@@ -20,6 +20,10 @@ Ten minutes is not marketing. The list is: two minutes reading the library manif
 - No account, no API key, no payment. The library is free and public, and so is the embed runtime.
 - Background reading, if you want it: [Character Library](/docs/character-library.md) for the gallery and manifest, [Embedding Guide](/docs/embedding.md) for the full `<agent-3d>` contract.
 
+[![The character library grid of ready-to-use rigged characters](/docs/img/character-library.webp)](/character-library)
+
+*Every character here is a real rigged GLB you can embed as-is.*
+
 ---
 
 ## Step 1 - Read the library

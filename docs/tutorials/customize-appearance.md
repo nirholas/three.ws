@@ -13,6 +13,10 @@ This tutorial walks through every appearance attribute the `<agent-3d>` element 
 
 **Prerequisites:** A page with the embed working from [Embed in 30 seconds](/tutorials/embed-in-30-seconds). You can write the attributes here straight into that page.
 
+[![The three.ws Avatar Studio with a rigged avatar in the viewport and the customisation rail](/docs/img/avatar-studio.webp)](/avatar-studio)
+
+*Avatar Studio: the rig on the left, every appearance control on the right.*
+
 ---
 
 ## Step 1 — How the element reads your attributes
