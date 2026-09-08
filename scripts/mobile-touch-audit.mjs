@@ -19,7 +19,9 @@
  *     a viewer embedded in a scrolling page).
  *  3. Safe-area handling: whether the viewport meta opts into
  *     `viewport-fit=cover` (without it `env(safe-area-inset-*)` always resolves
- *     to 0), and which bottom-anchored fixed/sticky bars have no CSS rule
+ *     to 0), and which bottom-anchored fixed/sticky bars (those that actually
+ *     declare an offset from the bottom edge, so a horizontally-sticky table
+ *     cell that happens to be low on screen is not one) have no CSS rule
  *     mentioning `safe-area-inset` applying to them. Those bars land under the
  *     iOS home indicator.
  *  4. Horizontal overflow at the mobile viewport width (scrollWidth > clientWidth).
@@ -208,6 +210,14 @@ function auditDom(minTarget) {
 	for (const el of Array.from(document.body.querySelectorAll('*'))) {
 		const cs = getComputedStyle(el);
 		if (cs.position !== 'fixed' && cs.position !== 'sticky') continue;
+		// Anchored to the bottom, not merely sitting near it. A sticky table cell
+		// is `position: sticky` with a `left` offset so it survives a horizontal
+		// scroll, and it lands wherever the row happens to be: on /markets that
+		// put 101 `td.left.name-cell` elements into this list as "bottom bars
+		// missing a safe-area rule", which is not a defect and is not something
+		// any fix could clear. A real bottom bar declares an offset from the
+		// bottom edge; without one, `bottom` computes to `auto`.
+		if (cs.bottom === 'auto') continue;
 		const box = el.getBoundingClientRect();
 		if (!isVisible(el, cs, box)) continue;
 		const distanceFromBottom = window.innerHeight - box.bottom;

@@ -404,6 +404,16 @@
 				color: #fde047;
 				border: 1px solid rgba(253, 224, 71, 0.25);
 			}
+			/* The hero rotates every 6.5s through avatars whose names and blurbs
+			   are different lengths, and updateHeroMeta() writes both into the
+			   same boxes. Unreserved, that moved the actions row, the dots and
+			   the whole grid below the hero on every rotation, forever: measured
+			   on a Pixel 5 against production on 2026-09-08, `section#market-hero`
+			   was 0.1094 + 0.2045 of the page's 0.4381 CLS, the worst on the
+			   site. Both boxes are clamped AND floored to the same line count, so
+			   every slide occupies identical space and a rotation moves nothing.
+			   Clamp without a floor is only half the fix: it caps the tall case
+			   and still lets the short case collapse. */
 			.market-hero-title {
 				font-family: var(--font-display);
 				font-size: 32px;
@@ -412,6 +422,11 @@
 				margin: 0;
 				line-height: 1.1;
 				word-break: break-word;
+				display: -webkit-box;
+				-webkit-line-clamp: 2;
+				-webkit-box-orient: vertical;
+				overflow: hidden;
+				min-height: 2.2em;
 			}
 			.market-hero-desc {
 				font-size: 14px;
@@ -422,6 +437,7 @@
 				-webkit-line-clamp: 3;
 				-webkit-box-orient: vertical;
 				overflow: hidden;
+				min-height: 4.5em;
 			}
 			.market-hero-actions {
 				display: flex;
@@ -3271,8 +3287,15 @@
 							<button class="market-hero-secondary" id="market-hero-lobby" data-i18n="marketplace.open_3d_lobby">
 								Open 3D Lobby
 							</button>
-							<button class="market-hero-secondary" id="market-hero-fork" hidden data-i18n="marketplace.fork_agent">
-								Fork agent
+							<!-- Ships visible and disabled, carrying the exact label
+							     updateHeroMeta() writes. It used to ship `hidden`
+							     and be revealed with a different label, which added
+							     a button to a flex-wrap row after first paint and
+							     re-wrapped everything under it. The label is written
+							     by JS, so per docs/site-performance.md rule 6 the
+							     node cannot carry a data-i18n key. -->
+							<button class="market-hero-secondary" id="market-hero-fork" disabled data-no-i18n>
+								Start an agent →
 							</button>
 							<a class="market-hero-secondary" href="/marketplace-walk" data-i18n="marketplace.walk_browse_the_gallery">Walk-Browse the gallery →</a>
 								<a class="market-hero-secondary" href="/forge" data-i18n="marketplace.forge_your_own_from_text">Forge your own from text →</a>

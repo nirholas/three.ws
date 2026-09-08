@@ -28,6 +28,7 @@ import { skeletonHTML, emptyStateHTML, errorStateHTML, ensureStateKitStyles } fr
 import { debounce, syncStateToUrl } from './shared/list-controls.js';
 import { log } from './shared/log.js';
 import { track, trackError, ANALYTICS_EVENTS } from './analytics.js';
+import { resizedImageUrl } from './shared/image-url.js';
 ensureStateKitStyles();
 
 const API = '/api';
@@ -1139,7 +1140,11 @@ function updateHeroMeta() {
 	}
 	const fork = $('market-hero-fork');
 	if (fork) {
+		// The markup already ships this button, enabled-looking and holding the
+		// same label, so the actions row is its final size in the first frame.
+		// Only the wiring arrives here.
 		fork.hidden = false;
+		fork.disabled = false;
 		fork.textContent = 'Start an agent →';
 		fork.onclick = () => {
 			activeAvatar = a;
@@ -1584,6 +1589,31 @@ function observeCardModelViewers() {
 		mv.dataset.observed = '1';
 		cardObserver.observe(mv);
 	});
+}
+
+// A grid card's thumbnail, fetched at the size the card actually paints.
+//
+// Avatar and forge thumbnails are stored full-size on R2 (768x768 renders, and
+// forge previews up to 344 KB each) and painted into a card 160-370 CSS px
+// wide. On 2026-09-08 a Pixel 5 over slow 4G pulled 2,488 KB of images across
+// 206 <img> elements opening /marketplace, which was 60% of the page's whole
+// 4,141 KB. /api/img re-encodes to WebP at a fixed width ladder and caches the
+// result immutably at the edge, so the same picture costs a tenth of that.
+//
+// srcset rather than one width because the card is 160px in a phone's two-up
+// grid and 370px in its one-up, and a DPR-2 screen wants twice either; the
+// browser is in a better position to choose than this function is. The `sizes`
+// list mirrors public/marketplace.css's own grid breakpoints.
+const CARD_THUMB_SIZES = '(max-width: 600px) 100vw, (max-width: 900px) 50vw, 300px';
+function cardThumbHtml(url, alt) {
+	const srcset = [320, 480, 960]
+		.map((w) => `${escapeHtml(resizedImageUrl(url, w))} ${w}w`)
+		.join(', ');
+	return (
+		`<img src="${escapeHtml(resizedImageUrl(url, 480))}" srcset="${srcset}" sizes="${CARD_THUMB_SIZES}"` +
+		` alt="${alt}" loading="lazy" decoding="async" data-fallback="element"` +
+		` data-fallback-class="card-img-fallback" />`
+	);
 }
 
 // ── Avatar detail modal ──────────────────────────────────────────────────
@@ -4635,7 +4665,7 @@ function renderAvatarCard(a, spotlight = false) {
 	// reveal="auto" (default) means model-viewer un-veils the model on load;
 	// no explicit dismissPoster() call needed.
 	const preview = a.image
-		? `<img src="${escapeHtml(a.image)}" alt="${name}" loading="lazy" decoding="async" data-fallback="element" data-fallback-class="card-img-fallback" />`
+		? cardThumbHtml(a.image, name)
 		: a.glbUrl
 			? `${placeholderHtml(a.name)}<model-viewer
 					data-src="${escapeHtml(a.glbUrl)}"
@@ -4803,7 +4833,7 @@ function renderOnchainCard(a) {
 	const href = a.viewerUrl || a.tokenExplorerUrl || '#';
 	const priceBadge = priceBadgeHtml(a.price);
 	const preview = a.image
-		? `<img src="${escapeHtml(a.image)}" alt="${name}" loading="lazy" decoding="async" data-fallback="element" data-fallback-class="card-img-fallback" />`
+		? cardThumbHtml(a.image, name)
 		: a.glbUrl
 			? `${placeholderHtml(a.name)}<model-viewer
 					data-src="${escapeHtml(a.glbUrl)}"

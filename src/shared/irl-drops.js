@@ -12,7 +12,19 @@ import {
 	Group, Mesh, CylinderGeometry, TorusGeometry, MeshStandardMaterial,
 	MeshBasicMaterial, Vector3,
 } from 'three';
-import { tipAgent, TipError } from './agent-tip.js';
+// agent-tip.js pulls @solana/web3.js and @solana/spl-token, which Rollup pins
+// into the 146 KB `solana` chunk. A static import here put that chunk on the
+// critical path of /irl, which imports this module at its top level: measured on
+// a Pixel 5 over slow 4G on 2026-09-08, /irl transferred 1,173 KB of script and
+// blocked the main thread for 14,580 ms, 7,283 ms of it in one task, for a
+// wallet signing path that only runs when someone funds a drop. Loaded at that
+// moment instead, which is already a "approve in your wallet" interaction with
+// its own progress stage, so the download is invisible.
+let tipModule = null;
+function loadTip() {
+	if (!tipModule) tipModule = import('./agent-tip.js');
+	return tipModule;
+}
 import { detectSolanaWallet, solanaTxExplorerUrl } from '../erc8004/solana-deploy.js';
 
 const VIOLET = 0xc4b5fd;
@@ -530,8 +542,11 @@ function openCreate() {
 			// 2. Fund the escrow with the creator's own signed transfer.
 			setStage('Approve in your wallet…');
 			let funding;
+			let TipError = null;
 			try {
-				funding = await tipAgent({
+				const tip = await loadTip();
+				TipError = tip.TipError;
+				funding = await tip.tipAgent({
 					toAddress: escrow, token: state.asset,
 					amount: Number(state.amount) * state.maxClaims,
 					onStage: (s) => setStage(stageLabel(s)),
@@ -539,7 +554,7 @@ function openCreate() {
 			} catch (e) {
 				// Roll the unfunded drop back so it isn't orphaned.
 				cancelSilently(dropId);
-				if (e instanceof TipError && e.code === 'cancelled') { setStage('Fund & drop'); go.disabled = false; state.busy = false; return; }
+				if (TipError && e instanceof TipError && e.code === 'cancelled') { setStage('Fund & drop'); go.disabled = false; state.busy = false; return; }
 				throw new Error(e?.message || 'Funding was not completed.');
 			}
 
