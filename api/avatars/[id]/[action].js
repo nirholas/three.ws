@@ -3,6 +3,9 @@
 // (from [action] filename) automatically. Each handler below is unchanged
 // from its prior single-file form.
 
+import { Readable } from 'node:stream';
+import { pipeline } from 'node:stream/promises';
+
 import { GetObjectCommand } from '@aws-sdk/client-s3';
 import { z } from 'zod';
 
@@ -14,7 +17,13 @@ import { limits, clientIp } from '../../_lib/rate-limit.js';
 import { parse, isUuid } from '../../_lib/validate.js';
 import { readStorageMode, storageModeSchema, defaultStorageMode } from '../../_lib/storage-mode.js';
 import { getAvatar, resolveAvatarUrl } from '../../_lib/avatars.js';
-import { r2, publicUrl, thumbnailUrl } from '../../_lib/r2.js';
+import {
+	r2,
+	publicUrl,
+	publicUrlOrNull,
+	thumbnailUrl,
+	isStorageInfrastructureError,
+} from '../../_lib/r2.js';
 import { env } from '../../_lib/env.js';
 import { fetchUpstream } from '../../_lib/upstream-fetch.js';
 
@@ -673,10 +682,53 @@ async function handleGlb(req, res) {
 			} catch {}
 		});
 	} catch (err) {
-		// 404 if R2 doesn't know the key (deleted out-of-band); 502 otherwise.
+		// 404 if R2 doesn't know the key (deleted out-of-band).
 		const code = err?.Code || err?.name;
 		if (code === 'NoSuchKey' || code === 'NotFound') {
 			return error(res, 404, 'not_found', 'avatar glb missing from storage');
+		}
+		// The signed read is broken, not the object: the credential is rejected
+		// or the endpoint is unreachable, and the same key is readable
+		// unauthenticated on the bucket's public domain. api/cdn-object.js grew
+		// this rung on 2026-09-07 and this route never did, so a rejected R2
+		// secret answered 502 for EVERY avatar GLB on the site: /pay, /walk and
+		// every embed swapped the user's avatar for the "robot" placeholder
+		// while the public domain served those same bytes with a 200 throughout.
+		//
+		// cdn-object redirects; this route must not. Its entire reason to exist
+		// is that the public r2.dev domain sends no access-control-allow-origin
+		// at all, so a 302 there turns a 502 into a CORS failure for the embed
+		// SDK and every cross-origin GLTFLoader. Streaming the bytes through
+		// keeps the wildcard CORS headers set at the top of this handler, so the
+		// contract callers depend on survives the degraded path unchanged.
+		//
+		// The permission gate above has already run, so this changes who may
+		// read nothing: it only changes which origin the bytes come from.
+		const fallbackUrl = isStorageInfrastructureError(err) ? publicUrlOrNull(key) : null;
+		if (fallbackUrl) {
+			console.error('[avatars/glb] signed read failed, streaming public bucket domain:', key, err?.message);
+			try {
+				const upstream = await fetchUpstream(
+					fallbackUrl,
+					{ headers: { accept: 'model/gltf-binary,*/*' } },
+					{ name: 'r2:public-glb', timeoutMs: 20_000, attempts: 2 },
+				);
+				res.statusCode = 200;
+				res.setHeader('content-type', 'model/gltf-binary');
+				const len = upstream.headers.get('content-length');
+				if (len) res.setHeader('content-length', len);
+				const etag = upstream.headers.get('etag');
+				if (etag) res.setHeader('etag', etag);
+				// Never cache the degraded path: the moment the credential is
+				// healthy again traffic has to return to the signed read with no
+				// stale hop pinned at the edge.
+				res.setHeader('cache-control', 'no-store');
+				await pipeline(Readable.fromWeb(upstream.body), res);
+				return;
+			} catch (fallbackErr) {
+				console.error('[avatars/glb] public bucket domain failed too:', key, fallbackErr?.message);
+				if (res.headersSent) return res.destroy(fallbackErr);
+			}
 		}
 		console.error('[avatars/glb] r2 fetch failed:', err);
 		return error(res, 502, 'upstream_error', 'failed to fetch avatar glb');
