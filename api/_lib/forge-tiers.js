@@ -670,6 +670,21 @@ export function selfhostQualityForTier(tierId) {
 	return SELFHOST_TRELLIS_QUALITY[tierId] || SELFHOST_TRELLIS_QUALITY[DEFAULT_TIER];
 }
 
+// Can this backend read a reference view supplied inline as a data URI, instead
+// of a public https URL it has to fetch? True for our own GPU workers and only
+// them: every workers/model-* service declares `images: [data-uri|url, ...]` and
+// base64-decodes the payload directly. A third-party reconstructor (NIM, HF
+// Spaces, Replicate, and the BYOK vendors) takes a URL it fetches itself, so an
+// inline view must never be handed to one.
+//
+// This is what makes the object-storage failover in _lib/image-persist.js safe:
+// when the bucket refuses the reference-view write, the generation can still run
+// on a gcp lane, and the guard in api/forge.js uses this to refuse the lanes
+// where it could not.
+export function backendAcceptsInlineViews(backendId) {
+	return BACKENDS[backendId]?.provider === 'gcp';
+}
+
 // A platform backend is "live" only when its required env is present. BYOK
 // backends are always selectable — liveness depends on the caller's key, which
 // is resolved per-request, not here.
