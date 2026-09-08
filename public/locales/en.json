@@ -11657,11 +11657,11 @@
 	"my_agents_index": {
 		"create_agent": "+ Create agent",
 		"discover": "Discover",
-		"meta_description": "Manage your 3D AI agents on three.ws — edit, chat, check on-chain registration, and create new ones.",
+		"meta_description": "Your private collection of 3D AI agents on three.ws: edit them, chat with them, check on-chain registration, and create new ones.",
 		"meta_title": "My Agents · three.ws",
 		"my_agents": "My Agents",
 		"my_agents_2": "My Agents",
-		"your_3d_ai_agents_edit_chat_and": "Your 3D AI agents — edit, chat, and manage them from here."
+		"your_3d_ai_agents_edit_chat_and": "Your 3D AI agents. Edit, chat, and manage them from here."
 	},
 	"nav": {
 		"10an78q": "Real-time new launches",
