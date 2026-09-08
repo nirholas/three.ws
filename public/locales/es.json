@@ -4148,6 +4148,7 @@
 		"meta_title": "Holders de $THREE · Panel · three.ws"
 	},
 	"dashboard_next_index": {
+		"meta_description": "Tu resumen del panel de three.ws: agentes y avatares 3D, vistas de widget y actividad de chat, ingresos y pagos, claves de API, servidores MCP, monetización y facturación, todo en un solo lugar.",
 		"meta_title": "Resumen · Panel · three.ws"
 	},
 	"dashboard_next_irl_placements": {
@@ -4172,6 +4173,7 @@
 		"meta_title": "Referencias · Dashboard · three.ws"
 	},
 	"dashboard_next_settings": {
+		"meta_description": "Ajustes de tu panel de three.ws: modos de almacenamiento de avatares (R2 frente a IPFS), sesiones activas, tu bandeja de notificaciones, canales de notificación por categoría para la app, push, correo y Telegram, además de apariencia y preferencias del panel.",
 		"meta_title": "Configuración · Dashboard · three.ws"
 	},
 	"dashboard_next_sniper": {
@@ -8016,7 +8018,7 @@
 		"embed_this_model_on_any_webs_title": "Inserta este modelo en cualquier sitio web",
 		"engine": "Motor",
 		"enter_a_prompt_to_generate": "Introduce un prompt para generar",
-		"every_lab_tool_runs_entirely_in_your": "Cada herramienta del Lab funciona completamente en tu navegador — sin clave API, sin subidas, sin coste. Las herramientas de malla exportan un <strong>GLB</strong> binario real; el visor de Gaussian-splat renderiza el formato de campo de radiancia fotorrealista. Impulsado por <a href=\"https://threejs.org\" rel=\"noopener\" target=\"_blank\">three.js</a> y <a href=\"https://github.com/mkkellogg/GaussianSplats3D\" rel=\"noopener\" target=\"_blank\">GaussianSplats3D</a>.",
+		"every_lab_tool_runs_entirely_in_your": "Todas las herramientas del Lab funcionan íntegramente en tu navegador: sin clave de API, sin subidas, sin coste. Las herramientas de malla exportan un <strong>GLB</strong> binario real; el visor de Gaussian-splat renderiza el formato fotorrealista de campo de radiancia. Con la tecnología de <a href=\"https://threejs.org\" rel=\"noopener\" target=\"_blank\">three.js</a> y <a href=\"https://github.com/sparkjsdev/spark\" rel=\"noopener\" target=\"_blank\">Spark</a>.",
 		"fill_the_box_with_a_random_v_arialabel": "Rellena el cuadro con un prompt vívido aleatorio",
 		"finalizing_glb": "Finalizando GLB",
 		"free_no_api_key_your_own_key": "<span class=\"el-item\"><span class=\"el-free\">GRATIS</span> sin clave API</span> <span class=\"el-item\" ><svg class=\"el-key\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><circle cx=\"8\" cy=\"15\" r=\"4\"></circle><path d=\"M10.85 12.15 19 4\"></path><path d=\"m18 5 2 2\"></path><path d=\"m15 8 2 2\"></path></svg> tu propia clave</span> <span class=\"el-item\"><span class=\"el-dot el-dot-busy\"></span> ocupado</span> <span class=\"el-item\"><span class=\"el-dot el-dot-down\"></span> no disponible</span>",
@@ -18530,7 +18532,7 @@
 		"couldn_t_load_that_splat": "No se pudo cargar ese splat",
 		"download_splat_arialabel": "Descargar splat",
 		"download_splat_title": "Descargar splat",
-		"drop_a_here_paste_a_url_or": "Suelta un <code>.ply</code> / <code>.splat</code> / <code>.ksplat</code> aquí, pega una URL o prueba una muestra a la derecha.",
+		"drop_a_here_paste_a_url_or": "Suelta aquí un <code>.ply</code>, <code>.spz</code>, <code>.splat</code>, <code>.ksplat</code> o <code>.sog</code>, pega una URL o prueba un ejemplo de la derecha.",
 		"fetching_and_decoding_the_radiance_field": "Obteniendo y decodificando el campo de radiancia.",
 		"files_stay_on_your_device_decoding_runs": "Los archivos permanecen en tu dispositivo — la decodificación se ejecuta completamente en tu navegador.",
 		"gaussian_splatting_webgl": "Gaussian Splatting · WebGL",
@@ -18548,7 +18550,7 @@
 		"radiance_shell_6k_splats": "<span class=\"sp-sample-dot\" style=\"background:#86efac\"></span> Caparazón de radiancia · 6k splats",
 		"recenter_camera_arialabel": "Recentrar cámara",
 		"recenter_camera_title": "Recentrar cámara",
-		"render_gaussian_splat_and_radiance_field_ava": "Renderiza avatares de Gaussian-splat y campos de radiancia directamente en el navegador — el resultado fotorrealista de motores como <a href=\"/avatar-engines?family=photoreal-head\">GaussianAvatars y HumanGaussian</a>. Carga un <code>.ply</code>, <code>.splat</code> o <code>.ksplat</code> por URL o arrastra un archivo.",
+		"render_gaussian_splat_and_radiance_field_ava": "Renderiza avatares de Gaussian-splat y de campo de radiancia directamente en el navegador: la salida fotorrealista de motores como <a href=\"/avatar-engines?family=photoreal-head\">GaussianAvatars y HumanGaussian</a>. Carga un <code>.ply</code>, <code>.spz</code>, <code>.splat</code>, <code>.ksplat</code> o <code>.sog</code> por URL o suelta un archivo aquí.",
 		"samples": "Ejemplos",
 		"samples_are_procedurally_generated_to_exerci": "Los ejemplos se generan procedimentalmente para probar el renderizador — no son capturas reales.",
 		"splat_scene_url": "URL de escena Splat",
