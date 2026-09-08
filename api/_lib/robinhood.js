@@ -25,7 +25,7 @@
 import { readFileSync } from 'node:fs';
 import path from 'node:path';
 import { createPublicClient, fallback, http } from 'viem';
-import { cacheWrap } from './cache.js';
+import { cacheGet, cacheSet, cacheWrap } from './cache.js';
 
 // ── Chain definitions (viem 2.52 predates the official robinhood chain defs) ──
 // The installed viem is 2.52.x, whose `viem/chains` does not yet export
@@ -229,7 +229,14 @@ const GET_ROUND_DATA_ABI = [
 export async function feedRoundHistory(feed, count = 24) {
 	const addr = String(feed || '').toLowerCase();
 	if (!/^0x[0-9a-f]{40}$/.test(addr)) return [];
-	return cacheWrap(`rh:feed:hist:${addr}:${count}`, 60, async () => {
+	// Deliberately not `cacheWrap`: an empty result here means the read failed
+	// (a dropped multicall, a throttled RPC), not that the feed has no rounds, and
+	// caching that emptiness for 60s makes every retry inside the window pointless.
+	// Only a non-empty series is worth remembering.
+	const cacheKey = `rh:feed:hist:${addr}:${count}`;
+	const hit = await cacheGet(cacheKey);
+	if (hit) return hit;
+	return (async () => {
 		const client = publicClient(false);
 		let latest;
 		try {
@@ -244,10 +251,29 @@ export async function feedRoundHistory(feed, count = 24) {
 			if (id <= 0n) continue;
 			ids.push(id);
 		}
-		const results = await client.multicall({
-			contracts: ids.map((id) => ({ address: feed, abi: GET_ROUND_DATA_ABI, functionName: 'getRoundData', args: [id] })),
-			allowFailure: true,
-		});
+		// Chunked, because this RPC silently drops calls out of a large multicall
+		// rather than failing it. Measured 2026-09-08 against NVDA's feed: one
+		// multicall of 80 returned all 80, 120 returned 8, and 160 returned none.
+		// A partial result is the dangerous case, since `allowFailure` renders it
+		// as a short-but-successful history rather than as an error, and a caller
+		// intersecting several such histories ends up with an empty window and no
+		// idea why. Batches of 40 stay well inside the limit.
+		const CHUNK = 40;
+		const results = [];
+		for (let i = 0; i < ids.length; i += CHUNK) {
+			const batch = ids.slice(i, i + CHUNK);
+			results.push(
+				...(await client.multicall({
+					contracts: batch.map((id) => ({
+						address: feed,
+						abi: GET_ROUND_DATA_ABI,
+						functionName: 'getRoundData',
+						args: [id],
+					})),
+					allowFailure: true,
+				})),
+			);
+		}
 		const out = [];
 		for (let i = 0; i < results.length; i++) {
 			const r = results[i];
@@ -257,8 +283,9 @@ export async function feedRoundHistory(feed, count = 24) {
 			if (answer == null || !updatedAt) continue;
 			out.push({ roundId: ids[i].toString(), priceUsd: Number(answer) / 10 ** FEED_DECIMALS, updatedAt });
 		}
+		if (out.length) cacheSet(cacheKey, out, 60).catch(() => {});
 		return out;
-	});
+	})();
 }
 
 // ── Shared cached JSON fetch ───────────────────────────────────────────────
