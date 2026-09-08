@@ -3327,6 +3327,17 @@
 				margin-top: var(--space-md);
 				display: inline-flex;
 				gap: var(--space-xs);
+				/* A recovery row must never run off the panel: at 320px a two-button
+				   row (or one long label) used to clip its own text against the
+				   right edge, so the escape hatch was unreadable exactly where the
+				   user needed it most. */
+				flex-wrap: wrap;
+				justify-content: center;
+				max-width: 100%;
+			}
+			.notice .actions .btn {
+				max-width: 100%;
+				white-space: normal;
 			}
 			.hint-foot {
 				text-align: center;

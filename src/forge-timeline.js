@@ -73,6 +73,13 @@ export function createForgeTimeline({ list, preview, warming, engineLabel = (id)
 			// genuinely left the prompt alone), and the label must not conflate them.
 			directedReported: false,
 			directorRan: false, // the submit response came back, so the pass is over
+			// Extra reference views the fusing lane painted around the primary one.
+			// 0 means the lane painted a single view, which is not a missing stage.
+			referenceViews: 0,
+			// The generation finished every image step and is handing the job to a
+			// GPU lane. Reported by a pre-submit progress crumb, so the mesh row can
+			// start before the POST that carries the job id has resolved.
+			handedOff: false,
 			submitted: false,
 			resumed: false,
 			status: 'submitting', // submitting | queued | running | finalizing | done | failed
@@ -88,7 +95,7 @@ export function createForgeTimeline({ list, preview, warming, engineLabel = (id)
 	// ── Stage model ──────────────────────────────────────────────────────────
 	function stages() {
 		const out = [];
-		const meshStarted = f.submitted || f.resumed;
+		const meshStarted = f.submitted || f.resumed || f.handedOff;
 		const terminal = f.status === 'done' || f.status === 'finalizing';
 		// A failed job stops spinning: the row keeps its label and detail but drops
 		// back to the idle marker, so nothing on screen still implies live work.
@@ -126,7 +133,9 @@ export function createForgeTimeline({ list, preview, warming, engineLabel = (id)
 				id: 'reference',
 				label: f.hasReference ? 'Reference view painted' : 'Painting the reference view',
 				detail: f.hasReference
-					? 'This is the image the mesh is reconstructed from'
+					? f.referenceViews > 1
+						? `Plus ${f.referenceViews - 1} turnaround ${plural(f.referenceViews - 1, 'view', 'views')}, so the engine fuses real coverage instead of guessing the back`
+						: 'This is the image the mesh is reconstructed from'
 					: 'A photoreal single view the reconstructor can read cleanly',
 				state: f.hasReference ? 'done' : f.directorRan ? 'active' : 'pending',
 				thumb: f.hasReference ? f.referenceUrl : null,
@@ -187,6 +196,11 @@ export function createForgeTimeline({ list, preview, warming, engineLabel = (id)
 
 	function meshDetail() {
 		if (f.status === 'failed') return 'The lane reported a failure';
+		// Handed off but the POST has not answered yet: the reference work is
+		// provably finished (the crumb said so) and the job id is still in flight.
+		if (f.handedOff && !f.submitted && !f.resumed) {
+			return `Handing the reference views to ${engineLabel(f.backend || f.plannedBackend)}`;
+		}
 		if (f.failoverFrom) {
 			return `${engineLabel(f.failoverFrom)} hit a snag, so ${engineLabel(f.backend)} picked the job up`;
 		}
@@ -415,7 +429,9 @@ export function createForgeTimeline({ list, preview, warming, engineLabel = (id)
 				f.hasReference = true;
 				f.referenceUrl = ref;
 				f.plannedReference = true;
-			} else if (f.mode === 'text' && job?.status && !ref && !job?.coalesced) {
+				const views = Array.isArray(job?.reference_image_urls) ? job.reference_image_urls.length : 0;
+				if (views > f.referenceViews) f.referenceViews = views;
+			} else if (f.mode === 'text' && !f.hasReference && job?.status && !ref && !job?.coalesced) {
 				// The lane answered without a reference view: it generates the mesh
 				// straight from the prompt. Drop the reference stages rather than
 				// leaving a row that will never complete.
@@ -424,13 +440,76 @@ export function createForgeTimeline({ list, preview, warming, engineLabel = (id)
 			if (Number(job?.eta_seconds) > 0) f.etaSeconds = Math.round(Number(job.eta_seconds));
 			f.coldStart = Boolean(job?.cold_start);
 			if (f.coldStart) {
-				const warm = Number(warmEtaSeconds) > 0 ? Number(warmEtaSeconds) : null;
-				const gap = warm && f.etaSeconds ? f.etaSeconds - warm : null;
-				f.coldSeconds = gap && gap > 0 ? Math.round(gap) : null;
+				// The lane's real spin-up budget when the API states it
+				// (`cold_start_seconds`, returned alongside `cold_start` on both the
+				// submit and the poll frame). The subtraction below is the older,
+				// weaker estimate: it infers the boot from how much the ETA widened,
+				// which is only as good as the catalog's warm figure and reads as
+				// "no estimate" whenever the two happen to match. Prefer the stated
+				// number; keep the derivation for a lane that reports the flag
+				// without a budget, so a boot is still measurable rather than silent.
+				const stated = Number(job?.cold_start_seconds);
+				if (stated > 0) {
+					f.coldSeconds = Math.round(stated);
+				} else {
+					const warm = Number(warmEtaSeconds) > 0 ? Number(warmEtaSeconds) : null;
+					const gap = warm && f.etaSeconds ? f.etaSeconds - warm : null;
+					f.coldSeconds = gap && gap > 0 ? Math.round(gap) : null;
+				}
 			}
 			f.status = job?.status === 'done' ? 'finalizing' : job?.status === 'running' ? 'running' : 'queued';
 			paint();
 			return { etaSeconds: f.etaSeconds, directedPrompt: f.directedPrompt, referenceUrl: f.referenceUrl };
+		},
+
+		/**
+		 * Apply the pre-submit progress crumbs read from GET /api/forge?progress=…
+		 * while the POST is still open. Each crumb is written by the server AFTER
+		 * the work it names finished, so this advances the same stages the submit
+		 * response would have advanced, only minutes earlier in wall-clock terms.
+		 * Crumbs never move a stage backwards: a fact the POST already delivered
+		 * stands.
+		 */
+		applyProgress(crumbs) {
+			if (!Array.isArray(crumbs) || !crumbs.length) return false;
+			if (f.submitted || f.resumed) return false;
+			let changed = false;
+			for (const crumb of crumbs) {
+				if (crumb?.stage === 'directed' && !f.directorRan) {
+					f.directorRan = true;
+					f.directedReported = Object.prototype.hasOwnProperty.call(crumb, 'directed_prompt');
+					if (typeof crumb.directed_prompt === 'string' && crumb.directed_prompt.trim()) {
+						f.directedPrompt = crumb.directed_prompt.trim();
+					}
+					changed = true;
+				} else if (crumb?.stage === 'reference') {
+					if (typeof crumb.preview_image_url === 'string' && crumb.preview_image_url && !f.hasReference) {
+						f.hasReference = true;
+						f.referenceUrl = crumb.preview_image_url;
+						f.plannedReference = true;
+						// A reference view can only exist because the director already
+						// handed a brief to the painter, so this crumb proves both.
+						f.directorRan = true;
+						changed = true;
+					}
+				} else if (crumb?.stage === 'views') {
+					const n = Number(crumb.view_count);
+					if (n > f.referenceViews) {
+						f.referenceViews = Math.round(n);
+						changed = true;
+					}
+				} else if (crumb?.stage === 'submitting' && !f.handedOff) {
+					f.handedOff = true;
+					changed = true;
+				}
+			}
+			if (changed) paint();
+			return changed;
+		},
+
+		/** The art-directed prompt a crumb reported, before the POST resolves. */
+		hasDirectedPrompt() {
+			return Boolean(f.directedPrompt);
 		},
 
 		/** Apply one GET /api/forge?job=… poll payload. */

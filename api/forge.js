@@ -77,10 +77,12 @@ import {
 	estimateCredits,
 	preferFreeReconstruct,
 	backendIsConfigured,
+	backendAcceptsInlineViews,
 	buildCatalog,
 	selfhostQualityForTier,
 } from './_lib/forge-tiers.js';
 import { laneHealthSnapshot, markLaneUnhealthy } from './_lib/forge-lane-health.js';
+import { isInlineImageRef } from './_lib/image-persist.js';
 import { resolveProviderKey } from './_lib/forge-provider-key.js';
 import { validateForgeImage } from './_lib/forge-image-validate.js';
 import { encodeJobToken, decodeJobToken } from './_lib/forge-job-token.js';
@@ -94,6 +96,7 @@ import {
 	findByJob,
 } from './_lib/forge-store.js';
 import { isStorageInfrastructureError } from './_lib/r2.js';
+import { normalizeTraceId, recordForgeProgress, readForgeProgress } from './_lib/forge-progress.js';
 import { getSessionUser } from './_lib/auth.js';
 import { constantTimeEquals } from './_lib/crypto.js';
 import {
@@ -1078,6 +1081,12 @@ async function startJob(req, res) {
 	// before. An explicitly-present but invalid value is a 400 with an actionable
 	// message; an absent field is never an error.
 	const opts = normalizeForgeOptions(body);
+	// Optional client-supplied trace id for the pre-submit progress channel. The
+	// director pass and the reference-view synthesis both finish long before this
+	// request can answer, so each records a crumb the page reads with a cheap poll
+	// (GET ?progress=<id>) while this POST is still open. Absent id: no crumbs, and
+	// the generation is byte-for-byte what it was before.
+	const progressId = normalizeTraceId(body?.progress_id);
 	if (opts.errors.length) {
 		return json(res, 400, {
 			error: 'invalid_options',
@@ -1883,6 +1892,14 @@ async function startJob(req, res) {
 		// view synthesized from the prompt (text→3D). `referenceImageUrl` is the
 		// primary view: the durable preview + the synthesis target.
 		let referenceImageUrl;
+		// What we ECHO and STORE for the reference view, as opposed to what we send
+		// the reconstructor. They differ in exactly one case: a storage outage makes
+		// referenceImageUrl an inline data URI (see _lib/image-persist.js), which the
+		// worker must receive and which must never reach the response body or the
+		// forge_creations row, where a multi-megabyte base64 string would bloat every
+		// poll payload and the database. Null there means "no durable preview", which
+		// is the truth: nothing was parked.
+		let reportableRefUrl = null;
 		let textToImageModel;
 		let views;
 		// The prompt the art director actually handed to the reference painter, when
@@ -1894,6 +1911,7 @@ async function startJob(req, res) {
 		if (isImageMode) {
 			views = imageUrls;
 			referenceImageUrl = imageUrls[0];
+			reportableRefUrl = referenceImageUrl;
 			textToImageModel = null;
 		} else {
 			// Granite art-director pass (on by default; pass director:false to skip):
@@ -1927,6 +1945,10 @@ async function startJob(req, res) {
 			// Report the rewrite only when it actually changed the brief, an
 			// unchanged value means the model saw exactly what the user typed.
 			if (promptForReference && promptForReference !== prompt) directedPrompt = promptForReference;
+			// Milestone 1: the director pass is over. Crumb it before the (much
+			// longer) image synthesis starts so the page can retire that stage and
+			// show the real rewrite instead of holding it for the whole request.
+			recordForgeProgress(progressId, 'directed', { directed_prompt: directedPrompt }).catch(() => {});
 			// Seed the reconstruction reference from the dedicated Vertex-Gemini
 			// photoreal module when it is live, so a text prompt reconstructs from the
 			// most photoreal single view we can synthesize. Fail-open: an absent module
@@ -1941,6 +1963,33 @@ async function startJob(req, res) {
 			referenceImageUrl = synthesized.imageUrl;
 			textToImageModel = synthesized.model;
 			views = [referenceImageUrl];
+			reportableRefUrl = isInlineImageRef(referenceImageUrl) ? null : referenceImageUrl;
+			// The reference view came back inline because object storage refused to
+			// park it (see _lib/image-persist.js). Our own GPU workers decode a data
+			// URI, so those lanes carry on untouched; a third-party reconstructor
+			// fetches a URL and cannot, so it is refused here with the actual cause
+			// rather than being handed a data URI it will reject opaquely. Before
+			// this branch existed the storage error escaped raw, and every text→3D
+			// caller was told to "check your secret access key and signing method".
+			if (isInlineImageRef(referenceImageUrl) && !backendAcceptsInlineViews(backendId)) {
+				return json(res, 503, {
+					error: 'storage_unavailable',
+					message:
+						'Our image storage is not accepting writes right now, so this engine cannot be given the reference view. Try again on the free built-in engine, or retry shortly.',
+					backend: backendId,
+					retryable: true,
+					retry_backends: retryBackendSuggestions({ attempted: [backendId], hasImage: false }).filter(
+						backendAcceptsInlineViews,
+					),
+				});
+			}
+			// Milestone 2: the reference view exists. This is the one the user is
+			// really waiting to see, and it is now minutes-fresh rather than
+			// arriving with the job id at the end of the request.
+			recordForgeProgress(progressId, 'reference', {
+				preview_image_url: reportableRefUrl,
+				text_to_image_model: textToImageModel,
+			}).catch(() => {});
 		}
 
 		// Multi-view conditioning: rotate the primary view (the caller's uploaded
@@ -1954,10 +2003,29 @@ async function startJob(req, res) {
 		// speed, and a caller who supplied multiple calibrated views keeps exactly
 		// those. Best-effort: a failed view just means fewer views, never a
 		// failed generation.
-		if (backendId === 'trellis_selfhost' && tier.id !== 'draft' && views.length === 1) {
+		// An inline reference view (storage outage) is skipped here on purpose: the
+		// turnaround lane edits an image it fetches by URL, so it can only fail, and
+		// paying a Vertex round trip to learn that would just slow the one path still
+		// able to deliver a mesh. Single-view reconstruction still runs.
+		if (
+			backendId === 'trellis_selfhost' &&
+			tier.id !== 'draft' &&
+			views.length === 1 &&
+			!isInlineImageRef(referenceImageUrl)
+		) {
 			const turnaround = await synthesizeTurnaroundViews(referenceImageUrl).catch(() => []);
 			if (turnaround.length) views = [...views, ...turnaround];
 		}
+		// Milestone 3: every view the reconstructor will fuse now exists, so the
+		// remaining wait is the GPU itself. Only crumbed when the lane actually
+		// painted extra views, so a single-view lane never shows a stage it skipped.
+		if (views.length > 1) {
+			recordForgeProgress(progressId, 'views', { view_count: views.length }).catch(() => {});
+		}
+		// Milestone 4: every image the reconstructor needs is in the bucket and the
+		// request is handing the job to a GPU lane. Everything after this point is
+		// the engine's own queued/running reporting, which the page already polls.
+		recordForgeProgress(progressId, 'submitting', {}).catch(() => {});
 
 		// Explicitly chosen free HuggingFace lane. Unlike the trellis free-first
 		// path below: which degrades to the paid Replicate lane when the free
@@ -2047,7 +2115,7 @@ async function startJob(req, res) {
 					ipHash: hashIp(ip),
 					prompt: prompt || (isImageMode ? 'image-to-3d' : ''),
 					aspect: isImageMode ? null : aspect,
-					previewImageUrl: referenceImageUrl,
+					previewImageUrl: reportableRefUrl,
 					replicateJobId: job.extJobId,
 					textToImageModel: isImageMode ? null : textToImageModel,
 					viewsRequested: views.length,
@@ -2072,7 +2140,7 @@ async function startJob(req, res) {
 					backend: backendId,
 					prompt: prompt || null,
 					directed_prompt: directedPrompt,
-					preview_image_url: referenceImageUrl,
+					preview_image_url: reportableRefUrl,
 					reference_image_urls: views,
 					text_to_image_model: isImageMode ? null : textToImageModel,
 					cold_start: cold,
@@ -2114,7 +2182,7 @@ async function startJob(req, res) {
 					tier,
 					path,
 					mode: isImageMode ? 'image_to_3d' : 'text_to_3d',
-					previewImageUrl: referenceImageUrl,
+					previewImageUrl: reportableRefUrl,
 					textToImageModel,
 					directedPrompt,
 					opts,
@@ -2152,7 +2220,7 @@ async function startJob(req, res) {
 					tier,
 					path,
 					mode: isImageMode ? 'image_to_3d' : 'text_to_3d',
-					previewImageUrl: referenceImageUrl,
+					previewImageUrl: reportableRefUrl,
 					textToImageModel,
 					directedPrompt,
 					opts,
@@ -2316,7 +2384,7 @@ async function startJob(req, res) {
 						tier,
 						path,
 						mode: isImageMode ? 'image_to_3d' : 'text_to_3d',
-						previewImageUrl: referenceImageUrl,
+						previewImageUrl: reportableRefUrl,
 						textToImageModel,
 						directedPrompt,
 						opts,
@@ -2359,7 +2427,7 @@ async function startJob(req, res) {
 			ipHash: hashIp(ip),
 			prompt: prompt || (isImageMode ? 'image-to-3d' : ''),
 			aspect,
-			previewImageUrl: referenceImageUrl,
+			previewImageUrl: reportableRefUrl,
 			replicateJobId: job.extJobId,
 			textToImageModel,
 			viewsRequested,
@@ -2395,7 +2463,7 @@ async function startJob(req, res) {
 			backend: backendId,
 			prompt: prompt || null,
 			directed_prompt: directedPrompt,
-			preview_image_url: referenceImageUrl,
+			preview_image_url: reportableRefUrl,
 			reference_image_urls: views,
 			views_requested: viewsRequested,
 			views_used: viewsUsed,
@@ -3147,6 +3215,23 @@ export default wrap(async (req, res) => {
 		return json(res, 200, await probeForgeHealth(), {
 			'cache-control': 'public, max-age=15, s-maxage=30, stale-while-revalidate=120',
 		});
+	}
+
+	// ?progress: the pre-submit crumbs for a trace id the caller passed on its own
+	// still-open POST (see _lib/forge-progress.js). Answers instantly from the
+	// shared cache, and an unknown trace is an empty list rather than an error:
+	// polling ahead of the first milestone is the normal case, not a fault.
+	if (url.searchParams.has('progress')) {
+		const traceId = (url.searchParams.get('progress') || '').trim();
+		if (!normalizeTraceId(traceId)) {
+			return json(res, 400, {
+				error: 'invalid_progress_id',
+				message: 'Pass ?progress=<id> using the same id sent as progress_id on the POST.',
+			});
+		}
+		const rl = await limits.mcp3dStatus(clientIp(req));
+		if (!rl.success) return rateLimited(res, rl);
+		return json(res, 200, { progress: await readForgeProgress(traceId) });
 	}
 
 	const jobId = (url.searchParams.get('job') || '').trim();

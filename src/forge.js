@@ -152,6 +152,11 @@ const els = {
 
 let aspectRatio = '1:1';
 let elapsedTimer = null;
+// Wall-clock origin of the running elapsed meter, and a handle to repaint it on
+// demand. Module-level because anchorElapsed() re-points the origin at the
+// server's own job age when a poll frame reports one.
+let elapsedStart = 0;
+let elapsedRetick = null;
 let pollAbort = false;
 let mode = 'text'; // 'text' | 'image' | 'sketch' — input mode (prompt vs photos vs drawing)
 let lastJob = null; // { prompt, imageUrls, seed }: for retry and refine
@@ -310,7 +315,14 @@ const CLIENT_ID = (() => {
 	}
 })();
 
-const CLIENT_HEADERS = { 'x-forge-client': CLIENT_ID };
+// `x-witness: handled` tells the session recorder (packages/witness) that this
+// page renders a designed state for every status /api/forge can answer with: a
+// rate limit, a lane failure, a storage outage. Without it the recorder counts
+// each of those as an unhandled failure and the companion interrupts with
+// "something just broke, want to report it?" ON TOP of the recovery buttons the
+// page is already showing, which at 320px literally covered Try again. The call
+// is still recorded, it just stops triggering that offer.
+const CLIENT_HEADERS = { 'x-forge-client': CLIENT_ID, 'x-witness': 'handled' };
 
 // Leave-the-page continuity. The active async job persists here so a reload,
 // a navigation away, or a closed tab does not lose the generation: returning
@@ -387,6 +399,29 @@ function showState(name) {
 	}
 	// Leaving the result state always leaves cinema mode with it.
 	if (name !== 'result' && cinemaOn) setCinema(false);
+}
+
+// Bring the stage (the panel that holds the timeline, the viewer and the error
+// states) into view when the page has just switched what it is showing there.
+//
+// On a wide screen the composer and the stage sit side by side and the stage is
+// already on screen, so scrolling would be a pointless jolt. Below the layout's
+// breakpoint they stack, and the stage starts a full viewport BELOW the Generate
+// button: pressing Generate on a phone used to leave the user staring at the
+// engine picker while the whole live timeline played out off-screen. So: scroll
+// only when the stage genuinely is not in view, and respect a reduced-motion
+// preference by jumping instead of animating.
+function revealStage() {
+	const el = els.stage;
+	if (!el || typeof el.getBoundingClientRect !== 'function') return;
+	const rect = el.getBoundingClientRect();
+	const viewport = window.innerHeight || document.documentElement.clientHeight || 0;
+	if (!viewport) return;
+	// "In view" means its top edge is inside the upper two thirds of the window,
+	// which is where a side-by-side stage always is and a stacked one never is.
+	if (rect.top >= 0 && rect.top < viewport * 0.66) return;
+	const reduced = window.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches;
+	el.scrollIntoView({ behavior: reduced ? 'auto' : 'smooth', block: 'start' });
 }
 
 // Human label for a backend id, from the short-label map or the live catalog.
@@ -468,7 +503,7 @@ function setProgress(pct) {
 function startElapsed(offsetMs = 0) {
 	// `offsetMs` backdates the counter for a resumed job, so the elapsed line
 	// stays honest about how long the generation has really been running.
-	const started = performance.now() - Math.max(0, offsetMs);
+	elapsedStart = performance.now() - Math.max(0, offsetMs);
 	stopElapsed();
 	// Reset the meter to a clean running state for this job.
 	if (els.genProgress) {
@@ -478,7 +513,7 @@ function startElapsed(offsetMs = 0) {
 	}
 	setProgress(0);
 	const tick = () => {
-		const s = Math.floor((performance.now() - started) / 1000);
+		const s = Math.floor((performance.now() - elapsedStart) / 1000);
 		// Re-read every tick: the accepted job replaces the catalog guess with the
 		// server's real ETA for the lane that actually ran (cold start included).
 		const typical = currentEtaSeconds();
@@ -499,7 +534,30 @@ function startElapsed(offsetMs = 0) {
 		}
 	};
 	tick();
+	elapsedRetick = tick;
 	elapsedTimer = window.setInterval(tick, 1000);
+}
+
+// Re-anchor the running meter to the server's own age for this job.
+//
+// The meter interpolates between polls with a local 1s tick, which is what keeps
+// it smooth, but the tick alone has no idea when the JOB started: only when this
+// tab did. `elapsed_seconds` on every non-terminal poll frame is measured from
+// the creation row, so it is the same number for every viewer of the same job.
+// Snapping to it costs nothing when they already agree and is the difference
+// between "3s in" and the truth on a resumed page.
+//
+// A drift under 2s is ignored, so an ordinary round-trip does not re-snap the
+// display on every poll; past that the server wins in both directions, because
+// the one case that matters (a resumed or coalesced job, where the local clock
+// reads far too LOW) is a correction the meter has to make.
+function anchorElapsed(serverElapsedS) {
+	const s = Number(serverElapsedS);
+	if (!Number.isFinite(s) || s < 0 || !elapsedTimer) return;
+	const localS = (performance.now() - elapsedStart) / 1000;
+	if (Math.abs(s - localS) < 2) return;
+	elapsedStart = performance.now() - s * 1000;
+	elapsedRetick?.();
 }
 
 // Snap the meter to a finished, successful state — the only path to 100%.
@@ -512,10 +570,82 @@ function markProgressDone() {
 }
 
 function stopElapsed() {
+	elapsedRetick = null;
 	if (elapsedTimer) {
 		window.clearInterval(elapsedTimer);
 		elapsedTimer = null;
 	}
+}
+
+// ── Pre-submit progress watch ────────────────────────────────────────────────
+// POST /api/forge is ONE long request: the art-director pass, the reference-view
+// synthesis and (on the fusing lane) the turnaround views all complete inside
+// it. Without a second channel the stage list could only report "art-directing
+// your prompt" for that whole window, and the reference image the user is really
+// waiting to watch appear arrived at the very END of it, with the job id.
+//
+// So the server records a crumb the moment each of those milestones genuinely
+// finishes (api/_lib/forge-progress.js), keyed by a trace id this browser mints,
+// and this poll reads them while the POST is still open. Every transition it
+// causes is still a real server signal, never a timer. It is also completely
+// optional: a poll that answers with nothing (no Redis, a different instance, an
+// older deployment) leaves the panel behaving exactly as it did before.
+const PROGRESS_POLL_MS = 2500;
+let progressWatch = null;
+
+function mintProgressId() {
+	const raw =
+		typeof crypto?.randomUUID === 'function'
+			? crypto.randomUUID()
+			: `${Date.now().toString(36)}-${Math.random().toString(36).slice(2)}-${Math.random().toString(36).slice(2)}`;
+	// The server accepts 16-64 url-safe characters; a UUID with its dashes removed
+	// sits comfortably inside that and stays a single token in a query string.
+	return raw.replace(/[^A-Za-z0-9_-]/g, '').slice(0, 48);
+}
+
+function stopProgressWatch() {
+	if (!progressWatch) return;
+	progressWatch.stopped = true;
+	window.clearTimeout(progressWatch.timer);
+	try {
+		progressWatch.controller?.abort();
+	} catch {
+		// An already-settled fetch has nothing to abort.
+	}
+	progressWatch = null;
+}
+
+function startProgressWatch(traceId) {
+	stopProgressWatch();
+	if (!traceId) return;
+	const watch = { stopped: false, timer: 0, controller: null };
+	progressWatch = watch;
+	const poll = async () => {
+		if (watch.stopped) return;
+		watch.controller = typeof AbortController === 'function' ? new AbortController() : null;
+		try {
+			const res = await fetch(`/api/forge?progress=${encodeURIComponent(traceId)}`, {
+				headers: CLIENT_HEADERS,
+				signal: watch.controller?.signal,
+			});
+			if (!watch.stopped && res.ok) {
+				const data = await res.json().catch(() => null);
+				if (Array.isArray(data?.progress) && data.progress.length) timeline.applyProgress(data.progress);
+			} else if (!res.ok && res.status !== 429) {
+				// This deployment does not serve the progress channel (or refused the
+				// trace). One answer is enough to know that: keep polling and we would
+				// just fill the console with the same failure for the whole request.
+				stopProgressWatch();
+				return;
+			}
+		} catch {
+			// A dropped progress poll is invisible on purpose: the submit response
+			// carries every one of these facts a moment later regardless.
+		}
+		if (watch.stopped) return;
+		watch.timer = window.setTimeout(poll, PROGRESS_POLL_MS);
+	};
+	watch.timer = window.setTimeout(poll, PROGRESS_POLL_MS);
 }
 
 function setBusy(busy) {
@@ -1504,7 +1634,7 @@ function forgeHeaders(extra) {
 	return h;
 }
 
-async function startJob({ prompt, imageUrls, skipValidation, payment, seed }) {
+async function startJob({ prompt, imageUrls, skipValidation, payment, seed, progressId }) {
 	const base = { path: selectedEngine.path, tier: selectedTier, backend: selectedEngine.backend };
 	const body =
 		Array.isArray(imageUrls) && imageUrls.length
@@ -1518,6 +1648,10 @@ async function startJob({ prompt, imageUrls, skipValidation, payment, seed }) {
 	// Reproducibility: see mintSeed(). Absent on a job replayed from the gallery,
 	// where the original seed was never recorded, so that path stays as it was.
 	if (Number.isInteger(seed)) body.seed = seed;
+	// Trace id for the pre-submit progress channel (see startProgressWatch). The
+	// server crumbs each finished milestone against it while this request is still
+	// open. Purely additive: omit it and the response is identical.
+	if (progressId) body.progress_id = progressId;
 	// Caller already saw the vision warning and chose to proceed (Consumer 1).
 	if (skipValidation) body.skip_validation = true;
 	// Pay-per-use proof: a non-holder who paid $THREE for this High generation
@@ -1552,6 +1686,20 @@ async function startJob({ prompt, imageUrls, skipValidation, payment, seed }) {
 	if (data.error === 'unconfigured') {
 		const e = new Error(data.message || 'unconfigured');
 		e.kind = 'unconfigured';
+		throw e;
+	}
+	// Object storage rejected the generation (a rotated credential, an unreachable
+	// endpoint). Nothing about the prompt is wrong, no engine switch routes around
+	// it, and unlike a quota pause it does not clear in seconds, so it gets its
+	// own designed state rather than a countdown that promises a fix it cannot
+	// deliver. Models already forged are served from the public CDN and are
+	// unaffected, which is the honest alternative to offer.
+	if (data.error === 'storage_unavailable') {
+		const e = new Error(
+			data.message || '3D generation is paused while our asset storage recovers.',
+		);
+		e.kind = 'storage_down';
+		e.retryAfter = Number(data.retry_after) > 0 ? Math.ceil(Number(data.retry_after)) : 60;
 		throw e;
 	}
 	if (res.status === 503) {
@@ -1727,6 +1875,15 @@ async function pollUntilDone(jobId) {
 			if (data.error === 'invalid_job' || data.error === 'missing_job') {
 				throw new Error(data.message || 'That generation is no longer available.');
 			}
+			// The server's elapsed is the JOB's age, measured from the row's
+			// created_at; the local meter only knows when THIS tab started counting.
+			// Those agree for a job submitted here and diverge for every other case:
+			// a resumed session, a coalesced job that joined work already in flight,
+			// or a failover successor. Re-anchor the meter to the server's figure so
+			// the elapsed readout and the cold-start countdown describe the
+			// generation rather than the tab, while the 1s tick keeps them moving
+			// smoothly between polls.
+			anchorElapsed(data.elapsed_seconds);
 			// One place folds the poll into the stage timeline: queued vs running, the
 			// lane a poll-time failover moved to, and a reference view that only
 			// becomes visible now (coalesced job, resumed session, failover successor).
@@ -2086,6 +2243,7 @@ function showResult(glbUrl, label, meta, { autoSaved = false, downloadUrl = null
 	currentResultTier = meta?.tier || selectedTier;
 	updateRefineButton();
 	showState('result');
+	revealStage();
 	// Manage focus across the async transition: land on the primary next action
 	// (Download), but never steal focus from a user already working elsewhere,
 	// e.g. a gallery card click or someone mid-typing a new prompt.
@@ -2398,9 +2556,15 @@ function showError(message, { allowOverride = false, title = 'Generation failed'
 	if (els.errorLanes) {
 		els.errorLanes.classList.add('is-hidden');
 		els.errorLanes.innerHTML = '';
+		// showStorageDown relabels this group for its own contents; every other
+		// state that reveals it fills it with engine switches, so reset the name.
+		els.errorLanes.setAttribute('aria-label', 'Retry on another engine');
 	}
 	if (els.retry) els.retry.disabled = false;
 	showState('error');
+	// A failure the user cannot see is a hang. On a stacked layout the stage sits
+	// below the fold, so bring it up before moving focus into it.
+	revealStage();
 	// The async flow just landed on an error: put keyboard focus on the primary
 	// recovery action, unless the user is already typing somewhere else.
 	const ax = document.activeElement;
@@ -2438,6 +2602,68 @@ function showLaneFailed(message, backends) {
 		els.errorLanes.appendChild(btn);
 	}
 	els.errorLanes.classList.remove('is-hidden');
+}
+
+// Object storage is rejecting us, so no lane can finish a generation: every one
+// of them has to park a reference image or a finished mesh in the bucket. This
+// is the one failure class where "try another engine" is a lie, so instead of
+// offering it we tell the user plainly what broke, that it is ours and not
+// theirs, and what still works right now: every model they already forged is
+// served from the public CDN and opens, downloads and refines exactly as before.
+// Retry stays, on the same live countdown as the quota state, because a fixed
+// credential recovers within seconds without a redeploy.
+function showStorageDown({ retryAfter = 60, message = '' } = {}) {
+	stopElapsed();
+	timeline.fail();
+	stopRateLimitCountdown();
+	if (els.generateAnyway) els.generateAnyway.classList.add('is-hidden');
+
+	const canRefineLocally = Boolean(lastShownGlb && els.viewer.getAttribute('src'));
+	if (els.refineLocally) els.refineLocally.classList.toggle('is-hidden', !canRefineLocally);
+
+	if (els.errorTitle) els.errorTitle.textContent = 'Our storage is down, not your prompt';
+
+	// The alternative that genuinely works while the bucket is unreachable. This
+	// row is normally the engine-switch group, so it says what it holds now.
+	if (els.errorLanes) {
+		els.errorLanes.innerHTML = '';
+		els.errorLanes.setAttribute('aria-label', 'What still works while storage recovers');
+		const seeSaved = document.createElement('button');
+		seeSaved.type = 'button';
+		seeSaved.className = 'btn btn-ghost';
+		seeSaved.textContent = 'Open a saved model';
+		seeSaved.addEventListener('click', () => {
+			els.creations?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+			els.creationsGrid?.querySelector('button, [tabindex]')?.focus?.({ preventScroll: true });
+		});
+		els.errorLanes.appendChild(seeSaved);
+		els.errorLanes.classList.remove('is-hidden');
+	}
+
+	let remaining = Math.max(1, Math.ceil(retryAfter));
+	const base =
+		message ||
+		'3D generation is paused while our asset storage recovers. Nothing you did caused this and nothing was charged.';
+	const tail = canRefineLocally ? ' Your current model is still here: refine it locally, no storage needed.' : '';
+	const render = () => {
+		els.errorMessage.textContent =
+			remaining > 0
+				? `${base} Retrying is available in ${remaining}s.${tail}`
+				: `${base} You can try again now.${tail}`;
+	};
+	if (els.retry) els.retry.disabled = remaining > 0;
+	render();
+	showState('error');
+	revealStage();
+
+	rateLimitTimer = setInterval(() => {
+		remaining -= 1;
+		if (remaining <= 0) {
+			stopRateLimitCountdown();
+			if (els.retry) els.retry.disabled = false;
+		}
+		render();
+	}, 1000);
 }
 
 // Rate-limit state: a designed, recoverable treatment for a 429. Instead of a
@@ -2493,6 +2719,7 @@ function showRateLimited({ retryAfter = 10, unavailable = false, busy = false })
 	if (els.retry) els.retry.disabled = remaining > 0;
 	render();
 	showState('error');
+	revealStage();
 
 	rateLimitTimer = setInterval(() => {
 		remaining -= 1;
@@ -2537,11 +2764,21 @@ async function run(cfg) {
 	pendingLaneNote = '';
 	startElapsed();
 	showState('generating');
+	revealStage();
 
 	const label = cfg.prompt || (isImage ? 'Multi-view reconstruction' : '');
 
+	// Watch the server's pre-submit milestones for THIS submission while the POST
+	// below is still open, so the director's rewrite and the reference view land
+	// on the stage list the moment each one genuinely finishes, not at the end.
+	const progressId = mintProgressId();
+	startProgressWatch(progressId);
+
 	try {
-		const job = await startJob(cfg);
+		const job = await startJob({ ...cfg, progressId });
+		// The POST answered, so it now carries every fact the crumbs were standing
+		// in for. Nothing left to watch.
+		stopProgressWatch();
 		if (job.creation_id) currentCreationId = job.creation_id;
 
 		// Fold every real signal the submit response carries into the timeline: the
@@ -2667,6 +2904,12 @@ async function run(cfg) {
 			showRateLimited({ retryAfter: err.retryAfter, unavailable: err.unavailable });
 			return;
 		}
+		// Object storage is refusing us. Designed, honest, and pointed at the thing
+		// that still works, instead of a raw signing complaint from the store.
+		if (err.kind === 'storage_down') {
+			showStorageDown({ retryAfter: err.retryAfter, message: err.message });
+			return;
+		}
 		// Free lane at capacity under load — same recoverable countdown UI, framed as
 		// high demand. Auto-retry lands the user in line as slots free up, and the
 		// local-refine escape hatch still applies when a model is already on screen.
@@ -2735,6 +2978,9 @@ async function run(cfg) {
 				'Something went wrong. Try a simpler, single-subject prompt or cleaner photos.',
 		);
 	} finally {
+		// Every exit from this job (delivered, cancelled, errored, gated) ends the
+		// pre-submit watch, so a poll can never outlive the run that started it.
+		stopProgressWatch();
 		setBusy(false);
 	}
 }

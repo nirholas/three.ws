@@ -190,3 +190,89 @@ describe('forge timeline completion', () => {
 		expect(labelOf('finish')).toBe('Model ready');
 	});
 });
+
+// The pre-submit progress channel (api/_lib/forge-progress.js writes the crumbs,
+// src/forge.js polls them). Its whole point is that the reference view appears
+// while the POST is still open instead of arriving with the job id, so these
+// pin that the crumbs advance exactly the stages the submit response would have,
+// and that a later submit response can never walk that back.
+describe('forge timeline pre-submit progress crumbs', () => {
+	let timeline;
+	beforeEach(() => {
+		timeline = mount();
+	});
+
+	const detailOf = (id) =>
+		document.querySelector(`#stages .step[data-stage="${id}"] .step-detail`)?.textContent;
+
+	it('retires the director stage on the crumb, before any submit response', () => {
+		timeline.begin({ mode: 'text', backend: 'trellis_selfhost', usesReference: true });
+		expect(stateOf('direct')).toBe('active');
+		const changed = timeline.applyProgress([
+			{ stage: 'directed', at: 1, directed_prompt: 'a brass sundial, weathered patina, studio light' },
+		]);
+		expect(changed).toBe(true);
+		expect(stateOf('direct')).toBe('done');
+		expect(labelOf('direct')).toBe('Prompt art-directed');
+		// The next stage is now the one genuinely running.
+		expect(stateOf('reference')).toBe('active');
+		expect(stateOf('mesh')).toBe('pending');
+	});
+
+	it('paints the reference view from the crumb and keeps it after the submit lands', () => {
+		timeline.begin({ mode: 'text', backend: 'trellis_selfhost', usesReference: true });
+		timeline.applyProgress([
+			{ stage: 'directed', at: 1, directed_prompt: 'a brass sundial' },
+			{ stage: 'reference', at: 2, preview_image_url: 'https://cdn.example/ref.png' },
+		]);
+		expect(stateOf('reference')).toBe('done');
+		expect(
+			document.querySelector('#stages .step[data-stage="reference"] .step-thumb')?.getAttribute('href'),
+		).toBe('https://cdn.example/ref.png');
+		// A submit response that omits the reference must not drop stages the
+		// crumbs already proved happened.
+		timeline.applySubmit({ status: 'queued', backend: 'trellis_selfhost' });
+		expect(stageIds()).toEqual(['direct', 'reference', 'mesh', 'finish']);
+		expect(stateOf('reference')).toBe('done');
+	});
+
+	it('starts the mesh row on the submitting crumb and names the turnaround views', () => {
+		timeline.begin({ mode: 'text', backend: 'trellis_selfhost', usesReference: true });
+		timeline.applyProgress([
+			{ stage: 'directed', at: 1, directed_prompt: null },
+			{ stage: 'reference', at: 2, preview_image_url: 'https://cdn.example/ref.png' },
+			{ stage: 'views', at: 3, view_count: 3 },
+			{ stage: 'submitting', at: 4 },
+		]);
+		expect(detailOf('reference')).toContain('2 turnaround views');
+		expect(stateOf('mesh')).toBe('active');
+		expect(detailOf('mesh')).toContain('Handing the reference views to TRELLIS');
+		// A director that genuinely left the prompt alone says so, and never
+		// claims a rewrite that did not happen.
+		expect(labelOf('direct')).toBe('Prompt used as you wrote it');
+	});
+
+	it('ignores crumbs once the submit response has landed', () => {
+		timeline.begin({ mode: 'text', backend: 'trellis_selfhost', usesReference: true });
+		timeline.applySubmit({
+			status: 'queued',
+			backend: 'trellis_selfhost',
+			preview_image_url: 'https://cdn.example/real.png',
+		});
+		const changed = timeline.applyProgress([
+			{ stage: 'reference', at: 9, preview_image_url: 'https://cdn.example/stale.png' },
+		]);
+		expect(changed).toBe(false);
+		expect(
+			document.querySelector('#stages .step[data-stage="reference"] .step-thumb')?.getAttribute('href'),
+		).toBe('https://cdn.example/real.png');
+	});
+
+	it('does nothing at all when the channel reports nothing', () => {
+		timeline.begin({ mode: 'text', backend: 'trellis_selfhost', usesReference: true });
+		expect(timeline.applyProgress([])).toBe(false);
+		expect(timeline.applyProgress(null)).toBe(false);
+		expect(stateOf('direct')).toBe('active');
+		expect(stateOf('reference')).toBe('pending');
+	});
+});
