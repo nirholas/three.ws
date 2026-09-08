@@ -44,12 +44,17 @@ import {
 	vertexGeminiHeaders,
 } from './vertex-gemini.js';
 
-// Free NIM vision lanes, in order. nemotron-nano carries the smallest image
-// token footprint (~281 prompt tokens for a tiny image vs ~1600 for llama-90B);
-// llama-3.2-11b is a different model family, so its failure modes are
-// independent — a real second lane, not a re-roll of the first.
+// Free NIM vision lanes, in order.
+//
+// `nvidia/nemotron-nano-12b-v2-vl` used to lead here for its small image token
+// footprint. NVIDIA retired it: the host answers every request for it with a
+// hard 410 ("has reached its end of life on 2026-08-26T09:00:00Z"), verified
+// against production on 2026-09-08. A 410 never recovers, so leaving it in the
+// list only spent the first, largest slice of every vision request's deadline
+// on a model that cannot answer. Adding a replacement free NIM VLM needs a live
+// NVIDIA_API_KEY to probe the catalog against, which is why this is a removal
+// rather than a swap.
 const NVIDIA_VISION_MODELS = [
-	'nvidia/nemotron-nano-12b-v2-vl',
 	'meta/llama-3.2-11b-vision-instruct',
 ];
 // Paid last-resort tail. gpt-5.4-nano is vision-capable and already priced in
@@ -76,11 +81,11 @@ const OPENAI_VISION_MODEL = 'gpt-5.4-nano';
 //      remaining budget across the lanes that are still to come guarantees
 //      every rung a real attempt, which is the only reason a chain exists.
 //
-// The two free NIM rungs share one host, so a transport failure or a 429 there
-// is a statement about the HOST, not the model: cooling only the model that
-// happened to be asked would send the very next request to its twin on the same
-// sick host. Model-specific rejections (a 404 for a retired model id, a 400)
-// cool just that lane.
+// Free NIM rungs share one host, so a transport failure or a 429 there is a
+// statement about the HOST, not the model: cooling only the model that happened
+// to be asked would send the very next request to a sibling on the same sick
+// host. Model-specific rejections (a 404 for a retired model id, a 400) cool
+// just that lane, and a 410 parks it for the long window (see below).
 const VISION_LANE_COOLDOWN_SECONDS = 45;
 // Below this a lane cannot complete a VLM call, so handing it a smaller slice
 // only burns budget the next rung could have used.
@@ -132,7 +137,16 @@ export function laneAttemptTimeout(remainingMs, lanesLeft, timeoutMs) {
 	const share = remainingMs / Math.max(1, lanesLeft);
 	// The floor may exceed the share when the budget is nearly spent; capping it
 	// by what is actually left keeps the attempt inside the deadline either way.
-	return Math.max(1, Math.min(timeoutMs, remainingMs, Math.max(MIN_LANE_ATTEMPT_MS, share)));
+	//
+	// Math.floor is load-bearing, not cosmetic: this value is handed straight to
+	// AbortSignal.timeout(), which rejects a non-integer delay with
+	// ERR_OUT_OF_RANGE. The division above produces an integer only when the
+	// remaining budget happens to divide evenly by the lane count, so in
+	// production the fallback rung usually threw before it sent a single byte
+	// and was recorded as "unreachable" ("The value of \"delay\" is out of range.
+	// It must be an integer. Received 7924.333333333333"). That silently cost the
+	// chain the very rung it exists for, on every request that reached it.
+	return Math.floor(Math.max(1, Math.min(timeoutMs, remainingMs, Math.max(MIN_LANE_ATTEMPT_MS, share))));
 }
 
 /**
@@ -465,7 +479,11 @@ export async function describeImage({
 			// every rung sharing it. Anything else (a 404 for a retired model id, a
 			// 400) is specific to this model and cools this lane alone.
 			const st = upstream.status;
-			const authFault = st === 401 || st === 403 || st === 402;
+			// 410 Gone is how NIM reports a retired model id. Unlike a 404 or a 500 it
+			// is a permanent verdict about this model, so it parks the lane for the
+			// long window instead of being re-probed (and re-charged a slice of the
+			// deadline) on every request until someone notices.
+			const authFault = st === 401 || st === 403 || st === 402 || st === 410;
 			// A 429 is the one verdict that is unambiguously about the HOST and the
 			// account behind it: every model served there is throttled by the same
 			// quota, so both the bench and the in-request skip cover every sibling

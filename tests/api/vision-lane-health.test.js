@@ -16,7 +16,6 @@ const ENV_KEYS = ['NVIDIA_API_KEY', 'OPENAI_API_KEY', 'GOOGLE_CLOUD_PROJECT'];
 const ORIGINAL_ENV = Object.fromEntries(ENV_KEYS.map((k) => [k, process.env[k]]));
 
 const LANE_KEYS = [
-	'vision:nvidia:nvidia/nemotron-nano-12b-v2-vl',
 	'vision:nvidia:meta/llama-3.2-11b-vision-instruct',
 	'vision:openai:gpt-5.4-nano',
 ];
@@ -75,6 +74,23 @@ describe('laneAttemptTimeout', () => {
 	it('leaves the caller timeout alone when there is no deadline', () => {
 		expect(laneAttemptTimeout(Infinity, 3, 20_000)).toBe(20_000);
 	});
+	it('always returns an integer AbortSignal.timeout will accept', () => {
+		// Every case above divides evenly, which is how a fractional return value
+		// shipped: AbortSignal.timeout() throws ERR_OUT_OF_RANGE on a non-integer
+		// delay, so the lane threw before sending a byte and the chain lost its
+		// fallback rung. 23_474/3 is the shape production actually produced.
+		const split = laneAttemptTimeout(23_474, 3, 20_000);
+		expect(Number.isInteger(split)).toBe(true);
+		expect(split).toBe(7_824);
+		expect(() => AbortSignal.timeout(split)).not.toThrow();
+		for (const remaining of [23_474, 9_999, 12_345, 7_001]) {
+			for (const lanes of [1, 2, 3, 4, 7]) {
+				const ms = laneAttemptTimeout(remaining, lanes, 20_000);
+				expect(Number.isInteger(ms)).toBe(true);
+				expect(() => AbortSignal.timeout(ms)).not.toThrow();
+			}
+		}
+	});
 });
 
 describe('inlineImageBudget', () => {
@@ -98,8 +114,8 @@ describe('vision lane cooldowns', () => {
 		const a = await describeImage({ prompt: 'p', imageBase64: 'AAAA', mimeType: 'image/png' });
 		expect(a.provider).toBe('openai');
 		// 429 is the one verdict that is unambiguously about the host and its
-		// quota, so the sibling rung is skipped inside this very request: one
-		// throttled attempt is paid, not one per model the host serves.
+		// quota, so every rung sharing that host is skipped inside this very
+		// request: one throttled attempt is paid, not one per model it serves.
 		expect(first.filter((c) => c.url.includes('nvidia')).length).toBe(1);
 
 		const second = stubFetch([
@@ -112,32 +128,39 @@ describe('vision lane cooldowns', () => {
 		expect(second[0].url).toContain('openai.com');
 	});
 
-	it('keeps trying the twin rung on a transport failure, which may be one slow model', async () => {
-		let nimCalls = 0;
+	it('fails a transport error over to the backstop rather than giving up', async () => {
 		const calls = stubFetch([
-			['integrate.api.nvidia.com', () => {
-				if (++nimCalls === 1) throw Object.assign(new Error('aborted'), { name: 'TimeoutError' });
-				return chatOk('twin answered');
-			}],
+			['integrate.api.nvidia.com', () => { throw Object.assign(new Error('aborted'), { name: 'TimeoutError' }); }],
+			['api.openai.com', () => chatOk('backstop answered')],
 		]);
 		const r = await describeImage({ prompt: 'p', imageBase64: 'AAAA', mimeType: 'image/png' });
-		expect(r.text).toBe('twin answered');
-		expect(calls.filter((c) => c.url.includes('nvidia')).length).toBe(2);
+		expect(r.text).toBe('backstop answered');
+		expect(r.provider).toBe('openai');
+		// The NIM rung was really attempted before the failover: a chain that skips
+		// its free lane and bills the paid one is the regression worth catching.
+		expect(calls.filter((c) => c.url.includes('nvidia')).length).toBe(1);
 	});
 
-	it('benches only the failing model on a 5xx, keeping its twin on the same host', async () => {
-		let nimCalls = 0;
+	it('parks a 410 lane for the long window instead of re-probing a retired model', async () => {
+		// NVIDIA answers a retired model id with 410 Gone. That verdict never
+		// reverses, so the lane must be benched for the auth-length window, not the
+		// 45s health one, or every request keeps paying it a slice of the deadline.
 		stubFetch([
-			['integrate.api.nvidia.com', () => (++nimCalls === 1 ? httpErr(500, 'boom') : chatOk('twin'))],
+			['integrate.api.nvidia.com', () => httpErr(410, "model has reached its end of life")],
+			['api.openai.com', () => chatOk('backstop')],
 		]);
 		const a = await describeImage({ prompt: 'p', imageBase64: 'AAAA', mimeType: 'image/png' });
-		expect(a.provider).toBe('nvidia');
+		expect(a.provider).toBe('openai');
 
-		// Next request still leads with a NIM lane, because a model-level 500 is no
-		// evidence against the host or against the sibling model.
-		const next = stubFetch([['integrate.api.nvidia.com', () => chatOk('ok')]]);
-		await describeImage({ prompt: 'p', imageBase64: 'AAAA', mimeType: 'image/png' });
-		expect(next[0].url).toContain('integrate.api.nvidia.com');
+		// The retired lane is now behind the healthy one, so the next request does
+		// not lead with it.
+		const next = stubFetch([
+			['integrate.api.nvidia.com', () => httpErr(410, 'gone')],
+			['api.openai.com', () => chatOk('backstop again')],
+		]);
+		const b = await describeImage({ prompt: 'p', imageBase64: 'AAAA', mimeType: 'image/png' });
+		expect(b.provider).toBe('openai');
+		expect(next[0].url).toContain('openai.com');
 	});
 
 	it('clears a lane cooldown as soon as that lane serves a real request', async () => {
