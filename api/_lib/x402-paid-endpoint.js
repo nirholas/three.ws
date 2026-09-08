@@ -100,7 +100,7 @@ function atomicsToUsd(atomics) {
 	return Number.isFinite(n) ? n / 1e6 : undefined;
 }
 
-function buildAccept(network, priceAtomics, resourceUrl, payToOverride) {
+function buildAccept(network, priceAtomics, resourceUrl, payToOverride, selfPayOnly = false) {
 	const common = {
 		scheme: 'exact',
 		amount: String(priceAtomics),
@@ -125,7 +125,14 @@ function buildAccept(network, priceAtomics, resourceUrl, payToOverride) {
 			payTo: payToOverride?.solana || env.X402_PAY_TO_SOLANA,
 			asset: env.X402_ASSET_MINT_SOLANA,
 			// PayAI requires this account as fee payer; without it /verify rejects.
-			extra: { name: 'USDC', decimals: 6, feePayer: env.X402_FEE_PAYER_SOLANA },
+			// Omitted deliberately in self-pay mode: absence of feePayer is the
+			// wire signal that the buyer covers their own gas, which is what keeps
+			// the endpoint payable while the sponsor wallet is empty.
+			extra: {
+				name: 'USDC',
+				decimals: 6,
+				...(selfPayOnly ? {} : { feePayer: env.X402_FEE_PAYER_SOLANA }),
+			},
 		};
 	}
 	if (network === NETWORK_BSC_MAINNET) {
@@ -150,7 +157,10 @@ function buildAccept(network, priceAtomics, resourceUrl, payToOverride) {
 	throw new X402Error('unsupported_network', `paidEndpoint: unsupported network ${network}`, 500);
 }
 
-function buildRequirements({ priceAtomics, networks, resourceUrl, payToOverride, acceptThree = true }) {
+// Exported for tests: the self-pay fallback below decides whether a paid
+// endpoint stays payable while the sponsor wallet is empty, which is the
+// difference between taking money and answering 503.
+export function buildRequirements({ priceAtomics, networks, resourceUrl, payToOverride, acceptThree = true }) {
 	const out = [];
 	for (const name of networks) {
 		const net = resolveNetwork(name);
@@ -183,20 +193,22 @@ function buildRequirements({ priceAtomics, networks, resourceUrl, payToOverride,
 		// secret is set. See solanaSettleable() in x402-spec.js.
 		if (
 			net === NETWORK_SOLANA_MAINNET &&
-			(!solTo ||
-				!env.X402_FEE_PAYER_SOLANA ||
-				!env.X402_ASSET_MINT_SOLANA ||
-				!solanaSettleable() ||
-				// Sponsor recently observed under its SOL settle floor (sync,
-				// cache-backed, fail-open): every sponsor-mode settle is refused at
-				// that level, so advertising the accept just makes the buyer sign a
-				// payment that dies with settlement_unavailable. Drop Solana until
-				// the wallet is refunded; other networks keep the endpoint payable.
-				sponsorKnownBelowFloor())
+			(!solTo || !env.X402_ASSET_MINT_SOLANA)
 		)
 			continue;
+		// Sponsoring the buyer's gas is a convenience, not a precondition for
+		// taking money. When the sponsor cannot co-sign (no key loaded, or the
+		// wallet is under its SOL settle floor) we used to drop Solana entirely
+		// and answer 503 on a paid endpoint whose whole job is RECEIVING crypto.
+		// Advertise the accept without a feePayer instead: that is the self-pay
+		// contract, where the buyer signs as their own fee payer and the
+		// facilitator only broadcasts, spending none of our SOL. Sponsored mode
+		// resumes on its own the moment the wallet is topped up.
+		const solanaSelfPayOnly =
+			net === NETWORK_SOLANA_MAINNET &&
+			(!env.X402_FEE_PAYER_SOLANA || !solanaSettleable() || sponsorKnownBelowFloor());
 		if (net === NETWORK_BSC_MAINNET && (!bscTo || !env.X402_ASSET_ADDRESS_BSC)) continue;
-		const accept = buildAccept(net, priceAtomics, resourceUrl, payToOverride);
+		const accept = buildAccept(net, priceAtomics, resourceUrl, payToOverride, solanaSelfPayOnly);
 		out.push(accept);
 		// $THREE alongside USDC on Solana (opt-in via X402_ACCEPT_THREE_SOLANA).
 		// Pushed right after the USDC Solana accept — and after the network guard
@@ -218,7 +230,11 @@ function buildRequirements({ priceAtomics, networks, resourceUrl, payToOverride,
 				resource: resourceUrl,
 				payTo: solTo,
 				asset: env.THREE_TOKEN_MINT,
-				extra: { name: 'THREE', decimals: env.THREE_TOKEN_DECIMALS, feePayer: env.X402_FEE_PAYER_SOLANA },
+				extra: {
+					name: 'THREE',
+					decimals: env.THREE_TOKEN_DECIMALS,
+					...(solanaSelfPayOnly ? {} : { feePayer: env.X402_FEE_PAYER_SOLANA }),
+				},
 			});
 		}
 		// For EVM `exact` networks, advertise a Permit2 sibling so @x402/* SDK

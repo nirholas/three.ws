@@ -580,10 +580,16 @@ export async function settleRingPayment({ paymentPayload, requirement, conn, fee
 	// Self-pay → the payer pays its own fee; sponsor mode → the sponsor pays.
 	const feeWallet = new PublicKey(decoded.feePayer);
 	const solLamports = await sponsorSolLamports(connection, feeWallet);
-	if (solLamports < SPONSOR_SOL_FLOOR_LAMPORTS) {
+	// The floor is a reserve protecting OUR sponsor wallet from being drained by
+	// the paying loop. In self-pay the fee wallet is the buyer's own, so holding
+	// their balance to our reserve would refuse a perfectly good payment for the
+	// crime of not keeping 0.02 SOL spare. They only have to afford the fee they
+	// are about to pay, which the affordability check below enforces.
+	const floorFor = selfPay ? 0 : SPONSOR_SOL_FLOOR_LAMPORTS;
+	if (solLamports < floorFor) {
 		return {
 			success: false,
-			reason: `fee_wallet_below_floor:${solLamports}<${SPONSOR_SOL_FLOOR_LAMPORTS}`,
+			reason: `fee_wallet_below_floor:${solLamports}<${floorFor}`,
 			sponsorSolLamports: solLamports,
 			feePayer: decoded.feePayer,
 			selfPay,
@@ -597,10 +603,10 @@ export async function settleRingPayment({ paymentPayload, requirement, conn, fee
 	// time a resource is paid in a new token. Comparing the bare balance let such
 	// a settle pass the gate and then die on chain with InsufficientFundsForRent,
 	// a confusing failure at exactly the moment a new payment token goes live.
-	if (solLamports - estFeeLamports < SPONSOR_SOL_FLOOR_LAMPORTS) {
+	if (solLamports - estFeeLamports < floorFor) {
 		return {
 			success: false,
-			reason: `fee_wallet_cannot_cover_settle:${solLamports}-${estFeeLamports}<${SPONSOR_SOL_FLOOR_LAMPORTS}`,
+			reason: `fee_wallet_cannot_cover_settle:${solLamports}-${estFeeLamports}<${floorFor}`,
 			sponsorSolLamports: solLamports,
 			estFeeLamports,
 			feePayer: decoded.feePayer,

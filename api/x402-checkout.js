@@ -227,8 +227,17 @@ async function handlePrepare(req, res) {
 	const conn = solanaConnection({ url: rpc, commitment: 'confirmed' });
 	const mint = toPubkey(accept.asset, 'asset');
 	const payTo = toPubkey(accept.payTo, 'payTo');
-	const feePayer = toPubkey(accept.extra.feePayer, 'feePayer');
 	const buyerPubkey = toPubkey(buyer, 'buyer');
+	// Who pays the Solana fee. Sponsor mode (the default) is a convenience we
+	// offer so a buyer holding only USDC can pay without owning any SOL, and it
+	// costs the platform a fee per settle. It is NOT a requirement for receiving
+	// money: an accept advertised without `extra.feePayer` means "you pay your
+	// own gas", the buyer signs as fee payer, and the facilitator broadcasts a
+	// fully-signed transaction without touching a sponsor key or a lamport of
+	// ours. That is the mode a paid endpoint falls back to when the sponsor
+	// wallet is dry, so the door stays open instead of answering 503.
+	const selfPay = !accept.extra?.feePayer;
+	const feePayer = selfPay ? buyerPubkey : toPubkey(accept.extra.feePayer, 'feePayer');
 	const amount = BigInt(accept.amount);
 
 	const senderAta = getAssociatedTokenAddressSync(
@@ -314,6 +323,11 @@ async function handlePrepare(req, res) {
 		network: accept.network,
 		tx_base64: txBase64,
 		recent_blockhash: blockhash,
+		// Lets the checkout tell the buyer they are covering the network fee on
+		// this one, rather than silently handing them a transaction that debits
+		// their SOL when every previous payment did not.
+		self_pay: selfPay,
+		fee_payer: feePayer.toBase58(),
 	});
 }
 

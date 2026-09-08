@@ -96,8 +96,8 @@ describe('settleRingPayment minimum-settle guard', () => {
 	it('does NOT apply the minimum to a self-pay dust settle (buyer pays its own fee)', async () => {
 		const p = buildPayment({ amount: 1n });
 		process.env.X402_PAY_TO_SOLANA = p.payTo;
-		// Self-pay is exempt from the min guard, so it proceeds to the SOL floor
-		// check — which fails here (balance 0), proving the guard did not fire.
+		// Self-pay is exempt from the min guard, so it proceeds to the SOL check,
+		// which fails here (balance 0), proving the guard did not fire.
 		const conn = {
 			getBalance: async () => 0,
 		};
@@ -107,6 +107,10 @@ describe('settleRingPayment minimum-settle guard', () => {
 			conn,
 		});
 		expect(res.success).toBe(false);
-		expect(res.reason).toMatch(/^fee_wallet_below_floor:/);
+		// A self-pay buyer is not held to the sponsor's reserve (that floor exists
+		// to stop OUR wallet draining), only to affording the fee they are about
+		// to pay. So the refusal is the affordability one against a zero floor.
+		expect(res.reason).toMatch(/^fee_wallet_cannot_cover_settle:0-\d+<0$/);
+		expect(res.selfPay).toBe(true);
 	});
 });

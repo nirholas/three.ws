@@ -185,3 +185,57 @@ describe('floor state is recorded only for the advertised sponsor wallet', () =>
 		expect(sponsorKnownBelowFloor()).toBe(true);
 	});
 });
+
+describe('self-pay: a dry sponsor must not close a receiving endpoint', () => {
+	it('holds a self-pay buyer to the fee only, not to the sponsor reserve', async () => {
+		// The buyer is their own fee payer. Our 0.02 SOL reserve is there to stop
+		// the paying loop draining the PLATFORM wallet, so applying it to a
+		// stranger's wallet would refuse a payment we can settle for free.
+		const p = buildPayment({});
+		process.env.X402_PAY_TO_SOLANA = p.payTo;
+		// Far under the sponsor floor, but comfortably able to pay its own fee.
+		const conn = { getBalance: async () => 30_000 };
+
+		const res = await settleRingPayment({
+			paymentPayload: p.paymentPayload,
+			requirement: p.requirement,
+			conn,
+		});
+
+		expect(res.reason || '').not.toMatch(/fee_wallet_below_floor|fee_wallet_cannot_cover_settle/);
+	});
+
+	it('still refuses a self-pay buyer who cannot cover the fee', async () => {
+		const p = buildPayment({});
+		process.env.X402_PAY_TO_SOLANA = p.payTo;
+		const conn = { getBalance: async () => 1 };
+
+		const res = await settleRingPayment({
+			paymentPayload: p.paymentPayload,
+			requirement: p.requirement,
+			conn,
+		});
+
+		expect(res.success).toBe(false);
+		expect(res.reason).toMatch(/^fee_wallet_cannot_cover_settle:/);
+	});
+
+	it('leaves the sponsor reserve fully in force for sponsored settles', async () => {
+		// The relaxation above must not leak into sponsor mode, which is the only
+		// thing standing between the paying loop and an empty platform wallet.
+		const sponsor = Keypair.generate();
+		const p = buildPayment({ sponsor });
+		process.env.X402_PAY_TO_SOLANA = p.payTo;
+		const conn = { getBalance: async () => 30_000 };
+
+		const res = await settleRingPayment({
+			paymentPayload: p.paymentPayload,
+			requirement: p.requirement,
+			conn,
+			feePayer: sponsor,
+		});
+
+		expect(res.success).toBe(false);
+		expect(res.reason).toMatch(/^fee_wallet_below_floor:30000</);
+	});
+});
