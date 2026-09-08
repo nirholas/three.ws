@@ -113,6 +113,12 @@ body.market-page > header {
 
 .market-topbar {
 	display: flex;
+	/* Wrapping is not cosmetic here. The bar holds search, the type chips, the
+	   avatar category chips, the sort select and the submit CTA; once the
+	   category row appears the row is wider than a 1440px viewport, and because
+	   the page body is overflow-x: clip the sort and the CTA were not pushed
+	   off-screen with a scrollbar, they were simply erased. */
+	flex-wrap: wrap;
 	gap: var(--space-sm);
 	padding: var(--space-md) var(--space-lg);
 	border-bottom: 1px solid var(--stroke);
@@ -3635,6 +3641,10 @@ body.market-page > header {
 
 .market-filter-chips {
 	display: inline-flex;
+	/* The avatar category row can hold a dozen chips; without wrapping it sets
+	   the width of the whole toolbar and pushes the controls after it out. */
+	flex-wrap: wrap;
+	max-width: 100%;
 	gap: var(--space-2xs);
 	padding: var(--space-2xs);
 	background: var(--surface-2);
