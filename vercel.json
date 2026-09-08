@@ -528,6 +528,14 @@
 			"dest": "/changelog.json"
 		},
 		{
+			"src": "/changelog-recent\\.json",
+			"headers": {
+				"content-type": "application/json; charset=utf-8",
+				"cache-control": "public, max-age=600"
+			},
+			"dest": "/changelog-recent.json"
+		},
+		{
 			"src": "/changelog\\.xml",
 			"headers": {
 				"content-type": "application/rss+xml; charset=utf-8",

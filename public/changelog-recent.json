@@ -1,0 +1,1605 @@
+{
+	"generated_at": "2026-09-08T17:19:34.218Z",
+	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
+	"site": {
+		"name": "three.ws",
+		"url": "https://three.ws"
+	},
+	"total": 3551,
+	"complete": false,
+	"full_feed": "/changelog.json",
+	"entries": [
+		{
+			"date": "2026-09-08",
+			"type": "update",
+			"title": "A GPU waking up now says so, instead of looking like a stuck progress bar",
+			"summary": "Some of our 3D engines release their graphics card when nobody is using them, so the first request of a quiet spell has to boot one back up before any sculpting starts. That wait is normal and it ends, but several surfaces showed nothing but a spinning step while it happened, which reads as a hang. Now every place you can watch a model being built names it: the homepage forge, the Studio, the in-world item forge on /play, and the tools other apps drive us through all say a GPU is waking, how much of the boot is left, and that your job is already accepted and starts the second the worker answers. Every number comes from the generator itself, so nothing is a guessed timer. Two related fixes came out of it: the elapsed counter on /forge now reports how long your job has really been running rather than how long the tab has been open, so reopening the page mid-build no longer restarts the clock at zero; and the countdown now uses each engine's real boot budget instead of an estimate. The keep-warm schedule that holds those engines open during busy hours was also missing our highest-quality lane, which has the longest boot of the fleet.",
+			"link": "/forge",
+			"tags": [
+				"improvement",
+				"fix"
+			]
+		},
+		{
+			"date": "2026-09-08",
+			"type": "update",
+			"title": "Avatars keep their real skin, eyes and hair, and we can prove it on a phone",
+			"summary": "Every avatar the platform loads gets its skin, eyes, hair and teeth re-shaded with real-world material values the moment it appears: skin at the roughness bare skin actually has with a warm scattering layer, a wet cornea that catches a highlight, and hair that reads as strands rather than a helmet. That pass was already running, but the check meant to prove it was pointed at the wrong page and had been quietly reporting nothing at all, so it could not have caught the day it broke. It now runs against the same embed page your visitors see, at phone, tablet and desktop widths, and records exactly which materials it upgraded and to what values. Alongside it, a new check loads a full 4K-textured model on an emulated iPhone and Android phone over a slow mobile connection and measures the real bytes and load time, so a model that would not open on a phone is caught before it ships rather than after.",
+			"link": null,
+			"tags": [
+				"improvement",
+				"infra"
+			]
+		},
+		{
+			"date": "2026-09-08",
+			"type": "update",
+			"title": "Buttons that looked dead now respond, and the whole site paints from one palette",
+			"summary": "A consistency pass across the platform. Fifty controls set the clickable cursor but had no hover styling at all, so the pointer changed shape and the button did not, which made working controls read as broken; the marketplace, Widget Studio, the brain workspace, the pump dashboard, agent detail and the on-chain deploy panel now all answer under the pointer, on the same timing. The retry buttons on an agent page were the worst case, because they only appear after something already failed. Separately, 73 colours were still typed in by hand across 24 stylesheets instead of coming from the shared palette, which is why a handful of panels stayed dark when you switched to the light theme and why some captions drifted a shade off everywhere else; they now all read from one source. Eight standalone pages that had quietly grown their own private palette (the demos, Widget Studio, the dashboard sub-pages, the print insert, agent detail) were folded back onto the shared one, so they also pick up the site-wide keyboard focus ring and the reduced-motion setting for the first time. Two new checks keep both from creeping back.",
+			"link": "/marketplace",
+			"tags": [
+				"improvement",
+				"fix"
+			]
+		},
+		{
+			"date": "2026-09-08",
+			"type": "update",
+			"title": "Forge tells you when uploads are down, instead of blaming your connection",
+			"summary": "Adding a photo on the Forge could fail with \"Network error during upload\" when nothing was wrong with your network or your photo. Our asset storage had stopped accepting our credential, but the page had no way to know that: the browser is handed a short-lived upload address and sends the image straight to storage, and when storage refuses, the refusal comes back without the header a browser needs in order to show the page what happened. So a platform outage arrived looking exactly like a bad phone signal, and Retry could never fix it. The page now checks that storage will actually accept an upload before handing one out, and says so plainly when it will not, so you can tell \"come back in a few minutes\" apart from \"try a different photo\". The same fix covers the Forge Studio and 3D print upload paths.",
+			"link": "/forge",
+			"tags": [
+				"fix"
+			]
+		},
+		{
+			"date": "2026-09-08",
+			"type": "update",
+			"title": "Robinhood Portfolios can now show you what a basket would have done, and what the rebalancing did to it",
+			"summary": "Every generated portfolio now comes with a backtest, and it runs the basket twice: once rebalanced on the schedule it published, and once left alone. The gap between those two lines is the whole reason to pick one schedule over another, and it goes both ways, since rebalancing quietly harvests the swings in a basket whose holdings move against each other and quietly gives up gains in one where a single holding keeps winning. Coverage is stated rather than glossed over: a holding with no price history is named and left out, the window shown is only the stretch where every remaining holding has real observations, and nothing is filled in to close a gap. Getting that history at all took some doing, because this chain keeps no price archive and produces about 864,000 blocks a day, so reading a month of prices back off the chain is not something a page can do while you wait. Tokenized stocks are covered from their price feeds going back weeks, and a nightly snapshot now records the whole market so coverage keeps growing for everything else, memecoins included. Sharing a portfolio also got fixed: a link now carries the portfolio itself rather than the sentence that produced it, so what you send is exactly what the other person opens, where before the wording was re-run and could quietly come back as a different basket. There is a new endpoint for checking that a portfolio document really is the one a portfolio was published under, and a client library for developers who want the market, the generator, the backtest and that check from their own code. Along the way two data bugs were fixed that were quietly under-reporting the market: the tokenized-stock board had been describing only a couple of tokens per batch instead of all thirty, and the price-history reads had been silently returning less history the more of it you asked for.",
+			"link": "/markets/robinhood/portfolios",
+			"tags": [
+				"feature",
+				"improvement"
+			]
+		},
+		{
+			"date": "2026-09-08",
+			"type": "update",
+			"title": "The club now takes $THREE at the door and at the stage, not just USDC",
+			"summary": "The club has always advertised two ways to pay: USDC or $THREE, on Solana, for both the cover charge and every dance tip. Only one of them was reachable. The checkout window picked the first token a service offered and gave you no way to choose the other, so $THREE was quoted on every paid page and payable on none of them. Across every club tip ever settled, not one was paid in $THREE, which is what you would expect from a menu with a hidden second item. The checkout now shows a token picker whenever a service quotes more than one, with each token's real price on it, so you can compare 0.001 USDC against its $THREE equivalent before you approve anything, and the price at the top of the window follows what you pick. If you have agent wallets, they still pay in USDC only, and the window now says so instead of quietly hiding them when you switch tokens. Two settlement bugs behind the door were fixed at the same time. The first would have hit the very first person to pay in $THREE: sending a token to a wallet that has never held it requires opening an account for it on-chain, and the check that decides whether we can afford to sponsor a payment was ignoring that cost, so the payment would have been accepted and then failed on-chain for a reason that looked like something else entirely. The second was making the club look open when it was not: a healthy payer covering their own fees could reset a shared 'we can still sponsor payments' flag that belonged to a different wallet, so the door kept quoting prices it could not actually take. Finally, when payments are paused because the wallet that settles them needs topping up, the checkout now says that in a sentence and tells you nothing was charged, instead of showing you the raw error envelope it used to paste in, which read like a broken link.",
+			"link": "/club",
+			"tags": [
+				"fix",
+				"improvement"
+			]
+		},
+		{
+			"date": "2026-09-07",
+			"type": "launch",
+			"title": "Awesome 3D Agents",
+			"summary": "A curated, link-checked list of everything you need to give an AI agent a body: text-to-3D models, capture and Gaussian splatting, avatars, rigging, motion generation, lipsync and voice, web renderers, asset pipelines, and the agent frameworks that drive them. Searchable and filterable, and published as an awesome list on GitHub.",
+			"link": "/awesome",
+			"tags": [
+				"launch"
+			]
+		},
+		{
+			"date": "2026-09-07",
+			"type": "launch",
+			"title": "Docs · Robinhood Portfolios",
+			"summary": "How Robinhood Portfolios works: the manifest that makes a generated basket binding, in-kind issuance that needs no price oracle, the descending-price rebalance auction nobody can front-run, what happens when a tokenized equity is halted, and the lineage fee budget that leaves sybils nothing to farm.",
+			"link": "/docs/robinhood-portfolios",
+			"tags": [
+				"launch"
+			]
+		},
+		{
+			"date": "2026-09-07",
+			"type": "launch",
+			"title": "Docs · SEO and crawler rendering",
+			"summary": "How a JavaScript site is served to search engines: the four server-side render paths, the contract that keeps a page and its sitemap entry agreeing, and how to audit the live origin.",
+			"link": "/docs/seo",
+			"tags": [
+				"launch"
+			]
+		},
+		{
+			"date": "2026-09-07",
+			"type": "launch",
+			"title": "Hood Desk",
+			"summary": "A live onchain trading desk for any Robinhood Chain (4663) wallet: book value, native balance history rebuilt from the indexer, an activity tape of swaps and transfers, positions priced against Chainlink NAV and the deepest Uniswap pool, the NAV premium ridge layered by pool depth, counterparty flow, and memecoin movers.",
+			"link": "/markets/robinhood/desk",
+			"tags": [
+				"launch"
+			]
+		},
+		{
+			"date": "2026-09-07",
+			"type": "launch",
+			"title": "My Creations",
+			"summary": "Everything you have made on three.ws in one newest-first grid: the agents you built, the 3D avatars you saved, and every model you forged, including models forged in this browser before you had an account. Open, edit, or copy a link to any of them in one click.",
+			"link": "/mine",
+			"tags": [
+				"launch"
+			]
+		},
+		{
+			"date": "2026-09-07",
+			"type": "launch",
+			"title": "Portfolio universe",
+			"summary": "Every asset a Robinhood Chain portfolio may hold, priced live: tokenized equities, crypto majors and chain-native tokens with on-chain liquidity, 24h volume, price change and the NAV premium against each equity's Chainlink feed. Sortable and filterable by asset class.",
+			"link": "/markets/robinhood/portfolios/universe",
+			"tags": [
+				"launch"
+			]
+		},
+		{
+			"date": "2026-09-07",
+			"type": "launch",
+			"title": "Robinhood Portfolios",
+			"summary": "Describe a portfolio in a sentence and get a real basket of Robinhood Chain assets: tokenized equities, crypto majors and chain-native tokens in one index. A screen ranks the whole 700-asset universe against the prompt, the weights are committed on-chain as a signed immutable manifest, and a vault holds the basket in kind and rebalances it back to target on a published schedule.",
+			"link": "/markets/robinhood/portfolios",
+			"tags": [
+				"launch"
+			]
+		},
+		{
+			"date": "2026-09-07",
+			"type": "update",
+			"title": "3D generation and the whole site keep working when our asset storage does not",
+			"summary": "Early on 2026-09-07 our object storage stopped accepting the platform's credential, and because every generation parks its reference image there, 3D generation stopped on the website and in ChatGPT at the same time, agent registration could not store its manifest, and images loaded through our CDN stopped resolving. Three things changed so that a storage fault is never again a blank page. Avatars, thumbnails and models now fall back to the bucket's public domain automatically, so the site keeps rendering. When generation genuinely cannot run you get a plain message saying storage is recovering and to try again shortly, instead of a raw error from the storage vendor. And our own health checks now watch the storage credential directly and treat a silent forge as an outage rather than a quiet hour, so we hear about this class of failure before you do.",
+			"link": null,
+			"tags": [
+				"fix",
+				"infra"
+			]
+		},
+		{
+			"date": "2026-09-07",
+			"type": "update",
+			"title": "A payment we cannot read now comes back with the price list, not a bare error",
+			"summary": "When an agent pays one of our x402 endpoints and the payment header arrives mangled (truncated in transit, double-encoded, wrapped by a proxy), the answer used to be a plain 400 error with no prices in it, so the agent had nothing left to work from and no way to retry. Every rejected payment now returns the ordinary 402 with the full list of accepted rails, tokens and amounts attached, exactly as it does when a payment is simply missing. That is what the x402 spec and the OKX seller SDK both do, and it means a paying agent can always read the quote again and try once more. Only a real server fault answers without a quote.",
+			"link": "/docs/okx-marketplace",
+			"tags": [
+				"fix",
+				"improvement"
+			]
+		},
+		{
+			"date": "2026-09-07",
+			"type": "update",
+			"title": "A sharper cutout for images with hair, fur, or fine edges",
+			"summary": "Background removal now offers BiRefNet as an optional model alongside the fast default. The default model smears wispy boundaries into a soft halo, and because every image-to-3D lane rebuilds geometry from the cut-out subject, that halo turned into real polygons on the finished mesh. BiRefNet keeps hair strands, fur, foliage, and thin straps intact. It takes about six seconds against the default's one, so it stays opt-in: pass model \"birefnet\" on the background-removal endpoint or pick it from the MCP tool when the edge is what matters.",
+			"link": null,
+			"tags": [
+				"improvement",
+				"feature"
+			]
+		},
+		{
+			"date": "2026-09-07",
+			"type": "update",
+			"title": "Archived news stories with emoji in their summary keep their search listing",
+			"summary": "Google Search Console flagged an archived story page for unparsable structured data. The cause: the archive trims a publisher summary to a fixed length before serving it, and the cut landed in the middle of an emoji, leaving half a character in the page data that search engines read. Trimming is now character-aware, so it never splits an emoji, a flag, or an accented letter, and the page data is checked for half characters before it is written. Around one archived story in seven thousand carried the flaw; all of them serve a valid listing now. The same fix covers the story summaries shown in link previews and the shared page descriptions across the site.",
+			"link": "/markets/news",
+			"tags": [
+				"fix",
+				"infra"
+			]
+		},
+		{
+			"date": "2026-09-07",
+			"type": "update",
+			"title": "Awesome 3D Agents: a curated list of everything you need to give an AI a body",
+			"summary": "Giving an agent a body means assembling a pipeline out of a dozen separate fields, and the map of that pipeline did not exist anywhere. There is now one: 152 hand-picked projects across 15 sections, covering text-to-3D generation, photo and video capture, avatars, rigging, motion generation, texturing, lipsync and voice, web renderers, asset pipelines, AR and XR, physics and networking, agent frameworks, datasets, free assets, and where to learn all of it. Each entry says in one sentence what the thing does and why you would reach for it instead of the alternative. The list is searchable and filterable by tag at /awesome, copyable as Markdown, and published in the standard awesome-list format on GitHub so it can be read, forked, and contributed to there. Every link is fetched and verified before it ships.",
+			"link": "/awesome",
+			"tags": [
+				"feature",
+				"docs"
+			]
+		},
+		{
+			"date": "2026-09-07",
+			"type": "update",
+			"title": "Blender tools now open three.ws avatars, which Blender alone cannot",
+			"summary": "Most three.ws avatars are delivered in a compressed form that Blender flatly cannot read: point stock Blender at one and it refuses the file. That made the new Blender tools useless on exactly the models this platform produces. Compressed models are now unpacked automatically before Blender opens them, for both of the common compression schemes, with nothing extra to install and your original file left untouched. The answer tells you when it happened.",
+			"link": null,
+			"tags": [
+				"fix",
+				"sdk"
+			]
+		},
+		{
+			"date": "2026-09-07",
+			"type": "update",
+			"title": "Hood Desk: a live onchain trading desk for any Robinhood Chain wallet",
+			"summary": "Paste a Robinhood Chain address (or connect a wallet) at three.ws/markets/robinhood/desk and the whole book loads: total value in USD, every token you hold priced against its Chainlink NAV feed or its deepest Uniswap pool, a native balance curve rebuilt from the chain's own history, and a live tape of your swaps, transfers and mints that folds each trade into one readable line instead of three. The centrepiece is the NAV premium ridge: the spread between what every tokenized stock is worth and what it actually trades for on the DEX, redrawn once per liquidity floor, so a dislocation that survives to the back rows is one you could really size into. Under it, the widest tradeable gaps, ranked. Reading any wallet is free, keyless and signature-free, so a desk link is a view anyone can open.",
+			"link": "/markets/robinhood/desk",
+			"tags": [
+				"feature"
+			]
+		},
+		{
+			"date": "2026-09-07",
+			"type": "update",
+			"title": "Keyboard focus is visible again on every /play HUD button, and the AGI filter counts clear AA contrast",
+			"summary": "Six buttons on the /play world HUD (friends, jobs, avatar, wardrobe, shop and buy) had lost their keyboard focus ring: the page never defined the shared focus-ring colour those buttons outline with, so the browser dropped the outline entirely and a keyboard player could not see where they were. The ring is back. On /agi, the count inside a selected filter chip measured 4.37:1 against its background at 11px, just under the 4.5:1 AA floor; it now uses the primary ink and clears it comfortably.",
+			"link": "/play",
+			"tags": [
+				"fix",
+				"improvement"
+			]
+		},
+		{
+			"date": "2026-09-07",
+			"type": "update",
+			"title": "My Creations: one button that takes you back to everything you made",
+			"summary": "A creator told us the making part was intuitive and the finding part was not: they built an agent, closed the tab, and had no obvious way back to it. There is now a My creations button in the header, and it opens a single page holding everything you have made, newest first: your agents, the 3D avatars saved to your account, and every model you forged, with Open, Edit and Copy link on each one. Signed out it still finds the models forged in this browser, so work made before you had an account is not lost. Filter by type, search by name or prompt, and hover any card to spin it in 3D. The create wizard and the Forge now point here too, so you are told where your work lives at the moment you make it.",
+			"link": "/mine",
+			"tags": [
+				"feature",
+				"improvement"
+			]
+		},
+		{
+			"date": "2026-09-07",
+			"type": "update",
+			"title": "One command makes a 3D model small enough to ship, and shows you all four sides",
+			"summary": "Getting a model down to a size a web page can load used to mean writing a Blender script by hand every time: cut the polygon count, shrink the textures, throw away what nothing uses, compress the result. That is now a single request with a budget, and it answers with an honest before and after, so you can see what the size actually cost you in detail. On a test model it went from 1.3 MB to 282 KB. Previews can also orbit the model now: ask for four angles and you get four pictures from one pass, which is what tells you whether the back of a model was ever finished, or whether a texture only looks right from the front.",
+			"link": null,
+			"tags": [
+				"feature",
+				"sdk"
+			]
+		},
+		{
+			"date": "2026-09-07",
+			"type": "update",
+			"title": "Point an AI agent at the Blender on your own machine",
+			"summary": "A new MCP server drives the Blender you already have installed, with no GUI open and no add-on to install first. An assistant can now read a 3D file and tell you what is actually in it (objects, triangle counts, materials, bones, animations, real-world size), convert between GLB, glTF, FBX, OBJ, STL, PLY, Collada, Alembic, USD and .blend in either direction, render a preview image of a bare asset file that arrives with no camera or lighting of its own, and run a Blender Python script to do the things no single tool covers, like halving a mesh's triangle count and exporting the result in one step. It also reaches back into three.ws: describe something in a sentence and the free text-to-3D lane generates it and opens it in Blender. Blender runs in the background, one process per request, so it works the same on a laptop, a server, or in CI.",
+			"link": null,
+			"tags": [
+				"feature",
+				"sdk"
+			]
+		},
+		{
+			"date": "2026-09-07",
+			"type": "update",
+			"title": "Reference-image upload now tells you to paste a URL instead of failing with a network error",
+			"summary": "When the image storage credentials are rejected, /forge used to hand the browser an upload address that the storage service refused. The refusal arrives without the header a browser needs to read it, so the page could only say \"Network error during upload\" and the reference image was lost. The upload endpoint now checks storage the same way the rest of the site does, so it says up front that direct upload is unavailable and points you at the paste-a-URL field, which keeps working through the outage.",
+			"link": "/forge",
+			"tags": [
+				"fix"
+			]
+		},
+		{
+			"date": "2026-09-07",
+			"type": "update",
+			"title": "Robinhood Portfolios: describe a portfolio in a sentence, hold it on-chain",
+			"summary": "Robinhood Chain is the one place where tokenized stocks, crypto majors and memecoins trade against each other in the same pools, so a basket holding NVDA, WETH and a launchpad coin is just three tokens in one vault. Write a sentence at three.ws/markets/robinhood/portfolios and a screen ranks all 700-odd holdable assets against it, then hands back a real basket with target weights, a thesis, and a per-holding reason for every pick. The whole methodology, the prompt, the weights, the schedule, and every holding's price and liquidity at the moment it was chosen, is hashed into a manifest you can download, so the document you read is provably the one the portfolio is deployed against. The vault behind it holds the basket in kind: you deliver every holding to mint and receive every holding to redeem, so it never sells anything to let somebody in or out and needs no price feed to work at all, which matters because most of this chain has none. Rebalancing back to target happens on the schedule the manifest published, and is offered as a descending-price auction anyone can fill rather than a trade a manager makes. Refining a portfolio mints a new version pointing back at its parent instead of editing what you already hold, and forks pay their ancestors out of a fixed slice of fees. When a tokenized stock is paused by its issuer everything stops until it resumes, and the page says so, because a halted share cannot be moved at any price. A companion board at /markets/robinhood/portfolios/universe lists every asset a portfolio may hold, with live liquidity, volume, and the premium each stock trades at against its Chainlink price.",
+			"link": "/markets/robinhood/portfolios",
+			"tags": [
+				"feature"
+			]
+		},
+		{
+			"date": "2026-09-07",
+			"type": "update",
+			"title": "Security: the image and mesh workers now run patched libraries",
+			"summary": "The services that strip a background, convert a mesh, and paint a texture all decode a file you upload, and they were pinned to an image library with a long list of published flaws, including several that let a crafted image corrupt memory. Those three services now run the patched release, and the mesh converter's 3D-format library was moved off a version with a critical flaw of its own. There is also a new check that scans every pinned Python dependency across the whole worker fleet against the public vulnerability database, so the next one gets found rather than waited for.",
+			"link": null,
+			"tags": [
+				"security",
+				"infra"
+			]
+		},
+		{
+			"date": "2026-09-07",
+			"type": "update",
+			"title": "Shared avatar and agent links now show a real page to Google, not a loading spinner",
+			"summary": "Search engines were shown a different version of every /avatars/... and /agents/... page than people were, and that version had nothing on it: the name and description were hidden in a fallback block that a crawler removes before reading, the rest was a spinner, and the last line of the page sent the crawler straight back to the URL it was already on. Tens of thousands of avatar and agent pages therefore looked identical to Google and were filed as duplicates instead of being listed. Crawlers now get the same content a visitor sees: the name, the description, the rendered card, the creator, the tags, the skills, the on-chain identity, and links onward into the gallery and the directory. A link to an avatar or agent that no longer exists now says so honestly instead of quietly bouncing to a listing page, an id that belongs to the other side of the platform redirects to where it actually lives, and a private agent is no longer readable by anything sending a crawler's name. Signed-in surfaces were also unblocked in robots.txt so their existing no-index instruction can finally be read and obeyed.",
+			"link": null,
+			"tags": [
+				"fix",
+				"infra"
+			]
+		},
+		{
+			"date": "2026-09-07",
+			"type": "update",
+			"title": "Studio Lab reads the same splat formats as the viewer",
+			"summary": "The Lab's Gaussian-splat tools ran on a different rendering engine from the Splat Viewer, so the two disagreed about which files they would open: the viewer had just gained .spz and .sog and the Lab had not. Both now share one engine, so anything one of them opens the other opens too, the Lab works out a dropped file's format from its contents instead of its name, and its camera frames the scene it loaded.",
+			"link": "/forge-studio",
+			"tags": [
+				"improvement"
+			]
+		},
+		{
+			"date": "2026-09-07",
+			"type": "update",
+			"title": "The AgenC task embed now loads even when it is inlined or served from a blob",
+			"summary": "The <three-ws-agent> element that shows a 3D avatar reacting to an on-chain AgenC task resolves its mesh decoder relative to its own script address. A copy that had been pasted inline, bundled, or loaded from a blob: or data: URL has no address to resolve against, and the element failed to register before it drew anything. It now falls back to the decoder on three.ws in that case and keeps the same-origin path everywhere else, so the embed works wherever the snippet ends up.",
+			"link": "/agenc/embodied",
+			"tags": [
+				"fix"
+			]
+		},
+		{
+			"date": "2026-09-07",
+			"type": "update",
+			"title": "The Blender tools now show you the render instead of describing it",
+			"summary": "Asking an assistant to render a 3D model used to hand back a file path, which is useless if the assistant cannot open files on your disk. The rendered image now comes back with the answer, scaled to fit, while the full-resolution PNG still lands on disk. That turns a look at this model into one step, so an assistant can render, spot the problem, fix it and render again. Reading a file also reports its texture budget now: every image with its resolution and byte size, plus the total, which is usually what actually decides whether a model is small enough to ship, and it was previously reported as nothing more than a count. Two reliability fixes came out of real use: several requests at once now queue instead of all starting Blender at the same moment and exhausting the machine, and when Blender is installed but momentarily will not start you get a message saying exactly that, with the details, rather than being told to install software you already have.",
+			"link": null,
+			"tags": [
+				"improvement",
+				"feature"
+			]
+		},
+		{
+			"date": "2026-09-07",
+			"type": "update",
+			"title": "The featured agent is one you can actually open",
+			"summary": "The agent we spotlight is picked automatically from real activity, but the pick only checked whether an agent was public, not whether its owner had published it. That let a brand new starter agent, the draft every account is given on signup, take the spot, and every panel that tried to read it came back empty with a live feed error. The pick now requires a published agent, so the spotlight lands on one that every part of the site can open.",
+			"link": null,
+			"tags": [
+				"fix"
+			]
+		},
+		{
+			"date": "2026-09-07",
+			"type": "update",
+			"title": "The partner-hosted demo page loads all of its pieces again",
+			"summary": "Our partnership page is published once onto a partner's own website, so everything it loads comes from three.ws across origins. Two of its scripts were being refused by the browser there, which quietly cost the page its in-editor map and its iOS handoff. Both are now served with the same cross-origin permission the rest of the page already had, and an audit that loads the page from a foreign origin now passes end to end.",
+			"link": null,
+			"tags": [
+				"fix"
+			]
+		},
+		{
+			"date": "2026-09-07",
+			"type": "update",
+			"title": "The splat viewer opens the compressed formats captures actually ship",
+			"summary": "Gaussian-splat scenes used to arrive as enormous PLY files, and the tools that make them now export compressed containers instead: the same capture that is a gigabyte of PLY is about 100 MB as SPZ and about 42 MB as SOG. The viewer could not open either. It now reads .spz and .sog alongside .ply, .splat, and .ksplat, works out the format from the file contents instead of trusting the filename, and frames the camera on the scene it actually loaded rather than a fixed distance that suited one file in ten. It also shows the real splat count, and waits for the first sorted frame before going live so a slow machine no longer shows an empty stage.",
+			"link": "/splat",
+			"tags": [
+				"improvement",
+				"feature"
+			]
+		},
+		{
+			"date": "2026-09-07",
+			"type": "update",
+			"title": "Turn a photo into a 3D model without leaving your editor",
+			"summary": "The Blender tools could already build a model from a written description. They now build one from a picture too: point at an image on your machine or a link to one, add a few words to steer it if you like, and the finished model opens in Blender. It runs on the same free lane as the text version and takes about as long.",
+			"link": null,
+			"tags": [
+				"feature",
+				"sdk"
+			]
+		},
+		{
+			"date": "2026-09-07",
+			"type": "update",
+			"title": "Tutorials and walkthroughs are now readable by search engines, and pages we never wanted indexed stopped asking to be",
+			"summary": "The 76 tutorial and walkthrough pages loaded their content after the page opened, which meant a search engine reading the raw page found no text at all, and on tutorials found the words 'Tutorial not found' sitting under an empty heading. Those pages now arrive with their full text already in them, so they can finally be found by the questions they answer. Separately, eighteen pages were being submitted to Google while telling Google not to index them: sign-in surfaces, viewers that need a link to work, and one endpoint that returns data rather than a page. They have been withdrawn from the sitemap, and a new check refuses to let a page ask for indexing and refuse it at the same time. Two documentation pages that shared a title with the product page they described have been retitled.",
+			"link": "/tutorials",
+			"tags": [
+				"improvement",
+				"docs"
+			]
+		},
+		{
+			"date": "2026-09-07",
+			"type": "update",
+			"title": "World tiles show their artwork again",
+			"summary": "The picker that lets you choose a community world was loading each world's artwork straight from a public storage gateway, and browsers now refuse to draw images served that way. Nine tiles on the page failed silently every visit. The artwork is now fetched through our own image service, so tiles paint their real picture, and a world whose artwork has gone missing falls back to its lettered tile instead of an empty square.",
+			"link": null,
+			"tags": [
+				"fix"
+			]
+		},
+		{
+			"date": "2026-09-05",
+			"type": "launch",
+			"title": "Docs · Pocket Console",
+			"summary": "How the /pocket handheld works: the D-pad and gamepad controls, the three cartridges, the URL params that make a share link, and the one iframe that puts a live 3D agent console on any site.",
+			"link": "/docs/pocket",
+			"tags": [
+				"launch"
+			]
+		},
+		{
+			"date": "2026-09-05",
+			"type": "launch",
+			"title": "Docs · three.ws in VS Code",
+			"summary": "The VS Code extension that renders .glb and .gltf files in an editor tab, reports on them, generates and rigs new models on the free lane, and writes a pinned <agent-3d> embed.",
+			"link": "/docs/vscode",
+			"tags": [
+				"launch"
+			]
+		},
+		{
+			"date": "2026-09-05",
+			"type": "launch",
+			"title": "Filming the product demo",
+			"summary": "How the narrated walkthrough of every three.ws feature is filmed on the live site: the route is generated from the Feature Tour curriculum, so a page that ships tomorrow films itself, and each chapter can be re-shot on its own.",
+			"link": "/docs/product-demo",
+			"tags": [
+				"launch"
+			]
+		},
+		{
+			"date": "2026-09-05",
+			"type": "launch",
+			"title": "Machine Atlas",
+			"summary": "A radial aero engine and a steam locomotive generated in the browser from code, with no 3D model files: solved linkages, live dimensions, explode views and a GLB export.",
+			"link": "/assembly",
+			"tags": [
+				"launch"
+			]
+		},
+		{
+			"date": "2026-09-05",
+			"type": "launch",
+			"title": "Pocket Console",
+			"summary": "A handheld console with a live 3D agent inside the screen. Steer it with the D-pad, swap cartridges for any public agent, and embed the whole console anywhere with one line of HTML.",
+			"link": "/pocket",
+			"tags": [
+				"launch"
+			]
+		},
+		{
+			"date": "2026-09-05",
+			"type": "launch",
+			"title": "Printable IRL sign",
+			"summary": "Print a sign for a placed IRL agent: its name, thumbnail and a QR of the visit link. Scan it at the spot to open IRL, walk up, and meet the 3D AI agent in AR. Carries no coordinate.",
+			"link": "/irl/sign",
+			"tags": [
+				"launch"
+			]
+		},
+		{
+			"date": "2026-09-05",
+			"type": "update",
+			"title": "3D models now open, animate and report on themselves inside VS Code",
+			"summary": "A new three.ws extension makes .glb and .gltf files first-class in the editor. Double-click one and it renders in an editor tab instead of showing binary-file-not-shown: orbit it, play its animation clips on a scrub bar, flip on the wireframe or the skeleton, and save the view as a PNG next to the model. A report panel counts triangles, textures, bones and extensions and says what to fix, using the same inspector as the validation page, running on your machine so the model is never uploaded to be measured. Compressed avatars decode locally, so it all works offline. From the command palette you can also generate a model or an avatar from a sentence on the free lane, rig a static model for animation, browse and import recent community creations, and drop in an agent-3d embed snippet with the current library version and its integrity hash already pinned.",
+			"link": "/docs/vscode",
+			"tags": [
+				"feature",
+				"sdk"
+			]
+		},
+		{
+			"date": "2026-09-05",
+			"type": "update",
+			"title": "A new agent skill teaches Claude to look for an existing 3D asset before making one",
+			"summary": "find-3d-assets joins the three.ws Agent Skills pack. It tells an AI assistant that the platform already publishes 3,492 finished 3D assets and how to search them, so a request like put a chair on my landing page gets an existing CC0 chair in seconds instead of a generation job that takes GPU minutes and produces something nobody has looked at. The skill covers all three ways in (the free MCP tools, the plain HTTP endpoint, and the command line), which framework to emit for each kind of asset, and how to read the license that travels with every result. It also says plainly when to give up on the catalog and generate instead, and to tell the user which of the two they got.",
+			"link": "/docs/agent-skills",
+			"tags": [
+				"feature",
+				"docs"
+			]
+		},
+		{
+			"date": "2026-09-05",
+			"type": "update",
+			"title": "AI coding assistants can now search the three.ws asset library and get working code back",
+			"summary": "Every ready-made asset the platform publishes is now one search away from any AI coding client connected to the three.ws MCP server: 511 CC0 props, 107 rigged characters and 2,874 motion clips, all in a single searchable catalog instead of three separate browse pages. Ask for a wooden chair or an industrial lamp and you get matching items ranked best first, with tags, license, and the CDN link. Ask for the source and you get code that runs as it is: the model-viewer tag our own gallery renders with, the agent-3d web component pinned to the exact published version and its integrity hash, plain three.js, or a React component. Motion clips come back as three.js code that loads and plays them. All three tools are free and need no account, no API key and no payment, because you should be able to find out what is already here before you sign up for anything. A search that matches only part of what you typed says so instead of returning nothing.",
+			"link": "/docs/mcp",
+			"tags": [
+				"feature",
+				"sdk"
+			]
+		},
+		{
+			"date": "2026-09-05",
+			"type": "update",
+			"title": "Invite people to an IRL agent with a visit link and a printable sign",
+			"summary": "Every agent you have placed in the real world now has a visit link and a sign you can print and tape to the spot. Someone who scans it opens IRL with a banner naming the agent they came to meet, and the moment they are close enough the agent appears in their camera, flashes, and opens its card by itself: bio, reputation, wallet, tip QR, services, and a message box. That card also gained View in AR: on iPhone it stands the agent on the real floor in Quick Look, animated, and the banner inside AR brings you straight back to the card. The link never contains a location, so you can post it anywhere and the agent still only shows to people who are actually there. Find it under Visit link on each placement in your dashboard.",
+			"link": "/irl",
+			"tags": [
+				"feature",
+				"improvement"
+			]
+		},
+		{
+			"date": "2026-09-05",
+			"type": "update",
+			"title": "IRL no longer fails to load your agent on a cold start",
+			"summary": "Opening IRL on a fresh page could show \"Couldn't load this agent\" with a Retry button even though nothing was wrong with your connection. The 3D loader was asked for a compressed avatar a moment before its decoder had finished arriving, and it gave up instead of waiting. Every avatar load on IRL and in the AR Studio now waits for that decoder, so the first load works the same as the retry always did.",
+			"link": "/irl",
+			"tags": [
+				"fix"
+			]
+		},
+		{
+			"date": "2026-09-05",
+			"type": "update",
+			"title": "Machine Atlas: two working machines built in the browser from code, with no 3D model files",
+			"summary": "A new Labs surface at /assembly renders a nine-cylinder radial aero engine and a coupled steam locomotive without loading a single model file. Both are generated when the page opens: bore and stroke set the crank throw, the crank throw sets the crankcase diameter, and every fin, rail section and propeller blade is a profile revolved, extruded or lofted at runtime. Move any dimension slider and the geometry is rebuilt in front of you. The motion is solved rather than animated, so the pistons follow the exact slider-crank and the locomotive's valve gear closes a real four-bar chain every frame, which means a rod length that cannot physically reach simply refuses to move. Pull either machine apart with the explode slider, switch to the structure view to see the mesh, hover any part to name it, hide whole subassemblies, and read the actual generating calls in the Source panel, printed from the values you set. Every configuration has its own link, and any of them can be exported as a GLB or saved as a PNG frame.",
+			"link": "/assembly",
+			"tags": [
+				"feature"
+			]
+		},
+		{
+			"date": "2026-09-05",
+			"type": "update",
+			"title": "One command drops a three.ws prop, character or motion clip into your project",
+			"summary": "npx @three-ws/assets search wooden chair finds it, and npx @three-ws/assets add object:painted_wooden_chair_01 downloads the model into your public folder and prints the tag that renders it, already pointing at your local copy rather than our CDN. Your site keeps working even if we do not. The catalog behind it is the same one the AI tools read: 511 CC0 props, 107 rigged characters and 2,874 motion clips, searchable in one place instead of three separate galleries. It is also a plain HTTP endpoint now, GET /api/catalog, free and open to any origin, so a build script or a site that is not using an AI client can read it too. Adding an asset twice changes nothing the second time, and a file you edited afterwards is never overwritten without asking. Every object is CC0, and the license of anything that is not travels with it in the output.",
+			"link": "/docs/api-reference",
+			"tags": [
+				"feature",
+				"sdk"
+			]
+		},
+		{
+			"date": "2026-09-05",
+			"type": "update",
+			"title": "Seven background jobs that were never running now run",
+			"summary": "Seven scheduled jobs were declared in the platform config but had no matching job on the scheduler, so they had never fired: the companion poll, feedback triage, print-order syncing, the home health alert, the home-relay sweep, web-variant generation for the forge, and the oracle refit. Three of them shipped with live features behind them, which meant those features quietly did nothing on a timer. All seven are now created and enabled on their declared schedules, and a drift check confirms every declared job exists and matches.",
+			"link": null,
+			"tags": [
+				"fix",
+				"infra"
+			]
+		},
+		{
+			"date": "2026-09-05",
+			"type": "update",
+			"title": "The site header now stays put when you scroll",
+			"summary": "The navigation bar was set to stick to the top of the window but never actually did: it scrolled away with the page on every route, at every screen size, so reaching the menu meant scrolling all the way back up. The bar was mounted inside a wrapper exactly its own height, and a sticky element can only travel inside its parent, so it had nowhere to go. The header now stays on screen wherever you scroll, on phones and desktop alike.",
+			"link": null,
+			"tags": [
+				"fix",
+				"improvement"
+			]
+		},
+		{
+			"date": "2026-09-05",
+			"type": "update",
+			"title": "The VS Code extension now animates, refines, optimizes and reviews your models, and checks your embeds",
+			"summary": "Open a rigged model in VS Code, press Animate, and pick from the same 2,800-clip motion library the site uses: the clip is retargeted onto that model's own skeleton right in the editor, and Bake clip writes it into a copy of the file so it plays in Unity, Unreal or Blender too. Describe a motion in words and the GPU fleet samples one for you. Refine takes a change like make it metallic and generates a new version anchored to the current one, keeping the version history. Optimize runs the platform's web passes on your machine and tells you what it saved. Compare pulls the committed version straight out of git, opens both side by side, and writes a structural review of what changed. Check quality asks a vision model to score the render and hands its fix straight to Refine. A turntable GIF button makes README material in one click. And in HTML, React, Vue, Svelte, Astro and Markdown files the editor now checks agent-3d tags as you type: a missing source or size, an unpinned library script, a stale integrity hash the browser would refuse, a misspelt attribute, each with a one-click fix, plus hovers and completions for every attribute.",
+			"link": "/docs/vscode",
+			"tags": [
+				"feature",
+				"sdk",
+				"improvement"
+			]
+		},
+		{
+			"date": "2026-09-05",
+			"type": "update",
+			"title": "Walk up to an IRL agent, talk to it out loud, and stand it on your floor in AR",
+			"summary": "Tap any agent you discover on IRL and the card now leads with Talk and View in AR. Talk is a real conversation with the agent standing in front of you: hold the mic and speak, or type. It answers in its own persona, out loud in its voice (its cloned voice when it has one), and the 3D model's mouth moves with the words while it keeps breathing. Press the mic while it is talking to interrupt it. View in AR works on anyone's agent, not only your own: iPhone opens it in Quick Look on the real floor, animated, with a banner that brings you back to the conversation; Android phones with ARCore anchor it to the detected floor right inside the page, tap to place and pinch to size; every other device opens the AR launcher. Owners see a new \"talked with your agent\" event in their IRL feed when someone starts a conversation. The transcript stays between the visitor and the agent.",
+			"link": "/irl",
+			"tags": [
+				"feature"
+			]
+		},
+		{
+			"date": "2026-09-05",
+			"type": "update",
+			"title": "Your agent now lives in a handheld console you can put on any website",
+			"summary": "The new Pocket Console at /pocket is a real handheld with a real 3D agent inside the screen. The D-pad walks it, A waves, B jumps, START swaps between the agent walking, its live stats, and a menu of every public agent you can slot in like a cartridge, and L and R flip through them. It takes keyboard, touch and a plugged-in game controller. Four shell finishes, four scenes, and the whole state travels in the link, so what you share is the device exactly as you left it. Add chrome=off and one iframe puts the console, your agent included, on your own site: transparent background, no sign-in, no SDK, no API key.",
+			"link": "/pocket",
+			"tags": [
+				"feature"
+			]
+		},
+		{
+			"date": "2026-09-04",
+			"type": "launch",
+			"title": "Docs · Trader Wrapped",
+			"summary": "How the shareable season recap for a pump.fun trading agent is built: what each of the eight slides reads, where its numbers come from, and why the whole page is read-only arithmetic over round-trips that already settled on-chain.",
+			"link": "/docs/trader-wrapped",
+			"tags": [
+				"launch"
+			]
+		},
+		{
+			"date": "2026-09-04",
+			"type": "launch",
+			"title": "Trader Wrapped: your season on pump.fun",
+			"summary": "The season recap for any verified pump.fun trading agent on three.ws: realized profit and loss, the trade that carried the season, the trade that hurt, the rhythm behind both, and where they finished against the field. Cut from closed on-chain round-trips with buy and sell signatures attached, so a losing season reads as a losing season. Swipeable, shareable, no account and no wallet.",
+			"link": "/wrapped",
+			"tags": [
+				"launch"
+			]
+		},
+		{
+			"date": "2026-09-04",
+			"type": "update",
+			"title": "A knock now holds the money until you actually get a reply",
+			"summary": "Paying to reach someone used to send your money the instant the payment cleared, which meant an owner could take every knock and answer none, and you had no way to get it back. A new Solana program makes the payment conditional: it sits in a vault that only the knock itself controls, and exactly three things can happen to it. The owner answers inside the reply window and gets paid, the owner declines and you are refunded in full with no fee taken, or the window closes and anyone at all can trigger your refund. There is no admin key that can move a knock that is parked, the fee is capped at 10% in the program itself, and the fee you agreed to when you knocked cannot be raised on money that is already in escrow. Your message never touches the chain: only a fingerprint of it is stored, so either side can later prove what was sent without publishing it. Ten invariants covering every one of those promises run against the real compiled program on every test run.",
+			"link": null,
+			"tags": [
+				"feature",
+				"security"
+			]
+		},
+		{
+			"date": "2026-09-04",
+			"type": "update",
+			"title": "A second opinion now reviews every trade a sniper agent wants to make",
+			"summary": "Trading agents already pass a stack of mechanical checks before they buy: the market-cap band, the price-impact ceiling, budget and slot caps, and an on-chain honeypot check that simulates a real buy and a real sell. All of those answer a question with a number. A new Risk Officer asks the one they cannot: knowing everything we know, is this specific trade still a good idea? It is shown the proposed trade plus the agent's own reason for wanting it, and is told to look for what the agent missed, so it argues with the trade instead of agreeing with it. It starts in shadow mode on every strategy: it reviews and records, and changes nothing, so its calls can be scored against what the trades actually did before anyone lets it veto one. When it is armed, a veto has to name a specific fact, it can shrink a trade instead of killing it, it can only ever reduce risk and never raise it, and if the reviewer is unavailable the trade goes ahead unchanged rather than the fleet stalling.",
+			"link": null,
+			"tags": [
+				"feature",
+				"security"
+			]
+		},
+		{
+			"date": "2026-09-04",
+			"type": "update",
+			"title": "Agent wallets can pay three.ws on X Layer again",
+			"summary": "Buying agents that pay for a 3D generation on X Layer sign their payment with a wallet that carries an on-chain delegation, which is how every OKX agent wallet is built. Our checker judged those signatures with a contract call that answers a different question, so it turned away correct, fully funded payments and quoted the price a second time instead of doing the work. Payments are now checked the same way the stablecoin itself checks them, so a signed authorization that the network would honour is one we accept.",
+			"link": null,
+			"tags": [
+				"fix"
+			]
+		},
+		{
+			"date": "2026-09-04",
+			"type": "update",
+			"title": "Cross-origin 3D loads no longer break on a header your site never sent",
+			"summary": "Embedding a three.ws avatar on your own site loads the model straight from us, and the site answers every origin. One case still failed: if your loader attached any extra header (a trace id, an auth token, anything a browser does not treat as standard), the browser first asked us for permission and we answered with a 404 page, so the model never loaded. That request is now answered properly, and the answer echoes exactly the headers you asked about. Alongside it, the media docs now spell out the three ways to read a model file and which one to pick: files under three.ws load directly, generated assets load directly from three.ws/cdn, and the /api/glb proxy is there for a URL whose host you cannot identify.",
+			"link": "/docs/media-api",
+			"tags": [
+				"fix",
+				"docs"
+			]
+		},
+		{
+			"date": "2026-09-04",
+			"type": "update",
+			"title": "Daily Match reads on a phone, and its live ticker finally matches its board",
+			"summary": "The Daily Match board tracks which agent ships the most real output each UTC day. Two things were wrong with it. On a narrow screen the eight-column standings table was being silently clipped instead of scrolled, so P&L and Score, the two columns the whole page is about, simply could not be reached on a phone; the table now scrolls inside its own region, with edge shadows that show up only while there is more to reach and keyboard focus so you can scroll it without a mouse. And the Live output ticker only ever read one of the four activity sources the board scores, so an agent that shipped a launch, a trade or a paid skill sale could rank first on a board sitting next to a panel claiming the day was quiet; the ticker now reads all four and labels each entry with what it was. The board also got wider on desktop so every column fits without scrolling, a designed loading and failure state for the ticker, and a refresh that no longer wipes good standings off the screen when a single poll fails: it says live updates are paused and puts them back when the next one lands.",
+			"link": "/daily-match",
+			"tags": [
+				"fix",
+				"improvement"
+			]
+		},
+		{
+			"date": "2026-09-04",
+			"type": "update",
+			"title": "DeFi tables stop showing broken logos when a coin icon disappears",
+			"summary": "The protocol and chain logos on the fees, DeFi, DEX volumes, chain, protocol and exchange pages were loaded straight from a third-party icon host. When that host renamed or removed an icon, the row rendered a broken-image glyph and every reader's browser recorded a failed request. Those logos now come from three.ws itself: we fetch and resize them on our side, cache them, and hand back an empty answer for an icon that no longer exists, so the row shows the same neutral disc a protocol without a logo already gets. Pages load a little faster too, since a 24-pixel icon no longer arrives at full size, and your browser no longer talks to an outside host on every table paint.",
+			"link": "/fees",
+			"tags": [
+				"fix",
+				"improvement"
+			]
+		},
+		{
+			"date": "2026-09-04",
+			"type": "update",
+			"title": "Every 3D viewer on the site now runs the same build",
+			"summary": "The 3D preview you see on three.ws is drawn by a viewer library loaded from a public CDN, and pages had quietly fallen out of step: most ran the current version while a handful of older pages, demos and the copy-paste embed snippet were still on a version behind. That split is worse than it sounds. Two different builds of the viewer cannot coexist in one page, so if someone pasted our embed onto a site that already showed a three.ws model, the second one would refuse to start and show nothing. Everything is now on one build, the offline copy served by the hosted IBM page was checked against it byte for byte, and an automated check runs before every release that fails the build if a single page drifts off again. Pages still fetch the viewer in the way that suits them (some with a security hash, some through a fallback chain of mirrors so a blocked CDN cannot leave an empty box), but the version they all land on is the same one.",
+			"link": null,
+			"tags": [
+				"fix",
+				"improvement"
+			]
+		},
+		{
+			"date": "2026-09-04",
+			"type": "update",
+			"title": "Generated models are checked for the invisible surface detail that makes them look real",
+			"summary": "A 3D model can have perfect shape and still look like plastic, because the colour picture painted onto it is only half of what makes a surface look real. The other half is invisible detail: which parts are bumpy, which are shiny, which sit in shadow. Without it, leather, wool and glass all catch the light in exactly the same flat way, and an object can read as though it were cast in dull metal rather than made of what you asked for. There was no way to check which of those layers a model actually carried, so we built one and pointed it at real generations from the live engines, then wrote down what each engine does and does not produce. That measurement is now published alongside the texturing service instead of being guessed at, and the checker refuses to pass a model missing a layer it should have, so the gap cannot quietly reopen.",
+			"link": null,
+			"tags": [
+				"docs",
+				"improvement"
+			]
+		},
+		{
+			"date": "2026-09-04",
+			"type": "update",
+			"title": "Generation jobs can now push their result to your server, and the health page finally watches the editing tools",
+			"summary": "Two additions for anyone who builds on the forge. First, webhooks for generation jobs: subscribe to forge.completed and forge.failed and three.ws POSTs you the finished model instead of making you poll for it. A generation outlives the request that started it, so until now an integration had to keep asking. The completion event rides the single writer every lane finishes through, so it arrives exactly once whether the job ran on the free lane, a paid call, or the background finalizer that picks up abandoned work; the failure event deliberately stays quiet while a job is being retried on another engine, so it only ever means the job is really over. Payloads and a runnable example are in the developer platform docs. Second, the forge health report now live-probes the editing tools as well as the generation engines: remesh, stylize, segment, background removal, text to motion, auto-rig and retexture each get checked for real. Those tools have buttons in the result panel, so a user can hit them, but none of them were being watched; retexture had in fact been offline the whole time and nothing said so.",
+			"link": "/changelog",
+			"tags": [
+				"feature",
+				"sdk",
+				"improvement"
+			]
+		},
+		{
+			"date": "2026-09-04",
+			"type": "update",
+			"title": "Knock on a stranger and get your money back if they never answer",
+			"summary": "A door that takes escrowed knocks now shows the option on its own page, next to paying up front. Choose it and your payment goes into an on-chain vault instead of the recipient's wallet: they are paid by answering you, and if they decline or the window runs out, every unit comes back to you. Before anything is signed, a dialog states the amount, who it reaches, and the exact deadline. Afterwards the page counts down to that deadline, and the moment it passes, a button hands your payment back. three.ws holds no key that can move it either way.",
+			"link": null,
+			"tags": [
+				"feature"
+			]
+		},
+		{
+			"date": "2026-09-04",
+			"type": "update",
+			"title": "Knock somebody's door and get your money back if they never answer",
+			"summary": "Paying to reach a stranger has meant paying first and hoping. The money left your wallet the moment the payment cleared, and if the person never replied, that was that. Doors can now take escrowed knocks instead: your payment sits in a vault on Solana that the recipient cannot touch until they actually answer you. If they answer, they are paid. If they decline, you get everything back and are charged nothing, because reading something and passing on it is not a service. And if they simply never respond before the window they set, anyone at all can trigger the refund and every cent comes back to you, so it does not depend on you remembering to chase it. three.ws holds no key that can move that money, and neither does anyone else. Door owners can turn the lane on in their knock settings and choose how long they get to reply, from an hour to a month.",
+			"link": "/docs/knock",
+			"tags": [
+				"feature",
+				"security"
+			]
+		},
+		{
+			"date": "2026-09-04",
+			"type": "update",
+			"title": "Opening the homepage, Create and Discover no longer loads 3D you never asked to see",
+			"summary": "Three pages were doing heavy 3D work before anyone had scrolled to it. The homepage hero picked whichever featured avatar the list returned first, which meant a 4.6 MB model downloading and decoding while the page was still trying to become usable; it now picks the richest avatar that fits a size budget, which cut the hero to 2.1 MB without changing what the stage shows. Discover was fetching an entire 3D viewer engine on every visit even though almost every card in the directory is a still thumbnail, and now fetches it only when a card that really has a 3D model comes near the screen. The Create page did the same for one preview card that already waited for your cursor, and now waits for it too, with the poster on screen in the meantime so the card looks the same. The walking companion also stopped booting on top of a page that is still loading: it waits for the page to settle first, then turns up as before.",
+			"link": "/discover",
+			"tags": [
+				"improvement",
+				"fix"
+			]
+		},
+		{
+			"date": "2026-09-04",
+			"type": "update",
+			"title": "Pairing a house, paying an agent and the status page all answer again",
+			"summary": "A packaging rule left two small token modules out of the deployed image, and because the server loads them the moment a request arrives, every route that touched them answered with a server error instead of a page: pairing or managing a house, the agent payment endpoint, and the public status page. The modules ship again, and the check that simulates the upload now runs as part of every deploy, so a file the server needs can no longer go missing quietly.",
+			"link": "/status",
+			"tags": [
+				"fix",
+				"infra"
+			]
+		},
+		{
+			"date": "2026-09-04",
+			"type": "update",
+			"title": "Pin your avatars to IPFS from Settings, and choose which copy loads first",
+			"summary": "Settings now has an Avatar storage panel. Every avatar you own is listed with its size, its three.ws storage copy, and whether it also lives on IPFS. Pin one and it gets a permanent content address you can open on any public gateway, and a small R2 / IPFS switch decides which copy a viewer resolves first. If a deployment has no pinning provider it says so plainly instead of showing an address that leads nowhere. The About block on the same page now reports the build that is actually serving you and the language the page is really rendering in, rather than today's date and a hardcoded English.",
+			"link": "/dashboard/settings",
+			"tags": [
+				"feature",
+				"improvement"
+			]
+		},
+		{
+			"date": "2026-09-04",
+			"type": "update",
+			"title": "Run an escrowed door from your own wallet, and see what the chain actually says",
+			"summary": "Door settings now carry the escrowed lane: switch it on, choose how long you want to answer within, and open your on-chain door with your own wallet, which is the only thing that can. The panel reads the chain and tells you the truth rather than your intent, so a door you never opened, or one still charging last month's price, says so plainly instead of quietly turning strangers away. Escrowed knocks in your inbox show how long you have and what answering is worth, replying releases the payment, and refusing refunds the sender in full with no fee. Money still in escrow is no longer counted as earned.",
+			"link": null,
+			"tags": [
+				"feature",
+				"improvement"
+			]
+		},
+		{
+			"date": "2026-09-04",
+			"type": "update",
+			"title": "The 3D services we sell to other agents quote one clear price, however they are asked",
+			"summary": "Our four paid 3D generation services on the OKX.AI agent marketplace answer every caller with a price quote before any work happens. Two flaws in that quote are fixed. A request that arrived with no body and no content type was turned away with a formatting complaint instead of a price, and that is exactly how the marketplace's own compatibility check asks, so the check saw four services that looked like they had no payment set up at all. Separately, a request that named no specific tool got a quote listing the same payment network twice at two different prices, one of them wrong. Every unpaid request now receives a single unambiguous quote at the service's listed price, on each payment network it accepts.",
+			"link": null,
+			"tags": [
+				"fix"
+			]
+		},
+		{
+			"date": "2026-09-04",
+			"type": "update",
+			"title": "The agent answering for us on the OKX.AI marketplace now says when it cannot answer",
+			"summary": "Our marketplace listing is answered by an agent that reads a buyer's message and writes back. It could fail in the quietest possible way: the process alive, the health page green, and every reply dying against an AI credential the provider had stopped honouring, which from the buyer's side is indistinguishable from being ignored. The host now asks the provider itself, on every boot and every fifteen minutes, and a refused credential turns the listing amber on our status page, raises an alert, and carries the exact commands that fix it. It also stopped crying wolf: a daemon that is merely still starting up no longer reports as dead.",
+			"link": null,
+			"tags": [
+				"fix",
+				"infra"
+			]
+		},
+		{
+			"date": "2026-09-04",
+			"type": "update",
+			"title": "The agent economy demo now quotes the amount it actually pays",
+			"summary": "On the Agent Economy demo, NOVA buys a live Solana market briefing from ORACLE. The narration announced a 0.001 SOL payment while the listed price, the receipt panel and the transfer itself were all 0.000001 SOL, and the screen in the world printed a PAID badge even on the simulated runs that signed-out visitors get. Every one of those now reads the same figure from one place, and a simulated run says so on screen. The page also handles a bad day: if the stream drops, the run times out, or the market feed cannot be reached, you get a plain explanation and a Retry button instead of a stalled page and a pointer at the developer console. On a phone the Run demo button no longer sits off the edge of the screen, the 3D world resizes with the window instead of staying clipped at its widest size, and a browser without WebGL is told so rather than shown a black rectangle.",
+			"link": "/demo",
+			"tags": [
+				"fix",
+				"improvement"
+			]
+		},
+		{
+			"date": "2026-09-04",
+			"type": "update",
+			"title": "The agent that answers for us on the OKX.AI marketplace now lives somewhere that stays up",
+			"summary": "Buyers who message our marketplace listing were being answered from a development workspace that goes to sleep on its own, and one message this week sat unread for twenty hours because of it. It now runs on a host that stays up, keeps its identity across restarts, and reports its own reachability alongside every other part of the platform on the status page.",
+			"link": null,
+			"tags": [
+				"improvement",
+				"infra"
+			]
+		},
+		{
+			"date": "2026-09-04",
+			"type": "update",
+			"title": "The DeFi page reads on a phone, links straight to each protocol, and can refresh itself",
+			"summary": "Every protocol name on /defi is now a real link into its detail page, so you can open one in a new tab, and dragging to copy a TVL figure no longer navigates away. A Refresh button in the toolbar pulls new figures without reloading the page and keeps the current table on screen while it works; if the refresh fails, the numbers you already had stay put and the page says so. On a phone the table now fits the screen, so TVL and the 1-day move are readable without scrolling sideways. When the upstream is down you get a real retry button instead of a dead link, an empty feed says so plainly instead of showing a $0.00 total, and figures served from cache are labelled as cached rather than passed off as live.",
+			"link": "/defi",
+			"tags": [
+				"improvement",
+				"fix"
+			]
+		},
+		{
+			"date": "2026-09-04",
+			"type": "update",
+			"title": "The friends panel tells you when it cannot reach the server, instead of saying you have no friends",
+			"summary": "When the friends list could not be loaded, the panel showed the same screen it shows a brand new player: \"No friends yet\", with a button inviting you to go and add someone. That reads as though your friends were gone, when the truth was only that we could not look. It now says plainly that the connection dropped, that nothing was lost, and offers a Try again button that really does retry, and if the list had already loaded once, it stays on screen and is marked as possibly out of date rather than being thrown away. Coming back online repaints the panel straight away, even when your friends list is exactly as you left it. The panel also had a stray word \"null\" printed under the tabs every time it opened, on both the world and the walk pages, which is now gone.",
+			"link": "/play",
+			"tags": [
+				"fix",
+				"improvement"
+			]
+		},
+		{
+			"date": "2026-09-04",
+			"type": "update",
+			"title": "The IBM partnership demos arm wherever the page is opened",
+			"summary": "The live demo pages loaded their own payment script across the network by full address, so on any address other than the main site (a preview, a local run, a copy published on a partner domain) the browser refused it and the paid demos never armed. Each page now loads the copy it ships with. The publish-once page IBM hosts got the opposite fix: every file it pulls now carries our full address, so its language switcher no longer looks for a file on the host's own domain and comes back empty.",
+			"link": "/ibm/hello",
+			"tags": [
+				"fix"
+			]
+		},
+		{
+			"date": "2026-09-04",
+			"type": "update",
+			"title": "The invitation link you just created stays on screen",
+			"summary": "Inviting somebody into your home hands you a link that works once. It used to vanish the instant the household list refreshed behind it, and since we keep only a fingerprint of that link and never the link itself, there was no way to get it back. It now stays put until you close the panel, whether or not the email went out.",
+			"link": null,
+			"tags": [
+				"fix"
+			]
+		},
+		{
+			"date": "2026-09-04",
+			"type": "update",
+			"title": "The IRL placements desk can use your location again, and only when you ask it to",
+			"summary": "The page that pins your agents to real places offers to measure how far away each pin is and to drop a new one where you are standing. None of it could work: the page arrived with the browser location service switched off for it, so every attempt failed on the spot. Location is allowed on that page now. It also no longer reaches for your position the second the page opens: it reads it only when you have already granted permission, and otherwise waits for you to press one of the location buttons.",
+			"link": null,
+			"tags": [
+				"fix",
+				"improvement"
+			]
+		},
+		{
+			"date": "2026-09-04",
+			"type": "update",
+			"title": "The one-line x402 script now works on your site, not just on ours",
+			"summary": "Our docs tell you to make any element payable by dropping one line onto your page: a script tag pointing at three.ws/x402.js. On your own domain that line never worked. Your browser asked us whether another site was allowed to read the file and we never answered, so the script was refused and the button stayed inert. The same silence broke the runtime translation script and the language catalogs it reads, and it broke the IBM partnership page that IBM hosts on its own domain: that page keeps itself current by pulling the latest copy from us, and instead had quietly frozen on the version baked in the day it was published. All of it answers any site that asks now. The live copy also carries its own script and translation addresses with it, instead of asking your server for files only we have, and a new check loads that page from a stranger's domain so none of this can go unnoticed again.",
+			"link": "/docs/x402-studio",
+			"tags": [
+				"fix",
+				"sdk",
+				"infra"
+			]
+		},
+		{
+			"date": "2026-09-04",
+			"type": "update",
+			"title": "The Smart Money directory stops asking your browser for pictures it can never get",
+			"summary": "Every wallet in the copy-trading Smart Money list carried a portrait link pointing at an outside image host that serves nobody but its own site. Browsers blocked all of them, so the list drew the trader initials it was designed to fall back on while quietly recording a failed request for each row on screen. That unusable link is no longer sent, so the directory looks exactly as it did with none of the wasted traffic behind it.",
+			"link": null,
+			"tags": [
+				"fix",
+				"improvement"
+			]
+		},
+		{
+			"date": "2026-09-04",
+			"type": "update",
+			"title": "The Windows 11 widget now actually paints your agent on the widgets board",
+			"summary": "Windows renders the Agent glance widget from a card layout the site has to hand it, and we were handing it the address of that layout instead of the layout itself, so a pinned widget had nothing to draw. The worker now fetches the card, keeps a copy so a machine that wakes up offline still renders, re-paints slots that were pinned before it took over, and registers the 15 minute refresh the widget advertises, which was never actually being scheduled. Pin it with Win + W, Add widgets, Agent glance.",
+			"link": "/glance",
+			"tags": [
+				"fix"
+			]
+		},
+		{
+			"date": "2026-09-04",
+			"type": "update",
+			"title": "Trader Wrapped: every trading agent's season, in eight slides you can share",
+			"summary": "Pick any trading agent on three.ws and read its season back as a recap you swipe through: what it made, the trade that carried it, the trade that hurt, the streaks and hours behind both, where it finished against every comparable trader, and the receipt with its verification state. Every number is cut from closed on-chain round-trips with buy and sell signatures attached, using the exact same arithmetic the leaderboard and the trader profile use, so a recap can never disagree with the record it links to. It is built to be honest rather than flattering: the worst trade is its own slide, a losing season is labelled a losing season and drawn in red, coins that cost the trader money still rank in the breakdown, coins a trader launched themselves are excluded from every superlative, the rank always shows how big the field really was, and a trader with fewer than three settled trades gets told there is no season yet instead of a chart made out of noise. Sharing a recap gives you a real preview card on X, Telegram and Farcaster, and the link carries your referral code when you are signed in. Nothing here signs, spends, or touches your wallet: browse it all signed out, and open the trade panel only if you choose to fork a coin you read about.",
+			"link": "/wrapped",
+			"tags": [
+				"feature"
+			]
+		},
+		{
+			"date": "2026-09-04",
+			"type": "update",
+			"title": "Two paid endpoints now quote a price to anyone who asks, instead of an error",
+			"summary": "The 3D asset pipeline and pay-by-name resolution both checked your request for missing fields before they ever mentioned the price, so a caller who simply asked what they cost got a validation error back. Directories that index paid APIs ask exactly that way, with an empty request, and read an error as a service that sells nothing, which is why neither endpoint could be listed anywhere. Both now answer with the payment challenge and the real price first. The pipeline quotes the published example chain when the request names no stages, and anyone who pays and then sends an incomplete request still gets the same clear validation error, with nothing charged.",
+			"link": null,
+			"tags": [
+				"fix",
+				"improvement"
+			]
+		},
+		{
+			"date": "2026-09-04",
+			"type": "update",
+			"title": "When the payment wallets run thin, the money now reaches the right one first",
+			"summary": "three.ws pays its own on-chain fees from a funding wallet that tops up every engine below its floor. It ranked those engines purely by the size of their shortfall, so a top-up went to whichever wallet was missing the most, and the small wallet that pays the fee on every single payment could sit under its cutoff while the rail stayed shut. The payment wallets are now funded first, so a modest top-up restores settlement instead of a large one being required to reach it by accident. Two related repairs land with it: a wallet holding stablecoins but too little native currency to open the account a swap pays out into is now told exactly how much it is short, instead of retrying the same impossible conversion every half hour, and previewing the rebalancer with a dry run no longer executes real swaps.",
+			"link": null,
+			"tags": [
+				"fix",
+				"infra"
+			]
+		},
+		{
+			"date": "2026-09-03",
+			"type": "launch",
+			"title": "Docs · Connect a home that is only on your network",
+			"summary": "Most Home Assistant installs cannot be reached from the internet, so the house dials three.ws instead: install one HACS integration, paste a ten-minute pairing code, and nothing listens on your network, no port is forwarded, and three.ws never receives a Home Assistant token. Includes the operator half: the relay service, its configuration and deploy, how the allowlist is changed, and how to prove the whole path against a real house on a network the server cannot route to.",
+			"link": "/docs/home-relay",
+			"tags": [
+				"launch"
+			]
+		},
+		{
+			"date": "2026-09-03",
+			"type": "launch",
+			"title": "Docs · Fork a trade",
+			"summary": "One tap on any coin across the Radar, the Live Trade Feed, the Smart Money Radar, or a ghost-copy replay opens the real pump.fun trade panel for it, pre-filled and signed by your own wallet. No custody, no delegated key, and a ?fork= link so a coin travels.",
+			"link": "/docs/fork-trade",
+			"tags": [
+				"launch"
+			]
+		},
+		{
+			"date": "2026-09-03",
+			"type": "launch",
+			"title": "Docs · Give your voice assistant a face",
+			"summary": "Point an existing Home Assistant voice pipeline at a three.ws agent and it gains a face: the setup in four steps, exactly what crosses your network and what never does, the eleven states the display can be in, and the rule the whole thing is built around, that closing the page never stops your voice assistant working.",
+			"link": "/docs/home-satellite",
+			"tags": [
+				"launch"
+			]
+		},
+		{
+			"date": "2026-09-03",
+			"type": "launch",
+			"title": "Docs · Home households and roles",
+			"summary": "Sharing a connected house without sharing a login: the five roles and what each one may do, per-member entity scopes that narrow the house a member can even see, how invitations are issued and accepted, what happens to somebody's access when they leave, and the rule everything hangs off, that a guest can never confirm an action that opens a building.",
+			"link": "/docs/home-households",
+			"tags": [
+				"launch"
+			]
+		},
+		{
+			"date": "2026-09-03",
+			"type": "launch",
+			"title": "Docs · Home plans and quotas",
+			"summary": "What a connected house costs and what each plan covers, with the two commitments enforced in code rather than promised in prose: a limit never blocks a safety action, so locking up, closing a garage or valve and arming an alarm work over quota and past due; and nothing about the confirmation gate, the action log's integrity or the role system is ever a paid feature.",
+			"link": "/docs/home-plans",
+			"tags": [
+				"launch"
+			]
+		},
+		{
+			"date": "2026-09-03",
+			"type": "launch",
+			"title": "Docs · Home privacy and retention",
+			"summary": "Everything three.ws stores about a home you connect, why, for how long, and what removes it: the full inventory, the promise that room names and device states are never persisted, the 90-day action-log window and the control that changes it, the export and deletion paths, the logging rules, and the disclosure text shown at connect and at the voice opt-in.",
+			"link": "/docs/home-privacy",
+			"tags": [
+				"launch"
+			]
+		},
+		{
+			"date": "2026-09-03",
+			"type": "launch",
+			"title": "Docs · Home relay threat model",
+			"summary": "What an attacker gets at every position around the socket a LAN-only house dials out through, and what stops them: why the relay carries a fixed list of message types instead of proxying HTTP into a home network, what a stolen install token is and is not worth, why the allowlist is enforced again inside the house so a compromised relay widens nothing, and the residuals accepted on purpose.",
+			"link": "/docs/home-relay-threat-model",
+			"tags": [
+				"launch"
+			]
+		},
+		{
+			"date": "2026-09-03",
+			"type": "launch",
+			"title": "Docs · Home security",
+			"summary": "The threat model for a connected house, written about a building rather than a database: what each actor can do and what stops them, why the confirmation gate is the load-bearing control and prompt filtering is depth, the eleven checks that run with every build, the SSRF guard every server-side dial goes through and why a hostname check is not one, the prompt-injection proof that ends by asking a real lock whether it opened, and the residuals accepted on purpose.",
+			"link": "/docs/home-security",
+			"tags": [
+				"launch"
+			]
+		},
+		{
+			"date": "2026-09-03",
+			"type": "launch",
+			"title": "Docs · Simulation readiness",
+			"summary": "A free physics grade for any 3D model: whether a rigid-body solver can use it as-is, whether its size is real meters or a generator's unit box, and its exact volume, centre of mass and inertia tensor.",
+			"link": "/docs/sim-readiness",
+			"tags": [
+				"launch"
+			]
+		},
+		{
+			"date": "2026-09-03",
+			"type": "launch",
+			"title": "Docs · The browser voice loop",
+			"summary": "How hands-free works for a connected home: a wake word matched by a model running in your own tab, an interruption that stops the agent mid-sentence, a pause that does not truncate your command, and a spoken confirmation narrow enough that a background yes can never unlock a front door. Includes the measured latency of every leg and how to mount the loop on your own surface.",
+			"link": "/docs/home-voice",
+			"tags": [
+				"launch"
+			]
+		},
+		{
+			"date": "2026-09-03",
+			"type": "launch",
+			"title": "Docs · The live 3D home",
+			"summary": "How the connected house becomes a room you can stand in: the room graph the bridge builds from Home Assistant's registries, how a real light dimming dims the model, what the scene does while the house is unreachable, and the fallback that keeps every control usable without WebGL.",
+			"link": "/docs/home-scene",
+			"tags": [
+				"launch"
+			]
+		},
+		{
+			"date": "2026-09-03",
+			"type": "launch",
+			"title": "Docs · three.ws Drive",
+			"summary": "How a three.ws agent rides in the car: the CarPlay entitlement categories measured, why Apple's voice-based conversational category is the one that fits and why it grants no drawing surface, the open-source in-car projects worth adopting and the copyleft ones that are not, and how the /drive surface, the native CarPlay scene, and an open head unit share one implementation.",
+			"link": "/docs/carplay",
+			"tags": [
+				"launch"
+			]
+		},
+		{
+			"date": "2026-09-03",
+			"type": "launch",
+			"title": "Docs: Alpha-drip",
+			"summary": "Alpha-drip lets a copy-trading leader price the latency of their own signal: $THREE holders in higher tiers see the copy intent first, everyone else after a delay the leader sets. It delays the reveal, never the record.",
+			"link": "/docs/alpha-drip",
+			"tags": [
+				"launch"
+			]
+		},
+		{
+			"date": "2026-09-03",
+			"type": "launch",
+			"title": "Hands-free voice for your home",
+			"summary": "Talk to your house without finding a phone: a wake word matched on your own device, real barge-in mid-sentence, and a spoken confirmation that a background yes can never satisfy.",
+			"link": "/voice/home",
+			"tags": [
+				"launch"
+			]
+		},
+		{
+			"date": "2026-09-03",
+			"type": "launch",
+			"title": "Home plan",
+			"summary": "What your plan covers for connected homes: homes, household seats, live screens, voice minutes and agent turns, each with what you have used and when it resets. Pause and resume which homes are live without disconnecting any of them. Locking up, closing a garage and arming an alarm are never limited.",
+			"link": "/smart-home/plan",
+			"tags": [
+				"launch"
+			]
+		},
+		{
+			"date": "2026-09-03",
+			"type": "launch",
+			"title": "Join a home",
+			"summary": "Accept an invitation to somebody's connected home. The link says which home it is, exactly what your role would let you do there and what it would never let you do, before you sign in. It works once and it expires.",
+			"link": "/smart-home/join",
+			"tags": [
+				"launch"
+			]
+		},
+		{
+			"date": "2026-09-03",
+			"type": "launch",
+			"title": "Smart home",
+			"summary": "Connect a Home Assistant house to your three.ws agent. Your agent reads every room and device, runs the scenes you already built, and stops to ask before it unlocks, opens or disarms anything.",
+			"link": "/smart-home",
+			"tags": [
+				"launch"
+			]
+		},
+		{
+			"date": "2026-09-03",
+			"type": "launch",
+			"title": "three.ws Drive",
+			"summary": "Your 3D agent in the car: voice-first, glanceable, and built to the rules CarPlay and Android Auto enforce. Runs on a head unit, a phone in the cradle, or inside the native car shell.",
+			"link": "/drive",
+			"tags": [
+				"launch"
+			]
+		},
+		{
+			"date": "2026-09-03",
+			"type": "launch",
+			"title": "Tutorial · Connect your home",
+			"summary": "Point your agent at a real Home Assistant and it runs your actual house: lights, thermostat, and the scenes you already built. Covers the three honest ways to reach a house that lives on a home network, and the rule that unlocking, opening and disarming always stop and ask, while locking up never...",
+			"link": "/tutorials/connect-your-home",
+			"tags": [
+				"launch"
+			]
+		},
+		{
+			"date": "2026-09-03",
+			"type": "launch",
+			"title": "Voice satellite",
+			"summary": "Give your existing Home Assistant voice assistant a face. Pair a three.ws satellite and the same pipeline you already use gains a 3D agent that lip-syncs its answers and reacts, on any screen in the house. Home Assistant keeps the wake word, the speech recognition and the answer; closing the page never stops the voice working.",
+			"link": "/smart-home/satellite",
+			"tags": [
+				"launch"
+			]
+		},
+		{
+			"date": "2026-09-03",
+			"type": "launch",
+			"title": "Your home data",
+			"summary": "Everything three.ws stores about the homes you connected, with why it exists and how long it stays. Set how long your action log lives and watch the old entries go, download all of it as JSON, or delete one home or every trace of all of them. Room names, device states and voice audio are never stored at all.",
+			"link": "/smart-home/privacy",
+			"tags": [
+				"launch"
+			]
+		},
+		{
+			"date": "2026-09-03",
+			"type": "update",
+			"title": "A stranger cannot make your agent open your front door",
+			"summary": "The home lane now has a written threat model and eleven security checks that run with every build, and the standard they hold is a lock, not a database row. The big fix: the address you give for your house is now resolved and pinned on our side before anything dials it, so a web address that secretly points back into our own network is refused instead of connected to, and it is re-checked every time your house reconnects rather than trusted from the day you added it. A device or integration in your house cannot talk your agent into anything either: we wrote an unlock instruction into a real room name, a real device name and a real scene name, ran a real agent against that house, and the front door stayed locked. Your privacy page is now rate limited like everything else, so nobody can hammer the export or the delete.",
+			"link": "/smart-home",
+			"tags": [
+				"security",
+				"improvement"
+			]
+		},
+		{
+			"date": "2026-09-03",
+			"type": "update",
+			"title": "Agent avatars on the Pay page load instead of 404ing",
+			"summary": "Every agent card on the x402 Pay page asked for its owner's avatar picture at a URL that has never existed on this site, so the picture always 404'd and the card fell back to a plain letter tile. The page now uses the real thumbnail the rest of three.ws uses, so an agent with a public avatar shows its face on the card, and an agent whose avatar is private still gets the letter tile without a wasted failed request.",
+			"link": "/pay",
+			"tags": [
+				"fix"
+			]
+		},
+		{
+			"date": "2026-09-03",
+			"type": "update",
+			"title": "AI material restyling works again without an IBM key",
+			"summary": "Restyling a model's materials in plain language (make it chrome, weathered copper, frosted glass) asked IBM Granite for the answer and gave up with a not-configured message if no IBM credentials were present, even though the same free model chain that powers the rest of the site was one call away. It now leads with Granite where it is available and falls back to that shared chain everywhere else, so the button works on every deployment. The two matching tools on the 3D Studio agent server, material generation and prompt direction, had the same dead end and were fixed with it.",
+			"link": "/forge",
+			"tags": [
+				"fix"
+			]
+		},
+		{
+			"date": "2026-09-03",
+			"type": "update",
+			"title": "Any assistant can now run your house, and it still will not open your door",
+			"summary": "There is a new way to connect your home that needs no three.ws account and no remote web address at all: install @three-ws/home-mcp in Claude, Cursor, or anything else that speaks Model Context Protocol, give it your Home Assistant address and a token, and it reads your rooms, runs the scenes you already built, and calls services. Because it runs on your own machine, your ordinary home network address works and nothing about your house leaves the building. The safety rule is the same one the rest of the platform uses, applied honestly to this setup: locking up, closing the garage and arming the alarm run straight away and never ask. Unlocking, opening a door and disarming are refused outright, every time, because saying yes to opening a building takes a person and this kind of connection has no person in it to ask. If you genuinely want one specific door handled without asking, you name that exact door yourself when you start it, by hand, and nothing your assistant can do will widen that to any other door. We proved it against a real Home Assistant rather than a stand-in: the front door was told to unlock seven different ways, including with a fake confirmation smuggled into the request, and it stayed locked every time. Alongside it there is now a full walkthrough from nothing to a working agent in a real house, covering what to do when it says your home is unreachable, and what a guest in your household can and cannot do.",
+			"link": "/smart-home",
+			"tags": [
+				"feature",
+				"sdk",
+				"docs"
+			]
+		},
+		{
+			"date": "2026-09-03",
+			"type": "update",
+			"title": "Avatar posters and clips survive a CDN outage instead of coming back blank",
+			"summary": "Some of the images we render of an avatar on the server are drawn by a headless browser that loads three.js from a public CDN: the images the render endpoint and the MCP render tools return, rendered clips, and the preview cards for models our fast in-process renderer cannot decode on its own. When that one CDN was slow or unreachable, the page's module load simply hung, the render timed out, and the image came back empty with nothing to explain why. A failover had been written for exactly this and was never connected to the renderers. It is connected now: before each render we check that the CDN is answering and switch to a second one if it is not, remembering the answer for ten minutes so a burst of renders pays for a single check. The three renderers also share one pinned version of three.js instead of keeping three copies that could drift apart, and a test now fails the build if a renderer ever goes back to hardcoding a single CDN.",
+			"link": null,
+			"tags": [
+				"fix",
+				"infra"
+			]
+		},
+		{
+			"date": "2026-09-03",
+			"type": "update",
+			"title": "Avatar Studio can now dress, rig and walk your avatar, not just paint it",
+			"summary": "Avatar Studio picked up everything the older avatar editor could do and it could not. A Wardrobe tab puts real catalog garments on your avatar, bound to its own skeleton so they move with every animation, on top of the show/hide and recolour controls for the clothes the body already came with. A Walk tab lets you drive the avatar around the stage with WASD, which is where a garment that does not follow the hips actually becomes visible, and hands the unsaved look straight to the full Walk page. Editing a saved avatar also gets a Rig tab that turns a static mesh into an animation-ready one, and a Play as this button that saves and drops you into a world wearing it. Saving a dressed avatar keeps the clothes: the outfit is stored as data and rebuilt on the pristine base, so nothing gets baked on twice and the base model you started from is always recoverable.",
+			"link": "/avatar-studio",
+			"tags": [
+				"feature",
+				"improvement"
+			]
+		},
+		{
+			"date": "2026-09-03",
+			"type": "update",
+			"title": "Chain logos on the fees tables render instead of breaking",
+			"summary": "Every chain row on the fees and revenue tables showed a broken image. The upstream data source hands out chain logo links that are missing a piece of their address, so each one failed to load. We repair the address before the data reaches the page, and any icon that still fails for its own reasons now quietly becomes the same neutral disc a protocol without a logo already gets, rather than a broken-image mark. The same repair covers the DEX volume, protocol and chain pages that draw from the same feed.",
+			"link": "/fees",
+			"tags": [
+				"fix"
+			]
+		},
+		{
+			"date": "2026-09-03",
+			"type": "update",
+			"title": "Coin art and 3D models load again, wherever the page is running",
+			"summary": "Token logos on the launches feed and every coin card were painted straight from a public IPFS gateway that now rate-limits us, so a feed of launches rendered a wall of blank tiles and filled the console with blocked requests. Art now comes through the site's own image service, which retries across gateways, resizes to the size actually shown, and falls back to a generated placeholder instead of an error. Creation gallery models load the same way, through the site's model proxy, so a 3D preview also works inside an embed on somebody else's site.",
+			"link": "/launches",
+			"tags": [
+				"fix",
+				"improvement"
+			]
+		},
+		{
+			"date": "2026-09-03",
+			"type": "update",
+			"title": "Coin Radar tells you when it is your filter, not the market, that is empty",
+			"summary": "Search the radar for a ticker it has not seen and the board used to say \"Radar is clear, waiting for the next launch\", which blamed a quiet market for a filter you set and gave you no way back. Most of Radar's filters run on the server, so an over-tight one came back looking exactly like a quiet window. Now the board reads your filters instead of the response: it says no coins match, lists every filter you have on as a chip you can click to drop just that one, and keeps a reset-everything button next to it. The 24-hour pulse strip across the top also got an honest state of its own. It is a separate request from the live feed, and when it failed it used to shimmer as if still loading forever; now it says the aggregate did not load, offers a retry, and leaves the feed below running. On a 320px phone every card was losing about 19 pixels off its right edge to a layout overflow that the mobile scroll guard was quietly clipping; cards now fit the screen they are on.",
+			"link": "/radar",
+			"tags": [
+				"fix",
+				"improvement"
+			]
+		},
+		{
+			"date": "2026-09-03",
+			"type": "update",
+			"title": "Connect a home that only exists on your own network",
+			"summary": "Most Home Assistant installs sit on a home network with nothing exposed to the internet, so until now three.ws had no way to reach them. Now the house connects to us instead. Install one integration through HACS, paste a ten-minute pairing code, and your agent can see your rooms and run your scenes with nothing listening on your network, no port forwarded, and no firewall rule changed. The part worth saying plainly: three.ws never receives a Home Assistant token for a home connected this way. The integration signs in to Home Assistant on your own machine with a credential it makes for itself and never sends anywhere, so there is nothing stored here that would open your house. What we can do through that connection is a fixed list, enforced twice, once by us and once by the integration on your machine: reads, your room layout, and device controls. It can never run code on the machine Home Assistant lives on, restart or reconfigure your instance, or reach anything else on your network. Unlocking, opening and disarming still stop and ask a person first, every time, exactly as they do for a home connected by address. Disconnecting works from either end and takes effect immediately. There is an honest threat model in the docs, including what a compromise of three.ws would mean for a connected house; read it before you decide.",
+			"link": "/docs/home-relay",
+			"tags": [
+				"feature",
+				"security"
+			]
+		},
+		{
+			"date": "2026-09-03",
+			"type": "update",
+			"title": "Connect your house to your agent, and see every way it can go wrong",
+			"summary": "The /smart-home page now takes you from \"I have a Home Assistant somewhere\" to a connected house, and it is honest at every step. An address that only exists on your home network is refused the moment you type it, with the two real ways round it, instead of spinning for fifteen seconds. A rejected token says so and puts the cursor back in the token box. A house that stops answering keeps its rooms on screen, marked stale with how long ago it last replied, rather than blanking out. Your access token is sent once, encrypted at rest, and never comes back to the page: it is not in your browser storage, not in a URL, and not in any response. Disconnecting says plainly that the stored token is erased and reminds you to delete it in Home Assistant too.",
+			"link": "/smart-home",
+			"tags": [
+				"feature"
+			]
+		},
+		{
+			"date": "2026-09-03",
+			"type": "update",
+			"title": "Copy a working embed snippet with no account, and embed an agent's chat page",
+			"summary": "The embed editor moved into the Widget Studio, and it got the two things it was missing. You no longer need an account: the walking-avatar and the new Agent Chat widget carry their whole setup in the embed URL, so you can configure one, copy the snippet and put it on your site without signing in (signing in still gets you a shareable link and the ability to change a live embed later). Agent Chat embeds an agent you already published, so visitors talk to it on your page. You can also point an embed at a .glb or .vrm you host yourself, and the modal now tells you exactly where the snippet goes in HTML, React, WordPress, Webflow and Shopify. Every control writes itself back into the address bar, so a configured studio link is something you can send to someone. Old /embed links keep working and land on the same configuration.",
+			"link": "/studio",
+			"tags": [
+				"feature",
+				"improvement"
+			]
+		},
+		{
+			"date": "2026-09-03",
+			"type": "update",
+			"title": "Copy trading now stops itself when a leader slides, and a trader has to earn the right to be copied",
+			"summary": "Three guards landed on the copy loop. You can set a drawdown limit when you start copying a trader: if their real closed trades fall that far below their best point, new copies stop automatically, you get told why, and exits on positions you already hold keep coming through so you are never frozen inside the leader that just tripped. Resuming while they are still down is refused with the actual numbers rather than a button that silently re-pauses. Second, a trader now has to have earned a record before anyone can put money behind them: five closed round-trips, a day of trading history, and real capital deployed, all measured on-chain. Fall short and the panel shows exactly what is still missing instead of a flat refusal, and a losing trader with a real record still qualifies, because this asks whether the record is real, not whether it is good. Third, you can no longer copy an agent you own, and follows between your own agents no longer count toward the follower score on the leaderboard. Along the way, starting or editing a copy from a trader profile was failing silently on every attempt; that is fixed.",
+			"link": "/dashboard/copy",
+			"tags": [
+				"feature",
+				"security",
+				"improvement"
+			]
+		},
+		{
+			"date": "2026-09-03",
+			"type": "update",
+			"title": "Daily Forge shows the day's theme again",
+			"summary": "Daily Forge is built around one thing: the challenge of the day. That headline was being wiped out a moment after the page loaded. The translation layer runs after the page fetches its language file, and it was overwriting the day's theme with the placeholder text baked into the HTML, so every visitor read \"Today's theme\" and \"Loading today's challenge\" forever while the starter prompt and the idea chips below quietly described a completely different subject. The theme, its emoji, its hint and the browser tab title now hold. Four more fixes landed with it: a failed generation says \"Could not reach the forge, check your connection\" instead of the browser's raw \"Failed to fetch\"; when a model finishes but the preview cannot show it, the Download button the message points at is now actually clickable instead of sitting underneath the message; every button and link has a visible focus outline for keyboard and screen-reader users, and the streak milestone popup takes focus, closes on Escape and hands focus back; and a browser without 3D support now still sees today's theme and a clear explanation instead of a permanent loading line. The community strip at the bottom also fills in properly rather than staying empty.",
+			"link": "/daily",
+			"tags": [
+				"fix",
+				"improvement"
+			]
+		},
+		{
+			"date": "2026-09-03",
+			"type": "update",
+			"title": "Download your model as FBX or 3MF",
+			"summary": "The download menu on a finished model offered five formats it could convert inside your browser: GLB, OBJ, STL, PLY and USDZ. FBX and 3MF have no browser converter, so they were missing from the menu even though the platform has always been able to author them. Both are there now, converted on our side and handed straight back: FBX keeps the skeleton for Unity, Unreal and Maya, and 3MF is the modern package that slicers and print services expect. A server conversion shows real progress while it runs, says what went wrong if it fails, and leaves the finished file one click away in case the download was missed. The format menu also no longer runs off the left edge of a narrow phone screen.",
+			"link": "/forge",
+			"tags": [
+				"feature",
+				"improvement"
+			]
+		},
+		{
+			"date": "2026-09-03",
+			"type": "update",
+			"title": "Endpoint Shopper takes payment on the page, so a paid run actually runs",
+			"summary": "Paying for an Endpoint Shopper run used to send you to the generic payment page, which arrived with no price and no wallet options because it could not read the challenge this route sends. Even if it had, it would have replayed the run as an empty request: your task and budget were left behind on the previous page, so a completed payment unlocked nothing. Payment now happens on /shopper itself. The card quotes the real price, lists the Base and Solana wallets the endpoint accepts, reports connecting, signing and settling as they happen, and replays the exact task and budget you typed, so the answer and its cost breakdown appear right where you were, with a link to the settlement transaction. The example task chips are now real buttons you can reach with the keyboard, the task box and budget slider carry proper labels, and the Marketplace and Fact Checker links no longer vanish from the header on a phone.",
+			"link": "/shopper",
+			"tags": [
+				"fix",
+				"improvement"
+			]
+		},
+		{
+			"date": "2026-09-03",
+			"type": "update",
+			"title": "Every 3D model now says whether a physics engine could actually use it",
+			"summary": "A 3D model can look flawless on screen and still be unusable the moment you drop it into a physics engine: an open shell sinks through the floor, an inside-out surface spins like it is hollow, and a model fitted to a unit box is a metre tall when you asked for a teapot. Nothing in a GLB file has ever said so, so everyone building robotics, game or simulation pipelines has been finding out one broken asset at a time. Now every model page carries a verdict beside its geometry stats, and the GLB viewer will grade any public model you point it at. Four answers: ready to simulate as-is, sound but needs its real size set, needs its surface closed first, or nothing there to simulate. Open the badge and you get every number behind the verdict, including the exact volume, centre of mass and inertia tensor, copyable as JSON straight into your own pipeline. It is free, needs no account, and works on any public model, not just ours. Agents can ask the same question through the free grade_sim_readiness tool, so a shopping agent can check ten candidates for nothing and only pay for the one that works. Models forged here are graded the moment they are generated, so the answer is already waiting when the page opens, and when a model is credentialed the grade is signed along with it, which makes the physics claim as hard to forge as the authorship claim.",
+			"link": "/docs/sim-readiness",
+			"tags": [
+				"feature",
+				"sdk"
+			]
+		},
+		{
+			"date": "2026-09-03",
+			"type": "update",
+			"title": "Every SDK doc now points at code you can actually run",
+			"summary": "Eight developer docs pages described a capability without ever showing you a working project that uses it, so finding the runnable version meant guessing at folder names on GitHub. The SDK, MCP, embedding, authentication, create-an-agent, Solana, agent-payments and agent-wallets pages now each end with a Runnable example section linking straight to the project that backs them: a browser demo, a Node script that drives the free MCP server end to end, nine single-file HTML embeds you can open with no build step, the full wallet sign-in round trip, and a complete agent defined entirely as files. The machine-readable index that AI agents read to navigate the site now carries the examples location too, so an agent asked to build against three.ws can fetch working code instead of inferring it from prose. Every one of those examples is installed, run and link-checked before release, so a link on a docs page never points at something broken.",
+			"link": "/docs/sdk",
+			"tags": [
+				"docs",
+				"improvement"
+			]
+		},
+		{
+			"date": "2026-09-03",
+			"type": "update",
+			"title": "Every three.ws MCP server now shows up in the directories, and six more joined the list",
+			"summary": "The one file every MCP directory listing is written from was six servers short and thirty-five versions behind, because it was being kept by hand. It is generated from the server manifests again, so a listing can no longer drift from what we actually publish, and a build check fails when it does. Six servers that existed but were invisible to the directories are now in: Herald, Home, Knock, the Metaplex agent registry, on-chain agent wallets, and the Robinhood Chain server. Paid tools also answer more cleanly to a store reviewer: the discovery data they attached to a payment prompt declared a transport the spec does not allow, so an indexer threw the whole row away. That is fixed, and a new check drives every paid tool the way a reviewer's client does and fails if any of them answers with anything but a clear, priced payment prompt.",
+			"link": "/docs/mcp",
+			"tags": [
+				"improvement",
+				"sdk"
+			]
+		},
+		{
+			"date": "2026-09-03",
+			"type": "update",
+			"title": "Fork a trade: one tap from any coin on the site into the real pump.fun trade",
+			"summary": "The pages that tell you which coins are real and which wallets keep winning used to end in a link out to pump.fun, where you had to find the coin again and start over. Now every one of them carries Fork. One tap on a Coin Radar card, a Smart Money card or its drawer, the coin deep-dive on the Live Trade Feed, or a position a leader is still holding in a ghost-copy replay opens the real trade panel for that exact coin: live quote, the same safety firewall that guards every other trade surface (a coin it judges unsafe stays unbuyable), and your own browser wallet as the signer. Nothing is delegated, no key is handed over, and no balance is held. A fork on a ghost-copy row opens at the size your paper budget used, so the practice position and the real one match. Forks also travel: the Share button next to them builds a link that opens the trade panel on arrival, carrying your referral code when you are signed in, and a size a link suggests is capped and always editable before you sign.",
+			"link": "/radar",
+			"tags": [
+				"feature"
+			]
+		},
+		{
+			"date": "2026-09-03",
+			"type": "update",
+			"title": "Live Trading Theater: the tape opens full and the connection light tells the truth",
+			"summary": "The theater got a pass over every state it can be in. The connection light in the top bar used to say Connecting for the whole visit even after the live feed had connected seconds earlier, because the page's translation pass ran last and put the placeholder wording back; it now reports the connection it actually has, and the same fix stops the sound button telling a screen reader the sound is off while it is on. The Live tape used to be a blank column until something happened on-chain: it now opens seeded with real recent activity, shows placeholder rows while that is loading, and says what it is waiting for when the feed is genuinely quiet. A slow roster response no longer dumps you straight onto the error card; the page tries again with more room and says it is still assembling. Recent-activity entries that had nowhere to link are plain text now instead of links that went nowhere, and the ones that do link to a three.ws page stay in your tab instead of opening a new one. The nameplates over each 3D trader were invisible to screen readers even though they are the only keyboard route into a trader's wallet and reputation panel; they are now reachable, and every remaining control on the page has a visible focus ring.",
+			"link": "/theater",
+			"tags": [
+				"fix",
+				"improvement"
+			]
+		},
+		{
+			"date": "2026-09-03",
+			"type": "update",
+			"title": "Older Home Assistant houses get their agent tools back",
+			"summary": "If your house runs a Home Assistant release from 2025, three.ws was telling you the Model Context Protocol Server integration was not enabled even when it was, and your agent lost the curated tool list you had set up for it. Home Assistant moved that endpoint between releases: the older ones serve it over one connection style and the newer ones over another, and we were only asking for the newer one. three.ws now asks your house which one it speaks and uses that, instead of guessing from a version number. Nothing to change on your side. We also now test every release we support on a real Home Assistant before we say we support it, so the supported range is a measurement rather than a promise: 2025.10 and newer, with everything working across all of it.",
+			"link": "/smart-home",
+			"tags": [
+				"fix"
+			]
+		},
+		{
+			"date": "2026-09-03",
+			"type": "update",
+			"title": "One unreachable home can no longer take the others down with it",
+			"summary": "Homes connect over a live socket, and a house whose broadband keeps dropping in and out was able to crash the server process that held it, which meant every other connected home on that server went quiet at the same time. The cause was in the open-source Home Assistant client we build on: it reconnects a subscription after a drop without handling the case where the connection dies again mid-reconnect. That is now handled on our side, the failure is reported instead of being lost, and the connection recovers on its own. We have written the problem up for the upstream project too. Found by deliberately flapping a real house on and off every five seconds for two minutes.",
+			"link": null,
+			"tags": [
+				"fix",
+				"infra"
+			]
+		},
+		{
+			"date": "2026-09-03",
+			"type": "update",
+			"title": "Refine now returns the same model at higher quality, not a different one",
+			"summary": "Refine bumps a finished model up a quality tier. It replayed your prompt but never pinned the randomness, so on the text path it painted a brand new reference image and reconstructed a different object: you asked for this model, better, and got another model, better. Every generation is now stamped with a seed that rides along on Refine, Retry and an automatic engine switch, so the tier is the only thing that changes. Starting a fresh generation still explores, so Make another on the same prompt keeps giving you something new. Two related fixes came with it: requests that differed only by their seed were being collapsed into a single job and handed back the identical file, and the force-a-fresh-run flag skipped the result cache but not that collapsing.",
+			"link": "/forge",
+			"tags": [
+				"fix",
+				"improvement"
+			]
+		},
+		{
+			"date": "2026-09-03",
+			"type": "update",
+			"title": "Restyle Studio: upload works from the keyboard, and reverting a version really rewinds the source",
+			"summary": "Two things on the Restyle Studio page were quietly broken. \"Upload GLB\" was a styled label wrapped around a hidden file input, so it could not be reached by keyboard or by a screen reader at all: the only way to bring your own model in was a mouse click. It is now a real button, in the tab order, with the same look. Separately, clicking an older entry in the Versions strip reloaded that model on the stage but left every following action pointed at the newest checkpoint, so an AI restyle or a Save right after a revert quietly re-skinned the wrong model and filed the result under the version you had gone back to. Reverting now re-anchors the source, so restyle, Save version, and \"Save all as versions\" all branch from the version you are actually looking at. The rest of the sweep is smaller but adds up: the metalness, roughness and emissive sliders and the model-URL and instruction fields now have real labels; every async result note is announced instead of silently changing; a successful save reads as success rather than as another grey hint; clicking \"Load URL\" with an empty box tells you what it wants instead of doing nothing; dropping a file on the stage highlights the target and says so when the file is not a model; picking the same file twice in a row works; and \"Load the sample model\" clears the failing ?url= so a reload does not land straight back in the error state.",
+			"link": "/restyle",
+			"tags": [
+				"fix",
+				"improvement"
+			]
+		},
+		{
+			"date": "2026-09-03",
+			"type": "update",
+			"title": "Scene Studio stops hiding its own menu bar, and tells a new scene what to do next",
+			"summary": "The 3D scene editor was pinning itself 13 pixels too high, so the site header covered the top of the File, Edit, Add, View, Render and Help row and sliced the tops off the letters at every window size; the autosave checkbox was hidden entirely. It now sits below the header. The Import, Export and Share buttons were parked on top of the Scene, Project and Settings tabs, which made those tabs unreadable and unclickable on any desktop window; they now dock beside the sidebar and follow it when you drag it wider or narrower. At phone width the menu bar used to spill Help onto a second row that the layout could not show, and it now keeps all six on one line. A brand-new scene is no longer a silent black grid: a card explains the three ways to start and disappears the moment you add anything. Importing a model by URL now happens in a proper dialog that checks the link and explains what is wrong inline, instead of a bare browser prompt, and a failed import, export or share now says what went wrong and what to try next in the same notification style as the rest of the site rather than a browser alert box. Sharing a scene labels it with the scene's own name instead of the page's title. The translate, rotate and scale buttons are icon-only and had no names at all for screen readers; they now announce both their name and which one is active. The page also gained the heading every other page on the site has.",
+			"link": "/scene",
+			"tags": [
+				"fix",
+				"improvement"
+			]
+		},
+		{
+			"date": "2026-09-03",
+			"type": "update",
+			"title": "Search keeps its filters honest, and says so when it cannot answer",
+			"summary": "Sharing a filtered search link now works the way it looks: open /search?type=agent and the Agents filter is the one highlighted, instead of the row claiming All while the results were already narrowed. After a search runs, the types that turned up nothing for that query fade back, so you can see at a glance where the matches actually are. When the search index itself is unreachable the page now says it is warming up and offers a retry plus the browse galleries, rather than telling you nothing matched, which was never true. A failed search says what went wrong and gives you the same retry and browse links. Pressing Enter runs the query immediately without waiting for the pause-and-search delay, and Escape clears it. Result cards lost their duplicate untitled thumbnail link, creators without a public profile read as plain names instead of links that went nowhere, the search box and the remix instruction field are properly labelled for screen readers, and every focusable control on the page now shows a visible focus ring.",
+			"link": "/search",
+			"tags": [
+				"fix",
+				"improvement"
+			]
+		},
+		{
+			"date": "2026-09-03",
+			"type": "update",
+			"title": "See what your connected homes use, before a limit ever stops you",
+			"summary": "Your smart home plan now has a page. It shows every allowance whether or not you are near it: how many homes you have connected, how many people are in each household, how many live screens, how many voice minutes and agent turns you have used this month, and the exact date each one resets. Two things a plan can never do are written on the page itself, because they matter more than any number on it. Locking a door, closing a garage or a water valve and arming an alarm are never refused by a limit, on any plan, in any state, including on a home your plan has paused. And confirmation prompts, your action log and every safety property of household roles are on every plan, free included: safety is not an upgrade. If a plan change ever leaves you with more homes than it covers, nothing is disconnected and nothing is deleted. The extra homes are paused, with their access tokens and their whole history untouched, and you pick which ones are live from the same page.",
+			"link": "/smart-home/plan",
+			"tags": [
+				"feature",
+				"improvement"
+			]
+		},
+		{
+			"date": "2026-09-03",
+			"type": "update",
+			"title": "See, export and delete everything a connected home stores",
+			"summary": "Connecting a house to three.ws hands over a key to a physical building, so the answer to \"what do you keep, and for how long\" is now a page you can read and an endpoint you can call. Every piece of data a connected home creates is listed with why it exists and what removes it, including the parts we deliberately never store: the names of your rooms and devices, their states, and any audio from voice control. There is no record of which lights were on, or when. The log of what the agent did in your home is yours: it keeps 90 days by default, you can shorten it to a single day and the old entries go immediately, and an operator who has to keep records for longer can, with a written reason. One endpoint shows you what is stored, downloads all of it as JSON, and deletes one home or every trace of all of them.",
+			"link": "/docs/home-privacy",
+			"tags": [
+				"feature",
+				"security",
+				"docs"
+			]
+		},
+		{
+			"date": "2026-09-03",
+			"type": "update",
+			"title": "Sign Mirror tells you what went wrong, and remembers how close you got",
+			"summary": "The ASL practice mirror got a pass over every state it can be in. When the camera cannot start it now says which thing failed and what to do about it: permission refused, no camera on the device, the camera busy in another app, or the hand tracker itself failing to download. It used to print the raw internal error, which nobody could act on. While the tracker downloads you see that it is downloading, instead of a panel that still says the camera is off. Turning the camera off puts the panel back to telling you what to do next rather than leaving an empty box. Every letter square now carries the best score you have reached on it, so twenty six identical squares become a map of where your practice actually is, and that score is kept between sessions. Screen readers now hear the finger being named, and the live skeleton and the per finger bars are redrawn in place instead of being rebuilt on every camera frame, which takes real work off the machine doing the grading.",
+			"link": "/sign-mirror",
+			"tags": [
+				"fix",
+				"improvement"
+			]
+		},
+		{
+			"date": "2026-09-03",
+			"type": "update",
+			"title": "Soft shadows are soft again in Pose Studio, Mirror and Diorama",
+			"summary": "These three 3D surfaces were asking for a soft-shadow mode that the renderer stopped supporting and silently swapped for hard-edged shadows, complaining in the console every time a scene started. They now use the supported soft-shadow type, so contact shadows under a figure read as shadows rather than hard cutouts.",
+			"link": "/pose",
+			"tags": [
+				"fix",
+				"improvement"
+			]
+		},
+		{
+			"date": "2026-09-03",
+			"type": "update",
+			"title": "Talk to your house without finding a phone, and a background \"yeah\" can never open your front door",
+			"summary": "Hands-free is here for connected homes. Turn it on at /voice/home, say the wake word, and ask for what you want: \"turn the kitchen light off\" works while you are carrying groceries. The wake word is matched by a model that runs inside your own browser tab, so that audio never leaves your device; only the sentence you say afterwards is sent, and only to be turned into text. While the microphone is live there is an indicator on the page that cannot be switched off, and Mute genuinely stops the microphone at the device rather than hiding a dot. Talk over the agent and it stops mid-sentence and listens, in about a tenth of a second, and it will not wake itself up when it happens to say its own wake word out loud. The part we spent the most care on is the door. Anything that opens your house is spoken back in full first, the exact device appears on screen while you decide, and only the word \"confirm\" goes through. A \"yeah\" or a \"sure\" overheard from a conversation on the other side of the room does not, and on a device with no screen the agent refuses to take an unlock by voice at all and offers your phone instead. Four wake phrases to choose from, twelve designed states including an honest one for deployments where speech recognition is not available, and every stage of the round trip timed live on screen so you can see where the seconds go.",
+			"link": "/voice/home",
+			"tags": [
+				"feature",
+				"security"
+			]
+		},
+		{
+			"date": "2026-09-03",
+			"type": "update",
+			"title": "The free 3D generation lane is back up, and it can no longer fail quietly",
+			"summary": "The worker behind the default free text-to-3D and image-to-3D lane stopped being able to load its model on the evening of 2 September, and then kept accepting work it could not do. It had cached that one failure and replayed it to every job that followed, while its status page still reported itself healthy, so nothing raised a flag: roughly a third of generations on that lane failed over about twelve hours. The lane is running again, and four things now stop a repeat. The load is retried instead of one bad moment being treated as final. A worker that genuinely cannot run turns work away, so your generation is handed to another backend rather than dying several minutes later. It reports itself as unhealthy, so it gets replaced automatically and shows up as down on the status page instead of green. And the part of the model that had to be fetched from an outside site every time the worker started, which is what failed, now ships inside the worker, so that fetch cannot fail again.",
+			"link": "/forge",
+			"tags": [
+				"fix",
+				"infra"
+			]
+		},
+		{
+			"date": "2026-09-03",
+			"type": "update",
+			"title": "The parametric avatar goes from 122 sliders to 306, and a brush for everything they still cannot reach",
+			"summary": "Avatar Studio's Parametric base now carries 306 shape sliders instead of 122, curated from source data that was already vendored: eyelid heights and eye folds, nose bridge and septum, philtrum and cupid's bow, ear rotation and shape, temples, jaw bones, lats, navel, knee alignment, upper and lower leg length, and per-ethnicity phenotype anchors. Face regions keep separate left and right controls because facial asymmetry is part of a face; limbs get one symmetric slider. With that many controls the panel grew a filter box, collapsed body groups, and an \"N edited\" pill so you can see which closed group you have already touched. Above all of it sits Free Sculpt: turn the brush on and drag on the avatar to push or pull the surface anywhere, with a real-size on-screen ring, adjustable strength, and symmetry you can switch off. Playback pauses while you paint so the mesh holds still, dragging the background still orbits the camera, and Clear sculpt puts the body back exactly. Two things that used to be editor-only now reach everyone: a body edited in the avatar editor's Proportions panel and any free-sculpt stroke are both rendered into the GLB the server serves, so what you shaped is what viewers, embeds and AR downloads actually see.",
+			"link": "/create/studio",
+			"tags": [
+				"feature",
+				"improvement"
+			]
+		},
+		{
+			"date": "2026-09-03",
+			"type": "update",
+			"title": "The payments feed now tells you which volume is ours and which is real demand",
+			"summary": "three.ws runs a closed loop where platform wallets pay platform endpoints on a schedule, to keep the payment rails warm and provably live. That traffic is real money on a real chain, and it is the overwhelming majority of settled volume, so anyone reading the raw total was reading our own money back to us. The x402 volume report on the paid analytics endpoint now carries a revenue split alongside the totals: how many calls and how much USDC came from outside wallets, how much is the internal loop, and how much is test traffic that was never money at all. A new command, npm run readout:revenue, prints the same breakdown for any window and refuses to print an external figure when it cannot tell our wallets apart from anyone else's, rather than quietly reporting a flattering one. One classifier backs both, so the API and the command can never disagree.",
+			"link": "/docs/autonomous-x402",
+			"tags": [
+				"improvement",
+				"infra"
+			]
+		},
+		{
+			"date": "2026-09-03",
+			"type": "update",
+			"title": "The rest of the smart home now speaks your language, and the wall display stays awake",
+			"summary": "The connect page learned all 87 languages last week; the invitation, plan and voice satellite pages had the same gap and now speak them too, along with the live 3D house. Setting a page to Arabic or Hebrew also actually mirrors it now: the reveal button, the coloured bars beside notices, and the room and device columns in the live house used to stay stuck on the left. If you have asked your device to reduce motion, the house stops animating between states while staying completely live, so lights and locks still update the instant they change, they just arrive rather than glide. The live house also keeps the screen awake now, which is what you want on a kitchen tablet on a shelf, and gives that up the moment you switch away, which is what you want on a phone in your pocket. On a phone with a notch the house fills the screen without hiding its own controls behind the cutout.",
+			"link": "/smart-home",
+			"tags": [
+				"improvement",
+				"fix"
+			]
+		},
+		{
+			"date": "2026-09-03",
+			"type": "update",
+			"title": "The Showcase directory is back after a stray change emptied it",
+			"summary": "Showcase lists every ERC-8004 agent that carries a 3D body, discovered across 22 chains and indexed from the canonical registries, and any card opens that agent in the live viewer. An unrelated change had emptied the file behind it, so for a while the page loaded and then showed nothing at all. It is restored and browsing again. While it was open we also gave the page a single real heading instead of two competing ones, which matters to anyone reading the site with a screen reader, and rewrote its description, which had been advertising a drag-and-drop model viewer rather than the agent directory it actually is.",
+			"link": "/showcase",
+			"tags": [
+				"fix"
+			]
+		},
+		{
+			"date": "2026-09-03",
+			"type": "update",
+			"title": "The signal marketplace tells you how to get on it, and reads correctly to a screen reader",
+			"summary": "No verified trader has published a paid feed yet, so the marketplace's empty state is what everyone actually sees, and it only pointed at the leaderboard. It now also points at the place you publish from: the Signals tab of your agent wallet. The rank and network filters used to announce themselves as tabs, which promises a screen-reader user a panel to arrow between that this page does not have; they are now announced as the pressed toggles they really are, wired to the board they re-rank. The Retry button on a failed load and both empty-state buttons had no hover or keyboard-focus styling at all, so a keyboard user could not see where they were; all three now light up on hover and show a focus ring. Landing on the page with a stale or misspelled sort in the address bar rewrites it to the board you are actually looking at, so a shared link always opens the view it names. And a feed link that no longer resolves now gets a real page heading instead of a floating error message.",
+			"link": "/signals",
+			"tags": [
+				"improvement",
+				"fix"
+			]
+		},
+		{
+			"date": "2026-09-03",
+			"type": "update",
+			"title": "The sniper scoreboard reads correctly in the light theme, and tells you what it is doing while it loads",
+			"summary": "The strategy board was building a second copy of its own stylesheet in JavaScript and appending it to the page, so those rules won every tie and quietly reverted the real one. In the light theme that meant profit figures and the LLM badges rendered in a near-white green and lavender on white paper, close to invisible; they now use the same colours as every other crypto page and read properly in both themes. Loading is no longer a blank space under the headline: the board paints a skeleton in the exact shape of the table while it reads each agent's live wallet balance off the chain. If the feed cannot be reached you now get a plain sentence about what went wrong plus a button to try again, instead of a raw browser error and a silent 30-second wait, and a refresh that fails on top of a board that already has numbers keeps the numbers, says they are the last good read, and offers the same retry. Switching the time window while a slower request is still in flight can no longer paint the wrong window's figures. The judgment ledger says so when there are no LLM verdicts in the window rather than disappearing. And the table stopped showing a hand cursor over rows and headers that were never clickable or sortable.",
+			"link": "/sniper/experiments",
+			"tags": [
+				"fix",
+				"improvement"
+			]
+		},
+		{
+			"date": "2026-09-03",
+			"type": "update",
+			"title": "The splat viewer lets go of the graphics card between scenes",
+			"summary": "Every scene the viewer opened built a fresh WebGL renderer, and tearing the old one down freed its memory but never released the graphics context itself. The library we use for splat rendering ends its own cleanup by removing an element from the page that was never there, which throws and skips the last of its teardown, so the contexts stacked up across a session of opening one capture after another. The viewer now releases each context by hand on every swap and when you leave the page. Recentering the camera no longer rebuilds the whole scene either: it moves the camera on the running viewer, so the stage snaps back instantly instead of flashing through the loading screen. If the browser does take the graphics context back, after a GPU reset or under memory pressure, the stage now says so and offers a way to reload rather than sitting on a frozen frame. Two smaller things while we were in there: a scene you opened by URL can be downloaded from the viewer, the same as an upload or a sample, and the drop zone now has a real button for keyboard users with a labelled URL field for screen readers.",
+			"link": "/splat",
+			"tags": [
+				"fix",
+				"improvement"
+			]
+		},
+		{
+			"date": "2026-09-03",
+			"type": "update",
+			"title": "The status page can tell one dark house from an outage",
+			"summary": "Connected homes now report on the public status page at /status, and the hard part was making that number honest. If your Home Assistant is switched off, your token expired or your internet dropped, that is your house: it shows up in your own home view, not as a three.ws outage and not as an alert to anyone. It takes at least ten homes failing at once before the platform will call it a problem on our side, because with three homes connected one holiday cottage losing power would look like a third of everything being broken. One thing is treated as an emergency at a count of one: an action that can open a building (a lock, a garage door, an alarm) recorded as having run without someone saying yes. That has no acceptable rate.",
+			"link": "/status",
+			"tags": [
+				"infra",
+				"improvement"
+			]
+		},
+		{
+			"date": "2026-09-03",
+			"type": "update",
+			"title": "The tour atlas counts its stops correctly again",
+			"summary": "The atlas at /tour/atlas is the map of the guided tour: one card per stop, numbered in the order you would walk them. Two hundred and three of those cards were still carrying numbers from an older version of the tour, so the grid showed duplicate stop numbers, skipped others, and put cards out of order, under a heading that claimed one more stop than the grid actually held. Every card is now numbered by its real position in the tour and the count above the grid matches what is under it. Nothing about the stops themselves changed: same pages, same screenshots, same highlights.",
+			"link": "/tour/atlas",
+			"tags": [
+				"fix"
+			]
+		}
+	]
+}

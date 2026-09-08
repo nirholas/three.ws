@@ -11,6 +11,8 @@
  *   CHANGELOG.md                — page launches (`added` dates) merged with
  *                                 curated entries from data/changelog.json
  *   public/changelog.json       — machine-readable changelog feed at /changelog.json
+ *   public/changelog-recent.json — the newest RECENT_FEED_ENTRIES of that feed,
+ *                                 which is what /changelog paints first
  *   public/changelog.xml        — RSS feed of the same entries at /changelog.xml
  *
  * Note: the crawler sitemap.xml is NO LONGER static. It's served dynamically
@@ -624,6 +626,39 @@ function buildChangelogJson() {
 	) + '\n';
 }
 
+// How many of the newest entries the first-paint feed carries. The full feed is
+// every launch since the site existed and grows forever: on 2026-09-08 it was
+// 3,552 entries, 2.9 MB on disk and 870 KB over the wire, and /changelog
+// downloaded and rendered all of it before it showed anyone the one thing they
+// came for. On a Pixel 5 over slow 4G that measured 14,172 ms of blocking time
+// in a single 11,187 ms task and 21,125 DOM nodes. This window covers roughly
+// the last two months of shipping, which is what the page shows above the fold
+// and what a link from Telegram or RSS points at; readers who want more get the
+// full feed on demand.
+const RECENT_FEED_ENTRIES = 150;
+
+// The same envelope as the full feed, truncated, plus the two fields a reader
+// needs to know it is looking at a window: `total` (how many exist) and
+// `complete` (whether this file is all of them). A consumer that wants
+// everything still asks for /changelog.json, which is unchanged and stays the
+// documented public feed.
+function buildChangelogRecentJson() {
+	const feed = changelogFeed();
+	return JSON.stringify(
+		{
+			generated_at: new Date().toISOString(),
+			generated_by: 'scripts/build-page-index.mjs from data/pages.json + data/changelog.json',
+			site: { name: site.name, url: site.url },
+			total: feed.length,
+			complete: feed.length <= RECENT_FEED_ENTRIES,
+			full_feed: '/changelog.json',
+			entries: feed.slice(0, RECENT_FEED_ENTRIES),
+		},
+		null,
+		'\t',
+	) + '\n';
+}
+
 function buildChangelogRss() {
 	const feed = changelogFeed();
 	const items = feed
@@ -715,6 +750,7 @@ const outputs = [
 	{ file: resolve(publicDir, 'features.json'), content: buildFeaturesJson() },
 	{ file: resolve(root, 'CHANGELOG.md'), content: buildChangelog() },
 	{ file: resolve(publicDir, 'changelog.json'), content: buildChangelogJson() },
+	{ file: resolve(publicDir, 'changelog-recent.json'), content: buildChangelogRecentJson() },
 	{ file: resolve(publicDir, 'changelog.xml'), content: buildChangelogRss() },
 ];
 

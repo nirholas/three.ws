@@ -1,11 +1,22 @@
 {
-	"generated_at": "2026-09-08T17:08:53.652Z",
+	"generated_at": "2026-09-08T17:19:33.654Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
 		"url": "https://three.ws"
 	},
 	"entries": [
+		{
+			"date": "2026-09-08",
+			"type": "update",
+			"title": "A GPU waking up now says so, instead of looking like a stuck progress bar",
+			"summary": "Some of our 3D engines release their graphics card when nobody is using them, so the first request of a quiet spell has to boot one back up before any sculpting starts. That wait is normal and it ends, but several surfaces showed nothing but a spinning step while it happened, which reads as a hang. Now every place you can watch a model being built names it: the homepage forge, the Studio, the in-world item forge on /play, and the tools other apps drive us through all say a GPU is waking, how much of the boot is left, and that your job is already accepted and starts the second the worker answers. Every number comes from the generator itself, so nothing is a guessed timer. Two related fixes came out of it: the elapsed counter on /forge now reports how long your job has really been running rather than how long the tab has been open, so reopening the page mid-build no longer restarts the clock at zero; and the countdown now uses each engine's real boot budget instead of an estimate. The keep-warm schedule that holds those engines open during busy hours was also missing our highest-quality lane, which has the longest boot of the fleet.",
+			"link": "/forge",
+			"tags": [
+				"improvement",
+				"fix"
+			]
+		},
 		{
 			"date": "2026-09-08",
 			"type": "update",

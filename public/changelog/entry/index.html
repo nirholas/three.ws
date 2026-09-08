@@ -147,14 +147,34 @@
 		if (!slug || slug === 'entry') {
 			window.location.replace('/changelog');
 		} else {
-			try {
-				const res = await fetch('/changelog.json', { headers: { accept: 'application/json' } });
+			// A detail page needs exactly one entry, and almost every link that
+			// reaches one (Telegram, RSS, the changelog's own first screen) points
+			// at something recent. Read the small feed first and only fall back to
+			// the full 870 KB history when the slug is older than that window, so
+			// the common case downloads ~138 KB instead of all of it.
+			async function feedEntries(url) {
+				const res = await fetch(url, { headers: { accept: 'application/json' } });
 				if (!res.ok) throw new Error('feed ' + res.status);
 				const data = await res.json();
-				const entries = data.entries || [];
-				const entry = entries.find((e) => slugify(e.title, e.date) === slug);
-				if (entry) {
-					render(entry);
+				return { entries: data.entries || [], complete: data.complete === true || !('complete' in data) };
+			}
+			try {
+				let found = null;
+				let complete = false;
+				try {
+					const recent = await feedEntries('/changelog-recent.json');
+					found = recent.entries.find((e) => slugify(e.title, e.date) === slug) || null;
+					complete = recent.complete;
+				} catch {
+					found = null;
+					complete = false;
+				}
+				if (!found && !complete) {
+					const full = await feedEntries('/changelog.json');
+					found = full.entries.find((e) => slugify(e.title, e.date) === slug) || null;
+				}
+				if (found) {
+					render(found);
 				} else {
 					renderNotFound(slug);
 				}

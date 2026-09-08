@@ -25,7 +25,13 @@
 	.cl-filter:hover { border-color: var(--stroke-strong); color: var(--ink-bright); }
 	.cl-filter:focus-visible { outline: 2px solid var(--focus-ring-color); outline-offset: 2px; }
 	.cl-filter[aria-pressed="true"] { border-color: var(--success); color: var(--success); background: color-mix(in srgb, var(--success) 8%, transparent); }
-	.cl-day { margin: 44px 0 0; padding-top: 28px; border-top: 1px solid var(--stroke); }
+	/* The feed is thousands of entries and grows forever, so a day section that
+	   nobody has scrolled to is not styled, laid out or painted. Paint
+	   containment is already true for these (nothing overflows a .cl-day), and
+	   the size hint leads with `auto` so a section that renders taller than the
+	   guess replaces the guess instead of leaving a gap under the reader's
+	   scrollbar. See docs/site-performance.md rule 1. */
+	.cl-day { margin: 44px 0 0; padding-top: 28px; border-top: 1px solid var(--stroke); content-visibility: auto; contain-intrinsic-size: auto 320px; }
 	.cl-day:first-of-type { border-top: none; padding-top: 0; }
 	.cl-date { font-size: 13px; color: var(--ink-faint); font-family: var(--font-mono); letter-spacing: 0.04em; margin: 0 0 16px; }
 	.cl-item { display: block; background: var(--surface-1); border: 1px solid var(--stroke); border-radius: var(--radius-lg); padding: 16px 18px; margin-bottom: 10px; text-decoration: none; transition: border-color var(--duration-fast) var(--ease-standard), transform var(--duration-fast) var(--ease-standard); }
@@ -45,6 +51,11 @@
 	.cl-tag-security { color: var(--danger); border-color: color-mix(in srgb, var(--danger) 35%, transparent); background: color-mix(in srgb, var(--danger) 8%, transparent); }
 	.cl-tag-sdk { color: var(--success); border-color: color-mix(in srgb, var(--success) 35%, transparent); background: color-mix(in srgb, var(--success) 8%, transparent); }
 	.cl-tags { margin-top: 10px; }
+	.cl-more { display: block; width: 100%; margin: 36px 0 0; padding: 14px 18px; min-height: 44px; background: var(--surface-1); border: 1px solid var(--stroke); border-radius: var(--radius-lg); color: var(--ink-bright); font-family: inherit; font-size: 14px; font-weight: var(--weight-semibold); cursor: pointer; transition: border-color var(--duration-fast) var(--ease-standard), color var(--duration-fast) var(--ease-standard); }
+	.cl-more:hover { border-color: var(--accent); }
+	.cl-more:focus-visible { outline: 2px solid var(--focus-ring-color); outline-offset: 2px; }
+	.cl-more[aria-busy="true"] { color: var(--ink-dim); cursor: progress; }
+	.cl-more-note { color: var(--ink-faint); font-size: 12px; font-family: var(--font-mono); text-align: center; margin: 14px 0 0; }
 </style>
 
 	<meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1">
@@ -80,12 +91,36 @@
 	</main>
 
 	<script type="module">
+		// Two feeds, one page.
+		//
+		// /changelog.json is every launch since the site existed: on 2026-09-08,
+		// 3,552 entries, 870 KB over the wire. This page used to download all of
+		// it and write all of it into the DOM in one innerHTML assignment, which
+		// on a Pixel 5 over slow 4G measured 14,172 ms of blocking time in a
+		// single 11,187 ms task, for 21,125 DOM nodes nobody scrolled to.
+		//
+		// /changelog-recent.json is the newest 150 of the same entries in the
+		// same envelope, ~138 KB on disk, and it is what first paint reads. The
+		// full feed is fetched exactly once, and only when the reader asks for
+		// something outside that window: a filter, or "Show older updates".
+		// Rendering is paged on top of that, so no single pass ever writes more
+		// than PAGE_SIZE entries.
 		const RECENT_DAYS = 14;
+		const PAGE_SIZE = 60;
 		const elt = document.getElementById('cl-content');
 		const filtersElt = document.getElementById('cl-filters');
 		const FILTERS = ['all', 'launch', 'feature', 'improvement', 'fix', 'sdk', 'security', 'infra', 'docs'];
 		let activeFilter = 'all';
 		let entries = [];
+		// How many entries exist in total, from the recent feed's own `total`.
+		// Used for the "showing N of M" line so the count is never a guess.
+		let totalEntries = 0;
+		// Whether `entries` is the whole feed yet, and the in-flight promise that
+		// makes it so, so two clicks never start two downloads.
+		let haveFullFeed = false;
+		let fullFeedPromise = null;
+		// How many of the current filter's entries are on screen.
+		let shown = 0;
 
 		function fmtDate(iso) {
 			try {
@@ -106,35 +141,131 @@
 			return e.type === 'launch' ? ['launch'] : e.tags || [];
 		}
 
-		function render() {
-			const visible = activeFilter === 'all' ? entries : entries.filter((e) => entryTags(e).includes(activeFilter));
-			if (visible.length === 0) {
-				elt.innerHTML = '<p class="cl-empty">Nothing here for this filter yet — try another one.</p>';
-				return;
-			}
-			const byDate = new Map();
-			for (const e of visible) {
-				if (!byDate.has(e.date)) byDate.set(e.date, []);
-				byDate.get(e.date).push(e);
-			}
-			const now = Date.now();
-			elt.innerHTML = [...byDate.entries()].map(([date, items]) => {
-				const isNew = (now - new Date(date + 'T00:00:00Z').getTime()) < RECENT_DAYS * 86400000;
-				const cards = items.map((e) => {
-					const tags = entryTags(e).map((t) => `<span class="cl-tag cl-tag-${esc(t)}">${esc(t)}</span>`).join('');
-					const detailUrl = `/changelog/${slugify(e.title, e.date)}`;
-					const inner = `
+		function filtered() {
+			return activeFilter === 'all' ? entries : entries.filter((e) => entryTags(e).includes(activeFilter));
+		}
+
+		// One day's worth of entries as markup. Kept separate from render() so a
+		// later page can be built with exactly the same code as the first one.
+		function dayHtml(date, items, now) {
+			const isNew = (now - new Date(date + 'T00:00:00Z').getTime()) < RECENT_DAYS * 86400000;
+			const cards = items.map((e) => {
+				const tags = entryTags(e).map((t) => `<span class="cl-tag cl-tag-${esc(t)}">${esc(t)}</span>`).join('');
+				const detailUrl = `/changelog/${slugify(e.title, e.date)}`;
+				const inner = `
 						<span class="cl-item-title">${esc(e.title)}</span>
 						${e.type === 'launch' ? `<span class="cl-item-path">${esc(e.link)}</span>` : ''}
 						<div class="cl-item-desc">${esc(e.summary)}</div>
 						<div class="cl-tags">${tags}</div>`;
-					return `<a class="cl-item" href="${esc(detailUrl)}">${inner}</a>`;
-				}).join('');
-				return `<section class="cl-day">
+				return `<a class="cl-item" href="${esc(detailUrl)}">${inner}</a>`;
+			}).join('');
+			return `<section class="cl-day">
 					<p class="cl-date">${fmtDate(date)}${isNew ? '<span class="cl-badge cl-badge-new">new</span>' : ''}</p>
 					${cards}
 				</section>`;
-			}).join('');
+		}
+
+		function slice(list) {
+			const byDate = new Map();
+			for (const e of list) {
+				if (!byDate.has(e.date)) byDate.set(e.date, []);
+				byDate.get(e.date).push(e);
+			}
+			const now = Date.now();
+			return [...byDate.entries()].map(([date, items]) => dayHtml(date, items, now)).join('');
+		}
+
+		// Rebuild the footer control after every append. Three states, and which
+		// one shows depends on whether more entries exist locally, remotely, or
+		// not at all.
+		function renderMore() {
+			document.getElementById('cl-more-wrap')?.remove();
+			const total = filtered().length;
+			const moreLocally = shown < total;
+			const moreRemotely = !haveFullFeed && (activeFilter === 'all' ? totalEntries > entries.length : true);
+			const wrap = document.createElement('div');
+			wrap.id = 'cl-more-wrap';
+			if (!moreLocally && !moreRemotely) {
+				if (shown > PAGE_SIZE) {
+					wrap.innerHTML = `<p class="cl-more-note">${shown} of ${shown} shown.</p>`;
+					elt.appendChild(wrap);
+				}
+				return;
+			}
+			const btn = document.createElement('button');
+			btn.type = 'button';
+			btn.className = 'cl-more';
+			btn.textContent = 'Show older updates';
+			btn.addEventListener('click', async () => {
+				if (!moreLocally && moreRemotely) {
+					btn.setAttribute('aria-busy', 'true');
+					btn.textContent = 'Loading the full history…';
+					await loadFullFeed();
+					btn.removeAttribute('aria-busy');
+				}
+				appendPage();
+			});
+			wrap.appendChild(btn);
+			const known = haveFullFeed || activeFilter !== 'all' ? total : Math.max(total, totalEntries);
+			wrap.insertAdjacentHTML('beforeend', `<p class="cl-more-note">${shown} of ${known} shown.</p>`);
+			elt.appendChild(wrap);
+		}
+
+		// Append the next PAGE_SIZE entries of the active filter. Never rewrites
+		// what is already on screen, so scroll position is preserved and the
+		// browser only lays out the new sections.
+		function appendPage() {
+			const visible = filtered();
+			const next = visible.slice(shown, shown + PAGE_SIZE);
+			if (next.length) {
+				document.getElementById('cl-more-wrap')?.remove();
+				elt.insertAdjacentHTML('beforeend', slice(next));
+				shown += next.length;
+			}
+			renderMore();
+		}
+
+		// Full reset: used on first paint and whenever the filter changes.
+		function render() {
+			shown = 0;
+			const visible = filtered();
+			if (visible.length === 0 && haveFullFeed) {
+				elt.innerHTML = '<p class="cl-empty">Nothing here for this filter yet — try another one.</p>';
+				return;
+			}
+			elt.innerHTML = '';
+			appendPage();
+			if (!shown && !haveFullFeed) {
+				elt.innerHTML = '<p class="cl-empty">Loading older updates…</p>';
+				loadFullFeed().then(render);
+			}
+		}
+
+		// Fetch the complete feed at most once per page view, whatever asks for it.
+		function loadFullFeed() {
+			if (haveFullFeed) return Promise.resolve();
+			if (fullFeedPromise) return fullFeedPromise;
+			fullFeedPromise = fetch('/changelog.json', { headers: { accept: 'application/json' } })
+				.then((res) => {
+					if (!res.ok) throw new Error('feed ' + res.status);
+					return res.json();
+				})
+				.then((data) => {
+					if (Array.isArray(data.entries) && data.entries.length >= entries.length) {
+						entries = data.entries;
+						totalEntries = entries.length;
+					}
+					haveFullFeed = true;
+				})
+				.catch((err) => {
+					// The recent window is still on screen and still correct, so a
+					// failed upgrade degrades to "you can see the last 150" rather
+					// than to an error page. Clearing the promise lets a second
+					// click retry.
+					console.error('[changelog] full feed', err);
+					fullFeedPromise = null;
+				});
+			return fullFeedPromise;
 		}
 
 		function renderFilters() {
@@ -150,11 +281,24 @@
 			});
 		}
 
+		// First paint reads the small feed. If it is missing (an older deploy, a
+		// cached shell) the full feed still works, so the page never depends on
+		// the new file existing.
 		try {
-			const res = await fetch('/changelog.json', { headers: { accept: 'application/json' } });
-			if (!res.ok) throw new Error('feed ' + res.status);
-			const data = await res.json();
+			let data = null;
+			try {
+				const res = await fetch('/changelog-recent.json', { headers: { accept: 'application/json' } });
+				if (res.ok) data = await res.json();
+			} catch { data = null; }
+			if (!data) {
+				const res = await fetch('/changelog.json', { headers: { accept: 'application/json' } });
+				if (!res.ok) throw new Error('feed ' + res.status);
+				data = await res.json();
+				haveFullFeed = true;
+			}
 			entries = data.entries || [];
+			totalEntries = Number.isFinite(data.total) ? data.total : entries.length;
+			if (data.complete === true) haveFullFeed = true;
 			renderFilters();
 			render();
 		} catch (err) {
