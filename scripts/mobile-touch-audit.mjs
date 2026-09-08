@@ -9,9 +9,14 @@
  * It reports four classes of defect:
  *
  *  1. Touch targets below 44x44 CSS px. Per WCAG 2.5.5 / the Apple and Material
- *     guidance, control targets need ~44 px. Inline links that sit inside a run
- *     of text are exempt (WCAG 2.5.8 "inline" exception) and are counted
- *     separately as `inlineExempt` rather than reported as defects.
+ *     guidance, control targets need ~44 px. Two things are exempt rather than
+ *     reported, and both are counted separately: anything inline inside a run of
+ *     text (`inlineExempt`, the WCAG 2.5.8 "inline" exception, judged against the
+ *     nearest BLOCK ancestor so a link wrapped in <strong> or a tooltip trigger
+ *     in a <span> still qualifies), and a form control whose own <label> already
+ *     meets the floor (`labelExempt`, because tapping the label activates the
+ *     control, so the label is the target). An element that is clipped to a
+ *     pixel until it takes focus, which is every skip link, is measured focused.
  *  2. Canvases and viewer containers whose computed `touch-action` is `auto`.
  *     A WebGL viewer that calls preventDefault on pointer moves while
  *     touch-action stays `auto` makes orbit gestures fight page scroll; the fix
@@ -149,26 +154,81 @@ function auditDom(minTarget) {
 
 	const smallTargets = [];
 	let inlineExempt = 0;
+	let labelExempt = 0;
 	let checked = 0;
+
+	// WCAG 2.5.8's inline exception is "the target is in a sentence or block of
+	// text", which is about the CONTEXT, not the tag. Two things the old
+	// parent-only, anchors-only test got wrong, both of them real findings on
+	// this site: a link wrapped in emphasis (`<li>Read <strong><a>the
+	// guide</a></strong> first`) has a parent with no text of its own, and a
+	// tooltip trigger in a paragraph is a `<span tabindex>` rather than an `<a>`.
+	// Walk up through inline ancestors to the block that actually holds the
+	// sentence, and ask whether that block has text outside this element.
+	function sitsInASentence(el, cs) {
+		if (!cs.display.startsWith('inline')) return false;
+		let block = el.parentElement;
+		while (block && getComputedStyle(block).display.startsWith('inline')) block = block.parentElement;
+		if (!block) return false;
+		const own = (el.textContent || '').trim();
+		const surrounding = (block.textContent || '').trim();
+		return surrounding.length > own.length + 1;
+	}
+
+	// A form control's target is the control plus its label: tapping the label
+	// activates it, so a 18x18 checkbox inside a 44px-tall label row is a 44px
+	// target. public/mobile.css relies on exactly that (it floors the label and
+	// leaves the box its designed size), and the audit used to report the box it
+	// had deliberately left alone.
+	function labelMeetsFloor(el) {
+		if (!/^(INPUT|SELECT|TEXTAREA)$/.test(el.tagName)) return false;
+		const labels = [];
+		const wrapping = el.closest('label');
+		if (wrapping) labels.push(wrapping);
+		if (el.id) {
+			for (const l of document.querySelectorAll(`label[for="${CSS.escape(el.id)}"]`)) labels.push(l);
+		}
+		return labels.some((l) => {
+			const b = l.getBoundingClientRect();
+			return b.width >= minTarget && b.height >= minTarget;
+		});
+	}
+
+	// A skip link is 1px and clipped until it takes focus, which is the only
+	// moment anyone can hit it. Measuring it at rest reports a 1x44 defect that
+	// no CSS change could ever clear. Measure it in the state it is used in.
+	function boxInUsableState(el, box) {
+		if (box.width >= 4 && box.height >= 4) return box;
+		if (typeof el.focus !== 'function') return box;
+		const active = document.activeElement;
+		try {
+			el.focus({ preventScroll: true });
+			const focused = el.getBoundingClientRect();
+			if (focused.width > box.width || focused.height > box.height) return focused;
+		} catch { /* not focusable: keep the resting box */ }
+		finally {
+			if (active && active !== el && typeof active.focus === 'function') active.focus({ preventScroll: true });
+			else if (typeof el.blur === 'function') el.blur();
+		}
+		return box;
+	}
 
 	for (const el of Array.from(document.querySelectorAll(INTERACTIVE))) {
 		const cs = getComputedStyle(el);
-		const box = el.getBoundingClientRect();
-		if (!isVisible(el, cs, box)) continue;
+		const box = boxInUsableState(el, el.getBoundingClientRect());
+		if (!isVisible(el, cs, el.getBoundingClientRect())) continue;
 		if (el.closest('[aria-hidden="true"]')) continue;
 		checked++;
 		const w = box.width;
 		const h = box.height;
 		if (w >= minTarget && h >= minTarget) continue;
 
-		// WCAG 2.5.8 inline exception: a link inside a sentence.
-		const inlineDisplay = cs.display.startsWith('inline');
-		const parent = el.parentElement;
-		const parentHasText =
-			!!parent &&
-			Array.from(parent.childNodes).some((n) => n.nodeType === 3 && n.textContent.trim().length > 0);
-		if (el.tagName === 'A' && inlineDisplay && parentHasText) {
+		if (sitsInASentence(el, cs)) {
 			inlineExempt++;
+			continue;
+		}
+		if (labelMeetsFloor(el)) {
+			labelExempt++;
 			continue;
 		}
 
@@ -266,6 +326,7 @@ function auditDom(minTarget) {
 		viewportFitCover: /viewport-fit\s*=\s*cover/.test(viewportMeta),
 		safeAreaRuleCount: safeAreaRules.length,
 		bottomBars,
+		labelExempt,
 		overflowX: overflowPx,
 		innerWidth: window.innerWidth,
 	};
