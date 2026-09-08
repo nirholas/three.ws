@@ -122,6 +122,8 @@
 						data-network="mainnet"
 						role="tab"
 						aria-selected="true"
+						aria-controls="lx-feed"
+						id="lx-net-mainnet"
 					 data-i18n="launches.mainnet_2">
 						Mainnet
 					</button>
@@ -131,6 +133,9 @@
 						data-network="devnet"
 						role="tab"
 						aria-selected="false"
+						aria-controls="lx-feed"
+						tabindex="-1"
+						id="lx-net-devnet"
 					 data-i18n="launches.devnet">
 						Devnet
 					</button>
@@ -153,7 +158,14 @@
 				<a class="lx-explore-link" href="/launchpad" data-i18n="launches.launchpad_studio">Launchpad Studio →</a>
 			</nav>
 
-			<section id="lx-feed" class="lx-grid" aria-label="Launched coins" aria-busy="true"></section>
+			<section
+				id="lx-feed"
+				class="lx-grid"
+				role="tabpanel"
+				aria-labelledby="lx-net-mainnet"
+				tabindex="-1"
+				aria-busy="true"
+			></section>
 
 			<div id="lx-footer-state" class="lx-footer-state"></div>
 		</main>

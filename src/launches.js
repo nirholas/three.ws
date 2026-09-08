@@ -743,18 +743,37 @@ function renderEmpty() {
 						text: 'Clear filters',
 						onclick: () => { setAgentFilter(null); setOracleTier(''); },
 					})
-				: el('div', { class: 'lx-state-ctas' }, [
-						el('a', {
-							class: 'lx-btn lx-btn-primary',
-							href: '/create-agent',
-							text: 'Create an agent',
-						}),
-						el('a', {
-							class: 'lx-btn',
-							href: '/forge',
-							text: 'Forge its 3D body',
-						}),
-					]),
+				: state.network === 'devnet'
+					? el('div', { class: 'lx-state-ctas' }, [
+							// The copy above tells the reader to switch networks, so the
+							// state hands them the switch instead of pointing at the toolbar.
+							el('button', {
+								class: 'lx-btn lx-btn-primary',
+								type: 'button',
+								text: 'Switch to mainnet',
+								onclick: () => {
+									setNetwork('mainnet');
+									document.querySelector('.lx-net-btn[data-network="mainnet"]')?.focus();
+								},
+							}),
+							el('a', {
+								class: 'lx-btn',
+								href: '/create-agent',
+								text: 'Create an agent',
+							}),
+						])
+					: el('div', { class: 'lx-state-ctas' }, [
+							el('a', {
+								class: 'lx-btn lx-btn-primary',
+								href: '/create-agent',
+								text: 'Create an agent',
+							}),
+							el('a', {
+								class: 'lx-btn',
+								href: '/forge',
+								text: 'Forge its 3D body',
+							}),
+						]),
 		]),
 	);
 }
@@ -922,14 +941,24 @@ function syncUrl() {
 	history.replaceState(null, '', url);
 }
 
-function setNetwork(network) {
-	if (state.network === network) return;
-	state.network = network;
+// The network toggle is a real tablist over one panel (the feed), so the
+// selected tab is the only tab stop and the arrow keys move between them. A
+// tablist that announces itself but ignores the arrow keys strands anyone who
+// takes the announcement at its word.
+function syncNetworkTabs(network) {
 	document.querySelectorAll('.lx-net-btn').forEach((b) => {
 		const active = b.dataset.network === network;
 		b.classList.toggle('active', active);
 		b.setAttribute('aria-selected', String(active));
+		b.tabIndex = active ? 0 : -1;
+		if (active && b.id) feedEl.setAttribute('aria-labelledby', b.id);
 	});
+}
+
+function setNetwork(network) {
+	if (state.network === network) return;
+	state.network = network;
+	syncNetworkTabs(network);
 	syncUrl();
 	loadPage({ reset: true });
 }
@@ -994,11 +1023,19 @@ function boot() {
 	const oracleTierParam = qs.get('oracle_tier') || '';
 	state.oracleTier = VALID_TIERS.has(oracleTierParam) ? oracleTierParam : '';
 
-	document.querySelectorAll('.lx-net-btn').forEach((b) => {
-		const active = b.dataset.network === state.network;
-		b.classList.toggle('active', active);
-		b.setAttribute('aria-selected', String(active));
+	const netBtns = [...document.querySelectorAll('.lx-net-btn')];
+	syncNetworkTabs(state.network);
+	netBtns.forEach((b, i) => {
 		b.addEventListener('click', () => setNetwork(b.dataset.network));
+		b.addEventListener('keydown', (e) => {
+			const step = e.key === 'ArrowRight' ? 1 : e.key === 'ArrowLeft' ? -1 : 0;
+			const jump = e.key === 'Home' ? 0 : e.key === 'End' ? netBtns.length - 1 : null;
+			const next = jump != null ? netBtns[jump] : step ? netBtns[(i + step + netBtns.length) % netBtns.length] : null;
+			if (!next) return;
+			e.preventDefault();
+			setNetwork(next.dataset.network);
+			next.focus();
+		});
 	});
 
 	document.querySelectorAll('.lx-of-btn').forEach((b) => {
