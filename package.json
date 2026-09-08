@@ -459,7 +459,8 @@
 		"deck:inception": "node scripts/build-inception-deck.mjs",
 		"build:awesome": "node scripts/build-awesome.mjs",
 		"check:awesome": "node scripts/build-awesome.mjs --check",
-		"awesome:links": "node scripts/check-awesome-links.mjs"
+		"awesome:links": "node scripts/check-awesome-links.mjs",
+		"awesome:standalone": "node scripts/build-awesome.mjs --standalone"
 	},
 	"dependencies": {
 		"@0xsplits/splits-sdk": "^6.5.0",

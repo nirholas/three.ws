@@ -98,11 +98,22 @@ await Promise.all(Array.from({ length: Math.min(concurrency, targets.length) }, 
 
 // Compare without the fragment: an anchor into a single-page docs site is
 // resolved in the browser, so the server answering the bare page is correct.
-const normalise = (u) =>
-	u
-		.replace(/#.*$/, '')
-		.replace(/\/+$/, '')
-		.replace(/^https?:\/\/www\./, 'https://');
+// Locale parameters are dropped too, because a docs host that geolocates this
+// machine and appends `?hl=zh-tw` has not moved the page anywhere.
+const LOCALE_PARAMS = new Set(['hl', 'lang', 'locale', 'lr', 'gl']);
+const normalise = (u) => {
+	let out = u.replace(/#.*$/, '');
+	try {
+		const parsed = new URL(out);
+		for (const key of [...parsed.searchParams.keys()]) {
+			if (LOCALE_PARAMS.has(key)) parsed.searchParams.delete(key);
+		}
+		out = parsed.toString();
+	} catch {
+		// A url this malformed is already reported by the fetch itself.
+	}
+	return out.replace(/\?$/, '').replace(/\/+$/, '').replace(/^https?:\/\/www\./, 'https://');
+};
 
 const blockedCodes = new Set([403, 429]);
 const broken = results.filter((r) => r.status === 0 || (r.status >= 400 && !blockedCodes.has(r.status)));

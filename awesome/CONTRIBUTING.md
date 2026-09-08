@@ -21,9 +21,15 @@ there is overwritten by the next build. Entries live in
 3. Regenerate and check:
 
 ```bash
-npm run build:awesome    # rewrites awesome/README.md and public/awesome.json
-npm run awesome:links    # fetches every url and reports anything unreachable
+npm run build:awesome     # rewrites awesome/README.md and public/awesome.json
+npm run awesome:links     # fetches every url and reports anything unreachable
+npx awesome-lint awesome/README.md
 ```
+
+`awesome-lint` reports two errors that cannot be fixed from a file: it reads
+the GitHub repository's topics, and this list lives inside a product repo. That
+is what the mirror below exists for. Every other rule is enforced by the build,
+so a green `npm run build:awesome` means a green lint.
 
 4. Commit `data/awesome.json` together with both generated files.
 
@@ -36,8 +42,11 @@ The bar is "a working engineer would be glad someone showed them this".
 - **It has to earn its section.** Fifteen text-to-3D models that do the same
   thing help nobody. If a new entry beats an existing one on the same job, say
   so in the description, or replace the old one.
-- **One sentence, under 260 characters.** Say what it does and why you would
-  reach for it over the alternative. The build fails on longer descriptions.
+- **One sentence, under 260 characters**, starting with a capital letter and
+  ending with a period. Say what it does and why you would reach for it over
+  the alternative. The build fails on anything else, and so does `awesome-lint`.
+  A project whose real name is lowercase (`three.js`, `gsplat`) still cannot
+  open the sentence: rephrase so a capital does.
 - **No em-dash (U+2014) or en-dash (U+2013).** House rule across this repository.
   Use a period, a comma, a colon, or parentheses. A plain hyphen is fine. The
   build fails on either dash.
@@ -62,3 +71,17 @@ A new section is a bigger change than a new entry. Propose it in an issue
 first, with the three or more entries that would fill it. Sections are ordered
 along the pipeline: generate, capture, embody, rig, animate, speak, render,
 ship, connect.
+
+## The published mirror
+
+The canonical [awesome.re](https://awesome.re) index only accepts a dedicated
+repository, so the list is also published as a standalone mirror:
+
+```bash
+npm run awesome:standalone
+```
+
+That writes `readme.md`, `contributing.md`, `code-of-conduct.md`, and `license`
+to a sibling directory and prints the `gh` commands to create the repository and
+set the `awesome` and `awesome-list` topics. Nothing in that directory is
+committed here; regenerate it after any change to the list and push the mirror.
