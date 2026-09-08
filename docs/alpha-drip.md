@@ -92,6 +92,7 @@ Public. Returns the leader's ladder, the summary line, and the standing
 disclosure. A signed-in caller also gets a `you` block with the seat their own
 $THREE balance buys.
 
+<!-- runnable: 404 the leader id is illustrative; substitute a real public trader for a 200 -->
 ```bash
 curl -s 'https://three.ws/api/copy/alpha-drip?leader_agent_id=00000000-0000-0000-0000-000000000000'
 ```

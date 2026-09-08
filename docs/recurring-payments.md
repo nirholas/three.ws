@@ -70,6 +70,7 @@ curl -X POST https://three.ws/api/agent-subscriptions \
 
 `amountPerPeriod` is in base units (USDC has 6 decimals, so `5000000` is 5 USDC). Creating a second schedule for the same agent and permission returns the existing one with HTTP 200 instead of duplicating it.
 
+<!-- runnable: 401 the schedule list is per-account; without a session cookie the call is refused -->
 ```bash
 # What you pay
 curl https://three.ws/api/agent-subscriptions --cookie "$COOKIE"

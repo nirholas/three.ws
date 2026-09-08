@@ -1462,6 +1462,24 @@ silently.
 
 Poll with `GET /api/forge?job=<job>` — it returns `{ status: "queued" | "done" | "failed", glb_url? }`.
 
+**Watching the pre-submit work** (optional). Most of a standard text-to-3D
+request happens before it can answer: the art-director pass, the reference-view
+synthesis, and the turnaround views. Send any url-safe id of 16 to 64 characters
+as `progress_id` on the POST, then read `GET /api/forge?progress=<id>` while the
+POST is still open to see which of those milestones has finished:
+
+```bash
+curl -sS "https://three.ws/api/forge?progress=$TRACE"
+# → {"progress":[{"stage":"directed","at":1757345001000,"directed_prompt":"…"},
+#                {"stage":"reference","at":1757345013000,"preview_image_url":"https://…/ref.jpg"}]}
+```
+
+Stages are `directed`, `reference`, `views` and `submitting`, each written only
+after the work it names returned. An unknown or not-yet-started trace answers
+`{"progress":[]}`, crumbs expire after five minutes, and omitting `progress_id`
+leaves the request byte-for-byte what it was. Full walkthrough:
+[docs/forge.md](./forge.md#watching-a-generation-happen).
+
 Signed-in callers can skip the poll loop entirely: register a webhook for
 `forge.completed` and `forge.failed` and the platform POSTs you the finished
 job. Payloads, delivery semantics and a runnable subscribe-then-submit example
@@ -7595,6 +7613,7 @@ listening is for the person at the browser). Emits `open` once, then one
 drained rather than broadcast, so a line is said by exactly one open tab, and
 an undelivered one expires after about five minutes.
 
+<!-- runnable: 401 the herald queue is per-session; without a real session cookie the stream is refused -->
 ```bash
 curl -N https://three.ws/api/herald/stream -b 'session=<your session cookie>'
 ```

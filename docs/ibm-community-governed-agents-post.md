@@ -221,6 +221,7 @@ You get either a finished GLB or a job handle with an ETA and a watch URL. Riggi
 
 **2. Check that the model is actually usable** before you build anything on top of it:
 
+<!-- runnable: 400 <your glb url> is a placeholder; a real GLB URL answers 200 -->
 ```bash
 curl "https://three.ws/api/sim-readiness?src=<your glb url>"
 ```

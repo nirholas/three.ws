@@ -96,6 +96,7 @@ shut door gives, so they cannot tell it was them specifically.
 
 ### Read the door first
 
+<!-- runnable: 404 the handle answers 200 only while its owner has a door open -->
 ```bash
 curl -s 'https://three.ws/api/knock/door?handle=nirholas'
 ```
@@ -230,6 +231,7 @@ stays with a human. See
 
 ### Read the answer
 
+<!-- runnable: 404 the id and token are placeholders; a real receipt answers 200 -->
 ```bash
 curl -s 'https://three.ws/api/knock/reply?id=<knock id>&token=<receipt token>'
 ```

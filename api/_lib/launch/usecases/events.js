@@ -67,7 +67,7 @@ export const eventsUseCases = [
 	eventsUseCase({
 		id: 'events-search-spikes-now',
 		title: 'Live Google search spikes',
-		description: 'Real-time trending Google searches with traffic behind them: the queries spiking this minute. Mint a coin the moment a topic catches fire.',
+		description: 'Real-time trending Google searches with traffic behind them — the queries spiking this minute. Mint a coin the moment a topic catches fire.',
 		tags: ['googletrends', 'search', 'realtime'],
 		sources: ['googletrends'],
 		limit: 12,
@@ -84,7 +84,7 @@ export const eventsUseCases = [
 	eventsUseCase({
 		id: 'events-tight-headliners',
 		title: 'Today\'s headliners only',
-		description: 'A tight shortlist of the single biggest moments across Wikipedia and Google right now: fewer picks, every one a genuine headliner worth a coin.',
+		description: 'A tight shortlist of the single biggest moments across Wikipedia and Google right now — fewer picks, every one a genuine headliner worth a coin.',
 		tags: ['wikipedia', 'googletrends', 'curated', 'top'],
 		sources: ['wikipedia', 'googletrends'],
 		limit: 5,
@@ -93,7 +93,7 @@ export const eventsUseCases = [
 	eventsUseCase({
 		id: 'events-encyclopedia-moments',
 		title: 'Wikipedia moments, expanded',
-		description: 'A wider sweep of Wikipedia\'s trending pages, beyond the obvious top few into the deep cut subjects quietly surging in readership. Each minted as its own celebratory coin.',
+		description: 'A wider sweep of Wikipedia\'s trending pages — beyond the obvious top few into the deep cut subjects quietly surging in readership. Each minted as its own celebratory coin.',
 		tags: ['wikipedia', 'discovery', 'deep'],
 		sources: ['wikipedia'],
 		limit: 20,
@@ -102,7 +102,7 @@ export const eventsUseCases = [
 	eventsUseCase({
 		id: 'events-breakout-searches',
 		title: 'Breakout searches, search-first',
-		description: 'Google\'s freshest breakout queries leading, reinforced by Wikipedia\'s most-read pages: the fastest-moving cultural moments of the day turned into original coins.',
+		description: 'Google\'s freshest breakout queries leading, reinforced by Wikipedia\'s most-read pages — the fastest-moving cultural moments of the day turned into original coins.',
 		tags: ['googletrends', 'wikipedia', 'breakout', 'culture'],
 		sources: ['googletrends', 'wikipedia'],
 		limit: 14,

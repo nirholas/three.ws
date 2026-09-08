@@ -133,6 +133,7 @@ GLB, VRM 1.0, or USDZ through [`src/avatar-export.js`](../src/avatar-export.js).
 
 The **Verify this roll** button on every collection page calls:
 
+<!-- runnable: 404 clay-wardens is an example slug; a live collection answers 200 -->
 ```bash
 curl "https://three.ws/api/drops/verify?slug=clay-wardens&index=7"
 ```
