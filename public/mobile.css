@@ -1126,4 +1126,30 @@
 	.sidebar-search input {
 		display: block;
 	}
+
+	/* /coin breadcrumbs and the copy-contract button reach the height floor and
+	   stop at 38px wide. */
+	.cv-crumbs a,
+	.cv-contract button {
+		min-width: 44px;
+		justify-content: center;
+	}
+
+	/* /launches explore nav: 21px underlined links in a row of their own. */
+	.lx-explore-link {
+		min-height: 44px;
+		display: inline-flex;
+		align-items: center;
+	}
+
+	/* /forge's two holder notes. Both paragraphs are flex containers, so the
+	   link inside each is a standalone box rather than a word in a sentence
+	   (which is why the WCAG 2.5.8 inline exception does not cover it), and
+	   both measured 15px tall. */
+	.fq-holder-note a,
+	.fq-perk-line a {
+		min-height: 44px;
+		display: inline-flex;
+		align-items: center;
+	}
 }

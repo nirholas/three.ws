@@ -131,10 +131,18 @@ function auditDom(minTarget) {
 		} catch {
 			continue; // cross-origin sheet, not readable
 		}
+		// A style rule is collected AND descended into. The `else` this used to
+		// carry made the whole collection dead: CSSStyleRule has had a `cssRules`
+		// property since CSS Nesting shipped, so every plain rule took the
+		// recursion branch into its own empty nested list and none of them were
+		// ever pushed. `safeAreaRules` was therefore always empty and every
+		// bottom-anchored bar on every page was reported as missing a safe-area
+		// rule, including the ones that carry `env(safe-area-inset-bottom)`
+		// directly (/irl's dock has it in two rules; /markets reported 101).
 		const walk = (ruleList) => {
 			for (const rule of Array.from(ruleList || [])) {
+				if (rule.selectorText && rule.cssText) rules.push(rule);
 				if (rule.cssRules) walk(rule.cssRules);
-				else if (rule.selectorText && rule.cssText) rules.push(rule);
 			}
 		};
 		walk(list);
@@ -194,6 +202,37 @@ function auditDom(minTarget) {
 		});
 	}
 
+	// getBoundingClientRect() reports the box AFTER every ancestor transform, and
+	// this site reveals cards with `transform: scale(.985) translateY(16px)`,
+	// released by an IntersectionObserver. The audit does not scroll, so every
+	// card below the fold stays in its pre-reveal state and everything inside it
+	// measures 1.5% small: on /launches that reported 47 controls at 43px whose
+	// CSS says 44px and whose revealed box IS 44px. A decorative transform is not
+	// a tap-target defect, so divide it back out and judge the layout box.
+	// Deliberately starts at the PARENT. A transform on the element itself is its
+	// real rendered size, and a control a page genuinely draws at scale(.7) is a
+	// genuinely small target; only an ancestor's transform is scenery the control
+	// had no say in.
+	function ancestorScale(el) {
+		let sx = 1;
+		let sy = 1;
+		for (let n = el.parentElement; n && n !== document.documentElement; n = n.parentElement) {
+			const t = getComputedStyle(n).transform;
+			if (!t || t === 'none') continue;
+			const m = /^matrix\(([^)]+)\)$/.exec(t) || /^matrix3d\(([^)]+)\)$/.exec(t);
+			if (!m) continue;
+			const p = m[1].split(',').map(Number);
+			if (p.length === 6) {
+				sx *= Math.hypot(p[0], p[1]) || 1;
+				sy *= Math.hypot(p[2], p[3]) || 1;
+			} else if (p.length === 16) {
+				sx *= Math.hypot(p[0], p[1], p[2]) || 1;
+				sy *= Math.hypot(p[4], p[5], p[6]) || 1;
+			}
+		}
+		return { sx: sx || 1, sy: sy || 1 };
+	}
+
 	// A skip link is 1px and clipped until it takes focus, which is the only
 	// moment anyone can hit it. Measuring it at rest reports a 1x44 defect that
 	// no CSS change could ever clear. Measure it in the state it is used in.
@@ -219,8 +258,9 @@ function auditDom(minTarget) {
 		if (!isVisible(el, cs, el.getBoundingClientRect())) continue;
 		if (el.closest('[aria-hidden="true"]')) continue;
 		checked++;
-		const w = box.width;
-		const h = box.height;
+		const scale = ancestorScale(el);
+		const w = box.width / scale.sx;
+		const h = box.height / scale.sy;
 		if (w >= minTarget && h >= minTarget) continue;
 
 		if (sitsInASentence(el, cs)) {
