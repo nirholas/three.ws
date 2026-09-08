@@ -954,9 +954,9 @@ async function resolveAvatar(params) {
 		const r = await fetch(`/api/avatars/${encodeURIComponent(id)}`, { credentials: 'include' });
 		if (!r.ok) throw new Error(`avatar ${id} not found`);
 		const { avatar } = await r.json();
-		if (!avatar?.url) throw new Error('avatar has no model_url');
+		if (!avatar?.id) throw new Error(`avatar ${id} not found`);
 		return {
-			modelUrl: optimizedUrl(avatar.url, params),
+			modelUrl: storedAvatarUrl(avatar, params),
 			name: avatar.name || null,
 			id: avatar.id,
 			handle: null,
@@ -997,14 +997,42 @@ async function resolveAvatar(params) {
 	return null;
 }
 
-function optimizedUrl(baseUrl, params) {
+// A stored avatar always renders through the same-origin GLB proxy
+// (api/avatars/[id]/[action].js), never through the `url` the API hands back.
+// That `url` is a presigned r2.cloudflarestorage.com read for a private avatar
+// and the public r2.dev domain for a shared one: the first sends no
+// access-control-allow-origin at all, and the second only allows the three.ws
+// origin, so GLTFLoader is CORS-blocked in every other context this frame runs
+// in (a dev server, a preview host, an embedding page on another domain). The
+// proxy is same-origin, carries the session cookie through the permission gate,
+// and falls back to the public bucket when the signed read is refused.
+function storedAvatarUrl(avatar, params) {
+	const proxy = `/api/avatars/${encodeURIComponent(avatar.id)}/glb`;
+	if (!wantsOptimization(params)) return proxy;
+	// /api/avatar/optimize is unauthenticated and resolves an id only for a
+	// public or unlisted avatar (resolving a private one by id was an IDOR), so
+	// a private avatar stays on the unoptimized proxy rather than 404ing.
+	const shared = avatar.visibility === 'public' || avatar.visibility === 'unlisted';
+	if (!shared) return proxy;
+	return optimizedUrl(avatar.id, params);
+}
+
+function wantsOptimization(params) {
+	return !!(
+		params.get('lod') ||
+		params.get('textureSize') ||
+		params.get('morphs') ||
+		params.get('draco') === '1'
+	);
+}
+
+function optimizedUrl(avatarId, params) {
 	const lod = params.get('lod');
 	const textureSize = params.get('textureSize');
 	const morphs = params.get('morphs');
 	const draco = params.get('draco');
-	if (!lod && !textureSize && !morphs && draco !== '1') return baseUrl;
 	const u = new URL('/api/avatar/optimize', location.origin);
-	u.searchParams.set('src', baseUrl);
+	u.searchParams.set('id', avatarId);
 	if (lod) u.searchParams.set('lod', lod);
 	if (textureSize) u.searchParams.set('textureSize', textureSize);
 	if (morphs) u.searchParams.set('morphs', morphs);
