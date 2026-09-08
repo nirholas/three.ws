@@ -707,3 +707,59 @@ row. Vite was killed once mid-session when another agent's i18n build wrote a la
 into `scripts/.tmp-i18n-build/out/` and flooded the watcher; restarting it standalone rather
 than under `dev:walk-all` (which kills both servers when either exits) is what let the later
 runs finish.
+
+## 2026-09-08 · Order 06 · Independently re-verified and retired
+
+Order 06 was finished on 2026-09-02 by two sessions (both entries above) but its prompt file was
+left on disk, which reads as open work to the next agent. This pass re-derived the state, re-ran
+every definition-of-done line that can be run, and retired the file. **No product code changed:
+nothing was found to fix.**
+
+**Re-verified here, from output in front of me, not from the ledger.**
+
+- `npx vitest run tests/photo-mode.test.js`: **13 passed**, covering the card geometry at
+  landscape / portrait / tiny, the preview sheet, Escape, the retake, the clipboard fallback and
+  the event stamp.
+- `npm run check:rules --paths` over all six photo-mode files: clean.
+- **Lazy import re-proved by reading, not by trusting the comment.** `photo-mode.js` is reached
+  only through `await import('./photo-mode.js')` at `coincommunities.js:4683`; a grep for a static
+  import across `src/` returns nothing but the module's own `import './photo-mode.css'`, which
+  lives inside the lazy chunk. A session that never presses the button downloads none of it.
+- **Both engines, scene mode, 12/13 each** (`scripts/play-photo-mode-check.mjs`). The numbers
+  reproduce the 2026-09-02 run almost exactly, which is the point of re-running it:
+
+  | Fact | chromium | webkit |
+  |---|---|---|
+  | capture is not a black frame | 100% non-black, mean luma 53.5 | 100% non-black, mean luma 53.6 |
+  | a real rendered scene, not a flat fill | 24 distinct colours | 22 distinct colours |
+  | card PNG on disk | magic `89504e470d0a1a0a`, 960x654, 40,513 B | same magic, 960x654, 21,928 B |
+  | focus lands on Download | true | true |
+  | console errors or warnings from photo mode | none | none |
+
+  (The byte counts differ from the earlier run's 40,494 / 21,870 by the width of the timestamp
+  drawn into the card, which is the expected difference for a different day.)
+
+**The one line I could not close, and why it is not a product defect.** The 13th check, clicking
+Download and reading the saved file, timed out both times at the harness's 30s
+`page.click`. The box was at a **load average of 292** with three other agents' Playwright gates
+running. The locator resolved to the right element every time and the log names it in full: the
+anchor carries `download="threews-three-2026-09-08_172847.png"` and a live `blob:` href, and
+playwright was still in "waiting for element to be visible, enabled and stable" when it gave up,
+which is a thrashing machine, not a dead button. What the click would have proved is proved
+anyway from the other side: the composited card was written to disk by both engines and is a real
+PNG containing the world (magic and dimensions above), and the 2026-09-02 run asserted the
+downloaded bytes on a quieter box. Sample card for the owner to eyeball:
+`.../scratchpad/photo-chromium/card.png` (session scratchpad, per the no-screenshots hygiene
+rule). It renders the world, the three.ws mark, the `$THREE · three.ws` subline and `Sep 8, 2026`;
+no event stamp, correctly, since no event window is open today.
+
+**Suite.** `npm run test:core`: **29,005 passed, 4 failed across 3 files, none of them photo-mode.**
+All three traced to other agents' work in this shared worktree, none fixed here because none block
+this order: `tests/resilience-shared.test.js` is a TTL-cache timing assertion that **passes in
+isolation** and failed only under the load above; `tests/money-rpc-resilience.test.js` exercises
+`getGcpAccessToken` and fails against a peer's **uncommitted 95-line edit to
+`api/_lib/gcp-auth.js`** sitting in the tree; `tests/audit-guards.test.js` is the guards-registry
+failure already named in the 2026-09-02 entry.
+
+**Remains.** Nothing in this order. Photo mode is still behind the same deploy gap as the rest of
+`main`: production serves the pre-fix build until an owner-gated deploy carries these commits.
