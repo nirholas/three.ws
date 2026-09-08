@@ -1,0 +1,139 @@
+[
+  {
+    "name": "production",
+    "url": "https://three.ws/irl?avatar=https%3A%2F%2Fpub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev%2Fforge%2Fanon%2Fefebb3ca-f5b0-4341-a925-a26bef9b390a.glb",
+    "loaded": true,
+    "avatarRendered": true,
+    "consoleErrors": [],
+    "pageErrors": [],
+    "screenshots": [
+      "/workspaces/three.ws/prompts/quality-bar/_generated/10/pass-2026-09-08/irl-avatar-kid-prod.png",
+      "/workspaces/three.ws/prompts/quality-bar/_generated/10/pass-2026-09-08/irl-avatar-ar-kid-prod.png"
+    ],
+    "readback": {
+      "scenes": 3,
+      "meshes": 18,
+      "skinnedMeshes": 1,
+      "classified": [],
+      "sample": [
+        {
+          "name": "",
+          "class": null,
+          "visible": true
+        },
+        {
+          "name": "",
+          "class": null,
+          "visible": false
+        },
+        {
+          "name": "",
+          "class": null,
+          "visible": true
+        },
+        {
+          "name": "",
+          "class": null,
+          "visible": true
+        },
+        {
+          "name": "",
+          "class": null,
+          "visible": true
+        },
+        {
+          "name": "texturedobj",
+          "class": null,
+          "visible": true
+        },
+        {
+          "name": "",
+          "class": null,
+          "visible": true
+        },
+        {
+          "name": "",
+          "class": null,
+          "visible": true
+        },
+        {
+          "name": "",
+          "class": null,
+          "visible": true
+        },
+        {
+          "name": "",
+          "class": null,
+          "visible": true
+        },
+        {
+          "name": "",
+          "class": null,
+          "visible": true
+        },
+        {
+          "name": "",
+          "class": null,
+          "visible": true
+        },
+        {
+          "name": "",
+          "class": null,
+          "visible": true
+        },
+        {
+          "name": "",
+          "class": null,
+          "visible": true
+        },
+        {
+          "name": "",
+          "class": null,
+          "visible": true
+        },
+        {
+          "name": "",
+          "class": null,
+          "visible": true
+        },
+        {
+          "name": "",
+          "class": null,
+          "visible": true
+        },
+        {
+          "name": "",
+          "class": null,
+          "visible": true
+        }
+      ]
+    },
+    "summary": {
+      "classifiedCount": 0,
+      "physicalCount": 0,
+      "skinCount": 0,
+      "eyeCount": 0,
+      "skinMarked": false,
+      "eyeMarked": false,
+      "realismActive": false
+    },
+    "afterModule": null,
+    "afterSummary": null,
+    "cameraAr": {
+      "bodyIsAr": false,
+      "videoReady": {
+        "readyState": 0,
+        "w": 0,
+        "h": 0,
+        "hasStream": false
+      }
+    },
+    "onboarding": [
+      "Enable Camera",
+      "Enable Location",
+      "Continue without",
+      "Start exploring"
+    ],
+    "notes": []
+  }
+]

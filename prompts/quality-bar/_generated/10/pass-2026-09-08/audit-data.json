@@ -1,6 +1,6 @@
 {
 	"startedAt": "2026-09-04T08:22:27.364Z",
-	"finishedAt": "2026-09-04T08:50:48.303Z",
+	"finishedAt": "2026-09-08T18:01:33.127Z",
 	"baseUrl": "https://three.ws",
 	"cases": {
 		"a": {
@@ -15,10 +15,12 @@
 					"tierRequested": "standard",
 					"views": {
 						"front": {
-							"renderError": "Navigation timeout of 30000 ms exceeded"
+							"renderError": null,
+							"file": "a-before-front.png"
 						},
 						"three-quarter": {
-							"renderError": "Navigation timeout of 30000 ms exceeded"
+							"renderError": null,
+							"file": "a-before-three-quarter.png"
 						},
 						"side": {
 							"file": "a-before-side.png",
@@ -47,7 +49,18 @@
 							"file": "a-after-front.png",
 							"renderError": null
 						},
-						"three-quarter": {}
+						"three-quarter": {
+							"file": "a-after-three-quarter.png",
+							"renderError": null
+						},
+						"side": {
+							"file": "a-after-side.png",
+							"renderError": null
+						},
+						"hands": {
+							"file": "a-after-hands.png",
+							"renderError": null
+						}
 					},
 					"glbUrl": "https://pub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev/forge/anon/18b68632-8bce-4fd5-9126-01838b0abc47.glb",
 					"backend": "hunyuan3d",
@@ -78,7 +91,8 @@
 					"tierRequested": "standard",
 					"views": {
 						"front": {
-							"renderError": "render timed out after 150000ms. page reported no error (the render loop never finished)"
+							"renderError": null,
+							"file": "b-before-front.png"
 						},
 						"three-quarter": {
 							"file": "b-before-three-quarter.png",
@@ -88,7 +102,10 @@
 							"file": "b-before-side.png",
 							"renderError": null
 						},
-						"hands": {}
+						"hands": {
+							"renderError": null,
+							"file": "b-before-hands.png"
+						}
 					},
 					"glbUrl": "https://pub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev/forge/anon/a4403d52-2e60-461a-a58b-f532c98b1e91.glb",
 					"backend": "trellis_selfhost",
@@ -103,7 +120,24 @@
 				"after": {
 					"id": "after",
 					"tierRequested": "high",
-					"views": {},
+					"views": {
+						"front": {
+							"file": "b-after-front.png",
+							"renderError": null
+						},
+						"three-quarter": {
+							"file": "b-after-three-quarter.png",
+							"renderError": null
+						},
+						"side": {
+							"file": "b-after-side.png",
+							"renderError": null
+						},
+						"hands": {
+							"renderError": null,
+							"file": "b-after-hands.png"
+						}
+					},
 					"glbUrl": "https://pub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev/forge/anon/ec76c664-9f66-47bf-a60e-7ee6a78eea7c.glb",
 					"backend": "hunyuan3d",
 					"tierServed": "high",
@@ -143,6 +177,10 @@
 						"side": {
 							"file": "c-before-side.png",
 							"renderError": null
+						},
+						"hands": {
+							"file": "c-before-hands.png",
+							"renderError": null
 						}
 					},
 					"glbUrl": "https://pub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev/forge/anon/bd5f6005-b62a-4b5e-a06b-3bf0c83258d2.glb",
@@ -158,7 +196,24 @@
 				"after": {
 					"id": "after",
 					"tierRequested": "high",
-					"views": {},
+					"views": {
+						"front": {
+							"file": "c-after-front.png",
+							"renderError": null
+						},
+						"three-quarter": {
+							"file": "c-after-three-quarter.png",
+							"renderError": null
+						},
+						"side": {
+							"file": "c-after-side.png",
+							"renderError": null
+						},
+						"hands": {
+							"file": "c-after-hands.png",
+							"renderError": null
+						}
+					},
 					"glbUrl": "https://pub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev/forge/anon/5256ee8b-ee95-4a35-94e7-36ebeec4bb35.glb",
 					"backend": "hunyuan3d",
 					"tierServed": "high",
@@ -186,7 +241,24 @@
 				"before": {
 					"id": "before",
 					"tierRequested": "standard",
-					"views": {},
+					"views": {
+						"front": {
+							"file": "d-before-front.png",
+							"renderError": null
+						},
+						"three-quarter": {
+							"renderError": null,
+							"file": "d-before-three-quarter.png"
+						},
+						"side": {
+							"renderError": null,
+							"file": "d-before-side.png"
+						},
+						"hands": {
+							"file": "d-before-hands.png",
+							"renderError": null
+						}
+					},
 					"glbUrl": "https://pub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev/forge/anon/8b3ed5bc-e30e-4ad0-86f6-a584411ef165.glb",
 					"backend": "trellis_selfhost",
 					"tierServed": "standard",
@@ -200,7 +272,24 @@
 				"after": {
 					"id": "after",
 					"tierRequested": "high",
-					"views": {},
+					"views": {
+						"front": {
+							"file": "d-after-front.png",
+							"renderError": null
+						},
+						"three-quarter": {
+							"file": "d-after-three-quarter.png",
+							"renderError": null
+						},
+						"side": {
+							"file": "d-after-side.png",
+							"renderError": null
+						},
+						"hands": {
+							"file": "d-after-hands.png",
+							"renderError": null
+						}
+					},
 					"glbUrl": "https://pub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev/forge/anon/fd66c368-97b8-4afb-822c-d820a19a8e40.glb",
 					"backend": "hunyuan3d",
 					"tierServed": "high",
@@ -228,7 +317,24 @@
 				"before": {
 					"id": "before",
 					"tierRequested": "standard",
-					"views": {},
+					"views": {
+						"front": {
+							"file": "e-before-front.png",
+							"renderError": null
+						},
+						"three-quarter": {
+							"renderError": null,
+							"file": "e-before-three-quarter.png"
+						},
+						"side": {
+							"renderError": null,
+							"file": "e-before-side.png"
+						},
+						"hands": {
+							"file": "e-before-hands.png",
+							"renderError": null
+						}
+					},
 					"glbUrl": "https://pub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev/forge/anon/9da72645-bcaf-4a81-a8eb-e862ab746bc5.glb",
 					"backend": "trellis_selfhost",
 					"tierServed": "standard",
@@ -242,7 +348,24 @@
 				"after": {
 					"id": "after",
 					"tierRequested": "high",
-					"views": {},
+					"views": {
+						"front": {
+							"renderError": null,
+							"file": "e-after-front.png"
+						},
+						"three-quarter": {
+							"file": "e-after-three-quarter.png",
+							"renderError": null
+						},
+						"side": {
+							"file": "e-after-side.png",
+							"renderError": null
+						},
+						"hands": {
+							"file": "e-after-hands.png",
+							"renderError": null
+						}
+					},
 					"glbUrl": "https://pub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev/forge/anon/ef150e6a-db8a-4a13-a3c0-5ef0bf2fc8ec.glb",
 					"backend": "hunyuan3d",
 					"tierServed": "high",
@@ -277,7 +400,24 @@
 				"after": {
 					"id": "after",
 					"tierRequested": "high",
-					"views": {},
+					"views": {
+						"front": {
+							"file": "f-after-front.png",
+							"renderError": null
+						},
+						"three-quarter": {
+							"file": "f-after-three-quarter.png",
+							"renderError": null
+						},
+						"side": {
+							"file": "f-after-side.png",
+							"renderError": null
+						},
+						"hands": {
+							"file": "f-after-hands.png",
+							"renderError": null
+						}
+					},
 					"glbUrl": "https://pub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev/forge/anon/dc1ba014-76d3-47d2-ac62-0b4bd6f67a14.glb",
 					"backend": "hunyuan3d",
 					"tierServed": "high",
@@ -294,6 +434,52 @@
 			"directed": null,
 			"directedVia": null,
 			"directorError": "vertex director 403: [{\"error\":{\"code\":403,\"message\":\"Lightning dunning decision is deny for project: projects/93741856042\",\"status\":\"PERMISSION_DENIED\"}}]"
+		},
+		"g": {
+			"id": "g",
+			"label": "Photo: unidentified young man (LOC plate)",
+			"prompt": "A single standing man photographed full length in a studio, front facing, in a dark high-collar button-front uniform jacket and dark trousers with dark leather boots, arms at his sides.",
+			"subjectClass": "person",
+			"stylized": false,
+			"variants": {
+				"before": {
+					"id": "before",
+					"tierRequested": "standard",
+					"views": {}
+				},
+				"after": {
+					"id": "after",
+					"tierRequested": "high",
+					"views": {}
+				}
+			},
+			"imageUrls": [
+				"https://upload.wikimedia.org/wikipedia/commons/0/09/Unidentified_young_man%2C_full-length_studio_portrait%2C_standing_in_front_of_painted_backdrop%2C_facing_front%2C_wearing_military_uniform%29_-_Jno._Holyland%2C_Metropolitan_Gallery%2C_250_Pennsylvania_LCCN2005677261.jpg"
+			],
+			"credit": "Library of Congress via Wikimedia Commons, public domain, subject unidentified"
+		},
+		"h": {
+			"id": "h",
+			"label": "Photo: unidentified man in embroidered dress (LOC plate)",
+			"prompt": "A single standing man photographed full length in a studio, front facing, wearing a heavily embroidered open jacket over a striped shirt, a wrapped sash, loose light trousers and a wrapped head covering, one arm resting on a branch railing.",
+			"subjectClass": "person",
+			"stylized": false,
+			"variants": {
+				"before": {
+					"id": "before",
+					"tierRequested": "standard",
+					"views": {}
+				},
+				"after": {
+					"id": "after",
+					"tierRequested": "high",
+					"views": {}
+				}
+			},
+			"imageUrls": [
+				"https://upload.wikimedia.org/wikipedia/commons/7/72/Kurdish_chief%2C_full-length_portrait%2C_standing%2C_facing_front_LCCN2003677090.tif"
+			],
+			"credit": "Library of Congress via Wikimedia Commons, public domain, subject unidentified"
 		}
 	},
 	"variants": [

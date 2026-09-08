@@ -39,6 +39,14 @@
 			<description>Every avatar the platform loads gets its skin, eyes, hair and teeth re-shaded with real-world material values the moment it appears: skin at the roughness bare skin actually has with a warm scattering layer, a wet cornea that catches a highlight, and hair that reads as strands rather than a helmet. That pass was already running, but the check meant to prove it was pointed at the wrong page and had been quietly reporting nothing at all, so it could not have caught the day it broke. It now runs against the same embed page your visitors see, at phone, tablet and desktop widths, and records exactly which materials it upgraded and to what values. Alongside it, a new check loads a full 4K-textured model on an emulated iPhone and Android phone over a slow mobile connection and measures the real bytes and load time, so a model that would not open on a phone is caught before it ships rather than after.</description>
 		</item>
 		<item>
+			<title>Avatars of people now come off the stronger lane, and stop standing on a slab of their own backdrop</title>
+			<link>https://three.ws/changelog</link>
+			<guid isPermaLink="false">2026-09-08:Avatars of people now come off the stronger lane, and stop standing on a slab of their own backdrop</guid>
+			<pubDate>Tue, 08 Sep 2026 12:00:00 GMT</pubDate>
+			<category>improvement</category>
+			<description>Two things were quietly holding avatars back. The first: our own docs said that asking for a 3D person always ran on the strongest engine we host, the one that is best at faces and bodies. The code was still sending those requests to the faster, weaker engine, so every avatar came back off the wrong lane. Side by side on the same six descriptions, the weaker lane returned smeared, faceless figures with mitten hands and once no figure at all, while the stronger one returned people you can recognise. Avatars now go where the docs always said they did. The second: when you describe a person in words, we paint a reference picture first and sculpt the model from it. That picture has a plain background, and we had assumed plain was harmless. It is not. The sculptor was treating the backdrop as part of the scene and building it in, so four of six test figures came out standing on a full-size slab of their own background and two were swallowed by it entirely. Written descriptions now get the same background cutout that uploaded photos already got.</description>
+		</item>
+		<item>
 			<title>Buttons that looked dead now respond, and the whole site paints from one palette</title>
 			<link>https://three.ws/marketplace</link>
 			<guid isPermaLink="false">2026-09-08:Buttons that looked dead now respond, and the whole site paints from one palette</guid>

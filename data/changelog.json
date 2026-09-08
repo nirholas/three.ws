@@ -3,6 +3,15 @@
 	"entries": [
 		{
 			"date": "2026-09-08",
+			"title": "Avatars of people now come off the stronger lane, and stop standing on a slab of their own backdrop",
+			"summary": "Two things were quietly holding avatars back. The first: our own docs said that asking for a 3D person always ran on the strongest engine we host, the one that is best at faces and bodies. The code was still sending those requests to the faster, weaker engine, so every avatar came back off the wrong lane. Side by side on the same six descriptions, the weaker lane returned smeared, faceless figures with mitten hands and once no figure at all, while the stronger one returned people you can recognise. Avatars now go where the docs always said they did. The second: when you describe a person in words, we paint a reference picture first and sculpt the model from it. That picture has a plain background, and we had assumed plain was harmless. It is not. The sculptor was treating the backdrop as part of the scene and building it in, so four of six test figures came out standing on a full-size slab of their own background and two were swallowed by it entirely. Written descriptions now get the same background cutout that uploaded photos already got.",
+			"tags": [
+				"improvement",
+				"fix"
+			]
+		},
+		{
+			"date": "2026-09-08",
 			"title": "Watch your model being made, instead of watching a spinner",
 			"summary": "Making a model from a written prompt starts with work you never saw: an art director rewrites your words into a proper brief, then an image model paints the reference picture the mesh is actually sculpted from, and on our best lane it paints the extra angles that fill in the subject's back. All of that used to happen inside one long silent request, so Forge could only say \"art-directing your prompt\" for the whole wait and then reveal the reference picture at the very end, when it had already existed for half a minute. Now the pipeline reports each step the instant it finishes, so the stage list ticks over as the work really happens and the reference image appears on screen while the sculpting is still running. Nothing on that list is a guess: a step only lights up because the server said it finished. On a phone, pressing Generate now brings the panel into view instead of leaving the whole thing playing out below the fold, and the same is true when a model lands or when something goes wrong. If our asset storage is the thing that is down, Forge now says so plainly, tells you nothing was charged, and points you at the models you already made, which keep working throughout. A model on screen also stops spinning by itself for anyone who has asked their device for less motion, and the report-a-bug prompt no longer pops up on top of the recovery buttons on a narrow screen.",
 			"tags": [
