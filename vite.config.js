@@ -66,6 +66,59 @@ const STALE_BRIDGE_TAG = /\s*<script type="module" src="\/ios-bridge\.[0-9a-f]+\
 // don't control, so the floor has to be the old WebView, not our dev browser.
 // defineProperty (not assignment) keeps it non-enumerable like the native one,
 // so `for...in` over Object stays clean.
+// ── Mobile ergonomics rewrites (shared by the plugin's two entry points) ────
+//
+// Applied both to Rollup's HTML inputs (transformIndexHtml) and, after the
+// build, to every HTML file in dist/, because everything under public/ is
+// copied out verbatim and never reaches the first hook. Both rewrites are
+// idempotent so running them twice on the same page changes nothing.
+
+// Embeds render inside someone else's page and must not inherit our viewport
+// or tap-target rules; nav/footer are markup FRAGMENTS, not documents.
+const MOBILE_ERGONOMICS_EXCLUDED = new Set([
+	'widget.html',
+	'embed.html',
+	'avatar-embed.html',
+	'agent-embed.html',
+	'a-embed.html',
+	'nav.html',
+	'footer.html',
+]);
+
+// Without viewport-fit=cover every env(safe-area-inset-*) resolves to 0, so
+// the safe-area padding in mobile.css is dead code on an iPhone.
+function withViewportFitCover(html) {
+	return html.replace(
+		/(<meta[^>]*name=["']viewport["'][^>]*content=["'])([^"']*)(["'])/i,
+		(match, head, content, tail) =>
+			/viewport-fit\s*=/i.test(content)
+				? match
+				: `${head}${content.trim().replace(/,\s*$/, '')}, viewport-fit=cover${tail}`,
+	);
+}
+
+function hasMobileCss(html) {
+	return /["']\/mobile\.css["']/.test(html);
+}
+
+// mobile.css promises in its own header that it is "loaded after every
+// page-specific stylesheet so the rules below win on equal specificity", so it
+// goes after the LAST <link rel="stylesheet"> in the document; a page with no
+// stylesheet at all gets it at the top of <head>. A page with no <head> is not
+// a document we can safely rewrite, so it is left alone.
+function withMobileCss(html) {
+	if (hasMobileCss(html)) return html;
+	const tag = '<link rel="stylesheet" href="/mobile.css" />';
+	const links = [...html.matchAll(/<link\b[^>]*rel=["']stylesheet["'][^>]*>/gi)];
+	if (links.length) {
+		const last = links[links.length - 1];
+		const at = last.index + last[0].length;
+		return html.slice(0, at) + '\n\t\t' + tag + html.slice(at);
+	}
+	if (!/<head(\s[^>]*)?>/i.test(html)) return html;
+	return html.replace(/<head(\s[^>]*)?>/i, (m) => `${m}\n\t\t${tag}`);
+}
+
 const LEGACY_RUNTIME_POLYFILL =
 	'if(!Object.hasOwn){Object.defineProperty(Object,"hasOwn",{value:function(o,k){' +
 	'if(o==null)throw new TypeError("Cannot convert undefined or null to object");' +
@@ -2722,35 +2775,31 @@ const appConfig = {
 			// env(safe-area-inset-*) resolves to 0, so the safe-area padding in
 			// mobile.css would be dead code on an iPhone. The rewrite is additive
 			// and idempotent; pages that already opt in are left alone.
+			// transformIndexHtml only sees Rollup's HTML *inputs*. Everything under
+			// public/ is copied to dist/ byte-for-byte and never passes through this
+			// hook, and that is 392 of the site's 584 stylesheet-bearing pages,
+			// including three of the fifteen the mobile audit samples: /changelog,
+			// /ar and the whole /docs shell. Measured on a Pixel 5 against production
+			// on 2026-09-08, /docs/start-here reported 308 undersized touch targets,
+			// 296 of them the sidebar links that mobile.css's round-2 block already
+			// sizes to 44px. The rule was correct; the stylesheet was simply absent.
+			// So the same transform also runs as a post-build sweep over every HTML
+			// file in dist/, which is the only place both kinds of page meet. It is
+			// idempotent (both rewrites no-op on a page that already has them), so a
+			// Vite-processed page passing through twice is unchanged.
 			name: 'mobile-ergonomics',
 			transformIndexHtml: {
 				order: 'post',
 				handler(html, ctx) {
-					// Embeds render inside someone else's page and must not inherit our
-					// viewport or tap-target rules.
-					const EMBED_FILES = new Set([
-						'widget.html',
-						'embed.html',
-						'avatar-embed.html',
-						'agent-embed.html',
-						'a-embed.html',
-						'nav.html',
-						'footer.html',
-					]);
 					const filename = (ctx.filename || ctx.path || '')
 						.replace(/\\/g, '/')
 						.split('/')
 						.pop();
-					if (EMBED_FILES.has(filename)) return html;
-
-					let out = html.replace(
-						/(<meta[^>]*name=["']viewport["'][^>]*content=["'])([^"']*)(["'])/i,
-						(match, head, content, tail) =>
-							/viewport-fit\s*=/i.test(content)
-								? match
-								: `${head}${content.trim().replace(/,\s*$/, '')}, viewport-fit=cover${tail}`,
-					);
-					const tags = /["']\/mobile\.css["']/.test(out)
+					if (MOBILE_ERGONOMICS_EXCLUDED.has(filename)) return html;
+					// The link is injected as a tag rather than spliced in, so Vite
+					// places it with the rest of this page's head injections.
+					const out = withViewportFitCover(html);
+					const tags = hasMobileCss(out)
 						? []
 						: [
 								{
@@ -2760,6 +2809,43 @@ const appConfig = {
 								},
 							];
 					return { html: out, tags };
+				},
+			},
+			closeBundle: {
+				sequential: true,
+				order: 'post',
+				async handler() {
+					const { readdirSync, statSync, readFileSync, writeFileSync } = await import('fs');
+					const { join } = await import('path');
+					const distDir = resolve(__dirname, 'dist');
+					if (!existsSync(distDir)) return;
+					let patched = 0;
+					const walk = (dir) => {
+						for (const entry of readdirSync(dir)) {
+							const full = join(dir, entry);
+							let stat;
+							try {
+								stat = statSync(full);
+							} catch {
+								continue;
+							}
+							if (stat.isDirectory()) {
+								walk(full);
+								continue;
+							}
+							if (!entry.endsWith('.html')) continue;
+							if (MOBILE_ERGONOMICS_EXCLUDED.has(entry)) continue;
+							const html = readFileSync(full, 'utf8');
+							let next = withViewportFitCover(html);
+							next = withMobileCss(next);
+							if (next !== html) {
+								writeFileSync(full, next);
+								patched++;
+							}
+						}
+					};
+					walk(distDir);
+					if (patched) console.log(`mobile-ergonomics: patched ${patched} static page(s) copied from public/`);
 				},
 			},
 		},
