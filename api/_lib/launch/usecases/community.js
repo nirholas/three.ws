@@ -111,7 +111,7 @@ function communityNarrativeUseCase({ id, title, description, tags = [], params =
 			return {
 				name,
 				symbol: deriveSymbol(subject, { max: 9 }),
-				description: `A community coin riding the “${name}” vibe — minted on three.ws as the culture surfaces across the open web.`,
+				description: `A community coin riding the “${name}” vibe, minted on three.ws as the culture surfaces across the open web.`,
 				image: null,
 			};
 		},
@@ -127,7 +127,7 @@ export const communityUseCases = [
 		id: 'community-ecosystem-contributors',
 		title: 'Ecosystem contributors → reward coins',
 		description:
-			'Mint a coin for the builders carrying a whole ecosystem forward right now — the contributors whose repos are trending across GitHub. Creator fees route to each builder; they claim by linking a Solana wallet on three.ws.',
+			'Mint a coin for the builders carrying a whole ecosystem forward right now: the contributors whose repos are trending across GitHub. Creator fees route to each builder; they claim by linking a Solana wallet on three.ws.',
 		tags: ['contributors', 'ecosystem'],
 		params: { window: 'active', sinceDays: 30, minStars: 120 },
 	}),
@@ -143,7 +143,7 @@ export const communityUseCases = [
 		id: 'community-open-source-builders',
 		title: 'Open-source builders this month',
 		description:
-			'The highest-signal open-source builders by trending stars over the last 30 days — one reward coin per person, fees routed to them. Turn community appreciation into real, claimable creator fees.',
+			'The highest-signal open-source builders by trending stars over the last 30 days: one reward coin per person, fees routed to them. Turn community appreciation into real, claimable creator fees.',
 		tags: ['builders', 'open-source'],
 		params: { window: 'new', sinceDays: 30, minStars: 100 },
 	}),
@@ -153,7 +153,7 @@ export const communityUseCases = [
 		id: 'community-culture-blend',
 		title: 'Community culture, cross-sourced',
 		description:
-			'Blend what the internet’s communities are actually talking about — pulling shared themes from social, forums, search, and meme culture at once — into an original, brand-safe community coin. Identity is invented; only $THREE is ever the promoted coin.',
+			'Blend what the internet’s communities are actually talking about, pulling shared themes from social, forums, search, and meme culture at once, into an original, brand-safe community coin. Identity is invented; only $THREE is ever the promoted coin.',
 		tags: ['blend', 'social'],
 		params: { sources: ['reddit', 'hackernews', 'knowyourmeme', 'x'], limit: 12 },
 	}),
@@ -161,7 +161,7 @@ export const communityUseCases = [
 		id: 'community-meme-zeitgeist',
 		title: 'The meme zeitgeist',
 		description:
-			'The shared jokes and references a community is rallying around, cross-checked across meme culture, search interest, and the broader knowledge web. An original Title-Case identity rides the vibe — never an external ticker.',
+			'The shared jokes and references a community is rallying around, cross-checked across meme culture, search interest, and the broader knowledge web. An original Title-Case identity rides the vibe, never an external ticker.',
 		tags: ['meme', 'zeitgeist'],
 		params: { sources: ['knowyourmeme', 'googletrends', 'wikipedia', 'reddit'], limit: 12 },
 	}),
@@ -169,7 +169,7 @@ export const communityUseCases = [
 		id: 'community-fandom-pulse',
 		title: 'Fandom pulse',
 		description:
-			'Where fandoms and interest communities are converging right now — themes surfacing across forums, search trends, and the encyclopedic web, distilled into a fresh, brand-safe community coin.',
+			'Where fandoms and interest communities are converging right now: themes surfacing across forums, search trends, and the encyclopedic web, distilled into a fresh, brand-safe community coin.',
 		tags: ['fandom', 'interest'],
 		params: { sources: ['reddit', 'googletrends', 'wikipedia', 'trending'], limit: 12 },
 	}),
