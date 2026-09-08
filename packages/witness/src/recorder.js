@@ -42,6 +42,41 @@ const DEFAULTS = {
 	sampleScrolls: false,
 };
 
+// Header a caller sets to say "I render a designed state for every status this
+// request can return". Its 5xx is then recorded as history but never counted as
+// an unhandled failure, so nothing proactively interrupts a page that is already
+// explaining what happened. Mirrors the DOM opt-out, data-witness="off".
+const HANDLED_HEADER = 'x-witness';
+const HANDLED_VALUE = 'handled';
+
+function headerValue(headers, name) {
+	if (!headers) return '';
+	try {
+		if (typeof headers.get === 'function') return String(headers.get(name) || '');
+		if (Array.isArray(headers)) {
+			const hit = headers.find((pair) => String(pair?.[0] ?? '').toLowerCase() === name);
+			return hit ? String(hit[1] ?? '') : '';
+		}
+		for (const key of Object.keys(headers)) {
+			if (key.toLowerCase() === name) return String(headers[key] ?? '');
+		}
+	} catch {
+		/* a malformed headers bag is simply not an opt-out */
+	}
+	return '';
+}
+
+function requestOptsOut(input, init) {
+	try {
+		const fromInit = headerValue(init?.headers, HANDLED_HEADER);
+		if (fromInit.toLowerCase() === HANDLED_VALUE) return true;
+		const fromRequest = typeof input === 'object' && input ? headerValue(input.headers, HANDLED_HEADER) : '';
+		return fromRequest.toLowerCase() === HANDLED_VALUE;
+	} catch {
+		return false;
+	}
+}
+
 function now() {
 	return Date.now();
 }
@@ -273,11 +308,21 @@ export class Recorder {
 					const method = String(init?.method || input?.method || 'GET').toUpperCase();
 					const raw = typeof input === 'string' ? input : input?.url || '';
 					const path = redactUrl(raw, { origin });
+					// A caller that ships `x-witness: handled` has a designed state for
+					// every status this request can answer with, so its 5xx is a product
+					// state, not an unhandled fault. The event is still recorded (a bug
+					// report should carry it), it just stops being the thing that makes
+					// the companion interrupt with "something just broke". The DOM
+					// sibling of this opt-out is data-witness="off".
+					const handled = requestOptsOut(input, init);
 					if (path && !self.options.ignore?.(path)) {
 						promise.then(
 							(res) => {
 								if (res && !res.ok) {
-									self.record('xhr', { detail: `${method} ${path} -> ${res.status}`, fatal: res.status >= 500 || res.status === 0 });
+									self.record('xhr', {
+										detail: `${method} ${path} -> ${res.status}`,
+										fatal: !handled && (res.status >= 500 || res.status === 0),
+									});
 								}
 							},
 							(err) => {
