@@ -1,0 +1,314 @@
+{
+	"startedAt": "2026-09-04T08:22:27.364Z",
+	"finishedAt": "2026-09-04T08:50:48.303Z",
+	"baseUrl": "https://three.ws",
+	"cases": {
+		"a": {
+			"id": "a",
+			"label": "Athlete",
+			"prompt": "A synthetic persona, not a real person: a professional sprinter in her late twenties, lean muscular build, short natural curls, wearing a fitted team tracksuit and running shoes, standing relaxed with arms slightly away from the body and hands open, fingers separated.",
+			"subjectClass": "person",
+			"stylized": false,
+			"variants": {
+				"before": {
+					"id": "before",
+					"tierRequested": "standard",
+					"views": {
+						"front": {
+							"renderError": "Navigation timeout of 30000 ms exceeded"
+						},
+						"three-quarter": {
+							"renderError": "Navigation timeout of 30000 ms exceeded"
+						},
+						"side": {
+							"file": "a-before-side.png",
+							"renderError": null
+						},
+						"hands": {
+							"file": "a-before-hands.png",
+							"renderError": null
+						}
+					},
+					"glbUrl": "https://pub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev/forge/anon/9e5ba691-57cf-41f3-9d55-90dd61b15a6e.glb",
+					"backend": "trellis_selfhost",
+					"tierServed": "standard",
+					"previewImageUrl": "https://pub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev/forge/refs/44131cdf-fae1-4851-917c-658f4db54e75.jpg",
+					"creationId": "9e5ba691-57cf-41f3-9d55-90dd61b15a6e",
+					"generationMs": 504193,
+					"error": null,
+					"meanScore": null,
+					"dimMeans": null
+				},
+				"after": {
+					"id": "after",
+					"tierRequested": "high",
+					"views": {
+						"front": {
+							"file": "a-after-front.png",
+							"renderError": null
+						},
+						"three-quarter": {}
+					},
+					"glbUrl": "https://pub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev/forge/anon/18b68632-8bce-4fd5-9126-01838b0abc47.glb",
+					"backend": "hunyuan3d",
+					"tierServed": "high",
+					"previewImageUrl": "https://pub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev/forge/refs/aa12332d-2c25-4a5f-9991-84078ca12457.jpg",
+					"creationId": "18b68632-8bce-4fd5-9126-01838b0abc47",
+					"generationMs": 119740,
+					"error": null,
+					"riggedGlbUrl": "https://pub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev/forge/anon/e08d6d25-4b7c-4a69-bfd8-fb0a64687fb8.glb",
+					"rigMs": 16510,
+					"meanScore": null,
+					"dimMeans": null
+				}
+			},
+			"directed": null,
+			"directedVia": null,
+			"directorError": "vertex director 403: [{\"error\":{\"code\":403,\"message\":\"Lightning dunning decision is deny for project: projects/93741856042\",\"status\":\"PERMISSION_DENIED\"}}]"
+		},
+		"b": {
+			"id": "b",
+			"label": "Grandmother",
+			"prompt": "A synthetic persona, not a real person: a grandmother in her seventies, soft build, silver hair pinned in a bun, reading glasses, wearing a knitted cardigan over a floral blouse and a long skirt with flat shoes, standing relaxed with arms slightly away from the body and hands open, fingers separated.",
+			"subjectClass": "person",
+			"stylized": false,
+			"variants": {
+				"before": {
+					"id": "before",
+					"tierRequested": "standard",
+					"views": {
+						"front": {
+							"renderError": "render timed out after 150000ms. page reported no error (the render loop never finished)"
+						},
+						"three-quarter": {
+							"file": "b-before-three-quarter.png",
+							"renderError": null
+						},
+						"side": {
+							"file": "b-before-side.png",
+							"renderError": null
+						},
+						"hands": {}
+					},
+					"glbUrl": "https://pub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev/forge/anon/a4403d52-2e60-461a-a58b-f532c98b1e91.glb",
+					"backend": "trellis_selfhost",
+					"tierServed": "standard",
+					"previewImageUrl": "https://pub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev/forge/refs/bfeb423b-232c-4184-99ed-97bcf44dab88.jpg",
+					"creationId": "a4403d52-2e60-461a-a58b-f532c98b1e91",
+					"generationMs": 321004,
+					"error": null,
+					"meanScore": null,
+					"dimMeans": null
+				},
+				"after": {
+					"id": "after",
+					"tierRequested": "high",
+					"views": {},
+					"glbUrl": "https://pub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev/forge/anon/ec76c664-9f66-47bf-a60e-7ee6a78eea7c.glb",
+					"backend": "hunyuan3d",
+					"tierServed": "high",
+					"previewImageUrl": "https://pub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev/forge/refs/d00e165b-394e-4d1c-975f-a99da3ef6575.jpg",
+					"creationId": "ec76c664-9f66-47bf-a60e-7ee6a78eea7c",
+					"generationMs": 123680,
+					"error": null,
+					"riggedGlbUrl": "https://pub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev/forge/anon/24bb8043-6475-4df0-a28c-c1e9f5ee3a0f.glb",
+					"rigMs": 15173,
+					"meanScore": null,
+					"dimMeans": null
+				}
+			},
+			"directed": null,
+			"directedVia": null,
+			"directorError": "vertex director 403: [{\"error\":{\"code\":403,\"message\":\"Lightning dunning decision is deny for project: projects/93741856042\",\"status\":\"PERMISSION_DENIED\"}}]"
+		},
+		"c": {
+			"id": "c",
+			"label": "Stylized kid (child-safe)",
+			"prompt": "A clearly stylized cartoon toy character of a child: chunky vinyl-figure proportions, oversized round head, simple mitten-like hands, matte toy-plastic finish with visible seam lines, painted-on facial features, wearing dungarees and a striped shirt, standing upright with arms slightly away from the body. Deliberately non-photoreal: a collectible vinyl figure, never a photographic human child.",
+			"subjectClass": "person",
+			"stylized": true,
+			"variants": {
+				"before": {
+					"id": "before",
+					"tierRequested": "standard",
+					"views": {
+						"front": {
+							"file": "c-before-front.png",
+							"renderError": null
+						},
+						"three-quarter": {
+							"file": "c-before-three-quarter.png",
+							"renderError": null
+						},
+						"side": {
+							"file": "c-before-side.png",
+							"renderError": null
+						}
+					},
+					"glbUrl": "https://pub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev/forge/anon/bd5f6005-b62a-4b5e-a06b-3bf0c83258d2.glb",
+					"backend": "trellis_selfhost",
+					"tierServed": "standard",
+					"previewImageUrl": "https://pub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev/forge/refs/bd989e61-f3db-4227-b8b2-f1105e9a3ccd.jpg",
+					"creationId": "bd5f6005-b62a-4b5e-a06b-3bf0c83258d2",
+					"generationMs": 401743,
+					"error": null,
+					"meanScore": null,
+					"dimMeans": null
+				},
+				"after": {
+					"id": "after",
+					"tierRequested": "high",
+					"views": {},
+					"glbUrl": "https://pub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev/forge/anon/5256ee8b-ee95-4a35-94e7-36ebeec4bb35.glb",
+					"backend": "hunyuan3d",
+					"tierServed": "high",
+					"previewImageUrl": "https://pub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev/forge/refs/7db49a37-9867-47d2-873e-f14304f50120.jpg",
+					"creationId": "5256ee8b-ee95-4a35-94e7-36ebeec4bb35",
+					"generationMs": 136313,
+					"error": null,
+					"riggedGlbUrl": "https://pub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev/forge/anon/efebb3ca-f5b0-4341-a925-a26bef9b390a.glb",
+					"rigMs": 15241,
+					"meanScore": null,
+					"dimMeans": null
+				}
+			},
+			"directed": null,
+			"directedVia": null,
+			"directorError": "vertex director 403: [{\"error\":{\"code\":403,\"message\":\"Lightning dunning decision is deny for project: projects/93741856042\",\"status\":\"PERMISSION_DENIED\"}}]"
+		},
+		"d": {
+			"id": "d",
+			"label": "Businessperson",
+			"prompt": "A synthetic persona, not a real person: a businessman in his forties, average build, short dark hair, clean-shaven, wearing a navy two-piece wool suit over a white shirt with an open collar and polished black leather shoes, standing relaxed with arms slightly away from the body and hands open, fingers separated.",
+			"subjectClass": "person",
+			"stylized": false,
+			"variants": {
+				"before": {
+					"id": "before",
+					"tierRequested": "standard",
+					"views": {},
+					"glbUrl": "https://pub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev/forge/anon/8b3ed5bc-e30e-4ad0-86f6-a584411ef165.glb",
+					"backend": "trellis_selfhost",
+					"tierServed": "standard",
+					"previewImageUrl": "https://pub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev/forge/refs/c65b6a39-fb87-484f-a8d8-f63908f84a4f.jpg",
+					"creationId": "8b3ed5bc-e30e-4ad0-86f6-a584411ef165",
+					"generationMs": 515301,
+					"error": null,
+					"meanScore": null,
+					"dimMeans": null
+				},
+				"after": {
+					"id": "after",
+					"tierRequested": "high",
+					"views": {},
+					"glbUrl": "https://pub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev/forge/anon/fd66c368-97b8-4afb-822c-d820a19a8e40.glb",
+					"backend": "hunyuan3d",
+					"tierServed": "high",
+					"previewImageUrl": "https://pub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev/forge/refs/668505a1-34e6-4f0d-81c5-0cacd5882b96.jpg",
+					"creationId": "fd66c368-97b8-4afb-822c-d820a19a8e40",
+					"generationMs": 126436,
+					"error": null,
+					"riggedGlbUrl": "https://pub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev/forge/anon/f9f648d7-2a94-4f03-9278-af835aa984d4.glb",
+					"rigMs": 18239,
+					"meanScore": null,
+					"dimMeans": null
+				}
+			},
+			"directed": null,
+			"directedVia": null,
+			"directorError": "vertex director 403: [{\"error\":{\"code\":403,\"message\":\"Lightning dunning decision is deny for project: projects/93741856042\",\"status\":\"PERMISSION_DENIED\"}}]"
+		},
+		"e": {
+			"id": "e",
+			"label": "Construction worker in workwear",
+			"prompt": "A synthetic persona, not a real person: a construction worker in his fifties, stocky build, weathered face, wearing a yellow high-visibility vest with reflective bands over a grey long-sleeve shirt, heavy canvas work trousers, a white hard hat and scuffed steel-toe boots, standing relaxed with arms slightly away from the body and hands open, fingers separated.",
+			"subjectClass": "person",
+			"stylized": false,
+			"variants": {
+				"before": {
+					"id": "before",
+					"tierRequested": "standard",
+					"views": {},
+					"glbUrl": "https://pub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev/forge/anon/9da72645-bcaf-4a81-a8eb-e862ab746bc5.glb",
+					"backend": "trellis_selfhost",
+					"tierServed": "standard",
+					"previewImageUrl": "https://pub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev/forge/refs/85ace1b0-e742-40bb-a64c-5a7624096d7c.jpg",
+					"creationId": "9da72645-bcaf-4a81-a8eb-e862ab746bc5",
+					"generationMs": 541639,
+					"error": null,
+					"meanScore": null,
+					"dimMeans": null
+				},
+				"after": {
+					"id": "after",
+					"tierRequested": "high",
+					"views": {},
+					"glbUrl": "https://pub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev/forge/anon/ef150e6a-db8a-4a13-a3c0-5ef0bf2fc8ec.glb",
+					"backend": "hunyuan3d",
+					"tierServed": "high",
+					"previewImageUrl": "https://pub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev/forge/refs/ca4b69bc-9c1f-448b-9649-6fe9b17f508d.jpg",
+					"creationId": "ef150e6a-db8a-4a13-a3c0-5ef0bf2fc8ec",
+					"generationMs": 94487,
+					"error": null,
+					"riggedGlbUrl": "https://pub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev/forge/anon/259b7184-f623-455b-afae-e4af207dffc0.glb",
+					"rigMs": 13272,
+					"meanScore": null,
+					"dimMeans": null
+				}
+			},
+			"directed": null,
+			"directedVia": null,
+			"directorError": "vertex director 403: [{\"error\":{\"code\":403,\"message\":\"Lightning dunning decision is deny for project: projects/93741856042\",\"status\":\"PERMISSION_DENIED\"}}]"
+		},
+		"f": {
+			"id": "f",
+			"label": "Dancer mid-pose",
+			"prompt": "A synthetic persona, not a real person: a contemporary dancer in her thirties, tall athletic build, hair tied back, wearing a fitted dark leotard and a loose wrap skirt with bare feet, standing tall in a poised neutral stance with one arm raised slightly to the side and both hands open, fingers separated and clearly visible.",
+			"subjectClass": "person",
+			"stylized": false,
+			"variants": {
+				"before": {
+					"id": "before",
+					"tierRequested": "standard",
+					"views": {},
+					"error": "job f1.eyJwIjoiZ2NwIiwiayI6bnVsbCwidCI6ImV5SnRiMlJsSWpvaWRISmxiR3hwY3lJc0luUmhjMnRKWkNJNklqTXpNekJoWmpObUxUTTNPVFF0TkdVMVpDMWhZMk0wTFdNMllqSXdabUkzT0RVeE15SXNJbUpoYzJWVmNtd2lPaUpvZEhSd2N6b3ZMMjF2WkdWc0xYUnlaV3hzYVhNdGJIQTJOREpyTTJ0d1lTMTFZeTVoTG5KMWJpNWhjSEFpTENKeVpYTjFiSFJMWlhraU9pSnlaWE4xYkhSZloyTnpYM1Z5YkNKOSJ9.ilvkHkQbRUftrmQMUb9Vgmcab024zqEqv1sswtQ5YaU did not finish within 900000ms",
+					"generationMs": 914674
+				},
+				"after": {
+					"id": "after",
+					"tierRequested": "high",
+					"views": {},
+					"glbUrl": "https://pub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev/forge/anon/dc1ba014-76d3-47d2-ac62-0b4bd6f67a14.glb",
+					"backend": "hunyuan3d",
+					"tierServed": "high",
+					"previewImageUrl": "https://pub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev/forge/refs/190a2102-58b7-4b8d-99d9-c0ffb5ea82f7.jpg",
+					"creationId": "dc1ba014-76d3-47d2-ac62-0b4bd6f67a14",
+					"generationMs": 112123,
+					"error": null,
+					"riggedGlbUrl": "https://pub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev/forge/anon/6509a3f8-e627-46c3-81e7-51b99bf8171a.glb",
+					"rigMs": 24651,
+					"meanScore": null,
+					"dimMeans": null
+				}
+			},
+			"directed": null,
+			"directedVia": null,
+			"directorError": "vertex director 403: [{\"error\":{\"code\":403,\"message\":\"Lightning dunning decision is deny for project: projects/93741856042\",\"status\":\"PERMISSION_DENIED\"}}]"
+		}
+	},
+	"variants": [
+		{
+			"id": "before",
+			"tier": "standard"
+		},
+		{
+			"id": "after",
+			"tier": "high"
+		}
+	],
+	"judge": {
+		"model": "google/gemini-2.5-pro",
+		"maxTokens": 4096,
+		"callsPerView": 2
+	}
+}
