@@ -559,6 +559,27 @@
 			}
 		},
 		{
+			"id": "audit-interactive-states",
+			"script": "scripts/audit-interactive-states.mjs",
+			"npm": "audit:states",
+			"title": "Interactive-state ratchet",
+			"protects": "A selector that declares cursor:pointer cannot ship without a hover rule behind it.",
+			"why": "public/tokens.css gives every control a focus floor and a disabled floor, but hover is component-specific and a blanket rule would stack on top of components that already style their own. So hover is audited instead: cursor:pointer promises the thing is clickable, and with no :hover rule in the same stylesheet the pointer changes shape and nothing else happens, which reads as a dead control. Counting against a committed baseline and failing only when the count rises makes the debt strictly decreasing, the same contract as the design-token ratchet beside it.",
+			"stages": [
+				"gate"
+			],
+			"needs": "none",
+			"proof": {
+				"summary": "A stylesheet declaring a clickable selector with no hover rule for it.",
+				"violation": {
+					"write": {
+						"public/guard-proof-hover.css": ".proof-clickable { cursor: pointer; color: var(--fg); }\n.proof-other { cursor: pointer; color: var(--fg); }\n"
+					}
+				},
+				"expect": "interactive-state gaps increased"
+			}
+		},
+		{
 			"id": "check-browser-graph",
 			"script": "scripts/check-browser-graph.mjs",
 			"npm": "check:browser-graph",

@@ -96,6 +96,7 @@ Run `npm run audit:guards` to print the current count and per-stage breakdown. T
 | The guard registry | `npm run audit:guards` | Every guard is registered and every stage claim is true. |
 | One `<model-viewer>` build | `npm run check:model-viewer` | Every `<model-viewer>` reference in tracked source names one version, no version is served under two integrity hashes, and the vendored copy matches. |
 | Design-token ratchet | `npm run audit:tokens` | Hardcoded colour hexes cannot creep back past a committed baseline. |
+| Interactive-state ratchet | `npm run audit:states` | A selector that declares cursor:pointer cannot ship without a hover rule behind it. |
 | Credential material | `npm run check:secrets` | No dotenv file, private key, keystore, or downloaded cloud credential becomes a tracked file, and no added line carries a provider-issued key. |
 | Python worker dependencies | `npm run audit:deps` | No pinned Python dependency in `workers/`, `services/` or `packages/` carries a known vulnerability in the OSV database. Needs network, so it runs on demand rather than in the gate. |
 | iOS app icon | `npm run check:ios-icons` | The committed iOS icon and launch images are exactly what the current brand mark produces, and the icon carries no alpha channel. |
