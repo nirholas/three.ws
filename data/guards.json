@@ -1371,13 +1371,8 @@
 			],
 			"needs": "none",
 			"proof": {
-				"summary": "A served tour bundle that no longer matches a fresh tour-sdk build.",
-				"violation": {
-					"append": {
-						"public/tour-builder/tour.global.js": "\n// guard-proof-tour-drift\n"
-					}
-				},
-				"expect": "public/tour-builder/tour.global.js is stale"
+				"kind": "live",
+				"reason": "The check is a comparison against a fresh `npm run build` of tour-sdk, so proving it needs that build to reproduce byte-for-byte. It does not inside the proof sandbox, which reports the served copy as stale before any fixture is applied and leaves nothing attributable to the fixture. Run `npm run audit:tour-global` on a real tree instead."
 			}
 		},
 		{
