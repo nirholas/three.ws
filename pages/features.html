@@ -1660,7 +1660,12 @@
 					} catch { return iso; }
 				};
 				try {
-					const res = await fetch('/changelog.json', { headers: { accept: 'application/json' } });
+					// Six newest entries only, so read the 150-entry window rather
+					// than the full 870 KB history. /changelog.json is the fallback
+					// for a cached shell served by a deploy that predates the small
+					// feed; both carry the same envelope.
+					let res = await fetch('/changelog-recent.json', { headers: { accept: 'application/json' } });
+					if (!res.ok) res = await fetch('/changelog.json', { headers: { accept: 'application/json' } });
 					if (!res.ok) throw new Error('feed ' + res.status);
 					const { entries = [] } = await res.json();
 					const seen = new Set();

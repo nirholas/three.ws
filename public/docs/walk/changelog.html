@@ -148,16 +148,41 @@
 					.join('');
 			}
 
+			async function fetchFeed(url) {
+				const res = await fetch(url, { headers: { accept: 'application/json' } });
+				if (!res.ok) throw new Error(`HTTP ${res.status}`);
+				const data = await res.json();
+				return {
+					entries: Array.isArray(data.entries) ? data.entries : [],
+					complete: data.complete === true || !('complete' in data),
+				};
+			}
+
+			function walkEntriesIn(all) {
+				return all.filter(isWalk).sort((a, b) => String(b.date).localeCompare(String(a.date)));
+			}
+
+			// Paint from the 150-entry window first (~138 KB), then quietly complete
+			// the history from the full feed (870 KB). Everything the upgrade adds is
+			// strictly older than what is already on screen, so it renders below the
+			// fold and nothing above it moves.
 			async function load() {
 				try {
-					const res = await fetch('/changelog.json', { headers: { accept: 'application/json' } });
-					if (!res.ok) throw new Error(`HTTP ${res.status}`);
-					const data = await res.json();
-					const all = Array.isArray(data.entries) ? data.entries : [];
-					const walk = all
-						.filter(isWalk)
-						.sort((a, b) => String(b.date).localeCompare(String(a.date)));
-					render(walk);
+					const recent = await fetchFeed('/changelog-recent.json');
+					render(walkEntriesIn(recent.entries));
+					host.setAttribute('aria-busy', 'false');
+					if (recent.complete) return;
+					const full = await fetchFeed('/changelog.json');
+					const complete = walkEntriesIn(full.entries);
+					if (complete.length > walkEntriesIn(recent.entries).length) render(complete);
+					return;
+				} catch {
+					/* Fall through to the full feed: it is the only source that is
+					   guaranteed to exist on every deploy. */
+				}
+				try {
+					const full = await fetchFeed('/changelog.json');
+					render(walkEntriesIn(full.entries));
 				} catch (err) {
 					host.innerHTML =
 						'<p class="wd-cl-state">Couldn\'t load the changelog right now. ' +
