@@ -358,9 +358,17 @@
 		var par = node.parentNode;
 		if (!par) return;
 		if (SKIP_TAGS[par.tagName]) return;
-		// Skip if inside any skip context or already inside a tooltip
+		// Skip if inside any skip context or already inside a tooltip.
+		// aria-hidden / hidden / inert subtrees are skipped for two reasons, and
+		// the accessibility one is the serious half: a wrapper carries
+		// tabindex="0", so wrapping a term inside an aria-hidden subtree hands a
+		// keyboard user a tab stop on content a screen reader announces as
+		// nothing (axe: aria-hidden-focus, serious). It also wastes the
+		// first-occurrence slot for that term on decorative text, so the real
+		// occurrence further down the page silently never gets its tooltip.
 		if (par.closest) {
 			if (par.closest('code,pre,a,button,input,textarea,select,.tws-tt,[data-term]')) return;
+			if (par.closest('[aria-hidden="true"],[hidden],[inert]')) return;
 		}
 
 		var text = node.textContent;
