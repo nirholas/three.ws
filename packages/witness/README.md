@@ -155,6 +155,24 @@ from a network call.
 </section>
 ```
 
+- **Mark a request whose failures you already handle** with an `x-witness:
+  handled` header. The call is still recorded, so a report the user files
+  carries it, but its 5xx stops counting as an unhandled failure. That matters
+  because `hasFailure()` is what a host app reads to decide whether to
+  proactively ask "something just broke, want to tell me what you were doing?".
+  A page that renders a designed state for a 503 (a rate limit, a lane outage)
+  should not trigger that offer, and on a narrow screen the offer landed on top
+  of the recovery buttons the page was already showing.
+
+```js
+// This endpoint's 429 and 503 both have designed states in the UI.
+await fetch('/api/forge', { method: 'POST', headers: { 'x-witness': 'handled' } });
+```
+
+A request that never resolves at all (a dropped connection, DNS failure) still
+counts as a failure with or without the marker: no UI can have a designed state
+for a response it never received.
+
 ## It never changes the page it watches
 
 - Listeners are capture-phase and never call `preventDefault`.
