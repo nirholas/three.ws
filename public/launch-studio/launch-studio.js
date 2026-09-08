@@ -1,4 +1,4 @@
-// Launch Studio — a catalog of coin-launch recipes with LIVE previews of what
+// Launch Studio: a catalog of coin-launch recipes with LIVE previews of what
 // each would mint right now, and one-click handoff to the real /launch wizard.
 //
 // Reads /api/pump/launch-studio (list + preview). Designed to be the most
@@ -28,143 +28,173 @@ const CATEGORY_META = {
 const hue = (cat) => (CATEGORY_META[cat]?.hue ?? 150);
 
 // Reward-target planner options. `needs` = extra input required.
+//
+// Every entry here has to survive the handoff: the choice is encoded as
+// ?reward=… on the /launch deep link, /launch parses it, and the fee-split panel
+// opens pre-filled with that recipient once the coin mints. Cashback and buyback
+// used to sit in this list and did neither: cashback is a read-only pump.fun pool
+// property with no create-time control, and the launch panel's buyback slider
+// burns AGENT REVENUE rather than routing creator fees. Both rendered a chip that
+// promised a payout nothing downstream could deliver, so neither is offered.
 const REWARD_TARGETS = [
 	{ id: 'default',  label: 'As designed', hint: 'Use the recipe’s built-in routing' },
 	{ id: 'creator',  label: 'Creator',     hint: 'Fees stay with the launching wallet' },
 	{ id: 'github',   label: 'GitHub @user', hint: 'Route 100% to a GitHub account', needs: 'handle' },
 	{ id: 'x',        label: 'X @handle',    hint: 'Route 100% to an X (Twitter) account', needs: 'handle' },
 	{ id: 'wallet',   label: 'Wallet / .sol', hint: 'Route 100% to a Solana address or .sol name', needs: 'address' },
-	{ id: 'cashback', label: 'Cashback',     hint: 'Trading fees return to holders' },
-	{ id: 'buyback',  label: 'Buyback',      hint: 'Fees auto-buy-back & burn the coin' },
 ];
 
 const CSS = `
-.ls{--line:rgba(255,255,255,.08);--line2:rgba(255,255,255,.14);--ink:rgba(255,255,255,.92);--dim:rgba(255,255,255,.5);color:var(--ink);
-  --ease:cubic-bezier(.22,.61,.36,1)}
+/* Every colour here resolves through the platform tokens in /tokens.css, so the
+   whole surface flips with [data-theme]. The three that do NOT flip are
+   deliberate: the drawer scrim (--scrim sits over content, not a page surface),
+   the toast, and the coin monogram, which are coloured fills carrying their own
+   ink. --ls-* locals exist so the accent lightness can be re-pitched for the
+   light canvas in one block instead of per rule; --h is the per-category hue,
+   set inline on the card / drawer root. */
+.ls{--ls-line:var(--stroke,rgba(255,255,255,.08));--ls-line2:var(--stroke-strong,rgba(255,255,255,.14));
+  --ls-ink:var(--ink-bright,#fff);--ls-dim:var(--ink-dim,rgba(255,255,255,.5));--ls-faint:var(--ink-faint,rgba(255,255,255,.42));
+  --ls-s1:var(--surface-1,rgba(255,255,255,.03));--ls-s2:var(--surface-2,rgba(255,255,255,.05));--ls-s3:var(--surface-3,rgba(255,255,255,.08));
+  --ls-page:var(--bg-0,#0a0a0a);--ls-panel:var(--bg-1,#12151c);
+  --ls-al:62%;--ls-ail:74%;--ls-brand-l:74%;--ls-cta-ink:#d2f3df;
+  color:var(--ls-ink);--ease:cubic-bezier(.22,.61,.36,1)}
+:root[data-theme='light'] .ls{--ls-al:44%;--ls-ail:32%;--ls-brand-l:28%;--ls-cta-ink:#14532d}
 .ls *{box-sizing:border-box}
+.ls-sr{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0}
 .ls-tools{position:sticky;top:0;z-index:5;display:flex;flex-direction:column;gap:.7rem;padding:.7rem 0 .8rem;margin-bottom:.4rem;
-  background:linear-gradient(180deg,#0b0e14 72%,rgba(11,14,20,0));backdrop-filter:blur(6px)}
+  background:linear-gradient(180deg,var(--ls-page) 72%,transparent);backdrop-filter:blur(6px)}
 .ls-search-row{display:flex;gap:.5rem;align-items:center}
 .ls-search{flex:1;position:relative;min-width:0}
 .ls-search input{width:100%;padding:.66rem .8rem .66rem 2.1rem;border-radius:11px;outline:none;font-size:.85rem;
-  background:rgba(255,255,255,.045);border:1px solid var(--line);color:#fff;transition:border-color .15s,background .15s}
-.ls-search input:focus{border-color:rgba(164,240,188,.5);background:rgba(255,255,255,.06)}
-.ls-search input::placeholder{color:rgba(255,255,255,.32)}
-.ls-search .ls-mag{position:absolute;left:.72rem;top:50%;transform:translateY(-50%);color:rgba(255,255,255,.35);font-size:.9rem;pointer-events:none}
-.ls-search .ls-kbd{position:absolute;right:.6rem;top:50%;transform:translateY(-50%);font-size:.62rem;color:rgba(255,255,255,.3);
-  border:1px solid var(--line2);border-radius:5px;padding:.08rem .3rem;font-family:ui-monospace,monospace}
+  background:var(--ls-s1);border:1px solid var(--ls-line);color:var(--ls-ink);transition:border-color .15s,background .15s}
+.ls-search input:focus-visible{border-color:hsl(142 60% var(--ls-al));background:var(--ls-s2);outline:2px solid hsl(142 60% var(--ls-al));outline-offset:1px}
+.ls-search input::placeholder{color:var(--ls-faint)}
+.ls-search .ls-mag{position:absolute;left:.72rem;top:50%;transform:translateY(-50%);color:var(--ls-faint);font-size:.9rem;pointer-events:none}
+.ls-search .ls-kbd{position:absolute;right:.6rem;top:50%;transform:translateY(-50%);font-size:.62rem;color:var(--ls-faint);
+  border:1px solid var(--ls-line2);border-radius:5px;padding:.08rem .3rem;font-family:ui-monospace,monospace}
 .ls-surprise{white-space:nowrap;font-size:.78rem;font-weight:650;padding:.62rem .8rem;border-radius:11px;cursor:pointer;
-  background:linear-gradient(135deg,rgba(180,140,240,.2),rgba(120,90,220,.14));border:1px solid rgba(170,130,240,.4);color:#e2d4fb;transition:all .15s}
-.ls-surprise:hover{background:linear-gradient(135deg,rgba(180,140,240,.32),rgba(120,90,220,.2));border-color:rgba(170,130,240,.65);transform:translateY(-1px)}
+  background:hsl(268 70% var(--ls-al) / .16);border:1px solid hsl(268 70% var(--ls-al) / .42);color:hsl(268 62% var(--ls-ail));transition:all .15s}
+.ls-surprise:hover{background:hsl(268 70% var(--ls-al) / .28);border-color:hsl(268 70% var(--ls-al) / .65);transform:translateY(-1px)}
+.ls-surprise:active{transform:translateY(0)}
 .ls-tabs{display:flex;gap:.4rem;flex-wrap:wrap;align-items:center}
 .ls-tab{display:inline-flex;align-items:center;gap:.4rem;font-size:.76rem;font-weight:600;padding:.4rem .68rem;border-radius:999px;cursor:pointer;
-  background:rgba(255,255,255,.035);border:1px solid var(--line);color:var(--dim);transition:all .15s;white-space:nowrap}
-.ls-tab:hover{color:#fff;border-color:var(--line2);transform:translateY(-1px)}
-.ls-tab.on{color:#fff}
-.ls-tab .n{font-size:.64rem;opacity:.65;font-weight:600}
-.ls-modeseg{margin-left:auto;display:inline-flex;background:rgba(255,255,255,.04);border:1px solid var(--line);border-radius:999px;padding:.14rem}
-.ls-modeseg button{font-size:.7rem;font-weight:650;padding:.3rem .62rem;border-radius:999px;cursor:pointer;background:none;border:none;color:var(--dim);transition:all .15s}
-.ls-modeseg button.on{background:rgba(255,255,255,.1);color:#fff}
-.ls-modeseg button:hover:not(.on){color:#fff}
+  background:var(--ls-s1);border:1px solid var(--ls-line);color:var(--ls-dim);transition:all .15s;white-space:nowrap}
+.ls-tab:hover{color:var(--ls-ink);border-color:var(--ls-line2);transform:translateY(-1px)}
+.ls-tab:active{transform:translateY(0)}
+.ls-tab.on{color:var(--ls-ink);background:var(--ls-s3);border-color:var(--ls-line2)}
+.ls-tab .n{font-size:.64rem;opacity:.7;font-weight:600}
+.ls-modeseg{margin-left:auto;display:inline-flex;background:var(--ls-s1);border:1px solid var(--ls-line);border-radius:999px;padding:.14rem}
+.ls-modeseg button{font-size:.7rem;font-weight:650;padding:.3rem .62rem;border-radius:999px;cursor:pointer;background:none;border:none;color:var(--ls-dim);transition:all .15s}
+.ls-modeseg button.on{background:var(--ls-s3);color:var(--ls-ink)}
+.ls-modeseg button:hover:not(.on){color:var(--ls-ink)}
+.ls :is(button,a,input,[tabindex]):focus-visible{outline:2px solid hsl(var(--h,142) 70% var(--ls-al));outline-offset:2px;border-radius:8px}
 
 .ls-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:.75rem}
-.ls-card{position:relative;display:flex;flex-direction:column;gap:.55rem;padding:.9rem .95rem .9rem 1.1rem;border-radius:14px;cursor:pointer;text-align:left;overflow:hidden;
-  background:rgba(255,255,255,.028);border:1px solid var(--line);transition:transform .18s var(--ease),border-color .15s,background .15s,box-shadow .2s}
-.ls-card::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;background:hsl(var(--h) 70% 62%);opacity:.75;transition:opacity .15s}
-.ls-card:hover{transform:translateY(-3px);background:rgba(255,255,255,.05);border-color:var(--line2);box-shadow:0 10px 30px -12px hsl(var(--h) 70% 40% / .5)}
-.ls-card:hover::before{opacity:1}
-.ls-card:focus-visible{outline:2px solid hsl(var(--h) 70% 62%);outline-offset:2px}
-.ls-card.on{border-color:hsl(var(--h) 70% 55% / .6);background:hsl(var(--h) 60% 50% / .07)}
+/* The card is a plain container: the full-bleed button below it opens the
+   drawer, so the Save control can sit inside the card without nesting one
+   interactive element inside another. */
+.ls-card{position:relative;display:flex;flex-direction:column;gap:.55rem;padding:.9rem .95rem .9rem 1.1rem;border-radius:14px;text-align:left;overflow:hidden;
+  background:var(--ls-s1);border:1px solid var(--ls-line);transition:transform .18s var(--ease),border-color .15s,background .15s,box-shadow .2s}
+.ls-card::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;background:hsl(var(--h) 70% var(--ls-al));opacity:.75;transition:opacity .15s}
+.ls-card:hover,.ls-card:focus-within{transform:translateY(-3px);background:var(--ls-s2);border-color:var(--ls-line2);box-shadow:0 10px 30px -12px hsl(var(--h) 70% 40% / .5)}
+.ls-card:hover::before,.ls-card:focus-within::before{opacity:1}
+.ls-card.on{border-color:hsl(var(--h) 70% var(--ls-al) / .6);background:hsl(var(--h) 60% var(--ls-al) / .09)}
+.ls-open{position:absolute;inset:0;z-index:1;border:none;background:none;padding:0;margin:0;cursor:pointer;font:inherit;color:transparent}
+.ls-open:focus-visible{outline:2px solid hsl(var(--h) 70% var(--ls-al));outline-offset:-3px;border-radius:14px}
 .ls-card-top{display:flex;align-items:center;gap:.5rem}
 .ls-card-ic{width:26px;height:26px;flex-shrink:0;display:grid;place-items:center;border-radius:8px;font-size:.82rem;
-  background:hsl(var(--h) 60% 55% / .14);color:hsl(var(--h) 75% 72%);border:1px solid hsl(var(--h) 60% 55% / .28)}
-.ls-card-t{font-size:.87rem;font-weight:650;letter-spacing:-.01em;line-height:1.25;flex:1;min-width:0}
-.ls-fav{flex-shrink:0;width:24px;height:24px;border-radius:7px;border:none;background:none;cursor:pointer;color:rgba(255,255,255,.28);font-size:.9rem;line-height:1;transition:color .15s,transform .15s}
-.ls-fav:hover{color:#f6d878;transform:scale(1.15)}
-.ls-fav.on{color:#f6d878}
-.ls-card-d{font-size:.73rem;color:var(--dim);line-height:1.5}
+  background:hsl(var(--h) 60% var(--ls-al) / .16);color:hsl(var(--h) 65% var(--ls-ail));border:1px solid hsl(var(--h) 60% var(--ls-al) / .3)}
+.ls-card-t{font-size:.87rem;font-weight:650;letter-spacing:-.01em;line-height:1.25;flex:1;min-width:0;color:var(--ls-ink)}
+.ls-fav{position:relative;z-index:2;flex-shrink:0;width:24px;height:24px;border-radius:7px;border:none;background:none;cursor:pointer;color:var(--ls-faint);font-size:.9rem;line-height:1;transition:color .15s,transform .15s}
+.ls-fav:hover{color:#d99b06;transform:scale(1.15)}
+.ls-fav:active{transform:scale(1)}
+.ls-fav.on{color:#d99b06}
+:root:not([data-theme='light']) .ls-fav:hover,:root:not([data-theme='light']) .ls-fav.on{color:#f6d878}
+.ls-card-d{font-size:.73rem;color:var(--ls-dim);line-height:1.5}
 .ls-card-foot{display:flex;align-items:center;gap:.4rem;margin-top:auto;flex-wrap:wrap}
 .ls-mode{font-size:.58rem;font-weight:700;letter-spacing:.04em;text-transform:uppercase;padding:.16rem .42rem;border-radius:999px}
-.ls-mode.attribution{color:#a8c4f0;background:rgba(120,160,240,.14);border:1px solid rgba(120,160,240,.32)}
-.ls-mode.narrative{color:#e6d3a6;background:rgba(240,205,130,.1);border:1px solid rgba(240,205,130,.28)}
-.ls-card-r{font-size:.66rem;color:hsl(var(--h) 60% 70%);display:flex;align-items:center;gap:.3rem;margin-left:auto}
+.ls-mode.attribution{color:hsl(220 62% var(--ls-ail));background:hsl(220 70% var(--ls-al) / .14);border:1px solid hsl(220 70% var(--ls-al) / .34)}
+.ls-mode.narrative{color:hsl(42 62% var(--ls-ail));background:hsl(42 75% var(--ls-al) / .14);border:1px solid hsl(42 75% var(--ls-al) / .32)}
+.ls-card-r{font-size:.66rem;color:hsl(var(--h) 55% var(--ls-ail));display:flex;align-items:center;gap:.3rem;margin-left:auto}
 
-.ls-msg{padding:1.6rem;text-align:center;font-size:.82rem;color:var(--dim);border:1px dashed var(--line2);border-radius:14px;line-height:1.6}
-.ls-msg b{color:#fff;display:block;margin-bottom:.35rem;font-size:.95rem}
+.ls-msg{padding:1.6rem;text-align:center;font-size:.82rem;color:var(--ls-dim);border:1px dashed var(--ls-line2);border-radius:14px;line-height:1.6}
+.ls-msg b{color:var(--ls-ink);display:block;margin-bottom:.35rem;font-size:.95rem}
 .ls-msg .ls-btn{margin-top:.7rem}
-.ls-err{color:#f6b3b3;border-color:rgba(246,179,179,.28)}
+.ls-err{color:hsl(0 62% var(--ls-ail));border-color:hsl(0 62% var(--ls-al) / .32)}
 .ls-btn{display:inline-flex;align-items:center;gap:.4rem;font-size:.76rem;font-weight:650;padding:.44rem .78rem;border-radius:9px;cursor:pointer;text-decoration:none;
-  background:rgba(255,255,255,.06);border:1px solid var(--line2);color:rgba(255,255,255,.82);transition:all .15s}
-.ls-btn:hover{background:rgba(255,255,255,.11);color:#fff}
-.ls-btn.primary{background:linear-gradient(135deg,rgba(120,200,140,.24),rgba(60,140,100,.15));border-color:rgba(120,200,140,.45);color:#d2f3df}
-.ls-btn.primary:hover{background:linear-gradient(135deg,rgba(120,200,140,.36),rgba(60,140,100,.24));border-color:rgba(120,200,140,.7)}
+  background:var(--ls-s2);border:1px solid var(--ls-line2);color:var(--ls-ink);transition:all .15s}
+.ls-btn:hover{background:var(--ls-s3)}
+.ls-btn:active{transform:translateY(1px)}
 
-.ls-skel{border-radius:14px;background:linear-gradient(100deg,rgba(255,255,255,.03) 30%,rgba(255,255,255,.07) 50%,rgba(255,255,255,.03) 70%);
+.ls-skel{border-radius:14px;background:linear-gradient(100deg,var(--skeleton-base,rgba(255,255,255,.03)) 30%,var(--skeleton-sheen,rgba(255,255,255,.07)) 50%,var(--skeleton-base,rgba(255,255,255,.03)) 70%);
   background-size:200% 100%;animation:ls-sh 1.3s linear infinite;height:132px}
 @keyframes ls-sh{to{background-position:-200% 0}}
 
 /* Preview drawer */
 .ls-drawer{position:fixed;inset:0;z-index:60;display:flex;justify-content:flex-end;pointer-events:none}
 .ls-drawer.open{pointer-events:auto}
-.ls-scrim{position:absolute;inset:0;background:rgba(4,6,10,.62);opacity:0;transition:opacity .25s var(--ease);backdrop-filter:blur(2px)}
+.ls-scrim{position:absolute;inset:0;background:var(--scrim,rgba(0,0,0,.55));opacity:0;transition:opacity .25s var(--ease);backdrop-filter:blur(2px);border:none;padding:0;cursor:pointer}
 .ls-drawer.open .ls-scrim{opacity:1}
-.ls-panel{position:relative;width:min(560px,100%);height:100%;overflow-y:auto;background:#0d1119;border-left:1px solid var(--line2);
+.ls-panel{position:relative;width:min(560px,100%);height:100%;overflow-y:auto;background:var(--ls-panel);border-left:1px solid var(--ls-line2);
   box-shadow:-30px 0 60px -20px rgba(0,0,0,.7);transform:translateX(100%);transition:transform .3s var(--ease);padding:1.1rem 1.2rem 2.4rem}
 .ls-drawer.open .ls-panel{transform:none}
-.ls-ph{display:flex;align-items:flex-start;gap:.6rem;position:sticky;top:-1.1rem;background:linear-gradient(180deg,#0d1119 80%,rgba(13,17,25,0));padding:.3rem 0 .7rem;margin:-.3rem 0 0;z-index:2}
+.ls-ph{display:flex;align-items:flex-start;gap:.6rem;position:sticky;top:-1.1rem;background:linear-gradient(180deg,var(--ls-panel) 80%,transparent);padding:.3rem 0 .7rem;margin:-.3rem 0 0;z-index:2}
 .ls-ph-ic{width:34px;height:34px;flex-shrink:0;display:grid;place-items:center;border-radius:10px;font-size:1rem;
-  background:hsl(var(--h) 60% 55% / .16);color:hsl(var(--h) 75% 72%);border:1px solid hsl(var(--h) 60% 55% / .3)}
+  background:hsl(var(--h) 60% var(--ls-al) / .18);color:hsl(var(--h) 65% var(--ls-ail));border:1px solid hsl(var(--h) 60% var(--ls-al) / .32)}
 .ls-ph-tt{flex:1;min-width:0}
-.ls-ph-tt h3{font-size:1.02rem;font-weight:700;letter-spacing:-.02em;margin:0 0 .12rem}
-.ls-ph-tt p{font-size:.72rem;color:var(--dim);margin:0;line-height:1.45}
-.ls-x{flex-shrink:0;width:30px;height:30px;border-radius:8px;border:1px solid var(--line2);background:rgba(255,255,255,.04);color:var(--dim);cursor:pointer;font-size:1rem;line-height:1;transition:all .15s}
-.ls-x:hover{background:rgba(255,255,255,.1);color:#fff}
+.ls-ph-tt h3{font-size:1.02rem;font-weight:700;letter-spacing:-.02em;margin:0 0 .12rem;color:var(--ls-ink)}
+.ls-ph-tt p{font-size:.72rem;color:var(--ls-dim);margin:0;line-height:1.45}
+.ls-x{flex-shrink:0;width:30px;height:30px;border-radius:8px;border:1px solid var(--ls-line2);background:var(--ls-s1);color:var(--ls-dim);cursor:pointer;font-size:1rem;line-height:1;transition:all .15s}
+.ls-x:hover{background:var(--ls-s3);color:var(--ls-ink)}
 
-.ls-ctrls{display:flex;flex-direction:column;gap:.6rem;padding:.85rem;border-radius:12px;background:rgba(255,255,255,.025);border:1px solid var(--line);margin:.3rem 0 1rem}
-.ls-ctrl-l{font-size:.66rem;font-weight:600;letter-spacing:.03em;text-transform:uppercase;color:rgba(255,255,255,.42);margin-bottom:.38rem}
+.ls-ctrls{display:flex;flex-direction:column;gap:.6rem;padding:.85rem;border-radius:12px;background:var(--ls-s1);border:1px solid var(--ls-line);margin:.3rem 0 1rem}
+.ls-ctrl-l{font-size:.66rem;font-weight:600;letter-spacing:.03em;text-transform:uppercase;color:var(--ls-faint);margin-bottom:.38rem}
 .ls-rt{display:flex;gap:.3rem;flex-wrap:wrap}
 .ls-rt button{font-size:.68rem;font-weight:600;padding:.32rem .55rem;border-radius:8px;cursor:pointer;
-  background:rgba(255,255,255,.04);border:1px solid var(--line);color:var(--dim);transition:all .13s}
-.ls-rt button:hover{color:#fff;border-color:var(--line2)}
-.ls-rt button.on{background:rgba(164,240,188,.13);border-color:rgba(164,240,188,.42);color:#c8f0d8}
+  background:var(--ls-s1);border:1px solid var(--ls-line);color:var(--ls-dim);transition:all .13s}
+.ls-rt button:hover{color:var(--ls-ink);border-color:var(--ls-line2)}
+.ls-rt button.on{background:hsl(142 60% var(--ls-al) / .15);border-color:hsl(142 60% var(--ls-al) / .45);color:hsl(142 55% var(--ls-brand-l))}
 .ls-rt-input{margin-top:.5rem;width:100%;padding:.42rem .6rem;border-radius:8px;outline:none;font-size:.74rem;font-family:ui-monospace,monospace;
-  background:rgba(255,255,255,.04);border:1px solid var(--line);color:#fff}
-.ls-rt-input:focus{border-color:rgba(164,240,188,.45)}
-.ls-rt-hint{font-size:.66rem;color:rgba(255,255,255,.4);margin-top:.35rem;line-height:1.4}
+  background:var(--ls-s1);border:1px solid var(--ls-line);color:var(--ls-ink)}
+.ls-rt-input::placeholder{color:var(--ls-faint)}
+.ls-rt-input:focus{border-color:hsl(142 60% var(--ls-al) / .5)}
+.ls-rt-hint{font-size:.66rem;color:var(--ls-faint);margin-top:.35rem;line-height:1.4}
 .ls-slider-row{display:flex;align-items:center;gap:.6rem}
-.ls-slider-row input[type=range]{flex:1;accent-color:#a4f0bc}
-.ls-slider-v{font-size:.74rem;font-family:ui-monospace,monospace;color:#c8f0d8;min-width:4.5rem;text-align:right}
-.ls-netseg{display:inline-flex;background:rgba(255,255,255,.04);border:1px solid var(--line);border-radius:8px;padding:.12rem}
-.ls-netseg button{font-size:.68rem;font-weight:600;padding:.26rem .5rem;border-radius:6px;cursor:pointer;background:none;border:none;color:var(--dim)}
-.ls-netseg button.on{background:rgba(255,255,255,.1);color:#fff}
+.ls-slider-row input[type=range]{flex:1;accent-color:hsl(142 60% var(--ls-al))}
+.ls-slider-v{font-size:.74rem;font-family:ui-monospace,monospace;color:hsl(142 55% var(--ls-brand-l));min-width:4.5rem;text-align:right}
+.ls-netseg{display:inline-flex;background:var(--ls-s1);border:1px solid var(--ls-line);border-radius:8px;padding:.12rem}
+.ls-netseg button{font-size:.68rem;font-weight:600;padding:.26rem .5rem;border-radius:6px;cursor:pointer;background:none;border:none;color:var(--ls-dim);transition:all .13s}
+.ls-netseg button:hover:not(.on){color:var(--ls-ink)}
+.ls-netseg button.on{background:var(--ls-s3);color:var(--ls-ink)}
 
 .ls-coins{display:flex;flex-direction:column;gap:.55rem}
-.ls-coin{display:flex;flex-direction:column;gap:.5rem;padding:.75rem;border-radius:12px;background:rgba(255,255,255,.03);border:1px solid var(--line);
+.ls-coin{display:flex;flex-direction:column;gap:.5rem;padding:.75rem;border-radius:12px;background:var(--ls-s1);border:1px solid var(--ls-line);
   animation:ls-in .35s var(--ease) both}
 @keyframes ls-in{from{opacity:0;transform:translateY(8px)}}
 .ls-coin-top{display:flex;align-items:center;gap:.6rem}
-.ls-coin-img{width:40px;height:40px;border-radius:10px;object-fit:cover;background:rgba(255,255,255,.06);flex-shrink:0}
+.ls-coin-img{width:40px;height:40px;border-radius:10px;object-fit:cover;background:var(--ls-s2);flex-shrink:0}
 .ls-coin-ph{width:40px;height:40px;border-radius:10px;flex-shrink:0;display:grid;place-items:center;font-weight:800;font-size:.95rem;color:#0c1410;
   background:hsl(var(--h) 65% 62%)}
 .ls-coin-id{flex:1;min-width:0}
-.ls-coin-n{font-size:.9rem;font-weight:700;letter-spacing:-.01em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.ls-coin-s{font-size:.68rem;color:var(--dim);font-family:ui-monospace,monospace}
-.ls-copy{flex-shrink:0;width:28px;height:28px;border-radius:7px;border:1px solid var(--line);background:rgba(255,255,255,.04);color:var(--dim);cursor:pointer;font-size:.78rem;transition:all .13s}
-.ls-copy:hover{background:rgba(255,255,255,.1);color:#fff}
-.ls-coin-d{font-size:.72rem;color:rgba(255,255,255,.58);line-height:1.5}
-.ls-bar{height:4px;border-radius:999px;background:rgba(255,255,255,.07);overflow:hidden}
-.ls-bar>i{display:block;height:100%;border-radius:999px;background:linear-gradient(90deg,hsl(var(--h) 70% 55%),hsl(var(--h) 80% 68%))}
+.ls-coin-n{font-size:.9rem;font-weight:700;letter-spacing:-.01em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--ls-ink)}
+.ls-coin-s{font-size:.68rem;color:var(--ls-dim);font-family:ui-monospace,monospace}
+.ls-copy{flex-shrink:0;width:28px;height:28px;border-radius:7px;border:1px solid var(--ls-line);background:var(--ls-s1);color:var(--ls-dim);cursor:pointer;font-size:.78rem;transition:all .13s}
+.ls-copy:hover{background:var(--ls-s3);color:var(--ls-ink)}
+.ls-coin-d{font-size:.72rem;color:var(--ls-dim);line-height:1.5}
+.ls-bar{height:4px;border-radius:999px;background:var(--ls-s3);overflow:hidden}
+.ls-bar>i{display:block;height:100%;border-radius:999px;background:linear-gradient(90deg,hsl(var(--h) 70% var(--ls-al)),hsl(var(--h) 80% calc(var(--ls-al) + 8%)))}
 .ls-coin-meta{display:flex;align-items:center;gap:.4rem;flex-wrap:wrap;font-size:.65rem}
-.ls-tag{color:rgba(255,255,255,.42);background:rgba(255,255,255,.04);border:1px solid var(--line);padding:.15rem .42rem;border-radius:6px}
-.ls-tag.reward{color:#9fdcb4;background:rgba(164,240,188,.07);border-color:rgba(164,240,188,.2)}
-.ls-tag.reward.pending{color:#e6cf96;background:rgba(240,205,130,.07);border-color:rgba(240,205,130,.2)}
+.ls-tag{color:var(--ls-dim);background:var(--ls-s1);border:1px solid var(--ls-line);padding:.15rem .42rem;border-radius:6px}
+.ls-tag.reward{color:hsl(142 50% var(--ls-brand-l));background:hsl(142 60% var(--ls-al) / .1);border-color:hsl(142 60% var(--ls-al) / .26)}
+.ls-tag.reward.pending{color:hsl(42 62% var(--ls-ail));background:hsl(42 75% var(--ls-al) / .1);border-color:hsl(42 75% var(--ls-al) / .26)}
 .ls-coin-go{margin-top:.15rem;display:flex;align-items:center;justify-content:center;gap:.4rem;font-size:.78rem;font-weight:700;padding:.55rem;border-radius:10px;
-  text-decoration:none;background:linear-gradient(135deg,rgba(120,200,140,.24),rgba(60,140,100,.15));border:1px solid rgba(120,200,140,.45);color:#d2f3df;transition:all .15s}
-.ls-coin-go:hover{background:linear-gradient(135deg,rgba(120,200,140,.38),rgba(60,140,100,.24));border-color:rgba(120,200,140,.72)}
+  text-decoration:none;background:hsl(142 55% var(--ls-al) / .2);border:1px solid hsl(142 55% var(--ls-al) / .5);color:var(--ls-cta-ink);transition:all .15s}
+.ls-coin-go:hover{background:hsl(142 55% var(--ls-al) / .34);border-color:hsl(142 55% var(--ls-al) / .75)}
+.ls-coin-go:active{transform:translateY(1px)}
 .ls-toast{position:fixed;bottom:22px;left:50%;transform:translateX(-50%) translateY(20px);z-index:80;font-size:.78rem;font-weight:600;color:#0c1410;
   background:#a4f0bc;padding:.5rem .9rem;border-radius:10px;opacity:0;transition:all .25s var(--ease);pointer-events:none;box-shadow:0 8px 24px -8px rgba(0,0,0,.5)}
 .ls-toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
-@media(max-width:560px){.ls-grid{grid-template-columns:1fr}.ls-modeseg{margin-left:0}}
+@media(max-width:560px){.ls-grid{grid-template-columns:1fr}.ls-modeseg{margin-left:0}.ls-panel{padding:1rem .8rem 2.4rem}}
 @media(prefers-reduced-motion:reduce){.ls *{animation-duration:.01ms!important;transition-duration:.01ms!important}}
 `;
 
@@ -227,8 +257,6 @@ export function mountLaunchStudio(root) {
 		const t = s.rt;
 		if (t === 'default') return item.reward;
 		if (t === 'creator') return { kind: 'creator', note: 'Fees stay with the launching wallet.' };
-		if (t === 'cashback') return { kind: 'cashback', note: 'Trading fees return to holders as cashback.' };
-		if (t === 'buyback') return { kind: 'buyback', note: 'Fees auto-buy-back & burn the coin.' };
 		if (t === 'github') return { kind: 'github-owner', username: s.rtValue.replace(/^@/, ''), mode: 'pending', note: `Routes to @${s.rtValue.replace(/^@/, '') || '…'} on GitHub.` };
 		if (t === 'x') return { kind: 'x-owner', username: s.rtValue.replace(/^@/, ''), mode: 'pending', note: `Routes to @${s.rtValue.replace(/^@/, '') || '…'} on X.` };
 		if (t === 'wallet') return { kind: 'address', address: s.rtValue, note: 'Routes to a fixed Solana address / .sol name.' };
@@ -258,7 +286,6 @@ export function mountLaunchStudio(root) {
 		const r = effectiveReward(item);
 		if ((r.kind === 'github-owner' || r.kind === 'x-owner') && (r.username || r.github_username)) p.set('reward', `${r.kind === 'x-owner' ? 'x' : 'github'}:${r.username || r.github_username}`);
 		else if (r.kind === 'address' && r.address) p.set('reward', `wallet:${r.address}`);
-		else if (r.kind === 'cashback' || r.kind === 'buyback') p.set('reward', r.kind);
 		return `/launch?${p.toString()}`;
 	}
 
@@ -280,7 +307,7 @@ export function mountLaunchStudio(root) {
 			<div class="ls-search-row">
 				<div class="ls-search">
 					<span class="ls-mag">⌕</span>
-					<input id="ls-q" type="search" placeholder="Search 50 recipes — GitHub, memes, Hacker News, sectors…" value="${esc(s.q)}" autocomplete="off" spellcheck="false" aria-label="Search recipes" />
+					<input id="ls-q" type="search" placeholder="Search 50 recipes: GitHub, memes, Hacker News, sectors…" value="${esc(s.q)}" autocomplete="off" spellcheck="false" aria-label="Search recipes" />
 					<span class="ls-kbd">/</span>
 				</div>
 				<button class="ls-surprise" id="ls-surprise" title="Preview a random recipe">✦ Surprise me</button>
@@ -305,10 +332,7 @@ export function mountLaunchStudio(root) {
 		const items = filtered();
 		if (!items.length) { g.innerHTML = `<div class="ls-msg"><b>No recipes match</b>Try a different search or category.${s.q ? `<div><button class="ls-btn" id="ls-clear">Clear search</button></div>` : ''}</div>`; g.querySelector('#ls-clear')?.addEventListener('click', () => { s.q = ''; renderAll(); }); return; }
 		g.innerHTML = `<div class="ls-grid">${items.map(renderCard).join('')}</div>`;
-		g.querySelectorAll('.ls-card').forEach((el) => {
-			el.addEventListener('click', () => openDrawer(el.dataset.id));
-			el.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openDrawer(el.dataset.id); } });
-		});
+		g.querySelectorAll('.ls-open').forEach((el) => el.addEventListener('click', () => openDrawer(el.dataset.id)));
 		g.querySelectorAll('.ls-fav').forEach((el) => el.addEventListener('click', (e) => {
 			e.stopPropagation(); const id = el.dataset.fav;
 			if (favs.has(id)) favs.delete(id); else favs.add(id);
@@ -320,9 +344,10 @@ export function mountLaunchStudio(root) {
 		const m = CATEGORY_META[u.category] || { icon: '' };
 		const attribution = u.mode === 'attribution';
 		const fav = favs.has(u.id);
-		return `<div class="ls-card${s.activeId === u.id && s.open ? ' on' : ''}" data-id="${esc(u.id)}" style="--h:${hue(u.category)}" tabindex="0" role="button" aria-label="${esc(u.title)}">
+		return `<div class="ls-card${s.activeId === u.id && s.open ? ' on' : ''}" style="--h:${hue(u.category)}">
+			<button class="ls-open" data-id="${esc(u.id)}" aria-label="Preview ${esc(u.title)}"></button>
 			<div class="ls-card-top">
-				<span class="ls-card-ic">${esc(m.icon)}</span>
+				<span class="ls-card-ic" aria-hidden="true">${esc(m.icon)}</span>
 				<span class="ls-card-t">${esc(u.title)}</span>
 				<button class="ls-fav${fav ? ' on' : ''}" data-fav="${esc(u.id)}" title="${fav ? 'Saved' : 'Save recipe'}" aria-label="${fav ? 'Unsave' : 'Save'}">${fav ? '★' : '☆'}</button>
 			</div>
@@ -335,11 +360,59 @@ export function mountLaunchStudio(root) {
 	}
 
 	// ── drawer ────────────────────────────────────────────────────────────────
+	// The drawer is a real modal (role=dialog, aria-modal), so it owns focus while
+	// it is open: focus moves in on open, Tab cycles inside it, and closing puts
+	// focus back on the card that opened it. `renderDrawer` rebuilds the panel's
+	// markup on every control change, which would otherwise drop focus to <body>
+	// mid-interaction, so the focused control is identified and restored around it.
+	let returnToId = null;
+
+	function focusKey(el) {
+		if (!el || !root.contains(el)) return null;
+		if (el.id) return `#${el.id}`;
+		if (el.dataset.rt) return `.ls-rt button[data-rt="${el.dataset.rt}"]`;
+		if (el.dataset.net) return `.ls-netseg button[data-net="${el.dataset.net}"]`;
+		if (el.dataset.copy != null) return null;
+		return null;
+	}
+
 	function openDrawer(id) {
+		returnToId = id;
 		s.activeId = id; s.open = true; s.rt = 'default'; s.rtValue = ''; s.devBuy = 0;
 		renderAll(); loadPreview(id);
+		lockScroll(true);
+		root.querySelector('#ls-close')?.focus();
 	}
-	function closeDrawer() { s.open = false; renderDrawer(); setTimeout(() => { if (!s.open) { s.activeId = null; renderGrid(); } }, 300); }
+
+	function closeDrawer() {
+		s.open = false; renderDrawer(); lockScroll(false);
+		const back = returnToId; returnToId = null;
+		setTimeout(() => {
+			if (s.open) return;
+			s.activeId = null; renderGrid();
+			if (back) [...root.querySelectorAll('.ls-open')].find((b) => b.dataset.id === back)?.focus();
+		}, 300);
+	}
+
+	let scrollLocked = false;
+	function lockScroll(on) {
+		if (on === scrollLocked) return;
+		scrollLocked = on;
+		document.body.style.overflow = on ? 'hidden' : '';
+	}
+
+	// Keep Tab inside the open dialog. Without this the next Tab walks the page
+	// behind the scrim, where nothing is visible and Enter fires blind.
+	function trapTab(e) {
+		const panel = root.querySelector('.ls-panel'); if (!panel) return;
+		const stops = [...panel.querySelectorAll('button, a[href], input, [tabindex]:not([tabindex="-1"])')]
+			.filter((el) => !el.disabled && el.offsetParent !== null);
+		if (!stops.length) return;
+		const first = stops[0], last = stops[stops.length - 1];
+		if (!panel.contains(document.activeElement)) { e.preventDefault(); first.focus(); return; }
+		if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
+		else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
+	}
 
 	function renderDrawer() {
 		const host = root.querySelector('#ls-drawer-root'); if (!host) return;
@@ -349,12 +422,13 @@ export function mountLaunchStudio(root) {
 		let body;
 		if (s.previewLoading) body = `<div class="ls-coins">${Array.from({ length: 3 }, () => '<div class="ls-skel" style="height:150px"></div>').join('')}</div>`;
 		else if (s.previewError) body = `<div class="ls-msg ls-err"><b>Preview failed</b>${esc(s.previewError)}<div><button class="ls-btn" id="ls-reload">↻ Retry</button></div></div>`;
-		else if (!s.preview || !s.preview.items.length) body = `<div class="ls-msg"><b>No live candidates right now</b>This source is quiet — try another recipe or refresh shortly.<div><button class="ls-btn" id="ls-reload">↻ Refresh</button></div></div>`;
+		else if (!s.preview?.items?.length) body = `<div class="ls-msg"><b>No live candidates right now</b>This source is quiet. Try another recipe, or refresh in a moment.<div><button class="ls-btn" id="ls-reload">↻ Refresh</button></div></div>`;
 		else body = `<div class="ls-coins">${s.preview.items.map((it, i) => renderCoin(it, i)).join('')}</div>`;
 
 		const attribution = uc.mode === 'attribution';
+		const keep = focusKey(document.activeElement);
 		host.innerHTML = `<div class="ls-drawer${s.open ? ' open' : ''}" style="--h:${hue(uc.category)}">
-			<div class="ls-scrim" id="ls-scrim"></div>
+			<button class="ls-scrim" id="ls-scrim" tabindex="-1" aria-label="Close preview"></button>
 			<aside class="ls-panel" role="dialog" aria-modal="true" aria-label="${esc(uc.title)} preview">
 				<div class="ls-ph">
 					<span class="ls-ph-ic">${esc(m.icon)}</span>
@@ -362,11 +436,12 @@ export function mountLaunchStudio(root) {
 					<button class="ls-x" id="ls-close" aria-label="Close">✕</button>
 				</div>
 				${renderControls(attribution)}
-				<div class="ls-ctrl-l" style="margin:.2rem 0 .5rem">Live candidates — what this would mint right now</div>
+				<div class="ls-ctrl-l" style="margin:.2rem 0 .5rem">Live candidates: what this would mint right now</div>
 				${body}
 			</aside>
 		</div>`;
 		wireDrawer();
+		if (keep) root.querySelector(keep)?.focus();
 	}
 
 	function renderControls(attribution) {
@@ -374,7 +449,7 @@ export function mountLaunchStudio(root) {
 			`<button data-rt="${t.id}" class="${s.rt === t.id ? 'on' : ''}" title="${esc(t.hint)}">${esc(t.label)}</button>`).join('');
 		const active = REWARD_TARGETS.find((t) => t.id === s.rt);
 		const input = active?.needs
-			? `<input class="ls-rt-input" id="ls-rt-input" placeholder="${active.needs === 'handle' ? '@username' : 'Solana address or name.sol'}" value="${esc(s.rtValue)}" spellcheck="false" />`
+			? `<label class="ls-sr" for="ls-rt-input">${esc(active.label)} to route fees to</label><input class="ls-rt-input" id="ls-rt-input" placeholder="${active.needs === 'handle' ? '@username' : 'Solana address or name.sol'}" value="${esc(s.rtValue)}" spellcheck="false" autocomplete="off" />`
 			: '';
 		return `<div class="ls-ctrls">
 			<div>
@@ -401,7 +476,7 @@ export function mountLaunchStudio(root) {
 	}
 
 	function renderCoin(it, i) {
-		const maxScore = Math.max(1, ...(s.preview.items.map((x) => Number(x.score) || 0)));
+		const maxScore = Math.max(1, ...((s.preview?.items || []).map((x) => Number(x.score) || 0)));
 		const pct = Math.max(6, Math.round(((Number(it.score) || 0) / maxScore) * 100));
 		const img = it.identity.image
 			? `<img class="ls-coin-img" src="${esc(it.identity.image)}" alt="" loading="lazy" data-fallback="element" data-fallback-class="ls-coin-ph" data-fallback-text="${esc((it.identity.symbol || '?')[0])}" />`
@@ -475,10 +550,11 @@ export function mountLaunchStudio(root) {
 	function onKey(e) {
 		if (e.key === '/' && !/input|textarea/i.test(document.activeElement?.tagName || '')) { e.preventDefault(); root.querySelector('#ls-q')?.focus(); }
 		if (e.key === 'Escape' && s.open) closeDrawer();
+		if (e.key === 'Tab' && s.open) trapTab(e);
 	}
 	document.addEventListener('keydown', onKey);
 
 	renderAll();
 	loadList();
-	return { teardown() { alive = false; document.removeEventListener('keydown', onKey); root.innerHTML = ''; } };
+	return { teardown() { alive = false; document.removeEventListener('keydown', onKey); lockScroll(false); root.innerHTML = ''; } };
 }

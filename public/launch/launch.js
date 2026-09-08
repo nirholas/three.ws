@@ -17,7 +17,7 @@ import { mountLaunchPanel } from '/studio/launch-panel.js';
 const PICKER_CSS = `
 .lc-shell{display:grid;grid-template-columns:minmax(0,300px) minmax(0,440px);gap:1.5rem;
   align-items:start;justify-content:center;max-width:780px;margin:0 auto;padding:1rem}
-@media (max-width:760px){.lc-shell{grid-template-columns:1fr;gap:1.1rem;padding:.5rem}}
+@media (max-width:760px){.lc-shell{grid-template-columns:minmax(0,1fr);gap:1.1rem;padding:.5rem}}
 
 .lc-col-h{font-size:.72rem;font-weight:600;letter-spacing:.06em;text-transform:uppercase;
   color:rgba(255,255,255,.4);margin:0 0 .65rem}
@@ -37,8 +37,8 @@ const PICKER_CSS = `
   align-items:center;justify-content:center;font-size:1.15rem;font-weight:700;
   color:rgba(164,240,188,.7);background:rgba(164,240,188,.08);border:1px solid rgba(164,240,188,.16)}
 .lc-meta{min-width:0;flex:1}
-.lc-name{font-size:.86rem;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.lc-sub{font-size:.68rem;color:rgba(255,255,255,.4);margin-top:.12rem;white-space:nowrap;
+.lc-name{display:block;font-size:.86rem;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.lc-sub{display:block;font-size:.68rem;color:rgba(255,255,255,.4);margin-top:.12rem;white-space:nowrap;
   overflow:hidden;text-overflow:ellipsis}
 .lc-coined{flex-shrink:0;font-size:.6rem;font-weight:600;letter-spacing:.04em;color:#a4f0bc;
   background:rgba(164,240,188,.1);border:1px solid rgba(164,240,188,.22);border-radius:6px;
@@ -70,10 +70,24 @@ const PICKER_CSS = `
   border-radius:9px;background:rgba(255,255,255,.025);border:1px solid rgba(255,255,255,.07)}
 .lc-signin a{color:rgba(164,240,188,.8);text-decoration:none}
 .lc-signin a:hover{color:#a4f0bc}
+.lc-err{display:flex;flex-direction:column;gap:.3rem;font-size:.74rem;line-height:1.55;
+  padding:.6rem .7rem;border-radius:9px;color:rgba(246,196,152,.9);
+  background:rgba(246,140,80,.07);border:1px solid rgba(246,140,80,.24)}
+.lc-err b{color:#f6c498;font-weight:600}
+.lc-err-why{color:rgba(246,196,152,.6);font-size:.68rem;word-break:break-word}
+.lc-retry{display:flex;align-items:center;justify-content:center;gap:.4rem;min-height:44px;
+  box-sizing:border-box;width:100%;padding:.6rem .8rem;border-radius:9px;font:inherit;
+  font-size:.82rem;font-weight:500;cursor:pointer;color:rgba(246,196,152,.95);
+  background:rgba(246,140,80,.1);border:1px solid rgba(246,140,80,.3);
+  transition:background .15s,border-color .15s,color .15s}
+.lc-retry:hover{background:rgba(246,140,80,.16);border-color:rgba(246,140,80,.46);color:#f8d8b4}
+.lc-retry:active{background:rgba(246,140,80,.22)}
+.lc-retry:focus-visible{outline:2px solid rgba(246,196,152,.7);outline-offset:2px}
+.lc-retry[disabled]{opacity:.55;cursor:progress}
 
 @media (prefers-reduced-motion:reduce){
   .lc-skel{animation:none;background:rgba(255,255,255,.045)}
-  .lc-card,.lc-pick-cta,.lc-cta-primary{transition:none}
+  .lc-card,.lc-pick-cta,.lc-cta-primary,.lc-retry{transition:none}
 }
 `;
 
@@ -82,34 +96,71 @@ const esc = (s) =>
 		({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c],
 	);
 
-const state = { user: null, avatars: [], avatarId: null, loading: true };
+const state = { user: null, avatars: [], avatarId: null, loading: true, error: null };
 let launchPanel = null;
 let pickerEl = null;
+
+// Parse the ?reward= deep-link value Launch Studio (and any other recipe surface)
+// hands to /launch. Returns a normalized routing target, or null when the param
+// is absent or malformed — a bad value never blocks a launch, it just means the
+// coin routes creator fees the default way.
+//   github:<login> | x:<handle> → a social account, resolved to its three.ws
+//                                 payout wallet when the fee split is saved.
+//   wallet:<address|name.sol>   → a fixed Solana recipient.
+function parseRewardParam(raw) {
+	const v = String(raw || '').trim();
+	if (!v) return null;
+	const i = v.indexOf(':');
+	if (i < 1) return null;
+	const kind = v.slice(0, i).toLowerCase();
+	const value = v.slice(i + 1).replace(/^@/, '').trim();
+	if (!value) return null;
+	if (kind === 'github' || kind === 'x') {
+		if (!/^[\w.-]{1,39}$/.test(value)) return null;
+		return { platform: kind, login: value };
+	}
+	if (kind === 'wallet') {
+		if (!/^[1-9A-HJ-NP-Za-km-z]{32,44}$/.test(value) && !/^[\w-]{1,63}\.sol$/i.test(value)) return null;
+		return { address: value };
+	}
+	return null;
+}
 
 function currentAvatar() {
 	return state.avatars.find((a) => a.id === state.avatarId) || null;
 }
 
-async function fetchMe() {
-	try {
-		const res = await fetch('/api/auth/me', { credentials: 'include' });
-		if (!res.ok) return null;
-		const { user } = await res.json();
-		return user || null;
-	} catch {
-		return null;
-	}
+// Both loaders separate "the answer is nobody / nothing" from "we never got an
+// answer". Swallowing the second into the first is what made a failed load
+// unreadable: a signed-in owner of six agents whose /api/avatars call 500'd was
+// told "No agents yet, create one first" and pushed toward a duplicate agent,
+// and a dropped /api/auth/me told an authenticated visitor to sign in again.
+// A refusal (401/403) is a real signed-out answer; anything else that is not a
+// clean 2xx is a fault, and a fault throws so boot() can render it.
+async function loadSession() {
+	const res = await fetch('/api/auth/me', { credentials: 'include' });
+	if (res.status === 401 || res.status === 403) return null;
+	if (!res.ok) throw new Error(`the session check answered ${res.status}`);
+	const { user } = await res.json();
+	return user || null;
 }
 
-async function fetchAvatars() {
-	try {
-		const res = await fetch('/api/avatars?limit=100', { credentials: 'include' });
-		if (!res.ok) return [];
-		const { avatars = [] } = await res.json();
-		return avatars;
-	} catch {
-		return [];
-	}
+async function loadAvatars() {
+	const res = await fetch('/api/avatars?limit=100', { credentials: 'include' });
+	if (res.status === 401 || res.status === 403) return null;
+	if (!res.ok) throw new Error(`the agent list answered ${res.status}`);
+	const { avatars = [] } = await res.json();
+	return avatars;
+}
+
+// fetch() rejects with a bare "Failed to fetch" for offline, DNS, CORS and
+// blocked-by-extension alike, which tells the visitor nothing. Name the class
+// of fault instead, and keep a real status through untouched.
+function reasonFor(err) {
+	const msg = String(err?.message || '');
+	return /failed to fetch|networkerror|load failed/i.test(msg)
+		? 'the request never reached three.ws (offline, or a blocker cut it off)'
+		: msg || 'an unexpected error';
 }
 
 function renderPicker() {
@@ -119,6 +170,25 @@ function renderPicker() {
 		pickerEl.innerHTML =
 			'<p class="lc-col-h">Choose your agent</p>' +
 			Array(3).fill('<div class="lc-skel"></div>').join('');
+		return;
+	}
+
+	// The load faulted. Say so, say why, and offer the one action that can
+	// actually fix it, rather than mislabelling the fault as "signed out" or
+	// "no agents yet" and sending the visitor down a wrong path.
+	if (state.error) {
+		pickerEl.innerHTML =
+			'<p class="lc-col-h">Choose your agent</p>' +
+			'<div class="lc-err" role="alert"><b>Could not load your agents</b>' +
+			`<span class="lc-err-why">${esc(state.error)}. Your agents are safe; nothing was launched.</span></div>` +
+			'<button type="button" class="lc-retry" id="lc-retry">Try again</button>' +
+			'<a class="lc-pick-cta" href="/create-agent">+ Create an agent</a>';
+		pickerEl.querySelector('#lc-retry')?.addEventListener('click', (e) => {
+			e.currentTarget.disabled = true;
+			e.currentTarget.textContent = 'Retrying…';
+			retryFocus = true;
+			boot();
+		});
 		return;
 	}
 
@@ -196,6 +266,59 @@ function selectAvatar(id) {
 	launchPanel?.avatarChanged();
 }
 
+// Set when a retry is in flight so the re-render can put focus back on the
+// control the visitor just pressed instead of dropping it to the document.
+let retryFocus = false;
+
+async function boot() {
+	state.loading = true;
+	state.error = null;
+	renderPicker();
+
+	let user = null;
+	let avatars = [];
+	try {
+		user = await loadSession();
+		// A null list means the avatar endpoint refused the session the /me call
+		// just accepted, which is a session that expired between the two reads.
+		// Treat it as signed out rather than as an empty account.
+		if (user) {
+			const list = await loadAvatars();
+			if (list === null) user = null;
+			else avatars = list;
+		}
+	} catch (err) {
+		state.user = null;
+		state.avatars = [];
+		state.avatarId = null;
+		state.error = reasonFor(err);
+		state.loading = false;
+		renderPicker();
+		if (retryFocus) pickerEl?.querySelector('#lc-retry')?.focus();
+		retryFocus = false;
+		launchPanel?.avatarChanged();
+		return;
+	}
+
+	state.user = user;
+	state.avatars = avatars;
+
+	// Honor ?avatar=<id|slug> deep links (e.g. from an agent profile), else
+	// default to the first agent so the form is immediately usable.
+	const wanted = new URL(location.href).searchParams.get('avatar');
+	const match =
+		(wanted && avatars.find((a) => a.id === wanted || a.slug === wanted)) || avatars[0] || null;
+	state.avatarId = match?.id || null;
+	state.loading = false;
+
+	renderPicker();
+	// A recovered retry leaves focus where the pressed button used to be; move
+	// it onto the selected agent so keyboard flow continues into the picker.
+	if (retryFocus) pickerEl?.querySelector('.lc-card.on, .lc-cta-primary')?.focus();
+	retryFocus = false;
+	launchPanel?.avatarChanged();
+}
+
 export function mountLaunchCoin(root) {
 	if (!document.getElementById('lc-css')) {
 		const style = document.createElement('style');
@@ -236,6 +359,13 @@ export function mountLaunchCoin(root) {
 		description: params.get('description') || '',
 		imageUrl: prefillImage,
 		initialBuy: params.get('initialBuy') || '',
+		// ?reward=github:<user> | x:<handle> | wallet:<address-or-name.sol>
+		// Launch Studio's reward planner (and every attribution recipe in its
+		// catalog) promises that creator fees route to the subject of the coin.
+		// The launch panel shows that routing on the form and seeds the fee-split
+		// panel with the recipient once the mint lands, so the promise survives
+		// the handoff instead of being dropped at the door.
+		reward: parseRewardParam(params.get('reward')),
 	};
 	const hasPrefill = Object.values(prefill).some(Boolean);
 
@@ -246,23 +376,7 @@ export function mountLaunchCoin(root) {
 		prefill: hasPrefill ? prefill : null,
 	});
 
-	(async function boot() {
-		const user = await fetchMe();
-		state.user = user;
-		const avatars = user ? await fetchAvatars() : [];
-		state.avatars = avatars;
-
-		// Honor ?avatar=<id|slug> deep links (e.g. from an agent profile), else
-		// default to the first agent so the form is immediately usable.
-		const wanted = new URL(location.href).searchParams.get('avatar');
-		const match =
-			(wanted && avatars.find((a) => a.id === wanted || a.slug === wanted)) || avatars[0] || null;
-		state.avatarId = match?.id || null;
-		state.loading = false;
-
-		renderPicker();
-		launchPanel?.avatarChanged();
-	})();
+	boot();
 
 	return {
 		teardown() {
