@@ -1755,7 +1755,7 @@ class CheckoutModal {
 			// than letting a wallet popup be the first time they find out.
 			this.renderProgress('authorize', {
 				text: prep.self_pay
-					? `Confirm in ${walletName} — you cover the network fee on this one`
+					? `Confirm in ${walletName}: you cover the network fee on this one`
 					: `Confirm in ${walletName}…`,
 			});
 			const txBytes = base64ToUint8Array(prep.tx_base64);

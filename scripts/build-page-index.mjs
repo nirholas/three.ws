@@ -11,7 +11,7 @@
  *   CHANGELOG.md                — page launches (`added` dates) merged with
  *                                 curated entries from data/changelog.json
  *   public/changelog.json       — machine-readable changelog feed at /changelog.json
- *   public/changelog-recent.json — the newest RECENT_FEED_ENTRIES of that feed,
+ *   public/changelog-recent.json: the newest RECENT_FEED_ENTRIES of that feed,
  *                                 which is what /changelog paints first
  *   public/changelog.xml        — RSS feed of the same entries at /changelog.xml
  *

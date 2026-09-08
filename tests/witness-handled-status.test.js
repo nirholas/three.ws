@@ -7,7 +7,7 @@
 // unhandled failure. Without this opt-out the recorder counted every designed
 // 503 from the generator (storage down, free lane unavailable) as a fatal
 // event, which is what the feedback companion reads to decide whether to
-// interrupt with "something just broke, want to report it?" — an offer that at
+// interrupt with "something just broke, want to report it?", an offer that at
 // 320px landed directly on top of the Try again button the error state was
 // showing.
 //
