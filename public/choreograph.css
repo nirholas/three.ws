@@ -1055,3 +1055,24 @@
 		transform: none;
 	}
 }
+
+/* ── Interactive states (QB-07) ────────────────────────────────────────────
+   The export disclosure, the parameter range and the timeline scrubber all set
+   cursor: pointer and answered nothing under it. The timeline matters most:
+   it is a click-to-seek surface and looked like a static strip. */
+.ch-export > summary,
+.ch-timeline {
+	transition:
+		background var(--duration-fast) var(--ease-standard),
+		color var(--duration-fast) var(--ease-standard);
+}
+
+.ch-export > summary:hover { color: var(--ink-bright); }
+.ch-export > summary:hover::before { color: var(--ink); }
+.ch-timeline:hover { background: var(--surface-2); }
+
+.ch-range {
+	transition: transform var(--duration-fast) var(--ease-standard);
+}
+
+.ch-range:hover { transform: scaleY(1.4); }

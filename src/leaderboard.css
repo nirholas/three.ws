@@ -834,3 +834,23 @@
 	.lb-live-dot, .lb-row, .lb-skeleton .lb-sk { animation: none !important; }
 	.lb-btn:hover { transform: none; }
 }
+
+/* ── Interactive states (QB-07) ────────────────────────────────────────────
+   The period select and the toggle beside it set cursor: pointer with no
+   hover. The toggle's track already had its transition; it never had a
+   resting hover, which is the part that tells you the track is the target. */
+.lb-select {
+	transition:
+		border-color var(--duration-fast) var(--ease-standard),
+		background var(--duration-fast) var(--ease-standard);
+}
+
+.lb-select:hover {
+	border-color: var(--stroke-strong);
+	background: var(--surface-2);
+}
+
+.lb-toggle:hover .lb-toggle-track {
+	background: var(--stroke-strong);
+	border-color: var(--stroke-strong);
+}

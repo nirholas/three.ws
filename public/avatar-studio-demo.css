@@ -685,3 +685,39 @@ html, body {
 		grid-template-columns: 100px 1fr 36px;
 	}
 }
+
+/* ── Interactive states (QB-07) ────────────────────────────────────────────
+   The sculpt group headers and the mirror toggle set cursor: pointer with no
+   hover rule, and so did both vendor spellings of the slider thumb, which is
+   the part you actually aim at. */
+.as-sculpt-group > summary,
+.as-sculpt-mirror {
+	transition:
+		background var(--duration-fast) var(--ease-standard),
+		color var(--duration-fast) var(--ease-standard);
+}
+
+.as-sculpt-group > summary:hover {
+	color: var(--ink-bright);
+	background: var(--as-panel);
+}
+
+.as-sculpt-mirror:hover {
+	color: var(--ink-bright);
+}
+
+.as-sculpt-row input[type="range"]::-webkit-slider-thumb {
+	transition: transform var(--duration-fast) var(--ease-standard);
+}
+
+.as-sculpt-row input[type="range"]::-moz-range-thumb {
+	transition: transform var(--duration-fast) var(--ease-standard);
+}
+
+.as-sculpt-row input[type="range"]:hover::-webkit-slider-thumb {
+	transform: scale(1.15);
+}
+
+.as-sculpt-row input[type="range"]:hover::-moz-range-thumb {
+	transform: scale(1.15);
+}

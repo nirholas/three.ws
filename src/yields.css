@@ -523,3 +523,20 @@
 	outline-offset: 2px;
 	border-radius: 2px;
 }
+
+/* ── Interactive states (QB-07) ────────────────────────────────────────────
+   The pool row expands on click and the pool name inside it is its own
+   button. Both declared cursor: pointer and neither reacted, so an
+   expandable table looked like a static one. The row's cells already carry a
+   background transition; this gives that transition something to run. */
+.yl-row:hover td {
+	background: var(--cv-surface-2);
+}
+
+.yl-pool-btn {
+	transition: color var(--duration-fast) var(--ease-standard);
+}
+
+.yl-pool-btn:hover {
+	color: var(--ink-bright);
+}

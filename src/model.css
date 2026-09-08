@@ -542,3 +542,22 @@ a.mp-comment-author:hover { text-decoration: underline; }
 	line-height: 1.6;
 	color: var(--ink-dim, rgba(255, 255, 255, 0.5));
 }
+
+/* ── Interactive states (QB-07) ────────────────────────────────────────────
+   These three ARE the empty and error states: the link that tells you what to
+   do when there is nothing here, and the retry beside a failure. A recovery
+   action that does not answer the pointer reads as part of the failure. */
+.mp-error a,
+.mp-empty a,
+.mp-error button {
+	transition:
+		color var(--duration-fast) var(--ease-standard),
+		text-decoration-thickness var(--duration-fast) var(--ease-standard);
+}
+
+.mp-error a:hover,
+.mp-empty a:hover,
+.mp-error button:hover {
+	color: var(--ink-bright);
+	text-decoration-thickness: 2px;
+}

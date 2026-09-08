@@ -564,3 +564,22 @@
 	.lm-card-btn:hover, .lm-btn:hover { transform: none; }
 	.lm-toast { opacity: 1; transform: none; }
 }
+
+/* ── Interactive states (QB-07) ────────────────────────────────────────────
+   Four controls set cursor: pointer with no hover rule. The toast is the
+   notable one: it is click-to-dismiss, and with no hover feedback nothing told
+   you that. It carries its own enter transition, so its hover only touches
+   properties that transition does not own. */
+.lm-check,
+.lm-deliv summary,
+.lm-select-wrap select {
+	transition:
+		background var(--duration-fast) var(--ease-standard),
+		border-color var(--duration-fast) var(--ease-standard),
+		color var(--duration-fast) var(--ease-standard);
+}
+
+.lm-check:hover { color: var(--accent); }
+.lm-deliv summary:hover { color: var(--ink); }
+.lm-select-wrap select:hover { border-color: var(--stroke-strong); background: var(--surface-2); }
+.lm-toast:hover { border-color: var(--accent); }

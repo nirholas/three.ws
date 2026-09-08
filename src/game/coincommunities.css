@@ -3818,3 +3818,40 @@ summary:focus-visible,
 	}
 	.cc-shop-chip, .cc-shop-buy, .cc-friends-panel-crew { min-height: 40px; }
 }
+
+/* ── Interactive states (QB-07) ────────────────────────────────────────────
+   Five controls set cursor: pointer and answered nothing. Three of them are
+   retry affordances: the offline/failed connection chip and the failed
+   property status are click-to-reconnect, and with no hover they read as
+   labels rather than as the way out of the failure. The unavailable state is
+   deliberately excluded, because it is a passive readout and already declares
+   cursor: default. */
+#cc-status[data-state="offline"],
+#cc-status[data-state="failed"],
+.cc-prop-gstatus.cc-err,
+.cc-shop-thumb-btn,
+select.npc-svc-input {
+	transition:
+		background var(--duration-fast) var(--ease-standard),
+		border-color var(--duration-fast) var(--ease-standard),
+		color var(--duration-fast) var(--ease-standard);
+}
+
+#cc-status[data-state="offline"]:hover,
+#cc-status[data-state="failed"]:hover {
+	color: var(--ink);
+	border-color: var(--cc-edge-soft);
+}
+
+.cc-prop-gstatus.cc-err:hover {
+	color: var(--danger);
+	text-decoration: underline;
+}
+
+.cc-shop-thumb-btn:hover {
+	background: var(--surface-1);
+}
+
+select.npc-svc-input:hover {
+	border-color: var(--stroke-strong);
+}

@@ -920,3 +920,38 @@
 .mny-price-chip-free.is-on { background: var(--surface-3, rgba(255,255,255,0.1)); color: var(--ink, #e8e8e8); border-color: var(--stroke-strong, rgba(255,255,255,0.2)); }
 @media (max-width: 540px) { .mny-price-controls { align-items: stretch; } .mny-price-quick { justify-content: flex-end; } }
 @media (prefers-reduced-motion: reduce) { .mny-price-chip { transition: none; } }
+
+/* ── Interactive states (QB-07) ────────────────────────────────────────────
+   Four controls set cursor: pointer with no hover rule. The switch already had
+   the transition and the checked colour; what it was missing was the resting
+   hover, which is what tells you the track is the hit target. */
+.bdy-chip-play,
+.tb-caveats summary,
+.tb-mode-btn {
+	transition:
+		background var(--duration-fast) var(--ease-standard),
+		color var(--duration-fast) var(--ease-standard);
+}
+
+.bdy-chip-play:hover {
+	background: var(--surface-1);
+	color: var(--ink-bright);
+}
+
+.skl-switch:hover {
+	border-color: var(--stroke-strong);
+	background: var(--surface-3);
+}
+
+.skl-switch[aria-checked='true']:hover {
+	background: var(--wallet-accent-strong);
+}
+
+.tb-caveats summary:hover {
+	color: var(--ink-bright);
+}
+
+.tb-mode-btn:hover {
+	color: var(--ink-bright);
+	background: var(--surface-1);
+}

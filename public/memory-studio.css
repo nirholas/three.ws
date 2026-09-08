@@ -320,3 +320,29 @@
 	.mem-skel-row, .mem-embed-dot.pending, .mem-seed-dot.loading { animation: none; }
 	.mem-ctx-fill, .mem-toast { transition: none; }
 }
+
+/* ── Interactive states (QB-07) ────────────────────────────────────────────
+   The card body is click-to-expand and the salience slider is draggable, and
+   neither said so. .mem-tool-select already had the transition and the tool
+   sibling's hover; it just never got its own. */
+.mem-card-content {
+	transition: color var(--duration-fast) var(--ease-standard);
+}
+
+.mem-card-content:hover {
+	color: var(--ink-bright);
+}
+
+.mem-sal-range {
+	transition: transform var(--duration-fast) var(--ease-standard);
+}
+
+.mem-sal-range:hover {
+	transform: scaleY(1.4);
+}
+
+.mem-tool-select:hover {
+	color: var(--ink);
+	border-color: var(--stroke-strong);
+	background: var(--surface-2);
+}

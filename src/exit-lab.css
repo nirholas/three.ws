@@ -951,3 +951,19 @@
 		transition: none;
 	}
 }
+
+/* ── Interactive states (QB-07) ────────────────────────────────────────────
+   The parameter label, its range and the toggle beside it all set
+   cursor: pointer and answered nothing. Disabled is already handled above and
+   platform-wide, so these hovers exclude it. */
+.xl-param-label,
+.xl-range,
+.xl-toggle {
+	transition:
+		color var(--dur-fast, var(--duration-fast)) var(--ease-standard),
+		transform var(--dur-fast, var(--duration-fast)) var(--ease-standard);
+}
+
+.xl-param-label:hover { color: var(--color-accent); }
+.xl-range:hover:not([disabled]) { transform: scaleY(1.3); }
+.xl-toggle:hover { color: var(--color-text); }

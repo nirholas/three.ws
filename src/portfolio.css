@@ -728,3 +728,21 @@
 @media (prefers-reduced-motion: reduce) {
 	.pf-skel span { animation: none; }
 }
+
+/* ── Interactive states (QB-07) ────────────────────────────────────────────
+   The donut slices are clickable filters. They already transition opacity but
+   nothing ever changed it on hover, so the transition had no trigger and the
+   chart read as a picture. */
+#pf-donut path:hover {
+	opacity: 0.82;
+}
+
+.pf-toggle,
+.pf-toggle input {
+	transition:
+		color var(--duration-fast) var(--ease-standard),
+		transform var(--duration-fast) var(--ease-standard);
+}
+
+.pf-toggle:hover { color: var(--ink); }
+.pf-toggle input:hover { transform: scale(1.12); }

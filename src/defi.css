@@ -156,3 +156,23 @@
 		height: 20px;
 	}
 }
+
+/* ── Interactive states (QB-07) ────────────────────────────────────────────
+   A table row that navigates on click is a link with none of a link's
+   affordances. It sets cursor: pointer and, until now, nothing else, so
+   nothing told you which row you were about to open. */
+#defi-table .cv-table tbody tr[data-href] {
+	transition: background var(--duration-fast) var(--ease-standard);
+}
+
+#defi-table .cv-table tbody tr[data-href]:hover {
+	background: var(--surface-1);
+}
+
+.defi-refresh {
+	transition: color var(--duration-fast) var(--ease-standard);
+}
+
+.defi-refresh:hover:not([disabled]) {
+	color: var(--ink-bright);
+}

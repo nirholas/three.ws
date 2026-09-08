@@ -1132,3 +1132,24 @@ body.gallery-body {
 		max-width: 100%;
 	}
 }
+
+/* ── Interactive states (QB-07) ────────────────────────────────────────────
+   The split button's two halves and the colour knob set cursor: pointer with
+   no hover rule, so nothing told you which half of a split button you were on,
+   which is the entire point of splitting it. */
+.split-btn-main,
+.split-btn-toggle,
+.knob-row input[type='color'] {
+	transition:
+		background var(--duration-fast) var(--ease-standard),
+		border-color var(--duration-fast) var(--ease-standard);
+}
+
+.split-btn-main:hover,
+.split-btn-toggle:hover {
+	background: var(--scrim-soft);
+}
+
+.knob-row input[type='color']:hover {
+	border-color: var(--stroke-strong);
+}

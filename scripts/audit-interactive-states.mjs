@@ -94,6 +94,11 @@ function normalize(css) {
 
 const escapeRe = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
+/** A rule that paints nothing: only the cursor plus inherited typography or
+ * appearance resets. Matched against the whole declaration block. */
+const RESET_ONLY =
+	/^(?:\s*(?:cursor|font|font-family|font-size|appearance|-webkit-appearance|-moz-appearance|user-select|-webkit-user-select|touch-action)\s*:[^;]*;?\s*)+$/;
+
 function gapsIn(css) {
 	const sheet = normalize(css);
 	const rules = [...sheet.matchAll(/([^{}]+)\{([^{}]*)\}/g)];
@@ -104,6 +109,11 @@ function gapsIn(css) {
 		// over a drop zone, a bare click-catcher) has nothing to restyle; the
 		// visible element under it owns the feedback.
 		if (/opacity:\s*0\s*(;|$)/.test(body)) continue;
+		// A base reset (`button { font-family: inherit; cursor: pointer; }`)
+		// declares the cursor for every button on the page. It is not a
+		// component, and a hover rule at that selector would stack on top of
+		// every real component instead of filling a gap.
+		if (RESET_ONLY.test(body)) continue;
 		for (const selector of selectorList.split(',').map((s) => s.trim()).filter(Boolean)) {
 			if (!selector || selector.startsWith('@')) continue;
 			// A selector that already names a state is not the thing being audited.
@@ -122,9 +132,19 @@ function gapsIn(css) {
 			const inSameSelector = new RegExp(
 				`(?:${escaped}[^{},]*:hover|:hover[^{},]*${escaped})`,
 			);
+			// A pseudo-element is styled on hover as `base:hover::thumb`, so the
+			// :hover lands BETWEEN the base and the pseudo and neither pattern
+			// above sees it. Both vendor spellings of a range thumb hit this.
+			const pseudoAt = selector.indexOf('::');
+			const hoverBeforePseudo =
+				pseudoAt > 0 &&
+				new RegExp(
+					`${escapeRe(selector.slice(0, pseudoAt))}:hover${escapeRe(selector.slice(pseudoAt))}`,
+				).test(sheet);
 			const covered =
 				new RegExp(`${escaped}:hover`).test(sheet) ||
 				inSameSelector.test(sheet) ||
+				hoverBeforePseudo ||
 				(lastCompound !== selector &&
 					// Only when the compound is specific enough to name one
 					// component. A bare `button` or `summary` tail would match

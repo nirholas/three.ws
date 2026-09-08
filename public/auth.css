@@ -235,3 +235,21 @@ body {
 		scroll-behavior: auto !important;
 	}
 }
+
+/* ── Interactive states (QB-07) ────────────────────────────────────────────
+   The remember-me row is the last control before someone signs in, and both
+   the label and its box set cursor: pointer while answering nothing. */
+.remember-row label,
+.remember-row input[type="checkbox"] {
+	transition:
+		color var(--duration-fast) var(--ease-standard),
+		transform var(--duration-fast) var(--ease-standard);
+}
+
+.remember-row label:hover {
+	color: var(--ink);
+}
+
+.remember-row input[type="checkbox"]:hover {
+	transform: scale(1.12);
+}
