@@ -187,8 +187,10 @@ function clipSnippets(item, origin) {
 			language: 'javascript',
 			code: `import * as THREE from "three";
 
-// three.ws motion clips are plain THREE.AnimationClip JSON.
-const json = await fetch(${jsString(url)}).then((r) => r.json());
+// three.ws motion clips are plain THREE.AnimationClip JSON. The deadline
+// matters: without one a stalled connection hangs your loader forever
+// rather than failing, because fetch has no timeout of its own.
+const json = await fetch(${jsString(url)}, { signal: AbortSignal.timeout(10000) }).then((r) => r.json());
 const clip = THREE.AnimationClip.parse(json);
 
 // Track names use the canonical (Mixamo) bone names. Any avatar whose rig maps
@@ -221,7 +223,10 @@ export function use${componentName(item)}(avatar) {
     let cancelled = false;
     const clock = new THREE.Clock();
 
-    fetch(CLIP_URL)
+    // A deadline as well as the cancelled flag: the flag stops a late response
+    // touching an unmounted component, but only the signal ends a request that
+    // never answers at all.
+    fetch(CLIP_URL, { signal: AbortSignal.timeout(10000) })
       .then((r) => r.json())
       .then((json) => {
         if (cancelled) return;
