@@ -32,6 +32,15 @@ describe('blameless render failures', () => {
 		expect(blameless(new Error('Missing required env var: S3_BUCKET'))).toBe(true);
 		expect(blameless(new Error('Missing required env var: S3_ACCESS_KEY_ID'))).toBe(true);
 		expect(blameless(new Error('InvalidAccessKeyId'))).toBe(true);
+		// A bad R2 token has two shapes and only one of them used to match. A
+		// rotated secret answers SignatureDoesNotMatch; a revoked or deleted
+		// access key id answers a bare Unauthorized, which slipped past every
+		// caller, including the public-domain failover in cdn-object.js and the
+		// avatar GLB proxy. Object-level denial is AccessDenied, so Unauthorized
+		// from S3 is always the credential.
+		expect(blameless(new Error('Unauthorized'))).toBe(true);
+		expect(blameless({ name: 'Unauthorized', Code: 'Unauthorized' })).toBe(true);
+		expect(blameless(new Error('SignatureDoesNotMatch'))).toBe(true);
 		expect(blameless(new Error('NoSuchBucket: the bucket does not exist'))).toBe(true);
 		expect(blameless({ message: 'connect ECONNREFUSED 10.0.0.1:443' })).toBe(true);
 	});

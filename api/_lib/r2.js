@@ -78,8 +78,16 @@ export function objectStorageConfigured() {
 // caller of this helper, including the batch runners that use it to decide
 // whether an asset is blameless, and surfaced to users as a raw "Check your
 // secret access key" in the browser.
+// `unauthorized` covers the OTHER shape a bad token takes: a ROTATED secret
+// answers SignatureDoesNotMatch, but a REVOKED or deleted access key id answers
+// a bare `Unauthorized` instead, which nothing here matched. That gap is
+// invisible until it fires, because both faults present identically to a user
+// and only one of them reached the public-domain failover in cdn-object.js and
+// the avatar GLB proxy. Object-level denial is `AccessDenied` (already listed
+// above), so `Unauthorized` from S3 is always the credential and never the
+// object: classifying it as infrastructure blames nothing that deserves blame.
 export const STORAGE_ERROR_PATTERN =
-	'missing required env var: s3_|invalidaccesskeyid|signaturedoesnotmatch|does not match the signature|nosuchbucket|access denied|econnrefused|enotfound|socket hang up|econnreset';
+	'missing required env var: s3_|invalidaccesskeyid|signaturedoesnotmatch|does not match the signature|unauthorized|nosuchbucket|access denied|econnrefused|enotfound|socket hang up|econnreset';
 
 const STORAGE_ERROR_RE = new RegExp(STORAGE_ERROR_PATTERN, 'i');
 

@@ -728,6 +728,14 @@ async function handleGlb(req, res) {
 			} catch (fallbackErr) {
 				console.error('[avatars/glb] public bucket domain failed too:', key, fallbackErr?.message);
 				if (res.headersSent) return res.destroy(fallbackErr);
+				// Nothing has been written yet, so the 502 below still gets to
+				// answer, but only if the GLB's own length and etag come back
+				// off first. json() refuses to touch a committed response and
+				// never clears headers, so leaving content-length behind would
+				// pin the error body to the model's byte count and hang the
+				// client waiting for megabytes that are never coming.
+				res.removeHeader('content-length');
+				res.removeHeader('etag');
 			}
 		}
 		console.error('[avatars/glb] r2 fetch failed:', err);
