@@ -169,6 +169,60 @@ recorded inputs, reproduces its recorded output, and that needs no bond: the man
 universe snapshot and every constituent's price and liquidity at selection time, so anyone can
 re-run it and publish the diff.
 
+## Backtesting
+
+Every backtest runs the same basket **twice**: once rebalanced on the schedule its manifest
+published, and once never rebalanced at all. The difference, `rebalancingAddedPct`, is the only
+number that judges a schedule, and it goes both ways. Rebalancing harvests the swings in a basket
+whose legs move against each other, and gives up upside in one where a single leg keeps winning.
+A backtest that could not produce the second result would not be measuring anything.
+
+### Where the history comes from
+
+This chain has no price history API. DexScreener serves only current state, GeckoTerminal does not
+index chain 4663, and the public RPC is pruned, so historical `eth_call` is unavailable.
+
+Reconstructing prices from Uniswap swap logs is the obvious next idea and it does not survive
+contact with the chain's block rate. Robinhood Chain produces roughly **864,000 blocks a day** at
+~100ms each, and the RPC caps `eth_getLogs` at a 500k-block span or 10,000 results. One month of
+history for *one* token is 50+ archival queries before any block-timestamp reads. That is not
+something an API request can do, for any number of constituents.
+
+So history comes from the two sources that are actually cheap here:
+
+| Source | Covers | Reach |
+|---|---|---|
+| Chainlink round history | the 34 registry equities with a feed | weeks, today |
+| Daily snapshot (`/api/cron/hood-portfolio-snapshot`) | every token, memecoins included | from the day it first ran, compounding |
+
+Rounds are addressed by id and read at head state, so a pruned node serves them fine.
+`feedRoundHistory` batches them into multicalls of **40**, which is load-bearing: this RPC silently
+*drops* calls out of a larger multicall rather than failing it, so before chunking, asking for more
+history returned less of it. Measured against NVDA's feed on 2026-09-08: 80 rounds at depth 80, only
+8 at depth 120, and none at 160. That partial result was the dangerous failure, because it reads as
+a short-but-successful history rather than an error, and intersecting several of them produced an
+empty backtest window with nothing to explain it. Chunked, 300 rounds costs about two seconds a feed.
+
+### Coverage is reported, never assumed
+
+A constituent with no history is **excluded and named**, the remaining weights are renormalised, and
+`coveredWeightBps` says how much of the portfolio the answer actually describes. The window is the
+**intersection** of the days on which every covered leg has a real observation, not the union with
+gaps carried forward, because carrying a price forward manufactures flat stretches for a token that
+simply was not being recorded, and those read as stability rather than as missing data.
+
+Trading costs are not modelled, and the response says so in `costModel`.
+
+## The permalink
+
+A generated portfolio is shared by putting the **manifest itself** in the URL (`?p=`), deflate
+compressed to about a kilobyte. Sharing the prompt instead (`?q=`, still supported) does not
+reproduce a portfolio: the screen is a language model, so the same sentence returns a different
+basket tomorrow, and a link that silently resolves to something else is worse than no link.
+
+The hash is never read from the link. It is re-derived from the document through
+`POST /manifest`, so a tampered link shows a different hash rather than a borrowed one.
+
 ## The universe
 
 A token is selectable when it has a live pool and a readable price. Classification is either
@@ -243,6 +297,44 @@ Capped at 10 requests per minute per caller, because each one is a real model ca
 model invents is dropped rather than repaired; weights are renormalised to sum to exactly 10000,
 because that is arithmetic rather than judgement.
 
+### `POST /backtest`
+
+```bash
+curl -s -X POST https://three.ws/api/v1/hood-portfolios/backtest \
+  -H 'content-type: application/json' \
+  -d '{"constituents":[{"address":"0xd0601ce157db5bdc3162bbac2a2c8af5320d9eec","weightBps":5000},
+                       {"address":"0x117cc2133c37b721f49de2a7a74833232b3b4c0c","weightBps":5000}],
+       "rebalanceDays":7}'
+```
+
+```jsonc
+{
+  "data": {
+    "ok": true,
+    "from": "2026-08-07", "to": "2026-09-08", "windowDays": 32,
+    "rebalanced":              { "totalReturnPct": 1.42, "maxDrawdownPct": 3.39, "rebalances": 4 },
+    "heldWithoutRebalancing":  { "totalReturnPct": 1.418 },
+    "rebalancingAddedPct": 0.002,
+    "coveredWeightBps": 10000, "totalWeightBps": 10000,
+    "uncovered": [], "unknown": [], "costModel": "none"
+  }
+}
+```
+
+An address the universe does not know is returned in `unknown` rather than quietly skipped:
+silently backtesting two legs of a three-leg basket produces a number that looks complete and
+describes something the caller never asked for.
+
+### `POST /manifest`
+
+Canonicalises a manifest and returns the hash it commits to, plus the exact bytes that were hashed.
+Pure: no storage, no chain reads.
+
+```bash
+curl -s -X POST https://three.ws/api/v1/hood-portfolios/manifest \
+  -H 'content-type: application/json' -d '{"manifest":{"b":2,"a":1}}'
+```
+
 ### `GET /health`
 
 Whether the chain is answering and how fresh the universe snapshot is.
@@ -259,6 +351,24 @@ import { canonicalise, manifestHash } from './api/_lib/hood-portfolios.js';
 
 manifestHash(manifest); // 0x… the value passed to PortfolioRegistry.publish
 ```
+
+## The SDK
+
+[`@three-ws/hood-portfolios-sdk`](../packages/hood-portfolios-sdk) wraps all five endpoints and
+ships the canonicaliser, so a client can verify a manifest hash without a server:
+
+```js
+import { HoodPortfolios, canonicalise } from '@three-ws/hood-portfolios-sdk';
+import { keccak256, toHex } from 'viem';
+
+const hood = new HoodPortfolios();
+const { screen, manifest, manifestHash } = await hood.generate('AI infrastructure across stocks and crypto');
+
+keccak256(toHex(canonicalise(manifest))) === manifestHash; // true, checked offline
+```
+
+Its test suite asserts that canonicaliser is byte-identical to the server's, because a divergence
+would only ever surface as an on-chain commitment that does not match the document it came from.
 
 ## Contracts
 

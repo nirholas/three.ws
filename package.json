@@ -79,6 +79,7 @@
 		"packages/avatar-cli",
 		"packages/assets-cli",
 		"packages/defi-utils",
+		"packages/hood-portfolios-sdk",
 		"packages/viewer-presets",
 		"packages/avatar-agent-mcp",
 		"packages/pumpfun-mcp",

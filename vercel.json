@@ -6069,6 +6069,10 @@
 	],
 	"crons": [
 		{
+			"path": "/api/cron/hood-portfolio-snapshot",
+			"schedule": "17 2 * * *"
+		},
+		{
 			"path": "/api/cron/economy-tick",
 			"schedule": "* * * * *"
 		},

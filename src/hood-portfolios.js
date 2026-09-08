@@ -54,6 +54,108 @@ const CLASS_LABEL = {
 	stablecoin: 'Stable',
 };
 
+// ── Shareable permalinks ────────────────────────────────────────────────────
+
+/*
+ * A generated portfolio is shared by putting the manifest itself in the URL.
+ *
+ * The alternative was sharing the prompt, which is what `?q=` does, and a prompt
+ * does not reproduce a portfolio: the screen is a language model, so the same
+ * sentence returns a different basket tomorrow. A link that silently resolves to
+ * something else is worse than no link. The manifest IS the portfolio, so it
+ * travels whole and the recipient sees exactly what the sender saw.
+ *
+ * Deflate-compressed where the browser has CompressionStream (every current one),
+ * which takes a typical manifest from ~4KB to under 1KB of base64url and keeps
+ * the URL comfortably inside the limits proxies impose. Uncompressed is a valid
+ * payload too, so an older browser still reads links and only writes longer ones.
+ */
+
+function bytesToBase64Url(bytes) {
+	let binary = '';
+	for (const b of bytes) binary += String.fromCharCode(b);
+	return btoa(binary).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+}
+
+function base64UrlToBytes(text) {
+	const padded = text.replace(/-/g, '+').replace(/_/g, '/');
+	const binary = atob(padded + '='.repeat((4 - (padded.length % 4)) % 4));
+	return Uint8Array.from(binary, (c) => c.charCodeAt(0));
+}
+
+async function encodeManifest(manifest) {
+	const raw = new TextEncoder().encode(JSON.stringify(manifest));
+	if (typeof CompressionStream !== 'function') return `0${bytesToBase64Url(raw)}`;
+	const stream = new Blob([raw]).stream().pipeThrough(new CompressionStream('deflate-raw'));
+	const packed = new Uint8Array(await new Response(stream).arrayBuffer());
+	return `1${bytesToBase64Url(packed)}`;
+}
+
+async function decodeManifest(text) {
+	const flag = text[0];
+	const bytes = base64UrlToBytes(text.slice(1));
+	if (flag === '0') return JSON.parse(new TextDecoder().decode(bytes));
+	if (flag !== '1' || typeof DecompressionStream !== 'function') {
+		throw new Error('this link needs a browser with decompression support');
+	}
+	const stream = new Blob([bytes]).stream().pipeThrough(new DecompressionStream('deflate-raw'));
+	return JSON.parse(await new Response(stream).text());
+}
+
+/** Rebuild the on-screen result from a shared manifest, with the hash re-derived server-side. */
+async function openSharedManifest(encoded) {
+	setBusy(true);
+	showSkeleton();
+	el.status.textContent = 'Opening a shared portfolio...';
+	try {
+		const manifest = await decodeManifest(encoded);
+		const constituents = (manifest.constituents || []).map((c) => ({
+			address: c.address,
+			symbol: c.symbol,
+			assetClass: c.assetClass,
+			weightBps: c.weightBps,
+			rationale: c.rationale,
+			priceUsd: c.priceUsdAtSelection ?? null,
+			liquidityUsd: c.liquidityUsdAtSelection ?? null,
+			change24hPct: null,
+		}));
+		if (constituents.length < 2) throw new Error('that link does not contain a portfolio');
+
+		// The hash is never taken from the link. It is re-derived from the document
+		// by the same canonicalisation the registry commits, so a tampered link
+		// shows a different hash rather than a borrowed one.
+		const { manifestHash } = await getJson(`${API}/manifest`, {
+			method: 'POST',
+			headers: { 'content-type': 'application/json' },
+			body: JSON.stringify({ manifest }),
+		});
+
+		el.prompt.value = manifest.prompt || '';
+		updateCounter();
+		renderResult({
+			screen: {
+				name: manifest.name,
+				symbol: manifest.symbol,
+				thesis: manifest.thesis,
+				rebalanceDays: manifest.rebalance?.intervalDays ?? 30,
+				constituents,
+			},
+			manifest,
+			manifestHash,
+			provider: 'shared link',
+			model: null,
+			universeConsidered: manifest.universe?.consideredCount ?? constituents.length,
+			shared: true,
+		});
+		el.status.textContent = '';
+	} catch (err) {
+		showError(new Error(`That shared link could not be opened: ${err.message}`));
+		el.status.textContent = '';
+	} finally {
+		setBusy(false);
+	}
+}
+
 // ── Network ─────────────────────────────────────────────────────────────────
 
 async function getJson(url, init) {
@@ -220,6 +322,12 @@ function renderResult(result) {
 			</table>
 			</div>
 
+			<section class="hp-backtest" id="hp-backtest" aria-label="Backtest">
+				<h3>What this basket would have done</h3>
+				<div class="hp-sk-line" style="width:60%"></div>
+				<div class="hp-sk-line" style="width:40%;margin-bottom:0"></div>
+			</section>
+
 			<div class="hp-manifest">
 				<h3>Manifest</h3>
 				<div class="hp-hash">
@@ -241,11 +349,16 @@ function renderResult(result) {
 					Weights are binding; the prompt is provenance.
 				</p>
 				<div class="hp-actions">
+					<button type="button" class="hp-btn hp-btn-ghost" data-action="copy-link">Copy shareable link</button>
 					<button type="button" class="hp-btn hp-btn-ghost" data-action="refine">Refine this portfolio</button>
 					<a class="hp-btn hp-btn-ghost" href="/markets/robinhood/portfolios/universe">Inspect the universe</a>
 				</div>
 			</div>
 		</article>`;
+
+	// Every surface that renders a portfolio gets its backtest, rather than only
+	// the freshly generated one: a shared link showed an empty panel forever.
+	loadBacktest(result);
 }
 
 async function generate(prompt) {
@@ -266,10 +379,17 @@ async function generate(prompt) {
 		});
 		renderResult(result);
 		el.status.textContent = '';
-		// Make the result shareable without a backend: the prompt reproduces it.
-		const url = new URL(window.location.href);
-		url.searchParams.set('q', prompt);
-		window.history.replaceState(null, '', url);
+		// Share the manifest, not the prompt: the screen is a model, so the same
+		// sentence returns a different basket tomorrow.
+		try {
+			const url = new URL(window.location.href);
+			url.searchParams.delete('q');
+			url.searchParams.set('p', await encodeManifest(result.manifest));
+			window.history.replaceState(null, '', url);
+		} catch {
+			// A URL that got too long for the browser is not a reason to lose the
+			// result that is already on screen.
+		}
 		el.output.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
 	} catch (err) {
 		if (err.name === 'AbortError') return;
@@ -278,6 +398,118 @@ async function generate(prompt) {
 	} finally {
 		if (inFlight === controller) inFlight = null;
 		setBusy(false);
+	}
+}
+
+// ── Backtest ────────────────────────────────────────────────────────────────
+
+/**
+ * A two-line area chart, drawn as inline SVG.
+ *
+ * No chart library: this is two polylines and a fill, the page already ships no
+ * runtime dependencies, and an external script would be blocked by the CSP on
+ * embedded surfaces anyway. Both series are scaled to one shared axis so the gap
+ * between them is readable, which is the entire point of the chart.
+ */
+function sparkChart(rebalanced, held) {
+	const W = 720;
+	const H = 180;
+	const PAD = 4;
+	const all = [...rebalanced.map((p) => p.valueUsd), ...held.map((p) => p.valueUsd)];
+	const min = Math.min(...all);
+	const max = Math.max(...all);
+	const span = max - min || 1;
+	const x = (i, n) => PAD + (i / Math.max(1, n - 1)) * (W - PAD * 2);
+	const y = (v) => H - PAD - ((v - min) / span) * (H - PAD * 2);
+	const path = (pts) => pts.map((p, i) => `${i ? 'L' : 'M'}${x(i, pts.length).toFixed(1)},${y(p.valueUsd).toFixed(1)}`).join(' ');
+
+	const rPath = path(rebalanced);
+	const area = `${rPath} L${x(rebalanced.length - 1, rebalanced.length).toFixed(1)},${H - PAD} L${PAD},${H - PAD} Z`;
+
+	return `<svg class="hp-chart" viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" role="img"
+		aria-label="Value of the rebalanced basket against the same basket never rebalanced, over ${rebalanced.length} days">
+		<path class="hp-chart-area" d="${area}" />
+		<path class="hp-chart-held" d="${path(held)}" />
+		<path class="hp-chart-line" d="${rPath}" />
+	</svg>`;
+}
+
+function renderBacktest(data) {
+	const slot = document.getElementById('hp-backtest');
+	if (!slot) return;
+
+	if (!data || data.ok === false) {
+		const uncovered = (data?.uncovered || []).map((u) => u.symbol).filter(Boolean);
+		slot.innerHTML = `
+			<h3>What this basket would have done</h3>
+			<p class="hp-note" style="margin-top:0">
+				${escapeHtml(data?.reason || 'No price history is available for this basket yet.')}
+				${uncovered.length ? `Waiting on: ${escapeHtml(uncovered.join(', '))}.` : ''}
+			</p>`;
+		return;
+	}
+
+	const r = data.rebalanced;
+	const h = data.heldWithoutRebalancing;
+	const delta = data.rebalancingAddedPct;
+	const sign = (n) => `${n >= 0 ? '+' : ''}${n.toFixed(2)}%`;
+	const cls = (n) => (n > 0 ? 'hp-pos' : n < 0 ? 'hp-neg' : 'hp-muted');
+	const coveredPct = ((data.coveredWeightBps / data.totalWeightBps) * 100).toFixed(0);
+	const uncovered = data.uncovered || [];
+
+	slot.innerHTML = `
+		<h3>What this basket would have done</h3>
+		<div class="hp-bt-grid">
+			<div>
+				<span class="hp-bt-label">Rebalanced every ${escapeHtml(String(data.rebalanceDays))} days</span>
+				<span class="hp-bt-value ${cls(r.totalReturnPct)}">${escapeHtml(sign(r.totalReturnPct))}</span>
+			</div>
+			<div>
+				<span class="hp-bt-label">Never rebalanced</span>
+				<span class="hp-bt-value ${cls(h.totalReturnPct)}">${escapeHtml(sign(h.totalReturnPct))}</span>
+			</div>
+			<div>
+				<span class="hp-bt-label">Rebalancing added</span>
+				<span class="hp-bt-value ${cls(delta)}">${escapeHtml(`${delta >= 0 ? '+' : ''}${delta.toFixed(3)} pp`)}</span>
+			</div>
+			<div>
+				<span class="hp-bt-label">Worst drawdown</span>
+				<span class="hp-bt-value">${escapeHtml(`-${r.maxDrawdownPct.toFixed(2)}%`)}</span>
+			</div>
+		</div>
+
+		${sparkChart(r.series, h.series)}
+
+		<p class="hp-chart-key">
+			<span class="hp-key-line"></span> rebalanced
+			<span class="hp-key-held"></span> never rebalanced
+			<span class="hp-muted">${escapeHtml(`${data.from} to ${data.to}, ${data.windowDays} days`)}</span>
+		</p>
+
+		<p class="hp-note" style="margin-top:.75rem">
+			Real prices only: ${escapeHtml(String(data.covered.length))} of
+			${escapeHtml(String(data.covered.length + uncovered.length))} holdings had history, covering
+			${escapeHtml(coveredPct)}% of the portfolio by weight, and the window is the overlap where all of
+			them have data.
+			${uncovered.length ? `Not included: ${escapeHtml(uncovered.map((u) => u.symbol).join(', '))}, because ${escapeHtml(uncovered[0].reason)}.` : ''}
+			Trading costs are not modelled. Past prices are not a forecast.
+		</p>`;
+}
+
+async function loadBacktest(result) {
+	try {
+		const data = await getJson(`${API}/backtest`, {
+			method: 'POST',
+			headers: { 'content-type': 'application/json' },
+			body: JSON.stringify({
+				constituents: result.screen.constituents.map((c) => ({ address: c.address, weightBps: c.weightBps })),
+				rebalanceDays: result.screen.rebalanceDays,
+				days: 90,
+			}),
+		});
+		renderBacktest(data);
+	} catch (err) {
+		renderBacktest({ ok: false, reason: `The backtest could not be run: ${err.message}` });
 	}
 }
 
@@ -317,6 +549,23 @@ function downloadManifest() {
 	a.click();
 	a.remove();
 	setTimeout(() => URL.revokeObjectURL(url), 0);
+}
+
+async function copyShareLink(button) {
+	if (!currentResult) return;
+	const original = button.textContent;
+	try {
+		const url = new URL(window.location.href);
+		url.searchParams.delete('q');
+		url.searchParams.set('p', await encodeManifest(currentResult.manifest));
+		await navigator.clipboard.writeText(url.toString());
+		button.textContent = 'Link copied';
+	} catch {
+		button.textContent = 'Could not copy';
+	}
+	setTimeout(() => {
+		button.textContent = original;
+	}, 1600);
 }
 
 function refine() {
@@ -389,14 +638,21 @@ function init() {
 		const action = button.dataset.action;
 		if (action === 'copy-hash') copyHash(button);
 		else if (action === 'download') downloadManifest();
+		else if (action === 'copy-link') copyShareLink(button);
 		else if (action === 'refine') refine();
 		else if (action === 'retry') el.form.requestSubmit();
 	});
 
-	// A shared link carries its prompt, so the page reproduces the portfolio.
-	const shared = new URL(window.location.href).searchParams.get('q');
-	if (shared) {
-		el.prompt.value = shared.slice(0, MAX_PROMPT);
+	// `?p=` carries a whole manifest and reproduces the portfolio exactly. `?q=`
+	// is the older prompt-only form, kept working: it re-runs the screen, which
+	// may return something different, so the manifest link is what we now write.
+	const params = new URL(window.location.href).searchParams;
+	const packed = params.get('p');
+	const prompt = params.get('q');
+	if (packed) {
+		openSharedManifest(packed);
+	} else if (prompt) {
+		el.prompt.value = prompt.slice(0, MAX_PROMPT);
 		updateCounter();
 		generate(el.prompt.value.trim());
 	}

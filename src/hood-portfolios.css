@@ -863,3 +863,112 @@
 .hp-row-flagged:hover td {
 	opacity: 1;
 }
+
+/* ── Backtest ───────────────────────────────────────────────────────────── */
+
+.hp-backtest {
+	border-top: 1px solid var(--cv-border);
+	padding: 1.25rem 1.5rem;
+}
+
+.hp-backtest h3 {
+	margin: 0 0 0.9rem;
+	font-size: 0.75rem;
+	letter-spacing: 0.06em;
+	text-transform: uppercase;
+	color: var(--cv-text-3);
+}
+
+.hp-bt-grid {
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+	gap: 1rem;
+	margin-bottom: 1.1rem;
+}
+
+.hp-bt-label {
+	display: block;
+	font-size: 0.75rem;
+	color: var(--cv-text-3);
+	margin-bottom: 0.25rem;
+}
+
+.hp-bt-value {
+	display: block;
+	font-family: var(--cv-font-mono);
+	font-size: 1.25rem;
+	font-weight: 600;
+	letter-spacing: -0.02em;
+	color: var(--cv-text);
+}
+
+/*
+ * Two polylines on one shared axis. `vector-effect` keeps the strokes a constant
+ * width even though the viewBox is stretched by preserveAspectRatio="none", which
+ * is what lets the chart be fluid without the lines going wedge-shaped.
+ */
+.hp-chart {
+	display: block;
+	width: 100%;
+	height: 180px;
+	overflow: visible;
+}
+
+.hp-chart path {
+	fill: none;
+	vector-effect: non-scaling-stroke;
+}
+
+.hp-chart-area {
+	fill: var(--cv-accent);
+	opacity: 0.08;
+	stroke: none;
+}
+
+.hp-chart-line {
+	stroke: var(--cv-accent);
+	stroke-width: 2;
+	stroke-linejoin: round;
+	stroke-linecap: round;
+}
+
+.hp-chart-held {
+	stroke: var(--cv-text-3);
+	stroke-width: 1.5;
+	stroke-dasharray: 4 3;
+	stroke-linejoin: round;
+}
+
+.hp-chart-key {
+	display: flex;
+	align-items: center;
+	gap: 0.45rem;
+	flex-wrap: wrap;
+	margin: 0.6rem 0 0;
+	font-size: 0.75rem;
+	color: var(--cv-text-2);
+}
+
+.hp-key-line,
+.hp-key-held {
+	display: inline-block;
+	width: 18px;
+	height: 0;
+	border-top: 2px solid var(--cv-accent);
+}
+
+.hp-key-held {
+	border-top: 1.5px dashed var(--cv-text-3);
+	margin-left: 0.6rem;
+}
+
+@media (max-width: 640px) {
+	.hp-backtest {
+		padding-left: 1rem;
+		padding-right: 1rem;
+	}
+
+	.hp-chart {
+		height: 140px;
+	}
+}

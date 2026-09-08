@@ -16,9 +16,11 @@
 //   • the manifest            = canonical JSON + keccak256, so the document a
 //                               user is shown hashes to the value that gets
 //                               committed on-chain by PortfolioRegistry
-//   • valuation and history   = NAV from live prices, and real price history
-//                               from Chainlink rounds (equities) and Uniswap v4
-//                               swap events (everything else)
+//   • valuation               = NAV from live prices, refusing to answer rather
+//                               than under-reporting when a leg is unpriceable
+//
+// Price history and backtesting live next door in hood-portfolios-history.js and
+// hood-portfolios-backtest.js, because both are about time rather than about now.
 //
 // Nothing here invents a number. Where a price genuinely does not exist (a
 // memecoin with no live pool, an equity feed that stopped updating when the US
@@ -34,7 +36,6 @@ import { llmComplete } from './llm.js';
 import {
 	chainlinkSnapshot,
 	dexSnapshot,
-	feedRoundHistory,
 	publicClient,
 	stockRegistry,
 } from './robinhood.js';
@@ -533,37 +534,6 @@ export function valueBasket(constituents, priceByAddress) {
 		pricedLegs: legs.length - unpriceable.length,
 		totalLegs: legs.length,
 	};
-}
-
-// ── Real price history ──────────────────────────────────────────────────────
-
-/**
- * Daily USD price history for one token, from whatever real source it has.
- *
- * Two sources, in order of what actually exists on this chain:
- *
- *   1. Chainlink round history, for the 34 registry equities that carry a feed.
- *      Read by round id at head state, so it works on the pruned public RPC.
- *   2. Uniswap v4 `Swap` events, for everything else. The post-swap
- *      `sqrtPriceX96` is in the log data, so a real series can be reconstructed
- *      from logs alone, which is the only historical source a pruned node can
- *      still serve.
- *
- * Returns an empty series rather than a synthesised one when neither exists.
- * A backtest over a token with no history is a backtest with a hole in it, and
- * the caller is told which legs those are.
- */
-export async function priceHistory(token, { days = 30 } = {}) {
-	if (token.feed) {
-		// feedRoundHistory returns [{ roundId, priceUsd, updatedAt }], oldest first.
-		const rounds = await feedRoundHistory(token.feed, Math.min(days * 2, 80)).catch(() => []);
-		const points = (rounds || [])
-			.filter((r) => r?.priceUsd != null && Number(r.priceUsd) > 0)
-			.map((r) => ({ t: Number(r.updatedAt) * 1000, priceUsd: Number(r.priceUsd) }))
-			.sort((a, b) => a.t - b.t);
-		if (points.length) return { source: 'chainlink', feed: token.feed, points };
-	}
-	return { source: 'none', points: [] };
 }
 
 /** Cheap health line for the status surfaces: is the chain answering, and how fresh is the universe. */
