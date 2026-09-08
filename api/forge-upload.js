@@ -11,14 +11,22 @@
  *
  * Auth-free, matching the rest of /forge: rate-limited by client IP and scoped
  * to the anonymous browser handle (x-forge-client) so uploads land under that
- * client's key prefix. When object storage isn't configured the endpoint returns
- * a clean 503 and the page falls back to accepting public image URLs directly.
+ * client's key prefix.
+ *
+ * Because the only thing this endpoint returns is a URL the BROWSER dereferences,
+ * it verifies that storage will accept an upload rather than only that storage is
+ * configured. A signed URL made from a rejected credential is indistinguishable
+ * from a good one until the browser uses it, and the bucket's 403 arrives with no
+ * CORS header, so the page sees a rejected fetch and no status. Both unavailable
+ * cases answer 503: `unconfigured` (this deployment has no bucket, and the page
+ * falls back to accepting public image URLs) and `storage_unavailable` (the
+ * bucket is refusing us, and the user should come back shortly).
  */
 
 import { randomUUID } from 'node:crypto';
 import { cors, json, method, readJson, wrap, rateLimited } from './_lib/http.js';
 import { limits, clientIp } from './_lib/rate-limit.js';
-import { presignUpload, publicUrl, objectStorageConfigured } from './_lib/r2.js';
+import { presignUpload, publicUrl, objectStorageUsable } from './_lib/r2.js';
 import { hashClient } from './_lib/forge-store.js';
 
 // Accepted reference-image types → file extension for the storage key.
@@ -30,17 +38,6 @@ const CONTENT_TYPE_EXT = Object.freeze({
 
 const MAX_IMAGE_BYTES = 8 * 1024 * 1024; // matches forge-store's preview copy cap
 
-// Upload needs object storage (R2/S3), and the check lives in r2.js so this
-// route cannot drift from it. That module trims before testing: a credential
-// that is only a trailing newline reads truthy through a raw `process.env`
-// test, so an untrimmed copy here would call storage healthy and hand the
-// browser a presigned URL that answers 403 SignatureDoesNotMatch. The 403
-// carries no CORS header, so the page reports "Network error during upload"
-// instead of the designed "paste a URL" fallback below.
-function storageConfigured() {
-	return objectStorageConfigured();
-}
-
 function clientKeyFrom(req) {
 	const raw = req.headers['x-forge-client'];
 	return hashClient(Array.isArray(raw) ? raw[0] : raw);
@@ -50,7 +47,29 @@ export default wrap(async (req, res) => {
 	if (cors(req, res, { methods: 'POST,OPTIONS' })) return;
 	if (!method(req, res, ['POST'])) return;
 
-	if (!storageConfigured()) {
+	// Ask whether storage will actually ACCEPT the bytes, not merely whether it
+	// is configured. This endpoint's whole output is a URL the browser uses
+	// itself, so a credential that is present but rejected produces a perfectly
+	// formed 200 here and a 403 SignatureDoesNotMatch there. Cross-origin, that
+	// 403 arrives without a CORS header and the page cannot read its status, so
+	// it surfaces as a bare "Network error during upload" with no way for the
+	// user to tell a broken photo from a broken platform (live on /forge from
+	// 2026-09-07). Answering honestly here is the only place that distinction
+	// still exists. The check is cached in r2.js, so this costs one signed list
+	// per minute, not one per upload.
+	const storage = await objectStorageUsable();
+	if (!storage.ok) {
+		if (storage.reason === 'rejected') {
+			console.error(`[forge-upload] object storage rejected our credential: ${storage.message}`);
+			res.setHeader('retry-after', '60');
+			return json(res, 503, {
+				error: 'storage_unavailable',
+				message:
+					'Reference image upload is temporarily unavailable while our asset storage recovers. ' +
+					'Please try again shortly.',
+				retry_after: 60,
+			});
+		}
 		return json(res, 503, {
 			error: 'unconfigured',
 			message:

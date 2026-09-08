@@ -16,7 +16,7 @@ import { randomUUID } from 'node:crypto';
 
 import { cors, json, method, rateLimited, readJson, wrap } from '../_lib/http.js';
 import { clientIp, limits } from '../_lib/rate-limit.js';
-import { objectStorageConfigured, presignUpload, publicUrl } from '../_lib/r2.js';
+import { objectStorageUsable, presignUpload, publicUrl } from '../_lib/r2.js';
 import { hashClient } from '../_lib/forge-store.js';
 import { MAX_INPUT_BYTES } from '../_lib/print/mesh-io.js';
 
@@ -32,7 +32,24 @@ export default wrap(async (req, res) => {
 	if (cors(req, res, { methods: 'POST,OPTIONS' })) return;
 	if (!method(req, res, ['POST'])) return;
 
-	if (!objectStorageConfigured()) {
+	// Presence is not acceptance: a present-but-rejected credential signs a URL
+	// the browser cannot use, and the bucket's 403 comes back without a CORS
+	// header, so the page can only report a generic network failure. Ask whether
+	// storage will take the bytes. Cached in r2.js, so this is one signed list a
+	// minute across all callers (see objectStorageUsable).
+	const storage = await objectStorageUsable();
+	if (!storage.ok) {
+		if (storage.reason === 'rejected') {
+			console.error(`[print-upload] object storage rejected our credential: ${storage.message}`);
+			res.setHeader('retry-after', '60');
+			return json(res, 503, {
+				error: 'storage_unavailable',
+				message:
+					'Model upload is temporarily unavailable while our asset storage recovers. ' +
+					'Please try again shortly.',
+				retry_after: 60,
+			});
+		}
 		return json(res, 503, {
 			error: 'unconfigured',
 			message:

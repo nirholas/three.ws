@@ -113,14 +113,22 @@ vi.mock('../../api/_lib/forge-store.js', () => ({
 }));
 
 const presignMock = vi.fn(async ({ key }) => `https://r2.example/${key}?sig=abc`);
-// Storage config is read through r2.js so the route cannot drift from the
-// trimmed check; default configured, flipped per test for the 503 fallback.
-const storageState = { configured: true };
+// Storage readiness is read through r2.js so the route cannot drift from it.
+// Two independent failure modes, because they need different answers: no bucket
+// on this deployment (`unconfigured`), and a bucket that refuses our credential
+// (`rejected`). Default healthy, flipped per test.
+const storageState = { configured: true, rejected: false };
 
 vi.mock('../../api/_lib/r2.js', () => ({
 	presignUpload: (...a) => presignMock(...a),
 	publicUrl: (key) => `https://cdn.example/${key}`,
 	objectStorageConfigured: () => storageState.configured,
+	objectStorageUsable: async () => {
+		if (!storageState.configured) return { ok: false, reason: 'unconfigured', message: null };
+		if (storageState.rejected)
+			return { ok: false, reason: 'rejected', message: 'does not match the signature' };
+		return { ok: true, reason: null, message: null };
+	},
 }));
 
 vi.mock('../../api/_lib/auth.js', () => ({
@@ -332,6 +340,29 @@ describe('forge-upload', () => {
 			expect(presignMock).not.toHaveBeenCalled();
 		} finally {
 			storageState.configured = true;
+		}
+	});
+
+	// The failure users actually hit on 2026-09-07: every var was present, so the
+	// old presence-only check called storage healthy and returned 200 with a URL
+	// the bucket then rejected. Cross-origin, that 403 has no CORS header, so the
+	// page could only say "Network error during upload" over a photo that was
+	// never at fault. The route must refuse to mint the URL at all.
+	it('503s without minting a URL when the bucket rejects our credential', async () => {
+		storageState.rejected = true;
+		try {
+			const res = await call(upload, {
+				method: 'POST',
+				url: '/api/forge-upload',
+				headers: { 'x-forge-client': 'browser-1' },
+				body: { content_type: 'image/png', size_bytes: 1_000 },
+			});
+			expect(res.statusCode).toBe(503);
+			expect(parse(res).error).toBe('storage_unavailable');
+			expect(res.headers['retry-after']).toBeDefined();
+			expect(presignMock).not.toHaveBeenCalled();
+		} finally {
+			storageState.rejected = false;
 		}
 	});
 

@@ -7,6 +7,7 @@ import {
 	DeleteObjectCommand,
 	HeadObjectCommand,
 	CopyObjectCommand,
+	ListObjectsV2Command,
 } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import { env } from './env.js';
@@ -90,6 +91,79 @@ export function isStorageInfrastructureError(err) {
 		.filter(Boolean)
 		.join(' ');
 	return STORAGE_ERROR_RE.test(text);
+}
+
+// Cached liveness of the storage credential, for the one caller shape that
+// cannot recover on its own: an endpoint that hands the BROWSER a presigned URL.
+// objectStorageConfigured() above only proves the vars are present, and a
+// present-but-rejected secret signs a URL that looks perfect and answers 403
+// SignatureDoesNotMatch on use. That 403 carries no CORS header, so the page
+// never sees a status at all: it sees a rejected fetch and reports a network
+// fault, which is how a rotated R2 token read as "Network error during upload"
+// to every /forge user on 2026-09-07 while the endpoint reported 200 OK.
+//
+// The probe is the same signed one-key list the health sensor uses (a rejected
+// credential fails identically for reads and writes, so one read proves both).
+// Results are cached and single-flighted so a six-slot burst costs one probe,
+// and a rejection is re-checked often enough that a fixed credential recovers
+// within seconds without a redeploy.
+const CRED_OK_TTL_MS = 60_000;
+const CRED_FAIL_TTL_MS = 15_000;
+let _credProbe = null;
+let _credProbeInFlight = null;
+
+async function runCredProbe() {
+	const started = Date.now();
+	try {
+		await r2.send(new ListObjectsV2Command({ Bucket: env.S3_BUCKET, MaxKeys: 1 }), {
+			abortSignal: AbortSignal.timeout(3_000),
+		});
+		return { at: started, ok: true, reason: null, message: null };
+	} catch (err) {
+		// Fail CLOSED only on the deterministic class (the credential itself was
+		// rejected): that never fixes itself on retry, and every presigned URL we
+		// hand out until it is fixed is guaranteed to fail in the browser. A
+		// timeout or a dropped socket is transient and may well be the probe's own
+		// bad luck, so fail OPEN there and let the real PUT decide rather than
+		// taking uploads down over one flaky list.
+		const transient = /timeout|aborted|econnreset|socket hang up/i.test(String(err?.message || ''));
+		const rejected = isStorageInfrastructureError(err) && !transient;
+		return {
+			at: started,
+			ok: !rejected,
+			reason: rejected ? 'rejected' : null,
+			message: rejected ? String(err?.message || err).slice(0, 200) : null,
+		};
+	}
+}
+
+/**
+ * @returns {Promise<{ ok: boolean, reason: 'unconfigured'|'rejected'|null, message: string|null }>}
+ */
+export async function objectStorageUsable() {
+	if (!objectStorageConfigured()) {
+		return { ok: false, reason: /** @type {const} */ ('unconfigured'), message: null };
+	}
+	const ttl = _credProbe?.ok ? CRED_OK_TTL_MS : CRED_FAIL_TTL_MS;
+	if (_credProbe && Date.now() - _credProbe.at < ttl) return _credProbe;
+	if (!_credProbeInFlight) {
+		_credProbeInFlight = runCredProbe()
+			.then((result) => {
+				_credProbe = result;
+				return result;
+			})
+			.finally(() => {
+				_credProbeInFlight = null;
+			});
+	}
+	return _credProbeInFlight;
+}
+
+// Drops the cached verdict. Tests use it to probe a fresh state; production
+// never needs it, because both TTLs above expire on their own.
+export function resetObjectStorageUsableCache() {
+	_credProbe = null;
+	_credProbeInFlight = null;
 }
 
 // Short-lived signed URL for direct browser upload (PUT).

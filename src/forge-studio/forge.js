@@ -1092,31 +1092,53 @@ function handleFiles(startIndex, fileList) {
 // Presign → PUT to object storage → public URL. Shared by the view slots and
 // the sketch uploader. Returns { ok: true, url } or { ok: false, message }.
 async function presignAndPut(file) {
+	// Two legs, two catches on purpose. The presign leg is same-origin, so a
+	// throw there really is the user's connection. The PUT leg is cross-origin to
+	// the bucket, where a rejected credential or a missing CORS rule answers 403
+	// with no Access-Control-Allow-Origin, and the browser hands us a rejected
+	// promise with no status to read. Reporting that as a network fault (one
+	// shared catch, as this had until 2026-09-08) blames the user's phone for our
+	// outage and sends them into an endless Retry loop.
+	let presign;
+	let presignRes;
 	try {
-		const presignRes = await fetch('/api/forge-upload', {
+		presignRes = await fetch('/api/forge-upload', {
 			method: 'POST',
 			headers: { 'content-type': 'application/json', ...CLIENT_HEADERS },
 			body: JSON.stringify({ content_type: file.type, size_bytes: file.size }),
 		});
-		const presign = await presignRes.json().catch(() => ({}));
-		if (presignRes.status === 503)
-			return { ok: false, message: 'Uploads unavailable — paste a URL.' };
-		if (presignRes.status === 429)
-			return { ok: false, message: 'Rate limited — retry shortly.' };
-		if (!presignRes.ok || !presign.upload_url || !presign.public_url) {
-			return { ok: false, message: presign.message || 'Upload failed.' };
-		}
+		presign = await presignRes.json().catch(() => ({}));
+	} catch {
+		return { ok: false, message: 'No connection. Check your network.' };
+	}
 
+	if (presignRes.status === 503) {
+		// The server distinguishes "this deployment has no storage" from "our
+		// storage is refusing us right now"; only the second is worth asking the
+		// user to come back for.
+		return {
+			ok: false,
+			message:
+				presign.error === 'storage_unavailable'
+					? 'Uploads are down right now. Try again shortly.'
+					: 'Uploads unavailable on this deployment.',
+		};
+	}
+	if (presignRes.status === 429) return { ok: false, message: 'Rate limited. Retry shortly.' };
+	if (!presignRes.ok || !presign.upload_url || !presign.public_url) {
+		return { ok: false, message: presign.message || 'Upload failed.' };
+	}
+
+	try {
 		const putRes = await fetch(presign.upload_url, {
 			method: 'PUT',
 			headers: { 'content-type': file.type },
 			body: file,
 		});
-		if (!putRes.ok)
-			return { ok: false, message: `Storage rejected the file (${putRes.status}).` };
+		if (!putRes.ok) return { ok: false, message: `Storage rejected the file (${putRes.status}).` };
 		return { ok: true, url: presign.public_url };
 	} catch {
-		return { ok: false, message: 'Network error during upload.' };
+		return { ok: false, message: 'Storage refused the upload. Try again shortly.' };
 	}
 }
 

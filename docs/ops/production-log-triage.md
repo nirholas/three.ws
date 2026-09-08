@@ -114,13 +114,17 @@ thing:
   hop never touches R2. But `materializeCreation` cannot copy it, so the reply carries
   `durable:false`: no R2 copy, no DB creation row, no gallery entry, and the mesh is
   only as long-lived as the raw bucket. This is the workaround to give users.
-- **Uploads cannot land**, which is what users actually report. `POST
-  /api/forge-upload` presigns fine (200) and the R2 CORS preflight passes, then the
-  browser's `PUT` answers `403 SignatureDoesNotMatch` with NO
-  `Access-Control-Allow-Origin` on the 403 itself. The browser therefore hides the
-  status, `fetch` throws, and `/forge` can only say **"Network error during upload"**
-  (`src/forge.js`), never the `Storage rejected the file (403)` branch beside it. Treat
-  that phrase in a user report as this outage until proven otherwise.
+- **Uploads cannot land**, which is what users actually report. The R2 CORS preflight
+  passes, then the browser's `PUT` answers `403 SignatureDoesNotMatch` with NO
+  `Access-Control-Allow-Origin` on the 403 itself, so the browser hides the status and
+  `fetch` throws with nothing to read. Until 2026-09-08 `POST /api/forge-upload`
+  presigned fine (200) regardless, so `/forge` could only say **"Network error during
+  upload"** and a user had no way to tell our outage from their own signal. The route
+  now asks `objectStorageUsable()` (`api/_lib/r2.js`) whether the bucket will accept an
+  upload before it mints a URL, and answers `503 storage_unavailable` when it will not,
+  which the page renders as "Uploads are down right now. Try again shortly."
+  `api/print/upload.js` does the same. Treat **either** phrase in a user report as this
+  outage until proven otherwise: the old one means the fix is not deployed yet.
 - **Agent registration** cannot store its manifest. **`/cdn/*`** cannot read an object
   and answers `502 upstream_error` until the public-bucket fallback (`36b67b8a8`,
   `99c521446`, `2ab1cb56a`) is actually deployed; those commits sat on `main` unshipped
