@@ -114,6 +114,13 @@ curl -s -X POST "https://three.ws/api/forge?action=rig" -H 'content-type: applic
   fingers separated and visible (never a fist, never a hand hidden behind the
   body or in a pocket) — do not fight that by asking for "hands on hips" or
   "arms crossed" unless you accept a higher chance of fused-finger geometry.
+  Asking is not the same as getting: measured across six personas on 2026-09-08,
+  a prompt that explicitly said "hands open, fingers separated" still came back
+  with both hands fused into one clasped blob at the chest in one case, and with
+  cleanly separated fingers in another. What correlates with separated fingers is
+  the hands being **away from the torso and from each other** in the described
+  pose, so say where the hands are ("arms hanging at his sides, palms forward"),
+  not just what they are doing.
 - Both avatar tools always request the platform's `high` quality tier under the
   hood — the self-host Hunyuan3D lane (people/organic-subject strength, portrait
   realism cues on the reference image) instead of the faster draft/standard
