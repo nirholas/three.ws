@@ -173,19 +173,29 @@ Green, run this session:
 - `npm run audit:rig-coverage` clean
 - `node scripts/animation-dignity-sweep.mjs` 10/10, re-run AFTER these changes
 
-A whole-suite `vitest run` in this worktree is **not** a clean signal right now:
-21 concurrent vitest processes from other agents share the same repo, and tests
-that touch shared files race. `tests/version-endpoint.test.js` ("trusts a
-pre-build snapshot ... then consumes it"), `tests/build-asset-paths.test.js` and
-`tests/server-404-routes.test.js` each failed in the shared run and each pass in
-isolation, verified individually.
+Whole-suite `vitest run`: **29,103 passed, 2 failed, 155 skipped (3 files red of
+2,018)**. None of the three is from this work, and all three are accounted for:
 
-One genuine failure remains and is **not** from this work:
-`tests/audit-guards.test.js` reports that `data/guards.json` never describes the
-gate steps `check:skills-seed`, `audit:motion` and `audit:tour-global`, and that a
-`check-thing` fixture edits a `public/gone.json` that does not exist. That file and
-`package.json` are untouched by this pass; the recent commits there belong to
-another agent's in-flight guards registration.
+- `tests/audit-guards.test.js`: genuine, and someone else's. `data/guards.json`
+  never describes the gate steps `check:skills-seed`, `audit:motion` and
+  `audit:tour-global`, and a `check-thing` fixture edits a `public/gone.json` that
+  does not exist. Neither that file nor `package.json` is touched by this pass; the
+  recent commits there belong to another agent's in-flight guards registration.
+- `tests/version-endpoint.test.js`: shared-file race. The case is literally
+  "trusts a pre-build snapshot ... then consumes it", and 21 concurrent vitest
+  processes from other agents were consuming the same snapshot. Passes in
+  isolation, verified.
+- `tests/extension-build.test.js`: shared-directory race:
+  `ENOENT ... chmod dist/extension/popup.html` on a file the build had just
+  written, i.e. a concurrent `vite build` (which runs with `emptyOutDir`) wiped
+  `dist/` mid-copy.
+
+`tests/build-asset-paths.test.js` and `tests/server-404-routes.test.js` also failed
+in an earlier shared run and both pass in isolation, verified individually.
+
+The Playwright stage was not run to completion: it needs the single shared dev
+server on port 3000, which concurrent agents were already using, and starting a
+second run kills the first one's server.
 
 ## What is still open
 
