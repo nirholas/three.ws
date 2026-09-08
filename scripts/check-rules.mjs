@@ -129,6 +129,15 @@ const SKIP = [
 	// wording is the record, and retyping its punctuation to satisfy a house
 	// rule would make the evidence a paraphrase of what the endpoint said.
 	/^prompts\/okx-ai\/e2e-evidence\//,
+	// The quality-bar audit captures, for the same reason. Every file under
+	// prompts/quality-bar/_generated/ is written by a harness (e.g.
+	// scripts/mobile-touch-audit.mjs) against the LIVE site and stores what the
+	// page actually renders, control labels and document titles included. It is
+	// the before-and-after evidence a finish work order is scored against, so
+	// retyping its punctuation would make the record disagree with production
+	// and hide the very drift the capture exists to prove. The pages whose copy
+	// these files quote are still scanned.
+	/^prompts\/quality-bar\/_generated\//,
 	// The baked animation library. Every clip, the manifest, and the signature
 	// index are written by scripts/build-animations.mjs and
 	// scripts/compact-clips.mjs from FBX sources deliberately kept out of the
