@@ -47,6 +47,11 @@ import {
 import { COMPONENT_URI } from './component.js';
 import { renderTurntable, describeGeometry } from '../_lib/3d-vision.js';
 import { buildSpatialArtifact } from '../_lib/spatial-mcp.js';
+// The same pure cold-start core the browser surfaces render from
+// (src/shared/forge-frames.js). Zero DOM, zero env, zero network, so it is safe
+// server-side, and sharing it is what keeps the MCP wording from drifting away
+// from what /forge and the homepage chamber say about the identical job.
+import { coldStartState } from '../../src/shared/forge-frames.js';
 // Pure, dependency-free lineage core — the SAME module the paid stdio server's
 // runRefineModel uses (mcp-server/src/tools/_lineage.js), so conversational
 // iteration behaves identically on both tracks and never drifts. It carries
@@ -150,9 +155,8 @@ function toolError(message) {
 function pendingTiming(job) {
 	return {
 		etaRemainingSeconds: job?.eta_remaining_seconds,
-		coldStart: Boolean(job?.cold_start),
-		coldStartSeconds: job?.cold_start_seconds ?? null,
-		elapsedSeconds: job?.elapsed_seconds ?? null,
+		// null when the API is not reporting a boot on this frame.
+		cold: coldStartState(job || {}),
 	};
 }
 
@@ -163,53 +167,39 @@ function pendingTiming(job) {
 // quietly finished minutes later and the caller never learned. The job handle
 // is public (the free /api/forge poll endpoint takes it with no auth), so hand
 // it over and let the caller collect the result.
-function pendingResult({
-	base,
-	jobId,
-	what,
-	prompt,
-	etaRemainingSeconds,
-	stage = 'mesh',
-	coldStart = false,
-	coldStartSeconds = null,
-	elapsedSeconds = null,
-}) {
+function pendingResult({ base, jobId, what, prompt, etaRemainingSeconds, stage = 'mesh', cold = null }) {
 	// The ChatGPT pipeline's own endpoint, not /api/forge: the whole point of
 	// the clone is that this surface can evolve independently.
 	const pollUrl = `${base}/api/gpt-forge?job=${encodeURIComponent(jobId)}`;
-	const num = (v) => (Number.isFinite(Number(v)) && Number(v) > 0 ? Math.round(Number(v)) : null);
-	const eta = num(etaRemainingSeconds);
-	// Guard the null BEFORE the numeric compare: Number(null) is 0, which passes
-	// `>= 0` and would report a job with no known age as "0s in".
-	const elapsed =
-		elapsedSeconds == null || !Number.isFinite(Number(elapsedSeconds)) || Number(elapsedSeconds) < 0
-			? null
-			: Math.round(Number(elapsedSeconds));
-	const coldTotal = num(coldStartSeconds);
+	const eta = Number.isFinite(Number(etaRemainingSeconds)) && Number(etaRemainingSeconds) > 0
+		? Math.round(Number(etaRemainingSeconds))
+		: null;
+	const elapsed = cold?.elapsedSeconds ?? null;
 	// A queued job on a scale-to-zero worker is a container boot, not a slow
 	// render, and saying so is the difference between a client that waits and a
-	// client that retries into the same boot. Every number here comes off the
-	// poll payload; when the API reports the boot without a budget we name the
-	// state and promise no time rather than inventing one.
-	const bootLeft = coldStart && coldTotal != null && elapsed != null ? coldTotal - elapsed : null;
+	// client that retries into the same boot. Every number comes off the poll
+	// payload via coldStartState; when the API reports the boot without a budget
+	// we name the state and promise no time rather than inventing one.
 	let head;
-	if (coldStart) {
+	if (cold) {
+		const inNote = elapsed != null && elapsed >= 5 ? `, ${elapsed}s in` : '';
 		const budget =
-			bootLeft != null
-				? bootLeft > 0
-					? ` (about ${bootLeft}s of boot left`
-					: ` (past its usual ${coldTotal}s boot`
-				: coldTotal != null
-					? ` (about ${coldTotal}s`
-					: '';
-		const elapsedNote = budget && elapsed != null && elapsed >= 5 ? `, ${elapsed}s in)` : budget ? ')' : '';
+			cold.remainingSeconds != null
+				? ` (about ${cold.remainingSeconds}s of boot left${inNote})`
+				: cold.pastBudget
+					? ` (past its usual ${cold.budgetSeconds}s boot${inNote})`
+					: cold.budgetSeconds != null
+						? ` (about ${cold.budgetSeconds}s)`
+						: '';
 		head =
-			`The GPU worker for this ${what} is waking up${budget}${elapsedNote}. ` +
+			`The GPU worker for this ${what} is waking up${budget}. ` +
 			'The job is accepted and rendering starts the moment it answers';
 	} else {
 		head = `The ${what} is still rendering (heavier scenes take a few minutes)${eta ? ` (roughly ${eta}s to go)` : ''}`;
 	}
-	const retryIn = coldStart && bootLeft != null && bootLeft > 0 ? bootLeft : eta;
+	// Point the retry at the BOOT when one is running: telling a caller to come
+	// back in the render ETA when the worker answers sooner wastes the difference.
+	const retryIn = cold?.remainingSeconds ?? eta;
 	const message =
 		`${head}. ` +
 		`It keeps running: call the check_job tool with this job_id${retryIn ? ` in ~${retryIn}s` : ' shortly'} to collect it, ` +
@@ -229,11 +219,11 @@ function pendingResult({
 			...(eta ? { etaRemainingSeconds: eta } : {}),
 			// Machine-readable twin of the sentence above, so a client can render
 			// its own "waking up" state instead of parsing prose.
-			...(coldStart
+			...(cold
 				? {
 						coldStart: true,
-						...(coldTotal != null ? { coldStartSeconds: coldTotal } : {}),
-						...(bootLeft != null && bootLeft > 0 ? { coldStartRemainingSeconds: bootLeft } : {}),
+						...(cold.budgetSeconds != null ? { coldStartSeconds: cold.budgetSeconds } : {}),
+						...(cold.remainingSeconds != null ? { coldStartRemainingSeconds: cold.remainingSeconds } : {}),
 					}
 				: {}),
 			...(elapsed != null ? { elapsedSeconds: elapsed } : {}),
