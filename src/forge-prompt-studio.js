@@ -131,7 +131,7 @@ function grade(raw) {
 	if (!text) {
 		return {
 			grade: 'tip',
-			msg: 'Name one object and a material — e.g. “a brass compass, weathered”.',
+			msg: 'Name one object and a material, e.g. “a brass compass, weathered”.',
 		};
 	}
 	if (words < 2) {

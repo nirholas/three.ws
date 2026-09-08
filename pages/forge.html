@@ -3473,7 +3473,17 @@
 							</svg>
 							Surprise me
 						</button>
-						<span class="prompt-coach" id="prompt-coach" data-grade="tip" aria-live="polite"></span>
+						<!-- Ships the exact message grade('') writes for an empty prompt, so
+						     .prompt-tools is its settled height in the first frame. It used
+						     to ship empty at min-height:1.2em and grow when updateCoach()
+						     ran, wrapping the coach onto its own line in this flex-wrap row
+						     and pushing the quality tiles, the composer and the example
+						     chips down with it: 38px at desktop widths, measured against
+						     production. tests/forge-prompt-coach.test.js reads this file and
+						     src/forge-prompt-studio.js so the two copies cannot drift.
+						     data-no-i18n because the text becomes dynamic the moment anyone
+						     types (docs/site-performance.md rule 6). -->
+						<span class="prompt-coach" id="prompt-coach" data-grade="tip" aria-live="polite" data-no-i18n>Name one object and a material, e.g. “a brass compass, weathered”.</span>
 						<span class="prompt-count" id="prompt-count">0 / 1000</span>
 					</div>
 				</div>
