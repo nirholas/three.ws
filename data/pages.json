@@ -2901,6 +2901,14 @@
 					"added": "2026-08-12"
 				},
 				{
+					"path": "/docs/trader-wrapped",
+					"title": "Docs · Trader Wrapped",
+					"description": "How the shareable season recap for a pump.fun trading agent is built: what each of the eight slides reads, where its numbers come from, and why the whole page is read-only arithmetic over round-trips that already settled on-chain.",
+					"priority": 0.6,
+					"changefreq": "monthly",
+					"added": "2026-09-04"
+				},
+				{
 					"path": "/docs/pump-claims-channel",
 					"title": "Docs · pump.fun first-claims channel",
 					"description": "A live Telegram feed of first-time pump.fun creator fee claims: how the delivery lane scans, dedupes by transaction signature, and drains a backlog in order, plus the configuration it needs and why the direct on-chain fallback cannot serve the feed.",
