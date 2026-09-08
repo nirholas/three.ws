@@ -759,7 +759,7 @@ function renderForgeAnnounce(host) {
 				<div class="dnx-forge-head">
 					<span class="dnx-forge-badge">New</span>
 					<span class="dnx-forge-title">Text &amp; image&nbsp;to&nbsp;3D are live</span>
-					<span class="dnx-forge-sub">Describe any object, or upload a photo of one — get a downloadable, textured GLB in seconds.</span>
+					<span class="dnx-forge-sub">Describe any object, or upload a photo of one, and get a downloadable, textured GLB in seconds.</span>
 				</div>
 				<form class="dnx-forge-form" novalidate>
 					<label class="dnx-forge-field">
@@ -946,7 +946,7 @@ function renderOnboarding(host, { avatars, agents, widgets, loadErrors = {} }) {
 			icon: OB_ICONS.avatar,
 			label: 'Create your first avatar',
 			outcome: 'Your selfie becomes a 3D character ready to talk to visitors',
-			detail: 'We turn a single photo into a full-body animated 3D agent in under 60 seconds. No design tools, no uploads — just a selfie.',
+			detail: 'We turn a single photo into a full-body animated 3D agent in under 60 seconds. No design tools, no uploads, just a selfie.',
 			href: avatars.length === 0 ? '/start' : '/create',
 			cta: avatars.length === 0 ? 'Take a selfie' : 'Create another avatar',
 			done: avatars.length > 0,
@@ -955,7 +955,7 @@ function renderOnboarding(host, { avatars, agents, widgets, loadErrors = {} }) {
 			id: 'agent',
 			icon: OB_ICONS.agent,
 			label: 'Give your avatar a brain',
-			outcome: 'It learns your personality and answers in your style — not a generic bot',
+			outcome: 'It learns your personality and answers in your style, not a generic bot',
 			detail: 'Set its name, persona, and knowledge base. Upload docs, link URLs, or just write a prompt. This is what makes it distinctly yours.',
 			href: agents.length === 0 ? '/start' : '/dashboard/agents',
 			cta: 'Set up agent',
@@ -965,8 +965,8 @@ function renderOnboarding(host, { avatars, agents, widgets, loadErrors = {} }) {
 			id: 'widget',
 			icon: OB_ICONS.widget,
 			label: 'Put it on your website',
-			outcome: 'One line of HTML — visitors chat with your 3D agent in 2 minutes',
-			detail: 'Copy a single script tag. Drop it anywhere — WordPress, Shopify, Webflow, raw HTML. Visitors see your agent immediately, no account required on their end.',
+			outcome: 'One line of HTML, and visitors chat with your 3D agent in 2 minutes',
+			detail: 'Copy a single script tag. Drop it anywhere: WordPress, Shopify, Webflow, raw HTML. Visitors see your agent immediately, no account required on their end.',
 			href: '/dashboard/widgets',
 			cta: 'Create embed widget',
 			done: widgets.length > 0,
@@ -975,13 +975,13 @@ function renderOnboarding(host, { avatars, agents, widgets, loadErrors = {} }) {
 			id: 'monetize',
 			icon: OB_ICONS.monetize,
 			label: 'Start earning from chats',
-			outcome: 'Charge per message, set a subscription, or let fans tip — you keep 90%',
+			outcome: 'Charge per message, set a subscription, or let fans tip. You keep 90%',
 			detail: 'Your agent becomes a revenue stream. Choose your pricing: per-message, monthly subscription, or tip jar. Payouts in USDC, directly to your wallet.',
 			href: '/dashboard/monetize',
 			cta: 'Set up monetization',
 			done: guideStepDone('monetize'),
 			optional: true,
-			optionalTip: 'Earning and payouts settle in USDC and need a wallet. It is entirely opt-in — your agent works exactly the same without it.',
+			optionalTip: 'Earning and payouts settle in USDC and need a wallet. It is entirely opt-in, and your agent works exactly the same without it.',
 		},
 	];
 
@@ -998,7 +998,7 @@ function renderOnboarding(host, { avatars, agents, widgets, loadErrors = {} }) {
 	const doneStepsHtml = steps
 		.filter((s) => s.done)
 		.map((s) => `
-			<li class="dnx-ob-done-row" aria-label="${esc(s.label)} — complete">
+			<li class="dnx-ob-done-row" aria-label="${esc(s.label)}, complete">
 				<span class="dnx-ob-done-check" aria-hidden="true">
 					<svg viewBox="0 0 14 14" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 7l3.5 3.5L12 3"/></svg>
 				</span>
@@ -1216,7 +1216,7 @@ const DIRECTORY = [
 	{
 		group: 'Create & Build',
 		items: [
-			{ href: '/create',          title: 'Create Avatar',      sub: 'Snap a selfie — 3D agent in 60 seconds' },
+			{ href: '/create',          title: 'Create Avatar',      sub: 'Snap a selfie, 3D agent in 60 seconds' },
 			{ href: '/create/selfie',   title: 'Selfie Capture',     sub: 'Camera-based avatar creation flow' },
 			{ href: '/avatar-studio',   title: 'Avatar Studio',      sub: 'Full 3D editor with lighting and poses' },
 			{ href: '/brain',           title: 'Brain',              sub: 'Persona builder, model playground, agent voice' },
@@ -1402,7 +1402,7 @@ function renderDirectory(host) {
 				<button class="dnx-dir-head-toggle" aria-expanded="${!collapsed}" data-action="dir-toggle">
 					<div>
 						<div class="dn-panel-title" style="margin:0 0 2px">All Features & Pages</div>
-						<div class="dn-panel-sub" style="margin:0">Every tool, page, and feature on three.ws — all in one place.</div>
+						<div class="dn-panel-sub" style="margin:0">Every tool, page, and feature on three.ws, all in one place.</div>
 					</div>
 					<span class="dnx-dir-chevron" aria-hidden="true">
 						<svg viewBox="0 0 12 12" width="12" height="12" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 4.5l3 3 3-3"/></svg>
