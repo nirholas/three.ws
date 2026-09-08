@@ -32,7 +32,12 @@ let usdzObjectUrl = null;
 
 async function init() {
 	if (!entityId) {
-		showError(`No ${mode} specified.`);
+		showError(
+			`This link does not name a${mode === 'agent' ? 'n agent' : 'n avatar'} to show, so there is nothing to place in your room.`,
+			mode === 'agent'
+				? { browseHref: '/agents', browseLabel: 'Browse agents' }
+				: {},
+		);
 		return;
 	}
 
@@ -40,7 +45,10 @@ async function init() {
 		const agent = await fetchAgent(entityId);
 		if (!agent) return;
 		if (!agent.avatar_id) {
-			showError(`${agent.name || 'This agent'} has no 3D body yet.`);
+			showError(
+				`${agent.name || 'This agent'} has no 3D body yet, so there is nothing to place in your room. Give it one in the studio, then come back.`,
+				{ browseHref: '/create', browseLabel: 'Create a body' },
+			);
 			return;
 		}
 		avatarId = agent.avatar_id;
@@ -51,7 +59,9 @@ async function init() {
 
 	const glbUrl = avatar.model_url || avatar.url;
 	if (!glbUrl) {
-		showError('This avatar has no 3D model.');
+		showError(
+			'This avatar has no 3D model attached yet, so there is nothing to place in your room.',
+		);
 		return;
 	}
 
@@ -72,7 +82,7 @@ async function fetchAvatar(id) {
 		if (!r.ok) throw new Error(`${r.status}`);
 		return (await r.json()).avatar;
 	} catch (err) {
-		showError(`Couldn't load avatar (${err.message}).`);
+		showError(`We could not load this avatar (${err.message}).`, { retry: true });
 		return null;
 	}
 }
@@ -83,7 +93,11 @@ async function fetchAgent(id) {
 		if (!r.ok) throw new Error(`${r.status}`);
 		return (await r.json()).agent;
 	} catch (err) {
-		showError(`Couldn't load agent (${err.message}).`);
+		showError(`We could not load this agent (${err.message}).`, {
+			retry: true,
+			browseHref: '/agents',
+			browseLabel: 'Browse agents',
+		});
 		return null;
 	}
 }
@@ -193,9 +207,56 @@ async function generateUsdz(glbUrl) {
 	}
 }
 
-function showError(msg) {
+/**
+ * Replace the whole shell with a designed error state.
+ *
+ * This is the only thing a visitor sees when a link is stale, an agent has no
+ * body yet, or a fetch fails, and until now it was one unstyled line of text
+ * against a black page with nowhere to go. Every message therefore ships with
+ * a way out: a browse link that is always correct, plus a retry when the
+ * failure could be transient (a network hiccup, a cold API) rather than a
+ * statement about this particular avatar.
+ *
+ * @param {string} msg     What went wrong, in plain language.
+ * @param {{ retry?: boolean, browseHref?: string, browseLabel?: string }} [opts]
+ */
+function showError(msg, opts = {}) {
 	const shell = $('ar-shell');
-	if (shell) shell.innerHTML = `<div class="ar-error">${msg}</div>`;
+	if (!shell) return;
+	const { retry = false, browseHref = '/avatars', browseLabel = 'Browse avatars' } = opts;
+	const panel = document.createElement('div');
+	panel.className = 'ar-error';
+	panel.setAttribute('role', 'alert');
+
+	const title = document.createElement('h2');
+	title.className = 'ar-error__title';
+	title.textContent = 'This avatar cannot open in AR';
+	const body = document.createElement('p');
+	body.className = 'ar-error__body';
+	body.textContent = msg;
+	const actions = document.createElement('div');
+	actions.className = 'ar-error__actions';
+
+	if (retry) {
+		const again = document.createElement('button');
+		again.type = 'button';
+		again.className = 'ar-error__btn ar-error__btn--primary';
+		again.textContent = 'Try again';
+		again.addEventListener('click', () => location.reload());
+		actions.append(again);
+	}
+	const browse = document.createElement('a');
+	browse.className = retry ? 'ar-error__btn' : 'ar-error__btn ar-error__btn--primary';
+	browse.href = browseHref;
+	browse.textContent = browseLabel;
+	actions.append(browse);
+
+	panel.append(title, body, actions);
+	shell.replaceChildren(panel);
+	// Move focus to the alert so a screen reader and a keyboard user both land
+	// on the recovery path instead of at the top of a page that no longer exists.
+	panel.tabIndex = -1;
+	panel.focus();
 }
 
 async function shareAvatar(avatar) {
@@ -251,7 +312,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
 	init().catch((err) => {
 		log.error('[ar-page] init error', err);
-		showError('Something went wrong loading this avatar.');
+		showError('Something went wrong loading this avatar.', { retry: true });
 	});
 
 	window.addEventListener('beforeunload', () => {

@@ -13,6 +13,7 @@
 		<link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png" />
 		<link rel="apple-touch-icon" href="/apple-touch-icon.png" />
 		<link rel="manifest" href="/manifest.webmanifest" />
+		<link rel="stylesheet" href="/tokens.css" />
 		<link rel="stylesheet" href="/fonts/fonts.css" />
 		<meta name="description" content="Type a prompt, get a real 3D model, and place it in your room: free text-to-3D with one-tap AR on any phone (WebXR, Scene Viewer, Quick Look) and a QR handoff from desktop." data-i18n-attr="content:ar.meta_description" />
 		<meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1" />
@@ -40,17 +41,29 @@
 		<script type="module" src="/src/ar-page.js"></script>
 
 		<style>
-			:root {
-				--bg: #000000;
-				--bg2: #0a0a0a;
-				--text: #e8e8e8;
-				--text-2: #888888;
-				--text-3: #555555;
+			/* Dark-only theme layer (QB-07). An AR page renders a model against a
+			   dark studio ground in either theme, so it pins the canonical
+			   primitives to their dark values and aliases its local names to
+			   them rather than forking a second palette. The doubled :root is a
+			   specificity bump over the token sheet's own light block. */
+			:root,
+			:root:root[data-theme='light'] {
+				color-scheme: dark;
+				--bg-0: #0a0a0a;
+				--ink: #e8e8e8;
+				--ink-dim: #888888;
 				--accent: #ffffff;
-				--accent-2: #ffffff;
-				--panel: rgba(255, 255, 255, 0.04);
-				--border: rgba(255, 255, 255, 0.08);
-				--radius: 14px;
+				--danger: #f87171;
+
+				--bg: #000000;
+				--bg2: var(--bg-0);
+				--text: var(--ink);
+				--text-2: var(--ink-dim);
+				--text-3: #555555;
+				--accent-2: var(--accent);
+				--panel: var(--surface-1);
+				--border: var(--stroke);
+				--radius: var(--radius-lg);
 			}
 
 			*,
@@ -406,16 +419,81 @@
 			.ar-footer-link:hover { color: var(--text-2); }
 			.ar-footer-sep { font-size: 12px; color: var(--text-3); }
 
-			/* ── Loading / error fallback ─────────────────── */
+			/* ── Error state ──────────────────────────────────
+			   The only thing a visitor sees when a link is stale, an agent has
+			   no body yet, or a fetch fails. It used to be one line of grey
+			   text on a black page with nowhere to go, which is a dead end
+			   dressed as a message. It is a panel now: what happened, in plain
+			   language, and at least one action that always works. */
 			.ar-error {
 				display: flex;
+				flex-direction: column;
 				align-items: center;
 				justify-content: center;
+				gap: var(--space-sm);
 				height: 100%;
-				color: var(--text-2);
-				font-size: 15px;
+				padding: var(--space-xl) var(--space-md);
 				text-align: center;
-				padding: 2rem;
+				outline: none;
+			}
+			.ar-error__title {
+				margin: 0;
+				font-size: clamp(18px, 4.5vw, 22px);
+				font-weight: 600;
+				letter-spacing: -0.01em;
+				color: var(--text);
+			}
+			.ar-error__body {
+				margin: 0;
+				max-width: 42ch;
+				font-size: 15px;
+				line-height: var(--leading-normal);
+				color: var(--text-2);
+			}
+			.ar-error__actions {
+				display: flex;
+				flex-wrap: wrap;
+				justify-content: center;
+				gap: var(--space-xs);
+				margin-top: var(--space-xs);
+			}
+			.ar-error__btn {
+				display: inline-flex;
+				align-items: center;
+				justify-content: center;
+				min-height: 44px;
+				padding: 0 var(--space-lg);
+				border-radius: var(--radius-pill);
+				border: 1px solid var(--border);
+				background: var(--panel);
+				color: var(--text);
+				font: inherit;
+				font-size: 14px;
+				font-weight: 600;
+				text-decoration: none;
+				cursor: pointer;
+				transition:
+					background var(--duration-fast) var(--ease-standard),
+					border-color var(--duration-fast) var(--ease-standard),
+					color var(--duration-fast) var(--ease-standard),
+					transform var(--duration-fast) var(--ease-standard);
+			}
+			.ar-error__btn:hover {
+				border-color: var(--accent);
+				background: var(--surface-2);
+				color: var(--ink-bright);
+			}
+			.ar-error__btn:active {
+				transform: translateY(1px);
+			}
+			.ar-error__btn--primary {
+				background: var(--accent);
+				border-color: transparent;
+				color: var(--on-accent);
+			}
+			.ar-error__btn--primary:hover {
+				background: var(--btn-primary-bg-hover, #ffffff);
+				color: var(--on-accent);
 			}
 		</style>
 		<script src="/model-viewer-meshopt.js"></script>
