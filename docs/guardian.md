@@ -39,9 +39,9 @@ The response sorts agents that need your action first, then those with an open p
 
 ## Walkthrough
 
-1. Open [/guardian](https://three.ws/guardian). Signed out, it prompts you to sign in. Signed in with no roles, it explains what the console is for and invites you to ask a friend to name you.
+1. Open [/guardian](https://three.ws/guardian). Signed out, it prompts you to sign in or create an account, and returns you here afterwards. Signed in with no roles, it explains what the console is for, invites you to ask a friend to name you, and links you to setting up recovery on your own agents.
 2. Each agent you protect renders as a card: its name (linked to its profile), who owns it, when you were trusted, and your roles (guardian, beneficiary, or both). A badge at the top counts how many agents need your action.
-3. If a process is open, the card tells its story in the agent's own voice ("I'm being recovered. If you trust this person is really my owner, approve."), plus the approval count, the safety-window countdown, and when it opened.
+3. If a process is open, the card tells its story in the agent's own voice ("I am being recovered. If you trust this person is really my owner, approve."), and then gives you what a decision actually needs: the reason the requester gave, the approval count, which guardians have already approved or declined by name, how long until the request expires if nobody acts, the safety-window countdown, and when it opened.
 4. Act. For a recovery you trust, click **Approve recovery** (or **Decline**). For an inheritance you believe is real, click **Confirm inheritance**. Each action asks you to confirm, because these are consequential.
 5. When the safety window has elapsed and the process is ready, click **Complete transfer** to pass control of the agent and its wallet to the new owner.
 6. If you are the beneficiary or a guardian and the owner has gone silent past their threshold with no active process, you can try to arm inheritance, which begins the grace window.
@@ -68,7 +68,8 @@ The console reads this on load, resolves your viewer id (so it can tell whether 
 - **Time-locked and cancelable.** Threshold approvals start a safety window; the real owner can cancel any time before completion, and their return defeats the request outright.
 - **Auto-freeze during a dispute.** An open request freezes autonomous spend (owner withdrawal stays open), tracked separately so it lifts on resolution without overriding a freeze the owner set.
 - **Confirmation on every consequential action.** Approve, confirm, decline, and complete each prompt for confirmation before firing.
-- **Signed-out, empty, and error states** are all designed: sign-in prompt, "no one's named you yet", and an inline retry on failure.
+- **Signed-out, empty, loading, and error states** are all designed: a sign-in prompt that returns you to the console, "no one has named you yet" with a route to setting up your own guardians, skeleton cards while the inbox loads, and a plain-English failure with a retry (a dropped connection, a rate limit, and a server fault each read differently).
+- **The page tracks the process while you watch it.** It reloads itself the moment a safety window lifts, and again when you return to the tab, so a card never shows a countdown that expired while you were away.
 - **Not the content-safety Guardian.** This console is unrelated to `@three-ws/guardian`, the AI content-moderation package that shares the name.
 
 ## Related
