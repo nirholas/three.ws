@@ -1,11 +1,11 @@
 {
-	"generated_at": "2026-09-08T17:37:03.863Z",
+	"generated_at": "2026-09-08T18:09:04.268Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
 		"url": "https://three.ws"
 	},
-	"total": 3557,
+	"total": 3564,
 	"complete": false,
 	"full_feed": "/changelog.json",
 	"entries": [
@@ -34,6 +34,17 @@
 		{
 			"date": "2026-09-08",
 			"type": "update",
+			"title": "Agent Launches: the Tip button on every launch card actually works now",
+			"summary": "Each card on the launches feed carries the launching agent's wallet, and the whole-card link to the coin profile was sitting on top of it: every tap on Tip, and every attempt to preview the wallet, opened the coin page instead. The wallet now sits above that link, so tipping and the wallet preview both work, on the feed and everywhere else the wallet badge appears. Keyboard and screen-reader use got the same pass: the Mainnet/Devnet switch responds to the arrow keys and says which feed it controls, the graduation bars announce which coin they belong to and how far along it is, the wallet's trust score and balance no longer read as unlabelled boxes while they load, and a page that found nothing on devnet now offers a button back to mainnet instead of only telling you to switch.",
+			"link": "/launches",
+			"tags": [
+				"fix",
+				"improvement"
+			]
+		},
+		{
+			"date": "2026-09-08",
+			"type": "update",
 			"title": "Avatars keep their real skin, eyes and hair, and we can prove it on a phone",
 			"summary": "Every avatar the platform loads gets its skin, eyes, hair and teeth re-shaded with real-world material values the moment it appears: skin at the roughness bare skin actually has with a warm scattering layer, a wet cornea that catches a highlight, and hair that reads as strands rather than a helmet. That pass was already running, but the check meant to prove it was pointed at the wrong page and had been quietly reporting nothing at all, so it could not have caught the day it broke. It now runs against the same embed page your visitors see, at phone, tablet and desktop widths, and records exactly which materials it upgraded and to what values. Alongside it, a new check loads a full 4K-textured model on an emulated iPhone and Android phone over a slow mobile connection and measures the real bytes and load time, so a model that would not open on a phone is caught before it ships rather than after.",
 			"link": null,
@@ -51,6 +62,17 @@
 			"tags": [
 				"improvement",
 				"fix"
+			]
+		},
+		{
+			"date": "2026-09-08",
+			"type": "update",
+			"title": "Every tutorial now shows you the page it is teaching",
+			"summary": "Twenty screenshots of the real product had been captured for the tutorials and then never put on the page: the tutorials described the Forge, Avatar Studio, Voice Lab, Scene Studio, Widget Studio and the rest entirely in words, while the pictures sat unused. All twenty are now embedded where they belong, each with a caption and a link straight to the live page, so you can see what you are about to open before you open it. The sign-language reference gained its two figures as well, and the missing Scene Studio capture was taken.",
+			"link": "/tutorials/text-to-3d",
+			"tags": [
+				"docs",
+				"improvement"
 			]
 		},
 		{
@@ -110,6 +132,17 @@
 		{
 			"date": "2026-09-08",
 			"type": "update",
+			"title": "The agent vitals endpoint answers again, and eight documented API examples now say what they really return",
+			"summary": "GET /api/agents/vitals, the operator view that reports whether each autonomous agent can actually act, had been unreachable: a broader routing rule for agent profiles was catching the request first and answering with an agent lookup instead. It resolves to its own handler again. Separately, every runnable curl sample in the documentation was replayed against the live API, and the ones whose example used a placeholder id or needed a signed-in session now say so above the snippet rather than looking like a call that should have worked.",
+			"link": "/docs/agent-vitals",
+			"tags": [
+				"fix",
+				"docs"
+			]
+		},
+		{
+			"date": "2026-09-08",
+			"type": "update",
 			"title": "The ChatGPT and AR docs now describe the AR launcher that actually runs",
 			"summary": "Three corrections to the documentation for the ChatGPT surfaces and augmented reality. The AR reference still said the one-tap launcher at /api/ar draws the model itself in Google's model-viewer, which stopped being true when the launcher became a pure router: it now sends Android straight into Scene Viewer and everyone else to a bundled page that builds a real USDZ on the device, which is what iPhone's Quick Look needs. The pages are named correctly throughout, including which one does the file conversion, so nobody debugging an iPhone handoff starts in the wrong file. The ChatGPT AR page also credited a single generation engine for every model, when the connector actually tries the free engines in turn and steps down to a slower one if the first is cold, which is why generation keeps working when one lane is down. And the paid studio server's page promised that anyone can browse its tool catalogue without credentials, without mentioning that a connector client is deliberately answered with a sign-in challenge instead, as the connector standard requires; both paths are now written down, with a command that works. That page's tool tables also describe nine tools that were previously only named in its price list, so no tool appears with a price and no explanation.",
 			"link": "/docs/ar",
@@ -132,9 +165,53 @@
 		{
 			"date": "2026-09-08",
 			"type": "update",
+			"title": "The guardian console now tells you why someone is asking for an agent back",
+			"summary": "If a friend has named you a guardian or a beneficiary of their agent, /guardian is where you decide whether to let them back in. Until now the card told you a process was open and asked you to approve it, without showing you the one thing a decision actually turns on: the reason the person gave when they opened the request. It now shows that reason, names every guardian who has already approved or declined, and says how long the request has before it expires if nobody acts. The status stopped reading like a database field, so a card says \"awaiting approvals\" or \"in the safety window\" instead of pending_approvals. Approving takes a couple of seconds to travel; the button now says Approving while it does, rather than going quiet. If the safety window lifts while you have the page open, it refreshes itself so Complete transfer appears without a reload, and it refreshes again whenever you come back to the tab. Signed out, the page has a proper heading, offers to make you an account, and brings you straight back here after you sign in; with nobody yet naming you, it now points you at setting up guardians on your own agents. When the console cannot load at all it explains what went wrong in plain words, telling a dropped connection apart from a rate limit and a fault on our side, instead of printing the browser's own \"Failed to fetch\".",
+			"link": "/guardian",
+			"tags": [
+				"improvement",
+				"fix"
+			]
+		},
+		{
+			"date": "2026-09-08",
+			"type": "update",
 			"title": "The Launch a Coin button now works once you have filled the form",
 			"summary": "On the Launch a Coin page we fill in your token name and ticker from the agent you pick, but never the description, because only you can write that. The launch button read \"Add name, symbol & description to launch\" until all three were there, and that label was worked out once when the page drew itself and then never again. So the moment you typed your description the button was describing a form that no longer existed: it still said something was missing, and pressing it did nothing whatsoever, because it went looking for an empty field and found none. The button now keeps up with what you type, turning into \"Connect wallet to launch\" or the real launch action the instant the last field is filled, and back again if you clear one. Pressing it while something is genuinely missing now says which field it is, instead of silently moving your cursor there. Separately, if we cannot reach your agent list, the page now says so and offers a Try again button that recovers in place; it used to tell owners of a dozen agents that they had none yet and send them off to create a duplicate. The agent picker also fits a phone screen now instead of running off both edges.",
 			"link": "/launch",
+			"tags": [
+				"fix",
+				"improvement"
+			]
+		},
+		{
+			"date": "2026-09-08",
+			"type": "update",
+			"title": "The Revenue view on Protocol Fees stopped calling itself Fees",
+			"summary": "Open /fees, switch to Revenue, and the numbers, the chart and the stat cards all changed to revenue while the table heading and the browser tab kept saying \"Fees\". The page writes those two pieces of copy itself, and the site-wide translation pass, which lands a second or two after the page does, was overwriting them back to the fees wording. Both now hold the metric you actually selected, and hand themselves back to the translator when you switch to Fees, so a reader in another language keeps their own copy. Four more things on that page while we were in there: the footer line now says when a figure is a cached copy served because DeFiLlama is unreachable, rather than presenting it as live; a run where the feed returns nothing no longer paints three empty totals and a \"Top 0 protocols\" line that read like a claim DeFi earned nothing; toggling Fees and Revenue faster than the network answers can no longer land one metric's numbers under the other's heading; and screen readers are now told every column is sortable, told which metric each region is showing, and given a proper pair of toggle buttons instead of tabs with no panel behind them. The \"+3\" badge on a protocol's chain list also names the chains it is hiding.",
+			"link": "/fees",
+			"tags": [
+				"fix",
+				"improvement"
+			]
+		},
+		{
+			"date": "2026-09-08",
+			"type": "update",
+			"title": "Watch your model being made, instead of watching a spinner",
+			"summary": "Making a model from a written prompt starts with work you never saw: an art director rewrites your words into a proper brief, then an image model paints the reference picture the mesh is actually sculpted from, and on our best lane it paints the extra angles that fill in the subject's back. All of that used to happen inside one long silent request, so Forge could only say \"art-directing your prompt\" for the whole wait and then reveal the reference picture at the very end, when it had already existed for half a minute. Now the pipeline reports each step the instant it finishes, so the stage list ticks over as the work really happens and the reference image appears on screen while the sculpting is still running. Nothing on that list is a guess: a step only lights up because the server said it finished. On a phone, pressing Generate now brings the panel into view instead of leaving the whole thing playing out below the fold, and the same is true when a model lands or when something goes wrong. If our asset storage is the thing that is down, Forge now says so plainly, tells you nothing was charged, and points you at the models you already made, which keep working throughout. A model on screen also stops spinning by itself for anyone who has asked their device for less motion, and the report-a-bug prompt no longer pops up on top of the recovery buttons on a narrow screen.",
+			"link": "/forge",
+			"tags": [
+				"improvement",
+				"fix"
+			]
+		},
+		{
+			"date": "2026-09-08",
+			"type": "update",
+			"title": "Your avatars show up on the dashboard again, and a failed one says why",
+			"summary": "The avatar previews on your dashboard, and every three.ws avatar embedded through the <threews-avatar> tag, were being pointed straight at the storage bucket that holds the 3D file. That address is on a different domain to the page asking for it, and the browser refuses cross-domain reads it has not been given permission for, so the model was blocked before a single byte arrived and the preview sat empty. Stored avatars now load through three.ws itself, which is the same origin as the page, carries your session so a private avatar stays private, and already knows to fall back to the public copy of the file when the signed read is refused. That last part is why this was invisible on our own site and total everywhere else: the bucket permits three.ws by name and nothing else, so a dashboard preview, a developer running the site locally, and a customer embedding an avatar on their own domain all failed for the same reason. When a model genuinely cannot be loaded, the frame no longer paints the raw network error, complete with an internal URL, into the box. It now says whether the avatar is private, gone, or the service is down, and what to do next. My Agents got the same treatment: a failed load explains the cause and gives you a Try again button instead of telling you to refresh the page, its keyboard focus outlines are visible again, and the page respects a reduced-motion preference.",
+			"link": "/dashboard",
 			"tags": [
 				"fix",
 				"improvement"
@@ -1524,83 +1601,6 @@
 				"feature",
 				"security",
 				"docs"
-			]
-		},
-		{
-			"date": "2026-09-03",
-			"type": "update",
-			"title": "Sign Mirror tells you what went wrong, and remembers how close you got",
-			"summary": "The ASL practice mirror got a pass over every state it can be in. When the camera cannot start it now says which thing failed and what to do about it: permission refused, no camera on the device, the camera busy in another app, or the hand tracker itself failing to download. It used to print the raw internal error, which nobody could act on. While the tracker downloads you see that it is downloading, instead of a panel that still says the camera is off. Turning the camera off puts the panel back to telling you what to do next rather than leaving an empty box. Every letter square now carries the best score you have reached on it, so twenty six identical squares become a map of where your practice actually is, and that score is kept between sessions. Screen readers now hear the finger being named, and the live skeleton and the per finger bars are redrawn in place instead of being rebuilt on every camera frame, which takes real work off the machine doing the grading.",
-			"link": "/sign-mirror",
-			"tags": [
-				"fix",
-				"improvement"
-			]
-		},
-		{
-			"date": "2026-09-03",
-			"type": "update",
-			"title": "Soft shadows are soft again in Pose Studio, Mirror and Diorama",
-			"summary": "These three 3D surfaces were asking for a soft-shadow mode that the renderer stopped supporting and silently swapped for hard-edged shadows, complaining in the console every time a scene started. They now use the supported soft-shadow type, so contact shadows under a figure read as shadows rather than hard cutouts.",
-			"link": "/pose",
-			"tags": [
-				"fix",
-				"improvement"
-			]
-		},
-		{
-			"date": "2026-09-03",
-			"type": "update",
-			"title": "Talk to your house without finding a phone, and a background \"yeah\" can never open your front door",
-			"summary": "Hands-free is here for connected homes. Turn it on at /voice/home, say the wake word, and ask for what you want: \"turn the kitchen light off\" works while you are carrying groceries. The wake word is matched by a model that runs inside your own browser tab, so that audio never leaves your device; only the sentence you say afterwards is sent, and only to be turned into text. While the microphone is live there is an indicator on the page that cannot be switched off, and Mute genuinely stops the microphone at the device rather than hiding a dot. Talk over the agent and it stops mid-sentence and listens, in about a tenth of a second, and it will not wake itself up when it happens to say its own wake word out loud. The part we spent the most care on is the door. Anything that opens your house is spoken back in full first, the exact device appears on screen while you decide, and only the word \"confirm\" goes through. A \"yeah\" or a \"sure\" overheard from a conversation on the other side of the room does not, and on a device with no screen the agent refuses to take an unlock by voice at all and offers your phone instead. Four wake phrases to choose from, twelve designed states including an honest one for deployments where speech recognition is not available, and every stage of the round trip timed live on screen so you can see where the seconds go.",
-			"link": "/voice/home",
-			"tags": [
-				"feature",
-				"security"
-			]
-		},
-		{
-			"date": "2026-09-03",
-			"type": "update",
-			"title": "The free 3D generation lane is back up, and it can no longer fail quietly",
-			"summary": "The worker behind the default free text-to-3D and image-to-3D lane stopped being able to load its model on the evening of 2 September, and then kept accepting work it could not do. It had cached that one failure and replayed it to every job that followed, while its status page still reported itself healthy, so nothing raised a flag: roughly a third of generations on that lane failed over about twelve hours. The lane is running again, and four things now stop a repeat. The load is retried instead of one bad moment being treated as final. A worker that genuinely cannot run turns work away, so your generation is handed to another backend rather than dying several minutes later. It reports itself as unhealthy, so it gets replaced automatically and shows up as down on the status page instead of green. And the part of the model that had to be fetched from an outside site every time the worker started, which is what failed, now ships inside the worker, so that fetch cannot fail again.",
-			"link": "/forge",
-			"tags": [
-				"fix",
-				"infra"
-			]
-		},
-		{
-			"date": "2026-09-03",
-			"type": "update",
-			"title": "The parametric avatar goes from 122 sliders to 306, and a brush for everything they still cannot reach",
-			"summary": "Avatar Studio's Parametric base now carries 306 shape sliders instead of 122, curated from source data that was already vendored: eyelid heights and eye folds, nose bridge and septum, philtrum and cupid's bow, ear rotation and shape, temples, jaw bones, lats, navel, knee alignment, upper and lower leg length, and per-ethnicity phenotype anchors. Face regions keep separate left and right controls because facial asymmetry is part of a face; limbs get one symmetric slider. With that many controls the panel grew a filter box, collapsed body groups, and an \"N edited\" pill so you can see which closed group you have already touched. Above all of it sits Free Sculpt: turn the brush on and drag on the avatar to push or pull the surface anywhere, with a real-size on-screen ring, adjustable strength, and symmetry you can switch off. Playback pauses while you paint so the mesh holds still, dragging the background still orbits the camera, and Clear sculpt puts the body back exactly. Two things that used to be editor-only now reach everyone: a body edited in the avatar editor's Proportions panel and any free-sculpt stroke are both rendered into the GLB the server serves, so what you shaped is what viewers, embeds and AR downloads actually see.",
-			"link": "/create/studio",
-			"tags": [
-				"feature",
-				"improvement"
-			]
-		},
-		{
-			"date": "2026-09-03",
-			"type": "update",
-			"title": "The payments feed now tells you which volume is ours and which is real demand",
-			"summary": "three.ws runs a closed loop where platform wallets pay platform endpoints on a schedule, to keep the payment rails warm and provably live. That traffic is real money on a real chain, and it is the overwhelming majority of settled volume, so anyone reading the raw total was reading our own money back to us. The x402 volume report on the paid analytics endpoint now carries a revenue split alongside the totals: how many calls and how much USDC came from outside wallets, how much is the internal loop, and how much is test traffic that was never money at all. A new command, npm run readout:revenue, prints the same breakdown for any window and refuses to print an external figure when it cannot tell our wallets apart from anyone else's, rather than quietly reporting a flattering one. One classifier backs both, so the API and the command can never disagree.",
-			"link": "/docs/autonomous-x402",
-			"tags": [
-				"improvement",
-				"infra"
-			]
-		},
-		{
-			"date": "2026-09-03",
-			"type": "update",
-			"title": "The rest of the smart home now speaks your language, and the wall display stays awake",
-			"summary": "The connect page learned all 87 languages last week; the invitation, plan and voice satellite pages had the same gap and now speak them too, along with the live 3D house. Setting a page to Arabic or Hebrew also actually mirrors it now: the reveal button, the coloured bars beside notices, and the room and device columns in the live house used to stay stuck on the left. If you have asked your device to reduce motion, the house stops animating between states while staying completely live, so lights and locks still update the instant they change, they just arrive rather than glide. The live house also keeps the screen awake now, which is what you want on a kitchen tablet on a shelf, and gives that up the moment you switch away, which is what you want on a phone in your pocket. On a phone with a notch the house fills the screen without hiding its own controls behind the cutout.",
-			"link": "/smart-home",
-			"tags": [
-				"improvement",
-				"fix"
 			]
 		}
 	]

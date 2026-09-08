@@ -3,23 +3,62 @@
 	"entries": [
 		{
 			"date": "2026-09-08",
+			"title": "Watch your model being made, instead of watching a spinner",
+			"summary": "Making a model from a written prompt starts with work you never saw: an art director rewrites your words into a proper brief, then an image model paints the reference picture the mesh is actually sculpted from, and on our best lane it paints the extra angles that fill in the subject's back. All of that used to happen inside one long silent request, so Forge could only say \"art-directing your prompt\" for the whole wait and then reveal the reference picture at the very end, when it had already existed for half a minute. Now the pipeline reports each step the instant it finishes, so the stage list ticks over as the work really happens and the reference image appears on screen while the sculpting is still running. Nothing on that list is a guess: a step only lights up because the server said it finished. On a phone, pressing Generate now brings the panel into view instead of leaving the whole thing playing out below the fold, and the same is true when a model lands or when something goes wrong. If our asset storage is the thing that is down, Forge now says so plainly, tells you nothing was charged, and points you at the models you already made, which keep working throughout. A model on screen also stops spinning by itself for anyone who has asked their device for less motion, and the report-a-bug prompt no longer pops up on top of the recovery buttons on a narrow screen.",
+			"tags": [
+				"improvement",
+				"fix"
+			],
+			"link": "/forge"
+		},
+		{
+			"date": "2026-09-08",
+			"title": "The guardian console now tells you why someone is asking for an agent back",
+			"summary": "If a friend has named you a guardian or a beneficiary of their agent, /guardian is where you decide whether to let them back in. Until now the card told you a process was open and asked you to approve it, without showing you the one thing a decision actually turns on: the reason the person gave when they opened the request. It now shows that reason, names every guardian who has already approved or declined, and says how long the request has before it expires if nobody acts. The status stopped reading like a database field, so a card says \"awaiting approvals\" or \"in the safety window\" instead of pending_approvals. Approving takes a couple of seconds to travel; the button now says Approving while it does, rather than going quiet. If the safety window lifts while you have the page open, it refreshes itself so Complete transfer appears without a reload, and it refreshes again whenever you come back to the tab. Signed out, the page has a proper heading, offers to make you an account, and brings you straight back here after you sign in; with nobody yet naming you, it now points you at setting up guardians on your own agents. When the console cannot load at all it explains what went wrong in plain words, telling a dropped connection apart from a rate limit and a fault on our side, instead of printing the browser's own \"Failed to fetch\".",
+			"tags": [
+				"improvement",
+				"fix"
+			],
+			"link": "/guardian"
+		},
+		{
+			"date": "2026-09-08",
+			"title": "Your avatars show up on the dashboard again, and a failed one says why",
+			"summary": "The avatar previews on your dashboard, and every three.ws avatar embedded through the <threews-avatar> tag, were being pointed straight at the storage bucket that holds the 3D file. That address is on a different domain to the page asking for it, and the browser refuses cross-domain reads it has not been given permission for, so the model was blocked before a single byte arrived and the preview sat empty. Stored avatars now load through three.ws itself, which is the same origin as the page, carries your session so a private avatar stays private, and already knows to fall back to the public copy of the file when the signed read is refused. That last part is why this was invisible on our own site and total everywhere else: the bucket permits three.ws by name and nothing else, so a dashboard preview, a developer running the site locally, and a customer embedding an avatar on their own domain all failed for the same reason. When a model genuinely cannot be loaded, the frame no longer paints the raw network error, complete with an internal URL, into the box. It now says whether the avatar is private, gone, or the service is down, and what to do next. My Agents got the same treatment: a failed load explains the cause and gives you a Try again button instead of telling you to refresh the page, its keyboard focus outlines are visible again, and the page respects a reduced-motion preference.",
+			"tags": [
+				"fix",
+				"improvement"
+			],
+			"link": "/dashboard"
+		},
+		{
+			"date": "2026-09-08",
 			"title": "The Revenue view on Protocol Fees stopped calling itself Fees",
 			"summary": "Open /fees, switch to Revenue, and the numbers, the chart and the stat cards all changed to revenue while the table heading and the browser tab kept saying \"Fees\". The page writes those two pieces of copy itself, and the site-wide translation pass, which lands a second or two after the page does, was overwriting them back to the fees wording. Both now hold the metric you actually selected, and hand themselves back to the translator when you switch to Fees, so a reader in another language keeps their own copy. Four more things on that page while we were in there: the footer line now says when a figure is a cached copy served because DeFiLlama is unreachable, rather than presenting it as live; a run where the feed returns nothing no longer paints three empty totals and a \"Top 0 protocols\" line that read like a claim DeFi earned nothing; toggling Fees and Revenue faster than the network answers can no longer land one metric's numbers under the other's heading; and screen readers are now told every column is sortable, told which metric each region is showing, and given a proper pair of toggle buttons instead of tabs with no panel behind them. The \"+3\" badge on a protocol's chain list also names the chains it is hiding.",
-			"tags": ["fix", "improvement"],
+			"tags": [
+				"fix",
+				"improvement"
+			],
 			"link": "/fees"
 		},
 		{
 			"date": "2026-09-08",
 			"title": "The ChatGPT and AR docs now describe the AR launcher that actually runs",
 			"summary": "Three corrections to the documentation for the ChatGPT surfaces and augmented reality. The AR reference still said the one-tap launcher at /api/ar draws the model itself in Google's model-viewer, which stopped being true when the launcher became a pure router: it now sends Android straight into Scene Viewer and everyone else to a bundled page that builds a real USDZ on the device, which is what iPhone's Quick Look needs. The pages are named correctly throughout, including which one does the file conversion, so nobody debugging an iPhone handoff starts in the wrong file. The ChatGPT AR page also credited a single generation engine for every model, when the connector actually tries the free engines in turn and steps down to a slower one if the first is cold, which is why generation keeps working when one lane is down. And the paid studio server's page promised that anyone can browse its tool catalogue without credentials, without mentioning that a connector client is deliberately answered with a sign-in challenge instead, as the connector standard requires; both paths are now written down, with a command that works. That page's tool tables also describe nine tools that were previously only named in its price list, so no tool appears with a price and no explanation.",
-			"tags": ["docs", "fix"],
+			"tags": [
+				"docs",
+				"fix"
+			],
 			"link": "/docs/ar"
 		},
 		{
 			"date": "2026-09-08",
 			"title": "The Launch a Coin button now works once you have filled the form",
 			"summary": "On the Launch a Coin page we fill in your token name and ticker from the agent you pick, but never the description, because only you can write that. The launch button read \"Add name, symbol & description to launch\" until all three were there, and that label was worked out once when the page drew itself and then never again. So the moment you typed your description the button was describing a form that no longer existed: it still said something was missing, and pressing it did nothing whatsoever, because it went looking for an empty field and found none. The button now keeps up with what you type, turning into \"Connect wallet to launch\" or the real launch action the instant the last field is filled, and back again if you clear one. Pressing it while something is genuinely missing now says which field it is, instead of silently moving your cursor there. Separately, if we cannot reach your agent list, the page now says so and offers a Try again button that recovers in place; it used to tell owners of a dozen agents that they had none yet and send them off to create a duplicate. The agent picker also fits a phone screen now instead of running off both edges.",
-			"tags": ["fix", "improvement"],
+			"tags": [
+				"fix",
+				"improvement"
+			],
 			"link": "/launch"
 		},
 		{
@@ -27108,6 +27147,26 @@
 				"improvement"
 			],
 			"link": "/launches"
+		},
+		{
+			"date": "2026-09-08",
+			"title": "Every tutorial now shows you the page it is teaching",
+			"summary": "Twenty screenshots of the real product had been captured for the tutorials and then never put on the page: the tutorials described the Forge, Avatar Studio, Voice Lab, Scene Studio, Widget Studio and the rest entirely in words, while the pictures sat unused. All twenty are now embedded where they belong, each with a caption and a link straight to the live page, so you can see what you are about to open before you open it. The sign-language reference gained its two figures as well, and the missing Scene Studio capture was taken.",
+			"tags": [
+				"docs",
+				"improvement"
+			],
+			"link": "/tutorials/text-to-3d"
+		},
+		{
+			"date": "2026-09-08",
+			"title": "The agent vitals endpoint answers again, and eight documented API examples now say what they really return",
+			"summary": "GET /api/agents/vitals, the operator view that reports whether each autonomous agent can actually act, had been unreachable: a broader routing rule for agent profiles was catching the request first and answering with an agent lookup instead. It resolves to its own handler again. Separately, every runnable curl sample in the documentation was replayed against the live API, and the ones whose example used a placeholder id or needed a signed-in session now say so above the snippet rather than looking like a call that should have worked.",
+			"tags": [
+				"fix",
+				"docs"
+			],
+			"link": "/docs/agent-vitals"
 		}
 	]
 }
