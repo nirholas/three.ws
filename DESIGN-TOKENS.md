@@ -209,11 +209,20 @@ gap. So hover is audited instead of floored.
 part of `npm run gate`) finds every selector that declares `cursor: pointer` and
 has no `:hover` rule anywhere in the same stylesheet. That combination is a
 promise with nothing behind it: the pointer changes shape, the control does not,
-and it reads as dead. The count may only go **down**
-(`scripts/audit-interactive-states.baseline.json`). Invisible hit targets
-(`opacity: 0` file inputs over a drop zone), selectors already carrying a state
-pseudo-class, `@media (hover: none)` blocks and vendored third-party CSS are out
-of scope.
+and it reads as dead. **The baseline is 0** and the count may only go down
+(`scripts/audit-interactive-states.baseline.json`), so a control that promises a
+click and does not answer one cannot land.
+
+Out of scope, because the finding would not be real: invisible hit targets (an
+`opacity: 0` file input over a drop zone, a transparent `position: absolute`
+stretched link over a card, where the card owns the feedback); a reset whose
+declarations are all `inherit` / `none` / `0`, such as
+`button { color: inherit; cursor: pointer }`, which is not a component and would
+have a hover rule stack on every real button; selectors already carrying a state
+pseudo-class; `@media (hover: none)` blocks; and vendored third-party CSS.
+
+Coverage counts a `:hover` wherever it can legally sit: `.x:hover`, `.x b:hover`,
+`.x:hover b` and `.x:hover::-webkit-slider-thumb` all cover their selector.
 
 Author the hover from tokens, on the motion ladder:
 
