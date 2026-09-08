@@ -131,7 +131,7 @@ Strategy for what to run next inside E: [the Fable playbook](../../docs/internal
 
 | Order | State |
 |---|---|
-| [../fable-audit/RESIDUALS.md](../012-fable-audit-RESIDUALS.md) | Task 1 partial (guard test exists, no negative fixture, no OIDC step), task 2 API-only (its page was removed 2026-08-05), task 3 six seed drifts behind the commit gate. |
+| Fable-audit residuals (order retired 2026-09-08) | All three closed. The cron sweep runs every `api/cron/` handler plus the dispatcher's routes unauthenticated and rejects four deliberately broken fixtures (`tests/api/cron-auth-sweep.test.js`); the edge gate accepts a Cloud Scheduler OIDC token beside `CRON_SECRET` (`server/cron-edge-auth.mjs`); `/payment-outcomes` renders the board again over `api/ops/payment-outcomes.js`; `check:skills-seed` is clean and the generator idempotent. Only attaching the OIDC identity to the live jobs is left, and it is a runbook step behind one `gcloud auth login`: [docs/ops/cron-auth.md](../../../docs/ops/cron-auth.md). |
 
 ### J. The swarm (parallel-safe, self-retiring)
 

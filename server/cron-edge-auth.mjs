@@ -2,13 +2,14 @@
 //
 // Cron auth is a per-file inline call to requireCron (api/_lib/cron-auth.js),
 // which is correct and fail-closed today: tests/api/cron-auth-sweep.test.js
-// invokes all 85 handlers unauthenticated every run and requires a closed
-// status from each. But it is a convention, not a mechanism. The server's
-// filesystem phase routes every api/cron/*.js file by existing, so ONE future
-// handler that forgets the line is directly internet-invokable, and money-moving
-// sweeps live in that directory (custody attestation, buybacks, treasury
-// top-ups, wallet intents). This layer makes that single omission survivable:
-// the request never reaches the handler at all.
+// invokes every handler in that directory unauthenticated on every run and
+// requires a closed status from each. But it is a convention, not a
+// mechanism. The server's filesystem phase routes every api/cron/*.js file
+// by existing, so ONE future handler that forgets the line is directly
+// internet-invokable, and money-moving sweeps live in that directory
+// (custody attestation, buybacks, treasury top-ups, wallet intents). This
+// layer makes that single omission survivable: the request never reaches
+// the handler at all.
 //
 // Two credentials are accepted, and both stay accepted permanently. This is
 // defense in depth, not a migration with a cutover:

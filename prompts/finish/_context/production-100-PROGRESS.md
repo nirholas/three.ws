@@ -463,6 +463,40 @@ Eight vitest files fail ONLY in a detached worktree and pass in the main checkou
 need nested workspace `node_modules` and a real `.git/hooks` that `prep:worktree` does not
 stage; worth staging next time rather than re-diagnosing.
 
+## 2026-09-08: the fable-audit residuals order retired (section I is now empty)
+
+Measured, not claimed. Task 1: `tests/api/cron-auth-sweep.test.js` invokes every handler in
+`api/cron/` plus each of the dispatcher's routes with no credential and requires 401/403/503
+(or 405 per method), and it is pointed at four deliberately broken fixtures (no guard, a
+verdict computed and discarded, a 200 above the guard, a handler that hangs) plus a positive
+control, so a sweep that degraded into a no-op cannot pass; 147 tests green across it and the
+edge-gate and scheduler-sync suites. The edge layer shipped too (`server/cron-edge-auth.mjs`,
+mounted ahead of the route table in `server/index.mjs`): it accepts a Google-signed Cloud
+Scheduler OIDC token, requiring BOTH `CRON_OIDC_SERVICE_ACCOUNT` and `CRON_OIDC_AUDIENCE`,
+beside `CRON_SECRET`, permanently, and stands aside only when no credential is configured at
+all. Task 2: `/payment-outcomes` exists again and was driven in headless Chromium against a
+local `server/index.mjs` on the production database. All four states render: skeleton while
+the read is open, the populated board (24h: 0 settled, 45 settle-failed, 142 verify-rejected,
+75.9% verify-reject rate, `unsupported_network` x142 and `settlement_unavailable` x45 as the
+top reasons, ring settle DOWN with `sponsor_floor` named as the dominant cause), the internal
+gate on a 401, and a transport error. 1440 px and 320 px both clean, no console error from
+page code. Task 3: `npm run -s check:skills-seed` reports the seed matching its 115 SKILL.md
+sources and a second `build:skills-seed` writes nothing, so the regeneration landed and the
+generator is idempotent; the drift the order recorded is gone.
+
+Left: attaching the OIDC identity to the live Cloud Scheduler jobs. `gcloud` auth is dead here
+(`Reauthentication failed. cannot prompt during non-interactive execution`), and the whole
+sequence, including the trap that Cloud Scheduler's OIDC token evicts the Bearer secret unless
+it moves to `X-Cron-Secret` in the same update, is a runbook in `docs/ops/cron-auth.md` behind
+one `gcloud auth login`. That is documentation, not a work order, so the file retired.
+
+`npm test`: the vitest stage cannot be trusted as a whole-suite verdict on this shared
+worktree. Two full runs failed different files (`thumbnail-blameless-failures` and three
+others; then `corner-stack`, `forge-frame`, `x402-checkout-prepare`) with the file count
+moving 2007 -> 2010 between them, and every named file passes in isolation: concurrent agents
+are editing sources mid-run. The Playwright stage was deliberately not run, because another
+session's headless browser and `:3000` dev server were live.
+
 ## Retire this file when the campaign is done (required)
 
 This file is shared context rather than a single order, so it outlives the

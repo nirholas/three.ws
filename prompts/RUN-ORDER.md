@@ -90,7 +90,6 @@ Finishing a partial beats starting a new campaign; the expensive half is already
 | [finish/gcp-credits-05-catalog-animation-seeding.md](finish/gcp-credits-05-catalog-animation-seeding.md) | The catalog seed runs at scale (56,898 avatars); the generated motion library still has **0 clips**. Pure credit spend and pre-approved, but the 2026-09-06 billing hold in P0 denies the generation lane, so probe before starting. |
 | [finish/event-06-photo-mode-share.md](finish/event-06-photo-mode-share.md) | Cross-engine verification and the changelog entry remain. Check `event-PROGRESS.md` first; another agent was on it 2026-09-02. |
 | [finish/event-02-play-polish-sweep.md](finish/event-02-play-polish-sweep.md) | Rewritten to its remainder: one harness run on a quiet box. |
-| [finish/fable-audit-RESIDUALS.md](finish/fable-audit-RESIDUALS.md) | Three deliberately-left items: a negative fixture and an OIDC step, an API-only task, and six seed drifts behind the commit gate. |
 
 ## P4. Distribution and listings (owner-gated, batch the human touchpoints)
 

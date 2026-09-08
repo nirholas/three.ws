@@ -73,7 +73,6 @@ directory, never this table. For the order to run them in, see [RUN-ORDER.md](RU
 |---|---|
 | `backlog-` | The open backlog, one work order per item: everything [../ISSUES.md](../ISSUES.md) and the retired campaign logs still carry, each with a measured starting state and a definition of done. Six open (01, 05, 07 to 10); order 11 retired 2026-09-03 after production came back to `ok`. |
 | `event-` | The $THREE Community Day pack (window 2026-08-09 17:00 to 19:30 UTC). What remains is the closeout (the standings board expired unexported, the log-derived counts are readable until about 2026-09-08), the `/play` polish sweep and photo mode. |
-| `fable-audit-` | The 2026-07-11 deep audit. Every numbered finding shipped; [RESIDUALS.md](finish/fable-audit-RESIDUALS.md) is the one file left, carrying the three items deliberately left open plus the pack's history. |
 | `fix-queue-` | Defects reproduced on 2026-08-01 by running the repo's own checks (`gate`, `lint`, `audit:links`, `audit:tour-atlas`, `check:cron-drift`, `check:runnable-docs`, `test:core`) plus a production probe, each carrying the verbatim output. Seven of eight shipped; the one left is the garment-sweep cron, blocked on an owner `gcloud auth login`. |
 | `gcp-credits-` | The GCP credit program. Seven of eight shipped; [the catalog and animation seeding order](finish/gcp-credits-05-catalog-animation-seeding.md) is the open one, turning credits into a curated catalog and a generated motion library. |
 | `home-` | three.ws Home: an agent that runs a real house by voice, with a 3D body standing in a live model of it. Home Assistant owns the device layer (we write no device code), and the campaign builds everything above it: the encrypted connection store, the multi-tenant bridge runtime, the `/api/home/*` surface, the agent tools and the confirmation gate that a model cannot satisfy, the live 3D home and its floorplan editor, the browser voice loop, three.ws as a Home Assistant voice satellite, the dial-out add-on for LAN-only houses, then security, households and roles, observability, scale, privacy, the test program, a11y and 87 locales, docs and SDK publish, entitlements, and a standing go/no-go. Fourteen open orders (04 to 20) over a shared context file; the earlier orders and the Matter horizon order have retired. The client library and the investigation ([../docs/smart-home.md](../docs/smart-home.md), [../packages/home-bridge/](../packages/home-bridge)) landed before the campaign; nothing is wired into the product yet. |
@@ -101,6 +100,13 @@ retired fourteen (event 01/03/04/05/07, backlog 02/03/04/06, the OpenAI pack's b
 plus the fable-audit index, and rewrote the production-100 map from the measurements; the
 per-order evidence is in each campaign's log and in
 [production-100/PROGRESS.md](finish/production-100-PROGRESS.md).
+
+On 2026-09-08 the `fable-audit-` pack retired entirely: its last file (the residuals order) was
+verified line by line and deleted. The cron guard sweep and its four negative fixtures, the
+payment-outcome board and page, and the regenerated skills seed are all in the codebase; the one
+step this machine cannot take (attaching the Cloud Scheduler OIDC identity, which needs a live
+`gcloud auth login`) is a runbook in [../docs/ops/cron-auth.md](../docs/ops/cron-auth.md), not a
+work order.
 
 On 2026-09-02 every open order moved out of its per-campaign directory into [finish/](finish/) so
 the queue is one folder instead of fourteen. Nothing was rewritten beyond link paths; the campaign
