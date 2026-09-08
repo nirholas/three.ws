@@ -3,6 +3,15 @@
 	"entries": [
 		{
 			"date": "2026-09-08",
+			"title": "A live globe of what is happening on Earth, and every layer says how far back it can really see",
+			"summary": "There is a new page at /globe: a 3D globe carrying eleven layers of open data at once. Armed conflict, mobilizations and sanctions are read out of the world news stream and placed where they happened; earthquakes, volcanoes and wildfires come from the USGS and NASA; cyclones, floods and drought from the UN and European Commission disaster system; national internet blackouts from Georgia Tech's outage project; and economic contraction from World Bank figures. Under all of it sits the geography that gives the rest meaning: overseas military bases, nuclear sites, and the nine maritime chokepoints world trade passes through, each one scored by how much armed activity the live feed puts within reach of it. Drag the globe or press F to flatten it into a map, click any point to read what it is and open the source it came from, and search the feed for a place or an actor. The whole view lives in the link, so the exact globe you are looking at is one you can send to someone. Two things it will not do: it will not quietly show you an hour of data under a label that says a week, because every layer prints the window it actually covered, and it will not go blank when a source goes down, because a layer that cannot be reached says so and the other ten keep working. Nothing here needs an account or an API key, and the same data is one call away at /api/globe/intel.",
+			"tags": [
+				"feature"
+			],
+			"link": "/globe"
+		},
+		{
+			"date": "2026-09-08",
 			"title": "Two thirds of the site was missing its mobile stylesheet, and every page it reached got bigger buttons",
 			"summary": "three.ws keeps one stylesheet for phones: it sets a 44px minimum on anything you tap, keeps 3D viewers from fighting the page scroll, and holds bottom bars clear of the iPhone home indicator. It was reaching 192 of the 584 pages that carry a stylesheet at all. The build injected it, and the injector only ever saw pages built through the bundler, so everything served as a plain HTML file quietly went without: the whole documentation site, this changelog, /ar and hundreds of others. The documentation sidebar was the clearest case, 296 links measured at 30 pixels tall on a Pixel 5, against a rule sizing them to 44 that had been sitting in that stylesheet unused. The build now sweeps every page it produces, which added the stylesheet to 210 more of them, and the same sweep switches on the setting iOS needs before safe-area spacing does anything at all. On top of that, the controls the audit still found short have been raised across the home page, the marketplace, /coin, /play, /launches, /forge, /markets, /news, /irl, /walk and the docs shell.",
 			"tags": [

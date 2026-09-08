@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-09-08T21:34:12.041Z",
+	"generated_at": "2026-09-08T22:41:00.887Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json",
 	"site": {
 		"name": "three.ws",
@@ -1390,6 +1390,16 @@
 			"title": "Labs",
 			"description": "Experimental features actively shipping. Expect fast iteration.",
 			"pages": [
+				{
+					"path": "/globe",
+					"title": "Global Intel Globe",
+					"description": "A live 3D globe of what is happening on Earth right now: armed conflict, force posture, sanctions, natural events, severe weather, internet outages and economic stress, layered over military bases, nuclear sites and maritime chokepoints. Every layer is open data, every point links to its source, and the view is a shareable link.",
+					"added": "2026-09-08",
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": true
+				},
 				{
 					"path": "/assembly",
 					"title": "Machine Atlas",
@@ -3343,6 +3353,16 @@
 					"title": "Docs · Skill bundles",
 					"description": "How a bundle of an agent's skills is priced from that agent's own sales rather than a rule of thumb: the median-basket and flat-discount bases, the public pricing and backtest endpoint, the owner endpoints that publish and retire a bundle, and the on-chain checkout that unlocks every skill in one payment.",
 					"added": "2026-08-16",
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false
+				},
+				{
+					"path": "/docs/globe",
+					"title": "Docs · Global Intel Globe",
+					"description": "The live 3D globe at /globe: its eleven keyless open-data layers and where each comes from, the URL parameters that make any view a shareable link, the one API call that returns every layer, and why an ingest cron has to keep its own GDELT window for the time control to be honest.",
+					"added": "2026-09-08",
 					"auth": null,
 					"indexable": true,
 					"tags": [],

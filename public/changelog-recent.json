@@ -1,14 +1,34 @@
 {
-	"generated_at": "2026-09-08T21:34:12.155Z",
+	"generated_at": "2026-09-08T22:41:00.932Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
 		"url": "https://three.ws"
 	},
-	"total": 3573,
+	"total": 3576,
 	"complete": false,
 	"full_feed": "/changelog.json",
 	"entries": [
+		{
+			"date": "2026-09-08",
+			"type": "launch",
+			"title": "Docs · Global Intel Globe",
+			"summary": "The live 3D globe at /globe: its eleven keyless open-data layers and where each comes from, the URL parameters that make any view a shareable link, the one API call that returns every layer, and why an ingest cron has to keep its own GDELT window for the time control to be honest.",
+			"link": "/docs/globe",
+			"tags": [
+				"launch"
+			]
+		},
+		{
+			"date": "2026-09-08",
+			"type": "launch",
+			"title": "Global Intel Globe",
+			"summary": "A live 3D globe of what is happening on Earth right now: armed conflict, force posture, sanctions, natural events, severe weather, internet outages and economic stress, layered over military bases, nuclear sites and maritime chokepoints. Every layer is open data, every point links to its source, and the view is a shareable link.",
+			"link": "/globe",
+			"tags": [
+				"launch"
+			]
+		},
 		{
 			"date": "2026-09-08",
 			"type": "update",
@@ -28,6 +48,16 @@
 			"tags": [
 				"improvement",
 				"fix"
+			]
+		},
+		{
+			"date": "2026-09-08",
+			"type": "update",
+			"title": "A live globe of what is happening on Earth, and every layer says how far back it can really see",
+			"summary": "There is a new page at /globe: a 3D globe carrying eleven layers of open data at once. Armed conflict, mobilizations and sanctions are read out of the world news stream and placed where they happened; earthquakes, volcanoes and wildfires come from the USGS and NASA; cyclones, floods and drought from the UN and European Commission disaster system; national internet blackouts from Georgia Tech's outage project; and economic contraction from World Bank figures. Under all of it sits the geography that gives the rest meaning: overseas military bases, nuclear sites, and the nine maritime chokepoints world trade passes through, each one scored by how much armed activity the live feed puts within reach of it. Drag the globe or press F to flatten it into a map, click any point to read what it is and open the source it came from, and search the feed for a place or an actor. The whole view lives in the link, so the exact globe you are looking at is one you can send to someone. Two things it will not do: it will not quietly show you an hour of data under a label that says a week, because every layer prints the window it actually covered, and it will not go blank when a source goes down, because a layer that cannot be reached says so and the other ten keep working. Nothing here needs an account or an API key, and the same data is one call away at /api/globe/intel.",
+			"link": "/globe",
+			"tags": [
+				"feature"
 			]
 		},
 		{
@@ -1567,38 +1597,6 @@
 			"tags": [
 				"feature",
 				"sdk"
-			]
-		},
-		{
-			"date": "2026-09-03",
-			"type": "update",
-			"title": "Every SDK doc now points at code you can actually run",
-			"summary": "Eight developer docs pages described a capability without ever showing you a working project that uses it, so finding the runnable version meant guessing at folder names on GitHub. The SDK, MCP, embedding, authentication, create-an-agent, Solana, agent-payments and agent-wallets pages now each end with a Runnable example section linking straight to the project that backs them: a browser demo, a Node script that drives the free MCP server end to end, nine single-file HTML embeds you can open with no build step, the full wallet sign-in round trip, and a complete agent defined entirely as files. The machine-readable index that AI agents read to navigate the site now carries the examples location too, so an agent asked to build against three.ws can fetch working code instead of inferring it from prose. Every one of those examples is installed, run and link-checked before release, so a link on a docs page never points at something broken.",
-			"link": "/docs/sdk",
-			"tags": [
-				"docs",
-				"improvement"
-			]
-		},
-		{
-			"date": "2026-09-03",
-			"type": "update",
-			"title": "Every three.ws MCP server now shows up in the directories, and six more joined the list",
-			"summary": "The one file every MCP directory listing is written from was six servers short and thirty-five versions behind, because it was being kept by hand. It is generated from the server manifests again, so a listing can no longer drift from what we actually publish, and a build check fails when it does. Six servers that existed but were invisible to the directories are now in: Herald, Home, Knock, the Metaplex agent registry, on-chain agent wallets, and the Robinhood Chain server. Paid tools also answer more cleanly to a store reviewer: the discovery data they attached to a payment prompt declared a transport the spec does not allow, so an indexer threw the whole row away. That is fixed, and a new check drives every paid tool the way a reviewer's client does and fails if any of them answers with anything but a clear, priced payment prompt.",
-			"link": "/docs/mcp",
-			"tags": [
-				"improvement",
-				"sdk"
-			]
-		},
-		{
-			"date": "2026-09-03",
-			"type": "update",
-			"title": "Fork a trade: one tap from any coin on the site into the real pump.fun trade",
-			"summary": "The pages that tell you which coins are real and which wallets keep winning used to end in a link out to pump.fun, where you had to find the coin again and start over. Now every one of them carries Fork. One tap on a Coin Radar card, a Smart Money card or its drawer, the coin deep-dive on the Live Trade Feed, or a position a leader is still holding in a ghost-copy replay opens the real trade panel for that exact coin: live quote, the same safety firewall that guards every other trade surface (a coin it judges unsafe stays unbuyable), and your own browser wallet as the signer. Nothing is delegated, no key is handed over, and no balance is held. A fork on a ghost-copy row opens at the size your paper budget used, so the practice position and the real one match. Forks also travel: the Share button next to them builds a link that opens the trade panel on arrival, carrying your referral code when you are signed in, and a size a link suggests is capped and always editable before you sign.",
-			"link": "/radar",
-			"tags": [
-				"feature"
 			]
 		}
 	]

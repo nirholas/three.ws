@@ -1,11 +1,31 @@
 {
-	"generated_at": "2026-09-08T21:34:12.086Z",
+	"generated_at": "2026-09-08T22:41:00.905Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
 		"url": "https://three.ws"
 	},
 	"entries": [
+		{
+			"date": "2026-09-08",
+			"type": "launch",
+			"title": "Docs · Global Intel Globe",
+			"summary": "The live 3D globe at /globe: its eleven keyless open-data layers and where each comes from, the URL parameters that make any view a shareable link, the one API call that returns every layer, and why an ingest cron has to keep its own GDELT window for the time control to be honest.",
+			"link": "/docs/globe",
+			"tags": [
+				"launch"
+			]
+		},
+		{
+			"date": "2026-09-08",
+			"type": "launch",
+			"title": "Global Intel Globe",
+			"summary": "A live 3D globe of what is happening on Earth right now: armed conflict, force posture, sanctions, natural events, severe weather, internet outages and economic stress, layered over military bases, nuclear sites and maritime chokepoints. Every layer is open data, every point links to its source, and the view is a shareable link.",
+			"link": "/globe",
+			"tags": [
+				"launch"
+			]
+		},
 		{
 			"date": "2026-09-08",
 			"type": "update",
@@ -25,6 +45,16 @@
 			"tags": [
 				"improvement",
 				"fix"
+			]
+		},
+		{
+			"date": "2026-09-08",
+			"type": "update",
+			"title": "A live globe of what is happening on Earth, and every layer says how far back it can really see",
+			"summary": "There is a new page at /globe: a 3D globe carrying eleven layers of open data at once. Armed conflict, mobilizations and sanctions are read out of the world news stream and placed where they happened; earthquakes, volcanoes and wildfires come from the USGS and NASA; cyclones, floods and drought from the UN and European Commission disaster system; national internet blackouts from Georgia Tech's outage project; and economic contraction from World Bank figures. Under all of it sits the geography that gives the rest meaning: overseas military bases, nuclear sites, and the nine maritime chokepoints world trade passes through, each one scored by how much armed activity the live feed puts within reach of it. Drag the globe or press F to flatten it into a map, click any point to read what it is and open the source it came from, and search the feed for a place or an actor. The whole view lives in the link, so the exact globe you are looking at is one you can send to someone. Two things it will not do: it will not quietly show you an hour of data under a label that says a week, because every layer prints the window it actually covered, and it will not go blank when a source goes down, because a layer that cannot be reached says so and the other ten keep working. Nothing here needs an account or an API key, and the same data is one call away at /api/globe/intel.",
+			"link": "/globe",
+			"tags": [
+				"feature"
 			]
 		},
 		{

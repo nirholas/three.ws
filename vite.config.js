@@ -611,6 +611,7 @@ const appConfig = {
 				'nav-tier-badge': resolve(__dirname, 'src/nav-tier-badge.js'),
 				i18n: resolve(__dirname, 'src/i18n.js'),
 				drops: resolve(__dirname, 'pages/drops.html'),
+				globe: resolve(__dirname, 'pages/globe.html'),
 				'home-scene': resolve(__dirname, 'pages/home-scene.html'),
 				materialize: resolve(__dirname, 'pages/materialize.html'),
 				'smart-home': resolve(__dirname, 'pages/smart-home.html'),

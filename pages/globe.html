@@ -1,0 +1,182 @@
+<!doctype html>
+<html lang="en" class="cv-page">
+	<head>
+		<script>
+			/* three.ws theme boot: no-flash; runtime in /theme-switcher.js */ (function () {
+				try {
+					var m = localStorage.getItem('twx_theme');
+					var l =
+						m === 'auto'
+							? window.matchMedia &&
+								window.matchMedia('(prefers-color-scheme: light)').matches
+							: m === 'light';
+					document.documentElement.setAttribute('data-theme', l ? 'light' : 'dark');
+				} catch (e) {
+					document.documentElement.setAttribute('data-theme', 'dark');
+				}
+			})();
+		</script>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<title>Global Intel Globe · three.ws</title>
+		<meta
+			name="description"
+			content="A live 3D globe of what is happening on Earth right now: armed conflict, force posture, sanctions, natural events, severe weather, internet outages and economic stress, layered over military bases, nuclear sites and maritime chokepoints."
+		/>
+		<meta property="og:type" content="website" />
+		<meta property="og:site_name" content="three.ws" />
+		<meta property="og:url" content="https://three.ws/globe" />
+		<meta property="og:title" content="Global Intel Globe · three.ws" />
+		<meta
+			property="og:description"
+			content="Eleven live layers on one 3D globe: conflict, force posture, sanctions, natural events, weather, outages, economic stress, bases, nuclear sites and chokepoints."
+		/>
+		<meta
+			property="og:image"
+			content="https://three.ws/api/page-og?s=labs&amp;t=Global+Intel+Globe&amp;d=A+live+3D+globe+of+what+is+happening+on+Earth+right+now%3A+armed+conflict%2C+force+posture%2C+sanctions%2C+natural+events%2C+severe+weather%2C+internet+outages+and&amp;p=%2Fglobe"
+		/>
+		<meta property="og:image:width" content="1200" />
+		<meta property="og:image:height" content="630" />
+		<meta property="og:image:alt" content="Global Intel Globe on three.ws" />
+		<meta property="og:locale" content="en_US" />
+		<meta name="twitter:card" content="summary_large_image" />
+		<meta name="twitter:site" content="@trythreews" />
+		<meta name="twitter:title" content="Global Intel Globe · three.ws" />
+		<meta
+			name="twitter:description"
+			content="Eleven live layers on one 3D globe: conflict, force posture, sanctions, natural events, weather, outages, economic stress, bases, nuclear sites and chokepoints."
+		/>
+		<meta
+			name="twitter:image"
+			content="https://three.ws/api/page-og?s=labs&amp;t=Global+Intel+Globe&amp;d=A+live+3D+globe+of+what+is+happening+on+Earth+right+now%3A+armed+conflict%2C+force+posture%2C+sanctions%2C+natural+events%2C+severe+weather%2C+internet+outages+and&amp;p=%2Fglobe"
+		/>
+		<meta name="theme-color" content="#09090b" />
+		<link rel="icon" href="/favicon.ico" sizes="any" />
+		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+		<link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+		<link rel="manifest" href="/manifest.webmanifest" />
+		<link rel="stylesheet" href="/fonts/fonts.css" />
+		<link rel="stylesheet" href="/nav.css" />
+		<link rel="stylesheet" href="/src/globe-intel.css" />
+		<link rel="stylesheet" href="/footer.css" />
+		<link rel="canonical" href="https://three.ws/globe" />
+		<meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1" />
+		<link rel="preload" as="fetch" href="/data/globe-land.json" crossorigin />
+
+		<script type="application/ld+json">
+			{
+				"@context": "https://schema.org",
+				"@graph": [
+					{
+						"@type": "WebApplication",
+						"name": "Global Intel Globe",
+						"applicationCategory": "BusinessApplication",
+						"operatingSystem": "Any",
+						"url": "https://three.ws/globe",
+						"description": "A live 3D globe of armed conflict, force posture, sanctions, natural events, severe weather, internet outages and economic stress, layered over military bases, nuclear sites and maritime chokepoints.",
+						"offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" },
+						"isPartOf": { "@type": "WebSite", "name": "three.ws", "url": "https://three.ws" }
+					}
+				]
+			}
+		</script>
+	</head>
+	<body class="gi-body">
+		<header><div id="nav-container"></div></header>
+		<script src="/nav.js"></script>
+
+		<main class="gi-shell" id="gi-shell">
+			<!-- The scene. Everything inside is drawn by src/globe-intel.js. -->
+			<div class="gi-stage" id="gi-stage">
+				<canvas id="gi-canvas" aria-label="Interactive 3D globe of live world events" role="img"></canvas>
+
+				<div class="gi-stage-head">
+					<div class="gi-title-block">
+						<nav class="gi-crumbs" aria-label="Breadcrumb">
+							<a href="/labs">Labs</a><span class="gi-sep">/</span><span class="gi-here">Globe</span>
+						</nav>
+						<h1 class="gi-h1">Global Intel Globe</h1>
+					</div>
+					<div class="gi-head-actions">
+						<div class="gi-seg" role="group" aria-label="View">
+							<button type="button" class="gi-seg-btn" data-view="global" aria-pressed="true">Globe</button>
+							<button type="button" class="gi-seg-btn" data-view="flat" aria-pressed="false">Flat</button>
+						</div>
+						<div class="gi-seg" role="group" aria-label="Time range" id="gi-range"></div>
+						<button type="button" class="gi-icon-btn" id="gi-share" aria-label="Copy a link to this exact view">
+							Share view
+						</button>
+					</div>
+				</div>
+
+				<p class="gi-hint" id="gi-hint">
+					Drag to spin, scroll to zoom, click any point to read it. Press
+					<kbd>F</kbd> to flatten, <kbd>Space</kbd> to pause the spin.
+				</p>
+
+				<!-- Hover readout. Positioned by the renderer, hidden until a point is under the pointer. -->
+				<div class="gi-tooltip" id="gi-tooltip" role="status" aria-live="polite" hidden></div>
+
+				<div class="gi-stage-foot">
+					<p class="gi-updated" id="gi-updated">Loading live layers…</p>
+					<button type="button" class="gi-ghost-btn" id="gi-refresh">Refresh</button>
+				</div>
+			</div>
+
+			<!-- Control rail. Layers, the live feed, and the detail card for a selected point. -->
+			<aside class="gi-rail" id="gi-rail" aria-label="Layers and events">
+				<div class="gi-rail-tabs" role="tablist" aria-label="Panel">
+					<button type="button" class="gi-tab" role="tab" data-tab="layers" aria-selected="true" id="gi-tab-layers" aria-controls="gi-panel-layers">
+						Layers
+					</button>
+					<button type="button" class="gi-tab" role="tab" data-tab="feed" aria-selected="false" id="gi-tab-feed" aria-controls="gi-panel-feed">
+						Feed
+					</button>
+				</div>
+
+				<section class="gi-panel" id="gi-panel-layers" role="tabpanel" aria-labelledby="gi-tab-layers">
+					<div class="gi-layer-list" id="gi-layers"></div>
+					<p class="gi-panel-note" id="gi-layer-note"></p>
+				</section>
+
+				<section class="gi-panel" id="gi-panel-feed" role="tabpanel" aria-labelledby="gi-tab-feed" hidden>
+					<label class="gi-search">
+						<span class="gi-sr">Search events</span>
+						<input type="search" id="gi-search" placeholder="Search place, actor or event" autocomplete="off" />
+					</label>
+					<div class="gi-feed" id="gi-feed"></div>
+				</section>
+
+				<section class="gi-detail" id="gi-detail" hidden aria-live="polite">
+					<button type="button" class="gi-detail-close" id="gi-detail-close" aria-label="Close event detail">Close</button>
+					<div id="gi-detail-body"></div>
+				</section>
+			</aside>
+		</main>
+
+		<section class="gi-about">
+			<h2>What this is</h2>
+			<p>
+				Eleven layers of open data on one globe, refreshed continuously. Armed conflict, force
+				posture and sanctions are classified from the GDELT event stream by CAMEO code and kept in
+				a rolling window on three.ws, so the time control is real rather than decorative. Natural
+				events come from the USGS earthquake feed and NASA EONET, severe weather from GDACS,
+				connectivity loss from Georgia Tech's IODA project, and economic stress from World Bank
+				indicators. Military bases, nuclear sites and maritime chokepoints are reference geography,
+				and the chokepoint layer scores itself against the live feed rather than sitting still.
+			</p>
+			<p>
+				Every layer states the window it actually covered and every point links to its source. No
+				credential is needed to read any of it. The full payload is one call:
+				<a href="/api/globe/intel?range=7d"><code>/api/globe/intel</code></a>, documented in
+				<a href="/docs/globe">the globe reference</a>.
+			</p>
+		</section>
+
+		<script type="module" src="/src/globe-intel.js"></script>
+		<script src="/brand.js" defer></script>
+		<div id="footer-container"></div>
+		<script src="/footer.js"></script>
+		<script type="module" src="/i18n.js"></script>
+	</body>
+</html>

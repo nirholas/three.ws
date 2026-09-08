@@ -853,6 +853,12 @@ How Robinhood Portfolios works: the manifest that makes a generated basket bindi
 
 Experimental features actively shipping. Expect fast iteration.
 
+### Global Intel Globe
+
+URL: https://three.ws/globe
+
+A live 3D globe of what is happening on Earth right now: armed conflict, force posture, sanctions, natural events, severe weather, internet outages and economic stress, layered over military bases, nuclear sites and maritime chokepoints. Every layer is open data, every point links to its source, and the view is a shareable link.
+
 ### Machine Atlas
 
 URL: https://three.ws/assembly
@@ -2055,6 +2061,12 @@ Full documentation: SDKs, API reference, embedding, agent system, smart contract
 URL: https://three.ws/docs/skill-bundles
 
 How a bundle of an agent's skills is priced from that agent's own sales rather than a rule of thumb: the median-basket and flat-discount bases, the public pricing and backtest endpoint, the owner endpoints that publish and retire a bundle, and the on-chain checkout that unlocks every skill in one payment.
+
+### Docs · Global Intel Globe
+
+URL: https://three.ws/docs/globe
+
+The live 3D globe at /globe: its eleven keyless open-data layers and where each comes from, the URL parameters that make any view a shareable link, the one API call that returns every layer, and why an ingest cron has to keep its own GDELT window for the time control to be honest.
 
 ### Docs · Avatar Artifact viewer
 

@@ -1148,6 +1148,15 @@
 			"description": "Experimental features actively shipping. Expect fast iteration.",
 			"pages": [
 				{
+					"path": "/globe",
+					"title": "Global Intel Globe",
+					"description": "A live 3D globe of what is happening on Earth right now: armed conflict, force posture, sanctions, natural events, severe weather, internet outages and economic stress, layered over military bases, nuclear sites and maritime chokepoints. Every layer is open data, every point links to its source, and the view is a shareable link.",
+					"priority": 0.7,
+					"changefreq": "hourly",
+					"showcase": true,
+					"added": "2026-09-08"
+				},
+				{
 					"path": "/assembly",
 					"title": "Machine Atlas",
 					"description": "A radial aero engine and a steam locomotive generated in the browser from code, with no 3D model files: solved linkages, live dimensions, explode views and a GLB export.",
@@ -2755,6 +2764,14 @@
 					"priority": 0.6,
 					"changefreq": "monthly",
 					"added": "2026-08-16"
+				},
+				{
+					"path": "/docs/globe",
+					"title": "Docs \u00b7 Global Intel Globe",
+					"description": "The live 3D globe at /globe: its eleven keyless open-data layers and where each comes from, the URL parameters that make any view a shareable link, the one API call that returns every layer, and why an ingest cron has to keep its own GDELT window for the time control to be honest.",
+					"priority": 0.6,
+					"changefreq": "monthly",
+					"added": "2026-09-08"
 				},
 				{
 					"path": "/docs/avatar-artifact",

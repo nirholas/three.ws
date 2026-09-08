@@ -7,6 +7,22 @@
 		<description>What's new on three.ws: features, improvements, and releases, newest first.</description>
 		<language>en</language>
 		<item>
+			<title>Docs · Global Intel Globe</title>
+			<link>https://three.ws/docs/globe</link>
+			<guid isPermaLink="false">2026-09-08:Docs · Global Intel Globe</guid>
+			<pubDate>Tue, 08 Sep 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>The live 3D globe at /globe: its eleven keyless open-data layers and where each comes from, the URL parameters that make any view a shareable link, the one API call that returns every layer, and why an ingest cron has to keep its own GDELT window for the time control to be honest.</description>
+		</item>
+		<item>
+			<title>Global Intel Globe</title>
+			<link>https://three.ws/globe</link>
+			<guid isPermaLink="false">2026-09-08:Global Intel Globe</guid>
+			<pubDate>Tue, 08 Sep 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>A live 3D globe of what is happening on Earth right now: armed conflict, force posture, sanctions, natural events, severe weather, internet outages and economic stress, layered over military bases, nuclear sites and maritime chokepoints. Every layer is open data, every point links to its source, and the view is a shareable link.</description>
+		</item>
+		<item>
 			<title>3D pages send a phone a phone-sized world</title>
 			<link>https://three.ws/play</link>
 			<guid isPermaLink="false">2026-09-08:3D pages send a phone a phone-sized world</guid>
@@ -21,6 +37,14 @@
 			<pubDate>Tue, 08 Sep 2026 12:00:00 GMT</pubDate>
 			<category>improvement</category>
 			<description>Some of our 3D engines release their graphics card when nobody is using them, so the first request of a quiet spell has to boot one back up before any sculpting starts. That wait is normal and it ends, but several surfaces showed nothing but a spinning step while it happened, which reads as a hang. Now every place you can watch a model being built names it: the homepage forge, the Studio, the in-world item forge on /play, and the tools other apps drive us through all say a GPU is waking, how much of the boot is left, and that your job is already accepted and starts the second the worker answers. Every number comes from the generator itself, so nothing is a guessed timer. Two related fixes came out of it: the elapsed counter on /forge now reports how long your job has really been running rather than how long the tab has been open, so reopening the page mid-build no longer restarts the clock at zero; and the countdown now uses each engine's real boot budget instead of an estimate. The keep-warm schedule that holds those engines open during busy hours was also missing our highest-quality lane, which has the longest boot of the fleet.</description>
+		</item>
+		<item>
+			<title>A live globe of what is happening on Earth, and every layer says how far back it can really see</title>
+			<link>https://three.ws/globe</link>
+			<guid isPermaLink="false">2026-09-08:A live globe of what is happening on Earth, and every layer says how far back it can really see</guid>
+			<pubDate>Tue, 08 Sep 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>There is a new page at /globe: a 3D globe carrying eleven layers of open data at once. Armed conflict, mobilizations and sanctions are read out of the world news stream and placed where they happened; earthquakes, volcanoes and wildfires come from the USGS and NASA; cyclones, floods and drought from the UN and European Commission disaster system; national internet blackouts from Georgia Tech's outage project; and economic contraction from World Bank figures. Under all of it sits the geography that gives the rest meaning: overseas military bases, nuclear sites, and the nine maritime chokepoints world trade passes through, each one scored by how much armed activity the live feed puts within reach of it. Drag the globe or press F to flatten it into a map, click any point to read what it is and open the source it came from, and search the feed for a place or an actor. The whole view lives in the link, so the exact globe you are looking at is one you can send to someone. Two things it will not do: it will not quietly show you an hour of data under a label that says a week, because every layer prints the window it actually covered, and it will not go blank when a source goes down, because a layer that cannot be reached says so and the other ten keep working. Nothing here needs an account or an API key, and the same data is one call away at /api/globe/intel.</description>
 		</item>
 		<item>
 			<title>Agent Galaxy no longer strands you when the star map cannot be built</title>

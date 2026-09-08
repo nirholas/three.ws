@@ -157,6 +157,7 @@
 		"build:examples": "node scripts/build-examples-index.mjs && node scripts/mirror-examples-index.mjs && node scripts/build-hosted-examples.mjs",
 		"build:docs-search": "node scripts/build-docs-search-index.mjs",
 		"check:docs-search": "node scripts/build-docs-search-index.mjs --check",
+		"build:globe-geometry": "node scripts/build-globe-geometry.mjs",
 		"build:pages": "node scripts/build-page-index.mjs",
 		"hood:universe": "node scripts/build-hood-portfolios-universe.mjs --verbose",
 		"ship": "node packages/shipfeed/bin/shipfeed.mjs --local --changelog data/changelog.json --site https://three.ws",
@@ -624,17 +625,20 @@
 		"es-module-lexer": "^2.0.0",
 		"fbx2gltf": "^0.9.7-p1",
 		"glob": "^11.1.0",
+		"i18n-iso-countries": "^7.14.0",
 		"jsdom": "27.3.0",
 		"json5": "^2.2.3",
 		"playwright": "^1.45.1",
 		"prettier": "^3.8.4",
 		"puppeteer": "^24.42.0",
+		"topojson-client": "^3.1.0",
 		"typescript": "^5.9.3",
 		"vite": "^7.3.2",
 		"vite-plugin-node-polyfills": "^0.28.0",
 		"vite-plugin-pwa": "^1.3.0",
 		"vitest": "^4.1.9",
 		"workbox-build": "^7.4.0",
-		"workbox-window": "^7.4.0"
+		"workbox-window": "^7.4.0",
+		"world-atlas": "^2.0.2"
 	}
 }

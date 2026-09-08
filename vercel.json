@@ -1264,6 +1264,10 @@
 			"dest": "/fear-greed.html"
 		},
 		{
+			"src": "/globe/?",
+			"dest": "/globe.html"
+		},
+		{
 			"src": "/heatmap/?",
 			"dest": "/heatmap.html"
 		},
@@ -6479,6 +6483,10 @@
 		{
 			"path": "/api/cron/retention-rollup",
 			"schedule": "35 9 * * 1"
+		},
+		{
+			"path": "/api/cron/globe-ingest",
+			"schedule": "*/15 * * * *"
 		},
 		{
 			"path": "/api/cron/changelog-push",
