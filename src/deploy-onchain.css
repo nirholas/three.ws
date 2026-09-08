@@ -333,3 +333,23 @@
 	.do-live-dot, .do-stages li.active::before { animation: none; }
 	.do-agent-tile, .do-btn { transition: none; }
 }
+
+/* ── Interactive states (QB-07) ────────────────────────────────────────────
+   The advanced disclosure, the JSON tabs and the option toggles all set
+   cursor: pointer and defined no hover, so a user aiming at a tab got no
+   confirmation they were on it. Focus and disabled come from the floors in
+   public/tokens.css. */
+.do-adv summary,
+.do-json-tab,
+.do-toggle,
+.do-toggle input {
+	transition:
+		background var(--duration-fast) var(--ease-standard),
+		color var(--duration-fast) var(--ease-standard),
+		transform var(--duration-fast) var(--ease-standard);
+}
+
+.do-adv summary:hover h2 { color: var(--ink-bright); }
+.do-json-tab:hover:not(.active) { color: var(--ink); background: var(--surface-2); }
+.do-toggle:hover { color: var(--ink-bright); }
+.do-toggle input:hover { transform: scale(1.1); }

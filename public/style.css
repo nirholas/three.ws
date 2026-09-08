@@ -4428,6 +4428,25 @@ body.deploy-page {
 	font-size: var(--text-sm);
 	cursor: pointer;
 }
+/* QB-07 interactive-state pass: every control below promises it is clickable
+   (cursor: pointer) and now answers on hover, on the platform's motion ladder
+   (--duration-fast, --ease-standard). Focus and disabled come from the floors
+   in public/tokens.css; hover is the one a component has to author. */
+.showcase-sort-sel,
+.erc8004-accordion-head,
+.erc8004-checkbox,
+.erc8004-checkbox input[type='checkbox'] {
+	transition:
+		background var(--duration-fast) var(--ease-standard),
+		border-color var(--duration-fast) var(--ease-standard),
+		color var(--duration-fast) var(--ease-standard),
+		transform var(--duration-fast) var(--ease-standard);
+}
+
+.showcase-sort-sel:hover {
+	background: var(--surface-3);
+	border-color: var(--accent);
+}
 .showcase-sort-sel option {
 	background: #151515;
 	color: #e6e6e6;
@@ -7940,6 +7959,13 @@ body[data-viewer-mode='main'][data-authed='false'] .auth-gate {
 	justify-content: space-between;
 	align-items: center;
 }
+.erc8004-accordion-head:hover {
+	color: var(--ink-bright);
+	background: var(--surface-1);
+}
+.erc8004-accordion-head:hover::after {
+	color: var(--ink);
+}
 
 .erc8004-accordion-head::after {
 	content: '▼';
@@ -8041,12 +8067,18 @@ body[data-viewer-mode='main'][data-authed='false'] .auth-gate {
 	cursor: pointer;
 	user-select: none;
 }
+.erc8004-checkbox:hover {
+	color: var(--ink-bright);
+}
 
 .erc8004-checkbox input[type='checkbox'] {
 	width: 16px;
 	height: 16px;
 	accent-color: #b15bff;
 	cursor: pointer;
+}
+.erc8004-checkbox input[type='checkbox']:hover {
+	transform: scale(1.12);
 }
 
 .erc8004-qr-canvas-wrap {

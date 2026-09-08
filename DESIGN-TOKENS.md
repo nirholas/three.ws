@@ -171,6 +171,36 @@ state changes appearance.
 Want no ring on a control? Re-style it (a different colour, an inset shadow).
 Do not remove it.
 
+### The state a floor cannot supply: hover (QB-07)
+
+Focus and disabled are floorable because one rule fits every control. Hover is
+not: what "hovered" looks like is component-specific (a card lifts, a button
+tints, a tab brightens its underline), and a blanket rule would *stack* on the
+hundreds of components that already style their own hover instead of filling the
+gap. So hover is audited instead of floored.
+
+`npm run audit:states` ([scripts/audit-interactive-states.mjs](scripts/audit-interactive-states.mjs),
+part of `npm run gate`) finds every selector that declares `cursor: pointer` and
+has no `:hover` rule anywhere in the same stylesheet. That combination is a
+promise with nothing behind it: the pointer changes shape, the control does not,
+and it reads as dead. The count may only go **down**
+(`scripts/audit-interactive-states.baseline.json`). Invisible hit targets
+(`opacity: 0` file inputs over a drop zone), selectors already carrying a state
+pseudo-class, `@media (hover: none)` blocks and vendored third-party CSS are out
+of scope.
+
+Author the hover from tokens, on the motion ladder:
+
+```css
+.thing {
+	transition:
+		background var(--duration-fast) var(--ease-standard),
+		border-color var(--duration-fast) var(--ease-standard),
+		color var(--duration-fast) var(--ease-standard);
+}
+.thing:hover { background: var(--surface-3); border-color: var(--stroke-strong); }
+```
+
 ### Opting out of the reduced-motion floor
 
 "Reduce" does not mean "remove status". A spinner frozen mid-rotation reads as a

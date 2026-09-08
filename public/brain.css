@@ -1245,3 +1245,42 @@ body {
 	.br-topbar-right { gap: 5px; }
 	.br-topbar-btn { padding: 5px 8px; font-size: 11.5px; }
 }
+
+/* ── Interactive states (QB-07) ────────────────────────────────────────────
+   Six controls here set cursor: pointer and had no hover rule, so the pointer
+   changed shape and nothing else did, which reads as a dead control. Each now
+   answers on the platform ladder (--duration-fast, --ease-standard). Focus and
+   disabled are already covered by the floors in public/tokens.css. */
+.br-sess-name,
+.br-agent-bar-sel,
+.br-agent-select,
+.br-focus-sel {
+	transition:
+		background var(--duration-fast) var(--ease-standard),
+		border-color var(--duration-fast) var(--ease-standard),
+		color var(--duration-fast) var(--ease-standard);
+}
+
+.br-sess-name:hover {
+	color: var(--ink-bright);
+}
+
+.br-agent-bar-sel:hover {
+	color: var(--ink-bright);
+}
+
+.br-agent-select:hover,
+.br-focus-sel:hover {
+	border-color: var(--stroke-strong);
+	color: var(--ink);
+}
+
+.br-mode-btn:hover:not(.active):not(:disabled) {
+	color: var(--ink-dim);
+	background: var(--surface-1);
+}
+
+.br-pill:hover:not(:disabled) {
+	border-color: var(--stroke-strong);
+	color: var(--ink-dim);
+}

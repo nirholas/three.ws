@@ -147,6 +147,10 @@ body.market-page > header {
 	font-size: 13px;
 	cursor: pointer;
 }
+.market-sort:hover {
+	background: var(--surface-2);
+	border-color: var(--accent);
+}
 
 /* ── Discovery body ──────────────────────────────────────────────────── */
 
@@ -505,6 +509,13 @@ body.market-page > header {
 	padding: var(--space-sm) var(--space-lg);
 	border-radius: var(--radius-md);
 	cursor: pointer;
+}
+.market-loadmore button:hover {
+	background: var(--surface-3);
+	border-color: var(--accent);
+}
+.market-loadmore button:active {
+	transform: translateY(1px);
 }
 
 /* ── Avatar deep-link detail page ────────────────────────────────────── */
@@ -1241,6 +1252,10 @@ body.market-page > header {
 	cursor: pointer;
 	padding: var(--space-xs) var(--space-sm);
 }
+.market-back:hover {
+	color: var(--ink-bright);
+	transform: translateX(-2px);
+}
 
 .market-detail-head {
 	display: flex;
@@ -1306,6 +1321,10 @@ body.market-page > header {
 	font-size: 22px;
 	cursor: pointer;
 }
+.market-bookmark:hover {
+	color: var(--warn);
+	transform: scale(1.1);
+}
 
 .market-bookmark.on {
 	color: var(--warn);
@@ -1328,6 +1347,10 @@ body.market-page > header {
 	cursor: pointer;
 	border-bottom: 2px solid transparent;
 	white-space: nowrap;
+}
+.market-tabs button:hover {
+	color: var(--ink);
+	border-bottom-color: var(--stroke-strong);
 }
 
 .market-tabs button.active {
@@ -1901,7 +1924,7 @@ body.market-page > header {
 
 .market-fork {
 	background: #fafafa;
-	color: #000000;
+	color: var(--on-bright);
 	border: 0;
 	padding: var(--space-md);
 	border-radius: var(--radius-md);
@@ -1922,6 +1945,11 @@ body.market-page > header {
 	border-radius: var(--radius-md);
 	font-size: 13px;
 	cursor: pointer;
+}
+.market-export-btn:hover {
+	background: var(--surface-2);
+	border-color: var(--accent);
+	color: var(--ink);
 }
 
 .market-overview-card {
@@ -2199,7 +2227,7 @@ body.market-page > header {
 
 .plugin-install-btn {
 	background: var(--accent);
-	color: #000000;
+	color: var(--on-accent);
 	border: 0;
 	border-radius: var(--radius-sm);
 	padding: var(--space-xs) var(--space-md);
@@ -2258,6 +2286,10 @@ body.market-page > header {
 	font-size: 24px;
 	color: var(--ink-dim);
 	cursor: pointer;
+}
+.close-button:hover {
+	color: var(--ink-bright);
+	transform: rotate(90deg);
 }
 
 /* ── Add by URL modal ────────────────────────────────────────────────── */
@@ -2376,12 +2408,24 @@ body.market-page > header {
 	cursor: pointer;
 	font-family: inherit;
 }
+.plugin-modal-btn:hover:not(:disabled) {
+	background: var(--surface-3);
+	border-color: var(--stroke-strong);
+	color: var(--ink);
+}
+.plugin-modal-btn:active:not(:disabled) {
+	transform: translateY(1px);
+}
 
 .plugin-modal-btn-primary {
 	background: var(--accent);
-	color: #000000;
+	color: var(--on-accent);
 	border: 0;
 	font-weight: 600;
+}
+.plugin-modal-btn-primary:hover:not(:disabled) {
+	background: var(--btn-primary-bg-hover);
+	color: var(--on-accent);
 }
 
 .plugin-modal-btn:disabled {
@@ -2435,6 +2479,10 @@ body.market-page > header {
 	font-size: 22px;
 	cursor: pointer;
 	line-height: 1;
+}
+.market-modal-close:hover {
+	color: var(--ink-bright);
+	transform: rotate(90deg);
 }
 
 .market-submit-form {
@@ -2500,13 +2548,19 @@ body.market-page > header {
 
 .market-btn-pri {
 	background: var(--accent);
-	color: #000000;
+	color: var(--on-accent);
 	border: 0;
 	border-radius: var(--radius-sm);
 	padding: var(--space-sm) var(--space-md);
 	font-size: 14px;
 	font-weight: 600;
 	cursor: pointer;
+}
+.market-btn-pri:hover:not(:disabled) {
+	background: var(--btn-primary-bg-hover);
+}
+.market-btn-pri:active:not(:disabled) {
+	transform: translateY(1px);
 }
 
 .market-btn-sec {
@@ -2518,10 +2572,15 @@ body.market-page > header {
 	font-size: 14px;
 	cursor: pointer;
 }
+.market-btn-sec:hover {
+	background: var(--surface-3);
+	border-color: var(--stroke-strong);
+	color: var(--ink);
+}
 
 .market-submit-btn {
 	background: var(--accent);
-	color: #000000;
+	color: var(--on-accent);
 	border: 0;
 	border-radius: var(--radius-sm);
 	padding: var(--space-xs) var(--space-md);
@@ -2733,6 +2792,10 @@ body.market-page > header {
 	font-size: 12px;
 	text-decoration: underline;
 }
+.msm-note .msm-note-cta:hover {
+	color: var(--ink-bright);
+	text-decoration-thickness: 2px;
+}
 
 .msm-error {
 	flex-basis: 100%;
@@ -2762,6 +2825,11 @@ body.market-page > header {
 	font-size: 12px;
 	cursor: pointer;
 	align-self: flex-start;
+}
+.market-import-btn:hover {
+	background: var(--surface-2);
+	border-color: var(--stroke-strong);
+	color: var(--ink);
 }
 
 .market-json-input {
@@ -3550,11 +3618,17 @@ body.market-page > header {
 	border: 0;
 	cursor: pointer;
 	padding: 0;
-	transition: background 0.2s, width 0.2s;
+	transition:
+		background var(--duration-fast) var(--ease-standard),
+		width var(--duration-fast) var(--ease-standard);
 }
 .market-hero-dot.active {
 	background: var(--ink);
 	width: 36px;
+}
+.market-hero-dot:hover:not(.active) {
+	background: var(--stroke-strong);
+	width: 28px;
 }
 
 /* ── Filter chips (All / Agents / Avatars) ──────────────────── */
@@ -5135,6 +5209,7 @@ body.market-page > header {
 .anim-buy-note-err { color: #fca5a5; }
 .anim-buy-snippet { margin-top: 16px; border-top: 1px solid var(--stroke); padding-top: 12px; }
 .anim-buy-snippet summary { font-size: 12px; font-weight: 600; color: #c7d2fe; cursor: pointer; }
+.anim-buy-snippet summary:hover { color: var(--ink-bright); }
 .anim-buy-endpoint { display: flex; align-items: center; gap: 8px; margin-top: 10px; }
 .anim-buy-endpoint code {
 	flex: 1; min-width: 0;
@@ -5187,7 +5262,7 @@ body.market-page > header {
 	gap: 7px;
 	width: 100%;
 	background: var(--accent);
-	color: #000000;
+	color: var(--on-accent);
 	border: 0;
 	border-radius: var(--radius-sm);
 	padding: var(--space-xs) var(--space-md);
@@ -5380,4 +5455,34 @@ body.market-page > header {
 	background: rgba(255,212,121,0.10);
 	font-weight: 700;
 	letter-spacing: 0.02em;
+}
+
+/* ── Interactive-state motion (QB-07) ──────────────────────────────────────
+   The controls above promise they are clickable (cursor: pointer) and now
+   answer that promise on hover. This is the one place that gives those hovers
+   their timing, so the whole surface moves on a single ladder: --duration-fast
+   for a control, the standard easing, and only cheap properties (colour, and
+   transform, which the compositor handles). prefers-reduced-motion is honoured
+   platform-wide by the floor in public/tokens.css, so there is no media query
+   to repeat here. */
+.market-sort,
+.market-loadmore button,
+.market-back,
+.market-bookmark,
+.market-tabs button,
+.market-export-btn,
+.close-button,
+.plugin-modal-btn,
+.market-modal-close,
+.market-btn-pri,
+.market-btn-sec,
+.msm-note .msm-note-cta,
+.market-import-btn,
+.anim-buy-snippet summary {
+	transition:
+		background var(--duration-fast) var(--ease-standard),
+		border-color var(--duration-fast) var(--ease-standard),
+		color var(--duration-fast) var(--ease-standard),
+		text-decoration-thickness var(--duration-fast) var(--ease-standard),
+		transform var(--duration-fast) var(--ease-standard);
 }

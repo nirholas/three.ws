@@ -2907,3 +2907,46 @@ div.ad-hero-avatar canvas {
 	color: var(--ad-green);
 	font-variant-numeric: tabular-nums;
 }
+
+/* ── Interactive states (QB-07) ────────────────────────────────────────────
+   Four controls set cursor: pointer with no hover rule. The two retry buttons
+   are the ones that hurt: they only appear after something already failed, and
+   a recovery action that gives no feedback under the pointer reads as broken
+   too. Focus and disabled come from the floors in public/tokens.css. */
+.ad-collapse summary,
+.payment-gift-toggle input[type='checkbox'],
+.retry-primary,
+.retry-secondary {
+	transition:
+		background var(--duration-fast) var(--ease-standard),
+		border-color var(--duration-fast) var(--ease-standard),
+		color var(--duration-fast) var(--ease-standard),
+		transform var(--duration-fast) var(--ease-standard);
+}
+
+.ad-collapse summary:hover {
+	background: var(--ad-bg-2);
+}
+
+.ad-collapse summary:hover::after {
+	color: var(--ad-text);
+}
+
+.payment-gift-toggle input[type='checkbox']:hover {
+	transform: scale(1.12);
+}
+
+.retry-primary:hover {
+	background: var(--ink-bright);
+	border-color: var(--ink-bright);
+}
+
+.retry-secondary:hover {
+	border-color: var(--ad-text);
+	color: var(--ad-text);
+}
+
+.retry-primary:active,
+.retry-secondary:active {
+	transform: translateY(1px);
+}

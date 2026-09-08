@@ -1932,3 +1932,44 @@ a:hover {
 	border: 1px solid var(--border);
 	border-radius: 999px;
 }
+
+/* ── Interactive states (QB-07) ────────────────────────────────────────────
+   Seven controls in Widget Studio set cursor: pointer with no hover rule, so
+   the pointer changed shape and the control did not. Each answers now on the
+   platform ladder (--duration-fast, --ease-standard); focus and disabled come
+   from the floors in public/tokens.css. */
+.field input[type='checkbox'],
+.field input[type='color'],
+.field--range input[type='range'],
+.kp-drop-link,
+.kp-section summary,
+.modal details summary,
+.walk-bg-transparent {
+	transition:
+		border-color var(--duration-fast) var(--ease-standard),
+		color var(--duration-fast) var(--ease-standard),
+		transform var(--duration-fast) var(--ease-standard);
+}
+
+.field input[type='checkbox']:hover,
+.field--range input[type='range']:hover {
+	transform: scale(1.08);
+}
+
+.field input[type='color']:hover {
+	border-color: var(--accent);
+}
+
+.kp-drop-link:hover {
+	color: var(--ink-bright);
+	text-decoration-thickness: 2px;
+}
+
+.kp-section summary:hover,
+.modal details summary:hover {
+	color: var(--ink-bright);
+}
+
+.walk-bg-transparent:hover {
+	color: var(--ink-bright);
+}

@@ -1160,3 +1160,34 @@ code, .pd-mono-inline {
 .pd-switch input:checked + .pd-switch-track { background: var(--accent); }
 .pd-switch input:checked + .pd-switch-track .pd-switch-thumb { transform: translateX(15px); }
 .pd-switch input:focus-visible + .pd-switch-track { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+/* ── Interactive states (QB-07) ────────────────────────────────────────────
+   Four controls set cursor: pointer with no hover rule. The switch and the
+   toggle are the ones that matter most: a track that never lights up under the
+   pointer reads as a decorative graphic rather than a switch. */
+.pd-check:hover {
+	color: var(--ink-bright);
+}
+
+.pd-chip-action:hover {
+	text-decoration-thickness: 2px;
+	filter: brightness(1.15);
+}
+
+.pd-switch:hover .pd-switch-track {
+	background: var(--surface-3);
+	border-color: var(--stroke-strong);
+}
+
+.pd-toggle:hover:not(:disabled) {
+	border-color: var(--stroke-strong);
+	background: var(--surface-2);
+}
+
+.pd-check,
+.pd-chip-action {
+	transition:
+		color var(--duration-fast) var(--ease-standard),
+		filter var(--duration-fast) var(--ease-standard),
+		text-decoration-thickness var(--duration-fast) var(--ease-standard);
+}
