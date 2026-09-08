@@ -16,6 +16,41 @@ It is complete on its own. Also read `prompts/finish/_context/quality-bar-_share
    share this worktree. Do not `git push` unless the owner's message asked for it.
 4. GCP spend is pre-approved (credits). Never trade quality for cost.
 
+## Session status as of 2026-09-08 (read before re-running anything)
+
+A prior session executed this order. Do not redo tasks 2 and 3.
+
+- **Task 2 (cold-start honesty): DONE and verified.** `/forge` renders the boot state at
+  320/768/1440 with zero console errors, its countdown uses the lane's real
+  `cold_start_seconds`, and its elapsed meter is now anchored to the server's
+  `elapsed_seconds` instead of a tab-local clock. `/api/gpt-forge` now returns
+  `cold_start` on POLL frames (it only did so at submit, which is why the MCP
+  surfaces, who see nothing but poll frames, could never report a boot), and the
+  `_mcp-studio` tools narrate it. The wording lives once in
+  `src/shared/forge-frames.js` (`coldStartState` / `coldStartLabel`), used by the
+  homepage chamber, the Studio, the in-world prop forge and the MCP tools.
+- **Task 3 (keep-warm): was ALREADY shipped before this order was written.**
+  `/api/cron/gpu-keepwarm` runs on exactly the `*/10 14-23,0-4` schedule this file
+  asks for, and is deliberately quota-aware rather than warming every minScale=0
+  worker (the us-central1 L4 grant is 3 and two floors already hold 2; pinning a
+  third starved `model-text2motion` on 2026-07-26). The gap that was fixed:
+  `model-hunyuan3d`, the fleet's longest spin-up, was missing from the registry
+  entirely, so no override could ever reach it. `tests/cron-forge-lane-guards.test.js`
+  now fails if a routed scale-to-zero lane is absent or carries the wrong url env.
+- **Task 1 (scale ceilings): BLOCKED on one `gcloud auth login`.** Also note its target
+  numbers conflict with a twice-learned lesson recorded in `docs/ops/gcp-credits-plan.md`:
+  at a granted L4 quota of 3, `model-trellis` min 1 + `model-hunyuan3d` min 1 + `model-rig`
+  min 1 consume the whole pool and trellis can never burst to its stated max 3. Read the
+  live grant before applying them; if it is still 3, raise the grant first.
+- **Tasks 4 and 5 (load test, prove a lane): BLOCKED by a production outage, not by capacity.**
+  Every `/api/forge` generation fails with `SignatureDoesNotMatch` from object storage: the
+  R2 credential on the Cloud Run service is rejected, so no lane can park a reference image
+  or a finished mesh. 24h metrics read 12 attempts, 0 successful. Only a pre-outage CACHED
+  result still returns. There is nothing to load test until the credential is rotated and the
+  pending commits deploy (the graceful-degradation fix for this exact class landed
+  2026-09-07 and is not yet in production, which is why the raw AWS signing sentence is
+  currently shown to users).
+
 ## Step 0: re-derive current state (do this first, trust nothing below)
 
 This file's claims rot. Measure before you plan:
