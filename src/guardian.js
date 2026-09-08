@@ -38,6 +38,7 @@ const STYLE = `
 .gd-pill { font-size:var(--text-2xs,.6875rem); font-weight:600; padding:2px 8px; border-radius:999px; border:1px solid transparent; }
 .gd-pill.guardian { color:var(--wallet-accent-ink,#c4b5fd); background:color-mix(in srgb,var(--wallet-accent,#8b5cf6) 14%,transparent); border-color:color-mix(in srgb,var(--wallet-accent,#8b5cf6) 32%,transparent); }
 .gd-pill.beneficiary { color:var(--success,#4ade80); background:color-mix(in srgb,var(--success,#4ade80) 12%,transparent); border-color:color-mix(in srgb,var(--success,#4ade80) 30%,transparent); }
+.gd-pill.neutral { color:var(--ink-dim,#999); background:var(--surface-2,rgba(255,255,255,.05)); border-color:var(--stroke,rgba(255,255,255,.08)); }
 .gd-proc { margin-top:12px; padding-top:12px; border-top:1px solid var(--stroke,rgba(255,255,255,.08)); }
 .gd-proc-h { font-size:var(--text-sm,.85rem); color:var(--ink-bright,#fff); display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
 .gd-narrate { font-style:italic; color:var(--ink,#c8c8c8); font-size:var(--text-sm,.8rem); line-height:1.5; padding:10px 12px; margin-top:8px; border-left:2px solid color-mix(in srgb,var(--wallet-accent,#8b5cf6) 50%,transparent); background:color-mix(in srgb,var(--wallet-accent,#8b5cf6) 7%,transparent); border-radius:0 10px 10px 0; }
@@ -64,7 +65,7 @@ const STYLE = `
 .gd-empty p{ margin:0 auto; max-width:46ch; line-height:1.55; }
 .gd-empty .ill{ font-size:34px; opacity:.5; display:block; margin-bottom:10px; }
 .gd-skel{ height:84px; border-radius:14px; background:linear-gradient(90deg,var(--surface-1,rgba(255,255,255,.03)) 25%,var(--surface-2,rgba(255,255,255,.05)) 37%,var(--surface-1,rgba(255,255,255,.03)) 63%); background-size:400% 100%; animation:gd-sh 1.4s ease infinite; }
-.gd-toast{ position:fixed; left:50%; bottom:var(--gd-toast-bottom,24px); transform:translateX(-50%) translateY(8px); width:max-content; max-width:min(92vw,420px); text-align:center; background:var(--bg-1,#1a1a1a); color:var(--ink-bright,#fff); border:1px solid var(--stroke-strong,rgba(255,255,255,.14)); border-radius:10px; padding:10px 16px; font-size:.85rem; line-height:1.45; box-shadow:0 8px 32px rgba(0,0,0,.5); opacity:0; pointer-events:none; transition:opacity .2s,transform .2s; z-index:2147483000; }
+.gd-toast{ position:fixed; left:50%; bottom:24px; transform:translateX(-50%) translateY(8px); max-width:min(92vw,420px); text-align:center; background:var(--bg-1,#1a1a1a); color:var(--ink-bright,#fff); border:1px solid var(--stroke-strong,rgba(255,255,255,.14)); border-radius:10px; padding:10px 16px; font-size:.85rem; box-shadow:0 8px 32px rgba(0,0,0,.5); opacity:0; pointer-events:none; transition:opacity .2s,transform .2s; z-index:9999; }
 .gd-toast[data-show="true"]{ opacity:1; transform:translateX(-50%) translateY(0); }
 @keyframes gd-sh{ 0%{background-position:100% 0} 100%{background-position:-100% 0} }
 @media (prefers-reduced-motion: reduce){ .gd-skel{animation:none} .gd-btn,.gd-toast{transition:none} }
@@ -83,30 +84,10 @@ function esc(s) {
 	return String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
 }
 
-// The site-wide corner stack (the companion, the tour pill, the language
-// switcher) is fixed to the bottom-right at a z-index no page can outrank, and
-// on a phone it is wide enough to sit under a centred toast. Measure it rather
-// than guessing a clearance: lift the toast above it only when the two would
-// actually overlap horizontally.
-function toastBottom() {
-	const stack = document.querySelector('.tws-corner-stack');
-	if (!stack) return null;
-	const b = stack.getBoundingClientRect();
-	if (!b.height) return null;
-	// A centred toast is at most min(92vw, 420px) wide.
-	const toastHalf = Math.min(window.innerWidth * 0.92, 420) / 2;
-	const toastLeft = window.innerWidth / 2 - toastHalf;
-	const toastRight = window.innerWidth / 2 + toastHalf;
-	if (b.left >= toastRight || b.right <= toastLeft) return null;
-	return Math.round(window.innerHeight - b.top) + 12;
-}
-
 let toastTimer = null;
 function toast(msg, ms = 2400) {
 	let el = document.querySelector('.gd-toast');
 	if (!el) { el = document.createElement('div'); el.className = 'gd-toast'; el.setAttribute('role', 'status'); el.setAttribute('aria-live', 'polite'); document.body.appendChild(el); }
-	const lift = toastBottom();
-	el.style.setProperty('--gd-toast-bottom', lift ? `${lift}px` : '24px');
 	el.textContent = msg;
 	el.dataset.show = 'true';
 	clearTimeout(toastTimer);
@@ -123,15 +104,6 @@ function fmtDuration(ms) {
 	return `${s}s`;
 }
 
-// What a button says while its request is in the air.
-const PENDING_LABEL = {
-	approve: 'Approving',
-	confirm: 'Confirming',
-	decline: 'Declining',
-	complete: 'Transferring',
-	arm: 'Arming',
-};
-
 // The API's phase names are storage identifiers. A guardian reads a sentence.
 const STATUS_LABEL = {
 	pending_approvals: 'awaiting approvals',
@@ -147,9 +119,6 @@ const STATUS_LABEL = {
 // about it. Anything unmapped falls through to the server's own sentence, which
 // this API writes for humans; a raw exception string never reaches the page.
 function humanError(res) {
-	if (res.code === 'timeout') {
-		return 'three.ws did not answer in time. Nothing was changed. Try again.';
-	}
 	if (res.code === 'network_error' || res.status === 0) {
 		return 'We could not reach three.ws. Check your connection, then try again.';
 	}
@@ -159,22 +128,9 @@ function humanError(res) {
 	return res.message || 'Something went wrong. Nothing was changed.';
 }
 
-// Deadlines, matching the ones apiFetch applies site-wide: a read that never
-// answers must not hold the skeleton up forever, and a write whose response
-// body stalls mid-stream (seen for real through a proxied connection) must not
-// strand a guardian on a permanently disabled button.
-const READ_TIMEOUT_MS = 20_000;
-const WRITE_TIMEOUT_MS = 45_000;
-
-function deadline(ms) {
-	if (typeof AbortSignal === 'undefined' || typeof AbortSignal.timeout !== 'function') return undefined;
-	return AbortSignal.timeout(ms);
-}
-
 async function call(url, { method = 'GET', body = null } = {}) {
 	try {
 		const opts = { method, credentials: 'include', headers: { accept: 'application/json' } };
-		opts.signal = deadline(method === 'GET' ? READ_TIMEOUT_MS : WRITE_TIMEOUT_MS);
 		if (body != null) { opts.headers['content-type'] = 'application/json'; opts.body = JSON.stringify(body); }
 		if (method !== 'GET') { const tok = await consumeCsrfToken(); if (tok) opts.headers['x-csrf-token'] = tok; }
 		const r = await fetch(url, opts);
@@ -182,8 +138,7 @@ async function call(url, { method = 'GET', body = null } = {}) {
 		if (!r.ok) return { ok: false, status: r.status, code: j?.error || 'error', message: j?.error_description || `request failed (${r.status})`, detail: j?.detail || null };
 		return { ok: true, status: r.status, data: j?.data ?? j };
 	} catch (err) {
-		const timedOut = err?.name === 'TimeoutError' || err?.name === 'AbortError';
-		return { ok: false, status: 0, code: timedOut ? 'timeout' : 'network_error', message: err?.message || 'network error' };
+		return { ok: false, status: 0, code: 'network_error', message: err?.message || 'network error' };
 	}
 }
 
@@ -382,13 +337,7 @@ function wire() {
 			if (confirmMsg && !confirm(confirmMsg)) return;
 
 			busy = true;
-			// A guardian action is a real round trip (CSRF issue, then the write).
-			// Say so on the button itself, so the seconds between click and toast
-			// read as work in progress rather than a dead control.
-			const restLabel = btn.textContent;
 			btn.disabled = true;
-			btn.setAttribute('aria-busy', 'true');
-			btn.textContent = PENDING_LABEL[act] || 'Working';
 			let res;
 			if (act === 'arm') {
 				res = await call(`/api/agents/${encodeURIComponent(agent)}/recovery/inheritance/arm`, { method: 'POST', body: {} });
@@ -399,13 +348,7 @@ function wire() {
 			// A session that expired while the page sat open must not read as a
 			// mystery failure: send them back to the signed-out door.
 			if (res.status === 401) { noteSession(false); renderSignedOut(); return; }
-			if (!res.ok) {
-				toast(humanError(res));
-				btn.textContent = restLabel;
-				btn.removeAttribute('aria-busy');
-				btn.disabled = false;
-				return;
-			}
+			if (!res.ok) { toast(humanError(res)); btn.disabled = false; return; }
 			const msg = {
 				approve: 'Approved. Thank you for vouching.',
 				confirm: 'Confirmed',
@@ -419,16 +362,6 @@ function wire() {
 	});
 }
 
-// Single-flight. A tab-focus refresh that overlapped an action's own reload
-// would replace the card mid-click and leave the guardian pressing a detached
-// button that answers nothing.
-let loading = null;
-function load() {
-	if (loading) return loading;
-	loading = loadOnce().finally(() => { loading = null; });
-	return loading;
-}
-
 /**
  * Resolve the viewer before asking for the inbox. /api/auth/me answers 200 with
  * `{ user: null }` for a signed-out visitor, so the signed-out path costs one
@@ -436,7 +369,7 @@ function load() {
  * path gets the viewer id it needs for "you approved" out of the same response
  * rather than a second lookup.
  */
-async function loadOnce() {
+async function load() {
 	renderLoading();
 	const me = await call('/api/auth/me');
 	if (!me.ok) { renderError(me); return; }
