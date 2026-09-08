@@ -94,24 +94,26 @@
 				category, the chains they run on, and 24-hour, 7-day, and 30-day totals.
 			</p>
 
-			<div class="fx-toggle" role="tablist" aria-label="Metric">
+			<!-- A segmented pair of toggle buttons, not a tablist: there is no
+			     tabpanel here (the metric swaps the stats, chart and table in
+			     place), and a tablist would promise arrow-key navigation this
+			     control does not implement. aria-pressed is the honest role. -->
+			<div class="fx-toggle" role="group" aria-label="Metric">
 				<button
 					type="button"
 					class="fx-toggle-btn"
-					role="tab"
 					id="fx-tab-fees"
 					data-type="fees"
-					aria-selected="true"
+					aria-pressed="true"
 				 data-i18n="fees.fees">
 					Fees
 				</button>
 				<button
 					type="button"
 					class="fx-toggle-btn"
-					role="tab"
 					id="fx-tab-revenue"
 					data-type="revenue"
-					aria-selected="false"
+					aria-pressed="false"
 				 data-i18n="fees.revenue">
 					Revenue
 				</button>

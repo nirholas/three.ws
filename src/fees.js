@@ -16,6 +16,9 @@ import { upstreamLogoURL, swapFailedLogos } from './shared/upstream-logo.js';
 
 const $ = (id) => document.getElementById(id);
 
+// /api/defi/fees labels a last-good copy it served after an upstream failure
+// with `x-three-stale: 1`. The footer line says so rather than passing a cached
+// figure off as live, matching /defi and /stablecoins.
 async function getJson(url) {
 	const res = await fetch(url, { headers: { accept: 'application/json' } });
 	if (!res.ok) {
@@ -23,7 +26,35 @@ async function getJson(url) {
 		err.status = res.status;
 		throw err;
 	}
-	return res.json();
+	return { data: await res.json(), stale: res.headers.get('x-three-stale') === '1' };
+}
+
+/*
+ * The page ships its copy as static HTML annotated with data-i18n, and the
+ * catalog pass lands AFTER an async locale fetch. Anything this script writes
+ * into an annotated node before then is silently reverted: on ?type=revenue the
+ * table heading and the document title snapped back to the Fees copy while the
+ * Revenue metric was selected and the revenue numbers were on screen.
+ * `data-i18n-owned="1"` is this codebase's documented opt-out (src/i18n.js):
+ * claim a node while the script owns its text, hand it back when it returns to
+ * its declared copy so a later locale switch still translates it.
+ */
+function i18nText(key, fallback) {
+	const v = window.threewsI18n?.t?.(key);
+	return typeof v === 'string' && v && v !== key ? v : fallback;
+}
+
+function claimI18n(el, text) {
+	if (!el) return;
+	el.setAttribute('data-i18n-owned', '1');
+	el.textContent = text;
+}
+
+function releaseI18n(el, text) {
+	if (!el) return;
+	el.textContent = text;
+	el.removeAttribute('data-i18n-owned');
+	window.threewsI18n?.apply?.(el); // the catalog may have landed while owned
 }
 
 // ── State ───────────────────────────────────────────────────────────────────
@@ -37,6 +68,7 @@ const state = {
 	chart: [],
 	protocols: [],
 	updated_at: 0,
+	stale: false,
 	sortKey: 'total24h',
 	sortDir: 'desc',
 	loading: true,
@@ -272,8 +304,10 @@ function chainsCell(chains) {
 				`<a class="fx-chip" href="/chain/${encodeURIComponent(c)}">${esc(c)}</a>`,
 		)
 		.join('');
-	const extra =
-		chains.length > 3 ? `<span class="fx-more">+${chains.length - 3}</span>` : '';
+	const rest = chains.slice(3);
+	const extra = rest.length
+		? `<span class="fx-more" title="${esc(rest.join(', '))}">+${rest.length}</span>`
+		: '';
 	return `<td class="left hide-lg"><span class="fx-chips">${shown}${extra}</span></td>`;
 }
 
@@ -339,7 +373,11 @@ function renderTable() {
 	const head = COLUMNS.map((col) => {
 		const active = col.key === state.sortKey;
 		const arrow = active ? (state.sortDir === 'asc' ? '↑' : '↓') : '↕';
-		return `<th scope="col" tabindex="0" data-key="${col.key}" class="${col.left ? 'left' : ''} ${col.hide || ''}"${active ? ` aria-sort="${state.sortDir === 'asc' ? 'ascending' : 'descending'}"` : ''}>${esc(col.label)}<span class="arrow" aria-hidden="true">${arrow}</span></th>`;
+		// Every column here is sortable, so every header carries aria-sort: the
+		// inactive ones get "none" (which is what makes a screen reader announce
+		// them as sortable at all) and only the active one names a direction.
+		const sort = active ? (state.sortDir === 'asc' ? 'ascending' : 'descending') : 'none';
+		return `<th scope="col" tabindex="0" data-key="${col.key}" aria-sort="${sort}" class="${col.left ? 'left' : ''} ${col.hide || ''}">${esc(col.label)}<span class="arrow" aria-hidden="true">${arrow}</span></th>`;
 	}).join('');
 
 	const body = sortedProtocols()
@@ -394,13 +432,33 @@ function renderTable() {
 
 // ── Toggle + URL sync ───────────────────────────────────────────────────────
 
+const FEES_TITLE = 'Protocol Fees & Revenue · three.ws';
+const REVENUE_TITLE = 'Protocol Revenue & Fees · three.ws';
+
 function syncToggle() {
 	for (const type of ['fees', 'revenue']) {
 		const btn = $(`fx-tab-${type}`);
-		if (btn) btn.setAttribute('aria-selected', String(type === state.type));
+		if (btn) btn.setAttribute('aria-pressed', String(type === state.type));
 	}
-	$('fx-table-heading').textContent = LABELS[state.type].heading;
-	document.title = `${LABELS[state.type].noun === 'Fees' ? 'Protocol Fees & Revenue' : 'Protocol Revenue & Fees'} · three.ws`;
+
+	const heading = $('fx-table-heading');
+	const titleEl = document.querySelector('title');
+	if (state.type === 'revenue') {
+		claimI18n(heading, LABELS.revenue.heading);
+		claimI18n(titleEl, REVENUE_TITLE);
+	} else {
+		// Back on the declared metric: hand both nodes back to the catalog so a
+		// visitor reading in another language keeps the translated copy.
+		releaseI18n(heading, i18nText('fees.top_protocols_by_fees', LABELS.fees.heading));
+		releaseI18n(titleEl, i18nText('fees.meta_title', FEES_TITLE));
+	}
+
+	// The three hydrated regions are labelled for the metric on screen, so a
+	// screen reader on the Revenue tab is not told it is reading fees.
+	const metric = LABELS[state.type].metric;
+	$('fx-stats')?.setAttribute('aria-label', `24h, 7d and 30d ${metric} totals`);
+	$('fx-chart')?.setAttribute('aria-label', `Aggregate daily ${metric} over time`);
+	$('fx-table')?.setAttribute('aria-label', `Top protocols by ${metric}`);
 }
 
 function wireToggle() {
@@ -418,16 +476,24 @@ function wireToggle() {
 
 // ── Boot ────────────────────────────────────────────────────────────────────
 
+// Toggling Fees/Revenue faster than the network answers used to let an earlier
+// response land on top of a later one, painting one metric's numbers under the
+// other metric's heading. Only the newest request may write to the state.
+let requestSeq = 0;
+
 async function load(type) {
+	const seq = ++requestSeq;
 	state.type = type === 'revenue' ? 'revenue' : 'fees';
 	state.loading = true;
 	state.error = false;
+	state.stale = false;
 	syncToggle();
 	statsSkeleton();
 	renderChart();
 	renderTable();
 	try {
-		const data = await getJson(`/api/defi/fees?type=${state.type}`);
+		const { data, stale } = await getJson(`/api/defi/fees?type=${state.type}`);
+		if (seq !== requestSeq) return;
 		state.total24h = data.total24h ?? null;
 		state.total7d = data.total7d ?? null;
 		state.total30d = data.total30d ?? null;
@@ -435,14 +501,27 @@ async function load(type) {
 		state.chart = Array.isArray(data.chart) ? data.chart : [];
 		state.protocols = Array.isArray(data.protocols) ? data.protocols : [];
 		state.updated_at = data.updated_at || Date.now();
+		state.stale = stale;
 		state.loading = false;
 		state.error = false;
-		renderStats();
 		renderChart();
 		renderTable();
-		$('fx-updated').textContent =
-			`Top ${state.protocols.length} protocols by ${LABELS[state.type].metric} · Data: DeFiLlama · updated ${new Date(state.updated_at).toLocaleTimeString('en-US')}`;
+		// An empty payload has no totals worth showing: three "no value" cards and
+		// a "Top 0 protocols" line read as a claim that DeFi earned nothing today
+		// rather than as missing data. The table's empty state carries the message.
+		if (state.protocols.length) {
+			renderStats();
+			const when = new Date(state.updated_at).toLocaleTimeString('en-US');
+			const lead = `Top ${state.protocols.length} protocols by ${LABELS[state.type].metric} · Data: DeFiLlama`;
+			$('fx-updated').textContent = state.stale
+				? `${lead} · cached copy from ${when}, the live feed is unreachable`
+				: `${lead} · updated ${when}`;
+		} else {
+			$('fx-stats').innerHTML = '';
+			$('fx-updated').textContent = 'Data: DeFiLlama';
+		}
 	} catch {
+		if (seq !== requestSeq) return;
 		state.loading = false;
 		state.error = true;
 		$('fx-stats').innerHTML = '';
@@ -457,4 +536,7 @@ function initialType() {
 }
 
 wireToggle();
+// A late catalog or a language switch re-translates the annotated copy; the
+// heading and title this script owns have to follow it.
+window.addEventListener('i18n:change', syncToggle);
 load(initialType());

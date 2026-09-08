@@ -51,14 +51,17 @@ const CSS = `
    the toast, and the coin monogram, which are coloured fills carrying their own
    ink. --ls-* locals exist so the accent lightness can be re-pitched for the
    light canvas in one block instead of per rule; --h is the per-category hue,
-   set inline on the card / drawer root. */
-.ls{--ls-line:var(--stroke,rgba(255,255,255,.08));--ls-line2:var(--stroke-strong,rgba(255,255,255,.14));
+   set inline on the card / drawer root. The selector covers .ls-drawer and
+   .ls-toast as well as .ls because renderAll mounts all three as SIBLINGS:
+   locals declared on .ls alone would leave the drawer with no background at
+   all, which is exactly the bug the literal colours used to hide. */
+.ls,.ls-drawer,.ls-toast{--ls-line:var(--stroke,rgba(255,255,255,.08));--ls-line2:var(--stroke-strong,rgba(255,255,255,.14));
   --ls-ink:var(--ink-bright,#fff);--ls-dim:var(--ink-dim,rgba(255,255,255,.5));--ls-faint:var(--ink-faint,rgba(255,255,255,.42));
   --ls-s1:var(--surface-1,rgba(255,255,255,.03));--ls-s2:var(--surface-2,rgba(255,255,255,.05));--ls-s3:var(--surface-3,rgba(255,255,255,.08));
   --ls-page:var(--bg-0,#0a0a0a);--ls-panel:var(--bg-1,#12151c);
   --ls-al:62%;--ls-ail:74%;--ls-brand-l:74%;--ls-cta-ink:#d2f3df;
   color:var(--ls-ink);--ease:cubic-bezier(.22,.61,.36,1)}
-:root[data-theme='light'] .ls{--ls-al:44%;--ls-ail:32%;--ls-brand-l:28%;--ls-cta-ink:#14532d}
+:root[data-theme='light'] :is(.ls,.ls-drawer,.ls-toast){--ls-al:44%;--ls-ail:32%;--ls-brand-l:28%;--ls-cta-ink:#14532d}
 .ls *{box-sizing:border-box}
 .ls-sr{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0}
 .ls-tools{position:sticky;top:0;z-index:5;display:flex;flex-direction:column;gap:.7rem;padding:.7rem 0 .8rem;margin-bottom:.4rem;

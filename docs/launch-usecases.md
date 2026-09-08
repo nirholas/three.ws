@@ -54,18 +54,45 @@ The preview drawer has a **reward planner**: route a coin's creator fees to any 
 | **GitHub @user** | 100% to a GitHub account (pump.fun social platform 2). |
 | **X @handle** | 100% to an X / Twitter account (pump.fun social platform 1). |
 | **Wallet / .sol** | 100% to a fixed Solana address or name. |
-| **Cashback** | Trading fees return to holders. |
-| **Buyback** | Fees auto-buy-back & burn the coin. |
 
-The same generalisation powers the post-launch [fees panel](../public/studio/fees-panel.js):
-its recipient box accepts a **GitHub @user**, an **X handle** (`x:@handle`), a
-raw **Solana wallet**, or an **owner/repo** to split across contributors. All of
-it resolves through one shared resolver ([`api/_lib/github-reward.js`](../api/_lib/github-reward.js),
+Every target in that table survives the handoff to the launch wizard, which is
+the point: a target the launch flow cannot apply is a promise the product does
+not keep. (Cashback and buyback used to appear here and were exactly that.
+Cashback is a read-only pump.fun pool property with no create-time control, and
+the launch panel's buyback slider burns *agent revenue* rather than routing
+creator fees, so neither is offered.)
+
+### The `?reward=` handoff
+
+"Launch this coin" builds a deep link to `/launch` carrying the coin identity
+**and** the chosen routing:
+
+```
+/launch?name=Deepseek+Harness&symbol=DEEPSEEKH&description=…&image=…&reward=github:deepseek-ai
+```
+
+`reward` takes one of three forms, and anything else is ignored rather than
+blocking a launch:
+
+| Value | Recipient |
+|---|---|
+| `github:<login>` | A GitHub account, resolved to its three.ws-linked payout wallet. |
+| `x:<handle>` | An X account, same resolver. |
+| `wallet:<address or name.sol>` | A fixed Solana recipient. |
+
+[`public/launch/launch.js`](../public/launch/launch.js) parses it, the launch
+panel shows the routing on the form before the mint ("Creator fees route to
+@deepseek-ai on GitHub"), and the moment the coin lands the post-launch
+[fees panel](../public/studio/fees-panel.js) mounts on the success screen with
+that recipient already filled in at 100%. It is a draft, not an automatic write:
+the creator still reviews and signs the split, and a coin that already has
+shareholders is never re-seeded.
+
+The same generalisation powers that fees panel on its own: its recipient box
+accepts a **GitHub @user**, an **X handle** (`x:@handle`), a raw **Solana
+wallet**, or an **owner/repo** to split across contributors. All of it resolves
+through one shared resolver ([`api/_lib/github-reward.js`](../api/_lib/github-reward.js),
 `resolveSocialReward`) so GitHub and X route identically.
-
-For reward coins, after the coin graduates you set the GitHub recipient in the
-[fees panel](../public/studio/fees-panel.js) (type a `@username` → 100%, or
-import a repo's contributors to split) — see the fee-sharing flow.
 
 ## API
 

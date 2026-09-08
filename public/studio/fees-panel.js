@@ -17,8 +17,13 @@
 //
 // Entry:
 //   mountFeesPanel(el, {
-//     mint, network, creator, agentId, avatarId, symbol, name, getUser
+//     mint, network, creator, agentId, avatarId, symbol, name, getUser,
+//     prefillRecipient   // { platform:'github'|'x', login } | { address }
 //   }) → { teardown }
+//
+// prefillRecipient seeds the split with the recipient a launch recipe promised
+// (Launch Studio hands it to /launch as ?reward=…). It applies only to a coin
+// with no shareholders yet, and only as an unsaved draft the creator signs.
 
 // ── Pure helpers (tested) ────────────────────────────────────────────────────
 
@@ -258,7 +263,7 @@ function injectCss() {
 
 export function mountFeesPanel(container, opts = {}) {
 	injectCss();
-	const { mint, network = 'mainnet', creator, agentId, avatarId, symbol = 'TOKEN', getUser } = opts;
+	const { mint, network = 'mainnet', creator, agentId, avatarId, symbol = 'TOKEN', getUser, prefillRecipient } = opts;
 
 	const s = {
 		info: null, loading: true, loadError: '',
@@ -860,7 +865,22 @@ export function mountFeesPanel(container, opts = {}) {
 	// ── Boot ────────────────────────────────────────────────────────────────────
 
 	render();
-	loadInfo();
+	// A coin launched from a reward recipe (Launch Studio's ?reward= deep link)
+	// arrives with the recipient its catalog entry promised. Seed the split with
+	// it once, and only when the coin has no shareholders yet, so re-opening this
+	// panel on a coin whose fees are already routed never quietly rewrites them.
+	// It stays a draft: the creator still reviews and signs the change.
+	async function applyPrefillRecipient() {
+		if (!prefillRecipient) return;
+		await loadInfo();
+		if (!_alive) return;
+		if ((s.info?.sharing_config?.shareholders || []).length) return;
+		if (prefillRecipient.login) await addSocialAccount(prefillRecipient.platform === 'x' ? 'x' : 'github', prefillRecipient.login);
+		else if (prefillRecipient.address) addWalletRecipient(prefillRecipient.address);
+	}
+
+	if (prefillRecipient) applyPrefillRecipient();
+	else loadInfo();
 	resolveAgentWallet();
 	tryAutoConnect();
 

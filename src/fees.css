@@ -45,10 +45,13 @@
 .fx-toggle-btn:hover {
 	color: var(--cv-text);
 }
-.fx-toggle-btn[aria-selected='true'] {
+.fx-toggle-btn[aria-pressed='true'] {
 	background: var(--cv-surface);
 	color: var(--cv-text);
 	box-shadow: 0 1px 2px rgb(0 0 0 / 0.15);
+}
+.fx-toggle-btn:active {
+	transform: translateY(1px);
 }
 .fx-toggle-btn:focus-visible {
 	outline: none;
@@ -99,10 +102,21 @@
 	background: color-mix(in srgb, var(--cv-accent) 12%, var(--cv-surface-3));
 	outline: none;
 }
+/* Hover and keyboard focus shared one treatment, which left a keyboard user
+   with nothing louder than the tint a mouse already produces. Focus gets the
+   same ring every other control on the page uses. */
+.fx-chip:focus-visible {
+	outline: 2px solid var(--cv-accent);
+	outline-offset: 2px;
+}
+.fx-chip:active {
+	transform: translateY(1px);
+}
 .fx-more {
 	color: var(--cv-text-3);
 	font-size: 0.75rem;
 	font-variant-numeric: tabular-nums;
+	cursor: help;
 }
 
 /* ── Protocol name link ────────────────────────────────────────────────────── */
@@ -146,4 +160,12 @@
 }
 .fx-retry:hover {
 	color: var(--cv-accent-hover);
+}
+.fx-retry:active {
+	opacity: 0.75;
+}
+.fx-retry:focus-visible {
+	outline: 2px solid var(--cv-accent);
+	outline-offset: 2px;
+	border-radius: var(--cv-radius-sm);
 }

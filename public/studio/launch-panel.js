@@ -408,6 +408,16 @@ const LP_CSS = `
   border-radius:8px;background:rgba(246,179,179,.07);border:1px solid rgba(246,179,179,.18)}
 .lp-err-sub{font-size:.7rem;color:rgba(255,255,255,.3);margin-top:.3rem}
 
+/* Deep-link fee routing (?reward=…), carried in from Launch Studio. Shown on the
+   form before the mint and again as the first step after it, so the promise the
+   recipe made is visible at both ends of the handoff. */
+.lp-reward{display:flex;align-items:flex-start;gap:.5rem;font-size:.75rem;line-height:1.5;padding:.55rem .7rem;border-radius:9px;
+  color:var(--ink,rgba(255,255,255,.82));background:rgba(120,200,140,.07);border:1px solid rgba(120,200,140,.24)}
+.lp-reward-ic{flex-shrink:0;font-size:.85rem;line-height:1.35}
+.lp-reward b{font-weight:650}
+.lp-reward-sub{display:block;font-size:.68rem;color:var(--ink-dim,rgba(255,255,255,.45));margin-top:.15rem}
+.lp-ok-fees{margin-top:1rem;text-align:left}
+
 /* Confirmation timeout escape hatch */
 .lp-timeout{display:flex;flex-direction:column;gap:.7rem;padding:.85rem;border-radius:12px;
   background:rgba(246,200,100,.05);border:1px solid rgba(246,200,100,.18)}
@@ -542,6 +552,9 @@ export function mountLaunchPanel(container, { getAvatar, getUser, getPreviewView
 		imageFile: null, imagePreviewUrl: null,
 		imageError: '',
 		_symbolEdited: false,
+		// Deep-linked creator-fee routing from ?reward= ({platform,login} | {address}).
+		// Null means "creator fees stay with the launching wallet", the default.
+		rewardTarget: null,
 		// Which required fields the user has visited, for inline "required" hints.
 		_touched: { name: false, symbol: false, description: false },
 
@@ -1460,6 +1473,51 @@ export function mountLaunchPanel(container, { getAvatar, getUser, getPreviewView
 	// Symbol accepts any raw value (whitespace, emoji, special chars) — only name & description require real text.
 	const formValid     = () => s.name.trim() && s.symbol.length > 0 && s.description.trim();
 
+	// The launch CTA's label, action and enabled state are a pure function of the
+	// form's validity, the wallet lane and the phase. It lives here rather than
+	// inline in renderForm() so wireForm() can re-derive it on every keystroke:
+	// the name/symbol/description inputs deliberately patch the DOM instead of
+	// re-rendering (a full render would destroy the caret), and without this the
+	// button kept whatever label the first render gave it. A visitor who filled
+	// the form was left with a CTA still reading "Add name, symbol & description
+	// to launch" and still carrying data-action="focus-form", which resolves to
+	// no empty field and so did nothing at all: the primary action on /launch and
+	// /studio was unreachable once the form was actually complete.
+	function computeCta({ busy, cost }) {
+		const signedIn = !!(getUser?.());
+
+		let btnText, btnDis, btnAction = 'launch', btnTitle = '';
+		if (busy) {
+			btnText = s.phaseLabel || 'Working…'; btnDis = true;
+		} else if (!signedIn) {
+			btnText = 'Sign in to launch'; btnDis = false; btnAction = 'sign-in';
+			btnTitle = 'You need an account to launch. Click to sign in, then come right back.';
+		} else if (!formValid()) {
+			btnText = 'Add name, symbol &amp; description to launch'; btnDis = false; btnAction = 'focus-form';
+			btnTitle = 'Click to jump to the first missing field. You need a name, ticker symbol, and short description.';
+		} else if (s.walletSource === 'agent') {
+			if (s.agentWalletLoading)         { btnText = 'Preparing agent wallet…'; btnDis = true; }
+			else if (!s.agentWallet)          { btnText = 'Retry agent wallet'; btnDis = false; btnAction = 'agent-retry';
+				btnTitle = 'Click to retry provisioning your custodial agent wallet.'; }
+			else if ((s.agentWallet.sol ?? 0) < cost) {
+				btnText = `Fund agent wallet (~${cost.toFixed(3)} SOL needed)`; btnDis = false; btnAction = 'agent-fund';
+				btnTitle = `Your agent wallet needs ~${cost.toFixed(3)} SOL to cover mint fees and your initial buy. Click to see the deposit address & QR code.`;
+			}
+			else                              { btnText = `Launch $${esc(s.symbol.trim() || 'TOKEN')} from agent wallet`; btnDis = false;
+				btnTitle = 'Signs and submits the transaction from your custodial agent wallet.'; }
+		} else {
+			if (!s.walletAddr)                 { btnText = 'Connect wallet to launch'; btnDis = false; btnAction = 'connect';
+				btnTitle = 'Opens Phantom or Backpack to connect your Solana wallet. No funds move until you sign the launch.'; }
+			else if (s.walletLinkChecking)     { btnText = 'Checking wallet link…';     btnDis = true; }
+			else if (s.walletLinked === false) { btnText = 'Link wallet to launch';     btnDis = false; btnAction = 'link';
+				btnTitle = 'Signs a free message proving you own this wallet. Required so tokens get attributed to your account.'; }
+			else                               { btnText = `Launch $${esc(s.symbol.trim() || 'TOKEN')}`; btnDis = false;
+				btnTitle = 'Signs and submits the launch transaction from your connected wallet.'; }
+		}
+		return { btnText, btnDis, btnAction, btnTitle };
+	}
+
+
 	// ── Render ─────────────────────────────────────────────────────────────
 
 	function render() {
@@ -1602,6 +1660,7 @@ export function mountLaunchPanel(container, { getAvatar, getUser, getPreviewView
 				avatarId: av?.id || null,
 				symbol: m.symbol || '',
 				name: m.name || '',
+				prefillRecipient: s.rewardTarget,
 				getUser,
 			});
 		}
@@ -1867,36 +1926,7 @@ export function mountLaunchPanel(container, { getAvatar, getUser, getPreviewView
 			walletHtml = renderConnectedWalletBar(cost) + renderLinkRow();
 		}
 
-		const signedIn = !!(getUser?.());
-
-		let btnText, btnDis, btnAction = 'launch', btnTitle = '';
-		if (busy) {
-			btnText = s.phaseLabel || 'Working…'; btnDis = true;
-		} else if (!signedIn) {
-			btnText = 'Sign in to launch'; btnDis = false; btnAction = 'sign-in';
-			btnTitle = 'You need an account to launch — click to sign in, then come right back.';
-		} else if (!formValid()) {
-			btnText = 'Add name, symbol &amp; description to launch'; btnDis = false; btnAction = 'focus-form';
-			btnTitle = 'Click to jump to the first missing field. You need a name, ticker symbol, and short description.';
-		} else if (s.walletSource === 'agent') {
-			if (s.agentWalletLoading)         { btnText = 'Preparing agent wallet…'; btnDis = true; }
-			else if (!s.agentWallet)          { btnText = 'Retry agent wallet'; btnDis = false; btnAction = 'agent-retry';
-				btnTitle = 'Click to retry provisioning your custodial agent wallet.'; }
-			else if ((s.agentWallet.sol ?? 0) < cost) {
-				btnText = `Fund agent wallet (~${cost.toFixed(3)} SOL needed)`; btnDis = false; btnAction = 'agent-fund';
-				btnTitle = `Your agent wallet needs ~${cost.toFixed(3)} SOL to cover mint fees and your initial buy. Click to see the deposit address & QR code.`;
-			}
-			else                              { btnText = `Launch $${esc(s.symbol.trim() || 'TOKEN')} from agent wallet`; btnDis = false;
-				btnTitle = 'Signs and submits the transaction from your custodial agent wallet.'; }
-		} else {
-			if (!s.walletAddr)                 { btnText = 'Connect wallet to launch'; btnDis = false; btnAction = 'connect';
-				btnTitle = 'Opens Phantom or Backpack to connect your Solana wallet. No funds move until you sign the launch.'; }
-			else if (s.walletLinkChecking)     { btnText = 'Checking wallet link…';     btnDis = true; }
-			else if (s.walletLinked === false) { btnText = 'Link wallet to launch';     btnDis = false; btnAction = 'link';
-				btnTitle = 'Signs a free message proving you own this wallet. Required so tokens get attributed to your account.'; }
-			else                               { btnText = `Launch $${esc(s.symbol.trim() || 'TOKEN')}`; btnDis = false;
-				btnTitle = 'Signs and submits the launch transaction from your connected wallet.'; }
-		}
+		const { btnText, btnDis, btnAction, btnTitle } = computeCta({ busy, cost });
 
 		const imgSrc = s.imagePreviewUrl || av?.thumbnail_url;
 
@@ -1985,6 +2015,7 @@ export function mountLaunchPanel(container, { getAvatar, getUser, getPreviewView
 			})()}
 			${sourceToggleHtml}
 			${walletHtml}
+			${rewardNoteHtml()}
 			${s.phase === 'error' ? `<div class="lp-err" role="alert"><b>Launch failed.</b> ${esc(s.errorMsg)}<div class="lp-err-sub">Nothing was minted. Fix the issue, then press the launch button to retry.</div></div>` : ''}
 			<button class="lp-launch${busy ? ' busy' : ''}" id="lp-go" data-action="${btnAction}"${btnTitle ? ` title="${esc(btnTitle)}"` : ''} ${btnDis ? 'disabled' : ''}>${btnText}</button>
 			${busy ? launchStepsHtml() : ''}
@@ -1993,6 +2024,23 @@ export function mountLaunchPanel(container, { getAvatar, getUser, getPreviewView
 		</div>`;
 
 		wireForm();
+	}
+
+	/** Human label for the deep-linked fee recipient, e.g. "@vercel on GitHub". */
+	function rewardLabel(t) {
+		if (!t) return '';
+		if (t.login) return `@${t.login} on ${t.platform === 'x' ? 'X' : 'GitHub'}`;
+		const a = String(t.address || '');
+		return a.length > 16 ? `${a.slice(0, 6)}…${a.slice(-4)}` : a;
+	}
+
+	/** The routing promise, shown on the form so it is visible before the mint. */
+	function rewardNoteHtml() {
+		if (!s.rewardTarget) return '';
+		return `<div class="lp-reward"><span class="lp-reward-ic" aria-hidden="true">🎁</span><div>
+			Creator fees route to <b>${esc(rewardLabel(s.rewardTarget))}</b>.
+			<span class="lp-reward-sub">The fee split opens pre-filled right after the mint, where you confirm and sign it.</span>
+		</div></div>`;
 	}
 
 	/** Render a mint with the leading 3ws mark visually emphasized. */
@@ -2040,6 +2088,7 @@ export function mountLaunchPanel(container, { getAvatar, getUser, getPreviewView
 			</div>
 			<button class="lp-share" id="lp-share">📋 Copy launch announcement</button>
 			<button class="lp-again" id="lp-again">Launch another token</button>
+			${s.rewardTarget ? `<div class="lp-ok-fees" id="lp-ok-fees"></div>` : ''}
 		</div></div>`;
 
 		const copyBtn = (id, text) => {
@@ -2052,12 +2101,46 @@ export function mountLaunchPanel(container, { getAvatar, getUser, getPreviewView
 		};
 		copyBtn('#lp-copy-mint', mint);
 		copyBtn('#lp-share', shareText);
+
+		// A coin launched from a reward recipe promised its fees to somebody. Mount
+		// the real fee-split panel here, seeded with that recipient, so the creator
+		// finishes the routing in the same flow instead of having to find it later.
+		if (s.rewardTarget && mint) mountSuccessFees(mint);
 		container.querySelector('#lp-again')?.addEventListener('click', () => {
 			s.phase = 'idle'; s.mint = null; s.errorMsg = ''; s.launchSig = null;
 			s.imageFile = null; s.imagePreviewUrl = null; s.imageError = '';
 			s._metaUrl = null; s._metaKey = null;
 			s.existingMint = null; s.forceNew = false;
 			render();
+		});
+	}
+
+	// The on-chain creator (agent_authority) decides whether a fee-split save is
+	// server-signed by the agent wallet or signed by the user's wallet, and it is
+	// only known once the mint is indexed, so read it back before mounting.
+	async function mountSuccessFees(mint) {
+		const host = container.querySelector('#lp-ok-fees');
+		if (!host) return;
+		let creator = null;
+		try {
+			const param = s.resolvedAgentId
+				? `agent_id=${encodeURIComponent(s.resolvedAgentId)}`
+				: `avatar_id=${encodeURIComponent(av?.id || '')}`;
+			const r = await fetch(`/api/pump/by-agent?${param}`, { credentials: 'include' });
+			if (r.ok) creator = (await r.json())?.data?.agent_authority || null;
+		} catch { /* the panel still works: it falls back to the connected wallet */ }
+		if (!container.contains(host)) return;
+		_feesPanel?.teardown?.();
+		_feesPanel = mountFeesPanel(host, {
+			mint,
+			network: 'mainnet',
+			creator,
+			agentId: s.resolvedAgentId || av?.agent_id || null,
+			avatarId: av?.id || null,
+			symbol: s.symbol.trim() || 'TOKEN',
+			name: s.name.trim() || '',
+			prefillRecipient: s.rewardTarget,
+			getUser,
 		});
 	}
 
@@ -2075,6 +2158,30 @@ export function mountLaunchPanel(container, { getAvatar, getUser, getPreviewView
 			el.classList.toggle('warn', n >= max * 0.9);
 		};
 
+		// Keep the launch CTA truthful while the visitor types. Same DOM-patch
+		// reason as the counters and hints: a full render on each keystroke would
+		// drop the caret, so the button's label, action, tooltip and enabled
+		// state are re-derived and written straight onto the node instead.
+		const syncCta = () => {
+			const go = q('#lp-go');
+			if (!go) return;
+			const busy = s.phase !== 'idle' && s.phase !== 'error';
+			const { btnText, btnDis, btnAction, btnTitle } = computeCta({ busy, cost: estimatedCost() });
+			// btnText is render-time HTML (it carries entities such as &amp;), so
+			// it goes in as HTML here too, exactly as the template writes it.
+			if (go.innerHTML !== btnText) go.innerHTML = btnText;
+			go.dataset.action = btnAction;
+			go.disabled = btnDis;
+			if (btnTitle) go.title = btnTitle;
+			else go.removeAttribute('title');
+			go.classList.toggle('busy', busy);
+		};
+
+		// Every wired required field, so the CTA's "jump to the first gap" action
+		// can mark them visited and show their reasons instead of moving the caret
+		// with no explanation.
+		const requiredFields = [];
+
 		// Inline "required" hints: appear once a field is visited and left empty,
 		// clear live as soon as the user types. DOM-patched, never a full render.
 		const wireRequired = (key, inputSel, msgSel, isEmpty) => {
@@ -2085,7 +2192,8 @@ export function mountLaunchPanel(container, { getAvatar, getUser, getPreviewView
 				const m = q(msgSel); if (m) m.hidden = !bad;
 			};
 			el.addEventListener('blur',  () => { s._touched[key] = true; apply(); });
-			el.addEventListener('input', apply);
+			el.addEventListener('input', () => { apply(); syncCta(); });
+			requiredFields.push({ key, apply, isEmpty, el });
 		};
 
 		q('#lp-name')?.addEventListener('input', (e) => {
@@ -2113,6 +2221,7 @@ export function mountLaunchPanel(container, { getAvatar, getUser, getPreviewView
 		q('#lp-desc')?.addEventListener('input', (e) => {
 			s.description = e.target.value;
 			setCount('#lp-desc-count', s.description.length, 500);
+			syncCta();
 		});
 
 		wireRequired('name',        '#lp-name', '#lp-name-msg', () => !s.name.trim());
@@ -2180,12 +2289,24 @@ export function mountLaunchPanel(container, { getAvatar, getUser, getPreviewView
 					location.href = `/login?next=${encodeURIComponent(location.pathname + location.search)}`;
 					return;
 				case 'focus-form': {
-					const target = !s.name.trim()        ? '#lp-name'
-					            :  !s.symbol.trim()      ? '#lp-sym'
-					            :  !s.description.trim() ? '#lp-desc'
-					            :  null;
-					const el = target && container.querySelector(target);
-					if (el) { el.focus(); el.scrollIntoView({ behavior: 'smooth', block: 'center' }); }
+					// Pressing the CTA is the visitor asking what is missing, so
+					// treat every empty required field as visited: that flips its
+					// inline "… is required." hint and aria-invalid on. Focusing
+					// the first gap without this moved the caret into a textarea
+					// and explained nothing, because the hints only ever appeared
+					// after a field had been blurred.
+					let first = null;
+					for (const f of requiredFields) {
+						if (!f.isEmpty()) continue;
+						s._touched[f.key] = true;
+						f.apply();
+						if (!first) first = f.el;
+					}
+					// Nothing is missing after all: the CTA raced a keystroke.
+					// Re-derive it and let the visitor press the real action.
+					if (!first) { syncCta(); return; }
+					first.focus();
+					first.scrollIntoView({ behavior: 'smooth', block: 'center' });
 					return;
 				}
 				case 'connect':     connectWallet(); return;
@@ -2237,6 +2358,7 @@ export function mountLaunchPanel(container, { getAvatar, getUser, getPreviewView
 		if (prefill.description) s.description = String(prefill.description).slice(0, 500);
 		const buy = Number(prefill.initialBuy);
 		if (isFinite(buy) && buy > 0) s.initialBuy = String(buy);
+		if (prefill.reward && (prefill.reward.login || prefill.reward.address)) s.rewardTarget = prefill.reward;
 	}
 
 	// Pull a prefilled token image (a hosted URL from the launchpad config) into a
