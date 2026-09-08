@@ -1,8 +1,22 @@
 # Run order: which work order to paste next
 
-Everything open lives in [finish/](finish/) as one flat folder of 197 work orders (150 route
-audits + 47 everything else). That folder tells you what is open; it does not tell you what
-matters. This file ranks it.
+Everything open lives in [finish/](finish/) as 196 work orders, and since 2026-09-07 the
+filenames carry the ranking: sort the folder by name and you are reading it in priority order,
+so you can open one, run it, and open the next without consulting anything. Every file in
+`finish/` is runnable; the context and log files that must never be run were moved out to
+[finish/_context/](finish/_context/).
+
+| Band | What it is | Count |
+|---|---|---|
+| `001` to `014` | Runnable right now, no gate. Highest value first. Start at `001`. | 14 |
+| `100` to `248` | The route-audit swarm, ordered by measured defect class. Parallel-safe. | 149 |
+| `300` to `313` | The unbuilt Home campaign, in numeric order (04 gates 05 and 06, 11 gates 20). | 14 |
+| `900` and up | Blocked: the last step is an owner action or an outside party. Read before running. | 19 |
+
+The number is a position, not an identity. When an order retires its file is deleted and a gap
+is left rather than renumbering the folder, so a link to `003-...` keeps meaning the same order.
+This file explains WHY that order is where it is; the tiers below are the reasoning behind the
+numbers.
 
 **Measured 2026-09-06**, not copied from any pack's status text:
 
@@ -138,9 +152,11 @@ for the same reason.
 ## Not tasks
 
 - [masters/](masters/): nine reusable master prompts. They take a supplied TARGET and never retire.
-- `<campaign>-00-INDEX.md`, `-00-CONTEXT.md`, `-README.md`, `-PROGRESS.md`, `-RUNBOOK.md`,
-  `quality-bar-_shared.md`, `roadmap-REUSE-MAP.md`, `production-100-OWNER-ACTIONS.md`: context and
-  logs. Read the one your order names; never run one.
+- [finish/_context/](finish/_context/): the 24 campaign indexes, briefs, runbooks and progress
+  logs (`-00-INDEX.md`, `-00-CONTEXT.md`, `-README.md`, `-PROGRESS.md`, `-RUNBOOK.md`,
+  `quality-bar-_shared.md`, `roadmap-REUSE-MAP.md`, `production-100-OWNER-ACTIONS.md`). They are
+  unnumbered and live outside the queue precisely so they are never opened as the next task.
+  Read the one your order names; never run one.
 - [finish/production-100-00-INDEX.md](finish/production-100-00-INDEX.md) is the campaign map this
   file ranks. It carries the per-order evidence; this file carries the sequence.
 

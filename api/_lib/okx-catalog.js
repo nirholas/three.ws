@@ -341,7 +341,7 @@ export const OKX_CATALOG = Object.freeze([
 	// Micro-priced REST services, one capability per endpoint, all backed by
 	// the same engines /api/mcp-3d runs on (api/_okx3d/rest-services.js maps
 	// each id to its engine, no logic duplicated). Prices clear worst-case
-	// lane cost; the math is recorded in prompts/finish/okx-ai-PROGRESS.md.
+	// lane cost; the math is recorded in prompts/finish/_context/okx-ai-PROGRESS.md.
 	{
 		id: 'text-to-3d',
 		listed: false,

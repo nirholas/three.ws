@@ -1,0 +1,210 @@
+# Sweep: Console audit clean
+
+How to run: paste this file's repo path into a fresh Claude Code chat in this
+repository and say "run this work order". This file is fully self-contained:
+it depends on no other prompt file anywhere. If sibling swarm-100 files in
+prompts/finish/ are gone, that work is done; if present, ignore them.
+Every claim below rots; step 0 re-measures, and what you measure wins.
+
+## Operating clause (binding)
+
+- Read CLAUDE.md first. Its rules override everything, including this file.
+- Finish 100% in this session. Never end the turn with a question, an option
+  list, or an unexecuted plan. A judgment call goes in one line of the final
+  report; it never becomes a question that halts work.
+- The only permitted stops are the CLAUDE.md stop-and-ask gates: spending real
+  funds or any irreversible on-chain write, git push or a production deploy,
+  committing content that references a crypto project other than $THREE, and
+  destroying unrecoverable data.
+- No mocks, no fake data, no placeholder stubs, no unfinished-work markers, no
+  commented-out code. Real APIs and real integrations only.
+- The em-dash and en-dash characters are banned in everything you write.
+- Concurrent agents share this worktree: stage explicit paths only (never a
+  bare add-everything), and commit finished work promptly.
+- Before committing, run: npm run check:rules -- --paths <files you touched>.
+  It must exit 0.
+
+## State on 2026-09-04 (measured, not claimed)
+
+A full sweep ran that day with the page-side fixes below already in place. The
+desktop pass measured **770 of 780 routes clean**. Every one of the ten
+remaining routes was traced to a named cause, and **none of them is open page
+code**: each is either already fixed on `main` and waiting for a production
+deploy, or a page that is correct on the origin it actually runs on.
+
+Fixed and committed that day (page code, root causes):
+
+| Route | Cause | Fix |
+|---|---|---|
+| `/launches` | The shared coin card painted token art straight from a public gateway that now answers 429 behind a sunset notice. One paint logged 89 blocked requests. | `src/pump/coin-status-card.js` routes art through `/api/img` (gateway retry, painted-size resize, deterministic placeholder). `src/launches.js` does the same for agent thumbnails. Commit `795becc00`. |
+| `/creations` | Gallery models were read straight from the asset bucket, whose CORS policy allowlists the production origin by name, so model-viewer died with "Failed to fetch" on every other origin. | New `proxiedModelURL` in `src/ipfs.js` routes them through `/api/glb`; `src/model-diff.js` dropped its private copy of the rule; covered by `tests/ipfs-image-url-safety.test.js`. Commit `795becc00`. |
+| `/ibm/x402-demo`, `/ibm/hello.live` | Both pages loaded their own `x402.js` by absolute URL, so the browser refused it on any origin but production and the paid demos never armed. | They load `/x402.js` now; the copyable snippet still shows the absolute URL an embedder needs. `scripts/build-ibm-shell.mjs` absolutizes root-relative asset URLs when baking the publish-once page, which also repaired its language switcher. Commits `b1f6db3be`, `6cf18771d`. |
+
+Waiting on the production deploy, not on code (verified by running this repo's
+own API server and re-requesting each endpoint, see step 0):
+
+| Route | What the sweep sees | Where the fix already is |
+|---|---|---|
+| `/fees` | 7 chain-icon 404s from the upstream icon host | `cc5dbb211` repairs the URLs and falls back to a neutral disc |
+| `/markets`, `/markets/news` | `/api/news/image` 404s | `f32c2987f` answers 204 for an article that simply has no picture |
+| `/oracle-lab` | `/api/oracle/model` 500 | `272b659fc`, and the endpoint answers 200 against this tree |
+| `/smart-home`, `/smart-home/plan`, `/smart-home/satellite`, `/smart-home/privacy` | `/api/home` 404 | `e6a32da61`; the handler exists here and answers 401 signed out, as designed |
+
+`/ibm/hello` is the one route that is correct as it stands: it is the
+publish-once page IBM hosts on its own domain, so it deliberately fetches
+`https://three.ws/ibm/hello.live` and its assets by absolute URL. On a localhost
+sweep those reads are cross-origin and refused; on the origin the page is
+actually served from they are same-origin. Do not "fix" it by making those
+relative, which is what breaks the IBM-hosted copy.
+
+Four routes carried warnings rather than errors. Three are closed; the fourth is
+a production configuration gap that no page edit can close:
+
+| Route | Warning | Disposition |
+|---|---|---|
+| `/play/war` | Two assets "preloaded but not used" | **Fixed.** `src/play/war.js` returns early with "No battle to join" when the link carries no pairing, so a static `<link rel=preload>` in the head downloaded a manifest and an avatar the page never read. `pages/play/war.html` now injects the two preloads from the head only when `match`, `ticket` and `coin` are all present, which keeps the head start on the real path and emits nothing on the dead one. `/play/arena` keeps its static pair because it always loads both, which is why it never warned. |
+| `/create/selfie` | `gl_context.cc:1118] OpenGL error checking is disabled` | **Filtered.** MediaPipe's native logger, glog-formatted, written by the C++ library with no JS frame of ours in it and no verbosity control on the JS API. Added to `scripts/lib/console-noise.mjs` beside the other headless-GL driver lines. |
+| `/avatar-sdk` | `RGBELoader has been deprecated. Please use HDRLoader instead.` | **Intentional, documented.** `avatar-sdk/src/viewer.js` explains it: the SDK's peer range is `three >= 0.150.0`, `HDRLoader.js` does not exist before r180, and a bundler resolves the literal dynamic import statically, so renaming trades one cosmetic console line on new `three` for a hard "module not found" build failure for every consumer on older `three`. Revisit when the peer floor moves to `>= 0.180.0`. |
+| `/clash` | `clash: CoinCommunities unconfigured, polling stopped` | **Not a code defect: one missing credential.** `CC_API_KEY` is absent from `.env`, `.env.local` and the `three-ws-api` service (`node scripts/read-service-env.mjs '^CC_API_KEY$' --names` finds no match), and production's `/api/clash/state` answers `503 cc_unconfigured` for the same reason. The page is fully wired behind the var and degrades as designed: one request per page view, poll cancelled, the designed unavailable state on both tabs. The warning names a real operational gap and stays. Supplying `CC_API_KEY` is the fix, and it is the owner's. |
+
+## Second pass, 2026-09-04 later the same day (re-measured against this tree)
+
+Four of the rows above did not survive re-measurement. Each was re-checked by
+running this repo's own API server and re-requesting the endpoint, and by loading
+the page in a real browser, rather than by re-reading the earlier report.
+
+| Row above | What was actually true | What changed |
+|---|---|---|
+| `/fees` waits on `cc5dbb211` | `cc5dbb211` is already deployed, and `/fees` still logged 404s. Repairing a URL cannot help: the icons come from a third-party CDN, and one it has retired 404s whatever URL you ask for. The browser logs that 404 before any `onerror` handler can run, so no client-side recovery keeps the console clean. | Fixed at root in `23160dc9f`. Every upstream logo on `/fees`, `/defi`, `/dex-volumes`, `/chain/:name`, `/protocol/:slug` and `/exchange/:id` now goes through `/api/img` with the new `fallback=none`, which answers `204 No Content` instead of the token-art placeholder. A `204` logs nothing and still fires `error` on the `<img>`, so each surface paints the neutral disc it already designs. Measured on `/fees`: 99 logos, all proxied, 0 broken, 1 disc, 0 failed requests. |
+| `/oracle-lab` waits on `272b659fc` | `272b659fc` is deployed and `https://three.ws/api/oracle/model` answers `200`. | Row closed, nothing to do. |
+| `/smart-home*` sees `/api/home` 404 | Production answers `500`, not `404`. `e6a32da61` shipped, but the handler's `services/` directory did not travel with the image. | The fix is `d668ceece`, still unshipped. The endpoint answers `401` signed out against this tree, as designed. |
+| `/ibm/hello` "is correct as it stands" | It is not. `/x402.js`, `/i18n.js`, `/locales/*.json` and `/ibm/hello.live` all answered with no `access-control-allow-origin`, so on the copy IBM hosts the live update failed silently and the page froze on its baked baseline, the language switcher never mounted, and the paid demo never armed. Worse, the one-line embed `docs/x402-studio.md` recommends (`<script type="module" src="https://three.ws/x402.js">`) has therefore never worked on anybody's site: proven from a foreign origin against production, the module is CORS-refused and the payable button stays inert. | Fixed in `cbf83b2a0`: `vercel.json` grants those paths open CORS, the boot script absolutizes the live document's root-relative scripts the way the bake already did, and `src/i18n.js` derives its catalog origin from `import.meta.url`. `npm run audit:ibm-hosted` holds it (`docs/ops/ibm-hosted-page-audit.md`). The advice above still stands: do NOT make the baked page's URLs relative. |
+
+The instruction to keep `/ibm/hello`'s absolute URLs was right; the conclusion
+that the route was therefore fine was not. A page that is same-origin on three.ws
+and cross-origin everywhere else needs an audit that loads it from somewhere
+else, which is what `npm run audit:ibm-hosted` now does.
+
+### Production is broken right now, and the sweep is what found it
+
+`/monitor` failed the serial retry, which made it a real finding rather than
+contention. It calls `/api/status`, which answers `500` in production and `200`
+against this tree. The production log says why:
+
+    [api] GET /api/status failed: Error [ERR_MODULE_NOT_FOUND]:
+    Cannot find module '/app/services/home-relay/src/token.js'
+    imported from /app/api/_lib/home/relay.js
+
+That is the same cause as the `/smart-home` row: `.gcloudignore` never
+re-included `services/`, so two modules the API imports are absent from the
+image. It is not confined to Smart Home. Counting the last two hours of
+production error logs by endpoint:
+
+| Endpoint | 500s in 2h | What it is |
+|---|---|---|
+| `/api/healthz` | 38 | the health check itself |
+| `/api/wk` | 20 | |
+| `/api/mcp` | 14 | the MCP server every agent integration calls |
+| `/api/chat` | 6 | |
+| `/api/home`, `/api/home/satellite` | 9 | |
+| `/api/x402-pay`, `/api/x402-facilitator/[action]`, `/api/x402/mcp-tool-catalog` | 8 | the payment path |
+| `/api/status` | 4 | powers `/status` and `/monitor` |
+| `/api/cron/uptime-check` | 1 | which is why `/api/status` has no probe history to serve |
+
+Confirmed live: `/api/healthz`, `/api/mcp`, `/api/status`, `/api/x402-pay` and
+`/api/wk` all answer `500`.
+
+`d668ceece` fixes it (re-includes `services/` and adds a `check:gcloudignore`
+rule so the same omission fails before a build instead of in production) and is
+committed but unshipped. Production serves `c2148462e` from 2026-09-03 19:09;
+revision `00413` rebuilt the same commit, so it did not help. `npm run
+check:gcloudignore` passes on this tree and `npm run db:status` reports no
+pending migrations, so the deploy is one owner-approved command.
+
+**A raw parallel sweep on this box cannot be trusted, and that is fixed too.**
+The first re-run reported 550 of 780 routes broken. Every route sampled out of
+that list was clean when checked alone: the box was at load 100+ beside another
+agent's `build:gcp`, and pages were missing their settle window. `c9deecba3`
+makes `audit:console` re-run each failing route once, serially, and report that
+second reading, with the report naming how many cleared that way. Before trusting
+any number from this sweep, check that line.
+
+## Step 0: re-derive the current state
+
+    npm run audit:console
+
+Capture the full output to the session scratchpad; do not work from an excerpt.
+
+Then separate deploy lag from page defects before you touch any page code, or
+you will spend the session chasing production's staleness. The dev server
+proxies `/api/*` to https://three.ws, so an API finding measures the DEPLOYED
+code, not this tree. Point the proxy at the repo's own server instead:
+
+    node --env-file-if-exists=.env --env-file-if-exists=.env.local server/index.mjs &
+    DEV_API_PROXY=http://localhost:8080 npx vite --port 3211 --strictPort &
+    AUDIT_BASE=http://localhost:3211 npm run audit:console
+
+A finding that clears under that run is deploy lag: record it and move on. The
+reverse also holds, so judge it both ways: endpoints whose credentials live only
+on the deployed service answer `not_configured` (503) locally and are fine in
+production.
+
+## Task
+
+Run the console audit across pages. Every console error is a defect: fix it at
+root in the page or module that throws. Warnings from our own code get fixed
+too; third-party warnings we cannot control get documented in the report.
+
+Fix everything found in this sweep's scope. Findings that belong to a different
+surface entirely (and would take this session off its one task) go in the report
+as named follow-ups instead; everything in scope gets fixed here, at root, with
+no masking.
+
+## Definition of done
+
+- [ ] The command above exits 0 (or, for measurement-style sweeps, the report
+      carries the measured numbers and every committed fix).
+- [ ] Every fix is a root-cause fix; no check was weakened, skipped, or
+      quarantined to get to green.
+- [ ] npm run check:rules -- --paths <touched files> exits 0; npm test passes
+      if code changed.
+
+**The one line that cannot pass without an owner:** the sweep exits 0 only once
+production serves the four deploy-lag fixes above. That is the ship order
+(`production-100-01-ship-readiness.md`), owner-gated, and it is the whole
+remainder of this file. Re-run step 0 after the next deploy; if the four rows
+clear, this order is done and the file retires.
+
+## Never blocked
+
+| Blocker | Resolution (act, do not ask) |
+|---|---|
+| Missing env var or credential | Check .env and .env.local, then the Cloud Run service env, then Secret Manager (the CLAUDE.md self-unblock playbook has the exact commands). If it truly exists nowhere, wire the code fully behind the env var, prove the wiring with a dry run, and name the single missing var in the report. |
+| gcloud not on PATH | Run: export PATH="$HOME/google-cloud-sdk/bin:$PATH" |
+| Dev server port 3000 busy | Another agent may be serving this repo; probe it and reuse if so. Otherwise start your own on a free port: npx vite --port 3101 |
+| Playwright browser missing | npx playwright install chromium |
+| A surface needs a signed-in user | Register a fresh account through the real /register flow against the real API and use it. Never mock the session. |
+| A defect sits in code you did not touch | Fix it if it blocks a Definition of done line (root cause it, never mask it). Otherwise note it in the report and continue. |
+| An unrelated test is red | Same rule. Never pipe npm test through tail; it masks exit codes. |
+| `ENOSPC` mid-run, or a build dying with exit 144 | The shared disk is full. `npm run clean:worktrees` (add `--apply`), and never delete a worktree holding uncommitted work. The sweep writes nothing large, but Vite's optimizer cache does. |
+
+## Close out (required)
+
+1. Verify every Definition of done line with the actual command output in
+   front of you. Never claim a line you did not verify.
+2. Commit with explicit paths and a subject that describes the diff (house
+   style: type(scope): what changed and why a reader cares).
+3. Delete this prompt file in that same commit:
+
+       git rm prompts/finish/900-swarm-100-sweep-console.md
+
+   The shrinking directory is this campaign's only progress ledger; there is
+   no progress log to update.
+4. Final report: what step 0 measured, what changed (file list), evidence per
+   Definition of done line, and any one-line judgment calls. No trailing
+   questions, no unexecuted plans.
+
+If a line genuinely cannot pass inside this session (an external party must
+respond, or an owner-gated action is the final step), finish everything else,
+leave this file in place, and state exactly which line remains and who owns
+it. Never delete this file on a partial.

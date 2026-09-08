@@ -12,9 +12,9 @@ operating strategy for converting that into shipped features and external
 revenue. Every play names the real surface it builds on (see `STRUCTURE.md`) and
 the doc that governs it.
 
-Companion reading: [`prompts/finish/roadmap-00-README.md`](../../prompts/finish/roadmap-00-README.md)
+Companion reading: [`prompts/finish/_context/roadmap-00-README.md`](../../prompts/finish/_context/roadmap-00-README.md)
 (the open work orders and the regression gate),
-[`prompts/finish/roadmap-REUSE-MAP.md`](../../prompts/finish/roadmap-REUSE-MAP.md)
+[`prompts/finish/_context/roadmap-REUSE-MAP.md`](../../prompts/finish/_context/roadmap-REUSE-MAP.md)
 (license-vetted OSS), [financial controls](../financial-controls.md) (how money
 is governed), [the x402 ring economy](../x402-ring-economy.md) (what internal
 volume is and why it is labeled).
@@ -54,7 +54,7 @@ be built before any claim in §4 could be trusted.
 The original ten numbered roadmap prompts all shipped and were retired; they are
 readable in git history (`git log --diff-filter=D --name-only -- prompts/roadmap/`).
 The open work orders now live in `prompts/finish/` with a `roadmap-` prefix, and
-[`roadmap-00-README.md`](../../prompts/finish/roadmap-00-README.md) lists which
+[`roadmap-00-README.md`](../../prompts/finish/_context/roadmap-00-README.md) lists which
 are open and what each owns. Feed one file to one fresh session. Do not invent
 new work while those sit unexecuted; they were sequenced deliberately.
 
@@ -213,7 +213,7 @@ the numbers the platform reported about itself.
 
 ## 5. Open source: what we take in, what we give out
 
-**In**, governed by the [REUSE-MAP](../../prompts/finish/roadmap-REUSE-MAP.md).
+**In**, governed by the [REUSE-MAP](../../prompts/finish/_context/roadmap-REUSE-MAP.md).
 Prefer the permissively licensed picks; the excluded list (non-commercial
 splatting rasterizers, capped 3D models, unlicensed layout tools) is a hard no
 regardless of technical appeal. Check `package.json` before adding anything: much

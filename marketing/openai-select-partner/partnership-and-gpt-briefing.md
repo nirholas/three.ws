@@ -436,7 +436,7 @@ together, and re-render `public/partners/openai/social-card-studio.png` from
 | Partner ecosystem overview | `docs/partners.md` |
 | App Directory answer sheet and audit | `prompts/store-submissions/_generated/openai-submission.md` |
 | Submission status tracker | `prompts/store-submissions/_generated/TRACKER.md` |
-| Apps SDK handoff pack | `prompts/finish/openai-pr-00-START-HERE.md` |
+| Apps SDK handoff pack | `prompts/finish/_context/openai-pr-00-START-HERE.md` |
 | Actions endpoint | `api/3d/studio.js` |
 | MCP connector | `api/mcp-studio.js`, `api/_mcp-studio/*` |
 | Inline widget | `api/_mcp-studio/component.js` |

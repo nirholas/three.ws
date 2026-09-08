@@ -254,7 +254,7 @@ the owner runs it, or explicitly approves each transfer.
 The old value was a plaintext literal for some window, so it should be treated as exposed to
 everyone who has held project viewer access in that period. Whether that warrants a rotation
 is a judgment call about who those principals are: it is logged as an owner decision in
-`prompts/finish/production-100-OWNER-ACTIONS.md`.
+`prompts/finish/_context/production-100-OWNER-ACTIONS.md`.
 
 If the owner decides to rotate:
 

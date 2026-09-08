@@ -39379,11 +39379,11 @@ submission target is the free keyless connector at
 Actions surface, all of which are live and re-verified.
 
 - **Package:** [`prompts/store-submissions/_generated/openai-submission.md`](../prompts/store-submissions/_generated/openai-submission.md) (7/7 policy PASS, real screenshots, real captured tool responses)
-- **Pre-submission verification pack:** [`prompts/finish/openai-pr-00-START-HERE.md`](../prompts/finish/openai-pr-00-START-HERE.md), with task 07 as the go/no-go gate
+- **Pre-submission verification pack:** [`prompts/finish/_context/openai-pr-00-START-HERE.md`](../prompts/finish/_context/openai-pr-00-START-HERE.md), with task 07 as the go/no-go gate
 - **Standing status:** Partner Network accepted 2026-07-14; organization verified; GPT Store listing live and public
 - **Open item:** the final submit in the partner portal
 
-Before the submit, run [`prompts/finish/openai-pr-07-final-verification-and-submit.md`](../prompts/finish/openai-pr-07-final-verification-and-submit.md) against the currently deployed
+Before the submit, run [`prompts/finish/915-openai-pr-07-final-verification-and-submit.md`](../prompts/finish/915-openai-pr-07-final-verification-and-submit.md) against the currently deployed
 revision. Its checklist exists precisely because the answer sheet asserts
 "verified live" facts dated 2026-07-14 and deployments move. That is a
 one-session job, not a blocker.
@@ -39588,7 +39588,7 @@ Ordered so that the items with the longest external latency go out first.
 
 | Day | Action | Owner |
 |---|---|---|
-| Mon 08-17 | Run [openai-pr task 07](../prompts/finish/openai-pr-07-final-verification-and-submit.md) against the live revision, then **submit the OpenAI App Directory package** | Owner (portal) |
+| Mon 08-17 | Run [openai-pr task 07](../prompts/finish/915-openai-pr-07-final-verification-and-submit.md) against the live revision, then **submit the OpenAI App Directory package** | Owner (portal) |
 | Mon 08-17 | Approve and run the staged **MCP Registry** publish; submit **`three-ws-3d`** to the Claude plugin marketplace | Owner (approval), agent (commands) |
 | Tue 08-18 | Correct the **NVIDIA Inception portal product record** | Owner |
 | Tue 08-18 | Send the **five-ask Inception email** to `inceptionprogram@nvidia.com` | Owner |
@@ -39631,7 +39631,7 @@ Publishing, posting, and sending are owner-gated under stop-and-ask gate 2 in
 - [Listings and distribution](#sec-305): the canonical program and directory inventory
 - [Announcement coverage](#sec-100): which surfaces have been announced on X and which have not
 - [Press kit](#sec-385): marks, boilerplate, and the rules governing co-branded graphics
-- [OpenAI submission handoff pack](../prompts/finish/openai-pr-00-START-HERE.md): the pre-submission task briefs
+- [OpenAI submission handoff pack](../prompts/finish/_context/openai-pr-00-START-HERE.md): the pre-submission task briefs
 
 ---
 
@@ -83730,7 +83730,7 @@ the artifact. Our marketplace entry is agent **#2632 "three.ws 3D Studio"**.
 > ("your A2MCP service has not been integrated with the OKX Agent Payments Protocol
 > standard"); every row now answers that directly. Until approval lands, the services are
 > reachable at the endpoints documented here. Current state is tracked in
-> [`prompts/finish/okx-ai-PROGRESS.md`](../prompts/finish/okx-ai-PROGRESS.md).
+> [`prompts/finish/_context/okx-ai-PROGRESS.md`](../prompts/finish/_context/okx-ai-PROGRESS.md).
 
 **What we list, as of 2026-08-22: three.ws Forge.** The listing was rebuilt around one
 thing done extremely well, turning a description into a real 3D model, because that is the
@@ -83973,7 +83973,7 @@ unit tests in [`tests/api/okx-forge.test.js`](../tests/api/okx-forge.test.js).
 > payer wallet is unfunded, so every real attempt returns `insufficient_balance`. Treat the
 > bullets above as the implemented and unit-tested contract, not as a claim of an observed
 > on-chain settlement. The first settled transaction hash gets recorded in
-> [`prompts/finish/okx-ai-PROGRESS.md`](../prompts/finish/okx-ai-PROGRESS.md).
+> [`prompts/finish/_context/okx-ai-PROGRESS.md`](../prompts/finish/_context/okx-ai-PROGRESS.md).
 
 ---
 
@@ -87499,7 +87499,7 @@ The page's stat bar reads 8 partners, 22 chains, and an infinity glyph for scale
 - **AR handoff** works from any of these: every generation carries a place-in-your-room link, and the whole pipeline is public and keyless rather than ChatGPT-exclusive. See [AR in ChatGPT](#sec-151).
 - **Spatial MCP** is the open, CC0 response shape that makes a 3D scene a native MCP result instead of a URL in text. three.ws is the reference implementation; the shape is renderer-agnostic and carries no payment, wallet, or coin surface. See [Spatial MCP](#sec-456).
 
-**Saying it correctly.** Write the status as "OpenAI Select Partner". three.ws is an independent member of the network at the Select tier: not an OpenAI product, and not endorsed by OpenAI beyond the partner designation. Badge rules, the required independence line, and every asset are in [`marketing/openai-select-partner/badge-usage.md`](../marketing/openai-select-partner/badge-usage.md); the graphics cleared for editorial use are in [Press kit](#sec-385). The pre-submission verification pack is [`prompts/finish/openai-pr-00-START-HERE.md`](../prompts/finish/openai-pr-00-START-HERE.md).
+**Saying it correctly.** Write the status as "OpenAI Select Partner". three.ws is an independent member of the network at the Select tier: not an OpenAI product, and not endorsed by OpenAI beyond the partner designation. Badge rules, the required independence line, and every asset are in [`marketing/openai-select-partner/badge-usage.md`](../marketing/openai-select-partner/badge-usage.md); the graphics cleared for editorial use are in [Press kit](#sec-385). The pre-submission verification pack is [`prompts/finish/_context/openai-pr-00-START-HERE.md`](../prompts/finish/_context/openai-pr-00-START-HERE.md).
 
 ---
 

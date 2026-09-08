@@ -7,9 +7,20 @@ documents, not a product surface. Nothing here ships to users.
 **Everything still to finish lives in one folder: [finish/](finish/).** Open a work order there,
 paste it, run it. That folder is the whole queue; nothing outstanding is filed anywhere else.
 
-**Which one to run first: [RUN-ORDER.md](RUN-ORDER.md).** It ranks the whole queue into tiers
-against live production measurements, so the folder tells you what is open and that file tells
-you what matters.
+**The filenames are the running order.** Since 2026-09-07 every order is numbered by priority,
+so sorting the folder by name gives you the sequence to work through: start at `001`, run it,
+open the next. `001` to `014` are runnable right now with no gate; `100` and up are the
+route-audit swarm; `300` and up are the Home campaign; `900` and up are blocked on an owner
+action, so read one before you start it. A retired order is deleted and its number left as a
+gap, so a link to a numbered order keeps pointing at the same work.
+
+**Why the order is what it is: [RUN-ORDER.md](RUN-ORDER.md).** It ranks the queue into tiers
+against live production measurements. The numbers carry the sequence; that file carries the
+reasoning, and it is the one to re-derive when the measurements change.
+
+Campaign indexes, briefs, runbooks and progress logs are not tasks and live in
+[finish/_context/](finish/_context/), unnumbered, so they are never opened as the next thing to
+run. Read the one your order names.
 
 ## Layout
 
