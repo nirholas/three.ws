@@ -1,0 +1,6356 @@
+{
+  "config": {
+    "base": "https://three.ws",
+    "device": "Pixel 5",
+    "label": "",
+    "startedAt": "2026-09-08T17:13:11.901Z",
+    "harness": "scripts/mobile-touch-audit.mjs",
+    "minTarget": 44
+  },
+  "results": [
+    {
+      "url": "https://three.ws/",
+      "status": 200,
+      "error": null,
+      "gesture": {
+        "control": 165,
+        "canvases": [
+          {
+            "sel": "canvas.walk-preview-canvas",
+            "touchAction": "pan-y",
+            "scrolled": 165,
+            "headroom": 3651,
+            "swallowed": false
+          },
+          {
+            "sel": "canvas#drop-canvas",
+            "touchAction": "pan-y",
+            "scrolled": 165,
+            "headroom": 1632,
+            "swallowed": false
+          }
+        ]
+      },
+      "title": "three.ws — The 3D Agent Layer of the Internet",
+      "overflowXStyle": "clip",
+      "canScrollX": false,
+      "checked": 218,
+      "inlineExempt": 6,
+      "smallTargets": [
+        {
+          "sel": "input#hero-forge-input.hero-forge-input",
+          "w": 186,
+          "h": 36,
+          "text": "Describe a 3D model to generate",
+          "inNav": false,
+          "fixed": false,
+          "path": "section.hero > div.hero-text.entered > form#hero-forge-form.hero-forge"
+        },
+        {
+          "sel": "button#hero-forge-go.hero-forge-go",
+          "w": 110,
+          "h": 38,
+          "text": "Forge it\n\t\t\t\t→",
+          "inNav": false,
+          "fixed": false,
+          "path": "section.hero > div.hero-text.entered > form#hero-forge-form.hero-forge"
+        },
+        {
+          "sel": "button.hero-try",
+          "w": 101,
+          "h": 27,
+          "text": "low-poly fox",
+          "inNav": false,
+          "fixed": false,
+          "path": "section.hero > div.hero-text.entered > div.hero-forge-tries"
+        },
+        {
+          "sel": "button.hero-try",
+          "w": 98,
+          "h": 27,
+          "text": "sci-fi helmet",
+          "inNav": false,
+          "fixed": false,
+          "path": "section.hero > div.hero-text.entered > div.hero-forge-tries"
+        },
+        {
+          "sel": "button.hero-try",
+          "w": 113,
+          "h": 27,
+          "text": "ceramic teapot",
+          "inNav": false,
+          "fixed": false,
+          "path": "section.hero > div.hero-text.entered > div.hero-forge-tries"
+        },
+        {
+          "sel": "button.hf-chip.hf-chip--surprise",
+          "w": 94,
+          "h": 27,
+          "text": "Surprise me with a prompt",
+          "inNav": false,
+          "fixed": false,
+          "path": "div.hf-chamber.reveal.reveal-d1 > form.hf-dock > div.hf-chips"
+        },
+        {
+          "sel": "button.hf-chip",
+          "w": 110,
+          "h": 27,
+          "text": "low-poly fox",
+          "inNav": false,
+          "fixed": false,
+          "path": "div.hf-chamber.reveal.reveal-d1 > form.hf-dock > div.hf-chips"
+        },
+        {
+          "sel": "button.hf-chip",
+          "w": 117,
+          "h": 27,
+          "text": "sci-fi helmet",
+          "inNav": false,
+          "fixed": false,
+          "path": "div.hf-chamber.reveal.reveal-d1 > form.hf-dock > div.hf-chips"
+        },
+        {
+          "sel": "button.hf-chip",
+          "w": 124,
+          "h": 27,
+          "text": "monstera plant",
+          "inNav": false,
+          "fixed": false,
+          "path": "div.hf-chamber.reveal.reveal-d1 > form.hf-dock > div.hf-chips"
+        },
+        {
+          "sel": "button.hf-chip",
+          "w": 103,
+          "h": 27,
+          "text": "film camera",
+          "inNav": false,
+          "fixed": false,
+          "path": "div.hf-chamber.reveal.reveal-d1 > form.hf-dock > div.hf-chips"
+        },
+        {
+          "sel": "textarea#hf-prompt-input.hf-prompt",
+          "w": 140,
+          "h": 35,
+          "text": "",
+          "inNav": false,
+          "fixed": false,
+          "path": "div.hf-chamber.reveal.reveal-d1 > form.hf-dock > div.hf-bar"
+        },
+        {
+          "sel": "button.hf-icon-mini",
+          "w": 30,
+          "h": 30,
+          "text": "Enhance the prompt",
+          "inNav": false,
+          "fixed": false,
+          "path": "div.hf-chamber.reveal.reveal-d1 > form.hf-dock > div.hf-bar"
+        },
+        {
+          "sel": "button.hf-forge-btn",
+          "w": 81,
+          "h": 37,
+          "text": "Forge",
+          "inNav": false,
+          "fixed": false,
+          "path": "div.hf-chamber.reveal.reveal-d1 > form.hf-dock > div.hf-bar"
+        },
+        {
+          "sel": "button.hf-opts-toggle",
+          "w": 96,
+          "h": 26,
+          "text": "Options",
+          "inNav": false,
+          "fixed": false,
+          "path": "div.hf-chamber.reveal.reveal-d1 > form.hf-dock > div.hf-dock-meta"
+        },
+        {
+          "sel": "a.press-logo",
+          "w": 88,
+          "h": 21,
+          "text": "Anthropic",
+          "inNav": false,
+          "fixed": false,
+          "path": "div.press-strip > div.wrap-1280 > div.press-row"
+        },
+        {
+          "sel": "a.press-logo",
+          "w": 84,
+          "h": 21,
+          "text": "Coinbase",
+          "inNav": false,
+          "fixed": false,
+          "path": "div.press-strip > div.wrap-1280 > div.press-row"
+        },
+        {
+          "sel": "a.press-logo",
+          "w": 23,
+          "h": 21,
+          "text": "IBM",
+          "inNav": false,
+          "fixed": false,
+          "path": "div.press-strip > div.wrap-1280 > div.press-row"
+        },
+        {
+          "sel": "a.press-logo",
+          "w": 28,
+          "h": 21,
+          "text": "AWS",
+          "inNav": false,
+          "fixed": false,
+          "path": "div.press-strip > div.wrap-1280 > div.press-row"
+        },
+        {
+          "sel": "a.press-logo",
+          "w": 108,
+          "h": 21,
+          "text": "Google Cloud",
+          "inNav": false,
+          "fixed": false,
+          "path": "div.press-strip > div.wrap-1280 > div.press-row"
+        },
+        {
+          "sel": "a.press-logo",
+          "w": 112,
+          "h": 21,
+          "text": "Alibaba Cloud",
+          "inNav": false,
+          "fixed": false,
+          "path": "div.press-strip > div.wrap-1280 > div.press-row"
+        },
+        {
+          "sel": "a.press-logo",
+          "w": 67,
+          "h": 21,
+          "text": "Solana",
+          "inNav": false,
+          "fixed": false,
+          "path": "div.press-strip > div.wrap-1280 > div.press-row"
+        },
+        {
+          "sel": "a.press-logo",
+          "w": 123,
+          "h": 21,
+          "text": "CoinMarketCap",
+          "inNav": false,
+          "fixed": false,
+          "path": "div.press-strip > div.wrap-1280 > div.press-row"
+        },
+        {
+          "sel": "a.press-logo",
+          "w": 66,
+          "h": 21,
+          "text": "CoinGecko",
+          "inNav": false,
+          "fixed": false,
+          "path": "div.press-strip > div.wrap-1280 > div.press-row"
+        },
+        {
+          "sel": "a.press-logo",
+          "w": 101,
+          "h": 21,
+          "text": "HackerNoon",
+          "inNav": false,
+          "fixed": false,
+          "path": "div.press-strip > div.wrap-1280 > div.press-row"
+        },
+        {
+          "sel": "button.pg-tab.active",
+          "w": 52,
+          "h": 25,
+          "text": "HTML",
+          "inNav": false,
+          "fixed": false,
+          "path": "div.pg.reveal.reveal-d1 > div.pg-toolbar > div#pg-tabs.pg-tabs"
+        },
+        {
+          "sel": "button.pg-tab",
+          "w": 59,
+          "h": 25,
+          "text": "React",
+          "inNav": false,
+          "fixed": false,
+          "path": "div.pg.reveal.reveal-d1 > div.pg-toolbar > div#pg-tabs.pg-tabs"
+        },
+        {
+          "sel": "button.pg-tab",
+          "w": 45,
+          "h": 25,
+          "text": "Vue",
+          "inNav": false,
+          "fixed": false,
+          "path": "div.pg.reveal.reveal-d1 > div.pg-toolbar > div#pg-tabs.pg-tabs"
+        },
+        {
+          "sel": "button#pg-copy.pg-copy",
+          "w": 59,
+          "h": 27,
+          "text": "Copy",
+          "inNav": false,
+          "fixed": false,
+          "path": "div.pg.reveal.reveal-d1 > div.pg-toolbar > div.pg-toolbar-end"
+        },
+        {
+          "sel": "button#pg-color-trigger.pg-color-trigger",
+          "w": 26,
+          "h": 26,
+          "text": "Pick a custom background color",
+          "inNav": false,
+          "fixed": false,
+          "path": "div.pg.reveal.reveal-d1 > div.pg-controls > div.pg-control-group"
+        },
+        {
+          "sel": "button#wyg-anim-stop.wyg-anim-stop",
+          "w": 14,
+          "h": 14,
+          "text": "Stop animation",
+          "inNav": false,
+          "fixed": false,
+          "path": "div#wyg-viewer.wyg-viewer > div.wyg-anim-bar > div.wyg-anim-head"
+        },
+        {
+          "sel": "button.hcf-tab",
+          "w": 64,
+          "h": 28,
+          "text": "Fresh",
+          "inNav": false,
+          "fixed": false,
+          "path": "div.hcf-head.reveal > div.hcf-controls > div.hcf-tabs"
+        },
+        {
+          "sel": "button.hcf-tab",
+          "w": 83,
+          "h": 28,
+          "text": "Trending",
+          "inNav": false,
+          "fixed": false,
+          "path": "div.hcf-head.reveal > div.hcf-controls > div.hcf-tabs"
+        },
+        {
+          "sel": "a.hcf-cta",
+          "w": 151,
+          "h": 40,
+          "text": "Generate yours →",
+          "inNav": false,
+          "fixed": false,
+          "path": "div.wrap-1280 > div.hcf-head.reveal > div.hcf-controls"
+        },
+        {
+          "sel": "button#hcf-more.hcf-more",
+          "w": 120,
+          "h": 39,
+          "text": "Show more",
+          "inNav": false,
+          "fixed": false,
+          "path": "section#home-community-forge.block > div.wrap-1280 > div.hcf-morewrap"
+        },
+        {
+          "sel": "button.hero-chip.hero-chip--rand",
+          "w": 97,
+          "h": 29,
+          "text": "🎲 Random",
+          "inNav": false,
+          "fixed": false,
+          "path": "section#vclose.vclose > div.vclose-overlay > div#vclose-chips.vclose-chips"
+        },
+        {
+          "sel": "button.hero-chip",
+          "w": 80,
+          "h": 29,
+          "text": "👋 Wave",
+          "inNav": false,
+          "fixed": false,
+          "path": "section#vclose.vclose > div.vclose-overlay > div#vclose-chips.vclose-chips"
+        },
+        {
+          "sel": "button.hero-chip",
+          "w": 85,
+          "h": 29,
+          "text": "💃 Dance",
+          "inNav": false,
+          "fixed": false,
+          "path": "section#vclose.vclose > div.vclose-overlay > div#vclose-chips.vclose-chips"
+        },
+        {
+          "sel": "button.hero-chip",
+          "w": 101,
+          "h": 29,
+          "text": "🤸 Capoeira",
+          "inNav": false,
+          "fixed": false,
+          "path": "section#vclose.vclose > div.vclose-overlay > div#vclose-chips.vclose-chips"
+        },
+        {
+          "sel": "button.hero-chip",
+          "w": 89,
+          "h": 29,
+          "text": "🧟 Thriller",
+          "inNav": false,
+          "fixed": false,
+          "path": "section#vclose.vclose > div.vclose-overlay > div#vclose-chips.vclose-chips"
+        },
+        {
+          "sel": "button.hero-chip",
+          "w": 104,
+          "h": 29,
+          "text": "🎉 Celebrate",
+          "inNav": false,
+          "fixed": false,
+          "path": "section#vclose.vclose > div.vclose-overlay > div#vclose-chips.vclose-chips"
+        },
+        {
+          "sel": "a",
+          "w": 165,
+          "h": 20,
+          "text": "Build an agent",
+          "inNav": true,
+          "fixed": false,
+          "path": "div.wrap-1280 > nav.foot-cols > div.foot-col"
+        },
+        {
+          "sel": "a",
+          "w": 165,
+          "h": 20,
+          "text": "Text to 3D",
+          "inNav": true,
+          "fixed": false,
+          "path": "div.wrap-1280 > nav.foot-cols > div.foot-col"
+        },
+        {
+          "sel": "a",
+          "w": 165,
+          "h": 20,
+          "text": "Image to 3D",
+          "inNav": true,
+          "fixed": false,
+          "path": "div.wrap-1280 > nav.foot-cols > div.foot-col"
+        },
+        {
+          "sel": "a",
+          "w": 165,
+          "h": 20,
+          "text": "Marketplace",
+          "inNav": true,
+          "fixed": false,
+          "path": "div.wrap-1280 > nav.foot-cols > div.foot-col"
+        },
+        {
+          "sel": "a",
+          "w": 165,
+          "h": 20,
+          "text": "Discover",
+          "inNav": true,
+          "fixed": false,
+          "path": "div.wrap-1280 > nav.foot-cols > div.foot-col"
+        },
+        {
+          "sel": "a",
+          "w": 165,
+          "h": 20,
+          "text": "Pricing",
+          "inNav": true,
+          "fixed": false,
+          "path": "div.wrap-1280 > nav.foot-cols > div.foot-col"
+        },
+        {
+          "sel": "a",
+          "w": 165,
+          "h": 20,
+          "text": "Console",
+          "inNav": true,
+          "fixed": false,
+          "path": "div.wrap-1280 > nav.foot-cols > div.foot-col"
+        },
+        {
+          "sel": "a",
+          "w": 165,
+          "h": 20,
+          "text": "Agents Index",
+          "inNav": true,
+          "fixed": false,
+          "path": "div.wrap-1280 > nav.foot-cols > div.foot-col"
+        },
+        {
+          "sel": "a",
+          "w": 165,
+          "h": 20,
+          "text": "Reputation",
+          "inNav": true,
+          "fixed": false,
+          "path": "div.wrap-1280 > nav.foot-cols > div.foot-col"
+        },
+        {
+          "sel": "a",
+          "w": 165,
+          "h": 20,
+          "text": "Characters",
+          "inNav": true,
+          "fixed": false,
+          "path": "div.wrap-1280 > nav.foot-cols > div.foot-col"
+        },
+        {
+          "sel": "a",
+          "w": 165,
+          "h": 20,
+          "text": "Avatar Gallery",
+          "inNav": true,
+          "fixed": false,
+          "path": "div.wrap-1280 > nav.foot-cols > div.foot-col"
+        },
+        {
+          "sel": "a",
+          "w": 165,
+          "h": 20,
+          "text": "Marketplace",
+          "inNav": true,
+          "fixed": false,
+          "path": "div.wrap-1280 > nav.foot-cols > div.foot-col"
+        },
+        {
+          "sel": "a",
+          "w": 165,
+          "h": 20,
+          "text": "Docs",
+          "inNav": true,
+          "fixed": false,
+          "path": "div.wrap-1280 > nav.foot-cols > div.foot-col"
+        },
+        {
+          "sel": "a",
+          "w": 165,
+          "h": 20,
+          "text": "Avatar SDK",
+          "inNav": true,
+          "fixed": false,
+          "path": "div.wrap-1280 > nav.foot-cols > div.foot-col"
+        },
+        {
+          "sel": "a",
+          "w": 165,
+          "h": 20,
+          "text": "API",
+          "inNav": true,
+          "fixed": false,
+          "path": "div.wrap-1280 > nav.foot-cols > div.foot-col"
+        },
+        {
+          "sel": "a",
+          "w": 165,
+          "h": 20,
+          "text": "Artifact Viewer",
+          "inNav": true,
+          "fixed": false,
+          "path": "div.wrap-1280 > nav.foot-cols > div.foot-col"
+        },
+        {
+          "sel": "a",
+          "w": 165,
+          "h": 20,
+          "text": "Sitemap",
+          "inNav": true,
+          "fixed": false,
+          "path": "div.wrap-1280 > nav.foot-cols > div.foot-col"
+        },
+        {
+          "sel": "a",
+          "w": 165,
+          "h": 20,
+          "text": "Agent Galaxy",
+          "inNav": true,
+          "fixed": false,
+          "path": "div.wrap-1280 > nav.foot-cols > div.foot-col"
+        },
+        {
+          "sel": "a",
+          "w": 165,
+          "h": 20,
+          "text": "Trust Layer",
+          "inNav": true,
+          "fixed": false,
+          "path": "div.wrap-1280 > nav.foot-cols > div.foot-col"
+        },
+        {
+          "sel": "a",
+          "w": 165,
+          "h": 20,
+          "text": "AWS Marketplace",
+          "inNav": true,
+          "fixed": false,
+          "path": "div.wrap-1280 > nav.foot-cols > div.foot-col"
+        },
+        {
+          "sel": "a",
+          "w": 165,
+          "h": 20,
+          "text": "Blog",
+          "inNav": true,
+          "fixed": false,
+          "path": "div.wrap-1280 > nav.foot-cols > div.foot-col"
+        },
+        {
+          "sel": "a",
+          "w": 165,
+          "h": 20,
+          "text": "Community",
+          "inNav": true,
+          "fixed": false,
+          "path": "div.wrap-1280 > nav.foot-cols > div.foot-col"
+        },
+        {
+          "sel": "a",
+          "w": 165,
+          "h": 20,
+          "text": "Support",
+          "inNav": true,
+          "fixed": false,
+          "path": "div.wrap-1280 > nav.foot-cols > div.foot-col"
+        },
+        {
+          "sel": "a",
+          "w": 165,
+          "h": 20,
+          "text": "Status",
+          "inNav": true,
+          "fixed": false,
+          "path": "div.wrap-1280 > nav.foot-cols > div.foot-col"
+        },
+        {
+          "sel": "a",
+          "w": 165,
+          "h": 20,
+          "text": "X / Twitter",
+          "inNav": true,
+          "fixed": false,
+          "path": "div.wrap-1280 > nav.foot-cols > div.foot-col"
+        },
+        {
+          "sel": "a",
+          "w": 165,
+          "h": 20,
+          "text": "GitHub",
+          "inNav": true,
+          "fixed": false,
+          "path": "div.wrap-1280 > nav.foot-cols > div.foot-col"
+        },
+        {
+          "sel": "a",
+          "w": 165,
+          "h": 20,
+          "text": "Contact",
+          "inNav": true,
+          "fixed": false,
+          "path": "div.wrap-1280 > nav.foot-cols > div.foot-col"
+        },
+        {
+          "sel": "a",
+          "w": 165,
+          "h": 20,
+          "text": "Privacy",
+          "inNav": true,
+          "fixed": false,
+          "path": "div.wrap-1280 > nav.foot-cols > div.foot-col"
+        },
+        {
+          "sel": "a",
+          "w": 165,
+          "h": 20,
+          "text": "Terms",
+          "inNav": true,
+          "fixed": false,
+          "path": "div.wrap-1280 > nav.foot-cols > div.foot-col"
+        },
+        {
+          "sel": "button#foot-ca-btn.foot-ca",
+          "w": 353,
+          "h": 26,
+          "text": "$THREE FeMbDoX7R1Psc4GEcvJdsbNbZA3bfztcy",
+          "inNav": true,
+          "fixed": false,
+          "path": "footer > div.wrap-1280 > div.foot-inner"
+        }
+      ],
+      "canvases": [
+        {
+          "sel": "canvas#har-qr-canvas",
+          "w": 0,
+          "h": 0,
+          "visible": false,
+          "touchAction": "auto",
+          "parentSel": "div#har-qr-wrap.har-qr-wrap",
+          "parentTouchAction": "auto"
+        },
+        {
+          "sel": "canvas#mocap-waveform.mocap-waveform",
+          "w": 0,
+          "h": 0,
+          "visible": false,
+          "touchAction": "pan-y",
+          "parentSel": "div#mocap-demo.bento-interact.mocap-demo",
+          "parentTouchAction": "auto"
+        },
+        {
+          "sel": "canvas#walk-minimap.walk-minimap",
+          "w": 0,
+          "h": 0,
+          "visible": false,
+          "touchAction": "pan-y",
+          "parentSel": "div.walk-minimap-wrap",
+          "parentTouchAction": "auto"
+        },
+        {
+          "sel": "canvas.walk-preview-canvas",
+          "w": 351,
+          "h": 197,
+          "visible": true,
+          "touchAction": "pan-y",
+          "parentSel": "div.walk-preview-canvas-area",
+          "parentTouchAction": "auto"
+        },
+        {
+          "sel": "canvas#drop-canvas",
+          "w": 393,
+          "h": 627,
+          "visible": true,
+          "touchAction": "pan-y",
+          "parentSel": "section#body-drop.block.body-drop",
+          "parentTouchAction": "auto"
+        }
+      ],
+      "viewportMeta": "width=device-width,initial-scale=1, viewport-fit=cover",
+      "viewportFitCover": true,
+      "safeAreaRuleCount": 0,
+      "bottomBars": [],
+      "overflowX": 0,
+      "innerWidth": 393,
+      "path": "/"
+    },
+    {
+      "url": "https://three.ws/forge",
+      "status": 200,
+      "error": null,
+      "gesture": {
+        "control": 165,
+        "canvases": [
+          {
+            "sel": "canvas.walk-companion-canvas",
+            "touchAction": "pan-y",
+            "scrolled": 165,
+            "headroom": 7828,
+            "swallowed": false
+          }
+        ]
+      },
+      "title": "Forge · Text & Image → 3D · three.ws",
+      "overflowXStyle": "clip",
+      "canScrollX": false,
+      "checked": 149,
+      "inlineExempt": 1,
+      "smallTargets": [
+        {
+          "sel": "a",
+          "w": 70,
+          "h": 15,
+          "text": "$THREE holder",
+          "inNav": false,
+          "fixed": false,
+          "path": "form#composer.composer > div#forge-quality.forge-quality > p#fq-holder-note.fq-holder-note"
+        },
+        {
+          "sel": "button",
+          "w": 36,
+          "h": 44,
+          "text": "1:1",
+          "inNav": false,
+          "fixed": false,
+          "path": "form#composer.composer > div.composer-row > div#aspect.aspect"
+        },
+        {
+          "sel": "button",
+          "w": 36,
+          "h": 44,
+          "text": "4:3",
+          "inNav": false,
+          "fixed": false,
+          "path": "form#composer.composer > div.composer-row > div#aspect.aspect"
+        },
+        {
+          "sel": "button",
+          "w": 36,
+          "h": 44,
+          "text": "3:4",
+          "inNav": false,
+          "fixed": false,
+          "path": "form#composer.composer > div.composer-row > div#aspect.aspect"
+        },
+        {
+          "sel": "button",
+          "w": 42,
+          "h": 44,
+          "text": "16:9",
+          "inNav": false,
+          "fixed": false,
+          "path": "form#composer.composer > div.composer-row > div#aspect.aspect"
+        },
+        {
+          "sel": "a",
+          "w": 221,
+          "h": 15,
+          "text": "Hold $THREE for up to 10× free generatio",
+          "inNav": false,
+          "fixed": false,
+          "path": "form#composer.composer > div#forge-perk-row.fq-perk-row > p#forge-perk-line.fq-perk-line"
+        },
+        {
+          "sel": "button.showcase-sort-btn.is-active",
+          "w": 61,
+          "h": 22,
+          "text": "Fresh",
+          "inNav": false,
+          "fixed": false,
+          "path": "div.creations-head > div.showcase-head-right > div.showcase-sort"
+        },
+        {
+          "sel": "a.showcase-view-all",
+          "w": 25,
+          "h": 48,
+          "text": "View all →",
+          "inNav": false,
+          "fixed": false,
+          "path": "section#showcase.creations.showcase > div.creations-head > div.showcase-head-right"
+        },
+        {
+          "sel": "button#showcase-refresh.showcase-refresh",
+          "w": 26,
+          "h": 26,
+          "text": "Refresh the community feed",
+          "inNav": false,
+          "fixed": false,
+          "path": "section#showcase.creations.showcase > div.creations-head > div.showcase-head-right"
+        },
+        {
+          "sel": "button.showcase-vote",
+          "w": 43,
+          "h": 44,
+          "text": "Upvote — 0 votes",
+          "inNav": false,
+          "fixed": false,
+          "path": "div.creation.showcase-card > div.showcase-foot > div.showcase-foot-actions"
+        },
+        {
+          "sel": "button.showcase-vote",
+          "w": 43,
+          "h": 44,
+          "text": "Upvote — 0 votes",
+          "inNav": false,
+          "fixed": false,
+          "path": "div.creation.showcase-card > div.showcase-foot > div.showcase-foot-actions"
+        },
+        {
+          "sel": "button.showcase-vote",
+          "w": 43,
+          "h": 44,
+          "text": "Upvote — 0 votes",
+          "inNav": false,
+          "fixed": false,
+          "path": "div.creation.showcase-card > div.showcase-foot > div.showcase-foot-actions"
+        },
+        {
+          "sel": "button.showcase-vote",
+          "w": 43,
+          "h": 44,
+          "text": "Upvote — 0 votes",
+          "inNav": false,
+          "fixed": false,
+          "path": "div.creation.showcase-card > div.showcase-foot > div.showcase-foot-actions"
+        },
+        {
+          "sel": "button.showcase-vote",
+          "w": 43,
+          "h": 44,
+          "text": "Upvote — 0 votes",
+          "inNav": false,
+          "fixed": false,
+          "path": "div.creation.showcase-card > div.showcase-foot > div.showcase-foot-actions"
+        },
+        {
+          "sel": "button.showcase-vote",
+          "w": 43,
+          "h": 44,
+          "text": "Upvote — 0 votes",
+          "inNav": false,
+          "fixed": false,
+          "path": "div.creation.showcase-card > div.showcase-foot > div.showcase-foot-actions"
+        },
+        {
+          "sel": "button.showcase-vote",
+          "w": 43,
+          "h": 44,
+          "text": "Upvote — 0 votes",
+          "inNav": false,
+          "fixed": false,
+          "path": "div.creation.showcase-card > div.showcase-foot > div.showcase-foot-actions"
+        },
+        {
+          "sel": "button.showcase-vote",
+          "w": 43,
+          "h": 44,
+          "text": "Upvote — 0 votes",
+          "inNav": false,
+          "fixed": false,
+          "path": "div.creation.showcase-card > div.showcase-foot > div.showcase-foot-actions"
+        },
+        {
+          "sel": "button.showcase-vote",
+          "w": 43,
+          "h": 44,
+          "text": "Upvote — 0 votes",
+          "inNav": false,
+          "fixed": false,
+          "path": "div.creation.showcase-card > div.showcase-foot > div.showcase-foot-actions"
+        },
+        {
+          "sel": "button.showcase-vote",
+          "w": 43,
+          "h": 44,
+          "text": "Upvote — 0 votes",
+          "inNav": false,
+          "fixed": false,
+          "path": "div.creation.showcase-card > div.showcase-foot > div.showcase-foot-actions"
+        },
+        {
+          "sel": "button.showcase-vote",
+          "w": 43,
+          "h": 44,
+          "text": "Upvote — 0 votes",
+          "inNav": false,
+          "fixed": false,
+          "path": "div.creation.showcase-card > div.showcase-foot > div.showcase-foot-actions"
+        },
+        {
+          "sel": "button.showcase-vote",
+          "w": 43,
+          "h": 44,
+          "text": "Upvote — 0 votes",
+          "inNav": false,
+          "fixed": false,
+          "path": "div.creation.showcase-card > div.showcase-foot > div.showcase-foot-actions"
+        },
+        {
+          "sel": "button.walk-companion-feedback",
+          "w": 20,
+          "h": 21,
+          "text": "Tell your agent what is wrong",
+          "inNav": false,
+          "fixed": false,
+          "path": "html.tws-lite > body.forge-page > div.walk-companion.is-in"
+        }
+      ],
+      "canvases": [
+        {
+          "sel": "canvas#footer-bot-canvas",
+          "w": 90,
+          "h": 90,
+          "visible": true,
+          "touchAction": "pan-y",
+          "parentSel": "div.h-footer-avatar",
+          "parentTouchAction": "auto"
+        },
+        {
+          "sel": "canvas.walk-companion-canvas",
+          "w": 148,
+          "h": 208,
+          "visible": true,
+          "touchAction": "pan-y",
+          "parentSel": "div.walk-companion.is-in",
+          "parentTouchAction": "auto"
+        },
+        {
+          "sel": "canvas",
+          "w": 0,
+          "h": 0,
+          "visible": false,
+          "touchAction": "auto",
+          "parentSel": "div.walk-trail-layer",
+          "parentTouchAction": "auto"
+        }
+      ],
+      "viewportMeta": "width=device-width, initial-scale=1.0, viewport-fit=cover",
+      "viewportFitCover": true,
+      "safeAreaRuleCount": 0,
+      "bottomBars": [],
+      "overflowX": 0,
+      "innerWidth": 393,
+      "path": "/forge"
+    },
+    {
+      "url": "https://three.ws/markets",
+      "status": 200,
+      "error": null,
+      "gesture": null,
+      "title": "Markets — live crypto prices, news & tools · three.ws",
+      "overflowXStyle": "clip",
+      "canScrollX": false,
+      "checked": 197,
+      "inlineExempt": 0,
+      "smallTargets": [
+        {
+          "sel": "a",
+          "w": 225,
+          "h": 24,
+          "text": "Bitcoin\n\t\t\t\tBTC",
+          "inNav": false,
+          "fixed": false,
+          "path": "tbody > tr > td.left.name-cell"
+        },
+        {
+          "sel": "a",
+          "w": 225,
+          "h": 24,
+          "text": "Ethereum\n\t\t\t\tETH",
+          "inNav": false,
+          "fixed": false,
+          "path": "tbody > tr > td.left.name-cell"
+        },
+        {
+          "sel": "a",
+          "w": 225,
+          "h": 24,
+          "text": "Tether\n\t\t\t\tUSDT",
+          "inNav": false,
+          "fixed": false,
+          "path": "tbody > tr > td.left.name-cell"
+        },
+        {
+          "sel": "a",
+          "w": 225,
+          "h": 24,
+          "text": "BNB\n\t\t\t\tBNB",
+          "inNav": false,
+          "fixed": false,
+          "path": "tbody > tr > td.left.name-cell"
+        },
+        {
+          "sel": "a",
+          "w": 225,
+          "h": 24,
+          "text": "XRP\n\t\t\t\tXRP",
+          "inNav": false,
+          "fixed": false,
+          "path": "tbody > tr > td.left.name-cell"
+        },
+        {
+          "sel": "a",
+          "w": 225,
+          "h": 24,
+          "text": "USDC\n\t\t\t\tUSDC",
+          "inNav": false,
+          "fixed": false,
+          "path": "tbody > tr > td.left.name-cell"
+        },
+        {
+          "sel": "a",
+          "w": 225,
+          "h": 24,
+          "text": "Solana\n\t\t\t\tSOL",
+          "inNav": false,
+          "fixed": false,
+          "path": "tbody > tr > td.left.name-cell"
+        },
+        {
+          "sel": "a",
+          "w": 225,
+          "h": 24,
+          "text": "TRON\n\t\t\t\tTRX",
+          "inNav": false,
+          "fixed": false,
+          "path": "tbody > tr > td.left.name-cell"
+        },
+        {
+          "sel": "a",
+          "w": 225,
+          "h": 24,
+          "text": "Figure Heloc\n\t\t\t\tFIGR_HELOC",
+          "inNav": false,
+          "fixed": false,
+          "path": "tbody > tr > td.left.name-cell"
+        },
+        {
+          "sel": "a",
+          "w": 225,
+          "h": 24,
+          "text": "Zcash\n\t\t\t\tZEC",
+          "inNav": false,
+          "fixed": false,
+          "path": "tbody > tr > td.left.name-cell"
+        },
+        {
+          "sel": "a",
+          "w": 225,
+          "h": 24,
+          "text": "Hyperliquid\n\t\t\t\tHYPE",
+          "inNav": false,
+          "fixed": false,
+          "path": "tbody > tr > td.left.name-cell"
+        },
+        {
+          "sel": "a",
+          "w": 225,
+          "h": 24,
+          "text": "Dogecoin\n\t\t\t\tDOGE",
+          "inNav": false,
+          "fixed": false,
+          "path": "tbody > tr > td.left.name-cell"
+        },
+        {
+          "sel": "a",
+          "w": 225,
+          "h": 24,
+          "text": "Rain\n\t\t\t\tRAIN",
+          "inNav": false,
+          "fixed": false,
+          "path": "tbody > tr > td.left.name-cell"
+        },
+        {
+          "sel": "a",
+          "w": 225,
+          "h": 24,
+          "text": "USDS\n\t\t\t\tUSDS",
+          "inNav": false,
+          "fixed": false,
+          "path": "tbody > tr > td.left.name-cell"
+        },
+        {
+          "sel": "a",
+          "w": 225,
+          "h": 24,
+          "text": "WhiteBIT Coin\n\t\t\t\tWBT",
+          "inNav": false,
+          "fixed": false,
+          "path": "tbody > tr > td.left.name-cell"
+        },
+        {
+          "sel": "a",
+          "w": 225,
+          "h": 24,
+          "text": "Chainlink\n\t\t\t\tLINK",
+          "inNav": false,
+          "fixed": false,
+          "path": "tbody > tr > td.left.name-cell"
+        },
+        {
+          "sel": "a",
+          "w": 225,
+          "h": 24,
+          "text": "Monero\n\t\t\t\tXMR",
+          "inNav": false,
+          "fixed": false,
+          "path": "tbody > tr > td.left.name-cell"
+        },
+        {
+          "sel": "a",
+          "w": 225,
+          "h": 24,
+          "text": "Cardano\n\t\t\t\tADA",
+          "inNav": false,
+          "fixed": false,
+          "path": "tbody > tr > td.left.name-cell"
+        },
+        {
+          "sel": "a",
+          "w": 225,
+          "h": 24,
+          "text": "LEO Token\n\t\t\t\tLEO",
+          "inNav": false,
+          "fixed": false,
+          "path": "tbody > tr > td.left.name-cell"
+        },
+        {
+          "sel": "a",
+          "w": 225,
+          "h": 24,
+          "text": "Stellar\n\t\t\t\tXLM",
+          "inNav": false,
+          "fixed": false,
+          "path": "tbody > tr > td.left.name-cell"
+        },
+        {
+          "sel": "a",
+          "w": 225,
+          "h": 24,
+          "text": "Bitcoin Cash\n\t\t\t\tBCH",
+          "inNav": false,
+          "fixed": false,
+          "path": "tbody > tr > td.left.name-cell"
+        },
+        {
+          "sel": "a",
+          "w": 225,
+          "h": 24,
+          "text": "Dai\n\t\t\t\tDAI",
+          "inNav": false,
+          "fixed": false,
+          "path": "tbody > tr > td.left.name-cell"
+        },
+        {
+          "sel": "a",
+          "w": 225,
+          "h": 24,
+          "text": "Ethena USDe\n\t\t\t\tUSDE",
+          "inNav": false,
+          "fixed": false,
+          "path": "tbody > tr > td.left.name-cell"
+        },
+        {
+          "sel": "a",
+          "w": 225,
+          "h": 24,
+          "text": "Uniswap\n\t\t\t\tUNI",
+          "inNav": false,
+          "fixed": false,
+          "path": "tbody > tr > td.left.name-cell"
+        },
+        {
+          "sel": "a",
+          "w": 225,
+          "h": 24,
+          "text": "Canton\n\t\t\t\tCC",
+          "inNav": false,
+          "fixed": false,
+          "path": "tbody > tr > td.left.name-cell"
+        },
+        {
+          "sel": "a",
+          "w": 225,
+          "h": 24,
+          "text": "USD1\n\t\t\t\tUSD1",
+          "inNav": false,
+          "fixed": false,
+          "path": "tbody > tr > td.left.name-cell"
+        },
+        {
+          "sel": "a",
+          "w": 225,
+          "h": 24,
+          "text": "Litecoin\n\t\t\t\tLTC",
+          "inNav": false,
+          "fixed": false,
+          "path": "tbody > tr > td.left.name-cell"
+        },
+        {
+          "sel": "a",
+          "w": 225,
+          "h": 24,
+          "text": "Gram (prev. Toncoin)\n\t\t\t\tGRAM",
+          "inNav": false,
+          "fixed": false,
+          "path": "tbody > tr > td.left.name-cell"
+        },
+        {
+          "sel": "a",
+          "w": 225,
+          "h": 24,
+          "text": "Hedera\n\t\t\t\tHBAR",
+          "inNav": false,
+          "fixed": false,
+          "path": "tbody > tr > td.left.name-cell"
+        },
+        {
+          "sel": "a",
+          "w": 225,
+          "h": 24,
+          "text": "Avalanche\n\t\t\t\tAVAX",
+          "inNav": false,
+          "fixed": false,
+          "path": "tbody > tr > td.left.name-cell"
+        },
+        {
+          "sel": "a",
+          "w": 225,
+          "h": 24,
+          "text": "Sui\n\t\t\t\tSUI",
+          "inNav": false,
+          "fixed": false,
+          "path": "tbody > tr > td.left.name-cell"
+        },
+        {
+          "sel": "a",
+          "w": 225,
+          "h": 24,
+          "text": "Global Dollar\n\t\t\t\tUSDG",
+          "inNav": false,
+          "fixed": false,
+          "path": "tbody > tr > td.left.name-cell"
+        },
+        {
+          "sel": "a",
+          "w": 225,
+          "h": 24,
+          "text": "Shiba Inu\n\t\t\t\tSHIB",
+          "inNav": false,
+          "fixed": false,
+          "path": "tbody > tr > td.left.name-cell"
+        },
+        {
+          "sel": "a",
+          "w": 225,
+          "h": 24,
+          "text": "NEAR Protocol\n\t\t\t\tNEAR",
+          "inNav": false,
+          "fixed": false,
+          "path": "tbody > tr > td.left.name-cell"
+        },
+        {
+          "sel": "a",
+          "w": 225,
+          "h": 24,
+          "text": "Cronos\n\t\t\t\tCRO",
+          "inNav": false,
+          "fixed": false,
+          "path": "tbody > tr > td.left.name-cell"
+        },
+        {
+          "sel": "a",
+          "w": 225,
+          "h": 24,
+          "text": "PayPal USD\n\t\t\t\tPYUSD",
+          "inNav": false,
+          "fixed": false,
+          "path": "tbody > tr > td.left.name-cell"
+        },
+        {
+          "sel": "a",
+          "w": 225,
+          "h": 24,
+          "text": "BlackRock USD Institutional Digital Liqu",
+          "inNav": false,
+          "fixed": false,
+          "path": "tbody > tr > td.left.name-cell"
+        },
+        {
+          "sel": "a",
+          "w": 225,
+          "h": 24,
+          "text": "MemeCore\n\t\t\t\tM",
+          "inNav": false,
+          "fixed": false,
+          "path": "tbody > tr > td.left.name-cell"
+        },
+        {
+          "sel": "a",
+          "w": 225,
+          "h": 24,
+          "text": "Tether Gold\n\t\t\t\tXAUT",
+          "inNav": false,
+          "fixed": false,
+          "path": "tbody > tr > td.left.name-cell"
+        },
+        {
+          "sel": "a",
+          "w": 225,
+          "h": 24,
+          "text": "Circle USYC\n\t\t\t\tUSYC",
+          "inNav": false,
+          "fixed": false,
+          "path": "tbody > tr > td.left.name-cell"
+        },
+        {
+          "sel": "a",
+          "w": 225,
+          "h": 24,
+          "text": "Bittensor\n\t\t\t\tTAO",
+          "inNav": false,
+          "fixed": false,
+          "path": "tbody > tr > td.left.name-cell"
+        },
+        {
+          "sel": "a",
+          "w": 225,
+          "h": 24,
+          "text": "Ripple USD\n\t\t\t\tRLUSD",
+          "inNav": false,
+          "fixed": false,
+          "path": "tbody > tr > td.left.name-cell"
+        },
+        {
+          "sel": "a",
+          "w": 225,
+          "h": 24,
+          "text": "OKB\n\t\t\t\tOKB",
+          "inNav": false,
+          "fixed": false,
+          "path": "tbody > tr > td.left.name-cell"
+        },
+        {
+          "sel": "a",
+          "w": 225,
+          "h": 24,
+          "text": "Ondo US Dollar Yield\n\t\t\t\tUSDY",
+          "inNav": false,
+          "fixed": false,
+          "path": "tbody > tr > td.left.name-cell"
+        },
+        {
+          "sel": "a",
+          "w": 225,
+          "h": 24,
+          "text": "Mantle\n\t\t\t\tMNT",
+          "inNav": false,
+          "fixed": false,
+          "path": "tbody > tr > td.left.name-cell"
+        },
+        {
+          "sel": "a",
+          "w": 225,
+          "h": 24,
+          "text": "Polkadot\n\t\t\t\tDOT",
+          "inNav": false,
+          "fixed": false,
+          "path": "tbody > tr > td.left.name-cell"
+        },
+        {
+          "sel": "a",
+          "w": 225,
+          "h": 24,
+          "text": "Aster\n\t\t\t\tASTER",
+          "inNav": false,
+          "fixed": false,
+          "path": "tbody > tr > td.left.name-cell"
+        },
+        {
+          "sel": "a",
+          "w": 225,
+          "h": 24,
+          "text": "Aave\n\t\t\t\tAAVE",
+          "inNav": false,
+          "fixed": false,
+          "path": "tbody > tr > td.left.name-cell"
+        },
+        {
+          "sel": "a",
+          "w": 225,
+          "h": 24,
+          "text": "PAX Gold\n\t\t\t\tPAXG",
+          "inNav": false,
+          "fixed": false,
+          "path": "tbody > tr > td.left.name-cell"
+        },
+        {
+          "sel": "a",
+          "w": 225,
+          "h": 24,
+          "text": "Ondo\n\t\t\t\tONDO",
+          "inNav": false,
+          "fixed": false,
+          "path": "tbody > tr > td.left.name-cell"
+        },
+        {
+          "sel": "a",
+          "w": 225,
+          "h": 24,
+          "text": "Pump.fun\n\t\t\t\tPUMP",
+          "inNav": false,
+          "fixed": false,
+          "path": "tbody > tr > td.left.name-cell"
+        },
+        {
+          "sel": "a",
+          "w": 225,
+          "h": 24,
+          "text": "World Liberty Financial\n\t\t\t\tWLFI",
+          "inNav": false,
+          "fixed": false,
+          "path": "tbody > tr > td.left.name-cell"
+        },
+        {
+          "sel": "a",
+          "w": 225,
+          "h": 24,
+          "text": "Worldcoin\n\t\t\t\tWLD",
+          "inNav": false,
+          "fixed": false,
+          "path": "tbody > tr > td.left.name-cell"
+        },
+        {
+          "sel": "a",
+          "w": 225,
+          "h": 24,
+          "text": "Morpho\n\t\t\t\tMORPHO",
+          "inNav": false,
+          "fixed": false,
+          "path": "tbody > tr > td.left.name-cell"
+        },
+        {
+          "sel": "a",
+          "w": 225,
+          "h": 24,
+          "text": "Internet Computer\n\t\t\t\tICP",
+          "inNav": false,
+          "fixed": false,
+          "path": "tbody > tr > td.left.name-cell"
+        },
+        {
+          "sel": "a",
+          "w": 225,
+          "h": 24,
+          "text": "Ethena\n\t\t\t\tENA",
+          "inNav": false,
+          "fixed": false,
+          "path": "tbody > tr > td.left.name-cell"
+        },
+        {
+          "sel": "a",
+          "w": 225,
+          "h": 24,
+          "text": "Sky\n\t\t\t\tSKY",
+          "inNav": false,
+          "fixed": false,
+          "path": "tbody > tr > td.left.name-cell"
+        },
+        {
+          "sel": "a",
+          "w": 225,
+          "h": 24,
+          "text": "Pepe\n\t\t\t\tPEPE",
+          "inNav": false,
+          "fixed": false,
+          "path": "tbody > tr > td.left.name-cell"
+        },
+        {
+          "sel": "a",
+          "w": 225,
+          "h": 24,
+          "text": "HTX DAO\n\t\t\t\tHTX",
+          "inNav": false,
+          "fixed": false,
+          "path": "tbody > tr > td.left.name-cell"
+        },
+        {
+          "sel": "a",
+          "w": 225,
+          "h": 24,
+          "text": "USDD\n\t\t\t\tUSDD",
+          "inNav": false,
+          "fixed": false,
+          "path": "tbody > tr > td.left.name-cell"
+        },
+        {
+          "sel": "a",
+          "w": 225,
+          "h": 24,
+          "text": "Bitget Token\n\t\t\t\tBGB",
+          "inNav": false,
+          "fixed": false,
+          "path": "tbody > tr > td.left.name-cell"
+        },
+        {
+          "sel": "a",
+          "w": 225,
+          "h": 24,
+          "text": "Ethereum Classic\n\t\t\t\tETC",
+          "inNav": false,
+          "fixed": false,
+          "path": "tbody > tr > td.left.name-cell"
+        },
+        {
+          "sel": "a",
+          "w": 225,
+          "h": 24,
+          "text": "USDGO\n\t\t\t\tUSDGO",
+          "inNav": false,
+          "fixed": false,
+          "path": "tbody > tr > td.left.name-cell"
+        },
+        {
+          "sel": "a",
+          "w": 225,
+          "h": 24,
+          "text": "Falcon USD\n\t\t\t\tUSDF",
+          "inNav": false,
+          "fixed": false,
+          "path": "tbody > tr > td.left.name-cell"
+        },
+        {
+          "sel": "a",
+          "w": 225,
+          "h": 24,
+          "text": "BFUSD\n\t\t\t\tBFUSD",
+          "inNav": false,
+          "fixed": false,
+          "path": "tbody > tr > td.left.name-cell"
+        },
+        {
+          "sel": "a",
+          "w": 225,
+          "h": 24,
+          "text": "United Stables\n\t\t\t\tU",
+          "inNav": false,
+          "fixed": false,
+          "path": "tbody > tr > td.left.name-cell"
+        },
+        {
+          "sel": "a",
+          "w": 225,
+          "h": 24,
+          "text": "Bitway\n\t\t\t\tBTW",
+          "inNav": false,
+          "fixed": false,
+          "path": "tbody > tr > td.left.name-cell"
+        },
+        {
+          "sel": "a",
+          "w": 225,
+          "h": 24,
+          "text": "Spiko Amundi Overnight Swap Fund (EUR)\n\t",
+          "inNav": false,
+          "fixed": false,
+          "path": "tbody > tr > td.left.name-cell"
+        },
+        {
+          "sel": "a",
+          "w": 225,
+          "h": 24,
+          "text": "Lighter\n\t\t\t\tLIT",
+          "inNav": false,
+          "fixed": false,
+          "path": "tbody > tr > td.left.name-cell"
+        },
+        {
+          "sel": "a",
+          "w": 225,
+          "h": 24,
+          "text": "Venice Token\n\t\t\t\tVVV",
+          "inNav": false,
+          "fixed": false,
+          "path": "tbody > tr > td.left.name-cell"
+        },
+        {
+          "sel": "a",
+          "w": 225,
+          "h": 24,
+          "text": "Arbitrum\n\t\t\t\tARB",
+          "inNav": false,
+          "fixed": false,
+          "path": "tbody > tr > td.left.name-cell"
+        },
+        {
+          "sel": "a",
+          "w": 225,
+          "h": 24,
+          "text": "Pi Network\n\t\t\t\tPI",
+          "inNav": false,
+          "fixed": false,
+          "path": "tbody > tr > td.left.name-cell"
+        },
+        {
+          "sel": "a",
+          "w": 225,
+          "h": 24,
+          "text": "POL (ex-MATIC)\n\t\t\t\tPOL",
+          "inNav": false,
+          "fixed": false,
+          "path": "tbody > tr > td.left.name-cell"
+        },
+        {
+          "sel": "a",
+          "w": 225,
+          "h": 24,
+          "text": "Quant\n\t\t\t\tQNT",
+          "inNav": false,
+          "fixed": false,
+          "path": "tbody > tr > td.left.name-cell"
+        },
+        {
+          "sel": "a",
+          "w": 225,
+          "h": 24,
+          "text": "Kaspa\n\t\t\t\tKAS",
+          "inNav": false,
+          "fixed": false,
+          "path": "tbody > tr > td.left.name-cell"
+        },
+        {
+          "sel": "a",
+          "w": 225,
+          "h": 24,
+          "text": "Gate\n\t\t\t\tGT",
+          "inNav": false,
+          "fixed": false,
+          "path": "tbody > tr > td.left.name-cell"
+        },
+        {
+          "sel": "a",
+          "w": 225,
+          "h": 24,
+          "text": "Blockchain Capital\n\t\t\t\tBCAP",
+          "inNav": false,
+          "fixed": false,
+          "path": "tbody > tr > td.left.name-cell"
+        },
+        {
+          "sel": "a",
+          "w": 225,
+          "h": 24,
+          "text": "KuCoin\n\t\t\t\tKCS",
+          "inNav": false,
+          "fixed": false,
+          "path": "tbody > tr > td.left.name-cell"
+        },
+        {
+          "sel": "a",
+          "w": 225,
+          "h": 24,
+          "text": "Cosmos Hub\n\t\t\t\tATOM",
+          "inNav": false,
+          "fixed": false,
+          "path": "tbody > tr > td.left.name-cell"
+        },
+        {
+          "sel": "a",
+          "w": 225,
+          "h": 24,
+          "text": "Algorand\n\t\t\t\tALGO",
+          "inNav": false,
+          "fixed": false,
+          "path": "tbody > tr > td.left.name-cell"
+        },
+        {
+          "sel": "a",
+          "w": 225,
+          "h": 24,
+          "text": "Spiko EU T-Bills Money Market Fund\n\t\t\t\tE",
+          "inNav": false,
+          "fixed": false,
+          "path": "tbody > tr > td.left.name-cell"
+        },
+        {
+          "sel": "a",
+          "w": 225,
+          "h": 24,
+          "text": "JUST\n\t\t\t\tJST",
+          "inNav": false,
+          "fixed": false,
+          "path": "tbody > tr > td.left.name-cell"
+        },
+        {
+          "sel": "a",
+          "w": 225,
+          "h": 24,
+          "text": "NEXO\n\t\t\t\tNEXO",
+          "inNav": false,
+          "fixed": false,
+          "path": "tbody > tr > td.left.name-cell"
+        },
+        {
+          "sel": "a",
+          "w": 225,
+          "h": 24,
+          "text": "Dash\n\t\t\t\tDASH",
+          "inNav": false,
+          "fixed": false,
+          "path": "tbody > tr > td.left.name-cell"
+        },
+        {
+          "sel": "a",
+          "w": 225,
+          "h": 24,
+          "text": "Jupiter\n\t\t\t\tJUP",
+          "inNav": false,
+          "fixed": false,
+          "path": "tbody > tr > td.left.name-cell"
+        },
+        {
+          "sel": "a",
+          "w": 225,
+          "h": 24,
+          "text": "Render\n\t\t\t\tRENDER",
+          "inNav": false,
+          "fixed": false,
+          "path": "tbody > tr > td.left.name-cell"
+        },
+        {
+          "sel": "a",
+          "w": 225,
+          "h": 24,
+          "text": "Janus Henderson Anemoy Treasury Fund\n\t\t\t",
+          "inNav": false,
+          "fixed": false,
+          "path": "tbody > tr > td.left.name-cell"
+        },
+        {
+          "sel": "a",
+          "w": 225,
+          "h": 24,
+          "text": "Invesco Short Duration US Government Sec",
+          "inNav": false,
+          "fixed": false,
+          "path": "tbody > tr > td.left.name-cell"
+        },
+        {
+          "sel": "a",
+          "w": 225,
+          "h": 24,
+          "text": "​​Stable\n\t\t\t\tSTABLE",
+          "inNav": false,
+          "fixed": false,
+          "path": "tbody > tr > td.left.name-cell"
+        },
+        {
+          "sel": "a",
+          "w": 225,
+          "h": 24,
+          "text": "PancakeSwap\n\t\t\t\tCAKE",
+          "inNav": false,
+          "fixed": false,
+          "path": "tbody > tr > td.left.name-cell"
+        },
+        {
+          "sel": "a",
+          "w": 225,
+          "h": 24,
+          "text": "Janus Henderson Anemoy AAA CLO Fund\n\t\t\t\t",
+          "inNav": false,
+          "fixed": false,
+          "path": "tbody > tr > td.left.name-cell"
+        },
+        {
+          "sel": "a",
+          "w": 225,
+          "h": 24,
+          "text": "Filecoin\n\t\t\t\tFIL",
+          "inNav": false,
+          "fixed": false,
+          "path": "tbody > tr > td.left.name-cell"
+        },
+        {
+          "sel": "a",
+          "w": 225,
+          "h": 24,
+          "text": "GHO\n\t\t\t\tGHO",
+          "inNav": false,
+          "fixed": false,
+          "path": "tbody > tr > td.left.name-cell"
+        },
+        {
+          "sel": "a",
+          "w": 225,
+          "h": 24,
+          "text": "VeChain\n\t\t\t\tVET",
+          "inNav": false,
+          "fixed": false,
+          "path": "tbody > tr > td.left.name-cell"
+        },
+        {
+          "sel": "a",
+          "w": 225,
+          "h": 24,
+          "text": "Injective\n\t\t\t\tINJ",
+          "inNav": false,
+          "fixed": false,
+          "path": "tbody > tr > td.left.name-cell"
+        },
+        {
+          "sel": "a",
+          "w": 225,
+          "h": 24,
+          "text": "Official Trump\n\t\t\t\tTRUMP",
+          "inNav": false,
+          "fixed": false,
+          "path": "tbody > tr > td.left.name-cell"
+        },
+        {
+          "sel": "a",
+          "w": 225,
+          "h": 24,
+          "text": "Aerodrome Finance\n\t\t\t\tAERO",
+          "inNav": false,
+          "fixed": false,
+          "path": "tbody > tr > td.left.name-cell"
+        },
+        {
+          "sel": "a",
+          "w": 225,
+          "h": 24,
+          "text": "Beldex\n\t\t\t\tBDX",
+          "inNav": false,
+          "fixed": false,
+          "path": "tbody > tr > td.left.name-cell"
+        },
+        {
+          "sel": "a",
+          "w": 225,
+          "h": 24,
+          "text": "Ether.fi\n\t\t\t\tETHFI",
+          "inNav": false,
+          "fixed": false,
+          "path": "tbody > tr > td.left.name-cell"
+        },
+        {
+          "sel": "a",
+          "w": 225,
+          "h": 24,
+          "text": "Pons\n\t\t\t\tPONS",
+          "inNav": false,
+          "fixed": false,
+          "path": "tbody > tr > td.left.name-cell"
+        },
+        {
+          "sel": "a",
+          "w": 317,
+          "h": 19,
+          "text": "Solana Tokenization Roundup: August 2026",
+          "inNav": false,
+          "fixed": false,
+          "path": "article.nw-card > div.nw-body > h3.nw-title"
+        },
+        {
+          "sel": "a",
+          "w": 434,
+          "h": 19,
+          "text": "Revolut Starts EURR Rollout With Bridge ",
+          "inNav": false,
+          "fixed": false,
+          "path": "article.nw-card > div.nw-body > h3.nw-title"
+        },
+        {
+          "sel": "a",
+          "w": 411,
+          "h": 19,
+          "text": "SEC Crypto Custody Rewrite Enters White ",
+          "inNav": false,
+          "fixed": false,
+          "path": "article.nw-card > div.nw-body > h3.nw-title"
+        },
+        {
+          "sel": "a",
+          "w": 471,
+          "h": 19,
+          "text": "US Republicans: Crypto Clarity Act may f",
+          "inNav": false,
+          "fixed": false,
+          "path": "article.nw-card > div.nw-body > h3.nw-title"
+        },
+        {
+          "sel": "a",
+          "w": 420,
+          "h": 19,
+          "text": "Stellar Takes $490M Lead in Tokenized Go",
+          "inNav": false,
+          "fixed": false,
+          "path": "article.nw-card > div.nw-body > h3.nw-title"
+        }
+      ],
+      "canvases": [
+        {
+          "sel": "canvas#footer-bot-canvas",
+          "w": 90,
+          "h": 90,
+          "visible": true,
+          "touchAction": "pan-y",
+          "parentSel": "div.h-footer-avatar",
+          "parentTouchAction": "auto"
+        }
+      ],
+      "viewportMeta": "width=device-width, initial-scale=1.0, viewport-fit=cover",
+      "viewportFitCover": true,
+      "safeAreaRuleCount": 0,
+      "bottomBars": [
+        {
+          "sel": "th.left",
+          "h": 47,
+          "paddingBottom": "12px",
+          "bottom": "auto",
+          "hasSafeAreaRule": false
+        },
+        {
+          "sel": "td.left.name-cell",
+          "h": 49,
+          "paddingBottom": "12px",
+          "bottom": "auto",
+          "hasSafeAreaRule": false
+        },
+        {
+          "sel": "td.left.name-cell",
+          "h": 49,
+          "paddingBottom": "12px",
+          "bottom": "auto",
+          "hasSafeAreaRule": false
+        },
+        {
+          "sel": "td.left.name-cell",
+          "h": 49,
+          "paddingBottom": "12px",
+          "bottom": "auto",
+          "hasSafeAreaRule": false
+        },
+        {
+          "sel": "td.left.name-cell",
+          "h": 49,
+          "paddingBottom": "12px",
+          "bottom": "auto",
+          "hasSafeAreaRule": false
+        },
+        {
+          "sel": "td.left.name-cell",
+          "h": 49,
+          "paddingBottom": "12px",
+          "bottom": "auto",
+          "hasSafeAreaRule": false
+        },
+        {
+          "sel": "td.left.name-cell",
+          "h": 49,
+          "paddingBottom": "12px",
+          "bottom": "auto",
+          "hasSafeAreaRule": false
+        },
+        {
+          "sel": "td.left.name-cell",
+          "h": 49,
+          "paddingBottom": "12px",
+          "bottom": "auto",
+          "hasSafeAreaRule": false
+        },
+        {
+          "sel": "td.left.name-cell",
+          "h": 49,
+          "paddingBottom": "12px",
+          "bottom": "auto",
+          "hasSafeAreaRule": false
+        },
+        {
+          "sel": "td.left.name-cell",
+          "h": 49,
+          "paddingBottom": "12px",
+          "bottom": "auto",
+          "hasSafeAreaRule": false
+        },
+        {
+          "sel": "td.left.name-cell",
+          "h": 49,
+          "paddingBottom": "12px",
+          "bottom": "auto",
+          "hasSafeAreaRule": false
+        },
+        {
+          "sel": "td.left.name-cell",
+          "h": 49,
+          "paddingBottom": "12px",
+          "bottom": "auto",
+          "hasSafeAreaRule": false
+        },
+        {
+          "sel": "td.left.name-cell",
+          "h": 49,
+          "paddingBottom": "12px",
+          "bottom": "auto",
+          "hasSafeAreaRule": false
+        },
+        {
+          "sel": "td.left.name-cell",
+          "h": 49,
+          "paddingBottom": "12px",
+          "bottom": "auto",
+          "hasSafeAreaRule": false
+        },
+        {
+          "sel": "td.left.name-cell",
+          "h": 49,
+          "paddingBottom": "12px",
+          "bottom": "auto",
+          "hasSafeAreaRule": false
+        },
+        {
+          "sel": "td.left.name-cell",
+          "h": 49,
+          "paddingBottom": "12px",
+          "bottom": "auto",
+          "hasSafeAreaRule": false
+        },
+        {
+          "sel": "td.left.name-cell",
+          "h": 49,
+          "paddingBottom": "12px",
+          "bottom": "auto",
+          "hasSafeAreaRule": false
+        },
+        {
+          "sel": "td.left.name-cell",
+          "h": 49,
+          "paddingBottom": "12px",
+          "bottom": "auto",
+          "hasSafeAreaRule": false
+        },
+        {
+          "sel": "td.left.name-cell",
+          "h": 49,
+          "paddingBottom": "12px",
+          "bottom": "auto",
+          "hasSafeAreaRule": false
+        },
+        {
+          "sel": "td.left.name-cell",
+          "h": 49,
+          "paddingBottom": "12px",
+          "bottom": "auto",
+          "hasSafeAreaRule": false
+        },
+        {
+          "sel": "td.left.name-cell",
+          "h": 49,
+          "paddingBottom": "12px",
+          "bottom": "auto",
+          "hasSafeAreaRule": false
+        },
+        {
+          "sel": "td.left.name-cell",
+          "h": 49,
+          "paddingBottom": "12px",
+          "bottom": "auto",
+          "hasSafeAreaRule": false
+        },
+        {
+          "sel": "td.left.name-cell",
+          "h": 49,
+          "paddingBottom": "12px",
+          "bottom": "auto",
+          "hasSafeAreaRule": false
+        },
+        {
+          "sel": "td.left.name-cell",
+          "h": 49,
+          "paddingBottom": "12px",
+          "bottom": "auto",
+          "hasSafeAreaRule": false
+        },
+        {
+          "sel": "td.left.name-cell",
+          "h": 49,
+          "paddingBottom": "12px",
+          "bottom": "auto",
+          "hasSafeAreaRule": false
+        },
+        {
+          "sel": "td.left.name-cell",
+          "h": 49,
+          "paddingBottom": "12px",
+          "bottom": "auto",
+          "hasSafeAreaRule": false
+        },
+        {
+          "sel": "td.left.name-cell",
+          "h": 49,
+          "paddingBottom": "12px",
+          "bottom": "auto",
+          "hasSafeAreaRule": false
+        },
+        {
+          "sel": "td.left.name-cell",
+          "h": 49,
+          "paddingBottom": "12px",
+          "bottom": "auto",
+          "hasSafeAreaRule": false
+        },
+        {
+          "sel": "td.left.name-cell",
+          "h": 49,
+          "paddingBottom": "12px",
+          "bottom": "auto",
+          "hasSafeAreaRule": false
+        },
+        {
+          "sel": "td.left.name-cell",
+          "h": 49,
+          "paddingBottom": "12px",
+          "bottom": "auto",
+          "hasSafeAreaRule": false
+        },
+        {
+          "sel": "td.left.name-cell",
+          "h": 49,
+          "paddingBottom": "12px",
+          "bottom": "auto",
+          "hasSafeAreaRule": false
+        },
+        {
+          "sel": "td.left.name-cell",
+          "h": 49,
+          "paddingBottom": "12px",
+          "bottom": "auto",
+          "hasSafeAreaRule": false
+        },
+        {
+          "sel": "td.left.name-cell",
+          "h": 49,
+          "paddingBottom": "12px",
+          "bottom": "auto",
+          "hasSafeAreaRule": false
+        },
+        {
+          "sel": "td.left.name-cell",
+          "h": 49,
+          "paddingBottom": "12px",
+          "bottom": "auto",
+          "hasSafeAreaRule": false
+        },
+        {
+          "sel": "td.left.name-cell",
+          "h": 49,
+          "paddingBottom": "12px",
+          "bottom": "auto",
+          "hasSafeAreaRule": false
+        },
+        {
+          "sel": "td.left.name-cell",
+          "h": 49,
+          "paddingBottom": "12px",
+          "bottom": "auto",
+          "hasSafeAreaRule": false
+        },
+        {
+          "sel": "td.left.name-cell",
+          "h": 49,
+          "paddingBottom": "12px",
+          "bottom": "auto",
+          "hasSafeAreaRule": false
+        },
+        {
+          "sel": "td.left.name-cell",
+          "h": 49,
+          "paddingBottom": "12px",
+          "bottom": "auto",
+          "hasSafeAreaRule": false
+        },
+        {
+          "sel": "td.left.name-cell",
+          "h": 49,
+          "paddingBottom": "12px",
+          "bottom": "auto",
+          "hasSafeAreaRule": false
+        },
+        {
+          "sel": "td.left.name-cell",
+          "h": 49,
+          "paddingBottom": "12px",
+          "bottom": "auto",
+          "hasSafeAreaRule": false
+        },
+        {
+          "sel": "td.left.name-cell",
+          "h": 49,
+          "paddingBottom": "12px",
+          "bottom": "auto",
+          "hasSafeAreaRule": false
+        },
+        {
+          "sel": "td.left.name-cell",
+          "h": 49,
+          "paddingBottom": "12px",
+          "bottom": "auto",
+          "hasSafeAreaRule": false
+        },
+        {
+          "sel": "td.left.name-cell",
+          "h": 49,
+          "paddingBottom": "12px",
+          "bottom": "auto",
+          "hasSafeAreaRule": false
+        },
+        {
+          "sel": "td.left.name-cell",
+          "h": 49,
+          "paddingBottom": "12px",
+          "bottom": "auto",
+          "hasSafeAreaRule": false
+        },
+        {
+          "sel": "td.left.name-cell",
+          "h": 49,
+          "paddingBottom": "12px",
+          "bottom": "auto",
+          "hasSafeAreaRule": false
+        },
+        {
+          "sel": "td.left.name-cell",
+          "h": 49,
+          "paddingBottom": "12px",
+          "bottom": "auto",
+          "hasSafeAreaRule": false
+        },
+        {
+          "sel": "td.left.name-cell",
+          "h": 49,
+          "paddingBottom": "12px",
+          "bottom": "auto",
+          "hasSafeAreaRule": false
+        },
+        {
+          "sel": "td.left.name-cell",
+          "h": 49,
+          "paddingBottom": "12px",
+          "bottom": "auto",
+          "hasSafeAreaRule": false
+        },
+        {
+          "sel": "td.left.name-cell",
+          "h": 49,
+          "paddingBottom": "12px",
+          "bottom": "auto",
+          "hasSafeAreaRule": false
+        },
+        {
+          "sel": "td.left.name-cell",
+          "h": 49,
+          "paddingBottom": "12px",
+          "bottom": "auto",
+          "hasSafeAreaRule": false
+        },
+        {
+          "sel": "td.left.name-cell",
+          "h": 49,
+          "paddingBottom": "12px",
+          "bottom": "auto",
+          "hasSafeAreaRule": false
+        },
+        {
+          "sel": "td.left.name-cell",
+          "h": 49,
+          "paddingBottom": "12px",
+          "bottom": "auto",
+          "hasSafeAreaRule": false
+        },
+        {
+          "sel": "td.left.name-cell",
+          "h": 49,
+          "paddingBottom": "12px",
+          "bottom": "auto",
+          "hasSafeAreaRule": false
+        },
+        {
+          "sel": "td.left.name-cell",
+          "h": 49,
+          "paddingBottom": "12px",
+          "bottom": "auto",
+          "hasSafeAreaRule": false
+        },
+        {
+          "sel": "td.left.name-cell",
+          "h": 49,
+          "paddingBottom": "12px",
+          "bottom": "auto",
+          "hasSafeAreaRule": false
+        },
+        {
+          "sel": "td.left.name-cell",
+          "h": 49,
+          "paddingBottom": "12px",
+          "bottom": "auto",
+          "hasSafeAreaRule": false
+        },
+        {
+          "sel": "td.left.name-cell",
+          "h": 49,
+          "paddingBottom": "12px",
+          "bottom": "auto",
+          "hasSafeAreaRule": false
+        },
+        {
+          "sel": "td.left.name-cell",
+          "h": 49,
+          "paddingBottom": "12px",
+          "bottom": "auto",
+          "hasSafeAreaRule": false
+        },
+        {
+          "sel": "td.left.name-cell",
+          "h": 49,
+          "paddingBottom": "12px",
+          "bottom": "auto",
+          "hasSafeAreaRule": false
+        },
+        {
+          "sel": "td.left.name-cell",
+          "h": 49,
+          "paddingBottom": "12px",
+          "bottom": "auto",
+          "hasSafeAreaRule": false
+        },
+        {
+          "sel": "td.left.name-cell",
+          "h": 49,
+          "paddingBottom": "12px",
+          "bottom": "auto",
+          "hasSafeAreaRule": false
+        },
+        {
+          "sel": "td.left.name-cell",
+          "h": 49,
+          "paddingBottom": "12px",
+          "bottom": "auto",
+          "hasSafeAreaRule": false
+        },
+        {
+          "sel": "td.left.name-cell",
+          "h": 49,
+          "paddingBottom": "12px",
+          "bottom": "auto",
+          "hasSafeAreaRule": false
+        },
+        {
+          "sel": "td.left.name-cell",
+          "h": 49,
+          "paddingBottom": "12px",
+          "bottom": "auto",
+          "hasSafeAreaRule": false
+        },
+        {
+          "sel": "td.left.name-cell",
+          "h": 49,
+          "paddingBottom": "12px",
+          "bottom": "auto",
+          "hasSafeAreaRule": false
+        },
+        {
+          "sel": "td.left.name-cell",
+          "h": 49,
+          "paddingBottom": "12px",
+          "bottom": "auto",
+          "hasSafeAreaRule": false
+        },
+        {
+          "sel": "td.left.name-cell",
+          "h": 49,
+          "paddingBottom": "12px",
+          "bottom": "auto",
+          "hasSafeAreaRule": false
+        },
+        {
+          "sel": "td.left.name-cell",
+          "h": 49,
+          "paddingBottom": "12px",
+          "bottom": "auto",
+          "hasSafeAreaRule": false
+        },
+        {
+          "sel": "td.left.name-cell",
+          "h": 49,
+          "paddingBottom": "12px",
+          "bottom": "auto",
+          "hasSafeAreaRule": false
+        },
+        {
+          "sel": "td.left.name-cell",
+          "h": 49,
+          "paddingBottom": "12px",
+          "bottom": "auto",
+          "hasSafeAreaRule": false
+        },
+        {
+          "sel": "td.left.name-cell",
+          "h": 49,
+          "paddingBottom": "12px",
+          "bottom": "auto",
+          "hasSafeAreaRule": false
+        },
+        {
+          "sel": "td.left.name-cell",
+          "h": 49,
+          "paddingBottom": "12px",
+          "bottom": "auto",
+          "hasSafeAreaRule": false
+        },
+        {
+          "sel": "td.left.name-cell",
+          "h": 49,
+          "paddingBottom": "12px",
+          "bottom": "auto",
+          "hasSafeAreaRule": false
+        },
+        {
+          "sel": "td.left.name-cell",
+          "h": 49,
+          "paddingBottom": "12px",
+          "bottom": "auto",
+          "hasSafeAreaRule": false
+        },
+        {
+          "sel": "td.left.name-cell",
+          "h": 49,
+          "paddingBottom": "12px",
+          "bottom": "auto",
+          "hasSafeAreaRule": false
+        },
+        {
+          "sel": "td.left.name-cell",
+          "h": 49,
+          "paddingBottom": "12px",
+          "bottom": "auto",
+          "hasSafeAreaRule": false
+        },
+        {
+          "sel": "td.left.name-cell",
+          "h": 49,
+          "paddingBottom": "12px",
+          "bottom": "auto",
+          "hasSafeAreaRule": false
+        },
+        {
+          "sel": "td.left.name-cell",
+          "h": 49,
+          "paddingBottom": "12px",
+          "bottom": "auto",
+          "hasSafeAreaRule": false
+        },
+        {
+          "sel": "td.left.name-cell",
+          "h": 49,
+          "paddingBottom": "12px",
+          "bottom": "auto",
+          "hasSafeAreaRule": false
+        },
+        {
+          "sel": "td.left.name-cell",
+          "h": 49,
+          "paddingBottom": "12px",
+          "bottom": "auto",
+          "hasSafeAreaRule": false
+        },
+        {
+          "sel": "td.left.name-cell",
+          "h": 49,
+          "paddingBottom": "12px",
+          "bottom": "auto",
+          "hasSafeAreaRule": false
+        },
+        {
+          "sel": "td.left.name-cell",
+          "h": 49,
+          "paddingBottom": "12px",
+          "bottom": "auto",
+          "hasSafeAreaRule": false
+        },
+        {
+          "sel": "td.left.name-cell",
+          "h": 49,
+          "paddingBottom": "12px",
+          "bottom": "auto",
+          "hasSafeAreaRule": false
+        },
+        {
+          "sel": "td.left.name-cell",
+          "h": 49,
+          "paddingBottom": "12px",
+          "bottom": "auto",
+          "hasSafeAreaRule": false
+        },
+        {
+          "sel": "td.left.name-cell",
+          "h": 49,
+          "paddingBottom": "12px",
+          "bottom": "auto",
+          "hasSafeAreaRule": false
+        },
+        {
+          "sel": "td.left.name-cell",
+          "h": 49,
+          "paddingBottom": "12px",
+          "bottom": "auto",
+          "hasSafeAreaRule": false
+        },
+        {
+          "sel": "td.left.name-cell",
+          "h": 49,
+          "paddingBottom": "12px",
+          "bottom": "auto",
+          "hasSafeAreaRule": false
+        },
+        {
+          "sel": "td.left.name-cell",
+          "h": 49,
+          "paddingBottom": "12px",
+          "bottom": "auto",
+          "hasSafeAreaRule": false
+        },
+        {
+          "sel": "td.left.name-cell",
+          "h": 49,
+          "paddingBottom": "12px",
+          "bottom": "auto",
+          "hasSafeAreaRule": false
+        },
+        {
+          "sel": "td.left.name-cell",
+          "h": 49,
+          "paddingBottom": "12px",
+          "bottom": "auto",
+          "hasSafeAreaRule": false
+        },
+        {
+          "sel": "td.left.name-cell",
+          "h": 49,
+          "paddingBottom": "12px",
+          "bottom": "auto",
+          "hasSafeAreaRule": false
+        },
+        {
+          "sel": "td.left.name-cell",
+          "h": 49,
+          "paddingBottom": "12px",
+          "bottom": "auto",
+          "hasSafeAreaRule": false
+        },
+        {
+          "sel": "td.left.name-cell",
+          "h": 49,
+          "paddingBottom": "12px",
+          "bottom": "auto",
+          "hasSafeAreaRule": false
+        },
+        {
+          "sel": "td.left.name-cell",
+          "h": 49,
+          "paddingBottom": "12px",
+          "bottom": "auto",
+          "hasSafeAreaRule": false
+        },
+        {
+          "sel": "td.left.name-cell",
+          "h": 49,
+          "paddingBottom": "12px",
+          "bottom": "auto",
+          "hasSafeAreaRule": false
+        },
+        {
+          "sel": "td.left.name-cell",
+          "h": 49,
+          "paddingBottom": "12px",
+          "bottom": "auto",
+          "hasSafeAreaRule": false
+        },
+        {
+          "sel": "td.left.name-cell",
+          "h": 49,
+          "paddingBottom": "12px",
+          "bottom": "auto",
+          "hasSafeAreaRule": false
+        },
+        {
+          "sel": "td.left.name-cell",
+          "h": 49,
+          "paddingBottom": "12px",
+          "bottom": "auto",
+          "hasSafeAreaRule": false
+        },
+        {
+          "sel": "td.left.name-cell",
+          "h": 49,
+          "paddingBottom": "12px",
+          "bottom": "auto",
+          "hasSafeAreaRule": false
+        },
+        {
+          "sel": "td.left.name-cell",
+          "h": 49,
+          "paddingBottom": "12px",
+          "bottom": "auto",
+          "hasSafeAreaRule": false
+        },
+        {
+          "sel": "td.left.name-cell",
+          "h": 49,
+          "paddingBottom": "12px",
+          "bottom": "auto",
+          "hasSafeAreaRule": false
+        }
+      ],
+      "overflowX": 0,
+      "innerWidth": 393,
+      "path": "/markets"
+    },
+    {
+      "url": "https://three.ws/news",
+      "status": 200,
+      "error": null,
+      "gesture": null,
+      "title": "News & Announcements — three.ws",
+      "overflowXStyle": "clip",
+      "canScrollX": false,
+      "checked": 122,
+      "inlineExempt": 5,
+      "smallTargets": [
+        {
+          "sel": "a",
+          "w": 38,
+          "h": 26,
+          "text": "News",
+          "inNav": true,
+          "fixed": false,
+          "path": "body > header.topbar > nav"
+        },
+        {
+          "sel": "a",
+          "w": 58,
+          "h": 26,
+          "text": "Discover",
+          "inNav": true,
+          "fixed": false,
+          "path": "body > header.topbar > nav"
+        },
+        {
+          "sel": "a",
+          "w": 82,
+          "h": 26,
+          "text": "Marketplace",
+          "inNav": true,
+          "fixed": false,
+          "path": "body > header.topbar > nav"
+        },
+        {
+          "sel": "a.subscribe",
+          "w": 165,
+          "h": 42,
+          "text": "Subscribe via RSS →",
+          "inNav": false,
+          "fixed": false,
+          "path": "body > section.listing > div.listing-intro"
+        }
+      ],
+      "canvases": [],
+      "viewportMeta": "width=device-width, initial-scale=1, viewport-fit=cover",
+      "viewportFitCover": true,
+      "safeAreaRuleCount": 0,
+      "bottomBars": [],
+      "overflowX": 0,
+      "innerWidth": 393,
+      "path": "/news"
+    },
+    {
+      "url": "https://three.ws/marketplace",
+      "status": 200,
+      "error": null,
+      "gesture": null,
+      "title": "Agent Marketplace · three.ws",
+      "overflowXStyle": "clip",
+      "canScrollX": false,
+      "checked": 1654,
+      "inlineExempt": 0,
+      "smallTargets": [],
+      "canvases": [
+        {
+          "sel": "canvas#market-lobby-canvas.market-lobby-canvas",
+          "w": 0,
+          "h": 0,
+          "visible": false,
+          "touchAction": "auto",
+          "parentSel": "div#market-lobby-overlay.market-lobby-overlay",
+          "parentTouchAction": "auto"
+        },
+        {
+          "sel": "canvas#footer-bot-canvas",
+          "w": 90,
+          "h": 90,
+          "visible": true,
+          "touchAction": "pan-y",
+          "parentSel": "div.h-footer-avatar",
+          "parentTouchAction": "auto"
+        }
+      ],
+      "viewportMeta": "width=device-width, initial-scale=1.0, viewport-fit=cover",
+      "viewportFitCover": true,
+      "safeAreaRuleCount": 0,
+      "bottomBars": [],
+      "overflowX": 0,
+      "innerWidth": 393,
+      "path": "/marketplace"
+    },
+    {
+      "url": "https://three.ws/coin/FeMbDoX7R1Psc4GEcvJdsbNbZA3bfztcyDCatJVJpump",
+      "status": 200,
+      "error": null,
+      "gesture": null,
+      "title": "Coin · three.ws",
+      "overflowXStyle": "clip",
+      "canScrollX": false,
+      "checked": 86,
+      "inlineExempt": 0,
+      "smallTargets": [
+        {
+          "sel": "a",
+          "w": 38,
+          "h": 22,
+          "text": "Home",
+          "inNav": true,
+          "fixed": false,
+          "path": "body > main#cv-main.cv-container > nav.cv-crumbs"
+        },
+        {
+          "sel": "a",
+          "w": 54,
+          "h": 22,
+          "text": "Markets",
+          "inNav": true,
+          "fixed": false,
+          "path": "body > main#cv-main.cv-container > nav.cv-crumbs"
+        },
+        {
+          "sel": "button.cv-range-btn",
+          "w": 48,
+          "h": 27,
+          "text": "24H",
+          "inNav": false,
+          "fixed": false,
+          "path": "div.cv-chart-bar > div.cv-chart-controls > div.cv-ranges"
+        },
+        {
+          "sel": "button.cv-range-btn",
+          "w": 40,
+          "h": 27,
+          "text": "7D",
+          "inNav": false,
+          "fixed": false,
+          "path": "div.cv-chart-bar > div.cv-chart-controls > div.cv-ranges"
+        },
+        {
+          "sel": "button.cv-range-btn",
+          "w": 49,
+          "h": 27,
+          "text": "30D",
+          "inNav": false,
+          "fixed": false,
+          "path": "div.cv-chart-bar > div.cv-chart-controls > div.cv-ranges"
+        },
+        {
+          "sel": "button.cv-range-btn",
+          "w": 49,
+          "h": 27,
+          "text": "90D",
+          "inNav": false,
+          "fixed": false,
+          "path": "div.cv-chart-bar > div.cv-chart-controls > div.cv-ranges"
+        },
+        {
+          "sel": "button.cv-range-btn",
+          "w": 37,
+          "h": 27,
+          "text": "1Y",
+          "inNav": false,
+          "fixed": false,
+          "path": "div.cv-chart-bar > div.cv-chart-controls > div.cv-ranges"
+        },
+        {
+          "sel": "button.cv-range-btn",
+          "w": 87,
+          "h": 27,
+          "text": "CoinGecko",
+          "inNav": false,
+          "fixed": false,
+          "path": "div.cv-chart-bar > div.cv-chart-controls > div.cv-ranges.cv-chart-modes"
+        },
+        {
+          "sel": "button.cv-range-btn",
+          "w": 96,
+          "h": 27,
+          "text": "TradingView",
+          "inNav": false,
+          "fixed": false,
+          "path": "div.cv-chart-bar > div.cv-chart-controls > div.cv-ranges.cv-chart-modes"
+        },
+        {
+          "sel": "button.cv-range-btn",
+          "w": 100,
+          "h": 27,
+          "text": "DexScreener",
+          "inNav": false,
+          "fixed": false,
+          "path": "div.cv-chart-bar > div.cv-chart-controls > div.cv-ranges.cv-chart-modes"
+        },
+        {
+          "sel": "button.cv-range-btn",
+          "w": 110,
+          "h": 27,
+          "text": "GeckoTerminal",
+          "inNav": false,
+          "fixed": false,
+          "path": "div.cv-chart-bar > div.cv-chart-controls > div.cv-ranges.cv-chart-modes"
+        },
+        {
+          "sel": "a.cv-mkt-x",
+          "w": 104,
+          "h": 22,
+          "text": "LBank",
+          "inNav": false,
+          "fixed": false,
+          "path": "tbody > tr > td.left"
+        },
+        {
+          "sel": "a.cv-mkt-pair",
+          "w": 103,
+          "h": 17,
+          "text": "THREE/USDT ↗",
+          "inNav": false,
+          "fixed": false,
+          "path": "tbody > tr > td.left"
+        },
+        {
+          "sel": "a.cv-mkt-x",
+          "w": 104,
+          "h": 22,
+          "text": "PumpSwap",
+          "inNav": false,
+          "fixed": false,
+          "path": "tbody > tr > td.left"
+        },
+        {
+          "sel": "a.cv-mkt-pair",
+          "w": 698,
+          "h": 17,
+          "text": "FEMBDOX7R1PSC4GECVJDSBNBZA3BFZTCYDCATJVJ",
+          "inNav": false,
+          "fixed": false,
+          "path": "tbody > tr > td.left"
+        },
+        {
+          "sel": "a.cv-mkt-x",
+          "w": 104,
+          "h": 22,
+          "text": "KCEX",
+          "inNav": false,
+          "fixed": false,
+          "path": "tbody > tr > td.left"
+        },
+        {
+          "sel": "a.cv-mkt-pair",
+          "w": 103,
+          "h": 17,
+          "text": "THREE/USDT ↗",
+          "inNav": false,
+          "fixed": false,
+          "path": "tbody > tr > td.left"
+        },
+        {
+          "sel": "a.cv-mkt-x",
+          "w": 104,
+          "h": 22,
+          "text": "Orca",
+          "inNav": false,
+          "fixed": false,
+          "path": "tbody > tr > td.left"
+        },
+        {
+          "sel": "a.cv-mkt-pair",
+          "w": 698,
+          "h": 17,
+          "text": "FEMBDOX7R1PSC4GECVJDSBNBZA3BFZTCYDCATJVJ",
+          "inNav": false,
+          "fixed": false,
+          "path": "tbody > tr > td.left"
+        },
+        {
+          "sel": "a.cv-mkt-x",
+          "w": 104,
+          "h": 22,
+          "text": "Meteora",
+          "inNav": false,
+          "fixed": false,
+          "path": "tbody > tr.cv-stale > td.left"
+        },
+        {
+          "sel": "a.cv-pill",
+          "w": 95,
+          "h": 36,
+          "text": "Website ↗",
+          "inNav": false,
+          "fixed": false,
+          "path": "main#cv-main.cv-container > section#cv-links.cv-section > div.cv-pills"
+        },
+        {
+          "sel": "a.cv-pill",
+          "w": 87,
+          "h": 36,
+          "text": "Twitter ↗",
+          "inNav": false,
+          "fixed": false,
+          "path": "main#cv-main.cv-container > section#cv-links.cv-section > div.cv-pills"
+        },
+        {
+          "sel": "a.cv-pill",
+          "w": 87,
+          "h": 36,
+          "text": "GitHub ↗",
+          "inNav": false,
+          "fixed": false,
+          "path": "main#cv-main.cv-container > section#cv-links.cv-section > div.cv-pills"
+        },
+        {
+          "sel": "a.cv-pill",
+          "w": 119,
+          "h": 36,
+          "text": "Whitepaper ↗",
+          "inNav": false,
+          "fixed": false,
+          "path": "main#cv-main.cv-container > section#cv-links.cv-section > div.cv-pills"
+        },
+        {
+          "sel": "a.cv-pill",
+          "w": 82,
+          "h": 36,
+          "text": "Forum ↗",
+          "inNav": false,
+          "fixed": false,
+          "path": "main#cv-main.cv-container > section#cv-links.cv-section > div.cv-pills"
+        },
+        {
+          "sel": "a.cv-pill",
+          "w": 96,
+          "h": 36,
+          "text": "Explorer ↗",
+          "inNav": false,
+          "fixed": false,
+          "path": "main#cv-main.cv-container > section#cv-links.cv-section > div.cv-pills"
+        },
+        {
+          "sel": "a.cv-pill",
+          "w": 96,
+          "h": 36,
+          "text": "Explorer ↗",
+          "inNav": false,
+          "fixed": false,
+          "path": "main#cv-main.cv-container > section#cv-links.cv-section > div.cv-pills"
+        },
+        {
+          "sel": "button",
+          "w": 38,
+          "h": 19,
+          "text": "Copy solana contract address",
+          "inNav": false,
+          "fixed": false,
+          "path": "section#cv-links.cv-section > div.cv-pills > span.cv-contract"
+        },
+        {
+          "sel": "a.cv-pill",
+          "w": 202,
+          "h": 36,
+          "text": "Analyze with Alpha Copilot",
+          "inNav": false,
+          "fixed": false,
+          "path": "main#cv-main.cv-container > section#cv-links.cv-section > div.cv-pills"
+        },
+        {
+          "sel": "a.cv-pill",
+          "w": 179,
+          "h": 36,
+          "text": "Live trades on three.ws",
+          "inNav": false,
+          "fixed": false,
+          "path": "main#cv-main.cv-container > section#cv-links.cv-section > div.cv-pills"
+        }
+      ],
+      "canvases": [
+        {
+          "sel": "canvas#footer-bot-canvas",
+          "w": 90,
+          "h": 90,
+          "visible": true,
+          "touchAction": "pan-y",
+          "parentSel": "div.h-footer-avatar",
+          "parentTouchAction": "auto"
+        },
+        {
+          "sel": "canvas.walk-companion-canvas",
+          "w": 148,
+          "h": 208,
+          "visible": false,
+          "touchAction": "pan-y",
+          "parentSel": "div.walk-companion.is-loading.is-in",
+          "parentTouchAction": "auto"
+        },
+        {
+          "sel": "canvas",
+          "w": 0,
+          "h": 0,
+          "visible": false,
+          "touchAction": "auto",
+          "parentSel": "div.walk-trail-layer",
+          "parentTouchAction": "auto"
+        }
+      ],
+      "viewportMeta": "width=device-width, initial-scale=1.0, viewport-fit=cover",
+      "viewportFitCover": true,
+      "safeAreaRuleCount": 0,
+      "bottomBars": [
+        {
+          "sel": "th.left",
+          "h": 47,
+          "paddingBottom": "12px",
+          "bottom": "auto",
+          "hasSafeAreaRule": false
+        }
+      ],
+      "overflowX": 0,
+      "innerWidth": 393,
+      "path": "/coin/FeMbDoX7R1Psc4GEcvJdsbNbZA3bfztcyDCatJVJpump"
+    },
+    {
+      "url": "https://three.ws/dashboard",
+      "status": 200,
+      "error": null,
+      "gesture": {
+        "control": 165,
+        "canvases": [
+          {
+            "sel": "canvas#avatar-canvas",
+            "touchAction": "pan-y",
+            "scrolled": 165,
+            "headroom": 1470,
+            "swallowed": false
+          }
+        ]
+      },
+      "title": "Sign in · three.ws",
+      "overflowXStyle": "clip",
+      "canScrollX": false,
+      "checked": 36,
+      "inlineExempt": 3,
+      "smallTargets": [
+        {
+          "sel": "a.skip-link",
+          "w": 1,
+          "h": 44,
+          "text": "Skip to main content",
+          "inNav": false,
+          "fixed": false,
+          "path": "html.tws-lite > body"
+        },
+        {
+          "sel": "input#remember",
+          "w": 18,
+          "h": 18,
+          "text": "",
+          "inNav": false,
+          "fixed": false,
+          "path": "form#f.card > div.remember-row > label"
+        },
+        {
+          "sel": "button.tws-disc-x",
+          "w": 43,
+          "h": 43,
+          "text": "Dismiss suggestion",
+          "inNav": false,
+          "fixed": false,
+          "path": "body > div#tws-corner-stack > div.tws-disc-card.tws-corner-item.is-in"
+        },
+        {
+          "sel": "a.tws-disc-cta.tws-disc-cta--primary",
+          "w": 300,
+          "h": 43,
+          "text": "Try it",
+          "inNav": false,
+          "fixed": false,
+          "path": "div#tws-corner-stack > div.tws-disc-card.tws-corner-item.is-in > div.tws-disc-actions"
+        }
+      ],
+      "canvases": [
+        {
+          "sel": "canvas#avatar-canvas",
+          "w": 393,
+          "h": 727,
+          "visible": true,
+          "touchAction": "pan-y",
+          "parentSel": "body",
+          "parentTouchAction": "auto"
+        }
+      ],
+      "viewportMeta": "width=device-width, initial-scale=1, viewport-fit=cover",
+      "viewportFitCover": true,
+      "safeAreaRuleCount": 0,
+      "bottomBars": [],
+      "overflowX": 0,
+      "innerWidth": 393,
+      "path": "/dashboard"
+    },
+    {
+      "url": "https://three.ws/walk",
+      "status": 200,
+      "error": null,
+      "gesture": null,
+      "title": "Walk: your avatar walks anywhere on the web · three.ws",
+      "overflowXStyle": "clip",
+      "canScrollX": false,
+      "checked": 63,
+      "inlineExempt": 0,
+      "smallTargets": [
+        {
+          "sel": "a.h-skip-link",
+          "w": 201,
+          "h": 36,
+          "text": "Skip to main content",
+          "inNav": false,
+          "fixed": true,
+          "path": "html.tws-lite > body.walk-landing-page"
+        }
+      ],
+      "canvases": [
+        {
+          "sel": "canvas#footer-bot-canvas",
+          "w": 90,
+          "h": 90,
+          "visible": true,
+          "touchAction": "pan-y",
+          "parentSel": "div.h-footer-avatar",
+          "parentTouchAction": "auto"
+        }
+      ],
+      "viewportMeta": "width=device-width, initial-scale=1.0, viewport-fit=cover",
+      "viewportFitCover": true,
+      "safeAreaRuleCount": 0,
+      "bottomBars": [],
+      "overflowX": 0,
+      "innerWidth": 393,
+      "path": "/walk"
+    },
+    {
+      "url": "https://three.ws/irl",
+      "status": 200,
+      "error": null,
+      "gesture": {
+        "control": 0,
+        "canvases": [
+          {
+            "sel": "canvas#irl-canvas",
+            "touchAction": "none",
+            "scrolled": 0,
+            "headroom": 0,
+            "swallowed": false
+          }
+        ]
+      },
+      "title": "Your Avatar IRL · three.ws",
+      "overflowXStyle": "hidden",
+      "canScrollX": false,
+      "checked": 59,
+      "inlineExempt": 0,
+      "smallTargets": [
+        {
+          "sel": "input#irl-consent-dontshow",
+          "w": 22,
+          "h": 22,
+          "text": "",
+          "inNav": false,
+          "fixed": false,
+          "path": "body > div#irl-consent-sheet > label.irl-consent-dontshow"
+        },
+        {
+          "sel": "a.irl-ob-learn",
+          "w": 142,
+          "h": 32,
+          "text": "How location works ↗",
+          "inNav": false,
+          "fixed": false,
+          "path": "div#irl-onboard.irl-onboard.is-open > div.irl-ob-panel > div.irl-ob-head"
+        },
+        {
+          "sel": "button.tws-es-btn.tws-es-btn--primary",
+          "w": 280,
+          "h": 44,
+          "text": "Enable Camera",
+          "inNav": false,
+          "fixed": false,
+          "path": "div.irl-ob-card > div.tws-es > div.tws-es-actions"
+        },
+        {
+          "sel": "button.tws-es-btn",
+          "w": 280,
+          "h": 44,
+          "text": "Skip for now",
+          "inNav": false,
+          "fixed": false,
+          "path": "div.irl-ob-card > div.tws-es > div.tws-es-actions"
+        }
+      ],
+      "canvases": [
+        {
+          "sel": "canvas#irl-canvas",
+          "w": 393,
+          "h": 727,
+          "visible": true,
+          "touchAction": "none",
+          "parentSel": "body",
+          "parentTouchAction": "none"
+        }
+      ],
+      "viewportMeta": "width=device-width, initial-scale=1, viewport-fit=cover",
+      "viewportFitCover": true,
+      "safeAreaRuleCount": 0,
+      "bottomBars": [
+        {
+          "sel": "footer.irl-bottom",
+          "h": 238,
+          "paddingBottom": "14px",
+          "bottom": "0px",
+          "hasSafeAreaRule": false
+        },
+        {
+          "sel": "div#irl-error-sheet",
+          "h": 207,
+          "paddingBottom": "36px",
+          "bottom": "0px",
+          "hasSafeAreaRule": false
+        },
+        {
+          "sel": "div#irl-mypins-sheet",
+          "h": 200,
+          "paddingBottom": "36px",
+          "bottom": "0px",
+          "hasSafeAreaRule": false
+        },
+        {
+          "sel": "div#irl-agents-sheet",
+          "h": 200,
+          "paddingBottom": "36px",
+          "bottom": "0px",
+          "hasSafeAreaRule": false
+        },
+        {
+          "sel": "div#irl-calibrate-panel",
+          "h": 237,
+          "paddingBottom": "18px",
+          "bottom": "0px",
+          "hasSafeAreaRule": false
+        }
+      ],
+      "overflowX": 0,
+      "innerWidth": 393,
+      "path": "/irl"
+    },
+    {
+      "url": "https://three.ws/ar",
+      "status": 200,
+      "error": null,
+      "gesture": null,
+      "title": "AR Forge · three.ws",
+      "overflowXStyle": "visible",
+      "canScrollX": false,
+      "checked": 14,
+      "inlineExempt": 6,
+      "smallTargets": [
+        {
+          "sel": "a.brand",
+          "w": 98,
+          "h": 19,
+          "text": "three.ws",
+          "inNav": true,
+          "fixed": false,
+          "path": "html > body > header.bar"
+        },
+        {
+          "sel": "a.top",
+          "w": 81,
+          "h": 15,
+          "text": "Full studio →",
+          "inNav": true,
+          "fixed": false,
+          "path": "html > body > header.bar"
+        },
+        {
+          "sel": "button.chip",
+          "w": 165,
+          "h": 29,
+          "text": "a retro arcade cabinet",
+          "inNav": false,
+          "fixed": false,
+          "path": "body > main > div#chips.chips"
+        },
+        {
+          "sel": "button.chip",
+          "w": 223,
+          "h": 29,
+          "text": "a koi fish made of stained glass",
+          "inNav": false,
+          "fixed": false,
+          "path": "body > main > div#chips.chips"
+        },
+        {
+          "sel": "button.chip",
+          "w": 146,
+          "h": 29,
+          "text": "a tiny robot barista",
+          "inNav": false,
+          "fixed": false,
+          "path": "body > main > div#chips.chips"
+        },
+        {
+          "sel": "button.chip",
+          "w": 162,
+          "h": 29,
+          "text": "a crystal chess knight",
+          "inNav": false,
+          "fixed": false,
+          "path": "body > main > div#chips.chips"
+        }
+      ],
+      "canvases": [
+        {
+          "sel": "canvas#qr",
+          "w": 0,
+          "h": 0,
+          "visible": false,
+          "touchAction": "auto",
+          "parentSel": "div#handoff.handoff",
+          "parentTouchAction": "auto"
+        }
+      ],
+      "viewportMeta": "width=device-width, initial-scale=1, viewport-fit=cover",
+      "viewportFitCover": true,
+      "safeAreaRuleCount": 0,
+      "bottomBars": [],
+      "overflowX": 0,
+      "innerWidth": 393,
+      "path": "/ar"
+    },
+    {
+      "url": "https://three.ws/play",
+      "status": 0,
+      "error": "page.goto: Timeout 60000ms exceeded.",
+      "gesture": null,
+      "path": "/play"
+    },
+    {
+      "url": "https://three.ws/launches",
+      "status": 0,
+      "error": "page.goto: Timeout 60000ms exceeded.",
+      "gesture": null,
+      "path": "/launches"
+    },
+    {
+      "url": "https://three.ws/changelog",
+      "status": 200,
+      "error": null,
+      "gesture": null,
+      "title": "Changelog · three.ws",
+      "overflowXStyle": "visible",
+      "canScrollX": false,
+      "checked": 3570,
+      "inlineExempt": 4,
+      "smallTargets": [
+        {
+          "sel": "a.nav-skip",
+          "w": 157,
+          "h": 36,
+          "text": "Skip to content",
+          "inNav": false,
+          "fixed": true,
+          "path": "html.tws-lite > body"
+        },
+        {
+          "sel": "button.cl-filter",
+          "w": 46,
+          "h": 28,
+          "text": "All",
+          "inNav": false,
+          "fixed": false,
+          "path": "main#main-content.cl-wrap > div.cl-hero > div#cl-filters.cl-filters"
+        },
+        {
+          "sel": "button.cl-filter",
+          "w": 71,
+          "h": 28,
+          "text": "launch",
+          "inNav": false,
+          "fixed": false,
+          "path": "main#main-content.cl-wrap > div.cl-hero > div#cl-filters.cl-filters"
+        },
+        {
+          "sel": "button.cl-filter",
+          "w": 73,
+          "h": 28,
+          "text": "feature",
+          "inNav": false,
+          "fixed": false,
+          "path": "main#main-content.cl-wrap > div.cl-hero > div#cl-filters.cl-filters"
+        },
+        {
+          "sel": "button.cl-filter",
+          "w": 109,
+          "h": 28,
+          "text": "improvement",
+          "inNav": false,
+          "fixed": false,
+          "path": "main#main-content.cl-wrap > div.cl-hero > div#cl-filters.cl-filters"
+        },
+        {
+          "sel": "button.cl-filter",
+          "w": 45,
+          "h": 28,
+          "text": "fix",
+          "inNav": false,
+          "fixed": false,
+          "path": "main#main-content.cl-wrap > div.cl-hero > div#cl-filters.cl-filters"
+        },
+        {
+          "sel": "button.cl-filter",
+          "w": 52,
+          "h": 28,
+          "text": "sdk",
+          "inNav": false,
+          "fixed": false,
+          "path": "main#main-content.cl-wrap > div.cl-hero > div#cl-filters.cl-filters"
+        },
+        {
+          "sel": "button.cl-filter",
+          "w": 79,
+          "h": 28,
+          "text": "security",
+          "inNav": false,
+          "fixed": false,
+          "path": "main#main-content.cl-wrap > div.cl-hero > div#cl-filters.cl-filters"
+        },
+        {
+          "sel": "button.cl-filter",
+          "w": 58,
+          "h": 28,
+          "text": "infra",
+          "inNav": false,
+          "fixed": false,
+          "path": "main#main-content.cl-wrap > div.cl-hero > div#cl-filters.cl-filters"
+        },
+        {
+          "sel": "button.cl-filter",
+          "w": 59,
+          "h": 28,
+          "text": "docs",
+          "inNav": false,
+          "fixed": false,
+          "path": "main#main-content.cl-wrap > div.cl-hero > div#cl-filters.cl-filters"
+        },
+        {
+          "sel": "a.h-footer-community-btn",
+          "w": 148,
+          "h": 40,
+          "text": "Follow on X",
+          "inNav": true,
+          "fixed": false,
+          "path": "footer.h-footer.h-footer-horizon > div.h-footer-cta > div.h-footer-community"
+        }
+      ],
+      "canvases": [
+        {
+          "sel": "canvas#footer-bot-canvas",
+          "w": 90,
+          "h": 90,
+          "visible": true,
+          "touchAction": "pan-y",
+          "parentSel": "div.h-footer-avatar",
+          "parentTouchAction": "auto"
+        }
+      ],
+      "viewportMeta": "width=device-width,initial-scale=1",
+      "viewportFitCover": false,
+      "safeAreaRuleCount": 0,
+      "bottomBars": [],
+      "overflowX": 7,
+      "innerWidth": 400,
+      "path": "/changelog"
+    },
+    {
+      "url": "https://three.ws/docs/start-here",
+      "status": 200,
+      "error": null,
+      "gesture": null,
+      "title": "Docs · Start Here · three.ws",
+      "overflowXStyle": "visible",
+      "canScrollX": false,
+      "checked": 573,
+      "inlineExempt": 161,
+      "smallTargets": [
+        {
+          "sel": "a.docs-logo",
+          "w": 114,
+          "h": 33,
+          "text": "three.ws",
+          "inNav": true,
+          "fixed": false,
+          "path": "html > body > header.docs-header"
+        },
+        {
+          "sel": "a#world-link.docs-world-link",
+          "w": 35,
+          "h": 23,
+          "text": "3D world",
+          "inNav": true,
+          "fixed": false,
+          "path": "body > header.docs-header > nav.docs-header-right"
+        },
+        {
+          "sel": "a.btn-primary",
+          "w": 58,
+          "h": 30,
+          "text": "Studio",
+          "inNav": true,
+          "fixed": false,
+          "path": "body > header.docs-header > nav.docs-header-right"
+        },
+        {
+          "sel": "input#search-input",
+          "w": 247,
+          "h": 31,
+          "text": "Search the documentation",
+          "inNav": false,
+          "fixed": false,
+          "path": "div.docs-shell > aside#sidebar.docs-sidebar > div.sidebar-search"
+        },
+        {
+          "sel": "a.sidebar-link.active",
+          "w": 267,
+          "h": 30,
+          "text": "What is three.ws?",
+          "inNav": true,
+          "fixed": false,
+          "path": "aside#sidebar.docs-sidebar > nav#sidebar-nav > div.sidebar-section"
+        },
+        {
+          "sel": "a.sidebar-link",
+          "w": 267,
+          "h": 30,
+          "text": "Agents vs. Avatars",
+          "inNav": true,
+          "fixed": false,
+          "path": "aside#sidebar.docs-sidebar > nav#sidebar-nav > div.sidebar-section"
+        },
+        {
+          "sel": "a.sidebar-link",
+          "w": 267,
+          "h": 30,
+          "text": "Make your first agent",
+          "inNav": true,
+          "fixed": false,
+          "path": "aside#sidebar.docs-sidebar > nav#sidebar-nav > div.sidebar-section"
+        },
+        {
+          "sel": "a.sidebar-link",
+          "w": 267,
+          "h": 30,
+          "text": "Share & embed",
+          "inNav": true,
+          "fixed": false,
+          "path": "aside#sidebar.docs-sidebar > nav#sidebar-nav > div.sidebar-section"
+        },
+        {
+          "sel": "a.sidebar-link",
+          "w": 267,
+          "h": 30,
+          "text": "Do I need crypto?",
+          "inNav": true,
+          "fixed": false,
+          "path": "aside#sidebar.docs-sidebar > nav#sidebar-nav > div.sidebar-section"
+        },
+        {
+          "sel": "a.sidebar-link",
+          "w": 267,
+          "h": 30,
+          "text": "The complete dossier",
+          "inNav": true,
+          "fixed": false,
+          "path": "aside#sidebar.docs-sidebar > nav#sidebar-nav > div.sidebar-section"
+        },
+        {
+          "sel": "a.sidebar-link",
+          "w": 267,
+          "h": 30,
+          "text": "The Body: 3D creation",
+          "inNav": true,
+          "fixed": false,
+          "path": "aside#sidebar.docs-sidebar > nav#sidebar-nav > div.sidebar-section"
+        },
+        {
+          "sel": "a.sidebar-link",
+          "w": 267,
+          "h": 30,
+          "text": "Motion & animation",
+          "inNav": true,
+          "fixed": false,
+          "path": "aside#sidebar.docs-sidebar > nav#sidebar-nav > div.sidebar-section"
+        },
+        {
+          "sel": "a.sidebar-link",
+          "w": 267,
+          "h": 30,
+          "text": "Creation studios",
+          "inNav": true,
+          "fixed": false,
+          "path": "aside#sidebar.docs-sidebar > nav#sidebar-nav > div.sidebar-section"
+        },
+        {
+          "sel": "a.sidebar-link",
+          "w": 267,
+          "h": 30,
+          "text": "The Mind: memory & autonomy",
+          "inNav": true,
+          "fixed": false,
+          "path": "aside#sidebar.docs-sidebar > nav#sidebar-nav > div.sidebar-section"
+        },
+        {
+          "sel": "a.sidebar-link",
+          "w": 267,
+          "h": 30,
+          "text": "The Voice: conversation",
+          "inNav": true,
+          "fixed": false,
+          "path": "aside#sidebar.docs-sidebar > nav#sidebar-nav > div.sidebar-section"
+        },
+        {
+          "sel": "a.sidebar-link",
+          "w": 267,
+          "h": 30,
+          "text": "Identity & reputation",
+          "inNav": true,
+          "fixed": false,
+          "path": "aside#sidebar.docs-sidebar > nav#sidebar-nav > div.sidebar-section"
+        },
+        {
+          "sel": "a.sidebar-link",
+          "w": 267,
+          "h": 30,
+          "text": "Skills",
+          "inNav": true,
+          "fixed": false,
+          "path": "aside#sidebar.docs-sidebar > nav#sidebar-nav > div.sidebar-section"
+        },
+        {
+          "sel": "a.sidebar-link",
+          "w": 267,
+          "h": 30,
+          "text": "Screens",
+          "inNav": true,
+          "fixed": false,
+          "path": "aside#sidebar.docs-sidebar > nav#sidebar-nav > div.sidebar-section"
+        },
+        {
+          "sel": "a.sidebar-link",
+          "w": 267,
+          "h": 30,
+          "text": "The Agent Economy",
+          "inNav": true,
+          "fixed": false,
+          "path": "aside#sidebar.docs-sidebar > nav#sidebar-nav > div.sidebar-section"
+        },
+        {
+          "sel": "a.sidebar-link",
+          "w": 267,
+          "h": 30,
+          "text": "The Agent Wallet: 23 abilities",
+          "inNav": true,
+          "fixed": false,
+          "path": "aside#sidebar.docs-sidebar > nav#sidebar-nav > div.sidebar-section"
+        },
+        {
+          "sel": "a.sidebar-link",
+          "w": 267,
+          "h": 30,
+          "text": "Markets & intelligence",
+          "inNav": true,
+          "fixed": false,
+          "path": "aside#sidebar.docs-sidebar > nav#sidebar-nav > div.sidebar-section"
+        },
+        {
+          "sel": "a.sidebar-link",
+          "w": 267,
+          "h": 30,
+          "text": "Live worlds, social & IRL",
+          "inNav": true,
+          "fixed": false,
+          "path": "aside#sidebar.docs-sidebar > nav#sidebar-nav > div.sidebar-section"
+        },
+        {
+          "sel": "a.sidebar-link",
+          "w": 267,
+          "h": 30,
+          "text": "Agents everywhere",
+          "inNav": true,
+          "fixed": false,
+          "path": "aside#sidebar.docs-sidebar > nav#sidebar-nav > div.sidebar-section"
+        },
+        {
+          "sel": "a.sidebar-link",
+          "w": 267,
+          "h": 30,
+          "text": "The Developer platform",
+          "inNav": true,
+          "fixed": false,
+          "path": "aside#sidebar.docs-sidebar > nav#sidebar-nav > div.sidebar-section"
+        },
+        {
+          "sel": "a.sidebar-link",
+          "w": 267,
+          "h": 30,
+          "text": "Full product map",
+          "inNav": true,
+          "fixed": false,
+          "path": "aside#sidebar.docs-sidebar > nav#sidebar-nav > div.sidebar-section"
+        },
+        {
+          "sel": "a.sidebar-link",
+          "w": 267,
+          "h": 30,
+          "text": "Everything on one page",
+          "inNav": true,
+          "fixed": false,
+          "path": "aside#sidebar.docs-sidebar > nav#sidebar-nav > div.sidebar-section"
+        },
+        {
+          "sel": "a.sidebar-link",
+          "w": 267,
+          "h": 30,
+          "text": "Screen control (drive a computer)",
+          "inNav": true,
+          "fixed": false,
+          "path": "aside#sidebar.docs-sidebar > nav#sidebar-nav > div.sidebar-section"
+        },
+        {
+          "sel": "a.sidebar-link",
+          "w": 267,
+          "h": 30,
+          "text": "The agent shell",
+          "inNav": true,
+          "fixed": false,
+          "path": "aside#sidebar.docs-sidebar > nav#sidebar-nav > div.sidebar-section"
+        },
+        {
+          "sel": "a.sidebar-link",
+          "w": 267,
+          "h": 30,
+          "text": "Persona Hub",
+          "inNav": true,
+          "fixed": false,
+          "path": "aside#sidebar.docs-sidebar > nav#sidebar-nav > div.sidebar-section"
+        },
+        {
+          "sel": "a.sidebar-link",
+          "w": 267,
+          "h": 30,
+          "text": "Agent labor market",
+          "inNav": true,
+          "fixed": false,
+          "path": "aside#sidebar.docs-sidebar > nav#sidebar-nav > div.sidebar-section"
+        },
+        {
+          "sel": "a.sidebar-link",
+          "w": 267,
+          "h": 30,
+          "text": "Forge (text & image to 3D)",
+          "inNav": true,
+          "fixed": false,
+          "path": "aside#sidebar.docs-sidebar > nav#sidebar-nav > div.sidebar-section"
+        },
+        {
+          "sel": "a.sidebar-link",
+          "w": 267,
+          "h": 30,
+          "text": "How the Forge works (plain language)",
+          "inNav": true,
+          "fixed": false,
+          "path": "aside#sidebar.docs-sidebar > nav#sidebar-nav > div.sidebar-section"
+        },
+        {
+          "sel": "a.sidebar-link",
+          "w": 267,
+          "h": 30,
+          "text": "The Forge pipeline (deep dive)",
+          "inNav": true,
+          "fixed": false,
+          "path": "aside#sidebar.docs-sidebar > nav#sidebar-nav > div.sidebar-section"
+        },
+        {
+          "sel": "a.sidebar-link",
+          "w": 267,
+          "h": 30,
+          "text": "Pocket Console",
+          "inNav": true,
+          "fixed": false,
+          "path": "aside#sidebar.docs-sidebar > nav#sidebar-nav > div.sidebar-section"
+        },
+        {
+          "sel": "a.sidebar-link",
+          "w": 267,
+          "h": 30,
+          "text": "Materialize: print it for real",
+          "inNav": true,
+          "fixed": false,
+          "path": "aside#sidebar.docs-sidebar > nav#sidebar-nav > div.sidebar-section"
+        },
+        {
+          "sel": "a.sidebar-link",
+          "w": 267,
+          "h": 30,
+          "text": "Image to 3D",
+          "inNav": true,
+          "fixed": false,
+          "path": "aside#sidebar.docs-sidebar > nav#sidebar-nav > div.sidebar-section"
+        },
+        {
+          "sel": "a.sidebar-link",
+          "w": 267,
+          "h": 30,
+          "text": "Forge in world (spawn items into /play)",
+          "inNav": true,
+          "fixed": false,
+          "path": "aside#sidebar.docs-sidebar > nav#sidebar-nav > div.sidebar-section"
+        },
+        {
+          "sel": "a.sidebar-link",
+          "w": 267,
+          "h": 30,
+          "text": "Diorama (text to world)",
+          "inNav": true,
+          "fixed": false,
+          "path": "aside#sidebar.docs-sidebar > nav#sidebar-nav > div.sidebar-section"
+        },
+        {
+          "sel": "a.sidebar-link",
+          "w": 267,
+          "h": 30,
+          "text": "Cosmos (living worlds)",
+          "inNav": true,
+          "fixed": false,
+          "path": "aside#sidebar.docs-sidebar > nav#sidebar-nav > div.sidebar-section"
+        },
+        {
+          "sel": "a.sidebar-link",
+          "w": 267,
+          "h": 30,
+          "text": "Splat viewer (Gaussian avatars)",
+          "inNav": true,
+          "fixed": false,
+          "path": "aside#sidebar.docs-sidebar > nav#sidebar-nav > div.sidebar-section"
+        },
+        {
+          "sel": "a.sidebar-link",
+          "w": 267,
+          "h": 30,
+          "text": "Scene Capture (video to point cloud)",
+          "inNav": true,
+          "fixed": false,
+          "path": "aside#sidebar.docs-sidebar > nav#sidebar-nav > div.sidebar-section"
+        },
+        {
+          "sel": "a.sidebar-link",
+          "w": 267,
+          "h": 30,
+          "text": "Restyle Studio",
+          "inNav": true,
+          "fixed": false,
+          "path": "aside#sidebar.docs-sidebar > nav#sidebar-nav > div.sidebar-section"
+        },
+        {
+          "sel": "a.sidebar-link",
+          "w": 267,
+          "h": 30,
+          "text": "Scene Studio",
+          "inNav": true,
+          "fixed": false,
+          "path": "aside#sidebar.docs-sidebar > nav#sidebar-nav > div.sidebar-section"
+        },
+        {
+          "sel": "a.sidebar-link",
+          "w": 267,
+          "h": 30,
+          "text": "Scene Composer",
+          "inNav": true,
+          "fixed": false,
+          "path": "aside#sidebar.docs-sidebar > nav#sidebar-nav > div.sidebar-section"
+        },
+        {
+          "sel": "a.sidebar-link",
+          "w": 267,
+          "h": 30,
+          "text": "Animation Studio",
+          "inNav": true,
+          "fixed": false,
+          "path": "aside#sidebar.docs-sidebar > nav#sidebar-nav > div.sidebar-section"
+        },
+        {
+          "sel": "a.sidebar-link",
+          "w": 267,
+          "h": 30,
+          "text": "Sign language (ASL)",
+          "inNav": true,
+          "fixed": false,
+          "path": "aside#sidebar.docs-sidebar > nav#sidebar-nav > div.sidebar-section"
+        },
+        {
+          "sel": "a.sidebar-link",
+          "w": 267,
+          "h": 30,
+          "text": "Avatar Studio",
+          "inNav": true,
+          "fixed": false,
+          "path": "aside#sidebar.docs-sidebar > nav#sidebar-nav > div.sidebar-section"
+        },
+        {
+          "sel": "a.sidebar-link",
+          "w": 267,
+          "h": 30,
+          "text": "Mocap Studio",
+          "inNav": true,
+          "fixed": false,
+          "path": "aside#sidebar.docs-sidebar > nav#sidebar-nav > div.sidebar-section"
+        },
+        {
+          "sel": "a.sidebar-link",
+          "w": 267,
+          "h": 30,
+          "text": "Selfie to Avatar",
+          "inNav": true,
+          "fixed": false,
+          "path": "aside#sidebar.docs-sidebar > nav#sidebar-nav > div.sidebar-section"
+        },
+        {
+          "sel": "a.sidebar-link",
+          "w": 267,
+          "h": 30,
+          "text": "Daily Forge",
+          "inNav": true,
+          "fixed": false,
+          "path": "aside#sidebar.docs-sidebar > nav#sidebar-nav > div.sidebar-section"
+        },
+        {
+          "sel": "a.sidebar-link",
+          "w": 267,
+          "h": 30,
+          "text": "AR Studio",
+          "inNav": true,
+          "fixed": false,
+          "path": "aside#sidebar.docs-sidebar > nav#sidebar-nav > div.sidebar-section"
+        },
+        {
+          "sel": "a.sidebar-link",
+          "w": 267,
+          "h": 30,
+          "text": "Generation Watch (live progress)",
+          "inNav": true,
+          "fixed": false,
+          "path": "aside#sidebar.docs-sidebar > nav#sidebar-nav > div.sidebar-section"
+        },
+        {
+          "sel": "a.sidebar-link",
+          "w": 267,
+          "h": 30,
+          "text": "Character Library (106 rigged)",
+          "inNav": true,
+          "fixed": false,
+          "path": "aside#sidebar.docs-sidebar > nav#sidebar-nav > div.sidebar-section"
+        },
+        {
+          "sel": "a.sidebar-link",
+          "w": 267,
+          "h": 30,
+          "text": "Agent Identity Studio",
+          "inNav": true,
+          "fixed": false,
+          "path": "aside#sidebar.docs-sidebar > nav#sidebar-nav > div.sidebar-section"
+        },
+        {
+          "sel": "a.sidebar-link",
+          "w": 267,
+          "h": 30,
+          "text": "Living Stages",
+          "inNav": true,
+          "fixed": false,
+          "path": "aside#sidebar.docs-sidebar > nav#sidebar-nav > div.sidebar-section"
+        },
+        {
+          "sel": "a.sidebar-link",
+          "w": 267,
+          "h": 30,
+          "text": "Avatar Engines Atlas",
+          "inNav": true,
+          "fixed": false,
+          "path": "aside#sidebar.docs-sidebar > nav#sidebar-nav > div.sidebar-section"
+        },
+        {
+          "sel": "a.sidebar-link",
+          "w": 267,
+          "h": 30,
+          "text": "Object Library (CC0 props)",
+          "inNav": true,
+          "fixed": false,
+          "path": "aside#sidebar.docs-sidebar > nav#sidebar-nav > div.sidebar-section"
+        },
+        {
+          "sel": "a.sidebar-link",
+          "w": 267,
+          "h": 30,
+          "text": "Avatar Studio",
+          "inNav": true,
+          "fixed": false,
+          "path": "aside#sidebar.docs-sidebar > nav#sidebar-nav > div.sidebar-section"
+        },
+        {
+          "sel": "a.sidebar-link",
+          "w": 267,
+          "h": 30,
+          "text": "Additive wardrobe",
+          "inNav": true,
+          "fixed": false,
+          "path": "aside#sidebar.docs-sidebar > nav#sidebar-nav > div.sidebar-section"
+        },
+        {
+          "sel": "a.sidebar-link",
+          "w": 267,
+          "h": 30,
+          "text": "Selfie to avatar reconstruction",
+          "inNav": true,
+          "fixed": false,
+          "path": "aside#sidebar.docs-sidebar > nav#sidebar-nav > div.sidebar-section"
+        },
+        {
+          "sel": "a.sidebar-link",
+          "w": 267,
+          "h": 30,
+          "text": "Motion Swap (swap yourself in video)",
+          "inNav": true,
+          "fixed": false,
+          "path": "aside#sidebar.docs-sidebar > nav#sidebar-nav > div.sidebar-section"
+        },
+        {
+          "sel": "a.sidebar-link",
+          "w": 267,
+          "h": 30,
+          "text": "Procedural animation",
+          "inNav": true,
+          "fixed": false,
+          "path": "aside#sidebar.docs-sidebar > nav#sidebar-nav > div.sidebar-section"
+        },
+        {
+          "sel": "a.sidebar-link",
+          "w": 267,
+          "h": 30,
+          "text": "Background generation & notifications",
+          "inNav": true,
+          "fixed": false,
+          "path": "aside#sidebar.docs-sidebar > nav#sidebar-nav > div.sidebar-section"
+        },
+        {
+          "sel": "a.sidebar-link",
+          "w": 267,
+          "h": 30,
+          "text": "Forge-Off (community voting)",
+          "inNav": true,
+          "fixed": false,
+          "path": "aside#sidebar.docs-sidebar > nav#sidebar-nav > div.sidebar-section"
+        },
+        {
+          "sel": "a.sidebar-link",
+          "w": 267,
+          "h": 30,
+          "text": "Avatar thumbnails",
+          "inNav": true,
+          "fixed": false,
+          "path": "aside#sidebar.docs-sidebar > nav#sidebar-nav > div.sidebar-section"
+        },
+        {
+          "sel": "a.sidebar-link",
+          "w": 267,
+          "h": 30,
+          "text": "Rigging a mascot",
+          "inNav": true,
+          "fixed": false,
+          "path": "aside#sidebar.docs-sidebar > nav#sidebar-nav > div.sidebar-section"
+        },
+        {
+          "sel": "a.sidebar-link",
+          "w": 267,
+          "h": 30,
+          "text": "Voice Lab",
+          "inNav": true,
+          "fixed": false,
+          "path": "aside#sidebar.docs-sidebar > nav#sidebar-nav > div.sidebar-section"
+        },
+        {
+          "sel": "a.sidebar-link",
+          "w": 267,
+          "h": 30,
+          "text": "Lipsync",
+          "inNav": true,
+          "fixed": false,
+          "path": "aside#sidebar.docs-sidebar > nav#sidebar-nav > div.sidebar-section"
+        },
+        {
+          "sel": "a.sidebar-link",
+          "w": 267,
+          "h": 30,
+          "text": "Talking Avatar Video",
+          "inNav": true,
+          "fixed": false,
+          "path": "aside#sidebar.docs-sidebar > nav#sidebar-nav > div.sidebar-section"
+        },
+        {
+          "sel": "a.sidebar-link",
+          "w": 267,
+          "h": 30,
+          "text": "three.ws Home (start here)",
+          "inNav": true,
+          "fixed": false,
+          "path": "aside#sidebar.docs-sidebar > nav#sidebar-nav > div.sidebar-section"
+        },
+        {
+          "sel": "a.sidebar-link",
+          "w": 267,
+          "h": 30,
+          "text": "Connect your house",
+          "inNav": true,
+          "fixed": false,
+          "path": "aside#sidebar.docs-sidebar > nav#sidebar-nav > div.sidebar-section"
+        },
+        {
+          "sel": "a.sidebar-link",
+          "w": 267,
+          "h": 30,
+          "text": "The live 3D home",
+          "inNav": true,
+          "fixed": false,
+          "path": "aside#sidebar.docs-sidebar > nav#sidebar-nav > div.sidebar-section"
+        },
+        {
+          "sel": "a.sidebar-link",
+          "w": 267,
+          "h": 30,
+          "text": "The browser voice loop",
+          "inNav": true,
+          "fixed": false,
+          "path": "aside#sidebar.docs-sidebar > nav#sidebar-nav > div.sidebar-section"
+        },
+        {
+          "sel": "a.sidebar-link",
+          "w": 267,
+          "h": 30,
+          "text": "Households and roles",
+          "inNav": true,
+          "fixed": false,
+          "path": "aside#sidebar.docs-sidebar > nav#sidebar-nav > div.sidebar-section"
+        },
+        {
+          "sel": "a.sidebar-link",
+          "w": 267,
+          "h": 30,
+          "text": "A house that is only on your network",
+          "inNav": true,
+          "fixed": false,
+          "path": "aside#sidebar.docs-sidebar > nav#sidebar-nav > div.sidebar-section"
+        },
+        {
+          "sel": "a.sidebar-link",
+          "w": 267,
+          "h": 30,
+          "text": "Home security",
+          "inNav": true,
+          "fixed": false,
+          "path": "aside#sidebar.docs-sidebar > nav#sidebar-nav > div.sidebar-section"
+        },
+        {
+          "sel": "a.sidebar-link",
+          "w": 267,
+          "h": 30,
+          "text": "Home privacy and retention",
+          "inNav": true,
+          "fixed": false,
+          "path": "aside#sidebar.docs-sidebar > nav#sidebar-nav > div.sidebar-section"
+        },
+        {
+          "sel": "a.sidebar-link",
+          "w": 267,
+          "h": 30,
+          "text": "Home plans and quotas",
+          "inNav": true,
+          "fixed": false,
+          "path": "aside#sidebar.docs-sidebar > nav#sidebar-nav > div.sidebar-section"
+        },
+        {
+          "sel": "a.sidebar-link",
+          "w": 267,
+          "h": 30,
+          "text": "Instant Agent Genesis",
+          "inNav": true,
+          "fixed": false,
+          "path": "aside#sidebar.docs-sidebar > nav#sidebar-nav > div.sidebar-section"
+        },
+        {
+          "sel": "a.sidebar-link",
+          "w": 267,
+          "h": 30,
+          "text": "Agent Genome (breeding)",
+          "inNav": true,
+          "fixed": false,
+          "path": "aside#sidebar.docs-sidebar > nav#sidebar-nav > div.sidebar-section"
+        },
+        {
+          "sel": "a.sidebar-link",
+          "w": 267,
+          "h": 30,
+          "text": "Agent Studio",
+          "inNav": true,
+          "fixed": false,
+          "path": "aside#sidebar.docs-sidebar > nav#sidebar-nav > div.sidebar-section"
+        },
+        {
+          "sel": "a.sidebar-link",
+          "w": 267,
+          "h": 30,
+          "text": "Multi-LLM Brain",
+          "inNav": true,
+          "fixed": false,
+          "path": "aside#sidebar.docs-sidebar > nav#sidebar-nav > div.sidebar-section"
+        },
+        {
+          "sel": "a.sidebar-link",
+          "w": 267,
+          "h": 30,
+          "text": "Agent Galaxy",
+          "inNav": true,
+          "fixed": false,
+          "path": "aside#sidebar.docs-sidebar > nav#sidebar-nav > div.sidebar-section"
+        },
+        {
+          "sel": "a.sidebar-link",
+          "w": 267,
+          "h": 30,
+          "text": "Integrations",
+          "inNav": true,
+          "fixed": false,
+          "path": "aside#sidebar.docs-sidebar > nav#sidebar-nav > div.sidebar-section"
+        },
+        {
+          "sel": "a.sidebar-link",
+          "w": 267,
+          "h": 30,
+          "text": "Trading hub (start here)",
+          "inNav": true,
+          "fixed": false,
+          "path": "aside#sidebar.docs-sidebar > nav#sidebar-nav > div.sidebar-section"
+        },
+        {
+          "sel": "a.sidebar-link",
+          "w": 267,
+          "h": 30,
+          "text": "Exit Lab (replay real trades)",
+          "inNav": true,
+          "fixed": false,
+          "path": "aside#sidebar.docs-sidebar > nav#sidebar-nav > div.sidebar-section"
+        },
+        {
+          "sel": "a.sidebar-link",
+          "w": 267,
+          "h": 30,
+          "text": "Risk acknowledgment",
+          "inNav": true,
+          "fixed": false,
+          "path": "aside#sidebar.docs-sidebar > nav#sidebar-nav > div.sidebar-section"
+        },
+        {
+          "sel": "a.sidebar-link",
+          "w": 267,
+          "h": 30,
+          "text": "Coin Autopilot",
+          "inNav": true,
+          "fixed": false,
+          "path": "aside#sidebar.docs-sidebar > nav#sidebar-nav > div.sidebar-section"
+        },
+        {
+          "sel": "a.sidebar-link",
+          "w": 267,
+          "h": 30,
+          "text": "Signal Marketplace",
+          "inNav": true,
+          "fixed": false,
+          "path": "aside#sidebar.docs-sidebar > nav#sidebar-nav > div.sidebar-section"
+        },
+        {
+          "sel": "a.sidebar-link",
+          "w": 267,
+          "h": 30,
+          "text": "The AGI",
+          "inNav": true,
+          "fixed": false,
+          "path": "aside#sidebar.docs-sidebar > nav#sidebar-nav > div.sidebar-section"
+        },
+        {
+          "sel": "a.sidebar-link",
+          "w": 267,
+          "h": 30,
+          "text": "Alpha Co-pilot",
+          "inNav": true,
+          "fixed": false,
+          "path": "aside#sidebar.docs-sidebar > nav#sidebar-nav > div.sidebar-section"
+        },
+        {
+          "sel": "a.sidebar-link",
+          "w": 267,
+          "h": 30,
+          "text": "Guardian console",
+          "inNav": true,
+          "fixed": false,
+          "path": "aside#sidebar.docs-sidebar > nav#sidebar-nav > div.sidebar-section"
+        },
+        {
+          "sel": "a.sidebar-link",
+          "w": 267,
+          "h": 30,
+          "text": "Strategy Objects",
+          "inNav": true,
+          "fixed": false,
+          "path": "aside#sidebar.docs-sidebar > nav#sidebar-nav > div.sidebar-section"
+        },
+        {
+          "sel": "a.sidebar-link",
+          "w": 267,
+          "h": 30,
+          "text": "Mission Control (terminal)",
+          "inNav": true,
+          "fixed": false,
+          "path": "aside#sidebar.docs-sidebar > nav#sidebar-nav > div.sidebar-section"
+        },
+        {
+          "sel": "a.sidebar-link",
+          "w": 267,
+          "h": 30,
+          "text": "Smart Money Radar",
+          "inNav": true,
+          "fixed": false,
+          "path": "aside#sidebar.docs-sidebar > nav#sidebar-nav > div.sidebar-section"
+        },
+        {
+          "sel": "a.sidebar-link",
+          "w": 267,
+          "h": 30,
+          "text": "Coin Radar",
+          "inNav": true,
+          "fixed": false,
+          "path": "aside#sidebar.docs-sidebar > nav#sidebar-nav > div.sidebar-section"
+        },
+        {
+          "sel": "a.sidebar-link",
+          "w": 267,
+          "h": 30,
+          "text": "Coin Clash",
+          "inNav": true,
+          "fixed": false,
+          "path": "aside#sidebar.docs-sidebar > nav#sidebar-nav > div.sidebar-section"
+        },
+        {
+          "sel": "a.sidebar-link",
+          "w": 267,
+          "h": 30,
+          "text": "x402 Studio",
+          "inNav": true,
+          "fixed": false,
+          "path": "aside#sidebar.docs-sidebar > nav#sidebar-nav > div.sidebar-section"
+        },
+        {
+          "sel": "a.sidebar-link",
+          "w": 267,
+          "h": 30,
+          "text": "Fact Check",
+          "inNav": true,
+          "fixed": false,
+          "path": "aside#sidebar.docs-sidebar > nav#sidebar-nav > div.sidebar-section"
+        },
+        {
+          "sel": "a.sidebar-link",
+          "w": 267,
+          "h": 30,
+          "text": "Trading Copilot",
+          "inNav": true,
+          "fixed": false,
+          "path": "aside#sidebar.docs-sidebar > nav#sidebar-nav > div.sidebar-section"
+        },
+        {
+          "sel": "a.sidebar-link",
+          "w": 267,
+          "h": 30,
+          "text": "Earned autonomy (fleet self-tuning)",
+          "inNav": true,
+          "fixed": false,
+          "path": "aside#sidebar.docs-sidebar > nav#sidebar-nav > div.sidebar-section"
+        },
+        {
+          "sel": "a.sidebar-link",
+          "w": 267,
+          "h": 30,
+          "text": "Trader Card (claim your wallet)",
+          "inNav": true,
+          "fixed": false,
+          "path": "aside#sidebar.docs-sidebar > nav#sidebar-nav > div.sidebar-section"
+        },
+        {
+          "sel": "a.sidebar-link",
+          "w": 267,
+          "h": 30,
+          "text": "Clip Director",
+          "inNav": true,
+          "fixed": false,
+          "path": "aside#sidebar.docs-sidebar > nav#sidebar-nav > div.sidebar-section"
+        },
+        {
+          "sel": "a.sidebar-link",
+          "w": 267,
+          "h": 30,
+          "text": "KOL Tracker",
+          "inNav": true,
+          "fixed": false,
+          "path": "aside#sidebar.docs-sidebar > nav#sidebar-nav > div.sidebar-section"
+        },
+        {
+          "sel": "a.sidebar-link",
+          "w": 267,
+          "h": 30,
+          "text": "Copy trading (mirror)",
+          "inNav": true,
+          "fixed": false,
+          "path": "aside#sidebar.docs-sidebar > nav#sidebar-nav > div.sidebar-section"
+        },
+        {
+          "sel": "a.sidebar-link",
+          "w": 267,
+          "h": 30,
+          "text": "Reasoning Ledger (verifiable decisions)",
+          "inNav": true,
+          "fixed": false,
+          "path": "aside#sidebar.docs-sidebar > nav#sidebar-nav > div.sidebar-section"
+        },
+        {
+          "sel": "a.sidebar-link",
+          "w": 267,
+          "h": 30,
+          "text": "Coin & market pages",
+          "inNav": true,
+          "fixed": false,
+          "path": "aside#sidebar.docs-sidebar > nav#sidebar-nav > div.sidebar-section"
+        },
+        {
+          "sel": "a.sidebar-link",
+          "w": 267,
+          "h": 30,
+          "text": "Agent Sniper",
+          "inNav": true,
+          "fixed": false,
+          "path": "aside#sidebar.docs-sidebar > nav#sidebar-nav > div.sidebar-section"
+        },
+        {
+          "sel": "a.sidebar-link",
+          "w": 267,
+          "h": 30,
+          "text": "Trading surfaces (Radar, Mission Control",
+          "inNav": true,
+          "fixed": false,
+          "path": "aside#sidebar.docs-sidebar > nav#sidebar-nav > div.sidebar-section"
+        },
+        {
+          "sel": "a.sidebar-link",
+          "w": 267,
+          "h": 30,
+          "text": "Arenas, Theater & Vaults",
+          "inNav": true,
+          "fixed": false,
+          "path": "aside#sidebar.docs-sidebar > nav#sidebar-nav > div.sidebar-section"
+        },
+        {
+          "sel": "a.sidebar-link",
+          "w": 267,
+          "h": 30,
+          "text": "Oracle (the conviction engine)",
+          "inNav": true,
+          "fixed": false,
+          "path": "aside#sidebar.docs-sidebar > nav#sidebar-nav > div.sidebar-section"
+        },
+        {
+          "sel": "a.sidebar-link",
+          "w": 267,
+          "h": 30,
+          "text": "Trading swarms",
+          "inNav": true,
+          "fixed": false,
+          "path": "aside#sidebar.docs-sidebar > nav#sidebar-nav > div.sidebar-section"
+        },
+        {
+          "sel": "a.sidebar-link",
+          "w": 267,
+          "h": 30,
+          "text": "The autonomous trading experiment",
+          "inNav": true,
+          "fixed": false,
+          "path": "aside#sidebar.docs-sidebar > nav#sidebar-nav > div.sidebar-section"
+        },
+        {
+          "sel": "a.sidebar-link",
+          "w": 267,
+          "h": 30,
+          "text": "Introduction",
+          "inNav": true,
+          "fixed": false,
+          "path": "aside#sidebar.docs-sidebar > nav#sidebar-nav > div.sidebar-section"
+        },
+        {
+          "sel": "a.sidebar-link",
+          "w": 267,
+          "h": 30,
+          "text": "Quick start",
+          "inNav": true,
+          "fixed": false,
+          "path": "aside#sidebar.docs-sidebar > nav#sidebar-nav > div.sidebar-section"
+        },
+        {
+          "sel": "a.sidebar-link",
+          "w": 267,
+          "h": 30,
+          "text": "Getting started (hosted)",
+          "inNav": true,
+          "fixed": false,
+          "path": "aside#sidebar.docs-sidebar > nav#sidebar-nav > div.sidebar-section"
+        },
+        {
+          "sel": "a.sidebar-link",
+          "w": 267,
+          "h": 30,
+          "text": "Deployment",
+          "inNav": true,
+          "fixed": false,
+          "path": "aside#sidebar.docs-sidebar > nav#sidebar-nav > div.sidebar-section"
+        },
+        {
+          "sel": "a.sidebar-link",
+          "w": 267,
+          "h": 30,
+          "text": "How it works",
+          "inNav": true,
+          "fixed": false,
+          "path": "aside#sidebar.docs-sidebar > nav#sidebar-nav > div.sidebar-section"
+        },
+        {
+          "sel": "a.sidebar-link",
+          "w": 267,
+          "h": 30,
+          "text": "Architecture overview",
+          "inNav": true,
+          "fixed": false,
+          "path": "aside#sidebar.docs-sidebar > nav#sidebar-nav > div.sidebar-section"
+        },
+        {
+          "sel": "a.sidebar-link",
+          "w": 267,
+          "h": 30,
+          "text": "Agent system",
+          "inNav": true,
+          "fixed": false,
+          "path": "aside#sidebar.docs-sidebar > nav#sidebar-nav > div.sidebar-section"
+        },
+        {
+          "sel": "a.sidebar-link",
+          "w": 267,
+          "h": 30,
+          "text": "Agent reputation",
+          "inNav": true,
+          "fixed": false,
+          "path": "aside#sidebar.docs-sidebar > nav#sidebar-nav > div.sidebar-section"
+        },
+        {
+          "sel": "a.sidebar-link",
+          "w": 267,
+          "h": 30,
+          "text": "Solana reputation",
+          "inNav": true,
+          "fixed": false,
+          "path": "aside#sidebar.docs-sidebar > nav#sidebar-nav > div.sidebar-section"
+        },
+        {
+          "sel": "a.sidebar-link",
+          "w": 267,
+          "h": 30,
+          "text": "Memory system",
+          "inNav": true,
+          "fixed": false,
+          "path": "aside#sidebar.docs-sidebar > nav#sidebar-nav > div.sidebar-section"
+        },
+        {
+          "sel": "a.sidebar-link",
+          "w": 267,
+          "h": 30,
+          "text": "Skills system",
+          "inNav": true,
+          "fixed": false,
+          "path": "aside#sidebar.docs-sidebar > nav#sidebar-nav > div.sidebar-section"
+        },
+        {
+          "sel": "a.sidebar-link",
+          "w": 267,
+          "h": 30,
+          "text": "Multi-agent",
+          "inNav": true,
+          "fixed": false,
+          "path": "aside#sidebar.docs-sidebar > nav#sidebar-nav > div.sidebar-section"
+        },
+        {
+          "sel": "a.sidebar-link",
+          "w": 267,
+          "h": 30,
+          "text": "IRL (agents in the real world)",
+          "inNav": true,
+          "fixed": false,
+          "path": "aside#sidebar.docs-sidebar > nav#sidebar-nav > div.sidebar-section"
+        },
+        {
+          "sel": "a.sidebar-link",
+          "w": 267,
+          "h": 30,
+          "text": "World Lines (proof of presence)",
+          "inNav": true,
+          "fixed": false,
+          "path": "aside#sidebar.docs-sidebar > nav#sidebar-nav > div.sidebar-section"
+        },
+        {
+          "sel": "a.sidebar-link",
+          "w": 267,
+          "h": 30,
+          "text": "Cars in /play (traffic and the drivable ",
+          "inNav": true,
+          "fixed": false,
+          "path": "aside#sidebar.docs-sidebar > nav#sidebar-nav > div.sidebar-section"
+        },
+        {
+          "sel": "a.sidebar-link",
+          "w": 267,
+          "h": 30,
+          "text": "Walk Leaderboard",
+          "inNav": true,
+          "fixed": false,
+          "path": "aside#sidebar.docs-sidebar > nav#sidebar-nav > div.sidebar-section"
+        },
+        {
+          "sel": "a.sidebar-link",
+          "w": 267,
+          "h": 30,
+          "text": "Permissions",
+          "inNav": true,
+          "fixed": false,
+          "path": "aside#sidebar.docs-sidebar > nav#sidebar-nav > div.sidebar-section"
+        },
+        {
+          "sel": "a.sidebar-link",
+          "w": 267,
+          "h": 30,
+          "text": "Layers",
+          "inNav": true,
+          "fixed": false,
+          "path": "aside#sidebar.docs-sidebar > nav#sidebar-nav > div.sidebar-section"
+        },
+        {
+          "sel": "a.sidebar-link",
+          "w": 267,
+          "h": 30,
+          "text": "The social layer",
+          "inNav": true,
+          "fixed": false,
+          "path": "aside#sidebar.docs-sidebar > nav#sidebar-nav > div.sidebar-section"
+        },
+        {
+          "sel": "a.sidebar-link",
+          "w": 267,
+          "h": 30,
+          "text": "Trust primitives",
+          "inNav": true,
+          "fixed": false,
+          "path": "aside#sidebar.docs-sidebar > nav#sidebar-nav > div.sidebar-section"
+        },
+        {
+          "sel": "a.sidebar-link",
+          "w": 267,
+          "h": 30,
+          "text": "Onboarding tiers (Simple / Everything)",
+          "inNav": true,
+          "fixed": false,
+          "path": "aside#sidebar.docs-sidebar > nav#sidebar-nav > div.sidebar-section"
+        },
+        {
+          "sel": "a.sidebar-link",
+          "w": 267,
+          "h": 30,
+          "text": "The in-game economy",
+          "inNav": true,
+          "fixed": false,
+          "path": "aside#sidebar.docs-sidebar > nav#sidebar-nav > div.sidebar-section"
+        },
+        {
+          "sel": "a.sidebar-link",
+          "w": 267,
+          "h": 30,
+          "text": "The economy solver",
+          "inNav": true,
+          "fixed": false,
+          "path": "aside#sidebar.docs-sidebar > nav#sidebar-nav > div.sidebar-section"
+        },
+        {
+          "sel": "a.sidebar-link",
+          "w": 267,
+          "h": 30,
+          "text": "Circulation engine",
+          "inNav": true,
+          "fixed": false,
+          "path": "aside#sidebar.docs-sidebar > nav#sidebar-nav > div.sidebar-section"
+        },
+        {
+          "sel": "a.sidebar-link",
+          "w": 267,
+          "h": 30,
+          "text": "Money feed",
+          "inNav": true,
+          "fixed": false,
+          "path": "aside#sidebar.docs-sidebar > nav#sidebar-nav > div.sidebar-section"
+        },
+        {
+          "sel": "a.sidebar-link",
+          "w": 267,
+          "h": 30,
+          "text": "Agent wallets",
+          "inNav": true,
+          "fixed": false,
+          "path": "aside#sidebar.docs-sidebar > nav#sidebar-nav > div.sidebar-section"
+        },
+        {
+          "sel": "a.sidebar-link",
+          "w": 267,
+          "h": 30,
+          "text": "Marketplace",
+          "inNav": true,
+          "fixed": false,
+          "path": "aside#sidebar.docs-sidebar > nav#sidebar-nav > div.sidebar-section"
+        },
+        {
+          "sel": "a.sidebar-link",
+          "w": 267,
+          "h": 30,
+          "text": "Skill bundles",
+          "inNav": true,
+          "fixed": false,
+          "path": "aside#sidebar.docs-sidebar > nav#sidebar-nav > div.sidebar-section"
+        },
+        {
+          "sel": "a.sidebar-link",
+          "w": 267,
+          "h": 30,
+          "text": "Coin launches",
+          "inNav": true,
+          "fixed": false,
+          "path": "aside#sidebar.docs-sidebar > nav#sidebar-nav > div.sidebar-section"
+        },
+        {
+          "sel": "a.sidebar-link",
+          "w": 267,
+          "h": 30,
+          "text": "x402 protocol",
+          "inNav": true,
+          "fixed": false,
+          "path": "aside#sidebar.docs-sidebar > nav#sidebar-nav > div.sidebar-section"
+        },
+        {
+          "sel": "a.sidebar-link",
+          "w": 267,
+          "h": 30,
+          "text": "x402 paid endpoints",
+          "inNav": true,
+          "fixed": false,
+          "path": "aside#sidebar.docs-sidebar > nav#sidebar-nav > div.sidebar-section"
+        },
+        {
+          "sel": "a.sidebar-link",
+          "w": 267,
+          "h": 30,
+          "text": "x402 buyer client",
+          "inNav": true,
+          "fixed": false,
+          "path": "aside#sidebar.docs-sidebar > nav#sidebar-nav > div.sidebar-section"
+        },
+        {
+          "sel": "a.sidebar-link",
+          "w": 267,
+          "h": 30,
+          "text": "Autonomous x402 loop",
+          "inNav": true,
+          "fixed": false,
+          "path": "aside#sidebar.docs-sidebar > nav#sidebar-nav > div.sidebar-section"
+        },
+        {
+          "sel": "a.sidebar-link",
+          "w": 267,
+          "h": 30,
+          "text": "x402 developer tools",
+          "inNav": true,
+          "fixed": false,
+          "path": "aside#sidebar.docs-sidebar > nav#sidebar-nav > div.sidebar-section"
+        },
+        {
+          "sel": "a.sidebar-link",
+          "w": 267,
+          "h": 30,
+          "text": "Market Data API (x402)",
+          "inNav": true,
+          "fixed": false,
+          "path": "aside#sidebar.docs-sidebar > nav#sidebar-nav > div.sidebar-section"
+        },
+        {
+          "sel": "a.sidebar-link",
+          "w": 267,
+          "h": 30,
+          "text": "Premium Data API pass",
+          "inNav": true,
+          "fixed": false,
+          "path": "aside#sidebar.docs-sidebar > nav#sidebar-nav > div.sidebar-section"
+        },
+        {
+          "sel": "a.sidebar-link",
+          "w": 267,
+          "h": 30,
+          "text": "Pump Launcher (paid launch API)",
+          "inNav": true,
+          "fixed": false,
+          "path": "aside#sidebar.docs-sidebar > nav#sidebar-nav > div.sidebar-section"
+        },
+        {
+          "sel": "a.sidebar-link",
+          "w": 267,
+          "h": 30,
+          "text": "Launch Studio recipes",
+          "inNav": true,
+          "fixed": false,
+          "path": "aside#sidebar.docs-sidebar > nav#sidebar-nav > div.sidebar-section"
+        },
+        {
+          "sel": "a.sidebar-link",
+          "w": 267,
+          "h": 30,
+          "text": "Remix economy & royalties",
+          "inNav": true,
+          "fixed": false,
+          "path": "aside#sidebar.docs-sidebar > nav#sidebar-nav > div.sidebar-section"
+        },
+        {
+          "sel": "a.sidebar-link",
+          "w": 267,
+          "h": 30,
+          "text": "Embody (x402 3D body)",
+          "inNav": true,
+          "fixed": false,
+          "path": "aside#sidebar.docs-sidebar > nav#sidebar-nav > div.sidebar-section"
+        },
+        {
+          "sel": "a.sidebar-link",
+          "w": 267,
+          "h": 30,
+          "text": "Custody, limits & recovery",
+          "inNav": true,
+          "fixed": false,
+          "path": "aside#sidebar.docs-sidebar > nav#sidebar-nav > div.sidebar-section"
+        },
+        {
+          "sel": "a.sidebar-link",
+          "w": 267,
+          "h": 30,
+          "text": "Payment Sessions (spend envelopes)",
+          "inNav": true,
+          "fixed": false,
+          "path": "aside#sidebar.docs-sidebar > nav#sidebar-nav > div.sidebar-section"
+        },
+        {
+          "sel": "a.sidebar-link",
+          "w": 267,
+          "h": 30,
+          "text": "Agent wallet control API",
+          "inNav": true,
+          "fixed": false,
+          "path": "aside#sidebar.docs-sidebar > nav#sidebar-nav > div.sidebar-section"
+        },
+        {
+          "sel": "a.sidebar-link",
+          "w": 267,
+          "h": 30,
+          "text": "Agent-to-agent payments (limits & kill s",
+          "inNav": true,
+          "fixed": false,
+          "path": "aside#sidebar.docs-sidebar > nav#sidebar-nav > div.sidebar-section"
+        },
+        {
+          "sel": "a.sidebar-link",
+          "w": 267,
+          "h": 30,
+          "text": "USDC agent vaults",
+          "inNav": true,
+          "fixed": false,
+          "path": "aside#sidebar.docs-sidebar > nav#sidebar-nav > div.sidebar-section"
+        },
+        {
+          "sel": "a.sidebar-link",
+          "w": 267,
+          "h": 30,
+          "text": "CA to x402 (mint to endpoint)",
+          "inNav": true,
+          "fixed": false,
+          "path": "aside#sidebar.docs-sidebar > nav#sidebar-nav > div.sidebar-section"
+        },
+        {
+          "sel": "a.sidebar-link",
+          "w": 267,
+          "h": 30,
+          "text": "Agent economy volume",
+          "inNav": true,
+          "fixed": false,
+          "path": "aside#sidebar.docs-sidebar > nav#sidebar-nav > div.sidebar-section"
+        },
+        {
+          "sel": "a.sidebar-link",
+          "w": 267,
+          "h": 30,
+          "text": "Viability (on-chain unit economics)",
+          "inNav": true,
+          "fixed": false,
+          "path": "aside#sidebar.docs-sidebar > nav#sidebar-nav > div.sidebar-section"
+        },
+        {
+          "sel": "a.sidebar-link",
+          "w": 267,
+          "h": 30,
+          "text": "Your master wallet",
+          "inNav": true,
+          "fixed": false,
+          "path": "aside#sidebar.docs-sidebar > nav#sidebar-nav > div.sidebar-section"
+        },
+        {
+          "sel": "a.sidebar-link",
+          "w": 267,
+          "h": 30,
+          "text": "Agent-Forged Gallery",
+          "inNav": true,
+          "fixed": false,
+          "path": "aside#sidebar.docs-sidebar > nav#sidebar-nav > div.sidebar-section"
+        },
+        {
+          "sel": "a.sidebar-link",
+          "w": 267,
+          "h": 30,
+          "text": "Minted 3D assets",
+          "inNav": true,
+          "fixed": false,
+          "path": "aside#sidebar.docs-sidebar > nav#sidebar-nav > div.sidebar-section"
+        },
+        {
+          "sel": "a.sidebar-link",
+          "w": 267,
+          "h": 30,
+          "text": "Agent Symphony (economy as music)",
+          "inNav": true,
+          "fixed": false,
+          "path": "aside#sidebar.docs-sidebar > nav#sidebar-nav > div.sidebar-section"
+        },
+        {
+          "sel": "a.sidebar-link",
+          "w": 267,
+          "h": 30,
+          "text": "AgenC",
+          "inNav": true,
+          "fixed": false,
+          "path": "aside#sidebar.docs-sidebar > nav#sidebar-nav > div.sidebar-section"
+        },
+        {
+          "sel": "a.sidebar-link",
+          "w": 267,
+          "h": 30,
+          "text": "The autonomous economy",
+          "inNav": true,
+          "fixed": false,
+          "path": "aside#sidebar.docs-sidebar > nav#sidebar-nav > div.sidebar-section"
+        },
+        {
+          "sel": "a.sidebar-link",
+          "w": 267,
+          "h": 30,
+          "text": "Closed-loop x402 ring economy",
+          "inNav": true,
+          "fixed": false,
+          "path": "aside#sidebar.docs-sidebar > nav#sidebar-nav > div.sidebar-section"
+        },
+        {
+          "sel": "a.sidebar-link",
+          "w": 267,
+          "h": 30,
+          "text": "x402 distribution & listings",
+          "inNav": true,
+          "fixed": false,
+          "path": "aside#sidebar.docs-sidebar > nav#sidebar-nav > div.sidebar-section"
+        },
+        {
+          "sel": "a.sidebar-link",
+          "w": 267,
+          "h": 30,
+          "text": "Paid plans (USDC, SOL, $THREE)",
+          "inNav": true,
+          "fixed": false,
+          "path": "aside#sidebar.docs-sidebar > nav#sidebar-nav > div.sidebar-section"
+        },
+        {
+          "sel": "a.sidebar-link",
+          "w": 267,
+          "h": 30,
+          "text": "Vanity addresses",
+          "inNav": true,
+          "fixed": false,
+          "path": "aside#sidebar.docs-sidebar > nav#sidebar-nav > div.sidebar-section"
+        },
+        {
+          "sel": "a.sidebar-link",
+          "w": 267,
+          "h": 30,
+          "text": "Hold-to-access",
+          "inNav": true,
+          "fixed": false,
+          "path": "aside#sidebar.docs-sidebar > nav#sidebar-nav > div.sidebar-section"
+        },
+        {
+          "sel": "a.sidebar-link",
+          "w": 267,
+          "h": 30,
+          "text": "$THREE micro-buy loop",
+          "inNav": true,
+          "fixed": false,
+          "path": "aside#sidebar.docs-sidebar > nav#sidebar-nav > div.sidebar-section"
+        },
+        {
+          "sel": "a.sidebar-link",
+          "w": 267,
+          "h": 30,
+          "text": "Token-gated 3D embeds",
+          "inNav": true,
+          "fixed": false,
+          "path": "aside#sidebar.docs-sidebar > nav#sidebar-nav > div.sidebar-section"
+        },
+        {
+          "sel": "a.sidebar-link",
+          "w": 267,
+          "h": 30,
+          "text": "Real-funds risk acknowledgment",
+          "inNav": true,
+          "fixed": false,
+          "path": "aside#sidebar.docs-sidebar > nav#sidebar-nav > div.sidebar-section"
+        },
+        {
+          "sel": "a.sidebar-link",
+          "w": 267,
+          "h": 30,
+          "text": "3D pipeline (pay-per-stage x402)",
+          "inNav": true,
+          "fixed": false,
+          "path": "aside#sidebar.docs-sidebar > nav#sidebar-nav > div.sidebar-section"
+        },
+        {
+          "sel": "a.sidebar-link",
+          "w": 267,
+          "h": 30,
+          "text": "Embedding",
+          "inNav": true,
+          "fixed": false,
+          "path": "aside#sidebar.docs-sidebar > nav#sidebar-nav > div.sidebar-section"
+        },
+        {
+          "sel": "a.sidebar-link",
+          "w": 267,
+          "h": 30,
+          "text": "Concierge (AI chat widget)",
+          "inNav": true,
+          "fixed": false,
+          "path": "aside#sidebar.docs-sidebar > nav#sidebar-nav > div.sidebar-section"
+        },
+        {
+          "sel": "a.sidebar-link",
+          "w": 267,
+          "h": 30,
+          "text": "Assistant widget (3D avatar)",
+          "inNav": true,
+          "fixed": false,
+          "path": "aside#sidebar.docs-sidebar > nav#sidebar-nav > div.sidebar-section"
+        },
+        {
+          "sel": "a.sidebar-link",
+          "w": 267,
+          "h": 30,
+          "text": "3D Viewer",
+          "inNav": true,
+          "fixed": false,
+          "path": "aside#sidebar.docs-sidebar > nav#sidebar-nav > div.sidebar-section"
+        },
+        {
+          "sel": "a.sidebar-link",
+          "w": 267,
+          "h": 30,
+          "text": "Editor guide",
+          "inNav": true,
+          "fixed": false,
+          "path": "aside#sidebar.docs-sidebar > nav#sidebar-nav > div.sidebar-section"
+        },
+        {
+          "sel": "a.sidebar-link",
+          "w": 267,
+          "h": 30,
+          "text": "Animations (clips & slots)",
+          "inNav": true,
+          "fixed": false,
+          "path": "aside#sidebar.docs-sidebar > nav#sidebar-nav > div.sidebar-section"
+        },
+        {
+          "sel": "a.sidebar-link",
+          "w": 267,
+          "h": 30,
+          "text": "Choreography (gesture routines)",
+          "inNav": true,
+          "fixed": false,
+          "path": "aside#sidebar.docs-sidebar > nav#sidebar-nav > div.sidebar-section"
+        },
+        {
+          "sel": "a.sidebar-link",
+          "w": 267,
+          "h": 30,
+          "text": "Avatar inspector",
+          "inNav": true,
+          "fixed": false,
+          "path": "aside#sidebar.docs-sidebar > nav#sidebar-nav > div.sidebar-section"
+        },
+        {
+          "sel": "a.sidebar-link",
+          "w": 267,
+          "h": 30,
+          "text": "AR & WebXR",
+          "inNav": true,
+          "fixed": false,
+          "path": "aside#sidebar.docs-sidebar > nav#sidebar-nav > div.sidebar-section"
+        },
+        {
+          "sel": "a.sidebar-link",
+          "w": 267,
+          "h": 30,
+          "text": "Authentication",
+          "inNav": true,
+          "fixed": false,
+          "path": "aside#sidebar.docs-sidebar > nav#sidebar-nav > div.sidebar-section"
+        },
+        {
+          "sel": "a.sidebar-link",
+          "w": 267,
+          "h": 30,
+          "text": "Avatar creation",
+          "inNav": true,
+          "fixed": false,
+          "path": "aside#sidebar.docs-sidebar > nav#sidebar-nav > div.sidebar-section"
+        },
+        {
+          "sel": "a.sidebar-link",
+          "w": 267,
+          "h": 30,
+          "text": "Avatar pipeline (end to end)",
+          "inNav": true,
+          "fixed": false,
+          "path": "aside#sidebar.docs-sidebar > nav#sidebar-nav > div.sidebar-section"
+        },
+        {
+          "sel": "a.sidebar-link",
+          "w": 267,
+          "h": 30,
+          "text": "ERC-8004",
+          "inNav": true,
+          "fixed": false,
+          "path": "aside#sidebar.docs-sidebar > nav#sidebar-nav > div.sidebar-section"
+        },
+        {
+          "sel": "a.sidebar-link",
+          "w": 267,
+          "h": 30,
+          "text": "Reputation system",
+          "inNav": true,
+          "fixed": false,
+          "path": "aside#sidebar.docs-sidebar > nav#sidebar-nav > div.sidebar-section"
+        },
+        {
+          "sel": "a.sidebar-link",
+          "w": 267,
+          "h": 30,
+          "text": "Validation attestations",
+          "inNav": true,
+          "fixed": false,
+          "path": "aside#sidebar.docs-sidebar > nav#sidebar-nav > div.sidebar-section"
+        },
+        {
+          "sel": "a.sidebar-link",
+          "w": 267,
+          "h": 30,
+          "text": "3D provenance (verify authenticity)",
+          "inNav": true,
+          "fixed": false,
+          "path": "aside#sidebar.docs-sidebar > nav#sidebar-nav > div.sidebar-section"
+        },
+        {
+          "sel": "a.sidebar-link",
+          "w": 267,
+          "h": 30,
+          "text": "SAS attestations",
+          "inNav": true,
+          "fixed": false,
+          "path": "aside#sidebar.docs-sidebar > nav#sidebar-nav > div.sidebar-section"
+        },
+        {
+          "sel": "a.sidebar-link",
+          "w": 267,
+          "h": 30,
+          "text": "Solana agents",
+          "inNav": true,
+          "fixed": false,
+          "path": "aside#sidebar.docs-sidebar > nav#sidebar-nav > div.sidebar-section"
+        },
+        {
+          "sel": "a.sidebar-link",
+          "w": 267,
+          "h": 30,
+          "text": "Deploy agents on-chain (bulk)",
+          "inNav": true,
+          "fixed": false,
+          "path": "aside#sidebar.docs-sidebar > nav#sidebar-nav > div.sidebar-section"
+        },
+        {
+          "sel": "a.sidebar-link",
+          "w": 267,
+          "h": 30,
+          "text": "On-chain deployments feed",
+          "inNav": true,
+          "fixed": false,
+          "path": "aside#sidebar.docs-sidebar > nav#sidebar-nav > div.sidebar-section"
+        },
+        {
+          "sel": "a.sidebar-link",
+          "w": 267,
+          "h": 30,
+          "text": "Solana pump.fun signals",
+          "inNav": true,
+          "fixed": false,
+          "path": "aside#sidebar.docs-sidebar > nav#sidebar-nav > div.sidebar-section"
+        },
+        {
+          "sel": "a.sidebar-link",
+          "w": 267,
+          "h": 30,
+          "text": "Mint mark (\"3ws\")",
+          "inNav": true,
+          "fixed": false,
+          "path": "aside#sidebar.docs-sidebar > nav#sidebar-nav > div.sidebar-section"
+        },
+        {
+          "sel": "a.sidebar-link",
+          "w": 267,
+          "h": 30,
+          "text": "Security",
+          "inNav": true,
+          "fixed": false,
+          "path": "aside#sidebar.docs-sidebar > nav#sidebar-nav > div.sidebar-section"
+        },
+        {
+          "sel": "a.sidebar-link",
+          "w": 267,
+          "h": 30,
+          "text": "Configuration",
+          "inNav": true,
+          "fixed": false,
+          "path": "aside#sidebar.docs-sidebar > nav#sidebar-nav > div.sidebar-section"
+        },
+        {
+          "sel": "a.sidebar-link",
+          "w": 267,
+          "h": 30,
+          "text": "Agent Skills pack (Claude)",
+          "inNav": true,
+          "fixed": false,
+          "path": "aside#sidebar.docs-sidebar > nav#sidebar-nav > div.sidebar-section"
+        },
+        {
+          "sel": "a.sidebar-link",
+          "w": 267,
+          "h": 30,
+          "text": "Notifications",
+          "inNav": true,
+          "fixed": false,
+          "path": "aside#sidebar.docs-sidebar > nav#sidebar-nav > div.sidebar-section"
+        },
+        {
+          "sel": "a.sidebar-link",
+          "w": 267,
+          "h": 30,
+          "text": "Creator portfolio",
+          "inNav": true,
+          "fixed": false,
+          "path": "aside#sidebar.docs-sidebar > nav#sidebar-nav > div.sidebar-section"
+        },
+        {
+          "sel": "a.sidebar-link",
+          "w": 267,
+          "h": 30,
+          "text": "Contributing",
+          "inNav": true,
+          "fixed": false,
+          "path": "aside#sidebar.docs-sidebar > nav#sidebar-nav > div.sidebar-section"
+        },
+        {
+          "sel": "a.sidebar-link",
+          "w": 267,
+          "h": 30,
+          "text": "Your first contribution",
+          "inNav": true,
+          "fixed": false,
+          "path": "aside#sidebar.docs-sidebar > nav#sidebar-nav > div.sidebar-section"
+        },
+        {
+          "sel": "a.sidebar-link",
+          "w": 267,
+          "h": 30,
+          "text": "Triage",
+          "inNav": true,
+          "fixed": false,
+          "path": "aside#sidebar.docs-sidebar > nav#sidebar-nav > div.sidebar-section"
+        },
+        {
+          "sel": "a.sidebar-link",
+          "w": 267,
+          "h": 30,
+          "text": "Community",
+          "inNav": true,
+          "fixed": false,
+          "path": "aside#sidebar.docs-sidebar > nav#sidebar-nav > div.sidebar-section"
+        },
+        {
+          "sel": "a.sidebar-link",
+          "w": 267,
+          "h": 30,
+          "text": "REST API",
+          "inNav": true,
+          "fixed": false,
+          "path": "aside#sidebar.docs-sidebar > nav#sidebar-nav > div.sidebar-section"
+        },
+        {
+          "sel": "a.sidebar-link",
+          "w": 267,
+          "h": 30,
+          "text": "3D API (free text to 3D)",
+          "inNav": true,
+          "fixed": false,
+          "path": "aside#sidebar.docs-sidebar > nav#sidebar-nav > div.sidebar-section"
+        },
+        {
+          "sel": "a.sidebar-link",
+          "w": 267,
+          "h": 30,
+          "text": "Media & render API",
+          "inNav": true,
+          "fixed": false,
+          "path": "aside#sidebar.docs-sidebar > nav#sidebar-nav > div.sidebar-section"
+        },
+        {
+          "sel": "a.sidebar-link",
+          "w": 267,
+          "h": 30,
+          "text": "Developer platform (keys, webhooks)",
+          "inNav": true,
+          "fixed": false,
+          "path": "aside#sidebar.docs-sidebar > nav#sidebar-nav > div.sidebar-section"
+        },
+        {
+          "sel": "a.sidebar-link",
+          "w": 267,
+          "h": 30,
+          "text": "Crypto Data API (free)",
+          "inNav": true,
+          "fixed": false,
+          "path": "aside#sidebar.docs-sidebar > nav#sidebar-nav > div.sidebar-section"
+        },
+        {
+          "sel": "a.sidebar-link",
+          "w": 267,
+          "h": 30,
+          "text": "3D Studio MCP (free)",
+          "inNav": true,
+          "fixed": false,
+          "path": "aside#sidebar.docs-sidebar > nav#sidebar-nav > div.sidebar-section"
+        },
+        {
+          "sel": "a.sidebar-link",
+          "w": 267,
+          "h": 30,
+          "text": "Agent manifest",
+          "inNav": true,
+          "fixed": false,
+          "path": "aside#sidebar.docs-sidebar > nav#sidebar-nav > div.sidebar-section"
+        },
+        {
+          "sel": "a.sidebar-link",
+          "w": 267,
+          "h": 30,
+          "text": "ERC-8004 smart contracts",
+          "inNav": true,
+          "fixed": false,
+          "path": "aside#sidebar.docs-sidebar > nav#sidebar-nav > div.sidebar-section"
+        },
+        {
+          "sel": "a.sidebar-link",
+          "w": 267,
+          "h": 30,
+          "text": "JavaScript API",
+          "inNav": true,
+          "fixed": false,
+          "path": "aside#sidebar.docs-sidebar > nav#sidebar-nav > div.sidebar-section"
+        },
+        {
+          "sel": "a.sidebar-link",
+          "w": 267,
+          "h": 30,
+          "text": "Web component",
+          "inNav": true,
+          "fixed": false,
+          "path": "aside#sidebar.docs-sidebar > nav#sidebar-nav > div.sidebar-section"
+        },
+        {
+          "sel": "a.sidebar-link",
+          "w": 267,
+          "h": 30,
+          "text": "MCP",
+          "inNav": true,
+          "fixed": false,
+          "path": "aside#sidebar.docs-sidebar > nav#sidebar-nav > div.sidebar-section"
+        },
+        {
+          "sel": "a.sidebar-link",
+          "w": 267,
+          "h": 30,
+          "text": "MCP tools catalog",
+          "inNav": true,
+          "fixed": false,
+          "path": "aside#sidebar.docs-sidebar > nav#sidebar-nav > div.sidebar-section"
+        },
+        {
+          "sel": "a.sidebar-link",
+          "w": 267,
+          "h": 30,
+          "text": "MCP tool safety",
+          "inNav": true,
+          "fixed": false,
+          "path": "aside#sidebar.docs-sidebar > nav#sidebar-nav > div.sidebar-section"
+        },
+        {
+          "sel": "a.sidebar-link",
+          "w": 267,
+          "h": 30,
+          "text": "Spatial MCP (3D responses)",
+          "inNav": true,
+          "fixed": false,
+          "path": "aside#sidebar.docs-sidebar > nav#sidebar-nav > div.sidebar-section"
+        },
+        {
+          "sel": "a.sidebar-link",
+          "w": 267,
+          "h": 30,
+          "text": "SDK",
+          "inNav": true,
+          "fixed": false,
+          "path": "aside#sidebar.docs-sidebar > nav#sidebar-nav > div.sidebar-section"
+        },
+        {
+          "sel": "a.sidebar-link",
+          "w": 267,
+          "h": 30,
+          "text": "Avatar CLI",
+          "inNav": true,
+          "fixed": false,
+          "path": "aside#sidebar.docs-sidebar > nav#sidebar-nav > div.sidebar-section"
+        },
+        {
+          "sel": "a.sidebar-link",
+          "w": 267,
+          "h": 30,
+          "text": "Terminal avatar (tty)",
+          "inNav": true,
+          "fixed": false,
+          "path": "aside#sidebar.docs-sidebar > nav#sidebar-nav > div.sidebar-section"
+        },
+        {
+          "sel": "a.sidebar-link",
+          "w": 267,
+          "h": 30,
+          "text": "Rig Doctor (will my GLB animate?)",
+          "inNav": true,
+          "fixed": false,
+          "path": "aside#sidebar.docs-sidebar > nav#sidebar-nav > div.sidebar-section"
+        },
+        {
+          "sel": "a.sidebar-link",
+          "w": 267,
+          "h": 30,
+          "text": "Widgets",
+          "inNav": true,
+          "fixed": false,
+          "path": "aside#sidebar.docs-sidebar > nav#sidebar-nav > div.sidebar-section"
+        },
+        {
+          "sel": "a.sidebar-link",
+          "w": 267,
+          "h": 30,
+          "text": "Widget Studio",
+          "inNav": true,
+          "fixed": false,
+          "path": "aside#sidebar.docs-sidebar > nav#sidebar-nav > div.sidebar-section"
+        },
+        {
+          "sel": "a.sidebar-link",
+          "w": 267,
+          "h": 30,
+          "text": "Widget API (JSON-RPC)",
+          "inNav": true,
+          "fixed": false,
+          "path": "aside#sidebar.docs-sidebar > nav#sidebar-nav > div.sidebar-section"
+        },
+        {
+          "sel": "a.sidebar-link.external",
+          "w": 267,
+          "h": 30,
+          "text": "Widget reference",
+          "inNav": true,
+          "fixed": false,
+          "path": "aside#sidebar.docs-sidebar > nav#sidebar-nav > div.sidebar-section"
+        },
+        {
+          "sel": "a.sidebar-link",
+          "w": 267,
+          "h": 30,
+          "text": "ui-juice (game-feel library)",
+          "inNav": true,
+          "fixed": false,
+          "path": "aside#sidebar.docs-sidebar > nav#sidebar-nav > div.sidebar-section"
+        },
+        {
+          "sel": "a.sidebar-link",
+          "w": 267,
+          "h": 30,
+          "text": "Shared utilities",
+          "inNav": true,
+          "fixed": false,
+          "path": "aside#sidebar.docs-sidebar > nav#sidebar-nav > div.sidebar-section"
+        },
+        {
+          "sel": "a.sidebar-link",
+          "w": 267,
+          "h": 30,
+          "text": "Terminal renderer",
+          "inNav": true,
+          "fixed": false,
+          "path": "aside#sidebar.docs-sidebar > nav#sidebar-nav > div.sidebar-section"
+        },
+        {
+          "sel": "a.sidebar-link",
+          "w": 267,
+          "h": 30,
+          "text": "NVIDIA free models",
+          "inNav": true,
+          "fixed": false,
+          "path": "aside#sidebar.docs-sidebar > nav#sidebar-nav > div.sidebar-section"
+        },
+        {
+          "sel": "a.sidebar-link",
+          "w": 267,
+          "h": 30,
+          "text": "IBM watsonx & Granite",
+          "inNav": true,
+          "fixed": false,
+          "path": "aside#sidebar.docs-sidebar > nav#sidebar-nav > div.sidebar-section"
+        },
+        {
+          "sel": "a.sidebar-link",
+          "w": 267,
+          "h": 30,
+          "text": "IBM x402 MCP",
+          "inNav": true,
+          "fixed": false,
+          "path": "aside#sidebar.docs-sidebar > nav#sidebar-nav > div.sidebar-section"
+        },
+        {
+          "sel": "a.sidebar-link",
+          "w": 267,
+          "h": 30,
+          "text": "IBM Community catalog",
+          "inNav": true,
+          "fixed": false,
+          "path": "aside#sidebar.docs-sidebar > nav#sidebar-nav > div.sidebar-section"
+        },
+        {
+          "sel": "a.sidebar-link",
+          "w": 267,
+          "h": 30,
+          "text": "BNB payments",
+          "inNav": true,
+          "fixed": false,
+          "path": "aside#sidebar.docs-sidebar > nav#sidebar-nav > div.sidebar-section"
+        },
+        {
+          "sel": "a.sidebar-link",
+          "w": 267,
+          "h": 30,
+          "text": "BNB vault",
+          "inNav": true,
+          "fixed": false,
+          "path": "aside#sidebar.docs-sidebar > nav#sidebar-nav > div.sidebar-section"
+        },
+        {
+          "sel": "a.sidebar-link",
+          "w": 267,
+          "h": 30,
+          "text": "MCP: agent wallet server",
+          "inNav": true,
+          "fixed": false,
+          "path": "aside#sidebar.docs-sidebar > nav#sidebar-nav > div.sidebar-section"
+        },
+        {
+          "sel": "a.sidebar-link",
+          "w": 267,
+          "h": 30,
+          "text": "MCP: 3D Studio server",
+          "inNav": true,
+          "fixed": false,
+          "path": "aside#sidebar.docs-sidebar > nav#sidebar-nav > div.sidebar-section"
+        },
+        {
+          "sel": "a.sidebar-link",
+          "w": 267,
+          "h": 30,
+          "text": "MCP: x402 Bazaar server",
+          "inNav": true,
+          "fixed": false,
+          "path": "aside#sidebar.docs-sidebar > nav#sidebar-nav > div.sidebar-section"
+        },
+        {
+          "sel": "a.sidebar-link",
+          "w": 267,
+          "h": 30,
+          "text": "MCP: Scenes server",
+          "inNav": true,
+          "fixed": false,
+          "path": "aside#sidebar.docs-sidebar > nav#sidebar-nav > div.sidebar-section"
+        },
+        {
+          "sel": "a.sidebar-link",
+          "w": 267,
+          "h": 30,
+          "text": "MCP: x402 Wallet server",
+          "inNav": true,
+          "fixed": false,
+          "path": "aside#sidebar.docs-sidebar > nav#sidebar-nav > div.sidebar-section"
+        },
+        {
+          "sel": "a.sidebar-link",
+          "w": 267,
+          "h": 30,
+          "text": "AR in ChatGPT",
+          "inNav": true,
+          "fixed": false,
+          "path": "aside#sidebar.docs-sidebar > nav#sidebar-nav > div.sidebar-section"
+        },
+        {
+          "sel": "a.sidebar-link",
+          "w": 267,
+          "h": 30,
+          "text": "The 3D Studio custom GPT",
+          "inNav": true,
+          "fixed": false,
+          "path": "aside#sidebar.docs-sidebar > nav#sidebar-nav > div.sidebar-section"
+        },
+        {
+          "sel": "a.sidebar-link",
+          "w": 267,
+          "h": 30,
+          "text": "VS Code extension",
+          "inNav": true,
+          "fixed": false,
+          "path": "aside#sidebar.docs-sidebar > nav#sidebar-nav > div.sidebar-section"
+        },
+        {
+          "sel": "a.sidebar-link",
+          "w": 267,
+          "h": 30,
+          "text": "Sketchfab showcase",
+          "inNav": true,
+          "fixed": false,
+          "path": "aside#sidebar.docs-sidebar > nav#sidebar-nav > div.sidebar-section"
+        },
+        {
+          "sel": "a.sidebar-link",
+          "w": 267,
+          "h": 30,
+          "text": "NVIDIA Inception",
+          "inNav": true,
+          "fixed": false,
+          "path": "aside#sidebar.docs-sidebar > nav#sidebar-nav > div.sidebar-section"
+        },
+        {
+          "sel": "a.sidebar-link",
+          "w": 267,
+          "h": 30,
+          "text": "Hugging Face",
+          "inNav": true,
+          "fixed": false,
+          "path": "aside#sidebar.docs-sidebar > nav#sidebar-nav > div.sidebar-section"
+        },
+        {
+          "sel": "a.sidebar-link",
+          "w": 267,
+          "h": 30,
+          "text": "AWS Builder Center",
+          "inNav": true,
+          "fixed": false,
+          "path": "aside#sidebar.docs-sidebar > nav#sidebar-nav > div.sidebar-section"
+        },
+        {
+          "sel": "a.sidebar-link",
+          "w": 267,
+          "h": 30,
+          "text": "AWS Marketplace listing",
+          "inNav": true,
+          "fixed": false,
+          "path": "aside#sidebar.docs-sidebar > nav#sidebar-nav > div.sidebar-section"
+        },
+        {
+          "sel": "a.sidebar-link",
+          "w": 267,
+          "h": 30,
+          "text": "AWS partner spotlight",
+          "inNav": true,
+          "fixed": false,
+          "path": "aside#sidebar.docs-sidebar > nav#sidebar-nav > div.sidebar-section"
+        },
+        {
+          "sel": "a.sidebar-link",
+          "w": 267,
+          "h": 30,
+          "text": "AWS: MCP agents",
+          "inNav": true,
+          "fixed": false,
+          "path": "aside#sidebar.docs-sidebar > nav#sidebar-nav > div.sidebar-section"
+        },
+        {
+          "sel": "a.sidebar-link",
+          "w": 267,
+          "h": 30,
+          "text": "AWS: agent payment sessions",
+          "inNav": true,
+          "fixed": false,
+          "path": "aside#sidebar.docs-sidebar > nav#sidebar-nav > div.sidebar-section"
+        },
+        {
+          "sel": "a.sidebar-link",
+          "w": 267,
+          "h": 30,
+          "text": "AWS: marketplace x402",
+          "inNav": true,
+          "fixed": false,
+          "path": "aside#sidebar.docs-sidebar > nav#sidebar-nav > div.sidebar-section"
+        },
+        {
+          "sel": "a.sidebar-link",
+          "w": 267,
+          "h": 30,
+          "text": "NVIDIA Nemotron spotlight",
+          "inNav": true,
+          "fixed": false,
+          "path": "aside#sidebar.docs-sidebar > nav#sidebar-nav > div.sidebar-section"
+        },
+        {
+          "sel": "a.sidebar-link",
+          "w": 267,
+          "h": 30,
+          "text": "Explore the docs in 3D",
+          "inNav": true,
+          "fixed": false,
+          "path": "aside#sidebar.docs-sidebar > nav#sidebar-nav > div.sidebar-section"
+        },
+        {
+          "sel": "a.sidebar-link",
+          "w": 267,
+          "h": 30,
+          "text": "Text prompt to 3D model",
+          "inNav": true,
+          "fixed": false,
+          "path": "aside#sidebar.docs-sidebar > nav#sidebar-nav > div.sidebar-section"
+        },
+        {
+          "sel": "a.sidebar-link",
+          "w": 267,
+          "h": 30,
+          "text": "Photos to 3D model",
+          "inNav": true,
+          "fixed": false,
+          "path": "aside#sidebar.docs-sidebar > nav#sidebar-nav > div.sidebar-section"
+        },
+        {
+          "sel": "a.sidebar-link",
+          "w": 267,
+          "h": 30,
+          "text": "Prompt recipes for 3D",
+          "inNav": true,
+          "fixed": false,
+          "path": "aside#sidebar.docs-sidebar > nav#sidebar-nav > div.sidebar-section"
+        },
+        {
+          "sel": "a.sidebar-link",
+          "w": 267,
+          "h": 30,
+          "text": "Generate 3D from code",
+          "inNav": true,
+          "fixed": false,
+          "path": "aside#sidebar.docs-sidebar > nav#sidebar-nav > div.sidebar-section"
+        },
+        {
+          "sel": "a.sidebar-link",
+          "w": 267,
+          "h": 30,
+          "text": "Place your model in AR",
+          "inNav": true,
+          "fixed": false,
+          "path": "aside#sidebar.docs-sidebar > nav#sidebar-nav > div.sidebar-section"
+        },
+        {
+          "sel": "a.sidebar-link",
+          "w": 267,
+          "h": 30,
+          "text": "Make your avatar sign (ASL)",
+          "inNav": true,
+          "fixed": false,
+          "path": "aside#sidebar.docs-sidebar > nav#sidebar-nav > div.sidebar-section"
+        },
+        {
+          "sel": "a.sidebar-link",
+          "w": 267,
+          "h": 30,
+          "text": "Place an agent in the real world",
+          "inNav": true,
+          "fixed": false,
+          "path": "aside#sidebar.docs-sidebar > nav#sidebar-nav > div.sidebar-section"
+        },
+        {
+          "sel": "a.sidebar-link",
+          "w": 267,
+          "h": 30,
+          "text": "Build your first agent",
+          "inNav": true,
+          "fixed": false,
+          "path": "aside#sidebar.docs-sidebar > nav#sidebar-nav > div.sidebar-section"
+        },
+        {
+          "sel": "a.sidebar-link",
+          "w": 267,
+          "h": 30,
+          "text": "Personal AI site",
+          "inNav": true,
+          "fixed": false,
+          "path": "aside#sidebar.docs-sidebar > nav#sidebar-nav > div.sidebar-section"
+        },
+        {
+          "sel": "a.sidebar-link",
+          "w": 267,
+          "h": 30,
+          "text": "Create a custom skill",
+          "inNav": true,
+          "fixed": false,
+          "path": "aside#sidebar.docs-sidebar > nav#sidebar-nav > div.sidebar-section"
+        },
+        {
+          "sel": "a.sidebar-link",
+          "w": 267,
+          "h": 30,
+          "text": "Embed on a website",
+          "inNav": true,
+          "fixed": false,
+          "path": "aside#sidebar.docs-sidebar > nav#sidebar-nav > div.sidebar-section"
+        },
+        {
+          "sel": "a.sidebar-link",
+          "w": 267,
+          "h": 30,
+          "text": "Build a site concierge",
+          "inNav": true,
+          "fixed": false,
+          "path": "aside#sidebar.docs-sidebar > nav#sidebar-nav > div.sidebar-section"
+        },
+        {
+          "sel": "a.sidebar-link",
+          "w": 267,
+          "h": 30,
+          "text": "Add a 3D avatar assistant",
+          "inNav": true,
+          "fixed": false,
+          "path": "aside#sidebar.docs-sidebar > nav#sidebar-nav > div.sidebar-section"
+        },
+        {
+          "sel": "a.sidebar-link",
+          "w": 267,
+          "h": 30,
+          "text": "Add wallet sign-in",
+          "inNav": true,
+          "fixed": false,
+          "path": "aside#sidebar.docs-sidebar > nav#sidebar-nav > div.sidebar-section"
+        },
+        {
+          "sel": "a.sidebar-link",
+          "w": 267,
+          "h": 30,
+          "text": "Register on-chain",
+          "inNav": true,
+          "fixed": false,
+          "path": "aside#sidebar.docs-sidebar > nav#sidebar-nav > div.sidebar-section"
+        },
+        {
+          "sel": "a.sidebar-link",
+          "w": 267,
+          "h": 30,
+          "text": "Give an agent a spending envelope",
+          "inNav": true,
+          "fixed": false,
+          "path": "aside#sidebar.docs-sidebar > nav#sidebar-nav > div.sidebar-section"
+        },
+        {
+          "sel": "a.sidebar-link",
+          "w": 267,
+          "h": 30,
+          "text": "Monetize an MCP server",
+          "inNav": true,
+          "fixed": false,
+          "path": "aside#sidebar.docs-sidebar > nav#sidebar-nav > div.sidebar-section"
+        },
+        {
+          "sel": "a.sidebar-link",
+          "w": 267,
+          "h": 30,
+          "text": "Render avatar images anywhere",
+          "inNav": true,
+          "fixed": false,
+          "path": "aside#sidebar.docs-sidebar > nav#sidebar-nav > div.sidebar-section"
+        },
+        {
+          "sel": "a.sidebar-link",
+          "w": 267,
+          "h": 30,
+          "text": "Library character to live embed",
+          "inNav": true,
+          "fixed": false,
+          "path": "aside#sidebar.docs-sidebar > nav#sidebar-nav > div.sidebar-section"
+        },
+        {
+          "sel": "a.sidebar-link",
+          "w": 267,
+          "h": 30,
+          "text": "Read an agent's reputation",
+          "inNav": true,
+          "fixed": false,
+          "path": "aside#sidebar.docs-sidebar > nav#sidebar-nav > div.sidebar-section"
+        },
+        {
+          "sel": "a.sidebar-link",
+          "w": 267,
+          "h": 30,
+          "text": "Read a Solana agent's reputation",
+          "inNav": true,
+          "fixed": false,
+          "path": "aside#sidebar.docs-sidebar > nav#sidebar-nav > div.sidebar-section"
+        },
+        {
+          "sel": "a.sidebar-link",
+          "w": 267,
+          "h": 30,
+          "text": "Read the trading fleet",
+          "inNav": true,
+          "fixed": false,
+          "path": "aside#sidebar.docs-sidebar > nav#sidebar-nav > div.sidebar-section"
+        },
+        {
+          "sel": "a.sidebar-link",
+          "w": 267,
+          "h": 30,
+          "text": "Find a better exit policy",
+          "inNav": true,
+          "fixed": false,
+          "path": "aside#sidebar.docs-sidebar > nav#sidebar-nav > div.sidebar-section"
+        },
+        {
+          "sel": "a.sidebar-link",
+          "w": 267,
+          "h": 30,
+          "text": "Earn and spend in /play",
+          "inNav": true,
+          "fixed": false,
+          "path": "aside#sidebar.docs-sidebar > nav#sidebar-nav > div.sidebar-section"
+        },
+        {
+          "sel": "a.sidebar-link",
+          "w": 267,
+          "h": 30,
+          "text": "Write a repository guard",
+          "inNav": true,
+          "fixed": false,
+          "path": "aside#sidebar.docs-sidebar > nav#sidebar-nav > div.sidebar-section"
+        },
+        {
+          "sel": "a.sidebar-link",
+          "w": 267,
+          "h": 30,
+          "text": "Ship an avatar manifest",
+          "inNav": true,
+          "fixed": false,
+          "path": "aside#sidebar.docs-sidebar > nav#sidebar-nav > div.sidebar-section"
+        },
+        {
+          "sel": "a.sidebar-link",
+          "w": 267,
+          "h": 30,
+          "text": "Live Docs (runnable samples)",
+          "inNav": true,
+          "fixed": false,
+          "path": "aside#sidebar.docs-sidebar > nav#sidebar-nav > div.sidebar-section"
+        },
+        {
+          "sel": "a.sidebar-link",
+          "w": 267,
+          "h": 30,
+          "text": "Docs World (3D docs)",
+          "inNav": true,
+          "fixed": false,
+          "path": "aside#sidebar.docs-sidebar > nav#sidebar-nav > div.sidebar-section"
+        },
+        {
+          "sel": "a.sidebar-link",
+          "w": 267,
+          "h": 30,
+          "text": "Examples",
+          "inNav": true,
+          "fixed": false,
+          "path": "aside#sidebar.docs-sidebar > nav#sidebar-nav > div.sidebar-section"
+        },
+        {
+          "sel": "a.sidebar-link",
+          "w": 267,
+          "h": 30,
+          "text": "Listings & distribution",
+          "inNav": true,
+          "fixed": false,
+          "path": "aside#sidebar.docs-sidebar > nav#sidebar-nav > div.sidebar-section"
+        },
+        {
+          "sel": "a.sidebar-link",
+          "w": 267,
+          "h": 30,
+          "text": "The Story So Far (3D timeline)",
+          "inNav": true,
+          "fixed": false,
+          "path": "aside#sidebar.docs-sidebar > nav#sidebar-nav > div.sidebar-section"
+        },
+        {
+          "sel": "a.sidebar-link",
+          "w": 267,
+          "h": 30,
+          "text": "Press kit",
+          "inNav": true,
+          "fixed": false,
+          "path": "aside#sidebar.docs-sidebar > nav#sidebar-nav > div.sidebar-section"
+        },
+        {
+          "sel": "a.sidebar-link",
+          "w": 267,
+          "h": 30,
+          "text": "Partner ecosystem",
+          "inNav": true,
+          "fixed": false,
+          "path": "aside#sidebar.docs-sidebar > nav#sidebar-nav > div.sidebar-section"
+        },
+        {
+          "sel": "a.sidebar-link",
+          "w": 267,
+          "h": 30,
+          "text": "Daily Match",
+          "inNav": true,
+          "fixed": false,
+          "path": "aside#sidebar.docs-sidebar > nav#sidebar-nav > div.sidebar-section"
+        },
+        {
+          "sel": "a.sidebar-link",
+          "w": 267,
+          "h": 30,
+          "text": "Troubleshooting",
+          "inNav": true,
+          "fixed": false,
+          "path": "aside#sidebar.docs-sidebar > nav#sidebar-nav > div.sidebar-section"
+        },
+        {
+          "sel": "a.sidebar-link",
+          "w": 267,
+          "h": 30,
+          "text": "Changelog",
+          "inNav": true,
+          "fixed": false,
+          "path": "aside#sidebar.docs-sidebar > nav#sidebar-nav > div.sidebar-section"
+        },
+        {
+          "sel": "a.sidebar-link",
+          "w": 267,
+          "h": 30,
+          "text": "Internationalization (i18n)",
+          "inNav": true,
+          "fixed": false,
+          "path": "aside#sidebar.docs-sidebar > nav#sidebar-nav > div.sidebar-section"
+        },
+        {
+          "sel": "a.sidebar-link",
+          "w": 267,
+          "h": 30,
+          "text": "Asset pipeline (FBX, GLB, JSON)",
+          "inNav": true,
+          "fixed": false,
+          "path": "aside#sidebar.docs-sidebar > nav#sidebar-nav > div.sidebar-section"
+        },
+        {
+          "sel": "a.sidebar-link",
+          "w": 267,
+          "h": 30,
+          "text": "Design tokens",
+          "inNav": true,
+          "fixed": false,
+          "path": "aside#sidebar.docs-sidebar > nav#sidebar-nav > div.sidebar-section"
+        },
+        {
+          "sel": "a.sidebar-link",
+          "w": 267,
+          "h": 30,
+          "text": "Liquid glass (visual direction)",
+          "inNav": true,
+          "fixed": false,
+          "path": "aside#sidebar.docs-sidebar > nav#sidebar-nav > div.sidebar-section"
+        },
+        {
+          "sel": "a.sidebar-link",
+          "w": 267,
+          "h": 30,
+          "text": "Vanity protocol spec",
+          "inNav": true,
+          "fixed": false,
+          "path": "aside#sidebar.docs-sidebar > nav#sidebar-nav > div.sidebar-section"
+        },
+        {
+          "sel": "a.sidebar-link",
+          "w": 267,
+          "h": 30,
+          "text": "Catalog quality gate",
+          "inNav": true,
+          "fixed": false,
+          "path": "aside#sidebar.docs-sidebar > nav#sidebar-nav > div.sidebar-section"
+        },
+        {
+          "sel": "a.sidebar-link",
+          "w": 267,
+          "h": 30,
+          "text": "Publisher rights (news reader)",
+          "inNav": true,
+          "fixed": false,
+          "path": "aside#sidebar.docs-sidebar > nav#sidebar-nav > div.sidebar-section"
+        },
+        {
+          "sel": "a.sidebar-link",
+          "w": 267,
+          "h": 30,
+          "text": "Repository guards",
+          "inNav": true,
+          "fixed": false,
+          "path": "aside#sidebar.docs-sidebar > nav#sidebar-nav > div.sidebar-section"
+        },
+        {
+          "sel": "a.sidebar-link",
+          "w": 267,
+          "h": 30,
+          "text": "Package extraction",
+          "inNav": true,
+          "fixed": false,
+          "path": "aside#sidebar.docs-sidebar > nav#sidebar-nav > div.sidebar-section"
+        },
+        {
+          "sel": "button#pagetools-copy.docs-pagetools-btn",
+          "w": 110,
+          "h": 35,
+          "text": "Copy page",
+          "inNav": false,
+          "fixed": false,
+          "path": "div#docs-content.docs-content > div.docs-pagetools > div#pagetools-group.docs-pagetools-group"
+        },
+        {
+          "sel": "button#pagetools-caret.docs-pagetools-caret",
+          "w": 35,
+          "h": 35,
+          "text": "More options",
+          "inNav": false,
+          "fixed": false,
+          "path": "div#docs-content.docs-content > div.docs-pagetools > div#pagetools-group.docs-pagetools-group"
+        },
+        {
+          "sel": "a",
+          "w": 146,
+          "h": 21,
+          "text": "Agents vs. Avatars",
+          "inNav": false,
+          "fixed": false,
+          "path": "ol > li > strong"
+        },
+        {
+          "sel": "a",
+          "w": 164,
+          "h": 21,
+          "text": "Make your first agent",
+          "inNav": false,
+          "fixed": false,
+          "path": "ol > li > strong"
+        },
+        {
+          "sel": "a",
+          "w": 115,
+          "h": 21,
+          "text": "Share & embed",
+          "inNav": false,
+          "fixed": false,
+          "path": "ol > li > strong"
+        },
+        {
+          "sel": "a",
+          "w": 135,
+          "h": 21,
+          "text": "Do I need crypto?",
+          "inNav": false,
+          "fixed": false,
+          "path": "ol > li > strong"
+        }
+      ],
+      "canvases": [
+        {
+          "sel": "canvas#footer-bot-canvas",
+          "w": 90,
+          "h": 90,
+          "visible": true,
+          "touchAction": "pan-y",
+          "parentSel": "div.h-footer-avatar",
+          "parentTouchAction": "auto"
+        }
+      ],
+      "viewportMeta": "width=device-width, initial-scale=1.0",
+      "viewportFitCover": false,
+      "safeAreaRuleCount": 0,
+      "bottomBars": [],
+      "overflowX": 0,
+      "innerWidth": 393,
+      "path": "/docs/start-here"
+    }
+  ]
+}
