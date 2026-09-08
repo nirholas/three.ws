@@ -339,6 +339,26 @@ function looksNonHumanoid(prompt) {
 	return NON_HUMANOID.test(t) && !HUMANOID.test(t);
 }
 
+// Tier for AVATAR generation specifically (a person, not a prop).
+//
+// The router maps the image path's high tier to the self-hosted Hunyuan3D lane
+// and standard to TRELLIS (GET /api/forge?catalog, default_backend_for_tier).
+// On people that is the difference the whole likeness bar rests on: Hunyuan3D
+// is the organic/portrait-strength lane, and it is what the avatar skill has
+// documented these tools to request all along ("Both avatar tools always
+// request the platform's `high` quality tier under the hood"). The code was
+// still sending `standard`, so every avatar quietly came back off the weaker
+// lane while the docs promised otherwise.
+//
+// Asking for high is safe rather than a latency gamble: startForge degrades an
+// explicit high request to standard on a 402 (a deployment without the platform
+// seed token) or on a submit timeout, and a slow job returns a pollable handle
+// instead of an error. So the worst case is exactly today's behaviour.
+//
+// Props stay on standard. handleForgeFree documents its own reasoning for that
+// and a coffee cup gains nothing from the portrait lane.
+const AVATAR_TIER = 'high';
+
 // ── handlers ────────────────────────────────────────────────────────────────
 
 async function handleForgeFree(args, _auth, req) {
@@ -418,7 +438,7 @@ async function handleTextToAvatar(args, _auth, req) {
 	try {
 		job = await generate(
 			base,
-			{ prompt: effective || undefined, imageUrls: imageUrl ? [imageUrl] : undefined, aspect: '1:1', tier: 'standard', internal: true },
+			{ prompt: effective || undefined, imageUrls: imageUrl ? [imageUrl] : undefined, aspect: '1:1', tier: AVATAR_TIER, internal: true },
 			{ timeoutEnv: 'STUDIO_FORGE_TIMEOUT_MS' },
 		);
 	} catch (err) {
@@ -531,7 +551,7 @@ async function handleForgeAvatar(args, _auth, req) {
 	try {
 		gen = await generate(
 			base,
-			{ prompt: effective || undefined, imageUrls: imageUrl ? [imageUrl] : undefined, aspect: '1:1', tier: 'standard', internal: true },
+			{ prompt: effective || undefined, imageUrls: imageUrl ? [imageUrl] : undefined, aspect: '1:1', tier: AVATAR_TIER, internal: true },
 			{ timeoutEnv: 'STUDIO_FORGE_TIMEOUT_MS' },
 		);
 	} catch (err) {

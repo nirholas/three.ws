@@ -448,4 +448,75 @@ describe('mcp-studio dispatch', () => {
 		expect(r.error).toBeTruthy();
 		expect(spy).not.toHaveBeenCalled();
 	});
+
+	// The tier an avatar is generated on IS the likeness bar: the router maps the
+	// image path's high tier to the self-host Hunyuan3D lane and standard to
+	// TRELLIS. Both the avatar skill and the standalone MCP server
+	// (mcp-server/src/tools/_studio-core.js) have promised high for avatars for a
+	// while; this API-side twin was still sending standard, so every avatar
+	// quietly came off the weaker lane. Pin both halves of the contract.
+	describe('generation tier routing', () => {
+		// Captures the body of the POST /api/forge submit, letting the director's
+		// own fetch (which fails soft) pass through as an unusable response.
+		function stubForge() {
+			const submits = [];
+			globalThis.fetch = vi.fn(async (url, init) => {
+				const u = String(url);
+				// The studio submits through /api/gpt-forge (and /api/forge for the
+				// rig leg); match on the generation submit rather than a bare path so
+				// the art director's own LLM calls cannot be mistaken for one.
+				if (/\/api\/(gpt-)?forge/.test(u)) {
+					if (init?.method === 'POST') {
+						const body = JSON.parse(init.body);
+						if (body.tier) submits.push(body);
+					}
+					// Every forge call (submit, rig submit, and any job poll) answers
+					// finished, so the rigged chain runs to completion instead of
+					// spinning on a poll this test does not care about.
+					return {
+						ok: true,
+						status: 200,
+						json: async () => ({ status: 'done', glb_url: 'https://three.ws/cdn/creations/t.glb', job_id: 'T1', creation_id: 'C1', backend: 'hunyuan3d' }),
+					};
+				}
+				// Anything else (the art director's LLM chain) answers unusably so the
+				// handler falls back to the raw prompt instead of hanging the test.
+				return { ok: false, status: 503, json: async () => ({}), text: async () => '' };
+			});
+			return submits;
+		}
+
+		it('sends avatars to the high tier (the Hunyuan3D lane)', async () => {
+			const submits = stubForge();
+			await dispatch(
+				{ jsonrpc: '2.0', id: 20, method: 'tools/call', params: { name: 'text_to_avatar', arguments: { prompt: 'a woman in a red jacket, standing' } } },
+				auth,
+				mkReq(),
+			);
+			expect(submits).toHaveLength(1);
+			expect(submits[0].tier).toBe('high');
+		});
+
+		it('sends the rigged avatar chain to the high tier too', async () => {
+			const submits = stubForge();
+			await dispatch(
+				{ jsonrpc: '2.0', id: 21, method: 'tools/call', params: { name: 'forge_avatar', arguments: { prompt: 'a man in a blue suit, standing' } } },
+				auth,
+				mkReq(),
+			);
+			expect(submits.length).toBeGreaterThanOrEqual(1);
+			expect(submits[0].tier).toBe('high');
+		});
+
+		it('leaves props on the standard tier: a mesh gains nothing from the portrait lane', async () => {
+			const submits = stubForge();
+			await dispatch(
+				{ jsonrpc: '2.0', id: 22, method: 'tools/call', params: { name: 'mesh_forge', arguments: { prompt: 'a ceramic coffee mug' } } },
+				auth,
+				mkReq(),
+			);
+			expect(submits).toHaveLength(1);
+			expect(submits[0].tier).toBe('standard');
+		});
+	});
 });
