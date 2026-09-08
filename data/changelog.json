@@ -3,6 +3,13 @@
 	"entries": [
 		{
 			"date": "2026-09-08",
+			"title": "Paying for something no longer depends on our wallet having gas in it",
+			"summary": "Every Solana payment on three.ws was quietly gasless: we paid the tiny network fee on your behalf so you could pay with USDC or $THREE without owning any SOL. That is a convenience, but it had been wired as a requirement, so when the wallet we pay those fees from ran empty, every paid page stopped accepting money altogether. The club door and its dance tips returned an error for four days, and sixteen other paid endpoints (asset downloads, skill calls, print orders, cosmetic purchases and the rest) were in the same state, all of them sitting on a perfectly good account that was ready to receive. Receiving money never actually needed our wallet to have anything in it. When we cannot cover the fee, the payment now simply asks you to cover it yourself, which is a fraction of a cent and what most wallets do everywhere else, and the checkout tells you before you approve rather than letting your wallet be the first to mention it. Gasless comes back on its own the moment our wallet is topped up. Two related things got clearer: paying in $THREE stays available in that mode instead of disappearing, and if your own wallet is short on SOL the message now says so and tells you to add a little, instead of claiming we were the ones with the problem.",
+			"tags": ["fix", "improvement"],
+			"link": "/club"
+		},
+		{
+			"date": "2026-09-08",
 			"title": "Every button on Drive Your Avatar is reachable again, by mouse and by keyboard",
 			"summary": "Two things were quietly breaking the controls on Drive Your Avatar. The gesture tray grew up the right-hand edge until it sat on top of the HUD column beside it, so Photo, Record, Map and the help button silently stopped taking clicks; the tray now keeps to the lower band and wraps into a second column instead of climbing into the buttons. Separately, pressing Enter anywhere on the page jumped straight to the chat box, which meant a keyboard user could tab to any control and never activate it. Enter now belongs to whatever you have focused, and only opens chat when you are looking at the scene. Along the way: the radar moved off the crowded bottom edge on phones, the chat box no longer pushes its send button off a narrow screen, the avatar list tells you when it could not load instead of always saying you are signed out, and the coin-world picker closes on Escape.",
 			"tags": [

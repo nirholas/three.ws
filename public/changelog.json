@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-09-08T18:41:08.164Z",
+	"generated_at": "2026-09-08T18:47:02.384Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -75,6 +75,17 @@
 		{
 			"date": "2026-09-08",
 			"type": "update",
+			"title": "Every button on Drive Your Avatar is reachable again, by mouse and by keyboard",
+			"summary": "Two things were quietly breaking the controls on Drive Your Avatar. The gesture tray grew up the right-hand edge until it sat on top of the HUD column beside it, so Photo, Record, Map and the help button silently stopped taking clicks; the tray now keeps to the lower band and wraps into a second column instead of climbing into the buttons. Separately, pressing Enter anywhere on the page jumped straight to the chat box, which meant a keyboard user could tab to any control and never activate it. Enter now belongs to whatever you have focused, and only opens chat when you are looking at the scene. Along the way: the radar moved off the crowded bottom edge on phones, the chat box no longer pushes its send button off a narrow screen, the avatar list tells you when it could not load instead of always saying you are signed out, and the coin-world picker closes on Escape.",
+			"link": "/temporary",
+			"tags": [
+				"fix",
+				"improvement"
+			]
+		},
+		{
+			"date": "2026-09-08",
+			"type": "update",
 			"title": "Every tutorial now shows you the page it is teaching",
 			"summary": "Twenty screenshots of the real product had been captured for the tutorials and then never put on the page: the tutorials described the Forge, Avatar Studio, Voice Lab, Scene Studio, Widget Studio and the rest entirely in words, while the pictures sat unused. All twenty are now embedded where they belong, each with a caption and a link straight to the live page, so you can see what you are about to open before you open it. The sign-language reference gained its two figures as well, and the missing Scene Studio capture was taken.",
 			"link": "/tutorials/text-to-3d",
@@ -99,6 +110,17 @@
 			"title": "Launch Studio reads in light mode, and a recipe's reward routing now reaches the launch",
 			"summary": "Launch Studio, the catalog of 50 coin-launch recipes, was written entirely in white text and never flipped for the light theme, so on a light background its title, its recipe cards and its preview drawer were white on white with a dark strip painted across the top. The whole surface now draws from the site's colour system and reads in both themes. The bigger fix sits behind the Launch this coin button: every reward recipe promises that a coin's creator fees route to its subject, and that choice was being dropped the moment you left the studio, so the launch form opened with no recipient at all. The routing now travels with the coin, shows on the launch form before you mint, and opens the fee split pre-filled with that recipient the moment the coin is live, ready to review and sign. Two planner options no launch could ever apply were removed rather than left promising a payout. The preview drawer also behaves as a real dialog now: focus moves into it, Tab stays inside it, and closing it returns you to the card you opened.",
 			"link": "/launch-studio",
+			"tags": [
+				"fix",
+				"improvement"
+			]
+		},
+		{
+			"date": "2026-09-08",
+			"type": "update",
+			"title": "Paying for something no longer depends on our wallet having gas in it",
+			"summary": "Every Solana payment on three.ws was quietly gasless: we paid the tiny network fee on your behalf so you could pay with USDC or $THREE without owning any SOL. That is a convenience, but it had been wired as a requirement, so when the wallet we pay those fees from ran empty, every paid page stopped accepting money altogether. The club door and its dance tips returned an error for four days, and sixteen other paid endpoints (asset downloads, skill calls, print orders, cosmetic purchases and the rest) were in the same state, all of them sitting on a perfectly good account that was ready to receive. Receiving money never actually needed our wallet to have anything in it. When we cannot cover the fee, the payment now simply asks you to cover it yourself, which is a fraction of a cent and what most wallets do everywhere else, and the checkout tells you before you approve rather than letting your wallet be the first to mention it. Gasless comes back on its own the moment our wallet is topped up. Two related things got clearer: paying in $THREE stays available in that mode instead of disappearing, and if your own wallet is short on SOL the message now says so and tells you to add a little, instead of claiming we were the ones with the problem.",
+			"link": "/club",
 			"tags": [
 				"fix",
 				"improvement"
