@@ -8,8 +8,7 @@
  */
 
 import { describe, it, expect } from 'vitest';
-import {
-	clampPrompt,
+import {clampPrompt,
 	validatePrompt,
 	forgeStageNarration,
 	buildForgeFrame,
@@ -17,8 +16,7 @@ import {
 	parseForgeFrame,
 	viewerLinkFor,
 	sanitizeFrameMeta,
-	TRELLIS_PROMPT_LIMIT,
-} from '../src/shared/forge-frames.js';
+	TRELLIS_PROMPT_LIMIT, coldStartState, coldStartLabel } from '../src/shared/forge-frames.js';
 
 describe('clampPrompt', () => {
 	it('passes a short prompt through untouched', () => {
@@ -161,5 +159,69 @@ describe('sanitizeFrameMeta', () => {
 		expect(sanitizeFrameMeta(null)).toBeNull();
 		expect(sanitizeFrameMeta({ kind: 'other' })).toBeNull();
 		expect(sanitizeFrameMeta({ kind: 'forge', glbUrl: 'not-a-url' })).toBeNull();
+	});
+});
+
+// ── cold-start state ─────────────────────────────────────────────────────────
+//
+// A queued job on a scale-to-zero GPU worker is waiting on a container boot, not
+// behind other people's work. Four surfaces render that state (the homepage
+// chamber, the Studio step list, the in-world prop forge, the MCP tool
+// responses) and three of them had grown their own copy of this arithmetic, so
+// it lives here once. Every value is read off a real /api/forge frame; nothing
+// is timed locally, which is what stops a page resumed mid-generation from
+// restarting the countdown at zero.
+describe('coldStartState / coldStartLabel', () => {
+	it('reports nothing for a frame the API did not flag as cold', () => {
+		expect(coldStartState({ status: 'queued', eta_seconds: 120 })).toBeNull();
+		expect(coldStartLabel({ status: 'running' })).toBeNull();
+		expect(coldStartState()).toBeNull();
+	});
+
+	it('counts the remaining boot from the stated budget and the job age', () => {
+		const c = coldStartState({ cold_start: true, cold_start_seconds: 75, elapsed_seconds: 20 });
+		expect(c).toEqual({ budgetSeconds: 75, elapsedSeconds: 20, remainingSeconds: 55, pastBudget: false });
+		expect(coldStartLabel({ cold_start: true, cold_start_seconds: 75, elapsed_seconds: 20 })).toBe(
+			'Waking up a GPU: about 55s of boot left (20s in)',
+		);
+	});
+
+	it('a boot past its budget says so instead of counting into negatives', () => {
+		const c = coldStartState({ cold_start: true, cold_start_seconds: 75, elapsed_seconds: 200 });
+		expect(c.remainingSeconds).toBeNull();
+		expect(c.pastBudget).toBe(true);
+		const label = coldStartLabel({ cold_start: true, cold_start_seconds: 75, elapsed_seconds: 200 });
+		expect(label).toBe('Still waking the GPU (200s in)');
+		expect(label).not.toMatch(/-\d+s/);
+	});
+
+	// The exact boundary: elapsed === budget is spent, not "0s left", because a
+	// "about 0s of boot left" line reads as broken.
+	it('treats a boot exactly at its budget as spent', () => {
+		const c = coldStartState({ cold_start: true, cold_start_seconds: 75, elapsed_seconds: 75 });
+		expect(c.remainingSeconds).toBeNull();
+		expect(c.pastBudget).toBe(true);
+	});
+
+	it('names the state but promises no number when the lane states no budget', () => {
+		expect(coldStartLabel({ cold_start: true })).toBe('Waking up a GPU');
+		expect(coldStartLabel({ cold_start: true, cold_start_seconds: 60 })).toBe('Waking up a GPU (about 60s)');
+	});
+
+	// Number(null) is 0, which passes a bare `>= 0` check: a job of unknown age
+	// would otherwise be reported as "0s in" on every frame.
+	it('does not invent an age for a frame that carries none', () => {
+		const c = coldStartState({ cold_start: true, cold_start_seconds: 75 });
+		expect(c.elapsedSeconds).toBeNull();
+		expect(c.remainingSeconds).toBeNull();
+		expect(c.pastBudget).toBe(false);
+		expect(coldStartLabel({ cold_start: true, cold_start_seconds: 75 })).not.toContain('0s in');
+	});
+
+	// Under 5s the age just flickers as the first polls land, so it is omitted.
+	it('omits an age too small to mean anything', () => {
+		expect(coldStartLabel({ cold_start: true, cold_start_seconds: 75, elapsed_seconds: 2 })).toBe(
+			'Waking up a GPU: about 73s of boot left',
+		);
 	});
 });

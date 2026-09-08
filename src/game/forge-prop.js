@@ -8,6 +8,7 @@
 // the uploaded-prop pipeline (world-objects.js registerUploadedProp).
 
 import { log } from '../shared/log.js';
+import { coldStartLabel } from '../shared/forge-frames.js';
 
 const SUBMIT_URL = '/api/forge';
 const UPLOAD_URL = '/api/forge-upload';
@@ -115,11 +116,14 @@ async function uploadReferenceImage(file, { onStatus, signal } = {}) {
 //
 // Two states this used to flatten into "waiting for a slot":
 //   • A scale-to-zero GPU worker booting. That is a nameable wait with a stated
-//     budget (`cold_start` + `cold_start_seconds`), not an anonymous queue.
+//     budget, not an anonymous queue (coldStartLabel owns that wording, shared
+//     with the homepage chamber and the Studio so the three cannot drift).
 //   • The countdown. It printed `eta_seconds`, the lane's static TOTAL, on every
 //     frame, so a two-minute wait read as a bar stuck at the same "~60s" the
 //     whole time. `eta_remaining_seconds` is the live figure and leads now.
 function statusLine(job = {}) {
+	const cold = coldStartLabel(job);
+	if (cold) return `${cold}, then forging…`;
 	const num = (v) => (Number.isFinite(Number(v)) && Number(v) > 0 ? Math.round(Number(v)) : null);
 	const remaining = num(job.eta_remaining_seconds) ?? num(job.eta_seconds);
 	const elapsed = num(job.elapsed_seconds);
@@ -129,18 +133,6 @@ function statusLine(job = {}) {
 		Boolean,
 	);
 	const suffix = notes.length ? ` (${notes.join(', ')})` : '';
-	if (job.cold_start) {
-		const budget = num(job.cold_start_seconds);
-		const bootLeft = budget != null && elapsed != null ? budget - elapsed : null;
-		if (bootLeft != null && bootLeft > 0) {
-			return `Waking up a GPU: about ${bootLeft}s of boot left${elapsed >= 5 ? ` (${elapsed}s in)` : ''}…`;
-		}
-		// Past the stated budget: say so rather than counting into negatives.
-		if (bootLeft != null) {
-			return `Still waking the GPU${elapsed >= 5 ? ` (${elapsed}s in)` : ''}. Forging starts the moment it answers…`;
-		}
-		return budget ? `Waking up a GPU (about ${budget}s), then forging…` : 'Waking up a GPU, then forging…';
-	}
 	return job.status === 'queued'
 		? `Forging: waiting for a slot${suffix}…`
 		: `Forging your model${suffix}…`;

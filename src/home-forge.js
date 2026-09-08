@@ -40,6 +40,7 @@ import {
 	fetchJobStatus,
 	nextBackoff,
 } from './shared/resilient-poll.js';
+import { coldStartLabel } from './shared/forge-frames.js';
 
 const POLL_INTERVAL_MS = 2500;
 // Max-tier texture bakes legitimately run past 10 minutes at full quality; the
@@ -212,34 +213,19 @@ function setStep(name, state) {
 // Cold-start line, written from a real /api/forge poll frame and nothing else.
 // A queued job on a scale-to-zero worker is a container boot: the one wait the
 // page can name instead of showing a step that spins with no explanation. The
-// API states both the flag and the lane's boot budget (`cold_start`,
-// `cold_start_seconds`), and `elapsed_seconds` is the JOB's age, so a page
-// resumed mid-generation counts from the submit, not from the reload.
+// wording lives in the shared forge-frames helper, so this chamber, the Studio,
+// the in-world prop forge and the MCP tools all describe a boot identically.
 // Passing a frame that is not cold clears the line: it is dismissed by the
 // first real "running" poll, never by a timer.
 function setWarming(job) {
 	if (!els.warming) return;
-	if (!job?.cold_start) {
+	const label = coldStartLabel(job || {});
+	if (!label) {
 		els.warming.hidden = true;
 		els.warming.textContent = '';
 		return;
 	}
-	const num = (v) => (Number.isFinite(Number(v)) && Number(v) > 0 ? Math.round(Number(v)) : null);
-	const budget = num(job.cold_start_seconds);
-	const elapsed = num(job.elapsed_seconds);
-	const bootLeft = budget != null && elapsed != null ? budget - elapsed : null;
-	let text;
-	if (bootLeft != null && bootLeft > 0) {
-		text = `Waking up a GPU: about ${bootLeft}s of boot left. Sculpting starts the moment it answers.`;
-	} else if (bootLeft != null) {
-		// Past the stated budget: say so rather than counting into negatives.
-		text = `Still waking the GPU (${elapsed}s in). Your job is accepted and starts the moment it answers.`;
-	} else if (budget != null) {
-		text = `Waking up a GPU (about ${budget}s), then sculpting starts.`;
-	} else {
-		text = 'Waking up a GPU, then sculpting starts.';
-	}
-	els.warming.textContent = text;
+	els.warming.textContent = `${label}. Sculpting starts the moment the worker answers.`;
 	els.warming.hidden = false;
 }
 

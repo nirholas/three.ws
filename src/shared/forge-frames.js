@@ -143,6 +143,57 @@ export function forgeStageNarration(state = {}) {
 	}
 }
 
+// Cold-start state for one real /api/forge frame, or null when the API is not
+// reporting a boot.
+//
+// A queued job on a scale-to-zero GPU worker is waiting on a container start,
+// not on a queue of other people's work, and the two need different words: "in
+// line for a GPU" says something is ahead of you, which is both wrong and
+// unfixable-sounding, when in fact nothing is ahead and the wait has a known
+// end. The API states the flag and the lane's spin-up budget (`cold_start`,
+// `cold_start_seconds`) and reports the JOB's age (`elapsed_seconds`), so every
+// number below is read off the payload. Nothing is timed locally, which is what
+// keeps a page resumed mid-generation from restarting the countdown at zero.
+//
+// Shared because four surfaces render this state (the homepage chamber, the
+// Studio step list, the in-world prop forge, and the MCP tool responses) and
+// three of them had grown their own copy of the arithmetic.
+//
+// @returns {null | { budgetSeconds: number|null, elapsedSeconds: number|null,
+//                    remainingSeconds: number|null, pastBudget: boolean }}
+export function coldStartState(job = {}) {
+	if (!job || !job.cold_start) return null;
+	const num = (v) => (Number.isFinite(Number(v)) && Number(v) > 0 ? Math.round(Number(v)) : null);
+	// Guard null BEFORE the numeric compare: Number(null) is 0, which would report
+	// a job of unknown age as "0s in".
+	const elapsedSeconds =
+		job.elapsed_seconds == null || !Number.isFinite(Number(job.elapsed_seconds)) || Number(job.elapsed_seconds) < 0
+			? null
+			: Math.round(Number(job.elapsed_seconds));
+	const budgetSeconds = num(job.cold_start_seconds);
+	const left = budgetSeconds != null && elapsedSeconds != null ? budgetSeconds - elapsedSeconds : null;
+	return {
+		budgetSeconds,
+		elapsedSeconds,
+		remainingSeconds: left != null && left > 0 ? left : null,
+		// A boot that has run past its stated budget says so rather than counting
+		// into negatives.
+		pastBudget: left != null && left <= 0,
+	};
+}
+
+// The short phrase every surface leads with, from coldStartState(). Returns null
+// when the frame reports no boot, so a caller keeps its own queued/running copy.
+// Callers append their own tail ("then sculpting starts", an ellipsis, nothing).
+export function coldStartLabel(job = {}) {
+	const c = coldStartState(job);
+	if (!c) return null;
+	const inNote = c.elapsedSeconds != null && c.elapsedSeconds >= 5 ? ` (${c.elapsedSeconds}s in)` : '';
+	if (c.remainingSeconds != null) return `Waking up a GPU: about ${c.remainingSeconds}s of boot left${inNote}`;
+	if (c.pastBudget) return `Still waking the GPU${inNote}`;
+	return c.budgetSeconds != null ? `Waking up a GPU (about ${c.budgetSeconds}s)` : 'Waking up a GPU';
+}
+
 // A forge progress frame for screenPush — the live narration other viewers see.
 // `type: 'analysis'` matches the activity-log "analysis" lane. The optional
 // `meta` rides in the frame sidecar (used only on the final frame).

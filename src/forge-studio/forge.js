@@ -17,6 +17,7 @@ import { openSketchCanvas } from './sketch-canvas.js';
 import { mountPromptDictation } from '../voice/prompt-dictation.js';
 import { showToast } from '../ui-helpers.js';
 import { resolveDevR2Url } from '../shared/dev-r2-proxy.js';
+import { coldStartLabel } from '../shared/forge-frames.js';
 ensureStateKitStyles();
 //
 // Drives /api/forge. Three paths share one polling loop:
@@ -1465,24 +1466,6 @@ async function startJob({ prompt, imageUrls, skipValidation, payment }) {
 		throw new Error(data.message || `The generator returned ${res.status}.`);
 	}
 	return data;
-}
-
-// A queued job on a scale-to-zero GPU worker is a container boot, not a queue,
-// and the two deserve different words: "In line for a GPU" tells someone their
-// job is behind other work, which is wrong and unfixable-sounding, when in fact
-// nothing is ahead of them and the wait has a known end. Returns null when the
-// API does not report a cold start, so the caller keeps its queue wording.
-// Every number comes off the poll payload; nothing is timed locally.
-function coldStartLabel(job) {
-	if (!job?.cold_start) return null;
-	const num = (v) => (Number.isFinite(Number(v)) && Number(v) > 0 ? Math.round(Number(v)) : null);
-	const budget = num(job.cold_start_seconds);
-	const elapsed = num(job.elapsed_seconds);
-	const bootLeft = budget != null && elapsed != null ? budget - elapsed : null;
-	if (bootLeft != null && bootLeft > 0) return `Waking up a GPU: about ${bootLeft}s of boot left`;
-	// Past the stated budget: say so rather than counting into negatives.
-	if (bootLeft != null) return 'Still waking the GPU: it starts the moment the worker answers';
-	return budget ? `Waking up a GPU (about ${budget}s)` : 'Waking up a GPU';
 }
 
 async function pollUntilDone(jobId) {
