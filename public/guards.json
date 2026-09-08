@@ -580,6 +580,27 @@
 			}
 		},
 		{
+			"id": "audit-motion-drift",
+			"script": "scripts/audit-motion-drift.mjs",
+			"npm": "audit:motion-tokens",
+			"title": "Motion ratchet",
+			"protects": "A transition cannot spell its duration or easing as a literal past a committed baseline.",
+			"why": "public/tokens.css names four durations and three easings and collapses the durations to 0ms under prefers-reduced-motion, and none of that reaches a transition written as `150ms ease`. The platform was saying the same thing 41 different ways, which nobody notices on one control and everybody feels as the site not behaving like one product. Counting literals against a baseline and failing only when the count rises makes the debt strictly decreasing, the same contract as the design-token and interactive-state ratchets beside it. @keyframes and `animation` are deliberately out of scope: their durations are intrinsic to the effect, not a control response.",
+			"stages": [
+				"gate"
+			],
+			"needs": "none",
+			"proof": {
+				"summary": "A stylesheet whose transition states its duration and easing as literals instead of tokens.",
+				"violation": {
+					"write": {
+						"public/guard-proof-motion.css": ".proof-motion { transition: opacity 137ms ease, transform 240ms ease-in-out; }\n"
+					}
+				},
+				"expect": "motion drift increased"
+			}
+		},
+		{
 			"id": "check-browser-graph",
 			"script": "scripts/check-browser-graph.mjs",
 			"npm": "check:browser-graph",
