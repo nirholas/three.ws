@@ -379,7 +379,10 @@ if (check) {
 		process.exit(1);
 	}
 	if (readFileSync(OUT_PATH, 'utf8') !== output) {
-		console.error('docs-search: the committed index is stale. Run `npm run build:docs-search` and commit the result.');
+		// The index is deliberately gitignored (it is ~2 MB and rewritten by every
+		// docs edit), so there is nothing to commit: prebuild and postinstall are
+		// what keep the shipped copy current. This only reports the local one.
+		console.error('docs-search: the local index is stale against docs/. Run `npm run build:docs-search` to refresh it.');
 		process.exit(1);
 	}
 	console.log(`docs-search: index is current (${index.docCount} docs, ${index.sectionCount} sections).`);
