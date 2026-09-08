@@ -78,7 +78,7 @@
 .nav-main > a {
 	display: inline-flex; align-items: center;
 	padding: 7px 12px; font-size: var(--text-ui); font-weight: 450;
-	color: var(--nv-text-2); transition: color 0.12s;
+	color: var(--nv-text-2); transition: color var(--duration-fast);
 }
 .nav-main > a:hover,
 .nav-main > a[aria-current="page"] { color: var(--nv-text); }
@@ -89,7 +89,7 @@
 .nav-end a {
 	display: inline-flex; align-items: center;
 	padding: 7px 12px; font-size: var(--text-ui); font-weight: 450; color: var(--nv-text-2);
-	transition: color 0.12s, border-color 0.15s, background 0.15s;
+	transition: color var(--duration-fast), border-color var(--duration-fast), background var(--duration-fast);
 }
 .nav-end a:hover { color: var(--nv-text); }
 .nav-end .console {
@@ -141,7 +141,7 @@
 	color: var(--nv-text-2); background: none;
 	border: 1px solid var(--nv-hairline-strong); border-radius: 7px;
 	font-family: inherit; cursor: pointer;
-	transition: color 0.12s, border-color 0.15s, background 0.15s;
+	transition: color var(--duration-fast), border-color var(--duration-fast), background var(--duration-fast);
 }
 .nav-search-btn:hover { color: var(--nv-text); border-color: rgba(255,255,255,0.18); background: rgba(255,255,255,0.04); }
 .nav-search-btn:active { background: rgba(255,255,255,0.08); border-color: rgba(255,255,255,0.22); }
@@ -176,7 +176,7 @@
 	color: var(--nv-text-2); background: none;
 	border: 1px solid transparent; border-radius: 8px;
 	cursor: pointer; font-family: inherit;
-	transition: color 0.12s, border-color 0.15s, background 0.15s;
+	transition: color var(--duration-fast), border-color var(--duration-fast), background var(--duration-fast);
 	flex-shrink: 0;
 }
 .nav-notif-btn:hover { color: var(--nv-text); border-color: var(--nv-hairline-strong); background: rgba(255,255,255,0.04); }
@@ -205,7 +205,7 @@
 	color: var(--nv-text-2); background: none;
 	border: 1px solid transparent; border-radius: 8px;
 	cursor: pointer; font-family: inherit;
-	transition: color 0.12s, border-color 0.15s, background 0.15s;
+	transition: color var(--duration-fast), border-color var(--duration-fast), background var(--duration-fast);
 	flex-shrink: 0;
 }
 .nav-theme-btn:hover { color: var(--nv-text); border-color: var(--nv-hairline-strong); background: var(--nv-tint, rgba(255,255,255,0.04)); }
@@ -285,7 +285,7 @@
 	background: none; border: 0; padding: 3px 8px; border-radius: 6px;
 	font-size: var(--text-2xs); font-weight: 500; color: rgba(255,255,255,0.4);
 	cursor: pointer; font-family: inherit;
-	transition: color 0.12s, background 0.12s;
+	transition: color var(--duration-fast), background var(--duration-fast);
 }
 .notif-mark-all:hover { color: rgba(255,255,255,0.7); background: rgba(255,255,255,0.06); }
 .notif-mark-all:focus-visible { outline: 2px solid rgba(255,255,255,0.3); outline-offset: 1px; }
@@ -295,7 +295,7 @@
 	width: 24px; height: 24px; border-radius: 6px;
 	font-size: var(--text-sm); color: rgba(255,255,255,0.4);
 	text-decoration: none; line-height: 1;
-	transition: color 0.12s, background 0.12s;
+	transition: color var(--duration-fast), background var(--duration-fast);
 }
 .notif-prefs-link:hover { color: rgba(255,255,255,0.7); background: rgba(255,255,255,0.06); }
 .notif-prefs-link:focus-visible { outline: 2px solid rgba(255,255,255,0.3); outline-offset: 1px; }
@@ -309,7 +309,7 @@
 	font-size: var(--text-sm); font-weight: 500; color: rgba(255,255,255,0.5);
 	border-top: 1px solid rgba(255,255,255,0.08);
 	text-decoration: none;
-	transition: color 0.12s, background 0.12s;
+	transition: color var(--duration-fast), background var(--duration-fast);
 }
 .notif-panel-viewall:hover { color: rgba(255,255,255,0.85); background: rgba(255,255,255,0.04); }
 .notif-panel-viewall:focus-visible { outline: 2px solid rgba(255,255,255,0.3); outline-offset: -2px; }
@@ -320,7 +320,7 @@
 	padding: 11px 14px;
 	border-bottom: 1px solid rgba(255,255,255,0.05);
 	cursor: pointer;
-	transition: background 0.1s;
+	transition: background var(--duration-instant);
 }
 .notif-row:last-child { border-bottom: 0; }
 .notif-row:hover { background: rgba(255,255,255,0.04); }
@@ -351,7 +351,7 @@
 	font-size: var(--text-md); font-weight: 500; color: #fff;
 	background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.18);
 	text-decoration: none;
-	transition: background 0.12s, border-color 0.12s;
+	transition: background var(--duration-fast), border-color var(--duration-fast);
 	/* Shared by the sign-in link and the retry <button>, so normalize both. */
 	font-family: inherit; line-height: inherit; cursor: pointer;
 }
@@ -372,7 +372,7 @@
 	flex: 1; padding: 7px 12px; border-radius: 8px; cursor: pointer;
 	font-size: var(--text-sm); font-weight: 600; color: #fff;
 	background: linear-gradient(135deg, #6a5cff, #ff5ca8); border: none;
-	transition: filter 0.12s, transform 0.06s;
+	transition: filter var(--duration-fast), transform var(--duration-instant);
 }
 .notif-push-enable:hover:not(:disabled) { filter: brightness(1.08); }
 .notif-push-enable:active:not(:disabled) { transform: translateY(1px); }
@@ -381,7 +381,7 @@
 	padding: 7px 12px; border-radius: 8px; cursor: pointer;
 	font-size: var(--text-sm); color: rgba(255,255,255,0.6);
 	background: transparent; border: 1px solid rgba(255,255,255,0.16);
-	transition: color 0.12s, border-color 0.12s;
+	transition: color var(--duration-fast), border-color var(--duration-fast);
 }
 .notif-push-dismiss:hover { color: rgba(255,255,255,0.85); border-color: rgba(255,255,255,0.3); }
 .notif-push-enable:focus-visible, .notif-push-dismiss:focus-visible { outline: 2px solid rgba(255,255,255,0.5); outline-offset: 2px; }
@@ -397,7 +397,7 @@
 	color: var(--nv-text-2); background: none;
 	border: 1px solid transparent; border-radius: 7px;
 	font-family: inherit; cursor: pointer;
-	transition: color 0.12s, border-color 0.15s, background 0.15s;
+	transition: color var(--duration-fast), border-color var(--duration-fast), background var(--duration-fast);
 }
 .nav-walk-toggle:hover { color: var(--nv-text); border-color: var(--nv-hairline-strong); }
 .nav-walk-toggle.is-on {
@@ -420,12 +420,12 @@
 	padding: 7px 12px; font-size: var(--text-ui); font-weight: 450;
 	color: var(--nv-text-2); background: none; border: 0;
 	border-radius: 7px; font-family: inherit; cursor: pointer;
-	transition: color 0.12s, background 0.12s;
+	transition: color var(--duration-fast), background var(--duration-fast);
 }
 .nav-trigger:hover,
 .nav-grp.open .nav-trigger { color: var(--nv-text); }
 .nav-grp.open .nav-trigger { background: rgba(255,255,255,0.04); }
-.nav-caret { font-size: var(--text-xs); opacity: 0.55; transition: transform 0.2s ease; }
+.nav-caret { font-size: var(--text-xs); opacity: 0.55; transition: transform var(--duration-base) var(--ease-standard); }
 .nav-grp.open .nav-caret { transform: rotate(180deg); }
 .nav-pop {
 	position: absolute; top: calc(100% + 9px); left: 0;
@@ -446,7 +446,7 @@
 	overscroll-behavior: contain;
 	opacity: 0; transform: translateY(-6px) scale(0.985);
 	transform-origin: top left; pointer-events: none;
-	transition: opacity 0.16s ease, transform 0.16s ease;
+	transition: opacity var(--duration-fast) var(--ease-standard), transform var(--duration-fast) var(--ease-standard);
 	z-index: 200;
 }
 .nav-pop::-webkit-scrollbar { width: 4px; }
@@ -489,7 +489,7 @@
 }
 .nav-mi {
 	display: block; padding: 9px 12px; border-radius: 9px;
-	transition: background 0.12s;
+	transition: background var(--duration-fast);
 }
 .nav-mi:hover { background: var(--nv-surface-2); }
 .nav-mi-t {
@@ -529,7 +529,7 @@
 	/* explicit — pages like /forge set a 56px line-height on nav anchors */
 	line-height: 1.4;
 	background: rgba(255,255,255,0.03);
-	transition: border-color 0.15s, background 0.15s, color 0.12s;
+	transition: border-color var(--duration-fast), background var(--duration-fast), color var(--duration-fast);
 }
 .nav-main > a.nav-hot:hover {
 	border-color: rgba(255,255,255,0.3);
@@ -561,7 +561,7 @@
 	border: 1px solid rgba(139,92,246,0.35); border-radius: 12px;
 	color: var(--nv-text); font-weight: 500;
 	background: rgba(139,92,246,0.08);
-	transition: border-color 0.15s, background 0.15s;
+	transition: border-color var(--duration-fast), background var(--duration-fast);
 }
 .nav-drawer a.dr-hot:active {
 	border-color: rgba(139,92,246,0.6);
@@ -577,7 +577,7 @@
 	border: 1px solid rgba(139,92,246,0.35); border-radius: 12px;
 	color: var(--nv-text); font: inherit; font-weight: 500; text-align: left;
 	background: rgba(139,92,246,0.08); cursor: pointer;
-	transition: border-color 0.15s, background 0.15s;
+	transition: border-color var(--duration-fast), background var(--duration-fast);
 }
 .nav-drawer button.dr-walk:hover { border-color: rgba(139,92,246,0.5); }
 .nav-drawer button.dr-walk:active {
@@ -626,7 +626,7 @@
 	width: 44px; height: 44px; padding: 0; margin-left: auto;
 	background: none; border: 1px solid var(--nv-hairline-strong);
 	border-radius: 9px; color: var(--nv-text); cursor: pointer;
-	transition: border-color 0.15s, background 0.15s;
+	transition: border-color var(--duration-fast), background var(--duration-fast);
 }
 .nav-toggle:hover { border-color: var(--nv-text); background: rgba(255,255,255,0.04); }
 .nav .brand:focus-visible,
@@ -665,7 +665,7 @@
 	font: 600 14px/1 var(--font-sans, system-ui, sans-serif);
 	text-decoration: none;
 	box-shadow: 0 8px 28px rgba(0,0,0,0.45);
-	transition: transform 150ms ease;
+	transition: transform var(--duration-fast) var(--ease-standard);
 }
 .nav-skip:focus,
 .h-skip-link:focus { transform: translateY(0); }
@@ -692,7 +692,7 @@
 	overflow-y: auto; -webkit-overflow-scrolling: touch;
 	overscroll-behavior: contain;
 	opacity: 0; transform: translateY(-8px);
-	transition: opacity 0.25s ease, transform 0.25s ease;
+	transition: opacity var(--duration-base) var(--ease-standard), transform var(--duration-base) var(--ease-standard);
 }
 .nav-drawer a { color: var(--nv-text-2); text-decoration: none; }
 .nav-drawer.open { display: flex; opacity: 1; transform: translateY(0); }
@@ -706,7 +706,7 @@
 	display: flex; align-items: center; min-height: 44px;
 	padding: 11px 16px; font-size: var(--text-base); font-weight: 450;
 	border-radius: 8px;
-	transition: background 0.12s, color 0.12s;
+	transition: background var(--duration-fast), color var(--duration-fast);
 }
 .nav-drawer a:hover { background: var(--nv-surface-1); color: var(--nv-text); }
 .nav-drawer [hidden] { display: none; }
@@ -717,7 +717,7 @@
 	font-size: var(--text-ui); font-weight: 500;
 	border: 1px solid var(--nv-hairline-strong);
 	background: transparent; color: var(--nv-text);
-	transition: border-color 0.15s, background 0.15s;
+	transition: border-color var(--duration-fast), background var(--duration-fast);
 }
 .nav-drawer .btn:hover { border-color: var(--nv-text); background: rgba(255,255,255,0.04); }
 .nav-drawer .btn.primary { background: var(--nv-text); color: var(--nv-bg); border-color: var(--nv-text); }
@@ -781,7 +781,7 @@ html.tws-lite .nav-pop.mega.lite-cols-3 { grid-template-columns: repeat(3, 1fr);
 	background: transparent; cursor: pointer;
 	font: inherit; font-size: var(--text-xs); font-weight: 500;
 	color: var(--nv-text-3); text-align: center;
-	transition: background 0.12s, color 0.12s;
+	transition: background var(--duration-fast), color var(--duration-fast);
 }
 .nav-tier-toggle:hover { background: var(--nv-surface-2); color: var(--nv-text); }
 .nav-tier-toggle:focus-visible { outline: 2px solid var(--nv-text); outline-offset: -2px; color: var(--nv-text); }
@@ -804,7 +804,7 @@ html:not(.tws-lite) .nav-tier-toggle .nav-tier-less { display: inline; }
 	border: 1px solid var(--nv-hairline); border-radius: 12px;
 	background: transparent; color: var(--nv-text-2);
 	font: inherit; font-size: var(--text-base); font-weight: 500; cursor: pointer;
-	transition: border-color 0.15s, background 0.15s, color 0.15s;
+	transition: border-color var(--duration-fast), background var(--duration-fast), color var(--duration-fast);
 }
 .nav-drawer button.dr-tier:hover,
 .nav-drawer button.dr-tier:active {

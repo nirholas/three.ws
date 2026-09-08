@@ -100,7 +100,7 @@ a { color: inherit; }
 	font-size: var(--text-ui);
 	color: var(--ink);
 	opacity: 0.92;
-	transition: opacity 0.18s ease;
+	transition: opacity var(--duration-fast) var(--ease-standard);
 }
 .deck-wordmark:hover { opacity: 1; }
 .deck-mark {
@@ -141,7 +141,7 @@ a { color: inherit; }
 	display: inline-flex;
 	align-items: center;
 	gap: 0.4rem;
-	transition: background 0.15s ease, border-color 0.15s ease, transform 0.08s ease;
+	transition: background var(--duration-fast) var(--ease-standard), border-color var(--duration-fast) var(--ease-standard), transform var(--duration-instant) var(--ease-standard);
 	white-space: nowrap;
 }
 .deck-tool:hover { background: var(--surface-3); border-color: var(--stroke-strong); }
@@ -164,7 +164,7 @@ a { color: inherit; }
 	width: 0%;
 	background: var(--deck-grad);
 	box-shadow: 0 0 12px rgba(124, 139, 255, 0.5);
-	transition: width 0.45s cubic-bezier(0.22, 1, 0.36, 1);
+	transition: width var(--duration-slow) cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 /* ── Stage / slides ──────────────────────────────────────────────────────── */
@@ -182,7 +182,7 @@ a { color: inherit; }
 	opacity: 0;
 	visibility: hidden;
 	transform: translateY(18px) scale(0.992);
-	transition: opacity 0.5s ease, transform 0.5s cubic-bezier(0.22, 1, 0.36, 1), visibility 0s linear 0.5s;
+	transition: opacity var(--duration-slow) var(--ease-standard), transform var(--duration-slow) cubic-bezier(0.22, 1, 0.36, 1), visibility 0s linear var(--duration-slow);
 	overflow-y: auto;
 	overscroll-behavior: contain;
 }
@@ -190,7 +190,7 @@ a { color: inherit; }
 	opacity: 1;
 	visibility: visible;
 	transform: none;
-	transition: opacity 0.55s ease, transform 0.6s cubic-bezier(0.22, 1, 0.36, 1), visibility 0s;
+	transition: opacity var(--duration-slow) var(--ease-standard), transform var(--duration-slow) cubic-bezier(0.22, 1, 0.36, 1), visibility 0s;
 }
 /* Direction-aware exit: when going back, previous slides exit downward. */
 .slide.is-prev { transform: translateY(-18px) scale(0.992); }
@@ -355,7 +355,7 @@ a { color: inherit; }
 	border-radius: var(--radius-pill);
 	border: 1px solid transparent;
 	cursor: pointer;
-	transition: transform 0.08s ease, background 0.15s ease, border-color 0.15s ease, box-shadow 0.2s ease;
+	transition: transform var(--duration-instant) var(--ease-standard), background var(--duration-fast) var(--ease-standard), border-color var(--duration-fast) var(--ease-standard), box-shadow var(--duration-base) var(--ease-standard);
 }
 .btn:active { transform: translateY(1px); }
 .btn-primary {
@@ -442,7 +442,7 @@ a { color: inherit; }
 	border: 1px solid var(--stroke);
 	border-radius: var(--radius-lg);
 	background: var(--surface-1);
-	transition: border-color 0.2s ease, transform 0.2s ease, background 0.2s ease;
+	transition: border-color var(--duration-base) var(--ease-standard), transform var(--duration-base) var(--ease-standard), background var(--duration-base) var(--ease-standard);
 }
 .curve:hover { border-color: var(--stroke-strong); transform: translateX(3px); background: var(--surface-2); }
 .curve .k {
@@ -471,7 +471,7 @@ a { color: inherit; }
 	background: var(--surface-1);
 	border-radius: var(--radius-lg);
 	padding: 1.25rem 1.15rem;
-	transition: border-color 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
+	transition: border-color var(--duration-base) var(--ease-standard), transform var(--duration-base) var(--ease-standard), box-shadow var(--duration-base) var(--ease-standard);
 	min-height: 100%;
 }
 .step:hover { border-color: var(--stroke-strong); transform: translateY(-3px); box-shadow: var(--shadow-2); }
@@ -508,7 +508,7 @@ a { color: inherit; }
 	background: var(--surface-1);
 	border-radius: var(--radius-lg);
 	padding: 1.1rem 1.15rem;
-	transition: border-color 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
+	transition: border-color var(--duration-base) var(--ease-standard), transform var(--duration-base) var(--ease-standard), box-shadow var(--duration-base) var(--ease-standard);
 }
 .card:hover { border-color: var(--stroke-strong); transform: translateY(-3px); box-shadow: var(--shadow-2); }
 .card .ico {
@@ -541,7 +541,7 @@ a { color: inherit; }
 	background: var(--surface-1);
 	border-radius: var(--radius-lg);
 	padding: 1.15rem 1.1rem;
-	transition: border-color 0.2s ease, transform 0.2s ease;
+	transition: border-color var(--duration-base) var(--ease-standard), transform var(--duration-base) var(--ease-standard);
 }
 .who:hover { border-color: var(--stroke-strong); transform: translateY(-3px); }
 .who .for { font-size: var(--text-2xs); letter-spacing: 0.12em; text-transform: uppercase; color: var(--deck-a2); }
@@ -696,7 +696,7 @@ a { color: inherit; }
 	color: var(--ink);
 	display: grid; place-items: center;
 	cursor: pointer;
-	transition: background 0.15s ease, transform 0.08s ease, border-color 0.15s ease, opacity 0.15s ease;
+	transition: background var(--duration-fast) var(--ease-standard), transform var(--duration-instant) var(--ease-standard), border-color var(--duration-fast) var(--ease-standard), opacity var(--duration-fast) var(--ease-standard);
 	backdrop-filter: blur(8px);
 }
 .nav-btn:hover { background: var(--surface-3); border-color: var(--deck-a1); }
@@ -713,7 +713,7 @@ a { color: inherit; }
 	border: 0;
 	background: var(--stroke-strong);
 	cursor: pointer;
-	transition: transform 0.18s ease, background 0.18s ease, width 0.24s ease;
+	transition: transform var(--duration-fast) var(--ease-standard), background var(--duration-fast) var(--ease-standard), width var(--duration-base) var(--ease-standard);
 }
 .dot:hover { background: var(--ink-dim); transform: scale(1.3); }
 .dot.is-active { background: var(--deck-grad); width: 22px; border-radius: var(--radius-pill); }
@@ -778,7 +778,7 @@ a { color: inherit; }
 /* ── Motion / a11y ───────────────────────────────────────────────────────── */
 @media (prefers-reduced-motion: reduce) {
 	.deck-bg { animation: none; }
-	.slide, .slide.is-active { transition: opacity 0.2s ease; transform: none; }
+	.slide, .slide.is-active { transition: opacity var(--duration-base) var(--ease-standard); transform: none; }
 	.slide.is-active [data-rise] { animation: none; }
 	.live-dot { animation: none; }
 }

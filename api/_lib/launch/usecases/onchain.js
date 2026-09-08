@@ -69,7 +69,7 @@ export const onchainUseCases = [
 		id: 'onchain-oracle-hot-sectors',
 		title: 'Oracle hot sectors',
 		description:
-			'Rides the conviction-scored sectors the trending oracle ranks hottest right now. Each hot sector becomes a clean, invented coin. Back the theme, not any one ticker.',
+			'Rides the conviction-scored sectors the trending oracle ranks hottest right now. Each hot sector becomes a clean, invented coin — back the theme, not any one ticker.',
 		tags: ['oracle', 'trending', 'sectors'],
 		suffix: 'Sector',
 		params: { sources: ['trending'], limit: 10 },
@@ -86,7 +86,7 @@ export const onchainUseCases = [
 		id: 'onchain-high-conviction-top',
 		title: 'High-conviction top sectors',
 		description:
-			'A tight, high-conviction subset (only the five strongest oracle-ranked sectors of the moment) so each coin rides a theme with real weight behind it.',
+			'A tight, high-conviction subset — only the five strongest oracle-ranked sectors of the moment — so each coin rides a theme with real weight behind it.',
 		tags: ['high-conviction', 'oracle', 'top5'],
 		suffix: 'Index',
 		params: { sources: ['trending'], limit: 5 },
@@ -95,7 +95,7 @@ export const onchainUseCases = [
 		id: 'onchain-fresh-tags',
 		title: 'Fresh venue tags',
 		description:
-			'Mines the raw category tags attached to quality coins breaking out in the last day and turns the freshest tags into invented coins. Catch a narrative as the venue starts labelling it.',
+			'Mines the raw category tags attached to quality coins breaking out in the last day and turns the freshest tags into invented coins — catch a narrative as the venue starts labelling it.',
 		tags: ['tags', 'coin-intel', 'fresh'],
 		suffix: 'Tag',
 		params: { sources: ['coin_intel'], limit: 12 },
@@ -121,7 +121,7 @@ export const onchainUseCases = [
 		id: 'onchain-wide-radar',
 		title: 'Wide onchain radar',
 		description:
-			'A broad sweep across both venue providers with no category filter: the widest net of onchain narratives, surfacing emerging themes before they consolidate. One invented coin per theme.',
+			'A broad sweep across both venue providers with no category filter — the widest net of onchain narratives, surfacing emerging themes before they consolidate. One invented coin per theme.',
 		tags: ['radar', 'blended', 'wide'],
 		suffix: 'Wave',
 		params: { sources: ['coin_intel', 'trending'], limit: 20 },

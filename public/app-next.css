@@ -149,7 +149,7 @@ body.app-next-body {
 	font-size: 15px;
 	padding: 6px 10px 6px 6px;
 	border-radius: var(--nxt-radius-pill);
-	transition: background 0.15s;
+	transition: background var(--duration-fast);
 }
 
 .nxt-brand:hover {
@@ -213,7 +213,7 @@ body.app-next-body {
 	padding: 7px 12px;
 	border-radius: var(--nxt-radius-pill);
 	cursor: pointer;
-	transition: background 0.15s, color 0.15s;
+	transition: background var(--duration-fast), color var(--duration-fast);
 }
 
 .nxt-more:hover {
@@ -222,7 +222,7 @@ body.app-next-body {
 }
 
 .nxt-more svg {
-	transition: transform 0.18s;
+	transition: transform var(--duration-fast);
 }
 
 .nxt-more[aria-expanded='true'] svg {
@@ -263,7 +263,7 @@ body.app-next-body {
 	padding: 9px 12px;
 	border-radius: 8px;
 	cursor: pointer;
-	transition: background 0.12s, color 0.12s;
+	transition: background var(--duration-fast), color var(--duration-fast);
 }
 
 .nxt-more-menu a:hover,
@@ -294,7 +294,7 @@ body.app-next-body {
 	border-radius: var(--nxt-radius-pill);
 	text-decoration: none;
 	border: 1px solid var(--nxt-stroke);
-	transition: background 0.15s, border-color 0.15s;
+	transition: background var(--duration-fast), border-color var(--duration-fast);
 }
 
 .nxt-signin:hover {
@@ -395,7 +395,7 @@ body.app-next-body {
 	/* Shifts left into the empty stage when the chat thread docks on the right
 	   (see --nxt-stage-shift). 0 by default so the avatar stays centered. */
 	transform: translateX(var(--nxt-stage-shift, 0));
-	transition: transform 0.5s cubic-bezier(0.22, 1, 0.36, 1);
+	transition: transform var(--duration-slow) cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 .nxt-viewer canvas {
@@ -415,7 +415,7 @@ body.app-next-body {
 	height: 32vmin;
 	/* Tracks the avatar's --nxt-stage-shift so the glow stays under the feet. */
 	transform: translate(calc(-50% + var(--nxt-stage-shift, 0)), 18%);
-	transition: transform 0.5s cubic-bezier(0.22, 1, 0.36, 1);
+	transition: transform var(--duration-slow) cubic-bezier(0.22, 1, 0.36, 1);
 	background:
 		/* Inner soft light pool */
 		radial-gradient(
@@ -510,7 +510,7 @@ body.app-next-body {
 	border-radius: var(--nxt-radius-pill);
 	cursor: pointer;
 	white-space: nowrap;
-	transition: background 0.15s, color 0.15s, transform 0.15s;
+	transition: background var(--duration-fast), color var(--duration-fast), transform var(--duration-fast);
 }
 
 .nxt-action svg { flex: none; }
@@ -610,7 +610,7 @@ body.app-next-body {
 	z-index: 1;
 	pointer-events: none;
 	background: radial-gradient(circle at 50% 28%, #2c2c2c 0%, #111111 72%);
-	transition: background 0.45s ease;
+	transition: background var(--duration-slow) var(--ease-standard);
 }
 
 /* ── Avatar switch button (loading state) ──────────────────────────────── */
@@ -672,7 +672,7 @@ body.app-next-body {
 	cursor: pointer;
 	padding: 0;
 	overflow: hidden;
-	transition: transform 0.14s ease, box-shadow 0.14s ease, border-color 0.14s ease;
+	transition: transform var(--duration-fast) var(--ease-standard), box-shadow var(--duration-fast) var(--ease-standard), border-color var(--duration-fast) var(--ease-standard);
 }
 
 .nxt-backdrop-swatch:hover {
@@ -764,7 +764,7 @@ body.app-next-body {
 	height: 28px;
 	border-radius: 50%;
 	cursor: pointer;
-	transition: background 0.15s, color 0.15s;
+	transition: background var(--duration-fast), color var(--duration-fast);
 }
 
 .nxt-anim-sheet__close:hover {
@@ -786,7 +786,7 @@ body.app-next-body {
 	font-size: 13.5px;
 	padding: 9px 12px;
 	outline: none;
-	transition: border-color 0.15s, background 0.15s;
+	transition: border-color var(--duration-fast), background var(--duration-fast);
 }
 
 .nxt-anim-search:focus {
@@ -829,7 +829,7 @@ body.app-next-body {
 	font-size: 11.5px;
 	text-align: center;
 	line-height: 1.3;
-	transition: background 0.12s, border-color 0.12s, transform 0.12s;
+	transition: background var(--duration-fast), border-color var(--duration-fast), transform var(--duration-fast);
 }
 
 .nxt-anim-card:hover {
@@ -963,7 +963,7 @@ body.app-next-body.is-dragover::before {
 	padding: 5px 11px;
 	border-radius: var(--nxt-radius-pill);
 	cursor: pointer;
-	transition: color 0.15s, background 0.15s;
+	transition: color var(--duration-fast), background var(--duration-fast);
 }
 
 .nxt-preset:hover {
@@ -988,7 +988,7 @@ body.app-next-body.is-dragover::before {
 	border-radius: 50%;
 	color: var(--nxt-ink-dim);
 	cursor: pointer;
-	transition: color 0.15s, background 0.15s, border-color 0.15s;
+	transition: color var(--duration-fast), background var(--duration-fast), border-color var(--duration-fast);
 	backdrop-filter: blur(10px);
 	-webkit-backdrop-filter: blur(10px);
 }
@@ -1036,7 +1036,7 @@ body.app-next-body.is-dragover::before {
 	cursor: pointer;
 	backdrop-filter: blur(10px);
 	-webkit-backdrop-filter: blur(10px);
-	transition: color 0.15s, background 0.15s, border-color 0.15s, transform 0.15s;
+	transition: color var(--duration-fast), background var(--duration-fast), border-color var(--duration-fast), transform var(--duration-fast);
 }
 
 .nxt-chat-chip:hover {
@@ -1062,7 +1062,7 @@ body.app-next-body.is-dragover::before {
 	backdrop-filter: blur(20px) saturate(140%);
 	-webkit-backdrop-filter: blur(20px) saturate(140%);
 	box-shadow: 0 28px 64px rgba(0, 0, 0, 0.55);
-	transition: border-color 0.15s, box-shadow 0.15s;
+	transition: border-color var(--duration-fast), box-shadow var(--duration-fast);
 }
 
 /* The input itself carries `outline: none`, so the wrap is the only thing that
@@ -1105,7 +1105,7 @@ body.app-next-body.is-dragover::before {
 	border: 0;
 	border-radius: 50%;
 	cursor: pointer;
-	transition: background 0.15s, color 0.15s, transform 0.15s;
+	transition: background var(--duration-fast), color var(--duration-fast), transform var(--duration-fast);
 }
 
 .nxt-chat-mic {
@@ -1324,7 +1324,7 @@ body.app-next-body.is-dragover::before {
 	font-size: 12.5px;
 	font-weight: 500;
 	cursor: pointer;
-	transition: transform 0.12s, box-shadow 0.12s;
+	transition: transform var(--duration-fast), box-shadow var(--duration-fast);
 }
 
 .nxt-share-copy--block button {
@@ -1368,7 +1368,7 @@ body.app-next-body.is-dragover::before {
 	color: var(--nxt-ink);
 	background: rgba(255, 255, 255, 0.04);
 	border: 1px solid rgba(255, 255, 255, 0.10);
-	transition: background 0.15s, border-color 0.15s, transform 0.15s;
+	transition: background var(--duration-fast), border-color var(--duration-fast), transform var(--duration-fast);
 }
 
 .nxt-share-deploy:hover {
@@ -1577,7 +1577,7 @@ body.app-next-body.nxt-chrome-hidden .nxt-first-hint {
 .nxt-action-bar,
 .nxt-chat-dock,
 .nxt-first-hint {
-	transition: opacity 0.35s ease, transform 0.35s ease;
+	transition: opacity var(--duration-slow) var(--ease-standard), transform var(--duration-slow) var(--ease-standard);
 }
 
 /* When the chat input is focused or NichAgent panel is open, force chrome to stay visible. */
@@ -1591,7 +1591,7 @@ body.app-next-body.nxt-chat-active .nxt-chat-dock {
 
 /* The chat dock's chip row is translated with the dock; keep their transforms in sync */
 .nxt-chat-dock .nxt-chat-chips {
-	transition: opacity 0.25s ease;
+	transition: opacity var(--duration-base) var(--ease-standard);
 }
 
 body.app-next-body.nxt-chrome-hidden .nxt-chat-dock .nxt-chat-chips {
@@ -1926,7 +1926,7 @@ body.app-next-body .dg.ac { display: none !important; }
 	background: rgba(255, 255, 255, 0.04);
 	color: rgba(255, 255, 255, 0.8);
 	cursor: pointer;
-	transition: all 0.18s ease;
+	transition: all var(--duration-fast) var(--ease-standard);
 }
 
 .nxt-visitor-card__btn:hover {
@@ -1978,10 +1978,10 @@ body.app-next-body .dg.ac { display: none !important; }
 .nxt-chrome-hidden .nxt-visitor-card {
 	opacity: 0;
 	pointer-events: none;
-	transition: opacity 0.35s ease;
+	transition: opacity var(--duration-slow) var(--ease-standard);
 }
 .nxt-visitor-card {
-	transition: opacity 0.35s ease;
+	transition: opacity var(--duration-slow) var(--ease-standard);
 }
 
 /* ══════════════════════════════════════════════════════════════════════
@@ -2087,7 +2087,7 @@ body.app-next-body .dg.ac { display: none !important; }
 	background: rgba(255, 255, 255, 0.04);
 	color: rgba(255, 255, 255, 0.55);
 	cursor: pointer;
-	transition: all 0.15s ease;
+	transition: all var(--duration-fast) var(--ease-standard);
 }
 
 .nxt-mobile-agent-strip__share:hover,
@@ -2112,10 +2112,10 @@ body.app-next-body .dg.ac { display: none !important; }
 .nxt-chrome-hidden .nxt-mobile-agent-strip {
 	opacity: 0;
 	pointer-events: none;
-	transition: opacity 0.35s ease;
+	transition: opacity var(--duration-slow) var(--ease-standard);
 }
 .nxt-mobile-agent-strip {
-	transition: opacity 0.35s ease;
+	transition: opacity var(--duration-slow) var(--ease-standard);
 }
 
 /* ══════════════════════════════════════════════════════════════════════
@@ -2143,7 +2143,7 @@ body.app-next-body .dg.ac { display: none !important; }
 	background: rgba(255, 255, 255, 0.04);
 	color: rgba(255, 255, 255, 0.55);
 	cursor: pointer;
-	transition: all 0.18s ease;
+	transition: all var(--duration-fast) var(--ease-standard);
 }
 
 .nxt-share-social__btn:hover {
@@ -2170,7 +2170,7 @@ body.app-next-body .dg.ac { display: none !important; }
 	justify-content: center;
 	pointer-events: none;
 	overflow: hidden;
-	transition: opacity 0.65s ease;
+	transition: opacity var(--duration-slow) var(--ease-standard);
 }
 
 .nxt-poster-skeleton[hidden] {

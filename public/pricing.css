@@ -100,7 +100,7 @@
 
 .billing-toggle span {
 	cursor: pointer;
-	transition: color 0.2s;
+	transition: color var(--duration-base);
 }
 
 .billing-toggle span.is-active {
@@ -115,7 +115,7 @@
 	background: rgba(var(--pr-fg), 0.1);
 	border: 1px solid rgba(var(--pr-fg), 0.12);
 	cursor: pointer;
-	transition: background 0.2s, border-color 0.2s;
+	transition: background var(--duration-base), border-color var(--duration-base);
 }
 
 .billing-toggle .toggle-track:hover {
@@ -131,7 +131,7 @@
 	border-radius: 50%;
 	background: rgb(var(--pr-fg));
 	box-shadow: 0 1px 4px rgba(0, 0, 0, 0.3);
-	transition: transform 0.2s cubic-bezier(0.2, 0.9, 0.3, 1);
+	transition: transform var(--duration-base) cubic-bezier(0.2, 0.9, 0.3, 1);
 }
 
 .billing-toggle.annual .toggle-thumb {
@@ -175,7 +175,7 @@
 	display: flex;
 	flex-direction: column;
 	position: relative;
-	transition: background 0.2s;
+	transition: background var(--duration-base);
 }
 
 .pricing-tier-card:hover {
@@ -288,7 +288,7 @@
 	border: 1px solid rgba(var(--pr-fg), 0.1);
 	background: rgba(var(--pr-fg), 0.04);
 	color: rgb(var(--pr-fg));
-	transition: background 0.15s, border-color 0.15s, transform 0.15s;
+	transition: background var(--duration-fast), border-color var(--duration-fast), transform var(--duration-fast);
 }
 
 .pricing-cta:hover {
@@ -477,7 +477,7 @@
 	align-items: center;
 	justify-content: space-between;
 	gap: 16px;
-	transition: color 0.15s;
+	transition: color var(--duration-fast);
 }
 
 .pricing-faq summary::-webkit-details-marker {
@@ -501,7 +501,7 @@
 	color: rgba(var(--pr-fg), 0.6);
 	font-size: 16px;
 	font-weight: 400;
-	transition: background 0.15s, transform 0.2s;
+	transition: background var(--duration-fast), transform var(--duration-base);
 }
 
 .pricing-faq details[open] summary::after {
@@ -568,7 +568,7 @@
 	border: 1px solid rgba(var(--pr-fg), 0.08);
 	border-radius: 12px;
 	background: rgba(var(--pr-fg), 0.02);
-	transition: background 0.15s, border-color 0.15s;
+	transition: background var(--duration-fast), border-color var(--duration-fast);
 }
 
 .upgrade-banner:hover {
@@ -621,7 +621,7 @@
 	font-size: 12px;
 	font-weight: 600;
 	text-decoration: none;
-	transition: background 0.15s, border-color 0.15s;
+	transition: background var(--duration-fast), border-color var(--duration-fast);
 	white-space: nowrap;
 }
 
@@ -682,7 +682,7 @@
 	display: flex;
 	flex-direction: column;
 	position: relative;
-	transition: background 0.15s;
+	transition: background var(--duration-fast);
 }
 
 .pricing-embed-card:hover {
@@ -786,7 +786,7 @@
 	text-decoration: none;
 	font-size: 14px;
 	font-weight: 500;
-	transition: color 0.15s;
+	transition: color var(--duration-fast);
 }
 
 .pricing-embed-cta a:hover {
@@ -794,7 +794,7 @@
 }
 
 .pricing-embed-cta a .arrow {
-	transition: transform 0.15s;
+	transition: transform var(--duration-fast);
 }
 
 .pricing-embed-cta a:hover .arrow {
@@ -833,7 +833,7 @@
 }
 
 /* CTAs — press + focus */
-.pricing-cta { transition: background var(--duration-fast, 140ms) var(--ease-standard, ease), border-color var(--duration-fast, 140ms) var(--ease-standard, ease), transform var(--duration-fast, 140ms) var(--ease-standard, ease), box-shadow var(--duration-fast, 140ms) var(--ease-standard, ease); }
+.pricing-cta { transition: background var(--duration-fast, var(--duration-fast)) var(--ease-standard, var(--ease-standard)), border-color var(--duration-fast, var(--duration-fast)) var(--ease-standard, var(--ease-standard)), transform var(--duration-fast, var(--duration-fast)) var(--ease-standard, var(--ease-standard)), box-shadow var(--duration-fast, var(--duration-fast)) var(--ease-standard, var(--ease-standard)); }
 .pricing-cta:active {
 	transform: translateY(0) scale(0.98);
 }
@@ -870,8 +870,8 @@
 	opacity: 0;
 	transform: translateY(18px);
 	transition:
-		opacity var(--duration-slow, 420ms) var(--ease-emphasized, cubic-bezier(0.22, 1, 0.36, 1)),
-		transform var(--duration-slow, 420ms) var(--ease-emphasized, cubic-bezier(0.22, 1, 0.36, 1));
+		opacity var(--duration-slow, var(--duration-slow)) var(--ease-emphasized, cubic-bezier(0.22, 1, 0.36, 1)),
+		transform var(--duration-slow, var(--duration-slow)) var(--ease-emphasized, cubic-bezier(0.22, 1, 0.36, 1));
 	will-change: opacity, transform;
 }
 .reveal-section.is-revealed {
@@ -1001,7 +1001,7 @@
 	color: rgb(var(--pr-fg));
 	text-decoration: none;
 	border-bottom: 1px solid rgba(var(--pr-fg), 0.3);
-	transition: border-color 0.15s;
+	transition: border-color var(--duration-fast);
 }
 
 .payg-lead a:hover,
@@ -1023,7 +1023,7 @@
 	display: flex;
 	flex-direction: column;
 	gap: 10px;
-	transition: border-color 0.18s, transform 0.18s, background 0.18s;
+	transition: border-color var(--duration-fast), transform var(--duration-fast), background var(--duration-fast);
 }
 
 .payg-card:hover {
@@ -1082,7 +1082,7 @@
 	font-size: 13px;
 	color: var(--accent, #7c5cff);
 	text-decoration: none;
-	transition: opacity 0.15s;
+	transition: opacity var(--duration-fast);
 }
 .payg-holder-cta:hover {
 	opacity: 0.8;
@@ -1187,7 +1187,7 @@
 	border: 1px solid rgba(var(--pr-fg), 0.12);
 	background: rgba(var(--pr-fg), 0.05);
 	color: rgb(var(--pr-fg));
-	transition: background 0.15s, border-color 0.15s, transform 0.15s;
+	transition: background var(--duration-fast), border-color var(--duration-fast), transform var(--duration-fast);
 }
 
 .payg-card.is-free .payg-card-cta {
@@ -1374,7 +1374,7 @@
 	border-radius: 50%;
 	color: rgba(var(--pr-fg), 0.7);
 	cursor: pointer;
-	transition: background var(--duration-fast, 140ms) ease, color var(--duration-fast, 140ms) ease;
+	transition: background var(--duration-fast, var(--duration-fast)) var(--ease-standard), color var(--duration-fast, var(--duration-fast)) var(--ease-standard);
 }
 
 .pc-close:hover, .pc-close:focus-visible {
@@ -1407,7 +1407,7 @@
 	color: var(--pr-panel-ink);
 	text-align: left;
 	cursor: pointer;
-	transition: border-color var(--duration-fast, 140ms) ease, background var(--duration-fast, 140ms) ease, transform var(--duration-fast, 140ms) ease;
+	transition: border-color var(--duration-fast, var(--duration-fast)) var(--ease-standard), background var(--duration-fast, var(--duration-fast)) var(--ease-standard), transform var(--duration-fast, var(--duration-fast)) var(--ease-standard);
 }
 
 .pc-asset:hover { border-color: rgba(var(--pr-fg), 0.35); transform: translateY(-1px); }
@@ -1495,7 +1495,7 @@
 	padding: 8px;
 	line-height: 0;
 	flex-shrink: 0;
-	transition: opacity var(--duration-fast, 140ms) ease;
+	transition: opacity var(--duration-fast, var(--duration-fast)) var(--ease-standard);
 }
 
 .pc-pay-actions {
@@ -1531,7 +1531,7 @@
 	color: var(--pr-panel-ink);
 	font-size: 13px;
 	font-family: inherit;
-	transition: border-color var(--duration-fast, 140ms) ease;
+	transition: border-color var(--duration-fast, var(--duration-fast)) var(--ease-standard);
 }
 
 .pc-sig-row input:focus-visible {

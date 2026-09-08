@@ -161,7 +161,7 @@
 	background: var(--surface-1, rgba(255, 255, 255, 0.03));
 	border: 1px solid var(--stroke);
 	overflow: hidden;
-	transition: border-color var(--duration-fast, 140ms) var(--ease-standard), background var(--duration-fast) var(--ease-standard), transform var(--duration-fast) var(--ease-standard);
+	transition: border-color var(--duration-fast, var(--duration-fast)) var(--ease-standard), background var(--duration-fast) var(--ease-standard), transform var(--duration-fast) var(--ease-standard);
 }
 .bdy-chip:hover { border-color: var(--stroke-strong, rgba(255, 255, 255, 0.2)); background: var(--surface-2); }
 .bdy-chip--featured { background: var(--surface-2, rgba(255, 255, 255, 0.05)); }
@@ -458,7 +458,7 @@
 	box-shadow: var(--shadow-2, 0 8px 32px rgba(0, 0, 0, 0.5));
 	opacity: 0;
 	pointer-events: none;
-	transition: opacity var(--duration-base, 220ms) var(--ease-out), transform var(--duration-base) var(--ease-out);
+	transition: opacity var(--duration-base, var(--duration-base)) var(--ease-out), transform var(--duration-base) var(--ease-out);
 }
 .bdy-toast.show,
 .mny-toast.show,
@@ -546,7 +546,7 @@
 .mny-asset-btn {
 	border: 0; background: transparent; color: var(--ink-dim, #888); cursor: pointer;
 	padding: 3px 12px; border-radius: 999px; font-size: var(--text-2xs, 0.6875rem); font-weight: var(--weight-semibold, 600);
-	transition: background-color 0.15s ease, color 0.15s ease;
+	transition: background-color var(--duration-fast) var(--ease-standard), color var(--duration-fast) var(--ease-standard);
 }
 .mny-asset-btn:hover { color: var(--ink-bright, #fff); }
 .mny-asset-btn.is-on { background: var(--accent, #6366f1); color: #fff; }
@@ -699,7 +699,7 @@
 .tb-spent.is-warm b { color: var(--warning, #fbbf24); }
 .tb-spent.is-hot b { color: var(--danger, #f87171); }
 .tb-budget-bar { display: inline-block; width: 84px; height: 5px; border-radius: 999px; background: var(--surface-2, rgba(255,255,255,0.08)); overflow: hidden; vertical-align: middle; }
-.tb-budget-fill { display: block; height: 100%; border-radius: 999px; background: var(--success, #4ade80); transition: width 0.4s ease, background-color 0.3s ease; }
+.tb-budget-fill { display: block; height: 100%; border-radius: 999px; background: var(--success, #4ade80); transition: width var(--duration-slow) var(--ease-standard), background-color var(--duration-base) var(--ease-standard); }
 .tb-spent.is-warm .tb-budget-fill { background: var(--warning, #fbbf24); }
 .tb-spent.is-hot .tb-budget-fill { background: var(--danger, #f87171); }
 .tb-glimits-foot .studio-btn { margin-top: 0; }
@@ -815,7 +815,7 @@
 	display: flex; flex-direction: column; gap: 3px; text-align: left; cursor: pointer;
 	padding: 10px 12px; border-radius: var(--radius-md, 10px);
 	background: var(--surface-1, rgba(255,255,255,0.03)); border: 1px solid var(--stroke);
-	transition: border-color 0.18s var(--ease-out, ease), background-color 0.18s ease, transform 0.18s ease, box-shadow 0.18s ease;
+	transition: border-color var(--duration-fast) var(--ease-out, var(--ease-standard)), background-color var(--duration-fast) var(--ease-standard), transform var(--duration-fast) var(--ease-standard), box-shadow var(--duration-fast) var(--ease-standard);
 }
 .tb-preset:hover { transform: translateY(-2px); border-color: var(--stroke-strong, rgba(255,255,255,0.2)); background: var(--surface-2, rgba(255,255,255,0.06)); }
 .tb-preset:focus-visible { outline: 2px solid var(--focus-ring-color, var(--accent, #6366f1)); outline-offset: 2px; }
@@ -834,7 +834,7 @@
 .tb-risk-l { font-size: var(--text-2xs, 0.6875rem); text-transform: uppercase; letter-spacing: 0.08em; color: var(--ink-faint, #666); }
 .tb-risk-label { font-size: var(--text-md, 0.8125rem); font-weight: var(--weight-semibold, 600); color: var(--ink-bright, #fff); }
 .tb-risk-track { height: 8px; border-radius: 999px; background: var(--surface-2, rgba(255,255,255,0.06)); overflow: hidden; box-shadow: inset 0 1px 2px rgba(0,0,0,0.3); }
-.tb-risk-fill { height: 100%; border-radius: 999px; transition: width 0.5s var(--ease-out, cubic-bezier(0.16,1,0.3,1)), background 0.4s ease; }
+.tb-risk-fill { height: 100%; border-radius: 999px; transition: width var(--duration-slow) var(--ease-out, cubic-bezier(0.16,1,0.3,1)), background var(--duration-slow) var(--ease-standard); }
 .tb-risk-calm .tb-risk-fill { background: linear-gradient(90deg, #34d399, #10b981); }
 .tb-risk-calm .tb-risk-label { color: #34d399; }
 .tb-risk-balanced .tb-risk-fill { background: linear-gradient(90deg, #38bdf8, #6366f1); }
@@ -858,7 +858,7 @@
 .tb-dist { margin-top: 14px; display: flex; flex-direction: column; gap: 8px; }
 .tb-dist-l { font-size: var(--text-2xs, 0.6875rem); color: var(--ink-dim, #888); }
 .tb-dist-bar { display: flex; height: 12px; border-radius: 999px; overflow: hidden; background: var(--surface-2, rgba(255,255,255,0.06)); gap: 2px; }
-.tb-dist-seg { min-width: 3px; transition: flex 0.5s var(--ease-out, ease); }
+.tb-dist-seg { min-width: 3px; transition: flex var(--duration-slow) var(--ease-out, var(--ease-standard)); }
 .tb-dist-grad { background: #34d399; }
 .tb-dist-pump { background: #60a5fa; }
 .tb-dist-flat { background: #94a3b8; }
@@ -885,7 +885,7 @@
 @media (max-width: 540px) { .tb-topline, .tb-samples-cols { grid-template-columns: 1fr; } .tb-preset-chips { grid-template-columns: 1fr 1fr; } }
 
 /* — Money tab: balance count-up flash — */
-.mny-bal b { transition: color 0.3s ease; font-variant-numeric: tabular-nums; }
+.mny-bal b { transition: color var(--duration-base) var(--ease-standard); font-variant-numeric: tabular-nums; }
 @keyframes mnyBalUp { 0% { color: var(--success, #4ade80); } 100% { color: var(--ink-bright, #fff); } }
 @keyframes mnyBalDown { 0% { color: var(--danger, #f87171); } 100% { color: var(--ink-bright, #fff); } }
 .mny-bal-up { animation: mnyBalUp 1.1s ease-out; }
@@ -912,7 +912,7 @@
 	appearance: none; cursor: pointer; padding: 3px 10px; border-radius: var(--radius-pill, 999px);
 	font-size: var(--text-2xs, 0.6875rem); font-variant-numeric: tabular-nums; font-weight: var(--weight-medium, 500);
 	color: var(--ink-dim, #999); background: var(--surface-2, rgba(255,255,255,0.06)); border: 1px solid var(--stroke);
-	transition: color 0.15s ease, background-color 0.15s ease, border-color 0.15s ease, transform 0.1s ease;
+	transition: color var(--duration-fast) var(--ease-standard), background-color var(--duration-fast) var(--ease-standard), border-color var(--duration-fast) var(--ease-standard), transform var(--duration-instant) var(--ease-standard);
 }
 .mny-price-chip:hover { color: var(--ink-bright, #fff); border-color: var(--stroke-strong, rgba(255,255,255,0.2)); }
 .mny-price-chip:active { transform: scale(0.94); }

@@ -130,7 +130,7 @@ a:hover {
 	font-weight: 500;
 	color: rgba(255, 255, 255, 0.65);
 	border-radius: var(--radius-sm);
-	transition: color 0.15s ease, background 0.15s ease;
+	transition: color var(--duration-fast) var(--ease-standard), background var(--duration-fast) var(--ease-standard);
 }
 
 .studio-header nav a:hover,
@@ -187,7 +187,7 @@ a:hover {
 	font: inherit;
 	font-size: 0.85rem;
 	cursor: pointer;
-	transition: background 0.15s ease, border-color 0.15s ease;
+	transition: background var(--duration-fast) var(--ease-standard), border-color var(--duration-fast) var(--ease-standard);
 }
 
 .user-menu-trigger:hover {
@@ -512,7 +512,7 @@ a:hover {
 	border-radius: var(--radius-md);
 	color: var(--text);
 	cursor: pointer;
-	transition: border-color 0.15s ease, transform 0.1s ease, background 0.15s ease, box-shadow 0.15s ease;
+	transition: border-color var(--duration-fast) var(--ease-standard), transform var(--duration-instant) var(--ease-standard), background var(--duration-fast) var(--ease-standard), box-shadow var(--duration-fast) var(--ease-standard);
 	text-align: center;
 	font: inherit;
 }
@@ -734,7 +734,7 @@ a:hover {
 	color: var(--text);
 	cursor: pointer;
 	text-align: left;
-	transition: border-color 0.15s ease, background 0.15s ease;
+	transition: border-color var(--duration-fast) var(--ease-standard), background var(--duration-fast) var(--ease-standard);
 	font: inherit;
 }
 
@@ -765,7 +765,7 @@ a:hover {
 	background: rgba(255, 255, 255, 0.07);
 	color: #bbb;
 	font-size: 0.95rem;
-	transition: background 0.15s ease, color 0.15s ease;
+	transition: background var(--duration-fast) var(--ease-standard), color var(--duration-fast) var(--ease-standard);
 }
 
 .type-card .label {
@@ -929,7 +929,7 @@ a:hover {
 	font-size: 0.82rem;
 	font-weight: 500;
 	cursor: pointer;
-	transition: background 0.15s ease, color 0.15s ease;
+	transition: background var(--duration-fast) var(--ease-standard), color var(--duration-fast) var(--ease-standard);
 }
 
 .studio-right-tab:hover {
@@ -1045,7 +1045,7 @@ a:hover {
 	font-weight: 500;
 	font-size: 0.85rem;
 	cursor: pointer;
-	transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+	transition: background var(--duration-fast) var(--ease-standard), border-color var(--duration-fast) var(--ease-standard), color var(--duration-fast) var(--ease-standard);
 	border: 1px solid transparent;
 }
 
@@ -1356,7 +1356,7 @@ a:hover {
 	max-width: 240px;
 	pointer-events: none;
 	opacity: 0;
-	transition: opacity 0.15s ease, transform 0.15s ease;
+	transition: opacity var(--duration-fast) var(--ease-standard), transform var(--duration-fast) var(--ease-standard);
 	z-index: 30;
 	box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4);
 }
@@ -1427,7 +1427,7 @@ a:hover {
 .bonding-curve-fill {
 	height: 100%;
 	background: linear-gradient(90deg, #555, var(--ink-dim));
-	transition: width 0.25s ease;
+	transition: width var(--duration-base) var(--ease-standard);
 	border-radius: 999px;
 }
 
@@ -1513,7 +1513,7 @@ a:hover {
 	border-radius: 10px;
 	text-align: center;
 	background: rgba(255, 255, 255, 0.015);
-	transition: background 0.15s ease, border-color 0.15s ease;
+	transition: background var(--duration-fast) var(--ease-standard), border-color var(--duration-fast) var(--ease-standard);
 }
 .kp-drop.over {
 	border-color: rgba(255, 255, 255, 0.35);
@@ -1595,7 +1595,7 @@ a:hover {
 	color: var(--muted);
 	border-radius: 6px;
 	cursor: pointer;
-	transition: background 0.12s ease, color 0.12s ease;
+	transition: background var(--duration-fast) var(--ease-standard), color var(--duration-fast) var(--ease-standard);
 	flex-shrink: 0;
 }
 
@@ -1649,7 +1649,7 @@ a:hover {
 	border: 1px solid rgba(248, 113, 113, 0.3);
 	background: rgba(248, 113, 113, 0.06);
 	color: #fca5a5;
-	transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+	transition: background var(--duration-fast) var(--ease-standard), border-color var(--duration-fast) var(--ease-standard), color var(--duration-fast) var(--ease-standard);
 }
 
 .btn-danger:hover {
@@ -1794,7 +1794,7 @@ a:hover {
 	background: rgba(255, 255, 255, 0.025);
 	border: 1px solid rgba(255, 255, 255, 0.08);
 	border-radius: var(--radius-md);
-	transition: border-color 0.15s ease;
+	transition: border-color var(--duration-fast) var(--ease-standard);
 }
 
 .hotspot-row:hover {
@@ -1834,7 +1834,7 @@ a:hover {
 	cursor: pointer;
 	font-size: 1rem;
 	line-height: 1;
-	transition: background 0.12s ease, border-color 0.12s ease, color 0.12s ease;
+	transition: background var(--duration-fast) var(--ease-standard), border-color var(--duration-fast) var(--ease-standard), color var(--duration-fast) var(--ease-standard);
 }
 
 .hotspot-del:hover {

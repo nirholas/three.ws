@@ -89,7 +89,7 @@ html[data-bg="transparent"] #cc-lobby {
 #kx-loading, #cc-loading {
 	position: fixed; inset: 0; display: grid; place-items: center; z-index: 80;
 	background: radial-gradient(circle at 50% 38%, #161616, #050505 72%);
-	transition: opacity 0.5s ease;
+	transition: opacity var(--duration-slow) var(--ease-standard);
 }
 #kx-loading.kx-hidden, #cc-loading.cc-hidden { opacity: 0; pointer-events: none; }
 .kx-loading-card {
@@ -132,7 +132,7 @@ html[data-bg="transparent"] #cc-lobby {
 }
 .kx-boot-coin-art img {
 	position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover;
-	opacity: 0; transition: opacity 0.4s ease;
+	opacity: 0; transition: opacity var(--duration-slow) var(--ease-standard);
 }
 .kx-boot-coin-ok .kx-boot-coin-art img { opacity: 1; }
 /* Monogram stand-in under the art: covers the decode window and stays put for
@@ -185,7 +185,7 @@ html[data-bg="transparent"] #cc-lobby {
 @keyframes kx-pedestal { 50% { opacity: 0.45; transform: translateX(-50%) scale(0.92); } }
 #kx-boot-avatar {
 	display: block; width: 100%; height: 100%; position: relative; z-index: 1;
-	opacity: 0; transition: opacity 0.6s ease;
+	opacity: 0; transition: opacity var(--duration-slow) var(--ease-standard);
 }
 .kx-boot-stage.kx-boot-ready #kx-boot-avatar { opacity: 1; }
 /* Fallback mark, hidden unless WebGL/asset load fails. */
@@ -245,7 +245,7 @@ html[data-bg="transparent"] #cc-lobby {
 	/* Thumb-sized: this is the recovery button on a screen that has already
 	   failed once, often on the phone the failure happened on. */
 	min-height: 44px; padding: 9px 20px; font-size: 13px; font-weight: 700; letter-spacing: 0.02em;
-	transition: transform 0.12s ease, box-shadow 0.12s ease, opacity 0.12s ease;
+	transition: transform var(--duration-fast) var(--ease-standard), box-shadow var(--duration-fast) var(--ease-standard), opacity var(--duration-fast) var(--ease-standard);
 }
 .kx-boot-error-btn:hover { box-shadow: var(--cc-glow); transform: translateY(-1px); }
 .kx-boot-error-btn:active { transform: translateY(0); opacity: 0.9; }
@@ -254,7 +254,7 @@ html[data-bg="transparent"] #cc-lobby {
 	display: inline-flex; align-items: center; min-height: 44px; padding: 0 6px;
 	color: var(--cc-dim); font-size: 13px; text-decoration: none;
 	box-shadow: inset 0 -1px 0 var(--cc-edge-soft);
-	transition: color 0.12s ease, box-shadow 0.12s ease;
+	transition: color var(--duration-fast) var(--ease-standard), box-shadow var(--duration-fast) var(--ease-standard);
 }
 .kx-boot-error-link:hover { color: var(--cc-text); box-shadow: inset 0 -1px 0 var(--cc-edge-hi); }
 .kx-boot-error-link:focus-visible { outline: 2px solid var(--cc-edge-hi); outline-offset: 2px; border-radius: 1px; }
@@ -302,12 +302,12 @@ html[data-bg="transparent"] #cc-lobby {
 	background: none; border: 0; cursor: pointer; font: inherit;
 	color: var(--cc-dim); font-size: 13.5px; font-weight: 500;
 	padding: 7px 11px; border-radius: var(--cc-radius-sm);
-	transition: color 0.15s ease, background 0.15s ease;
+	transition: color var(--duration-fast) var(--ease-standard), background var(--duration-fast) var(--ease-standard);
 }
 .cc-nav-flat:hover, .cc-nav-trigger:hover,
 .cc-nav-grp.cc-open .cc-nav-trigger { color: var(--cc-text); }
 .cc-nav-grp.cc-open .cc-nav-trigger { background: rgba(255, 255, 255, 0.05); }
-.cc-nav-caret { font-size: 9px; opacity: 0.55; transition: transform 0.2s ease; }
+.cc-nav-caret { font-size: 9px; opacity: 0.55; transition: transform var(--duration-base) var(--ease-standard); }
 .cc-nav-grp.cc-open .cc-nav-caret { transform: rotate(180deg); }
 .cc-nav-grp { position: relative; display: flex; }
 .cc-nav-pop {
@@ -316,13 +316,13 @@ html[data-bg="transparent"] #cc-lobby {
 	background: var(--cc-panel-solid); border: 1px solid var(--cc-edge);
 	border-radius: var(--cc-radius); box-shadow: var(--cc-shadow);
 	opacity: 0; transform: translateY(-6px); pointer-events: none;
-	transition: opacity 0.16s ease, transform 0.16s ease;
+	transition: opacity var(--duration-fast) var(--ease-standard), transform var(--duration-fast) var(--ease-standard);
 }
 .cc-nav-pop.cc-nav-wide { grid-template-columns: 1fr 1fr; min-width: 540px; }
 .cc-nav-grp.cc-open .cc-nav-pop { opacity: 1; transform: translateY(0); pointer-events: auto; }
 .cc-nav-mi {
 	display: block; padding: 8px 10px; border-radius: var(--cc-radius-sm);
-	transition: background 0.13s ease;
+	transition: background var(--duration-fast) var(--ease-standard);
 }
 .cc-nav-mi:hover { background: rgba(255, 255, 255, 0.05); }
 .cc-nav-mi-t { display: flex; align-items: center; gap: 7px; font-size: 13.5px; font-weight: 600; color: var(--cc-text); }
@@ -334,13 +334,13 @@ html[data-bg="transparent"] #cc-lobby {
 .cc-nav-end { display: flex; align-items: center; gap: 4px; }
 .cc-nav-signin {
 	color: var(--cc-dim); font-size: 13.5px; font-weight: 500; padding: 7px 12px;
-	border-radius: var(--cc-radius-sm); transition: color 0.15s ease;
+	border-radius: var(--cc-radius-sm); transition: color var(--duration-fast) var(--ease-standard);
 }
 .cc-nav-signin:hover { color: var(--cc-text); }
 .cc-nav-console {
 	color: var(--cc-ink); background: #fff; font-size: 13.5px; font-weight: 600;
 	padding: 7px 14px; border-radius: var(--cc-radius-sm);
-	box-shadow: var(--cc-glow); transition: transform 0.15s ease, opacity 0.15s ease;
+	box-shadow: var(--cc-glow); transition: transform var(--duration-fast) var(--ease-standard), opacity var(--duration-fast) var(--ease-standard);
 }
 .cc-nav-console:hover { transform: translateY(-1px); opacity: 0.92; }
 .cc-nav-toggle {
@@ -392,7 +392,7 @@ html[data-bg="transparent"] #cc-lobby {
 	/* The row already cleared 44px of height; a four-letter label ("Docs", "API")
 	   was still only 31px wide, so the padding buys the other axis too. */
 	padding: 0 6px; margin: 0 -6px; min-width: 40px; justify-content: center;
-	color: var(--cc-dim); font-size: 13px; transition: color 0.15s ease;
+	color: var(--cc-dim); font-size: 13px; transition: color var(--duration-fast) var(--ease-standard);
 }
 .cc-foot-links a:hover { color: var(--cc-text); }
 .cc-foot-links a:focus-visible { outline: 2px solid var(--cc-edge-hi); outline-offset: 2px; border-radius: var(--cc-radius-sm); }
@@ -414,7 +414,7 @@ html[data-bg="transparent"] #cc-lobby {
 	background: #fff; color: var(--cc-ink);
 	display: grid; place-items: center; flex: none;
 	box-shadow: var(--cc-glow);
-	transition: transform 0.18s ease, box-shadow 0.18s ease;
+	transition: transform var(--duration-fast) var(--ease-standard), box-shadow var(--duration-fast) var(--ease-standard);
 }
 .cc-brand-logo svg { width: 26px; height: 26px; display: block; }
 .cc-brand-logo:hover { transform: translateY(-1px); }
@@ -463,7 +463,7 @@ html[data-bg="transparent"] #cc-lobby {
 	display: flex; align-items: center; gap: 12px;
 	background: var(--cc-panel); border: 1px solid var(--cc-edge);
 	border-radius: var(--cc-radius); padding: 0 14px;
-	transition: border-color 0.15s ease, box-shadow 0.2s ease;
+	transition: border-color var(--duration-fast) var(--ease-standard), box-shadow var(--duration-base) var(--ease-standard);
 }
 .cc-search:hover { border-color: rgba(255, 255, 255, 0.22); }
 .cc-search:focus-within { border-color: var(--cc-edge-hi); box-shadow: 0 0 0 1px var(--cc-edge-hi), 0 0 34px rgba(255, 255, 255, 0.07); }
@@ -484,7 +484,7 @@ html[data-bg="transparent"] #cc-lobby {
 	display: grid; place-items: center; flex: none; width: 30px; height: 30px; padding: 0;
 	background: rgba(255, 255, 255, 0.06); border: 1px solid var(--cc-edge-soft);
 	border-radius: 50%; color: var(--cc-dim); cursor: pointer;
-	transition: color 0.14s ease, background 0.14s ease;
+	transition: color var(--duration-fast) var(--ease-standard), background var(--duration-fast) var(--ease-standard);
 }
 .cc-search-clear svg { width: 12px; height: 12px; display: block; }
 .cc-search-clear:hover { color: var(--cc-text); background: rgba(255, 255, 255, 0.12); }
@@ -523,11 +523,11 @@ html[data-bg="transparent"] #cc-lobby {
 	min-height: 40px; padding: 0 14px; font: inherit; font-size: 13px; font-weight: 600;
 	color: var(--cc-text); background: var(--cc-bg2);
 	border: 1px solid var(--cc-edge); border-radius: var(--cc-radius-sm);
-	transition: border-color 0.15s ease, background 0.15s ease;
+	transition: border-color var(--duration-fast) var(--ease-standard), background var(--duration-fast) var(--ease-standard);
 }
 .cc-id-toggle:hover { border-color: var(--cc-edge-hi); background: var(--cc-bg3); }
 .cc-id-toggle:focus-visible { outline: 2px solid var(--cc-edge-hi); outline-offset: 2px; }
-.cc-id-toggle-caret { font-size: 10px; opacity: 0.6; transition: transform 0.2s ease; }
+.cc-id-toggle-caret { font-size: 10px; opacity: 0.6; transition: transform var(--duration-base) var(--ease-standard); }
 .cc-avatar-bar.cc-id-open .cc-id-toggle-caret { transform: rotate(180deg); }
 .cc-id-body {
 	display: flex; align-items: center; gap: 14px; flex-wrap: wrap;
@@ -563,7 +563,7 @@ html[data-bg="transparent"] #cc-lobby {
 	width: 50px; height: 50px; border-radius: var(--cc-radius); overflow: hidden;
 	border: 1px solid var(--cc-edge); background: var(--cc-bg2);
 	cursor: pointer; padding: 0; display: grid; place-items: center; font-size: 22px;
-	transition: border-color 0.12s ease, transform 0.08s ease;
+	transition: border-color var(--duration-fast) var(--ease-standard), transform var(--duration-instant) var(--ease-standard);
 }
 .cc-avatar-chip img { width: 100%; height: 100%; object-fit: cover; }
 /* Rendered avatar portraits frame head-to-chest, so contain + anchor to top and
@@ -585,7 +585,7 @@ html[data-bg="transparent"] #cc-lobby {
 .cc-avatar-custom input {
 	flex: 1; min-width: 0; background: var(--cc-bg2); border: 1px solid var(--cc-edge);
 	border-radius: var(--cc-radius-sm); padding: 10px 12px; color: var(--cc-text); font-size: 13px; outline: none;
-	transition: border-color 0.15s ease;
+	transition: border-color var(--duration-fast) var(--ease-standard);
 }
 .cc-avatar-custom input:focus { border-color: var(--cc-edge-hi); }
 /* On a phone the paste field plus two nowrap buttons is wider than the screen,
@@ -598,7 +598,7 @@ html[data-bg="transparent"] #cc-lobby {
 }
 
 /* bring-your-own .glb: upload button, drop target, status */
-.cc-avatar-bar { position: relative; transition: border-color 0.15s ease, box-shadow 0.15s ease; }
+.cc-avatar-bar { position: relative; transition: border-color var(--duration-fast) var(--ease-standard), box-shadow var(--duration-fast) var(--ease-standard); }
 .cc-avatar-bar.cc-drag { border-color: var(--cc-edge-hi); box-shadow: 0 0 0 1px var(--cc-edge-hi), var(--cc-glow); }
 .cc-avatar-dropmsg {
 	position: absolute; inset: 0; display: none; align-items: center; justify-content: center;
@@ -613,7 +613,7 @@ html[data-bg="transparent"] #cc-lobby {
 	display: inline-flex; align-items: center; gap: 7px; flex: none; cursor: pointer; user-select: none;
 	background: var(--cc-bg2); border: 1px solid var(--cc-edge); border-radius: var(--cc-radius-sm);
 	padding: 9px 14px; color: var(--cc-text); font-size: 13px; font-weight: 600; white-space: nowrap;
-	transition: border-color 0.15s ease, background 0.15s ease, transform 0.1s ease;
+	transition: border-color var(--duration-fast) var(--ease-standard), background var(--duration-fast) var(--ease-standard), transform var(--duration-instant) var(--ease-standard);
 }
 .cc-upload-btn:hover { border-color: var(--cc-edge-hi); background: var(--cc-bg3); }
 .cc-upload-btn:active { transform: translateY(1px); }
@@ -649,7 +649,7 @@ html[data-bg="transparent"] #cc-lobby {
 	display: inline-flex; align-items: center; gap: 7px; flex: none; cursor: pointer; user-select: none;
 	background: var(--cc-bg2); border: 1px solid var(--cc-edge); border-radius: var(--cc-radius-sm);
 	padding: 9px 14px; color: var(--cc-text); font-size: 13px; font-weight: 600; white-space: nowrap;
-	transition: border-color 0.15s ease, background 0.15s ease, transform 0.1s ease;
+	transition: border-color var(--duration-fast) var(--ease-standard), background var(--duration-fast) var(--ease-standard), transform var(--duration-instant) var(--ease-standard);
 }
 .cc-gallery-btn:hover { border-color: var(--cc-edge-hi); background: var(--cc-bg3); }
 .cc-gallery-btn:active { transform: translateY(1px); }
@@ -665,7 +665,7 @@ html[data-bg="transparent"] #cc-lobby {
 	background: #fff; color: var(--cc-ink); border: 1px solid #fff; border-radius: var(--cc-radius);
 	padding: 13px 16px; margin: 2px 0 4px; font: inherit;
 	box-shadow: var(--cc-glow);
-	transition: transform 0.1s ease, box-shadow 0.16s ease, filter 0.16s ease;
+	transition: transform var(--duration-instant) var(--ease-standard), box-shadow var(--duration-fast) var(--ease-standard), filter var(--duration-fast) var(--ease-standard);
 }
 .cc-create-btn:hover { transform: translateY(-1px); box-shadow: 0 0 0 1px #fff, 0 0 22px rgba(255, 255, 255, 0.5); }
 .cc-create-btn:active { transform: translateY(0); }
@@ -676,7 +676,7 @@ html[data-bg="transparent"] #cc-lobby {
 }
 .cc-create-copy { flex: 1; min-width: 0; font-weight: 700; font-size: 14px; letter-spacing: 0.01em; }
 .cc-create-copy small { display: block; color: rgba(6, 6, 7, 0.62); font-weight: 500; font-size: 12px; margin-top: 2px; letter-spacing: 0; }
-.cc-create-arrow { flex: none; font-size: 16px; opacity: 0.55; transition: transform 0.16s ease, opacity 0.16s ease; }
+.cc-create-arrow { flex: none; font-size: 16px; opacity: 0.55; transition: transform var(--duration-fast) var(--ease-standard), opacity var(--duration-fast) var(--ease-standard); }
 .cc-create-btn:hover .cc-create-arrow { transform: translateX(3px); opacity: 1; }
 .cc-create-btn.cc-busy { pointer-events: none; opacity: 0.7; }
 .cc-create-btn.cc-busy .cc-create-ico { animation: cc-upload-pulse 0.9s ease-in-out infinite; }
@@ -692,14 +692,14 @@ html[data-bg="transparent"] #cc-lobby {
 .cc-create-overlay {
 	position: fixed; inset: 0; z-index: 90; display: grid; place-items: center; padding: 20px;
 	background: rgba(4, 4, 5, 0.78); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
-	opacity: 0; transition: opacity 0.2s ease;
+	opacity: 0; transition: opacity var(--duration-base) var(--ease-standard);
 }
 .cc-create-overlay.cc-on { opacity: 1; }
 .cc-create-modal {
 	width: min(560px, 100%); max-height: calc(100dvh - 40px); overflow-y: auto;
 	background: var(--cc-panel-solid); border: 1px solid var(--cc-edge); border-radius: var(--cc-radius);
 	box-shadow: var(--cc-shadow); padding: 22px;
-	transform: translateY(10px) scale(0.99); transition: transform 0.22s cubic-bezier(0.2, 0.7, 0.2, 1);
+	transform: translateY(10px) scale(0.99); transition: transform var(--duration-base) cubic-bezier(0.2, 0.7, 0.2, 1);
 }
 .cc-create-overlay.cc-on .cc-create-modal { transform: none; }
 .cc-create-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; margin-bottom: 18px; }
@@ -708,7 +708,7 @@ html[data-bg="transparent"] #cc-lobby {
 .cc-create-close {
 	flex: none; width: 32px; height: 32px; border-radius: var(--cc-radius-sm); cursor: pointer;
 	background: var(--cc-bg2); border: 1px solid var(--cc-edge); color: var(--cc-dim);
-	font-size: 20px; line-height: 1; transition: border-color 0.15s ease, color 0.15s ease, background 0.15s ease;
+	font-size: 20px; line-height: 1; transition: border-color var(--duration-fast) var(--ease-standard), color var(--duration-fast) var(--ease-standard), background var(--duration-fast) var(--ease-standard);
 }
 .cc-create-close:hover { color: var(--cc-text); border-color: var(--cc-edge-hi); background: var(--cc-bg3); }
 .cc-create-close:focus-visible { outline: none; border-color: var(--cc-edge-hi); box-shadow: 0 0 0 1px var(--cc-edge-hi); }
@@ -717,7 +717,7 @@ html[data-bg="transparent"] #cc-lobby {
 	display: flex; align-items: center; gap: 14px; width: 100%; text-align: left; cursor: pointer; font: inherit;
 	background: var(--cc-bg2); border: 1px solid var(--cc-edge); border-radius: var(--cc-radius);
 	padding: 14px 16px; color: var(--cc-text);
-	transition: border-color 0.14s ease, background 0.14s ease, transform 0.1s ease;
+	transition: border-color var(--duration-fast) var(--ease-standard), background var(--duration-fast) var(--ease-standard), transform var(--duration-instant) var(--ease-standard);
 }
 .cc-create-card:hover { border-color: var(--cc-edge-hi); background: var(--cc-bg3); transform: translateY(-1px); }
 .cc-create-card:active { transform: translateY(0); }
@@ -734,7 +734,7 @@ html[data-bg="transparent"] #cc-lobby {
 	color: var(--cc-ink); background: #fff; border-radius: 999px; padding: 2px 8px;
 }
 .cc-create-card-desc { display: block; margin-top: 3px; color: var(--cc-dim); font-size: 12.5px; line-height: 1.45; font-weight: 400; }
-.cc-create-card-arrow { flex: none; font-size: 16px; color: var(--cc-faint); transition: transform 0.16s ease, color 0.16s ease; }
+.cc-create-card-arrow { flex: none; font-size: 16px; color: var(--cc-faint); transition: transform var(--duration-fast) var(--ease-standard), color var(--duration-fast) var(--ease-standard); }
 .cc-create-card:hover .cc-create-card-arrow { transform: translateX(3px); color: var(--cc-text); }
 @media (prefers-reduced-motion: reduce) {
 	.cc-create-overlay, .cc-create-modal { transition: none; }
@@ -755,7 +755,7 @@ html[data-bg="transparent"] #cc-lobby {
 	background: rgba(0, 0, 0, 0.6); border: 1px solid var(--cc-edge); border-radius: var(--cc-radius-sm);
 	padding: 3px 9px; color: var(--cc-text);
 	font-size: 10px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase;
-	transition: border-color 0.14s ease, background 0.14s ease, color 0.14s ease;
+	transition: border-color var(--duration-fast) var(--ease-standard), background var(--duration-fast) var(--ease-standard), color var(--duration-fast) var(--ease-standard);
 }
 .cc-card-holders:hover { border-color: var(--cc-edge-hi); background: #fff; color: var(--cc-ink); }
 .cc-card-holders:focus-visible { outline: none; border-color: #fff; box-shadow: 0 0 0 1px #fff; }
@@ -776,14 +776,14 @@ html[data-bg="transparent"] #cc-lobby {
 .cc-gate-overlay {
 	position: fixed; inset: 0; z-index: 95; display: grid; place-items: center; padding: 20px;
 	background: rgba(4, 4, 5, 0.8); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
-	opacity: 0; transition: opacity 0.2s ease;
+	opacity: 0; transition: opacity var(--duration-base) var(--ease-standard);
 }
 .cc-gate-overlay.cc-on { opacity: 1; }
 .cc-gate-modal {
 	width: min(420px, 100%); background: var(--cc-panel-solid);
 	border: 1px solid var(--cc-edge); border-radius: var(--cc-radius); box-shadow: var(--cc-shadow);
 	padding: 18px 22px 22px;
-	transform: translateY(10px) scale(0.99); transition: transform 0.22s cubic-bezier(0.2, 0.7, 0.2, 1);
+	transform: translateY(10px) scale(0.99); transition: transform var(--duration-base) cubic-bezier(0.2, 0.7, 0.2, 1);
 }
 .cc-gate-overlay.cc-on .cc-gate-modal { transform: none; }
 .cc-gate-head { display: flex; align-items: center; justify-content: space-between; gap: 16px; }
@@ -791,7 +791,7 @@ html[data-bg="transparent"] #cc-lobby {
 .cc-gate-x {
 	flex: none; width: 30px; height: 30px; border-radius: var(--cc-radius-sm); cursor: pointer;
 	background: var(--cc-bg2); border: 1px solid var(--cc-edge); color: var(--cc-dim); font-size: 19px; line-height: 1;
-	transition: border-color 0.15s ease, color 0.15s ease, background 0.15s ease;
+	transition: border-color var(--duration-fast) var(--ease-standard), color var(--duration-fast) var(--ease-standard), background var(--duration-fast) var(--ease-standard);
 }
 .cc-gate-x:hover { color: var(--cc-text); border-color: var(--cc-edge-hi); background: var(--cc-bg3); }
 .cc-gate-x:focus-visible { outline: none; border-color: var(--cc-edge-hi); box-shadow: 0 0 0 1px var(--cc-edge-hi); }
@@ -810,7 +810,7 @@ html[data-bg="transparent"] #cc-lobby {
 	width: 100%; padding: 11px 14px; border-radius: var(--cc-radius-sm); cursor: pointer; font: inherit;
 	font-weight: 700; font-size: 13px; letter-spacing: 0.03em;
 	background: var(--cc-bg2); border: 1px solid var(--cc-edge); color: var(--cc-text);
-	transition: border-color 0.14s ease, background 0.14s ease, filter 0.12s ease, transform 0.1s ease;
+	transition: border-color var(--duration-fast) var(--ease-standard), background var(--duration-fast) var(--ease-standard), filter var(--duration-fast) var(--ease-standard), transform var(--duration-instant) var(--ease-standard);
 }
 .cc-gate-btn:hover { border-color: var(--cc-edge-hi); background: var(--cc-bg3); }
 .cc-gate-btn:active { transform: translateY(1px); }
@@ -843,7 +843,7 @@ html[data-bg="transparent"] #cc-lobby {
 .avatar-creator-title { font-size: 15px; font-weight: 600; letter-spacing: 0.02em; color: var(--cc-text); }
 .avatar-creator-close {
 	background: none; border: none; color: var(--cc-dim); font-size: 26px; line-height: 1; cursor: pointer;
-	padding: 0 4px; transition: color 0.18s ease;
+	padding: 0 4px; transition: color var(--duration-fast) var(--ease-standard);
 }
 .avatar-creator-close:hover { color: var(--cc-text); }
 .avatar-creator-body { flex: 1; position: relative; min-height: 0; }
@@ -880,7 +880,7 @@ html[data-bg="transparent"] #cc-lobby {
 	cursor: pointer; font: inherit; font-size: 12px; font-weight: 600; letter-spacing: 0.02em;
 	min-height: 34px; padding: 0 13px; color: var(--cc-dim);
 	background: transparent; border: 1px solid var(--cc-edge-soft); border-radius: 999px;
-	transition: color 0.14s ease, border-color 0.14s ease, background 0.14s ease;
+	transition: color var(--duration-fast) var(--ease-standard), border-color var(--duration-fast) var(--ease-standard), background var(--duration-fast) var(--ease-standard);
 }
 .cc-sort:hover:not(:disabled) { color: var(--cc-text); border-color: var(--cc-edge); }
 .cc-sort:disabled { opacity: 0.4; cursor: not-allowed; }
@@ -891,7 +891,7 @@ html[data-bg="transparent"] #cc-lobby {
 .cc-card {
 	background: var(--cc-panel); border: 1px solid var(--cc-edge); border-radius: var(--cc-radius);
 	overflow: hidden; cursor: pointer; position: relative;
-	transition: transform 0.16s cubic-bezier(0.2, 0.7, 0.2, 1), border-color 0.14s ease, box-shadow 0.14s ease;
+	transition: transform var(--duration-fast) cubic-bezier(0.2, 0.7, 0.2, 1), border-color var(--duration-fast) var(--ease-standard), box-shadow var(--duration-fast) var(--ease-standard);
 	display: flex; flex-direction: column;
 	animation: cc-card-in 0.34s cubic-bezier(0.2, 0.7, 0.2, 1) both;
 	animation-delay: var(--cc-in-delay, 0ms);
@@ -903,7 +903,7 @@ html[data-bg="transparent"] #cc-lobby {
 .cc-card-img {
 	aspect-ratio: 16/10; background: var(--cc-bg2) center/cover no-repeat; position: relative;
 	filter: saturate(0.96) contrast(1.03); overflow: hidden;
-	transition: filter 0.25s ease, transform 0.4s cubic-bezier(0.2, 0.7, 0.2, 1);
+	transition: filter var(--duration-base) var(--ease-standard), transform var(--duration-slow) cubic-bezier(0.2, 0.7, 0.2, 1);
 }
 .cc-card:hover .cc-card-img { filter: saturate(1.12) contrast(1.05); transform: scale(1.03); }
 @media (prefers-reduced-motion: reduce) { .cc-card:hover .cc-card-img { transform: none; } }
@@ -972,7 +972,7 @@ html[data-bg="transparent"] #cc-lobby {
 	background: rgba(255, 255, 255, 0.05); color: var(--cc-dim);
 	border: 1px solid var(--cc-edge-soft);
 	font-weight: 700; font-size: 12px; letter-spacing: 0.06em; text-transform: uppercase;
-	transition: background 0.16s ease, color 0.16s ease, border-color 0.16s ease, filter 0.12s ease;
+	transition: background var(--duration-fast) var(--ease-standard), color var(--duration-fast) var(--ease-standard), border-color var(--duration-fast) var(--ease-standard), filter var(--duration-fast) var(--ease-standard);
 }
 .cc-card:hover .cc-card-cta,
 /* Keyboard parity: tabbing to a card must promote its call to action, not just
@@ -1041,7 +1041,7 @@ html[data-bg="transparent"] #cc-lobby {
 .cc-state button {
 	margin-top: 16px; background: #fff; border: none; color: var(--cc-ink);
 	font-weight: 700; padding: 9px 20px; border-radius: var(--cc-radius-sm); cursor: pointer;
-	font-size: 12px; letter-spacing: 0.06em; text-transform: uppercase; transition: filter 0.12s ease;
+	font-size: 12px; letter-spacing: 0.06em; text-transform: uppercase; transition: filter var(--duration-fast) var(--ease-standard);
 }
 .cc-state button:hover { filter: brightness(0.92); }
 .cc-state .cc-spinner-lg { margin: 0 auto 14px; width: 28px; height: 28px; }
@@ -1090,7 +1090,7 @@ html[data-bg="transparent"] #cc-lobby {
 	padding: 9px 15px; color: var(--cc-text); font-weight: 600; font-size: 12px;
 	letter-spacing: 0.04em; text-transform: uppercase; cursor: pointer;
 	box-shadow: var(--cc-shadow); backdrop-filter: blur(10px);
-	transition: border-color 0.12s ease, background 0.12s ease;
+	transition: border-color var(--duration-fast) var(--ease-standard), background var(--duration-fast) var(--ease-standard);
 }
 .cc-leave:hover { border-color: var(--cc-edge-hi); background: rgba(255, 255, 255, 0.05); }
 
@@ -1119,7 +1119,7 @@ html[data-bg="transparent"] #cc-lobby {
 	padding: 8px 13px 8px 11px; color: var(--cc-dim); cursor: pointer;
 	font-weight: 600; font-size: 11px; letter-spacing: 0.06em; text-transform: uppercase;
 	box-shadow: var(--cc-shadow); backdrop-filter: blur(10px);
-	transition: border-color 0.12s ease, color 0.12s ease, background 0.12s ease, box-shadow 0.12s ease;
+	transition: border-color var(--duration-fast) var(--ease-standard), color var(--duration-fast) var(--ease-standard), background var(--duration-fast) var(--ease-standard), box-shadow var(--duration-fast) var(--ease-standard);
 }
 .cc-voice:hover { border-color: var(--cc-edge-hi); color: var(--cc-text); background: rgba(255, 255, 255, 0.05); }
 /* The glow below rides `.cc-voice`'s own transition, so a keyboard user tabbing
@@ -1134,7 +1134,7 @@ html[data-bg="transparent"] #cc-lobby {
 .cc-voice:disabled { opacity: 0.45; cursor: not-allowed; }
 .cc-voice-ico { display: inline-flex; }
 .cc-voice-ico svg { width: 16px; height: 16px; display: block; }
-.cc-voice-cap { fill: transparent; transition: fill 0.12s ease; }
+.cc-voice-cap { fill: transparent; transition: fill var(--duration-fast) var(--ease-standard); }
 .cc-voice-slash { display: none; opacity: 0.85; }
 .cc-voice-label { line-height: 1; }
 /* live (unmuted): white icon + brighter frame */
@@ -1166,7 +1166,7 @@ html[data-bg="transparent"] #cc-lobby {
 	padding: 8px 13px 8px 11px; color: var(--cc-dim); cursor: pointer;
 	font-weight: 600; font-size: 11px; letter-spacing: 0.06em; text-transform: uppercase;
 	box-shadow: var(--cc-shadow); backdrop-filter: blur(10px);
-	transition: border-color 0.12s ease, color 0.12s ease, background 0.12s ease;
+	transition: border-color var(--duration-fast) var(--ease-standard), color var(--duration-fast) var(--ease-standard), background var(--duration-fast) var(--ease-standard);
 }
 .cc-power-btn:hover { border-color: var(--cc-edge-hi); color: var(--cc-text); background: rgba(255, 255, 255, 0.05); }
 .cc-power-btn:focus-visible { outline: none; border-color: var(--cc-edge-hi); box-shadow: 0 0 0 1px var(--cc-edge-hi); }
@@ -1184,7 +1184,7 @@ html[data-bg="transparent"] #cc-lobby {
 	padding: 8px 13px 8px 11px; color: var(--cc-dim); cursor: pointer;
 	font-weight: 600; font-size: 11px; letter-spacing: 0.06em; text-transform: uppercase;
 	box-shadow: var(--cc-shadow); backdrop-filter: blur(10px);
-	transition: border-color 0.12s ease, color 0.12s ease, background 0.12s ease, opacity 0.3s ease, top 0.3s ease;
+	transition: border-color var(--duration-fast) var(--ease-standard), color var(--duration-fast) var(--ease-standard), background var(--duration-fast) var(--ease-standard), opacity var(--duration-base) var(--ease-standard), top var(--duration-base) var(--ease-standard);
 }
 .cc-photo-hud-btn:hover { border-color: var(--cc-edge-hi); color: var(--cc-text); background: rgba(255, 255, 255, 0.05); }
 .cc-photo-hud-btn:active { background: rgba(255, 255, 255, 0.12); }
@@ -1216,7 +1216,7 @@ body.is-zen #cc-photo-btn { top: calc(env(safe-area-inset-top, 0px) + 58px); opa
 body.is-zen.zen-revealed #cc-photo-btn { opacity: 0.85; }
 body.is-zen #cc-photo-btn:hover, body.is-zen #cc-photo-btn:focus-visible { opacity: 1; }
 @media (prefers-reduced-motion: reduce) {
-	.cc-photo-hud-btn { transition: border-color 0.12s ease, color 0.12s ease, background 0.12s ease; }
+	.cc-photo-hud-btn { transition: border-color var(--duration-fast) var(--ease-standard), color var(--duration-fast) var(--ease-standard), background var(--duration-fast) var(--ease-standard); }
 }
 
 /* chat sidebar, dockable, minimizable, persistent log */
@@ -1227,7 +1227,7 @@ body.is-zen #cc-photo-btn:hover, body.is-zen #cc-photo-btn:focus-visible { opaci
 	display: flex; flex-direction: column; overflow: hidden;
 	background: var(--cc-panel); border: 1px solid var(--cc-edge);
 	border-radius: var(--cc-radius); box-shadow: var(--cc-shadow);
-	backdrop-filter: blur(12px); transition: max-height 0.22s ease;
+	backdrop-filter: blur(12px); transition: max-height var(--duration-base) var(--ease-standard);
 }
 .cc-chat-head {
 	display: flex; align-items: center; gap: 8px; flex: none;
@@ -1245,7 +1245,7 @@ body.is-zen #cc-photo-btn:hover, body.is-zen #cc-photo-btn:focus-visible { opaci
 	border-radius: var(--cc-radius-sm); box-shadow: var(--cc-glow);
 }
 .cc-chat-unread[hidden] { display: none; }
-.cc-chat-chevron { margin-left: auto; color: var(--cc-dim); font-size: 11px; transition: color 0.12s ease; }
+.cc-chat-chevron { margin-left: auto; color: var(--cc-dim); font-size: 11px; transition: color var(--duration-fast) var(--ease-standard); }
 .cc-chat-unread:not([hidden]) + .cc-chat-chevron { margin-left: 8px; }
 .cc-chat-head:hover .cc-chat-chevron { color: var(--cc-text); }
 .cc-chat-body { display: flex; flex-direction: column; min-height: 0; padding: 11px; gap: 9px; }
@@ -1278,7 +1278,7 @@ body.is-zen #cc-photo-btn:hover, body.is-zen #cc-photo-btn:focus-visible { opaci
 .cc-chat-input {
 	display: flex; gap: 8px; flex: none; background: rgba(0, 0, 0, 0.35);
 	border: 1px solid var(--cc-edge); border-radius: var(--cc-radius-sm); padding: 7px 9px;
-	transition: border-color 0.15s ease;
+	transition: border-color var(--duration-fast) var(--ease-standard);
 }
 .cc-chat-input:focus-within { border-color: var(--cc-edge-hi); }
 .cc-chat-input input { flex: 1; min-width: 0; background: none; border: none; color: var(--cc-text); font-size: 13px; outline: none; }
@@ -1286,7 +1286,7 @@ body.is-zen #cc-photo-btn:hover, body.is-zen #cc-photo-btn:focus-visible { opaci
 .cc-chat-send {
 	background: #fff; border: none; color: var(--cc-ink); font-weight: 700;
 	border-radius: var(--cc-radius-sm); padding: 0 13px; cursor: pointer;
-	font-size: 11px; letter-spacing: 0.06em; text-transform: uppercase; transition: filter 0.12s ease;
+	font-size: 11px; letter-spacing: 0.06em; text-transform: uppercase; transition: filter var(--duration-fast) var(--ease-standard);
 }
 .cc-chat-send:hover { filter: brightness(0.9); }
 
@@ -1303,7 +1303,7 @@ body.is-zen #cc-photo-btn:hover, body.is-zen #cc-photo-btn:focus-visible { opaci
 .cc-emote {
 	width: 44px; height: 44px; border-radius: var(--cc-radius-sm); border: 1px solid transparent;
 	background: rgba(255, 255, 255, 0.04); cursor: pointer; font-size: 21px; filter: grayscale(1);
-	transition: transform 0.08s ease, background 0.12s ease, border-color 0.12s ease, filter 0.15s ease;
+	transition: transform var(--duration-instant) var(--ease-standard), background var(--duration-fast) var(--ease-standard), border-color var(--duration-fast) var(--ease-standard), filter var(--duration-fast) var(--ease-standard);
 }
 .cc-emote:hover { background: rgba(255, 255, 255, 0.12); border-color: var(--cc-edge); transform: translateY(-3px); filter: grayscale(0); }
 .cc-emote:active { transform: translateY(-1px) scale(0.9); }
@@ -1319,8 +1319,8 @@ body.is-zen #cc-photo-btn:hover, body.is-zen #cc-photo-btn:focus-visible { opaci
 .cc-reaction {
 	width: 36px; height: 36px; border-radius: var(--cc-radius-sm); border: 1px solid transparent;
 	background: rgba(255, 255, 255, 0.04); cursor: pointer; font-size: 18px; filter: grayscale(0.4);
-	transition: transform 0.08s ease, background 0.12s ease, border-color 0.12s ease,
-	            filter 0.12s ease, opacity 0.12s ease;
+	transition: transform var(--duration-instant) var(--ease-standard), background var(--duration-fast) var(--ease-standard), border-color var(--duration-fast) var(--ease-standard),
+	            filter var(--duration-fast) var(--ease-standard), opacity var(--duration-fast) var(--ease-standard);
 }
 .cc-reaction:hover { background: rgba(255, 255, 255, 0.12); border-color: var(--cc-edge); transform: scale(1.18); filter: grayscale(0); }
 .cc-reaction:active { transform: scale(0.88); }
@@ -1424,7 +1424,7 @@ body.is-zen #cc-photo-btn:hover, body.is-zen #cc-photo-btn:focus-visible { opaci
 #cc-joystick {
 	position: fixed; left: calc(22px + var(--cc-safe-l)); bottom: calc(90px + var(--cc-safe-b));
 	width: 120px; height: 120px; z-index: 30; touch-action: none;
-	opacity: 0.5; transition: opacity 0.2s ease;
+	opacity: 0.5; transition: opacity var(--duration-base) var(--ease-standard);
 }
 #cc-joystick:hover { opacity: 1; }
 @media (pointer: coarse) { #cc-joystick { opacity: 1; } }
@@ -1440,7 +1440,7 @@ body.is-zen #cc-photo-btn:hover, body.is-zen #cc-photo-btn:focus-visible { opaci
 	width: 46px; height: 46px; border-radius: 50%;
 	background: rgba(255, 255, 255, 0.85);
 	box-shadow: 0 2px 10px rgba(0, 0, 0, 0.4);
-	transition: transform 0.05s linear;
+	transition: transform var(--duration-instant) linear;
 	will-change: transform; pointer-events: none;
 }
 #cc-joystick.cc-joy-active .cc-joy-thumb { transition: none; }
@@ -1500,7 +1500,7 @@ body.is-zen #cc-photo-btn:hover, body.is-zen #cc-photo-btn:focus-visible { opaci
 	display: inline-flex; align-items: center; gap: 10px; text-decoration: none;
 	padding: 8px 14px; border-radius: var(--cc-radius); color: var(--cc-text);
 	background: var(--cc-panel); border: 1px solid var(--cc-edge);
-	transition: background 0.15s, border-color 0.15s, transform 0.08s;
+	transition: background var(--duration-fast), border-color var(--duration-fast), transform var(--duration-instant);
 	white-space: nowrap;
 	/* Rendered as a <button> now: neutralize the UA button font/cursor. */
 	font: inherit; cursor: pointer; text-align: left;
@@ -1529,7 +1529,7 @@ body.is-zen #cc-photo-btn:hover, body.is-zen #cc-photo-btn:focus-visible { opaci
 	border: 1px solid var(--cc-accent); border-radius: var(--cc-radius);
 	font-weight: 800; font-size: 12px; letter-spacing: 0.04em; text-transform: uppercase;
 	cursor: pointer; box-shadow: var(--cc-glow);
-	transition: transform 0.12s ease, box-shadow 0.12s ease, background 0.12s ease;
+	transition: transform var(--duration-fast) var(--ease-standard), box-shadow var(--duration-fast) var(--ease-standard), background var(--duration-fast) var(--ease-standard);
 }
 .cc-buy-btn:hover { transform: translateY(-1px); box-shadow: 0 0 22px rgba(255, 255, 255, 0.55); }
 .cc-buy-btn:active { transform: translateY(1px); }
@@ -1558,7 +1558,7 @@ body.is-zen #cc-photo-btn:hover, body.is-zen #cc-photo-btn:focus-visible { opaci
 	background: var(--cc-bg2); border: 1px solid var(--cc-edge);
 	border-radius: var(--cc-radius); padding: 10px 13px;
 	color: var(--cc-text); font-size: 14px; font-weight: 600; outline: none;
-	transition: border-color 0.12s ease;
+	transition: border-color var(--duration-fast) var(--ease-standard);
 }
 .cc-name-input::placeholder { color: var(--cc-dim); font-weight: 400; }
 .cc-name-input:focus { border-color: var(--cc-edge-hi); }
@@ -1566,7 +1566,7 @@ body.is-zen #cc-photo-btn:hover, body.is-zen #cc-photo-btn:focus-visible { opaci
 .cc-identity-chip {
 	flex: 0 0 auto; font-size: 12px; font-weight: 650; padding: 4px 10px; border-radius: 999px;
 	color: #9db8ff; text-decoration: none; border: 1px solid rgba(120, 150, 255, 0.35);
-	background: rgba(90, 130, 255, 0.1); transition: background 0.15s ease, color 0.15s ease;
+	background: rgba(90, 130, 255, 0.1); transition: background var(--duration-fast) var(--ease-standard), color var(--duration-fast) var(--ease-standard);
 }
 .cc-identity-chip:hover, .cc-identity-chip:focus-visible { background: rgba(90, 130, 255, 0.22); color: #c6d6ff; }
 
@@ -1578,7 +1578,7 @@ body.is-zen #cc-photo-btn:hover, body.is-zen #cc-photo-btn:focus-visible { opaci
 	border-radius: var(--cc-radius); box-shadow: var(--cc-shadow); backdrop-filter: blur(10px);
 	color: var(--cc-text); font-size: 13px; line-height: 1.4; text-align: center;
 	opacity: 0; pointer-events: none; z-index: 60;
-	transition: opacity 0.18s ease, transform 0.18s ease;
+	transition: opacity var(--duration-fast) var(--ease-standard), transform var(--duration-fast) var(--ease-standard);
 }
 #cc-toast.cc-on { opacity: 1; transform: translate(-50%, 0); }
 #cc-toast[data-kind="warn"] { border-color: rgba(216, 192, 138, 0.5); }
@@ -1634,11 +1634,11 @@ body.is-zen #cc-photo-btn:hover, body.is-zen #cc-photo-btn:focus-visible { opaci
     letter-spacing: 0.01em;
     cursor: pointer;
     transition:
-        background 0.15s,
-        border-color 0.15s,
-        color 0.15s,
-        transform 0.1s,
-        opacity 0.15s;
+        background var(--duration-fast),
+        border-color var(--duration-fast),
+        color var(--duration-fast),
+        transform var(--duration-instant),
+        opacity var(--duration-fast);
 }
 .cc-build-toggle:hover {
     background: rgba(22, 25, 33, 0.85);
@@ -1708,9 +1708,9 @@ body.is-zen #cc-photo-btn:hover, body.is-zen #cc-photo-btn:focus-visible { opaci
     cursor: pointer;
     overflow: hidden;
     transition:
-        border-color 0.12s,
-        transform 0.1s,
-        box-shadow 0.12s;
+        border-color var(--duration-fast),
+        transform var(--duration-instant),
+        box-shadow var(--duration-fast);
 }
 .cc-build-slot:hover {
     border-color: rgba(255, 255, 255, 0.4);
@@ -1758,9 +1758,9 @@ body.is-zen #cc-photo-btn:hover, body.is-zen #cc-photo-btn:focus-visible { opaci
     font-weight: 600;
     cursor: pointer;
     transition:
-        background 0.14s,
-        color 0.14s,
-        border-color 0.14s;
+        background var(--duration-fast),
+        color var(--duration-fast),
+        border-color var(--duration-fast);
 }
 .cc-build-mode:hover {
     border-color: rgba(255, 255, 255, 0.3);
@@ -1809,8 +1809,8 @@ body.is-zen #cc-photo-btn:hover, body.is-zen #cc-photo-btn:focus-visible { opaci
     border-radius: 999px;
     background: #66ff8c;
     transition:
-        transform 0.2s ease,
-        background 0.2s ease;
+        transform var(--duration-base) var(--ease-standard),
+        background var(--duration-base) var(--ease-standard);
 }
 .cc-build-budget-text {
     white-space: nowrap;
@@ -1865,7 +1865,7 @@ body.is-zen #cc-photo-btn:hover, body.is-zen #cc-photo-btn:focus-visible { opaci
     transform: scaleX(0);
     border-radius: 999px;
     background: rgba(255, 255, 255, 0.45);
-    transition: transform 0.2s ease, background 0.2s ease;
+    transition: transform var(--duration-base) var(--ease-standard), background var(--duration-base) var(--ease-standard);
 }
 .cc-build-mine-text {
     white-space: nowrap;
@@ -1908,7 +1908,7 @@ body.is-zen #cc-photo-btn:hover, body.is-zen #cc-photo-btn:focus-visible { opaci
     font-size: 11px;
     font-weight: 600;
     cursor: pointer;
-    transition: background 0.14s, border-color 0.14s, color 0.14s;
+    transition: background var(--duration-fast), border-color var(--duration-fast), color var(--duration-fast);
 }
 .cc-build-mod-btn:hover {
     background: rgba(255, 255, 255, 0.12);
@@ -1972,7 +1972,7 @@ body.is-zen #cc-photo-btn:hover, body.is-zen #cc-photo-btn:focus-visible { opaci
     min-width: 52px; padding: 6px 8px; border-radius: var(--cc-radius-sm);
     border: 1px solid transparent; background: rgba(255, 255, 255, 0.04);
     color: var(--cc-dim); cursor: pointer; font-weight: 600;
-    transition: background 0.12s, border-color 0.12s, color 0.12s, transform 0.08s;
+    transition: background var(--duration-fast), border-color var(--duration-fast), color var(--duration-fast), transform var(--duration-instant);
 }
 .cc-st-piece:hover { background: rgba(255, 255, 255, 0.1); color: var(--cc-text); transform: translateY(-2px); }
 .cc-st-piece:focus-visible { outline: 2px solid #66ff8c; outline-offset: 2px; }
@@ -1984,7 +1984,7 @@ body.is-zen #cc-photo-btn:hover, body.is-zen #cc-photo-btn:focus-visible { opaci
     border-radius: var(--cc-radius-sm); border: 1px solid var(--cc-edge);
     background: rgba(255, 255, 255, 0.04); color: var(--cc-text);
     font-weight: 600; cursor: pointer;
-    transition: background 0.12s, border-color 0.12s, color 0.12s, opacity 0.12s, transform 0.08s;
+    transition: background var(--duration-fast), border-color var(--duration-fast), color var(--duration-fast), opacity var(--duration-fast), transform var(--duration-instant);
 }
 .cc-st-rotate:hover, .cc-st-action:hover { background: rgba(255, 255, 255, 0.12); border-color: var(--cc-edge-hi); }
 .cc-st-rotate:active, .cc-st-action:active { transform: translateY(1px); }
@@ -2028,7 +2028,7 @@ body.is-zen #cc-photo-btn:hover, body.is-zen #cc-photo-btn:focus-visible { opaci
     border: 1px solid var(--cc-edge); background: var(--cc-panel); color: var(--cc-text);
     font-size: 15px; cursor: pointer;
     -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px);
-    transition: background 0.12s, border-color 0.12s, opacity 0.12s, transform 0.08s;
+    transition: background var(--duration-fast), border-color var(--duration-fast), opacity var(--duration-fast), transform var(--duration-instant);
 }
 .cc-prop-rotate:hover { background: rgba(255, 255, 255, 0.12); border-color: var(--cc-edge-hi); }
 .cc-prop-rotate:active { transform: translateY(1px) rotate(90deg); }
@@ -2042,7 +2042,7 @@ body.is-zen #cc-photo-btn:hover, body.is-zen #cc-photo-btn:focus-visible { opaci
     border: 1px solid var(--cc-edge); background: var(--cc-panel); color: var(--cc-text);
     font-size: 11.5px; font-weight: 600; white-space: nowrap; cursor: pointer;
     -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px);
-    transition: background 0.12s, border-color 0.12s, transform 0.08s;
+    transition: background var(--duration-fast), border-color var(--duration-fast), transform var(--duration-instant);
 }
 .cc-prop-upload:hover { background: rgba(255, 255, 255, 0.12); border-color: var(--cc-edge-hi); }
 .cc-prop-upload:active { transform: translateY(1px); }
@@ -2068,7 +2068,7 @@ body.is-zen #cc-photo-btn:hover, body.is-zen #cc-photo-btn:focus-visible { opaci
     min-width: 54px; padding: 6px 8px; border-radius: var(--cc-radius-sm);
     border: 1px solid transparent; background: rgba(255, 255, 255, 0.04);
     color: var(--cc-dim); cursor: pointer; font-weight: 600;
-    transition: background 0.12s, border-color 0.12s, color 0.12s, transform 0.08s;
+    transition: background var(--duration-fast), border-color var(--duration-fast), color var(--duration-fast), transform var(--duration-instant);
 }
 .cc-prop:hover { background: rgba(255, 255, 255, 0.1); color: var(--cc-text); transform: translateY(-2px); }
 .cc-prop:focus-visible { outline: 2px solid #66ff8c; outline-offset: 2px; }
@@ -2096,7 +2096,7 @@ body.is-zen #cc-photo-btn:hover, body.is-zen #cc-photo-btn:focus-visible { opaci
     border: 1px solid var(--cc-edge); background: rgba(255, 255, 255, 0.04);
     color: var(--cc-text); font: inherit; font-size: 12px;
     -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px);
-    transition: background 0.12s, border-color 0.12s;
+    transition: background var(--duration-fast), border-color var(--duration-fast);
 }
 .cc-prop-search::placeholder { color: var(--cc-dim); }
 .cc-prop-search:focus { outline: none; border-color: var(--cc-edge-hi); background: rgba(255, 255, 255, 0.08); }
@@ -2116,7 +2116,7 @@ body.is-zen #cc-photo-btn:hover, body.is-zen #cc-photo-btn:focus-visible { opaci
     border: 1px solid rgba(102, 255, 140, 0.45); background: var(--cc-panel); color: var(--cc-text);
     font-size: 11.5px; font-weight: 600; white-space: nowrap; cursor: pointer;
     -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px);
-    transition: background 0.12s, border-color 0.12s, transform 0.08s;
+    transition: background var(--duration-fast), border-color var(--duration-fast), transform var(--duration-instant);
 }
 .cc-prop-forge-btn:hover { background: rgba(102, 255, 140, 0.12); border-color: #66ff8c; }
 .cc-prop-forge-btn:active { transform: translateY(1px); }
@@ -2135,7 +2135,7 @@ body.is-zen #cc-photo-btn:hover, body.is-zen #cc-photo-btn:focus-visible { opaci
     border-radius: var(--cc-radius-sm); border: 1px solid var(--cc-edge);
     background: rgba(255, 255, 255, 0.04); color: var(--cc-text);
     font: inherit; font-size: 12px;
-    transition: background 0.12s, border-color 0.12s;
+    transition: background var(--duration-fast), border-color var(--duration-fast);
 }
 .cc-forge-prompt::placeholder { color: var(--cc-dim); }
 .cc-forge-prompt:focus { outline: none; border-color: var(--cc-edge-hi); background: rgba(255, 255, 255, 0.08); }
@@ -2145,7 +2145,7 @@ body.is-zen #cc-photo-btn:hover, body.is-zen #cc-photo-btn:focus-visible { opaci
     height: 30px; padding: 0 9px; border-radius: var(--cc-radius-sm);
     border: 1px solid var(--cc-edge); background: rgba(255, 255, 255, 0.04); color: var(--cc-dim);
     font-size: 11px; font-weight: 600; white-space: nowrap; cursor: pointer;
-    transition: background 0.12s, border-color 0.12s, color 0.12s;
+    transition: background var(--duration-fast), border-color var(--duration-fast), color var(--duration-fast);
 }
 .cc-forge-attach:hover { background: rgba(255, 255, 255, 0.1); color: var(--cc-text); border-color: var(--cc-edge-hi); }
 .cc-forge-attach:focus-within { outline: 2px solid #66ff8c; outline-offset: 2px; }
@@ -2156,7 +2156,7 @@ body.is-zen #cc-photo-btn:hover, body.is-zen #cc-photo-btn:focus-visible { opaci
     width: 24px; height: 30px; border-radius: var(--cc-radius-sm);
     border: 1px solid var(--cc-edge); background: transparent; color: var(--cc-dim);
     font-size: 11px; cursor: pointer;
-    transition: background 0.12s, color 0.12s, border-color 0.12s;
+    transition: background var(--duration-fast), color var(--duration-fast), border-color var(--duration-fast);
 }
 .cc-forge-attach-clear:hover { background: rgba(255, 138, 138, 0.12); color: #ff8a8a; border-color: #ff8a8a; }
 .cc-forge-attach-clear:focus-visible { outline: 2px solid #66ff8c; outline-offset: 2px; }
@@ -2165,7 +2165,7 @@ body.is-zen #cc-photo-btn:hover, body.is-zen #cc-photo-btn:focus-visible { opaci
     flex: 0 0 auto; height: 30px; padding: 0 14px; border-radius: var(--cc-radius-sm);
     border: 1px solid #66ff8c; background: rgba(102, 255, 140, 0.14); color: var(--cc-text);
     font: inherit; font-size: 12px; font-weight: 700; cursor: pointer;
-    transition: background 0.12s, transform 0.08s, opacity 0.12s;
+    transition: background var(--duration-fast), transform var(--duration-instant), opacity var(--duration-fast);
 }
 .cc-forge-go:hover { background: rgba(102, 255, 140, 0.24); }
 .cc-forge-go:active { transform: translateY(1px); }
@@ -2186,7 +2186,7 @@ body.is-zen #cc-photo-btn:hover, body.is-zen #cc-photo-btn:focus-visible { opaci
     position: fixed; inset: 0; z-index: 120; display: grid; place-items: center;
     padding: 20px; background: rgba(4, 4, 5, 0.62);
     -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px);
-    opacity: 0; transition: opacity 0.2s ease;
+    opacity: 0; transition: opacity var(--duration-base) var(--ease-standard);
 }
 #cc-share.cc-on, #cc-featured.cc-on { opacity: 1; }
 .cc-share-card, .cc-fb-card {
@@ -2194,7 +2194,7 @@ body.is-zen #cc-photo-btn:hover, body.is-zen #cc-photo-btn:focus-visible { opaci
     background: var(--cc-panel-solid); border: 1px solid var(--cc-edge);
     border-radius: var(--cc-radius); box-shadow: var(--cc-shadow);
     padding: 20px; color: var(--cc-text);
-    transform: translateY(8px) scale(0.99); transition: transform 0.2s ease;
+    transform: translateY(8px) scale(0.99); transition: transform var(--duration-base) var(--ease-standard);
 }
 #cc-share.cc-on .cc-share-card, #cc-featured.cc-on .cc-fb-card { transform: none; }
 .cc-fb-card { width: min(720px, 94vw); }
@@ -2203,7 +2203,7 @@ body.is-zen #cc-photo-btn:hover, body.is-zen #cc-photo-btn:focus-visible { opaci
     display: grid; place-items: center; border-radius: var(--cc-radius-sm);
     border: 1px solid var(--cc-edge); background: rgba(255, 255, 255, 0.04);
     color: var(--cc-dim); cursor: pointer; font-size: 14px; line-height: 1;
-    transition: color 0.12s, background 0.12s, border-color 0.12s;
+    transition: color var(--duration-fast), background var(--duration-fast), border-color var(--duration-fast);
 }
 .cc-share-close:hover, .cc-fb-close:hover { color: var(--cc-text); border-color: var(--cc-edge-hi); background: rgba(255, 255, 255, 0.1); }
 .cc-share-close:focus-visible, .cc-fb-close:focus-visible { outline: 2px solid #66ff8c; outline-offset: 2px; }
@@ -2226,7 +2226,7 @@ body.is-zen #cc-photo-btn:hover, body.is-zen #cc-photo-btn:focus-visible { opaci
     border-radius: var(--cc-radius-sm); border: 1px solid var(--cc-edge);
     background: rgba(255, 255, 255, 0.04); color: var(--cc-text); cursor: pointer;
     font-weight: 600; font-size: 13px; text-decoration: none;
-    transition: background 0.12s, border-color 0.12s, opacity 0.12s, transform 0.08s;
+    transition: background var(--duration-fast), border-color var(--duration-fast), opacity var(--duration-fast), transform var(--duration-instant);
 }
 .cc-share-btn:hover { background: rgba(255, 255, 255, 0.12); border-color: var(--cc-edge-hi); }
 .cc-share-btn:active { transform: translateY(1px); }
@@ -2244,7 +2244,7 @@ body.is-zen #cc-photo-btn:hover, body.is-zen #cc-photo-btn:focus-visible { opaci
 .cc-fb-item {
     display: flex; flex-direction: column; text-decoration: none; color: var(--cc-text);
     border: 1px solid var(--cc-edge); border-radius: var(--cc-radius); overflow: hidden;
-    background: var(--cc-bg2); transition: border-color 0.14s, transform 0.1s, box-shadow 0.14s;
+    background: var(--cc-bg2); transition: border-color var(--duration-fast), transform var(--duration-instant), box-shadow var(--duration-fast);
 }
 .cc-fb-item:hover { border-color: var(--cc-edge-hi); transform: translateY(-3px); box-shadow: var(--cc-shadow); }
 .cc-fb-item:focus-visible { outline: 2px solid #66ff8c; outline-offset: 2px; }
@@ -2256,7 +2256,7 @@ body.is-zen #cc-photo-btn:hover, body.is-zen #cc-photo-btn:focus-visible { opaci
 .cc-fb-byline { margin-top: 3px; font-size: 11.5px; color: var(--cc-dim); }
 .cc-fb-enter {
     padding: 0 12px 11px; font-size: 12px; font-weight: 600; color: var(--cc-dim);
-    transition: color 0.14s;
+    transition: color var(--duration-fast);
 }
 .cc-fb-item:hover .cc-fb-enter { color: var(--cc-text); }
 .cc-fb-skel {
@@ -2277,7 +2277,7 @@ body.is-zen #cc-photo-btn:hover, body.is-zen #cc-photo-btn:focus-visible { opaci
     margin-top: 14px; padding: 8px 16px; border-radius: var(--cc-radius-sm);
     border: 1px solid var(--cc-edge); background: rgba(255, 255, 255, 0.04);
     color: var(--cc-text); cursor: pointer; font-weight: 600;
-    transition: background 0.12s, border-color 0.12s;
+    transition: background var(--duration-fast), border-color var(--duration-fast);
 }
 .cc-fb-retry:hover { background: rgba(255, 255, 255, 0.12); border-color: var(--cc-edge-hi); }
 .cc-fb-retry:focus-visible { outline: 2px solid #66ff8c; outline-offset: 2px; }
@@ -2322,7 +2322,7 @@ body.is-zen #cc-photo-btn:hover, body.is-zen #cc-photo-btn:focus-visible { opaci
 	display: grid; place-items: center;
 	border: 1px solid var(--cc-edge); border-radius: 50%;
 	color: var(--cc-text);
-	transition: border-color 0.3s ease, box-shadow 0.3s ease;
+	transition: border-color var(--duration-base) var(--ease-standard), box-shadow var(--duration-base) var(--ease-standard);
 }
 .pg-icon svg { width: 22px; height: 22px; }
 /* Breathing pulse on connect state to draw eye to the CTA */
@@ -2348,7 +2348,7 @@ body.is-zen #cc-photo-btn:hover, body.is-zen #cc-photo-btn:focus-visible { opaci
 	border-radius: var(--cc-radius-sm); border: 1px solid var(--cc-edge);
 	background: transparent; color: var(--cc-text);
 	text-decoration: none; display: inline-flex; align-items: center; justify-content: center;
-	transition: transform 0.1s ease, background 0.16s ease, border-color 0.16s ease, box-shadow 0.16s ease;
+	transition: transform var(--duration-instant) var(--ease-standard), background var(--duration-fast) var(--ease-standard), border-color var(--duration-fast) var(--ease-standard), box-shadow var(--duration-fast) var(--ease-standard);
 }
 .pg-btn:hover { border-color: var(--cc-edge-hi); background: rgba(255, 255, 255, 0.04); }
 .pg-btn:active { transform: translateY(1px); }
@@ -2375,7 +2375,7 @@ body.is-zen #cc-photo-btn:hover, body.is-zen #cc-photo-btn:focus-visible { opaci
 	font-family: inherit; font-size: 11.5px; font-weight: 500; letter-spacing: 0.02em;
 	background: none; border: none; border-radius: var(--cc-radius-sm);
 	color: var(--cc-faint); text-decoration: underline; text-underline-offset: 3px;
-	transition: color 0.16s ease;
+	transition: color var(--duration-fast) var(--ease-standard);
 }
 .pg-link:hover { color: var(--cc-dim); }
 .pg-link:focus-visible { outline: none; box-shadow: 0 0 0 2px var(--cc-bg), 0 0 0 4px var(--cc-edge-hi); }
@@ -2387,7 +2387,7 @@ body.is-zen #cc-photo-btn:hover, body.is-zen #cc-photo-btn:focus-visible { opaci
 .pg-dot {
 	width: 5px; height: 5px; border-radius: 50%;
 	background: var(--cc-edge);
-	transition: background 0.25s ease, transform 0.25s ease;
+	transition: background var(--duration-base) var(--ease-standard), transform var(--duration-base) var(--ease-standard);
 }
 .pg-dot-done { background: rgba(255, 255, 255, 0.4); }
 .pg-dot-active {
@@ -2457,7 +2457,7 @@ body.is-zen #cc-photo-btn:hover, body.is-zen #cc-photo-btn:focus-visible { opaci
 	border: 1px solid var(--cc-edge); border-radius: var(--cc-radius);
 	font-weight: 700; font-size: 12px; letter-spacing: 0.04em; text-transform: uppercase;
 	cursor: pointer; white-space: nowrap;
-	transition: transform 0.12s ease, border-color 0.12s ease, background 0.12s ease;
+	transition: transform var(--duration-fast) var(--ease-standard), border-color var(--duration-fast) var(--ease-standard), background var(--duration-fast) var(--ease-standard);
 }
 .cc-shop-btn:hover { border-color: var(--cc-edge-hi); background: rgba(255, 255, 255, 0.08); transform: translateY(-1px); }
 .cc-shop-btn:active { transform: translateY(1px); }
@@ -2473,7 +2473,7 @@ body.is-zen #cc-photo-btn:hover, body.is-zen #cc-photo-btn:focus-visible { opaci
     border: 1px solid var(--cc-edge); border-radius: var(--cc-radius);
     font-weight: 700; font-size: 12px; letter-spacing: 0.04em; text-transform: uppercase;
     cursor: pointer; white-space: nowrap; appearance: none; -webkit-appearance: none; font-family: inherit;
-    transition: transform 0.12s ease, border-color 0.12s ease, background 0.12s ease;
+    transition: transform var(--duration-fast) var(--ease-standard), border-color var(--duration-fast) var(--ease-standard), background var(--duration-fast) var(--ease-standard);
 }
 .cc-wardrobe-btn:hover { border-color: var(--cc-edge-hi); background: rgba(255, 255, 255, 0.08); transform: translateY(-1px); }
 .cc-wardrobe-btn:active { transform: translateY(1px); }
@@ -2491,7 +2491,7 @@ body.is-zen #cc-photo-btn:hover, body.is-zen #cc-photo-btn:focus-visible { opaci
 	border: 1px solid var(--cc-edge); border-radius: var(--cc-radius);
 	font-weight: 700; font-size: 12px; letter-spacing: 0.04em; text-transform: uppercase;
 	cursor: pointer; white-space: nowrap; appearance: none; -webkit-appearance: none; font-family: inherit;
-	transition: transform 0.12s ease, border-color 0.12s ease, background 0.12s ease;
+	transition: transform var(--duration-fast) var(--ease-standard), border-color var(--duration-fast) var(--ease-standard), background var(--duration-fast) var(--ease-standard);
 }
 .cc-avatarbtn:hover { border-color: var(--cc-edge-hi); background: rgba(255, 255, 255, 0.08); transform: translateY(-1px); }
 .cc-avatarbtn:active { transform: translateY(1px); }
@@ -2508,7 +2508,7 @@ body.is-zen #cc-photo-btn:hover, body.is-zen #cc-photo-btn:focus-visible { opaci
 	background: rgba(255, 255, 255, 0.04); color: var(--cc-text);
 	border: 1px solid var(--cc-edge); border-radius: var(--cc-radius);
 	font-weight: 700; font-size: 12px; letter-spacing: 0.04em; text-transform: uppercase;
-	cursor: pointer; transition: border-color 0.14s ease, background 0.14s ease, transform 0.1s ease;
+	cursor: pointer; transition: border-color var(--duration-fast) var(--ease-standard), background var(--duration-fast) var(--ease-standard), transform var(--duration-instant) var(--ease-standard);
 }
 .cc-jobs-btn:hover { border-color: var(--cc-edge-hi); background: rgba(255, 255, 255, 0.08); transform: translateY(-1px); }
 .cc-jobs-btn:active { transform: translateY(1px); }
@@ -2527,7 +2527,7 @@ body.is-zen #cc-photo-btn:hover, body.is-zen #cc-photo-btn:focus-visible { opaci
 	border: 1px solid var(--cc-edge); border-radius: var(--cc-radius);
 	font-weight: 700; font-size: 12px; letter-spacing: 0.04em; text-transform: uppercase;
 	cursor: pointer; white-space: nowrap; appearance: none; -webkit-appearance: none; font-family: inherit;
-	transition: border-color 0.14s ease, background 0.14s ease, transform 0.1s ease;
+	transition: border-color var(--duration-fast) var(--ease-standard), background var(--duration-fast) var(--ease-standard), transform var(--duration-instant) var(--ease-standard);
 }
 .cc-friends-btn:hover { border-color: var(--cc-edge-hi); background: rgba(255, 255, 255, 0.08); transform: translateY(-1px); }
 .cc-friends-btn:active { transform: translateY(1px); }
@@ -2560,7 +2560,7 @@ body.is-zen #cc-photo-btn:hover, body.is-zen #cc-photo-btn:focus-visible { opaci
 	box-shadow: -18px 0 48px rgba(0, 0, 0, 0.45);
 	pointer-events: auto;
 	transform: translateX(100%);
-	transition: transform 0.22s cubic-bezier(0.22, 1, 0.36, 1);
+	transition: transform var(--duration-base) cubic-bezier(0.22, 1, 0.36, 1);
 	will-change: transform;
 }
 .cc-friends-panel.is-open { transform: translateX(0); }
@@ -2584,7 +2584,7 @@ body.is-zen #cc-photo-btn:hover, body.is-zen #cc-photo-btn:focus-visible { opaci
 	font-size: 11px; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase;
 	color: var(--cc-text); text-decoration: none;
 	border: 1px solid var(--cc-edge);
-	transition: border-color 0.14s ease, background 0.14s ease;
+	transition: border-color var(--duration-fast) var(--ease-standard), background var(--duration-fast) var(--ease-standard);
 }
 .cc-friends-panel-crew:hover { border-color: var(--cc-edge-hi); background: rgba(255, 255, 255, 0.08); }
 .cc-friends-panel-crew:focus-visible { outline: 2px solid var(--focus-ring-color); outline-offset: 2px; }
@@ -2594,7 +2594,7 @@ body.is-zen #cc-photo-btn:hover, body.is-zen #cc-photo-btn:focus-visible { opaci
 	background: transparent; color: var(--cc-text);
 	border: 1px solid var(--cc-edge); border-radius: 8px;
 	font-size: 15px; line-height: 1; cursor: pointer;
-	transition: border-color 0.14s ease, background 0.14s ease;
+	transition: border-color var(--duration-fast) var(--ease-standard), background var(--duration-fast) var(--ease-standard);
 }
 .cc-friends-panel-close:hover { border-color: var(--cc-edge-hi); background: rgba(255, 255, 255, 0.08); }
 .cc-friends-panel-close:focus-visible { outline: 2px solid var(--focus-ring-color); outline-offset: 2px; }
@@ -2638,7 +2638,7 @@ body.is-zen #cc-photo-btn:hover, body.is-zen #cc-photo-btn:focus-visible { opaci
 	margin-top: 4px; min-height: 40px; padding: 0 16px;
 	background: transparent; color: var(--cc-text); font: inherit; font-size: 12px; font-weight: 700;
 	border: 1px solid var(--cc-edge); border-radius: var(--cc-radius-sm); cursor: pointer;
-	transition: border-color 0.14s ease, background 0.14s ease;
+	transition: border-color var(--duration-fast) var(--ease-standard), background var(--duration-fast) var(--ease-standard);
 }
 .cc-friends-loaderr-retry:hover { border-color: var(--cc-edge-hi); background: rgba(255, 255, 255, 0.08); }
 .cc-friends-loaderr-retry:active { background: rgba(255, 255, 255, 0.14); }
@@ -2687,7 +2687,7 @@ body.is-zen #cc-photo-btn:hover, body.is-zen #cc-photo-btn:focus-visible { opaci
 	padding: 8px 6px; border-radius: var(--cc-radius);
 	background: rgba(255, 255, 255, 0.03); color: var(--cc-text);
 	border: 1px solid var(--cc-edge); cursor: pointer;
-	transition: transform 0.12s ease, border-color 0.12s ease, background 0.12s ease;
+	transition: transform var(--duration-fast) var(--ease-standard), border-color var(--duration-fast) var(--ease-standard), background var(--duration-fast) var(--ease-standard);
 }
 .cc-avsw-chip:hover { border-color: var(--cc-edge-hi); background: rgba(255, 255, 255, 0.07); transform: translateY(-1px); }
 .cc-avsw-chip:active { transform: translateY(1px); }
@@ -2742,7 +2742,7 @@ body.is-zen #cc-photo-btn:hover, body.is-zen #cc-photo-btn:focus-visible { opaci
 	border: 1px solid var(--cc-edge);
 	font-weight: 700; font-size: 12px; letter-spacing: 0.03em;
 	cursor: pointer; white-space: nowrap;
-	transition: transform 0.12s ease, border-color 0.12s ease, background 0.12s ease;
+	transition: transform var(--duration-fast) var(--ease-standard), border-color var(--duration-fast) var(--ease-standard), background var(--duration-fast) var(--ease-standard);
 }
 .cc-avsw-btn:hover { border-color: var(--cc-edge-hi); background: rgba(255, 255, 255, 0.08); transform: translateY(-1px); }
 .cc-avsw-btn:active { transform: translateY(1px); }
@@ -2761,7 +2761,7 @@ body.is-zen #cc-photo-btn:hover, body.is-zen #cc-photo-btn:focus-visible { opaci
 	border: 1px solid var(--cc-edge); border-radius: var(--cc-radius);
 	font-weight: 700; font-size: 12px; letter-spacing: 0.04em; text-transform: uppercase;
 	cursor: pointer; white-space: nowrap;
-	transition: transform 0.12s ease, border-color 0.12s ease, background 0.12s ease;
+	transition: transform var(--duration-fast) var(--ease-standard), border-color var(--duration-fast) var(--ease-standard), background var(--duration-fast) var(--ease-standard);
 }
 .cc-gate-cfg-btn:hover { border-color: var(--cc-edge-hi); background: rgba(255, 255, 255, 0.08); transform: translateY(-1px); }
 .cc-gate-cfg-btn:active { transform: translateY(1px); }
@@ -2785,7 +2785,7 @@ body.is-zen #cc-photo-btn:hover, body.is-zen #cc-photo-btn:focus-visible { opaci
 	position: fixed; inset: 0; z-index: 92;
 	display: grid; place-items: center; padding: 20px;
 	background: rgba(4, 4, 6, 0.62); backdrop-filter: blur(6px);
-	opacity: 0; transition: opacity 0.18s ease;
+	opacity: 0; transition: opacity var(--duration-fast) var(--ease-standard);
 	font: 14px/1.4 system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
 }
 .cc-shop.cc-shop-in { opacity: 1; }
@@ -2797,7 +2797,7 @@ body.is-zen #cc-photo-btn:hover, body.is-zen #cc-photo-btn:focus-visible { opaci
 	border: 1px solid var(--cc-edge); border-radius: var(--cc-radius);
 	box-shadow: var(--cc-shadow);
 	transform: translateY(10px) scale(0.99); opacity: 0;
-	transition: transform 0.2s cubic-bezier(0.16, 0.84, 0.34, 1), opacity 0.2s ease;
+	transition: transform var(--duration-base) cubic-bezier(0.16, 0.84, 0.34, 1), opacity var(--duration-base) var(--ease-standard);
 }
 .cc-shop-in .cc-shop-panel { transform: none; opacity: 1; }
 
@@ -2820,7 +2820,7 @@ body.is-zen #cc-photo-btn:hover, body.is-zen #cc-photo-btn:focus-visible { opaci
 	border: 1px solid var(--cc-edge); border-radius: 999px;
 	font-size: 11px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase;
 	cursor: pointer; white-space: nowrap;
-	transition: color 0.12s ease, border-color 0.12s ease, background 0.12s ease;
+	transition: color var(--duration-fast) var(--ease-standard), border-color var(--duration-fast) var(--ease-standard), background var(--duration-fast) var(--ease-standard);
 }
 .cc-shop-flex:hover { color: var(--cc-text); border-color: var(--cc-edge-hi); background: rgba(255, 255, 255, 0.07); }
 .cc-shop-flex:active { background: rgba(255, 255, 255, 0.02); }
@@ -2829,7 +2829,7 @@ body.is-zen #cc-photo-btn:hover, body.is-zen #cc-photo-btn:focus-visible { opaci
 	flex: none; width: 32px; height: 32px; display: grid; place-items: center;
 	background: none; border: 1px solid var(--cc-edge); border-radius: var(--cc-radius-sm);
 	color: var(--cc-dim); font-size: 14px; cursor: pointer;
-	transition: color 0.12s ease, border-color 0.12s ease, background 0.12s ease;
+	transition: color var(--duration-fast) var(--ease-standard), border-color var(--duration-fast) var(--ease-standard), background var(--duration-fast) var(--ease-standard);
 }
 .cc-shop-close:hover { color: var(--cc-text); border-color: var(--cc-edge-hi); background: rgba(255, 255, 255, 0.05); }
 .cc-shop-close:focus-visible { outline: 2px solid var(--focus-ring-color); outline-offset: 2px; }
@@ -2842,7 +2842,7 @@ body.is-zen #cc-photo-btn:hover, body.is-zen #cc-photo-btn:focus-visible { opaci
 	padding: 6px 13px; background: rgba(255, 255, 255, 0.03);
 	border: 1px solid var(--cc-edge); border-radius: 999px;
 	color: var(--cc-dim); font-size: 12px; font-weight: 600; letter-spacing: 0.02em;
-	cursor: pointer; transition: color 0.12s ease, border-color 0.12s ease, background 0.12s ease;
+	cursor: pointer; transition: color var(--duration-fast) var(--ease-standard), border-color var(--duration-fast) var(--ease-standard), background var(--duration-fast) var(--ease-standard);
 }
 .cc-shop-chip:hover { color: var(--cc-text); border-color: var(--cc-edge-hi); }
 .cc-shop-chip:focus-visible { outline: 2px solid var(--focus-ring-color); outline-offset: 2px; }
@@ -2874,7 +2874,7 @@ body.is-zen #cc-photo-btn:hover, body.is-zen #cc-photo-btn:focus-visible { opaci
 	padding: 0; background: var(--cc-bg2);
 	border: 1px solid var(--cc-edge-soft); border-radius: var(--cc-radius);
 	color: var(--cc-text); overflow: hidden;
-	transition: transform 0.12s ease, border-color 0.12s ease, box-shadow 0.12s ease;
+	transition: transform var(--duration-fast) var(--ease-standard), border-color var(--duration-fast) var(--ease-standard), box-shadow var(--duration-fast) var(--ease-standard);
 }
 .cc-shop-card:hover { transform: translateY(-2px); border-color: var(--cc-edge-hi); }
 .cc-shop-card.cc-active {
@@ -2918,7 +2918,7 @@ body.is-zen #cc-photo-btn:hover, body.is-zen #cc-photo-btn:focus-visible { opaci
 	padding: 2px 8px; border-radius: 999px;
 	font-size: 10px; font-weight: 700; letter-spacing: 0.04em;
 	color: var(--cc-ink); background: rgba(255, 255, 255, 0.9);
-	opacity: 0; transform: translateY(3px); transition: opacity 0.12s ease, transform 0.12s ease;
+	opacity: 0; transform: translateY(3px); transition: opacity var(--duration-fast) var(--ease-standard), transform var(--duration-fast) var(--ease-standard);
 }
 .cc-shop-card:hover .cc-shop-preview-tag { opacity: 1; transform: none; }
 .cc-shop-card.cc-active .cc-shop-preview-tag { opacity: 1; transform: none; background: var(--cc-accent); }
@@ -2936,7 +2936,7 @@ body.is-zen #cc-photo-btn:hover, body.is-zen #cc-photo-btn:focus-visible { opaci
 	width: 100%; padding: 8px 10px; border-radius: var(--cc-radius);
 	border: 1px solid var(--cc-edge-hi); background: rgba(255, 255, 255, 0.92);
 	color: var(--cc-ink); font-size: 12px; font-weight: 800; letter-spacing: 0.02em;
-	cursor: pointer; transition: transform 0.12s ease, background 0.12s ease, opacity 0.12s ease;
+	cursor: pointer; transition: transform var(--duration-fast) var(--ease-standard), background var(--duration-fast) var(--ease-standard), opacity var(--duration-fast) var(--ease-standard);
 }
 .cc-shop-buy:hover { transform: translateY(-1px); background: #fff; }
 .cc-shop-buy:active { transform: translateY(1px); }
@@ -2983,7 +2983,7 @@ span.cc-shop-action.cc-owned { align-self: flex-start; }
 	border: 1px solid var(--cc-accent); border-radius: var(--cc-radius-sm);
 	font-size: 12px; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase;
 	cursor: pointer; box-shadow: var(--cc-glow);
-	transition: transform 0.12s ease, opacity 0.12s ease;
+	transition: transform var(--duration-fast) var(--ease-standard), opacity var(--duration-fast) var(--ease-standard);
 }
 .cc-shop-retry:hover { transform: translateY(-1px); }
 .cc-shop-retry:active { transform: translateY(1px); }
@@ -3014,7 +3014,7 @@ span.cc-shop-action.cc-owned { align-self: flex-start; }
 	position: fixed; inset: 0; z-index: 120; display: grid; place-items: center;
 	padding: 20px; background: rgba(4, 4, 5, 0.66);
 	backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
-	opacity: 0; transition: opacity 0.18s ease;
+	opacity: 0; transition: opacity var(--duration-fast) var(--ease-standard);
 }
 .npc-svc-overlay.is-in { opacity: 1; }
 .npc-svc-card {
@@ -3022,7 +3022,7 @@ span.cc-shop-action.cc-owned { align-self: flex-start; }
 	background: var(--cc-panel-solid); color: var(--cc-text);
 	border: 1px solid var(--cc-edge); border-radius: var(--cc-radius);
 	box-shadow: var(--cc-shadow); padding: 18px 18px 16px;
-	transform: translateY(8px) scale(0.985); transition: transform 0.18s ease;
+	transform: translateY(8px) scale(0.985); transition: transform var(--duration-fast) var(--ease-standard);
 }
 .npc-svc-overlay.is-in .npc-svc-card { transform: translateY(0) scale(1); }
 .npc-svc-card::-webkit-scrollbar { width: 8px; }
@@ -3036,7 +3036,7 @@ span.cc-shop-action.cc-owned { align-self: flex-start; }
 .npc-svc-close {
 	flex-shrink: 0; width: 28px; height: 28px; line-height: 1; cursor: pointer;
 	background: transparent; border: 1px solid var(--cc-edge-soft); border-radius: var(--cc-radius-sm);
-	color: var(--cc-dim); font: inherit; font-size: 13px; transition: all 0.14s ease;
+	color: var(--cc-dim); font: inherit; font-size: 13px; transition: all var(--duration-fast) var(--ease-standard);
 }
 .npc-svc-close:hover { color: var(--cc-text); border-color: var(--cc-edge-hi); }
 .npc-svc-close:focus-visible { outline: 2px solid var(--cc-edge-hi); outline-offset: 1px; }
@@ -3050,7 +3050,7 @@ span.cc-shop-action.cc-owned { align-self: flex-start; }
 .npc-svc-input {
 	width: 100%; background: var(--cc-bg2); color: var(--cc-text);
 	border: 1px solid var(--cc-edge); border-radius: var(--cc-radius-sm);
-	padding: 9px 11px; font: inherit; font-size: 14px; transition: border-color 0.14s ease, box-shadow 0.14s ease;
+	padding: 9px 11px; font: inherit; font-size: 14px; transition: border-color var(--duration-fast) var(--ease-standard), box-shadow var(--duration-fast) var(--ease-standard);
 }
 textarea.npc-svc-input { resize: vertical; min-height: 64px; line-height: 1.45; }
 select.npc-svc-input { cursor: pointer; appearance: none; -webkit-appearance: none;
@@ -3065,7 +3065,7 @@ select.npc-svc-input { cursor: pointer; appearance: none; -webkit-appearance: no
 .npc-svc-actions { display: flex; gap: 8px; justify-content: flex-end; margin-top: 5px; }
 .npc-svc-pay, .npc-svc-cancel, .npc-svc-btn {
 	font: inherit; font-size: 13.5px; cursor: pointer; border-radius: var(--cc-radius-sm);
-	padding: 9px 16px; transition: filter 0.14s ease, background 0.14s ease, border-color 0.14s ease, transform 0.06s ease;
+	padding: 9px 16px; transition: filter var(--duration-fast) var(--ease-standard), background var(--duration-fast) var(--ease-standard), border-color var(--duration-fast) var(--ease-standard), transform var(--duration-instant) var(--ease-standard);
 }
 .npc-svc-pay {
 	background: var(--cc-accent); color: var(--cc-ink); border: 1px solid var(--cc-accent); font-weight: 600;
@@ -3115,7 +3115,7 @@ select.npc-svc-input { cursor: pointer; appearance: none; -webkit-appearance: no
 .npc-svc-address, .npc-svc-secret { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; padding: 10px; background: var(--cc-bg2); border: 1px solid var(--cc-edge-soft); border-radius: var(--cc-radius-sm); }
 .npc-svc-secret { flex-direction: column; align-items: stretch; }
 .npc-svc-address code, .npc-svc-secret code { font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size: 12.5px; word-break: break-all; flex: 1; min-width: 0; }
-.npc-svc-copy { flex-shrink: 0; font: inherit; font-size: 12px; cursor: pointer; padding: 5px 10px; background: transparent; color: var(--cc-dim); border: 1px solid var(--cc-edge); border-radius: var(--cc-radius-sm); transition: all 0.14s ease; }
+.npc-svc-copy { flex-shrink: 0; font: inherit; font-size: 12px; cursor: pointer; padding: 5px 10px; background: transparent; color: var(--cc-dim); border: 1px solid var(--cc-edge); border-radius: var(--cc-radius-sm); transition: all var(--duration-fast) var(--ease-standard); }
 .npc-svc-copy:hover { color: var(--cc-text); border-color: var(--cc-edge-hi); }
 .npc-svc-btn { display: inline-block; text-align: center; text-decoration: none; background: transparent; color: var(--cc-text); border: 1px solid var(--cc-edge-hi); align-self: flex-start; }
 .npc-svc-btn:hover { background: rgba(255, 255, 255, 0.06); }
@@ -3151,7 +3151,7 @@ select.npc-svc-input { cursor: pointer; appearance: none; -webkit-appearance: no
 	position: fixed; inset: 0; z-index: 120; display: grid; place-items: end center;
 	padding: 20px; background: rgba(4, 4, 5, 0.5);
 	backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
-	opacity: 0; transition: opacity 0.18s ease;
+	opacity: 0; transition: opacity var(--duration-fast) var(--ease-standard);
 }
 .npc-chat-overlay.is-in { opacity: 1; }
 .npc-chat-card {
@@ -3159,7 +3159,7 @@ select.npc-svc-input { cursor: pointer; appearance: none; -webkit-appearance: no
 	background: var(--cc-panel-solid); color: var(--cc-text);
 	border: 1px solid var(--cc-edge); border-radius: var(--cc-radius);
 	box-shadow: var(--cc-shadow);
-	transform: translateY(12px) scale(0.99); transition: transform 0.18s ease;
+	transform: translateY(12px) scale(0.99); transition: transform var(--duration-fast) var(--ease-standard);
 }
 .npc-chat-overlay.is-in .npc-chat-card { transform: translateY(0) scale(1); }
 
@@ -3176,14 +3176,14 @@ select.npc-svc-input { cursor: pointer; appearance: none; -webkit-appearance: no
 	background: var(--cc-bg2); color: var(--cc-dim);
 	border: 1px solid var(--cc-edge); border-radius: var(--cc-radius-sm);
 	padding: 5px 8px; appearance: none; -webkit-appearance: none;
-	transition: border-color 0.14s ease, color 0.14s ease;
+	transition: border-color var(--duration-fast) var(--ease-standard), color var(--duration-fast) var(--ease-standard);
 }
 .npc-chat-model:hover { color: var(--cc-text); border-color: var(--cc-edge-hi); }
 .npc-chat-model:focus-visible { outline: 2px solid var(--cc-edge-hi); outline-offset: 1px; }
 .npc-chat-close {
 	flex-shrink: 0; width: 28px; height: 28px; line-height: 1; cursor: pointer;
 	background: transparent; border: 1px solid var(--cc-edge-soft); border-radius: var(--cc-radius-sm);
-	color: var(--cc-dim); font: inherit; font-size: 13px; transition: all 0.14s ease;
+	color: var(--cc-dim); font: inherit; font-size: 13px; transition: all var(--duration-fast) var(--ease-standard);
 }
 .npc-chat-close:hover { color: var(--cc-text); border-color: var(--cc-edge-hi); }
 .npc-chat-close:focus-visible { outline: 2px solid var(--cc-edge-hi); outline-offset: 1px; }
@@ -3194,7 +3194,7 @@ select.npc-svc-input { cursor: pointer; appearance: none; -webkit-appearance: no
 	font: inherit; font-size: 13px; text-align: left;
 	background: rgba(255, 255, 255, 0.04); color: var(--cc-text);
 	border: 1px solid var(--cc-edge); border-radius: var(--cc-radius-sm);
-	padding: 9px 12px; transition: border-color 0.14s ease, background 0.14s ease;
+	padding: 9px 12px; transition: border-color var(--duration-fast) var(--ease-standard), background var(--duration-fast) var(--ease-standard);
 }
 .npc-chat-offer-btn:hover { background: rgba(255, 255, 255, 0.07); border-color: var(--cc-edge-hi); }
 .npc-chat-offer-btn:focus-visible { outline: 2px solid var(--cc-edge-hi); outline-offset: 1px; }
@@ -3241,7 +3241,7 @@ select.npc-svc-input { cursor: pointer; appearance: none; -webkit-appearance: no
 	flex: 1; resize: none; max-height: 120px; font: inherit; font-size: 14px; line-height: 1.45;
 	background: var(--cc-bg2); color: var(--cc-text);
 	border: 1px solid var(--cc-edge); border-radius: var(--cc-radius-sm);
-	padding: 9px 11px; transition: border-color 0.14s ease, box-shadow 0.14s ease;
+	padding: 9px 11px; transition: border-color var(--duration-fast) var(--ease-standard), box-shadow var(--duration-fast) var(--ease-standard);
 }
 .npc-chat-input::placeholder { color: var(--cc-faint); }
 .npc-chat-input:focus { outline: none; border-color: var(--cc-edge-hi); box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.08); }
@@ -3250,7 +3250,7 @@ select.npc-svc-input { cursor: pointer; appearance: none; -webkit-appearance: no
 	flex-shrink: 0; font: inherit; font-size: 13.5px; font-weight: 600; cursor: pointer;
 	background: var(--cc-accent); color: var(--cc-ink); border: 1px solid var(--cc-accent);
 	border-radius: var(--cc-radius-sm); padding: 9px 16px;
-	transition: filter 0.14s ease, transform 0.06s ease;
+	transition: filter var(--duration-fast) var(--ease-standard), transform var(--duration-instant) var(--ease-standard);
 }
 .npc-chat-send:hover:not(:disabled) { filter: brightness(0.9); }
 .npc-chat-send:active:not(:disabled) { transform: translateY(1px); }
@@ -3276,7 +3276,7 @@ select.npc-svc-input { cursor: pointer; appearance: none; -webkit-appearance: no
 	border-radius: var(--cc-radius);
 	color: var(--cc-text); font-size: 13px; font-weight: 600;
 	cursor: pointer; white-space: nowrap;
-	transition: background 0.15s, border-color 0.15s, box-shadow 0.2s, transform 0.08s;
+	transition: background var(--duration-fast), border-color var(--duration-fast), box-shadow var(--duration-base), transform var(--duration-instant);
 	order: 5; /* sits after the voice button in the flex HUD */
 }
 #cc-hud .cc-dance-btn:hover {
@@ -3322,7 +3322,7 @@ select.npc-svc-input { cursor: pointer; appearance: none; -webkit-appearance: no
 #cc-emote-wheel {
 	position: fixed; inset: 0; z-index: 50;
 	display: grid; place-items: center;
-	opacity: 0; transition: opacity 0.2s ease; pointer-events: none;
+	opacity: 0; transition: opacity var(--duration-base) var(--ease-standard); pointer-events: none;
 }
 #cc-emote-wheel.cc-on { opacity: 1; pointer-events: auto; }
 
@@ -3337,7 +3337,7 @@ select.npc-svc-input { cursor: pointer; appearance: none; -webkit-appearance: no
 .cc-ew-ring {
 	position: relative; z-index: 1;
 	width: 360px; height: 360px;
-	transform: scale(0.88); transition: transform 0.22s cubic-bezier(0.2, 0.7, 0.2, 1);
+	transform: scale(0.88); transition: transform var(--duration-base) cubic-bezier(0.2, 0.7, 0.2, 1);
 }
 #cc-emote-wheel.cc-on .cc-ew-ring { transform: scale(1); }
 @media (prefers-reduced-motion: reduce) {
@@ -3351,7 +3351,7 @@ select.npc-svc-input { cursor: pointer; appearance: none; -webkit-appearance: no
 }
 .cc-ew-sector {
 	fill: rgba(255, 255, 255, 0.05); stroke: rgba(255, 255, 255, 0.12);
-	stroke-width: 1; transition: fill 0.14s ease, stroke 0.14s ease;
+	stroke-width: 1; transition: fill var(--duration-fast) var(--ease-standard), stroke var(--duration-fast) var(--ease-standard);
 }
 .cc-ew-sector-active {
 	fill: rgba(255, 255, 255, 0.14); stroke: rgba(255, 255, 255, 0.55);
@@ -3364,7 +3364,7 @@ select.npc-svc-input { cursor: pointer; appearance: none; -webkit-appearance: no
 	display: flex; flex-direction: column; align-items: center; gap: 4px;
 	background: rgba(255, 255, 255, 0.06); border: 1px solid var(--cc-edge);
 	border-radius: var(--cc-radius); padding: 8px 12px; cursor: pointer; font: inherit;
-	color: var(--cc-dim); transition: background 0.12s ease, border-color 0.12s ease, color 0.12s ease, transform 0.12s ease;
+	color: var(--cc-dim); transition: background var(--duration-fast) var(--ease-standard), border-color var(--duration-fast) var(--ease-standard), color var(--duration-fast) var(--ease-standard), transform var(--duration-fast) var(--ease-standard);
 	min-width: 60px;
 	/* Keep the button above the SVG arcs */
 	z-index: 2;
@@ -3421,7 +3421,7 @@ select.npc-svc-input { cursor: pointer; appearance: none; -webkit-appearance: no
 	width: 62px; padding: 7px 4px 6px; cursor: pointer; font: inherit;
 	background: rgba(255, 255, 255, 0.04); border: 1px solid transparent;
 	border-radius: var(--cc-radius-sm); color: var(--cc-dim);
-	transition: background 0.12s ease, border-color 0.12s ease, color 0.12s ease, transform 0.08s ease;
+	transition: background var(--duration-fast) var(--ease-standard), border-color var(--duration-fast) var(--ease-standard), color var(--duration-fast) var(--ease-standard), transform var(--duration-instant) var(--ease-standard);
 	text-align: center;
 }
 .cc-ew-seg:hover { background: rgba(255, 255, 255, 0.1); border-color: var(--cc-edge); color: var(--cc-text); transform: translateY(-2px); }
@@ -3440,7 +3440,7 @@ select.npc-svc-input { cursor: pointer; appearance: none; -webkit-appearance: no
 	width: 28px; height: 28px; border-radius: var(--cc-radius-sm); cursor: pointer;
 	background: var(--cc-bg2); border: 1px solid var(--cc-edge); color: var(--cc-dim);
 	font-size: 16px; line-height: 1;
-	transition: border-color 0.12s ease, color 0.12s ease, background 0.12s ease;
+	transition: border-color var(--duration-fast) var(--ease-standard), color var(--duration-fast) var(--ease-standard), background var(--duration-fast) var(--ease-standard);
 }
 .cc-ew-close:hover { color: var(--cc-text); border-color: var(--cc-edge-hi); background: var(--cc-bg3); }
 .cc-ew-close:focus-visible { outline: none; border-color: #fff; box-shadow: 0 0 0 1px #fff; }
@@ -3469,7 +3469,7 @@ select.npc-svc-input { cursor: pointer; appearance: none; -webkit-appearance: no
 	padding: 2px 7px; border-radius: 10px;
 	box-shadow: 0 0 8px rgba(255, 50, 50, 0.6);
 	white-space: nowrap;
-	transition: opacity 0.2s ease;
+	transition: opacity var(--duration-base) var(--ease-standard);
 }
 /* Local player variant, slightly larger so they see it on themselves */
 .cc-it-marker--local {
@@ -3515,7 +3515,7 @@ select.npc-svc-input { cursor: pointer; appearance: none; -webkit-appearance: no
 	padding: 12px 32px; border-radius: 14px;
 	box-shadow: 0 0 40px rgba(255, 40, 40, 0.5);
 	opacity: 0; transform: translateX(-50%) scale(0.8);
-	transition: opacity 0.18s ease, transform 0.18s ease;
+	transition: opacity var(--duration-fast) var(--ease-standard), transform var(--duration-fast) var(--ease-standard);
 }
 #cc-tag-alert.cc-tag-alert--show {
 	opacity: 1; transform: translateX(-50%) scale(1);
@@ -3572,7 +3572,7 @@ select.npc-svc-input { cursor: pointer; appearance: none; -webkit-appearance: no
 	display: grid; grid-template-columns: 16px 1fr auto; align-items: center; gap: 8px;
 	font-size: 11px; color: var(--cc-dim);
 	padding: 2px 5px; border-radius: var(--cc-radius-sm);
-	transition: background 0.18s ease, color 0.18s ease;
+	transition: background var(--duration-fast) var(--ease-standard), color var(--duration-fast) var(--ease-standard);
 }
 .cc-king-rank { color: var(--cc-faint); font-variant-numeric: tabular-nums; text-align: right; }
 .cc-king-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; text-align: left; }
@@ -3610,7 +3610,7 @@ select.npc-svc-input { cursor: pointer; appearance: none; -webkit-appearance: no
 	color: #fff; padding: 18px 38px; border-radius: 16px;
 	box-shadow: 0 0 50px rgba(255, 206, 92, 0.4);
 	opacity: 0;
-	transition: opacity 0.22s ease, transform 0.22s cubic-bezier(0.22, 1.2, 0.36, 1);
+	transition: opacity var(--duration-base) var(--ease-standard), transform var(--duration-base) cubic-bezier(0.22, 1.2, 0.36, 1);
 }
 #cc-king-banner.cc-king-banner--show { opacity: 1; transform: translateX(-50%) scale(1); }
 .cc-king-banner-crown { font-size: 42px; line-height: 1; filter: drop-shadow(0 0 14px rgba(255, 206, 92, 0.7)); animation: cc-king-crown-bob 1.6s ease-in-out infinite; }
@@ -3677,7 +3677,7 @@ body.is-zen .twx-i18n-fab {
 	padding: 8px 13px 8px 11px; color: var(--cc-dim); cursor: pointer;
 	font-weight: 600; font-size: 11px; letter-spacing: 0.06em; text-transform: uppercase;
 	box-shadow: var(--cc-shadow); backdrop-filter: blur(10px);
-	transition: border-color 0.12s ease, color 0.12s ease, background 0.12s ease;
+	transition: border-color var(--duration-fast) var(--ease-standard), color var(--duration-fast) var(--ease-standard), background var(--duration-fast) var(--ease-standard);
 }
 .cc-zen-btn:hover { border-color: var(--cc-edge-hi); color: var(--cc-text); background: rgba(255, 255, 255, 0.05); }
 .cc-zen-btn:focus-visible { outline: none; border-color: var(--cc-edge-hi); box-shadow: 0 0 0 1px var(--cc-edge-hi); }
@@ -3695,7 +3695,7 @@ body.is-zen .twx-i18n-fab {
 	padding: 8px 13px; border-radius: 999px; cursor: pointer;
 	backdrop-filter: blur(10px); box-shadow: var(--cc-shadow);
 	opacity: 0;
-	transition: opacity 0.3s ease, color 0.12s ease, border-color 0.12s ease, background 0.12s ease;
+	transition: opacity var(--duration-base) var(--ease-standard), color var(--duration-fast) var(--ease-standard), border-color var(--duration-fast) var(--ease-standard), background var(--duration-fast) var(--ease-standard);
 }
 body.is-zen #cc-zen-exit { display: inline-flex; }
 body.is-zen.zen-revealed #cc-zen-exit { opacity: 0.85; }
@@ -3775,7 +3775,7 @@ summary:focus-visible,
 	*, *::before, *::after {
 		animation-duration: 0.01ms !important;
 		animation-iteration-count: 1 !important;
-		transition-duration: 0.01ms !important;
+		transition-duration: var(--duration-instant) !important;
 		scroll-behavior: auto !important;
 	}
 	/* Pulses and sweeps are pure decoration: stop them outright rather than

@@ -74,9 +74,9 @@ body.gallery-page {
 	border-color: rgba(255, 255, 255, 0.18);
 	color: rgba(255, 255, 255, 0.78);
 	transition:
-		border-color 0.15s ease,
-		color 0.15s ease,
-		background 0.15s ease;
+		border-color var(--duration-fast) var(--ease-standard),
+		color var(--duration-fast) var(--ease-standard),
+		background var(--duration-fast) var(--ease-standard);
 }
 .gallery-hero-chip--link:hover,
 .gallery-hero-chip--link:focus-visible {
@@ -133,7 +133,7 @@ body.gallery-page {
 	font-weight: 600;
 	text-decoration: none;
 	cursor: pointer;
-	transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+	transition: background var(--duration-fast) var(--ease-standard), border-color var(--duration-fast) var(--ease-standard), color var(--duration-fast) var(--ease-standard);
 }
 .gallery-hero-btn:hover {
 	background: rgba(255, 255, 255, 0.1);
@@ -209,7 +209,7 @@ body.gallery-page {
 	font-size: 14px;
 	outline: none;
 	cursor: pointer;
-	transition: border-color 0.15s ease;
+	transition: border-color var(--duration-fast) var(--ease-standard);
 }
 .gallery-sort-select select:focus {
 	border-color: rgba(165, 180, 252, 0.55);
@@ -241,7 +241,7 @@ body.gallery-page {
 	font-size: 15px;
 	font-family: inherit;
 	outline: none;
-	transition: border-color 0.15s ease, background 0.15s ease;
+	transition: border-color var(--duration-fast) var(--ease-standard), background var(--duration-fast) var(--ease-standard);
 }
 .gallery-search input[type='search']::placeholder {
 	color: rgba(255, 255, 255, 0.4);
@@ -269,7 +269,7 @@ body.gallery-page {
 	display: inline-flex;
 	align-items: center;
 	justify-content: center;
-	transition: background 0.15s ease, color 0.15s ease;
+	transition: background var(--duration-fast) var(--ease-standard), color var(--duration-fast) var(--ease-standard);
 }
 .gallery-search-clear:hover {
 	background: rgba(255, 255, 255, 0.18);
@@ -307,9 +307,9 @@ body.gallery-page {
 	font-weight: 500;
 	cursor: pointer;
 	transition:
-		background 0.15s ease,
-		border-color 0.15s ease,
-		color 0.15s ease;
+		background var(--duration-fast) var(--ease-standard),
+		border-color var(--duration-fast) var(--ease-standard),
+		color var(--duration-fast) var(--ease-standard);
 }
 .gallery-tag:hover {
 	background: rgba(255, 255, 255, 0.08);
@@ -374,10 +374,10 @@ body.gallery-page {
 	display: flex;
 	flex-direction: column;
 	transition:
-		transform 0.18s ease,
-		border-color 0.18s ease,
-		background 0.18s ease,
-		box-shadow 0.18s ease;
+		transform var(--duration-fast) var(--ease-standard),
+		border-color var(--duration-fast) var(--ease-standard),
+		background var(--duration-fast) var(--ease-standard),
+		box-shadow var(--duration-fast) var(--ease-standard);
 }
 .gallery-card:hover {
 	transform: translateY(-2px);
@@ -403,7 +403,7 @@ body.gallery-page {
 	width: 100%;
 	height: 100%;
 	object-fit: cover;
-	transition: transform 0.4s ease;
+	transition: transform var(--duration-slow) var(--ease-standard);
 }
 .gallery-card:hover .gallery-card-thumb img {
 	transform: scale(1.04);
@@ -482,7 +482,7 @@ body.gallery-page {
 	color: #fff;
 	font-size: 18px;
 	opacity: 0;
-	transition: opacity 0.18s ease, transform 0.18s ease;
+	transition: opacity var(--duration-fast) var(--ease-standard), transform var(--duration-fast) var(--ease-standard);
 	pointer-events: none;
 }
 .gallery-card:hover .gallery-card-play {
@@ -618,9 +618,9 @@ body.gallery-page {
 	align-items: center;
 	gap: 4px;
 	transition:
-		background 0.15s ease,
-		border-color 0.15s ease,
-		color 0.15s ease;
+		background var(--duration-fast) var(--ease-standard),
+		border-color var(--duration-fast) var(--ease-standard),
+		color var(--duration-fast) var(--ease-standard);
 }
 .gallery-card-btn:hover {
 	background: rgba(255, 255, 255, 0.1);
@@ -736,7 +736,7 @@ body.gallery-page {
 	font-weight: 600;
 	cursor: pointer;
 	margin-right: 8px;
-	transition: background 0.15s ease, border-color 0.15s ease;
+	transition: background var(--duration-fast) var(--ease-standard), border-color var(--duration-fast) var(--ease-standard);
 }
 .gallery-clear-filters:hover {
 	background: rgba(255, 255, 255, 0.1);
@@ -752,7 +752,7 @@ body.gallery-page {
 	font-size: 13px;
 	font-weight: 600;
 	text-decoration: none;
-	transition: filter 0.15s ease;
+	transition: filter var(--duration-fast) var(--ease-standard);
 }
 .gallery-empty .gallery-clear-cta:hover {
 	filter: brightness(1.1);
@@ -794,7 +794,7 @@ body.gallery-page {
 	font-size: 14px;
 	font-weight: 600;
 	cursor: pointer;
-	transition: background 0.15s ease, border-color 0.15s ease;
+	transition: background var(--duration-fast) var(--ease-standard), border-color var(--duration-fast) var(--ease-standard);
 }
 .gallery-load-more:hover {
 	background: rgba(255, 255, 255, 0.1);
@@ -987,7 +987,7 @@ body.gallery-page {
 	border-radius: 99px;
 	padding: 9px 20px;
 	background: #fff;
-	transition: color 0.15s, border-color 0.15s, background 0.15s, box-shadow 0.15s, opacity 0.15s;
+	transition: color var(--duration-fast), border-color var(--duration-fast), background var(--duration-fast), box-shadow var(--duration-fast), opacity var(--duration-fast);
 	display: inline-flex;
 	align-items: center;
 	gap: 6px;
@@ -1035,7 +1035,7 @@ body.gallery-page {
 	opacity: 1;
 	filter: none;
 	box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.15);
-	transition: transform 0.2s ease, box-shadow 0.2s ease;
+	transition: transform var(--duration-base) var(--ease-standard), box-shadow var(--duration-base) var(--ease-standard);
 }
 .forge-card:hover .forge-card-ph {
 	transform: scale(1.08);
@@ -1146,7 +1146,7 @@ body.gallery-page {
 	border: 1px solid transparent;
 	text-decoration: none;
 	color: inherit;
-	transition: border-color 0.15s, background 0.15s;
+	transition: border-color var(--duration-fast), background var(--duration-fast);
 }
 .equip-avatar-row:hover {
 	border-color: var(--tws-accent, #9b5dff);
@@ -1187,7 +1187,7 @@ body.gallery-page {
 	place-items: center;
 	padding: 20px;
 	opacity: 0;
-	transition: opacity 0.2s ease;
+	transition: opacity var(--duration-base) var(--ease-standard);
 }
 .surprise-modal.is-open { opacity: 1; }
 /* Guarantee the hidden attribute wins over the display set on state classes
@@ -1214,7 +1214,7 @@ body.gallery-page {
 	background: linear-gradient(180deg, rgba(22, 22, 28, 0.92), rgba(12, 12, 16, 0.94));
 	box-shadow: 0 24px 80px rgba(0, 0, 0, 0.6), 0 2px 10px rgba(0, 0, 0, 0.4);
 	transform: translateY(10px) scale(0.98);
-	transition: transform 0.24s cubic-bezier(0.2, 0.9, 0.3, 1);
+	transition: transform var(--duration-base) cubic-bezier(0.2, 0.9, 0.3, 1);
 }
 .surprise-modal.is-open .surprise-panel { transform: none; }
 .surprise-close {
@@ -1230,7 +1230,7 @@ body.gallery-page {
 	background: rgba(255, 255, 255, 0.05);
 	color: #cfcfd6;
 	cursor: pointer;
-	transition: background 0.15s ease, color 0.15s ease;
+	transition: background var(--duration-fast) var(--ease-standard), color var(--duration-fast) var(--ease-standard);
 }
 .surprise-close:hover { background: rgba(255, 255, 255, 0.12); color: #fff; }
 .surprise-close:focus-visible { outline: 2px solid rgba(236, 72, 153, 0.7); outline-offset: 2px; }
@@ -1245,7 +1245,7 @@ body.gallery-page {
 		radial-gradient(ellipse 90% 70% at 50% 34%,
 			hsl(var(--surprise-hue) 34% 16%),
 			hsl(var(--surprise-hue) 44% 6%));
-	transition: background 0.4s ease;
+	transition: background var(--duration-slow) var(--ease-standard);
 }
 .surprise-viewer {
 	width: 100%;
@@ -1333,7 +1333,7 @@ body.gallery-page {
 	font-family: inherit;
 	cursor: pointer;
 	border: 1px solid transparent;
-	transition: transform 0.12s ease, background 0.15s ease, border-color 0.15s ease, opacity 0.15s ease;
+	transition: transform var(--duration-fast) var(--ease-standard), background var(--duration-fast) var(--ease-standard), border-color var(--duration-fast) var(--ease-standard), opacity var(--duration-fast) var(--ease-standard);
 }
 .surprise-btn:active { transform: translateY(1px); }
 .surprise-btn:disabled { opacity: 0.55; cursor: default; }
@@ -1359,7 +1359,7 @@ body.gallery-page {
 	font-family: inherit;
 	cursor: pointer;
 	padding: 2px 6px;
-	transition: color 0.15s ease;
+	transition: color var(--duration-fast) var(--ease-standard);
 }
 .surprise-share:hover { color: rgba(255, 255, 255, 0.8); }
 .surprise-share:focus-visible { outline: 2px solid rgba(236, 72, 153, 0.7); outline-offset: 2px; border-radius: 6px; }

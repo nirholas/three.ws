@@ -364,7 +364,7 @@ body {
 	font-size: 13px;
 	font-weight: 500;
 	cursor: pointer;
-	transition: background 0.15s ease, border-color 0.15s ease;
+	transition: background var(--duration-fast) var(--ease-standard), border-color var(--duration-fast) var(--ease-standard);
 }
 .viewer-status__btn:hover {
 	background: rgba(255, 255, 255, 0.12);
@@ -427,7 +427,7 @@ body {
 		rgba(255, 255, 255, 0.9)
 	);
 	border-radius: inherit;
-	transition: width 0.18s ease-out;
+	transition: width var(--duration-fast) var(--ease-out);
 }
 .viewer-status__progress-meta {
 	font-size: 11px;
@@ -451,7 +451,7 @@ body {
 	object-position: center;
 	z-index: 5;
 	opacity: 1;
-	transition: opacity 0.55s ease;
+	transition: opacity var(--duration-slow) var(--ease-standard);
 	pointer-events: none;
 	background:
 		radial-gradient(
@@ -645,8 +645,8 @@ header .site-wordmark .wordmark-logo {
 	padding: 0.35rem 0.7rem;
 	border-radius: var(--radius-md);
 	transition:
-		color 0.18s ease,
-		background 0.18s ease;
+		color var(--duration-fast) var(--ease-standard),
+		background var(--duration-fast) var(--ease-standard);
 	position: relative;
 }
 
@@ -815,7 +815,7 @@ header .site-wordmark .wordmark-logo {
 	text-align: left;
 	font-family: inherit;
 	width: 100%;
-	transition: background 0.12s, color 0.12s;
+	transition: background var(--duration-fast), color var(--duration-fast);
 }
 
 .nav-user-menu-item:hover {
@@ -845,8 +845,8 @@ header .site-wordmark .wordmark-logo {
 	bottom: 0;
 	pointer-events: none;
 	transition:
-		opacity 0.2s ease,
-		transform 0.2s ease;
+		opacity var(--duration-base) var(--ease-standard),
+		transform var(--duration-base) var(--ease-standard);
 }
 
 .gui-wrap--hidden {
@@ -883,9 +883,9 @@ header .site-wordmark .wordmark-logo {
 	backdrop-filter: blur(12px);
 	-webkit-backdrop-filter: blur(12px);
 	transition:
-		color 0.18s,
-		background 0.18s,
-		border-color 0.18s;
+		color var(--duration-fast),
+		background var(--duration-fast),
+		border-color var(--duration-fast);
 	z-index: 30;
 }
 
@@ -926,9 +926,9 @@ header .site-wordmark .wordmark-logo {
 	backdrop-filter: blur(12px);
 	-webkit-backdrop-filter: blur(12px);
 	transition:
-		color 0.18s,
-		background 0.18s,
-		border-color 0.18s;
+		color var(--duration-fast),
+		background var(--duration-fast),
+		border-color var(--duration-fast);
 	z-index: 30;
 }
 
@@ -1145,7 +1145,7 @@ footer:not([class*="h-footer"]) a {
 	pointer-events: all;
 	color: rgba(255, 255, 255, 0.55);
 	text-decoration: none;
-	transition: color 0.18s ease;
+	transition: color var(--duration-fast) var(--ease-standard);
 	display: inline-flex;
 	align-items: center;
 }
@@ -1191,10 +1191,10 @@ footer:not([class*="h-footer"]) .separator {
 	border: 1px solid rgba(255, 255, 255, 0.14);
 	border-radius: var(--radius-md);
 	transition:
-		background 0.18s ease,
-		border-color 0.18s ease,
-		color 0.18s ease,
-		transform 0.18s ease;
+		background var(--duration-fast) var(--ease-standard),
+		border-color var(--duration-fast) var(--ease-standard),
+		color var(--duration-fast) var(--ease-standard),
+		transform var(--duration-fast) var(--ease-standard);
 	font-size: var(--text-sm);
 	font-weight: 500;
 	text-overflow: ellipsis;
@@ -1343,7 +1343,7 @@ footer:not([class*="h-footer"]) .separator {
 	border-radius: var(--radius-sm);
 	color: rgba(255, 255, 255, 0.85);
 	text-decoration: none;
-	transition: background-color 120ms ease;
+	transition: background-color var(--duration-fast) var(--ease-standard);
 }
 
 .report-download:hover {
@@ -1593,7 +1593,7 @@ footer:not([class*="h-footer"]) .separator {
 	display: flex;
 	align-items: center;
 	justify-content: center;
-	transition: all 0.25s ease;
+	transition: all var(--duration-base) var(--ease-standard);
 	z-index: 50;
 }
 
@@ -1690,7 +1690,7 @@ footer:not([class*="h-footer"]) .separator {
 	cursor: pointer;
 	padding: 0;
 	line-height: 1;
-	transition: color 0.2s ease;
+	transition: color var(--duration-base) var(--ease-standard);
 }
 
 .nich-close:hover {
@@ -1748,7 +1748,7 @@ footer:not([class*="h-footer"]) .separator {
 	font-family: var(--font-body);
 	font-size: var(--text-sm);
 	outline: none;
-	transition: border-color 0.2s ease;
+	transition: border-color var(--duration-base) var(--ease-standard);
 }
 
 .nich-input::placeholder {
@@ -1768,7 +1768,7 @@ footer:not([class*="h-footer"]) .separator {
 	padding: var(--space-xs) var(--space-sm);
 	display: flex;
 	align-items: center;
-	transition: all 0.2s ease;
+	transition: all var(--duration-base) var(--ease-standard);
 }
 
 .nich-send:hover {
@@ -1793,7 +1793,7 @@ footer:not([class*="h-footer"]) .separator {
 	justify-content: center;
 	color: rgba(255, 255, 255, 0.35);
 	cursor: pointer;
-	transition: all 0.2s ease;
+	transition: all var(--duration-base) var(--ease-standard);
 }
 
 .nich-mic:hover {
@@ -2026,8 +2026,8 @@ body.deploy-page {
 	border-radius: var(--radius-lg);
 	overflow: hidden;
 	transition:
-		border-color 0.15s ease,
-		box-shadow 0.15s ease;
+		border-color var(--duration-fast) var(--ease-standard),
+		box-shadow var(--duration-fast) var(--ease-standard);
 }
 .explore-input-wrap:focus-within {
 	border-color: rgba(123, 97, 255, 0.65);
@@ -2083,8 +2083,8 @@ body.deploy-page {
 	font-size: var(--text-xs);
 	cursor: pointer;
 	transition:
-		background 0.15s ease,
-		border-color 0.15s ease;
+		background var(--duration-fast) var(--ease-standard),
+		border-color var(--duration-fast) var(--ease-standard);
 }
 .explore-example:hover {
 	background: rgba(255, 255, 255, 0.1);
@@ -2150,9 +2150,9 @@ body.deploy-page {
 	font-size: var(--text-xs);
 	cursor: pointer;
 	transition:
-		background 0.15s ease,
-		border-color 0.15s ease,
-		color 0.15s ease;
+		background var(--duration-fast) var(--ease-standard),
+		border-color var(--duration-fast) var(--ease-standard),
+		color var(--duration-fast) var(--ease-standard);
 }
 .explore-chain-chip:hover {
 	color: #fff;
@@ -2184,7 +2184,7 @@ body.deploy-page {
 	font-family: inherit;
 	font-size: var(--text-xs);
 	cursor: pointer;
-	transition: all 0.15s ease;
+	transition: all var(--duration-fast) var(--ease-standard);
 }
 .explore-chain-presets-btn:hover {
 	color: #fff;
@@ -2265,8 +2265,8 @@ body.deploy-page {
 	font-size: var(--text-xs);
 	cursor: pointer;
 	transition:
-		background 0.15s ease,
-		border-color 0.15s ease;
+		background var(--duration-fast) var(--ease-standard),
+		border-color var(--duration-fast) var(--ease-standard);
 }
 .explore-filter:hover {
 	background: rgba(255, 255, 255, 0.08);
@@ -2292,9 +2292,9 @@ body.deploy-page {
 	border-radius: var(--radius-lg);
 	overflow: hidden;
 	transition:
-		transform 0.15s ease,
-		border-color 0.15s ease,
-		box-shadow 0.15s ease;
+		transform var(--duration-fast) var(--ease-standard),
+		border-color var(--duration-fast) var(--ease-standard),
+		box-shadow var(--duration-fast) var(--ease-standard);
 }
 .explore-card:hover {
 	transform: translateY(-2px);
@@ -2459,9 +2459,9 @@ body.deploy-page {
 	cursor: pointer;
 	text-decoration: none;
 	transition:
-		background 0.15s ease,
-		border-color 0.15s ease,
-		transform 0.1s ease;
+		background var(--duration-fast) var(--ease-standard),
+		border-color var(--duration-fast) var(--ease-standard),
+		transform var(--duration-instant) var(--ease-standard);
 }
 .explore-btn:hover {
 	background: rgba(255, 255, 255, 0.14);
@@ -2592,8 +2592,8 @@ body.deploy-page {
 	color: inherit;
 	cursor: pointer;
 	transition:
-		border-color 0.12s ease,
-		background 0.12s ease;
+		border-color var(--duration-fast) var(--ease-standard),
+		background var(--duration-fast) var(--ease-standard);
 }
 .erc8004-quickstart-btn:hover:not(:disabled) {
 	border-color: rgba(255, 255, 255, 0.3);
@@ -2717,7 +2717,7 @@ body.deploy-page {
 	color: rgba(255, 255, 255, 0.55);
 	text-decoration: none;
 	border-bottom: 1px dashed transparent;
-	transition: color 0.15s, border-color 0.15s;
+	transition: color var(--duration-fast), border-color var(--duration-fast);
 }
 
 .deploy-hero-link:hover {
@@ -2949,7 +2949,7 @@ body.deploy-page {
 	border-radius: var(--radius-pill);
 	cursor: pointer;
 	font-family: inherit;
-	transition: background 0.15s, color 0.15s, border-color 0.15s;
+	transition: background var(--duration-fast), color var(--duration-fast), border-color var(--duration-fast);
 }
 
 .deploy-qs-chip:hover:not(:disabled) {
@@ -3169,7 +3169,7 @@ body.deploy-page {
 	font-family: inherit;
 	font-size: var(--text-base);
 	outline: none;
-	transition: border-color 0.2s, box-shadow 0.2s, background 0.2s;
+	transition: border-color var(--duration-base), box-shadow var(--duration-base), background var(--duration-base);
 }
 
 .erc8004-input:focus {
@@ -3194,8 +3194,8 @@ body.deploy-page {
 	border-radius: var(--radius-control);
 	cursor: pointer;
 	transition:
-		border-color 0.2s,
-		background 0.2s;
+		border-color var(--duration-base),
+		background var(--duration-base);
 }
 
 .erc8004-file-drop:hover,
@@ -3231,8 +3231,8 @@ body.deploy-page {
 	font-weight: 500;
 	cursor: pointer;
 	transition:
-		background 0.2s,
-		border-color 0.2s;
+		background var(--duration-base),
+		border-color var(--duration-base);
 }
 
 .erc8004-btn:hover:not(:disabled) {
@@ -3289,7 +3289,7 @@ body.deploy-page {
 	gap: 12px;
 	padding: 10px 0;
 	position: relative;
-	transition: opacity 0.2s ease;
+	transition: opacity var(--duration-base) var(--ease-standard);
 }
 
 .deploy-phase--pending {
@@ -3312,7 +3312,7 @@ body.deploy-page {
 	margin-top: 3px;
 	background: rgba(255, 255, 255, 0.15);
 	border: 2px solid rgba(255, 255, 255, 0.2);
-	transition: background 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+	transition: background var(--duration-base) var(--ease-standard), border-color var(--duration-base) var(--ease-standard), box-shadow var(--duration-base) var(--ease-standard);
 }
 
 .deploy-phase--active .deploy-phase-dot {
@@ -3476,7 +3476,7 @@ body.deploy-page {
 	flex-shrink: 0;
 	color: rgba(255, 255, 255, 0.35);
 	font-variant-numeric: tabular-nums;
-	transition: color 0.15s ease;
+	transition: color var(--duration-fast) var(--ease-standard);
 }
 
 .erc8004-count--limit {
@@ -3689,8 +3689,8 @@ body.deploy-page {
 	font-size: var(--text-xs);
 	cursor: pointer;
 	transition:
-		background-color 0.15s,
-		border-color 0.15s;
+		background-color var(--duration-fast),
+		border-color var(--duration-fast);
 }
 
 .erc8004-chain-select:hover {
@@ -3792,8 +3792,8 @@ body.deploy-page {
 	cursor: pointer;
 	border-radius: var(--radius-sm);
 	transition:
-		background 0.2s,
-		color 0.2s;
+		background var(--duration-base),
+		color var(--duration-base);
 }
 
 .erc8004-tab:hover {
@@ -4169,9 +4169,9 @@ body.deploy-page {
 	text-align: left;
 	cursor: pointer;
 	transition:
-		background 0.2s,
-		border-color 0.2s,
-		transform 0.15s;
+		background var(--duration-base),
+		border-color var(--duration-base),
+		transform var(--duration-fast);
 }
 
 .erc8004-template:hover {
@@ -4395,8 +4395,8 @@ body.deploy-page {
 	border-radius: var(--radius-pill);
 	cursor: pointer;
 	transition:
-		background 0.12s ease,
-		color 0.12s ease;
+		background var(--duration-fast) var(--ease-standard),
+		color var(--duration-fast) var(--ease-standard);
 }
 .showcase-seg:hover {
 	color: #fff;
@@ -4471,9 +4471,9 @@ body.deploy-page {
 	font-size: var(--text-xs);
 	cursor: pointer;
 	transition:
-		background 0.12s ease,
-		color 0.12s ease,
-		border-color 0.12s ease;
+		background var(--duration-fast) var(--ease-standard),
+		color var(--duration-fast) var(--ease-standard),
+		border-color var(--duration-fast) var(--ease-standard);
 }
 .showcase-chip:hover {
 	color: #fff;
@@ -4510,8 +4510,8 @@ body.deploy-page {
 	font-size: var(--text-xs);
 	cursor: pointer;
 	transition:
-		color 0.12s ease,
-		border-color 0.12s ease;
+		color var(--duration-fast) var(--ease-standard),
+		border-color var(--duration-fast) var(--ease-standard);
 }
 .showcase-chip-reset:hover {
 	color: #fff;
@@ -4535,9 +4535,9 @@ body.deploy-page {
 	border-radius: var(--radius-card);
 	overflow: hidden;
 	transition:
-		transform 0.16s ease,
-		box-shadow 0.16s ease,
-		border-color 0.16s ease;
+		transform var(--duration-fast) var(--ease-standard),
+		box-shadow var(--duration-fast) var(--ease-standard),
+		border-color var(--duration-fast) var(--ease-standard);
 }
 .showcase-card:hover {
 	transform: translateY(-2px);
@@ -4558,7 +4558,7 @@ body.deploy-page {
 	height: 100%;
 	object-fit: cover;
 	display: block;
-	transition: transform 0.3s ease;
+	transition: transform var(--duration-base) var(--ease-standard);
 }
 .showcase-card:hover .showcase-card-thumb img {
 	transform: scale(1.04);
@@ -4603,8 +4603,8 @@ body.deploy-page {
 	opacity: 0;
 	transform: translateY(4px);
 	transition:
-		opacity 0.16s ease,
-		transform 0.16s ease;
+		opacity var(--duration-fast) var(--ease-standard),
+		transform var(--duration-fast) var(--ease-standard);
 }
 .showcase-card:hover .showcase-card-3dpill {
 	opacity: 1;
@@ -4711,9 +4711,9 @@ body.deploy-page {
 	border-radius: var(--radius-control);
 	cursor: pointer;
 	transition:
-		background 0.12s ease,
-		border-color 0.12s ease,
-		transform 0.1s ease;
+		background var(--duration-fast) var(--ease-standard),
+		border-color var(--duration-fast) var(--ease-standard),
+		transform var(--duration-instant) var(--ease-standard);
 }
 .showcase-btn:hover {
 	background: rgba(255, 255, 255, 0.1);
@@ -4888,10 +4888,10 @@ body.deploy-page {
 	text-decoration: none;
 	cursor: pointer;
 	transition:
-		background 0.18s ease,
-		border-color 0.18s ease,
-		color 0.18s ease,
-		transform 0.18s ease;
+		background var(--duration-fast) var(--ease-standard),
+		border-color var(--duration-fast) var(--ease-standard),
+		color var(--duration-fast) var(--ease-standard),
+		transform var(--duration-fast) var(--ease-standard);
 	letter-spacing: -0.005em;
 	box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06);
 }
@@ -4963,10 +4963,10 @@ body.deploy-page {
 	text-decoration: none;
 	cursor: pointer;
 	transition:
-		background 0.18s ease,
-		border-color 0.18s ease,
-		color 0.18s ease,
-		transform 0.18s ease;
+		background var(--duration-fast) var(--ease-standard),
+		border-color var(--duration-fast) var(--ease-standard),
+		color var(--duration-fast) var(--ease-standard),
+		transform var(--duration-fast) var(--ease-standard);
 	letter-spacing: -0.005em;
 	white-space: nowrap;
 }
@@ -5003,7 +5003,7 @@ body.deploy-page {
 .view-public-profile-btn svg {
 	width: 1em;
 	height: 1em;
-	transition: color 0.18s ease;
+	transition: color var(--duration-fast) var(--ease-standard);
 }
 .save-to-account-btn[disabled] {
 	opacity: 0.6;
@@ -5088,8 +5088,8 @@ body.deploy-page {
 	border-radius: calc(var(--radius-md) - 3px);
 	cursor: pointer;
 	transition:
-		background 0.18s ease,
-		color 0.18s ease;
+		background var(--duration-fast) var(--ease-standard),
+		color var(--duration-fast) var(--ease-standard);
 }
 .layout-switch__btn:hover {
 	color: #fff;
@@ -5173,7 +5173,7 @@ body[data-viewer-mode='explore'] #layout-switch {
 	cursor: pointer;
 	padding: 0;
 	line-height: 1;
-	transition: color 0.2s ease;
+	transition: color var(--duration-base) var(--ease-standard);
 }
 
 .avatar-creator-close:hover {
@@ -5274,7 +5274,7 @@ body[data-viewer-mode='explore'] #layout-switch {
 	box-shadow:
 		0 4px 16px rgba(0, 0, 0, 0.4),
 		inset 0 1px 0 rgba(255, 255, 255, 0.04);
-	transition: transform 0.15s ease, border-color 0.15s ease;
+	transition: transform var(--duration-fast) var(--ease-standard), border-color var(--duration-fast) var(--ease-standard);
 }
 
 .agent-home-show-pill:hover {
@@ -5321,8 +5321,8 @@ body[data-viewer-mode='explore'] #layout-switch {
 	justify-content: center;
 	flex-shrink: 0;
 	transition:
-		border-color 0.6s ease,
-		box-shadow 0.6s ease;
+		border-color var(--duration-slow) var(--ease-standard),
+		box-shadow var(--duration-slow) var(--ease-standard);
 }
 
 /* Emotion ring colours */
@@ -5387,8 +5387,8 @@ body[data-viewer-mode='explore'] #layout-switch {
 	padding: 1px 4px;
 	margin: -1px -4px;
 	transition:
-		background 0.15s,
-		box-shadow 0.15s;
+		background var(--duration-fast),
+		box-shadow var(--duration-fast);
 	outline: none;
 }
 .agent-home-editable:hover:not(.is-editing) {
@@ -5467,7 +5467,7 @@ body[data-viewer-mode='explore'] #layout-switch {
 }
 
 #agent-home-emotion-label {
-	transition: opacity 0.15s ease;
+	transition: opacity var(--duration-fast) var(--ease-standard);
 }
 
 .agent-home-address {
@@ -5498,8 +5498,8 @@ body[data-viewer-mode='explore'] #layout-switch {
 	justify-content: center;
 	cursor: pointer;
 	transition:
-		color 0.2s,
-		border-color 0.2s;
+		color var(--duration-base),
+		border-color var(--duration-base);
 	padding: 0;
 	font-size: var(--text-xs);
 }
@@ -5572,8 +5572,8 @@ body[data-viewer-mode='explore'] #layout-switch {
 	list-style: none;
 	user-select: none;
 	transition:
-		color 0.15s,
-		background 0.15s;
+		color var(--duration-fast),
+		background var(--duration-fast);
 }
 
 .agent-home-skills-summary::-webkit-details-marker {
@@ -5599,7 +5599,7 @@ body[data-viewer-mode='explore'] #layout-switch {
 .agent-home-chevron {
 	margin-left: auto;
 	color: rgba(255, 255, 255, 0.3);
-	transition: transform 0.2s ease;
+	transition: transform var(--duration-base) var(--ease-standard);
 }
 
 .agent-home-skills[open] .agent-home-chevron {
@@ -5622,8 +5622,8 @@ body[data-viewer-mode='explore'] #layout-switch {
 	border: 1px solid rgba(255, 255, 255, 0.08);
 	cursor: default;
 	transition:
-		background 0.15s,
-		color 0.15s;
+		background var(--duration-fast),
+		color var(--duration-fast);
 	white-space: nowrap;
 }
 
@@ -5705,7 +5705,7 @@ body[data-viewer-mode='explore'] #layout-switch {
 	gap: var(--space-xs);
 	padding: 4px var(--space-sm);
 	border-bottom: 1px solid rgba(255, 255, 255, 0.03);
-	transition: background 0.15s;
+	transition: background var(--duration-fast);
 }
 
 .agent-timeline-item:hover {
@@ -5773,7 +5773,7 @@ body[data-viewer-mode='explore'] #layout-switch {
 	font-variant-numeric: tabular-nums;
 	pointer-events: none;
 	user-select: none;
-	transition: color 0.15s;
+	transition: color var(--duration-fast);
 }
 
 .agent-edit-counter--visible {
@@ -5801,7 +5801,7 @@ body[data-viewer-mode='explore'] #layout-switch {
 	white-space: nowrap;
 	overflow: hidden;
 	text-overflow: ellipsis;
-	transition: color 0.15s;
+	transition: color var(--duration-fast);
 	text-decoration: underline dotted rgba(255, 255, 255, 0.2);
 	text-underline-offset: 2px;
 }
@@ -5823,8 +5823,8 @@ body[data-viewer-mode='explore'] #layout-switch {
 	opacity: 0;
 	transform: translateY(-4px);
 	transition:
-		opacity 0.25s ease,
-		transform 0.25s ease;
+		opacity var(--duration-base) var(--ease-standard),
+		transform var(--duration-base) var(--ease-standard);
 }
 
 .agent-wallet-nudge--visible {
@@ -5849,9 +5849,9 @@ body[data-viewer-mode='explore'] #layout-switch {
 	white-space: nowrap;
 	flex-shrink: 0;
 	transition:
-		background 0.15s,
-		color 0.15s,
-		border-color 0.15s;
+		background var(--duration-fast),
+		color var(--duration-fast),
+		border-color var(--duration-fast);
 }
 
 .agent-wallet-nudge-btn:hover {
@@ -5883,8 +5883,8 @@ body[data-viewer-mode='explore'] #layout-switch {
 	border-radius: 50%;
 	background: rgba(255, 255, 255, 0.2);
 	transition:
-		background 0.4s ease,
-		box-shadow 0.4s ease;
+		background var(--duration-slow) var(--ease-standard),
+		box-shadow var(--duration-slow) var(--ease-standard);
 }
 
 .nich-sign {
@@ -5898,9 +5898,9 @@ body[data-viewer-mode='explore'] #layout-switch {
 	cursor: pointer;
 	filter: grayscale(1) opacity(0.7);
 	transition:
-		filter 0.15s ease,
-		border-color 0.15s ease,
-		background 0.15s ease;
+		filter var(--duration-fast) var(--ease-standard),
+		border-color var(--duration-fast) var(--ease-standard),
+		background var(--duration-fast) var(--ease-standard);
 }
 
 .nich-sign:hover {
@@ -5931,9 +5931,9 @@ body[data-viewer-mode='explore'] #layout-switch {
 	cursor: pointer;
 	filter: grayscale(1) opacity(0.7);
 	transition:
-		filter 0.15s ease,
-		border-color 0.15s ease,
-		background 0.15s ease;
+		filter var(--duration-fast) var(--ease-standard),
+		border-color var(--duration-fast) var(--ease-standard),
+		background var(--duration-fast) var(--ease-standard);
 }
 
 .nich-signcam:hover:not(:disabled) {
@@ -5987,7 +5987,7 @@ body[data-viewer-mode='explore'] #layout-switch {
 	max-width: 150px;
 	cursor: pointer;
 	outline: none;
-	transition: border-color 0.15s ease, background 0.15s ease;
+	transition: border-color var(--duration-fast) var(--ease-standard), background var(--duration-fast) var(--ease-standard);
 }
 
 .nich-model-select:hover {
@@ -6054,7 +6054,7 @@ body[data-viewer-mode='explore'] #layout-switch {
 	z-index: 10;
 	pointer-events: none;
 	opacity: 0;
-	transition: opacity 0.25s ease;
+	transition: opacity var(--duration-base) var(--ease-standard);
 	transform-origin: center bottom;
 	will-change: transform, left, top;
 }
@@ -6236,8 +6236,8 @@ body[data-viewer-mode='explore'] #layout-switch {
 	padding: 2px 6px;
 	border-radius: var(--radius-sm);
 	transition:
-		color 0.2s,
-		background 0.2s;
+		color var(--duration-base),
+		background var(--duration-base);
 	line-height: 1;
 }
 
@@ -6270,7 +6270,7 @@ body[data-viewer-mode='explore'] #layout-switch {
 	font-family: inherit;
 	font-size: var(--text-xs);
 	cursor: pointer;
-	transition: all 0.2s ease;
+	transition: all var(--duration-base) var(--ease-standard);
 	flex-shrink: 0;
 }
 
@@ -6288,8 +6288,8 @@ body[data-viewer-mode='explore'] #layout-switch {
 	line-height: 1;
 	pointer-events: none;
 	transition:
-		color 0.18s,
-		background 0.18s;
+		color var(--duration-fast),
+		background var(--duration-fast);
 }
 
 .anim-btn:hover .anim-btn__key {
@@ -6662,8 +6662,8 @@ body[data-viewer-mode='explore'] #layout-switch {
 	padding: var(--space-xs);
 	cursor: pointer;
 	transition:
-		border-color 0.15s,
-		transform 0.15s;
+		border-color var(--duration-fast),
+		transform var(--duration-fast);
 }
 .texture-card:hover {
 	border-color: #5e4fff;
@@ -6963,8 +6963,8 @@ body[data-viewer-mode='main'][data-authed='false'] .auth-gate {
 	height: 32px;
 	border-radius: var(--radius-sm);
 	transition:
-		color 0.15s,
-		background 0.15s;
+		color var(--duration-fast),
+		background var(--duration-fast);
 }
 
 .agent-onboarding__close:hover {
@@ -7014,10 +7014,10 @@ body[data-viewer-mode='main'][data-authed='false'] .auth-gate {
 	color: rgba(255, 255, 255, 0.82);
 	cursor: pointer;
 	transition:
-		background 0.18s ease,
-		border-color 0.18s ease,
-		color 0.18s ease,
-		transform 0.18s ease;
+		background var(--duration-fast) var(--ease-standard),
+		border-color var(--duration-fast) var(--ease-standard),
+		color var(--duration-fast) var(--ease-standard),
+		transform var(--duration-fast) var(--ease-standard);
 }
 
 .agent-onboarding__btn:hover {
@@ -7142,10 +7142,10 @@ body[data-viewer-mode='main'][data-authed='false'] .auth-gate {
 	color: rgba(255, 255, 255, 0.82);
 	background: rgba(255, 255, 255, 0.04);
 	transition:
-		background 0.18s ease,
-		border-color 0.18s ease,
-		color 0.18s ease,
-		transform 0.18s ease;
+		background var(--duration-fast) var(--ease-standard),
+		border-color var(--duration-fast) var(--ease-standard),
+		color var(--duration-fast) var(--ease-standard),
+		transform var(--duration-fast) var(--ease-standard);
 }
 
 .auth-gate__btn:hover {
@@ -7272,7 +7272,7 @@ body[data-viewer-mode='main'][data-authed='false'] .auth-gate {
 	cursor: pointer;
 	padding: 0;
 	line-height: 1;
-	transition: color 0.2s ease;
+	transition: color var(--duration-base) var(--ease-standard);
 }
 
 .publish-close:hover {
@@ -7303,8 +7303,8 @@ body[data-viewer-mode='main'][data-authed='false'] .auth-gate {
 	font-size: var(--text-sm);
 	color: rgba(255, 255, 255, 0.5);
 	transition:
-		color 0.2s ease,
-		background 0.2s ease;
+		color var(--duration-base) var(--ease-standard),
+		background var(--duration-base) var(--ease-standard);
 }
 
 .publish-step--active {
@@ -7428,8 +7428,8 @@ body[data-viewer-mode='main'][data-authed='false'] .auth-gate {
 	cursor: pointer;
 	white-space: nowrap;
 	transition:
-		background 0.15s ease,
-		color 0.15s ease;
+		background var(--duration-fast) var(--ease-standard),
+		color var(--duration-fast) var(--ease-standard);
 }
 
 .publish-copy-btn:hover,
@@ -7465,9 +7465,9 @@ body[data-viewer-mode='main'][data-authed='false'] .auth-gate {
 	font-size: var(--text-sm);
 	cursor: pointer;
 	transition:
-		background 0.15s ease,
-		color 0.15s ease,
-		filter 0.15s ease;
+		background var(--duration-fast) var(--ease-standard),
+		color var(--duration-fast) var(--ease-standard),
+		filter var(--duration-fast) var(--ease-standard);
 }
 
 .publish-done-btn,
@@ -7642,7 +7642,7 @@ body[data-viewer-mode='main'][data-authed='false'] .auth-gate {
 	color: rgba(255, 255, 255, 0.6);
 	cursor: pointer;
 	font-family: inherit;
-	transition: all 0.2s;
+	transition: all var(--duration-base);
 }
 
 .erc8004-chip:hover {
@@ -7754,7 +7754,7 @@ body[data-viewer-mode='main'][data-authed='false'] .auth-gate {
 .erc8004-progress-fill {
 	height: 100%;
 	background: #ffffff;
-	transition: width 0.3s;
+	transition: width var(--duration-base);
 	width: 0;
 }
 
@@ -7794,8 +7794,8 @@ body[data-viewer-mode='main'][data-authed='false'] .auth-gate {
 	border-radius: var(--radius-md);
 	cursor: pointer;
 	transition:
-		border-color 0.15s,
-		background 0.15s;
+		border-color var(--duration-fast),
+		background var(--duration-fast);
 }
 
 .erc8004-avatar-source:hover {
@@ -7902,8 +7902,8 @@ body[data-viewer-mode='main'][data-authed='false'] .auth-gate {
 	color: inherit;
 	font-family: inherit;
 	transition:
-		border-color 0.15s,
-		background 0.15s;
+		border-color var(--duration-fast),
+		background var(--duration-fast);
 }
 
 .erc8004-saved-card:hover {
@@ -7971,7 +7971,7 @@ body[data-viewer-mode='main'][data-authed='false'] .auth-gate {
 	content: '▼';
 	color: rgba(255, 255, 255, 0.4);
 	font-size: 10px;
-	transition: transform 0.2s;
+	transition: transform var(--duration-base);
 }
 
 .erc8004-accordion[open] .erc8004-accordion-head::after {
@@ -8004,7 +8004,7 @@ body[data-viewer-mode='main'][data-authed='false'] .auth-gate {
 	font-family: inherit;
 	cursor: pointer;
 	text-align: center;
-	transition: all 0.2s;
+	transition: all var(--duration-base);
 }
 
 .erc8004-export-opt:hover {
@@ -8119,8 +8119,8 @@ body[data-viewer-mode='main'][data-authed='false'] .auth-gate {
 	font-size: var(--text-sm);
 	cursor: pointer;
 	transition:
-		color 0.15s,
-		border-color 0.15s;
+		color var(--duration-fast),
+		border-color var(--duration-fast);
 }
 .erc8004-embed-tabs .erc8004-tab:hover {
 	color: rgba(255, 255, 255, 0.9);
@@ -8305,9 +8305,9 @@ textarea.erc8004-code {
 	border-color: rgba(255, 255, 255, 0.18);
 	color: rgba(255, 255, 255, 0.78);
 	transition:
-		border-color 0.15s ease,
-		color 0.15s ease,
-		background 0.15s ease;
+		border-color var(--duration-fast) var(--ease-standard),
+		color var(--duration-fast) var(--ease-standard),
+		background var(--duration-fast) var(--ease-standard);
 }
 .explore-hero-chip--link:hover,
 .explore-hero-chip--link:focus-visible {
@@ -8409,9 +8409,9 @@ textarea.erc8004-code {
 	border-radius: var(--radius-md);
 	overflow: hidden;
 	transition:
-		border-color 0.15s,
-		transform 0.15s,
-		background 0.15s;
+		border-color var(--duration-fast),
+		transform var(--duration-fast),
+		background var(--duration-fast);
 	display: flex;
 	flex-direction: column;
 	/* /discover renders the whole directory in one grid, a few thousand pixels
@@ -8467,7 +8467,7 @@ textarea.erc8004-code {
 	text-shadow: 0 2px 14px rgba(0, 0, 0, 0.6);
 	opacity: 0;
 	background: rgba(0, 0, 0, 0.35);
-	transition: opacity 0.2s;
+	transition: opacity var(--duration-base);
 }
 .explore-card--3d:hover .explore-card-play {
 	opacity: 1;
@@ -8638,7 +8638,7 @@ textarea.erc8004-code {
 	color: rgba(255, 255, 255, 0.85);
 	text-decoration: underline;
 	text-underline-offset: 3px;
-	transition: color 0.15s ease;
+	transition: color var(--duration-fast) var(--ease-standard);
 }
 .explore-empty a:hover,
 .explore-empty a:focus-visible {
@@ -8654,9 +8654,9 @@ textarea.erc8004-code {
 	font-weight: 500;
 	cursor: pointer;
 	transition:
-		border-color 0.15s ease,
-		color 0.15s ease,
-		background 0.15s ease;
+		border-color var(--duration-fast) var(--ease-standard),
+		color var(--duration-fast) var(--ease-standard),
+		background var(--duration-fast) var(--ease-standard);
 }
 .explore-clear-filters:hover,
 .explore-clear-filters:focus-visible {
@@ -8686,9 +8686,9 @@ textarea.erc8004-code {
 	font-weight: 600;
 	cursor: pointer;
 	transition:
-		border-color 0.15s ease,
-		color 0.15s ease,
-		background 0.15s ease;
+		border-color var(--duration-fast) var(--ease-standard),
+		color var(--duration-fast) var(--ease-standard),
+		background var(--duration-fast) var(--ease-standard);
 }
 .explore-retry:hover,
 .explore-retry:focus-visible {
@@ -8712,7 +8712,7 @@ textarea.erc8004-code {
 	font-weight: 600;
 	font-size: 14px;
 	cursor: pointer;
-	transition: all 0.15s;
+	transition: all var(--duration-fast);
 }
 .explore-load-more:hover {
 	background: rgba(255, 255, 255, 0.12);
@@ -8893,7 +8893,7 @@ textarea.erc8004-code {
 	height: 32px;
 	border-radius: var(--radius-sm);
 	cursor: pointer;
-	transition: all 0.15s;
+	transition: all var(--duration-fast);
 }
 .embed-modal__close:hover {
 	background: rgba(255, 255, 255, 0.08);
@@ -8922,7 +8922,7 @@ textarea.erc8004-code {
 	border-bottom: 2px solid transparent;
 	margin-bottom: -1px;
 	white-space: nowrap;
-	transition: all 0.15s;
+	transition: all var(--duration-fast);
 }
 .embed-tab:hover {
 	color: #e5e5e5;
@@ -8982,9 +8982,9 @@ textarea.erc8004-code {
 	font-weight: 500;
 	cursor: pointer;
 	transition:
-		transform 0.1s,
-		box-shadow 0.15s,
-		background 0.15s;
+		transform var(--duration-instant),
+		box-shadow var(--duration-fast),
+		background var(--duration-fast);
 }
 .embed-copy-btn:hover {
 	background: rgba(255, 255, 255, 0.16);
@@ -9092,7 +9092,7 @@ textarea.erc8004-code {
 	font-size: 13px;
 	padding: 2px 6px;
 	border-radius: var(--radius-sm);
-	transition: opacity .15s, background .15s;
+	transition: opacity var(--duration-fast), background var(--duration-fast);
 }
 .pumpfun-card-link:hover { opacity: 1; background: rgba(255,255,255,0.08); }
 .pumpfun-card-sub {
@@ -9133,7 +9133,7 @@ textarea.erc8004-code {
 	background: rgba(255, 255, 255, 0.06);
 	color: inherit;
 	cursor: pointer;
-	transition: background .15s, transform .05s;
+	transition: background var(--duration-fast), transform var(--duration-instant);
 }
 .pumpfun-btn:hover { background: rgba(255, 255, 255, 0.12); }
 .pumpfun-btn:active { transform: translateY(1px); }
@@ -9173,7 +9173,7 @@ textarea.erc8004-code {
 	opacity: 0.55;
 	cursor: pointer;
 	text-align: left;
-	transition: opacity .12s;
+	transition: opacity var(--duration-fast);
 }
 .pumpfun-card-mint:hover { opacity: 0.85; text-decoration: underline; }
 .pumpfun-btn--active {
@@ -9224,7 +9224,7 @@ textarea.erc8004-code {
 	border-radius: var(--radius-sm);
 	cursor: pointer;
 	opacity: 0.6;
-	transition: background .15s, opacity .15s;
+	transition: background var(--duration-fast), opacity var(--duration-fast);
 }
 .pumpfun-signer-tab:hover { opacity: 0.9; }
 .pumpfun-signer-tab.is-active {
@@ -9298,7 +9298,7 @@ textarea.erc8004-code {
 	box-shadow: 0 10px 24px -10px rgba(0,0,0,0.6);
 	transform: translateY(8px);
 	opacity: 0;
-	transition: opacity .22s ease, transform .22s ease;
+	transition: opacity var(--duration-base) var(--ease-standard), transform var(--duration-base) var(--ease-standard);
 	max-width: 320px;
 }
 .pumpfun-toast.is-in { opacity: 1; transform: translateY(0); }
@@ -9613,10 +9613,10 @@ body[data-layout='next'] .next-drawer__body .dg.main {
 	backdrop-filter: blur(14px);
 	-webkit-backdrop-filter: blur(14px);
 	transition:
-		background 0.18s ease,
-		color 0.18s ease,
-		border-color 0.18s ease,
-		transform 0.18s ease;
+		background var(--duration-fast) var(--ease-standard),
+		color var(--duration-fast) var(--ease-standard),
+		border-color var(--duration-fast) var(--ease-standard),
+		transform var(--duration-fast) var(--ease-standard);
 	position: relative;
 }
 @media (hover: none) and (pointer: coarse) {
@@ -9692,7 +9692,7 @@ body[data-layout='next'] .next-drawer__body .dg.main {
 	text-align: left;
 	text-decoration: none;
 	cursor: pointer;
-	transition: background 0.15s ease, color 0.15s ease;
+	transition: background var(--duration-fast) var(--ease-standard), color var(--duration-fast) var(--ease-standard);
 }
 .next-share-menu__item:hover {
 	background: rgba(255, 255, 255, 0.06);
@@ -9727,7 +9727,7 @@ body[data-layout='next'] .next-drawer__body .dg.main {
 	border-left: 1px solid rgba(255, 255, 255, 0.06);
 	box-shadow: -16px 0 48px rgba(0, 0, 0, 0.45);
 	transform: translateX(100%);
-	transition: transform 0.28s cubic-bezier(0.2, 0.8, 0.2, 1);
+	transition: transform var(--duration-base) var(--ease-standard);
 	z-index: 38;
 	display: flex;
 	flex-direction: column;
@@ -9762,7 +9762,7 @@ body[data-layout='next'] .next-drawer__body .dg.main {
 	cursor: pointer;
 	font-size: 20px;
 	line-height: 1;
-	transition: background 0.15s ease, color 0.15s ease;
+	transition: background var(--duration-fast) var(--ease-standard), color var(--duration-fast) var(--ease-standard);
 	margin: -8px -8px -8px auto;
 }
 .next-drawer__close:hover {
@@ -9802,7 +9802,7 @@ body[data-layout='next'] .next-drawer__body .dg.main {
 	min-width: 200px;
 	max-width: calc(100vw - 32px);
 	box-sizing: border-box;
-	transition: background 0.2s ease, border-color 0.2s ease;
+	transition: background var(--duration-base) var(--ease-standard), border-color var(--duration-base) var(--ease-standard);
 }
 .next-dock:hover,
 .next-dock:focus-within {
@@ -9834,7 +9834,7 @@ body[data-layout='next'] .next-drawer__body .dg.main {
 	max-width: 240px;
 	overflow: hidden;
 	text-overflow: ellipsis;
-	transition: color 0.18s ease;
+	transition: color var(--duration-fast) var(--ease-standard);
 	z-index: 34;
 }
 .next-dock__clip::before {
@@ -9853,7 +9853,7 @@ body[data-layout='next'] .next-drawer__body .dg.main {
 .next-dock__caret {
 	flex-shrink: 0;
 	opacity: 0.55;
-	transition: transform 0.18s ease, opacity 0.18s ease;
+	transition: transform var(--duration-fast) var(--ease-standard), opacity var(--duration-fast) var(--ease-standard);
 }
 .next-dock__clip:hover .next-dock__caret { opacity: 1; }
 .next-dock__clip--open .next-dock__caret { transform: rotate(180deg); opacity: 1; }
@@ -9871,7 +9871,7 @@ body[data-layout='next'] .next-drawer__body .dg.main {
 	border-radius: 50%;
 	cursor: pointer;
 	box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
-	transition: transform 0.15s ease, background 0.15s ease;
+	transition: transform var(--duration-fast) var(--ease-standard), background var(--duration-fast) var(--ease-standard);
 	flex-shrink: 0;
 }
 .next-dock__play svg { width: 14px; height: 14px; }
@@ -9898,7 +9898,7 @@ body[data-layout='next'] .next-drawer__body .dg.main {
 	align-items: center;
 	min-width: 120px;
 	opacity: 0.5;
-	transition: opacity 0.2s ease;
+	transition: opacity var(--duration-base) var(--ease-standard);
 }
 .next-dock:hover .next-dock__scrub,
 .next-dock:focus-within .next-dock__scrub { opacity: 1; }
@@ -9912,7 +9912,7 @@ body[data-layout='next'] .next-drawer__body .dg.main {
 	background: rgba(255, 255, 255, 0.85);
 	width: 0%;
 	pointer-events: none;
-	transition: height 0.2s ease;
+	transition: height var(--duration-base) var(--ease-standard);
 }
 .next-dock__scrub::before {
 	content: '';
@@ -9925,7 +9925,7 @@ body[data-layout='next'] .next-drawer__body .dg.main {
 	border-radius: var(--radius-sm);
 	background: rgba(255, 255, 255, 0.16);
 	pointer-events: none;
-	transition: height 0.2s ease;
+	transition: height var(--duration-base) var(--ease-standard);
 }
 .next-dock:hover .next-dock__scrub::before,
 .next-dock:focus-within .next-dock__scrub::before,
@@ -9954,7 +9954,7 @@ body[data-layout='next'] .next-drawer__body .dg.main {
 	box-shadow: 0 1px 4px rgba(0, 0, 0, 0.4);
 	cursor: grab;
 	opacity: 0;
-	transition: opacity 0.18s ease;
+	transition: opacity var(--duration-fast) var(--ease-standard);
 }
 .next-dock:hover .next-dock__scrub-input::-webkit-slider-thumb,
 .next-dock:focus-within .next-dock__scrub-input::-webkit-slider-thumb { opacity: 1; }
@@ -9967,7 +9967,7 @@ body[data-layout='next'] .next-drawer__body .dg.main {
 	border: 0;
 	box-shadow: 0 1px 4px rgba(0, 0, 0, 0.4);
 	opacity: 0;
-	transition: opacity 0.18s ease;
+	transition: opacity var(--duration-fast) var(--ease-standard);
 }
 .next-dock:hover .next-dock__scrub-input::-moz-range-thumb,
 .next-dock:focus-within .next-dock__scrub-input::-moz-range-thumb { opacity: 1; }
@@ -9987,7 +9987,7 @@ body[data-layout='next'] .next-drawer__body .dg.main {
 	max-width: 0;
 	overflow: hidden;
 	opacity: 0;
-	transition: max-width 0.2s ease, opacity 0.2s ease, padding 0.2s ease;
+	transition: max-width var(--duration-base) var(--ease-standard), opacity var(--duration-base) var(--ease-standard), padding var(--duration-base) var(--ease-standard);
 	padding: 0;
 }
 .next-dock:hover .next-dock__time,
@@ -10009,7 +10009,7 @@ body[data-layout='next'] .next-drawer__body .dg.main {
 	border-radius: var(--radius-sm);
 	color: rgba(255, 255, 255, 0.45);
 	cursor: pointer;
-	transition: color 0.15s ease, background 0.15s ease;
+	transition: color var(--duration-fast) var(--ease-standard), background var(--duration-fast) var(--ease-standard);
 	flex-shrink: 0;
 }
 .next-dock__loop:hover { color: rgba(255, 255, 255, 0.95); background: rgba(255, 255, 255, 0.06); }
@@ -10082,7 +10082,7 @@ body[data-layout='next'] .next-chrome::after {
 	font-weight: 500;
 	text-align: left;
 	cursor: pointer;
-	transition: background 0.15s ease, border-color 0.15s ease;
+	transition: background var(--duration-fast) var(--ease-standard), border-color var(--duration-fast) var(--ease-standard);
 }
 .next-grid__item:hover {
 	background: rgba(255, 255, 255, 0.07);
@@ -10183,7 +10183,7 @@ body[data-layout='next'] .next-chrome::after {
 /* ── Linked pill (anchor) ─────────────────────────────────────────────────── */
 a.pill {
 	cursor: pointer;
-	transition: background 0.15s ease, border-color 0.15s ease, transform 0.15s ease;
+	transition: background var(--duration-fast) var(--ease-standard), border-color var(--duration-fast) var(--ease-standard), transform var(--duration-fast) var(--ease-standard);
 }
 a.pill:hover {
 	background: var(--surface-3);
@@ -10300,14 +10300,14 @@ a.pill--devnet:hover {
 	/* Entry + exit transitions */
 	opacity: 1;
 	transform: scale(1) translateY(0);
-	transition: opacity 0.2s ease, transform 0.2s ease;
+	transition: opacity var(--duration-base) var(--ease-standard), transform var(--duration-base) var(--ease-standard);
 }
 
 /* Backdrop scrim */
 .tws-modal::backdrop {
 	background: var(--modal-backdrop);
 	opacity: 1;
-	transition: opacity 0.2s ease;
+	transition: opacity var(--duration-base) var(--ease-standard);
 }
 
 /* Entry animation (Chrome 117+, Firefox 129+, Safari 17.5+) */
@@ -10371,7 +10371,7 @@ a.pill--devnet:hover {
 	cursor: pointer;
 	padding: var(--space-xs) var(--space-sm);
 	border-radius: var(--radius-sm);
-	transition: color 0.15s, background 0.15s;
+	transition: color var(--duration-fast), background var(--duration-fast);
 	flex-shrink: 0;
 }
 
@@ -10462,7 +10462,7 @@ a.pill--devnet:hover {
 	color: rgba(255, 255, 255, 0.44);
 	margin-left: 2px;
 	vertical-align: super;
-	transition: background 120ms ease, color 120ms ease;
+	transition: background var(--duration-fast) var(--ease-standard), color var(--duration-fast) var(--ease-standard);
 }
 
 .tws-tt:hover::after,
@@ -10496,7 +10496,7 @@ a.pill--devnet:hover {
 	color: var(--ink);
 	opacity: 0;
 	transform: translateY(6px) scale(0.98);
-	transition: opacity 140ms ease, transform 140ms ease;
+	transition: opacity var(--duration-fast) var(--ease-standard), transform var(--duration-fast) var(--ease-standard);
 	backdrop-filter: blur(12px);
 	-webkit-backdrop-filter: blur(12px);
 }
@@ -10535,7 +10535,7 @@ a.pill--devnet:hover {
 	color: var(--accent);
 	text-decoration: none;
 	opacity: 0.75;
-	transition: opacity 120ms ease;
+	transition: opacity var(--duration-fast) var(--ease-standard);
 }
 
 #tws-tt-pop .tws-tt-more:hover,
@@ -10638,7 +10638,7 @@ a.pill--devnet:hover {
 	background: var(--surface-2);
 	border: 1px solid var(--stroke);
 	border-radius: var(--radius-control);
-	transition: border-color 0.15s ease, background 0.15s ease;
+	transition: border-color var(--duration-fast) var(--ease-standard), background var(--duration-fast) var(--ease-standard);
 }
 
 .glos-search input::placeholder { color: var(--ink-dim); }
@@ -10687,7 +10687,7 @@ a.pill--devnet:hover {
 	background: var(--surface-1);
 	border: 1px solid var(--stroke);
 	border-radius: var(--radius-card);
-	transition: border-color 0.15s ease, background 0.15s ease, transform 0.15s ease;
+	transition: border-color var(--duration-fast) var(--ease-standard), background var(--duration-fast) var(--ease-standard), transform var(--duration-fast) var(--ease-standard);
 }
 
 .glos-card:hover {
@@ -10741,7 +10741,7 @@ a.pill--devnet:hover {
 .glos-empty strong { color: var(--ink); font-weight: 600; }
 
 @media (prefers-reduced-motion: reduce) {
-	.glos-card { transition: border-color 0.15s ease; }
+	.glos-card { transition: border-color var(--duration-fast) var(--ease-standard); }
 	.glos-card.is-target { animation: none; }
 }
 
@@ -10769,9 +10769,9 @@ a.pill--devnet:hover {
 .card--interactive {
 	cursor: pointer;
 	transition:
-		border-color 0.15s ease,
-		transform    0.15s ease,
-		box-shadow   0.15s ease;
+		border-color var(--duration-fast) var(--ease-standard),
+		transform    var(--duration-fast) var(--ease-standard),
+		box-shadow   var(--duration-fast) var(--ease-standard);
 }
 
 .card--interactive:hover {
@@ -10813,7 +10813,7 @@ a.pill--devnet:hover {
 
 @media (prefers-reduced-motion: reduce) {
 	.card--interactive {
-		transition: border-color 0.15s ease;
+		transition: border-color var(--duration-fast) var(--ease-standard);
 	}
 	.card--interactive:hover,
 	.card--interactive:active {
@@ -10863,9 +10863,9 @@ a.pill--devnet:hover {
 /* Generic hover lift for interactive panels/surfaces (cards use --interactive) */
 .hover-lift {
 	transition:
-		border-color 0.15s ease,
-		transform    0.15s ease,
-		box-shadow   0.15s ease;
+		border-color var(--duration-fast) var(--ease-standard),
+		transform    var(--duration-fast) var(--ease-standard),
+		box-shadow   var(--duration-fast) var(--ease-standard);
 }
 .hover-lift:hover {
 	border-color: var(--stroke-strong);
@@ -10906,7 +10906,7 @@ a.pill--devnet:hover {
 
 @media (prefers-reduced-motion: reduce) {
 	.hover-lift {
-		transition: border-color 0.15s ease;
+		transition: border-color var(--duration-fast) var(--ease-standard);
 	}
 	.hover-lift:hover,
 	.hover-lift:active {
@@ -10949,7 +10949,7 @@ a.pill--devnet:hover {
 	font-weight: 600;
 	cursor: pointer;
 	text-decoration: none;
-	transition: opacity 0.15s, background 0.15s;
+	transition: opacity var(--duration-fast), background var(--duration-fast);
 	letter-spacing: 0.02em;
 }
 
@@ -11036,7 +11036,7 @@ a.pill--devnet:hover {
 	color: rgba(255, 255, 255, 0.35);
 	font-size: 0.85em;
 	text-decoration: none;
-	transition: color 0.12s;
+	transition: color var(--duration-fast);
 }
 .receipt-detail:hover {
 	color: rgba(255, 255, 255, 0.65);
@@ -11068,7 +11068,7 @@ a.pill--devnet:hover {
 	font-weight: 600;
 	cursor: pointer;
 	text-decoration: none;
-	transition: background 0.12s, border-color 0.12s, color 0.12s;
+	transition: background var(--duration-fast), border-color var(--duration-fast), color var(--duration-fast);
 	vertical-align: middle;
 }
 .tx-add-funds-btn:hover,
@@ -11102,7 +11102,7 @@ a.pill--devnet:hover {
 	font-size: 13px;
 	font-weight: 600;
 	cursor: pointer;
-	transition: background 0.12s, border-color 0.12s;
+	transition: background var(--duration-fast), border-color var(--duration-fast);
 }
 .fund-alert-btn:hover {
 	background: rgba(255, 255, 255, 0.12);
@@ -11154,7 +11154,7 @@ a.pill--devnet:hover {
 	color: var(--ink, var(--ink));
 	opacity: 0;
 	transform: translateY(12px) scale(0.98);
-	transition: opacity 0.22s ease, transform 0.22s cubic-bezier(0.22, 1, 0.36, 1);
+	transition: opacity var(--duration-base) var(--ease-standard), transform var(--duration-base) cubic-bezier(0.22, 1, 0.36, 1);
 }
 .tws-disc-card.is-in {
 	opacity: 1;
@@ -11177,7 +11177,7 @@ a.pill--devnet:hover {
 	border: 1px solid transparent;
 	border-radius: var(--radius-pill, 999px);
 	cursor: pointer;
-	transition: color 0.15s ease, background 0.15s ease, border-color 0.15s ease;
+	transition: color var(--duration-fast) var(--ease-standard), background var(--duration-fast) var(--ease-standard), border-color var(--duration-fast) var(--ease-standard);
 }
 .tws-disc-x:hover { color: var(--ink, var(--ink)); background: var(--surface-2, rgba(255, 255, 255, 0.05)); }
 .tws-disc-x:active { background: var(--surface-3, rgba(255, 255, 255, 0.08)); }
@@ -11220,7 +11220,7 @@ a.pill--devnet:hover {
 	background: var(--surface-2, rgba(255, 255, 255, 0.05));
 	border: 1px solid var(--stroke-strong, rgba(255, 255, 255, 0.14));
 	border-radius: var(--radius-control, 10px);
-	transition: background 0.15s ease, border-color 0.15s ease, transform 0.1s ease;
+	transition: background var(--duration-fast) var(--ease-standard), border-color var(--duration-fast) var(--ease-standard), transform var(--duration-instant) var(--ease-standard);
 }
 .tws-disc-cta:hover { background: var(--surface-3, rgba(255, 255, 255, 0.08)); border-color: var(--stroke-strong, rgba(255, 255, 255, 0.2)); }
 .tws-disc-cta:active { transform: translateY(1px); }
@@ -11237,7 +11237,7 @@ a.pill--devnet:hover {
 }
 
 @media (prefers-reduced-motion: reduce) {
-	.tws-disc-card { transition: opacity 0.001s linear; transform: none; }
+	.tws-disc-card { transition: opacity var(--duration-instant) linear; transform: none; }
 	.tws-disc-card.is-in { transform: none; }
 }
 
@@ -11350,7 +11350,7 @@ a.pill--devnet:hover {
 	box-shadow: 0 4px 20px rgba(155, 93, 255, 0.35);
 	opacity: 0;
 	pointer-events: none;
-	transition: opacity 0.25s, transform 0.25s;
+	transition: opacity var(--duration-base), transform var(--duration-base);
 	z-index: 9900;
 	white-space: nowrap;
 	max-width: calc(100vw - 2rem);

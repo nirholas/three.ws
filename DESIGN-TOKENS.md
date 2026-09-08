@@ -127,6 +127,32 @@ transition: transform var(--duration-fast) var(--ease-standard),
             opacity   var(--duration-fast) var(--ease-standard);
 ```
 
+**Enforced by `npm run audit:motion-tokens`**
+([scripts/audit-motion-drift.mjs](scripts/audit-motion-drift.mjs), part of
+`npm run gate`). None of the ladder above reaches a transition that spells its
+timing as a literal, including the `prefers-reduced-motion` zeroing. A sweep
+found the platform saying the same thing 41 different ways: 150ms, 140ms, 120ms,
+200ms, 180ms, 160ms and 130ms all mean "a control responding", and a bare `ease`
+appeared thousands of times where a named easing belongs. Nobody notices one
+transition; what they notice is that the site does not feel like one product.
+
+The audit counts literal times and easings inside `transition`,
+`transition-duration` and `transition-timing-function`, and the count may only
+go down. `@keyframes` and `animation` are out of scope, because a loop's
+duration is usually intrinsic to the effect (a 2s shimmer is not a control
+response). Migrate to the nearest rung rather than adding a token for a value:
+
+| Literal | Rung |
+|---------|------|
+| up to 110ms | `var(--duration-instant)` |
+| 111 to 180ms | `var(--duration-fast)` |
+| 181 to 300ms | `var(--duration-base)` |
+| over 300ms | `var(--duration-slow)` |
+| `ease`, `ease-in-out` | `var(--ease-standard)` |
+| `ease-out` | `var(--ease-out)` |
+
+A bespoke `cubic-bezier()` stays: a deliberate curve is a choice, not drift.
+
 ### Layout
 `--header-h` (3.5rem) · `--phi` (1.618).
 
