@@ -1,24 +1,24 @@
-# Awesome 3D Agents
-
-[![Awesome](https://awesome.re/badge-flat2.svg)](https://awesome.re)
+# Awesome 3D Agents [![Awesome](https://awesome.re/badge.svg)](https://awesome.re)
 
 > Everything you need to give an AI agent a body.
 
 A curated list of the models, engines, formats, and research that turn a language model into something you can see, animate, talk to, and put on a web page. Generation, rigging, motion, faces, voice, renderers, and the agent frameworks that drive them.
 
-134 entries across 13 sections. Browsable, searchable, and filterable at [three.ws/awesome](https://three.ws/awesome). Every link is checked with `npm run awesome:links`.
+152 entries across 15 sections. Browsable, searchable, and filterable at [three.ws/awesome](https://three.ws/awesome). Every link is fetched and verified before it ships.
 
 ## Contents
 
 - [Text and image to 3D](#text-and-image-to-3d) (16)
 - [Photos and video to 3D](#photos-and-video-to-3d) (14)
-- [Avatars and characters](#avatars-and-characters) (8)
-- [Rigging and retargeting](#rigging-and-retargeting) (6)
-- [Motion and animation](#motion-and-animation) (9)
+- [Avatars and characters](#avatars-and-characters) (13)
+- [Rigging and retargeting](#rigging-and-retargeting) (8)
+- [Motion and animation](#motion-and-animation) (10)
+- [Texturing and materials](#texturing-and-materials) (5)
 - [Faces, lipsync, and voice](#faces-lipsync-and-voice) (15)
 - [Rendering on the web](#rendering-on-the-web) (12)
 - [Formats and asset pipeline](#formats-and-asset-pipeline) (12)
-- [Physics, networking, and shared worlds](#physics-networking-and-shared-worlds) (9)
+- [AR and XR](#ar-and-xr) (6)
+- [Physics, networking, and shared worlds](#physics-networking-and-shared-worlds) (8)
 - [Agent frameworks and protocols](#agent-frameworks-and-protocols) (13)
 - [Datasets and simulators](#datasets-and-simulators) (7)
 - [Free assets](#free-assets) (6)
@@ -76,6 +76,11 @@ Humanoid bodies that arrive already rigged, already skinned, and ready to be dri
 - [SMPL-X](https://smpl-x.is.tue.mpg.de) - A parametric body model with articulated hands and an expressive face. The shared coordinate system that most human motion research speaks.
 - [Character Creator](https://www.reallusion.com/character-creator/) - Commercial character authoring with production-grade topology, morphs, and direct export to game engines.
 - [three.ws Avatar Studio](https://three.ws/avatar-studio) - Generate, rig, dress, and pose an avatar in the browser, then embed it anywhere with one script tag.
+- [MetaHuman](https://dev.epicgames.com/documentation/en-us/metahuman/metahuman-documentation) - Epic's photorealistic human creator, free to use, with a browser editor and export into Unreal or Maya. The quality ceiling for a digital human.
+- [VRM Add-on for Blender](https://github.com/saturday06/VRM-Addon-for-Blender) - Import, edit, and export VRM avatars in Blender, including spring bones and expressions. The missing link between an authoring tool and the avatar format.
+- [PIFuHD](https://github.com/facebookresearch/pifuhd) - Reconstructs a clothed 3D human from one photo at a resolution that captures fabric folds. The paper that made single-image humans plausible.
+- [ECON](https://github.com/YuliangXiu/ECON) - Clothed human reconstruction that stays robust on loose garments and unusual poses, where implicit-only methods fall apart.
+- [Meshcapade](https://meshcapade.com) - Commercial bodies and motion built on the SMPL family, so what you buy speaks the same parameter space as the research above.
 
 ## Rigging and retargeting
 
@@ -86,7 +91,9 @@ A mesh without a skeleton is a statue. This is the layer that decides whether an
 - [RigNet](https://github.com/zhan-xu/RigNet) - The neural rigging paper this field grew out of: joint prediction, skeleton connectivity, and skinning learned end to end.
 - [AccuRIG](https://actorcore.reallusion.com/auto-rig) - A free desktop auto-rigger for static humanoid meshes, with clean weight painting and direct export to standard skeletons.
 - [Rigify](https://docs.blender.org/manual/en/4.5/addons/rigging/rigify/index.html) - Blender's bundled meta-rig system. Free, scriptable, and the practical fallback when an automatic rigger gets a character wrong.
-- [SkeletonUtils](https://threejs.org/docs/#examples/en/utils/SkeletonUtils) - three.js retargeting helpers that map a clip authored for one skeleton onto another at runtime. Small, unglamorous, and load-bearing.
+- [SkeletonUtils](https://threejs.org/docs/#examples/en/utils/SkeletonUtils) - Retargeting helpers in three.js that map a clip authored for one skeleton onto another at runtime. Small, unglamorous, and load-bearing.
+- [Ossos](https://github.com/sketchpunklabs/ossos) - A TypeScript skeletal animation library with inverse kinematics and retargeting written to be read, not just imported.
+- [mixamo_converter](https://github.com/enziop/mixamo_converter) - Batch-converts Mixamo clips to in-place root motion in Blender, which is the conversion every game and web project needs and Mixamo does not do.
 
 ## Motion and animation
 
@@ -101,6 +108,17 @@ Generated motion, captured motion, and the datasets both are trained on. A body 
 - [AMASS](https://amass.is.tue.mpg.de) - Fifteen-plus motion capture datasets unified onto one SMPL body. The reason cross-dataset motion training is possible at all.
 - [Cascadeur](https://cascadeur.com) - Keyframe animation software with physics-aware assistance and AutoPosing, usable free for individuals under a revenue threshold.
 - [Rokoko](https://www.rokoko.com) - Motion capture suits and a free video-to-motion tool, plus a Blender plugin that handles retargeting.
+- [Kalidokit](https://github.com/yeemachine/kalidokit) - Turns MediaPipe face, hand, and pose landmarks into VRM rotations in the browser, so a webcam drives an avatar with no capture suit.
+
+## Texturing and materials
+
+Geometry is half the asset. These are the tools that decide whether it looks like a surface or like grey clay.
+
+- [TEXTure](https://github.com/TEXTurePaper/TEXTurePaper) - Text-guided texturing of an existing mesh through iterative depth-conditioned diffusion. The paper that started this category.
+- [Text2Tex](https://github.com/daveredrum/Text2Tex) - Generates high-resolution textures for a mesh from a prompt, with a view-selection pass that reduces the seams these methods usually leave.
+- [Paint3D](https://github.com/OpenTexture/Paint3D) - Produces lighting-free texture maps, so the result can be relit properly instead of baking one scene's shadows into the albedo.
+- [xatlas](https://github.com/jpcy/xatlas) - Mesh parameterisation and UV atlas generation. A generated mesh with no UVs cannot be textured, and this is what fixes that.
+- [Material Maker](https://github.com/RodZill4/material-maker) - A free node-based procedural material authoring tool built on Godot, in the shape of Substance Designer.
 
 ## Faces, lipsync, and voice
 
@@ -127,14 +145,14 @@ The difference between a model standing there and an agent talking to you. Speec
 The runtime that actually puts the body on a page. Everything above is upstream of a choice made here.
 
 - [three.js](https://github.com/mrdoob/three.js) - The default WebGL and WebGPU library for the web, with the deepest ecosystem of loaders, controls, and examples anywhere.
-- [React Three Fiber](https://github.com/pmndrs/react-three-fiber) - three.js as a React renderer. Scene graphs become components, and the reconciler handles the mutation you would otherwise write by hand.
+- [React Three Fiber](https://github.com/pmndrs/react-three-fiber) - A React renderer for three.js. Scene graphs become components, and the reconciler handles the mutation you would otherwise write by hand.
 - [drei](https://github.com/pmndrs/drei) - The helper library that makes React Three Fiber practical: controls, loaders, staging, text, and effects you would otherwise rebuild every project.
 - [Babylon.js](https://github.com/BabylonJS/Babylon.js) - A batteries-included web engine with a built-in physics layer, node material editor, and an inspector that is genuinely better than the alternatives.
 - [PlayCanvas](https://github.com/playcanvas/engine) - A lightweight engine tuned hard for load time and mobile, backed by a collaborative browser editor.
 - [model-viewer](https://github.com/google/model-viewer) - One custom element that renders a glTF with sensible defaults, accessibility, and AR on both phone platforms. The lowest-effort correct answer.
 - [A-Frame](https://github.com/aframevr/aframe) - Declarative HTML for WebXR scenes, with an entity-component system underneath. Still the shortest path from markup to headset.
-- [Threlte](https://github.com/threlte/threlte) - three.js for Svelte, with a component library, physics bindings, and a preprocessor that keeps bundles small.
-- [TresJS](https://github.com/Tresjs/tres) - three.js as Vue components, with reactivity mapped onto scene-graph updates.
+- [Threlte](https://github.com/threlte/threlte) - Svelte components for three.js, with a component library, physics bindings, and a preprocessor that keeps bundles small.
+- [TresJS](https://github.com/Tresjs/tres) - Vue components for three.js, with reactivity mapped onto scene-graph updates.
 - [OGL](https://github.com/oframe/ogl) - A minimal WebGL library that stays close to the API instead of hiding it. The right tool when three.js is more engine than you need.
 - [Needle Engine](https://needle.tools) - Author in Unity or Blender, ship a small web build. A pragmatic bridge for teams whose content pipeline already exists.
 - [agent-3d](https://github.com/nirholas/three.ws/tree/main/avatar-sdk) - A web component that drops a rigged, animated, lip-syncing agent avatar onto any page in one tag, with a JS API for moods and gestures.
@@ -156,6 +174,17 @@ Getting the asset small, valid, and loadable. Most 3D-on-the-web failures are pi
 - [OpenUSD](https://github.com/PixarAnimationStudios/OpenUSD) - Pixar's scene description for large, layered, collaboratively edited worlds. Heavier than glTF, and the right answer above a certain scale.
 - [three-mesh-bvh](https://github.com/gkjohnson/three-mesh-bvh) - Bounding volume hierarchies for three.js geometry, turning raycasts against dense meshes from unusable into instant.
 
+## AR and XR
+
+Getting the body off the page and into the room. The web is the only platform where this needs no install.
+
+- [WebXR Device API](https://immersive-web.github.io/webxr/) - The specification behind every headset and phone AR session on the open web. Read the spec, not just a framework's wrapper.
+- [WebXR Samples](https://immersive-web.github.io/webxr-samples/) - The working group's own runnable examples, from a bare session to hit testing and layers. Read these before any framework tutorial.
+- [Immersive Web Emulator](https://github.com/meta-quest/immersive-web-emulator) - A browser extension that emulates a headset and controllers, so WebXR can be developed and debugged without putting a device on.
+- [AR Quick Look](https://developer.apple.com/documentation/arkit/previewing-a-model-with-ar-quick-look) - Apple's system AR viewer. A USDZ behind a link opens full-screen AR on any iPhone with no app and no permission prompt.
+- [Scene Viewer](https://developers.google.com/ar/develop/scene-viewer) - The Android equivalent, launched from an intent URL with a glTF. Together with AR Quick Look it is why model-viewer can offer AR everywhere.
+- [8th Wall](https://8thwall.org/) - Markerless AR that runs in the mobile browser rather than an app, with world tracking and face effects.
+
 ## Physics, networking, and shared worlds
 
 One avatar in a viewer is a demo. Several avatars in a place, with gravity and collisions, is a product.
@@ -168,7 +197,6 @@ One avatar in a viewer is a demo. Several avatars in a place, with gravity and c
 - [LiveKit](https://github.com/livekit/livekit) - An open WebRTC server for real-time audio and video, with SDKs everywhere and a self-hostable path.
 - [mediasoup](https://github.com/versatica/mediasoup) - A selective forwarding unit as a Node library rather than a service, for teams that want to own the media path.
 - [geckos.io](https://github.com/geckosio/geckos.io) - Unreliable UDP-like messaging in the browser over WebRTC data channels, which is what fast-moving avatar positions actually want.
-- [WebXR Device API](https://immersive-web.github.io/webxr/) - The specification behind every headset and phone AR session on the open web. Read the spec, not just a framework's wrapper.
 
 ## Agent frameworks and protocols
 
@@ -225,8 +253,4 @@ How to get good at this. Read in roughly this order.
 
 ## Contributing
 
-Additions are welcome. Read [CONTRIBUTING.md](CONTRIBUTING.md) first: entries live in [`data/awesome.json`](../data/awesome.json), not in this file, which is generated.
-
-## License
-
-The list is published under [Apache-2.0](../LICENSE) with the rest of this repository. Each linked project carries its own license.
+Additions are welcome. Read [CONTRIBUTING.md](CONTRIBUTING.md) first: entries live in [`data/awesome.json`](../data/awesome.json), not in this file, which is generated. The list is published under Apache-2.0, and each linked project carries its own license.
