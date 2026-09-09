@@ -453,22 +453,30 @@ export function classifyOkxChatBotBeat(beat, now = Date.now()) {
 	const lastBeatMs = beat.last_beat_at ? new Date(beat.last_beat_at).getTime() : 0;
 	const ageMs = lastBeatMs ? now - lastBeatMs : Number.POSITIVE_INFINITY;
 	const meta = beat.meta && typeof beat.meta === 'object' ? beat.meta : {};
+	// Who is beating, reported on every branch that has a beat at all. Not
+	// decoration: scripts/lib/okx-bot-host-guard.mjs reads these two fields to
+	// refuse a local revive that would put a second writer on the one shared
+	// identity, and it reads them from THIS public endpoint precisely so that
+	// check needs no database and no gcloud login.
+	const host = typeof meta.host === 'string' && meta.host ? meta.host : null;
+	const hostDurable = typeof meta.hostDurable === 'boolean' ? meta.hostDurable : null;
+	const identity = { host, hostDurable };
 
 	if (ageMs > OKX_BOT_DOWN_MS) {
 		const ageNote = Number.isFinite(ageMs) ? `${Math.round(ageMs / 60_000)} min old` : 'never recorded';
 		return {
 			...base,
+			...identity,
 			status: 'down',
 			detail: `heartbeat ${ageNote}, the chat-bot host is gone, so marketplace chat is not delivered at all`,
 			hint: 'Redeploy the host: gcloud builds submit --config workers/okx-chat-bot/cloudbuild.yaml . (see workers/okx-chat-bot/README.md). For a local stopgap, npm run okx:bot.',
 		};
 	}
 	if (ageMs > OKX_BOT_FRESH_MS) {
-		return { ...base, status: 'degraded', detail: `heartbeat ${Math.round(ageMs / 1000)}s old, host slow or mid-restart` };
+		return { ...base, ...identity, status: 'degraded', detail: `heartbeat ${Math.round(ageMs / 1000)}s old, host slow or mid-restart` };
 	}
 
 	const reported = typeof meta.health === 'string' ? meta.health : 'unknown';
-	const host = typeof meta.host === 'string' && meta.host ? meta.host : null;
 	if (reported === 'ok') {
 		const online = `online (${meta.activeClients ?? '?'} XMTP client(s), provider=${beat.mode || meta.provider || 'unknown'}${host ? `, host=${host}` : ''})`;
 		// A host that beats but cannot survive on its own is a stopgap, not the
@@ -477,18 +485,20 @@ export function classifyOkxChatBotBeat(beat, now = Date.now()) {
 		if (meta.hostDurable === false) {
 			return {
 				...base,
+				...identity,
 				status: 'degraded',
 				detail: `${online}; that host is a stopgap and dies with its workspace, so chat delivery is not durable yet`,
 				hint: 'Deploy the always-on host: gcloud builds submit --config workers/okx-chat-bot/cloudbuild.yaml . (see workers/okx-chat-bot/README.md).',
 			};
 		}
-		return { ...base, status: 'ok', detail: online };
+		return { ...base, ...identity, status: 'ok', detail: online };
 	}
 	if (reported === 'unknown') {
-		return { ...base, status: 'unknown', detail: String(meta.detail || 'bot could not determine its own state') };
+		return { ...base, ...identity, status: 'unknown', detail: String(meta.detail || 'bot could not determine its own state') };
 	}
 	return {
 		...base,
+		...identity,
 		status: reported === 'down' ? 'down' : 'degraded',
 		detail: String(meta.detail || `bot reports ${reported}`),
 		hint: meta.needsHumanLogin

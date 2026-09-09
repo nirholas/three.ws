@@ -24,6 +24,7 @@ import { createSupervisor } from '../workers/okx-chat-bot/supervisor.js';
 import { STATE_ROOTS, STATE_EXCLUDES } from '../workers/okx-chat-bot/state.js';
 import { SKILLS, buildWorkspace } from '../workers/okx-chat-bot/workspace.js';
 import { classifyOkxChatBotBeat } from '../api/_lib/ops/subsystem-health.js';
+import { classifyLocalRevive, fetchOkxBotSubsystem } from '../scripts/lib/okx-bot-host-guard.mjs';
 import { buildChatBriefing } from '../api/_lib/okx-chat-briefing.js';
 import { OKX_CATALOG } from '../api/_lib/okx-catalog.js';
 
@@ -773,5 +774,128 @@ describe('okx_chat_bot subsystem health', () => {
 		expect(classifyOkxChatBotBeat(beat(20_000, { health: 'degraded', detail: '0 XMTP clients' }), now).status).toBe(
 			'degraded',
 		);
+	});
+});
+
+// One writer, enforced. The bot's identity (wallet keyring + XMTP database) is a
+// single state object, which is why the Cloud Run service is pinned to
+// --max-instances=1. `npm run okx:bot` is the one path that can still put a
+// second daemon on it, and on 2026-09-09 it did: the health endpoint reported
+// degraded without naming a host, the guard read that as an all-clear, and a
+// rival daemon came up on the same inbox. So the rule is fail-open on ignorance
+// (an unreachable endpoint must never block the emergency revive) and fail-closed
+// on any evidence that something is beating, named or not.
+describe('okx-chat-bot local revive guard', () => {
+	const sub = (over = {}) => ({ name: 'okx_chat_bot', status: 'ok', detail: 'online', host: null, ...over });
+
+	it('allows the revive when the health endpoint cannot be read at all', () => {
+		const v = classifyLocalRevive(null, { reachable: false });
+		expect(v.blocked).toBe(false);
+		expect(v.code).toBe('unreadable');
+	});
+
+	it('allows the revive when no host has ever reported', () => {
+		const v = classifyLocalRevive(sub({ status: 'unknown', detail: 'no heartbeat reported yet' }));
+		expect(v.blocked).toBe(false);
+		expect(v.code).toBe('never_hosted');
+	});
+
+	it('allows the revive when the host stopped beating, which is what it is for', () => {
+		const v = classifyLocalRevive(
+			sub({ status: 'down', detail: 'heartbeat 41 min old, the chat-bot host is gone', host: 'cloudrun:okx-chat-bot' }),
+		);
+		expect(v.blocked).toBe(false);
+		expect(v.code).toBe('host_gone');
+	});
+
+	it('blocks a revive while the durable host is serving chat', () => {
+		const v = classifyLocalRevive(sub({ host: 'cloudrun:okx-chat-bot (okx-chat-bot-00001-926)', hostDurable: true }), {
+			localHost: 'codespace:fluffy',
+		});
+		expect(v.blocked).toBe(true);
+		expect(v.code).toBe('durable_host_beating');
+		expect(v.detail).toContain('okx-chat-bot-00001-926');
+	});
+
+	// Two stopgaps are not better than one: they are two writers.
+	it('blocks a revive while another stopgap is serving chat', () => {
+		const v = classifyLocalRevive(sub({ host: 'codespace:other', hostDurable: false }), { localHost: 'codespace:mine' });
+		expect(v.blocked).toBe(true);
+		expect(v.code).toBe('stopgap_host_beating');
+	});
+
+	// The regression that made this guard exist: an API build older than the
+	// `host` field answers degraded and names nobody.
+	it('blocks a revive when a host is beating but the endpoint does not name it', () => {
+		const v = classifyLocalRevive(sub({ status: 'degraded', detail: 'the AI provider refuses this credential' }), {
+			localHost: 'codespace:mine',
+		});
+		expect(v.blocked).toBe(true);
+		expect(v.code).toBe('unnamed_host_beating');
+	});
+
+	// Re-staging the workspace on the machine that IS the host adds no writer.
+	it('allows the revive on the machine that is already the beating host', () => {
+		const v = classifyLocalRevive(sub({ host: 'codespace:mine', hostDurable: false }), { localHost: 'codespace:mine' });
+		expect(v.blocked).toBe(false);
+		expect(v.code).toBe('self');
+	});
+
+	it('reads the okx_chat_bot subsystem off a healthz body', async () => {
+		const body = { subsystems: { subsystems: [{ name: 'database', status: 'ok' }, { name: 'okx_chat_bot', status: 'ok', host: 'cloudrun:x' }] } };
+		const res = await fetchOkxBotSubsystem({
+			fetchImpl: async () => ({ ok: true, json: async () => body }),
+		});
+		expect(res.reachable).toBe(true);
+		expect(res.subsystem.host).toBe('cloudrun:x');
+	});
+
+	// Never throws: a network failure has to become a warning, not a crash, or
+	// the emergency path dies exactly when it is needed.
+	it('reports a failed fetch as unreachable instead of throwing', async () => {
+		const res = await fetchOkxBotSubsystem({
+			fetchImpl: async () => {
+				throw new Error('getaddrinfo ENOTFOUND');
+			},
+		});
+		expect(res.reachable).toBe(false);
+		expect(res.error).toContain('ENOTFOUND');
+		expect(classifyLocalRevive(res.subsystem, { reachable: res.reachable }).blocked).toBe(false);
+	});
+});
+
+// The guard reads these two fields off the public endpoint, so they are part of
+// its contract, not incidental output.
+describe('okx_chat_bot subsystem identity fields', () => {
+	const now = Date.parse('2026-08-02T12:00:00Z');
+	const beat = (ageMs, meta = {}) => ({
+		mode: 'claude',
+		last_beat_at: new Date(now - ageMs).toISOString(),
+		meta: { health: 'ok', activeClients: 1, host: 'cloudrun:okx-chat-bot', hostDurable: true, ...meta },
+	});
+
+	it('carries host and hostDurable on a healthy beat', () => {
+		const s = classifyOkxChatBotBeat(beat(20_000), now);
+		expect(s.host).toBe('cloudrun:okx-chat-bot');
+		expect(s.hostDurable).toBe(true);
+	});
+
+	it('carries them on a self-reported failure, which is when a human reads them', () => {
+		const s = classifyOkxChatBotBeat(beat(20_000, { health: 'degraded', reason: 'ai_provider_unauthorized' }), now);
+		expect(s.status).toBe('degraded');
+		expect(s.host).toBe('cloudrun:okx-chat-bot');
+	});
+
+	it('carries them on a stale beat, so a silent host is still identified', () => {
+		expect(classifyOkxChatBotBeat(beat(30 * 60_000), now).host).toBe('cloudrun:okx-chat-bot');
+	});
+
+	it('reports null rather than undefined for a beat predating the fields', () => {
+		const s = classifyOkxChatBotBeat(
+			{ mode: 'claude', last_beat_at: new Date(now - 20_000).toISOString(), meta: { health: 'ok' } },
+			now,
+		);
+		expect(s.host).toBeNull();
+		expect(s.hostDurable).toBeNull();
 	});
 });

@@ -14,30 +14,32 @@ the daemon (observed alive at 21:09, stale pid by 03:13). The marketplace's own
 tests then report "timeout, no delivery in 30 min", which is what got the listing
 flagged offline once already.
 
-**State on 2026-09-02.** The wallet session is logged in (`claude@three.ws`), the daemon
-is running under the worker's own supervisor rather than the codespace autostart unit, and
-`/api/healthz` shows the `okx_chat_bot` subsystem for the first time. It is still a
-codespace, so every beat says so: `hostDurable=false` reads as degraded on the ops surface,
-not green. What is left is the deploy itself.
+**State on 2026-09-09, measured.** The durable host exists and this order is mostly done.
+Cloud Run service `okx-chat-bot`, revision `okx-chat-bot-00001-926`, booted
+2026-09-05T00:33Z and beating every 30s with `loggedIn: true`, `activeClients: 1`,
+`daemonRestarts: 0`. What is left is one reply lane: the AI provider refuses this
+project's credential (`Lightning dunning decision is deny`, a GCP billing hold), so chat
+arrives and no reply is authored. Both remaining steps are the owner's, and they are listed
+at the bottom of this file.
 
-## Immediate revive (do this first, it takes one command)
+## Do NOT start a local daemon (read this before running anything)
+
+The codespace stopgap is retired and **must stay stopped**. The bot's identity, the
+onchainos wallet keyring plus the XMTP client database, is a single state object with
+exactly one writer, which is what `--max-instances=1` protects on Cloud Run. Starting a
+second daemon anywhere puts a second writer on it, and a torn identity costs a human email
+OTP to recover.
+
+An earlier version of this file opened with "Immediate revive (do this first)" and
+`npm run okx:bot`. Following it on 2026-09-09 started exactly that rival daemon. The
+command now refuses while any other host is beating (exit 3, `--force` to override), so the
+trap is closed mechanically as well as here, but the rule stands: run nothing local while
+the deployed host is up.
+
+Read the deployed host's state instead. This read needs no `gcloud` and no credential:
 
 ```sh
-npm run okx:bot        # scripts/okx-bot-revive.mjs
-# exit 0 = online
-# exit 2 = staged but logged out; it prints the login URL and the poll commands
-```
-
-The login needs a human: email OTP as `claude@three.ws`. Run this immediately
-before any retest window. The wiring table is in
-[../okx-ai/RUNBOOK.md](_context/okx-ai-RUNBOOK.md) section 0.5.
-
-Then hand the daemon to the worker instead of leaving it parentless, so the fleet can see
-it and an expired session pages instead of going quiet:
-
-```sh
-PORT=8080 OKX_BOT_REPO_ROOT=/workspaces/three.ws \
-  node --env-file=.env.local workers/okx-chat-bot/index.js
+curl -s https://three.ws/api/healthz | jq '.subsystems.subsystems[]|select(.name=="okx_chat_bot")'
 ```
 
 ## The durable fix
@@ -71,21 +73,44 @@ host. Build it:
    host detect an expired session and emit an actionable alert naming the exact
    command, rather than failing chat silently.
 
-## Owner actions
+## Owner actions (both, and nothing else, as of 2026-09-09)
 
-- One email OTP login when the session is logged out.
-- An AI-provider credential for the headless box, if the host cannot reuse this
-  machine's.
+1. **Fund one AI lane.** Clearing the GCP billing hold on `aerial-vehicle-466722-p5` is
+   the one that also restores the platform's own Vertex anchor (`LLM providers DOWN`,
+   count 657). OpenRouter credit or an OpenAI reactivation each work too, because the
+   chain elects on a live probe.
+2. **Deploy the worker**, so the AI-lane chain from `ad723e87f` is actually running. The
+   live beat carries no `providerLane`/`providerChain` key, which is how you can tell
+   the serving revision predates it without `gcloud`: it is pinned to Vertex and cannot
+   pick up a funded lane even after step 1.
+
+   ```sh
+   gcloud builds submit --config workers/okx-chat-bot/cloudbuild.yaml \
+     --region us-central1 --project aerial-vehicle-466722-p5 \
+     --substitutions=SHORT_SHA=manual$(date +%s) .
+   ```
+
+Order does not matter; whichever lands second is picked up by the next 15-minute election.
+An email OTP is **not** currently needed: the session has been `loggedIn: true` since
+2026-09-05.
 
 ## Definition of done
 
-- [ ] `npm run okx:bot` exits 0, chat delivery verified end to end with a real
-      inbound message.
-- [ ] The daemon runs on an always-on host, not this codespace.
-- [ ] Its workspace carries real three.ws context, verified by asking it a
-      platform question and reading the answer.
-- [ ] A health endpoint exists and an offline session raises an alert.
-- [ ] [../okx-ai/PROGRESS.md](_context/okx-ai-PROGRESS.md) updated with the host details.
+- [ ] **Chat delivery verified end to end with a real inbound message.** The inbound half
+      is proven (`activeClients: 1`, `agentCount: 1`, 0 daemon restarts since
+      2026-09-05). The reply half cannot pass until owner action 1. The original wording
+      of this line, "`npm run okx:bot` exits 0", is retired: that command is the
+      codespace stopgap and must not run while the deployed host is up.
+- [x] **The daemon runs on an always-on host, not this codespace.** Cloud Run
+      `okx-chat-bot-00001-926`, 4.8 days of continuous 30s beats.
+- [ ] **Its workspace carries real three.ws context.** The mechanical half is done and
+      tested: `buildChatBriefing()` renders 10,069 bytes from the live catalog module and
+      is rebuilt on every boot. Asking the bot a platform question needs owner action 1.
+- [x] **A health endpoint exists and an offline session raises an alert.** `/readyz` is
+      strict, `/api/healthz` carries the `okx_chat_bot` subsystem (now naming its
+      `host` and `hostDurable` as fields), and `sendOpsAlert` fires on every
+      transition into a bad state.
+- [x] **[../okx-ai/PROGRESS.md](_context/okx-ai-PROGRESS.md) updated with the host details.**
 
 ## Retire this prompt when it is done (required)
 

@@ -234,7 +234,38 @@ curl -s localhost:8080/readyz | jq '{ready: .health.ready, reason: .health.reaso
 
 To stage the same workspace on a developer machine without running the worker,
 use [scripts/okx-bot-revive.mjs](../../scripts/okx-bot-revive.mjs), which keeps
-the identical skill list.
+the identical skill list. It refuses to start a daemon while any other host is
+serving agent 2632: see **One writer, enforced** below.
+
+### One writer, enforced
+
+The wallet keyring and the XMTP client database are one state object with exactly
+one writer, which is what `--max-instances=1` protects on Cloud Run. Nothing
+protected it from a *second machine*, and `npm run okx:bot` is the one command
+that starts one. On 2026-09-09 it did: run from a codespace while the Cloud Run
+host was serving, it installed the CLIs, started a daemon, and came up
+`agentCount=1 activeClients=1` against the same inbox. It was stopped within
+three minutes and the deployed host never missed a beat, but nothing about the
+command said no.
+
+Now it asks first, through
+[scripts/lib/okx-bot-host-guard.mjs](../../scripts/lib/okx-bot-host-guard.mjs):
+
+| What the health endpoint says | Verdict |
+|---|---|
+| unreachable | **allowed**, with a warning. An emergency revive must not need the internet to work |
+| `no heartbeat reported yet` | **allowed**. Nothing has ever hosted this bot |
+| `down`, heartbeat stale | **allowed**. The host is gone; this is the emergency the script exists for |
+| any beat, host is this machine | **allowed**. Re-staging the workspace where the daemon already runs adds no writer |
+| any beat, another host | **refused**, exit 3, `--force` to override |
+| any beat, host not named | **refused**. An API build older than the `host` field answers exactly this, and reading it as an all-clear is what started the rival daemon |
+
+The read is `GET /api/healthz` and nothing else: no `DATABASE_URL`, no
+`gcloud` login, no secret. The machine most likely to run this by mistake is a
+fresh clone with none of those, so the guard has to work there or it does not
+work at all. That is also why [subsystem-health.js](../../api/_lib/ops/subsystem-health.js)
+now puts `host` and `hostDurable` on the `okx_chat_bot` subsystem as fields
+rather than only inside a sentence.
 
 ## HTTP surface
 
@@ -408,7 +439,8 @@ Daemon stdout and stderr are forwarded into the worker's own log stream under a
 
 ## Related
 
-- [scripts/okx-bot-revive.mjs](../../scripts/okx-bot-revive.mjs) stages the same workspace locally.
+- [scripts/okx-bot-revive.mjs](../../scripts/okx-bot-revive.mjs) stages the same workspace locally, and refuses while another host is serving.
+- [scripts/lib/okx-bot-host-guard.mjs](../../scripts/lib/okx-bot-host-guard.mjs) is the one-writer check that script runs first.
 - [scripts/okx-bot-seed-state.mjs](../../scripts/okx-bot-seed-state.mjs) seeds the GCS session snapshot (`npm run okx:bot:seed-state`).
 - [api/_lib/okx-chat-briefing.js](../../api/_lib/okx-chat-briefing.js) generates the subsession briefing.
 - [workers/README.md](../README.md) is the worker index.

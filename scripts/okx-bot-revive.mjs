@@ -1,9 +1,19 @@
 #!/usr/bin/env node
 // Brings the OKX.AI marketplace chat bot for agent #2632 back online, end to end.
 //
-//   npm run okx:bot
+//   npm run okx:bot              # refuses while another host is serving chat
+//   npm run okx:bot -- --force   # start anyway (only after stopping that host)
 //
-// The bot is a LOCAL `okx-a2a` daemon plus an `onchainos` wallet session, both of
+// EMERGENCY PATH ONLY, since 2026-09-04. The durable host is the Cloud Run
+// service `okx-chat-bot` (workers/okx-chat-bot/), and the bot's identity (the
+// onchainos wallet keyring plus the XMTP client database) is a single state
+// object with exactly one writer. Starting this daemon while that service is up
+// puts a second daemon on the same inbox, and recovering a torn identity costs a
+// human email OTP. So the script refuses to start when it can see another host
+// beating; `--force` overrides, and is for the case where you have just stopped
+// the other host yourself.
+//
+// The bot is an `okx-a2a` daemon plus an `onchainos` wallet session, both of
 // which live outside this repo. A codespace rebuild (or an idle nap) wipes them,
 // and OKX-side chat tests then time out with "no delivery in 30 min". This script
 // is the whole recovery: install, daemon, AI workspace, catalog briefing, skills,
@@ -19,7 +29,11 @@ import { homedir } from 'node:os';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
+import { classifyLocalRevive, fetchOkxBotSubsystem } from './lib/okx-bot-host-guard.mjs';
+import { resolveHost } from '../workers/okx-chat-bot/config.js';
+
 const REPO = join(dirname(fileURLToPath(import.meta.url)), '..');
+const FORCE = process.argv.slice(2).includes('--force');
 const WORKSPACE = join(homedir(), '.okx-agent-task', 'workspace');
 const SKILLS_SRC = join(REPO, '.agents', 'skills');
 const MIN_NODE_MAJOR = 22;
@@ -61,6 +75,25 @@ function has(bin) {
 }
 
 console.log('OKX chat bot revive\n');
+
+// 0. One writer. The identity this daemon would open is shared with whatever
+//    host is already serving agent #2632, so ask the platform who that is before
+//    installing or starting anything. The read is credential-free on purpose: it
+//    has to work on the machine with the least set up, which is the one most
+//    likely to run this by mistake.
+const local = resolveHost().label;
+const remote = await fetchOkxBotSubsystem();
+const verdict = classifyLocalRevive(remote.subsystem, { localHost: local, reachable: remote.reachable });
+if (verdict.blocked && !FORCE) {
+	console.error(`REFUSED: ${verdict.detail}.\n`);
+	console.error('Starting a second daemon would put two writers on one wallet keyring and one');
+	console.error('XMTP database, and a torn identity costs a human email OTP to recover.\n');
+	console.error('If that host is healthy, you want nothing from this script. To read its state:');
+	console.error("  curl -s https://three.ws/api/healthz | jq '.subsystems.subsystems[]|select(.name==\"okx_chat_bot\")'\n");
+	console.error('If you have already stopped it, re-run with --force.');
+	process.exit(3);
+}
+step('one-writer check', verdict.blocked ? `OVERRIDDEN with --force: ${verdict.detail}` : verdict.detail);
 
 // 1. Node version, the daemon refuses to run below 22.14.
 const major = Number(process.versions.node.split('.')[0]);
