@@ -277,6 +277,13 @@ export function buildSceneModel(graph, options = {}) {
 	return {
 		floors: floors.map((f) => ({ id: f.id, name: f.name, level: f.level, y: f.y, roomIds: f.rooms.map((r) => r.id) })),
 		rooms: placed,
+		// The unit the HOUSE measures in, as the instance itself reports it, so
+		// every readout in every view can print it. Never derived from the
+		// visitor's locale: a Fahrenheit house read in French is still Fahrenheit,
+		// and a thermostat labelled with the wrong unit is a number that means
+		// nothing. Null when the instance did not say, and a bare degree sign is
+		// then the honest answer.
+		temperatureUnit: source.temperatureUnit || null,
 		bounds,
 		focusRoomId,
 		agent: agentStand(placed, focusRoomId),

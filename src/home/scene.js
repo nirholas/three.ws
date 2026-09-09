@@ -465,6 +465,9 @@ async function mount3d() {
 		state.renderer = createHomeScene(el.stage, {
 			onSelect: (entityId, object) => {
 				state.selected = entityId ? { entityId, object } : null;
+				for (const button of el.rooms.querySelectorAll('.hs-room-device')) {
+					button.setAttribute('aria-current', String(button.dataset.entityId === entityId));
+				}
 				renderInspector();
 			},
 			onFocusRoom: focusRoom,
@@ -550,8 +553,15 @@ function renderRooms(model) {
 			button.setAttribute('aria-current', String(room.id === model.focusRoomId));
 			button.dataset.roomId = room.id;
 
+			// Decorative: it carries the room's real light colour, which is lovely
+			// and is never the only place a fact lives. Every state it hints at is
+			// also a word in the meta below or in the description read to a screen
+			// reader, so a person who cannot separate warm white from cool white,
+			// or cannot see the rail at all, loses nothing.
 			const dot = document.createElement('span');
 			dot.className = 'hs-room-dot';
+			dot.setAttribute('aria-hidden', 'true');
+			dot.dataset.lit = String(Boolean(room.light.on));
 			dot.style.setProperty('--room-dot', room.light.on ? room.light.hex : 'rgba(255,255,255,0.14)');
 			dot.style.setProperty('--room-halo', room.light.on ? `${Math.round(3 + room.light.brightness * 7)}px` : '0px');
 			button.appendChild(dot);
@@ -565,7 +575,15 @@ function renderRooms(model) {
 			meta.className = 'hs-room-meta';
 			if (room.security && !room.security.secure) {
 				meta.classList.add('hs-room-alert');
+				// The word carries it, not the colour: `hs-room-alert` is red AND
+				// says "open", and the two never disagree.
 				meta.textContent = 'open';
+			} else if (room.light.total) {
+				// Lights on used to live only in the dot's colour, which is exactly
+				// the failure WCAG 1.4.1 is about. The count is the same fact in
+				// words, and it is more useful than the bare entity count it
+				// replaced: "2/5" answers "did I leave a light on in there".
+				meta.textContent = `${room.light.count}/${room.light.total}`;
 			} else if (room.climate) {
 				meta.textContent = room.climate.label;
 			} else {
@@ -573,8 +591,38 @@ function renderRooms(model) {
 			}
 			button.appendChild(meta);
 
+			// The whole room in one sentence, for the reader that cannot see any
+			// of the above. It replaces the button's own label rather than adding
+			// to it, so "Kitchen, 2 of 5" is never read as two disconnected
+			// fragments.
+			button.setAttribute('aria-label', `${room.name}. ${describeRoom(room)}`);
+
 			button.addEventListener('click', () => focusRoom(room.id));
 			item.appendChild(button);
+
+			// The devices of the room the house is looking at, as real controls.
+			//
+			// This is the keyboard and screen-reader path into the house, and it
+			// is the reason the 3D view is operable at all: a WebGL canvas is one
+			// opaque element, so picking a lamp by clicking it in the scene is a
+			// gesture only a mouse or a finger can make. Without this list, a
+			// person navigating by keyboard could reach the rooms and the panel
+			// and never reach a single device. It is not a fallback rendering of
+			// the scene: it is the same model, the same selection and the same
+			// inspector the canvas drives, reached a different way.
+			//
+			// Only the focused room expands, which is also what the camera is
+			// doing, so the two stay one thing rather than two lists to keep in
+			// sync. It stays visible rather than screen-reader-only on purpose:
+			// an invisible control that takes focus fails WCAG 2.4.7, and picking
+			// a small object out of a 3D scene is fiddly with a mouse too.
+			const expanded = room.id === model.focusRoomId;
+			button.setAttribute('aria-expanded', String(expanded));
+			if (expanded && room.objects.length) {
+				const devicesId = `hs-devices-${room.id}`;
+				button.setAttribute('aria-controls', devicesId);
+				item.appendChild(renderRoomDevices(room, devicesId));
+			}
 			list.appendChild(item);
 		}
 		section.appendChild(list);
@@ -582,13 +630,87 @@ function renderRooms(model) {
 	}
 }
 
+/**
+ * A room as one plain sentence: what is lit, what it measures, what is open.
+ * Used for the rail button's own label and for the spoken announcement when the
+ * house looks at a room, so the two can never say different things.
+ */
+function describeRoom(room) {
+	const bits = [];
+	if (room.light.total) {
+		bits.push(room.light.count === 0
+			? `No lights on out of ${room.light.total}.`
+			: `${room.light.count} of ${room.light.total} lights on.`);
+	}
+	if (room.climate) bits.push(`${room.climate.label}.`);
+	if (room.security) {
+		bits.push(room.security.secure
+			? 'Everything here is closed and locked.'
+			: `${room.security.unlocked.length + room.security.open.length} open or unlocked.`);
+	}
+	bits.push(`${room.entityCount} ${room.entityCount === 1 ? 'device' : 'devices'}.`);
+	return bits.join(' ');
+}
+
 function focusRoom(roomId) {
 	if (!state.model) return;
 	state.model = { ...state.model, focusRoomId: roomId };
 	state.renderer?.focusRoom?.(roomId);
-	for (const button of el.rooms.querySelectorAll('.hs-room')) {
-		button.setAttribute('aria-current', String(button.dataset.roomId === roomId));
+	// The rail is rebuilt rather than patched, because the focused room now owns
+	// a device list and moving that list is a structural change. The keyboard is
+	// put back on the room that was just chosen: rebuilding under someone's
+	// fingers and dropping focus to the document is the classic way an otherwise
+	// correct list becomes unusable without a mouse.
+	const hadFocus = el.rooms.contains(document.activeElement);
+	renderRooms(state.model);
+	if (hadFocus) el.rooms.querySelector(`.hs-room[data-room-id="${cssEscape(roomId)}"]`)?.focus();
+	const room = state.model.rooms.find((r) => r.id === roomId);
+	if (room) announce(`${room.name}. ${describeRoom(room)}`);
+}
+
+/**
+ * One room's devices, as buttons that select and buttons that act.
+ *
+ * Selecting is separated from acting deliberately: the first press moves the
+ * inspector to that device and says what it is, and only the explicit action
+ * button next to it moves anything physical. On a phone that also means a
+ * stray tap on a device name can never open a door.
+ */
+function renderRoomDevices(room, id) {
+	const list = document.createElement('ul');
+	list.className = 'hs-room-devices';
+	list.id = id;
+	for (const object of room.objects) {
+		const li = document.createElement('li');
+		const pick = document.createElement('button');
+		pick.type = 'button';
+		pick.className = 'hs-room-device';
+		pick.dataset.entityId = object.entityId;
+		const selected = state.selected?.entityId === object.entityId;
+		pick.setAttribute('aria-current', String(selected));
+		const name = document.createElement('span');
+		name.className = 'hs-room-device-name';
+		name.textContent = object.name;
+		const value = document.createElement('span');
+		value.className = 'hs-room-device-state';
+		value.textContent = object.available ? String(object.state) : 'unreachable';
+		pick.append(name, value);
+		pick.addEventListener('click', () => selectEntity(object.entityId, object));
+		li.appendChild(pick);
+		list.appendChild(li);
 	}
+	return list;
+}
+
+/** One selection path for the canvas, the rail and the 2D house. */
+function selectEntity(entityId, object) {
+	state.selected = entityId ? { entityId, object } : null;
+	state.renderer?.select?.(entityId);
+	for (const button of el.rooms.querySelectorAll('.hs-room-device')) {
+		button.setAttribute('aria-current', String(button.dataset.entityId === entityId));
+	}
+	renderInspector();
+	if (object) announce(`${object.name}. ${object.available ? `Currently ${object.state}.` : 'Unreachable.'} Its controls are in the device panel.`);
 }
 
 // ── inspector ────────────────────────────────────────────────────────────────
@@ -666,8 +788,10 @@ function describeAttributes(object) {
 	if (Number.isFinite(Number(a.brightness))) out.push(['Brightness', `${Math.round((Number(a.brightness) / 255) * 100)}%`]);
 	if (Array.isArray(a.rgb_color)) out.push(['Colour', `rgb(${a.rgb_color.join(', ')})`]);
 	if (Number.isFinite(Number(a.current_position))) out.push(['Open', `${Number(a.current_position)}%`]);
-	if (Number.isFinite(Number(a.current_temperature))) out.push(['Now', `${a.current_temperature}°`]);
-	if (Number.isFinite(Number(a.temperature))) out.push(['Set to', `${a.temperature}°`]);
+	// The unit the house reports, not the one the browser's locale would guess.
+	const unit = state.model?.temperatureUnit || '°';
+	if (Number.isFinite(Number(a.current_temperature))) out.push(['Now', `${a.current_temperature}${unit}`]);
+	if (Number.isFinite(Number(a.temperature))) out.push(['Set to', `${a.temperature}${unit}`]);
 	if (a.device_class) out.push(['Class', String(a.device_class)]);
 	if (a.media_title) out.push(['Playing', String(a.media_title)]);
 	return out.slice(0, 6);

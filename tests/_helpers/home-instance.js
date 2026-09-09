@@ -53,6 +53,7 @@ export async function acquireHomeInstance({ timeout = 600_000 } = {}) {
 			token: process.env.HOME_ASSISTANT_TOKEN,
 			version: null,
 			seed: null,
+			container: null,
 			managed: false,
 		};
 	}
@@ -67,6 +68,12 @@ export async function acquireHomeInstance({ timeout = 600_000 } = {}) {
 		token: result.token,
 		version: result.haVersion,
 		seed: result.seed || null,
+		// The container this house runs in, carried through so a journey can stop
+		// and start the real house. Losing a connection is a state the product
+		// draws, and the only honest way to reach it is to take the house away.
+		// A house supplied through the environment has no container we own, which
+		// is why the field is null rather than guessed.
+		container: result.container || null,
 		managed: true,
 	};
 }

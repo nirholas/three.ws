@@ -146,6 +146,11 @@ path, the old-device path and the "WebGL is blocked by policy" path.
 You reach it three ways:
 
 1. The **2D** button in the top bar, or `?view=2d`. The choice is remembered.
+   An explicit `?view=` outranks that memory: `?view=3d`, `?view=2d` and
+   `?view=plan` all open the view they name, whatever this browser used last,
+   which is what makes a shared link and a wall display's pinned address land
+   where they say they will. Following such a link does not change the
+   preference this browser chose for itself.
 2. **Automatically**, when the browser has no WebGL at all. The page says so
    rather than showing a black canvas.
 3. **Automatically**, when this device measurably cannot hold 18 frames a second

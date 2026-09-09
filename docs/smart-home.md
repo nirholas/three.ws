@@ -247,7 +247,7 @@ below exists, and anything that does not exist says so.
 | Piece | Where |
 |---|---|
 | The client library: state and action channel, MCP channel, room graph, intent resolution, the gate | [`packages/home-bridge/`](../packages/home-bridge/README.md) |
-| The connection store: schema, encrypted credentials, lifecycle | [`api/_lib/home/store.js`](../api/_lib/home/store.js), 8 migrations under `api/_lib/migrations/*_home_*.sql` |
+| The connection store: schema, encrypted credentials, lifecycle | [`api/_lib/home/store.js`](../api/_lib/home/store.js), 11 migrations under `api/_lib/migrations/*_home_*.sql` |
 | The bridge runtime: pooled per-home connections, refcounting, breaker, backpressure ladder | [`api/_lib/home/runtime.js`](../api/_lib/home/runtime.js), [`admission.js`](../api/_lib/home/admission.js) |
 | The `/api/home/*` surface: REST, SSE stream, the error contract | [`api/home/`](../api/home) |
 | Agent tools and the confirmation protocol | [`api/_lib/home/tools.js`](../api/_lib/home/tools.js), [`confirm.js`](../api/_lib/home/confirm.js), wired into `api/chat.js` and `api/_mcp/tools/home.js` |
@@ -260,6 +260,7 @@ below exists, and anything that does not exist says so.
 | The Wyoming voice satellite | [`services/home-satellite/`](../services/home-satellite/README.md) |
 | A standalone MCP server, so any assistant can run a house | [`packages/home-mcp/`](../packages/home-mcp/README.md) |
 | A real Home Assistant on demand, for every live test | [`scripts/home-test-instance.mjs`](../scripts/home-test-instance.mjs) |
+| The floorplan editor: a top-down plan the 3D scene follows, and a tray that makes rooms and files devices into them in the user's own registry | [`src/home/floorplan.js`](../src/home/floorplan.js), [`api/_lib/home/layout.js`](../api/_lib/home/layout.js), [`api/home/[id]/layout.js`](../api/home/[id]/layout.js), [`api/home/[id]/areas.js`](../api/home/[id]/areas.js) |
 | The tutorial | [docs/tutorials/connect-your-home.md](tutorials/connect-your-home.md) |
 
 ### The connect flow, state by state
@@ -320,8 +321,10 @@ flow into a page and into a model prompt, and there is a physical actuator on th
   It works; it is not yet worth shipping. The evidence and the conditions that would change that
   answer are in [section 8](#8-matter-direct-control-measured-and-not-yet-built). Nothing of it
   is in the tree.
-- **A floorplan editor.** The 3D scene derives its layout from the area graph. Authoring and
-  persisting a hand-drawn floorplan is not built.
+- **A room shape that is not a rectangle.** The floorplan editor stores each room as a centre and
+  a footprint in metres, which is the shape [`src/home/scene-model.js`](../src/home/scene-model.js)
+  reads. The stored document is versioned so it can gain rotation, wall openings and polygons
+  without the renderer's lookup changing, and none of those three is built.
 
 ## 6. What was actually verified
 

@@ -180,7 +180,11 @@ export function createHomeFallback(container, options = {}) {
 		}
 		if (object.domain === 'climate') {
 			const current = Number(object.attributes?.current_temperature);
-			if (Number.isFinite(current)) return `${object.state} · ${current}°`;
+			// The house's own unit, straight off the model. A bare degree sign made
+			// a thermostat unreadable: 21 and 70 are both plausible room
+			// temperatures, and which one is comfortable depends entirely on the
+			// symbol this line used to leave off.
+			if (Number.isFinite(current)) return `${object.state} · ${current}${model?.temperatureUnit || '°'}`;
 		}
 		if (object.domain === 'light' && object.activity > 0) {
 			const brightness = Number(object.attributes?.brightness);
