@@ -3,6 +3,16 @@
 	"entries": [
 		{
 			"date": "2026-09-09",
+			"title": "The retired Flappin UFO page is readable in light mode, and its two bottom-corner controls stopped sitting on top of each other",
+			"summary": "A full audit of /play/ufo, the page that stands where the retired Flappin UFO arcade demo used to be. In light mode its headline was painted in a violet-to-cyan gradient that all but vanished against the white card, the Retired badge and the Still live label were too pale to read, and the keyboard focus ring was that same near-invisible cyan, so tabbing through the page showed you nothing. All four now clear the contrast bar in both themes. The three links to the experiences that are still live were 37 pixels tall and the three.ws logo link was 21, both under the 44 pixels a thumb needs; every link on the page now clears it. The language picker and the Ctrl+K search hint were both pinned to the bottom right corner and overlapped each other, because this page carries its own compact header instead of the site nav that normally arranges that corner; they now stack. Two fixes from this audit land site-wide: the search hint was drawing dark text on its dark default pill on every light-themed page that does not define the site's surface colors, and neither floating control could be reached by screen reader landmark navigation. The page copy also lost the long dash the house style bans, in English and in all 84 translations.",
+			"tags": [
+				"fix",
+				"improvement"
+			],
+			"link": "/play/ufo"
+		},
+		{
+			"date": "2026-09-09",
 			"title": "The 3D Playground recovers when a model will not load, and now works from the keyboard",
 			"summary": "Dropping a .glb into /playground had exactly one failure mode: a dimmed screen and a spinner that never stopped. If the file was corrupt, the download stalled, or the 3D viewer script itself was blocked, nothing on the page said so and there was no way back. That spinner is now a shimmer inside the viewer frame instead of a curtain over the whole page, so the controls stay usable while a model streams, and a failure lands in a designed error card that names what went wrong and offers Retry or a file picker. A load that never finishes gives up after 25 seconds rather than hanging forever. The lighting presets no longer strand the scene on the previous preset’s exposure. The page also gained the structure it was missing: a real heading that says what it is for, headings on every control group, an accessible name on each switch, slider and field, a focus ring on everything you can tab to, and an upload button the keyboard can actually reach (it was hidden with display:none, which drops it out of the tab order entirely). On a phone the top navigation scrolls instead of vanishing. Animation names read out of an uploaded file are rendered as text, never as markup.",
 			"tags": [

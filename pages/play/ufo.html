@@ -265,6 +265,11 @@
 		</nav>
 	</section>
 </main>
+	<!-- Shared bottom-right corner stack. This page carries its own header
+	     instead of /nav.js, which is what normally loads it, so without this the
+	     auto-mounted language switcher and the Ctrl+K search hint both fall back
+	     to fixed positioning and stack on top of each other. -->
+	<script src="/corner-stack.js" defer></script>
 	<!-- Runtime i18n: detects locale, swaps annotated copy, mounts <lang-switcher>. -->
 	<script type="module" src="/i18n.js"></script>
 </body>
