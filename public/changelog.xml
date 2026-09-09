@@ -15,6 +15,14 @@
 			<description>A full audit of /oracle/arm found that anyone not signed in was shown “Create a 3D agent to arm it”, a dead end for a visitor with no account, and the rest of the page was hidden behind it. Signing in now gets its own state with sign-in and register buttons, and the live “clearing your bar” preview plus the 30-day win-rate readout stay on screen for everyone, because both run on public data. If the agents list itself fails to load, the page now says so with the status it got back and a Try again button, instead of pretending the account is empty. Four more fixes went with it: the arm switch and the two rule toggles can now be operated from the keyboard (they were focusable but did nothing on Enter or Space), coin artwork routes through the site image proxy so icons stop failing on IPFS gateways, the status line no longer flips back to “Disarmed” when the translation catalog lands after the page has rendered, and every form field now has a real label attached to it.</description>
 		</item>
 		<item>
+			<title>Avatars and token art load again on sites that embed three.ws</title>
+			<link>https://three.ws/changelog</link>
+			<guid isPermaLink="false">2026-09-09:Avatars and token art load again on sites that embed three.ws</guid>
+			<pubDate>Wed, 09 Sep 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>Assets served from /cdn (avatars, thumbnails, generated models) are read from our object store with a signed request, and when that request is rejected the route falls back to the store's public address so the bytes still arrive. That fallback was a redirect, and a redirect throws away the cross-origin permission the route grants: browsers re-check permission at the redirect's destination, and the public address grants none. Measured from an outside site, every one of those reads failed outright, which took down model previews on pages that load art through the proxy and silently broke third-party embeds of three.ws avatars. The bytes are now served through three.ws itself rather than pointed at, so the permission, the file type and the download rules all survive the fallback, partial reads for video and audio keep working, and a file that genuinely is not there says so instead of reporting a server fault the page retries forever. It also keeps the fallback off the rate-limited public address, which is the whole reason the proxy exists.</description>
+		</item>
+		<item>
 			<title>Endpoint Shopper fits a phone, and says something useful when a run finds nothing to buy</title>
 			<link>https://three.ws/shopper</link>
 			<guid isPermaLink="false">2026-09-09:Endpoint Shopper fits a phone, and says something useful when a run finds nothing to buy</guid>
@@ -37,6 +45,14 @@
 			<pubDate>Wed, 09 Sep 2026 12:00:00 GMT</pubDate>
 			<category>fix</category>
 			<description>A full audit of /oracle, the fused conviction board for pump.fun launches. When a panel's request failed, the page told you the opposite of the truth: the live feed claimed &quot;Oracle is warming up&quot; and said the engine ships with its backend, the movers, proof, agent-ranking, activity and 3D-graph panels each claimed there was simply nothing to show, and the performance record said the edge was still proving itself. Every one of those is now a real error state that names what went wrong (offline, rate limited, or an engine error) and offers a retry that actually recovers. The Proof gallery had a second bug behind that one: opening it for the first time while the request failed painted nothing at all, not even a skeleton. Searching a symbol Oracle has not scored used to make the results dropdown vanish with no explanation, which reads as a broken search box; it now says there is no match, and says so differently when search itself is down. The conviction-breadth bar's tier segments and legend chips were 10 and 15 pixels tall, too small to reliably tap on a phone, and now carry a full 24-pixel target without changing how the bar looks. Screen readers can finally move from a tab into the panel it opens, every button declares its type, and if a browser is holding a cached copy of an older release the 3D graph explains that and offers a reload instead of retrying a module that can never load.</description>
+		</item>
+		<item>
+			<title>Paid 3D services now refuse a job they cannot deliver, instead of charging for it</title>
+			<link>https://three.ws/changelog</link>
+			<guid isPermaLink="false">2026-09-09:Paid 3D services now refuse a job they cannot deliver, instead of charging for it</guid>
+			<pubDate>Wed, 09 Sep 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>The paid three.ws forge services sold to other AI agents charge the moment the generator accepts a job, and the finished model reaches the buyer only after it lands in our delivery storage. When that storage stopped accepting writes, jobs were still being accepted and charged while no model could ever be handed back. Those services now check that delivery storage is writable before they take the job: if it is not, the call is refused, says so, and is not charged. The check is cached and ignores a one-off blip, so a passing wobble never stops the services selling. The free public health page also had a bug where a storage failure replaced the name of the failing subsystem with the storage provider's error code and printed the request's signing details; it now names the subsystem and reports the reason alone.</description>
 		</item>
 		<item>
 			<title>Pay-per-call is keyboard-drivable, and it now tells you when the wallet lane is down instead of sitting on a spinner</title>

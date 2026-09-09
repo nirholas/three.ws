@@ -1,11 +1,11 @@
 {
-	"generated_at": "2026-09-09T05:43:06.259Z",
+	"generated_at": "2026-09-09T05:54:28.300Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
 		"url": "https://three.ws"
 	},
-	"total": 3621,
+	"total": 3623,
 	"complete": false,
 	"full_feed": "/changelog.json",
 	"entries": [
@@ -18,6 +18,16 @@
 			"tags": [
 				"fix",
 				"improvement"
+			]
+		},
+		{
+			"date": "2026-09-09",
+			"type": "update",
+			"title": "Avatars and token art load again on sites that embed three.ws",
+			"summary": "Assets served from /cdn (avatars, thumbnails, generated models) are read from our object store with a signed request, and when that request is rejected the route falls back to the store's public address so the bytes still arrive. That fallback was a redirect, and a redirect throws away the cross-origin permission the route grants: browsers re-check permission at the redirect's destination, and the public address grants none. Measured from an outside site, every one of those reads failed outright, which took down model previews on pages that load art through the proxy and silently broke third-party embeds of three.ws avatars. The bytes are now served through three.ws itself rather than pointed at, so the permission, the file type and the download rules all survive the fallback, partial reads for video and audio keep working, and a file that genuinely is not there says so instead of reporting a server fault the page retries forever. It also keeps the fallback off the rate-limited public address, which is the whole reason the proxy exists.",
+			"link": null,
+			"tags": [
+				"fix"
 			]
 		},
 		{
@@ -51,6 +61,17 @@
 			"tags": [
 				"fix",
 				"improvement"
+			]
+		},
+		{
+			"date": "2026-09-09",
+			"type": "update",
+			"title": "Paid 3D services now refuse a job they cannot deliver, instead of charging for it",
+			"summary": "The paid three.ws forge services sold to other AI agents charge the moment the generator accepts a job, and the finished model reaches the buyer only after it lands in our delivery storage. When that storage stopped accepting writes, jobs were still being accepted and charged while no model could ever be handed back. Those services now check that delivery storage is writable before they take the job: if it is not, the call is refused, says so, and is not charged. The check is cached and ignores a one-off blip, so a passing wobble never stops the services selling. The free public health page also had a bug where a storage failure replaced the name of the failing subsystem with the storage provider's error code and printed the request's signing details; it now names the subsystem and reports the reason alone.",
+			"link": null,
+			"tags": [
+				"fix",
+				"security"
 			]
 		},
 		{
@@ -1598,26 +1619,6 @@
 			"tags": [
 				"fix",
 				"improvement"
-			]
-		},
-		{
-			"date": "2026-09-04",
-			"type": "update",
-			"title": "The IBM partnership demos arm wherever the page is opened",
-			"summary": "The live demo pages loaded their own payment script across the network by full address, so on any address other than the main site (a preview, a local run, a copy published on a partner domain) the browser refused it and the paid demos never armed. Each page now loads the copy it ships with. The publish-once page IBM hosts got the opposite fix: every file it pulls now carries our full address, so its language switcher no longer looks for a file on the host's own domain and comes back empty.",
-			"link": "/ibm/hello",
-			"tags": [
-				"fix"
-			]
-		},
-		{
-			"date": "2026-09-04",
-			"type": "update",
-			"title": "The invitation link you just created stays on screen",
-			"summary": "Inviting somebody into your home hands you a link that works once. It used to vanish the instant the household list refreshed behind it, and since we keep only a fingerprint of that link and never the link itself, there was no way to get it back. It now stays put until you close the panel, whether or not the email went out.",
-			"link": null,
-			"tags": [
-				"fix"
 			]
 		}
 	]
