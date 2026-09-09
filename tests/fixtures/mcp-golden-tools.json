@@ -22,7 +22,7 @@
 			"descHead": "dynamic",
 			"descHash": "dynamic",
 			"annotations": "ref:SAY_ANNOTATIONS",
-			"schemaHash": "9966d27830f0"
+			"schemaHash": "96a5774ef9fc"
 		}
 	],
 	"api/_mcp-studio/tools.js": [
@@ -82,7 +82,7 @@
 			"descHead": "dynamic",
 			"descHash": "dynamic",
 			"annotations": "ref:GEN_ANNOTATIONS",
-			"schemaHash": "599e4482de20"
+			"schemaHash": "b966b3537b41"
 		},
 		{
 			"name": "rig_mesh",
