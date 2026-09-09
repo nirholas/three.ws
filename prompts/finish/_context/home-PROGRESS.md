@@ -935,3 +935,85 @@ byte-identical to one the surviving migration creates and each was verified to b
 before the drop; after applying, zero orphans remain, all four intended indexes are present, the
 grants index is still UNIQUE and the row counts are unchanged.
 
+
+---
+
+## 18 (re-verified). Docs, SDK publish, the home MCP server package (2026-09-09)
+
+**Why a second pass:** the order file's own step 0 says nothing in it is a status claim to trust,
+so every line of the 2026-09-03 entry above was re-measured against the tree six days later. Three
+things had drifted, all of them the kind that reads as true until someone runs it.
+
+**Fixed:**
+
+1. **`packages/home-mcp`'s README documented test commands that cannot work.** The suite moved to
+   vitest at `packages/home-mcp/tests/*.test.js`, and the README still said
+   `node --test "packages/home-mcp/test/**/*.test.mjs"` (singular `test/`, `.test.mjs`). The glob
+   form matched nothing and **exited 0**, so a reader would have concluded the package was green
+   without running one assertion; the single-file form failed with `Could not find`. Both replaced
+   with the vitest commands, both executed.
+2. **The live gate suite was flaky by construction and was failing.** `pickLastSettledLock` chose
+   the last lock sitting at `locked` or `unlocked`, with a comment claiming that filter kept it off
+   the demo integration's deliberately unreliable lock. It does not: `lock.poorly_installed_door`
+   sits at `locked` on a fresh instance and only jams once something acts on it, so on a house
+   nobody had touched yet it was picked, sorted last, and then `beforeAll` timed out waiting for it
+   to lock. It passed on 2026-09-03 only because an earlier suite had already jammed it on the
+   shared instance. Replaced with `claimLockableLock`, which walks candidates from the far end and
+   accepts one only after it has actually reached `locked`, so the resting state is never taken as
+   evidence.
+3. **`docs/smart-home.md` listed a shipped feature under "Not shipped".** Its bullet said a
+   floorplan editor "is not built" while `src/home/floorplan.js` (774 lines), `api/_lib/home/layout.js`,
+   `api/home/[id]/layout.js` and two migrations were in the tree and mounted from `src/home/scene.js`.
+   Moved into the shipped table; the not-shipped bullet now names what is genuinely absent (room
+   shapes other than a rectangle: rotation, wall openings and polygons, which exist only as reserved
+   fields behind `LAYOUT_FORMAT`). The same section's migration count said 8; `api/_lib/migrations/*_home_*.sql`
+   is 11. `STRUCTURE.md`'s 3D-home row named the scene's model, renderer, fallback and controller but
+   none of the floorplan files, so the editor was unfindable from the map; added.
+
+**Measured** (house: `node scripts/home-test-instance.mjs --up --onboard --seed --name docs18`,
+Home Assistant 2026.9.0, 1 floor, 4 areas, 4 locks, 2 scenes, port 42785):
+
+- `npx vitest run packages/home-mcp`: 21/21 passing with the house configured, 13 passing and 8
+  live tests correctly skipped without it. Includes "refuses a guarded unlock, and the door does
+  not move" and "lets the operator's own out-of-band allowance through, and it really unlocks".
+- `npx vitest run packages/home-bridge`: 47/47.
+- Both READMEs' code examples executed against that house. `home-bridge`: connect and room graph,
+  a real `light.turn_on`, `activate('good night')` resolving to `scene.bedtime` at 0.95, the gate
+  raising `needs_confirmation` then running under `{confirmed:true}`, the per-entity allow list,
+  the MCP channel (29 real tools plus a tool call that moved a real light), and the relay
+  transport's URL shape. `home-mcp`: the stdio client printed the real rooms, `refused: true`, and
+  `lock.front_door` read `locked` afterwards.
+- Tutorial, step by step: `curl` reachability `200`; `/api/` returning `{"message":"API running."}`
+  and `401` on a bad token; the harness one-liner; the stderr banner, verbatim as documented
+  (`[home-mcp@0.1.0] connected over stdio with 5 tools, home http://127.0.0.1:42785`); section 4's
+  three JSON payloads, which match what the tools really return, including the no-match refusal
+  and the `goodnight` / `bedtime` / `time for bed` synonyms all landing on `scene.bedtime`;
+  section 8's error contract, where `assertDialableHomeUrl` raises `private_address` internally and
+  `api/home/index.js` maps it to the documented wire code `unreachable` with the message verbatim.
+- The tutorial's load-bearing security claim re-proved live: `intent__HassTurnOff` is described by
+  Home Assistant itself as *"Turns off/closes a device or entity. For locks, this performs an
+  'unlock' action."* and calling it on a `locked` front door left it `unlocked`.
+- `npm pack --dry-run`: `@three-ws/home-bridge` 12 files / 33.8 kB, `@three-ws/home-mcp` 12 files /
+  18.3 kB. No tests, no fixtures, no tokens in either; `home-mcp`'s `files` matches `brain-mcp`'s
+  convention exactly, so `smithery.yaml` stays out of the tarball on purpose.
+- `npm run audit:docs`: clean, 1586 files. `npm run check:claude`: OK. `npm run check:rules`: clean.
+  `npm run check:docs-search`: current after a rebuild (690 docs, 8976 sections); it is gitignored
+  and goes stale again within minutes here because peers are editing docs continuously, so its
+  staleness is a shared-worktree artifact and never something to commit.
+- `npm run publish:packages:dry` and `npm run publish:mcp:dry`: both clean, both packages still
+  reported as would-publish.
+
+**Deviations from the order file:** the file's docs table asks for `/home` and `/home/:id` in
+`data/pages.json`. Those routes do not exist; `/home` is a 301 to `/`. The real ones are
+`/smart-home` and `/smart-home/:id`, and `data/pages.json` already carries `/smart-home` and its
+four static children plus every home doc and the tutorial. The 2026-09-03 entry recorded the same
+correction; it is repeated here because the order file still says otherwise and was left on disk.
+
+**Left open:** the npm publish, still owner-gated and still the only outstanding step, so the order
+file stays on disk per its own retire clause. No changelog entry was added: this pass corrected
+documentation of features whose user-visible shipping already has entries (the floorplan editor's
+landed the same day), and a "we fixed our own doc" line would be noise in a community feed.
+
+**Commits:** `30972fa08` (the vitest command and the gate-test pick, swept into a peer's commit
+before I could stage it, under an accurate message), `54b71805a` (the `docs/smart-home.md`
+corrections, likewise swept), `934ae7aea` (the STRUCTURE.md row).
