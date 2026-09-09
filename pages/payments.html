@@ -5,7 +5,7 @@
 		<meta charset="utf-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
 		<title data-i18n="payments.meta_title">Agent Payment Sessions · three.ws</title>
-		<meta name="description" content="Create budget-limited payment sessions for AI agents. No private keys needed — agents pay x402 endpoints with platform governance enforcing spend limits, URL allowlists, and expiry."  data-i18n-attr="content:payments.meta_description"/>
+		<meta name="description" content="Create budget-limited payment sessions for AI agents. Governance-enforced spend limits, URL allowlists, and expiry: agents pay x402 APIs without holding a private key."  data-i18n-attr="content:payments.meta_description"/>
 <link rel="canonical" href="https://three.ws/payments" />
 		<link rel="icon" href="/favicon.ico" sizes="any" />
 		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
@@ -135,6 +135,11 @@
 			.mcp-box.show { display: block; }
 			.mcp-copy-btn { position: absolute; top: 0.6rem; right: 0.6rem; font: inherit; font-size: 11px; font-weight: 600; padding: 4px 10px; border-radius: 6px; border: 1px solid rgba(167,139,250,0.3); background: rgba(167,139,250,0.12); color: var(--accent-violet); cursor: pointer; transition: background var(--duration-fast); }
 			.mcp-copy-btn:hover { background: rgba(167,139,250,0.22); }
+			.mcp-hint { margin-top: 0.75rem; padding-top: 0.7rem; border-top: 1px solid rgba(255,255,255,0.07); font-family: inherit; font-size: 11.5px; line-height: 1.55; color: rgba(255,255,255,0.42); word-break: normal; }
+			.mcp-hint code { font-family: 'SF Mono', 'Fira Code', monospace; font-size: 11px; color: rgba(167,139,250,0.9); }
+			.mcp-hint a { color: rgba(167,139,250,0.95); text-decoration: none; border-bottom: 1px solid rgba(167,139,250,0.3); }
+			.mcp-hint a:hover { color: #fff; border-bottom-color: rgba(255,255,255,0.6); }
+			.mcp-hint a:focus-visible { outline: 2px solid rgba(167,139,250,0.95); outline-offset: 2px; border-radius: 3px; }
 
 			/* Executions section */
 			.exec-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.75rem; }
@@ -166,6 +171,27 @@
 			.pw-empty-alt a:hover { color: #fff; border-bottom-color: rgba(255,255,255,0.6); }
 			.pw-empty-alt a:focus-visible { outline: 2px solid rgba(167,139,250,0.9); outline-offset: 3px; border-radius: 3px; }
 
+			/* ── Error state ─────────────────────────────────────────── */
+			/* A failed load is a state, not a void: it names the failure and
+			   offers the one action that can resolve it. */
+			.pw-error { text-align: center; padding: 4rem 1rem; }
+			.pw-error-icon { width: 64px; height: 64px; background: linear-gradient(135deg, rgba(248,113,113,0.16), rgba(248,113,113,0.06)); border-radius: 18px; margin: 0 auto 1.5rem; display: flex; align-items: center; justify-content: center; border: 1px solid rgba(248,113,113,0.28); }
+			.pw-error h2 { font-size: 1.3rem; margin: 0 0 0.6rem; letter-spacing: -0.02em; }
+			.pw-error p { color: rgba(255,255,255,0.5); margin: 0 auto 1.5rem; max-width: 42ch; line-height: 1.6; font-size: 14.5px; }
+			.pw-error-detail { display: block; margin-top: 0.5rem; font-family: var(--font-mono, ui-monospace, monospace); font-size: 12px; color: rgba(255,255,255,0.35); word-break: break-word; }
+
+			/* ── Focus rings ─────────────────────────────────────────────
+			   Every control on this page is keyboard reachable, so every control
+			   shows where the keyboard is. */
+			.btn-primary:focus-visible, .btn-ghost:focus-visible, .pw-filters button:focus-visible,
+			.tpl-btn:focus-visible, .sc-head:focus-visible, .sc-act:focus-visible,
+			.token-btn:focus-visible, .f-cancel:focus-visible, .f-primary:focus-visible,
+			.mcp-copy-btn:focus-visible, .sc-meta code[data-copy]:focus-visible,
+			.pw-empty a:focus-visible, .pw-error a:focus-visible {
+				outline: 2px solid rgba(167,139,250,0.95); outline-offset: 3px; border-radius: 8px;
+			}
+			.f-row input:focus-visible, .f-row select:focus-visible { outline: 2px solid rgba(167,139,250,0.75); outline-offset: 1px; }
+
 			/* ── Create modal ────────────────────────────────────────── */
 			.modal-bg { position: fixed; inset: 0; z-index: 1000; background: rgba(0,0,0,0.75); backdrop-filter: blur(8px); display: flex; align-items: center; justify-content: center; padding: 1rem; opacity: 0; pointer-events: none; transition: opacity var(--duration-base); }
 			.modal-bg.show { opacity: 1; pointer-events: auto; }
@@ -196,6 +222,13 @@
 			.budget-preview { display: flex; align-items: center; justify-content: space-between; background: rgba(47,191,113,0.07); border: 1px solid rgba(47,191,113,0.2); border-radius: 10px; padding: 0.75rem 1rem; margin-bottom: 1.25rem; font-size: 13px; }
 			.budget-preview .bp-label { color: rgba(255,255,255,0.55); }
 			.budget-preview .bp-val { font-weight: 700; color: #2fbf71; font-size: 15px; }
+
+			/* Inline create error: an actionable failure stays next to the control
+			   that caused it, unlike a toast the user has to read before it fades. */
+			.f-error { background: rgba(248,113,113,0.09); border: 1px solid rgba(248,113,113,0.3); border-radius: 10px; padding: 0.7rem 0.9rem; margin-bottom: 1rem; font-size: 13px; line-height: 1.5; color: rgba(255,255,255,0.82); }
+			.f-error a { display: inline-flex; margin-left: 0.4rem; color: #fca5a5; font-weight: 600; text-decoration: none; border-bottom: 1px solid rgba(252,165,165,0.4); }
+			.f-error a:hover { color: #fff; border-bottom-color: rgba(255,255,255,0.7); }
+			.f-error a:focus-visible { outline: 2px solid rgba(252,165,165,0.95); outline-offset: 3px; border-radius: 4px; }
 
 			/* Modal actions */
 			.modal-footer { display: flex; gap: 0.75rem; margin-top: 1.5rem; }
@@ -261,7 +294,7 @@
 	<meta name="twitter:title" content="Agent Payment Sessions · three.ws" data-i18n-attr="content:payments.meta_twitter_title">
 	<meta name="twitter:description" content="Create budget-limited payment sessions for AI agents. Governance-enforced spend limits, URL allowlists, and expiry — agents pay x402 APIs without holding a private key." data-i18n-attr="content:payments.meta_twitter_description">
 	<meta name="twitter:image" content="https://three.ws/api/page-og?s=account&amp;t=Agent+Payment+Sessions&amp;d=Create+budget-limited+payment+sessions+for+AI+agents.+Governance-enforced+spend+limits%2C+URL+allowlists%2C+and+expiry%3A+agents+pay+x402+APIs+without+holding+a&amp;p=%2Fpayments">
-	<script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"WebPage","name":"Agent Payment Sessions","description":"Create budget-limited payment sessions for AI agents. Governance-enforced spend limits, URL allowlists, and expiry — agents pay x402 APIs without holding a private key.","url":"https://three.ws/payments","isPartOf":{"@type":"WebSite","name":"three.ws","url":"https://three.ws"},"primaryImageOfPage":"https://three.ws/api/page-og?s=account&t=Agent+Payment+Sessions&d=Create+budget-limited+payment+sessions+for+AI+agents.+Governance-enforced+spend+limits%2C+URL+allowlists%2C+and+expiry+%E2%80%94+agents+pay+x402+APIs+without+holding+a+priv&p=%2Fpayments"}]}</script>
+	<script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"WebPage","name":"Agent Payment Sessions","description":"Create budget-limited payment sessions for AI agents. Governance-enforced spend limits, URL allowlists, and expiry: agents pay x402 APIs without holding a private key.","url":"https://three.ws/payments","isPartOf":{"@type":"WebSite","name":"three.ws","url":"https://three.ws"},"primaryImageOfPage":"https://three.ws/api/page-og?s=account&t=Agent+Payment+Sessions&d=Create+budget-limited+payment+sessions+for+AI+agents.+Governance-enforced+spend+limits%2C+URL+allowlists%2C+and+expiry%3A+agents+pay+x402+APIs+without+holding+a+priv&p=%2Fpayments"}]}</script>
 
 	<meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1">
 </head>
@@ -342,17 +375,17 @@
 					</div>
 
 					<div class="f-row">
-						<label data-i18n-html="payments.label_optional">Label <span>optional</span></label>
-						<input type="text" id="fLabel" maxlength="120" placeholder="e.g. Research agent — June sprint" autocomplete="off" />
+						<label for="fLabel" data-i18n-html="payments.label_optional">Label <span>optional</span></label>
+						<input type="text" id="fLabel" maxlength="120" placeholder="e.g. Research agent, June sprint" autocomplete="off" />
 					</div>
 
 					<div class="f-row-2">
 						<div class="f-row">
-							<label data-i18n="payments.budget_usd">Budget (USD)</label>
+							<label for="fBudget" data-i18n="payments.budget_usd">Budget (USD)</label>
 							<input type="number" id="fBudget" min="0.001" max="1000" step="0.001" value="1.00" />
 						</div>
 						<div class="f-row">
-							<label data-i18n="payments.expiry">Expiry</label>
+							<label for="fExpiry" data-i18n="payments.expiry">Expiry</label>
 							<select id="fExpiry">
 								<option value="900" data-i18n="payments.15_minutes">15 minutes</option>
 								<option value="3600" selected data-i18n="payments.1_hour">1 hour</option>
@@ -366,27 +399,29 @@
 
 					<div class="f-row-2">
 						<div class="f-row">
-							<label data-i18n="payments.network">Network</label>
+							<label for="fNetwork" data-i18n="payments.network">Network</label>
 							<select id="fNetwork">
 								<option value="solana" selected data-i18n="payments.solana_usdc">Solana USDC</option>
 							</select>
 						</div>
 						<div class="f-row">
-							<label data-i18n-html="payments.max_per_tx_optional">Max per tx <span>optional</span></label>
+							<label for="fMaxTx" data-i18n-html="payments.max_per_tx_optional">Max per tx <span>optional</span></label>
 							<input type="number" id="fMaxTx" min="0.000001" max="1000" step="0.0001" placeholder="No limit" />
 						</div>
 					</div>
 
 					<div class="f-row">
-						<label data-i18n-html="payments.allowed_hosts_optional_comma_separated">Allowed hosts <span>optional — comma-separated</span></label>
-						<input type="text" id="fHosts" placeholder="api.example.com, data.provider.io" autocomplete="off" />
-						<div class="f-hint">If set, the session can only pay endpoints at these domains. Empty = any host.</div>
+						<label for="fHosts" data-i18n-html="payments.allowed_hosts_optional_comma_separated">Allowed hosts <span>optional, comma-separated</span></label>
+						<input type="text" id="fHosts" placeholder="api.example.com, data.provider.io" autocomplete="off" aria-describedby="fHostsHint" />
+						<div class="f-hint" id="fHostsHint">If set, the session can only pay endpoints at these domains. Empty = any host.</div>
 					</div>
 
 					<div class="budget-preview" id="budgetPreview">
 						<span class="bp-label" data-i18n="payments.credit_charge">Credit charge</span>
 						<span class="bp-val" id="previewVal">$1.0000</span>
 					</div>
+
+					<div class="f-error" id="createError" role="alert" hidden></div>
 
 					<div class="modal-footer">
 						<button class="f-cancel" id="mClose" data-i18n="payments.cancel">Cancel</button>
@@ -422,19 +457,19 @@
 		</div>
 
 		<!-- Edit session modal -->
-		<div class="modal-bg" id="editModal" role="dialog" aria-modal="true">
+		<div class="modal-bg" id="editModal" role="dialog" aria-modal="true" aria-labelledby="editTitle">
 			<div class="edit-modal">
-				<h3 data-i18n="payments.edit_session">Edit Session</h3>
+				<h3 id="editTitle" data-i18n="payments.edit_session">Edit Session</h3>
 				<div class="f-row">
-					<label data-i18n="payments.label">Label</label>
+					<label for="editLabel" data-i18n="payments.label">Label</label>
 					<input type="text" id="editLabel" maxlength="120" placeholder="Session label" />
 				</div>
 				<div class="f-row">
-					<label data-i18n-html="payments.allowed_hosts_comma_separated">Allowed hosts <span style="text-transform:none;letter-spacing:0;font-weight:400;font-size:11px;color:rgba(255,255,255,.3)">comma-separated</span></label>
+					<label for="editHosts" data-i18n-html="payments.allowed_hosts_comma_separated">Allowed hosts <span style="text-transform:none;letter-spacing:0;font-weight:400;font-size:11px;color:rgba(255,255,255,.3)">comma-separated</span></label>
 					<input type="text" id="editHosts" placeholder="Any host (leave empty)" />
 				</div>
 				<div class="f-row">
-					<label data-i18n="payments.max_per_tx_usd">Max per tx (USD)</label>
+					<label for="editMaxTx" data-i18n="payments.max_per_tx_usd">Max per tx (USD)</label>
 					<input type="number" id="editMaxTx" min="0.000001" step="0.0001" placeholder="No limit" />
 				</div>
 				<div class="modal-footer">
@@ -444,7 +479,7 @@
 			</div>
 		</div>
 
-		<div class="toast" id="toast"></div>
+		<div class="toast" id="toast" role="status" aria-live="polite"></div>
 
 		<div id="footer-container"></div>
 		<script src="/footer.js"></script>
@@ -483,7 +518,7 @@
 					await navigator.clipboard.writeText(text);
 					toast(label, 'ok');
 				} catch {
-					toast('Copy failed — select manually.', 'err');
+					toast('Copy failed. Select the text and copy it manually.', 'err');
 				}
 			}
 
@@ -570,7 +605,7 @@
 									<td><div class="exec-url" title="${esc(e.endpoint_url)}">${esc(e.endpoint_host || e.endpoint_url)}</div></td>
 									<td><span class="exec-amt">${fmtUsd(e.amount_usd)}</span></td>
 									<td><span class="exec-dot ${e.status}"></span>${e.status}</td>
-									<td>${href ? `<a class="exec-tx-link" href="${esc(href)}" target="_blank" rel="noopener">${e.tx_hash.slice(0,8)}…</a>` : '—'}</td>
+									<td>${href ? `<a class="exec-tx-link" href="${esc(href)}" target="_blank" rel="noopener" title="View on Solscan">${e.tx_hash.slice(0,8)}…</a>` : '<span class="exec-none">not settled</span>'}</td>
 									<td class="exec-ts">${fmtDate(e.created_at)}</td>
 								</tr>`;
 							}).join('')}
@@ -580,15 +615,19 @@
 			}
 
 			// ── MCP config snippet ─────────────────────────────────────
-			function mcpSnippet(sessionId) {
+			// The config references the two env vars the MCP package reads rather than
+			// inlining either secret: the session token is shown once at creation and
+			// THREE_WS_SESSION is the VALUE of the __Host-sid cookie (no name prefix).
+			// Baking a truncated token in here produced a config that never worked.
+			function mcpSnippet() {
 				return JSON.stringify({
 					mcpServers: {
 						'three-ws-payments': {
 							command: 'npx',
 							args: ['-y', '@three-ws/agentcore-payments-mcp'],
 							env: {
-								THREE_WS_SESSION: '__Host-sid=<your-cookie>',
-								PAYMENT_SESSION_TOKEN: `pss_${sessionId.slice(0,8)}…`,
+								THREE_WS_SESSION: '${THREE_WS_SESSION}',
+								PAYMENT_SESSION_TOKEN: '${PAYMENT_SESSION_TOKEN}',
 							},
 						},
 					},
@@ -673,7 +712,8 @@
 							<!-- MCP snippet (toggled) -->
 							<div class="mcp-box" id="mcp-${s.id}">
 								<button class="mcp-copy-btn" data-mcp-copy="${esc(s.id)}">Copy</button>
-								<pre style="margin:0;white-space:pre-wrap;padding-right:3.5rem">${esc(mcpSnippet(s.id))}</pre>
+								<pre style="margin:0;white-space:pre-wrap;padding-right:3.5rem">${esc(mcpSnippet())}</pre>
+								<div class="mcp-hint">Export both before starting the server: <code>PAYMENT_SESSION_TOKEN</code> is the token shown once when you created this session, <code>THREE_WS_SESSION</code> is the value of your <code>__Host-sid</code> cookie. Full setup: <a href="/docs/payment-sessions">payment sessions guide</a>.</div>
 							</div>
 
 							<!-- Executions -->
@@ -746,7 +786,7 @@
 						e.stopPropagation();
 						const id = btn.dataset.mcpCopy;
 						const s = sessions.find(x => x.id === id);
-						if (s) copy(mcpSnippet(s.id), 'MCP config copied');
+						if (s) copy(mcpSnippet(), 'MCP config copied');
 					});
 				});
 
@@ -836,6 +876,36 @@
 				}
 			});
 
+			// ── Load error ─────────────────────────────────────────────
+			// The list and the stats share one fetch, so a failure has to clear the
+			// stats skeletons too. Left alone they shimmer forever and read as a load
+			// that is still running.
+			function renderLoadError(err) {
+				const offline = typeof navigator !== 'undefined' && navigator.onLine === false;
+				const detail = err?.message ? `<span class="pw-error-detail">${esc(err.message)}</span>` : '';
+				$('pwStats').innerHTML = '';
+				$('pwFilters').hidden = true;
+				$('pwCount').textContent = '';
+				$('pwList').innerHTML = `
+					<div class="pw-error">
+						<div class="pw-error-icon">
+							<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="rgba(248,113,113,0.85)" stroke-width="1.5" stroke-linecap="round"><path d="M12 3.5L1.8 20.5h20.4L12 3.5z"/><path d="M12 10v4M12 17.2v.3"/></svg>
+						</div>
+						<h2>Could not load your sessions</h2>
+						<p>${offline ? 'This browser is offline. Reconnect, then try again.' : 'The payment service did not answer. Your sessions and their budgets are untouched.'}${detail}</p>
+						<button class="btn-primary" id="pwRetry" type="button">
+							<svg width="13" height="13" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><path d="M17 10a7 7 0 11-2.05-4.95"/><path d="M17 2v4h-4"/></svg>
+							Try again
+						</button>
+						<div class="pw-empty-alt">Still failing? Check <a href="/status">platform status</a> or read the <a href="/docs/payment-sessions">payment sessions guide</a>.</div>
+					</div>
+				`;
+				$('pwRetry')?.addEventListener('click', () => {
+					$('pwList').innerHTML = '<div class="skel" style="height:82px"></div><div class="skel" style="height:82px;opacity:.7"></div><div class="skel" style="height:82px;opacity:.45"></div>';
+					load();
+				});
+			}
+
 			// ── Load data ──────────────────────────────────────────────
 			async function load() {
 				try {
@@ -862,7 +932,7 @@
 						// Status chips filter a list that does not exist while signed out.
 						$('pwFilters').hidden = true;
 					} else {
-						$('pwList').innerHTML = `<div class="pw-empty"><h2>Could not load sessions</h2><p>${esc(err.message)}</p></div>`;
+						renderLoadError(err);
 					}
 				}
 			}
@@ -906,9 +976,22 @@
 				applyTemplate(btn.dataset.tpl);
 			});
 
-			$('fBudget').addEventListener('input', updateBudgetPreview);
+			$('fBudget').addEventListener('input', () => { updateBudgetPreview(); clearCreateError(); });
+
+			function showCreateError(message, action = null) {
+				const el = $('createError');
+				el.innerHTML = `${esc(message)}${action ? ` <a href="${esc(action.href)}">${esc(action.label)}</a>` : ''}`;
+				el.hidden = false;
+			}
+
+			function clearCreateError() {
+				const el = $('createError');
+				el.textContent = '';
+				el.hidden = true;
+			}
 
 			function openCreate() {
+				clearCreateError();
 				$('createForm').style.display = '';
 				$('tokenReveal').style.display = 'none';
 				$('mCreate').disabled = false;
@@ -923,17 +1006,18 @@
 			}
 
 			$('btnNew').addEventListener('click', openCreate);
-			$('btnDocs').addEventListener('click', () => window.open('https://three.ws/docs/payments', '_blank', 'noopener'));
+			$('btnDocs').addEventListener('click', () => window.open('/docs/payment-sessions', '_blank', 'noopener'));
 			$('mClose').addEventListener('click', closeCreate);
 			$('createModal').addEventListener('click', e => { if (e.target === $('createModal')) closeCreate(); });
 
 			$('mCreate').addEventListener('click', async () => {
 				const budget = parseFloat($('fBudget').value);
-				if (!budget || budget <= 0) { toast('Enter a valid budget.', 'err'); return; }
+				if (!budget || budget <= 0) { showCreateError('Enter a budget greater than $0.'); $('fBudget').focus(); return; }
 
 				const hostsRaw = $('fHosts').value.trim();
 				const maxTxRaw = $('fMaxTx').value.trim();
 
+				clearCreateError();
 				$('mCreate').disabled = true;
 				$('mCreate').textContent = 'Creating…';
 
@@ -961,9 +1045,13 @@
 					$('mDone').onclick = closeCreate;
 
 				} catch (err) {
-					toast(err.code === 'insufficient_credits'
-						? `Not enough credits — ${err.message}`
-						: err.message || 'Failed to create session.', 'err');
+					if (err.code === 'insufficient_credits') {
+						// A budget larger than the balance is the most common create failure,
+						// and a toast that only states it leaves the user with nowhere to go.
+						showCreateError(`${err.message || 'Your credit balance is below this budget.'} Top up, then create the session.`, { href: '/credits', label: 'Add credits' });
+					} else {
+						showCreateError(err.message || 'Could not create the session. Try again.');
+					}
 					$('mCreate').disabled = false;
 					$('mCreate').textContent = 'Create session →';
 				}
