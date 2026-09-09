@@ -74,11 +74,46 @@ export default async function globalSetup(config) {
 	console.log(`[home-e2e] Home Assistant ${home.version || 'unknown'} at ${home.baseUrl}`);
 
 	const accounts = await ensureAccounts(origin);
+	await raiseHomeCeiling(accounts);
 	fs.writeFileSync(
 		STACK_FILE,
 		`${JSON.stringify({ home, accounts, origin, lane: LANE, startedAt: new Date().toISOString() }, null, '\t')}\n`,
 	);
 	console.log(`[home-e2e] accounts ready: ${ROLES.map((role) => accounts[role]?.username).filter(Boolean).join(', ')}`);
+}
+
+/**
+ * Give the QA accounts room for more than one house.
+ *
+ * The free plan covers one home, which is correct product behaviour and is the
+ * exact thing order 19's plan-ceiling state exists to render. It is also a hard
+ * stop for this harness: every lane on this machine shares these two accounts,
+ * so the first lane to connect its house takes the only slot and every other
+ * lane is refused 402 by the ceiling. That reads as a broken connect flow and
+ * is a fixture collision, and it cost three runs to see.
+ *
+ * The fix uses the platform's own mechanism rather than inventing a test-only
+ * bypass: `home_plan_overrides` is exactly "this account has these numbers, and
+ * here is the sentence saying why". Nothing about the gate is relaxed, no code
+ * path is skipped, and the ceiling itself is still asserted (against a stub, in
+ * home-connect.spec.js) where it can be reached deterministically. Removing the
+ * row returns the accounts to the free plan.
+ */
+async function raiseHomeCeiling(accounts) {
+	const [{ sql }, { setAccountOverride }] = await Promise.all([
+		import('../../api/_lib/db.js'),
+		import('../../api/_lib/home/entitlements.js'),
+	]);
+	for (const role of ['owner', 'guest']) {
+		const rows = await sql`select id from users where email = ${accounts[role].email}`;
+		if (!rows.length) continue;
+		await setAccountOverride({
+			userId: rows[0].id,
+			limits: { homes: 25, streams: 25, members: 25 },
+			note: 'Automated QA account for the home e2e lane (tests/e2e/home-global-setup.js). Concurrent lanes on one machine share these accounts, and the free one-home ceiling would let only one lane connect at a time.',
+		});
+	}
+	console.log('[home-e2e] QA accounts have room for concurrent lanes');
 }
 
 /**

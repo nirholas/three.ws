@@ -34,6 +34,19 @@ export function homeInstance() {
 }
 
 /**
+ * The name of the lane this run is driving, as global setup recorded it.
+ *
+ * Read from the stack file rather than from the environment on purpose. The
+ * lane name decides which container the harness acts on, and a spec that
+ * stopped or started the wrong one would be taking a concurrent run's house
+ * off the network. The stack file is the one place that name is written down
+ * by the process that actually chose it.
+ */
+export function laneName() {
+	return stack().lane || process.env.HOME_LIVE_NAME || 'lane';
+}
+
+/**
  * Sign in as one of the two accounts global setup provisioned.
  *
  * Signing in rather than signing up on every journey is not a shortcut: account
