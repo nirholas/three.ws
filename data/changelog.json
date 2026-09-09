@@ -3,6 +3,14 @@
 	"entries": [
 		{
 			"date": "2026-09-09",
+			"title": "Trading finally counts toward your daily streak",
+			"summary": "The cross-surface streak on three.ws counted signing in, forging a model, saving a world and a walk session, but not a trade, which on a trading platform is the one thing it most obviously should count. A confirmed on-chain buy or sell now keeps your streak alive like any other activity, and still counts once per day however many times you trade, so the streak measures showing up rather than trading volume.",
+			"tags": [
+				"improvement"
+			]
+		},
+		{
+			"date": "2026-09-09",
 			"title": "Put a live trader on your own page with one script tag",
 			"summary": "A trader with a following had no way to show it anywhere except on three.ws. Every public trader profile now has an Embed this trader button that hands over a one-line snippet: paste it into a site, a blog post, a link in bio or a stream overlay and the trader's live record renders there, updating itself. It shows realized profit or loss for the period, win rate, settled trades, whatever they are holding right now and their last few results, and every coin on it carries a Fork button that opens the real trade panel back on three.ws, signed by the reader's own wallet. The card holds no funds, asks for no key and signs nothing. It follows the reader's light or dark setting, stops updating when nobody is looking at it, keeps the last good card on screen if a refresh fails rather than blanking the page it sits on, and shows a loss exactly as plainly as a win. The snippet carries the leader's referral code, so the traffic it brings back is credited to them, and the panel previews the real card before they copy anything.",
 			"tags": [
