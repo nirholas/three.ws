@@ -249,6 +249,54 @@ export async function getObjectBuffer(key) {
 	return Buffer.concat(chunks);
 }
 
+// Keys already warned about, so a credential fault logs once per process per key
+// instead of once per edge-cache miss.
+const publicFallbackWarned = new Set();
+
+// Read an object whose bytes are PUBLIC anyway (a CC0 library manifest, a
+// rendered thumbnail) with the signed read first and the bucket's own public CDN
+// domain as the fallback.
+//
+// The signed read stays first because it is authoritative: it sees a freshly
+// published manifest the instant it lands, while the CDN may still be serving
+// the previous copy. But it is also the only part of a public read that can fail
+// for a reason having nothing to do with the object. On 2026-09-09 the
+// production S3 secret stopped matching its access key id, every signed GET came
+// back SignatureDoesNotMatch, and the whole CC0 asset catalog (511 objects, the
+// character library, the animation clips) read as empty to every visitor, while
+// the exact same bytes stayed downloadable by anyone on the public domain those
+// manifests already hand out. A credential fault must not be able to empty a
+// route that serves public bytes.
+//
+// Both paths failing rethrows the SIGNED error, so callers that treat NoSuchKey
+// as "not uploaded yet" keep working unchanged.
+export async function getPublicObjectBuffer(key) {
+	let signedErr;
+	try {
+		return await getObjectBuffer(key);
+	} catch (err) {
+		signedErr = err;
+	}
+	const url = publicUrlOrNull(key);
+	if (!url) throw signedErr;
+	let res;
+	try {
+		res = await fetch(url, { signal: AbortSignal.timeout(8000) });
+	} catch {
+		throw signedErr;
+	}
+	// A CDN 404 means the object genuinely is not there; surface the signed error
+	// so a NoSuchKey stays a NoSuchKey upstream rather than becoming an HTTP 404
+	// nobody has a branch for.
+	if (!res.ok) throw signedErr;
+	const buf = Buffer.from(await res.arrayBuffer());
+	if (!publicFallbackWarned.has(key)) {
+		publicFallbackWarned.add(key);
+		console.warn(`[r2] signed read of ${key} failed (${signedErr?.name || 'error'}: ${signedErr?.message || signedErr}); served it from the public CDN instead`);
+	}
+	return buf;
+}
+
 // Read an object together with the user metadata it was stored with. Used by
 // caches that key on a stable path and decide freshness from a stamp in the
 // metadata (the glance PNG cache stores the card's ETag there), so a stale

@@ -18,7 +18,7 @@
 //
 // `id` is `<kind>:<name>` and is the stable handle every consumer quotes back.
 
-import { getObjectBuffer } from './r2.js';
+import { getPublicObjectBuffer } from './r2.js';
 
 // Each source: the R2 manifest key, the array field inside it, and the kind the
 // rows become. The generated animation catalog is a separate object that may not
@@ -48,7 +48,7 @@ function asArray(parsed, field) {
 
 async function readManifest({ key, field }) {
 	try {
-		const buf = await getObjectBuffer(key);
+		const buf = await getPublicObjectBuffer(key);
 		const parsed = JSON.parse(buf.toString('utf8'));
 		return { rows: asArray(parsed, field), generatedAt: parsed?.generated_at || null };
 	} catch (err) {

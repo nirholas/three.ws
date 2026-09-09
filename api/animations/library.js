@@ -36,7 +36,7 @@
 // grows.
 
 import { cors, json, method, wrap } from '../_lib/http.js';
-import { getObjectBuffer } from '../_lib/r2.js';
+import { getPublicObjectBuffer } from '../_lib/r2.js';
 
 const MANIFEST_KEY = 'animations/library/manifest.json';
 const GENERATED_MANIFEST_KEY = 'animations/library/generated/manifest.json';
@@ -53,7 +53,7 @@ const MAX_PAGE = 1000;
  */
 async function readManifest(key) {
 	try {
-		const buf = await getObjectBuffer(key);
+		const buf = await getPublicObjectBuffer(key);
 		const parsed = JSON.parse(buf.toString('utf8'));
 		const clips = Array.isArray(parsed)
 			? parsed

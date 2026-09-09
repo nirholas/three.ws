@@ -27,7 +27,7 @@
 // `next_offset` (null on the last page). `total` is always the full library size.
 
 import { cors, json, method, wrap } from '../_lib/http.js';
-import { getObjectBuffer } from '../_lib/r2.js';
+import { getPublicObjectBuffer } from '../_lib/r2.js';
 
 const MANIFEST_KEY = 'avatars/library/manifest.json';
 const MAX_PAGE = 1000;
@@ -39,7 +39,7 @@ export default wrap(async (req, res) => {
 	let avatars = [];
 	let generatedAt = null;
 	try {
-		const buf = await getObjectBuffer(MANIFEST_KEY);
+		const buf = await getPublicObjectBuffer(MANIFEST_KEY);
 		const parsed = JSON.parse(buf.toString('utf8'));
 		avatars = Array.isArray(parsed) ? parsed : Array.isArray(parsed.avatars) ? parsed.avatars : [];
 		generatedAt = parsed.generated_at || null;

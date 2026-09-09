@@ -10,7 +10,7 @@
 // feature-detect by emptiness. Pagination via ?limit=N (1..1000) + ?offset=M.
 
 import { cors, error, json, method, wrap } from '../_lib/http.js';
-import { getObjectBuffer } from '../_lib/r2.js';
+import { getPublicObjectBuffer } from '../_lib/r2.js';
 
 const MANIFEST_KEY = 'objects/library/manifest.json';
 const MAX_PAGE = 1000;
@@ -72,7 +72,7 @@ export default wrap(async (req, res) => {
 	let generatedAt = null;
 	let degraded = false;
 	try {
-		const buf = await getObjectBuffer(MANIFEST_KEY);
+		const buf = await getPublicObjectBuffer(MANIFEST_KEY);
 		const parsed = JSON.parse(buf.toString('utf8'));
 		const list = Array.isArray(parsed) ? parsed : Array.isArray(parsed?.objects) ? parsed.objects : null;
 		// A manifest that parses but carries no object list is corrupt, not empty.
