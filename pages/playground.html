@@ -270,8 +270,19 @@
 				border-color: var(--text-3);
 				background: var(--panel-2);
 			}
+			/* Visually hidden, still in the tab order: display:none would strand
+			   keyboard users with no way to reach the upload control. */
 			#avatar-upload {
-				display: none;
+				position: absolute;
+				width: 1px;
+				height: 1px;
+				padding: 0;
+				margin: -1px;
+				overflow: hidden;
+				clip: rect(0 0 0 0);
+				clip-path: inset(50%);
+				white-space: nowrap;
+				border: 0;
 			}
 
 			/* pills */
@@ -330,8 +341,10 @@
 				display: flex;
 				align-items: center;
 				justify-content: space-between;
+				gap: 0.75rem;
+				cursor: pointer;
 			}
-			.toggle-row span {
+			.toggle-text {
 				font-size: 12.5px;
 				color: var(--text-2);
 			}
@@ -340,6 +353,7 @@
 				display: inline-block;
 				width: 36px;
 				height: 20px;
+				flex-shrink: 0;
 			}
 			.toggle input {
 				opacity: 0;
@@ -517,24 +531,40 @@
 				color: var(--err);
 			}
 
-			/* loading */
+			/* loading: scoped to the viewer so the controls stay usable while a model streams */
 			.loading-indicator {
 				display: none;
-				position: fixed;
+				position: absolute;
 				inset: 0;
-				z-index: 150;
-				background: rgba(0, 0, 0, 0.45);
+				z-index: 20;
+				background:
+					linear-gradient(
+						100deg,
+						rgba(255, 255, 255, 0) 22%,
+						rgba(255, 255, 255, 0.05) 50%,
+						rgba(255, 255, 255, 0) 78%
+					),
+					rgba(10, 10, 10, 0.72);
+				background-size: 240% 100%;
 				backdrop-filter: blur(2px);
 				-webkit-backdrop-filter: blur(2px);
+				flex-direction: column;
 				align-items: center;
 				justify-content: center;
+				gap: 0.85rem;
+				animation: pgShimmer 1.4s ease-in-out infinite;
 			}
 			.loading-indicator.open {
 				display: flex;
 			}
+			.loading-label {
+				font-size: 11.5px;
+				color: var(--text-3);
+				letter-spacing: 0.04em;
+			}
 			.spinner {
-				width: 44px;
-				height: 44px;
+				width: 40px;
+				height: 40px;
 				border: 3px solid rgba(255, 255, 255, 0.08);
 				border-top-color: var(--accent);
 				border-radius: 50%;
@@ -543,6 +573,105 @@
 			@keyframes spin {
 				to {
 					transform: rotate(360deg);
+				}
+			}
+			@keyframes pgShimmer {
+				0% {
+					background-position: 140% 0;
+				}
+				100% {
+					background-position: -40% 0;
+				}
+			}
+
+			/* viewer error state */
+			.pg-error {
+				display: none;
+				position: absolute;
+				inset: 0;
+				z-index: 30;
+				flex-direction: column;
+				align-items: center;
+				justify-content: center;
+				gap: 0.7rem;
+				padding: 1.5rem;
+				text-align: center;
+				background: rgba(10, 10, 10, 0.94);
+			}
+			.pg-error.open {
+				display: flex;
+			}
+			.pg-error-icon {
+				width: 44px;
+				height: 44px;
+				border-radius: 12px;
+				border: 1.5px solid var(--err);
+				color: var(--err);
+				display: flex;
+				align-items: center;
+				justify-content: center;
+			}
+			.pg-error-title {
+				margin: 0;
+				font-family: var(--font-body);
+				font-size: 14px;
+				font-weight: 600;
+				line-height: 1.3;
+				letter-spacing: 0;
+				text-transform: none;
+				color: var(--text);
+			}
+			.pg-error-msg {
+				margin: 0;
+				max-width: 36ch;
+				font-size: 12.5px;
+				line-height: 1.55;
+				color: var(--text-2);
+			}
+
+			/* page intro */
+			.pg-intro {
+				display: flex;
+				flex-direction: column;
+				gap: 0.3rem;
+			}
+			.pg-title {
+				margin: 0;
+				font-family: var(--font-display);
+				font-size: 1.35rem;
+				font-weight: 600;
+				line-height: 1.2;
+				letter-spacing: -0.01em;
+				color: var(--text);
+			}
+			.pg-lede {
+				margin: 0;
+				max-width: 66ch;
+				font-size: 12.5px;
+				line-height: 1.55;
+				color: var(--text-2);
+			}
+
+			/* focus: every interactive control shows where the keyboard is */
+			.pg-header-nav a:focus-visible,
+			.pill:focus-visible,
+			.pg-btn:focus-visible,
+			.anim-btn:focus-visible,
+			#anim-select:focus-visible,
+			#embed-code:focus-visible,
+			.pg-slider:focus-visible,
+			#avatar-upload:focus-visible + .pg-upload-label,
+			.toggle input:focus-visible + .toggle-slider {
+				outline: 2px solid var(--accent);
+				outline-offset: 2px;
+			}
+
+			@media (prefers-reduced-motion: reduce) {
+				.loading-indicator {
+					animation: none;
+				}
+				.spinner {
+					animation-duration: 2.4s;
 				}
 			}
 
@@ -562,15 +691,37 @@
 				.pg-controls-col {
 					padding: 1rem;
 				}
+				.pg-title {
+					font-size: 1.15rem;
+				}
+				/* The nav scrolls rather than disappearing: hiding it stranded
+				   phone visitors with no way back to Discover, Create or Studio. */
+				.pg-header {
+					padding: 0.65rem 1rem;
+				}
+				.pg-header-left {
+					min-width: 0;
+					flex: 1;
+				}
 				.pg-header-nav {
+					margin-left: 0.9rem;
+					gap: 0.9rem;
+					overflow-x: auto;
+					scrollbar-width: none;
+					-webkit-overflow-scrolling: touch;
+				}
+				.pg-header-nav::-webkit-scrollbar {
 					display: none;
+				}
+				.pg-header-nav a {
+					white-space: nowrap;
 				}
 			}
 		</style>
 
 		<meta
 			name="description"
-			content="Sandbox for experimenting with agents, prompts, and 3D scenes."
+			content="Sandbox for 3D scenes: drop in any .glb, play its animations, tune the lighting, and copy a paste-ready embed snippet."
 		 data-i18n-attr="content:playground.meta_description"/>
 		<link rel="canonical" href="https://three.ws/playground" />
 		<meta property="og:type" content="website" />
@@ -578,25 +729,25 @@
 		<meta property="og:title" content="Playground · three.ws"  data-i18n-attr="content:playground.meta_og_title"/>
 		<meta
 			property="og:description"
-			content="Sandbox for experimenting with agents, prompts, and 3D scenes."
+			content="Sandbox for 3D scenes: drop in any .glb, play its animations, tune the lighting, and copy a paste-ready embed snippet."
 		 data-i18n-attr="content:playground.meta_og_description"/>
 		<meta property="og:url" content="https://three.ws/playground" />
-		<meta property="og:image" content="https://three.ws/api/page-og?s=labs&amp;t=Playground&amp;d=Sandbox+for+experimenting+with+agents%2C+prompts%2C+and+3D+scenes.&amp;p=%2Fplayground" />
+		<meta property="og:image" content="https://three.ws/api/page-og?s=labs&amp;t=Playground&amp;d=Sandbox+for+3D+scenes%3A+drop+in+any+.glb%2C+play+its+animations%2C+tune+the+lighting%2C+and+copy+a+paste-ready+embed+snippet.&amp;p=%2Fplayground" />
 		<meta property="og:image:width" content="1200" />
 		<meta property="og:image:height" content="630" />
 		<meta name="twitter:card" content="summary_large_image" />
 		<meta name="twitter:title" content="Playground · three.ws"  data-i18n-attr="content:playground.meta_twitter_title"/>
 		<meta
 			name="twitter:description"
-			content="Sandbox for experimenting with agents, prompts, and 3D scenes."
+			content="Sandbox for 3D scenes: drop in any .glb, play its animations, tune the lighting, and copy a paste-ready embed snippet."
 		 data-i18n-attr="content:playground.meta_twitter_description"/>
-		<meta name="twitter:image" content="https://three.ws/api/page-og?s=labs&amp;t=Playground&amp;d=Sandbox+for+experimenting+with+agents%2C+prompts%2C+and+3D+scenes.&amp;p=%2Fplayground" />
+		<meta name="twitter:image" content="https://three.ws/api/page-og?s=labs&amp;t=Playground&amp;d=Sandbox+for+3D+scenes%3A+drop+in+any+.glb%2C+play+its+animations%2C+tune+the+lighting%2C+and+copy+a+paste-ready+embed+snippet.&amp;p=%2Fplayground" />
 		<script type="application/ld+json">
 			{
 				"@context": "https://schema.org",
 				"@type": "WebPage",
 				"name": "Playground",
-				"description": "Sandbox for experimenting with agents, prompts, and 3D scenes.",
+				"description": "Sandbox for 3D scenes: drop in any .glb, play its animations, tune the lighting, and copy a paste-ready embed snippet.",
 				"url": "https://three.ws/playground",
 				"isPartOf": { "@type": "WebSite", "name": "three.ws", "url": "https://three.ws" }
 			}
@@ -626,6 +777,13 @@
 		<div class="pg-body">
 			<!-- viewer column -->
 			<div class="pg-viewer-col">
+				<div class="pg-intro">
+					<h1 class="pg-title" data-i18n="playground.h1">Playground</h1>
+					<p class="pg-lede" data-i18n="playground.lede">
+						Drop a .glb to see it render live: play its animations, tune the
+						lighting and background, then copy a paste-ready embed snippet.
+					</p>
+				</div>
 				<div class="pg-viewer-wrap" id="dropzone">
 					<!-- shown before a model is loaded -->
 					<div class="drop-overlay" id="drop-overlay">
@@ -661,11 +819,45 @@
 						auto-rotate
 						autoplay
 					></model-viewer>
+
+					<div id="loading-indicator" class="loading-indicator">
+						<div class="spinner"></div>
+						<span class="loading-label" data-i18n="playground.loading_model">Loading model</span>
+					</div>
+
+					<div id="viewer-error" class="pg-error" role="alert">
+						<div class="pg-error-icon" aria-hidden="true">
+							<svg
+								width="20"
+								height="20"
+								viewBox="0 0 24 24"
+								fill="none"
+								stroke="currentColor"
+								stroke-width="1.6"
+								stroke-linecap="round"
+								stroke-linejoin="round"
+							>
+								<circle cx="12" cy="12" r="9" />
+								<line x1="12" y1="8" x2="12" y2="13" />
+								<line x1="12" y1="16.5" x2="12" y2="16.5" />
+							</svg>
+						</div>
+						<h2 class="pg-error-title" id="viewer-error-title" data-i18n="playground.error_title">
+							That model did not load
+						</h2>
+						<p class="pg-error-msg" id="viewer-error-msg" data-i18n="playground.error_msg">
+							The file may be corrupt, or the network dropped mid-download.
+						</p>
+						<div class="btn-row">
+							<button class="pg-btn accent" id="viewer-retry" data-i18n="playground.retry">Retry</button>
+							<button class="pg-btn" id="viewer-error-upload" data-i18n="playground.pick_a_file">Pick a .glb</button>
+						</div>
+					</div>
 				</div>
 
 				<div class="pg-viewer-bar">
-					<span id="file-chip" class="pg-file-chip loaded" data-i18n="playground.default_glb">default.glb</span>
-					<div id="pg-status"></div>
+					<span id="file-chip" class="pg-file-chip loaded" data-i18n-owned="1">default.glb</span>
+					<div id="pg-status" role="status" aria-live="polite"></div>
 				</div>
 			</div>
 
@@ -673,7 +865,8 @@
 			<div class="pg-controls-col">
 				<!-- upload -->
 				<div class="pg-section">
-					<div class="pg-section-label">Model</div>
+					<h2 class="pg-section-label" data-i18n="playground.section_model">Model</h2>
+					<input type="file" id="avatar-upload" accept=".glb" />
 					<label for="avatar-upload" class="pg-upload-label">
 						<svg
 							width="14"
@@ -689,14 +882,13 @@
 							<polyline points="17 8 12 3 7 8" />
 							<line x1="12" y1="3" x2="12" y2="15" />
 						</svg>
-						Upload .glb file
+						<span data-i18n="playground.upload_glb_file">Upload .glb file</span>
 					</label>
-					<input type="file" id="avatar-upload" accept=".glb" />
 				</div>
 
 				<!-- animations -->
 				<div class="pg-section" id="anim-section" style="display: none">
-					<div class="pg-section-label">Animations</div>
+					<h2 class="pg-section-label" data-i18n="playground.animations">Animations</h2>
 					<div class="anim-controls">
 						<button
 							class="anim-btn"
@@ -731,17 +923,17 @@
 
 				<!-- environment -->
 				<div class="pg-section">
-					<div class="pg-section-label">Environment</div>
+					<h2 class="pg-section-label" data-i18n="playground.section_environment">Environment</h2>
 					<div class="pill-row">
 						<button class="pill active" data-env="neutral" data-i18n="playground.neutral">Neutral</button>
 						<button class="pill" data-env="legacy" data-i18n="playground.warm">Warm</button>
-						<button class="pill" data-env="" data-i18n="playground.dark">Dark</button>
+						<button class="pill" data-env="dim" data-i18n="playground.dark">Dark</button>
 					</div>
 				</div>
 
 				<!-- background -->
 				<div class="pg-section">
-					<div class="pg-section-label">Background</div>
+					<h2 class="pg-section-label" data-i18n="playground.section_background">Background</h2>
 					<div class="pill-row" id="bg-pills">
 						<button class="pill active" data-bg="#0f0f0f" data-i18n="playground.dark_2">Dark</button>
 						<button class="pill" data-bg="#1b1b1b" data-i18n="playground.midnight">Midnight</button>
@@ -752,31 +944,33 @@
 
 				<!-- rotation + shadow -->
 				<div class="pg-section">
-					<div class="pg-section-label">Controls</div>
-					<div class="toggle-row" style="margin-bottom: 0.85rem">
-						<span data-i18n="playground.auto_rotate">Auto-rotate</span>
-						<label class="toggle">
+					<h2 class="pg-section-label" data-i18n="playground.section_controls">Controls</h2>
+					<label class="toggle-row" for="toggle-rotate" style="margin-bottom: 0.85rem">
+						<span class="toggle-text" data-i18n="playground.auto_rotate">Auto-rotate</span>
+						<span class="toggle">
 							<input type="checkbox" id="toggle-rotate" checked />
 							<span class="toggle-slider"></span>
-						</label>
-					</div>
-					<div class="toggle-row">
-						<span data-i18n="playground.shadow">Shadow</span>
-						<label class="toggle">
+						</span>
+					</label>
+					<label class="toggle-row" for="toggle-shadow">
+						<span class="toggle-text" data-i18n="playground.shadow">Shadow</span>
+						<span class="toggle">
 							<input type="checkbox" id="toggle-shadow" checked />
 							<span class="toggle-slider"></span>
-						</label>
-					</div>
+						</span>
+					</label>
 				</div>
 
 				<!-- exposure -->
 				<div class="pg-section">
-					<div class="pg-section-label">Exposure</div>
+					<h2 class="pg-section-label" data-i18n="playground.section_exposure">Exposure</h2>
 					<div class="slider-row">
 						<input
 							type="range"
 							class="pg-slider"
 							id="exposure-slider"
+							aria-label="Exposure"
+							data-i18n-attr="aria-label:playground.section_exposure"
 							min="0.2"
 							max="2.5"
 							step="0.05"
@@ -788,21 +982,27 @@
 
 				<!-- model info -->
 				<div class="pg-section" id="info-section" style="display: none">
-					<div class="pg-section-label">Model info</div>
+					<h2 class="pg-section-label" data-i18n="playground.section_model_info">Model info</h2>
 					<dl class="info-grid">
 						<dt data-i18n="playground.file">File</dt>
-						<dd id="info-filename">—</dd>
+						<dd id="info-filename" data-i18n-owned="1">default.glb</dd>
 						<dt data-i18n="playground.size">Size</dt>
-						<dd id="info-size">—</dd>
+						<dd id="info-size" data-i18n-owned="1">Unknown</dd>
 						<dt data-i18n="playground.animations">Animations</dt>
-						<dd id="info-anims">—</dd>
+						<dd id="info-anims" data-i18n-owned="1">None</dd>
 					</dl>
 				</div>
 
 				<!-- embed -->
 				<div class="pg-section">
-					<div class="pg-section-label">Embed</div>
-					<textarea id="embed-code" readonly spellcheck="false"></textarea>
+					<h2 class="pg-section-label" data-i18n="playground.section_embed">Embed</h2>
+					<textarea
+						id="embed-code"
+						readonly
+						spellcheck="false"
+						aria-label="Embed snippet"
+						data-i18n-attr="aria-label:playground.embed_snippet_arialabel"
+					></textarea>
 					<p class="embed-note" id="embed-note"></p>
 					<div class="btn-row">
 						<button class="pg-btn accent" id="copy-embed" data-i18n="playground.copy_snippet">Copy snippet</button>
@@ -810,10 +1010,6 @@
 					</div>
 				</div>
 			</div>
-		</div>
-
-		<div id="loading-indicator" class="loading-indicator">
-			<div class="spinner"></div>
 		</div>
 
 		<div id="footer-container"></div>
@@ -828,6 +1024,11 @@
 				const fileChip = document.getElementById('file-chip');
 				const statusEl = document.getElementById('pg-status');
 				const loading = document.getElementById('loading-indicator');
+				const errorBox = document.getElementById('viewer-error');
+				const errorTitle = document.getElementById('viewer-error-title');
+				const errorMsg = document.getElementById('viewer-error-msg');
+				const retryBtn = document.getElementById('viewer-retry');
+				const errorUpload = document.getElementById('viewer-error-upload');
 				const animSection = document.getElementById('anim-section');
 				const animSelect = document.getElementById('anim-select');
 				const animPlayPause = document.getElementById('anim-play-pause');
@@ -846,52 +1047,125 @@
 
 				const DEFAULT_SRC = '/avatars/default.glb';
 				const DEFAULT_NAME = 'default.glb';
+				// A cold model-viewer on a slow link needs a while; past this the
+				// spinner is lying and the visitor gets a way out instead.
+				const LOAD_TIMEOUT_MS = 25000;
 
 				let isPlaying = true;
+				let currentSrc = DEFAULT_SRC;
 				let currentFilename = DEFAULT_NAME;
 				let currentFileSize = null;
 				let currentIsLocal = false;
 				let statusTimer = null;
+				let loadTimer = null;
+				let settled = false;
 
 				/* ── status ── */
 				const setStatus = (msg, kind = '') => {
 					statusEl.textContent = msg || '';
 					statusEl.className = kind;
 					if (statusTimer) clearTimeout(statusTimer);
-					if (msg) statusTimer = setTimeout(() => setStatus(''), 3000);
+					if (msg) statusTimer = setTimeout(() => setStatus(''), 4000);
 				};
 
-				/* ── loading overlay ── */
-				const showLoading = () => loading.classList.add('open');
+				/* ── loading + error overlays ── */
+				const showLoading = () => {
+					errorBox.classList.remove('open');
+					loading.classList.add('open');
+				};
 				const hideLoading = () => loading.classList.remove('open');
 
-				/* ── load model ── */
-				const loadModel = (src, filename, fileSize) => {
-					showLoading();
-					currentFilename = filename;
-					currentFileSize = fileSize || null;
-					currentIsLocal = src.startsWith('blob:');
-					viewer.src = src;
+				const showError = (title, message) => {
+					clearTimeout(loadTimer);
+					settled = true;
+					hideLoading();
+					errorTitle.textContent = title;
+					errorTitle.setAttribute('data-i18n-owned', '1');
+					errorMsg.textContent = message;
+					errorMsg.setAttribute('data-i18n-owned', '1');
+					errorBox.classList.add('open');
 					dropOverlay.classList.add('hidden');
-					fileChip.textContent = filename;
-					fileChip.classList.add('loaded');
-					viewer.addEventListener('load', onModelLoad, { once: true });
-					viewer.addEventListener(
-						'error',
-						() => {
-							hideLoading();
-							setStatus('Could not load model.', 'err');
-						},
-						{ once: true },
-					);
 				};
 
+				const clearError = () => errorBox.classList.remove('open');
+
+				/* ── load model ── */
 				const onModelLoad = () => {
+					if (settled) return;
+					settled = true;
+					clearTimeout(loadTimer);
 					hideLoading();
+					clearError();
+					dropOverlay.classList.add('hidden');
+					viewer.setAttribute('alt', '3D preview of ' + currentFilename);
 					updateAnimations();
 					updateInfo();
 					updateEmbed();
 				};
+
+				const onModelError = () => {
+					showError(
+						'That model did not load',
+						currentIsLocal
+							? 'The .glb could not be parsed. Try re-exporting it as binary glTF, or load the sample model again.'
+							: 'The file could not be fetched. Check your connection, then retry.',
+					);
+				};
+
+				const watchLoad = () => {
+					clearTimeout(loadTimer);
+					loadTimer = setTimeout(() => {
+						if (settled) return;
+						if (!customElements.get('model-viewer')) {
+							showError(
+								'The 3D viewer did not start',
+								'The model-viewer runtime could not be fetched from the CDN. Reload the page, or try again on a network that allows it.',
+							);
+							return;
+						}
+						showError(
+							'This model is taking too long',
+							'The download stalled. Retry, or pick a smaller .glb from your machine.',
+						);
+					}, LOAD_TIMEOUT_MS);
+				};
+
+				const loadModel = (src, filename, fileSize) => {
+					settled = false;
+					currentSrc = src;
+					currentFilename = filename;
+					currentFileSize = fileSize || null;
+					currentIsLocal = src.startsWith('blob:');
+					showLoading();
+					watchLoad();
+					fileChip.textContent = filename;
+					fileChip.classList.add('loaded');
+					viewer.addEventListener('load', onModelLoad, { once: true });
+					viewer.addEventListener('error', onModelError, { once: true });
+					viewer.src = src;
+				};
+
+				retryBtn.addEventListener('click', () => {
+					clearError();
+					if (!customElements.get('model-viewer')) {
+						window.location.reload();
+						return;
+					}
+					viewer.removeAttribute('src');
+					if (currentIsLocal) {
+						// A blob that failed to parse will fail again; the sample model is
+						// the only retry from here that can actually succeed.
+						currentIsLocal = false;
+						loadModel(DEFAULT_SRC, DEFAULT_NAME, null);
+						return;
+					}
+					loadModel(currentSrc, currentFilename, currentFileSize);
+				});
+
+				errorUpload.addEventListener('click', () => {
+					clearError();
+					upload.click();
+				});
 
 				/* ── animations ── */
 				const updateAnimations = () => {
@@ -901,9 +1175,11 @@
 						return;
 					}
 					animSection.style.display = '';
-					animSelect.innerHTML = anims
-						.map((a, i) => `<option value="${i}">${a || `Animation ${i + 1}`}</option>`)
-						.join('');
+					// Built as DOM nodes: a clip name inside a caller-supplied .glb is
+					// untrusted text and must never be parsed as markup.
+					animSelect.replaceChildren(
+						...anims.map((a, idx) => new Option(a || 'Animation ' + (idx + 1), String(idx))),
+					);
 					isPlaying = true;
 					setAnimIcon(true);
 					viewer.animationName = anims[0];
@@ -927,7 +1203,7 @@
 
 				animSelect.addEventListener('change', () => {
 					const anims = viewer.availableAnimations || [];
-					viewer.animationName = anims[animSelect.value] ?? anims[0];
+					viewer.animationName = anims[Number(animSelect.value)] ?? anims[0];
 					if (!isPlaying) {
 						viewer.play();
 						isPlaying = true;
@@ -937,7 +1213,7 @@
 
 				/* ── model info ── */
 				const formatBytes = (b) => {
-					if (!b) return '—';
+					if (!b) return 'Unknown';
 					if (b < 1024) return b + ' B';
 					if (b < 1048576) return (b / 1024).toFixed(1) + ' KB';
 					return (b / 1048576).toFixed(2) + ' MB';
@@ -947,19 +1223,27 @@
 					const anims = viewer.availableAnimations || [];
 					infoFilename.textContent = currentFilename;
 					infoSize.textContent = formatBytes(currentFileSize);
-					infoAnims.textContent = anims.length === 0 ? 'None' : anims.length;
+					infoAnims.textContent = anims.length === 0 ? 'None' : String(anims.length);
 					infoSection.style.display = '';
 				};
 
 				/* ── embed code ── */
+				const VIEWER_TAG =
+					'<script type="module" src="https://ajax.googleapis.com/ajax/libs/model-viewer/4.0.0/model-viewer.min.js" integrity="sha384-sr9b4Ux0WhAUGclJ0ym0FSY2zSOMmNSn0bP/SA0e6bNCrpn/5W3QL8mm+LdlQMKw" crossorigin="anonymous"><\/script>';
+
+				const snippetFor = (src) =>
+					VIEWER_TAG +
+					'\n<model-viewer\n  src="' +
+					src +
+					'"\n  alt="3D model"\n  camera-controls\n  auto-rotate\n  autoplay\n  style="width:500px;height:500px"\n></model-viewer>';
+
 				const updateEmbed = () => {
 					if (currentIsLocal) {
-						embedCode.value = `<script type="module" src="https://ajax.googleapis.com/ajax/libs/model-viewer/4.0.0/model-viewer.min.js" integrity="sha384-sr9b4Ux0WhAUGclJ0ym0FSY2zSOMmNSn0bP/SA0e6bNCrpn/5W3QL8mm+LdlQMKw" crossorigin="anonymous"><\/script>\n<model-viewer\n  src="YOUR_HOSTED_MODEL_URL.glb"\n  camera-controls\n  auto-rotate\n  autoplay\n  style="width:500px;height:500px"\n></model-viewer>`;
+						embedCode.value = snippetFor('https://your-host.example/model.glb');
 						embedNote.textContent =
-							'Host your .glb file on a server and replace the src URL above.';
+							'This file lives only in your browser. Upload the .glb to your own host and swap the src above.';
 					} else {
-						const src = `${window.location.origin}${DEFAULT_SRC}`;
-						embedCode.value = `<script type="module" src="https://ajax.googleapis.com/ajax/libs/model-viewer/4.0.0/model-viewer.min.js" integrity="sha384-sr9b4Ux0WhAUGclJ0ym0FSY2zSOMmNSn0bP/SA0e6bNCrpn/5W3QL8mm+LdlQMKw" crossorigin="anonymous"><\/script>\n<model-viewer\n  src="${src}"\n  camera-controls\n  auto-rotate\n  autoplay\n  style="width:500px;height:500px"\n></model-viewer>`;
+						embedCode.value = snippetFor(window.location.origin + DEFAULT_SRC);
 						embedNote.textContent = '';
 					}
 				};
@@ -967,28 +1251,41 @@
 				updateEmbed();
 
 				/* ── copy embed ── */
+				const legacyCopy = () => {
+					embedCode.focus();
+					embedCode.select();
+					try {
+						return document.execCommand('copy');
+					} catch {
+						return false;
+					}
+				};
+
 				copyEmbed.addEventListener('click', async () => {
+					let copied = false;
 					try {
 						await navigator.clipboard.writeText(embedCode.value);
+						copied = true;
 					} catch {
-						embedCode.select();
-						document.execCommand('copy');
+						copied = legacyCopy();
 					}
-					setStatus('Snippet copied.', 'ok');
+					if (copied) setStatus('Snippet copied.', 'ok');
+					else setStatus('Clipboard blocked. The snippet is selected: press Ctrl+C.', 'err');
 				});
 
 				/* ── reset ── */
 				resetBtn.addEventListener('click', () => {
 					upload.value = '';
 					animSection.style.display = 'none';
-					dropOverlay.classList.remove('hidden');
-					fileChip.textContent = DEFAULT_NAME;
+					clearError();
+					viewer.removeAttribute('src');
 					loadModel(DEFAULT_SRC, DEFAULT_NAME, null);
+					setStatus('Back to the sample model.', 'ok');
 				});
 
 				/* ── file upload ── */
 				const MAX_UPLOAD_BYTES = 100 * 1024 * 1024; // 100 MB
-				const fmtMB = (b) => `${(b / 1024 / 1024).toFixed(1)} MB`;
+				const fmtMB = (b) => (b / 1024 / 1024).toFixed(1) + ' MB';
 
 				const handleFile = (file) => {
 					if (!file) return;
@@ -996,25 +1293,25 @@
 						const ext = file.name.includes('.')
 							? file.name.split('.').pop().toLowerCase()
 							: 'that file type';
-						setStatus(
-							`Can't load .${ext} — drop a binary glTF (.glb) instead.`,
-							'err',
-						);
+						setStatus('Cannot load .' + ext + ': drop a binary glTF (.glb) instead.', 'err');
 						return;
 					}
 					if (file.size === 0) {
-						setStatus('That file is empty — pick a valid .glb model.', 'err');
+						setStatus('That file is empty. Pick a valid .glb model.', 'err');
 						return;
 					}
 					if (file.size > MAX_UPLOAD_BYTES) {
 						setStatus(
-							`That model is ${fmtMB(file.size)} — keep it under ${fmtMB(MAX_UPLOAD_BYTES)} so it loads smoothly.`,
+							'That model is ' +
+								fmtMB(file.size) +
+								'. Keep it under ' +
+								fmtMB(MAX_UPLOAD_BYTES) +
+								' so it loads smoothly.',
 							'err',
 						);
 						return;
 					}
-					const url = URL.createObjectURL(file);
-					loadModel(url, file.name, file.size);
+					loadModel(URL.createObjectURL(file), file.name, file.size);
 				};
 
 				upload.addEventListener('change', (e) => {
@@ -1027,30 +1324,44 @@
 				dropzone.addEventListener('dragover', (e) => {
 					e.preventDefault();
 					dropzone.classList.add('drag-over');
+					dropOverlay.classList.remove('hidden');
 				});
-				dropzone.addEventListener('dragleave', () =>
-					dropzone.classList.remove('drag-over'),
-				);
+				dropzone.addEventListener('dragleave', () => {
+					dropzone.classList.remove('drag-over');
+					if (settled) dropOverlay.classList.add('hidden');
+				});
 				dropzone.addEventListener('drop', (e) => {
 					e.preventDefault();
 					dropzone.classList.remove('drag-over');
+					if (settled) dropOverlay.classList.add('hidden');
 					handleFile(e.dataTransfer.files[0]);
 				});
 
-				/* ── environment pills ── */
+				/* ── environment presets ──
+				   Each preset owns both the image and its exposure baseline, and writes
+				   the slider back, so switching presets can never leave the scene lit
+				   by the previous preset's exposure. */
+				const ENVIRONMENTS = {
+					neutral: { image: 'neutral', exposure: '1.00' },
+					legacy: { image: 'legacy', exposure: '1.15' },
+					dim: { image: 'neutral', exposure: '0.35' },
+				};
+
+				const setExposure = (value) => {
+					exposureSlider.value = value;
+					exposureVal.textContent = Number(value).toFixed(2);
+					viewer.setAttribute('exposure', value);
+				};
+
 				document.querySelectorAll('[data-env]').forEach((btn) => {
 					btn.addEventListener('click', () => {
 						document
 							.querySelectorAll('[data-env]')
 							.forEach((b) => b.classList.remove('active'));
 						btn.classList.add('active');
-						viewer.setAttribute('environment-image', btn.dataset.env || 'neutral');
-						if (btn.dataset.env === '') {
-							viewer.setAttribute('environment-image', 'neutral');
-							viewer.setAttribute('exposure', '0.35');
-							exposureSlider.value = '0.35';
-							exposureVal.textContent = '0.35';
-						}
+						const preset = ENVIRONMENTS[btn.dataset.env] || ENVIRONMENTS.neutral;
+						viewer.setAttribute('environment-image', preset.image);
+						setExposure(preset.exposure);
 					});
 				});
 
@@ -1062,7 +1373,8 @@
 							.forEach((b) => b.classList.remove('active'));
 						btn.classList.add('active');
 						document.querySelector('.pg-viewer-wrap').style.background =
-							`radial-gradient(ellipse at 50% 30%, rgba(255,255,255,0.03) 0%, transparent 65%), ${btn.dataset.bg}`;
+							'radial-gradient(ellipse at 50% 30%, rgba(255,255,255,0.03) 0%, transparent 65%), ' +
+							btn.dataset.bg;
 					});
 				});
 
@@ -1084,9 +1396,20 @@
 					viewer.setAttribute('exposure', v);
 				});
 
-				/* ── initial load ── */
+				/* ── initial load ──
+				   The markup ships src already set, so the element may finish before
+				   this runs. Adopt whatever state it is already in rather than waiting
+				   for an event that has been and gone. */
 				showLoading();
+				watchLoad();
 				viewer.addEventListener('load', onModelLoad, { once: true });
+				viewer.addEventListener('error', onModelError, { once: true });
+				customElements
+					.whenDefined('model-viewer')
+					.then(() => {
+						if (viewer.loaded) onModelLoad();
+					})
+					.catch(() => {});
 			})();
 		</script>
 
