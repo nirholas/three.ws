@@ -118,7 +118,9 @@ loadEnvironment(renderer, scene, qualityTier === 'mobile' ? null : 'studio');
 stageEl.appendChild(renderer.domElement);
 
 const controls = new OrbitControls(camera, renderer.domElement);
-controls.target.set(0.6, 1.0, 0);
+// Centred between the avatar's spawn and the kiosk, not on the kiosk: the walk
+// between them is the thing being watched.
+controls.target.set(-0.2, 1.0, 0.7);
 controls.enableDamping = true;
 controls.dampingFactor = 0.08;
 controls.minDistance = 2.5;
@@ -444,11 +446,37 @@ function drawBoard() {
 
 const clock = new Timer();
 let redrawAcc = 0;
+// The story of this page is one walk: the avatar at its spawn, the kiosk it
+// pays, and the ground between them. All three have to be on screen, and a
+// camera distance hardcoded for one viewport cannot promise that. On a 1440px
+// desktop the 384px side panel leaves a wide, short stage and the avatar stood
+// half outside the left edge of it. Pull the camera back until the whole span
+// fits horizontally AND vertically at the current stage aspect.
+const FRAME_SPAN_X = 7.4;   // world units that must stay horizontally in frame
+const FRAME_SPAN_Y = 3.6;   // ground to the top of the kiosk mast, with headroom
+const CAM_DIR = new Vector3(-1.6, 2.5, 6.4).sub(controls.target).normalize();
+
+function frameScene() {
+	const vHalf = MathUtils.degToRad(camera.fov) / 2;
+	const hHalf = Math.atan(Math.tan(vHalf) * camera.aspect);
+	const dist = MathUtils.clamp(
+		Math.max(FRAME_SPAN_X / 2 / Math.tan(hHalf), FRAME_SPAN_Y / 2 / Math.tan(vHalf)),
+		controls.minDistance,
+		controls.maxDistance,
+	);
+	camera.position.copy(controls.target).addScaledVector(CAM_DIR, dist);
+	camera.updateProjectionMatrix();
+}
+
 function resize() {
 	const w = stageEl.clientWidth, h = stageEl.clientHeight;
+	if (!w || !h) return;
 	renderer.setSize(w, h, false);
 	camera.aspect = w / h;
 	camera.updateProjectionMatrix();
+	// Re-frame only while the shot is still ours. Once the visitor has orbited,
+	// the camera is theirs and a resize must not yank it back.
+	if (!hintFaded) frameScene();
 }
 new ResizeObserver(resize).observe(stageEl);
 resize();
