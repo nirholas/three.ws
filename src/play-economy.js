@@ -26,6 +26,13 @@ const fmtPct = (n) =>
 
 const RARITY_ORDER = ['common', 'uncommon', 'rare', 'epic', 'legendary'];
 
+/**
+ * A failed fetch surfaces as a bare browser string ("Failed to fetch") with no
+ * terminating period, so appending the retry hint to it produced one run-on
+ * sentence. Terminate anything that does not already end one.
+ */
+const sentence = (s) => (/[.!?]$/.test(s.trim()) ? s.trim() : `${s.trim()}.`);
+
 function el(tag, props = {}, kids = []) {
 	const n = document.createElement(tag);
 	for (const [k, v] of Object.entries(props)) {
@@ -188,6 +195,69 @@ function renderBank(data) {
 	]);
 }
 
+/**
+ * A proportional split bar whose labels live in a legend underneath rather than
+ * inside the segments. Text inside a segment has to fit that segment, which it
+ * cannot at 320px, and clipping "50% holder rewards" down to "50% holder re..."
+ * loses the one thing the bar exists to say. A legend also stays readable if the
+ * split is ever re-weighted to something lopsided, where the smaller segment
+ * would be far too narrow to hold any text at all.
+ */
+function splitBar(parts, label) {
+	return el('figure', { class: 'pe-splitfig' }, [
+		el(
+			'div',
+			{ class: 'pe-splitbar', role: 'img', 'aria-label': label },
+			parts.map((p) =>
+				el('div', {
+					class: `pe-splitbar-seg pe-splitbar-${p.tone}`,
+					style: `--w:${p.pct}%`,
+				}),
+			),
+		),
+		el(
+			'figcaption',
+			{ class: 'pe-splitlegend' },
+			parts.map((p) =>
+				el('span', { class: `pe-splitkey pe-splitkey-${p.tone}` }, [
+					el('span', { class: 'pe-splitdot', 'aria-hidden': 'true' }),
+					el('strong', { class: 'pe-splitpct', text: `${fmtPct(p.pct)}%` }),
+					el('span', { class: 'pe-splitname', text: p.label }),
+				]),
+			),
+		),
+	]);
+}
+
+/**
+ * The visual for one boutique listing. Dyes and auras are a flat colour and get
+ * the swatch circle; hats and eyewear are modelled items and ship a rendered
+ * thumbnail, which the API already serves. Without this the two thumbnail
+ * listings rendered as blank grey circles next to five coloured ones. The alt
+ * is empty on purpose: the item name sits beside it, so the image is decorative
+ * and announcing it twice only adds noise for a screen reader.
+ */
+function fitSwatch(c) {
+	const plain = () =>
+		el('div', {
+			class: 'pe-fit-swatch',
+			style: c.swatch ? `--sw:${c.swatch}` : null,
+			'aria-hidden': 'true',
+		});
+	if (!c.thumb) return plain();
+	const img = el('img', {
+		class: 'pe-fit-swatch pe-fit-thumb',
+		src: c.thumb,
+		alt: '',
+		width: '34',
+		height: '34',
+		loading: 'lazy',
+		decoding: 'async',
+		onerror: () => img.replaceWith(plain()),
+	});
+	return img;
+}
+
 function renderBoutique(data) {
 	const { listings, currency, rewardsBps, treasuryBps } = data.boutique;
 	const sorted = [...listings].sort((a, b) => {
@@ -202,11 +272,7 @@ function renderBoutique(data) {
 		{ class: 'pe-fit-grid' },
 		sorted.map((c) =>
 			el('article', { class: `pe-fit pe-rar-${c.rarity || 'common'}` }, [
-				el('div', {
-					class: 'pe-fit-swatch',
-					style: c.swatch ? `--sw:${c.swatch}` : null,
-					'aria-hidden': 'true',
-				}),
+				fitSwatch(c),
 				el('div', { class: 'pe-fit-body' }, [
 					el('h4', { class: 'pe-fit-name', text: c.name }),
 					el('p', { class: 'pe-fit-meta' }, [
@@ -222,18 +288,15 @@ function renderBoutique(data) {
 		),
 	);
 
-	const split = el('div', { class: 'pe-splitbar' }, [
-		el('div', {
-			class: 'pe-splitbar-seg pe-splitbar-rewards',
-			style: `--w:${rewardsBps / 100}%`,
-			text: `${rewardsBps / 100}% holder rewards`,
-		}),
-		el('div', {
-			class: 'pe-splitbar-seg pe-splitbar-treasury',
-			style: `--w:${treasuryBps / 100}%`,
-			text: `${treasuryBps / 100}% treasury`,
-		}),
-	]);
+	const rewardsPct = rewardsBps / 100;
+	const treasuryPct = treasuryBps / 100;
+	const split = splitBar(
+		[
+			{ tone: 'rewards', pct: rewardsPct, label: 'holder rewards' },
+			{ tone: 'treasury', pct: treasuryPct, label: 'treasury' },
+		],
+		`Every paid ${currency} sale splits ${fmtPct(rewardsPct)} percent to holder rewards and ${fmtPct(treasuryPct)} percent to the treasury`,
+	);
 
 	return el('div', {}, [
 		cards,
@@ -391,7 +454,7 @@ async function load() {
 			root,
 			offline
 				? 'You appear to be offline. Reconnect and try again.'
-				: `${err.message || 'The request failed.'} These numbers are static config, so a retry usually works.`,
+				: `${sentence(err.message || 'The request failed')} These numbers are static config, so a retry usually works.`,
 			load,
 		);
 		if (status) status.textContent = 'Economy reference failed to load';

@@ -192,7 +192,11 @@
 
 .pe-split {
 	display: grid;
-	grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+	/* min() on the track floor so the single column of a narrow viewport can
+	   shrink below its preferred width instead of overflowing. html and body
+	   carry overflow-x: clip, so an overflowing track is not scrollable: it is
+	   silently cut off, which lost the right edge of this panel at 320px. */
+	grid-template-columns: repeat(auto-fit, minmax(min(320px, 100%), 1fr));
 	gap: 16px;
 	align-items: start;
 }
@@ -201,7 +205,7 @@
 
 .pe-cur-grid {
 	display: grid;
-	grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+	grid-template-columns: repeat(auto-fit, minmax(min(300px, 100%), 1fr));
 	gap: 16px;
 }
 .pe-cur {
@@ -380,7 +384,7 @@
 
 .pe-fit-grid {
 	display: grid;
-	grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+	grid-template-columns: repeat(auto-fill, minmax(min(240px, 100%), 1fr));
 	gap: 14px;
 	margin-bottom: 18px;
 }
@@ -424,6 +428,11 @@
 	border-radius: 50%;
 	background: var(--sw, var(--surface-3, rgba(255, 255, 255, 0.08)));
 	border: 1px solid var(--stroke, rgba(255, 255, 255, 0.14));
+}
+.pe-fit-thumb {
+	object-fit: contain;
+	padding: 2px;
+	background: var(--surface-3, rgba(255, 255, 255, 0.08));
 }
 .pe-fit-body {
 	flex: 1 1 auto;
@@ -499,36 +508,63 @@
 	font-weight: var(--weight-semibold, 600);
 }
 
+.pe-splitfig {
+	margin: 0;
+}
 .pe-splitbar {
 	display: flex;
 	overflow: hidden;
+	height: 14px;
 	border-radius: var(--radius-pill, 999px);
 	border: 1px solid var(--stroke, rgba(255, 255, 255, 0.1));
 }
 .pe-splitbar-seg {
 	width: var(--w, 50%);
-	padding: 8px 12px;
-	font-size: var(--text-2xs, 0.6875rem);
-	font-weight: var(--weight-semibold, 600);
-	white-space: nowrap;
-	overflow: hidden;
-	text-overflow: ellipsis;
-	text-align: center;
 }
 .pe-splitbar-rewards {
-	background: color-mix(in srgb, var(--pe-chain) 24%, transparent);
-	color: var(--pe-chain);
+	background: color-mix(in srgb, var(--pe-chain) 62%, transparent);
 }
 .pe-splitbar-treasury {
-	background: color-mix(in srgb, var(--pe-cash) 24%, transparent);
-	color: var(--pe-cash);
+	background: color-mix(in srgb, var(--pe-cash) 62%, transparent);
+}
+.pe-splitlegend {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 6px 20px;
+	margin-top: 10px;
+	font-size: var(--text-xs, 0.75rem);
+}
+.pe-splitkey {
+	display: inline-flex;
+	align-items: center;
+	gap: 7px;
+}
+.pe-splitdot {
+	flex: none;
+	width: 10px;
+	height: 10px;
+	border-radius: var(--radius-pill, 999px);
+}
+.pe-splitkey-rewards .pe-splitdot {
+	background: var(--pe-chain);
+}
+.pe-splitkey-treasury .pe-splitdot {
+	background: var(--pe-cash);
+}
+.pe-splitpct {
+	font-weight: var(--weight-semibold, 600);
+	font-variant-numeric: tabular-nums;
+	color: var(--ink-bright, #fff);
+}
+.pe-splitname {
+	color: var(--ink-dim, #9aa1ad);
 }
 
 /* --- stats + odds -------------------------------------------------------- */
 
 .pe-stats {
 	display: grid;
-	grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+	grid-template-columns: repeat(auto-fit, minmax(min(160px, 100%), 1fr));
 	gap: 12px;
 	margin-bottom: 18px;
 }
