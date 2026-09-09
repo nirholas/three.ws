@@ -6,6 +6,94 @@ Work Order 04 session, no earlier entries existed because no earlier work order 
 
 ---
 
+## 2026-09-09, backlog-08 re-verified with no `gcloud`: the host is unchanged, the lane chain is committed but has never shipped
+
+Independent re-measurement of the chat-bot work order a few hours after the entry below it,
+by a session that could not use `gcloud` at all: the workspace's user credential and its ADC
+both answer `Reauthentication failed. cannot prompt during non-interactive execution`, and a
+peer session recorded the same block on an unrelated read (`6e45a8b42`). So none of the
+`gcloud run services describe` reads that earlier entries lean on were available here.
+
+**That turned out not to matter, and the substitute path is worth keeping.** Everything the
+work order asks about is readable without a Google credential:
+
+| Read | Command | Value, 2026-09-09 14:48 UTC |
+|---|---|---|
+| Host identity and uptime | `SELECT meta FROM bot_heartbeat WHERE worker='okx-chat-bot'` | `cloudrun:okx-chat-bot (okx-chat-bot-00001-926)`, `hostDurable: true`, `bootAt 2026-09-05T00:33Z` |
+| Beat freshness | same row's `last_beat_at` | 17 s old |
+| Delivery | same row | `loggedIn: true`, `activeClients: 1`, `agentCount: 1`, `daemonRestarts: 0` |
+| Reply lane | same row | `providerVerdict: unauthorized`, probed 2 min earlier |
+| Platform view | `curl -s https://three.ws/api/healthz` | `okx_chat_bot` degraded, quoting the dunning 403 |
+| Alerting | `SELECT ... FROM ops_alerts WHERE title ILIKE '%OKX%'` | the worker's own alert at `x22` since 2026-09-04, plus an hourly re-escalation row from `uptime-check` |
+| Service exists | `curl https://okx-chat-bot-93741856042.us-central1.run.app/readyz` | `403` (the service is there; only the identity token was missing) |
+
+### The finding: the running revision predates the AI-lane chain
+
+`ad723e87f` (committed 14:06 today) gave the worker an ordered provider chain, and
+`heartbeat()` in that code writes `providerLane` and `providerChain` into the beat. **The live
+beat carries neither key**, and both would serialize even when empty (`null` and `[]`). So the
+revision serving today is the single-lane 2026-09-04 build: it is pinned to Vertex, and it
+cannot pick up a funded lane even if the owner funds one. The chain exists only in git.
+
+That makes the deploy the load-bearing half of the handoff, not a formality. It also gives
+future sessions a way to tell which code a Cloud Run worker is running without `gcloud`:
+**diff the heartbeat meta's key set against `heartbeat()` in the tree.**
+
+### The block is platform-wide, not OKX-specific
+
+`ops_alerts` says so in the platform's own words, no probing needed:
+
+- `LLM providers DOWN`, count **657**, last seen 14:00 today:
+  `openrouter: 402 Payment Required | openai: 429 Too Many Requests | vertex-gemini: 403 Forbidden`.
+- `agent-sniper: named LLM judges are NOT answering`, count **1105**: 144/144 verdicts served
+  by the free fallback chain.
+
+So the same hold that silences this bot has also taken out the platform's LLM reliability
+anchor, and the free-first chain in `api/_lib/llm.js` is what is keeping user-facing AI up.
+Clearing the GCP billing hold is one action that fixes both. Nothing else here is engineering.
+
+### Definition of done, line by line
+
+| Line | Verdict |
+|---|---|
+| `npm run okx:bot` exits 0, chat delivery verified end to end | **Superseded and blocked.** `okx:bot` is the codespace stopgap and must stay stopped (`pgrep` confirms nothing local is running; Cloud Run is the sole GCS state writer). Inbound delivery is proven by `activeClients: 1`; the reply half cannot pass while no lane is funded |
+| Runs on an always-on host | **DONE**, 4.6 days of continuous beats, 0 daemon restarts |
+| Workspace carries real three.ws context | **Mechanical half done.** `buildChatBriefing()` renders 10,068 bytes naming three.ws, the forge and agent #2632, and its source module is `JSON.stringify`-identical to what `GET /api/okx/3d/catalog` serves in production, so the briefing rebuilt on every boot cannot quote a stale price. Asking the bot a question needs a funded lane |
+| Health endpoint plus an alert on an offline session | **DONE**, and proven from two independent paths: the worker's own `sendOpsAlert` row (deduped to one row at `x22`) and `uptime-check`'s hourly subsystem re-escalation |
+| PROGRESS updated with host details | **DONE** (the entry below plus this one) |
+
+`tests/okx-chat-bot.test.js`: 71 pass.
+
+### Fixed here
+
+Two documents were telling the next agent to do something now unsafe or untrue.
+
+`STRUCTURE.md` line 81 still read `Built · deploy owner-gated` five days after the service went
+live, and still described Vertex as "the deploy's transport ... no secret to mint", which the
+chain commit made false. Both corrected, with the live per-lane refusals named so the next
+reader does not re-probe them.
+
+RUNBOOK section 0.5 opened by describing the bot as "a LOCAL `okx-a2a` daemon", led with
+`npm run okx:bot`, and closed by recommending it "before an OKX retest window". Following that
+today starts a **second writer** against the GCS state object and the XMTP identity that Cloud
+Run owns, which `--max-instances=1` exists to prevent. The section now opens with that warning,
+demotes the whole local path to an emergency used only when the Cloud Run host is gone, and
+carries the two `gcloud`-free reads used above. (The backlog work order carried the same
+hazardous "do this first" instruction; it was not edited because the owner retired every file in
+`prompts/finish/` the same day, so the durable homes are this log, the INDEX and the RUNBOOK.)
+
+### What is left, and who owns it
+
+1. **Owner: fund one AI lane.** Clearing the GCP billing hold is the one that also restores the
+   platform's Vertex anchor. OpenRouter credit or an OpenAI reactivation each work too.
+2. **Owner: deploy the worker**, so the chain from `ad723e87f` is actually running:
+   `gcloud builds submit --config workers/okx-chat-bot/cloudbuild.yaml --region us-central1 --project aerial-vehicle-466722-p5 --substitutions=SHORT_SHA=manual$(date +%s) .`
+   Order does not matter: whichever lands second is picked up on the next 15-minute election.
+3. **Owner or a session with a browser: `gcloud auth login`.** Every `gcloud` read in this
+   runbook is unavailable in this workspace until that is redone.
+
+---
+
 ## 2026-09-09, WO-07 final audit: the listing OKX stores fails OKX's own description rule, and nothing was comparing that copy
 
 Third OKX session on this date; two peers were running WO-04 and WO-05 in this worktree at the
@@ -3509,6 +3597,94 @@ login URL, and a clean SIGTERM (daemon stopped, then exit). 29 unit tests pass
 
 **Not committed.** The diff names a marketplace outside the `$THREE` ecosystem, so the
 CLAUDE.md commit gate applies and the owner has to approve it first.
+
+## 2026-09-09, Work Order 04 (later session): every unfunded leg green, and case 6 was found testing the wrong side of the acceptance line
+
+Re-ran the whole no-money half of the gauntlet against production, root-caused a defect in
+the paid half BEFORE spending on it, and stopped at the one stop-and-ask gate. Nothing was
+simulated in place of a real payment; no on-chain write was attempted.
+
+### Step 0 preconditions, all verified live today
+
+| Check | Result |
+| --- | --- |
+| `onchainos --version` / `wallet status` | 4.5.2, `loggedIn: true` as `claude@three.ws`. **The OTP gate from the 2026-08-01 session is discharged.** |
+| `GET /api/okx/3d/health` | 200, six subsystems, `payment-rail settleable: true`, block 70196288 |
+| `GET /api/okx/3d/catalog` | 200, 7 rows, byte-identical to `catalogIndex()` |
+| 402 sweep, 4 listed paid rows, MCP headers sent | all 402, `accepts[0].network = eip155:196`, amounts byte-exact (10000 / 50000 / 250000 / 250000), `payTo` `0x4022de2D...f402` unchanged. Evidence: `96-2026-09-09-402-sweep.txt` |
+| `npx vitest run tests/api/okx-3d-services.test.js` | 36 passed |
+| `npm run okx:three-copy` | module == live == submission. The only divergence is the known stale on-chain DESCRIPTIONS, owned by work order 08, not by this one. |
+| `node scripts/okx-e2e-gauntlet.mjs --dry-run` | 4/4 unfunded cases PASS (1, 1d, 5d, 7); the other ten are the paid legs |
+| `scripts/okx-verify-glb.mjs` controls | 4/4 correct: michelle.glb 0 and 0 `--rigged`, mannequin.glb 0 and 1 `--rigged`, an error JSON named `.glb` exits 1, a 404 exits 2 |
+
+### The defect: case 6 would have spent $0.25 to prove the opposite of our promise
+
+Case 6 asserts the pay-on-acceptance promise by forcing a job to fail after payment verifies
+and checking the EIP-3009 nonce is still unredeemed. It forced that failure with an
+`image_urls` entry that 404s. **Measured against production: that input does not fail.**
+`POST /api/forge` with a 404 image URL answers `200 queued` (job `f1.eyJwIjoiZ2NwIi...`,
+creation `67c9d5ad-e14c-466b-97b9-b48d00006baa`); validation on that lane is format-only and
+never fetches the image. The job would have been accepted, settled, and failed later in
+generation, which is the CHARGED side of the line `docs/okx-marketplace.md` documents.
+
+Fixed by moving case 6 to `forge-draft` ($0.01) with a whitespace-only prompt: it clears the
+tool's JSON schema (minLength counts the spaces, so a real payable 402 is still issued,
+confirmed by Ajv against the live schema and by a 402 from production) and is then refused
+inside the handler with `invalid_input` before the lane is asked for any work. Both hops are
+now covered by a unit test in `tests/api/okx-forge.test.js` (46 passed), so the premise cannot
+rot silently. Float floor for a clean run drops from $1.32 to $1.08.
+
+### One docs defect fixed in the same pass
+
+`docs/okx-marketplace.md` stated the acceptance line precisely in "Payment semantics" and then
+contradicted it 80 lines later in the REST-rows section ("an engine failure answers before
+settlement and never charges"). A buyer reading only the second paragraph concludes a
+generation failure is refunded. Corrected to name acceptance explicitly and to cross-link the
+precise section. Code and promise now agree everywhere; no code change was needed.
+
+### Two more adversarial cases went green with NO funding
+
+`5b` and `5c` were assumed to need money by every prior session's plan; they do not. The
+`onchainos` CLI signs an EIP-3009 authorization off-chain regardless of balance, and the
+server rejects both before it ever reaches a balance or settlement check, so the pair is fully
+provable at a zero balance and was proved today (`node scripts/okx-e2e-gauntlet.mjs --yes
+--only 5b,5c`, `2/2 cases passed. Settlements: 0`, buyer balance unchanged at 0.000000):
+
+- **5b PASS**: an authorization signed for `forge-draft` (10000) replayed against `forge-hd`
+  answers 402 with a fresh challenge and `signed payment amount 10000 is below required
+  250000`. Nonce unspent on-chain. Evidence `51-case5b-cross-service.json`.
+- **5c PASS**: an expired authorization answers 402, the message names expiry, and a full
+  fresh challenge is offered. Nonce unspent. Evidence `52-case5c-expired.json`.
+
+**Three of the four adversarial cases (5b, 5c, 5d) are therefore closed without funding.**
+Only 5a still needs it, because replaying a VALID authorization first requires a real
+settlement to replay. Case 6 was deliberately NOT attempted unfunded: at a zero balance verify
+rejects on balance before the handler is reached, so it would pass for the wrong reason and
+the evidence would be worthless. Its handler half is instead covered mechanically by the new
+unit test above.
+
+### Still blocked on exactly one owner action
+
+**5.0 USD₮0 to `0x75d00a2713565171f33216e5aa2a375e076ecf69` on X Layer (chainId 196), token
+`0x779Ded0c9e1022225f8E0630b35a9b54bE713736`.** Buyer holds 0.000000, unchanged for six
+weeks. Details, arithmetic and the optional Solana leg are in
+`prompts/okx-ai/e2e-evidence/FUNDING-REQUEST.md`, refreshed today. Note the money largely
+returns: `payTo` is our own merchant wallet, so a full run costs the platform only gas
+(~0.00002 OKB), and that wallet already holds 2.427731 USD₮0 if funding from there is easier.
+`gcloud` auth is expired in this session, so the merchant key cannot be read here either way.
+
+### GO/NO-GO for OKX-05 / the relisting
+
+**NO-GO on the settlement evidence, unchanged and for the same reason as every prior session:
+no real settlement has ever landed on this rail.** Six of the fourteen cases now pass for real
+against production with no funding (1, 1d, 5b, 5c, 5d, 7). The eight that remain (2, 2b, 3,
+3i, 3r, 4, 5a, 6) are written, wired and budget-checked, and they are unproven until they
+spend. `docs/okx-marketplace.md` still carries no "verified behavior" section, deliberately:
+writing settlement timing and replay protection from intention rather than from a tx hash is
+exactly what this work order forbids.
+
+Agent #2632 untouched. The relisting (work order 08) does not depend on this: a listing does
+not require a settled payment to be submitted.
 
 ## Retire this file when the campaign is done (required)
 

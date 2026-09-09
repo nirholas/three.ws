@@ -1,0 +1,381 @@
+{
+  "signedFor": {
+    "service": "forge-draft",
+    "amount": "10000"
+  },
+  "replayedAgainst": {
+    "service": "forge-hd",
+    "amount": "250000"
+  },
+  "attempt": {
+    "status": 402,
+    "structured": null,
+    "body": {
+      "x402Version": 2,
+      "error": "signed payment amount 10000 is below required 250000",
+      "resource": {
+        "url": "https://three.ws/api/okx/3d/forge-hd",
+        "description": "three.ws Forge, Forge 3D HD: A2MCP service that turns a text description into a downloadable 3D model (GLB) with a browser viewer and an augmented-reality link. $0.25 per call on X Layer via x402; job polling is free. Operated by three.ws.",
+        "mimeType": "application/json",
+        "serviceName": "three.ws Forge, Forge 3D HD",
+        "tags": [
+          "x402",
+          "mcp",
+          "3d",
+          "forge",
+          "okx"
+        ],
+        "iconUrl": "https://three.ws/favicon.ico"
+      },
+      "accepts": [
+        {
+          "scheme": "exact",
+          "network": "eip155:196",
+          "amount": "250000",
+          "payTo": "0x4022de2D36C334E73C7a108805Cea11C0564f402",
+          "maxTimeoutSeconds": 86400,
+          "asset": "0x779ded0c9e1022225f8e0630b35a9b54be713736",
+          "resource": "https://three.ws/api/okx/3d/forge-hd",
+          "extra": {
+            "symbol": "USDT",
+            "name": "USD₮0",
+            "version": "1",
+            "transferMethod": "eip3009",
+            "decimals": 6
+          }
+        },
+        {
+          "scheme": "exact",
+          "amount": "250000",
+          "maxTimeoutSeconds": 60,
+          "resource": "https://three.ws/api/okx/3d/forge-hd",
+          "network": "solana:5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp",
+          "payTo": "wwwwwDxFWRn7grgr3Esrsg5C6NvDoDHSA4gaCffccrU",
+          "asset": "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v",
+          "extra": {
+            "name": "USDC",
+            "decimals": 6
+          }
+        },
+        {
+          "scheme": "exact",
+          "amount": "10000000",
+          "maxTimeoutSeconds": 60,
+          "resource": "https://three.ws/api/okx/3d/forge-hd",
+          "network": "solana:5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp",
+          "payTo": "wwwwwDxFWRn7grgr3Esrsg5C6NvDoDHSA4gaCffccrU",
+          "asset": "FeMbDoX7R1Psc4GEcvJdsbNbZA3bfztcyDCatJVJpump",
+          "extra": {
+            "name": "THREE",
+            "decimals": 6
+          }
+        },
+        {
+          "scheme": "exact",
+          "amount": "250000",
+          "maxTimeoutSeconds": 60,
+          "resource": "https://three.ws/api/okx/3d/forge-hd",
+          "network": "eip155:8453",
+          "payTo": "0x4022de2d36c334e73c7a108805cea11c0564f402",
+          "asset": "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
+          "extra": {
+            "name": "USD Coin",
+            "version": "2",
+            "decimals": 6
+          }
+        }
+      ],
+      "extensions": {
+        "bazaar": {
+          "discoverable": true,
+          "info": {
+            "input": {
+              "type": "http",
+              "method": "POST",
+              "body": {
+                "jsonrpc": "2.0",
+                "id": 1,
+                "method": "tools/call",
+                "params": {
+                  "name": "forge_3d",
+                  "arguments": {
+                    "prompt": "a low-poly orange fox sitting down"
+                  }
+                }
+              },
+              "bodyType": "json"
+            },
+            "output": {
+              "type": "json",
+              "example": {
+                "jsonrpc": "2.0",
+                "id": 1,
+                "result": {
+                  "content": [
+                    {
+                      "type": "text",
+                      "text": "Job accepted. Call forge_status with job_id f1.abc123 until status is \"done\"."
+                    }
+                  ],
+                  "structuredContent": {
+                    "ok": true,
+                    "status": "pending",
+                    "job": "f1.abc123",
+                    "poll_tool": "forge_status",
+                    "poll_endpoint": "https://three.ws/api/okx/3d/forge-status",
+                    "format": "glb",
+                    "etaSeconds": 45
+                  }
+                }
+              }
+            }
+          },
+          "schema": {
+            "$schema": "https://json-schema.org/draft/2020-12/schema",
+            "type": "object",
+            "properties": {
+              "input": {
+                "type": "object",
+                "properties": {
+                  "type": {
+                    "type": "string",
+                    "const": "http"
+                  },
+                  "method": {
+                    "type": "string",
+                    "enum": [
+                      "POST",
+                      "PUT",
+                      "PATCH"
+                    ]
+                  },
+                  "bodyType": {
+                    "type": "string",
+                    "enum": [
+                      "json",
+                      "form-data",
+                      "text"
+                    ]
+                  },
+                  "body": {
+                    "$schema": "https://json-schema.org/draft/2020-12/schema",
+                    "type": "object",
+                    "required": [
+                      "jsonrpc",
+                      "method"
+                    ],
+                    "properties": {
+                      "jsonrpc": {
+                        "type": "string",
+                        "const": "2.0"
+                      },
+                      "id": {
+                        "type": [
+                          "string",
+                          "number"
+                        ]
+                      },
+                      "method": {
+                        "type": "string",
+                        "enum": [
+                          "initialize",
+                          "tools/list",
+                          "tools/call",
+                          "ping"
+                        ],
+                        "description": "MCP JSON-RPC method."
+                      },
+                      "params": {
+                        "type": "object",
+                        "description": "For tools/call: { name, arguments }. Tool names: forge_3d (paid, $0.25), forge_status (free job polling), getting_started (free overview). See tools/list."
+                      }
+                    }
+                  }
+                },
+                "required": [
+                  "type",
+                  "method",
+                  "bodyType",
+                  "body"
+                ],
+                "additionalProperties": false
+              },
+              "output": {
+                "type": "object",
+                "properties": {
+                  "type": {
+                    "type": "string"
+                  },
+                  "example": {
+                    "type": "object",
+                    "$schema": "https://json-schema.org/draft/2020-12/schema",
+                    "properties": {
+                      "jsonrpc": {
+                        "type": "string",
+                        "const": "2.0"
+                      },
+                      "id": {
+                        "type": [
+                          "string",
+                          "number"
+                        ]
+                      },
+                      "result": {
+                        "type": "object",
+                        "properties": {
+                          "content": {
+                            "type": "array",
+                            "items": {
+                              "type": "object",
+                              "required": [
+                                "type",
+                                "text"
+                              ],
+                              "properties": {
+                                "type": {
+                                  "type": "string",
+                                  "enum": [
+                                    "text"
+                                  ]
+                                },
+                                "text": {
+                                  "type": "string"
+                                }
+                              }
+                            }
+                          }
+                        }
+                      },
+                      "error": {
+                        "type": "object",
+                        "properties": {
+                          "code": {
+                            "type": "number"
+                          },
+                          "message": {
+                            "type": "string"
+                          }
+                        }
+                      }
+                    }
+                  }
+                },
+                "required": [
+                  "type"
+                ]
+              }
+            },
+            "required": [
+              "input"
+            ]
+          }
+        },
+        "offer-receipt": {
+          "includeTxHash": false,
+          "offerValiditySeconds": 60,
+          "info": {
+            "offers": [
+              {
+                "format": "jws",
+                "acceptIndex": 0,
+                "signature": "eyJhbGciOiJFZERTQSIsImtpZCI6ImRpZDp3ZWI6dGhyZWUud3Mja2V5LTEifQ.eyJhbW91bnQiOiIyNTAwMDAiLCJhc3NldCI6IjB4Nzc5ZGVkMGM5ZTEwMjIyMjVmOGUwNjMwYjM1YTliNTRiZTcxMzczNiIsIm5ldHdvcmsiOiJlaXAxNTU6MTk2IiwicGF5VG8iOiIweDQwMjJkZTJEMzZDMzM0RTczQzdhMTA4ODA1Q2VhMTFDMDU2NGY0MDIiLCJyZXNvdXJjZVVybCI6Imh0dHBzOi8vdGhyZWUud3MvYXBpL29reC8zZC9mb3JnZS1oZCIsInNjaGVtZSI6ImV4YWN0IiwidmFsaWRVbnRpbCI6MTc4ODk2NjM1NSwidmVyc2lvbiI6MX0.rA3zqQeiK6bVrh0_ByUnihs86jVJJIsIVnBZGu-vJuz5CTicalRFXq4AkM05iFuYTDsH3uFfd0TnVlaMBqnTCg"
+              },
+              {
+                "format": "jws",
+                "acceptIndex": 1,
+                "signature": "eyJhbGciOiJFZERTQSIsImtpZCI6ImRpZDp3ZWI6dGhyZWUud3Mja2V5LTEifQ.eyJhbW91bnQiOiIyNTAwMDAiLCJhc3NldCI6IkVQakZXZGQ1QXVmcVNTcWVNMnFOMXh6eWJhcEM4RzR3RUdHa1p3eVREdDF2IiwibmV0d29yayI6InNvbGFuYTo1ZXlrdDRVc0Z2OFA4TkpkVFJFcFkxdnpxS3FaS3ZkcCIsInBheVRvIjoid3d3d3dEeEZXUm43Z3JncjNFc3JzZzVDNk52RG9ESFNBNGdhQ2ZmY2NyVSIsInJlc291cmNlVXJsIjoiaHR0cHM6Ly90aHJlZS53cy9hcGkvb2t4LzNkL2ZvcmdlLWhkIiwic2NoZW1lIjoiZXhhY3QiLCJ2YWxpZFVudGlsIjoxNzg4OTY2MzU1LCJ2ZXJzaW9uIjoxfQ.viM-_g17YQ7hiPdiFOHIeh_jnc8wrFVNzoOvHoTqeVDGXdbUxEYmZTDJqJeMHo57iyRRhQwzF1JtnULDYVmuCA"
+              },
+              {
+                "format": "jws",
+                "acceptIndex": 2,
+                "signature": "eyJhbGciOiJFZERTQSIsImtpZCI6ImRpZDp3ZWI6dGhyZWUud3Mja2V5LTEifQ.eyJhbW91bnQiOiIxMDAwMDAwMCIsImFzc2V0IjoiRmVNYkRvWDdSMVBzYzRHRWN2SmRzYk5iWkEzYmZ6dGN5RENhdEpWSnB1bXAiLCJuZXR3b3JrIjoic29sYW5hOjVleWt0NFVzRnY4UDhOSmRUUkVwWTF2enFLcVpLdmRwIiwicGF5VG8iOiJ3d3d3d0R4RldSbjdncmdyM0VzcnNnNUM2TnZEb0RIU0E0Z2FDZmZjY3JVIiwicmVzb3VyY2VVcmwiOiJodHRwczovL3RocmVlLndzL2FwaS9va3gvM2QvZm9yZ2UtaGQiLCJzY2hlbWUiOiJleGFjdCIsInZhbGlkVW50aWwiOjE3ODg5NjYzNTUsInZlcnNpb24iOjF9.Z1CdoTMzlS9nZxhMvbByo3eQFAcDJqmYdyikzysMDlh5cLqPRGAdPATL9V11pwg48cJYv9rQ5giGmLrb5bpuBA"
+              },
+              {
+                "format": "jws",
+                "acceptIndex": 3,
+                "signature": "eyJhbGciOiJFZERTQSIsImtpZCI6ImRpZDp3ZWI6dGhyZWUud3Mja2V5LTEifQ.eyJhbW91bnQiOiIyNTAwMDAiLCJhc3NldCI6IjB4ODMzNTg5ZkNENmVEYjZFMDhmNGM3QzMyRDRmNzFiNTRiZEEwMjkxMyIsIm5ldHdvcmsiOiJlaXAxNTU6ODQ1MyIsInBheVRvIjoiMHg0MDIyZGUyZDM2YzMzNGU3M2M3YTEwODgwNWNlYTExYzA1NjRmNDAyIiwicmVzb3VyY2VVcmwiOiJodHRwczovL3RocmVlLndzL2FwaS9va3gvM2QvZm9yZ2UtaGQiLCJzY2hlbWUiOiJleGFjdCIsInZhbGlkVW50aWwiOjE3ODg5NjYzNTUsInZlcnNpb24iOjF9.qDCVgZ8AwscXId3O0Sp9SKOaQbxzMc9rePMLux2ymb8fvNH1ohLgGRrRN-TPuxhS-vJHtgGj3DWvtN6TU3KhAQ"
+              }
+            ]
+          },
+          "schema": {
+            "$schema": "https://json-schema.org/draft/2020-12/schema",
+            "type": "object",
+            "properties": {
+              "offers": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "format": {
+                      "type": "string"
+                    },
+                    "acceptIndex": {
+                      "type": "integer"
+                    },
+                    "payload": {
+                      "type": "object",
+                      "properties": {
+                        "version": {
+                          "type": "integer"
+                        },
+                        "resourceUrl": {
+                          "type": "string"
+                        },
+                        "scheme": {
+                          "type": "string"
+                        },
+                        "network": {
+                          "type": "string"
+                        },
+                        "asset": {
+                          "type": "string"
+                        },
+                        "payTo": {
+                          "type": "string"
+                        },
+                        "amount": {
+                          "type": "string"
+                        },
+                        "validUntil": {
+                          "type": "integer"
+                        }
+                      },
+                      "required": [
+                        "version",
+                        "resourceUrl",
+                        "scheme",
+                        "network",
+                        "asset",
+                        "payTo",
+                        "amount"
+                      ]
+                    },
+                    "signature": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "format",
+                    "signature"
+                  ]
+                }
+              }
+            },
+            "required": [
+              "offers"
+            ]
+          }
+        }
+      }
+    }
+  },
+  "authorization": {
+    "from": "0x75d00a2713565171f33216e5aa2a375e076ecf69",
+    "nonce": "0xe48d08c246a4cd448cf26eadf8f0d6ace07cc53998e43030ff6d98e8d279575b",
+    "to": "0x4022de2D36C334E73C7a108805Cea11C0564f402",
+    "validAfter": "0",
+    "validBefore": "1789052454",
+    "value": "10000"
+  },
+  "authorizationSpentOnChain": false
+}

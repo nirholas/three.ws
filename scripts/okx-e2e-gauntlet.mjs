@@ -31,7 +31,7 @@
  *   5b  an authorization bound to one price cannot buy a dearer service
  *   5c  an expired authorization is rejected and a fresh challenge offered
  *   5d  a garbage payment header gets a clean 4xx and runs no tool
- *   6   a job that fails after payment leaves the authorization unspent
+ *   6   a job refused at acceptance leaves the authorization unspent
  *   7   a legacy (non-X-Layer) rail still answers, and pays, its own challenge
  *
  * Usage:
@@ -92,11 +92,19 @@ const evidence = (name, data) => {
 	writeFileSync(path, typeof data === 'string' ? data : JSON.stringify(data, null, 2));
 	return `prompts/okx-ai/e2e-evidence/${name}`;
 };
-function record(id, title, ok, detail, ref) {
-	results.push({ id, title, ok, detail, evidence: ref });
-	log(`${ok ? 'PASS' : 'FAIL'}  [${id}] ${title}${detail ? `: ${detail}` : ''}`);
+// A case that never ran is not a case that failed. A dry run used to report
+// every paid leg as FAIL and headline "4/14 cases passed", which reads as ten
+// broken cases and has been misread that way in this campaign's own notes. A
+// skipped case is recorded as SKIP, kept out of the pass ratio, and counted
+// separately, so the headline says what was actually exercised.
+function record(id, title, ok, detail, ref, { skipped = false } = {}) {
+	results.push({ id, title, ok, detail, evidence: ref, skipped });
+	log(`${skipped ? 'SKIP' : ok ? 'PASS' : 'FAIL'}  [${id}] ${title}${detail ? `: ${detail}` : ''}`);
 	return ok;
 }
+// Cases the run deliberately did not exercise: a dry run signs nothing, so
+// every leg that has to sign is skipped rather than failed.
+const skip = (id, title, detail) => record(id, title, false, detail, null, { skipped: true });
 const wanted = (id) => !args.only || args.only.has(id);
 
 // ── X Layer reads ────────────────────────────────────────────────────────────
@@ -403,7 +411,7 @@ async function buyForge({ id, serviceId, title, toolArgs }) {
 		return record(id, title, false, `challenge mismatch: ${accept.network} @ ${accept.amount}, want eip155:196 @ ${entry.amountAtomics}`, evidence(`31-case${id}-unpaid.json`, unpaid));
 	}
 
-	if (args.dryRun) return record(id, title, false, 'dry run: signing skipped', null);
+	if (args.dryRun) return skip(id, title, 'dry run: signing skipped');
 
 	const signed = signChallenge(unpaid.challengeHeader);
 	const auth = authFromHeader(signed.header);
@@ -476,7 +484,7 @@ async function case3Rigged() {
 	if (accept.network !== 'eip155:196' || accept.amount !== entry.amountAtomics) {
 		return record(id, title, false, `challenge mismatch: ${accept.network} @ ${accept.amount}, want eip155:196 @ ${entry.amountAtomics}`, evidence(`31-case${id}-unpaid.json`, unpaid));
 	}
-	if (args.dryRun) return record(id, title, false, 'dry run: signing skipped', null);
+	if (args.dryRun) return skip(id, title, 'dry run: signing skipped');
 
 	const signed = signChallenge(unpaid.challengeHeader);
 	const auth = authFromHeader(signed.header);
@@ -516,7 +524,14 @@ async function case3Rigged() {
 }
 
 async function case4Settlement() {
-	if (!settlements.length) return record('4', 'settlement verified on-chain', false, 'no settlements to verify (paid cases did not run or did not settle)', null);
+	// In a dry run nothing signed, so there is nothing to verify and this is a
+	// skip. In a real run it is a failure: a paid case that answered 200 without
+	// producing a settlement is exactly the outcome this case exists to catch.
+	if (!settlements.length) {
+		return args.dryRun
+			? skip('4', 'settlement verified on-chain', 'dry run: nothing was signed, so nothing settled')
+			: record('4', 'settlement verified on-chain', false, 'no settlements to verify (paid cases did not run or did not settle)', null);
+	}
 	const verified = [];
 	let allOk = true;
 	for (const s of settlements) {
@@ -534,7 +549,7 @@ async function case5aReplay() {
 	const toolArgs = { prompt: 'a small brass astrolabe' };
 	const unpaid = await mcpCall(entry, FORGE_TOOL, toolArgs);
 	if (unpaid.status !== 402) return record('5a', 'replayed authorization buys no second job', false, `setup failed, expected 402 got ${unpaid.status}`, null);
-	if (args.dryRun) return record('5a', 'replayed authorization buys no second job', false, 'dry run', null);
+	if (args.dryRun) return skip('5a', 'replayed authorization buys no second job', 'dry run: signing skipped');
 
 	const signed = signChallenge(unpaid.challengeHeader);
 	const auth = authFromHeader(signed.header);
@@ -576,7 +591,7 @@ async function case5bCrossService() {
 	const dear = catalogEntry('forge-hd');
 	const unpaid = await mcpCall(cheap, FORGE_TOOL, { prompt: 'a tin whistle' });
 	if (unpaid.status !== 402) return record('5b', 'cheap authorization cannot buy a dearer service', false, `setup failed, expected 402 got ${unpaid.status}`, null);
-	if (args.dryRun) return record('5b', 'cheap authorization cannot buy a dearer service', false, 'dry run', null);
+	if (args.dryRun) return skip('5b', 'cheap authorization cannot buy a dearer service', 'dry run: signing skipped');
 
 	const signed = signChallenge(unpaid.challengeHeader);
 	const auth = authFromHeader(signed.header);
@@ -606,7 +621,7 @@ async function case5cExpired() {
 	const toolArgs = { prompt: 'a paper lantern' };
 	const unpaid = await mcpCall(entry, FORGE_TOOL, toolArgs);
 	if (unpaid.status !== 402) return record('5c', 'expired authorization is rejected, fresh challenge offered', false, `setup failed, expected 402 got ${unpaid.status}`, null);
-	if (args.dryRun) return record('5c', 'expired authorization is rejected, fresh challenge offered', false, 'dry run', null);
+	if (args.dryRun) return skip('5c', 'expired authorization is rejected, fresh challenge offered', 'dry run: signing skipped');
 
 	// Sign against a one-second validity window, then let it lapse. This is a
 	// genuinely expired real signature, not a hand-edited authorization.
@@ -663,15 +678,29 @@ async function case5dGarbage() {
 }
 
 async function case6PayOnlySuccess() {
-	// A job that passes payment verification and then fails in the lane: a
-	// well-formed image request pointing at a URL that does not resolve to an
-	// image. If the promise holds, the authorization is still unspent on-chain
-	// afterwards and no settlement receipt was emitted.
-	const entry = catalogEntry('forge-image');
-	const toolArgs = { image_urls: [`${args.base}/definitely-not-a-real-image-${Date.now()}.png`] };
+	// A job that passes payment verification and is then REFUSED by the lane.
+	// Acceptance is the line the catalog and docs/okx-marketplace.md draw, so
+	// that is where the promise is testable: refused at acceptance means the
+	// authorization is still unspent on-chain afterwards and no settlement
+	// receipt was emitted. A job that is ACCEPTED and then fails during
+	// generation IS charged, by design and by documentation, so forcing that
+	// would assert the opposite of what we promise.
+	//
+	// The refusal used here is a whitespace-only prompt: it clears the tool's
+	// JSON-schema minLength (three characters) and so still earns a real 402 to
+	// sign, then trims to empty inside the handler and is refused with
+	// `invalid_input` before settlement. It carries no content and no GPU cost.
+	//
+	// Do NOT "improve" this back to an unreachable image URL. Measured against
+	// production 2026-09-09: POST /api/forge with a 404 image_urls entry answers
+	// 200 `queued` (validation there is format-only, not reachability), so that
+	// input is accepted, settles, and only fails later in generation, which is
+	// the charged side of the line.
+	const entry = catalogEntry('forge-draft');
+	const toolArgs = { prompt: '   ' };
 	const unpaid = await mcpCall(entry, FORGE_TOOL, toolArgs);
-	if (unpaid.status !== 402) return record('6', 'failed job leaves the authorization unspent', false, `setup failed, expected 402 got ${unpaid.status}`, null);
-	if (args.dryRun) return record('6', 'failed job leaves the authorization unspent', false, 'dry run', null);
+	if (unpaid.status !== 402) return record('6', 'job rejected at acceptance leaves the authorization unspent', false, `setup failed, expected 402 got ${unpaid.status}`, null);
+	if (args.dryRun) return skip('6', 'job rejected at acceptance leaves the authorization unspent', 'dry run: signing skipped');
 
 	const signed = signChallenge(unpaid.challengeHeader);
 	const auth = authFromHeader(signed.header);
@@ -691,7 +720,7 @@ async function case6PayOnlySuccess() {
 	const notCharged = after === false && !attempt.receiptHeader;
 	return record(
 		'6',
-		'failed job leaves the authorization unspent (pay-only-on-success)',
+		'job rejected at acceptance leaves the authorization unspent',
 		failed && notCharged,
 		`job ${attempt.status}${attempt.isToolError ? ' tool error' : ''} (${attempt.structured?.error || ''}), nonce redeemed on-chain: ${after}, settlement receipt emitted: ${Boolean(attempt.receiptHeader)}`,
 		ref,
@@ -760,7 +789,7 @@ const SPEND_PLAN = [
 	{ id: '5a', service: 'forge-draft', settles: true },
 	{ id: '5b', service: 'forge-draft', settles: false },
 	{ id: '5c', service: 'forge-draft', settles: false },
-	{ id: '6', service: 'forge-image', settles: false },
+	{ id: '6', service: 'forge-draft', settles: false },
 	{ id: '7', service: 'forge-draft', settles: false, rail: 'solana USDC' },
 ];
 function budget() {
@@ -835,11 +864,17 @@ async function main() {
 	if (wanted('4')) await case4Settlement();
 
 	const ref = evidence('00-gauntlet-summary.json', { base: args.base, dryRun: args.dryRun, ranAt: new Date().toISOString(), results, settlements });
-	const passed = results.filter((r) => r.ok).length;
+	const ran = results.filter((r) => !r.skipped);
+	const passed = ran.filter((r) => r.ok).length;
+	const skippedCount = results.length - ran.length;
 	log('\n' + '-'.repeat(72));
-	for (const r of results) log(`  ${r.ok ? 'PASS' : 'FAIL'}  ${r.id.padEnd(3)} ${r.title}`);
+	for (const r of results) log(`  ${r.skipped ? 'SKIP' : r.ok ? 'PASS' : 'FAIL'}  ${r.id.padEnd(3)} ${r.title}`);
 	log('-'.repeat(72));
-	log(`${passed}/${results.length} cases passed. Settlements: ${settlements.length}. Summary: ${ref}`);
+	log(
+		`${passed}/${ran.length} cases exercised passed` +
+			(skippedCount ? `, ${skippedCount} skipped (not run)` : '') +
+			`. Settlements: ${settlements.length}. Summary: ${ref}`,
+	);
 	process.exit(passed === results.length ? 0 : 1);
 }
 

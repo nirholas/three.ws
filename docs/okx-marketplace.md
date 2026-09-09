@@ -305,8 +305,10 @@ The buyer flow is the same for all of them: unpaid `POST` → 402 → sign
 Generation-grade services reply `{status:"queued", job_id, poll_url}` and polling
 `GET https://three.ws/api/forge?job=<job_id>` is free; fast services (`retarget`,
 `pose-seed`) reply `{status:"done", …}` inline. Settlement happens **after** the engine
-accepts the job, so invalid input, the avatar humanoid gate, or an engine failure answers
-before settlement and never charges.
+accepts the job, so invalid input, the avatar humanoid gate, or an engine failure at
+acceptance answers before settlement and never charges. The same acceptance line applies
+here as on the listed rows: a job that fails later, during generation, has been charged
+(see [Payment semantics](#payment-semantics)).
 
 ---
 

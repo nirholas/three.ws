@@ -661,6 +661,18 @@ describe('each row drives its own lane', () => {
 		expect(submitted).toHaveLength(0);
 	});
 
+	// The gauntlet's pay-on-acceptance case (scripts/okx-e2e-gauntlet.mjs case 6)
+	// signs a real payment for exactly this input, so the refusal has to survive
+	// two hops: the tool's JSON schema must ACCEPT it (minLength 3 counts the
+	// spaces) so the buyer still gets a payable 402, and the handler must then
+	// refuse it before the lane is ever asked for work.
+	it('refuses a whitespace-only prompt at acceptance, before any generation runs', async () => {
+		const out = await callTool('forge-draft', FORGE_TOOL, { prompt: '   ' });
+		expect(out.isError).toBe(true);
+		expect(out.structuredContent.error).toBe('invalid_input');
+		expect(submitted).toHaveLength(0);
+	});
+
 	it('turns a saturated generator into an actionable busy error, never a 500', async () => {
 		lane.submit = () => jsonResponse(429, { message: 'busy', retry_after: 12 });
 		const out = await callTool('forge-draft', FORGE_TOOL, { prompt: 'a fox' });

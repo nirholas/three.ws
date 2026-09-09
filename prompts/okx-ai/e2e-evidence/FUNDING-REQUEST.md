@@ -6,9 +6,10 @@ catalog and today's gas price, not padded.
 
 ## Re-verified 2026-09-09, and one blocker cleared itself
 
-- **All four unpaid gauntlet cases pass** (1, 1d, 5d, 7). `node scripts/okx-e2e-gauntlet.mjs
-  --dry-run` reads `4/14 cases passed`, the other ten being the paid legs this file asks to
-  unblock.
+- **Every gauntlet case that can run without funding passes.** `node
+  scripts/okx-e2e-gauntlet.mjs --dry-run` reads `4/4 cases exercised passed, 10 skipped`
+  (1, 1d, 5d, 7), and a separate real run closes two more (see the 5b/5c section below), so
+  six of the fourteen are green. The eight that remain are the paid legs this file unblocks.
 - **Case 1d is GREEN in production.** The discovery paywall the 2026-09-02 version of this
   file called out as "one thing funding will NOT fix" shipped since. A spec-compliant MCP
   client (`Accept: text/event-stream` + `MCP-Protocol-Version`) now gets 200 on `initialize`
@@ -34,7 +35,7 @@ catalog and today's gas price, not padded.
   7 A2MCP forge rows, submitted on-chain 2026-08-27 and currently
   `approvalLabel: "Listing under review"`. The old ask was priced against `text-to-3d`,
   `avatar` and `fbx-export`; the gauntlet now buys the rows OKX actually lists.
-- **The ask is smaller.** $1.32 covers a clean run, against $3.00 before.
+- **The ask is smaller.** $1.08 covers a clean run, against $3.00 before.
 
 ## Live balances (X Layer RPC, direct `eth_call`, block 70162898, 2026-09-09)
 
@@ -75,19 +76,19 @@ authorization off-chain and the relayer broadcasts.
 | 5a | forge-draft | $0.01 | yes |
 | 5b | forge-draft | $0.01 | no, rejected on amount before redemption |
 | 5c | forge-draft | $0.01 | no, authorization expired |
-| 6 | forge-image | $0.25 | no, that is the assertion |
+| 6 | forge-draft | $0.01 | no, that is the assertion |
 | 7 | forge-draft | $0.01 | no, and it pays a different rail (see below) |
 
 One clean run settles **$1.07**. The binding constraint is not that sum but the **balance
 floor**: verify refuses any authorization whose value exceeds `balanceOf(buyer)`, including
-the ones designed to be rejected, so the wallet must still hold $0.25 when case 6 signs. A
-single clean run therefore needs a starting float of **$1.32**, which the gauntlet checks
-before it signs anything and refuses to start below.
+the ones designed to be rejected, so the wallet must still hold the price of the last case
+that signs. A single clean run therefore needs a starting float of **$1.08**, which the
+gauntlet checks before it signs anything and refuses to start below.
 
-$1.32 covers one clean run. The rest is the fix loop: phase 3 re-runs the failed case plus
+$1.08 covers one clean run. The rest is the fix loop: phase 3 re-runs the failed case plus
 cases 2 and 5a as its regression floor, and the two dearest cases are the ones most likely to
 need iterating (the HD lane hold-gates, the image lane depends on an upstream painter).
-Budgeting five iterations at the worst case adds ~$2.6. **$1.32 + $2.6 = $3.9, rounded to
+Budgeting five iterations at the worst case adds ~$2.6. **$1.08 + $2.6 = $3.7, rounded to
 5.0** so the run is never the thing that runs out. Anything unspent stays in the buyer wallet
 for WO-05 and for retests during OKX's review.
 
@@ -97,6 +98,30 @@ platform wallet to another. Net platform cost for a full run is the gas only (~0
 If it is easier to fund from `payTo` (2.427731 USD₮0, enough for a clean run plus two
 iterations) than from an exchange, that works and needs no external transfer. That key is in
 Secret Manager and this session cannot read it, so it has to be you either way.
+
+## Two cases came off this ask entirely (2026-09-09, later session)
+
+`5b` and `5c` do not need funding and never did. The CLI signs an EIP-3009 authorization
+off-chain regardless of balance, and the server rejects both before any balance or settlement
+check, so `node scripts/okx-e2e-gauntlet.mjs --yes --only 5b,5c` reads `2/2 cases passed.
+Settlements: 0` with the buyer at 0.000000. Three of the four adversarial cases (5b, 5c, 5d)
+are now closed. Only 5a still needs money, because replaying a VALID authorization first
+requires a real settlement to replay.
+
+## Correction made 2026-09-09 (later session): case 6 was testing the wrong side of the line
+
+The earlier version of this file priced case 6 at $0.25 on `forge-image`, forcing the failure
+with an image URL that 404s. Measured against production today, that input does not fail at
+acceptance: `POST /api/forge` with a 404 `image_urls` entry answers `200 queued`, because
+validation there is format-only and never fetches the image. The job would have been accepted,
+settled, and only failed later in generation, which is the CHARGED side of the acceptance line
+we document. Case 6 would have spent $0.25 to assert the opposite of our own promise.
+
+Case 6 now signs `forge-draft` ($0.01) with a whitespace-only prompt: it clears the tool's
+JSON schema (minLength counts the spaces, so the buyer still gets a real, payable 402) and is
+then refused inside the handler with `invalid_input` before the lane is asked for any work.
+Covered by a unit test in `tests/api/okx-forge.test.js` that asserts both hops, so the premise
+cannot rot silently. This is why the float floor above dropped from $1.32 to $1.08.
 
 ## Optional second leg: make case 7 a real paid legacy settlement
 

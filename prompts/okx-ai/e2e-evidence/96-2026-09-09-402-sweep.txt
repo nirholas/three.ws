@@ -1,0 +1,10 @@
+== forge-draft :: HTTP/2 402 
+   x402Version=2 accepts=4 first=eip155:196 amount=10000 payTo=0x4022de2D36C334E73C7a108805Cea11C0564f402 asset=0x779ded0c9e1022225f8e0630b35a9b54be713736 scheme=exact
+== forge-standard :: HTTP/2 402 
+   x402Version=2 accepts=4 first=eip155:196 amount=50000 payTo=0x4022de2D36C334E73C7a108805Cea11C0564f402 asset=0x779ded0c9e1022225f8e0630b35a9b54be713736 scheme=exact
+== forge-hd :: HTTP/2 402 
+   x402Version=2 accepts=4 first=eip155:196 amount=250000 payTo=0x4022de2D36C334E73C7a108805Cea11C0564f402 asset=0x779ded0c9e1022225f8e0630b35a9b54be713736 scheme=exact
+== forge-image :: HTTP/2 402 
+   x402Version=2 accepts=4 first=eip155:196 amount=250000 payTo=0x4022de2D36C334E73C7a108805Cea11C0564f402 asset=0x779ded0c9e1022225f8e0630b35a9b54be713736 scheme=exact
+== forge-status (free, GET)
+   GET forge-status http=405
