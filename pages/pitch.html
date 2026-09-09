@@ -748,7 +748,7 @@
 				// leaving a "Live - drag to orbit" badge over nothing.
 				const MODEL_VIEWER_SRC =
 					'https://ajax.googleapis.com/ajax/libs/model-viewer/4.0.0/model-viewer.min.js';
-				const MODEL_VIEWER_TIMEOUT = 12000;
+				const MODEL_VIEWER_TIMEOUT = 6000;
 
 				function stageOf(mv) { return mv.closest('.title-stage'); }
 
@@ -756,6 +756,7 @@
 					const stage = stageOf(mv);
 					if (!stage) return;
 					stage.classList.add('is-fallback');
+					mv.inert = true;
 					const box = stage.querySelector('[data-stage-fallback]');
 					if (box) box.hidden = false;
 				}
@@ -764,6 +765,7 @@
 					const stage = stageOf(mv);
 					if (!stage) return;
 					stage.classList.remove('is-fallback');
+					mv.inert = false;
 					const box = stage.querySelector('[data-stage-fallback]');
 					if (box) box.hidden = true;
 				}

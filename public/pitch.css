@@ -103,6 +103,8 @@ a { color: inherit; }
 	font-size: var(--text-ui);
 	color: var(--ink);
 	opacity: 0.92;
+	min-height: 24px;
+	padding: 0.15rem 0;
 	transition: opacity var(--duration-fast) var(--ease-standard);
 }
 .deck-wordmark:hover { opacity: 1; }
@@ -327,10 +329,14 @@ a { color: inherit; }
 [data-theme='light'] .stage-label { background: rgba(255, 255, 255, 0.6); }
 /* A "Live" badge over a dead canvas is a lie; the fallback owns the stage. */
 .title-stage.is-fallback .stage-label { display: none; }
-.title-stage.is-fallback model-viewer { display: none; }
 .stage-fallback {
 	position: absolute;
 	inset: 0;
+	z-index: 1;
+	background:
+		var(--deck-glow),
+		linear-gradient(180deg, rgba(255, 255, 255, 0.04), rgba(255, 255, 255, 0.01)),
+		var(--bg-0);
 	display: grid;
 	grid-template-rows: 1fr auto auto;
 	justify-items: center;
