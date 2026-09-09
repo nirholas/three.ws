@@ -22,6 +22,25 @@ const SOURCES = [
 const PER_SOURCE_TIMEOUT_MS = 12_000;
 
 let _pending = null;
+let _defineGuarded = false;
+
+// The chain abandons a source after PER_SOURCE_TIMEOUT_MS, but removing a
+// <script> does not cancel a fetch already in flight: a slow first CDN can
+// still execute after a later one defined the element, and that second
+// customElements.define('model-viewer', ...) throws an uncaught
+// NotSupportedError ("the name model-viewer has already been used with this
+// registry") onto the page console. Every source here serves the identical
+// library, so the first definition wins and a duplicate is a no-op. Scoped to
+// this one element name so a genuine double-define anywhere else still throws.
+function guardDuplicateDefine() {
+	if (_defineGuarded || typeof customElements === 'undefined') return;
+	_defineGuarded = true;
+	const nativeDefine = customElements.define;
+	customElements.define = function (name, ctor, options) {
+		if (name === 'model-viewer' && customElements.get(name)) return undefined;
+		return nativeDefine.call(this, name, ctor, options);
+	};
+}
 
 function loadScript(src) {
 	return new Promise((resolve, reject) => {
@@ -57,9 +76,13 @@ function loadScript(src) {
 export function ensureModelViewer() {
 	if (typeof customElements !== 'undefined' && customElements.get('model-viewer')) return Promise.resolve();
 	if (_pending) return _pending;
+	guardDuplicateDefine();
 	_pending = (async () => {
 		let lastErr;
 		for (const src of SOURCES) {
+			// An abandoned source can still land while the next one is being
+			// picked; if it did, the chain is already done.
+			if (customElements.get('model-viewer')) return;
 			try {
 				await loadScript(src);
 				if (customElements.get('model-viewer')) return;
