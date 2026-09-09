@@ -55,6 +55,14 @@
 			<description>A person saying yes is the one thing that stands between an agent and your front door, and we found a way around it. If you had ever issued an API key or connected an app to your three.ws account, that key could send an unlock request with the &quot;the owner already approved this&quot; flag set, and the lock opened, with nobody asked and nothing to click. We reproduced it against a real house and a real deadbolt before fixing it. Two things changed. Only a signed-in browser session can say yes now: a key or a connected app can ask to unlock, open or disarm, and is always answered with &quot;a person has to approve this&quot;, exactly as the agent in your chat window already was. And the home permissions you approve when you connect an app are now actually enforced on every home request, so an app you gave read-only access to, or one you never gave home access at all, is refused instead of let through. Nothing legitimate changed: your agent still asks, you still approve, the door still opens.</description>
 		</item>
 		<item>
+			<title>An embedded avatar no longer crashes the page it was removed from</title>
+			<link>https://three.ws/docs/web-component</link>
+			<guid isPermaLink="false">2026-09-09:An embedded avatar no longer crashes the page it was removed from</guid>
+			<pubDate>Wed, 09 Sep 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>Sites embed three.ws avatars with the &lt;agent-3d&gt; tag, and a single-page app can swap the whole page out while an avatar is still loading. When that happened the avatar was left holding a piece of the page that no longer existed, and its own tidy-up threw an error into the host site console instead of quietly reporting that loading had stopped. The avatar had already handled the failure correctly; the report of it was what broke. Embedders now get the agent:error event they listen for, and nothing else, whether or not the page moved on while the avatar was still loading.</description>
+		</item>
+		<item>
 			<title>Arm your agent stops telling signed-out visitors to create an agent, and shows them the live conviction stream instead</title>
 			<link>https://three.ws/oracle/arm</link>
 			<guid isPermaLink="false">2026-09-09:Arm your agent stops telling signed-out visitors to create an agent, and shows them the live conviction stream instead</guid>

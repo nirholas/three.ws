@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-09-09T19:55:21.363Z",
+	"generated_at": "2026-09-09T19:56:43.235Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -65,6 +65,17 @@
 			"tags": [
 				"security",
 				"fix"
+			]
+		},
+		{
+			"date": "2026-09-09",
+			"type": "update",
+			"title": "An embedded avatar no longer crashes the page it was removed from",
+			"summary": "Sites embed three.ws avatars with the <agent-3d> tag, and a single-page app can swap the whole page out while an avatar is still loading. When that happened the avatar was left holding a piece of the page that no longer existed, and its own tidy-up threw an error into the host site console instead of quietly reporting that loading had stopped. The avatar had already handled the failure correctly; the report of it was what broke. Embedders now get the agent:error event they listen for, and nothing else, whether or not the page moved on while the avatar was still loading.",
+			"link": "/docs/web-component",
+			"tags": [
+				"fix",
+				"sdk"
 			]
 		},
 		{
