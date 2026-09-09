@@ -7767,6 +7767,14 @@ Read and act on a Home Assistant house the account has connected. Session-authen
 browser; bearer principals (OAuth, API key) may read with `home:read` and act with `home:act`, but
 **no bearer may ever confirm a guarded action**.
 
+Both scopes are enforced on every route here, not only on the MCP tools: a read needs `home:read`,
+anything that changes a house (acting, activating a scene, grants, layout, roster, disconnect)
+needs `home:act`, and a token holding neither is answered `403 insufficient_scope` before the home
+is even looked up. Confirming is separate and is not a scope at all: `confirmed: true` in the body
+of `/call` or `/activate`, like the `/confirm` route itself, is refused for any principal that is
+not a browser session (`403 confirmation_requires_session`). A bearer caller asking without the
+flag still gets the ordinary `409 needs_confirmation`, which is the answer to route to a person.
+
 Every failure carries a stable `code` alongside the message: `bad_url`, `auth`, `unreachable`,
 `needs_confirmation`, `no_mcp`, `call_failed`, `not_connected`. Branch on the code, show the
 message. Full walkthrough: [Connect your home](./tutorials/connect-your-home.md).

@@ -38,8 +38,16 @@ import { fileURLToPath } from 'node:url';
 
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 
+// Loads .env.local / .env before anything else imports, so the live arms below
+// find DATABASE_URL without every developer exporting it by hand. It never
+// overwrites a variable already in the environment, so it cannot quietly turn
+// the SSRF seam on: those checks re-import the guard with the seam forced off
+// regardless (see loadAsProduction).
+import './setup.env.js';
+
 import { acquireHomeInstance, liveHomeAvailable } from './_helpers/home-instance.js';
 
+import { HOME_CAPABILITIES } from '../api/_lib/home/members.js';
 import { classifyCall } from '../packages/home-bridge/src/safety.js';
 
 /**
@@ -293,6 +301,76 @@ describe('home security 3: only a session with CSRF can redeem a confirmation', 
 			// Refusing a bearer explicitly, BEFORE authentication, rather than
 			// relying on a scope check elsewhere being right.
 			expect(src, `${rel(file)} must refuse a bearer principal outright`).toMatch(/extractBearer\s*\(/);
+		}
+	});
+
+	// The half of the protocol the check above does not cover, and the hole it
+	// was hiding. Redeeming a MINTED confirmation is only one way to say yes; the
+	// other is `confirmed: true` in the body of the acting route itself, which is
+	// how the browser answers a 409. Those routes are not named "confirm", so
+	// nothing above looked at them, and `requireCsrf` exempts bearer callers by
+	// design. Measured, before this check existed: an API key holding only the
+	// `profile` scope POSTed `confirmed: true` to /api/home/:id/call and a real
+	// deadbolt opened.
+	const inlineConfirmRoutes = homeRouteFiles().filter((f) =>
+		/\bbody\??\.confirmed\b/.test(stripComments(routeSource(f).src)),
+	);
+
+	it('the routes that take an inline confirmation were found', () => {
+		expect(
+			inlineConfirmRoutes.length,
+			'no route reads body.confirmed, so the checks below proved nothing',
+		).toBeGreaterThan(0);
+	});
+
+	for (const file of inlineConfirmRoutes) {
+		it(`${rel(file)} refuses an inline confirmation from anything but a session`, () => {
+			const code = stripComments(routeSource(file).src);
+			expect(code, `${rel(file)} must ask who is confirming`).toMatch(/canAssertConfirmation\s*\(/);
+			// The refusal has to come BEFORE the house is reached. A check placed
+			// after the socket is acquired is a check a refactor moves past, and by
+			// then the only thing left between the flag and the lock is the bridge.
+			const asked = code.search(/canAssertConfirmation\s*\(/);
+			// `bridge.` and not `bridge`, so the '@three-ws/home-bridge' import line
+			// at the top of the file is not mistaken for the moment a socket opens.
+			const reachesHouse = code.search(/\bbridge\s*\.|\bwithHome\s*\(|\bacquire\s*\(/);
+			expect(
+				reachesHouse,
+				`${rel(file)} never reaches the house, so this route was matched by mistake`,
+			).toBeGreaterThan(-1);
+			expect(
+				asked,
+				`${rel(file)} opens a connection to the house before it asks who asserted the confirmation`,
+			).toBeLessThan(reachesHouse);
+		});
+	}
+
+	it('only a browser session can assert a confirmation', async () => {
+		const { canAssertConfirmation } = await import('../api/_lib/home/access.js');
+		expect(canAssertConfirmation({ via: 'session' })).toBe(true);
+		for (const caller of [{ via: 'bearer' }, { via: 'relay' }, { via: undefined }, {}, null, undefined]) {
+			expect(canAssertConfirmation(caller), `${JSON.stringify(caller)} must not be able to say yes`).toBe(
+				false,
+			);
+		}
+	});
+
+	it('the home OAuth scopes are enforced on the REST surface, not only in MCP', () => {
+		// The consent screen promises "Control your connected home (unlocking,
+		// opening and disarming still need your explicit yes each time)" against
+		// `home:act`. That promise is only true if the REST routes read the scope:
+		// api/_lib/mcp-dispatch.js enforces it for the MCP tools and nothing
+		// enforced it here, so a token granted `profile` alone reached every route.
+		const access = stripComments(read(join(REPO, 'api', '_lib', 'home', 'access.js')));
+		expect(access, 'resolveHomeAccess must check the granted scope').toMatch(/hasScope\s*\(/);
+		expect(access, 'a bearer without the scope must be refused').toMatch(/insufficient_scope/);
+		// Every capability a route can name must map to a scope, or the route that
+		// names the missing one is ungated.
+		const mapped = new Set(
+			[...access.matchAll(/^\t(\w+): '(home:(?:read|act))',$/gm)].map((m) => m[1]),
+		);
+		for (const capability of HOME_CAPABILITIES) {
+			expect(mapped.has(capability), `capability "${capability}" maps to no OAuth scope`).toBe(true);
 		}
 	});
 });
@@ -1136,6 +1214,175 @@ live('home security 4: a prompt injection with a deadbolt behind it', () => {
 			socket.close();
 		}
 		return undo;
+	}
+});
+
+// ---------------------------------------------------------------------------
+// 3 (live). The inline confirmation, against a real deadbolt.
+// ---------------------------------------------------------------------------
+//
+// The static checks above read the source. This one reads the door. It mints a
+// real API key against the real key table, POSTs a real body to the real
+// handler, points it at a real Home Assistant, and then asks the house whether
+// the lock moved. It exists because that is exactly how the hole was found: the
+// source looked right, and the deadbolt opened anyway.
+
+// Needs the database as well as the house: the proof mints a real API key in the
+// real key table, because a synthetic principal would prove only that the object
+// literal was shaped the way the test expected.
+const liveGate = describe.skipIf(!liveHomeAvailable() || !process.env.DATABASE_URL);
+
+liveGate('home security 3 (live): a bearer principal cannot open a real door', () => {
+	const prefix = `home-sec-bearer-${Math.random().toString(36).slice(2, 10)}`;
+	let sql;
+	let callHandler;
+	let homeId;
+	let userId;
+	let stubbedKey = false;
+	const keys = {};
+
+	beforeAll(async () => {
+		const instance = await acquireHomeInstance();
+		liveUrl = instance.baseUrl;
+		liveToken = instance.token;
+		const crypto = await import('node:crypto');
+		// secret-box needs a key to encrypt the house credential with. Production
+		// and Cloud Run carry one; a developer's machine usually does not, and the
+		// alternative to supplying one here is storing the token in plaintext,
+		// which would make this test prove the opposite of what it is for. The
+		// value only has to round-trip inside this process.
+		if (!process.env.WALLET_ENCRYPTION_KEY && !process.env.JWT_SECRET) {
+			vi.stubEnv('WALLET_ENCRYPTION_KEY', crypto.randomBytes(32).toString('hex'));
+			stubbedKey = true;
+		}
+		({ sql } = await import('../api/_lib/db.js'));
+		const { encryptSecret } = await import('../api/_lib/secret-box.js');
+		callHandler = (await import('../api/home/[id]/call.js')).default;
+
+		const [user] = await sql`
+			INSERT INTO users (email, display_name) VALUES (${`${prefix}@example.invalid`}, ${prefix}) RETURNING id
+		`;
+		userId = user.id;
+		const [home] = await sql`
+			INSERT INTO home_connections (user_id, label, base_url, access_token_enc, token_fingerprint, status)
+			VALUES (${userId}, ${`${prefix} house`}, ${liveUrl}, ${await encryptSecret(liveToken)}, ${prefix}, 'connected')
+			RETURNING id
+		`;
+		homeId = home.id;
+
+		// Two delegates: one the user never granted home access to at all, and one
+		// they granted the full home:act scope. Both must fail to say yes.
+		for (const [name, scope] of [
+			['profileOnly', 'profile'],
+			['homeAct', 'home:read home:act'],
+		]) {
+			const raw = `sk_live_${crypto.randomBytes(24).toString('hex')}`;
+			const hash = crypto.createHash('sha256').update(raw).digest('hex');
+			await sql`
+				INSERT INTO api_keys (user_id, name, token_hash, scope, prefix)
+				VALUES (${userId}, ${`${prefix}-${name}`}, ${hash}, ${scope}, ${raw.slice(0, 16)})
+			`;
+			keys[name] = raw;
+		}
+
+		await haCall('lock', 'lock', { entity_id: 'lock.front_door' });
+		await settle(1500);
+	}, 600_000);
+
+	afterAll(async () => {
+		if (!sql || !userId) return;
+		await haCall('lock', 'lock', { entity_id: 'lock.front_door' }).catch(() => {});
+		if (homeId) {
+			await sql`DELETE FROM home_action_log WHERE home_id = ${homeId}`;
+			await sql`DELETE FROM home_members WHERE home_id = ${homeId}`;
+			await sql`DELETE FROM home_connections WHERE id = ${homeId}`;
+		}
+		await sql`DELETE FROM api_keys WHERE user_id = ${userId}`;
+		await sql`DELETE FROM audit_log WHERE user_id = ${userId}`;
+		await sql`DELETE FROM users WHERE id = ${userId}`;
+		if (stubbedKey) vi.unstubAllEnvs();
+	});
+
+	it('refuses a token that was never granted a home scope', async () => {
+		const res = await unlockAs(keys.profileOnly, { confirmed: true });
+		expect(res.status).toBe(403);
+		expect(res.body.error).toBe('insufficient_scope');
+		expect(await lockState()).toBe('locked');
+	}, 60_000);
+
+	it('refuses a token holding home:act that asserts its own confirmation', async () => {
+		const res = await unlockAs(keys.homeAct, { confirmed: true });
+		expect(res.status).toBe(403);
+		expect(res.body.error).toBe('confirmation_requires_session');
+		await settle(2000);
+		// The assertion that matters. Everything above is how we got here.
+		expect(await lockState(), 'a bearer token opened a real front door').toBe('locked');
+	}, 60_000);
+
+	it('still tells that token to go and ask a person, so the agent lane works', async () => {
+		const res = await unlockAs(keys.homeAct, {});
+		expect(res.status).toBe(409);
+		expect(res.body.error).toBe('needs_confirmation');
+		await settle(2000);
+		expect(await lockState()).toBe('locked');
+	}, 60_000);
+
+	async function unlockAs(key, extra) {
+		const body = { domain: 'lock', service: 'unlock', data: { entity_id: 'lock.front_door' }, ...extra };
+		const raw = Buffer.from(JSON.stringify(body));
+		const req = {
+			method: 'POST',
+			url: `/api/home/${homeId}/call`,
+			query: { id: homeId },
+			headers: { 'content-type': 'application/json', authorization: `Bearer ${key}` },
+			socket: { remoteAddress: '127.0.0.1' },
+			on(event, fn) {
+				if (event === 'data') fn(raw);
+				if (event === 'end') fn();
+				return this;
+			},
+			destroy() {},
+		};
+		const res = {
+			statusCode: 200,
+			headers: {},
+			body: undefined,
+			writableEnded: false,
+			headersSent: false,
+			setHeader(k, v) {
+				this.headers[String(k).toLowerCase()] = v;
+			},
+			getHeader(k) {
+				return this.headers[String(k).toLowerCase()];
+			},
+			writeHead(status, hdrs) {
+				this.statusCode = status;
+				for (const [k, v] of Object.entries(hdrs || {})) this.setHeader(k, v);
+				this.headersSent = true;
+				return this;
+			},
+			write() {
+				return true;
+			},
+			end(b) {
+				if (b !== undefined) this.body = b;
+				this.writableEnded = true;
+				this.headersSent = true;
+			},
+		};
+		await callHandler(req, res);
+		let parsed = {};
+		try {
+			parsed = JSON.parse(res.body);
+		} catch {
+			parsed = {};
+		}
+		return { status: res.statusCode, body: parsed };
+	}
+
+	async function lockState() {
+		const states = await haStates();
+		return states.find((s) => s.entity_id === 'lock.front_door')?.state;
 	}
 });
 

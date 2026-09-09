@@ -17,7 +17,7 @@
 // result rather than throwing, because the caller is the only code that knows
 // whether it is answering an SSE stream or a JSON POST.
 
-import { authenticateBearer, extractBearer, getSessionUser } from '../auth.js';
+import { authenticateBearer, extractBearer, getSessionUser, hasScope } from '../auth.js';
 
 import { can, filterGraphForScope, normalizeScope, outOfScopeEntities } from './members.js';
 import { getConnection } from './store.js';
@@ -40,6 +40,59 @@ export async function resolveCaller(req, res) {
 
 	return null;
 }
+
+/**
+ * The OAuth scope a capability needs from a bearer principal.
+ *
+ * `home:read` and `home:act` are named on the consent screen the user approves,
+ * so a token that was never granted one must not reach the surface behind it.
+ * Reading is `home:read`; everything that changes a house, its roster, its
+ * layout or its standing allowances is `home:act`, because each of them is a
+ * write to somebody's building.
+ *
+ * A session principal is not scoped: the person is present, and the scopes exist
+ * to narrow what a DELEGATE may do on their behalf.
+ */
+const CAPABILITY_SCOPE = Object.freeze({
+	read: 'home:read',
+	act: 'home:act',
+	confirm: 'home:act',
+	grant: 'home:act',
+	layout: 'home:act',
+	invite: 'home:act',
+	manage: 'home:act',
+	disconnect: 'home:act',
+});
+
+/**
+ * Whether this caller may assert `confirmed: true`, the flag that stands for a
+ * human saying yes to opening a building.
+ *
+ * Only a browser session can. This is the same rule `api/home/:id/confirm.js`
+ * enforces for redeeming a minted confirmation, applied to the other half of the
+ * protocol: the routes that accept a confirmation inline. Without it the whole
+ * gate is optional, because `requireCsrf` exempts bearer callers by design (a
+ * token is not auto-attached by a browser, so there is nothing to forge), and a
+ * bearer caller could therefore write `confirmed: true` into a body and open a
+ * front door with no person anywhere in the request. Measured, before this
+ * existed: an API key holding only the `profile` scope unlocked a real deadbolt.
+ *
+ * `home:act` authorises ASKING to act. It has never authorised answering the
+ * question, and the consent screen says so in those words.
+ *
+ * @param {{ via?: string }|null} caller
+ */
+export function canAssertConfirmation(caller) {
+	return caller?.via === 'session';
+}
+
+/** The refusal a non-session principal gets when it claims a confirmation. */
+export const CONFIRMATION_REQUIRES_SESSION = Object.freeze({
+	status: 403,
+	code: 'confirmation_requires_session',
+	message:
+		'A guarded action can only be confirmed by a signed-in person in a browser session. A bearer token, including one holding home:act, can ask to act and can never say yes on the account holder\'s behalf.',
+});
 
 /**
  * Authenticate, then resolve one home this caller is entitled to, for a named
@@ -68,6 +121,7 @@ export async function resolveCaller(req, res) {
  *   | { ok: true, caller: object, home: object, role: string, scope: object, scoped: boolean }
  *   | { ok: false, status: 401, code: 'unauthorized', message: string }
  *   | { ok: false, status: 404, code: 'not_found', message: string }
+ *   | { ok: false, status: 403, code: 'insufficient_scope', message: string }
  *   | { ok: false, status: 403, code: 'role_forbidden', message: string, role: string }
  * >}
  */
@@ -75,6 +129,21 @@ export async function resolveHomeAccess(req, res, homeId, capability = 'read') {
 	const caller = await resolveCaller(req, res);
 	if (!caller) {
 		return { ok: false, status: 401, code: 'unauthorized', message: 'Sign in to reach your home.' };
+	}
+
+	// The scope gate, and it runs BEFORE the home is read on purpose. It depends
+	// on nothing but the token, so it names a principal and never a house, and
+	// answering it first keeps a token that was never granted home access off the
+	// tenancy lookup entirely.
+	const required = CAPABILITY_SCOPE[capability];
+	if (caller.via === 'bearer' && required && !hasScope(caller.scope, required)) {
+		return {
+			ok: false,
+			status: 403,
+			code: 'insufficient_scope',
+			message: `${required} required. This token was not granted it.`,
+			caller,
+		};
 	}
 
 	// A malformed id is answered exactly like a real id you are not in. A 400

@@ -18,7 +18,7 @@
 // answer the client renders as a suggestion, not a failure to report.
 
 import { requireCsrf } from '../../_lib/csrf.js';
-import { resolveHomeAccess } from '../../_lib/home/access.js';
+import { canAssertConfirmation, CONFIRMATION_REQUIRES_SESSION, resolveHomeAccess } from '../../_lib/home/access.js';
 import { can } from '../../_lib/home/members.js';
 import { homeError, homeFailure, HOME_ERR, toHomeFailure } from '../../_lib/home/errors.js';
 import { acquire } from '../../_lib/home/runtime.js';
@@ -50,6 +50,19 @@ export default wrap(async (req, res) => {
 	// Strict `=== true`: see the note in call.js. A truthy string must never be
 	// able to stand in for a person saying yes.
 	const confirmed = body.confirmed === true;
+
+	// WHO may say yes, before WHICH ROLE may say yes. Same rule and same reason as
+	// call.js: `confirmed: true` stands for a person, `requireCsrf` exempts bearer
+	// callers, and a scene that reaches a lock is a physical action like any
+	// other. A phrase is not a person.
+	if (confirmed && !canAssertConfirmation(caller)) {
+		return error(
+			res,
+			CONFIRMATION_REQUIRES_SESSION.status,
+			CONFIRMATION_REQUIRES_SESSION.code,
+			CONFIRMATION_REQUIRES_SESSION.message,
+		);
+	}
 
 	// The same role check call.js makes, for the same reason. A scene is a bundle
 	// of service calls the user assembled themselves, and "good night" in a house

@@ -27,7 +27,7 @@
 import { classifyCall, flattenEntities } from '@three-ws/home-bridge';
 
 import { requireCsrf } from '../../_lib/csrf.js';
-import { outOfScopeEntities, resolveHomeAccess } from '../../_lib/home/access.js';
+import { canAssertConfirmation, CONFIRMATION_REQUIRES_SESSION, outOfScopeEntities, resolveHomeAccess } from '../../_lib/home/access.js';
 import { can } from '../../_lib/home/members.js';
 import { assertHomeActionAllowed, HomePausedError } from '../../_lib/home/entitlements.js';
 import { homeError, homeFailure, HOME_ERR, toHomeFailure } from '../../_lib/home/errors.js';
@@ -78,6 +78,29 @@ export default wrap(async (req, res) => {
 
 	const action = `${domain}.${service}`;
 	const targets = entityIdsOf(data);
+
+	// WHO may say yes, asked before WHICH ROLE may say yes.
+	//
+	// `confirmed: true` stands for a person. `requireCsrf` above exempts bearer
+	// callers by design (a token is not auto-attached by a browser, so there is
+	// nothing to forge), which means without this check a bearer principal could
+	// write the flag into a body and open a front door with nobody present.
+	// Measured before it existed: an API key holding only the `profile` scope
+	// unlocked a real deadbolt through this handler. `home:act` authorises asking
+	// to act; it has never authorised answering.
+	if (confirmed && !canAssertConfirmation(caller)) {
+		logHomeAction({
+			homeId: home.id, userId: caller.userId, actor: actorFor(caller), channel: 'websocket',
+			action, entityIds: targets, guarded: true, outcome: 'refused',
+			detail: { reason: CONFIRMATION_REQUIRES_SESSION.code, via: caller.via },
+		});
+		return error(
+			res,
+			CONFIRMATION_REQUIRES_SESSION.status,
+			CONFIRMATION_REQUIRES_SESSION.code,
+			CONFIRMATION_REQUIRES_SESSION.message,
+		);
+	}
 
 	// The role check on the confirmation, and the reason order 12 exists.
 	//

@@ -3,6 +3,16 @@
 	"entries": [
 		{
 			"date": "2026-09-09",
+			"title": "An app key can no longer say yes to unlocking your door",
+			"summary": "A person saying yes is the one thing that stands between an agent and your front door, and we found a way around it. If you had ever issued an API key or connected an app to your three.ws account, that key could send an unlock request with the \"the owner already approved this\" flag set, and the lock opened, with nobody asked and nothing to click. We reproduced it against a real house and a real deadbolt before fixing it. Two things changed. Only a signed-in browser session can say yes now: a key or a connected app can ask to unlock, open or disarm, and is always answered with \"a person has to approve this\", exactly as the agent in your chat window already was. And the home permissions you approve when you connect an app are now actually enforced on every home request, so an app you gave read-only access to, or one you never gave home access at all, is refused instead of let through. Nothing legitimate changed: your agent still asks, you still approve, the door still opens.",
+			"tags": [
+				"security",
+				"fix"
+			],
+			"link": "/smart-home"
+		},
+		{
+			"date": "2026-09-09",
 			"title": "Fade Radar: the wallets that have never once been right, and the coins they are crowding into",
 			"summary": "The Smart Money Radar tells you which proven winners are buying a coin. Fade Radar is the other half of that question, and on pump.fun it turns out to be the sharper one: how much of a coin's buy side is money that has never been right. A wallet joins the reverse-indicator board only after five coins it bought have a known outcome and not one of them won, which is a bar a surprising number of addresses clear. The new page ranks every launch from the last few hours by how much of its observed buy side belongs to those wallets, by wallet count and by SOL, and carries a second board of the wallets themselves with their full record. The number above the board is the part we care most about: it is measured, not asserted. We rebuild the reverse-indicator group using only coins whose outcome was known before the coins it is graded on existed, then check what actually happened. Coins where a quarter or more of the buyers were reverse indicators went on to win 1.8 percent of the time, against 22.1 percent for coins with none, across 26,626 labelled coins. Nothing here is a short and nothing signs anything: on a bonding curve the only tradeable form of a fade is not buying, so every action on the page is a link out to the coin, its intel, or a wallet's track record. Wallet links also now open directly on the Smart Money Radar, so an address cited anywhere on the platform lands on its record instead of a board you have to scan by eye.",
 			"tags": [
