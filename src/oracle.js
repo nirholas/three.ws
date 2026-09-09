@@ -278,13 +278,21 @@ function boot() {
 
 	function closeSearchDrop() { _searchDrop.style.display = 'none'; _searchDrop.innerHTML = ''; }
 
+	// A dropdown that silently disappears reads as a broken search box, so a
+	// miss and an outage each say so in place, in the same surface.
+	function showSearchNote(text) {
+		_searchDrop.innerHTML = `<div class="ms-note" role="status">${esc(text)}</div>`;
+		_searchDrop.style.display = '';
+	}
+
 	async function doSymbolSearch(q) {
 		if (!q || q.length < 2) { closeSearchDrop(); return; }
-		const res = await fetch(`/api/oracle/search?q=${encodeURIComponent(q)}&network=${NETWORK}&limit=8`).catch(() => null);
-		if (!res?.ok) { closeSearchDrop(); return; }
-		const data = await res.json().catch(() => null);
-		const items = data?.items || [];
-		if (!items.length) { closeSearchDrop(); return; }
+		const { ok, data } = await api(`/api/oracle/search?q=${encodeURIComponent(q)}&network=${NETWORK}&limit=8`);
+		// The box may have moved on while the request was in flight.
+		if (searchEl.value.trim() !== q) return;
+		if (!ok || !data) { showSearchNote('Search is unavailable right now. Try again in a moment.'); return; }
+		const items = data.items || [];
+		if (!items.length) { showSearchNote(`No scored coin matches “${q}”. Oracle only searches launches it has scored.`); return; }
 		const TCOL = { prime: '#e8ebf2', strong: '#e4e8f2', lean: '#c4c9d6', watch: '#8a92a8', avoid: '#6c7280' };
 		_searchDrop.innerHTML = items.map((it) => {
 			const col = TCOL[it.tier] || '#8a92a8';

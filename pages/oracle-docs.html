@@ -217,11 +217,22 @@
 		/* tier ladder */
 		.ladder { display: flex; flex-direction: column; gap: 7px; }
 		.ladder .rung { display: grid; grid-template-columns: 86px 1fr auto; align-items: center; gap: 4px 14px; }
-		.ladder .bar { height: 30px; border-radius: 7px; display: flex; align-items: center; padding: 0 12px; font-weight: 700; font-size: 13px; color: #06070d; white-space: nowrap; overflow: hidden; }
+		.ladder .bar { height: 30px; border-radius: 7px; display: flex; align-items: center; padding: 0 12px; font-weight: 700; font-size: 13px; background: var(--fill); color: var(--fill-ink); white-space: nowrap; overflow: hidden; }
+		.ladder .rung { --fill: #6c7280; --fill-ink: #06070d; --nm: var(--ink); }
+		.ladder .rung[data-tier="prime"] { --fill: #eceff5; --nm: #eceff5; }
+		.ladder .rung[data-tier="strong"] { --fill: #cdd2e0; --nm: #cdd2e0; }
+		.ladder .rung[data-tier="lean"] { --fill: #9aa0b0; --nm: #9aa0b0; }
+		.ladder .rung[data-tier="watch"] { --fill: #8a92a8; --nm: #8a92a8; }
+		.ladder .rung[data-tier="avoid"] { --fill: #6c7280; --nm: #6c7280; }
+		[data-theme="light"] .ladder .rung[data-tier="prime"] { --fill: #2b3245; --fill-ink: #f6f7fb; --nm: #131726; }
+		[data-theme="light"] .ladder .rung[data-tier="strong"] { --fill: #4c5470; --fill-ink: #f6f7fb; --nm: #2f3546; }
+		[data-theme="light"] .ladder .rung[data-tier="lean"] { --fill: #737b92; --fill-ink: #ffffff; --nm: #4a5266; }
+		[data-theme="light"] .ladder .rung[data-tier="watch"] { --fill: #9aa1b2; --fill-ink: #10131c; --nm: #5a6378; }
+		[data-theme="light"] .ladder .rung[data-tier="avoid"] { --fill: #c3c8d4; --fill-ink: #10131c; --nm: #6c7280; }
 		.ladder .obs { grid-column: 2 / -1; font-size: 12.5px; color: var(--muted); padding-left: 2px; }
 		.ladder .rung + .rung { margin-top: 5px; }
 		.ladder .rng { font-family: var(--mono); font-size: 12px; color: var(--muted); }
-		.ladder .nm { font-weight: 700; }
+		.ladder .nm { font-weight: 700; color: var(--nm); }
 
 		/* score equation */
 		.eq { font-family: var(--mono); font-size: 13.5px; line-height: 2; background: var(--panel-solid); border: 1px solid var(--line); border-radius: var(--r-sm); padding: 16px 18px; overflow-x: auto; color: var(--ink); }
@@ -513,11 +524,11 @@ score = min(score, 45 if rugger_creator)
 				<div class="diagram">
 					<div class="cap">Conviction tiers: score → tier → measured odds</div>
 					<div class="ladder">
-						<div class="rung"><span class="nm" style="color:#eceff5">Prime</span><div class="bar" data-tier="prime" data-i18n-owned="1" style="background:#eceff5; width:100%">86-100</div><span class="rng">≥ 86</span><div class="obs" data-obs="prime" data-i18n-owned="1">Claims 45% &middot; holdout observed 45.7% good over 300 launches</div></div>
-						<div class="rung"><span class="nm" style="color:#cdd2e0">Strong</span><div class="bar" data-tier="strong" data-i18n-owned="1" style="background:#cdd2e0; width:84%">72-85</div><span class="rng">≥ 72</span><div class="obs" data-obs="strong" data-i18n-owned="1">Claims 25% &middot; holdout observed 29.2% good over 1,133 launches</div></div>
-						<div class="rung"><span class="nm" style="color:#9aa0b0">Lean</span><div class="bar" data-tier="lean" data-i18n-owned="1" style="background:#9aa0b0; width:70%">56-71</div><span class="rng">≥ 56</span><div class="obs" data-obs="lean" data-i18n-owned="1">Claims 12% &middot; holdout observed 20.1% good over 3,465 launches</div></div>
-						<div class="rung"><span class="nm" style="color:#8a92a8">Watch</span><div class="bar" data-tier="watch" data-i18n-owned="1" style="background:#8a92a8; width:58%">34-55</div><span class="rng">≥ 34</span><div class="obs" data-obs="watch" data-i18n-owned="1">Claims 5% &middot; holdout observed 7.2% good over 9,572 launches</div></div>
-						<div class="rung"><span class="nm" style="color:#6c7280">Avoid</span><div class="bar" data-tier="avoid" data-i18n-owned="1" style="background:#6c7280; width:46%">0-33</div><span class="rng">≥ 0</span><div class="obs" data-obs="avoid" data-i18n-owned="1">Claims nothing &middot; holdout observed 1.4% good over 85,530 launches</div></div>
+						<div class="rung" data-tier="prime"><span class="nm">Prime</span><div class="bar" data-tier="prime" data-i18n-owned="1" style="width:100%">86-100</div><span class="rng">≥ 86</span><div class="obs" data-obs="prime" data-i18n-owned="1">Claims 45% &middot; holdout observed 45.7% good over 300 launches</div></div>
+						<div class="rung" data-tier="strong"><span class="nm">Strong</span><div class="bar" data-tier="strong" data-i18n-owned="1" style="width:84%">72-85</div><span class="rng">≥ 72</span><div class="obs" data-obs="strong" data-i18n-owned="1">Claims 25% &middot; holdout observed 29.2% good over 1,133 launches</div></div>
+						<div class="rung" data-tier="lean"><span class="nm">Lean</span><div class="bar" data-tier="lean" data-i18n-owned="1" style="width:70%">56-71</div><span class="rng">≥ 56</span><div class="obs" data-obs="lean" data-i18n-owned="1">Claims 12% &middot; holdout observed 20.1% good over 3,465 launches</div></div>
+						<div class="rung" data-tier="watch"><span class="nm">Watch</span><div class="bar" data-tier="watch" data-i18n-owned="1" style="width:58%">34-55</div><span class="rng">≥ 34</span><div class="obs" data-obs="watch" data-i18n-owned="1">Claims 5% &middot; holdout observed 7.2% good over 9,572 launches</div></div>
+						<div class="rung" data-tier="avoid"><span class="nm">Avoid</span><div class="bar" data-tier="avoid" data-i18n-owned="1" style="width:46%">0-33</div><span class="rng">≥ 0</span><div class="obs" data-obs="avoid" data-i18n-owned="1">Claims nothing &middot; holdout observed 1.4% good over 85,530 launches</div></div>
 					</div>
 				</div>
 				<p>Alongside the score, the engine emits <b>badges</b> (e.g. <code class="t">smart-money</code>, <code class="t">structure-flag</code>, <code class="t">pedigree-flag</code>, <code class="t">news</code>, <code class="t">momentum</code>, <code class="t">thin-data</code>, <code class="t">prime</code>) for fast visual scanning, and an ordered list of <b>reasons</b>: strongest evidence first, each quoting the observed outcome rate for the bucket it hit ("organic demand ≥0.8: 60% of similar launches worked"). The engine cites its training data instead of asserting adjectives.</p>
