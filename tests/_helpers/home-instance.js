@@ -134,6 +134,55 @@ function allowLocalInstance(baseUrl) {
 	process.env.HOME_ALLOW_LOCAL_INSTANCE = '1';
 }
 
+/**
+ * Arm the seam at IMPORT time, not just when the house is handed out.
+ *
+ * `allowLocalInstance` above runs inside `acquireHomeInstance`, which a test
+ * calls from `beforeAll`. The guard reads the seam ONCE, at module load, and
+ * that is a deliberate security property of it: no request can turn it on. The
+ * two facts collide whenever a test file imports a route handler before it asks
+ * for a house, which `tests/api-home.test.js` does (handlers in a file-level
+ * `beforeAll`, the house in a nested one). The guard is then already frozen with
+ * the seam off, every dial of the loopback house is refused, and the whole live
+ * block fails with `502 unreachable` from routes that are working perfectly.
+ *
+ * That failure has now been misread twice, most expensively as a 409-to-502
+ * regression in the confirmation protocol, reproduced against two houses, when
+ * the confirmation gate was never reached at all. See the "guard's own failure
+ * mode" section of docs/home-security.md.
+ *
+ * So the decision is made here, before this module's importer can import
+ * anything else. It is armed only when the caller has ALREADY asked for a live
+ * house, and only for an address that is private:
+ *
+ *   * `HOME_LIVE` truthy: the harness builds houses on 127.0.0.1 and nowhere
+ *     else, so the address is known before it exists.
+ *   * `HOME_ASSISTANT_URL` set: armed only if that host is a private literal. A
+ *     public house needs no seam and never gets one.
+ *
+ * It cannot make a security check pass that would fail in production: check 7
+ * re-imports the guard with the seam forced off and `K_SERVICE` present, which
+ * is the shape the live service runs in, and the guard itself refuses to honour
+ * the seam on a Cloud Run revision regardless of what is set here.
+ */
+export function armLocalInstanceSeam() {
+	if (process.env.K_SERVICE) return;
+	if (process.env.HOME_ASSISTANT_URL) {
+		allowLocalInstance(process.env.HOME_ASSISTANT_URL);
+		return;
+	}
+	if (isTruthy(process.env.HOME_LIVE)) process.env.HOME_ALLOW_LOCAL_INSTANCE = '1';
+}
+
+// Also run on import, for a caller that reaches this module outside vitest (a
+// script, or a fork whose setup file did not run). Idempotent, and it is NOT
+// the load-bearing call: importing this helper is only early enough for a test
+// file that imports it above whatever pulls in the guard, and
+// tests/home-runtime-live.test.js imports api/_lib/home/runtime.js first. The
+// call that always wins the race is in tests/setup.home-seam.js, which vitest
+// runs before it imports the test module at all.
+armLocalInstanceSeam();
+
 /** Loopback, RFC1918, CGNAT and link-local, as literals. No DNS, no guessing. */
 function isPrivateLiteral(host) {
 	const bare = host.replace(/^\[|\]$/g, '').toLowerCase();

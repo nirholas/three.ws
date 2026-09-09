@@ -60,9 +60,22 @@ for (const s of raw) {
 }
 const keep = new Set(Object.keys(states));
 
+// The provenance is recorded, not described. A hand-written sentence claiming
+// "three areas, one floor" goes stale the first time the seed changes and says
+// nothing about WHICH Home Assistant release the recording came from, which is
+// the fact that matters when the pure suite and a live run disagree.
 const fixture = {
-	_source:
-		'Recorded from a real Home Assistant instance (docker ghcr.io/home-assistant/home-assistant:stable) running the demo integration, with three areas, one floor, and two user scenes. Not hand-written: regenerate by pointing scripts/capture-home-fixture.mjs at any instance.',
+	_source: {
+		description:
+			'Recorded from a real Home Assistant running the demo integration. Not hand-written: regenerate with `node scripts/capture-home-fixture.mjs`, which builds its own instance through scripts/home-test-instance.mjs.',
+		haVersion: instance.version || null,
+		capturedAt: new Date().toISOString().slice(0, 10),
+		counts: {
+			floors: registries.floors.length,
+			areas: registries.areas.length,
+			scenes: Object.keys(states).filter((id) => id.startsWith('scene.')).length,
+		},
+	},
 	floors: registries.floors.map((f) => ({ floor_id: f.floor_id, name: f.name, level: f.level, icon: f.icon ?? null })),
 	areas: registries.areas.map((a) => ({ area_id: a.area_id, name: a.name, icon: a.icon ?? null, floor_id: a.floor_id ?? null, aliases: a.aliases || [] })),
 	devices: registries.devices.map((d) => ({ id: d.id, area_id: d.area_id ?? null, name: d.name_by_user || d.name })),
@@ -136,7 +149,11 @@ async function readRegistries() {
 // concurrent lane, and the next capture would then inherit whatever this run
 // left in it.
 if (!BORROWED) {
-	spawnSync(process.execPath, [path.join(HERE, 'home-test-instance.mjs'), '--down', '--name', OWN_LANE], {
+	// --force because this house is unambiguously ours: this process created it
+	// moments ago on its own lane and is the only thing that has ever touched it.
+	// The harness otherwise refuses to remove a house acquired in the last half
+	// hour, which is the guard that stops one agent tearing down another's.
+	spawnSync(process.execPath, [path.join(HERE, 'home-test-instance.mjs'), '--down', '--force', '--name', OWN_LANE], {
 		stdio: 'inherit',
 	});
 }

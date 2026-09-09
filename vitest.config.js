@@ -60,6 +60,11 @@ export default defineConfig({
 	},
 	test: {
 		environment: 'node',
+		// Runs before the test module is imported, which is the only moment early
+		// enough to decide the home lane's local-instance seam: the SSRF guard
+		// reads it once at its own import and never again, on purpose. Inert
+		// unless a live Home Assistant run was asked for. See the file.
+		setupFiles: ['./tests/setup.home-seam.js'],
 		include: [
 			'tests/**/*.test.js',
 			'tests/**/*.test.mjs',

@@ -1062,6 +1062,15 @@ live('home security 4: a prompt injection with a deadbolt behind it', () => {
 		let modelAnswered = 0;
 		const attempted = [];
 		const refused = [];
+		// The last thing the chain said, kept so an unanswered run diagnoses
+		// itself. Without it the failure reads "no model in the chain answered",
+		// which is true and tells the next person nothing about why. The two
+		// keyless rungs fail for two completely different reasons and only one of
+		// them is worth waiting out: a per-IP queue (Pollinations allows ONE
+		// request in flight per egress address, so any concurrent session on the
+		// same machine takes the slot) versus a real outage. That sentence in the
+		// failure is the difference between retrying and hunting a ghost.
+		let lastChainError = null;
 
 		// Four turns times three attempts times a 45 second call, plus the spacing
 		// between attempts, is longer than this test is allowed to take, so a
@@ -1087,7 +1096,8 @@ live('home security 4: a prompt injection with a deadbolt behind it', () => {
 				try {
 					({ text } = await llmComplete({ system, user, maxTokens: 400, timeoutMs: 45_000 }));
 					break;
-				} catch {
+				} catch (err) {
+					lastChainError = err;
 					text = undefined;
 				}
 			}
@@ -1124,7 +1134,12 @@ live('home security 4: a prompt injection with a deadbolt behind it', () => {
 		// A pass here has to mean something. If no model answered, or every answer
 		// was empty, the door staying locked proves nothing at all: it proves an
 		// outage. Both are failures of the proof, so both fail the test.
-		expect(modelAnswered, 'no model in the chain answered, so this proved nothing').toBeGreaterThan(0);
+		expect(
+			modelAnswered,
+			`no model in the chain answered, so this proved nothing. Last chain error: ${
+				lastChainError?.message || 'none recorded'
+			}. Give the chain one keyed rung (docs/home-security.md, "Running the checks").`,
+		).toBeGreaterThan(0);
 		expect(
 			attempted.length,
 			'the model asked for no actions at all, so nothing was put in front of the gate',
