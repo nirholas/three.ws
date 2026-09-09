@@ -1,0 +1,65 @@
+[
+  {
+    "operation": "update",
+    "id": "39975",
+    "serviceName": "Forge 3D Draft",
+    "serviceDescription": "Turns a text description of one object or character into a downloadable textured 3D model in GLB format, with a browser preview link and an augmented-reality link that places it in a real room.\nprompt (string, required): What to build: one subject, plus its style and main colours; aspect_ratio (string, optional): Framing of the concept image the model is built from\nPOST (MCP JSON-RPC tools/call, tool name: forge_3d)\ncurl -X POST https://three.ws/api/okx/3d/forge-draft -H \"Content-Type: application/json\" -d '{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"tools/call\",\"params\":{\"name\":\"forge_3d\",\"arguments\":{\"prompt\":\"a low-poly orange fox sitting down\"}}}'",
+    "serviceType": "A2MCP",
+    "fee": "0.01",
+    "endpoint": "https://three.ws/api/okx/3d/forge-draft"
+  },
+  {
+    "operation": "update",
+    "id": "39976",
+    "serviceName": "Forge 3D Standard",
+    "serviceDescription": "Turns a text description of one object or character into a downloadable textured 3D model in GLB format on the standard quality pass, with a browser preview link and an augmented-reality link.\nprompt (string, required): What to build: one subject, plus its style and main colours; aspect_ratio (string, optional): Framing of the concept image the model is built from\nPOST (MCP JSON-RPC tools/call, tool name: forge_3d)\ncurl -X POST https://three.ws/api/okx/3d/forge-standard -H \"Content-Type: application/json\" -d '{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"tools/call\",\"params\":{\"name\":\"forge_3d\",\"arguments\":{\"prompt\":\"a brass steampunk pocket watch, open lid\"}}}'",
+    "serviceType": "A2MCP",
+    "fee": "0.05",
+    "endpoint": "https://three.ws/api/okx/3d/forge-standard"
+  },
+  {
+    "operation": "update",
+    "id": "39977",
+    "serviceName": "Forge 3D HD",
+    "serviceDescription": "Turns a text description of one object or character into a downloadable textured 3D model in GLB format on the highest detail pass, with a browser preview link and an augmented-reality link.\nprompt (string, required): What to build: one subject, plus its style and main colours; aspect_ratio (string, optional): Framing of the concept image the model is built from\nPOST (MCP JSON-RPC tools/call, tool name: forge_3d)\ncurl -X POST https://three.ws/api/okx/3d/forge-hd -H \"Content-Type: application/json\" -d '{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"tools/call\",\"params\":{\"name\":\"forge_3d\",\"arguments\":{\"prompt\":\"an ornate marble griffin statue on a plinth\",\"aspect_ratio\":\"3:4\"}}}'",
+    "serviceType": "A2MCP",
+    "fee": "0.25",
+    "endpoint": "https://three.ws/api/okx/3d/forge-hd"
+  },
+  {
+    "operation": "update",
+    "id": "39978",
+    "serviceName": "Forge 3D from Image",
+    "serviceDescription": "Rebuilds a downloadable textured 3D model in GLB format from photographs or rendered views of one object, with a browser preview link and an augmented-reality link that places it in a real room.\nimage_urls (string[], required): Public https links to photographs or rendered views of one object; prompt (string, optional): Optional text describing the object, which sharpens the rebuild\nPOST (MCP JSON-RPC tools/call, tool name: forge_3d)\ncurl -X POST https://three.ws/api/okx/3d/forge-image -H \"Content-Type: application/json\" -d '{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"tools/call\",\"params\":{\"name\":\"forge_3d\",\"arguments\":{\"image_urls\":[\"https://three.ws/og-image.png\"]}}}'",
+    "serviceType": "A2MCP",
+    "fee": "0.25",
+    "endpoint": "https://three.ws/api/okx/3d/forge-image"
+  },
+  {
+    "operation": "update",
+    "id": "39979",
+    "serviceName": "Forge Job Status",
+    "serviceDescription": "Reports the live state of any three.ws forge generation job and returns the finished model file, concept image, browser preview link and augmented-reality link once the job completes. Always free.\njob_id (string, required): The job id returned when a generation was accepted; title (string, optional): Optional title carried onto the viewer and AR pages\nPOST (MCP JSON-RPC tools/call, tool name: forge_status)\ncurl -X POST https://three.ws/api/okx/3d/forge-status -H \"Content-Type: application/json\" -d '{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"tools/call\",\"params\":{\"name\":\"forge_status\",\"arguments\":{\"job_id\":\"f1.abc123\"}}}'",
+    "serviceType": "A2MCP",
+    "fee": "0",
+    "endpoint": "https://three.ws/api/okx/3d/forge-status"
+  },
+  {
+    "operation": "update",
+    "id": "39980",
+    "serviceName": "3D Studio Service Catalog",
+    "serviceDescription": "Free machine-readable index of every three.ws 3D Studio service sold here: names, descriptions, prices, endpoints, and input formats, always in sync with the live services.\nNo parameters. Send an empty request.\nGET\ncurl https://three.ws/api/okx/3d/catalog",
+    "serviceType": "A2MCP",
+    "fee": "0",
+    "endpoint": "https://three.ws/api/okx/3d/catalog"
+  },
+  {
+    "operation": "update",
+    "id": "39981",
+    "serviceName": "3D Studio Health Status",
+    "serviceDescription": "Free live health status for the systems behind every paid service: generation, rigging, rendering, storage, and the payment rail, from real checks rather than a fixed reply.\nNo parameters. Send an empty request.\nGET\ncurl https://three.ws/api/okx/3d/health",
+    "serviceType": "A2MCP",
+    "fee": "0",
+    "endpoint": "https://three.ws/api/okx/3d/health"
+  }
+]

@@ -386,6 +386,28 @@ their repo exposes, the paid `registry-register` x402 endpoint, registers one
 URL per settled payment and would need 60 payments, so the bulk SIWX flow is
 strictly better.
 
+**Exactly what the wallet is asked to sign** (read from their source
+2026-09-09, so nobody has to trust a wallet popup's summary). On the Solana
+path, which is ours, `signInWithSolana` in
+`apps/scan/src/auth/providers/siws/sign-in.ts` calls `signMessage` on the UTF-8
+bytes of one constant string and nothing else:
+
+```
+Sign into x402scan
+```
+
+That constant is `SIWS_STATEMENT` in
+`apps/scan/src/auth/providers/siws/constants.ts`. It is an off-chain
+`signMessage`, not a transaction: no instructions, no program, no recent
+blockhash, no fee payer, so it cannot move a lamport or a token no matter which
+wallet signs it. The signature plus the public key are posted to a NextAuth
+credentials provider (`siws-csrf`) purely to establish a session. The EVM
+variant builds a full SIWE message (domain, URI, nonce, chainId, a two-hour
+expiry) around the same statement; on either path the wallet only proves it
+holds a key. What signing does commit is the *identity*: the signing address
+becomes the owner of the `three.ws` origin in their registry, so use the
+account intended to hold that listing long-term.
+
 
 **2026-09-02: re-verification after the facilitator merge (measured, no
 credentials used).** PR #1032 merged 2026-08-11 with zero reviews, so the
