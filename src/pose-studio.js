@@ -1447,7 +1447,10 @@ function boot() {
 
 		function renderKeyframes() {
 			tl.lane.innerHTML = '';
-			tl.empty.style.display = doc.keyframes.length ? 'none' : 'flex';
+			const isEmpty = !doc.keyframes.length;
+			tl.empty.style.display = isEmpty ? 'flex' : 'none';
+			// Drives the CSS that hides the ruler while the hint is showing.
+			tl.track.dataset.empty = String(isEmpty);
 			for (const kf of doc.keyframes) {
 				const diamond = el('div', {
 					class: 'tl-key',

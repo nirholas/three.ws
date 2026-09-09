@@ -12,7 +12,7 @@
 		<meta name="author" content="nirholas" />
 		<meta
 			name="description"
-			content="Pose and animate any three.ws avatar in your browser. Drag joints with IK, keyframe a timeline, preview live, then export an animated GLB — save to your account and sell your animations for USDC."
+			content="Pose and animate any three.ws avatar in your browser. Drag joints with IK, keyframe a timeline, preview live, then export an animated GLB. Save it to your account and sell your animations for USDC."
 		 data-i18n-attr="content:pose.meta_description"/>
 		<meta name="theme-color" content="#0b0b0b" />
 		<link rel="icon" href="/favicon.ico" sizes="any" />
@@ -41,7 +41,7 @@
 	<meta name="twitter:card" content="summary_large_image" />
 	<meta name="twitter:site" content="@trythreews" />
 	<meta name="twitter:title" content="Animation Studio · three.ws"  data-i18n-attr="content:pose.meta_twitter_title"/>
-	<meta name="twitter:description" content="Author animations for any three.ws avatar — IK posing, keyframe timeline, animated-GLB export. Save to your account and sell for USDC."  data-i18n-attr="content:pose.meta_twitter_description"/>
+	<meta name="twitter:description" content="Author animations for any three.ws avatar: IK posing, keyframe timeline, animated-GLB export. Save to your account and sell for USDC."  data-i18n-attr="content:pose.meta_twitter_description"/>
 	<meta name="twitter:image" content="https://three.ws/api/page-og?s=build&amp;t=Animation+Studio&amp;d=Pose+any+three.ws+avatar+or+the+built-in+mannequin+with+FK%2FIK%2C+keyframe+a+timeline%2C+and+preview+the+motion+live.+Export+an+animated+GLB+or+clip+JSON%2C+save&amp;p=%2Fpose" />
 
 		<style>
@@ -110,7 +110,7 @@
 			   forces height/line-height 56px (buttons inherit it via
 			   `font: inherit` and balloon into oversized pills) and marks the
 			   bar as an app-drag region. That selector hides an ID inside
-			   :has(), so a bare #pose-top loses — double the ID to outrank it.
+			   :has(), so a bare #pose-top loses. Double the ID to outrank it.
 			   The grid row sizes this bar; overflow-x is the narrow-width
 			   safety net so buttons scroll instead of truncating mid-label. */
 			#pose-app #pose-top {
@@ -130,6 +130,13 @@
 				display: flex;
 				align-items: center;
 				gap: 8px;
+				font-weight: 600;
+				font-size: 14px;
+				letter-spacing: 0.01em;
+				color: var(--text);
+			}
+			#pose-top .brand h1 {
+				margin: 0;
 				font-weight: 600;
 				font-size: 14px;
 				letter-spacing: 0.01em;
@@ -268,7 +275,7 @@
 				display: none;
 			}
 
-			/* Overflow ("More") menu — low-frequency toolbar actions live here so
+			/* Overflow ("More") menu: low-frequency toolbar actions live here so
 			   the top bar never truncates at laptop widths. The panel is
 			   position:fixed and placed from the trigger's rect in JS, so the
 			   scrollable top bar can never clip it. */
@@ -948,7 +955,7 @@
 				color: #67e8f9;
 				border-color: rgba(34, 211, 238, 0.5);
 			}
-			/* Animated "now playing" equalizer — only visible on the active card. */
+			/* Animated "now playing" equalizer, only visible on the active card. */
 			.al-card-eq {
 				position: absolute;
 				top: 9px;
@@ -1396,6 +1403,11 @@
 				color: var(--text-3);
 				font-variant-numeric: tabular-nums;
 				font-family: ui-monospace, monospace;
+			}
+			/* An empty timeline has nothing to measure: the tick labels only
+			   compete with the empty-state hint that sits over them. */
+			#tl-track[data-empty='true'] .tl-ruler {
+				opacity: 0;
 			}
 			.tl-lane {
 				position: absolute;
@@ -1846,7 +1858,7 @@
 						'timeline'
 						'right'
 						'left';
-					/* Stacked panels can exceed one screen — let the page scroll. */
+					/* Stacked panels can exceed one screen, so let the page scroll. */
 					height: auto;
 					min-height: calc(100dvh - var(--nav-h));
 				}
@@ -1866,11 +1878,12 @@
 				.tl-field-name {
 					display: none;
 				}
-				/* The empty-state hint wraps on narrow screens and collides
-				   with the ruler labels — scrim the whole track while empty. */
+				/* The hint wraps to two lines here, so it needs the ruler's
+				   18px band as well. #tl-track[data-empty] already hides the
+				   ruler, so the band is free. */
 				.tl-empty {
 					inset: 0;
-					background: rgba(0, 0, 0, 0.6);
+					line-height: 1.35;
 				}
 			}
 		</style>
@@ -1880,7 +1893,7 @@
 
 	<meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1">
 	<meta property="og:locale" content="en_US">
-	<meta property="og:image:alt" content="Animation Studio — three.ws">
+	<meta property="og:image:alt" content="Animation Studio - three.ws">
 </head>
 	<body>
 		<header><div id="nav-container"></div></header>
@@ -1892,7 +1905,7 @@
 				<div class="brand">
 					<a href="/" title="three.ws home" data-i18n="pose.three_ws" data-i18n-attr="title:pose.three_ws_home_title">three.ws</a>
 					<span>/</span>
-					<span data-i18n="pose.animation_studio">Animation Studio</span>
+					<h1 data-i18n="pose.animation_studio">Animation Studio</h1>
 				</div>
 				<span class="sep"></span>
 
@@ -1902,7 +1915,7 @@
 						class="mode-btn"
 						data-posemode="fk"
 						aria-pressed="true"
-						title="FK — select a bone and rotate it with the gizmo or sliders (F)"
+						title="FK: select a bone and rotate it with the gizmo or sliders (F)"
 					 data-i18n="pose.fk" data-i18n-attr="title:pose.fk_select_a_bone_and_rotate_title">
 						FK
 					</button>
@@ -1911,7 +1924,7 @@
 						class="mode-btn"
 						data-posemode="ik"
 						aria-pressed="false"
-						title="IK — drag a hand or foot and the limb solves (I)"
+						title="IK: drag a hand or foot and the limb solves (I)"
 					 data-i18n="pose.ik" data-i18n-attr="title:pose.ik_drag_a_hand_or_foot_and_title">
 						IK
 					</button>
@@ -2159,7 +2172,7 @@
 			<!-- STAGE -->
 			<main id="pose-stage">
 				<canvas id="pose-canvas"></canvas>
-				<div id="pose-status">Loading…</div>
+				<div id="pose-status" role="status" aria-live="polite">Loading…</div>
 				<noscript>
 					<div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;text-align:center;padding:24px;background:inherit">
 						<p style="max-width:46ch;margin:0">The Animation Studio poses and animates rigged 3D avatars live on this canvas, which needs JavaScript. Enable JavaScript and reload to pose, animate, and export.</p>
@@ -2174,7 +2187,7 @@
 					<h2 data-i18n="pose.animation">Animation</h2>
 					<p class="pose-section-sub" data-i18n-html="pose.load_a_rigged_avatar_then_generate_a">
 						Load a rigged avatar, then <strong>generate a motion from a text
-						prompt</strong> or pick a preset — preview it live and export an
+						prompt</strong> or pick a preset, preview it live and export an
 						animated GLB.
 					</p>
 					<div id="pose-anim-library"></div>
@@ -2353,7 +2366,7 @@
 					id="tl-track"
 					role="slider"
 					tabindex="0"
-					aria-label="Playhead — click or drag to scrub, arrow keys to step"
+					aria-label="Playhead: click or drag to scrub, arrow keys to step"
 					aria-valuemin="0"
 					aria-valuemax="4"
 					aria-valuenow="0"
