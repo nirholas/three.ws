@@ -68,6 +68,222 @@ retired, row 8 added), `okx-ai-00-CONTEXT.md`, `okx-ai-RUNBOOK.md`, `prompts/REA
 
 ---
 
+## 2026-09-09, Work Order 04: every unpaid leg green, delivery outage root-caused and cleared, funding is still the only gate
+
+Ran WO-04 against production. The paid half stays gated on the owner (money-moving is a
+CLAUDE.md stop-and-ask gate and the buyer wallet holds nothing). Everything that does not move
+money is finished, and two things moved that the last WO-04 session could not report.
+
+### Delivery was broken for part of today, and it would have eaten a buyer's money
+
+`/api/okx/3d/health` read `ok: false` at 05:32 UTC with a subsystem failing on R2
+`SignatureDoesNotMatch`, and `[forge-store] materializeCreation failed` was firing in bursts.
+A free-lane job submitted at 05:32 came back `failed`. This matters more than it looks:
+**a paid forge row settles at job ACCEPTANCE**, so every paid call during that window would
+have charged the buyer and delivered nothing.
+
+Root cause, from the logs rather than a guess: **Cloud Run revision `three-ws-api-00419-5tr`
+(created 05:34:26Z) carried a bad storage credential.** All 50 failure lines in the window
+carry that revision label and no other. Revision `three-ws-api-00420-ljh` (05:39:41Z) took
+100% of traffic and cleared it. Nothing in this session fixed it; a concurrent session or the
+owner did, and the record matters because the same signature was mis-diagnosed on 2026-09-07
+as a standing owner action.
+
+**Correcting my own first reading, because it is the kind of error that wastes a session:** a
+`date_trunc('day')` query over `forge_creations` made it look like generation had produced
+zero successes since 2026-09-07. The hourly view does not support that, and it was wrong.
+What was true is narrower and was the real defect: `trellis_selfhost` was failing ~100%
+(7 failed, 0 done in a 40-minute window) while `hunyuan3d` and `gcp` succeeded.
+
+**Verified after the fix, mock-free:** health `ok: true` on all six subsystems, and a fresh
+draft-tier job delivered a durable GLB in about 30 s. `scripts/okx-verify-glb.mjs` reads
+`PASS` on the bytes: glTF v2, 3,281,092 bytes, 1 mesh, 17,603 vertices, 30,000 triangles. A
+paid buyer would receive a real artifact today. Capture:
+`prompts/okx-ai/e2e-evidence/93-2026-09-09-delivery-and-discovery.json`.
+
+### Case 1d has flipped to PASS, so the last known red on the listing path is gone
+
+The 2026-09-02 funding request called the discovery paywall "one thing funding will NOT fix".
+It shipped since. A spec-compliant MCP client (`Accept: text/event-stream` +
+`MCP-Protocol-Version`) now gets **200 on `initialize` and `tools/list` on all four paid
+rows**, so an OKX reviewer can read the tool schema without paying. That stale section is cut
+from `FUNDING-REQUEST.md` rather than carried forward.
+
+### The gauntlet, unpaid legs, against production
+
+`node scripts/okx-e2e-gauntlet.mjs --dry-run` reads **4/14, and all four runnable cases pass**:
+
+| Case | Result | Evidence |
+| --- | --- | --- |
+| 1 free lane serves live data, no payment demanded | PASS | `94-2026-09-09-gauntlet-dryrun.json` |
+| 1d MCP discovery is free to a spec-compliant client | PASS | `93-`, `94-2026-09-09-*.json` |
+| 5d garbage payment header gets a clean 4xx, runs no tool | PASS (4 shapes, all 402) | `94-2026-09-09-gauntlet-dryrun.json` |
+| 7 legacy rail still answers and pays its own challenge | PASS (4 accepts advertised) | `94-2026-09-09-gauntlet-dryrun.json` |
+| 2, 2b, 3, 3i, 3r, 5a, 5b, 5c, 6 | not run, unfunded buyer | pending |
+| 4 settlement verified on-chain | not run, no settlements exist | pending |
+
+All three pre-resubmission gates are green, OKX's own validator included:
+`okx-compliance-probe.mjs` PASS 20 probes (`90-`), `okx-payment-leg-probe.mjs` PASS 4 rows
+(`91-`), and `onchainos agent x402-check` `valid: true` on all four rows with
+`eip155:196` / `exact` / USD₮0 / `payTo 0x4022de2D…f402` and `amountMinimal` 10000 / 50000 /
+250000 / 250000 (`92-`). 79 unit tests pass across `okx-3d-services` and `okx-forge`.
+
+### New finding: the ON-CHAIN listing descriptions are stale, on all seven rows
+
+RUNBOOK §2 says the live listing is our current catalog. That is true for names, endpoints,
+prices, type and chain, and it is **not true for the descriptions**. With `AGENT_ID=2632`,
+`scripts/okx-three-copy-check.mjs` reports `COPY CHECK: FAIL (7 divergences)`: the on-chain
+rows carry prose parameter text, while the module's `listingDescription()` emits a parameter
+spec line, a method line and a runnable `curl` example. Rejection #2 (2026-07-26) was about
+"service description / parameters / usage examples", so this is the exact class of defect that
+got us rejected once. Module == live == listing-submission still holds (`COPY CHECK: PASS`
+without `AGENT_ID`); only the on-chain copy lags. Fixing it is an on-chain write, so it
+belongs to the relisting order (`911-okx-ai-08-forge-relisting.md`) and to the owner, not
+here. Capture: `95-2026-09-09-three-copy-onchain.txt`.
+
+### Fixed here
+
+**Banned dash characters in the failure copy a paying buyer reads.**
+`api/_lib/provider-job-error.js` is the shared masker every async generation pipeline routes a
+failed job through, and all seven of its user-facing strings carried an em-dash, as did
+`api/3d/generate.js`'s free-lane failure line. CLAUDE.md bans the character outright, and this
+is copy an OKX buyer sees on a failed paid job, which is work order case 6's territory. The
+file's stable classifier tokens ("content safety", "face", "resources", "too long"/"try
+again", "temporarily unavailable", "busy") are untouched by design, so nothing downstream
+re-branches: 22 masking tests and 113 surface tests pass.
+
+Not fixed here, deliberately: the `probe()` helper in `api/okx/3d/[service].js` used to spread
+a thrown AWS error over its own result, which replaced the subsystem's `name` with
+`SignatureDoesNotMatch` and served the request's signing material from a public,
+unauthenticated endpoint. That is exactly what `/health` printed at 05:32. A concurrent
+session already fixed it in this worktree; it is staged and undeployed, and I left it alone
+rather than collide.
+
+### Blocked, and it is exactly one thing, unchanged since 2026-09-02
+
+**Funding the buyer.** Balances re-read live at block 70162898: buyer
+`0x75d0…cf69` holds **0 USD₮0, 0 OKB**; seller `0x4022de2D…f402` 2.427731 USD₮0; relayer
+`0xe81DE501…415B` 0.02 OKB. Every figure is unchanged from 2026-09-02, 2026-08-01 and
+2026-07-23. `prompts/okx-ai/e2e-evidence/FUNDING-REQUEST.md` is refreshed against today:
+**5.0 USD₮0 on X Layer (196) to the buyer**, of which a clean run settles $1.07 against a
+$1.32 floor (verify refuses any authorization above `balanceOf`, including the ones designed
+to be rejected). The money largely returns, because the buyer pays our own merchant wallet.
+
+The OTP ask from every earlier version of this request is discharged: `onchainos wallet
+status` reads `loggedIn: true` as `claude@three.ws`.
+
+**`docs/okx-marketplace.md` still has no "verified behavior" section, on purpose.** The work
+order requires it to state settlement timing, refund semantics and replay protection *from
+evidence*. Zero settlements exist on this rail (re-confirmed: nothing has moved into the
+seller wallet). Writing that section now would be the fabrication the work order exists to
+prevent. It lands with the first tx hash and not before.
+
+### Verdict for OKX-05
+
+**NO-GO**, and the reason is evidence, not defects: the work order's bar is at least three
+real settlements with tx hashes, and there are zero. Every non-monetary precondition is met
+and every gate is green. One owner action stands between this and a GO.
+
+---
+
+## 2026-09-09, WO-08 run: every listing gate is GREEN, and the resubmission is NO-GO on a production outage
+
+Ran the whole of `911-okx-ai-08-forge-relisting.md` except the on-chain write. The listing
+itself is ready and provably so. **It was not submitted, and it must not be, until the R2
+credential below is fixed**, because a reviewer's paid probe would be charged and receive
+nothing.
+
+### The blocker: production has delivered zero generations since 2026-09-07 00:19 UTC
+
+`forge_creations` has no `done` row in 48 hours. Every job either fails or sits in
+`generating` forever. Root cause, read on the wire and in the logs, is a single one:
+
+- The R2 credential on the Cloud Run service is **rejected**. `[forge-store] materializeCreation
+  failed: The request signature we calculated does not match the signature you provided` fires
+  on every job. Probed directly with the service's own values: `S3_ACCESS_KEY_ID`
+  `2b70392d34a9946c33486f9953c18414` against the secret in `s3-secret-access-key:latest` fails
+  a bare `ListObjectsV2` with `SignatureDoesNotMatch`, so this is not a permission scope and
+  not our signing code: the key pair itself does not match. This is the same owner item the
+  2026-09-07 entry raised, still open, and it is now two days of total delivery loss.
+- **Owner action, the only one that fixes it:** mint a new R2 API token for bucket
+  `chatty-storage` in the Cloudflare dashboard, then
+  `gcloud secrets versions add s3-secret-access-key --data-file=-` (and
+  `--update-env-vars S3_ACCESS_KEY_ID=...` if the id changes too). Never `--set-env-vars`.
+
+Not the cause, but found and worth recording: `model-trellis` is throwing
+`RuntimeError: Cuda error: 2[cudaMalloc]` out of nvdiffrast's rasterizer inside
+`postprocessing_utils.to_glb`, and the rate has climbed from 1 to 2 per hour to 9 to 13 per
+hour since 01:00 on 2026-09-09. The worker still completes most jobs (many `done in ~30s`
+lines today), so this is a second, independent degradation on an L4 with `MAX_CONCURRENT=1`,
+not the outage. It needs its own work order.
+
+### Two defects found by probing the listed rows, both fixed and committed
+
+1. **`GET /api/okx/3d/health` was serving R2 request signing material.** `probe()` spread the
+   caught error into the subsystem entry, so an AWS SDK error's own `name` replaced the
+   subsystem's (the live response carried a subsystem literally named
+   `SignatureDoesNotMatch`) and `StringToSign`, `CanonicalRequest`, `SignatureProvided` and
+   the bucket host rode along, on a row that is public, unauthenticated and listed on the
+   marketplace. A failing probe now reports detail only through an explicit `detail` property
+   and the fixed keys are written after the spread, so nothing can overwrite the subsystem's
+   identity. Regression test in `tests/api/okx-identity-studio.test.js`.
+2. **The paid rows charged for jobs they could not deliver.** They settle when the lane
+   ACCEPTS the job, and delivery happens later in `materializeCreation`, so through this whole
+   outage a buyer could pay 0.01 to 0.25 USDT and poll a job that can never reach `done`.
+   `forge_3d` now calls `objectStorageUsable()` (the cached, single-flighted probe the
+   browser-upload path already uses) before handing the job over, and answers
+   `delivery_unavailable` with `charged: false` and a `retry_after` when the bucket is
+   unwritable. It fails OPEN on a transient fault, so only a deterministically rejected or
+   missing credential stops the rows selling. Commit `b481c2cc8`, two cases in
+   `tests/api/okx-forge.test.js`, stated in the payment-semantics list of
+   `docs/okx-marketplace.md`. **This needs a deploy to take effect.**
+
+### Every listing gate, run today, all green
+
+| Gate | Result |
+|---|---|
+| `curl /api/version` | `880bdcef8`, revision `three-ws-api-00418-j26` |
+| `GET /api/okx/3d/catalog` | the 7 forge/free rows listed, 9 on the back burner |
+| Reviewer probe, 4 paid rows | 402 with `accepts[0]` = `exact` / `eip155:196` at 10000 / 50000 / 250000 / 250000, payTo `0x4022de2D…f402` |
+| Rail uniqueness | no duplicate (scheme, network, asset, amount, payTo) on any row. The two Solana entries are two different assets (USDC and $THREE), not a duplicated rail |
+| `forge-status`, `getting_started` | free on every endpoint, never a 402 |
+| `catalog` / `health` on GET | 200 / 503. The 503 is honest: the storage subsystem is genuinely down |
+| `scripts/okx-three-copy-check.mjs` | PASS, module == live == submission |
+| `scripts/okx-compliance-probe.mjs` | PASS 20 probes |
+| `scripts/okx-payment-leg-probe.mjs` | PASS, 4 paid rows accepted a signed authorization |
+| `onchainos agent x402-check` | `valid: true` on all four, rail and amount as registered |
+| OKX suites | 45 + 84 + 78 tests pass |
+
+### The delta, and the description question it settles
+
+`agent service-list` reads 7 rows, ids 39975 to 39981, unchanged. The delta is therefore
+**7 `operation: update` entries, no deletes and no creates**, so service ids and their history
+survive. The prompt's expectation of 7 deletes plus 7 creates is stale; RUNBOOK §5.5 is right.
+
+The only field that differs is `serviceDescription`: the catalog module has moved on from the
+2-part text that is on-chain to a 4-part text carrying a parameter list, the tool name, and a
+curl example. That contradicts `.agents/skills/okx-agent-identity/references/invariants.md`
+("2-part description ... no example prompts / links / tech-stack") but matches the 2026-07-26
+rejection, which demanded exactly parameter details and usage examples. Settled by asking
+OKX's own QA tool rather than by picking a side: `agent validate-listing` over the 7 entries
+returns **`pass: true`, 0 findings**. Run once, as the work order requires. So the delta is
+submittable as-is whenever the outage clears.
+
+### What is left, and who owns it
+
+1. **Owner:** rotate the R2 credential (command above). Nothing else unblocks generation.
+2. **Owner:** deploy, so `delivery_unavailable` and the health fix reach production.
+3. **Then, and only then,** re-run the three gates in RUNBOOK §5.5, confirm a real free
+   generation reaches `done`, and submit:
+   `onchainos agent update --agent-id 2632 --service "$(cat delta.json)"` followed by
+   `onchainos agent activate --agent-id 2632 --preferred-language en-US`. Both are on-chain
+   writes and need the owner's confirm on the diff card.
+
+The wallet session is live (`loggedIn: true`, `claude@three.ws`), so no OTP is outstanding.
+`911-okx-ai-08-forge-relisting.md` stays on disk: its submission step has not run.
+
+---
+
 ## 2026-09-07, the new rejection email is the OLD verdict: the listing state never moved, and OKX's own validator now passes us
 
 An OKX rejection mail landed naming all four paid rows plus the internal note *"x402 quotation
