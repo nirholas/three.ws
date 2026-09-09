@@ -35,19 +35,48 @@ const HEARTBEAT_FRESH_MS = 90_000;
 const SNIPE = 'snipe';
 const TRADE = 'trade';
 
-/** Derive the recorder's operational truth from its heartbeat row. */
-function recorderState(beat) {
+/**
+ * Derive the recorder's operational truth from its heartbeat row.
+ *
+ * bot_heartbeat is keyed by worker alone, so a single row describes whichever
+ * network that worker is actually recording. Asking about the other network
+ * must not inherit its liveness: a mainnet worker is honestly "offline" from
+ * devnet's point of view, and reporting otherwise made every downstream devnet
+ * stage read as "waiting on the next launch" when nothing was ever recording.
+ *
+ * @param {any} beat        the bot_heartbeat row, or undefined
+ * @param {string} network  the network the caller asked about
+ */
+function recorderState(beat, network) {
 	if (!beat) return { state: 'offline', reason: 'never started' };
 	const lastBeatMs = beat.last_beat_at ? new Date(beat.last_beat_at).getTime() : 0;
 	const ageMs = lastBeatMs ? Date.now() - lastBeatMs : null;
 	const alive = ageMs != null && ageMs < HEARTBEAT_FRESH_MS;
 	const meta = beat.meta && typeof beat.meta === 'object' ? beat.meta : {};
+	if (meta.network && meta.network !== network) {
+		return {
+			state: 'offline',
+			reason: `recording ${meta.network}, not ${network}`,
+			mode: beat.mode || meta.mode || 'unknown',
+			network: meta.network,
+			feedLive: false,
+			feedSilent: false,
+			heartbeatAgeMs: ageMs,
+			lastEventAgeMs: null,
+			reconnects: null,
+			errors: null,
+			lastError: null,
+			intel: null,
+			bootAt: meta.bootAt ?? null,
+		};
+	}
 	const feedLive = alive && meta.feedConnected === true;
 	const watchdogMs = Number(meta.feedWatchdogMs) || 180_000;
 	const feedSilent = alive && Number(meta.lastEventAgeMs) > watchdogMs;
 	const state = !alive ? 'down' : feedSilent || !feedLive ? 'degraded' : 'live';
 	return {
 		state,
+		reason: state === 'down' ? 'heartbeat stale' : state === 'degraded' ? (feedLive ? 'feed silent' : 'feed disconnected') : null,
 		mode: beat.mode || meta.mode || 'unknown',
 		network: meta.network || null,
 		feedLive,
@@ -87,7 +116,7 @@ export default wrap(async (req, res) => {
 		safe(async () => {
 			const [beat] = await sql`
 				SELECT mode, last_beat_at, meta FROM bot_heartbeat WHERE worker = ${WORKER} LIMIT 1`;
-			return recorderState(beat);
+			return recorderState(beat, network);
 		}, { state: 'unknown', reason: 'status store unreachable' }),
 
 		// 2 — Intel: launches observed + signal-quality distribution.
