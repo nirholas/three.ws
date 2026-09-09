@@ -5,10 +5,10 @@
 // asset enters the public catalog:
 //   • api/cron/forge-seed-cron.js  — the per-minute trickle, in-process on
 //     Cloud Run (Vertex reachable via the attached service account).
-//   • the bulk batch runner (gcp-credits campaign, work order 05 task 5, still
-//     open: not in the tree yet) - driven from a workstation with no GCP
-//     credentials, so it routes render + judge through the production HTTP
-//     surfaces instead.
+//   • scripts/gcp/seed-avatars.mjs - the bulk batch runner, driven from a
+//     workstation with no GCP credentials, so it routes render (and by default
+//     the judge too) through the production HTTP surfaces instead. It has no
+//     70 s function wall, so unlike the cron it runs BOTH stages below.
 //
 // Two stages, cheapest first:
 //
@@ -192,9 +192,8 @@ export const SEED_WATCHLIST = Object.freeze([
  * @param {{ origin: string, fetchImpl?: typeof fetch, timeoutMs?: number }} opts
  */
 export function remoteTransport({ origin, fetchImpl = fetch, timeoutMs = 120_000 }) {
-	const base = String(origin || '').replace(/\/+$/, '');
-
 	async function visionAsk({ png, prompt }) {
+		const base = String(origin || '').replace(/\/+$/, '');
 		const res = await fetchImpl(`${base}/api/vision`, {
 			method: 'POST',
 			headers: { 'content-type': 'application/json' },
@@ -209,9 +208,81 @@ export function remoteTransport({ origin, fetchImpl = fetch, timeoutMs = 120_000
 		if (!res.ok) throw new Error(`vision ${res.status}: ${JSON.stringify(data).slice(0, 300)}`);
 		return String(data?.text || '');
 	}
+	return buildTransport({ name: 'remote', origin, fetchImpl, timeoutMs, visionAsk });
+}
+
+/**
+ * Same gate as remoteTransport, with the judge running IN THIS PROCESS against
+ * api/_lib/vision.js's provider chain instead of the deployed POST /api/vision.
+ * Rendering still goes to `origin`, because the renderer is a GPU service with
+ * no in-process equivalent; only the judge moves.
+ *
+ * This is how a vision-chain change is measured before it ships. A fix to the
+ * chain cannot be exercised through the deployed endpoint until the deploy
+ * lands, so a bulk run that needs the fixed chain points its judge here and
+ * keeps its accept rate honest in the meantime. Same prompts, same parser, same
+ * verdict maths as remoteTransport; the only difference is which process calls
+ * the model, so the numbers are comparable across the two.
+ *
+ * Needs whatever credentials that chain reads (OPENROUTER_API_KEY, NVIDIA_API_KEY,
+ * or GCP application-default credentials for the Vertex anchor) in this process.
+ *
+ * @param {{ origin: string, fetchImpl?: typeof fetch, timeoutMs?: number }} opts
+ */
+export function localJudgeTransport({ origin, fetchImpl = fetch, timeoutMs = 120_000 }) {
+	async function visionAsk({ png, prompt }) {
+		const { describeImage } = await import('./vision.js');
+		const out = await describeImage({
+			imageBase64: png.toString('base64'),
+			prompt,
+			maxTokens: 700,
+			timeoutMs,
+		});
+		return String(out?.text || '');
+	}
+	return buildTransport({ name: 'local-judge', origin, fetchImpl, timeoutMs, visionAsk });
+}
+
+/**
+ * Shared transport body: the renderer call and the two judge calls, over an
+ * injected `visionAsk`. Both transports differ only in that function, and the
+ * prompts and parsing must stay identical between them or their accept rates
+ * stop being comparable, which is why they are written once here.
+ */
+function buildTransport({ name, origin, fetchImpl, timeoutMs, visionAsk }) {
+	const base = String(origin || '').replace(/\/+$/, '');
+
+	/**
+	 * Ask for a JSON verdict, and give a model that answered in prose exactly one
+	 * more chance with the instruction restated as the last thing it reads.
+	 *
+	 * The free vision lanes obey "reply with only JSON" most of the time and
+	 * occasionally open with "The image shows..." instead. Treating that as an
+	 * infrastructure failure loses the whole asset: it is recorded as ungated,
+	 * so the run learns nothing about that prompt and re-spends GPU time on it
+	 * at the next resume. One retry is cheap next to a regeneration, and it is
+	 * NOT a quality shortcut: the retry only re-asks for the format, never
+	 * relaxes the verdict, and a second prose reply still fails the gate.
+	 */
+	async function askJson({ png, prompt }) {
+		const first = await visionAsk({ png, prompt });
+		try {
+			return parseJsonReply(first);
+		} catch (err) {
+			const retry = await visionAsk({
+				png,
+				prompt: `${prompt}\n\nYour previous reply was prose and could not be parsed. Reply with ONLY the JSON object, starting with { and ending with }. No prose, no markdown fence.`,
+			});
+			try {
+				return parseJsonReply(retry);
+			} catch {
+				throw err;
+			}
+		}
+	}
 
 	return {
-		name: 'remote',
+		name,
 		async render({ glbUrl, width = 768, height = 768, theta = 0, phi = 78 }) {
 			const res = await fetchImpl(`${base}/api/render/avatar-clip`, {
 				method: 'POST',
@@ -233,7 +304,7 @@ export function remoteTransport({ origin, fetchImpl = fetch, timeoutMs = 120_000
 		},
 		async judgeRealism({ png, prompt, viewLabel }) {
 			const { buildJudgePrompt } = await import('./quality-bench.js');
-			const text = await visionAsk({
+			const parsed = await askJson({
 				png,
 				prompt: buildJudgePrompt({
 					prompt,
@@ -242,7 +313,6 @@ export function remoteTransport({ origin, fetchImpl = fetch, timeoutMs = 120_000
 					viewLabel,
 				}),
 			});
-			const parsed = parseJsonReply(text);
 			const out = {};
 			for (const k of ['photorealism', 'geometryIntegrity', 'textureFidelity', 'promptAdherence']) {
 				const n = Number(parsed[k]);
@@ -253,8 +323,7 @@ export function remoteTransport({ origin, fetchImpl = fetch, timeoutMs = 120_000
 			return out;
 		},
 		async judgeRigReadiness({ png, prompt, category }) {
-			const text = await visionAsk({ png, prompt: buildRigReadinessPrompt({ prompt, category }) });
-			return normalizeRigReadiness(parseJsonReply(text));
+			return normalizeRigReadiness(await askJson({ png, prompt: buildRigReadinessPrompt({ prompt, category }) }));
 		},
 	};
 }

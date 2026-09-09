@@ -57,6 +57,34 @@ import {
 const NVIDIA_VISION_MODELS = [
 	'meta/llama-3.2-11b-vision-instruct',
 ];
+// Free OpenRouter vision lanes, in order.
+//
+// The text chain (llm.js providerChain) has carried an OpenRouter rung for a
+// long time; vision never did, and that gap took the whole endpoint down on
+// 2026-09-09: NVIDIA answered 500, the paid OpenAI backstop answered 429
+// `billing_not_active`, and Vertex answered 403 `Lightning dunning decision is
+// deny for project` (a project-level billing hold that denies Vertex AND the
+// AI-Studio Gemini endpoint on the same key, so both Google rungs die together).
+// Three rungs, one dead chain, and every consumer that judges an image with it
+// (catalog seeding's quality gate, forge validation, alt text) went dark.
+//
+// Only the `:free` suffix is used here. llm-pricing.js prices OpenRouter by
+// exactly that suffix (isOpenRouterFreeModel), so a `:free` route is metered at
+// zero and the spend ledger stays truthful; OpenRouter's `openrouter/free`
+// router meta-model answers fine but would be metered as paid, so it is
+// deliberately not in this list.
+//
+// Verified against the live platform key on 2026-09-09: nemotron-omni answered
+// 3/3 in a median 1.5 s with clean parseable JSON, which is what the seed judge
+// needs (api/_lib/seed-quality.js parses every reply as JSON). The two Gemma
+// routes were saturated (429) in the same probe and are kept behind it as spare
+// capacity: a 429 falls through in ~150 ms and, unlike the 410 that retired the
+// NIM model above, it recovers when the shared free pool drains.
+const OPENROUTER_VISION_MODELS = [
+	'nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free',
+	'google/gemma-4-31b-it:free',
+	'google/gemma-4-26b-a4b-it:free',
+];
 // Paid last-resort tail. gpt-5.4-nano is vision-capable and already priced in
 // llm-pricing.js, keeping the backstop cheap and the spend ledger truthful.
 const OPENAI_VISION_MODEL = 'gpt-5.4-nano';
@@ -164,7 +192,7 @@ export function inlineImageBudget(remainingMs, timeoutMs) {
 // a handler that *chose* to surface it can return 503 — but consumers should
 // generally catch it and degrade silently instead.
 export class VisionUnavailableError extends Error {
-	constructor(message = 'No vision provider available. Configure NVIDIA_API_KEY (free), GOOGLE_CLOUD_PROJECT (Vertex Gemini credits anchor), or OPENAI_API_KEY (paid backstop).') {
+	constructor(message = 'No vision provider available. Configure NVIDIA_API_KEY or OPENROUTER_API_KEY (free), GOOGLE_CLOUD_PROJECT (Vertex Gemini credits anchor), or OPENAI_API_KEY (paid backstop).') {
 		super(message);
 		this.name = 'VisionUnavailableError';
 		this.code = 'vision_unavailable';
@@ -207,6 +235,21 @@ export function visionChain() {
 				name: 'nvidia',
 				key: env.NVIDIA_API_KEY,
 				url: 'https://integrate.api.nvidia.com/v1/chat/completions',
+				model,
+			}));
+		}
+	}
+	// Free OpenRouter routes, alongside the NIM lanes and ahead of the credits
+	// anchor: same free tier, same zero meter, and they are the rungs that keep
+	// vision answering when both NVIDIA and Google are down at once. Ordering
+	// them here leaves the Vertex anchor exactly where it was in the chain
+	// relative to the paid tail; nothing is evicted.
+	if (env.OPENROUTER_API_KEY) {
+		for (const model of OPENROUTER_VISION_MODELS) {
+			chain.push(openaiCompatVisionProvider({
+				name: 'openrouter',
+				key: env.OPENROUTER_API_KEY,
+				url: 'https://openrouter.ai/api/v1/chat/completions',
 				model,
 			}));
 		}

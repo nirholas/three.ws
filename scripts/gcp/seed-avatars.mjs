@@ -20,6 +20,7 @@
  *   node scripts/gcp/seed-avatars.mjs --limit=500 --concurrency=4
  *   node scripts/gcp/seed-avatars.mjs --categories=accessory
  *   node scripts/gcp/seed-avatars.mjs --no-vision           # mesh stage only
+ *   node scripts/gcp/seed-avatars.mjs --judge=local         # judge in-process
  *   node scripts/gcp/seed-avatars.mjs --report              # checkpoint stats
  *
  * RESUMABLE. Every decision is written to a checkpoint keyed by the bare prompt
@@ -44,7 +45,7 @@ import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import { SEED_PROMPTS, composeSeedPrompt } from '../../api/_lib/seed-prompts.js';
-import { evaluateSeedAsset, remoteTransport } from '../../api/_lib/seed-quality.js';
+import { evaluateSeedAsset, remoteTransport, localJudgeTransport } from '../../api/_lib/seed-quality.js';
 import { isFreeBackend } from '../../api/_lib/forge-tiers.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -66,6 +67,11 @@ const LIMIT = args.limit ? Number(args.limit) : 25;
 const CONCURRENCY = Math.max(1, Math.min(Number(args.concurrency) || 3, 8));
 const CATEGORIES = typeof args.categories === 'string' ? args.categories.split(',').map((s) => s.trim()) : null;
 const VISION = args['no-vision'] !== true;
+// Where the vision judge runs. 'remote' (default) calls the deployed
+// POST /api/vision; 'local' runs the same prompts against this process's own
+// api/_lib/vision.js chain, which is the only way to measure a chain fix before
+// its deploy lands. Rendering is remote either way (see seed-quality.js).
+const JUDGE = args.judge === 'local' ? 'local' : 'remote';
 const REPORT_ONLY = !!args.report;
 const RETRY_REJECTS = !!args['retry-rejects'];
 
@@ -289,12 +295,13 @@ async function main() {
 
 	// Render + judge run through the live platform's own HTTP surfaces, so the
 	// batch enforces the identical gate from a machine with no GCP credentials.
-	const transport = VISION ? remoteTransport({ origin: ORIGIN, timeoutMs: GATE_TIMEOUT_MS }) : null;
+	const makeTransport = JUDGE === 'local' ? localJudgeTransport : remoteTransport;
+	const transport = VISION ? makeTransport({ origin: ORIGIN, timeoutMs: GATE_TIMEOUT_MS }) : null;
 
 	log('Seeding the avatar catalog from api/_lib/seed-prompts.js');
 	log(`  origin      ${ORIGIN}`);
 	log(`  queue       ${queue.length} prompt(s) of ${pool.length} (${Object.keys(state.prompts).length} already decided)`);
-	log(`  gate        mesh${VISION ? ' + vision judge (render + Vertex via /api/vision)' : ' only (--no-vision)'}`);
+	log(`  gate        mesh${VISION ? ` + vision judge (remote render, ${JUDGE} judge)` : ' only (--no-vision)'}`);
 	log(`  concurrency ${CONCURRENCY}`);
 	log('');
 
