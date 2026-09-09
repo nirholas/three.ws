@@ -1698,6 +1698,64 @@ seeding over HTTP goes from 30 clips an hour to 240.
 
 ---
 
+## Seeding: accept rates and cost per accepted asset (measured 2026-09-09)
+
+Supersedes the 2026-09-02 animation figures above. Both numbers below are dollars
+per asset that actually reached the catalog, not per generation.
+
+**Avatars: 75% accept, $0.139 per accepted asset.** A 24-prompt batch through
+`scripts/gcp/seed-avatars.mjs` with the full gate (mesh sanity AND the vision
+judge) decided 20: 15 accepted, 5 rejected, 2 left ungated, 2 errored. The lane
+spent 4,428 seconds over 22 generations (mean 201 s, median 188 s), which is 295
+lane-seconds per accepted asset; at the `model-trellis` instance rate of
+\$1.69/hr that is **\$0.139**. Nineteen of the 22 ran on `trellis_selfhost` and
+three on `hunyuan3d`, all self-hosted, no paid third-party lane. The rejects were
+vision faults the mesh stage cannot see: incomplete body (3), fused limbs (3),
+prompt adherence (2), blob (2), subject missing (2), multiple subjects (2).
+
+**Motion: 29% accept, roughly \$0.05 per accepted clip.** This corrects the "10
+of 10" recorded on 2026-09-02, which was measured against clips carrying a
+fabricated root drift. Of the 133 clips published to the library, **39 survive
+the corrected gate and 94 do not** (91 foot sliding, 7 frame discontinuity). At
+the lane's measured 35 to 45 s per clip that is 119 to 153 lane-seconds per
+accepted clip, or **\$0.040 to \$0.051** at the `model-text2motion` instance rate
+of \$1.20/hr. Repairing the existing 133 costs no GPU time at all
+(`seed-motion.mjs --repair`), so the marginal cost of the surviving 39 is zero.
+
+**Two defects in the published motion library, both found and fixed on
+2026-09-09, neither yet republished.** Full write-up:
+[docs/animation-seeding.md](../animation-seeding.md).
+
+1. **Wrong rest basis, 133 of 133 clips.** Library clips are authored relative to
+   the `cz` rig's rest pose; the text2motion lane emits rotations relative to
+   identity, and the calibration hook meant to reconcile them
+   (`smpl_to_clip.py`'s `rest_offsets`) was never given a value. Every published
+   generated clip therefore plays with the legs folded up over the body: forward
+   kinematics puts the feet at 1.71 m and the head at 1.45 m, against 0.15 m and
+   1.68 m for an authored clip. `rebaseToCanonicalRest` converts them, and a new
+   `wrong_rest_basis` gate rule catches 111 of the 133 so it cannot recur.
+2. **A fabricated 0.2577 m/s forward drift, 133 of 133 clips.** A
+   denormalization artifact: HumanML3D's dataset mean forward velocity is a brisk
+   walk, so a model with no locomotion signal to express emits a normalized value
+   near zero that denormalizes into one. Idles drifted faster than locomotion.
+   `flattenRootDrift` removes the fitted ramp and keeps the residual.
+
+The second defect is why the accept rate moved so far. The foot-slide rule divides
+planted-foot slide by the stride a clip covers, and a fabricated one-metre stride
+made it vacuous, so the check that now rejects 91 clips could never fire. The
+authored Mixamo control still passes 48 of 60 (80%) through the same gate, with
+frozen and out-of-duration assets as its only rejects, so the gate is calibrated
+and it is the lane's output that fails it.
+
+**Cost model source.** Instance rates are the `us-central1` on-demand Cloud Run
+figures in the "Cost per asset" section above (8 vCPU / 32 GiB + L4 = \$1.69/hr,
+4 vCPU / 16 GiB + L4 = \$1.20/hr). They are not billing-export figures:
+`scripts/gcp/burn-report.mjs` needs a live `gcloud` credential and this session's
+had expired again (`Reauthentication failed`). Lane seconds are measured, the rate
+is the published list price, and the product of the two is what is quoted here.
+
+---
+
 ## Catalog scale: the four browse surfaces at 58k avatars (measured 2026-09-02)
 
 The seeding campaign is the reason to check this: a catalog growing 1,600 rows a day
