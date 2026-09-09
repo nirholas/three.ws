@@ -1079,3 +1079,30 @@ limit 50;
 That last query is the one an operator owes a user who asks "what did my agent do
 in my house last Tuesday", and it is why the action log is its own table rather
 than rows in the shared `audit_log`.
+
+## The first 48 hours after launch
+
+Written before launch, not after. The lane's alerts are tuned to catch a
+correlated outage, and none of them catch the thing a first launch actually
+produces: a slow drift that never trips a threshold. These five checks are the
+manual watch that covers the gap, and each one is a command rather than a
+feeling.
+
+| Hour | Check | Command | What "fine" looks like |
+|---|---|---|---|
+| 0 | The `home` block is real, and the first connection and first action landed | `curl -s https://three.ws/api/healthz \| node -e "let s='';process.stdin.on('data',d=>s+=d).on('end',()=>console.log(JSON.stringify(JSON.parse(s).subsystems.home,null,1)))"` | status `ok`, `homes.connected` climbing off zero, `actions.total` non-zero |
+| 1 | Handshake success across tenants, and how many confirmations expire unanswered | the correlation query above, plus `confirmations` on the health block | handshake rate at 1, expiry rate under 0.2 |
+| 6 | Heap trend on the API service and subscriber counts per instance | `gcloud logging read 'resource.type="cloud_run_revision" resource.labels.service_name="three-ws-api" textPayload:"home-runtime"' --freshness=6h --limit=50` | subscribers tracking open connections, not climbing past them |
+| 24 | p95 action latency against the SLO, and the action-log integrity query | `actions.p95LatencyMs` on the health block, then the integrity query in alert 2 | p95 under 1500 ms, integrity violations 0 |
+| 48 | The alert set has not fired spuriously, and the error budget spent so far | the ops alert channel, plus the SLO table above | zero pages that were not real, budget spend tracking below linear |
+
+Two notes that matter more than the table.
+
+**The hour-24 p95 is the one to read carefully.** A refusal never reaches the
+timing, so a window where most actions were guarded and refused reports a p95
+over very few samples. Read `actions.total` next to it: a p95 over fewer than
+twenty timed actions is a sample, not a verdict, and the SLO is a 30-day number.
+
+**A quiet alert channel at hour 48 is not proof the alerts work.** That proof is
+`tests/cron-home-health-alert.test.js`, which fires all three against the real
+cron. If the channel is quiet and that suite is red, believe the suite.
