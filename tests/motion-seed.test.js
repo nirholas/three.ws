@@ -31,7 +31,15 @@ import {
 	closeLoopSeam,
 	loopSeamDistance,
 	LOOP_SEAM,
+	rebaseToCanonicalRest,
+	needsRebase,
+	flattenRootDrift,
+	legBasisDegrees,
+	maxUprightGap,
+	uprightGap,
+	CLIP_BASIS,
 } from '../api/_lib/motion-seed.js';
+import { CANONICAL_REST } from '../src/animation-canonical-rest.js';
 
 const BODY_BONES = [
 	'Hips', 'Spine', 'Spine1', 'Spine2', 'Neck', 'Head',
@@ -46,6 +54,18 @@ function quatX(angle) {
 	return [Math.sin(angle / 2), 0, 0, Math.cos(angle / 2)];
 }
 
+/** Hamilton product, [x,y,z,w] convention. */
+function quatMul(a, b) {
+	const [ax, ay, az, aw] = a;
+	const [bx, by, bz, bw] = b;
+	return [
+		aw * bx + ax * bw + ay * bz - az * by,
+		aw * by - ax * bz + ay * bw + az * bx,
+		aw * bz + ax * by - ay * bx + az * bw,
+		aw * bw - ax * bx - ay * by - az * bz,
+	];
+}
+
 /**
  * Build a clip whose bones swing smoothly, so it reads as real motion.
  * `swing` scales how far the limbs travel; `hipsTravel` moves the root forward.
@@ -53,7 +73,11 @@ function quatX(angle) {
 function buildClip({
 	frames = 120,
 	fps = 30,
-	swing = 0.35,
+	// 0.2 rad, not the 0.35 this fixture used before the bones were composed onto
+	// their canonical rest. With the skeleton correctly oriented the swing finally
+	// moves real legs, and at 0.35 the synthetic feet genuinely skate across the
+	// floor: the gate was right to call it, the fixture was wrong to do it.
+	swing = 0.2,
 	hipsTravel = 0,
 	bones = BODY_BONES,
 	mutate = null,
@@ -65,7 +89,12 @@ function buildClip({
 		for (let i = 0; i < frames; i += 1) {
 			// Each bone gets its own phase so the whole body is not one rigid unit.
 			const phase = (bone.length % 7) * 0.4;
-			values.push(...quatX(swing * Math.sin((i / frames) * Math.PI * 4 + phase)));
+			// Composed onto the bone's canonical rest, because that is what a real
+			// library clip carries: a bone swinging away from ITS REST, not away
+			// from identity. A fixture that rests every bone at identity is
+			// indistinguishable from a clip in the wrong rest basis.
+			const rest = CANONICAL_REST[bone] ?? [0, 0, 0, 1];
+			values.push(...quatMul(rest, quatX(swing * Math.sin((i / frames) * Math.PI * 4 + phase))));
 		}
 		tracks.push({ type: 'quaternion', name: `${bone}.quaternion`, times: [...times], values });
 	}
