@@ -40,7 +40,7 @@ observable health, so 01 to 03 come first.
 
 | # | Work order | Blocked on | Owner action needed |
 |---|---|---|---|
-| 01 | [x402 settle: clear `fee_runway_exhausted`](../902-backlog-01-x402-settle-runway.md) | capital and the deploy (three more code defects found and fixed 2026-09-04, incl. a thin top-up that funded the wrong wallet) | SOL to the economy master, and the deploy that carries the ordering fix; the config levers are already applied |
+| 01 | [x402 settle: clear `fee_runway_exhausted`](../902-backlog-01-x402-settle-runway.md) | **the deploy landed 2026-09-08**; one capital decision left (re-measured 2026-09-09: `fee_runway_exhausted` is gone, the hard SOL floor is the constraint) | pick one: release the **0.0558 SOL the platform already owns** but has fenced behind `pump-x402-launcher`'s 0.1 SOL `minSol` (the ring payer is 0.0012 SOL short), or send SOL to the economy master. Either moves funds, so either is gate 1 |
 | 05 | [R2 bucket CORS: verify, then fix at the origin](../906-backlog-05-r2-bucket-cors.md) | two credentials (re-measured 2026-09-09, both surfaces still fail) | first re-set `S3_SECRET_ACCESS_KEY` (object storage is DOWN, ISSUES.md item 10), then mint an R2 admin token |
 | 07 | [BNB testnet: deploy the two finished contracts](../910-backlog-07-bnb-testnet-deploys.md) | one funded EOA | send tBNB to `0x1C4918894dfA5eE11cfF9629B458b5169Cfa3871` (faucet is reCAPTCHA-gated) |
 | 08 | [OKX chat bot: move off the codespace](../907-backlog-08-okx-chat-bot-always-on.md) | **deployed 2026-09-04**; only the reply lane is blocked | clear the GCP billing hold so the bot can author replies |
