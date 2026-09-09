@@ -2829,3 +2829,175 @@ the record, and re-derived what the owner is actually being asked.
 
 Nothing in the mechanism changed this session; no code was touched. `313-home-19-plans-entitlements.md`
 stays on disk, still on the one outstanding owner action.
+
+
+## 20. Launch readiness, run 4 (2026-09-09)
+
+**Verdict: NO-GO**, on three inputs, one of which is new and is the reason this run was worth
+taking: a house whose container has been stopped can keep reading **"Live, updated moments ago"**
+on `/smart-home` for at least sixty seconds. Run 3's list is otherwise much shorter than it was.
+
+**Why this run reached verdicts run 3 could not:** the machine was quiet. Run 3 measured load 68
+to 124 and marked nine lines explicitly unverified because of it. This run started at load 1.0.
+Three of run 3's unreachable checks are now green, and its two open findings that this order owns
+are fixed here.
+
+**Closed since run 3:**
+
+- **Finding 3 (the a11y suite could not reach a verdict).** `tests/e2e/home-a11y.spec.js` is
+  **15/15**, twice: axe on the 3D house, the flat house and the floorplan editor, the keyboard-only
+  walk, the polite and assertive live regions, colour-independence, measured stale contrast, the
+  four breakpoints, the 44px floor on a real touch context, Fahrenheit, RTL, untranslated device
+  names, reduced motion, and the stray-tap-proof confirmation. The `color-contrast` node on
+  `button[aria-current="true"] > .hs-room-meta` that run 3 could not explain does not reproduce; it
+  was fixed in `c79ab3ecd` and run 3 was reading a contended machine.
+- **Finding 2 (the three alerts had never been fired in a test).** `api/cron/home-health-alert.js`
+  had no test anywhere. `tests/cron-home-health-alert.test.js` now drives the real cron: **9/9**. A
+  single unconfirmed guarded action pages at critical with a signature that carries the newest
+  violation timestamp, so a second incident an hour later cannot be swallowed as a repeat; nine
+  dark houses stay silent while fifteen page and then re-escalate on the twelfth tick rather than
+  every five minutes; recovery fires once, at info; a leak names its climbing samples and excludes
+  the healthy instance; all three fire on one tick with three distinct signatures; and a grant the
+  user revoked afterwards reports without paging (`d063a6f86`).
+- **Finding 5 (the post-launch watch table was not in the runbook).** Written into
+  `docs/ops/home-operations.md`, hour 0/1/6/24/48, each row a command rather than a feeling, plus
+  the two notes that matter more than the table: an hour-24 p95 over fewer than twenty timed
+  actions is a sample and not a verdict, and a quiet alert channel is not proof the alerts work
+  (`d063a6f86`).
+- **Order 19's browser gap.** Its two queued journeys had never executed. `home-plan.spec.js` is
+  **2/2** against a real house: every quota with its reset date before any is hit, and a paused
+  home shown as paused, keeping its row, and swapped back. Order 19's Definition of Done now has
+  only the owner's price left on it.
+- **Run 3's check 4 (the injection proof).** **121/121, zero skipped**, in 197 s, against a real
+  Home Assistant 2026.9.0 (`go20d`), the live database and a real model chain. Run 3 got 120/121
+  with the injection check failing on exhausted free rungs. The check cannot pass on an outage:
+  `modelAnswered > 0` and `attempted.length > 0` are hard assertions before the physical one, so
+  a green here means real model turns really ran against a really poisoned house and the deadbolt
+  really stayed locked.
+
+**Measured, safety and correctness:**
+
+- **Confirmation integrity.** The order's raw query returns **2**; the shipped invariant (grant
+  backed and scrub marked excluded) returns **0**. Both rows are lawful and this run traced them
+  rather than accepting run 3's word: action 122 `grant.create` (confirmed), 123 `lock.unlock`
+  allowed by that grant, 125 `grant.revoke` (confirmed), 126 refused. `home_entity_grants` has no
+  `revoked_at` column, so revoking hard-deletes the row and a lawful historical action is left
+  claiming a grant that no longer exists. That is what `integrity.grantBackedWithoutGrant = 1`
+  means, it is documented at `docs/ops/home-operations.md` step 4, nothing pages on it, and
+  `tests/home-integrity.test.js` already covers the case. Production's own `integrity.violations`
+  is **0** across three samples.
+- **No home tool exposes `confirmed`.** All five `HOME_TOOL_DEFS` walked recursively: zero
+  `confirm*` keys. Walked the whole public MCP catalog too, 61 tools: the only `confirm*` key
+  anywhere is `delete_avatar.confirm`, a different lane with no actuator behind it.
+- **The home live tier**, 10 files sharing one real house: **305 passed, 5 skipped, 0 failed**.
+- **Privacy inventory re-derived from the live schema:** 11 `home_*` tables exist,
+  `api/_lib/home/privacy.js` names all **11**, zero uncovered. Every `%state%`/`%entity%`/
+  `%attribute%` column across them holds entity ids or scopes, never a value or a reading.
+
+**Measured, the build:**
+
+- **Full vitest, sharded into quarters, all four green: 29,506 passed, 175 skipped, 0 failed,
+  every shard exit 0.** Shard 1 first ran at an older HEAD while the live tier was running and
+  reported 15 failures; re-run alone at HEAD it is 510 files passed, 0 failed. Every one of the 15
+  was load or a peer's in-flight state.
+- `npm run gate` exit 0. `npm run check:claude` OK. `npm run audit:docs` clean (1593 files).
+  `npm run check:home-matrix` OK. `npm run check:cron-syntax` OK, 117 crons matching CLAUDE.md.
+  `npm run db:status`: all applied.
+- `npm run check:rules -- --base 2849cafb6 --head HEAD`: clean, 464 changed files.
+  `node scripts/check-secrets.mjs` same range: clean, 19,420 tracked, 576 changed.
+- `npm run smoke:prod`: 810 of 816 pages live; **all 17 home routes reachable**. The 6 misses are
+  other lanes' undeployed pages (`/fade`, `/globe`, three `/docs/*`, `/docs/trader-card-embed`).
+- **deploy-preflight subagent: SAFE.** build:gcp 13/13 in CLAUDE.md's order, 32/32 cloudbuild
+  configs pin a real SA, check:gcloudignore clean over 16,328 files with all 2,424 runtime imports
+  present, 0 pending and 0 drifted migrations, 0 unbacked route dests, purge still synchronous. The
+  nine orphaned migration rows run 3 found are still nine and are now explained: five are traceable
+  to the commit that deleted the file after it applied, four predate the current migrations path.
+  Ledger residue, not a schema gap, and re-adding files to match would re-apply them.
+
+**Measured, production** (revision `three-ws-api-00420-ljh`, commit `880bdcef8`, 356 commits
+behind this checkout):
+
+- The `home` subsystem is **`degraded`**, on latency alone, across three samples 50 s apart.
+- **p95 our-leg action latency 2013 ms against a 1.5 s SLO**, identical across all three samples
+  and within 1 ms of run 3's 2012 ms a day earlier. It is measured over **3 timed actions**, because
+  7 of the window's 15 actions were refusals and a refusal never reaches the timing. Reproducible
+  across two days on a small sample, so it is a real signal and not yet a 30-day verdict.
+- Action success 100%, handshakes 100%, integrity violations 0, leak false, 37/47 homes connected.
+
+**Fixed here, beyond the two findings above:**
+
+1. **`deploy:gcp` submitted past two of the runbook's own gates.** CLAUDE.md offers
+   `npm run deploy:gcp:full` as the whole runbook in one command; it routes through `deploy:gcp`,
+   which carried its own copy of the `gcloud builds submit` line gated only by `check:dist`,
+   `check:pages` and `db:check`. Step 3 also requires `check:gcloudignore` and `audit:deploy`, and
+   `check:gcloudignore` is the gate that exists because an omitted `services/home-relay/src/token.js`
+   (this lane's file) shipped revision 00412 answering every request with `ERR_MODULE_NOT_FOUND`.
+   Taking the documented shortcut skipped exactly the check that catches that. `deploy:gcp` now
+   calls `deploy:gcp:submit` instead of repeating it, so there is one submit definition and the two
+   entry points cannot drift (`efe9c3b3a`).
+2. **A spent connect budget blocked a disconnect.** `DELETE /api/home/:id` spent `homeConnect`, ten
+   in ten minutes, shared with `POST /api/home` and the relay pairing call. That bucket exists
+   because the connect body carries a Home Assistant token and is the credential-stuffing surface;
+   a revoke carries no token and can stuff nothing. Sharing meant the budget ran out exactly when
+   someone had been fumbling a token, and the answer to "disconnect this house" became "too many
+   connection changes, wait a moment" for up to ten minutes. Being unable to cut our access to your
+   own building inverts this lane's rule that a move toward safety always goes through. Revoking has
+   its own bucket now, 30 in 10 minutes, still not local. Found by `home-scene.spec.js` taking a
+   real 429 from a real server; that spec is **7/7** after the fix. `tests/home-revoke-limit.test.js`
+   pins the split, and the contract suite's limiter mock, which listed buckets by hand and would
+   have failed this change as a phantom handler bug, now materialises any bucket a route reaches
+   for (`3f97e2078`).
+
+**Blocking findings:**
+
+1. **A stopped house keeps reading "Live, updated moments ago" for at least 60 seconds.** This is
+   new and it is the reason for the no-go. `tests/e2e/home-connect-live.spec.js:190` stops the real
+   container and expects the card to say it is not answering. It **passes in isolation (2 of 2
+   runs) and fails in the full tier (3 of 3 runs)**. The difference is a warm pool: a cold
+   `acquire` re-handshakes and fails instantly, a warm one answers the read off the bridge it
+   already holds. The spec now polls the product's own documented bound instead of Playwright's
+   default 5 s (`#startLiveness` in `packages/home-bridge/src/bridge.js` pings every 10 s with a
+   5 s deadline, so 15 s worst case) and **still fails after 60 s of active polling**, with the
+   page snapshot showing the card reading "Live, updated moments ago." for a container confirmed
+   stopped. Ruled out on the way: the harness really does stop the container (reproduced by hand),
+   the published port survives a stop/start, `workers` is 1 so no two specs race, and
+   `stopHomeInstance` throws rather than silently skipping. This is the wall-display failure the
+   lane names as its worst, solved for revoke in `8956a5095` and open for unreachable.
+   **Owner: order 02 (bridge runtime) with order 14 (reliability); not fixable inside a go/no-go.**
+2. **`npm run i18n:lint` fails with 49,379 problems**, of which **30,150** are this lane's, counted
+   today by namespace: `home_scene` 9,336, `home_connect` 6,216, `home_manage` 5,964,
+   `home_floorplan` 5,376, `home_voice` 2,940, `home_plan` 114, `home_join` 108, `home_satellite`
+   96. `en.json` carries every namespace, so this is a translation gap and not a source gap.
+   **Owner: order 17**, which is open, and the action is the owner's: `gcloud auth login`, then
+   `GOOGLE_CLOUD_PROJECT=aerial-vehicle-466722-p5 npm run i18n:translate`.
+3. **Two lane orders are still on disk**: `311-home-17-a11y-i18n-mobile.md` and
+   `313-home-19-plans-entitlements.md`. Order 20 runs after the campaign is retired, so an open
+   order is a no-go input by definition. Both are now down to a single owner action each: the
+   translation run for 17, the price for 19.
+
+**Accepted residuals, named rather than hidden:**
+
+- The p95 breach above. Real and reproducible, but three timed actions is not a 30-day verdict and
+  the 30-day figure needs the production database, which needs gcloud.
+- `npm run check:docs-search` reports the local index stale. **Not this lane's:** rebuilt in a
+  throwaway worktree at my own commit it is byte-identical and reports current, so the staleness is
+  a peer's uncommitted `docs/ibm.md`, `docs/ops/gcp-production.md`,
+  `docs/ops/production-log-triage.md` and untracked `docs/partners/ibm-partner-plus.md`.
+- The nine orphaned migration rows. Explained above, disaster-recovery hygiene, outside this
+  campaign.
+- `/api/agents/me` throwing `Missing required env var: S3_PUBLIC_DOMAIN` in every local e2e server
+  log. Order 17 already recorded it; it is the nav's agent widget, not this lane.
+
+**Explicitly unverified, never marked green:** `npm run audit:web` authed against every home route,
+the order 14 chaos scenarios, a ten-minute flat-heap session, ten consecutive runs of the lane's
+suites (order 16 recorded ten; this run did not repeat them), the rollback walk, the live
+`check:cron-drift`, and the 30-day p95. The last four are one environmental cause: **gcloud auth in
+this Codespace is dead** (`Reauthentication failed: cannot prompt during non-interactive
+execution`), which also blocks the production `DATABASE_URL` and the translation run. The rollback
+commands are recorded in this order's report from `docs/ops/gcp-production.md:284` so the owner can
+run them without hunting.
+
+**Left open:** the campaign. Re-run this when orders 17 and 19 are retired and blocking finding 1
+is closed.
+**Commits:** `d063a6f86`, `efe9c3b3a`, `3f97e2078`, `b42d86c51` (the spec change, swept into a
+peer's commit), plus this entry.
