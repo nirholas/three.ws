@@ -27904,6 +27904,15 @@
 				"improvement"
 			],
 			"link": "/animations"
+		},
+		{
+			"date": "2026-09-09",
+			"title": "Every translated news page is advertised as translated again",
+			"summary": "The site publishes a manifest of which pages carry translated copy, and it was missing 113 of them: every news page. The build wrote that manifest before the news pages had been through the translation pass, so it read them as English-only and shipped a list 113 pages short. Nothing was untranslated, the translations were there and served correctly, but anything reading the manifest to decide what to offer in a reader's language (the language picker's page-level hints, and crawlers looking for alternates) was told those pages had no other language. The build now annotates the news pages first and counts afterwards, so the published count is 357 rather than 244.",
+			"tags": [
+				"fix"
+			],
+			"link": "/news"
 		}
 	]
 }
