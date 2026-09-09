@@ -56,6 +56,7 @@ function buildSelfPayPayment({ amount = AMOUNT_ATOMIC } = {}) {
 
 	return {
 		payTo: recipientOwner.publicKey.toBase58(),
+		feePayer: buyer.publicKey.toBase58(),
 		requirement: {
 			network: 'solana',
 			asset: mint.toBase58(),
@@ -69,10 +70,12 @@ function buildSelfPayPayment({ amount = AMOUNT_ATOMIC } = {}) {
 let prevPayTo;
 let prevAssetMint;
 let prevThreeMint;
+let prevFeePayer;
 beforeEach(() => {
 	prevPayTo = process.env.X402_PAY_TO_SOLANA;
 	prevAssetMint = process.env.X402_ASSET_MINT_SOLANA;
 	prevThreeMint = process.env.THREE_TOKEN_MINT;
+	prevFeePayer = process.env.X402_FEE_PAYER_SOLANA;
 });
 afterEach(() => {
 	if (prevPayTo === undefined) delete process.env.X402_PAY_TO_SOLANA;
@@ -81,6 +84,8 @@ afterEach(() => {
 	else process.env.X402_ASSET_MINT_SOLANA = prevAssetMint;
 	if (prevThreeMint === undefined) delete process.env.THREE_TOKEN_MINT;
 	else process.env.THREE_TOKEN_MINT = prevThreeMint;
+	if (prevFeePayer === undefined) delete process.env.X402_FEE_PAYER_SOLANA;
+	else process.env.X402_FEE_PAYER_SOLANA = prevFeePayer;
 });
 
 describe('verifyRingPayment settleability gate', () => {
@@ -224,5 +229,78 @@ describe('mint pin (2026-07-23 audit: junk-mint sponsor drain)', () => {
 		});
 		expect(out.ok).toBe(false);
 		expect(out.reason).toMatch(/^mint_not_settleable:/);
+	});
+});
+
+// An unfundable FEE PAYER gets its own reason class, separate from every other
+// simulation revert.
+//
+// Every consumer of `invalidReason` groups on the token before the first ':'.
+// /api/healthz exposes only that prefix, and isRailFault() in
+// api/_lib/ops/x402-settle-health.js matches /simulation/, so while this verdict
+// was spelled `simulation_failed` a starved platform sponsor was (a) bucketed
+// with buyers signing from empty ATAs and (b) counted as a payment-RAIL fault.
+// Production on 2026-09-09: 1,438 verify rejects in 24h, top of the book, every
+// one of them {"InsufficientFundsForRent":{"account_index":0}} on our own
+// sponsor. Account index 0 is the fee payer by definition, so the split is exact.
+describe('fee-payer rent failures are their own reason class', () => {
+	const RENT_ERR = { InsufficientFundsForRent: { account_index: 0 } };
+
+	it('names the platform sponsor when the dry fee payer is ours', async () => {
+		const p = buildSelfPayPayment();
+		process.env.X402_PAY_TO_SOLANA = p.payTo;
+		process.env.X402_FEE_PAYER_SOLANA = p.feePayer;
+		const conn = {
+			simulateTransaction: async () => ({ value: { err: RENT_ERR } }),
+			getTokenAccountBalance: async () => { throw new Error('should not be called'); },
+		};
+		const res = await verifyRingPayment({
+			paymentPayload: p.paymentPayload,
+			requirement: p.requirement,
+			conn,
+		});
+		expect(res.isValid).toBe(false);
+		expect(res.invalidReason.split(':')[0]).toBe('sponsor_fee_unfunded');
+		// The suffix keeps the evidence: which wallet the chain refused.
+		expect(res.invalidReason).toContain(p.feePayer);
+	});
+
+	it('names the buyer when the dry fee payer is not ours', async () => {
+		const p = buildSelfPayPayment();
+		process.env.X402_PAY_TO_SOLANA = p.payTo;
+		process.env.X402_FEE_PAYER_SOLANA = Keypair.generate().publicKey.toBase58();
+		const conn = {
+			simulateTransaction: async () => ({ value: { err: RENT_ERR } }),
+			getTokenAccountBalance: async () => { throw new Error('should not be called'); },
+		};
+		const res = await verifyRingPayment({
+			paymentPayload: p.paymentPayload,
+			requirement: p.requirement,
+			conn,
+		});
+		expect(res.isValid).toBe(false);
+		// A broke buyer must never wear the platform's class: nothing to fund.
+		expect(res.invalidReason.split(':')[0]).toBe('payer_fee_unfunded');
+	});
+
+	it('leaves every other simulation revert as simulation_failed', async () => {
+		const p = buildSelfPayPayment();
+		process.env.X402_PAY_TO_SOLANA = p.payTo;
+		process.env.X402_FEE_PAYER_SOLANA = p.feePayer;
+		const conn = {
+			// A rent failure on a NON-fee-payer account is a different condition and
+			// must not be reclassified: only index 0 is the fee payer.
+			simulateTransaction: async () => ({
+				value: { err: { InsufficientFundsForRent: { account_index: 3 } } },
+			}),
+			getTokenAccountBalance: async () => { throw new Error('should not be called'); },
+		};
+		const res = await verifyRingPayment({
+			paymentPayload: p.paymentPayload,
+			requirement: p.requirement,
+			conn,
+		});
+		expect(res.isValid).toBe(false);
+		expect(res.invalidReason.split(':')[0]).toBe('simulation_failed');
 	});
 });

@@ -3,6 +3,24 @@
 	"entries": [
 		{
 			"date": "2026-09-09",
+			"title": "The trading arena now says who just passed whom",
+			"summary": "The live leaderboard on the arena told you who was ahead and nothing about what had changed, so a place changing hands, which happens several times a week on its own, went unnoticed. A grudge-match strip now sits under the standings: each trader is paired with the one directly above them, labelled as an overtake, a debut or a standing chase, with the profit or loss both sides settled in the last 24 hours as the reason. It is worked out from the same closed on-chain trades the board is ranked from, by rebuilding what the board actually said 24 hours ago out of the trade timestamps rather than trusting a stored snapshot, so the matchups reach back over history the platform already has and can never disagree with the leaderboard or with either trader's profile. Every line is written from those numbers: it will not call a trader behind when they in fact hold more SOL and rank lower on consistency, and it will not say someone booked nothing when they simply did not trade. Each matchup links to the leader's verified record and to a ghost-copy of them with no money at risk. Also available to agents and scripts at /api/sniper/rivalries.",
+			"tags": [
+				"feature"
+			],
+			"link": "/play/arena"
+		},
+		{
+			"date": "2026-09-09",
+			"title": "The payments dashboard now says whose wallet ran out of SOL",
+			"summary": "When a Solana payment cannot go through because the wallet paying the network fee is too low, the chain reports it as a generic simulation failure. Our status page grouped all of those together, so the platform's own fee wallet running low looked exactly like a buyer signing from an empty wallet, and both were also counted as payment-network faults. They are now three separate, named outcomes, so the status page says whether the money problem is ours to fix, the buyer's, or neither. Today's reject book was 1,438 rows of the first kind reading as the third.",
+			"tags": [
+				"fix",
+				"infra"
+			]
+		},
+		{
+			"date": "2026-09-09",
 			"title": "The partnership page works properly on the partner's own site",
 			"summary": "The IBM partnership page is published once onto IBM's own domain and then keeps itself current by reading from three.ws, so everything it loads is a cross-origin read and anything we get wrong there is invisible on three.ws itself. Three things were wrong. The site-wide command palette asked the partner's server for our page index and for the ranking module it imports, so it never opened and logged an error on every visit: the index now travels with the code the way the language catalogs already do, and both files are readable from other sites. And a build step that adds the site's mobile stylesheet to every page was reaching the partner artifacts too, even though they are copied out untouched by design, so the hosted copy asked IBM's server for a stylesheet only we have. All three are closed, and the audit that loads the page from a foreign domain now passes all four of its checks: the live update applies, the language switcher mounts, the paid demo arms, and the console is clean.",
 			"tags": [
@@ -27810,6 +27828,34 @@
 				"fix"
 			],
 			"link": "/docs/home-scene"
+		},
+		{
+			"date": "2026-09-09",
+			"title": "Your own agent now stands in your live house",
+			"summary": "The 3D home at /smart-home/<id> always drew a generic figure standing in your rooms, even when you had given your agent a face months ago. It now shows your agent: the same avatar the walk world, /play and the voice satellite use, read from the one record the whole platform treats as \"my agent\". Switch agents in another tab and the body in the house follows, with no reload. It is fetched after the house has already drawn, so nothing waits on it, and the platform's default body stands in when you have no agent yet, no avatar yet, or an avatar you keep private, which by design publishes no model for any page to read.",
+			"tags": [
+				"improvement"
+			],
+			"link": "/docs/home-scene"
+		},
+		{
+			"date": "2026-09-09",
+			"title": "Smart Home: the connection pool now sizes itself to the server it is running on",
+			"summary": "The number of houses one server holds open at once was set by hand, in a different place from the memory that has to hold them, and the two drifted apart three times. Left alone, that ends with a server running out of memory and taking the whole API down with it, which every part of three.ws would feel, not just Smart Home. The pool now reads the memory its own container actually has and refuses to hold more houses than fit, saying so in the health endpoint when it does. When there is less room it connects fewer houses per server and keeps working, instead of risking an outage for everybody.",
+			"tags": [
+				"infra",
+				"fix"
+			],
+			"link": "/docs/smart-home"
+		},
+		{
+			"date": "2026-09-09",
+			"title": "Fact-check now reads the part of a source that is actually about your claim",
+			"summary": "When the fact-checker fell back to Wikipedia, it only ever read each article's opening summary. An opening summary says what a page is about, so it carries the answer only when your claim is about the page's subject. Ask whether Napoleon was unusually short and it read the first lines of \"Napoleon\", \"Napoleon III\" and \"Napoleonic Wars\", none of which mention height at all, so every source was scored as saying nothing and the verdict came back \"not enough evidence\" while the passage about his height sat further down the same article. The checker now reads each article in full and picks the paragraphs that actually discuss your claim, so that question returns the \"Appearance and image\" and \"Napoleon's height\" sections instead. Reference lists are skipped, since they repeat your words without asserting anything, and the deeper read is bounded by the time the check already had, so a slow source can never cost you the evidence that already arrived.",
+			"tags": [
+				"improvement"
+			],
+			"link": "/docs/fact-check"
 		}
 	]
 }

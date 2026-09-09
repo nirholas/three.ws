@@ -109,7 +109,14 @@ const FEE_GOVERNOR = /^fee_runway_exhausted/i;
 // arrives either as the 503 prose or as the raw floor signature.
 // `insufficient_lamports_for_fee` is the same starvation reported from inside
 // the settle path (see runway-lab's bucketer, which files it under floor too).
-const SPONSOR_FLOOR = /^(settlement temporarily unavailable|fee_wallet_below_floor|sponsor_sol_floor|sol_floor|insufficient_lamports_for_fee)/i;
+// `sponsor_fee_unfunded` is the chain's own verdict on the same wallet, raised by
+// assertSettleable() when simulation returns InsufficientFundsForRent on account
+// index 0 (the fee payer, by definition) and that fee payer is OUR sponsor. It
+// belongs here and not in RAIL_SIGNATURE: before it had its own class it read as
+// `simulation_failed`, which /simulation/ matches, so a starved sponsor was
+// counted as a rail fault. The buyer-side twin `payer_fee_unfunded` deliberately
+// stays out: that wallet is not ours and needs no operator action.
+const SPONSOR_FLOOR = /^(settlement temporarily unavailable|fee_wallet_below_floor|sponsor_sol_floor|sol_floor|insufficient_lamports_for_fee|sponsor_fee_unfunded)/i;
 
 /**
  * Why did the settle rate fall? Two failure shapes are indistinguishable in the

@@ -91,10 +91,15 @@ rate so a wallet sliding toward its budget shows up before the rate does.
 
 A rent-exemption failure on the fee payer (`InsufficientFundsForRent` on
 account index 0, in either spelling the RPCs use) wears a rail-shaped reason
-token (`simulation_failed`, `sweep_broadcast_failed`) while being the opposite
-of a rail fault: the transaction never reached the rail because the sponsor
-could not pay for it. The sensor flags those rows from the full `error_msg`
-and counts them as floor signals, not faults, so a dry sponsor reads as
+token (`sweep_broadcast_failed`, and `simulation_failed` on any path that has
+not yet been split) while being the opposite of a rail fault: the transaction
+never reached the rail because the sponsor could not pay for it. The verify
+path stopped relying on that reconstruction on 2026-09-09 and now raises the
+verdict as its own class, `sponsor_fee_unfunded` when the dry fee payer is our
+sponsor and `payer_fee_unfunded` when it is the buyer's own wallet, so the
+token alone carries the meaning. The sensor flags the remaining rail-shaped
+rows from the full `error_msg` and counts both kinds as floor signals, not
+faults, so a dry sponsor reads as
 `cause: sponsor_floor` rather than pointing the operator at duplicate
 signatures and RPC preflight (which is what happened for three hours on
 2026-08-28). Because a sponsor under its floor is a hard stop, those attempts

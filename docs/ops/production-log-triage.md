@@ -300,11 +300,29 @@ HTTP 502/503 GET|POST /api/x402/*, /api/mcp   ua: threews-x402-autonomous/1.0 or
   the rail. The sponsor held 0.000899107 SOL against the 0.02 SOL floor, which
   is 0.0000082 SOL of spendable headroom, less than two transaction fees, so
   every transaction it fee-paid failed at simulation:
-  `simulation_failed:{"InsufficientFundsForRent":{"account_index":0}}` on the
-  verify path and `sweep_broadcast_failed:Simulation failed ... account (0) with
-  insufficient funds for rent` on the sweep path. **Account index 0 of a
-  compiled Solana message is the fee payer**, so that error is never about the
-  buyer's USDC: it is the sponsor being too poor to sign.
+  `sponsor_fee_unfunded:<sponsor pubkey>` on the verify path (spelled
+  `simulation_failed:{"InsufficientFundsForRent":{"account_index":0}}` before
+  2026-09-09, see below) and `sweep_broadcast_failed:Simulation failed ...
+  account (0) with insufficient funds for rent` on the sweep path. **Account
+  index 0 of a compiled Solana message is the fee payer**, so that error is
+  never about the buyer's USDC: it is the sponsor being too poor to sign.
+
+  Since 2026-09-09 the verify path gives that verdict its own reason class, so
+  you can read it straight off `/api/healthz`
+  (`x402.self_facilitator.verify.reject_reasons`, which groups on the token
+  before the first `:`):
+
+  | Class | Who is out of SOL | What to do |
+  |---|---|---|
+  | `sponsor_fee_unfunded` | our sponsor (`X402_FEE_PAYER_SOLANA`) | fund it; this is the platform's problem |
+  | `payer_fee_unfunded` | the buyer's own wallet in a self-pay settle | nothing; not ours to fund |
+  | `simulation_failed` | neither: some other revert | read the suffix, it carries the raw error |
+
+  Under the old single `simulation_failed` spelling those three shared one
+  bucket, and because `isRailFault()` matches `/simulation/` the platform's own
+  dry sponsor was also counted as a payment-rail fault. Measured on 2026-09-09,
+  that bucket sat at the top of the verify book with 1,438 rejects in 24 hours
+  and every row was the sponsor.
 
   Why the quiet variant's guard did not catch it: `sponsorKnownBelowFloor()` was
   only ever written by `getBalance`, and all four paid Solana RPC lanes were over

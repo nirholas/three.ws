@@ -15,6 +15,14 @@
 			<description>How the Fade Radar scores a coin's buy side: what makes a wallet a reverse indicator, the 0 to 100 fade score, the verdict bands, and the out-of-sample measurement behind them.</description>
 		</item>
 		<item>
+			<title>Docs · Rivalries</title>
+			<link>https://three.ws/docs/rivalries</link>
+			<guid isPermaLink="false">2026-09-09:Docs · Rivalries</guid>
+			<pubDate>Wed, 09 Sep 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>What changed on the trader board: who passed whom, who just arrived, and who is closing. Derived from close timestamps rather than a snapshot table, so the matchups work retroactively and cannot disagree with the leaderboard.</description>
+		</item>
+		<item>
 			<title>Fade Radar: the wallets that are never right</title>
 			<link>https://three.ws/fade</link>
 			<guid isPermaLink="false">2026-09-09:Fade Radar: the wallets that are never right</guid>
@@ -77,6 +85,14 @@
 			<pubDate>Wed, 09 Sep 2026 12:00:00 GMT</pubDate>
 			<category>fix</category>
 			<description>A full audit of /portfolio, where you paste any Solana or Ethereum address and get a live portfolio. The Ethereum half had gone dark: the single provider behind it ran out of monthly capacity, so every 0x address answered &quot;Data source unavailable&quot; with nothing behind it. Ethereum now has the same keyless floor Solana has always had. The ETH balance comes from the public Ethereum nodes the rest of the platform already uses, the token list with its prices and icons comes from a public block explorer, and the 24h move comes from the same market source the Solana side uses, with the coverage it achieved stated on the card. The Data panel names whichever lane actually answered, so you can see whether you are reading the paid provider or the free one. Token logos were another visible break: the page pointed your browser straight at an IPFS gateway, which the browser refuses on cross-origin grounds, so every holding fell back to a three-letter monogram and your address bar handed your IP to the gateway on every load. Logos now come through three.ws, sized for the row. Keyboard users could tab onto a slice of the allocation donut and get nothing: the tooltip was wired to an event handler property that browsers do not actually support, so it never fired once; the slice now names its asset and share, and Escape dismisses it. When a lookup fails, the page now shows the reason the server actually sent instead of a generic sentence, and clicking Retry after a rejected address no longer silently reloads the wallet you looked at before it. Underneath, the fallback that names Solana tokens when the primary metadata source is out of quota had never run at all, because of a missing import; token symbols and names come back on that path.</description>
+		</item>
+		<item>
+			<title>Fact-check now reads the part of a source that is actually about your claim</title>
+			<link>https://three.ws/docs/fact-check</link>
+			<guid isPermaLink="false">2026-09-09:Fact-check now reads the part of a source that is actually about your claim</guid>
+			<pubDate>Wed, 09 Sep 2026 12:00:00 GMT</pubDate>
+			<category>improvement</category>
+			<description>When the fact-checker fell back to Wikipedia, it only ever read each article's opening summary. An opening summary says what a page is about, so it carries the answer only when your claim is about the page's subject. Ask whether Napoleon was unusually short and it read the first lines of &quot;Napoleon&quot;, &quot;Napoleon III&quot; and &quot;Napoleonic Wars&quot;, none of which mention height at all, so every source was scored as saying nothing and the verdict came back &quot;not enough evidence&quot; while the passage about his height sat further down the same article. The checker now reads each article in full and picks the paragraphs that actually discuss your claim, so that question returns the &quot;Appearance and image&quot; and &quot;Napoleon's height&quot; sections instead. Reference lists are skipped, since they repeat your words without asserting anything, and the deeper read is bounded by the time the check already had, so a slow source can never cost you the evidence that already arrived.</description>
 		</item>
 		<item>
 			<title>Fade Radar: the wallets that have never once been right, and the coins they are crowding into</title>
@@ -197,6 +213,14 @@
 			<pubDate>Wed, 09 Sep 2026 12:00:00 GMT</pubDate>
 			<category>fix</category>
 			<description>A full audit of /signals, the directory of paid trading feeds ranked by proven edge. Four real defects came out of it. Every publisher without a profile picture showed an empty grey square: the generated fallback avatar is an image, and the card was assigning it to a CSS background, which browsers ignore, so it never painted. A publisher whose profile picture had gone missing showed the browser's broken-image icon; both now render as an image that quietly falls back to the generated avatar. Prices were printed as raw numbers, so a feed charging 12.345678 USDC advertised exactly that; amounts are now grouped and rounded the way money reads, while a genuine sub-cent price keeps its digits instead of rounding to zero. Subscriber counts skipped the same shortening every other number on the card uses and printed as 1234567. Worst of all, opening any live feed's own page while signed out crashed the render and left a blank panel where the sign-in prompt belongs, which is exactly the reader that panel exists to convert. Each card's screen-reader description now carries every number a sighted reader sees (rank, edge, hit rate, average ROI, signal counts, subscribers and price) instead of just the headline score, and the loading skeleton's shimmer now sweeps across the card rather than starting halfway off it.</description>
+		</item>
+		<item>
+			<title>Smart Home: the connection pool now sizes itself to the server it is running on</title>
+			<link>https://three.ws/docs/smart-home</link>
+			<guid isPermaLink="false">2026-09-09:Smart Home: the connection pool now sizes itself to the server it is running on</guid>
+			<pubDate>Wed, 09 Sep 2026 12:00:00 GMT</pubDate>
+			<category>infra</category>
+			<description>The number of houses one server holds open at once was set by hand, in a different place from the memory that has to hold them, and the two drifted apart three times. Left alone, that ends with a server running out of memory and taking the whole API down with it, which every part of three.ws would feel, not just Smart Home. The pool now reads the memory its own container actually has and refuses to hold more houses than fit, saying so in the health endpoint when it does. When there is less room it connects fewer houses per server and keeps working, instead of risking an outage for everybody.</description>
 		</item>
 		<item>
 			<title>The &quot;have you tried&quot; card no longer hangs off the side of the screen on a phone</title>
@@ -335,6 +359,14 @@
 			<description>The IBM partnership page is published once onto IBM's own domain and then keeps itself current by reading from three.ws, so everything it loads is a cross-origin read and anything we get wrong there is invisible on three.ws itself. Three things were wrong. The site-wide command palette asked the partner's server for our page index and for the ranking module it imports, so it never opened and logged an error on every visit: the index now travels with the code the way the language catalogs already do, and both files are readable from other sites. And a build step that adds the site's mobile stylesheet to every page was reaching the partner artifacts too, even though they are copied out untouched by design, so the hosted copy asked IBM's server for a stylesheet only we have. All three are closed, and the audit that loads the page from a foreign domain now passes all four of its checks: the live update applies, the language switcher mounts, the paid demo arms, and the console is clean.</description>
 		</item>
 		<item>
+			<title>The payments dashboard now says whose wallet ran out of SOL</title>
+			<link>https://three.ws/changelog</link>
+			<guid isPermaLink="false">2026-09-09:The payments dashboard now says whose wallet ran out of SOL</guid>
+			<pubDate>Wed, 09 Sep 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>When a Solana payment cannot go through because the wallet paying the network fee is too low, the chain reports it as a generic simulation failure. Our status page grouped all of those together, so the platform's own fee wallet running low looked exactly like a buyer signing from an empty wallet, and both were also counted as payment-network faults. They are now three separate, named outcomes, so the status page says whether the money problem is ours to fix, the buyer's, or neither. Today's reject book was 1,438 rows of the first kind reading as the third.</description>
+		</item>
+		<item>
 			<title>The pitch deck now shows the whole character, and says so when the 3D cannot load</title>
 			<link>https://three.ws/pitch</link>
 			<guid isPermaLink="false">2026-09-09:The pitch deck now shows the whole character, and says so when the 3D cannot load</guid>
@@ -423,6 +455,14 @@
 			<description>Loading a scene on /splat used to erase the viewer's own controls: writing the scene label into the HUD replaced the recenter and download buttons with plain text, so from the first render onward neither existed. Both now live beside the label and survive every scene swap, and the download always offers the scene you are actually looking at rather than a previous one. The error state was worse than useless: it showed a heading over an empty space because the explanation was being written into an element that was not on the page. Now a failed load tells you what happened and what to do, including the advice to download and upload a file whose host blocks cross-origin requests. Clicking a sample or picking a file also shows the loading state immediately instead of sitting on an idle stage while the splat engine downloads in silence, and an engine that fails to load says so rather than leaving the page frozen.</description>
 		</item>
 		<item>
+			<title>The trading arena now says who just passed whom</title>
+			<link>https://three.ws/play/arena</link>
+			<guid isPermaLink="false">2026-09-09:The trading arena now says who just passed whom</guid>
+			<pubDate>Wed, 09 Sep 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>The live leaderboard on the arena told you who was ahead and nothing about what had changed, so a place changing hands, which happens several times a week on its own, went unnoticed. A grudge-match strip now sits under the standings: each trader is paired with the one directly above them, labelled as an overtake, a debut or a standing chase, with the profit or loss both sides settled in the last 24 hours as the reason. It is worked out from the same closed on-chain trades the board is ranked from, by rebuilding what the board actually said 24 hours ago out of the trade timestamps rather than trusting a stored snapshot, so the matchups reach back over history the platform already has and can never disagree with the leaderboard or with either trader's profile. Every line is written from those numbers: it will not call a trader behind when they in fact hold more SOL and rank lower on consistency, and it will not say someone booked nothing when they simply did not trade. Each matchup links to the leader's verified record and to a ghost-copy of them with no money at risk. Also available to agents and scripts at /api/sniper/rivalries.</description>
+		</item>
+		<item>
 			<title>The Windows 11 widget draws its card again, and a new check keeps the board honest</title>
 			<link>https://three.ws/glance</link>
 			<guid isPermaLink="false">2026-09-09:The Windows 11 widget draws its card again, and a new check keeps the board honest</guid>
@@ -453,6 +493,14 @@
 			<pubDate>Wed, 09 Sep 2026 12:00:00 GMT</pubDate>
 			<category>feature</category>
 			<description>Talking to the agent about your house is the one part of the smart-home lane that can really cost money: the room graph makes a home prompt large, and on a paid model a single turn costs several weeks of holding that house’s connection open. Those turns were being counted but never actually limited. They are now, against the monthly allowance shown on your plan page, and if you run out the agent says so in a sentence that names the limit, the date it resets and where to raise it, instead of failing at you. Two things are deliberately left outside that limit. Asking the agent what the house is doing still works, because you have to be able to see which door is open. And telling it to lock a door, close a garage or a valve, or arm the alarm still runs, over quota, on a paused home, in every state we can put an account in: the safe direction is free, always, on every plan. If our own billing lookup fails, the turn is allowed through rather than refused.</description>
+		</item>
+		<item>
+			<title>Your own agent now stands in your live house</title>
+			<link>https://three.ws/docs/home-scene</link>
+			<guid isPermaLink="false">2026-09-09:Your own agent now stands in your live house</guid>
+			<pubDate>Wed, 09 Sep 2026 12:00:00 GMT</pubDate>
+			<category>improvement</category>
+			<description>The 3D home at /smart-home/&lt;id&gt; always drew a generic figure standing in your rooms, even when you had given your agent a face months ago. It now shows your agent: the same avatar the walk world, /play and the voice satellite use, read from the one record the whole platform treats as &quot;my agent&quot;. Switch agents in another tab and the body in the house follows, with no reload. It is fetched after the house has already drawn, so nothing waits on it, and the platform's default body stands in when you have no agent yet, no avatar yet, or an avatar you keep private, which by design publishes no model for any page to read.</description>
 		</item>
 		<item>
 			<title>Your private avatars load on the dashboard again, and say so when they cannot</title>

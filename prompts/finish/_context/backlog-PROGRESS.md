@@ -1864,6 +1864,97 @@ long-term. Recorded in
 [docs/ops/x402-discovery-listings.md](../../docs/ops/x402-discovery-listings.md)
 under the owner-gated step.
 
+## 2026-09-09 (later): 01 x402 settle runway, the largest reject class was misfiled
+
+Re-measured live, nothing carried forward. Production `880bdcef8`, revision
+`three-ws-api-00420-ljh`. The capital decision from the entry below is unchanged
+and still the owner's; `gcloud` auth is dead in this codespace this session
+(`Reauthentication failed`), so even the config lever could not be applied here.
+
+| Fact | Value | Source |
+|---|---|---|
+| `x402_settle` | **down**, 0.0% (0/125 paid attempts, 3h), `cause: sponsor_floor` | `/api/healthz` |
+| Sponsor / economy master `Wwwu…T3WwW` | 1,167,627 lamports, spendable 0, floor 2,000,000 | on chain + `/api/x402/runway-lab` |
+| Shortfall to the floor | **832,373 lamports (0.000832 SOL)** | same |
+| Treasury `wwwww…ccrU` | 54,994,966 lamports (0.055 SOL) + 0.06 USDC, fenced behind `minSol` 0.1 | on chain |
+| Ring payer `X4o2…stML` | 812,444 lamports + 4.163 USDC | on chain |
+| Settle rejects, 24h | `fee_wallet_below_floor` 227 of 227, `fee_runway_exhausted` absent | `/api/healthz` |
+| Verify rejects, 24h | `simulation_failed` **1,438 of 1,438** | same |
+
+### The finding: 1,438 of 1,438 verify rejects were our own sponsor, filed as a rail fault
+
+The verify book's single largest class was read straight out of the production
+table rather than off the healthz prefix, which is what made it visible:
+
+```
+1438 | verify | simulation_failed:{"InsufficientFundsForRent":{"account_index":0}}
+```
+
+Every row, identical. Account index 0 of a compiled Solana message is the fee
+payer by definition, so not one of those 1,438 was about a buyer: they are all
+the sponsor being too poor to sign. Two things went wrong with that spelling:
+
+1. `/api/healthz` exposes only the token before the first `:` (deliberately, the
+   suffix can carry wallet addresses), so the platform's own dry sponsor shared
+   one bucket with a buyer signing from an empty ATA. An operator reading the
+   book sees `simulation_failed 1438` at the top and has no way to tell which.
+2. `isRailFault()` in `api/_lib/ops/x402-settle-health.js` matches `/simulation/`.
+   So the class was also counted as a payment-RAIL fault, which is the one thing
+   this order's own "Do not do these" warns against attributing it to. The 2026-08-28
+   post-mortem in that module already names this trap and mitigates it with a
+   separate `rent` flag reconstructed from the full `error_msg`; the reason token
+   itself was never fixed.
+
+This is the same defect shape as the `at_or_below_floor` ambiguity fixed earlier
+today: one string covering two opposite operator situations.
+
+### Landed (no funds moved, no config changed, deployable)
+
+- `assertSettleable()` in `api/_lib/x402/self-facilitator.js` now raises the
+  fee-payer verdict as its own reason class, using the exact `isFeePayerRentFailure()`
+  test that was already computed on that line and thrown away:
+  `sponsor_fee_unfunded:<pubkey>` when the dry fee payer is ours
+  (`X402_FEE_PAYER_SOLANA`), `payer_fee_unfunded:<pubkey>` when it is the buyer's
+  own wallet in a self-pay settle, and `simulation_failed` for everything else.
+  The split is exact rather than heuristic. The suffix keeps the pubkey as evidence.
+- `SPONSOR_FLOOR` in `api/_lib/ops/x402-settle-health.js` gained
+  `sponsor_fee_unfunded`, so the sensor classifies it from the token alone instead
+  of depending on the reconstructed `rent` flag. `payer_fee_unfunded` deliberately
+  stays out: that wallet is not ours to fund and must never trip the sponsor hint.
+- Five tests: three in `tests/x402-self-facilitator-settleable.test.js` (sponsor,
+  buyer, and a rent failure on a NON-fee-payer account which must stay
+  `simulation_failed`), two in `tests/api/x402-settle-health.test.js` (the new
+  class reads as `sponsor_floor` with zero faults and no `rent` flag; the buyer
+  twin raises no floor signal and no funding hint). 113 green across the 5 suites
+  that touch these modules.
+- `docs/ops/production-log-triage.md` gained a three-row table mapping each class
+  to who is out of SOL and what to do; `docs/ops/payment-outcomes.md` corrected.
+  `npm run audit:docs` clean (1,590 files). `data/changelog.json` entry added
+  (`fix`, `infra`), `npm run build:pages` regenerated the feed.
+- `npm run check:rules --paths <the 7 touched files>`: clean.
+
+Nothing here changes what settles. It changes what the dashboard says while the
+rail is down, which is what the next reader of this order will act on.
+
+### Still open, still one owner decision
+
+Unchanged from the entry below, restated with today's numbers. The sponsor is
+**0.000832 SOL** under its floor and the treasury holds **66 times that**, fenced.
+Both options move SOL, so both are stop-and-ask gate 1:
+
+1. Lower `pump-x402-launcher`'s `minSol` from 0.1 to ~0.02 in
+   `api/_lib/solana-signers.js`, then run `POST /api/cron/treasury-topup` without
+   `?dry=1`. Path `wwwww…ccrU` to `Wwwu…T3WwW` to `X4o2…stML`. No owner capital.
+2. Send SOL to `WwwuGbqHrwF5RG89KhUbmRWEvjnRH9k5kVM5p7T3WwW` and nowhere else.
+   0.1 SOL restarts settlement, 2 SOL clears the fleet deficit with real runway.
+
+Either also needs `gcloud` re-auth in this codespace and a deploy (gate 2) for the
+reason-class work above to reach production.
+
+DoD lines 1 and 3 stay open behind that decision. Line 2 passes
+(`fee_runway_exhausted` absent from the book). Lines 4 to 6 done. The prompt file
+stays on disk.
+
 ## 2026-09-09: 01 x402 settle runway (the deploy landed; the fleet is not empty, it is fenced)
 
 Everything below was read live today, not carried forward.
@@ -2015,3 +2106,48 @@ Left: one owner action. Mint an "Admin Read & Write" R2 token for `chatty-storag
 put it in `.env.local` as `R2_ACCESS_KEY_ID`/`R2_SECRET_ACCESS_KEY`, run
 `node scripts/set-r2-cors.mjs`, confirm with `--probe`. The work order stays on disk
 because its "policy applied" line is that action.
+
+## 2026-09-09 (15:00 UTC): 09 telegram-bots-durability (re-verified after the fix, one gate left)
+
+Measured, independently of the earlier pass in this file and without `gcloud`,
+which is unusable in this codespace: every call answers `Reauthentication failed.
+cannot prompt during non-interactive execution`, and the org reauth policy cannot
+be satisfied non-interactively. So the work order's own `/stats` recipe could not
+run, and the feeds were confirmed from the public Telegram surface instead, which
+is the stronger signal anyway: a post proves the deployed service decoded a real
+event and delivered it, not merely that a container is `Ready`.
+
+- Firehose `@pumpfunclaimed` (`-1003905427189`): posting continuously, four posts
+  in the four seconds around 14:50:58 UTC, latest content a
+  `CLAIMS DIGEST last 1m 20 claims $57 total` with per-claim rows. That is the
+  ~20 claims/min baseline this order set, hit on the nose, eight hours after the
+  fix deployed.
+- Tracker `@trackpumpfun` (`-1003965305979`): a supergroup, so `t.me/s/` returns
+  302 and the id-embed walk is the way in. 16 posts in 187 s (ids 67971 to
+  67987), latest content a decoded launch with market cap, dev launch count and
+  chart links.
+- Neither is a local process: no `node` under `pump-fun-sdk` in `/proc/*/cwd`,
+  and `localhost:3900` and `3901` both refuse the connection. Cloud Run is the
+  source.
+- Both channels answer `getChat` on their numeric ids with distinct titles and
+  usernames, so the separate-identity line still holds.
+
+Re-checked in the sibling repo at `2a12ec3a` (HEAD, clean worktree): the endpoint
+list, the 20-second traffic-based liveness check, the rotating reconnect in both
+`claim-monitor.ts` and `channel-bot/src/event-monitor.ts`, the cleared heartbeat
+timer, and `activeWs`/`wsEventsReceived` on `/stats` are all present. Test counts
+match the claim exactly: 95 passing in allclaims (7 files), 205 in channel-bot
+(14 files). Both `.env` files carry the publicnode plus mainnet-beta lists with no
+magicblock. Both deploy scripts pin the build and runtime service accounts and use
+`--env-vars-file`, never `--set-env-vars`. `DECODERS.md` records the canonical
+copy and now the matching transport rule.
+
+Did: added the `gcloud`-free verification recipe to the work order's Verify
+section, since the documented one is unusable on a recycled codespace and its
+absence is what would stall the next person, plus the re-proof line on the first
+definition-of-done box.
+
+Left: one owner action, the last box on that order. Approve committing the
+launchpad-referencing update into three.ws under the coin gate. Nothing technical
+remains; the code and the deploys landed in the sibling repo, which the gate
+exempts.

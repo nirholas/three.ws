@@ -869,7 +869,26 @@ async function assertSettleable({ tx, connection, requirement, decoded }) {
 			// A dry sponsor is a platform condition, not this payment's fault: record
 			// it so the 402 challenge stops advertising a Solana accept that cannot
 			// settle, rather than rejecting one payment and inviting the next.
-			noteSponsorRentFailure(simErr, decoded?.feePayer);
+			const sponsorDry = noteSponsorRentFailure(simErr, decoded?.feePayer);
+			// Give the fee-payer verdict its own reason CLASS, because every consumer
+			// of this string groups on the token before the first ':'. /api/healthz
+			// exposes only that prefix, and isRailFault() in ops/x402-settle-health.js
+			// matches /simulation/, so folding this into `simulation_failed` filed
+			// the platform's own unfundable sponsor under the same bucket as a buyer
+			// signing from an empty ATA, AND counted it as a rail fault. Measured in
+			// production on 2026-09-09: `simulation_failed` sat at the top of the
+			// verify book with 1,438 rejects in 24h and every single row was
+			// {"InsufficientFundsForRent":{"account_index":0}} on our sponsor, a
+			// wallet 0.00083 SOL under its floor. Read as a rail fault it points an
+			// operator at the RPC lanes, which is the one thing this class is never
+			// about. Account index 0 is the fee payer by definition, so the split is
+			// exact, not a heuristic: `sponsor_fee_unfunded` is ours to fund,
+			// `payer_fee_unfunded` is the buyer's own wallet and needs nothing.
+			if (isFeePayerRentFailure(simErr)) {
+				const cls = sponsorDry ? 'sponsor_fee_unfunded' : 'payer_fee_unfunded';
+				const who = decoded?.feePayer ? String(decoded.feePayer) : 'unknown';
+				return { ok: false, reason: `${cls}:${who}`.slice(0, 160) };
+			}
 			return { ok: false, reason: `simulation_failed:${s}`.slice(0, 160) };
 		}
 		return { ok: true };

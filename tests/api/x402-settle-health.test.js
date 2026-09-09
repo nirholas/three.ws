@@ -439,6 +439,33 @@ describe('classifySettleBuckets: a dry sponsor is not a rail fault', () => {
 		expect(v.status).toBe('unknown');
 	});
 
+	it('classifies sponsor_fee_unfunded as floor even with no rent flag set', () => {
+		// The verify path now raises the fee-payer verdict as its own reason class
+		// (api/_lib/x402/self-facilitator.js), so the token itself carries the
+		// meaning and the sensor no longer depends on a `rent` flag reconstructed
+		// from the full error_msg. That matters because the old spelling,
+		// `simulation_failed`, matches RAIL_SIGNATURE's /simulation/: a caller that
+		// aggregates by token alone counted a starved sponsor as a rail fault.
+		const v = classifySettleBuckets([
+			{ success: false, paid: false, reason: 'sponsor_fee_unfunded', n: 95 },
+		]);
+		expect(v.cause).toBe('sponsor_floor');
+		expect(v.floorSignals).toBe(95);
+		expect(v.faults).toBe(0);
+	});
+
+	it('leaves the buyer-side twin off the sponsor floor', () => {
+		// `payer_fee_unfunded` is a buyer whose OWN wallet cannot pay the fee. It is
+		// not the platform's to fund, so it must never trip the sponsor hint that
+		// tells an operator to send SOL.
+		const v = classifySettleBuckets([
+			{ success: false, paid: false, reason: 'payer_fee_unfunded', n: 95 },
+		]);
+		expect(v.floorSignals ?? 0).toBe(0);
+		expect(v.cause).not.toBe('sponsor_floor');
+		expect(v.hint ?? '').not.toMatch(/treasury-topup/);
+	});
+
 	it('a bucket with no rent flag behaves exactly as it always did', () => {
 		const withFlag = classifySettleBuckets([
 			{ success: true, paid: true, n: 90 },

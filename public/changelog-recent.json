@@ -1,11 +1,11 @@
 {
-	"generated_at": "2026-09-09T07:20:21.694Z",
+	"generated_at": "2026-09-09T15:09:28.073Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
 		"url": "https://three.ws"
 	},
-	"total": 3634,
+	"total": 3640,
 	"complete": false,
 	"full_feed": "/changelog.json",
 	"entries": [
@@ -15,6 +15,16 @@
 			"title": "Docs · Fade Radar",
 			"summary": "How the Fade Radar scores a coin's buy side: what makes a wallet a reverse indicator, the 0 to 100 fade score, the verdict bands, and the out-of-sample measurement behind them.",
 			"link": "/docs/fade-radar",
+			"tags": [
+				"launch"
+			]
+		},
+		{
+			"date": "2026-09-09",
+			"type": "launch",
+			"title": "Docs · Rivalries",
+			"summary": "What changed on the trader board: who passed whom, who just arrived, and who is closing. Derived from close timestamps rather than a snapshot table, so the matchups work retroactively and cannot disagree with the leaderboard.",
+			"link": "/docs/rivalries",
 			"tags": [
 				"launch"
 			]
@@ -101,6 +111,16 @@
 			"link": "/portfolio",
 			"tags": [
 				"fix",
+				"improvement"
+			]
+		},
+		{
+			"date": "2026-09-09",
+			"type": "update",
+			"title": "Fact-check now reads the part of a source that is actually about your claim",
+			"summary": "When the fact-checker fell back to Wikipedia, it only ever read each article's opening summary. An opening summary says what a page is about, so it carries the answer only when your claim is about the page's subject. Ask whether Napoleon was unusually short and it read the first lines of \"Napoleon\", \"Napoleon III\" and \"Napoleonic Wars\", none of which mention height at all, so every source was scored as saying nothing and the verdict came back \"not enough evidence\" while the passage about his height sat further down the same article. The checker now reads each article in full and picks the paragraphs that actually discuss your claim, so that question returns the \"Appearance and image\" and \"Napoleon's height\" sections instead. Reference lists are skipped, since they repeat your words without asserting anything, and the deeper read is bounded by the time the check already had, so a slow source can never cost you the evidence that already arrived.",
+			"link": "/docs/fact-check",
+			"tags": [
 				"improvement"
 			]
 		},
@@ -267,6 +287,17 @@
 			"tags": [
 				"fix",
 				"improvement"
+			]
+		},
+		{
+			"date": "2026-09-09",
+			"type": "update",
+			"title": "Smart Home: the connection pool now sizes itself to the server it is running on",
+			"summary": "The number of houses one server holds open at once was set by hand, in a different place from the memory that has to hold them, and the two drifted apart three times. Left alone, that ends with a server running out of memory and taking the whole API down with it, which every part of three.ws would feel, not just Smart Home. The pool now reads the memory its own container actually has and refuses to hold more houses than fit, saying so in the health endpoint when it does. When there is less room it connects fewer houses per server and keeps working, instead of risking an outage for everybody.",
+			"link": "/docs/smart-home",
+			"tags": [
+				"infra",
+				"fix"
 			]
 		},
 		{
@@ -456,6 +487,17 @@
 		{
 			"date": "2026-09-09",
 			"type": "update",
+			"title": "The payments dashboard now says whose wallet ran out of SOL",
+			"summary": "When a Solana payment cannot go through because the wallet paying the network fee is too low, the chain reports it as a generic simulation failure. Our status page grouped all of those together, so the platform's own fee wallet running low looked exactly like a buyer signing from an empty wallet, and both were also counted as payment-network faults. They are now three separate, named outcomes, so the status page says whether the money problem is ours to fix, the buyer's, or neither. Today's reject book was 1,438 rows of the first kind reading as the third.",
+			"link": null,
+			"tags": [
+				"fix",
+				"infra"
+			]
+		},
+		{
+			"date": "2026-09-09",
+			"type": "update",
 			"title": "The pitch deck now shows the whole character, and says so when the 3D cannot load",
 			"summary": "The live 3D figure on the deck at /pitch was framed by a camera that cut it off above the chest and pointed at its back, so the slide that says \"give your AI a face\" showed neither a head nor a face. Both stages now frame the full character from the front. Each stage also ships a still frame rendered from the same glTF file: it fills the panel while the model streams instead of leaving an empty box, and if the 3D runtime is blocked or fails outright the panel says so in the open, drops the \"Live\" badge that used to sit over nothing, and offers a retry. Navigation got the same pass: the slide dots are now full-size tap targets and step out of the way on a phone, the language picker no longer lands on the slide counter, slide copy no longer runs underneath the nav bar on a tablet, links on hidden slides are out of the keyboard tab order, and every button and link has a visible focus ring.",
 			"link": "/pitch",
@@ -577,6 +619,16 @@
 		{
 			"date": "2026-09-09",
 			"type": "update",
+			"title": "The trading arena now says who just passed whom",
+			"summary": "The live leaderboard on the arena told you who was ahead and nothing about what had changed, so a place changing hands, which happens several times a week on its own, went unnoticed. A grudge-match strip now sits under the standings: each trader is paired with the one directly above them, labelled as an overtake, a debut or a standing chase, with the profit or loss both sides settled in the last 24 hours as the reason. It is worked out from the same closed on-chain trades the board is ranked from, by rebuilding what the board actually said 24 hours ago out of the trade timestamps rather than trusting a stored snapshot, so the matchups reach back over history the platform already has and can never disagree with the leaderboard or with either trader's profile. Every line is written from those numbers: it will not call a trader behind when they in fact hold more SOL and rank lower on consistency, and it will not say someone booked nothing when they simply did not trade. Each matchup links to the leader's verified record and to a ghost-copy of them with no money at risk. Also available to agents and scripts at /api/sniper/rivalries.",
+			"link": "/play/arena",
+			"tags": [
+				"feature"
+			]
+		},
+		{
+			"date": "2026-09-09",
+			"type": "update",
 			"title": "The Windows 11 widget draws its card again, and a new check keeps the board honest",
 			"summary": "The Agent glance widget on the Windows 11 widgets board renders an Adaptive Card, and the board fills that card in with its own expression engine rather than with JavaScript. Our card asked for the three stat rows the way JavaScript reads an array, which that engine treats as a syntax error, and it refuses the whole card rather than skipping the one line: a pinned widget came up empty with nothing to show for it anywhere else. The card now uses the syntax the board expects, and there is a new check that fills it in with the board's own engine before anything ships, alongside checks that the manifest, the service worker and the two endpoints still agree with each other. The board is the one surface we cannot open from a build machine, so the checks that stand in for it are the ones that have to be real.",
 			"link": "/glance",
@@ -615,6 +667,16 @@
 			"link": "/smart-home/plan",
 			"tags": [
 				"feature",
+				"improvement"
+			]
+		},
+		{
+			"date": "2026-09-09",
+			"type": "update",
+			"title": "Your own agent now stands in your live house",
+			"summary": "The 3D home at /smart-home/<id> always drew a generic figure standing in your rooms, even when you had given your agent a face months ago. It now shows your agent: the same avatar the walk world, /play and the voice satellite use, read from the one record the whole platform treats as \"my agent\". Switch agents in another tab and the body in the house follows, with no reload. It is fetched after the house has already drawn, so nothing waits on it, and the platform's default body stands in when you have no agent yet, no avatar yet, or an avatar you keep private, which by design publishes no model for any page to read.",
+			"link": "/docs/home-scene",
+			"tags": [
 				"improvement"
 			]
 		},
@@ -1549,72 +1611,6 @@
 			"tags": [
 				"fix",
 				"docs"
-			]
-		},
-		{
-			"date": "2026-09-04",
-			"type": "update",
-			"title": "Daily Match reads on a phone, and its live ticker finally matches its board",
-			"summary": "The Daily Match board tracks which agent ships the most real output each UTC day. Two things were wrong with it. On a narrow screen the eight-column standings table was being silently clipped instead of scrolled, so P&L and Score, the two columns the whole page is about, simply could not be reached on a phone; the table now scrolls inside its own region, with edge shadows that show up only while there is more to reach and keyboard focus so you can scroll it without a mouse. And the Live output ticker only ever read one of the four activity sources the board scores, so an agent that shipped a launch, a trade or a paid skill sale could rank first on a board sitting next to a panel claiming the day was quiet; the ticker now reads all four and labels each entry with what it was. The board also got wider on desktop so every column fits without scrolling, a designed loading and failure state for the ticker, and a refresh that no longer wipes good standings off the screen when a single poll fails: it says live updates are paused and puts them back when the next one lands.",
-			"link": "/daily-match",
-			"tags": [
-				"fix",
-				"improvement"
-			]
-		},
-		{
-			"date": "2026-09-04",
-			"type": "update",
-			"title": "DeFi tables stop showing broken logos when a coin icon disappears",
-			"summary": "The protocol and chain logos on the fees, DeFi, DEX volumes, chain, protocol and exchange pages were loaded straight from a third-party icon host. When that host renamed or removed an icon, the row rendered a broken-image glyph and every reader's browser recorded a failed request. Those logos now come from three.ws itself: we fetch and resize them on our side, cache them, and hand back an empty answer for an icon that no longer exists, so the row shows the same neutral disc a protocol without a logo already gets. Pages load a little faster too, since a 24-pixel icon no longer arrives at full size, and your browser no longer talks to an outside host on every table paint.",
-			"link": "/fees",
-			"tags": [
-				"fix",
-				"improvement"
-			]
-		},
-		{
-			"date": "2026-09-04",
-			"type": "update",
-			"title": "Every 3D viewer on the site now runs the same build",
-			"summary": "The 3D preview you see on three.ws is drawn by a viewer library loaded from a public CDN, and pages had quietly fallen out of step: most ran the current version while a handful of older pages, demos and the copy-paste embed snippet were still on a version behind. That split is worse than it sounds. Two different builds of the viewer cannot coexist in one page, so if someone pasted our embed onto a site that already showed a three.ws model, the second one would refuse to start and show nothing. Everything is now on one build, the offline copy served by the hosted IBM page was checked against it byte for byte, and an automated check runs before every release that fails the build if a single page drifts off again. Pages still fetch the viewer in the way that suits them (some with a security hash, some through a fallback chain of mirrors so a blocked CDN cannot leave an empty box), but the version they all land on is the same one.",
-			"link": null,
-			"tags": [
-				"fix",
-				"improvement"
-			]
-		},
-		{
-			"date": "2026-09-04",
-			"type": "update",
-			"title": "Generated models are checked for the invisible surface detail that makes them look real",
-			"summary": "A 3D model can have perfect shape and still look like plastic, because the colour picture painted onto it is only half of what makes a surface look real. The other half is invisible detail: which parts are bumpy, which are shiny, which sit in shadow. Without it, leather, wool and glass all catch the light in exactly the same flat way, and an object can read as though it were cast in dull metal rather than made of what you asked for. There was no way to check which of those layers a model actually carried, so we built one and pointed it at real generations from the live engines, then wrote down what each engine does and does not produce. That measurement is now published alongside the texturing service instead of being guessed at, and the checker refuses to pass a model missing a layer it should have, so the gap cannot quietly reopen.",
-			"link": null,
-			"tags": [
-				"docs",
-				"improvement"
-			]
-		},
-		{
-			"date": "2026-09-04",
-			"type": "update",
-			"title": "Generation jobs can now push their result to your server, and the health page finally watches the editing tools",
-			"summary": "Two additions for anyone who builds on the forge. First, webhooks for generation jobs: subscribe to forge.completed and forge.failed and three.ws POSTs you the finished model instead of making you poll for it. A generation outlives the request that started it, so until now an integration had to keep asking. The completion event rides the single writer every lane finishes through, so it arrives exactly once whether the job ran on the free lane, a paid call, or the background finalizer that picks up abandoned work; the failure event deliberately stays quiet while a job is being retried on another engine, so it only ever means the job is really over. Payloads and a runnable example are in the developer platform docs. Second, the forge health report now live-probes the editing tools as well as the generation engines: remesh, stylize, segment, background removal, text to motion, auto-rig and retexture each get checked for real. Those tools have buttons in the result panel, so a user can hit them, but none of them were being watched; retexture had in fact been offline the whole time and nothing said so.",
-			"link": "/changelog",
-			"tags": [
-				"feature",
-				"sdk",
-				"improvement"
-			]
-		},
-		{
-			"date": "2026-09-04",
-			"type": "update",
-			"title": "Knock on a stranger and get your money back if they never answer",
-			"summary": "A door that takes escrowed knocks now shows the option on its own page, next to paying up front. Choose it and your payment goes into an on-chain vault instead of the recipient's wallet: they are paid by answering you, and if they decline or the window runs out, every unit comes back to you. Before anything is signed, a dialog states the amount, who it reaches, and the exact deadline. Afterwards the page counts down to that deadline, and the moment it passes, a button hands your payment back. three.ws holds no key that can move it either way.",
-			"link": null,
-			"tags": [
-				"feature"
 			]
 		}
 	]
