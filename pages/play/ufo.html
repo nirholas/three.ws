@@ -5,16 +5,16 @@
 	<script>/* three.ws theme boot */(function(){try{var m=localStorage.getItem('twx_theme');var l=m==='auto'?(window.matchMedia&&window.matchMedia('(prefers-color-scheme: light)').matches):m==='light';document.documentElement.setAttribute('data-theme',l?'light':'dark');}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();</script>
 	<meta charset="utf-8" />
 	<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-	<title data-i18n="play_ufo.meta_title">Flappin UFO — retired demo · three.ws</title>
-	<meta name="description" content="The Flappin UFO arcade demo has been retired. Explore the live three.ws experiences instead — the coin communities world, Sniper Arena, and Coin Clash."  data-i18n-attr="content:play_ufo.meta_description"/>
-	<meta property="og:title" content="Flappin UFO — retired demo · three.ws"  data-i18n-attr="content:play_ufo.meta_og_title"/>
+	<title data-i18n="play_ufo.meta_title">Flappin UFO: retired demo · three.ws</title>
+	<meta name="description" content="The Flappin UFO arcade demo has been retired. Explore the live three.ws experiences instead: the coin communities world, Sniper Arena, and Coin Clash."  data-i18n-attr="content:play_ufo.meta_description"/>
+	<meta property="og:title" content="Flappin UFO: retired demo · three.ws"  data-i18n-attr="content:play_ufo.meta_og_title"/>
 	<meta property="og:description" content="This arcade demo is no longer available. Jump into the live three.ws experiences instead."  data-i18n-attr="content:play_ufo.meta_og_description"/>
 	<meta property="og:type" content="website" />
 	<meta property="og:site_name" content="three.ws" />
 	<meta property="og:url" content="https://three.ws/play/ufo" />
 	<meta property="og:image" content="https://three.ws/api/page-og?s=crypto&amp;t=Flappin+UFO%3A+retired+demo&amp;d=The+Flappin+UFO+arcade+demo+ran+on+an+external+deployment+that+is+no+longer+online%2C+so+the+game+has+been+retired.+The+page+now+points+visitors+to+the+live&amp;p=%2Fplay%2Fufo" />
 	<meta name="twitter:card" content="summary_large_image" />
-	<meta name="twitter:title" content="Flappin UFO — retired demo · three.ws"  data-i18n-attr="content:play_ufo.meta_twitter_title"/>
+	<meta name="twitter:title" content="Flappin UFO: retired demo · three.ws"  data-i18n-attr="content:play_ufo.meta_twitter_title"/>
 	<meta name="twitter:description" content="This arcade demo is no longer available. Explore the live three.ws experiences instead."  data-i18n-attr="content:play_ufo.meta_twitter_description"/>
 	<link rel="canonical" href="https://three.ws/play/ufo" />
 	<link rel="icon" href="/favicon.ico" />
@@ -25,11 +25,9 @@
 			--line: rgba(255, 255, 255, 0.08);
 			--ink: #e8edf8;
 			--muted: #8b93b0;
-			--faint: rgba(255, 255, 255, 0.38);
+			--faint: rgba(255, 255, 255, 0.56);
 			--violet: #a78bff;
 			--cyan: #6ee7ff;
-			--gold: var(--warn, #fbbf24);
-			--r: 14px;
 			--mono: ui-monospace, "JetBrains Mono", SFMono-Regular, Menlo, monospace;
 			--shadow: 0 18px 50px -20px rgba(0, 0, 0, 0.85), 0 1px 0 rgba(255, 255, 255, 0.04) inset;
 			--blur: saturate(160%) blur(20px);
@@ -41,7 +39,9 @@
 			--line: rgba(10, 14, 30, 0.1);
 			--ink: #10131f;
 			--muted: #55607a;
-			--faint: rgba(10, 14, 30, 0.4);
+			--faint: rgba(10, 14, 30, 0.62);
+			--violet: #6d28d9;
+			--cyan: #0e7490;
 			--shadow: 0 18px 50px -22px rgba(20, 24, 50, 0.28), 0 1px 0 rgba(255, 255, 255, 0.6) inset;
 		}
 
@@ -69,15 +69,18 @@
 		/* ── top bar ─────────────────────────────────────── */
 		.bar {
 			position: fixed; top: 0; left: 0; right: 0; z-index: 10;
-			display: flex; align-items: center; gap: 12px; padding: 11px 16px;
+			display: flex; align-items: center; gap: 12px; padding: 4px 16px;
+			min-height: 52px;
 		}
 
 		.brand {
 			display: inline-flex; align-items: center; gap: 8px;
+			min-height: 44px; padding-inline: 4px; margin-inline: -4px; border-radius: 10px;
 			font-weight: 700; font-size: 14px; letter-spacing: -0.02em;
 			opacity: 0.9; transition: opacity .2s;
 		}
 		.brand:hover { opacity: 1; }
+		.brand:focus-visible { outline: 2px solid var(--cyan); outline-offset: 2px; }
 		.brand img { width: 20px; height: 20px; border-radius: 5px; }
 		.brand-sep { color: var(--faint); font-weight: 400; margin: 0 2px; }
 		.game-title {
@@ -176,7 +179,7 @@
 		}
 		.chip {
 			display: inline-flex; align-items: center; gap: 7px;
-			padding: 8px 13px; border-radius: 999px;
+			min-height: 44px; padding: 8px 15px; border-radius: 999px;
 			border: 1px solid var(--line); background: rgba(255,255,255,0.03);
 			font-size: 12.5px; color: var(--muted);
 			transition: transform .12s, border-color .2s, color .2s;
@@ -200,9 +203,9 @@
 
 	<meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1">
 	<meta property="og:locale" content="en_US">
-	<meta property="og:image:alt" content="Flappin UFO — retired demo — three.ws">
+	<meta property="og:image:alt" content="Flappin UFO: retired demo, three.ws">
 	<meta name="twitter:site" content="@trythreews">
-	<script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"WebPage","name":"Flappin UFO — retired demo","description":"The Flappin UFO arcade demo has been retired. Explore the live three.ws experiences instead.","url":"https://three.ws/play/ufo","isPartOf":{"@type":"WebSite","name":"three.ws","url":"https://three.ws"}},{"@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Home","item":"https://three.ws/"},{"@type":"ListItem","position":2,"name":"Play","item":"https://three.ws/play"},{"@type":"ListItem","position":3,"name":"Ufo","item":"https://three.ws/play/ufo"}]}]}</script>
+	<script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"WebPage","name":"Flappin UFO: retired demo","description":"The Flappin UFO arcade demo has been retired. Explore the live three.ws experiences instead.","url":"https://three.ws/play/ufo","isPartOf":{"@type":"WebSite","name":"three.ws","url":"https://three.ws"}},{"@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Home","item":"https://three.ws/"},{"@type":"ListItem","position":2,"name":"Play","item":"https://three.ws/play"},{"@type":"ListItem","position":3,"name":"Ufo","item":"https://three.ws/play/ufo"}]}]}</script>
 
 	<meta name="twitter:image" content="https://three.ws/api/page-og?s=crypto&amp;t=Flappin+UFO%3A+retired+demo&amp;d=The+Flappin+UFO+arcade+demo+ran+on+an+external+deployment+that+is+no+longer+online%2C+so+the+game+has+been+retired.+The+page+now+points+visitors+to+the+live&amp;p=%2Fplay%2Fufo">
 </head>
@@ -212,7 +215,7 @@
 <!-- top bar -->
 <header class="bar">
 	<a href="/" class="brand">
-		<img src="/favicon.svg" alt="three.ws" />
+		<img src="/favicon.svg" alt="" aria-hidden="true" />
 		<span data-i18n="play_ufo.three_ws">three.ws</span>
 	</a>
 	<span class="brand-sep">/</span>
@@ -222,7 +225,7 @@
 
 <!-- designed retired state -->
 <main class="wrap">
-	<section class="card" role="region" aria-label="Flappin UFO has been retired">
+	<section class="card" aria-label="Flappin UFO has been retired">
 		<div class="emblem" aria-hidden="true">
 			<!-- UFO -->
 			<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
@@ -236,7 +239,7 @@
 		<p class="lead" data-i18n="play_ufo.flappin_ufo_was_an_external_arcade_demo">
 			Flappin UFO was an external arcade demo hosted off-platform, and its deployment
 			is no longer online. Rather than leave you staring at a broken screen, we've
-			grounded it — the live three.ws experiences are where the action is now.
+			grounded it: the live three.ws experiences are where the action is now.
 		</p>
 
 		<div class="actions">
