@@ -6,18 +6,18 @@
 	<script>(function(){try{var m=localStorage.getItem('twx_theme');var l=m==='auto'?(window.matchMedia&&window.matchMedia('(prefers-color-scheme: light)').matches):m==='light';document.documentElement.setAttribute('data-theme',l?'light':'dark');}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();</script>
 	<meta charset="utf-8" />
 	<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-	<title data-i18n="partners.meta_title">Partner Ecosystem — three.ws</title>
+	<title data-i18n="partners.meta_title">Partner Ecosystem · three.ws</title>
 	<meta name="description" content="three.ws partner ecosystem: OpenAI, IBM, AWS, Google Cloud, Alibaba Cloud, NVIDIA, Quicknode, HackerNoon. The AI, cloud, and infrastructure programs powering 3D AI agents at enterprise scale."  data-i18n-attr="content:partners.meta_description"/>
 	<meta property="og:type" content="website" />
 	<meta property="og:site_name" content="three.ws" />
-	<meta property="og:title" content="Partner Ecosystem — three.ws"  data-i18n-attr="content:partners.meta_og_title"/>
+	<meta property="og:title" content="Partner Ecosystem · three.ws"  data-i18n-attr="content:partners.meta_og_title"/>
 	<meta property="og:description" content="The cloud and AI platforms powering 3D AI agents at enterprise scale."  data-i18n-attr="content:partners.meta_og_description"/>
 	<meta property="og:url" content="https://three.ws/partners" />
 	<meta property="og:image" content="https://three.ws/api/page-og?s=main&amp;t=Partner+Ecosystem&amp;d=three.ws+partner+ecosystem%3A+OpenAI%2C+IBM%2C+AWS%2C+Google+Cloud%2C+Alibaba+Cloud%2C+NVIDIA%2C+Quicknode%2C+HackerNoon.+The+AI%2C+cloud%2C+and+infrastructure+programs+powering&amp;p=%2Fpartners" />
 	<meta property="og:image:width" content="1200" />
 	<meta property="og:image:height" content="630" />
 	<meta name="twitter:card" content="summary_large_image" />
-	<meta name="twitter:title" content="Partner Ecosystem — three.ws"  data-i18n-attr="content:partners.meta_twitter_title"/>
+	<meta name="twitter:title" content="Partner Ecosystem · three.ws"  data-i18n-attr="content:partners.meta_twitter_title"/>
 	<meta name="twitter:description" content="The cloud and AI platforms powering 3D AI agents at enterprise scale."  data-i18n-attr="content:partners.meta_twitter_description"/>
 	<meta name="twitter:image" content="https://three.ws/api/page-og?s=main&amp;t=Partner+Ecosystem&amp;d=three.ws+partner+ecosystem%3A+OpenAI%2C+IBM%2C+AWS%2C+Google+Cloud%2C+Alibaba+Cloud%2C+NVIDIA%2C+Quicknode%2C+HackerNoon.+The+AI%2C+cloud%2C+and+infrastructure+programs+powering&amp;p=%2Fpartners" />
 	<meta name="twitter:site" content="@trythreews" />
@@ -31,6 +31,7 @@
 	<link rel="stylesheet" href="/fonts/fonts.css" />
 	<link rel="stylesheet" href="/nav.css" />
 	<link rel="stylesheet" href="/footer.css" />
+	<script src="/footer.js" defer></script>
 	<script defer src="/footer-newsletter.js"></script>
 	<script src="/embed.js" defer></script>
 	<script src="/nav.js" defer></script>
@@ -156,6 +157,24 @@
 		}
 		.btn-ghost:hover { color: var(--text); border-color: #444; }
 
+		.btn-primary:focus-visible,
+		.btn-ghost:focus-visible,
+		.partner-card:focus-visible {
+			outline: 2px solid var(--focus-ring-color, rgba(255,255,255,0.6));
+			outline-offset: 3px;
+		}
+		.partner-card:focus-visible { border-color: #2e2e2e; }
+
+		.sr-only {
+			position: absolute;
+			width: 1px; height: 1px;
+			padding: 0; margin: -1px;
+			overflow: hidden;
+			clip-path: inset(50%);
+			white-space: nowrap;
+			border: 0;
+		}
+
 		/* ── Stat bar ─────────────────────────────────────────────── */
 		.stat-bar {
 			display: flex;
@@ -168,9 +187,13 @@
 		}
 		.stat {
 			flex: 1;
+			min-width: 0;
 			padding: 16px 20px;
 			text-align: center;
 			border-right: 1px solid var(--border);
+			display: flex;
+			flex-direction: column-reverse;
+			justify-content: center;
 		}
 		.stat:last-child { border-right: none; }
 		.stat-value {
@@ -200,7 +223,7 @@
 		/* ── Partners grid ────────────────────────────────────────── */
 		.partners-grid {
 			display: grid;
-			grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+			grid-template-columns: repeat(auto-fill, minmax(min(320px, 100%), 1fr));
 			gap: 20px;
 			margin-bottom: 80px;
 		}
@@ -217,6 +240,7 @@
 			transition: border-color var(--duration-base), transform var(--duration-base), box-shadow var(--duration-base);
 			text-decoration: none;
 			color: inherit;
+			min-width: 0;
 		}
 		.partner-card:hover {
 			border-color: #2e2e2e;
@@ -227,8 +251,10 @@
 		.partner-header {
 			display: flex;
 			align-items: center;
-			gap: 14px;
+			gap: 10px 14px;
+			flex-wrap: wrap;
 		}
+		.partner-name { min-width: 0; overflow-wrap: anywhere; }
 		.partner-logo {
 			width: 44px;
 			height: 44px;
@@ -373,6 +399,11 @@
 			line-height: 1.6;
 		}
 
+		@media (prefers-reduced-motion: reduce) {
+			.hero-eyebrow-dot { animation: none; }
+			.partner-card:hover { transform: none; }
+		}
+
 		@media (max-width: 640px) {
 			.hero { padding: 48px 0 40px; }
 			.hero h1 { font-size: 36px; }
@@ -385,7 +416,7 @@
 
 	<meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1">
 	<meta property="og:locale" content="en_US">
-	<meta property="og:image:alt" content="Partner Ecosystem — three.ws">
+	<meta property="og:image:alt" content="Partner Ecosystem · three.ws">
 	<script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"WebPage","name":"Partner Ecosystem","description":"three.ws partner ecosystem: OpenAI, IBM, AWS, Google Cloud, Alibaba Cloud, NVIDIA, Quicknode, HackerNoon. The AI, cloud, and infrastructure programs powering 3D AI agents at enterprise scale.","url":"https://three.ws/partners","isPartOf":{"@type":"WebSite","name":"three.ws","url":"https://three.ws"},"primaryImageOfPage":"https://three.ws/api/page-og?s=main&t=Partner+Ecosystem&d=three.ws+partner+ecosystem%3A+OpenAI%2C+IBM%2C+AWS%2C+Google+Cloud%2C+Alibaba+Cloud%2C+NVIDIA%2C+Quicknode%2C+HackerNoon.+The+AI%2C+cloud%2C+and+infrastructure+programs&p=%2Fpartners"}]}</script>
 </head>
 <body>
@@ -399,12 +430,12 @@
 	<section class="hero">
 		<div class="hero-eyebrow">
 			<span class="hero-eyebrow-dot" aria-hidden="true"></span>
-			Enterprise ecosystem
+			<span data-i18n="partners.enterprise_ecosystem">Enterprise ecosystem</span>
 		</div>
-		<h1 data-i18n-html="partners.built_on_the_world_s_best_infrastructure">Built on the world's<br><em>best infrastructure.</em></h1>
+		<h1 data-i18n-html="partners.built_on_the_world_s_best_infrastructure">Built on the world's <br><em>best infrastructure.</em></h1>
 		<p class="hero-sub" data-i18n="partners.three_ws_runs_on_and_integrates_with">
 			three.ws runs on and integrates with the leading cloud, AI, and hardware
-			platforms — giving every agent enterprise-grade compute, identity, and reach.
+			platforms, giving every agent enterprise-grade compute, identity, and reach.
 		</p>
 		<div class="hero-cta">
 			<a href="/create" class="btn-primary" data-i18n="partners.deploy_an_agent">Deploy an agent</a>
@@ -413,20 +444,20 @@
 	</section>
 
 	<!-- ── Stats ─────────────────────────────────────────────────── -->
-	<div class="stat-bar" aria-hidden="true">
+	<dl class="stat-bar">
 		<div class="stat">
-			<div class="stat-value">8</div>
-			<div class="stat-label">Partners</div>
+			<dt class="stat-label" data-i18n="partners.partners">Partners</dt>
+			<dd class="stat-value" id="partner-count">8</dd>
 		</div>
 		<div class="stat">
-			<div class="stat-value">22</div>
-			<div class="stat-label">Chains</div>
+			<dt class="stat-label" data-i18n="partners.chains">Chains</dt>
+			<dd class="stat-value">22</dd>
 		</div>
 		<div class="stat">
-			<div class="stat-value">∞</div>
-			<div class="stat-label">Scale</div>
+			<dt class="stat-label" data-i18n="partners.scale">Scale</dt>
+			<dd class="stat-value" data-no-i18n><span aria-hidden="true">∞</span><span class="sr-only">Unbounded</span></dd>
 		</div>
-	</div>
+	</dl>
 
 	<!-- ── Partner grid ──────────────────────────────────────────── -->
 	<p class="section-label" data-i18n="partners.strategic_partners">Strategic partners</p>
@@ -453,7 +484,7 @@
 				<span class="partner-tag" data-i18n="partners.spatial_mcp">Spatial MCP</span>
 			</div>
 			<span class="partner-link">
-				See what we ship
+				<span data-i18n="partners.see_what_we_ship">See what we ship</span>
 				<svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true"><path d="M2.5 6h7M6.5 3l3 3-3 3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
 			</span>
 		</a>
@@ -467,7 +498,7 @@
 			<p class="partner-desc" data-i18n="partners.three_ws_3d_agent_identity_and_x402">
 				three.ws 3D agent identity and x402 payment rails integrate with IBM watsonx
 				and IBM Granite. Agents run enterprise AI models while maintaining on-chain
-				identity and executing real micropayments — all from a single agent profile.
+				identity and executing real micropayments, all from a single agent profile.
 			</p>
 			<div class="partner-tags">
 				<span class="partner-tag" data-i18n="partners.watsonx_ai">watsonx.ai</span>
@@ -476,7 +507,7 @@
 				<span class="partner-tag" data-i18n="partners.mcp">MCP</span>
 			</div>
 			<span class="partner-link">
-				Read announcement
+				<span data-i18n="partners.read_announcement">Read announcement</span>
 				<svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true"><path d="M2.5 6h7M6.5 3l3 3-3 3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
 			</span>
 		</a>
@@ -498,7 +529,7 @@
 				<span class="partner-tag" data-i18n="partners.iam">IAM</span>
 			</div>
 			<span class="partner-link">
-				View on AWS Marketplace
+				<span data-i18n="partners.how_we_run_on_aws">How we run on AWS</span>
 				<svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true"><path d="M2.5 6h7M6.5 3l3 3-3 3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
 			</span>
 		</a>
@@ -520,7 +551,7 @@
 				<span class="partner-tag" data-i18n="partners.cloud_run">Cloud Run</span>
 			</div>
 			<span class="partner-link">
-				Read partnership post
+				<span data-i18n="partners.read_partnership_post">Read partnership post</span>
 				<svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true"><path d="M2.5 6h7M6.5 3l3 3-3 3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
 			</span>
 		</a>
@@ -542,7 +573,7 @@
 				<span class="partner-tag" data-i18n="partners.apac">APAC</span>
 			</div>
 			<span class="partner-link">
-				Read partnership post
+				<span data-i18n="partners.read_partnership_post">Read partnership post</span>
 				<svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true"><path d="M2.5 6h7M6.5 3l3 3-3 3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
 			</span>
 		</a>
@@ -565,7 +596,7 @@
 				<span class="partner-tag" data-i18n="partners.gpu">GPU</span>
 			</div>
 			<span class="partner-link">
-				What membership adds
+				<span data-i18n="partners.what_membership_adds">What membership adds</span>
 				<svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true"><path d="M2.5 6h7M6.5 3l3 3-3 3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
 			</span>
 		</a>
@@ -586,7 +617,7 @@
 				<span class="partner-tag" data-i18n="partners.developer_content">Developer content</span>
 			</div>
 			<span class="partner-link">
-				Read announcement
+				<span data-i18n="partners.read_announcement">Read announcement</span>
 				<svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true"><path d="M2.5 6h7M6.5 3l3 3-3 3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
 			</span>
 		</a>
@@ -609,7 +640,7 @@
 				<span class="partner-tag" data-i18n="partners.multi_chain">Multi-chain</span>
 			</div>
 			<span class="partner-link">
-				Read announcement
+				<span data-i18n="partners.read_announcement">Read announcement</span>
 				<svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true"><path d="M2.5 6h7M6.5 3l3 3-3 3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
 			</span>
 		</a>
@@ -622,22 +653,22 @@
 	<div class="benefits">
 		<div class="benefit">
 			<div class="benefit-icon" aria-hidden="true">🌐</div>
-			<div class="benefit-title">Global distribution</div>
+			<div class="benefit-title" data-i18n="partners.global_distribution">Global distribution</div>
 			<p class="benefit-desc" data-i18n="partners.reach_developers_and_enterprises_building_th">Reach developers and enterprises building the next generation of AI agents across every major market.</p>
 		</div>
 		<div class="benefit">
 			<div class="benefit-icon" aria-hidden="true">⛓️</div>
-			<div class="benefit-title">On-chain identity</div>
+			<div class="benefit-title" data-i18n="partners.on_chain_identity">On-chain identity</div>
 			<p class="benefit-desc" data-i18n="partners.every_agent_gets_a_verifiable_on_chain">Every agent gets a verifiable on-chain identity. Your platform becomes part of a permissionless agent economy.</p>
 		</div>
 		<div class="benefit">
 			<div class="benefit-icon" aria-hidden="true">💳</div>
-			<div class="benefit-title">x402 payments</div>
+			<div class="benefit-title" data-i18n="partners.x402_payments">x402 payments</div>
 			<p class="benefit-desc" data-i18n="partners.agents_earn_and_spend_using_the_x402">Agents earn and spend using the x402 payment protocol. Partners can monetize API surface through agent-to-agent micropayments.</p>
 		</div>
 		<div class="benefit">
 			<div class="benefit-icon" aria-hidden="true">🔌</div>
-			<div class="benefit-title">MCP server integration</div>
+			<div class="benefit-title" data-i18n="partners.mcp_server_integration">MCP server integration</div>
 			<p class="benefit-desc" data-i18n="partners.ship_a_first_class_mcp_server_that">Ship a first-class MCP server that agents can discover and call natively inside three.ws Forge and the marketplace.</p>
 		</div>
 	</div>
@@ -659,6 +690,16 @@
 </main>
 
 <div id="footer-container"></div>
+
+	<!-- The stat bar ships the correct partner count in the markup so it is right
+	     with JavaScript off; this keeps it right when a card is added or removed. -->
+	<script>
+		(function () {
+			var cards = document.querySelectorAll('.partners-grid .partner-card').length;
+			var out = document.getElementById('partner-count');
+			if (out && cards && out.textContent !== String(cards)) out.textContent = String(cards);
+		})();
+	</script>
 
 	<!-- Runtime i18n: detects locale, swaps annotated copy, mounts <lang-switcher>. -->
 	<script type="module" src="/i18n.js"></script>
