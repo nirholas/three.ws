@@ -345,6 +345,10 @@ ${items}
 <link rel="stylesheet" href="/footer.css" />
 <style>
 \t:root { color-scheme: dark; }
+\t/* The filter toggles .hidden on rows, sections, the jump list and the
+\t   no-results panel, several of which set an explicit display. Pin the
+\t   attribute here rather than trusting every UA sheet to mark it important. */
+\t[hidden] { display: none !important; }
 \tbody { margin: 0; background: #060611; color: #e7e7f5; font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; -webkit-font-smoothing: antialiased; }
 \t.sm-wrap { max-width: 1080px; margin: 0 auto; padding: 96px 24px 64px; }
 \t.sm-hero { margin-bottom: 48px; }
@@ -416,7 +420,7 @@ ${items}
 \t\t<div class="sm-filter">
 \t\t\t<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
 \t\t\t<input id="sm-filter-input" type="search" placeholder="Filter ${totalPages} pages by name, path, or description…" aria-label="Filter pages" autocomplete="off" spellcheck="false" />
-\t\t\t<kbd aria-hidden="true">/</kbd>
+\t\t\t<kbd id="sm-filter-kbd" aria-hidden="true">/</kbd>
 \t\t</div>
 \t\t<p class="sm-filter-count" id="sm-filter-count" role="status" aria-live="polite"></p>
 \t\t<section class="sm-new" id="sm-new" aria-labelledby="sm-new-title">
@@ -450,6 +454,8 @@ ${sectionHtml}
 \t\tvar emptyQ = document.getElementById('sm-empty-q');
 \t\tvar emptyClear = document.getElementById('sm-empty-clear');
 \t\tvar emptySearch = document.getElementById('sm-empty-search');
+\t\tvar toc = document.querySelector('.sm-toc');
+\t\tvar kbdHint = document.getElementById('sm-filter-kbd');
 \t\tvar groups = Array.prototype.map.call(document.querySelectorAll('.sm-section'), function (sec) {
 \t\t\treturn {
 \t\t\t\tsec: sec,
@@ -465,31 +471,66 @@ ${sectionHtml}
 
 \t\tvar newest = document.getElementById('sm-new');
 
-\t\tfunction apply(q) {
-\t\t\tq = q.trim().toLowerCase();
-\t\t\tif (newest) newest.hidden = !!q;
+\t\t// Every token has to hit, so "studio avatar" finds Avatar Studio in either
+\t\t// word order. A single substring test would only match the typed order.
+\t\tfunction matches(text, tokens) {
+\t\t\tfor (var i = 0; i < tokens.length; i++) {
+\t\t\t\tif (text.indexOf(tokens[i]) === -1) return false;
+\t\t\t}
+\t\t\treturn true;
+\t\t}
+
+\t\t// Safari throttles history.replaceState to ~100 calls per 30s and throws a
+\t\t// SecurityError past that, which one fast typist in a 924-row list would
+\t\t// reach. Filtering stays synchronous; only the URL write is coalesced.
+\t\tvar urlTimer = 0;
+\t\tfunction syncUrl(q) {
+\t\t\tclearTimeout(urlTimer);
+\t\t\turlTimer = setTimeout(function () {
+\t\t\t\tvar url = new URL(location.href);
+\t\t\t\tif (q) url.searchParams.set('q', q); else url.searchParams.delete('q');
+\t\t\t\tif (url.href !== location.href) history.replaceState(null, '', url);
+\t\t\t}, 200);
+\t\t}
+
+\t\tfunction firstMatch() {
+\t\t\treturn document.querySelector('.sm-section:not([hidden]) .sm-list > li:not([hidden]) a');
+\t\t}
+
+\t\tfunction apply(raw) {
+\t\t\tvar q = raw.trim();
+\t\t\tvar tokens = q.toLowerCase().split(/\\s+/).filter(Boolean);
+\t\t\tvar filtering = tokens.length > 0;
+\t\t\tif (newest) newest.hidden = filtering;
 \t\t\tvar shown = 0;
+\t\t\tvar sectionsShown = 0;
 \t\t\tgroups.forEach(function (g) {
 \t\t\t\tvar visible = 0;
 \t\t\t\tg.items.forEach(function (it) {
-\t\t\t\t\tvar hit = !q || it.text.indexOf(q) !== -1;
-\t\t\t\t\tit.li.hidden = !hit;
+\t\t\t\t\tvar hit = !filtering || matches(it.text, tokens);
+\t\t\t\t\t// Only write when the state actually flips: a blind assignment
+\t\t\t\t\t// invalidates style for all 900+ rows on every keystroke.
+\t\t\t\t\tif (it.li.hidden === hit) it.li.hidden = !hit;
 \t\t\t\t\tif (hit) visible++;
 \t\t\t\t});
-\t\t\t\tg.sec.hidden = visible === 0;
-\t\t\t\tif (g.toc) g.toc.hidden = visible === 0;
-\t\t\t\tif (g.count) g.count.textContent = visible;
+\t\t\t\tvar blank = visible === 0;
+\t\t\t\tif (g.sec.hidden !== blank) g.sec.hidden = blank;
+\t\t\t\tif (g.toc && g.toc.hidden !== blank) g.toc.hidden = blank;
+\t\t\t\tif (g.count && g.count.textContent !== String(visible)) g.count.textContent = visible;
+\t\t\t\tif (!blank) sectionsShown++;
 \t\t\t\tshown += visible;
 \t\t\t});
-\t\t\tcountEl.textContent = q
-\t\t\t\t? shown + ' of ' + total + ' pages match'
+\t\t\t// Without this the section jump-list survives as an empty bordered bar
+\t\t\t// floating above the no-results panel.
+\t\t\tif (toc) toc.hidden = sectionsShown === 0;
+\t\t\tcountEl.textContent = filtering
+\t\t\t\t? shown + ' of ' + total + ' pages match' + (shown ? ' \\u00b7 press Enter to open the first' : '')
 \t\t\t\t: total + ' pages \\u00b7 ' + groups.length + ' sections';
+\t\t\tif (kbdHint) kbdHint.textContent = filtering && shown ? '\\u21b5' : '/';
 \t\t\temptyQ.textContent = q;
-\t\t\tempty.hidden = !q || shown > 0;
-\t\t\temptySearch.href = q ? '/search?q=' + encodeURIComponent(q) : '/search';
-\t\t\tvar url = new URL(location.href);
-\t\t\tif (q) url.searchParams.set('q', q); else url.searchParams.delete('q');
-\t\t\thistory.replaceState(null, '', url);
+\t\t\tempty.hidden = !filtering || shown > 0;
+\t\t\temptySearch.href = filtering ? '/search?q=' + encodeURIComponent(q) : '/search';
+\t\t\tsyncUrl(q);
 \t\t}
 
 \t\tinput.addEventListener('input', function () { apply(input.value); });
@@ -503,7 +544,13 @@ ${sectionHtml}
 \t\t\t\te.stopPropagation();
 \t\t\t\tinput.value = '';
 \t\t\t\tapply('');
+\t\t\t\treturn;
 \t\t\t}
+\t\t\tif (e.key !== 'Enter' || e.metaKey || e.ctrlKey || e.altKey || e.shiftKey) return;
+\t\t\tvar first = firstMatch();
+\t\t\tif (!first) return;
+\t\t\te.preventDefault();
+\t\t\tfirst.click();
 \t\t});
 \t\tdocument.addEventListener('keydown', function (e) {
 \t\t\tif (e.key !== '/' || e.metaKey || e.ctrlKey || e.altKey) return;
