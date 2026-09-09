@@ -296,6 +296,11 @@ export function configError(message) {
  * valid JSON; applied to a whole-account failure it silently rewrites a whole
  * catalog into English and exits 0.
  *
+ * `isQuotaExhausted` is set by the retry loop for a 429 or a 5xx that survives
+ * the whole backoff budget, which is how a spent quota and a downed gateway
+ * reach this predicate: both fail identically on every key, and neither is
+ * distinguishable from the other by looking at one string.
+ *
  * 402 is here because leaving it out cost a real catalog. A funded OpenRouter
  * key with a spent balance answers every request `402 Insufficient credits`,
  * which is neither a config error nor an auth rejection, so the run treated it
@@ -500,20 +505,43 @@ async function callThreews(prompt) {
 let _cliToken = { value: null, expiresAt: 0 };
 async function vertexToken({ fresh = false } = {}) {
 	if (fresh) _cliToken = { value: null, expiresAt: 0 };
+	// Why every failure here falls through to the CLI and then to configError,
+	// and none of them escapes as a plain Error: a credential that cannot be
+	// minted fails identically on every key, so letting one reach the caller
+	// unmarked routes it into the per-key English fallback and rewrites the
+	// whole catalog into English. That is not theoretical. On 2026-09-09 this
+	// workspace's Application Default Credentials had a revoked refresh token,
+	// so `getGcpAccessToken()` threw `adc_unusable`, which the previous
+	// `code !== 'unconfigured'` rethrow sent out as an ordinary error: an
+	// Arabic run then wrote 67 empty strings and English passthrough into
+	// public/locales/ar.json and would have exited 0. `unconfigured` means no
+	// credentials are configured at all, `adc_unusable` means the configured
+	// ones no longer refresh, and `metadata_unavailable` means the metadata
+	// server did not answer. All three are worth trying the signed-in CLI for,
+	// and none of them is ever a property of the string being translated.
+	let sdkReason = '';
 	try {
 		const { getGcpAccessToken } = await import('../api/_lib/gcp-auth.js');
 		if (!fresh) return await getGcpAccessToken();
 	} catch (err) {
-		if (err?.code !== 'unconfigured') throw err;
+		sdkReason = err?.message || String(err);
 	}
 	if (_cliToken.value && Date.now() < _cliToken.expiresAt) return _cliToken.value;
 	const { spawnSync } = await import('node:child_process');
 	const out = spawnSync('gcloud', ['auth', 'print-access-token'], { encoding: 'utf8' });
 	const token = out.status === 0 && out.stdout.trim();
 	if (!token) {
+		// The CLI's own reason matters as much as the SDK's: an expired gcloud
+		// session says "Reauthentication failed" here and nothing at all in the
+		// SDK path, and a reader who only sees "no credentials" goes looking for
+		// a variable that is already set.
+		const cliReason = (out.stderr || '').trim().split('\n')[0] || `gcloud exited ${out.status}`;
 		throw configError(
-			'No GCP credentials for vertex: set GCP_SERVICE_ACCOUNT_JSON, or run `gcloud auth login` ' +
-				'(the CLI token is used automatically). Alternatively pass --provider=gemini with GOOGLE_API_KEY set.',
+			'No usable GCP credentials for vertex: set GCP_SERVICE_ACCOUNT_JSON, or run `gcloud auth login` ' +
+				'(the CLI token is used automatically). Alternatively pass --provider=gemini with GOOGLE_API_KEY set, ' +
+				'or --provider=threews to ride the platform proxy.' +
+				`${sdkReason ? `\n  credentials: ${sdkReason}` : ''}` +
+				`\n  gcloud: ${cliReason}`,
 		);
 	}
 	// gcloud tokens last an hour; re-shell every 45 minutes rather than per call.
@@ -682,6 +710,18 @@ async function callBackendWithRetry(call, langName, payload, attempt = 0) {
 		// bad key. Mark it so the caller aborts instead of splitting down to
 		// single keys and baking English over every key the run had left.
 		if (err.status === 429) err.isQuotaExhausted = true;
+		// So is a 5xx that survives it, for exactly the same reason. A gateway
+		// that is down is a property of the backend, not of the string being
+		// translated, and no amount of halving the chunk brings it back. This
+		// cost a catalog on 2026-09-09: the three.ws proxy answered
+		// `502 {"error":"upstream_error","status":403}` and then
+		// `503 {"error":"provider_unavailable","message":"no configured fallback
+		// model is available"}` on every request, because its own free-tier chain
+		// was exhausted, and the run walked the whole Arabic catalog baking
+		// English one key at a time while printing a warning per key and heading
+		// for exit 0. An outage must stop the run and be fixed, not be written
+		// into the product as English.
+		if (err.status >= 500 && err.status < 600) err.isQuotaExhausted = true;
 		throw err;
 	}
 }

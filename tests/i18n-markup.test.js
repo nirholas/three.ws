@@ -173,6 +173,22 @@ describe('isFatalAuthFailure', () => {
 		expect(isFatalAuthFailure(new Error('no JSON object in response'))).toBe(false);
 	});
 
+	// Regression, 2026-09-09: the three.ws proxy's own free-tier chain went down
+	// and answered every request `502 {"error":"upstream_error","status":403}`
+	// and then `503 {"error":"provider_unavailable"}`. A single 5xx is a hiccup
+	// worth retrying, which is the case above; one that outlives the whole
+	// backoff budget is a downed gateway, and the run walked the Arabic catalog
+	// baking English one key at a time. Same rule as the 429 directly above it.
+	it('is fatal once a server error has outlived its whole backoff budget', () => {
+		for (const status of [500, 502, 503, 504]) {
+			expect(
+				isFatalAuthFailure(
+					Object.assign(new Error(`threews ${status}`), { status, isQuotaExhausted: true }),
+				),
+			).toBe(true);
+		}
+	});
+
 	it('tolerates a missing error object', () => {
 		expect(isFatalAuthFailure(undefined)).toBe(false);
 	});
