@@ -10,12 +10,13 @@
 // RPC walk otherwise, Jupiter Lite + pump.fun curve prices), Ethereum via the
 // same getBalances() EVM path (needs ALCHEMY_API_KEY, degrades to 503).
 //
-// 24h changes: the EVM path already carries CoinGecko 24h changes per token.
-// Solana balances carry none, so this handler enriches the top holdings from
-// DexScreener's batch endpoint (30 mints per call, keyless) and SOL itself from
-// the multi-provider sol-price failover. Tokens beyond the enrichment cap keep
-// change24h null and the aggregate reports its actual coverage; nothing is
-// extrapolated.
+// 24h changes: the keyed EVM path carries CoinGecko 24h changes per token, but
+// the Solana path and the keyless EVM rung carry none, so this handler enriches
+// the top holdings from DexScreener's batch endpoint (30 addresses per call,
+// keyless, and it indexes both chain families) plus the multi-provider
+// sol-price failover for SOL and DexScreener's WETH pairs for ETH. Holdings
+// beyond the enrichment cap keep change24h null and the aggregate reports its
+// actual coverage; nothing is extrapolated.
 
 import { cors, method, wrap, error } from '../_lib/http.js';
 import { limits, clientIp } from '../_lib/rate-limit.js';
@@ -44,16 +45,19 @@ const CHANGE_BATCHES_MAX = 2;
 
 const OVERVIEW_TTL_S = 60;
 
-// Wrapped SOL tracks native SOL; pricing it off its own (thinner) pairs would
-// let the two report different moves for the same asset.
+// A wrapped native token tracks its native asset; pricing it off its own
+// (thinner) pairs would let the two report different moves for the same asset.
+// Each is therefore excluded from the batch and given the native move instead,
+// which for ETH is read from the deepest WETH pair.
 const WSOL_MINT = 'So11111111111111111111111111111111111111112';
+const WETH_CONTRACT = '0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2';
 
 async function fetchSolanaChanges(tokens) {
 	const changes = new Map();
 
 	const [solPct, batchResults] = await Promise.all([
 		solChange24hPct().catch(() => null),
-		fetchDexScreenerChanges(tokens),
+		fetchDexScreenerChanges(tokens, { wrappedNative: WSOL_MINT }),
 	]);
 	if (Number.isFinite(solPct)) {
 		changes.set('native', solPct);
@@ -65,12 +69,40 @@ async function fetchSolanaChanges(tokens) {
 	return changes;
 }
 
-async function fetchDexScreenerChanges(tokens) {
+// The keyless EVM rung (api/_lib/balances.js getEvmBalancesKeyless) reads
+// balances off public RPC + Blockscout, neither of which carries a 24h move, so
+// the same DexScreener enrichment the Solana lane uses runs for EVM too.
+// Balances that already carry a change (the Alchemy/CoinGecko path) keep theirs:
+// buildOverview's pickChange only consults this map when it has the id.
+async function fetchEvmChanges(tokens) {
+	const [ethPct, batchResults] = await Promise.all([
+		fetchDexScreenerChanges([{ contract: WETH_CONTRACT, usd: 1 }])
+			.then((m) => m.get(WETH_CONTRACT) ?? null)
+			.catch(() => null),
+		fetchDexScreenerChanges(tokens, { wrappedNative: WETH_CONTRACT }),
+	]);
+	const changes = new Map(batchResults);
+	if (Number.isFinite(ethPct)) {
+		changes.set('native', ethPct);
+		changes.set(WETH_CONTRACT, ethPct);
+	}
+	return changes;
+}
+
+// EVM contract addresses are compared case-insensitively (Blockscout and
+// DexScreener both checksum, but neither guarantees the same casing forever);
+// base58 Solana mints are case-SENSITIVE and are matched verbatim.
+const isEvmAddress = (id) => /^0x[0-9a-fA-F]{40}$/.test(id);
+const changeKey = (id) => (isEvmAddress(id) ? id.toLowerCase() : id);
+
+async function fetchDexScreenerChanges(tokens, { wrappedNative = null } = {}) {
+	const skip = wrappedNative ? changeKey(wrappedNative) : null;
 	const mints = tokens
-		.filter((t) => t.mint && t.mint !== WSOL_MINT && Number(t.usd) > 0)
-		.sort((a, b) => (b.usd || 0) - (a.usd || 0))
+		.map((t) => ({ id: t.mint || t.contract || null, usd: Number(t.usd) || 0 }))
+		.filter((t) => t.id && changeKey(t.id) !== skip && t.usd > 0)
+		.sort((a, b) => b.usd - a.usd)
 		.slice(0, CHANGE_BATCH * CHANGE_BATCHES_MAX)
-		.map((t) => t.mint);
+		.map((t) => t.id);
 	if (!mints.length) return new Map();
 
 	const batches = [];
@@ -100,18 +132,21 @@ async function fetchDexScreenerChanges(tokens) {
 	// A mint can be either side of many pairs; keep the change from its
 	// deepest-liquidity pair, the same pick rule as api/_lib/token-market.js.
 	const best = new Map();
-	const wanted = new Set(mints);
+	// Keyed by the normalized id, valued by the id the caller passed in, so the
+	// returned map matches the ids buildOverview puts on its rows.
+	const wanted = new Map(mints.map((m) => [changeKey(m), m]));
 	for (const res of settled) {
 		if (res.status !== 'fulfilled') continue;
 		for (const p of res.value) {
 			const liq = p?.liquidity?.usd ?? 0;
 			for (const side of [p?.baseToken, p?.quoteToken]) {
-				const addr = side?.address;
-				if (!addr || !wanted.has(addr)) continue;
-				const prev = best.get(addr);
+				const raw = side?.address;
+				const id = raw ? wanted.get(changeKey(raw)) : null;
+				if (!id) continue;
+				const prev = best.get(id);
 				if (!prev || liq > prev.liq) {
 					const pct = Number(p?.priceChange?.h24);
-					best.set(addr, { liq, pct: Number.isFinite(pct) ? pct : null });
+					best.set(id, { liq, pct: Number.isFinite(pct) ? pct : null });
 				}
 			}
 		}
@@ -123,13 +158,19 @@ async function fetchDexScreenerChanges(tokens) {
 	return changes;
 }
 
-function sourcesFor(chain) {
+function sourcesFor(chain, balances) {
 	if (chain === 'solana') {
 		const h = heliusHealth();
 		const balanceSource = h.configured && h.available ? 'helius-das' : 'solana-rpc';
 		return [balanceSource, 'jupiter-lite', 'dexscreener'];
 	}
-	return ['alchemy', 'coingecko'];
+	// The keyless rung leaves no CoinGecko-priced token behind: it prices off
+	// Blockscout and values ETH off the market-fallback chain. Naming the rung
+	// that actually answered is what makes the page's "Sources" row honest when
+	// Alchemy is out of monthly capacity.
+	return balances?.keyless
+		? ['ethereum-rpc', 'blockscout', 'dexscreener']
+		: ['alchemy', 'coingecko', 'dexscreener'];
 }
 
 export default wrap(async function handler(req, res) {
@@ -171,7 +212,7 @@ export default wrap(async function handler(req, res) {
 			const balances = await getBalances({ chain, address });
 			const changes = chain === 'solana'
 				? await fetchSolanaChanges(balances.tokens || [])
-				: null;
+				: await fetchEvmChanges(balances.tokens || []);
 			const overview = buildOverview(balances, changes);
 			return {
 				address,
@@ -179,7 +220,7 @@ export default wrap(async function handler(req, res) {
 				...overview,
 				...(balances.stale ? { stale: true } : {}),
 				ts: new Date().toISOString(),
-				sources: sourcesFor(chain),
+				sources: sourcesFor(chain, balances),
 			};
 		});
 	} catch (err) {

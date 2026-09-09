@@ -18,7 +18,7 @@
 
 import { sql, sqlValues } from './db.js';
 
-import { fetchUpstream } from './upstream-fetch.js';
+import { fetchUpstream, fetchUpstreamJson } from './upstream-fetch.js';
 const REFRESH_AFTER_MS = 1000 * 60 * 60 * 24 * 30; // 30 days
 
 function heliusRpcUrl() {

@@ -44,9 +44,16 @@ which builds on the same balance layer as
   otherwise; prices from Jupiter Lite with a pump.fun bonding-curve fallback;
   per-token 24h changes from DexScreener's batch endpoint; SOL's own 24h move
   from a multi-provider failover.
-- **Ethereum**: Alchemy balances with CoinGecko prices and 24h changes. Requires
-  a provider key on the deployment; without one the endpoint returns an honest
-  `503 not_configured`, never fabricated data.
+- **Ethereum** (keyless floor): Alchemy balances with CoinGecko prices and 24h
+  changes when `ALCHEMY_API_KEY` is set and answering. When it is absent or out
+  of monthly capacity the read falls to a keyless rung: native ETH off the
+  shared public-RPC failover ([`api/_lib/evm/rpc.js`](../api/_lib/evm/rpc.js)),
+  ERC-20 discovery and pricing off Blockscout's public Ethereum instance, and
+  24h moves off the same DexScreener batch the Solana lane uses. The `sources`
+  array names the rung that actually answered
+  (`["ethereum-rpc", "blockscout", "dexscreener"]` for the keyless one). Only a
+  deployment where both rungs fail returns `503 not_configured`, never
+  fabricated data.
 
 Classification and aggregation are pure functions in
 [`api/_lib/portfolio-overview.js`](../api/_lib/portfolio-overview.js), unit-tested
