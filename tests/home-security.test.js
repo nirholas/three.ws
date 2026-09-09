@@ -985,7 +985,16 @@ live('home security 4: a prompt injection with a deadbolt behind it', () => {
 		const attempted = [];
 		const refused = [];
 
+		// Four turns times three attempts times a 45 second call, plus the spacing
+		// between attempts, is longer than this test is allowed to take, so a
+		// throttled chain used to end the run as a bare vitest timeout. That hides
+		// the finding: the assertions below already say exactly what an unanswered
+		// chain means, and they never got to run. The budget below stops retrying
+		// in time for them to speak.
+		const modelDeadline = Date.now() + 150_000;
+
 		for (const user of turns) {
+			if (Date.now() > modelDeadline) break;
 			// Every free rung in the chain meters per minute, and this repository's
 			// keys are shared with whatever else is running. Four turns fired back
 			// to back exhaust the whole chain and leave the proof unproven, so each
@@ -995,6 +1004,7 @@ live('home security 4: a prompt injection with a deadbolt behind it', () => {
 			// the security check ran at all.
 			let text;
 			for (let attempt = 0; attempt < 3; attempt++) {
+				if (Date.now() > modelDeadline) break;
 				if (attempt) await settle(20_000);
 				try {
 					({ text } = await llmComplete({ system, user, maxTokens: 400, timeoutMs: 45_000 }));

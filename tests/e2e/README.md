@@ -40,6 +40,7 @@ The smart-home journeys live behind their own config,
 part of `npm run test:e2e`, because a spec about `/club` has no business booting a house.
 
 ```bash
+npm run test:home:live         # every live test in the lane, one shared house
 npm run test:home:e2e          # the ten journeys, against a real Home Assistant
 npm run home:instance          # just the house: prints its URL and token
 npm run home:instance:down     # remove it and its config directory
@@ -53,6 +54,25 @@ The lane's three suites, from cheapest to most expensive:
 | Pure, over a recording of a real instance | `npx vitest run packages/home-bridge` | nothing |
 | Live, against a real house | `npm run test:home:live` | Docker, or a house you already have |
 | The ten browser journeys | `npm run test:home:e2e` | Docker, `.env.local` with `DATABASE_URL` |
+
+### What `npm run test:home:live` runs
+
+[`scripts/home-live-tests.mjs`](../../scripts/home-live-tests.mjs) collects every test file that
+imports [`tests/_helpers/home-instance.js`](../_helpers/home-instance.js) and runs them together
+against one shared house. The list is derived from that import rather than typed out, so a new
+live test cannot be added and then quietly left out of the suite.
+
+It supplies the four things those files need, which is why they used to skip on most machines:
+
+| Variable | Why |
+|---|---|
+| `HOME_LIVE=1` | lets the helper build the house through the harness |
+| `HOME_ALLOW_LOCAL_INSTANCE=1` | the seam in [`api/_lib/home-url-guard.js`](../../api/_lib/home-url-guard.js). A house you run yourself lands on loopback, and the reachability guard refuses loopback in production. `tests/home-runtime-live.test.js` dials through that guard and skips without it. |
+| `WALLET_ENCRYPTION_KEY` | encrypts the throwaway rows the run creates. Generated per run when unset, exactly as the Playwright config does. |
+| `JWT_SECRET` | signs the sessions the HTTP tiers mint. Generated the same way. |
+
+`DATABASE_URL` comes from `.env.local`. Without it the database tiers skip themselves rather than
+failing, so a machine with Docker but no database still runs the bridge and MCP tiers.
 
 ### What `npm run test:home:e2e` actually starts
 

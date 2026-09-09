@@ -111,7 +111,7 @@ test('axe: the guarded confirmation card clears WCAG AA while it is standing', a
 	expect(await readState(instance, lock)).toBe('locked');
 });
 
-test('the whole lane is operable with no mouse: connect, act, confirm, cancel, disconnect', async ({ page }) => {
+test('the house is operable with no mouse: reach a room, open a device, act, cancel', async ({ page }) => {
 	const instance = homeInstance();
 	await signIn(page, 'owner');
 	await openView(page, homeId, '3d');
