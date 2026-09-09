@@ -1875,3 +1875,16 @@ the model is proven without it. **Owner: whoever next re-authenticates gcloud in
 **Commits:** the harness changes were swept into `d40e17778` by a concurrent agent's `git add -A`
 before they could be staged here (the message it landed under describes them accurately); this
 commit carries the docs and this entry.
+
+**Sweep result for the addendum above (same session).** `npx vitest run --root .` sharded into
+quarters: **29,399 passed, 175 skipped.** Four failures appeared across shards 1 and 3 on the first
+pass and NONE of them is real. Shard 3's three re-run green on their own (**507 passed, 0 failed**),
+and shard 1's one, `tests/motion-seed.test.js > gateMotionClip > accepts a smooth, lively clip`,
+passes on its own too (**55 passed**). Both are load artifacts: the box sat at load 88 to 123 for
+the whole sweep with several agents running their own full suites, and `motion-seed` is another
+session's lane, committed into three times today. Nothing this order touched failed in any shard.
+
+One trap worth recording for whoever sweeps next: **`npx vitest list --shard=N/M` ignores the
+shard** and prints the same file list for every N, so it cannot be used to work out which shard a
+file landed in. Two conclusions were drawn from it here before that was noticed; both were
+discarded and replaced with an actual re-run.
