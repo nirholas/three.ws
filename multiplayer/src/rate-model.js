@@ -557,7 +557,7 @@ export function findings(level) {
 				: `The hardest ${family === 'chop' ? 'tree' : 'rock'} is not worth standing at`,
 			detail: better
 				? `${hardest.node.id} (difficulty ${hardest.node.difficulty}) pays ${hardest.cashPerHour} cash per hour against ${easiest.node.id}'s ${easiest.cashPerHour}, so the tougher node clears its own penalty by ${gapPct}%.`
-				: `${hardest.node.id} (difficulty ${hardest.node.difficulty}) pays ${hardest.cashPerHour} cash per hour, ${gapPct}% BELOW ${easiest.node.id} at ${easiest.cashPerHour}. Its richer yield does not cover the slower success rate, so the easy node wins outright.`,
+				: `${hardest.node.id} (difficulty ${hardest.node.difficulty}) pays ${hardest.cashPerHour} cash per hour, ${gapPct}% below ${easiest.node.id} at ${easiest.cashPerHour}. Its richer yield does not cover the slower success rate, so the easy node wins outright.`,
 			nodes: [easiest.node.id, hardest.node.id],
 		});
 	}

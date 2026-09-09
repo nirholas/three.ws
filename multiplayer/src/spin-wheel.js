@@ -52,7 +52,7 @@ export const WHEEL_SEGMENTS = [
 	{ kind: 'gold', gold: 8, label: '8 Cash', oddsPct: 5 },
 	{ kind: 'gold', gold: 12, label: '12 Cash', oddsPct: 5 },
 	{ kind: 'gold', gold: 12, label: '12 Cash', oddsPct: 5 },
-	{ kind: 'gold', gold: 100, label: 'JACKPOT — 100 Cash', oddsPct: 5 },
+	{ kind: 'gold', gold: 100, label: 'JACKPOT: 100 Cash', oddsPct: 5 },
 ];
 
 function avgLevel(profile) {
