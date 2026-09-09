@@ -388,6 +388,17 @@ describe('simulator policy parsing', () => {
 		expect(parsePolicy({ budget_usd: 0.0000001 }).notes.join(' ')).toMatch(/raised/);
 	});
 
+	it('says so when it substituted a budget for a missing or zero one', () => {
+		// The page sends `Number(field.value) || 0` for an empty budget box, so this
+		// is the common path, not an edge case. Substituting $1 in silence handed the
+		// reader a verdict computed against a budget they never proposed.
+		for (const raw of [{}, { budget_usd: 0 }, { budget_usd: -5 }, { budget_usd: 'abc' }]) {
+			const p = parsePolicy(raw);
+			expect(p.budgetUsd).toBe(1);
+			expect(p.notes.join(' ')).toMatch(/costed against \$1/);
+		}
+	});
+
 	it('clamps the TTL to the creatable range', () => {
 		expect(parsePolicy({ expiry_seconds: 1 }).expirySeconds).toBe(SESSION_LIMITS.MIN_TTL_SECONDS);
 		expect(parsePolicy({ expiry_seconds: 1e12 }).expirySeconds).toBe(SESSION_LIMITS.MAX_TTL_SECONDS);
