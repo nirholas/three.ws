@@ -17166,7 +17166,6 @@
 		"visualizer": "Визуализатор →"
 	},
 	"pump_visualizer": {
-		"0_tokens": "<b id=\"vz-stat-count\">0</b> токен",
 		"3d_view_unavailable": "3D харагдац боломжгүй.",
 		"all_launches": "Бүх нээлтүүд →",
 		"c": "C",
@@ -17184,13 +17183,13 @@
 		"meta_description": "Pump.fun дээрх трэнд токенуудын бодит цагийн 3D дүрслэл. Бөмбөлөг бүр нь зах зээлийн үнэлгээгээрээ хэмжээлэгдсэн амьд койн юм.",
 		"meta_og_description": "Трэнд болж буй pump.fun токенуудын 3D дүрслэгч — бодит цагийн зах зээлийн өгөгдлийг интерактив орчинд дүрсэлсэн.",
 		"meta_og_title": "Pump Визуалжуулагч · three.ws",
-		"meta_title": "3D-Агент · Pump.fun Визуалжуулагч",
+		"meta_title": "Pump.fun Визуалжуулагч · three.ws",
 		"meta_twitter_description": "Трэнд болж буй pump.fun токенуудын 3D дүрслэгч — бодит цагийн зах зээлийн өгөгдлийг интерактив орчинд дүрсэлсэн.",
 		"meta_twitter_title": "Pump Визуалжуулагч · three.ws",
 		"migrations": "<span class=\"live-dot\"></span>Шилжүүлэг",
-		"min": "<b id=\"vz-stat-rate\">—</b> <span id=\"vz-stat-rate-unit\">/мин</span>",
 		"new": "Шинэ",
 		"on_refresh": "сэргээхэд",
+		"per_minute_label": "/мин",
 		"refresh_data_r_title": "Өгөгдөл сэргээх (R)",
 		"replies": "Хариултууд",
 		"retry": "Дахин оролдох",
@@ -17198,7 +17197,8 @@
 		"show_tokens_as_3d_orbs_arialabel": "Токенуудыг 3D бөмбөлөг хэлбэрээр харуулах",
 		"show_tokens_as_coin_logos_arialabel": "Токенуудыг койны лого хэлбэрээр харуулах",
 		"streams": "Урсгалууд",
-		"total": "нийт <b id=\"vz-stat-mcap\">—</b>",
+		"tokens_label": "токен",
+		"total_label": "нийт",
 		"trending": "Трэнд",
 		"try_3d_again": "3D-г дахин оролдох",
 		"up": "▲ <b>дээш</b>"

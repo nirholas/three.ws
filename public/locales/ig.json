@@ -17166,7 +17166,6 @@
 		"visualizer": "Ihe ngosi →"
 	},
 	"pump_visualizer": {
-		"0_tokens": "<b id=\"vz-stat-count\">0</b> token",
 		"3d_view_unavailable": "Nlele 3D adịghị.",
 		"all_launches": "Mwepụta niile →",
 		"c": "C",
@@ -17184,13 +17183,13 @@
 		"meta_description": "Ngosipụta 3D na-eme n'oge nke akara ngosi na-ewu ewu na Pump.fun. Bọọlụ ọ bụla bụ mkpụrụ ego dị ndụ, nha ya dabere n'oke ahịa.",
 		"meta_og_description": "Ngosipụta 3D nke akara ngosi pump.fun na-ewu ewu — data ahịa dị ndụ egosipụtara dị ka ihe nkiri mmekọrịta.",
 		"meta_og_title": "Ngosipụta Pump · three.ws",
-		"meta_title": "Onye Ọrụ 3D · Ngosipụta Pump.fun",
+		"meta_title": "Ngosipụta Pump.fun · three.ws",
 		"meta_twitter_description": "Ngosipụta 3D nke akara ngosi pump.fun na-ewu ewu — data ahịa dị ndụ egosipụtara dị ka ihe nkiri mmekọrịta.",
 		"meta_twitter_title": "Ngosipụta Pump · three.ws",
 		"migrations": "<span class=\"live-dot\"></span>Mbugharị",
-		"min": "<b id=\"vz-stat-rate\">—</b> <span id=\"vz-stat-rate-unit\">/nkeji</span>",
 		"new": "Ọhụrụ",
 		"on_refresh": "na mmelite",
+		"per_minute_label": "/nkeji",
 		"refresh_data_r_title": "Mmelite data (R)",
 		"replies": "Azịza",
 		"retry": "Gbalịa ọzọ",
@@ -17198,7 +17197,8 @@
 		"show_tokens_as_3d_orbs_arialabel": "Gosi akara ngosi dị ka bọọlụ 3D",
 		"show_tokens_as_coin_logos_arialabel": "Gosi akara ngosi dị ka akara mkpụrụ ego",
 		"streams": "Nnyefe",
-		"total": "ngụkọta <b id=\"vz-stat-mcap\">—</b>",
+		"tokens_label": "token",
+		"total_label": "ngụkọta",
 		"trending": "Na-ewu ewu",
 		"try_3d_again": "Gbalịa 3D ọzọ",
 		"up": "▲ <b>elu</b>"

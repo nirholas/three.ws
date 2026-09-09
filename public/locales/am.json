@@ -16793,7 +16793,6 @@
 		"visualizer": "ቪዥዋልዘር →"
 	},
 	"pump_visualizer": {
-		"0_tokens": "<b id=\"vz-stat-count\">0</b> ቶከኖች",
 		"3d_view_unavailable": "3D እይታ አይገኝም።",
 		"all_launches": "ሁሉም ማስጀመሪያዎች →",
 		"c": "C",
@@ -16811,13 +16810,13 @@
 		"meta_description": "በPump.fun ላይ በአዝማሚያ ላይ ያሉ ቶከኖች በቅጽበት የሚታይ 3D ምስል፡፡ እያንዳንዱ ሉል በገበያ ካፒታላይዜሽን መጠን የተሰራ የቀጥታ ሳንቲም ነው፡፡",
 		"meta_og_description": "በአዝማሚያ ላይ ያሉ pump.fun ቶከኖች 3D ምስል ማሳያ — የቀጥታ የገበያ መረጃ እንደ መስተጋብራዊ ትዕይንት የቀረበ።",
 		"meta_og_title": "ፓምፕ ቪዥዋላይዘር · three.ws",
-		"meta_title": "3D-ኤጀንት · Pump.fun ቪዥዋላይዘር",
+		"meta_title": "Pump.fun ቪዥዋላይዘር · three.ws",
 		"meta_twitter_description": "በአዝማሚያ ላይ ያሉ pump.fun ቶከኖች 3D ምስል ማሳያ — የቀጥታ የገበያ መረጃ እንደ መስተጋብራዊ ትዕይንት የቀረበ።",
 		"meta_twitter_title": "ፓምፕ ቪዥዋላይዘር · three.ws",
 		"migrations": "<span class=\"live-dot\"></span>ፍልሰቶች",
-		"min": "<b id=\"vz-stat-rate\">—</b> <span id=\"vz-stat-rate-unit\">/ደቂቃ</span>",
 		"new": "አዲስ",
 		"on_refresh": "ሲታደስ",
+		"per_minute_label": "/ደቂቃ",
 		"refresh_data_r_title": "መረጃን አድስ (R)",
 		"replies": "ምላሾች",
 		"retry": "እንደገና ሞክር",
@@ -16825,7 +16824,8 @@
 		"show_tokens_as_3d_orbs_arialabel": "ቶከኖችን እንደ 3D ሉሎች አሳይ",
 		"show_tokens_as_coin_logos_arialabel": "ቶከኖችን እንደ ሳንቲም አርማዎች አሳይ",
 		"streams": "ዥረቶች",
-		"total": "ጠቅላላ <b id=\"vz-stat-mcap\">—</b>",
+		"tokens_label": "ቶከኖች",
+		"total_label": "ጠቅላላ",
 		"trending": "በአዝማሚያ ላይ",
 		"try_3d_again": "3Dን እንደገና ሞክር",
 		"up": "▲ <b>ከፍ</b>"

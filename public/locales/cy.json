@@ -17166,7 +17166,6 @@
 		"visualizer": "Gweledydd →"
 	},
 	"pump_visualizer": {
-		"0_tokens": "<b id=\"vz-stat-count\">0</b> tocynnau",
 		"3d_view_unavailable": "Golygfa 3D ddim ar gael.",
 		"all_launches": "Pob lansiad →",
 		"c": "C",
@@ -17184,13 +17183,13 @@
 		"meta_description": "Gweledigaeth 3D amser real o docynnau tueddol ar Pump.fun. Mae pob sffêr yn ddarn arian byw, wedi'i faintio yn ôl cap marchnad.",
 		"meta_og_description": "Gweledydd 3D o docynnau pump.fun tueddol — data marchnad byw wedi'i rendro fel golygfa ryngweithiol.",
 		"meta_og_title": "Gweledydd Pump · three.ws",
-		"meta_title": "3D-Agent · Gweledydd Pump.fun",
+		"meta_title": "Gweledydd Pump.fun · three.ws",
 		"meta_twitter_description": "Gweledydd 3D o docynnau pump.fun tueddol — data marchnad byw wedi'i rendro fel golygfa ryngweithiol.",
 		"meta_twitter_title": "Gweledydd Pump · three.ws",
 		"migrations": "<span class=\"live-dot\"></span>Mudo",
-		"min": "<b id=\"vz-stat-rate\">—</b> <span id=\"vz-stat-rate-unit\">/mun</span>",
 		"new": "Newydd",
 		"on_refresh": "wrth adnewyddu",
+		"per_minute_label": "/mun",
 		"refresh_data_r_title": "Adnewyddu data (R)",
 		"replies": "Atebion",
 		"retry": "Ail-gynnig",
@@ -17198,7 +17197,8 @@
 		"show_tokens_as_3d_orbs_arialabel": "Dangos tocynnau fel orbs 3D",
 		"show_tokens_as_coin_logos_arialabel": "Dangos tocynnau fel logos darnau arian",
 		"streams": "Ffrydiau",
-		"total": "cyfanswm <b id=\"vz-stat-mcap\">—</b>",
+		"tokens_label": "tocynnau",
+		"total_label": "cyfanswm",
 		"trending": "Tueddol",
 		"try_3d_again": "Rhowch gynnig ar 3D eto",
 		"up": "▲ <b>i fyny</b>"

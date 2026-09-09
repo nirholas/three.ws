@@ -17166,7 +17166,6 @@
 		"visualizer": "Візуалізатор →"
 	},
 	"pump_visualizer": {
-		"0_tokens": "<b id=\"vz-stat-count\">0</b> токенів",
 		"3d_view_unavailable": "3D перегляд недоступний.",
 		"all_launches": "Усі запуски →",
 		"c": "C",
@@ -17184,13 +17183,13 @@
 		"meta_description": "3D візуалізація популярних токенів на Pump.fun в реальному часі. Кожна сфера — це живий монета, розмір якої визначається капіталізацією.",
 		"meta_og_description": "3D візуалізатор популярних токенів pump.fun — живі ринкові дані, представлені як інтерактивна сцена.",
 		"meta_og_title": "Pump Visualizer · three.ws",
-		"meta_title": "3D-Агент · Pump.fun Visualizer",
+		"meta_title": "Pump.fun Visualizer · three.ws",
 		"meta_twitter_description": "3D візуалізатор трендових pump.fun токенів — живі ринкові дані, представлені як інтерактивна сцена.",
 		"meta_twitter_title": "Візуалізатор Памп · three.ws",
 		"migrations": "<span class=\"live-dot\"></span>Міграції",
-		"min": "<b id=\"vz-stat-rate\">—</b> <span id=\"vz-stat-rate-unit\">/хв</span>",
 		"new": "Новий",
 		"on_refresh": "при оновленні",
+		"per_minute_label": "/хв",
 		"refresh_data_r_title": "Оновити дані (R)",
 		"replies": "Відповіді",
 		"retry": "Спробувати знову",
@@ -17198,7 +17197,8 @@
 		"show_tokens_as_3d_orbs_arialabel": "Показати токени як 3D кулі",
 		"show_tokens_as_coin_logos_arialabel": "Показати токени як логотипи монет",
 		"streams": "Потоки",
-		"total": "всього <b id=\"vz-stat-mcap\">—</b>",
+		"tokens_label": "токенів",
+		"total_label": "всього",
 		"trending": "Трендові",
 		"try_3d_again": "Спробуйте 3D знову",
 		"up": "▲ <b>вгору</b>"

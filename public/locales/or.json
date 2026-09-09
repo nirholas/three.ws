@@ -17166,7 +17166,6 @@
 		"visualizer": "ଭିଜୁଆଲାଇଜର →"
 	},
 	"pump_visualizer": {
-		"0_tokens": "<b id=\"vz-stat-count\">0</b> ଟୋକେନ୍",
 		"3d_view_unavailable": "3D ଦୃଶ୍ୟ ଉପଲବ୍ଧ ନାହିଁ।",
 		"all_launches": "ସମସ୍ତ ଲଞ୍ଚ →",
 		"c": "C",
@@ -17184,13 +17183,13 @@
 		"meta_description": "Pump.fun ରେ ଟ୍ରେଣ୍ଡିଂ ଟୋକେନର ଏକ ରିଅଲ୍-ଟାଇମ୍ 3D ଭିଜୁଆଲାଇଜେସନ୍। ପ୍ରତ୍ୟେକ ଗୋଲକ ଏକ ଲାଇଭ୍ କଏନ୍, ଯାହା ମାର୍କେଟ କ୍ୟାପ୍ ଦ୍ୱାରା ଆକାରିତ।",
 		"meta_og_description": "ଟ୍ରେଣ୍ଡିଂ pump.fun ଟୋକେନର 3D ଭିଜୁଆଲାଇଜର — ଲାଇଭ୍ ମାର୍କେଟ ଡାଟା ଏକ ଇଣ୍ଟରାକ୍ଟିଭ୍ ଦୃଶ୍ୟ ଭାବରେ ରେଣ୍ଡର ହୋଇଛି।",
 		"meta_og_title": "ପମ୍ପ ଭିଜୁଆଲାଇଜର · three.ws",
-		"meta_title": "3D-ଏଜେଣ୍ଟ · Pump.fun ଭିଜୁଆଲାଇଜର",
+		"meta_title": "Pump.fun ଭିଜୁଆଲାଇଜର · three.ws",
 		"meta_twitter_description": "ଟ୍ରେଣ୍ଡିଂ pump.fun ଟୋକେନର 3D ଭିଜୁଆଲାଇଜର — ଲାଇଭ୍ ମାର୍କେଟ ଡାଟା ଏକ ଇଣ୍ଟରାକ୍ଟିଭ୍ ଦୃଶ୍ୟ ଭାବରେ ରେଣ୍ଡର ହୋଇଛି।",
 		"meta_twitter_title": "ପମ୍ପ ଭିଜୁଆଲାଇଜର · three.ws",
 		"migrations": "<span class=\"live-dot\"></span>ମାଇଗ୍ରେସନ୍",
-		"min": "<b id=\"vz-stat-rate\">—</b> <span id=\"vz-stat-rate-unit\">/ମିନିଟ୍</span>",
 		"new": "ନୂଆ",
 		"on_refresh": "ରିଫ୍ରେସ୍ ଉପରେ",
+		"per_minute_label": "/ମିନିଟ୍",
 		"refresh_data_r_title": "ଡାଟା ରିଫ୍ରେସ୍ କରନ୍ତୁ (R)",
 		"replies": "ପ୍ରତ୍ୟୁତ୍ତର",
 		"retry": "ପୁନଃ ଚେଷ୍ଟା କରନ୍ତୁ",
@@ -17198,7 +17197,8 @@
 		"show_tokens_as_3d_orbs_arialabel": "ଟୋକେନ୍‌ଗୁଡ଼ିକୁ 3D ଅର୍ବ ଭାବରେ ଦେଖାନ୍ତୁ",
 		"show_tokens_as_coin_logos_arialabel": "ଟୋକେନ୍‌ଗୁଡ଼ିକୁ କଏନ୍ ଲୋଗୋ ଭାବରେ ଦେଖାନ୍ତୁ",
 		"streams": "ଷ୍ଟ୍ରିମ୍‌ଗୁଡ଼ିକ",
-		"total": "ମୋଟ <b id=\"vz-stat-mcap\">—</b>",
+		"tokens_label": "ଟୋକେନ୍",
+		"total_label": "ମୋଟ",
 		"trending": "ଟ୍ରେଣ୍ଡିଂ",
 		"try_3d_again": "3D ପୁଣି ଚେଷ୍ଟା କରନ୍ତୁ",
 		"up": "▲ <b>ଉପର</b>"

@@ -17166,7 +17166,6 @@
 		"visualizer": "ვიზუალიზატორი →"
 	},
 	"pump_visualizer": {
-		"0_tokens": "<b id=\"vz-stat-count\">0</b> ტოკენი",
 		"3d_view_unavailable": "3D ხედი მიუწვდომელია.",
 		"all_launches": "ყველა გაშვება →",
 		"c": "C",
@@ -17184,13 +17183,13 @@
 		"meta_description": "Pump.fun-ზე ტრენდული ტოკენების რეალურ დროში 3D ვიზუალიზაცია. თითოეული სფერო ცოცხალი მონეტაა, ზომა მარკეტ კაპის მიხედვით.",
 		"meta_og_description": "ტრენდული pump.fun ტოკენების 3D ვიზუალიზატორი — ცოცხალი საბაზრო მონაცემები წარმოდგენილია ინტერაქტიული სცენის სახით.",
 		"meta_og_title": "Pump ვიზუალიზატორი · three.ws",
-		"meta_title": "3D-აგენტი · Pump.fun ვიზუალიზატორი",
+		"meta_title": "Pump.fun ვიზუალიზატორი · three.ws",
 		"meta_twitter_description": "ტრენდული pump.fun ტოკენების 3D ვიზუალიზატორი — ცოცხალი საბაზრო მონაცემები წარმოდგენილია ინტერაქტიული სცენის სახით.",
 		"meta_twitter_title": "Pump ვიზუალიზატორი · three.ws",
 		"migrations": "<span class=\"live-dot\"></span>მიგრაციები",
-		"min": "<b id=\"vz-stat-rate\">—</b> <span id=\"vz-stat-rate-unit\">/წთ</span>",
 		"new": "ახალი",
 		"on_refresh": "განახლებაზე",
+		"per_minute_label": "/წთ",
 		"refresh_data_r_title": "მონაცემების განახლება (R)",
 		"replies": "პასუხები",
 		"retry": "ხელახლა ცდა",
@@ -17198,7 +17197,8 @@
 		"show_tokens_as_3d_orbs_arialabel": "ტოკენების 3D ორბებად ჩვენება",
 		"show_tokens_as_coin_logos_arialabel": "ტოკენების მონეტის ლოგოებად ჩვენება",
 		"streams": "ნაკადები",
-		"total": "სულ <b id=\"vz-stat-mcap\">—</b>",
+		"tokens_label": "ტოკენი",
+		"total_label": "სულ",
 		"trending": "ტრენდული",
 		"try_3d_again": "ხელახლა სცადეთ 3D",
 		"up": "▲ <b>ზრდა</b>"

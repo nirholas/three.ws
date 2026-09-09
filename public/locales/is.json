@@ -17166,7 +17166,6 @@
 		"visualizer": "Sjónmyndari →"
 	},
 	"pump_visualizer": {
-		"0_tokens": "<b id=\"vz-stat-count\">0</b> tóken",
 		"3d_view_unavailable": "3D sýn ófáanleg.",
 		"all_launches": "Öll útgáfur →",
 		"c": "C",
@@ -17184,13 +17183,13 @@
 		"meta_description": "Rauntíma þrívíddarmyndun á vinsælum táknum á Pump.fun. Hver kúla er lifandi mynt, stærðar eftir markaðsvirði.",
 		"meta_og_description": "Þrívíddarmyndun á vinsælum pump.fun táknum — lifandi markaðsgögn sýnd sem gagnvirk sena.",
 		"meta_og_title": "Pump Sjónræning · three.ws",
-		"meta_title": "3D-Agent · Pump.fun Sjónræning",
+		"meta_title": "Pump.fun Sjónræning · three.ws",
 		"meta_twitter_description": "Þrívíddarmyndun á vinsælum pump.fun táknum — lifandi markaðsgögn sýnd sem gagnvirk sena.",
 		"meta_twitter_title": "Pump Sjónræning · three.ws",
 		"migrations": "<span class=\"live-dot\"></span>Flutningar",
-		"min": "<b id=\"vz-stat-rate\">—</b> <span id=\"vz-stat-rate-unit\">/mín</span>",
 		"new": "Nýtt",
 		"on_refresh": "við endurnýjun",
+		"per_minute_label": "/mín",
 		"refresh_data_r_title": "Endurnýja gögn (R)",
 		"replies": "Svör",
 		"retry": "Reyna aftur",
@@ -17198,7 +17197,8 @@
 		"show_tokens_as_3d_orbs_arialabel": "Sýna tákn sem þrívíddarkúlur",
 		"show_tokens_as_coin_logos_arialabel": "Sýna tákn sem myntmerki",
 		"streams": "Straumir",
-		"total": "samtals <b id=\"vz-stat-mcap\">—</b>",
+		"tokens_label": "tóken",
+		"total_label": "samtals",
 		"trending": "Vinsælt",
 		"try_3d_again": "Reyna 3D aftur",
 		"up": "▲ <b>upp</b>"

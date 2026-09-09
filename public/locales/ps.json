@@ -16599,7 +16599,6 @@
 		"visualizer": "ویژولایزر →"
 	},
 	"pump_visualizer": {
-		"0_tokens": "<b id=\"vz-stat-count\">0</b> ټوکنونه",
 		"3d_view_unavailable": "3D لید شتون نلري.",
 		"all_launches": "ټول پیلونه →",
 		"c": "C",
@@ -16617,13 +16616,13 @@
 		"meta_description": "د Pump.fun پر مخ د رجحان لرونکو ټوکنونو 3D لید. هره کره یوه ژوندۍ سکه ده، چې د مارکیټ کیپ له مخې اندازه شوې ده.",
 		"meta_og_description": "د رجحان لرونکو pump.fun ټوکنونو 3D لیدونکی — د ژوندي مارکیټ ډیټا د متقابلې صحنې په توګه وړاندې شوې.",
 		"meta_og_title": "پمپ ویژولایزر · three.ws",
-		"meta_title": "3D-ایجنټ · Pump.fun ویژولایزر",
+		"meta_title": "Pump.fun ویژولایزر · three.ws",
 		"meta_twitter_description": "د رجحان لرونکو pump.fun ټوکنونو 3D لیدونکی — د ژوندي مارکیټ ډیټا د متقابلې صحنې په توګه وړاندې شوې.",
 		"meta_twitter_title": "پمپ ویژولایزر · three.ws",
 		"migrations": "<span class=\"live-dot\"></span>مهاجرتونه",
-		"min": "<b id=\"vz-stat-rate\">—</b> <span id=\"vz-stat-rate-unit\">/دقیقه</span>",
 		"new": "نوی",
 		"on_refresh": "په تازه کولو سره",
+		"per_minute_label": "/دقیقه",
 		"refresh_data_r_title": "ډیټا تازه کړئ (R)",
 		"replies": "ځوابونه",
 		"retry": "بیا هڅه وکړئ",
@@ -16631,7 +16630,8 @@
 		"show_tokens_as_3d_orbs_arialabel": "ټوکنونه د 3D کروی شکلونو په توګه وښایاست",
 		"show_tokens_as_coin_logos_arialabel": "ټوکنونه د سکې لوګو په توګه وښایاست",
 		"streams": "جریانونه",
-		"total": "ټول <b id=\"vz-stat-mcap\">—</b>",
+		"tokens_label": "ټوکنونه",
+		"total_label": "ټول",
 		"trending": "رجحان لرونکي",
 		"try_3d_again": "بیا 3D هڅه وکړئ",
 		"up": "▲ <b>پورته</b>"

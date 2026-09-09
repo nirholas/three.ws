@@ -16599,7 +16599,6 @@
 		"visualizer": "Viżwalizzatur →"
 	},
 	"pump_visualizer": {
-		"0_tokens": "<b id=\"vz-stat-count\">0</b> tokens",
 		"3d_view_unavailable": "Il-veduta 3D mhix disponibbli.",
 		"all_launches": "It-tnedijiet kollha →",
 		"c": "C",
@@ -16617,13 +16616,13 @@
 		"meta_description": "Viżwalizzazzjoni 3D f'ħin reali ta' tokens popolari fuq Pump.fun. Kull sfera hija munita diretta, iddimensionata skont il-kapitalizzazzjoni tas-suq.",
 		"meta_og_description": "Viżwalizzatur 3D ta' tokens pump.fun popolari — data tas-suq diretta murija bħala xena interattiva.",
 		"meta_og_title": "Viżwalizzatur Pump · three.ws",
-		"meta_title": "Aġent 3D · Viżwalizzatur Pump.fun",
+		"meta_title": "Viżwalizzatur Pump.fun · three.ws",
 		"meta_twitter_description": "Viżwalizzatur 3D ta' tokens pump.fun popolari — data tas-suq diretta murija bħala xena interattiva.",
 		"meta_twitter_title": "Viżwalizzatur Pump · three.ws",
 		"migrations": "<span class=\"live-dot\"></span>Migrazzjonijiet",
-		"min": "<b id=\"vz-stat-rate\">—</b> <span id=\"vz-stat-rate-unit\">/min</span>",
 		"new": "Ġdid",
 		"on_refresh": "mal-aġġornament",
+		"per_minute_label": "/min",
 		"refresh_data_r_title": "Aġġorna d-data (R)",
 		"replies": "Tweġibiet",
 		"retry": "Erġa' pprova",
@@ -16631,7 +16630,8 @@
 		"show_tokens_as_3d_orbs_arialabel": "Uri t-tokens bħala orbs 3D",
 		"show_tokens_as_coin_logos_arialabel": "Uri t-tokens bħala logos tal-muniti",
 		"streams": "Flussi",
-		"total": "total <b id=\"vz-stat-mcap\">—</b>",
+		"tokens_label": "tokens",
+		"total_label": "total",
 		"trending": "Popolari",
 		"try_3d_again": "Erġa' pprova 3D",
 		"up": "▲ <b>żieda</b>"

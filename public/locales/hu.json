@@ -17166,7 +17166,6 @@
 		"visualizer": "Vizualizáló →"
 	},
 	"pump_visualizer": {
-		"0_tokens": "<b id=\"vz-stat-count\">0</b> token",
 		"3d_view_unavailable": "3D nézet nem elérhető.",
 		"all_launches": "Összes indítás →",
 		"c": "C",
@@ -17184,13 +17183,13 @@
 		"meta_description": "Valós idejű 3D vizualizáció a népszerű tokenekről a Pump.fun-on. Minden gömb egy élő érme, a piaci kapitalizáció alapján méretezve.",
 		"meta_og_description": "3D vizualizáló a népszerű pump.fun tokenekhez — élő piaci adatok interaktív jelenetben megjelenítve.",
 		"meta_og_title": "Pump Vizualizáló · three.ws",
-		"meta_title": "3D-Ügynök · Pump.fun Vizualizáló",
+		"meta_title": "Pump.fun Vizualizáló · three.ws",
 		"meta_twitter_description": "3D vizualizáló a trendi pump.fun tokenekhez — élő piaci adatok interaktív jelenetként megjelenítve.",
 		"meta_twitter_title": "Pump Visualizer · three.ws",
 		"migrations": "<span class=\"live-dot\"></span>Migrációk",
-		"min": "<b id=\"vz-stat-rate\">—</b> <span id=\"vz-stat-rate-unit\">/perc</span>",
 		"new": "Új",
 		"on_refresh": "frissítéskor",
+		"per_minute_label": "/perc",
 		"refresh_data_r_title": "Adatok frissítése (R)",
 		"replies": "Válaszok",
 		"retry": "Újrapróbálás",
@@ -17198,7 +17197,8 @@
 		"show_tokens_as_3d_orbs_arialabel": "Tokenek megjelenítése 3D gömbökként",
 		"show_tokens_as_coin_logos_arialabel": "Tokenek megjelenítése érme logókként",
 		"streams": "Áramlások",
-		"total": "összesen <b id=\"vz-stat-mcap\">—</b>",
+		"tokens_label": "token",
+		"total_label": "összesen",
 		"trending": "Trendben",
 		"try_3d_again": "Próbáld újra a 3D-t",
 		"up": "▲ <b>fel</b>"

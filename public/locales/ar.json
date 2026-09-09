@@ -17166,7 +17166,6 @@
 		"visualizer": "المصور →"
 	},
 	"pump_visualizer": {
-		"0_tokens": "<b id=\"vz-stat-count\">0</b> رموز",
 		"3d_view_unavailable": "عرض ثلاثي الأبعاد غير متاح.",
 		"all_launches": "جميع الإطلاقات →",
 		"c": "C",
@@ -17184,13 +17183,13 @@
 		"meta_description": "عرض ثلاثي الأبعاد في الوقت الحقيقي للرموز الرائجة على Pump.fun. كل كرة هي عملة حية، بحجم يعتمد على القيمة السوقية.",
 		"meta_og_description": "مصور ثلاثي الأبعاد للرموز الرائجة pump.fun — بيانات السوق الحية مصورة كمشهد تفاعلي.",
 		"meta_og_title": "مصور Pump · three.ws",
-		"meta_title": "وكيل ثلاثي الأبعاد · أداة تصور Pump.fun",
+		"meta_title": "أداة تصور Pump.fun · three.ws",
 		"meta_twitter_description": "مصور ثلاثي الأبعاد للرموز الرائجة pump.fun — بيانات السوق الحية مصورة كمشهد تفاعلي.",
 		"meta_twitter_title": "مصور Pump · three.ws",
 		"migrations": "<span class=\"live-dot\"></span>الهجرات",
-		"min": "<b id=\"vz-stat-rate\">—</b> <span id=\"vz-stat-rate-unit\">/دقيقة</span>",
 		"new": "جديد",
 		"on_refresh": "عند التحديث",
+		"per_minute_label": "/دقيقة",
 		"refresh_data_r_title": "تحديث البيانات (R)",
 		"replies": "ردود",
 		"retry": "إعادة المحاولة",
@@ -17198,7 +17197,8 @@
 		"show_tokens_as_3d_orbs_arialabel": "عرض الرموز ككرات ثلاثية الأبعاد",
 		"show_tokens_as_coin_logos_arialabel": "عرض الرموز كشعارات عملات",
 		"streams": "البث",
-		"total": "الإجمالي <b id=\"vz-stat-mcap\">—</b>",
+		"tokens_label": "رموز",
+		"total_label": "الإجمالي",
 		"trending": "رائج",
 		"try_3d_again": "حاول 3D مرة أخرى",
 		"up": "▲ <b>أعلى</b>"

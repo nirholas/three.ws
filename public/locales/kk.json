@@ -17166,7 +17166,6 @@
 		"visualizer": "Визуализатор →"
 	},
 	"pump_visualizer": {
-		"0_tokens": "<b id=\"vz-stat-count\">0</b> токендер",
 		"3d_view_unavailable": "3D көрініс қолжетімсіз.",
 		"all_launches": "Барлық іске қосулар →",
 		"c": "C",
@@ -17184,13 +17183,13 @@
 		"meta_description": "Pump.fun-дағы трендтегі токендердің нақты уақыттағы 3D визуализациясы. Әрбір сфера — нарықтық капиталдандыру бойынша өлшемделген тікелей монета.",
 		"meta_og_description": "Трендтегі pump.fun токендерінің 3D визуализаторы — интерактивті көрініс ретінде көрсетілген нақты уақыттағы нарық деректері.",
 		"meta_og_title": "Pump Visualizer · three.ws",
-		"meta_title": "3D-Агент · Pump.fun Визуализатор",
+		"meta_title": "Pump.fun Визуализатор · three.ws",
 		"meta_twitter_description": "Трендтегі pump.fun токендерінің 3D визуализаторы — интерактивті көрініс ретінде көрсетілген нақты уақыттағы нарық деректері.",
 		"meta_twitter_title": "Pump Visualizer · three.ws",
 		"migrations": "<span class=\"live-dot\"></span>Миграциялар",
-		"min": "<b id=\"vz-stat-rate\">—</b> <span id=\"vz-stat-rate-unit\">/мин</span>",
 		"new": "Жаңа",
 		"on_refresh": "жаңарту кезінде",
+		"per_minute_label": "/мин",
 		"refresh_data_r_title": "Деректерді жаңарту (R)",
 		"replies": "Жауаптар",
 		"retry": "Қайталау",
@@ -17198,7 +17197,8 @@
 		"show_tokens_as_3d_orbs_arialabel": "Токендерді 3D шарлар ретінде көрсету",
 		"show_tokens_as_coin_logos_arialabel": "Токендерді монета логотиптері ретінде көрсету",
 		"streams": "Ағындар",
-		"total": "барлығы <b id=\"vz-stat-mcap\">—</b>",
+		"tokens_label": "токендер",
+		"total_label": "барлығы",
 		"trending": "Трендтегі",
 		"try_3d_again": "3D-ді қайта көру",
 		"up": "▲ <b>жоғары</b>"

@@ -17166,7 +17166,6 @@
 		"visualizer": "Vizualizētājs →"
 	},
 	"pump_visualizer": {
-		"0_tokens": "<b id=\"vz-stat-count\">0</b> žetoni",
 		"3d_view_unavailable": "3D skats nav pieejams.",
 		"all_launches": "Visi palaišanas gadījumi →",
 		"c": "C",
@@ -17184,13 +17183,13 @@
 		"meta_description": "Reāllaika 3D vizualizācija populārākajiem žetoniem platformā Pump.fun. Katra sfēra ir dzīva monēta, kuras izmērs noteikts pēc tirgus kapitalizācijas.",
 		"meta_og_description": "3D vizualizators populārākajiem pump.fun žetoniem — reāllaika tirgus dati atveidoti kā interaktīva aina.",
 		"meta_og_title": "Pump vizualizators · three.ws",
-		"meta_title": "3D-Aģents · Pump.fun vizualizators",
+		"meta_title": "Pump.fun vizualizators · three.ws",
 		"meta_twitter_description": "3D vizualizators populārākajiem pump.fun žetoniem — reāllaika tirgus dati atveidoti kā interaktīva aina.",
 		"meta_twitter_title": "Pump vizualizators · three.ws",
 		"migrations": "<span class=\"live-dot\"></span>Migrācijas",
-		"min": "<b id=\"vz-stat-rate\">—</b> <span id=\"vz-stat-rate-unit\">/min</span>",
 		"new": "Jauns",
 		"on_refresh": "atsvaidzinot",
+		"per_minute_label": "/min",
 		"refresh_data_r_title": "Atsvaidzināt datus (R)",
 		"replies": "Atbildes",
 		"retry": "Mēģināt vēlreiz",
@@ -17198,7 +17197,8 @@
 		"show_tokens_as_3d_orbs_arialabel": "Rādīt žetonus kā 3D lodes",
 		"show_tokens_as_coin_logos_arialabel": "Rādīt žetonus kā monētu logotipus",
 		"streams": "Plūsmas",
-		"total": "kopā <b id=\"vz-stat-mcap\">—</b>",
+		"tokens_label": "žetoni",
+		"total_label": "kopā",
 		"trending": "Populāri",
 		"try_3d_again": "Mēģināt 3D vēlreiz",
 		"up": "▲ <b>augšup</b>"

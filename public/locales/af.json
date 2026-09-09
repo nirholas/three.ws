@@ -16599,7 +16599,6 @@
 		"visualizer": "Visualiseerder →"
 	},
 	"pump_visualizer": {
-		"0_tokens": "<b id=\"vz-stat-count\">0</b> tekens",
 		"3d_view_unavailable": "3D-aansig onbeskikbaar.",
 		"all_launches": "Alle bekendstellings →",
 		"c": "C",
@@ -16617,13 +16616,13 @@
 		"meta_description": "Intydse 3D-visualisering van gewilde tokens op Pump.fun. Elke sfeer is 'n lewendige muntstuk, grootte volgens markkapitalisasie.",
 		"meta_og_description": "3D-visualiseerder van gewilde pump.fun tokens — regstreekse markdata weergegee as 'n interaktiewe toneel.",
 		"meta_og_title": "Pump Visualiseerder · three.ws",
-		"meta_title": "3D-Agent · Pump.fun Visualiseerder",
+		"meta_title": "Pump.fun Visualiseerder · three.ws",
 		"meta_twitter_description": "3D-visualiseerder van gewilde pump.fun tokens — regstreekse markdata weergegee as 'n interaktiewe toneel.",
 		"meta_twitter_title": "Pump Visualiseerder · three.ws",
 		"migrations": "<span class=\"live-dot\"></span>Migrasies",
-		"min": "<b id=\"vz-stat-rate\">—</b> <span id=\"vz-stat-rate-unit\">/min</span>",
 		"new": "Nuut",
 		"on_refresh": "by verfris",
+		"per_minute_label": "/min",
 		"refresh_data_r_title": "Verfris data (R)",
 		"replies": "Antwoorde",
 		"retry": "Probeer weer",
@@ -16631,7 +16630,8 @@
 		"show_tokens_as_3d_orbs_arialabel": "Wys tokens as 3D-bolle",
 		"show_tokens_as_coin_logos_arialabel": "Wys tokens as muntlogo's",
 		"streams": "Strome",
-		"total": "totaal <b id=\"vz-stat-mcap\">—</b>",
+		"tokens_label": "tekens",
+		"total_label": "totaal",
 		"trending": "Gewild",
 		"try_3d_again": "Probeer 3D weer",
 		"up": "▲ <b>op</b>"

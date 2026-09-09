@@ -16599,7 +16599,6 @@
 		"visualizer": "Isibonisi →"
 	},
 	"pump_visualizer": {
-		"0_tokens": "<b id=\"vz-stat-count\">0</b> amathokheni",
 		"3d_view_unavailable": "Ukubuka kwe-3D akutholakali.",
 		"all_launches": "Konke okwethuliwe →",
 		"c": "C",
@@ -16617,13 +16616,13 @@
 		"meta_description": "Ukwenza ngeso lengqondo kwe-3D ngesikhathi sangempela kwama-token athrendayo ku-Pump.fun. Ibhola ngalinye liyimali ebukhoma, ubukhulu bayo buhlelwe ngokuya ngenani lemakethe.",
 		"meta_og_description": "Isibonisi se-3D sama-token athrendayo pump.fun — idatha yemakethe ebukhoma evezwe njengesimo esisebenzisanayo.",
 		"meta_og_title": "Isibonisi se-Pump · three.ws",
-		"meta_title": "I-3D-Agent · Isibonisi se-Pump.fun",
+		"meta_title": "Isibonisi se-Pump.fun · three.ws",
 		"meta_twitter_description": "Isibonisi se-3D sama-token athrendayo pump.fun — idatha yemakethe ebukhoma evezwe njengesimo esisebenzisanayo.",
 		"meta_twitter_title": "Isibonisi se-Pump · three.ws",
 		"migrations": "<span class=\"live-dot\"></span>Ukufuduka",
-		"min": "<b id=\"vz-stat-rate\">—</b> <span id=\"vz-stat-rate-unit\">/ngomzuzu</span>",
 		"new": "Okusha",
 		"on_refresh": "ekuvuseleleni",
+		"per_minute_label": "/ngomzuzu",
 		"refresh_data_r_title": "Vuselela idatha (R)",
 		"replies": "Izimpendulo",
 		"retry": "Zama futhi",
@@ -16631,7 +16630,8 @@
 		"show_tokens_as_3d_orbs_arialabel": "Bonisa ama-token njengamabhola e-3D",
 		"show_tokens_as_coin_logos_arialabel": "Bonisa ama-token njengama-logo emali",
 		"streams": "Ukusakaza",
-		"total": "ingqikithi <b id=\"vz-stat-mcap\">—</b>",
+		"tokens_label": "amathokheni",
+		"total_label": "ingqikithi",
 		"trending": "Okuthrendayo",
 		"try_3d_again": "Zama i-3D futhi",
 		"up": "▲ <b>phezulu</b>"

@@ -17166,7 +17166,6 @@
 		"visualizer": "Visualizer →"
 	},
 	"pump_visualizer": {
-		"0_tokens": "<b id=\"vz-stat-count\">0</b> tokens",
 		"3d_view_unavailable": "3D-weergave niet beschikbaar.",
 		"all_launches": "Alle lanceringen →",
 		"c": "C",
@@ -17184,13 +17183,13 @@
 		"meta_description": "Een realtime 3D-visualisatie van trending tokens op Pump.fun. Elke bol is een live munt, geconfigureerd op marktkapitalisatie.",
 		"meta_og_description": "3D visualizer van trending pump.fun tokens — live marktgegevens weergegeven als een interactieve scène.",
 		"meta_og_title": "Pump Visualizer · three.ws",
-		"meta_title": "3D-Agent · Pump.fun Visualizer",
+		"meta_title": "Pump.fun Visualizer · three.ws",
 		"meta_twitter_description": "3D visualizer van trending pump.fun tokens — live markgegevens weergegeven als een interactieve scène.",
 		"meta_twitter_title": "Pump Visualizer · three.ws",
 		"migrations": "<span class=\"live-dot\"></span>Migraties",
-		"min": "<b id=\"vz-stat-rate\">—</b> <span id=\"vz-stat-rate-unit\">/min</span>",
 		"new": "Nieuw",
 		"on_refresh": "bij verversen",
+		"per_minute_label": "/min",
 		"refresh_data_r_title": "Vernieuw gegevens (R)",
 		"replies": "Antwoorden",
 		"retry": "Opnieuw proberen",
@@ -17198,7 +17197,8 @@
 		"show_tokens_as_3d_orbs_arialabel": "Toon tokens als 3D bollen",
 		"show_tokens_as_coin_logos_arialabel": "Toon tokens als muntenlogo's",
 		"streams": "Streams",
-		"total": "totaal <b id=\"vz-stat-mcap\">—</b>",
+		"tokens_label": "tokens",
+		"total_label": "totaal",
 		"trending": "Trending",
 		"try_3d_again": "Probeer 3D opnieuw",
 		"up": "▲ <b>omhoog</b>"

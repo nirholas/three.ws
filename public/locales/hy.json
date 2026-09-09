@@ -17166,7 +17166,6 @@
 		"visualizer": "Visualizer →"
 	},
 	"pump_visualizer": {
-		"0_tokens": "<b id=\"vz-stat-count\">0</b> tokens",
 		"3d_view_unavailable": "3D տեսքը հասանելի չէ։",
 		"all_launches": "Բոլոր գործարկումները →",
 		"c": "C",
@@ -17184,13 +17183,13 @@
 		"meta_description": "Pump.fun-ի թրենդային թոքենների իրական ժամանակի 3D վիզուալիզացիա։ Յուրաքանչյուր գունդ կենդանի մետաղադրամ է՝ չափսերով ըստ շուկայական կապիտալիզացիայի։",
 		"meta_og_description": "Թրենդային pump.fun թոքենների 3D վիզուալիզատոր — շուկայական կենդանի տվյալներ, որոնք ներկայացված են որպես ինտերակտիվ տեսարան։",
 		"meta_og_title": "Pump Visualizer · three.ws",
-		"meta_title": "3D-Գործակալ · Pump.fun Վիզուալիզատոր",
+		"meta_title": "Pump.fun Վիզուալիզատոր · three.ws",
 		"meta_twitter_description": "Թրենդային pump.fun թոքենների 3D վիզուալիզատոր — շուկայական կենդանի տվյալներ, որոնք ներկայացված են որպես ինտերակտիվ տեսարան։",
 		"meta_twitter_title": "Pump Visualizer · three.ws",
 		"migrations": "<span class=\"live-dot\"></span>Migrations",
-		"min": "<b id=\"vz-stat-rate\">—</b> <span id=\"vz-stat-rate-unit\">/min</span>",
 		"new": "New",
 		"on_refresh": "թարմացնելիս",
+		"per_minute_label": "/min",
 		"refresh_data_r_title": "Թարմացնել տվյալները (R)",
 		"replies": "Replies",
 		"retry": "Retry",
@@ -17198,7 +17197,8 @@
 		"show_tokens_as_3d_orbs_arialabel": "Ցուցադրել թոքենները որպես 3D գնդեր",
 		"show_tokens_as_coin_logos_arialabel": "Ցուցադրել թոքենները որպես մետաղադրամի լոգոներ",
 		"streams": "Streams",
-		"total": "total <b id=\"vz-stat-mcap\">—</b>",
+		"tokens_label": "tokens",
+		"total_label": "total",
 		"trending": "Trending",
 		"try_3d_again": "Նորից փորձել 3D-ն",
 		"up": "▲ <b>up</b>"

@@ -16940,7 +16940,6 @@
 		"visualizer": "Igaragaza →"
 	},
 	"pump_visualizer": {
-		"0_tokens": "<b id=\"vz-stat-count\">0</b> Token",
 		"3d_view_unavailable": "Kureba muri 3D ntibishoboka.",
 		"all_launches": "Ibyatangijwe byose →",
 		"c": "C",
@@ -16958,13 +16957,13 @@
 		"meta_description": "Igaragazwa rya 3D ry'igihe nyacyo ry'ama-token agezweho kuri Pump.fun. Buri mupira ni ikiceri kiriho, ingano yacyo ikagenwa n'agaciro kacyo ku isoko.",
 		"meta_og_description": "Igaragazwa rya 3D ry'ama-token agezweho ya pump.fun — amakuru y'isoko y'igihe nyacyo agaragazwa nk'ishusho ushobora gukorana nayo.",
 		"meta_og_title": "Igaragazwa rya Pump · three.ws",
-		"meta_title": "Agent ya 3D · Igaragazwa rya Pump.fun",
+		"meta_title": "Igaragazwa rya Pump.fun · three.ws",
 		"meta_twitter_description": "Igaragazwa rya 3D ry'ama-token agezweho ya pump.fun — amakuru y'isoko y'igihe nyacyo agaragazwa nk'ishusho ushobora gukorana nayo.",
 		"meta_twitter_title": "Igaragazwa rya Pump · three.ws",
 		"migrations": "<span class=\"live-dot\"></span>Kwimuka",
-		"min": "<b id=\"vz-stat-rate\">—</b> <span id=\"vz-stat-rate-unit\">/ku munota</span>",
 		"new": "Gishya",
 		"on_refresh": "iyo byavuguruwe",
+		"per_minute_label": "/ku munota",
 		"refresh_data_r_title": "Vugurura amakuru (R)",
 		"replies": "Ibisubizo",
 		"retry": "Ongera ugerageze",
@@ -16972,7 +16971,8 @@
 		"show_tokens_as_3d_orbs_arialabel": "Erekana ama-token nk'imipira ya 3D",
 		"show_tokens_as_coin_logos_arialabel": "Erekana ama-token nk'ibirango by'ibiceri",
 		"streams": "Ibirimo gutambuka",
-		"total": "igiteranyo <b id=\"vz-stat-mcap\">—</b>",
+		"tokens_label": "Token",
+		"total_label": "igiteranyo",
 		"trending": "Agezweho",
 		"try_3d_again": "Ongera ugerageze 3D",
 		"up": "▲ <b>byazamutse</b>"

@@ -17166,7 +17166,6 @@
 		"visualizer": "Vizualizator →"
 	},
 	"pump_visualizer": {
-		"0_tokens": "<b id=\"vz-stat-count\">0</b> žetonov",
 		"3d_view_unavailable": "3D pogled ni na voljo.",
 		"all_launches": "Vse lansiranja →",
 		"c": "C",
@@ -17184,13 +17183,13 @@
 		"meta_description": "3D vizualizacija priljubljenih žetonov na Pump.fun v realnem času. Vsaka krogla predstavlja aktiven kovanec, velikosti glede na tržno kapitalizacijo.",
 		"meta_og_description": "3D vizualizator priljubljenih žetonov pump.fun — podatki trga v živo, prikazani kot interaktivna scena.",
 		"meta_og_title": "Pump Vizualizator · three.ws",
-		"meta_title": "3D-Agent · Pump.fun Vizualizator",
+		"meta_title": "Pump.fun Vizualizator · three.ws",
 		"meta_twitter_description": "3D vizualizator priljubljenih žetonov pump.fun — podatki trga v živo, prikazani kot interaktivna scena.",
 		"meta_twitter_title": "Pump Vizualizator · three.ws",
 		"migrations": "<span class=\"live-dot\"></span>Migracije",
-		"min": "<b id=\"vz-stat-rate\">—</b> <span id=\"vz-stat-rate-unit\">/min</span>",
 		"new": "Novo",
 		"on_refresh": "ob osvežitvi",
+		"per_minute_label": "/min",
 		"refresh_data_r_title": "Osveži podatke (R)",
 		"replies": "Odgovori",
 		"retry": "Poskusi znova",
@@ -17198,7 +17197,8 @@
 		"show_tokens_as_3d_orbs_arialabel": "Prikaži žetone kot 3D krogle",
 		"show_tokens_as_coin_logos_arialabel": "Prikaži žetone kot logotipe kovancev",
 		"streams": "Tokovi",
-		"total": "skupno <b id=\"vz-stat-mcap\">—</b>",
+		"tokens_label": "žetonov",
+		"total_label": "skupno",
 		"trending": "Priljubljeno",
 		"try_3d_again": "Poskusi 3D znova",
 		"up": "▲ <b>gor</b>"

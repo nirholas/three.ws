@@ -17166,7 +17166,6 @@
 		"visualizer": "Vizualizator →"
 	},
 	"pump_visualizer": {
-		"0_tokens": "<b id=\"vz-stat-count\">0</b> tokenuri",
 		"3d_view_unavailable": "Vizualizare 3D indisponibilă.",
 		"all_launches": "Toate lansările →",
 		"c": "C",
@@ -17184,13 +17183,13 @@
 		"meta_description": "O vizualizare 3D în timp real a tokenurilor populare pe Pump.fun. Fiecare sferă este o monedă live, dimensionată după capitalizarea de piață.",
 		"meta_og_description": "Vizualizator 3D al tokenurilor populare pump.fun — date de piață live redată ca o scenă interactivă.",
 		"meta_og_title": "Pump Visualizer · three.ws",
-		"meta_title": "3D-Agent · Vizualizator Pump.fun",
+		"meta_title": "Vizualizator Pump.fun · three.ws",
 		"meta_twitter_description": "Vizualizator 3D pentru tokenuri pump.fun în trend — date de piață live redată ca o scenă interactivă.",
 		"meta_twitter_title": "Vizualizator Pump · three.ws",
 		"migrations": "Migrații <span class=\"live-dot\"></span>",
-		"min": "<b id=\"vz-stat-rate\">—</b> <span id=\"vz-stat-rate-unit\">/min</span>",
 		"new": "Nou",
 		"on_refresh": "la reîmprospătare",
+		"per_minute_label": "/min",
 		"refresh_data_r_title": "Reîmprospătează datele (R)",
 		"replies": "Răspunsuri",
 		"retry": "Reîncercare",
@@ -17198,7 +17197,8 @@
 		"show_tokens_as_3d_orbs_arialabel": "Afișează tokenurile ca sfere 3D",
 		"show_tokens_as_coin_logos_arialabel": "Afișează tokenurile ca logo-uri de monede",
 		"streams": "Fluxuri",
-		"total": "total <b id=\"vz-stat-mcap\">—</b>",
+		"tokens_label": "tokenuri",
+		"total_label": "total",
 		"trending": "În trend",
 		"try_3d_again": "Încearcă din nou 3D",
 		"up": "▲ <b>sus</b>"

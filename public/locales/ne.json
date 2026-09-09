@@ -17166,7 +17166,6 @@
 		"visualizer": "भिजुअलाइजर →"
 	},
 	"pump_visualizer": {
-		"0_tokens": "<b id=\"vz-stat-count\">0</b> टोकनहरू",
 		"3d_view_unavailable": "3D दृश्य उपलब्ध छैन।",
 		"all_launches": "सबै लन्चहरू →",
 		"c": "C",
@@ -17184,13 +17183,13 @@
 		"meta_description": "Pump.fun मा ट्रेन्डिङ टोकनहरूको वास्तविक-समय 3D भिजुअलाइजेसन। प्रत्येक गोला एक लाइभ सिक्का हो, मार्केट क्याप अनुसार आकारको।",
 		"meta_og_description": "ट्रेन्डिङ pump.fun टोकनहरूको 3D भिजुअलाइजर — लाइभ बजार डेटा एक अन्तरक्रियात्मक दृश्यको रूपमा प्रस्तुत।",
 		"meta_og_title": "पम्प भिजुअलाइजर · three.ws",
-		"meta_title": "3D-एजेन्ट · Pump.fun भिजुअलाइजर",
+		"meta_title": "Pump.fun भिजुअलाइजर · three.ws",
 		"meta_twitter_description": "ट्रेन्डिङ pump.fun टोकनहरूको 3D भिजुअलाइजर — लाइभ बजार डेटा एक अन्तरक्रियात्मक दृश्यको रूपमा प्रस्तुत।",
 		"meta_twitter_title": "पम्प भिजुअलाइजर · three.ws",
 		"migrations": "<span class=\"live-dot\"></span>माइग्रेसनहरू",
-		"min": "<b id=\"vz-stat-rate\">—</b> <span id=\"vz-stat-rate-unit\">/मिनेट</span>",
 		"new": "नयाँ",
 		"on_refresh": "रिफ्रेसमा",
+		"per_minute_label": "/मिनेट",
 		"refresh_data_r_title": "डेटा रिफ्रेस गर्नुहोस् (R)",
 		"replies": "जवाफहरू",
 		"retry": "पुनः प्रयास गर्नुहोस्",
@@ -17198,7 +17197,8 @@
 		"show_tokens_as_3d_orbs_arialabel": "टोकनहरूलाई 3D ओर्बको रूपमा देखाउनुहोस्",
 		"show_tokens_as_coin_logos_arialabel": "टोकनहरूलाई सिक्का लोगोको रूपमा देखाउनुहोस्",
 		"streams": "स्ट्रिमहरू",
-		"total": "कुल <b id=\"vz-stat-mcap\">—</b>",
+		"tokens_label": "टोकनहरू",
+		"total_label": "कुल",
 		"trending": "ट्रेन्डिङ",
 		"try_3d_again": "फेरि 3D प्रयास गर्नुहोस्",
 		"up": "▲ <b>अप</b>"

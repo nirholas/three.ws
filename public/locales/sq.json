@@ -17166,7 +17166,6 @@
 		"visualizer": "Vizualizues →"
 	},
 	"pump_visualizer": {
-		"0_tokens": "<b id=\"vz-stat-count\">0</b> tokena",
 		"3d_view_unavailable": "Pamja 3D e padisponueshme.",
 		"all_launches": "Të gjitha lëshimet →",
 		"c": "C",
@@ -17184,13 +17183,13 @@
 		"meta_description": "Vizualizim 3D në kohë reale i tokens-ave në trend në Pump.fun. Çdo sferë është një monedhë live, e madhësuar sipas kapitalizimit të tregut.",
 		"meta_og_description": "Vizualizues 3D i tokens-ave në trend pump.fun — të dhëna tregu live të paraqitura si një skenë interaktive.",
 		"meta_og_title": "Vizualizuesi i Pump · three.ws",
-		"meta_title": "Agjent 3D · Vizualizuesi i Pump.fun",
+		"meta_title": "Vizualizuesi i Pump.fun · three.ws",
 		"meta_twitter_description": "Vizualizues 3D i tokens-ave në trend pump.fun — të dhëna tregu live të paraqitura si një skenë interaktive.",
 		"meta_twitter_title": "Vizualizuesi i Pump · three.ws",
 		"migrations": "<span class=\"live-dot\"></span>Migrimet",
-		"min": "<b id=\"vz-stat-rate\">—</b> <span id=\"vz-stat-rate-unit\">/min</span>",
 		"new": "E re",
 		"on_refresh": "në rifreskim",
+		"per_minute_label": "/min",
 		"refresh_data_r_title": "Rifresko të dhënat (R)",
 		"replies": "Përgjigjet",
 		"retry": "Riprovo",
@@ -17198,7 +17197,8 @@
 		"show_tokens_as_3d_orbs_arialabel": "Shfaq tokens-at si orbe 3D",
 		"show_tokens_as_coin_logos_arialabel": "Shfaq tokens-at si logo monedhash",
 		"streams": "Transmetime",
-		"total": "gjithsej <b id=\"vz-stat-mcap\">—</b>",
+		"tokens_label": "tokena",
+		"total_label": "gjithsej",
 		"trending": "Në trend",
 		"try_3d_again": "Riprovo 3D",
 		"up": "▲ <b>lart</b>"

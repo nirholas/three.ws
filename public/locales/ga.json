@@ -17166,7 +17166,6 @@
 		"visualizer": "Amharcléiritheoir →"
 	},
 	"pump_visualizer": {
-		"0_tokens": "<b id=\"vz-stat-count\">0</b> comharthaí",
 		"3d_view_unavailable": "Amharc 3D neamh-infhaighte.",
 		"all_launches": "Gach seoladh →",
 		"c": "C",
@@ -17184,13 +17183,13 @@
 		"meta_description": "Léirshamhlú 3D fíor-ama ar chomharthaí treochta ar Pump.fun. Is bonn beo gach sféar, méidithe de réir caipín margaidh.",
 		"meta_og_description": "Léirshamhlóir 3D ar chomharthaí treochta pump.fun — sonraí margaidh beo léirithe mar radharc idirghníomhach.",
 		"meta_og_title": "Léirshamhlóir Pump · three.ws",
-		"meta_title": "Gníomhaire 3D · Léirshamhlóir Pump.fun",
+		"meta_title": "Léirshamhlóir Pump.fun · three.ws",
 		"meta_twitter_description": "Léirshamhlóir 3D ar chomharthaí treochta pump.fun — sonraí margaidh beo léirithe mar radharc idirghníomhach.",
 		"meta_twitter_title": "Léirshamhlóir Pump · three.ws",
 		"migrations": "<span class=\"live-dot\"></span>Imirceacha",
-		"min": "<b id=\"vz-stat-rate\">—</b> <span id=\"vz-stat-rate-unit\">/nóim</span>",
 		"new": "Nua",
 		"on_refresh": "ar athnuachan",
+		"per_minute_label": "/nóim",
 		"refresh_data_r_title": "Athnuaigh sonraí (R)",
 		"replies": "Freagraí",
 		"retry": "Atriail",
@@ -17198,7 +17197,8 @@
 		"show_tokens_as_3d_orbs_arialabel": "Taispeáin comharthaí mar órbanna 3D",
 		"show_tokens_as_coin_logos_arialabel": "Taispeáin comharthaí mar lógónna bonn",
 		"streams": "Sruthanna",
-		"total": "iomlán <b id=\"vz-stat-mcap\">—</b>",
+		"tokens_label": "comharthaí",
+		"total_label": "iomlán",
 		"trending": "Treochta",
 		"try_3d_again": "Bain triail as 3D arís",
 		"up": "▲ <b>suas</b>"

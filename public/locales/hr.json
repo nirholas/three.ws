@@ -17166,7 +17166,6 @@
 		"visualizer": "Vizualizator →"
 	},
 	"pump_visualizer": {
-		"0_tokens": "<b id=\"vz-stat-count\">0</b> tokena",
 		"3d_view_unavailable": "3D prikaz nije dostupan.",
 		"all_launches": "Sva lansiranja →",
 		"c": "C",
@@ -17184,13 +17183,13 @@
 		"meta_description": "3D vizualizacija trending tokena na Pump.fun u stvarnom vremenu. Svaka sfera je živa kovanica, veličine prema tržišnoj kapitalizaciji.",
 		"meta_og_description": "3D vizualizator trending pump.fun tokena — živi tržišni podaci prikazani kao interaktivna scena.",
 		"meta_og_title": "Pump Vizualizator · three.ws",
-		"meta_title": "3D-Agent · Pump.fun Vizualizator",
+		"meta_title": "Pump.fun Vizualizator · three.ws",
 		"meta_twitter_description": "3D vizualizator trendovskih pump.fun tokena — živi tržišni podaci prikazani kao interaktivna scena.",
 		"meta_twitter_title": "Pump Vizualizator · three.ws",
 		"migrations": "<span class=\"live-dot\"></span>Migracije",
-		"min": "<b id=\"vz-stat-rate\">—</b> <span id=\"vz-stat-rate-unit\">/min</span>",
 		"new": "Novi",
 		"on_refresh": "prilikom osvježavanja",
+		"per_minute_label": "/min",
 		"refresh_data_r_title": "Osvježi podatke (R)",
 		"replies": "Odgovori",
 		"retry": "Pokušaj ponovo",
@@ -17198,7 +17197,8 @@
 		"show_tokens_as_3d_orbs_arialabel": "Prikaži tokene kao 3D orbove",
 		"show_tokens_as_coin_logos_arialabel": "Prikaži tokene kao logotipe kovanica",
 		"streams": "Struje",
-		"total": "ukupno <b id=\"vz-stat-mcap\">—</b>",
+		"tokens_label": "tokena",
+		"total_label": "ukupno",
 		"trending": "Trendovi",
 		"try_3d_again": "Pokušaj 3D ponovo",
 		"up": "▲ <b>gore</b>"

@@ -16599,7 +16599,6 @@
 		"visualizer": "Visualizer →"
 	},
 	"pump_visualizer": {
-		"0_tokens": "<b id=\"vz-stat-count\">0</b> token",
 		"3d_view_unavailable": "Kallon 3D ba a samu ba.",
 		"all_launches": "Duk ƙaddamarwa →",
 		"c": "C",
@@ -16617,13 +16616,13 @@
 		"meta_description": "Wani nuni na 3D kai tsaye na token masu tasowa a Pump.fun. Kowace ƙwallo tsabar kuɗi ce mai rai, an girmanta da ƙimar kasuwa.",
 		"meta_og_description": "Mai nuna hoto na 3D na token masu tasowa na pump.fun — bayanan kasuwa kai tsaye da aka nuna a matsayin yanayi mai mu'amala.",
 		"meta_og_title": "Pump Visualizer · three.ws",
-		"meta_title": "Wakilin 3D · Pump.fun Visualizer",
+		"meta_title": "Pump.fun Visualizer · three.ws",
 		"meta_twitter_description": "Mai nuna hoto na 3D na token masu tasowa na pump.fun — bayanan kasuwa kai tsaye da aka nuna a matsayin yanayi mai mu'amala.",
 		"meta_twitter_title": "Pump Visualizer · three.ws",
 		"migrations": "<span class=\"live-dot\"></span>Migrations",
-		"min": "<b id=\"vz-stat-rate\">—</b> <span id=\"vz-stat-rate-unit\">/min</span>",
 		"new": "Sabon",
 		"on_refresh": "akan wartsakewa",
+		"per_minute_label": "/min",
 		"refresh_data_r_title": "Wartsake bayanai (R)",
 		"replies": "Amsoshi",
 		"retry": "Sake gwadawa",
@@ -16631,7 +16630,8 @@
 		"show_tokens_as_3d_orbs_arialabel": "Nuna token a matsayin ƙwallaye 3D",
 		"show_tokens_as_coin_logos_arialabel": "Nuna token a matsayin tambarin tsabar kuɗi",
 		"streams": "Gudana",
-		"total": "jimilla <b id=\"vz-stat-mcap\">—</b>",
+		"tokens_label": "token",
+		"total_label": "jimilla",
 		"trending": "Masu tasowa",
 		"try_3d_again": "Sake gwada 3D",
 		"up": "▲ <b>sama</b>"

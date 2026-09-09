@@ -17166,7 +17166,6 @@
 		"visualizer": "ตัวแสดงผล →"
 	},
 	"pump_visualizer": {
-		"0_tokens": "<b id=\"vz-stat-count\">0</b> โทเค็น",
 		"3d_view_unavailable": "มุมมอง 3D ไม่สามารถใช้ได้.",
 		"all_launches": "การเปิดตัวทั้งหมด →",
 		"c": "C",
@@ -17184,13 +17183,13 @@
 		"meta_description": "การแสดงผล 3D แบบเรียลไทม์ของโทเค็นที่กำลังเป็นที่นิยมบน Pump.fun แต่ละทรงกลมคือเหรียญสด ขนาดตามมูลค่าตลาด.",
 		"meta_og_description": "ตัวแสดงผล 3D ของโทเค็น pump.fun ที่กำลังเป็นที่นิยม — ข้อมูลตลาดสดที่แสดงเป็นฉากโต้ตอบ.",
 		"meta_og_title": "Pump Visualizer · three.ws",
-		"meta_title": "เอเจนต์ 3D · Pump.fun Visualizer",
+		"meta_title": "Pump.fun Visualizer · three.ws",
 		"meta_twitter_description": "ตัวแสดงภาพ 3D ของโทเค็น pump.fun ที่กำลังมาแรง — ข้อมูลตลาดสดที่แสดงเป็นฉากโต้ตอบได้",
 		"meta_twitter_title": "Pump Visualizer · three.ws",
 		"migrations": "<span class=\"live-dot\"></span>การโยกย้าย",
-		"min": "<b id=\"vz-stat-rate\">—</b> <span id=\"vz-stat-rate-unit\">/นาที</span>",
 		"new": "ใหม่",
 		"on_refresh": "เมื่อรีเฟรช",
+		"per_minute_label": "/นาที",
 		"refresh_data_r_title": "รีเฟรชข้อมูล (R)",
 		"replies": "ตอบกลับ",
 		"retry": "ลองอีกครั้ง",
@@ -17198,7 +17197,8 @@
 		"show_tokens_as_3d_orbs_arialabel": "แสดงโทเค็นเป็นลูกบอล 3D",
 		"show_tokens_as_coin_logos_arialabel": "แสดงโทเค็นเป็นโลโก้เหรียญ",
 		"streams": "สตรีม",
-		"total": "รวม <b id=\"vz-stat-mcap\">—</b>",
+		"tokens_label": "โทเค็น",
+		"total_label": "รวม",
 		"trending": "กำลังมาแรง",
 		"try_3d_again": "ลอง 3D อีกครั้ง",
 		"up": "▲ <b>ขึ้น</b>"

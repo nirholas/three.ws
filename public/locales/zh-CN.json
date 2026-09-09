@@ -17166,7 +17166,6 @@
 		"visualizer": "可视化工具 →"
 	},
 	"pump_visualizer": {
-		"0_tokens": "<b id=\"vz-stat-count\">0</b> 代币",
 		"3d_view_unavailable": "3D 视图不可用。",
 		"all_launches": "所有发布 →",
 		"c": "C",
@@ -17184,13 +17183,13 @@
 		"meta_description": "Pump.fun 上热门代币的实时 3D 可视化。每个球体代表一个实时代币，大小由市值决定。",
 		"meta_og_description": "热门 pump.fun 代币的 3D 可视化工具 — 将实时市场数据渲染为交互式场景。",
 		"meta_og_title": "Pump Visualizer · three.ws",
-		"meta_title": "3D-Agent · Pump.fun Visualizer",
+		"meta_title": "Pump.fun Visualizer · three.ws",
 		"meta_twitter_description": "热门 pump.fun 代币的 3D 可视化工具 — 将实时市场数据渲染为交互式场景。",
 		"meta_twitter_title": "Pump Visualizer · three.ws",
 		"migrations": "<span class=\"live-dot\"></span>迁移",
-		"min": "<b id=\"vz-stat-rate\">—</b> <span id=\"vz-stat-rate-unit\">/分钟</span>",
 		"new": "新",
 		"on_refresh": "刷新时",
+		"per_minute_label": "/分钟",
 		"refresh_data_r_title": "刷新数据 (R)",
 		"replies": "回复",
 		"retry": "重试",
@@ -17198,7 +17197,8 @@
 		"show_tokens_as_3d_orbs_arialabel": "将代币显示为 3D 球体",
 		"show_tokens_as_coin_logos_arialabel": "将代币显示为代币标志",
 		"streams": "流",
-		"total": "总计 <b id=\"vz-stat-mcap\">—</b>",
+		"tokens_label": "代币",
+		"total_label": "总计",
 		"trending": "热门",
 		"try_3d_again": "再试一次 3D",
 		"up": "▲ <b>上涨</b>"

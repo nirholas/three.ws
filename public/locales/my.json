@@ -17166,7 +17166,6 @@
 		"visualizer": "Visualizer →"
 	},
 	"pump_visualizer": {
-		"0_tokens": "<b id=\"vz-stat-count\">0</b> တိုကင်များ",
 		"3d_view_unavailable": "3D မြင်ကွင်း မရရှိနိုင်ပါ။",
 		"all_launches": "ထုတ်လွှင့်မှု အားလုံး →",
 		"c": "C",
@@ -17184,13 +17183,13 @@
 		"meta_description": "Pump.fun ပေါ်ရှိ ခေတ်စားနေသော တိုကင်များ၏ အချိန်နှင့်တပြေးညီ 3D မြင်ကွင်းဖော်ပြချက်။ စက်လုံးတစ်ခုစီသည် ဈေးကွက်အရင်းအနှီးအလိုက် အရွယ်အစားသတ်မှတ်ထားသော တိုက်ရိုက်ကွိုင်တစ်ခုဖြစ်သည်။",
 		"meta_og_description": "ခေတ်စားနေသော pump.fun တိုကင်များ၏ 3D မြင်ကွင်းဖော်ပြချက် — တိုက်ရိုက်ဈေးကွက်ဒေတာကို အပြန်အလှန်တုံ့ပြန်နိုင်သော မြင်ကွင်းအဖြစ် ဖော်ပြထားသည်။",
 		"meta_og_title": "Pump မြင်ကွင်းဖော်ပြချက် · three.ws",
-		"meta_title": "3D-အေးဂျင့် · Pump.fun မြင်ကွင်းဖော်ပြချက်",
+		"meta_title": "Pump.fun မြင်ကွင်းဖော်ပြချက် · three.ws",
 		"meta_twitter_description": "ခေတ်စားနေသော pump.fun တိုကင်များ၏ 3D မြင်ကွင်းဖော်ပြချက် — တိုက်ရိုက်ဈေးကွက်ဒေတာကို အပြန်အလှန်တုံ့ပြန်နိုင်သော မြင်ကွင်းအဖြစ် ဖော်ပြထားသည်။",
 		"meta_twitter_title": "Pump မြင်ကွင်းဖော်ပြချက် · three.ws",
 		"migrations": "<span class=\"live-dot\"></span>ပြောင်းရွှေ့မှုများ",
-		"min": "<b id=\"vz-stat-rate\">—</b> <span id=\"vz-stat-rate-unit\">/မိနစ်</span>",
 		"new": "အသစ်",
 		"on_refresh": "ပြန်လည်စတင်ချိန်တွင်",
+		"per_minute_label": "/မိနစ်",
 		"refresh_data_r_title": "ဒေတာပြန်လည်စတင်ရန် (R)",
 		"replies": "ပြန်ကြားချက်များ",
 		"retry": "ထပ်ကြိုးစားရန်",
@@ -17198,7 +17197,8 @@
 		"show_tokens_as_3d_orbs_arialabel": "တိုကင်များကို 3D စက်လုံးများအဖြစ် ပြသပါ",
 		"show_tokens_as_coin_logos_arialabel": "တိုကင်များကို ကွိုင်လိုဂိုများအဖြစ် ပြသပါ",
 		"streams": "ထုတ်လွှင့်မှုများ",
-		"total": "စုစုပေါင်း <b id=\"vz-stat-mcap\">—</b>",
+		"tokens_label": "တိုကင်များ",
+		"total_label": "စုစုပေါင်း",
 		"trending": "ခေတ်စားနေသည်",
 		"try_3d_again": "3D ကို ထပ်မံကြိုးစားကြည့်ပါ",
 		"up": "▲ <b>တက်</b>"

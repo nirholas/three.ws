@@ -17166,7 +17166,6 @@
 		"visualizer": "Ẹ̀rọ ìfihàn →"
 	},
 	"pump_visualizer": {
-		"0_tokens": "<b id=\"vz-stat-count\">0</b> àwọn tóòkẹ̀nì",
 		"3d_view_unavailable": "Ìran 3D kò sí.",
 		"all_launches": "Gbogbo ìfìlọ́lẹ̀ →",
 		"c": "C",
@@ -17184,13 +17183,13 @@
 		"meta_description": "Ìfihàn 3D ní àkókò gidi fún àwọn àmì-ìdámọ̀ tí ó gbòde kan lórí Pump.fun. Gbogbo òbìrìkítí jẹ́ owó-ìdámọ̀ láàyè, tí a fi ìwọ̀n ọjà rẹ̀ díwọ̀n.",
 		"meta_og_description": "Olùfihàn 3D fún àwọn àmì-ìdámọ̀ pump.fun tí ó gbòde kan — ìfúnni ọjà láàyè tí a fi hàn gẹ́gẹ́ bí ìran tí a lè bá ṣiṣẹ́.",
 		"meta_og_title": "Olùfihàn Pump · three.ws",
-		"meta_title": "Aṣojú 3D · Olùfihàn Pump.fun",
+		"meta_title": "Olùfihàn Pump.fun · three.ws",
 		"meta_twitter_description": "Olùfihàn 3D fún àwọn àmì-ìdámọ̀ pump.fun tí ó gbòde kan — ìfúnni ọjà láàyè tí a fi hàn gẹ́gẹ́ bí ìran tí a lè bá ṣiṣẹ́.",
 		"meta_twitter_title": "Olùfihàn Pump · three.ws",
 		"migrations": "<span class=\"live-dot\"></span>Àwọn Ìṣípòpadà",
-		"min": "<b id=\"vz-stat-rate\">—</b> <span id=\"vz-stat-rate-unit\">/ìṣẹ́jú</span>",
 		"new": "Tuntun",
 		"on_refresh": "lórí ìtúnṣe",
+		"per_minute_label": "/ìṣẹ́jú",
 		"refresh_data_r_title": "Tún ìfúnni ṣe (R)",
 		"replies": "Àwọn Ìdáhùn",
 		"retry": "Tún gbìyànjú",
@@ -17198,7 +17197,8 @@
 		"show_tokens_as_3d_orbs_arialabel": "Fi àwọn àmì-ìdámọ̀ hàn gẹ́gẹ́ bí àwọn òbìrìkítí 3D",
 		"show_tokens_as_coin_logos_arialabel": "Fi àwọn àmì-ìdámọ̀ hàn gẹ́gẹ́ bí àwọn àmì-ìdámọ̀ owó",
 		"streams": "Àwọn Ìṣàn",
-		"total": "àpapọ̀ <b id=\"vz-stat-mcap\">—</b>",
+		"tokens_label": "àwọn tóòkẹ̀nì",
+		"total_label": "àpapọ̀",
 		"trending": "Tí ó ń gbòde kan",
 		"try_3d_again": "Tún gbìyànjú 3D",
 		"up": "▲ <b>sókè</b>"

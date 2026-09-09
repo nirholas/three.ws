@@ -17166,7 +17166,6 @@
 		"visualizer": "Visualizer →"
 	},
 	"pump_visualizer": {
-		"0_tokens": "<b id=\"vz-stat-count\">0</b> tokens",
 		"3d_view_unavailable": "Hindi available ang 3D view.",
 		"all_launches": "Lahat ng paglulunsad →",
 		"c": "C",
@@ -17184,13 +17183,13 @@
 		"meta_description": "Isang real-time na 3D visualization ng mga trending tokens sa Pump.fun. Bawat sphere ay isang live coin, na sukat ayon sa market cap.",
 		"meta_og_description": "3D visualizer ng mga trending pump.fun tokens — live market data na na-render bilang isang interactive scene.",
 		"meta_og_title": "Pump Visualizer · three.ws",
-		"meta_title": "3D-Agent · Pump.fun Visualizer",
+		"meta_title": "Pump.fun Visualizer · three.ws",
 		"meta_twitter_description": "3D visualizer ng mga trending pump.fun tokens — live market data na na-render bilang isang interactive na eksena.",
 		"meta_twitter_title": "Pump Visualizer · three.ws",
 		"migrations": "<span class=\"live-dot\"></span>Migrations",
-		"min": "<b id=\"vz-stat-rate\">—</b> <span id=\"vz-stat-rate-unit\">/min</span>",
 		"new": "Bago",
 		"on_refresh": "sa pag-refresh",
+		"per_minute_label": "/min",
 		"refresh_data_r_title": "I-refresh ang data (R)",
 		"replies": "Mga Tugon",
 		"retry": "Subukan muli",
@@ -17198,7 +17197,8 @@
 		"show_tokens_as_3d_orbs_arialabel": "Ipakita ang mga token bilang 3D orbs",
 		"show_tokens_as_coin_logos_arialabel": "Ipakita ang mga token bilang mga logo ng barya",
 		"streams": "Mga Stream",
-		"total": "kabuuang <b id=\"vz-stat-mcap\">—</b>",
+		"tokens_label": "tokens",
+		"total_label": "kabuuang",
 		"trending": "Trending",
 		"try_3d_again": "Subukan muli ang 3D",
 		"up": "▲ <b>pataas</b>"

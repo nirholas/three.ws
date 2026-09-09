@@ -17166,7 +17166,6 @@
 		"visualizer": "വിഷ്വലൈസർ →"
 	},
 	"pump_visualizer": {
-		"0_tokens": "<b id=\"vz-stat-count\">0</b> ടോക്കണുകൾ",
 		"3d_view_unavailable": "3D കാഴ്ച ലഭ്യമല്ല.",
 		"all_launches": "എല്ലാ ലോഞ്ചുകളും →",
 		"c": "സി",
@@ -17184,13 +17183,13 @@
 		"meta_description": "Pump.fun-ലെ ട്രെൻഡിംഗ് ടോക്കണുകളുടെ തത്സമയ 3D വിഷ്വലൈസേഷൻ. ഓരോ ഗോളവും മാർക്കറ്റ് ക്യാപ് അനുസരിച്ച് വലുപ്പം നിശ്ചയിച്ച ഒരു തത്സമയ കോയിനാണ്.",
 		"meta_og_description": "ട്രെൻഡിംഗ് pump.fun ടോക്കണുകളുടെ 3D വിഷ്വലൈസർ — തത്സമയ മാർക്കറ്റ് ഡാറ്റ ഒരു സംവേദനാത്മക രംഗമായി റെൻഡർ ചെയ്യുന്നു.",
 		"meta_og_title": "Pump Visualizer · three.ws",
-		"meta_title": "3D-Agent · Pump.fun Visualizer",
+		"meta_title": "Pump.fun Visualizer · three.ws",
 		"meta_twitter_description": "ട്രെൻഡിംഗ് pump.fun ടോക്കണുകളുടെ 3D വിഷ്വലൈസർ — തത്സമയ മാർക്കറ്റ് ഡാറ്റ ഒരു സംവേദനാത്മക രംഗമായി റെൻഡർ ചെയ്യുന്നു.",
 		"meta_twitter_title": "Pump Visualizer · three.ws",
 		"migrations": "<span class=\"live-dot\"></span>മൈഗ്രേഷനുകൾ",
-		"min": "<b id=\"vz-stat-rate\">—</b> <span id=\"vz-stat-rate-unit\">/മിനിറ്റ്</span>",
 		"new": "പുതിയത്",
 		"on_refresh": "റീഫ്രഷ് ചെയ്യുമ്പോൾ",
+		"per_minute_label": "/മിനിറ്റ്",
 		"refresh_data_r_title": "ഡാറ്റ റീഫ്രഷ് ചെയ്യുക (R)",
 		"replies": "മറുപടികൾ",
 		"retry": "വീണ്ടും ശ്രമിക്കുക",
@@ -17198,7 +17197,8 @@
 		"show_tokens_as_3d_orbs_arialabel": "ടോക്കണുകൾ 3D ഓർബുകളായി കാണിക്കുക",
 		"show_tokens_as_coin_logos_arialabel": "ടോക്കണുകൾ കോയിൻ ലോഗോകളായി കാണിക്കുക",
 		"streams": "സ്ട്രീമുകൾ",
-		"total": "ആകെ <b id=\"vz-stat-mcap\">—</b>",
+		"tokens_label": "ടോക്കണുകൾ",
+		"total_label": "ആകെ",
 		"trending": "ട്രെൻഡിംഗ്",
 		"try_3d_again": "3D വീണ്ടും ശ്രമിക്കുക",
 		"up": "▲ <b>മുകളിലേക്ക്</b>"

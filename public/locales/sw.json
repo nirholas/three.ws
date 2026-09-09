@@ -17166,7 +17166,6 @@
 		"visualizer": "Mchoro →"
 	},
 	"pump_visualizer": {
-		"0_tokens": "<b id=\"vz-stat-count\">0</b> token",
 		"3d_view_unavailable": "Muonekano wa 3D haupatikani.",
 		"all_launches": "Uzinduzi wote →",
 		"c": "C",
@@ -17184,13 +17183,13 @@
 		"meta_description": "Muonekano wa 3D wa wakati halisi wa token zinazovuma kwenye Pump.fun. Kila mpira ni sarafu ya moja kwa moja, iliyoandaliwa kwa ukubwa wa soko.",
 		"meta_og_description": "Mchoro wa 3D wa token zinazovuma za pump.fun — data ya soko ya moja kwa moja inayoonyeshwa kama scene ya mwingiliano.",
 		"meta_og_title": "Pump Visualizer · three.ws",
-		"meta_title": "3D-Agent · Pump.fun Visualizer",
+		"meta_title": "Pump.fun Visualizer · three.ws",
 		"meta_twitter_description": "Mchoro wa 3D wa pump.fun tokens zinazopanda — data za soko za moja kwa moja zikiwa zimewasilishwa kama scene ya mwingiliano.",
 		"meta_twitter_title": "Mchoro wa Pump · three.ws",
 		"migrations": "<span class=\"live-dot\"></span>Uhamiaji",
-		"min": "<b id=\"vz-stat-rate\">—</b> <span id=\"vz-stat-rate-unit\">/dakika</span>",
 		"new": "Mpya",
 		"on_refresh": "pale inapo refresh",
+		"per_minute_label": "/dakika",
 		"refresh_data_r_title": "Onyesha upya data (R)",
 		"replies": "Majibu",
 		"retry": "Jaribu tena",
@@ -17198,7 +17197,8 @@
 		"show_tokens_as_3d_orbs_arialabel": "Onyesha tokens kama orbs za 3D",
 		"show_tokens_as_coin_logos_arialabel": "Onyesha tokens kama nembo za sarafu",
 		"streams": "Mito",
-		"total": "jumla <b id=\"vz-stat-mcap\">—</b>",
+		"tokens_label": "token",
+		"total_label": "jumla",
 		"trending": "Inayoendelea",
 		"try_3d_again": "Jaribu 3D tena",
 		"up": "▲ <b>panda</b>"

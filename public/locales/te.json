@@ -17166,7 +17166,6 @@
 		"visualizer": "విజువలైజర్ →"
 	},
 	"pump_visualizer": {
-		"0_tokens": "<b id=\"vz-stat-count\">0</b> టోకెన్లు",
 		"3d_view_unavailable": "3D వీక్షణ అందుబాటులో లేదు.",
 		"all_launches": "అన్నీ ప్రారంభాలు →",
 		"c": "C",
@@ -17184,13 +17183,13 @@
 		"meta_description": "Pump.fun లో ట్రెండింగ్ టోకెన్ల యొక్క రియల్-టైమ్ 3D విజువలైజేషన్. ప్రతి గోళం ఒక లైవ్ కాయిన్, మార్కెట్ క్యాప్ ద్వారా పరిమాణం.",
 		"meta_og_description": "ట్రెండింగ్ pump.fun టోకెన్ల యొక్క 3D విజువలైజర్ — లైవ్ మార్కెట్ డేటా ఇంటరాక్టివ్ దృశ్యంగా రూపొందించబడింది.",
 		"meta_og_title": "పంపు విజువలైజర్ · three.ws",
-		"meta_title": "3D-ఏజెంట్ · Pump.fun విజువలైజర్",
+		"meta_title": "Pump.fun విజువలైజర్ · three.ws",
 		"meta_twitter_description": "ట్రెండింగ్ pump.fun టోకెన్ల 3D విజువలైజర్ — ఇంటరాక్టివ్ సీన్‌గా ప్రదర్శించబడిన ప్రత్యక్ష మార్కెట్ డేటా.",
 		"meta_twitter_title": "పంప్ విజువలైజర్ · three.ws",
 		"migrations": "<span class=\"live-dot\"></span> మైగ్రేషన్స్",
-		"min": "<b id=\"vz-stat-rate\">—</b> <span id=\"vz-stat-rate-unit\">/నిమిషం</span>",
 		"new": "కొత్తది",
 		"on_refresh": "రీఫ్రెష్ చేసినప్పుడు",
+		"per_minute_label": "/నిమిషం",
 		"refresh_data_r_title": "డేటాను రీఫ్రెష్ చేయండి (R)",
 		"replies": "సమాధానాలు",
 		"retry": "మళ్లీ ప్రయత్నించండి",
@@ -17198,7 +17197,8 @@
 		"show_tokens_as_3d_orbs_arialabel": "టోకెన్లను 3D ఆర్భాటాలుగా చూపించండి",
 		"show_tokens_as_coin_logos_arialabel": "టోకెన్లను కాయిన్ లోగోలుగా చూపించండి",
 		"streams": "స్ట్రీమ్స్",
-		"total": "మొత్తం <b id=\"vz-stat-mcap\">—</b>",
+		"tokens_label": "టోకెన్లు",
+		"total_label": "మొత్తం",
 		"trending": "ట్రెండింగ్",
 		"try_3d_again": "మరలా 3Dని ప్రయత్నించండి",
 		"up": "▲ <b> పైకి</b>"

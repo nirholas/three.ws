@@ -17166,7 +17166,6 @@
 		"visualizer": "Visualizer →"
 	},
 	"pump_visualizer": {
-		"0_tokens": "<b id=\"vz-stat-count\">0</b> tokens",
 		"3d_view_unavailable": "3D visning utilgængelig.",
 		"all_launches": "Alle lanceringer →",
 		"c": "C",
@@ -17184,13 +17183,13 @@
 		"meta_description": "En real-time 3D visualisering af trending tokens på Pump.fun. Hver kugle er en live mønt, størrelsen bestemt af markedskapital.",
 		"meta_og_description": "3D visualizer af trending pump.fun tokens — live markedsdata gengivet som en interaktiv scene.",
 		"meta_og_title": "Pump Visualizer · three.ws",
-		"meta_title": "3D-Agent · Pump.fun Visualizer",
+		"meta_title": "Pump.fun Visualizer · three.ws",
 		"meta_twitter_description": "3D visualizer af trending pump.fun tokens — live markedsdata gengivet som en interaktiv scene.",
 		"meta_twitter_title": "Pump Visualizer · three.ws",
 		"migrations": "<span class=\"live-dot\"></span>Migrationer",
-		"min": "<b id=\"vz-stat-rate\">—</b> <span id=\"vz-stat-rate-unit\">/min</span>",
 		"new": "Ny",
 		"on_refresh": "ved opdatering",
+		"per_minute_label": "/min",
 		"refresh_data_r_title": "Opdater data (R)",
 		"replies": "Svar",
 		"retry": "Prøv igen",
@@ -17198,7 +17197,8 @@
 		"show_tokens_as_3d_orbs_arialabel": "Vis tokens som 3D kugler",
 		"show_tokens_as_coin_logos_arialabel": "Vis tokens som møntlogoer",
 		"streams": "Streams",
-		"total": "total <b id=\"vz-stat-mcap\">—</b>",
+		"tokens_label": "tokens",
+		"total_label": "total",
 		"trending": "Trending",
 		"try_3d_again": "Prøv 3D igen",
 		"up": "▲ <b>op</b>"

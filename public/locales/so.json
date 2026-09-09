@@ -17166,7 +17166,6 @@
 		"visualizer": "Muuqaal-tuse →"
 	},
 	"pump_visualizer": {
-		"0_tokens": "<b id=\"vz-stat-count\">0</b> tokens",
 		"3d_view_unavailable": "Muuqaalka 3D lama heli karo.",
 		"all_launches": "Dhammaan daahfurka →",
 		"c": "C",
@@ -17184,13 +17183,13 @@
 		"meta_description": "Muuqaal 3D ah oo waqtiga dhabta ah oo ah calaamadaha (tokens) isbeddelaya ee Pump.fun. Kubbad kastaa waa qadaadiic (coin) nool, oo cabbirkeedu yahay capka suuqa.",
 		"meta_og_description": "Muuqaal 3D ah oo ah calaamadaha (tokens) pump.fun isbeddelaya — xogta suuqa ee tooska ah oo loo soo bandhigay sidii muuqaal isdhexgal ah.",
 		"meta_og_title": "Muuqaal-bixiyaha Pump · three.ws",
-		"meta_title": "Wakiilka 3D · Muuqaal-bixiyaha Pump.fun",
+		"meta_title": "Muuqaal-bixiyaha Pump.fun · three.ws",
 		"meta_twitter_description": "Muuqaal 3D ah oo ah calaamadaha (tokens) pump.fun isbeddelaya — xogta suuqa ee tooska ah oo loo soo bandhigay sidii muuqaal isdhexgal ah.",
 		"meta_twitter_title": "Muuqaal-bixiyaha Pump · three.ws",
 		"migrations": "<span class=\"live-dot\"></span>Guuritaanno",
-		"min": "<b id=\"vz-stat-rate\">—</b> <span id=\"vz-stat-rate-unit\">/daqiiqad</span>",
 		"new": "Cusub",
 		"on_refresh": "marka la cusboonaysiiyo",
+		"per_minute_label": "/daqiiqad",
 		"refresh_data_r_title": "Cusboonaysii xogta (R)",
 		"replies": "Jawaabo",
 		"retry": "Iskuday mar kale",
@@ -17198,7 +17197,8 @@
 		"show_tokens_as_3d_orbs_arialabel": "Tus calaamadaha (tokens) sidii kubbadaha 3D ah",
 		"show_tokens_as_coin_logos_arialabel": "Tus calaamadaha (tokens) sidii astaamaha qadaadiicda",
 		"streams": "Qulqulo",
-		"total": "guud ahaan <b id=\"vz-stat-mcap\">—</b>",
+		"tokens_label": "tokens",
+		"total_label": "guud ahaan",
 		"trending": "Isbeddelaya",
 		"try_3d_again": "Iskuday 3D mar kale",
 		"up": "▲ <b>kor</b>"

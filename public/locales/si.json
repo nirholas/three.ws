@@ -16845,7 +16845,6 @@
 		"visualizer": "දෘශ්‍යකරණය →"
 	},
 	"pump_visualizer": {
-		"0_tokens": "<b id=\"vz-stat-count\">0</b> ටෝකන",
 		"3d_view_unavailable": "3D දසුන නොමැත.",
 		"all_launches": "සියලු දියත් කිරීම් →",
 		"c": "C",
@@ -16863,13 +16862,13 @@
 		"meta_description": "Pump.fun හි ජනප්‍රිය ටෝකන වල තත්‍ය කාලීන ත්‍රිමාණ දෘශ්‍යකරණයක්. සෑම ගෝලයක්ම සජීවී කාසියකි, වෙළඳපල ප්‍රාග්ධනය අනුව ප්‍රමාණය කර ඇත.",
 		"meta_og_description": "ජනප්‍රිය pump.fun ටෝකන වල ත්‍රිමාණ දෘශ්‍යකරණය — සජීවී වෙළඳපල දත්ත අන්තර්ක්‍රියාකාරී දර්ශනයක් ලෙස ඉදිරිපත් කෙරේ.",
 		"meta_og_title": "Pump දෘශ්‍යකරණය · three.ws",
-		"meta_title": "3D-Agent · Pump.fun දෘශ්‍යකරණය",
+		"meta_title": "Pump.fun දෘශ්‍යකරණය · three.ws",
 		"meta_twitter_description": "ජනප්‍රිය pump.fun ටෝකන වල ත්‍රිමාණ දෘශ්‍යකරණය — සජීවී වෙළඳපල දත්ත අන්තර්ක්‍රියාකාරී දර්ශනයක් ලෙස ඉදිරිපත් කෙරේ.",
 		"meta_twitter_title": "Pump දෘශ්‍යකරණය · three.ws",
 		"migrations": "<span class=\"live-dot\"></span>සංක්‍රමණ",
-		"min": "<b id=\"vz-stat-rate\">—</b> <span id=\"vz-stat-rate-unit\">/විනාඩිය</span>",
 		"new": "අලුත්",
 		"on_refresh": "නැවුම් කිරීමේදී",
+		"per_minute_label": "/විනාඩිය",
 		"refresh_data_r_title": "දත්ත නැවුම් කරන්න (R)",
 		"replies": "පිළිතුරු",
 		"retry": "නැවත උත්සාහ කරන්න",
@@ -16877,7 +16876,8 @@
 		"show_tokens_as_3d_orbs_arialabel": "ටෝකන ත්‍රිමාණ ගෝල ලෙස පෙන්වන්න",
 		"show_tokens_as_coin_logos_arialabel": "ටෝකන කාසි ලාංඡන ලෙස පෙන්වන්න",
 		"streams": "ප්‍රවාහ",
-		"total": "මුළු <b id=\"vz-stat-mcap\">—</b>",
+		"tokens_label": "ටෝකන",
+		"total_label": "මුළු",
 		"trending": "ජනප්‍රිය",
 		"try_3d_again": "ත්‍රිමාණ නැවත උත්සාහ කරන්න",
 		"up": "▲ <b>ඉහළට</b>"

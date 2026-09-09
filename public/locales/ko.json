@@ -17166,7 +17166,6 @@
 		"visualizer": "비주얼라이저 →"
 	},
 	"pump_visualizer": {
-		"0_tokens": "<b id=\"vz-stat-count\">0</b>개 토큰",
 		"3d_view_unavailable": "3D 뷰를 사용할 수 없습니다.",
 		"all_launches": "모든 런치 보기 →",
 		"c": "C",
@@ -17184,13 +17183,13 @@
 		"meta_description": "Pump.fun의 인기 토큰을 실시간 3D로 시각화합니다. 각 구체는 시가총액에 따라 크기가 결정되는 실시간 코인입니다.",
 		"meta_og_description": "인기 pump.fun 토큰의 3D 비주얼라이저 — 실시간 시장 데이터가 인터랙티브 장면으로 렌더링됩니다.",
 		"meta_og_title": "펌프 비주얼라이저 · three.ws",
-		"meta_title": "3D 에이전트 · Pump.fun 비주얼라이저",
+		"meta_title": "Pump.fun 비주얼라이저 · three.ws",
 		"meta_twitter_description": "인기 pump.fun 토큰의 3D 비주얼라이저 — 실시간 시장 데이터가 인터랙티브 장면으로 렌더링됩니다.",
 		"meta_twitter_title": "펌프 비주얼라이저 · three.ws",
 		"migrations": "<span class=\"live-dot\"></span>마이그레이션",
-		"min": "<b id=\"vz-stat-rate\">—</b> <span id=\"vz-stat-rate-unit\">/분</span>",
 		"new": "신규",
 		"on_refresh": "새로고침 시",
+		"per_minute_label": "/분",
 		"refresh_data_r_title": "데이터 새로고침 (R)",
 		"replies": "답글",
 		"retry": "재시도",
@@ -17198,7 +17197,8 @@
 		"show_tokens_as_3d_orbs_arialabel": "토큰을 3D 구체로 표시",
 		"show_tokens_as_coin_logos_arialabel": "토큰을 코인 로고로 표시",
 		"streams": "스트림",
-		"total": "총 <b id=\"vz-stat-mcap\">—</b>",
+		"tokens_label": "개 토큰",
+		"total_label": "총",
 		"trending": "인기",
 		"try_3d_again": "3D 다시 시도",
 		"up": "▲ <b>상승</b>"

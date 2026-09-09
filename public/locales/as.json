@@ -17166,7 +17166,6 @@
 		"visualizer": "ভিজুৱেলাইজাৰ →"
 	},
 	"pump_visualizer": {
-		"0_tokens": "<b id=\"vz-stat-count\">0</b> টোকেন",
 		"3d_view_unavailable": "3D দৃশ্য উপলব্ধ নহয়।",
 		"all_launches": "সকলো মুকলি →",
 		"c": "C",
@@ -17184,13 +17183,13 @@
 		"meta_description": "Pump.fun-ত ট্ৰেণ্ডিং টোকেনসমূহৰ এক ৰিয়েল-টাইম 3D ভিজুৱেলাইজেচন। প্ৰতিটো গোলক এটা লাইভ কইন, মাৰ্কেট কেপৰ দ্বাৰা আকাৰ নিৰ্ধাৰণ কৰা হৈছে।",
 		"meta_og_description": "ট্ৰেণ্ডিং pump.fun টোকেনসমূহৰ 3D ভিজুৱেলাইজাৰ — লাইভ মাৰ্কেট ডেটা এটা ইন্টাৰেক্টিভ দৃশ্য হিচাপে ৰেণ্ডাৰ কৰা হৈছে।",
 		"meta_og_title": "পাম্প ভিজুৱেলাইজাৰ · three.ws",
-		"meta_title": "3D-এজেণ্ট · Pump.fun ভিজুৱেলাইজাৰ",
+		"meta_title": "Pump.fun ভিজুৱেলাইজাৰ · three.ws",
 		"meta_twitter_description": "ট্ৰেণ্ডিং pump.fun টোকেনসমূহৰ 3D ভিজুৱেলাইজাৰ — লাইভ মাৰ্কেট ডেটা এটা ইন্টাৰেক্টিভ দৃশ্য হিচাপে ৰেণ্ডাৰ কৰা হৈছে।",
 		"meta_twitter_title": "পাম্প ভিজুৱেলাইজাৰ · three.ws",
 		"migrations": "<span class=\"live-dot\"></span>মাইগ্ৰেচন",
-		"min": "<b id=\"vz-stat-rate\">—</b> <span id=\"vz-stat-rate-unit\">/মিনিট</span>",
 		"new": "নতুন",
 		"on_refresh": "ৰিফ্ৰেশত",
+		"per_minute_label": "/মিনিট",
 		"refresh_data_r_title": "ডেটা ৰিফ্ৰেশ কৰক (R)",
 		"replies": "উত্তৰসমূহ",
 		"retry": "পুনৰ চেষ্টা কৰক",
@@ -17198,7 +17197,8 @@
 		"show_tokens_as_3d_orbs_arialabel": "টোকেনসমূহ 3D অৰ্ব হিচাপে দেখুৱাওক",
 		"show_tokens_as_coin_logos_arialabel": "টোকেনসমূহ কইন লোগো হিচাপে দেখুৱাওক",
 		"streams": "ষ্ট্ৰীমসমূহ",
-		"total": "মুঠ <b id=\"vz-stat-mcap\">—</b>",
+		"tokens_label": "টোকেন",
+		"total_label": "মুঠ",
 		"trending": "ট্ৰেণ্ডিং",
 		"try_3d_again": "পুনৰ 3D চেষ্টা কৰক",
 		"up": "▲ <b>আপ</b>"

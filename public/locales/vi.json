@@ -17166,7 +17166,6 @@
 		"visualizer": "Trình trực quan →"
 	},
 	"pump_visualizer": {
-		"0_tokens": "<b id=\"vz-stat-count\">0</b> token",
 		"3d_view_unavailable": "Không có chế độ xem 3D.",
 		"all_launches": "Tất cả các lần ra mắt →",
 		"c": "C",
@@ -17184,13 +17183,13 @@
 		"meta_description": "Một trực quan 3D thời gian thực của các token đang thịnh hành trên Pump.fun. Mỗi hình cầu là một đồng coin trực tiếp, kích thước theo vốn hóa thị trường.",
 		"meta_og_description": "Trình trực quan 3D của các token pump.fun đang thịnh hành — dữ liệu thị trường trực tiếp được hiển thị dưới dạng một cảnh tương tác.",
 		"meta_og_title": "Trình hiển thị Pump · three.ws",
-		"meta_title": "3D-Agent · Trình trực quan Pump.fun",
+		"meta_title": "Trình trực quan Pump.fun · three.ws",
 		"meta_twitter_description": "Trình hiển thị 3D của các token pump.fun đang hot — dữ liệu thị trường trực tiếp được hiển thị dưới dạng một cảnh tương tác.",
 		"meta_twitter_title": "Trình Hiển Thị Tăng Giá · three.ws",
 		"migrations": "<span class=\"live-dot\"></span>Di chuyển",
-		"min": "<b id=\"vz-stat-rate\">—</b> <span id=\"vz-stat-rate-unit\">/phút</span>",
 		"new": "Mới",
 		"on_refresh": "khi làm mới",
+		"per_minute_label": "/phút",
 		"refresh_data_r_title": "Làm mới dữ liệu (R)",
 		"replies": "Phản hồi",
 		"retry": "Thử lại",
@@ -17198,7 +17197,8 @@
 		"show_tokens_as_3d_orbs_arialabel": "Hiển thị token dưới dạng hình cầu 3D",
 		"show_tokens_as_coin_logos_arialabel": "Hiển thị token dưới dạng logo coin",
 		"streams": "Luồng",
-		"total": "tổng <b id=\"vz-stat-mcap\">—</b>",
+		"tokens_label": "token",
+		"total_label": "tổng",
 		"trending": "Xu hướng",
 		"try_3d_again": "Thử lại 3D",
 		"up": "▲ <b>tăng</b>"

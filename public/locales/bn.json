@@ -17166,7 +17166,6 @@
 		"visualizer": "ভিজুয়ালাইজার →"
 	},
 	"pump_visualizer": {
-		"0_tokens": "<b id=\"vz-stat-count\">0</b> টোকেন",
 		"3d_view_unavailable": "3D ভিউ উপলব্ধ নয়।",
 		"all_launches": "সব লঞ্চ →",
 		"c": "C",
@@ -17184,13 +17183,13 @@
 		"meta_description": "Pump.fun-এ ট্রেন্ডিং টোকেনগুলোর একটি রিয়েল-টাইম 3D ভিজুয়ালাইজেশন। প্রতিটি গোলক একটি লাইভ কয়েন, মার্কেট ক্যাপ দ্বারা আকার দেওয়া।",
 		"meta_og_description": "ট্রেন্ডিং pump.fun টোকেনগুলোর 3D ভিজুয়ালাইজার — লাইভ মার্কেট ডেটা একটি ইন্টারেক্টিভ দৃশ্যে রেন্ডার করা।",
 		"meta_og_title": "পাম্প ভিজ্যুয়ালাইজার · three.ws",
-		"meta_title": "থ্রিডি-এজেন্ট · পাম্প.ফান ভিজ্যুয়ালাইজার",
+		"meta_title": "পাম্প.ফান ভিজ্যুয়ালাইজার · three.ws",
 		"meta_twitter_description": "ট্রেন্ডিং pump.fun টোকেনের 3D ভিজুয়ালাইজার — ইন্টারেক্টিভ দৃশ্যে রেন্ডার করা লাইভ মার্কেট ডেটা।",
 		"meta_twitter_title": "পাম্প ভিজুয়ালাইজার · three.ws",
 		"migrations": "<span class=\"live-dot\"></span>মাইগ্রেশন",
-		"min": "<b id=\"vz-stat-rate\">—</b> <span id=\"vz-stat-rate-unit\">/মিনিট</span>",
 		"new": "নতুন",
 		"on_refresh": "রিফ্রেশের সময়",
+		"per_minute_label": "/মিনিট",
 		"refresh_data_r_title": "ডেটা রিফ্রেশ করুন (R)",
 		"replies": "প্রতিক্রিয়া",
 		"retry": "পুনরায় চেষ্টা করুন",
@@ -17198,7 +17197,8 @@
 		"show_tokens_as_3d_orbs_arialabel": "টোকেনগুলো 3D অরব হিসেবে দেখান",
 		"show_tokens_as_coin_logos_arialabel": "টোকেনগুলো কয়েন লোগো হিসেবে দেখান",
 		"streams": "স্ট্রিম",
-		"total": "মোট <b id=\"vz-stat-mcap\">—</b>",
+		"tokens_label": "টোকেন",
+		"total_label": "মোট",
 		"trending": "ট্রেন্ডিং",
 		"try_3d_again": "পুনরায় 3D চেষ্টা করুন",
 		"up": "▲ <b>উপরে</b>"

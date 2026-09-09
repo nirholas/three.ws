@@ -16767,7 +16767,6 @@
 		"visualizer": "Visualizer →"
 	},
 	"pump_visualizer": {
-		"0_tokens": "<b id=\"vz-stat-count\">0</b> ໂທເຄັນ",
 		"3d_view_unavailable": "ບໍ່ສາມາດເບິ່ງແບບ 3D ໄດ້.",
 		"all_launches": "ການເປີດຕົວທັງໝົດ →",
 		"c": "C",
@@ -16785,13 +16784,13 @@
 		"meta_description": "ການສະແດງພາບ 3D ແບບສົດໆຂອງໂທເຄັນທີ່ກຳລັງເປັນກະແສໃນ Pump.fun. ແຕ່ລະວົງມົນແມ່ນຫຼຽນສົດ, ຂະໜາດຕາມມູນຄ່າຕະຫຼາດ.",
 		"meta_og_description": "ເຄື່ອງສະແດງພາບ 3D ຂອງໂທເຄັນ pump.fun ທີ່ກຳລັງເປັນກະແສ — ຂໍ້ມູນຕະຫຼາດສົດທີ່ສະແດງຜົນເປັນສາກແບບໂຕ້ຕອບ.",
 		"meta_og_title": "Pump Visualizer · three.ws",
-		"meta_title": "3D-Agent · Pump.fun Visualizer",
+		"meta_title": "Pump.fun Visualizer · three.ws",
 		"meta_twitter_description": "ເຄື່ອງສະແດງພາບ 3D ຂອງໂທເຄັນ pump.fun ທີ່ກຳລັງເປັນກະແສ — ຂໍ້ມູນຕະຫຼາດສົດທີ່ສະແດງຜົນເປັນສາກແບບໂຕ້ຕອບ.",
 		"meta_twitter_title": "Pump Visualizer · three.ws",
 		"migrations": "<span class=\"live-dot\"></span>ການຍ້າຍຖິ່ນ",
-		"min": "<b id=\"vz-stat-rate\">—</b> <span id=\"vz-stat-rate-unit\">/ນາທີ</span>",
 		"new": "ໃໝ່",
 		"on_refresh": "ເມື່ອໂຫຼດໃໝ່",
+		"per_minute_label": "/ນາທີ",
 		"refresh_data_r_title": "ໂຫຼດຂໍ້ມູນໃໝ່ (R)",
 		"replies": "ຄຳຕອບ",
 		"retry": "ລອງໃໝ່",
@@ -16799,7 +16798,8 @@
 		"show_tokens_as_3d_orbs_arialabel": "ສະແດງໂທເຄັນເປັນວົງມົນ 3D",
 		"show_tokens_as_coin_logos_arialabel": "ສະແດງໂທເຄັນເປັນໂລໂກ້ຫຼຽນ",
 		"streams": "ສະຕຣີມ",
-		"total": "ທັງໝົດ <b id=\"vz-stat-mcap\">—</b>",
+		"tokens_label": "ໂທເຄັນ",
+		"total_label": "ທັງໝົດ",
 		"trending": "ກຳລັງເປັນກະແສ",
 		"try_3d_again": "ລອງ 3D ອີກຄັ້ງ",
 		"up": "▲ <b>ຂຶ້ນ</b>"

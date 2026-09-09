@@ -17166,7 +17166,6 @@
 		"visualizer": "ビジュアライザー →"
 	},
 	"pump_visualizer": {
-		"0_tokens": "<b id=\"vz-stat-count\">0</b>トークン",
 		"3d_view_unavailable": "3Dビューは利用できません。",
 		"all_launches": "全ローンチ →",
 		"c": "C",
@@ -17184,13 +17183,13 @@
 		"meta_description": "Pump.funのトレンドトークンをリアルタイムで3D可視化。各球体はライブコインで、時価総額に応じてサイズが変化します。",
 		"meta_og_description": "トレンドのpump.funトークンを3Dで可視化 — ライブ市場データをインタラクティブなシーンとしてレンダリング。",
 		"meta_og_title": "Pump Visualizer · three.ws",
-		"meta_title": "3Dエージェント · Pump.fun ビジュアライザー",
+		"meta_title": "Pump.fun ビジュアライザー · three.ws",
 		"meta_twitter_description": "トレンドのpump.funトークンを3Dで可視化 — ライブ市場データをインタラクティブなシーンとしてレンダリング。",
 		"meta_twitter_title": "Pump Visualizer · three.ws",
 		"migrations": "<span class=\"live-dot\"></span>マイグレーション",
-		"min": "<b id=\"vz-stat-rate\">—</b> <span id=\"vz-stat-rate-unit\">/分</span>",
 		"new": "新規",
 		"on_refresh": "更新時",
+		"per_minute_label": "/分",
 		"refresh_data_r_title": "データを更新 (R)",
 		"replies": "返信",
 		"retry": "再試行",
@@ -17198,7 +17197,8 @@
 		"show_tokens_as_3d_orbs_arialabel": "トークンを3Dオーブとして表示",
 		"show_tokens_as_coin_logos_arialabel": "トークンをコインロゴとして表示",
 		"streams": "ストリーム",
-		"total": "合計 <b id=\"vz-stat-mcap\">—</b>",
+		"tokens_label": "トークン",
+		"total_label": "合計",
 		"trending": "トレンド",
 		"try_3d_again": "3Dを再試行",
 		"up": "▲ <b>アップ</b>"

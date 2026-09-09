@@ -17166,7 +17166,6 @@
 		"visualizer": "Görselleştirici →"
 	},
 	"pump_visualizer": {
-		"0_tokens": "<b id=\"vz-stat-count\">0</b> token",
 		"3d_view_unavailable": "3D görünüm mevcut değil.",
 		"all_launches": "Tüm lansmanlar →",
 		"c": "C",
@@ -17184,13 +17183,13 @@
 		"meta_description": "Pump.fun'daki trend tokenların gerçek zamanlı 3D görselleştirmesi. Her bir küre, piyasa değeriyle boyutlandırılmış canlı bir coin'dir.",
 		"meta_og_description": "Trend pump.fun tokenlarının 3D görselleştiricisi — canlı piyasa verileri etkileşimli bir sahne olarak sunulmaktadır.",
 		"meta_og_title": "Pump Görselleştirici · three.ws",
-		"meta_title": "3D-Ajans · Pump.fun Görselleştirici",
+		"meta_title": "Pump.fun Görselleştirici · three.ws",
 		"meta_twitter_description": "Trend olan pump.fun tokenlerinin 3D görselleştiricisi — etkileşimli bir sahne olarak sunulan canlı piyasa verileri.",
 		"meta_twitter_title": "Pump Görselleştirici · three.ws",
 		"migrations": "<span class=\"live-dot\"></span>Göçler",
-		"min": "<b id=\"vz-stat-rate\">—</b> <span id=\"vz-stat-rate-unit\">/dakika</span>",
 		"new": "Yeni",
 		"on_refresh": "yenileme sırasında",
+		"per_minute_label": "/dakika",
 		"refresh_data_r_title": "Verileri yenile (R)",
 		"replies": "Yanıtlar",
 		"retry": "Tekrar dene",
@@ -17198,7 +17197,8 @@
 		"show_tokens_as_3d_orbs_arialabel": "Tokenleri 3D küreler olarak göster",
 		"show_tokens_as_coin_logos_arialabel": "Tokenleri madeni para logoları olarak göster",
 		"streams": "Akışlar",
-		"total": "toplam <b id=\"vz-stat-mcap\">—</b>",
+		"tokens_label": "token",
+		"total_label": "toplam",
 		"trending": "Trend",
 		"try_3d_again": "3D'yi tekrar dene",
 		"up": "▲ <b>yukarı</b>"

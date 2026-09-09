@@ -17166,7 +17166,6 @@
 		"visualizer": "વિઝ્યુલાઇઝર →"
 	},
 	"pump_visualizer": {
-		"0_tokens": "<b id=\"vz-stat-count\">0</b> ટોકન્સ",
 		"3d_view_unavailable": "3D દૃશ્ય અનુપલબ્ધ છે.",
 		"all_launches": "બધા લોન્ચ →",
 		"c": "C",
@@ -17184,13 +17183,13 @@
 		"meta_description": "Pump.fun પર ટ્રેન્ડિંગ ટોકન્સનું રીઅલ-ટાઇમ 3D વિઝ્યુલાઇઝેશન. દરેક ગોળો એક લાઇવ સિક્કો છે, જે માર્કેટ કેપ દ્વારા કદમાં છે.",
 		"meta_og_description": "ટ્રેન્ડિંગ pump.fun ટોકન્સનું 3D વિઝ્યુલાઇઝર — લાઇવ માર્કેટ ડેટા ઇન્ટરેક્ટિવ દ્રશ્ય તરીકે રેન્ડર થયેલ છે.",
 		"meta_og_title": "પમ્પ વિઝ્યુલાઇઝર · three.ws",
-		"meta_title": "3D-એજન્ટ · Pump.fun વિઝ્યુલાઇઝર",
+		"meta_title": "Pump.fun વિઝ્યુલાઇઝર · three.ws",
 		"meta_twitter_description": "ટ્રેન્ડિંગ pump.fun ટોકન્સનું 3D વિઝ્યુલાઇઝર — લાઇવ માર્કેટ ડેટા ઇન્ટરેક્ટિવ દ્રશ્ય તરીકે રેન્ડર થયેલ છે.",
 		"meta_twitter_title": "પમ્પ વિઝ્યુલાઇઝર · three.ws",
 		"migrations": "<span class=\"live-dot\"></span>માઇગ્રેશન",
-		"min": "<b id=\"vz-stat-rate\">—</b> <span id=\"vz-stat-rate-unit\">/મિનિટ</span>",
 		"new": "નવું",
 		"on_refresh": "રિફ્રેશ પર",
+		"per_minute_label": "/મિનિટ",
 		"refresh_data_r_title": "ડેટા રિફ્રેશ કરો (R)",
 		"replies": "જવાબો",
 		"retry": "ફરી પ્રયાસ કરો",
@@ -17198,7 +17197,8 @@
 		"show_tokens_as_3d_orbs_arialabel": "ટોકન્સને 3D ઓર્બ્સ તરીકે બતાવો",
 		"show_tokens_as_coin_logos_arialabel": "ટોકન્સને કોઈન લોગો તરીકે બતાવો",
 		"streams": "સ્ટ્રીમ્સ",
-		"total": "કુલ <b id=\"vz-stat-mcap\">—</b>",
+		"tokens_label": "ટોકન્સ",
+		"total_label": "કુલ",
 		"trending": "ટ્રેન્ડિંગ",
 		"try_3d_again": "3D ફરી પ્રયાસ કરો",
 		"up": "▲ <b>અપ</b>"

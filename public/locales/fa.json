@@ -17166,7 +17166,6 @@
 		"visualizer": "تصویرساز →"
 	},
 	"pump_visualizer": {
-		"0_tokens": "<b id=\"vz-stat-count\">0</b> توکن",
 		"3d_view_unavailable": "نمای 3D در دسترس نیست.",
 		"all_launches": "همه راه‌اندازی‌ها →",
 		"c": "C",
@@ -17184,13 +17183,13 @@
 		"meta_description": "یک تجسم 3D لحظه‌ای از توکن‌های پرطرفدار در Pump.fun. هر کره یک سکه زنده است که بر اساس کاپ بازار اندازه‌گیری می‌شود.",
 		"meta_og_description": "تصویرساز 3D توکن‌های پرطرفدار pump.fun — داده‌های بازار زنده به صورت یک صحنه تعاملی ارائه شده است.",
 		"meta_og_title": "Pump Visualizer · three.ws",
-		"meta_title": "3D-Agent · Pump.fun Visualizer",
+		"meta_title": "Pump.fun Visualizer · three.ws",
 		"meta_twitter_description": "ویژوالایزر ۳D توکن‌های محبوب pump.fun — داده‌های زنده بازار به‌صورت یک صحنه تعاملی نمایش داده می‌شود.",
 		"meta_twitter_title": "ویژوالایزر پمپ · three.ws",
 		"migrations": "<span class=\"live-dot\"></span>مهاجرت‌ها",
-		"min": "<b id=\"vz-stat-rate\">—</b> <span id=\"vz-stat-rate-unit\">/دقیقه</span>",
 		"new": "جدید",
 		"on_refresh": "در زمان تازه‌سازی",
+		"per_minute_label": "/دقیقه",
 		"refresh_data_r_title": "تازه‌سازی داده‌ها (R)",
 		"replies": "پاسخ‌ها",
 		"retry": "تلاش مجدد",
@@ -17198,7 +17197,8 @@
 		"show_tokens_as_3d_orbs_arialabel": "نمایش توکن‌ها به‌صورت کره‌های ۳D",
 		"show_tokens_as_coin_logos_arialabel": "نمایش توکن‌ها به‌صورت لوگوهای سکه",
 		"streams": "جریان‌ها",
-		"total": "مجموع <b id=\"vz-stat-mcap\">—</b>",
+		"tokens_label": "توکن",
+		"total_label": "مجموع",
 		"trending": "محبوب",
 		"try_3d_again": "دوباره ۳D را امتحان کنید",
 		"up": "▲ <b>بالا</b>"

@@ -17166,7 +17166,6 @@
 		"visualizer": "Visualizer →"
 	},
 	"pump_visualizer": {
-		"0_tokens": "<b id=\"vz-stat-count\">0</b> tokens",
 		"3d_view_unavailable": "3D-vy otillgänglig.",
 		"all_launches": "Alla lanseringar →",
 		"c": "C",
@@ -17184,13 +17183,13 @@
 		"meta_description": "En realtids 3D-visualisering av trendande tokens på Pump.fun. Varje sfär är en live-mynt, storleksanpassad efter marknadskapital.",
 		"meta_og_description": "3D-visualiserare av trendande pump.fun tokens — live marknadsdata renderad som en interaktiv scen.",
 		"meta_og_title": "Pump Visualizer · three.ws",
-		"meta_title": "3D-Agent · Pump.fun Visualizer",
+		"meta_title": "Pump.fun Visualizer · three.ws",
 		"meta_twitter_description": "3D visualiser av trendande pump.fun tokens — live marknadsdata renderad som en interaktiv scen.",
 		"meta_twitter_title": "Pump Visualizer · three.ws",
 		"migrations": "<span class=\"live-dot\"></span>Migrationer",
-		"min": "<b id=\"vz-stat-rate\">—</b> <span id=\"vz-stat-rate-unit\">/min</span>",
 		"new": "Ny",
 		"on_refresh": "vid uppdatering",
+		"per_minute_label": "/min",
 		"refresh_data_r_title": "Uppdatera data (R)",
 		"replies": "Svar",
 		"retry": "Försök igen",
@@ -17198,7 +17197,8 @@
 		"show_tokens_as_3d_orbs_arialabel": "Visa tokens som 3D-orbitar",
 		"show_tokens_as_coin_logos_arialabel": "Visa tokens som myntlogotyper",
 		"streams": "Strömmar",
-		"total": "totalt <b id=\"vz-stat-mcap\">—</b>",
+		"tokens_label": "tokens",
+		"total_label": "totalt",
 		"trending": "Trendande",
 		"try_3d_again": "Försök 3D igen",
 		"up": "▲ <b>upp</b>"

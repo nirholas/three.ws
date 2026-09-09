@@ -17166,7 +17166,6 @@
 		"visualizer": "Visualiseur →"
 	},
 	"pump_visualizer": {
-		"0_tokens": "<b id=\"vz-stat-count\">0</b> jetons",
 		"3d_view_unavailable": "Vue 3D indisponible.",
 		"all_launches": "Tous les lancements →",
 		"c": "C",
@@ -17184,13 +17183,13 @@
 		"meta_description": "Une visualisation 3D en temps réel des jetons tendances sur Pump.fun. Chaque sphère représente une pièce en direct, dimensionnée par sa capitalisation boursière.",
 		"meta_og_description": "Visualiseur 3D des jetons tendances pump.fun — données de marché en direct rendues sous forme de scène interactive.",
 		"meta_og_title": "Visualiseur Pump · three.ws",
-		"meta_title": "Agent 3D · Visualiseur Pump.fun",
+		"meta_title": "Visualiseur Pump.fun · three.ws",
 		"meta_twitter_description": "Visualiseur 3D des jetons tendances pump.fun — données de marché en direct rendues sous forme de scène interactive.",
 		"meta_twitter_title": "Visualiseur Pump · three.ws",
 		"migrations": "<span class=\"live-dot\"></span>Migrations",
-		"min": "<b id=\"vz-stat-rate\">—</b> <span id=\"vz-stat-rate-unit\">/min</span>",
 		"new": "Nouveau",
 		"on_refresh": "au rafraîchissement",
+		"per_minute_label": "/min",
 		"refresh_data_r_title": "Actualiser les données (R)",
 		"replies": "Réponses",
 		"retry": "Réessayer",
@@ -17198,7 +17197,8 @@
 		"show_tokens_as_3d_orbs_arialabel": "Afficher les jetons comme des orbes 3D",
 		"show_tokens_as_coin_logos_arialabel": "Afficher les jetons comme des logos de pièces",
 		"streams": "Flux",
-		"total": "total <b id=\"vz-stat-mcap\">—</b>",
+		"tokens_label": "jetons",
+		"total_label": "total",
 		"trending": "Tendances",
 		"try_3d_again": "Réessayer la 3D",
 		"up": "▲ <b>haut</b>"

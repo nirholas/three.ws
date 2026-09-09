@@ -17166,7 +17166,6 @@
 		"visualizer": "Visualiseerija →"
 	},
 	"pump_visualizer": {
-		"0_tokens": "<b id=\"vz-stat-count\">0</b> märki",
 		"3d_view_unavailable": "3D vaade pole saadaval.",
 		"all_launches": "Kõik käivitused →",
 		"c": "C",
@@ -17184,13 +17183,13 @@
 		"meta_description": "Pump.fun'i trendivate tokenite reaalajas 3D-visualiseering. Iga kera on elav münt, mille suurus sõltub turukapitalisatsioonist.",
 		"meta_og_description": "Trendivate pump.fun tokenite 3D-visualiseerija — reaalajas turuandmed interaktiivse stseenina.",
 		"meta_og_title": "Pump Visualiseerija · three.ws",
-		"meta_title": "3D-agent · Pump.fun Visualiseerija",
+		"meta_title": "Pump.fun Visualiseerija · three.ws",
 		"meta_twitter_description": "Trendivate pump.fun tokenite 3D-visualiseerija — reaalajas turuandmed interaktiivse stseenina.",
 		"meta_twitter_title": "Pump Visualiseerija · three.ws",
 		"migrations": "<span class=\"live-dot\"></span>Migratsioonid",
-		"min": "<b id=\"vz-stat-rate\">—</b> <span id=\"vz-stat-rate-unit\">/min</span>",
 		"new": "Uus",
 		"on_refresh": "värskendamisel",
+		"per_minute_label": "/min",
 		"refresh_data_r_title": "Värskenda andmeid (R)",
 		"replies": "Vastused",
 		"retry": "Proovi uuesti",
@@ -17198,7 +17197,8 @@
 		"show_tokens_as_3d_orbs_arialabel": "Näita tokeneid 3D-keradena",
 		"show_tokens_as_coin_logos_arialabel": "Näita tokeneid mündilogodena",
 		"streams": "Vood",
-		"total": "kokku <b id=\"vz-stat-mcap\">—</b>",
+		"tokens_label": "märki",
+		"total_label": "kokku",
 		"trending": "Trendivad",
 		"try_3d_again": "Proovi 3D-d uuesti",
 		"up": "▲ <b>tõus</b>"

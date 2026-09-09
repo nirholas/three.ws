@@ -17166,7 +17166,6 @@
 		"visualizer": "ویژولائزر →"
 	},
 	"pump_visualizer": {
-		"0_tokens": "<b id=\"vz-stat-count\">0</b> ٹوکن",
 		"3d_view_unavailable": "3D ویو دستیاب نہیں۔",
 		"all_launches": "تمام لانچز →",
 		"c": "C",
@@ -17184,13 +17183,13 @@
 		"meta_description": "Pump.fun پر ٹرینڈنگ ٹوکنز کا حقیقی وقت کا 3D ویژولائزیشن۔ ہر گیند ایک زندہ سکہ ہے، مارکیٹ کیپ کے لحاظ سے سائز کی گئی۔",
 		"meta_og_description": "ٹرینڈنگ pump.fun ٹوکنز کا 3D ویژولائزر — زندہ مارکیٹ کے ڈیٹا کو ایک تعاملاتی منظر کے طور پر پیش کیا گیا۔",
 		"meta_og_title": "پمپ ویژولائزر · three.ws",
-		"meta_title": "تھری ڈی ایجنٹ · پمپ.فن ویژولائزر",
+		"meta_title": "پمپ.فن ویژولائزر · three.ws",
 		"meta_twitter_description": "تازہ ترین pump.fun ٹوکنز کا 3D بصری نمائندہ — زندہ مارکیٹ ڈیٹا کو ایک تعاملاتی منظر کے طور پر پیش کیا گیا۔",
 		"meta_twitter_title": "پمپ بصری نمائندہ · three.ws",
 		"migrations": "<span class=\"live-dot\"></span> مائیگریشنز",
-		"min": "<b id=\"vz-stat-rate\">—</b> <span id=\"vz-stat-rate-unit\">/منٹ</span>",
 		"new": "نیا",
 		"on_refresh": "تازہ کرنے پر",
+		"per_minute_label": "/منٹ",
 		"refresh_data_r_title": "ڈیٹا کو تازہ کریں (R)",
 		"replies": "جواب",
 		"retry": "دوبارہ کوشش کریں",
@@ -17198,7 +17197,8 @@
 		"show_tokens_as_3d_orbs_arialabel": "ٹوکنز کو 3D گولوں کے طور پر دکھائیں",
 		"show_tokens_as_coin_logos_arialabel": "ٹوکنز کو سکہ کے لوگو کے طور پر دکھائیں",
 		"streams": "اسٹریمز",
-		"total": "مجموعی <b id=\"vz-stat-mcap\">—</b>",
+		"tokens_label": "ٹوکن",
+		"total_label": "مجموعی",
 		"trending": "ٹرینڈنگ",
 		"try_3d_again": "پھر سے 3D آزمائیں",
 		"up": "▲ <b> اوپر </b>"

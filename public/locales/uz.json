@@ -17166,7 +17166,6 @@
 		"visualizer": "Vizualizator →"
 	},
 	"pump_visualizer": {
-		"0_tokens": "<b id=\"vz-stat-count\">0</b> tokenlar",
 		"3d_view_unavailable": "3D ko'rinish mavjud emas.",
 		"all_launches": "Barcha ishga tushirishlar →",
 		"c": "C",
@@ -17184,13 +17183,13 @@
 		"meta_description": "Pump.fun'dagi trenddagi tokenlarning real vaqtdagi 3D vizualizatsiyasi. Har bir sharcha bozor kapitallashuvi bo'yicha o'lchamlangan jonli tangadir.",
 		"meta_og_description": "Trenddagi pump.fun tokenlarining 3D vizualizatori — jonli bozor ma'lumotlari interaktiv sahna sifatida ko'rsatilgan.",
 		"meta_og_title": "Pump Visualizer · three.ws",
-		"meta_title": "3D-Agent · Pump.fun Visualizer",
+		"meta_title": "Pump.fun Visualizer · three.ws",
 		"meta_twitter_description": "Trenddagi pump.fun tokenlarining 3D vizualizatori — jonli bozor ma'lumotlari interaktiv sahna sifatida ko'rsatilgan.",
 		"meta_twitter_title": "Pump Visualizer · three.ws",
 		"migrations": "<span class=\"live-dot\"></span>Migratsiyalar",
-		"min": "<b id=\"vz-stat-rate\">—</b> <span id=\"vz-stat-rate-unit\">/daq</span>",
 		"new": "Yangi",
 		"on_refresh": "yangilashda",
+		"per_minute_label": "/daq",
 		"refresh_data_r_title": "Ma'lumotlarni yangilash (R)",
 		"replies": "Javoblar",
 		"retry": "Qayta urinish",
@@ -17198,7 +17197,8 @@
 		"show_tokens_as_3d_orbs_arialabel": "Tokenlarni 3D sharchalar sifatida ko'rsatish",
 		"show_tokens_as_coin_logos_arialabel": "Tokenlarni tanga logotiplari sifatida ko'rsatish",
 		"streams": "Oqimlar",
-		"total": "jami <b id=\"vz-stat-mcap\">—</b>",
+		"tokens_label": "tokenlar",
+		"total_label": "jami",
 		"trending": "Trendda",
 		"try_3d_again": "3Dni qayta urinib ko'ring",
 		"up": "▲ <b>yuqoriga</b>"

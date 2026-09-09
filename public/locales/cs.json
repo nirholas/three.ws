@@ -17166,7 +17166,6 @@
 		"visualizer": "Vizualizátor →"
 	},
 	"pump_visualizer": {
-		"0_tokens": "<b id=\"vz-stat-count\">0</b> tokenů",
 		"3d_view_unavailable": "3D zobrazení není k dispozici.",
 		"all_launches": "Všechny spuštění →",
 		"c": "C",
@@ -17184,13 +17183,13 @@
 		"meta_description": "3D vizualizace trendových tokenů na Pump.fun v reálném čase. Každá koule je živá mince, velikostí podle tržní kapitalizace.",
 		"meta_og_description": "3D vizualizátor trendových pump.fun tokenů — živá tržní data zobrazená jako interaktivní scéna.",
 		"meta_og_title": "Pump Visualizer · three.ws",
-		"meta_title": "3D-Agent · Pump.fun Vizualizátor",
+		"meta_title": "Pump.fun Vizualizátor · three.ws",
 		"meta_twitter_description": "3D vizualizátor trendových pump.fun tokenů — živá tržní data zobrazená jako interaktivní scéna.",
 		"meta_twitter_title": "Pump Visualizer · three.ws",
 		"migrations": "<span class=\"live-dot\"></span>Migrace",
-		"min": "<b id=\"vz-stat-rate\">—</b> <span id=\"vz-stat-rate-unit\">/min</span>",
 		"new": "Nové",
 		"on_refresh": "při obnovení",
+		"per_minute_label": "/min",
 		"refresh_data_r_title": "Obnovit data (R)",
 		"replies": "Odpovědi",
 		"retry": "Zkusit znovu",
@@ -17198,7 +17197,8 @@
 		"show_tokens_as_3d_orbs_arialabel": "Zobrazit tokeny jako 3D koule",
 		"show_tokens_as_coin_logos_arialabel": "Zobrazit tokeny jako loga mincí",
 		"streams": "Streamy",
-		"total": "celkem <b id=\"vz-stat-mcap\">—</b>",
+		"tokens_label": "tokenů",
+		"total_label": "celkem",
 		"trending": "Trendující",
 		"try_3d_again": "Zkusit 3D znovu",
 		"up": "▲ <b>nahoru</b>"

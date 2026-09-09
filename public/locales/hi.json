@@ -17166,7 +17166,6 @@
 		"visualizer": "विज़ुअलाइज़र →"
 	},
 	"pump_visualizer": {
-		"0_tokens": "<b id=\"vz-stat-count\">0</b> टोकन",
 		"3d_view_unavailable": "3D दृश्य अनुपलब्ध है।",
 		"all_launches": "सभी लॉन्च →",
 		"c": "C",
@@ -17184,13 +17183,13 @@
 		"meta_description": "Pump.fun पर ट्रेंडिंग टोकन का एक रीयल-टाइम 3D विज़ुअलाइज़ेशन। प्रत्येक गोला एक लाइव कॉइन है, जिसका आकार मार्केट कैप के अनुसार है।",
 		"meta_og_description": "ट्रेंडिंग pump.fun टोकन का 3D विज़ुअलाइज़र — लाइव मार्केट डेटा को एक इंटरैक्टिव दृश्य के रूप में प्रस्तुत किया गया है।",
 		"meta_og_title": "पंप विज़ुअलाइज़र · three.ws",
-		"meta_title": "3D-एजेंट · Pump.fun विज़ुअलाइज़र",
+		"meta_title": "Pump.fun विज़ुअलाइज़र · three.ws",
 		"meta_twitter_description": "ट्रेंडिंग pump.fun टोकन का 3D विज़ुअलाइज़र — लाइव मार्केट डेटा को एक इंटरैक्टिव दृश्य के रूप में प्रस्तुत किया गया है।",
 		"meta_twitter_title": "पंप विज़ुअलाइज़र · three.ws",
 		"migrations": "<span class=\"live-dot\"></span>माइग्रेशन",
-		"min": "<b id=\"vz-stat-rate\">—</b> <span id=\"vz-stat-rate-unit\">/मिनट</span>",
 		"new": "नया",
 		"on_refresh": "रिफ्रेश पर",
+		"per_minute_label": "/मिनट",
 		"refresh_data_r_title": "डेटा रीफ्रेश करें (R)",
 		"replies": "जवाब",
 		"retry": "पुनः प्रयास करें",
@@ -17198,7 +17197,8 @@
 		"show_tokens_as_3d_orbs_arialabel": "टोकन को 3D ऑर्ब के रूप में दिखाएं",
 		"show_tokens_as_coin_logos_arialabel": "टोकन को कॉइन लोगो के रूप में दिखाएं",
 		"streams": "स्ट्रीम",
-		"total": "कुल <b id=\"vz-stat-mcap\">—</b>",
+		"tokens_label": "टोकन",
+		"total_label": "कुल",
 		"trending": "ट्रेंडिंग",
 		"try_3d_again": "3D फिर से आज़माएँ",
 		"up": "▲ <b>ऊपर</b>"

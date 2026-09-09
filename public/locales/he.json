@@ -17166,7 +17166,6 @@
 		"visualizer": "ממחיש →"
 	},
 	"pump_visualizer": {
-		"0_tokens": "<b id=\"vz-stat-count\">0</b> אסימונים",
 		"3d_view_unavailable": "תצוגת תלת-ממדי אינה זמינה.",
 		"all_launches": "כל השקות →",
 		"c": "C",
@@ -17184,13 +17183,13 @@
 		"meta_description": "המחשה תלת-ממדית בזמן אמת של אסימונים פופולריים על Pump.fun. כל כדור הוא מטבע חי, בגודל לפי שווי שוק.",
 		"meta_og_description": "ממחיש תלת-ממדי של אסימוני pump.fun פופולריים — נתוני שוק חיים מוצגים כסצנה אינטראקטיבית.",
 		"meta_og_title": "ממחיש Pump · three.ws",
-		"meta_title": "סוכן תלת-ממדי · ממחיש Pump.fun",
+		"meta_title": "ממחיש Pump.fun · three.ws",
 		"meta_twitter_description": "ויזואליזטור תלת-ממדי של טוקנים טרנדיים pump.fun — נתוני שוק חיים מוצגים כסצנה אינטראקטיבית.",
 		"meta_twitter_title": "ויזואליזטור פאמפ · three.ws",
 		"migrations": "<span class=\"live-dot\"></span>מיגרציות",
-		"min": "<b id=\"vz-stat-rate\">—</b> <span id=\"vz-stat-rate-unit\">/דקה</span>",
 		"new": "חדש",
 		"on_refresh": "בהתחדשות",
+		"per_minute_label": "/דקה",
 		"refresh_data_r_title": "רענן נתונים (R)",
 		"replies": "תגובות",
 		"retry": "נסה שוב",
@@ -17198,7 +17197,8 @@
 		"show_tokens_as_3d_orbs_arialabel": "הצג טוקנים כדוריים תלת-ממדיים",
 		"show_tokens_as_coin_logos_arialabel": "הצג טוקנים בלוגואים של מטבעות",
 		"streams": "זרמים",
-		"total": "סך הכל <b id=\"vz-stat-mcap\">—</b>",
+		"tokens_label": "אסימונים",
+		"total_label": "סך הכל",
 		"trending": "טרנדי",
 		"try_3d_again": "נסה תלת-ממדי שוב",
 		"up": "▲ <b>למעלה</b>"

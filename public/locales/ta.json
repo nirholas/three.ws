@@ -17166,7 +17166,6 @@
 		"visualizer": "காட்சி →"
 	},
 	"pump_visualizer": {
-		"0_tokens": "<b id=\"vz-stat-count\">0</b> டோக்கன்கள்",
 		"3d_view_unavailable": "3D காட்சி கிடைக்கவில்லை.",
 		"all_launches": "அனைத்து வெளியீடுகள் →",
 		"c": "C",
@@ -17184,13 +17183,13 @@
 		"meta_description": "Pump.fun இல் பிரபலமான டோக்கன்களின் நேரடி 3D காட்சி. ஒவ்வொரு கோளும் ஒரு நேரடி நாணயமாகும், சந்தை காப்பின் அடிப்படையில் அளவிடப்படுகிறது.",
 		"meta_og_description": "பிரபலமான pump.fun டோக்கன்களின் 3D காட்சி — நேரடி சந்தை தரவுகள் ஒரு இடைமுக காட்சியாக உருவாக்கப்படுகிறது.",
 		"meta_og_title": "பம்பின் விஷுவலைசர் · three.ws",
-		"meta_title": "3D-ஏஜென்ட் · பம்ப்பன் விஷுவலைசர்",
+		"meta_title": "பம்ப்பன் விஷுவலைசர் · three.ws",
 		"meta_twitter_description": "பிரபலமான pump.fun டோக்கன்களின் 3D காட்சி — நேரடி சந்தை தரவுகள் ஒரு தொடர்பான காட்சியாக உருவாக்கப்படுகிறது.",
 		"meta_twitter_title": "பம்பின் விஷுவலைசர் · three.ws",
 		"migrations": "<span class=\"live-dot\"></span>மாற்றங்கள்",
-		"min": "<b id=\"vz-stat-rate\">—</b> <span id=\"vz-stat-rate-unit\">/நிமிடத்தில்</span>",
 		"new": "புதியது",
 		"on_refresh": "மீண்டும் புதுப்பிக்கும்போது",
+		"per_minute_label": "/நிமிடத்தில்",
 		"refresh_data_r_title": "தரவை புதுப்பிக்கவும் (R)",
 		"replies": "பதில்",
 		"retry": "மீண்டும் முயற்சிக்கவும்",
@@ -17198,7 +17197,8 @@
 		"show_tokens_as_3d_orbs_arialabel": "டோக்கன்களை 3D குண்டுகளாக காட்டு",
 		"show_tokens_as_coin_logos_arialabel": "டோக்கன்களை நாணய லோகோக்களாக காட்டு",
 		"streams": "நடவடிக்கைகள்",
-		"total": "மொத்தம் <b id=\"vz-stat-mcap\">—</b>",
+		"tokens_label": "டோக்கன்கள்",
+		"total_label": "மொத்தம்",
 		"trending": "பிரபலமாக உள்ளது",
 		"try_3d_again": "மீண்டும் 3D ஐ முயற்சிக்கவும்",
 		"up": "▲ <b>மேல்</b>"

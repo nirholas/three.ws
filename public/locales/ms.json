@@ -17166,7 +17166,6 @@
 		"visualizer": "Visualizer →"
 	},
 	"pump_visualizer": {
-		"0_tokens": "<b id=\"vz-stat-count\">0</b> token",
 		"3d_view_unavailable": "Pandangan 3D tidak tersedia.",
 		"all_launches": "Semua pelancaran →",
 		"c": "C",
@@ -17184,13 +17183,13 @@
 		"meta_description": "Satu visualisasi 3D masa nyata token trending di Pump.fun. Setiap sfera adalah syiling langsung, bersaiz mengikut kaps pasaran.",
 		"meta_og_description": "Visualizer 3D token trending pump.fun — data pasaran langsung dipaparkan sebagai adegan interaktif.",
 		"meta_og_title": "Visualizer Pump · three.ws",
-		"meta_title": "Ejen 3D · Visualizer Pump.fun",
+		"meta_title": "Visualizer Pump.fun · three.ws",
 		"meta_twitter_description": "Penyusun visual 3D bagi token pump.fun yang trending — data pasaran langsung dipaparkan sebagai adegan interaktif.",
 		"meta_twitter_title": "Penyusun Visual · three.ws",
 		"migrations": "Migrasi <span class=\"live-dot\"></span>",
-		"min": "<b id=\"vz-stat-rate\">—</b> <span id=\"vz-stat-rate-unit\">/min</span>",
 		"new": "Baru",
 		"on_refresh": "pada penyegaran",
+		"per_minute_label": "/min",
 		"refresh_data_r_title": "Segarkan data (R)",
 		"replies": "Balasan",
 		"retry": "Cuba lagi",
@@ -17198,7 +17197,8 @@
 		"show_tokens_as_3d_orbs_arialabel": "Tunjukkan token sebagai orb 3D",
 		"show_tokens_as_coin_logos_arialabel": "Tunjukkan token sebagai logo syiling",
 		"streams": "Aliran",
-		"total": "jumlah <b id=\"vz-stat-mcap\">—</b>",
+		"tokens_label": "token",
+		"total_label": "jumlah",
 		"trending": "Trending",
 		"try_3d_again": "Cuba 3D lagi",
 		"up": "▲ <b>naik</b>"

@@ -17166,7 +17166,6 @@
 		"visualizer": "Визуализатор →"
 	},
 	"pump_visualizer": {
-		"0_tokens": "<b id=\"vz-stat-count\">0</b> токена",
 		"3d_view_unavailable": "3D изгледът не е наличен.",
 		"all_launches": "Всички стартирания →",
 		"c": "C",
@@ -17184,13 +17183,13 @@
 		"meta_description": "3D визуализация в реално време на популярни токени на Pump.fun. Всяка сфера е живо монета, с размери според пазарната капитализация.",
 		"meta_og_description": "3D визуализатор на популярни токени pump.fun — живи пазарни данни, представени като интерактивна сцена.",
 		"meta_og_title": "Pump Visualizer · three.ws",
-		"meta_title": "3D-Агент · Pump.fun Визуализатор",
+		"meta_title": "Pump.fun Визуализатор · three.ws",
 		"meta_twitter_description": "3D визуализатор на трендиращи pump.fun токени — живи пазарни данни, представени като интерактивна сцена.",
 		"meta_twitter_title": "Pump Visualizer · three.ws",
 		"migrations": "<span class=\"live-dot\"></span>Миграции",
-		"min": "<b id=\"vz-stat-rate\">—</b> <span id=\"vz-stat-rate-unit\">/мин</span>",
 		"new": "Нов",
 		"on_refresh": "при обновяване",
+		"per_minute_label": "/мин",
 		"refresh_data_r_title": "Обнови данни (R)",
 		"replies": "Отговори",
 		"retry": "Опитай отново",
@@ -17198,7 +17197,8 @@
 		"show_tokens_as_3d_orbs_arialabel": "Покажи токените като 3D сфери",
 		"show_tokens_as_coin_logos_arialabel": "Покажи токените като логота на монети",
 		"streams": "Стриймове",
-		"total": "общо <b id=\"vz-stat-mcap\">—</b>",
+		"tokens_label": "токена",
+		"total_label": "общо",
 		"trending": "Трендиращи",
 		"try_3d_again": "Опитай 3D отново",
 		"up": "▲ <b>нагоре</b>"

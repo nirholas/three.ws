@@ -17166,7 +17166,6 @@
 		"visualizer": "Οπτικοποιητής →"
 	},
 	"pump_visualizer": {
-		"0_tokens": "<b id=\"vz-stat-count\">0</b> tokens",
 		"3d_view_unavailable": "Μη διαθέσιμη 3D προβολή.",
 		"all_launches": "Όλες οι εκκινήσεις →",
 		"c": "C",
@@ -17184,13 +17183,13 @@
 		"meta_description": "Μια ζωντανή 3D οπτικοποίηση των δημοφιλών tokens στο Pump.fun. Κάθε σφαίρα είναι ένα ζωντανό νόμισμα, με μέγεθος ανάλογα με την κεφαλαιοποίηση της αγοράς.",
 		"meta_og_description": "3D οπτικοποιητής των δημοφιλών pump.fun tokens — ζωντανά δεδομένα αγοράς αποδομένα ως μια διαδραστική σκηνή.",
 		"meta_og_title": "Pump Visualizer · three.ws",
-		"meta_title": "3D-Πράκτορας · Pump.fun Visualizer",
+		"meta_title": "Pump.fun Visualizer · three.ws",
 		"meta_twitter_description": "3D οπτικοποιητής των ανερχόμενων pump.fun tokens — ζωντανά δεδομένα αγοράς αποδομένα ως διαδραστική σκηνή.",
 		"meta_twitter_title": "Pump Visualizer · three.ws",
 		"migrations": "<span class=\"live-dot\"></span>Μεταφορές",
-		"min": "<b id=\"vz-stat-rate\">—</b> <span id=\"vz-stat-rate-unit\">/λεπτό</span>",
 		"new": "Νέο",
 		"on_refresh": "κατά την ανανέωση",
+		"per_minute_label": "/λεπτό",
 		"refresh_data_r_title": "Ανανέωση δεδομένων (R)",
 		"replies": "Απαντήσεις",
 		"retry": "Επανάληψη",
@@ -17198,7 +17197,8 @@
 		"show_tokens_as_3d_orbs_arialabel": "Εμφάνιση tokens ως 3D σφαίρες",
 		"show_tokens_as_coin_logos_arialabel": "Εμφάνιση tokens ως λογότυπα νομισμάτων",
 		"streams": "Ροές",
-		"total": "σύνολο <b id=\"vz-stat-mcap\">—</b>",
+		"tokens_label": "tokens",
+		"total_label": "σύνολο",
 		"trending": "Ανερχόμενα",
 		"try_3d_again": "Δοκιμάστε ξανά 3D",
 		"up": "▲ <b>πάνω</b>"

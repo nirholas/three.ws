@@ -17166,7 +17166,6 @@
 		"visualizer": "Visualisoija →"
 	},
 	"pump_visualizer": {
-		"0_tokens": "<b id=\"vz-stat-count\">0</b> tokenia",
 		"3d_view_unavailable": "3D-näkymä ei saatavilla.",
 		"all_launches": "Kaikki julkaisut →",
 		"c": "C",
@@ -17184,13 +17183,13 @@
 		"meta_description": "Reaaliaikainen 3D-visualisointi trendikkäistä tokeneista Pump.fun:ssa. Jokainen pallomalli on live-kolikko, koottu markkinakaton mukaan.",
 		"meta_og_description": "3D-visualisoija trendikkäistä pump.fun tokeneista — live-markkinatiedot renderöityinä interaktiivisena kohtauksena.",
 		"meta_og_title": "Pump Visualizer · three.ws",
-		"meta_title": "3D-Agent · Pump.fun Visualizer",
+		"meta_title": "Pump.fun Visualizer · three.ws",
 		"meta_twitter_description": "3D visualisoija trendikkäistä pump.fun tokenista — reaaliaikaiset markkinatiedot esitettyinä interaktiivisena kohtauksena.",
 		"meta_twitter_title": "Pump Visualizer · three.ws",
 		"migrations": "<span class=\"live-dot\"></span>Muutokset",
-		"min": "<b id=\"vz-stat-rate\">—</b> <span id=\"vz-stat-rate-unit\">/min</span>",
 		"new": "Uusi",
 		"on_refresh": "päivityksessä",
+		"per_minute_label": "/min",
 		"refresh_data_r_title": "Päivitä tiedot (R)",
 		"replies": "Vastaukset",
 		"retry": "Yritä uudelleen",
@@ -17198,7 +17197,8 @@
 		"show_tokens_as_3d_orbs_arialabel": "Näytä tokenit 3D-palloina",
 		"show_tokens_as_coin_logos_arialabel": "Näytä tokenit kolikkologoin",
 		"streams": "Virrat",
-		"total": "yhteensä <b id=\"vz-stat-mcap\">—</b>",
+		"tokens_label": "tokenia",
+		"total_label": "yhteensä",
 		"trending": "Trendikkäät",
 		"try_3d_again": "Kokeile 3D:tä uudelleen",
 		"up": "▲ <b>ylös</b>"

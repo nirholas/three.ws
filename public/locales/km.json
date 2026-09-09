@@ -17166,7 +17166,6 @@
 		"visualizer": "កម្មវិធីបង្ហាញរូបភាព →"
 	},
 	"pump_visualizer": {
-		"0_tokens": "<b id=\"vz-stat-count\">0</b> ថូខឹន",
 		"3d_view_unavailable": "ទិដ្ឋភាព 3D មិនអាចប្រើបានទេ។",
 		"all_launches": "ការដាក់ឱ្យដំណើរការទាំងអស់ →",
 		"c": "C",
@@ -17184,13 +17183,13 @@
 		"meta_description": "ការបង្ហាញរូបភាព 3D តាមពេលវេលាជាក់ស្ដែងនៃថូខឹនដែលកំពុងពេញនិយមនៅលើ Pump.fun។ រាល់ស្វ៊ែរនីមួយៗគឺជាកាក់ផ្ទាល់ ដែលមានទំហំតាមមូលធនទីផ្សារ។",
 		"meta_og_description": "កម្មវិធីបង្ហាញរូបភាព 3D នៃថូខឹន pump.fun ដែលកំពុងពេញនិយម — ទិន្នន័យទីផ្សារផ្ទាល់ត្រូវបានបង្ហាញជាទិដ្ឋភាពអន្តរកម្ម។",
 		"meta_og_title": "កម្មវិធីបង្ហាញរូបភាព Pump · three.ws",
-		"meta_title": "ភ្នាក់ងារ 3D · កម្មវិធីបង្ហាញរូបភាព Pump.fun",
+		"meta_title": "កម្មវិធីបង្ហាញរូបភាព Pump.fun · three.ws",
 		"meta_twitter_description": "កម្មវិធីបង្ហាញរូបភាព 3D នៃថូខឹន pump.fun ដែលកំពុងពេញនិយម — ទិន្នន័យទីផ្សារផ្ទាល់ត្រូវបានបង្ហាញជាទិដ្ឋភាពអន្តរកម្ម។",
 		"meta_twitter_title": "កម្មវិធីបង្ហាញរូបភាព Pump · three.ws",
 		"migrations": "<span class=\"live-dot\"></span>ការផ្លាស់ប្ដូរ",
-		"min": "<b id=\"vz-stat-rate\">—</b> <span id=\"vz-stat-rate-unit\">/នាទី</span>",
 		"new": "ថ្មី",
 		"on_refresh": "នៅពេលផ្ទុកឡើងវិញ",
+		"per_minute_label": "/នាទី",
 		"refresh_data_r_title": "ផ្ទុកទិន្នន័យឡើងវិញ (R)",
 		"replies": "ការឆ្លើយតប",
 		"retry": "ព្យាយាមម្ដងទៀត",
@@ -17198,7 +17197,8 @@
 		"show_tokens_as_3d_orbs_arialabel": "បង្ហាញថូខឹនជាស្វ៊ែរ 3D",
 		"show_tokens_as_coin_logos_arialabel": "បង្ហាញថូខឹនជាឡូហ្គោរូបកាក់",
 		"streams": "ស្ទ្រីម",
-		"total": "សរុប <b id=\"vz-stat-mcap\">—</b>",
+		"tokens_label": "ថូខឹន",
+		"total_label": "សរុប",
 		"trending": "កំពុងពេញនិយម",
 		"try_3d_again": "ព្យាយាម 3D ម្ដងទៀត",
 		"up": "▲ <b>ឡើង</b>"

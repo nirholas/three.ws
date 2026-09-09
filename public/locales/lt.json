@@ -16645,7 +16645,6 @@
 		"visualizer": "Vizualizatorius →"
 	},
 	"pump_visualizer": {
-		"0_tokens": "<b id=\"vz-stat-count\">0</b> žetonų",
 		"3d_view_unavailable": "3D vaizdas nepasiekiamas.",
 		"all_launches": "Visi paleidimai →",
 		"c": "C",
@@ -16663,13 +16662,13 @@
 		"meta_description": "Realaus laiko 3D vizualizacija populiarėjančių žetonų platformoje Pump.fun. Kiekviena sfera – gyva moneta, kurios dydis nustatomas pagal rinkos kapitalizaciją.",
 		"meta_og_description": "3D vizualizatorius populiarėjančių pump.fun žetonų – gyvi rinkos duomenys atvaizduojami kaip interaktyvi scena.",
 		"meta_og_title": "Pump vizualizatorius · three.ws",
-		"meta_title": "3D-Agent · Pump.fun vizualizatorius",
+		"meta_title": "Pump.fun vizualizatorius · three.ws",
 		"meta_twitter_description": "3D vizualizatorius populiarėjančių pump.fun žetonų – gyvi rinkos duomenys atvaizduojami kaip interaktyvi scena.",
 		"meta_twitter_title": "Pump vizualizatorius · three.ws",
 		"migrations": "<span class=\"live-dot\"></span>Migracijos",
-		"min": "<b id=\"vz-stat-rate\">—</b> <span id=\"vz-stat-rate-unit\">/min</span>",
 		"new": "Nauja",
 		"on_refresh": "atnaujinti",
+		"per_minute_label": "/min",
 		"refresh_data_r_title": "Atnaujinti duomenis (R)",
 		"replies": "Atsakymai",
 		"retry": "Pakartoti",
@@ -16677,7 +16676,8 @@
 		"show_tokens_as_3d_orbs_arialabel": "Rodyti žetonus kaip 3D sferas",
 		"show_tokens_as_coin_logos_arialabel": "Rodyti žetonus kaip monetų logotipus",
 		"streams": "Srautai",
-		"total": "iš viso <b id=\"vz-stat-mcap\">—</b>",
+		"tokens_label": "žetonų",
+		"total_label": "iš viso",
 		"trending": "Populiarėja",
 		"try_3d_again": "Bandyti 3D dar kartą",
 		"up": "▲ <b>aukštyn</b>"

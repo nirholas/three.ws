@@ -17166,7 +17166,6 @@
 		"visualizer": "Визуализатор →"
 	},
 	"pump_visualizer": {
-		"0_tokens": "<b id=\"vz-stat-count\">0</b> токен",
 		"3d_view_unavailable": "Намоиши 3D дастнорас аст.",
 		"all_launches": "Ҳамаи оғозҳо →",
 		"c": "C",
@@ -17184,13 +17183,13 @@
 		"meta_description": "Визуализатсияи 3D-и воқеии токенҳои трендингӣ дар Pump.fun. Ҳар як кура тангаи зинда аст, ки андозааш аз рӯи капитализатсияи бозор муайян шудааст.",
 		"meta_og_description": "Визуализатори 3D-и токенҳои трендингии pump.fun — маълумоти мустақими бозор ҳамчун саҳнаи интерактивӣ тасвир шудааст.",
 		"meta_og_title": "Визуализатори Pump · three.ws",
-		"meta_title": "3D-Agent · Визуализатори Pump.fun",
+		"meta_title": "Визуализатори Pump.fun · three.ws",
 		"meta_twitter_description": "Визуализатори 3D-и токенҳои трендингии pump.fun — маълумоти мустақими бозор ҳамчун саҳнаи интерактивӣ тасвир шудааст.",
 		"meta_twitter_title": "Визуализатори Pump · three.ws",
 		"migrations": "<span class=\"live-dot\"></span>Муҳоҷиратҳо",
-		"min": "<b id=\"vz-stat-rate\">—</b> <span id=\"vz-stat-rate-unit\">/дақ</span>",
 		"new": "Нав",
 		"on_refresh": "ҳангоми навсозӣ",
+		"per_minute_label": "/дақ",
 		"refresh_data_r_title": "Маълумотро навсозӣ кунед (R)",
 		"replies": "Ҷавобҳо",
 		"retry": "Такрор кунед",
@@ -17198,7 +17197,8 @@
 		"show_tokens_as_3d_orbs_arialabel": "Токенҳоро ҳамчун кураҳои 3D нишон диҳед",
 		"show_tokens_as_coin_logos_arialabel": "Токенҳоро ҳамчун логотипҳои танга нишон диҳед",
 		"streams": "Ҷараёнҳо",
-		"total": "умумӣ <b id=\"vz-stat-mcap\">—</b>",
+		"tokens_label": "токен",
+		"total_label": "умумӣ",
 		"trending": "Трендинг",
 		"try_3d_again": "3D-ро боз кӯшиш кунед",
 		"up": "▲ <b>боло</b>"

@@ -17166,7 +17166,6 @@
 		"visualizer": "Bistaratzailea →"
 	},
 	"pump_visualizer": {
-		"0_tokens": "<b id=\"vz-stat-count\">0</b> token",
 		"3d_view_unavailable": "3D ikuspegia ez dago eskuragarri.",
 		"all_launches": "Abiarazte guztiak →",
 		"c": "C",
@@ -17184,13 +17183,13 @@
 		"meta_description": "Pump.fun-eko joerako tokenen denbora errealeko 3D bistaratzea. Esfera bakoitza zuzeneko txanpon bat da, merkatu-kapitalizazioaren arabera tamainatua.",
 		"meta_og_description": "Joerako pump.fun tokenen 3D bistaratzailea — zuzeneko merkatu-datuak eszena interaktibo gisa errendatuta.",
 		"meta_og_title": "Pump Visualizer · three.ws",
-		"meta_title": "3D-Agent · Pump.fun Bistaratzailea",
+		"meta_title": "Pump.fun Bistaratzailea · three.ws",
 		"meta_twitter_description": "Joerako pump.fun tokenen 3D bistaratzailea — zuzeneko merkatu-datuak eszena interaktibo gisa errendatuta.",
 		"meta_twitter_title": "Pump Visualizer · three.ws",
 		"migrations": "<span class=\"live-dot\"></span>Migrazioak",
-		"min": "<b id=\"vz-stat-rate\">—</b> <span id=\"vz-stat-rate-unit\">/min</span>",
 		"new": "Berria",
 		"on_refresh": "freskatzean",
+		"per_minute_label": "/min",
 		"refresh_data_r_title": "Datuak freskatu (R)",
 		"replies": "Erantzunak",
 		"retry": "Saiatu berriro",
@@ -17198,7 +17197,8 @@
 		"show_tokens_as_3d_orbs_arialabel": "Erakutsi tokenak 3D orbe gisa",
 		"show_tokens_as_coin_logos_arialabel": "Erakutsi tokenak txanpon-logo gisa",
 		"streams": "Jarioak",
-		"total": "guztira <b id=\"vz-stat-mcap\">—</b>",
+		"tokens_label": "token",
+		"total_label": "guztira",
 		"trending": "Joeran",
 		"try_3d_again": "Saiatu 3D berriro",
 		"up": "▲ <b>gora</b>"

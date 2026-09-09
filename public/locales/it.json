@@ -17166,7 +17166,6 @@
 		"visualizer": "Visualizzatore →"
 	},
 	"pump_visualizer": {
-		"0_tokens": "<b id=\"vz-stat-count\">0</b> token",
 		"3d_view_unavailable": "Visualizzazione 3D non disponibile.",
 		"all_launches": "Tutti i lanci →",
 		"c": "C",
@@ -17184,13 +17183,13 @@
 		"meta_description": "Una visualizzazione 3D in tempo reale dei token di tendenza su Pump.fun. Ogni sfera è una moneta live, dimensionata per capitalizzazione di mercato.",
 		"meta_og_description": "Visualizzatore 3D dei token di tendenza pump.fun — dati di mercato live resi come una scena interattiva.",
 		"meta_og_title": "Pump Visualizer · three.ws",
-		"meta_title": "Agente 3D · Visualizzatore Pump.fun",
+		"meta_title": "Visualizzatore Pump.fun · three.ws",
 		"meta_twitter_description": "Visualizzatore 3D dei token pump.fun in tendenza — dati di mercato live resi come una scena interattiva.",
 		"meta_twitter_title": "Visualizzatore Pump · three.ws",
 		"migrations": "<span class=\"live-dot\"></span>Migrazioni",
-		"min": "<b id=\"vz-stat-rate\">—</b> <span id=\"vz-stat-rate-unit\">/min</span>",
 		"new": "Nuovo",
 		"on_refresh": "al refresh",
+		"per_minute_label": "/min",
 		"refresh_data_r_title": "Aggiorna dati (R)",
 		"replies": "Risposte",
 		"retry": "Riprova",
@@ -17198,7 +17197,8 @@
 		"show_tokens_as_3d_orbs_arialabel": "Mostra token come orbs 3D",
 		"show_tokens_as_coin_logos_arialabel": "Mostra token come loghi di monete",
 		"streams": "Flussi",
-		"total": "totale <b id=\"vz-stat-mcap\">—</b>",
+		"tokens_label": "token",
+		"total_label": "totale",
 		"trending": "In tendenza",
 		"try_3d_again": "Riprova 3D",
 		"up": "▲ <b>su</b>"

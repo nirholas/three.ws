@@ -17166,7 +17166,6 @@
 		"visualizer": "ವಿಷುಲೈಸರ್ →"
 	},
 	"pump_visualizer": {
-		"0_tokens": "<b id=\"vz-stat-count\">0</b> ಟೋಕನ್‌ಗಳು",
 		"3d_view_unavailable": "3D ವೀಕ್ಷಣೆ ಲಭ್ಯವಿಲ್ಲ.",
 		"all_launches": "ಎಲ್ಲಾ ಬಿಡುಗಡೆಗಳು →",
 		"c": "C",
@@ -17184,13 +17183,13 @@
 		"meta_description": "Pump.fun ನಲ್ಲಿ ಟ್ರೆಂಡಿಂಗ್ ಟೋಕನ್‌ಗಳ ನೈಜ-ಸಮಯದ 3D ದೃಶ್ಯೀಕರಣ. ಪ್ರತಿ ಗೋಳವು ಲೈವ್ ಕಾಯಿನ್ ಆಗಿದ್ದು, ಮಾರುಕಟ್ಟೆ ಕ್ಯಾಪ್‌ನಿಂದ ಗಾತ್ರವನ್ನು ಹೊಂದಿದೆ.",
 		"meta_og_description": "ಟ್ರೆಂಡಿಂಗ್ pump.fun ಟೋಕನ್‌ಗಳ 3D ವಿಷುಲೈಸರ್ — ಲೈವ್ ಮಾರುಕಟ್ಟೆ ಡೇಟಾವನ್ನು ಸಂವಾದಾತ್ಮಕ ದೃಶ್ಯವಾಗಿ ನಿರೂಪಿಸಲಾಗಿದೆ.",
 		"meta_og_title": "ಪಂಪ್ ವಿಷುಲೈಸರ್ · three.ws",
-		"meta_title": "3D-ಏಜೆಂಟ್ · Pump.fun ವಿಷುಲೈಸರ್",
+		"meta_title": "Pump.fun ವಿಷುಲೈಸರ್ · three.ws",
 		"meta_twitter_description": "ಟ್ರೆಂಡಿಂಗ್ pump.fun ಟೋಕನ್‌ಗಳ 3D ವಿಷುಲೈಸರ್ — ಲೈವ್ ಮಾರುಕಟ್ಟೆ ಡೇಟಾವನ್ನು ಸಂವಾದಾತ್ಮಕ ದೃಶ್ಯವಾಗಿ ನಿರೂಪಿಸಲಾಗಿದೆ.",
 		"meta_twitter_title": "ಪಂಪ್ ವಿಷುಲೈಸರ್ · three.ws",
 		"migrations": "<span class=\"live-dot\"></span>ವಲಸೆಗಳು",
-		"min": "<b id=\"vz-stat-rate\">—</b> <span id=\"vz-stat-rate-unit\">/ನಿಮಿಷ</span>",
 		"new": "ಹೊಸದು",
 		"on_refresh": "ರಿಫ್ರೆಶ್ ಮೇಲೆ",
+		"per_minute_label": "/ನಿಮಿಷ",
 		"refresh_data_r_title": "ಡೇಟಾವನ್ನು ರಿಫ್ರೆಶ್ ಮಾಡಿ (R)",
 		"replies": "ಪ್ರತ್ಯುತ್ತರಗಳು",
 		"retry": "ಮರುಪ್ರಯತ್ನಿಸಿ",
@@ -17198,7 +17197,8 @@
 		"show_tokens_as_3d_orbs_arialabel": "ಟೋಕನ್‌ಗಳನ್ನು 3D ಗೋಳಗಳಾಗಿ ತೋರಿಸಿ",
 		"show_tokens_as_coin_logos_arialabel": "ಟೋಕನ್‌ಗಳನ್ನು ಕಾಯಿನ್ ಲೋಗೋಗಳಾಗಿ ತೋರಿಸಿ",
 		"streams": "ಸ್ಟ್ರೀಮ್‌ಗಳು",
-		"total": "ಒಟ್ಟು <b id=\"vz-stat-mcap\">—</b>",
+		"tokens_label": "ಟೋಕನ್‌ಗಳು",
+		"total_label": "ಒಟ್ಟು",
 		"trending": "ಟ್ರೆಂಡಿಂಗ್",
 		"try_3d_again": "3D ಅನ್ನು ಮತ್ತೆ ಪ್ರಯತ್ನಿಸಿ",
 		"up": "▲ <b>ಮೇಲೆ</b>"

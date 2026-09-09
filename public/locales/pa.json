@@ -17166,7 +17166,6 @@
 		"visualizer": "ਵਿਜ਼ੂਅਲਾਈਜ਼ਰ →"
 	},
 	"pump_visualizer": {
-		"0_tokens": "<b id=\"vz-stat-count\">0</b> ਟੋਕਨ",
 		"3d_view_unavailable": "3D ਦ੍ਰਿਸ਼ ਉਪਲਬਧ ਨਹੀਂ ਹੈ।",
 		"all_launches": "ਸਾਰੇ ਲਾਂਚ →",
 		"c": "C",
@@ -17184,13 +17183,13 @@
 		"meta_description": "Pump.fun 'ਤੇ ਟਰੈਂਡਿੰਗ ਟੋਕਨਾਂ ਦਾ ਇੱਕ ਰੀਅਲ-ਟਾਈਮ 3D ਵਿਜ਼ੂਅਲਾਈਜ਼ੇਸ਼ਨ। ਹਰ ਗੋਲਾ ਇੱਕ ਲਾਈਵ ਸਿੱਕਾ ਹੈ, ਜੋ ਮਾਰਕੀਟ ਕੈਪ ਦੁਆਰਾ ਆਕਾਰਿਆ ਗਿਆ ਹੈ।",
 		"meta_og_description": "ਟਰੈਂਡਿੰਗ pump.fun ਟੋਕਨਾਂ ਦਾ 3D ਵਿਜ਼ੂਅਲਾਈਜ਼ਰ — ਲਾਈਵ ਮਾਰਕੀਟ ਡੇਟਾ ਇੱਕ ਇੰਟਰਐਕਟਿਵ ਦ੍ਰਿਸ਼ ਵਜੋਂ ਪੇਸ਼ ਕੀਤਾ ਗਿਆ।",
 		"meta_og_title": "ਪੰਪ ਵਿਜ਼ੂਅਲਾਈਜ਼ਰ · three.ws",
-		"meta_title": "3D-ਏਜੰਟ · Pump.fun ਵਿਜ਼ੂਅਲਾਈਜ਼ਰ",
+		"meta_title": "Pump.fun ਵਿਜ਼ੂਅਲਾਈਜ਼ਰ · three.ws",
 		"meta_twitter_description": "ਟਰੈਂਡਿੰਗ pump.fun ਟੋਕਨਾਂ ਦਾ 3D ਵਿਜ਼ੂਅਲਾਈਜ਼ਰ — ਲਾਈਵ ਮਾਰਕੀਟ ਡੇਟਾ ਇੱਕ ਇੰਟਰਐਕਟਿਵ ਦ੍ਰਿਸ਼ ਵਜੋਂ ਪੇਸ਼ ਕੀਤਾ ਗਿਆ।",
 		"meta_twitter_title": "ਪੰਪ ਵਿਜ਼ੂਅਲਾਈਜ਼ਰ · three.ws",
 		"migrations": "<span class=\"live-dot\"></span>ਮਾਈਗ੍ਰੇਸ਼ਨ",
-		"min": "<b id=\"vz-stat-rate\">—</b> <span id=\"vz-stat-rate-unit\">/ਮਿੰਟ</span>",
 		"new": "ਨਵਾਂ",
 		"on_refresh": "ਰੀਫ੍ਰੈਸ਼ 'ਤੇ",
+		"per_minute_label": "/ਮਿੰਟ",
 		"refresh_data_r_title": "ਡੇਟਾ ਰੀਫ੍ਰੈਸ਼ ਕਰੋ (R)",
 		"replies": "ਜਵਾਬ",
 		"retry": "ਮੁੜ ਕੋਸ਼ਿਸ਼ ਕਰੋ",
@@ -17198,7 +17197,8 @@
 		"show_tokens_as_3d_orbs_arialabel": "ਟੋਕਨਾਂ ਨੂੰ 3D ਓਰਬਸ ਵਜੋਂ ਦਿਖਾਓ",
 		"show_tokens_as_coin_logos_arialabel": "ਟੋਕਨਾਂ ਨੂੰ ਸਿੱਕੇ ਦੇ ਲੋਗੋ ਵਜੋਂ ਦਿਖਾਓ",
 		"streams": "ਸਟ੍ਰੀਮਾਂ",
-		"total": "ਕੁੱਲ <b id=\"vz-stat-mcap\">—</b>",
+		"tokens_label": "ਟੋਕਨ",
+		"total_label": "ਕੁੱਲ",
 		"trending": "ਟਰੈਂਡਿੰਗ",
 		"try_3d_again": "3D ਦੁਬਾਰਾ ਕੋਸ਼ਿਸ਼ ਕਰੋ",
 		"up": "▲ <b>ਉੱਪਰ</b>"
