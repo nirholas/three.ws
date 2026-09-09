@@ -461,36 +461,47 @@ curl -s -X POST https://three.ws/api/mcp-studio -H 'content-type: application/js
 
 ## 7. Pre-submit checklist
 
-- [ ] **B3** open: the free lane can ship a degenerate slab as a top-confidence result (§0). Cheap-scorer
-      fix is in the tree (`api/_lib/glb-quality.js`); **deploy it, then re-run a `forge_free` generation and
-      confirm the returned GLB is a solid object** before submitting.
-- [x] **B1** cleared: `tools/call forge_free` returns 200 with a GLB (re-verified live 2026-09-02: HTTP 200
-      in 88s, real 2,256,144-byte GLB with `glTF` magic, `model/gltf-binary`; verbatim response saved to
-      `_generated/live-call-forge_free.json`, which previously held only a stale rate-limit error).
-- [x] **B2** cleared: `/viewer?src=<glb>` returns 200 and renders the model (re-verified live 2026-09-02:
-      `<model-viewer>` reports `loaded === true` for the generated GLB, with no page errors).
+- [ ] **B3** narrowed to one owner-gated dependency (§0). The cheap-scorer fix is **deployed and
+      re-measured on 2026-09-09**: 40 consecutive production generations gave 4 planar flags, 4 of 4
+      escalating to vision QA. The gate fails open when no vision provider answers, and Vertex is still
+      refused project-wide (`403 Lightning dunning decision is deny for project`), so escalation is only
+      as reliable as the free fallback rung. `[HUMAN: clear the GCP billing hold]`, then one clean
+      confirming generation.
+- [x] **B1** cleared: `tools/call forge_free` returns 200 with a GLB (re-verified live 2026-09-09: HTTP 200
+      in 137s, real 5,402,572-byte `model/gltf-binary`, keyless, scored 0.976 by the cheap gate with no
+      planar signal; verbatim response saved to `_generated/live-call-forge_free.json`).
+- [x] **B2** cleared: `/viewer?src=<glb>` returns 200 and renders the model (re-verified live 2026-09-09
+      for the freshly generated GLB; `<model-viewer>` reports `loaded === true` with no page errors).
 - [x] Developer identity verified on platform.openai.com (verified organization, 2026-07-14).
 - [x] Support contact + privacy policy confirmed live (2026-07-14); both legal URLs return 200 in the
       canonical no-`.html` form (`/legal/privacy`, `/legal/tos`), matching the served OpenAPI (2026-07-18).
 - [x] Review surface is the MCP connector metadata, not `/.well-known/ai-plugin.json` (§2.1a, cited);
       live `initialize` + `tools/list` return `three-ws-3d-studio-free` on protocol `2025-06-18` with the
-      exact 11-tool surface (re-verified live 2026-09-02).
+      exact 11-tool surface, each carrying its four `openai/*` annotations and its `outputTemplate`
+      (the 8 model tools to the model widget, the 3 persona tools to the persona widget), and
+      `resources/list` returns both skybridge resources with `widgetCSP`, `widgetDescription` and
+      `widgetDomain` (re-verified live 2026-09-09).
 - [x] App discovery schema served + guarded — `/.well-known/3d-studio-openapi.yaml`, free-only,
       `security: []`, byte-identical to the custom-GPT Action file, crypto/payment-free
       (`tests/api/3d-studio-openapi.test.js`).
 - [x] Served discovery schema is live: `https://three.ws/.well-known/3d-studio-openapi.yaml` returns
       200 in production, as do `/.well-known/ai-plugin.json`, `/legal/privacy`, `/legal/tos` and
-      `/support` (re-verified 2026-09-02).
-- [ ] Screenshots: re-capture against the shipped inline widget (`api/_mcp-studio/component.js`).
-      Verified 2026-09-02 that no evidence file still cites the retired `apps-sdk/` viewer, and that the
-      widget drives correctly for capture. Held on B3: no generation clean enough to photograph yet (§4).
-      Required dimensions still need the portal. `[HUMAN: confirm required dimensions]`
-- [x] Inline widget re-verified live 2026-09-02 in a `window.openai`-less Chromium: the skybridge
+      `/support` (re-verified 2026-09-09). The served schema lints clean under Redocly, describes only
+      the two free paths, and every URL inside it resolves 200.
+- [x] Screenshots current: all three files show the shipped inline widget
+      (`api/_mcp-studio/component.js`) rendering a solid, textured model with the real action bar, and
+      no evidence file cites the retired `apps-sdk/` viewer (re-checked 2026-09-09 after regenerating
+      evidence). Only the portal states the required dimensions.
+      `[HUMAN: confirm required dimensions]`
+- [x] Inline widget re-verified live 2026-09-09 in a `window.openai`-less Chromium: the skybridge
       resource paints its empty state ("No model yet"), accepts a real tool payload over `postMessage`,
       shows the generating state, and reaches ready with `<model-viewer>.loaded === true` on the real
       generated GLB. Error state reached with an unresolvable GLB ("Couldn't load the model"). No console
-      or page errors in any state.
-- [x] `/api/ar` re-verified live 2026-09-02 per device class: Android UA gets a 302 to a Google Scene
+      or page errors in any state. This run also caught the CORS exposure in §0: driven from a foreign
+      origin the widget could not fetch a raw asset-bucket GLB at all, which is what a ChatGPT sandbox
+      origin is. It now routes the fetch through `/api/glb` and loads from anywhere,
+      pinned by `tests/mcp-studio.test.js`.
+- [x] `/api/ar` re-verified live 2026-09-09 per device class: Android UA gets a 302 to a Google Scene
       Viewer `intent://` URL with a `browser_fallback_url`; iOS and desktop UAs get the 200 launch page
       that carries the real `og:image`/`og:title` and hands off to `/ar/view`; `kind=avatar` adds the
       `irl=` hand-off and `/ar/view` renders its "Bring it to life" control; a bad `src` returns a
