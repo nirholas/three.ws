@@ -62,6 +62,26 @@ climate and security rollups a real room gets, and the page offers a link
 straight to Home Assistant's own Areas screen. The house is fully usable before
 anyone has filed a thing.
 
+### Whose body stands in the house
+
+Yours. The figure in the scene is your own agent, wearing the same avatar the
+[walk world](../STRUCTURE.md), `/play` and the
+[voice satellite](home-satellite.md) show, resolved from the one canonical
+"my agent" record the whole platform reads. Switch agents in another tab and the
+body in the house changes with it, without a reload.
+
+It is resolved after the first frame rather than before it, so the house never
+waits on that round trip, and three ordinary situations end at the platform's
+default body instead: you have not made an agent yet, your agent has no avatar
+yet, or your avatar is private, which by design publishes no model URL for any
+page to read. A model that fails to load at all leaves a lit capsule standing in
+the room. The house is fully usable in every one of those cases; it just loses
+the face.
+
+The body is driven by the canonical clip library, so any rig that animates
+elsewhere on three.ws animates here, and one that cannot be skeleton-driven
+falls back rather than freezing in a T-pose.
+
 ## Reactivity
 
 The page holds one Server-Sent Events subscription to

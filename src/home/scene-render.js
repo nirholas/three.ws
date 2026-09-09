@@ -201,6 +201,9 @@ export function createHomeScene(container, options = {}) {
 	const spare = { color: new Color(), target: new Color(), v: new Vector3(), toward: new Vector3(), forward: new Vector3() };
 
 	let model = null;
+	// The body the agent wears. Null until the visitor's own agent resolves, and
+	// the default body stands in meanwhile rather than nobody standing there.
+	let avatarUrl = options.avatarUrl || null;
 	let stale = false;
 	let staleAmount = 0;
 	let acting = null;
@@ -859,7 +862,7 @@ export function createHomeScene(container, options = {}) {
 	function placeAgent(stand) {
 		if (!stand) return;
 		if (!agent) {
-			agent = createAgentBody(scene, renderer);
+			agent = createAgentBody(scene, renderer, avatarUrl);
 		}
 		agent.moveTo(stand.x, stand.y, stand.z, stand.facing);
 	}
@@ -937,6 +940,17 @@ export function createHomeScene(container, options = {}) {
 			stale = Boolean(next);
 		},
 		/** Highlight the room an action is happening in, for a short beat. */
+		/**
+		 * Put the visitor's own agent in the house, or swap it for another one.
+		 * Resolving that record is a round trip the house must never wait on, so
+		 * it arrives here after the first frame rather than gating it.
+		 */
+		setAvatarUrl(next) {
+			const url = next || null;
+			if (url === avatarUrl) return;
+			avatarUrl = url;
+			agent?.setAvatarUrl(url);
+		},
 		setActing(next, holdMs = 2600) {
 			acting = next;
 			actingUntil = performance.now() + holdMs;
@@ -974,6 +988,14 @@ export function createHomeScene(container, options = {}) {
 				drawCalls: renderer.info.render.calls,
 				geometries: renderer.info.memory.geometries,
 				textures: renderer.info.memory.textures,
+				// Reported, not inferred. `prefers-reduced-motion` turns off both
+				// the camera's coasting and the damping that walks a light to its
+				// new brightness, and neither is visible from outside the closure:
+				// a test could only watch pixels and guess. These two are the
+				// setting as the renderer actually applied it, which is the thing
+				// worth asserting, and they cost nothing to read.
+				reduceMotion,
+				damping: controls.enableDamping,
 			};
 		},
 		dispose() {
@@ -994,20 +1016,32 @@ export function createHomeScene(container, options = {}) {
 	};
 }
 
+/** The body every house falls back to when the visitor has no avatar of their own. */
+const DEFAULT_BODY = '/avatars/default.glb';
+
 /**
  * The agent's body, standing in the house.
  *
- * The platform's default rigged body driven by the canonical clip library, the
- * same pair `/walk`, `/play` and Docs World use, so a rig that animates
+ * It is the VISITOR'S OWN agent whenever they have one: the same avatar the
+ * walk world, `/play` and the voice satellite show, resolved through the
+ * canonical active-agent record and swapped live when they switch agents in
+ * another tab. Somebody who has not made one yet, or whose avatar is private
+ * and therefore has no readable model URL, gets the platform's default body
+ * rather than an empty room.
+ *
+ * Either way it is driven by the canonical clip library, so a rig that animates
  * anywhere on three.ws animates here. A rig that cannot be skeleton-driven, or
  * a load that fails outright, falls back to a lit capsule: the house stays
  * fully usable, it just loses the face.
  */
-function createAgentBody(scene, renderer) {
+function createAgentBody(scene, renderer, avatarUrl = null) {
 	const root = new Group();
 	scene.add(root);
 	let anim = null;
+	let body = null;
 	let disposed = false;
+	/** Guards against a slow first avatar landing after a faster second one. */
+	let loadToken = 0;
 	const target = new Vector3();
 	let bob = 0;
 	let gesture = 0;
@@ -1024,34 +1058,76 @@ function createAgentBody(scene, renderer) {
 	placeholder.position.y = 0.75;
 	root.add(placeholder);
 
-	(async () => {
+	/** Drop the body currently standing here, with its GPU resources. */
+	function clearBody() {
+		anim?.dispose?.();
+		anim = null;
+		if (!body) return;
+		root.remove(body);
+		body.traverse((node) => {
+			if (!node.isMesh) return;
+			node.geometry?.dispose?.();
+			for (const material of Array.isArray(node.material) ? node.material : [node.material]) {
+				if (!material) continue;
+				for (const value of Object.values(material)) {
+					if (value?.isTexture) value.dispose();
+				}
+				material.dispose?.();
+			}
+		});
+		body = null;
+	}
+
+	/**
+	 * Load one avatar. Falls back to the platform body once when a personal one
+	 * cannot be fetched or decoded, which is the ordinary case for an avatar
+	 * whose owner made it private after pointing a wall display at this house.
+	 */
+	async function load(url) {
+		const token = (loadToken += 1);
+		const wanted = url || DEFAULT_BODY;
 		try {
 			const [{ gltfLoader }, { AnimationManager }] = await Promise.all([
 				import('../loaders/gltf.js'),
 				import('../animation-manager.js'),
 			]);
-			const gltf = await new Promise((resolve, reject) => gltfLoader(renderer).load('/avatars/default.glb', resolve, undefined, reject));
-			if (disposed) return;
+			const gltf = await new Promise((resolve, reject) => gltfLoader(renderer).load(wanted, resolve, undefined, reject));
+			if (disposed || token !== loadToken) return;
+			clearBody();
 			const model = gltf.scene;
 			model.traverse((node) => {
 				if (node.isMesh) node.frustumCulled = false;
 			});
 			root.add(model);
+			body = model;
 			placeholder.visible = false;
 			anim = new AnimationManager();
-			anim.attach(model, { avatarUrl: '/avatars/default.glb' });
+			anim.attach(model, { avatarUrl: wanted });
 			anim.relaxUndrivenArms?.();
 			const defs = await fetch('/animations/manifest.json').then((r) => (r.ok ? r.json() : []));
+			if (disposed || token !== loadToken) return;
 			if (Array.isArray(defs) && defs.length && anim.supportsCanonicalClips?.() !== false) {
 				anim.setAnimationDefs(defs);
 				if (await anim.ensureLoaded('idle')) await anim.crossfadeTo('idle', 0);
 			}
 		} catch {
-			// The capsule is already standing; the house does not need the body.
+			if (disposed || token !== loadToken) return;
+			// One retry, on the body we ship and serve ourselves. Beyond that the
+			// capsule is already standing and the house does not need the body.
+			if (wanted !== DEFAULT_BODY) await load(DEFAULT_BODY);
 		}
-	})();
+	}
+
+	load(avatarUrl);
 
 	return {
+		/**
+		 * Show a different avatar without rebuilding the house. Called when the
+		 * visitor switches agents, in this tab or another one.
+		 */
+		setAvatarUrl(next) {
+			load(next);
+		},
 		moveTo(x, y, z, facing) {
 			target.set(x, y, z);
 			root.position.copy(target);
@@ -1074,7 +1150,7 @@ function createAgentBody(scene, renderer) {
 		},
 		dispose() {
 			disposed = true;
-			anim?.dispose?.();
+			clearBody();
 			scene.remove(root);
 			placeholder?.geometry.dispose();
 			placeholder?.material.dispose();

@@ -15,7 +15,7 @@
 import { HomeApiError, callService, getHome, getLayout, grantEntity, openStream } from './api.js';
 import { buildSceneModel } from './scene-model.js';
 import { createHomeFallback, webglAvailable } from './scene-fallback.js';
-import { formatNumber, locale, plural, t } from './i18n-home.js';
+import { formatNumber, locale, plural, relativeAge, t } from './i18n-home.js';
 
 const VIEW_KEY = 'three:home:view';
 /** A device that cannot hold this for a few seconds is sent to the 2D house. */
@@ -69,6 +69,12 @@ const state = {
 	// first painted frame that carries it. Reported on window for the
 	// measurement pass and for the e2e spec.
 	latency: { last: null, samples: [] },
+	/**
+	 * The GLB the agent standing in the house wears: the visitor's own agent,
+	 * resolved after the first frame. Null until it lands, and null forever for
+	 * somebody who has not made one, in which case the default body stands there.
+	 */
+	avatarUrl: null,
 	overlay: null,
 	fpsSince: 0,
 	// True once a person picked a view, by clicking the toggle or by asking for
@@ -132,8 +138,39 @@ async function boot() {
 	el.reconnect.addEventListener('click', () => reconnect());
 	document.addEventListener('keydown', onKeydown);
 	holdScreenAwake();
+	watchAgentBody();
 
 	await load();
+}
+
+/**
+ * Whose body stands in the house.
+ *
+ * Every other three.ws surface that draws the visitor's agent (the walk world,
+ * `/play`, the voice satellite) reads one canonical record, and the house has
+ * to agree with them: a person who has given their agent a face should see THAT
+ * face in their kitchen, not a stranger's. Resolved off the critical path and
+ * applied whenever it lands, so the house never waits on it, and re-applied
+ * when they switch agents, including from another tab.
+ *
+ * Nothing here is fatal. A signed-out visitor, an agent with no avatar, and an
+ * avatar its owner made private (which leaves no readable model URL by design)
+ * all end at the same place: the platform's default body, already standing.
+ */
+async function watchAgentBody() {
+	try {
+		const { getActiveAgent, onActiveAgentChange } = await import('../agents/active-agent.js');
+		const apply = (agent) => {
+			const url = agent?.avatar_model_url || null;
+			if (url === state.avatarUrl) return;
+			state.avatarUrl = url;
+			state.renderer?.setAvatarUrl?.(url);
+		};
+		onActiveAgentChange(apply);
+		apply(await getActiveAgent());
+	} catch {
+		// The default body is already in the room.
+	}
 }
 
 /**
@@ -481,6 +518,7 @@ async function mount3d() {
 		const { createHomeScene } = await import('./scene-render.js');
 		if (state.view !== '3d') return;
 		state.renderer = createHomeScene(el.stage, {
+			avatarUrl: state.avatarUrl,
 			onSelect: (entityId, object) => {
 				state.selected = entityId ? { entityId, object } : null;
 				for (const button of el.rooms.querySelectorAll('.hs-room-device')) {
@@ -1208,23 +1246,6 @@ function renderAge() {
 	if (!existing) {
 		el.stage.appendChild(node);
 		state.ageTimer = setInterval(write, 1000);
-	}
-}
-
-/**
- * "2 minutes ago", in the reader's language, through Intl.RelativeTimeFormat.
- *
- * Not three catalog keys with an English `s` suffix bolted on: that spelling of
- * a plural is wrong in most of the 84 locales this ships in, and several need
- * forms English has no word for. The platform already knows all of them.
- */
-function relativeAge(ms) {
-	const s = Math.max(0, Math.round(ms / 1000));
-	const [value, unit] = s < 60 ? [s, 'second'] : s < 3600 ? [Math.round(s / 60), 'minute'] : [Math.round(s / 3600), 'hour'];
-	try {
-		return new Intl.RelativeTimeFormat(locale(), { numeric: 'always' }).format(-value, unit);
-	} catch {
-		return `${value} ${unit}${value === 1 ? '' : 's'} ago`;
 	}
 }
 
