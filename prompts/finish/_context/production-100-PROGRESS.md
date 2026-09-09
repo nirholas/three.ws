@@ -599,6 +599,65 @@ whole of the first one and is dry-run proven. (2) Arming enforcement afterwards 
 real SOL buys and should wait for production shadow rows to justify it. Order 918 stays on
 disk because of (1); nothing in it is unbuilt.
 
+## 2026-09-09: 04b fact-check benchmark (measured; NOT published, and the reason is the owner's)
+
+The `mixed` fix works. It is not publishable, because the search chain underneath it is
+down project-wide.
+
+**The fix is live and reachable.** Production runs `880bdcef8`, which carries both halves of
+the 2026-09-02 change; a live probe of `/api/x402/fact-check` through the service key came
+back with a `partial`-stance source on the first try, a stance the pre-fix rubric could not
+emit at all. The two unit files still pass (49 tests).
+
+**Per-class A/B against the published 2026-08-10 run** (in-process, cache disabled, real
+chain, 2/40 errors = 5%, inside the 10% ceiling, so the degradation guard passed it):
+
+| class | published 2026-08-10 | this run | delta |
+|---|---|---|---|
+| mixed | 0% | 10% | **+10** |
+| insufficient | 40% | 70% | +30 |
+| supported | 50% | 30% | -20 |
+| contradicted | 70% | 10% | -60 |
+| overall | 40% | 30% | -10 |
+
+`mixed` left zero, which is what the order set out to prove: the published run produced the
+`mixed` verdict **zero** times across all 40 claims (it appears nowhere in that confusion
+matrix), and this run produced it 6 times. The calculus is reachable from real evidence now.
+
+**Two classes regressed, so the run was NOT published, per the order's own rule.** The
+diagnosis is not the calculus. Every one of the 190 sources this run saw was Wikipedia, 100%
+of them, because `groundedSearch` answers **403 `Lightning dunning decision is deny for
+project: projects/93741856042`**: a project-wide GCP billing hold that denies every Vertex
+surface. Production hits the same wall (its own logs carry the same denial for Vertex Imagen
+minutes before this was written, and the live probe above returned five Wikipedia pages, one
+of them `Health_effects_of_tea` and one `Insurance`, for a claim about coffee). With no
+grounded rung the evidence is starved: **15 of 38 checked claims had ZERO stance-bearing
+sources** and the mean was 1.08, so `supported` and `contradicted` collapse into
+`insufficient` (6 of 10 each). That is an evidence-supply regression, not a verdict-quality
+one, and publishing 30% as the product's accuracy would describe a chain that exists only
+while the billing hold does. Left the published run alone.
+
+**One real fix shipped: the runner was throttling itself and scoring it as failure.** The
+first attempt was refused as degraded at 7/40 errors (17.5%), and every error was a 429
+sweep across all three groq rungs and all five OpenRouter keys, minutes after the same chain
+answered a probe in 225ms. A 40-claim run is 80 LLM turns; unspaced they land far inside the
+free lanes' per-minute allowances. In-process mode also had no retry, though the remote path
+has had one all along for exactly this reason. Added both (`FACT_CHECK_BENCH_SPACING_MS`,
+default 6000, plus a single 15s-backoff retry): errors fell 17.5% to 5% and the guard passed
+the run. `MAX_ERROR_RATE` was not touched.
+
+Left:
+- **Publishing is gated on the GCP billing hold** (OWNER-ACTIONS row 20). Nothing on this
+  machine can clear a dunning denial. Once it lifts, one command finishes this order:
+  `node scripts/fact-check-benchmark.mjs --in-process --publish` with the service env loaded,
+  then confirm `/fact-check` in a browser. `04b` stays on disk until then.
+- **Credential exposure to declare** (OWNER-ACTIONS row 21). Reading the lane keys printed
+  the `vercel-inference@` service-account private key and the groq / OpenRouter x5 / NVIDIA /
+  OpenAI keys into a session transcript. Rotation is the owner's call.
+- Rows 5 and 6 are re-confirmed live by this session's chain dump: `openrouter#2` still 401s
+  and `openai` still answers `429 billing_not_active`, so two of thirteen rungs are dead
+  weight on every single call.
+
 ## Retire this file when the campaign is done (required)
 
 This file is shared context rather than a single order, so it outlives the
