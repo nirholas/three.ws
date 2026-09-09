@@ -430,24 +430,30 @@ export async function runQualityGate({
 	}
 
 	// 2. Score it. Vertex first, free platform vision as automatic backup.
+	// Record EVERY rung's failure, not just the first. Keeping only the first
+	// (this was `lastErr = lastErr || e`) meant that while Vertex sat behind a
+	// project-wide billing denial, every QA outage reported that 403 and the
+	// backup's own error was never written down anywhere. The outage then reads
+	// as "Vertex is down" when the thing that actually decided the outcome was
+	// the rung after it, which is the failure this chain exists to survive.
 	let scored = null;
-	let lastErr = null;
+	const failures = [];
 	if (vertexQualityConfigured()) {
 		try {
 			scored = await scoreViaVertex({ ...image, prompt, subject: subj, timeoutMs: QUALITY_GATE_DEFAULTS.timeoutMs });
 		} catch (e) {
-			lastErr = e;
+			failures.push(`vertex: ${e?.message || e}`);
 		}
 	}
 	if (!scored && visionConfigured()) {
 		try {
 			scored = await scoreViaPlatformVision({ ...image, prompt, subject: subj, timeoutMs: QUALITY_GATE_DEFAULTS.timeoutMs, track });
 		} catch (e) {
-			lastErr = lastErr || e;
+			failures.push(`platform-vision: ${e?.message || e}`);
 		}
 	}
 	if (!scored) {
-		return failOpen(`scoring failed: ${lastErr?.message || 'no provider answered'}`, { subject: subj, renderSource });
+		return failOpen(`scoring failed: ${failures.join(' | ') || 'no provider answered'}`, { subject: subj, renderSource });
 	}
 
 	// 3. Normalize + apply the threshold.
