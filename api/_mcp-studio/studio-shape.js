@@ -131,7 +131,14 @@ export function shapePoll(data, base, jobId, title, { pollPath = STUDIO_POLL_PAT
 	// estimate the poll carries (falling back to the lane's total estimate)
 	// instead of leaving the caller with N identical frames.
 	const t = titleSuffix(title);
-	const etaRemaining = Number(data?.eta_remaining_seconds ?? data?.eta_seconds);
+	// eta_remaining_seconds is dropped upstream once a job outruns its estimate.
+	// The lane's TOTAL estimate is not a stand-in at that point: it would restate
+	// a whole fresh countdown on a job already past it. Fall back to the total
+	// only on a frame carrying no elapsed reading at all, which is the first one.
+	const hasElapsedReading = Number.isFinite(Number(data?.elapsed_seconds));
+	const etaRemaining = Number(
+		hasElapsedReading ? data?.eta_remaining_seconds : (data?.eta_remaining_seconds ?? data?.eta_seconds),
+	);
 	const elapsed = Number(data?.elapsed_seconds);
 	return {
 		status: 'pending',

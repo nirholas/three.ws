@@ -192,6 +192,38 @@ describe('shape helpers — Actions wire contract', () => {
 		expect(shapePoll(POLL_DONE, 'https://three.ws', SUBMIT_QUEUED.job_id, 'x').watchUrl).toBeUndefined();
 	});
 
+	it('shapePoll never fabricates a countdown on a job that has outrun its estimate', async () => {
+		const { shapePoll } = await import('../../api/3d/studio.js');
+
+		// Inside the estimate: report the real remaining time.
+		const early = shapePoll(
+			{ status: 'running', eta_seconds: 200, eta_remaining_seconds: 140, elapsed_seconds: 60 },
+			'https://three.ws',
+			'f1.a.b',
+		);
+		expect(early.etaSeconds).toBe(140);
+		expect(early.elapsedSeconds).toBe(60);
+
+		// Past it, /api/gpt-forge drops eta_remaining_seconds. The lane's TOTAL
+		// estimate must NOT step in as a substitute: doing so restates a whole
+		// fresh countdown on a job already 11 minutes past it, which is what made
+		// the widget and the custom GPT both say "roughly 5s to go" for the final
+		// 11 minutes of a measured 12.5-minute generation.
+		const late = shapePoll(
+			{ status: 'running', eta_seconds: 200, elapsed_seconds: 760 },
+			'https://three.ws',
+			'f1.a.b',
+		);
+		expect(late.etaSeconds).toBeUndefined();
+		// The honest, moving number survives so the caller can still show progress.
+		expect(late.elapsedSeconds).toBe(760);
+
+		// The very first frame carries no elapsed reading; the lane's total
+		// estimate is the best available answer there and is still forwarded.
+		const first = shapePoll({ status: 'queued', eta_seconds: 200 }, 'https://three.ws', 'f1.a.b');
+		expect(first.etaSeconds).toBe(200);
+	});
+
 	it('shapePoll maps done/running/failed forge shapes cleanly, echoing the title into arUrl', async () => {
 		const { shapePoll } = await import('../../api/3d/studio.js');
 		const done = shapePoll(POLL_DONE, 'https://three.ws', SUBMIT_QUEUED.job_id, 'a tiny fox');

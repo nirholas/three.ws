@@ -3087,8 +3087,22 @@ async function pollJob(req, res, jobId) {
 		...(etaSeconds != null
 			? {
 					eta_seconds: etaSeconds,
-					eta_remaining_seconds:
-						elapsedSeconds != null ? Math.max(5, etaSeconds - elapsedSeconds) : etaSeconds,
+					// Only claim a countdown while there is one left to claim. A
+					// floor here (this used to be Math.max(5, ...)) makes every
+					// poll past the estimate report the same "roughly 5s to go"
+					// for as long as the job actually runs: measured 2026-09-09,
+					// a 12.5-minute self-host job reported 5s remaining for its
+					// final 11 minutes, to the ChatGPT widget and the custom GPT
+					// alike. That is a fabricated reading, not a slow one. Past
+					// the estimate the key is simply absent and every consumer
+					// falls back to its honest "it keeps running in the
+					// background" copy, with elapsed_seconds still carrying the
+					// real, moving number.
+					...(elapsedSeconds == null
+						? { eta_remaining_seconds: etaSeconds }
+						: etaSeconds - elapsedSeconds > 0
+							? { eta_remaining_seconds: etaSeconds - elapsedSeconds }
+							: {}),
 				}
 			: {}),
 		...(cold ? { cold_start: true, cold_start_seconds: coldStartSecondsFor(meta?.backend) } : {}),
