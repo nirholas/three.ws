@@ -1,0 +1,104 @@
+{
+  "measuredAt": "2026-09-09T15:45:00Z",
+  "what": "Order 09: the three.ws Wyoming voice satellite, verified end to end against a real Home Assistant and a real local voice stack. No fixture, no mock: Home Assistant ran its own wake word, speech recognition, intent handling and text to speech, and the house really changed.",
+  "stack": {
+    "homeAssistant": "ghcr.io/home-assistant/home-assistant:stable, onboarded and seeded by scripts/home-test-instance.mjs --name sat09",
+    "speechToText": "rhasspy/wyoming-whisper, tiny-int8",
+    "textToSpeech": "rhasspy/wyoming-piper, en_US-lessac-low",
+    "wakeWord": "rhasspy/wyoming-openwakeword, ok_nabu (pipeline wake word okay_nabu)",
+    "satellite": "services/home-satellite, run both in Docker and on the host",
+    "wyomingVersion": "1.10.2 (this implementation); the tested Home Assistant ships 1.10.0"
+  },
+  "homeAssistantSide": {
+    "integration": "Wyoming Protocol lists the satellite as a service named 'Kitchen display', area Kitchen, 8 entities",
+    "entity": "assist_satellite.kitchen_kitchen_display",
+    "pipeline": "'three.ws satellite' (01m22aey558ddcyjssesb0095f), set as the preferred assistant",
+    "assistDevices": 1
+  },
+  "pipelineRun": {
+    "said": "turn on the bed light",
+    "transcript": " Turn on the bed light.",
+    "answer": "Turned on the light",
+    "ttsBytes": 44454,
+    "ttsFormat": {
+      "rate": 22050,
+      "width": 2,
+      "channels": 1
+    },
+    "states": [
+      "listening",
+      "listening",
+      "listening",
+      "idle",
+      "thinking",
+      "thinking",
+      "speaking",
+      "idle"
+    ],
+    "watched": {
+      "entity": "light.bed_light",
+      "before": "off",
+      "after": "on"
+    }
+  },
+  "browserClosedMidRun": {
+    "said": "turn off the bed light",
+    "viewer": "closed immediately after the utterance",
+    "satelliteAfter": {
+      "state": "idle",
+      "ttsChunks": 51,
+      "viewers": 0
+    },
+    "watched": {
+      "entity": "light.bed_light",
+      "before": "on",
+      "after": "off"
+    },
+    "bound": "satellite.js _finishSpeaking: with a viewer attached the played acknowledgement is bounded by the answer's own duration plus a grace period, and the timer always fires, so no browser can block the pipeline"
+  },
+  "pairing": {
+    "neverIssuedCodeRefused": "claim ZZZZ-ZZZZ -> 400 invalid_code",
+    "singleUse": "claim #1 -> 201 (satellite created); claim #2 with the same code -> 400 invalid_code",
+    "expiry": "code minted with a 15.0 minute ttl, row aged one second into the past, claim -> 400 invalid_code",
+    "oneAnswerForAll": "malformed, expired, already-claimed and never-existed all return the same message, so the endpoint is not an oracle for guessing codes"
+  },
+  "unpairedSatellite": {
+    "wyoming": "answers describe with error {code: 'unpaired', text: 'This three.ws satellite has not been paired...'}",
+    "healthz": "ok:false with pairing_error 'no pairing code was supplied and no identity has been claimed'",
+    "viewer": "websocket closed 4401 with that same reason"
+  },
+  "errorState": {
+    "how": "the whisper container was stopped, so speech to text really failed",
+    "homeAssistantSent": "error code stt-stream-failed, text 'speech-to-text failed'",
+    "page": "badge reads 'speech-to-text failed'; the state is transient and settles back to Ready"
+  },
+  "docker": {
+    "built": "docker build -t three-ws-home-satellite services/home-satellite",
+    "ran": "docker run with THREE_WS_PAIRING_CODE, claimed the code and came up paired",
+    "restart": "recreated with no pairing code and came up paired from the /data volume"
+  },
+  "states": [
+    "01-unpaired.png",
+    "02-pairing.png",
+    "03-idle.png",
+    "04-wake.png",
+    "05-listening.png",
+    "05b-listening.png",
+    "06-thinking.png",
+    "07-speaking.png",
+    "08-error.png",
+    "09-after.png",
+    "10-disconnected.png",
+    "11-asleep.png"
+  ],
+  "tests": "npx vitest run tests/home-satellite-{protocol,server,pairing}.test.js -> 78 passed (74 before this run, plus 4 covering the two fixes)",
+  "fixed": [
+    "the token role built the whole service before signing, so running it the documented way on the machine already running the satellite died with EADDRINUSE",
+    "an unpaired satellite never opened its viewer port, so the /healthz the README promises answered nothing on a fresh install",
+    "the README's reproduce section named scripts/provision-home-assistant.mjs, which does not exist"
+  ],
+  "localOnlyArtifacts": [
+    "the agent's GLB is CORS-refused for a http://127.0.0.1 origin by the R2 bucket, so the captured states show the page's designed no-model fallback rather than a face; the model URL itself resolves and the fallback text is correct",
+    "Chromium loops --use-file-for-fake-audio-capture, so an unpadded WAV produces a repeated transcript; the padded WAV in the harness notes avoids it"
+  ]
+}

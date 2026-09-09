@@ -38,7 +38,7 @@ One section per finished order, newest at the bottom:
 | 06 3D home scene | open | |
 | 07 floorplan editor | built, browser verification blocked, see entry | |
 | 08 voice loop | done | 2026-09-09 |
-| 09 Wyoming satellite | open | |
+| 09 Wyoming satellite | done | 2026-09-09 |
 | 10 add-on relay | done, publish + deploy owner-gated | 2026-09-09 |
 | 11 security | done | 2026-09-09 |
 | 12 households and RBAC | done | 2026-09-03 |
@@ -2146,3 +2146,87 @@ failed: cannot prompt during non-interactive execution`), which also blocks read
 and 07 are finished, and read this table rather than the absence of order files: the orders were
 retired by the owner, not completed.
 **Commits:** `9e0574559`, `245485891`, `0ad50e967`, plus this entry.
+
+
+## 09. Home Assistant voice satellite over Wyoming (2026-09-09)
+
+**Shipped:** the service, the protocol client, the pairing surface, the browser side and the
+container already existed in the tree from an earlier session that never verified them; this run
+proved the whole path against real software and fixed the three defects the proof turned up.
+`services/home-satellite` implements the Wyoming framing and event set (it does not vendor the
+reference satellite), announces itself over TCP, relays the pipeline's audio and events to a
+browser over a websocket, and drives the existing `src/voice/lipsync-driver.js` and
+`talk-emotes.js`. A real Home Assistant now lists it, runs a full pipeline through it, and keeps
+working when the browser closes.
+
+**Measured** (all of it against a seeded Home Assistant 2026.9.0 plus rhasspy whisper `tiny-int8`,
+piper `en_US-lessac-low` and openWakeWord `ok_nabu`; evidence in
+[tasks/home/satellite-2026-09-09.json](../../../tasks/home/satellite-2026-09-09.json)):
+
+- **Home Assistant's own screens.** Wyoming Protocol lists a service `Kitchen display`, area
+  Kitchen, 8 entities, as `assist_satellite.kitchen_kitchen_display`. The Voice assistants page
+  shows the `three.ws satellite` pipeline starred as preferred and counts `1 Assist device`.
+- **A full pipeline run.** Said "turn on the bed light"; whisper transcribed " Turn on the bed
+  light."; Home Assistant answered "Turned on the light"; 44,454 bytes of 22,050 Hz TTS came back
+  for the lip sync; `light.bed_light` went `off` to `on`. States walked
+  listening, idle, thinking, speaking, idle.
+- **The browser closed mid-run.** With `--drop-viewer` the viewer socket closed the instant the
+  utterance ended and `light.bed_light` still went `on` to `off`, satellite `viewers: 0`,
+  51 TTS chunks still consumed. The claim is structural, not incidental: `_finishSpeaking`
+  bounds the `played` acknowledgement by the answer's own duration plus a grace period and the
+  timer always fires, so no browser can hold a pipeline open.
+- **Pairing, three transcripts.** A never-issued code is refused; a real code claims once and its
+  second claim is refused; a code aged one second past its 15 minute expiry is refused. All four
+  failure kinds return one message on purpose, so the endpoint is not an oracle for guessing codes.
+- **An unpaired satellite is rejected and says why.** Wyoming `describe` gets back
+  `error {code: 'unpaired'}`, `/healthz` reports `ok:false` with the reason, and a viewer upgrade
+  is closed `4401` carrying that reason.
+- **Docker.** Built from `services/home-satellite/Dockerfile`, run with `THREE_WS_PAIRING_CODE`,
+  claimed its code and came up paired; recreated with no code and came up paired off the `/data`
+  volume.
+- **A real pipeline error, shown not swallowed.** With the whisper container stopped, Home
+  Assistant sent `error` `stt-stream-failed` / "speech-to-text failed" and the page painted it.
+- **Ten states, screenshotted** from the page in Chromium with a WAV played into `getUserMedia`:
+  unpaired, pairing, idle, wake, listening, thinking, speaking, error, disconnected, and the
+  resting screen. The empty state reads "Nothing paired yet. Get a code above, run the container
+  next to Home Assistant, and add it as a Wyoming Protocol integration."
+- `npx vitest run tests/home-satellite-{protocol,server,pairing}.test.js`: **78 passed** (74
+  before, plus 4 covering the fixes below). `npm run audit:docs`: clean, 1592 files.
+  `npm run check:rules` on the touched paths: clean.
+
+**Fixed here, all found by running it:**
+
+- The `token` role built the entire service before signing, so running it the documented way, on
+  the machine already running the satellite, bound 10700 and 10701 a second time and died with
+  `EADDRINUSE` in exactly the situation the role exists for. It now reads the identity off disk
+  and signs, starting nothing.
+- An unpaired satellite never created its viewer server, so the `/healthz` the README promises for
+  that state answered nothing at all on a fresh install. The viewer server now runs whether or not
+  the satellite is paired, serves the service's own health object, and closes viewer upgrades with
+  the pairing reason.
+- The README's reproduce section named `scripts/provision-home-assistant.mjs`, which does not
+  exist. Replaced with the real harness plus the two steps a working run actually needs: joining
+  the Home Assistant container to the voice stack's network, and addressing a host-run satellite
+  at that network's gateway.
+
+**Deviations from the order file:**
+
+- The order requires "the transcript streams into the UI as Home Assistant produces it (state 5),
+  not only at the end". **Home Assistant does not do this.** It sends `transcribe` when listening
+  starts, `voice-started` and `voice-stopped` as it hears speech begin and end, and one final
+  `transcript`. `transcript-chunk` exists in the protocol but the `wyoming` integration never
+  writes it downstream. The view streams the stages it does get and shows the transcript when it
+  arrives; claiming word-by-word streaming would be a lie about somebody else's software. This was
+  already recorded in the service README and this run confirmed it on the wire.
+- The order lists `api/home/satellite.js` "a migration if it needs storage"; it needed storage and
+  `20260903200000_home_satellites.sql` is applied.
+
+**Left open:** nothing in the order. Two local-only artifacts worth knowing before re-running the
+capture: the agent's GLB is CORS-refused for a `http://127.0.0.1` origin by the R2 bucket, so the
+state screenshots show the page's designed no-model fallback rather than a face (the model URL
+resolves, and the fallback is the correct behaviour for an unloadable model); and Chromium loops
+`--use-file-for-fake-audio-capture`, so a microphone WAV needs trailing silence or the transcript
+repeats. Neither is a product defect and neither reproduces on `https://three.ws`.
+
+**Commits:** `9e9a2f42f` (the two service fixes and their tests, committed from the shared worktree
+by a concurrent agent mid-run), `6fc8dccff` (README), plus this entry.
