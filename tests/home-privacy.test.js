@@ -496,9 +496,15 @@ describe.skipIf(!LIVE)('home privacy: deletion and purge against the real databa
 		// who is gone.
 		const [{ n }] = await sql`select count(*)::int as n from home_action_log where home_id = ${theirs}`;
 		expect(n).toBe(1);
-		const [row] = await sql`select user_id, confirmed_by from home_action_log where home_id = ${theirs}`;
+		const [row] = await sql`select user_id, confirmed_by, detail from home_action_log where home_id = ${theirs}`;
 		expect(row.user_id).toBeNull();
 		expect(row.confirmed_by).toBeNull();
+
+		// Removing the name must not forge a safety violation. A guarded action
+		// with a null `confirmed_by` and nothing else on it is the subsystem's
+		// zero-budget Sev 1, so the scrub records that the yes happened while
+		// dropping who gave it.
+		expect(row.detail?.confirmation_scrubbed).toBe(true);
 
 		// And the account row itself can now actually be deleted, which the
 		// pre-migration granted_by foreign key made impossible.
@@ -608,8 +614,8 @@ describe.skipIf(!LIVE)('home privacy: deletion and purge against the real databa
 		const data = await privacy.exportHomeData(owner.id);
 		expect(Object.keys(data).sort()).toEqual([
 			'action_log', 'confirmations', 'generated_at', 'grants', 'homes_you_own',
-			'inventory', 'invites', 'members', 'memberships', 'notice', 'plan_override',
-			'relay_pairings', 'satellite_codes', 'satellites',
+			'inventory', 'invites', 'layouts', 'members', 'memberships', 'notice',
+			'plan_override', 'relay_pairings', 'satellite_codes', 'satellites',
 		]);
 		expect(data.homes_you_own).toHaveLength(1);
 		expect(data.grants).toHaveLength(1);

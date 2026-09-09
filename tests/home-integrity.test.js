@@ -68,6 +68,19 @@ describe('confirmation integrity is a zero-budget invariant', () => {
 		expect(verdict.status).toBe('ok');
 	});
 
+	it('does not fire on an action confirmed by an account that has since been deleted', () => {
+		// Erasure removes WHO said yes, not THAT somebody did: deleting a user
+		// nulls `confirmed_by` on a household they have left. Without the marker
+		// the scrub stamps, every right-to-erasure request would forge this Sev 1
+		// out of a lawful, properly confirmed unlock and send an operator to tell
+		// an innocent household their house was opened without permission.
+		const verdict = homeHealthVerdict(
+			healthy({ integrity: { violations: 0, lastAt: null, grantBacked: 0, grantBackedWithoutGrant: 0, confirmationScrubbed: 2 } }),
+		);
+		expect(verdict.status).toBe('ok');
+		expect(verdict.detail).toContain('2 guarded action(s) confirmed by a since-deleted account');
+	});
+
 	it('outranks every other signal, so it is never masked by a busy platform', () => {
 		const verdict = homeHealthVerdict(
 			healthy({

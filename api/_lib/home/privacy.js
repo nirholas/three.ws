@@ -662,7 +662,20 @@ export async function deleteAllHomeDataForUser(userId, { email = null } = {}) {
 	// those rows is entitled to its own history, and it does not need to keep a
 	// pointer to a person who left.
 	await sql`update home_action_log set user_id = null where user_id = ${userId}`;
-	await sql`update home_action_log set confirmed_by = null where confirmed_by = ${userId}`;
+
+	// Removing WHO confirmed must not erase THAT it was confirmed. A guarded
+	// physical action with no confirmation and no grant behind it is the
+	// subsystem's zero-budget Sev 1 (api/_lib/ops/home-health.js), and a bare
+	// `confirmed_by = null` would forge exactly that shape out of a lawful,
+	// properly confirmed unlock every time somebody exercised their right to
+	// erasure. The marker keeps the household's record honest and keeps the
+	// integrity alert reading the truth.
+	await sql`
+		update home_action_log
+		   set confirmed_by = null,
+		       detail = coalesce(detail, '{}'::jsonb) || '{"confirmation_scrubbed":true}'::jsonb
+		 where confirmed_by = ${userId}
+	`;
 
 	const after = await countUserRows(userId, email);
 	return { before, after, homes: homeIds.length };

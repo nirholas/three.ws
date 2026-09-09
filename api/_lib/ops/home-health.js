@@ -247,13 +247,27 @@ export async function readHomeSignals({ windowMinutes = WINDOW_MINUTES } = {}) {
 		// allow list and stamps `detail.allowed_by_grant`. Those rows are counted
 		// and reported, never paged.
 		//
+		// The second lawful null is an erased account. Deleting a user scrubs the
+		// pointer to who confirmed an action on a household they have left
+		// (api/_lib/home/privacy.js), which removes the name and not the yes. That
+		// path stamps `detail.confirmation_scrubbed`, so the row reports as
+		// confirmed-by-someone-departed rather than forging a violation out of a
+		// person exercising their right to erasure.
+		//
 		// What remains a violation is the shape with no yes behind it at all:
-		// guarded, executed, nobody confirmed it, and no grant claimed.
+		// guarded, executed, nobody confirmed it, no grant claimed and no
+		// confirmation scrubbed.
 		withTimeout(
 			sql`
 				select
-					count(*) filter (where coalesce(detail->>'allowed_by_grant', 'false') <> 'true')::int as violations,
-					max(created_at) filter (where coalesce(detail->>'allowed_by_grant', 'false') <> 'true') as last_at,
+					count(*) filter (
+						where coalesce(detail->>'allowed_by_grant', 'false') <> 'true'
+						  and coalesce(detail->>'confirmation_scrubbed', 'false') <> 'true'
+					)::int as violations,
+					max(created_at) filter (
+						where coalesce(detail->>'allowed_by_grant', 'false') <> 'true'
+						  and coalesce(detail->>'confirmation_scrubbed', 'false') <> 'true'
+					) as last_at,
 					count(*) filter (where detail->>'allowed_by_grant' = 'true')::int as grant_backed,
 					count(*) filter (
 						where detail->>'allowed_by_grant' = 'true'
@@ -262,7 +276,8 @@ export async function readHomeSignals({ windowMinutes = WINDOW_MINUTES } = {}) {
 							where g.home_id = home_action_log.home_id
 							  and g.entity_id = any(home_action_log.entity_ids)
 						)
-					)::int as grant_backed_without_grant
+					)::int as grant_backed_without_grant,
+					count(*) filter (where detail->>'confirmation_scrubbed' = 'true')::int as confirmation_scrubbed
 				from home_action_log
 				where guarded = true and confirmed_by is null and outcome = 'ok'
 				  and created_at > now() - interval '24 hours'
@@ -329,6 +344,10 @@ export async function readHomeSignals({ windowMinutes = WINDOW_MINUTES } = {}) {
 			// alerts. A number that climbs while nobody is revoking anything is
 			// worth reading.
 			grantBackedWithoutGrant: v.grant_backed_without_grant ?? 0,
+			// Guarded actions that WERE confirmed by a person who has since deleted
+			// their account. Reported so the number is visible, never scored: the
+			// yes happened, and only the pointer to who gave it was erased.
+			confirmationScrubbed: v.confirmation_scrubbed ?? 0,
 		},
 		pool,
 		leak,
@@ -448,6 +467,7 @@ export function homeHealthVerdict(s) {
 				+ (decidedConfirmations >= MIN_CONFIRMATIONS_FOR_A_VERDICT ? '' : ` (under the ${MIN_CONFIRMATIONS_FOR_A_VERDICT}-confirmation floor, reported not scored)`)
 			: 'no confirmations in window',
 		s.integrity.grantBacked ? `${s.integrity.grantBacked} guarded action(s) cleared by a standing grant` : null,
+		s.integrity.confirmationScrubbed ? `${s.integrity.confirmationScrubbed} guarded action(s) confirmed by a since-deleted account` : null,
 		`pool ${s.pool.open} open, ${s.pool.subscribers} subscribers` + (s.pool.streams === null ? '' : ` across ${s.pool.streams} streams`) + `, ${s.pool.breakersOpen} breakers open` + (s.pool.rung && s.pool.rung !== 'normal' ? `, admission ${s.pool.rung}` : ''),
 	];
 

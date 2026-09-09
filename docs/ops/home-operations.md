@@ -58,7 +58,7 @@ expired of 4 (under the 10-confirmation floor, reported not scored); ...
 | Breaker-open homes | `runtime.stats()` | under 2% | 2 to 10% | over 10% |
 | p95 action latency (our leg) | `home_action_log.detail->>'latencyMs'` | under 1.5 s | 1.5 to 4 s | over 4 s |
 | Subscriber leak | `stats().subscribers` over three checks | flat or falling | climbing with flat connections | climbing with flat connections |
-| Confirmation integrity | `home_action_log`, excluding standing grants | zero rows | n/a | any row |
+| Confirmation integrity | `home_action_log`, excluding standing grants and scrubbed confirmations | zero rows | n/a | any row |
 
 A **refused** action counts as a success. The safety gate refusing to open a
 front door is the product working, not a failure to deliver, and scoring it as an
@@ -70,9 +70,18 @@ every legitimate unlock. A standing per-entity allowance in `home_entity_grants`
 is a yes the user already gave, recorded once rather than re-asked every time, so
 the act path clears the gate through the allow list and stamps
 `detail.allowed_by_grant`. Those rows are counted and reported
-(`integrity.grantBacked`), never paged. What remains a Sev 1 is the shape with no
-yes behind it at all: guarded, executed, nobody confirmed it, and no grant
-claimed.
+(`integrity.grantBacked`), never paged.
+
+The second lawful null is an **erased account**. Deleting a user scrubs the
+pointer to who confirmed an action on a household they have left
+([`api/_lib/home/privacy.js`](../../api/_lib/home/privacy.js)), which removes the
+name and not the yes, so that path stamps `detail.confirmation_scrubbed` and
+those rows report as `integrity.confirmationScrubbed` rather than paging. Without
+that marker every right-to-erasure request would forge this Sev 1 out of a
+lawful, properly confirmed unlock.
+
+What remains a Sev 1 is the shape with no yes behind it at all: guarded,
+executed, nobody confirmed it, no grant claimed and no confirmation scrubbed.
 
 ### Why one broken house scores `ok` and not `degraded`
 
@@ -717,6 +726,7 @@ select id, home_id, user_id, actor, channel, action, entity_ids, risk, detail, c
 from home_action_log
 where guarded = true and confirmed_by is null and outcome = 'ok'
   and coalesce(detail->>'allowed_by_grant', 'false') <> 'true'
+  and coalesce(detail->>'confirmation_scrubbed', 'false') <> 'true'
   and created_at > now() - interval '24 hours'
 order by created_at desc;
 ```
@@ -724,7 +734,8 @@ order by created_at desc;
 Drop the `allowed_by_grant` line to see the grant-backed actions alongside them.
 Those are legitimate and are the reason that line is there: without it, this
 query returns every standing-grant unlock in the fleet and the alert becomes
-noise within a day.
+noise within a day. Drop the `confirmation_scrubbed` line to see the actions
+whose confirmer has since deleted their account, for the same reason.
 
 **Then, in this order:**
 
@@ -747,6 +758,10 @@ noise within a day.
    `integrity.grantBackedWithoutGrant` on the health block counts rows that
    claimed a grant that no longer exists; that is usually a grant the user
    revoked afterwards, which is why it reports rather than pages.
+5. **Check the scrub claim.** The alert also excludes rows stamped
+   `detail.confirmation_scrubbed`, which is an account deletion removing the
+   pointer to a confirmer. A row that reached you claimed neither a grant nor a
+   scrub, so somebody's yes is genuinely missing rather than merely anonymous.
 
 **Rollback:** yes. Roll back to the last revision known to gate correctly before
 diagnosing further.
