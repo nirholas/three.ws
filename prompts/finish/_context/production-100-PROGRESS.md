@@ -743,8 +743,19 @@ secrets across 2424 reachable modules, `audit:deploy` clean). `server/cloudbuild
 three failures were `Test timed out in 120000ms` in two forge suites, under load average 30
 with 2036 files in flight; both files pass in 19s when run alone. The first run of the same
 suite reported 18 failures and every one was the worktree's environment, not the commit,
-which is what the prep:worktree work below fixes. Playwright was left to a window with no
-peer run in flight.
+which is what the prep:worktree work below fixes.
+
+**Playwright: 257 passed, 0 failed, 5 skipped, exit 0** (10.3 min), after one more fix. The
+first run reported three failures, all in `home-lifecycle` and `home-plan`. Neither is a
+product defect: both are live journeys that need a real Home Assistant and two provisioned
+accounts, which only `playwright.home.config.js` sets up, and both had drifted out of the
+default config's `testIgnore` list. The general run drove them with no house to reach, so
+journey 1 died on `Could not reach http://127.0.0.1:39611` and the plan page found none of
+its quota rows. **`npm test` could not pass for anyone while that held.** The config states
+the rule in prose right above the list (importing `./home-support.js` is what makes a spec
+live), so the list is now read from the spec files instead of being that rule written a
+second time: eight live specs, the original six plus the two that drifted. Both still run
+under `npm run test:home:e2e`, so nothing loses coverage.
 
 **Eight reds fixed, all of them at HEAD and none of them mine:**
 
