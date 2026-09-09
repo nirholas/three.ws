@@ -1,4 +1,5 @@
 import { describe, it, expect } from 'vitest';
+import { readFile } from 'node:fs/promises';
 import {
 	isRailFault,
 	classifySettleBuckets,
@@ -581,5 +582,22 @@ describe('classifySettleBuckets: a floor refusal is not a withdrawn accept', () 
 		]);
 		expect(rail.cause).toBe('rail');
 		expect(rail.mechanism).toBe('rail');
+	});
+});
+
+describe('readSettleHealth surfaces the mechanism the runbook tells operators to read', () => {
+	// The field is computed in the classifier and consumed by
+	// docs/ops/production-log-triage.md as `metrics.mechanism`. It reached the
+	// healthz payload only because it is listed in the metrics builder, and a
+	// documented field that is silently absent is worse than no field: it sends
+	// the reader looking for something that is not there. Pin the wiring.
+	it('lists mechanism in the metrics the health check builds', async () => {
+		const src = await readFile(
+			new URL('../../api/_lib/ops/x402-settle-health.js', import.meta.url),
+			'utf8',
+		);
+		const metricsBlock = src.slice(src.indexOf('metrics: {'), src.indexOf('metrics: {') + 1400);
+		expect(metricsBlock).toMatch(/mechanism: v\.mechanism/);
+		expect(metricsBlock).toMatch(/cause: v\.cause/);
 	});
 });

@@ -497,7 +497,13 @@ export async function gatherX402SettleHealth() {
 				topFaults: v.faultClasses.slice(0, 5),
 				// The collapse-vs-rejection split. `cause` is what an operator should
 				// read first; noSolanaAccept is the volume the rate cannot show.
+				// `mechanism` is what to read SECOND, and it is not cosmetic: one
+				// `cause: sponsor_floor` covers a withdrawn accept (the facilitator
+				// never saw these calls) and a floor refusal (it saw and rejected
+				// every one), which send an operator to opposite evidence. The triage
+				// runbook's mechanism table keys off exactly this field.
 				...(v.cause ? { cause: v.cause } : {}),
+				...(v.mechanism ? { mechanism: v.mechanism } : {}),
 				noSolanaAccept: v.noSolanaAccept ?? 0,
 				floorSignals: v.floorSignals ?? 0,
 				// Deliberate spend-pacing, not failure. Read it next to `rate`: the two
