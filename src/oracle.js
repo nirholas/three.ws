@@ -160,6 +160,37 @@ async function api(path, opts = {}) {
 	}
 }
 
+// ── failure states ────────────────────────────────────────────────
+// A request that never landed is not an empty result. Telling a user "nothing
+// scored yet" when the fetch actually failed sends them away from a working
+// product, so every panel that loads over the network renders this instead:
+// what broke, whether it is on us or on their connection, and a retry.
+
+// Plain-language cause, derived from the transport status api() hands back:
+// 0 means the request never completed (offline, DNS, timeout, blocked).
+function failureCause(status) {
+	if (!status) return 'The request did not complete. Check your connection, then try again.';
+	if (status === 429) return 'Oracle is rate limiting right now. Give it a few seconds, then retry.';
+	if (status >= 500) return 'The conviction engine returned an error. This is on us and usually clears in a moment.';
+	return `The conviction engine answered with HTTP ${status}. Retrying usually clears it.`;
+}
+
+// One designed error block, wired to a retry. `onRetry` runs on click; the
+// button id is scoped per panel so two open panels never collide.
+function renderFailure(el, { title, status, retryId, onRetry, gridSpan = false }) {
+	if (!el) return;
+	const span = gridSpan ? ' style="grid-column:1/-1"' : '';
+	el.innerHTML = `<div class="state"${span}><b>${esc(title)}</b>${esc(failureCause(status))}<div style="margin-top:14px"><button class="btn" type="button" id="${retryId}">Retry now</button></div></div>`;
+	const btn = el.querySelector(`#${retryId}`);
+	if (btn && onRetry) {
+		btn.addEventListener('click', () => {
+			btn.disabled = true;
+			btn.textContent = 'Retrying\u2026';
+			onRetry();
+		});
+	}
+}
+
 // ── state ────────────────────────────────────────────────────────────────────
 const state = {
 	view: 'feed',
@@ -484,8 +515,17 @@ async function loadGraph() {
 	try {
 		const { mountOracleGraph } = await import('./oracle-graph.js');
 		const q = new URLSearchParams({ network: NETWORK, limit: '80' });
-		const { data } = await api(`/api/oracle/feed?${q}`);
-		const coins = Array.isArray(data?.items) ? data.items : [];
+		const { ok, status, data } = await api(`/api/oracle/feed?${q}`);
+		if (!ok || !data) {
+			canvas.dataset.loaded = '';
+			return renderFailure(stateEl, {
+				title: 'Could not load the conviction graph',
+				status,
+				retryId: 'ogRetry',
+				onRetry: () => { stateEl.textContent = ''; loadGraph(); },
+			});
+		}
+		const coins = Array.isArray(data.items) ? data.items : [];
 		if (!coins.length) {
 			if (stateEl) stateEl.textContent = 'No scored coins yet — check back once the Oracle has swept.';
 			return;
@@ -522,9 +562,18 @@ async function loadFeed() {
 	if (state.tier) q.set('tier', state.tier);
 	if (state.category) q.set('category', state.category);
 	if (state.minScore) q.set('min_score', String(state.minScore));
-	const { ok, data } = await api(`/api/oracle/feed?${q}`);
+	const { ok, status, data } = await api(`/api/oracle/feed?${q}`);
 
-	if (!ok || !data) return renderFeedEmpty('warming');
+	if (!ok || !data) {
+		$('#ctFeed').textContent = '';
+		return renderFailure($('#feedGrid'), {
+			title: 'Could not load the conviction feed',
+			status,
+			retryId: 'feedRetry',
+			onRetry: loadFeed,
+			gridSpan: true,
+		});
+	}
 	state.feed = new Map((data.items || []).map((it) => [it.mint, it]));
 	setStats(data);
 	renderFeed();
@@ -594,12 +643,6 @@ function renderFeedEmpty(kind) {
 	const grid = $('#feedGrid');
 	$('#ctFeed').textContent = '';
 
-	if (kind === 'warming') {
-		grid.innerHTML = `<div class="state" style="grid-column:1/-1"><b>Oracle is warming up</b>The conviction engine ships with its backend — once the ingestion augmentor is live it scores every new pump.fun launch in real time. Check back shortly.<div style="margin-top:14px"><button class="btn" type="button" id="feedRetry">Retry now</button></div></div>`;
-		$('#feedRetry')?.addEventListener('click', () => loadFeed());
-		return;
-	}
-
 	if (kind === 'watch') {
 		const hasWatched = watchedMints().size > 0;
 		grid.innerHTML = hasWatched
@@ -645,7 +688,9 @@ async function loadHotSectors() {
 
 	const { ok, data } = await api(`/api/oracle/categories?network=${NETWORK}&hours=24`);
 	const items = ok && data ? (data.items || []) : [];
-	if (!items.length) return;
+	// Secondary strip: it stays hidden rather than shouting at the user, but the
+	// latch is released so the next feed refresh can fill it in.
+	if (!items.length) { el.dataset.loaded = ''; return; }
 
 	el.innerHTML = items.map((c) => {
 		const initial = esc((c.best_symbol || c.category || '?')[0].toUpperCase());
@@ -1110,13 +1155,17 @@ async function loadWallets() {
 	wrap.innerHTML = '<div class="state">Loading the reputation graph…</div>';
 	const q = new URLSearchParams({ leaderboard: '1', network: NETWORK, limit: '60' });
 	if (state.label) q.set('label', state.label);
-	const { ok, data } = await api(`/api/oracle/wallet?${q}`);
+	const { ok, status, data } = await api(`/api/oracle/wallet?${q}`);
 	wrap.dataset.loaded = '1';
 	if (!ok) {
-		wrap.innerHTML = `<div class="state"><b>Could not reach the reputation graph</b>The wallet leaderboard did not respond — this is usually temporary. The engine or network may be momentarily unavailable.<div style="margin-top:14px"><button class="btn" type="button" id="walletRetry">Retry now</button></div></div>`;
+		wrap.dataset.loaded = '';
 		$('#ctWallets').textContent = '';
-		$('#walletRetry')?.addEventListener('click', () => loadWallets());
-		return;
+		return renderFailure(wrap, {
+			title: 'Could not reach the reputation graph',
+			status,
+			retryId: 'walletRetry',
+			onRetry: loadWallets,
+		});
 	}
 	if (!data || !(data.items || []).length) {
 		const filtered = !!state.label;
@@ -1141,7 +1190,7 @@ async function loadWallets() {
 function walletRow(w, i) {
 	const a = w.archetype || { label: w.label, title: ARCH_TITLE[w.label] || 'Unproven' };
 	return `<div class="lrow-wrap">
-		<button class="lrow" data-wallet="${esc(w.wallet)}">
+		<button type="button" class="lrow" data-wallet="${esc(w.wallet)}">
 			<span class="lrank ${i < 3 ? 'top' : ''}">${i + 1}</span>
 			<span class="lw"><span class="nlabel lb-${esc(w.label)}">${esc(a.title)}</span><span class="lw-addr">${esc(shortAddr(w.wallet))}</span></span>
 			<span class="lstat colhide"><b>${fmtPct(w.win_rate)}</b></span>
@@ -1157,8 +1206,18 @@ async function loadAgentLeaderboard() {
 	const wrap = $('#agentLeadWrap');
 	wrap.dataset.loaded = '1';
 	wrap.innerHTML = '<div class="state">Loading agent rankings…</div>';
-	const { ok, data } = await api(`/api/oracle/leaderboard?network=${NETWORK}&limit=30&min_actions=1`);
-	const agents = ok && data ? (data.agents || []) : [];
+	const { ok, status, data } = await api(`/api/oracle/leaderboard?network=${NETWORK}&limit=30&min_actions=1`);
+	if (!ok || !data) {
+		wrap.dataset.loaded = '';
+		$('#ctAgents').textContent = '';
+		return renderFailure(wrap, {
+			title: 'Could not load the agent rankings',
+			status,
+			retryId: 'agentLeadRetry',
+			onRetry: loadAgentLeaderboard,
+		});
+	}
+	const agents = data.agents || [];
 	if (!agents.length) {
 		wrap.innerHTML = `<div class="state"><b>No ranked agents yet</b>Once oracle agents have resolved enough conviction calls, they appear here ranked by win rate. Agents in simulate mode are included — their track records are just as honest.</div>`;
 		$('#ctAgents').textContent = '';
@@ -1330,10 +1389,28 @@ async function loadActivity(reset = false) {
 	if (_afState.outcome) params.set('outcome', _afState.outcome);
 	if (_afState.cursor)  params.set('before',  _afState.cursor);
 
-	const { ok, data } = await api(`/api/oracle/activity?${params}`);
+	const { ok, status, data } = await api(`/api/oracle/activity?${params}`);
 	_afState.loading = false;
 
-	const items = ok && data ? (data.items || []) : [];
+	if (!ok || !data) {
+		if (reset) {
+			wrap.dataset.loaded = '';
+			$('#ctActivity').textContent = '';
+			$('#afMore').style.display = 'none';
+			renderFailure(wrap, {
+				title: 'Could not load the agent action feed',
+				status,
+				retryId: 'afRetry',
+				onRetry: () => loadActivity(true),
+			});
+		} else {
+			const moreBtn = $('#afMoreBtn');
+			if (moreBtn) { moreBtn.disabled = false; moreBtn.textContent = 'Retry loading more'; }
+		}
+		return;
+	}
+
+	const items = data.items || [];
 	if (!items.length && reset) {
 		wrap.innerHTML = `<div class="state"><b>No actions yet</b>Once Oracle-armed agents make their first call, the floor lights up here — every buy, every outcome, in real time.</div>`;
 		$('#ctActivity').textContent = '';
@@ -1661,11 +1738,22 @@ async function loadMovers(reset = false) {
 	if (reset || !grid.children.length) grid.innerHTML = skels;
 
 	const { direction, hours } = _moversState;
-	const { ok, data } = await api(
+	const { ok, status, data } = await api(
 		`/api/oracle/movers?network=${NETWORK}&direction=${direction}&hours=${hours}&limit=40`
 	);
 
-	if (!ok || !data?.items?.length) {
+	if (!ok || !data) {
+		grid.dataset.loaded = '';
+		return renderFailure(grid, {
+			title: 'Could not load conviction movers',
+			status,
+			retryId: 'moversRetry',
+			onRetry: () => loadMovers(true),
+			gridSpan: true,
+		});
+	}
+
+	if (!data.items?.length) {
 		grid.innerHTML = `<div class="state" style="grid-column:1/-1">
 			<b>No movers yet in this window.</b>
 			Conviction deltas appear once Oracle re-scores the same coins in the selected window.
@@ -1740,11 +1828,23 @@ async function loadProof(reset = false) {
 	const url = `/api/oracle/wins?network=${NETWORK}&period=${_proofState.period}&limit=24&min_ath=2`;
 	const q = url + (_proofState.tier ? `&tier=${_proofState.tier}` : '') + (_proofState.cursor ? `&before=${_proofState.cursor}` : '');
 
-	const { ok, data } = await api(q);
+	const { ok, status, data } = await api(q);
 	_proofState.loading = false;
 
 	if (!ok || !data?.items) {
-		if (reset) grid.innerHTML = `<div class="state" style="grid-column:1/-1"><b>No proved wins yet.</b><br>Once Oracle-scored coins resolve to a positive outcome, they appear here. The engine is scoring live.</div>`;
+		if (reset) {
+			grid.dataset.loaded = '';
+			renderFailure(grid, {
+				title: 'Could not load the proof gallery',
+				status,
+				retryId: 'proofRetry',
+				onRetry: () => loadProof(true),
+				gridSpan: true,
+			});
+		} else {
+			const moreBtn = $('#proofLoadMoreBtn');
+			if (moreBtn) { moreBtn.disabled = false; moreBtn.textContent = 'Retry loading more'; }
+		}
 		return;
 	}
 
