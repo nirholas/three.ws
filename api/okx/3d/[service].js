@@ -188,11 +188,32 @@ async function healthReport() {
 			// settlement-route configuration (OKX facilitator creds / relayer).
 			const rail = await xlayerRailHealth();
 			if (rail.rpc && !rail.rpc.ok) throw new Error(rail.rpc.error || 'X Layer RPC unreachable');
+			// `rail.settleable` answers "is a settlement route configured", which
+			// is not the same question a buyer is asking. When the OKX facilitator
+			// is not credentialed the relayer redeems the authorization itself and
+			// pays the gas, so a relayer with no OKB turns a collected payment into
+			// a 502 at settle time. Report the gas reading rather than hiding it,
+			// and fail the subsystem when no route can actually settle: a rail that
+			// quotes a price it cannot collect is exactly the never-402-then-502
+			// case the challenge gate exists to prevent.
+			const facilitator = rail.facilitator?.configured ?? false;
+			const relayerFunded = rail.relayer?.configured ? rail.relayer.funded === true : null;
+			const settleable = rail.settleable && (facilitator || relayerFunded !== false);
+			if (!settleable) {
+				const err = new Error(
+					facilitator || rail.relayer?.configured
+						? 'X Layer settlement relayer is out of gas (OKB balance 0)'
+						: 'X Layer settlement route is not configured',
+				);
+				err.detail = { settleable: false, block: rail.rpc?.block, token: rail.token?.symbol, facilitator_configured: facilitator, relayer_funded: relayerFunded };
+				throw err;
+			}
 			return {
-				settleable: rail.settleable,
+				settleable,
 				block: rail.rpc?.block,
 				token: rail.token?.symbol,
-				facilitator_configured: rail.facilitator?.configured ?? false,
+				facilitator_configured: facilitator,
+				relayer_funded: relayerFunded,
 			};
 		}),
 	]);

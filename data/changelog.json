@@ -3,6 +3,16 @@
 	"entries": [
 		{
 			"date": "2026-09-09",
+			"title": "The health page for our paid 3D services now checks that a payment could actually be collected",
+			"summary": "Every agent that buys a 3D generation from us on the OKX.AI marketplace can read a free health page first, and one of the lines on it says whether payment settlement is working. That line only ever checked that a settlement route was configured, not that it could run: the account that broadcasts a buyer's already-signed payment onto the chain pays the network fee for it, and if that account runs out of fee balance the page still read green while a paid call would have failed after the buyer had committed. The page now reports the fee balance it actually measured, and marks the payment lane down when nothing can settle, so the problem shows up on a free page before anyone pays rather than as a failure afterwards.",
+			"tags": [
+				"fix",
+				"improvement"
+			],
+			"link": "/docs/okx-marketplace"
+		},
+		{
+			"date": "2026-09-09",
 			"title": "The payments status page now says which of two opposite outages it is looking at",
 			"summary": "When agent payments stop settling, the status page names the cause. Two very different situations shared one description: either the platform stops offering Solana payment on its price quotes, so nothing is ever attempted, or it keeps offering them and then turns each signed payment away at the final check. Both are fixed by topping up the same wallet, but the evidence sits in opposite places, and the old wording sent whoever was on call to the wrong one. It could even report that Solana had been withdrawn from quotes while the counter printed beside it read zero withdrawals. The status page now names the mechanism and points at the record that actually holds the proof, and the operations runbook carries a table for telling the two apart.",
 			"tags": [

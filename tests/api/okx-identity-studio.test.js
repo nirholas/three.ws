@@ -301,6 +301,40 @@ describe('free lanes over HTTP', () => {
 		expect(rail.token).toBe('USD₮0');
 	});
 
+	// `settleable` used to answer "is a settlement route configured", which is
+	// not what a buyer reading this page is asking. With no OKX facilitator
+	// credentials the relayer redeems the authorization itself and pays the gas,
+	// so a relayer with an empty OKB balance turns a collected payment into a 502
+	// at settle time while /health still read green.
+	it('GET /health reports the relayer gas reading, not just that a route is configured', async () => {
+		mountHealthyProbes();
+		const res = makeRes();
+		await handler(makeReq({ method: 'GET', service: 'health' }), res);
+		const rail = JSON.parse(res.body).subsystems.find((s) => s.name === 'payment-rail');
+		expect(rail.ok).toBe(true);
+		expect(rail.settleable).toBe(true);
+		expect(rail.relayer_funded).toBe(true);
+	});
+
+	it('GET /health fails the payment rail when the settlement relayer is out of gas', async () => {
+		mountHealthyProbes();
+		fetchRoutes.rpc = (url, init) => {
+			const rpc = jsonRpcBody(init);
+			if (rpc?.method === 'eth_getBalance') return jsonResponse(200, { jsonrpc: '2.0', id: rpc.id, result: '0x0' });
+			return healthyXlayerRpc(url, init);
+		};
+		const res = makeRes();
+		await handler(makeReq({ method: 'GET', service: 'health' }), res);
+		expect(res.statusCode).toBe(503);
+		const body = JSON.parse(res.body);
+		expect(body.ok).toBe(false);
+		const rail = body.subsystems.find((s) => s.name === 'payment-rail');
+		expect(rail.ok).toBe(false);
+		expect(rail.settleable).toBe(false);
+		expect(rail.relayer_funded).toBe(false);
+		expect(rail.error).toMatch(/out of gas/);
+	});
+
 	it('GET /health goes 503 when a subsystem is down — never a hardcoded ok', async () => {
 		fetchRoutes.render = () => new Response(null, { status: 500 });
 		fetchRoutes.forgeSubmit = () => jsonResponse(200, FORGE_CATALOG);

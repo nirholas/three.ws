@@ -188,10 +188,22 @@ Verified output (2026-09-09, the fields that matter):
   "status": 2, "statusLabel": "not listed", "soldCount": 2, "role": 2, "roleLabel": "ASP" }
 ```
 
-That is rejection #3's verdict, unchanged since 2026-09-05: the 4109-character `approvalRemark`
-is byte-for-byte the one the 2026-09-04 session root-caused, and nothing has been resubmitted
+That is rejection #3's verdict, unchanged since 2026-09-05: the `approvalRemark` is
+byte-for-byte the one the 2026-09-04 session root-caused, and nothing has been resubmitted
 since, so no new review has run. A rejection email arriving now is a re-send of that verdict,
 not a new one.
+
+**Identify the remark by hash, not by length.** Its sha256 is
+`c30676a2b95d7c84a9fb26e48b3ff07798664d9d3eb42873d956b1070c9fff0d` (re-read 2026-09-09), and
+`get-my-agents` and `service-list` return the identical string. Earlier entries call it
+"4109 characters" and a Python reader counts 4101: the remark carries CJK bracket and emoji
+code points, so JavaScript's UTF-16 `.length` and Python's code-point `len()` disagree by 8 on
+the same bytes. Neither number changing means the verdict changed. Compare the hash:
+
+```bash
+onchainos agent get-my-agents \
+  | python3 -c "import json,sys,hashlib; a=[x for g in json.load(sys.stdin)['data']['list'] for x in g['agentList'] if x['agentId']=='2632'][0]; print(hashlib.sha256(a['approvalRemark'].encode()).hexdigest())"
+```
 
 ### Reading the fields
 
@@ -331,7 +343,12 @@ The buyer needs **no OKB**: it signs an EIP-3009 authorization off-chain and the
 broadcasts and pays gas, which is why the buyer's 0 OKB above is not a second blocker.
 
 Re-verify the relayer's OKB balance is still enough for ≥3 settlement tx before relying on
-0.02 OKB, top up a few cents' worth if a dry run shows `broadcast_failed`/out-of-gas.
+0.02 OKB, top up a few cents' worth if a dry run shows `broadcast_failed`/out-of-gas. Measured
+2026-09-09: 0.020 OKB at a 0.021 gwei gas price, roughly 7,900 settlements, and its nonce is
+still 0, so it has never broadcast one. `/api/okx/3d/health` reports that reading itself as
+`relayer_funded` on the `payment-rail` row and fails the subsystem when the only settlement
+route is a relayer with no gas, so a dry relayer shows up on the free health lane instead of
+as a 502 after a buyer has already paid (committed 2026-09-09, live on the next deploy).
 
 Once funded, run [`okx-ai-04-e2e-real-payment-test.md`](../913-okx-ai-04-e2e-real-payment-test.md). It needs ≥3
 real settlements with transaction hashes.
