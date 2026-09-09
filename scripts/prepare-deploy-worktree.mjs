@@ -146,6 +146,29 @@ export const ARTIFACTS = [
 	},
 ];
 
+/**
+ * How to hardlink one artifact into the staged tree.
+ *
+ * An artifact is not always all-or-nothing in git. `animation-sources` holds
+ * tracked .fbx sources next to gitignored .glb fixtures, so `git worktree add`
+ * creates the directory with only the tracked half in it. Treating a
+ * destination that merely EXISTS as already staged then drops every file this
+ * entry was added for, and the suite fails on 25 missing fixtures that read as
+ * a broken commit rather than an unstaged tree. So an existing destination is
+ * merged into instead of skipped: `--update=none` hardlinks what checkout could
+ * not produce and leaves every file the worktree already owns exactly as it is,
+ * which matters because a hardlinked tracked file would make an edit in the
+ * deploy tree rewrite the source tree too.
+ *
+ * @param {string} src absolute path in the source tree
+ * @param {string} dest absolute path in the staged tree
+ * @param {boolean} destExists does dest already exist (git checked part of it out)
+ * @returns {string[]} argv for `cp`
+ */
+export function cpArgsFor(src, dest, destExists) {
+	return destExists ? ['-al', '--update=none', `${src}/.`, `${dest}/`] : ['-al', src, dest];
+}
+
 /** Env files copied (never hardlinked: a deploy tree must not share their inode). */
 const ENV_FILES = ['.env', '.env.local'];
 
@@ -261,9 +284,9 @@ function run() {
 	for (const p of plan) {
 		if (p.action === 'skip') continue;
 		const dest = path.join(TARGET, p.rel);
-		if (existsSync(dest)) continue;
-		execFileSync('cp', ['-al', p.src, dest], { cwd: ROOT, timeout: 900_000 });
-		console.log(`[prep:worktree] hardlinked ${p.rel}`);
+		const merging = existsSync(dest);
+		execFileSync('cp', cpArgsFor(p.src, dest, merging), { cwd: ROOT, timeout: 900_000 });
+		console.log(`[prep:worktree] hardlinked ${merging ? `the untracked half of ${p.rel}` : p.rel}`);
 	}
 
 	for (const e of envPlan) {

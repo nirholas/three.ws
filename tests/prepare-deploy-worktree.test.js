@@ -12,7 +12,7 @@ import { execFileSync } from 'node:child_process';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-import { ARTIFACTS, planArtifacts } from '../scripts/prepare-deploy-worktree.mjs';
+import { ARTIFACTS, planArtifacts, cpArgsFor } from '../scripts/prepare-deploy-worktree.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const SCRIPT = path.join(ROOT, 'scripts/prepare-deploy-worktree.mjs');
@@ -72,6 +72,35 @@ describe('planArtifacts', () => {
 		const p = planArtifacts((rel) => !rel.startsWith('character-studio/node_modules'));
 		expect(p.find((x) => x.rel === 'character-studio/node_modules').action).toBe('skip');
 		expect(p.some((x) => x.action === 'blocked')).toBe(false);
+	});
+});
+
+describe('cpArgsFor', () => {
+	it('hardlinks the whole artifact when the worktree has no such directory', () => {
+		expect(cpArgsFor('/src/node_modules', '/wt/node_modules', false)).toEqual([
+			'-al',
+			'/src/node_modules',
+			'/wt/node_modules',
+		]);
+	});
+
+	it('fills in a directory git already created rather than skipping it', () => {
+		// animation-sources is half tracked (.fbx) and half gitignored (.glb), so
+		// checkout creates it with only the tracked half. Skipping it on the
+		// grounds that it exists is what left the glb-diff and model-diff suites
+		// failing on 25 missing fixtures in a freshly staged tree.
+		expect(cpArgsFor('/src/animation-sources', '/wt/animation-sources', true)).toEqual([
+			'-al',
+			'--update=none',
+			'/src/animation-sources/.',
+			'/wt/animation-sources/',
+		]);
+	});
+
+	it('never overwrites a file the worktree already owns', () => {
+		// A tracked file hardlinked from the source tree would make an edit in the
+		// deploy tree rewrite the shared tree through the shared inode.
+		expect(cpArgsFor('/src/x', '/wt/x', true)).toContain('--update=none');
 	});
 });
 
