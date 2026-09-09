@@ -3,8 +3,26 @@
 	"entries": [
 		{
 			"date": "2026-09-09",
+			"title": "Put a live trader on your own page with one script tag",
+			"summary": "A trader with a following had no way to show it anywhere except on three.ws. Every public trader profile now has an Embed this trader button that hands over a one-line snippet: paste it into a site, a blog post, a link in bio or a stream overlay and the trader's live record renders there, updating itself. It shows realized profit or loss for the period, win rate, settled trades, whatever they are holding right now and their last few results, and every coin on it carries a Fork button that opens the real trade panel back on three.ws, signed by the reader's own wallet. The card holds no funds, asks for no key and signs nothing. It follows the reader's light or dark setting, stops updating when nobody is looking at it, keeps the last good card on screen if a refresh fails rather than blanking the page it sits on, and shows a loss exactly as plainly as a win. The snippet carries the leader's referral code, so the traffic it brings back is credited to them, and the panel previews the real card before they copy anything.",
+			"tags": [
+				"feature"
+			],
+			"link": "/docs/trader-card-embed"
+		},
+		{
+			"date": "2026-09-09",
+			"title": "Voice satellite: the token command works where you actually run it, and an unpaired satellite explains itself",
+			"summary": "Two fixes for the Home Assistant voice satellite. The command that prints a viewing token for a screen on your own network was documented to be run on the machine already running the satellite, but doing exactly that failed: it tried to start a second copy of the service and died because the ports were already taken. It now reads the identity it needs and prints the token, with nothing else running. Separately, a satellite that has not been paired yet answers its health check again and says why it is unpaired, and turns a browser away with that same reason instead of a blank refusal. That is the state you are in on a fresh install, which is exactly when you need something to read.",
+			"tags": [
+				"fix"
+			],
+			"link": "/smart-home/satellite"
+		},
+		{
+			"date": "2026-09-09",
 			"title": "The 3D studio stops promising \"5 seconds to go\" for eleven minutes",
-			"summary": "Every surface that waits on a generation, the ChatGPT widget and the custom GPT included, showed a countdown built from the lane's own time estimate. Once a model outran that estimate the countdown stopped at five seconds and stayed there for the rest of the job: on a generation measured this week that meant reading \"roughly 5s to go\" for the final eleven minutes. The countdown now runs only while there is genuinely time left on the estimate, and past it the wait says the job keeps running in the background and shows how long it has actually been going, which is a number that moves. The inline 3D viewer in ChatGPT also now loads its model through three.ws itself rather than straight from the asset store, so it renders from any host that embeds it instead of only from our own pages.",
+			"summary": "Every surface that waits on a generation, the ChatGPT widget and the custom GPT included, showed a countdown built from the lane's own time estimate. Once a model outran that estimate the countdown stopped at five seconds and stayed there for the rest of the job: on a generation measured this week that meant reading \"roughly 5s to go\" for the final eleven minutes. The countdown now runs only while there is genuinely time left on the estimate, and past it the wait says the job keeps running in the background and shows how long it has actually been going, which is a number that moves. The inline 3D viewer in ChatGPT also now loads its model through three.ws itself rather than straight from the asset store, so it renders from any host that embeds it instead of only from our own pages. Separately, the free 3D endpoints no longer announce payment-related headers to browsers: they never accepted a payment, but the shared header defaults named them anyway, which was misleading to anyone reading the network tab.",
 			"tags": [
 				"fix",
 				"improvement"

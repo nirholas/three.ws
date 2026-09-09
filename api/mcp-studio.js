@@ -43,7 +43,7 @@ function callsGenerationTool(body) {
 }
 
 export default wrap(async (req, res) => {
-	if (cors(req, res, { methods: 'GET,HEAD,POST,OPTIONS', origins: '*' })) return;
+	if (cors(req, res, { methods: 'GET,HEAD,POST,OPTIONS', origins: '*', payments: false })) return;
 
 	// No server-initiated SSE stream — this server answers requests synchronously.
 	if (req.method === 'GET' || req.method === 'HEAD') {

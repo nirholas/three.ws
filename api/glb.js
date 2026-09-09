@@ -27,7 +27,7 @@ const MAX_BYTES = 30 * 1024 * 1024;
 const TIMEOUT_MS = 20_000;
 
 export default wrap(async function handler(req, res) {
-	if (cors(req, res, { origins: '*', methods: 'GET,OPTIONS' })) return;
+	if (cors(req, res, { origins: '*', methods: 'GET,OPTIONS', payments: false })) return;
 	if (!method(req, res, ['GET'])) return;
 
 	const ip = clientIp(req);

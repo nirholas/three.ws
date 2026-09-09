@@ -46,6 +46,13 @@ the escalation deterministic; that is the single owner-gated dependency left on 
   descriptions, and the widget description) had an em-dash the house style bans. The stored
   `studio-resources-list.json` evidence had silently been written in the correct form, so the kit and
   production disagreed; the source is now fixed and they agree after the deploy.
+- The free surface no longer advertises payment headers. Every endpoint shares one `cors()` helper,
+  which announced `x-payment` in `access-control-allow-headers` and `PAYMENT-REQUIRED` in
+  `access-control-expose-headers`. The JSON bodies were always clean, but a reviewer with devtools
+  open would have read a payment capability off the network tab of the very connector this package
+  describes as free. The four free ChatGPT-facing endpoints (`/api/mcp-studio`, `/api/3d/studio`,
+  `/api/ar`, `/api/glb`) now pass `payments: false` and omit both. The metered x402 surface is
+  untouched: the flag defaults to on, and `tests/mcp-studio.test.js` pins both halves.
 
 The historical 2026-07-14 blockers below stay cleared.
 

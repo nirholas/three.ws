@@ -241,6 +241,44 @@ describe('mcp-studio dispatch', () => {
 		expect(COMPONENT_HTML).toContain('poster');
 	});
 
+	it('advertises no payment headers on the free surface, so the network tab agrees with the listing', async () => {
+		// The app is submitted to OpenAI as having zero payment capability, and
+		// that claim has to hold at the header layer too: a reviewer with devtools
+		// open would otherwise read `x-payment` in allow-headers and
+		// `PAYMENT-REQUIRED` in expose-headers on the very connector we describe
+		// as free. Those belong to the metered x402 surface, which still gets them
+		// because `payments` defaults to true.
+		const { cors } = await import('../api/_lib/http.js');
+		const headers = {};
+		const res = {
+			setHeader: (k, v) => { headers[k.toLowerCase()] = String(v); },
+			getHeader: (k) => headers[k.toLowerCase()],
+			end: () => {},
+		};
+		cors({ method: 'GET', headers: { origin: 'https://web-sandbox.oaiusercontent.com' } }, res, {
+			origins: '*',
+			methods: 'GET,HEAD,POST,OPTIONS',
+			payments: false,
+		});
+		expect(headers['access-control-allow-origin']).toBe('*');
+		expect(headers['access-control-allow-headers']).not.toMatch(/payment/i);
+		expect(headers['access-control-expose-headers']).not.toMatch(/payment/i);
+		// The non-payment plumbing the connector actually needs survives.
+		expect(headers['access-control-allow-headers']).toContain('mcp-session-id');
+		expect(headers['access-control-allow-headers']).toContain('mcp-protocol-version');
+
+		// The metered surface is untouched: omitting the flag keeps both lists.
+		const paidHeaders = {};
+		const paidRes = {
+			setHeader: (k, v) => { paidHeaders[k.toLowerCase()] = String(v); },
+			getHeader: (k) => paidHeaders[k.toLowerCase()],
+			end: () => {},
+		};
+		cors({ method: 'GET', headers: {} }, paidRes, { origins: '*' });
+		expect(paidHeaders['access-control-allow-headers']).toContain('x-payment');
+		expect(paidHeaders['access-control-expose-headers']).toContain('PAYMENT-REQUIRED');
+	});
+
 	it('routes the widget model fetch through /api/glb so it survives the ChatGPT sandbox origin', async () => {
 		// model-viewer FETCHES the GLB, so the bytes need an
 		// access-control-allow-origin the widget's origin is covered by. The

@@ -1,11 +1,11 @@
 {
-	"generated_at": "2026-09-09T15:29:36.953Z",
+	"generated_at": "2026-09-09T15:37:11.696Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
 		"url": "https://three.ws"
 	},
-	"total": 3645,
+	"total": 3649,
 	"complete": false,
 	"full_feed": "/changelog.json",
 	"entries": [
@@ -25,6 +25,16 @@
 			"title": "Docs · Rivalries",
 			"summary": "What changed on the trader board: who passed whom, who just arrived, and who is closing. Derived from close timestamps rather than a snapshot table, so the matchups work retroactively and cannot disagree with the leaderboard.",
 			"link": "/docs/rivalries",
+			"tags": [
+				"launch"
+			]
+		},
+		{
+			"date": "2026-09-09",
+			"type": "launch",
+			"title": "Docs · Trader card embed",
+			"summary": "Put a live three.ws trader on any page with one script tag. The card shows the verified on-chain record and lets readers fork a coin or ghost-copy the trader, signing with their own wallet.",
+			"link": "/docs/trader-card-embed",
 			"tags": [
 				"launch"
 			]
@@ -112,6 +122,16 @@
 			"tags": [
 				"fix",
 				"improvement"
+			]
+		},
+		{
+			"date": "2026-09-09",
+			"type": "update",
+			"title": "Every translated news page is advertised as translated again",
+			"summary": "The site publishes a manifest of which pages carry translated copy, and it was missing 113 of them: every news page. The build wrote that manifest before the news pages had been through the translation pass, so it read them as English-only and shipped a list 113 pages short. Nothing was untranslated, the translations were there and served correctly, but anything reading the manifest to decide what to offer in a reader's language (the language picker's page-level hints, and crawlers looking for alternates) was told those pages had no other language. The build now annotates the news pages first and counts afterwards, so the published count is 357 rather than 244.",
+			"link": "/news",
+			"tags": [
+				"fix"
 			]
 		},
 		{
@@ -218,6 +238,16 @@
 			"tags": [
 				"fix",
 				"improvement"
+			]
+		},
+		{
+			"date": "2026-09-09",
+			"type": "update",
+			"title": "Put a live trader on your own page with one script tag",
+			"summary": "A trader with a following had no way to show it anywhere except on three.ws. Every public trader profile now has an Embed this trader button that hands over a one-line snippet: paste it into a site, a blog post, a link in bio or a stream overlay and the trader's live record renders there, updating itself. It shows realized profit or loss for the period, win rate, settled trades, whatever they are holding right now and their last few results, and every coin on it carries a Fork button that opens the real trade panel back on three.ws, signed by the reader's own wallet. The card holds no funds, asks for no key and signs nothing. It follows the reader's light or dark setting, stops updating when nobody is looking at it, keeps the last good card on screen if a refresh fails rather than blanking the page it sits on, and shows a loss exactly as plainly as a win. The snippet carries the leader's referral code, so the traffic it brings back is credited to them, and the panel previews the real card before they copy anything.",
+			"link": "/docs/trader-card-embed",
+			"tags": [
+				"feature"
 			]
 		},
 		{
@@ -356,7 +386,7 @@
 			"date": "2026-09-09",
 			"type": "update",
 			"title": "The 3D studio stops promising \"5 seconds to go\" for eleven minutes",
-			"summary": "Every surface that waits on a generation, the ChatGPT widget and the custom GPT included, showed a countdown built from the lane's own time estimate. Once a model outran that estimate the countdown stopped at five seconds and stayed there for the rest of the job: on a generation measured this week that meant reading \"roughly 5s to go\" for the final eleven minutes. The countdown now runs only while there is genuinely time left on the estimate, and past it the wait says the job keeps running in the background and shows how long it has actually been going, which is a number that moves. The inline 3D viewer in ChatGPT also now loads its model through three.ws itself rather than straight from the asset store, so it renders from any host that embeds it instead of only from our own pages.",
+			"summary": "Every surface that waits on a generation, the ChatGPT widget and the custom GPT included, showed a countdown built from the lane's own time estimate. Once a model outran that estimate the countdown stopped at five seconds and stayed there for the rest of the job: on a generation measured this week that meant reading \"roughly 5s to go\" for the final eleven minutes. The countdown now runs only while there is genuinely time left on the estimate, and past it the wait says the job keeps running in the background and shows how long it has actually been going, which is a number that moves. The inline 3D viewer in ChatGPT also now loads its model through three.ws itself rather than straight from the asset store, so it renders from any host that embeds it instead of only from our own pages. Separately, the free 3D endpoints no longer announce payment-related headers to browsers: they never accepted a payment, but the shared header defaults named them anyway, which was misleading to anyone reading the network tab.",
 			"link": "/forge",
 			"tags": [
 				"fix",
@@ -699,6 +729,16 @@
 			"tags": [
 				"fix",
 				"improvement"
+			]
+		},
+		{
+			"date": "2026-09-09",
+			"type": "update",
+			"title": "Voice satellite: the token command works where you actually run it, and an unpaired satellite explains itself",
+			"summary": "Two fixes for the Home Assistant voice satellite. The command that prints a viewing token for a screen on your own network was documented to be run on the machine already running the satellite, but doing exactly that failed: it tried to start a second copy of the service and died because the ports were already taken. It now reads the identity it needs and prints the token, with nothing else running. Separately, a satellite that has not been paired yet answers its health check again and says why it is unpaired, and turns a browser away with that same reason instead of a blank refusal. That is the state you are in on a fresh install, which is exactly when you need something to read.",
+			"link": "/smart-home/satellite",
+			"tags": [
+				"fix"
 			]
 		},
 		{
@@ -1569,48 +1609,6 @@
 			"tags": [
 				"fix",
 				"improvement"
-			]
-		},
-		{
-			"date": "2026-09-05",
-			"type": "update",
-			"title": "The VS Code extension now animates, refines, optimizes and reviews your models, and checks your embeds",
-			"summary": "Open a rigged model in VS Code, press Animate, and pick from the same 2,800-clip motion library the site uses: the clip is retargeted onto that model's own skeleton right in the editor, and Bake clip writes it into a copy of the file so it plays in Unity, Unreal or Blender too. Describe a motion in words and the GPU fleet samples one for you. Refine takes a change like make it metallic and generates a new version anchored to the current one, keeping the version history. Optimize runs the platform's web passes on your machine and tells you what it saved. Compare pulls the committed version straight out of git, opens both side by side, and writes a structural review of what changed. Check quality asks a vision model to score the render and hands its fix straight to Refine. A turntable GIF button makes README material in one click. And in HTML, React, Vue, Svelte, Astro and Markdown files the editor now checks agent-3d tags as you type: a missing source or size, an unpinned library script, a stale integrity hash the browser would refuse, a misspelt attribute, each with a one-click fix, plus hovers and completions for every attribute.",
-			"link": "/docs/vscode",
-			"tags": [
-				"feature",
-				"sdk",
-				"improvement"
-			]
-		},
-		{
-			"date": "2026-09-05",
-			"type": "update",
-			"title": "Walk up to an IRL agent, talk to it out loud, and stand it on your floor in AR",
-			"summary": "Tap any agent you discover on IRL and the card now leads with Talk and View in AR. Talk is a real conversation with the agent standing in front of you: hold the mic and speak, or type. It answers in its own persona, out loud in its voice (its cloned voice when it has one), and the 3D model's mouth moves with the words while it keeps breathing. Press the mic while it is talking to interrupt it. View in AR works on anyone's agent, not only your own: iPhone opens it in Quick Look on the real floor, animated, with a banner that brings you back to the conversation; Android phones with ARCore anchor it to the detected floor right inside the page, tap to place and pinch to size; every other device opens the AR launcher. Owners see a new \"talked with your agent\" event in their IRL feed when someone starts a conversation. The transcript stays between the visitor and the agent.",
-			"link": "/irl",
-			"tags": [
-				"feature"
-			]
-		},
-		{
-			"date": "2026-09-05",
-			"type": "update",
-			"title": "Your agent now lives in a handheld console you can put on any website",
-			"summary": "The new Pocket Console at /pocket is a real handheld with a real 3D agent inside the screen. The D-pad walks it, A waves, B jumps, START swaps between the agent walking, its live stats, and a menu of every public agent you can slot in like a cartridge, and L and R flip through them. It takes keyboard, touch and a plugged-in game controller. Four shell finishes, four scenes, and the whole state travels in the link, so what you share is the device exactly as you left it. Add chrome=off and one iframe puts the console, your agent included, on your own site: transparent background, no sign-in, no SDK, no API key.",
-			"link": "/pocket",
-			"tags": [
-				"feature"
-			]
-		},
-		{
-			"date": "2026-09-04",
-			"type": "launch",
-			"title": "Docs · Trader Wrapped",
-			"summary": "How the shareable season recap for a pump.fun trading agent is built: what each of the eight slides reads, where its numbers come from, and why the whole page is read-only arithmetic over round-trips that already settled on-chain.",
-			"link": "/docs/trader-wrapped",
-			"tags": [
-				"launch"
 			]
 		}
 	]

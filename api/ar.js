@@ -84,7 +84,7 @@ font-family:ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;b
 }
 
 export default wrap(async (req, res) => {
-	if (cors(req, res, { methods: 'GET,OPTIONS' })) return;
+	if (cors(req, res, { methods: 'GET,OPTIONS', payments: false })) return;
 	// The CORS preflight already advertises GET only; enforce it too, so a POST
 	// gets a 405 with an Allow header instead of a redirect.
 	if (!method(req, res, ['GET'])) return;

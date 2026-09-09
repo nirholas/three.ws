@@ -488,7 +488,7 @@ export function varyOn(res, ...fields) {
 export function cors(
 	req,
 	res,
-	{ origins = null, methods = 'GET,POST,OPTIONS', credentials = false } = {},
+	{ origins = null, methods = 'GET,POST,OPTIONS', credentials = false, payments = true } = {},
 ) {
 	const origin = req.headers.origin;
 	if (origins === '*') {
@@ -499,16 +499,24 @@ export function cors(
 		if (credentials) res.setHeader('access-control-allow-credentials', 'true');
 	}
 	res.setHeader('access-control-allow-methods', methods);
+	// `payments: false` is for the surfaces we present as having no payment
+	// capability at all (the free ChatGPT connector and the endpoints its widget
+	// touches). Advertising a payment request header and exposing a
+	// PAYMENT-REQUIRED response header on one of those is a claim a reviewer can
+	// read straight off the network tab, and it contradicts the rest of the
+	// surface. The default stays `true`, so every metered caller is unchanged.
 	res.setHeader(
 		'access-control-allow-headers',
-		'authorization, content-type, mcp-session-id, mcp-protocol-version, x-payment, payment-signature, idempotency-key, x-irl-device, x-irl-fix, x-forge-client, x-agent-id, x-forge-seed',
+		payments
+			? 'authorization, content-type, mcp-session-id, mcp-protocol-version, x-payment, payment-signature, idempotency-key, x-irl-device, x-irl-fix, x-forge-client, x-agent-id, x-forge-seed'
+			: 'authorization, content-type, mcp-session-id, mcp-protocol-version, idempotency-key, x-irl-device, x-irl-fix, x-forge-client, x-agent-id, x-forge-seed',
 	);
 	// x402: clients (drop-in modal, x402-fetch) must read these to drive the
 	// 402-pay-retry flow and surface settlement receipts. Without `expose`,
 	// cross-origin readers only see CORS-safelisted response headers.
 	res.setHeader(
 		'access-control-expose-headers',
-		'PAYMENT-REQUIRED, PAYMENT-RESPONSE, x-payment-response, x-payment-network, x-payment-tx, link',
+		payments ? 'PAYMENT-REQUIRED, PAYMENT-RESPONSE, x-payment-response, x-payment-network, x-payment-tx, link' : 'link',
 	);
 	res.setHeader('access-control-max-age', '86400');
 	if (req.method === 'OPTIONS') {

@@ -247,7 +247,7 @@ async function poll(req, res, jobId, title) {
 }
 
 export default wrap(async (req, res) => {
-	if (cors(req, res, { methods: 'GET,POST,OPTIONS' })) return;
+	if (cors(req, res, { methods: 'GET,POST,OPTIONS', payments: false })) return;
 	if (!method(req, res, ['GET', 'POST'])) return;
 
 	if (req.method === 'POST') return generate(req, res);

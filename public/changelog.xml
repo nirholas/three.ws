@@ -23,6 +23,14 @@
 			<description>What changed on the trader board: who passed whom, who just arrived, and who is closing. Derived from close timestamps rather than a snapshot table, so the matchups work retroactively and cannot disagree with the leaderboard.</description>
 		</item>
 		<item>
+			<title>Docs · Trader card embed</title>
+			<link>https://three.ws/docs/trader-card-embed</link>
+			<guid isPermaLink="false">2026-09-09:Docs · Trader card embed</guid>
+			<pubDate>Wed, 09 Sep 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>Put a live three.ws trader on any page with one script tag. The card shows the verified on-chain record and lets readers fork a coin or ghost-copy the trader, signing with their own wallet.</description>
+		</item>
+		<item>
 			<title>Fade Radar: the wallets that are never right</title>
 			<link>https://three.ws/fade</link>
 			<guid isPermaLink="false">2026-09-09:Fade Radar: the wallets that are never right</guid>
@@ -85,6 +93,14 @@
 			<pubDate>Wed, 09 Sep 2026 12:00:00 GMT</pubDate>
 			<category>fix</category>
 			<description>A full audit of /portfolio, where you paste any Solana or Ethereum address and get a live portfolio. The Ethereum half had gone dark: the single provider behind it ran out of monthly capacity, so every 0x address answered &quot;Data source unavailable&quot; with nothing behind it. Ethereum now has the same keyless floor Solana has always had. The ETH balance comes from the public Ethereum nodes the rest of the platform already uses, the token list with its prices and icons comes from a public block explorer, and the 24h move comes from the same market source the Solana side uses, with the coverage it achieved stated on the card. The Data panel names whichever lane actually answered, so you can see whether you are reading the paid provider or the free one. Token logos were another visible break: the page pointed your browser straight at an IPFS gateway, which the browser refuses on cross-origin grounds, so every holding fell back to a three-letter monogram and your address bar handed your IP to the gateway on every load. Logos now come through three.ws, sized for the row. Keyboard users could tab onto a slice of the allocation donut and get nothing: the tooltip was wired to an event handler property that browsers do not actually support, so it never fired once; the slice now names its asset and share, and Escape dismisses it. When a lookup fails, the page now shows the reason the server actually sent instead of a generic sentence, and clicking Retry after a rejected address no longer silently reloads the wallet you looked at before it. Underneath, the fallback that names Solana tokens when the primary metadata source is out of quota had never run at all, because of a missing import; token symbols and names come back on that path.</description>
+		</item>
+		<item>
+			<title>Every translated news page is advertised as translated again</title>
+			<link>https://three.ws/news</link>
+			<guid isPermaLink="false">2026-09-09:Every translated news page is advertised as translated again</guid>
+			<pubDate>Wed, 09 Sep 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>The site publishes a manifest of which pages carry translated copy, and it was missing 113 of them: every news page. The build wrote that manifest before the news pages had been through the translation pass, so it read them as English-only and shipped a list 113 pages short. Nothing was untranslated, the translations were there and served correctly, but anything reading the manifest to decide what to offer in a reader's language (the language picker's page-level hints, and crawlers looking for alternates) was told those pages had no other language. The build now annotates the news pages first and counts afterwards, so the published count is 357 rather than 244.</description>
 		</item>
 		<item>
 			<title>Fact-check now reads the part of a source that is actually about your claim</title>
@@ -165,6 +181,14 @@
 			<pubDate>Wed, 09 Sep 2026 12:00:00 GMT</pubDate>
 			<category>fix</category>
 			<description>A full audit of /pump-dashboard, the pump.fun trading desk. The headline defect was the feed itself: every event streaming in from the realtime socket was labelled UNKNOWN and printed as a wall of raw JSON, because the socket names its event type in a field the page never read. Launches, graduations and trades now render as readable rows with the token name, symbol, mint and size, whale-sized trades are tagged as whales, and the socket's own subscription acknowledgements stop appearing as feed entries. Recent activity loaded on arrival was stamped with the current time, so a graduation from yesterday claimed to have happened seconds ago; each row now carries the time it actually happened. Filtering the feed to a type with nothing in it left an empty panel with no explanation, and now says what is being filtered and offers a way back to everything. The Token Scanner gave no sign it was working during a scan that routinely takes ten seconds, and could hang forever with no result and no error if a Solana provider accepted the request and never answered; it now shows a busy state, times out, and explains a failure with a way to retry. The Quote Engine printed raw machine codes at you (internal_error, no_curve) where a sentence belongs, and the quote service itself answered a rate-limited Solana chain with a generic internal error instead of an honest &quot;try again in a moment&quot;. The Watch List fired a request that could only fail unless you had pointed the dashboard at your own PumpKit backend, and now explains the requirement and takes you to the setting. Twenty-one form fields across the desk got the labels screen readers need, the feed's filter row is now a properly labelled group of toggles, and the high-conviction stats no longer clip their labels on a 320 pixel phone.</description>
+		</item>
+		<item>
+			<title>Put a live trader on your own page with one script tag</title>
+			<link>https://three.ws/docs/trader-card-embed</link>
+			<guid isPermaLink="false">2026-09-09:Put a live trader on your own page with one script tag</guid>
+			<pubDate>Wed, 09 Sep 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>A trader with a following had no way to show it anywhere except on three.ws. Every public trader profile now has an Embed this trader button that hands over a one-line snippet: paste it into a site, a blog post, a link in bio or a stream overlay and the trader's live record renders there, updating itself. It shows realized profit or loss for the period, win rate, settled trades, whatever they are holding right now and their last few results, and every coin on it carries a Fork button that opens the real trade panel back on three.ws, signed by the reader's own wallet. The card holds no funds, asks for no key and signs nothing. It follows the reader's light or dark setting, stops updating when nobody is looking at it, keeps the last good card on screen if a refresh fails rather than blanking the page it sits on, and shows a loss exactly as plainly as a win. The snippet carries the leader's referral code, so the traffic it brings back is credited to them, and the panel previews the real card before they copy anything.</description>
 		</item>
 		<item>
 			<title>Rankings survives a stalled leaderboard and stops reading the whole board aloud</title>
@@ -268,7 +292,7 @@
 			<guid isPermaLink="false">2026-09-09:The 3D studio stops promising &quot;5 seconds to go&quot; for eleven minutes</guid>
 			<pubDate>Wed, 09 Sep 2026 12:00:00 GMT</pubDate>
 			<category>fix</category>
-			<description>Every surface that waits on a generation, the ChatGPT widget and the custom GPT included, showed a countdown built from the lane's own time estimate. Once a model outran that estimate the countdown stopped at five seconds and stayed there for the rest of the job: on a generation measured this week that meant reading &quot;roughly 5s to go&quot; for the final eleven minutes. The countdown now runs only while there is genuinely time left on the estimate, and past it the wait says the job keeps running in the background and shows how long it has actually been going, which is a number that moves. The inline 3D viewer in ChatGPT also now loads its model through three.ws itself rather than straight from the asset store, so it renders from any host that embeds it instead of only from our own pages.</description>
+			<description>Every surface that waits on a generation, the ChatGPT widget and the custom GPT included, showed a countdown built from the lane's own time estimate. Once a model outran that estimate the countdown stopped at five seconds and stayed there for the rest of the job: on a generation measured this week that meant reading &quot;roughly 5s to go&quot; for the final eleven minutes. The countdown now runs only while there is genuinely time left on the estimate, and past it the wait says the job keeps running in the background and shows how long it has actually been going, which is a number that moves. The inline 3D viewer in ChatGPT also now loads its model through three.ws itself rather than straight from the asset store, so it renders from any host that embeds it instead of only from our own pages. Separately, the free 3D endpoints no longer announce payment-related headers to browsers: they never accepted a payment, but the shared header defaults named them anyway, which was misleading to anyone reading the network tab.</description>
 		</item>
 		<item>
 			<title>The agent-wallet demo pays again when an endpoint asks the buyer to cover its own network fee</title>
@@ -517,6 +541,14 @@
 			<pubDate>Wed, 09 Sep 2026 12:00:00 GMT</pubDate>
 			<category>fix</category>
 			<description>Turn on reduced motion in your operating system and three.ws is supposed to hold still: every animation timing on the site is named rather than spelled out, so one switch can zero all of them at once. Three places had drifted off that and spelled their own timing instead, which meant the object library card fade, the avatar picker chips and the Money Pulse rows kept animating for people who had explicitly asked them not to. One of them was pointing at a timing name that does not exist, so the value it fell back to was never the one anyone chose. All three are back on the named ladder at the same speed they always looked, and the reduced-motion switch reaches them again.</description>
+		</item>
+		<item>
+			<title>Voice satellite: the token command works where you actually run it, and an unpaired satellite explains itself</title>
+			<link>https://three.ws/smart-home/satellite</link>
+			<guid isPermaLink="false">2026-09-09:Voice satellite: the token command works where you actually run it, and an unpaired satellite explains itself</guid>
+			<pubDate>Wed, 09 Sep 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>Two fixes for the Home Assistant voice satellite. The command that prints a viewing token for a screen on your own network was documented to be run on the machine already running the satellite, but doing exactly that failed: it tried to start a second copy of the service and died because the ports were already taken. It now reads the identity it needs and prints the token, with nothing else running. Separately, a satellite that has not been paired yet answers its health check again and says why it is unpaired, and turns a browser away with that same reason instead of a blank refusal. That is the state you are in on a fresh install, which is exactly when you need something to read.</description>
 		</item>
 		<item>
 			<title>When the payment wallets look empty, the self-heal now says whether they are empty or just fenced</title>
