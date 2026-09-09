@@ -1,6 +1,6 @@
 #!/usr/bin/env node
-import { existsSync, readFileSync, statSync } from 'node:fs';
-import { resolve, dirname } from 'node:path';
+import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs';
+import { resolve, dirname, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
@@ -14,6 +14,8 @@ const required = [
 	// until 2026-09-01, which left the page on its error state.
 	'dist/data/timeline.json',
 ];
+
+
 
 let ok = true;
 for (const rel of required) {
@@ -95,6 +97,98 @@ if (missingPages.length) {
 	console.error(`[check-dist] ${missingPages.length} critical static page(s) missing from dist/ (did \`npm run build\` run?):`);
 	for (const p of missingPages) console.error(`[check-dist]   MISSING PAGE: ${p}`);
 	ok = false;
+}
+
+// ── Chunk-graph integrity ──────────────────────────────────────────────────
+// Every hashed asset the build points at must actually exist in dist/. A build
+// whose lazy chunk references a sibling that was never emitted (or that a later
+// step overwrote with a different build's output) ships green: the entry page
+// loads, the page renders, and the feature behind that dynamic import is dead
+// with a 404 nobody sees until a user clicks it. That is how the Fork button on
+// /radar, /trades and /smart-money died in production on 2026-09-08: the
+// deployed fork-trade chunk imported a coin-buy chunk the deployed dist did not
+// contain, so every click 404'd into the error toast.
+//
+// Scope is deliberately narrow: only files inside a built `assets/` directory,
+// and only references that point back into one. That covers the whole emitted
+// chunk graph (the root build plus the /chat and /avatar-studio sub-apps, each
+// with its own assets dir) while ignoring dist/src/**, the raw sources we also
+// publish, whose import paths are source-relative and never resolve in dist.
+const distRoot = resolve(root, 'dist');
+// Vite names every emitted chunk `<name>-<hash>.<ext>` with an 8-character
+// hash. Requiring that shape is what keeps unhashed strings that merely look
+// like module paths (wasm glue names, editor panel ids that Rollup already
+// inlined) from reading as broken references.
+const HASHED = String.raw`[A-Za-z0-9._-]+-[A-Za-z0-9_-]{8}\.(?:js|css)`;
+const CHUNK_REF = new RegExp(String.raw`["'(,\s](\.{1,2}/${HASHED}|(?:/|(?:\.{1,2}/)*)?[A-Za-z0-9._/-]*assets/${HASHED})`, 'g');
+const HTML_REF = new RegExp(String.raw`(?:src|href)=["']([^"']*/assets/${HASHED})["']`, 'g');
+
+const dangling = new Map();
+function note(ref, fromAbs, fromLabel) {
+	// Three reference shapes, three bases. A root-relative href resolves against
+	// dist/. A `./sibling.js` import resolves against the importing file's own
+	// directory. A Vite dep-map entry is written as `assets/x.js` relative to the
+	// build's BASE, which is the directory holding that assets dir (dist/ for the
+	// main build, dist/chat/ and dist/avatar-studio/ for the sub-apps).
+	let abs;
+	if (ref.startsWith('/')) abs = resolve(distRoot, ref.slice(1));
+	else if (ref.startsWith('.')) abs = resolve(dirname(fromAbs), ref);
+	else abs = resolve(buildBase(fromAbs), ref);
+	if (existsSync(abs)) return;
+	if (!dangling.has(ref)) dangling.set(ref, new Set());
+	dangling.get(ref).add(fromLabel);
+}
+
+/** The directory a chunk's `assets/...` references are relative to. */
+function buildBase(fromAbs) {
+	let dir = dirname(fromAbs);
+	while (dir.startsWith(distRoot) && dir !== distRoot) {
+		if (dir.endsWith(`${sep}assets`)) return dirname(dir);
+		dir = dirname(dir);
+	}
+	return distRoot;
+}
+
+// Built files worth scanning: every .js/.css that lives in an `assets/` dir,
+// plus every HTML entry page (which is what names the entry chunks).
+function collect(dir, inAssets, out = []) {
+	let entries;
+	// dist/ carries symlinked trees, and a concurrent build may be rewriting it,
+	// so an unreadable directory is skipped rather than crashing the gate.
+	try { entries = readdirSync(dir, { withFileTypes: true }); } catch { return out; }
+	for (const entry of entries) {
+		const abs = resolve(dir, entry.name);
+		let isDir = entry.isDirectory();
+		if (entry.isSymbolicLink()) {
+			try { isDir = statSync(abs).isDirectory(); } catch { continue; }
+		}
+		if (isDir) collect(abs, inAssets || entry.name === 'assets', out);
+		else if (entry.name.endsWith('.html')) out.push(abs);
+		else if (inAssets && /\.(?:js|css)$/.test(entry.name)) out.push(abs);
+	}
+	return out;
+}
+
+if (!existsSync(resolve(distRoot, 'assets'))) {
+	console.error('[check-dist] MISSING: dist/assets (did `npm run build` run?)');
+	ok = false;
+} else {
+	const files = collect(distRoot, false);
+	for (const abs of files) {
+		let text;
+		try { text = readFileSync(abs, 'utf8'); } catch { continue; }
+		const label = abs.slice(root.length + 1);
+		for (const m of text.matchAll(abs.endsWith('.html') ? HTML_REF : CHUNK_REF)) note(m[1], abs, label);
+	}
+	if (dangling.size) {
+		console.error(`[check-dist] ${dangling.size} built asset(s) referenced by the chunk graph but missing from dist/:`);
+		for (const [ref, from] of dangling) {
+			console.error(`[check-dist]   DANGLING: ${ref}  <- ${[...from].slice(0, 4).join(', ')}`);
+		}
+		ok = false;
+	} else {
+		console.log(`[check-dist] chunk graph OK - every asset reference across ${files.length} built files resolves`);
+	}
 }
 
 if (!ok) process.exit(1);
