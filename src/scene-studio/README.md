@@ -20,9 +20,10 @@ upstream demo: models forged on `/forge` or `/forge-max` deep-link straight into
 the scene, animations baked on `/pose` hand off through IndexedDB, and any
 composed scene can be exported with one click or uploaded and embedded on
 another site. They also close the gaps the upstream demo never had to care
-about: a first-run empty state, accessible names on the icon-only transform
-buttons, and failures that surface in the platform's own toast instead of a
-native `alert()`.
+about: a first-run empty state, accessible names on the icon-only transform and
+animation-transport buttons, a sidebar that fits a 320px screen instead of
+overflowing it, and failures that surface in the platform's own toast instead of
+a native `alert()`.
 
 ## Layout
 
@@ -34,7 +35,8 @@ src/scene-studio/
 │                    adds a parsed GLB through the undo-able AddObjectCommand path
 ├── actions.js       Layered action bar: Import from Forge, Export presets, Share
 ├── empty-state.js   First-run overlay over the empty grid, retires on first object
-├── toolbar-a11y.js  Accessible names + pressed state for the transform gizmo buttons
+├── toolbar-a11y.js  Accessible names for the icon-only controls: the transform
+│                    gizmos (plus pressed state) and the animation transport
 ├── studio.css       three.ws chrome overrides (vendor css/main.css is untouched)
 └── vendor/          three.js r184 editor source (see vendor/README.md)
 ```
@@ -100,7 +102,7 @@ affordances the stock File and Export menus do not offer on their own:
 
 ## Exports
 
-The wrappers export two functions; `main.js` is entry-only and exports nothing.
+The wrappers export seven functions; `main.js` is entry-only and exports nothing.
 
 | Module | Export | What it does |
 | --- | --- | --- |
@@ -111,6 +113,7 @@ The wrappers export two functions; `main.js` is entry-only and exports nothing.
 | `actions.js` | `describeImportFailure(error)` | Turns an `HTTP 4xx` / `Failed to fetch` into copy that names the likely cause. |
 | `empty-state.js` | `mountEmptyState(editor, container)` | Mounts the first-run overlay and keeps it in sync with the scene graph. Returns the overlay element. |
 | `toolbar-a11y.js` | `enhanceToolbarA11y(editor, toolbarDom)` | Labels the vendored translate/rotate/scale buttons and mirrors their `selected` class into `aria-pressed`. Returns the labelled buttons. |
+| `toolbar-a11y.js` | `enhanceAnimationA11y(editor, animationDom)` | Labels the vendored animation timeline's play/pause/stop transport, which ships as three identical unnamed icon buttons. Matches each one on the SVG shape the vendor draws, not on child order, so a control added to that panel can never inherit the wrong label. Returns the labelled buttons. |
 
 ## Example
 

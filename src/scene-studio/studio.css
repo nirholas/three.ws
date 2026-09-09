@@ -56,6 +56,22 @@ body.scene-studio {
 	#studio-app #menubar .menu .title {
 		padding: 10px 6px;
 	}
+
+	/* Below 600px the vendored sidebar stops being a right-hand column and docks
+	 * full-width along the bottom, but it is also the .TabbedPanel, which carries
+	 * `min-width: 335px` from vendor/css/main.css. 335 is wider than a 320px
+	 * viewport, so the dock overflowed the screen by 15px and body's
+	 * `overflow: hidden` cut that strip off: the outliner's type labels, the right
+	 * stepper of every number field, and the right edge of every row in the
+	 * OBJECT/GEOMETRY/MATERIAL panels were unreachable at 320px.
+	 *
+	 * The min-width exists to stop the desktop resizer (vendor/js/Resizer.js
+	 * clamps its drag to the same 335) from collapsing the column. A full-width
+	 * bottom dock has no resizer (the same media query hides #resizer), so there
+	 * is nothing left for the floor to protect. */
+	#studio-app #sidebar {
+		min-width: 0;
+	}
 }
 
 #studio-app #menubar .menu:hover,

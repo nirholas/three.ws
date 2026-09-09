@@ -134,10 +134,34 @@ const CSS = `
 	.tws-se-btn { transition: none; }
 }
 /* Below 600px the vendored sidebar docks along the bottom instead of the right
-   (vendor/css/main.css), so the overlay spans the full width and stops above it. */
+   (vendor/css/main.css), so the overlay spans the full width and stops above it.
+   Two narrow-viewport corrections on top of that:
+
+   1. The card was centred in a region starting at the menubar (top: 36px), which
+      put it straight under the quick-action bar (actions.js pins that at
+      top: 44px). At 320px the two boxes genuinely overlapped and the bar sat on
+      top of the card's eyebrow and title. Starting the region below the bar
+      instead of centring through it keeps both readable.
+   2. A phone-height viewport leaves this region shorter than the card: at
+      320x568 the vendored layout gives the 3D view 143px and a 320px sidebar
+      dock. Capping the card at the region height and letting it scroll inside
+      itself means it never spills over the sidebar underneath. The card already
+      re-enables pointer events, so that scroll works by touch and wheel while
+      the rest of the overlay stays click-through for orbiting. */
 @media (max-width: 600px) {
-	.tws-se { right: 0; bottom: 320px; }
-	.tws-se-card { padding: 18px; }
+	.tws-se {
+		right: 0;
+		top: 76px;
+		bottom: 320px;
+		align-items: flex-start;
+		padding: 0 12px 12px;
+	}
+	.tws-se-card {
+		max-height: 100%;
+		overflow-y: auto;
+		overscroll-behavior: contain;
+		padding: 16px;
+	}
 	.tws-se-title { font-size: 17px; }
 }
 `;

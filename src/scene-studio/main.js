@@ -30,7 +30,7 @@ import { TextGeometry } from 'three/addons/geometries/TextGeometry.js';
 import { addGltfBufferToScene as sharedAddGltfBufferToScene } from './loader.js';
 import { mountStudioActions } from './actions.js';
 import { mountEmptyState } from './empty-state.js';
-import { enhanceToolbarA11y } from './toolbar-a11y.js';
+import { enhanceAnimationA11y, enhanceToolbarA11y } from './toolbar-a11y.js';
 import { toastError } from '../shared/toast.js';
 
 window.URL = window.URL || window.webkitURL;
@@ -77,8 +77,10 @@ container.appendChild(animationResizer.dom);
 mountStudioActions(editor, container);
 
 // The vendored transform buttons ship as icon-only <button>s with no
-// accessible name; label them and announce their pressed state.
+// accessible name; label them and announce their pressed state. The animation
+// timeline's play/pause/stop transport has the same gap.
 enhanceToolbarA11y(editor, toolbar.dom);
+enhanceAnimationA11y(editor, animation.dom);
 
 // First-run guidance over the empty grid. Retires itself as soon as the scene
 // holds anything, including a scene restored from the autosave below.

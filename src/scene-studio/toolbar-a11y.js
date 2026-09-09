@@ -1,4 +1,4 @@
-// Scene Studio: accessible names for the vendored transform toolbar.
+// Scene Studio: accessible names for the vendored icon-only controls.
 //
 // The vendored Toolbar (vendor/js/Toolbar.js) builds its translate / rotate /
 // scale controls as a <button> whose only child is an <img> carrying a `title`
@@ -6,10 +6,14 @@
 // that wraps it, so all three shipped to screen readers as unlabelled buttons,
 // and the pressed state (a `selected` class) was never announced at all.
 //
-// This runs over the mounted toolbar once and fixes both, reading the labels
-// from the same `editor.strings` table the vendor uses for the tooltips, so a
-// translated UI stays translated. Sibling module: it edits the live DOM, never
-// vendor/**.
+// The animation timeline (vendor/js/Animation.js) has the same problem one step
+// worse: its play / pause / stop transport is three 24px <button>s whose only
+// child is an inline <svg> with no title at all, so they reached a screen reader
+// as three identical unnamed buttons with nothing to tell them apart.
+//
+// Both fixes run over the mounted DOM once, reading labels from the same
+// `editor.strings` table the vendor uses for its own copy, so a translated UI
+// stays translated. Sibling module: it edits the live DOM, never vendor/**.
 
 const MODE_KEYS = ['translate', 'rotate', 'scale'];
 
@@ -53,4 +57,46 @@ export function enhanceToolbarA11y(editor, toolbarDom) {
 	sync();
 
 	return buttons.map(({ button }) => button);
+}
+
+// The vendored transport icons, keyed by the SVG geometry Animation.js draws.
+// Matched on the shape rather than on child order, for the same reason the
+// toolbar above matches on the icon file: a control added to the vendored panel
+// must never be able to silently inherit one of these labels. A re-vendor that
+// redraws an icon leaves that one button unlabelled (what it is today) instead
+// of mislabelled, which is the safer way to fail.
+const TRANSPORT = [
+	{ selector: 'path[d="M3 1.5v9l7-4.5z"]', stringKey: 'sidebar/animations/play', fallback: 'Play' },
+	// Upstream ships no `sidebar/animations/pause` key (the sidebar it was
+	// written for has no pause control), so this one label stays English until
+	// the vendored table grows one.
+	{ selector: 'path[d="M2 1h3v10H2zM7 1h3v10H7z"]', stringKey: null, fallback: 'Pause' },
+	{ selector: 'rect[x="2"][y="2"]', stringKey: 'sidebar/animations/stop', fallback: 'Stop' },
+];
+
+/**
+ * Label the animation timeline's play / pause / stop buttons.
+ * @param {import('./vendor/js/Editor.js').Editor} editor
+ * @param {HTMLElement} animationDom the Animation instance's `.dom`.
+ * @returns {HTMLButtonElement[]} the buttons that were labelled.
+ */
+export function enhanceAnimationA11y(editor, animationDom) {
+	const labelled = [];
+
+	for (const { selector, stringKey, fallback } of TRANSPORT) {
+		const button = animationDom.querySelector(selector)?.closest('button');
+		if (!button) continue;
+
+		// Strings.getKey answers '???' for a key the active language lacks, which
+		// would be a worse accessible name than the English word.
+		const translated = stringKey ? editor.strings.getKey(stringKey) : null;
+		const label = translated && translated !== '???' ? translated : fallback;
+
+		button.setAttribute('type', 'button');
+		button.setAttribute('aria-label', label);
+		if (!button.title) button.title = label;
+		labelled.push(button);
+	}
+
+	return labelled;
 }
