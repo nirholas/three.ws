@@ -17,8 +17,8 @@
 
 import { describe, it, expect, vi } from 'vitest';
 
-const getObjectBuffer = vi.fn();
-vi.mock('../api/_lib/r2.js', () => ({ getObjectBuffer: (...a) => getObjectBuffer(...a) }));
+const readManifest = vi.fn();
+vi.mock('../api/_lib/r2.js', () => ({ getPublicObjectBuffer: (...a) => readManifest(...a) }));
 
 const { default: handler } = await import('../api/objects/library.js');
 
@@ -62,7 +62,7 @@ const OBJECT = {
 describe('GET /api/objects/library', () => {
 	it('returns an empty library when the manifest has not been uploaded yet', async () => {
 		const missing = Object.assign(new Error('no such key'), { name: 'NoSuchKey' });
-		getObjectBuffer.mockRejectedValue(missing);
+		readManifest.mockRejectedValue(missing);
 		const { res, body } = await get();
 		expect(res.statusCode).toBe(200);
 		expect(body).toEqual({ objects: [], total: 0, generated_at: null });
@@ -72,7 +72,7 @@ describe('GET /api/objects/library', () => {
 	});
 
 	it('degrades to an empty library on storage errors without caching the emptiness', async () => {
-		getObjectBuffer.mockRejectedValue(new Error('socket hang up'));
+		readManifest.mockRejectedValue(new Error('socket hang up'));
 		const { res, body } = await get();
 		expect(res.statusCode).toBe(200);
 		expect(body.objects).toEqual([]);
@@ -80,7 +80,7 @@ describe('GET /api/objects/library', () => {
 	});
 
 	it('passes through a published { objects } manifest and derives total', async () => {
-		getObjectBuffer.mockResolvedValue(Buffer.from(JSON.stringify({
+		readManifest.mockResolvedValue(Buffer.from(JSON.stringify({
 			generated_at: '2026-07-21T13:16:14.305Z',
 			total: 1,
 			objects: [OBJECT],
@@ -94,13 +94,13 @@ describe('GET /api/objects/library', () => {
 	});
 
 	it('accepts a bare-array manifest shape', async () => {
-		getObjectBuffer.mockResolvedValue(Buffer.from(JSON.stringify([OBJECT])));
+		readManifest.mockResolvedValue(Buffer.from(JSON.stringify([OBJECT])));
 		const { body } = await get();
 		expect(body.objects).toEqual([OBJECT]);
 	});
 
 	it('rejects non-GET methods', async () => {
-		getObjectBuffer.mockResolvedValue(Buffer.from('[]'));
+		readManifest.mockResolvedValue(Buffer.from('[]'));
 		const res = fakeRes();
 		await handler(fakeReq('POST'), res);
 		expect(res.statusCode).toBe(405);
@@ -108,7 +108,7 @@ describe('GET /api/objects/library', () => {
 
 	// ── Bounded pagination (opt-in via ?limit) ──────────────────────────────
 	const OBJECTS = Array.from({ length: 5 }, (_, i) => ({ ...OBJECT, name: `prop-${i}` }));
-	const publish = () => getObjectBuffer.mockResolvedValue(Buffer.from(JSON.stringify({ objects: OBJECTS })));
+	const publish = () => readManifest.mockResolvedValue(Buffer.from(JSON.stringify({ objects: OBJECTS })));
 
 	it('pages a large manifest with ?limit and exposes next_offset', async () => {
 		publish();
@@ -184,15 +184,15 @@ describe('GET /api/objects/library', () => {
 	// added latency on every client-side pagination bug.
 	it('rejects a malformed cursor without touching storage', async () => {
 		publish();
-		getObjectBuffer.mockClear();
+		readManifest.mockClear();
 		const { res } = await get('?limit=abc');
 		expect(res.statusCode).toBe(400);
-		expect(getObjectBuffer).not.toHaveBeenCalled();
+		expect(readManifest).not.toHaveBeenCalled();
 	});
 
 	// ── Corrupt manifests are an outage, not an empty library ────────────────
 	it('degrades without caching when the manifest is not valid JSON', async () => {
-		getObjectBuffer.mockResolvedValue(Buffer.from('{"objects": [truncated'));
+		readManifest.mockResolvedValue(Buffer.from('{"objects": [truncated'));
 		const { res, body } = await get();
 		expect(res.statusCode).toBe(200);
 		expect(body.objects).toEqual([]);
@@ -203,7 +203,7 @@ describe('GET /api/objects/library', () => {
 		// Parses fine, but a `null` / wrong-shape body means a bad upload, and
 		// caching "no objects" for 300s would outlive the bad upload.
 		for (const bad of ['null', '{"objects":"nope"}', '"a string"']) {
-			getObjectBuffer.mockResolvedValue(Buffer.from(bad));
+			readManifest.mockResolvedValue(Buffer.from(bad));
 			const { res, body } = await get();
 			expect(res.statusCode).toBe(200);
 			expect(body.objects).toEqual([]);
@@ -213,14 +213,14 @@ describe('GET /api/objects/library', () => {
 	});
 
 	it('keeps the normal cache for a manifest that is legitimately empty', async () => {
-		getObjectBuffer.mockResolvedValue(Buffer.from('{"objects":[]}'));
+		readManifest.mockResolvedValue(Buffer.from('{"objects":[]}'));
 		const { res, body } = await get();
 		expect(body.objects).toEqual([]);
 		expect(res.getHeader('cache-control')).toContain('s-maxage=300');
 	});
 
 	it('does not cache a degraded response on the paginated path either', async () => {
-		getObjectBuffer.mockRejectedValue(new Error('socket hang up'));
+		readManifest.mockRejectedValue(new Error('socket hang up'));
 		const { res, body } = await get('?limit=2');
 		expect(res.statusCode).toBe(200);
 		expect(body.objects).toEqual([]);

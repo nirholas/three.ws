@@ -37,6 +37,7 @@ const els = {
 
 const PAGE_SIZE = 48;
 const MAX_LIVE_VIEWERS = 6;
+const HOVER_INTENT_MS = 200;
 
 const state = { all: [], query: '', sort: 'az', category: '', view: [], rendered: 0 };
 
@@ -234,6 +235,7 @@ function applyView() {
 async function load() {
 	show(els.loading, true); show(els.grid, false); show(els.empty, false);
 	show(els.emptySearch, false); show(els.error, false); show(els.more, false);
+	show(els.errorMsg, false);
 	try {
 		const res = await fetch('/api/objects/library');
 		if (!res.ok) throw new Error(`HTTP ${res.status}`);
@@ -245,7 +247,10 @@ async function load() {
 	} catch (err) {
 		show(els.loading, false); show(els.grid, false); show(els.empty, false);
 		show(els.emptySearch, false); show(els.more, false); show(els.error, true);
-		if (els.errorMsg) els.errorMsg.textContent = `Failed to load objects: ${err?.message || 'network error'}. Check your connection and try again.`;
+		if (els.errorMsg) {
+			els.errorMsg.textContent = `Request failed: ${err?.message || 'network error'}`;
+			show(els.errorMsg, true);
+		}
 	}
 }
 
@@ -276,12 +281,25 @@ function wire() {
 	// Delegated so a chunk appended later needs no extra wiring. `pointerover`
 	// bubbles where `pointerenter` does not, and `focusin` gives a keyboard user
 	// the same live preview a mouse user gets on hover.
-	const upgradeFromEvent = (e) => {
+	//
+	// Hover INTENT, not hover: sweeping the pointer across a row of cards on the
+	// way to the search box would otherwise start a multi-megabyte GLB download
+	// per card it crossed, six of which raced hard enough to crash the renderer
+	// outright in testing. A short dwell means only the card you actually stopped
+	// on goes live. Keyboard focus is already a deliberate act, so it upgrades at
+	// once.
+	let hoverTimer;
+	els.grid?.addEventListener('pointerover', (e) => {
+		const thumb = e.target.closest?.('.ch-card-thumb');
+		if (!thumb) return;
+		clearTimeout(hoverTimer);
+		hoverTimer = setTimeout(() => upgradeThumb(thumb), HOVER_INTENT_MS);
+	});
+	els.grid?.addEventListener('pointerout', () => clearTimeout(hoverTimer));
+	els.grid?.addEventListener('focusin', (e) => {
 		const thumb = e.target.closest?.('.ch-card-thumb');
 		if (thumb) upgradeThumb(thumb);
-	};
-	els.grid?.addEventListener('pointerover', upgradeFromEvent);
-	els.grid?.addEventListener('focusin', upgradeFromEvent);
+	});
 
 	// Infinite scroll on top of the real button: the sentinel loads the next
 	// chunk as it nears the viewport, and the button stays the accessible,

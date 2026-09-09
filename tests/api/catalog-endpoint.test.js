@@ -39,7 +39,7 @@ const MANIFESTS = {
 };
 
 vi.mock('../../api/_lib/r2.js', () => ({
-	getObjectBuffer: vi.fn(async (key) => {
+	getPublicObjectBuffer: vi.fn(async (key) => {
 		const value = MANIFESTS[key];
 		if (value == null) {
 			const err = new Error('NoSuchKey');

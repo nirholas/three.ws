@@ -13,8 +13,8 @@
 
 import { describe, it, expect, vi } from 'vitest';
 
-const getObjectBuffer = vi.fn();
-vi.mock('../api/_lib/r2.js', () => ({ getObjectBuffer: (...a) => getObjectBuffer(...a) }));
+const readManifest = vi.fn();
+vi.mock('../api/_lib/r2.js', () => ({ getPublicObjectBuffer: (...a) => readManifest(...a) }));
 
 const { default: handler } = await import('../api/animations/library.js');
 
@@ -52,7 +52,7 @@ const CLIP = {
 describe('GET /api/animations/library', () => {
 	it('returns an empty library when the manifest has not been uploaded yet', async () => {
 		const missing = Object.assign(new Error('no such key'), { name: 'NoSuchKey' });
-		getObjectBuffer.mockRejectedValue(missing);
+		readManifest.mockRejectedValue(missing);
 		const res = fakeRes();
 		await handler(fakeReq(), res);
 		expect(res.statusCode).toBe(200);
@@ -60,7 +60,7 @@ describe('GET /api/animations/library', () => {
 	});
 
 	it('degrades to an empty library on storage errors instead of failing', async () => {
-		getObjectBuffer.mockRejectedValue(new Error('socket hang up'));
+		readManifest.mockRejectedValue(new Error('socket hang up'));
 		const res = fakeRes();
 		await handler(fakeReq(), res);
 		expect(res.statusCode).toBe(200);
@@ -68,7 +68,7 @@ describe('GET /api/animations/library', () => {
 	});
 
 	it('passes through a published { clips } manifest and derives total', async () => {
-		getObjectBuffer.mockResolvedValue(Buffer.from(JSON.stringify({
+		readManifest.mockResolvedValue(Buffer.from(JSON.stringify({
 			generated_at: '2026-07-04T00:00:00.000Z',
 			total: 1,
 			clips: [CLIP],
@@ -84,14 +84,14 @@ describe('GET /api/animations/library', () => {
 	});
 
 	it('accepts a bare-array manifest shape', async () => {
-		getObjectBuffer.mockResolvedValue(Buffer.from(JSON.stringify([CLIP])));
+		readManifest.mockResolvedValue(Buffer.from(JSON.stringify([CLIP])));
 		const res = fakeRes();
 		await handler(fakeReq(), res);
 		expect(JSON.parse(res.body).clips).toEqual([CLIP]);
 	});
 
 	it('rejects non-GET methods', async () => {
-		getObjectBuffer.mockResolvedValue(Buffer.from('[]'));
+		readManifest.mockResolvedValue(Buffer.from('[]'));
 		const res = fakeRes();
 		await handler(fakeReq('POST'), res);
 		expect(res.statusCode).toBe(405);
@@ -101,7 +101,7 @@ describe('GET /api/animations/library', () => {
 	const CLIPS = Array.from({ length: 5 }, (_, i) => ({ ...CLIP, name: `mx-clip-${i}` }));
 
 	it('pages a large manifest with ?limit and exposes next_offset', async () => {
-		getObjectBuffer.mockResolvedValue(Buffer.from(JSON.stringify({ clips: CLIPS })));
+		readManifest.mockResolvedValue(Buffer.from(JSON.stringify({ clips: CLIPS })));
 		const res = fakeRes();
 		await handler(fakeReq('GET', '/api/animations/library?limit=2'), res);
 		const body = JSON.parse(res.body);
@@ -112,7 +112,7 @@ describe('GET /api/animations/library', () => {
 	});
 
 	it('honors ?offset and returns next_offset=null on the final page', async () => {
-		getObjectBuffer.mockResolvedValue(Buffer.from(JSON.stringify({ clips: CLIPS })));
+		readManifest.mockResolvedValue(Buffer.from(JSON.stringify({ clips: CLIPS })));
 		const res = fakeRes();
 		await handler(fakeReq('GET', '/api/animations/library?limit=2&offset=4'), res);
 		const body = JSON.parse(res.body);
@@ -122,7 +122,7 @@ describe('GET /api/animations/library', () => {
 	});
 
 	it('returns an empty page (not an error) when offset runs past the end', async () => {
-		getObjectBuffer.mockResolvedValue(Buffer.from(JSON.stringify({ clips: CLIPS })));
+		readManifest.mockResolvedValue(Buffer.from(JSON.stringify({ clips: CLIPS })));
 		const res = fakeRes();
 		await handler(fakeReq('GET', '/api/animations/library?limit=2&offset=99'), res);
 		const body = JSON.parse(res.body);
@@ -132,7 +132,7 @@ describe('GET /api/animations/library', () => {
 	});
 
 	it('omits pagination fields entirely when ?limit is absent (legacy contract)', async () => {
-		getObjectBuffer.mockResolvedValue(Buffer.from(JSON.stringify({ clips: CLIPS })));
+		readManifest.mockResolvedValue(Buffer.from(JSON.stringify({ clips: CLIPS })));
 		const res = fakeRes();
 		await handler(fakeReq('GET', '/api/animations/library'), res);
 		const body = JSON.parse(res.body);
