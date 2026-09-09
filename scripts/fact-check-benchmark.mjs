@@ -30,6 +30,10 @@
 // stale cached verdict:
 //   node --env-file=.env scripts/fact-check-benchmark.mjs --in-process
 //
+// In-process runs are paced (FACT_CHECK_BENCH_SPACING_MS, default 6000) and
+// retry a failed claim once, because 80 unspaced LLM turns trip the free lanes'
+// per-minute limits and score the runner's own throttling as errored claims.
+//
 // Publishing (`--publish`) additionally writes the run to the DB, which is what
 // the live /api/fact-check-benchmark endpoint reads first, so a re-run reaches
 // the public page without a deploy. Without the flag the run only updates the
@@ -215,6 +219,35 @@ async function main() {
 // produce the published data/_generated numbers so the benchmark measures the
 // product's verdict quality, not payment plumbing.
 
+// Seconds to wait between claims. A 40-claim run is 80 LLM turns (query
+// generation + stance extraction per claim); fired back to back they arrive
+// far inside the free lanes' per-minute allowances, and the chain answers the
+// first few claims and then 429s on every rung at once. That is the benchmark
+// throttling itself, and it scores as an errored claim, so a fast run walks
+// straight into the degraded-run refusal while the chain is perfectly healthy
+// (observed 2026-09-09: 7/40 errors, every one a 429 sweep across all three
+// groq rungs and all five openrouter keys, minutes after the same chain
+// answered a probe in 225ms). Pace the run instead. Tunable for a machine with
+// paid lanes that does not need the wait.
+function claimSpacingMs() {
+	const raw = Number(process.env.FACT_CHECK_BENCH_SPACING_MS);
+	return Number.isFinite(raw) && raw >= 0 ? raw : 6_000;
+}
+
+// One in-process check with the same bounded retry the remote path has had all
+// along (see checkOneWithRetry): a lane that 429s or stalls on one attempt is a
+// transient failure, not a wrong verdict, and four of them trip the degraded
+// refusal. The backoff is longer than the remote path's because the failure
+// being ridden out here is a per-minute rate-limit window, not an edge blip.
+async function checkClaimWithRetry(checkClaim, claim) {
+	try {
+		return await checkClaim(claim);
+	} catch (err) {
+		await new Promise((r) => setTimeout(r, 15_000));
+		return checkClaim(claim);
+	}
+}
+
 async function mainInProcess(claims, fixture, { publish } = {}) {
 	// Disable the shared Redis verdict cache for the run: a benchmark that reads
 	// week-old cached verdicts measures the cache, not the chain.
@@ -229,15 +262,26 @@ async function mainInProcess(claims, fixture, { publish } = {}) {
 	const endpoint = 'in-process:api/x402/fact-check.js#_checkClaim (real chain, no HTTP/x402 payment layer)';
 	console.log(`Running ${claims.length} claims in-process (live search + live LLM, cache disabled) …`);
 
+	// One claim through the real chain, raising on a degraded result so the retry
+	// above treats a half-answered check the same as an outright failure.
+	const checkOnce = async (claim) => {
+		const r = await _checkClaim(claim, 'medium', null);
+		const degradation = degradationOf(r);
+		if (degradation) throw new Error(`degraded check: ${degradation}`);
+		return r;
+	};
+
+	const spacingMs = claimSpacingMs();
+	if (spacingMs > 0) console.log(`Pacing ${spacingMs}ms between claims to stay inside the free lanes' rate limits.`);
+
 	const results = [];
 	const details = [];
 	for (const [i, c] of claims.entries()) {
+		if (i > 0 && spacingMs > 0) await new Promise((r) => setTimeout(r, spacingMs));
 		let actual = null;
 		let detail = null;
 		try {
-			const r = await _checkClaim(c.claim, 'medium', null);
-			const degradation = degradationOf(r);
-			if (degradation) throw new Error(`degraded check: ${degradation}`);
+			const r = await checkClaimWithRetry(checkOnce, c.claim);
 			actual = r?.verdict ?? null;
 			detail = {
 				confidence: r?.confidence ?? null,

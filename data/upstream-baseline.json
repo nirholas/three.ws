@@ -1,20 +1,20 @@
 {
 	"generated": "scripts/audit-upstreams.mjs",
 	"summary": {
-		"total": 226,
+		"total": 233,
 		"grades": {
 			"A": 0,
 			"B": 54,
-			"C": 92,
+			"C": 99,
 			"D": 80,
 			"F": 0
 		},
 		"protections": {
-			"deadline": 226,
-			"retry": 97,
+			"deadline": 233,
+			"retry": 104,
 			"failover": 49,
 			"lastGood": 5,
-			"breaker": 88
+			"breaker": 95
 		}
 	},
 	"sites": {
@@ -196,6 +196,11 @@
 		"src/shared/wallet-networth.js::lite-api.jup.ag::fetch": "D",
 		"src/social/x-post-impact.js::publish.twitter.com::fetch": "D",
 		"api/_lib/print/ops-notify.js::api.telegram.org::fetchUpstream": "C",
-		"workers/agent-sniper/risk-officer.js::openrouter.ai::fetch": "D"
+		"workers/agent-sniper/risk-officer.js::openrouter.ai::fetch": "D",
+		"api/_lib/globe-sources.js::data.gdeltproject.org::fetchUpstream": "C",
+		"api/_lib/globe-sources.js::www.gdacs.org::fetchUpstreamJson": "C",
+		"api/_lib/globe-sources.js::api.ioda.inetintel.cc.gatech.edu::fetchUpstreamJson": "C",
+		"api/_lib/globe-sources.js::api.worldbank.org::fetchUpstreamJson": "C",
+		"api/_lib/token-metadata.js::lite-api.jup.ag::fetchUpstreamJson": "C"
 	}
 }
