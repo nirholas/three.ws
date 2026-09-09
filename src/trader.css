@@ -88,6 +88,43 @@
 /* ---- Window selector + actions ---- */
 .tp-actions { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--space-sm); margin-bottom: var(--space-md); }
 
+/* ---- Embed panel: the card this trader can paste anywhere ---- */
+.tp-embed {
+	display: grid;
+	grid-template-columns: minmax(0, 1fr) minmax(0, 360px);
+	gap: var(--space-lg);
+	align-items: start;
+	border: 1px solid var(--stroke);
+	background: var(--surface-1);
+	border-radius: var(--radius-card);
+	padding: var(--space-lg);
+	margin-bottom: var(--space-md);
+}
+.tp-embed h3 { margin: 0 0 var(--space-2xs); font-size: var(--text-md); }
+.tp-embed p { margin: 0 0 var(--space-sm); color: var(--ink-dim); font-size: var(--text-sm); line-height: var(--leading-normal); max-width: 56ch; }
+.tp-embed-label { display: block; font-size: var(--text-2xs); text-transform: uppercase; letter-spacing: 0.06em; color: var(--ink-faint); margin-bottom: var(--space-3xs); }
+.tp-embed-code {
+	width: 100%;
+	resize: vertical;
+	font-family: var(--font-mono, ui-monospace, SFMono-Regular, Menlo, monospace);
+	font-size: var(--text-xs);
+	line-height: 1.6;
+	color: var(--ink);
+	background: var(--surface-3);
+	border: 1px solid var(--stroke);
+	border-radius: var(--radius-lg);
+	padding: var(--space-sm);
+}
+.tp-embed-code:focus-visible { outline: 2px solid var(--accent, currentColor); outline-offset: 2px; }
+.tp-embed-actions { display: flex; flex-wrap: wrap; gap: var(--space-2xs); margin-top: var(--space-sm); }
+.tp-embed-actions .lb-btn { text-decoration: none; }
+.tp-embed-preview { display: grid; gap: var(--space-3xs); justify-items: stretch; }
+.tp-embed-preview-label { font-size: var(--text-2xs); text-transform: uppercase; letter-spacing: 0.06em; color: var(--ink-faint); }
+.tp-embed-fallback { color: var(--ink-dim); font-size: var(--text-sm); }
+@media (max-width: 760px) {
+	.tp-embed { grid-template-columns: minmax(0, 1fr); }
+}
+
 /* ---- Metric grid ---- */
 .tp-metrics {
 	display: grid;
