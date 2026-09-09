@@ -1,7 +1,7 @@
 # The browser voice loop: wake word, barge-in, and a confirmation a "yeah" cannot satisfy
 
 **Status:** shipped. Live at [`/voice/home`](https://three.ws/voice/home) and mountable on any
-surface that wants it. **Last measured against the tree:** 2026-09-03.
+surface that wants it. **Last measured against the tree:** 2026-09-09.
 
 Hands-free is the only interface that works when you are carrying groceries into a dark kitchen.
 This is the part of [three.ws Home](./smart-home.md) that lets you say "turn the kitchen light
@@ -137,12 +137,12 @@ is a worse network position than a real user's:
 
 | Leg | Budget | Measured | Note |
 |---|---|---|---|
-| Wake word detection | 200 ms | 8 to 16 ms | Inference only. The model needs about 140 ms of audio context past the end of the word before it crosses threshold, measured offline. |
-| End of speech | 400 ms | 343 to 369 ms | 11 silero frames of trailing silence, plus the frame the decision is made on. |
-| Transcription round trip | 900 ms | 684 to 1810 ms | Misses from here. The path is Codespace to Cloud Run to NVIDIA Riva; a browser near the region is materially closer. |
+| Wake word detection | 200 ms | 21 to 49 ms | Inference only. The model needs about 140 ms of audio context past the end of the word before it crosses threshold, measured offline. |
+| End of speech | 400 ms | 389 ms settled, 480 ms loaded | 11 silero frames of trailing silence, plus the frame the decision is made on. The window itself is 352 ms; the rest is frame quantisation and per-frame inference on the main thread. On a machine also running the wake-word model and a 3D scene it has been seen to stretch to 2.3 s for a single utterance, which is scheduling, not the window. |
+| Transcription round trip | 900 ms | 738 ms best, 5.4 s worst | Misses from here under load. The path is Codespace to Cloud Run to NVIDIA Riva; a browser near the region is materially closer. |
 | Agent turn to first tool call | 1200 ms | measured live, varies by provider | The `home_tool` frame arrives ahead of the model's closing sentence. |
 | Action to device change | 700 ms | needs a connected house | Mostly Home Assistant's own latency. |
-| Playback stops after you interrupt | 200 ms | 104 to 125 ms | Four consecutive frames above a high speech probability. |
+| Playback stops after you interrupt | 200 ms | 91 to 101 ms | Four consecutive frames above a high speech probability, measured against sound that was genuinely audible. |
 
 The transcription leg is the one that misses, and the number above is the real one. It is not
 widened here to make the table green.
@@ -234,11 +234,11 @@ from speech the platform's own TTS lane synthesized. It writes the measured legs
 each of the twelve states to `.cache/home-voice/`. Add `--headed` to watch it.
 
 `--only <names>` runs a subset, comma separated, from `cold-load, happy, barge, self-trigger,
-guarded-yeah, guarded-token, mute, unavailable, permission-denied, gallery, live`. Use it when
+guarded-yeah, guarded-token, mute, unavailable, permission-denied, gallery, live, live-confirm`. Use it when
 re-checking one fix: a full run spends the ASR bucket for this IP, and the block that follows
 lengthens each time it is hit, so repeated full runs cost the next hour of them.
 
-`--live` adds an eleventh scenario that drives a **real Home Assistant** and asserts the device
+`--live` adds two more scenarios that drive a **real Home Assistant** and assert the real device
 actually changed:
 
 ```bash
@@ -253,6 +253,26 @@ API. The assertion is on the entity state, not on what the agent said it did. It
 it removes the home connection it created on the way out. The local server exists only because a
 Home Assistant on loopback is not reachable from Cloud Run; ASR and TTS still go to production,
 because those are the two lanes whose credentials live there.
+
+`live-confirm` is the other half, and it is the one that proves the door. It drives
+[`api/_lib/home/tools.js`](../api/_lib/home/tools.js), the same module `api/chat.js` runs
+server-side between its two model passes, so a real confirmation row is minted; then it redeems
+that id through the real `POST /api/home/:id/confirm` and reads `lock.front_door` back out of
+Home Assistant. It asserts the door was locked before, that minting alone did not move it, that
+redeeming really unlocked it, and that replaying the same id is refused (410 `confirmation_spent`)
+with the door still locked. No model is involved on purpose: the model picking a tool is the one
+leg that needs a provider key, and none of the safety properties depend on it.
+
+Measured 2026-09-09: 36/36 browser assertions and 6/6 live-confirm assertions against Home
+Assistant 2026.9.0.
+
+**The `live` scenario needs a tool-calling provider, and says so when there is none.** Every rung
+of [`api/_lib/llm-tool-chain.js`](../api/_lib/llm-tool-chain.js) needs either a provider key or a
+usable GCP token, so a checkout with no keys in `.env` and an expired `gcloud` login has zero
+rungs and no agent turn can run at all. That used to surface as "the light is still on", which
+reads like a broken home lane and is not one. The run now counts the rungs first and skips the
+spoken end-to-end leg with the reason and the fix, rather than reporting a red. `live-confirm`
+still runs, because it needs no model.
 
 The run signs in with `AUDIT_EMAIL` and `AUDIT_PASSWORD`, which it reads from `.env` itself, so it
 gets the signed-in rate limits rather than the tighter anonymous ones. Without them it still works,

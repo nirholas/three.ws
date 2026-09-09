@@ -929,32 +929,92 @@ function describeInstance(name, version) {
  * An exclusive lock around one named instance, held for the whole up/onboard/
  * seed sequence. `mkdir` is the atomic primitive here: it either creates the
  * directory or fails, with no window between the two.
+ *
+ * The lock records WHO holds it, and that is the difference between a lock and
+ * a fifteen-minute outage. Callers of this harness kill it on their own
+ * timeouts (tests/_helpers/home-instance.js gives `--stop` 120 seconds), and a
+ * killed process never reaches the `finally` below, so the directory outlives
+ * it. Abandoning purely on age meant the next call on that lane sat in the wait
+ * loop below until the stale lock aged out, then died on ITS caller's timeout
+ * and left a fresh lock behind: one kill guaranteed the next several. It was
+ * seen as `home-test-instance timed out after 120s` on a `--stop` that takes
+ * seven seconds when it runs at all, which reads as a hung container and is a
+ * dead process's leftovers.
+ *
+ * So the holder writes its pid, and a waiter asks the operating system whether
+ * that process still exists. A dead holder's lock is reclaimed at once; a live
+ * holder's is waited on exactly as before. Signal 0 is the standard "is this
+ * pid alive" probe: it performs the permission check and delivers nothing.
  */
 async function withLock(inst, fn) {
 	const lock = `${inst.configDir}.lock`;
+	const owner = path.join(lock, 'pid');
 	const deadline = Date.now() + 900_000;
 	for (;;) {
 		try {
 			fs.mkdirSync(lock);
+			fs.writeFileSync(owner, `${process.pid}\n`);
 			break;
 		} catch (err) {
 			if (err.code !== 'EEXIST') throw err;
-			// A killed run leaves its lock behind. Nothing here takes longer than
-			// a cold Home Assistant boot, so a much older lock is abandoned.
+			const holder = lockHolder(owner);
+			// No pid file yet means the holder is between its mkdir and its write,
+			// which is microseconds; anything else is a lock whose owner is gone.
+			if (holder !== null && !isAlive(holder)) {
+				log(`[lock] reclaiming the lock on "${inst.name}" from pid ${holder}, which is no longer running`);
+				fs.rmSync(lock, { recursive: true, force: true });
+				continue;
+			}
+			// Belt and braces for the pre-pid window and for a lock written by an
+			// older copy of this script: nothing here outlasts a cold boot.
 			const age = Date.now() - (fs.statSync(lock).mtimeMs || 0);
 			if (age > 900_000) {
 				fs.rmSync(lock, { recursive: true, force: true });
 				continue;
 			}
 			if (Date.now() > deadline) throw new Error(`another run has held the lock on "${inst.name}" for 15 minutes`);
-			log(`[lock] waiting for another run to finish with "${inst.name}"`);
+			log(`[lock] waiting for pid ${holder ?? 'unknown'} to finish with "${inst.name}"`);
 			await new Promise((r) => setTimeout(r, 2000));
 		}
 	}
+	// SIGKILL cannot be caught, which is why the pid check above exists; SIGTERM
+	// and SIGINT can be, and releasing on them means the common case (a caller
+	// asking politely first, a developer pressing ctrl-c) leaves nothing behind.
+	const release = () => fs.rmSync(lock, { recursive: true, force: true });
+	const onSignal = (signal) => {
+		release();
+		process.exit(signal === 'SIGINT' ? 130 : 143);
+	};
+	process.once('SIGTERM', onSignal);
+	process.once('SIGINT', onSignal);
 	try {
 		return await fn();
 	} finally {
-		fs.rmSync(lock, { recursive: true, force: true });
+		process.off('SIGTERM', onSignal);
+		process.off('SIGINT', onSignal);
+		release();
+	}
+}
+
+/** The pid inside a lock directory, or null when it has not been written yet. */
+function lockHolder(pidFile) {
+	try {
+		const pid = Number.parseInt(fs.readFileSync(pidFile, 'utf8').trim(), 10);
+		return Number.isInteger(pid) && pid > 0 ? pid : null;
+	} catch {
+		return null;
+	}
+}
+
+/** Whether a pid is a process this user could signal. Sends nothing. */
+function isAlive(pid) {
+	try {
+		process.kill(pid, 0);
+		return true;
+	} catch (err) {
+		// EPERM means it exists and belongs to somebody else, which still counts
+		// as held. Only ESRCH is proof that nothing is there.
+		return err.code === 'EPERM';
 	}
 }
 

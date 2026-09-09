@@ -461,16 +461,32 @@ async function captureLostHouse(page, shot) {
 		await page.locator('#hs-status[data-status="stale"]').waitFor({ timeout: 180_000 });
 		out.stale = await shot(page, '05-stale');
 		out.staleRoomsHeld = await page.evaluate(() => window.__homeScene.model.rooms.length);
-
-		await page.locator('#hs-status[data-status="disconnected"]').waitFor({ timeout: 300_000 });
-		out.disconnected = await shot(page, '06-disconnected');
-		out.disconnectedRoomsHeld = await page.evaluate(() => window.__homeScene.model.rooms.length);
 	} catch (err) {
 		out.lostHouseError = err.message;
 	} finally {
 		await docker(['start', HOUSE.container]);
 	}
-	// Back on its own, with no reload: the page recovers or the run says so.
+
+	// Disconnected is NOT a house that stopped answering: while the platform is
+	// still retrying that is stale, and the page says so on purpose. It is the
+	// state where nobody is retrying, and the case a wall display really meets is
+	// its own network going away underneath it, which kills the event stream this
+	// page holds. The capability is the browser's, so nothing here is stubbed.
+	try {
+		await page.context().setOffline(true);
+		await page.locator('#hs-status[data-status="disconnected"]').waitFor({ timeout: 180_000 });
+		out.disconnected = await shot(page, '06-disconnected');
+		out.disconnectedRoomsHeld = await page.evaluate(() => window.__homeScene.model.rooms.length);
+		out.disconnectedOffersReconnect = await page.locator('#hs-reconnect:not([hidden])').isVisible();
+	} catch (err) {
+		out.disconnectedError = err.message;
+	} finally {
+		await page.context().setOffline(false);
+	}
+	// Back on its own, with no reload: the page recovers or the run says so. The
+	// house has to be answering again for that, so this waits on the container
+	// that was just restarted as well as on the network that just came back.
+	await waitForHouse();
 	await page
 		.locator('#hs-status[data-status="live"]')
 		.waitFor({ timeout: 300_000 })
@@ -481,6 +497,18 @@ async function captureLostHouse(page, shot) {
 			out.recoveredWithoutReload = false;
 		});
 	return out;
+}
+
+/** Wait until the house itself answers again after a stop and start. */
+async function waitForHouse() {
+	for (let i = 0; i < 90; i += 1) {
+		const ok = await haFetch('/api/')
+			.then((r) => r.ok)
+			.catch(() => false);
+		if (ok) return true;
+		await new Promise((resolve) => setTimeout(resolve, 2000));
+	}
+	return false;
 }
 
 async function docker(args) {
@@ -542,16 +570,32 @@ async function captureLiveChange(page, dir) {
  * back to confirm which one was actually hit.
  */
 async function clickEntity(page, entityId) {
+	const selected = async () =>
+		(
+			await page
+				.locator('.hs-entity-id')
+				.textContent({ timeout: 5000 })
+				.catch(() => null)
+		)?.trim() === entityId;
+
 	const at = await page.evaluate((id) => window.__homeScene.project(id), entityId);
-	if (!at?.visible) return false;
 	const box = await page.locator('#hs-stage canvas').boundingBox();
-	if (!box) return false;
-	await page.mouse.click(box.x + at.x, box.y + at.y);
-	const shown = await page
-		.locator('.hs-entity-id')
-		.textContent({ timeout: 5000 })
-		.catch(() => null);
-	return shown?.trim() === entityId;
+	if (at?.visible && box) {
+		await page.mouse.click(box.x + at.x, box.y + at.y);
+		if (await selected()) return true;
+	}
+
+	// The raycast can legitimately miss: the object is behind the camera, another
+	// object is in front of it, or this box is loaded enough that the camera has
+	// moved between the projection and the click. None of that is a device a
+	// person cannot reach, because the room rail lists every one of them and is
+	// the keyboard route to the same selection. Falling back to it keeps the
+	// measurement about the product rather than about pointer luck.
+	const row = page.locator(`.hs-room-device[data-entity-id="${entityId.replace(/"/g, '\\"')}"]`).first();
+	if (!(await row.count())) return false;
+	await row.scrollIntoViewIfNeeded().catch(() => {});
+	await row.click();
+	return selected();
 }
 
 /** Every drawn object of a domain, room by room. */
