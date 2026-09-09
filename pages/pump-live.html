@@ -112,6 +112,21 @@
     gap: 2px;
   }
   .stat:last-child { border-right: none; }
+  /* The prime-scored stat is also the shortcut into the prime filter, so it is
+     a real <button>. These rules undo the UA button chrome and keep it visually
+     identical to the plain stats beside it. */
+  .stat-filter {
+    font-family: inherit;
+    text-align: left;
+    background: none;
+    border: none;
+    border-right: 1px solid var(--dark-grey);
+    cursor: pointer;
+    transition: background var(--duration-fast);
+  }
+  .stat-filter:last-child { border-right: none; }
+  .stat-filter:hover { background: rgba(192, 132, 252, 0.07); }
+  .stat-filter:active { background: rgba(192, 132, 252, 0.12); }
   .stat-label {
     font-size: 10px;
     letter-spacing: 0.08em;
@@ -269,6 +284,58 @@
     padding: 4px 0 12px;
   }
 
+  /* ── Reconnecting banner ───────────────────────────────
+     Auto-reconnect can spend minutes in backoff before it gives up, so the
+     disconnect is surfaced (and made recoverable) the moment it happens
+     instead of only in the terminal panel below. Sits above the feed so an
+     already-populated list is never wiped out by a transient outage. */
+  #feed-notice {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 12px;
+    background: rgba(255, 138, 138, 0.07);
+    border-bottom: 1px solid #4a2323;
+    font-size: 11px;
+    color: #ffb4b4;
+  }
+  #feed-notice[hidden] { display: none; }
+  #feed-notice .fn-dot {
+    width: 7px; height: 7px; border-radius: 50%;
+    background: #ff8a8a; flex-shrink: 0;
+    animation: fn-pulse 1.4s ease-in-out infinite;
+  }
+  @keyframes fn-pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.25; } }
+  #feed-notice .fn-text { flex: 1; min-width: 0; }
+  #feed-notice #fn-countdown { font-variant-numeric: tabular-nums; }
+  #fn-retry {
+    background: transparent;
+    border: 1px solid rgba(255, 138, 138, 0.5);
+    border-radius: 999px;
+    color: #ffb4b4;
+    font-family: inherit;
+    font-size: 11px;
+    padding: 3px 12px;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: color var(--duration-fast), border-color var(--duration-fast), background var(--duration-fast);
+  }
+  #fn-retry:hover { color: #fff; border-color: #ffb4b4; background: rgba(255, 138, 138, 0.12); }
+  #fn-retry:active { transform: translateY(1px); }
+
+  /* Every control on this page gets the same visible keyboard ring — the
+     feed is dense and a lost focus position is unrecoverable without one. */
+  .fb-btn:focus-visible,
+  #fn-retry:focus-visible,
+  .stat-filter:focus-visible,
+  .token-watch:focus-visible,
+  .token-links a:focus-visible,
+  .pl-ob-link:focus-visible {
+    outline: 2px solid var(--green);
+    outline-offset: 2px;
+    border-radius: 6px;
+  }
+
   /* ── Stopped / dead-feed state ─────────────────────────
      Distinct from the transient "reconnecting…" status (amber, in the
      header). This is the terminal state after auto-reconnect gives up:
@@ -423,10 +490,10 @@
         <span class="stat-label" data-i18n="pump_live.last_launch">Last launch</span>
         <span class="stat-value" id="stat-age" aria-live="polite">—</span>
       </div>
-      <div class="stat" id="stat-prime-filter" style="cursor:pointer" title="Filter to prime coins">
+      <button type="button" class="stat stat-filter" id="stat-prime-filter" title="Filter to prime coins" data-i18n-attr="title:pump_live.filter_to_prime_coins_title">
         <span class="stat-label" data-i18n="pump_live.prime_scored">🔮 Prime scored</span>
         <span class="stat-value" id="stat-prime" aria-live="polite" style="color:#c084fc">0</span>
-      </div>
+      </button>
     </div>
     <div id="feed-header">
       <h2 data-i18n="pump_live.new_tokens_on_pump_fun">New Tokens on Pump.fun</h2>
@@ -438,6 +505,11 @@
       <button class="fb-btn tier-prime" data-ftier="prime" aria-pressed="false" data-i18n="pump_live.prime">Prime</button>
       <span id="filter-count" style="flex:1;text-align:right" aria-live="polite"></span>
       <button class="fb-btn" id="fb-pause" aria-pressed="false" title="Pause / resume the live feed" data-i18n="pump_live.pause" data-i18n-attr="title:pump_live.pause_resume_the_live_feed_title">⏸ Pause</button>
+    </div>
+    <div id="feed-notice" role="status" aria-live="polite" hidden>
+      <span class="fn-dot" aria-hidden="true"></span>
+      <span class="fn-text">Live feed disconnected. Retrying in <span id="fn-countdown">…</span></span>
+      <button type="button" id="fn-retry" title="Reconnect to the pump.fun launch stream now">Retry now</button>
     </div>
     <div id="feed"></div>
   </div>
@@ -536,6 +608,8 @@
   const $statLaunched = document.getElementById('stat-launched');
   const $statVolume = document.getElementById('stat-volume');
   const $statAge = document.getElementById('stat-age');
+  const $notice = document.getElementById('feed-notice');
+  const $countdown = document.getElementById('fn-countdown');
 
   let ws = null;
   let reconnectTimer = null;
@@ -639,6 +713,41 @@
       : 'Market Cap: ' + mcSol.toFixed(2) + ' SOL';
   }
 
+  // ── Reconnecting banner ───────────────────────────────────────────────────
+  // The header status already names the state, but the header is far from the
+  // feed and offers no way out: with eight attempts and a 60s backoff cap the
+  // terminal panel is minutes away. This banner appears on the first dropped
+  // connection, counts the retry down, and lets the user force it immediately.
+  let retryAt = 0;
+  let countdownTimer = null;
+
+  function tickCountdown() {
+    const left = Math.max(0, Math.ceil((retryAt - Date.now()) / 1000));
+    $countdown.textContent = left + 's';
+  }
+
+  function showReconnectNotice(delayMs) {
+    retryAt = Date.now() + delayMs;
+    $notice.hidden = false;
+    tickCountdown();
+    if (!countdownTimer) countdownTimer = setInterval(tickCountdown, 1000);
+    // The skeleton's "waiting for launches" line would contradict this banner.
+    const hint = document.getElementById('feed-empty-hint');
+    if (hint) hint.hidden = true;
+  }
+
+  function hideReconnectNotice() {
+    $notice.hidden = true;
+    if (countdownTimer) { clearInterval(countdownTimer); countdownTimer = null; }
+    const hint = document.getElementById('feed-empty-hint');
+    if (hint) hint.hidden = false;
+  }
+
+  document.getElementById('fn-retry').addEventListener('click', () => {
+    hideReconnectNotice();
+    connect();
+  });
+
   function showSkeleton() {
     $log.innerHTML = '';
     for (let i = 0; i < 4; i++) {
@@ -658,6 +767,7 @@
     hint.className = 'feed-empty-hint';
     hint.id = 'feed-empty-hint';
     hint.textContent = 'Waiting for new launches…';
+    hint.hidden = !$notice.hidden;   // a reconnect is in progress: the banner speaks
     $log.appendChild(hint);
   }
 
@@ -671,6 +781,7 @@
   // stream is fully stopped and will not recover on its own. A prominent manual
   // Reconnect button restarts the backoff cycle from scratch.
   function showError() {
+    hideReconnectNotice();
     $log.innerHTML = '';
     const box = document.createElement('div');
     box.className = 'feed-error';
@@ -747,6 +858,7 @@
 
     ws.onopen = () => {
       reconnectAttempts = 0;
+      hideReconnectNotice();
       setStatus('● Live', 'connected');
       ws.send(JSON.stringify({ method: 'subscribeNewToken' }));
     };
@@ -781,6 +893,7 @@
       const delay = Math.min(BASE_BACKOFF_MS * 2 ** reconnectAttempts, MAX_BACKOFF_MS);
       reconnectAttempts++;
       setStatus(`● Reconnecting in ${Math.round(delay / 1000)}s…`, 'error');
+      showReconnectNotice(delay);
       reconnectTimer = setTimeout(connect, delay);
     };
 
