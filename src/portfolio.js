@@ -10,6 +10,7 @@
 import { updateValue, enterStagger } from './ui-juice.js';
 import { formatUsd, formatPrice, formatPercent, formatSupply, timeAgo, escapeHtml } from './shared/coin-format.js';
 import { createLogger } from './shared/log.js';
+import { upstreamLogoURL } from './shared/upstream-logo.js';
 
 const log = createLogger('portfolio');
 const $ = (id) => document.getElementById(id);
@@ -17,6 +18,8 @@ const $ = (id) => document.getElementById(id);
 const RECENT_KEY = 'twx_portfolio_recent';
 const RECENT_MAX = 5;
 const SMALL_SHARE_PCT = 1;
+// The painted size of a holding's logo (.pf-asset img in src/portfolio.css).
+const LOGO_PX = 22;
 
 const EXPLORERS = {
 	solana: (a) => `https://solscan.io/account/${a}`,
@@ -226,6 +229,8 @@ function arcPath(cx, cy, rOuter, rInner, a0, a1) {
 function renderDonut(d) {
 	const svg = $('pf-donut');
 	const assets = d.topAssets;
+	donutAssets = assets;
+	hideTip();
 	$('pf-alloc-sub').textContent = `top ${Math.min(assets.length, 5)} of ${d.tokenCount} holdings`;
 
 	const total = assets.reduce((s, a) => s + a.usd, 0);
@@ -261,8 +266,6 @@ function renderDonut(d) {
 			</li>`,
 		)
 		.join('');
-
-	wireDonutHover(svg, assets);
 }
 
 let tipEl = null;
@@ -276,37 +279,54 @@ function tip() {
 	return tipEl;
 }
 
-function wireDonutHover(svg, assets) {
+// The donut is re-rendered on every lookup, so its listeners are wired once
+// against this array rather than re-bound per render. `onfocusin`/`onfocusout`
+// are NOT IDL event-handler attributes on any element in Chromium or WebKit:
+// assigning them sets a plain expando that never fires, which is why the
+// tooltip used to be silent for keyboard users. The events do bubble, so
+// addEventListener on the svg covers every segment.
+let donutAssets = [];
+
+function showTip(seg, x, y) {
+	const svg = $('pf-donut');
+	const a = donutAssets[Number(seg.dataset.i)];
+	if (!a) return;
 	const t = tip();
-	const showTip = (seg, x, y) => {
-		const a = assets[Number(seg.dataset.i)];
-		if (!a) return;
-		svg.classList.add('pf-donut-focus');
-		svg.querySelectorAll('path').forEach((p) => p.classList.toggle('pf-seg-active', p === seg));
-		t.innerHTML = `<b>${escapeHtml(a.symbol)}</b> ${a.pct}%<br /><span class="sub">${escapeHtml(formatUsd(a.usd))}</span>`;
-		t.hidden = false;
-		const pad = 12;
-		t.style.left = `${Math.min(x + pad, window.innerWidth - t.offsetWidth - pad)}px`;
-		t.style.top = `${Math.max(y - t.offsetHeight - pad, pad)}px`;
-	};
-	const hideTip = () => {
-		svg.classList.remove('pf-donut-focus');
-		svg.querySelectorAll('path').forEach((p) => p.classList.remove('pf-seg-active'));
-		t.hidden = true;
-	};
-	svg.onmousemove = (e) => {
+	svg.classList.add('pf-donut-focus');
+	svg.querySelectorAll('path').forEach((p) => p.classList.toggle('pf-seg-active', p === seg));
+	t.innerHTML = `<b>${escapeHtml(a.symbol)}</b> ${a.pct}%<br /><span class="sub">${escapeHtml(formatUsd(a.usd))}</span>`;
+	t.hidden = false;
+	const pad = 12;
+	t.style.left = `${Math.min(x + pad, window.innerWidth - t.offsetWidth - pad)}px`;
+	t.style.top = `${Math.max(y - t.offsetHeight - pad, pad)}px`;
+}
+
+function hideTip() {
+	const svg = $('pf-donut');
+	svg.classList.remove('pf-donut-focus');
+	svg.querySelectorAll('path').forEach((p) => p.classList.remove('pf-seg-active'));
+	tip().hidden = true;
+}
+
+function wireDonut() {
+	const svg = $('pf-donut');
+	svg.addEventListener('mousemove', (e) => {
 		const seg = e.target.closest('path');
 		if (seg) showTip(seg, e.clientX, e.clientY);
 		else hideTip();
-	};
-	svg.onmouseleave = hideTip;
-	svg.onfocusin = (e) => {
+	});
+	svg.addEventListener('mouseleave', hideTip);
+	svg.addEventListener('focusin', (e) => {
 		const seg = e.target.closest('path');
 		if (!seg) return;
 		const r = seg.getBoundingClientRect();
 		showTip(seg, r.left + r.width / 2, r.top);
-	};
-	svg.onfocusout = hideTip;
+	});
+	svg.addEventListener('focusout', hideTip);
+	// A keyboard user needs a way out of the tooltip without tabbing onward.
+	svg.addEventListener('keydown', (e) => {
+		if (e.key === 'Escape') hideTip();
+	});
 }
 
 /* ---------------- meta + table ---------------- */
@@ -351,8 +371,9 @@ function renderTable(d) {
 function rowHtml(d, r) {
 	const slot = slotForSymbol(d, r.symbol);
 	const sym = r.symbol || (r.id ? `${r.id.slice(0, 6)}…` : '?');
-	const logo = r.logo
-		? `<img src="${escapeHtml(r.logo)}" alt="" loading="lazy" data-ph="${escapeHtml(sym.slice(0, 3))}" />`
+	const proxied = r.logo ? upstreamLogoURL(r.logo, LOGO_PX) : '';
+	const logo = proxied
+		? `<img src="${escapeHtml(proxied)}" alt="" loading="lazy" width="${LOGO_PX}" height="${LOGO_PX}" data-ph="${escapeHtml(sym.slice(0, 3))}" />`
 		: `<span class="ph">${escapeHtml(sym.slice(0, 3))}</span>`;
 	const chg =
 		r.change24h == null
@@ -391,6 +412,10 @@ function submit(raw) {
 	}
 	const detected = detectChain(address);
 	if (!detected) {
+		// Drop any previously loaded wallet: Retry must re-read the box the user
+		// is looking at, never silently reload the wallet before it.
+		state.address = '';
+		state.data = null;
 		renderError(400, { message: 'Not a valid Solana or Ethereum address.' });
 		return;
 	}
@@ -399,6 +424,7 @@ function submit(raw) {
 
 function init() {
 	renderRecent();
+	wireDonut();
 
 	// Broken token logos collapse to a monogram placeholder. Error events do not
 	// bubble, so this listens in the capture phase over the whole table body.
