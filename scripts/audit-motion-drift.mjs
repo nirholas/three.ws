@@ -22,8 +22,10 @@
  * drops the whole declaration, which is worse than the literal.
  *
  * It does NOT touch @keyframes or `animation`, whose durations are usually
- * intrinsic to the effect (a 2s shimmer loop is not a control response), and it
- * ignores vendored third-party CSS.
+ * intrinsic to the effect (a 2s shimmer loop is not a control response), it
+ * ignores vendored third-party CSS, and it skips whatever sits inside a
+ * `@media (prefers-reduced-motion: reduce)` block: that floor is the zeroing,
+ * not an escape from it.
  *
  * The count may only go DOWN. Migrate a value to the nearest rung of the
  * ladder rather than adding a token for it: the point of a ladder is that the
@@ -70,9 +72,37 @@ const LITERAL_TIME = /(?<![\w-])\d*\.?\d+m?s(?![\w-])/g;
 const LITERAL_EASE =
 	/(?<![\w-])(?:ease-in-out|ease-out|ease-in|linear|ease)(?![\w-])|cubic-bezier\([^)]*\)/g;
 
+/** Strip every `@media (prefers-reduced-motion: reduce)` block.
+ *
+ * A literal inside that floor is not drift: it IS the zeroing the ladder exists
+ * to preserve, and it cannot be a token without pointing a token at itself (the
+ * floor is where `--duration-*` collapses in the first place). `1ms` rather
+ * than `0s` there is deliberate too, so a `transitionend` listener still fires.
+ * Counting it taught the opposite lesson: it read as a violation and pushed the
+ * next author to delete the floor to get the gate green. */
+function stripReducedMotionFloor(css) {
+	let out = '';
+	let i = 0;
+	const re = /@media[^{]*prefers-reduced-motion[^{]*\{/g;
+	let m;
+	while ((m = re.exec(css))) {
+		out += css.slice(i, m.index);
+		let j = re.lastIndex;
+		let depth = 1;
+		while (j < css.length && depth > 0) {
+			if (css[j] === '{') depth++;
+			else if (css[j] === '}') depth--;
+			j++;
+		}
+		i = j;
+		re.lastIndex = j;
+	}
+	return out + css.slice(i);
+}
+
 /** Count the literals a sheet still spells out instead of naming. */
 function countDrift(css) {
-	const body = css.replace(/\/\*[\s\S]*?\*\//g, '');
+	const body = stripReducedMotionFloor(css.replace(/\/\*[\s\S]*?\*\//g, ''));
 	let n = 0;
 	for (const m of body.matchAll(TRANSITION_DECL)) {
 		const value = m[1];
@@ -129,10 +159,6 @@ function audit() {
 		...collectStylesheets(join(ROOT, 'src')),
 		...collectStylesheets(join(ROOT, 'public')),
 	]) {
-		// The token sheet is the source of truth. Its one literal is the 1ms
-		// collapse inside the prefers-reduced-motion floor, which cannot be a
-		// token without pointing a token at itself.
-		if (relative(ROOT, sheet) === 'public/tokens.css') continue;
 		const n = countDrift(readFileSync(sheet, 'utf8'));
 		if (n > 0) {
 			perFile[relative(ROOT, sheet)] = n;

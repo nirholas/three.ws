@@ -1,5 +1,5 @@
 {
-	"total": 162,
+	"total": 158,
 	"perFile": {
 		"pages/agent-screen.html": 4,
 		"pages/club.html": 9,
@@ -53,7 +53,7 @@
 		"public/avatar-sdk.css": 2,
 		"public/docs-freshness.css": 1,
 		"public/docs-world.css": 1,
-		"public/feature-discovery.css": 2,
+		"public/feature-discovery.css": 1,
 		"public/features.css": 3,
 		"public/gallery/gallery.css": 1,
 		"public/genome.css": 1,
@@ -64,12 +64,11 @@
 		"public/ibm.css": 7,
 		"public/marketplace-v2.css": 1,
 		"public/marketplace.css": 1,
-		"public/nav.css": 1,
 		"public/oracle-coin.css": 4,
 		"public/pitch.css": 6,
-		"public/pricing.css": 4,
+		"public/pricing.css": 3,
 		"public/rig-doctor.css": 2,
 		"public/studio-panels.css": 1,
-		"public/style.css": 2
+		"public/style.css": 1
 	}
 }
