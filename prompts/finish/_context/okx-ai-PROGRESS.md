@@ -6,6 +6,127 @@ Work Order 04 session, no earlier entries existed because no earlier work order 
 
 ---
 
+## 2026-09-09, WO-07 final audit: the listing OKX stores fails OKX's own description rule, and nothing was comparing that copy
+
+Third OKX session on this date; two peers were running WO-04 and WO-05 in this worktree at the
+same time and their entries are directly above. Their probes and mine were independent and
+agree on everything they both cover, so this entry records only what is new: the audit findings
+and the fixes.
+
+### Re-verified today against production, nothing trusted from this file
+
+| Claim re-checked | Verdict |
+| --- | --- |
+| `okx-compliance-probe.mjs` | PASS 20 probes (`90-2026-09-09-compliance-probe.json`) |
+| `okx-payment-leg-probe.mjs` | PASS, 4 paid rows accepted a signed authorization, buyer still empty so nothing spent |
+| `onchainos agent x402-check`, all four paid rows | `valid: true`, `eip155:196` / `exact` / USD₮0 / `payTo 0x4022de2D...f402`, amounts 10000 / 50000 / 250000 / 250000 |
+| Module catalog vs `GET /api/okx/3d/catalog` | byte-identical (`JSON.stringify` equality), `validateCatalog()` clean |
+| Free lane | `catalog` 200, `health` 200 with all six subsystems ok, `forge-status` GET 405, four paid rows 402 |
+| Live 402 vs `specs/okx-agent-payments.md` §1.1 | every required field matches, `Access-Control-Expose-Headers` present, error string names the v2 header first |
+| Verify-before-dispatch | a forged EIP-3009 signature is refused identically on two identical attempts (`402`, quotation re-issued, no job started); a $0.01 authorization replayed at the $0.25 row dies at the amount check |
+| Wallets, X Layer block 70163162 | buyer 0 USD₮0 / 0 OKB, seller 2.427731 / 0.839596 OKB, relayer 0 / 0.02 OKB, `payTo` had not drifted |
+| `agent get-my-agents` | `approvalDisplayStatus: 5`, "Listing rejected", `status: 2`, `soldCount: 2`, `approvalRemark` 4109 chars, byte-identical to rejection #3 |
+| `agent feedback-list --agent-id 2632` | works, `total: 0` reviews |
+| `npm run build:pages` / `npm run audit:docs` | green / clean (1589 files) |
+
+### The finding: the seven rows OKX stores are missing three of the four required description parts
+
+`onchainos agent update --help` states the contract in OKX's own words: an A2MCP
+`serviceDescription` is four newline-separated parts (what it does / parameter spec / request
+method / a working curl) and *"an A2MCP listing missing any is rejected at listing QA"*.
+
+The rows OKX stores carry TWO parts, the prose form submitted on 2026-08-27. The module began
+generating all four on 2026-09-02 (`6435b9c07`) and no `agent update` has gone out since. So for
+a week the listing has been in exactly the state rejection #2 (2026-07-26, "service description /
+parameters / usage examples") described, while three sessions reported it as drift-free,
+including the entry directly above this one, which concluded "no service delta is needed" from a
+comparison of names, endpoints, fees and `serviceType` only.
+
+Nothing was comparing the copy that matters. `scripts/okx-three-copy-check.mjs` compared the
+module, the live endpoint and the submission payload: three copies that all derive from the same
+module and therefore cannot disagree in production. The 2026-09-02 session checked the on-chain
+rows by hand, found them identical, and that hand check was never mechanised.
+
+**Fixed:** the script now reads a FOURTH copy, the rows OKX actually stores
+(`onchainos agent service-list`), and fails on drift in description, fee or endpoint, plus rows
+present on one side only. It is on by default, takes the agent id from the catalog module
+(`AGENT_ID` overrides), accepts a saved capture with `--listing <file>`, narrows to the local
+copies with `--no-onchain`, and prints `on-chain  NOT COMPARED (<why>)` rather than passing
+silently when there is no wallet session. `npm run okx:three-copy` today reads
+`COPY CHECK: FAIL (7 divergences across all four copies)`. It is check 5 of the RUNBOOK's
+pre-resubmission gate.
+
+### What that changes about the resubmission
+
+It is no longer a bare `activate`. The delta goes out first, and both are on-chain writes that
+wait for the owner:
+
+```bash
+onchainos agent service-list --agent-id 2632 \
+  | node scripts/okx-listing-payload.mjs --delta > /tmp/okx-2632-delta.json
+onchainos agent update --agent-id 2632 --service "$(cat /tmp/okx-2632-delta.json)"
+onchainos agent activate --agent-id 2632 --preferred-language en-US
+```
+
+The delta is seven `update` operations, each carrying its existing service id (39975 to 39981),
+so no row is deleted and no id is lost. That is the concern the entry above raises about running
+a delta, and it does not apply to this one: it is an update-in-place, not the retired WO-05
+create/delete churn.
+
+### Second finding: the chat bot cannot answer a reviewer, and its documented fallback is dead too
+
+`/api/healthz` reads `okx_chat_bot: degraded`. The host is deployed and healthy in every other
+respect (Cloud Run `okx-chat-bot`, up 4.2 days, daemon supervised, wallet session live as
+`claude@three.ws`, chat delivered, `lastOnlineTime` seconds old), but the AI provider refuses its
+credential: Vertex answers `403 Lightning dunning decision is deny for project:
+projects/93741856042`, which is a project-wide billing hold, not IAM. No reply can be authored,
+which is the failure mode that got the listing flagged offline on 2026-07-26.
+
+The host's own remedy lists three ways out. Option 3 (pin `OKX_BOT_AI_PROVIDER=codex` on the
+existing `openai-api-key` secret) was tested rather than assumed: the key authenticates
+(`/v1/models` 200) but a real completion answers `429 billing_not_active`. Both providers are
+billing-blocked, so no config change on this machine can restore the bot. Owner action.
+
+### Third finding, outside this stream, recorded because it costs a buyer their money
+
+`forge_generation` reads `down`: 44 of 91 outcomes in six hours failed, all of them
+`trellis_selfhost` on the image path, none marked `superseded_by`, so the poll-time failover did
+not re-dispatch them. Root cause from the worker's own logs, not a guess: `model-trellis` dies in
+TRELLIS `postprocessing_utils._fill_holes` with `RuntimeError: Cuda error: 2` from
+`nvdiffrast.rasterize`, i.e. `cudaErrorMemoryAllocation` on the L4. Container concurrency is 80
+but the worker holds `MAX_CONCURRENT=1` and frees GPU memory per job, so this is not parallel
+inference; it needs GPU-side debugging and a worker redeploy, and it is not a config lever.
+A draft-tier job submitted during this session landed on `hunyuan3d` and delivered a real
+3,058,208-byte GLB, so the lane that an OKX buyer hits is serving today.
+
+### Not fixed here, deliberately
+
+- `STRUCTURE.md` line 81 still reads `Built · deploy owner-gated` for the chat bot host, which
+  has been a live Cloud Run service since 2026-09-05. Another session is mid-rewrite on that file
+  (staged and unstaged home-lane edits), so correcting one status word would either mix their
+  work into this commit or lose it. Whoever edits `STRUCTURE.md` next: change that status to Live.
+- `tests/audit-guards.test.js` fails on `gate steps missing from data/guards.json:
+  check:windows-widget`, from commit `727869703` eleven minutes before this session's sweep. The
+  registry entry needs a proof fixture only that guard's author can write. Not this stream's, and
+  it blocks nothing here. `tests/version-endpoint.test.js` also failed once in shard 2 on the
+  build-info snapshot, which a concurrent build in this worktree explains.
+
+### State of the stream at close
+
+Code and production: verified. Docs: the RUNBOOK's §1 reading, §2 drift correction, §5.5 fifth
+gate and §6 first-sale table are corrected and every command in §1, §5, §5.5, §6 and §7 was
+executed this session. Three owner actions remain, all single steps:
+
+1. **Approve the resubmission** (the two on-chain writes above). Wallet session is live, no OTP
+   pending.
+2. **Fund the buyer** `0x75d00a2713565171f33216e5aa2a375e076ecf69` with >=$3 USD₮0
+   (`0x779ded0c9e1022225f8e0630b35a9b54be713736`) on X Layer / 196 for the first real settlement.
+   No OKB needed; the relayer pays gas.
+3. **Clear the GCP billing hold** on project `aerial-vehicle-466722-p5` so the marketplace chat
+   bot can author replies before OKX's review chat-tests it.
+
+---
+
 ## 2026-09-09, WO-05 refused and deleted; the three pre-resubmission gates are green on today's production
 
 Asked to execute `912-okx-ai-05-relisting-resubmission.md`. **It was not executed, and the file

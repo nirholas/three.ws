@@ -161,12 +161,17 @@ onchainos agent get-my-agents
 > moved field. `get-my-agents` (own agents only, no `--agent-ids`) carries all four. Use it for
 > every status read; keep `get-agents` for the card copy, description and profile photo.
 
-Verified output (2026-09-02, the fields that matter):
+Verified output (2026-09-09, the fields that matter):
 
 ```json
-{ "agentId": "2632", "approvalDisplayStatus": 2, "approvalLabel": "Listing under review",
+{ "agentId": "2632", "approvalDisplayStatus": 5, "approvalLabel": "Listing rejected",
   "status": 2, "statusLabel": "not listed", "soldCount": 2, "role": 2, "roleLabel": "ASP" }
 ```
+
+That is rejection #3's verdict, unchanged since 2026-09-05: the 4109-character `approvalRemark`
+is byte-for-byte the one the 2026-09-04 session root-caused, and nothing has been resubmitted
+since, so no new review has run. A rejection email arriving now is a re-send of that verdict,
+not a new one.
 
 ### Reading the fields
 
@@ -214,15 +219,22 @@ Re-verified 2026-09-02, live listing against
 endpoint matching.**
 
 > **Correction, 2026-09-09: "no drift" was only ever checked on names and endpoints, and the
-> descriptions ARE stale.** Run the check with the agent id and it fails:
-> `AGENT_ID=2632 node scripts/okx-three-copy-check.mjs` reports
-> `COPY CHECK: FAIL (7 divergences)`, one per row. The on-chain rows carry prose parameter
-> text; the module's `listingDescription()` now emits a parameter spec line, a method line and
-> a runnable `curl` example. Rejection #2 (2026-07-26) was about "service description /
-> parameters / usage examples", so this is that exact class of defect. Without `AGENT_ID` the
-> same script reads `PASS`, because it then compares only module, live endpoint and listing
-> submission, which do agree: **always pass `AGENT_ID=2632` when the question is what a
-> reviewer sees.** Closing this is an on-chain write, owned by
+> descriptions ARE stale.** `npm run okx:three-copy` (or `node scripts/okx-three-copy-check.mjs`)
+> now reads a FOURTH copy, the rows OKX actually stores, and reports
+> `COPY CHECK: FAIL (7 divergences across all four copies)`, one per row. The on-chain rows
+> carry prose parameter text; the module's `listingDescription()` now emits a parameter spec
+> line, a method line and a runnable `curl` example. Rejection #2 (2026-07-26) was about
+> "service description / parameters / usage examples", and `onchainos agent update --help`
+> states the rule in OKX's own words: all four parts are required and *"an A2MCP listing
+> missing any is rejected at listing QA"*. So this is that exact class of defect, live on the
+> listing right now.
+>
+> The on-chain copy is compared by DEFAULT and needs a live `onchainos` wallet session; the
+> agent id comes from the catalog module (`AGENT_ID=<id>` overrides it). Without a session the
+> run prints `on-chain  NOT COMPARED (<why>)` and judges only the three local copies, which do
+> agree, so **read the `on-chain` line before trusting a PASS**; `--no-onchain` asks for that
+> narrower run deliberately, and `--listing <file>` compares against a saved `service-list`
+> capture instead of the CLI. Closing this is an on-chain write, owned by
 > [`okx-ai-08-forge-relisting.md`](../911-okx-ai-08-forge-relisting.md). Capture:
 > `prompts/okx-ai/e2e-evidence/95-2026-09-09-three-copy-onchain.txt`.
 
@@ -247,7 +259,7 @@ The catalog module stays the source of truth. Nine further rows (Identity Studio
 single-capability REST services) are deployed and payable but carry `listed: false`; they
 show up under `unlisted` in `GET /api/okx/3d/catalog` and are deliberately not submitted.
 Re-run the comparison above after any change to the module, and after any listing update,
-with `AGENT_ID=2632` set so the on-chain copy is actually in the comparison.
+with a live wallet session so the on-chain copy is actually in the comparison.
 
 ---
 
@@ -390,7 +402,7 @@ This is the holder-visible moment. Work the list top to bottom.
 
 ---
 
-## 5.5 The pre-resubmission gate: four checks, all must pass
+## 5.5 The pre-resubmission gate: five checks, all must pass
 
 Never resubmit on a code review alone. These run against live production and each one covers a
 leg the others cannot see. Every rejection since 2026-07-04 would have been caught by one of
@@ -454,6 +466,21 @@ A window with no `done` row is a NO-GO on its own, whatever the payment gates sa
 delivery bucket is unwritable, so a buyer is no longer charged for this, but a row that
 refuses every call is still not a listing worth submitting.
 
+**5. What OKX stores matches what we serve.** The four checks above all read our own endpoints.
+None of them reads the listing, so none of them can see a row whose stored description, price
+or endpoint no longer matches the module. That is what was wrong on 2026-09-09 (§2), and it is
+rejection #2's exact class of defect sitting on a listing three sessions had called drift-free.
+
+```bash
+npm run okx:three-copy    # needs a wallet session for the on-chain copy
+```
+
+`COPY CHECK: PASS (module == live == listing submission == on-chain listing)` is the only
+passing form. A run whose `on-chain` line reads `NOT COMPARED` has judged three local copies
+that cannot disagree with each other in production and proves nothing about the listing; log
+in and run it again. On a FAIL, the delta in §2 is the fix and it goes out BEFORE the
+activate.
+
 The two scripts take `--base` (point them at a staged worktree's server before a deploy) and `--out`
 (write the capture into `prompts/okx-ai/e2e-evidence/`). Commit the captures: they are the
 evidence trail for the next review.
@@ -466,7 +493,10 @@ onchainos agent activate --agent-id 2632 --preferred-language en-US
 ```
 
 Do not run the WO-08 service delta when the rows already match: it deletes and recreates
-correct rows and loses their service ids.
+correct rows and loses their service ids. **They do not match today** (§2), so the resubmission
+is currently `agent update --service <delta>` and then `activate`; the delta from
+`okx-listing-payload.mjs --delta` is seven `update` operations that each carry the existing
+service id, so nothing is deleted and no id is lost.
 
 ## 6. First-sale operations
 
@@ -476,7 +506,9 @@ correct rows and loses their service ids.
 | What did buyers say? | `onchainos agent feedback-list --agent-id 2632` ("Query Agent reviews"). `--agent-id` is runtime-enforced: omit it and the CLI answers `missing required parameter: --agent-id`. Optional `--page` / `--page-size`. |
 | Where does revenue land? | The seller/payTo wallet on X Layer (196), **verify live**, it has moved before (see §3); as of 2026-07-23 it is `0x4022de2D36C334E73C7a108805Cea11C0564f402`, the platform's standard EVM merchant wallet, not the buyer wallet. Confirm the first payout against the settlement tx hash from WO-04. |
 | Where do errors surface? | The existing error-reporting path in [`api/_mcp/payments.js`](../../api/_mcp/payments.js); paid-endpoint failures answer **before** settlement, so a failed job never charges a buyer. |
-| Daily watch | `soldCount`, `approvalLabel`, and the paid-endpoint health/catalog free routes (§7). |
+| Can a buyer talk to us? | Chat is a buyer's first contact and OKX tests it during review. `curl -s -H "Authorization: Bearer $(gcloud auth print-identity-token)" https://okx-chat-bot-lp642k3kpa-uc.a.run.app/readyz` reads the host directly (it is not public, so an unauthenticated curl answers 403 from Google, not from us), and `/api/healthz`'s `okx_chat_bot` subsystem carries the same verdict. `ready:true` is the only healthy form: on 2026-09-09 the daemon was running, the wallet session live and every message delivered, while `verdict:"unauthorized"` meant no reply could be authored at all. `.remedy` names the three ways out. |
+| Two sales already, no settlement | `soldCount` reads 2 and has since before any funded call, while nothing has ever moved into the seller wallet on our rail (swept 2026-08-03 to 2026-09-09). Never cite it as revenue; the first real sale is the first settlement tx hash. |
+| Daily watch | `soldCount`, `approvalLabel`, the `okx_chat_bot` verdict, and the paid-endpoint health/catalog free routes (§7). |
 
 ---
 
