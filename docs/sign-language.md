@@ -35,6 +35,8 @@ Nothing here needs an account, a plugin, or a download. It is 3D in the browser.
 
 The status line under the avatar tells you what it just did, for example `signed happy, meet, you · spelled to`, so you always know which words were real signs and which were spelled.
 
+The avatar is a multi-megabyte model, so it arrives a beat after the page. You do not have to wait for it: type and press **🤟 Sign it** while the silhouette is still breathing, and the phrase is queued and performed the moment the avatar lands. If the model fails to download, the stage says so and offers **Retry the avatar**; the [sign API](#the-sign-api) further down runs on the server and keeps working either way.
+
 Three settings sit under the input, and all three are remembered on your next visit:
 
 | Setting | Options | Why it exists |
@@ -456,6 +458,8 @@ npm run sign:sheet -- --dominant Left          # left-handed signer
 
 | What you see | Why | Fix |
 |---|---|---|
+| A breathing silhouette where the avatar should be | The avatar GLB is still downloading | Nothing to do. Anything you type or click meanwhile is queued and signed the moment it lands |
+| "The 3D preview did not load" on the stage | The avatar GLB request failed, usually the network | Click **Retry the avatar**. The [sign API](#the-sign-api) runs server-side and works without the preview |
 | "Load a rigged avatar to fingerspell" in the Studio | You are on the built-in mannequin, which has no skinned skeleton | Click **Load avatar**, or open `/pose?avatar=<id>` |
 | The avatar refuses to sign, saying the rig cannot | The skeleton has no finger bones, so handshapes are impossible | Use a rig with fingers. Most generated and Mixamo-style avatars have them |
 | It signs, but the face never changes | The rig carries no ARKit blendshapes | Switch the **Avatar** setting to Expressive face on /sign-language, or use an avatar exported with ARKit shapes |

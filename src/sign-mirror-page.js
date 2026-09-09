@@ -199,9 +199,32 @@ async function boot() {
 
 	// The hint is a live region, and it is written on every graded frame. Writing
 	// the same sentence again would make a screen reader read it again, so only a
-	// genuine change reaches the DOM.
-	const setHint = (text) => {
-		if (hintEl && hintEl.textContent !== text) hintEl.textContent = text;
+	// genuine change reaches the DOM. The tone is carried separately because a
+	// camera failure has to LOOK different from a coaching tip, and the sentence
+	// alone does not say so.
+	const setHint = (text, tone = '') => {
+		if (!hintEl) return;
+		if (hintEl.textContent !== text) hintEl.textContent = text;
+		if (hintEl.dataset.tone !== tone) hintEl.dataset.tone = tone;
+	};
+
+	/**
+	 * Report a camera or tracker failure where the learner is actually looking.
+	 *
+	 * The avatar's status strip is the wrong home for this: it sits in the OTHER
+	 * panel, over the 3D stage, hundreds of pixels from the button that was just
+	 * pressed, so pressing "Turn the camera on" and being refused looked like the
+	 * button did nothing. The hint box is directly above that button in both the
+	 * two-column and the stacked layout, and is already a polite live region, so
+	 * the recovery sentence goes there and the stage strip is cleared rather than
+	 * left repeating it into a second live region.
+	 *
+	 * @param {string} message  what went wrong and what to do about it
+	 */
+	const reportCameraProblem = (message) => {
+		stopCamera();
+		setStatus('');
+		setHint(message, 'warn');
 	};
 
 	const setScore = (value, holding, heldMs) => {
@@ -396,7 +419,7 @@ async function boot() {
 	const startCamera = async () => {
 		if (running) return;
 		if (!navigator.mediaDevices?.getUserMedia) {
-			setStatus(
+			setHint(
 				window.isSecureContext
 					? 'This browser has no camera API. Practice with the target diagram instead.'
 					: 'Browsers only hand out the camera over HTTPS. Open this page on https://three.ws to be graded live.',
@@ -442,8 +465,7 @@ async function boot() {
 			// A tracker that half-loaded is not reusable: drop it so the next
 			// attempt downloads it again rather than throwing on a dead handle.
 			if (failedAt === 'tracker') landmarker = null;
-			stopCamera();
-			setStatus(cameraFailureMessage(err, failedAt), 'warn');
+			reportCameraProblem(cameraFailureMessage(err, failedAt));
 		} finally {
 			cameraBtn.disabled = false;
 			cameraBtn.removeAttribute('aria-busy');
@@ -464,8 +486,7 @@ async function boot() {
 			// the page claiming the camera is on. Stop, and say why.
 			log.warn('[sign-mirror] tracker failed', err?.message);
 			landmarker = null;
-			stopCamera();
-			setStatus('The hand tracker stopped. Turn the camera on again to restart it.', 'warn');
+			reportCameraProblem('The hand tracker stopped. Turn the camera on again to restart it.');
 			return;
 		}
 		const hand = result?.landmarks?.[0];

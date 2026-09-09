@@ -194,7 +194,17 @@
 				content: ''; position: absolute; inset: 0; width: var(--sm-hold, 0%);
 				background: rgba(255,255,255,.35); border-radius: inherit; transition: width var(--duration-instant) linear;
 			}
-			#sm-hint { min-height: 42px; border: 1px dashed var(--stroke); border-radius: 12px; padding: 10px 13px; font-size: 14px; color: var(--ink-dim); line-height: 1.5; }
+			#sm-hint {
+				min-height: 42px; border: 1px dashed var(--stroke); border-radius: 12px;
+				padding: 10px 13px; font-size: 14px; color: var(--ink-dim); line-height: 1.5;
+				transition: border-color var(--duration-base) var(--ease-standard), color var(--duration-base) var(--ease-standard), background var(--duration-base) var(--ease-standard);
+			}
+			/* A camera that refused to start is not a coaching tip, and the sentence
+			   alone does not say so: the box it lands in has to read as a problem. */
+			#sm-hint[data-tone='warn'] {
+				border-style: solid; border-color: var(--warn);
+				background: rgba(252, 211, 77, .09); color: var(--ink);
+			}
 			#sm-fingers { display: flex; flex-direction: column; gap: 6px; }
 			.sm-finger { display: grid; grid-template-columns: 64px 1fr; align-items: center; gap: 10px; }
 			.sm-finger-name { font-size: 12px; color: var(--ink-dim); font-family: var(--font-mono); text-transform: capitalize; }
