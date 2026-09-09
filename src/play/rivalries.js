@@ -83,7 +83,12 @@ export function mountRivalries(el, { network = 'mainnet', window: win = '7d', lo
 		if (stopped) return;
 		try {
 			const q = new URLSearchParams({ network, window: win, lookback, limit: String(limit) });
-			const res = await fetch(`/api/sniper/rivalries?${q}`, { headers: { accept: 'application/json' } });
+			const res = await fetch(`/api/sniper/rivalries?${q}`, {
+				headers: { accept: 'application/json' },
+				// A strip under a 3D scene must not hold a request open indefinitely: a
+				// stalled fetch would keep the skeleton up forever with no way back.
+				signal: AbortSignal.timeout(8000),
+			});
 			if (!res.ok) throw new Error(`http ${res.status}`);
 			const data = await res.json();
 			if (stopped) return;
