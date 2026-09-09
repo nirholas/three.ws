@@ -86,6 +86,25 @@ Installs with the PWA, no store submission: open three.ws in Edge, install it, o
 board (`Win + W`), **Add widgets**, pick **Agent glance**. It authenticates with your session and
 refreshes every 15 minutes. Details in [glance.md](glance.md#on-the-windows-11-widgets-board).
 
+### For developers
+
+The board holds three moving parts: the `widgets` member of the PWA manifest (generated from
+`vite.config.js`), the Adaptive Card template at `/api/glance/template`, and
+[public/glance-sw.js](../public/glance-sw.js), which is the only thing that ever calls
+`widgets.updateByTag`. `npm run check:windows-widget` verifies all three against each other
+without Windows, and it is in `npm run gate`.
+
+Two traps are worth knowing before you touch the card, because both draw an empty slot rather
+than an error, and neither is visible outside a real board:
+
+- **`msAcTemplate` is the URL of the card, not the card.** The host fetches nothing for you. A
+  worker that hands `updateByTag` that string leaves every pinned slot blank.
+- **The template is Adaptive Expression Language, not JavaScript.** An array is indexed with
+  brackets (`${stats[0].label}`); a dot before a digit is a syntax error, and the engine throws
+  on the whole card rather than skipping the one binding, so a single dotted index empties the
+  entire widget. `api/_lib/glance-adaptive.js` writes paths the JavaScript way and converts them
+  on the way out, and the guard expands the result in the board's own engine to prove it.
+
 ## macOS and iOS
 
 One WidgetKit extension serves both, in small, medium and large. It fetches the same
