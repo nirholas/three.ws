@@ -13,9 +13,17 @@
  * Any route that fails in the parallel pass is re-run once, serially, and that
  * second reading is what the report carries. This worktree is shared with other
  * agents and a sweep routinely runs beside somebody else's full build; a page
- * that misses its settle window at load 100+ has not failed. A real defect
- * reproduces on the quiet retry, so nothing is excused, only re-measured, and
- * the report says how many routes cleared that way.
+ * that misses its settle window at load 100+ has not failed. The report says how
+ * many routes cleared that way.
+ *
+ * The retry clears a momentary spike. It does NOT clear a sweep run while a
+ * multi-minute build is going, because the retry runs under the same load, so a
+ * surviving failure is evidence but not proof. On 2026-09-09 a sweep at load 80
+ * to 100 reported 31 failing routes and 29 of them passed on a quiet box, all
+ * with the same signature (a texture or module fetch dropped mid-load). Before
+ * acting on a failure list: read the load, and if it is high, re-run just the
+ * failures once the box is quiet, against a dev server you started yourself.
+ * docs/audit/console-sweep-2026-09-09.md carries that comparison.
  *
  * Usage:
  *   node scripts/audit-console.mjs                  # every HTML route, both viewports
