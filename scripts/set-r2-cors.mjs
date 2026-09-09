@@ -16,6 +16,8 @@
  *   node scripts/set-r2-cors.mjs --probe       # measure the LIVE policy from outside (no credentials at all)
  *   node scripts/set-r2-cors.mjs --probe --site=https://staging.example  # probe another deployment
  *   node scripts/set-r2-cors.mjs --probe --key=thumb/x.png               # read a specific object
+ *   node scripts/set-r2-cors.mjs --probe --endpoint=https://<account>.r2.cloudflarestorage.com --bucket=<name>
+ *                                              # measure the write rule when the presign routes are down
  *   node scripts/set-r2-cors.mjs --get         # read the live policy (needs an admin token)
  *   node scripts/set-r2-cors.mjs --dry-run     # print the policy, don't push
  *   node scripts/set-r2-cors.mjs               # apply (idempotent, needs an admin token)
@@ -243,32 +245,42 @@ async function probe() {
 		return false;
 	}
 
+	// A missing write host does NOT abort the probe. The `public-read` rule is
+	// the one third-party embeds actually hit, it is measurable on its own, and
+	// the presign routes that reveal the write host return 503 exactly when
+	// object storage is unhealthy. Reporting the half we can measure beats
+	// exiting with nothing measured at all.
 	const writeUrl = await probeWriteUrl(site);
 	if (!writeUrl) {
-		console.error('--probe could not determine the presigned-upload host.');
-		console.error(`Set S3_ENDPOINT + S3_BUCKET, or check that ${site}/api/forge-upload is reachable.`);
-		return false;
+		console.warn('Note: the presigned-upload host could not be determined, so the');
+		console.warn('`browser-upload` (write) rule is NOT measured below and shows as "skip".');
+		console.warn(`Pass it explicitly to measure that rule too, no credentials needed:`);
+		console.warn('  node scripts/set-r2-cors.mjs --probe --endpoint=https://<account>.r2.cloudflarestorage.com --bucket=<name>');
+		console.warn('(both values are non-secret; read them with `node scripts/read-service-env.mjs \'^S3_ENDPOINT$\' --raw`)\n');
 	}
 
-	console.log(`Probing ${Bucket || hostLabel(writeUrl)} (read: ${readUrl})\n`);
+	console.log(`Probing ${Bucket || hostLabel(writeUrl || readUrl)} (read: ${readUrl})\n`);
 	console.log(`${'ORIGIN'.padEnd(38)} ${'READ'.padEnd(6)} ${'WRITE'.padEnd(6)} EXPECTED`);
 
 	let ok = true;
 	for (const origin of PROBE_ORIGINS) {
 		const [read, write] = await Promise.all([
 			corsAllowed(readUrl, origin, 'GET'),
-			corsAllowed(writeUrl, origin, 'PUT'),
+			writeUrl ? corsAllowed(writeUrl, origin, 'PUT') : Promise.resolve(null),
 		]);
 		const wantRead = ruleAllows('public-read', origin);
 		const wantWrite = ruleAllows('browser-upload', origin);
-		const bad = read !== wantRead || write !== wantWrite;
+		const bad = read !== wantRead || (write !== null && write !== wantWrite);
 		if (bad) ok = false;
 		const want = `read=${wantRead ? 'yes' : 'no'} write=${wantWrite ? 'yes' : 'no'}${bad ? '  <- DRIFT' : ''}`;
-		console.log(`${origin.padEnd(38)} ${(read ? 'yes' : 'no').padEnd(6)} ${(write ? 'yes' : 'no').padEnd(6)} ${want}`);
+		const writeCell = write === null ? 'skip' : write ? 'yes' : 'no';
+		console.log(`${origin.padEnd(38)} ${(read ? 'yes' : 'no').padEnd(6)} ${writeCell.padEnd(6)} ${want}`);
 	}
 
 	console.log('');
-	if (ok) {
+	if (ok && !writeUrl) {
+		console.log('Live READ policy matches POLICY in this script. The write rule was not measured.');
+	} else if (ok) {
 		console.log('Live policy matches POLICY in this script.');
 	} else {
 		console.log('Live policy DIFFERS from POLICY in this script. Apply it with an admin token:');
@@ -326,28 +338,46 @@ async function discoverPublicAssetUrl(site, publicHost) {
 	return null;
 }
 
-// The presigned-upload host. From env when credentials are present, else from
-// the site's own auth-free presign endpoint, which returns a real upload URL on
-// the exact host the browser PUTs to. Only its OPTIONS preflight is ever sent,
-// so no object is created.
+// The presigned-upload host. Three sources, best first: an explicit
+// --endpoint (the S3 endpoint and bucket name are not secrets, so anyone can
+// pass them), the same values from env, and finally the site's own auth-free
+// presign endpoints, which return a real upload URL on the exact host the
+// browser PUTs to. Only an OPTIONS preflight is ever sent, so no object is
+// created and no presigned signature is ever used.
+//
+// Every presign endpoint is tried in turn rather than just the first: they all
+// hand back a URL on the one host we want, so any one of them answering is
+// enough. That matters because a presign route returns 503 while object storage
+// itself is unhealthy, and the write host is still perfectly measurable then.
 async function probeWriteUrl(site) {
-	if (process.env.S3_ENDPOINT && Bucket) {
-		return `${process.env.S3_ENDPOINT.replace(/\/$/, '')}/${Bucket}/${PROBE_WRITE_KEY}`;
+	const endpoint = argValue('--endpoint') || process.env.S3_ENDPOINT;
+	const bucket = argValue('--bucket') || Bucket;
+	if (endpoint && bucket) {
+		return `${endpoint.replace(/\/$/, '')}/${bucket}/${PROBE_WRITE_KEY}`;
 	}
-	try {
-		const res = await fetch(`${site}/api/forge-upload`, {
-			method: 'POST',
-			headers: { 'content-type': 'application/json', 'x-forge-client': 'set-r2-cors-probe' },
-			body: JSON.stringify({ content_type: 'image/png', size_bytes: 1024 }),
-		});
-		if (!res.ok) return null;
-		const { upload_url: uploadUrl } = await res.json();
-		if (!uploadUrl) return null;
-		const u = new URL(uploadUrl);
-		return `${u.origin}${u.pathname}`;
-	} catch {
-		return null;
+
+	const presignRoutes = [
+		['/api/forge-upload', { content_type: 'image/png', size_bytes: 1024 }],
+		['/api/avatar/presign-glb', { content_type: 'model/gltf-binary', size_bytes: 1024 }],
+		['/api/avatar/presign-audio', { content_type: 'audio/mpeg', size_bytes: 1024 }],
+	];
+	for (const [path, body] of presignRoutes) {
+		try {
+			const res = await fetch(`${site}${path}`, {
+				method: 'POST',
+				headers: { 'content-type': 'application/json', 'x-forge-client': 'set-r2-cors-probe' },
+				body: JSON.stringify(body),
+			});
+			if (!res.ok) continue;
+			const { upload_url: uploadUrl } = await res.json();
+			if (!uploadUrl) continue;
+			const u = new URL(uploadUrl);
+			return `${u.origin}${u.pathname}`;
+		} catch {
+			continue;
+		}
 	}
+	return null;
 }
 
 function hostLabel(url) {

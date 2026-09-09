@@ -183,20 +183,21 @@ here; the code-quality items from that pass are not production issues.
 
 9. **Live R2 CORS does not match `scripts/set-r2-cors.mjs`** (owner action:
     one credential). CONFIRMED by measurement, not inference, and RE-CONFIRMED
-    unchanged on 2026-09-04: `node scripts/set-r2-cors.mjs --probe` reads the
+    unchanged on 2026-09-09: `node scripts/set-r2-cors.mjs --probe` reads the
     enforced policy from outside and exits 1 on this bucket. The probe needs no
     credentials of any kind (it discovers the public host from a live listing
-    endpoint and the upload host from the auth-free `/api/forge-upload`), so
-    anyone can re-check this in one command.
+    endpoint, and the upload host from an auth-free presign route or from an
+    explicit `--endpoint=`/`--bucket=`, both non-secret), so anyone can re-check
+    this in one command.
 
-    Measured again 2026-09-04, every row from raw `curl` as well as the probe:
+    Measured again 2026-09-09, every row from raw `curl` as well as the probe:
 
     | Surface | Result |
     |---|---|
     | Site edge, `three.ws/avatars/*.glb`, foreign origin | PASS, `access-control-allow-origin: *` with `access-control-allow-methods: GET, HEAD, OPTIONS`. Not affected. |
     | Site edge, first-party `three.ws/cdn/<key>`, foreign origin | PASS, `access-control-allow-origin: *`. Serves the same bucket objects, so it is a working route around the row below for any caller that has the object key. |
-    | Public bucket host `pub-*.r2.dev`, foreign origin GET/HEAD | FAIL. Body returns `200`, but with no `access-control-allow-origin`, so the browser discards it. Allowlisted origins DO get their origin echoed (`Vary: Origin`), which is how the live read rule is known to still be the old allowlist rather than the world-open `*`. Its `OPTIONS` preflight is a bare `403`. |
-    | Presigned `PUT` preflight on the S3 endpoint | Mixed, unchanged. `204` for `three.ws`, `*.vercel.app` (wildcard confirmed with a synthetic subdomain), `localhost:3000`; `403` for `www.three.ws`, `*.app.github.dev`, `localhost:5173`. |
+    | Public bucket host `pub-*.r2.dev`, foreign origin GET/HEAD | FAIL. On a real `200` object, `https://example.org` gets the body with no `access-control-allow-origin`, so the browser discards it. Allowlisted origins DO get their origin echoed (`Vary: Origin`), which is how the live read rule is known to still be the old allowlist rather than the world-open `*`. Its `OPTIONS` preflight is a bare `403`. |
+    | Presigned `PUT` preflight on the S3 endpoint | Mixed, unchanged. `204` for `three.ws`, `*.vercel.app` (wildcard confirmed with a synthetic subdomain), `localhost:3000`; `403` for `www.three.ws`, `*.app.github.dev`, `localhost:5173`, `example.org`. |
 
     The live policy is one allowlist rule serving both reads and writes
     (`GET, PUT, HEAD, POST, DELETE`), predating the script's split into a
@@ -210,14 +211,18 @@ here; the code-quality items from that pass are not production issues.
     applies where (docs/media-api.md, docs/character-library.md, both embed
     tutorials).
 
-    Fixed on the way past, 2026-09-04: the site edge advertised
-    `access-control-allow-methods: GET, HEAD, OPTIONS` on the media routes but
-    answered `OPTIONS` with the 404 page, because the filesystem phase of
-    [server/index.mjs](server/index.mjs) serves GET/HEAD only. A simple
-    cross-origin GET was unaffected (it sends no preflight), but any fetch
-    carrying a non-safelisted header was blocked. Those routes now answer the
-    preflight `204` from the headers the route already collected
-    (tests/server-media-cors-preflight.test.js). Ships with the next deploy.
+    Fixed on the way past, 2026-09-04, and now VERIFIED LIVE (2026-09-09): the
+    site edge advertised `access-control-allow-methods: GET, HEAD, OPTIONS` on
+    the media routes but answered `OPTIONS` with the 404 page, because the
+    filesystem phase of [server/index.mjs](server/index.mjs) serves GET/HEAD
+    only. A simple cross-origin GET was unaffected (it sends no preflight), but
+    any fetch carrying a non-safelisted header was blocked. Those routes now
+    answer the preflight `204` from the headers the route already collected
+    (tests/server-media-cors-preflight.test.js). Confirmed on the live site:
+    `curl -I -X OPTIONS -H 'Origin: https://example.org'
+    -H 'Access-Control-Request-Method: GET' -H 'Access-Control-Request-Headers: range'
+    https://three.ws/avatars/cesium-man.glb` returns `204` with
+    `access-control-allow-origin: *` and `access-control-allow-headers: range`.
 
     Blocked on one credential, not on code. The only R2 token reachable from
     this machine (`S3_*` in `.env`, identical to the Cloud Run service env,
@@ -234,6 +239,36 @@ here; the code-quality items from that pass are not production issues.
     script prints the exact steps; its `--get` path explains this instead
     of crashing), drop it in `.env.local` as `R2_ACCESS_KEY_ID`/`R2_SECRET_ACCESS_KEY`,
     then `node scripts/set-r2-cors.mjs` and confirm with `--probe`.
+
+10. **Object storage is DOWN in production: the bucket rejects our credential**
+    (owner action: one env var). Found 2026-09-09 while measuring item 9.
+    `/api/healthz` reports the `object_storage` subsystem `down` with
+    `credentialFault: true` and the bucket's own words: `The request signature
+    we calculated does not match the signature you provided.` The access key id
+    is accepted, so the SECRET is what is wrong, not the code and not the key.
+
+    Live symptoms, all measured 2026-09-09:
+
+    | Surface | Result |
+    |---|---|
+    | `POST /api/forge-upload` | `503 storage_unavailable`, so no reference image can be parked and no upload can land. |
+    | `GET /api/avatars/library`, `GET /api/objects/library` | `{"total":0}`, empty manifests where the catalog should be. |
+    | `forge_generation` subsystem | `down`, 0/30 finished over 6 hours, every failure on the image path. |
+
+    No lane failover routes around it: `/cdn/<key>` falls back to the
+    rate-limited public bucket domain, and the forge cannot stage inputs at all.
+    On Cloudflare R2 the secret access key is the API token's SHA-256 digest,
+    not the token value, and a trailing newline fails identically (`env.js`
+    trims, so a padded value can only come from a store read elsewhere).
+
+    `S3_SECRET_ACCESS_KEY` on `three-ws-api` is a Secret Manager reference
+    (`secret:s3-secret-access-key:latest`), and reading or rotating it is
+    owner-gated from this machine. Owner: re-set that secret to the token's
+    SHA-256 digest, then confirm with
+    `curl -s https://three.ws/api/healthz | grep -o '"name":"object_storage"[^}]*'`.
+    Nothing else needs redeploying. Note this must be fixed BEFORE item 9's
+    admin-token step is worth doing: a correct CORS policy on a bucket we
+    cannot authenticate to changes nothing users can see.
 
 ---
 
