@@ -237,6 +237,13 @@
 		}
 		.how b { color:var(--muted); font-weight:650; }
 
+		/* The 3D stage IS the content, so the document heading exists for
+		   assistive tech and search engines rather than for sighted layout. */
+		.sr-only {
+			position:absolute; width:1px; height:1px; padding:0; margin:-1px;
+			overflow:hidden; clip:rect(0 0 0 0); white-space:nowrap; border:0;
+		}
+
 		/* ── Mobile ──────────────────────────────────────────── */
 		@media (max-width:860px) {
 			#main { grid-template-columns:1fr; grid-template-rows:46vh 1fr; }
@@ -270,6 +277,10 @@
 			<a class="tb-btn" href="/pay" title="x402 pay-per-call demo" data-i18n="play_agent_wallet.x402_demo" data-i18n-attr="title:play_agent_wallet.x402_pay_per_call_demo_title">x402 demo</a>
 		</div>
 	</header>
+
+	<h1 class="sr-only" data-i18n="play_agent_wallet.page_heading">
+		Agent Wallet: your 3D avatar pays a live x402 endpoint with real USDC, settled on Solana
+	</h1>
 
 	<div id="main">
 		<section id="stage3d" aria-label="3D scene: your avatar pays a x402 endpoint kiosk">

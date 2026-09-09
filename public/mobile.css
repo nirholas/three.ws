@@ -921,10 +921,14 @@
 	}
 
 	/* The walk companion's own controls: 22x22, 22x22 and 20x21, floating
-	   over whatever page summoned it. */
+	   over whatever page summoned it. Its dismiss, avatar-swap, transition and
+	   narration buttons are the same 22x22 and were missing from this list. */
 	.walk-companion-trail,
 	.walk-companion-c2w,
-	.walk-companion-feedback {
+	.walk-companion-feedback,
+	.walk-companion-close,
+	.walk-companion-swap,
+	.walk-companion-narrate {
 		min-width: 44px;
 		min-height: 44px;
 		display: inline-flex;
