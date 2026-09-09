@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-09-09T04:26:17.431Z",
+	"generated_at": "2026-09-09T05:31:23.137Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -104,6 +104,17 @@
 				"fix",
 				"improvement",
 				"docs"
+			]
+		},
+		{
+			"date": "2026-09-09",
+			"type": "update",
+			"title": "Restyle Studio: a failed save now tells you what went wrong and what still works",
+			"summary": "A full audit of /restyle, the material and PBR editor. Every failure coming back from the server was thrown away and replaced with a bare status code: a rejected model URL read as \"Restyle failed: restyle failed (400)\" when the server had actually said which part of the URL it would not accept. The page now shows the real reason on all four calls it makes (AI restyle, seeded variants, version checkpoints, and texture generation). A second case got its own wording: when the model store itself is unavailable, the note says so, and points out that your edits are still live in the viewer and that Export GLB keeps working, because export runs entirely in your browser and needs no server at all. Dropping a local file used to be told to \"load a public URL instead\" even when the URL was never the problem, which sent people in circles; the advice now matches the actual failure. Verified end to end in a real browser: the 18 material presets, the live metalness, roughness, colour and emissive sliders, the seeded variant strip, Reset, and a validated GLB export all check out, as do the loading and error states, keyboard focus on every control, and the layout at 320, 768 and 1440 pixels.",
+			"link": "/restyle",
+			"tags": [
+				"fix",
+				"improvement"
 			]
 		},
 		{
@@ -224,6 +235,16 @@
 			"tags": [
 				"fix",
 				"improvement"
+			]
+		},
+		{
+			"date": "2026-09-09",
+			"type": "update",
+			"title": "The homepage stops calling its Community strip live when no new models are arriving",
+			"summary": "The Community strip on the homepage is headed \"Made with Forge. Right now.\" and carries a pulsing live chip. That chip was switched on by the Fresh tab alone, so it asserted liveness no matter how old the newest model on the strip actually was. When our object storage started rejecting the platform's credential on 2026-09-07, finished generations could no longer be recorded, the strip froze on the last model stored before that, and the chip went on pulsing live over two-day-old work with nothing on the page to say otherwise. The chip is now earned by the data: it appears only when the newest model on the strip is from the last six hours, and it reads the newest timestamp in the list rather than trusting the order it arrives in. Older models still show exactly as before, because a quiet stretch is worth showing; it just is not live.",
+			"link": "/",
+			"tags": [
+				"fix"
 			]
 		},
 		{

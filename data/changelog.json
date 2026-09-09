@@ -3,6 +3,15 @@
 	"entries": [
 		{
 			"date": "2026-09-09",
+			"title": "The homepage stops calling its Community strip live when no new models are arriving",
+			"summary": "The Community strip on the homepage is headed \"Made with Forge. Right now.\" and carries a pulsing live chip. That chip was switched on by the Fresh tab alone, so it asserted liveness no matter how old the newest model on the strip actually was. When our object storage started rejecting the platform's credential on 2026-09-07, finished generations could no longer be recorded, the strip froze on the last model stored before that, and the chip went on pulsing live over two-day-old work with nothing on the page to say otherwise. The chip is now earned by the data: it appears only when the newest model on the strip is from the last six hours, and it reads the newest timestamp in the list rather than trusting the order it arrives in. Older models still show exactly as before, because a quiet stretch is worth showing; it just is not live.",
+			"tags": [
+				"fix"
+			],
+			"link": "/"
+		},
+		{
+			"date": "2026-09-09",
 			"title": "The retired Flappin UFO page is readable in light mode, and its two bottom-corner controls stopped sitting on top of each other",
 			"summary": "A full audit of /play/ufo, the page that stands where the retired Flappin UFO arcade demo used to be. In light mode its headline was painted in a violet-to-cyan gradient that all but vanished against the white card, the Retired badge and the Still live label were too pale to read, and the keyboard focus ring was that same near-invisible cyan, so tabbing through the page showed you nothing. All four now clear the contrast bar in both themes. The three links to the experiences that are still live were 37 pixels tall and the three.ws logo link was 21, both under the 44 pixels a thumb needs; every link on the page now clears it. The language picker and the Ctrl+K search hint were both pinned to the bottom right corner and overlapped each other, because this page carries its own compact header instead of the site nav that normally arranges that corner; they now stack. Two fixes from this audit land site-wide: the search hint was drawing dark text on its dark default pill on every light-themed page that does not define the site's surface colors, and neither floating control could be reached by screen reader landmark navigation. The page copy also lost the long dash the house style bans, in English and in all 84 translations.",
 			"tags": [
