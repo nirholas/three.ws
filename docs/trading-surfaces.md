@@ -25,6 +25,7 @@ On top of that base layer:
 - **Price history** (candlesticks) comes from Birdeye with GeckoTerminal fallback.
 - **Live trades** stream over server-sent events from `/api/pump/trades-stream` (PumpPortal websocket, relayed). PumpPortal gates per-coin trade subscriptions behind an API key funded with at least 0.02 SOL; when it refuses one, the socket stays open and simply never delivers, so the relay forwards that refusal as an SSE `notice` event and the tape shows a degraded state instead of a lit "live" lamp over an empty panel. A malformed `mint` is refused up front with `400 invalid_mint`.
 - **Smart-money pedigree** comes from the proven-wallet ledger (`/api/intel/smart-money`).
+- **Rivalries** ([the matchup layer](rivalries.md)) turns the leaderboard's own deltas into what changed: who passed whom, who just arrived, and who is closing. It reads the same closed positions the board is ranked from.
 
 One naming trap for API users: `/radar` is served by `api/pump/coin-intel.js` and `/coin-intel` is served by `api/pump/intel.js`. The names look swapped; they are two distinct read models over the same engine.
 

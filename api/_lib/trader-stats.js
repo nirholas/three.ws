@@ -514,7 +514,7 @@ export async function fetchTraderPositions({ agentId, network, window = 'all', n
 
 /** SOL/USD with a short module cache so a burst of stat requests prices once. */
 let _solCache = { usd: null, at: 0 };
-async function cachedSolUsd() {
+export async function cachedSolUsd() {
 	const now = Date.now();
 	if (_solCache.usd != null && now - _solCache.at < 60_000) return _solCache.usd;
 	try {
@@ -655,7 +655,7 @@ export async function mintLaunchTimes(mints, network) {
 }
 
 /** Self-deal mint sets for many users at once (leaderboard). Map(userId → Set(mint)). */
-async function selfDealMintsByUsers(userIds, network) {
+export async function selfDealMintsByUsers(userIds, network) {
 	const byUser = new Map();
 	const ids = [...new Set((userIds || []).filter(Boolean))];
 	if (!ids.length) return byUser;
@@ -800,6 +800,48 @@ function buildProjectionComparison(snap, metrics) {
  * public agents only) so strategy traders rank alongside snipers. Best-effort: an
  * unmigrated table yields no extra rows rather than failing the whole board.
  */
+/**
+ * Every public agent's positions for one network, board-shaped: the sniper arena
+ * ledger plus Strategy Objects, aliased into the one canonical position shape.
+ * `start` (ISO) window-bounds CLOSED positions by close time; open positions are
+ * always included, because current exposure is "now" regardless of window. Pass
+ * `start = null` for the all-time board.
+ *
+ * Extracted so the leaderboard and the rivalry engine read the same rows through
+ * the same joins and the same is_public gate: two boards computed from one fetch
+ * can never disagree about who is on them.
+ */
+export async function fetchLeaderboardPositions({ network, start }) {
+	const [rows, strategyRows] = await Promise.all([
+		start
+			? sql`
+				select p.id, p.agent_id, p.wallet, p.mint, p.symbol, p.name, p.status, p.exit_reason,
+				       p.entry_quote_lamports, p.exit_quote_lamports, p.last_value_lamports, p.peak_value_lamports,
+				       p.realized_pnl_lamports, p.realized_pnl_pct, p.buy_sig, p.sell_sig,
+				       p.opened_at, p.closed_at,
+				       p.moonbag_base_amount, p.moonbag_last_value_lamports, p.initials_recovered,
+				       a.user_id as agent_user_id, a.name as agent_name, a.avatar_url as agent_avatar, a.profile_image_url as agent_image
+				from agent_sniper_positions p
+				join agent_identities a on a.id = p.agent_id
+				where p.network = ${network} and a.is_public is not false
+				  and (p.status in ('open','opening','closing') or p.closed_at >= ${start})
+			`
+			: sql`
+				select p.id, p.agent_id, p.wallet, p.mint, p.symbol, p.name, p.status, p.exit_reason,
+				       p.entry_quote_lamports, p.exit_quote_lamports, p.last_value_lamports, p.peak_value_lamports,
+				       p.realized_pnl_lamports, p.realized_pnl_pct, p.buy_sig, p.sell_sig,
+				       p.opened_at, p.closed_at,
+				       p.moonbag_base_amount, p.moonbag_last_value_lamports, p.initials_recovered,
+				       a.user_id as agent_user_id, a.name as agent_name, a.avatar_url as agent_avatar, a.profile_image_url as agent_image
+				from agent_sniper_positions p
+				join agent_identities a on a.id = p.agent_id
+				where p.network = ${network} and a.is_public is not false
+			`,
+		fetchStrategyLeaderboardRows({ network, start }),
+	]);
+	return strategyRows.length ? [...rows, ...strategyRows] : rows;
+}
+
 async function fetchStrategyLeaderboardRows({ network, start }) {
 	try {
 		return start
@@ -854,34 +896,7 @@ export async function getLeaderboard({
 	network, window = '30d', limit = 100, sort = 'score', verifiedOnly = false, now = Date.now(),
 }) {
 	const start = windowStartIso(window, now);
-	const [rows, strategyRows] = await Promise.all([
-		start
-			? sql`
-				select p.id, p.agent_id, p.wallet, p.mint, p.symbol, p.name, p.status, p.exit_reason,
-				       p.entry_quote_lamports, p.exit_quote_lamports, p.last_value_lamports, p.peak_value_lamports,
-				       p.realized_pnl_lamports, p.realized_pnl_pct, p.buy_sig, p.sell_sig,
-				       p.opened_at, p.closed_at,
-				       p.moonbag_base_amount, p.moonbag_last_value_lamports, p.initials_recovered,
-				       a.user_id as agent_user_id, a.name as agent_name, a.avatar_url as agent_avatar, a.profile_image_url as agent_image
-				from agent_sniper_positions p
-				join agent_identities a on a.id = p.agent_id
-				where p.network = ${network} and a.is_public is not false
-				  and (p.status in ('open','opening','closing') or p.closed_at >= ${start})
-			`
-			: sql`
-				select p.id, p.agent_id, p.wallet, p.mint, p.symbol, p.name, p.status, p.exit_reason,
-				       p.entry_quote_lamports, p.exit_quote_lamports, p.last_value_lamports, p.peak_value_lamports,
-				       p.realized_pnl_lamports, p.realized_pnl_pct, p.buy_sig, p.sell_sig,
-				       p.opened_at, p.closed_at,
-				       p.moonbag_base_amount, p.moonbag_last_value_lamports, p.initials_recovered,
-				       a.user_id as agent_user_id, a.name as agent_name, a.avatar_url as agent_avatar, a.profile_image_url as agent_image
-				from agent_sniper_positions p
-				join agent_identities a on a.id = p.agent_id
-				where p.network = ${network} and a.is_public is not false
-			`,
-		fetchStrategyLeaderboardRows({ network, start }),
-	]);
-	const allRows = strategyRows.length ? [...rows, ...strategyRows] : rows;
+	const allRows = await fetchLeaderboardPositions({ network, start });
 	const solUsd = await cachedSolUsd();
 	const copiers = await activeCopierCounts(network);
 

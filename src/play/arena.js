@@ -14,6 +14,7 @@ import { createLogger } from '../shared/log.js';
 import { fetchReputationBatch } from '../shared/agent-reputation.js';
 import { fetchUnlocks } from '../shared/wallet-access.js';
 import { evaluateAccessKey, buildAccessContext } from '../shared/wallet-access-rules.js';
+import { mountRivalries } from './rivalries.js';
 
 const log = createLogger('arena');
 
@@ -155,6 +156,10 @@ function ingest(data) {
 	// Controls are wired before anything can fail, so the retry button, the avatar
 	// picker and the sort toggle respond from the first frame.
 	mountControls();
+
+	// The grudge-match strip reads its own endpoint and owns its own states, so it
+	// paints (or says why it cannot) without waiting on the board or the 3D world.
+	mountRivalries(document.getElementById('rivalries'), { network: NETWORK, window: '7d', lookback: '24h', limit: 2 });
 
 	// The HUD reads the leaderboard API, which owes nothing to the 3D load. Firing
 	// it here means the board (or its error state) paints while the animation

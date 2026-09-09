@@ -131,6 +131,45 @@
 		.as-kpi b.up { color: var(--up); } .as-kpi b.down { color: var(--down); }
 		.as-kpi i { font: 500 10px/1.1 var(--mono); color: var(--faint); font-style: normal; }
 
+		/* grudge matches: what changed on the board, under the numbers that changed */
+		.rivalries { border-bottom: 1px solid var(--line); padding: 9px 12px 10px; display: flex; flex-direction: column; gap: 8px; }
+		.rv-head { font-size: 9.5px; text-transform: uppercase; letter-spacing: .07em; color: var(--faint); display: flex; gap: 6px; align-items: baseline; }
+		.rv-head i { font-style: normal; text-transform: none; letter-spacing: 0; opacity: .75; }
+		.rv-row { display: grid; grid-template-columns: 34px 1fr; gap: 9px; align-items: start; }
+		.rv-faces { position: relative; display: block; width: 34px; height: 26px; }
+		.rv-face { position: absolute; top: 0; width: 22px; height: 22px; border-radius: 7px; object-fit: cover;
+			background: radial-gradient(120% 100% at 50% 0%, #1b2233, #0d1018); border: 1px solid var(--line); }
+		.rv-face-fb { display: grid; place-items: center; font: 700 10px/1 var(--mono); color: var(--faint); }
+		.rv-face.rv-a { left: 0; z-index: 2; border-color: color-mix(in srgb, var(--cyan) 45%, var(--line)); }
+		.rv-face.rv-b { left: 12px; z-index: 1; filter: saturate(.7); }
+		.rv-body { min-width: 0; }
+		.rv-l1 { display: flex; gap: 6px; align-items: baseline; }
+		.rv-l1 b { font: 600 12px/1.3 Inter, sans-serif; color: var(--ink); }
+		.rv-kind { flex: none; font: 700 8.5px/1.6 var(--mono); text-transform: uppercase; letter-spacing: .06em;
+			padding: 0 6px; border-radius: 999px; background: rgba(255,255,255,0.06); color: var(--muted); }
+		.rv-kind.overtake { background: color-mix(in srgb, var(--up) 20%, transparent); color: var(--up); }
+		.rv-kind.debut { background: color-mix(in srgb, var(--gold) 20%, transparent); color: var(--gold); }
+		.rv-kind.chase { background: color-mix(in srgb, var(--cyan) 16%, transparent); color: var(--cyan); }
+		.rv-l2 { font-size: 11px; line-height: 1.38; color: var(--muted); margin-top: 2px; }
+		.rv-shared { display: block; font: 500 10.5px/1.4 var(--mono); color: var(--faint); margin-top: 3px; }
+		.rv-cta { display: flex; gap: 12px; margin-top: 4px; flex-wrap: wrap; }
+		.rv-cta a { font-size: 10.5px; color: var(--cyan); text-decoration: none; border-bottom: 1px solid transparent; transition: border-color .15s; }
+		.rv-cta a:hover { border-bottom-color: currentColor; }
+		.rv-cta a:focus-visible { outline: 2px solid var(--cyan); outline-offset: 2px; border-radius: 3px; }
+		.rv-note { font-size: 11.5px; line-height: 1.45; color: var(--muted); }
+		.rv-note.rv-err { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; color: var(--gold); }
+		.rv-note.rv-err b { color: var(--gold); font-weight: 600; }
+		.rv-retry { padding: 4px 10px; border-radius: 7px; border: 1px solid var(--line); background: rgba(255,255,255,0.04);
+			color: var(--ink); font: 600 11px/1 Inter, sans-serif; }
+		.rv-retry:hover { border-color: var(--cyan); color: var(--cyan); }
+		.rv-skel i { display: block; height: 10px; border-radius: 5px;
+			background: linear-gradient(90deg, rgba(255,255,255,0.03) 25%, rgba(255,255,255,0.08) 37%, rgba(255,255,255,0.03) 63%);
+			background-size: 400% 100%; animation: sh 1.3s infinite; }
+		.rv-skel { grid-template-columns: 34px 1fr; row-gap: 6px; }
+		.rv-skel .rv-sk-face { grid-row: 1 / span 2; height: 22px; width: 22px; border-radius: 7px; }
+		.rv-skel .rv-sk-l2 { width: 70%; }
+		@media (prefers-reduced-motion: reduce) { .rv-skel i { animation: none; } }
+
 		/* sort segmented control */
 		.board-tools:empty, .sort-seg[hidden] { display: none; }
 		.board-tools { padding: 9px 12px; border-bottom: 1px solid var(--line); }
@@ -408,6 +447,7 @@
 			</div>
 		</div>
 		<div class="arena-stats" id="arenaStats" hidden></div>
+		<section class="rivalries" id="rivalries" aria-label="Grudge matches" hidden></section>
 		<div class="board-tools">
 			<div class="sort-seg" id="sortSeg" role="group" aria-label="Sort leaderboard" hidden>
 				<button type="button" data-sort="score" aria-pressed="true" data-i18n="play_arena.score">Score</button>
