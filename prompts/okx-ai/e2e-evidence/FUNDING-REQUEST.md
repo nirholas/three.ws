@@ -7,9 +7,16 @@ catalog and today's gas price, not padded.
 ## Re-verified 2026-09-09, and one blocker cleared itself
 
 - **Every gauntlet case that can run without funding passes.** `node
-  scripts/okx-e2e-gauntlet.mjs --dry-run` reads `4/4 cases exercised passed, 10 skipped`
-  (1, 1d, 5d, 7), and a separate real run closes two more (see the 5b/5c section below), so
-  six of the fourteen are green. The eight that remain are the paid legs this file unblocks.
+  scripts/okx-e2e-gauntlet.mjs --no-spend` reads `5/5 cases exercised passed, 9 skipped`
+  (1, 1d, 5b, 5c, 5d), with the buyer still at 0.000000 and `Settlements: 0`. Evidence:
+  `101-2026-09-09-no-spend-sweep.json`. The nine that remain are the paid legs this file
+  unblocks.
+- **Correction to the earlier version of this file, which claimed six green including case
+  7.** It is five. Case 7 asserts a legacy rail "still answers AND PAYS its own challenge",
+  and its paid leg has never run: the green came from a dry run, where the case passed on
+  the advertisement half alone. The script no longer allows that reading. It now records
+  case 7 as SKIP whenever the run is not allowed to pay, and `--no-spend` refuses every case
+  that can move money on any rail, case 7 included.
 - **Case 1d is GREEN in production.** The discovery paywall the 2026-09-02 version of this
   file called out as "one thing funding will NOT fix" shipped since. A spec-compliant MCP
   client (`Accept: text/event-stream` + `MCP-Protocol-Version`) now gets 200 on `initialize`
@@ -37,7 +44,7 @@ catalog and today's gas price, not padded.
   `avatar` and `fbx-export`; the gauntlet now buys the rows OKX actually lists.
 - **The ask is smaller.** $1.08 covers a clean run, against $3.00 before.
 
-## Live balances (X Layer RPC, direct `eth_call`, block 70162898, 2026-09-09)
+## Live balances (X Layer RPC, direct `eth_call`, re-read 2026-09-09 19:33 UTC, block 70213386)
 
 | Wallet | Role | USD₮0 | OKB |
 | --- | --- | --- | --- |
@@ -123,12 +130,14 @@ then refused inside the handler with `invalid_input` before the lane is asked fo
 Covered by a unit test in `tests/api/okx-forge.test.js` that asserts both hops, so the premise
 cannot rot silently. This is why the float floor above dropped from $1.32 to $1.08.
 
-## Optional second leg: make case 7 a real paid legacy settlement
+## Required second leg: case 7 needs a real paid legacy settlement
 
-Case 7 currently proves the pre-OKX rails are still advertised at the right price, which
-passes with no funding. The gauntlet is wired to also *pay* one, which turns it into a real
-regression test that adding X Layer did not break the rails the platform already sells on.
-The cheapest is the Solana USDC rail, whose accept carries a `feePayer`, so it needs **no SOL**:
+This is not optional, and an earlier version of this file was wrong to call it so. The work
+order's case 7 is "one paid call over an existing rail still works", and the case title says
+"answers AND pays". Today it proves only that the pre-OKX rails are still advertised at the
+right price. Paying one is what makes it a regression test that adding X Layer did not break
+a rail the platform already sells on. The cheapest is the Solana USDC rail, whose accept
+carries a `feePayer`, so it needs **no SOL**:
 
 | | |
 | --- | --- |
@@ -140,8 +149,7 @@ The cheapest is the Solana USDC rail, whose accept carries a `feePayer`, so it n
 The same challenge also advertises a **$THREE** rail
 (`FeMbDoX7R1Psc4GEcvJdsbNbZA3bfztcyDCatJVJpump`, 10 THREE for a draft call). Funding that
 instead, or as well, would let the gauntlet prove an agent can buy three.ws compute with
-$THREE. Say which you prefer; the run defaults to the USDC rail and skips the paid leg
-cleanly if the wallet is empty.
+$THREE. Say which you prefer; the run defaults to the USDC rail.
 
 Read both `asset` fields live before sending anything:
 
@@ -157,6 +165,13 @@ curl -s -X POST https://three.ws/api/okx/3d/forge-draft \
 ```bash
 node scripts/okx-e2e-gauntlet.mjs --budget    # confirms the float arrived
 node scripts/okx-e2e-gauntlet.mjs --yes       # the full gauntlet
+```
+
+Until then, the half that cannot move money is reproducible at any time and needs no
+authorization flag:
+
+```bash
+node scripts/okx-e2e-gauntlet.mjs --no-spend
 ```
 
 Cases 1, 1d, 2, 2b, 3, 3i, 3r, 5a, 5b, 5c, 5d, 6, 7, then case 4 (on-chain settlement

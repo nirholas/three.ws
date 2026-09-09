@@ -6,6 +6,95 @@ Work Order 04 session, no earlier entries existed because no earlier work order 
 
 ---
 
+## 2026-09-09 19:45 UTC, backlog-08: the last local footgun is closed, after it went off
+
+Fourth session on the chat host today. The state it inherited was correct and unchanged, so
+this entry is not another re-measurement: it is the one thing left that an agent could still
+do, found by running the work order's own instructions and watching them cause the failure
+they were written before.
+
+### Re-measured first, from the heartbeat row (no `gcloud`, still expired here)
+
+| Read | Value at 19:35 UTC |
+|---|---|
+| Host | `cloudrun:okx-chat-bot (okx-chat-bot-00001-926)`, `hostDurable: true`, boot 2026-09-05T00:33Z (4.8 days) |
+| Beat | 13 s old |
+| Delivery | `loggedIn: true`, `agentCount: 1`, `activeClients: 1`, `daemonRestarts: 0` |
+| Reply lane | `providerVerdict: unauthorized`, `providerTransport: vertex` |
+| Serving revision | still predates `ad723e87f`: the beat carries no `providerLane` or `providerChain` key |
+
+Unchanged from the entry below it, five hours later. Both owner actions still stand.
+
+### The incident: the work order's first instruction starts a second writer
+
+`prompts/finish/907-...md` opened with **"Immediate revive (do this first, it takes one
+command): `npm run okx:bot`"**, written when the codespace WAS the host. Running it today,
+to verify the definition-of-done line that names it, did exactly what the deployed host's
+`--max-instances=1` exists to prevent: it installed the CLIs, started a local daemon
+(`pid=54287`), installed a systemd autostart unit, and came up
+`agentCount=1 activeClients=1` against the same XMTP inbox and the same wallet keyring
+Cloud Run owns.
+
+Stopped three minutes later (`okx-a2a daemon stop`, autostart unit deleted). The deployed
+host never missed a beat: `daemonRestarts: 0` and `activeClients: 1` before, during and
+after, re-read at 19:42. Nothing was seeded to GCS, so the shared state object was never
+written from here. No harm; the point is that nothing except the operator's memory stood
+between that command and a torn identity, and a torn identity costs a human email OTP.
+
+### Closed mechanically, not with a warning
+
+`scripts/lib/okx-bot-host-guard.mjs` is a pure classifier plus one credential-free read,
+and `scripts/okx-bot-revive.mjs` now runs it before it installs or starts anything.
+Fail-open on ignorance, fail-closed on evidence:
+
+| Health endpoint says | Verdict |
+|---|---|
+| unreachable | allowed, with a warning: an emergency revive must not require the internet |
+| `no heartbeat reported yet` | allowed, nothing has ever hosted this bot |
+| `down`, heartbeat stale | allowed, this is the emergency the script exists for |
+| a beat whose host is this machine | allowed, re-staging where the daemon already runs adds no writer |
+| a beat from another host | refused, exit 3, `--force` to override |
+| a beat naming no host | refused |
+
+That last row is not hypothetical, and getting it wrong is what let the daemon start: the
+first cut of the guard read "degraded, no host named" as an all-clear, and production's API
+build predates the `host` field, so that is exactly what it answered. Not knowing WHICH
+machine is serving chat is not a licence to add a second one. Verified against live
+production after the fix: `node scripts/okx-bot-revive.mjs` now exits 3 with
+`REFUSED: the bot reports degraded, so a host is serving agent #2632, but the health
+endpoint does not name it`, and installs nothing.
+
+The read is `GET /api/healthz` and nothing else, deliberately: no `DATABASE_URL`, no
+`gcloud`, no secret, because the machine most likely to run this by mistake is a fresh
+clone with none of them. To make that read exact,
+`classifyOkxChatBotBeat()` now puts `host` and `hostDurable` on the `okx_chat_bot`
+subsystem as fields rather than only inside an English sentence (additive, `null` for a
+beat that predates them).
+
+### Verified
+
+- `tests/okx-chat-bot.test.js`: **84 pass** (13 new: seven guard verdicts, two on the
+  non-throwing fetch, four on the new subsystem fields).
+- `tests/subsystem-health.test.js` + `tests/api/uptime-status.test.js`: 32 pass, so the
+  additive fields broke no existing consumer.
+- The guard's refusal was exercised against the live endpoint, not a fixture.
+
+### Also fixed
+
+`prompts/finish/907-backlog-08-okx-chat-bot-always-on.md` no longer opens with the
+instruction that caused this. It now leads with "do NOT start a local daemon", carries the
+measured state, and its definition-of-done lines carry per-line verdicts instead of empty
+boxes. The peer session below left that file alone on the understanding that every order in
+`prompts/finish/` had been retired; the retirement never landed on disk, the files are
+still tracked at HEAD, and the owner handed this one to a session today. A work order that
+still exists is still an instruction.
+
+### What is left, and who owns it
+
+Unchanged, and both owner-gated: fund one AI lane (clearing the GCP billing hold fixes the
+platform's Vertex anchor too), and deploy `workers/okx-chat-bot/cloudbuild.yaml` so the
+elected-lane chain is actually running. Nothing else in this order is engineering.
+
 ## 2026-09-09, WO-07 closing audit: everything re-verified from scratch, and the one blocker is unchanged
 
 The last WO-07 session ran this morning; this one trusted none of it and re-measured every
@@ -3821,6 +3910,94 @@ exactly what this work order forbids.
 
 Agent #2632 untouched. The relisting (work order 08) does not depend on this: a listing does
 not require a settled payment to be submitted.
+
+## 2026-09-09, Work Order 04 (evening session): the unfunded half re-proved, and the case 7 "green" retracted
+
+Re-ran every precondition and every case that cannot move money against production, found
+and fixed a reporting defect that had inflated this campaign's own status, and stopped at the
+funding gate. Nothing was signed that could settle; the buyer is still at 0.000000.
+
+### Preconditions, all re-verified live today
+
+| Check | Result |
+| --- | --- |
+| `onchainos --version` / `wallet status` | 4.5.2, `loggedIn: true` as `claude@three.ws`. No OTP needed. |
+| `GET /api/okx/3d/health` | 200, six subsystems ok, `payment-rail settleable: true`, block 70213386 |
+| `GET /api/okx/3d/catalog` | 200, 7 rows |
+| `npm run okx:three-copy` | module == live == submission payload. The only divergence is the known stale on-chain DESCRIPTIONS, owned by work order 08. |
+| `npx vitest run tests/api/okx-3d-services.test.js tests/api/okx-forge.test.js` | 82 passed |
+| Buyer float, direct `eth_call` on X Layer | 0.000000 USD₮0, 0.000000 OKB. `payTo` holds 2.427731 USD₮0. |
+| `onchainos wallet balance` (all chains) | `totalValueUsd: "0.00"`. There is no rail this wallet can pay on today. |
+
+### The defect: case 7 was never green, and this file said it was
+
+The 2026-09-09 earlier entry above reports "six of the fourteen cases now pass for real
+against production with no funding (1, 1d, 5b, 5c, 5d, 7)". **Case 7 does not belong on that
+list.** Its title is "legacy rail still answers AND PAYS its own challenge", and its paid leg
+has never run. The pass came from a dry run, where the record expression was
+`advertised && (args.dryRun || paidLeg?.ok === true)`: in a dry run the advertisement half
+alone satisfied the full title. The evidence file proves it, `"paidLeg": null`, and the last
+real summary (`00-gauntlet-summary.json`) never contained case 7 at all.
+
+Fixed in the script, not just in the notes:
+
+- Case 7 now records **SKIP** whenever the run is not allowed to pay, with the advertisement
+  result kept in the detail line, so an advertisement-only result can never again be counted
+  as a pass. A failed advertisement is still a hard FAIL in any mode.
+- Added `--no-spend`, which runs every case that cannot move money and refuses every case that
+  can, on any rail. It is distinct from `--dry-run`: a dry run signs nothing and so only
+  proves the free lanes, while `--no-spend` signs the real authorizations the server must
+  refuse (5b, 5c) and therefore actually proves the replay and expiry protections at a zero
+  balance. It also overrides `--yes`, so it can only ever narrow a run.
+- `SPENDING_CASES` is a deliberate superset of the X Layer settlement plan, because case 7
+  pays in USDC on Solana rather than USD₮0 on X Layer. A startup check refuses to run if any
+  settling row is missing from it, so the two cannot drift.
+- `--budget` no longer prints "rejected before settlement" against case 7 (it settles, just on
+  another rail) and now names the Solana leg's USDC requirement, which the X Layer float math
+  does not price.
+
+### Today's run
+
+`node scripts/okx-e2e-gauntlet.mjs --no-spend`: **5/5 cases exercised passed, 9 skipped,
+Settlements: 0**, buyer balance unchanged at 0.000000. Evidence:
+`101-2026-09-09-no-spend-sweep.json`.
+
+| Case | Result | Evidence |
+| --- | --- | --- |
+| 1 free lane | PASS | `30-case1-free-lane.json` |
+| 1d MCP discovery free | PASS | `33-case1d-mcp-discovery.json` |
+| 5b cheap auth cannot buy dearer | PASS, nonce unspent | `51-case5b-cross-service.json` |
+| 5c expired auth refused | PASS, fresh challenge offered | `52-case5c-expired.json` |
+| 5d garbage header | PASS, 4xx on all four shapes | `53-case5d-garbage.json` |
+| 7 legacy rail | SKIP, advertisement ok, paid leg never attempted | `70-case7-legacy-rails.json` |
+| 2, 2b, 3, 3i, 3r, 5a, 6, 4 | SKIP, need funding | n/a |
+
+So the honest count is **five of fourteen green**, not six, and **nine remain**, not eight.
+
+### Docs
+
+`docs/okx-marketplace.md` already carried a "Verified behavior" section that correctly
+refuses to claim settlement timing. Added the legacy-rail line (advertised: measured; paid:
+not) so the same honesty covers case 7, and the `npm run okx:gauntlet -- --no-spend` command
+so any reader can reproduce the section without spending.
+
+### Still blocked on exactly one owner action, now with a second leg named
+
+**1.08 USD₮0 minimum (5.0 requested for the fix loop) to
+`0x75d00a2713565171f33216e5aa2a375e076ecf69` on X Layer (chainId 196), token
+`0x779Ded0c9e1022225f8E0630b35a9b54bE713736`**, plus **0.10 USDC on Solana to
+`9PirGw9wVLLNFgVyjgAt5jvuFQwJ3pYUBWt9n3vZfnyc`** for case 7, which the earlier version of the
+funding request wrongly called optional. Details and arithmetic:
+`prompts/okx-ai/e2e-evidence/FUNDING-REQUEST.md`. The X Layer money largely returns, since
+`payTo` is our own merchant wallet (holding 2.427731 USD₮0, enough on its own); that key is in
+Secret Manager and gcloud in this session cannot refresh its token, so the transfer is the
+owner's either way.
+
+### GO/NO-GO for OKX-05
+
+**NO-GO on settlement evidence, unchanged: no real settlement has ever landed on this rail.**
+Every case that can be proved without money is proved and reproducible on demand. Agent #2632
+untouched. The relisting (work order 08) does not depend on this.
 
 ## Retire this file when the campaign is done (required)
 

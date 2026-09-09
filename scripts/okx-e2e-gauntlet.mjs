@@ -16,7 +16,9 @@
  * them, which is where the rigged-artifact assertion lives: forge output is a
  * static mesh, only the `avatar` chain ships a skeleton.
  *
- * This spends real USD₮0 on X Layer. It refuses to run without --yes.
+ * A full run spends real USD₮0 on X Layer and real USDC on Solana (case 7). It
+ * refuses to run without --yes, or without --no-spend, which holds back every
+ * case that could move money.
  *
  * Cases (each runs individually, none is "covered by" another):
  *   1   free lane serves live data with no payment demanded
@@ -37,8 +39,15 @@
  * Usage:
  *   node scripts/okx-e2e-gauntlet.mjs --yes
  *   node scripts/okx-e2e-gauntlet.mjs --yes --only 2,3,4
- *   node scripts/okx-e2e-gauntlet.mjs --dry-run          # no signing, no spend
+ *   node scripts/okx-e2e-gauntlet.mjs --no-spend         # every case that cannot move money
+ *   node scripts/okx-e2e-gauntlet.mjs --dry-run          # no signing at all
  *   node scripts/okx-e2e-gauntlet.mjs --budget           # what a full run costs
+ *
+ * --dry-run and --no-spend are different tools. A dry run signs nothing, so it
+ * only proves the free lanes answer. --no-spend signs the real authorizations
+ * the server is supposed to REFUSE (5b, 5c) and so actually proves the replay
+ * and expiry protections at a zero balance, while refusing to run any case that
+ * could move money on any rail.
  */
 
 import { execFileSync } from 'node:child_process';
@@ -70,17 +79,44 @@ const POLL_TIMEOUT_MS = 15 * 60 * 1000;
 const POLL_INTERVAL_MS = 5000;
 
 function parseArgs(argv) {
-	const args = { base: 'https://three.ws', yes: false, dryRun: false, budget: false, only: null };
+	const args = { base: 'https://three.ws', yes: false, dryRun: false, noSpend: false, budget: false, only: null };
 	for (let i = 0; i < argv.length; i++) {
 		if (argv[i] === '--base') args.base = argv[++i].replace(/\/$/, '');
 		else if (argv[i] === '--yes') args.yes = true;
 		else if (argv[i] === '--dry-run') args.dryRun = true;
+		else if (argv[i] === '--no-spend') args.noSpend = true;
 		else if (argv[i] === '--budget') args.budget = true;
 		else if (argv[i] === '--only') args.only = new Set(argv[++i].split(',').map((s) => s.trim()));
 	}
 	return args;
 }
 const args = parseArgs(process.argv.slice(2));
+// --no-spend only ever narrows what runs, so it wins over --yes: a stale
+// authorization flag left in a shell history cannot turn a re-verification of
+// the free half into a buy.
+if (args.noSpend) args.yes = false;
+
+// Cases that can move real money on ANY rail, and so never run under
+// --no-spend. This is deliberately a superset of the X Layer settlement plan
+// further down: case 7 pays in USDC on Solana rather than USD₮0 on X Layer, so
+// the budget math (which prices the X Layer float alone) does not mark it as
+// settling. That is not the same as it being free, and the difference has
+// already been misread once. On 2026-09-09 a dry run recorded case 7 green on
+// the advertisement half by itself and this campaign's notes then reported it
+// as a case that passes unfunded; its paid leg has never run.
+const SPENDING_CASES = new Set(['2', '2b', '3', '3i', '3r', '5a', '7']);
+// Cases that sign a real authorization the server is expected to refuse before
+// redeeming it. 5b (wrong amount) and 5c (expired) are refused ahead of any
+// balance check, so they prove exactly what they claim at a zero float and do
+// run under --no-spend. Case 6 is refused after verification, so at a zero
+// balance it would pass on an insufficient-balance rejection instead of on the
+// acceptance check it exists to prove. That is a false green, so it is held
+// back for a funded buyer.
+const NEEDS_FLOAT_CASES = new Set(['6']);
+const noSpendReason = (id) =>
+	NEEDS_FLOAT_CASES.has(id)
+		? '--no-spend: needs a funded buyer, or it passes for the wrong reason'
+		: '--no-spend: this case moves real money on a live rail';
 
 mkdirSync(EVIDENCE, { recursive: true });
 const results = [];
@@ -104,7 +140,7 @@ function record(id, title, ok, detail, ref, { skipped = false } = {}) {
 }
 // Cases the run deliberately did not exercise: a dry run signs nothing, so
 // every leg that has to sign is skipped rather than failed.
-const skip = (id, title, detail) => record(id, title, false, detail, null, { skipped: true });
+const skip = (id, title, detail, ref = null) => record(id, title, false, detail, ref, { skipped: true });
 const wanted = (id) => !args.only || args.only.has(id);
 
 // ── X Layer reads ────────────────────────────────────────────────────────────
@@ -411,7 +447,7 @@ async function buyForge({ id, serviceId, title, toolArgs }) {
 		return record(id, title, false, `challenge mismatch: ${accept.network} @ ${accept.amount}, want eip155:196 @ ${entry.amountAtomics}`, evidence(`31-case${id}-unpaid.json`, unpaid));
 	}
 
-	if (args.dryRun) return skip(id, title, 'dry run: signing skipped');
+	if (args.dryRun || args.noSpend) return skip(id, title, args.noSpend ? noSpendReason(id) : 'dry run: signing skipped');
 
 	const signed = signChallenge(unpaid.challengeHeader);
 	const auth = authFromHeader(signed.header);
@@ -484,7 +520,7 @@ async function case3Rigged() {
 	if (accept.network !== 'eip155:196' || accept.amount !== entry.amountAtomics) {
 		return record(id, title, false, `challenge mismatch: ${accept.network} @ ${accept.amount}, want eip155:196 @ ${entry.amountAtomics}`, evidence(`31-case${id}-unpaid.json`, unpaid));
 	}
-	if (args.dryRun) return skip(id, title, 'dry run: signing skipped');
+	if (args.dryRun || args.noSpend) return skip(id, title, args.noSpend ? noSpendReason(id) : 'dry run: signing skipped');
 
 	const signed = signChallenge(unpaid.challengeHeader);
 	const auth = authFromHeader(signed.header);
@@ -528,9 +564,9 @@ async function case4Settlement() {
 	// skip. In a real run it is a failure: a paid case that answered 200 without
 	// producing a settlement is exactly the outcome this case exists to catch.
 	if (!settlements.length) {
-		return args.dryRun
-			? skip('4', 'settlement verified on-chain', 'dry run: nothing was signed, so nothing settled')
-			: record('4', 'settlement verified on-chain', false, 'no settlements to verify (paid cases did not run or did not settle)', null);
+		if (args.dryRun) return skip('4', 'settlement verified on-chain', 'dry run: nothing was signed, so nothing settled');
+		if (args.noSpend) return skip('4', 'settlement verified on-chain', '--no-spend: no case was allowed to settle, so there is nothing to verify');
+		return record('4', 'settlement verified on-chain', false, 'no settlements to verify (paid cases did not run or did not settle)', null);
 	}
 	const verified = [];
 	let allOk = true;
@@ -549,7 +585,7 @@ async function case5aReplay() {
 	const toolArgs = { prompt: 'a small brass astrolabe' };
 	const unpaid = await mcpCall(entry, FORGE_TOOL, toolArgs);
 	if (unpaid.status !== 402) return record('5a', 'replayed authorization buys no second job', false, `setup failed, expected 402 got ${unpaid.status}`, null);
-	if (args.dryRun) return skip('5a', 'replayed authorization buys no second job', 'dry run: signing skipped');
+	if (args.dryRun || args.noSpend) return skip('5a', 'replayed authorization buys no second job', args.noSpend ? noSpendReason('5a') : 'dry run: signing skipped');
 
 	const signed = signChallenge(unpaid.challengeHeader);
 	const auth = authFromHeader(signed.header);
@@ -700,7 +736,7 @@ async function case6PayOnlySuccess() {
 	const toolArgs = { prompt: '   ' };
 	const unpaid = await mcpCall(entry, FORGE_TOOL, toolArgs);
 	if (unpaid.status !== 402) return record('6', 'job rejected at acceptance leaves the authorization unspent', false, `setup failed, expected 402 got ${unpaid.status}`, null);
-	if (args.dryRun) return skip('6', 'job rejected at acceptance leaves the authorization unspent', 'dry run: signing skipped');
+	if (args.dryRun || args.noSpend) return skip('6', 'job rejected at acceptance leaves the authorization unspent', args.noSpend ? noSpendReason('6') : 'dry run: signing skipped');
 
 	const signed = signChallenge(unpaid.challengeHeader);
 	const auth = authFromHeader(signed.header);
@@ -744,8 +780,18 @@ async function case7LegacyRail() {
 	const base = challenge.accepts.find((a) => a.network === 'eip155:8453');
 	const advertised = Boolean(solana && base) && [solana, base].every((a) => a.amount === entry.amountAtomics);
 
+	// The paid half is the half this case exists to prove, so a run that is not
+	// allowed to pay reports the advertisement as a SKIP and never as a pass.
+	// Reading an advertisement-only green as "case 7 passes unfunded" is a
+	// mistake this campaign has already made once, on 2026-09-09.
+	const paidLegHeld = args.dryRun || args.noSpend;
+	if (!advertised) {
+		const ref = evidence('70-case7-legacy-rails.json', { challenge, advertised, paidLeg: null });
+		return record('7', 'legacy rail still answers and pays its own challenge', false, `advertisement FAILED, accepts: ${challenge.accepts.map((a) => `${a.network}@${a.amount}`).join(', ')}`, ref);
+	}
+
 	let paidLeg = null;
-	if (advertised && !args.dryRun) {
+	if (!paidLegHeld) {
 		// Sign on the Solana rail rather than X Layer. The rail sponsors gas
 		// through its feePayer, so this needs USDC and no SOL.
 		try {
@@ -765,12 +811,21 @@ async function case7LegacyRail() {
 		}
 	}
 
-	const ref = evidence('70-case7-legacy-rails.json', { challenge, paidLeg });
+	const ref = evidence('70-case7-legacy-rails.json', { challenge, advertised, paidLegAttempted: !paidLegHeld, paidLeg });
+	const accepts = `accepts: ${challenge.accepts.map((a) => `${a.network}@${a.amount}`).join(', ')}`;
+	if (paidLegHeld) {
+		return skip(
+			'7',
+			'legacy rail still answers and pays its own challenge',
+			`${accepts}; advertisement ok, paid leg NOT attempted (${args.noSpend ? noSpendReason('7') : 'dry run: signing skipped'})`,
+			ref,
+		);
+	}
 	return record(
 		'7',
 		'legacy rail still answers and pays its own challenge',
-		advertised && (args.dryRun || paidLeg?.ok === true),
-		`accepts: ${challenge.accepts.map((a) => `${a.network}@${a.amount}`).join(', ')}; paid leg: ${paidLeg ? (paidLeg.ok ? `200 on ${paidLeg.rail}, tx ${paidLeg.receipt?.transaction || 'none in receipt'}` : `FAILED (${paidLeg.error || paidLeg.status})`) : 'not attempted'}`,
+		paidLeg?.ok === true,
+		`${accepts}; paid leg: ${paidLeg.ok ? `200 on ${paidLeg.rail}, tx ${paidLeg.receipt?.transaction || 'none in receipt'}` : `FAILED (${paidLeg.error || paidLeg.status})`}`,
 		ref,
 	);
 }
@@ -780,6 +835,9 @@ async function case7LegacyRail() {
 // refuses any authorization whose value exceeds balanceOf(buyer), including the
 // ones designed to be rejected, so the binding constraint is the floor at the
 // moment each case signs, not the sum of what settles.
+// `settles` means "settles USD₮0 on X Layer", which is what the float math
+// below prices. It is NOT the same as "spends nothing": case 7 pays its $0.01
+// in USDC on Solana, so it needs no X Layer float and still needs funding.
 const SPEND_PLAN = [
 	{ id: '2', service: 'forge-draft', settles: true },
 	{ id: '2b', service: 'forge-standard', settles: true },
@@ -817,27 +875,48 @@ async function main() {
 	const plan = budget();
 	if (args.budget) {
 		log('Per-case spend plan (X Layer USD₮0 unless noted):\n');
-		for (const r of plan.rows) log(`  ${r.id.padEnd(3)} ${r.service.padEnd(16)} $${r.priceUsd.padStart(5)}  ${r.settles ? 'settles' : 'rejected before settlement'}${r.rail ? `  [${r.rail}]` : ''}`);
+		for (const r of plan.rows) {
+			const fate = r.settles ? 'settles on X Layer' : r.rail ? `settles on ${r.rail}, no X Layer float` : 'rejected before settlement';
+			log(`  ${r.id.padEnd(3)} ${r.service.padEnd(16)} $${r.priceUsd.padStart(5)}  ${fate}`);
+		}
 		log(`\n  one clean run settles $${plan.settlesUsd} and needs a starting float of $${plan.floorUsd}`);
 		log(`  buyer ${BUYER}`);
 		const held = await buyerFloat();
 		log(`  held now: ${(Number(held) / 1e6).toFixed(6)} USD₮0 (${held} atomics)`);
 		log(held >= BigInt(plan.floorAtomics) ? '  FUNDED: a full run fits.' : `  SHORT by ${(Number(BigInt(plan.floorAtomics) - held) / 1e6).toFixed(2)} USD₮0.`);
+		// The X Layer float is not the whole bill: case 7 buys on the legacy
+		// Solana rail, whose fee is USDC at the buyer's Solana address. That rail
+		// sponsors gas through its feePayer, so it needs no SOL.
+		const solanaLeg = plan.rows.find((r) => r.rail?.includes('solana'));
+		if (solanaLeg) {
+			log(`\n  plus, on the legacy rail: $${solanaLeg.priceUsd} USDC on Solana for case ${solanaLeg.id} (no SOL needed, the rail sponsors gas)`);
+			log('  buyer Solana address: run `onchainos wallet addresses` to read it');
+		}
 		process.exit(0);
 	}
 
-	if (!args.yes && !args.dryRun) {
+	if (!args.yes && !args.dryRun && !args.noSpend) {
 		console.error('This gauntlet spends real USD₮0 on X Layer against production.');
 		console.error(`A full run settles $${plan.settlesUsd} and needs a starting float of $${plan.floorUsd} at ${BUYER}.`);
-		console.error('Re-run with --yes to authorize spending, --budget to price it, or --dry-run to exercise the unpaid legs only.');
+		console.error('Re-run with --yes to authorize spending, --no-spend to run every case that cannot move money,');
+		console.error('--budget to price it, or --dry-run to exercise the unpaid legs without signing anything.');
 		process.exit(2);
 	}
-	log(`OKX.AI end-to-end gauntlet against ${args.base}${args.dryRun ? '  (DRY RUN, no signing)' : ''}\n`);
+	// The spend classification and the X Layer budget plan are two views of the
+	// same thing and must not drift: every settling row has to be a spending
+	// case, or --no-spend would let one through.
+	const unguarded = plan.rows.filter((r) => r.settles && !SPENDING_CASES.has(r.id)).map((r) => r.id);
+	if (unguarded.length) {
+		console.error(`SPENDING_CASES is missing settling case(s): ${unguarded.join(', ')}. Refusing to run.`);
+		process.exit(5);
+	}
+	const mode = args.dryRun ? '  (DRY RUN, no signing)' : args.noSpend ? '  (NO SPEND: only cases that cannot move money)' : '';
+	log(`OKX.AI end-to-end gauntlet against ${args.base}${mode}\n`);
 
 	// Refuse to start a paid run that cannot finish: a half-funded run burns the
 	// cheap cases and then fails the dear ones on balance, which reads like a
 	// rail defect and is not one.
-	if (!args.dryRun && !args.only) {
+	if (!args.dryRun && !args.noSpend && !args.only) {
 		const held = await buyerFloat();
 		if (held < BigInt(plan.floorAtomics)) {
 			console.error(`Buyer ${BUYER} holds ${(Number(held) / 1e6).toFixed(6)} USD₮0, a full run needs ${plan.floorUsd}.`);

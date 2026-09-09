@@ -330,6 +330,15 @@ end-to-end gauntlet (`npm run okx:gauntlet`, source
 [`scripts/okx-e2e-gauntlet.mjs`](../scripts/okx-e2e-gauntlet.mjs)), and every claim below has a
 capture under `prompts/okx-ai/e2e-evidence/`. Last run 2026-09-09 against `https://three.ws`.
 
+Every claim in this section is reproducible without spending anything:
+
+```bash
+npm run okx:gauntlet -- --no-spend
+```
+
+That mode runs every case that cannot move money, including the ones that sign a real
+authorization the server is meant to refuse, and holds back every case that could pay.
+
 **Replay protection: verified.** Three independent ways of presenting a payment that should
 not buy anything were tried against the live paid rows, and all three were refused before any
 work ran:
@@ -348,6 +357,12 @@ client sends the MCP headers an OAuth-capable client would send.
 **Free lanes: verified.** `catalog` and `health` serve live data at 200 with no payment
 demanded, and MCP `initialize` plus `tools/list` are free on every paid row, so a buyer can
 read the tool schema before deciding to pay.
+
+**Legacy rails: advertised, not yet bought.** The same 402 also offers the pre-OKX rails the
+platform already sells on (Solana USDC, Solana $THREE, and Base), each at the same price as
+the X Layer accept. That the advertisement is correct is measured. That one of them still
+*pays* is not: like the X Layer rail below, no funded purchase has been made, so this is a
+verified advertisement and an unverified purchase, and it is listed here as exactly that.
 
 **Refund semantics: no refunds, and none are needed for a refused call.** There is no refund
 path. What there is instead is the acceptance line described under

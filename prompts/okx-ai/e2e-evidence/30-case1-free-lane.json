@@ -7,14 +7,14 @@
         {
           "name": "generation",
           "ok": true,
-          "latency_ms": 40,
+          "latency_ms": 801,
           "tiers": 3,
           "backends": 11
         },
         {
           "name": "submit-latency",
           "ok": true,
-          "latency_ms": 61,
+          "latency_ms": 69,
           "window_minutes": 60,
           "samples": 0,
           "errors": 0,
@@ -24,31 +24,31 @@
         {
           "name": "render",
           "ok": true,
-          "latency_ms": 35,
+          "latency_ms": 709,
           "poses": 28
         },
         {
           "name": "storage",
           "ok": true,
-          "latency_ms": 255
+          "latency_ms": 782
         },
         {
           "name": "retarget",
           "ok": true,
-          "latency_ms": 39,
+          "latency_ms": 815,
           "clips": 112
         },
         {
           "name": "payment-rail",
           "ok": true,
-          "latency_ms": 915,
+          "latency_ms": 1881,
           "settleable": true,
-          "block": "70197194",
+          "block": "70214068",
           "token": "USD₮0",
           "facilitator_configured": false
         }
       ],
-      "checkedAt": "2026-09-09T15:03:51.516Z"
+      "checkedAt": "2026-09-09T19:45:05.262Z"
     }
   },
   "catalog": {
