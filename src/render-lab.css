@@ -40,8 +40,10 @@ body { font-family: var(--font-body, 'Inter', system-ui, sans-serif); min-height
 .rl-panel-state { font-size: 0.72rem; letter-spacing: 0; text-transform: none; font-weight: 500; padding: 2px 8px; border-radius: 999px; border: 1px solid transparent; }
 .rl-panel-state.is-ok { color: var(--success); background: rgba(74, 222, 128, 0.12); border-color: rgba(74, 222, 128, 0.28); }
 .rl-panel-state.is-off { color: var(--warn); background: rgba(251, 191, 36, 0.12); border-color: rgba(251, 191, 36, 0.28); }
-.rl-panel[data-disabled="true"] { opacity: 0.62; }
-.rl-panel[data-disabled="true"] .rl-chips, .rl-panel[data-disabled="true"] .rl-sliders, .rl-panel[data-disabled="true"] .rl-presets { pointer-events: none; filter: saturate(0.4); }
+.rl-panel[data-disabled="true"] .rl-chips, .rl-panel[data-disabled="true"] .rl-sliders, .rl-panel[data-disabled="true"] .rl-presets { opacity: 0.62; pointer-events: none; filter: saturate(0.4); }
+/* The empty state is what a disabled panel is FOR: it explains the why and
+   carries the only way out, so it stays at full strength and stays clickable. */
+.rl-panel[data-disabled="true"] .rl-empty { opacity: 1; pointer-events: auto; filter: none; }
 
 /* ── stage ──────────────────────────────────────────────────────────── */
 .rl-stage { background: var(--card-bg); border: 1px solid var(--card-border); border-radius: var(--radius-card, 14px); overflow: hidden; }
@@ -83,6 +85,8 @@ body { font-family: var(--font-body, 'Inter', system-ui, sans-serif); min-height
 .rl-btn-secondary:hover { background: var(--btn-secondary-bg-hover, var(--surface-3)); }
 .rl-btn-ghost { background: transparent; color: var(--ink); border-color: var(--stroke-strong); }
 .rl-btn-ghost:hover { background: var(--surface-2); }
+/* Covers "Open image", which has no href until a render lands: it holds its
+   place so the stage bar does not reflow, but reads and behaves as unavailable. */
 .rl-btn[disabled], .rl-btn[aria-disabled="true"] { opacity: var(--disabled-opacity, 0.4); cursor: var(--disabled-cursor, not-allowed); pointer-events: none; }
 .rl-reset { align-self: flex-start; }
 
@@ -165,11 +169,19 @@ body { font-family: var(--font-body, 'Inter', system-ui, sans-serif); min-height
 .rl-cell:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 .rl-cell img { width: 100%; height: 100%; object-fit: contain; display: block; opacity: 0; transition: opacity var(--duration-base) var(--ease-standard); }
 .rl-cell img.is-in { opacity: 1; }
+/* A cold tile takes seconds. It shimmers while it renders so an in-flight sheet
+   reads as loading rather than as a grid of empty squares. */
+.rl-cell.is-pending::after {
+	content: ''; position: absolute; inset: 0;
+	background: linear-gradient(90deg, var(--skeleton-base) 25%, var(--skeleton-sheen) 37%, var(--skeleton-base) 63%);
+	background-size: 400% 100%; animation: rl-shimmer 1.3s ease-in-out infinite;
+}
+@media (prefers-reduced-motion: reduce) { .rl-cell.is-pending::after { animation: none; } }
 /* A tile the renderer could not produce stays legible: its label survives and
    the frame reads as failed rather than as an empty square still loading. */
 .rl-cell.is-failed { border-color: var(--danger); border-style: dashed; cursor: not-allowed; }
 .rl-cell.is-failed::before { content: 'render failed'; position: absolute; inset: 0; display: grid; place-items: center; font-size: 0.68rem; color: var(--danger); }
-.rl-cell-label { position: absolute; inset: auto 0 0 0; font-size: 0.66rem; padding: 4px 6px; background: linear-gradient(180deg, transparent, rgba(0,0,0,0.78)); color: #fff; text-align: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.rl-cell-label { position: absolute; z-index: 1; inset: auto 0 0 0; font-size: 0.66rem; padding: 4px 6px; background: linear-gradient(180deg, transparent, rgba(0,0,0,0.78)); color: #fff; text-align: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .rl-sheet-note { margin: 12px 0 0; font-size: 0.74rem; color: var(--ink-dim); }
 
 /* ── code panel ─────────────────────────────────────────────────────── */

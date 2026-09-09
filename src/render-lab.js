@@ -63,12 +63,21 @@ const state = {
 
 let capabilities = null;
 let poseCatalog = [];
+let poseCatalogFailed = false;
 let avatars = [];
+let featuredFailed = false;
 let codeLang = 'url';
 let sheetAxis = 'scene';
 let renderToken = 0;
 let lastImageUrl = '';
 let objectUrl = null;
+let sheetObjectUrls = [];
+let morphModelSearch = null;
+
+// A cold GLB render is genuinely slow (mesh fetch, decode, rig, rasterize), so
+// the ceiling is generous. It exists so a worker that never answers surfaces as
+// a designed error instead of a skeleton that shimmers forever.
+const CLIP_TIMEOUT_MS = 90_000;
 
 const origin = location.origin;
 
@@ -179,6 +188,24 @@ function clipBody(overrides = {}) {
 	return body;
 }
 
+// Every call to the raw-GLB renderer goes through here so none of them can hang
+// the UI indefinitely. An abort surfaces as a named error the caller can turn
+// into copy that tells the user what to do next.
+async function postClip(body, { timeoutMs = CLIP_TIMEOUT_MS } = {}) {
+	const controller = new AbortController();
+	const timer = setTimeout(() => controller.abort(), timeoutMs);
+	try {
+		return await fetch('/api/render/avatar-clip', {
+			method: 'POST',
+			headers: { 'content-type': 'application/json' },
+			body: JSON.stringify(body),
+			signal: controller.signal,
+		});
+	} finally {
+		clearTimeout(timer);
+	}
+}
+
 // ── capability card ──────────────────────────────────────────────────
 
 function meter(label, value, tip) {
@@ -254,6 +281,19 @@ function renderPoseChips() {
 	if (!supported && capabilities) {
 		$('poseChips').innerHTML = `<p class="rl-empty">${esc(capabilities.can.pose.reason)} <a href="/rig-doctor">Diagnose the skeleton in Rig Doctor</a>.</p>`;
 		mirrorTips(panel);
+		syncChipStates();
+		return;
+	}
+
+	// The catalog is its own fetch, so it can fail while the model is perfectly
+	// poseable. Say which of the two happened rather than showing a lone "None"
+	// chip that reads like the model has no poses.
+	if (!poseCatalog.length) {
+		$('poseChips').innerHTML = poseCatalogFailed
+			? `<p class="rl-empty">The pose catalog did not load, so presets are unavailable. Renders still work without a pose. <button type="button" class="rl-chip" data-retry-poses>Retry</button></p>`
+			: `<p class="rl-empty">No pose presets are published right now. Renders still work without a pose, in whatever pose the model's own animation or bind pose puts it in.</p>`;
+		mirrorTips(panel);
+		syncChipStates();
 		return;
 	}
 
@@ -271,6 +311,7 @@ function renderPoseChips() {
 	}
 	$('poseChips').innerHTML = html;
 	mirrorTips(panel);
+	syncChipStates();
 }
 
 function supportedMorphs() {
@@ -344,7 +385,25 @@ function renderExpressionControls() {
 }
 
 function renderAvatarStrip() {
-	$('avatarStrip').innerHTML = avatars
+	const strip = $('avatarStrip');
+
+	// The featured feed is the only source for this strip, and the lab is still
+	// fully usable through the field below it, so an empty or unreachable feed
+	// gets copy that says which happened and where to go next.
+	if (!avatars.length) {
+		strip.removeAttribute('role');
+		strip.removeAttribute('aria-label');
+		strip.innerHTML = `<p class="rl-empty">${
+			featuredFailed
+				? 'The featured avatar feed is unreachable right now.'
+				: 'No featured avatars are published right now.'
+		} Paste any avatar ID or public .glb URL below, or <a href="/create">create an avatar</a> and render your own.</p>`;
+		return;
+	}
+
+	strip.setAttribute('role', 'radiogroup');
+	strip.setAttribute('aria-label', 'Choose an avatar');
+	strip.innerHTML = avatars
 		.map(
 			(a) => `
 			<button type="button" class="rl-av" role="radio" data-avatar="${esc(a.id)}" aria-checked="${state.source?.id === a.id}" title="${esc(a.name)}">
@@ -353,6 +412,7 @@ function renderAvatarStrip() {
 			</button>`,
 		)
 		.join('');
+	syncChipStates();
 }
 
 function syncChipStates() {
@@ -365,6 +425,37 @@ function syncChipStates() {
 	for (const el of document.querySelectorAll('[data-avatar]')) {
 		el.setAttribute('aria-checked', String(el.dataset.avatar === state.source?.id));
 	}
+	syncRovingTabIndex();
+}
+
+// A radiogroup is one tab stop, not one per option: without this, walking past
+// the pose panel costs 29 tabs. The checked option carries the stop and the
+// arrow keys move between them, which is also what a screen reader announces
+// for role="radio".
+function syncRovingTabIndex() {
+	for (const group of document.querySelectorAll('[role="radiogroup"]')) {
+		const radios = [...group.querySelectorAll('[role="radio"]')];
+		if (!radios.length) continue;
+		const current = radios.find((r) => r.getAttribute('aria-checked') === 'true') || radios[0];
+		for (const radio of radios) radio.tabIndex = radio === current ? 0 : -1;
+	}
+}
+
+const ARROW_KEYS = ['ArrowRight', 'ArrowDown', 'ArrowLeft', 'ArrowUp', 'Home', 'End'];
+
+function wireRadioKeys(group) {
+	group.addEventListener('keydown', (e) => {
+		if (!ARROW_KEYS.includes(e.key)) return;
+		const radios = [...group.querySelectorAll('[role="radio"]')];
+		const from = radios.indexOf(e.target.closest('[role="radio"]'));
+		if (from < 0 || radios.length < 2) return;
+		e.preventDefault();
+		const step = e.key === 'ArrowRight' || e.key === 'ArrowDown' ? 1 : -1;
+		const to =
+			e.key === 'Home' ? 0 : e.key === 'End' ? radios.length - 1 : (from + step + radios.length) % radios.length;
+		radios[to].focus();
+		radios[to].click();
+	});
 }
 
 // ── code panel ───────────────────────────────────────────────────────
@@ -460,11 +551,28 @@ function renderCode() {
 
 // ── rendering ────────────────────────────────────────────────────────
 
+// "Open image" is an anchor, and an anchor with no href is a control that looks
+// live and does nothing. Until a render lands it carries no href at all, is
+// marked disabled, and is out of the tab order.
+function setOpenTarget(href) {
+	const el = $('btnOpen');
+	if (href) {
+		el.setAttribute('href', href);
+		el.removeAttribute('aria-disabled');
+		el.removeAttribute('tabindex');
+	} else {
+		el.removeAttribute('href');
+		el.setAttribute('aria-disabled', 'true');
+		el.setAttribute('tabindex', '-1');
+	}
+}
+
 function setStage(stateName, message) {
 	const stage = $('stage');
 	stage.dataset.state = stateName;
 	if (message) $('stageMsg').textContent = message;
 	$('stageImg').hidden = stateName !== 'ready';
+	if (stateName !== 'ready') setOpenTarget('');
 }
 
 function releaseObjectUrl() {
@@ -472,6 +580,14 @@ function releaseObjectUrl() {
 		URL.revokeObjectURL(objectUrl);
 		objectUrl = null;
 	}
+}
+
+// Every raw-GLB sheet tile is a blob the browser holds until it is revoked.
+// Switching axes rebuilds the whole grid, so the previous batch is released
+// first rather than accumulating for the life of the tab.
+function releaseSheetObjectUrls() {
+	for (const url of sheetObjectUrls) URL.revokeObjectURL(url);
+	sheetObjectUrls = [];
 }
 
 // Resolve when the image paints, reject with the API's own error message when
@@ -525,11 +641,7 @@ async function runRender() {
 
 	try {
 		if (state.source.kind === 'url') {
-			const res = await fetch('/api/render/avatar-clip', {
-				method: 'POST',
-				headers: { 'content-type': 'application/json' },
-				body: JSON.stringify(clipBody()),
-			});
+			const res = await postClip(clipBody());
 			if (!res.ok) {
 				const detail = await res.json().catch(() => ({}));
 				throw new Error(detail.message || detail.error || `render failed (${res.status})`);
@@ -540,7 +652,7 @@ async function runRender() {
 			objectUrl = URL.createObjectURL(blob);
 			lastImageUrl = objectUrl;
 			$('stageImg').src = objectUrl;
-			$('btnOpen').href = objectUrl;
+			setOpenTarget(objectUrl);
 			$('stageMeta').textContent = `${state.size}px · ${Math.round(performance.now() - started)}ms · ${(blob.size / 1024).toFixed(0)}KB`;
 		} else {
 			// Load through the <img> element rather than fetch(): a cached render
@@ -553,7 +665,7 @@ async function runRender() {
 			lastImageUrl = `${origin}${url}`;
 			await loadImage($('stageImg'), url);
 			if (token !== renderToken) return;
-			$('btnOpen').href = url;
+			setOpenTarget(url);
 
 			// The renderer publishes an x-render-expression header, but an <img>
 			// cannot read headers. The verdict is derivable from the capability
@@ -572,22 +684,32 @@ async function runRender() {
 		setStage('ready');
 	} catch (err) {
 		if (token !== renderToken) return;
-		setStage('error', err.message || 'Render failed. Try a different model or a smaller size.');
+		const message =
+			err?.name === 'AbortError'
+				? `The renderer did not answer within ${CLIP_TIMEOUT_MS / 1000}s. Heavy models render faster at a smaller size, or try again in a moment.`
+				: err?.message || 'Render failed. Try a different model or a smaller size.';
+		setStage('error', message);
 		$('stageMeta').textContent = '';
 	}
 }
 
-const queueRender = debounce(() => {
-	runRender();
-	renderCode();
-	writeUrl();
-}, 260);
+const queueRender = debounce(runRender, 260);
+
+// Dragging a range input fires an event per step. Safari throttles
+// history.replaceState to roughly 100 calls per 30 seconds and throws once the
+// budget is spent, so the permalink is written on the same trailing edge as the
+// render rather than on every pixel of the drag.
+const queueUrlWrite = debounce(writeUrl, 300);
 
 function commit({ immediate = false } = {}) {
 	renderCode();
-	writeUrl();
-	if (immediate) runRender();
-	else queueRender();
+	if (immediate) {
+		writeUrl();
+		runRender();
+	} else {
+		queueUrlWrite();
+		queueRender();
+	}
 }
 
 // ── contact sheet ────────────────────────────────────────────────────
@@ -637,34 +759,40 @@ async function renderSheet() {
 	}
 
 	const SHEET_SIZE = 256;
-	note.textContent = `${cells.length} live renders at ${SHEET_SIZE}px. Click any tile to load it into the composer.`;
+	const plural = cells.length === 1 ? 'render' : 'renders';
+	note.textContent = `${cells.length} live ${plural} at ${SHEET_SIZE}px. Click any tile to load it into the composer.`;
+	releaseSheetObjectUrls();
+	// A cold tile takes seconds to come back. Each one starts as a shimmering
+	// placeholder so an in-flight sheet reads as loading rather than as a grid
+	// of empty squares.
 	grid.innerHTML = cells
 		.map(
 			(cell, i) => `
-			<button type="button" class="rl-cell" data-cell="${i}" aria-label="Use ${esc(cell.label)}">
-				<img alt="${esc(cell.label)}" loading="lazy" />
+			<button type="button" class="rl-cell is-pending" data-cell="${i}" aria-label="Use ${esc(cell.label)}">
+				<img alt="${esc(cell.label)}" />
 				<span class="rl-cell-label">${esc(cell.label)}</span>
 			</button>`,
 		)
 		.join('');
 
 	const imgs = [...grid.querySelectorAll('img')];
+	const settle = (img, ok) => {
+		const cell = img.closest('.rl-cell');
+		cell?.classList.remove('is-pending');
+		if (ok) img.classList.add('is-in');
+		else cell?.classList.add('is-failed');
+	};
+
 	if (state.source.kind === 'avatar') {
 		cells.forEach((cell, i) => {
 			const img = imgs[i];
 			// Listener first: a CDN-cached tile can complete before the next
 			// statement runs, and a load event fired before the listener attaches
 			// would leave the tile permanently invisible.
-			img.addEventListener('load', () => img.classList.add('is-in'), { once: true });
-			img.addEventListener(
-				'error',
-				() => {
-					img.closest('.rl-cell')?.classList.add('is-failed');
-				},
-				{ once: true },
-			);
+			img.addEventListener('load', () => settle(img, true), { once: true });
+			img.addEventListener('error', () => settle(img, false), { once: true });
 			img.src = renderUrl({ size: SHEET_SIZE, ...cell.overrides });
-			if (img.complete && img.naturalWidth) img.classList.add('is-in');
+			if (img.complete && img.naturalWidth) settle(img, true);
 		});
 		return;
 	}
@@ -680,18 +808,20 @@ async function renderSheet() {
 				const overrides = { ...cell.overrides, size: SHEET_SIZE };
 				if (typeof overrides.expression === 'string') overrides.expression = JSON.parse(overrides.expression);
 				else if (overrides.expression === null) overrides.expression = {};
-				const res = await fetch('/api/render/avatar-clip', {
-					method: 'POST',
-					headers: { 'content-type': 'application/json' },
-					body: JSON.stringify(clipBody(overrides)),
-				});
-				if (!res.ok) continue;
+				const res = await postClip(clipBody(overrides));
+				if (!res.ok) {
+					settle(imgs[i], false);
+					continue;
+				}
 				const blob = await res.blob();
-				imgs[i].src = URL.createObjectURL(blob);
-				imgs[i].classList.add('is-in');
+				const tileUrl = URL.createObjectURL(blob);
+				sheetObjectUrls.push(tileUrl);
+				imgs[i].src = tileUrl;
+				settle(imgs[i], true);
 			} catch {
-				// One failed tile must not abandon the sheet; the empty cell
-				// still carries its label so the gap is legible.
+				// One failed tile must not abandon the sheet; the cell keeps its
+				// label and reads as failed so the gap is legible.
+				settle(imgs[i], false);
 			}
 		}
 	};
@@ -709,6 +839,7 @@ function writeUrl() {
 	if (state.bg !== DEFAULTS.bg) p.set('bg', state.bg);
 	if (state.pose) p.set('pose', state.pose);
 	if (state.format !== DEFAULTS.format) p.set('format', state.format);
+	if (state.format !== 'png' && state.quality !== DEFAULTS.quality) p.set('quality', String(state.quality));
 	const expr = activeExpression();
 	if (Object.keys(expr).length) p.set('expression', JSON.stringify(expr));
 	const qs = p.toString();
@@ -719,10 +850,14 @@ function readUrl() {
 	const p = new URLSearchParams(location.search);
 	if (p.get('scene') && SCENES.some((s) => s.id === p.get('scene'))) state.scene = p.get('scene');
 	const size = Number(p.get('size'));
-	if (size >= 128 && size <= 2048) state.size = size;
+	// Snap to the slider's own step so the readout and the control cannot
+	// disagree after a hand-edited link.
+	if (size >= 128 && size <= 2048) state.size = Math.round(size / 64) * 64;
 	if (p.get('bg')) state.bg = p.get('bg');
 	if (p.get('pose')) state.pose = p.get('pose');
 	if (['png', 'webp', 'jpeg'].includes(p.get('format'))) state.format = p.get('format');
+	const quality = Number(p.get('quality'));
+	if (quality >= 1 && quality <= 100) state.quality = Math.round(quality);
 	const expr = p.get('expression');
 	if (expr) {
 		try {
@@ -778,6 +913,29 @@ function pruneUnsupportedExpression() {
 	if (dropped) renderExpressionControls();
 }
 
+// Which published avatar carries ARKit shapes is a property of the models, not
+// a constant worth hardcoding, so the empty state's escape hatch reads it from
+// the same capability endpoint the rest of the page uses. The answer is
+// deterministic per model and cached server-side, so it costs one round of
+// cached JSON and is remembered for the session.
+function findMorphModel() {
+	if (!morphModelSearch) {
+		morphModelSearch = Promise.all(
+			avatars.map(async (a) => {
+				try {
+					const res = await fetch(`/api/avatar/capabilities?avatar=${encodeURIComponent(a.id)}`);
+					if (!res.ok) return null;
+					const data = await res.json();
+					return data.morphs?.supported?.length ? a : null;
+				} catch {
+					return null;
+				}
+			}),
+		).then((found) => found.find(Boolean) || null);
+	}
+	return morphModelSearch;
+}
+
 async function selectAvatar(id, name) {
 	state.source = { kind: 'avatar', id, name: name || 'Avatar' };
 	syncChipStates();
@@ -806,6 +964,13 @@ function wire() {
 	});
 
 	$('poseChips').addEventListener('click', (e) => {
+		const retry = e.target.closest('[data-retry-poses]');
+		if (retry) {
+			retry.disabled = true;
+			retry.textContent = 'Retrying…';
+			loadPoseCatalog().then(renderPoseChips);
+			return;
+		}
 		const btn = e.target.closest('[data-pose]');
 		if (!btn) return;
 		state.pose = btn.dataset.pose;
@@ -876,11 +1041,21 @@ function wire() {
 		commit();
 	});
 
-	$('exprEmpty').addEventListener('click', (e) => {
-		if (!e.target.closest('[data-pick-morphy]')) return;
+	$('exprEmpty').addEventListener('click', async (e) => {
+		const btn = e.target.closest('[data-pick-morphy]');
+		if (!btn || btn.disabled) return;
 		// Steer to a model that demonstrably has a full ARKit face rig rather
 		// than leaving a dead end at the empty state.
-		selectUrl(`${origin}/avatars/selfie-girl.glb`);
+		const label = btn.textContent;
+		btn.disabled = true;
+		btn.textContent = 'Looking…';
+		const match = await findMorphModel();
+		if (btn.isConnected) {
+			btn.disabled = false;
+			btn.textContent = label;
+		}
+		if (match) selectAvatar(match.id, match.name);
+		else toast('No published avatar carries ARKit shapes right now.');
 	});
 
 	$('btnLoadCustom').addEventListener('click', () => {
@@ -905,18 +1080,22 @@ function wire() {
 		});
 	}
 
+	for (const group of [$('sceneChips'), $('poseChips'), $('avatarStrip')]) wireRadioKeys(group);
+
 	$('btnCopyCode').addEventListener('click', () => copy(codeFor(codeLang), codeLang === 'url' ? 'URL' : 'Snippet'));
 	$('btnPermalink').addEventListener('click', () => copy(location.href, 'Link'));
 
-	$('btnSheet').addEventListener('click', () => {
-		const sheet = $('sheet');
-		sheet.hidden = !sheet.hidden;
-		$('btnSheet').textContent = sheet.hidden ? 'Contact sheet' : 'Hide sheet';
-		if (!sheet.hidden) renderSheet();
-	});
+	const setSheetOpen = (open) => {
+		$('sheet').hidden = !open;
+		$('btnSheet').textContent = open ? 'Hide sheet' : 'Contact sheet';
+		$('btnSheet').setAttribute('aria-expanded', String(open));
+		if (open) renderSheet();
+		else releaseSheetObjectUrls();
+	};
+	$('btnSheet').addEventListener('click', () => setSheetOpen($('sheet').hidden));
 	$('btnSheetClose').addEventListener('click', () => {
-		$('sheet').hidden = true;
-		$('btnSheet').textContent = 'Contact sheet';
+		setSheetOpen(false);
+		$('btnSheet').focus();
 	});
 
 	for (const btn of document.querySelectorAll('.rl-seg-btn')) {
@@ -958,10 +1137,41 @@ function wire() {
 		toast('Reset to defaults');
 	});
 
-	window.addEventListener('beforeunload', releaseObjectUrl);
+	window.addEventListener('beforeunload', () => {
+		releaseObjectUrl();
+		releaseSheetObjectUrls();
+	});
 }
 
 // ── boot ─────────────────────────────────────────────────────────────
+
+// The pose catalog is served by a GET on the clip endpoint. It is loaded on its
+// own so the panel's retry can re-run exactly this and nothing else.
+async function loadPoseCatalog() {
+	try {
+		const res = await fetch('/api/render/avatar-clip');
+		const data = await res.json();
+		if (!res.ok || !Array.isArray(data?.poses)) throw new Error('catalog unavailable');
+		poseCatalog = data.poses;
+		poseCatalogFailed = false;
+	} catch {
+		poseCatalog = [];
+		poseCatalogFailed = true;
+	}
+}
+
+async function loadFeatured() {
+	try {
+		const res = await fetch('/api/avatars/featured?limit=12');
+		const data = await res.json();
+		if (!res.ok || !Array.isArray(data?.avatars)) throw new Error('feed unavailable');
+		avatars = data.avatars.filter((a) => a.thumb_url);
+		featuredFailed = false;
+	} catch {
+		avatars = [];
+		featuredFailed = true;
+	}
+}
 
 async function boot() {
 	mirrorTips();
@@ -971,24 +1181,16 @@ async function boot() {
 	$('sizeInput').value = String(state.size);
 	$('sizeVal').textContent = String(state.size);
 	$('bgInput').value = state.bg;
+	if (/^#[0-9a-f]{6}$/i.test(state.bg)) $('bgColor').value = state.bg;
 	$('formatInput').value = state.format;
+	$('qualityInput').value = String(state.quality);
 	$('qualityInput').disabled = state.format === 'png';
+	setOpenTarget('');
 	renderSceneChips();
 	renderExpressionControls();
 
-	const [catalogRes, featuredRes] = await Promise.allSettled([
-		fetch('/api/render/avatar-clip').then((r) => r.json()),
-		fetch('/api/avatars/featured?limit=12').then((r) => r.json()),
-	]);
-
-	if (catalogRes.status === 'fulfilled' && Array.isArray(catalogRes.value?.poses)) {
-		poseCatalog = catalogRes.value.poses;
-	}
+	await Promise.all([loadPoseCatalog(), loadFeatured()]);
 	renderPoseChips();
-
-	if (featuredRes.status === 'fulfilled' && Array.isArray(featuredRes.value?.avatars)) {
-		avatars = featuredRes.value.avatars.filter((a) => a.thumb_url);
-	}
 	renderAvatarStrip();
 
 	if (linked.url) {
@@ -1001,9 +1203,11 @@ async function boot() {
 	} else if (avatars.length) {
 		await selectAvatar(avatars[0].id, avatars[0].name);
 	} else {
-		// The featured feed is the only thing that can leave this page with
-		// nothing to show; fall back to a first-party model that always exists.
-		await selectUrl(`${origin}/avatars/selfie-girl.glb`);
+		// Nothing to auto-load: the renderer can only reach publicly resolvable
+		// models, so inventing a source here would produce a failed render
+		// instead of an answer. The strip above already says what happened, and
+		// the stage stays in its idle state pointing at the field that works.
+		setStage('idle', 'Paste an avatar ID or a public .glb URL on the right to render it.');
 	}
 }
 
