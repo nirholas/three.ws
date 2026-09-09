@@ -8089,6 +8089,40 @@ no longer reach it.
 
 ---
 
+### Making a room
+
+```
+POST /api/home/:id/areas
+```
+
+```json
+{ "name": "Kitchen" }
+```
+
+```json
+{ "ok": true, "area": { "id": "kitchen", "name": "Kitchen", "floorId": null, "created": true } }
+```
+
+Creates the area in **the user's own Home Assistant** (`config/area_registry/create`) and
+answers **201** when it made one, **200** when an area by that name already existed. A duplicate
+name is not an error: the room the caller asked for is there, which is what they wanted, and the
+existing `id` comes back so a client can carry straight on and file devices into it.
+
+This is the way out of the most common real Home Assistant there is: one where nothing has ever
+been assigned to an area, so every room-shaped surface has nothing to draw. Without it the only
+advice a client can give is "go and make areas in Home Assistant's settings first", which is a
+chore people leave to do and do not come back from. The floorplan editor calls this instead, and
+files the device that prompted the room in the same step.
+
+Same rules as filing a device: not a guarded action (an empty area is two clicks to delete in
+their own UI), and it still needs the `layout` capability, a CSRF token, and a `home_action_log`
+row. A **scoped** member is refused with `scope_forbidden`: a brand new room belongs to no scope
+by definition, so they would create something they could not then see, place or file into.
+
+Names are trimmed and capped at 64 characters; an empty one returns `name_required`.
+
+---
+
 ### The action log
 
 ```
