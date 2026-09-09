@@ -478,6 +478,14 @@ async function scenarioHappyPath() {
 async function scenarioBargeIn() {
 	const { browser, page } = await launch(CLIPS.bargeUser.path);
 	try {
+		// The agent's own speech comes from the disk cache here, which is the same
+		// bytes the real lane produced, returned in milliseconds. The live lane
+		// takes seconds to synthesize a sentence this long, and the interrupting
+		// clip starts talking 5 s in: against the live lane the interruption
+		// reliably lands BEFORE the first sample plays, which measures TTS latency
+		// rather than barge-in. Cached, the agent is genuinely audible when the
+		// user talks over it, which is the thing this scenario exists to prove.
+		await routeCachedSpeech(page);
 		await bootPage(page);
 		await optIn(page);
 		// Speak a long enough answer that the user's interruption lands inside it.
@@ -499,14 +507,28 @@ async function scenarioBargeIn() {
 		if (ttsFailure) throw new Error(`the agent could not speak, so barge-in cannot be measured: ${ttsFailure.message}`);
 		await waitForEvent(page, 'barge-in', 45000);
 		const all = await events(page);
+		const barge = all.find((e) => e.type === 'barge-in');
 		const stop = all.find((e) => e.type === 'playback-stopped' && e.reason === 'barge-in');
-		check('the user talking over the agent stops playback', !!stop);
+		check('the user talking over the agent stops playback', !!stop, {
+			audible: stop?.audible,
+		});
+		check('and the sound it stopped was already coming out of the speaker', stop?.audible === true, {
+			audible: stop?.audible,
+		});
 		const measured = await legs(page);
 		check('playback stops within 200 ms of the user starting to talk', (measured.bargeIn?.median ?? 1e9) <= 200, measured.bargeIn);
-		const state = await page.evaluate(() => window.homeVoice.loop.state);
-		check('the loop is capturing again immediately after a barge-in', state === 'capturing' || state === 'thinking', {
-			state,
-		});
+		// Read the transitions the loop made AT the barge-in, from the recorded
+		// log. A live read races the real turn that the interrupting utterance
+		// legitimately kicks off: by the time it runs the loop may already be
+		// thinking, or speaking the answer, and neither of those is a failure.
+		// The pair is asserted rather than the destination alone because state 8
+		// existing but being skipped would leave a host with no way to render it.
+		const after = await page.evaluate((t) => window.__hv.states.filter((s) => s.t >= t).map((s) => s.state), barge.t);
+		check(
+			'the loop passes through barged-in and is capturing again immediately',
+			after[0] === 'barged-in' && after[1] === 'capturing',
+			{ after: after.slice(0, 4).join(' -> ') },
+		);
 		await page.locator('#voice-panel').screenshot({ path: join(OUT, 'barge-in.png') });
 		return measured;
 	} finally {

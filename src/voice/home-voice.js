@@ -1003,6 +1003,7 @@ export class HomeVoiceLoop {
 			if (controller.signal.aborted) return;
 			// A voice that fails is not a loop that fails: the answer still exists,
 			// it just has to be read instead of heard.
+			this._playbackAbort = null;
 			this.onEvent({ type: 'tts-failed', message: err?.message, text });
 			this._releaseSuppression();
 			this._recover(keepState);
@@ -1029,6 +1030,9 @@ export class HomeVoiceLoop {
 			source.onended = () => {
 				if (this._playback !== source) return;
 				this._playback = null;
+				// The utterance is over, so there is nothing left for a later
+				// _cancelPlayback to cancel.
+				this._playbackAbort = null;
 				this._stopLipsync();
 				this._releaseSuppression();
 				this._recover(keepState);
@@ -1077,18 +1081,32 @@ export class HomeVoiceLoop {
 		this._setState(STATES.CAPTURING, { viaBargeIn: true });
 	}
 
+	/**
+	 * Stop the current utterance, whether it is already audible or still being
+	 * synthesized, and say so.
+	 *
+	 * The event fires in both cases on purpose. An interruption that lands inside
+	 * the synthesis window cancels a sentence the user never heard, and a host
+	 * that clears its speaking affordance on `playback-stopped` would otherwise
+	 * sit on that affordance forever waiting for audio that was aborted in
+	 * flight. `audible` tells the two apart for a host that renders them
+	 * differently; both are a stopped utterance.
+	 */
 	_cancelPlayback(reason) {
+		const pendingSynthesis = !!this._playbackAbort;
 		this._playbackAbort?.abort();
 		this._playbackAbort = null;
 		const source = this._playback;
 		this._playback = null;
 		this._stopLipsync();
-		if (!source) return;
-		try {
-			source.onended = null;
-			source.stop();
-		} catch {}
-		this.onEvent({ type: 'playback-stopped', reason });
+		if (!source && !pendingSynthesis) return;
+		if (source) {
+			try {
+				source.onended = null;
+				source.stop();
+			} catch {}
+		}
+		this.onEvent({ type: 'playback-stopped', reason, audible: !!source });
 	}
 
 	_releaseSuppression() {

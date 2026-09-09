@@ -536,3 +536,54 @@ describe('the agent turn over Server-Sent Events', () => {
 		await expect(loop._turn('hello', new AbortController().signal)).rejects.toThrow(/stream interrupted/);
 	});
 });
+
+describe('interrupting an utterance that is not audible yet', () => {
+	beforeEach(() => installStorage());
+
+	/**
+	 * A barge-in that lands inside the synthesis window cancels a sentence the
+	 * user never heard. The host still has to be told, because a surface that
+	 * clears its speaking affordance on `playback-stopped` would otherwise hold
+	 * that affordance forever waiting for audio that was aborted in flight.
+	 */
+	it('reports the stop even when no sound had started, and marks it inaudible', () => {
+		const events = [];
+		const loop = new HomeVoiceLoop({ onEvent: (e) => events.push(e) });
+		loop._playbackAbort = new AbortController();
+
+		loop._cancelPlayback('barge-in');
+
+		const stop = events.find((e) => e.type === 'playback-stopped');
+		expect(stop).toBeTruthy();
+		expect(stop.reason).toBe('barge-in');
+		expect(stop.audible).toBe(false);
+		expect(loop._playbackAbort).toBeNull();
+	});
+
+	it('marks the stop audible when a source was actually playing', () => {
+		const events = [];
+		const loop = new HomeVoiceLoop({ onEvent: (e) => events.push(e) });
+		let stopped = false;
+		loop._playbackAbort = new AbortController();
+		loop._playback = {
+			onended: () => {},
+			stop() {
+				stopped = true;
+			},
+		};
+
+		loop._cancelPlayback('barge-in');
+
+		expect(stopped).toBe(true);
+		expect(events.find((e) => e.type === 'playback-stopped').audible).toBe(true);
+	});
+
+	it('stays silent when there was nothing to cancel', () => {
+		const events = [];
+		const loop = new HomeVoiceLoop({ onEvent: (e) => events.push(e) });
+
+		loop._cancelPlayback('superseded');
+
+		expect(events.filter((e) => e.type === 'playback-stopped')).toEqual([]);
+	});
+});
