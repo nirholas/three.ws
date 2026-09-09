@@ -525,18 +525,139 @@ async function getSolanaBalances(address) {
 	return getSolanaBalancesFallback(address);
 }
 
-// -- EVM (Alchemy) — unchanged behavior, kept on CoinGecko since Jupiter is Solana-only --
+// -- EVM: Alchemy first, then a keyless rung, mirroring the Solana lanes above --
+//
+// Alchemy is the fast path (one proprietary `alchemy_getTokenBalances` call
+// covers discovery), but it is a single paid dependency: when its monthly
+// capacity is exhausted every EVM read used to 503, and /portfolio answered a
+// pasted 0x address with "data source unavailable" for the rest of the billing
+// month. Solana has had a keyless lane since day one; this gives EVM the same
+// floor. See getEvmBalancesKeyless below for the free rung.
 
 async function getEvmBalances(address) {
 	const alchemyKey = process.env.ALCHEMY_API_KEY;
-	if (!alchemyKey) {
+	if (alchemyKey) {
+		try {
+			return await getEvmBalancesAlchemy(address, alchemyKey);
+		} catch (err) {
+			warnThrottled('evm:alchemy', `[balances] Alchemy EVM path failed, using keyless rung: ${err?.message}`);
+			return getEvmBalancesKeyless(address);
+		}
+	}
+	try {
+		return await getEvmBalancesKeyless(address);
+	} catch (err) {
+		// No key AND the free rung is down: name the var an operator can set,
+		// which is what api/wallet/balances.js and api/crypto/* report.
 		const e = new Error('not_configured: ALCHEMY_API_KEY');
 		e.status = 503;
 		e.code = 'not_configured';
 		e.missing = 'ALCHEMY_API_KEY';
+		e.cause = err;
 		throw e;
 	}
+}
 
+// Keyless EVM balance read. Native ETH comes off the canonical public RPC
+// failover (api/_lib/evm/rpc.js, same list every other EVM caller uses); token
+// discovery comes off Blockscout's public Ethereum instance, whose
+// `/addresses/:a/tokens?type=ERC-20` page is already ordered by USD value and
+// carries decimals, price and icon per row, so one page covers what a portfolio
+// view renders. A wallet holding more than KEYLESS_TOKEN_PAGE priced tokens is
+// truncated by value, which buildOverview already reports as `truncated`.
+const BLOCKSCOUT_ETH = 'https://eth.blockscout.com/api/v2';
+const KEYLESS_RPC_TIMEOUT_MS = 6000;
+// Blockscout walks an address's full token set to order it, which takes seconds
+// on a wallet with thousands of positions. Bounded so a whale address degrades
+// to a native-only read instead of hanging the portfolio request.
+const BLOCKSCOUT_TIMEOUT_MS = 12_000;
+
+async function keylessEthBalance(address) {
+	const { evmRpcEndpoints } = await import('./evm/rpc.js');
+	const body = JSON.stringify({ jsonrpc: '2.0', id: 1, method: 'eth_getBalance', params: [address, 'latest'] });
+	let lastErr = null;
+	for (const url of evmRpcEndpoints(1)) {
+		try {
+			const resp = await fetchJson(url, {
+				method: 'POST',
+				headers: { 'content-type': 'application/json' },
+				body,
+				signal: AbortSignal.timeout(KEYLESS_RPC_TIMEOUT_MS),
+			});
+			if (resp?.error) throw new Error(resp.error.message || 'rpc error');
+			return Number(BigInt(resp?.result ?? '0x0')) / 1e18;
+		} catch (err) {
+			lastErr = err;
+		}
+	}
+	throw lastErr || new Error('no EVM RPC endpoint answered');
+}
+
+async function keylessErc20s(address) {
+	const data = await fetchJson(
+		`${BLOCKSCOUT_ETH}/addresses/${encodeURIComponent(address)}/tokens?type=ERC-20`,
+		{ headers: { accept: 'application/json' }, signal: AbortSignal.timeout(BLOCKSCOUT_TIMEOUT_MS) },
+	);
+	const items = Array.isArray(data?.items) ? data.items : [];
+	return items
+		.map((it) => {
+			const t = it?.token || {};
+			const decimals = Number(t.decimals);
+			const raw = String(it?.value ?? '0');
+			if (!t.address_hash || !/^\d+$/.test(raw)) return null;
+			const amount = Number(raw) / Math.pow(10, Number.isFinite(decimals) ? decimals : 18);
+			if (!(amount > 0)) return null;
+			const price = Number(t.exchange_rate);
+			const usdPrice = Number.isFinite(price) && price > 0 ? price : 0;
+			return {
+				symbol: t.symbol || null,
+				name: t.name || t.symbol || null,
+				contract: t.address_hash,
+				decimals: Number.isFinite(decimals) ? decimals : 18,
+				amount,
+				price: usdPrice,
+				// Blockscout carries no 24h change; /api/crypto/portfolio reports the
+				// resulting coverage rather than inventing one.
+				change24h: null,
+				usd: amount * usdPrice,
+				logo: t.icon_url || null,
+			};
+		})
+		.filter(Boolean)
+		.sort((a, b) => (b.usd || 0) - (a.usd || 0));
+}
+
+async function getEvmBalancesKeyless(address) {
+	const [ethAmount, tokens, ethUsdPrice] = await Promise.all([
+		keylessEthBalance(address),
+		keylessErc20s(address).catch((err) => {
+			warnThrottled('evm:blockscout', `[balances] keyless ERC-20 discovery failed: ${err?.message}`);
+			return [];
+		}),
+		fetchCoinPriceUsdOrNull('ethereum').catch(() => 0),
+	]);
+	const ethPrice = Number(ethUsdPrice) > 0 ? Number(ethUsdPrice) : 0;
+	return {
+		chain: 'evm',
+		address,
+		// Which rung answered, so a caller can name its real sources rather than
+		// crediting Alchemy/CoinGecko for a read neither one served.
+		keyless: true,
+		native: {
+			symbol: 'ETH',
+			name: 'Ethereum',
+			amount: ethAmount,
+			price: ethPrice,
+			// This lane carries no 24h move of its own; /api/crypto/portfolio
+			// enriches it from DexScreener and states the coverage it achieved.
+			change24h: null,
+			usd: ethAmount * ethPrice,
+		},
+		tokens,
+	};
+}
+
+async function getEvmBalancesAlchemy(address, alchemyKey) {
 	const rpcUrl = `https://eth-mainnet.g.alchemy.com/v2/${alchemyKey}`;
 
 	const ethBalResp = await fetchJson(rpcUrl, {
