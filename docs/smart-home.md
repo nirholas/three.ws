@@ -401,18 +401,19 @@ per release, and the set is the current stable, the two releases before it, and 
 release still in contiguous wide use at or above one percent of installs. The floor moves on its
 own as the world upgrades.
 
-Measured 2026-09-03:
+<!-- home-version-matrix:start -->
+Measured 2026-09-09, by `npm run home:matrix`. This table is written by the runner from
+[`docs/ops/home-version-matrix.json`](ops/home-version-matrix.json); do not edit it by hand.
 
 | Version | Share | Connect | Registries | State stream | Service call | Scenes | `mcp_server` | Notes |
 |---|---|---|---|---|---|---|---|---|
-| `2026.9` (current stable) | 4.17% | pass (2026.9.0) | pass (1f/4a/62d/92e) | pass (push) | pass (gated) | pass (scene) | pass (29 tools) | exposes via `homeassistant/expose_entity` |
-| `2026.8` (previous release) | 50.41% | pass (2026.8.3) | pass (1f/4a/62d/92e) | pass (push) | pass (gated) | pass (scene) | pass (29 tools) | exposes via `homeassistant/expose_entity` |
-| `2026.7` (previous release) | 13.21% | pass (2026.7.4) | pass (1f/4a/61d/87e) | pass (push) | pass (gated) | pass (scene) | pass (29 tools) | exposes via `homeassistant/expose_entity` |
-| `2025.10` (oldest in wide use) | 1.05% | pass (2025.10.4) | pass (1f/4a/52d/79e) | pass (push) | pass (gated) | pass (scene) | pass (22 tools) | exposes via `homeassistant/expose_entity` |
+| `2026.9` (current stable) | 34.19% | pass (2026.9.1) | pass (1f/4a/62d/92e) | pass (push) | pass (gated) | pass (scene) | pass (29 tools) | exposes via `homeassistant/expose_entity` |
+| `2026.8` (previous release) | 23.60% | pass (2026.8.3) | pass (1f/4a/62d/92e) | pass (push) | pass (gated) | pass (scene) | pass (29 tools) | exposes via `homeassistant/expose_entity` |
+| `2026.7` (previous release) | 11.41% | pass (2026.7.4) | pass (1f/4a/62d/92e) | pass (push) | pass (gated) | pass (scene) | pass (29 tools) | exposes via `homeassistant/expose_entity` |
+| `2025.10` (oldest in wide use) | 1.02% | pass (2025.10.4) | pass (1f/4a/52d/79e) | pass (push) | pass (gated) | pass (scene) | pass (22 tools) | exposes via `homeassistant/expose_entity` |
 
-**Supported range: 2025.10 and newer.** Every capability the platform depends on works across it.
-The floor is where install share falls below one percent, not where the code stops working;
-nothing was found that a 2025.10 house cannot do.
+**Supported range: 2025.10 and newer.** Every capability the platform depends on works across it. The floor is where install share falls below one percent, not where the code stops working; nothing was found that a 2025.10 house cannot do.
+<!-- home-version-matrix:end -->
 
 One version difference was found, and it is handled by asking the house rather than by reading
 its version number:

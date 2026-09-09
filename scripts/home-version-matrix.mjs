@@ -12,6 +12,8 @@
  *   node scripts/home-version-matrix.mjs                  # the derived version set
  *   node scripts/home-version-matrix.mjs --versions 2026.8,2026.7
  *   node scripts/home-version-matrix.mjs --keep-images    # skip the disk reclaim
+ *   node scripts/home-version-matrix.mjs --check         # is the published table still the measured one
+ *   node scripts/home-version-matrix.mjs --sync-doc      # rewrite the published table from the last run
  *
  * The version set is DERIVED, never hardcoded: Home Assistant's own analytics
  * (https://analytics.home-assistant.io/data.json, ~676k opted-in installs)
@@ -36,6 +38,9 @@ const HARNESS = path.join(ROOT, 'scripts', 'home-test-instance.mjs');
 const IMAGE = 'ghcr.io/home-assistant/home-assistant';
 const ANALYTICS = 'https://analytics.home-assistant.io/data.json';
 const OUT_JSON = path.join(ROOT, 'docs', 'ops', 'home-version-matrix.json');
+const OUT_DOC = path.join(ROOT, 'docs', 'smart-home.md');
+const DOC_START = '<!-- home-version-matrix:start -->';
+const DOC_END = '<!-- home-version-matrix:end -->';
 
 /**
  * The entry point sits below every declaration it uses. A top-level driver
@@ -45,6 +50,24 @@ const OUT_JSON = path.join(ROOT, 'docs', 'ops', 'home-version-matrix.json');
  */
 async function main() {
 	const args = parse(process.argv.slice(2));
+
+	// --check and --sync-doc read the last run's JSON instead of pulling four
+	// Home Assistant images. They exist because the published table drifted from
+	// the measurements once already: the runner wrote the JSON and left the
+	// markdown to a human, and by the next run the doc claimed shares and entity
+	// counts no release had ever reported.
+	if (args.check || args.syncDoc) {
+		const report = readReport();
+		const written = syncDoc(report, { write: args.syncDoc });
+		if (args.syncDoc) console.error(`[matrix] ${written ? 'updated' : 'left unchanged'} ${path.relative(ROOT, OUT_DOC)}`);
+		else if (!written) console.error(`[matrix] ${path.relative(ROOT, OUT_DOC)} matches ${path.relative(ROOT, OUT_JSON)}`);
+		else {
+			console.error(`[matrix] ${path.relative(ROOT, OUT_DOC)} is stale. Run: npm run home:matrix:sync`);
+			process.exitCode = 1;
+		}
+		return;
+	}
+
 	const versions = args.versions || (await deriveVersions());
 	console.error(`[matrix] testing ${versions.map((v) => v.tag).join(', ')}`);
 
@@ -57,9 +80,10 @@ async function main() {
 	const report = { measuredAt: new Date().toISOString(), source: ANALYTICS, results };
 	fs.mkdirSync(path.dirname(OUT_JSON), { recursive: true });
 	fs.writeFileSync(OUT_JSON, `${JSON.stringify(report, null, '\t')}\n`);
+	syncDoc(report, { write: true });
 
 	console.log(renderTable(results));
-	console.error(`\n[matrix] wrote ${path.relative(ROOT, OUT_JSON)}`);
+	console.error(`\n[matrix] wrote ${path.relative(ROOT, OUT_JSON)} and ${path.relative(ROOT, OUT_DOC)}`);
 
 	// A version that cannot connect at all is the finding this runner exists to
 	// surface, so it fails the command rather than printing a quiet FAIL cell.
@@ -224,6 +248,54 @@ async function probe(instance, cells, notes) {
 	home.close();
 }
 
+// ---------------------------------------------------------------- the doc
+
+/**
+ * The published table, rewritten from the measurements.
+ *
+ * `docs/smart-home.md` is where a developer actually reads which releases we
+ * hold, so the runner owns that section rather than trusting someone to
+ * transcribe a JSON file by hand. Returns whether the file's content differs
+ * from what the report says it should be, which is what `--check` reports and
+ * `--sync-doc` acts on.
+ */
+function syncDoc(report, { write }) {
+	const doc = fs.readFileSync(OUT_DOC, 'utf8');
+	const start = doc.indexOf(DOC_START);
+	const end = doc.indexOf(DOC_END);
+	if (start < 0 || end < 0) throw new Error(`${path.relative(ROOT, OUT_DOC)} is missing the ${DOC_START} / ${DOC_END} markers.`);
+
+	const body = renderDocSection(report);
+	const next = `${doc.slice(0, start)}${DOC_START}\n${body}\n${doc.slice(end)}`;
+	const changed = next !== doc;
+	if (changed && write) fs.writeFileSync(OUT_DOC, next);
+	return changed;
+}
+
+function renderDocSection(report) {
+	const measured = report.measuredAt.slice(0, 10);
+	const floor = report.results.reduce((oldest, r) => (compareVersions(r.tag, oldest.tag) < 0 ? r : oldest), report.results[0]);
+	const broken = report.results.filter((r) => Object.values(r.cells).some((c) => c && !c.ok));
+
+	const range = broken.length
+		? `**Supported range: ${floor.tag} and newer, with exceptions.** ${broken.map((r) => `\`${r.tag}\` fails ${Object.entries(r.cells).filter(([, c]) => c && !c.ok).map(([k]) => k).join(', ')}`).join('; ')}.`
+		: `**Supported range: ${floor.tag} and newer.** Every capability the platform depends on works across it. The floor is where install share falls below one percent, not where the code stops working; nothing was found that a ${floor.tag} house cannot do.`;
+
+	return [
+		`Measured ${measured}, by \`npm run home:matrix\`. This table is written by the runner from`,
+		`[\`docs/ops/home-version-matrix.json\`](ops/home-version-matrix.json); do not edit it by hand.`,
+		'',
+		renderTable(report.results),
+		'',
+		range,
+	].join('\n');
+}
+
+function readReport() {
+	if (!fs.existsSync(OUT_JSON)) throw new Error(`${path.relative(ROOT, OUT_JSON)} does not exist. Run: npm run home:matrix`);
+	return JSON.parse(fs.readFileSync(OUT_JSON, 'utf8'));
+}
+
 // ---------------------------------------------------------------- rendering
 
 function renderTable(rows) {
@@ -314,7 +386,7 @@ async function reclaim(tag) {
 }
 
 function parse(argv) {
-	const out = { keepImages: false, allowFailures: false };
+	const out = { keepImages: false, allowFailures: false, check: false, syncDoc: false };
 	for (let i = 0; i < argv.length; i += 1) {
 		if (argv[i] === '--versions') {
 			out.versions = argv[++i]
@@ -322,6 +394,8 @@ function parse(argv) {
 				.map((tag) => ({ tag: tag.trim(), share: 0, role: 'requested', installs: 0 }));
 		} else if (argv[i] === '--keep-images') out.keepImages = true;
 		else if (argv[i] === '--allow-failures') out.allowFailures = true;
+		else if (argv[i] === '--check') out.check = true;
+		else if (argv[i] === '--sync-doc') out.syncDoc = true;
 		else throw new Error(`unknown argument "${argv[i]}"`);
 	}
 	return out;
