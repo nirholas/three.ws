@@ -1,20 +1,20 @@
 {
   "base": "https://three.ws",
   "dryRun": true,
-  "ranAt": "2026-09-02T19:19:52.751Z",
+  "ranAt": "2026-09-09T05:37:38.978Z",
   "results": [
     {
       "id": "1",
       "title": "free lane serves live data, no payment demanded",
-      "ok": true,
-      "detail": "health 200 (6 subsystems, real latencies), catalog 200 (7 rows), free tools on a paid row: forge_status 200, getting_started 200",
+      "ok": false,
+      "detail": "health 503 (6 subsystems, real latencies), catalog 200 (7 rows), free tools on a paid row: forge_status 200, getting_started 200",
       "evidence": "prompts/okx-ai/e2e-evidence/30-case1-free-lane.json"
     },
     {
       "id": "1d",
       "title": "MCP discovery is free to a spec-compliant client",
-      "ok": false,
-      "detail": "forge-draft=402/402, forge-standard=402/402, forge-hd=402/402, forge-image=402/402",
+      "ok": true,
+      "detail": "forge-draft=200/200, forge-standard=200/200, forge-hd=200/200, forge-image=200/200",
       "evidence": "prompts/okx-ai/e2e-evidence/33-case1d-mcp-discovery.json"
     },
     {
@@ -77,7 +77,7 @@
       "id": "5d",
       "title": "garbage payment header gets a clean 4xx, runs no tool",
       "ok": true,
-      "detail": "notBase64=400, wrongShape=402, emptyString=402, truncatedJson=400",
+      "detail": "notBase64=402, wrongShape=402, emptyString=402, truncatedJson=402",
       "evidence": "prompts/okx-ai/e2e-evidence/53-case5d-garbage.json"
     },
     {

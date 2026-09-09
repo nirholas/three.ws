@@ -1,18 +1,9 @@
 {
   "notBase64": {
-    "status": 400,
-    "body": {
-      "error": "invalid_payment",
-      "error_description": "X-PAYMENT JSON parse failed: Unexpected token '�', \"��~k��j_�k)��ߡy�^\" is not valid JSON"
-    },
-    "receiptHeader": null,
-    "structured": null
-  },
-  "wrongShape": {
     "status": 402,
     "body": {
       "x402Version": 2,
-      "error": "X Layer payment must carry payload.authorization + payload.signature (EIP-3009)",
+      "error": "X-PAYMENT JSON parse failed: Unexpected token '�', \"��~k��j_�k)��ߡy�^\" is not valid JSON",
       "resource": {
         "url": "https://three.ws/api/okx/3d/forge-draft",
         "description": "three.ws Forge, Forge 3D Draft: A2MCP service that turns a text description into a downloadable 3D model (GLB) with a browser viewer and an augmented-reality link. $0.01 per call on X Layer via x402; job polling is free. Operated by three.ws.",
@@ -54,8 +45,7 @@
           "asset": "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v",
           "extra": {
             "name": "USDC",
-            "decimals": 6,
-            "feePayer": "WwwuGbqHrwF5RG89KhUbmRWEvjnRH9k5kVM5p7T3WwW"
+            "decimals": 6
           }
         },
         {
@@ -68,8 +58,7 @@
           "asset": "FeMbDoX7R1Psc4GEcvJdsbNbZA3bfztcyDCatJVJpump",
           "extra": {
             "name": "THREE",
-            "decimals": 6,
-            "feePayer": "WwwuGbqHrwF5RG89KhUbmRWEvjnRH9k5kVM5p7T3WwW"
+            "decimals": 6
           }
         },
         {
@@ -280,22 +269,385 @@
               {
                 "format": "jws",
                 "acceptIndex": 0,
-                "signature": "eyJhbGciOiJFZERTQSIsImtpZCI6ImRpZDp3ZWI6dGhyZWUud3Mja2V5LTEifQ.eyJhbW91bnQiOiIxMDAwMCIsImFzc2V0IjoiMHg3NzlkZWQwYzllMTAyMjIyNWY4ZTA2MzBiMzVhOWI1NGJlNzEzNzM2IiwibmV0d29yayI6ImVpcDE1NToxOTYiLCJwYXlUbyI6IjB4NDAyMmRlMkQzNkMzMzRFNzNDN2ExMDg4MDVDZWExMUMwNTY0ZjQwMiIsInJlc291cmNlVXJsIjoiaHR0cHM6Ly90aHJlZS53cy9hcGkvb2t4LzNkL2ZvcmdlLWRyYWZ0Iiwic2NoZW1lIjoiZXhhY3QiLCJ2YWxpZFVudGlsIjoxNzg4Mzc3MDg4LCJ2ZXJzaW9uIjoxfQ.xklrzrz30IxIp48oUofNUSCPrH-fF6WmMhOulIOHZ4JKBft-rx62rePnDo03krty9QVO9vyG9vc0arnn_Y3BBg"
+                "signature": "eyJhbGciOiJFZERTQSIsImtpZCI6ImRpZDp3ZWI6dGhyZWUud3Mja2V5LTEifQ.eyJhbW91bnQiOiIxMDAwMCIsImFzc2V0IjoiMHg3NzlkZWQwYzllMTAyMjIyNWY4ZTA2MzBiMzVhOWI1NGJlNzEzNzM2IiwibmV0d29yayI6ImVpcDE1NToxOTYiLCJwYXlUbyI6IjB4NDAyMmRlMkQzNkMzMzRFNzNDN2ExMDg4MDVDZWExMUMwNTY0ZjQwMiIsInJlc291cmNlVXJsIjoiaHR0cHM6Ly90aHJlZS53cy9hcGkvb2t4LzNkL2ZvcmdlLWRyYWZ0Iiwic2NoZW1lIjoiZXhhY3QiLCJ2YWxpZFVudGlsIjoxNzg4OTMyNTU4LCJ2ZXJzaW9uIjoxfQ.6OSCUaQW38lSynR2b0pGzDgiYVD6KvLq9_BChEI_2DZzkCa0mCeukyMfK870PgTdycEETeJts_WNa31rkS2xBg"
               },
               {
                 "format": "jws",
                 "acceptIndex": 1,
-                "signature": "eyJhbGciOiJFZERTQSIsImtpZCI6ImRpZDp3ZWI6dGhyZWUud3Mja2V5LTEifQ.eyJhbW91bnQiOiIxMDAwMCIsImFzc2V0IjoiRVBqRldkZDVBdWZxU1NxZU0ycU4xeHp5YmFwQzhHNHdFR0drWnd5VER0MXYiLCJuZXR3b3JrIjoic29sYW5hOjVleWt0NFVzRnY4UDhOSmRUUkVwWTF2enFLcVpLdmRwIiwicGF5VG8iOiJ3d3d3d0R4RldSbjdncmdyM0VzcnNnNUM2TnZEb0RIU0E0Z2FDZmZjY3JVIiwicmVzb3VyY2VVcmwiOiJodHRwczovL3RocmVlLndzL2FwaS9va3gvM2QvZm9yZ2UtZHJhZnQiLCJzY2hlbWUiOiJleGFjdCIsInZhbGlkVW50aWwiOjE3ODgzNzcwODgsInZlcnNpb24iOjF9.M51-7GUKSD2S5djLG2funPfT8JA44fPUGNucIdCF5rq6HFlOvBYFcy5M81HL7UY_wgcIX4FMo_WoJIDX_hrLAw"
+                "signature": "eyJhbGciOiJFZERTQSIsImtpZCI6ImRpZDp3ZWI6dGhyZWUud3Mja2V5LTEifQ.eyJhbW91bnQiOiIxMDAwMCIsImFzc2V0IjoiRVBqRldkZDVBdWZxU1NxZU0ycU4xeHp5YmFwQzhHNHdFR0drWnd5VER0MXYiLCJuZXR3b3JrIjoic29sYW5hOjVleWt0NFVzRnY4UDhOSmRUUkVwWTF2enFLcVpLdmRwIiwicGF5VG8iOiJ3d3d3d0R4RldSbjdncmdyM0VzcnNnNUM2TnZEb0RIU0E0Z2FDZmZjY3JVIiwicmVzb3VyY2VVcmwiOiJodHRwczovL3RocmVlLndzL2FwaS9va3gvM2QvZm9yZ2UtZHJhZnQiLCJzY2hlbWUiOiJleGFjdCIsInZhbGlkVW50aWwiOjE3ODg5MzI1NTgsInZlcnNpb24iOjF9.aI1kU2VmvK8Snqpco1Chx4CLzRRodFVnkwQG7DV4PHQnNC2zpdI_FGcBO0FW0BPbzblS4xo1dE5u6CdsU4BoAQ"
               },
               {
                 "format": "jws",
                 "acceptIndex": 2,
-                "signature": "eyJhbGciOiJFZERTQSIsImtpZCI6ImRpZDp3ZWI6dGhyZWUud3Mja2V5LTEifQ.eyJhbW91bnQiOiIxMDAwMDAwMCIsImFzc2V0IjoiRmVNYkRvWDdSMVBzYzRHRWN2SmRzYk5iWkEzYmZ6dGN5RENhdEpWSnB1bXAiLCJuZXR3b3JrIjoic29sYW5hOjVleWt0NFVzRnY4UDhOSmRUUkVwWTF2enFLcVpLdmRwIiwicGF5VG8iOiJ3d3d3d0R4RldSbjdncmdyM0VzcnNnNUM2TnZEb0RIU0E0Z2FDZmZjY3JVIiwicmVzb3VyY2VVcmwiOiJodHRwczovL3RocmVlLndzL2FwaS9va3gvM2QvZm9yZ2UtZHJhZnQiLCJzY2hlbWUiOiJleGFjdCIsInZhbGlkVW50aWwiOjE3ODgzNzcwODgsInZlcnNpb24iOjF9.CfhQyJgzhh-eG8utsErfmDwx-RgdjktDJ3ZRuzHKNPaotMVtWIkhLgpABuds-7I_P0txNCXbra2yqz1DhgzfBQ"
+                "signature": "eyJhbGciOiJFZERTQSIsImtpZCI6ImRpZDp3ZWI6dGhyZWUud3Mja2V5LTEifQ.eyJhbW91bnQiOiIxMDAwMDAwMCIsImFzc2V0IjoiRmVNYkRvWDdSMVBzYzRHRWN2SmRzYk5iWkEzYmZ6dGN5RENhdEpWSnB1bXAiLCJuZXR3b3JrIjoic29sYW5hOjVleWt0NFVzRnY4UDhOSmRUUkVwWTF2enFLcVpLdmRwIiwicGF5VG8iOiJ3d3d3d0R4RldSbjdncmdyM0VzcnNnNUM2TnZEb0RIU0E0Z2FDZmZjY3JVIiwicmVzb3VyY2VVcmwiOiJodHRwczovL3RocmVlLndzL2FwaS9va3gvM2QvZm9yZ2UtZHJhZnQiLCJzY2hlbWUiOiJleGFjdCIsInZhbGlkVW50aWwiOjE3ODg5MzI1NTgsInZlcnNpb24iOjF9.idwfM0E78pzqphuAuJIk3_nsJX082qRLXwcl4e95-dH1qDQlv8gzEgy61Dgb1b6C5FMCJKpMk0Vu-RET9XApBg"
               },
               {
                 "format": "jws",
                 "acceptIndex": 3,
-                "signature": "eyJhbGciOiJFZERTQSIsImtpZCI6ImRpZDp3ZWI6dGhyZWUud3Mja2V5LTEifQ.eyJhbW91bnQiOiIxMDAwMCIsImFzc2V0IjoiMHg4MzM1ODlmQ0Q2ZURiNkUwOGY0YzdDMzJENGY3MWI1NGJkQTAyOTEzIiwibmV0d29yayI6ImVpcDE1NTo4NDUzIiwicGF5VG8iOiIweDQwMjJkZTJkMzZjMzM0ZTczYzdhMTA4ODA1Y2VhMTFjMDU2NGY0MDIiLCJyZXNvdXJjZVVybCI6Imh0dHBzOi8vdGhyZWUud3MvYXBpL29reC8zZC9mb3JnZS1kcmFmdCIsInNjaGVtZSI6ImV4YWN0IiwidmFsaWRVbnRpbCI6MTc4ODM3NzA4OCwidmVyc2lvbiI6MX0.qRg0v_C5aGDgVayQtl3PgZl_S1fEYtkxGQercn2E9lpAh3dot8ZGpQoUYgcNO36uBOgfDZyWt6xwdlf2X13rBg"
+                "signature": "eyJhbGciOiJFZERTQSIsImtpZCI6ImRpZDp3ZWI6dGhyZWUud3Mja2V5LTEifQ.eyJhbW91bnQiOiIxMDAwMCIsImFzc2V0IjoiMHg4MzM1ODlmQ0Q2ZURiNkUwOGY0YzdDMzJENGY3MWI1NGJkQTAyOTEzIiwibmV0d29yayI6ImVpcDE1NTo4NDUzIiwicGF5VG8iOiIweDQwMjJkZTJkMzZjMzM0ZTczYzdhMTA4ODA1Y2VhMTFjMDU2NGY0MDIiLCJyZXNvdXJjZVVybCI6Imh0dHBzOi8vdGhyZWUud3MvYXBpL29reC8zZC9mb3JnZS1kcmFmdCIsInNjaGVtZSI6ImV4YWN0IiwidmFsaWRVbnRpbCI6MTc4ODkzMjU1OCwidmVyc2lvbiI6MX0.dQHahWMVjpXbwokoYu-TCvvoOM41kQvCk6spHJFkm6RsskcH_GQG1NKfgqt6G_moPvOg_WrMVd2Qj4ZrsHL5BQ"
+              }
+            ]
+          },
+          "schema": {
+            "$schema": "https://json-schema.org/draft/2020-12/schema",
+            "type": "object",
+            "properties": {
+              "offers": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "format": {
+                      "type": "string"
+                    },
+                    "acceptIndex": {
+                      "type": "integer"
+                    },
+                    "payload": {
+                      "type": "object",
+                      "properties": {
+                        "version": {
+                          "type": "integer"
+                        },
+                        "resourceUrl": {
+                          "type": "string"
+                        },
+                        "scheme": {
+                          "type": "string"
+                        },
+                        "network": {
+                          "type": "string"
+                        },
+                        "asset": {
+                          "type": "string"
+                        },
+                        "payTo": {
+                          "type": "string"
+                        },
+                        "amount": {
+                          "type": "string"
+                        },
+                        "validUntil": {
+                          "type": "integer"
+                        }
+                      },
+                      "required": [
+                        "version",
+                        "resourceUrl",
+                        "scheme",
+                        "network",
+                        "asset",
+                        "payTo",
+                        "amount"
+                      ]
+                    },
+                    "signature": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "format",
+                    "signature"
+                  ]
+                }
+              }
+            },
+            "required": [
+              "offers"
+            ]
+          }
+        }
+      }
+    },
+    "receiptHeader": null,
+    "structured": null
+  },
+  "wrongShape": {
+    "status": 402,
+    "body": {
+      "x402Version": 2,
+      "error": "X Layer payment must carry payload.authorization + payload.signature (EIP-3009)",
+      "resource": {
+        "url": "https://three.ws/api/okx/3d/forge-draft",
+        "description": "three.ws Forge, Forge 3D Draft: A2MCP service that turns a text description into a downloadable 3D model (GLB) with a browser viewer and an augmented-reality link. $0.01 per call on X Layer via x402; job polling is free. Operated by three.ws.",
+        "mimeType": "application/json",
+        "serviceName": "three.ws Forge, Forge 3D Draft",
+        "tags": [
+          "x402",
+          "mcp",
+          "3d",
+          "forge",
+          "okx"
+        ],
+        "iconUrl": "https://three.ws/favicon.ico"
+      },
+      "accepts": [
+        {
+          "scheme": "exact",
+          "network": "eip155:196",
+          "amount": "10000",
+          "payTo": "0x4022de2D36C334E73C7a108805Cea11C0564f402",
+          "maxTimeoutSeconds": 86400,
+          "asset": "0x779ded0c9e1022225f8e0630b35a9b54be713736",
+          "resource": "https://three.ws/api/okx/3d/forge-draft",
+          "extra": {
+            "symbol": "USDT",
+            "name": "USD₮0",
+            "version": "1",
+            "transferMethod": "eip3009",
+            "decimals": 6
+          }
+        },
+        {
+          "scheme": "exact",
+          "amount": "10000",
+          "maxTimeoutSeconds": 60,
+          "resource": "https://three.ws/api/okx/3d/forge-draft",
+          "network": "solana:5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp",
+          "payTo": "wwwwwDxFWRn7grgr3Esrsg5C6NvDoDHSA4gaCffccrU",
+          "asset": "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v",
+          "extra": {
+            "name": "USDC",
+            "decimals": 6
+          }
+        },
+        {
+          "scheme": "exact",
+          "amount": "10000000",
+          "maxTimeoutSeconds": 60,
+          "resource": "https://three.ws/api/okx/3d/forge-draft",
+          "network": "solana:5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp",
+          "payTo": "wwwwwDxFWRn7grgr3Esrsg5C6NvDoDHSA4gaCffccrU",
+          "asset": "FeMbDoX7R1Psc4GEcvJdsbNbZA3bfztcyDCatJVJpump",
+          "extra": {
+            "name": "THREE",
+            "decimals": 6
+          }
+        },
+        {
+          "scheme": "exact",
+          "amount": "10000",
+          "maxTimeoutSeconds": 60,
+          "resource": "https://three.ws/api/okx/3d/forge-draft",
+          "network": "eip155:8453",
+          "payTo": "0x4022de2d36c334e73c7a108805cea11c0564f402",
+          "asset": "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
+          "extra": {
+            "name": "USD Coin",
+            "version": "2",
+            "decimals": 6
+          }
+        }
+      ],
+      "extensions": {
+        "bazaar": {
+          "discoverable": true,
+          "info": {
+            "input": {
+              "type": "http",
+              "method": "POST",
+              "body": {
+                "jsonrpc": "2.0",
+                "id": 1,
+                "method": "tools/call",
+                "params": {
+                  "name": "forge_3d",
+                  "arguments": {
+                    "prompt": "a low-poly orange fox sitting down"
+                  }
+                }
+              },
+              "bodyType": "json"
+            },
+            "output": {
+              "type": "json",
+              "example": {
+                "jsonrpc": "2.0",
+                "id": 1,
+                "result": {
+                  "content": [
+                    {
+                      "type": "text",
+                      "text": "Job accepted. Call forge_status with job_id f1.abc123 until status is \"done\"."
+                    }
+                  ],
+                  "structuredContent": {
+                    "ok": true,
+                    "status": "pending",
+                    "job": "f1.abc123",
+                    "poll_tool": "forge_status",
+                    "poll_endpoint": "https://three.ws/api/okx/3d/forge-status",
+                    "format": "glb",
+                    "etaSeconds": 45
+                  }
+                }
+              }
+            }
+          },
+          "schema": {
+            "$schema": "https://json-schema.org/draft/2020-12/schema",
+            "type": "object",
+            "properties": {
+              "input": {
+                "type": "object",
+                "properties": {
+                  "type": {
+                    "type": "string",
+                    "const": "http"
+                  },
+                  "method": {
+                    "type": "string",
+                    "enum": [
+                      "POST",
+                      "PUT",
+                      "PATCH"
+                    ]
+                  },
+                  "bodyType": {
+                    "type": "string",
+                    "enum": [
+                      "json",
+                      "form-data",
+                      "text"
+                    ]
+                  },
+                  "body": {
+                    "$schema": "https://json-schema.org/draft/2020-12/schema",
+                    "type": "object",
+                    "required": [
+                      "jsonrpc",
+                      "method"
+                    ],
+                    "properties": {
+                      "jsonrpc": {
+                        "type": "string",
+                        "const": "2.0"
+                      },
+                      "id": {
+                        "type": [
+                          "string",
+                          "number"
+                        ]
+                      },
+                      "method": {
+                        "type": "string",
+                        "enum": [
+                          "initialize",
+                          "tools/list",
+                          "tools/call",
+                          "ping"
+                        ],
+                        "description": "MCP JSON-RPC method."
+                      },
+                      "params": {
+                        "type": "object",
+                        "description": "For tools/call: { name, arguments }. Tool names: forge_3d (paid, $0.01), forge_status (free job polling), getting_started (free overview). See tools/list."
+                      }
+                    }
+                  }
+                },
+                "required": [
+                  "type",
+                  "method",
+                  "bodyType",
+                  "body"
+                ],
+                "additionalProperties": false
+              },
+              "output": {
+                "type": "object",
+                "properties": {
+                  "type": {
+                    "type": "string"
+                  },
+                  "example": {
+                    "type": "object",
+                    "$schema": "https://json-schema.org/draft/2020-12/schema",
+                    "properties": {
+                      "jsonrpc": {
+                        "type": "string",
+                        "const": "2.0"
+                      },
+                      "id": {
+                        "type": [
+                          "string",
+                          "number"
+                        ]
+                      },
+                      "result": {
+                        "type": "object",
+                        "properties": {
+                          "content": {
+                            "type": "array",
+                            "items": {
+                              "type": "object",
+                              "required": [
+                                "type",
+                                "text"
+                              ],
+                              "properties": {
+                                "type": {
+                                  "type": "string",
+                                  "enum": [
+                                    "text"
+                                  ]
+                                },
+                                "text": {
+                                  "type": "string"
+                                }
+                              }
+                            }
+                          }
+                        }
+                      },
+                      "error": {
+                        "type": "object",
+                        "properties": {
+                          "code": {
+                            "type": "number"
+                          },
+                          "message": {
+                            "type": "string"
+                          }
+                        }
+                      }
+                    }
+                  }
+                },
+                "required": [
+                  "type"
+                ]
+              }
+            },
+            "required": [
+              "input"
+            ]
+          }
+        },
+        "offer-receipt": {
+          "includeTxHash": false,
+          "offerValiditySeconds": 60,
+          "info": {
+            "offers": [
+              {
+                "format": "jws",
+                "acceptIndex": 0,
+                "signature": "eyJhbGciOiJFZERTQSIsImtpZCI6ImRpZDp3ZWI6dGhyZWUud3Mja2V5LTEifQ.eyJhbW91bnQiOiIxMDAwMCIsImFzc2V0IjoiMHg3NzlkZWQwYzllMTAyMjIyNWY4ZTA2MzBiMzVhOWI1NGJlNzEzNzM2IiwibmV0d29yayI6ImVpcDE1NToxOTYiLCJwYXlUbyI6IjB4NDAyMmRlMkQzNkMzMzRFNzNDN2ExMDg4MDVDZWExMUMwNTY0ZjQwMiIsInJlc291cmNlVXJsIjoiaHR0cHM6Ly90aHJlZS53cy9hcGkvb2t4LzNkL2ZvcmdlLWRyYWZ0Iiwic2NoZW1lIjoiZXhhY3QiLCJ2YWxpZFVudGlsIjoxNzg4OTMyNTU4LCJ2ZXJzaW9uIjoxfQ.6OSCUaQW38lSynR2b0pGzDgiYVD6KvLq9_BChEI_2DZzkCa0mCeukyMfK870PgTdycEETeJts_WNa31rkS2xBg"
+              },
+              {
+                "format": "jws",
+                "acceptIndex": 1,
+                "signature": "eyJhbGciOiJFZERTQSIsImtpZCI6ImRpZDp3ZWI6dGhyZWUud3Mja2V5LTEifQ.eyJhbW91bnQiOiIxMDAwMCIsImFzc2V0IjoiRVBqRldkZDVBdWZxU1NxZU0ycU4xeHp5YmFwQzhHNHdFR0drWnd5VER0MXYiLCJuZXR3b3JrIjoic29sYW5hOjVleWt0NFVzRnY4UDhOSmRUUkVwWTF2enFLcVpLdmRwIiwicGF5VG8iOiJ3d3d3d0R4RldSbjdncmdyM0VzcnNnNUM2TnZEb0RIU0E0Z2FDZmZjY3JVIiwicmVzb3VyY2VVcmwiOiJodHRwczovL3RocmVlLndzL2FwaS9va3gvM2QvZm9yZ2UtZHJhZnQiLCJzY2hlbWUiOiJleGFjdCIsInZhbGlkVW50aWwiOjE3ODg5MzI1NTgsInZlcnNpb24iOjF9.aI1kU2VmvK8Snqpco1Chx4CLzRRodFVnkwQG7DV4PHQnNC2zpdI_FGcBO0FW0BPbzblS4xo1dE5u6CdsU4BoAQ"
+              },
+              {
+                "format": "jws",
+                "acceptIndex": 2,
+                "signature": "eyJhbGciOiJFZERTQSIsImtpZCI6ImRpZDp3ZWI6dGhyZWUud3Mja2V5LTEifQ.eyJhbW91bnQiOiIxMDAwMDAwMCIsImFzc2V0IjoiRmVNYkRvWDdSMVBzYzRHRWN2SmRzYk5iWkEzYmZ6dGN5RENhdEpWSnB1bXAiLCJuZXR3b3JrIjoic29sYW5hOjVleWt0NFVzRnY4UDhOSmRUUkVwWTF2enFLcVpLdmRwIiwicGF5VG8iOiJ3d3d3d0R4RldSbjdncmdyM0VzcnNnNUM2TnZEb0RIU0E0Z2FDZmZjY3JVIiwicmVzb3VyY2VVcmwiOiJodHRwczovL3RocmVlLndzL2FwaS9va3gvM2QvZm9yZ2UtZHJhZnQiLCJzY2hlbWUiOiJleGFjdCIsInZhbGlkVW50aWwiOjE3ODg5MzI1NTgsInZlcnNpb24iOjF9.idwfM0E78pzqphuAuJIk3_nsJX082qRLXwcl4e95-dH1qDQlv8gzEgy61Dgb1b6C5FMCJKpMk0Vu-RET9XApBg"
+              },
+              {
+                "format": "jws",
+                "acceptIndex": 3,
+                "signature": "eyJhbGciOiJFZERTQSIsImtpZCI6ImRpZDp3ZWI6dGhyZWUud3Mja2V5LTEifQ.eyJhbW91bnQiOiIxMDAwMCIsImFzc2V0IjoiMHg4MzM1ODlmQ0Q2ZURiNkUwOGY0YzdDMzJENGY3MWI1NGJkQTAyOTEzIiwibmV0d29yayI6ImVpcDE1NTo4NDUzIiwicGF5VG8iOiIweDQwMjJkZTJkMzZjMzM0ZTczYzdhMTA4ODA1Y2VhMTFjMDU2NGY0MDIiLCJyZXNvdXJjZVVybCI6Imh0dHBzOi8vdGhyZWUud3MvYXBpL29reC8zZC9mb3JnZS1kcmFmdCIsInNjaGVtZSI6ImV4YWN0IiwidmFsaWRVbnRpbCI6MTc4ODkzMjU1OCwidmVyc2lvbiI6MX0.dQHahWMVjpXbwokoYu-TCvvoOM41kQvCk6spHJFkm6RsskcH_GQG1NKfgqt6G_moPvOg_WrMVd2Qj4ZrsHL5BQ"
               }
             ]
           },
@@ -377,7 +729,370 @@
     "status": 402,
     "body": {
       "x402Version": 2,
-      "error": "X-PAYMENT header is required",
+      "error": "PAYMENT-SIGNATURE header is required (X-PAYMENT is also accepted)",
+      "resource": {
+        "url": "https://three.ws/api/okx/3d/forge-draft",
+        "description": "three.ws Forge, Forge 3D Draft: A2MCP service that turns a text description into a downloadable 3D model (GLB) with a browser viewer and an augmented-reality link. $0.01 per call on X Layer via x402; job polling is free. Operated by three.ws.",
+        "mimeType": "application/json",
+        "serviceName": "three.ws Forge, Forge 3D Draft",
+        "tags": [
+          "x402",
+          "mcp",
+          "3d",
+          "forge",
+          "okx"
+        ],
+        "iconUrl": "https://three.ws/favicon.ico"
+      },
+      "accepts": [
+        {
+          "scheme": "exact",
+          "network": "eip155:196",
+          "amount": "10000",
+          "payTo": "0x4022de2D36C334E73C7a108805Cea11C0564f402",
+          "maxTimeoutSeconds": 86400,
+          "asset": "0x779ded0c9e1022225f8e0630b35a9b54be713736",
+          "resource": "https://three.ws/api/okx/3d/forge-draft",
+          "extra": {
+            "symbol": "USDT",
+            "name": "USD₮0",
+            "version": "1",
+            "transferMethod": "eip3009",
+            "decimals": 6
+          }
+        },
+        {
+          "scheme": "exact",
+          "amount": "10000",
+          "maxTimeoutSeconds": 60,
+          "resource": "https://three.ws/api/okx/3d/forge-draft",
+          "network": "solana:5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp",
+          "payTo": "wwwwwDxFWRn7grgr3Esrsg5C6NvDoDHSA4gaCffccrU",
+          "asset": "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v",
+          "extra": {
+            "name": "USDC",
+            "decimals": 6
+          }
+        },
+        {
+          "scheme": "exact",
+          "amount": "10000000",
+          "maxTimeoutSeconds": 60,
+          "resource": "https://three.ws/api/okx/3d/forge-draft",
+          "network": "solana:5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp",
+          "payTo": "wwwwwDxFWRn7grgr3Esrsg5C6NvDoDHSA4gaCffccrU",
+          "asset": "FeMbDoX7R1Psc4GEcvJdsbNbZA3bfztcyDCatJVJpump",
+          "extra": {
+            "name": "THREE",
+            "decimals": 6
+          }
+        },
+        {
+          "scheme": "exact",
+          "amount": "10000",
+          "maxTimeoutSeconds": 60,
+          "resource": "https://three.ws/api/okx/3d/forge-draft",
+          "network": "eip155:8453",
+          "payTo": "0x4022de2d36c334e73c7a108805cea11c0564f402",
+          "asset": "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
+          "extra": {
+            "name": "USD Coin",
+            "version": "2",
+            "decimals": 6
+          }
+        }
+      ],
+      "extensions": {
+        "bazaar": {
+          "discoverable": true,
+          "info": {
+            "input": {
+              "type": "http",
+              "method": "POST",
+              "body": {
+                "jsonrpc": "2.0",
+                "id": 1,
+                "method": "tools/call",
+                "params": {
+                  "name": "forge_3d",
+                  "arguments": {
+                    "prompt": "a low-poly orange fox sitting down"
+                  }
+                }
+              },
+              "bodyType": "json"
+            },
+            "output": {
+              "type": "json",
+              "example": {
+                "jsonrpc": "2.0",
+                "id": 1,
+                "result": {
+                  "content": [
+                    {
+                      "type": "text",
+                      "text": "Job accepted. Call forge_status with job_id f1.abc123 until status is \"done\"."
+                    }
+                  ],
+                  "structuredContent": {
+                    "ok": true,
+                    "status": "pending",
+                    "job": "f1.abc123",
+                    "poll_tool": "forge_status",
+                    "poll_endpoint": "https://three.ws/api/okx/3d/forge-status",
+                    "format": "glb",
+                    "etaSeconds": 45
+                  }
+                }
+              }
+            }
+          },
+          "schema": {
+            "$schema": "https://json-schema.org/draft/2020-12/schema",
+            "type": "object",
+            "properties": {
+              "input": {
+                "type": "object",
+                "properties": {
+                  "type": {
+                    "type": "string",
+                    "const": "http"
+                  },
+                  "method": {
+                    "type": "string",
+                    "enum": [
+                      "POST",
+                      "PUT",
+                      "PATCH"
+                    ]
+                  },
+                  "bodyType": {
+                    "type": "string",
+                    "enum": [
+                      "json",
+                      "form-data",
+                      "text"
+                    ]
+                  },
+                  "body": {
+                    "$schema": "https://json-schema.org/draft/2020-12/schema",
+                    "type": "object",
+                    "required": [
+                      "jsonrpc",
+                      "method"
+                    ],
+                    "properties": {
+                      "jsonrpc": {
+                        "type": "string",
+                        "const": "2.0"
+                      },
+                      "id": {
+                        "type": [
+                          "string",
+                          "number"
+                        ]
+                      },
+                      "method": {
+                        "type": "string",
+                        "enum": [
+                          "initialize",
+                          "tools/list",
+                          "tools/call",
+                          "ping"
+                        ],
+                        "description": "MCP JSON-RPC method."
+                      },
+                      "params": {
+                        "type": "object",
+                        "description": "For tools/call: { name, arguments }. Tool names: forge_3d (paid, $0.01), forge_status (free job polling), getting_started (free overview). See tools/list."
+                      }
+                    }
+                  }
+                },
+                "required": [
+                  "type",
+                  "method",
+                  "bodyType",
+                  "body"
+                ],
+                "additionalProperties": false
+              },
+              "output": {
+                "type": "object",
+                "properties": {
+                  "type": {
+                    "type": "string"
+                  },
+                  "example": {
+                    "type": "object",
+                    "$schema": "https://json-schema.org/draft/2020-12/schema",
+                    "properties": {
+                      "jsonrpc": {
+                        "type": "string",
+                        "const": "2.0"
+                      },
+                      "id": {
+                        "type": [
+                          "string",
+                          "number"
+                        ]
+                      },
+                      "result": {
+                        "type": "object",
+                        "properties": {
+                          "content": {
+                            "type": "array",
+                            "items": {
+                              "type": "object",
+                              "required": [
+                                "type",
+                                "text"
+                              ],
+                              "properties": {
+                                "type": {
+                                  "type": "string",
+                                  "enum": [
+                                    "text"
+                                  ]
+                                },
+                                "text": {
+                                  "type": "string"
+                                }
+                              }
+                            }
+                          }
+                        }
+                      },
+                      "error": {
+                        "type": "object",
+                        "properties": {
+                          "code": {
+                            "type": "number"
+                          },
+                          "message": {
+                            "type": "string"
+                          }
+                        }
+                      }
+                    }
+                  }
+                },
+                "required": [
+                  "type"
+                ]
+              }
+            },
+            "required": [
+              "input"
+            ]
+          }
+        },
+        "offer-receipt": {
+          "includeTxHash": false,
+          "offerValiditySeconds": 60,
+          "info": {
+            "offers": [
+              {
+                "format": "jws",
+                "acceptIndex": 0,
+                "signature": "eyJhbGciOiJFZERTQSIsImtpZCI6ImRpZDp3ZWI6dGhyZWUud3Mja2V5LTEifQ.eyJhbW91bnQiOiIxMDAwMCIsImFzc2V0IjoiMHg3NzlkZWQwYzllMTAyMjIyNWY4ZTA2MzBiMzVhOWI1NGJlNzEzNzM2IiwibmV0d29yayI6ImVpcDE1NToxOTYiLCJwYXlUbyI6IjB4NDAyMmRlMkQzNkMzMzRFNzNDN2ExMDg4MDVDZWExMUMwNTY0ZjQwMiIsInJlc291cmNlVXJsIjoiaHR0cHM6Ly90aHJlZS53cy9hcGkvb2t4LzNkL2ZvcmdlLWRyYWZ0Iiwic2NoZW1lIjoiZXhhY3QiLCJ2YWxpZFVudGlsIjoxNzg4OTMyNTU4LCJ2ZXJzaW9uIjoxfQ.6OSCUaQW38lSynR2b0pGzDgiYVD6KvLq9_BChEI_2DZzkCa0mCeukyMfK870PgTdycEETeJts_WNa31rkS2xBg"
+              },
+              {
+                "format": "jws",
+                "acceptIndex": 1,
+                "signature": "eyJhbGciOiJFZERTQSIsImtpZCI6ImRpZDp3ZWI6dGhyZWUud3Mja2V5LTEifQ.eyJhbW91bnQiOiIxMDAwMCIsImFzc2V0IjoiRVBqRldkZDVBdWZxU1NxZU0ycU4xeHp5YmFwQzhHNHdFR0drWnd5VER0MXYiLCJuZXR3b3JrIjoic29sYW5hOjVleWt0NFVzRnY4UDhOSmRUUkVwWTF2enFLcVpLdmRwIiwicGF5VG8iOiJ3d3d3d0R4RldSbjdncmdyM0VzcnNnNUM2TnZEb0RIU0E0Z2FDZmZjY3JVIiwicmVzb3VyY2VVcmwiOiJodHRwczovL3RocmVlLndzL2FwaS9va3gvM2QvZm9yZ2UtZHJhZnQiLCJzY2hlbWUiOiJleGFjdCIsInZhbGlkVW50aWwiOjE3ODg5MzI1NTgsInZlcnNpb24iOjF9.aI1kU2VmvK8Snqpco1Chx4CLzRRodFVnkwQG7DV4PHQnNC2zpdI_FGcBO0FW0BPbzblS4xo1dE5u6CdsU4BoAQ"
+              },
+              {
+                "format": "jws",
+                "acceptIndex": 2,
+                "signature": "eyJhbGciOiJFZERTQSIsImtpZCI6ImRpZDp3ZWI6dGhyZWUud3Mja2V5LTEifQ.eyJhbW91bnQiOiIxMDAwMDAwMCIsImFzc2V0IjoiRmVNYkRvWDdSMVBzYzRHRWN2SmRzYk5iWkEzYmZ6dGN5RENhdEpWSnB1bXAiLCJuZXR3b3JrIjoic29sYW5hOjVleWt0NFVzRnY4UDhOSmRUUkVwWTF2enFLcVpLdmRwIiwicGF5VG8iOiJ3d3d3d0R4RldSbjdncmdyM0VzcnNnNUM2TnZEb0RIU0E0Z2FDZmZjY3JVIiwicmVzb3VyY2VVcmwiOiJodHRwczovL3RocmVlLndzL2FwaS9va3gvM2QvZm9yZ2UtZHJhZnQiLCJzY2hlbWUiOiJleGFjdCIsInZhbGlkVW50aWwiOjE3ODg5MzI1NTgsInZlcnNpb24iOjF9.idwfM0E78pzqphuAuJIk3_nsJX082qRLXwcl4e95-dH1qDQlv8gzEgy61Dgb1b6C5FMCJKpMk0Vu-RET9XApBg"
+              },
+              {
+                "format": "jws",
+                "acceptIndex": 3,
+                "signature": "eyJhbGciOiJFZERTQSIsImtpZCI6ImRpZDp3ZWI6dGhyZWUud3Mja2V5LTEifQ.eyJhbW91bnQiOiIxMDAwMCIsImFzc2V0IjoiMHg4MzM1ODlmQ0Q2ZURiNkUwOGY0YzdDMzJENGY3MWI1NGJkQTAyOTEzIiwibmV0d29yayI6ImVpcDE1NTo4NDUzIiwicGF5VG8iOiIweDQwMjJkZTJkMzZjMzM0ZTczYzdhMTA4ODA1Y2VhMTFjMDU2NGY0MDIiLCJyZXNvdXJjZVVybCI6Imh0dHBzOi8vdGhyZWUud3MvYXBpL29reC8zZC9mb3JnZS1kcmFmdCIsInNjaGVtZSI6ImV4YWN0IiwidmFsaWRVbnRpbCI6MTc4ODkzMjU1OCwidmVyc2lvbiI6MX0.dQHahWMVjpXbwokoYu-TCvvoOM41kQvCk6spHJFkm6RsskcH_GQG1NKfgqt6G_moPvOg_WrMVd2Qj4ZrsHL5BQ"
+              }
+            ]
+          },
+          "schema": {
+            "$schema": "https://json-schema.org/draft/2020-12/schema",
+            "type": "object",
+            "properties": {
+              "offers": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "format": {
+                      "type": "string"
+                    },
+                    "acceptIndex": {
+                      "type": "integer"
+                    },
+                    "payload": {
+                      "type": "object",
+                      "properties": {
+                        "version": {
+                          "type": "integer"
+                        },
+                        "resourceUrl": {
+                          "type": "string"
+                        },
+                        "scheme": {
+                          "type": "string"
+                        },
+                        "network": {
+                          "type": "string"
+                        },
+                        "asset": {
+                          "type": "string"
+                        },
+                        "payTo": {
+                          "type": "string"
+                        },
+                        "amount": {
+                          "type": "string"
+                        },
+                        "validUntil": {
+                          "type": "integer"
+                        }
+                      },
+                      "required": [
+                        "version",
+                        "resourceUrl",
+                        "scheme",
+                        "network",
+                        "asset",
+                        "payTo",
+                        "amount"
+                      ]
+                    },
+                    "signature": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "format",
+                    "signature"
+                  ]
+                }
+              }
+            },
+            "required": [
+              "offers"
+            ]
+          }
+        }
+      }
+    },
+    "receiptHeader": null,
+    "structured": null
+  },
+  "truncatedJson": {
+    "status": 402,
+    "body": {
+      "x402Version": 2,
+      "error": "X-PAYMENT JSON parse failed: Expected property name or '}' in JSON at position 28 (line 1 column 29)",
       "resource": {
         "url": "https://three.ws/api/okx/3d/forge-draft",
         "description": "three.ws Forge, Forge 3D Draft: A2MCP service that turns a text description into a downloadable 3D model (GLB) with a browser viewer and an augmented-reality link. $0.01 per call on X Layer via x402; job polling is free. Operated by three.ws.",
@@ -645,22 +1360,22 @@
               {
                 "format": "jws",
                 "acceptIndex": 0,
-                "signature": "eyJhbGciOiJFZERTQSIsImtpZCI6ImRpZDp3ZWI6dGhyZWUud3Mja2V5LTEifQ.eyJhbW91bnQiOiIxMDAwMCIsImFzc2V0IjoiMHg3NzlkZWQwYzllMTAyMjIyNWY4ZTA2MzBiMzVhOWI1NGJlNzEzNzM2IiwibmV0d29yayI6ImVpcDE1NToxOTYiLCJwYXlUbyI6IjB4NDAyMmRlMkQzNkMzMzRFNzNDN2ExMDg4MDVDZWExMUMwNTY0ZjQwMiIsInJlc291cmNlVXJsIjoiaHR0cHM6Ly90aHJlZS53cy9hcGkvb2t4LzNkL2ZvcmdlLWRyYWZ0Iiwic2NoZW1lIjoiZXhhY3QiLCJ2YWxpZFVudGlsIjoxNzg4Mzc3MDg4LCJ2ZXJzaW9uIjoxfQ.xklrzrz30IxIp48oUofNUSCPrH-fF6WmMhOulIOHZ4JKBft-rx62rePnDo03krty9QVO9vyG9vc0arnn_Y3BBg"
+                "signature": "eyJhbGciOiJFZERTQSIsImtpZCI6ImRpZDp3ZWI6dGhyZWUud3Mja2V5LTEifQ.eyJhbW91bnQiOiIxMDAwMCIsImFzc2V0IjoiMHg3NzlkZWQwYzllMTAyMjIyNWY4ZTA2MzBiMzVhOWI1NGJlNzEzNzM2IiwibmV0d29yayI6ImVpcDE1NToxOTYiLCJwYXlUbyI6IjB4NDAyMmRlMkQzNkMzMzRFNzNDN2ExMDg4MDVDZWExMUMwNTY0ZjQwMiIsInJlc291cmNlVXJsIjoiaHR0cHM6Ly90aHJlZS53cy9hcGkvb2t4LzNkL2ZvcmdlLWRyYWZ0Iiwic2NoZW1lIjoiZXhhY3QiLCJ2YWxpZFVudGlsIjoxNzg4OTMyNTU4LCJ2ZXJzaW9uIjoxfQ.6OSCUaQW38lSynR2b0pGzDgiYVD6KvLq9_BChEI_2DZzkCa0mCeukyMfK870PgTdycEETeJts_WNa31rkS2xBg"
               },
               {
                 "format": "jws",
                 "acceptIndex": 1,
-                "signature": "eyJhbGciOiJFZERTQSIsImtpZCI6ImRpZDp3ZWI6dGhyZWUud3Mja2V5LTEifQ.eyJhbW91bnQiOiIxMDAwMCIsImFzc2V0IjoiRVBqRldkZDVBdWZxU1NxZU0ycU4xeHp5YmFwQzhHNHdFR0drWnd5VER0MXYiLCJuZXR3b3JrIjoic29sYW5hOjVleWt0NFVzRnY4UDhOSmRUUkVwWTF2enFLcVpLdmRwIiwicGF5VG8iOiJ3d3d3d0R4RldSbjdncmdyM0VzcnNnNUM2TnZEb0RIU0E0Z2FDZmZjY3JVIiwicmVzb3VyY2VVcmwiOiJodHRwczovL3RocmVlLndzL2FwaS9va3gvM2QvZm9yZ2UtZHJhZnQiLCJzY2hlbWUiOiJleGFjdCIsInZhbGlkVW50aWwiOjE3ODgzNzcwODgsInZlcnNpb24iOjF9.M51-7GUKSD2S5djLG2funPfT8JA44fPUGNucIdCF5rq6HFlOvBYFcy5M81HL7UY_wgcIX4FMo_WoJIDX_hrLAw"
+                "signature": "eyJhbGciOiJFZERTQSIsImtpZCI6ImRpZDp3ZWI6dGhyZWUud3Mja2V5LTEifQ.eyJhbW91bnQiOiIxMDAwMCIsImFzc2V0IjoiRVBqRldkZDVBdWZxU1NxZU0ycU4xeHp5YmFwQzhHNHdFR0drWnd5VER0MXYiLCJuZXR3b3JrIjoic29sYW5hOjVleWt0NFVzRnY4UDhOSmRUUkVwWTF2enFLcVpLdmRwIiwicGF5VG8iOiJ3d3d3d0R4RldSbjdncmdyM0VzcnNnNUM2TnZEb0RIU0E0Z2FDZmZjY3JVIiwicmVzb3VyY2VVcmwiOiJodHRwczovL3RocmVlLndzL2FwaS9va3gvM2QvZm9yZ2UtZHJhZnQiLCJzY2hlbWUiOiJleGFjdCIsInZhbGlkVW50aWwiOjE3ODg5MzI1NTgsInZlcnNpb24iOjF9.aI1kU2VmvK8Snqpco1Chx4CLzRRodFVnkwQG7DV4PHQnNC2zpdI_FGcBO0FW0BPbzblS4xo1dE5u6CdsU4BoAQ"
               },
               {
                 "format": "jws",
                 "acceptIndex": 2,
-                "signature": "eyJhbGciOiJFZERTQSIsImtpZCI6ImRpZDp3ZWI6dGhyZWUud3Mja2V5LTEifQ.eyJhbW91bnQiOiIxMDAwMDAwMCIsImFzc2V0IjoiRmVNYkRvWDdSMVBzYzRHRWN2SmRzYk5iWkEzYmZ6dGN5RENhdEpWSnB1bXAiLCJuZXR3b3JrIjoic29sYW5hOjVleWt0NFVzRnY4UDhOSmRUUkVwWTF2enFLcVpLdmRwIiwicGF5VG8iOiJ3d3d3d0R4RldSbjdncmdyM0VzcnNnNUM2TnZEb0RIU0E0Z2FDZmZjY3JVIiwicmVzb3VyY2VVcmwiOiJodHRwczovL3RocmVlLndzL2FwaS9va3gvM2QvZm9yZ2UtZHJhZnQiLCJzY2hlbWUiOiJleGFjdCIsInZhbGlkVW50aWwiOjE3ODgzNzcwODgsInZlcnNpb24iOjF9.CfhQyJgzhh-eG8utsErfmDwx-RgdjktDJ3ZRuzHKNPaotMVtWIkhLgpABuds-7I_P0txNCXbra2yqz1DhgzfBQ"
+                "signature": "eyJhbGciOiJFZERTQSIsImtpZCI6ImRpZDp3ZWI6dGhyZWUud3Mja2V5LTEifQ.eyJhbW91bnQiOiIxMDAwMDAwMCIsImFzc2V0IjoiRmVNYkRvWDdSMVBzYzRHRWN2SmRzYk5iWkEzYmZ6dGN5RENhdEpWSnB1bXAiLCJuZXR3b3JrIjoic29sYW5hOjVleWt0NFVzRnY4UDhOSmRUUkVwWTF2enFLcVpLdmRwIiwicGF5VG8iOiJ3d3d3d0R4RldSbjdncmdyM0VzcnNnNUM2TnZEb0RIU0E0Z2FDZmZjY3JVIiwicmVzb3VyY2VVcmwiOiJodHRwczovL3RocmVlLndzL2FwaS9va3gvM2QvZm9yZ2UtZHJhZnQiLCJzY2hlbWUiOiJleGFjdCIsInZhbGlkVW50aWwiOjE3ODg5MzI1NTgsInZlcnNpb24iOjF9.idwfM0E78pzqphuAuJIk3_nsJX082qRLXwcl4e95-dH1qDQlv8gzEgy61Dgb1b6C5FMCJKpMk0Vu-RET9XApBg"
               },
               {
                 "format": "jws",
                 "acceptIndex": 3,
-                "signature": "eyJhbGciOiJFZERTQSIsImtpZCI6ImRpZDp3ZWI6dGhyZWUud3Mja2V5LTEifQ.eyJhbW91bnQiOiIxMDAwMCIsImFzc2V0IjoiMHg4MzM1ODlmQ0Q2ZURiNkUwOGY0YzdDMzJENGY3MWI1NGJkQTAyOTEzIiwibmV0d29yayI6ImVpcDE1NTo4NDUzIiwicGF5VG8iOiIweDQwMjJkZTJkMzZjMzM0ZTczYzdhMTA4ODA1Y2VhMTFjMDU2NGY0MDIiLCJyZXNvdXJjZVVybCI6Imh0dHBzOi8vdGhyZWUud3MvYXBpL29reC8zZC9mb3JnZS1kcmFmdCIsInNjaGVtZSI6ImV4YWN0IiwidmFsaWRVbnRpbCI6MTc4ODM3NzA4OCwidmVyc2lvbiI6MX0.qRg0v_C5aGDgVayQtl3PgZl_S1fEYtkxGQercn2E9lpAh3dot8ZGpQoUYgcNO36uBOgfDZyWt6xwdlf2X13rBg"
+                "signature": "eyJhbGciOiJFZERTQSIsImtpZCI6ImRpZDp3ZWI6dGhyZWUud3Mja2V5LTEifQ.eyJhbW91bnQiOiIxMDAwMCIsImFzc2V0IjoiMHg4MzM1ODlmQ0Q2ZURiNkUwOGY0YzdDMzJENGY3MWI1NGJkQTAyOTEzIiwibmV0d29yayI6ImVpcDE1NTo4NDUzIiwicGF5VG8iOiIweDQwMjJkZTJkMzZjMzM0ZTczYzdhMTA4ODA1Y2VhMTFjMDU2NGY0MDIiLCJyZXNvdXJjZVVybCI6Imh0dHBzOi8vdGhyZWUud3MvYXBpL29reC8zZC9mb3JnZS1kcmFmdCIsInNjaGVtZSI6ImV4YWN0IiwidmFsaWRVbnRpbCI6MTc4ODkzMjU1OCwidmVyc2lvbiI6MX0.dQHahWMVjpXbwokoYu-TCvvoOM41kQvCk6spHJFkm6RsskcH_GQG1NKfgqt6G_moPvOg_WrMVd2Qj4ZrsHL5BQ"
               }
             ]
           },
@@ -734,15 +1449,6 @@
           }
         }
       }
-    },
-    "receiptHeader": null,
-    "structured": null
-  },
-  "truncatedJson": {
-    "status": 400,
-    "body": {
-      "error": "invalid_payment",
-      "error_description": "X-PAYMENT JSON parse failed: Expected property name or '}' in JSON at position 28 (line 1 column 29)"
     },
     "receiptHeader": null,
     "structured": null

@@ -1,46 +1,66 @@
 {
   "forge-draft": {
     "initialize": {
-      "status": 402,
-      "protocolVersion": null
+      "status": 200,
+      "protocolVersion": "2025-06-18"
     },
     "toolsList": {
-      "status": 402,
-      "tools": null
+      "status": 200,
+      "tools": [
+        "getting_started",
+        "forge_3d",
+        "forge_status",
+        "look_at_model"
+      ]
     },
-    "paidToolDocumented": false
+    "paidToolDocumented": true
   },
   "forge-standard": {
     "initialize": {
-      "status": 402,
-      "protocolVersion": null
+      "status": 200,
+      "protocolVersion": "2025-06-18"
     },
     "toolsList": {
-      "status": 402,
-      "tools": null
+      "status": 200,
+      "tools": [
+        "getting_started",
+        "forge_3d",
+        "forge_status",
+        "look_at_model"
+      ]
     },
-    "paidToolDocumented": false
+    "paidToolDocumented": true
   },
   "forge-hd": {
     "initialize": {
-      "status": 402,
-      "protocolVersion": null
+      "status": 200,
+      "protocolVersion": "2025-06-18"
     },
     "toolsList": {
-      "status": 402,
-      "tools": null
+      "status": 200,
+      "tools": [
+        "getting_started",
+        "forge_3d",
+        "forge_status",
+        "look_at_model"
+      ]
     },
-    "paidToolDocumented": false
+    "paidToolDocumented": true
   },
   "forge-image": {
     "initialize": {
-      "status": 402,
-      "protocolVersion": null
+      "status": 200,
+      "protocolVersion": "2025-06-18"
     },
     "toolsList": {
-      "status": 402,
-      "tools": null
+      "status": 200,
+      "tools": [
+        "getting_started",
+        "forge_3d",
+        "forge_status",
+        "look_at_model"
+      ]
     },
-    "paidToolDocumented": false
+    "paidToolDocumented": true
   }
 }

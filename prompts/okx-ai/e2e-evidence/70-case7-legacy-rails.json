@@ -1,7 +1,7 @@
 {
   "challenge": {
     "x402Version": 2,
-    "error": "X-PAYMENT header is required",
+    "error": "PAYMENT-SIGNATURE header is required (X-PAYMENT is also accepted)",
     "resource": {
       "url": "https://three.ws/api/okx/3d/forge-draft",
       "description": "three.ws Forge, Forge 3D Draft: A2MCP service that turns a text description into a downloadable 3D model (GLB) with a browser viewer and an augmented-reality link. $0.01 per call on X Layer via x402; job polling is free. Operated by three.ws.",
@@ -43,8 +43,7 @@
         "asset": "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v",
         "extra": {
           "name": "USDC",
-          "decimals": 6,
-          "feePayer": "WwwuGbqHrwF5RG89KhUbmRWEvjnRH9k5kVM5p7T3WwW"
+          "decimals": 6
         }
       },
       {
@@ -57,8 +56,7 @@
         "asset": "FeMbDoX7R1Psc4GEcvJdsbNbZA3bfztcyDCatJVJpump",
         "extra": {
           "name": "THREE",
-          "decimals": 6,
-          "feePayer": "WwwuGbqHrwF5RG89KhUbmRWEvjnRH9k5kVM5p7T3WwW"
+          "decimals": 6
         }
       },
       {
