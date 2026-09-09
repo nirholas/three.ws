@@ -402,7 +402,12 @@ describe('pre-push hook (behavior)', () => {
 
 describe('this repository', () => {
 	it('has the current hook version installed', () => {
-		const hookPath = join(repoRoot, '.git', 'hooks', 'pre-push');
+		// Ask git where the hooks live rather than assuming `<root>/.git/hooks`.
+		// In a linked worktree (every deploy worktree here is one) `.git` is a
+		// FILE pointing at the common dir, so the assumed path does not exist and
+		// this reads as "the hook is missing" when it is installed and working.
+		const gitDir = execFileSync('git', ['rev-parse', '--git-common-dir'], { cwd: repoRoot, encoding: 'utf8' }).trim();
+		const hookPath = join(resolve(repoRoot, gitDir), 'hooks', 'pre-push');
 		expect(existsSync(hookPath)).toBe(true);
 		const body = readFileSync(hookPath, 'utf8');
 		expect(body).toContain('three.ws pre-push hook');

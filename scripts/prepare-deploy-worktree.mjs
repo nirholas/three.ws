@@ -103,6 +103,35 @@ export const ARTIFACTS = [
 		optional: true,
 		why: 'an in-worktree agent-payments-sdk rebuild',
 	},
+	// The three below are not build inputs: build:gcp is green without them. They
+	// are what lets a deploy worktree run the repository's own test suite, which
+	// is the only way to test the exact commit being shipped rather than the
+	// shared tree with every concurrent session's work in it. Without them a full
+	// vitest run from a worktree reports eighteen failures that are all missing
+	// files, which reads as a broken commit and is the reason the pre-ship test
+	// run kept being taken in the dirty main tree instead.
+	{
+		// Same shape as agent-payments-sdk/dist: gitignored, so the package source
+		// arrives with nothing behind its entry and tour-sdk's importers die on
+		// "Failed to resolve entry for package @three-ws/walk".
+		rel: 'walk-sdk/dist',
+		build: ['npm', ['run', 'build', '--prefix', 'walk-sdk']],
+		optional: true,
+		why: "tour-sdk's suites, which import @three-ws/walk",
+	},
+	{
+		rel: 'multiplayer/node_modules',
+		build: null,
+		optional: true,
+		why: 'the multiplayer server-boot suite, which joins a real colyseus room',
+	},
+	{
+		// Gitignored GLB fixtures, ~113 MB, hardlinked so they cost nothing.
+		rel: 'animation-sources',
+		build: null,
+		optional: true,
+		why: 'the glb-diff and model-diff suites, whose fixtures are gitignored',
+	},
 ];
 
 /** Env files copied (never hardlinked: a deploy tree must not share their inode). */

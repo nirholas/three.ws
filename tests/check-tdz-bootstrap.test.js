@@ -14,7 +14,11 @@
  */
 
 import { describe, it, expect } from 'vitest';
+import { dirname, relative, resolve } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { analyze, tracked } from '../scripts/check-tdz-bootstrap.mjs';
+
+const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 
 const names = (src) => analyze('t.js', src).map((f) => f.name).sort();
 
@@ -151,7 +155,11 @@ describe('the sweep actually reaches the pages it claims to cover', () => {
 	// every top-level page, including the one whose regression it was written
 	// for. A count alone would not have caught that; naming the file does.
 	it('includes top-level page modules, not just nested ones', () => {
-		const files = tracked(['src', 'public']).map((f) => f.replace(/^.*\/three\.ws\//, ''));
+		// Relative to the repo this test lives in, never to a hardcoded checkout
+		// name: run from a deploy worktree (/workspaces/.deploy-wt-*) a
+		// `/three.ws/` regex strips nothing and every expectation below fails
+		// for a reason that has nothing to do with the sweep.
+		const files = tracked(['src', 'public']).map((f) => relative(repoRoot, f));
 		expect(files).toContain('src/avatar-page.js');
 		expect(files).toContain('src/three-tier-page.js');
 		expect(files).toContain('public/forever.js');
