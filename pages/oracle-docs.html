@@ -94,6 +94,8 @@
 		h2 { font-size: clamp(23px, 3vw, 30px); line-height: 1.15; letter-spacing: -0.015em; font-weight: 750; margin: 4px 0 14px; }
 		h3 { font-size: 18.5px; font-weight: 700; margin: 28px 0 10px; letter-spacing: -.01em; }
 		h4 { font-size: 15px; font-weight: 700; margin: 20px 0 8px; color: var(--ink); }
+		/* card-level heading: h3 for a correct document outline, h4 typography by design */
+		h3.ch { font-size: 15px; font-weight: 700; margin: 20px 0 8px; color: var(--ink); letter-spacing: 0; }
 		main p { color: var(--muted); margin: 0 0 14px; max-width: 74ch; }
 		main p b, main li b { color: var(--ink); font-weight: 600; }
 		main ul, main ol { color: var(--muted); margin: 0 0 16px; padding-left: 22px; max-width: 74ch; }
@@ -142,6 +144,7 @@
 		.card { border: 1px solid var(--line); background: var(--panel); border-radius: var(--r); padding: 17px 18px; backdrop-filter: var(--blur); transition: transform var(--duration-fast), border-color var(--duration-fast); }
 		.card:hover { transform: translateY(-3px); border-color: var(--stroke-strong); }
 		.card h4 { margin: 0 0 6px; }
+		.card h3.ch { margin: 0 0 6px; }
 		.card p { margin: 0; font-size: 13.5px; }
 		.card .ic { font-family: var(--mono); font-size: 11px; color: var(--faint); letter-spacing: .12em; text-transform: uppercase; }
 		.card.link::after { content: "→"; float: right; color: var(--muted); transition: transform var(--duration-fast); }
@@ -152,6 +155,27 @@
 		.stat { border: 1px solid var(--line); border-radius: var(--r-sm); padding: 13px 15px; background: var(--panel); }
 		.stat .v { font-size: 24px; font-weight: 800; letter-spacing: -.02em; }
 		.stat .l { font-family: var(--mono); font-size: 10px; letter-spacing: .12em; text-transform: uppercase; color: var(--faint); margin-top: 3px; }
+
+		/* ===== live model card (fed by /api/oracle/model?view=card) ===== */
+		.mc { border: 1px solid var(--line); border-radius: var(--r); background: var(--panel); padding: 20px; margin: 20px 0; }
+		.mc-head { display: flex; flex-wrap: wrap; align-items: baseline; gap: 10px 14px; margin-bottom: 14px; }
+		.mc-head .cap { font-family: var(--mono); font-size: 10.5px; letter-spacing: .12em; text-transform: uppercase; color: var(--faint); }
+		.mc-live { display: inline-flex; align-items: center; gap: 6px; font-family: var(--mono); font-size: 10px; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); border: 1px solid var(--line); border-radius: 999px; padding: 2px 9px; }
+		.mc-live b { width: 6px; height: 6px; border-radius: 50%; background: var(--down); display: inline-block; }
+		.mc[data-state="ready"] .mc-live b { background: var(--up); }
+		.mc-meta { font-size: 12px; color: var(--faint); margin-left: auto; }
+		.mc .stats { margin: 0 0 14px; }
+		.mc .stat .v { font-size: 21px; }
+		.mc-foot { font-size: 12.5px; color: var(--muted); margin: 12px 0 0; }
+		.mc-err { display: none; border-left: 3px solid var(--amber); background: var(--panel-2); border-radius: 0 var(--r-sm) var(--r-sm) 0; padding: 12px 15px; margin-top: 14px; font-size: 13px; color: var(--muted); }
+		.mc[data-state="error"] .mc-err { display: block; }
+		.mc-err p { margin: 0 0 9px; }
+		.mc-retry { font: inherit; font-size: 12.5px; cursor: pointer; color: var(--ink); background: var(--panel); border: 1px solid var(--stroke-strong); border-radius: 8px; padding: 5px 12px; transition: background var(--duration-fast), border-color var(--duration-fast); }
+		.mc-retry:hover { background: var(--panel-2); border-color: var(--up); }
+		.mc-retry:active { transform: translateY(1px); }
+		.mc[data-state="loading"] .mc-num { color: transparent; background: linear-gradient(90deg, var(--line-2), var(--line), var(--line-2)); background-size: 200% 100%; border-radius: 5px; animation: mc-shimmer 1.25s linear infinite; }
+		@keyframes mc-shimmer { from { background-position: 200% 0; } to { background-position: -200% 0; } }
+		@media (prefers-reduced-motion: reduce) { .mc[data-state="loading"] .mc-num { animation: none; } }
 
 		/* tables */
 		.tbl-wrap { overflow-x: auto; margin: 16px 0; border: 1px solid var(--line); border-radius: var(--r-sm); }
@@ -304,11 +328,11 @@
 				<p class="lead-in" data-i18n="oracle_docs.these_docs_are_written_in_two_layers">These docs are written in two layers so the same page serves a curious first-timer and a quant who wants the closed form.</p>
 				<div class="cards c2">
 					<div class="card">
-						<h4 data-i18n-html="oracle_docs.plain_the_body_text"><span class="layer basic"><b></b>Plain</span> &nbsp;The body text</h4>
+						<h3 class="ch" data-i18n-html="oracle_docs.plain_the_body_text"><span class="layer basic"><b></b>Plain</span> &nbsp;The body text</h3>
 						<p data-i18n="oracle_docs.every_section_opens_in_plain_english_what">Every section opens in plain English: what it is, why it exists, and how to use it. If you only read the prose, you will understand the whole system and never see a formula you didn't ask for.</p>
 					</div>
 					<div class="card">
-						<h4 data-i18n-html="oracle_docs.deep_dive_the_disclosures"><span class="layer deep"><b></b>Deep dive</span> &nbsp;The disclosures</h4>
+						<h3 class="ch" data-i18n-html="oracle_docs.deep_dive_the_disclosures"><span class="layer deep"><b></b>Deep dive</span> &nbsp;The disclosures</h3>
 						<p data-i18n-html="oracle_docs.anything_labelled_deep_dive_expands_into_the">Anything labelled <b>Deep dive</b> expands into the exact math, constants, code paths, and edge cases — the researcher's layer. Closed by default. Use <b>Expand all</b> up top to read everything at once.</p>
 					</div>
 				</div>
@@ -326,17 +350,17 @@
 				<div class="cards c3">
 					<a class="card link" href="/oracle">
 						<div class="ic">For traders</div>
-						<h4 data-i18n="oracle_docs.read_a_score">Read a score</h4>
+						<h3 class="ch" data-i18n="oracle_docs.read_a_score">Read a score</h3>
 						<p data-i18n="oracle_docs.open_the_feed_sort_by_conviction_click">Open the feed, sort by conviction, click any coin. The drawer shows the four pillars and a plain-English reason for every point. A high score is an argument, not a promise — read the reasons.</p>
 					</a>
 					<a class="card link" href="#evidence">
 						<div class="ic">For skeptics</div>
-						<h4 data-i18n="oracle_docs.see_the_proof">See the proof</h4>
+						<h3 class="ch" data-i18n="oracle_docs.see_the_proof">See the proof</h3>
 						<p data-i18n-html="oracle_docs.go_straight_to_the_edge_win_rate">Go straight to <b>The edge</b>. Win rate by tier with 95% confidence bands, a calibration ladder, and a Brier score — shown even when the edge is thin. Proof, not promises.</p>
 					</a>
 					<a class="card link" href="/oracle/arm">
 						<div class="ic">For builders</div>
-						<h4 data-i18n="oracle_docs.arm_an_agent_2">Arm an agent</h4>
+						<h3 class="ch" data-i18n="oracle_docs.arm_an_agent_2">Arm an agent</h3>
 						<p data-i18n-html="oracle_docs.point_a_3d_agent_at_the_conviction">Point a 3D agent at the conviction stream, set your bar and caps, and let it act — in <b>simulate</b> mode for free, or <b>live</b> with hard spend limits. Every action is graded against the outcome.</p>
 					</a>
 				</div>
@@ -396,9 +420,9 @@
 
 				<p data-i18n="oracle_docs.concretely_the_platform_splits_into_three_co">Concretely, the platform splits into three cooperating parts:</p>
 				<div class="cards c3">
-					<div class="card"><div class="ic">Read path</div><h4 data-i18n="oracle_docs.the_conviction_library">The conviction library</h4><p data-i18n-html="oracle_docs.a_pure_side_effect_free_scoring_function">A pure, side-effect-free scoring function (<code class="t">convict()</code>) plus a defensive data-assembly layer. Given a mint, it returns a score, tier, pillar breakdown, and reasons. No I/O during scoring — fully testable.</p></div>
-					<div class="card"><div class="ic">Run path</div><h4 data-i18n="oracle_docs.the_worker_2">The worker</h4><p data-i18n-html="oracle_docs.a_long_lived_node_process_running_three">A long-lived Node process running three independent loops — <b>score</b> (keep verdicts warm), <b>agent</b> (act on armed watches), and <b>settle</b> (grade outcomes) — each self-scheduling so a slow pass never blocks a fast one.</p></div>
-					<div class="card"><div class="ic">Edge path</div><h4 data-i18n="oracle_docs.the_api_ui">The API + UI</h4><p data-i18n="oracle_docs.24_endpoints_json_sse_serving_the_feed">~24 endpoints (JSON + SSE) serving the feed, coin detail, wallet intel, backtest, streams, and the agent-config surface. Cached at the CDN; rate-limited per IP.</p></div>
+					<div class="card"><div class="ic">Read path</div><h3 class="ch" data-i18n="oracle_docs.the_conviction_library">The conviction library</h3><p data-i18n-html="oracle_docs.a_pure_side_effect_free_scoring_function">A pure, side-effect-free scoring function (<code class="t">convict()</code>) plus a defensive data-assembly layer. Given a mint, it returns a score, tier, pillar breakdown, and reasons. No I/O during scoring — fully testable.</p></div>
+					<div class="card"><div class="ic">Run path</div><h3 class="ch" data-i18n="oracle_docs.the_worker_2">The worker</h3><p data-i18n-html="oracle_docs.a_long_lived_node_process_running_three">A long-lived Node process running three independent loops — <b>score</b> (keep verdicts warm), <b>agent</b> (act on armed watches), and <b>settle</b> (grade outcomes) — each self-scheduling so a slow pass never blocks a fast one.</p></div>
+					<div class="card"><div class="ic">Edge path</div><h3 class="ch" data-i18n="oracle_docs.the_api_ui">The API + UI</h3><p data-i18n="oracle_docs.24_endpoints_json_sse_serving_the_feed">~24 endpoints (JSON + SSE) serving the feed, coin detail, wallet intel, backtest, streams, and the agent-config surface. Cached at the CDN; rate-limited per IP.</p></div>
 				</div>
 				<div class="note tip">
 					<span class="nt" data-i18n="oracle_docs.design_principle">Design principle</span>
@@ -410,12 +434,35 @@
 			<section id="pillars">
 				<div class="kicker">The model · part 1</div>
 				<h2>A model fitted from real outcomes</h2>
-				<p class="lead-in">Since 2026-08-09 the conviction engine is a bucketed logistic model fitted on the platform's own labeled outcome history (92,906 launches at first fit, growing daily). Every launch-time signal is bucketed by its empirically observed ranges, each bucket carries a fitted log-odds weight, and the fused sum passes through a sigmoid into a calibrated probability that the coin graduates or hits a 3x-plus ATH. The full weight table ships in <code class="t">conviction-model.json</code> with each bucket's sample size and observed good-rate. Not a black box: a lookup table anyone can audit.</p>
+				<p class="lead-in">Since 2026-08-09 the conviction engine is a bucketed logistic model fitted on the platform's own labeled outcome history, and since 2026-08-28 it refits itself every six hours behind a promotion gate that can refuse a candidate. Every launch-time signal is bucketed by its empirically observed ranges, each bucket carries a fitted log-odds weight, and the fused sum passes through a sigmoid into a calibrated probability. Not a black box: a lookup table anyone can audit, published whole at <code class="t">GET /api/oracle/model</code> and scoreable offline through <code class="t">@three-ws/oracle-model</code> on npm.</p>
 
-				<div class="note">
-					<span class="nt">Measured, not asserted</span>
-					<p>On a time-split holdout (the newest 25% of labels, never seen in training): <b>AUC 0.879</b> against 0.627 for the previous hand-tuned engine; <b>62.5%</b> of coins in the top decile of score were good against an <b>11.7%</b> base rate; the Prime band observed <b>72.7%</b> good.</p>
+				<p>The current model is <b>v3</b>, and v3 changed the question. Earlier versions scored the odds of a <i>spike</i>: graduated, or peaked at 3x or more above the market cap at first sight. v3's published head scores the odds of a spike <b>that holds</b>: the same 3x-or-graduation bar, but only if the coin is still worth at least what it cost when Oracle first saw it. A coin that ran 3x and gave it all back is a hit under the old label and a miss under this one. That is the holder's question rather than the flipper's, and because it is a stricter bar the base rate underneath every number below is much lower than v2's was. The engine also fits two companion heads on the same features, <code class="t">rug</code> and <code class="t">moon</code>, which the API publishes alongside the one the score is built from.</p>
+
+				<div class="mc" id="model-card" data-state="loading">
+					<div class="mc-head">
+						<span class="cap">Measured, not asserted: the model running right now</span>
+						<span class="mc-live"><b></b><span id="mc-status">Loading</span></span>
+						<span class="mc-meta">v<span class="mc-num" id="mc-version" data-i18n-owned="1">3</span> · fitted <span class="mc-num" id="mc-fitted" data-i18n-owned="1">2026-09-08</span></span>
+					</div>
+					<div class="stats">
+						<div class="stat"><div class="v mc-num" id="mc-auc" data-i18n-owned="1">0.846</div><div class="l">Holdout AUC</div></div>
+						<div class="stat"><div class="v mc-num" id="mc-base" data-i18n-owned="1">3.0%</div><div class="l">Base rate</div></div>
+						<div class="stat"><div class="v mc-num" id="mc-top1" data-i18n-owned="1">11.8x</div><div class="l">Lift, top 1%</div></div>
+						<div class="stat"><div class="v mc-num" id="mc-brier" data-i18n-owned="1">0.026</div><div class="l">Brier</div></div>
+					</div>
+					<div class="stats">
+						<div class="stat"><div class="v mc-num" id="mc-rows" data-i18n-owned="1">400,000</div><div class="l">Labeled launches</div></div>
+						<div class="stat"><div class="v mc-num" id="mc-holdout" data-i18n-owned="1">100,000</div><div class="l">Held out, unseen</div></div>
+						<div class="stat"><div class="v mc-num" id="mc-features" data-i18n-owned="1">25</div><div class="l">Features</div></div>
+						<div class="stat"><div class="v mc-num" id="mc-buckets" data-i18n-owned="1">109</div><div class="l">Fitted buckets</div></div>
+					</div>
+					<p class="mc-foot">Pillar weights, derived from each pillar's share of the fitted log-odds range: <span class="mc-num" id="mc-pillars" data-i18n-owned="1">WHO 0.17 · HOW 0.20 · WHAT 0.03 · MOVE 0.60</span>. Precision at depth on the same holdout: <span class="mc-num" id="mc-precision" data-i18n-owned="1">top 1% 35.5%, top 5% 23.4%, top 10% 15.7%, top 25% 9.1%</span>. Features the fit dropped for carrying no signal: <span class="mc-num" id="mc-dropped" data-i18n-owned="1">fresh_wallet_ratio, bubblemap_connectivity</span>.</p>
+					<div class="mc-err" role="status">
+						<p><b>Live model card unavailable.</b> The numbers above are the values baked into this page at publish time, so they stay correct as documentation but may trail the model in production by a refit or two. Read them straight from the engine at <a class="inl" href="/api/oracle/model?view=card">/api/oracle/model?view=card</a>.</p>
+						<button class="mc-retry" type="button" id="mc-retry">Retry the live fetch</button>
+					</div>
 				</div>
+				<p style="font-size:13px;color:var(--faint);margin-top:-6px">Every figure in this block is read live from <code class="t">GET /api/oracle/model?view=card</code> when you open the page, because the model refits every six hours and any number typed into a document goes stale by design. <a class="inl" href="/api/oracle/model?view=registry">The registry view</a> lists every fit ever attempted, promoted or refused, with the reason.</p>
 
 				<p>The four pillars remain as the lens: every feature belongs to WHO, HOW, WHAT, or MOVE, each pillar bar shows what its own evidence alone would imply, and the pillar weights shown in the API are derived from the fitted model (each pillar's share of the total log-odds range its features span) instead of hand-picked constants.</p>
 
@@ -449,10 +496,10 @@
 <span class="op"># fitted bucket weights + smart-money overlay, in log-odds</span>
 z = intercept <span class="op">+</span> Σ w[bucket(feature)] <span class="op">+</span> overlay
 
-<span class="op"># calibrated probability the coin graduates or hits 3x+ ATH</span>
+<span class="op"># calibrated probability it runs 3x or graduates AND holds entry</span>
 p = 1 / (1 + e^(−z))
 
-<span class="op"># fixed monotone map; anchors: 5%→34, 12%→56, 30%→72, 55%→86</span>
+<span class="op"># fixed monotone map; anchors: 5%→34, 12%→56, 25%→72, 45%→86</span>
 score = map(p)
 
 <span class="op"># the one surviving veto: serial-rugger creator</span>
@@ -460,15 +507,15 @@ score = min(score, 45 if rugger_creator)
 				</div>
 
 				<h3>The tier ladder</h3>
-				<p>Each boundary is anchored to a probability, and each band's holdout performance is published. Tiers are how humans skim the feed and how agents set a bar.</p>
+				<p>Each boundary is anchored to a probability, and each band's holdout performance is published next to the probability it claims. Tiers are how humans skim the feed and how agents set a bar. These rows update from the live model card when the page loads, for the same reason the block above does: the refit runs every six hours and a number typed into a document is stale the moment it ships. A band observing <i>more</i> than it claims is the engine being conservative at that boundary, which the next refit's promotion gate checks explicitly.</p>
 				<div class="diagram">
 					<div class="cap">Conviction tiers: score → tier → measured odds</div>
 					<div class="ladder">
-						<div class="rung"><span class="nm" style="color:#eceff5">Prime</span><div class="bar" style="background:#eceff5; width:100%">86-100 · P(good) ≥ 55% · holdout observed 72.7%</div><span class="rng">≥ 86</span></div>
-						<div class="rung"><span class="nm" style="color:#cdd2e0">Strong</span><div class="bar" style="background:#cdd2e0; width:84%">72-85 · P(good) ≥ 30% · observed 36.5%</div><span class="rng">≥ 72</span></div>
-						<div class="rung"><span class="nm" style="color:#9aa0b0">Lean</span><div class="bar" style="background:#9aa0b0; width:70%; color:#06070d">56-71 · P(good) ≥ 12% · observed 16.8%</div><span class="rng">≥ 56</span></div>
-						<div class="rung"><span class="nm" style="color:#8a92a8">Watch</span><div class="bar" style="background:#8a92a8; width:58%; color:#06070d">34-55 · P(good) ≥ 5% · below base rate</div><span class="rng">≥ 34</span></div>
-						<div class="rung"><span class="nm" style="color:#6c7280">Avoid</span><div class="bar" style="background:#6c7280; width:46%">0-33 · P(good) &lt; 5% · observed 2.5% good, 96.3% rugged</div><span class="rng">≥ 0</span></div>
+						<div class="rung"><span class="nm" style="color:#eceff5">Prime</span><div class="bar" data-tier="prime" data-i18n-owned="1" style="background:#eceff5; width:100%">86-100 · claims 45% · observed 45.7% over 300</div><span class="rng">≥ 86</span></div>
+						<div class="rung"><span class="nm" style="color:#cdd2e0">Strong</span><div class="bar" data-tier="strong" data-i18n-owned="1" style="background:#cdd2e0; width:84%">72-85 · claims 25% · observed 29.2% over 1,133</div><span class="rng">≥ 72</span></div>
+						<div class="rung"><span class="nm" style="color:#9aa0b0">Lean</span><div class="bar" data-tier="lean" data-i18n-owned="1" style="background:#9aa0b0; width:70%; color:#06070d">56-71 · claims 12% · observed 20.1% over 3,465</div><span class="rng">≥ 56</span></div>
+						<div class="rung"><span class="nm" style="color:#8a92a8">Watch</span><div class="bar" data-tier="watch" data-i18n-owned="1" style="background:#8a92a8; width:58%; color:#06070d">34-55 · claims 5% · observed 7.2% over 9,572</div><span class="rng">≥ 34</span></div>
+						<div class="rung"><span class="nm" style="color:#6c7280">Avoid</span><div class="bar" data-tier="avoid" data-i18n-owned="1" style="background:#6c7280; width:46%">0-33 · claims nothing · observed 1.4% over 85,530</div><span class="rng">≥ 0</span></div>
 					</div>
 				</div>
 				<p>Alongside the score, the engine emits <b>badges</b> (e.g. <code class="t">smart-money</code>, <code class="t">structure-flag</code>, <code class="t">pedigree-flag</code>, <code class="t">news</code>, <code class="t">momentum</code>, <code class="t">thin-data</code>, <code class="t">prime</code>) for fast visual scanning, and an ordered list of <b>reasons</b>: strongest evidence first, each quoting the observed outcome rate for the bucket it hit ("organic demand ≥0.8: 60% of similar launches worked"). The engine cites its training data instead of asserting adjectives.</p>
@@ -491,7 +538,7 @@ score = min(score, 45 if rugger_creator)
 				<ul>
 					<li><b>The four pillar bars</b> (WHO / HOW / WHAT / MOVE) are the sub-scores: what each pillar's own fitted evidence would imply alone, on the same probability-to-score map as the big number.</li>
 					<li><b>“Why this score”</b> is the <code class="t">reasons[]</code> array, strongest evidence first, each line tagged to its pillar and quoting the observed outcome rate for the bucket it hit, e.g. "unique early buyers >=40: 80% of similar launches worked (6.8x base rate)" (MOVE). The engine cites its training data instead of asserting adjectives.</li>
-					<li data-i18n-html="oracle_docs.structure_wallet_graph_buy_pattern_expose_th"><b>Structure / wallet-graph / buy-pattern</b> expose the raw HOW inputs (organic-buy %, bundle %, the funder graph) so you can audit the guardrail.</li>
+					<li data-i18n-html="oracle_docs.structure_wallet_graph_buy_pattern_expose_th"><b>Structure / wallet-graph / buy-pattern</b> expose the raw HOW inputs (organic-buy %, bundle %, snipe ratio, holder concentration) so you can audit the guardrail. The funder-graph panel renders only when a funder is resolvable; see <a class="inl" href="#limits">Limits</a> for why it is usually not.</li>
 					<li data-i18n-html="oracle_docs.who_s_in_is_the_live_pedigree"><b>Who's-in</b> is the live pedigree roster — every notable wallet, its label, and its track record.</li>
 					<li data-i18n-html="oracle_docs.live_trades_streams_the_coin_s_buys"><b>Live trades</b> streams the coin's buys and sells in real time, each annotated with the trader's wallet archetype.</li>
 				</ul>
@@ -541,9 +588,9 @@ score = min(score, 45 if rugger_creator)
 				<h2 data-i18n="oracle_docs.the_worker_3">The worker</h2>
 				<p class="lead-in" data-i18n="oracle_docs.a_single_long_lived_node_process_runs">A single long-lived Node process runs three independent, self-scheduling loops. They share nothing but the database, so a slow scoring pass never delays an agent acting, and a stuck confirmation never freezes scoring.</p>
 				<div class="cards c3">
-					<div class="card"><div class="ic">every ~15s · batch 20</div><h4 data-i18n="oracle_docs.score_loop">Score loop</h4><p data-i18n="oracle_docs.finds_recent_launches_that_are_new_or">Finds recent launches that are new or stale (last scored &gt;3 min ago), scores each — assemble → classify → fuse → persist — and appends history on material change. Keeps the cache warm.</p></div>
-					<div class="card"><div class="ic">every ~3s</div><h4 data-i18n="oracle_docs.agent_loop">Agent loop</h4><p data-i18n="oracle_docs.for_each_armed_watch_evaluates_freshly_score">For each armed watch, evaluates freshly-scored coins against the agent's bar and budget, executes a buy when the gates pass, and fires alerts. Dedups so an agent never acts twice on one coin.</p></div>
-					<div class="card"><div class="ic">every ~60s · batch 100</div><h4 data-i18n="oracle_docs.settle_loop">Settle loop</h4><p data-i18n="oracle_docs.finds_open_actions_whose_coin_now_has">Finds open actions whose coin now has a resolved outcome, grades each win/loss/flat, marks PnL to market, and closes the learning loop.</p></div>
+					<div class="card"><div class="ic">every ~15s · batch 20</div><h3 class="ch" data-i18n="oracle_docs.score_loop">Score loop</h3><p data-i18n="oracle_docs.finds_recent_launches_that_are_new_or">Finds recent launches that are new or stale (last scored &gt;3 min ago), scores each — assemble → classify → fuse → persist — and appends history on material change. Keeps the cache warm.</p></div>
+					<div class="card"><div class="ic">every ~3s</div><h3 class="ch" data-i18n="oracle_docs.agent_loop">Agent loop</h3><p data-i18n="oracle_docs.for_each_armed_watch_evaluates_freshly_score">For each armed watch, evaluates freshly-scored coins against the agent's bar and budget, executes a buy when the gates pass, and fires alerts. Dedups so an agent never acts twice on one coin.</p></div>
+					<div class="card"><div class="ic">every ~60s · batch 100</div><h3 class="ch" data-i18n="oracle_docs.settle_loop">Settle loop</h3><p data-i18n="oracle_docs.finds_open_actions_whose_coin_now_has">Finds open actions whose coin now has a resolved outcome, grades each win/loss/flat, marks PnL to market, and closes the learning loop.</p></div>
 				</div>
 				<h3 data-i18n="oracle_docs.cold_start_graceful_degradation">Cold start &amp; graceful degradation</h3>
 				<p data-i18n="oracle_docs.if_the_conviction_cache_is_empty_fresh">If the conviction cache is empty (fresh deploy), the feed endpoint scores a handful of recent coins on the spot — database-only, no LLM — so the UI is never blank while the score loop catches up. Every brain query is wrapped so a missing table yields a null slice, not a crashed pass.</p>
@@ -694,6 +741,8 @@ CI = [centre − margin, centre + margin]</pre>
 						<tr><td><code>GET /api/oracle/movers</code></td><td data-i18n="oracle_docs.biggest_conviction_changes_over_a_window_ris">Biggest conviction changes over a window (rising / falling).</td></tr>
 						<tr><td><code>GET /api/oracle/history</code></td><td data-i18n="oracle_docs.a_coin_s_conviction_time_series_sparkline">A coin's conviction time-series (sparkline data) with a rising/falling/stable trend.</td></tr>
 						<tr><td><code>GET /api/oracle/stats</code> · <code>/categories</code> · <code>/search</code> · <code>/leaderboard</code> · <code>/agent-stats</code> · <code>/activity</code></td><td data-i18n="oracle_docs.global_kpis_per_category_intel_symbol_search">Global KPIs, per-category intel, symbol search, the agent leaderboard, a single agent's record, and the global action feed.</td></tr>
+						<tr><td><code>GET /api/oracle/model</code></td><td>The scoring machine itself, published: every bucket weight, the sample count behind it, the held-out reliability curve, the features the fit dropped, and the promotion decision that let it near production. Roughly 32KB of JSON, so any score ever shown can be reproduced offline with no API key. Views: <code>view=registry</code> (every fit, promoted or refused, with the reason), <code>view=diff&amp;from=&amp;to=</code> (what changed between two), <code>view=card</code> (the short human summary this page reads on load). <code>@three-ws/oracle-model</code> on npm scores a launch from it in a few lines.</td></tr>
+						<tr><td><code>GET /api/oracle/calibration</code></td><td>The realized answer to "when Oracle says 80, do those coins actually win 80% of the time with real money?" Per conviction band: the fleet's realized win rate from real fills only, the mean conviction, the mean realized PnL%, and the bounded correction factor the scorer applies to nudge future scores toward what pays. Written by the calibration cron every six hours.</td></tr>
 						<tr><td><code>GET /api/oracle/og</code></td><td data-i18n="oracle_docs.a_dynamic_1200_630_opengraph_conviction_card">A dynamic 1200×630 OpenGraph conviction card (SVG) for sharing a coin.</td></tr>
 					</tbody>
 				</table></div>
@@ -760,12 +809,13 @@ CI = [centre − margin, centre + margin]</pre>
 				<h2 data-i18n="oracle_docs.limits_failure_modes_2">Limits &amp; failure modes</h2>
 				<p class="lead-in" data-i18n="oracle_docs.a_model_you_can_only_trust_when">A model you can only trust when it flatters you is useless. Here is what Oracle cannot do, where it can be wrong, and how it's hardened.</p>
 				<div class="cards c2">
-					<div class="card"><h4 data-i18n="oracle_docs.it_is_a_probability_not_a_prophecy">It is a probability, not a prophecy</h4><p data-i18n="oracle_docs.a_high_score_is_the_weight_of">A high score is the weight of on-chain evidence, not a guarantee. pump.fun is adversarial and heavy-tailed — most launches fail, and even a calibrated edge loses often. Read the tier as odds, size accordingly, and never bet what you can't lose.</p></div>
-					<div class="card"><h4 data-i18n="oracle_docs.garbage_in_on_a_young_coin">Garbage-in on a young coin</h4><p data-i18n="oracle_docs.the_first_seconds_of_a_launch_are">The first seconds of a launch are data-poor. Pedigree and momentum need wallets to show up before they say much; a brand-new coin leans on structure and a category prior. Scores sharpen as the footprint fills in — which is exactly why history and movers exist.</p></div>
-					<div class="card"><h4 data-i18n="oracle_docs.adversarial_structure">Adversarial structure</h4><p data-i18n="oracle_docs.the_how_pillar_is_a_guardrail_against">The HOW pillar is a guardrail against known manipulation — bundles, fresh-wallet farms, funder clusters — but launderers iterate. New evasion patterns are caught by the outcome loop (they rug, reputation updates) before they're caught by a rule. The defense is the closed loop, not any single check.</p></div>
-					<div class="card"><h4 data-i18n="oracle_docs.narrative_lag_model_error">Narrative lag &amp; model error</h4><p data-i18n="oracle_docs.the_what_pillar_depends_on_a_language">The WHAT pillar depends on a language model and a news feed; both can misread a story or miss a fast-breaking one. It's the lightest-weighted pillar for exactly this reason, and it degrades to a deterministic classifier rather than failing.</p></div>
-					<div class="card"><h4 data-i18n="oracle_docs.outcome_latency">Outcome latency</h4><p data-i18n="oracle_docs.win_loss_isn_t_known_until_a">Win/loss isn't known until a coin resolves, so the backtest always trails the present. Recent windows are thin and their confidence bands are wide — and the page shows the width rather than hiding it.</p></div>
-					<div class="card"><h4>Weights are fitted, and drift is real</h4><p>Since 2026-08-09 every bucket weight is fitted from labeled outcomes and validated on a temporal holdout. The flip side: a fitted model is only as current as its last refit, the launch meta drifts, and the training window always lags the newest evasion pattern by however long outcomes take to resolve. The refit script exists to be rerun.</p></div>
+					<div class="card"><h3 class="ch" data-i18n="oracle_docs.it_is_a_probability_not_a_prophecy">It is a probability, not a prophecy</h3><p data-i18n="oracle_docs.a_high_score_is_the_weight_of">A high score is the weight of on-chain evidence, not a guarantee. pump.fun is adversarial and heavy-tailed — most launches fail, and even a calibrated edge loses often. Read the tier as odds, size accordingly, and never bet what you can't lose.</p></div>
+					<div class="card"><h3 class="ch" data-i18n="oracle_docs.garbage_in_on_a_young_coin">Garbage-in on a young coin</h3><p data-i18n="oracle_docs.the_first_seconds_of_a_launch_are">The first seconds of a launch are data-poor. Pedigree and momentum need wallets to show up before they say much; a brand-new coin leans on structure and a category prior. Scores sharpen as the footprint fills in — which is exactly why history and movers exist.</p></div>
+					<div class="card"><h3 class="ch" data-i18n="oracle_docs.adversarial_structure">Adversarial structure</h3><p data-i18n="oracle_docs.the_how_pillar_is_a_guardrail_against">The HOW pillar is a guardrail against known manipulation — bundling, sniping, and coordinated holder concentration — but launderers iterate. New evasion patterns are caught by the outcome loop (they rug, reputation updates) before they're caught by a rule. The defense is the closed loop, not any single check.</p></div>
+					<div class="card"><h3 class="ch" data-i18n="oracle_docs.narrative_lag_model_error">Narrative lag &amp; model error</h3><p data-i18n="oracle_docs.the_what_pillar_depends_on_a_language">The WHAT pillar depends on a language model and a news feed; both can misread a story or miss a fast-breaking one. It's the lightest-weighted pillar for exactly this reason, and it degrades to a deterministic classifier rather than failing.</p></div>
+					<div class="card"><h3 class="ch" data-i18n="oracle_docs.outcome_latency">Outcome latency</h3><p data-i18n="oracle_docs.win_loss_isn_t_known_until_a">Win/loss isn't known until a coin resolves, so the backtest always trails the present. Recent windows are thin and their confidence bands are wide — and the page shows the width rather than hiding it.</p></div>
+					<div class="card"><h3 class="ch">Two features are missing, not zero</h3><p>The fitter reports every feature it drops for carrying no information, and on the current fit that is <code class="t">fresh_wallet_ratio</code> and <code class="t">bubblemap_connectivity</code>: both are null on effectively every training row, because nothing populates wallet metadata and the funder graph needs a Helius key that is not set. A third, <code class="t">coordination_score</code>, collapses to <code class="t">bundle_score × 0.6</code> once the null term drops out, which is why the live intel weights list the two as identical. The list is measured on each fit rather than hardcoded, so wiring the funder graph returns those features on the next refit with no code change. Until then, read the HOW pillar as bundle-and-organic evidence, not as a funder-cluster analysis.</p></div>
+					<div class="card"><h3 class="ch">Weights are fitted, and drift is real</h3><p>Since 2026-08-09 every bucket weight is fitted from labeled outcomes and validated on a temporal holdout. The flip side: a fitted model is only as current as its last refit, the launch meta drifts, and the training window always lags the newest evasion pattern by however long outcomes take to resolve. The refit script exists to be rerun.</p></div>
 				</div>
 				<div class="note warn">
 					<span class="nt" data-i18n="oracle_docs.not_financial_advice">Not financial advice</span>
@@ -779,12 +829,12 @@ CI = [centre − margin, centre + margin]</pre>
 				<h2 data-i18n="oracle_docs.where_it_scales_2">Where it scales</h2>
 				<p class="lead-in" data-i18n="oracle_docs.the_architecture_pure_scoring_over_a_coverag">The architecture — pure scoring over a coverage brain, behind a cached API, with a closed outcome loop — was chosen because it extends along several axes at once without a rewrite.</p>
 				<div class="cards c2">
-					<div class="card"><div class="ic">Calibration</div><h4 data-i18n="oracle_docs.learned_weights_logistic_calibration">Learned weights &amp; logistic calibration</h4><p data-i18n-html="oracle_docs.the_biggest_lever_replace_the_hand_set">The biggest lever. Replace the hand-set pillar weights with weights fit to outcomes (logistic regression / gradient boosting on the same features), and post-process the raw score through Platt scaling or isotonic regression so the number <i>is</i> the probability. The backtest infrastructure to measure the gain already exists.</p></div>
-					<div class="card"><div class="ic">Coverage</div><h4 data-i18n="oracle_docs.more_wallets_more_density">More wallets, more density</h4><p data-i18n="oracle_docs.every_new_wallet_judged_and_every_new">Every new wallet judged and every new launch resolved sharpens the WHO pillar and tightens the bands. The data flywheel is the moat — coverage compounds into calibration.</p></div>
-					<div class="card"><div class="ic">Surface</div><h4 data-i18n="oracle_docs.more_chains_more_venues">More chains, more venues</h4><p data-i18n="oracle_docs.the_pillars_are_venue_agnostic_who_how">The pillars are venue-agnostic — who/how/what/move generalize to any launch venue with on-chain footprints. The brain abstraction is the seam where a new chain plugs in.</p></div>
-					<div class="card"><div class="ic">Speed</div><h4 data-i18n="oracle_docs.push_not_poll">Push, not poll</h4><p data-i18n="oracle_docs.streams_poll_the_database_today_for_serverle">Streams poll the database today for serverless simplicity. Event-driven push (LISTEN/NOTIFY or a log tail) cuts verdict-to-screen latency toward the block, which on pump.fun is the whole game.</p></div>
-					<div class="card"><div class="ic">Inputs</div><h4 data-i18n="oracle_docs.richer_signals">Richer signals</h4><p data-i18n="oracle_docs.deeper_social_ingestion_holder_graph_evoluti">Deeper social ingestion, holder-graph evolution over time, cross-coin creator/funder linkage, and order-flow microstructure are all additive pillars or sub-signals under the same fusion contract.</p></div>
-					<div class="card"><div class="ic">Ecosystem</div><h4 data-i18n="oracle_docs.an_agent_native_signal_layer">An agent-native signal layer</h4><p data-i18n-html="oracle_docs.the_machine_ready_endpoint_and_the_action">The machine-ready <code class="t">/signal</code> endpoint and the action loop make Oracle a primitive other agents build on — discoverable, payable, and composable across the three.ws agent economy and MCP.</p></div>
+					<div class="card"><div class="ic">Calibration</div><h3 class="ch" data-i18n="oracle_docs.interactions_over_the_fitted_buckets">Interactions over the fitted buckets</h3><p data-i18n-html="oracle_docs.learned_weights_and_a_calibrated_probability">Learned weights and a calibrated probability shipped in v2; the six-hourly refit behind a promotion gate shipped in v3. The next lever is the additive assumption itself: interaction terms or shallow trees over the same buckets, since the strongest observed patterns (holder concentration crossed with buyer count) are plausibly interactive and a sum of one-hot weights cannot express them.</p></div>
+					<div class="card"><div class="ic">Coverage</div><h3 class="ch" data-i18n="oracle_docs.more_wallets_more_density">More wallets, more density</h3><p data-i18n="oracle_docs.every_new_wallet_judged_and_every_new">Every new wallet judged and every new launch resolved sharpens the WHO pillar and tightens the bands. The data flywheel is the moat — coverage compounds into calibration.</p></div>
+					<div class="card"><div class="ic">Surface</div><h3 class="ch" data-i18n="oracle_docs.more_chains_more_venues">More chains, more venues</h3><p data-i18n="oracle_docs.the_pillars_are_venue_agnostic_who_how">The pillars are venue-agnostic — who/how/what/move generalize to any launch venue with on-chain footprints. The brain abstraction is the seam where a new chain plugs in.</p></div>
+					<div class="card"><div class="ic">Speed</div><h3 class="ch" data-i18n="oracle_docs.push_not_poll">Push, not poll</h3><p data-i18n="oracle_docs.streams_poll_the_database_today_for_serverle">Streams poll the database today for serverless simplicity. Event-driven push (LISTEN/NOTIFY or a log tail) cuts verdict-to-screen latency toward the block, which on pump.fun is the whole game.</p></div>
+					<div class="card"><div class="ic">Inputs</div><h3 class="ch" data-i18n="oracle_docs.richer_signals">Richer signals</h3><p data-i18n="oracle_docs.deeper_social_ingestion_holder_graph_evoluti">Deeper social ingestion, holder-graph evolution over time, cross-coin creator/funder linkage, and order-flow microstructure are all additive pillars or sub-signals under the same fusion contract.</p></div>
+					<div class="card"><div class="ic">Ecosystem</div><h3 class="ch" data-i18n="oracle_docs.an_agent_native_signal_layer">An agent-native signal layer</h3><p data-i18n-html="oracle_docs.the_machine_ready_endpoint_and_the_action">The machine-ready <code class="t">/signal</code> endpoint and the action loop make Oracle a primitive other agents build on — discoverable, payable, and composable across the three.ws agent economy and MCP.</p></div>
 				</div>
 			</section>
 
@@ -798,7 +848,13 @@ CI = [centre − margin, centre + margin]</pre>
 				<pre>z(x) = w_0 + Σ_j w[j, b_j(x)] + o(x)   <span class="c">// o(x): smart-money overlay (documented priors)</span>
 p(x) = σ(z(x)) = 1 / (1 + e^(−z(x)))  <span class="c">// calibrated P(good | x)</span>
 s(x) = min( m(p(x)),  c(x) )           <span class="c">// m: fixed monotone map; c: 45 iff serial rugger</span></pre>
-				<p>with <code class="t">good = graduated ∨ ATH ≥ 3×</code>, fitted by L2-regularized SGD on the labeled outcome set with a deterministic seed. <code class="t">m</code> is anchored so the public tier boundaries land on fixed probabilities (34 ↦ 0.05, 56 ↦ 0.12, 72 ↦ 0.30, 86 ↦ 0.55). Evaluation is a strict temporal split: train on the oldest 75%, report AUC, precision-at-depth, and per-band reliability on the newest 25%.</p>
+				<p>Fitted by L2-regularized SGD on the labeled outcome set with a deterministic seed. <code class="t">m</code> is anchored so the public tier boundaries land on fixed probabilities (34 ↦ 0.05, 56 ↦ 0.12, 72 ↦ 0.25, 86 ↦ 0.45). Evaluation is a strict temporal split: train on the oldest 75%, report AUC, precision-at-depth, and per-band reliability on the newest 25%.</p>
+				<p>v3 (2026-08-28) fits <b>three heads over one shared design matrix</b>, because a single target was answering two different questions at once:</p>
+				<pre>win  = (graduated ∨ ATH ≥ 3×) ∧ hold_multiple ≥ 1   <span class="c">// it ran and a first-sight holder is still up</span>
+rug  = hold_multiple &lt; 0.5                          <span class="c">// a first-sight holder is down more than half</span>
+moon = graduated ∨ ATH ≥ 3×                         <span class="c">// it ran at all: exactly what v2 ranked</span></pre>
+				<p>The published conviction score anchors on <code class="t">win</code>. <code class="t">rug</code> is published beside it rather than blended in, because "this will probably run" and "this will probably take your money" are different questions and one number that averages them answers neither: over the seven days to 2026-08-28, Prime-tier coins hit the 3x target 58.2% of the time <i>and</i> rugged 53.0% of the time, with 27.8% doing both. <code class="t">moon</code> is kept so v2 and v3 stay comparable and a regression in either is visible.</p>
+				<p><code class="t">hold_multiple = ath_multiple × (last_mc_usd / ath_mc_usd)</code>, deliberately price-independent: both dollar figures come from the same reading, so the SOL price cancels. The predecessor label decided <code class="t">rugged</code> by a hardcoded $3,000 market-cap floor, which on a bonding curve worth a fixed 27.958993 SOL when empty was really asking whether SOL closed above about $107.30 that day. It sorted identical dead curves by a price feed and put the true rug rate at 91% instead of 11.4%; trained on those labels a survival head scored AUC 0.484, which is a coin flip. Rebuilding the labels came before rebuilding the model.</p>
 				<h3 data-i18n="oracle_docs.calibration_objects">Calibration objects</h3>
 				<ul>
 					<li data-i18n-html="oracle_docs.reliability_calibration_ladder_partition_sco"><b>Reliability (calibration ladder):</b> partition scores into bins <code class="t">B_j</code>; plot empirical <code class="t">ŷ_j = (1/|B_j|)Σ 1[win]</code> against the bin's predicted rate. Perfect calibration ⇒ <code class="t">ŷ_j ≈ s̄_j/100</code> for all j (the identity line).</li>
@@ -807,7 +863,8 @@ s(x) = min( m(p(x)),  c(x) )           <span class="c">// m: fixed monotone map;
 					<li data-i18n-html="oracle_docs.monotonicity_edge_require_non_decreasing_in"><b>Monotonicity &amp; edge:</b> require <code class="t">ŷ</code> non-decreasing in the score bin (within tolerance); define edge multiple = <code class="t">P(win | prime) / P(win | any)</code> and lift = the difference, both reported with their CIs.</li>
 				</ul>
 				<h3 data-i18n="oracle_docs.the_improvement_path_formally">The improvement path, formally</h3>
-				<p>v2 delivered the first two upgrades this appendix used to promise: the weights are fitted by maximizing regularized log-likelihood on resolved outcomes, and the published score is a fixed monotone map of a calibrated probability. Open next, in order of expected value: (1) automated refit cadence with a champion/challenger holdout gate so a refit never silently regresses; (2) interaction terms or shallow trees over the same buckets, since the model is additive and the strongest observed patterns (concentration crossed with buyer count) are plausibly interactive; (3) fitting the smart-money overlay once the widened proven-wallet ledger accumulates enough judged appearances; (4) survival-style labels (time-to-rug) so the engine can price exit windows, not just entries.</p>
+				<p>Three of the four upgrades this appendix used to promise have shipped. v2 fitted the weights by maximizing regularized log-likelihood on resolved outcomes and made the published score a fixed monotone map of a calibrated probability. v3 rebuilt the labels to be price-independent and split the target into three heads. The refit cron (2026-08-28) closed the cadence question: every six hours the fitter reloads the labeled set, fits a challenger on a time-split holdout it has never seen, and puts it through a promotion gate that has to be beaten on held-out ranking, tier-claim honesty, and feature-set integrity before it can take over. A refused candidate is archived with its reason rather than discarded, so <a class="inl" href="/api/oracle/model?view=registry">the registry</a> holds the fits that lost next to the ones that won.</p>
+				<p>Open next, in order of expected value: (1) interaction terms or shallow trees over the same buckets, since the model is additive and the strongest observed patterns (concentration crossed with buyer count) are plausibly interactive; (2) fitting the smart-money overlay, currently documented expert priors, once the widened proven-wallet ledger accumulates enough judged appearances to support weights; (3) wiring the funder graph, whose absence currently drops two features from every fit (see <a class="inl" href="#limits">Limits</a>); (4) time-to-event labels so the engine prices exit windows, not just entries. The fourth is the one v3 came closest to and did not take: <code class="t">rug</code> answers whether a holder ends up down, not when.</p>
 				<div class="note tip">
 					<span class="nt" data-i18n="oracle_docs.references_further_reading">References &amp; further reading</span>
 					<p data-i18n-html="oracle_docs.wilson_1927_probable_inference_the_law_of">Wilson (1927), <i>Probable inference, the law of succession, and statistical inference</i> — the score interval. Brier (1950), <i>Verification of forecasts expressed in terms of probability</i>. Platt (1999), probabilistic outputs for SVMs (Platt scaling). Zadrozny &amp; Elkan (2002), isotonic calibration. Niculescu-Mizil &amp; Caruana (2005), <i>Predicting good probabilities with supervised learning</i>.</p>
@@ -880,6 +937,85 @@ s(x) = min( m(p(x)),  c(x) )           <span class="c">// m: fixed monotone map;
 			if (top && byId.get(top)) byId.get(top).classList.add('on');
 		}, { rootMargin: '-80px 0px -70% 0px', threshold: 0 });
 		document.querySelectorAll('main section[id]').forEach((s) => io.observe(s));
+
+		// ===== live model card =====
+		// The conviction model refits every six hours behind a promotion gate, so any
+		// number typed into this document is stale by design. The markup ships the
+		// values that were live at publish time (correct documentation, and what a
+		// reader with no JS or a failed fetch sees); this reads the real ones.
+		const mc = document.getElementById('model-card');
+		const mcStatus = document.getElementById('mc-status');
+		// Once the card is labelled Live, every figure in it has to come from the
+		// response. A field the payload omits reads as the published fallback, which
+		// would present a build-time number as a live one; NA is the honest answer.
+		const NA = 'n/a';
+		const set = (id, text) => { const el = document.getElementById(id); if (el) el.textContent = text == null ? NA : text; };
+		const pct = (n) => (n * 100).toFixed(1) + '%';
+		const num = (n) => Number(n).toLocaleString('en-US');
+		const TIER_RANGE = { prime: '86-100', strong: '72-85', lean: '56-71', watch: '34-55', avoid: '0-33' };
+
+		function renderCard(card) {
+			const win = (card.heads && card.heads.win) || card.holdout || {};
+			set('mc-version', card.version);
+			set('mc-fitted', String(card.fitted_at || '').slice(0, 10));
+			set('mc-auc', win.auc != null ? Number(win.auc).toFixed(3) : null);
+			set('mc-base', win.base_rate != null ? pct(win.base_rate) : null);
+			set('mc-brier', card.holdout && card.holdout.brier != null ? Number(card.holdout.brier).toFixed(3) : null);
+			set('mc-rows', card.training_rows != null ? num(card.training_rows) : null);
+			set('mc-holdout', card.holdout && card.holdout.n != null ? num(card.holdout.n) : null);
+			set('mc-features', card.features);
+			set('mc-buckets', card.bucket_weights);
+			const prec = (card.holdout && card.holdout.precision) || {};
+			set('mc-top1', prec.top1 && prec.top1.lift != null ? Number(prec.top1.lift).toFixed(1) + 'x' : NA);
+			const depths = [['top1', 'top 1%'], ['top5', 'top 5%'], ['top10', 'top 10%'], ['top25', 'top 25%']]
+				.filter(([k]) => prec[k] && prec[k].rate != null)
+				.map(([k, label]) => label + ' ' + pct(prec[k].rate));
+			set('mc-precision', depths.length ? depths.join(', ') : 'not published in this fit');
+			const pw = card.pillar_weights;
+			if (pw) {
+				set('mc-pillars', 'WHO ' + pw.pedigree.toFixed(2) + ' · HOW ' + pw.structure.toFixed(2) +
+					' · WHAT ' + pw.narrative.toFixed(2) + ' · MOVE ' + pw.momentum.toFixed(2));
+			}
+			const dropped = card.dropped_features || [];
+			set('mc-dropped', dropped.length ? dropped.map((d) => d.key).join(', ') : 'none on this fit');
+			const rungs = new Map((card.tier_ladder || []).map((r) => [r.tier, r]));
+			for (const bar of document.querySelectorAll('.ladder .bar[data-tier]')) {
+				const tier = bar.dataset.tier;
+				const rung = rungs.get(tier);
+				const range = TIER_RANGE[tier] || '';
+				if (!rung) { bar.textContent = range + ' · not published in this fit'; continue; }
+				const claims = rung.claims ? 'claims ' + Math.round(rung.claims * 100) + '%' : 'claims nothing';
+				const observed = rung.observed != null
+					? ' · observed ' + pct(rung.observed) + ' over ' + num(rung.samples)
+					: ' · not enough resolved launches yet';
+				bar.textContent = range + ' · ' + claims + observed;
+			}
+		}
+
+		let mcInFlight = false;
+		async function loadModelCard() {
+			if (mcInFlight) return;
+			mcInFlight = true;
+			mc.dataset.state = 'loading';
+			mcStatus.textContent = 'Loading';
+			try {
+				const r = await fetch('/api/oracle/model?view=card', { headers: { accept: 'application/json' } });
+				if (!r.ok) throw new Error('HTTP ' + r.status);
+				const body = await r.json();
+				if (!body || !body.card) throw new Error('no model card in response');
+				renderCard(body.card);
+				mc.dataset.state = 'ready';
+				mcStatus.textContent = 'Live';
+			} catch (err) {
+				mc.dataset.state = 'error';
+				mcStatus.textContent = 'As published';
+				console.warn('[oracle-docs] live model card unavailable:', err.message);
+			} finally {
+				mcInFlight = false;
+			}
+		}
+		document.getElementById('mc-retry').addEventListener('click', loadModelCard);
+		loadModelCard();
 
 		// expand / collapse all deep dives
 		const expandBtn = document.getElementById('expandAll');
