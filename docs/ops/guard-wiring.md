@@ -115,7 +115,7 @@ They belong to an operator, or to a post-deploy check.
 | `audit:seo` | Titles, descriptions, canonicals and sitemap agreement, fetched as Googlebot | 0 | 17.2s | **manual (post-deploy).** Fetches `https://three.ws`. |
 | `audit:ibm-hosted` | The IBM-hosted page against a local publisher plus live three.ws | 1 | 15.7s | **manual.** Its 6 findings are all CORS refusals of `https://three.ws/*.js` from a `127.0.0.1` publisher origin, which is the harness's origin, not a page defect. Needs the real IBM origin to mean anything. |
 | `audit:mcp-reviewer` | Drives the published stdio MCP server the way a Connectors reviewer's host does | 0 | 11.7s | **manual (pre-submission).** Spawns the published server and hits live x402 endpoints; run before a directory submission. |
-| `check:cron-drift` | vercel.json `crons` against what Cloud Scheduler is really running | 0 | 3.5s | **manual (needs live gcloud).** Owned by [905-fix-queue-03](../../prompts/finish/905-fix-queue-03-cron-drift-garment-sweep.md). |
+| `check:cron-drift` | vercel.json `crons` against what Cloud Scheduler is really running | 0 | 3.5s | **manual (needs live gcloud).** Owned by [fix-queue](../../prompts/finish/_context/fix-queue-00-INDEX.md). |
 | `audit:cron-liveness` | Every cron handler resolves through the real route table, loads, and runs | 0 | 19.6s | **manual.** Boots a server and probes each job. |
 | `audit:cron-liveness:static` | The same, static resolution only, no server and no probe | 0 | 23.5s | **manual.** Repo-only and green, but 23.5s is too slow for `gate` and it imports every cron handler at module scope. |
 | `audit:llm-metering` | Whether any lane that spends money reports exactly $0 | 0 | 1.7s | **manual (ops).** Reads `usage_events` from the live database; its answer is about production spend, not about the diff. |
@@ -152,7 +152,7 @@ viewports. They are pre-event, pre-release and incident tools.
 | `audit:meetup` | The /play live-event layer end to end | capped | >240s | **manual (pre-event).** Needs `npm run dev` **and** `npm run dev:walk-all`, per its header. |
 | `audit:csp` | Every CSP violation in a real browser | 2 | 6.0s | **manual (post-build).** Defaults to `127.0.0.1:8099`; it reported "25 of 25 pages never loaded, so this run proves nothing", which is the honest answer with nothing serving a built `dist/` there. Run it as `npm run audit:csp -- --base https://three.ws`. |
 | `check:home-voice` | The hands-free voice loop: wake word, barge-in, self-trigger, confirmation guards | 2 | 11.2s | **manual.** Starts its own server and drives real speech lanes. |
-| `audit:garments` | Every wardrobe garment: manifest validation, GLB hash, attach, walk-gait deviation | 1 | 133s | **manual.** Real finding: 1 hard failure and 4 review flags out of 59. Owned by [905-fix-queue-03](../../prompts/finish/905-fix-queue-03-cron-drift-garment-sweep.md). |
+| `audit:garments` | Every wardrobe garment: manifest validation, GLB hash, attach, walk-gait deviation | 1 | 133s | **manual.** Real finding: 1 hard failure and 4 review flags out of 59. Owned by [fix-queue](../../prompts/finish/_context/fix-queue-00-INDEX.md). |
 | `check:glb:payload` | The mobile payload budget for a high-resolution GLB, loaded under WebKit and Android Chrome | 1 | 17.4s | **manual.** Its script is currently untracked working-tree work belonging to another session; the run dies on `ENOENT` writing `public/_payload-check/`, which that session owns. |
 
 ### Deterministic problems, deliberately not gated
