@@ -185,7 +185,15 @@ export class RpcFallback {
 		// actionable condition (the whole failover chain is down), so it warns where
 		// the per-endpoint rotations above only log.
 		console.warn(`[rpc-fallback] all ${this.urls.length} endpoints exhausted`);
-		throw new Error('All RPC endpoints exhausted');
+		// Carry the contract fields wrap() looks for. Without them this surfaced to
+		// callers as a bare 500 `internal_error` with a support ref, which reads as
+		// "the endpoint is broken" when the truth is "every upstream provider is
+		// rate limited, retry shortly": a 503 the client and CDN can act on.
+		throw Object.assign(new Error('All RPC endpoints exhausted'), {
+			status: 503,
+			code: 'upstream_unavailable',
+			expose: true,
+		});
 	}
 
 	// Advance to the next endpoint without setting a local cooldown and without
