@@ -36,7 +36,7 @@ One section per finished order, newest at the bottom:
 | 04 agent tools | done | 2026-09-09 |
 | 05 connect flow | done | 2026-09-09 |
 | 06 3D home scene | open | |
-| 07 floorplan editor | built, browser verification blocked, see entry | |
+| 07 floorplan editor | done | 2026-09-09 |
 | 08 voice loop | done | 2026-09-09 |
 | 09 Wyoming satellite | done | 2026-09-09 |
 | 10 add-on relay | done, publish + deploy owner-gated | 2026-09-09 |
@@ -2388,3 +2388,90 @@ and the fixture getters, and `af50eb075` carries the `onConnect` await. The cont
 verified at HEAD; only the attribution is wrong, and the shared-worktree rule against amending
 means it stays that way. This entry and the order-file retirement are the only commit from this
 session.
+
+
+---
+
+## 07 (browser tier closed). Floorplan authoring and layout persistence (2026-09-09)
+
+The 2026-09-03 entry above left exactly one thing open: the six browser journeys in
+`tests/e2e/home-floorplan.spec.js` were written and had never executed. They execute now.
+
+**Measured:** `HOME_LIVE=1 HOME_LIVE_NAME=layout07 HOME_E2E_API_PORT=8141 HOME_E2E_WEB_PORT=3071
+npm run test:home:e2e -- tests/e2e/home-floorplan.spec.js`: **6 passed**, twice in a row, against
+a real Home Assistant 2026.9.0 (4 areas, 1 floor, 92 entities) and the real API and database.
+`tests/e2e/home-scene.spec.js`: **6 passed**, so order 06 did not regress. The live unit tier,
+`WALLET_ENCRYPTION_KEY=$(openssl rand -hex 32) node --env-file=.env.local
+./node_modules/vitest/vitest.mjs run tests/home-layout.test.js`: **31 passed, 0 skipped**.
+Journey 9e reports its own number: **zero areas to a saved two-room floorplan with a device filed
+into one, 3 to 5 seconds**, against the order's five-minute bar. Its two screenshots land in
+`test-results/` (gitignored).
+
+**Running the lane at all.** `npm run test:home:e2e`, not a bare `npx playwright test --config
+playwright.home.config.js`: only the npm script loaded `.env.local`, so the documented re-run
+command died in global setup on `Missing required env var: DATABASE_URL`. The config now loads
+the file itself, so both spellings work; that fix is a peer's, landed mid-session.
+
+**Six defects, found because the journeys finally ran.** Four were real and two were the lane
+lying about itself:
+
+1. **The editor had no stylesheet.** `pages/home-scene.html` linked `/home-scene.css` and nothing
+   else, but every class the floorplan renders is `hm-plan-*`, which lives in `src/home/home.css`,
+   which only the `/smart-home` pages loaded. So the Plan view shipped with no rules at all:
+   absolutely positioned rooms fell back to static blocks and stacked down the page. The
+   before/after screenshots are unambiguous. Found here by reading the deliverable screenshot the
+   order asks for, and independently by a peer measuring touch targets in `home-a11y.spec.js`;
+   their fix is the one in the tree.
+2. **The conflict panel could not take theirs.** `HomeApiError`'s constructor destructured
+   `{ status, pending }` and silently dropped the `current` and `field` every caller passed. So
+   `err.current` was always undefined, the panel read "They saved version ?", and **"Take theirs"
+   returned early and did nothing**: the only way out of a 409 was to overwrite the other person,
+   which is the exact outcome the panel exists to prevent. This is the order's headline promise
+   ("never a silent overwrite and never a lost edit") and it was broken in the shipped code.
+3. **Switching to 3D threw every time.** `setView` calls `mount3d()` without awaiting it (it
+   lazy-imports Three.js), then reached for `state.renderer`, which it had just set to null and
+   which mount3d only reassigns after the import resolves: `Cannot read properties of null
+   (reading 'setModel')` on every switch to the 3D house with a house already loaded. mount3d
+   applies the model itself, so the 2D branch keeps that block and the 3D branch does not.
+4. **A room card could not hold its own contents.** A card is drawn to scale, so an ordinary 5.7 m
+   room is an 80px box, and a name plus a measurement plus a Remove button do not fit one. The
+   size line and the orphan tag now drop out by container query rather than wrapping mid-word.
+
+The two test defects mattered as much, because both made the suite report success it had not
+earned. `openPlan` waited only for `#hs-plan`, which exists immediately, so 9b and 9c counted a
+loading skeleton, concluded the house had nothing to place, and **skipped every run against a
+house with four areas and 78 unfiled devices**. And the tray's File button carries an aria-label
+("File <device> into a room"), which is its accessible name and beats the visible text, so
+`name: /^File$/` had matched nothing since the i18n pass; 9c and 9e hunted it until they timed
+out. A skip-if-empty guard that can also fire for the wrong reason is worse than no guard.
+
+**Two more flakes, fixed at the cause.** Filtering `.hm-plan-room` on `hasText` is a substring
+match over the whole card, devices included, so the Bedroom card (which lists "Kitchen Lights")
+answered to a filter for "Kitchen"; rooms are matched on their own `.hm-plan-room-name` now.
+And 9c filed `loose.first()`, which is as likely to be a YAML-defined entity that can never hold
+an area: the product refuses that correctly and by name (the order's state 9), so the journey now
+asks Home Assistant which entities are registry-backed first.
+
+**Vite HMR is off for this lane** (`VITE_NO_HMR`). Concurrent agents edit `src/` while a journey
+runs, and a connected HMR client reloaded the page under the browser on each of their saves: five
+reloads in one run, and 9e died on a navigation that arrived between naming a room and clicking
+File. The Codespaces HMR host also 404s here, which was three console errors a page the product
+did not cause.
+
+**Deviations from the order file, beyond the 2026-09-03 entry's:** the order says four browser
+journeys; there are six (9, 9b, 9c, 9d, 9e, 9f). It asks for four validator rejections; the
+validator produces eight designed ones, each naming the field it refused (room cap, unknown
+top-level key, unknown room key, non-finite coordinate, coordinate past the origin cap, room
+below the minimum size, `rooms` as an array, unusable room id).
+
+**Left open:** nothing in this order. Two things worth someone's time and out of scope here:
+`scripts/home-test-instance.mjs --seed --json` reports `floors: 0, areas: 0` for a house it just
+gave one floor and four areas (the counter counts only records it created, but the JSON key reads
+as a census), and the local API logs `agent_init_failed Missing required env var:
+S3_PUBLIC_DOMAIN` on every `/api/agents/me`, which is noise in every home e2e log.
+
+**Commits:** the fixes landed under a concurrent agent's messages while this session was running
+(`093990158`, `9d5c14a21`, `dad31271e`, `38eea8d9f`, plus the config's DATABASE_URL loader). The
+content is verified at HEAD by the runs above; the shared-worktree rules against amending and
+against sweeping other agents' work mean the attribution stays as it is. This entry and the order
+file's retirement are this session's only commit.
