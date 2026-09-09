@@ -4,16 +4,16 @@
 	<script>/* three.ws theme boot — no-flash; runtime in /theme-switcher.js */(function(){try{var m=localStorage.getItem('twx_theme');var l=m==='auto'?(window.matchMedia&&window.matchMedia('(prefers-color-scheme: light)').matches):m==='light';document.documentElement.setAttribute('data-theme',l?'light':'dark');}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();</script>
 	<meta charset="utf-8" />
 	<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-	<title data-i18n="arm.meta_title">Arm your agent — automate Oracle conviction · three.ws</title>
+	<title data-i18n="arm.meta_title">Arm your agent: automate Oracle conviction · three.ws</title>
 	<meta name="description" content="Configure your 3D agent to act on Oracle conviction automatically: set the minimum score, position size, daily and open-position caps, narrative filters and alerts, then arm it in simulate or live mode. Every action gets graded against the outcome."  data-i18n-attr="content:arm.meta_description"/>
 	<meta property="og:title" content="Arm your agent · three.ws"  data-i18n-attr="content:arm.meta_og_title"/>
-	<meta property="og:description" content="Set the rules, arm your 3D agent, and let it trade Oracle conviction from its own custodial Solana wallet — simulate first, go live when you trust it."  data-i18n-attr="content:arm.meta_og_description"/>
+	<meta property="og:description" content="Set the rules, arm your 3D agent, and let it trade Oracle conviction from its own custodial Solana wallet. Simulate first, go live when you trust it."  data-i18n-attr="content:arm.meta_og_description"/>
 	<meta property="og:type" content="website" />
 	<meta property="og:site_name" content="three.ws" />
 	<meta property="og:url" content="https://three.ws/oracle/arm" />
 	<meta name="twitter:card" content="summary_large_image" />
-	<meta name="twitter:title" content="Arm your agent — automate Oracle conviction"  data-i18n-attr="content:arm.meta_twitter_title"/>
-	<meta name="twitter:description" content="Rules, sizing, caps, alerts — then arm. Your 3D agent acts the instant a coin clears your bar."  data-i18n-attr="content:arm.meta_twitter_description"/>
+	<meta name="twitter:title" content="Arm your agent: automate Oracle conviction"  data-i18n-attr="content:arm.meta_twitter_title"/>
+	<meta name="twitter:description" content="Rules, sizing, caps, alerts, then arm. Your 3D agent acts the instant a coin clears your bar."  data-i18n-attr="content:arm.meta_twitter_description"/>
 	<link rel="canonical" href="https://three.ws/oracle/arm" />
 	<link rel="icon" href="/favicon.ico" />
 	<link rel="stylesheet" href="/nav.css" />
@@ -82,7 +82,7 @@
 		/* fields */
 		.field { margin-bottom: 14px; }
 		.field:last-child { margin-bottom: 0; }
-		.field > label { display: block; font: 600 10.5px/1 var(--mono); text-transform: uppercase; letter-spacing: .07em; color: var(--faint); margin-bottom: 8px; }
+		.field > label, .field > .flab { display: block; font: 600 10.5px/1 var(--mono); text-transform: uppercase; letter-spacing: .07em; color: var(--faint); margin-bottom: 8px; }
 		.field input, .field select { width: 100%; background: rgba(255,255,255,0.03); border: 1px solid var(--line); border-radius: var(--r-sm); color: var(--ink); padding: 10px 12px; font: 600 14px/1 var(--mono); }
 		.field input:focus, .field select:focus { outline: 2px solid color-mix(in srgb, var(--cyan) 60%, transparent); outline-offset: 1px; }
 		.field-hint { margin-top: 7px; font-size: 11.5px; color: var(--muted); line-height: 1.5; }
@@ -170,6 +170,15 @@
 		.empty { display: none; text-align: center; padding: 60px 22px; }
 		.empty b { display: block; color: var(--ink); font-size: 18px; margin-bottom: 8px; }
 		.empty p { color: var(--muted); max-width: 460px; margin: 0 auto 20px; font-size: 14px; }
+		.empty .empty-cta { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; }
+		.empty .empty-cta .btn { width: auto; padding: 12px 22px; }
+
+		/* Signed-out / no-agent / error: the config column has nothing to bind to,
+		   but the conviction stream is public, so the page still proves itself. */
+		.layout.preview-only { grid-template-columns: minmax(0, 620px); justify-content: center; }
+		.layout.preview-only .col-config { display: none; }
+		.layout.preview-only .col-side { position: static; }
+		.layout.preview-only .col-side > .card:not(#qualCard) { display: none; }
 
 		.foot { margin-top: 34px; padding-top: 22px; border-top: 1px solid var(--line); color: var(--faint); font-size: 12px; line-height: 1.6; }
 
@@ -233,10 +242,10 @@
 	<meta property="og:image:width" content="1200">
 	<meta property="og:image:height" content="630">
 	<meta property="og:image:type" content="image/png">
-	<meta property="og:image:alt" content="Arm your agent — automate Oracle conviction — three.ws">
+	<meta property="og:image:alt" content="Arm your agent: automate Oracle conviction, three.ws">
 	<meta name="twitter:site" content="@trythreews">
 	<meta name="twitter:image" content="https://three.ws/api/page-og?s=crypto&amp;t=Arm+your+agent%3A+automate+Oracle+conviction&amp;d=Configure+your+3D+agent+to+trade+Oracle+conviction+automatically%3A+set+the+minimum+score%2C+position+size%2C+daily+and+open-position+caps%2C+narrative+filters+and&amp;p=%2Foracle%2Farm">
-	<script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"WebPage","name":"Arm your agent — automate Oracle conviction","description":"Configure your 3D agent to trade Oracle conviction automatically: set the minimum score, position size, daily and open-position caps, narrative filters and Telegram alerts, then arm it in simulate or live mode. Every action is graded against the outcome.","url":"https://three.ws/oracle/arm","isPartOf":{"@type":"WebSite","name":"three.ws","url":"https://three.ws"},"primaryImageOfPage":"https://three.ws/api/page-og?s=crypto&t=Arm+your+agent+%E2%80%94+automate+Oracle+conviction&d=Configure+your+3D+agent+to+trade+Oracle+conviction+automatically%3A+set+the+minimum+score%2C+position+size%2C+daily+and+open-position+caps%2C+narrative+filters+and+Tele&p=%2Foracle%2Farm"},{"@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Home","item":"https://three.ws/"},{"@type":"ListItem","position":2,"name":"Oracle","item":"https://three.ws/oracle"},{"@type":"ListItem","position":3,"name":"Arm","item":"https://three.ws/oracle/arm"}]}]}</script>
+	<script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"WebPage","name":"Arm your agent: automate Oracle conviction","description":"Configure your 3D agent to trade Oracle conviction automatically: set the minimum score, position size, daily and open-position caps, narrative filters and Telegram alerts, then arm it in simulate or live mode. Every action is graded against the outcome.","url":"https://three.ws/oracle/arm","isPartOf":{"@type":"WebSite","name":"three.ws","url":"https://three.ws"},"primaryImageOfPage":"https://three.ws/api/page-og?s=crypto&t=Arm+your+agent+%E2%80%94+automate+Oracle+conviction&d=Configure+your+3D+agent+to+trade+Oracle+conviction+automatically%3A+set+the+minimum+score%2C+position+size%2C+daily+and+open-position+caps%2C+narrative+filters+and+Tele&p=%2Foracle%2Farm"},{"@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Home","item":"https://three.ws/"},{"@type":"ListItem","position":2,"name":"Oracle","item":"https://three.ws/oracle"},{"@type":"ListItem","position":3,"name":"Arm","item":"https://three.ws/oracle/arm"}]}]}</script>
 </head>
 <body>
 	<header><div id="nav-container"></div></header>
@@ -248,11 +257,34 @@
 			<p data-i18n-html="arm.set_the_rules_once_your_3d_agent">Set the rules once. Your 3D agent watches the live Oracle conviction stream and acts the instant a coin clears your bar — buying a small position from its own custodial Solana wallet. Starts in <b>simulate</b> so you can watch it work risk-free, then go live when you trust it.</p>
 		</div>
 
-		<!-- signed-out / no-agent state -->
+		<!-- no-agent state (signed in, nothing to arm yet) -->
 		<div class="empty" id="emptyState">
 			<b data-i18n="arm.create_a_3d_agent_to_arm_it">Create a 3D agent to arm it</b>
-			<p data-i18n="arm.your_agent_needs_its_own_custodial_solana">Your agent needs its own custodial Solana wallet to act on conviction. Spin one up in the studio — it takes about a minute — then come back here to set its rules.</p>
-			<a class="btn primary" style="display:inline-flex;width:auto;padding:12px 22px" href="/create/studio" data-i18n="arm.create_an_agent">Create an agent →</a>
+			<p data-i18n="arm.your_agent_needs_its_own_custodial_solana">Your agent needs its own custodial Solana wallet to act on conviction. Spin one up in the studio, which takes about a minute, then come back here to set its rules.</p>
+			<div class="empty-cta">
+				<a class="btn primary" href="/create/studio" data-i18n="arm.create_an_agent">Create an agent →</a>
+				<a class="btn" href="/oracle" data-i18n="arm.browse_the_oracle">Browse the Oracle</a>
+			</div>
+		</div>
+
+		<!-- signed-out state -->
+		<div class="empty" id="signedOutState">
+			<b data-i18n="arm.sign_in_to_arm_an_agent">Sign in to arm an agent</b>
+			<p data-i18n="arm.arming_binds_rules_to_your_own_agent">Arming binds rules to your own agent and its custodial Solana wallet, so it needs an account. The conviction stream below is public: watch what clears a Strong+ bar right now, then sign in to point an agent at it.</p>
+			<div class="empty-cta">
+				<a class="btn primary" href="/login?next=%2Foracle%2Farm" data-i18n="arm.sign_in">Sign in</a>
+				<a class="btn" href="/register?next=%2Foracle%2Farm" data-i18n="arm.create_an_account">Create an account</a>
+			</div>
+		</div>
+
+		<!-- load-failure state -->
+		<div class="empty" id="errorState">
+			<b data-i18n="arm.could_not_load_your_agents">Could not load your agents</b>
+			<p><span id="errorDetail"></span> <span data-i18n="arm.the_conviction_stream_below_is_still_live">The conviction stream below is still live, so this is your agent list alone. Retry, or open the Oracle to keep watching.</span></p>
+			<div class="empty-cta">
+				<button class="btn primary" id="retryBtn" type="button" data-i18n="arm.try_again">Try again</button>
+				<a class="btn" href="/oracle" data-i18n="arm.browse_the_oracle_2">Browse the Oracle</a>
+			</div>
 		</div>
 
 		<!-- control bar -->
@@ -265,7 +297,7 @@
 				<span class="wp-lab" data-i18n="arm.wallet">Wallet</span>
 				<span class="wp-bal" id="walletBal">—</span>
 				<span class="wp-run" id="walletRun"></span>
-				<a class="wp-fund" id="walletFund" target="_blank" rel="noopener" data-i18n="arm.fund">Fund →</a>
+				<a class="wp-fund" id="walletFund" href="/agents" target="_blank" rel="noopener" data-i18n="arm.fund">Fund →</a>
 			</div>
 			<div class="armbox">
 				<div class="arm-state">
@@ -291,8 +323,8 @@
 					<h3 data-i18n-html="arm.1_entry_rules"><span class="stepno">1</span> Entry rules</h3>
 					<p class="sub" data-i18n="arm.when_should_your_agent_buy_only_plays">When should your agent buy? Only plays that clear every rule below get acted on.</p>
 					<div class="field">
-						<label data-i18n="arm.minimum_conviction">Minimum conviction</label>
-						<div class="seg" id="convSeg" role="group" aria-label="Minimum conviction">
+						<span class="flab" id="convSegLab" data-i18n="arm.minimum_conviction">Minimum conviction</span>
+						<div class="seg" id="convSeg" role="group" aria-labelledby="convSegLab">
 							<button type="button" data-min="86" data-i18n-html="arm.prime_86">Prime<small>≥ 86</small></button>
 							<button type="button" data-min="72" class="on" data-i18n-html="arm.strong_72">Strong+<small>≥ 72</small></button>
 							<button type="button" data-min="56" data-i18n-html="arm.lean_56">Lean+<small>≥ 56</small></button>
@@ -304,8 +336,8 @@
 						<div class="sw on" id="smartToggle" role="switch" aria-checked="true" tabindex="0" aria-label="Require smart money"></div>
 					</div>
 					<div class="field" style="margin-top:14px">
-						<label data-i18n-html="arm.only_these_narratives_none_selected_any">Only these narratives <span style="text-transform:none;letter-spacing:0;color:var(--muted)">— none selected = any</span></label>
-						<div class="chips" id="catChips"></div>
+						<span class="flab" id="catChipsLab" data-i18n-html="arm.only_these_narratives_none_selected_any">Only these narratives <span style="text-transform:none;letter-spacing:0;color:var(--muted)">(none selected = any)</span></span>
+						<div class="chips" id="catChips" role="group" aria-labelledby="catChipsLab"></div>
 					</div>
 				</div>
 
@@ -313,16 +345,16 @@
 					<h3 data-i18n-html="arm.2_position_sizing_risk"><span class="stepno">2</span> Position sizing &amp; risk</h3>
 					<p class="sub" data-i18n="arm.how_much_to_commit_and_the_hard">How much to commit, and the hard caps your agent can never cross.</p>
 					<div class="row2">
-						<div class="field"><label data-i18n="arm.size_trade">Size / trade</label>
+						<div class="field"><label for="fSize" data-i18n="arm.size_trade">Size / trade</label>
 							<div class="suffixed"><input id="fSize" type="number" min="0.001" step="0.01" value="0.05"><span class="suf" data-i18n="arm.sol">SOL</span></div>
 						</div>
-						<div class="field"><label data-i18n="arm.max_open_positions">Max open positions</label><input id="fOpen" type="number" min="1" step="1" value="5"></div>
+						<div class="field"><label for="fOpen" data-i18n="arm.max_open_positions">Max open positions</label><input id="fOpen" type="number" min="1" step="1" value="5"></div>
 					</div>
-					<div class="field"><label data-i18n="arm.max_spend_day">Max spend / day</label>
+					<div class="field"><label for="fDaily" data-i18n="arm.max_spend_day">Max spend / day</label>
 						<div class="suffixed"><input id="fDaily" type="number" min="0.01" step="0.05" value="0.5"><span class="suf" data-i18n="arm.sol_2">SOL</span></div>
 					</div>
 					<div class="toggle">
-						<div class="t-lab"><b data-i18n="arm.scale_size_by_conviction">Scale size by conviction</b><span id="scaleSub" data-i18n="arm.off_every_qualifying_play_uses_the_same">Off — every qualifying play uses the same size</span></div>
+						<div class="t-lab"><b data-i18n="arm.scale_size_by_conviction">Scale size by conviction</b><span id="scaleSub" data-i18n="arm.off_every_qualifying_play_uses_the_same">Off. Every qualifying play uses the same size.</span></div>
 						<div class="sw" id="scaleToggle" role="switch" aria-checked="false" tabindex="0" aria-label="Scale size by conviction"></div>
 					</div>
 					<div class="risk" id="riskSummary">Set a per-trade size and daily cap to see your exposure.</div>
@@ -332,12 +364,12 @@
 					<h3 data-i18n-html="arm.3_alerts_optional"><span class="stepno">3</span> Alerts <span class="opt">optional</span></h3>
 					<p class="sub" data-i18n="arm.get_a_personal_telegram_ping_whenever_a">Get a personal Telegram ping whenever a coin crosses your threshold — armed or not.</p>
 					<div class="field">
-						<label data-i18n="arm.telegram_chat_id_or_channel">Telegram chat ID or @channel</label>
+						<label for="tgInput" data-i18n="arm.telegram_chat_id_or_channel">Telegram chat ID or @channel</label>
 						<div class="tg-row">
 							<input id="tgInput" type="text" placeholder="Your chat ID or @channel" autocomplete="off">
 							<button id="tgTest" class="btn sm" type="button" data-i18n="arm.send_test">Send test</button>
 						</div>
-						<div class="tg-note" id="tgNote"></div>
+						<div class="tg-note" id="tgNote" role="status" aria-live="polite"></div>
 						<div class="field-hint">Chat <a href="https://t.me/three_ws_bot" target="_blank" rel="noopener" data-i18n="arm.three_ws_bot">@three_ws_bot</a> and send <code>/start</code> to get your chat ID.</div>
 					</div>
 				</div>
@@ -358,14 +390,14 @@
 					<h3 data-i18n-html="arm.4_mode_arm"><span class="stepno">4</span> Mode &amp; arm</h3>
 					<p class="sub" data-i18n="arm.simulate_logs_every_play_risk_free_live">Simulate logs every play risk-free. Live spends real SOL from the agent wallet, capped by your limits.</p>
 					<div class="field">
-						<label data-i18n="arm.execution_mode">Execution mode</label>
-						<div class="seg" id="modeSeg" role="group" aria-label="Execution mode">
+						<span class="flab" id="modeSegLab" data-i18n="arm.execution_mode">Execution mode</span>
+						<div class="seg" id="modeSeg" role="group" aria-labelledby="modeSegLab">
 							<button type="button" data-mode="simulate" class="on" data-i18n-html="arm.simulatespends_nothing">Simulate<small>spends nothing</small></button>
 							<button type="button" data-mode="live" data-i18n-html="arm.livereal_sol_capped">Live<small>real SOL, capped</small></button>
 						</div>
 					</div>
 					<button class="btn primary" id="saveBtn" style="margin-top:6px" data-i18n="arm.save_configuration">Save configuration</button>
-					<div class="save-note" id="saveNote"></div>
+					<div class="save-note" id="saveNote" role="status" aria-live="polite"></div>
 				</div>
 
 				<div class="card" id="ledgerCard">

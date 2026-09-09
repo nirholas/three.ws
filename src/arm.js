@@ -1,8 +1,9 @@
-// Arm your agent — standalone automation setup (the trading-bot config surface).
+// Arm your agent: standalone automation setup (the trading-bot config surface).
 // Reuses the Oracle watch API: /api/agents, /api/oracle/watch, /api/oracle/test-alert.
 // Self-contained: no imports from oracle.js so this page stands on its own.
 
 import { ensureRiskAck } from './shared/risk-ack.js';
+import { proxiedImageURL } from './ipfs.js';
 
 const NETWORK = 'mainnet';
 const $ = (s, r = document) => r.querySelector(s);
@@ -10,6 +11,9 @@ const $$ = (s, r = document) => [...r.querySelectorAll(s)];
 
 const CATEGORIES = ['meme', 'tech', 'ai', 'culture', 'community', 'political', 'news', 'animal', 'celebrity', 'utility', 'unknown'];
 
+// The stat strip's "no value yet" glyph, matching every other placeholder on
+// the page. Written as an escape because the repo bans the literal character.
+const NO_VALUE = '\u2014';
 const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const fmtSol = (n) => (n == null ? '—' : `${Number(n) < 0.01 && Number(n) > 0 ? Number(n).toFixed(4) : Number(n).toFixed(2)}◎`);
 const tierPill = (t) => `tp-${t || 'avoid'}`;
@@ -39,30 +43,81 @@ async function api(path, opts = {}) {
 	}
 }
 
+// Live values written by this script into elements the static markup annotates
+// for translation. Without the `data-i18n-owned` stamp, the locale catalog pass
+// (which lands after an async /api/locale fetch) reverts them to their English
+// placeholder: an agent showing "Armed - Live" flipped back to "Disarmed", and
+// "9 clearing your bar" back to "Reading the conviction stream...". See the
+// scriptOwns() contract in src/i18n.js.
+function setLive(sel, text) {
+	const el = typeof sel === 'string' ? $(sel) : sel;
+	if (!el) return;
+	el.dataset.i18nOwned = '1';
+	el.textContent = text;
+}
+
+// The page has four shapes, and exactly one is on screen at a time.
+// `config` is the real surface; the other three keep the public conviction
+// stream visible so a visitor who cannot configure anything still sees the
+// product working.
+const PANELS = { emptyState: 'emptyState', signedOut: 'signedOutState', error: 'errorState' };
+function showState(kind) {
+	for (const id of Object.values(PANELS)) $('#' + id).style.display = 'none';
+	const config = kind === 'config';
+	$('#setup').style.display = config ? '' : 'none';
+	$('#statsStrip').style.display = config ? '' : 'none';
+	$('.layout').classList.toggle('preview-only', !config);
+	if (!config && PANELS[kind]) $('#' + PANELS[kind]).style.display = 'block';
+}
+
 // ── boot ──────────────────────────────────────────────────────────────────────
 async function boot() {
 	wireStaticControls();
 	showSkeletons();
-	const { ok, data } = await api('/api/agents');
-	const agents = ok && data ? (data.agents || data.items || data || []) : [];
-	state.agents = Array.isArray(agents) ? agents : [];
+	// Both of these are public endpoints, so they run for every visitor. A
+	// signed-out page still shows what is clearing a Strong+ bar right now
+	// rather than being a bare sign-in wall.
+	loadEdge();        // 30-day proof-of-edge for the conviction bar (global)
+	startFeedLoop();   // live "clearing your bar" preview (global, polls)
+	$('#retryBtn').addEventListener('click', loadAgents);
+	await loadAgents();
+}
 
-	if (!state.agents.length) {
-		$('#setup').style.display = 'none';
-		$('#statsStrip').style.display = 'none';
-		$('#ledgerCard').style.display = 'none';
-		$('.layout').style.display = 'none';
-		$('#emptyState').style.display = 'block';
+// Three outcomes, three different things to tell the visitor. The old code
+// collapsed all of them into "Create a 3D agent to arm it", so a signed-out
+// visitor was told to create an agent they could not create, and an agents API
+// that was down looked like an empty account with no way to retry.
+async function loadAgents() {
+	const me = await api('/api/auth/me');
+	if (!me.ok || !me.data || !me.data.user) {
+		// A signed-out visitor never triggers the /api/agents 401 in the first
+		// place, which is what put an unhandled 401 in the console on every load.
+		showState(me.ok ? 'signedOut' : 'error');
+		if (!me.ok) setLive('#errorDetail', 'The session check did not answer.');
 		return;
 	}
 
+	const { ok, status, data } = await api('/api/agents');
+	if (!ok) {
+		setLive('#errorDetail', status
+			? `The agents API answered ${status}.`
+			: 'The agents API could not be reached.');
+		showState('error');
+		return;
+	}
+	const agents = data ? (data.agents || data.items || []) : [];
+	state.agents = Array.isArray(agents) ? agents : [];
+
+	if (!state.agents.length) { showState('emptyState'); return; }
+
 	const sel = $('#agentSel');
 	sel.innerHTML = state.agents.map((a) => `<option value="${esc(a.id)}">${esc(a.name || a.id)}</option>`).join('');
-	sel.addEventListener('change', () => loadWatch(sel.value));
+	if (sel.dataset.wired !== '1') {
+		sel.dataset.wired = '1';
+		sel.addEventListener('change', () => loadWatch(sel.value));
+	}
 	state.agentId = state.agents[0].id;
-
-	loadEdge();        // 30-day proof-of-edge for the conviction bar (global)
-	startFeedLoop();   // live "clearing your bar" preview (global, polls)
+	showState('config');
 	loadWatch(state.agentId);
 }
 
@@ -71,7 +126,7 @@ function showSkeletons() {
 	['#statWin', '#statPnl', '#statOpen', '#statTotal'].forEach((id) => {
 		const el = $(id); el.classList.add('sk'); el.textContent = '00%';
 	});
-	$('#edgeReadout').innerHTML = '<div class="e-note">Loading 30-day track record for this bar…</div>';
+	$('#edgeReadout').innerHTML = '<div class="e-note">Loading the 30-day track record for this bar…</div>';
 	$('#qualBody').innerHTML = '<div class="qual-empty">Reading the live conviction stream…</div>';
 	$('#ledgerBody').innerHTML = skeletonLedger();
 }
@@ -128,12 +183,21 @@ function wireStaticControls() {
 
 function wireSwitch(sel, cb) {
 	const el = $(sel);
-	el.addEventListener('click', () => {
+	const flip = () => {
 		const on = !el.classList.contains('on');
 		el.classList.toggle('on', on);
 		el.setAttribute('aria-checked', String(on));
 		markDirty();
 		if (cb) cb(on);
+	};
+	el.addEventListener('click', flip);
+	// role="switch" + tabindex="0" made these focusable but not operable: a
+	// keyboard user could tab onto the arm switch and never toggle it. Enter and
+	// Space are what the switch role contracts for.
+	el.addEventListener('keydown', (e) => {
+		if (e.key !== 'Enter' && e.key !== ' ' && e.key !== 'Spacebar') return;
+		e.preventDefault();
+		flip();
 	});
 }
 function setSwitch(sel, on) { const el = $(sel); el.classList.toggle('on', !!on); el.setAttribute('aria-checked', String(!!on)); }
@@ -158,22 +222,22 @@ function updateArmStatus() {
 	const sub = $('#armStatusSub');
 	dot.className = 'arm-dot ' + (armed ? (live ? 'live' : 'sim') : 'off');
 	if (!armed) {
-		lab.textContent = 'Disarmed';
+		setLive(lab, 'Disarmed');
 		sub.textContent = 'Your agent is idle. Flip the switch to start watching the conviction stream.';
 	} else if (live) {
-		lab.textContent = 'Armed · Live';
-		sub.textContent = 'Spending real SOL from the agent wallet when a coin clears your bar — capped by your limits.';
+		setLive(lab, 'Armed · Live');
+		sub.textContent = 'Spending real SOL from the agent wallet when a coin clears your bar, capped by your limits.';
 	} else {
-		lab.textContent = 'Armed · Simulate';
+		setLive(lab, 'Armed · Simulate');
 		sub.textContent = 'Logging every play it would take, risk-free. Outcomes get graded so you can trust it before going live.';
 	}
 }
 
 function renderScaleSub() {
 	const base = Number($('#fSize').value) || 0.05;
-	$('#scaleSub').textContent = isOn('#scaleToggle')
+	setLive('#scaleSub', isOn('#scaleToggle')
 		? `${base.toFixed(3)} SOL at your floor → up to ${(base * 1.5).toFixed(3)} SOL at score 100`
-		: 'Off — every qualifying play uses the same size';
+		: 'Off. Every qualifying play uses the same size.');
 }
 
 function renderRisk() {
@@ -190,7 +254,7 @@ function renderRisk() {
 	const w = state.wallet;
 	if (w && w.sol != null) {
 		if (w.sol < size) {
-			txt += ` · <b style="color:var(--amber)">wallet holds ${fmtSol(w.sol)} — fund it before going live</b>`;
+			txt += ` · <b style="color:var(--amber)">wallet holds ${fmtSol(w.sol)}, fund it before going live</b>`;
 		} else if (w.sol < daily) {
 			txt += ` · wallet covers ≈ ${Math.floor(w.sol / size)} ${Math.floor(w.sol / size) === 1 ? 'trade' : 'trades'} before it's dry`;
 		}
@@ -202,9 +266,11 @@ function renderRisk() {
 async function loadWallet(agentId) {
 	const pill = $('#walletPill');
 	const bal = $('#walletBal');
+	// Point the deposit link at this agent before the pill is shown, so the
+	// anchor is never on screen aimed at the generic agent list.
+	$('#walletFund').href = `/agents/${encodeURIComponent(agentId)}/wallet#deposit`;
 	pill.hidden = false;
 	pill.classList.remove('low');
-	$('#walletFund').href = `/agents/${encodeURIComponent(agentId)}/wallet#deposit`;
 	$('#walletRun').textContent = '';
 	bal.classList.add('sk'); bal.textContent = '0.00◎';
 	state.wallet = null;
@@ -251,7 +317,7 @@ function renderEdge() {
 	const el = $('#edgeReadout');
 	const e = state.edge;
 	if (!e) {
-		el.innerHTML = '<div class="e-note">Edge stats are warming up — historical win rates for this bar will show here.</div>';
+		el.innerHTML = '<div class="e-note">Edge stats are warming up. Historical win rates for this bar show here as soon as enough coins resolve.</div>';
 		return;
 	}
 	const inc = new Set(includedTiers(state.minScore));
@@ -328,13 +394,18 @@ function renderQualifying() {
 			(!r.requireSmart || (it.smart_wallet_count || 0) >= 1))
 		.sort((a, b) => b.score - a.score);
 
-	countEl.textContent = matches.length
+	setLive(countEl, matches.length
 		? `${matches.length} clearing your bar`
-		: 'Nothing clears your bar right now';
+		: 'Nothing clears your bar right now');
 	metaEl.textContent = state.feed.length ? `live · ${state.feed.length} scored / 12h` : '';
 
+	if (!state.feed.length) {
+		// Distinct from "nothing qualifies": the feed itself never answered.
+		body.innerHTML = `<div class="qual-empty">The conviction stream is not answering right now. It retries every 20 seconds, and your saved rules keep running server-side either way.</div>`;
+		return;
+	}
 	if (!matches.length) {
-		body.innerHTML = `<div class="qual-empty">No live coin meets every rule this moment — normal for a tight bar. Loosen the conviction floor or widen narratives to see more flow, or keep it strict and let your agent wait for the real ones.</div>`;
+		body.innerHTML = `<div class="qual-empty">No live coin meets every rule this moment, which is normal for a tight bar. Loosen the conviction floor or widen narratives to see more flow, or keep it strict and let your agent wait for the real ones.</div>`;
 		return;
 	}
 	body.innerHTML = matches.slice(0, 8).map((it) => qualRow(it, r)).join('');
@@ -342,8 +413,13 @@ function renderQualifying() {
 
 function qualRow(it, r) {
 	const sym = esc(it.symbol || (it.mint || '').slice(0, 6));
-	const img = it.image_uri
-		? `<img class="coinimg" src="${esc(it.image_uri)}" alt="" loading="lazy" data-fallback="remove">`
+	// Coin art is creator-supplied and lives on IPFS gateways that answer without
+	// the CORS/content-type headers a browser trusts, so a direct <img> is
+	// ORB-blocked and every icon fails. /api/img refetches server-side across a
+	// gateway list and always returns a valid image. Same pattern as oracle.js.
+	const art = proxiedImageURL(it.image_uri, it.mint || it.symbol || 'coin', { width: 36 });
+	const img = art
+		? `<img class="coinimg" src="${esc(art)}" alt="" loading="lazy" data-fallback="remove">`
 		: '';
 	const smart = (it.smart_wallet_count || 0) >= 1
 		? `<span class="q-smart">${it.smart_wallet_count} smart in</span>`
@@ -364,7 +440,10 @@ function qualRow(it, r) {
 async function loadWatch(agentId) {
 	state.agentId = agentId;
 	$('#saveNote').textContent = '';
+	$('#ledgerBody').innerHTML = skeletonLedger();
 	const { ok, data } = await api(`/api/oracle/watch?agent_id=${encodeURIComponent(agentId)}&network=${NETWORK}`);
+	// This one payload carries the config, the action ledger and the summary, so
+	// nothing here refetches it.
 	const w = ok && data ? data.watch : null;
 	state.watch = w;
 
@@ -397,14 +476,14 @@ async function loadWatch(agentId) {
 	$('#saveBtn').classList.remove('dirty');
 
 	loadWallet(agentId);
-	loadActions(agentId);
+	renderActions(ok ? data : null);
 }
 
 async function saveWatch() {
 	// Arming in live mode commits the agent's real SOL — gate on the risk ack.
 	if (modeIsLive() && isOn('#armToggle') && !(await ensureRiskAck({ context: 'oracle-arm' }))) return;
 	const btn = $('#saveBtn');
-	btn.disabled = true; btn.textContent = 'Saving…';
+	btn.disabled = true; setLive(btn, 'Saving…');
 	const cats = $$('#catChips .cchip.on').map((b) => b.dataset.cat);
 	const min = state.minScore;
 	const payload = {
@@ -423,7 +502,7 @@ async function saveWatch() {
 	const { ok, data } = await api('/api/oracle/watch', {
 		method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload),
 	});
-	btn.disabled = false; btn.textContent = 'Save configuration';
+	btn.disabled = false; setLive(btn, 'Save configuration');
 	const note = $('#saveNote');
 	if (ok && data?.watch) {
 		state.watch = data.watch;
@@ -431,14 +510,14 @@ async function saveWatch() {
 		const tg = data.watch.telegram_chat_id ? ' Telegram alerts active.' : '';
 		note.className = 'save-note ok';
 		note.textContent = data.watch.armed
-			? `✓ Armed in ${data.watch.mode} mode — your agent is watching the stream.${tg}`
+			? `✓ Armed in ${data.watch.mode} mode. Your agent is watching the stream.${tg}`
 			: `✓ Saved. Flip “Armed” when you’re ready to start watching.${tg}`;
 		// reflect any server-side clamping
 		$('#fSize').value = data.watch.per_trade_sol;
 		$('#fDaily').value = data.watch.max_daily_sol;
 		$('#fOpen').value = data.watch.max_open;
 		renderRisk();
-		loadActions(state.agentId);
+		refreshLedger(state.agentId);
 	} else {
 		note.className = 'save-note warn';
 		// The API answers `{error: "<code>", error_description: "<sentence>"}`, so
@@ -460,12 +539,12 @@ async function sendTelegramTest() {
 		return;
 	}
 	const btn = $('#tgTest');
-	btn.disabled = true; btn.textContent = 'Sending…';
+	btn.disabled = true; setLive(btn, 'Sending…');
 	const { ok, data } = await api('/api/oracle/test-alert', {
 		method: 'POST', headers: { 'content-type': 'application/json' },
 		body: JSON.stringify({ agent_id: state.agentId, chat_id: chatId }),
 	});
-	btn.disabled = false; btn.textContent = 'Send test';
+	btn.disabled = false; setLive(btn, 'Send test');
 	if (ok && data?.ok) {
 		note.className = 'tg-note ok';
 		note.textContent = '✓ Test message delivered. Check Telegram.';
@@ -479,11 +558,17 @@ async function sendTelegramTest() {
 }
 
 // ── activity ledger ───────────────────────────────────────────────────────────
-async function loadActions(agentId) {
-	const body = $('#ledgerBody');
+// A save answers with the new config only, so the graded ledger is refetched.
+async function refreshLedger(agentId) {
 	const { ok, data } = await api(`/api/oracle/watch?agent_id=${encodeURIComponent(agentId)}&network=${NETWORK}`);
-	const actions = ok && data ? (data.actions || []) : [];
-	const s = (ok && data && data.summary) || null;
+	renderActions(ok ? data : null);
+}
+
+// Rendered from the payload loadWatch() already fetched.
+function renderActions(payload) {
+	const body = $('#ledgerBody');
+	const actions = payload ? (payload.actions || []) : [];
+	const s = payload ? payload.summary : null;
 
 	// top stat strip
 	const setStat = (id, val, cls) => { const el = $(id); el.textContent = val; el.className = 'stat-val' + (cls ? ' ' + cls : ''); };
@@ -492,12 +577,23 @@ async function loadActions(agentId) {
 		setStat('#statPnl', `${s.realized_pnl_sol >= 0 ? '+' : ''}${fmtSol(s.realized_pnl_sol)}`, s.realized_pnl_sol >= 0 ? 'up' : 'dn');
 		setStat('#statOpen', String(s.open ?? 0));
 		setStat('#statTotal', String(s.total));
+	} else if (s) {
+		// A real answer that says "this agent has never acted" is a zero, not an
+		// unknown. Four dashes read as a failed load.
+		setStat('#statWin', NO_VALUE);
+		setStat('#statPnl', fmtSol(0));
+		setStat('#statOpen', '0');
+		setStat('#statTotal', '0');
 	} else {
 		['#statWin', '#statPnl', '#statOpen', '#statTotal'].forEach((id) => setStat(id, '—'));
 	}
 
+	if (!payload) {
+		body.innerHTML = `<div class="ledger-empty">Could not read this agent's ledger. Pick the agent again, or reload the page.</div>`;
+		return;
+	}
 	if (!actions.length) {
-		body.innerHTML = `<div class="ledger-empty">No actions yet — once armed, every buy lands here and gets graded against the outcome in real time.</div>`;
+		body.innerHTML = `<div class="ledger-empty">No actions yet. Once armed, every buy lands here and gets graded against the outcome in real time.</div>`;
 		return;
 	}
 	const rows = actions.map(actionRow).join('');
