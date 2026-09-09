@@ -9182,7 +9182,6 @@
 		"meta_description": "Home Assistant tarafından yönlendirilen evinizin canlı 3D modeli: her oda gerçek odanın gibi aydınlatılır, her kapı ve kilit gerçekte olduğu gibi gösterilir ve ajentiniz içinde durur.",
 		"meta_title": "Evınız, canlı · three.ws",
 		"panel_aria": "Seçilen cihaz",
-		"panel_empty": "Sol taraftan bir oda seçin veya evdeki herhangi bir şeye tıklayarak ne olduğunu görün ve etkileşime geçin.",
 		"rail_aria": "Odalar",
 		"rail_head": "Odalar",
 		"reconnect": "Yeniden bağlan",

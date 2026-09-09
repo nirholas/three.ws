@@ -9182,7 +9182,6 @@
 		"meta_description": "A házad élő 3D modellje a Home Assistant vezetésével: minden szoba úgy van megvilágítva, mint a valódi szoba, minden ajtó és zár úgy van mutatva, ahogy valóban van, és az agented benne áll.",
 		"meta_title": "A te otthonod, élő · three.ws",
 		"panel_aria": "Kiválasztott eszköz",
-		"panel_empty": "Válassz egy szobát balra, vagy kattints bármire a házban, hogy meglásd, mi az, és lépj rá.",
 		"rail_aria": "Szobák",
 		"rail_head": "Szobák",
 		"reconnect": "Újra csatlakozás",

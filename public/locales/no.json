@@ -9182,7 +9182,6 @@
 		"meta_description": "Et levende 3D-modell av huset ditt drevet av Home Assistant: hvert rom belyst slik det reelle rommet er, hver dør og lås vist slik de faktisk er, og din agent står i det.",
 		"meta_title": "Hjemmet ditt, levende · three.ws",
 		"panel_aria": "Valgt enhet",
-		"panel_empty": "Velg et rom til venstre, eller klikk på noe i huset for å se hva det er og handle på det.",
 		"rail_aria": "Rom",
 		"rail_head": "Rom",
 		"reconnect": "Koble til på nytt",

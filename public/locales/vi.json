@@ -9182,7 +9182,6 @@
 		"meta_description": "Mô hình 3D trực tiếp của ngôi nhà của bạn được điều khiển bởi Home Assistant: mỗi phòng được chiếu sáng như phòng thực tế, mỗi cửa và khóa được hiển thị như thực tế, và tác nhân của bạn đứng trong đó.",
 		"meta_title": "Nhà của bạn, trực tiếp · three.ws",
 		"panel_aria": "Thiết bị đã chọn",
-		"panel_empty": "Chọn một phòng ở bên trái, hoặc nhấp vào bất kỳ gì trong nhà để xem nó là gì và thực hiện hành động.",
 		"rail_aria": "Phòng",
 		"rail_head": "Phòng",
 		"reconnect": "Kết nối lại",

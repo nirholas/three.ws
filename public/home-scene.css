@@ -236,6 +236,17 @@
 }
 .hs-room-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .hs-room-meta { font-size: var(--text-2xs); color: var(--ink-dim); font-variant-numeric: tabular-nums; }
+/*
+ * The selected room's state line, at full ink.
+ *
+ * `aria-current` raises the row to --surface-3, which lifts the background
+ * under text that is already --text-2xs and dimmed. Measured by axe on the
+ * live house: that one line was the only WCAG 1.4.3 failure in the whole lane.
+ * The fix is not a darker row, it is a brighter line: this is the room the
+ * reader is looking at, so the words that say what is on in it are the last
+ * thing that should be faint.
+ */
+.hs-room[aria-current='true'] .hs-room-meta { color: var(--ink); }
 .hs-room-alert { color: var(--hs-warn-ink); }
 
 /*

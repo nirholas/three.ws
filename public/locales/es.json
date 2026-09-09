@@ -9182,7 +9182,6 @@
 		"meta_description": "Un modelo 3D en vivo de tu casa impulsado por Home Assistant: cada habitación iluminada como la real, cada puerta y cerradura mostrada tal como está, y tu agente de pie en ella.",
 		"meta_title": "Tu home, en vivo · three.ws",
 		"panel_aria": "Dispositivo seleccionado",
-		"panel_empty": "Elige una habitación a la izquierda, o haz clic en cualquier cosa en la casa para ver qué es y actuar sobre ello.",
 		"rail_aria": "Habitaciones",
 		"rail_head": "Habitaciones",
 		"reconnect": "Reconectar",

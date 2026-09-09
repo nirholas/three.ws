@@ -9182,7 +9182,6 @@
 		"meta_description": "Un model 3D en viu de la teva casa impuls per Home Assistant: cada habitació iluminada com la real, cada porta i cerradura mostrada tal com és, i el teu agent de pé dins.",
 		"meta_title": "La teva llar, en viu · three.ws",
 		"panel_aria": "Dispositiu seleccionat",
-		"panel_empty": "Triï una habitació a l'esquerra, o cliqueja qualsevol cosa a la casa per veure què és i actuar sobre ella.",
 		"rail_aria": "Habitacions",
 		"rail_head": "Habitacions",
 		"reconnect": "Reconnectar",

@@ -9182,7 +9182,6 @@
 		"meta_description": "Un modelo 3D en directo da túa casa impulsado polo Home Assistant: cada habitación iluminada como se ilumina a real, cada porta e cerradura mostrada como é realmente, e o teu axente de pé nela.",
 		"meta_title": "O teu fogar, en directo · three.ws",
 		"panel_aria": "Dispositivo seleccionado",
-		"panel_empty": "Escolle unha habitación á esquerda, ou fai clic en calquera cousa da casa para ver que é e actuar sobre ela.",
 		"rail_aria": "Habitacións",
 		"rail_head": "Habitacións",
 		"reconnect": "Reconectar",

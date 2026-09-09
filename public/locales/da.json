@@ -9182,7 +9182,6 @@
 		"meta_description": "En live 3D-model af dit hus drevet af Home Assistant: hvert rum oplyst, som det rigtige rum er oplyst, hver dør og lås vist, som den faktisk er, og din agent stående i det.",
 		"meta_title": "Dit hjem, live · three.ws",
 		"panel_aria": "Valgt enhed",
-		"panel_empty": "Vælg et rum til venstre, eller klik på hvad som helst i huset for at se, hvad det er, og handle på det.",
 		"rail_aria": "Rum",
 		"rail_head": "Rum",
 		"reconnect": "Genopret forbindelse",

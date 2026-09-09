@@ -9182,7 +9182,6 @@
 		"meta_description": "Elävä 3D-malli kodistasi, jota ohjaa Home Assistant: jokainen huone valaistu kuten oikeassa, jokainen ovi ja lukko todellisenaan, ja agenttisi seisomassa siellä.",
 		"meta_title": "Kotisi, elävä · three.ws",
 		"panel_aria": "Valittu laite",
-		"panel_empty": "Valitse huone vasemmalta tai klikkaa mitä tahansa kodista nähdäksesi mikä se on ja toimi siihen.",
 		"rail_aria": "Huoneet",
 		"rail_head": "Huoneet",
 		"reconnect": "Yhdistä uudelleen",

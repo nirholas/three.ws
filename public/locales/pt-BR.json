@@ -9182,7 +9182,6 @@
 		"meta_description": "Um modelo 3D ao vivo da sua casa, controlado pelo Home Assistant: cada cômodo iluminado como o real, cada porta e fechadura mostrada como realmente é, e seu agente dentro dele.",
 		"meta_title": "Sua casa, ao vivo · three.ws",
 		"panel_aria": "Dispositivo selecionado",
-		"panel_empty": "Selecione um cômodo à esquerda ou clique em qualquer coisa na casa para ver o que é e agir.",
 		"rail_aria": "Cômodos",
 		"rail_head": "Cômodos",
 		"reconnect": "Reconectar",

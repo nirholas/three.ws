@@ -9182,7 +9182,6 @@
 		"meta_description": "由 Home Assistant 驱动的住宅实时 3D 模型：每个房间的灯光与现实同步，每扇门和锁的状态真实呈现，您的代理静立其中。",
 		"meta_title": "您的住宅，实时呈现 · three.ws",
 		"panel_aria": "已选设备",
-		"panel_empty": "左侧选择房间，或点击屋内任意物体查看详情并进行操作。",
 		"rail_aria": "房间",
 		"rail_head": "房间",
 		"reconnect": "重新连接",

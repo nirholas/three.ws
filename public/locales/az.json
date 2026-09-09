@@ -9182,7 +9182,6 @@
 		"meta_description": "Home Assistant tərəfindən idarə olunan canlı 3D ev modeli: hər otaq real otaq işıqlandırılması kimi işıqlandırılır, hər qapı və kilid həqiqətən olduğu kimi göstərilir və agent orada dayanır.",
 		"meta_title": "Eviniz, canlı · three.ws",
 		"panel_aria": "Seçilmiş cihaz",
-		"panel_empty": "Soldan bir otaq seçin, və ya evdəki hər şeyə klik edin, nə olduğunu görüntü etmək və hərəkət etmək üçün.",
 		"rail_aria": "Otaqlar",
 		"rail_head": "Otaqlar",
 		"reconnect": "Yenidən birləşdir",

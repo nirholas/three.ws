@@ -9182,7 +9182,6 @@
 		"meta_description": "Home Assistant가 구동하는 집의 실시간 3D 모델: 실제 방처럼 각 방이 조명되고, 문과 잠금이 실제 그대로 표시되며, 에이전트가 그 안에 서 있습니다.",
 		"meta_title": "당신의 홈, 실시간 · three.ws",
 		"panel_aria": "선택된 기기",
-		"panel_empty": "왼쪽에서 방을 선택하거나, 집 안 아무 곳이나 클릭해서 무엇인지 확인하고 조치를 취하세요.",
 		"rail_aria": "방",
 		"rail_head": "방",
 		"reconnect": "재연결",

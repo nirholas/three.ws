@@ -9182,7 +9182,6 @@
 		"meta_description": "Un modèle 3D en direct de votre maison, piloté par Home Assistant : chaque pièce éclairée comme dans la réalité, chaque porte et serrure affichées telles quelles, et votre agent placé au cœur.",
 		"meta_title": "Votre maison, en direct · three.ws",
 		"panel_aria": "Appareil sélectionné",
-		"panel_empty": "Sélectionnez une pièce à gauche, ou cliquez sur n'importe quel élément de la maison pour le voir et agir.",
 		"rail_aria": "Pièces",
 		"rail_head": "Pièces",
 		"reconnect": "Reconnecter",
