@@ -2,6 +2,24 @@
 	"$comment": "Curated changelog entries for three.ws, the editorial layer of the public changelog. New PAGE launches are tracked automatically via the `added` field in data/pages.json; this file is for everything else holders care about: improvements, fixes, SDK releases, trading/payments capabilities, security work. scripts/build-page-index.mjs merges both sources into CHANGELOG.md, public/changelog.json, and public/changelog.xml. Newest first. Allowed tags: feature, improvement, fix, sdk, infra, docs, security. `link` is optional and must be a live three.ws path.",
 	"entries": [
 		{
+			"date": "2026-09-09",
+			"title": "Your private avatars load on the dashboard again, and say so when they cannot",
+			"summary": "Avatars you have not made public were failing to load on your dashboard, with nothing on the page to say why. The dashboard was being handed a temporary direct link into our storage provider rather than a link back through three.ws. When storage stopped accepting our credential, that direct link was refused in a way browsers deliberately hide, so the page could not tell the difference between a refusal and a dead connection: it just showed nothing. Private avatars now load through three.ws itself, which checks that the avatar is yours exactly as before, and which already knows how to fall back to a second copy when storage is having a bad day. As a side effect these links no longer expire, so a dashboard tab left open for an hour still shows your avatars when you come back to it.",
+			"tags": [
+				"fix"
+			],
+			"link": "/dashboard/avatars"
+		},
+		{
+			"date": "2026-09-08",
+			"title": "Your avatar shows up again on every page, instead of a stand-in robot",
+			"summary": "When you were signed in, the little avatar that rides along with you across the site had quietly been replaced by a generic robot on every page. The models themselves were fine and sitting safely in storage the whole time: what broke was the signed request the site uses to read them. Our storage provider stopped accepting that credential, and the page that serves your avatar had only that one way to fetch it, so it gave up and returned an error while the same file was being served correctly on the public storage address the entire time. That page now falls back to the public address and streams the model through as usual when the signed read is refused, so your avatar keeps loading through an outage like this one. It still prefers the signed path and returns to it automatically the moment storage is healthy again, and nothing about who is allowed to see a private avatar changed.",
+			"tags": [
+				"fix"
+			],
+			"link": "/avatars"
+		},
+		{
 			"date": "2026-09-08",
 			"title": "A live globe of what is happening on Earth, and every layer says how far back it can really see",
 			"summary": "There is a new page at /globe: a 3D globe carrying eleven layers of open data at once. Armed conflict, mobilizations and sanctions are read out of the world news stream and placed where they happened; earthquakes, volcanoes and wildfires come from the USGS and NASA; cyclones, floods and drought from the UN and European Commission disaster system; national internet blackouts from Georgia Tech's outage project; and economic contraction from World Bank figures. Under all of it sits the geography that gives the rest meaning: overseas military bases, nuclear sites, and the nine maritime chokepoints world trade passes through, each one scored by how much armed activity the live feed puts within reach of it. Drag the globe or press F to flatten it into a map, click any point to read what it is and open the source it came from, and search the feed for a place or an actor. The whole view lives in the link, so the exact globe you are looking at is one you can send to someone. Two things it will not do: it will not quietly show you an hour of data under a label that says a week, because every layer prints the window it actually covered, and it will not go blank when a source goes down, because a layer that cannot be reached says so and the other ten keep working. Nothing here needs an account or an API key, and the same data is one call away at /api/globe/intel.",

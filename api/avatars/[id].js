@@ -76,7 +76,10 @@ export default wrap(async (req, res) => {
 	if (req.method === 'GET') {
 		const avatar = await getAvatar({ id, requesterId: auth?.userId });
 		if (!avatar) return error(res, 404, 'not_found', 'avatar not found');
-		const urlInfo = await resolveAvatarUrl(avatar);
+		// The dashboard and every other page read this endpoint, so a private
+		// avatar has to come back as the same-origin proxy rather than a presigned
+		// S3 URL a browser cannot fail on legibly. See resolveAvatarUrl.
+		const urlInfo = await resolveAvatarUrl(avatar, { browser: true });
 		const [priceRow] = await sql`
 			SELECT amount, currency_mint, chain, mint_decimals
 			FROM asset_prices

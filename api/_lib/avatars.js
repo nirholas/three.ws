@@ -8,6 +8,10 @@ import { publicUrl, thumbnailUrl, presignGet, deleteObject } from './r2.js';
 import { defaultStorageMode } from './storage-mode.js';
 import { isUuid } from './validate.js';
 
+// Absolute, so the URL is equally usable from the dashboard, an SDK on another
+// origin, and a server rendering it into a page.
+const SITE_ORIGIN = (process.env.PUBLIC_BASE_URL || 'https://three.ws').replace(/\/$/, '');
+
 /**
  * Build the row-selection half of listAvatars.
  *
@@ -519,10 +523,30 @@ export async function listForks({ avatarId, limit = 24, cursor }) {
 	};
 }
 
-export async function resolveAvatarUrl(row, { expiresIn = 600 } = {}) {
+// Where the caller will hand this URL decides which private-avatar URL is
+// correct, so callers say, rather than every consumer inheriting the one shape
+// that suits a third-party fetcher.
+//
+// `browser: true` returns the same-origin proxy. A presigned S3 URL is the
+// wrong thing to hand a page: R2's S3 endpoint answers a rejected credential
+// with a 403 that carries NO access-control-allow-origin, so the browser hides
+// the status and the page sees an opaque CORS failure it can neither report nor
+// retry. The authenticated sweep of 2026-09-08 caught exactly that on
+// /dashboard and /dashboard/avatars, where every private avatar failed with
+// "blocked by CORS policy" while the real fault was a rotated storage secret.
+// The proxy enforces the identical owner-only rule, sends wildcard CORS, and
+// carries the public-bucket failover, so it degrades loudly instead of opaquely
+// and does not expire out from under a long-open tab.
+//
+// The default stays presigned because a third party we hand a URL to (the
+// Avaturn edit session, an MCP client) cannot authenticate against our proxy.
+export async function resolveAvatarUrl(row, { expiresIn = 600, browser = false } = {}) {
 	const key = _servedStorageKey(row);
 	if (row.visibility === 'public' || row.visibility === 'unlisted') {
 		return { url: publicUrl(key), cdn: true };
+	}
+	if (browser) {
+		return { url: `${SITE_ORIGIN}/api/avatars/${row.id}/glb`, cdn: false };
 	}
 	return {
 		url: await presignGet({ key, expiresIn }),

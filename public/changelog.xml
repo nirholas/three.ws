@@ -7,6 +7,14 @@
 		<description>What's new on three.ws: features, improvements, and releases, newest first.</description>
 		<language>en</language>
 		<item>
+			<title>Your private avatars load on the dashboard again, and say so when they cannot</title>
+			<link>https://three.ws/dashboard/avatars</link>
+			<guid isPermaLink="false">2026-09-09:Your private avatars load on the dashboard again, and say so when they cannot</guid>
+			<pubDate>Wed, 09 Sep 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>Avatars you have not made public were failing to load on your dashboard, with nothing on the page to say why. The dashboard was being handed a temporary direct link into our storage provider rather than a link back through three.ws. When storage stopped accepting our credential, that direct link was refused in a way browsers deliberately hide, so the page could not tell the difference between a refusal and a dead connection: it just showed nothing. Private avatars now load through three.ws itself, which checks that the avatar is yours exactly as before, and which already knows how to fall back to a second copy when storage is having a bad day. As a side effect these links no longer expire, so a dashboard tab left open for an hour still shows your avatars when you come back to it.</description>
+		</item>
+		<item>
 			<title>Docs · Global Intel Globe</title>
 			<link>https://three.ws/docs/globe</link>
 			<guid isPermaLink="false">2026-09-08:Docs · Global Intel Globe</guid>
@@ -245,6 +253,14 @@
 			<pubDate>Tue, 08 Sep 2026 12:00:00 GMT</pubDate>
 			<category>improvement</category>
 			<description>Making a model from a written prompt starts with work you never saw: an art director rewrites your words into a proper brief, then an image model paints the reference picture the mesh is actually sculpted from, and on our best lane it paints the extra angles that fill in the subject's back. All of that used to happen inside one long silent request, so Forge could only say &quot;art-directing your prompt&quot; for the whole wait and then reveal the reference picture at the very end, when it had already existed for half a minute. Now the pipeline reports each step the instant it finishes, so the stage list ticks over as the work really happens and the reference image appears on screen while the sculpting is still running. Nothing on that list is a guess: a step only lights up because the server said it finished. On a phone, pressing Generate now brings the panel into view instead of leaving the whole thing playing out below the fold, and the same is true when a model lands or when something goes wrong. If our asset storage is the thing that is down, Forge now says so plainly, tells you nothing was charged, and points you at the models you already made, which keep working throughout. A model on screen also stops spinning by itself for anyone who has asked their device for less motion, and the report-a-bug prompt no longer pops up on top of the recovery buttons on a narrow screen.</description>
+		</item>
+		<item>
+			<title>Your avatar shows up again on every page, instead of a stand-in robot</title>
+			<link>https://three.ws/avatars</link>
+			<guid isPermaLink="false">2026-09-08:Your avatar shows up again on every page, instead of a stand-in robot</guid>
+			<pubDate>Tue, 08 Sep 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>When you were signed in, the little avatar that rides along with you across the site had quietly been replaced by a generic robot on every page. The models themselves were fine and sitting safely in storage the whole time: what broke was the signed request the site uses to read them. Our storage provider stopped accepting that credential, and the page that serves your avatar had only that one way to fetch it, so it gave up and returned an error while the same file was being served correctly on the public storage address the entire time. That page now falls back to the public address and streams the model through as usual when the signed read is refused, so your avatar keeps loading through an outage like this one. It still prefers the signed path and returns to it automatically the moment storage is healthy again, and nothing about who is allowed to see a private avatar changed.</description>
 		</item>
 		<item>
 			<title>Your avatars show up on the dashboard again, and a failed one says why</title>
