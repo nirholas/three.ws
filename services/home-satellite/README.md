@@ -150,6 +150,7 @@ fixture: Home Assistant runs its own speech recognition, its own intent handling
 to speech, and the house really changes.
 
 ```bash
+# The house's own voice stack: speech to text, text to speech, wake word.
 docker network create wyoming
 docker run -d --name whisper --network wyoming rhasspy/wyoming-whisper:latest \
   --model tiny-int8 --language en --uri tcp://0.0.0.0:10300 --data-dir /data --download-dir /data
@@ -157,23 +158,30 @@ docker run -d --name piper --network wyoming -p 10200:10200 rhasspy/wyoming-pipe
   --voice en_US-lessac-low --uri tcp://0.0.0.0:10200 --data-dir /data --download-dir /data
 docker run -d --name openwakeword --network wyoming rhasspy/wyoming-openwakeword:latest \
   --preload-model ok_nabu --uri tcp://0.0.0.0:10400
-docker run -d --name ha --network wyoming -p 8123:8123 \
-  --add-host=host.docker.internal:host-gateway ghcr.io/home-assistant/home-assistant:stable
 
-# Onboard Home Assistant and get a token (repo root).
-node scripts/provision-home-assistant.mjs --url http://localhost:8123 --rooms
+# Home Assistant, onboarded and seeded, printing its URL and token (from the repo
+# root). It labels the container it creates and refuses to touch one it did not,
+# which matters on a machine running several instances at once.
+node scripts/home-test-instance.mjs --up --onboard --seed --name satellite --json
+# It lands on the default bridge, so join it to the voice stack's network:
+docker network connect wyoming three-ws-home-test-satellite
 
 # Add the four Wyoming services, build an Assist pipeline, make it preferred.
-node scripts/provision-ha-pipeline.mjs --url http://localhost:8123 --token "$HOME_ASSISTANT_TOKEN" \
+# The satellite is addressed at the wyoming network's gateway, which is how a
+# container reaches a service listening on the host that runs it.
+node scripts/provision-ha-pipeline.mjs --url "$HOME_ASSISTANT_URL" --token "$HOME_ASSISTANT_TOKEN" \
   --stt whisper:10300 --tts piper:10200 --wake openwakeword:10400 \
-  --satellite host.docker.internal:10700
+  --satellite "$(docker network inspect wyoming --format '{{range .IPAM.Config}}{{.Gateway}}{{end}}')":10700
 
 # Speak a sentence into the pipeline through this satellite and print what came back.
 node scripts/pipeline-run.mjs \
   --viewer ws://127.0.0.1:10701/viewer --token "$(node src/index.js token)" \
-  --piper 127.0.0.1:10200 --say "turn off the kitchen lights" \
-  --ha http://localhost:8123 --ha-token "$HOME_ASSISTANT_TOKEN" --watch light.kitchen_lights
+  --piper 127.0.0.1:10200 --say "turn on the bed light" \
+  --ha "$HOME_ASSISTANT_URL" --ha-token "$HOME_ASSISTANT_TOKEN" --watch light.bed_light
 ```
+
+Run the satellite itself in Docker instead and Home Assistant addresses it by container name
+(`--satellite three-ws-satellite:10700`) with the container on the same `wyoming` network.
 
 `pipeline-run.mjs` plays the part of the browser: it connects to the viewer WebSocket exactly as
 `src/home/satellite.js` does, streams microphone audio the same way, and receives the same events
