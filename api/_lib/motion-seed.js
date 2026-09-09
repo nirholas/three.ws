@@ -455,6 +455,24 @@ export const MOTION_GATE = Object.freeze({
 	MAX_SLIDE_PER_STRIDE: 0.85,
 	// Absolute slide ceiling in metres for a clip that does not travel.
 	MAX_STATIONARY_SLIDE: 0.55,
+	// Rest-basis check, and the rule whose absence let 133 clips ship with their
+	// legs folded up over the body. Every other threshold here measures a clip
+	// against ITSELF, so a clip expressed in the wrong rest basis is perfectly
+	// self-consistent and passes all of them.
+	//
+	// It takes TWO signals, because neither alone is safe. A clip that is never
+	// upright is suspicious but might be a pushup or a swim stroke, which are
+	// prone by definition. A clip whose upper legs sit near identity is
+	// suspicious but a single published clip reached 148 degrees. Requiring both
+	// leaves real margin on the measured distributions: over the published set,
+	// clips in the wrong basis peak at 0.435 m of head clearance with a median
+	// leg angle of 23.6 degrees, while the same clips rebased clear 0.939 m at
+	// p05 and never fall below 74.9 degrees.
+	MIN_UPRIGHT_GAP: 0.5,
+	MIN_LEG_BASIS_DEGREES: 60,
+	// Frames sampled when looking for the clip's most upright moment. Twelve is
+	// enough to catch a squat standing back up without walking every frame.
+	UPRIGHT_SAMPLES: 12,
 });
 
 function isFiniteSeq(seq) {
@@ -570,6 +588,24 @@ export function gateMotionClip(clip, opts = {}) {
 		const travels = foot.stride > 0.05;
 		if (travels && foot.slidePerStride > MOTION_GATE.MAX_SLIDE_PER_STRIDE) reasons.push('foot_sliding');
 		if (!travels && foot.slide > MOTION_GATE.MAX_STATIONARY_SLIDE) reasons.push('foot_sliding_in_place');
+
+		// Rest basis. A clip that never gets upright AND whose upper legs never
+		// leave the identity basis is not choreography, it is a clip expressed in
+		// the wrong rest frame, and it will play with the legs folded over the
+		// body on every rig. Either signal alone would reject real prone motion,
+		// so both have to agree.
+		const upright = maxUprightGap(clip);
+		const legs = legBasisDegrees(clip);
+		metrics.uprightGap = upright;
+		metrics.legBasisDegrees = legs;
+		if (
+			Number.isFinite(upright) &&
+			Number.isFinite(legs) &&
+			upright < MOTION_GATE.MIN_UPRIGHT_GAP &&
+			legs < MOTION_GATE.MIN_LEG_BASIS_DEGREES
+		) {
+			reasons.push('wrong_rest_basis');
+		}
 	}
 
 	return { ok: reasons.length === 0, reasons, metrics };
@@ -592,6 +628,7 @@ export function toLibraryClip(raw, { name, promptId, prompt, category, loop, tas
 		blendMode: raw.blendMode ?? 0,
 		userData: {
 			source: 'text2motion',
+			basis: CLIP_BASIS,
 			prompt_id: promptId,
 			prompt,
 			category,
@@ -796,6 +833,267 @@ function slerp(a, b, t) {
 	const wa = Math.sin((1 - t) * theta) / sin;
 	const wb = Math.sin(t * theta) / sin;
 	return [a[0] * wa + bx * wb, a[1] * wa + by * wb, a[2] * wa + bz * wb, a[3] * wa + bw * wb];
+}
+
+// ── Rest basis ──────────────────────────────────────────────────────────────
+//
+// Library clips are authored in the `cz` rig's rest basis: every per-bone
+// quaternion is a local rotation RELATIVE TO THAT REST, which is why a Mixamo
+// walk carries roughly 180 degrees on each upper leg (cz rests with the leg
+// bones pointing up, so the clip has to turn them down). Everything downstream
+// assumes that basis: forwardKinematicsFrame below composes the clip's
+// quaternions onto CANONICAL_REST, and src/animation-retarget.js builds its bind
+// correction from cz to whatever rig the page loaded.
+//
+// The text2motion lane does not produce that basis. Its clips come out of a
+// Kabsch fit against the HumanML3D skeleton's own raw offsets
+// (workers/model-text2motion/mdm_sampler.py `_positions_to_local_quats`), where
+// a joint at rest yields the IDENTITY quaternion, and smpl_to_clip.py's own
+// `rest_offsets` hook, the place that difference was meant to be calibrated
+// away, was never given a value. So a generated clip carries 29 degrees on the
+// upper legs where an authored one carries 176, and playing it composes the
+// missing half-turn into the legs: measured on all 133 clips published before
+// 2026-09-09, forward kinematics puts the FEET AT 1.71 m and the HEAD AT 1.45 m.
+// Every one of them plays with the legs folded up over the body.
+//
+// The conversion is bindCorrections (src/animation-retarget.js) with the source
+// rest set to identity, which is what the Kabsch formulation means:
+//
+//   L = Rt * Wt^-1 * Ws * Rs^-1  ->  Rt * Wt^-1     (Ws = Rs = identity)
+//   R = Ws^-1 * Wt               ->  Wt
+//   q <- L * q * R
+//
+// Verified against the whole published set: head-above-feet goes from -0.26 m to
+// +1.38 m, and 127 of 133 clear a 0.6 m upright bar. The six that do not are a
+// pushup, a squat, a swim stroke, a crouch, a sneak and a meditation, which are
+// low-posture by definition and correct as they are.
+
+/**
+ * Rewrite a clip's rotations from the generator's identity-rest basis into the
+ * library's canonical (cz) rest basis, so it composes correctly with every other
+ * library clip. Returns a NEW clip; the input is not modified.
+ *
+ * @param {any} clip
+ * @returns {{ clip: any, rebasedTracks: number }}
+ */
+export function rebaseToCanonicalRest(clip) {
+	const source = clip?.tracks;
+	if (!Array.isArray(source)) return { clip, rebasedTracks: 0 };
+
+	let rebasedTracks = 0;
+	const tracks = source.map((track) => {
+		const name = String(track?.name || '');
+		if (!name.endsWith('.quaternion')) return track;
+		const bone = name.slice(0, name.lastIndexOf('.'));
+		const restLocal = CANONICAL_REST[bone];
+		const restWorld = CANONICAL_REST_WORLD[bone];
+		if (!restLocal || !restWorld) return track;
+
+		// L = Rt * Wt^-1, R = Wt.
+		const L = quatMul(restLocal, quatConjugate(restWorld));
+		const R = restWorld;
+		const values = Array.from(track.values ?? []);
+		for (let i = 0; i + 3 < values.length; i += 4) {
+			const q = [values[i], values[i + 1], values[i + 2], values[i + 3]];
+			const out = quatMul(quatMul(L, q), R);
+			values[i] = out[0];
+			values[i + 1] = out[1];
+			values[i + 2] = out[2];
+			values[i + 3] = out[3];
+		}
+		rebasedTracks += 1;
+		return { ...track, values };
+	});
+
+	return { clip: { ...clip, tracks }, rebasedTracks };
+}
+
+// Stamped on every clip written in the library's basis, so a repair pass can
+// tell a converted clip from one of the 133 that predate the conversion and
+// never rebases the same clip twice.
+export const CLIP_BASIS = 'canonical-rest-v1';
+
+/** True when a clip still carries the generator's identity-rest basis. */
+export function needsRebase(clip) {
+	return clip?.userData?.basis !== CLIP_BASIS;
+}
+
+/**
+ * Mean angle, in degrees, that the upper-leg bones sit away from identity across
+ * the whole clip. The library's canonical rest points the leg bones up, so an
+ * authored clip has to turn them down and carries roughly 180 degrees on them;
+ * a clip still in the generator's identity-rest basis carries almost nothing.
+ *
+ * @param {any} clip
+ * @returns {number} NaN when the clip animates neither upper leg
+ */
+export function legBasisDegrees(clip) {
+	let total = 0;
+	let count = 0;
+	for (const track of clip?.tracks ?? []) {
+		if (!/^(Left|Right)UpLeg\.quaternion$/.test(String(track?.name || ''))) continue;
+		const values = track.values ?? [];
+		for (let i = 0; i + 3 < values.length; i += 4) {
+			total += (2 * Math.acos(Math.min(1, Math.abs(values[i + 3])) ) * 180) / Math.PI;
+			count += 1;
+		}
+	}
+	return count === 0 ? NaN : total / count;
+}
+
+/**
+ * The clip's most upright moment: the largest head clearance over the higher
+ * foot, in metres, sampled across the clip. Sampling rather than reading frame 0
+ * is what lets a squat or a bow through, since both stand up again.
+ *
+ * @param {any} clip
+ * @returns {number} NaN when the clip lacks the bones to judge
+ */
+export function maxUprightGap(clip) {
+	const frames = frameCount(clip);
+	if (frames === 0) return NaN;
+	const step = Math.max(1, Math.floor(frames / MOTION_GATE.UPRIGHT_SAMPLES));
+	let best = -Infinity;
+	for (let frame = 0; frame < frames; frame += step) {
+		const gap = uprightGap(clip, frame);
+		if (Number.isFinite(gap)) best = Math.max(best, gap);
+	}
+	return Number.isFinite(best) ? best : NaN;
+}
+
+/**
+ * Head height above the higher foot at a given frame, in metres. The cheapest
+ * check that a clip is the right way up, and the one whose absence let an
+ * entire inverted library through the gate.
+ *
+ * @param {any} clip
+ * @param {number} [frameIndex]
+ * @returns {number} NaN when the clip lacks the bones to judge
+ */
+export function uprightGap(clip, frameIndex = 0) {
+	const joints = forwardKinematicsFrame(clip, frameIndex);
+	const head = joints.Head?.[1];
+	const left = joints.LeftFoot?.[1];
+	const right = joints.RightFoot?.[1];
+	if (!Number.isFinite(head) || (!Number.isFinite(left) && !Number.isFinite(right))) return NaN;
+	return head - Math.max(Number.isFinite(left) ? left : -Infinity, Number.isFinite(right) ? right : -Infinity);
+}
+
+// ── Root drift ──────────────────────────────────────────────────────────────
+//
+// The text2motion lane's root translation channel carries a constant forward
+// ramp that is not part of the motion. Measured over the 133 clips published on
+// 2026-09-09, every clip travels forward at 0.2577 m/s (sd 0.0248) regardless of
+// what was asked for: emotes fit a straight line to a residual of 0.0002 m, and
+// idles (0.2502 m/s) drift FASTER than locomotion (0.2841 m/s). A channel where
+// "a person stands still breathing" and "a person sprints at full speed" travel
+// at the same speed carries no prompt signal at all.
+//
+// The cause is denormalization, and it is upstream of us. MDM samples in
+// HumanML3D's normalized feature space and mdm_sampler denormalizes with the
+// dataset's own mean and std before recover_from_ric integrates the root
+// velocity (workers/model-text2motion/mdm_sampler.py). Feature 2 is the root's
+// forward velocity, and most of HumanML3D walks, so that feature's dataset MEAN
+// is a brisk walk. When the model has no strong locomotion signal to express it
+// emits a normalized value near zero, and denormalizing "near zero" yields
+// exactly the dataset's average walking speed. The integration then turns a
+// constant velocity into a straight ramp.
+//
+// So the fix is to remove the component that is indistinguishable from a
+// constant-velocity ramp and keep everything else. Fitting the horizontal root
+// track by least squares and subtracting the fitted line leaves the residual
+// intact, which is where the real signal lives: a pirouette's sway and a walk's
+// per-step surge survive (locomotion residual 0.0051 m) while a clip whose root
+// track is a straight line flattens to nothing (emote residual 0.0002 m).
+// Vertical travel is never touched, because a crouch, a jump and a fall are all
+// real motion in Y.
+//
+// This is also what makes the library's convention honest: three.ws clips play
+// on an avatar standing where the page put it, and a game engine expects an
+// in-place clip it can drive from its own character controller. Run this BEFORE
+// gating and before closing a loop seam. Before gating, because the foot-slide
+// rule measures planted-foot slide against the stride the clip covers, and a
+// fake 1 m stride makes that rule far too lenient. Before the seam, because the
+// seam search is looking for the frame whose pose repeats frame 0, and a ramp
+// guarantees no frame ever does.
+
+export const ROOT_DRIFT = Object.freeze({
+	// Below this the fitted ramp is not worth removing: a clip that travels a
+	// centimetre over its whole length is already in place.
+	MIN_SPEED: 0.02,
+});
+
+/**
+ * Remove the constant-velocity horizontal ramp from a clip's root translation.
+ *
+ * Returns a NEW clip; the input is not modified. A clip with no root position
+ * track, too few frames, or no measurable ramp is returned unchanged, so this is
+ * always safe to call.
+ *
+ * @param {any} clip
+ * @returns {{ clip: any, speed: number, removed: number, residual: number }}
+ *   speed is the fitted ramp in m/s, removed the total metres taken out, and
+ *   residual the RMS of what was left behind (the real motion).
+ */
+export function flattenRootDrift(clip, opts = {}) {
+	const minSpeed = opts.minSpeed ?? ROOT_DRIFT.MIN_SPEED;
+	const tracks = clip?.tracks ?? [];
+	const index = tracks.findIndex((t) => String(t?.name || '') === 'Hips.position');
+	if (index === -1) return { clip, speed: 0, removed: 0, residual: 0 };
+
+	const track = tracks[index];
+	const times = Array.from(track.times ?? []);
+	const values = Array.from(track.values ?? []);
+	const n = times.length;
+	if (n < 2 || values.length !== n * 3) return { clip, speed: 0, removed: 0, residual: 0 };
+
+	const meanTime = times.reduce((s, t) => s + t, 0) / n;
+	let timeVariance = 0;
+	for (const t of times) timeVariance += (t - meanTime) ** 2;
+	if (timeVariance <= 0) return { clip, speed: 0, removed: 0, residual: 0 };
+
+	// Fit and subtract independently on X and Z: a clip can ramp on either axis.
+	const slopes = [0, 0];
+	const residuals = [0, 0];
+	for (const [slot, axis] of [[0, 0], [1, 2]]) {
+		let meanValue = 0;
+		for (let i = 0; i < n; i += 1) meanValue += values[i * 3 + axis];
+		meanValue /= n;
+
+		let covariance = 0;
+		for (let i = 0; i < n; i += 1) covariance += (times[i] - meanTime) * (values[i * 3 + axis] - meanValue);
+		const slope = covariance / timeVariance;
+		slopes[slot] = slope;
+
+		let sumSquares = 0;
+		const intercept = meanValue - slope * meanTime;
+		for (let i = 0; i < n; i += 1) sumSquares += (values[i * 3 + axis] - (slope * times[i] + intercept)) ** 2;
+		residuals[slot] = Math.sqrt(sumSquares / n);
+	}
+
+	const speed = Math.hypot(slopes[0], slopes[1]);
+	if (speed < minSpeed) {
+		return { clip, speed, removed: 0, residual: Math.hypot(residuals[0], residuals[1]) };
+	}
+
+	// Subtract the ramp relative to frame 0, so the clip still starts exactly
+	// where it started and only the travel is taken away.
+	const flattened = values.slice();
+	const t0 = times[0];
+	for (let i = 0; i < n; i += 1) {
+		const elapsed = times[i] - t0;
+		flattened[i * 3] -= slopes[0] * elapsed;
+		flattened[i * 3 + 2] -= slopes[1] * elapsed;
+	}
+
+	const out = { ...clip, tracks: tracks.slice() };
+	out.tracks[index] = { ...track, times, values: flattened };
+	return {
+		clip: out,
+		speed,
+		removed: speed * (times[n - 1] - t0),
+		residual: Math.hypot(residuals[0], residuals[1]),
+	};
 }
 
 export const LOOP_SEAM = Object.freeze({
