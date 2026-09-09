@@ -1831,6 +1831,39 @@ Left: one owner action, and nothing else.
 
 The work order file stays on disk: its origin-registration line is owner-gated.
 
+### Addendum, same day: re-run independently, plus the bytes the owner will sign
+
+Every verify command in the work order was re-run from a clean session and each
+one reproduces: PR #1032 `MERGED` 2026-08-11T20:01:45Z; the discovery endpoint
+4,521 resources; `/openapi.json` 82 paid `/api/x402/*` paths; the preview 123
+declared / 63 listed / **60 added / 0 deprecated**, 59 of 60 probe-valid with
+`GET /api/x402/vanity-premium` the documented exception; 26 tests green in
+`tests/openapi-aggregator.test.js` and `tests/service-catalog.test.js`. Nothing
+regressed between the two passes, and the deprecation count is still the zero
+that makes the run safe to sign.
+
+The gap this addendum closes: every write-up above says the signature "moves no
+funds" without showing what it actually is, which asks the owner to trust a
+wallet popup's summary. Read from x402scan's source instead. On the Solana path,
+`signInWithSolana` (`apps/scan/src/auth/providers/siws/sign-in.ts`) calls
+`signMessage` on the UTF-8 bytes of one constant and nothing else:
+
+```
+Sign into x402scan
+```
+
+That is `SIWS_STATEMENT` in the sibling `constants.ts`. It is an off-chain
+`signMessage`, not a transaction: no instructions, no program, no blockhash, no
+fee payer, so it cannot move a lamport or a token whichever wallet signs it. The
+signature and public key go to a NextAuth credentials provider (`siws-csrf`)
+only to open a session. The EVM variant wraps the same statement in a full SIWE
+message (domain, URI, nonce, chainId, two-hour expiry). What the signature does
+commit is the identity: the signing address becomes the owner of the `three.ws`
+origin in their registry, so it should be the account meant to hold that listing
+long-term. Recorded in
+[docs/ops/x402-discovery-listings.md](../../docs/ops/x402-discovery-listings.md)
+under the owner-gated step.
+
 ## 2026-09-09: 01 x402 settle runway (the deploy landed; the fleet is not empty, it is fenced)
 
 Everything below was read live today, not carried forward.
@@ -1944,3 +1977,41 @@ The prompt file stays on disk.
 `public/home-scene.css` and `src/home/home.css`), `audit:guards`
 (`scripts/check-windows-widget.mjs` unregistered) and `check:images`
 (`src/render-lab.js:772`). All three are other agents' open work in this shared tree.
+
+## 2026-09-09 (second pass): 05 R2 bucket CORS
+
+Re-measured all three surfaces independently, raw `curl` plus
+`node scripts/set-r2-cors.mjs --probe`, no bucket credentials:
+
+| Surface | Result |
+|---|---|
+| Site edge `three.ws/avatars/*.glb`, `Origin: https://example.org` GET | PASS. `200`, `access-control-allow-origin: *`, `access-control-allow-methods: GET, HEAD, OPTIONS`. |
+| Site edge, same route, `OPTIONS` preflight | PASS. `204`, `access-control-allow-origin: *`, `access-control-allow-headers: range`. |
+| Public bucket host `pub-*.r2.dev`, real `200` object | FAIL. `example.org` gets no `access-control-allow-origin`; `three.ws` gets `Access-Control-Allow-Origin: https://three.ws` with `Vary: Origin`. The differential is the proof the live read rule is still the old allowlist. |
+| Presigned `PUT` preflight on `chatty-storage.<account>.r2.cloudflarestorage.com` | FAIL for anything off the allowlist. `204` for `three.ws` (`Access-Control-Allow-Methods: GET, PUT, HEAD, POST, DELETE`, one combined rule); bare `403` for `www.three.ws`, `localhost:5173`, `example.org`. |
+| First-party `three.ws/cdn/<key>` and `three.ws/api/glb?src=`, foreign origin | PASS, `access-control-allow-origin: *` on both, including `/api/glb` over a `pub-*.r2.dev` source. Both documented mitigations are live. |
+
+So the item does not close: the bucket policy is still the pre-split allowlist and
+applying the fix needs the admin token. `--get` prints the credential steps and exits
+cleanly rather than crashing; `.env`/`.env.local` still hold no R2 token, and `gcloud`
+auth is expired in this session so Secret Manager could not be re-read from here.
+The two doc lines in the work order were verified, not redone: the script header warns
+against `vercel env pull` and names `.env.local` plus `read-service-env.mjs` instead,
+and the `/api/glb` docs state per-host when the proxy is needed.
+
+Did:
+- Closed ISSUES.md item 10, the object-storage credential fault filed earlier the same
+  day. Every symptom is gone: `object_storage` is `ok` (`signed read ok, 216ms`),
+  `POST /api/forge-upload` is `200` with a presigned URL, `/api/avatars/library` and
+  `/api/objects/library` return 107 and 511 entries, `forge_generation` is `ok` at 95%
+  (60/63, 6h). Moved to the closed section with the recurrence note, since nothing in
+  this repo changed and the fix is always that one Secret Manager value.
+- Refreshed item 9: added the `/api/glb` row to its measured table, dated the
+  no-local-token check to today, and removed the now-stale "fix the storage secret
+  first" ordering. One credential is the whole remaining blocker.
+- Updated this pack's index row for 05 to match.
+
+Left: one owner action. Mint an "Admin Read & Write" R2 token for `chatty-storage`,
+put it in `.env.local` as `R2_ACCESS_KEY_ID`/`R2_SECRET_ACCESS_KEY`, run
+`node scripts/set-r2-cors.mjs`, confirm with `--probe`. The work order stays on disk
+because its "policy applied" line is that action.

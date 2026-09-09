@@ -196,6 +196,7 @@ here; the code-quality items from that pass are not production issues.
     |---|---|
     | Site edge, `three.ws/avatars/*.glb`, foreign origin | PASS, `access-control-allow-origin: *` with `access-control-allow-methods: GET, HEAD, OPTIONS`. Not affected. |
     | Site edge, first-party `three.ws/cdn/<key>`, foreign origin | PASS, `access-control-allow-origin: *`. Serves the same bucket objects, so it is a working route around the row below for any caller that has the object key. |
+    | Site edge, first-party `three.ws/api/glb?src=<url>`, foreign origin | PASS, `access-control-allow-origin: *`, on both a `three.ws` source and a `pub-*.r2.dev` source (`200`, `model/gltf-binary`). The route around the row below when all you have is a URL. |
     | Public bucket host `pub-*.r2.dev`, foreign origin GET/HEAD | FAIL. On a real `200` object, `https://example.org` gets the body with no `access-control-allow-origin`, so the browser discards it. Allowlisted origins DO get their origin echoed (`Vary: Origin`), which is how the live read rule is known to still be the old allowlist rather than the world-open `*`. Its `OPTIONS` preflight is a bare `403`. |
     | Presigned `PUT` preflight on the S3 endpoint | Mixed, unchanged. `204` for `three.ws`, `*.vercel.app` (wildcard confirmed with a synthetic subdomain), `localhost:3000`; `403` for `www.three.ws`, `*.app.github.dev`, `localhost:5173`, `example.org`. |
 
@@ -231,44 +232,17 @@ here; the code-quality items from that pass are not production issues.
     (re-checked 2026-09-04: the project's only matching secret is
     `s3-secret-access-key`, and the `three-ws-api` service carries no
     `CLOUDFLARE_*` or `R2_*` variable, so the Cloudflare REST API is not an
-    alternative route in either). As of 2026-09-04 this machine's own `.env`
-    and `.env.local` hold no R2 token at all, which changes nothing: the probe
-    above still measures the live policy without credentials, and applying the
-    fix still needs the admin token below.
+    alternative route in either). Re-checked 2026-09-09: this machine's own
+    `.env` and `.env.local` still hold no R2 token at all, which changes
+    nothing: the probe above still measures the live policy without credentials,
+    and applying the fix still needs the admin token below. That token is the
+    ONLY thing left on this item. The object-storage credential fault filed
+    beside it on 2026-09-09 has since recovered and moved to the closed section,
+    so nothing gates the admin-token step any more.
     Owner: mint an "Admin Read & Write" R2 token scoped to the bucket (the
     script prints the exact steps; its `--get` path explains this instead
     of crashing), drop it in `.env.local` as `R2_ACCESS_KEY_ID`/`R2_SECRET_ACCESS_KEY`,
     then `node scripts/set-r2-cors.mjs` and confirm with `--probe`.
-
-10. **Object storage is DOWN in production: the bucket rejects our credential**
-    (owner action: one env var). Found 2026-09-09 while measuring item 9.
-    `/api/healthz` reports the `object_storage` subsystem `down` with
-    `credentialFault: true` and the bucket's own words: `The request signature
-    we calculated does not match the signature you provided.` The access key id
-    is accepted, so the SECRET is what is wrong, not the code and not the key.
-
-    Live symptoms, all measured 2026-09-09:
-
-    | Surface | Result |
-    |---|---|
-    | `POST /api/forge-upload` | `503 storage_unavailable`, so no reference image can be parked and no upload can land. |
-    | `GET /api/avatars/library`, `GET /api/objects/library` | `{"total":0}`, empty manifests where the catalog should be. |
-    | `forge_generation` subsystem | `down`, 0/30 finished over 6 hours, every failure on the image path. |
-
-    No lane failover routes around it: `/cdn/<key>` falls back to the
-    rate-limited public bucket domain, and the forge cannot stage inputs at all.
-    On Cloudflare R2 the secret access key is the API token's SHA-256 digest,
-    not the token value, and a trailing newline fails identically (`env.js`
-    trims, so a padded value can only come from a store read elsewhere).
-
-    `S3_SECRET_ACCESS_KEY` on `three-ws-api` is a Secret Manager reference
-    (`secret:s3-secret-access-key:latest`), and reading or rotating it is
-    owner-gated from this machine. Owner: re-set that secret to the token's
-    SHA-256 digest, then confirm with
-    `curl -s https://three.ws/api/healthz | grep -o '"name":"object_storage"[^}]*'`.
-    Nothing else needs redeploying. Note this must be fixed BEFORE item 9's
-    admin-token step is worth doing: a correct CORS policy on a bucket we
-    cannot authenticate to changes nothing users can see.
 
 ---
 
@@ -276,6 +250,23 @@ here; the code-quality items from that pass are not production issues.
 
 Kept briefly because each one was previously mis-stated on this list, and the
 wrong version is what a future reader would otherwise trust.
+
+- **Object storage rejected our credential (filed and closed 2026-09-09).** For
+  part of 2026-09-09 `/api/healthz` reported the `object_storage` subsystem
+  `down` with `credentialFault: true` and the bucket's own
+  `SignatureDoesNotMatch`: the access key id was accepted, so the secret was
+  what was wrong. Uploads answered `503 storage_unavailable`, both library
+  manifests answered `{"total":0}`, and forge image generation was 0/30 over six
+  hours. `S3_SECRET_ACCESS_KEY` on `three-ws-api` is a Secret Manager reference
+  (`secret:s3-secret-access-key:latest`) and rotating it is owner-gated from an
+  agent machine, so the item was filed for the owner. Re-measured the same day
+  and every symptom is gone: `object_storage` is `ok` (`signed read ok, 216ms`),
+  `POST /api/forge-upload` returns `200` with a presigned URL,
+  `/api/avatars/library` and `/api/objects/library` return 107 and 511 entries,
+  and `forge_generation` is `ok` at 95% (60/63 finished, 6 hours). Nothing in
+  this repo changed: on Cloudflare R2 the secret access key is the API token's
+  SHA-256 digest, and a wrong or newline-padded value fails exactly this way, so
+  if it recurs the fix is that one secret, never the code.
 
 - **`/api/avatar/optimize?draco=1` (closed 2026-08-01).** It returned
   `500 transcode_failed` with `draco.createCompressedPrimitive is not a function`
