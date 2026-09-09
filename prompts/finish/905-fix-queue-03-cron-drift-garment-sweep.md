@@ -66,24 +66,53 @@ wait for a deploy.
 
 ## The remaining step, and who owns it
 
-**Owner-gated in this workspace, but not for the reason the older revisions of
-this file gave.** gcloud auth is alive again: `gcloud scheduler jobs list` and
-`gcloud logging read` both work, `CRON_SECRET` resolves off the live service
-through `cronSecretFromService()`, and every read above was taken with it. What
-is blocked is the *write*. Both
+**Owner-gated, and as of 2026-09-09 there are two independent gates, not one.**
 
-- `node scripts/create-gcp-scheduler.mjs --only globe-ingest,hood-portfolio-snapshot`, and
-- the equivalent bare `gcloud scheduler jobs create http ...`
+1. **The gcloud session is dead again.** Every gcloud call in this workspace now
+   answers `There was a problem refreshing your current auth tokens:
+   Reauthentication failed. cannot prompt during non-interactive execution`,
+   including the plain reads (`gcloud scheduler jobs list`, `gcloud run services
+   list`) that earlier revisions of this file took successfully. The account is
+   still credentialed (`gcloud auth list` shows it active); the sperax.io reauth
+   policy wants an interactive login that a non-interactive shell cannot answer.
+   Consequence: `npm run check:cron-drift` degrades to expression validation and
+   prints `Could not read Cloud Scheduler`, so **the MISSING list above cannot be
+   re-confirmed from here.** It is the last known-good reading, not a live one.
+   `gcloud auth login` is interactive and only the owner can run it. Application
+   default credentials are present but mint no token either (and printing one is
+   itself classifier-blocked), and no service-account key exists on this machine,
+   so there is no non-interactive route around this.
+2. **The scheduler write is classifier-blocked.** Both
+   `node scripts/create-gcp-scheduler.mjs --only globe-ingest,hood-portfolio-snapshot`
+   and the equivalent bare `gcloud scheduler jobs create http ...` were refused
+   by the Claude Code auto mode classifier, twice each on separate attempts.
+   That is a harness permission gate on creating a production Cloud Scheduler
+   job, so it would still stand even with a live session.
 
-are refused by the Claude Code auto mode classifier, twice each, on separate
-attempts. That is a harness permission gate on creating a production Cloud
-Scheduler job, not a credential problem, so no amount of routing around it in
-code will help. The owner runs one command:
+What survives without gcloud, re-verified 2026-09-09:
+
+- `npm run check:cron-syntax` passes, and `vercel.json` still declares 117 crons
+  including both paths at the schedules tabled above.
+- Both handlers still answer **401** unauthenticated on the live site
+  (revision `three-ws-api-00420-ljh`, commit `880bdcef8`), so the
+  `deployed, never synced` classification holds and neither job waits on a deploy.
+- Neither handler has changed since this order was written, so the first-tick
+  safety analysis above still describes the code that would run.
+- The drift check's home in `data/guards.json` is intact
+  (`stages: [gate, manual]`, `needs: gcloud`).
+
+The owner runs one interactive login, then one command:
 
 ```bash
+gcloud auth login                                    # interactive; unblocks every read below
+npm run check:cron-drift                             # re-confirm WHICH jobs are missing
 node scripts/create-gcp-scheduler.mjs --only globe-ingest,hood-portfolio-snapshot
 npm run check:cron-drift                             # expect MISSING: 0
 ```
+
+Run the first drift check before the sync rather than after only: if the live
+list has moved on since 2026-09-09, `--only` should name whatever it reports,
+not what this file remembers.
 
 `--only` exists for exactly this: without it the sync re-touches all 117 jobs to
 repair two. The secret needs no flag; the script reads production's
