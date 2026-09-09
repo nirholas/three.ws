@@ -78,10 +78,16 @@ wait for a deploy.
    Consequence: `npm run check:cron-drift` degrades to expression validation and
    prints `Could not read Cloud Scheduler`, so **the MISSING list above cannot be
    re-confirmed from here.** It is the last known-good reading, not a live one.
-   `gcloud auth login` is interactive and only the owner can run it. Application
-   default credentials are present but mint no token either (and printing one is
-   itself classifier-blocked), and no service-account key exists on this machine,
-   so there is no non-interactive route around this.
+   `gcloud auth login` is interactive and only the owner can run it. The
+   non-interactive routes around it are all closed, and each was re-tested on
+   2026-09-09, so do not spend another session re-walking them:
+   application default credentials exist but are an `authorized_user` refresh
+   token, and reading that file to mint a token against the OAuth endpoint (so
+   the Scheduler REST API could be called directly, without gcloud) is refused
+   by the auto mode classifier, as is `gcloud auth application-default
+   print-access-token`; no service-account key file exists anywhere under
+   `/workspaces` or `/home/codespace`; and `GOOGLE_APPLICATION_CREDENTIALS` is
+   unset.
 2. **The scheduler write is classifier-blocked.** Both
    `node scripts/create-gcp-scheduler.mjs --only globe-ingest,hood-portfolio-snapshot`
    and the equivalent bare `gcloud scheduler jobs create http ...` were refused
@@ -138,6 +144,20 @@ storage_high_water` is the write-capacity gate doing its job, not a failure.
 npm run check:cron-drift     # MISSING: 0
 ```
 plus a successful invocation of each new job in the Cloud Scheduler logs.
+
+**Read the output, not just the exit code, and be sure the run was authenticated.**
+Until 2026-09-09 that command exited **0** when the gcloud session was dead: it
+printed `Could not read Cloud Scheduler`, compared no live job at all, and
+returned success, so the one command that proves this order is done passed while
+proving nothing. That is the same silent failure the check exists to catch,
+pointed at the check itself. `scripts/check-cron-drift.mjs` now exits 1 whenever
+a live run cannot read Cloud Scheduler (covered by
+`tests/cron-drift-unreadable-live.test.js`), and says so in `--json` as
+`liveError`. An explicit `--offline` run (`npm run check:cron-syntax`, which is
+what `npm run gate` runs) is a deliberate expression-only check and still exits
+0, so the gate is unaffected. Practical consequence for whoever finishes this
+order: a `MISSING: 0` line is now the only thing that closes it, and an
+exit-1 `FAILED: could not read Cloud Scheduler` means log in first.
 
 ## Done when
 

@@ -208,9 +208,15 @@ async function main() {
 		report.mismatched.length +
 		report.paused.length;
 
+	// A live run that could not read Cloud Scheduler compared nothing at all, so it
+	// must not report success: a dead gcloud session is exactly how a declared-but-
+	// never-synced cron stays invisible. An explicit --offline run is a deliberate
+	// expression-only check and still passes.
+	const unreadableLive = Boolean(report.liveError);
+
 	if (AS_JSON) {
 		console.log(JSON.stringify(report, null, 2));
-		process.exit(problems ? 1 : 0);
+		process.exit(problems || unreadableLive ? 1 : 0);
 	}
 
 	console.log(`Declared crons in vercel.json: ${report.declared}`);
@@ -262,9 +268,15 @@ async function main() {
 	}
 
 	if (report.liveError) {
-		console.log(`\nCould not read Cloud Scheduler: ${report.liveError}`);
+		console.log(`\nFAILED: could not read Cloud Scheduler: ${report.liveError}`);
 		console.log(
-			'Expression validation still ran. Re-run after `gcloud auth login` to compare live jobs.',
+			'Expression validation still ran, but no live job was compared, so this run',
+		);
+		console.log(
+			'proves nothing about drift. Re-run after `gcloud auth login`, or run',
+		);
+		console.log(
+			'`npm run check:cron-syntax` if you only meant to validate the expressions.',
 		);
 	} else if (!OFFLINE && !problems) {
 		console.log(
@@ -276,7 +288,7 @@ async function main() {
 
 	// Orphans alone do not fail the check: a job intentionally left behind during
 	// a migration is not a broken deploy. Everything else is.
-	process.exit(problems ? 1 : 0);
+	process.exit(problems || unreadableLive ? 1 : 0);
 }
 
 // Importing this file (the tests do, for classifyMissing) must not run the check.
