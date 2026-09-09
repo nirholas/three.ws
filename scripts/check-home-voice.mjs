@@ -39,7 +39,8 @@
 
 import { chromium } from 'playwright';
 import { mkdirSync, writeFileSync, existsSync, readFileSync } from 'node:fs';
-import { createHash } from 'node:crypto';
+import { createHash, randomBytes } from 'node:crypto';
+import { spawn } from 'node:child_process';
 import { resolve, join } from 'node:path';
 
 const args = process.argv.slice(2);
@@ -51,6 +52,26 @@ const PORT = Number(flag('port', process.env.HOME_VOICE_PORT || 3457));
 const BASE = `http://localhost:${PORT}`;
 const OUT = resolve(flag('out', '.cache/home-voice'));
 const HEADED = args.includes('--headed');
+/**
+ * Also drive a REAL Home Assistant, end to end, and assert the device changed.
+ *
+ * Off by default because it needs docker and a local API server: the loop's
+ * /api/chat has to run somewhere that can reach a Home Assistant on loopback,
+ * and production cannot route into this machine. Everything it adds is real.
+ */
+const LIVE = args.includes('--live');
+const LIVE_API_PORT = Number(flag('live-api-port', 3798));
+const LIVE_VITE_PORT = Number(flag('live-vite-port', 3799));
+/**
+ * Run only the named scenarios, comma separated. A full run spends the ASR
+ * bucket for the IP, and the block that follows lengthens each time it is hit,
+ * so re-verifying one fix by re-running all ten scenarios costs the next hour of
+ * runs. Names are the keys of SCENARIOS below.
+ */
+const ONLY = (flag('only', '') || '')
+	.split(',')
+	.map((name) => name.trim())
+	.filter(Boolean);
 const AUDIO = join(OUT, 'audio');
 
 mkdirSync(AUDIO, { recursive: true });
@@ -62,6 +83,26 @@ mkdirSync(AUDIO, { recursive: true });
  * credentials the run still works; it just cannot repeat as often.
  */
 let SESSION_COOKIE = null;
+
+/**
+ * The credentials live in .env, and nothing in a bare `node script.mjs` reads
+ * that file. Without this the run silently falls back to the anonymous buckets
+ * and dies part-way through the happy path on a 429 that reads like a broken
+ * speech lane. Same shape as the loader in scripts/agent-wallet-smoke.mjs; a
+ * value already in the environment always wins.
+ */
+(function loadEnvFiles() {
+	for (const name of ['.env', '.env.local']) {
+		const file = resolve(process.cwd(), name);
+		if (!existsSync(file)) continue;
+		for (const line of readFileSync(file, 'utf8').split('\n')) {
+			const m = line.match(/^([A-Z0-9_]+)=(.*)$/i);
+			if (!m) continue;
+			const value = m[2].trim().replace(/^"(.*)"$/, '$1').replace(/^'(.*)'$/, '$1');
+			if (process.env[m[1]] == null || process.env[m[1]] === '') process.env[m[1]] = value;
+		}
+	}
+})();
 
 async function signIn() {
 	const email = process.env.AUDIT_EMAIL;
@@ -500,7 +541,13 @@ async function scenarioBargeIn() {
 		await bootPage(page);
 		await optIn(page);
 		// Speak a long enough answer that the user's interruption lands inside it.
-		await page.evaluate((line) => window.homeVoice.loop._speak(line), BARGE_IN_ANSWER);
+		// Started, not awaited. _speak resolves when the utterance finishes playing,
+		// and the whole point of this scenario is that it never does: the promise a
+		// barge-in cancels is left unsettled on purpose, so returning it here would
+		// hang the evaluate for the rest of the run.
+		await page.evaluate((line) => {
+			window.homeVoice.loop._speak(line);
+		}, BARGE_IN_ANSWER);
 		// Wait for sound actually leaving the speaker, not merely for the state
 		// flip: _speak enters `speaking` before the synthesis request returns, so a
 		// failed TTS call would otherwise read as a silent, un-interruptible agent.
@@ -791,6 +838,214 @@ async function scenarioStateGallery() {
 }
 
 /**
+ * The whole point of the feature, proved against hardware-shaped reality: a
+ * person says one sentence out loud and a real device in a real Home Assistant
+ * changes state.
+ *
+ * Every leg here is the real one. The speech is synthesized audio played into
+ * Chromium's capture device, the wake word is matched by the committed
+ * openWakeWord weights in the tab, the transcript comes from the live ASR lane,
+ * and the agent turn runs api/chat.js with the real home tools against a real
+ * Home Assistant, which really turns the light off. The assertion is not on
+ * what the agent SAID it did: it is on the entity state read back out of Home
+ * Assistant's own REST API afterwards, because an agent that reports success it
+ * did not achieve is the failure this scenario exists to catch.
+ *
+ * The one piece of scaffolding is topology, not behaviour: the page is served
+ * by a Vite whose /api proxy points at a local server instead of production,
+ * because a Home Assistant on 127.0.0.1 is not reachable from Cloud Run. The
+ * two lanes that need cloud credentials, ASR and TTS, are routed back to
+ * production so they stay the real lanes too.
+ */
+/** The seeded demo light the spoken command names. Its friendly name is "Kitchen Lights". */
+const LIVE_LIGHT = 'light.kitchen_lights';
+
+/**
+ * Bring up everything the live scenario needs, and hand back a teardown.
+ *
+ * A real Home Assistant from the lane's shared harness, a real API server that
+ * can reach it, a real session for the QA account, and a real home connection
+ * created through the real POST /api/home. The connection row is deleted again
+ * on the way out: it points at a loopback URL that means nothing anywhere else,
+ * and its token is encrypted with a key generated for this run.
+ */
+async function liveStack() {
+	const sh = (cmd, cmdArgs, opts = {}) =>
+		new Promise((resolveRun, rejectRun) => {
+			const child = spawn(cmd, cmdArgs, { cwd: process.cwd(), ...opts });
+			let out = '';
+			child.stdout?.on('data', (d) => (out += d));
+			child.stderr?.on('data', (d) => (out += d));
+			child.on('error', rejectRun);
+			child.on('close', (code) => (code === 0 ? resolveRun(out) : rejectRun(new Error(`${cmd} exited ${code}: ${out.slice(-500)}`))));
+		});
+
+	console.log('[live] bringing up a real Home Assistant...');
+	const raw = await sh(process.execPath, [
+		'scripts/home-test-instance.mjs',
+		'--up', '--onboard', '--seed', '--json', '--name', 'voiceloop',
+	]);
+	const ha = JSON.parse(raw.slice(raw.indexOf('{')));
+	console.log(`[live] Home Assistant ${ha.haVersion} at ${ha.baseUrl}`);
+
+	// The API server needs its own signing and encryption keys. They are local to
+	// this run: they sign the session it mints and encrypt the row it writes, both
+	// of which this function deletes again.
+	const env = {
+		...process.env,
+		PORT: String(LIVE_API_PORT),
+		HOME_ALLOW_LOCAL_INSTANCE: '1',
+		JWT_SECRET: process.env.JWT_SECRET || randomBytes(32).toString('hex'),
+		WALLET_ENCRYPTION_KEY: process.env.WALLET_ENCRYPTION_KEY || randomBytes(32).toString('hex'),
+	};
+	const api = spawn(process.execPath, ['server/index.mjs'], { env, stdio: 'ignore' });
+	const apiBase = `http://localhost:${LIVE_API_PORT}`;
+	await waitForHttp(`${apiBase}/api/healthz`, 60000);
+
+	// The same real login the site's own form performs, against the local server
+	// so the session is one this server will accept.
+	const login = await fetch(`${apiBase}/api/auth/login`, {
+		method: 'POST',
+		headers: { 'content-type': 'application/json' },
+		body: JSON.stringify({ email: process.env.AUDIT_EMAIL, password: process.env.AUDIT_PASSWORD }),
+	});
+	if (!login.ok) throw new Error(`local login failed: ${login.status} ${(await login.text()).slice(0, 200)}`);
+	const cookie = cookieHeader(login);
+	if (!/sid=/.test(cookie)) throw new Error('the local server returned no session cookie');
+
+	// Cookie sessions are CSRF-protected, so the token has to be carried the same
+	// way the browser carries it: cookie plus matching header.
+	const csrfRes = await fetch(`${apiBase}/api/csrf-token`, { headers: { cookie } });
+	const csrf = (await csrfRes.json().catch(() => ({})))?.data?.token || '';
+	const authed = `${cookie}; ${cookieHeader(csrfRes)}`;
+	if (!csrf) throw new Error('the local server issued no CSRF token');
+
+	const created = await fetch(`${apiBase}/api/home`, {
+		method: 'POST',
+		headers: { 'content-type': 'application/json', cookie: authed, 'x-csrf-token': csrf },
+		body: JSON.stringify({ baseUrl: ha.baseUrl, token: ha.token }),
+	});
+	const body = await created.json().catch(() => ({}));
+	if (!created.ok) throw new Error(`could not connect the house: ${created.status} ${JSON.stringify(body).slice(0, 300)}`);
+	const homeId = body?.home?.id || body?.id;
+    if (!homeId) throw new Error(`the connect response carried no home id: ${JSON.stringify(body).slice(0, 300)}`);
+	console.log(`[live] connected as home ${homeId}`);
+
+	// A second Vite, whose /api goes to the local server rather than production.
+	const vite = spawn('npx', ['vite', '--port', String(LIVE_VITE_PORT)], {
+		env: { ...process.env, DEV_API_PROXY: apiBase },
+		stdio: 'ignore',
+	});
+	const viteBase = `http://localhost:${LIVE_VITE_PORT}`;
+	await waitForHttp(`${viteBase}/voice/home`, 90000);
+
+	return {
+		ha,
+		homeId,
+		cookie: authed,
+		viteBase,
+		async teardown() {
+			await fetch(`${apiBase}/api/home/${homeId}`, {
+				method: 'DELETE',
+				headers: { cookie: authed, 'x-csrf-token': csrf },
+			}).catch(() => {});
+			vite.kill();
+			api.kill();
+		},
+	};
+}
+
+/** Every cookie a response set, folded into one request-shaped header. */
+function cookieHeader(res) {
+	const raw = res.headers.getSetCookie?.() ?? [res.headers.get('set-cookie')].filter(Boolean);
+	return raw.map((c) => c.split(';')[0]).join('; ');
+}
+
+/** Poll a URL until it answers, so a spawned server is never raced. */
+async function waitForHttp(url, timeoutMs) {
+	const deadline = Date.now() + timeoutMs;
+	while (Date.now() < deadline) {
+		const res = await fetch(url).catch(() => null);
+		if (res?.ok) return;
+		await new Promise((r) => setTimeout(r, 1000));
+	}
+	throw new Error(`nothing answered at ${url} within ${timeoutMs} ms`);
+}
+
+async function scenarioLive({ ha, viteBase, homeId, cookie }) {
+	const state = async (entity) => {
+		const res = await fetch(`${ha.baseUrl}/api/states/${entity}`, {
+			headers: { authorization: `Bearer ${ha.token}` },
+		});
+		if (!res.ok) throw new Error(`home assistant ${res.status} reading ${entity}`);
+		return (await res.json()).state;
+	};
+	const call = (domain, service, entity) =>
+		fetch(`${ha.baseUrl}/api/services/${domain}/${service}`, {
+			method: 'POST',
+			headers: { authorization: `Bearer ${ha.token}`, 'content-type': 'application/json' },
+			body: JSON.stringify({ entity_id: entity }),
+		});
+
+	// Put the light in the state the sentence is going to change, so "off" at the
+	// end cannot be the state it was already in.
+	await call('light', 'turn_on', LIVE_LIGHT);
+	const before = await state(LIVE_LIGHT);
+	check('the real light starts on, so turning it off is a change', before === 'on', { before });
+
+	const { browser, page } = await launch(CLIPS.command.path);
+	try {
+		// ASR and TTS are the only lanes whose credentials live in the cloud, so
+		// they go to production while everything else talks to the local server.
+		for (const lane of ['**/api/asr', '**/api/tts/speak']) {
+			await page.route(lane, async (route) => {
+				const req = route.request();
+				const res = await fetch(`https://three.ws${new URL(req.url()).pathname}`, {
+					method: req.method(),
+					headers: { ...req.headers(), host: 'three.ws', ...(SESSION_COOKIE ? { cookie: SESSION_COOKIE } : {}) },
+					body: req.method() === 'GET' ? undefined : req.postDataBuffer(),
+				});
+				await route.fulfill({
+					status: res.status,
+					headers: { 'content-type': res.headers.get('content-type') || 'application/octet-stream' },
+					body: Buffer.from(await res.arrayBuffer()),
+				});
+			});
+		}
+		// launch() put the production session on the context for the ASR and TTS
+		// lanes; the page itself now talks to the local server, which needs the
+		// local one. The two routes above keep sending production's.
+		await page.setExtraHTTPHeaders({ cookie });
+		await page.goto(`${viteBase}/voice/home?home=${homeId}`, { waitUntil: 'domcontentloaded' });
+		await page.waitForFunction(() => !!window.homeVoice, null, { timeout: 30000 });
+		await page.evaluate(TAP);
+		await optIn(page);
+
+		await waitForEvent(page, 'transcript', 90000);
+		const transcript = (await events(page)).find((e) => e.type === 'transcript');
+		check('the spoken command is transcribed by the real lane', /kitchen/i.test(transcript?.text || ''), {
+			text: transcript?.text,
+		});
+
+		// Poll Home Assistant itself. The agent's own reply is not evidence.
+		let after = before;
+		for (let i = 0; i < 60 && after !== 'off'; i++) {
+			await page.waitForTimeout(1000);
+			after = await state(LIVE_LIGHT);
+		}
+		check('the real light is off, read back from Home Assistant', after === 'off', { before, after });
+
+		const done = (await events(page)).find((e) => e.type === 'reply' || e.type === 'turn-done');
+		const spoken = await page.evaluate(() => window.homeVoice.loop.stateDetail?.text || '');
+		check('and the agent says what it did', !!(spoken || done), { spoken: (spoken || '').slice(0, 120) });
+		await page.locator('#voice-panel').screenshot({ path: join(OUT, 'live-real-device.png') });
+		return { before, after, transcript: transcript?.text, spoken };
+	} finally {
+		await browser.close();
+	}
+}
+
+/**
  * Run one scenario, and run it again if a dev-server reload pulled the page out
  * from under it.
  *
@@ -832,16 +1087,35 @@ async function main() {
 	await warmUp();
 
 	const measured = {};
-	await run(scenarioColdLoad);
-	measured.happy = await run(scenarioHappyPath);
-	measured.barge = await run(scenarioBargeIn);
-	measured.selfTrigger = await run(scenarioSelfTrigger);
-	await run(() => scenarioGuarded({ clip: CLIPS.ambientYeah, expectRedeemed: false, label: 'ambient yes' }));
-	await run(() => scenarioGuarded({ clip: CLIPS.confirmToken, expectRedeemed: true, label: 'the token' }));
-	measured.mute = await run(scenarioMute);
-	await run(scenarioUnavailable);
-	await run(scenarioPermissionDenied);
-	await run(scenarioStateGallery);
+	const SCENARIOS = {
+		'cold-load': scenarioColdLoad,
+		happy: async () => (measured.happy = await scenarioHappyPath()),
+		barge: async () => (measured.barge = await scenarioBargeIn()),
+		'self-trigger': async () => (measured.selfTrigger = await scenarioSelfTrigger()),
+		'guarded-yeah': () => scenarioGuarded({ clip: CLIPS.ambientYeah, expectRedeemed: false, label: 'ambient yes' }),
+		'guarded-token': () => scenarioGuarded({ clip: CLIPS.confirmToken, expectRedeemed: true, label: 'the token' }),
+		mute: async () => (measured.mute = await scenarioMute()),
+		unavailable: scenarioUnavailable,
+		'permission-denied': scenarioPermissionDenied,
+		gallery: scenarioStateGallery,
+	};
+
+	const unknown = ONLY.filter((name) => name !== 'live' && !SCENARIOS[name]);
+	if (unknown.length) throw new Error(`unknown scenario(s): ${unknown.join(', ')}. Known: ${Object.keys(SCENARIOS).join(', ')}, live`);
+	const wanted = (name) => ONLY.length === 0 || ONLY.includes(name);
+
+	for (const [name, scenario] of Object.entries(SCENARIOS)) {
+		if (wanted(name)) await run(scenario);
+	}
+
+	if (LIVE && wanted('live')) {
+		const stack = await liveStack();
+		try {
+			measured.live = await run(() => scenarioLive(stack));
+		} finally {
+			await stack.teardown();
+		}
+	}
 
 	const failed = results.filter((r) => !r.pass);
 	writeFileSync(

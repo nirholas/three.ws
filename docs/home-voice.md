@@ -155,6 +155,12 @@ Playback and capture run together, the VAD runs during playback, and speech cuts
 the audio stops, whatever synthesis is still in flight is aborted, and the interrupting utterance
 becomes the next request without needing a second wake word.
 
+Either way the host is told. `onEvent` fires `playback-stopped` when an utterance is cut, whether it
+was already audible or still being synthesized, and `audible` says which. An interruption that lands
+inside the synthesis window cancels a sentence nobody heard, and a surface that clears its speaking
+affordance on that event would otherwise hold the affordance forever, waiting on audio that was
+aborted in flight.
+
 Interruption needs four consecutive frames (128 ms) above a high speech probability, not one
 frame at the idle threshold. One frame would fire on the agent's own voice leaking past echo
 cancellation on a laptop speaker at volume, and an agent that interrupts itself is worse than one
@@ -223,12 +229,35 @@ npx vite --port 3457                       # /api proxies to production
 node scripts/check-home-voice.mjs --port 3457
 ```
 
-Thirty-four assertions across ten scenarios, in a real Chromium with a real microphone stream fed
+Thirty-six assertions across ten scenarios, in a real Chromium with a real microphone stream fed
 from speech the platform's own TTS lane synthesized. It writes the measured legs and a frame of
 each of the twelve states to `.cache/home-voice/`. Add `--headed` to watch it.
 
-Set `AUDIT_EMAIL` and `AUDIT_PASSWORD` (the QA account already in `.env`) to run against the
-signed-in rate limits rather than the tighter anonymous ones.
+`--only <names>` runs a subset, comma separated, from `cold-load, happy, barge, self-trigger,
+guarded-yeah, guarded-token, mute, unavailable, permission-denied, gallery, live`. Use it when
+re-checking one fix: a full run spends the ASR bucket for this IP, and the block that follows
+lengthens each time it is hit, so repeated full runs cost the next hour of them.
+
+`--live` adds an eleventh scenario that drives a **real Home Assistant** and asserts the device
+actually changed:
+
+```bash
+node scripts/check-home-voice.mjs --port 3457 --live
+```
+
+It brings up a real Home Assistant through
+[`scripts/home-test-instance.mjs`](../scripts/home-test-instance.mjs), starts a local API server
+that can reach it, connects it through the real `POST /api/home`, then says "Hey Jarvis, turn the
+kitchen light off" out loud and reads `light.kitchen_lights` back out of Home Assistant's own REST
+API. The assertion is on the entity state, not on what the agent said it did. It needs docker, and
+it removes the home connection it created on the way out. The local server exists only because a
+Home Assistant on loopback is not reachable from Cloud Run; ASR and TTS still go to production,
+because those are the two lanes whose credentials live there.
+
+The run signs in with `AUDIT_EMAIL` and `AUDIT_PASSWORD`, which it reads from `.env` itself, so it
+gets the signed-in rate limits rather than the tighter anonymous ones. Without them it still works,
+it just cannot repeat as often: the anonymous ASR bucket is spent by roughly one full run, and the
+next one fails part-way through the happy path with a 429 that reads like a broken speech lane.
 
 The unit tests cover the parts that must not be wrong without a browser:
 
