@@ -164,7 +164,7 @@
 		.mc-live b { width: 6px; height: 6px; border-radius: 50%; background: var(--down); display: inline-block; }
 		.mc[data-state="ready"] .mc-live b { background: var(--up); }
 		.mc-meta { font-size: 12px; color: var(--faint); margin-left: auto; }
-		.mc .stats { margin: 0 0 14px; }
+		.mc .stats { margin: 0 0 14px; grid-template-columns: repeat(auto-fit, minmax(132px, 1fr)); }
 		.mc .stat .v { font-size: 21px; }
 		.mc-foot { font-size: 12.5px; color: var(--muted); margin: 12px 0 0; }
 		.mc-err { display: none; border-left: 3px solid var(--amber); background: var(--panel-2); border-radius: 0 var(--r-sm) var(--r-sm) 0; padding: 12px 15px; margin-top: 14px; font-size: 13px; color: var(--muted); }
