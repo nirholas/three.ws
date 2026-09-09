@@ -3,6 +3,16 @@
 	"entries": [
 		{
 			"date": "2026-09-09",
+			"title": "The spend policy dry run stops contradicting its own counters",
+			"summary": "The simulator at /pay/simulator reports what an agent budget actually buys, and its headline sentence disagreed with the numbers directly beneath it. An endpoint that answers without asking for payment is free: it costs nothing and is never checked against your policy. The counters knew that, and the sentence did not, so the very first run on the page announced that all seven calls settle while the tile beside it said six. Calls that could not be priced at all vanished the same way, counted nowhere the reader could see. Both now have their own tile, and the verdict sentence is built from the counts it is describing, so settled, free, unpriced and refused always add up to the total in front of you. A run that fails now says why: an unusable line used to produce a bare \"Simulation failed (HTTP 400)\", and now quotes the endpoint the simulator could not read along with what a working line looks like. A budget left blank was quietly costed against one dollar, giving you a verdict for a budget you never proposed; the answer now says when that substitution happened. On a phone the little question marks beside each field were fifteen pixels wide and their explanations opened off the side of the screen, so the help was unreadable exactly where it was needed most: the tap targets are now large enough to hit and the explanations stay on the page at every width.",
+			"tags": [
+				"fix",
+				"improvement"
+			],
+			"link": "/pay/simulator"
+		},
+		{
+			"date": "2026-09-09",
 			"title": "The economy solver says which level its numbers belong to, and shares a link that lands on them",
 			"summary": "The solver at /play/solver reprices the whole /play world when you move the skill level, and it fetches the new level as you move. If that fetch failed, the page dimmed its tables slightly and said nothing else: the chart marker sat at level 60 while every table below it still held level 1 figures, with no visible explanation, no way to tell which level you were reading, and no retry. The explanation existed but was written only into a region screen readers can reach, so anyone looking at the page saw a silent mismatch. A failed level now raises a banner in the open that names the level that failed, says plainly that the figures below are still the old level, and offers both a retry and a way back. A level still loading shows the same banner as a busy state with the level it is solving, so a slow connection reads as slow rather than as broken. The page also writes the level into its own address bar now: it has always read a level from a shared link, but never wrote one, so sending someone the URL after dragging to level 60 sent them level 1. And a link asking for a level past the cap settles on the cap instead of leaving the page waiting on a level that will never arrive. Alongside it, a conclusion in the model that shouted one word in capitals now reads as a normal sentence.",
 			"tags": [
@@ -27351,16 +27361,6 @@
 				"improvement"
 			],
 			"link": "/play/economy"
-		},
-		{
-			"date": "2026-09-09",
-			"title": "Endpoint Shopper fits a phone, and says something useful when a run finds nothing to buy",
-			"summary": "A full audit of /shopper, the page where you describe a task, set a budget, and let an agent shop the x402 Bazaar for endpoints that can answer it. Three things were wrong. A run that came back with no plan and no answer, which is what happens when nothing in the Bazaar matches the task or everything that does prices above your ceiling, painted an empty column and stopped: no explanation, no way forward. That case now says no endpoints matched, quotes the task back, and offers the three things that change the outcome (rewrite the task, raise the budget, browse the Bazaar) plus a button to run again. Second, when the request could not reach us at all, the page showed the browser's own wording for a dropped connection, which names no cause and suggests no fix; it now says the agent service could not be reached and what to do about it. Third, on a phone narrower than 560px the four navigation links were squeezed into a strip about 76px wide and had to be dragged sideways a few pixels at a time to read; they now wrap onto their own full-width row. Alongside those: the results column announces itself to a screen reader while a run is in flight and when it settles, the Task label sits above its box as intended rather than beside it, and an internal ticket number that had been sitting in the page's headline label since launch is gone.",
-			"tags": [
-				"fix",
-				"improvement"
-			],
-			"link": "/shopper"
 		}
 	]
 }
