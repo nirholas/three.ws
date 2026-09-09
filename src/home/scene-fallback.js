@@ -177,6 +177,12 @@ export function createHomeFallback(container, options = {}) {
 			const button = document.createElement('button');
 			button.type = 'button';
 			button.className = 'hs-item-act';
+			// Which control this is, in terms that survive the rebuild this list
+			// does on every busy change. scene.js's restoreConfirmFocus finds the
+			// replacement by these two attributes when the guarded confirmation
+			// is answered and the node it was opened from has gone.
+			button.dataset.actFor = object.entityId;
+			button.dataset.actService = `${domain}.${service}`;
 			button.textContent = busy.has(object.entityId) ? t('home_scene.working', 'Working') : label;
 			button.disabled = busy.has(object.entityId);
 			// The device's name and its room's name are the user's own words, so

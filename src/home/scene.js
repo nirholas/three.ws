@@ -63,6 +63,8 @@ const state = {
 	pending: null,
 	/** The control that asked, so a cancelled confirmation gives the keyboard back. */
 	confirmReturn: null,
+	/** What that control was, so it can be found again after a re-render. */
+	confirmReturnKey: null,
 	busy: new Set(),
 	log: [],
 	// Latency instrumentation: the wall time from an SSE frame landing to the
@@ -844,6 +846,10 @@ function renderInspector() {
 			const button = document.createElement('button');
 			button.type = 'button';
 			button.className = action.risky ? 'hs-btn hs-btn--danger' : 'hs-btn';
+			// Which control this is, in terms that survive a re-render. See
+			// dismissConfirm: the node itself does not.
+			button.dataset.actFor = object.entityId;
+			button.dataset.actService = `${action.domain}.${action.service}`;
 			button.textContent = state.busy.has(object.entityId) ? t('home_scene.working', 'Working') : action.label;
 			button.disabled = state.busy.has(object.entityId);
 			button.addEventListener('click', () =>
@@ -936,7 +942,18 @@ async function act(request, { confirmed = false, remember = false } = {}) {
 			// Where the keyboard was when the gate fired. Cancelling or pressing
 			// Escape puts it back there, so a keyboard user is returned to the
 			// control they pressed instead of to the top of the document.
+			//
+			// Both the node AND what it is, because the node does not survive.
+			// This same call's `finally` runs setBusy, which rebuilds the flat
+			// house's whole list, so by the time anyone answers the question the
+			// button they pressed has been replaced by an identical one and the
+			// original is detached. Holding only the reference sent the keyboard
+			// to the top of the document on every Escape: caught by the
+			// no-mouse journey in tests/e2e/home-a11y.spec.js.
 			state.confirmReturn = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+			state.confirmReturnKey = state.confirmReturn?.dataset?.actFor
+				? { entityId: state.confirmReturn.dataset.actFor, service: state.confirmReturn.dataset.actService || '' }
+				: null;
 			renderConfirm();
 		} else {
 			pushLog({ text: t('home_scene.log_entry', '{{action}} {{name}}', { action: serviceLabel(request.service), name: request.name }), outcome: 'failed' });
@@ -1009,10 +1026,11 @@ function renderConfirm() {
 		state.pending = null;
 		// Answering yes hands the keyboard back to the control that asked, so the
 		// next Tab continues from the device rather than from the document head.
-		const back = state.confirmReturn;
-		state.confirmReturn = null;
+		// Same route as Cancel and Escape, including the re-find when the button
+		// has been rebuilt in the meantime, which after a confirmed action it
+		// always has: the device just changed state.
+		restoreConfirmFocus();
 		act(request, { confirmed: true, remember });
-		if (back?.isConnected) back.focus();
 	});
 	const no = document.createElement('button');
 	no.type = 'button';
@@ -1096,10 +1114,28 @@ function dismissConfirm({ restoreFocus = false } = {}) {
 	// Only a dismissal that ENDS the question gives the keyboard back. Re-rendering
 	// the card (a second event for the same device) dismisses and rebuilds it, and
 	// must leave the return target exactly where act() put it.
-	if (!restoreFocus) return;
+	if (restoreFocus) restoreConfirmFocus();
+}
+
+/**
+ * Put the keyboard back on the control that asked the question.
+ *
+ * Prefers the node it started on and falls back to finding that control again
+ * by identity, because the flat house rebuilds its whole list on every busy
+ * change and the original button is usually detached by the time anyone
+ * answers. Clears the return target either way: a stale one would send a later,
+ * unrelated dismissal somewhere arbitrary.
+ */
+function restoreConfirmFocus() {
 	const back = state.confirmReturn;
+	const key = state.confirmReturnKey;
 	state.confirmReturn = null;
-	if (back?.isConnected) back.focus();
+	state.confirmReturnKey = null;
+	if (back?.isConnected) return back.focus();
+	if (!key?.entityId) return;
+	const selector = `[data-act-for="${cssEscape(key.entityId)}"]` + (key.service ? `[data-act-service="${cssEscape(key.service)}"]` : '');
+	const again = document.querySelector(selector);
+	if (again instanceof HTMLElement) again.focus();
 }
 
 function onKeydown(event) {

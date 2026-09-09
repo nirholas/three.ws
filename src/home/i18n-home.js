@@ -97,6 +97,41 @@ export function locale() {
 }
 
 /**
+ * "2 minutes ago", in the reader's language, through Intl.RelativeTimeFormat.
+ *
+ * Not three catalog keys with an English `s` suffix bolted on: that spelling of
+ * a plural is wrong in most of the 84 locales this ships in, and several need
+ * forms English has no word for. The platform already knows all of them, and
+ * the browser ships the data.
+ *
+ * Lives here rather than in one surface because two of them need the same
+ * sentence: the live scene says how old its last frame is, and the manage view
+ * says when each house last answered. A second copy is a second set of plural
+ * rules to get wrong.
+ *
+ * @param {number} ms milliseconds since the moment being described. Negative
+ *   input is clamped to zero: a clock skew must never print a future tense for
+ *   something that already happened.
+ */
+export function relativeAge(ms) {
+	const s = Math.max(0, Math.round(ms / 1000));
+	const [value, unit] = s < 60
+		? [s, 'second']
+		: s < 3600
+			? [Math.round(s / 60), 'minute']
+			: s < 86_400
+				? [Math.round(s / 3600), 'hour']
+				: [Math.round(s / 86_400), 'day'];
+	try {
+		return new Intl.RelativeTimeFormat(locale(), { numeric: 'always' }).format(-value, unit);
+	} catch {
+		// Intl.RelativeTimeFormat is absent only on browsers this product does
+		// not otherwise run on, so English here is a last resort, not a lane.
+		return `${value} ${unit}${value === 1 ? '' : 's'} ago`;
+	}
+}
+
+/**
  * Run `fn` whenever the visitor changes language, so a panel holding
  * interpolated copy can re-render itself. Returns an unsubscribe function.
  * @param {() => void} fn

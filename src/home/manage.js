@@ -13,6 +13,10 @@
 
 import { clear, el, noticeEl } from './connect.js';
 import { householdPanel } from './members.js';
+// Every string a person reads on this page goes through here. The name they
+// gave their house, the address they pasted and anything their own Home
+// Assistant said are interpolated as values, never baked into a source string.
+import { formatNumber, locale, plural, relativeAge, t } from './i18n-home.js';
 
 /** Past this, "moments ago" stops being honest. */
 const STALE_AFTER_MS = 90_000;
@@ -42,10 +46,14 @@ export function renderManage({ homes, notice, onDisconnect, onReconnect, focused
 	const head = el('div', 'hm-panel-head');
 	const heading = el('div');
 	heading.append(
+		// The focused heading is the user's own name for their house, shown as
+		// they typed it. Only the fallback for an unnamed one is ours.
 		el('h2', 'hm-panel-title', focused
-			? (homes[0]?.label || 'This home')
-			: homes.length === 1 ? 'Your home' : `Your homes (${homes.length})`),
-		el('p', 'hm-panel-sub', 'Your agent can read everything here. Anything that unlocks, opens or disarms still stops and asks, unless you have granted it below.'),
+			? (homes[0]?.label || t('home_manage.this_home', 'This home'))
+			: homes.length === 1
+				? t('home_manage.your_home', 'Your home')
+				: plural('home_manage.your_homes_n', homes.length, 'Your home ({{count}})', 'Your homes ({{count}})')),
+		el('p', 'hm-panel-sub', t('home_manage.sub', 'Your agent can read everything here. Anything that unlocks, opens or disarms still stops and asks, unless you have granted it below.')),
 	);
 	head.append(heading);
 
@@ -53,7 +61,7 @@ export function renderManage({ homes, notice, onDisconnect, onReconnect, focused
 	// The plan surface, reachable from the place a person is when they wonder how
 	// many of these they are allowed. A limit that can only be found after it
 	// refuses you was never shown to you.
-	const plan = el('a', 'hm-btn hm-btn-ghost', 'Plan and usage');
+	const plan = el('a', 'hm-btn hm-btn-ghost', t('home_manage.plan_and_usage', 'Plan and usage'));
 	plan.href = '/smart-home/plan';
 	headActions.append(plan);
 
@@ -61,18 +69,18 @@ export function renderManage({ homes, notice, onDisconnect, onReconnect, focused
 	// actually keeping. A data-deletion control nobody can find is a promise
 	// nobody can exercise, so it sits next to the homes it is about rather than
 	// three levels down a settings tree.
-	const privacy = el('a', 'hm-btn hm-btn-ghost', 'Your data');
+	const privacy = el('a', 'hm-btn hm-btn-ghost', t('home_manage.your_data', 'Your data'));
 	privacy.href = '/smart-home/privacy';
 	headActions.append(privacy);
 
 	if (focused) {
 		// A deep link is often the first page someone lands on, so it has to offer
 		// a way up rather than assuming they arrived from the list.
-		const all = el('a', 'hm-btn hm-btn-ghost', 'All your homes');
+		const all = el('a', 'hm-btn hm-btn-ghost', t('home_manage.all_your_homes', 'All your homes'));
 		all.href = '/smart-home';
 		headActions.append(all);
 	} else {
-		const add = el('button', 'hm-btn hm-btn-ghost', 'Connect another');
+		const add = el('button', 'hm-btn hm-btn-ghost', t('home_manage.connect_another', 'Connect another'));
 		add.type = 'button';
 		add.addEventListener('click', () => onReconnect && onReconnect());
 		headActions.append(add);
@@ -125,8 +133,8 @@ async function explainWhoseFault({ platform, cards }) {
 		clear(platform);
 		platform.append(noticeEl({
 			tone: home.status === 'down' ? 'error' : 'warn',
-			title: 'This one is us, not your house.',
-			body: 'three.ws is having trouble reaching connected homes right now. Nothing in your house needs restarting and your access token is fine. We are on it, and your home will come back on its own.',
+			title: t('home_manage.platform_title', 'This one is us, not your house.'),
+			body: t('home_manage.platform_body', 'three.ws is having trouble reaching connected homes right now. Nothing in your house needs restarting and your access token is fine. We are on it, and your home will come back on its own.'),
 		}));
 		return;
 	}
@@ -136,7 +144,7 @@ async function explainWhoseFault({ platform, cards }) {
 		if (row.status !== 'unreachable' && row.status !== 'auth_failed') continue;
 		const line = card.querySelector('.hm-status');
 		if (!line) continue;
-		line.append(el('span', 'hm-status-verdict', ' Every other connected home is answering normally, so this one looks like your house rather than us.'));
+		line.append(el('span', 'hm-status-verdict', ` ${t('home_manage.only_this_house', 'Every other connected home is answering normally, so this one looks like your house rather than us.')}`));
 	}
 }
 
@@ -155,16 +163,16 @@ function homeCard(home, { onDisconnect, onReconnect, focused = false }) {
 	// "Open" opens the house: the live 3D scene at /smart-home/<id>, which is the
 	// product. This card, with its grants and its action log, is that home's
 	// settings and sits one segment deeper.
-	const open = el('a', 'hm-btn', 'Open');
+	const open = el('a', 'hm-btn', t('home_manage.open', 'Open'));
 	open.href = `/smart-home/${encodeURIComponent(home.id)}`;
-	open.setAttribute('aria-label', `Open ${home.label || hostOf(home.base_url)}`);
+	open.setAttribute('aria-label', t('home_manage.open_aria', 'Open {{home}}', { home: home.label || hostOf(home.base_url) }));
 	actions.append(open);
 
 	// Not rendered on the focused view, where it would link to the current page.
 	if (!focused) {
-		const settings = el('a', 'hm-btn hm-btn-ghost', 'Settings');
+		const settings = el('a', 'hm-btn hm-btn-ghost', t('home_manage.settings', 'Settings'));
 		settings.href = `/smart-home/${encodeURIComponent(home.id)}/settings`;
-		settings.setAttribute('aria-label', `Settings for ${home.label || hostOf(home.base_url)}`);
+		settings.setAttribute('aria-label', t('home_manage.settings_aria', 'Settings for {{home}}', { home: home.label || hostOf(home.base_url) }));
 		actions.append(settings);
 	}
 
@@ -173,7 +181,9 @@ function homeCard(home, { onDisconnect, onReconnect, focused = false }) {
 	// it again, and without this the card states a problem and offers no way out
 	// of it except disconnecting.
 	if (home.status === 'auth_failed' || home.status === 'unreachable') {
-		const again = el('button', 'hm-btn', home.status === 'auth_failed' ? 'Reconnect with a new token' : 'Try connecting again');
+		const again = el('button', 'hm-btn', home.status === 'auth_failed'
+			? t('home_manage.reconnect_token', 'Reconnect with a new token')
+			: t('home_manage.try_again', 'Try connecting again'));
 		again.type = 'button';
 		again.addEventListener('click', () => onReconnect && onReconnect(null, {
 			label: home.label,
@@ -182,7 +192,7 @@ function homeCard(home, { onDisconnect, onReconnect, focused = false }) {
 		actions.append(again);
 	}
 
-	const drop = el('button', 'hm-btn hm-btn-danger', 'Disconnect');
+	const drop = el('button', 'hm-btn hm-btn-danger', t('home_manage.disconnect', 'Disconnect'));
 	drop.type = 'button';
 	drop.addEventListener('click', () => confirmDisconnect(card, home, onDisconnect));
 	actions.append(drop);
@@ -221,8 +231,8 @@ function healthPanel(home) {
 
 	if (!troubled) {
 		return lazyPanel({
-			title: 'How this home is doing',
-			summary: 'Reachability, what your agent has done here, and whether any problem is ours.',
+			title: t('home_manage.health_title', 'How this home is doing'),
+			summary: t('home_manage.health_summary', 'Reachability, what your agent has done here, and whether any problem is ours.'),
 			load,
 			render: renderHealth,
 		});
@@ -245,8 +255,8 @@ function healthPanel(home) {
 			// on top of that must not read as a second, different fault.
 			wrap.append(noticeEl({
 				tone: 'warn',
-				title: 'We could not check why yet.',
-				body: err?.message || 'Reload the page to try again.',
+				title: t('home_manage.health_failed_title', 'We could not check why yet.'),
+				body: err?.message || t('home_manage.health_failed_body', 'Reload the page to try again.'),
 			}));
 		},
 	);
@@ -325,15 +335,15 @@ function renderHealth(body) {
  */
 function grantsPanel(home) {
 	return lazyPanel({
-		title: 'Standing allowances',
-		summary: 'What your agent may open without asking you first.',
+		title: t('home_manage.grants_title', 'Standing allowances'),
+		summary: t('home_manage.grants_summary', 'What your agent may open without asking you first.'),
 		load: () => getJson(`/api/home/${encodeURIComponent(home.id)}/grants`),
 		render: (body, rerender) => {
 			const grants = Array.isArray(body?.grants) ? body.grants : [];
 			if (!grants.length) {
 				return emptyBlock(
-					'Nothing is pre-approved.',
-					'Every unlock, every opening and every disarm stops and asks you. When you grant one, it appears here with a revoke.',
+					t('home_manage.grants_empty_title', 'Nothing is pre-approved.'),
+					t('home_manage.grants_empty_body', 'Every unlock, every opening and every disarm stops and asks you. When you grant one, it appears here with a revoke.'),
 				);
 			}
 			const list = el('ul', 'hm-rows');
@@ -351,21 +361,21 @@ function grantRow(home, grant, rerender) {
 	title.append(el('span', 'hm-mono', grant.entity_id));
 	main.append(title);
 	main.append(el('p', 'hm-row-meta', grant.expires_at
-		? `Allowed until ${formatWhen(grant.expires_at)}.`
-		: 'Allowed until you revoke it.'));
+		? t('home_manage.grant_until', 'Allowed until {{when}}.', { when: formatWhen(grant.expires_at) })
+		: t('home_manage.grant_forever', 'Allowed until you revoke it.')));
 
-	const revoke = el('button', 'hm-btn hm-btn-danger', 'Revoke');
+	const revoke = el('button', 'hm-btn hm-btn-danger', t('home_manage.revoke', 'Revoke'));
 	revoke.type = 'button';
 	revoke.addEventListener('click', async () => {
 		revoke.disabled = true;
-		revoke.textContent = 'Revoking';
+		revoke.textContent = t('home_manage.revoking', 'Revoking');
 		try {
 			await sendJson(`/api/home/${encodeURIComponent(home.id)}/grants?entity_id=${encodeURIComponent(grant.entity_id)}`, 'DELETE');
 			rerender();
 		} catch (err) {
 			revoke.disabled = false;
-			revoke.textContent = 'Try again';
-			main.append(el('p', 'hm-row-meta', err?.message || 'That did not go through.'));
+			revoke.textContent = t('home_manage.try_again_short', 'Try again');
+			main.append(el('p', 'hm-row-meta', err?.message || t('home_manage.did_not_go_through', 'That did not go through.')));
 		}
 	});
 
@@ -384,15 +394,15 @@ function logPanel(home) {
 	};
 
 	return lazyPanel({
-		title: 'What happened in this house',
-		summary: 'Every action your agent took, and every one it refused.',
+		title: t('home_manage.log_title', 'What happened in this house'),
+		summary: t('home_manage.log_summary', 'Every action your agent took, and every one it refused.'),
 		load: () => getJson(url()),
 		render: (body) => {
 			const rows = Array.isArray(body?.actions) ? body.actions : [];
 			if (!rows.length) {
 				return emptyBlock(
-					'Nothing yet.',
-					'Once your agent turns a light on or refuses to open a door, it lands here with who asked and what happened.',
+					t('home_manage.log_empty_title', 'Nothing yet.'),
+					t('home_manage.log_empty_body', 'Once your agent turns a light on or refuses to open a door, it lands here with who asked and what happened.'),
 				);
 			}
 
@@ -408,25 +418,25 @@ function logPanel(home) {
 			let cursor = body.next_before || null;
 			if (!cursor) return wrap;
 
-			const more = el('button', 'hm-btn hm-btn-ghost', 'Show older activity');
+			const more = el('button', 'hm-btn hm-btn-ghost', t('home_manage.show_older', 'Show older activity'));
 			more.type = 'button';
 			more.addEventListener('click', async () => {
 				more.disabled = true;
-				more.textContent = 'Loading';
+				more.textContent = t('home_manage.loading', 'Loading');
 				try {
 					const next = await getJson(url(cursor));
 					for (const row of next.actions || []) list.append(logRow(row));
 					cursor = next.next_before || null;
 					if (!cursor) {
-						more.replaceWith(el('p', 'hm-hint', 'That is the whole history we hold for this home.'));
+						more.replaceWith(el('p', 'hm-hint', t('home_manage.log_end', 'That is the whole history we hold for this home.')));
 						return;
 					}
 					more.disabled = false;
-					more.textContent = 'Show older activity';
+					more.textContent = t('home_manage.show_older', 'Show older activity');
 				} catch (err) {
 					more.disabled = false;
-					more.textContent = 'Try again';
-					wrap.append(el('p', 'hm-row-meta', err?.message || 'That did not load.'));
+					more.textContent = t('home_manage.try_again_short', 'Try again');
+					wrap.append(el('p', 'hm-row-meta', err?.message || t('home_manage.did_not_load', 'That did not load.')));
 				}
 			});
 
@@ -496,8 +506,8 @@ function lazyPanel({ title, summary: summaryText, load, render }) {
 			clear(body);
 			body.append(noticeEl({
 				tone: 'error',
-				title: 'We could not load this.',
-				body: err?.message || 'Try opening it again in a moment.',
+				title: t('home_manage.panel_failed_title', 'We could not load this.'),
+				body: err?.message || t('home_manage.panel_failed_body', 'Try opening it again in a moment.'),
 			}));
 		}
 	};
@@ -544,8 +554,11 @@ async function sendJson(url, method) {
 
 function formatWhen(iso) {
 	const at = Date.parse(iso || '');
-	if (!Number.isFinite(at)) return 'an unknown time';
-	return new Date(at).toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' });
+	if (!Number.isFinite(at)) return t('home_manage.unknown_time', 'an unknown time');
+	// The reader's own locale and their own time zone, through Intl. `undefined`
+	// asked the browser rather than the site, which are different the moment
+	// somebody picks a language the browser is not set to.
+	return new Date(at).toLocaleString(locale(), { dateStyle: 'medium', timeStyle: 'short' });
 }
 
 /**
@@ -557,10 +570,12 @@ function summary(home) {
 	const caps = home.capabilities || {};
 	const wrap = el('div', 'hm-stats');
 	wrap.append(
-		stat(count(caps.areaCount), 'Rooms'),
-		stat(count(caps.entityCount), 'Devices'),
-		stat(count(caps.macroCount), 'Scenes'),
-		stat(caps.haVersion || 'Not measured', 'Home Assistant'),
+		stat(count(caps.areaCount), t('home_manage.stat_rooms', 'Rooms')),
+		stat(count(caps.entityCount), t('home_manage.stat_devices', 'Devices')),
+		stat(count(caps.macroCount), t('home_manage.stat_scenes', 'Scenes')),
+		// The version string is the house's own. Only the placeholder for a
+		// version we never measured is ours to translate.
+		stat(caps.haVersion || t('home_manage.not_measured', 'Not measured'), 'Home Assistant'),
 	);
 
 	const holder = el('div');
@@ -571,14 +586,14 @@ function summary(home) {
 	if (caps.mcp) {
 		holder.append(noticeEl({
 			tone: 'ok',
-			title: `Model Context Protocol server connected (${count(caps.mcpToolCount)} tools).`,
-			body: 'Your agent uses the exact tools you exposed in Home Assistant, with your own exposure rules.',
+			title: t('home_manage.mcp_on_title', 'Model Context Protocol server connected ({{tools}} tools).', { tools: count(caps.mcpToolCount) }),
+			body: t('home_manage.mcp_on_body', 'Your agent uses the exact tools you exposed in Home Assistant, with your own exposure rules.'),
 		}));
 	} else if (caps.websocket) {
 		holder.append(noticeEl({
 			tone: 'info',
-			title: 'Optional: turn on the Model Context Protocol server.',
-			body: 'Add the Model Context Protocol Server integration in Home Assistant, under Settings, Devices and services, to give your agent the exact tool set you curated. Everything already works without it.',
+			title: t('home_manage.mcp_off_title', 'Optional: turn on the Model Context Protocol server.'),
+			body: t('home_manage.mcp_off_body', 'Add the Model Context Protocol Server integration in Home Assistant, under Settings, Devices and services, to give your agent the exact tool set you curated. Everything already works without it.'),
 		}));
 	}
 	return holder;
@@ -591,7 +606,7 @@ function stat(value, label) {
 }
 
 function count(value) {
-	return Number.isFinite(Number(value)) ? String(Number(value)) : 'Not measured';
+	return Number.isFinite(Number(value)) ? formatNumber(Number(value)) : t('home_manage.not_measured', 'Not measured');
 }
 
 /**
@@ -635,13 +650,16 @@ export function isDegraded(home) {
 }
 
 function statusText(home, stale) {
-	if (stale) return `Last answered ${ago(home.last_ok_at)}. Showing the last state we saw.`;
+	if (stale) return t('home_manage.status_stale', 'Last answered {{ago}}. Showing the last state we saw.', { ago: ago(home.last_ok_at) });
 	switch (home.status) {
-		case 'connected': return `Live${home.last_ok_at ? `, updated ${ago(home.last_ok_at)}` : ''}.`;
-		case 'auth_failed': return home.status_detail || 'Home Assistant rejected the stored token. Reconnect with a new one.';
+		case 'connected':
+			return home.last_ok_at
+				? t('home_manage.status_live_updated', 'Live, updated {{ago}}.', { ago: ago(home.last_ok_at) })
+				: t('home_manage.status_live', 'Live.');
+		case 'auth_failed': return home.status_detail || t('home_manage.status_auth', 'Home Assistant rejected the stored token. Reconnect with a new one.');
 		case 'unreachable': return unreachableText(home);
-		case 'revoked': return 'Disconnected.';
-		default: return home.status_detail || 'Connecting.';
+		case 'revoked': return t('home_manage.status_revoked', 'Disconnected.');
+		default: return home.status_detail || t('home_manage.status_connecting', 'Connecting.');
 	}
 }
 
@@ -666,26 +684,28 @@ function statusText(home, stale) {
  */
 function unreachableText(home) {
 	const paused = /paused retries/i.test(home.status_detail || '')
-		? ' three.ws has paused its retries for a few minutes and will try again on its own.'
+		? ` ${t('home_manage.retries_paused', 'three.ws has paused its retries for a few minutes and will try again on its own.')}`
 		: '';
 	if (home.last_ok_at) {
-		return `Not answering right now. It last answered ${ago(home.last_ok_at)}, and that is the state shown below.${paused}`;
+		return t('home_manage.status_down_seen', 'Not answering right now. It last answered {{ago}}, and that is the state shown below.', { ago: ago(home.last_ok_at) }) + paused;
 	}
-	return home.status_detail || 'Not answering right now. The last state we saw is below.';
+	return home.status_detail || t('home_manage.status_down_never', 'Not answering right now. The last state we saw is below.');
 }
 
-/** Plain language, and never a future tense for a past timestamp. */
+/**
+ * Plain language, and never a future tense for a past timestamp.
+ *
+ * The wording comes from Intl.RelativeTimeFormat via the shared bridge, so
+ * "3 minutes ago" carries each locale's own plural rules instead of an English
+ * `s` appended in code. Only the two things Intl has no opinion about, an
+ * unreadable timestamp and the "just now" band, are catalog keys.
+ */
 function ago(iso) {
 	const then = Date.parse(iso || '');
-	if (!Number.isFinite(then)) return 'at an unknown time';
-	const seconds = Math.max(0, Math.round((Date.now() - then) / 1000));
-	if (seconds < 45) return 'moments ago';
-	const minutes = Math.round(seconds / 60);
-	if (minutes < 60) return `${minutes} minute${minutes === 1 ? '' : 's'} ago`;
-	const hours = Math.round(minutes / 60);
-	if (hours < 24) return `${hours} hour${hours === 1 ? '' : 's'} ago`;
-	const days = Math.round(hours / 24);
-	return `${days} day${days === 1 ? '' : 's'} ago`;
+	if (!Number.isFinite(then)) return t('home_manage.unknown_when', 'at an unknown time');
+	const ms = Date.now() - then;
+	if (ms < 45_000) return t('home_manage.moments_ago', 'moments ago');
+	return relativeAge(ms);
 }
 
 /**
@@ -700,20 +720,20 @@ function confirmDisconnect(card, home, onDisconnect) {
 	const box = el('div', 'hm-notice hm-notice-warn');
 	box.dataset.confirm = 'true';
 	box.setAttribute('role', 'alertdialog');
-	box.setAttribute('aria-label', `Disconnect ${home.label || 'this home'}`);
+	box.setAttribute('aria-label', t('home_manage.disconnect_aria', 'Disconnect {{home}}', { home: home.label || t('home_manage.this_home', 'This home') }));
 
 	const content = el('div');
 	content.append(
-		el('p', 'hm-notice-title', `Disconnect ${home.label || hostOf(home.base_url)}?`),
-		el('p', 'hm-notice-body', 'The access token we hold is erased immediately and your agent loses all access to this house. Your standing allowances and the action log are kept so you can still read what happened.'),
-		el('p', 'hm-notice-body', 'This does not delete the token inside Home Assistant. Delete it there too if you want it gone on both sides.'),
+		el('p', 'hm-notice-title', t('home_manage.disconnect_question', 'Disconnect {{home}}?', { home: home.label || hostOf(home.base_url) })),
+		el('p', 'hm-notice-body', t('home_manage.disconnect_body_1', 'The access token we hold is erased immediately and your agent loses all access to this house. Your standing allowances and the action log are kept so you can still read what happened.')),
+		el('p', 'hm-notice-body', t('home_manage.disconnect_body_2', 'This does not delete the token inside Home Assistant. Delete it there too if you want it gone on both sides.')),
 	);
 
 	const actions = el('div', 'hm-actions');
 	actions.style.marginTop = 'var(--space-sm)';
-	const yes = el('button', 'hm-btn hm-btn-danger', 'Disconnect and erase the token');
+	const yes = el('button', 'hm-btn hm-btn-danger', t('home_manage.disconnect_yes', 'Disconnect and erase the token'));
 	yes.type = 'button';
-	const no = el('button', 'hm-btn hm-btn-ghost', 'Keep it connected');
+	const no = el('button', 'hm-btn hm-btn-ghost', t('home_manage.disconnect_no', 'Keep it connected'));
 	no.type = 'button';
 
 	const dismiss = () => {
@@ -735,19 +755,19 @@ function confirmDisconnect(card, home, onDisconnect) {
 	yes.addEventListener('click', async () => {
 		yes.disabled = true;
 		no.disabled = true;
-		yes.textContent = 'Disconnecting';
+		yes.textContent = t('home_manage.disconnecting', 'Disconnecting');
 		try {
 			await onDisconnect(home);
 			document.removeEventListener('keydown', onKey);
 		} catch (err) {
 			clear(content);
 			content.append(
-				el('p', 'hm-notice-title', 'That did not go through.'),
-				el('p', 'hm-notice-body', err?.message || 'Try again in a moment.'),
+				el('p', 'hm-notice-title', t('home_manage.did_not_go_through', 'That did not go through.')),
+				el('p', 'hm-notice-body', err?.message || t('home_manage.try_in_a_moment', 'Try again in a moment.')),
 			);
 			yes.disabled = false;
 			no.disabled = false;
-			yes.textContent = 'Try again';
+			yes.textContent = t('home_manage.try_again_short', 'Try again');
 		}
 	});
 
