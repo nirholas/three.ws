@@ -45,7 +45,7 @@ One section per finished order, newest at the bottom:
 | 13 observability | done, Cloud Scheduler job owner-gated | 2026-09-03 |
 | 14 reliability and scale | open | |
 | 15 privacy and retention | done | 2026-09-03 |
-| 16 test program | open | |
+| 16 test program | harness + 10 journeys verified, ten-run soak open, see entry | |
 | 17 a11y, i18n, mobile | open | |
 | 18 docs and SDK | docs done, npm publish owner-gated | 2026-09-03 |
 | 19 plans and entitlements | built and verified, browser journeys green, price owner-gated | 2026-09-09 |
@@ -1888,3 +1888,258 @@ One trap worth recording for whoever sweeps next: **`npx vitest list --shard=N/M
 shard** and prints the same file list for every N, so it cannot be used to work out which shard a
 file landed in. Two conclusions were drawn from it here before that was noticed; both were
 discarded and replaced with an actual re-run.
+
+## 16. The test program: the harness, the version matrix, the ten journeys (2026-09-09)
+
+**Shipped:** the harness and the matrix runner already existed when this ran (built by earlier
+sessions, never verified end to end), so this session's work was proving them and fixing what the
+proof found. The published version table now cannot drift from its measurements, the harness can
+no longer destroy a peer's house, the fixture records which release it came from, and eight of the
+ten journeys are green against a real Home Assistant with the two guarded ones asserting on Home
+Assistant's own lock state.
+
+**Measured:**
+
+- **Harness, twice in a row then removed.** `--up --onboard --seed --json --name o16b`: a seeded
+  house in **44.8s** (1 floor, 1 area, 14 entities assigned, 2 scenes, `mcp_server` on, an exposed
+  lock, `haVersion 2026.9.0`). The identical command again: **0.9s**, same port, same token,
+  reporting `floors: 0, areas: 0` because it created nothing new. `--down`: container and config
+  directory both gone, verified with `docker ps -a` and `ls`.
+- **All ten journeys pass, against the real house on lane `o16a`.** Journey 1, 2 (20.7s),
+  3 (7.5s), 4 (2.9s), 5 (23.0s), 6 (15.9s), 7 (6.9s), 8 (27.7s), 9 (40.0s), 10 (5.2s). The whole
+  `home-connect.spec.js` set, which carries journey 10, is 20 passed. Journey 9 is the one that
+  needed two attempts: it failed once inside a full-file `home-floorplan.spec.js` run taken at load
+  average ~100 with two peer suites on the box, passed run alone in 40.0s, and failed a third
+  attempt for a different and unambiguous reason: `login as owner returned 429
+  {"reason":"rate_limiter_degraded_postgres","retry_after":14}`. See "Left open".
+- **The version matrix was NOT re-measured here.** `docs/ops/home-version-matrix.json` was
+  measured at 06:27 UTC today by an earlier session across 2026.9 / 2026.8 / 2026.7 / 2025.10,
+  every cell pass. What this session found is that the *published* table had drifted from it.
+- **The pure suite against the regenerated fixture:** 39 passed, 8 skipped.
+- `npm run audit:docs` clean (1591 files). `npm run check:rules` clean on every file touched.
+  `grep -rn "waitForTimeout" tests/e2e/home-*.spec.js` returns nothing.
+
+**Deviations, and the bugs the proof found:**
+
+1. **The published version table had drifted from the measurements it claims to report.** The
+   runner wrote the JSON and left the markdown to a human. `docs/smart-home.md` claimed 4.17%
+   install share for 2026.9 against a measured 34.19%, 50.41% for 2026.8 against 23.60%, version
+   2026.9.0 against 2026.9.1, and entity counts no release reported. The runner now owns that
+   section between markers; `--sync-doc` rebuilds it from the JSON with no Docker, `--check` fails
+   on a mismatch, and `check:home-matrix` is wired into `npm run gate`.
+2. **The harness could destroy another agent's house, and its own header said it could not.** The
+   label it stamps answers "did this harness make it", not "is it yours"; every concurrent agent
+   here uses the same script, so a peer's container carries an identical label. `--down --name
+   layout07` removed a peer's seeded house out from under a live run. This was found the bad way:
+   by doing it, twice, while trying to verify the safety claim. Both times it was rebuilt and
+   reseeded within a minute. Every acquire now stamps `lastAcquiredAt` and `--down` refuses a
+   house handed out in the last 30 minutes unless `--force`; verified on a throwaway lane, not on
+   anyone else's house. **Do not aim `--down` at a lane name that is not yours.**
+3. **Journey 7 had never passed, and could not have proved anything if it had.** Three defects in
+   one test. (a) `page.request.post` carries the session cookie without the CSRF header, so the
+   invite was refused `403 csrf_missing`; the guest's unlock attempt had the same hole, and since
+   the assertion accepted any `[401, 403]`, a missing header was indistinguishable from the role
+   gate. (b) The invite acceptance sat inside `if (invite?.invite?.token)` and that field does not
+   exist (the plaintext token is only in `invite_url`), so it never ran and the "guest" was a
+   stranger getting 404. (c) It acted on `homes[0]`, the first home on the *account*, which after a
+   container restart is a leftover row from an earlier run. All three fixed: `csrfHeaders()` mints
+   a token the way `src/home/api.js` does, the acceptance is unconditional and the guest's role is
+   asserted before the refusal counts, and `laneHome()` returns this lane's home.
+4. **A real product bug, found by journey 4.** `POST /api/home/:id/activate` documents at the top
+   of its own file that a phrase matching nothing is "a 200 with `ran: false` and `match: null`,
+   never a 404". It was a 500: `bridge.activate` returns `{ match: null }` and `macroShape()` read
+   `.entityId` straight off it. Fixed, and journey 4 now asserts the unmatched-phrase path.
+5. **The fixture recorded no provenance and its prose was already wrong.** `_source` was a
+   sentence claiming "three areas, one floor and two user scenes" for a house with four areas, and
+   said nothing about the release. It is now measured: real `haVersion`, capture date, counts
+   derived from the data.
+6. **Two environment findings.** Playwright's `reuseExistingServer: false` leaves the API and vite
+   servers orphaned when a run is killed, and the next run then dies instantly on "port already
+   used" with **no test output at all**, which reads exactly like a silent kill; several runs were
+   lost to this before it was understood. And `--force` was needed by
+   `scripts/capture-home-fixture.mjs`, whose own teardown the new in-use guard correctly blocked.
+
+**Left open:**
+
+- **The ten consecutive green runs were not done, and this order is not retired.** Three peer
+  Playwright suites ran against this machine throughout the session at load averages of 75 to 125,
+  which killed runs mid-flight and stretched a two-minute spec past eight. A ten-run tally taken
+  under that would be measuring the machine, not the suite, and a false red on a door is exactly
+  what the flake policy exists to prevent. Whoever picks this up should run it when the machine is
+  quiet. **Owner: the next session on order 16.**
+- **Journey 9 is not settled, and the shared rate limiter is the lead.** Three attempts: fail,
+  pass (40.0s), fail. The third failure names its cause outright, in `signIn` before the journey
+  even starts: `login as owner returned 429 {"error":"rate_limited",
+  "reason":"rate_limiter_degraded_postgres","retry_after":14}`. That is the login limiter shared by
+  every concurrent lane on this box, in a DEGRADED mode, not anything about floorplans. The first
+  failure fits the same shape one layer up: `Save floorplan` was clicked and the `Floorplan saved`
+  notice never appeared, and `save()` in `src/home/floorplan.js` sets that notice only on a
+  resolved `saveLayout`, so a 429 on `PUT /api/home/:id/layout` would land in the error branch
+  exactly as observed. Plausible, not proven: the artifacts for that run were cleared by a peer
+  before they could be read.
+  **Two things for whoever takes this.** (1) Re-run the full `home-floorplan.spec.js` on a quiet
+  box with `--output` set to your own directory, because `test-results/` is shared by every
+  concurrent lane and a peer's run deletes your evidence. (2) `rate_limiter_degraded_postgres` is
+  worth an ops look on its own: the limiter reporting a degraded backend is a production-shaped
+  fact, not a test artifact. **Owner: the next session on 16, with the second item for whoever
+  holds observability.**
+- **The version matrix has not been re-measured since 06:27 UTC today.** The published table is now
+  guaranteed to match that JSON, which is a different guarantee from the JSON being fresh.
+- `npx vitest run --root .` was not run un-piped at a stable HEAD: peers' own sweeps SIGTERM full
+  runs on this box. The home lane's own pure suite was run and passes.
+
+**Commits:** `91893eb2d` (matrix doc-sync), `4336a4272` (harness in-use guard), `ecb2dd4d9`
+(activate null guard), `a5d86ed7c` (fixture provenance), `542c5382e` (the `entity_id` field, swept
+into a peer's commit), plus this entry. The e2e spec fixes reached HEAD through peer `git add -A`
+sweeps rather than under their own message.
+
+---
+
+## 20. Launch readiness, run 3 (2026-09-09)
+
+**Verdict: NO-GO.** Five orders are open (06, 09, 14, 16, 17) and two are partial (05, 07) by
+this file's own table, which the owner's retirement note names as the record of what is still
+open. Four more items are owner-gated (10 publish and deploy, 13 the Cloud Scheduler job, 18 the
+npm publish, 19 the price). Order 20 is defined to run after the campaign is retired, so this is
+a baseline, not a gate result.
+
+**What changed since run 2.** Run 2's blocking finding 2 (the agent lane getting 502 where the
+contract says 409) is CLOSED: `tests/home-security.test.js` now passes that case at HEAD, and a
+peer's own re-verification entry sits above this one. Run 2's finding 1 (the ledger erased
+mid-campaign) is resolved differently: the owner retired all 30 orders themselves today and
+recorded it in `_context/00-RETIRED-BY-OWNER.md`, which explicitly keeps this file as the record.
+Order 20's file is therefore retired with the rest and this entry is its only record. Run 2's
+finding 3 (the injection proof unrunnable on a throttled chain) is fixed here in documentation.
+Finding 4 (i18n) is unchanged and worse.
+
+**Measured, safety and correctness:**
+
+- **Confirmation integrity holds.** The order's raw query returns **2**; both rows are the same
+  lawful grant-backed `lock.unlock` pair from 2026-09-03 that run 2 identified. The shipped
+  invariant (grant-backed and scrub-marked excluded) returns **0**. Production's own
+  `integrity.violations` is **0** across three samples.
+- **No home tool schema exposes `confirmed`.** All five `HOME_TOOL_DEFS` walked recursively: zero
+  `confirm*` keys. `tools.js` additionally strips a `confirmed` key from caller data before the
+  gate, so the invariant cannot be made untrue by an argument either.
+- **`tests/home-security.test.js` against a real Home Assistant 2026.9.0** (harness house
+  `go20c`), the live database and a real model chain: **120 of 121 pass.** The one failure is
+  check 4 and it is an environment failure, not a code one: every free rung answered 429 or 402
+  (`ovh`, `pollinations`) across eight retries in 164 s. With `GOOGLE_CLOUD_PROJECT` exported the
+  same check **passes in 183 s**. Fixed in `docs/home-security.md`, which previously named only
+  three keyed rungs that all draw on shared third-party free tiers.
+- **The three e2e journeys that assert on a real lock's real state all pass**, run in isolation
+  after the contended run: journey 5 (offered, cancelled, stays locked), journey 6 (offered,
+  confirmed, really unlocks), journey 7 (guest refused by role, stays locked), plus journey 4
+  ("good night" resolves to this house's own `scene.bedtime`). **4 passed in 1.2m.**
+- **Account deletion covers the whole lane.** `api/_lib/home/privacy.js` names all **11** home
+  tables the schema actually has. `tests/home-privacy.test.js` and `tests/home-integrity.test.js`
+  against the live database: **67 passed.**
+- **No entity-state history is persisted.** Every `%state%` / `%entity%` / `%attribute%` column
+  across the 11 tables holds entity ids or scopes, never a value or a reading.
+
+**Measured, the build:**
+
+- Full vitest, sharded into quarters (a full run gets SIGTERMed by peers here): **29,394 passed,
+  175 skipped, 4 failed, none in the home lane.** All four accounted for: one `audit-guards`
+  failure that a peer's in-flight `data/guards.json` already fixes (re-run at the working tree:
+  20/20 pass), and three `tests/api/forge-free-first.test.js` timeouts that pass **6/6 in
+  isolation** under lower load.
+- `npm run gate` exit 0. `npm run check:claude` OK. `npm run audit:docs` clean over 1590 files
+  **after the fix below**. `npm run db:status`: all migrations applied. `npm run smoke:prod`:
+  all **17** home routes live on production (the 5 failures are other lanes' undeployed pages).
+- `npm run check:rules -- --base 2849cafb6 --head HEAD`: clean, 370 changed files.
+  `node scripts/check-secrets.mjs` same range: clean, 19,415 tracked and 476 changed paths.
+- **HA version matrix, measured today 06:27Z:** 4 releases (2026.9, 2026.8, 2026.7, 2025.10),
+  **70.2% of installs**, all 6 capabilities ok on every one. `check:home-matrix` agrees with the
+  published table.
+
+**Measured, production (revision `three-ws-api-00420-ljh`, commit `880bdcef8`):**
+
+- The `home` subsystem reports **`degraded`, not ok**, on all three samples 100 seconds apart.
+- **p95 our-leg action latency 2012 ms against a 1.5 s SLO**, stable across all three samples.
+  This is the first time the number has been measurable at all: run 2 found no action in 24 hours
+  carrying a `latencyMs`. It is measured over only 2 to 5 timed actions in a 15-minute window,
+  because a refusal never reaches the timing (14 of 22 actions in one sample were refusals), so
+  it is a real in-window breach on a small sample, not a 30-day verdict. The 30-day figure needs
+  the production database, which needs gcloud.
+- 34/43 homes connected, 2 auth-failed, 1 unreachable; handshakes 100%; actions 96.7%.
+
+**Fixed here (three small defects, each on a checklist line this order owns):**
+
+1. **The injection proof read as unrunnable.** `docs/home-security.md` named `GROQ_API_KEY`,
+   `NVIDIA_API_KEY` and `OPENROUTER_API_KEY`, all of which share one per-minute quota with every
+   other agent on this machine, and never named Vertex, which `llm.js` itself calls the chain's
+   reliability anchor and which needs no key here. The doc now names it, with both timings.
+2. **The order 15 privacy inventory documented 10 of 11 tables.** `home_layouts` joined the schema
+   with the floorplan editor and was never added, so a table holding user data had no row saying
+   what it keeps or how to erase it. Its map is keyed by the area id Home Assistant slugifies from
+   a room's name, which also made the bolded "room names are never stored" promise and the "the
+   only persisted friendly name" claim imprecise. All three now say what is true: geometry only,
+   keyed by an identifier the house already derived, never entity names and never state.
+3. **The owner's retirement broke `npm run audit:docs`.** Five links from `docs/` and `api/` into
+   `prompts/finish/` went dead the moment the orders were deleted. The retirement note predicted
+   this would not matter because the audit skips the `prompts` tree; it skips links *inside* it,
+   not links *pointing at* it. Three repointed at the surviving `_context/` ledgers the note
+   itself designates as the record; audit is clean again.
+4. **CLAUDE.md step 3 was missing a gate.** `deploy:gcp:submit` has run `audit:deploy` between
+   `check:gcloudignore` and the submit for a while. An agent debugging a refused submit had no
+   idea that gate existed.
+
+**Blocking findings, not fixed here, each with an owner:**
+
+1. **`npm run i18n:lint` fails with 31,823 problems, and 12,594 of them are this lane's:** 194
+   distinct keys across all **84** locales, in `home_join`, `home_plan`, `home_satellite`,
+   `home_scene` and `home_voice`. `en.json` carries all five namespaces, so this is a translation
+   gap, not a source gap. Run 2 measured 61 keys across 10 locales, so the lane's share has grown
+   roughly twentyfold as orders 08, 10 and 19 landed. **Owner: order 17**, which is open.
+2. **The three alerts have never been fired in a test.** `api/cron/home-health-alert.js` is wired,
+   scheduled every 5 minutes in `vercel.json`, and sends `home:integrity`, `home:unreachable` and
+   `home:leak` through `sendOpsAlert`. **No test file anywhere references that cron or any of its
+   three signatures.** The one alert that pages on a single row with no error budget has never
+   been proven to fire. **Owner: order 13**, whose row reads done.
+3. **The home a11y suite cannot reach a verdict on this machine.** Three runs, three different
+   failures, at load average 68 to 124: (a) axe `[serious] color-contrast` on
+   `button[aria-current="true"] > .hs-room-meta` on `/smart-home/:id?view=3d`, one node; (b)
+   focus not restored to the Unlock button after Escape closes the confirm card; (c) a QA login
+   returning non-OK. Run 2 hit the same wall. The contrast hit is the one worth chasing: a rule
+   for exactly that selector already exists at `public/home-scene.css:249` and the two
+   `--ink: var(--ink-dim)` redefinitions in that file are scoped to `.hs-card.is-stale` and
+   `.hs-item.is-unavailable`, neither of which contains the rail, so the mechanism is not
+   explained by reading. It needs one quiet machine. **Owner: orders 06 and 17**, both open.
+4. **Nine migrations are applied in production with no file in `api/_lib/migrations/`** (found by
+   the deploy-preflight subagent). `apply-migrations.mjs` gates on pending and drift only and has
+   no concept of an orphaned row, so nothing catches it. Production's schema can no longer be
+   rebuilt from the migrations directory alone. Not a deploy blocker; a disaster-recovery gap.
+   **Owner: unassigned, outside this campaign.**
+5. **The post-launch watch table is not in `docs/ops/home-operations.md`.** Order 20 requires it
+   written before launch. Not added here on purpose: that file was `MM` (staged and unstaged peer
+   edits) for this entire session, so writing into it would have carried another session's
+   in-flight work into this commit. The five rows are in this order's own text. **Owner: whoever
+   next holds that file.**
+
+**Deploy preflight (subagent, read-only, HEAD moved 6 commits under it):** verdict **BLOCKED** on
+one item, `npm test` not run un-piped at a stable HEAD. Everything structural is green: the
+`build:gcp` chain matches CLAUDE.md 13/13 in order, 32 of 33 `cloudbuild*.yaml` pin
+`three-ws-build@` and the one exception pins its own real SA off the API path,
+`check:gcloudignore` clean (16,318 files, every runtime import present), 0 pending and 0 drifted
+migrations, **0** of 425 route dests unbacked at HEAD, 117 crons matching CLAUDE.md, CDN purge
+still synchronous, `test:gate` 86/86 and `audit:deploy` clean. It confirmed the `prompts/finish/`
+retirement is safe to commit (`audit-docs.mjs` has `SKIP_TREES = ['prompts','tasks']`, and the
+only test naming the tree does so in a comment). Two cautions: `dist/` currently fails
+`check:dist` because a peer is mid-build in the shared tree (harmless for the runbook path, fatal
+for anyone submitting from `/workspaces/three.ws` directly), and `/workspaces` free space fell
+from 9.9 GB to 8.6 GB during its run.
+
+**Explicitly unverified, never marked green:** axe on every home route (see finding 3), `npm run
+audit:web` authed, 320/768/1440 at every state, zero-console-errors on every surface, the order 14
+chaos scenarios, ten consecutive green suite runs, a ten-minute flat-heap session, re-firing the
+three alerts (see finding 2), the rollback walk, and the live `check:cron-drift` comparison.
+The last one is environmental: **gcloud auth in this Codespace is dead** (`Reauthentication
+failed: cannot prompt during non-interactive execution`), which also blocks reading the production
+`DATABASE_URL`, the 30-day p95, and every service-account and quota check. The offline half of
+`check:cron-drift` did run: 117 declared crons, expressions valid, matching CLAUDE.md.
+
+**Left open:** the campaign. Re-run this when 06, 09, 14, 16 and 17 are genuinely retired and 05
+and 07 are finished, and read this table rather than the absence of order files: the orders were
+retired by the owner, not completed.
+**Commits:** `9e0574559`, `245485891`, `0ad50e967`, plus this entry.
