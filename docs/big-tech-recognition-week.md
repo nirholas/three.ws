@@ -80,7 +80,7 @@ Actions surface, all of which are live and re-verified.
 - **Standing status:** Partner Network accepted 2026-07-14; organization verified; GPT Store listing live and public
 - **Open item:** the final submit in the partner portal
 
-Before the submit, run [`prompts/finish/915-openai-pr-07-final-verification-and-submit.md`](../prompts/finish/915-openai-pr-07-final-verification-and-submit.md) against the currently deployed
+Before the submit, run the final verification in [`prompts/finish/_context/openai-pr-00-START-HERE.md`](../prompts/finish/_context/openai-pr-00-START-HERE.md) against the currently deployed
 revision. Its checklist exists precisely because the answer sheet asserts
 "verified live" facts dated 2026-07-14 and deployments move. That is a
 one-session job, not a blocker.
@@ -285,7 +285,7 @@ Ordered so that the items with the longest external latency go out first.
 
 | Day | Action | Owner |
 |---|---|---|
-| Mon 08-17 | Run [openai-pr task 07](../prompts/finish/915-openai-pr-07-final-verification-and-submit.md) against the live revision, then **submit the OpenAI App Directory package** | Owner (portal) |
+| Mon 08-17 | Run the final verification in [openai-pr](../prompts/finish/_context/openai-pr-00-START-HERE.md) against the live revision, then **submit the OpenAI App Directory package** | Owner (portal) |
 | Mon 08-17 | Approve and run the staged **MCP Registry** publish; submit **`three-ws-3d`** to the Claude plugin marketplace | Owner (approval), agent (commands) |
 | Tue 08-18 | Correct the **NVIDIA Inception portal product record** | Owner |
 | Tue 08-18 | Send the **five-ask Inception email** to `inceptionprogram@nvidia.com` | Owner |
