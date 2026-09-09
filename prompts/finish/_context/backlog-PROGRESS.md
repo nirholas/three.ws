@@ -2220,3 +2220,120 @@ for `chatty-storage`, put it in `.env.local` as `R2_ACCESS_KEY_ID` /
 The work order stays on disk because its "policy applied" line is that action.
 The www fix removes the largest real-user consequence of the wait; third-party
 embeds still need `/cdn/<key>` or `/api/glb` until the policy is applied.
+
+## 2026-09-09 (third pass): 01 x402 settle runway, the hint named the wrong mechanism
+
+Re-measured live, nothing carried forward. Production is still `880bdcef8`,
+revision `three-ws-api-00420-ljh`. `gcloud` auth is dead in this codespace this
+session (`Reauthentication failed` on `read-service-env.mjs`), so `CRON_SECRET`
+was unreadable and the `treasury-topup?dry=1` plan could not be run from here.
+Everything below came from public endpoints and public Solana RPC.
+
+| Fact | Value | Source |
+|---|---|---|
+| `x402_settle` | **down**, 0.0% (0/132 paid attempts, 3h), `cause: sponsor_floor` | `/api/healthz` |
+| Sponsor / economy master `Wwwu...T3WwW` | **1,157,626 lamports**, spendable 0, floor 2,000,000 | `getBalance` + `/api/x402/runway-lab` |
+| Shortfall to the floor | **842,374 lamports (0.000842 SOL)** | same |
+| Ring payer `X4o2...stML` | 812,444 lamports, 4.163 USDC | `/api/x402/runway-lab`, `/api/x402-ring` |
+| Treasury `wwwww...ccrU` | 0.06 USDC, SOL fenced behind `minSol` 0.1 | `/api/x402-ring` |
+| Settle rejects since boot | `fee_wallet_below_floor` 164, `broadcast_failed` 1; `fee_runway_exhausted` **absent** | `/api/healthz` |
+| Verify rejects since boot | `simulation_failed` 1,835 of 1,835 | same |
+| Last settlement on chain | 2026-09-08T21:47:36Z | `/api/x402-ring` `recent[0]` |
+| Observed fee per settle | 5,033 lamports (`observed_median_24h`) | runway-lab |
+
+The sponsor drained a further 10,002 lamports since the second pass today, which
+is two settle-fee attempts. DoD line 2 still passes: `fee_runway_exhausted` does
+not appear in the reject book at all.
+
+### The finding: the outage hint described the opposite mechanism
+
+`diagnoseSettleDrop()` fires `cause: sponsor_floor` on `floorSignals > 0` OR the
+withdrawn-accept shape, and then printed ONE hint for both. Its opening sentence
+asserted the withdrawal unconditionally:
+
+```
+The Solana accept is being WITHDRAWN, not rejected: 0 no_solana_accept + 25 floor
+refusal(s) against 132 rail faults. ... Do NOT start at the facilitator.
+```
+
+Read the counter it prints in its own first clause: **0 no_solana_accept**. The
+accept was not withdrawn. Tracing the ring's own recorder settles it: in
+`api/_lib/x402/pay.js` a 402 probe carrying no Solana accept returns
+`no_solana_accept` and never builds a transaction, while `http_402` can ONLY be
+produced on the paid replay (line 553), after the ring parsed a real accept,
+signed a real payment, and had it rejected. 126 of the window's 132 faults were
+`http_402`. So every one of those calls got a payable Solana accept, signed, and
+was turned away by **our own facilitator** at the floor gate.
+
+The detail row an operator reads first was self-contradicting in a single clause:
+
+```
+; Solana accept withdrawn (0 no_solana_accept, sponsor under SOL floor)
+```
+
+And the hint's "Do NOT start at the facilitator" pointed away from the one table
+that names the wallet and both numbers, `fee_wallet_below_floor:1167627<2000000`
+in `x402_self_facilitator_log.reject_reason`. In the genuinely withdrawn regime
+that instruction is correct (with no accept on the challenge the facilitator
+never saw those calls); in this one it is exactly backwards. Same
+`cause: sponsor_floor`, same wallet, same remedy, opposite evidence trail.
+
+This is the third instance of the same defect shape found on this order: one
+string covering two opposite operator situations (`at_or_below_floor` fenced vs
+empty, `simulation_failed` sponsor vs buyer, and now withdrawn vs refused).
+
+### Landed (`30e83da5c`, no funds moved, no config changed, deployable)
+
+- `diagnoseSettleDrop()` returns a `mechanism`: `accept_withdrawn`,
+  `settle_refused`, `paced` or `rail`. The `sponsor_floor` branch picks its
+  opening sentence from it; the shared funding remedy paragraph
+  (`treasury-topup`, `agent_reclaim.failed`, `secret_undecryptable`,
+  `skipped_floor_held_sol 0`) is byte-identical across both, because the fix
+  really is the same. The refused text says START at the facilitator and names
+  the reject-book token to read.
+- Both signals lit resolves to `accept_withdrawn`, the harder stop: a call that
+  never carried a payable accept never reached the reject book, so a
+  facilitator-first instruction would under-count the outage.
+- `classifySettleBuckets()` carries `mechanism` through all four verdicts
+  (including the two `attempts < minAttempts` early returns) and the detail row
+  now prints `N settle(s) refused at the fee-wallet floor (accept still
+  advertised)` instead of a withdrawal beside a zero counter.
+- Six tests in `tests/api/x402-settle-health.test.js` built from today's exact
+  production bucket shape (126 `http_402`, 6 aborted, 25 floor refusals): the
+  refused verdict, the detail row never claiming a withdrawal beside a zero
+  counter, the withdrawn wording preserved, the flapping both-signals case, the
+  identical remedy in both hints, and `paced`/`rail` keeping their own mechanism.
+  72 green across the 3 suites that import the module, 122 green across those
+  plus the economy suites (`economy-master-sponsor-floor`, `economy-sweepback`,
+  `economy-ledger`).
+- One pre-existing test (`the sponsor-floor hint refuses to promise a self-heal
+  ...`) asserts the hint says "sponsor"; the refused branch names the sponsor
+  wallet and `X402_SPONSOR_SOL_FLOOR_LAMPORTS` explicitly rather than weakening
+  the assertion.
+- `docs/ops/production-log-triage.md` gained "The third variant" with a
+  four-row mechanism table and today's numbers. `npm run audit:docs` clean
+  (1,593 files). `data/changelog.json` entry added (`fix`, `infra`),
+  `npm run build:pages` regenerated the feed.
+- `npm run check:rules -- --paths <the 4 touched files>`: clean.
+
+The commit stages four paths only. A peer's in-flight `www.three.ws` changelog
+entry was in the shared working tree, so `data/changelog.json` was committed as a
+clean blob built from HEAD plus this entry alone, and the regenerated feed
+artifacts were deliberately left uncommitted for whoever lands that entry; the
+build regenerates them at deploy time either way.
+
+### Still open, unchanged, and still one owner decision
+
+Nothing here changes what settles. The sponsor is **0.000842 SOL** under its
+floor. Both options move SOL, so both are stop-and-ask gate 1:
+
+1. Release the fenced platform SOL: lower `pump-x402-launcher`'s `minSol` from
+   0.1 to about 0.02 in `api/_lib/solana-signers.js`, then run
+   `POST /api/cron/treasury-topup` without `?dry=1`. Path `wwwww...ccrU` to
+   `Wwwu...T3WwW` to `X4o2...stML`. No owner capital.
+2. Send SOL to `WwwuGbqHrwF5RG89KhUbmRWEvjnRH9k5kVM5p7T3WwW` and nowhere else.
+   0.1 SOL restarts settlement; 2 SOL clears the fleet deficit with real runway.
+
+DoD lines 1 and 3 stay open behind that decision (line 3 additionally needs
+`CRON_SECRET`, which needs `gcloud` re-auth in this codespace). Line 2 passes.
+Lines 4 to 6 are done. The prompt file stays on disk.
