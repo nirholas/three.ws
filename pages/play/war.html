@@ -18,28 +18,42 @@
 	<meta name="twitter:image" content="https://three.ws/api/page-og?s=crypto&amp;t=Coin+Wars+arena%3A+two+communities%2C+one+battlefield&amp;d=The+live+Coin+Wars+arena.+Enlist+at+your+coin+world%27s+war+portal%2C+fight+the+rival+community+to+the+kill+cap%2C+and+the+result+lands+on+the+Elo+ladder.+You+fight&amp;p=%2Fplay%2Fwar" />
 	<link rel="canonical" href="https://three.ws/play/war" />
 	<link rel="icon" href="/favicon.ico" />
-	<!-- The arena's two heaviest first-paint assets, preloaded only when this
-	     link actually carries a pairing. src/play/war.js returns early with "No
-	     battle to join" when match/ticket/coin are missing (a shared, expired, or
-	     hand-typed link), and a static preload on that path downloads a manifest
-	     and a 700 KB avatar the page never reads, which is what the browser
-	     reports as "preloaded ... but not used". Injecting from the head keeps
-	     the head start on the real path: this runs before the module graph below
-	     is even fetched. `crossorigin` stays because both consumers request in CORS mode
-	     (fetch() defaults to it; three's FileLoader builds a Request, which does
-	     too), so dropping it would silently orphan the preload instead. -->
+
+	<!-- The Colyseus service that hosts clash_arena, read through the shared
+	     chain in src/shared/game-server-url.js. A production build resolves to
+	     "" without it (localhost and the Codespace forward are inferred, the
+	     public domain is not), which turned every arrival at this page into
+	     "The arena server is unreachable". /play carries the same meta. -->
+	<meta name="game-server" content="wss://three-ws-multiplayer-93741856042.us-central1.run.app" />
+
+	<!-- Design tokens. This bespoke 3D page skips the global style.css, and
+	     tokens.css is variables-only, so linking it does not touch the arena's
+	     own layout. src/play/war.css spends the motion tokens on every hover,
+	     focus and cooldown transition; unresolved they made the whole
+	     `transition` declaration invalid and the HUD moved in hard cuts. -->
+	<link rel="stylesheet" href="/tokens.css" />
+	<!-- The clip manifest, preloaded only when this link actually carries a
+	     pairing. src/play/war.js returns early with "No battle to join" when
+	     match/ticket/coin are missing (a shared, expired, or hand-typed link),
+	     and a static preload on that path downloads a file the page never reads,
+	     which is what the browser reports as "preloaded ... but not used".
+	     Injecting from the head keeps the head start on the real path: this runs
+	     before the module graph below is even fetched. `crossorigin` stays
+	     because the consumer requests in CORS mode (fetch() defaults to it), so
+	     dropping it would silently orphan the preload instead. The fighter body
+	     is warmed from war.js instead, immediately before the room join, because
+	     it is only read once the play gate and the holder gate have both passed
+	     and its URL is whichever avatar the player picked in /play. -->
 	<script>
 		(function () {
 			var q = new URLSearchParams(location.search);
 			if (!q.get('match') || !q.get('ticket') || !q.get('coin')) return;
-			['/animations/manifest.json', '/avatars/default.glb'].forEach(function (href) {
-				var l = document.createElement('link');
-				l.rel = 'preload';
-				l.as = 'fetch';
-				l.crossOrigin = 'anonymous';
-				l.href = href;
-				document.head.appendChild(l);
-			});
+			var l = document.createElement('link');
+			l.rel = 'preload';
+			l.as = 'fetch';
+			l.crossOrigin = 'anonymous';
+			l.href = '/animations/manifest.json';
+			document.head.appendChild(l);
 		})();
 	</script>
 	<meta name="robots" content="index, follow, max-image-preview:large" />
@@ -50,6 +64,10 @@
 	<script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"WebPage","name":"Coin Wars arena: two communities, one battlefield","description":"The live Coin Wars arena. Enlist at your coin world's war portal, fight the rival community to the kill cap, and the result lands on the Elo ladder. You fight for the coin you hold.","url":"https://three.ws/play/war","isPartOf":{"@type":"WebSite","name":"three.ws","url":"https://three.ws"},"primaryImageOfPage":"https://three.ws/api/page-og?s=crypto&t=Coin+Wars+arena%3A+two+communities%2C+one+battlefield&d=The+live+Coin+Wars+arena.+Enlist+at+your+coin+world%27s+war+portal%2C+fight+the+rival+community+to+the+kill+cap%2C+and+the+result+lands+on+the+Elo+ladder.+You+fight&p=%2Fplay%2Fwar"},{"@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Home","item":"https://three.ws/"},{"@type":"ListItem","position":2,"name":"Play","item":"https://three.ws/play"},{"@type":"ListItem","position":3,"name":"War","item":"https://three.ws/play/war"}]}]}</script>
 </head>
 <body>
+	<!-- The page heading. A fullscreen arena has no chrome to hang a visible
+	     title on, but the document still needs exactly one h1: the two cards
+	     below are dialog headings and are mutually exclusive. -->
+	<h1 class="war-page-title">Coin Wars arena</h1>
 	<canvas id="scene" aria-label="Coin Wars battlefield"></canvas>
 	<div class="war-vignette" aria-hidden="true"></div>
 	<div id="labels" aria-hidden="true"></div>
@@ -91,7 +109,7 @@
 
 	<!-- Controls. Hidden until joined; the stick is thumb-sized on phones. -->
 	<div id="controls" class="war-controls" hidden>
-		<div id="stick" class="war-stick no-orbit" aria-label="Move">
+		<div id="stick" class="war-stick no-orbit" aria-hidden="true">
 			<span id="stick-nub" class="war-stick-nub" aria-hidden="true"></span>
 		</div>
 		<div class="war-right">
@@ -99,16 +117,17 @@
 				<div><dt>Kills</dt><dd id="kills">0</dd></div>
 				<div><dt>Downs</dt><dd id="deaths">0</dd></div>
 			</dl>
-			<button id="attack" class="war-attack no-orbit" type="button">Fire<small>space</small></button>
+			<button id="attack" class="war-attack no-orbit" type="button" aria-keyshortcuts="Space F">Fire<small aria-hidden="true">space</small></button>
 			<button id="leave" class="war-leave no-orbit" type="button">Leave</button>
 		</div>
 		<p id="downed" class="war-downed" role="status" hidden>You are down, respawning shortly.</p>
+		<p class="war-keys">WASD or the arrow keys to move</p>
 	</div>
 
 	<!-- Terminal states. Both are designed cards with the one way out. -->
 	<div id="result" class="war-modal" role="dialog" aria-modal="true" aria-labelledby="result-title" hidden>
 		<div class="war-modal-card">
-			<h1 id="result-title" class="war-result-title">Battle over</h1>
+			<h2 id="result-title" class="war-result-title">Battle over</h2>
 			<p id="result-score" class="war-result-score"></p>
 			<p id="result-reason" class="war-modal-b"></p>
 			<p id="result-mvp" class="war-modal-b war-modal-faint"></p>
@@ -118,9 +137,14 @@
 
 	<div id="fail" class="war-modal" role="dialog" aria-modal="true" aria-labelledby="fail-title" hidden>
 		<div class="war-modal-card">
-			<h1 id="fail-title" class="war-fail-title">No battle to join</h1>
+			<h2 id="fail-title" class="war-fail-title">No battle to join</h2>
 			<p id="fail-detail" class="war-modal-b"></p>
 			<button id="fail-back" class="war-modal-btn" type="button">Back to the world</button>
+			<!-- The war room. src/play/war-board.js fills this from /api/wars with
+			     the battles running now, the communities queued for an opponent
+			     and the top of the ladder, so a card that says "no battle here"
+			     always ends in a door into a world that has one. -->
+			<div id="fail-board"></div>
 		</div>
 	</div>
 

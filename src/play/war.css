@@ -56,6 +56,18 @@ button { font: inherit; color: inherit; cursor: pointer; }
 	background: radial-gradient(130% 100% at 50% 20%, transparent 55%, rgba(0, 0, 0, 0.6) 100%);
 }
 
+.war-page-title {
+	position: absolute;
+	width: 1px;
+	height: 1px;
+	margin: -1px;
+	padding: 0;
+	overflow: hidden;
+	clip-path: inset(50%);
+	white-space: nowrap;
+	border: 0;
+}
+
 #labels { position: fixed; inset: 0; z-index: 4; pointer-events: none; }
 
 .war-tag {
@@ -302,6 +314,24 @@ button { font: inherit; color: inherit; cursor: pointer; }
 .war-leave:hover { color: var(--war-ink); border-color: rgba(255, 255, 255, 0.24); }
 .war-leave:focus-visible { outline: 2px solid var(--war-us); outline-offset: 2px; }
 
+.war-keys {
+	position: fixed;
+	left: 50%;
+	bottom: max(8px, calc(env(safe-area-inset-bottom) + 8px));
+	transform: translateX(-50%);
+	margin: 0;
+	color: var(--war-muted);
+	font: 600 11px/1 Inter, system-ui, sans-serif;
+	letter-spacing: 0.02em;
+	pointer-events: none;
+	opacity: 0.75;
+}
+
+/* A phone has the stick and no keyboard, and the hint would sit under the thumb. */
+@media (pointer: coarse), (max-width: 520px) {
+	.war-keys { display: none; }
+}
+
 .war-downed {
 	position: fixed;
 	left: 50%;
@@ -329,10 +359,16 @@ button { font: inherit; color: inherit; cursor: pointer; }
 	padding: 20px;
 	background: rgba(4, 5, 8, 0.72);
 	backdrop-filter: blur(3px);
+	/* The body is overflow:hidden so the battlefield never scrolls. The card
+	   carries the war room, which on a short phone is taller than the viewport,
+	   so the scroll lives here. */
+	overflow-y: auto;
+	overscroll-behavior: contain;
 }
 
 .war-modal-card {
 	width: min(420px, 100%);
+	margin: auto;
 	padding: 26px 24px;
 	border: 1px solid var(--war-line);
 	border-radius: 18px;
@@ -371,6 +407,170 @@ button { font: inherit; color: inherit; cursor: pointer; }
 .war-modal-btn:active { transform: scale(0.985); }
 .war-modal-btn:focus-visible { outline: 2px solid var(--war-us); outline-offset: 3px; }
 
+/* ── the war room ────────────────────────────────────────────────────────── */
+
+/* Rendered into the fail card by src/play/war-board.js: live wars, the
+ * matchmaking queue, and the top of the Elo ladder, each row a link into that
+ * coin's world where the war portal stands. Left-aligned on purpose: the card
+ * above it centres a single message, a list of records is read down an edge. */
+
+.war-board {
+	margin-top: 18px;
+	padding-top: 16px;
+	border-top: 1px solid var(--war-line);
+	text-align: left;
+}
+
+.war-board-heading {
+	margin: 14px 0 8px;
+	color: var(--war-muted);
+	font: 700 10px/1.4 Inter, system-ui, sans-serif;
+	letter-spacing: 0.1em;
+	text-transform: uppercase;
+}
+
+.war-board-heading:first-child { margin-top: 0; }
+
+.war-board-note {
+	margin: 0 0 8px;
+	color: var(--war-muted);
+	font-size: 12.5px;
+	line-height: 1.55;
+}
+
+.war-board-list { margin: 0; padding: 0; list-style: none; }
+.war-board-row { margin: 0 0 6px; }
+
+.war-board-link {
+	display: flex;
+	align-items: center;
+	gap: 10px;
+	padding: 8px 10px;
+	border: 1px solid transparent;
+	border-radius: 10px;
+	background: rgba(255, 255, 255, 0.03);
+	color: var(--war-ink);
+	text-decoration: none;
+	transition: background var(--duration-fast) var(--ease-standard), border-color var(--duration-fast) var(--ease-standard), transform var(--duration-instant) var(--ease-standard);
+}
+
+.war-board-link:hover { background: rgba(255, 255, 255, 0.07); border-color: var(--war-line); }
+.war-board-link:active { transform: scale(0.99); }
+.war-board-link:focus-visible { outline: 2px solid var(--war-us); outline-offset: 2px; }
+.war-board-link.is-yours { border-color: color-mix(in srgb, var(--war-us) 45%, var(--war-line)); background: rgba(127, 216, 255, 0.08); }
+
+.war-board-rank {
+	flex: none;
+	min-width: 24px;
+	color: var(--war-muted);
+	font: 700 11px/1 var(--war-mono);
+}
+
+.war-board-avatar {
+	display: flex;
+	flex: none;
+	align-items: center;
+	justify-content: center;
+	width: 26px;
+	height: 26px;
+	overflow: hidden;
+	border: 1px solid var(--war-line);
+	border-radius: 50%;
+	background: rgba(255, 255, 255, 0.06);
+	color: var(--war-muted);
+	font: 700 11px/1 Inter, system-ui, sans-serif;
+}
+
+.war-board-avatar img { width: 100%; height: 100%; object-fit: cover; }
+
+.war-board-main { display: flex; flex-direction: column; gap: 2px; min-width: 0; flex: 1 1 auto; }
+
+.war-board-title {
+	overflow: hidden;
+	font: 700 13px/1.3 Inter, system-ui, sans-serif;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.war-board-sub {
+	overflow: hidden;
+	color: var(--war-muted);
+	font-size: 11.5px;
+	line-height: 1.4;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.war-board-tag {
+	flex: none;
+	padding: 3px 8px;
+	border: 1px solid var(--war-line);
+	border-radius: 999px;
+	color: var(--war-muted);
+	font: 700 9.5px/1.3 Inter, system-ui, sans-serif;
+	letter-spacing: 0.08em;
+	text-transform: uppercase;
+}
+
+.war-board-tag-live {
+	border-color: color-mix(in srgb, var(--war-win) 50%, var(--war-line));
+	color: var(--war-win);
+}
+
+.war-board-rating { flex: none; font: 800 15px/1 var(--war-mono); }
+
+.war-board-skeleton { display: flex; flex-direction: column; gap: 6px; }
+
+.war-board-skeleton-row {
+	height: 42px;
+	border-radius: 10px;
+	background: linear-gradient(90deg, rgba(255, 255, 255, 0.04), rgba(255, 255, 255, 0.09), rgba(255, 255, 255, 0.04));
+	background-size: 300% 100%;
+	animation: war-shimmer 1.4s linear infinite;
+}
+
+@keyframes war-shimmer {
+	from { background-position: 100% 0; }
+	to { background-position: -100% 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.war-board-skeleton-row { animation: none; }
+}
+
+.war-board-retry {
+	width: 100%;
+	margin: 4px 0 2px;
+	padding: 9px 14px;
+	border: 1px solid var(--war-line);
+	border-radius: 10px;
+	background: rgba(255, 255, 255, 0.04);
+	color: var(--war-ink);
+	font: 700 13px/1 Inter, system-ui, sans-serif;
+	transition: background var(--duration-fast) var(--ease-standard), border-color var(--duration-fast) var(--ease-standard);
+}
+
+.war-board-retry:hover { background: rgba(255, 255, 255, 0.09); border-color: rgba(255, 255, 255, 0.24); }
+.war-board-retry:focus-visible { outline: 2px solid var(--war-us); outline-offset: 2px; }
+
+.war-board-links {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 6px 16px;
+	margin: 16px 0 0;
+}
+
+.war-board-textlink {
+	color: var(--war-us);
+	font: 600 12px/1.4 Inter, system-ui, sans-serif;
+	text-decoration: none;
+	border-bottom: 1px solid transparent;
+	transition: border-color var(--duration-fast) var(--ease-standard), color var(--duration-fast) var(--ease-standard);
+}
+
+.war-board-textlink:hover { border-bottom-color: currentColor; }
+.war-board-textlink:focus-visible { outline: 2px solid var(--war-us); outline-offset: 3px; border-radius: 3px; }
+
 /* ── small screens ───────────────────────────────────────────────────────── */
 
 @media (max-width: 520px) {
@@ -379,4 +579,11 @@ button { font: inherit; color: inherit; cursor: pointer; }
 	.war-side-name { font-size: 12px; }
 	.war-stick { width: 100px; height: 100px; }
 	.war-attack { width: 92px; padding: 12px 0; }
+	.war-modal { padding: 14px 12px; }
+	.war-modal-card { padding: 22px 16px; }
+	.war-result-title, .war-fail-title { font-size: 26px; }
+	.war-board-link { gap: 8px; padding: 8px; }
+	.war-board-avatar { width: 22px; height: 22px; }
+	.war-board-title { font-size: 12.5px; }
+	.war-board-tag { padding: 3px 6px; letter-spacing: 0.05em; }
 }

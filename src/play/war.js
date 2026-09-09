@@ -22,6 +22,7 @@ import { ensurePlayAccess } from '../game/play-gate.js';
 import { requestHolderPass } from '../community/town-auth.js';
 import { createLogger } from '../shared/log.js';
 import { WarWorld } from './war-world.js';
+import { mountWarBoard } from './war-board.js';
 import './war.css';
 
 const log = createLogger('war');
@@ -64,6 +65,7 @@ let sendTimer = 0;
 let clockTimer = 0;
 let lastSent = { x: NaN, z: NaN, yaw: NaN, motion: '' };
 let attackCooldownUntil = 0;
+let board = null;
 
 // ── boot ─────────────────────────────────────────────────────────────────────
 
@@ -123,16 +125,16 @@ let attackCooldownUntil = 0;
 			}
 			holderPass = res.holderPass;
 		} catch (err) {
-			const msg = err?.code === 'auth_required'
-				? 'Sign in on the coin world first, then walk back to the war portal.'
-				: err?.code === 'wallet_required'
-					? 'Link a Solana wallet on the coin world, then walk back to the war portal.'
-					: err?.message || 'Your holding could not be verified right now.';
-			return fail('Could not verify your holding', msg, 'Back to the world');
+			return fail('Could not verify your holding', holderErrorText(err), 'Back to the world');
 		}
 	}
 
 	setStatus('Joining the battle…');
+	// Both gates have passed, so the body WILL be read: start it now and let the
+	// download run under the websocket handshake and the room's join. Doing this
+	// from the head instead orphaned the fetch on every failed join, which is
+	// what the browser reports as "preloaded but not used".
+	warmAvatar(savedAvatar());
 	try {
 		const client = new Client(serverUrl);
 		room = await joinRoomWithTimeout(client, ROOM, {
@@ -366,6 +368,7 @@ function showResult(m) {
 	$('result').hidden = false;
 	$('controls').hidden = true;
 	world?.setLocked(true);
+	focusCard('result-back');
 	// The league write happens as the room ends, so the world we return to can
 	// read this battle straight out of the ledger.
 	$('result-back').textContent = `Back to ${coinLabel()}`;
@@ -390,8 +393,13 @@ function wireChrome() {
 	addEventListener('keydown', (e) => {
 		if (e.repeat) return;
 		const k = e.key.toLowerCase();
-		if (k === ' ' || k === 'f') { e.preventDefault(); attack(); }
-		if (k === 'escape' && !$('result').hidden) goBack();
+		// Space is the fire key AND the key that presses a focused button. Taking
+		// it unconditionally meant a keyboard player on the result card could not
+		// activate "Back to the world" at all.
+		const onControl = e.target instanceof Element
+			&& e.target.closest('button, a, input, select, textarea, [contenteditable]');
+		if (!onControl && (k === ' ' || k === 'f')) { e.preventDefault(); attack(); }
+		if (k === 'escape' && (!$('result').hidden || !$('fail').hidden)) goBack();
 	});
 	mountJoystick();
 	// The coin the player fights for, painted into the page chrome the moment it
@@ -458,6 +466,25 @@ function fail(title, detail, action = 'Back to the world') {
 	$('fail').hidden = false;
 	clearInterval(sendTimer);
 	clearInterval(clockTimer);
+	// A dead end is where a player most needs somewhere to go: the war room
+	// answers "then where IS a battle" with live league state, and every row is a
+	// door into the world whose portal can start one.
+	board?.dispose();
+	board = mountWarBoard($('fail-board'), { network: cfg.network, coin: cfg.coin });
+	focusCard('fail-back');
+}
+
+// A modal that opens without moving focus leaves a keyboard player tabbing
+// through a battlefield they can no longer act on.
+function focusCard(id) {
+	requestAnimationFrame(() => $(id)?.focus());
+}
+
+// Warm a GLB into the HTTP cache. three's FileLoader requests in CORS mode, so
+// this must too or the browser keeps two separate entries and downloads twice.
+function warmAvatar(url) {
+	if (!url) return;
+	fetch(url, { mode: 'cors', credentials: 'omit' }).catch(() => { /* the loader will retry it for real */ });
 }
 
 // The room throws named errors; each one has a player-readable cause.
@@ -471,6 +498,30 @@ function joinErrorText(err) {
 	if (msg.includes('clash_faction_mismatch')) return 'You hold a coin that is not one of the two communities in this battle.';
 	if (msg.includes('timed out')) return 'The arena server did not answer in time. It may be restarting; try again in a moment.';
 	return msg || 'The arena refused the join.';
+}
+
+// The holder gate answers with a coded error; each one is a different thing the
+// player has to do. The raw upstream string is never shown: "CoinCommunities is
+// not configured" names an internal service and tells a player nothing.
+function holderErrorText(err) {
+	switch (err?.code) {
+		case 'auth_required':
+			return 'Sign in on the coin world first, then walk back to the war portal.';
+		case 'wallet_required':
+			return 'Link a Solana wallet on the coin world, then walk back to the war portal.';
+		case 'cc_unconfigured':
+			return 'Holder verification is offline on this deployment, so the arena cannot seat you. Nothing is wrong with your wallet or your standing in the league.';
+		case 'balance_unavailable':
+			return 'Your on-chain balance could not be read just now, so the arena cannot confirm you hold the coin. Try again in a moment.';
+		case 'upstream_error':
+			return 'The account service did not answer, so your holding could not be checked. Try again in a moment.';
+		case 'rate_limited':
+			return 'Too many checks from this connection. Wait a few seconds and queue again from the portal.';
+		default:
+			break;
+	}
+	if (err?.status >= 500) return 'The holder gate is having trouble right now. Try again in a moment.';
+	return 'Your holding could not be verified right now. Queue again from the war portal and it will be rechecked.';
 }
 
 function factionLabel(s, side) {
