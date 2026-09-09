@@ -206,7 +206,41 @@ test.describe('/smart-home against a real Home Assistant', () => {
 			// A dial the product itself makes. Reading the macros is a plain read,
 			// and it is what turns "the container is stopped" into "three.ws knows
 			// this house is not answering".
-			await page.request.get(`/api/home/${homeId}/macros`, { timeout: 120_000 }).catch(() => null);
+			//
+			// One read is not always enough, and assuming it was made this test
+			// pass or fail on whether an earlier spec happened to leave a warm
+			// socket in the pool. A cold pool re-handshakes and fails instantly; a
+			// warm one answers this read off the bridge it already holds and only
+			// learns the house is gone when its liveness ping goes unanswered.
+			// That is the product's real, documented bound (see #startLiveness in
+			// packages/home-bridge/src/bridge.js: a 10 s ping with a 5 s deadline,
+			// so 15 s worst case), so poll to it rather than asserting a 5 s bound
+			// the platform never promised. The invariant under test is unchanged
+			// and still strict: a stopped house must stop reading Live.
+			await expect
+				.poll(
+					async () => {
+						await page.request.get(`/api/home/${homeId}/macros`, { timeout: 120_000 }).catch(() => null);
+						const res = await page.request.get('/api/home', { timeout: 60_000 });
+						const body = await res.json().catch(() => null);
+						const mine = (body?.homes || []).find((h) => h.id === homeId);
+						// The same judgement the card makes (isDegraded in
+						// src/home/manage.js): the house is refusing us, its token
+						// is being rejected, or it is connected on paper but has
+						// not answered inside the stale window.
+						if (!mine) return false;
+						if (mine.status !== 'connected') return true;
+						const lastOk = Date.parse(mine.last_ok_at || '');
+						const lastErr = Date.parse(mine.last_error_at || '');
+						return Number.isFinite(lastErr) && (!Number.isFinite(lastOk) || lastErr > lastOk);
+					},
+					{
+						message: 'a house whose container was stopped must stop reading connected inside the liveness window',
+						timeout: 60_000,
+						intervals: [1_000, 2_000, 3_000, 5_000],
+					},
+				)
+				.toBe(true);
 
 			await page.goto('/smart-home', { waitUntil: 'domcontentloaded' });
 			await expect(card(page)).toHaveCount(1, { timeout: 120_000 });
