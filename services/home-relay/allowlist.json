@@ -32,7 +32,11 @@
 		"pong"
 	],
 	"allowedEventTypes": [
-		"state_changed"
+		"state_changed",
+		"area_registry_updated",
+		"device_registry_updated",
+		"entity_registry_updated",
+		"floor_registry_updated"
 	],
 	"deniedServiceDomains": [
 		"shell_command",

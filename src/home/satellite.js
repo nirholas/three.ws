@@ -452,8 +452,7 @@ async function renderLive(id) {
 		micButton.disabled = open && mode === 'command';
 		talkButton.disabled = open && mode === 'wake';
 	});
-	link.addEventListener('state', (event) => {
-		const { state, detail } = event.detail;
+	const paintState = ({ state, detail }) => {
 		const copy = STATE_COPY[state] || STATE_COPY[STATE.IDLE];
 		badge.dataset.state = state;
 		badge.textContent = detail || copy.label;
@@ -464,6 +463,48 @@ async function renderLive(id) {
 			status.textContent = 'Lost the satellite. Your voice assistant is unaffected; this screen is reconnecting.';
 		}
 		if (emotes && copy.emote && copy.emote !== 'idle') scene.playEmoteOnce?.(copy.emote);
+	};
+
+	// Home Assistant reports the wake word and opens speech-to-text in the same
+	// millisecond, so the acknowledgement this screen exists to give ("Yes?",
+	// and the agent looking up) was being overwritten about one millisecond
+	// after it was set: measured on a real pipeline, never once visible. Hold
+	// the wake frame long enough to be seen, then paint whatever the pipeline
+	// reached meanwhile.
+	//
+	// Presentation only, and that boundary matters: the microphone, the audio
+	// and the pipeline are never held up by this, so the house answers at
+	// exactly the speed it did before. Only the face waits.
+	const WAKE_DWELL_MS = 900;
+	let wakeHeldUntil = 0;
+	let heldState = null;
+	let holdTimer = null;
+
+	link.addEventListener('state', (event) => {
+		const now = Date.now();
+		if (event.detail.state === STATE.WAKE) {
+			wakeHeldUntil = now + WAKE_DWELL_MS;
+			clearTimeout(holdTimer);
+			holdTimer = null;
+			heldState = null;
+			paintState(event.detail);
+			return;
+		}
+		if (now < wakeHeldUntil) {
+			// Keep only the newest: a run that passed through three states while
+			// the wake frame was up should land on the one it is actually in.
+			heldState = event.detail;
+			if (!holdTimer) {
+				holdTimer = setTimeout(() => {
+					holdTimer = null;
+					const next = heldState;
+					heldState = null;
+					if (next) paintState(next);
+				}, wakeHeldUntil - now);
+			}
+			return;
+		}
+		paintState(event.detail);
 	});
 
 	const toggleMic = async (button, mode) => {
@@ -499,6 +540,7 @@ async function renderLive(id) {
 
 	window.addEventListener('pagehide', () => {
 		cancelAnimationFrame(rafId);
+		clearTimeout(holdTimer);
 		link.close();
 		scene.unmount?.();
 	});

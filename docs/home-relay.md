@@ -155,37 +155,49 @@ two enforcement points are kept from drifting apart.
 
 ### Verifying it against a real house on an unroutable network
 
-A test that reaches Home Assistant on localhost proves nothing about a relay. Build two networks
-Docker will not route between, put the house on one and the caller on the other:
+A test that reaches Home Assistant on localhost proves nothing about a relay. One command builds
+the whole rig, proves it, and tears it down:
 
 ```bash
-docker network create house-net
-docker network create cloud-net
-
-# The house. No published port: nothing on the outside can reach it.
-mkdir -p .ha-relay-config
-docker run -d --name threews-ha-relay --network house-net \
-  --add-host relay.host:host-gateway \
-  -v "$PWD/.ha-relay-config:/config" ghcr.io/home-assistant/home-assistant:stable
-printf '\ndemo:\n' >> .ha-relay-config/configuration.yaml && docker restart threews-ha-relay
-
-# The relay, on the host, which both networks reach through host-gateway, the
-# same way a real house reaches a public service through its own NAT.
-HOME_RELAY_SIGNING_KEY=$(node -e "console.log(require('crypto').randomBytes(32).toString('hex'))") \
-HOME_RELAY_SERVICE_TOKEN=$(node -e "console.log(require('crypto').randomBytes(32).toString('hex'))") \
-PORT=8899 node services/home-relay/src/index.js
-
-# Install the integration into that instance, pair it through /api/home/pair,
-# then run the proof from cloud-net, which has no route to house-net at all:
-docker run --rm --network cloud-net --add-host relay.host:host-gateway \
-  -v "$PWD:/app" -w /app node:24-slim \
-  node scripts/home-relay-e2e.mjs \
-    --relay ws://relay.host:8899 --relay-id <id> --service-token <token> \
-    --unroutable http://<the house's container ip>:8123
+export DATABASE_URL=...        # from .env.local; pairing is a real row
+node scripts/home-relay-live.mjs
 ```
 
-The script refuses to report success if `--unroutable` turns out to be reachable, so a run that
-accidentally had a route fails loudly instead of passing for the wrong reason.
+It needs Docker and about three minutes. Useful flags: `--keep` leaves the rig running so you can
+poke at it, `--down` removes a kept rig, and `--name <slug>` runs a second rig beside the first.
+
+What it builds, and why each piece sits where it does:
+
+| Network | What runs there | Why |
+|---|---|---|
+| `house-net` | A real Home Assistant with **no published port** | Unreachable from anywhere but this network, exactly like a house behind NAT. It reaches out through `host-gateway`. |
+| `cloud-net` | The relay **and** every caller | Docker refuses to route between two user-defined bridges, so nothing here can open a connection to the house. |
+
+The relay is deliberately on the `cloud-net` side. Running it on the host, which can reach both
+bridges, would look identical in the logs and prove considerably less.
+
+The only path between the two networks is the socket the house opens outbound to the relay's
+host-published port. Every proof runs from `cloud-net` and each one begins by failing to reach the
+house directly, so a run that accidentally had a route fails loudly instead of passing for the
+wrong reason.
+
+The run drives the real pairing path end to end: it serves the actual `/api/home/pair/redeem`
+handler, mints a code with `startPairing`, and types that code into the integration's own config
+flow inside Home Assistant. Nothing is written into `.storage` by hand. It then runs two proofs
+and the offline-and-recover check:
+
+- [`scripts/home-relay-e2e.mjs`](../scripts/home-relay-e2e.mjs) drives the bridge: connect, toggle
+  a real light, refuse an unconfirmed unlock, perform a confirmed one, and confirm the relay
+  refuses four message shapes outside the allowlist while still carrying an allowlisted one.
+- [`scripts/home-relay-gate-proof.mjs`](../scripts/home-relay-gate-proof.mjs) drives the layer the
+  product actually runs: `runHomeTool`, the minted confirmation, the claim-and-perform that
+  `api/home/[id]/confirm.js` does, and the `home_action_log` rows all of it writes. The gate is
+  enforced in two places and only one of them is the bridge, so both are tested.
+- Stopping the house and starting it again, to check that the home reports itself offline and then
+  recovers with nothing done on the three.ws side.
+
+Either proof can be run on its own against a rig kept up with `--keep`; both print their arguments
+in their file headers.
 
 ### Housekeeping
 

@@ -18,7 +18,9 @@ export default defineConfig({
 	// stay out of the general run. The stub-driven home specs (home-connect,
 	// home-whose-fault) need no stack and still run here.
 	testIgnore: [
+		'**/home-a11y.spec.js',
 		'**/home-confirmation.spec.js',
+		'**/home-connect-live.spec.js',
 		'**/home-control.spec.js',
 		'**/home-floorplan.spec.js',
 		'**/home-scene.spec.js',

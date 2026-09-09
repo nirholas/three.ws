@@ -74,8 +74,14 @@ even if the relay were to forget the denial.
 This is the position the allowlist in the relay exists for. Even holding the service token, a
 platform caller can send only the enumerated outbound types, and:
 
-- `subscribe_events` is limited to `state_changed`. Anything else "would subscribe to more of the
-  house than the room graph needs", and is refused by name.
+- `subscribe_events` is limited to a closed list: `state_changed` plus the four
+  `area_registry_updated`, `device_registry_updated`, `entity_registry_updated` and
+  `floor_registry_updated` announcements the room graph rebuilds from. Anything else "would
+  subscribe to more of the house than the room graph needs", and is refused by name. A bare
+  `subscribe_events`, which would carry every event in the house including other integrations'
+  service calls, is refused too. The registry events widen nothing: each is a notice that a
+  registry changed, and the full contents of all four registries are already readable through the
+  `config/*_registry/list` calls on the same list.
 - `call_service` is refused outright for `shell_command`, `python_script`, `hassio`, `supervisor`,
   `backup`, `update`, `cloud`, `config`, `auth` and `command_line`, plus the named services that
   survive a permitted domain: `homeassistant.restart`, `homeassistant.stop`,

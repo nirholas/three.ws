@@ -1,17 +1,17 @@
 {
-	"measuredAt": "2026-09-03T04:05:13.047Z",
+	"measuredAt": "2026-09-09T06:27:22.422Z",
 	"source": "https://analytics.home-assistant.io/data.json",
 	"results": [
 		{
 			"tag": "2026.9",
-			"share": 4.171891450676068,
+			"share": 34.19281092865948,
 			"role": "current stable",
-			"installs": 28213,
-			"haVersion": "2026.9.0",
+			"installs": 232427,
+			"haVersion": "2026.9.1",
 			"cells": {
 				"connect": {
 					"ok": true,
-					"note": "2026.9.0"
+					"note": "2026.9.1"
 				},
 				"registries": {
 					"ok": true,
@@ -40,9 +40,9 @@
 		},
 		{
 			"tag": "2026.8",
-			"share": 50.414778843765156,
+			"share": 23.601626470752656,
 			"role": "previous release",
-			"installs": 340937,
+			"installs": 160433,
 			"haVersion": "2026.8.3",
 			"cells": {
 				"connect": {
@@ -76,9 +76,9 @@
 		},
 		{
 			"tag": "2026.7",
-			"share": 13.214661729738681,
+			"share": 11.408391859407962,
 			"role": "previous release",
-			"installs": 89366,
+			"installs": 77549,
 			"haVersion": "2026.7.4",
 			"cells": {
 				"connect": {
@@ -87,7 +87,7 @@
 				},
 				"registries": {
 					"ok": true,
-					"note": "1f/4a/61d/87e"
+					"note": "1f/4a/62d/92e"
 				},
 				"stream": {
 					"ok": true,
@@ -112,9 +112,9 @@
 		},
 		{
 			"tag": "2025.10",
-			"share": 1.0467805472419056,
+			"share": 1.018162452887368,
 			"role": "oldest in wide use",
-			"installs": 7079,
+			"installs": 6921,
 			"haVersion": "2025.10.4",
 			"cells": {
 				"connect": {

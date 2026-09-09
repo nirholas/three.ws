@@ -1,0 +1,269 @@
+{
+  "ranAt": "2026-09-09T06:19:13.842Z",
+  "fleetImage": "ghcr.io/home-assistant/home-assistant:stable",
+  "houses": 12,
+  "results": [
+    {
+      "scenario": 1,
+      "title": "a house goes offline mid-session",
+      "transcript": [
+        "connected: 7 rooms, stale=false",
+        "docker stop threews-ha-1",
+        "while down: stale=true status=unreachable rooms=7",
+        "docker start threews-ha-1",
+        "recovered: 7 rooms, stale=false, no re-subscribe"
+      ],
+      "roomsWhileUp": 7,
+      "roomsWhileDown": 7,
+      "statusWhileDown": "unreachable",
+      "roomsAfterRecovery": 7,
+      "subscriptionSurvived": true,
+      "passed": true,
+      "note": "The same subscription callback saw the whole sequence. The browser never reloaded and the graph never went empty: it went stale.",
+      "durationMs": 140240
+    },
+    {
+      "scenario": 2,
+      "title": "a house flaps up, down, up",
+      "transcript": [
+        "connected through the flap gate; 26 file descriptors held",
+        "24 up-down-up cycles at 5000ms; 26 file descriptors held",
+        "pool still holds 1 connection(s) for 1 home",
+        "breaker opened on attempt 6; subsequent attempts fail in 0ms or less"
+      ],
+      "cycles": 24,
+      "fdBefore": 26,
+      "fdAfter": 26,
+      "fdLeaked": 0,
+      "poolEntriesAfterFlap": 1,
+      "breakerOpenedOnAttempt": 6,
+      "breakerFastFailMaxMs": 0,
+      "attempts": [
+        {
+          "attempt": 1,
+          "ms": 21,
+          "code": "unreachable"
+        },
+        {
+          "attempt": 2,
+          "ms": 2,
+          "code": "unreachable"
+        },
+        {
+          "attempt": 3,
+          "ms": 4,
+          "code": "unreachable"
+        },
+        {
+          "attempt": 4,
+          "ms": 2,
+          "code": "unreachable"
+        },
+        {
+          "attempt": 5,
+          "ms": 3,
+          "code": "unreachable"
+        },
+        {
+          "attempt": 6,
+          "ms": 0,
+          "code": "home_breaker_open"
+        },
+        {
+          "attempt": 7,
+          "ms": 0,
+          "code": "home_breaker_open"
+        },
+        {
+          "attempt": 8,
+          "ms": 0,
+          "code": "home_breaker_open"
+        }
+      ],
+      "warningsEmitted": 0,
+      "warningsPerCycle": 0,
+      "passed": true,
+      "note": "No socket leak across the flap, and the breaker turns a connect storm into one fast refusal per call. Warnings are counted, not sampled.",
+      "durationMs": 123190
+    },
+    {
+      "scenario": 3,
+      "title": "the token is revoked while we are connected",
+      "transcript": [
+        "minted a disposable long-lived token for this run (three.ws chaos scenario 3 1788934635221)",
+        "connected with it; 123 entities, 7 rooms",
+        "revoked in Home Assistant: 1 of 1 token(s) named \"three.ws chaos scenario 3 1788934635221\" deleted (listed with auth/refresh_tokens)",
+        "re-acquire: auth \"Home Assistant rejected that access token. Create a new long-lived token in your profile and try again.\"",
+        "store row: status=auth_failed detail=\"Home Assistant rejected that access token. Create a new long-lived token in your profile and try again.\"",
+        "the fleet credential for threews-ha-3 still works: true"
+      ],
+      "revoked": "1 of 1 token(s) named \"three.ws chaos scenario 3 1788934635221\" deleted (listed with auth/refresh_tokens)",
+      "reacquireCode": "auth",
+      "reacquireMessage": "Home Assistant rejected that access token. Create a new long-lived token in your profile and try again.",
+      "recordedStatus": "auth_failed",
+      "recordedDetail": "Home Assistant rejected that access token. Create a new long-lived token in your profile and try again.",
+      "fleetTokenStillWorks": true,
+      "passed": true,
+      "note": "The failure is reported as an auth problem the user can fix by reconnecting, never as an unreachable house, and the connection row records the same thing so the connect screen can explain it without dialling the house again.",
+      "durationMs": 534
+    },
+    {
+      "scenario": 4,
+      "title": "our instance is recycled mid-stream",
+      "transcript": [
+        "established sockets to threews-ha-4 before: 0",
+        "while the child streamed: 2",
+        "child exited 0 and reported: CLOSED 1",
+        "established sockets after: 0",
+        "a fresh instance re-subscribed in 25.3ms"
+      ],
+      "socketsBefore": 0,
+      "socketsDuring": 2,
+      "socketsAfter": 0,
+      "childClosedConnections": true,
+      "exit": {
+        "code": 0,
+        "signal": null
+      },
+      "resubscribeMs": 25.3,
+      "passed": true,
+      "note": "SIGTERM runs the runtime shutdown hook, which closes every held socket. The house sees a clean disconnect rather than a dead connection it has to time out, and the next instance is streaming again in well under a second.",
+      "durationMs": 3475
+    },
+    {
+      "scenario": 5,
+      "title": "the database is unavailable",
+      "transcript": [
+        "real store against a dead host: NeonDbError: Error connecting to database: fetch failed",
+        "connected with the database up: 7 rooms, readPlan=database",
+        "a cold acquire with the database down: Error connecting to database: fetch failed",
+        "readPlan is now source=graph rung=degraded_read",
+        "with the database down: 7 rooms still readable, write to light.bed_light went through",
+        "writePolicy: {\"attempt\":true,\"persistAudit\":false}",
+        "after the database answers again: readPlan=database"
+      ],
+      "realDriverError": "NeonDbError: Error connecting to database: fetch failed",
+      "roomsWhileHealthy": 7,
+      "roomsWhileDown": 7,
+      "readSourceWhileDown": "graph",
+      "writeAttemptedWhileDown": true,
+      "writeSucceededWhileDown": true,
+      "auditPersistedWhileDown": true,
+      "coldAcquireMessage": "Error connecting to database: fetch failed",
+      "stillServing": true,
+      "readSourceAfterRecovery": "database",
+      "passed": true,
+      "note": "Reads degrade to the graph this process already holds, a write is still attempted because a write is somebody pressing a button, and only the audit row waits. A cold acquire fails with a designed error rather than hanging, and the flag clears itself on the first query that answers.",
+      "durationMs": 104
+    },
+    {
+      "scenario": 6,
+      "title": "a slow house, beside a fast one",
+      "transcript": [
+        "a 2000ms delay on every response from threews-ha-7, injected at the socket",
+        "fast house alone: p50 1.61ms, p95 7.5ms over 2130 calls in 6000ms",
+        "slow house at the default 15s connect timeout: connected after 14086ms",
+        "slow house connected in 14034ms with a 120s timeout",
+        "slow house under 6-deep load: p50 2013.52ms, p95 2020.45ms over 30 calls",
+        "fast house beside it: p50 1.58ms, p95 7.99ms over 2213 calls in 6000ms, spanning 3.0 of the neighbour's round trips",
+        "fast house alone again, straight after: p50 1.61ms, p95 7.65ms over 2133 calls in 6000ms"
+      ],
+      "delayMs": 2000,
+      "slowConcurrency": 6,
+      "defaultTimeoutOutcome": "connected",
+      "defaultTimeoutMs": 14086,
+      "slowConnectMsWithLongTimeout": 14034,
+      "fastHouseAlone": {
+        "n": 2130,
+        "p50": 1.61,
+        "p95": 7.5,
+        "max": 344.5
+      },
+      "fastHouseAloneAfter": {
+        "n": 2133,
+        "p50": 1.61,
+        "p95": 7.65,
+        "max": 306.66
+      },
+      "fastHouseBesideSlow": {
+        "n": 2213,
+        "p50": 1.58,
+        "p95": 7.99,
+        "max": 37.04
+      },
+      "slowHouseUnderLoad": {
+        "n": 30,
+        "p50": 2013.52,
+        "p95": 2020.45,
+        "max": 2020.52
+      },
+      "fastP95Alone": 7.5,
+      "fastP95AloneAfter": 7.65,
+      "fastP95Control": 7.58,
+      "fastP95ControlSpreadMs": 0.15,
+      "fastP95Beside": 7.99,
+      "fastP95DriftMs": 0.41,
+      "inheritanceCeilingMs": 50,
+      "driftWithinControlNoise": true,
+      "passed": true,
+      "note": "Each home has its own socket; the process and its event loop are the only things they share. The gate is that the fast house never INHERITS the neighbour's latency: with the neighbour at 2,000ms it must stay under 2.5% of that. The finer drift is reported beside the spread between two bracketing alone-readings, because a difference smaller than the movement between two identical controls is a reading of a shared machine, not of the slow house. The default 15s connect timeout is what bounds a house this slow in production, and the long timeout here exists only so isolation could be measured with the slow house actually connected.",
+      "durationMs": 50263
+    },
+    {
+      "scenario": 7,
+      "title": "a 500 entity house at ten updates a second",
+      "transcript": [
+        "624 entities, 7 rooms",
+        "600 real state changes in 62.2s (9.6/s), 0 failed",
+        "62 graph rebuilds: 9.7 updates coalesced into each",
+        "graph rebuild p95 3.922ms against a 16.7ms frame budget",
+        "heap 18.1MB -> 17.6MB"
+      ],
+      "entityCount": 624,
+      "roomCount": 7,
+      "targetRatePerSecond": 10,
+      "achievedRatePerSecond": 9.65,
+      "updates": 600,
+      "failures": 0,
+      "seconds": 62.2,
+      "graphRebuilds": 62,
+      "coalescingRatio": 9.68,
+      "rebuildIntervalMs": {
+        "n": 62,
+        "p50": 999.84,
+        "p95": 1013.94,
+        "max": 1019
+      },
+      "graphBuildMs": {
+        "n": 40,
+        "p50": 0.504,
+        "p95": 3.922,
+        "max": 5.329
+      },
+      "frameBudgetMs": 16.7,
+      "frameBudgetHeld": true,
+      "heapStart": 18126496,
+      "heapEnd": 17620608,
+      "heapGrowthBytes": -505888,
+      "heapSamples": [
+        18576416,
+        18285064,
+        19676808,
+        19078232,
+        18369840,
+        19744344,
+        18501040,
+        19840504,
+        18511616,
+        18961640,
+        19926120,
+        18913664
+      ],
+      "cpuMs": 436.8,
+      "cpuPercentOfOneCore": 0.7,
+      "passed": true,
+      "note": "The frame budget measured here is the data half: how long it takes to rebuild the room graph the 3D scene renders. Coalescing is what keeps that off the critical path, and the ratio above is it working.",
+      "durationMs": 64244
+    }
+  ]
+}

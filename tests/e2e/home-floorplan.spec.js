@@ -310,6 +310,23 @@ test('journey 9e: a house with no areas at all reaches a full floorplan from the
 		await page.reload();
 		await openPlan(page);
 		await expect(page.locator('.hm-plan-room').filter({ hasText: 'Plan kitchen' })).toBeVisible({ timeout: 60_000 });
+
+		// The house this order set out to make, in both views. Written to
+		// test-results/, which is gitignored: evidence for the run, not an asset.
+		await page.locator('#hs-plan').screenshot({ path: 'test-results/floorplan-editor.png' });
+		await page.getByRole('button', { name: /Show the 3D house/i }).click();
+		// Wait for the renderer to have drawn the arranged house rather than for a
+		// fixed delay: a screenshot of a blank canvas proves nothing.
+		await expect(page.locator('#hs-stage canvas')).toBeVisible({ timeout: 60_000 });
+		await expect.poll(
+			() => page.evaluate(() => {
+				const canvas = document.querySelector('#hs-stage canvas');
+				return canvas ? canvas.width * canvas.height : 0;
+			}),
+			{ timeout: 60_000 },
+		).toBeGreaterThan(0);
+		await page.locator('#hs-stage').screenshot({ path: 'test-results/floorplan-3d-scene.png' });
+		console.log('[journey 9e] screenshots: test-results/floorplan-editor.png, test-results/floorplan-3d-scene.png');
 	} finally {
 		// Put the house back exactly as it was, whatever happened above.
 		const leftover = await session.send({ type: 'config/area_registry/list' });

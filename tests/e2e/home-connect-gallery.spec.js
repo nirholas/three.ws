@@ -24,7 +24,10 @@ import { expect, test } from '@playwright/test';
 
 import { CSRF, HOME, json, LIST, PAGE, SLOW, stub } from './home-connect-stubs.js';
 
-const OUT = path.join('test-results', 'home-connect-states');
+// Not test-results/: Playwright wipes its output directory at the start of
+// every run, so evidence written there is destroyed by the next lane to run.
+// reports/ is the repo's home for generated evidence, and it is gitignored.
+const OUT = path.join('reports', 'home-connect-states');
 const DESKTOP = { width: 1440, height: 900 };
 const MOBILE = { width: 320, height: 720 };
 
@@ -41,7 +44,21 @@ fs.mkdirSync(OUT, { recursive: true });
  * @param {string} expected the `data-state` the page must be in when it lands
  */
 function screen(name, expected, reach) {
-	test(`${name} renders, and fits a 320px screen`, async ({ page }) => {
+	test(`${name} renders, fits a 320px screen and logs nothing`, async ({ page }) => {
+		// Console noise is per-state too, and it is only ever found by opening the
+		// state. A warning that fires once, on the plan ceiling, is exactly the
+		// kind nobody sees until a paying customer hits it.
+		const noise = [];
+		page.on('console', (msg) => {
+			if (msg.type() !== 'error' && msg.type() !== 'warning') return;
+			const text = msg.text();
+			// The dev server's own HMR socket cannot reach this Codespace, and a
+			// route the spec deliberately fulfils with a 401 is answered, not
+			// broken. Neither is page code.
+			if (/\[vite\]|websocket|HMR|Failed to load resource: the server responded with a status of 401/i.test(text)) return;
+			noise.push(`${msg.type()}: ${text}`);
+		});
+
 		await page.setViewportSize(DESKTOP);
 		await reach(page);
 		await expect(root(page)).toHaveAttribute('data-state', expected, { timeout: SLOW });
@@ -57,6 +74,7 @@ function screen(name, expected, reach) {
 
 		const overflow = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
 		expect(overflow, `${name} pushes the page sideways at 320px`).toBeLessThanOrEqual(0);
+		expect(noise, `${name} wrote to the console`).toEqual([]);
 	});
 }
 
@@ -173,7 +191,7 @@ test.describe('/smart-home, every state', () => {
 		});
 		await page.goto(PAGE);
 		await expect(root(page)).toHaveAttribute('data-state', 'connected', { timeout: SLOW });
-		await page.getByRole('button', { name: /connect another home/i }).click();
+		await page.getByRole('button', { name: 'Connect another' }).click();
 		await page.fill('#hm-label', 'The cabin');
 		await page.fill('#hm-url', 'https://cabin.example.com');
 		await page.fill('#hm-token', 'a-token');

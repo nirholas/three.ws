@@ -49,7 +49,11 @@ const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const opts = parseArgs(process.argv.slice(2));
 const NAME = opts.name || 'relay10';
 
-/** Marks every container this script creates. Nothing without it is touched. */
+/**
+ * Marks every container this script creates, as `<LABEL>=1`. Nothing without it
+ * is ever stopped or removed: this machine runs concurrent agents and several of
+ * them keep their own Home Assistant containers alive.
+ */
 const LABEL = 'ws.three.home-relay-live';
 const HOUSE = `threews-house-${NAME}`;
 const RELAY = `threews-relay-${NAME}`;
@@ -179,6 +183,7 @@ async function startHouse() {
 		log(`house ${HOUSE} already up`);
 	} else {
 		await removeIfOurs(HOUSE);
+		await removeConfigDir();
 		fs.mkdirSync(CONFIG_DIR, { recursive: true });
 		// demo gives the house lights and a lock to actually drive. Without it
 		// the proof has nothing to turn on and reports a pass over an empty room.
@@ -187,7 +192,7 @@ async function startHouse() {
 			'default_config:\n\ndemo:\n\nlogger:\n  default: info\n  logs:\n    custom_components.three_ws: debug\n',
 		);
 		await docker([
-			'run', '-d', '--name', HOUSE, '--label', LABEL,
+			'run', '-d', '--name', HOUSE, '--label', `${LABEL}=1`,
 			'--network', HOUSE_NET,
 			// How the house reaches the outside world, standing in for its NAT.
 			'--add-host', 'relay.host:host-gateway',
@@ -204,7 +209,7 @@ async function startHouse() {
 async function startRelay({ relayHostPort, signingKey, serviceToken }) {
 	await removeIfOurs(RELAY);
 	await docker([
-		'run', '-d', '--name', RELAY, '--label', LABEL,
+		'run', '-d', '--name', RELAY, '--label', `${LABEL}=1`,
 		'--network', CLOUD_NET,
 		// Published so the house can dial in through host-gateway, which is the
 		// only direction any connection is ever opened.
@@ -226,7 +231,7 @@ async function startRelay({ relayHostPort, signingKey, serviceToken }) {
 /** The isolation the whole design rests on, measured rather than assumed. */
 async function cloudNetCanReach(ip) {
 	const out = await docker([
-		'run', '--rm', '--network', CLOUD_NET, '--label', LABEL, NODE_IMAGE,
+		'run', '--rm', '--network', CLOUD_NET, '--label', `${LABEL}=1`, NODE_IMAGE,
 		'node', '-e',
 		`fetch('http://${ip}:8123/',{signal:AbortSignal.timeout(8000)}).then(r=>console.log('REACHED '+r.status),e=>console.log('BLOCKED '+e.name))`,
 	]);
@@ -236,8 +241,23 @@ async function cloudNetCanReach(ip) {
 
 async function teardown() {
 	for (const container of [HOUSE, RELAY]) await removeIfOurs(container);
-	fs.rmSync(CONFIG_DIR, { recursive: true, force: true });
+	await removeConfigDir();
 	log('removed the containers and the config directory');
+}
+
+/**
+ * Home Assistant runs as root inside its container and writes root-owned files
+ * into the mounted config directory, so the unprivileged user driving this
+ * script cannot delete them. Borrow root from a container to do it, scoped to
+ * this rig's own directory by name.
+ */
+async function removeConfigDir() {
+	if (!fs.existsSync(CONFIG_DIR)) return;
+	await dockerRaw([
+		'run', '--rm', '-v', `${ROOT}:/work`, '-w', '/work', NODE_IMAGE,
+		'rm', '-rf', `.ha-relay-${NAME}`,
+	]);
+	fs.rmSync(CONFIG_DIR, { recursive: true, force: true });
 }
 
 // ------------------------------------------------------------- the house API
@@ -251,8 +271,11 @@ async function onboardHouse() {
 	const ip = await houseIp();
 	const baseUrl = `http://${ip}:8123`;
 	const clientId = `${baseUrl}/`;
-	const steps = await json(`${baseUrl}/api/onboarding`);
-	const done = new Set(steps.filter((s) => s.done).map((s) => s.step));
+	// A fully onboarded instance does not serve /api/onboarding at all, so a 404
+	// here is the answer "already done" rather than a failure. The rig reuses a
+	// running house between runs, which is exactly when that happens.
+	const steps = await json(`${baseUrl}/api/onboarding`, { optional: true });
+	const done = steps ? new Set(steps.filter((s) => s.done).map((s) => s.step)) : new Set(['user']);
 
 	let session;
 	if (done.has('user')) {
@@ -355,6 +378,7 @@ async function installIntegration() {
  */
 async function pairThroughConfigFlow({ token, code, redeemPort }) {
 	const baseUrl = `http://${await houseIp()}:8123`;
+	await removeExistingEntries(baseUrl, token);
 	const flow = await json(`${baseUrl}/api/config/config_entries/flow`, {
 		method: 'POST',
 		token,
@@ -375,6 +399,24 @@ async function pairThroughConfigFlow({ token, code, redeemPort }) {
 			: `flow returned ${JSON.stringify(result).slice(0, 300)}`,
 	);
 	if (result?.type !== 'create_entry') throw new Error('pairing failed, so nothing below would mean anything');
+}
+
+/**
+ * Remove any three.ws config entry the house is already holding, so the run
+ * under test is the only pairing in the house. Reusing a running house between
+ * runs would otherwise leave a previous install token dialling a relay id that
+ * no longer exists, which reads in the logs like a fault in the current run.
+ *
+ * This is also the uninstall path: removing the entry is what an owner does to
+ * revoke from the house's end, and it drops the socket.
+ */
+async function removeExistingEntries(baseUrl, token) {
+	const entries = await json(`${baseUrl}/api/config/config_entries/entry`, { token, optional: true });
+	for (const entry of entries || []) {
+		if (entry.domain !== 'three_ws') continue;
+		await json(`${baseUrl}/api/config/config_entries/entry/${entry.entry_id}`, { method: 'DELETE', token, optional: true });
+		log(`removed a previous three.ws config entry (${entry.entry_id})`);
+	}
 }
 
 // ------------------------------------------------------------ the redeem API
@@ -435,7 +477,7 @@ async function waitForDialIn({ relayHostPort, relayId, serviceToken }) {
 		}).catch(() => null);
 		if (!res?.ok) return false;
 		const body = await res.json().catch(() => null);
-		return body?.connected === true;
+		return body?.online === true;
 	}, { label: 'the house to dial the relay', timeout: 120_000 });
 }
 
@@ -444,7 +486,7 @@ async function waitForDialIn({ relayHostPort, relayId, serviceToken }) {
 /** Every proof runs from cloud-net, which has no route to the house. */
 async function runProof(label, argv, env) {
 	console.log(`\n---- ${label} (from ${CLOUD_NET}) ----`);
-	const args = ['run', '--rm', '--network', CLOUD_NET, '--label', LABEL, '-v', `${ROOT}:/app`, '-w', '/app'];
+	const args = ['run', '--rm', '--network', CLOUD_NET, '--label', `${LABEL}=1`, '-v', `${ROOT}:/app`, '-w', '/app'];
 	for (const [key, value] of Object.entries(env)) {
 		if (value) args.push('-e', `${key}=${value}`);
 	}
@@ -470,7 +512,7 @@ async function proveKillAndRecover({ relayHostPort, relayId, serviceToken }) {
 	};
 
 	await docker(['stop', HOUSE]);
-	const gone = await waitFor(async () => (await status())?.connected === false, {
+	const gone = await waitFor(async () => (await status())?.online === false, {
 		label: 'the relay to notice the house is gone',
 		timeout: 90_000,
 	}).then(() => true, () => false);
@@ -481,7 +523,7 @@ async function proveKillAndRecover({ relayHostPort, relayId, serviceToken }) {
 	);
 
 	await docker(['start', HOUSE]);
-	const back = await waitFor(async () => (await status())?.connected === true, {
+	const back = await waitFor(async () => (await status())?.online === true, {
 		label: 'the house to come back on its own',
 		timeout: 180_000,
 	}).then(() => true, () => false);
@@ -535,7 +577,7 @@ function dockerRaw(args) {
 async function removeIfOurs(container) {
 	const label = await dockerRaw(['inspect', '-f', '{{index .Config.Labels "' + LABEL + '"}}', container]);
 	if (label.code !== 0) return;
-	if (label.out.trim() !== LABEL) {
+	if (label.out.trim() !== '1') {
 		log(`refusing to touch ${container}: it is not ours`);
 		return;
 	}
@@ -544,7 +586,7 @@ async function removeIfOurs(container) {
 
 async function containerRunning(container) {
 	const res = await dockerRaw(['inspect', '-f', '{{.State.Running}}{{index .Config.Labels "' + LABEL + '"}}', container]);
-	return res.code === 0 && res.out.trim() === `true${LABEL}`;
+	return res.code === 0 && res.out.trim() === 'true1';
 }
 
 async function houseIp() {
@@ -554,10 +596,15 @@ async function houseIp() {
 
 async function waitForHouse(ip) {
 	await waitFor(async () => {
-		// A fresh instance answers /api/onboarding with 200 and an onboarded one
-		// with 401. Either means it is up; a refused connection means it is not.
-		const res = await fetch(`http://${ip}:8123/api/onboarding`, { signal: AbortSignal.timeout(4000) }).catch(() => null);
-		return res ? res.status === 200 || res.status === 401 : false;
+		// `/api/` is the probe that works in both phases of this script's life.
+		// `/api/onboarding` looks like the obvious choice and is a trap: it answers
+		// 200 on a fresh instance and then stops existing once onboarding is done,
+		// so a readiness check built on it waits out its whole timeout on the
+		// restart AFTER the integration is installed. `/api/` answers 401 without
+		// a token whether or not the instance has been onboarded, and a booting
+		// instance refuses the connection instead of answering at all.
+		const res = await fetch(`http://${ip}:8123/api/`, { signal: AbortSignal.timeout(4000) }).catch(() => null);
+		return res ? res.status === 401 || res.status === 200 : false;
 	}, { label: 'Home Assistant to boot', timeout: 240_000 });
 }
 

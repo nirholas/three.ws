@@ -151,9 +151,28 @@ export const INBOUND_TYPES = Object.freeze(['result', 'event', 'pong']);
  * `subscribe_events` without an event type subscribes to EVERY event in the
  * house, which is a far larger read surface than the room graph needs (it would
  * carry, for example, every `call_service` another integration makes). Only the
- * one event the legacy state channel uses is permitted.
+ * events the room graph is built from are permitted.
+ *
+ * `state_changed` is the live state channel. The four `*_registry_updated`
+ * events are how the graph learns that the house was rearranged: assigning a
+ * light to the kitchen, renaming a floor, adding a device. Without them a
+ * relayed home renders the rooms it had when the socket opened and quietly
+ * stops tracking, while a direct home updates in seconds. That divergence is a
+ * transport bug, and it belongs here rather than in a special case above the
+ * transport.
+ *
+ * They widen nothing. Each one is a notification that a registry changed, and
+ * the bridge answers it by re-reading the same four `config/*_registry/list`
+ * calls that are already allowlisted above. Permitting the announcement of a
+ * change while permitting a full read of its result is the consistent position.
  */
-export const ALLOWED_EVENT_TYPES = Object.freeze(['state_changed']);
+export const ALLOWED_EVENT_TYPES = Object.freeze([
+	'state_changed',
+	'area_registry_updated',
+	'device_registry_updated',
+	'entity_registry_updated',
+	'floor_registry_updated',
+]);
 
 /**
  * Service domains that administer the Home Assistant install or execute

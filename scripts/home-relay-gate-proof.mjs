@@ -186,7 +186,14 @@ await finish();
 // -------------------------------------------------------------- small parts
 
 async function finish() {
-	await closeHome(homeId).catch(() => null);
+	// closeHome is synchronous in the runtime's export surface, so it is wrapped
+	// rather than awaited with a `.catch` that would not exist on its return.
+	try {
+		await closeHome(homeId);
+	} catch {
+		// The pool is being torn down anyway; a failure here would only mask the
+		// result the script exists to report.
+	}
 	console.log(`\n${results.length - failures}/${results.length} checks passed.`);
 	process.exit(failures ? 1 : 0);
 }

@@ -639,10 +639,39 @@ function statusText(home, stale) {
 	switch (home.status) {
 		case 'connected': return `Live${home.last_ok_at ? `, updated ${ago(home.last_ok_at)}` : ''}.`;
 		case 'auth_failed': return home.status_detail || 'Home Assistant rejected the stored token. Reconnect with a new one.';
-		case 'unreachable': return home.status_detail || 'Not answering right now. The last state we saw is below.';
+		case 'unreachable': return unreachableText(home);
 		case 'revoked': return 'Disconnected.';
 		default: return home.status_detail || 'Connecting.';
 	}
+}
+
+/**
+ * What to say about a house that is not answering.
+ *
+ * The distinction is the whole of state 8 versus state 9, and getting it wrong
+ * is worse than saying nothing. `status_detail` on a failed dial carries the
+ * connect-time diagnosis, which for a LAN address reads "if it is only on your
+ * home network, three.ws cannot route to it: use your remote https URL". That
+ * is the right sentence for a house that has never connected. It is exactly the
+ * wrong one for a house that worked this morning and then lost power: the
+ * address was never the problem, and we would be sending somebody off to
+ * reconfigure a reverse proxy over a tripped breaker. Caught live, by stopping
+ * a connected house and reading its card.
+ *
+ * A house that has answered before therefore gets told the true thing (it
+ * stopped answering, and this is when it last spoke). The platform's own note
+ * that it has backed off its retries survives either way, because that one is
+ * true in both cases and it is the part that says "you do not have to do
+ * anything".
+ */
+function unreachableText(home) {
+	const paused = /paused retries/i.test(home.status_detail || '')
+		? ' three.ws has paused its retries for a few minutes and will try again on its own.'
+		: '';
+	if (home.last_ok_at) {
+		return `Not answering right now. It last answered ${ago(home.last_ok_at)}, and that is the state shown below.${paused}`;
+	}
+	return home.status_detail || 'Not answering right now. The last state we saw is below.';
 }
 
 /** Plain language, and never a future tense for a past timestamp. */

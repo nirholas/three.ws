@@ -387,19 +387,27 @@ Two proofs, both run rather than argued:
 Run them with `npm run home:chaos` (needs `npm run home:fleet` first). Each one
 injects a real failure against the real fleet: containers are stopped, sockets
 are cut, tokens are deleted in Home Assistant, the process is sent SIGTERM, the
-database is pointed at a host that cannot exist. The transcripts below are from
-the run committed at
-[`tasks/home/chaos-2026-09-03.json`](../../tasks/home/chaos-2026-09-03.json).
+database is pointed at a host that cannot exist.
 
-| # | Failure | Injected how | Result |
-|---|---|---|---|
-| 1 | House goes offline mid-session | `docker stop`, then `docker start` | **PASS** |
-| 2 | House flaps up, down, up every 5 s for 2 minutes | a TCP gate slammed shut and reopened in front of the container | **PASS** |
-| 3 | Token revoked while connected | a token deleted through Home Assistant's own WebSocket API | **PASS** |
-| 4 | Our instance recycled mid-stream | SIGTERM to a real child process holding a real stream | **PASS** |
-| 5 | Database unavailable | the real store pointed at a host in the reserved `.invalid` TLD | **PASS** |
-| 6 | Slow house (2 s per response) | a latency shim delaying the response direction only | **PASS** |
-| 7 | 624 entity house at ten updates a second | 600 real `input_number` writes over 62 seconds | **PASS** |
+The suite has been run twice against a freshly built fleet, on 2026-09-03 and
+2026-09-09, and both transcripts are committed:
+[`tasks/home/chaos-2026-09-03.json`](../../tasks/home/chaos-2026-09-03.json) and
+[`tasks/home/chaos-2026-09-09.json`](../../tasks/home/chaos-2026-09-09.json). The
+sections below quote the later run.
+
+| # | Failure | Injected how | 2026-09-03 | 2026-09-09 |
+|---|---|---|---|---|
+| 1 | House goes offline mid-session | `docker stop`, then `docker start` | **PASS** | **PASS** |
+| 2 | House flaps up, down, up every 5 s for 2 minutes | a TCP gate slammed shut and reopened in front of the container | **PASS** | **PASS** |
+| 3 | Token revoked while connected | a token deleted through Home Assistant's own WebSocket API | **PASS** | **PASS** |
+| 4 | Our instance recycled mid-stream | SIGTERM to a real child process holding a real stream | **PASS** | **PASS** |
+| 5 | Database unavailable | the real store pointed at a host in the reserved `.invalid` TLD | **PASS** | **PASS** |
+| 6 | Slow house (2 s per response) | a latency shim delaying the response direction only | **PASS** | **PASS**, after its measurement was rebuilt |
+| 7 | 624 entity house at ten updates a second | 600 real `input_number` writes over 62 seconds | **PASS** | **PASS** |
+
+Scenario 6 is the one that moved, and it moved because the **scenario** was
+wrong, not the system. Its first 2026-09-09 run failed; the section below records
+what that turned out to be and what replaced it.
 
 ### 1. A house goes offline mid-session
 

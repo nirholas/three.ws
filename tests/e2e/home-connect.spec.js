@@ -259,6 +259,53 @@ test.describe('/smart-home connect flow', () => {
 		await expect(page.getByText('120')).toBeVisible();
 	});
 
+	test('a house that stopped answering is never told its address is wrong', async ({ page }) => {
+		// The connect-time diagnosis and the ongoing status are different
+		// sentences, and reusing the first as the second is worse than saying
+		// nothing: this house answered ten minutes ago, so "if it is only on your
+		// home network, use your remote https URL" would send somebody to
+		// reconfigure a reverse proxy over what is actually a tripped breaker.
+		// Found by stopping a real container in home-connect-live.spec.js.
+		const tenMinutesAgo = new Date(Date.now() - 10 * 60 * 1000).toISOString();
+		await stub(page, {
+			homes: [{
+				...HOME,
+				status: 'unreachable',
+				status_detail: 'Could not reach https://home.example.com. If it is only on your home network, three.ws cannot route to it: use your remote https URL.',
+				last_ok_at: tenMinutesAgo,
+			}],
+		});
+		await page.goto(PAGE);
+		await expect(state(page)).toHaveAttribute('data-state', 'degraded', { timeout: SLOW });
+
+		const status = page.locator('.hm-status');
+		await expect(status).toContainText(/not answering right now/i);
+		await expect(status).toContainText(/last answered 10 minutes ago/i);
+		await expect(status).not.toContainText(/remote https url/i);
+		await expect(status).not.toContainText(/home network/i);
+		// And the way back is still offered, because the house may simply need
+		// turning on again.
+		await expect(page.getByRole('button', { name: /try connecting again/i })).toBeVisible();
+	});
+
+	test('a house that never connected keeps the diagnosis that explains why', async ({ page }) => {
+		// The mirror image: with no successful handshake behind it, the address
+		// really may be the problem, and the sentence that says so is the useful
+		// one. Losing it would leave a first-time connector with "not answering"
+		// and nothing to act on.
+		await stub(page, {
+			homes: [{
+				...HOME,
+				status: 'unreachable',
+				status_detail: 'Could not reach https://home.example.com. If it is only on your home network, three.ws cannot route to it: use your remote https URL.',
+				last_ok_at: null,
+			}],
+		});
+		await page.goto(PAGE);
+		await expect(state(page)).toHaveAttribute('data-state', 'degraded', { timeout: SLOW });
+		await expect(page.locator('.hm-status')).toContainText(/remote https url/i);
+	});
+
 	test('a house answering right now reads as live, not stale', async ({ page }) => {
 		await stub(page, { homes: [{ ...HOME, last_ok_at: new Date().toISOString() }] });
 		await page.goto(PAGE);
@@ -312,7 +359,7 @@ test.describe('/smart-home connect flow', () => {
 	test('a house whose token was rejected offers a prefilled reconnect', async ({ page }) => {
 		await stub(page, { homes: [{ ...HOME, status: 'auth_failed', status_detail: 'Home Assistant rejected the stored token.' }] });
 		await page.goto(PAGE);
-		await expect(state(page)).toHaveAttribute('data-state', 'connected', { timeout: SLOW });
+		await expect(state(page)).toHaveAttribute('data-state', 'degraded', { timeout: SLOW });
 
 		// Stating a problem and offering only "disconnect" is a dead end.
 		await page.getByRole('button', { name: /reconnect with a new token/i }).click();

@@ -575,6 +575,8 @@ tasks/home/*.local.json
 public/models/voice/runtime/
 # The reusable QA accounts for the home lane's e2e run. Real credentials.
 .ha-config-e2e-accounts.json
+# One per concurrent home e2e lane, keyed by HOME_LIVE_NAME.
+.ha-config-e2e-accounts.*.json
 
 # Playwright/agent walk screenshots. Scratch output, never commit.
 .shots/

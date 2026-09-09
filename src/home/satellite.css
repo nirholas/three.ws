@@ -311,6 +311,22 @@
 	inset: 0;
 }
 
+/* When there is no body to show, the fallback goes inside the stage canvas,
+   which is absolutely positioned: its content therefore has no effect on
+   layout and, left alone, hangs past the bottom of the stage, covers the Talk
+   now and Listen buttons and eats their clicks. Pin it to the stage, centre it
+   there, and let it scroll rather than escape. */
+.hs-stage-canvas > .hs-empty {
+	position: absolute;
+	inset: 0;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	gap: 0.4rem;
+	overflow: auto;
+}
+
 /* The whole point of the product: the badge that names the current state, over
    the avatar, legible from across a room. */
 .hs-badge {

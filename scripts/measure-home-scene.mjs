@@ -28,6 +28,7 @@
  */
 
 import fs from 'node:fs';
+import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -53,7 +54,15 @@ const MINUTES = Number(opts.minutes ?? 10);
 /** Round trips measured for the end to end latency figure. */
 const LATENCY_TRIALS = Number(opts.trials ?? 8);
 
-const report = { measuredAt: new Date().toISOString(), origin: ORIGIN, house: { version: HOUSE.version || null } };
+const report = {
+	measuredAt: new Date().toISOString(),
+	origin: ORIGIN,
+	house: { version: HOUSE.version || null },
+	// What else this machine was doing. A frame rate read off a box with a load
+	// average of sixty is a measurement of the box, and a reader who cannot see
+	// that has been handed a number that looks like a product fact.
+	machine: { cpus: os.cpus().length, loadAverageAtStart: os.loadavg().map((n) => Math.round(n * 100) / 100) },
+};
 
 await main();
 
@@ -65,21 +74,33 @@ async function main() {
 		const homeId = await connectHouse(context);
 		report.homeId = homeId;
 
-		const page = await context.newPage();
+		// Every page this run opens, not just the 3D one: the flat view, the empty
+		// house and the error screen are part of the product and a warning on any
+		// of them counts.
 		const errors = [];
-		page.on('console', (msg) => {
-			if (msg.type() === 'error' || msg.type() === 'warning') errors.push(`${msg.type()}: ${msg.text()}`);
+		context.on('page', (opened) => {
+			opened.on('console', (msg) => {
+				if (msg.type() === 'error' || msg.type() === 'warning') errors.push(`${msg.type()}: ${msg.text()}`);
+			});
+			opened.on('pageerror', (err) => errors.push(`pageerror: ${err.message}`));
 		});
-		page.on('pageerror', (err) => errors.push(`pageerror: ${err.message}`));
+		const page = await context.newPage();
 
+		report.routes = await checkRoutes(context, homeId);
 		report.coldPaint = await measureColdPaint(page, homeId);
-		report.desktop = await measureFrameRate(page, 'desktop');
-		report.latency = await measureLatency(page);
-		report.heap = await measureHeap(page, MINUTES);
-		report.mobile = await measureMobile(context, homeId);
+		// --states-only exists for the second pass over a differently configured
+		// house: the numbers do not change with the wallpaper, and re-running a
+		// ten minute heap trace to photograph one more empty state is waste.
+		if (!opts['states-only']) {
+			report.desktop = await measureFrameRate(page, 'desktop');
+			report.latency = await measureLatency(page);
+			report.heap = await measureHeap(page, MINUTES);
+			report.mobile = await measureMobile(context, homeId);
+		}
 		report.console = errors;
 
 		if (opts.out) report.screenshots = await captureStates(context, page, homeId);
+		await disconnectHouse(context, homeId);
 	} finally {
 		await browser.close();
 	}
@@ -98,21 +119,16 @@ async function signIn(context) {
 }
 
 /**
- * Connect the house through the real endpoint, reusing one this account already
- * has. Reuse matters: connecting verifies the instance and writes an encrypted
- * token every time, and a fresh row per run would leave a pile of houses behind
- * on an account that is reused across runs.
+ * Connect the house through the real endpoint.
+ *
+ * A fresh row every run, and removed again at the end. The stored Home
+ * Assistant token is encrypted with the API process's key, which a local stack
+ * generates per run, so a row left behind by an earlier run is one this run
+ * cannot read: reuse would fail as a product error rather than as the stale
+ * credential it is.
  */
 async function connectHouse(context) {
-	const label = opts.label || 'Scene measurement';
-	const list = await context.request.get(`${ORIGIN}/api/home`, { timeout: 60_000 });
-	if (list.ok()) {
-		const body = await list.json().catch(() => null);
-		const homes = Array.isArray(body?.homes) ? body.homes : Array.isArray(body) ? body : [];
-		const found = homes.find((h) => h.label === label);
-		if (found) return found.id;
-	}
-
+	const label = opts.label || `Scene measurement ${new Date().toISOString().slice(11, 19)}`;
 	const token = await csrf(context);
 	const res = await context.request.post(`${ORIGIN}/api/home`, {
 		data: { label, baseUrl: HOUSE.baseUrl, token: HOUSE.token },
@@ -126,11 +142,36 @@ async function connectHouse(context) {
 	return id;
 }
 
+/** Take the measurement house back off the account, so runs leave nothing. */
+async function disconnectHouse(context, homeId) {
+	const token = await csrf(context);
+	await context.request
+		.delete(`${ORIGIN}/api/home/${homeId}`, { headers: { 'x-csrf-token': token }, timeout: 60_000 })
+		.catch(() => {});
+}
+
 async function csrf(context) {
 	const res = await context.request.get(`${ORIGIN}/api/csrf-token`, { timeout: 30_000 });
 	if (!res.ok()) fail(`csrf token returned ${res.status()}`);
 	const body = await res.json();
 	return (body.data || body).token;
+}
+
+/**
+ * Both addresses really serve this page.
+ *
+ * `/smart-home/:id` is where the connect flow lands and `/home/:id` is the
+ * campaign's own address for the same house. They are two rows in the route
+ * table, so one of them can rot without the other noticing.
+ */
+async function checkRoutes(context, homeId) {
+	const out = {};
+	for (const route of [`/smart-home/${homeId}`, `/home/${homeId}`]) {
+		const res = await context.request.get(`${ORIGIN}${route}`, { timeout: 60_000 });
+		const body = res.ok() ? await res.text() : '';
+		out[route] = { status: res.status(), servesScene: body.includes('src/home/scene.js') };
+	}
+	return out;
 }
 
 /** Open the scene and wait until the renderer has drawn a frame of the house. */
@@ -332,6 +373,7 @@ async function captureStates(context, page, homeId) {
 	await page.waitForTimeout(1500);
 	shots.live = await shot(page, '04-live');
 
+	shots.liveChange = await captureLiveChange(page, dir);
 	shots.acting = await captureActing(page);
 	shots.confirmation = await captureConfirmation(page);
 
@@ -350,7 +392,7 @@ async function captureStates(context, page, homeId) {
 	shots.noWebgl = await shot(flat, '09-no-webgl');
 	await flat.close();
 
-	// 10. error: the house is gone from under the page.
+	// 10. error: a home id that is not this account's.
 	const missing = await context.newPage();
 	await missing.setViewportSize({ width: 1440, height: 900 });
 	await missing.goto(`${ORIGIN}/smart-home/00000000-0000-4000-8000-000000000000`, { waitUntil: 'domcontentloaded' });
@@ -358,8 +400,137 @@ async function captureStates(context, page, homeId) {
 	shots.error = await shot(missing, '10-error');
 	await missing.close();
 
+	// 2 and 3: a real house with nothing in it, and one where nothing is filed.
+	if (opts['bare-stack']) Object.assign(shots, await captureEmptyHouse(context, shot));
+
+	// 5 and 6: the house taken away underneath the page it is drawn in.
+	if (HOUSE.container) Object.assign(shots, await captureLostHouse(page, shot));
+
 	shots.dir = path.relative(ROOT, dir);
 	return shots;
+}
+
+/**
+ * The two states a house reaches before anyone has organised it: connected and
+ * exposing nothing at all, and exposing devices that are in no area.
+ *
+ * Both are real houses, not a filtered view of the seeded one: a second Home
+ * Assistant with no integration enabled is exactly what someone sees minutes
+ * after installing it.
+ */
+async function captureEmptyHouse(context, shot) {
+	const bare = JSON.parse(fs.readFileSync(path.resolve(ROOT, opts['bare-stack']), 'utf8'));
+	const token = await csrf(context);
+	const res = await context.request.post(`${ORIGIN}/api/home`, {
+		data: { label: `Bare house ${Date.now()}`, baseUrl: bare.baseUrl, token: bare.token },
+		headers: { 'content-type': 'application/json', 'x-csrf-token': token },
+		timeout: 120_000,
+	});
+	if (!res.ok()) return { emptyHouse: `connect failed: ${res.status()}` };
+	const id = (await res.json())?.home?.id;
+	if (!id) return { emptyHouse: 'connect returned no id' };
+
+	const page = await context.newPage();
+	await page.setViewportSize({ width: 1440, height: 900 });
+	await page.goto(`${ORIGIN}/smart-home/${id}`, { waitUntil: 'domcontentloaded' });
+	await page.waitForSelector('.hs-overlay h2', { timeout: 120_000 });
+	const heading = (await page.locator('.hs-overlay h2').first().textContent())?.trim();
+	// Which of the two designed nothings this house lands in is the house's own
+	// answer, not something to assert: a bare instance exposes nothing, and one
+	// with an integration on and no areas exposes devices that are in no room.
+	const empty = /empty/i.test(heading || '');
+	const file = await shot(page, empty ? '02-empty-house' : '03-nothing-in-a-room');
+	await page.close();
+	await disconnectHouse(context, id);
+	return { [empty ? 'emptyHouse' : 'nothingInARoom']: file, bareHouseHeading: heading };
+}
+
+/**
+ * Stale, then disconnected, then live again, by really stopping the container
+ * the house runs in.
+ *
+ * They are different states and the difference matters: stale means the
+ * platform is still retrying and the house on screen is the last one we saw,
+ * disconnected means nobody is retrying any more and there is a button. The
+ * rooms must survive both.
+ */
+async function captureLostHouse(page, shot) {
+	const out = {};
+	await docker(['stop', HOUSE.container]);
+	try {
+		await page.locator('#hs-status[data-status="stale"]').waitFor({ timeout: 180_000 });
+		out.stale = await shot(page, '05-stale');
+		out.staleRoomsHeld = await page.evaluate(() => window.__homeScene.model.rooms.length);
+
+		await page.locator('#hs-status[data-status="disconnected"]').waitFor({ timeout: 300_000 });
+		out.disconnected = await shot(page, '06-disconnected');
+		out.disconnectedRoomsHeld = await page.evaluate(() => window.__homeScene.model.rooms.length);
+	} catch (err) {
+		out.lostHouseError = err.message;
+	} finally {
+		await docker(['start', HOUSE.container]);
+	}
+	// Back on its own, with no reload: the page recovers or the run says so.
+	await page
+		.locator('#hs-status[data-status="live"]')
+		.waitFor({ timeout: 300_000 })
+		.then(() => {
+			out.recoveredWithoutReload = true;
+		})
+		.catch(() => {
+			out.recoveredWithoutReload = false;
+		});
+	return out;
+}
+
+async function docker(args) {
+	const { execFile } = await import('node:child_process');
+	await new Promise((resolve, reject) => execFile('docker', args, (err) => (err ? reject(err) : resolve())));
+}
+
+/**
+ * A frame sequence of a real light being switched in Home Assistant.
+ *
+ * One frame before the service call and a frame every 150 ms after it, of the
+ * canvas alone. The light is chosen in the room the camera is already looking
+ * at, so the change is inside the frame rather than behind it.
+ */
+async function captureLiveChange(page, dir) {
+	const target = await page.evaluate(() => {
+		const model = window.__homeScene.model;
+		const room = model.rooms.find((r) => r.id === model.focusRoomId) || model.rooms[0];
+		const light = room?.objects.find((o) => o.domain === 'light');
+		return light ? { entityId: light.entityId, state: light.state, room: room.name } : null;
+	});
+	if (!target) return null;
+
+	const stage = page.locator('#hs-stage canvas');
+	const frames = [];
+	const shoot = async (name) => {
+		const file = path.join(dir, `${name}.png`);
+		await stage.screenshot({ path: file });
+		frames.push(path.relative(ROOT, file));
+	};
+
+	await shoot('02-live-change-0-before');
+	const wanted = target.state === 'on' ? 'off' : 'on';
+	const sent = Date.now();
+	await callService(`light/turn_${wanted}`, target.entityId);
+	for (let i = 1; i <= 6; i += 1) {
+		await page.waitForTimeout(150);
+		await shoot(`02-live-change-${i}-t${i * 150}ms`);
+	}
+	const seen = await page.evaluate(
+		(id) => {
+			for (const room of window.__homeScene.model.rooms) {
+				const found = room.objects.find((o) => o.entityId === id);
+				if (found) return found.state;
+			}
+			return null;
+		},
+		target.entityId,
+	);
+	return { entityId: target.entityId, room: target.room, from: target.state, to: seen, wanted, elapsedMs: Date.now() - sent, frames };
 }
 
 /**
@@ -485,8 +656,10 @@ function usage() {
 			'  --stack <file>     the stack description (default: .ha-config-e2e-stack.json)',
 			'  --minutes <n>      length of the heap trace (default: 10)',
 			'  --trials <n>       latency round trips (default: 8)',
-			'  --label <text>     the home label to reuse or create',
+			'  --label <text>     the home label to create',
 			'  --out <dir>        write one PNG per state into this directory',
+			'  --bare-stack <f>   a second house with nothing in it, as --json from',
+			'                     scripts/home-test-instance.mjs, for the empty states',
 			'',
 		].join('\n'),
 	);

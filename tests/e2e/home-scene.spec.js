@@ -170,6 +170,16 @@ test('a link that asks for a view outranks what this browser remembers', async (
 	// And following that link did not overwrite what this browser chose itself.
 	expect(await page.evaluate(() => localStorage.getItem('three:home:view'))).toBe('2d');
 
+	// The floorplan is the third view this page opens at, and a cold load into it
+	// mounts the editor before the first graph frame has landed. The editor
+	// resolves room names from that graph, so without the handoff its tray lists
+	// raw area ids: the house is there and unreadable. Assert on a real name.
+	const roomName = await page.evaluate(() => window.__homeScene.model.rooms.find((r) => !r.synthetic)?.name);
+	expect(roomName).toBeTruthy();
+	await page.goto(`/smart-home/${id}?view=plan`, { waitUntil: 'domcontentloaded' });
+	await expect(page.locator('#hs-plan').getByText(roomName, { exact: true }).first()).toBeVisible({ timeout: 120_000 });
+	expect(await page.evaluate(() => window.__homeScene.status.view)).toBe('plan');
+
 	// With nothing asked for, the remembered view is still the one that opens.
 	await page.goto(`/smart-home/${id}`, { waitUntil: 'domcontentloaded' });
 	await expect(page.locator('.hs-card').first()).toBeVisible({ timeout: 120_000 });

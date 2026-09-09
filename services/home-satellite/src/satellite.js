@@ -61,6 +61,16 @@ const PLAYED_GRACE_MS = 2000;
 /** A socket that has said nothing for this long is not a Home Assistant. */
 const IDLE_SOCKET_MS = 60_000;
 
+/**
+ * How long a failed run stays on screen before the face goes back to resting.
+ *
+ * Home Assistant reports the failure and returns its own entity to idle in the
+ * same instant, so a screen that keeps the error up is telling a household
+ * their voice assistant is broken long after it recovered. Long enough to read
+ * across a kitchen, short enough that nobody is looking at yesterday's failure.
+ */
+const ERROR_DWELL_MS = 6_000;
+
 /** More concurrent sockets than this is not Home Assistant either. */
 const MAX_SOCKETS = 8;
 
@@ -104,6 +114,7 @@ export class WyomingSatellite extends EventEmitter {
 		this._micTimestamp = 0;
 		this._speaking = false;
 		this._playedTimer = null;
+		this._errorTimer = null;
 		this._playedSent = true;
 		this._incomingAudioMs = 0;
 
@@ -148,6 +159,7 @@ export class WyomingSatellite extends EventEmitter {
 
 	async close() {
 		this._clearPlayedTimer();
+		this._clearErrorTimer();
 		if (this._idleTimer) clearTimeout(this._idleTimer);
 		this._idleTimer = null;
 		for (const socket of this._sessions.keys()) socket.destroy();
@@ -420,6 +432,7 @@ export class WyomingSatellite extends EventEmitter {
 				// A pipeline error ends the run. Come back to a usable state rather
 				// than leaving the avatar frozen mid-sentence.
 				this._speaking = false;
+				this._scheduleErrorClear();
 				return;
 			}
 
@@ -524,7 +537,31 @@ export class WyomingSatellite extends EventEmitter {
 		return true;
 	}
 
+	/**
+	 * Show a failure for a moment, then rest. Cancelled by any state the
+	 * pipeline actually reaches, because real news beats a timer.
+	 */
+	_scheduleErrorClear() {
+		this._clearErrorTimer();
+		this._errorTimer = setTimeout(() => {
+			this._errorTimer = null;
+			if (this._state !== STATE.ERROR) return;
+			if (this.connected) this._setState(STATE.IDLE, 'Ready');
+			else this._setState(STATE.DISCONNECTED, 'Home Assistant is not connected');
+		}, ERROR_DWELL_MS);
+		this._errorTimer.unref?.();
+	}
+
+	_clearErrorTimer() {
+		if (this._errorTimer) clearTimeout(this._errorTimer);
+		this._errorTimer = null;
+	}
+
 	_setState(state, detail = null) {
+		// Leaving the error state for any reason retires its timer, so a run that
+		// starts inside the dwell window is never yanked back to "Ready" behind
+		// the pipeline that is already moving.
+		if (state !== STATE.ERROR) this._clearErrorTimer();
 		if (this._state === state && !detail) return;
 		this._state = state;
 		this.emit('state', { state, detail });

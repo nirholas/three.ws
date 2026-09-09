@@ -134,13 +134,23 @@ export async function createConnection({
 	const enc = await encryptSecret(String(token));
 	const fingerprint = fingerprintToken(token);
 
+	// A row created as `connected` was created because a handshake succeeded and
+	// its capabilities were measured, so the house has demonstrably answered and
+	// the timestamp that says so is true. Leaving it null was a real defect on
+	// the surface above: `last_ok_at` is what "Live, updated 2 minutes ago" and
+	// the whole staleness window read, and with it empty a house that had just
+	// connected could never go stale, never showed an age, and when it stopped
+	// answering fell back to the connect-time diagnosis and told its owner their
+	// address might be wrong. It was never wrong; the house was.
+	const okAt = status === HOME_STATUS.CONNECTED ? new Date() : null;
+
 	const rows = await sql`
 		insert into home_connections
 			(user_id, label, base_url, access_token_enc, token_fingerprint,
-			 transport, relay_id, capabilities, status, status_detail)
+			 transport, relay_id, capabilities, status, status_detail, last_ok_at)
 		values
 			(${userId}, ${cleanLabel}, ${http}, ${enc}, ${fingerprint},
-			 ${transport}, ${relayId}, ${JSON.stringify(capabilities)}::jsonb, ${status}, ${truncate(statusDetail, DETAIL_MAX)})
+			 ${transport}, ${relayId}, ${JSON.stringify(capabilities)}::jsonb, ${status}, ${truncate(statusDetail, DETAIL_MAX)}, ${okAt})
 		on conflict (user_id, base_url) where revoked_at is null
 		do update set
 			label             = excluded.label,
@@ -151,6 +161,8 @@ export async function createConnection({
 			capabilities      = excluded.capabilities,
 			status            = excluded.status,
 			status_detail     = excluded.status_detail,
+			-- A reconnect that failed must not erase when the house last worked.
+			last_ok_at        = coalesce(excluded.last_ok_at, home_connections.last_ok_at),
 			updated_at        = now()
 		returning ${SAFE_COLUMNS()}
 	`;

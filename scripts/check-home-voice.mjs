@@ -945,10 +945,17 @@ async function liveStack() {
 		cookie: authed,
 		viteBase,
 		async teardown() {
-			await fetch(`${apiBase}/api/home/${homeId}`, {
+			// A fresh token, not the one the POST used: CSRF tokens rotate on a
+			// state-changing request, and a stale one makes the DELETE a silent 403
+			// that leaves a loopback home connected to the account forever.
+			const fresh = await fetch(`${apiBase}/api/csrf-token`, { headers: { cookie: authed } }).catch(() => null);
+			const token = fresh ? (await fresh.json().catch(() => ({})))?.data?.token : '';
+			const res = await fetch(`${apiBase}/api/home/${homeId}`, {
 				method: 'DELETE',
-				headers: { cookie: authed, 'x-csrf-token': csrf },
-			}).catch(() => {});
+				headers: { cookie: `${authed}; ${fresh ? cookieHeader(fresh) : ''}`, 'x-csrf-token': token || csrf },
+			}).catch(() => null);
+			if (!res?.ok) console.warn(`[live] could not remove home ${homeId} (${res?.status ?? 'no response'}); remove it from /home before it is forgotten.`);
+			else console.log(`[live] removed home ${homeId}.`);
 			vite.kill();
 			api.kill();
 		},

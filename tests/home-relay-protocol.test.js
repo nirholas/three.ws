@@ -79,13 +79,29 @@ describe('what the platform may send into a house', () => {
 		expect(INBOUND_TYPES).not.toContain('auth_ok');
 	});
 
-	it('limits subscribe_events to the one event the state channel needs', () => {
+	it('limits subscribe_events to the events the room graph is built from', () => {
 		expect(checkOutbound({ type: 'subscribe_events', event_type: 'state_changed' })).toEqual({ allowed: true });
+		// The registry events are how a relayed home learns it was rearranged.
+		// Without them the graph freezes at whatever the house looked like when
+		// the socket opened, while a direct home keeps up: the same product
+		// behaving differently by transport, which is the bug this list fixes.
+		for (const event of ['area_registry_updated', 'device_registry_updated', 'entity_registry_updated', 'floor_registry_updated']) {
+			expect(checkOutbound({ type: 'subscribe_events', event_type: event })).toEqual({ allowed: true });
+		}
 		// A bare subscribe_events is a firehose of everything happening in the
 		// house, including other integrations' service calls.
 		expect(checkOutbound({ type: 'subscribe_events' }).allowed).toBe(false);
 		expect(checkOutbound({ type: 'subscribe_events', event_type: 'call_service' }).allowed).toBe(false);
-		expect(ALLOWED_EVENT_TYPES).toEqual(['state_changed']);
+		// The permitted set stays a closed list, and every member of it is an
+		// announcement whose full result the relay already carries through a
+		// `config/*_registry/list` read.
+		expect(ALLOWED_EVENT_TYPES).toEqual([
+			'state_changed',
+			'area_registry_updated',
+			'device_registry_updated',
+			'entity_registry_updated',
+			'floor_registry_updated',
+		]);
 	});
 
 	it('allows ordinary device control, including the guarded ones', () => {

@@ -25,7 +25,8 @@
  *   node scripts/provision-ha-pipeline.mjs \
  *     --url http://localhost:8123 --token <long-lived token> \
  *     --satellite host.docker.internal:10700 \
- *     --stt whisper:10300 --tts piper:10200 --wake openwakeword:10400
+ *     --stt whisper:10300 --tts piper:10200 --wake openwakeword:10400 \\
+ *     --wake-word okay_nabu
  *
  * Re-running it is safe: it removes the Wyoming entries it manages before it
  * adds them, because Home Assistant's own config flow will happily create a
@@ -50,6 +51,15 @@ const SERVICES = {
 	satellite: arg('satellite', 'host.docker.internal:10700'),
 };
 const PIPELINE_NAME = arg('pipeline-name', 'three.ws satellite');
+// Which wake word the pipeline listens for. openWakeWord ships several and the
+// choice is not cosmetic: a model only fires on the phrase it was trained on,
+// so an instance preloaded with one model and a pipeline asking for another
+// simply never wakes. The id is the one openWakeWord advertises over Wyoming
+// (`okay_nabu`, `alexa`, `hey_jarvis`, `hey_mycroft`, `hey_rhasspy`), NOT the
+// model filename: a versioned id like `ok_nabu_v0.1` is accepted by the
+// pipeline and then matches nothing, which looks exactly like a broken
+// microphone. Read the list with `wake_word/info` before changing this.
+const WAKE_WORD = arg('wake-word', 'okay_nabu');
 
 if (!TOKEN) {
 	console.error('a long-lived access token is required: --token <token>, or HOME_ASSISTANT_TOKEN');
@@ -199,7 +209,7 @@ const main = async () => {
 			tts_language: ttsLanguage,
 			tts_voice: null,
 			wake_word_entity: wakeEntity,
-			wake_word_id: wakeEntity ? 'ok_nabu_v0.1' : null,
+			wake_word_id: wakeEntity ? WAKE_WORD : null,
 		};
 		const pipeline = existing
 			? await ws.call({ type: 'assist_pipeline/pipeline/update', pipeline_id: existing.id, ...spec })

@@ -82,7 +82,7 @@ test.describe('whose fault is it', () => {
 			status: (route) => route.fulfill(statusFeed('down', 'handshakes 31.0% over 22 homes in 15m')),
 		});
 		await page.goto(PAGE);
-		await expect(root(page)).toHaveAttribute('data-state', 'connected', { timeout: SLOW });
+		await expect(root(page)).toHaveAttribute('data-state', 'degraded', { timeout: SLOW });
 
 		const banner = page.locator('.hm-notice', { hasText: 'This one is us, not your house.' });
 		await expect(banner).toBeVisible();
@@ -96,7 +96,7 @@ test.describe('whose fault is it', () => {
 			status: (route) => route.fulfill(statusFeed('ok', '48/49 homes connected')),
 		});
 		await page.goto(PAGE);
-		await expect(root(page)).toHaveAttribute('data-state', 'connected', { timeout: SLOW });
+		await expect(root(page)).toHaveAttribute('data-state', 'degraded', { timeout: SLOW });
 
 		await expect(page.locator('.hm-status-verdict')).toContainText('looks like your house rather than us');
 		await expect(page.locator('.hm-notice', { hasText: 'This one is us' })).toHaveCount(0);
@@ -121,11 +121,15 @@ test.describe('whose fault is it', () => {
 			status: (route) => route.abort(),
 		});
 		await page.goto(PAGE);
-		await expect(root(page)).toHaveAttribute('data-state', 'connected', { timeout: SLOW });
+		await expect(root(page)).toHaveAttribute('data-state', 'degraded', { timeout: SLOW });
 
 		await expect(page.locator('.hm-status-verdict')).toHaveCount(0);
 		await expect(page.locator('.hm-notice', { hasText: 'This one is us' })).toHaveCount(0);
-		// And the home's own designed failure state is still on screen.
-		await expect(page.locator('.hm-status')).toContainText('did not answer within 15 seconds');
+		// And the home's own designed failure state is still on screen. The card
+		// says the house stopped answering rather than repeating the connect-time
+		// diagnosis: this house answered twenty minutes ago, so its address was
+		// never the problem.
+		await expect(page.locator('.hm-status')).toContainText(/not answering right now/i);
+		await expect(page.locator('.hm-status')).toContainText(/last answered 20 minutes ago/i);
 	});
 });

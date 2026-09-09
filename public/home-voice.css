@@ -232,7 +232,18 @@
 	border: 1px solid var(--stroke);
 	border-radius: var(--radius-sm);
 	padding: var(--space-3xs) var(--space-xs);
-	color: var(--ink-dim);
+	/*
+	 * Full ink, not the dim rung. This list is the entity ids a person is being
+	 * asked to agree to, which is the most important content on the panel and
+	 * not secondary metadata: agreeing to something you cannot read is not
+	 * agreement. It also measured below AA where it sits, because the chip
+	 * stacks --surface-3 on the card's --surface-2 on the page, and axe scores
+	 * the composite: the site-wide gate reported a serious color-contrast
+	 * failure on `.hv-confirm-entities > li` at /voice/home on 2026-09-09, twice,
+	 * on a page whose whole job is a guarded confirmation. --ink measures 13.6:1
+	 * on the same stack.
+	 */
+	color: var(--ink);
 	word-break: break-all;
 }
 .hv-confirm-hint {

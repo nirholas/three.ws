@@ -276,9 +276,11 @@ answerable from `#hm-root[data-state]`, which is also how the e2e suite drives i
 |---|---|---|
 | `signed_out` | no session | Explain the feature and offer sign-in. Never a disabled form. |
 | `empty` | signed in, no homes | The connect card, with the token instructions one disclosure away. |
+| `validating` | the address typed so far cannot work | Say so under the field as they type, before any network call, without taking the caret out of the field. |
 | `private_host` | the address is LAN-only | Name the address class and give the two real routes out. |
 | `verifying` | the handshake is running | Named steps, cancellable. Never a bare spinner or a fake progress bar. |
-| `connected` / `many` | one or more homes | The measured summary per home, plus grants, log, health and household. |
+| `connected` / `many` | one or more homes, all answering | The measured summary per home, plus grants, log, health and household. |
+| `degraded` | the one home is stale, unreachable or refusing the stored token | Keep the last known summary on screen, marked with its age. A house that stopped answering must never look deleted. |
 | `one_home` | `/smart-home/:id` | That home alone, with a way back up to the list. |
 | `not_found` | an id that is not this account's | Reveals nothing about whether the id exists. |
 | `auth_failed` | Home Assistant rejected the token | Say so, refocus the token field, keep the URL. |
@@ -287,8 +289,20 @@ answerable from `#hm-root[data-state]`, which is also how the e2e suite drives i
 | `revoked` | the last home was disconnected | Say what happened to the stored credential. |
 | `pairing` | the relay is waiting for the house to dial out | Poll, and stop the animation when the poll stops. |
 
-Two invariants hold the surface together, and both are asserted in
-[`tests/e2e/home-connect.spec.js`](../tests/e2e/home-connect.spec.js) rather than left as prose.
+Three specs cover this surface, and they divide by what only they can prove.
+[`tests/e2e/home-connect.spec.js`](../tests/e2e/home-connect.spec.js) asserts behaviour on every
+screen with the API stubbed at the route layer.
+[`tests/e2e/home-connect-gallery.spec.js`](../tests/e2e/home-connect-gallery.spec.js) walks all
+fifteen in one run, writes a PNG of each at 1440px and 320px, and fails if any of them pushes the
+page sideways at 320px: the failure it exists to catch is a state nobody ever opened.
+[`tests/e2e/home-connect-live.spec.js`](../tests/e2e/home-connect-live.spec.js) stubs nothing at
+all, connects a real Home Assistant, and is the only one that can prove the summary is the
+house's own numbers, that a real long-lived token reaches no browser storage, and that stopping
+the container really does produce `degraded` with the summary intact. It runs under
+`npm run test:home:e2e`.
+
+Two invariants hold the surface together, and both are asserted in those specs rather than left
+as prose.
 
 **The token goes to the server once and never comes back.** The field is `type="password"` with
 a reveal toggle and `autocomplete="off"`; the value is never written to `localStorage` or
