@@ -59,12 +59,15 @@
 
 			/* ── Toolbar ─────────────────────────────────────────────── */
 			.pw-toolbar { display: flex; align-items: center; gap: 0.75rem; margin-bottom: 1.25rem; flex-wrap: wrap; }
-			.pw-filters { display: flex; border: 1px solid rgba(255,255,255,0.1); border-radius: 10px; overflow: hidden; }
+			.pw-filters { display: flex; border: 1px solid rgba(255,255,255,0.1); border-radius: 10px; overflow-x: auto; overflow-y: hidden; max-width: 100%; scrollbar-width: none; }
+			.pw-filters::-webkit-scrollbar { display: none; }
+			.pw-filters button { flex: 0 0 auto; }
 			.pw-filters button { font: inherit; font-size: 13px; font-weight: 500; padding: 7px 14px; background: transparent; border: none; color: rgba(255,255,255,0.5); cursor: pointer; transition: color var(--duration-fast), background var(--duration-fast); border-right: 1px solid rgba(255,255,255,0.07); }
 			.pw-filters button:last-child { border-right: none; }
 			.pw-filters button:hover { color: rgba(255,255,255,0.85); background: rgba(255,255,255,0.06); }
 			.pw-filters button.on { color: #fff; background: rgba(255,255,255,0.11); }
 			.pw-count { font-size: 12px; color: rgba(255,255,255,0.35); margin-left: auto; }
+			@media (max-width: 480px) { .pw-count { margin-left: 0; } .pw-filters button { padding: 7px 11px; } }
 			.pw-shortcut { font-size: 11px; color: rgba(255,255,255,0.3); border: 1px solid rgba(255,255,255,0.12); border-radius: 5px; padding: 2px 7px; font-family: monospace; }
 
 			/* ── Session list ────────────────────────────────────────── */
@@ -158,6 +161,9 @@
 			.exec-ts { color: rgba(255,255,255,0.35); font-size: 11px; }
 			.exec-amt { font-variant-numeric: tabular-nums; font-weight: 600; font-size: 12px; }
 			.exec-none { color: rgba(255,255,255,0.3); font-size: 13px; padding: 0.75rem 0; }
+			.exec-fail { display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap; font-size: 13px; color: #fca5a5; padding: 0.75rem 0; }
+			.exec-retry { position: static; }
+			.exec-retry:focus-visible { outline: 2px solid rgba(167,139,250,0.95); outline-offset: 3px; border-radius: 6px; }
 
 			/* ── Empty state ─────────────────────────────────────────── */
 			.pw-empty { text-align: center; padding: 5rem 1rem; }
@@ -282,7 +288,7 @@
 	<meta property="og:site_name" content="three.ws">
 	<meta property="og:locale" content="en_US">
 	<meta property="og:title" content="Agent Payment Sessions · three.ws" data-i18n-attr="content:payments.meta_og_title">
-	<meta property="og:description" content="Create budget-limited payment sessions for AI agents. Governance-enforced spend limits, URL allowlists, and expiry — agents pay x402 APIs without holding a private key." data-i18n-attr="content:payments.meta_og_description">
+	<meta property="og:description" content="Create budget-limited payment sessions for AI agents. Governance-enforced spend limits, URL allowlists, and expiry: agents pay x402 APIs without holding a private key." data-i18n-attr="content:payments.meta_og_description">
 	<meta property="og:url" content="https://three.ws/payments">
 	<meta property="og:image" content="https://three.ws/api/page-og?s=account&amp;t=Agent+Payment+Sessions&amp;d=Create+budget-limited+payment+sessions+for+AI+agents.+Governance-enforced+spend+limits%2C+URL+allowlists%2C+and+expiry%3A+agents+pay+x402+APIs+without+holding+a&amp;p=%2Fpayments">
 	<meta property="og:image:width" content="1200">
@@ -292,7 +298,7 @@
 	<meta name="twitter:card" content="summary_large_image">
 	<meta name="twitter:site" content="@trythreews">
 	<meta name="twitter:title" content="Agent Payment Sessions · three.ws" data-i18n-attr="content:payments.meta_twitter_title">
-	<meta name="twitter:description" content="Create budget-limited payment sessions for AI agents. Governance-enforced spend limits, URL allowlists, and expiry — agents pay x402 APIs without holding a private key." data-i18n-attr="content:payments.meta_twitter_description">
+	<meta name="twitter:description" content="Create budget-limited payment sessions for AI agents. Governance-enforced spend limits, URL allowlists, and expiry: agents pay x402 APIs without holding a private key." data-i18n-attr="content:payments.meta_twitter_description">
 	<meta name="twitter:image" content="https://three.ws/api/page-og?s=account&amp;t=Agent+Payment+Sessions&amp;d=Create+budget-limited+payment+sessions+for+AI+agents.+Governance-enforced+spend+limits%2C+URL+allowlists%2C+and+expiry%3A+agents+pay+x402+APIs+without+holding+a&amp;p=%2Fpayments">
 	<script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"WebPage","name":"Agent Payment Sessions","description":"Create budget-limited payment sessions for AI agents. Governance-enforced spend limits, URL allowlists, and expiry: agents pay x402 APIs without holding a private key.","url":"https://three.ws/payments","isPartOf":{"@type":"WebSite","name":"three.ws","url":"https://three.ws"},"primaryImageOfPage":"https://three.ws/api/page-og?s=account&t=Agent+Payment+Sessions&d=Create+budget-limited+payment+sessions+for+AI+agents.+Governance-enforced+spend+limits%2C+URL+allowlists%2C+and+expiry%3A+agents+pay+x402+APIs+without+holding+a+priv&p=%2Fpayments"}]}</script>
 
@@ -339,12 +345,12 @@
 
 			<!-- Toolbar -->
 			<div class="pw-toolbar">
-				<div class="pw-filters" id="pwFilters">
-					<button class="on" data-f="all" data-i18n="payments.all">All</button>
-					<button data-f="active" data-i18n="payments.active">Active</button>
-					<button data-f="exhausted" data-i18n="payments.exhausted">Exhausted</button>
-					<button data-f="expired" data-i18n="payments.expired">Expired</button>
-					<button data-f="cancelled" data-i18n="payments.cancelled">Cancelled</button>
+				<div class="pw-filters" id="pwFilters" role="group" aria-label="Filter sessions by status">
+					<button type="button" class="on" data-f="all" aria-pressed="true" data-i18n="payments.all">All</button>
+					<button type="button" data-f="active" aria-pressed="false" data-i18n="payments.active">Active</button>
+					<button type="button" data-f="exhausted" aria-pressed="false" data-i18n="payments.exhausted">Exhausted</button>
+					<button type="button" data-f="expired" aria-pressed="false" data-i18n="payments.expired">Expired</button>
+					<button type="button" data-f="cancelled" aria-pressed="false" data-i18n="payments.cancelled">Cancelled</button>
 				</div>
 				<span class="pw-count" id="pwCount"></span>
 			</div>
@@ -729,7 +735,7 @@
 								<h4>Recent payments</h4>
 							</div>
 							<div class="exec-section" data-exec="${s.id}">
-								<div class="exec-none" style="opacity:.5">Loading…</div>
+								<div class="exec-none">Loading payments…</div>
 							</div>
 						</div>
 					</div>
@@ -749,12 +755,20 @@
 								<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="rgba(167,139,250,0.8)" stroke-width="1.5" stroke-linecap="round"><rect x="2" y="6" width="20" height="13" rx="2"/><path d="M2 10h20"/><circle cx="6.5" cy="14" r="1" fill="rgba(167,139,250,0.8)" stroke="none"/><path d="M10 14h7"/></svg>
 							</div>
 							<h2>${activeFilter === 'all' ? 'No payment sessions yet' : `No ${activeFilter} sessions`}</h2>
-							<p>${activeFilter === 'all' ? 'Create a session to let an AI agent pay x402 endpoints without holding a private key.' : `Switch to "All" to see sessions with other statuses.`}</p>
-							${activeFilter === 'all' ? `<button class="btn-primary" id="emptyNew"><svg width="13" height="13" viewBox="0 0 14 14" fill="none"><path d="M7 1v12M1 7h12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg> New Session</button>` : ''}
+							<p>${activeFilter === 'all'
+								? 'Create a session to let an AI agent pay x402 endpoints without holding a private key.'
+								: `You have ${sessions.length} session${sessions.length !== 1 ? 's' : ''} in other states.`}</p>
+							${activeFilter === 'all'
+								? `<button class="btn-primary" id="emptyNew"><svg width="13" height="13" viewBox="0 0 14 14" fill="none"><path d="M7 1v12M1 7h12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg> New Session</button>`
+								: `<button class="btn-primary" id="emptyShowAll" type="button">Show all sessions</button>`}
+							${activeFilter === 'all' ? `<div class="pw-empty-alt">New to this? Read <a href="/docs/tutorials/agent-spending-envelope">the walkthrough</a> or the <a href="/docs/payment-sessions">payment sessions guide</a>.</div>` : ''}
 						</div>
 					`;
 					if (activeFilter === 'all') {
-						document.getElementById('emptyNew')?.addEventListener('click', openCreate);
+						$('emptyNew')?.addEventListener('click', openCreate);
+					} else {
+						// A filtered empty state with no way back to the full list is a dead end.
+						$('emptyShowAll')?.addEventListener('click', () => selectFilter('all'));
 					}
 					return;
 				}
@@ -815,6 +829,27 @@
 				});
 			}
 
+			async function loadExecutions(execEl, sid) {
+				execEl.innerHTML = '<div class="exec-none">Loading payments…</div>';
+				try {
+					const d = await api(`/api/pay/session/${sid}/executions?limit=10`);
+					execEl.innerHTML = renderExecs(d.items);
+				} catch (err) {
+					// The ledger loads separately from the card, so its failure gets its own
+					// way back rather than leaving a dead sentence inside an open card.
+					execEl.innerHTML = `
+						<div class="exec-fail">
+							<span>Could not load this session's payment history.${err?.status ? ` (HTTP ${err.status})` : ''}</span>
+							<button class="mcp-copy-btn exec-retry" type="button">Retry</button>
+						</div>
+					`;
+					execEl.querySelector('.exec-retry')?.addEventListener('click', (e) => {
+						e.stopPropagation();
+						loadExecutions(execEl, sid);
+					});
+				}
+			}
+
 			async function toggleCard(card) {
 				const wasOpen = card.classList.contains('open');
 				card.classList.toggle('open');
@@ -823,14 +858,7 @@
 				if (!wasOpen) {
 					const sid = card.dataset.id;
 					const execEl = card.querySelector('[data-exec]');
-					if (execEl && sid) {
-						try {
-							const d = await api(`/api/pay/session/${sid}/executions?limit=10`);
-							execEl.innerHTML = renderExecs(d.items);
-						} catch {
-							execEl.innerHTML = '<div class="exec-none" style="color:#f87171">Could not load payment history.</div>';
-						}
-					}
+					if (execEl && sid) await loadExecutions(execEl, sid);
 				}
 			}
 
@@ -890,7 +918,10 @@
 			// that is still running.
 			function renderLoadError(err) {
 				const offline = typeof navigator !== 'undefined' && navigator.onLine === false;
-				const detail = err?.message ? `<span class="pw-error-detail">${esc(err.message)}</span>` : '';
+				const GENERIC = new Set(['Failed to fetch', 'Load failed', 'NetworkError when attempting to fetch resource.']);
+				const detail = err?.message && !GENERIC.has(err.message)
+					? `<span class="pw-error-detail">${esc(err.message)}</span>`
+					: '';
 				$('pwStats').innerHTML = '';
 				$('pwFilters').hidden = true;
 				$('pwCount').textContent = '';
@@ -946,13 +977,21 @@
 			}
 
 			// ── Filters ────────────────────────────────────────────────
+			function selectFilter(f) {
+				const btn = $('pwFilters').querySelector(`button[data-f="${f}"]`);
+				if (!btn) return;
+				$('pwFilters').querySelectorAll('button').forEach(b => {
+					const on = b === btn;
+					b.classList.toggle('on', on);
+					b.setAttribute('aria-pressed', String(on));
+				});
+				activeFilter = f;
+				renderList();
+			}
+
 			$('pwFilters').addEventListener('click', e => {
 				const btn = e.target.closest('button[data-f]');
-				if (!btn) return;
-				$('pwFilters').querySelectorAll('button').forEach(b => b.classList.remove('on'));
-				btn.classList.add('on');
-				activeFilter = btn.dataset.f;
-				renderList();
+				if (btn) selectFilter(btn.dataset.f);
 			});
 
 			// ── Create modal ───────────────────────────────────────────
