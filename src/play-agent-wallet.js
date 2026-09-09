@@ -587,9 +587,17 @@ function updatePayButton() {
 
 // ── bridge client ───────────────────────────────────────────────────────────
 
+// Read timeout for the two public bridge calls. Production answers status in
+// well under a second, but a dev machine reaches the hosted bridge through the
+// vite /api proxy, where the extra hop routinely costs 8-12s; an 8s ceiling
+// aborted the fallback before it could ever land. The 30s status poll still has
+// room to spare, and nothing here spends money, so a longer wait only ever
+// turns a phantom "bridge offline" into a real answer.
+const READ_TIMEOUT_MS = 15_000;
+
 async function refreshStatus() {
 	try {
-		const r = await fetch(statusUrl(), { signal: AbortSignal.timeout(8000) });
+		const r = await fetch(statusUrl(), { signal: AbortSignal.timeout(READ_TIMEOUT_MS) });
 		if (!r.ok) throw new Error('HTTP ' + r.status);
 		const data = await r.json();
 		live.bridge = 'online';
@@ -625,7 +633,7 @@ async function refreshStatus() {
 async function loadQuote() {
 	try {
 		const qs = new URLSearchParams({ endpoint: ENDPOINT, method: 'POST', body: JSON.stringify({ topic: activeTopic }) });
-		const r = await fetch(quoteUrl(qs.toString()), { signal: AbortSignal.timeout(8000) });
+		const r = await fetch(quoteUrl(qs.toString()), { signal: AbortSignal.timeout(READ_TIMEOUT_MS) });
 		if (!r.ok) throw new Error('HTTP ' + r.status);
 		const q = await r.json();
 		if (!q.ok) throw new Error(q.error || 'quote failed');
