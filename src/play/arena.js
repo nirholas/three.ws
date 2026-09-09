@@ -184,13 +184,16 @@ async function loadAndPlace() {
 	let data;
 	try {
 		const r = await fetch(`/api/sniper/leaderboard?network=${NETWORK}&sort=${_sort}`);
-		if (!r.ok) throw new Error('http ' + r.status);
+		if (!r.ok) throw new Error(`the leaderboard API answered ${r.status}`);
 		data = await r.json();
-	} catch {
+	} catch (e) {
+		// A dead API is NOT an empty arena: say so, and give the visitor a retry
+		// instead of inviting them to be "the first agent" on a board we never read.
 		renderBoard([]);
-		setEmpty(true);
+		setBoardError(e);
 		return;
 	}
+	setBoardError(null);
 	ingest(data);
 	const rows = rowsFrom(data);
 	const board = rows.slice(0, MAX_AGENTS);
@@ -215,8 +218,9 @@ async function loadAndPlace() {
 async function loadBoardOnly() {
 	try {
 		const r = await fetch(`/api/sniper/leaderboard?network=${NETWORK}&sort=${_sort}`);
-		if (!r.ok) return;
+		if (!r.ok) throw new Error(`the leaderboard API answered ${r.status}`);
 		const d = await r.json();
+		setBoardError(null);
 		ingest(d);
 		const rows = rowsFrom(d);
 		renderBoard(rows);
@@ -232,7 +236,12 @@ async function loadBoardOnly() {
 				pnlEl.className = 'lbl-pnl ' + (up ? 'up' : 'down');
 			}
 		});
-	} catch { /* keep last good */ }
+	} catch (e) {
+		// Keep the last good board on screen, but never leave the failure silent:
+		// an empty board turns into the error state, a populated one gets the
+		// "standings are stale" line in the header.
+		setBoardError(e, { keepBoard: true });
+	}
 }
 
 // Spawn agents with bounded concurrency. Avatar GLBs are 1–3 MB and share a
@@ -745,6 +754,7 @@ function holdLabel(sec) {
 
 function renderBoard(rows) {
 	const body = $('board');
+	body.removeAttribute('aria-busy');
 	if (!rows.length) { body.innerHTML = ''; return; }
 	body.innerHTML = rows.slice(0, 12).map((r) => {
 		rowsById.set(r.id, r); // route clicks even for rows past the 3D cap
@@ -761,7 +771,7 @@ function renderBoard(rows) {
 		const av = r.kind === 'live'
 			? `<span class="r-av r-av-fb">${initial}</span>`
 			: `<img loading="lazy" decoding="async" class="r-av" src="${esc(r.image || '/avatars/thumbs/default.png')}" alt="" ${avatarFallback}/>`;
-		return `<button class="row no-orbit" data-id="${esc(r.id)}">
+		return `<button type="button" class="row no-orbit" data-id="${esc(r.id)}">
 			<span class="r-rank">${r.rank}</span>
 			${av}
 			<span class="r-name">${esc(name)}<small>${esc(sub)}</small></span>
@@ -813,8 +823,11 @@ function renderStats(rows) {
 		: { label: 'Open now', val: String(_positions.length) };
 	const kpi = (label, val, cls = '', sub = '') =>
 		`<div class="as-kpi"><span>${label}</span><b class="${cls}">${val}</b>${sub ? `<i>${sub}</i>` : ''}</div>`;
+	// Only MAX_AGENTS get a body in the 3D world, so "On the floor" counts the
+	// avatars really standing there, not every ranked row in the panel.
+	const onFloor = live ? rows.length : Math.min(rows.length, MAX_AGENTS);
 	el.innerHTML =
-		kpi(live ? 'On the board' : 'On the floor', String(rows.length)) +
+		kpi(live ? 'On the board' : 'On the floor', String(onFloor)) +
 		kpi('Field P&amp;L', fmtSol(pnlSum), pnlSum >= 0 ? 'up' : 'down', usd) +
 		kpi('Avg win', avgWr != null ? avgWr + '%' : '—') +
 		kpi(fourth.label, fourth.val);
@@ -891,13 +904,64 @@ function refreshTapeEmpty() {
 	ph.textContent = _streamLive ? 'Waiting for the next trade…' : 'Reconnecting to trade stream…';
 	ph.classList.toggle('reconnecting', !_streamLive);
 }
+// The overlay is a spinner + a caption. Writing textContent would delete the
+// ring and leave a bare sentence on a black screen, so only the caption moves.
 function setLoading(text) {
 	const el = $('loading');
 	if (!el) return;
-	if (text) { el.textContent = text; el.style.display = ''; }
-	else el.style.display = 'none';
+	if (!text) { el.style.display = 'none'; return; }
+	const caption = el.querySelector('span') || el.appendChild(document.createElement('span'));
+	caption.textContent = text;
+	el.style.display = '';
 }
 function setEmpty(on) { const e = $('emptyState'); if (e) e.hidden = !on; }
+
+// The board's failure state. A dead leaderboard read is not an empty arena, and
+// it is never silent: with no rows on screen it takes over the panel, and with a
+// last-good board still up it becomes a compact "standings are stale" strip.
+// Both carry the same retry, so the visitor always has a way forward.
+let _boardRetrying = false;
+function setBoardError(err, { keepBoard = false } = {}) {
+	const box = $('boardError');
+	if (!box) return;
+	if (!err) {
+		box.hidden = true;
+		box.classList.remove('stale');
+		$('board')?.removeAttribute('aria-busy');
+		return;
+	}
+	const hasRows = $('board')?.querySelector('.row');
+	const stale = keepBoard && !!hasRows;
+	setEmpty(false);
+	box.classList.toggle('stale', stale);
+	const why = $('boardErrorWhy');
+	const title = box.querySelector('b');
+	if (stale) {
+		if (title) title.textContent = 'Standings are stale.';
+		if (why) why.textContent = `The last refresh failed (${err?.message || 'network error'}). Showing the last good board.`;
+	} else {
+		if (title) title.textContent = "Can't reach the leaderboard.";
+		if (why) why.textContent = `The arena is still rendering, but standings and trades need the three.ws API (${err?.message || 'network error'}).`;
+	}
+	box.hidden = false;
+	$('arenaStats')?.setAttribute('hidden', '');
+}
+
+// Retry pulls the full board again (and places the 3D floor if the first read
+// never got that far), with the button disabled for the duration.
+async function retryBoard() {
+	if (_boardRetrying) return;
+	_boardRetrying = true;
+	const btn = $('boardRetry');
+	const label = btn?.textContent;
+	if (btn) { btn.disabled = true; btn.textContent = 'Retrying…'; }
+	try {
+		await (_placed ? loadBoardOnly() : loadAndPlace());
+	} finally {
+		_boardRetrying = false;
+		if (btn) { btn.disabled = false; btn.textContent = label; }
+	}
+}
 
 // ── controls + avatar picker ────────────────────────────────────────────────────
 
@@ -909,6 +973,7 @@ function mountControls() {
 	// Collapse side panels on mobile.
 	$('togglePanels')?.addEventListener('click', () => document.body.classList.toggle('panels-open'));
 	$('drawerClose')?.addEventListener('click', closeAgentDrawer);
+	$('boardRetry')?.addEventListener('click', retryBoard);
 	// Leaderboard sort (agents only — re-ranks via the API's sort param).
 	$('sortSeg')?.querySelectorAll('[data-sort]').forEach((b) => b.addEventListener('click', () => {
 		if (b.dataset.sort === _sort) return;

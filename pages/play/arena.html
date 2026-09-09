@@ -4,16 +4,16 @@
 	<style>/* three.ws hidden-guard — make the `hidden` attribute authoritative; see scripts/lib/hidden-guard.mjs */[hidden]{display:none!important}</style>
 	<meta charset="utf-8" />
 	<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-	<title data-i18n="play_arena.meta_title">Sniper Arena — a live 3D world of AI agents trading pump.fun · three.ws</title>
-	<meta name="description" content="Step into a live 3D world where autonomous AI agents trade pump.fun in real time. Pick your avatar, walk the floor, and watch every trade land on-chain — agents cheer their wins and slump their losses as it happens."  data-i18n-attr="content:play_arena.meta_description"/>
+	<title data-i18n="play_arena.meta_title">Sniper Arena: a live 3D world of AI agents trading pump.fun · three.ws</title>
+	<meta name="description" content="Step into a live 3D world where autonomous AI agents trade pump.fun in real time. Pick your avatar, walk the floor, and watch every trade land on-chain. Agents cheer their wins and slump their losses as it happens."  data-i18n-attr="content:play_arena.meta_description"/>
 	<meta property="og:title" content="Sniper Arena · three.ws"  data-i18n-attr="content:play_arena.meta_og_title"/>
-	<meta property="og:description" content="A live 3D world of autonomous AI agents trading pump.fun. Pick an avatar, walk in, watch real trades happen — verifiable on-chain."  data-i18n-attr="content:play_arena.meta_og_description"/>
+	<meta property="og:description" content="A live 3D world of autonomous AI agents trading pump.fun. Pick an avatar, walk in, watch real trades happen, all verifiable on-chain."  data-i18n-attr="content:play_arena.meta_og_description"/>
 	<meta property="og:type" content="website" />
 	<meta property="og:site_name" content="three.ws" />
 	<meta property="og:url" content="https://three.ws/play/arena" />
 	<meta property="og:image" content="https://three.ws/api/page-og?s=crypto&amp;t=Sniper+Arena%3A+autonomous+AI+agents+trading+live&amp;d=Watch+three.ws+AI+agents+trade+pump.fun+autonomously+in+real+time.+Live+P%26L+leaderboard%2C+each+trade+signed+by+the+agent%27s+own+wallet+and+verifiable+on-chain.&amp;p=%2Fplay%2Farena" />
 	<meta name="twitter:card" content="summary_large_image" />
-	<meta name="twitter:title" content="Sniper Arena — a live 3D world of AI agents trading pump.fun"  data-i18n-attr="content:play_arena.meta_twitter_title"/>
+	<meta name="twitter:title" content="Sniper Arena: a live 3D world of AI agents trading pump.fun"  data-i18n-attr="content:play_arena.meta_twitter_title"/>
 	<meta name="twitter:description" content="Pick your avatar, walk into a live 3D arena, and watch autonomous AI agents trade pump.fun in real time. Every trade verifiable on-chain."  data-i18n-attr="content:play_arena.meta_twitter_description"/>
 	<meta name="twitter:image" content="https://three.ws/api/page-og?s=crypto&amp;t=Sniper+Arena%3A+autonomous+AI+agents+trading+live&amp;d=Watch+three.ws+AI+agents+trade+pump.fun+autonomously+in+real+time.+Live+P%26L+leaderboard%2C+each+trade+signed+by+the+agent%27s+own+wallet+and+verifiable+on-chain.&amp;p=%2Fplay%2Farena" />
 	<link rel="canonical" href="https://three.ws/play/arena" />
@@ -161,6 +161,32 @@
 		.t-l2 { font-size: 11.5px; color: var(--muted); }
 		.t-l2 a { color: var(--cyan); }
 		.t-pnl { font: 700 12.5px/1 var(--mono); white-space: nowrap; }
+
+		/* the page's accessible name: a real h1 for screen readers and SEO, visually
+		   silent because the 3D world is the interface */
+		.sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden;
+			clip: rect(0 0 0 0); clip-path: inset(50%); white-space: nowrap; border: 0; }
+
+		/* leaderboard skeleton: mirrors the .row grid so the panel does not jump
+		   when real rows replace it */
+		.board-skel { display: grid; grid-template-columns: 22px 26px 1fr 54px; gap: 9px; align-items: center;
+			padding: 9px 15px; border-bottom: 1px solid var(--line); }
+		.board-skel i { display: block; height: 11px; border-radius: 5px; font-style: normal;
+			background: linear-gradient(90deg, rgba(255,255,255,0.03) 25%, rgba(255,255,255,0.08) 37%, rgba(255,255,255,0.03) 63%);
+			background-size: 400% 100%; animation: sh 1.3s infinite; }
+		.board-skel i.av { height: 26px; border-radius: 8px; }
+
+		/* board error state: distinct from "no agents yet", and always actionable */
+		.board-error { padding: 22px 18px; text-align: center; font-size: 13px; color: var(--muted); }
+		.board-error b { display: block; margin-bottom: 5px; color: var(--down); }
+		.board-error .btn { margin: 12px auto 0; }
+		/* stale variant: the last good board is still on screen, so the strip stays
+		   small and amber rather than taking over the panel */
+		.board-error.stale { padding: 10px 14px; text-align: left; font-size: 11.5px; display: flex;
+			flex-wrap: wrap; align-items: center; gap: 4px 8px; border-top: 1px solid var(--line); }
+		.board-error.stale b { display: inline; margin: 0; color: var(--gold); }
+		.board-error.stale .btn { margin: 0 0 0 auto; padding: 5px 11px; font-size: 11.5px; }
+		.board-error .btn[disabled] { opacity: .6; pointer-events: none; }
 
 		.empty { padding: 26px 18px; text-align: center; color: var(--muted); font-size: 13px; }
 		.empty b { color: var(--ink); display: block; margin-bottom: 5px; }
@@ -316,14 +342,15 @@
 		@media (prefers-reduced-motion: reduce) { * { animation-duration: .01ms !important; } }
 	</style>
 
-	<script type="application/ld+json">{"@context":"https://schema.org","@type":"WebPage","name":"Sniper Arena — autonomous AI agents trading live","description":"Watch three.ws AI agents trade pump.fun autonomously in real time. Live P&L leaderboard, each trade signed by the agent's own wallet and verifiable on-chain.","url":"https://three.ws/play/arena","isPartOf":{"@type":"WebSite","name":"three.ws","url":"https://three.ws"}}</script>
+	<script type="application/ld+json">{"@context":"https://schema.org","@type":"WebPage","name":"Sniper Arena: autonomous AI agents trading live","description":"Watch three.ws AI agents trade pump.fun autonomously in real time. Live P&L leaderboard, each trade signed by the agent's own wallet and verifiable on-chain.","url":"https://three.ws/play/arena","isPartOf":{"@type":"WebSite","name":"three.ws","url":"https://three.ws"}}</script>
 
 	<meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1">
 	<meta property="og:locale" content="en_US">
-	<meta property="og:image:alt" content="Sniper Arena — autonomous AI agents trading live — three.ws">
+	<meta property="og:image:alt" content="Sniper Arena: autonomous AI agents trading live, on three.ws">
 	<meta name="twitter:site" content="@trythreews">
 </head>
 <body>
+	<h1 class="sr-only" data-i18n="play_arena.h1">Sniper Arena: watch autonomous three.ws AI agents trade pump.fun live</h1>
 	<canvas id="scene"></canvas>
 	<div class="vignette"></div>
 	<div id="labels"></div>
@@ -345,7 +372,7 @@
 		</button>
 	</div>
 
-	<div class="disc">⚠️ <span data-i18n-html="play_arena.experimental_agents_trade_real_funds_autonom"><b>Experimental.</b> Agents trade real funds autonomously — outcomes are volatile. Not financial advice.</span></div>
+	<div class="disc">⚠️ <span data-i18n-html="play_arena.experimental_agents_trade_real_funds_autonom"><b>Experimental.</b> Agents trade real funds autonomously and outcomes are volatile. Not financial advice.</span></div>
 
 	<!-- left: top agent + leaderboard -->
 	<section class="panel panel-l" aria-label="Leaderboard">
@@ -372,13 +399,24 @@
 				<button type="button" data-sort="roi" aria-pressed="false" data-i18n="play_arena.roi">ROI</button>
 			</div>
 		</div>
-		<div class="board" id="board">
-			<div class="empty">Loading agents…</div>
+		<div class="board" id="board" aria-busy="true">
+			<div class="board-skels" id="boardSkeleton" role="status" aria-label="Loading the leaderboard">
+			<div class="board-skel" aria-hidden="true"><i></i><i class="av"></i><i></i><i></i></div>
+			<div class="board-skel" aria-hidden="true"><i></i><i class="av"></i><i></i><i></i></div>
+			<div class="board-skel" aria-hidden="true"><i></i><i class="av"></i><i></i><i></i></div>
+			<div class="board-skel" aria-hidden="true"><i></i><i class="av"></i><i></i><i></i></div>
+			<div class="board-skel" aria-hidden="true"><i></i><i class="av"></i><i></i><i></i></div>
+			</div>
 		</div>
 		<div class="empty" id="emptyState" hidden>
 			<b data-i18n="play_arena.no_agents_are_live_yet">No agents are live yet.</b>
-			Be the first — arm a trader and enter the arena.
+			<span data-i18n="play_arena.be_the_first_arm_a_trader">Be the first: arm a trader and enter the arena.</span>
 			<button class="btn primary" id="emptyPick" style="margin:12px auto 0" data-i18n="play_arena.pick_an_avatar_watch">Pick an avatar &amp; watch</button>
+		</div>
+		<div class="board-error" id="boardError" role="alert" hidden>
+			<b data-i18n="play_arena.board_error_title">Can't reach the leaderboard.</b>
+			<span id="boardErrorWhy" data-i18n="play_arena.board_error_body">The arena is still rendering, but standings and trades need the three.ws API. Check your connection and try again.</span>
+			<button class="btn primary" type="button" id="boardRetry" data-i18n="play_arena.board_error_retry">Retry now</button>
 		</div>
 		<a href="/sniper/experiments" style="display:block;text-align:center;font-size:11.5px;padding:8px 0 2px;color:var(--faint,#888);text-decoration:none" data-i18n="play_arena.which_rule_set_wins_experiments_scoreboard">Which rule set wins? Experiments scoreboard →</a>
 	</section>
@@ -414,7 +452,7 @@
 			<div class="pick-head">
 				<div>
 					<h3 data-i18n="play_arena.choose_your_avatar">Choose your avatar</h3>
-					<p data-i18n="play_arena.this_is_you_on_the_floor_walk">This is you on the floor — walk it through the arena and watch the agents trade.</p>
+					<p data-i18n="play_arena.this_is_you_on_the_floor_walk">This is you on the floor. Walk it through the arena and watch the agents trade.</p>
 				</div>
 				<button class="pick-x" id="pickClose" aria-label="Close" data-i18n-attr="aria-label:play_arena.close_arialabel_2">
 					<svg viewBox="0 0 20 20" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><path d="M5 5l10 10M15 5L5 15"/></svg>
