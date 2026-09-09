@@ -102,12 +102,41 @@ export async function forkShareUrl(trade, { base } = {}) {
 }
 
 /**
+ * Put a fork trigger into its loading state and hand back the undo.
+ *
+ * The trade panel is a lazy chunk carrying the Solana and pump SDKs, so the
+ * gap between the click and the modal is a real network fetch, not a frame.
+ * Without this the button sat inert and unchanged for the whole fetch, which
+ * reads as a dead control and earns a second and third click.
+ * @param {Element|null|undefined} el
+ * @returns {() => void} restores the trigger to exactly how it was.
+ */
+function markForkPending(el) {
+	if (!(el instanceof HTMLElement)) return () => {};
+	const wasBusy = el.getAttribute('aria-busy');
+	const wasDisabled = el instanceof HTMLButtonElement ? el.disabled : null;
+	const wasLabel = el.textContent;
+	el.setAttribute('aria-busy', 'true');
+	if (el instanceof HTMLButtonElement) el.disabled = true;
+	el.textContent = 'Opening';
+	return () => {
+		if (wasBusy == null) el.removeAttribute('aria-busy');
+		else el.setAttribute('aria-busy', wasBusy);
+		if (wasDisabled != null && el instanceof HTMLButtonElement) el.disabled = wasDisabled;
+		el.textContent = wasLabel;
+	};
+}
+
+/**
  * Open the real trade panel for a coin, pre-filled with the forked size.
  * @param {{mint:string, symbol?:string, name?:string, image?:string, size?:number|string}} trade
+ * @param {{trigger?: Element}} [opts] the control that was clicked, so it can
+ *   show a loading state while the trade-panel chunk downloads.
  * @returns {Promise<boolean>} false when the panel could not be loaded.
  */
-export async function openFork(trade) {
+export async function openFork(trade, { trigger } = {}) {
 	if (!isMint(trade?.mint)) return false;
+	const restore = markForkPending(trigger);
 	try {
 		const { openBuyModal } = await import('./game/coin-buy.js');
 		openBuyModal(
@@ -120,6 +149,8 @@ export async function openFork(trade) {
 	} catch {
 		toast('Could not open the trade panel. Trade this coin on pump.fun instead.', { variant: 'error' });
 		return false;
+	} finally {
+		restore();
 	}
 }
 
@@ -198,7 +229,7 @@ export function mountForkLinks(root = document) {
 			}, el);
 			return;
 		}
-		await openFork(trade);
+		await openFork(trade, { trigger: el });
 	});
 }
 

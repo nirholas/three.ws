@@ -46,6 +46,9 @@ function usdcDenom(network = NETWORK) {
 const SELL_PRESETS = [['25%', 0.25], ['50%', 0.5], ['Max', 1]];
 
 let _open = null; // the live modal controller, so a second click reuses it
+// Mirrors corner-stack.js's MODAL_CLASS, which that script also publishes on
+// window.twsCornerStack; the literal covers the moment before it has mounted.
+const CORNER_MODAL_CLASS = 'tws-modal-open';
 
 function el(tag, props = {}, kids = []) {
 	const n = document.createElement(tag);
@@ -295,6 +298,10 @@ class TradeModal {
 			e.stopPropagation();
 		});
 		document.body.appendChild(this.overlay);
+		// Tell the shared corner stack (public/corner-stack.js) to step aside:
+		// it renders above every page layer, so its widgets would otherwise stay
+		// clickable on top of this dialog.
+		document.body.classList.add(CORNER_MODAL_CLASS);
 		requestAnimationFrame(() => this.overlay.classList.add('cc-on'));
 		this._syncMode();
 		this.smartMoney?.loadForMint({ mint: this.coin.mint, network: NETWORK });
@@ -306,6 +313,7 @@ class TradeModal {
 	close() {
 		this.overlay.classList.remove('cc-on');
 		setTimeout(() => this.overlay.remove(), 180);
+		document.body.classList.remove(CORNER_MODAL_CLASS);
 		this.safety?.destroy();
 		this.smartMoney?.destroy();
 		if (_open === this) _open = null;

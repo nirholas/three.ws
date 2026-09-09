@@ -137,6 +137,14 @@
 	transition: border-color var(--duration-fast) var(--ease-standard);
 }
 .radar-search:focus-within { border-color: var(--accent); }
+/* The input clears its own outline so the pill reads as one control, which
+   left the search box as the only keyboard target on the page with no ring.
+   Put the page's standard ring on the wrapper, and only for keyboard focus,
+   so a mouse click still just tints the border. */
+.radar-search:has(.radar-search-input:focus-visible) {
+	outline: var(--focus-ring-width) solid var(--focus-ring-color);
+	outline-offset: 2px;
+}
 .radar-search-icon { color: var(--ink-faint); display: flex; flex-shrink: 0; }
 .radar-search-input {
 	flex: 1; min-width: 0; background: none; border: none; outline: none;
@@ -395,6 +403,15 @@
 .rc-fork:hover { background: color-mix(in srgb, var(--accent) 28%, transparent); border-color: var(--accent); }
 .rc-fork:active { transform: translateY(1px); }
 .rc-fork:focus-visible { outline: var(--focus-ring-width) solid var(--focus-ring-color); outline-offset: 2px; }
+/* The trade panel is a lazy chunk carrying the Solana SDKs, so the click is
+   followed by a real fetch. The button says so and refuses further clicks
+   while it runs; the min-width keeps the card footer from reflowing when the
+   label swaps to the longer word. */
+.rc-fork { min-width: 7ch; text-align: center; }
+.rc-fork[aria-busy='true'] {
+	cursor: progress; color: var(--ink-dim);
+	animation: radar-pulse 1.1s var(--ease-standard) infinite;
+}
 
 .rc-watch {
 	font-size: var(--text-md); line-height: 1; padding: var(--space-2xs) var(--space-xs);
@@ -695,6 +712,6 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-	.radar-card, .rc-ring-arc, .rc-ob-fill, .radar-glyph-sweep, .radar-pill-dot, .radar-live-dot { animation: none !important; transition: none !important; }
+	.radar-card, .rc-ring-arc, .rc-ob-fill, .radar-glyph-sweep, .radar-pill-dot, .radar-live-dot, .rc-fork[aria-busy='true'] { animation: none !important; transition: none !important; }
 	.radar-card.is-enter { opacity: 1; transform: none; }
 }

@@ -938,7 +938,7 @@ function renderCard(coin) {
 		// the event at the button, which a document-level delegate never sees.
 		forkBtn.addEventListener('click', (e) => {
 			e.stopPropagation();
-			openFork({ mint: coin.mint, symbol: coin.symbol, name: coin.name, image: coin.image_uri });
+			openFork({ mint: coin.mint, symbol: coin.symbol, name: coin.name, image: coin.image_uri }, { trigger: forkBtn });
 		});
 	}
 
@@ -1205,6 +1205,10 @@ function radarGlyph() {
 let drawer = null;
 let drawerAbort = null;
 let lastFocused = null;
+// Kept in sync with corner-stack.js's MODAL_CLASS, which that script also
+// publishes on window.twsCornerStack once it has run. The literal is the
+// fallback for the moment before the deferred script mounts.
+const CORNER_MODAL_CLASS = 'tws-modal-open';
 
 function ensureDrawer() {
 	if (drawer) return drawer;
@@ -1244,6 +1248,11 @@ async function openDrawer(mint) {
 	lastFocused = document.activeElement;
 	scrim.hidden = false;
 	document.body.classList.add('radar-no-scroll');
+	// The shared corner stack (public/corner-stack.js) renders above every page
+	// layer, so its widgets stayed clickable on top of this drawer and swallowed
+	// whatever control they covered (the language switcher sat on the mint row's
+	// Copy button). This is the flag that stack watches for.
+	document.body.classList.add(CORNER_MODAL_CLASS);
 	requestAnimationFrame(() => scrim.classList.add('is-open'));
 
 	panel.innerHTML = '';
@@ -1276,6 +1285,7 @@ function closeDrawer() {
 	if (!drawer) return;
 	drawer.scrim.classList.remove('is-open');
 	document.body.classList.remove('radar-no-scroll');
+	document.body.classList.remove(CORNER_MODAL_CLASS);
 	if (drawerAbort) { drawerAbort.abort(); drawerAbort = null; }
 	const scrim = drawer.scrim;
 	const onEnd = () => { scrim.hidden = true; scrim.removeEventListener('transitionend', onEnd); };

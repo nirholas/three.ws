@@ -41,6 +41,12 @@
  *                              pass { height, width } to declare both
  *   release(key)             — drop that reservation
  *   reserved()               — current reserved height in px
+ *   MODAL_CLASS              - the <body> class a modal sets to hide the stack
+ *
+ * Modals: a dialog that covers the screen should add `tws-modal-open` to
+ * <body> while it is open and remove it on close. The stack lives above every
+ * page layer, so without that flag its widgets stay clickable on top of the
+ * dialog and eat whatever control they cover.
  */
 (function () {
 	'use strict';
@@ -49,6 +55,8 @@
 	var STACK_ID = 'tws-corner-stack';
 	var STYLE_ID = 'tws-corner-stack-css';
 	var ITEM_CLASS = 'tws-corner-item';
+	/* Set on <body> by a modal that owns the screen; see the CSS rule below. */
+	var MODAL_CLASS = 'tws-modal-open';
 	var DEFAULT_PRIORITY = 50;
 	var stack = null;
 
@@ -83,6 +91,13 @@
 		'transition:transform .35s cubic-bezier(.22,1,.36,1);',
 		'}',
 		'@media (prefers-reduced-motion:reduce){#' + STACK_ID + '{transition:none;}}',
+		/* A modal dialog owns the whole screen while it is up, but the stack sits
+		   two billion layers above every page, so its widgets stayed clickable on
+		   top of the modal and swallowed whatever control landed under them (the
+		   language switcher over the /radar drawer\'s Copy button). Any modal can
+		   opt in by putting MODAL_CLASS on <body> while it is open; the stack
+		   fades out and stops taking pointer events until the class is removed. */
+		'body.' + MODAL_CLASS + ' #' + STACK_ID + '{opacity:0;pointer-events:none;visibility:hidden;}',
 		'#' + STACK_ID + ':empty{display:none;}',
 		/* relative (not static) keeps members in the flex flow while preserving a
 		   containing block for their position:absolute children (e.g. the
@@ -413,6 +428,7 @@
 		reserve: reserve,
 		release: release,
 		reserved: reservedHeight,
+		MODAL_CLASS: MODAL_CLASS,
 		remeasure: applyDocks
 	};
 
