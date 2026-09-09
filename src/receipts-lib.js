@@ -125,20 +125,66 @@ export function resourceDisplay(resourceUrl) {
 }
 
 /**
+ * Settlement assets whose atomic amounts denominate a US dollar, so a bare
+ * "$" prefix is an honest label. Everything else (the platform coin included)
+ * renders as a quantity plus its ticker: printing 22,000 THREE as "$22000.00"
+ * claims a dollar value nobody quoted.
+ */
+const USD_PEGGED_SYMBOLS = new Set(['USDC', 'USDC.E', 'USDT', 'USD\u20AE0', 'USD', 'PYUSD', 'DAI']);
+
+/** @param {string|null|undefined} symbol */
+export function isUsdPegged(symbol) {
+	if (symbol == null || symbol === '') return true; // legacy rows: dollars
+	return USD_PEGGED_SYMBOLS.has(String(symbol).toUpperCase());
+}
+
+/** Thousands-separated integer, so a 60,559-receipt vault reads as one. */
+export function formatCount(n) {
+	const v = Number(n);
+	if (!Number.isFinite(v)) return '\u00B7';
+	return v.toLocaleString('en-US');
+}
+
+/**
+ * Render a decimal quantity at the precision the number deserves: sub-cent
+ * micropayments are the norm on this rail, so a $0.001 call must not collapse
+ * to $0.00, while a 22,000-token payment must not carry four decimals.
+ * @param {number} value
+ */
+function quantityLabel(value) {
+	if (value > 0 && value < 0.01) {
+		return value.toFixed(4).replace(/0+$/, '').replace(/\.$/, '');
+	}
+	return value.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+
+/**
+ * Compose the human label for an amount already scaled out of atomics.
+ * @param {number} value
+ * @param {string|null|undefined} symbol
+ */
+export function amountLabel(value, symbol) {
+	const q = quantityLabel(value);
+	return isUsdPegged(symbol) ? `$${q}` : `${q} ${symbol}`;
+}
+
+/**
  * Human amount for a settled receipt, or null when we can't render it safely.
  *
- * The scale comes from the API's `assetDecimals` field, which the server
- * resolves from the same env config that builds the 402 accepts. The client
- * deliberately keeps NO copy of our asset addresses: a local registry would
- * silently drift the day an asset is repointed, and rendering an amount at the
- * wrong scale is worse than not rendering it. An unrecognised asset arrives
- * with `assetDecimals: null` and stays unformatted.
+ * The scale comes from the API's `assetDecimals` field and the ticker from its
+ * `assetSymbol`, both resolved server-side from the same env config that builds
+ * the 402 accepts. The client deliberately keeps NO copy of our asset
+ * addresses: a local registry would silently drift the day an asset is
+ * repointed, and rendering an amount at the wrong scale (or under the wrong
+ * ticker) is worse than not rendering it. An unrecognised asset arrives with
+ * `assetDecimals: null` and stays unformatted.
  *
  * @param {string|number|null|undefined} amountAtomics
  * @param {number|null|undefined} assetDecimals
- * @returns {{ value: number, label: string }|null}
+ * @param {string|null|undefined} [assetSymbol]
+ * @returns {{ value: number, label: string, symbol: string|null, usd: boolean }|null}
  */
-export function formatReceiptAmount(amountAtomics, assetDecimals) {
+export function formatReceiptAmount(amountAtomics, assetDecimals, assetSymbol) {
 	if (amountAtomics == null || amountAtomics === '') return null;
 	const atomic = Number(amountAtomics);
 	if (!Number.isFinite(atomic)) return null;
@@ -148,35 +194,80 @@ export function formatReceiptAmount(amountAtomics, assetDecimals) {
 	const decimals = Number(assetDecimals);
 	if (!Number.isInteger(decimals) || decimals < 0 || decimals > 18) return null;
 	const value = atomic / 10 ** decimals;
-	// Sub-cent micropayments are the norm on this rail, so show enough
-	// precision that a $0.001 call doesn't render as $0.00.
-	const label =
-		value > 0 && value < 0.01
-			? `$${value.toFixed(4).replace(/0+$/, '').replace(/\.$/, '')}`
-			: `$${value.toFixed(2)}`;
-	return { value, label };
+	const symbol = assetSymbol == null || assetSymbol === '' ? null : String(assetSymbol);
+	return { value, label: amountLabel(value, symbol), symbol, usd: isUsdPegged(symbol) };
 }
 
 /**
- * Total spend across rows whose amount we can render, plus how many rows had
- * no recorded amount (receipts issued before settlement capture landed).
- * @param {Array<{amountAtomics?: string|null, assetDecimals?: number|null}>} rows
+ * Spend across rows, kept per-asset because different settlement assets have
+ * different scales and different units. USD-pegged assets fold into one dollar
+ * figure (the headline a buyer wants); everything else is reported under its
+ * own ticker rather than converted at a rate we have no business inventing.
+ *
+ * `total`/`label` stay the dollar figure so the headline KPI has one number.
+ *
+ * @param {Array<{amountAtomics?: string|null, assetDecimals?: number|null,
+ *   assetSymbol?: string|null}>} rows
  */
 export function totalSpend(rows) {
 	let total = 0;
 	let priced = 0;
 	let unpriced = 0;
+	const others = new Map();
 	for (const r of rows || []) {
-		const amt = formatReceiptAmount(r.amountAtomics, r.assetDecimals);
-		if (amt) {
-			total += amt.value;
-			priced++;
-		} else {
+		const amt = formatReceiptAmount(r.amountAtomics, r.assetDecimals, r.assetSymbol);
+		if (!amt) {
 			unpriced++;
+			continue;
+		}
+		priced++;
+		if (amt.usd) {
+			total += amt.value;
+		} else {
+			others.set(amt.symbol, (others.get(amt.symbol) || 0) + amt.value);
 		}
 	}
-	const label = total > 0 && total < 0.01 ? `$${total.toFixed(4)}` : `$${total.toFixed(2)}`;
-	return { total, label, priced, unpriced };
+	return {
+		total,
+		label: amountLabel(total, null),
+		priced,
+		unpriced,
+		others: [...others.entries()]
+			.sort((a, b) => b[1] - a[1])
+			.map(([symbol, value]) => ({ symbol, value, label: amountLabel(value, symbol) })),
+	};
+}
+
+/**
+ * Same shape as totalSpend(), built from the API's account-wide `summary.spend`
+ * aggregate instead of the loaded page. A wallet with 60k receipts must be
+ * shown what it actually spent, not the spend of the newest page it happens to
+ * be holding, so the KPI strip prefers this whenever the API supplies it.
+ *
+ * @param {Array<{asset?: string, count?: number, atomics?: string,
+ *   decimals?: number|null, symbol?: string|null}>} spend
+ * @param {number} [unpriced] account-wide count of receipts with no amount
+ */
+export function formatSpendEntries(spend, unpriced = 0) {
+	let total = 0;
+	let priced = 0;
+	const others = new Map();
+	for (const s of spend || []) {
+		const amt = formatReceiptAmount(s.atomics, s.decimals, s.symbol);
+		if (!amt) continue;
+		priced += Number(s.count) || 0;
+		if (amt.usd) total += amt.value;
+		else others.set(amt.symbol, (others.get(amt.symbol) || 0) + amt.value);
+	}
+	return {
+		total,
+		label: amountLabel(total, null),
+		priced,
+		unpriced: Number(unpriced) || 0,
+		others: [...others.entries()]
+			.sort((a, b) => b[1] - a[1])
+			.map(([symbol, value]) => ({ symbol, value, label: amountLabel(value, symbol) })),
+	};
 }
 
 function csvCell(value) {

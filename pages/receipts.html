@@ -180,16 +180,23 @@
 				</div>
 
 				<div class="rc-search-wrap">
+					<label class="rc-search-label" for="rc-search">Filter loaded receipts</label>
 					<input
 						type="search"
 						class="rc-search"
 						id="rc-search"
 						placeholder="Filter by endpoint, network, or tx hash"
-						aria-label="Filter receipts"
 					/>
 				</div>
 
 				<div class="rc-list" id="rc-list" aria-live="polite"></div>
+
+				<div class="rc-more-wrap" id="rc-more-wrap" hidden>
+					<p class="rc-shown" id="rc-shown"></p>
+					<button type="button" class="rc-btn rc-btn-secondary rc-more" id="rc-more">
+						<span class="rc-btn-label">Load 200 more</span>
+					</button>
+				</div>
 
 				<div class="rc-empty" id="rc-empty" hidden>
 					<h3 id="rc-empty-title"></h3>

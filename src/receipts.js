@@ -22,6 +22,8 @@ import {
 	receiptsToCsv,
 	summarizeReceipts,
 	formatReceiptAmount,
+	formatSpendEntries,
+	formatCount,
 	totalSpend,
 } from './receipts-lib.js';
 import { timeAgo } from './shared/pulse-format.js';
@@ -35,8 +37,14 @@ const $ = (id) => document.getElementById(id);
 const state = {
 	session: null, // { address, network, signature, issuedAt }
 	rows: [],
+	// Account-wide aggregate from the API. The KPI strip reads THIS, never the
+	// loaded page: a wallet with 60k receipts must be told it has 60k, not the
+	// size of the window it happens to be holding.
+	summary: null,
+	nextCursor: null,
 	query: '',
 	loading: false,
+	loadingMore: false,
 };
 
 // ── wallet providers ─────────────────────────────────────────────────────────
@@ -122,7 +130,7 @@ function clearSession() {
 
 // ── data ─────────────────────────────────────────────────────────────────────
 
-async function fetchReceipts(session) {
+async function fetchReceipts(session, cursor) {
 	const params = new URLSearchParams({
 		address: session.address,
 		signature: session.signature,
@@ -130,6 +138,7 @@ async function fetchReceipts(session) {
 		network: session.network,
 		limit: String(FETCH_LIMIT),
 	});
+	if (cursor) params.set('cursor', cursor);
 	const res = await fetch(`${API_URL}?${params}`);
 	const body = await res.json().catch(() => null);
 	if (!res.ok) {
@@ -137,7 +146,11 @@ async function fetchReceipts(session) {
 		const detail = body?.error_description || 'The receipt service returned an error.';
 		throw Object.assign(new Error(detail), { code });
 	}
-	return body?.receipts || [];
+	return {
+		receipts: body?.receipts || [],
+		summary: body?.summary || null,
+		nextCursor: body?.nextCursor || null,
+	};
 }
 
 async function connect(kind) {
@@ -176,7 +189,10 @@ async function refresh({ resign = true } = {}) {
 			state.session = active;
 			saveSession(active);
 		}
-		state.rows = await fetchReceipts(active);
+		const page = await fetchReceipts(active);
+		state.rows = page.receipts;
+		state.summary = page.summary;
+		state.nextCursor = page.nextCursor;
 		renderVault();
 	} catch (err) {
 		if (err?.code === 'stale_signature' || err?.code === 'invalid_signature') {
@@ -193,10 +209,45 @@ async function refresh({ resign = true } = {}) {
 	}
 }
 
+/**
+ * Append the next keyset page. The API caps a page at 200 rows and hands back
+ * a cursor whenever more exist; without following it a heavy buyer could only
+ * ever see their newest 200 receipts, which is not "retrievable forever".
+ */
+async function loadMore() {
+	const session = state.session;
+	if (!session || !state.nextCursor || state.loading || state.loadingMore) return;
+	if (!signatureStillFresh(session.issuedAt)) {
+		showMoreError('Your signature expired. Hit Refresh to sign again.');
+		return;
+	}
+	state.loadingMore = true;
+	setMoreBusy(true);
+	try {
+		const page = await fetchReceipts(session, state.nextCursor);
+		state.rows = state.rows.concat(page.receipts);
+		state.nextCursor = page.nextCursor;
+		renderVault();
+	} catch (err) {
+		showMoreError(err?.message || 'Could not load more receipts.');
+	} finally {
+		state.loadingMore = false;
+		setMoreBusy(false);
+	}
+}
+
 function disconnect() {
 	state.session = null;
 	state.rows = [];
+	state.summary = null;
+	state.nextCursor = null;
+	// A stale filter carried into the next session renders the new wallet's
+	// vault as "no receipts match your search", which reads as an empty vault.
+	state.query = '';
+	$('rc-search').value = '';
 	clearSession();
+	$('rc-load-error').hidden = true;
+	$('rc-more-wrap').hidden = true;
 	$('rc-vault').hidden = true;
 	$('rc-signin').hidden = false;
 }
@@ -225,11 +276,13 @@ function renderSkeleton() {
 		.join('');
 	$('rc-empty').hidden = true;
 	$('rc-load-error').hidden = true;
+	$('rc-more-wrap').hidden = true;
 }
 
 function renderLoadError(message) {
 	$('rc-list').innerHTML = '';
 	$('rc-empty').hidden = true;
+	$('rc-more-wrap').hidden = true;
 	const el = $('rc-load-error');
 	el.hidden = false;
 	$('rc-load-error-msg').textContent = message;
@@ -242,29 +295,64 @@ function filteredRows() {
 		(r) =>
 			resourceDisplay(r.resourceUrl).toLowerCase().includes(q) ||
 			String(r.transaction || '').toLowerCase().includes(q) ||
+			String(r.assetSymbol || '').toLowerCase().includes(q) ||
 			networkLabel(r.network).toLowerCase().includes(q),
 	);
 }
 
+/**
+ * KPI inputs: the API's account-wide summary when it supplied one, else the
+ * loaded page. Networks arrive as raw CAIP-2 ids in the summary, so they get
+ * the same label treatment the rows do.
+ */
+function vaultStats() {
+	const s = state.summary;
+	if (!s) {
+		return { stats: summarizeReceipts(state.rows), spend: totalSpend(state.rows), wide: false };
+	}
+	return {
+		stats: {
+			total: s.total,
+			endpoints: s.endpoints,
+			networks: (s.networks || []).map(networkLabel),
+			lastAt: s.lastAt,
+		},
+		spend: formatSpendEntries(s.spend, s.unpriced),
+		wide: true,
+	};
+}
+
+function renderPager(shown, total) {
+	const wrap = $('rc-more-wrap');
+	if (!state.nextCursor) {
+		wrap.hidden = true;
+		return;
+	}
+	wrap.hidden = false;
+	$('rc-shown').textContent = `Showing the newest ${formatCount(shown)} of ${formatCount(total)} receipts.`;
+}
+
 function renderVault() {
-	const stats = summarizeReceipts(state.rows);
-	const spend = totalSpend(state.rows);
-	$('rc-k-total').textContent = String(stats.total);
-	$('rc-k-endpoints').textContent = String(stats.endpoints);
+	const { stats, spend } = vaultStats();
+	$('rc-k-total').textContent = formatCount(stats.total);
+	$('rc-k-endpoints').textContent = formatCount(stats.endpoints);
 	$('rc-k-networks').textContent = stats.networks.length ? stats.networks.join(' · ') : '·';
 	$('rc-k-last').textContent = stats.lastAt ? timeAgo(stats.lastAt) : '·';
-	// Receipts issued before settlement capture landed carry no amount; say so
-	// rather than quietly under-reporting the total.
+	// Receipts issued before settlement capture landed carry no amount, and
+	// non-dollar assets are never folded into the dollar figure. Say both,
+	// rather than quietly under-reporting or mislabelling the total.
 	$('rc-k-spend').textContent = spend.priced ? spend.label : '·';
-	$('rc-k-spend-note').textContent = spend.unpriced
-		? `${spend.priced} of ${stats.total} priced`
-		: 'USDC settled';
+	const notes = [];
+	for (const other of spend.others) notes.push(`+ ${other.label}`);
+	if (spend.unpriced) notes.push(`${formatCount(spend.priced)} of ${formatCount(stats.total)} priced`);
+	$('rc-k-spend-note').textContent = notes.length ? notes.join(' · ') : 'USDC settled';
 	$('rc-load-error').hidden = true;
 
 	const rows = filteredRows();
 	const list = $('rc-list');
 	if (!state.rows.length) {
 		list.innerHTML = '';
+		$('rc-more-wrap').hidden = true;
 		$('rc-empty').hidden = false;
 		$('rc-empty-title').textContent = 'No receipts for this wallet yet';
 		$('rc-empty-body').innerHTML =
@@ -275,12 +363,14 @@ function renderVault() {
 	}
 	if (!rows.length) {
 		list.innerHTML = '';
+		$('rc-more-wrap').hidden = true;
 		$('rc-empty').hidden = false;
 		$('rc-empty-title').textContent = 'No receipts match your search';
 		$('rc-empty-body').textContent = 'Try a different endpoint path, network, or transaction hash.';
 		return;
 	}
 	$('rc-empty').hidden = true;
+	renderPager(state.rows.length, stats.total);
 
 	list.innerHTML = rows
 		.map((r, i) => {
@@ -293,9 +383,9 @@ function renderVault() {
 			const when = r.issuedAt
 				? `<time datetime="${esc(r.issuedAt)}" title="${esc(new Date(r.issuedAt).toLocaleString())}">${esc(timeAgo(r.issuedAt))}</time>`
 				: '·';
-			const amount = formatReceiptAmount(r.amountAtomics, r.assetDecimals);
+			const amount = formatReceiptAmount(r.amountAtomics, r.assetDecimals, r.assetSymbol);
 			const amountCell = amount
-				? `<span class="rc-amount" title="${esc(r.amountAtomics)} atomic units">${esc(amount.label)}</span>`
+				? `<span class="rc-amount" title="${esc(r.amountAtomics)} atomic units of ${esc(r.asset || amount.symbol || 'the settlement asset')}">${esc(amount.label)}</span>`
 				: '';
 			return `
 			<div class="rc-row" data-idx="${i}">
