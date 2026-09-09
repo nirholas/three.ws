@@ -30,6 +30,11 @@ import { isPrivateHost, normalizeBaseUrl } from '@three-ws/home-bridge/url';
 
 import { disclosurePanel } from './disclosure-panel.js';
 import { isDegraded, renderManage } from './manage.js';
+// Every string a person reads on this page goes through here. Their own words
+// (the name they gave their house, the address they typed, a message their own
+// Home Assistant returned) are interpolated as values, never baked into a
+// source string. See i18n-home.js.
+import { plural, t } from './i18n-home.js';
 
 /** The eleven states. Each one has a designed treatment; none falls through. */
 export const STATE = Object.freeze({
@@ -112,7 +117,7 @@ async function boot() {
 	} catch (err) {
 		// The list failing is not the connect flow failing: offer the connect card
 		// with the reason attached, so a stranger is never staring at a dead page.
-		render(STATE.EMPTY, { notice: { tone: 'error', title: 'We could not load your homes.', body: messageOf(err) } });
+		render(STATE.EMPTY, { notice: { tone: 'error', title: t('home_connect.list_failed', 'We could not load your homes.'), body: messageOf(err) } });
 	}
 }
 
@@ -197,24 +202,24 @@ function render(state, data = {}) {
 function signedOut() {
 	const panel = el('section', 'hm-panel');
 	panel.append(
-		el('h2', 'hm-panel-title', 'Sign in to connect a home'),
-		el('p', 'hm-panel-sub', 'Your homes are tied to your three.ws account, because the credential that opens your house is stored encrypted against it and never in this browser.'),
+		el('h2', 'hm-panel-title', t('home_connect.signed_out_title', 'Sign in to connect a home')),
+		el('p', 'hm-panel-sub', t('home_connect.signed_out_sub', 'Your homes are tied to your three.ws account, because the credential that opens your house is stored encrypted against it and never in this browser.')),
 	);
 
 	const list = el('ul', 'hm-ol');
 	list.style.listStyle = 'disc';
 	for (const line of [
-		'Your agent reads every room, light, lock and sensor your instance exposes.',
-		'It runs the scenes and scripts you already built, by name.',
-		'Locking up, closing and arming never prompt. Unlocking, opening and disarming always do.',
+		t('home_connect.signed_out_point_1', 'Your agent reads every room, light, lock and sensor your instance exposes.'),
+		t('home_connect.signed_out_point_2', 'It runs the scenes and scripts you already built, by name.'),
+		t('home_connect.signed_out_point_3', 'Locking up, closing and arming never prompt. Unlocking, opening and disarming always do.'),
 	]) list.append(el('li', '', line));
 	panel.append(list);
 
 	const actions = el('div', 'hm-actions');
 	actions.style.marginTop = 'var(--space-md)';
-	const signIn = el('a', 'hm-btn hm-btn-primary', 'Sign in');
+	const signIn = el('a', 'hm-btn hm-btn-primary', t('home_connect.sign_in', 'Sign in'));
 	signIn.href = `/login?next=${encodeURIComponent('/smart-home')}`;
-	const learn = el('a', 'hm-btn hm-btn-ghost', 'How it works');
+	const learn = el('a', 'hm-btn hm-btn-ghost', t('home_connect.how_it_works', 'How it works'));
 	learn.href = '/docs/smart-home';
 	actions.append(signIn, learn);
 	panel.append(actions);
@@ -233,8 +238,8 @@ function connectCard({ notice, values = {}, focus } = {}) {
 	const head = el('div', 'hm-panel-head');
 	const heading = el('div');
 	heading.append(
-		el('h2', 'hm-panel-title', 'Connect a Home Assistant'),
-		el('p', 'hm-panel-sub', 'Everything runs against your own instance. What we store, and what we never store, is spelled out below before you connect.'),
+		el('h2', 'hm-panel-title', t('home_connect.card_title', 'Connect a Home Assistant')),
+		el('p', 'hm-panel-sub', t('home_connect.card_sub', 'Everything runs against your own instance. What we store, and what we never store, is spelled out below before you connect.')),
 	);
 	head.append(heading);
 	panel.append(head);
@@ -246,16 +251,16 @@ function connectCard({ notice, values = {}, focus } = {}) {
 
 	const label = field({
 		id: 'hm-label',
-		label: 'What do you call it?',
-		hint: 'Shown in your agent and in the action log. "Home", "The office", anything.',
+		label: t('home_connect.label_label', 'What do you call it?'),
+		hint: t('home_connect.label_hint', 'Shown in your agent and in the action log. "Home", "The office", anything.'),
 		value: values.label || '',
-		attrs: { type: 'text', maxlength: '120', autocomplete: 'off', placeholder: 'Home' },
+		attrs: { type: 'text', maxlength: '120', autocomplete: 'off', placeholder: t('home_connect.label_placeholder', 'Home') },
 	});
 
 	const url = field({
 		id: 'hm-url',
-		label: 'Your Home Assistant address',
-		hint: 'The https URL you use from outside the house: Home Assistant Cloud, or your own reverse proxy.',
+		label: t('home_connect.url_label', 'Your Home Assistant address'),
+		hint: t('home_connect.url_hint', 'The https URL you use from outside the house: Home Assistant Cloud, or your own reverse proxy.'),
 		value: values.baseUrl || '',
 		attrs: { type: 'url', inputmode: 'url', autocomplete: 'off', spellcheck: 'false', placeholder: 'https://your-home.ui.nabu.casa' },
 	});
@@ -265,7 +270,7 @@ function connectCard({ notice, values = {}, focus } = {}) {
 	form.append(label.wrap, url.wrap, token.wrap);
 
 	const actions = el('div', 'hm-actions');
-	const submit = el('button', 'hm-btn hm-btn-primary', 'Connect this home');
+	const submit = el('button', 'hm-btn hm-btn-primary', t('home_connect.submit', 'Connect this home'));
 	submit.type = 'submit';
 	actions.append(submit);
 	form.append(actions);
@@ -320,14 +325,14 @@ function notFoundCard({ homes = [] } = {}) {
 	const panel = el('section', 'hm-panel');
 	const wrap = el('div', 'hm-empty');
 	wrap.append(
-		el('p', 'hm-empty-title', 'That home is not on this account'),
+		el('p', 'hm-empty-title', t('home_connect.not_yours_title', 'That home is not on this account')),
 		el('p', 'hm-empty-body', homes.length
-			? 'It may have been disconnected, or the link may belong to a different account. Your own homes are below.'
-			: 'It may have been disconnected, or the link may belong to a different account. You have no homes connected yet.'),
+			? t('home_connect.not_yours_body_some', 'It may have been disconnected, or the link may belong to a different account. Your own homes are below.')
+			: t('home_connect.not_yours_body_none', 'It may have been disconnected, or the link may belong to a different account. You have no homes connected yet.')),
 	);
 	const actions = el('div', 'hm-actions');
 	actions.style.justifyContent = 'center';
-	const all = el('a', 'hm-btn hm-btn-primary', homes.length ? 'See your homes' : 'Connect a home');
+	const all = el('a', 'hm-btn hm-btn-primary', homes.length ? t('home_connect.see_your_homes', 'See your homes') : t('home_connect.connect_a_home', 'Connect a home'));
 	all.href = '/smart-home';
 	actions.append(all);
 	wrap.append(actions);
@@ -342,13 +347,13 @@ function notFoundCard({ homes = [] } = {}) {
  */
 function quotaCard({ notice, upgrade } = {}) {
 	const panel = el('section', 'hm-panel');
-	panel.append(el('h2', 'hm-panel-title', 'This account is at its home limit'));
+	panel.append(el('h2', 'hm-panel-title', t('home_connect.quota_title', 'This account is at its home limit')));
 	if (notice) panel.append(noticeEl(notice));
 
 	const actions = el('div', 'hm-actions');
-	const up = el('a', 'hm-btn hm-btn-primary', 'See the plans');
+	const up = el('a', 'hm-btn hm-btn-primary', t('home_connect.see_the_plans', 'See the plans'));
 	up.href = typeof upgrade === 'string' && upgrade.startsWith('/') ? upgrade : '/pricing';
-	const back = el('button', 'hm-btn hm-btn-ghost', 'Back to my homes');
+	const back = el('button', 'hm-btn hm-btn-ghost', t('home_connect.back_to_homes', 'Back to my homes'));
 	back.type = 'button';
 	back.addEventListener('click', () => boot());
 	actions.append(up, back);
@@ -362,21 +367,21 @@ function tokenHelp() {
 	const wrap = el('details', 'hm-panel hm-details');
 	wrap.style.marginTop = 'var(--space-md)';
 	wrap.style.background = 'transparent';
-	const summary = el('summary', '', 'Where do I get an access token?');
+	const summary = el('summary', '', t('home_connect.token_help_summary', 'Where do I get an access token?'));
 	summary.style.cursor = 'pointer';
 	summary.style.fontWeight = 'var(--weight-medium)';
 	wrap.append(summary);
 
 	const steps = el('ol', 'hm-ol');
 	for (const step of [
-		'Open your Home Assistant and click your user name at the bottom of the sidebar.',
-		'Go to the Security tab.',
-		'Scroll to Long-lived access tokens and choose Create token.',
-		'Name it "three.ws" and copy the token. Home Assistant shows it once.',
+		t('home_connect.token_step_1', 'Open your Home Assistant and click your user name at the bottom of the sidebar.'),
+		t('home_connect.token_step_2', 'Go to the Security tab.'),
+		t('home_connect.token_step_3', 'Scroll to Long-lived access tokens and choose Create token.'),
+		t('home_connect.token_step_4', 'Name it "three.ws" and copy the token. Home Assistant shows it once.'),
 	]) steps.append(el('li', '', step));
 	wrap.append(steps);
 
-	const note = el('p', 'hm-hint', 'The token is encrypted before it is stored and is never sent back to this page. Deleting it in Home Assistant revokes our access immediately, whatever we hold.');
+	const note = el('p', 'hm-hint', t('home_connect.token_help_note', 'The token is encrypted before it is stored and is never sent back to this page. Deleting it in Home Assistant revokes our access immediately, whatever we hold.'));
 	note.style.marginTop = 'var(--space-sm)';
 	wrap.append(note);
 	return wrap;
@@ -392,8 +397,8 @@ function tokenHelp() {
 function verifying({ steps = [], onCancel } = {}) {
 	const panel = el('section', 'hm-panel');
 	panel.append(
-		el('h2', 'hm-panel-title', 'Opening a connection to your home'),
-		el('p', 'hm-panel-sub', 'This runs against your instance directly. It usually takes a second or two.'),
+		el('h2', 'hm-panel-title', t('home_connect.verifying_title', 'Opening a connection to your home')),
+		el('p', 'hm-panel-sub', t('home_connect.verifying_sub', 'This runs against your instance directly. It usually takes a second or two.')),
 	);
 
 	const list = el('ul', 'hm-steps');
@@ -409,7 +414,7 @@ function verifying({ steps = [], onCancel } = {}) {
 
 	const actions = el('div', 'hm-actions');
 	actions.style.marginTop = 'var(--space-md)';
-	const cancel = el('button', 'hm-btn hm-btn-ghost', 'Cancel');
+	const cancel = el('button', 'hm-btn hm-btn-ghost', t('home_connect.cancel', 'Cancel'));
 	cancel.type = 'button';
 	cancel.addEventListener('click', () => onCancel && onCancel());
 	actions.append(cancel);
@@ -456,14 +461,25 @@ async function submitConnect({ form, label, url, token, submit }) {
 		return render(STATE.EMPTY, {
 			values: { label: values.label },
 			focus: 'url',
-			notice: { tone: 'error', title: 'Add your Home Assistant address.', body: 'It is the https URL you use to reach your house from outside it.' },
+			notice: {
+				tone: 'error',
+				title: t('home_connect.need_url_title', 'Add your Home Assistant address.'),
+				body: t('home_connect.need_url_body', 'It is the https URL you use to reach your house from outside it.'),
+			},
 		});
 	}
 	if (!values.token) {
 		return render(STATE.EMPTY, {
 			values: { label: values.label, baseUrl: values.baseUrl },
 			focus: 'token',
-			notice: { tone: 'error', title: 'Add a long-lived access token.', body: `Create one in Home Assistant under ${TOKEN_PATH}.` },
+			notice: {
+				tone: 'error',
+				title: t('home_connect.need_token_title', 'Add a long-lived access token.'),
+				// TOKEN_PATH is a path inside the reader's own Home Assistant, which
+				// their instance shows them in their own language. Interpolated, so
+				// no translation ever rewrites a navigation path.
+				body: t('home_connect.need_token_body', 'Create one in Home Assistant under {{path}}.', { path: TOKEN_PATH }),
+			},
 		});
 	}
 
@@ -482,10 +498,10 @@ async function submitConnect({ form, label, url, token, submit }) {
 
 	const controller = new AbortController();
 	const steps = [
-		{ text: 'Checking the address', state: 'done' },
-		{ text: 'Opening a connection to your home', state: 'active' },
-		{ text: 'Reading your rooms and devices', state: 'pending' },
-		{ text: 'Checking for the Model Context Protocol server', state: 'pending' },
+		{ text: t('home_connect.step_address', 'Checking the address'), state: 'done' },
+		{ text: t('home_connect.step_connect', 'Opening a connection to your home'), state: 'active' },
+		{ text: t('home_connect.step_rooms', 'Reading your rooms and devices'), state: 'pending' },
+		{ text: t('home_connect.step_mcp', 'Checking for the Model Context Protocol server'), state: 'pending' },
 	];
 	render(STATE.VERIFYING, { steps, onCancel: () => controller.abort() });
 
@@ -507,14 +523,19 @@ async function submitConnect({ form, label, url, token, submit }) {
 			if (landed) {
 				return renderHomes(after, {
 					tone: 'info',
-					title: `${landed.label} connected anyway.`,
-					body: 'You cancelled while it was still verifying, but your home had already answered by then, so it is connected. Disconnect it below if that is not what you wanted.',
+					// The label is the name they gave their own house.
+					title: t('home_connect.landed_anyway_title', '{{home}} connected anyway.', { home: landed.label }),
+					body: t('home_connect.landed_anyway_body', 'You cancelled while it was still verifying, but your home had already answered by then, so it is connected. Disconnect it below if that is not what you wanted.'),
 				});
 			}
 			return render(STATE.EMPTY, {
 				values: { label: values.label, baseUrl: values.baseUrl },
 				focus: 'url',
-				notice: { tone: 'info', title: 'Cancelled.', body: 'No home was connected and no token was stored. Try again whenever you are ready.' },
+				notice: {
+					tone: 'info',
+					title: t('home_connect.cancelled_title', 'Cancelled.'),
+					body: t('home_connect.cancelled_body', 'No home was connected and no token was stored. Try again whenever you are ready.'),
+				},
 			});
 		}
 		renderFailure(err, values);
@@ -533,8 +554,8 @@ function renderFailure(err, values) {
 			focus: 'token',
 			notice: {
 				tone: 'error',
-				title: 'Home Assistant rejected that token.',
-				body: `Tokens are one per line and easy to truncate on copy. Create a fresh one under ${TOKEN_PATH}, then paste the whole string.`,
+				title: t('home_connect.auth_failed_title', 'Home Assistant rejected that token.'),
+				body: t('home_connect.auth_failed_body', 'Tokens are one per line and easy to truncate on copy. Create a fresh one under {{path}}, then paste the whole string.', { path: TOKEN_PATH }),
 			},
 		});
 	}
@@ -546,11 +567,11 @@ function renderFailure(err, values) {
 			focus: 'url',
 			notice: {
 				tone: 'error',
-				title: 'We could not reach that address.',
+				title: t('home_connect.unreachable_title', 'We could not reach that address.'),
 				body: messageOf(err),
 				bullets: [
-					'If the address is right, check the house is online and reachable from outside your network.',
-					'If it is only reachable at home, three.ws cannot route to it. The add-on that dials out from inside your network is the path for that.',
+					t('home_connect.unreachable_bullet_1', 'If the address is right, check the house is online and reachable from outside your network.'),
+					t('home_connect.unreachable_bullet_2', 'If it is only reachable at home, three.ws cannot route to it. The add-on that dials out from inside your network is the path for that.'),
 				],
 			},
 		});
@@ -560,7 +581,7 @@ function renderFailure(err, values) {
 		return render(STATE.EMPTY, {
 			values: carried,
 			focus: 'url',
-			notice: { tone: 'error', title: 'That address does not look right.', body: messageOf(err) },
+			notice: { tone: 'error', title: t('home_connect.bad_url_title', 'That address does not look right.'), body: messageOf(err) },
 		});
 	}
 
@@ -575,8 +596,8 @@ function renderFailure(err, values) {
 				title: quotaTitle(err.quota),
 				body: messageOf(err),
 				bullets: [
-					'Disconnect a home you no longer use and this one will connect.',
-					'Or move to a plan that carries more homes.',
+					t('home_connect.quota_bullet_1', 'Disconnect a home you no longer use and this one will connect.'),
+					t('home_connect.quota_bullet_2', 'Or move to a plan that carries more homes.'),
 				],
 			},
 			upgrade: err.quota.upgrade || '/pricing',
@@ -586,14 +607,15 @@ function renderFailure(err, values) {
 	return render(STATE.EMPTY, {
 		values: carried,
 		focus: 'url',
-		notice: { tone: 'error', title: 'That did not work.', body: messageOf(err) },
+		notice: { tone: 'error', title: t('home_connect.generic_failed', 'That did not work.'), body: messageOf(err) },
 	});
 }
 
 function quotaTitle(quota) {
 	const limit = Number(quota?.limit);
-	if (!Number.isFinite(limit)) return 'Your plan is at its limit for homes.';
-	return `Your plan covers ${limit} ${limit === 1 ? 'home' : 'homes'}.`;
+	if (!Number.isFinite(limit)) return t('home_connect.quota_title_unknown', 'Your plan is at its limit for homes.');
+	// One home and many homes are two catalog keys, not an English "s".
+	return plural('home_connect.quota_title_n', limit, 'Your plan covers {{count}} home.', 'Your plan covers {{count}} homes.');
 }
 
 /**
@@ -642,8 +664,12 @@ export function checkReachable(input) {
 	} catch (err) {
 		return {
 			ok: false,
-			short: 'That is not a web address we can use.',
-			notice: { tone: 'error', title: 'That address does not look right.', body: err?.message || 'Use the full https URL of your Home Assistant.' },
+			short: t('home_connect.not_a_url_short', 'That is not a web address we can use.'),
+			notice: {
+				tone: 'error',
+				title: t('home_connect.bad_url_title', 'That address does not look right.'),
+				body: err?.message || t('home_connect.bad_url_body', 'Use the full https URL of your Home Assistant.'),
+			},
 		};
 	}
 
@@ -651,16 +677,17 @@ export function checkReachable(input) {
 	if (isPrivateHost(host) && !parsed.loopback) {
 		return {
 			ok: false,
-			short: `${host} is only on your home network.`,
+			// The host is what they typed. It is echoed back, never translated.
+			short: t('home_connect.private_host_short', '{{host}} is only on your home network.', { host }),
 			notice: {
 				tone: 'warn',
-				title: `${host} is an address on your home network.`,
-				body: 'three.ws runs on the public internet, so it cannot reach an address that only exists inside your house. There are two real ways round it.',
+				title: t('home_connect.private_host_title', '{{host}} is an address on your home network.', { host }),
+				body: t('home_connect.private_host_body', 'three.ws runs on the public internet, so it cannot reach an address that only exists inside your house. There are two real ways round it.'),
 				bullets: [
-					'Use your remote https address instead. Home Assistant Cloud gives you one, and so does your own reverse proxy. That works today, with the token you already have.',
-					'Or let your house dial out to three.ws instead, with the button below. One small integration inside Home Assistant, no port forwarded, and no Home Assistant token stored here at all.',
+					t('home_connect.private_host_bullet_1', 'Use your remote https address instead. Home Assistant Cloud gives you one, and so does your own reverse proxy. That works today, with the token you already have.'),
+					t('home_connect.private_host_bullet_2', 'Or let your house dial out to three.ws instead, with the button below. One small integration inside Home Assistant, no port forwarded, and no Home Assistant token stored here at all.'),
 				],
-				action: { label: 'Connect a home that is only on my network', onClick: () => render(STATE.PAIRING) },
+				action: { label: t('home_connect.private_host_action', 'Connect a home that is only on my network'), onClick: () => render(STATE.PAIRING) },
 			},
 		};
 	}
@@ -671,11 +698,11 @@ export function checkReachable(input) {
 	if (!parsed.secure && !parsed.loopback) {
 		return {
 			ok: false,
-			short: 'A plain http address cannot be reached from this page.',
+			short: t('home_connect.insecure_short', 'A plain http address cannot be reached from this page.'),
 			notice: {
 				tone: 'warn',
-				title: 'That is a plain http address.',
-				body: 'This page is served over https, and a browser will not open an unencrypted connection from it. Use the https address for your house.',
+				title: t('home_connect.insecure_title', 'That is a plain http address.'),
+				body: t('home_connect.insecure_body', 'This page is served over https, and a browser will not open an unencrypted connection from it. Use the https address for your house.'),
 			},
 		};
 	}
@@ -720,8 +747,8 @@ async function disconnect(home) {
 	const homes = await listHomes();
 	const notice = {
 		tone: 'ok',
-		title: `${home.label} is disconnected.`,
-		body: 'The access token we held has been erased. Delete the token in Home Assistant too if you want it gone on both sides, under ' + TOKEN_PATH + '.',
+		title: t('home_connect.disconnected_title', '{{home}} is disconnected.', { home: home.label }),
+		body: t('home_connect.disconnected_body', 'The access token we held has been erased. Delete the token in Home Assistant too if you want it gone on both sides, under {{path}}.', { path: TOKEN_PATH }),
 	};
 	if (homes && homes.length) render(listState(homes), { homes, notice });
 	else render(STATE.REVOKED, { notice });
@@ -863,7 +890,7 @@ function setInlineError(f, message) {
  */
 function tokenField(value) {
 	const wrap = el('div', 'hm-field');
-	const labelEl = el('label', 'hm-label', 'Long-lived access token');
+	const labelEl = el('label', 'hm-label', t('home_connect.token_label', 'Long-lived access token'));
 	labelEl.htmlFor = 'hm-token';
 
 	const shell = el('div', 'hm-secret');
@@ -877,19 +904,19 @@ function tokenField(value) {
 	input.setAttribute('spellcheck', 'false');
 	input.setAttribute('placeholder', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...');
 
-	const toggle = el('button', 'hm-reveal', 'Show');
+	const toggle = el('button', 'hm-reveal', t('home_connect.token_show', 'Show'));
 	toggle.type = 'button';
 	toggle.setAttribute('aria-pressed', 'false');
 	toggle.addEventListener('click', () => {
 		const revealed = input.type === 'text';
 		input.type = revealed ? 'password' : 'text';
-		toggle.textContent = revealed ? 'Show' : 'Hide';
+		toggle.textContent = revealed ? t('home_connect.token_show', 'Show') : t('home_connect.token_hide', 'Hide');
 		toggle.setAttribute('aria-pressed', String(!revealed));
 		input.focus();
 	});
 
 	shell.append(input, toggle);
-	const hintEl = el('p', 'hm-hint', 'Sent to three.ws once, encrypted at rest, and never returned to this page or saved in this browser.');
+	const hintEl = el('p', 'hm-hint', t('home_connect.token_hint', 'Sent to three.ws once, encrypted at rest, and never returned to this page or saved in this browser.'));
 	hintEl.id = 'hm-token-hint';
 	input.setAttribute('aria-describedby', hintEl.id);
 	wrap.append(labelEl, shell, hintEl);

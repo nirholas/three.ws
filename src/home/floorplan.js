@@ -17,6 +17,10 @@
 
 import { assignEntityArea, clearLayout, createArea, getLayout, HomeApiError, saveLayout } from './api.js';
 import { clear, el, noticeEl } from './connect.js';
+// Every string a person reads in this editor goes through here. Room names and
+// device names never do: they are the user's own words, interpolated as values
+// so the translation model only ever sees {{name}}. See i18n-home.js.
+import { formatNumber, plural, t } from './i18n-home.js';
 
 /** Metres per grid square. Matches the scene's CELL so the two read alike. */
 const GRID_M = 1.2;
@@ -216,7 +220,11 @@ export function mountFloorplan({ mount, homeId, graph, canEdit = true, onChange 
 			state.version = res.version;
 			state.orphaned = res.orphaned || [];
 			state.unplaced = res.unplaced || [];
-			state.notice = { tone: 'ok', title: 'Floorplan saved', body: 'Your 3D home follows this plan now.' };
+			state.notice = {
+				tone: 'ok',
+				title: t('home_floorplan.saved_title', 'Floorplan saved'),
+				body: t('home_floorplan.saved_body', 'Your 3D home follows this plan now.'),
+			};
 			state.history.length = 0;
 			state.future.length = 0;
 		} catch (err) {
@@ -248,7 +256,11 @@ export function mountFloorplan({ mount, homeId, graph, canEdit = true, onChange 
 		state.conflict = null;
 		state.history.length = 0;
 		state.future.length = 0;
-		state.notice = { tone: 'info', title: 'Loaded the other version', body: 'Your changes were not saved. Redraw and save again if you still want them.' };
+		state.notice = {
+			tone: 'info',
+			title: t('home_floorplan.took_theirs_title', 'Loaded the other version'),
+			body: t('home_floorplan.took_theirs_body', 'Your changes were not saved. Redraw and save again if you still want them.'),
+		};
 		render();
 		onChange?.(toDocument());
 	}
@@ -264,7 +276,11 @@ export function mountFloorplan({ mount, homeId, graph, canEdit = true, onChange 
 			state.orphaned = [];
 			state.history.length = 0;
 			state.future.length = 0;
-			state.notice = { tone: 'info', title: 'Back to the default arrangement', body: 'Rooms pack into a grid per floor until you draw a plan again.' };
+			state.notice = {
+				tone: 'info',
+				title: t('home_floorplan.reset_title', 'Back to the default arrangement'),
+				body: t('home_floorplan.reset_body', 'Rooms pack into a grid per floor until you draw a plan again.'),
+			};
 		} catch (err) {
 			state.error = describeError(err);
 		} finally {
@@ -283,15 +299,17 @@ export function mountFloorplan({ mount, homeId, graph, canEdit = true, onChange 
 			await assignEntityArea(homeId, { entityId, areaId });
 			state.notice = {
 				tone: 'ok',
-				title: `${entityId} is in ${nameOf(areaId)} now`,
-				body: 'That was written to your Home Assistant, so it shows up in your dashboards and voice assistant too.',
+				// Both names are the house's own: the entity id and the room the
+				// user named. Interpolated, never part of the source string.
+				title: t('home_floorplan.filed_title', '{{device}} is in {{room}} now', { device: entityId, room: nameOf(areaId) }),
+				body: t('home_floorplan.filed_body', 'That was written to your Home Assistant, so it shows up in your dashboards and voice assistant too.'),
 			};
 			onChange?.(toDocument(), { refreshGraph: true });
 		} catch (err) {
 			// State 9: the local plan is untouched and the failure is named. A
 			// YAML entity has no registry entry and cannot be filed, which is
 			// common and needs a sentence rather than a stack trace.
-			state.notice = { tone: 'error', title: 'Could not file that device', body: describeError(err).body };
+			state.notice = { tone: 'error', title: t('home_floorplan.file_failed', 'Could not file that device'), body: describeError(err).body };
 		}
 		render();
 	}
@@ -326,8 +344,16 @@ export function mountFloorplan({ mount, homeId, graph, canEdit = true, onChange 
 			state.creating = false;
 			placeRoom(area.id);
 			state.notice = area.created
-				? { tone: 'ok', title: `${area.name} is a room in your home now`, body: 'It was made in your Home Assistant, so you can file devices into it here and use it there.' }
-				: { tone: 'info', title: `${area.name} already existed`, body: 'It is on the plan now.' };
+				? {
+					tone: 'ok',
+					title: t('home_floorplan.room_made_title', '{{room}} is a room in your home now', { room: area.name }),
+					body: t('home_floorplan.room_made_body', 'It was made in your Home Assistant, so you can file devices into it here and use it there.'),
+				}
+				: {
+					tone: 'info',
+					title: t('home_floorplan.room_existed_title', '{{room}} already existed', { room: area.name }),
+					body: t('home_floorplan.room_existed_body', 'It is on the plan now.'),
+				};
 			render();
 			onChange?.(toDocument(), { refreshGraph: true });
 
@@ -350,13 +376,13 @@ export function mountFloorplan({ mount, homeId, graph, canEdit = true, onChange 
 		clear(view);
 
 		if (state.loading) return view.append(skeleton());
-		if (state.error) return view.append(noticeEl({ tone: 'error', ...state.error, action: { label: 'Try again', onClick: load } }));
+		if (state.error) return view.append(noticeEl({ tone: 'error', ...state.error, action: { label: t('home_floorplan.try_again', 'Try again'), onClick: load } }));
 
 		if (state.unreadable) {
 			view.append(noticeEl({
 				tone: 'error',
-				title: 'This floorplan could not be read',
-				body: `${state.unreadable} The 3D home is using its default arrangement. Drawing and saving replaces the stored plan.`,
+				title: t('home_floorplan.unreadable_title', 'This floorplan could not be read'),
+				body: t('home_floorplan.unreadable_body', '{{reason}} The 3D home is using its default arrangement. Drawing and saving replaces the stored plan.', { reason: state.unreadable }),
 			}));
 		}
 		if (state.notice) view.append(noticeEl(state.notice));
@@ -371,22 +397,27 @@ export function mountFloorplan({ mount, homeId, graph, canEdit = true, onChange 
 	function toolbar() {
 		const bar = el('div', 'hm-plan-toolbar');
 		bar.setAttribute('role', 'toolbar');
-		bar.setAttribute('aria-label', 'Floorplan');
+		bar.setAttribute('aria-label', t('home_floorplan.toolbar_aria', 'Floorplan'));
 
 		if (!canEdit) {
 			// State 8: read only. The plan is still worth seeing.
-			bar.append(el('p', 'hm-plan-readonly', 'You can see this floorplan. Editing it needs the owner or an admin.'));
+			bar.append(el('p', 'hm-plan-readonly', t('home_floorplan.readonly', 'You can see this floorplan. Editing it needs the owner or an admin.')));
 			return bar;
 		}
 
-		bar.append(button('Undo', undo, { disabled: !state.history.length, key: 'Ctrl+Z' }));
-		bar.append(button('Redo', redo, { disabled: !state.future.length, key: 'Ctrl+Shift+Z' }));
-		bar.append(button('New room', () => openNaming(), { disabled: state.creating }));
+		bar.append(button(t('home_floorplan.undo', 'Undo'), undo, { disabled: !state.history.length, key: 'Ctrl+Z' }));
+		bar.append(button(t('home_floorplan.redo', 'Redo'), redo, { disabled: !state.future.length, key: 'Ctrl+Shift+Z' }));
+		bar.append(button(t('home_floorplan.new_room', 'New room'), () => openNaming(), { disabled: state.creating }));
 		const dirty = state.history.length > 0;
-		bar.append(button(state.saving ? 'Saving' : 'Save floorplan', save, { primary: true, disabled: state.saving || !dirty }));
-		bar.append(button('Reset to default', resetPlan, { disabled: state.saving || !state.rooms.size }));
+		bar.append(button(state.saving ? t('home_floorplan.saving', 'Saving') : t('home_floorplan.save', 'Save floorplan'), save, { primary: true, disabled: state.saving || !dirty }));
+		bar.append(button(t('home_floorplan.reset', 'Reset to default'), resetPlan, { disabled: state.saving || !state.rooms.size }));
 
-		const count = el('span', 'hm-plan-count', `${state.rooms.size} placed, ${state.unplaced.length} to place`);
+		// Two counts in one sentence, so it is one translatable string rather
+		// than two fragments a translator cannot order for their own language.
+		const count = el('span', 'hm-plan-count', t('home_floorplan.count', '{{placed}} placed, {{toPlace}} to place', {
+			placed: formatNumber(state.rooms.size),
+			toPlace: formatNumber(state.unplaced.length),
+		}));
 		count.setAttribute('aria-live', 'polite');
 		bar.append(count);
 		return bar;
@@ -410,12 +441,12 @@ export function mountFloorplan({ mount, homeId, graph, canEdit = true, onChange 
 	 */
 	function namingForm() {
 		const form = el('form', 'hm-plan-naming');
-		form.setAttribute('aria-label', 'Make a new room');
+		form.setAttribute('aria-label', t('home_floorplan.naming_aria', 'Make a new room'));
 
 		const id = `hm-plan-newroom-${Math.random().toString(36).slice(2, 8)}`;
 		const label = el('label', null, state.naming.thenFile
-			? `Name a room for ${state.naming.thenFile}`
-			: 'Name the new room');
+			? t('home_floorplan.name_room_for', 'Name a room for {{device}}', { device: state.naming.thenFile })
+			: t('home_floorplan.name_new_room', 'Name the new room'));
 		label.htmlFor = id;
 		form.append(label);
 
@@ -425,7 +456,9 @@ export function mountFloorplan({ mount, homeId, graph, canEdit = true, onChange 
 		input.maxLength = 64;
 		input.required = true;
 		input.autocomplete = 'off';
-		input.placeholder = 'Kitchen';
+		// A placeholder is an example, so it is translated: a French reader is
+		// shown a French room, not the English word for one.
+		input.placeholder = t('home_floorplan.name_placeholder', 'Kitchen');
 		// Survives the re-render a refusal causes, so the name is theirs to fix
 		// rather than to retype.
 		input.value = state.naming.value || '';
@@ -433,12 +466,12 @@ export function mountFloorplan({ mount, homeId, graph, canEdit = true, onChange 
 		form.append(input);
 
 		const actions = el('div', 'hm-plan-naming-actions');
-		const submit = el('button', 'hm-plan-btn is-primary', state.creating ? 'Making' : 'Make this room');
+		const submit = el('button', 'hm-plan-btn is-primary', state.creating ? t('home_floorplan.making', 'Making') : t('home_floorplan.make_this_room', 'Make this room'));
 		submit.type = 'submit';
 		submit.disabled = state.creating;
 		actions.append(submit);
 
-		const cancel = el('button', 'hm-plan-btn', 'Cancel');
+		const cancel = el('button', 'hm-plan-btn', t('home_floorplan.cancel', 'Cancel'));
 		cancel.type = 'button';
 		cancel.disabled = state.creating;
 		cancel.addEventListener('click', () => { state.naming = null; render(); });
@@ -455,7 +488,7 @@ export function mountFloorplan({ mount, homeId, graph, canEdit = true, onChange 
 			e.preventDefault();
 			const name = input.value.trim();
 			if (!name) {
-				state.naming = { ...state.naming, error: 'Give the room a name, like Kitchen.', value: input.value };
+				state.naming = { ...state.naming, error: t('home_floorplan.name_required', 'Give the room a name, like Kitchen.'), value: input.value };
 				return render();
 			}
 			createRoom(name);
@@ -466,11 +499,15 @@ export function mountFloorplan({ mount, homeId, graph, canEdit = true, onChange 
 	function conflictPanel() {
 		const wrap = el('div', 'hm-plan-conflict');
 		wrap.setAttribute('role', 'alertdialog');
-		wrap.append(el('h3', null, 'Someone else changed this floorplan'));
-		wrap.append(el('p', null, `They saved version ${state.conflict.theirs?.version ?? '?'} while you were drawing. Nothing is lost yet: pick which one to keep.`));
+		wrap.append(el('h3', null, t('home_floorplan.conflict_title', 'Someone else changed this floorplan')));
+		wrap.append(el('p', null, t(
+			'home_floorplan.conflict_body',
+			'They saved version {{version}} while you were drawing. Nothing is lost yet: pick which one to keep.',
+			{ version: state.conflict.theirs?.version === undefined ? '?' : formatNumber(state.conflict.theirs.version) },
+		)));
 		const actions = el('div', 'hm-plan-conflict-actions');
-		actions.append(button('Keep mine', keepMine, { primary: true }));
-		actions.append(button('Take theirs', takeTheirs));
+		actions.append(button(t('home_floorplan.keep_mine', 'Keep mine'), keepMine, { primary: true }));
+		actions.append(button(t('home_floorplan.take_theirs', 'Take theirs'), takeTheirs));
 		wrap.append(actions);
 		return wrap;
 	}
@@ -481,7 +518,7 @@ export function mountFloorplan({ mount, homeId, graph, canEdit = true, onChange 
 		const wrap = el('div', 'hm-plan-canvas');
 		wrap.tabIndex = 0;
 		wrap.setAttribute('role', 'application');
-		wrap.setAttribute('aria-label', 'Floorplan. Arrow keys move the selected room, plus and minus resize it.');
+		wrap.setAttribute('aria-label', t('home_floorplan.canvas_aria', 'Floorplan. Arrow keys move the selected room, plus and minus resize it.'));
 
 		if (!rooms.length) {
 			// States 1 and 2: nothing placed. Which message depends on whether the
@@ -490,13 +527,13 @@ export function mountFloorplan({ mount, homeId, graph, canEdit = true, onChange 
 			wrap.append(noticeEl(live.length
 				? {
 					tone: 'info',
-					title: 'No plan yet',
-					body: 'Your 3D home is using a default grid. Place a room below to start drawing the real thing.',
+					title: t('home_floorplan.empty_title', 'No plan yet'),
+					body: t('home_floorplan.empty_body', 'Your 3D home is using a default grid. Place a room below to start drawing the real thing.'),
 				}
 				: {
 					tone: 'info',
-					title: 'Nothing is filed into a room yet',
-					body: 'Home Assistant has no areas for this house. Make a room below, then drag your devices into it: that writes the room into your Home Assistant, not just here.',
+					title: t('home_floorplan.no_areas_title', 'Nothing is filed into a room yet'),
+					body: t('home_floorplan.no_areas_body', 'Home Assistant has no areas for this house. Make a room below, then drag your devices into it: that writes the room into your Home Assistant, not just here.'),
 				}));
 			return wrap;
 		}
@@ -524,19 +561,24 @@ export function mountFloorplan({ mount, homeId, graph, canEdit = true, onChange 
 		node.style.height = `${d * PX_PER_M}px`;
 		node.tabIndex = 0;
 		node.setAttribute('role', 'button');
-		node.setAttribute('aria-label', `${nameOf(id)}, ${w} by ${d} metres${orphan ? ', no longer in this home' : ''}`);
+		// The room's own name is the user's word, interpolated. The size is
+		// formatted for the reader's locale, so 5,7 in French and 5.7 in English.
+		node.setAttribute('aria-label', orphan
+			? t('home_floorplan.room_aria_orphan', '{{room}}, {{w}} by {{d}} metres, no longer in this home', { room: nameOf(id), w: formatNumber(w), d: formatNumber(d) })
+			: t('home_floorplan.room_aria', '{{room}}, {{w}} by {{d}} metres', { room: nameOf(id), w: formatNumber(w), d: formatNumber(d) }));
 		node.setAttribute('aria-pressed', String(state.selected === id));
 
 		node.append(el('span', 'hm-plan-room-name', nameOf(id)));
-		node.append(el('span', 'hm-plan-room-size', `${w} x ${d} m`));
+		node.append(el('span', 'hm-plan-room-size', t('home_floorplan.room_size', '{{w}} x {{d}} m', { w: formatNumber(w), d: formatNumber(d) })));
 
 		if (orphan) {
 			// State 6: the area was deleted in Home Assistant. Never crash, never
 			// silently discard the rest of somebody's plan.
-			const drop = el('button', 'hm-plan-room-drop', 'Remove');
+			const drop = el('button', 'hm-plan-room-drop', t('home_floorplan.remove', 'Remove'));
 			drop.type = 'button';
+			drop.setAttribute('aria-label', t('home_floorplan.remove_aria', 'Remove {{room}} from the plan', { room: nameOf(id) }));
 			drop.addEventListener('click', (e) => { e.stopPropagation(); removeRoom(id); });
-			node.append(el('span', 'hm-plan-room-tag', 'not in this home'));
+			node.append(el('span', 'hm-plan-room-tag', t('home_floorplan.orphan_tag', 'not in this home')));
 			node.append(drop);
 		}
 
@@ -559,7 +601,7 @@ export function mountFloorplan({ mount, homeId, graph, canEdit = true, onChange 
 	function resizeHandle(id, room) {
 		const handle = el('button', 'hm-plan-handle');
 		handle.type = 'button';
-		handle.setAttribute('aria-label', `Resize ${nameOf(id)}`);
+		handle.setAttribute('aria-label', t('home_floorplan.resize_aria', 'Resize {{room}}', { room: nameOf(id) }));
 		handle.addEventListener('pointerdown', (e) => {
 			e.stopPropagation();
 			const start = { x: e.clientX, y: e.clientY, w: room.w ?? DEFAULT_SIZE, d: room.d ?? DEFAULT_SIZE };
@@ -623,14 +665,14 @@ export function mountFloorplan({ mount, homeId, graph, canEdit = true, onChange 
 
 	function tray() {
 		const wrap = el('div', 'hm-plan-tray');
-		wrap.append(el('h3', 'hm-plan-tray-title', 'To place'));
+		wrap.append(el('h3', 'hm-plan-tray-title', t('home_floorplan.tray_title', 'To place')));
 
 		// State 2. A house with no areas has nothing to arrange, and the honest
 		// answer is not an empty panel: it is the first room.
 		if (canEdit && !liveRoomIds().some((id) => !id.startsWith('__'))) {
 			const start = el('div', 'hm-plan-tray-start');
-			start.append(el('p', null, 'Nothing in this home is in a room yet. Make the first one and the plan starts here.'));
-			start.append(button('Make a room', () => openNaming()));
+			start.append(el('p', null, t('home_floorplan.first_room_body', 'Nothing in this home is in a room yet. Make the first one and the plan starts here.')));
+			start.append(button(t('home_floorplan.make_a_room', 'Make a room'), () => openNaming()));
 			wrap.append(start);
 		}
 
@@ -648,15 +690,23 @@ export function mountFloorplan({ mount, homeId, graph, canEdit = true, onChange 
 			}
 			wrap.append(list);
 		} else {
-			wrap.append(el('p', 'hm-plan-tray-empty', 'Every room in this home is on the plan.'));
+			wrap.append(el('p', 'hm-plan-tray-empty', t('home_floorplan.tray_empty', 'Every room in this home is on the plan.')));
 		}
 
 		const loose = graph?.unassigned || [];
 		if (loose.length) {
-			wrap.append(el('h3', 'hm-plan-tray-title', `${loose.length} device${loose.length === 1 ? '' : 's'} not in a room`));
+			// One device and many devices are two catalog keys, not an English
+			// "s" appended in code: a language with three plural forms cannot be
+			// served by a ternary here.
+			wrap.append(el('h3', 'hm-plan-tray-title', plural(
+				'home_floorplan.loose_count',
+				loose.length,
+				'{{count}} device not in a room',
+				'{{count}} devices not in a room',
+			)));
 			wrap.append(el('p', 'hm-plan-tray-hint', canEdit
-				? 'Drag one onto a room. That files it in your Home Assistant, so it shows up in your dashboards and voice assistant too.'
-				: 'Filing a device into a room needs the owner or an admin.'));
+				? t('home_floorplan.tray_hint', 'Drag one onto a room. That files it in your Home Assistant, so it shows up in your dashboards and voice assistant too.')
+				: t('home_floorplan.tray_hint_readonly', 'Filing a device into a room needs the owner or an admin.')));
 			const list = el('ul', 'hm-plan-tray-entities');
 			for (const entity of loose.slice(0, 200)) {
 				const li = el('li', 'hm-plan-tray-entity');
@@ -666,16 +716,16 @@ export function mountFloorplan({ mount, homeId, graph, canEdit = true, onChange 
 					li.draggable = true;
 					li.addEventListener('dragstart', (e) => e.dataTransfer?.setData('text/entity-id', entity.entityId));
 					// Keyboard parity: dragging is not the only way in.
-					const pick = el('button', 'hm-plan-tray-file', 'File');
+					const pick = el('button', 'hm-plan-tray-file', t('home_floorplan.file', 'File'));
 					pick.type = 'button';
-					pick.setAttribute('aria-label', `File ${entity.name || entity.entityId} into a room`);
+					pick.setAttribute('aria-label', t('home_floorplan.file_aria', 'File {{device}} into a room', { device: entity.name || entity.entityId }));
 					pick.addEventListener('click', () => fileByPrompt(entity.entityId));
 					li.append(pick);
 				}
 				list.append(li);
 			}
 			wrap.append(list);
-			if (loose.length > 200) wrap.append(el('p', 'hm-plan-tray-hint', `Showing the first 200 of ${loose.length}.`));
+			if (loose.length > 200) wrap.append(el('p', 'hm-plan-tray-hint', t('home_floorplan.tray_truncated', 'Showing the first 200 of {{total}}.', { total: formatNumber(loose.length) })));
 		}
 		return wrap;
 	}
@@ -725,7 +775,7 @@ export function mountFloorplan({ mount, homeId, graph, canEdit = true, onChange 
 	function skeleton() {
 		const s = el('div', 'hm-plan-skeleton');
 		s.setAttribute('aria-busy', 'true');
-		s.setAttribute('aria-label', 'Loading the floorplan');
+		s.setAttribute('aria-label', t('home_floorplan.loading_aria', 'Loading the floorplan'));
 		for (let i = 0; i < 4; i += 1) s.append(el('div', 'hm-plan-skeleton-room'));
 		return s;
 	}
@@ -733,9 +783,17 @@ export function mountFloorplan({ mount, homeId, graph, canEdit = true, onChange 
 
 function describeError(err) {
 	if (err instanceof HomeApiError) {
-		return { title: err.code === 'not_found' ? 'This home is not available' : 'Something went wrong', body: err.message };
+		return {
+			title: err.code === 'not_found'
+				? t('home_floorplan.err_not_found', 'This home is not available')
+				: t('home_floorplan.err_generic', 'Something went wrong'),
+			body: err.message,
+		};
 	}
-	return { title: 'Something went wrong', body: err?.message || 'Try again in a moment.' };
+	return {
+		title: t('home_floorplan.err_generic', 'Something went wrong'),
+		body: err?.message || t('home_floorplan.err_retry', 'Try again in a moment.'),
+	};
 }
 
 /** Grid snap, in metres. */
