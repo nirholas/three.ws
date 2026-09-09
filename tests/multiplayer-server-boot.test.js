@@ -250,6 +250,16 @@ describe('multiplayer entry point', () => {
 			while (!utterances.length && Date.now() < deadline) await sleep(100);
 			expect(utterances.length, 'the opening beat reached a handler registered before state wiring').toBeGreaterThan(0);
 			expect(utterances[0].text).toBeTruthy();
+
+			// The line and the caption are two separate deliveries, and the room
+			// sends them in that order on purpose: the broadcast carries
+			// `afterNextPatch: false` so the audience hears the host without
+			// waiting on a patch tick. So the caption in synced state ALWAYS lands
+			// after the message, and asserting it the moment the message arrives is
+			// a race the test only ever won by scheduling luck. Wait for state to
+			// catch up. _performUtterance sets caption and phase together and never
+			// clears the caption, so this settles once and stays settled.
+			while (room.state.host.caption !== utterances[0].text && Date.now() < deadline) await sleep(50);
 			expect(room.state.host.caption).toBe(utterances[0].text);
 			expect(room.state.phase).toBe('live');
 		} finally {
