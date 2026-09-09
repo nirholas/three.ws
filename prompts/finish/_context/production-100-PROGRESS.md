@@ -658,6 +658,72 @@ Left:
   and `openai` still answers `429 billing_not_active`, so two of thirteen rungs are dead
   weight on every single call.
 
+## 2026-09-09 (later pass): 04b, the starved evidence layer got the one fix that did not need the owner
+
+The session above proved the `mixed` fix works and named the blocker: with the Vertex
+grounded rung denied, 100% of sources are Wikipedia and **15 of 38 claims saw ZERO
+stance-bearing sources**. This pass attacked that starvation, which is the half of the
+problem that is fixable from here.
+
+**Re-derived the blocker independently, and it is unchanged.** `/api/web-search` answers
+`502 upstream_error`. That is diagnostic on its own: the handler returns `200 {enabled:false}`
+when `GOOGLE_CLOUD_PROJECT` is unset, so a 502 means the var IS set and the Vertex call
+itself is failing, which matches the dunning denial recorded above. Two free-lane probes of
+the live endpoint came back with Wikipedia-only sources, confirming production is still on
+the keyless tier.
+
+**Root cause of the starvation, one level down: the Wikipedia rung only ever read each
+article's LEAD section** (`exintro=1`, chosen 2026-07-08 to replace an even worse ~150-char
+search snippet). A lead says what a page is *about*, so it carries the fact only when the
+claim is about the page's subject. For a claim about an ATTRIBUTE it carries nothing. The
+live probe of "Napoleon Bonaparte was unusually short" is the clean example: the rung
+returned the opening lines of `Napoleon`, `Napoleon III`, `Napoleonic Wars` and
+`Cultural depictions of Napoleon`, **not one of which mentions height**, every stance came
+back `neutral`, and the verdict was `insufficient` at 0.3 confidence. The height prose was
+in those same articles the whole time, further down. The verdict layer was behaving
+correctly on evidence that never contained the answer.
+
+**Fixed:** `selectRelevantPassages` in `agents/fact-checker/src/search-sources.js` now reads
+each ranked article in full and returns the paragraphs carrying the claim's own vocabulary,
+scored by TF-IDF over that article's paragraphs (plain term-coverage ties constantly, and
+the tie then resolves to document order, which hands the win to the lead every time).
+Citation and See-also sections are skipped: their entries match query terms while asserting
+nothing. Measured live, keyless, on the same claim: `Napoleon` now yields
+`Appearance and image: In his youth, Bonaparte was consistently described as small and
+thin...` and `Cultural depictions of Napoleon` yields its `Napoleon's height` section, in
+1.06s for the whole `searchAll` sweep. Claim-relevant sources on that query went 2/5 to 4/5.
+
+Two things this pass did NOT do, deliberately:
+- **It did not re-measure accuracy.** No LLM lane exists on this machine now (the keys the
+  session above read off the service are unreachable: `gcloud` is back to
+  `Reauthentication failed. cannot prompt during non-interactive execution`, and the keyless
+  floor is gone, OVH 429s every call and Pollinations now answers ~6 requests then 402s
+  `KEY_BUDGET_EXHAUSTED`). So this is a measured **evidence-relevance** improvement, not a
+  measured accuracy improvement. Whether it moves the per-class table is unknown until a run
+  is possible.
+- **It did not touch search RANKING**, which is the other half and is upstream of this
+  function. "Great Wall of China single continuous wall" still ranks
+  `Great Green Wall (China)` and `Mexico-United States border wall` while never returning
+  the `Great Wall of China` article at all. No passage selector can recover from that.
+
+**One real bug caught by an existing test while doing it.** The first cut had the rung wait
+on the body fetches unconditionally, so a single hung fetch spent the caller's entire search
+budget and returned nothing, discarding intros that had arrived in milliseconds
+(`tests/fact-check-degradation.test.js` "keeps evidence from the queries that did answer in
+time" went red, correctly). Widening is now best-effort: `searchAll` threads its deadline
+down through `searchWeb` into the rung, widening gets what is left minus a 500ms reserve,
+and on expiry every source keeps the intro the ranked search already returned. That reserve
+is what stops the rung from finishing at the exact moment the caller stops waiting.
+
+Coverage: `tests/fact-check-wikipedia-passages.test.js` (8 cases, pure, no network) pins the
+selection, the apparatus-section skip, the heading split, and the fallback floor. All five
+fact-check suites pass (80 tests).
+
+Left: unchanged. The published run is still the 2026-08-10 one, and publishing is still
+gated on the GCP billing hold (OWNER-ACTIONS row 20). `04b` stays on disk. When the hold
+lifts, the finishing command is the same one recorded above, and this change should be
+re-measured in that run rather than assumed.
+
 ## Retire this file when the campaign is done (required)
 
 This file is shared context rather than a single order, so it outlives the

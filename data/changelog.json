@@ -27856,6 +27856,15 @@
 				"improvement"
 			],
 			"link": "/docs/fact-check"
+		},
+		{
+			"date": "2026-09-09",
+			"title": "Fact-check now reads the part of a source that is actually about your claim",
+			"summary": "When the fact-checker fell back to Wikipedia, it only ever read each article's opening summary. An opening summary says what a page is about, so it carries the answer only when your claim is about the page's subject. Ask whether Napoleon was unusually short and it read the first lines of \"Napoleon\", \"Napoleon III\" and \"Napoleonic Wars\", none of which mention height at all, so every source was scored as saying nothing and the verdict came back \"not enough evidence\" while the passage about his height sat further down the same article. The checker now reads each article in full and picks the paragraphs that actually discuss your claim, so that question returns the \"Appearance and image\" and \"Napoleon's height\" sections instead. Reference lists are skipped, since they repeat your words without asserting anything, and the deeper read is bounded by the time the check already had, so a slow source can never cost you the evidence that already arrived.",
+			"tags": [
+				"improvement"
+			],
+			"link": "/docs/fact-check"
 		}
 	]
 }
