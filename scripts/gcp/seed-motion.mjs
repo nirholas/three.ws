@@ -21,6 +21,15 @@
  *   node scripts/gcp/seed-motion.mjs --retry-rejects       # re-roll past rejects
  *   node scripts/gcp/seed-motion.mjs --publish             # upload + manifest
  *   node scripts/gcp/seed-motion.mjs --report              # checkpoint stats only
+ *   node scripts/gcp/seed-motion.mjs --repair --publish    # fix the live library
+ *
+ * REPAIRING THE PUBLISHED SET. --repair reads every generated clip already live
+ * in the library, converts it out of the generator's identity rest basis into the
+ * library's (rebaseToCanonicalRest), removes the lane's constant root drift, and
+ * re-gates the result. Survivors are staged exactly as a fresh generation would
+ * be, so a following --publish rewrites the clips and the manifest together and
+ * a clip that no longer passes simply stops being served. It costs no GPU time:
+ * the motion is already generated, it was only ever written down wrong.
  *
  * SPEND SAFETY. Every job is submitted with no backend named, so the platform's
  * own free-first resolver picks the lane. Before a clip is accepted the run
@@ -43,7 +52,13 @@ import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import { gateMotionClip, explainMotionGate, MOTION_GATE_VERSION } from '../../api/_lib/motion-quality.js';
-import { closeLoopSeam, flattenRootDrift } from '../../api/_lib/motion-seed.js';
+import {
+	closeLoopSeam,
+	flattenRootDrift,
+	needsRebase,
+	rebaseToCanonicalRest,
+	toLibraryClip,
+} from '../../api/_lib/motion-seed.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = resolve(__dirname, '../..');
@@ -68,6 +83,7 @@ const CATEGORIES = typeof args.categories === 'string' ? args.categories.split('
 const RETRY_REJECTS = !!args['retry-rejects'];
 const PUBLISH = !!args.publish;
 const REPORT_ONLY = !!args.report;
+const REPAIR = !!args.repair;
 
 const R2_PREFIX = 'animations/library/generated';
 const CLIP_NAME_PREFIX = 'gen-';
@@ -422,12 +438,114 @@ async function publish(state) {
 
 // ── Main ─────────────────────────────────────────────────────────────────────
 
+/**
+ * Re-derive the published generated library from what is live, correcting the
+ * two defects every clip in it carries. Fills the checkpoint and the staging
+ * directory in the same shape a generation run leaves behind, so `--publish`
+ * needs no special case.
+ */
+async function repair(state) {
+	log('Repairing the published generated library');
+	log(`  origin      ${ORIGIN}`);
+
+	const manifest = await (await fetch(`${ORIGIN}/api/animations/library`)).json();
+	const live = (manifest.clips || []).filter((c) => String(c.name || '').startsWith(CLIP_NAME_PREFIX));
+	log(`  live clips  ${live.length}`);
+	log('');
+
+	const prompts = new Map(loadPrompts().map((p) => [p.id, p]));
+	let kept = 0;
+	let dropped = 0;
+	const tally = {};
+
+	for (const entry of live) {
+		const source = await (await fetch(entry.url)).json();
+		// promptIdOf: gen-<prompt id>-<12 hex>. The hash is fixed width, so the id
+		// is everything between the prefix and the last dash.
+		const stem = entry.name.slice(CLIP_NAME_PREFIX.length);
+		const promptId = stem.slice(0, stem.lastIndexOf('-'));
+		const prompt = prompts.get(promptId);
+		const loop = prompt ? prompt.loop === true : entry.loop === true;
+
+		const rebased = needsRebase(source) ? rebaseToCanonicalRest(source).clip : source;
+		const flattened = flattenRootDrift(rebased);
+		const seam = loop ? closeLoopSeam(flattened.clip) : null;
+		const repaired = seam ? seam.clip : flattened.clip;
+
+		const verdict = gateMotionClip(repaired, {
+			loop,
+			requestedDuration: prompt?.duration_seconds,
+		});
+
+		const clip = toLibraryClip(repaired, {
+			name: entry.name,
+			promptId,
+			prompt: prompt?.prompt ?? '',
+			category: entry.category ?? prompt?.category ?? 'emote',
+			loop,
+			taskId: entry.name,
+		});
+		const serialized = JSON.stringify(clip);
+
+		const record = {
+			prompt_id: promptId,
+			label: entry.label ?? prompt?.label ?? promptId,
+			category: clip.userData.category,
+			icon: entry.icon || prompt?.icon || '🎬',
+			loop,
+			name: entry.name,
+			lane: 'repair',
+			elapsed_seconds: 0,
+			gate_version: verdict.gateVersion,
+			root_drift: {
+				speed_m_s: Number(flattened.speed.toFixed(4)),
+				removed_m: Number(flattened.removed.toFixed(4)),
+				residual_m: Number(flattened.residual.toFixed(4)),
+			},
+			status: verdict.pass ? 'accepted' : 'rejected',
+			reasons: verdict.reasons,
+			detail: verdict.detail || '',
+			metrics: verdict.metrics,
+			bytes: Buffer.byteLength(serialized),
+			decided_at: new Date().toISOString(),
+		};
+		state.prompts[promptId] = record;
+
+		if (verdict.pass) {
+			writeFileSync(join(CLIPS_DIR, `${entry.name}.json`), serialized);
+			kept++;
+			log(`  keep   ${entry.name}`);
+		} else {
+			writeFileSync(join(REJECTS_DIR, `${entry.name}.json`), JSON.stringify(record, null, 2));
+			dropped++;
+			for (const reason of verdict.reasons) tally[reason.split(':')[0]] = (tally[reason.split(':')[0]] || 0) + 1;
+			log(`  drop   ${entry.name}  ${verdict.reasons.join(',')}`);
+		}
+		saveCheckpoint(state);
+	}
+
+	log('');
+	log(`  kept    ${kept}`);
+	log(`  dropped ${dropped}`);
+	for (const [reason, count] of Object.entries(tally).sort((a, b) => b[1] - a[1])) {
+		log(`    ${reason.padEnd(26)} ${count}`);
+	}
+	return { kept, dropped };
+}
+
 async function main() {
 	ensureDirs();
 	const state = loadCheckpoint();
 
 	if (REPORT_ONLY) {
 		report(state);
+		return;
+	}
+
+	if (REPAIR) {
+		const outcome = await repair(state);
+		if (PUBLISH) await publish(state);
+		if (outcome.kept === 0) process.exitCode = 4;
 		return;
 	}
 
