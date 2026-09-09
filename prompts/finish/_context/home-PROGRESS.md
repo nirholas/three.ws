@@ -1439,3 +1439,27 @@ build the moment it is committed without them.
 **Left open:** the campaign. Re-run this order when 05 through 19 are genuinely retired, and
 read the restored order files rather than trusting a sweep that called them executed.
 **Commits:** `b730a85a3`, plus this entry and the order-file restoration.
+
+**Addendum, same session, after the verdict above was written.**
+
+- **This session's restoration commit (`9815c2410`) carried order 11's stranded progress entry
+  into it.** That agent had written its order 11 section and set its table row to `done` on
+  disk without committing, and the shared index swept it under this session's message. The
+  content is theirs and is preserved verbatim; only the commit subject is not about it.
+- **Finding 2 above is a regression, not a difference of environment.** Order 11's own entry
+  records `[key holding home:act, no flag] 409 needs_confirmation lock after: locked` as its
+  acceptance evidence. At the HEAD that exists after that entry was written, that exact case
+  returns **502**, reproduced three times and against **two independent Home Assistant
+  instances** (`go20` and order 11's own `sec11`), so it is not an artifact of one seeded house.
+  The gate itself still holds in all three runs: the door stays locked and the log records
+  `outcome: refused`, `code: needs_confirmation`.
+- **The most recent change to that path is `1e4e20dbc`** (`feat(home): enforce the monthly
+  agent-turn quota, and never let it refuse a lock`), which added `assertHomeActionAllowed` and
+  `HomePausedError` to `api/home/[id]/call.js`. Its own refusal branch returns `err.status`, so
+  it is a lead rather than a proven cause. Not root-caused further here on purpose: order 11's
+  agent is actively editing `access.js`, `entitlements.js` and `call.js`, and a second session
+  editing under it would cost more than it saves.
+- **`308-home-11-security.md` therefore stays on disk** even though the table row now reads
+  `done`. An order whose stated acceptance evidence does not reproduce at HEAD is not retired.
+  Whoever fixes the 409 should re-run `tests/home-security.test.js` against a live house and
+  retire the file in that commit.
