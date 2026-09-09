@@ -4,6 +4,37 @@
 `/workspaces/three.ws`. Read [00-CONTEXT.md](_context/home-00-CONTEXT.md) first. Orders
 [05](302-home-05-connect-flow.md) to [08](305-home-08-voice-loop.md) must have landed.
 
+## State on 2026-09-09: one item left, and it is not code
+
+**Do not re-run this order from the top.** Read
+[_context/home-PROGRESS.md](_context/home-PROGRESS.md), entry 17, first.
+
+Everything in this file is done and verified against a real Home Assistant except one line of
+the Definition of done: `npm run i18n:lint` is not clean. `tests/e2e/home-a11y.spec.js` is
+15 tests and passes 15/15 (axe on all three views, the keyboard-only walk, the live regions,
+colour-independence, stale contrast, the four breakpoints, the 44px floor on an emulated phone,
+Fahrenheit, RTL through the real Arabic catalog, untranslated device names, reduced motion, the
+stray-tap-proof confirmation). Six real defects were found and fixed getting there; the entry
+lists them.
+
+What remains is a single owner action, because no translation backend is reachable from a
+session: Vertex fails on revoked Application Default Credentials that need an interactive
+`gcloud auth login`, and the free `threews` proxy lane answers 502/503 on every request.
+
+       gcloud auth login
+       GOOGLE_CLOUD_PROJECT=aerial-vehicle-466722-p5 npm run i18n:translate
+
+That is roughly 500 requests and clears the whole repo's 49,378 lint problems, of which 30,259
+are this lane's 358 keys across 84 locales. When it lands: confirm `npm run i18n:lint` is clean,
+delete the `publishLocale` helper in `tests/e2e/home-a11y.spec.js` (the RTL and never-translate
+tests can read the real manifest once a locale is complete), re-run the suite, and retire this
+file per the section at the bottom.
+
+Also never produced, and never claimed: a VoiceOver or NVDA transcript. No screen reader exists
+in this environment. The live regions are asserted mechanically instead; see the entry.
+
+---
+
 ## Binding operating clause
 
 Finish 100%. Never end with a question or an unexecuted plan. All CLAUDE.md hard rules apply: no

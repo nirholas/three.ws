@@ -46,7 +46,7 @@ One section per finished order, newest at the bottom:
 | 14 reliability and scale | open | |
 | 15 privacy and retention | done | 2026-09-03 |
 | 16 test program | done | 2026-09-09 |
-| 17 a11y, i18n, mobile | open | |
+| 17 a11y, i18n, mobile | a11y and mobile done, 84 locales need a backend, see entry | 2026-09-09 |
 | 18 docs and SDK | docs done, npm publish owner-gated | 2026-09-03 |
 | 19 plans and entitlements | built and verified, browser journeys green, price owner-gated | 2026-09-09 |
 | 20 launch readiness | standing | |
@@ -2475,3 +2475,114 @@ S3_PUBLIC_DOMAIN` on every `/api/agents/me`, which is noise in every home e2e lo
 content is verified at HEAD by the runs above; the shared-worktree rules against amending and
 against sweeping other agents' work mean the attribution stays as it is. This entry and the order
 file's retirement are this session's only commit.
+
+## 17 (a11y and mobile closed; the 84 locales are not). Accessibility, 87 locales, mobile and PWA (2026-09-09)
+
+**Shipped:** the lane's accessibility gate now actually runs, and it found six real
+defects on the way to green. `tests/e2e/home-a11y.spec.js` is 15 tests against a real Home
+Assistant 2026.9.0 and passed 15/15 twice consecutively: axe (`wcag2a`/`wcag2aa`/`wcag21aa`) on
+the 3D house, the flat house and the floorplan editor, the guarded confirmation card while it
+stands, a keyboard-only walk of connect → room → device → act → refuse → Escape, the polite and
+assertive live regions, colour-independence, measured stale contrast, four breakpoints, the 44px
+touch floor measured on a context that really emulates touch, a Fahrenheit house in a
+non-English browser, an RTL locale driven through the committed Arabic catalog, a user's device
+name byte-identical in two languages, `prefers-reduced-motion` in both renderers, and a
+confirmation that survives three stray taps on a 375px screen. All six public home routes also
+clear the site-wide gate in `tests/e2e/a11y-top-pages.spec.js`.
+
+The defects, all of them things a person hits:
+
+1. **The selected room's state line failed WCAG 1.4.3.** `aria-current` lifts the row to
+   `--surface-3` under `--text-2xs` dimmed ink, and axe measured it below 4.5:1. It is the row
+   the reader is looking at, so it now carries full ink (`public/home-scene.css`, `c79ab3ecd`).
+2. **The flat house dropped the keyboard on every state event.** It rebuilt every node on each
+   frame from the stream, so a light dimming or a sensor ticking destroyed whatever control had
+   focus: tab to Unlock, let the thermostat report, and your Enter goes to the document. Focus
+   is carried across the rebuild by identity now, not by node reference (`83b4656de`).
+3. **A busy control was `disabled`, which the browser answers by blurring it.** Every action
+   taken from the keyboard threw the reader to the top of the document for the length of a round
+   trip, and Escape on "unlock the front door?" then had nothing to hand the keyboard back to.
+   The working state is `aria-disabled` on both surfaces: reads and looks disabled, refuses the
+   press, keeps the focus (`e900f98dd`).
+4. **The confirmation's return target was read after the busy render, too late to be useful.**
+   Read at the top of `act()` now, with the request itself as the fallback (`e900f98dd`).
+5. **The floorplan editor loaded no stylesheet inside the live house.** Its markup is all
+   `hm-plan-*`, which lives in the smart-home sheet only the `/smart-home` pages linked, so in
+   the Plan view it rendered with browser defaults and absolutely positioned rooms falling back
+   to static blocks (`ab246a226`, alongside a peer's `dad31271e`).
+6. **The editor's controls measured 21px on a phone.** Its toolbar, tray, File buttons, remove
+   button, file menu and name field take the 44px floor now, and the 22px resize corner grows to
+   something a fingertip can find. The rooms on the canvas deliberately do not: a room is sized
+   in metres by the plan. Its resize handle also moves off `right` onto `inset-inline-end`.
+
+**i18n.** The lane's JS-built copy went through the pipeline: `connect.js`, `manage.js` and
+`floorplan.js` now read every reader-facing string from the catalog, taking the home lane from
+208 keys to 358 (`dba5cffe5`, `8afc40c1b`). User data is never part of a source string: a room
+name, a device name, an address somebody pasted and anything their own Home Assistant returned
+are interpolated values, and `npm run i18n:home` refuses any source that interpolates a template
+expression. Relative times were lifted into the shared bridge and go through
+`Intl.RelativeTimeFormat` rather than three catalog keys with an English `s` appended, which is
+the wrong plural in most of these languages (`db9321f95`). `formatWhen` reads the site locale
+rather than the browser's. `home_scene.panel_empty` said "Pick a room on the left" and the rooms
+are on the right in Arabic, so the English names the list instead and the stale translations
+were dropped for retranslation (`2ec8bae32`).
+
+**Two pipeline guards, both of which had already cost a catalog.** An unusable GCP credential
+(ADC present but its refresh token revoked) escaped the Vertex token path as an ordinary error
+and routed every key into the English fallback; it is a config error now, naming both the
+credential's reason and gcloud's. And a 5xx that outlives its whole backoff budget is treated
+like a 429 that does. Both were found the hard way in this session: the first wrote 67 empty
+strings and English passthrough into `ar.json`, the second walked most of a catalog baking
+English one key at a time while heading for exit 0. Covered by a regression test in
+`tests/i18n-markup.test.js` and documented in `docs/i18n.md` (`113f365ea`, `23bfd3b52`).
+
+**Measured:** `home-a11y.spec.js` 15/15, twice, ~1.3 to 3.1 minutes a run, lane `a11y17` on
+ports 8188/3088. Site-wide axe 45/46; the one failure is `/unstoppable` (one `color-contrast`
+node), which is not this lane's page. `npm run check:rules` clean on every file touched,
+`npm run audit:docs` clean (1591 files), `npx vitest run tests/i18n-markup.test.js
+tests/i18n.test.js tests/i18n-missing-key.test.js` 56/56. Evidence screenshots (18, one per
+test, including the RTL house and the two-locale device names) are reproducible with
+`HOME_E2E_SCREENSHOTS=1`, added to `playwright.home.config.js` for exactly this.
+
+**Deviations from the order file.** The order asks for the 44px floor at 320/375/768 and the two
+breakpoint tests measured it on a desktop browser at a narrow viewport, where all 46 of the
+lane's controls "fail" and none is broken: the rules are correctly scoped to
+`@media (pointer: coarse)`, and a laptop window dragged narrow has a mouse in it. Both tests
+open a context with `hasTouch`/`isMobile` now and assert the context really is coarse before
+measuring. The order also asks for a PWA decision; the platform manifest already exists,
+`/manifest.webmanifest` is generated into `dist/` and answers 200 in production, and the scene
+page links it, so nothing lane-specific was invented. Wake lock was already implemented and is
+correct: the live scene alone holds the screen awake, and drops it the moment the document is
+hidden.
+
+**Left open.**
+
+1. **No translation backend was reachable, so `npm run i18n:lint` cannot be brought clean.** It
+   reports 49,378 problems, of which 30,259 are this lane's 358 keys times 84 locales; the
+   remainder predates this order. Two independent lanes are down, and neither is fixable from
+   inside a session: Vertex, the committed default and the one the owner's GCP credits pay for,
+   fails because this workspace's Application Default Credentials answer `invalid_grant` and
+   `gcloud auth print-access-token` demands an interactive reauth; the `threews` proxy, the
+   zero-credential fallback, answered `502 upstream_error status 403` and then
+   `503 no configured fallback model is available` on every request because its own free-tier
+   chain is exhausted. **Owner action: `gcloud auth login` in this workspace, then
+   `GOOGLE_CLOUD_PROJECT=aerial-vehicle-466722-p5 npm run i18n:translate`.** It is roughly 500
+   requests, five to eight chunks per locale, and it clears the whole repo's backlog, not only
+   this lane's. Until it runs, `public/locales/manifest.json` correctly lists English alone and
+   no translated locale ships in the switcher.
+2. **No screen reader exists in this environment**, so no VoiceOver or NVDA transcript was
+   produced and none is claimed. What is proved mechanically instead: the polite region carries
+   a light going on with the device named, the assertive region carries the whole confirmation
+   question including the word "unlock" and the Escape instruction, and it is cleared the moment
+   the question is answered so it cannot be read again in front of the next announcement.
+3. **The RTL and never-translate tests publish the Arabic locale to their own page** with a
+   routed manifest, because the real manifest gates on catalog completeness and no locale is
+   complete. Only that gate is faked; the runtime still reads `?lang=`, sets `lang` and `dir`,
+   and swaps the DOM from the committed `public/locales/ar.json`. When item 1 lands, delete the
+   `publishLocale` helper and the tests read the real manifest.
+4. `/api/agents/me` throws `Missing required env var: S3_PUBLIC_DOMAIN` on the local e2e stack.
+   Harmless to this lane (it is the nav's agent widget) and not this order's to fix, but it is
+   noise in every home run's server log.
+
+**Commits:** `c79ab3ecd`, `dba5cffe5`, `8afc40c1b`, `db9321f95`, `113f365ea`, `23bfd3b52`,
+`1319f26e3`, `83b4656de`, `e900f98dd`, `ab246a226`, `2ec8bae32`, plus this entry.
