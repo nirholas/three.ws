@@ -119,14 +119,6 @@
 			<description>When the fact-checker fell back to Wikipedia, it only ever read each article's opening summary. An opening summary says what a page is about, so it carries the answer only when your claim is about the page's subject. Ask whether Napoleon was unusually short and it read the first lines of &quot;Napoleon&quot;, &quot;Napoleon III&quot; and &quot;Napoleonic Wars&quot;, none of which mention height at all, so every source was scored as saying nothing and the verdict came back &quot;not enough evidence&quot; while the passage about his height sat further down the same article. The checker now reads each article in full and picks the paragraphs that actually discuss your claim, so that question returns the &quot;Appearance and image&quot; and &quot;Napoleon's height&quot; sections instead. Reference lists are skipped, since they repeat your words without asserting anything, and the deeper read is bounded by the time the check already had, so a slow source can never cost you the evidence that already arrived.</description>
 		</item>
 		<item>
-			<title>Fact-check now reads the part of a source that is actually about your claim</title>
-			<link>https://three.ws/docs/fact-check</link>
-			<guid isPermaLink="false">2026-09-09:Fact-check now reads the part of a source that is actually about your claim</guid>
-			<pubDate>Wed, 09 Sep 2026 12:00:00 GMT</pubDate>
-			<category>improvement</category>
-			<description>When the fact-checker fell back to Wikipedia, it only ever read each article's opening summary. An opening summary says what a page is about, so it carries the answer only when your claim is about the page's subject. Ask whether Napoleon was unusually short and it read the first lines of &quot;Napoleon&quot;, &quot;Napoleon III&quot; and &quot;Napoleonic Wars&quot;, none of which mention height at all, so every source was scored as saying nothing and the verdict came back &quot;not enough evidence&quot; while the passage about his height sat further down the same article. The checker now reads each article in full and picks the paragraphs that actually discuss your claim, so that question returns the &quot;Appearance and image&quot; and &quot;Napoleon's height&quot; sections instead. Reference lists are skipped, since they repeat your words without asserting anything, and the deeper read is bounded by the time the check already had, so a slow source can never cost you the evidence that already arrived.</description>
-		</item>
-		<item>
 			<title>Fade Radar: the wallets that have never once been right, and the coins they are crowding into</title>
 			<link>https://three.ws/fade</link>
 			<guid isPermaLink="false">2026-09-09:Fade Radar: the wallets that have never once been right, and the coins they are crowding into</guid>
@@ -325,6 +317,14 @@
 			<pubDate>Wed, 09 Sep 2026 12:00:00 GMT</pubDate>
 			<category>fix</category>
 			<description>Every three.ws page and API call is served by one container, and in early September that container was given twice the memory so it could hold live connections to people’s connected homes without ever running short. The setting did not survive: the next full deploy quietly put it back to the smaller limit, and the site then ran for five days on half the memory it had been sized for while still being configured to hold up to 600 home connections. Measured over the last 24 hours, memory was already peaking at 86% of that smaller limit before a single home connection was counted, which is close enough to the edge that a busy hour could have killed the container mid-request and taken every page down with it, not just the connected-home part. The limit is restored, peak memory is back to 43%, and it is now written into the deploy configuration itself so no future deploy can undo it again.</description>
+		</item>
+		<item>
+			<title>The changelog channel stops announcing the same update twice</title>
+			<link>https://three.ws/changelog</link>
+			<guid isPermaLink="false">2026-09-09:The changelog channel stops announcing the same update twice</guid>
+			<pubDate>Wed, 09 Sep 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>Updates reach the community channel automatically, and each one is remembered by its date and headline so it only goes out once. That worked across separate posting rounds but not within one: if the same update was written into the changelog file twice, both copies were unsent when the round was built, and both were sent, so subscribers got the identical message back to back. Six repeated entries had accumulated in the file that way, one of them added today and still unsent. The sender now collapses repeats before it posts, so a duplicated line costs a wasted row in a data file instead of a repeated message to everyone following along. The three verbatim repeats were removed from the changelog, and the build that publishes the feed now refuses a repeated entry outright rather than shipping it.</description>
 		</item>
 		<item>
 			<title>The Coin Wars arena reconnects to its battle server, and a link with no battle now shows you where the wars are</title>
@@ -5071,14 +5071,6 @@ And all of it is public. Oracle Lab publishes the actual model: every weight, th
 			<description>Every bounty the market posts comes back with its own link (three.ws/vanity/bounties#&lt;id&gt;), and the API hands that link out as the bounty's home. Opening one did nothing: the page rewrote the address back to the plain board and left you to hunt for the card, which was not even there if the bounty had already been won or had expired off the open filter. A linked bounty is now fetched by id and pinned above the board, whatever its state, with a Clear button to go back; a link to a bounty that no longer exists says so instead of leaving you staring at the board. The Grind this button on a card was equally misleading: it switched you to the grinder and hoped, while the worker pool always took whichever bounty happened to be first in the queue. It now sets a real priority target that the pool grinds ahead of the queue, shows which bounty is pinned, lets you clear it, and says so plainly if that bounty stops being claimable. Refunding an expired bounty used to ask which address to send the escrow to and then ignore the answer, because the destination is bound to the address recorded when the bounty was funded; it now names the amount and where the money goes and takes a plain yes or no. Four smaller fixes shipped with it: the board no longer fetches itself twice on every page load, the market stats strip and the grinder leaderboard offer a retry when they cannot load instead of a dead end, the tab strip answers arrow keys and Home/End the way its role promises, and the sealed-delivery key field is finally wired to its label for screen readers.</description>
 		</item>
 		<item>
-			<title>Grind-Bounty Market: shared bounty links now open the bounty, and &quot;Grind this&quot; grinds that one</title>
-			<link>https://three.ws/vanity/bounties</link>
-			<guid isPermaLink="false">2026-08-15:Grind-Bounty Market: shared bounty links now open the bounty, and &quot;Grind this&quot; grinds that one</guid>
-			<pubDate>Sat, 15 Aug 2026 12:00:00 GMT</pubDate>
-			<category>fix</category>
-			<description>Every bounty the market posts comes back with its own link (three.ws/vanity/bounties#&lt;id&gt;), and the API hands that link out as the bounty's home. Opening one did nothing: the page rewrote the address back to the plain board and left you to hunt for the card, which was not even there if the bounty had already been won or had expired off the open filter. A linked bounty is now fetched by id and pinned above the board, whatever its state, with a Clear button to go back; a link to a bounty that no longer exists says so instead of leaving you staring at the board. The Grind this button on a card was equally misleading: it switched you to the grinder and hoped, while the worker pool always took whichever bounty happened to be first in the queue. It now sets a real priority target that the pool grinds ahead of the queue, shows which bounty is pinned, lets you clear it, and says so plainly if that bounty stops being claimable. Refunding an expired bounty used to ask which address to send the escrow to and then ignore the answer, because the destination is bound to the address recorded when the bounty was funded; it now names the amount and where the money goes and takes a plain yes or no. Four smaller fixes shipped with it: the board no longer fetches itself twice on every page load, the market stats strip and the grinder leaderboard offer a retry when they cannot load instead of a dead end, the tab strip answers arrow keys and Home/End the way its role promises, and the sealed-delivery key field is finally wired to its label for screen readers.</description>
-		</item>
-		<item>
 			<title>KOL Tracker: the whole board is readable on a phone, and dead columns are gone</title>
 			<link>https://three.ws/tracker</link>
 			<guid isPermaLink="false">2026-08-15:KOL Tracker: the whole board is readable on a phone, and dead columns are gone</guid>
@@ -6869,14 +6861,6 @@ And all of it is public. Oracle Lab publishes the actual model: every weight, th
 			<pubDate>Thu, 13 Aug 2026 12:00:00 GMT</pubDate>
 			<category>fix</category>
 			<description>The Trust Layer endpoint that screens messages and proposed money moves through IBM Granite Guardian has an hourly platform-wide ceiling on how much model work it will pay for. That ceiling was being charged on every incoming request, including ones that were rejected before any model ran: a malformed body, a missing field, or a request arriving while the service is not configured. A single misbehaving client sending junk could therefore exhaust the shared budget and leave everyone else rate-limited for the rest of the hour without a single real assessment happening. The ceiling is now charged only when an assessment actually runs. Two error replies were also wrong in a way that misled callers: sending the wrong content type or a body over the size limit both came back as generic malformed JSON, so the fix looked like editing your payload when it was really a header or a smaller body. They now return the correct unsupported-media-type and payload-too-large codes, and the endpoint rejects a non-object body with a message that says so.</description>
-		</item>
-		<item>
-			<title>Publishing a Launchpad page can no longer be sniped by a second publisher</title>
-			<link>https://three.ws/launchpad</link>
-			<guid isPermaLink="false">2026-08-13:Publishing a Launchpad page can no longer be sniped by a second publisher</guid>
-			<pubDate>Thu, 13 Aug 2026 12:00:00 GMT</pubDate>
-			<category>fix</category>
-			<description>Two people publishing the same Launchpad Studio address at the same moment both got a success and an edit key. Only one of those keys actually worked, and the page the other person published was quietly replaced, leaving them locked out of their own page with no way to tell. The address is now claimed by the save itself, so the first publisher keeps the page and the key that opens it, and the second is told the address is taken while their draft is untouched. Editing an existing page still needs its edit key or the account that created it, and that check now happens inside the same write, so it cannot be raced either.</description>
 		</item>
 		<item>
 			<title>Publishing a Launchpad page can no longer be sniped by a second publisher</title>

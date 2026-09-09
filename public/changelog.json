@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-09-09T19:47:32.630Z",
+	"generated_at": "2026-09-09T19:55:21.363Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -140,16 +140,6 @@
 			"link": "/news",
 			"tags": [
 				"fix"
-			]
-		},
-		{
-			"date": "2026-09-09",
-			"type": "update",
-			"title": "Fact-check now reads the part of a source that is actually about your claim",
-			"summary": "When the fact-checker fell back to Wikipedia, it only ever read each article's opening summary. An opening summary says what a page is about, so it carries the answer only when your claim is about the page's subject. Ask whether Napoleon was unusually short and it read the first lines of \"Napoleon\", \"Napoleon III\" and \"Napoleonic Wars\", none of which mention height at all, so every source was scored as saying nothing and the verdict came back \"not enough evidence\" while the passage about his height sat further down the same article. The checker now reads each article in full and picks the paragraphs that actually discuss your claim, so that question returns the \"Appearance and image\" and \"Napoleon's height\" sections instead. Reference lists are skipped, since they repeat your words without asserting anything, and the deeper read is bounded by the time the check already had, so a slow source can never cost you the evidence that already arrived.",
-			"link": "/docs/fact-check",
-			"tags": [
-				"improvement"
 			]
 		},
 		{
@@ -429,6 +419,17 @@
 			"title": "The API container keeps the memory it was sized for, so a busy hour cannot take the whole site down",
 			"summary": "Every three.ws page and API call is served by one container, and in early September that container was given twice the memory so it could hold live connections to people’s connected homes without ever running short. The setting did not survive: the next full deploy quietly put it back to the smaller limit, and the site then ran for five days on half the memory it had been sized for while still being configured to hold up to 600 home connections. Measured over the last 24 hours, memory was already peaking at 86% of that smaller limit before a single home connection was counted, which is close enough to the edge that a busy hour could have killed the container mid-request and taken every page down with it, not just the connected-home part. The limit is restored, peak memory is back to 43%, and it is now written into the deploy configuration itself so no future deploy can undo it again.",
 			"link": null,
+			"tags": [
+				"fix",
+				"infra"
+			]
+		},
+		{
+			"date": "2026-09-09",
+			"type": "update",
+			"title": "The changelog channel stops announcing the same update twice",
+			"summary": "Updates reach the community channel automatically, and each one is remembered by its date and headline so it only goes out once. That worked across separate posting rounds but not within one: if the same update was written into the changelog file twice, both copies were unsent when the round was built, and both were sent, so subscribers got the identical message back to back. Six repeated entries had accumulated in the file that way, one of them added today and still unsent. The sender now collapses repeats before it posts, so a duplicated line costs a wasted row in a data file instead of a repeated message to everyone following along. The three verbatim repeats were removed from the changelog, and the build that publishes the feed now refuses a repeated entry outright rather than shipping it.",
+			"link": "/changelog",
 			"tags": [
 				"fix",
 				"infra"
@@ -6764,17 +6765,6 @@
 		{
 			"date": "2026-08-15",
 			"type": "update",
-			"title": "Grind-Bounty Market: shared bounty links now open the bounty, and \"Grind this\" grinds that one",
-			"summary": "Every bounty the market posts comes back with its own link (three.ws/vanity/bounties#<id>), and the API hands that link out as the bounty's home. Opening one did nothing: the page rewrote the address back to the plain board and left you to hunt for the card, which was not even there if the bounty had already been won or had expired off the open filter. A linked bounty is now fetched by id and pinned above the board, whatever its state, with a Clear button to go back; a link to a bounty that no longer exists says so instead of leaving you staring at the board. The Grind this button on a card was equally misleading: it switched you to the grinder and hoped, while the worker pool always took whichever bounty happened to be first in the queue. It now sets a real priority target that the pool grinds ahead of the queue, shows which bounty is pinned, lets you clear it, and says so plainly if that bounty stops being claimable. Refunding an expired bounty used to ask which address to send the escrow to and then ignore the answer, because the destination is bound to the address recorded when the bounty was funded; it now names the amount and where the money goes and takes a plain yes or no. Four smaller fixes shipped with it: the board no longer fetches itself twice on every page load, the market stats strip and the grinder leaderboard offer a retry when they cannot load instead of a dead end, the tab strip answers arrow keys and Home/End the way its role promises, and the sealed-delivery key field is finally wired to its label for screen readers.",
-			"link": "/vanity/bounties",
-			"tags": [
-				"fix",
-				"improvement"
-			]
-		},
-		{
-			"date": "2026-08-15",
-			"type": "update",
 			"title": "KOL Tracker: the whole board is readable on a phone, and dead columns are gone",
 			"summary": "On any screen narrower than the board, five of the tracker's seven columns were unreachable: the page could not shrink, and the overflow was clipped rather than scrollable, so P&L, win rate and trade count simply were not there on a phone. The board now fits any viewport and scrolls sideways on its own. Columns with nothing to show are dropped instead of rendering a full column of dashes, so followers and volume appear only once there is data behind them. Each wallet is printed once (it used to appear twice on every row) and links to its Solscan account, so any number on the board can be audited on-chain. Where the P&L for a window comes from is now stated once under the board instead of repeating on all fifty rows, the board refreshes every minute with the time of the last update on screen, and a refresh that fails keeps the rows you are reading rather than blanking them. A failed load now offers a Try again button, an empty window points at the trader leaderboard, and the whole board is navigable and announced properly with a keyboard and a screen reader.",
 			"link": "/tracker",
@@ -9189,17 +9179,6 @@
 			"tags": [
 				"fix",
 				"improvement"
-			]
-		},
-		{
-			"date": "2026-08-13",
-			"type": "update",
-			"title": "Publishing a Launchpad page can no longer be sniped by a second publisher",
-			"summary": "Two people publishing the same Launchpad Studio address at the same moment both got a success and an edit key. Only one of those keys actually worked, and the page the other person published was quietly replaced, leaving them locked out of their own page with no way to tell. The address is now claimed by the save itself, so the first publisher keeps the page and the key that opens it, and the second is told the address is taken while their draft is untouched. Editing an existing page still needs its edit key or the account that created it, and that check now happens inside the same write, so it cannot be raced either.",
-			"link": "/launchpad",
-			"tags": [
-				"fix",
-				"security"
 			]
 		},
 		{

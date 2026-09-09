@@ -41,6 +41,18 @@ describe('pendingEntries', () => {
 		expect(backlog).toBe(1);
 	});
 
+	it('posts a repeated entry once, so a duplicated feed line is not a repeated announcement', () => {
+		// The posted-set only suppresses entries sent on an earlier tick, so two
+		// feed entries sharing one key both survive it and the send loop posts
+		// each. data/changelog.json has carried such pairs.
+		const feed = {
+			entries: [entry({ title: 'shipped twice' }), entry({ title: 'shipped twice' }), entry({ title: 'other' })],
+		};
+		const { pending, backlog } = pendingEntries(feed, new Set(), 10);
+		expect(pending.map((e) => e.title)).toEqual(['shipped twice', 'other']);
+		expect(backlog).toBe(2);
+	});
+
 	it('sorts chronologically and slices oldest-first by default, newest-first with newestWin', () => {
 		const feed = {
 			entries: [

@@ -73,7 +73,15 @@ const sections = [...data.sections];
 const changelogFile = resolve(root, 'data/changelog.json');
 const CHANGELOG_TAGS = new Set(['feature', 'improvement', 'fix', 'sdk', 'infra', 'docs', 'security']);
 const curatedEntries = plainDeep(JSON.parse(readFileSync(changelogFile, 'utf8')).entries, 'data/changelog.json');
-for (const e of curatedEntries) {
+// Community delivery keys an entry by date + title (api/_lib/changelog-push.js),
+// so a repeated entry is a repeated Telegram announcement to every subscriber.
+// Concurrent agents editing this file have produced that byte-for-byte three
+// times. An identical repeat carries no information, so it fails the build here
+// rather than being caught downstream. Entries that merely share a date and
+// title while saying different things are left alone: that is a wording call on
+// published copy, and the delivery layer collapses them either way.
+const identicalEntries = new Map();
+for (const [index, e] of curatedEntries.entries()) {
 	const ctx = `data/changelog.json entry "${e.title || '?'}" (${e.date || 'no date'})`;
 	if (!/^\d{4}-\d{2}-\d{2}$/.test(e.date || '')) throw new Error(`${ctx}: date must be YYYY-MM-DD`);
 	if (!e.title || !e.summary) throw new Error(`${ctx}: title and summary are required`);
@@ -81,6 +89,11 @@ for (const e of curatedEntries) {
 	for (const t of e.tags) {
 		if (!CHANGELOG_TAGS.has(t)) throw new Error(`${ctx}: unknown tag "${t}" (allowed: ${[...CHANGELOG_TAGS].join(', ')})`);
 	}
+	const fingerprint = JSON.stringify(e);
+	if (identicalEntries.has(fingerprint)) {
+		throw new Error(`${ctx}: duplicated verbatim (also at index ${identicalEntries.get(fingerprint)}); delete one copy`);
+	}
+	identicalEntries.set(fingerprint, index);
 }
 
 // Splice in the "News" section so news entries appear in the sitemap,

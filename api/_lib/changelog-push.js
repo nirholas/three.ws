@@ -117,8 +117,23 @@ function cutoffDate() {
 
 export function pendingEntries(feed, posted, limit, { newestWin = false } = {}) {
 	const cutoff = cutoffDate();
+	// The posted-set is keyed by entryKey, so it can only suppress an entry that
+	// went out on an EARLIER tick. Two feed entries sharing one key are both
+	// unposted when the batch is built, and the send loop posts each of them:
+	// the community channel gets the identical announcement twice. That is not
+	// hypothetical, `data/changelog.json` has carried six such pairs, one of
+	// them added the day this guard was written. Collapse them here, keeping the
+	// first, so a duplicated feed entry costs a wasted line in the data file
+	// rather than a repeated message to every subscriber.
+	const seen = new Set();
 	const unposted = feed.entries
 		.filter((e) => !posted.has(entryKey(e)) && e.date >= cutoff && e.type !== 'launch')
+		.filter((e) => {
+			const key = entryKey(e);
+			if (seen.has(key)) return false;
+			seen.add(key);
+			return true;
+		})
 		.sort((a, b) => (a.date < b.date ? -1 : a.date > b.date ? 1 : 0));
 	// Telegram keeps the NEWEST entries when over the limit (newestWin); the X
 	// thread takes the OLDEST so the chain stays chronological. Both post in

@@ -1,11 +1,11 @@
 {
-	"generated_at": "2026-09-09T19:47:32.651Z",
+	"generated_at": "2026-09-09T19:55:21.390Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
 		"url": "https://three.ws"
 	},
-	"total": 3654,
+	"total": 3652,
 	"complete": false,
 	"full_feed": "/changelog.json",
 	"entries": [
@@ -143,16 +143,6 @@
 			"link": "/news",
 			"tags": [
 				"fix"
-			]
-		},
-		{
-			"date": "2026-09-09",
-			"type": "update",
-			"title": "Fact-check now reads the part of a source that is actually about your claim",
-			"summary": "When the fact-checker fell back to Wikipedia, it only ever read each article's opening summary. An opening summary says what a page is about, so it carries the answer only when your claim is about the page's subject. Ask whether Napoleon was unusually short and it read the first lines of \"Napoleon\", \"Napoleon III\" and \"Napoleonic Wars\", none of which mention height at all, so every source was scored as saying nothing and the verdict came back \"not enough evidence\" while the passage about his height sat further down the same article. The checker now reads each article in full and picks the paragraphs that actually discuss your claim, so that question returns the \"Appearance and image\" and \"Napoleon's height\" sections instead. Reference lists are skipped, since they repeat your words without asserting anything, and the deeper read is bounded by the time the check already had, so a slow source can never cost you the evidence that already arrived.",
-			"link": "/docs/fact-check",
-			"tags": [
-				"improvement"
 			]
 		},
 		{
@@ -432,6 +422,17 @@
 			"title": "The API container keeps the memory it was sized for, so a busy hour cannot take the whole site down",
 			"summary": "Every three.ws page and API call is served by one container, and in early September that container was given twice the memory so it could hold live connections to people’s connected homes without ever running short. The setting did not survive: the next full deploy quietly put it back to the smaller limit, and the site then ran for five days on half the memory it had been sized for while still being configured to hold up to 600 home connections. Measured over the last 24 hours, memory was already peaking at 86% of that smaller limit before a single home connection was counted, which is close enough to the edge that a busy hour could have killed the container mid-request and taken every page down with it, not just the connected-home part. The limit is restored, peak memory is back to 43%, and it is now written into the deploy configuration itself so no future deploy can undo it again.",
 			"link": null,
+			"tags": [
+				"fix",
+				"infra"
+			]
+		},
+		{
+			"date": "2026-09-09",
+			"type": "update",
+			"title": "The changelog channel stops announcing the same update twice",
+			"summary": "Updates reach the community channel automatically, and each one is remembered by its date and headline so it only goes out once. That worked across separate posting rounds but not within one: if the same update was written into the changelog file twice, both copies were unsent when the round was built, and both were sent, so subscribers got the identical message back to back. Six repeated entries had accumulated in the file that way, one of them added today and still unsent. The sender now collapses repeats before it posts, so a duplicated line costs a wasted row in a data file instead of a repeated message to everyone following along. The three verbatim repeats were removed from the changelog, and the build that publishes the feed now refuses a repeated entry outright rather than shipping it.",
+			"link": "/changelog",
 			"tags": [
 				"fix",
 				"infra"
