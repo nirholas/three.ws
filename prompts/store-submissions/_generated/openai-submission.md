@@ -1,6 +1,6 @@
 # three.ws 3D Studio — OpenAI ChatGPT App Directory submission package
 
-**Prepared:** 2026-07-07 · **Last re-verified live:** 2026-09-02 · **Owning prompt:** 06
+**Prepared:** 2026-07-07 · **Last re-verified live:** 2026-09-09 · **Owning prompt:** 07
 **Endpoint:** `https://three.ws/api/mcp-studio`
 **Prereqs verified live:** prompt 04 (`/api/mcp-studio` deployed), prompt 05 (widget renders real GLBs).
 
@@ -12,14 +12,40 @@ fix is deployed and re-verified, the remaining step is the owner's final submit 
 
 ---
 
-## 0. Submission verdict: NOT READY (output-quality blocker found 2026-09-02)
+## 0. Submission verdict: NOT READY (one owner-gated dependency, re-measured 2026-09-09)
 
-**Every connector, manifest, widget and Actions surface re-verified live on 2026-09-02 and all
-pass** (see the §7 checklist). Submission is held on one product defect, not a protocol one:
+**Every connector, manifest, widget and Actions surface re-verified live on 2026-09-09 and all
+pass** (see the §7 checklist). Submission is held on one product defect, not a protocol one, and
+the picture is materially better than it was on 2026-09-02:
 
-| # | Blocker | State |
-|---|---------|-------|
-| **B3** | The free lane intermittently ships a **degenerate slab**: a reconstruction that lost its image conditioning returns a full-footprint relief (a 2.0 x 0.31 x 2.0 pancake) instead of the object. It carries 30k triangles and PBR textures, so `scoreGlbQuality` rated it **0.976 / flag `ok`** and skipped vision QA entirely, shipping it as a top-confidence result. Measured on 40 consecutive live free-lane generations: **6 affected**. Both first-try verification generations run for this checklist hit it, so a reviewer's first prompt has a material chance of returning a flat slab. | Cheap-scorer fix landed in `api/_lib/glb-quality.js` (flatness metric + `planar` signal that forces vision-QA escalation; validated to flag 6/6 known-bad and 0/34 healthy). **Needs a production deploy, then a fresh re-verification generation, before submitting.** |
+| # | Blocker | State measured 2026-09-09 |
+|---|---------|---------------------------|
+| **B3** | The free lane can ship a **degenerate slab**: a reconstruction that lost its image conditioning returns a full-footprint relief instead of the object. It carries real triangles and PBR textures, so the cheap scorer used to rate it top-confidence and skip vision QA entirely. | **The scorer fix is deployed and works.** Live revision `three-ws-api-00420-ljh` (commit `880bdcef8`) contains the `planar` signal, and re-measuring it against **40 consecutive production generations** flagged **4 planar, 4 of 4 escalating to vision QA** and 0 healthy models escalated on the flatness rule. What remains is the rung the escalation hands off to: **vision QA answers only intermittently.** Vertex is still refused project-wide (`403 Lightning dunning decision is deny for project`, a billing hold, observed live at 15:02Z), and the gate **fails open** when no provider answers, so a flagged slab can still ship on a QA outage. |
+
+**What changed since 2026-09-02:** the fallback rung is no longer dead. A live generation at 15:04Z
+scored through the free NVIDIA vision lane and returned a full verdict with a real observation
+(`provider: nvidia`, `score 85`, `"the glass shade is slightly too green"`), so the earlier reading
+that the fallback simply 504s is no longer true in general. Of the two verification generations run
+today, one scored and one hit the Vertex denial and failed open. Clearing the GCP billing hold makes
+the escalation deterministic; that is the single owner-gated dependency left on B3.
+
+**Also fixed in this pass and awaiting the same deploy** (none of these are blockers on their own):
+
+- The inline widget now fetches its GLB through the same-origin `/api/glb` proxy. The asset bucket's
+  CORS policy is an origin allowlist naming `https://three.ws` only (measured: ChatGPT's sandbox
+  origin gets no `access-control-allow-origin` at all, and the preflight 403s), so any lane that
+  returns a raw bucket URL would have error-stated inside the ChatGPT widget sandbox while working
+  perfectly on our own pages. Today's lanes return a `three.ws/cdn/` URL, which already answers with
+  open CORS, so this closes an exposure rather than a live outage.
+- The pending ETA no longer fabricates a countdown. It was clamped to a floor, so a job that outran
+  its estimate reported "roughly 5s to go" for as long as it ran (measured: 5s reported for the final
+  11 minutes of a 12.5-minute generation, to the widget and the custom GPT alike). Past the estimate
+  the field is now absent and both surfaces fall back to their honest "it keeps running" copy, with
+  the real elapsed time still carried.
+- 14 reviewer-visible strings on the connector (the `initialize` instructions, 12 tool and schema
+  descriptions, and the widget description) had an em-dash the house style bans. The stored
+  `studio-resources-list.json` evidence had silently been written in the correct form, so the kit and
+  production disagreed; the source is now fixed and they agree after the deploy.
 
 The historical 2026-07-14 blockers below stay cleared.
 
@@ -368,31 +394,33 @@ The landscape shots must show the **shipped ChatGPT inline widget** (`api/_mcp-s
 resource `ui://widget/three-studio-model.html`) rendering the GLB produced by a real `forge_free` call
 — not a standalone page and not a mockup.
 
-**Status 2026-09-02 (task 07).** Two of the three sub-items are now resolved, one is blocked:
+**Status 2026-09-09 (task 07). All three sub-items are resolved; only the portal's dimension
+requirement is still unanswerable from here.**
 
 - **Resolved: no stale viewer references.** Nothing in the kit points at the retired
   `https://three.ws/apps-sdk/` viewer as "the widget". The only `apps-sdk/` strings left in
   `_generated/` are OpenAI's own developer-docs URLs and a repo source path, neither of which is a
-  capture target.
-- **Resolved: the capture harness works.** The shipped widget resource was driven end to end in a
-  `window.openai`-less Chromium off a real live tool payload and reached its ready state with
-  `<model-viewer>.loaded === true`, so a re-capture is a mechanical step, not an open question.
-- **Blocked on B3 (§0): no submission-grade model to photograph.** The three generations run for this
-  checklist returned, respectively, a flat slab, an untextured blob, and a recognizable cat carrying a
-  baked-in ground plane and a floating backdrop panel. A screenshot is the single most scrutinized
-  artifact in the listing and must not advertise the defect. **Re-capture once the B3 fix is deployed
-  and a generation comes back clean.**
+  capture target. Re-checked after this pass's evidence regeneration.
+- **Resolved: the capture harness works.** The shipped widget resource was driven end to end again on
+  2026-09-09 in a `window.openai`-less Chromium off a real live tool payload: empty state, generating
+  state, ready with `<model-viewer>.loaded === true` on the real GLB, and the designed error state on
+  an unresolvable one, with no page errors in any of them.
+- **Resolved: the shots are current and clean.** The three files on disk were re-captured against the
+  shipped widget and show a solid, fully textured model with the real action bar (`View in your
+  space` / `Open viewer` / `Download GLB`), not a slab and not a mockup. A fresh keyless `forge_free`
+  run the same day returned a 5,402,572-byte GLB that the cheap scorer rates 0.976 with **no** planar
+  signal, so a submission-grade generation is reproducible rather than lucky.
 
 `[HUMAN: confirm the App Directory form's exact required screenshot dimensions and aspect ratio. The
 current files are 1440x1520 portrait, 1600x1000 and 1280x800 landscape; only the portal states the
 requirement, so this cannot be checked from here. The widget renders any GLB at any viewport, so
-re-capturing to whatever the form asks for is trivial once B3 clears.]`
+re-capturing to whatever the form asks for is trivial.]`
 
 ---
 
 ## 5. Reviewer testing guide
 
-**No credentials needed** (anonymous, free). Full flow re-verified green against production 2026-07-14.
+**No credentials needed** (anonymous, free). Full flow re-verified green against production 2026-09-09.
 
 1. **Discover**: `initialize` → `tools/list` → `resources/list` against
    `https://three.ws/api/mcp-studio`. Expect 11 tools + two resources,
