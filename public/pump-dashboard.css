@@ -575,13 +575,28 @@ html.pump-dashboard-page body {
 	margin-bottom: 0.55rem;
 }
 
+/* Filtered-empty notice inside the live feed: message plus a way back to All. */
+#pd-filter-empty {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: 0.7rem;
+	padding: 2.4rem 1.25rem;
+}
+
+#pd-filter-empty .pd-filter-empty-msg {
+	max-width: 34ch;
+	line-height: 1.5;
+}
+
 /* ── Forms ───────────────────────────────────────────────── */
 
 .pd-form-group {
 	margin-bottom: 0.85rem;
 }
 
-.pd-form-group label {
+.pd-form-group label,
+.pd-form-group .pd-form-label {
 	display: block;
 	font-family: var(--font-display);
 	font-size: 0.7rem;

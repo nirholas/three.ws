@@ -156,8 +156,10 @@
 			.pd-oracle-empty a { color: var(--accent, #7c83ff); }
 			.pd-oracle-sk { height: 60px; background: linear-gradient(90deg, rgba(255,255,255,.03) 25%, rgba(255,255,255,.06) 37%, rgba(255,255,255,.03) 63%); background-size: 400% 100%; animation: pd-sk 1.4s infinite; border-bottom: 1px solid var(--line, rgba(255,255,255,.07)); }
 			@keyframes pd-sk { 0% { background-position: 100% 0; } 100% { background-position: -100% 0; } }
-			.pd-oracle-stats-row { display:grid; grid-template-columns:repeat(5,1fr); gap:1px; background:var(--line,rgba(255,255,255,.07)); border-bottom:1px solid var(--line,rgba(255,255,255,.07)); }
-			.pd-oracle-stat { padding:10px 12px; background:var(--surface-0,#0d0f14); display:flex; flex-direction:column; gap:2px; }
+			/* auto-fit keeps the five stats from clipping their labels on a 320px
+			   phone, where a fixed 5-column grid gave each cell only 64px. */
+			.pd-oracle-stats-row { display:grid; grid-template-columns:repeat(auto-fit,minmax(96px,1fr)); gap:1px; background:var(--line,rgba(255,255,255,.07)); border-bottom:1px solid var(--line,rgba(255,255,255,.07)); }
+			.pd-oracle-stat { padding:10px 12px; background:var(--surface-0,#0d0f14); display:flex; flex-direction:column; gap:2px; min-width:0; }
 			.pd-oracle-stat-val { font:700 14px/1 var(--font-mono,monospace); color:var(--text,#e8e8e8); }
 			.pd-oracle-stat-val.positive { color:#34d399; }
 			.pd-oracle-stat-lbl { font-size:9px; text-transform:uppercase; letter-spacing:.07em; color:var(--muted,#888); }
@@ -1753,6 +1755,9 @@
 				})(),
 				currentPage: 'dashboard',
 				currentFilter: 'all',
+				// null until refreshWatches() has established whether the configured
+				// API exposes the PumpKit /api/v1/watches surface.
+				watchesSupported: null,
 				ws: null,
 				feedItems: [],
 				feedCount: 0,
@@ -3510,17 +3515,39 @@
 
 			// ── Watches ──────────────────────────────────────────────────
 
+			// Watches live on a PumpKit deployment, not on three.ws. When the API URL
+			// still points at this origin there is nothing to call, so render the
+			// guidance directly instead of firing a request that can only 404.
+			function watchesUnsupported() {
+				const tbody = $('pd-watches-table');
+				tbody.innerHTML = `<tr><td colspan="6" class="pd-empty">Watches require a PumpKit-style API. Point the API URL in <a href="#config" data-page-link="config" class="pd-mono" style="color:var(--accent)">Configuration</a> at your PumpKit deployment.</td></tr>`;
+				$('pd-watches-count').textContent = '0';
+				state.watchesSupported = false;
+				bindPageLinks();
+			}
+
+			function watchesApiConfigured() {
+				try {
+					return new URL(state.apiUrl, location.origin).origin !== location.origin;
+				} catch {
+					return false;
+				}
+			}
+
 			async function refreshWatches() {
 				const tbody = $('pd-watches-table');
+				if (!watchesApiConfigured()) {
+					watchesUnsupported();
+					return;
+				}
 				tbody.innerHTML = '<tr><td colspan="6" class="pd-empty">Loading…</td></tr>';
 				try {
 					const resp = await apiFetch('/api/v1/watches?limit=100');
 					if (resp.status === 404) {
-						tbody.innerHTML = `<tr><td colspan="6" class="pd-empty">Watches require a PumpKit-style API. Point the API URL in <a href="#config" data-page-link="config" class="pd-mono" style="color:var(--accent)">Configuration</a> at your PumpKit deployment.</td></tr>`;
-						$('pd-watches-count').textContent = '0';
-						bindPageLinks();
+						watchesUnsupported();
 						return;
 					}
+					state.watchesSupported = true;
 					if (!resp.ok) {
 						tbody.innerHTML = `<tr><td colspan="6" class="pd-empty">Upstream unavailable (${resp.status}).</td></tr>`;
 						return;
@@ -4896,9 +4923,17 @@
 				);
 
 				// Watches
-				$('pd-add-watch-btn').addEventListener('click', () =>
-					openModal('pd-add-watch-modal'),
-				);
+				$('pd-add-watch-btn').addEventListener('click', () => {
+					// Opening the form against an origin with no watches API would only
+					// hand the user a 404 on submit. Send them where the fix lives.
+					if (state.watchesSupported === false) {
+						toast('Point the API URL at a PumpKit deployment to create watches', 'error');
+						navigateTo('config');
+						$('pd-cfg-api-url')?.focus();
+						return;
+					}
+					openModal('pd-add-watch-modal');
+				});
 				$('pd-refresh-watches').addEventListener('click', refreshWatches);
 				$('pd-cancel-watch').addEventListener('click', () =>
 					closeModal('pd-add-watch-modal'),
