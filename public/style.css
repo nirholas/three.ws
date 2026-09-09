@@ -11137,6 +11137,19 @@ a.pill--devnet:hover {
 	border-radius: var(--radius-pill, 999px);
 }
 
+/* Pages that load style.css inherit its global `* { box-sizing: border-box }`.
+   The cv-page design system and the other pages that skip style.css set it on
+   their own container only, so there the card's declared width is a CONTENT
+   width: its 16px padding and 1px border push the border-box 34px wider, which
+   hangs the card 22px off the left edge of a 320px viewport, and the
+   full-width CTA overflows the card by 28px. Scoped to this layer's own
+   subtree so it can never change a host page's boxes. */
+.tws-disc-card,
+.tws-disc-card *,
+.tws-disc-new {
+	box-sizing: border-box;
+}
+
 /* Discovery card — shared by the passive prompt and contextual cross-links. */
 .tws-disc-card {
 	position: fixed;
