@@ -437,6 +437,35 @@
 	line-height: 1.5;
 }
 .agp-error { color: var(--danger, #f87171); border-color: rgba(248, 113, 113, 0.2); }
+.agp-error-title {
+	margin: 0 0 6px;
+	font-weight: 600;
+	font-size: 14px;
+}
+.agp-error-detail {
+	margin: 0 auto 14px;
+	max-width: 42ch;
+	color: var(--ink-dim, #888888);
+}
+.agp-error-retry {
+	font: inherit;
+	color: var(--ink, #fafafa);
+	background: rgba(255, 255, 255, 0.06);
+	border: 1px solid var(--stroke, rgba(255, 255, 255, 0.16));
+	border-radius: 8px;
+	padding: 7px 16px;
+	cursor: pointer;
+	transition: background 140ms ease, border-color 140ms ease;
+}
+.agp-error-retry:hover {
+	background: rgba(255, 255, 255, 0.12);
+	border-color: rgba(255, 255, 255, 0.28);
+}
+.agp-error-retry:active { transform: translateY(1px); }
+.agp-error-retry:focus-visible {
+	outline: 2px solid var(--ink, #fafafa);
+	outline-offset: 2px;
+}
 
 /* ── Load more ──────────────────────────────────────────────────────── */
 

@@ -411,15 +411,44 @@ export class AvatarGalleryPicker {
 		} catch (err) {
 			if (this._state.totalLoaded === 0) {
 				this._els.grid.innerHTML = '';
-				const errDiv = document.createElement('div');
-				errDiv.className = 'agp-error';
-				errDiv.textContent = `Failed to load: ${err.message}`;
-				this._els.grid.appendChild(errDiv);
+				this._els.grid.appendChild(this._errorState(err));
 			}
 		} finally {
 			this._state.loading = false;
 			this._updateStatus();
 		}
+	}
+
+	// A dead "Failed to load: Failed to fetch" left the only path out of the
+	// picker as closing it. Say what happened in plain words and offer the retry.
+	_errorState(err) {
+		const box = document.createElement('div');
+		box.className = 'agp-error';
+		box.setAttribute('role', 'alert');
+
+		const title = document.createElement('p');
+		title.className = 'agp-error-title';
+		title.textContent = 'Could not load avatars';
+		box.appendChild(title);
+
+		const detail = document.createElement('p');
+		detail.className = 'agp-error-detail';
+		detail.textContent = /failed to fetch|networkerror|load failed/i.test(err?.message || '')
+			? 'The request did not reach three.ws. Check your connection, then try again.'
+			: `The avatar service answered with ${err?.message || 'an unexpected error'}.`;
+		box.appendChild(detail);
+
+		const retry = document.createElement('button');
+		retry.type = 'button';
+		retry.className = 'agp-error-retry';
+		retry.textContent = 'Try again';
+		retry.addEventListener('click', () => {
+			this._els.grid.innerHTML = '';
+			this._renderSkeletons(6);
+			this._loadPage();
+		});
+		box.appendChild(retry);
+		return box;
 	}
 
 	_hydratePreselection() {
