@@ -341,7 +341,14 @@ fired once, into a clean record, and section 5b is holding it: X's own notice
 says lock while X's own endpoint says suspended. Anything speculative goes
 after the documented path is exhausted, never before it has started.
 
-**File in English, per section 5b.** If a future tip proposes changing the
+**Owner directed on 2026-09-09 that the Hebrew version be written anyway.**
+It is section 5d, and it is bilingual rather than Hebrew-only, which removes
+the specific risk argued above at no cost. This section stays as written: it
+records the analysis and the recommendation, not a veto. If 5d is filed and
+the outcome is known either way, append the result here, because a real data
+point beats every paragraph above it.
+
+**Absent that direction, file in English, per section 5b.** If a future tip proposes changing the
 language, the identity, the tone, or the account itself in a way that makes
 the submission look less like the account's own history, it is the same idea
 wearing different clothes, and section 4 already lists why each of those got
@@ -507,6 +514,85 @@ That is the value here, not the privacy right itself.
 Point 4 asks for counts and dates only, deliberately. Asking who reported the
 account guarantees a refusal on third-party privacy grounds and gives X a
 clean reason to decline the whole request rather than the parts it can answer.
+
+## 5d. The bilingual filing, on owner direction
+
+**Status: written, NOT yet filed. This is a deliberate departure from the
+recommendation in section 4b, made by the owner on 2026-09-09.** Log it in the
+filing log as such when it goes in, so that if a reviewer reacts to it the
+record shows the choice rather than leaving a later reader to guess.
+
+**It is bilingual on purpose, and that is not a hedge.** Section 4b's
+objection was never to the Hebrew itself, it was that a Hebrew-only
+submission arriving on a twelve-year English-only account is a presentation
+that does not match the account, on the one charge where presentation is the
+accusation. Attaching the English original removes that entirely: nothing is
+concealed, the account is not pretending to be something it is not, and any
+queue-routing benefit the tip is chasing is still available. It also protects
+the argument, because appeal #2 turns on a precise claim about X's own
+record, and an English reviewer opening a Hebrew-only box either machine
+translates it back or skims it.
+
+Paste both blocks into the one description field, Hebrew first.
+
+> הערעור שלי על החשבון ‎@nichxbt‎ נדחה ב-5 בספטמבר. בהחלטה נכתב שלא תבטלו את
+> הנעילה של החשבון שלי, ושאוכל לשחזר את פעילות החשבון על ידי כניסה לחשבון
+> והשלמת ההוראות שעל המסך. אין שום הוראות על המסך כשאני נכנס לחשבון, והחשבון
+> אינו נעול: הפרופיל מוצג כמושעה, ונקודת הקצה הציבורית שלכם מדווחת
+> "User is suspended" עבור מזהה המשתמש 2817123964. אבקש שתבדקו איזו פעולת
+> אכיפה רשומה בפועל נגד החשבון הזה, מכיוון שההודעה ששלחתם ומצב החשבון אינם
+> מתארים את אותו הדבר.
+>
+> לגבי הממצא עצמו, הנה נקודה אחת שתוכלו לאמת מצדכם: מעולם לא נוצרה ולא אושרה
+> אפליקציית מפתחים של X בחשבון הזה, ולכן אף אחת מהפעילויות האוטומטיות
+> שמדיניות האותנטיות אוסרת לא יכלה לפעול דרכו. אני מחזיק בחשבון מאז 2014
+> ומפרסם ממנו ידנית.
+>
+> אני אדם אמיתי שמנהל חברה אמיתית. IBM פרסמה את המאמר הזה על העבודה שלנו
+> ביוני: https://community.ibm.com/community/user/blogs/jessica-swanson/2026/06/11/threews-the-open-on-chain-platform-for-3d-agents
+> אני מוכן להשלים אימות זהות באמצעות תעודה מזהה ממשלתית; לא הוצע לי שום אימות
+> על המסך.
+>
+> אבקש שנציג אנושי יבדוק את החשבון ואת רישום האכיפה.
+>
+> (English original follows.)
+>
+> My appeal for @nichxbt was denied on September 5. The decision says you will
+> not overturn the lock on my account and that I can restore functionality by
+> logging in and completing the on-screen instructions. There are no on-screen
+> instructions when I log in, and the account is not locked: the profile shows
+> as suspended and your public user endpoint reports "User is suspended" for
+> user ID 2817123964. Please check which enforcement action is actually
+> recorded against this account, because your notice and the account state do
+> not describe the same thing.
+>
+> On the finding itself, here is one point you can verify from your side: no X
+> developer application has ever been created or authorized on this account,
+> so none of the automated activity the authenticity policy covers could have
+> run through it. I have held the account since 2014 and I post from it by
+> hand.
+>
+> I am a real person running a real company. IBM published this about our work
+> in June: https://community.ibm.com/community/user/blogs/jessica-swanson/2026/06/11/threews-the-open-on-chain-platform-for-3d-agents
+> I am willing to complete government-ID verification; no verification has
+> been offered to me on screen.
+>
+> Please have a person review both the account and the enforcement record.
+
+**On the translation.** It is a faithful rendering of section 5b, not a
+different argument: same four moves, same order, same one ask. Two wordings
+are worth knowing if anyone asks about them. "User is suspended" is left in
+English inside the Hebrew because it is a quotation of what X's own endpoint
+returns, and translating a quoted string would misrepresent it. The last line
+asks for a נציג אנושי, a human representative, which is the direct equivalent
+of section 3's finding that explicitly asking for manual review is what the
+successful appeals did.
+
+**This does not change the schedule.** It replaces appeal #2, it does not add
+to it: one filing, in one box, on the date the schedule already allows. Filing
+the Hebrew and the English as two separate submissions would be the exact
+duplicate-filing mistake section 4 warns about, and it would look like
+volume-testing the queue.
 
 ## Filing log
 
