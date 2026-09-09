@@ -294,6 +294,26 @@ HTTP 502/503 GET|POST /api/x402/*, /api/mcp   ua: threews-x402-autonomous/1.0 or
   window, or `rail` for real payment-rail faults) and `detail` names the
   withdrawal, so the sensor no longer points at the facilitator for a funding
   problem.
+- **The third variant, and the one that reads as the quiet variant but is not:
+  the accept is still advertised and every settle is REFUSED at the floor.**
+  Measured 2026-09-09. `cause` is `sponsor_floor` here too and the fix is the
+  same wallet, but the evidence lives in the opposite place, so check
+  `metrics.mechanism` before you follow either hint:
+
+  | `metrics.mechanism` | What is happening | Where the proof is |
+  |---|---|---|
+  | `accept_withdrawn` | `sponsorKnownBelowFloor()` dropped the Solana accept, so no payment is ever attempted | the 402 challenge (`/api/x402/three-intel`), NOT the facilitator: it never saw these calls |
+  | `settle_refused` | the accept is on every challenge, buyers sign real payments, our facilitator turns each away at the floor gate | the facilitator's reject book: `fee_wallet_below_floor:<held><<floor>` names the wallet and both numbers |
+  | `paced` | the wallet fee governor spent today's budget on purpose | `GET /api/x402/runway-lab` |
+  | `rail` | genuine payment-rail faults | the settle logs, per the greps above |
+
+  On 2026-09-09 production was `settle_refused` verbatim: **0** `no_solana_accept`,
+  164 `fee_wallet_below_floor:1167627<2000000`, and 126 `http_402` recorded by the
+  ring on the paid replay (a 402 there means the payment we built was rejected,
+  which is why the reject book and not the challenge is the place to look). Before
+  the split, that window printed `Solana accept withdrawn (0 no_solana_accept …)`,
+  a clause contradicting its own counter, and told the reader not to start at the
+  facilitator.
 - **The loud variant: a rail-shaped storm that is really a dry sponsor
   (`InsufficientFundsForRent`).** Observed 2026-08-28. This is the quiet
   variant's opposite and it is easy to misread, because every symptom points at

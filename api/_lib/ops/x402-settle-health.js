@@ -132,6 +132,17 @@ const SPONSOR_FLOOR = /^(settlement temporarily unavailable|fee_wallet_below_flo
  *                    read as "settle 22%" while faults sat at their normal
  *                    ~100/h and `no_solana_accept` went 0 to 374/h.
  *
+ *   FLOOR REFUSED    the accept is still advertised and buyers still sign real
+ *                    payments, but OUR OWN facilitator refuses every one of them
+ *                    at the fee-wallet floor gate. Same wallet, same remedy as
+ *                    WITHDRAWN, opposite evidence trail: the proof is in the
+ *                    facilitator's reject book, not in the challenge. Measured
+ *                    2026-09-09: 0 no_solana_accept, 164
+ *                    `fee_wallet_below_floor:1167627<2000000`, and 126 `http_402`
+ *                    from paid replays the gate turned away. Telling that
+ *                    operator "do NOT start at the facilitator" points them away
+ *                    from the only table that names the wallet and both numbers.
+ *
  *   BUDGET PACED     nothing failed and nothing was withdrawn: the wallet fee
  *                    governor spent today's fee budget and is refusing the rest
  *                    of the day's settles on purpose. Look at the fee wallet's
@@ -143,7 +154,8 @@ const SPONSOR_FLOOR = /^(settlement temporarily unavailable|fee_wallet_below_flo
  * not the benign "ring chose not to pay" the rate deliberately excludes.
  * @param {{ noSolanaAccept: number, floorSignals: number, governorSkips?: number,
  *   settled: number, faults: number }} s
- * @returns {{ cause: 'sponsor_floor'|'fee_governor'|'rail', hint: string }}
+ * @returns {{ cause: 'sponsor_floor'|'fee_governor'|'rail',
+ *   mechanism: 'accept_withdrawn'|'settle_refused'|'paced'|'rail', hint: string }}
  */
 export function diagnoseSettleDrop({ noSolanaAccept, floorSignals, governorSkips = 0, settled, faults }) {
 	// A floor refusal is proof on its own. Absent that, treat the home chain going
@@ -155,14 +167,37 @@ export function diagnoseSettleDrop({ noSolanaAccept, floorSignals, governorSkips
 	// wallet, but under the floor EVERY settle fails closed, while a spent budget
 	// still settles at the paced rate. Report the harder stop when both are lit.
 	if (floorSignals > 0 || (noSolanaAccept > 0 && noSolanaAccept > settled)) {
-		return {
-			cause: /** @type {const} */ ('sponsor_floor'),
-			hint:
-				'The Solana accept is being WITHDRAWN, not rejected: ' +
+		// Same wallet, same remedy, two opposite evidence trails. Reporting the
+		// withdrawal unconditionally was wrong exactly when `noSolanaAccept` is 0:
+		// the accept was still on every challenge, buyers signed real payments, and
+		// our own facilitator turned each one away at the floor gate. The remedy
+		// paragraph below is shared because the fix is identical; only the sentence
+		// naming the mechanism and the place to look differs.
+		const withdrawn = noSolanaAccept > 0;
+		const mechanism = /** @type {const} */ (withdrawn ? 'accept_withdrawn' : 'settle_refused');
+		const opening = withdrawn
+			? 'The Solana accept is being WITHDRAWN, not rejected: ' +
 				`${noSolanaAccept} no_solana_accept + ${floorSignals} floor refusal(s) against ${faults} rail faults. ` +
 				'sponsorKnownBelowFloor() drops Solana from every 402 challenge while the sponsor sits under ' +
 				'X402_SPONSOR_SOL_FLOOR_LAMPORTS, so the ring has nothing payable and settlements stop. ' +
-				'Do NOT start at the facilitator. Check the sponsor balance, then let the free self-heal run: ' +
+				'Do NOT start at the facilitator: with no accept on the challenge it never saw these calls. ' +
+				'Check the sponsor balance, then let the free self-heal run: '
+			: 'Settles are being REFUSED at the sponsor floor, not withdrawn: ' +
+				`0 no_solana_accept + ${floorSignals} floor refusal(s) against ${faults} rail faults. ` +
+				'The Solana accept is still on every challenge and buyers are signing real payments; our own ' +
+				'facilitator rejects each one at the floor gate, because the sponsor fee wallet sits under ' +
+				'X402_SPONSOR_SOL_FLOOR_LAMPORTS. That is why the ring records them as `http_402` on the paid ' +
+				'replay. START at the facilitator here: its reject book is the only ' +
+				'place that names the wallet and both numbers ' +
+				'(`fee_wallet_below_floor:<held><<floor>` in x402_self_facilitator_log.reject_reason, also ' +
+				'under x402.self_facilitator.settle.fail_reasons on /api/healthz). Read the held number off ' +
+				'that token before anything else: it is the wallet the money has to reach. Then let the free ' +
+				'self-heal run: ';
+		return {
+			cause: /** @type {const} */ ('sponsor_floor'),
+			mechanism,
+			hint:
+				opening +
 				'POST /api/cron/treasury-topup?dry=1 (Bearer CRON_SECRET) to see the plan, then without ?dry=1 ' +
 				'to apply. READ agent_reclaim.failed in that plan before you trust its total: a wallet whose ' +
 				'secret does not decrypt is reported at stage `recover` and its SOL is unreachable until ' +
@@ -182,6 +217,7 @@ export function diagnoseSettleDrop({ noSolanaAccept, floorSignals, governorSkips
 	if (governorSkips > faults && governorSkips > 0) {
 		return {
 			cause: /** @type {const} */ ('fee_governor'),
+			mechanism: /** @type {const} */ ('paced'),
 			hint:
 				'This is a GOVERNED THROTTLE, not a rail fault: ' +
 				`${governorSkips} settle(s) skipped by the wallet fee governor against ${faults} rail fault(s). ` +
@@ -197,6 +233,7 @@ export function diagnoseSettleDrop({ noSolanaAccept, floorSignals, governorSkips
 	}
 	return {
 		cause: /** @type {const} */ ('rail'),
+		mechanism: /** @type {const} */ ('rail'),
 		hint:
 			'Payments are being rejected at settle. Check the self-facilitator: ' +
 			'`npm run logs -- -s three-ws-api --grep "settle_failed" --since 3h`. ' +
@@ -230,7 +267,8 @@ export function diagnoseSettleDrop({ noSolanaAccept, floorSignals, governorSkips
  *   facilitatorRejects?: { governor?: number, floor?: number } }} [opts]
  * @returns {{ status: 'ok'|'degraded'|'down'|'unknown', settled: number,
  *   faults: number, attempts: number, rate: number|null,
- *   faultClasses: Array<{ reason: string, n: number }>, detail: string, hint?: string }}
+ *   faultClasses: Array<{ reason: string, n: number }>, detail: string,
+ *   mechanism?: 'accept_withdrawn'|'settle_refused'|'paced'|'rail', hint?: string }}
  */
 export function classifySettleBuckets(buckets, { minAttempts = MIN_ATTEMPTS, facilitatorRejects } = {}) {
 	let settled = 0;
@@ -312,13 +350,13 @@ export function classifySettleBuckets(buckets, { minAttempts = MIN_ATTEMPTS, fac
 		// nothing settles at all, where a spent governor budget still settles at the
 		// paced rate.
 		if (floorSignals >= minAttempts) {
-			const { cause, hint } = diagnoseSettleDrop({
+			const { cause, mechanism, hint } = diagnoseSettleDrop({
 				noSolanaAccept, floorSignals, governorSkips, settled, faults,
 			});
 			return {
 				status: 'down',
 				settled, faults, attempts, rate: null, faultClasses,
-				cause, noSolanaAccept, floorSignals, governorSkips,
+				cause, mechanism, noSolanaAccept, floorSignals, governorSkips,
 				detail:
 					`settle halted: ${floorSignals} attempt(s) refused with the sponsor under its SOL floor ` +
 					`in ${WINDOW_INTERVAL}, ${settled} settled`,
@@ -332,13 +370,13 @@ export function classifySettleBuckets(buckets, { minAttempts = MIN_ATTEMPTS, fac
 		// verdict. The threshold is the same MIN_ATTEMPTS, so a handful of skips on
 		// a genuinely idle ring still reads `unknown`.
 		if (governorSkips >= minAttempts) {
-			const { cause, hint } = diagnoseSettleDrop({
+			const { cause, mechanism, hint } = diagnoseSettleDrop({
 				noSolanaAccept, floorSignals, governorSkips, settled, faults,
 			});
 			return {
 				status: 'degraded',
 				settled, faults, attempts, rate: null, faultClasses,
-				cause, noSolanaAccept, floorSignals, governorSkips,
+				cause, mechanism, noSolanaAccept, floorSignals, governorSkips,
 				detail:
 					`settle throttled: ${governorSkips} call(s) skipped by the wallet fee governor, ` +
 					`${attempts} attempt(s) in ${WINDOW_INTERVAL}`,
@@ -371,23 +409,31 @@ export function classifySettleBuckets(buckets, { minAttempts = MIN_ATTEMPTS, fac
 		};
 	}
 	const status = rate < DOWN_RATE ? 'down' : 'degraded';
-	const { cause, hint } = diagnoseSettleDrop({ noSolanaAccept, floorSignals, governorSkips, settled, faults });
-	// Name the withdrawal in `detail` too: the hint is one field deep in the JSON,
+	const { cause, mechanism, hint } = diagnoseSettleDrop({
+		noSolanaAccept, floorSignals, governorSkips, settled, faults,
+	});
+	// Name the mechanism in `detail` too: the hint is one field deep in the JSON,
 	// but `detail` is what the dashboard row, the digest and /api/status all print.
-	const withdrawn =
-		cause === 'sponsor_floor'
+	// It has to agree with the counter printed beside it. "Solana accept withdrawn
+	// (0 no_solana_accept)" was one clause contradicting itself, on the row an
+	// operator reads first.
+	const causeNote =
+		mechanism === 'accept_withdrawn'
 			? `; Solana accept withdrawn (${noSolanaAccept} no_solana_accept, sponsor under SOL floor)`
-			: cause === 'fee_governor'
-				? `; ${governorSkips} call(s) paced by the fee governor (budget spent, not a rail fault)`
-				: '';
+			: mechanism === 'settle_refused'
+				? `; ${floorSignals} settle(s) refused at the fee-wallet floor (accept still advertised)`
+				: mechanism === 'paced'
+					? `; ${governorSkips} call(s) paced by the fee governor (budget spent, not a rail fault)`
+					: '';
 	return {
 		status,
 		settled, faults, attempts, rate, faultClasses,
 		cause,
+		mechanism,
 		noSolanaAccept,
 		floorSignals,
 		governorSkips,
-		detail: `${base}; ${faults} rail faults${topFaults ? ` (${topFaults})` : ''}${withdrawn}`,
+		detail: `${base}; ${faults} rail faults${topFaults ? ` (${topFaults})` : ''}${causeNote}`,
 		hint,
 	};
 }

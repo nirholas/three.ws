@@ -480,3 +480,106 @@ describe('classifySettleBuckets: a dry sponsor is not a rail fault', () => {
 		expect(withFlag.rate).toBe(without.rate);
 	});
 });
+
+describe('classifySettleBuckets: a floor refusal is not a withdrawn accept', () => {
+	// Both shapes are `cause: sponsor_floor` and both are fixed by getting SOL to
+	// the same wallet, so one hint covered them for weeks. They are opposite
+	// situations to the person reading it:
+	//
+	//   WITHDRAWN  the challenge carries no Solana accept, so nothing is ever
+	//              attempted and the facilitator never sees these calls.
+	//   REFUSED    the accept is still advertised, buyers sign real payments, and
+	//              our own facilitator turns each one away at the floor gate.
+	//
+	// Production on 2026-09-09 was the REFUSED shape verbatim: 0 no_solana_accept,
+	// 164 `fee_wallet_below_floor:1167627<2000000`, 126 `http_402` from paid
+	// replays. The row read "Solana accept withdrawn (0 no_solana_accept...)", one
+	// clause contradicting its own counter, and the hint said "Do NOT start at the
+	// facilitator", which is the only place the wallet and both numbers are named.
+	const refusedAtFloor = [
+		{ success: false, paid: false, reason: 'http_402', n: 126 },
+		{ success: false, paid: false, reason: 'This operation was aborted', n: 6 },
+		{ success: false, paid: false, reason: 'fee_wallet_below_floor', n: 25 },
+	];
+
+	it('names the refusal, not a withdrawal, when no_solana_accept is zero', () => {
+		const v = classifySettleBuckets(refusedAtFloor);
+		expect(v.cause).toBe('sponsor_floor');
+		expect(v.mechanism).toBe('settle_refused');
+		expect(v.noSolanaAccept).toBe(0);
+		expect(v.floorSignals).toBe(25);
+		expect(v.hint).toMatch(/REFUSED at the sponsor floor, not withdrawn/);
+		// The correction that matters: send the operator TO the reject book.
+		expect(v.hint).toMatch(/START at the facilitator/);
+		expect(v.hint).toMatch(/fee_wallet_below_floor:<held><<floor>/);
+		expect(v.hint).not.toMatch(/Do NOT start at the facilitator/);
+		expect(v.hint).not.toMatch(/WITHDRAWN/);
+	});
+
+	it('the detail row never claims a withdrawal beside a zero counter', () => {
+		const v = classifySettleBuckets(refusedAtFloor);
+		expect(v.detail).toMatch(/25 settle\(s\) refused at the fee-wallet floor \(accept still advertised\)/);
+		expect(v.detail).not.toMatch(/withdrawn/i);
+		expect(v.detail).not.toMatch(/0 no_solana_accept/);
+	});
+
+	it('keeps the withdrawn wording, and its counter, when the accept really is gone', () => {
+		const v = classifySettleBuckets([
+			{ success: true, paid: true, reason: 'none', n: 10 },
+			{ success: false, paid: false, reason: 'http_502', n: 40 },
+			{ success: false, paid: false, reason: 'no_solana_accept', n: 374 },
+		]);
+		expect(v.cause).toBe('sponsor_floor');
+		expect(v.mechanism).toBe('accept_withdrawn');
+		expect(v.hint).toMatch(/WITHDRAWN, not rejected/);
+		expect(v.hint).toMatch(/Do NOT start at the facilitator/);
+		expect(v.detail).toMatch(/Solana accept withdrawn \(374 no_solana_accept/);
+	});
+
+	it('a flapping floor with both signals reports the withdrawal, the harder stop', () => {
+		// When the accept is gone for part of the window AND the settles that got
+		// through were refused, the withdrawal is what an operator has to know: a
+		// call that never carried a payable accept never reached the reject book,
+		// so the facilitator-first instruction would under-count the outage.
+		const v = classifySettleBuckets([
+			{ success: true, paid: true, reason: 'none', n: 5 },
+			{ success: false, paid: false, reason: 'http_502', n: 40 },
+			{ success: false, paid: false, reason: 'no_solana_accept', n: 200 },
+			{ success: false, paid: false, reason: 'fee_wallet_below_floor', n: 12 },
+		]);
+		expect(v.mechanism).toBe('accept_withdrawn');
+		expect(v.hint).toMatch(/WITHDRAWN, not rejected/);
+	});
+
+	it('both shapes still carry the identical funding remedy', () => {
+		const refused = classifySettleBuckets(refusedAtFloor);
+		const withdrawn = classifySettleBuckets([
+			{ success: true, paid: true, reason: 'none', n: 10 },
+			{ success: false, paid: false, reason: 'http_502', n: 40 },
+			{ success: false, paid: false, reason: 'no_solana_accept', n: 374 },
+		]);
+		for (const v of [refused, withdrawn]) {
+			expect(v.hint).toMatch(/treasury-topup\?dry=1/);
+			expect(v.hint).toMatch(/agent_reclaim\.failed/);
+			expect(v.hint).toMatch(/secret_undecryptable/);
+			expect(v.hint).toMatch(/skipped_floor_held_sol 0/);
+			expect(v.hint).toMatch(/docs\/ops\/production-log-triage\.md/);
+		}
+	});
+
+	it('the governor and rail verdicts carry their own mechanism, not a floor one', () => {
+		const paced = classifySettleBuckets([
+			{ success: true, paid: true, reason: 'none', n: 10 },
+			{ success: false, paid: false, reason: 'http_502', n: 20 },
+			{ success: false, paid: false, reason: 'fee_runway_exhausted', n: 400 },
+		]);
+		expect(paced.cause).toBe('fee_governor');
+		expect(paced.mechanism).toBe('paced');
+		const rail = classifySettleBuckets([
+			{ success: true, paid: true, reason: 'none', n: 10 },
+			{ success: false, paid: false, reason: 'http_502', n: 90 },
+		]);
+		expect(rail.cause).toBe('rail');
+		expect(rail.mechanism).toBe('rail');
+	});
+});
