@@ -235,11 +235,22 @@ describe('gateMotionClip', () => {
 
 describe('foot contact', () => {
 	it('ignores floor work, where no foot bears weight', () => {
-		// Hips pinned below the upright height: a fall or a breakdance flair. The
-		// feet may travel freely without that counting as skating.
+		// A fall or a breakdance flair: the hips are pinned low AND the legs are
+		// folded under the body, so no foot is bearing weight and the feet may
+		// travel freely without that counting as skating. Folding the knees is the
+		// part that makes it real: with the legs left straight the feet simply hang
+		// below the hips, the clip's own floor drops with them, and the body is
+		// still upright over its feet however low the root is placed.
 		const clip = buildClip({ hipsTravel: 2 });
 		const hips = clip.tracks.find((t) => t.name === 'Hips.position');
 		for (let i = 0; i < hips.values.length / 3; i += 1) hips.values[i * 3 + 1] = 0.15;
+		for (const bone of ['LeftUpLeg', 'RightUpLeg', 'LeftLeg', 'RightLeg']) {
+			const track = clip.tracks.find((t) => t.name === `${bone}.quaternion`);
+			const folded = quatMul(CANONICAL_REST[bone], quatX(bone.endsWith('UpLeg') ? -2.2 : 2.2));
+			for (let i = 0; i < track.values.length; i += 4) {
+				[track.values[i], track.values[i + 1], track.values[i + 2], track.values[i + 3]] = folded;
+			}
+		}
 		expect(footContactMetrics(clip).plantedFrames).toBe(0);
 	});
 
@@ -469,5 +480,118 @@ describe('loop seams', () => {
 		// left untouched rather than dragged back to the start by the blend.
 		expect(Number.isFinite(hips.values[(n - 1) * 3])).toBe(true);
 		expect(hips.values[(n - 1) * 3]).toBe(clip.tracks.find((t) => t.name === 'Hips.position').values[(n - 1) * 3]);
+	});
+});
+
+describe('rest basis', () => {
+	/**
+	 * A clip the way the text2motion lane writes one: the same motion, but with
+	 * every bone resting at identity instead of at the library's canonical rest.
+	 * This is the shape all 133 clips published before 2026-09-09 carry.
+	 */
+	function generatorBasisClip(opts = {}) {
+		const clip = buildClip(opts);
+		return {
+			...clip,
+			tracks: clip.tracks.map((track) => {
+				if (!track.name.endsWith('.quaternion')) return track;
+				const bone = track.name.slice(0, track.name.lastIndexOf('.'));
+				const rest = CANONICAL_REST[bone] ?? [0, 0, 0, 1];
+				const inverse = [-rest[0], -rest[1], -rest[2], rest[3]];
+				const values = Array.from(track.values);
+				for (let i = 0; i < values.length; i += 4) {
+					const q = quatMul(inverse, [values[i], values[i + 1], values[i + 2], values[i + 3]]);
+					[values[i], values[i + 1], values[i + 2], values[i + 3]] = q;
+				}
+				return { ...track, values };
+			}),
+		};
+	}
+
+	it('puts the feet above the head when the basis is wrong', () => {
+		// The defect itself, stated as a measurement: this is what shipped.
+		expect(uprightGap(generatorBasisClip())).toBeLessThan(0);
+		expect(uprightGap(buildClip())).toBeGreaterThan(1);
+	});
+
+	it('rebases a generator-basis clip back onto its feet', () => {
+		const rebased = rebaseToCanonicalRest(generatorBasisClip());
+		expect(rebased.rebasedTracks).toBeGreaterThan(20);
+		expect(uprightGap(rebased.clip)).toBeGreaterThan(1);
+	});
+
+	it('reads the leg convention, which is what separates the two bases', () => {
+		expect(legBasisDegrees(generatorBasisClip())).toBeLessThan(MOTION_GATE.MIN_LEG_BASIS_DEGREES);
+		expect(legBasisDegrees(buildClip())).toBeGreaterThan(MOTION_GATE.MIN_LEG_BASIS_DEGREES);
+	});
+
+	it('rejects a clip in the wrong basis, which the gate used to accept', () => {
+		expect(gateMotionClip(generatorBasisClip(), {}).reasons).toContain('wrong_rest_basis');
+		expect(gateMotionClip(buildClip({ hipsTravel: 1.2 }), {}).reasons).not.toContain('wrong_rest_basis');
+	});
+
+	it('needs both signals, so genuinely prone motion is not rejected', () => {
+		// Upright fails, leg convention passes: a pushup, not a broken rig.
+		const prone = buildClip();
+		expect(maxUprightGap(prone)).toBeGreaterThan(MOTION_GATE.MIN_UPRIGHT_GAP);
+		expect(legBasisDegrees(prone)).toBeGreaterThan(MOTION_GATE.MIN_LEG_BASIS_DEGREES);
+		expect(gateMotionClip(prone, {}).reasons).not.toContain('wrong_rest_basis');
+	});
+
+	it('stamps the basis so a repair pass never rebases twice', () => {
+		const raw = generatorBasisClip();
+		expect(needsRebase(raw)).toBe(true);
+		const published = toLibraryClip(rebaseToCanonicalRest(raw).clip, {
+			name: 'gen-x-0123456789ab',
+			promptId: 'x',
+			prompt: 'a person waves',
+			category: 'emote',
+			loop: false,
+			taskId: 't',
+		});
+		expect(published.userData.basis).toBe(CLIP_BASIS);
+		expect(needsRebase(published)).toBe(false);
+	});
+});
+
+describe('root drift', () => {
+	/** A clip with a constant forward ramp welded onto its root, as the lane emits. */
+	function drifting(speed = 0.25) {
+		const clip = buildClip();
+		const hips = clip.tracks.find((t) => t.name === 'Hips.position');
+		const times = hips.times;
+		for (let i = 0; i < times.length; i += 1) hips.values[i * 3 + 2] += speed * times[i];
+		return clip;
+	}
+
+	it('measures the ramp and takes it out', () => {
+		const result = flattenRootDrift(drifting(0.25));
+		expect(result.speed).toBeCloseTo(0.25, 2);
+		const hips = result.clip.tracks.find((t) => t.name === 'Hips.position');
+		const n = hips.times.length;
+		expect(Math.abs(hips.values[(n - 1) * 3 + 2] - hips.values[2])).toBeLessThan(0.01);
+	});
+
+	it('leaves the real motion behind, not just the endpoints', () => {
+		// The residual is what a pirouette's sway or a walk's per-step surge lives
+		// in, so flattening must not flatten the clip itself.
+		const before = buildClip();
+		const after = flattenRootDrift(drifting(0.25)).clip;
+		const y = (c) => c.tracks.find((t) => t.name === 'Hips.position').values.filter((_, i) => i % 3 === 1);
+		expect(y(after)).toEqual(y(before));
+	});
+
+	it('never touches vertical travel', () => {
+		const result = flattenRootDrift(drifting(0.25));
+		const hips = result.clip.tracks.find((t) => t.name === 'Hips.position');
+		const heights = hips.values.filter((_, i) => i % 3 === 1);
+		expect(Math.max(...heights) - Math.min(...heights)).toBeGreaterThan(0.01);
+	});
+
+	it('leaves an already in-place clip alone', () => {
+		const clip = buildClip();
+		const result = flattenRootDrift(clip);
+		expect(result.removed).toBe(0);
+		expect(result.clip).toBe(clip);
 	});
 });
