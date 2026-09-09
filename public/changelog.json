@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-09-09T15:18:36.344Z",
+	"generated_at": "2026-09-09T15:24:45.795Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -333,6 +333,17 @@
 			"title": "The 3D Playground recovers when a model will not load, and now works from the keyboard",
 			"summary": "Dropping a .glb into /playground had exactly one failure mode: a dimmed screen and a spinner that never stopped. If the file was corrupt, the download stalled, or the 3D viewer script itself was blocked, nothing on the page said so and there was no way back. That spinner is now a shimmer inside the viewer frame instead of a curtain over the whole page, so the controls stay usable while a model streams, and a failure lands in a designed error card that names what went wrong and offers Retry or a file picker. A load that never finishes gives up after 25 seconds rather than hanging forever. The lighting presets no longer strand the scene on the previous preset’s exposure. The page also gained the structure it was missing: a real heading that says what it is for, headings on every control group, an accessible name on each switch, slider and field, a focus ring on everything you can tab to, and an upload button the keyboard can actually reach (it was hidden with display:none, which drops it out of the tab order entirely). On a phone the top navigation scrolls instead of vanishing. Animation names read out of an uploaded file are rendered as text, never as markup.",
 			"link": "/playground",
+			"tags": [
+				"fix",
+				"improvement"
+			]
+		},
+		{
+			"date": "2026-09-09",
+			"type": "update",
+			"title": "The 3D studio stops promising \"5 seconds to go\" for eleven minutes",
+			"summary": "Every surface that waits on a generation, the ChatGPT widget and the custom GPT included, showed a countdown built from the lane's own time estimate. Once a model outran that estimate the countdown stopped at five seconds and stayed there for the rest of the job: on a generation measured this week that meant reading \"roughly 5s to go\" for the final eleven minutes. The countdown now runs only while there is genuinely time left on the estimate, and past it the wait says the job keeps running in the background and shows how long it has actually been going, which is a number that moves. The inline 3D viewer in ChatGPT also now loads its model through three.ws itself rather than straight from the asset store, so it renders from any host that embeds it instead of only from our own pages.",
+			"link": "/forge",
 			"tags": [
 				"fix",
 				"improvement"

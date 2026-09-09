@@ -3,6 +3,16 @@
 	"entries": [
 		{
 			"date": "2026-09-09",
+			"title": "The 3D studio stops promising \"5 seconds to go\" for eleven minutes",
+			"summary": "Every surface that waits on a generation, the ChatGPT widget and the custom GPT included, showed a countdown built from the lane's own time estimate. Once a model outran that estimate the countdown stopped at five seconds and stayed there for the rest of the job: on a generation measured this week that meant reading \"roughly 5s to go\" for the final eleven minutes. The countdown now runs only while there is genuinely time left on the estimate, and past it the wait says the job keeps running in the background and shows how long it has actually been going, which is a number that moves. The inline 3D viewer in ChatGPT also now loads its model through three.ws itself rather than straight from the asset store, so it renders from any host that embeds it instead of only from our own pages.",
+			"tags": [
+				"fix",
+				"improvement"
+			],
+			"link": "/forge"
+		},
+		{
+			"date": "2026-09-09",
 			"title": "News cards stop losing their preview picture to a cold cache",
 			"summary": "About a fifth of the crypto-news feed ships text-only, so those cards start as a source tile and upgrade in place once the publisher's own preview image is found. That lookup searched all 197 publisher feeds at once and gave up after 2.5 seconds, which on a freshly started server dropped whichever feed had not answered yet, so an article the feed had just served came back as unknown. The reader kept its tile, but the failed lookup was recorded as a public answer for the next ten minutes, so every visitor to /markets and /markets/news got the same dead result and a 404 in their browser console. The lookup now asks the one publisher that could hold the article first and waits for it, and a result that could not be confirmed is held for 30 seconds instead of ten minutes.",
 			"tags": [

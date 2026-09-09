@@ -1,11 +1,11 @@
 {
-	"generated_at": "2026-09-09T15:18:36.394Z",
+	"generated_at": "2026-09-09T15:24:45.853Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
 		"url": "https://three.ws"
 	},
-	"total": 3642,
+	"total": 3643,
 	"complete": false,
 	"full_feed": "/changelog.json",
 	"entries": [
@@ -336,6 +336,17 @@
 			"title": "The 3D Playground recovers when a model will not load, and now works from the keyboard",
 			"summary": "Dropping a .glb into /playground had exactly one failure mode: a dimmed screen and a spinner that never stopped. If the file was corrupt, the download stalled, or the 3D viewer script itself was blocked, nothing on the page said so and there was no way back. That spinner is now a shimmer inside the viewer frame instead of a curtain over the whole page, so the controls stay usable while a model streams, and a failure lands in a designed error card that names what went wrong and offers Retry or a file picker. A load that never finishes gives up after 25 seconds rather than hanging forever. The lighting presets no longer strand the scene on the previous preset’s exposure. The page also gained the structure it was missing: a real heading that says what it is for, headings on every control group, an accessible name on each switch, slider and field, a focus ring on everything you can tab to, and an upload button the keyboard can actually reach (it was hidden with display:none, which drops it out of the tab order entirely). On a phone the top navigation scrolls instead of vanishing. Animation names read out of an uploaded file are rendered as text, never as markup.",
 			"link": "/playground",
+			"tags": [
+				"fix",
+				"improvement"
+			]
+		},
+		{
+			"date": "2026-09-09",
+			"type": "update",
+			"title": "The 3D studio stops promising \"5 seconds to go\" for eleven minutes",
+			"summary": "Every surface that waits on a generation, the ChatGPT widget and the custom GPT included, showed a countdown built from the lane's own time estimate. Once a model outran that estimate the countdown stopped at five seconds and stayed there for the rest of the job: on a generation measured this week that meant reading \"roughly 5s to go\" for the final eleven minutes. The countdown now runs only while there is genuinely time left on the estimate, and past it the wait says the job keeps running in the background and shows how long it has actually been going, which is a number that moves. The inline 3D viewer in ChatGPT also now loads its model through three.ws itself rather than straight from the asset store, so it renders from any host that embeds it instead of only from our own pages.",
+			"link": "/forge",
 			"tags": [
 				"fix",
 				"improvement"
@@ -1595,17 +1606,6 @@
 			"type": "update",
 			"title": "A knock now holds the money until you actually get a reply",
 			"summary": "Paying to reach someone used to send your money the instant the payment cleared, which meant an owner could take every knock and answer none, and you had no way to get it back. A new Solana program makes the payment conditional: it sits in a vault that only the knock itself controls, and exactly three things can happen to it. The owner answers inside the reply window and gets paid, the owner declines and you are refunded in full with no fee taken, or the window closes and anyone at all can trigger your refund. There is no admin key that can move a knock that is parked, the fee is capped at 10% in the program itself, and the fee you agreed to when you knocked cannot be raised on money that is already in escrow. Your message never touches the chain: only a fingerprint of it is stored, so either side can later prove what was sent without publishing it. Ten invariants covering every one of those promises run against the real compiled program on every test run.",
-			"link": null,
-			"tags": [
-				"feature",
-				"security"
-			]
-		},
-		{
-			"date": "2026-09-04",
-			"type": "update",
-			"title": "A second opinion now reviews every trade a sniper agent wants to make",
-			"summary": "Trading agents already pass a stack of mechanical checks before they buy: the market-cap band, the price-impact ceiling, budget and slot caps, and an on-chain honeypot check that simulates a real buy and a real sell. All of those answer a question with a number. A new Risk Officer asks the one they cannot: knowing everything we know, is this specific trade still a good idea? It is shown the proposed trade plus the agent's own reason for wanting it, and is told to look for what the agent missed, so it argues with the trade instead of agreeing with it. It starts in shadow mode on every strategy: it reviews and records, and changes nothing, so its calls can be scored against what the trades actually did before anyone lets it veto one. When it is armed, a veto has to name a specific fact, it can shrink a trade instead of killing it, it can only ever reduce risk and never raise it, and if the reviewer is unavailable the trade goes ahead unchanged rather than the fleet stalling.",
 			"link": null,
 			"tags": [
 				"feature",
