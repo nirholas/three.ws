@@ -3,6 +3,26 @@
 	"entries": [
 		{
 			"date": "2026-09-09",
+			"title": "The pitch deck now shows the whole character, and says so when the 3D cannot load",
+			"summary": "The live 3D figure on the deck at /pitch was framed by a camera that cut it off above the chest and pointed at its back, so the slide that says \"give your AI a face\" showed neither a head nor a face. Both stages now frame the full character from the front. Each stage also ships a still frame rendered from the same glTF file: it fills the panel while the model streams instead of leaving an empty box, and if the 3D runtime is blocked or fails outright the panel says so in the open, drops the \"Live\" badge that used to sit over nothing, and offers a retry. Navigation got the same pass: the slide dots are now full-size tap targets and step out of the way on a phone, the language picker no longer lands on the slide counter, slide copy no longer runs underneath the nav bar on a tablet, links on hidden slides are out of the keyboard tab order, and every button and link has a visible focus ring.",
+			"tags": [
+				"fix",
+				"improvement"
+			],
+			"link": "/pitch"
+		},
+		{
+			"date": "2026-09-09",
+			"title": "The Oracle reference now reads the model it is describing",
+			"summary": "The complete Oracle documentation at /oracle/docs described version 2 of the conviction model while production had moved on to version 3, and the difference was not cosmetic. Version 3 changed the question the score answers: earlier versions ranked the odds of a spike, and version 3 ranks the odds of a spike that holds, counting a launch as a hit only if a holder who bought at first sight is still up. A coin that ran 3x and gave it all back was a success under the old target and is a miss under the new one, which is why the base rate underneath every figure on the page is far lower than it used to be. The page had the old target, the old tier probabilities and the old holdout numbers throughout, and its roadmap still promised fitted weights and calibration that had already shipped. Every model figure on the page is now read live from the published model card when you open it, because the engine refits itself every six hours behind a promotion gate and any number typed into a document goes stale on a clock. When that read fails the page says so, shows the values it was published with, explains that they may trail production, and offers a retry rather than a blank space. Two public endpoints that existed but were undocumented are now in the reference: the one that publishes the whole scoring machine, weights and holdout curve and the record of every fit ever refused, and the one that publishes the realized win rate per conviction band from real fills. The tier ladder used to truncate its own evidence, cutting off the sample counts on every band below the top, and now gives each band a full line. In light mode the tier names were near-white on a white card and the strongest bands were invisible; they now have their own ramp.",
+			"tags": [
+				"docs",
+				"fix"
+			],
+			"link": "/oracle/docs"
+		},
+		{
+			"date": "2026-09-09",
 			"title": "The spend policy dry run stops contradicting its own counters",
 			"summary": "The simulator at /pay/simulator reports what an agent budget actually buys, and its headline sentence disagreed with the numbers directly beneath it. An endpoint that answers without asking for payment is free: it costs nothing and is never checked against your policy. The counters knew that, and the sentence did not, so the very first run on the page announced that all seven calls settle while the tile beside it said six. Calls that could not be priced at all vanished the same way, counted nowhere the reader could see. Both now have their own tile, and the verdict sentence is built from the counts it is describing, so settled, free, unpriced and refused always add up to the total in front of you. A run that fails now says why: an unusable line used to produce a bare \"Simulation failed (HTTP 400)\", and now quotes the endpoint the simulator could not read along with what a working line looks like. A budget left blank was quietly costed against one dollar, giving you a verdict for a budget you never proposed; the answer now says when that substitution happened. On a phone the little question marks beside each field were fifteen pixels wide and their explanations opened off the side of the screen, so the help was unreadable exactly where it was needed most: the tap targets are now large enough to hit and the explanations stay on the page at every width.",
 			"tags": [
@@ -27364,6 +27384,26 @@
 		},
 		{
 			"date": "2026-09-09",
+			"title": "The Sniper Arena leaderboard now loads while the 3D world is still building, and says so when it cannot",
+			"summary": "A full audit of /play/arena, the live 3D floor where three.ws agents trade pump.fun in front of you. The leaderboard read used to wait behind the whole 3D boot: the animation library and your spectator avatar had to finish downloading before the panel asked the API for a single number, so on a slow connection you watched empty placeholder rows for as long as the avatar took. The board read now starts on the first frame, in parallel with the 3D load, and the placeholders are proper skeleton rows shaped like the real ones so the panel does not jump when the data lands. When that read fails, the page used to show \"No agents are live yet\" and invite you to be the first, which was simply wrong: the arena was full, we just could not reach it. A failed read now says the leaderboard is unreachable, names the reason, and gives you a retry button; if a later refresh fails while a good board is already on screen, a compact amber strip says the standings are stale instead of wiping them. The loading overlay keeps its spinner instead of replacing it with a bare line of text. The \"On the floor\" number counts the agents actually standing in the arena rather than every ranked row. And the page finally has a real top-level heading, so screen readers and search engines get the same answer about what this page is.",
+			"tags": [
+				"fix",
+				"improvement"
+			],
+			"link": "/play/arena"
+		},
+		{
+			"date": "2026-09-09",
+			"title": "The sniper scoreboard now links out to the pages that explain what it is showing you",
+			"summary": "A full audit of /sniper/experiments, the live board comparing rule-driven sniper agents against LLM-judged ones on the same market. The board is dense with terms it could only gloss in a hover tooltip: earned autonomy tiers, moon bags, the reasoning ledger behind every verdict, the exit ladder. A reader who wanted the real explanation had nowhere to go. The page now ends with a row of links to the seven surfaces that write each of those up, from the live Sniper Arena floor to the earned-autonomy docs and the page where you arm your own agent. Four smaller fixes came with it. The Best arm tile printed its profit in plain white even when that number was a loss, so a losing leader read as a win at a glance; it is now coloured like every other figure on the board. An arm or a judge with no model recorded against it used to crash the whole render; it now reads as unattributed and the rest of the board keeps working. Both tables label their column headers properly, so a screen reader can pair a figure with the column it belongs to across nine columns. And the time-window buttons are declared as buttons rather than defaulting to form submits.",
+			"tags": [
+				"improvement",
+				"fix"
+			],
+			"link": "/sniper/experiments"
+		},
+		{
+			"date": "2026-09-09",
 			"title": "Scene Studio fits a 320px phone screen, and its playback controls announce themselves",
 			"summary": "A full audit of /scene, the in-browser 3D scene editor. On a narrow phone the panel that holds the outliner, transforms, geometry and materials sits along the bottom of the screen, but it carried a 335px minimum width from the editor it is built on. That is wider than a 320px screen, and because the page suppresses sideways scrolling the right 15px of it simply had nowhere to go: the object type labels and the right-hand stepper of every number field were off-screen and unreachable. The panel now shrinks to the screen. The first-run card that tells you how to start a scene was centred in a band that ran underneath the Import/Export/Share buttons, so on the same narrow screens the buttons sat on top of its heading; the card now starts below them and scrolls inside itself on a short screen instead of running over the panel below. The floating translate/rotate/scale toolbar was painted under that card too, and now sits above it. And the animation timeline's play, pause and stop buttons are drawn as bare icons with no text, so a screen reader announced three identical unnamed buttons; all three now carry names taken from the editor's own translated string table.",
 			"tags": [
@@ -27371,6 +27411,66 @@
 				"improvement"
 			],
 			"link": "/scene"
+		},
+		{
+			"date": "2026-09-09",
+			"title": "Endpoint Shopper fits a phone, and says something useful when a run finds nothing to buy",
+			"summary": "A full audit of /shopper, the page where you describe a task, set a budget, and let an agent shop the x402 Bazaar for endpoints that can answer it. Three things were wrong. A run that came back with no plan and no answer, which is what happens when nothing in the Bazaar matches the task or everything that does prices above your ceiling, painted an empty white column and stopped: no explanation, no way forward. That case now says no endpoints matched, quotes the task back, and offers the three things that change the outcome (rewrite the task, raise the budget, browse the Bazaar) plus a button to run again. Second, when the request could not reach us at all, the page showed the browser's own wording for a dropped connection, which names no cause and suggests no fix; it now says the agent service could not be reached and what to do about it. Third, on a phone narrower than 560px the four navigation links were squeezed into a strip about 76px wide and had to be dragged sideways a few pixels at a time to read; they now wrap onto their own full-width row. Alongside those: the results column announces itself to a screen reader while a run is in flight and when it settles, the Task label sits above its box as intended rather than beside it, and an internal ticket number that had been sitting in the page's headline label since launch is gone.",
+			"tags": [
+				"fix",
+				"improvement"
+			],
+			"link": "/shopper"
+		},
+		{
+			"date": "2026-09-09",
+			"title": "The Pump.fun Stream tells you it is live, counts what it has seen, and has working Recent and Favorites tabs",
+			"summary": "A full audit of /pumpfun, the live pump.fun feed with a 3D agent narrating it. The connection badge in the header said \"connecting...\" forever, even with events pouring in, and the counter on the \"Powered by PumpPortal\" pill stayed on zero no matter how many launches arrived. Both were the same fault: the page's translated-copy pass rewrote those two headings wholesale every time it ran, throwing away the very elements the page updates. Seven controls were affected, including the Share button's \"Copied!\" flash and the avatar picker's name. Each one now hands the page ownership of its live value. The avatar picker's Recent and Favorites tabs were listed but had nothing behind them: opening either showed a blank panel. Both work now, kept in your own browser: every avatar you narrate with lands in Recent, and a star on any card adds it to Favorites. Filtering the feed down to nothing used to leave a blank column; it now says how many events are hidden and offers one click to clear the filters. If the stream drops, the feed says so and offers a Reconnect button instead of sitting on \"Waiting for events...\", and it notices about twice as fast as before. Also: the page title now matches the page (it said \"PumpFun migrations\" while the page streamed new tokens, graduations and claims too), a \"Launch a coin\" link sits next to the status badge, the first-time-fee-claims panel shows skeleton rows during its load and an actionable message with a retry if it fails, and clicking a tab in the agent-config dialog no longer reaches into the avatar picker and deselects its tabs.",
+			"tags": [
+				"fix",
+				"improvement"
+			],
+			"link": "/pumpfun"
+		},
+		{
+			"date": "2026-09-09",
+			"title": "The Animation Studio names itself for screen readers, and its empty timeline is legible on a phone",
+			"summary": "A full audit of /pose, where you pose an avatar and keyframe an animation. The page had no top-level heading at all: assistive technology jumped straight into \"Selection\" with nothing saying which studio you were in, so \"Animation Studio\" in the breadcrumb is now the page's real heading. The status pill above the canvas is the studio's only error surface (it is what tells you an import failed, an avatar could not be loaded, or that you need a keyframe before saving) and it never announced anything; it is now a live region, so those messages are spoken as they appear. On a 320px screen the empty-timeline hint (\"Pose the figure, then press K\") wrapped across the ruler's second markings and both became unreadable; the ruler now stays out of the way until you have keyframes to measure, and returns the moment you add one. Loading an avatar could also fail into a dead end: the picker said \"Failed to load: Failed to fetch\" with no way forward, and now explains whether the request reached three.ws and offers a Try again button. Behind that, a slow first CDN could make the 3D preview library load twice and throw an error into the console; a second load is now ignored.",
+			"tags": [
+				"fix",
+				"improvement"
+			],
+			"link": "/pose"
+		},
+		{
+			"date": "2026-09-09",
+			"title": "The sitemap filter matches words in any order, opens the first hit on Enter, and stops leaving an empty bar behind",
+			"summary": "A full audit of /sitemap, the human-readable index of all 924 pages on three.ws. Filtering used to test your whole query as one run of characters, so \"avatar studio\" found the Avatar Studio but \"studio avatar\" found nothing; every word is now matched independently and either order returns the same 23 pages. Typing a query that matched nothing left the section jump-list on screen as an empty bordered bar hovering above the no-results panel; it now steps aside with the sections it points at. Pressing Enter in the filter box did nothing at all, which is the one key anybody tries after typing a page name; it now opens the first match, and the hint at the right of the box switches from the / shortcut to a return arrow to say so. Under the surface: the address bar is updated once you stop typing rather than on every keystroke, which is what Safari's limit on that call actually allows, and each row's visibility is only rewritten when it changes rather than 924 times per key. A query of nothing but spaces is no longer treated as a search.",
+			"tags": [
+				"improvement",
+				"fix"
+			],
+			"link": "/sitemap"
+		},
+		{
+			"date": "2026-09-09",
+			"title": "The Coin Wars arena reconnects to its battle server, and a link with no battle now shows you where the wars are",
+			"summary": "A full audit of /play/war, the arena where two coin communities fight to the kill cap. The page had lost the address of the multiplayer server it joins, so every player walking through a war portal landed on 'The arena server is unreachable' instead of a battlefield; the arena is wired back up. Beyond that, a link with no pairing (a shared URL, an expired ticket, a battle that already finished) used to be one sentence and a button back to the lobby, which told you nothing about where a war actually is. It is now the war room: the battles running right now with their live score and clock, the communities queued for an opponent, and the top of the Elo ladder, each one a link into that coin's world where its war portal stands. The same panel sits under every other dead end, so 'there is no battle here' always comes with 'here is where one is'. Also fixed: a failed holder check used to show an internal service error instead of telling you what to do, the Fire button announced itself as 'Firespace' to screen readers, pressing Space on the result card did nothing because the arena was eating the key, and the HUD's hover and focus animations were dead because the page never loaded the site's motion tokens. The arena now says it is playable with WASD, moves focus onto the way out when a card appears, and reads cleanly from 320px up.",
+			"tags": [
+				"fix",
+				"improvement"
+			],
+			"link": "/play/war"
+		},
+		{
+			"date": "2026-09-09",
+			"title": "Ethereum wallets load on the portfolio page again, keylessly, and every token logo shows up",
+			"summary": "A full audit of /portfolio, where you paste any Solana or Ethereum address and get a live portfolio. The Ethereum half had gone dark: the single provider behind it ran out of monthly capacity, so every 0x address answered \"Data source unavailable\" with nothing behind it. Ethereum now has the same keyless floor Solana has always had. The ETH balance comes from the public Ethereum nodes the rest of the platform already uses, the token list with its prices and icons comes from a public block explorer, and the 24h move comes from the same market source the Solana side uses, with the coverage it achieved stated on the card. The Data panel names whichever lane actually answered, so you can see whether you are reading the paid provider or the free one. Token logos were another visible break: the page pointed your browser straight at an IPFS gateway, which the browser refuses on cross-origin grounds, so every holding fell back to a three-letter monogram and your address bar handed your IP to the gateway on every load. Logos now come through three.ws, sized for the row. Keyboard users could tab onto a slice of the allocation donut and get nothing: the tooltip was wired to an event handler property that browsers do not actually support, so it never fired once; the slice now names its asset and share, and Escape dismisses it. When a lookup fails, the page now shows the reason the server actually sent instead of a generic sentence, and clicking Retry after a rejected address no longer silently reloads the wallet you looked at before it. Underneath, the fallback that names Solana tokens when the primary metadata source is out of quota had never run at all, because of a missing import; token symbols and names come back on that path.",
+			"tags": [
+				"fix",
+				"improvement"
+			],
+			"link": "/portfolio"
 		}
 	]
 }

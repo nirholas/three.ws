@@ -264,13 +264,14 @@ coin-intel, pump-visualizer and pump-live: adding a coin on any surface shows up
   3. System: SSE `/api/agents/pumpfun-feed?...` (withCredentials) → `hello`, replay buffer (~30 events dimmed), then `evt` events (mint/trade/graduation/claim) stream live; agent animates + optionally narrates per configured emotion/TTS map.
   4. System: first-time fee-claims sidebar refreshes from `GET /api/pump/first-claims?limit=50&sinceMinutes=1440`.
   5. (optional) Filters: asset, mint search, event kind, min tier (notable+/influencer+/mega), MC range, min buy SOL, whale threshold.
-  6. (optional) Config modal: map emotions→animations and actions→TTS templates (stored in localStorage); narration/announce-mints/mood toggles.
-  7. (optional) Share/copy filter-encoded link.
+  6. (optional) Avatar picker: five tabs. Defaults ships with the page; Community reads `GET /api/avatars/public`; My Agents reads `GET /api/avatars` behind an `/api/auth/me` check; Recent and Favorites are this browser's own lists (`localStorage` keys `pumpfun-avatar-recents`, capped at 24, and `pumpfun-avatar-favorites`, written by the star on each card).
+  7. (optional) Config modal: map emotions→animations and actions→TTS templates (stored in localStorage); narration/announce-mints/mood toggles.
+  8. (optional) Share/copy filter-encoded link, or follow the "Launch a coin" link in the header to `/launch`.
 - **Decision points / branches:** public feed vs agent-bound (enriches via `?_handler=metadata`); event-kind/tier/MC/whale filters; narration + emotion config; provisioned wallet vs none.
 - **External calls / dependencies:** SSE `/api/agents/pumpfun-feed` (upstream Helius webhooks), `/api/agents`, `/api/agents/{id}/solana` (GET+POST), `/api/pump/first-claims`, `/api/agents/{id}/pumpfun/metadata`, avatars endpoints; model-viewer CDN.
 - **Success state:** live launch/trade/graduation/claim feed with reacting, narrating 3D agent; first-claims sidebar; accurate wallet info.
-- **Empty / error states:** "Waiting for events…"; quiet/no-events feed dot; "No Solana wallet on this agent" + provision; upstream error soft-degrades to empty `{items:[]}`; reconnect cycle.
-- **Step count:** 1 required (arrive → live feed) + ~6 optional (agent bind, filters, emotion config, share). Live monitor + reactive agent (+ optional agent-management).
+- **Empty / error states:** feed panel renders one of four states from `#feed-status`: "Waiting for the next launch" before the first event, "No events match your filters" with a Clear filters button when every card is hidden, "Feed disconnected" with a Reconnect button after 3 failed SSE attempts (8s open timeout each), and nothing at all once a card is visible. First-claims panel: skeleton rows while loading, "None in this window.", or an alert naming the failure with a Try again button. Avatar picker: Recent and Favorites each have their own empty state with a jump to a populated tab; "My Agents" shows a sign-in prompt (gated on `GET /api/auth/me`, so a signed-out visitor never takes a 401); community/mine load failures show the error plus Retry. Status pill: connecting / reconnecting / live / live · quiet / offline · retry (click to reconnect). Avatar load error surfaces as a toast and the previous avatar stays.
+- **Step count:** 1 required (arrive → live feed) + ~7 optional (agent bind, filters, avatar pick, emotion config, share, launch). Live monitor + reactive agent (+ optional agent-management).
 
 ---
 

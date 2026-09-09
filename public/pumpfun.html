@@ -1893,12 +1893,19 @@
 			el.append(title, body);
 
 			if (offline) {
-				title.textContent = t('pumpfun.feed_offline_title', 'Feed disconnected');
-				body.textContent = t('pumpfun.feed_offline_body', 'The live pump.fun stream stopped responding. Reconnect to resume, or reload the page.');
+				const retrying = statusKey === 'status_reconnecting';
+				title.textContent = retrying
+					? t('pumpfun.feed_retrying_title', 'Reconnecting to the stream')
+					: t('pumpfun.feed_offline_title', 'Feed disconnected');
+				body.textContent = retrying
+					? t('pumpfun.feed_retrying_body', 'The live pump.fun stream dropped. Retrying on its own, with a longer wait each time.')
+					: t('pumpfun.feed_offline_body', 'The live pump.fun stream stopped responding after several attempts. Reconnect to try again, or reload the page.');
 				const retry = document.createElement('button');
 				retry.type = 'button';
 				retry.className = 'fs-action';
-				retry.textContent = t('pumpfun.feed_offline_retry', 'Reconnect');
+				retry.textContent = retrying
+					? t('pumpfun.feed_retry_now', 'Retry now')
+					: t('pumpfun.feed_offline_retry', 'Reconnect');
 				retry.addEventListener('click', reconnectFeed);
 				el.appendChild(retry);
 				return;
