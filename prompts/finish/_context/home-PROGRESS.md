@@ -1660,3 +1660,116 @@ mechanism is complete and every number is a config value, so applying an approve
 change on the Cloud Run service (`HOME_LIMIT_<TIER>_<DIMENSION>`), not a deploy. The proposed table
 is in `docs/home-plans.md` with a measured cost behind every dimension. `313-home-19-plans-entitlements.md`
 therefore stays on disk, per its own retirement clause.
+
+## 11. Security hardening, re-verified: the 502 contract closed (2026-09-09)
+
+**Shipped:** order 11's controls were already built and its entry already written above. What was
+open was its ACCEPTANCE, and the file stayed on disk for a good reason: the addendum two entries up
+records that `[key holding home:act, no flag]` answers **502** at HEAD where this order's evidence
+says **409 needs_confirmation**, reproduced three times across two Home Assistant instances, and
+"an order whose stated acceptance evidence does not reproduce at HEAD is not retired". That is now
+closed with a cause rather than a retraction, and the two harness defects that manufactured the
+false report are fixed.
+
+**The 502 was the SSRF guard. The confirmation gate was never reached.** Measured at HEAD against a
+real Home Assistant 2026.9.0, a real API key in the real key table and a real deadbolt, with
+exactly one variable changed between the two runs:
+
+```
+seam=on   before: locked
+  [key holding home:act, no flag] 409 needs_confirmation   lock after: locked
+  action log: lock.unlock outcome=refused detail={"code":"needs_confirmation", ...}
+
+seam=off  before: locked
+  [key holding home:act, no flag] 502 unreachable          lock after: locked
+  action log: lock.unlock outcome=failed detail={"code":"unreachable"}
+```
+
+Two corrections to the addendum, both mine to make because I ran it: it is not a regression, and
+its own supporting detail is wrong. It reports the 502 case logging `outcome: refused`,
+`code: needs_confirmation`; the row actually written is `failed` / `unreachable`, which is exactly
+how the two are told apart from the outside. The door is locked on both lines, which is the real
+point: the controls are independent and the guard fired first.
+
+**The mechanism, and why "remember the flag" never fixed it.** `api/_lib/home-url-guard.js` reads
+`HOME_ALLOW_LOCAL_INSTANCE` once at module load, deliberately, so no request can turn it on. Every
+harness house lives on 127.0.0.1. So the flag has to be in the environment before the guard's FIRST
+import, and nothing inside a test file can guarantee that: `beforeAll` is far too late, and
+importing the harness helper is early enough only when it happens to sit above the import that
+pulls the guard in. `tests/api-home.test.js` imports handlers in a file-level `beforeAll` and its
+house in a nested one, so its live block was failing 3 of 47 on this alone;
+`tests/home-runtime-live.test.js` imports `api/_lib/home/runtime.js` above the helper, so it skipped
+itself entirely. Three sessions have now misread the resulting 502: as a broken plan journey (order
+19's entry above), as a broken floorplan route, and as this order's confirmation regression.
+
+Fixed at the only point that always wins the race: `tests/setup.home-seam.js`, a vitest
+`setupFiles` entry that runs before the test module is imported at all. It arms nothing unless a
+live house was already asked for, never for a public address, never on a Cloud Run revision. The
+shipped guard is untouched, and check 7 still proves it by re-importing it with the seam forced off
+and `K_SERVICE` present.
+
+**Check 4's real arm now says why it could not run.** Both keyless rungs meter by EGRESS IP
+(Pollinations queues ONE request per address; OVH allows two a minute), and this machine was
+running seven agent sessions behind one address, so twelve attempts were refused while a single
+request from an idle shell answered in under two seconds. The failure was a bare "no model in the
+chain answered". It now carries the chain's last error verbatim, which read
+`Queue full for IP: <address>: 1 requests already queued (max: 1)` and means retry or supply a key,
+not hunt a ghost.
+
+**Measured:**
+
+- `npx vitest run tests/home-security.test.js` against a real Home Assistant 2026.9.0
+  (`node scripts/home-test-instance.mjs --up --onboard --seed --name sec11b`), the live Neon
+  database and a real model chain: **121 passed, 0 skipped, 0 failed**, 284.85s. All eleven checks
+  green including check 4's real model arm and check 3's live arm against a real deadbolt. In the
+  shape `npm test` runs (no house, no `DATABASE_URL`): **115 passed, 6 skipped**, which is the same
+  number the entry above recorded, so the default path is unchanged.
+- The 502-versus-409 reproduction above: run twice against the same house at the same commit with
+  only `HOME_ALLOW_LOCAL_INSTANCE` differing, reading the lock and the `home_action_log` row back
+  each time.
+- `tests/api-home.test.js` live: **3 failed of 47 before the fix, 47 passed after**, with no
+  environment variable exported by hand. Its live block was the clearest victim of the import-order
+  collision.
+- Check 7 with the fix in place: **20 of 20**, including `the local-instance seam cannot be on in
+  production` and `a runtime built with no seam refuses a private address, so the seam is not a
+  bypass`. Nothing here can make an SSRF refusal pass that would fail on the live service.
+- `node scripts/check-secrets.mjs --base 2849cafb6 --head HEAD`: clean over 466 changed files.
+  `2849cafb6` is the shallow graft boundary of this clone, so it is the earliest base that
+  resolves; the whole-tree scan (19,407 paths) is clean too and is a superset.
+- Credential sweep: `grep -rn getDecryptedToken api/` returns `api/_lib/home/store.js` (its
+  definition) and `api/_lib/home/runtime.js` (the socket path) and nothing else, so no route can
+  reach a decrypted token. No `console.*` call in `api/home/`, `api/_lib/home/` or
+  `packages/home-bridge/src/` takes a token.
+- `npm run audit:docs`: clean. `npm run check:rules` on all five touched paths: clean.
+
+**Deviations:**
+
+- **The addendum's "409 to 502 regression" is withdrawn, with the cause named.** It was the SSRF
+  guard, not the confirmation path, and its supporting log detail was misreported (see above). The
+  order file was right to stay on disk: the evidence genuinely did not reproduce, and the reason it
+  did not is a real defect that has now been fixed rather than explained away.
+- **The check-4 counter is a diagnostic, not the assertion, and it is invisible on a green run.**
+  `docs/home-security.md` quoted `[injection] 4/4 turns answered...` as though a reader could see
+  it; vitest's default reporter printed no such line in either of this run's two passing live runs.
+  The doc now says so and points at the two assertions that actually read the house.
+- **`tests/home-runtime-live.test.js` could only ever skip itself.** Its describe gate is
+  `HOME_ALLOW_LOCAL_INSTANCE !== '1'`, and its own import of `api/_lib/home/runtime.js` sits above
+  the helper import, so nothing inside the file could arm the seam before that gate was evaluated:
+  a live run without the flag exported by hand skipped rather than ran. Measured after the fix,
+  with `HOME_LIVE=1` and nothing else: **5 passed**.
+- Order 19's entry above records the same trap and worked around it by making its failure say
+  "export it before the run". That instruction is now unnecessary for a harness-built house. Its
+  belt-and-braces throw in `tests/home-turn-gate.test.js` is simply never reached; left alone,
+  because that file is being edited by another session today.
+
+**Left open:** nothing in this order. `308-home-11-security.md` is deleted in this commit.
+
+**Where the doc changes actually landed:** `9e0574559`, another session's commit. Every edit this
+run made to `docs/home-security.md` (the guard's failure mode, the per-IP finding, the check-4
+counter note) was swept into it by a `git add -A` while that agent was documenting the Vertex rung
+in the same file. The content is intact and their own additions sit alongside it; only the commit
+subject is not about it. Their finding is the other half of mine and worth reading together: the
+diagnosis is that the keyless rungs meter by egress IP, and their answer is to export
+`GOOGLE_CLOUD_PROJECT` so the proof runs on the Vertex rung, which shares no third-party quota.
+
+**Commits:** this one, plus `9e0574559` for the doc.
