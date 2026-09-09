@@ -7,7 +7,8 @@
  * shareable; every card deep-links to the feed detail page.
  */
 
-import { escapeHtml, fmtPct, compact, identicon } from './trader-format.js';
+import { escapeHtml, fmtPct, compact } from './trader-format.js';
+import { fmtUsdc, epochLabel, publisherAvatarHtml } from './shared/signals-format.js';
 import { updateValue, flipReorder, setLiveDot } from './ui-juice.js';
 
 const API = '/api/signals/marketplace';
@@ -71,16 +72,21 @@ function skeletonGrid() {
 
 function priceBlock(p) {
 	if (p.per_signal_usdc > 0 && p.per_epoch_usdc > 0) {
-		return `<span class="amt">$${p.per_signal_usdc}</span><span class="per">/signal · $${p.per_epoch_usdc}/${epochLabel(p.epoch_seconds)}</span>`;
+		return `<span class="amt">$${fmtUsdc(p.per_signal_usdc)}</span><span class="per">/signal · $${fmtUsdc(p.per_epoch_usdc)}/${epochLabel(p.epoch_seconds)}</span>`;
 	}
-	if (p.per_signal_usdc > 0) return `<span class="amt">$${p.per_signal_usdc}</span><span class="per">USDC / signal</span>`;
-	if (p.per_epoch_usdc > 0) return `<span class="amt">$${p.per_epoch_usdc}</span><span class="per">USDC / ${epochLabel(p.epoch_seconds)}</span>`;
+	if (p.per_signal_usdc > 0) return `<span class="amt">$${fmtUsdc(p.per_signal_usdc)}</span><span class="per">USDC / signal</span>`;
+	if (p.per_epoch_usdc > 0) return `<span class="amt">$${fmtUsdc(p.per_epoch_usdc)}</span><span class="per">USDC / ${epochLabel(p.epoch_seconds)}</span>`;
 	return `<span class="amt">Free</span><span class="per">no charge</span>`;
 }
-function epochLabel(sec) {
-	if (sec % 86400 === 0) { const d = sec / 86400; return d === 1 ? 'day' : `${d}d`; }
-	if (sec % 3600 === 0) { const h = sec / 3600; return h === 1 ? 'hour' : `${h}h`; }
-	return `${Math.round(sec / 60)}m`;
+
+/** The card's price as one plain-language phrase for the link's accessible name. */
+function priceLabel(p) {
+	if (p.per_signal_usdc > 0 && p.per_epoch_usdc > 0) {
+		return `$${fmtUsdc(p.per_signal_usdc)} USDC per signal or $${fmtUsdc(p.per_epoch_usdc)} per ${epochLabel(p.epoch_seconds)}`;
+	}
+	if (p.per_signal_usdc > 0) return `$${fmtUsdc(p.per_signal_usdc)} USDC per signal`;
+	if (p.per_epoch_usdc > 0) return `$${fmtUsdc(p.per_epoch_usdc)} USDC per ${epochLabel(p.epoch_seconds)}`;
+	return 'free';
 }
 
 function metric(label, value, cls = '') {
@@ -89,9 +95,7 @@ function metric(label, value, cls = '') {
 
 function card(f) {
 	const s = f.stats;
-	const avatar = f.publisher.image
-		? `<img class="sm-avatar" src="${escapeHtml(f.publisher.image)}" alt="" loading="lazy" />`
-		: `<span class="sm-avatar" aria-hidden="true" style="background:${identicon(f.publisher.agent_id)}"></span>`;
+	const avatar = publisherAvatarHtml(f.publisher);
 	const verified = f.publisher.verified
 		? `<span class="sm-verified" title="Verified on-chain track record">✓ Verified</span>`
 		: '';
@@ -99,10 +103,22 @@ function card(f) {
 	const roi = s.avg_realized_pct != null ? fmtPct(s.avg_realized_pct, { sign: true }) : '—';
 	const roiCls = s.avg_realized_pct == null ? 'muted' : s.avg_realized_pct > 0 ? 'win' : s.avg_realized_pct < 0 ? 'loss' : 'muted';
 	const thin = s.closed_signals < 10
-		? `<span class="sm-thin" title="Fewer than 10 closed signals — edge is regressed toward neutral until proven">Building track record</span>`
+		? `<span class="sm-thin" title="Fewer than 10 closed signals: edge is regressed toward neutral until proven">Building track record</span>`
 		: '';
+	// An aria-label replaces a link's entire contents for assistive tech, so it
+	// has to restate every number the card shows, not just the headline score.
+	const label = [
+		`Rank ${f.rank}: ${f.title} by ${f.publisher.name}`,
+		f.publisher.verified ? 'verified publisher' : 'unverified publisher',
+		`proven edge ${f.edge_score} of 100`,
+		s.hit_rate != null ? `hit rate ${hit}` : 'hit rate not yet measured',
+		s.avg_realized_pct != null ? `average ROI ${roi}` : 'average ROI not yet measured',
+		`${compact(s.closed_signals)} closed of ${compact(s.total_entries)} signals`,
+		`${compact(s.subscribers)} subscriber${s.subscribers === 1 ? '' : 's'}`,
+		priceLabel(f.pricing),
+	].join(', ');
 	return `
-		<a class="sm-card" href="/signals/${encodeURIComponent(f.slug)}" data-key="${escapeHtml(String(f.slug))}" aria-label="${escapeHtml(f.title)} by ${escapeHtml(f.publisher.name)} — edge ${f.edge_score}">
+		<a class="sm-card" href="/signals/${encodeURIComponent(f.slug)}" data-key="${escapeHtml(String(f.slug))}" aria-label="${escapeHtml(label)}">
 			<span class="sm-rank">#${f.rank}</span>
 			<div class="sm-card-head">
 				${avatar}
@@ -122,7 +138,7 @@ function card(f) {
 			</div>
 			<div class="sm-card-foot">
 				<div class="sm-price">${priceBlock(f.pricing)}</div>
-				<div style="display:flex;align-items:center;gap:8px">${thin}<span class="sm-view">${s.subscribers} sub${s.subscribers === 1 ? '' : 's'} · View →</span></div>
+				<div style="display:flex;align-items:center;gap:8px">${thin}<span class="sm-view">${compact(s.subscribers)} sub${s.subscribers === 1 ? '' : 's'} · View →</span></div>
 			</div>
 		</a>`;
 }
@@ -190,7 +206,7 @@ async function load() {
 			setStatus('Could not load the marketplace. Check your connection and try again.', { error: true, retry: true });
 			setLiveDot($('#sm-live'), 'error', 'offline');
 		} else {
-			setStatus('Reconnecting — showing the last known board.', { error: false });
+			setStatus('Reconnecting. Showing the last known board.', { error: false });
 			setLiveDot($('#sm-live'), 'connecting', 'reconnecting');
 		}
 	}

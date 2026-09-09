@@ -25,11 +25,6 @@
 	letter-spacing: 0.04em; text-transform: uppercase;
 	color: var(--ink-dim, #9aa); margin: 0 0 14px;
 }
-.sm-live-dot {
-	width: 8px; height: 8px; border-radius: 50%; background: var(--sm-win);
-	box-shadow: 0 0 0 0 rgba(52, 211, 153, 0.55); animation: sm-pulse 2s ease infinite;
-}
-@keyframes sm-pulse { 0%,100% { box-shadow: 0 0 0 0 rgba(52,211,153,0.5); } 70% { box-shadow: 0 0 0 7px rgba(52,211,153,0); } }
 .sm-title {
 	margin: 0 0 12px; font: 700 clamp(28px, 5vw, 46px)/1.05 var(--display, 'Space Grotesk', sans-serif);
 	color: var(--ink-bright, #fff); letter-spacing: -0.02em;
@@ -144,7 +139,7 @@
 /* Skeleton loaders. */
 .sm-skel { position: relative; overflow: hidden; }
 .sm-skel::after { content: ''; position: absolute; inset: 0; background: linear-gradient(90deg, transparent, rgba(255,255,255,0.06), transparent); animation: sm-shimmer 1.2s infinite; }
-@keyframes sm-shimmer { 100% { transform: translateX(100%); } }
+@keyframes sm-shimmer { from { transform: translateX(-100%); } to { transform: translateX(100%); } }
 .sm-skel-line { height: 12px; border-radius: 6px; background: var(--surface-2, rgba(255,255,255,0.06)); }
 
 /* ── Feed detail ──────────────────────────────────────────────────────────── */
@@ -223,7 +218,7 @@
 .sd-gate a { color: var(--sm-accent); font-weight: 600; text-decoration: none; }
 
 @media (prefers-reduced-motion: reduce) {
-	.sm-card, .sm-live-dot, .sm-skel::after, .sm-edge-fill, .sd-mode, .sd-btn { animation: none; transition: none; }
+	.sm-card, .sm-skel::after, .sm-edge-fill, .sd-mode, .sd-btn { animation: none; transition: none; }
 }
 
 /* ── Interactive states (QB-07) ────────────────────────────────────────────

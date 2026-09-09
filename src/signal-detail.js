@@ -9,7 +9,8 @@
  */
 
 import { apiFetch } from './api.js';
-import { escapeHtml, fmtPct, compact, identicon } from './trader-format.js';
+import { escapeHtml, fmtPct, compact } from './trader-format.js';
+import { fmtUsdc, epochLabel, publisherAvatarHtml } from './shared/signals-format.js';
 import { markNoindex } from './seo-meta.js';
 
 const $ = (s, r = document) => r.querySelector(s);
@@ -29,11 +30,6 @@ const network = networkFromUrl();
 let feed = null;
 let myAgents = [];
 
-function epochLabel(sec) {
-	if (sec % 86400 === 0) { const d = sec / 86400; return d === 1 ? 'day' : `${d}d`; }
-	if (sec % 3600 === 0) { const h = sec / 3600; return h === 1 ? 'hour' : `${h}h`; }
-	return `${Math.round(sec / 60)}m`;
-}
 function latency(ms) {
 	if (ms == null) return '—';
 	if (ms < 1000) return `${ms}ms`;
@@ -47,9 +43,7 @@ function statBlock(label, value, { cls = '', sub = '' } = {}) {
 
 function heroHtml(f) {
 	const p = f.publisher;
-	const avatar = p.image
-		? `<img loading="lazy" decoding="async" class="sm-avatar" src="${escapeHtml(p.image)}" alt="" />`
-		: `<span class="sm-avatar" aria-hidden="true" style="background:${identicon(p.agent_id)}"></span>`;
+	const avatar = publisherAvatarHtml(p);
 	const verified = p.verified ? `<span class="sm-verified">✓ Verified track record</span>` : `<span class="sm-thin">Unverified</span>`;
 	return `
 		<div class="sd-hero">
@@ -138,17 +132,22 @@ function logHtml(f) {
 function subscribeHtml(f) {
 	const p = f.pricing;
 	let price;
-	if (p.per_signal_usdc > 0 && p.per_epoch_usdc > 0) price = `<span class="amt">$${p.per_signal_usdc}</span><span class="per">/ signal · $${p.per_epoch_usdc}/${epochLabel(p.epoch_seconds)} option</span>`;
-	else if (p.per_signal_usdc > 0) price = `<span class="amt">$${p.per_signal_usdc}</span><span class="per">USDC / signal</span>`;
-	else if (p.per_epoch_usdc > 0) price = `<span class="amt">$${p.per_epoch_usdc}</span><span class="per">USDC / ${epochLabel(p.epoch_seconds)}</span>`;
+	if (p.per_signal_usdc > 0 && p.per_epoch_usdc > 0) price = `<span class="amt">$${fmtUsdc(p.per_signal_usdc)}</span><span class="per">/ signal · $${fmtUsdc(p.per_epoch_usdc)}/${epochLabel(p.epoch_seconds)} option</span>`;
+	else if (p.per_signal_usdc > 0) price = `<span class="amt">$${fmtUsdc(p.per_signal_usdc)}</span><span class="per">USDC / signal</span>`;
+	else if (p.per_epoch_usdc > 0) price = `<span class="amt">$${fmtUsdc(p.per_epoch_usdc)}</span><span class="per">USDC / ${epochLabel(p.epoch_seconds)}</span>`;
 	else price = `<span class="amt">Free</span><span class="per">no charge</span>`;
 
-	const agentOpts = myAgents.length
-		? myAgents.map((a) => `<option value="${escapeHtml(a.id)}">${escapeHtml(a.name || a.id)}</option>`).join('')
-		: '';
+	// loadAgents() sets myAgents to null on a 401, which is the signed-out gate
+	// below. Read the list through a normalized array so a null can never take
+	// the render down: this threw for every anonymous visitor and left the page
+	// blank, which is exactly the reader the subscribe panel exists to convert.
+	const agents = Array.isArray(myAgents) ? myAgents : [];
+	const agentOpts = agents
+		.map((a) => `<option value="${escapeHtml(a.id)}">${escapeHtml(a.name || a.id)}</option>`)
+		.join('');
 	const billingOpts = [
-		p.per_signal_usdc > 0 ? `<option value="per_signal">Per signal ($${p.per_signal_usdc})</option>` : '',
-		p.per_epoch_usdc > 0 ? `<option value="per_epoch">Per ${epochLabel(p.epoch_seconds)} ($${p.per_epoch_usdc})</option>` : '',
+		p.per_signal_usdc > 0 ? `<option value="per_signal">Per signal ($${fmtUsdc(p.per_signal_usdc)})</option>` : '',
+		p.per_epoch_usdc > 0 ? `<option value="per_epoch">Per ${epochLabel(p.epoch_seconds)} ($${fmtUsdc(p.per_epoch_usdc)})</option>` : '',
 	].filter(Boolean).join('');
 
 	const form = `
@@ -176,7 +175,7 @@ function subscribeHtml(f) {
 	const gate = `<div class="sd-gate"><p style="margin:0 0 8px;color:var(--ink-dim,#9aa)">Sign in and pick one of your agents to subscribe — its wallet pays the USDC and signs the mirror.</p><a href="/login?next=${encodeURIComponent(location.pathname)}">Sign in →</a></div>`;
 	const noAgents = `<div class="sd-gate"><p style="margin:0 0 8px;color:var(--ink-dim,#9aa)">You don't have an agent with a wallet yet.</p><a href="/create-agent">Create your first agent →</a></div>`;
 
-	const body = myAgents === null ? gate : (myAgents.length ? form : noAgents);
+	const body = myAgents === null ? gate : (agents.length ? form : noAgents);
 	return `
 		<div class="sd-panel">
 			<h2>Subscribe</h2>
@@ -285,7 +284,12 @@ async function init() {
 	const data = await detailRes.json().catch(() => null);
 	if (!data?.feed) { errorState('Feed not found'); return; }
 	feed = data.feed;
-	render();
+	try {
+		render();
+	} catch (err) {
+		console.error('signal detail render failed', err);
+		errorState('This feed could not be displayed');
+	}
 }
 
 if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);
