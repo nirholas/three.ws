@@ -27281,6 +27281,16 @@
 				"improvement"
 			],
 			"link": "/exit-lab"
+		},
+		{
+			"date": "2026-09-09",
+			"title": "The OpenAI partner page now proves the free ChatGPT connector is up instead of just claiming it",
+			"summary": "The /openai page told readers that a free, keyless 3D connector answers at three.ws/api/mcp-studio and then listed the eleven tools it exposes. Both were claims on a static page. Now the page calls the connector from the reader's own browser on load and reports what came back: live with the tool count and the response time, or a plain explanation and a Check again button if the call was blocked. The printed tool table is reconciled against the same response, so every tool the server really answers with is ticked, one the server has dropped is flagged, and one the server has added since the page was written is appended with its own description. The connector URL and the curl command both got copy buttons, and hover plates on the page no longer turn near-white when the site theme is switched to light.",
+			"tags": [
+				"improvement",
+				"fix"
+			],
+			"link": "/openai"
 		}
 	]
 }
