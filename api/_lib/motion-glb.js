@@ -385,7 +385,16 @@ function prepareClip(source, gltf, { retarget, name }) {
 		return { clip: source, hipScale: 1, coverage: 1, droppedTracks: [] };
 	}
 	const basis = restBasisFromGltf(gltf);
-	const parsed = AnimationClip.parse({ ...source, name: name || source.name || 'motion' });
+	// AnimationClip.parse reads `userData` with JSON.parse, so it wants a STRING,
+	// while toLibraryClip writes the object form the library serves. Hand parse
+	// only the fields it understands rather than depending on which shape arrived.
+	const parsed = AnimationClip.parse({
+		name: name || source.name || 'motion',
+		duration: source.duration,
+		tracks: source.tracks,
+		uuid: source.uuid,
+		blendMode: source.blendMode,
+	});
 
 	// Root translation is authored around the source rig's hip height; scale it
 	// onto this one, clamped exactly as retargetClipToRig clamps it so a
