@@ -13,7 +13,9 @@ import { expect, test } from '@playwright/test';
 
 import {
 	connectHome,
+	csrfHeaders,
 	homeInstance,
+	laneHome,
 	lockedDoor,
 	openScene,
 	readState,
@@ -84,8 +86,7 @@ test('journey 7: a guest is refused the unlock by role, and the door stays locke
 	// The owner invites a guest into the household, through the real invite API
 	// the members panel calls.
 	await signIn(page, 'owner');
-	const homes = await (await page.request.get('/api/home')).json();
-	const home = (Array.isArray(homes?.homes) ? homes.homes : homes)[0];
+	const home = await laneHome(page);
 	expect(home?.id, 'journey 5 left a connected home for this one to use').toBeTruthy();
 
 	const guestContext = await browser.newContext();
@@ -95,15 +96,33 @@ test('journey 7: a guest is refused the unlock by role, and the door stays locke
 
 		const invited = await page.request.post(`/api/home/${home.id}/members`, {
 			data: { email: guest.email, role: 'guest' },
-			headers: { 'content-type': 'application/json' },
+			headers: await csrfHeaders(page),
 			timeout: 60_000,
 		});
 		expect(invited.ok(), `inviting the guest returned ${invited.status()}`).toBe(true);
 		const invite = await invited.json().catch(() => ({}));
-		if (invite?.invite?.token) {
-			const accepted = await guestPage.request.post(`/api/home/invites/${invite.invite.token}`, { timeout: 60_000 });
-			expect(accepted.ok(), `accepting the invite returned ${accepted.status()}`).toBe(true);
-		}
+
+		// The plaintext token is carried ONLY in the invite URL: the response body
+		// deliberately never repeats it. An earlier version of this journey looked
+		// for `invite.invite.token`, found undefined, and skipped the acceptance
+		// inside an `if`, so the "guest" was never in the household at all. The
+		// call it then made was refused 404 as a stranger rather than 403 as a
+		// guest, and a status-only assertion could not tell those apart.
+		const token = new URL(invite.invite_url).searchParams.get('invite');
+		expect(token, 'the invite response must carry a usable invite link').toBeTruthy();
+
+		const accepted = await guestPage.request.post(`/api/home/invites/${token}`, {
+			headers: await csrfHeaders(guestPage),
+			timeout: 60_000,
+		});
+		expect(accepted.ok(), `accepting the invite returned ${accepted.status()}: ${(await accepted.text()).slice(0, 200)}`).toBe(true);
+
+		// The guest is really in the household now, holding the guest role. Without
+		// this the refusal below could be a stranger being turned away, which
+		// proves nothing about roles.
+		const roster = await (await page.request.get(`/api/home/${home.id}/members`, { timeout: 60_000 })).json();
+		const seat = (roster.members || []).find((m) => m.email === guest.email);
+		expect(seat?.role, 'the guest must hold the guest role before the refusal is meaningful').toBe('guest');
 
 		const lock = await lockedDoor(instance);
 		expect(await readState(instance, lock)).toBe('locked');
@@ -113,11 +132,21 @@ test('journey 7: a guest is refused the unlock by role, and the door stays locke
 		// is a human saying yes, never an authorisation.
 		const attempt = await guestPage.request.post(`/api/home/${home.id}/call`, {
 			data: { domain: 'lock', service: 'unlock', entity_id: lock, confirmed: true },
-			headers: { 'content-type': 'application/json' },
+			headers: await csrfHeaders(guestPage),
 			timeout: 60_000,
 		});
 		expect(attempt.ok(), 'a guest must not be able to unlock a door').toBe(false);
-		expect([401, 403]).toContain(attempt.status());
+		expect(attempt.status()).toBe(403);
+
+		// Refused for the RIGHT reason. A missing CSRF header is also a 403, so a
+		// status-only assertion passes just as happily when the request never
+		// reached the role gate at all, and the journey would then be reporting
+		// that guests cannot unlock doors while proving only that this client
+		// forgot a header. The code names the gate that actually turned it away.
+		// api/_lib/http.js shapes an error as { error: <code>, error_description }.
+		const refusal = await attempt.json().catch(() => ({}));
+		expect(refusal.error, `the refusal must be the role gate, not ${refusal.error}`).toBe('role_forbidden');
+		expect(String(refusal.error_description || '')).toMatch(/guest/i);
 
 		expect(await readState(instance, lock), 'a refused guest must leave the door locked').toBe('locked');
 		await expect
@@ -131,8 +160,7 @@ test('journey 7: a guest is refused the unlock by role, and the door stays locke
 test('journey 4: "good night" runs the house\'s own scene, and the lock it touches is gated', async ({ page }) => {
 	const instance = homeInstance();
 	await signIn(page, 'owner');
-	const homes = await (await page.request.get('/api/home')).json();
-	const home = (Array.isArray(homes?.homes) ? homes.homes : homes)[0];
+	const home = await laneHome(page);
 	expect(home?.id).toBeTruthy();
 
 	const lock = await lockedDoor(instance);
@@ -141,16 +169,16 @@ test('journey 4: "good night" runs the house\'s own scene, and the lock it touch
 	// shipped: the seeded house has Bedtime, and the resolver has to find it.
 	const dry = await page.request.post(`/api/home/${home.id}/activate`, {
 		data: { phrase: 'good night', dryRun: true },
-		headers: { 'content-type': 'application/json' },
+		headers: await csrfHeaders(page),
 		timeout: 60_000,
 	});
-	expect(dry.ok(), `activate dry run returned ${dry.status()}`).toBe(true);
+	expect(dry.ok(), `activate dry run returned ${dry.status()}: ${(await dry.text()).slice(0, 300)}`).toBe(true);
 	const preview = await dry.json();
 	expect(preview.match?.entityId, '"good night" must resolve to a scene in this house').toMatch(/^(scene|script)\./);
 
 	const ran = await page.request.post(`/api/home/${home.id}/activate`, {
 		data: { phrase: 'good night' },
-		headers: { 'content-type': 'application/json' },
+		headers: await csrfHeaders(page),
 		timeout: 60_000,
 	});
 	const body = await ran.json().catch(() => ({}));

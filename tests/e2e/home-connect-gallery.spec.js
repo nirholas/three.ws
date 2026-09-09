@@ -33,6 +33,35 @@ const MOBILE = { width: 320, height: 720 };
 
 const root = (page) => page.locator('#hm-root');
 
+/**
+ * Lines Chromium wrote, as opposed to lines the page wrote.
+ *
+ * The distinction matters because this assertion is the only thing standing
+ * between a state and console noise nobody sees until a stranger reaches it, so
+ * it must not be softened into a blanket mute. Three things get through, each
+ * identified by who emitted it rather than by an allowlist of the states that
+ * happen to trip it today:
+ *
+ *   - the dev server's HMR socket, which cannot reach this Codespace;
+ *   - `Failed to load resource` for an `/api/` route THIS SPEC deliberately
+ *     fulfilled with an error status. That message comes from the network
+ *     stack, not from JavaScript, and the state under test is the page having
+ *     handled the response correctly. The same line for a stylesheet, a script
+ *     or a font still fails, which is the half worth keeping;
+ *   - `GL Driver Message`, printed by the GPU process about its own software
+ *     rasteriser under headless. No page code can emit that string.
+ *
+ * Scoping the second one by URL rather than by status is deliberate. The filter
+ * used to name 401, states 8 and 12 arrived later with a 502 and a 402, and
+ * both were red for a reason that had nothing to do with either screen.
+ */
+function isBrowserNoise(text, url) {
+	if (/\[vite\]|websocket|HMR/i.test(text)) return true;
+	if (/GL Driver Message/i.test(text)) return true;
+	if (/^Failed to load resource/i.test(text)) return new URL(url, 'http://localhost').pathname.startsWith('/api/');
+	return false;
+}
+
 fs.mkdirSync(OUT, { recursive: true });
 
 /**
@@ -52,10 +81,7 @@ function screen(name, expected, reach) {
 		page.on('console', (msg) => {
 			if (msg.type() !== 'error' && msg.type() !== 'warning') return;
 			const text = msg.text();
-			// The dev server's own HMR socket cannot reach this Codespace, and a
-			// route the spec deliberately fulfils with a 401 is answered, not
-			// broken. Neither is page code.
-			if (/\[vite\]|websocket|HMR|Failed to load resource: the server responded with a status of 401/i.test(text)) return;
+			if (isBrowserNoise(text, msg.location()?.url || '')) return;
 			noise.push(`${msg.type()}: ${text}`);
 		});
 

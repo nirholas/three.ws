@@ -73,6 +73,34 @@ export async function signIn(page, role = 'owner') {
 	return account;
 }
 
+/**
+ * A CSRF header, minted the way the real client mints one.
+ *
+ * Every state-changing route on this surface is CSRF-guarded, and
+ * `page.request.post` carries the session cookie WITHOUT the header a browser's
+ * fetch would add, so a raw post is refused with `403 csrf_missing` before it
+ * reaches the gate the journey is about. That refusal is a 403 like a role
+ * refusal is a 403, which is how a test that proves nothing looks green: the
+ * guest in journey 7 was being turned away at the door for the wrong reason.
+ *
+ * So this walks the same path `src/home/api.js` walks: GET /api/csrf-token with
+ * the session, then send what it returns. Tokens are single-use, so this is
+ * called per request rather than cached.
+ *
+ * Prefer clicking the real control where one exists. This is for the setup a
+ * journey needs before its assertion, and for the requests whose whole point is
+ * that they come from a client the UI would never let you be.
+ *
+ * @param {import('@playwright/test').Page} page
+ */
+export async function csrfHeaders(page) {
+	const res = await page.request.get('/api/csrf-token', { timeout: 60_000 });
+	if (!res.ok()) throw new Error(`GET /api/csrf-token returned ${res.status()}`);
+	const body = await res.json();
+	if (!body?.token) throw new Error('/api/csrf-token returned no token');
+	return { 'content-type': 'application/json', 'x-csrf-token': body.token };
+}
+
 /** Every home on the signed-in account, however the endpoint shapes its list. */
 async function listHomes(page) {
 	const list = await page.request.get('/api/home', { timeout: 60_000 });
@@ -109,6 +137,28 @@ async function laneHomes(page) {
  * Each one therefore starts from an account with no houses of ITS OWN on it;
  * a concurrent lane's houses are none of its business.
  */
+/**
+ * THIS lane's home, the one the journeys are about.
+ *
+ * Not `(await listHomes(page))[0]`. That is "the first home on the account",
+ * and it is a different thing: a run that recreated its container gets a new
+ * port, so the previous run's rows no longer match this lane's base URL, are
+ * not cleared by `resetHomes`, and stay at the front of the list. A journey
+ * that then acted on `homes[0]` was acting on a home whose stored Home
+ * Assistant token was sealed with an earlier run's per-run encryption key, and
+ * the API answered `400 auth: the stored access token for this home could not
+ * be read` from a route that was working perfectly.
+ *
+ * @param {import('@playwright/test').Page} page
+ */
+export async function laneHome(page) {
+	const homes = await laneHomes(page);
+	if (!homes.length) {
+		throw new Error(`no connected home on this lane's house (${homeBaseUrl(homeInstance())})`);
+	}
+	return homes[0];
+}
+
 export async function resetHomes(page) {
 	const homes = await laneHomes(page);
 	for (const home of homes) {

@@ -108,11 +108,24 @@ function watchConsole(page) {
 	return found;
 }
 
+/**
+ * Open the plan view and wait for it to have actually loaded.
+ *
+ * The wait on `.hm-plan-tray` is the load-bearing half. `#hs-plan` is the
+ * container and appears immediately, while the editor renders a skeleton until
+ * the layout and the room graph arrive; the tray is the first thing that exists
+ * only on the far side of that. Two journeys below decide whether to skip by
+ * counting tray entries, and without this they counted the skeleton: on a busy
+ * machine 9b and 9c skipped every run with "already placed" and "nothing left
+ * unfiled" against a house with four areas and seventy-eight unfiled devices,
+ * which is a green report for two journeys that never ran.
+ */
 async function openPlan(page) {
 	const plan = page.getByRole('button', { name: /Draw where the rooms are/i });
 	await expect(plan).toBeVisible({ timeout: 60_000 });
 	await plan.click();
 	await expect(page.locator('#hs-plan')).toBeVisible();
+	await expect(page.locator('.hm-plan-tray')).toBeVisible({ timeout: 60_000 });
 }
 
 test('journey 9: a floorplan is drawn, saved, and still there after a reload', async ({ page }) => {

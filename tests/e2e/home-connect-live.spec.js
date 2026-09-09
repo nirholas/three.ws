@@ -161,10 +161,13 @@ test.describe('/smart-home against a real Home Assistant', () => {
 		expect(leaks.cookie, 'the token reached a cookie').toBe(false);
 		expect(leaks.url, 'the token reached the URL').toBe(false);
 
-		// And the page said nothing to the console on the way through. The dev
-		// server's HMR socket cannot reach this Codespace and is not page code;
-		// everything else is.
-		const noise = consoleLines.filter((line) => !/\[vite\]|websocket/i.test(line));
+		// And the page said nothing to the console on the way through. Two things
+		// here are Chromium talking to itself rather than the page talking: the
+		// dev server's HMR socket, which cannot reach this Codespace, and the GPU
+		// process reporting a stall in its own software rasteriser under headless
+		// (`GL Driver Message`, a string no page code can emit). Everything else
+		// is the page and fails.
+		const noise = consoleLines.filter((line) => !/\[vite\]|websocket|GL Driver Message/i.test(line));
 		expect(noise, 'the connect flow wrote to the console').toEqual([]);
 
 		// The field is cleared the moment the connect lands, so a shoulder over
@@ -269,5 +272,48 @@ test.describe('/smart-home against a real Home Assistant', () => {
 		await expect(page.locator('.hm-list > li').filter({ hasText: 'Keyboard house' })).toHaveCount(1, { timeout: 180_000 });
 
 		fs.writeFileSync(path.join(OUT, 'keyboard-walkthrough.json'), `${JSON.stringify({ tabStops: stops }, null, '\t')}\n`);
+	});
+
+	test('a token a real house rejects lands on state 7, not on a generic failure', async ({ page }) => {
+		const house = homeInstance();
+		await signIn(page, 'owner');
+		await resetHomes(page);
+
+		// A stub can prove the page maps code `auth` onto state 7. It cannot prove
+		// the thing in front of it: that a real Home Assistant answering a real
+		// bad token with 401 is classified as `auth` at all rather than falling
+		// into the generic branch. That classification lives on the server, on the
+		// wire, and it is the difference between "create a new token" and "that
+		// did not work", which is the difference between a user recovering and a
+		// user giving up on an address that was never wrong.
+		await openConnectCard(page);
+		await page.fill('#hm-label', 'Rejected token');
+		await page.fill('#hm-url', house.baseUrl);
+		await page.fill('#hm-token', 'not-a-real-long-lived-access-token');
+
+		const rejected = page.waitForResponse(
+			(res) => res.request().method() === 'POST' && /\/api\/home$/.test(new URL(res.url()).pathname),
+			{ timeout: 180_000 },
+		);
+		await page.getByRole('button', { name: 'Connect this home' }).click();
+		const res = await rejected;
+		const body = await res.json().catch(() => null);
+		expect(res.status(), 'a house that refuses the token is a 4xx, never a 5xx').toBeLessThan(500);
+		expect(body?.code, 'the wire code the page branches on').toBe('auth');
+
+		await expect(page.locator('#hm-root')).toHaveAttribute('data-state', 'auth_failed', { timeout: 60_000 });
+		// Refocused on the field that has to change. Sending a keyboard user back
+		// to the top of the form to walk it again is the dead end this replaces.
+		await expect(page.locator('#hm-token')).toBeFocused();
+		// And it says which thing is wrong, with the path to a fresh one.
+		await expect(page.locator('.hm-notice')).toContainText(/rejected that token/i);
+		await expect(page.locator('.hm-notice')).toContainText(/Long-lived access tokens/i);
+		// The address the user typed survives, because it was never the problem.
+		await expect(page.locator('#hm-url')).toHaveValue(house.baseUrl);
+		// Nothing was stored: a refused token must not leave a half-home behind.
+		const after = await page.request.get('/api/home', { timeout: 60_000 }).then((r) => r.json());
+		expect((after.homes || []).some((h) => h.label === 'Rejected token')).toBe(false);
+
+		await page.screenshot({ path: path.join(OUT, 'auth-failed-live.png'), fullPage: true });
 	});
 });

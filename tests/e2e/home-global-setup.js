@@ -104,7 +104,13 @@ async function raiseHomeCeiling(accounts) {
 		import('../../api/_lib/db.js'),
 		import('../../api/_lib/home/entitlements.js'),
 	]);
-	for (const role of ['owner', 'guest']) {
+	// ROLES, not a hardcoded pair. HOME_E2E_ROLES exists so a lane that only
+	// needs an owner does not spend one of five hourly registrations on a guest,
+	// and that is the escape hatch a run reaches for when the budget is already
+	// gone. Reading `accounts.guest.email` in a run that deliberately provisioned
+	// no guest threw here, so the one path out of a rate limit was itself broken.
+	for (const role of ROLES) {
+		if (!accounts[role]?.email) continue;
 		const rows = await sql`select id from users where email = ${accounts[role].email}`;
 		if (!rows.length) continue;
 		await setAccountOverride({

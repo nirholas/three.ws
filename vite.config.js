@@ -192,6 +192,19 @@ const CODESPACE_HMR =
 			}
 		: undefined;
 
+/**
+ * Hot reload, or deliberately none of it.
+ *
+ * `VITE_NO_HMR` turns the client off entirely, and an e2e run is the case it
+ * exists for. This worktree is shared by concurrent agents who edit `src/`
+ * while a journey is mid-flight, and with HMR connected every one of their
+ * saves reloads the page under the browser: a run on 2026-09-09 took five full
+ * reloads from a peer editing src/home/scene-render.js, and journey 9e died on
+ * a navigation that landed between naming a room and clicking File. A test
+ * browser wants the build it loaded and nothing else.
+ */
+const HMR = process.env.VITE_NO_HMR ? false : CODESPACE_HMR;
+
 // Content types for the file kinds `npm run build:chat` emits into public/chat.
 // A dev-only static fallback needs exactly these; anything else is served as an
 // octet-stream rather than guessed.
@@ -266,7 +279,7 @@ const appConfig = {
 	server: {
 		// Bind to 0.0.0.0 so the Codespace port-forwarder can reach the server.
 		host: true,
-		...(CODESPACE_HMR ? { hmr: CODESPACE_HMR } : {}),
+		...(HMR === undefined ? {} : { hmr: HMR }),
 		proxy: {
 			'/r2-proxy': {
 				target: 'https://pub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev',

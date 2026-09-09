@@ -20,7 +20,25 @@ export const STATUS = '**/api/status';
 /** First hit transforms this page's module graph through the dev server. */
 export const SLOW = 60_000;
 
-/** A house as the API returns it, measured against a real instance. */
+/**
+ * A house as the API returns it, measured against a real instance.
+ *
+ * The three timestamps are GETTERS, and that is the whole point of them. A
+ * connected home whose last handshake has aged past 90 seconds is state 9, not
+ * state 6, and the manage view is right to say so. Stamping `last_ok_at` once
+ * when this module is imported therefore built a fixture with a 90-second fuse
+ * in it: the first specs in a run saw a live house and every spec after the
+ * ninety-second mark saw the same fixture as stale, so `connected` assertions
+ * went red purely as a function of how long the run had been going and which
+ * order the files happened to execute in. The suite is eight minutes long, so
+ * most of it was on the wrong side of that line.
+ *
+ * Reading them per access makes the fixture mean what it says at the moment it
+ * is used. Every `{ ...HOME }` spread and every `stub(page, { homes: [HOME] })`
+ * gets a house that answered just now, and a spec that wants a stale one still
+ * says so explicitly by overriding `last_ok_at`, which is how state 9 is
+ * reached on purpose rather than by the clock.
+ */
 export const HOME = {
 	id: '2b0d4c7e-1f8a-4c3d-9e11-7a6b5c4d3e2f',
 	label: 'Home',
@@ -30,10 +48,10 @@ export const HOME = {
 	status: 'connected',
 	status_detail: null,
 	capabilities: { websocket: true, entityCount: 120, areaCount: 3, floorCount: 1, macroCount: 2, haVersion: '2026.9.0', mcp: false, mcpToolCount: 0 },
-	last_ok_at: new Date().toISOString(),
+	get last_ok_at() { return new Date().toISOString(); },
 	last_error_at: null,
-	created_at: new Date().toISOString(),
-	updated_at: new Date().toISOString(),
+	get created_at() { return new Date().toISOString(); },
+	get updated_at() { return new Date().toISOString(); },
 	revoked_at: null,
 };
 

@@ -47,12 +47,20 @@ async function openView(page, id, view) {
  * ink composited into the background, and axe scores that blend rather than the
  * resting colour a reader actually sees: the same reason the site-wide gate
  * does this.
+ *
+ * The wait afterwards is on a condition, not a duration: the injected rule
+ * collapses every animation and transition to 1ms, so the resting colour is on
+ * screen once the browser has painted two frames past the injection. A fixed
+ * sleep would be both slower than that and, on a loaded machine, still too
+ * short, which is the shape every flaky contrast assertion has.
  */
 async function settle(page) {
 	await page.addStyleTag({
 		content: '*, *::before, *::after { animation-duration: 1ms !important; animation-delay: 0s !important; transition-duration: 1ms !important; transition-delay: 0s !important; }',
 	});
-	await page.waitForTimeout(120);
+	await page.evaluate(
+		() => new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(() => resolve(true)))),
+	);
 }
 
 async function axeOn(page, label) {
@@ -368,6 +376,116 @@ test("a user's own device names are never translated", async ({ page }) => {
 	// The house's own words for its own things, byte for byte, in both locales.
 	expect(seen[1]).toBe(seen[0]);
 	expect(seen[0]).toBe(light.name);
+});
+
+test('prefers-reduced-motion turns the scene\'s motion off, in 3D and in the flat house', async ({ page }) => {
+	await signIn(page, 'owner');
+
+	// The default first, so the assertion below is a difference and not a
+	// constant. A house that never damps anything would pass a one-sided check.
+	await openView(page, homeId, '3d');
+	const moving = await page.evaluate(() => window.__homeScene?.stats());
+	expect(moving.reduceMotion, 'motion is on by default').toBe(false);
+	expect(moving.damping, 'the camera coasts by default').toBe(true);
+
+	// Now ask for less motion the way a person does: an OS setting, which the
+	// browser reports as a media query. Not a class, not a test hook.
+	await page.emulateMedia({ reducedMotion: 'reduce' });
+	await openView(page, homeId, '3d');
+	const still = await page.evaluate(() => window.__homeScene?.stats());
+	expect(still.reduceMotion, 'the renderer reads the setting').toBe(true);
+	expect(still.damping, 'the camera must not coast after a drag').toBe(false);
+	// Reduced motion is not a frozen house: the scene still draws, the values
+	// just arrive instead of travelling.
+	expect(still.drawCalls).toBeGreaterThan(0);
+
+	// The whole lane, not just the canvas: nothing anywhere on the page may
+	// carry a real transition or animation once the setting is on.
+	await openView(page, homeId, '2d');
+	const durations = await page.evaluate(() => {
+		const out = [];
+		for (const node of document.querySelectorAll('#hs-shell *')) {
+			const style = getComputedStyle(node);
+			const longest = (value) => Math.max(0, ...String(value).split(',').map((v) => parseFloat(v) || 0));
+			const ms = Math.max(longest(style.transitionDuration), longest(style.animationDuration));
+			if (ms > 0.05) out.push(`${node.className || node.tagName}: ${ms}s`);
+		}
+		return out;
+	});
+	expect(durations, 'no element may animate under prefers-reduced-motion').toEqual([]);
+
+	await page.emulateMedia({ reducedMotion: null });
+});
+
+test('on a phone, the confirmation survives a stray tap and only a real answer clears it', async ({ page }) => {
+	const instance = homeInstance();
+	await signIn(page, 'owner');
+	// A real phone viewport, because this is a phone-shaped failure: the card
+	// covers most of a 375px screen, so the thumb that reaches for it lands
+	// beside it as often as on it.
+	await page.setViewportSize({ width: 375, height: 720 });
+	await openView(page, homeId, '2d');
+
+	const lock = await lockedDoor(instance);
+	await page.locator(`[data-entity-id="${lock}"]`).getByRole('button', { name: /^Unlock\b/ }).first().click();
+	const card = page.getByRole('alertdialog', { name: 'Confirm this action' });
+	await expect(card).toBeVisible({ timeout: 60_000 });
+
+	// Three ways a card gets dismissed by accident on a touch screen, all of
+	// which a backdrop-click or outside-tap-to-close handler would honour:
+	// beside the card, at the very top of the shell, and at the bottom edge
+	// where a thumb rests. None of them may answer the question.
+	const box = await card.boundingBox();
+	const outside = [
+		{ x: 6, y: Math.round(box.y + box.height / 2) },
+		{ x: 187, y: 8 },
+		{ x: 187, y: 712 },
+	];
+	for (const point of outside) {
+		await page.mouse.click(point.x, point.y);
+		await expect(card, `a tap at ${point.x},${point.y} must not answer the question`).toBeVisible();
+	}
+	// And the door is still shut after all of it.
+	expect(await readState(instance, lock)).toBe('locked');
+
+	// The two deliberate answers still work, and Cancel is one of them.
+	await card.getByRole('button', { name: 'Cancel' }).click();
+	await expect(card).toBeHidden({ timeout: 30_000 });
+	expect(await readState(instance, lock), 'cancelling must leave the door locked').toBe('locked');
+
+	await page.setViewportSize({ width: 1440, height: 900 });
+});
+
+test('the floorplan editor is a touch target at 320 and 375, not only at 1440', async ({ page }) => {
+	await signIn(page, 'owner');
+	// The editor is where the 44px floor is easiest to miss: its controls are a
+	// dense toolbar and a tray of device chips, and the breakpoint sweep above
+	// only ever opens the 2D house.
+	for (const width of [320, 375]) {
+		await page.setViewportSize({ width, height: 720 });
+		await openView(page, homeId, 'plan');
+		await settle(page);
+
+		const overflow = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
+		expect(overflow, `the editor must not push the page sideways at ${width}px`).toBeLessThanOrEqual(1);
+
+		const small = await page.evaluate(() => {
+			const out = [];
+			// The rooms on the canvas are sized by the plan itself: a 1.5m room
+			// is meant to be small, and forcing it to 44px would lie about the
+			// house. Every control that is chrome rather than content is held to
+			// the floor.
+			for (const node of document.querySelectorAll('#hs-plan button, #hs-plan [role="button"]:not(.hm-plan-room), #hs-plan input')) {
+				const r = node.getBoundingClientRect();
+				if (r.width === 0 && r.height === 0) continue;
+				if (r.height < 44) out.push(`${node.className || node.tagName}: ${Math.round(r.height)}px`);
+			}
+			return out;
+		});
+		expect(small, `floorplan controls under 44px at ${width}px`).toEqual([]);
+	}
+	await page.setViewportSize({ width: 1440, height: 900 });
+	await openView(page, homeId, '2d');
 });
 
 test.afterAll(async () => {
