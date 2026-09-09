@@ -7,46 +7,91 @@ Read [00-INDEX.md](_context/backlog-00-INDEX.md) first.
 > in three.ws without owner approval. Build and deploy freely; ask before
 > committing anything that names the launchpad into this repo.
 
-## Status: done, verified live 2026-09-02
+## Status: both feeds live and hardened, re-verified 2026-09-09
 
-Both feeds now run on Cloud Run and no longer depend on this codespace. The
-sibling repo is checked out at `/workspaces/pump-fun-sdk`, so the deliverables
-below are verifiable from here, which they were not when this order was written.
+The 2026-09-02 pass declared this done. It was half true. Re-measuring on
+2026-09-09 found the graduation tracker healthy and **the all-claims firehose
+silently dead**: 99 hours of uptime, `mode: websocket`, and zero events.
 
-| Feed | Cloud Run service | Revision | Uptime | Transport |
+Root cause: `rpc.magicblock.app` went key-gated. It now answers `401` on the
+WebSocket upgrade and `{"error":"invalid api key"}` over HTTP, and it was the
+firehose's only WebSocket endpoint *and* its primary RPC. The 2026-08-01 note
+below calling it a working free endpoint is what stopped being true.
+
+Why it stayed invisible for four days is the part worth keeping: **subscribing
+cannot fail loudly.** web3.js returns a subscription id immediately and retries
+the socket internally, so `startWebSocket()` resolved, `transport` was set to
+`websocket`, and `/stats` reported a healthy feed. The 90-second silence
+heartbeat did fire, but its reconnect rebuilt the same dead endpoint, so the
+watchdog looped instead of escaping. Nothing in the metrics distinguished a
+connected socket from a refused one.
+
+Both halves are fixed and deployed.
+
+| Feed | Cloud Run service | Revision | Transport | Measured 2026-09-09 |
 |---|---|---|---|---|
-| Graduation and migration tracker | `pumpfun-channel-bot` | `-00004-tvk` | 25.4 h | websocket |
-| All-claims firehose | `pumpfun-allclaims-bot` | `-00008-6d8` | 25.7 h | websocket |
+| Graduation and migration tracker | `pumpfun-channel-bot` | `-00006-wp4` | websocket on `solana-rpc.publicnode.com` | 156 events in 3m17s, `degraded: false`, delivery `ok` |
+| All-claims firehose | `pumpfun-allclaims-bot` | `-00010-bdc` | websocket on `solana-rpc.publicnode.com` | 745 claims and 242,207 WS events in 23m, 145 instant posts, 23 digests, **0 post failures** |
 
-Both are `Ready=True`, pinned singletons (`minScale=1`, `maxScale=1`) on the
-`three-ws@` runtime SA. The codespace was rebuilt on 2026-09-02 and both local
-processes on ports 3900/3901 died with it while the two services kept running:
-that rebuild is the proof of durability this order asked for, not a regression.
+Both `Ready=True`, pinned singletons (`minScale=1`, `maxScale=1`) on the
+`three-ws@` runtime SA, each with its own bot token in its own Secret Manager
+secret and its own numeric channel id (`-1003965305979`, `-1003905427189`).
 
-Measured the same day: the tracker had posted 1,719 messages over 23,456 events
-(`degraded: false`, delivery `ok`); the firehose had detected 15,566 claims and
-posted 754 digests over 14,862 events, on `rpc.magicblock.app/mainnet`, with 2
-post failures. Channel ids are distinct and numeric (`-1003965305979` and
-`-1003905427189`), each with its own bot token in its own Secret Manager secret.
+The firehose recovered the moment its endpoints were repointed: 62 claims in the
+first two minutes, against the ~20 claims/min baseline this order set.
 
-One open observation, not a failure: the firehose reports 531 queue drops
-(roughly 6.5% of claim transactions never fetched). That is the RPC queue's
-designed backpressure rather than a fault, and the levers are queue capacity and
-endpoint count. The 2026-08-02 baseline of zero drops was a 3h43m measurement,
-not a contract.
+### The config fix (immediate)
 
-### What was left to build
+Both services were repointed off magicblock onto endpoints verified keyless and
+streaming the same day: `solana-rpc.publicnode.com`, `api.mainnet-beta.solana.com`
+(HTTP and WS), and `solana.leorpc.com/?api_key=FREE` (HTTP only; its WS refuses).
+`drpc.org` and `rpc.ankr.com` are no longer keyless either and were rejected.
 
-Every numbered item below had already been completed by the 2026-08-01/02
-sessions. The one real gap this pass found and closed was configuration
-durability: `.env` is gitignored, so the rebuild destroyed the only copy of each
-bot's working config, and nothing could read it back. That stranded a bot twice
-over, since `deploy-cloudrun.sh` also reads its whole configuration from `.env`.
-Each bot directory now has a `recover-env.sh` that rebuilds `.env` from the live
-revision plus Secret Manager, applying the same numeric-`CHANNEL_ID` guard the
-deploy applies. It is committed in the sibling repo (`9701edb9`) and unpushed.
+A trap this exposed: `deploy-cloudrun.sh` ships env from `.env` via
+`--env-vars-file`, which **replaces the whole set**. The local `.env` still held
+the magicblock config, so the next deploy would have silently re-broken the feed.
+`recover-env.sh` now regenerates it from the corrected live revision, and both
+`.env` files carry the new endpoint lists.
+
+### The code fix (so this class of outage cannot hide again)
+
+Landed in the sibling repo at `2a12ec3a`, canonical copy first and propagated to
+`channel-bot`, per the rule in its own `DECODERS.md`:
+
+- **A WebSocket endpoint list, not one endpoint.** `SOLANA_WS_URLS` is
+  comma-separated, and whatever the RPC list implies is appended, so there is
+  always somewhere to fail over to. The firehose now runs with 5 resolved.
+- **Liveness is proven by traffic, not by a subscription id.** A new
+  subscription must deliver a real log event within 20 seconds or the endpoint is
+  rejected and the next one tried. The monitored programs emit thousands of
+  events a minute, so silence that long means the endpoint, not the chain.
+- **Reconnects rotate** instead of retrying the endpoint that just went quiet.
+- **The heartbeat timer is cleared before it is re-armed.** Every reconnect since
+  this code was written had been stacking another interval.
+- **`/stats` exposes `activeWs` and `wsEventsReceived`,** so a WebSocket carrying
+  no traffic is visible rather than indistinguishable from a healthy one.
+- `channel-bot`'s live feed runs on `event-monitor.ts`, not the claim monitor, so
+  the rotation was applied there too rather than only to the shared decoder path.
+
+Verified by running the monitor against the dead endpoint first: it rejected
+magicblock, settled on `solana-rpc.publicnode.com`, and reported 9,773 events.
+Covered by `src/__tests__/ws-urls.test.ts` in both bots (7 cases, including the
+regression that a single explicit endpoint must never de-duplicate down to a
+single point of failure). Suites green: 95 tests allclaims, 205 channel-bot.
+
+Deliberately not done: neither bot has a persistent volume, so tracker state is
+ephemeral and a redeploy resets it. That is pre-existing, was true before this
+pass, and mounting one is a separate change.
+
+### Standing observation, not a failure
+
+`queueDrops` sits at 53 on the firehose (~0.9% of pipeline claims). That is the
+RPC queue's designed backpressure, and the levers are queue capacity and endpoint
+count. The 2026-08-02 baseline of zero drops was a 3h43m measurement, not a
+contract.
 
 ## The work
+
 
 1. **Deploy both to Cloud Run.** `channel-bot/deploy-cloudrun.sh` exists and is the
    template. Write the equivalent for the all-claims package. Pin the
@@ -65,13 +110,18 @@ deploy applies. It is committed in the sibling repo (`9701edb9`) and unpushed.
    id from `getUpdates?allowed_updates=["my_chat_member"]`, whose promotion event
    carries the chat id, username, and full admin rights object.
 
-4. **Keep websockets, do not fall back to polling.** `getSignaturesForAddress`
-   limit-20 per 30s against the program samples a handful of valid transactions
-   per minute out of thousands, so events get missed entirely. The code only
-   enables WS when `SOLANA_WS_URL` is explicitly set. `wss://rpc.magicblock.app/mainnet`
-   carries the full firehose on the free tier (measured 4,545 events per 20s) and
-   `wss://solana-rpc.publicnode.com` also works keyless. The three.ws Helius key is
-   plan-exhausted and its WS handshakes 429 forever, so do not point these at it.
+4. **Keep websockets, do not fall back to polling, and configure more than one.**
+   `getSignaturesForAddress` limit-20 per 30s against the program samples a
+   handful of valid transactions per minute out of thousands, so events get
+   missed entirely. WS is enabled when `SOLANA_WS_URL` or `SOLANA_WS_URLS` is
+   set. **`wss://rpc.magicblock.app/mainnet` is dead as of 2026-09-09**: it went
+   key-gated and answers 401 on the upgrade. Do not re-add it. Keyless and
+   verified streaming that day: `wss://solana-rpc.publicnode.com` and
+   `wss://api.mainnet-beta.solana.com`. The three.ws Helius key is plan-exhausted
+   and its WS handshakes 429 forever, so do not point these at it.
+
+   Always set `SOLANA_WS_URLS` with at least two. A single endpoint is a single
+   point of failure, and the failure is silent: see the status section above.
 
 5. **Sync the stale decoders.** `@pumpkit/core` and `@pumpkit/channel` are March
    snapshots missing the post-2026-05-21 V2 layouts (quote-mint claims, lifetime
@@ -112,9 +162,18 @@ with a sliding-window budget reserving one slot for the digest.
 
 - [x] Both bots run on Cloud Run, surviving a codespace rebuild. Proven by the
       2026-09-02 rebuild: both local processes died, both services stayed up.
-- [x] Each uses its own token and numeric channel id, verified by a live post
-      (1,719 messages posted and 754 digests posted, to distinct `-100...` ids).
+- [x] Each uses its own token and numeric channel id, verified by live posts to
+      distinct `-100...` ids (145 instant posts and 23 digests on the firehose in
+      the 23 minutes after the fix, 0 post failures).
 - [x] WS mode confirmed active on both, with event rates recorded above.
+      Re-measured 2026-09-09 after the firehose was found silent for four days:
+      both now carry traffic on `solana-rpc.publicnode.com`, and `/stats`
+      reports `activeWs` so a dead socket is visible rather than reported as
+      healthy.
+- [x] A dead WebSocket endpoint can no longer flatline a feed: endpoint lists,
+      a traffic-based liveness check, rotating reconnects, and the metrics to
+      see it, committed in the sibling repo at `2a12ec3a` and deployed
+      (`pumpfun-allclaims-bot-00010-bdc`, `pumpfun-channel-bot-00006-wp4`).
 - [x] The decoder sync decision is made, executed, and written down in
       `DECODERS.md` at the sibling repo root: the all-claims copy is canonical,
       nothing was refactored into a shared package, and the two stale copies are

@@ -44,7 +44,7 @@ observable health, so 01 to 03 come first.
 | 05 | [R2 bucket CORS: verify, then fix at the origin](../906-backlog-05-r2-bucket-cors.md) | two credentials (re-measured 2026-09-09, both surfaces still fail) | first re-set `S3_SECRET_ACCESS_KEY` (object storage is DOWN, ISSUES.md item 10), then mint an R2 admin token |
 | 07 | [BNB testnet: deploy the two finished contracts](../910-backlog-07-bnb-testnet-deploys.md) | one funded EOA | send tBNB to `0x1C4918894dfA5eE11cfF9629B458b5169Cfa3871` (faucet is reCAPTCHA-gated) |
 | 08 | [OKX chat bot: move off the codespace](../907-backlog-08-okx-chat-bot-always-on.md) | **deployed 2026-09-04**; only the reply lane is blocked | clear the GCP billing hold so the bot can author replies |
-| 09 | [Telegram bots: durable hosting for both feeds](../908-backlog-09-telegram-bots-durability.md) | **done**, verified live 2026-09-02 | clear the commit gate on its file update |
+| 09 | [Telegram bots: durable hosting for both feeds](../908-backlog-09-telegram-bots-durability.md) | **done**; the firehose was found silently dead on 2026-09-09 (dead RPC), fixed and hardened the same day | clear the commit gate on its file update |
 | 10 | [x402scan listing: finish the last three steps](../909-backlog-10-x402scan-listing.md) | **the deploy landed 2026-09-08**; only the origin registration is left (re-measured 2026-09-09) | one SIWX wallet signature at x402scan `/resources/register` for origin `https://three.ws`; no funds move |
 
 ---
@@ -84,9 +84,16 @@ Read the same day: both AI credentials this project holds are present and refuse
 `Lightning dunning decision is deny`, a billing hold; the `openai-api-key` account
 `billing_not_active`, which kills the platform's OpenAI lane everywhere, not just here), so a
 deployed host will report the new `ai_provider_unauthorized` until the owner clears billing.
-09 is done: the sibling repository is checked out at `/workspaces/pump-fun-sdk` after all, and
-both feeds were verified running on Cloud Run on 2026-09-02 (`Ready=True`, websocket transport,
-25 h uptime each) while this codespace's own rebuild killed their local processes.
+09 is done, but the 2026-09-02 reading that closed it was only half right and is worth learning
+from. Both services were `Ready=True` on websocket transport, and the codespace rebuild that
+killed their local twins did prove the hosting durable. What `Ready=True` did not prove is that
+a feed was carrying traffic: re-measured on 2026-09-09, the all-claims firehose had 99 hours of
+uptime, `mode: websocket`, and **zero events**, because `rpc.magicblock.app` went key-gated and
+its only WebSocket endpoint had been answering 401 for four days. Subscribing cannot fail loudly
+in web3.js, so nothing in the metrics distinguished that from health. Fixed the same day:
+endpoints repointed, and both bots given a WebSocket endpoint list, a traffic-based liveness
+check, rotating reconnects, and `activeWs`/`wsEventsReceived` in `/stats`. **Read a feed's event
+counter, never just its readiness condition.**
 10's remaining external step resolved on its own
 (the upstream pull request merged 2026-08-11, the registry attributes 18,636 settlements and
 $1,055 of volume to our facilitator, and their own crawler replayed against production returns

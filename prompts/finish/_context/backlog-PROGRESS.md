@@ -76,6 +76,68 @@ Left: re-read healthz after a full budget window (3h+) and confirm settle >90%
 with `fee_runway_exhausted` no longer top; whoever finishes the pacing arc
 commits the governor + test file together.
 
+## 2026-09-09: 09 telegram-bots-durability (reopened by measurement, fixed, re-closed)
+
+Measured first, per this order's own instruction not to trust its numbers. The
+graduation tracker was healthy (137,954 events, 9,270 messages, 99 h uptime,
+`degraded: false`). The all-claims firehose was **silently dead**: same 99 h
+uptime, `mode: websocket`, `claimsDetected: 0`, `totalEvents: 0`. Its logs were
+hundreds of `ws error: Unexpected server response: 401` per second.
+
+Root cause: `rpc.magicblock.app` went key-gated some time after 2026-09-02. It
+now returns 401 on the WebSocket upgrade and `{"error":"invalid api key"}` over
+HTTP, and it was the firehose's only WS endpoint and its primary RPC. Confirmed
+directly, not inferred: a raw upgrade request returns 401, a `getSlot` returns
+the api-key error, while `solana-rpc.publicnode.com` and
+`api.mainnet-beta.solana.com` both stream (5 events in 355 ms and 792 ms).
+`drpc.org` and `rpc.ankr.com` are also no longer keyless.
+
+Why nobody saw it: subscribing cannot fail loudly. web3.js returns a
+subscription id immediately and retries the socket internally, so
+`startWebSocket()` resolved and the bot reported `websocket` transport. The
+90-second silence heartbeat fired correctly but its reconnect rebuilt the same
+dead endpoint, so the watchdog looped for four days instead of escaping. This is
+the lesson worth carrying: **`Ready=True` plus `mode: websocket` is not evidence
+a feed is working. Read the event counter.**
+
+Did, config (restored the feed immediately, config-only Cloud Run update):
+repointed both services off magicblock onto endpoints verified keyless and
+streaming the same day. The firehose recovered on the spot: 62 claims in the
+first two minutes against this order's ~20/min baseline. Also found and closed a
+trap that would have re-broken it: `deploy-cloudrun.sh` ships env from `.env` via
+`--env-vars-file`, which replaces the whole set, and the local `.env` still held
+the magicblock config. Regenerated both from the corrected live revisions with
+`recover-env.sh`.
+
+Did, code (sibling repo `2a12ec3a`, canonical copy first then propagated to
+`channel-bot`, per its own `DECODERS.md` rule): a WebSocket endpoint list
+(`SOLANA_WS_URLS`, with the RPC-derived endpoints appended so there is always a
+fallback); a liveness gate that requires a new subscription to deliver a real log
+event within 20 s before the endpoint is accepted; reconnects that rotate instead
+of retrying the endpoint that just went quiet; the heartbeat timer cleared before
+re-arming (every reconnect had been stacking another interval); and `activeWs` +
+`wsEventsReceived` in `/stats` so a traffic-free socket is visible. Applied to
+`channel-bot`'s `event-monitor.ts` too, since that is the transport its live feed
+actually runs on rather than the claim monitor.
+
+Proven, not assumed: ran the monitor with the dead endpoint listed first; it
+rejected magicblock, settled on publicnode, and reported 9,773 events. New
+`ws-urls.test.ts` in both bots (7 cases). Suites green: 95 allclaims, 205
+channel-bot.
+
+Deployed and re-verified: `pumpfun-allclaims-bot-00010-bdc` (745 claims and
+242,207 WS events in 23 min, 145 instant posts, 23 digests, 0 post failures) and
+`pumpfun-channel-bot-00006-wp4` (156 events in 3 min, `degraded: false`,
+delivery `ok`, `activeWs` reported).
+
+Left: only the owner-gated commit of the three.ws-side file updates (this entry,
+the order file, the index row), which the coin commit gate covers. Note for
+whoever commits: `backlog-00-INDEX.md` also carries concurrent edits from other
+sessions to rows 01, 05 and 10.
+
+Not done on purpose: neither bot has a persistent volume, so tracker state resets
+on redeploy. Pre-existing, and a separate change.
+
 ## 2026-08-01: 09 telegram-bots-durability (done)
 
 Measured: both feeds ran as codespace-local processes; local graduation bot pid
