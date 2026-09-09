@@ -3458,6 +3458,14 @@
 					"added": "2026-09-09"
 				},
 				{
+					"path": "/docs/trader-card-embed",
+					"title": "Docs · Trader card embed",
+					"description": "Put a live three.ws trader on any page with one script tag. The card shows the verified on-chain record and lets readers fork a coin or ghost-copy the trader, signing with their own wallet.",
+					"priority": 0.6,
+					"changefreq": "monthly",
+					"added": "2026-09-09"
+				},
+				{
 					"path": "/docs/clash",
 					"title": "Docs · Coin Clash",
 					"description": "Token-gated community warfare: every coin community is an army. Hold the coin, enlist, and rally for your faction in timed on-chain battles.",

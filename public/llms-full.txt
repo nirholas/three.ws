@@ -2578,6 +2578,12 @@ URL: https://three.ws/docs/rivalries
 
 What changed on the trader board: who passed whom, who just arrived, and who is closing. Derived from close timestamps rather than a snapshot table, so the matchups work retroactively and cannot disagree with the leaderboard.
 
+### Docs · Trader card embed
+
+URL: https://three.ws/docs/trader-card-embed
+
+Put a live three.ws trader on any page with one script tag. The card shows the verified on-chain record and lets readers fork a coin or ghost-copy the trader, signing with their own wallet.
+
 ### Docs · Coin Clash
 
 URL: https://three.ws/docs/clash
