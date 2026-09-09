@@ -70,6 +70,7 @@ const RUN_BTN_HTML =
 let emptyStateHtml = '';
 
 function renderEmptyState(panel) {
+	panel.removeAttribute('aria-busy');
 	panel.innerHTML = emptyStateHtml;
 }
 
@@ -193,7 +194,7 @@ async function runTask({ task, maxCostUsd, resultPanel, runBtn, refreshGate }) {
 
 		data = await res.json();
 	} catch (err) {
-		showError(resultPanel, err.message || 'Network error. Check your connection and try again.');
+		showError(resultPanel, networkErrorMessage(err));
 		return;
 	} finally {
 		runBtn.innerHTML = RUN_BTN_HTML;
@@ -205,7 +206,20 @@ async function runTask({ task, maxCostUsd, resultPanel, runBtn, refreshGate }) {
 	renderResults(resultPanel, data, task);
 }
 
+// A failed fetch surfaces as a bare TypeError whose message ("Failed to fetch",
+// "NetworkError when attempting to fetch resource") is browser-specific and
+// tells the buyer nothing they can act on. Anything that is not a real message
+// from our own code becomes one sentence that names the cause and the fix.
+function networkErrorMessage(err) {
+	const raw = String(err?.message || '');
+	const isTransport = !raw || err instanceof TypeError || /failed to fetch|networkerror|load failed|network request failed/i.test(raw);
+	return isTransport
+		? 'Could not reach the agent service. Check your connection, then run the task again.'
+		: raw;
+}
+
 function showSkeleton(panel) {
+	panel.setAttribute('aria-busy', 'true');
 	panel.innerHTML = `
 		<div class="skeleton-list">
 			<div class="skeleton-item"></div>
@@ -216,6 +230,7 @@ function showSkeleton(panel) {
 }
 
 function showError(panel, message) {
+	panel.removeAttribute('aria-busy');
 	panel.innerHTML = `
 		<div class="error-card">
 			<p>${escHtml(message)}</p>
@@ -337,6 +352,7 @@ function showPaymentRequired(panel, { body, header, task, maxCostUsd }) {
 	const price = formatAmount(quoted.amount, Number(quoted.extra?.decimals ?? 6));
 	const asset = quoted.extra?.name || 'USDC';
 
+	panel.removeAttribute('aria-busy');
 	panel.innerHTML = `
 		<div class="pay-card">
 			<div class="pay-head">
@@ -503,11 +519,21 @@ function shortId(value) {
 }
 
 function renderResults(panel, data, task) {
+	panel.removeAttribute('aria-busy');
 	panel.innerHTML = '';
 
 	const steps = Array.isArray(data.steps) ? data.steps : [];
 	const answer = data.result?.answer || '';
 	const totalCost = data.totalCostUsdc || '0.000000';
+
+	// A run can come back well-formed and still carry nothing to show: the
+	// Bazaar matched no endpoint for the task, or every candidate priced above
+	// the budget. Rendering an empty timeline there leaves a blank panel, so
+	// say what happened and give the two levers that change the outcome.
+	if (!steps.length && !answer) {
+		renderBarrenRun(panel, task);
+		return;
+	}
 
 	// Render step cards with staggered animation delays
 	const timeline = document.createElement('div');
@@ -544,6 +570,34 @@ function renderResults(panel, data, task) {
 			<div class="answer-text">${escHtml(answer)}</div>
 		`;
 		panel.appendChild(answerCard);
+	}
+}
+
+// Shown when the agent ran but produced no trace and no answer.
+function renderBarrenRun(panel, task) {
+	panel.innerHTML = `
+		<div class="barren-card">
+			<div class="barren-eyebrow">No endpoints matched</div>
+			<p class="barren-desc">
+				The agent found nothing in the Bazaar it could call for
+				${task ? `\u201c${escHtml(String(task).slice(0, 120))}\u201d` : 'that task'}
+				within your budget, so it spent nothing.
+			</p>
+			<ul class="barren-tips">
+				<li>Rewrite the task around the data you want (a price, a reputation score, a search).</li>
+				<li>Raise the budget: some endpoints price above the current ceiling.</li>
+				<li><a href="/marketplace">Browse the Bazaar</a> to see what is currently on sale.</li>
+			</ul>
+			<button class="btn" type="button" id="barren-retry">Run again</button>
+		</div>
+	`;
+	const retry = panel.querySelector('#barren-retry');
+	if (retry) {
+		retry.addEventListener('click', () => {
+			const runBtn = document.getElementById('run-btn');
+			if (runBtn && !runBtn.disabled) runBtn.click();
+			else document.getElementById('task-input')?.focus();
+		});
 	}
 }
 

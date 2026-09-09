@@ -99,10 +99,15 @@
 			.nav-main::-webkit-scrollbar { display: none; }
 			.nav-main a { padding: 7px 9px; white-space: nowrap; }
 		}
+		/* Under 560px the brand + Dashboard button leave the links about 76px of
+		   track, so they scroll a few pixels at a time. Wrap them onto their own
+		   full-width row: same links, readable width, still one tap away. */
 		@media (max-width: 560px) {
-			.nav-inner { gap: 8px; }
+			.nav-inner { gap: 8px; flex-wrap: wrap; padding-bottom: 8px; }
 			.brand { font-size: 15px; }
+			.nav-end { margin-left: auto; }
 			.nav-end .console { margin-left: 0; padding: 7px 12px; }
+			.nav-main { order: 3; flex: 0 0 100%; margin: 0 -20px; padding: 0 20px; }
 		}
 
 		/* ── BUTTONS ─────────────────────────────────────────────── */
@@ -172,6 +177,7 @@
 			position: sticky; top: 88px;
 		}
 		.panel-label {
+			display: block;
 			font-family: var(--font-mono); font-size: 11px;
 			letter-spacing: 0.18em; text-transform: uppercase;
 			color: var(--text-3); margin-bottom: 12px;
@@ -411,6 +417,38 @@
 		}
 		.empty-tips strong { color: var(--text-2); font-weight: 500; }
 
+		/* Ran, but the Bazaar had nothing to call */
+		.barren-card {
+			background: var(--surface-1);
+			border: 1px solid var(--hairline-strong);
+			border-radius: 12px;
+			padding: 24px;
+		}
+		.barren-eyebrow {
+			font-family: var(--font-mono); font-size: 10.5px;
+			letter-spacing: 0.2em; text-transform: uppercase;
+			color: var(--text-3); margin-bottom: 12px;
+		}
+		.barren-desc {
+			margin: 0 0 16px; font-size: 15px;
+			color: var(--text-2); line-height: 1.55;
+		}
+		.barren-tips {
+			list-style: none; margin: 0 0 20px; padding: 0;
+			display: flex; flex-direction: column; gap: 10px;
+		}
+		.barren-tips li {
+			position: relative; padding-left: 20px;
+			font-size: 13px; line-height: 1.5; color: var(--text-3);
+		}
+		.barren-tips li::before {
+			content: ""; position: absolute; left: 4px; top: 8px;
+			width: 5px; height: 5px; border-radius: 50%;
+			background: var(--text-4);
+		}
+		.barren-tips a { text-decoration: underline; text-underline-offset: 3px; color: var(--text-2); }
+		.barren-tips a:hover { color: var(--text); }
+
 		/* Inline payment card (402) */
 		.pay-card {
 			background: var(--surface-1);
@@ -509,16 +547,16 @@
 	<meta property="og:type" content="website">
 	<meta property="og:site_name" content="three.ws">
 	<meta property="og:title" content="Endpoint Shopper · three.ws" data-i18n-attr="content:shopper.meta_og_title">
-	<meta property="og:description" content="Describe a task and set a budget. An AI agent discovers relevant x402 endpoints via the Bazaar, chains them together, and synthesizes a final answer — paying per API call." data-i18n-attr="content:shopper.meta_og_description">
+	<meta property="og:description" content="Describe a task and set a budget. An AI agent discovers relevant x402 endpoints via the Bazaar, chains them together, and synthesizes a final answer: paying per API call." data-i18n-attr="content:shopper.meta_og_description">
 	<meta property="og:url" content="https://three.ws/shopper">
 	<meta property="og:image" content="https://three.ws/api/page-og?s=crypto&amp;t=Endpoint+Shopper&amp;d=Describe+a+task+and+set+a+budget.+An+AI+agent+discovers+relevant+x402+endpoints+via+the+Bazaar%2C+chains+them+together%2C+and+synthesizes+a+final+answer%3A+paying&amp;p=%2Fshopper">
 	<meta property="og:image:width" content="1200">
 	<meta property="og:image:height" content="630">
 	<meta name="twitter:card" content="summary_large_image">
 	<meta name="twitter:title" content="Endpoint Shopper · three.ws" data-i18n-attr="content:shopper.meta_twitter_title">
-	<meta name="twitter:description" content="Describe a task and set a budget. An AI agent discovers relevant x402 endpoints via the Bazaar, chains them together, and synthesizes a final answer — paying per API call." data-i18n-attr="content:shopper.meta_twitter_description">
+	<meta name="twitter:description" content="Describe a task and set a budget. An AI agent discovers relevant x402 endpoints via the Bazaar, chains them together, and synthesizes a final answer: paying per API call." data-i18n-attr="content:shopper.meta_twitter_description">
 	<meta name="twitter:image" content="https://three.ws/api/page-og?s=crypto&amp;t=Endpoint+Shopper&amp;d=Describe+a+task+and+set+a+budget.+An+AI+agent+discovers+relevant+x402+endpoints+via+the+Bazaar%2C+chains+them+together%2C+and+synthesizes+a+final+answer%3A+paying&amp;p=%2Fshopper">
-	<script type="application/ld+json">{"@context":"https://schema.org","@type":"WebPage","name":"Endpoint Shopper","description":"Describe a task and set a budget. An AI agent discovers relevant x402 endpoints via the Bazaar, chains them together, and synthesizes a final answer — paying per API call.","url":"https://three.ws/shopper","isPartOf":{"@type":"WebSite","name":"three.ws","url":"https://three.ws"}}</script>
+	<script type="application/ld+json">{"@context":"https://schema.org","@type":"WebPage","name":"Endpoint Shopper","description":"Describe a task and set a budget. An AI agent discovers relevant x402 endpoints via the Bazaar, chains them together, and synthesizes a final answer: paying per API call.","url":"https://three.ws/shopper","isPartOf":{"@type":"WebSite","name":"three.ws","url":"https://three.ws"}}</script>
 
 	<meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1">
 	<meta property="og:locale" content="en_US">
@@ -549,7 +587,7 @@
 <!-- ── HERO ─────────────────────────────────────────────────── -->
 <div class="hero">
 	<div class="wrap">
-		<div class="eyebrow">USE-36 — Agent Orchestration</div>
+		<div class="eyebrow">Agent orchestration</div>
 		<h1 class="hero-h" data-i18n-html="shopper.endpoint_shopper_ai_that_chains_paid_apis">Endpoint Shopper<br /><em>AI that chains paid APIs</em></h1>
 		<p class="hero-sub" data-i18n="shopper.describe_a_task_set_a_budget_the">Describe a task, set a budget. The agent discovers relevant x402 endpoints in the Bazaar, pays for each call, and synthesizes a final answer.</p>
 	</div>
@@ -602,12 +640,12 @@
 			</div>
 
 			<!-- Right: results -->
-			<div class="result-panel" id="result-panel">
+			<div class="result-panel" id="result-panel" role="region" aria-label="Execution trace" aria-live="polite">
 				<div class="empty-state" id="empty-state">
 					<svg width="40" height="40" fill="none" viewBox="0 0 40 40"><circle cx="20" cy="20" r="18" stroke="currentColor" stroke-width="1.5"/><path d="M14 20h12M20 14v12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
 					<div>Enter a task and click <strong data-i18n="shopper.run_task">Run Task</strong> to begin</div>
 					<ul class="empty-tips">
-						<li data-i18n-html="shopper.set_a_max_budget_the_agent_never">Set a <strong>max budget</strong> — the agent never spends past it on downstream calls.</li>
+						<li data-i18n-html="shopper.set_a_max_budget_the_agent_never">Set a <strong>max budget</strong>. The agent never spends past it on downstream calls.</li>
 						<li data-i18n="shopper.running_costs_usdc_you_ll_pay_once">Running costs USDC: you'll pay once with a Base or Solana wallet when prompted.</li>
 						<li data-i18n="shopper.try_an_example_chip_above_to_see">Try an example chip above to see the discover → plan → call → synthesize flow.</li>
 					</ul>
