@@ -2,10 +2,11 @@
 // under them: the manifest join (api/_lib/asset-catalog.js) and the snippet
 // builder (api/_lib/asset-snippets.js).
 //
-// R2 is stubbed with manifests shaped exactly like the published ones (the
-// field names and the "collection: x" category convention come from the live
-// objects/avatars/animations manifests), so the suite exercises the real join,
-// the real ranking, and the real code generation without a network call.
+// The public CDN read (r2.getPublicObjectBuffer, the export asset-catalog.js
+// actually imports) is stubbed with manifests shaped exactly like the published
+// ones: the field names and the "collection: x" category convention come from
+// the live objects/avatars/animations manifests, so the suite exercises the real
+// join, the real ranking, and the real code generation without a network call.
 
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 
@@ -68,7 +69,7 @@ const MANIFESTS = {
 	'animations/library/generated/manifest.json': null,
 };
 
-const getObjectBuffer = vi.fn(async (key) => {
+const getPublicObjectBuffer = vi.fn(async (key) => {
 	const value = MANIFESTS[key];
 	if (value == null) {
 		const err = new Error('NoSuchKey');
@@ -78,7 +79,7 @@ const getObjectBuffer = vi.fn(async (key) => {
 	return Buffer.from(JSON.stringify(value), 'utf8');
 });
 
-vi.mock('../../api/_lib/r2.js', () => ({ getObjectBuffer }));
+vi.mock('../../api/_lib/r2.js', () => ({ getPublicObjectBuffer }));
 
 const { searchCatalog, getCatalogItem, relatedItems, resetCatalogCache } = await import(
 	'../../api/_lib/asset-catalog.js'
@@ -94,7 +95,7 @@ const req = { headers: { host: 'three.ws' } };
 
 beforeEach(() => {
 	resetCatalogCache();
-	getObjectBuffer.mockClear();
+	getPublicObjectBuffer.mockClear();
 });
 
 describe('catalog join', () => {
@@ -124,9 +125,9 @@ describe('catalog join', () => {
 
 	it('memoizes the manifests so repeat searches do not re-read storage', async () => {
 		await searchCatalog({ q: 'chair' });
-		const afterFirst = getObjectBuffer.mock.calls.length;
+		const afterFirst = getPublicObjectBuffer.mock.calls.length;
 		await searchCatalog({ q: 'wrench' });
-		expect(getObjectBuffer.mock.calls.length).toBe(afterFirst);
+		expect(getPublicObjectBuffer.mock.calls.length).toBe(afterFirst);
 	});
 });
 
