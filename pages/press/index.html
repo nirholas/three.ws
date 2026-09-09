@@ -31,6 +31,22 @@
 	<link rel="stylesheet" href="/nav.css" />
 	<link rel="stylesheet" href="/footer.css" />
 	<style>
+		/* The page loads /nav.css, which imports the design tokens, but nothing was
+		   applying them to the document itself: every paragraph here rendered in the
+		   browser's default serif on a transparent ground with the UA's 8px margin.
+		   The shell below styles its own blocks, so only the document needs setting. */
+		html, body { margin: 0; }
+		body {
+			background: var(--bg-0, #0a0a0a);
+			color: var(--ink, #e8e8e8);
+			font-family: var(--font-body, 'Inter', system-ui, sans-serif);
+			font-size: 16px;
+			line-height: 1.6;
+			-webkit-font-smoothing: antialiased;
+			text-rendering: optimizeLegibility;
+			min-height: 100vh;
+		}
+
 		.prs-shell { max-width: 1020px; margin: 0 auto; padding: clamp(22px, 5vw, 48px) 18px 96px; }
 
 		.prs-kicker { display: inline-flex; align-items: center; gap: 8px; font-size: .72rem; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: var(--ink-dim, #888); margin: 0 0 12px; }
@@ -51,7 +67,7 @@
 		/* ── Asset cards ───────────────────────────────────────
 		   Each mark previews on the ground it was drawn for, so a light-type
 		   lockup is never judged against a dark tile it would never sit on. */
-		.prs-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(276px, 1fr)); gap: 14px; }
+		.prs-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(276px, 100%), 1fr)); gap: 14px; }
 		.prs-asset { border: 1px solid var(--stroke, rgba(255,255,255,.08)); border-radius: var(--radius-lg, 14px); background: var(--surface-1, rgba(255,255,255,.03)); overflow: hidden; display: flex; flex-direction: column; }
 		.prs-stage { display: grid; place-items: center; padding: 26px 20px; min-height: 152px; border-bottom: 1px solid var(--stroke, rgba(255,255,255,.08)); }
 		.prs-stage.on-dark { background: #0b0d0c; }
@@ -68,7 +84,7 @@
 		.prs-dl svg { width: 13px; height: 13px; }
 
 		/* ── Announcement cards (16:9 art) ─────────────────────── */
-		.prs-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 16px; }
+		.prs-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(320px, 100%), 1fr)); gap: 16px; }
 		.prs-card { border: 1px solid var(--stroke, rgba(255,255,255,.08)); border-radius: var(--radius-lg, 14px); overflow: hidden; background: var(--surface-1, rgba(255,255,255,.03)); display: flex; flex-direction: column; }
 		.prs-card img { display: block; width: 100%; height: auto; border-bottom: 1px solid var(--stroke, rgba(255,255,255,.08)); }
 
@@ -116,7 +132,7 @@
 	<script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"WebPage","name":"Press kit","description":"Logos, announcement graphics, boilerplate, and usage rules for three.ws.","url":"https://three.ws/press","isPartOf":{"@type":"WebSite","name":"three.ws","url":"https://three.ws"}},{"@type":"Organization","name":"three.ws","url":"https://three.ws","logo":"https://three.ws/brand/three-ws-mark.png","email":"partnerships@three.ws","sameAs":["https://github.com/nirholas/three.ws","https://x.com/trythreews"]}]}</script>
 
 	<meta property="og:locale" content="en_US">
-	<meta property="og:image:alt" content="Press kit — three.ws">
+	<meta property="og:image:alt" content="Press kit, three.ws">
 </head>
 <body>
 
@@ -153,7 +169,7 @@
 			<article class="prs-asset">
 				<div class="prs-stage on-dark"><img src="/brand/three-ws-mark.png" alt="The three.ws cube mark" loading="lazy" /></div>
 				<div class="prs-asset-body">
-					<p class="prs-file">three-ws-mark.png<br />897 &times; 1024</p>
+					<p class="prs-file">three-ws-mark.png<br /><span data-dims="three-ws-mark.png">898 &times; 1024</span></p>
 					<p class="prs-when">The mark on its own. Use when the name appears elsewhere: avatars, favicons, app tiles, sponsor walls.</p>
 					<a class="prs-dl" href="/brand/three-ws-mark.png" download>
 						<svg viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M8 1.5v9m0 0L4.5 7M8 10.5 11.5 7M2 13.5h12" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
@@ -165,7 +181,7 @@
 			<article class="prs-asset">
 				<div class="prs-stage on-dark"><img src="/brand/three-ws-lockup-on-dark.png" alt="three.ws horizontal lockup for dark backgrounds" loading="lazy" /></div>
 				<div class="prs-asset-body">
-					<p class="prs-file">three-ws-lockup-on-dark.png<br />1590 &times; 400</p>
+					<p class="prs-file">three-ws-lockup-on-dark.png<br /><span data-dims="three-ws-lockup-on-dark.png">1592 &times; 400</span></p>
 					<p class="prs-when">Horizontal lockup, light type. The default for dark grounds and video.</p>
 					<a class="prs-dl" href="/brand/three-ws-lockup-on-dark.png" download>
 						<svg viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M8 1.5v9m0 0L4.5 7M8 10.5 11.5 7M2 13.5h12" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
@@ -177,7 +193,7 @@
 			<article class="prs-asset">
 				<div class="prs-stage on-light"><img src="/brand/three-ws-lockup-on-light.png" alt="three.ws horizontal lockup for light backgrounds" loading="lazy" /></div>
 				<div class="prs-asset-body">
-					<p class="prs-file">three-ws-lockup-on-light.png<br />1590 &times; 400</p>
+					<p class="prs-file">three-ws-lockup-on-light.png<br /><span data-dims="three-ws-lockup-on-light.png">1592 &times; 400</span></p>
 					<p class="prs-when">Horizontal lockup, dark type. For white paper, print, and light decks.</p>
 					<a class="prs-dl" href="/brand/three-ws-lockup-on-light.png" download>
 						<svg viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M8 1.5v9m0 0L4.5 7M8 10.5 11.5 7M2 13.5h12" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
@@ -189,7 +205,7 @@
 			<article class="prs-asset">
 				<div class="prs-stage on-dark"><img src="/brand/three-ws-stacked-on-dark.png" alt="three.ws stacked lockup for dark backgrounds" loading="lazy" /></div>
 				<div class="prs-asset-body">
-					<p class="prs-file">three-ws-stacked-on-dark.png<br />793 &times; 864</p>
+					<p class="prs-file">three-ws-stacked-on-dark.png<br /><span data-dims="three-ws-stacked-on-dark.png">794 &times; 864</span></p>
 					<p class="prs-when">Stacked lockup, light type. For square crops, badges, and centred layouts.</p>
 					<a class="prs-dl" href="/brand/three-ws-stacked-on-dark.png" download>
 						<svg viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M8 1.5v9m0 0L4.5 7M8 10.5 11.5 7M2 13.5h12" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
@@ -201,7 +217,7 @@
 			<article class="prs-asset">
 				<div class="prs-stage on-light"><img src="/brand/three-ws-stacked-on-light.png" alt="three.ws stacked lockup for light backgrounds" loading="lazy" /></div>
 				<div class="prs-asset-body">
-					<p class="prs-file">three-ws-stacked-on-light.png<br />793 &times; 864</p>
+					<p class="prs-file">three-ws-stacked-on-light.png<br /><span data-dims="three-ws-stacked-on-light.png">794 &times; 864</span></p>
 					<p class="prs-when">Stacked lockup, dark type. Same shape, for light grounds.</p>
 					<a class="prs-dl" href="/brand/three-ws-stacked-on-light.png" download>
 						<svg viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M8 1.5v9m0 0L4.5 7M8 10.5 11.5 7M2 13.5h12" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
@@ -284,7 +300,7 @@
 		<div class="prs-quote">
 			<div class="prs-quote-bar">
 				<span class="prs-quote-k">One line</span>
-				<button class="prs-copy" type="button" data-copy="boiler-1"><span>Copy</span></button>
+				<button class="prs-copy" type="button" data-copy="boiler-1"><span aria-live="polite">Copy</span></button>
 			</div>
 			<p class="prs-quote-body" id="boiler-1">three.ws is an open-source platform for 3D AI agents: it turns a text prompt into a rigged, animation-ready 3D character you can embed anywhere.</p>
 		</div>
@@ -292,7 +308,7 @@
 		<div class="prs-quote">
 			<div class="prs-quote-bar">
 				<span class="prs-quote-k">Short, about 50 words</span>
-				<button class="prs-copy" type="button" data-copy="boiler-2"><span>Copy</span></button>
+				<button class="prs-copy" type="button" data-copy="boiler-2"><span aria-live="polite">Copy</span></button>
 			</div>
 			<p class="prs-quote-body" id="boiler-2">three.ws is an open-source platform for 3D AI agents. It turns a text prompt into a rigged, animation-ready 3D character, gives that character an on-chain identity and a payment rail, and embeds it into any website or assistant with a single tag. The free 3D generation lane requires no account, no API key, and no payment.</p>
 		</div>
@@ -300,7 +316,7 @@
 		<div class="prs-quote">
 			<div class="prs-quote-bar">
 				<span class="prs-quote-k">Long, about 100 words</span>
-				<button class="prs-copy" type="button" data-copy="boiler-3"><span>Copy</span></button>
+				<button class="prs-copy" type="button" data-copy="boiler-3"><span aria-live="polite">Copy</span></button>
 			</div>
 			<p class="prs-quote-body" id="boiler-3">three.ws is an open-source platform for 3D AI agents. It turns a text prompt into a rigged, animation-ready 3D character, gives that character an on-chain identity and a payment rail, and embeds it into any website or assistant with a single tag. The free 3D generation lane requires no account, no API key, and no payment. Assistants reach the same tools over MCP: three.ws is an OpenAI Select Partner, and its 3D Studio connector gives ChatGPT eleven keyless tools that generate, rig, animate, inspect, and place models in AR, rendered inline in the conversation. The viewer, the runtime, and the embeddable web component are open source.</p>
 		</div>
@@ -308,7 +324,7 @@
 		<div class="prs-quote">
 			<div class="prs-quote-bar">
 				<span class="prs-quote-k">Full bio, about 330 words</span>
-				<button class="prs-copy" type="button" data-copy="boiler-4"><span>Copy</span></button>
+				<button class="prs-copy" type="button" data-copy="boiler-4"><span aria-live="polite">Copy</span></button>
 			</div>
 			<div class="prs-quote-body" id="boiler-4"><p>The 3D agent layer of the internet.</p>
 <p>three.ws is an open-source platform that gives AI a body. It turns a text prompt, a few photos, or a sketch into a textured, rigged, animation-ready 3D character; gives that character a mind, a voice, an on-chain identity, and a payment rail; and embeds the result into any website, app, or AI assistant with a single tag. The free 3D generation lane requires no account, no API key, and no payment.</p>
@@ -371,22 +387,61 @@
 <script>
 	// Copy buttons for the boilerplate. Kept inline: one delegated listener, no
 	// state, nothing worth a module fetch on a page journalists open once.
-	document.addEventListener('click', function (e) {
-		var btn = e.target.closest('[data-copy]');
-		if (!btn) return;
-		var el = document.getElementById(btn.dataset.copy);
-		if (!el || !navigator.clipboard) return;
-		var paras = el.querySelectorAll('p');
-		var text = paras.length
-			? Array.prototype.map.call(paras, function (p) { return p.textContent.trim(); }).join('\n\n')
-			: el.textContent.trim();
-		navigator.clipboard.writeText(text).then(function () {
+	//
+	// The Clipboard API is not always there to be called: it is absent outside a
+	// secure context and the write can be refused by permission policy. A press
+	// page cannot answer that with a button that does nothing, so a failure
+	// selects the passage in place and says to press the shortcut, which leaves
+	// the reader one keystroke from the same result.
+	(function () {
+		var COPIED_MS = 1600;
+
+		function passageText(el) {
+			var paras = el.querySelectorAll('p');
+			return paras.length
+				? Array.prototype.map.call(paras, function (p) { return p.textContent.trim(); }).join('\n\n')
+				: el.textContent.trim();
+		}
+
+		function flash(btn, message) {
 			var label = btn.querySelector('span');
-			var original = label.textContent;
-			label.textContent = 'Copied';
-			setTimeout(function () { label.textContent = original; }, 1600);
+			if (!label) return;
+			if (btn.dataset.idle === undefined) btn.dataset.idle = label.textContent;
+			clearTimeout(Number(btn.dataset.timer));
+			label.textContent = message;
+			btn.dataset.timer = String(setTimeout(function () {
+				label.textContent = btn.dataset.idle;
+			}, COPIED_MS));
+		}
+
+		function selectPassage(el) {
+			var selection = window.getSelection();
+			if (!selection) return false;
+			var range = document.createRange();
+			range.selectNodeContents(el);
+			selection.removeAllRanges();
+			selection.addRange(range);
+			return true;
+		}
+
+		function fallback(btn, el) {
+			var shortcut = /mac|iphone|ipad/i.test(navigator.platform || navigator.userAgent) ? 'Cmd+C' : 'Ctrl+C';
+			flash(btn, selectPassage(el) ? 'Selected, press ' + shortcut : 'Copy by hand');
+		}
+
+		document.addEventListener('click', function (e) {
+			var btn = e.target.closest('[data-copy]');
+			if (!btn) return;
+			var el = document.getElementById(btn.dataset.copy);
+			if (!el) return;
+			if (!navigator.clipboard || !navigator.clipboard.writeText) { fallback(btn, el); return; }
+			navigator.clipboard.writeText(passageText(el)).then(function () {
+				flash(btn, 'Copied');
+			}, function () {
+				fallback(btn, el);
+			});
 		});
-	});
+	}());
 </script>
 <script src="/brand.js" defer></script>
 <script src="/nav.js" defer></script>

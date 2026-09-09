@@ -161,17 +161,32 @@ writeFileSync(zipPath, await zip.generateAsync({ type: 'nodebuffer', compression
 const zipBytes = statSync(zipPath).size;
 console.log(`three-ws-press-kit.zip  ${Math.round(zipBytes / 1024)} KB  →  ${zipPath}`);
 
-// Keep the size quoted on /press honest. A hand-typed number goes stale the
-// first time an asset changes, and "6 MB" that is really 11 is the kind of
-// small lie a journalist on a metered connection notices.
+/** Pixel dimensions straight out of the PNG IHDR chunk, which starts at byte 8. */
+function pngSize(file) {
+	const head = readFileSync(file).subarray(0, 24);
+	return { width: head.readUInt32BE(16), height: head.readUInt32BE(20) };
+}
+
+// Keep the numbers quoted on /press honest. A hand-typed figure goes stale the
+// first time an asset changes: "6 MB" that is really 11 is the kind of small lie
+// a journalist on a metered connection notices, and every dimension on the page
+// had drifted a pixel or two off the artwork it labelled. Both are written back
+// from the bytes that just landed, so neither can be wrong again.
 const PRESS_PAGE = join(ROOT, 'pages/press/index.html');
 if (existsSync(PRESS_PAGE)) {
 	const mb = (zipBytes / 1024 / 1024).toFixed(1);
 	const before = readFileSync(PRESS_PAGE, 'utf8');
-	const after = before.replace(/(<span data-zip-size>)[^<]*(<\/span>)/, `$1${mb} MB$2`);
+	let after = before.replace(/(<span data-zip-size>)[^<]*(<\/span>)/, `$1${mb} MB$2`);
+
+	for (const asset of ASSETS) {
+		const { width, height } = pngSize(join(OUT_DIR, asset.file));
+		const span = new RegExp(`(<span data-dims="${asset.file.replace(/\./g, '\\.')}">)[^<]*(</span>)`);
+		after = after.replace(span, `$1${width} &times; ${height}$2`);
+	}
+
 	if (after !== before) {
 		writeFileSync(PRESS_PAGE, after);
-		console.log(`pages/press/index.html  zip size → ${mb} MB`);
+		console.log('pages/press/index.html  size and dimensions rewritten from the rendered assets');
 	}
 }
 
