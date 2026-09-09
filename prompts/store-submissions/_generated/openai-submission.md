@@ -177,7 +177,7 @@ a separate surface, `api/_mcp-studio/component.js`; `/viewer` is the "open in a 
 4. `Make a rigged, animation-ready knight character I can pose.`
 5. `Model a small ceramic teapot with a bamboo handle and a celadon glaze.`
 
-### Tool list (titles as shown to users; matches live `tools/list`, re-pulled 2026-09-02)
+### Tool list (titles as shown to users; matches live `tools/list`, re-pulled 2026-09-09)
 | Tool | Title | What it does |
 |------|-------|--------------|
 | `forge_free` | Generate a 3D model from text | Text → textured GLB, platform-funded. Defaults to the standard tier (fast, reliable, textured); the caller may request `draft` (fastest) or `high` (best, slower; falls back to standard under load). |
@@ -263,7 +263,7 @@ checkout; the app charges the user nothing. (If monetization is ever added, Open
 goods via external checkout — out of scope here.)
 
 ### 2.3 Tool annotations correct on all eleven tools: **PASS**
-Pulled from the live `tools/list` (re-pulled 2026-09-02):
+Pulled from the live `tools/list` (all eleven rows re-checked against it on 2026-09-09):
 
 | Tool | readOnlyHint | destructiveHint | idempotentHint | openWorldHint |
 |------|:---:|:---:|:---:|:---:|
@@ -506,12 +506,21 @@ curl -s -X POST https://three.ws/api/mcp-studio -H 'content-type: application/js
       that carries the real `og:image`/`og:title` and hands off to `/ar/view`; `kind=avatar` adds the
       `irl=` hand-off and `/ar/view` renders its "Bring it to life" control; a bad `src` returns a
       designed 400 page ("Provide a valid https URL to a .glb model.").
-- [x] Custom-GPT Actions lane re-verified live 2026-09-02: `POST /api/3d/studio` returned the documented
-      pending shape in 15s, `GET ?job=&title=` polled to `done` with a real 2,922,332-byte GLB, and both
-      responses validate against the served OpenAPI's own response schemas.
+- [x] Custom-GPT Actions lane re-verified live 2026-09-09: `POST /api/3d/studio` returned the documented
+      pending shape (`job`, `poll`, `watchUrl`, `previewImageUrl`, `tier`, `format`), `GET ?job=&title=`
+      polled to `done` with a real GLB, and both responses validate against the served OpenAPI's own
+      response schemas. Note the honest latency for a reviewer demo: both verification generations took
+      about 12.5 minutes end to end on the self-hosted lane, well past the lane's own estimate, which is
+      exactly why the pending ETA fix in §0 matters on this surface.
 - [x] Compliance audit: 7/7 policy items PASS (§2), with the review-surface separation documented (§2.1a).
-- [x] Listing metadata drafted (§1): tool list is the live 11-tool surface (re-pulled 2026-09-02);
+- [x] Listing metadata drafted (§1): tool list is the live 11-tool surface (re-pulled 2026-09-09);
       `forge_free` tier note corrected to the honest standard default (2026-07-18).
 - [x] MCP connectivity documented (§3).
 - [x] Reviewer guide written (§5).
+- [x] Connector output carries **zero** crypto or payment surface: `initialize`, `tools/list`,
+      `resources/list`, a real `forge_free` call, `check_job`, and the widget resource body were each
+      scanned live on 2026-09-09 with the same forbidden-token regex `tests/mcp-studio.test.js` uses.
+      All clean, and none of them leaks an internal id (`creation_id`, backend name, worker host).
+- [ ] **Deploy the tree** so production matches this package: the ETA fix, the widget CORS routing, the
+      failover-diagnosis fix and the 14 em-dash corrections are all in the tree and unshipped. `[HUMAN]`
 - [ ] **Final submit in the portal.** `[HUMAN]`
