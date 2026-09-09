@@ -245,7 +245,7 @@ body {
 	color: var(--ink-bright, #fff); background: var(--surface-2, rgba(255,255,255,.05));
 	border: 1px solid var(--stroke-strong, rgba(255,255,255,.16)); border-radius: var(--radius-pill, 999px);
 	min-height: 30px; padding: 6px 14px; flex: 0 0 auto;
-	transition: background var(--duration-fast, 140ms) var(--ease-standard, ease), border-color var(--duration-fast, 140ms) var(--ease-standard, ease); }
+	transition: background var(--duration-fast) var(--ease-standard), border-color var(--duration-fast) var(--ease-standard); }
 .px-retry:hover { background: var(--surface-3, rgba(255,255,255,.09)); border-color: var(--ink-bright, #fff); }
 .px-retry:focus-visible { outline: 2px solid var(--ink-bright, #fff); outline-offset: 2px; }
 .px-retry[disabled] { opacity: .55; cursor: progress; }

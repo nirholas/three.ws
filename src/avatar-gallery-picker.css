@@ -455,7 +455,7 @@
 	border-radius: 8px;
 	padding: 7px 16px;
 	cursor: pointer;
-	transition: background 140ms ease, border-color 140ms ease;
+	transition: background var(--duration-fast) var(--ease-standard), border-color var(--duration-fast) var(--ease-standard);
 }
 .agp-error-retry:hover {
 	background: rgba(255, 255, 255, 0.12);
