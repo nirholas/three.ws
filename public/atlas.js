@@ -45,7 +45,23 @@ import { rankPages, rankIntents, highlight } from './atlas/score.js';
 	if (document.documentElement.hasAttribute('data-no-atlas')) return;
 	if (document.querySelector('meta[name="atlas"][content="off"]')) return;
 
-	var INDEX_URL = '/atlas-index.json';
+	// The page index travels with the code, not with the page. atlas.js is served
+	// cross-origin onto pages we do not host (the publish-once partnership page
+	// IBM hosts on its own domain reads it from three.ws), and a root-relative
+	// '/atlas-index.json' there asks the PUBLISHER'S server for a file only
+	// three.ws has, so the palette opened empty and logged a 404 on every load.
+	// Deriving the base from import.meta.url keeps the two together. On three.ws
+	// itself the origin matches and the URL is byte-identical to what it always
+	// was. src/i18n.js resolves its catalogs the same way, for the same reason.
+	var ASSET_ORIGIN = (function () {
+		try {
+			var origin = new URL(import.meta.url).origin;
+			return origin !== location.origin ? origin : '';
+		} catch (_) {
+			return '';
+		}
+	})();
+	var INDEX_URL = ASSET_ORIGIN + '/atlas-index.json';
 	var RECENT_KEY = 'tws:atlas:recent';
 	var HINT_KEY = 'tws:atlas:hinted';
 	var RECENT_MAX = 6;

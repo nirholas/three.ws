@@ -248,6 +248,22 @@
 			"continue": true
 		},
 		{
+			"src": "/atlas-index\\.json",
+			"headers": {
+				"access-control-allow-origin": "*",
+				"cross-origin-resource-policy": "cross-origin"
+			},
+			"continue": true
+		},
+		{
+			"src": "/atlas/(.+)\\.js",
+			"headers": {
+				"access-control-allow-origin": "*",
+				"cross-origin-resource-policy": "cross-origin"
+			},
+			"continue": true
+		},
+		{
 			"src": "/ios-bridge\\.[0-9a-f]+\\.js",
 			"headers": {
 				"access-control-allow-origin": "*",

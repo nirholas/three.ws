@@ -85,6 +85,19 @@ const MOBILE_ERGONOMICS_EXCLUDED = new Set([
 	'footer.html',
 ]);
 
+// Directories under dist/ that are copied VERBATIM from pages/ and must not be
+// rewritten by the post-build sweep below. dist/ibm/ holds the publish-once
+// partner artifacts: they are uploaded to a host we do not control, so a
+// root-relative URL in them resolves against the PUBLISHER'S domain, not ours.
+// build-ibm-shell.mjs refuses to bake one for exactly that reason, and the
+// sweep ran after that guard and injected `<link href="/mobile.css">` into all
+// three anyway, so the hosted copy 404ed on a stylesheet only three.ws has
+// (measured by `npm run audit:ibm-hosted` on 2026-09-09). Their CSP is also
+// `script-src 'self' three.ws`, and their whole contract is to stay
+// byte-for-byte identical wherever they are served, which is why the copy
+// plugin skips Rollup and the transformIndexHtml chain to begin with.
+const VERBATIM_DIST_DIRS = new Set(['ibm']);
+
 // Without viewport-fit=cover every env(safe-area-inset-*) resolves to 0, so
 // the safe-area padding in mobile.css is dead code on an iPhone.
 function withViewportFitCover(html) {
@@ -2832,6 +2845,7 @@ const appConfig = {
 								continue;
 							}
 							if (stat.isDirectory()) {
+								if (VERBATIM_DIST_DIRS.has(entry) && dir === distDir) continue;
 								walk(full);
 								continue;
 							}

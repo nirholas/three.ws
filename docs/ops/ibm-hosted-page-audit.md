@@ -45,6 +45,34 @@ Runtime `i18n.js` had the same shape: it fetched `/locales/<code>.json` and
 catalogs travel with the code. On three.ws itself that resolves to `''` and the
 URLs are byte-identical to what they always were.
 
+`public/atlas.js` had it too, and it was found the same way on 2026-09-09: the
+command palette fetched `/atlas-index.json` root-relative, so on the hosted copy
+it asked IBM's server for the site index and logged a 404 on every load. It now
+derives its origin from `import.meta.url` exactly as `i18n.js` does, and
+`/atlas-index.json` carries the same CORS grant as `/locales/*.json`.
+
+**3. A CORS grant on an entry module but not on what it imports.**
+Also 2026-09-09. `/atlas.js` had the grant; `./atlas/score.js`, the one module it
+imports, did not. A module script's dependencies are fetched under CORS too, so a
+blocked import fails the whole graph and the grant on the entry point buys
+nothing: the palette never mounted on the hosted copy even though `atlas.js`
+itself answered with `access-control-allow-origin: *`. When you grant CORS to a
+module, walk its import graph and grant every file in it.
+
+**4. A post-build sweep rewriting a file that ships verbatim.**
+`pages/ibm/` is copied to `dist/ibm/` byte-for-byte on purpose: these are
+publish-once artifacts under a strict `script-src 'self' three.ws` CSP, and the
+copy plugin skips Rollup and the whole `transformIndexHtml` chain to keep them
+that way. The `mobile-ergonomics` plugin's `closeBundle` pass walks every HTML
+file in `dist/` rather than only Vite's inputs, so it reached all three IBM
+artifacts *after* `build-ibm-shell.mjs`'s root-relative guard had already passed
+them, and injected `<link rel="stylesheet" href="/mobile.css">` into each. On
+three.ws that is correct and invisible; on IBM's domain it is a 404 for a
+stylesheet only we have. `VERBATIM_DIST_DIRS` in `vite.config.js` now keeps that
+sweep out of `dist/ibm/`. Any future post-build pass over `dist/` owes these
+files the same exemption, and the guard in the builder cannot catch it, because
+by then the builder has already run.
+
 ## Running it
 
 ```bash
