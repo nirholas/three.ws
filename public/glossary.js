@@ -335,8 +335,10 @@
 	// ── Text-node auto-scanner ─────────────────────────────────────────────────
 	// Walks content areas, finds first occurrence of each glossary term, and
 	// wraps it in a <span class="tws-tt" data-term="…" tabindex="0"> so the
-	// tooltip attaches. Skips interactive/code elements, existing wrappers, and
-	// [data-term] anchors already handled by C02.
+	// tooltip attaches. Skips interactive/code elements, existing wrappers,
+	// [data-term] anchors already handled by C02, and any subtree a page marked
+	// [data-no-glossary] (raw on-chain payloads, truncated labels: text where a
+	// dotted underline is noise and burns the term's one first-occurrence slot).
 
 	var SKIP_TAGS = { INPUT:1, TEXTAREA:1, SELECT:1, CODE:1, PRE:1, A:1, BUTTON:1, SCRIPT:1, STYLE:1 };
 	var _wrapped = Object.create(null); // track first-occurrence per term key
@@ -367,7 +369,7 @@
 		// first-occurrence slot for that term on decorative text, so the real
 		// occurrence further down the page silently never gets its tooltip.
 		if (par.closest) {
-			if (par.closest('code,pre,a,button,input,textarea,select,.tws-tt,[data-term]')) return;
+			if (par.closest('code,pre,a,button,input,textarea,select,.tws-tt,[data-term],[data-no-glossary]')) return;
 			if (par.closest('[aria-hidden="true"],[hidden],[inert]')) return;
 		}
 
@@ -403,6 +405,7 @@
 	function scanEl(el) {
 		if (!el) return;
 		if (SKIP_TAGS[el.tagName]) return;
+		if (el.hasAttribute && el.hasAttribute('data-no-glossary')) return;
 		// Snapshot children before mutation
 		var children = Array.prototype.slice.call(el.childNodes);
 		for (var i = 0; i < children.length; i++) {
