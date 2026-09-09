@@ -53,7 +53,7 @@ import { AnimationClip, Quaternion } from 'three';
 
 import { canonicalizeBoneName } from '../../src/glb-canonicalize.js';
 import { clipHipBaselineY, retargetClip } from '../../src/animation-retarget.js';
-import { flattenRootDrift } from './motion-seed.js';
+import { flattenRootDrift, needsRebase, rebaseToCanonicalRest } from './motion-seed.js';
 
 const GLB_MAGIC = 0x46546c67; // 'glTF'
 const CHUNK_JSON = 0x4e4f534a; // 'JSON'
@@ -266,7 +266,12 @@ export function bakeMotionGlb({ rig, clip: input, name, flatten = true, retarget
 	if (!input || !Array.isArray(input.tracks) || input.tracks.length === 0) {
 		throw new Error('clip has no tracks');
 	}
-	const drift = flatten ? flattenRootDrift(input) : { clip: input, removed: 0 };
+	// Clips published before the rest-basis fix carry the generator's identity
+	// basis and would bake with the legs folded over the body, so they are
+	// converted here. A clip stamped with the library basis is left alone, which
+	// keeps this idempotent once the repair pass has republished the set.
+	const rebased = needsRebase(input) ? rebaseToCanonicalRest(input).clip : input;
+	const drift = flatten ? flattenRootDrift(rebased) : { clip: rebased, removed: 0 };
 	const { json, bin } = readGlbChunks(rig);
 	const nodes = Array.isArray(json.nodes) ? json.nodes : [];
 	if (nodes.length === 0) throw new Error('rig has no nodes');
