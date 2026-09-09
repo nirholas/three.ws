@@ -220,9 +220,16 @@ function mountModel(newRoot, label, opts = {}) {
 					setNote(el['lineage-note'], '');
 				})
 				.catch((err) => {
+					// The advice has to match the failure. A rejected URL is the
+					// user's to fix by loading a public one; a store outage is not,
+					// and telling them to retype the URL would send them in circles.
+					const reason = err?.message || String(err);
+					const storeDown = /model store answered/.test(reason);
 					setNote(
 						el['lineage-note'],
-						`AI restyle / Save version need a public model URL — checkpoint failed: ${err?.message || err}. Try "Load URL" with a public .glb instead.`,
+						storeDown
+							? `Could not checkpoint this model: ${reason} AI restyle and Save version need that checkpoint, so they stay unavailable until it recovers.`
+							: `Could not checkpoint this model: ${reason}. AI restyle and Save version need a public model URL, so load one with "Load URL" instead.`,
 						'error',
 					);
 				})
@@ -245,6 +252,31 @@ async function uploadOriginBytes(root) {
 	return uploadGlbBytes(glb);
 }
 
+// Every api/** JSON error is shaped { error, error_description } by
+// api/_lib/http.js's error() helper. Reading a "message" key that is never sent
+// threw the real reason away and left the user with "restyle failed (400)"
+// where the server had actually said "glb_url rejected: scheme not allowed:
+// http:". Read the real field, fall back through the ones a proxy or gateway
+// might send instead, and only then admit to a bare status code.
+function apiReason(data, res) {
+	const reason = data?.error_description || data?.message || data?.error;
+	return reason ? String(reason) : `the server answered ${res.status}`;
+}
+
+// A failed durable-storage call, phrased so the user knows what to do next. A
+// 5xx is the model store being down (a bad storage credential answers exactly
+// this way), never anything the caller typed, so name it and point at the two
+// things that keep working: live editing and Export GLB are wholly in-browser
+// and need no server at all.
+function apiFailure(data, res) {
+	if (res.status >= 500) {
+		return new Error(
+			`the model store answered ${res.status}. Your edits are still live in the viewer, and Export GLB still works.`,
+		);
+	}
+	return new Error(apiReason(data, res));
+}
+
 async function uploadGlbBytes(arrayBufferOrBlob) {
 	const res = await fetch('/api/material-studio?action=upload', {
 		method: 'POST',
@@ -252,7 +284,7 @@ async function uploadGlbBytes(arrayBufferOrBlob) {
 		body: arrayBufferOrBlob,
 	});
 	const data = await res.json().catch(() => ({}));
-	if (!res.ok || !data?.url) throw new Error(data?.message || `upload failed (${res.status})`);
+	if (!res.ok || !data?.url) throw apiFailure(data, res);
 	return data.url;
 }
 
@@ -356,7 +388,7 @@ async function generateAndApplyTexture(instruction) {
 		const msg =
 			res.status === 402
 				? 'texture generation needs payment past the free daily quota — flat PBR restyle still applied'
-				: data?.message || `texture generation failed (${res.status})`;
+				: apiReason(data, res);
 		throw new Error(msg);
 	}
 	const tex = await new THREE.TextureLoader().loadAsync(data.url);
@@ -465,7 +497,7 @@ async function persistVariants() {
 			}),
 		});
 		const data = await res.json().catch(() => ({}));
-		if (!res.ok || !data?.ok) throw new Error(data?.message || `variants failed (${res.status})`);
+		if (!res.ok || !data?.ok) throw apiFailure(data, res);
 
 		state.realLineage = data.lineage;
 		// Leave the active pointer where it was — the variants are new siblings
@@ -513,7 +545,7 @@ async function aiRestyle() {
 			}),
 		});
 		const data = await res.json().catch(() => ({}));
-		if (!res.ok || !data?.ok) throw new Error(data?.message || `restyle failed (${res.status})`);
+		if (!res.ok || !data?.ok) throw apiFailure(data, res);
 
 		applyFactors(data.factors);
 		state.realLineage = data.lineage;
