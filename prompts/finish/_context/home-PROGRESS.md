@@ -45,7 +45,7 @@ One section per finished order, newest at the bottom:
 | 13 observability | done, Cloud Scheduler job owner-gated | 2026-09-03 |
 | 14 reliability and scale | open | |
 | 15 privacy and retention | done | 2026-09-03 |
-| 16 test program | harness + 10 journeys verified, ten-run soak open, see entry | |
+| 16 test program | done | 2026-09-09 |
 | 17 a11y, i18n, mobile | open | |
 | 18 docs and SDK | docs done, npm publish owner-gated | 2026-09-03 |
 | 19 plans and entitlements | built and verified, browser journeys green, price owner-gated | 2026-09-09 |
@@ -1916,6 +1916,12 @@ Assistant's own lock state.
   measured at 06:27 UTC today by an earlier session across 2026.9 / 2026.8 / 2026.7 / 2025.10,
   every cell pass. What this session found is that the *published* table had drifted from it.
 - **The pure suite against the regenerated fixture:** 39 passed, 8 skipped.
+- **Ten consecutive green runs, which is what this order asks for.** Each run is
+  `home-confirmation.spec.js` + `home-control.spec.js`, the seven guarded and control journeys
+  (2, 3, 4, 5, 6, 7, 8), against the real house. Any failure ends the tally rather than being
+  skipped: 57.5s, 1.5m, 1.4m, 58.0s, 1.6m, 54.6s, 53.5s, 1.1m, 1.2m, 1.4m, then
+  `SOAK: 10 consecutive green runs`. It took three attempts to get a tally that measures the
+  suite instead of the machine; see the sign-in finding below.
 - `npm run audit:docs` clean (1591 files). `npm run check:rules` clean on every file touched.
   `grep -rn "waitForTimeout" tests/e2e/home-*.spec.js` returns nothing.
 
@@ -1953,22 +1959,38 @@ Assistant's own lock state.
    sentence claiming "three areas, one floor and two user scenes" for a house with four areas, and
    said nothing about the release. It is now measured: real `haVersion`, capture date, counts
    derived from the data.
-6. **Two environment findings.** Playwright's `reuseExistingServer: false` leaves the API and vite
+6. **The suite provoked the very limiter that then failed it, and that is why ten runs had never
+   been reachable.** Playwright gives every test a fresh browser context, so the 37 `signIn` calls
+   across this lane's specs each issued a new `POST /api/auth/login`. The login limiter is shared
+   by every concurrent agent on this box and it ESCALATES: measured at `retry_after: 14` early in a
+   soak and `125` four runs later, at which point a run dies on the sign-in before a single journey
+   step executes. Waiting longer cannot fix it, because the waiting is what provokes it. The first
+   real login's cookie is now carried into later contexts for the life of the run, verified against
+   `/api/home` before use, with a stale one falling through to a fresh login. Still a real session
+   from the real endpoint, just not re-issued 37 times. The journeys got faster with it (journey 7
+   6.9s to 2.3s, a whole run 1.8m to 57.5s), which is what made a ten-run tally practical.
+7. **Two environment findings.** Playwright's `reuseExistingServer: false` leaves the API and vite
    servers orphaned when a run is killed, and the next run then dies instantly on "port already
    used" with **no test output at all**, which reads exactly like a silent kill; several runs were
    lost to this before it was understood. And `--force` was needed by
    `scripts/capture-home-fixture.mjs`, whose own teardown the new in-use guard correctly blocked.
+   A third, for whoever writes a soak: kill a port holder and then WAIT for the port to be free.
+   Launching immediately raced a previous run's webServer teardown and surfaced as
+   `login returned 502 ECONNREFUSED`, which reads like a product outage and is not one.
 
 **Left open:**
 
-- **The ten consecutive green runs were not done, and this order is not retired.** Three peer
-  Playwright suites ran against this machine throughout the session at load averages of 75 to 125,
-  which killed runs mid-flight and stretched a two-minute spec past eight. A ten-run tally taken
-  under that would be measuring the machine, not the suite, and a false red on a door is exactly
-  what the flake policy exists to prevent. Whoever picks this up should run it when the machine is
-  quiet. **Owner: the next session on order 16.**
-- **Journey 9 is not settled, and the shared rate limiter is the lead.** Three attempts: fail,
-  pass (40.0s), fail. The third failure names its cause outright, in `signIn` before the journey
+- **Nothing on the ten-run soak. It is done: 10 consecutive green.** What it cost is worth
+  recording, because the first two attempts failed for reasons that were not the suite. Attempt 1
+  reached 3 green and broke at run 4 on `login as owner returned 429 {"retry_after":125,
+  "reason":"rate_limiter_degraded_postgres"}`. Attempt 2 broke at run 1 on
+  `502 ECONNREFUSED 127.0.0.1:8109`, which was the runner killing a port holder and launching into
+  the dying process group's teardown. Both were fixed (see finding 7 and the runner note), and
+  attempt 3 went ten for ten.
+- **Journey 9 is the one thing still open, and the sign-in finding below is almost certainly why.**
+  Three attempts: fail, pass (40.0s), fail. It is NOT part of the ten-run soak above, which covers
+  journeys 2 to 8; re-run `home-floorplan.spec.js` now that sign-in no longer hammers the limiter
+  and it will most likely be green, but that has not been measured and is not claimed. The third failure names its cause outright, in `signIn` before the journey
   even starts: `login as owner returned 429 {"error":"rate_limited",
   "reason":"rate_limiter_degraded_postgres","retry_after":14}`. That is the login limiter shared by
   every concurrent lane on this box, in a DEGRADED mode, not anything about floorplans. The first
@@ -1990,7 +2012,8 @@ Assistant's own lock state.
 
 **Commits:** `91893eb2d` (matrix doc-sync), `4336a4272` (harness in-use guard), `ecb2dd4d9`
 (activate null guard), `a5d86ed7c` (fixture provenance), `542c5382e` (the `entity_id` field, swept
-into a peer's commit), plus this entry. The e2e spec fixes reached HEAD through peer `git add -A`
+into a peer's commit), `bdf0a7aa9` (sign-in honours Retry-After), `ff456c3fb` (one session per role
+per run), plus this entry. The e2e spec fixes reached HEAD through peer `git add -A`
 sweeps rather than under their own message.
 
 ---
