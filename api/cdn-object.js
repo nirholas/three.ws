@@ -17,9 +17,12 @@
 // safe to render inline is sent as an attachment, and `sandbox` puts whatever
 // does render into an opaque origin. See `isInlineSafe` below.
 
+import { Readable } from 'node:stream';
+import { pipeline } from 'node:stream/promises';
 import { GetObjectCommand } from '@aws-sdk/client-s3';
 import { cors, error, wrap } from './_lib/http.js';
 import { r2, isStorageInfrastructureError, publicUrlOrNull } from './_lib/r2.js';
+import { fetchUpstream } from './_lib/upstream-fetch.js';
 import { env } from './_lib/env.js';
 
 // Object keys are caller-controlled path input — keep them boring. UUID-based
@@ -165,21 +168,87 @@ export default wrap(async (req, res) => {
 		// The signed read itself is broken: the credentials are rejected, or the
 		// endpoint is unreachable, which says nothing about the object. The same
 		// bytes are readable, unauthenticated, on the bucket's public domain, so
-		// hand the caller there instead of 502ing every avatar, thumbnail and GLB
+		// serve them from there instead of 502ing every avatar, thumbnail and GLB
 		// on the site. On 2026-09-07 a rejected R2 secret took the signed read
 		// down and this route answered `upstream_error` for every object it
 		// serves; the public domain was serving those same keys with a 200
-		// throughout. Redirect, never cache: 302 + no-store, so the moment the
-		// credential is healthy again traffic returns to the signed path (which
-		// exists to dodge the public domain's rate limit) without a stale hop
-		// pinned in anyone's cache.
+		// throughout.
+		//
+		// STREAM the bytes, never redirect to them. This rung shipped as a 302 and
+		// that quietly broke a second contract while fixing the first: r2.dev sends
+		// no access-control-allow-origin at all, and a browser re-runs the CORS
+		// check on a redirect's target, so the wildcard grant set at the top of
+		// this handler is discarded the moment the hop is followed. Measured on
+		// 2026-09-09 from a foreign origin, every /cdn read threw "Failed to fetch"
+		// while the same URL curled 200, which is how the model-viewer stages on
+		// /spatial-mcp went dark. Streaming keeps the response on three.ws, so the
+		// CORS and CORP headers, the server-chosen content type and the attachment
+		// rule below all survive the degraded path unchanged. api/avatars/[id]/
+		// [action].js takes the same route for the same reason.
+		//
+		// It also stops the failover defeating its own purpose: a redirect points
+		// every browser straight at the rate-limited public domain this route was
+		// built to dodge, whereas a proxied read is absorbed by our own edge cache.
+		// That cache stays short (60s) rather than no-store, so a burst of gallery
+		// thumbnails costs r2.dev one fetch instead of one per viewer, and traffic
+		// still returns to the signed path within a minute of the credential being
+		// healthy again.
 		const fallback = isStorageInfrastructureError(err) ? publicUrlOrNull(key) : null;
 		if (fallback) {
-			console.error('[cdn-object] signed read failed, serving public bucket domain:', key, err?.message);
-			res.statusCode = 302;
-			res.setHeader('location', fallback);
-			res.setHeader('cache-control', 'no-store');
-			return res.end();
+			console.error('[cdn-object] signed read failed, streaming public bucket domain:', key, err?.message);
+			try {
+				const upstream = await fetchUpstream(
+					fallback,
+					{ headers: range ? { range } : {} },
+					{
+						name: 'r2:public-object',
+						timeoutMs: 20_000,
+						attempts: 2,
+						// A 404 on the public domain is the object genuinely being
+						// absent, not an outage: the signed error never got far
+						// enough to say so. Let it through and answer 404, so a
+						// caller that treats a missing thumbnail as an empty state
+						// is not handed a 502 it will retry forever.
+						okWhen: (r) => r.ok || r.status === 404,
+					},
+				);
+				if (upstream.status === 404) {
+					upstream.body?.cancel?.();
+					return error(res, 404, 'not_found', 'object not found');
+				}
+				const type = contentTypeFor(key, upstream.headers.get('content-type'));
+				res.statusCode = upstream.status === 206 ? 206 : 200;
+				res.setHeader('content-type', type);
+				res.setHeader('content-security-policy', "default-src 'none'; sandbox");
+				res.setHeader('cross-origin-resource-policy', 'cross-origin');
+				if (!isInlineSafe(type)) res.setHeader('content-disposition', 'attachment');
+				res.setHeader('accept-ranges', 'bytes');
+				res.setHeader('cache-control', 'public, max-age=60, s-maxage=60');
+				const len = upstream.headers.get('content-length');
+				if (len) res.setHeader('content-length', len);
+				const contentRange = upstream.headers.get('content-range');
+				if (contentRange) res.setHeader('content-range', contentRange);
+				const etag = upstream.headers.get('etag');
+				if (etag) res.setHeader('etag', etag);
+				if (req.method === 'HEAD') {
+					upstream.body?.cancel?.();
+					return res.end();
+				}
+				await pipeline(Readable.fromWeb(upstream.body), res);
+				return;
+			} catch (fallbackErr) {
+				console.error('[cdn-object] public bucket domain failed too:', key, fallbackErr?.message);
+				if (res.headersSent) return res.destroy(fallbackErr);
+				// Nothing is on the wire yet, so the 502 below still gets to
+				// answer, but only once the object's own length and range come
+				// back off: error() refuses to touch a committed response and
+				// never clears headers, so a leftover content-length would pin the
+				// JSON body to the object's byte count and hang the client waiting
+				// for megabytes that are never coming.
+				res.removeHeader('content-length');
+				res.removeHeader('content-range');
+				res.removeHeader('etag');
+			}
 		}
 		console.error('[cdn-object] r2 fetch failed:', key, err?.message);
 		return error(res, 502, 'upstream_error', 'failed to fetch object');
