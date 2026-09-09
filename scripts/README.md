@@ -123,12 +123,26 @@ node scripts/set-r2-cors.mjs --dry-run  # print the policy without pushing
 node scripts/set-r2-cors.mjs            # apply (admin token only)
 ```
 
-Start with `--probe`. It measures what the bucket actually enforces using only
-the object-scoped keys every environment already has: one HEAD per origin
-against the public host for the read rule, one PUT preflight against the S3
-endpoint for the write rule. It prints a row per origin, marks any row where
-the measurement disagrees with the policy in the script, and exits `1` on
-drift. `--get` and the bare apply both call Get/PutBucketCors, which an
+Start with `--probe`. It measures what the bucket actually enforces using no
+credentials at all: one HEAD per origin against the public host for the read
+rule, one PUT preflight against the S3 endpoint for the write rule. It prints a
+row per origin, marks any row where the measurement disagrees with the policy in
+the script, and exits `1` on drift.
+
+It finds both hosts by itself: the public host from a live listing endpoint, the
+upload host from an auth-free presign route. When object storage is unhealthy
+every presign route answers `503`, so the write host cannot be discovered that
+way. The probe still measures and reports the read rule in that case, showing
+`skip` in the write column rather than exiting with nothing measured. To get the
+write column back, pass the two non-secret values directly:
+
+```sh
+node scripts/set-r2-cors.mjs --probe \
+  --endpoint=https://<account>.r2.cloudflarestorage.com --bucket=<name>
+```
+
+Read them off the running service with
+`node scripts/read-service-env.mjs '^S3_ENDPOINT$' --raw`. `--get` and the bare apply both call Get/PutBucketCors, which an
 "Object Read & Write" token cannot do; they print the exact token to mint
 instead of a stack trace.
 
