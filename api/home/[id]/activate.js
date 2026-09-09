@@ -169,7 +169,18 @@ async function syncAllowList(bridge, homeId) {
 	for (const id of live) allowList.add(id);
 }
 
+/**
+ * The match, as the client sees it. Null when the phrase found nothing.
+ *
+ * The null case is the documented contract at the top of this file (a 200 with
+ * `match: null`, never a 404), and it used to be a 500: `bridge.activate`
+ * answers `{ ran: false, match: null }` for a phrase no scene claims, and
+ * reading `.entityId` off that threw a TypeError out of the handler. So the
+ * ordinary answer "your house has no scene by that name" was reported to the
+ * caller as the platform falling over.
+ */
 function macroShape(match) {
+	if (!match) return null;
 	return {
 		entity_id: match.entityId,
 		name: match.name,
