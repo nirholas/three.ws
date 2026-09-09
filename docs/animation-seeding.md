@@ -22,19 +22,95 @@ that is easy to get catastrophically wrong.
 Generated clips are named `gen-<prompt id>-<hash>`, so they are distinguishable from
 the `mx-` Mixamo import everywhere: in the manifest, the gallery, and any report.
 
-## Format: nothing to convert
+## Format: the names match, the basis did not
 
-The worker already emits clips on the canonical skeleton, and a generated clip's
-track names are a strict **subset** of the library's: the 23 body bones, with no
-finger tracks and no foreign bone names. An unanimated finger holds bind pose, which
-is correct rather than a defect. So publishing is a rename plus a `userData`
-provenance record, not a format conversion.
+A generated clip's track names are a strict **subset** of the library's: the 23
+body bones, with no finger tracks and no foreign bone names. An unanimated finger
+holds bind pose, which is correct rather than a defect.
+
+Matching names are not a matching format, and this doc said they were until
+2026-09-09. A library clip's per-bone quaternion is a local rotation **relative
+to the `cz` rig's rest pose**, which is what `forwardKinematicsFrame` composes
+against and what `src/animation-retarget.js` builds its bind correction from. The
+text2motion lane does not produce that basis: its rotations come out of a Kabsch
+fit against the HumanML3D skeleton's own raw offsets
+(`workers/model-text2motion/mdm_sampler.py`), where a joint at rest yields the
+IDENTITY quaternion. The hook meant to reconcile the two, `smpl_to_clip.py`'s
+`rest_offsets`, was never given a value.
+
+The gap is a half turn on the legs. An authored clip carries about 176 degrees on
+each upper leg, because `cz` rests with the leg bones pointing up and the clip has
+to turn them down; a generated clip carries about 29. Playing one composes the
+missing rotation into the legs, and **all 133 clips published before 2026-09-09
+play with the feet folded up over the body**: forward kinematics puts the feet at
+1.71 m and the head at 1.45 m, against 0.15 m and 1.68 m for an authored clip.
+
+`rebaseToCanonicalRest(clip)` converts a clip out of the generator's basis and
+into the library's. It is `bindCorrections` with the source rest set to identity:
+
+    L = Rt * Wt^-1 * Ws * Rs^-1  ->  Rt * Wt^-1     (Ws = Rs = identity)
+    R = Ws^-1 * Wt               ->  Wt
+    q <- L * q * R
+
+Measured over the whole published set, head-above-feet goes from -0.26 m to
++1.38 m and 127 of 133 clear a 0.6 m upright bar. The six that do not are a
+pushup, a squat, a swim stroke, a crouch, a sneak and a meditation, all correctly
+low-posture. Converted clips are stamped `userData.basis = "canonical-rest-v1"`
+(`CLIP_BASIS`), so `needsRebase()` can tell a converted clip from a legacy one and
+nothing is ever rebased twice.
+
+## Root drift: a constant the lane welds onto every clip
+
+The lane's root translation channel carries no prompt signal. Fitting a straight
+line to the horizontal root track of all 133 published clips gives 0.2577 m/s
+(sd 0.0248) whatever was asked for: emotes fit that line to a residual of
+0.0002 m, and idles (0.2502 m/s) drift FASTER than locomotion (0.2841 m/s).
+
+It is a denormalization artifact and it is upstream of us. MDM samples in
+HumanML3D's normalized feature space and the worker denormalizes with the dataset
+mean and std before `recover_from_ric` integrates the root velocity. Feature 2 is
+the root's forward velocity and most of HumanML3D walks, so that feature's dataset
+mean is a brisk walk: when the model has no strong locomotion signal it emits a
+normalized value near zero, and denormalizing "near zero" yields the dataset's
+average walking speed, which integration turns into a straight ramp.
+
+`flattenRootDrift(clip)` fits the horizontal root track by least squares and
+subtracts the fitted line, keeping the residual, which is where the real signal
+lives (locomotion residual 0.0051 m against an emote's 0.0002 m), and never
+touching vertical travel. The library's convention is in-place clips: they play on
+an avatar standing where the page put it, and a game engine drives locomotion from
+its own character controller.
+
+**Run both before the gate, in this order: rebase, flatten, then close the seam.**
+The order is load-bearing. The foot-slide rule divides planted-foot slide by the
+stride the clip covers, and a fabricated one-metre stride makes that rule vacuous;
+the seam search hunts for the frame whose pose repeats frame 0, which a ramp
+guarantees no frame ever does.
 
 ## The gate
 
 Run `gateMotionClip(clip, { expectedDuration })`. It returns
 `{ ok, reasons[], metrics }`, and every threshold in `MOTION_GATE` was derived by
 measuring a 60-clip sample of the authored Mixamo library, not chosen by taste.
+
+### Check the rest basis, because every other rule cannot
+
+`wrong_rest_basis` is the rule whose absence let an entire inverted library
+through. Every other threshold here measures a clip **against itself**, so a clip
+expressed in the wrong rest basis is perfectly self-consistent and passes all of
+them: continuity, travel, quaternion norms, even foot contact.
+
+It takes two signals together, because neither is safe alone. `maxUprightGap`
+(head clearance over the higher foot, at the clip's most upright sampled frame)
+under `MIN_UPRIGHT_GAP` is suspicious, but a pushup or a swim stroke is prone by
+definition. `legBasisDegrees` (mean angle the upper legs sit from identity) under
+`MIN_LEG_BASIS_DEGREES` is suspicious, but one published clip reached 148 degrees.
+A clip is rejected only when both agree, which leaves real margin: clips in the
+wrong basis peak at 0.435 m of clearance with a median leg angle of 23.6 degrees,
+while the same clips rebased clear 0.939 m at p05 and never fall below 74.9
+degrees. It flags 111 of the 133 published clips. The deterministic fix is
+`rebaseToCanonicalRest` plus the `CLIP_BASIS` stamp; this rule is the net under
+it, not the mechanism.
 
 ### Judge positions, not rotations
 
@@ -151,6 +227,33 @@ The run is **lane-asserted**. `/api/forge-motion` and the provider both return a
 id that names the worker the job was dispatched to, and the runner decodes it and
 aborts the entire batch unless the host is our own `model-text2motion` Cloud Run
 service. Bulk generation must never fall through to a paid third party.
+
+## Repairing the published library
+
+The 133 clips published before 2026-09-09 carry both defects. Repairing them
+costs no GPU time, because the motion was already generated and was only ever
+written down wrong:
+
+    node scripts/gcp/seed-motion.mjs --repair            # re-derive, re-gate, stage
+    node scripts/gcp/seed-motion.mjs --repair --publish  # and rewrite the library
+
+`--repair` reads every generated clip live in the library, rebases it, flattens
+the drift, closes the seam on loop prompts, and re-gates the result. Survivors are
+staged exactly as a fresh generation would leave them, so the following
+`--publish` rewrites the clips and the manifest together and a clip that no longer
+passes simply stops being served. Publishing needs the R2 credentials that live on
+the `three-ws-api` Cloud Run service (`S3_ENDPOINT`, `S3_ACCESS_KEY_ID`,
+`S3_SECRET_ACCESS_KEY`, `S3_BUCKET`, `S3_PUBLIC_DOMAIN`).
+
+**Measured 2026-09-09: 39 of 133 survive, 29%.** The 94 drops are 91 for foot
+sliding and 7 for frame discontinuity. That number is the first honest accept rate
+the generated library has had, and it is far below the "10 of 10" recorded on
+2026-09-02, which was measured against drift-inflated clips: the fabricated
+one-metre stride made the foot-slide rule vacuous, so the check that now rejects
+91 clips could not fire. The authored Mixamo control run through the same gate
+still passes 48 of 60 (80%), and its rejects are frozen, too-short and
+out-of-duration assets rather than basis or sliding faults, so the gate is
+calibrated and it is the lane's output that is failing it.
 
 ## Pricing and the rotating free subset
 
