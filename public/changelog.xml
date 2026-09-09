@@ -7,6 +7,38 @@
 		<description>What's new on three.ws: features, improvements, and releases, newest first.</description>
 		<language>en</language>
 		<item>
+			<title>Docs · Fade Radar</title>
+			<link>https://three.ws/docs/fade-radar</link>
+			<guid isPermaLink="false">2026-09-09:Docs · Fade Radar</guid>
+			<pubDate>Wed, 09 Sep 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>How the Fade Radar scores a coin's buy side: what makes a wallet a reverse indicator, the 0 to 100 fade score, the verdict bands, and the out-of-sample measurement behind them.</description>
+		</item>
+		<item>
+			<title>Fade Radar: the wallets that are never right</title>
+			<link>https://three.ws/fade</link>
+			<guid isPermaLink="false">2026-09-09:Fade Radar: the wallets that are never right</guid>
+			<pubDate>Wed, 09 Sep 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>The inverse of the Smart Money Radar. Every pump.fun coin ranked by how much of its buy side comes from wallets with a judged on-chain record and not one winner in it, with the measured, out-of-sample odds behind each verdict.</description>
+		</item>
+		<item>
+			<title>A link that opens your house in 3D now really opens it in 3D</title>
+			<link>https://three.ws/docs/home-scene</link>
+			<guid isPermaLink="false">2026-09-09:A link that opens your house in 3D now really opens it in 3D</guid>
+			<pubDate>Wed, 09 Sep 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>The live home page remembers whether you last looked at your house in 3D or as a room list, which is what you want when you open it yourself. It was also overruling links that asked for one view by name: once you had used the 2D view even once on a device, every /smart-home/&lt;id&gt;?view=3d link on that device quietly opened flat again. That matters for the two cases the parameter exists for, a link you share with someone in the house and the address a kitchen or wall display is pinned to. A view asked for in the link now wins, for 3D, 2D and the floorplan alike, and following such a link no longer overwrites the preference that device chose for itself.</description>
+		</item>
+		<item>
+			<title>An app key can no longer say yes to unlocking your door</title>
+			<link>https://three.ws/smart-home</link>
+			<guid isPermaLink="false">2026-09-09:An app key can no longer say yes to unlocking your door</guid>
+			<pubDate>Wed, 09 Sep 2026 12:00:00 GMT</pubDate>
+			<category>security</category>
+			<description>A person saying yes is the one thing that stands between an agent and your front door, and we found a way around it. If you had ever issued an API key or connected an app to your three.ws account, that key could send an unlock request with the &quot;the owner already approved this&quot; flag set, and the lock opened, with nobody asked and nothing to click. We reproduced it against a real house and a real deadbolt before fixing it. Two things changed. Only a signed-in browser session can say yes now: a key or a connected app can ask to unlock, open or disarm, and is always answered with &quot;a person has to approve this&quot;, exactly as the agent in your chat window already was. And the home permissions you approve when you connect an app are now actually enforced on every home request, so an app you gave read-only access to, or one you never gave home access at all, is refused instead of let through. Nothing legitimate changed: your agent still asks, you still approve, the door still opens.</description>
+		</item>
+		<item>
 			<title>Arm your agent stops telling signed-out visitors to create an agent, and shows them the live conviction stream instead</title>
 			<link>https://three.ws/oracle/arm</link>
 			<guid isPermaLink="false">2026-09-09:Arm your agent stops telling signed-out visitors to create an agent, and shows them the live conviction stream instead</guid>
@@ -23,6 +55,14 @@
 			<description>Assets served from /cdn (avatars, thumbnails, generated models) are read from our object store with a signed request, and when that request is rejected the route falls back to the store's public address so the bytes still arrive. That fallback was a redirect, and a redirect throws away the cross-origin permission the route grants: browsers re-check permission at the redirect's destination, and the public address grants none. Measured from an outside site, every one of those reads failed outright, which took down model previews on pages that load art through the proxy and silently broke third-party embeds of three.ws avatars. The bytes are now served through three.ws itself rather than pointed at, so the permission, the file type and the download rules all survive the fallback, partial reads for video and audio keep working, and a file that genuinely is not there says so instead of reporting a server fault the page retries forever. It also keeps the fallback off the rate-limited public address, which is the whole reason the proxy exists.</description>
 		</item>
 		<item>
+			<title>Connecting a home: the page now says which state it is in, out loud</title>
+			<link>https://three.ws/smart-home</link>
+			<guid isPermaLink="false">2026-09-09:Connecting a home: the page now says which state it is in, out loud</guid>
+			<pubDate>Wed, 09 Sep 2026 12:00:00 GMT</pubDate>
+			<category>improvement</category>
+			<description>Two moments on /smart-home were doing the right thing silently. Typing an address that can never work (a 192.168 number, a .local name) has always put the reason under the field straight away, before anything is sent, but the message was carried by colour alone and a screen reader never read it out; it is now announced the moment it appears, and marked in a way that does not depend on seeing red. And a house that has stopped answering, is refusing the stored token, or has simply gone quiet is now labelled as such by the page itself rather than only in the sentence on its card. Nothing about what you see moves: the last known summary of your house stays exactly where it was, with how long ago it last answered, because a home that went quiet should never look like a home that was deleted.</description>
+		</item>
+		<item>
 			<title>Endpoint Shopper fits a phone, and says something useful when a run finds nothing to buy</title>
 			<link>https://three.ws/shopper</link>
 			<guid isPermaLink="false">2026-09-09:Endpoint Shopper fits a phone, and says something useful when a run finds nothing to buy</guid>
@@ -37,6 +77,22 @@
 			<pubDate>Wed, 09 Sep 2026 12:00:00 GMT</pubDate>
 			<category>fix</category>
 			<description>A full audit of /portfolio, where you paste any Solana or Ethereum address and get a live portfolio. The Ethereum half had gone dark: the single provider behind it ran out of monthly capacity, so every 0x address answered &quot;Data source unavailable&quot; with nothing behind it. Ethereum now has the same keyless floor Solana has always had. The ETH balance comes from the public Ethereum nodes the rest of the platform already uses, the token list with its prices and icons comes from a public block explorer, and the 24h move comes from the same market source the Solana side uses, with the coverage it achieved stated on the card. The Data panel names whichever lane actually answered, so you can see whether you are reading the paid provider or the free one. Token logos were another visible break: the page pointed your browser straight at an IPFS gateway, which the browser refuses on cross-origin grounds, so every holding fell back to a three-letter monogram and your address bar handed your IP to the gateway on every load. Logos now come through three.ws, sized for the row. Keyboard users could tab onto a slice of the allocation donut and get nothing: the tooltip was wired to an event handler property that browsers do not actually support, so it never fired once; the slice now names its asset and share, and Escape dismisses it. When a lookup fails, the page now shows the reason the server actually sent instead of a generic sentence, and clicking Retry after a rejected address no longer silently reloads the wallet you looked at before it. Underneath, the fallback that names Solana tokens when the primary metadata source is out of quota had never run at all, because of a missing import; token symbols and names come back on that path.</description>
+		</item>
+		<item>
+			<title>Fade Radar: the wallets that have never once been right, and the coins they are crowding into</title>
+			<link>https://three.ws/fade</link>
+			<guid isPermaLink="false">2026-09-09:Fade Radar: the wallets that have never once been right, and the coins they are crowding into</guid>
+			<pubDate>Wed, 09 Sep 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>The Smart Money Radar tells you which proven winners are buying a coin. Fade Radar is the other half of that question, and on pump.fun it turns out to be the sharper one: how much of a coin's buy side is money that has never been right. A wallet joins the reverse-indicator board only after five coins it bought have a known outcome and not one of them won, which is a bar a surprising number of addresses clear. The new page ranks every launch from the last few hours by how much of its observed buy side belongs to those wallets, by wallet count and by SOL, and carries a second board of the wallets themselves with their full record. The number above the board is the part we care most about: it is measured, not asserted. We rebuild the reverse-indicator group using only coins whose outcome was known before the coins it is graded on existed, then check what actually happened. Coins where a quarter or more of the buyers were reverse indicators went on to win 1.8 percent of the time, against 22.1 percent for coins with none, across 26,626 labelled coins. Nothing here is a short and nothing signs anything: on a bonding curve the only tradeable form of a fade is not buying, so every action on the page is a link out to the coin, its intel, or a wallet's track record. Wallet links also now open directly on the Smart Money Radar, so an address cited anywhere on the platform lands on its record instead of a board you have to scan by eye.</description>
+		</item>
+		<item>
+			<title>Homes connected through the relay now follow the house when you rearrange it</title>
+			<link>https://three.ws/smart-home</link>
+			<guid isPermaLink="false">2026-09-09:Homes connected through the relay now follow the house when you rearrange it</guid>
+			<pubDate>Wed, 09 Sep 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>If your Home Assistant is only reachable inside your house, three.ws reaches it through the three.ws integration you install there, which dials out to us. Those homes were building their room list once, when the connection opened, and then quietly ignoring changes: assign a lamp to the kitchen, rename a floor, add a device, and the 3D house kept showing the old arrangement until the connection happened to be rebuilt. Homes connected by a direct address never had this problem, and the split was in the relay, which was not carrying the four small notices Home Assistant sends when its rooms, floors, devices or entities change. It carries them now, so both kinds of connection track the house the same way and updates land in seconds. The notices only say that something changed; the relay already read the full room and floor lists, so nothing new about your house is exposed by this.</description>
 		</item>
 		<item>
 			<title>Oracle: a failed request now says so, instead of claiming no coins have been scored</title>
@@ -175,6 +231,14 @@
 			<description>A full audit of /pose, where you pose an avatar and keyframe an animation. The page had no top-level heading at all: assistive technology jumped straight into &quot;Selection&quot; with nothing saying which studio you were in, so &quot;Animation Studio&quot; in the breadcrumb is now the page's real heading. The status pill above the canvas is the studio's only error surface (it is what tells you an import failed, an avatar could not be loaded, or that you need a keyframe before saving) and it never announced anything; it is now a live region, so those messages are spoken as they appear. On a 320px screen the empty-timeline hint (&quot;Pose the figure, then press K&quot;) wrapped across the ruler's second markings and both became unreadable; the ruler now stays out of the way until you have keyframes to measure, and returns the moment you add one. Loading an avatar could also fail into a dead end: the picker said &quot;Failed to load: Failed to fetch&quot; with no way forward, and now explains whether the request reached three.ws and offers a Try again button. Behind that, a slow first CDN could make the 3D preview library load twice and throw an error into the console; a second load is now ignored.</description>
 		</item>
 		<item>
+			<title>The API container keeps the memory it was sized for, so a busy hour cannot take the whole site down</title>
+			<link>https://three.ws/changelog</link>
+			<guid isPermaLink="false">2026-09-09:The API container keeps the memory it was sized for, so a busy hour cannot take the whole site down</guid>
+			<pubDate>Wed, 09 Sep 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>Every three.ws page and API call is served by one container, and in early September that container was given twice the memory so it could hold live connections to people’s connected homes without ever running short. The setting did not survive: the next full deploy quietly put it back to the smaller limit, and the site then ran for five days on half the memory it had been sized for while still being configured to hold up to 600 home connections. Measured over the last 24 hours, memory was already peaking at 86% of that smaller limit before a single home connection was counted, which is close enough to the edge that a busy hour could have killed the container mid-request and taken every page down with it, not just the connected-home part. The limit is restored, peak memory is back to 43%, and it is now written into the deploy configuration itself so no future deploy can undo it again.</description>
+		</item>
+		<item>
 			<title>The Coin Wars arena reconnects to its battle server, and a link with no battle now shows you where the wars are</title>
 			<link>https://three.ws/play/war</link>
 			<guid isPermaLink="false">2026-09-09:The Coin Wars arena reconnects to its battle server, and a link with no battle now shows you where the wars are</guid>
@@ -231,6 +295,14 @@
 			<description>A full audit of /objects, the public-domain prop library. The page had been showing &quot;Object library coming online&quot; to everyone: the 511 props were sitting on the CDN the whole time, but the server read their index over a signed storage connection whose credential had stopped matching, so every visitor got an empty shelf. The index is public data on a public domain, so the read now falls back to that domain when the signed one fails, and the same change refills the character library, the animation clips and the asset catalogue the agent tools search. Browsing is a different page too. It used to build all 511 cards at once, each one a live 3D viewer with its own model, which meant 511 image requests before the first card appeared and about eighteen seconds of nothing. Now it renders 48 at a time, with a Load more button and automatic loading as you scroll, and a card stays a still picture until you rest the pointer on it, at which point that one spins up in 3D; a handful stay live at a time instead of hundreds. The filter row dropped eight chips that were Poly Haven collection names rather than anything you would browse by. On a phone the Preview, AR and Download buttons each get a full-width row instead of three cramped pills. Keyboard focus is now visible on every control, a failed load names the actual reason above its retry button, and the page description no longer contradicts the one in the markup.</description>
 		</item>
 		<item>
+			<title>The OKX marketplace chat bot now switches AI providers by itself</title>
+			<link>https://three.ws/changelog</link>
+			<guid isPermaLink="false">2026-09-09:The OKX marketplace chat bot now switches AI providers by itself</guid>
+			<pubDate>Wed, 09 Sep 2026 12:00:00 GMT</pubDate>
+			<category>infra</category>
+			<description>Chat for our OKX.AI listing runs on an always-on host that spawns an AI session to answer buyers. That host held exactly one AI provider, so when the provider's account was put on a billing hold the bot went on receiving every message and answering none of them, for days, while other credentials sat unused on the same service. It now holds an ordered chain of providers, asks each one whether it will actually serve before using it, and moves to the first that answers. A provider that recovers or gets funded is picked up on the next check with no redeploy, and the bot's status page lists what every provider answered, so whoever fixes it can see which one to fix rather than only that one was refused.</description>
+		</item>
+		<item>
 			<title>The OpenAI partner page now proves the free ChatGPT connector is up instead of just claiming it</title>
 			<link>https://three.ws/openai</link>
 			<guid isPermaLink="false">2026-09-09:The OpenAI partner page now proves the free ChatGPT connector is up instead of just claiming it</guid>
@@ -253,6 +325,14 @@
 			<pubDate>Wed, 09 Sep 2026 12:00:00 GMT</pubDate>
 			<category>fix</category>
 			<description>An end-to-end audit of /partners found it was the only page on the site that carried a footer slot but never loaded the footer, so the whole bottom of the page was missing. It is back. On a 320px phone the partner cards were 38px wider than the screen and the overhanging text was silently cut off, because a card header could not shrink past its logo, name and category chip on one line; the chip now wraps and every card fits. The page description search engines and link previews read was also stale: it advertised Intel, Microsoft and Oracle, none of which have a card, and left out OpenAI and HackerNoon, which do. The AWS card said View on AWS Marketplace above a link to our own AWS page, so it now says what it actually opens. Beyond that: the 8 partners and 22 chains counters are no longer hidden from screen readers and the partner number is now counted from the cards themselves, keyboard users get a visible ring on every card and button, the card lift is dropped for anyone who asks for reduced motion, and the page eyebrow, the four benefit headings and every card call to action are translatable instead of staying English on a translated page. The floating walk companion also got a full-size dismiss, avatar-swap and narration button on touch devices, everywhere it appears.</description>
+		</item>
+		<item>
+			<title>The partnership page works properly on the partner's own site</title>
+			<link>https://three.ws/changelog</link>
+			<guid isPermaLink="false">2026-09-09:The partnership page works properly on the partner's own site</guid>
+			<pubDate>Wed, 09 Sep 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>The IBM partnership page is published once onto IBM's own domain and then keeps itself current by reading from three.ws, so everything it loads is a cross-origin read and anything we get wrong there is invisible on three.ws itself. Three things were wrong. The site-wide command palette asked the partner's server for our page index and for the ranking module it imports, so it never opened and logged an error on every visit: the index now travels with the code the way the language catalogs already do, and both files are readable from other sites. And a build step that adds the site's mobile stylesheet to every page was reaching the partner artifacts too, even though they are copied out untouched by design, so the hosted copy asked IBM's server for a stylesheet only we have. All three are closed, and the audit that loads the page from a foreign domain now passes all four of its checks: the live update applies, the language switcher mounts, the paid demo arms, and the console is clean.</description>
 		</item>
 		<item>
 			<title>The pitch deck now shows the whole character, and says so when the 3D cannot load</title>
@@ -351,6 +431,14 @@
 			<description>The Agent glance widget on the Windows 11 widgets board renders an Adaptive Card, and the board fills that card in with its own expression engine rather than with JavaScript. Our card asked for the three stat rows the way JavaScript reads an array, which that engine treats as a syntax error, and it refuses the whole card rather than skipping the one line: a pinned widget came up empty with nothing to show for it anywhere else. The card now uses the syntax the board expects, and there is a new check that fills it in with the board's own engine before anything ships, alongside checks that the manifest, the service worker and the two endpoints still agree with each other. The board is the one surface we cannot open from a build machine, so the checks that stand in for it are the ones that have to be real.</description>
 		</item>
 		<item>
+			<title>Three fades now stop when you ask the site to stop moving</title>
+			<link>https://three.ws/objects</link>
+			<guid isPermaLink="false">2026-09-09:Three fades now stop when you ask the site to stop moving</guid>
+			<pubDate>Wed, 09 Sep 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>Turn on reduced motion in your operating system and three.ws is supposed to hold still: every animation timing on the site is named rather than spelled out, so one switch can zero all of them at once. Three places had drifted off that and spelled their own timing instead, which meant the object library card fade, the avatar picker chips and the Money Pulse rows kept animating for people who had explicitly asked them not to. One of them was pointing at a timing name that does not exist, so the value it fell back to was never the one anyone chose. All three are back on the named ladder at the same speed they always looked, and the reduced-motion switch reaches them again.</description>
+		</item>
+		<item>
 			<title>When the payment wallets look empty, the self-heal now says whether they are empty or just fenced</title>
 			<link>https://three.ws/changelog</link>
 			<guid isPermaLink="false">2026-09-09:When the payment wallets look empty, the self-heal now says whether they are empty or just fenced</guid>
@@ -364,7 +452,7 @@
 			<guid isPermaLink="false">2026-09-09:Your monthly agent turns now count, and locking up never does</guid>
 			<pubDate>Wed, 09 Sep 2026 12:00:00 GMT</pubDate>
 			<category>feature</category>
-			<description>Talking to the agent about your house is the one part of the smart-home lane that can really cost money: the room graph makes a home prompt large, and on a paid model a single turn costs more than a year of holding that house’s connection open. Those turns were being counted but never actually limited. They are now, against the monthly allowance shown on your plan page, and if you run out the agent says so in a sentence that names the limit, the date it resets and where to raise it, instead of failing at you. Two things are deliberately left outside that limit. Asking the agent what the house is doing still works, because you have to be able to see which door is open. And telling it to lock a door, close a garage or a valve, or arm the alarm still runs, over quota, on a paused home, in every state we can put an account in: the safe direction is free, always, on every plan. If our own billing lookup fails, the turn is allowed through rather than refused.</description>
+			<description>Talking to the agent about your house is the one part of the smart-home lane that can really cost money: the room graph makes a home prompt large, and on a paid model a single turn costs several weeks of holding that house’s connection open. Those turns were being counted but never actually limited. They are now, against the monthly allowance shown on your plan page, and if you run out the agent says so in a sentence that names the limit, the date it resets and where to raise it, instead of failing at you. Two things are deliberately left outside that limit. Asking the agent what the house is doing still works, because you have to be able to see which door is open. And telling it to lock a door, close a garage or a valve, or arm the alarm still runs, over quota, on a paused home, in every state we can put an account in: the safe direction is free, always, on every plan. If our own billing lookup fails, the turn is allowed through rather than refused.</description>
 		</item>
 		<item>
 			<title>Your private avatars load on the dashboard again, and say so when they cannot</title>

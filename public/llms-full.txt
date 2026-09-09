@@ -1326,6 +1326,12 @@ URL: https://three.ws/smart-money
 
 A live first-party reputation graph of every pump.fun wallet. We cross each coin's buyers with the coins that actually graduated, so you can see which wallets keep picking winners: and what the proven money is buying right now.
 
+### Fade Radar: the wallets that are never right
+
+URL: https://three.ws/fade
+
+The inverse of the Smart Money Radar. Every pump.fun coin ranked by how much of its buy side comes from wallets with a judged on-chain record and not one winner in it, with the measured, out-of-sample odds behind each verdict.
+
 ### Pump.fun Stream
 
 URL: https://three.ws/pumpfun
@@ -2553,6 +2559,12 @@ The keyboard-first pump.fun trading terminal: the launch firehose fused with int
 URL: https://three.ws/docs/smart-money
 
 A live first-party reputation graph of every pump.fun wallet: cross each coin's buyers with the coins that actually graduated to surface the wallets that keep picking winners.
+
+### Docs · Fade Radar
+
+URL: https://three.ws/docs/fade-radar
+
+How the Fade Radar scores a coin's buy side: what makes a wallet a reverse indicator, the 0 to 100 fade score, the verdict bands, and the out-of-sample measurement behind them.
 
 ### Docs · Coin Radar
 

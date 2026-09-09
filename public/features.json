@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-09-09T05:43:06.184Z",
+	"generated_at": "2026-09-09T07:20:21.637Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json",
 	"site": {
 		"name": "three.ws",
@@ -2168,6 +2168,16 @@
 					"showcase": false
 				},
 				{
+					"path": "/fade",
+					"title": "Fade Radar: the wallets that are never right",
+					"description": "The inverse of the Smart Money Radar. Every pump.fun coin ranked by how much of its buy side comes from wallets with a judged on-chain record and not one winner in it, with the measured, out-of-sample odds behind each verdict.",
+					"added": "2026-09-09",
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false
+				},
+				{
 					"path": "/pumpfun",
 					"title": "Pump.fun Stream",
 					"description": "Mint and trade pump.fun agent tokens on Solana. Live feed of every launch.",
@@ -4173,6 +4183,16 @@
 					"title": "Docs · Smart Money Radar",
 					"description": "A live first-party reputation graph of every pump.fun wallet: cross each coin's buyers with the coins that actually graduated to surface the wallets that keep picking winners.",
 					"added": "2026-07-18",
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false
+				},
+				{
+					"path": "/docs/fade-radar",
+					"title": "Docs · Fade Radar",
+					"description": "How the Fade Radar scores a coin's buy side: what makes a wallet a reverse indicator, the 0 to 100 fade score, the verdict bands, and the out-of-sample measurement behind them.",
+					"added": "2026-09-09",
 					"auth": null,
 					"indexable": true,
 					"tags": [],

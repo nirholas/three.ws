@@ -1,14 +1,55 @@
 {
-	"generated_at": "2026-09-09T05:54:28.300Z",
+	"generated_at": "2026-09-09T07:20:21.694Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
 		"url": "https://three.ws"
 	},
-	"total": 3623,
+	"total": 3634,
 	"complete": false,
 	"full_feed": "/changelog.json",
 	"entries": [
+		{
+			"date": "2026-09-09",
+			"type": "launch",
+			"title": "Docs · Fade Radar",
+			"summary": "How the Fade Radar scores a coin's buy side: what makes a wallet a reverse indicator, the 0 to 100 fade score, the verdict bands, and the out-of-sample measurement behind them.",
+			"link": "/docs/fade-radar",
+			"tags": [
+				"launch"
+			]
+		},
+		{
+			"date": "2026-09-09",
+			"type": "launch",
+			"title": "Fade Radar: the wallets that are never right",
+			"summary": "The inverse of the Smart Money Radar. Every pump.fun coin ranked by how much of its buy side comes from wallets with a judged on-chain record and not one winner in it, with the measured, out-of-sample odds behind each verdict.",
+			"link": "/fade",
+			"tags": [
+				"launch"
+			]
+		},
+		{
+			"date": "2026-09-09",
+			"type": "update",
+			"title": "A link that opens your house in 3D now really opens it in 3D",
+			"summary": "The live home page remembers whether you last looked at your house in 3D or as a room list, which is what you want when you open it yourself. It was also overruling links that asked for one view by name: once you had used the 2D view even once on a device, every /smart-home/<id>?view=3d link on that device quietly opened flat again. That matters for the two cases the parameter exists for, a link you share with someone in the house and the address a kitchen or wall display is pinned to. A view asked for in the link now wins, for 3D, 2D and the floorplan alike, and following such a link no longer overwrites the preference that device chose for itself.",
+			"link": "/docs/home-scene",
+			"tags": [
+				"fix"
+			]
+		},
+		{
+			"date": "2026-09-09",
+			"type": "update",
+			"title": "An app key can no longer say yes to unlocking your door",
+			"summary": "A person saying yes is the one thing that stands between an agent and your front door, and we found a way around it. If you had ever issued an API key or connected an app to your three.ws account, that key could send an unlock request with the \"the owner already approved this\" flag set, and the lock opened, with nobody asked and nothing to click. We reproduced it against a real house and a real deadbolt before fixing it. Two things changed. Only a signed-in browser session can say yes now: a key or a connected app can ask to unlock, open or disarm, and is always answered with \"a person has to approve this\", exactly as the agent in your chat window already was. And the home permissions you approve when you connect an app are now actually enforced on every home request, so an app you gave read-only access to, or one you never gave home access at all, is refused instead of let through. Nothing legitimate changed: your agent still asks, you still approve, the door still opens.",
+			"link": "/smart-home",
+			"tags": [
+				"security",
+				"fix"
+			]
+		},
 		{
 			"date": "2026-09-09",
 			"type": "update",
@@ -33,6 +74,17 @@
 		{
 			"date": "2026-09-09",
 			"type": "update",
+			"title": "Connecting a home: the page now says which state it is in, out loud",
+			"summary": "Two moments on /smart-home were doing the right thing silently. Typing an address that can never work (a 192.168 number, a .local name) has always put the reason under the field straight away, before anything is sent, but the message was carried by colour alone and a screen reader never read it out; it is now announced the moment it appears, and marked in a way that does not depend on seeing red. And a house that has stopped answering, is refusing the stored token, or has simply gone quiet is now labelled as such by the page itself rather than only in the sentence on its card. Nothing about what you see moves: the last known summary of your house stays exactly where it was, with how long ago it last answered, because a home that went quiet should never look like a home that was deleted.",
+			"link": "/smart-home",
+			"tags": [
+				"improvement",
+				"fix"
+			]
+		},
+		{
+			"date": "2026-09-09",
+			"type": "update",
 			"title": "Endpoint Shopper fits a phone, and says something useful when a run finds nothing to buy",
 			"summary": "A full audit of /shopper, the page where you describe a task, set a budget, and let an agent shop the x402 Bazaar for endpoints that can answer it. Three things were wrong. A run that came back with no plan and no answer, which is what happens when nothing in the Bazaar matches the task or everything that does prices above your ceiling, painted an empty white column and stopped: no explanation, no way forward. That case now says no endpoints matched, quotes the task back, and offers the three things that change the outcome (rewrite the task, raise the budget, browse the Bazaar) plus a button to run again. Second, when the request could not reach us at all, the page showed the browser's own wording for a dropped connection, which names no cause and suggests no fix; it now says the agent service could not be reached and what to do about it. Third, on a phone narrower than 560px the four navigation links were squeezed into a strip about 76px wide and had to be dragged sideways a few pixels at a time to read; they now wrap onto their own full-width row. Alongside those: the results column announces itself to a screen reader while a run is in flight and when it settles, the Task label sits above its box as intended rather than beside it, and an internal ticket number that had been sitting in the page's headline label since launch is gone.",
 			"link": "/shopper",
@@ -50,6 +102,27 @@
 			"tags": [
 				"fix",
 				"improvement"
+			]
+		},
+		{
+			"date": "2026-09-09",
+			"type": "update",
+			"title": "Fade Radar: the wallets that have never once been right, and the coins they are crowding into",
+			"summary": "The Smart Money Radar tells you which proven winners are buying a coin. Fade Radar is the other half of that question, and on pump.fun it turns out to be the sharper one: how much of a coin's buy side is money that has never been right. A wallet joins the reverse-indicator board only after five coins it bought have a known outcome and not one of them won, which is a bar a surprising number of addresses clear. The new page ranks every launch from the last few hours by how much of its observed buy side belongs to those wallets, by wallet count and by SOL, and carries a second board of the wallets themselves with their full record. The number above the board is the part we care most about: it is measured, not asserted. We rebuild the reverse-indicator group using only coins whose outcome was known before the coins it is graded on existed, then check what actually happened. Coins where a quarter or more of the buyers were reverse indicators went on to win 1.8 percent of the time, against 22.1 percent for coins with none, across 26,626 labelled coins. Nothing here is a short and nothing signs anything: on a bonding curve the only tradeable form of a fade is not buying, so every action on the page is a link out to the coin, its intel, or a wallet's track record. Wallet links also now open directly on the Smart Money Radar, so an address cited anywhere on the platform lands on its record instead of a board you have to scan by eye.",
+			"link": "/fade",
+			"tags": [
+				"feature"
+			]
+		},
+		{
+			"date": "2026-09-09",
+			"type": "update",
+			"title": "Homes connected through the relay now follow the house when you rearrange it",
+			"summary": "If your Home Assistant is only reachable inside your house, three.ws reaches it through the three.ws integration you install there, which dials out to us. Those homes were building their room list once, when the connection opened, and then quietly ignoring changes: assign a lamp to the kitchen, rename a floor, add a device, and the 3D house kept showing the old arrangement until the connection happened to be rebuilt. Homes connected by a direct address never had this problem, and the split was in the relay, which was not carrying the four small notices Home Assistant sends when its rooms, floors, devices or entities change. It carries them now, so both kinds of connection track the house the same way and updates land in seconds. The notices only say that something changed; the relay already read the full room and floor lists, so nothing new about your house is exposed by this.",
+			"link": "/smart-home",
+			"tags": [
+				"fix",
+				"infra"
 			]
 		},
 		{
@@ -242,6 +315,17 @@
 		{
 			"date": "2026-09-09",
 			"type": "update",
+			"title": "The API container keeps the memory it was sized for, so a busy hour cannot take the whole site down",
+			"summary": "Every three.ws page and API call is served by one container, and in early September that container was given twice the memory so it could hold live connections to people’s connected homes without ever running short. The setting did not survive: the next full deploy quietly put it back to the smaller limit, and the site then ran for five days on half the memory it had been sized for while still being configured to hold up to 600 home connections. Measured over the last 24 hours, memory was already peaking at 86% of that smaller limit before a single home connection was counted, which is close enough to the edge that a busy hour could have killed the container mid-request and taken every page down with it, not just the connected-home part. The limit is restored, peak memory is back to 43%, and it is now written into the deploy configuration itself so no future deploy can undo it again.",
+			"link": null,
+			"tags": [
+				"fix",
+				"infra"
+			]
+		},
+		{
+			"date": "2026-09-09",
+			"type": "update",
 			"title": "The Coin Wars arena reconnects to its battle server, and a link with no battle now shows you where the wars are",
 			"summary": "A full audit of /play/war, the arena where two coin communities fight to the kill cap. The page had lost the address of the multiplayer server it joins, so every player walking through a war portal landed on 'The arena server is unreachable' instead of a battlefield; the arena is wired back up. Beyond that, a link with no pairing (a shared URL, an expired ticket, a battle that already finished) used to be one sentence and a button back to the lobby, which told you nothing about where a war actually is. It is now the war room: the battles running right now with their live score and clock, the communities queued for an opponent, and the top of the Elo ladder, each one a link into that coin's world where its war portal stands. The same panel sits under every other dead end, so 'there is no battle here' always comes with 'here is where one is'. Also fixed: a failed holder check used to show an internal service error instead of telling you what to do, the Fire button announced itself as 'Firespace' to screen readers, pressing Space on the result card did nothing because the arena was eating the key, and the HUD's hover and focus animations were dead because the page never loaded the site's motion tokens. The arena now says it is playable with WASD, moves focus onto the way out when a card appears, and reads cleanly from 320px up.",
 			"link": "/play/war",
@@ -318,6 +402,17 @@
 		{
 			"date": "2026-09-09",
 			"type": "update",
+			"title": "The OKX marketplace chat bot now switches AI providers by itself",
+			"summary": "Chat for our OKX.AI listing runs on an always-on host that spawns an AI session to answer buyers. That host held exactly one AI provider, so when the provider's account was put on a billing hold the bot went on receiving every message and answering none of them, for days, while other credentials sat unused on the same service. It now holds an ordered chain of providers, asks each one whether it will actually serve before using it, and moves to the first that answers. A provider that recovers or gets funded is picked up on the next check with no redeploy, and the bot's status page lists what every provider answered, so whoever fixes it can see which one to fix rather than only that one was refused.",
+			"link": null,
+			"tags": [
+				"infra",
+				"improvement"
+			]
+		},
+		{
+			"date": "2026-09-09",
+			"type": "update",
 			"title": "The OpenAI partner page now proves the free ChatGPT connector is up instead of just claiming it",
 			"summary": "The /openai page told readers that a free, keyless 3D connector answers at three.ws/api/mcp-studio and then listed the eleven tools it exposes. Both were claims on a static page. Now the page calls the connector from the reader's own browser on load and reports what came back: live with the tool count and the response time, or a plain explanation and a Check again button if the call was blocked. The printed tool table is reconciled against the same response, so every tool the server really answers with is ticked, one the server has dropped is flagged, and one the server has added since the page was written is appended with its own description. The connector URL and the curl command both got copy buttons, and hover plates on the page no longer turn near-white when the site theme is switched to light.",
 			"link": "/openai",
@@ -346,6 +441,16 @@
 			"tags": [
 				"fix",
 				"improvement"
+			]
+		},
+		{
+			"date": "2026-09-09",
+			"type": "update",
+			"title": "The partnership page works properly on the partner's own site",
+			"summary": "The IBM partnership page is published once onto IBM's own domain and then keeps itself current by reading from three.ws, so everything it loads is a cross-origin read and anything we get wrong there is invisible on three.ws itself. Three things were wrong. The site-wide command palette asked the partner's server for our page index and for the ranking module it imports, so it never opened and logged an error on every visit: the index now travels with the code the way the language catalogs already do, and both files are readable from other sites. And a build step that adds the site's mobile stylesheet to every page was reaching the partner artifacts too, even though they are copied out untouched by design, so the hosted copy asked IBM's server for a stylesheet only we have. All three are closed, and the audit that loads the page from a foreign domain now passes all four of its checks: the live update applies, the language switcher mounts, the paid demo arms, and the console is clean.",
+			"link": null,
+			"tags": [
+				"fix"
 			]
 		},
 		{
@@ -483,6 +588,17 @@
 		{
 			"date": "2026-09-09",
 			"type": "update",
+			"title": "Three fades now stop when you ask the site to stop moving",
+			"summary": "Turn on reduced motion in your operating system and three.ws is supposed to hold still: every animation timing on the site is named rather than spelled out, so one switch can zero all of them at once. Three places had drifted off that and spelled their own timing instead, which meant the object library card fade, the avatar picker chips and the Money Pulse rows kept animating for people who had explicitly asked them not to. One of them was pointing at a timing name that does not exist, so the value it fell back to was never the one anyone chose. All three are back on the named ladder at the same speed they always looked, and the reduced-motion switch reaches them again.",
+			"link": "/objects",
+			"tags": [
+				"fix",
+				"improvement"
+			]
+		},
+		{
+			"date": "2026-09-09",
+			"type": "update",
 			"title": "When the payment wallets look empty, the self-heal now says whether they are empty or just fenced",
 			"summary": "The x402 payment rail keeps a set of platform wallets topped up from one funding root, and a recovery run reports why it could not draw on each source. Every source that held less than its configured floor reported the same thing: \"at or below floor\". That single phrase covered two opposite situations. A wallet holding nothing needs money added from outside. A wallet holding real funds behind a floor somebody set does not: the platform already owns that money, and a floor decision releases it. Because the two printed identically, three separate investigations of the same stalled rail concluded the platform was out of funds while one of its own wallets held roughly forty-five times what the stalled wallet was short. A skipped source now reports how much it is holding and the line it had to stay above, and every run totals the funds it left behind, so an operator can tell at a glance whether the recovery needs a deposit or a decision. The health page and the operations runbook now point at that total instead of asserting that money is required.",
 			"link": null,
@@ -495,7 +611,7 @@
 			"date": "2026-09-09",
 			"type": "update",
 			"title": "Your monthly agent turns now count, and locking up never does",
-			"summary": "Talking to the agent about your house is the one part of the smart-home lane that can really cost money: the room graph makes a home prompt large, and on a paid model a single turn costs more than a year of holding that house’s connection open. Those turns were being counted but never actually limited. They are now, against the monthly allowance shown on your plan page, and if you run out the agent says so in a sentence that names the limit, the date it resets and where to raise it, instead of failing at you. Two things are deliberately left outside that limit. Asking the agent what the house is doing still works, because you have to be able to see which door is open. And telling it to lock a door, close a garage or a valve, or arm the alarm still runs, over quota, on a paused home, in every state we can put an account in: the safe direction is free, always, on every plan. If our own billing lookup fails, the turn is allowed through rather than refused.",
+			"summary": "Talking to the agent about your house is the one part of the smart-home lane that can really cost money: the room graph makes a home prompt large, and on a paid model a single turn costs several weeks of holding that house’s connection open. Those turns were being counted but never actually limited. They are now, against the monthly allowance shown on your plan page, and if you run out the agent says so in a sentence that names the limit, the date it resets and where to raise it, instead of failing at you. Two things are deliberately left outside that limit. Asking the agent what the house is doing still works, because you have to be able to see which door is open. And telling it to lock a door, close a garage or a valve, or arm the alarm still runs, over quota, on a paused home, in every state we can put an account in: the safe direction is free, always, on every plan. If our own billing lookup fails, the turn is allowed through rather than refused.",
 			"link": "/smart-home/plan",
 			"tags": [
 				"feature",
@@ -1499,126 +1615,6 @@
 			"link": null,
 			"tags": [
 				"feature"
-			]
-		},
-		{
-			"date": "2026-09-04",
-			"type": "update",
-			"title": "Knock somebody's door and get your money back if they never answer",
-			"summary": "Paying to reach a stranger has meant paying first and hoping. The money left your wallet the moment the payment cleared, and if the person never replied, that was that. Doors can now take escrowed knocks instead: your payment sits in a vault on Solana that the recipient cannot touch until they actually answer you. If they answer, they are paid. If they decline, you get everything back and are charged nothing, because reading something and passing on it is not a service. And if they simply never respond before the window they set, anyone at all can trigger the refund and every cent comes back to you, so it does not depend on you remembering to chase it. three.ws holds no key that can move that money, and neither does anyone else. Door owners can turn the lane on in their knock settings and choose how long they get to reply, from an hour to a month.",
-			"link": "/docs/knock",
-			"tags": [
-				"feature",
-				"security"
-			]
-		},
-		{
-			"date": "2026-09-04",
-			"type": "update",
-			"title": "Opening the homepage, Create and Discover no longer loads 3D you never asked to see",
-			"summary": "Three pages were doing heavy 3D work before anyone had scrolled to it. The homepage hero picked whichever featured avatar the list returned first, which meant a 4.6 MB model downloading and decoding while the page was still trying to become usable; it now picks the richest avatar that fits a size budget, which cut the hero to 2.1 MB without changing what the stage shows. Discover was fetching an entire 3D viewer engine on every visit even though almost every card in the directory is a still thumbnail, and now fetches it only when a card that really has a 3D model comes near the screen. The Create page did the same for one preview card that already waited for your cursor, and now waits for it too, with the poster on screen in the meantime so the card looks the same. The walking companion also stopped booting on top of a page that is still loading: it waits for the page to settle first, then turns up as before.",
-			"link": "/discover",
-			"tags": [
-				"improvement",
-				"fix"
-			]
-		},
-		{
-			"date": "2026-09-04",
-			"type": "update",
-			"title": "Pairing a house, paying an agent and the status page all answer again",
-			"summary": "A packaging rule left two small token modules out of the deployed image, and because the server loads them the moment a request arrives, every route that touched them answered with a server error instead of a page: pairing or managing a house, the agent payment endpoint, and the public status page. The modules ship again, and the check that simulates the upload now runs as part of every deploy, so a file the server needs can no longer go missing quietly.",
-			"link": "/status",
-			"tags": [
-				"fix",
-				"infra"
-			]
-		},
-		{
-			"date": "2026-09-04",
-			"type": "update",
-			"title": "Pin your avatars to IPFS from Settings, and choose which copy loads first",
-			"summary": "Settings now has an Avatar storage panel. Every avatar you own is listed with its size, its three.ws storage copy, and whether it also lives on IPFS. Pin one and it gets a permanent content address you can open on any public gateway, and a small R2 / IPFS switch decides which copy a viewer resolves first. If a deployment has no pinning provider it says so plainly instead of showing an address that leads nowhere. The About block on the same page now reports the build that is actually serving you and the language the page is really rendering in, rather than today's date and a hardcoded English.",
-			"link": "/dashboard/settings",
-			"tags": [
-				"feature",
-				"improvement"
-			]
-		},
-		{
-			"date": "2026-09-04",
-			"type": "update",
-			"title": "Run an escrowed door from your own wallet, and see what the chain actually says",
-			"summary": "Door settings now carry the escrowed lane: switch it on, choose how long you want to answer within, and open your on-chain door with your own wallet, which is the only thing that can. The panel reads the chain and tells you the truth rather than your intent, so a door you never opened, or one still charging last month's price, says so plainly instead of quietly turning strangers away. Escrowed knocks in your inbox show how long you have and what answering is worth, replying releases the payment, and refusing refunds the sender in full with no fee. Money still in escrow is no longer counted as earned.",
-			"link": null,
-			"tags": [
-				"feature",
-				"improvement"
-			]
-		},
-		{
-			"date": "2026-09-04",
-			"type": "update",
-			"title": "The 3D services we sell to other agents quote one clear price, however they are asked",
-			"summary": "Our four paid 3D generation services on the OKX.AI agent marketplace answer every caller with a price quote before any work happens. Two flaws in that quote are fixed. A request that arrived with no body and no content type was turned away with a formatting complaint instead of a price, and that is exactly how the marketplace's own compatibility check asks, so the check saw four services that looked like they had no payment set up at all. Separately, a request that named no specific tool got a quote listing the same payment network twice at two different prices, one of them wrong. Every unpaid request now receives a single unambiguous quote at the service's listed price, on each payment network it accepts.",
-			"link": null,
-			"tags": [
-				"fix"
-			]
-		},
-		{
-			"date": "2026-09-04",
-			"type": "update",
-			"title": "The agent answering for us on the OKX.AI marketplace now says when it cannot answer",
-			"summary": "Our marketplace listing is answered by an agent that reads a buyer's message and writes back. It could fail in the quietest possible way: the process alive, the health page green, and every reply dying against an AI credential the provider had stopped honouring, which from the buyer's side is indistinguishable from being ignored. The host now asks the provider itself, on every boot and every fifteen minutes, and a refused credential turns the listing amber on our status page, raises an alert, and carries the exact commands that fix it. It also stopped crying wolf: a daemon that is merely still starting up no longer reports as dead.",
-			"link": null,
-			"tags": [
-				"fix",
-				"infra"
-			]
-		},
-		{
-			"date": "2026-09-04",
-			"type": "update",
-			"title": "The agent economy demo now quotes the amount it actually pays",
-			"summary": "On the Agent Economy demo, NOVA buys a live Solana market briefing from ORACLE. The narration announced a 0.001 SOL payment while the listed price, the receipt panel and the transfer itself were all 0.000001 SOL, and the screen in the world printed a PAID badge even on the simulated runs that signed-out visitors get. Every one of those now reads the same figure from one place, and a simulated run says so on screen. The page also handles a bad day: if the stream drops, the run times out, or the market feed cannot be reached, you get a plain explanation and a Retry button instead of a stalled page and a pointer at the developer console. On a phone the Run demo button no longer sits off the edge of the screen, the 3D world resizes with the window instead of staying clipped at its widest size, and a browser without WebGL is told so rather than shown a black rectangle.",
-			"link": "/demo",
-			"tags": [
-				"fix",
-				"improvement"
-			]
-		},
-		{
-			"date": "2026-09-04",
-			"type": "update",
-			"title": "The agent that answers for us on the OKX.AI marketplace now lives somewhere that stays up",
-			"summary": "Buyers who message our marketplace listing were being answered from a development workspace that goes to sleep on its own, and one message this week sat unread for twenty hours because of it. It now runs on a host that stays up, keeps its identity across restarts, and reports its own reachability alongside every other part of the platform on the status page.",
-			"link": null,
-			"tags": [
-				"improvement",
-				"infra"
-			]
-		},
-		{
-			"date": "2026-09-04",
-			"type": "update",
-			"title": "The DeFi page reads on a phone, links straight to each protocol, and can refresh itself",
-			"summary": "Every protocol name on /defi is now a real link into its detail page, so you can open one in a new tab, and dragging to copy a TVL figure no longer navigates away. A Refresh button in the toolbar pulls new figures without reloading the page and keeps the current table on screen while it works; if the refresh fails, the numbers you already had stay put and the page says so. On a phone the table now fits the screen, so TVL and the 1-day move are readable without scrolling sideways. When the upstream is down you get a real retry button instead of a dead link, an empty feed says so plainly instead of showing a $0.00 total, and figures served from cache are labelled as cached rather than passed off as live.",
-			"link": "/defi",
-			"tags": [
-				"improvement",
-				"fix"
-			]
-		},
-		{
-			"date": "2026-09-04",
-			"type": "update",
-			"title": "The friends panel tells you when it cannot reach the server, instead of saying you have no friends",
-			"summary": "When the friends list could not be loaded, the panel showed the same screen it shows a brand new player: \"No friends yet\", with a button inviting you to go and add someone. That reads as though your friends were gone, when the truth was only that we could not look. It now says plainly that the connection dropped, that nothing was lost, and offers a Try again button that really does retry, and if the list had already loaded once, it stays on screen and is marked as possibly out of date rather than being thrown away. Coming back online repaints the panel straight away, even when your friends list is exactly as you left it. The panel also had a stray word \"null\" printed under the tabs every time it opened, on both the world and the walk pages, which is now gone.",
-			"link": "/play",
-			"tags": [
-				"fix",
-				"improvement"
 			]
 		}
 	]

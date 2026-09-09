@@ -11,6 +11,35 @@
 		},
 		{
 			"date": "2026-09-09",
+			"title": "Homes connected through the relay now follow the house when you rearrange it",
+			"summary": "If your Home Assistant is only reachable inside your house, three.ws reaches it through the three.ws integration you install there, which dials out to us. Those homes were building their room list once, when the connection opened, and then quietly ignoring changes: assign a lamp to the kitchen, rename a floor, add a device, and the 3D house kept showing the old arrangement until the connection happened to be rebuilt. Homes connected by a direct address never had this problem, and the split was in the relay, which was not carrying the four small notices Home Assistant sends when its rooms, floors, devices or entities change. It carries them now, so both kinds of connection track the house the same way and updates land in seconds. The notices only say that something changed; the relay already read the full room and floor lists, so nothing new about your house is exposed by this.",
+			"tags": [
+				"fix",
+				"infra"
+			],
+			"link": "/smart-home"
+		},
+		{
+			"date": "2026-09-09",
+			"title": "Connecting a home: the page now says which state it is in, out loud",
+			"summary": "Two moments on /smart-home were doing the right thing silently. Typing an address that can never work (a 192.168 number, a .local name) has always put the reason under the field straight away, before anything is sent, but the message was carried by colour alone and a screen reader never read it out; it is now announced the moment it appears, and marked in a way that does not depend on seeing red. And a house that has stopped answering, is refusing the stored token, or has simply gone quiet is now labelled as such by the page itself rather than only in the sentence on its card. Nothing about what you see moves: the last known summary of your house stays exactly where it was, with how long ago it last answered, because a home that went quiet should never look like a home that was deleted.",
+			"tags": [
+				"improvement",
+				"fix"
+			],
+			"link": "/smart-home"
+		},
+		{
+			"date": "2026-09-09",
+			"title": "The API container keeps the memory it was sized for, so a busy hour cannot take the whole site down",
+			"summary": "Every three.ws page and API call is served by one container, and in early September that container was given twice the memory so it could hold live connections to people’s connected homes without ever running short. The setting did not survive: the next full deploy quietly put it back to the smaller limit, and the site then ran for five days on half the memory it had been sized for while still being configured to hold up to 600 home connections. Measured over the last 24 hours, memory was already peaking at 86% of that smaller limit before a single home connection was counted, which is close enough to the edge that a busy hour could have killed the container mid-request and taken every page down with it, not just the connected-home part. The limit is restored, peak memory is back to 43%, and it is now written into the deploy configuration itself so no future deploy can undo it again.",
+			"tags": [
+				"fix",
+				"infra"
+			]
+		},
+		{
+			"date": "2026-09-09",
 			"title": "An app key can no longer say yes to unlocking your door",
 			"summary": "A person saying yes is the one thing that stands between an agent and your front door, and we found a way around it. If you had ever issued an API key or connected an app to your three.ws account, that key could send an unlock request with the \"the owner already approved this\" flag set, and the lock opened, with nobody asked and nothing to click. We reproduced it against a real house and a real deadbolt before fixing it. Two things changed. Only a signed-in browser session can say yes now: a key or a connected app can ask to unlock, open or disarm, and is always answered with \"a person has to approve this\", exactly as the agent in your chat window already was. And the home permissions you approve when you connect an app are now actually enforced on every home request, so an app you gave read-only access to, or one you never gave home access at all, is refused instead of let through. Nothing legitimate changed: your agent still asks, you still approve, the door still opens.",
 			"tags": [
@@ -21,12 +50,20 @@
 		},
 		{
 			"date": "2026-09-09",
-			"title": "Fade Radar: the wallets that have never once been right, and the coins they are crowding into",
-			"summary": "The Smart Money Radar tells you which proven winners are buying a coin. Fade Radar is the other half of that question, and on pump.fun it turns out to be the sharper one: how much of a coin's buy side is money that has never been right. A wallet joins the reverse-indicator board only after five coins it bought have a known outcome and not one of them won, which is a bar a surprising number of addresses clear. The new page ranks every launch from the last few hours by how much of its observed buy side belongs to those wallets, by wallet count and by SOL, and carries a second board of the wallets themselves with their full record. The number above the board is the part we care most about: it is measured, not asserted. We rebuild the reverse-indicator group using only coins whose outcome was known before the coins it is graded on existed, then check what actually happened. Coins where a quarter or more of the buyers were reverse indicators went on to win 1.8 percent of the time, against 22.1 percent for coins with none, across 26,626 labelled coins. Nothing here is a short and nothing signs anything: on a bonding curve the only tradeable form of a fade is not buying, so every action on the page is a link out to the coin, its intel, or a wallet's track record. Wallet links also now open directly on the Smart Money Radar, so an address cited anywhere on the platform lands on its record instead of a board you have to scan by eye.",
+			"title": "The OKX marketplace chat bot now switches AI providers by itself",
+			"summary": "Chat for our OKX.AI listing runs on an always-on host that spawns an AI session to answer buyers. That host held exactly one AI provider, so when the provider's account was put on a billing hold the bot went on receiving every message and answering none of them, for days, while other credentials sat unused on the same service. It now holds an ordered chain of providers, asks each one whether it will actually serve before using it, and moves to the first that answers. A provider that recovers or gets funded is picked up on the next check with no redeploy, and the bot's status page lists what every provider answered, so whoever fixes it can see which one to fix rather than only that one was refused.",
 			"tags": [
-				"feature"
-			],
-			"link": "/fade"
+				"infra",
+				"improvement"
+			]
+		},
+		{
+			"date": "2026-09-09",
+			"title": "Avatars and token art load again on sites that embed three.ws",
+			"summary": "Assets served from /cdn (avatars, thumbnails, generated models) are read from our object store with a signed request, and when that request is rejected the route falls back to the store's public address so the bytes still arrive. That fallback was a redirect, and a redirect throws away the cross-origin permission the route grants: browsers re-check permission at the redirect's destination, and the public address grants none. Measured from an outside site, every one of those reads failed outright, which took down model previews on pages that load art through the proxy and silently broke third-party embeds of three.ws avatars. The bytes are now served through three.ws itself rather than pointed at, so the permission, the file type and the download rules all survive the fallback, partial reads for video and audio keep working, and a file that genuinely is not there says so instead of reporting a server fault the page retries forever. It also keeps the fallback off the rate-limited public address, which is the whole reason the proxy exists.",
+			"tags": [
+				"fix"
+			]
 		},
 		{
 			"date": "2026-09-09",
@@ -39,11 +76,22 @@
 		},
 		{
 			"date": "2026-09-09",
-			"title": "Avatars and token art load again on sites that embed three.ws",
-			"summary": "Assets served from /cdn (avatars, thumbnails, generated models) are read from our object store with a signed request, and when that request is rejected the route falls back to the store's public address so the bytes still arrive. That fallback was a redirect, and a redirect throws away the cross-origin permission the route grants: browsers re-check permission at the redirect's destination, and the public address grants none. Measured from an outside site, every one of those reads failed outright, which took down model previews on pages that load art through the proxy and silently broke third-party embeds of three.ws avatars. The bytes are now served through three.ws itself rather than pointed at, so the permission, the file type and the download rules all survive the fallback, partial reads for video and audio keep working, and a file that genuinely is not there says so instead of reporting a server fault the page retries forever. It also keeps the fallback off the rate-limited public address, which is the whole reason the proxy exists.",
+			"title": "Fade Radar: the wallets that have never once been right, and the coins they are crowding into",
+			"summary": "The Smart Money Radar tells you which proven winners are buying a coin. Fade Radar is the other half of that question, and on pump.fun it turns out to be the sharper one: how much of a coin's buy side is money that has never been right. A wallet joins the reverse-indicator board only after five coins it bought have a known outcome and not one of them won, which is a bar a surprising number of addresses clear. The new page ranks every launch from the last few hours by how much of its observed buy side belongs to those wallets, by wallet count and by SOL, and carries a second board of the wallets themselves with their full record. The number above the board is the part we care most about: it is measured, not asserted. We rebuild the reverse-indicator group using only coins whose outcome was known before the coins it is graded on existed, then check what actually happened. Coins where a quarter or more of the buyers were reverse indicators went on to win 1.8 percent of the time, against 22.1 percent for coins with none, across 26,626 labelled coins. Nothing here is a short and nothing signs anything: on a bonding curve the only tradeable form of a fade is not buying, so every action on the page is a link out to the coin, its intel, or a wallet's track record. Wallet links also now open directly on the Smart Money Radar, so an address cited anywhere on the platform lands on its record instead of a board you have to scan by eye.",
 			"tags": [
-				"fix"
-			]
+				"feature"
+			],
+			"link": "/fade"
+		},
+		{
+			"date": "2026-09-09",
+			"title": "Three fades now stop when you ask the site to stop moving",
+			"summary": "Turn on reduced motion in your operating system and three.ws is supposed to hold still: every animation timing on the site is named rather than spelled out, so one switch can zero all of them at once. Three places had drifted off that and spelled their own timing instead, which meant the object library card fade, the avatar picker chips and the Money Pulse rows kept animating for people who had explicitly asked them not to. One of them was pointing at a timing name that does not exist, so the value it fell back to was never the one anyone chose. All three are back on the named ladder at the same speed they always looked, and the reduced-motion switch reaches them again.",
+			"tags": [
+				"fix",
+				"improvement"
+			],
+			"link": "/objects"
 		},
 		{
 			"date": "2026-09-09",
@@ -27753,6 +27801,15 @@
 				"improvement"
 			],
 			"link": "/restyle"
+		},
+		{
+			"date": "2026-09-09",
+			"title": "A link that opens your house in 3D now really opens it in 3D",
+			"summary": "The live home page remembers whether you last looked at your house in 3D or as a room list, which is what you want when you open it yourself. It was also overruling links that asked for one view by name: once you had used the 2D view even once on a device, every /smart-home/<id>?view=3d link on that device quietly opened flat again. That matters for the two cases the parameter exists for, a link you share with someone in the house and the address a kitchen or wall display is pinned to. A view asked for in the link now wins, for 3D, 2D and the floorplan alike, and following such a link no longer overwrites the preference that device chose for itself.",
+			"tags": [
+				"fix"
+			],
+			"link": "/docs/home-scene"
 		}
 	]
 }
