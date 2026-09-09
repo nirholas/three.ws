@@ -27,6 +27,17 @@
 //      free lanes rather than silently disabling itself.
 //   3. Neither available → fail-open pass with qa_available:false.
 //
+// Rung 1 is health-gated, which matters more than it sounds. A project-wide
+// billing denial ("Lightning dunning decision is deny for project") makes Vertex
+// answer 403 to every request until ops fixes billing, and without a breaker the
+// gate spends attempt-0 of EVERY generation on a lane that cannot answer. The
+// same circuit breaker the vision chain uses (provider-health) now covers this
+// lane: an auth/billing fault parks Vertex for AUTH_COOLDOWN_SECONDS so the very
+// next generation goes straight to the free non-GCP rungs, and the park expires
+// on its own, so the lane recovers with no deploy the moment billing is
+// restored. Measured on production 2026-09-09 under the live hold: 5 of 10
+// calls fell open with no verdict while Vertex was re-probed on every call.
+//
 // ── The router seam ───────────────────────────────────────────────────────────
 // The generation router (api/forge.js, owned by another agent) wires this in by:
 //   const verdict = await runQualityGate({ glbUrl, prompt });
@@ -38,6 +49,12 @@
 
 import { getGcpAccessToken } from './gcp-auth.js';
 import { describeImageJson, visionConfigured, parseJsonLoose } from './vision.js';
+import {
+	AUTH_COOLDOWN_SECONDS,
+	clearProviderCooldown,
+	markProviderCooldown,
+	providersInCooldown,
+} from './provider-health.js';
 import { renderAvatarScene, SCENE_PRESETS } from './avatar-render.js';
 import { validatePublicUrl, isPrivateAddress, SsrfError } from './ssrf.js';
 import { isIP } from 'node:net';
@@ -72,6 +89,14 @@ export const QUALITY_GATE_DEFAULTS = Object.freeze({
 	// Per-call vision timeout.
 	timeoutMs: intEnv('FORGE_QUALITY_TIMEOUT_MS', 25_000),
 });
+
+// Circuit-breaker key for the Vertex scoring rung. Namespaced away from the
+// vision chain's own lanes so parking the quality gate's Vertex call never
+// disables Vertex for a different consumer.
+const VERTEX_QUALITY_LANE = 'forge-quality:vertex';
+// Transient-failure park (timeout, 5xx, network blip). Matches the vision
+// chain's lane cooldown so the two breakers behave the same way.
+const VISION_FALLBACK_COOLDOWN_SECONDS = 45;
 
 // ── Subject awareness ─────────────────────────────────────────────────────────
 // The photoreal bar differs by subject: a person needs correct anatomy and skin;
@@ -439,10 +464,28 @@ export async function runQualityGate({
 	let scored = null;
 	const failures = [];
 	if (vertexQualityConfigured()) {
-		try {
-			scored = await scoreViaVertex({ ...image, prompt, subject: subj, timeoutMs: QUALITY_GATE_DEFAULTS.timeoutMs });
-		} catch (e) {
-			failures.push(`vertex: ${e?.message || e}`);
+		// Skip a lane already known to be refusing. Best-effort: an unreadable
+		// cache reads as "not cooling", which is exactly the pre-breaker path.
+		const cooling = await providersInCooldown([VERTEX_QUALITY_LANE]);
+		if (cooling.has(VERTEX_QUALITY_LANE)) {
+			failures.push(`vertex: skipped, lane cooling (${cooling.get(VERTEX_QUALITY_LANE)})`);
+		} else {
+			try {
+				scored = await scoreViaVertex({ ...image, prompt, subject: subj, timeoutMs: QUALITY_GATE_DEFAULTS.timeoutMs });
+				void clearProviderCooldown(VERTEX_QUALITY_LANE);
+			} catch (e) {
+				failures.push(`vertex: ${e?.message || e}`);
+				// 401/402/403 is a key or billing fault: broken until ops acts, so
+				// park it for the long window instead of re-probing every call. Any
+				// other failure is treated as transient and parked briefly.
+				const status = Number(e?.status);
+				const authFault = status === 401 || status === 402 || status === 403;
+				void markProviderCooldown(
+					VERTEX_QUALITY_LANE,
+					authFault ? AUTH_COOLDOWN_SECONDS : VISION_FALLBACK_COOLDOWN_SECONDS,
+					authFault ? 'auth' : 'health',
+				);
+			}
 		}
 	}
 	if (!scored && visionConfigured()) {

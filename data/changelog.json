@@ -27997,6 +27997,15 @@
         "sdk"
       ],
       "link": "/docs/web-component"
+    },
+    {
+      "date": "2026-09-09",
+      "title": "The quality check on a generated model keeps running when one AI provider goes down",
+      "summary": "Every generated model can be looked at by a vision model before you see it, which is what catches a flat slab or a melted blob before it reaches you. That check asks one provider first and a free provider second, but when the first one started refusing every request it was still asked first every single time, and half the checks ended up returning no verdict at all, so models shipped unchecked. The check now notices a provider that is refusing, sets it aside for a few minutes, and goes straight to the one that is answering. The set-aside expires by itself, so the moment the first provider is healthy again it is used again with nothing to switch back on.",
+      "tags": [
+        "fix",
+        "improvement"
+      ]
     }
   ]
 }

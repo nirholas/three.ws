@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-09-09T20:27:30.268Z",
+	"generated_at": "2026-09-09T22:09:39.871Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -692,6 +692,17 @@
 			"title": "The Pump.fun Stream tells you it is live, counts what it has seen, and has working Recent and Favorites tabs",
 			"summary": "A full audit of /pumpfun, the live pump.fun feed with a 3D agent narrating it. The connection badge in the header said \"connecting...\" forever, even with events pouring in, and the counter on the \"Powered by PumpPortal\" pill stayed on zero no matter how many launches arrived. Both were the same fault: the page's translated-copy pass rewrote those two headings wholesale every time it ran, throwing away the very elements the page updates. Seven controls were affected, including the Share button's \"Copied!\" flash and the avatar picker's name. Each one now hands the page ownership of its live value. The avatar picker's Recent and Favorites tabs were listed but had nothing behind them: opening either showed a blank panel. Both work now, kept in your own browser: every avatar you narrate with lands in Recent, and a star on any card adds it to Favorites. Filtering the feed down to nothing used to leave a blank column; it now says how many events are hidden and offers one click to clear the filters. If the stream drops, the feed says so and offers a Reconnect button instead of sitting on \"Waiting for events...\", and it notices about twice as fast as before. Also: the page title now matches the page (it said \"PumpFun migrations\" while the page streamed new tokens, graduations and claims too), a \"Launch a coin\" link sits next to the status badge, the first-time-fee-claims panel shows skeleton rows during its load and an actionable message with a retry if it fails, and clicking a tab in the agent-config dialog no longer reaches into the avatar picker and deselects its tabs.",
 			"link": "/pumpfun",
+			"tags": [
+				"fix",
+				"improvement"
+			]
+		},
+		{
+			"date": "2026-09-09",
+			"type": "update",
+			"title": "The quality check on a generated model keeps running when one AI provider goes down",
+			"summary": "Every generated model can be looked at by a vision model before you see it, which is what catches a flat slab or a melted blob before it reaches you. That check asks one provider first and a free provider second, but when the first one started refusing every request it was still asked first every single time, and half the checks ended up returning no verdict at all, so models shipped unchecked. The check now notices a provider that is refusing, sets it aside for a few minutes, and goes straight to the one that is answering. The set-aside expires by itself, so the moment the first provider is healthy again it is used again with nothing to switch back on.",
+			"link": null,
 			"tags": [
 				"fix",
 				"improvement"
