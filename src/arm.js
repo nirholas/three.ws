@@ -26,7 +26,7 @@ function ago(ts) {
 	return `${Math.floor(s / 86400)}d`;
 }
 
-const state = { agents: [], agentId: null, watch: null, minScore: 72, wallet: null, feed: [], feedAt: null, edge: null };
+const state = { agents: [], agentId: null, watch: null, minScore: 72, wallet: null, feed: [], feedAt: null, feedError: false, edge: null };
 let feedTimer = null;
 
 async function api(path, opts = {}) {
@@ -60,7 +60,7 @@ function setLive(sel, text) {
 // `config` is the real surface; the other three keep the public conviction
 // stream visible so a visitor who cannot configure anything still sees the
 // product working.
-const PANELS = { emptyState: 'emptyState', signedOut: 'signedOutState', error: 'errorState' };
+const PANELS = { noAgent: 'emptyState', signedOut: 'signedOutState', error: 'errorState' };
 function showState(kind) {
 	for (const id of Object.values(PANELS)) $('#' + id).style.display = 'none';
 	const config = kind === 'config';
@@ -108,7 +108,7 @@ async function loadAgents() {
 	const agents = data ? (data.agents || data.items || []) : [];
 	state.agents = Array.isArray(agents) ? agents : [];
 
-	if (!state.agents.length) { showState('emptyState'); return; }
+	if (!state.agents.length) { showState('noAgent'); return; }
 
 	const sel = $('#agentSel');
 	sel.innerHTML = state.agents.map((a) => `<option value="${esc(a.id)}">${esc(a.name || a.id)}</option>`).join('');
@@ -360,6 +360,11 @@ async function loadFeed() {
 	if (ok && data && Array.isArray(data.items)) {
 		state.feed = data.items;
 		state.feedAt = Date.now();
+		state.feedError = false;
+	} else {
+		// Kept distinct from "the stream answered and had nothing": the two read
+		// identically from an empty array and mean opposite things to the user.
+		state.feedError = true;
 	}
 	renderQualifying();
 }
@@ -394,16 +399,28 @@ function renderQualifying() {
 			(!r.requireSmart || (it.smart_wallet_count || 0) >= 1))
 		.sort((a, b) => b.score - a.score);
 
+	metaEl.textContent = state.feed.length ? `live · ${state.feed.length} scored / 12h` : '';
+	$('#liveDot').classList.toggle('stale', !!state.feedError);
+
+	if (!state.feed.length) {
+		// Three different silences, three different things to say. Before the
+		// first answer this is still the loading state, not an empty one.
+		if (state.feedError) {
+			setLive(countEl, 'Conviction stream unavailable');
+			body.innerHTML = `<div class="qual-empty">The stream is not answering right now. It retries every 20 seconds, and any rules you have already saved keep running server-side either way.</div>`;
+		} else if (state.feedAt) {
+			setLive(countEl, 'Nothing scored in the last 12 hours');
+			body.innerHTML = `<div class="qual-empty">The Oracle has not graded a launch in the last 12 hours. New coins land here the moment they are scored.</div>`;
+		} else {
+			countEl.textContent = 'Reading the conviction stream…';
+			body.innerHTML = `<div class="qual-empty">Reading the live conviction stream…</div>`;
+		}
+		return;
+	}
+
 	setLive(countEl, matches.length
 		? `${matches.length} clearing your bar`
 		: 'Nothing clears your bar right now');
-	metaEl.textContent = state.feed.length ? `live · ${state.feed.length} scored / 12h` : '';
-
-	if (!state.feed.length) {
-		// Distinct from "nothing qualifies": the feed itself never answered.
-		body.innerHTML = `<div class="qual-empty">The conviction stream is not answering right now. It retries every 20 seconds, and your saved rules keep running server-side either way.</div>`;
-		return;
-	}
 	if (!matches.length) {
 		body.innerHTML = `<div class="qual-empty">No live coin meets every rule this moment, which is normal for a tight bar. Loosen the conviction floor or widen narratives to see more flow, or keep it strict and let your agent wait for the real ones.</div>`;
 		return;
