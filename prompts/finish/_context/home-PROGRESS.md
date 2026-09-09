@@ -2008,7 +2008,10 @@ contract says 409) is CLOSED: `tests/home-security.test.js` now passes that case
 peer's own re-verification entry sits above this one. Run 2's finding 1 (the ledger erased
 mid-campaign) is resolved differently: the owner retired all 30 orders themselves today and
 recorded it in `_context/00-RETIRED-BY-OWNER.md`, which explicitly keeps this file as the record.
-Order 20's file is therefore retired with the rest and this entry is its only record. Run 2's
+The retirement landed PARTIAL, though: 9 order files were deleted and 21 remain
+tracked at HEAD, including `314-home-20-launch-readiness.md` itself and seven other home orders
+(302, 303, 304, 306, 310, 311, 313). So order 20 is still standing on disk, not retired, and this
+entry is a run record rather than a closing one. Run 2's
 finding 3 (the injection proof unrunnable on a throttled chain) is fixed here in documentation.
 Finding 4 (i18n) is unchanged and worse.
 
