@@ -114,17 +114,26 @@
 		.breadth-title { font: 600 10.5px/1 var(--mono); text-transform: uppercase; letter-spacing: .08em; color: var(--faint); }
 		.breadth-sub { font: 600 11px/1 var(--mono); color: var(--muted); margin-left: auto; }
 		.breadth-sub b { color: var(--ink); }
-		.breadth-track { display: flex; height: 10px; border-radius: 5px; overflow: hidden; background: rgba(255,255,255,.05); gap: 2px; }
-		.breadth-seg { height: 100%; border: 0; padding: 0; cursor: pointer; min-width: 3px; transition: opacity var(--duration-fast); }
+		/* The track stays a 10px ribbon, but each segment carries an invisible
+		   24px-tall hit area so it clears the WCAG 2.2 target-size minimum on
+		   touch. overflow is visible for that reason; the ribbon keeps its
+		   rounded ends via the segments' own radius. */
+		.breadth-track { display: flex; height: 10px; border-radius: 5px; background: rgba(255,255,255,.05); gap: 2px; }
+		.breadth-seg { position: relative; height: 100%; border: 0; padding: 0; cursor: pointer; min-width: 3px; transition: opacity var(--duration-fast); }
+		.breadth-seg::after { content: ''; position: absolute; inset: -7px 0; }
+		.breadth-seg:first-child { border-radius: 5px 0 0 5px; }
+		.breadth-seg:last-child { border-radius: 0 5px 5px 0; }
+		.breadth-seg:only-child { border-radius: 5px; }
 		.breadth-seg:hover { opacity: .8; }
 		.breadth-seg:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
-		.breadth-legend { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 10px; }
-		.breadth-leg { display: inline-flex; align-items: center; gap: 6px; background: none; border: 0; padding: 2px 0; cursor: pointer; font: 600 11px/1 var(--mono); color: var(--muted); transition: color var(--duration-fast); }
+		.breadth-legend { display: flex; flex-wrap: wrap; gap: 4px 8px; margin-top: 6px; }
+		.breadth-leg { display: inline-flex; align-items: center; gap: 6px; min-height: 24px; background: none; border: 0; padding: 4px 6px; margin-left: -6px; cursor: pointer; font: 600 11px/1 var(--mono); color: var(--muted); transition: color var(--duration-fast); }
 		.breadth-leg:hover { color: var(--ink); }
 		.breadth-leg.on { color: var(--ink); }
 		.breadth-leg i { width: 9px; height: 9px; border-radius: 3px; flex: none; }
 		.breadth-leg b { color: var(--ink); }
 		.breadth-leg:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 3px; }
+		.view:focus-visible { outline: 2px solid var(--accent); outline-offset: 6px; border-radius: var(--r-sm); }
 
 		/* coin grid */
 		.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); gap: 14px; }
@@ -712,25 +721,25 @@
 		</noscript>
 
 		<nav class="tabs" role="tablist">
-			<button class="tab on" data-view="feed" role="tab" data-i18n-html="oracle.live_conviction">Live conviction <span class="ct" id="ctFeed"></span></button>
-			<button class="tab" data-view="movers" role="tab" data-i18n="oracle.movers">Movers ↑</button>
-			<button class="tab" data-view="wallets" role="tab" data-i18n-html="oracle.top_wallets">Top wallets <span class="ct" id="ctWallets"></span></button>
-			<button class="tab" data-view="graph" role="tab" data-i18n="oracle.3d_graph">3D graph</button>
-			<button class="tab" data-view="edge" role="tab" data-i18n="oracle.the_edge">The edge</button>
-			<button class="tab" data-view="proof" role="tab" data-i18n-html="oracle.proof">Proof ✓ <span class="ct" id="ctProof"></span></button>
-			<button class="tab" data-view="agents" role="tab" data-i18n-html="oracle.agents">Agents <span class="ct" id="ctAgents"></span></button>
-			<button class="tab" data-view="activity" role="tab" data-i18n-html="oracle.activity">Activity <span class="ct" id="ctActivity"></span></button>
-			<button class="tab" data-view="agent" role="tab" data-i18n="oracle.arm_your_agent">Arm your agent</button>
+			<button class="tab on" type="button" id="tab-feed" data-view="feed" role="tab" aria-controls="view-feed" data-i18n-html="oracle.live_conviction">Live conviction <span class="ct" id="ctFeed"></span></button>
+			<button class="tab" type="button" id="tab-movers" data-view="movers" role="tab" aria-controls="view-movers" data-i18n="oracle.movers">Movers ↑</button>
+			<button class="tab" type="button" id="tab-wallets" data-view="wallets" role="tab" aria-controls="view-wallets" data-i18n-html="oracle.top_wallets">Top wallets <span class="ct" id="ctWallets"></span></button>
+			<button class="tab" type="button" id="tab-graph" data-view="graph" role="tab" aria-controls="view-graph" data-i18n="oracle.3d_graph">3D graph</button>
+			<button class="tab" type="button" id="tab-edge" data-view="edge" role="tab" aria-controls="view-edge" data-i18n="oracle.the_edge">The edge</button>
+			<button class="tab" type="button" id="tab-proof" data-view="proof" role="tab" aria-controls="view-proof" data-i18n-html="oracle.proof">Proof ✓ <span class="ct" id="ctProof"></span></button>
+			<button class="tab" type="button" id="tab-agents" data-view="agents" role="tab" aria-controls="view-agents" data-i18n-html="oracle.agents">Agents <span class="ct" id="ctAgents"></span></button>
+			<button class="tab" type="button" id="tab-activity" data-view="activity" role="tab" aria-controls="view-activity" data-i18n-html="oracle.activity">Activity <span class="ct" id="ctActivity"></span></button>
+			<button class="tab" type="button" id="tab-agent" data-view="agent" role="tab" aria-controls="view-agent" data-i18n="oracle.arm_your_agent">Arm your agent</button>
 		</nav>
 
 		<!-- FEED -->
-		<section class="view on" id="view-feed">
+		<section class="view on" id="view-feed" role="tabpanel" aria-labelledby="tab-feed" tabindex="0">
 			<div class="filters">
 				<div class="seg" id="tierSeg">
-					<button data-tier="" class="on" data-i18n="oracle.all">All</button>
-					<button data-tier="prime" data-i18n="oracle.prime">Prime</button>
-					<button data-tier="strong" data-i18n="oracle.strong">Strong</button>
-					<button data-tier="lean" data-i18n="oracle.lean">Lean</button>
+					<button type="button" data-tier="" class="on" data-i18n="oracle.all">All</button>
+					<button type="button" data-tier="prime" data-i18n="oracle.prime">Prime</button>
+					<button type="button" data-tier="strong" data-i18n="oracle.strong">Strong</button>
+					<button type="button" data-tier="lean" data-i18n="oracle.lean">Lean</button>
 				</div>
 				<select class="sel" id="catSel" aria-label="Filter by narrative">
 					<option value="" data-i18n="oracle.all_narratives">All narratives</option>
@@ -743,9 +752,9 @@
 				</select>
 				<button class="wtoggle" id="watchToggle" type="button" aria-pressed="false" title="Show only coins on your watchlist" style="margin-left:auto" data-i18n-html="oracle.watching" data-i18n-attr="title:oracle.show_only_coins_on_your_watc_title">☆ Watching <span class="wtoggle-ct" id="watchCt"></span></button>
 				<div class="seg" id="sortSeg" aria-label="Sort order">
-					<button data-fsort="score" class="on" data-i18n="oracle.top">Top</button>
-					<button data-fsort="hot" data-i18n="oracle.hot">Hot</button>
-					<button data-fsort="new" data-i18n="oracle.new">New</button>
+					<button type="button" data-fsort="score" class="on" data-i18n="oracle.top">Top</button>
+					<button type="button" data-fsort="hot" data-i18n="oracle.hot">Hot</button>
+					<button type="button" data-fsort="new" data-i18n="oracle.new">New</button>
 				</div>
 				<div style="position:relative;flex:1 1 180px;min-width:0;max-width:320px"><input class="sel" id="mintSearch" placeholder="Search symbol or paste mint…" aria-label="Search by symbol, name, or paste a mint address" autocomplete="off" style="width:100%" /></div>
 			</div>
@@ -762,32 +771,32 @@
 		</section>
 
 		<!-- MOVERS -->
-		<section class="view" id="view-movers">
+		<section class="view" id="view-movers" role="tabpanel" aria-labelledby="tab-movers" tabindex="0">
 			<p class="intro" data-i18n="oracle.coins_whose_oracle_conviction_score_moved_mo">Coins whose Oracle conviction score moved most in the last 24 hours — the fastest-building setups and the sharpest collapses. Rising movers are setups gaining edge before they hit Prime; falling movers are theses unwinding in real time.</p>
 			<div class="filters" style="margin-bottom:16px">
 				<div class="seg" id="movDirSeg">
-					<button data-movdir="rising" class="on" data-i18n="oracle.rising">Rising ↑</button>
-					<button data-movdir="falling" data-i18n="oracle.falling">Falling ↓</button>
-					<button data-movdir="all" data-i18n="oracle.all_2">All</button>
+					<button type="button" data-movdir="rising" class="on" data-i18n="oracle.rising">Rising ↑</button>
+					<button type="button" data-movdir="falling" data-i18n="oracle.falling">Falling ↓</button>
+					<button type="button" data-movdir="all" data-i18n="oracle.all_2">All</button>
 				</div>
 				<div class="seg" id="movHrSeg" style="margin-left:auto">
-					<button data-movhr="6" data-i18n="oracle.6h">6h</button>
-					<button data-movhr="24" class="on" data-i18n="oracle.24h">24h</button>
-					<button data-movhr="48" data-i18n="oracle.48h">48h</button>
+					<button type="button" data-movhr="6" data-i18n="oracle.6h">6h</button>
+					<button type="button" data-movhr="24" class="on" data-i18n="oracle.24h">24h</button>
+					<button type="button" data-movhr="48" data-i18n="oracle.48h">48h</button>
 				</div>
 			</div>
 			<div id="moversGrid" class="mv-grid"></div>
 		</section>
 
 		<!-- WALLETS -->
-		<section class="view" id="view-wallets">
+		<section class="view" id="view-wallets" role="tabpanel" aria-labelledby="tab-wallets" tabindex="0">
 			<p class="intro" data-i18n="oracle.every_wallet_oracle_has_judged_ranked_by">Every wallet Oracle has judged, ranked by its real track record — how often it's an early buyer of coins that went on to graduate, against how often it sprays into duds or dumps on its followers. This is the pedigree that powers the conviction score.</p>
 			<div class="filters">
 				<div class="seg" id="labelSeg">
-					<button data-label="" class="on" data-i18n="oracle.all_3">All</button>
-					<button data-label="smart_money" data-i18n="oracle.smart_money">Smart money</button>
-					<button data-label="sniper" data-i18n="oracle.snipers">Snipers</button>
-					<button data-label="rugger" data-i18n="oracle.ruggers">Ruggers</button>
+					<button type="button" data-label="" class="on" data-i18n="oracle.all_3">All</button>
+					<button type="button" data-label="smart_money" data-i18n="oracle.smart_money">Smart money</button>
+					<button type="button" data-label="sniper" data-i18n="oracle.snipers">Snipers</button>
+					<button type="button" data-label="rugger" data-i18n="oracle.ruggers">Ruggers</button>
 				</div>
 			</div>
 			<div class="lwrap" id="walletWrap"></div>
@@ -795,7 +804,7 @@
 
 		<!-- EDGE -->
 		<!-- GRAPH -->
-		<section class="view" id="view-graph">
+		<section class="view" id="view-graph" role="tabpanel" aria-labelledby="tab-graph" tabindex="0">
 			<p class="intro" style="margin-bottom:10px" data-i18n="oracle.every_scored_coin_as_a_sphere_in">Every scored coin as a sphere in 3D space. Size = conviction score. Color = tier. Drag to orbit, scroll to zoom. Click any sphere to open its full conviction breakdown.</p>
 			<div style="position:relative;height:560px;border-radius:12px;overflow:hidden">
 				<canvas id="og-canvas" style="width:100%;height:100%;display:block"></canvas>
@@ -804,47 +813,47 @@
 			</div>
 		</section>
 
-		<section class="view" id="view-edge">
+		<section class="view" id="view-edge" role="tabpanel" aria-labelledby="tab-edge" tabindex="0">
 			<p class="intro" data-i18n="oracle.proof_not_promises_every_conviction_verdict">Proof, not promises. Every conviction verdict is checked against ground truth — did the coin graduate, rug, or run? We measure the realized win rate by tier, show the 95% confidence band on every number, and plot calibration so you can see the score actually ranks coins by odds. The edge only counts if conviction beats blind buying — and we show it even when it doesn't.</p>
 			<div id="edgeWrap"></div>
 		</section>
 
 		<!-- AGENTS LEADERBOARD -->
-		<section class="view" id="view-agents">
+		<section class="view" id="view-agents" role="tabpanel" aria-labelledby="tab-agents" tabindex="0">
 			<p class="intro" data-i18n="oracle.oracle_agents_ranked_by_their_real_convictio">Oracle agents ranked by their real conviction track record — every call graded against ground truth. Only agents with resolved outcomes are shown. Subscribe to copy the best-performing ones.</p>
 			<div class="lwrap" id="agentLeadWrap"></div>
 		</section>
 
 		<!-- ACTIVITY FEED -->
-		<section class="view" id="view-activity">
+		<section class="view" id="view-activity" role="tabpanel" aria-labelledby="tab-activity" tabindex="0">
 			<p class="intro" data-i18n="oracle.every_oracle_armed_agent_action_in_real">Every Oracle-armed agent action in real time — what the autonomous trading floor is buying, what resolved to wins, what didn't. Simulated and live actions together.</p>
 			<div class="af-filters">
 				<div class="seg" id="afModeSeg">
-					<button data-afmode="" class="on" data-i18n="oracle.all_4">All</button>
-					<button data-afmode="live" data-i18n="oracle.live">Live</button>
-					<button data-afmode="simulate" data-i18n="oracle.simulate">Simulate</button>
+					<button type="button" data-afmode="" class="on" data-i18n="oracle.all_4">All</button>
+					<button type="button" data-afmode="live" data-i18n="oracle.live">Live</button>
+					<button type="button" data-afmode="simulate" data-i18n="oracle.simulate">Simulate</button>
 				</div>
 				<div class="seg" id="afTierSeg">
-					<button data-aftier="" class="on" data-i18n="oracle.all_tiers">All tiers</button>
-					<button data-aftier="prime" data-i18n="oracle.prime_2">Prime</button>
-					<button data-aftier="strong" data-i18n="oracle.strong_2">Strong</button>
-					<button data-aftier="lean" data-i18n="oracle.lean_2">Lean</button>
+					<button type="button" data-aftier="" class="on" data-i18n="oracle.all_tiers">All tiers</button>
+					<button type="button" data-aftier="prime" data-i18n="oracle.prime_2">Prime</button>
+					<button type="button" data-aftier="strong" data-i18n="oracle.strong_2">Strong</button>
+					<button type="button" data-aftier="lean" data-i18n="oracle.lean_2">Lean</button>
 				</div>
 				<div class="seg" id="afOutcomeSeg">
-					<button data-afoutcome="" class="on" data-i18n="oracle.all_outcomes">All outcomes</button>
-					<button data-afoutcome="open" data-i18n="oracle.open">Open</button>
-					<button data-afoutcome="win" data-i18n="oracle.wins">Wins</button>
-					<button data-afoutcome="loss" data-i18n="oracle.losses">Losses</button>
+					<button type="button" data-afoutcome="" class="on" data-i18n="oracle.all_outcomes">All outcomes</button>
+					<button type="button" data-afoutcome="open" data-i18n="oracle.open">Open</button>
+					<button type="button" data-afoutcome="win" data-i18n="oracle.wins">Wins</button>
+					<button type="button" data-afoutcome="loss" data-i18n="oracle.losses">Losses</button>
 				</div>
 			</div>
 			<div id="afTableWrap"></div>
 			<div class="af-more" id="afMore" style="display:none">
-				<button class="btn" id="afMoreBtn" data-i18n="oracle.load_more">Load more</button>
+				<button type="button" class="btn" id="afMoreBtn" data-i18n="oracle.load_more">Load more</button>
 			</div>
 		</section>
 
 		<!-- AGENT -->
-		<section class="view" id="view-agent">
+		<section class="view" id="view-agent" role="tabpanel" aria-labelledby="tab-agent" tabindex="0">
 			<div class="apanel">
 				<div class="card" id="armCard">
 					<h3 data-i18n="oracle.arm_your_3d_agent">Arm your 3D agent</h3>
@@ -860,27 +869,27 @@
 		</section>
 
 		<!-- PROOF — win gallery -->
-		<section class="view" id="view-proof">
+		<section class="view" id="view-proof" role="tabpanel" aria-labelledby="tab-proof" tabindex="0">
 			<p class="intro" data-i18n="oracle.coins_the_oracle_called_at_conviction_and">Coins the Oracle called at conviction — and how they resolved. Every card shows the score at entry time versus the ground-truth outcome: graduated, ATH multiple, or both. Proof, not promises.</p>
 			<div class="proof-kpis" id="proofKpis" style="display:none"></div>
 			<div class="proof-filters">
 				<div class="seg" id="proofTierSeg">
-					<button data-ptier="" class="on" title="Coins Oracle actually called — Lean tier or above" data-i18n="oracle.called_lean" data-i18n-attr="title:oracle.coins_oracle_actually_called_title">Called (Lean+)</button>
-					<button data-ptier="prime" data-i18n="oracle.prime_3">Prime</button>
-					<button data-ptier="strong" data-i18n="oracle.strong_3">Strong</button>
-					<button data-ptier="lean" data-i18n="oracle.lean_3">Lean</button>
-					<button data-ptier="all" title="Every scored coin, including Watch/Avoid — market context, not proof of edge" data-i18n="oracle.all_scored" data-i18n-attr="title:oracle.every_scored_coin_including_title">All scored</button>
+					<button type="button" data-ptier="" class="on" title="Coins Oracle actually called — Lean tier or above" data-i18n="oracle.called_lean" data-i18n-attr="title:oracle.coins_oracle_actually_called_title">Called (Lean+)</button>
+					<button type="button" data-ptier="prime" data-i18n="oracle.prime_3">Prime</button>
+					<button type="button" data-ptier="strong" data-i18n="oracle.strong_3">Strong</button>
+					<button type="button" data-ptier="lean" data-i18n="oracle.lean_3">Lean</button>
+					<button type="button" data-ptier="all" title="Every scored coin, including Watch/Avoid — market context, not proof of edge" data-i18n="oracle.all_scored" data-i18n-attr="title:oracle.every_scored_coin_including_title">All scored</button>
 				</div>
 				<div class="seg" id="proofPeriodSeg">
-					<button data-pperiod="7d" data-i18n="oracle.7d">7d</button>
-					<button data-pperiod="30d" class="on" data-i18n="oracle.30d">30d</button>
-					<button data-pperiod="90d" data-i18n="oracle.90d">90d</button>
-					<button data-pperiod="all" data-i18n="oracle.all_time">All time</button>
+					<button type="button" data-pperiod="7d" data-i18n="oracle.7d">7d</button>
+					<button type="button" data-pperiod="30d" class="on" data-i18n="oracle.30d">30d</button>
+					<button type="button" data-pperiod="90d" data-i18n="oracle.90d">90d</button>
+					<button type="button" data-pperiod="all" data-i18n="oracle.all_time">All time</button>
 				</div>
 			</div>
 			<div class="proof-grid" id="proofGrid"></div>
 			<div class="proof-load-more" id="proofLoadMore" style="display:none">
-				<button class="btn" id="proofLoadMoreBtn" data-i18n="oracle.load_more_wins">Load more wins</button>
+				<button type="button" class="btn" id="proofLoadMoreBtn" data-i18n="oracle.load_more_wins">Load more wins</button>
 			</div>
 		</section>
 
@@ -895,7 +904,7 @@
 		<div class="dr-panel" role="dialog" aria-modal="true" aria-label="Coin conviction detail">
 			<div class="dr-head">
 				<h3 id="drTitle">—</h3>
-				<button class="dr-x" data-close aria-label="Close" data-i18n-attr="aria-label:oracle.close_arialabel">✕</button>
+				<button type="button" class="dr-x" data-close aria-label="Close" data-i18n-attr="aria-label:oracle.close_arialabel">✕</button>
 			</div>
 			<div class="dr-body" id="drBody"></div>
 		</div>

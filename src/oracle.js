@@ -497,7 +497,7 @@ function switchView(view, { updateHash = true } = {}) {
 	if (view === 'movers' && !$('#moversGrid').dataset.loaded) loadMovers();
 	if (view === 'wallets' && !$('#walletWrap').dataset.loaded) loadWallets();
 	if (view === 'edge' && !$('#edgeWrap').dataset.loaded) loadEdge();
-	if (view === 'proof' && !$('#proofGrid').dataset.loaded) loadProof();
+	if (view === 'proof' && !$('#proofGrid').dataset.loaded) loadProof(true);
 	if (view === 'agents' && !$('#agentLeadWrap').dataset.loaded) loadAgentLeaderboard();
 	if (view === 'activity' && !$('#afTableWrap').dataset.loaded) loadActivity(true);
 	if (view === 'agent' && !$('#armBody').dataset.loaded) loadAgentPanel();
@@ -1483,13 +1483,25 @@ async function loadEdge() {
 	const wrap = $('#edgeWrap');
 	wrap.dataset.loaded = '1';
 	wrap.innerHTML = '<div class="state">Loading performance data…</div>';
-	const { ok, data } = await api(`/api/oracle/backtest?period=30d&network=${NETWORK}`);
+	const { ok, status, data } = await api(`/api/oracle/backtest?period=30d&network=${NETWORK}`);
 	if (ok && data) {
 		_backtest = data;
 	} else if (!_backtest) {
-		// Fallback: try to get the old format from the feed
-		const { data: feed } = await api(`/api/oracle/feed?network=${NETWORK}&limit=1`);
-		if (feed?.backtest) _backtest = { by_tier: feed.backtest, aggregate: null, top_performers: [] };
+		// Fallback: the feed carries the older by-tier rows.
+		const { ok: feedOk, data: feed } = await api(`/api/oracle/feed?network=${NETWORK}&limit=1`);
+		if (feed?.backtest) {
+			_backtest = { by_tier: feed.backtest, aggregate: null, top_performers: [] };
+		} else if (!feedOk) {
+			// Neither source answered: report the outage, never the honest-but-
+			// wrong "the edge is still proving itself".
+			wrap.dataset.loaded = '';
+			return renderFailure(wrap, {
+				title: 'Could not load the performance record',
+				status,
+				retryId: 'edgeRetry',
+				onRetry: loadEdge,
+			});
+		}
 	}
 	renderEdge();
 }
