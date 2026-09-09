@@ -562,8 +562,8 @@ async function getEvmBalances(address) {
 // failover (api/_lib/evm/rpc.js, same list every other EVM caller uses); token
 // discovery comes off Blockscout's public Ethereum instance, whose
 // `/addresses/:a/tokens?type=ERC-20` page is already ordered by USD value and
-// carries decimals, price and icon per row, so one page covers what a portfolio
-// view renders. A wallet holding more than KEYLESS_TOKEN_PAGE priced tokens is
+// carries decimals, price and icon per row, so its first page (50 holdings)
+// covers what a portfolio view renders. A wallet holding more than that is
 // truncated by value, which buildOverview already reports as `truncated`.
 const BLOCKSCOUT_ETH = 'https://eth.blockscout.com/api/v2';
 const KEYLESS_RPC_TIMEOUT_MS = 6000;
