@@ -28,7 +28,8 @@ so it cannot quietly go out of date.
 | The address of your home and the label you gave it | `home_connections` | To reach your Home Assistant at all | Until you delete the home | Delete the home, delete your account |
 | Your Home Assistant access token, encrypted | `home_connections.access_token_enc` | Home Assistant requires it on every connection, so we have to be able to replay it | Erased the moment you disconnect, before the row itself goes | Disconnect, delete the home, delete your account |
 | What your instance turned out to be: version, entity and area **counts**, whether it exposes MCP | `home_connections.capabilities` | So the connect screen and the agent can tell you what is available instead of guessing | Until the home is deleted | Delete the home, delete your account |
-| **The names of your rooms, devices and scenes** | **nowhere** | To draw your home and understand what you ask for | **Never stored.** Read live and held in memory only while the connection is open | Nothing to delete |
+| **The names of your devices and scenes** | **nowhere** | To draw your home and understand what you ask for | **Never stored.** Read live and held in memory only while the connection is open | Nothing to delete |
+| The names of your rooms | **nowhere**, with one exception below (`home_layouts`) | Same | **Not stored** as the label you see. If you author a floorplan, the room identifier Home Assistant already derived from that name is kept as a map key | Delete the floorplan, delete the home, delete your account |
 | **Whether a light is on, a door is locked, a room is warm** | **nowhere** | To render your home live | **Never stored.** See the promise above | Nothing to delete |
 | Who else you gave access to, and their role | `home_members` | So a household or a building can share one home without sharing one login | Until the member is removed or the home is deleted | Remove the member, delete the home, delete your account |
 | The email address of someone you invited | `home_invites` | To send and honour an invitation | Until accepted, revoked or expired | Revoke the invite, delete the home, delete your account |
@@ -36,6 +37,7 @@ so it cannot quietly go out of date.
 | A short-lived pairing code (as a one-way digest) for a LAN-only home | `home_relay_pairings` | To introduce the add-on inside your house to your account, once | Ten minutes, single use | Redemption, expiry, deleting the home or your account |
 | A voice satellite you set up: its name, the room you named, which agent appears on it, and the encrypted key that lets a browser in that room attach | `home_satellites` | So a speaker in a room can carry your agent, and a screen on the same network can show it even when three.ws is unreachable | Until you remove the satellite | Remove the satellite, delete your account |
 | A short-lived satellite setup code (as a one-way digest) | `home_satellite_codes` | To claim a satellite you are setting up, once | Until claimed or expired; expired unclaimed codes are swept daily | Claiming it, the sweep, deleting your account |
+| A floorplan you drew: where each room sits and how big it is | `home_layouts` | So your home renders as your home instead of a default grid, on every device you sign in from | Until you clear the floorplan or the home is deleted | Clear the floorplan, delete the home, delete your account |
 | A per-account limit an administrator agreed with you, and the sentence explaining why | `home_plan_overrides` | So an operator whose numbers do not fit a published plan gets the numbers they were promised, on the record | Until removed or your account is deleted | Delete your account, or ask for the override to be removed |
 | A pending request to open something, and the sentence you were shown: "Unlock the Front Door" | `home_confirmations` | So what a human approves and what actually runs cannot drift apart | The request is valid for seconds. The record rides your action-log window | The retention sweep, deleting the home or your account |
 | Every action the agent took: what, to which entities, whether it asked first, whether it worked | `home_action_log` | So you can answer "what did my agent do in my house" without taking our word for it | **Your choice. 90 days by default** | The retention sweep, deleting the home or your account |
@@ -49,8 +51,16 @@ something physical: *"Unlock the Front Door"*. It has to name the thing, because
 approving "unlock entity 4f2a" is not approving anything. That sentence is
 generated on our servers from the entities the safety gate actually resolved, it
 is never model output, and it is the only persisted string in this lane that
-carries a friendly name. It is bounded by your action-log window for exactly
-that reason.
+carries a friendly name as you typed it. It is bounded by your action-log window
+for exactly that reason.
+
+One other persisted string is derived from a name: the keys of
+`home_layouts.layout.rooms`. Those are the area identifiers Home Assistant itself
+generates by slugifying a room's name when the room is created, and they exist
+here only so a saved floorplan can say which room each rectangle belongs to. The
+value under each key is four numbers (position and footprint) and nothing else,
+so a floorplan records the shape of your home and never what is in it or what
+state it is in.
 
 ### Why entity state is not stored, restated
 
