@@ -52,7 +52,9 @@
 	.sm-filter kbd { flex-shrink: 0; display: inline-flex; align-items: center; justify-content: center; min-width: 20px; height: 20px; padding: 0 5px; border: 1px solid rgba(255,255,255,.14); border-radius: 4px; font: 600 11px/1 ui-monospace, SFMono-Regular, Menlo, monospace; color: #7a85a8; }
 	.sm-filter-count { color: #9b9bb7; font-size: 13px; margin: 0 0 20px; min-height: 18px; padding: 0 4px; }
 	#sm-filter-hint { color: #7a85a8; }
-	#sm-filter-hint:not(:empty)::before { content: ' \00b7 '; }
+	/* A CSS escape consumes the space that ends it, so a plain ' \00b7 ' loses
+	   its trailing gap. Non-breaking spaces are not eaten. */
+	#sm-filter-hint:not(:empty)::before { content: '\00a0\00b7\00a0'; }
 	.sm-empty { display: flex; flex-direction: column; align-items: center; gap: 10px; padding: 64px 24px; border: 1px dashed rgba(255,255,255,.12); border-radius: 16px; text-align: center; }
 	.sm-empty p { margin: 0; color: #b6b6cf; font-size: 15px; }
 	.sm-empty .sm-empty-hint { color: #7a85a8; font-size: 13px; }

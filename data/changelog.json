@@ -3,17 +3,6 @@
 	"entries": [
 		{
 			"date": "2026-09-09",
-			"title": "Render Lab: every control leads somewhere, and the contact sheet shows its work",
-			"summary": "Render Lab now behaves when the things it depends on do not. The Open image button no longer sits there looking live before a render exists: it reads as unavailable until there is an image, and goes back to unavailable if the render fails. When no featured avatars come back, the model strip explains that and points at the field and at /create instead of showing a blank row. When the pose catalog cannot be reached, the panel says so and offers a retry rather than a lone None chip that reads like the model has no poses. Contact sheet tiles now shimmer while they render, so a sheet in flight looks like it is working instead of like a grid of empty squares, and a tile the renderer could not produce says so and keeps its label. Where a panel is switched off because the model cannot honor it, the explanation and its escape hatch stay at full strength and stay clickable: the link into Rig Doctor was previously unclickable, and the shortcut to a model with a full face rig now finds one from the live catalog instead of loading a raw file the slow way. Dragging the size slider no longer writes a new address on every step, which Safari eventually refuses outright. Copied links now carry the quality setting, so a link really does reopen the exact configuration. Framing, pose and model options are one stop for keyboard and screen reader users and move with the arrow keys, instead of costing 29 tab presses to walk past. The capabilities endpoint the whole page is built on is now documented in the Media API reference, which is where the page has always linked.",
-			"tags": [
-				"fix",
-				"improvement",
-				"docs"
-			],
-			"link": "/render-lab"
-		},
-		{
-			"date": "2026-09-09",
 			"title": "The retired Flappin UFO page is readable in light mode, and its two bottom-corner controls stopped sitting on top of each other",
 			"summary": "A full audit of /play/ufo, the page that stands where the retired Flappin UFO arcade demo used to be. In light mode its headline was painted in a violet-to-cyan gradient that all but vanished against the white card, the Retired badge and the Still live label were too pale to read, and the keyboard focus ring was that same near-invisible cyan, so tabbing through the page showed you nothing. All four now clear the contrast bar in both themes. The three links to the experiences that are still live were 37 pixels tall and the three.ws logo link was 21, both under the 44 pixels a thumb needs; every link on the page now clears it. The language picker and the Ctrl+K search hint were both pinned to the bottom right corner and overlapped each other, because this page carries its own compact header instead of the site nav that normally arranges that corner; they now stack. Two fixes from this audit land site-wide: the search hint was drawing dark text on its dark default pill on every light-themed page that does not define the site's surface colors, and neither floating control could be reached by screen reader landmark navigation. The page copy also lost the long dash the house style bans, in English and in all 84 translations.",
 			"tags": [
@@ -27632,6 +27621,26 @@
 				"improvement"
 			],
 			"link": "/pump-visualizer"
+		},
+		{
+			"date": "2026-09-09",
+			"title": "Signal Marketplace: publisher avatars appear, prices read like money, and a feed page no longer goes blank for signed-out readers",
+			"summary": "A full audit of /signals, the directory of paid trading feeds ranked by proven edge. Four real defects came out of it. Every publisher without a profile picture showed an empty grey square: the generated fallback avatar is an image, and the card was assigning it to a CSS background, which browsers ignore, so it never painted. A publisher whose profile picture had gone missing showed the browser's broken-image icon; both now render as an image that quietly falls back to the generated avatar. Prices were printed as raw numbers, so a feed charging 12.345678 USDC advertised exactly that; amounts are now grouped and rounded the way money reads, while a genuine sub-cent price keeps its digits instead of rounding to zero. Subscriber counts skipped the same shortening every other number on the card uses and printed as 1234567. Worst of all, opening any live feed's own page while signed out crashed the render and left a blank panel where the sign-in prompt belongs, which is exactly the reader that panel exists to convert. Each card's screen-reader description now carries every number a sighted reader sees (rank, edge, hit rate, average ROI, signal counts, subscribers and price) instead of just the headline score, and the loading skeleton's shimmer now sweeps across the card rather than starting halfway off it.",
+			"tags": [
+				"fix",
+				"improvement"
+			],
+			"link": "/signals"
+		},
+		{
+			"date": "2026-09-09",
+			"title": "Oracle: a failed request now says so, instead of claiming no coins have been scored",
+			"summary": "A full audit of /oracle, the fused conviction board for pump.fun launches. When a panel's request failed, the page told you the opposite of the truth: the live feed claimed \"Oracle is warming up\" and said the engine ships with its backend, the movers, proof, agent-ranking, activity and 3D-graph panels each claimed there was simply nothing to show, and the performance record said the edge was still proving itself. Every one of those is now a real error state that names what went wrong (offline, rate limited, or an engine error) and offers a retry that actually recovers. The Proof gallery had a second bug behind that one: opening it for the first time while the request failed painted nothing at all, not even a skeleton. Searching a symbol Oracle has not scored used to make the results dropdown vanish with no explanation, which reads as a broken search box; it now says there is no match, and says so differently when search itself is down. The conviction-breadth bar's tier segments and legend chips were 10 and 15 pixels tall, too small to reliably tap on a phone, and now carry a full 24-pixel target without changing how the bar looks. Screen readers can finally move from a tab into the panel it opens, every button declares its type, and if a browser is holding a cached copy of an older release the 3D graph explains that and offers a reload instead of retrying a module that can never load.",
+			"tags": [
+				"fix",
+				"improvement"
+			],
+			"link": "/oracle"
 		}
 	]
 }

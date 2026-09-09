@@ -15,6 +15,8 @@ This page maps those paths, names the file that owns each one, and describes the
 
 Sitemaps are generated per entity type by [api/sitemap/[type].js](../api/sitemap/%5Btype%5D.js): `core` reads `data/pages.json`, the entity sitemaps read the database, and `news` reads the archive. `sitemap.xml` is the index over all six.
 
+The human-readable counterpart is [/sitemap](https://three.ws/sitemap), a fully static page written by [scripts/build-page-index.mjs](../scripts/build-page-index.mjs) from the same `data/pages.json`. It ships every catalogued page as real HTML (no fetch, so a crawler and a reader see the same thing), grouped by section, with a "Newest" strip of the most recently added pages and a client-side filter over titles, paths and descriptions. The filter is token-based, so `studio avatar` and `avatar studio` return the same rows; it mirrors the query into `?q=`, so `/sitemap?q=wallet` is a shareable link, and `Enter` opens the first match. Regenerate it with `npm run build:pages` after any `data/pages.json` edit; the script is idempotent and reports which files it rewrote.
+
 ## Contract 1: a page and its manifest entry must agree
 
 `data/pages.json` decides what is submitted to search engines. The page itself decides what a crawler may do once it arrives. When those disagree the crawler obeys the page, and Search Console records the difference as an error against the site.

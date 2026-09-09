@@ -366,6 +366,10 @@ ${items}
 \t.sm-filter input::-webkit-search-cancel-button { cursor: pointer; }
 \t.sm-filter kbd { flex-shrink: 0; display: inline-flex; align-items: center; justify-content: center; min-width: 20px; height: 20px; padding: 0 5px; border: 1px solid rgba(255,255,255,.14); border-radius: 4px; font: 600 11px/1 ui-monospace, SFMono-Regular, Menlo, monospace; color: #7a85a8; }
 \t.sm-filter-count { color: #9b9bb7; font-size: 13px; margin: 0 0 20px; min-height: 18px; padding: 0 4px; }
+\t#sm-filter-hint { color: #7a85a8; }
+\t/* A CSS escape consumes the space that ends it, so a plain ' \\00b7 ' loses
+\t   its trailing gap. Non-breaking spaces are not eaten. */
+\t#sm-filter-hint:not(:empty)::before { content: '\\00a0\\00b7\\00a0'; }
 \t.sm-empty { display: flex; flex-direction: column; align-items: center; gap: 10px; padding: 64px 24px; border: 1px dashed rgba(255,255,255,.12); border-radius: 16px; text-align: center; }
 \t.sm-empty p { margin: 0; color: #b6b6cf; font-size: 15px; }
 \t.sm-empty .sm-empty-hint { color: #7a85a8; font-size: 13px; }
@@ -422,7 +426,7 @@ ${items}
 \t\t\t<input id="sm-filter-input" type="search" placeholder="Filter ${totalPages} pages by name, path, or description…" aria-label="Filter pages" autocomplete="off" spellcheck="false" />
 \t\t\t<kbd id="sm-filter-kbd" aria-hidden="true">/</kbd>
 \t\t</div>
-\t\t<p class="sm-filter-count" id="sm-filter-count" role="status" aria-live="polite"></p>
+\t\t<p class="sm-filter-count" role="status" aria-live="polite"><span id="sm-filter-count"></span><span id="sm-filter-hint" aria-hidden="true"></span></p>
 \t\t<section class="sm-new" id="sm-new" aria-labelledby="sm-new-title">
 \t\t\t<h2 id="sm-new-title">Newest<a class="sm-new-more" href="/changelog">full changelog &rarr;</a></h2>
 \t\t\t<p class="sm-section-desc">The ${newestPages.length} most recently launched pages, straight to the live surface.</p>
@@ -456,6 +460,7 @@ ${sectionHtml}
 \t\tvar emptySearch = document.getElementById('sm-empty-search');
 \t\tvar toc = document.querySelector('.sm-toc');
 \t\tvar kbdHint = document.getElementById('sm-filter-kbd');
+\t\tvar hintEl = document.getElementById('sm-filter-hint');
 \t\tvar groups = Array.prototype.map.call(document.querySelectorAll('.sm-section'), function (sec) {
 \t\t\treturn {
 \t\t\t\tsec: sec,
@@ -524,8 +529,11 @@ ${sectionHtml}
 \t\t\t// floating above the no-results panel.
 \t\t\tif (toc) toc.hidden = sectionsShown === 0;
 \t\t\tcountEl.textContent = filtering
-\t\t\t\t? shown + ' of ' + total + ' pages match' + (shown ? ' \\u00b7 press Enter to open the first' : '')
+\t\t\t\t? shown + ' of ' + total + ' pages match'
 \t\t\t\t: total + ' pages \\u00b7 ' + groups.length + ' sections';
+\t\t\t// Decorative, and outside the announced text: the live region would
+\t\t\t// otherwise repeat the whole hint on every keystroke.
+\t\t\tif (hintEl) hintEl.textContent = filtering && shown ? 'press Enter to open the first' : '';
 \t\t\tif (kbdHint) kbdHint.textContent = filtering && shown ? '\\u21b5' : '/';
 \t\t\temptyQ.textContent = q;
 \t\t\tempty.hidden = !filtering || shown > 0;
