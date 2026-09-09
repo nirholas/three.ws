@@ -257,8 +257,27 @@ calibrated and it is the lane's output that is failing it.
 
 ## Pricing and the rotating free subset
 
-Generated clips are listed in the marketplace under the platform creator (`three`)
-and are paid by default. A fixed-size subset is free for one epoch at a time.
+**Not shipped, and deliberately so.** The pricing policy below is decided and its
+mechanism is written and tested, but nothing lists generated clips for sale yet:
+`api/marketplace/animations.js` serves creator listings out of `animation_clips`
+and no generated clip has a row. Wiring it is held until the repair pass above has
+run, because 94 of the 133 clips currently live do not meet the platform's own
+quality bar and selling them would be selling a defect. The order is repair,
+republish, then list.
+
+The policy, when it is wired: generated clips are listed under the platform
+creator and are paid by default, and a fixed-size subset is free for one epoch at
+a time.
+
+The sellable artifact is **not** the clip JSON. That is already public and free,
+it drives every avatar on the site, and it is useless outside three.ws. It is the
+motion baked onto the platform rig as one portable GLB a buyer can open in
+Blender, Unity or Unreal: `bakeMotionGlb` (`api/_lib/motion-glb.js`) writes it by
+appending keyframe accessors to the rig's own glTF container, so nothing is
+decoded and a meshopt-compressed rig survives untouched. It retargets through
+`src/animation-retarget.js` first, and rebases a legacy clip on the way, because
+writing library rotations onto a differently-resting rig is what produces the
+folded-legs pose described above.
 
 The subset is chosen by hashing each clip name together with the epoch number
 (`freeClipNames`). That makes it deterministic, so every server instance agrees
