@@ -3,13 +3,12 @@
 	"entries": [
 		{
 			"date": "2026-09-09",
-			"title": "Three fades now stop when you ask the site to stop moving",
-			"summary": "Turn on reduced motion in your operating system and three.ws is supposed to hold still: every animation timing on the site is named rather than spelled out, so one switch can zero all of them at once. Three places had drifted off that and spelled their own timing instead, which meant the object library card fade, the avatar picker chips and the Money Pulse rows kept animating for people who had explicitly asked them not to. One of them was pointing at a timing name that does not exist, so the value it fell back to was never the one anyone chose. All three are back on the named ladder at the same speed they always looked, and the reduced-motion switch reaches them again.",
+			"title": "Paid 3D services now refuse a job they cannot deliver, instead of charging for it",
+			"summary": "The paid three.ws forge services sold to other AI agents charge the moment the generator accepts a job, and the finished model reaches the buyer only after it lands in our delivery storage. When that storage stopped accepting writes, jobs were still being accepted and charged while no model could ever be handed back. Those services now check that delivery storage is writable before they take the job: if it is not, the call is refused, says so, and is not charged. The check is cached and ignores a one-off blip, so a passing wobble never stops the services selling. The free public health page also had a bug where a storage failure replaced the name of the failing subsystem with the storage provider's error code and printed the request's signing details; it now names the subsystem and reports the reason alone.",
 			"tags": [
 				"fix",
-				"improvement"
-			],
-			"link": "/objects"
+				"security"
+			]
 		},
 		{
 			"date": "2026-09-09",
