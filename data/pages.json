@@ -1272,7 +1272,7 @@
 				{
 					"path": "/playground",
 					"title": "Playground",
-					"description": "Sandbox for experimenting with agents, prompts, and 3D scenes.",
+					"description": "Sandbox for 3D scenes: drop in any .glb, play its animations, tune the lighting, and copy a paste-ready embed snippet.",
 					"priority": 0.5,
 					"changefreq": "weekly",
 					"added": "2026-05-25"

@@ -21,7 +21,7 @@ Page source: [`pages/partners.html`](../pages/partners.html). Partnership enquir
 | HackerNoon | Media | `/blog/three-ws-hackernoon-partnership` | [Syndication](./syndication.md), [Listings and distribution](./listings.md) |
 | Quicknode | Infrastructure | `/blog/three-ws-quicknode-startup-program` | [Solana integration](./solana.md), [Listings and distribution](./listings.md) |
 
-The page's stat bar reads 8 partners, 22 chains, and an infinity glyph for scale. It is marked `aria-hidden` and is decorative framing, not a metric to quote.
+The page's stat bar reads 8 partners, 22 chains, and an infinity glyph for scale. It is a `<dl>` and is read out to screen readers like any other content, so the two numbers have to stay true: the partner count is reconciled against the number of cards in the DOM on load, and 22 is the number of chains in `REGISTRY_DEPLOYMENTS` in [`src/erc8004/abi.js`](../src/erc8004/abi.js). The infinity glyph is framing, not a metric; it is announced as "Unbounded".
 
 ---
 
@@ -55,7 +55,7 @@ Live product surfaces: `three.ws/ibm/hello` (the partnership page) and `three.ws
 
 ## Amazon Web Services
 
-**What the page claims.** Deployed on AWS infrastructure with Marketplace availability. Enterprises can provision three.ws agent capabilities directly through their existing AWS billing, with support for VPC deployment and IAM-integrated access control. Card tags: Marketplace, EC2, IAM. The card's link label reads "View on AWS Marketplace" and points at `/aws`.
+**What the page claims.** Deployed on AWS infrastructure with Marketplace availability. Enterprises can provision three.ws agent capabilities directly through their existing AWS billing, with support for VPC deployment and IAM-integrated access control. Card tags: Marketplace, EC2, IAM. The card's link label reads "How we run on AWS" and points at `/aws`, the internal partner page. It used to read "View on AWS Marketplace", which promised an external listing the link never opened; the Marketplace listing itself is covered in [AWS Marketplace](./aws-marketplace.md).
 
 **What the integration is.** The AWS Marketplace SaaS contract is implemented and deployed: a fulfillment endpoint that exchanges the marketplace token for a customer identifier via `ResolveCustomer`, a signature-verified SNS webhook for subscribe and unsubscribe lifecycle events, account linking after the post-subscribe redirect, and daily metering plus entitlement checks. The subscription itself is a free front door: it links an AWS account to a three.ws account and issues an x402 access key, and usage is then paid per call in stablecoin over x402. AWS Marketplace does not meter or bill the usage. Code lives in `api/aws-marketplace/` and `api/_lib/aws-marketplace.js`; the reference is [AWS Marketplace](./aws-marketplace.md).
 
