@@ -304,8 +304,16 @@ function serveFile(req, res, file, headers, status) {
 	// other dot-segment denied. resolveStatic() already confined `file` to
 	// DIST_ROOT, so this loosens nothing else.
 	const dotfiles = file.includes(`${path.sep}.well-known${path.sep}`) ? 'allow' : 'deny';
+	// Send a path RELATIVE to DIST_ROOT. Given an absolute path and no root,
+	// Express applies the dotfiles policy to EVERY segment, including the ones
+	// above dist/ that no request can influence. Served from a checkout under a
+	// dot-directory (every deploy worktree here is named `.deploy-wt*`), that
+	// denied every static file as Forbidden and answered 500, 404.html included,
+	// so a whole site read as broken for a reason nothing in the URL explained.
+	// The policy is about the URL; a root is what scopes it there.
+	const rel = path.relative(DIST_ROOT, file);
 	return new Promise((resolvePromise) => {
-		res.sendFile(file, { dotfiles }, (err) => {
+		res.sendFile(rel, { dotfiles, root: DIST_ROOT }, (err) => {
 			if (err && !res.headersSent) {
 				console.error(`[static] ${req.method} ${req.url} → ${file} failed:`, err.message);
 				res.status(500).end();
