@@ -39,7 +39,7 @@ One section per finished order, newest at the bottom:
 | 07 floorplan editor | built, browser verification blocked, see entry | |
 | 08 voice loop | open | |
 | 09 Wyoming satellite | open | |
-| 10 add-on relay | open | |
+| 10 add-on relay | done, publish + deploy owner-gated | 2026-09-09 |
 | 11 security | done | 2026-09-09 |
 | 12 households and RBAC | done | 2026-09-03 |
 | 13 observability | done, Cloud Scheduler job owner-gated | 2026-09-03 |
@@ -48,7 +48,7 @@ One section per finished order, newest at the bottom:
 | 16 test program | open | |
 | 17 a11y, i18n, mobile | open | |
 | 18 docs and SDK | docs done, npm publish owner-gated | 2026-09-03 |
-| 19 plans and entitlements | built and verified, browser journeys queued, price owner-gated | 2026-09-09 |
+| 19 plans and entitlements | built and verified, browser journeys green, price owner-gated | 2026-09-09 |
 | 20 launch readiness | standing | |
 | 21 Matter direct | done, documented negative | 2026-09-03 |
 
@@ -1463,3 +1463,200 @@ read the restored order files rather than trusting a sweep that called them exec
   `done`. An order whose stated acceptance evidence does not reproduce at HEAD is not retired.
   Whoever fixes the 409 should re-run `tests/home-security.test.js` against a live house and
   retire the file in that commit.
+
+## 10. The dial-out add-on and relay for LAN-only homes (2026-09-09)
+
+**Shipped:** every task in this order was already on disk, built by the sessions whose own orders
+depended on it: `services/home-relay/` (the pure `protocol.js` that owns the allowlist, `server.js`,
+`token.js`, a Dockerfile and a `cloudbuild.yaml` with both service accounts pinned),
+`packages/home-bridge/src/transport-relay.js`, the `transport` / `relay_id` half of
+`api/_lib/home/store.js` and `runtime.js`, `api/_lib/home/relay.js`, `api/home/pair.js` and
+`api/home/pair/redeem.js`, the seven-state `src/home/pair.js`, `home-assistant-integration/` (a
+HACS custom integration rather than an add-on, because add-ons only work on OS and Supervised
+installs while an integration works on all four and HACS distributes integrations), and
+`docs/home-relay-threat-model.md`. What did not exist was a run: the rig scripts were there, but
+nothing in the repository showed the relay had ever carried a real light, a real door, or the
+status code a client actually receives. This session ran the whole thing three times against a real
+Home Assistant the caller cannot route to, and added the one proof the rig was missing.
+
+**Measured:** all against Home Assistant 2026.9.0 in the two-network rig
+(`node scripts/home-relay-live.mjs`), on the live Neon database. The final run is **8/8** at the rig
+level, with **10/10** and **12/12** inside its two proofs. The house is a container on
+`house-net` with NO published port; the relay and every caller live on `cloud-net`; Docker refuses
+to route between two user-defined bridges, so the only path is the socket the house opens outbound
+to the relay's host-published port. Every proof runs from `cloud-net` and begins by failing to
+reach the house.
+
+- **The isolation, measured rather than assumed.** A container on `cloud-net` fetching
+  `http://172.20.0.2:8123` (the house's address on `house-net`): `BLOCKED TimeoutError`. The
+  end-to-end script repeats the same check from its own process and exits rather than reporting a
+  success if the house ever answers.
+- **Pairing is real, through the integration's own config flow.** The rig serves the actual
+  `/api/home/pair/redeem` handler, mints a code with `startPairing`, and posts it into
+  `POST /api/config/config_entries/flow` inside Home Assistant. Result: `create_entry`, config
+  entry "Unroutable house". Nothing was written into `.storage` by hand.
+- **A relayed home stores no Home Assistant credential.** The row, verbatim:
+  `transport=relay relay_id=hr_fHiM5Y63Vdea9smRPeyfpx_e base_url=relay://hr_fHiM5Y63Vdea9smRPeyfpx_e
+  access_token_enc="" token_fingerprint=""`.
+- `scripts/home-relay-e2e.mjs`, from `cloud-net`: **10/10**, twice. Connected through the relay,
+  toggled a real light, an unconfirmed unlock refused with `needs_confirmation`, a confirmed one
+  really unlocked, and the relay refused all four out-of-allowlist shapes (`get_services`, a bare
+  `subscribe_events`, `shell_command.*`, `homeassistant.restart`) while still carrying `get_config`
+  on the same raw channel, so the refusals are the allowlist working and not a broken pipe.
+- `scripts/home-relay-gate-proof.mjs`, from `cloud-net`: **12/12**. The order 04 gate at the layer
+  the product runs. `home_status` read the house (4 rooms, 67 entities, 4 locks, not stale);
+  `lock.lock` ran with no prompt; `lock.unlock` returned `pending_confirmation` and the door stayed
+  `locked`; the claim redeemed once and the real door opened; the replay was refused.
+- **The gate over real HTTP, which is new in this session.** Everything above ran the tool layer
+  in-process, and the status a client sees is decided in `api/home/[id]/call.js`. The script now
+  binds that handler to a real port and drives it with a real session cookie and a real CSRF token:
+  `POST /api/home/:id/call` with an unconfirmed unlock answered
+  `HTTP 409 "needs_confirmation" pending={"domain":"lock","service":"unlock","entityId":"lock.front_door","risk":"security",...}`,
+  the door read `locked` afterwards, and the same call with a person's `confirmed: true` answered
+  `HTTP 200 confirmed=true risk=security` and `lock.front_door: locked -> unlocked`. The real door.
+- **The audit trail is indistinguishable between transports.** The relayed run wrote eight rows,
+  ids 2133 to 2140, every core column populated on every one: the ungated `lock.lock` (`actor:
+  agent, guarded: false, outcome: ok`), the agent's refused unlock (`guarded: true, risk: security,
+  outcome: refused, detail.reason: awaiting_confirmation`), the redeemed one (`actor: user,
+  confirmed_by: <owner>, outcome: ok`), the replay (`detail.reason: confirmation_replayed`), then
+  the HTTP pair: the 409 (`outcome: refused, detail.code: needs_confirmation`) and the confirmed
+  unlock (`confirmed_by: <owner>, detail.via: session, latencyMs: 2004`). A direct-transport home on
+  a locally reachable instance, driven through the same script, wrote the same rows with the same
+  columns populated, ids 1998 to 2002. The one asymmetry is the script's own first assertion,
+  "three.ws holds no way to dial this house directly", which the direct home correctly FAILS: it has
+  a `base_url` and an encrypted token, and the relayed one has `relay://<id>` and two empty
+  strings.
+- **Offline and recovery.** `docker stop` on the house: the relay reported it disconnected inside
+  the heartbeat window. `docker start`: it reconnected by itself, nothing re-paired, nothing done on
+  the three.ws side.
+- **Pairing refusals**, `npx vitest run tests/home-relay-pairing.test.js` with `DATABASE_URL`:
+  **17 passed**, live tier included. Reuse -> `already_redeemed` 409; expiry -> `expired` 410;
+  five wrong guesses -> `too_many_attempts` 429; a refreshed code kills the previous one; a stranger
+  refreshing someone else's pairing -> 404; and an install token minted for home A names A's relay
+  id and home id and never B's, which is the cross-tenant boundary the relay verifies on every
+  dial-in.
+- `npx vitest run tests/home-relay-protocol.test.js tests/home-relay-transport.test.js
+  packages/home-bridge`: **81 passed, 8 skipped**. `npm run audit:docs`: clean, 1,590 files.
+  `npm run check:rules --paths <the three files touched>`: clean.
+- **Nothing above the transport changed.** The word "relay" appears zero times in
+  `api/_lib/home/tools.js`, `packages/home-bridge/src/rooms.js`, `intents.js`, `safety.js`,
+  `src/home/scene.js`, `scene-model.js`, `connect.js` and `manage.js`. Its nine occurrences in
+  `bridge.js` are the transport injection point and its doc comment. The two allowlist copies are
+  byte-identical (`ba9634045e146e5c8d1e08ac67d6d56c`).
+
+**Deviations:** two, both in the order file's framing rather than the design.
+
+1. The order asks for "the add-on". The shipped thing is a **custom integration**, which is what
+   the community expects for this shape and what HACS distributes. An add-on would only work on OS
+   and Supervised installs. `STRUCTURE.md` records the reason.
+2. "A guarded unlock returns 409" was true but unproven: every prior transcript stopped at the tool
+   layer, which returns `pending_confirmation`, and the 409 lives one layer up. It is proven now.
+
+**Two things a reader should not rediscover:** `settleLock` waits for a state, it does not set one,
+so a section that needs a locked door has to lock it; and a CSRF token is consumed by the request
+that presents it (`requireCsrf` validates and deletes in one statement), so a second POST reusing
+one reads as a 403 that looks exactly like a gate failure. Both cost a rig run here.
+
+**Left open: two owner actions, and they are the same message.** Neither is a code gap; both are
+the publish gate.
+
+1. **Create and push `github.com/nirholas/three-ws-home-assistant`** (currently 404). The contents
+   are ready at `home-assistant-integration/`: `hacs.json`, `custom_components/three_ws/` with
+   `manifest.json` at version 1.0.0, LICENSE, README and `info.md`. Repository creation is
+   owner-gated and this Codespace's token cannot create repositories. Four docs already point users
+   at that URL.
+2. **Deploy the relay.** `services/home-relay/cloudbuild.yaml` carries the one-time secret setup and
+   the submit command in its header. Nothing is deployed yet: `home-relay.three.ws` does not answer,
+   and `HOME_RELAY_URL` is not set on `three-ws-api`, so `isRelayConfigured()` is false in
+   production and the connect UI correctly says the dial-out path is not offered there. gcloud auth
+   in this Codespace had expired, so the service list could not be enumerated from here.
+
+**Commits:** this entry, with `scripts/home-relay-gate-proof.mjs` (the HTTP section),
+`scripts/home-relay-live.mjs` (passes `JWT_SECRET` through for it) and `docs/home-relay.md`.
+
+---
+
+**Addendum, 2026-09-09, a later session: the two queued browser journeys ran, and the flagged
+regression did not reproduce.**
+
+- **The order's browser line is now met.** `tests/e2e/home-plan.spec.js` executed against a real
+  API, a real Vite frontend and a real Home Assistant 2026.9.0 (`plan19b`, 125 entities) on
+  dedicated ports: **2 passed**. `test-results/home-plan-quotas.png` shows all seven dimensions
+  with real usage (`Connected homes 1 of 25`), the real reset date (`Monthly allowances reset on
+  October 1`), the active per-account override rendered as "This account has agreed limits" with
+  the three dimensions it raises, and both commitments printed under "What a limit can never do".
+  `test-results/home-plan-paused.png` shows commitment 2 on screen: the row kept, badged PAUSED,
+  reading "You paused this home to make room for another one.", Open disabled, "Make live" offered,
+  and `Connected homes` recounted to `0 of 25`.
+- **Journey 2 was failing for a real reason and was rewritten, not patched.** It posted to
+  `/api/home/plan` directly and got a 403: that route is CSRF-guarded like every other state
+  change, and a raw `page.request.post` carries the session cookie without the header. Minting a
+  token inside the spec would have made it pass while testing a path no user takes, so the journey
+  now clicks the page's own Pause and Make live buttons, which exercises the token mint in
+  `src/home/api.js` on the way through. It also now asserts `revoked_at` is still null, which is
+  the half of commitment 2 that "the row is still there" does not cover.
+- **The documented re-run command could not work, and now does.** The Playwright process itself had
+  no `DATABASE_URL`: only the API child process is started with `--env-file=.env.local`, while the
+  global setup provisions QA accounts and the specs read home rows from the parent. Every run died
+  before the first browser opened with `Missing required env var: DATABASE_URL` thrown from
+  `api/_lib/env.js`, which reads as a product bug. `playwright.home.config.js` now loads
+  `.env.local` then `.env` with the same precedence as `scripts/apply-migrations.mjs`, so an
+  exported value still wins. `npm run test:home:e2e` never hit this because it already runs under
+  `node --env-file=.env.local`; the bare `npx playwright test --config ...` form, which this
+  file and `docs/home-scene.md` both document, always did.
+- **The 502 in the campaign entry's finding 2 does not reproduce at HEAD.** No commit has touched
+  `call.js`, `access.js`, `entitlements.js` or `turn-gate.js` since `f76680425`, so the code under
+  test is byte-identical to what that session ran. Against a fresh `plan19b` house,
+  `tests/home-security.test.js -t "still tells that token to go and ask a person"` passes, and the
+  whole bearer-principal group (`-t token`) is **10 passed**: `[key holding home:act, no flag]`
+  returns **409 `needs_confirmation`** and the door stays locked. The reported symptom is also
+  internally inconsistent with the handler: a genuine 502 comes from `acquire()` failing before
+  `bridge.call`, and that branch logs `outcome: 'failed'` with the transport code, so it cannot
+  have written the `refused` / `needs_confirmation` row that entry cites. The likeliest reading is
+  a house that had stopped answering under load plus a log row left by an earlier passing run.
+  Order 11's stated acceptance evidence therefore does reproduce, and `308-home-11-security.md` is
+  clear on this count as far as this order is concerned.
+
+**What this session added rather than merely verified.**
+
+- **The order's most important line is now a repeatable test instead of a transcript.** The three
+  safe-actions-over-quota proofs existed only as ad-hoc output in a session log, which is a proof
+  nobody can re-run. `tests/home-turn-gate.test.js` gained a live block that creates a real account,
+  writes an override of `0` on every dimension, pauses its real home, and then drives
+  `lock.lock` (unlocked to locked), `cover.close_cover` (open to closing) and
+  `alarm_control_panel.alarm_arm_away` (disarmed to arming) through `runHomeTool` against the real
+  house, asserting each device's state read back out of Home Assistant. It checks both gates in the
+  order a request meets them (`shouldRefuseHomeCall`, then `assertHomeActionAllowed`) and, in the
+  same moment on the same account, asserts that `light.turn_on` and `lock.unlock` are both still
+  refused: an exemption that is not selective is just a broken gate. **24 passed** live.
+- **The demo alarm needs its code, and that is realistic rather than a workaround.** This house's
+  panel reports `code_arm_required` and answers 500 to a bare `alarm_arm_away`; the code rides in
+  the call's `data`, where a real user's panel code rides, and it changes nothing about the
+  classification, which is made from the domain and the service alone.
+- **Two other live blocks in this lane could never run, and now do.** `tests/home-tools.test.js` and
+  the live block of `tests/api-home.test.js` both call `createConnection`, which encrypts the
+  connection token, and neither armed a key: on a machine with neither `WALLET_ENCRYPTION_KEY` nor
+  `JWT_SECRET` set they failed the whole suite with `Missing required env var: JWT_SECRET` raised
+  from `secret-box`. Both now generate a per-run key and unstub it, matching the idiom already in
+  `tests/home-security.test.js`. `home-tools` went from failing at setup to **25 passed**.
+- **A cross-file collision on the shared house was found and removed.** vitest runs test files in
+  parallel and every live block in this lane drives the SAME physical Home Assistant, so the new
+  block taking the first lock made `tests/home-tools.test.js` read `locking` where it expected
+  `locked`. The new block now takes a lock that is not the first one. All six lane files then pass
+  together: **324 passed, 2 skipped** live, and **292 passed, 34 skipped** in the shape `npm test`
+  runs (no `DATABASE_URL`, no house).
+- **`HOME_ALLOW_LOCAL_INSTANCE` must be exported before the run, and the failure now says so.**
+  `api/_lib/home-url-guard.js` reads it into a module-level constant when first imported, which
+  happens above the helper that would otherwise arm it, so a value set inside the run arrives too
+  late and every call is refused as a private address. The live block fails with that sentence
+  instead of the symptom.
+- **`docs/home-plans.md` gained a "How the two commitments are verified" section** with both
+  runnable commands, the `HOME_ALLOW_LOCAL_INSTANCE` trap, and why the journey clicks rather than
+  posts. `npm run audit:docs`: clean (1590 files). `npm run check:rules` on all six touched paths:
+  clean.
+
+**Still open, and it is the one thing this order was never allowed to decide: the price.** The
+mechanism is complete and every number is a config value, so applying an approved number is an env
+change on the Cloud Run service (`HOME_LIMIT_<TIER>_<DIMENSION>`), not a deploy. The proposed table
+is in `docs/home-plans.md` with a measured cost behind every dimension. `313-home-19-plans-entitlements.md`
+therefore stays on disk, per its own retirement clause.

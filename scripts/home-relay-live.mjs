@@ -148,6 +148,12 @@ async function main() {
 			HOME_RELAY_SERVICE_TOKEN: serviceToken,
 			HOME_RELAY_SIGNING_KEY: signingKey,
 			HOME_ENCRYPTION_KEY: process.env.HOME_ENCRYPTION_KEY || '',
+			// The gate proof's HTTP section mints a real session cookie and a real
+			// CSRF token for the throwaway owner, and both are keyed on this. A
+			// relayed home stores no credential, so nothing else in this rig needs
+			// it and a per-run value is the right scope: the session it signs dies
+			// with the owner this script deletes on the way out.
+			JWT_SECRET: process.env.JWT_SECRET || crypto.randomBytes(32).toString('hex'),
 		});
 
 		await proveKillAndRecover({ relayHostPort, relayId: home.relay_id, serviceToken });

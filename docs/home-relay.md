@@ -192,7 +192,11 @@ and the offline-and-recover check:
 - [`scripts/home-relay-gate-proof.mjs`](../scripts/home-relay-gate-proof.mjs) drives the layer the
   product actually runs: `runHomeTool`, the minted confirmation, the claim-and-perform that
   `api/home/[id]/confirm.js` does, and the `home_action_log` rows all of it writes. The gate is
-  enforced in two places and only one of them is the bridge, so both are tested.
+  enforced in two places and only one of them is the bridge, so both are tested. It then binds the
+  real `POST /api/home/:id/call` handler to a real port and repeats the refusal over HTTP with a
+  real session cookie and a real CSRF token, because the status a client sees (409, carrying the
+  resolved entity, and 200 once a person adds `confirmed: true`) is decided in that handler and
+  nowhere else.
 - Stopping the house and starting it again, to check that the home reports itself offline and then
   recovers with nothing done on the three.ws side.
 
