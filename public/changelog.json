@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-09-09T20:16:32.285Z",
+	"generated_at": "2026-09-09T20:27:30.268Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -188,7 +188,7 @@
 			"date": "2026-09-09",
 			"type": "update",
 			"title": "New gallery avatars now arrive with a skeleton, so they animate properly out of the box",
-			"summary": "Avatars generated for the gallery were published as static meshes: they still moved, but through a fallback that maps a generic body onto them rather than a skeleton of their own. Every new one now goes through our auto-rigger first and arrives with a real 52-bone humanoid skeleton, which means the whole motion library drives it directly. If the rigger fails or stalls, the avatar is still published rather than held back, so nothing is lost to a bad rig.",
+			"summary": "Avatars generated for the gallery were published as static meshes: they still moved, but through a fallback that maps a generic body onto them rather than a skeleton of their own. Every new one whose shape a humanoid skeleton can actually drive now goes through our auto-rigger first and arrives with a real 52-bone skeleton, so the whole motion library drives it directly. The ones that are skipped are skipped for a reason we measured: some generated models come out as a figure standing on a wide base slab, and rigging one of those tears the slab apart the moment it moves, so those keep publishing as static models. If the rigger fails or stalls, the avatar is published anyway rather than held back.",
 			"link": "/gallery",
 			"tags": [
 				"improvement",

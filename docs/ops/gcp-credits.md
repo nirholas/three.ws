@@ -1780,6 +1780,27 @@ minutes, added in the same change because `advanceRigs` polls the ten oldest
 rigging rows and a permanently stuck row would starve the queue behind it). Set
 `SEED_CRON_RIG=0` to go back to static meshes.
 
+**Not every mesh may be rigged, and that limit is measured rather than assumed.**
+The first mesh taken through the lane end to end, a seeded sky pirate, produced a
+structurally perfect rig (52 joints, unit inverse binds) and then shredded on
+screen the moment the curated `idle` clip played, while the same mesh published
+static rendered correctly. The cause is not the rigger: the generated mesh is a
+figure sitting in a wide base slab (1.99 x 0.69 x 1.99), the rigger skins the
+slab along with the figure, and the first clip that moves the legs drags it
+across the scene. `riggableShape()` refuses that shape before the submit, using
+the `thinAxis` the gate already records: glTF is Y-up, so a mesh thinnest in Y is
+lying down or slab-bound, while an upright figure is always thinnest front-to-back
+or side-to-side. Over a 12-mesh sample of live cron output the ten proper
+humanoids ran 1.47 to 2.63 in height over width with no Y-thin mesh among them,
+and the two Y-thin ones (the pirate, a rearing horse statuette) are exactly the
+two that must not be rigged. Roughly one seeded mesh in six is therefore
+published static, which is what all of them were before.
+
+That sample turned up a second catalog-quality problem worth its own pass: one
+published mesh measured 1.99 x 1.99 x 0.01, a flat billboard rather than a model.
+The gate's `planar` rule is what should have caught it, and did not, because at
+`thinAxis: 'z'` it is held to the sliver threshold rather than the slab one.
+
 Both stages, and the accept rate they produce, are now measurable from
 `forge_seed_jobs` alone: since 2026-09-09 the cron records the full verdict on
 the keepers as well as the rejects (`publishSeedAvatar`, covered by

@@ -54,9 +54,10 @@
 //                          publishing, so catalog entries arrive animation-ready
 //                          instead of driven by the retarget fallback. ON by
 //                          default since 2026-09-09; set it to '0' to publish
-//                          static meshes again. A rig fault, or a rig that stops
-//                          answering (RIG_STALL_MS), publishes the gated keeper
-//                          static rather than losing it.
+//                          static meshes again. Only meshes a humanoid rig can
+//                          drive are sent (riggableShape); a rig fault, or a rig
+//                          that stops answering (RIG_STALL_MS), publishes the
+//                          gated keeper static rather than losing it.
 
 import { json, method, wrapCron } from '../_lib/http.js';
 import { env } from '../_lib/env.js';
@@ -123,6 +124,38 @@ const visionGateBudgetMs = () => intEnv('SEED_CRON_VISION_MS', 20_000, { min: 5_
 // the worst case of leaving it on is the asset the old default always shipped.
 // Set SEED_CRON_RIG=0 to go back to publishing static meshes.
 export const rigStageEnabled = () => boolEnv('SEED_CRON_RIG', true);
+
+/**
+ * Can a humanoid skeleton drive this mesh at all?
+ *
+ * The gate asks whether an asset is worth publishing. This asks a different
+ * question: whether binding a humanoid rig to it makes it better or worse. It
+ * can make it much worse. A text-to-3D lane routinely returns a figure standing
+ * on a wide base slab, and the auto-rigger skins the slab along with the
+ * figure, so the first clip that moves the legs tears the slab across the
+ * scene. Measured on the real thing: a seeded "sky pirate" mesh (1.99 x 0.69 x
+ * 1.99) rigged cleanly by every structural measure (52-joint mixamorig
+ * skeleton, unit inverse binds) and then shredded on screen the moment the idle
+ * clip played, while the same mesh published static rendered correctly.
+ *
+ * `thinAxis` is the signal, and the gate already stores it: glTF is Y-up, so a
+ * mesh whose THINNEST extent is Y is lying down or sitting in a slab, while an
+ * upright figure is always thinnest front-to-back or side-to-side. Over a
+ * 12-mesh sample of what the cron actually published, the ten proper humanoids
+ * ran 1.47 to 2.63 in height over width and none was thin in Y; the two that
+ * were (the pirate, a rearing horse statuette) are exactly the two that must
+ * not be rigged. `planar` catches the other end, a mesh with no depth at all.
+ *
+ * A mesh that fails this is published static, which is what every seed avatar
+ * before 2026-09-09 was anyway.
+ *
+ * @param {{ thinAxis?: string | null, planar?: boolean } | null | undefined} metrics
+ */
+export function riggableShape(metrics) {
+	if (!metrics) return true; // no measurement is not evidence against rigging
+	if (metrics.planar === true) return false;
+	return metrics.thinAxis !== 'y';
+}
 // A rig job that never answers must not hold a row forever. advanceRigs polls
 // the ten oldest 'rigging' rows per tick, so a permanently stuck row would sit
 // at the front of that queue and starve the ones behind it. Past this age the
@@ -444,9 +477,15 @@ async function advanceGates(origin) {
 				continue;
 			}
 
-			// A keeper. Rig first when the stage is on and the mesh is not already
-			// skinned; otherwise publish straight away.
-			if (rigStageEnabled() && !verdict.mesh.rigged && job.model_category !== 'accessory') {
+			// A keeper. Rig first when the stage is on, the mesh is not already
+			// skinned, and its shape is one a humanoid rig can actually drive;
+			// otherwise publish straight away.
+			if (
+				rigStageEnabled()
+				&& !verdict.mesh.rigged
+				&& job.model_category !== 'accessory'
+				&& riggableShape(verdict.mesh?.metrics)
+			) {
 				const rig = await startRigStage({ origin, job });
 				if (rig.jobId) {
 					await sql`

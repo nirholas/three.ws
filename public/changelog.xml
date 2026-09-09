@@ -148,7 +148,7 @@
 			<guid isPermaLink="false">2026-09-09:New gallery avatars now arrive with a skeleton, so they animate properly out of the box</guid>
 			<pubDate>Wed, 09 Sep 2026 12:00:00 GMT</pubDate>
 			<category>improvement</category>
-			<description>Avatars generated for the gallery were published as static meshes: they still moved, but through a fallback that maps a generic body onto them rather than a skeleton of their own. Every new one now goes through our auto-rigger first and arrives with a real 52-bone humanoid skeleton, which means the whole motion library drives it directly. If the rigger fails or stalls, the avatar is still published rather than held back, so nothing is lost to a bad rig.</description>
+			<description>Avatars generated for the gallery were published as static meshes: they still moved, but through a fallback that maps a generic body onto them rather than a skeleton of their own. Every new one whose shape a humanoid skeleton can actually drive now goes through our auto-rigger first and arrives with a real 52-bone skeleton, so the whole motion library drives it directly. The ones that are skipped are skipped for a reason we measured: some generated models come out as a figure standing on a wide base slab, and rigging one of those tears the slab apart the moment it moves, so those keep publishing as static models. If the rigger fails or stalls, the avatar is published anyway rather than held back.</description>
 		</item>
 		<item>
 			<title>News cards stop losing their preview picture to a cold cache</title>

@@ -27,7 +27,7 @@ vi.mock('../api/_lib/db.js', () => ({
 	},
 }));
 
-const { publishSeedAvatar, rigStageEnabled } = await import('../api/cron/forge-seed-cron.js');
+const { publishSeedAvatar, rigStageEnabled, riggableShape } = await import('../api/cron/forge-seed-cron.js');
 
 const JOB = {
 	id: 'job-1',
@@ -116,5 +116,36 @@ describe('rigStageEnabled', () => {
 	it('is on when the env turns it on explicitly', () => {
 		process.env.SEED_CRON_RIG = '1';
 		expect(rigStageEnabled()).toBe(true);
+	});
+});
+
+// Which meshes may be rigged at all. Every number here is measured off real
+// seeded output, not chosen: the ten proper humanoids in a 12-mesh sample were
+// all thinnest front-to-back or side-to-side, and the two that were thinnest in
+// Y are the two an auto-rig destroys, because the rigger skins the base slab
+// along with the figure and the first clip that moves the legs tears it across
+// the scene.
+describe('riggableShape', () => {
+	it('rigs an upright figure, thin front-to-back', () => {
+		expect(riggableShape({ thinAxis: 'z', flatness: 0.3, planar: false })).toBe(true);
+	});
+
+	it('rigs an upright figure, thin side-to-side', () => {
+		expect(riggableShape({ thinAxis: 'x', flatness: 0.19, planar: false })).toBe(true);
+	});
+
+	it('refuses a figure sitting in a base slab', () => {
+		// The measured sky pirate: 1.99 x 0.69 x 1.99, rigged perfectly and
+		// shredded on screen.
+		expect(riggableShape({ thinAxis: 'y', flatness: 0.35, planar: false })).toBe(false);
+	});
+
+	it('refuses a mesh with no depth at all', () => {
+		expect(riggableShape({ thinAxis: 'z', flatness: 0.005, planar: true })).toBe(false);
+	});
+
+	it('rigs when the mesh was never measured, rather than refusing on no evidence', () => {
+		expect(riggableShape(null)).toBe(true);
+		expect(riggableShape({})).toBe(true);
 	});
 });
