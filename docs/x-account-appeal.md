@@ -328,6 +328,19 @@ if a reviewer follows it exactly and pulls the record. Machine translation
 blurs precisely that kind of sentence, and neither the owner nor anyone here
 reads Hebrew well enough to catch it when it does.
 
+**The general test, for the next tip as much as this one: filings are not
+independent tries.** They accumulate into one file, and every later reviewer
+reads the whole thing, including whoever opens the executive email in section
+7. So a strange submission is not a free roll that either wins or evaporates.
+It is a permanent edit to the record that every remaining argument will be
+read against, which is what makes a cheap-looking experiment negative rather
+than neutral. Weigh any tip against that, not against the cost of one form.
+
+Sequencing follows from the same fact. The strongest argument available is
+fired once, into a clean record, and section 5b is holding it: X's own notice
+says lock while X's own endpoint says suspended. Anything speculative goes
+after the documented path is exhausted, never before it has started.
+
 **File in English, per section 5b.** If a future tip proposes changing the
 language, the identity, the tone, or the account itself in a way that makes
 the submission look less like the account's own history, it is the same idea
