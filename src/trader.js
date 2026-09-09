@@ -530,6 +530,32 @@ function wireShare() {
 // code when they have one. The panel renders a real, live card rather than a
 // picture of one, so what they paste is exactly what they just looked at.
 
+/**
+ * Load the hosted element the same way a third-party page would: a module script
+ * tag pointing at the file in /public. It is a static asset rather than a bundled
+ * module, so it is deliberately not imported through the bundler; that also means
+ * the preview exercises the exact file the snippet hands out.
+ */
+function loadTraderCardElement() {
+	if (customElements.get('trader-card')) return Promise.resolve();
+	const SRC = '/trader-card/element.js';
+	let tag = document.querySelector(`script[data-trader-card="1"]`);
+	if (!tag) {
+		tag = document.createElement('script');
+		tag.type = 'module';
+		tag.src = SRC;
+		tag.dataset.traderCard = '1';
+		document.head.appendChild(tag);
+	}
+	return Promise.race([
+		customElements.whenDefined('trader-card'),
+		new Promise((_, reject) => {
+			tag.addEventListener('error', () => reject(new Error('trader-card element failed to load')), { once: true });
+			setTimeout(() => reject(new Error('trader-card element timed out')), 8000);
+		}),
+	]);
+}
+
 function wireEmbed() {
 	const btn = content.querySelector('#tp-embed');
 	const panel = content.querySelector('#tp-embed-panel');
@@ -550,11 +576,15 @@ function wireEmbed() {
 		// so the profile does not pay for a widget most visitors never open.
 		if (!mount.firstElementChild) {
 			try {
-				await import(/* @vite-ignore */ '/trader-card/element.js');
+				await loadTraderCardElement();
 				const card = document.createElement('trader-card');
 				card.setAttribute('agent', ctx.agentId);
 				card.setAttribute('window', ctx.window);
 				card.setAttribute('origin', location.origin);
+				// The preview is pinned to this page's theme so it reads as part of the
+				// profile. The snippet leaves theme unset on purpose: on a stranger's
+				// page the card should follow THEIR reader's appearance, not ours.
+				card.setAttribute('theme', document.documentElement.getAttribute('data-theme') === 'light' ? 'light' : 'dark');
 				if (ctx.refCode) card.setAttribute('ref', ctx.refCode);
 				mount.appendChild(card);
 			} catch {
