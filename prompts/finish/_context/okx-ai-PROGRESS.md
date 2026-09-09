@@ -6,6 +6,126 @@ Work Order 04 session, no earlier entries existed because no earlier work order 
 
 ---
 
+## 2026-09-09 20:00 UTC, WO-07 closing audit, second pass: two defects found by re-running the gates, both fixed
+
+A second independent WO-07 audit, run against production the same day as the one below it and
+trusting none of its readings. **Every claim in that entry that could be re-tested survived**,
+with one arithmetic correction. The value of the pass is what re-running the gates turned up
+rather than what it confirmed: two real defects, one in a public endpoint and one in the gate
+that was supposed to answer the rejection, plus one stale doc promise.
+
+### Re-verified independently, today
+
+| Claim | How it was re-tested | Verdict |
+| --- | --- | --- |
+| 402 spec-valid on the cheapest and the flagship row | raw `curl -i`, decoded `PAYMENT-REQUIRED` | PASS, `x402Version 2`, `accepts[0]` = `exact` / `eip155:196` / USD₮0 / `payTo 0x4022de2D…f402` / 10000 and 250000 |
+| OKX's own validator | `agent x402-check`, four rows | `valid: true`, `amountMinimal` 10000 / 50000 / 250000 / 250000 |
+| Reviewer probe shapes | `scripts/okx-compliance-probe.mjs` | `PASS 20 probes` |
+| Signed authorization accepted | `scripts/okx-payment-leg-probe.mjs` | `PASS 4 paid rows`, each stopped only at `insufficient_balance`, nothing spent |
+| Adversarial protections | `okx-e2e-gauntlet.mjs --no-spend` (the peer's new flag, on the fixed script) | 5/5 exercised PASS, 9 SKIP for want of a funded buyer, 0 settlements |
+| Free lane honest | `catalog` 200 (7 rows), `health` 200 (6 subsystems ok), four paid rows 402 with MCP headers, `forge-status` GET 405 | PASS |
+| Product delivers | free-lane job `1bf45ddd-9b12-476d-8ade-95ae192e90e1` on `trellis_selfhost` reached `done` on the first poll; `okx-verify-glb.mjs` reads glTF v2, 1,461,464 bytes, 8,413 vertices, 12,568 triangles | PASS |
+| Doc examples run | `docs/okx-marketplace.md`'s own curls: `catalog` 200, `health` 200, `forge-standard` unpaid 402, `forge-status` on a real job returns exactly the documented `done` key set | PASS |
+| Identity Studio matches its doc | `/agent-identities` 200, `/api/agent-identities` `count 4 ready 4`, ledgerlynx `rigged: true, joints: 52`, `create_identity` named identically in doc, catalog module and API | PASS |
+| Module == live == submission | `npm run okx:three-copy` | PASS on the three local copies |
+| What OKX stores | same run, on-chain copy | **FAIL, 7 divergences, unchanged.** Two-part descriptions stored against four-part generated |
+| Listing state | `agent get-my-agents` | `approvalDisplayStatus 5`, `Listing rejected`, `status 2`, `soldCount 2` |
+| Audit-address instruction honoured | grep of the whole payment path | one hit, a comment. No per-address branch exists |
+| OKX unit suites | six files (`okx-402-dialect`, `okx-3d-services`, `okx-identity-studio`, `okx-forge`, `okx-xlayer-verify`, `okx-chat-bot`) | 201 passed |
+| Whole API surface | `npx vitest run tests/api/` | 522 files, 7,735 passed, 0 failed |
+| Docs | `npm run audit:docs` | clean, 1,595 files |
+| Changelog | `npm run build:pages` | exit 0, 928 pages, entry validated |
+| Chat bot | `/api/healthz` | still `degraded`, Vertex `Lightning dunning decision is deny`. Owner action, unchanged |
+
+### Defect 1: the free health lane called the rail settleable without checking it could settle
+
+`/api/okx/3d/health` reported `settleable` straight out of `xlayerSettleable()`, which answers
+"is a payTo, an asset and a route configured". With no OKX facilitator credentials that route
+is the relayer, which redeems the buyer's EIP-3009 authorization and pays the X Layer gas
+itself, so a relayer with an empty OKB balance would have turned a collected payment into a
+502 after the buyer had committed, while the free page a buyer checks first read green.
+`xlayerRailHealth()` was already measuring that balance and the handler dropped the field.
+
+The `payment-rail` row now carries `relayer_funded` and fails the subsystem when nothing can
+settle, which is the same never-402-then-502 rule the challenge gate enforces. Two cases in
+`tests/api/okx-identity-studio.test.js` pin both directions. Commit `4e9ad0419`. It needs a
+deploy to reach production; the reading it would report today is green either way.
+
+Measured on-chain at block 70213511, and this is why the field is worth having: the relayer
+`0xe81DE501…415B` holds **0.020 OKB at a 0.021 gwei gas price, about 7,900 settlements**, and
+its nonce is still 0, so it has never broadcast one. Buyer `0x75d0…cf69` 0 USD₮0 / 0 OKB
+(23-byte `0xef0100…` delegation), seller `0x4022de2D…f402` 2.427731 USD₮0 / 0.839596 OKB, OKX
+audit `0xbc59eb75…2033` 19.547973 USD₮0, down another 110 atomics since this morning's
+19.548083, so their QA agent is still buying from other sellers on this rail.
+
+### Defect 2: the gate that answers "quotation cannot be parsed" was reading with our parser
+
+The rejection's internal note is a verdict from OKX's parser: *"x402 quotation cannot be parsed
+or is non-compliant (parsing failed / no exact / missing amount), and has not entered the
+payment stage"*. Every gate we had reads the challenge with our own code, which cannot answer
+it. `@okxweb3/app-x402-core` is already a declared dependency of this repo and exports the
+seller SDK's own `parsePaymentRequired`.
+
+`scripts/okx-compliance-probe.mjs` now reads every 402 back with it, on both copies: the
+`PAYMENT-REQUIRED` header (where OKX's own resource server puts the challenge) and the body.
+**All 20 probes across the four paid rows report `parsed` on both**, so the note is not
+reproducible against production today. Capture:
+`prompts/okx-ai/e2e-evidence/102-2026-09-09-okx-sdk-schema-read.json`. Commit `6b757caee`.
+
+A trap worth carrying: `parsePaymentRequired` is a zod SAFE parse. It returns
+`{ success, error }` and never throws, so the first version of this check (a `try`/`catch`)
+passed `{}` as green. The verdict reads `result.success` and reports the failing field paths.
+
+### The correction: the remark's "4109 characters" is a counting artifact
+
+The entry below identifies rejection #3's `approvalRemark` by a 4109-character length. Python
+reads 4101 on the same string: the remark carries CJK bracket and emoji code points, so
+JavaScript's UTF-16 `.length` and Python's code-point `len()` differ by 8 on identical bytes.
+`get-my-agents` and `service-list` return byte-identical text. The RUNBOOK now identifies it by
+sha256 `c30676a2b95d7c84a9fb26e48b3ff07798664d9d3eb42873d956b1070c9fff0d` instead, with the
+command to re-derive it, so a future session cannot read a counting difference as a new verdict.
+
+### One stale doc promise, corrected
+
+`specs/okx-agent-payments.md` still said the v2 header-name fix "Ships on the next deploy". It
+shipped: an unpaid `POST /api/okx/3d/forge-draft` answers with `error` =
+`"PAYMENT-SIGNATURE header is required (X-PAYMENT is also accepted)"`, read off production
+today. A spec that promises what the code already does is the same defect class as one that
+promises what it does not.
+
+### RUNBOOK: every command in it was executed
+
+§1's `get-my-agents` one-liner (`Listing rejected | status not listed | sold 2`), §2's
+`service-list`, §3's balance reads, §4.2's buyer search parser (10 rows, `#11167 #2023 #6023
+#6087 #9626 #6732 #6731 #2135 #9976 #4543`, none of them us, correct while `status` is "not
+listed"), §5.1's remark one-liner, §5.5's five gates, §7's probe loop (four 402s and the 405).
+All ran as written. The three edits above are the only drift found.
+
+### Launch branch executed: REJECTED, so nothing was announced
+
+`approvalLabel` reads `Listing rejected` and has not moved, so §4's approved branch does not
+apply and no listing changelog entry was written. §5's rejected branch was executed: the remark
+is captured verbatim in the entries below and re-read today, and it maps to three things. Two
+are code and both are fixed and live (the 402 quotation shape, and the EIP-7702 signature
+refusal). The third is the stored descriptions, which is an on-chain write.
+
+**Nothing in code remains to fix for this rejection**, and the case is now made with OKX's own
+reader rather than ours.
+
+### The owner actions, unchanged
+
+1. **Approve the resubmission** (two on-chain writes, delta first, RUNBOOK §5.5). Wallet
+   session is live, so no OTP is pending.
+2. **Fund the buyer** `0x75d00a2713565171f33216e5aa2a375e076ecf69` with >=$3 USD₮0 on X Layer
+   for the first settlement. Does not gate the resubmission; it gates case 5a, 2, 3, 4, 6 and 7
+   of the gauntlet, which is every case that is still SKIP.
+3. **Clear the GCP billing hold**, so the marketplace chat bot can author replies.
+
+One deploy is owed and is not owner-gated work: `4e9ad0419` (health) and the AI-lane chain the
+entry below names are both committed and neither is live.
+
+---
+
 ## 2026-09-09 19:45 UTC, backlog-08: the last local footgun is closed, after it went off
 
 Fourth session on the chat host today. The state it inherited was correct and unchanged, so
