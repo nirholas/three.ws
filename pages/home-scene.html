@@ -49,7 +49,15 @@
 		</div>
 	</div>
 
+	<!--
+		Two live regions, on purpose. Ordinary state changes (a light going on, the
+		house going stale, a view switching) are polite: they wait for the reader to
+		finish its sentence. The guarded confirmation is assertive, because it is the
+		safety control and a person must not be able to miss the question that stands
+		between them and an unlocked front door.
+	-->
 	<p class="sr-only" id="hs-live" role="status" aria-live="polite"></p>
+	<p class="sr-only" id="hs-alert" role="alert" aria-live="assertive"></p>
 
 	<script src="/nav.js"></script>
 	<script type="module" src="/src/home/scene.js"></script>

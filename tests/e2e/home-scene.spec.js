@@ -153,6 +153,29 @@ test('a browser with no WebGL gets a house it can read and operate', async ({ pa
 	expect(await waitForState(instance, light.entityId, wanted, { timeout: 30_000 })).toBe(wanted);
 });
 
+test('a link that asks for a view outranks what this browser remembers', async ({ page }) => {
+	await signIn(page, 'owner');
+	await resetHomes(page);
+	await connectHome(page, { label: 'Scene journey six' });
+	// openScene puts this browser in the 2D view, and the page remembers that.
+	const id = await openScene(page);
+	expect(await page.evaluate(() => localStorage.getItem('three:home:view'))).toBe('2d');
+
+	// The same browser, the same stored preference, and a link that asks for 3D:
+	// a shared link, a bookmark, or the address a wall display is pinned to. The
+	// link wins, and the house is really drawn rather than the toggle just moving.
+	await page.goto(`/smart-home/${id}?view=3d`, { waitUntil: 'domcontentloaded' });
+	await page.waitForFunction(() => window.__homeScene?.stats()?.drawCalls > 0, null, { timeout: 180_000 });
+	expect(await page.evaluate(() => window.__homeScene.status.view)).toBe('3d');
+	// And following that link did not overwrite what this browser chose itself.
+	expect(await page.evaluate(() => localStorage.getItem('three:home:view'))).toBe('2d');
+
+	// With nothing asked for, the remembered view is still the one that opens.
+	await page.goto(`/smart-home/${id}`, { waitUntil: 'domcontentloaded' });
+	await expect(page.locator('.hs-card').first()).toBeVisible({ timeout: 120_000 });
+	expect(await page.evaluate(() => window.__homeScene.status.view)).toBe('2d');
+});
+
 test('the scene holds its memory and its object count under a burst of real changes', async ({ page }) => {
 	const instance = homeInstance();
 	await open3d(page, 'Scene journey five');
