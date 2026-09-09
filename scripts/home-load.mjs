@@ -2,7 +2,7 @@
 /**
  * The Home lane's load harness.
  *
- * Everything in docs/home-operations.md is a number this script printed. It
+ * Everything in docs/ops/home-operations.md is a number this script printed. It
  * opens real WebSocket connections, with real long-lived access tokens, to real
  * Home Assistant containers started by scripts/home-fleet.mjs, and it measures
  * what they cost this process.
@@ -178,7 +178,7 @@ async function measureColdStart(fleet) {
 		totalToFirstConnectedHomeMs: Number((moduleReady - processStart + connectMs).toFixed(1)),
 		entities,
 		rooms,
-		note: 'Measured in a freshly spawned node process. bootToModulesReadyMs covers node start plus this harness module graph; the API container loads more than this and its own cold start is measured separately in docs/home-operations.md.',
+		note: 'Measured in a freshly spawned node process. bootToModulesReadyMs covers node start plus this harness module graph; the API container loads more than this and its own cold start is measured separately in docs/ops/home-operations.md.',
 	};
 }
 

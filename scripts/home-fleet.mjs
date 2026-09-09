@@ -2,7 +2,7 @@
 /**
  * A fleet of real Home Assistant instances, for the Home lane's load and chaos work.
  *
- * Every measurement in docs/home-operations.md is taken against containers this
+ * Every measurement in docs/ops/home-operations.md is taken against containers this
  * script starts: real Home Assistant, real onboarding, real long-lived access
  * tokens, real WebSocket handshakes. Nothing here simulates Home Assistant, and
  * nothing here ever points at somebody's house. The only hosts it touches are
