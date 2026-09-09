@@ -52,8 +52,38 @@ describe('parseWorktrees', () => {
 });
 
 describe('dirtyCount', () => {
-	it('counts tracked modifications, which veto removal', () => {
-		expect(dirtyCount(' M pages/wardrobe.html\n M public/changelog.json\n')).toBe(2);
+	it('counts tracked modifications outside the generated set, which veto removal', () => {
+		expect(dirtyCount(' M src/agent.js\n M api/pump.js\n')).toBe(2);
+	});
+
+	it('ignores the tracked files every build rewrites in place', () => {
+		// build:pages injects og:image/twitter:image into every pages/*.html and
+		// regenerates these index and feed JSONs on every run, so a worktree that
+		// merely finished a build is dirty with nothing but regenerable output.
+		// Counting it as work made three worktrees holding 11.3 GB unreclaimable.
+		const porcelain = [
+			' M pages/wardrobe.html',
+			' M public/changelog.json',
+			' M public/changelog-recent.json',
+			' M public/features.json',
+			' M data/examples.json',
+			' M public/examples.json',
+			' M public/atlas-index.json',
+			' M public/mcp-catalog.json',
+			' M public/locales/localized-pages.json',
+			'MM CHANGELOG.md',
+		].join('\n');
+		expect(dirtyCount(porcelain)).toBe(0);
+	});
+
+	it('still vetoes a deletion or rename of a generated file', () => {
+		// Only an in-place rewrite is generator output. Removing or renaming one
+		// is a deliberate act no build performs, so it stays real work.
+		expect(dirtyCount(' D public/features.json\nR  pages/a.html -> pages/b.html\n')).toBe(2);
+	});
+
+	it('does not extend the generated set to neighbouring paths', () => {
+		expect(dirtyCount(' M pages/sub/dir.html\n M public/changelog.js\n M data/pages.json\n')).toBe(3);
 	});
 
 	it('counts staged and deleted files too', () => {
