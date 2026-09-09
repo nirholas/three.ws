@@ -556,6 +556,11 @@ async function mountFloatingSwitcher() {
 	const host = document.createElement('div');
 	host.className = 'twx-i18n-fab';
 	host.setAttribute('data-no-i18n', ''); // never annotate/translate the control itself
+	// A bare floating div leaves the picker outside every landmark, which reads to
+	// a screen reader as orphaned content (axe "region") on every page that gets
+	// the auto-mounted switcher. A named region puts it on the landmark list.
+	host.setAttribute('role', 'region');
+	host.setAttribute('aria-label', 'Language');
 	const style = document.createElement('style');
 	style.textContent = `
 		.twx-i18n-fab {
