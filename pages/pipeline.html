@@ -51,7 +51,7 @@
 		.pl-net button { appearance: none; background: transparent; border: 0; color: var(--ink-dim, #888); font: inherit; font-size: 0.78rem; padding: 6px 13px; cursor: pointer; transition: color var(--duration-fast), background var(--duration-fast); }
 		.pl-net button[aria-pressed="true"] { background: var(--surface-3, rgba(255,255,255,0.08)); color: var(--ink-bright, #fff); }
 		.pl-net button:hover { color: var(--ink, #e8e8e8); }
-		.pl-net button:focus-visible { outline: 2px solid var(--stroke-strong, rgba(255,255,255,0.14)); outline-offset: -2px; }
+		.pl-net button:focus-visible { outline: 2px solid var(--ink-bright, #fff); outline-offset: -2px; color: var(--ink-bright, #fff); }
 		.pl-refresh { appearance: none; background: var(--surface-1, rgba(255,255,255,0.03)); border: 1px solid var(--stroke, rgba(255,255,255,0.08)); border-radius: var(--radius-md, 10px); color: var(--ink-dim, #888); width: 34px; height: 34px; display: grid; place-items: center; cursor: pointer; transition: color var(--duration-fast), border-color var(--duration-fast), transform var(--duration-base); }
 		.pl-refresh:hover { color: var(--ink-bright, #fff); border-color: var(--stroke-strong, rgba(255,255,255,0.14)); }
 		.pl-refresh:focus-visible { outline: 2px solid var(--ink-bright, #fff); outline-offset: 2px; color: var(--ink-bright, #fff); }
@@ -367,16 +367,16 @@
 		function renderHealth(data) {
 			healthEl.hidden = false;
 			const rec = normalize(data.stages).recorder;
-			const cls = data.health === 'flowing' ? 'is-live' : data.health === 'recording' ? 'is-active'
-				: rec.state === 'degraded' ? 'is-degraded' : 'is-idle';
+			const cls = rec.state === 'degraded' ? 'is-degraded'
+				: data.health === 'flowing' ? 'is-live' : data.health === 'recording' ? 'is-active' : 'is-idle';
 			if (dotEl.className !== 'pl-dot ' + cls) dotEl.className = 'pl-dot ' + cls;
 			setText(labelEl, data.health ?? 'unknown');
-			setText(noteEl, data.health === 'flowing'
+			setText(noteEl, rec.state === 'degraded'
+				? 'The worker is up but its feed has gone silent, so no new launches are being recorded.'
+				: data.health === 'flowing'
 				? 'The recorder is live and launches are streaming in, so the full loop is running.'
 				: data.health === 'recording'
 				? 'The recorder is live; waiting on the next launch to flow downstream.'
-				: rec.state === 'degraded'
-				? 'The worker is up but its feed has gone silent, so no new launches are being recorded.'
 				: 'The pipeline is idle. Once the recorder worker starts, every downstream stage activates.');
 			setText(metaEl, `${data.network} · updated ${new Date(data.t || Date.now()).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })}`);
 			// Drive the call-to-action straight from the endpoint's own guidance so
