@@ -163,15 +163,31 @@ Re-measure against production traffic in order 20.
 
 ## The scale envelope
 
-Every number in this section was measured on 2026-09-03 against a fleet of **12
-real Home Assistant containers** started by
+Every number in this section was measured against a fleet of **12 real Home
+Assistant containers** started by
 [`scripts/home-fleet.mjs`](../../scripts/home-fleet.mjs): real onboarding, real
 long-lived access tokens, real registries seeded with two floors and seven areas
 each, and real WebSocket sessions opened through `home-assistant-js-websocket`,
-the same client the product ships. The raw output is committed at
-[`tasks/home/envelope-2026-09-03.json`](../../tasks/home/envelope-2026-09-03.json).
+the same client the product ships.
 
-**What was real and what was not**, stated plainly because the difference decides
+**It has been run twice, six days apart, on deliberately different machines**,
+and both raw outputs are committed:
+
+| Run | Evidence | Machine load during the run |
+|---|---|---|
+| 2026-09-03 | [`tasks/home/envelope-2026-09-03.json`](../../tasks/home/envelope-2026-09-03.json) | load average 206 to 233 |
+| 2026-09-09 | [`tasks/home/envelope-2026-09-09.json`](../../tasks/home/envelope-2026-09-09.json) | load average 54 to 72 |
+
+That repetition is the point, and it is what makes the memory figures worth
+anything. **Every load-insensitive number reproduced**: heap per connection at
+400 connections was 245 KB both times, the large house 856 KB then and 847 KB
+now, the SSE frame 25,168 bytes then and 25,172 now, descriptors per connection
+exactly 1 in both, coalescing exactly 100:1 in both, and the gate assertion
+identical (400 guarded actions, 0 waved through). The numbers that did move are
+the latency ones, and they moved in the direction a four times quieter box
+predicts. The tables below give the quiet run first and the busy run beside it.
+
+**What is real and what is not**, stated plainly because the difference decides
 how much these numbers are worth:
 
 - **Real:** every connection, every handshake, every registry read, every service
@@ -182,48 +198,53 @@ how much these numbers are worth:
   rather than opened against 400 separate houses. What is being measured is what
   a connection costs **this process**: a socket, an entity state map and a room
   graph. Which container answers is the fixture.
-- **The box was busy, and badly.** The harness shares a 16 core machine with
-  other work, and the committed run was taken at a **load average between 206
-  and 233**. Memory, descriptor, coalescing and byte counts are unaffected by
-  that and were stable to within a few percent across four separate runs at loads
-  from 22 to 233. **The latency and timing figures are inflated by it**, heavily,
-  which is why every row records the load average it was taken at, why the quieter
-  readings are given alongside where they exist, and why none of these numbers is
-  an SLO. The SLO targets are in the table above and are measured against
-  production, not against this harness.
+- **The box is shared and it is never idle.** The harness runs on a 16 core
+  machine that several other agents build and test on, so even the quiet run sat
+  at load 57. Memory, descriptor, coalescing and byte counts are unaffected by
+  that, which the two runs now demonstrate rather than assert. **The latency and
+  timing figures are inflated by it**, which is why every row records the load
+  average it was taken at and why **none of these numbers is an SLO**. The SLO
+  targets are in the table above and are measured against production, not against
+  this harness.
 
 ### The envelope
 
 | Volume | Connections per instance | Heap | p95 action | Behaviour |
 |---|---|---|---|---|
-| **10 homes** | 10, all pooled | **4.1 MB** (407 KB each) | 12.3 ms at load 224 | Everything inline. Nothing to tune; no rung above 1 is ever reached, on any instance, ever. |
-| **1,000 homes** | 167 at `minScale=6`; measured at 200 | **49 MB** (250 KB each) | 49.8 ms at load 227 | Still rung 1. The pool never fills, eviction never runs, the ladder stays dormant. Measured directly: 200 connections is above the 167 this volume implies. |
-| **100,000 homes** | 600 (the cap), extrapolated | **143 MB heap, ~380 MB RSS** | not measured | **Does not fit as simultaneously live homes.** 100,000 *registered* homes is only rows and is comfortable; 100,000 *live at once* exceeds the fleet. The model and the ceiling are below. |
+| **10 homes** | 10, all pooled | **4.0 MB** (403 KB each) | **6.5 ms** at load 54 (12.3 ms at load 224) | Everything inline. Nothing to tune; no rung above 1 is ever reached, on any instance, ever. |
+| **1,000 homes** | 167 at `minScale=6`; measured at 200 | **49.7 MB** (249 KB each) | **31.0 ms** at load 58 (49.8 ms at load 227) | Still rung 1. The pool never fills, eviction never runs, the ladder stays dormant. Measured directly: 200 connections is above the 167 this volume implies. |
+| **100,000 homes** | 600 (the cap), extrapolated | **143 MB heap, ~390 MB RSS** | not measured | **Does not fit as simultaneously live homes.** 100,000 *registered* homes is only rows and is comfortable; 100,000 *live at once* exceeds the fleet. The model and the ceiling are below. |
 
-The 10 and 1,000 rows are measured. The 100,000 row is the extrapolation, and the
-model behind it is stated in full below rather than hidden inside a number.
+The 10 and 1,000 rows are measured, twice each. The 100,000 row is the
+extrapolation, and the model behind it is stated in full below rather than hidden
+inside a number. The 100,000 row's heap and RSS are `600 x` the 400-connection
+unit costs measured on 2026-09-09 (245 KB heap, 666 KB RSS), which are the
+asymptotes, not the small-N readings.
 
 ### The unit costs, each measured
 
-| Cost | Measured | How |
-|---|---|---|
-| Heap per idle connection, small house (123 entities) | **245 KB** at 400 connections; 250 KB at 200, 260 KB at 100, 280 KB at 50 | Two forced collections either side of opening N connections, in a process that has done nothing else. The figure falls with N because a fixed baseline amortizes, so 245 KB is the asymptote and the one to size on. Stable to 4 KB across four runs. |
-| Heap per connection, large house (624 entities) | **856 KB** | Same method against the 624 entity house: 3.5x the small house for 5.1x the entities, because the room graph is shared per house and the state map is not. |
-| RSS per connection, small house | **643 KB** at 400, 716 KB at 200 | Same window as the heap reading. |
-| RSS per connection, large house | **~1.1 MB** (estimate) | Not measured at a high enough connection count to amortize the baseline. Scaling the 400 connection small-house RSS by the measured large/small ratio at equal count gives 1.09 MB; scaling by the heap ratio gives 2.3 MB. The cap below is sized on the conservative one. |
-| File descriptors per connection | **exactly 1**, and back to the baseline of 22 after close | `/proc/self/fd`, before, during and after, at every tier from 10 to 400. |
-| Heap retained after close | **5 KB per connection** at 400, 10 KB at 200 | Two forced collections and a five second settle, with the harness's own references dropped first. This is noise, not a leak, and the descriptor count returning to exactly its baseline is the corroborating half. |
-| Idle CPU per connection | **3.0 to 4.6 ms per connection per minute** at 100 to 400 connections | A ten second window with the connections open and nothing asked of them. Under 0.008% of one core per connection, on a box at load 220, and Home Assistant's demo integration is pushing state on its own throughout. |
-| CPU per burst of 100 entity updates | **44.1 ms total, 0.441 ms per update** | 100 real `input_number.set_value` calls against the 624 entity house, measured across the whole absorb window: the outbound calls, the state pushes they caused, and every graph rebuild that survived coalescing. |
-| Graph rebuilds per 100 updates | **1** (a 100:1 coalescing ratio) | The 80 ms coalescing window in `HomeBridge` doing its job. |
-| One graph rebuild, 624 entities | **p50 0.49 ms, p95 1.02 ms** | `buildHomeGraph` called 30 times against the live state map. A thirtieth of a 16.7 ms frame. |
-| Connection open time | **6 to 83 ms per connection** in waves of 20 | Wall clock across the wave, divided by connections. The high end is the 10 connection tier, where a single wave carries the whole warm-up. |
-| Cold start to the first connected home | **270 to 552 ms of Home Assistant handshake**, on top of node boot | A freshly spawned process. Node plus this harness's module graph read 147 ms on a quiet box, 758 ms at load 70 and 3,165 ms at load 224, so the total ranges from **260 ms to 3.7 s** almost entirely as a function of how contended the machine is. The handshake itself, which is the part this lane owns, never exceeded 552 ms. |
-| **SSE: heap per subscriber** | **39 KB** | 200 real HTTP subscribers against a real server, fed by a real house that is being changed throughout. |
-| **SSE: RSS per subscriber** | **143 KB** (upper bound: both ends of every socket are in the one process) | Same window. |
-| **SSE: descriptors per subscriber** | **1 server side** (2 measured, both ends in one process) | Same window. |
-| **SSE: bytes per frame per subscriber** | **25,168 bytes** | 20 real state changes fanned to 200 subscribers: 4,000 frames and **100.7 MB in ten seconds**. |
-| **SSE: CPU per subscriber per minute** | **36.2 ms** at two state changes a second | 1,207 ms of CPU in the same ten second window: 12% of one core for one house with 200 watchers. |
+Every row gives the 2026-09-09 reading (the quieter box) with the 2026-09-03
+reading beside it, so a reader can see which costs moved and which did not.
+
+| Cost | 2026-09-09 | 2026-09-03 | How |
+|---|---|---|---|
+| Heap per idle connection, small house (123 entities) | **245 KB** at 400 connections; 249 KB at 200, 259 at 100, 279 at 50, 403 at 10 | 245 KB at 400; 250, 260, 280, 407 | Two forced collections either side of opening N connections, in a process that has done nothing else. The figure falls with N because a fixed baseline amortizes, so 245 KB is the asymptote and the one to size on. **Identical to the kilobyte across six days and a 4x load difference.** |
+| Heap per connection, large house (624 entities) | **847 KB** | 856 KB | Same method against the 624 entity house: 3.5x the small house for 5.1x the entities, because the room graph is shared per house and the state map is not. |
+| RSS per connection, small house | **666 KB** at 400; 690 KB at 200 | 643 KB at 400; 716 KB at 200 | Same window as the heap reading. |
+| RSS per connection, large house | **~1.12 MB**, from a measured ratio | ~1.09 MB (estimated) | This is the one row that improved. The large house is now measured at n=10 (4,253 KB per connection, baseline not yet amortized) against the small house at the same n=10 (2,530 KB), a ratio of **1.68**. Applying that ratio to the amortized 400-connection small-house RSS of 666 KB gives **1.12 MB**, which lands within 3% of the estimate the connection cap was sized on. |
+| File descriptors per connection | **exactly 1**, and back to the baseline of 22 after close | exactly 1, same baseline | `/proc/self/fd`, before, during and after, at every tier from 10 to 400. |
+| Heap retained after close | **5 KB per connection** at 400, 10 KB at 200 | 5 KB at 400, 10 KB at 200 | Two forced collections and a five second settle, with the harness's own references dropped first. This is noise, not a leak, and the descriptor count returning to exactly its baseline is the corroborating half. |
+| Idle CPU per connection | **2.2 ms per connection per minute** at 200 to 400 connections | 3.0 to 4.6 ms at 100 to 400 | A ten second window with the connections open and nothing asked of them. Under 0.004% of one core per connection, and Home Assistant's demo integration is pushing state on its own throughout. |
+| CPU per burst of 100 entity updates | **52.3 ms total, 0.523 ms per update** | 44.1 ms total, 0.441 per update | 100 real `input_number.set_value` calls against the 624 entity house, measured across the whole absorb window: the outbound calls, the state pushes they caused, and every graph rebuild that survived coalescing. |
+| Graph rebuilds per 100 updates | **1** (a 100:1 coalescing ratio) | 1 (100:1) | The 80 ms coalescing window in `HomeBridge` doing its job. Exactly reproduced. |
+| One graph rebuild, 624 entities | **p50 0.75 ms, p95 12.0 ms, max 15.4 ms** | p50 0.49 ms, p95 1.02 ms | `buildHomeGraph` called 30 times against the live state map. The p50 is the honest cost and it holds. The p95 is 30 samples on a contended box, so it is one outlier, and it is the number to watch: at 12 ms it is most of a 16.7 ms frame, where the earlier run's 1 ms was a thirtieth of one. **Under contention this rebuild can eat a frame**, which is an argument for the diff-based stream below, not against the coalescing. |
+| Connection open time | **5 to 76 ms per connection** in waves of 20 | 6 to 83 ms | Wall clock across the wave, divided by connections. The high end is the 10 connection tier, where a single wave carries the whole warm-up. |
+| Cold start to the first connected home | **364 ms total: 305 ms of node boot plus 59 ms of Home Assistant handshake** | 3,717 ms total, of which 552 ms was handshake | A freshly spawned process. The spread between the two runs is almost entirely node boot under contention (305 ms at load 54, 3,165 ms at load 224). The handshake, which is the part this lane owns, **never exceeded 552 ms in either run** and was 59 ms in the quiet one. This is the measurement the `minScale` decision rests on. |
+| **SSE: heap per subscriber** | **39 KB** | 39 KB | 200 real HTTP subscribers against a real server, fed by a real house that is being changed throughout. |
+| **SSE: RSS per subscriber** | **168 KB** (upper bound: both ends of every socket are in the one process) | 143 KB | Same window. |
+| **SSE: descriptors per subscriber** | **1 server side** (2 measured, both ends in one process) | same | Same window. |
+| **SSE: bytes per frame per subscriber** | **25,172 bytes** | 25,168 bytes | 20 real state changes fanned to 200 subscribers: 4,200 frames and **105.7 MB in ten seconds**. Four bytes apart across two runs, because it is a serialization cost and not a timing. |
+| **SSE: CPU per subscriber per minute** | **41.1 ms** at two state changes a second | 36.2 ms | 1,371 ms of CPU in the same ten second window: 14% of one core for one house with 200 watchers. |
 
 Two of those deserve to be read twice.
 
@@ -556,7 +577,8 @@ scene then does with it belongs to the surface that draws it.
 
 ## The Cloud Run configuration, and why
 
-Read off `three-ws-api` on 2026-09-03, then changed. Every decision below has a
+Read off `three-ws-api` on 2026-09-03, changed, silently reverted by the next
+deploy, re-measured and re-applied on 2026-09-09. Every decision below has a
 measurement behind it and none of them was made by reasoning about how Cloud Run
 probably behaves.
 
@@ -564,25 +586,56 @@ probably behaves.
 
 | Setting | Was | Is | Why, with the number |
 |---|---|---|---|
-| `--memory` | 4 GiB | **8 GiB** | Cloud Monitoring, `container/memory/utilizations`, 24 hours at 60 second buckets, per-bucket p99 across instances: **median 0.799, p95 0.839, max 0.919 of the 4 GiB limit, with zero home connections.** The service was already running at 3.2 GiB typical and 3.7 GiB peak. Adding any home connection budget at 4 GiB risks an OOM kill, and an OOM kill here takes the whole API container down rather than one lane. At 8 GiB the same peak is 46%, and 600 home connections take it to about 53%. |
-| `HOME_MAX_CONNECTIONS` | unset (the code default, 200) | **600** | 600 x the measured per-connection RSS. A 90/10 mix of small and large houses costs 643 KB x 0.9 + 1.09 MB x 0.1 = **0.69 MB each, so 414 MB**, or 500 MB if the large house is scaled by its heap ratio instead. Sized on the conservative 500 MB, which is **6% of an 8 GiB instance** and would have been 12% of a 4 GiB one that was already peaking at 92%. |
+| `--memory` | 4 GiB | **8 GiB** | Cloud Monitoring, `container/memory/utilizations`, 24 hours at 60 second buckets, per-bucket p99 across instances. Read twice: **2026-09-03 median 0.799, p95 0.839, max 0.919 of the 4 GiB limit; 2026-09-09 median 0.669, p95 0.779, max 0.859, both with zero home connections held.** The service runs at 2.7 GiB typical and peaked at 3.44 GiB in the last 24 hours. A 600 connection budget is about 500 MB on top of that, which is **98% of a 4 GiB limit**, and an OOM kill here takes the whole API container down rather than one lane. At 8 GiB the same peak is 43% and the full home budget takes it to 49%. |
+| `HOME_MAX_CONNECTIONS` | unset (the code default, 200) | **600** | 600 x the measured per-connection RSS. A 90/10 mix of small and large houses costs 666 KB x 0.9 + 1.12 MB x 0.1 = **0.71 MB each, so 428 MB**, or 500 MB if the large house is scaled by its heap ratio instead. Sized on the conservative 500 MB, which is **6% of an 8 GiB instance** and would have been 12% of a 4 GiB one that was already peaking at 86%. |
 
 Applied with a config-only update, which creates a revision from the same image:
 
 ```bash
+gcloud run services update three-ws-api --region us-central1 --memory 8Gi
 gcloud run services update three-ws-api --region us-central1 \
-  --memory 8Gi --update-env-vars HOME_MAX_CONNECTIONS=600
+  --update-env-vars HOME_MAX_CONNECTIONS=600
 ```
 
-Revision `three-ws-api-00411-m6h`, verified serving 100% of traffic with
-`/api/healthz` returning 200.
+**The memory setting did not survive, and the reason is worth writing down.** The
+2026-09-03 update landed as revision `three-ws-api-00411-m6h` at 8 GiB. The very
+next full deploy, `00412` on 2026-09-04, put it back to 4 GiB, and production
+then ran for five days at 4 GiB **with `HOME_MAX_CONNECTIONS=600` still set**,
+which is the one combination the measurement above rules out. The cause is that
+`gcloud run deploy` in [`server/cloudbuild.yaml`](../../server/cloudbuild.yaml)
+passes `--memory` explicitly, so it overwrites the service setting on every
+deploy; the env var survived only because `--update-env-vars` merges and nothing
+in the deploy names `HOME_MAX_CONNECTIONS`.
+
+Both halves are fixed:
+
+- The live service is back at 8 GiB (revision `three-ws-api-00419-5tr`,
+  2026-09-09, serving 100% of traffic, `/api/healthz` 200).
+- `server/cloudbuild.yaml` now pins `--memory 8Gi` with the measurement in a
+  comment beside it, so a full deploy cannot revert it again.
+
+**A config-only `gcloud run services update` is not durable on its own.** Any
+setting this file argues for must also be pinned in the deploy config, or the
+next deploy is the thing that undoes it.
+
+**Verified live on 2026-09-09**, which is the check that proves the number
+reached the running code rather than just the service description. The `home`
+block in production `/api/healthz` reports the pool reading its own cap:
+
+```json
+"pool": { "open": 0, "subscribers": 0, "capacity": 600,
+          "breakersOpen": 0, "streams": 0, "rung": "normal" }
+```
+
+`capacity: 600` is `HOME_MAX_CONNECTIONS` as the runtime actually read it, and
+`rung: "normal"` is the backpressure ladder reporting itself from production.
 
 ### What was deliberately left alone
 
 | Setting | Value | Why it stays |
 |---|---|---|
-| `--cpu` | 2 | `container/cpu/utilizations` p99 is 0.25 to 0.29 over the last hour. The lane's marginal CPU is small: 0.555 ms per entity update and at worst 0.012% of a core per idle connection. CPU is not the binding constraint; memory is. |
-| `--min-instances` | 6 | **This is why the lane needs no cold-start spending.** The measured cold start to a first connected home is 270 ms of handshake on top of an already-warm process, and 591 to 1,028 ms from a genuinely cold node. Both are under a second, and `minScale=6` means the process is usually warm anyway. Raising `minScale` to hide a sub-second cold start would be paying to solve a problem that was measured and found not to exist. |
+| `--cpu` | 2 | `container/cpu/utilizations`, per-minute p99 across instances: 0.25 to 0.29 on 2026-09-03, and **median 0.469, max 0.679 over the two hours before this was re-read on 2026-09-09**. It has climbed and it is now the setting to watch, but it is still a third clear of the limit, and the lane's own marginal CPU is tiny: 0.523 ms per entity update and 0.0037% of a core per idle connection (2.2 ms per connection per minute). 600 connections idle is 2.2% of one core. Memory remains the binding constraint; CPU is the one to re-read next. |
+| `--min-instances` | 6 | **This is why the lane needs no cold-start spending.** The measured cold start to a first connected home is **364 ms end to end on a quiet box (59 ms of it handshake), and 3.7 s on a box at load 224 of which 3.2 s was node boot under contention**. The handshake this lane owns has never exceeded 552 ms across two runs. Both are under a second on any machine that is not already saturated, and `minScale=6` means the process is usually warm anyway. Raising `minScale` to hide a sub-second cold start would be paying to solve a problem that was measured and found not to exist. |
 | `--max-instances` | 100 | The ceiling in the envelope model above. Raising it does not help until the duplicate-socket problem is solved, because a bigger fleet multiplies duplicate sockets against the user's own house. |
 | `--concurrency` | 160 | See the stream cap below. |
 | `--cpu-throttling` | on | Measured, not assumed. See below. |
@@ -893,13 +946,18 @@ from home_connections
 where revoked_at is null;
 ```
 
-Measured 2026-09-03 against the development database:
+Measured against the development database, twice:
 
 ```
- live_homes | ok_last_15m | failing_last_15m | auth_failed | unreachable
-------------+-------------+------------------+-------------+-------------
-          3 |           1 |                0 |           0 |           0
+             live_homes | ok_last_15m | failing_last_15m | auth_failed | unreachable
+            ------------+-------------+------------------+-------------+-------------
+ 2026-09-03           3 |           1 |                0 |           0 |           0
+ 2026-09-09          37 |           4 |                0 |           1 |           0
 ```
+
+The 2026-09-09 row is the shape a real support call has: 37 homes on the books,
+one in `auth_failed` (a token that expired), and **nothing failing across
+tenants**. That is a support conversation about one token, not an incident.
 
 `failing_last_15m` near zero with one complaint is their house. `failing_last_15m`
 approaching `live_homes` is an incident: go to alert 1.
