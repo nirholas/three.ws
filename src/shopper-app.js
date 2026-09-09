@@ -175,19 +175,18 @@ async function runTask({ task, maxCostUsd, resultPanel, runBtn, refreshGate }) {
 			const body = await res.json().catch(() => ({}));
 			showError(
 				resultPanel,
-				body.error || body.message || 'That task or budget was rejected. Adjust your inputs and try again.',
+				readableServerMessage(body) || 'That task or budget was rejected. Adjust your inputs and try again.',
 			);
 			return;
 		}
 
 		if (!res.ok) {
-			const body = await res.json().catch(() => ({ error: `HTTP ${res.status}` }));
-			const isServer = res.status >= 500;
+			const body = await res.json().catch(() => ({}));
 			showError(
 				resultPanel,
-				body.error || body.message || (isServer
+				res.status >= 500
 					? 'The agent service is temporarily unavailable. Please try again in a moment.'
-					: `Request failed (HTTP ${res.status}).`),
+					: readableServerMessage(body) || `Request failed (HTTP ${res.status}).`,
 			);
 			return;
 		}
@@ -204,6 +203,23 @@ async function runTask({ task, maxCostUsd, resultPanel, runBtn, refreshGate }) {
 	}
 
 	renderResults(resultPanel, data, task);
+}
+
+// The run route reports a failure the way a machine consumer wants it: a
+// snake_case code in `error` ("no_payto_configured") and an operator diagnostic
+// in `error_description` ("paidEndpoint: no X402_PAY_TO_* configured ..."). A
+// buyer should never read either, so a server string is used only when it reads
+// as a sentence written for a person: it has to contain whitespace and must not
+// open with a module prefix.
+export function readableServerMessage(body) {
+	for (const candidate of [body?.message, body?.error_description, body?.error]) {
+		if (typeof candidate !== 'string') continue;
+		const text = candidate.trim();
+		if (!text || !/\s/.test(text)) continue;
+		if (/^[A-Za-z][\w.]*:/.test(text)) continue;
+		return text;
+	}
+	return '';
 }
 
 // A failed fetch surfaces as a bare TypeError whose message ("Failed to fetch",
