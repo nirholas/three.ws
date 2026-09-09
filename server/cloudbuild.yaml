@@ -77,14 +77,25 @@ steps:
               '--region',
               'us-central1',
               '--allow-unauthenticated',
-              # 4Gi (not 2Gi): the headless-chromium GLB renderer (api/render/glb)
-              # peaks well past 2Gi under a burst of parallel renders and OOM-killed
-              # the container mid-request (2026-07-18 502 incident). The renderer now
-              # also caps its own concurrency, but the memory headroom is the
-              # defense-in-depth floor. Pinned here so a full-config deploy can never
-              # silently drop it back to 2Gi. Runbook: docs/ops/gcp-production.md.
+              # 8Gi. Two independent reasons, both measured:
+              #   1. The headless-chromium GLB renderer (api/render/glb) peaks well
+              #      past 2Gi under a burst of parallel renders and OOM-killed the
+              #      container mid-request (2026-07-18 502 incident). The renderer
+              #      now caps its own concurrency, but headroom is the
+              #      defense-in-depth floor.
+              #   2. The Home lane holds up to HOME_MAX_CONNECTIONS (600) live
+              #      WebSockets to real houses, about 500MB of RSS at the measured
+              #      per-connection cost. Cloud Monitoring, 24h of per-minute p99
+              #      memory utilization, read 2026-09-09: max 0.859 of a 4Gi limit
+              #      (3.44GiB) with zero home connections held. 3.44 + 0.5 is 98% of
+              #      4Gi, and an OOM here kills the whole API container rather than
+              #      one lane. At 8Gi the same peak is 43%.
+              # Pinned here because it was NOT: the service was updated to 8Gi on
+              # 2026-09-03 (revision 00411) and the very next full deploy silently
+              # put it back to 4Gi (00412), because this file said 4Gi.
+              # Runbook: docs/ops/gcp-production.md, docs/ops/home-operations.md.
               '--memory',
-              '4Gi',
+              '8Gi',
               '--cpu',
               '2',
               '--timeout',
