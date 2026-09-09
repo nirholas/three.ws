@@ -40,7 +40,13 @@ if (argv.includes('--help') || argv.includes('-h')) {
 	process.exit(0);
 }
 
-const log = (entry) => console.log(JSON.stringify({ ts: new Date().toISOString(), ...entry }));
+// `token` prints one credential to stdout and nothing else, because the
+// documented way to use it is `--token "$(node src/index.js token)"`. Logging a
+// startup line to stdout in that role puts JSON in front of the token and hands
+// the caller something that cannot authenticate. Every other role logs to
+// stdout, where a container runtime collects it.
+const logStream = role === 'token' ? process.stderr : process.stdout;
+const log = (entry) => logStream.write(`${JSON.stringify({ ts: new Date().toISOString(), ...entry })}\n`);
 
 if (role === 'hub') {
 	const service = await createHubService({ port: Number(flag('port', process.env.PORT || 8080)), log });

@@ -57,12 +57,14 @@ export async function createSatelliteService({
 } = {}) {
 	let identity = await loadIdentity(stateDir);
 	let pairingError = null;
+	let claimedNow = false;
 
 	if (!identity && pairingCode) {
 		log({ level: 'info', event: 'pairing.claiming' });
 		try {
 			identity = await claimPairingCode({ apiBase, code: pairingCode, name, version: SERVICE_VERSION, area, fetchImpl });
 			await saveIdentity(stateDir, identity);
+			claimedNow = true;
 			log({ level: 'info', event: 'pairing.claimed', satellite_id: identity.satellite_id, agent: identity.agent?.name || null });
 		} catch (err) {
 			pairingError = err.message;
@@ -71,6 +73,28 @@ export async function createSatelliteService({
 	} else if (!identity) {
 		pairingError = 'no pairing code was supplied and no identity has been claimed';
 		log({ level: 'error', event: 'pairing.missing' });
+	}
+
+	// A satellite claimed months ago is otherwise running on whatever the
+	// identity file recorded that day: the agent's name as it was then, its
+	// avatar as it was then, and whichever hub existed then. Ask three.ws once
+	// at every start, so renaming an agent or giving it a new body reaches the
+	// screen on the wall, and so a satellite paired before a hub was configured
+	// starts using one without being re-paired.
+	//
+	// Best effort, and deliberately so. The house's voice assistant does not
+	// depend on three.ws being reachable, and neither does starting the service
+	// that gives it a face: a failure here is logged and the satellite comes up
+	// on what it already knows.
+	if (identity && !claimedNow) {
+		try {
+			const next = await refreshHubToken({ identity, fetchImpl });
+			identity = { ...identity, ...next };
+			await saveIdentity(stateDir, identity);
+			log({ level: 'info', event: 'session.refreshed', agent: identity.agent?.name || null, hub: !!identity.hub_url });
+		} catch (err) {
+			log({ level: 'warn', event: 'session.refresh_failed', message: err.message });
+		}
 	}
 
 	const paired = !!identity;
