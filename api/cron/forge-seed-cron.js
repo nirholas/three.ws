@@ -50,9 +50,13 @@
 //   SEED_CRON_GATE         jobs to gate per tick (default 2). Each costs one GLB
 //                          fetch plus a mesh parse, so the ceiling keeps the
 //                          tick inside its wall when a burst finishes at once.
-//   SEED_CRON_RIG          '1' routes accepted avatars through the auto-rigger
-//                          before publishing, so catalog entries arrive
-//                          animation-ready instead of frozen in bind pose.
+//   SEED_CRON_RIG          routes accepted avatars through the auto-rigger before
+//                          publishing, so catalog entries arrive animation-ready
+//                          instead of driven by the retarget fallback. ON by
+//                          default since 2026-09-09; set it to '0' to publish
+//                          static meshes again. A rig fault, or a rig that stops
+//                          answering (RIG_STALL_MS), publishes the gated keeper
+//                          static rather than losing it.
 
 import { json, method, wrapCron } from '../_lib/http.js';
 import { env } from '../_lib/env.js';
@@ -91,8 +95,9 @@ function intEnv(name, fallback, { min = 1, max = 50 } = {}) {
 	if (!Number.isFinite(n)) return fallback;
 	return Math.max(min, Math.min(max, Math.floor(n)));
 }
-function boolEnv(name) {
+function boolEnv(name, fallback = false) {
 	const raw = String(process.env[name] ?? '').trim().toLowerCase();
+	if (!raw) return fallback;
 	return raw === '1' || raw === 'true' || raw === 'yes';
 }
 
@@ -109,7 +114,22 @@ const SUBMIT_CONCURRENCY = 2;
 
 const visionGateEnabled = () => boolEnv('SEED_CRON_VISION');
 const visionGateBudgetMs = () => intEnv('SEED_CRON_VISION_MS', 20_000, { min: 5_000, max: 45_000 });
-const rigStageEnabled = () => boolEnv('SEED_CRON_RIG');
+// On by default since 2026-09-09. A catalog avatar that cannot be skeleton
+// driven is half an asset, and the audit that turned the default around found
+// ZERO of 17,349 published seed avatars had ever been rigged. The lane was
+// verified live the same day (a seeded mesh came back with a 52-joint
+// mixamorig skeleton, which is exactly what src/glb-canonicalize.js maps), and
+// every failure path here publishes the static keeper instead of losing it, so
+// the worst case of leaving it on is the asset the old default always shipped.
+// Set SEED_CRON_RIG=0 to go back to publishing static meshes.
+export const rigStageEnabled = () => boolEnv('SEED_CRON_RIG', true);
+// A rig job that never answers must not hold a row forever. advanceRigs polls
+// the ten oldest 'rigging' rows per tick, so a permanently stuck row would sit
+// at the front of that queue and starve the ones behind it. Past this age the
+// keeper is published static, which is what a reported rig failure already
+// does. Measured against started_at (the whole job, generation included)
+// because the rig submit has no timestamp column of its own.
+const RIG_STALL_MS = 45 * 60 * 1000;
 // Gates per tick. Each one fetches the finished GLB and parses its glTF chunk;
 // two keeps the phase in the low seconds even when a burst lands together.
 const gateBatchSize = () => intEnv('SEED_CRON_GATE', 2, { min: 1, max: 10 });
@@ -499,10 +519,16 @@ async function advanceGates(origin) {
 // public avatar for one creation. Only the tick that wins the transition writes.
 // Returns null when this tick lost, so the caller reports that instead of
 // claiming a publish it did not do.
-async function publishSeedAvatar({ job, verdict, rigged, rigCreationId = null }) {
+export async function publishSeedAvatar({ job, verdict, rigged, rigCreationId = null }) {
+	// The verdict is written on the keeper as well as on the reject. Only the
+	// rejects used to carry one, which made the live accept rate unmeasurable
+	// from this table (every accepted row looked like a row that was never
+	// gated) and left nothing to tune a threshold against except the failures.
 	const [won] = await sql`
 		update forge_seed_jobs
 		set status = 'done',
+		    gate = ${verdict ? JSON.stringify(verdict) : null}::jsonb,
+		    gate_reasons = ${verdict?.reasons?.length ? verdict.reasons : null}::text[],
 		    finished_at = now()
 		where id = ${job.id}
 		  and status <> 'done'
@@ -524,7 +550,8 @@ async function publishSeedAvatar({ job, verdict, rigged, rigCreationId = null })
 }
 
 // The slice of the verdict worth carrying on the avatar row forever. The full
-// object (every judge score, every render note) stays on forge_seed_jobs.gate.
+// object (every judge score, every render note) stays on forge_seed_jobs.gate,
+// for the keepers as well as the rejects.
 // source_meta is read on every avatar detail render, so it gets the summary.
 function gateSummary(verdict) {
 	if (!verdict) return null;
@@ -579,7 +606,7 @@ async function publishableGlbUrl(job) {
 async function advanceRigs(origin) {
 	const rows = await sql`
 		select id, user_id, raw_client_id, prompt, model_category, creation_id, glb_url,
-		       rig_job_id, rig_creation_id, gate
+		       rig_job_id, rig_creation_id, gate, started_at
 		from forge_seed_jobs
 		where status = 'rigging'
 		order by started_at asc
@@ -627,6 +654,24 @@ async function advanceRigs(origin) {
 					status: avatarId ? 'published' : 'already_published',
 					rigged: false,
 					avatar_id: avatarId,
+				});
+			} else if (Date.now() - new Date(job.started_at).getTime() > RIG_STALL_MS) {
+				// Still working, far too long. Treated exactly like a reported rig
+				// failure: the mesh already passed the gate, so it is published
+				// static rather than held back for a rigger that is not answering.
+				const avatarId = await publishSeedAvatar({ job, verdict: job.gate, rigged: false });
+				if (avatarId) {
+					await sql`
+						update forge_seed_jobs
+						set error = ${`rig stalled past ${Math.round(RIG_STALL_MS / 60000)}m, published static`}
+						where id = ${job.id}
+					`;
+				}
+				results.push({
+					job_id: job.id,
+					status: avatarId ? 'published' : 'already_published',
+					rigged: false,
+					stalled: true,
 				});
 			} else {
 				results.push({ job_id: job.id, status: 'rigging' });
