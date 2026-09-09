@@ -5,7 +5,7 @@
 		<meta charset="utf-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
 		<title data-i18n="rankings.meta_title">Rankings · three.ws</title>
-		<meta name="description" content="The cross-surface three.ws leaderboard — creators ranked by real creations, remixes received, coin launches, followers, and distance walked. Track your streak and earn badges for showing up."  data-i18n-attr="content:rankings.meta_description"/>
+		<meta name="description" content="The cross-surface three.ws leaderboard: creators ranked by real creations, remixes received, coin launches, followers, and distance walked. Track your streak and earn badges for showing up."  data-i18n-attr="content:rankings.meta_description"/>
 		<link rel="canonical" href="https://three.ws/rankings" />
 		<link rel="icon" href="/favicon.ico" sizes="any" />
 		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
@@ -18,14 +18,14 @@
 		<meta property="og:site_name" content="three.ws" />
 		<meta property="og:url" content="https://three.ws/rankings" />
 		<meta property="og:title" content="Rankings · three.ws"  data-i18n-attr="content:rankings.meta_og_title"/>
-		<meta property="og:description" content="Creators ranked by real creations, remixes received, coin launches, followers, and distance walked — one board across every surface."  data-i18n-attr="content:rankings.meta_og_description"/>
+		<meta property="og:description" content="Creators ranked by real creations, remixes received, coin launches, followers, and distance walked. One board across every surface."  data-i18n-attr="content:rankings.meta_og_description"/>
 		<meta property="og:image" content="https://three.ws/api/page-og?s=labs&amp;t=Rankings&amp;d=The+cross-surface+three.ws+leaderboard%3A+creators+ranked+by+real+creations%2C+remixes+received%2C+coin+launches%2C+followers%2C+and+distance+walked.+Track+your+streak&amp;p=%2Frankings" />
 		<meta property="og:image:width" content="1200" />
 		<meta property="og:image:height" content="630" />
 		<meta name="twitter:card" content="summary_large_image" />
 		<meta name="twitter:site" content="@trythreews" />
 		<meta name="twitter:title" content="Rankings · three.ws"  data-i18n-attr="content:rankings.meta_twitter_title"/>
-		<meta name="twitter:description" content="Creators ranked by real creations, remixes, launches, followers, and walk distance — one board across every surface."  data-i18n-attr="content:rankings.meta_twitter_description"/>
+		<meta name="twitter:description" content="Creators ranked by real creations, remixes, launches, followers, and walk distance. One board across every surface."  data-i18n-attr="content:rankings.meta_twitter_description"/>
 		<meta name="twitter:image" content="https://three.ws/api/page-og?s=labs&amp;t=Rankings&amp;d=The+cross-surface+three.ws+leaderboard%3A+creators+ranked+by+real+creations%2C+remixes+received%2C+coin+launches%2C+followers%2C+and+distance+walked.+Track+your+streak&amp;p=%2Frankings" />
 		<meta name="theme-color" content="#0a0a0a" />
 		<style>
@@ -140,6 +140,11 @@
 			.rk-footer-links a:active { background: var(--surface-2); }
 			.rk-footer-links a:focus-visible { outline: var(--focus-ring-width) solid var(--focus-ring-color); outline-offset: var(--focus-ring-offset); }
 
+			.sr-only {
+				position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
+				overflow: hidden; clip: rect(0 0 0 0); clip-path: inset(50%); white-space: nowrap; border: 0;
+			}
+
 			@media (max-width: 640px) {
 				.rk-head, .rk-row, .rk-skel-row { grid-template-columns: 40px 1fr 96px; }
 				.rk-title { font-size: var(--text-xl); }
@@ -148,8 +153,8 @@
 
 	<meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1">
 	<meta property="og:locale" content="en_US">
-	<meta property="og:image:alt" content="Rankings — three.ws">
-	<script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"WebPage","name":"Rankings","description":"The cross-surface three.ws leaderboard — creations, remixes, launches, followers, and walk distance, ranked.","url":"https://three.ws/rankings","isPartOf":{"@type":"WebSite","name":"three.ws","url":"https://three.ws"}}]}</script>
+	<meta property="og:image:alt" content="Rankings · three.ws">
+	<script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"WebPage","name":"Rankings","description":"The cross-surface three.ws leaderboard: creations, remixes, launches, followers, and walk distance, ranked.","url":"https://three.ws/rankings","isPartOf":{"@type":"WebSite","name":"three.ws","url":"https://three.ws"}}]}</script>
 </head>
 	<body>
 		<header><div id="nav-container"></div></header>
@@ -159,7 +164,7 @@
 			<section class="rk-hero">
 				<p class="rk-kicker" data-i18n-html="rankings.cross_surface_updates_live"><span class="rk-live-dot" aria-hidden="true"></span> Cross-surface · updates live</p>
 				<h1 id="rk-title" class="rk-title" data-i18n="rankings.rankings">Rankings</h1>
-				<p class="rk-sub" data-i18n="rankings.one_board_across_every_surface_creations_for">One board across every surface — creations forged, remixes earned, coins launched, creators followed, and distance walked. Show up daily to build a streak and earn badges.</p>
+				<p class="rk-sub" data-i18n="rankings.one_board_across_every_surface_creations_for">One board across every surface: creations forged, remixes earned, coins launched, creators followed, and distance walked. Show up daily to build a streak and earn badges.</p>
 			</section>
 
 			<div class="rk-streak-card" id="rk-streak-card">
@@ -187,8 +192,9 @@
 					<span data-i18n="rankings.creator">Creator</span>
 					<span class="rk-col-num" id="rk-metric-label" data-i18n="rankings.creations_2">Creations</span>
 				</div>
-				<div id="rk-rows" aria-live="polite"></div>
+				<div id="rk-rows"></div>
 			</section>
+			<p id="rk-status" class="sr-only" role="status" aria-live="polite"></p>
 
 			<button type="button" id="rk-loadmore" class="rk-loadmore" hidden data-i18n="rankings.show_more">Show more</button>
 			<p id="rk-more-error" class="rk-more-error" role="status" hidden></p>
@@ -219,6 +225,7 @@
 			const meTag = meWrap.querySelector('.rk-me-tag');
 			const metricSeg = document.getElementById('rk-metric');
 			const moreErrorEl = document.getElementById('rk-more-error');
+			const statusEl = document.getElementById('rk-status');
 			const streakCard = document.getElementById('rk-streak-card');
 			const streakNum = document.getElementById('rk-streak-num');
 			const streakLabel = document.getElementById('rk-streak-label');
@@ -232,13 +239,18 @@
 				walk_distance: 'Distance',
 			};
 			const EMPTY_COPY = {
-				creations: { title: 'No creations ranked yet', msg: 'Forge a 3D model or build a world while signed in — it’ll show up here.', cta: { href: '/forge', label: 'Start creating →' } },
+				creations: { title: 'No creations ranked yet', msg: 'Forge a 3D model or build a world while signed in, and it’ll show up here.', cta: { href: '/forge', label: 'Start creating →' } },
 				remixes_received: { title: 'No remixes yet', msg: 'Publish one of your creations to the remix bazaar and wait for another creator to build on it.', cta: { href: '/creations', label: 'Open the bazaar →' } },
 				launches: { title: 'No launches ranked yet', msg: 'Launch a coin from one of your agents to show up here.', cta: { href: '/create-agent', label: 'Launch an agent →' } },
 				followers: { title: 'No one ranked yet', msg: 'Grow your following by sharing your profile and creations.', cta: { href: '/feed', label: 'Open your feed →' } },
-				walk_distance: { title: 'No walkers ranked yet', msg: 'Sign in and take your avatar for a walk — distance while signed in counts here.', cta: { href: '/walk', label: 'Start walking →' } },
+				walk_distance: { title: 'No walkers ranked yet', msg: 'Sign in and take your avatar for a walk. Distance while signed in counts here.', cta: { href: '/walk', label: 'Start walking →' } },
 			};
 			const PAGE = 50;
+			// Without a ceiling a stalled API leaves the board shimmering forever:
+			// the skeleton is indistinguishable from a request that will never
+			// answer. A timeout routes that case into the designed error state,
+			// which already carries a Retry button.
+			const REQUEST_TIMEOUT_MS = 15000;
 			let state = { metric: 'creations', offset: 0, total: 0, loading: false };
 			// Every fetch carries a sequence number and its own AbortController. A
 			// metric switch mid-flight aborts the old request and bumps the sequence,
@@ -299,8 +311,13 @@
 				rowsEl.innerHTML = h;
 			}
 
+			function announce(text) {
+				statusEl.textContent = text;
+			}
+
 			function showState(copy) {
 				rowsEl.innerHTML = `<div class="rk-state"><p class="rk-state-title">${esc(copy.title)}</p><p class="rk-state-msg">${esc(copy.msg)}</p>${copy.cta ? `<a class="rk-cta" href="${esc(copy.cta.href)}">${esc(copy.cta.label)}</a>` : ''}</div>`;
+				announce(copy.title);
 			}
 
 			function showError(detail) {
@@ -322,6 +339,7 @@
 					wrap.appendChild(p);
 				}
 				rowsEl.replaceChildren(wrap);
+				announce("Couldn't load the leaderboard. Use the retry button to try again.");
 			}
 
 			function renderMe(me, metric) {
@@ -354,6 +372,11 @@
 				inflight = ctrl;
 				const seq = ++requestSeq;
 				const isCurrent = () => seq === requestSeq;
+				// A metric switch aborts the previous request too, so the two cases
+				// have to stay distinguishable: a user-driven abort is silent, a
+				// timeout is a real failure the viewer needs to see.
+				let timedOut = false;
+				const timer = setTimeout(() => { timedOut = true; ctrl.abort(); }, REQUEST_TIMEOUT_MS);
 
 				state.loading = true;
 				if (reset) {
@@ -389,9 +412,14 @@
 					state.offset += (data.rows || []).length;
 					loadMoreEl.hidden = !data.hasMore;
 					renderMe(data.me, metric);
+					const label = METRIC_HEAD[metric] || 'Value';
+					announce(`${label}: showing ${state.offset} of ${state.total} ranked creators.`);
 				} catch (err) {
-					if (err?.name === 'AbortError' || !isCurrent()) return;
-					const detail = err?.message || 'Unknown error';
+					if (err?.name === 'AbortError' && !timedOut) return;
+					if (!isCurrent()) return;
+					const detail = timedOut
+						? `No response in ${Math.round(REQUEST_TIMEOUT_MS / 1000)}s`
+						: err?.message || 'Unknown error';
 					if (reset) {
 						loadMoreEl.hidden = true;
 						showError(detail);
@@ -402,6 +430,7 @@
 						moreErrorEl.hidden = false;
 					}
 				} finally {
+					clearTimeout(timer);
 					if (isCurrent()) {
 						state.loading = false;
 						inflight = null;

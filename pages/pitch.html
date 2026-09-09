@@ -40,6 +40,7 @@
 		<link rel="stylesheet" href="/style.css" />
 		<link rel="stylesheet" href="/pitch.css" />
 
+		<script src="/corner-stack.js"></script>
 		<script src="/model-viewer-meshopt.js"></script>
 		<script
 			type="module"
@@ -115,6 +116,7 @@
 							<div class="title-stage" aria-label="Live 3D avatar">
 								<model-viewer
 									src="/animations/soldier.glb"
+									poster="/media/pitch/soldier-title.webp"
 									alt="A live, rigged 3D character rendered in the browser"
 									autoplay
 									auto-rotate
@@ -125,8 +127,22 @@
 									shadow-intensity="0.6"
 									exposure="1.05"
 									environment-image="neutral"
-									camera-orbit="0deg 88deg 2.4m"
+									camera-orbit="180deg 85deg 3.7m"
 								></model-viewer>
+								<div class="stage-fallback" data-stage-fallback hidden>
+									<img
+										src="/media/pitch/soldier-title.webp"
+										alt="A rigged 3D character from the three.ws pipeline, shown as a still frame"
+										width="720"
+										height="720"
+										decoding="async"
+									/>
+									<p class="stage-fallback-note" data-i18n-html="pitch.stage_fallback_note">
+										<strong>The live 3D runtime did not load.</strong>
+										This still frame is the same character, rendered from the same glTF file.
+									</p>
+									<button class="btn btn-ghost btn-sm" type="button" data-retry-3d data-i18n="pitch.retry_the_live_render">Retry the live render</button>
+								</div>
 								<span class="stage-label" data-i18n-html="pitch.live_drag_to_orbit"><span class="live-dot"></span>Live · drag to orbit</span>
 							</div>
 						</div>
@@ -305,6 +321,7 @@
 							<div class="title-stage demo-stage" data-rise="3" style="aspect-ratio:1/1; max-height:64vh">
 								<model-viewer
 									src="/animations/soldier.glb"
+									poster="/media/pitch/soldier-demo.webp"
 									alt="A live, interactive 3D character you can orbit with the mouse"
 									autoplay
 									camera-controls
@@ -315,8 +332,22 @@
 									shadow-intensity="0.7"
 									exposure="1.1"
 									environment-image="neutral"
-									camera-orbit="-18deg 86deg 2.6m"
+									camera-orbit="200deg 84deg 3.8m"
 								></model-viewer>
+								<div class="stage-fallback" data-stage-fallback hidden>
+									<img
+										src="/media/pitch/soldier-demo.webp"
+										alt="A rigged 3D character from the three.ws pipeline, shown as a still frame"
+										width="760"
+										height="760"
+										decoding="async"
+									/>
+									<p class="stage-fallback-note" data-i18n-html="pitch.stage_fallback_note_2">
+										<strong>The live 3D runtime did not load.</strong>
+										This still frame is the same character, rendered from the same glTF file.
+									</p>
+									<button class="btn btn-ghost btn-sm" type="button" data-retry-3d data-i18n="pitch.retry_the_live_render_2">Retry the live render</button>
+								</div>
 								<span class="stage-label" data-i18n-html="pitch.live_in_browser_render_drag_to_orbit"><span class="live-dot"></span>Live in-browser render · drag to orbit</span>
 							</div>
 						</div>
@@ -520,7 +551,7 @@
 				<section class="slide" data-title="The ask" aria-roledescription="slide" aria-label="Closing">
 					<div class="slide-inner closing">
 						<p class="eyebrow is-num" data-rise="1" style="justify-content:center" data-i18n-html="pitch.13_the_ask"><span class="ey-n">13</span> · The ask</p>
-						<h1 data-rise="2" data-i18n-html="pitch.give_your_ai_a_body_2">Give your AI <span class="grad-text">a body.</span></h1>
+						<h2 class="closing-h" data-rise="2" data-i18n-html="pitch.give_your_ai_a_body_2">Give your AI <span class="grad-text">a body.</span></h2>
 						<p class="lede" data-rise="3" data-i18n="pitch.the_brains_are_everywhere_the_bodies_aren">
 							The brains are everywhere. The bodies aren't built yet. We're the team
 							that already shipped the layer that gives them one — and we're raising
@@ -584,7 +615,6 @@
 				});
 
 				let index = 0;
-				let prevIndex = 0;
 
 				function clamp(n) { return Math.max(0, Math.min(total - 1, n)); }
 
@@ -593,6 +623,7 @@
 						s.classList.toggle('is-active', i === index);
 						s.classList.toggle('is-prev', i < index);
 						s.setAttribute('aria-hidden', i === index ? 'false' : 'true');
+						s.inert = i !== index;
 					});
 					dots.forEach((d, i) => {
 						d.classList.toggle('is-active', i === index);
@@ -605,10 +636,9 @@
 					nextBtn.disabled = index === total - 1;
 				}
 
-				function go(n, opts) {
+				function go(n) {
 					const target = clamp(n);
 					if (target === index) return;
-					prevIndex = index;
 					index = target;
 					render();
 					const hash = '#' + (index + 1);
@@ -704,10 +734,109 @@
 				index = fromHash();
 				window.addEventListener('hashchange', () => {
 					const n = fromHash();
-					if (n !== index) { prevIndex = index; index = n; render(); }
+					if (n !== index) { index = n; render(); }
 				});
 
 				render();
+
+				// ── Live 3D: real loading, real failure ──────────────────────────
+				// Each stage ships a poster rendered from the same glTF file, so the
+				// slide is never an empty box while the model streams. When the render
+				// genuinely cannot happen (the model-viewer module is blocked, the
+				// GLB 404s, WebGL is unavailable) the poster is promoted into a
+				// labelled fallback that says so and offers a real retry, instead of
+				// leaving a "Live - drag to orbit" badge over nothing.
+				const MODEL_VIEWER_SRC =
+					'https://ajax.googleapis.com/ajax/libs/model-viewer/4.0.0/model-viewer.min.js';
+				const MODEL_VIEWER_TIMEOUT = 12000;
+
+				function stageOf(mv) { return mv.closest('.title-stage'); }
+
+				function showFallback(mv) {
+					const stage = stageOf(mv);
+					if (!stage) return;
+					stage.classList.add('is-fallback');
+					const box = stage.querySelector('[data-stage-fallback]');
+					if (box) box.hidden = false;
+				}
+
+				function hideFallback(mv) {
+					const stage = stageOf(mv);
+					if (!stage) return;
+					stage.classList.remove('is-fallback');
+					const box = stage.querySelector('[data-stage-fallback]');
+					if (box) box.hidden = true;
+				}
+
+				const viewers = Array.from(document.querySelectorAll('model-viewer'));
+				viewers.forEach((mv) => {
+					mv.addEventListener('error', () => showFallback(mv));
+					mv.addEventListener('load', () => hideFallback(mv));
+				});
+
+				// The custom element upgrades only once its module executes. A blocked
+				// or failed CDN leaves <model-viewer> an inert unknown element that
+				// fires nothing at all, so this is the only signal that path gives.
+				function waitForUpgrade() {
+					return Promise.race([
+						customElements.whenDefined('model-viewer'),
+						new Promise((_, reject) =>
+							setTimeout(() => reject(new Error('model-viewer timeout')), MODEL_VIEWER_TIMEOUT),
+						),
+					]);
+				}
+
+				function watchUpgrade() {
+					waitForUpgrade().then(
+						() => {
+							viewers.forEach((mv) => {
+								if (mv.loaded) hideFallback(mv);
+							});
+						},
+						() => viewers.forEach(showFallback),
+					);
+				}
+				watchUpgrade();
+
+				document.querySelectorAll('[data-retry-3d]').forEach((btn) => {
+					btn.addEventListener('click', () => {
+						const stage = btn.closest('.title-stage');
+						const mv = stage && stage.querySelector('model-viewer');
+						if (!mv) return;
+						btn.disabled = true;
+						hideFallback(mv);
+						if (customElements.get('model-viewer')) {
+							const src = mv.getAttribute('src');
+							mv.removeAttribute('src');
+							mv.setAttribute('src', src);
+						} else {
+							// Re-fetch the runtime past a failed/blocked first attempt.
+							const tag = document.createElement('script');
+							tag.type = 'module';
+							tag.src = MODEL_VIEWER_SRC + '?retry=' + Date.now();
+							tag.crossOrigin = 'anonymous';
+							tag.addEventListener('error', () => showFallback(mv));
+							document.head.appendChild(tag);
+							watchUpgrade();
+						}
+						setTimeout(() => { btn.disabled = false; }, MODEL_VIEWER_TIMEOUT);
+					});
+				});
+
+				// ── Corner stack ────────────────────────────────────────────────
+				// The deck is a full-viewport fixed shell, so corner-stack's dock probe
+				// (which ignores anything taller than half the screen) cannot see the
+				// slide controls underneath it. Declare the band explicitly, or the
+				// language switcher lands on the slide counter.
+				function reserveDeckChrome() {
+					const stack = window.twsCornerStack;
+					if (!stack) return;
+					const rect = prevBtn.getBoundingClientRect();
+					const height = Math.max(0, Math.round(window.innerHeight - rect.top + 12));
+					if (height > 0) stack.reserve('pitch-deck-chrome', { height });
+				}
+				reserveDeckChrome();
+				window.addEventListener('resize', reserveDeckChrome, { passive: true });
 			})();
 		</script>
 		<!-- Runtime i18n: detects locale, swaps annotated copy, mounts <lang-switcher>. -->

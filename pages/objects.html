@@ -103,15 +103,27 @@
 				position: relative; display: block; aspect-ratio: 1 / 1;
 				background: radial-gradient(120% 120% at 50% 20%, rgba(255,255,255,.05), rgba(0,0,0,.25));
 			}
-			.ch-card-mv { width: 100%; height: 100%; --poster-color: transparent; background: transparent; }
+			.ch-card-img {
+				position: absolute; inset: 0; display: block; width: 100%; height: 100%;
+				object-fit: contain; background: transparent;
+				transition: opacity var(--duration-normal, .2s) var(--ease-standard);
+			}
+			.ch-card-img--blank { background: repeating-linear-gradient(45deg, rgba(255,255,255,.03) 0 8px, transparent 8px 16px); }
+			/* The live viewer sits on top of the still and the still fades out only
+			   once the GLB has actually painted, so an upgrade never flashes empty. */
+			.ch-card-thumb.is-live .ch-card-img { opacity: 0; }
+			.ch-card-mv {
+				position: absolute; inset: 0; z-index: 1;
+				width: 100%; height: 100%; --poster-color: transparent; background: transparent;
+			}
 			.ch-card-pill {
-				position: absolute; top: 10px; left: 10px; z-index: 2;
+				position: absolute; top: 10px; left: 10px; z-index: 3;
 				font-family: var(--font-mono); font-size: 10px; letter-spacing: .05em; text-transform: uppercase;
 				padding: 3px 8px; border-radius: 999px; color: var(--ink);
 				background: rgba(0,0,0,.5); border: 1px solid var(--stroke-strong); backdrop-filter: blur(6px);
 			}
 			.ch-card-play {
-				position: absolute; inset: 0; display: grid; place-items: center; z-index: 1;
+				position: absolute; inset: 0; display: grid; place-items: center; z-index: 2;
 				font-size: 30px; color: rgba(255,255,255,.0); transition: color var(--duration-fast) var(--ease-standard); pointer-events: none;
 			}
 			.ch-card-thumb:hover .ch-card-play { color: rgba(255,255,255,.85); }
@@ -150,9 +162,41 @@
 			.ch-hbtn--secondary { background: var(--surface-1); color: var(--ink); }
 			.ch-hbtn--secondary:hover { border-color: var(--stroke-strong); }
 
+			.ch-more { display: flex; justify-content: center; padding: 28px 0 8px; }
+			.ch-more-btn {
+				padding: 11px 22px; border-radius: var(--radius-md); border: 1px solid var(--stroke);
+				background: var(--surface-1); color: var(--ink); font-size: 14px; font-weight: 600;
+				cursor: pointer; min-height: 44px;
+				transition: border-color var(--duration-fast) var(--ease-standard), background var(--duration-fast) var(--ease-standard);
+			}
+			.ch-more-btn:hover { border-color: var(--stroke-strong); background: var(--surface-2); }
+			.ch-more-btn:active { transform: translateY(1px); }
+
+			/* Keyboard focus has to be visible on every control this page owns:
+			   none of these classes inherit a focus ring from style.css. */
+			.ch-chip:focus-visible,
+			.ch-btn:focus-visible,
+			.ch-hbtn:focus-visible,
+			.ch-more-btn:focus-visible,
+			.ch-card-thumb:focus-visible,
+			.ch-search:focus-visible,
+			.ch-sort:focus-visible {
+				outline: 2px solid var(--accent);
+				outline-offset: 2px;
+			}
+			.ch-card-thumb:focus-visible { outline-offset: -2px; }
+
+			@media (prefers-reduced-motion: reduce) {
+				.ch-card, .ch-card-img, .ch-chip, .ch-btn { transition: none; }
+				.ch-skeleton { animation: none; }
+			}
+
 			@media (max-width: 560px) {
 				.ch-grid, .ch-skeleton-grid { grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); }
 				.ch-card-actions { flex-wrap: wrap; }
+				/* Three side-by-side pills fall under the 24px touch minimum on a
+				   150px card, so each action gets a full-width row instead. */
+				.ch-card-actions .ch-btn { flex: 1 1 100%; padding: 9px 8px; }
 			}
 		</style>
 	
@@ -210,6 +254,10 @@
 			</div>
 
 			<div data-role="grid" class="ch-grid" hidden></div>
+
+			<div data-role="more" class="ch-more" hidden>
+				<button type="button" class="ch-more-btn" data-role="load-more" data-i18n="objects.load_more">Load more</button>
+			</div>
 
 			<div data-role="empty" class="ch-state" hidden>
 				<div class="ch-state-icon">📦</div>

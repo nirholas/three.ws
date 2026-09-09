@@ -107,7 +107,11 @@
 			.brand { font-size: 15px; }
 			.nav-end { margin-left: auto; }
 			.nav-end .console { margin-left: 0; padding: 7px 12px; }
-			.nav-main { order: 3; flex: 0 0 100%; margin: 0 -20px; padding: 0 20px; }
+			.nav-main {
+				order: 3; flex: 0 0 100%;
+				flex-wrap: wrap; overflow-x: visible; gap: 2px 4px;
+			}
+			.nav-main a { white-space: normal; }
 		}
 
 		/* ── BUTTONS ─────────────────────────────────────────────── */

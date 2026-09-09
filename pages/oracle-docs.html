@@ -216,8 +216,10 @@
 
 		/* tier ladder */
 		.ladder { display: flex; flex-direction: column; gap: 7px; }
-		.ladder .rung { display: grid; grid-template-columns: 86px 1fr auto; align-items: center; gap: 14px; }
+		.ladder .rung { display: grid; grid-template-columns: 86px 1fr auto; align-items: center; gap: 4px 14px; }
 		.ladder .bar { height: 30px; border-radius: 7px; display: flex; align-items: center; padding: 0 12px; font-weight: 700; font-size: 13px; color: #06070d; white-space: nowrap; overflow: hidden; }
+		.ladder .obs { grid-column: 2 / -1; font-size: 12.5px; color: var(--muted); padding-left: 2px; }
+		.ladder .rung + .rung { margin-top: 5px; }
 		.ladder .rng { font-family: var(--mono); font-size: 12px; color: var(--muted); }
 		.ladder .nm { font-weight: 700; }
 
@@ -511,11 +513,11 @@ score = min(score, 45 if rugger_creator)
 				<div class="diagram">
 					<div class="cap">Conviction tiers: score → tier → measured odds</div>
 					<div class="ladder">
-						<div class="rung"><span class="nm" style="color:#eceff5">Prime</span><div class="bar" data-tier="prime" data-i18n-owned="1" style="background:#eceff5; width:100%">86-100 · claims 45% · observed 45.7% over 300</div><span class="rng">≥ 86</span></div>
-						<div class="rung"><span class="nm" style="color:#cdd2e0">Strong</span><div class="bar" data-tier="strong" data-i18n-owned="1" style="background:#cdd2e0; width:84%">72-85 · claims 25% · observed 29.2% over 1,133</div><span class="rng">≥ 72</span></div>
-						<div class="rung"><span class="nm" style="color:#9aa0b0">Lean</span><div class="bar" data-tier="lean" data-i18n-owned="1" style="background:#9aa0b0; width:70%; color:#06070d">56-71 · claims 12% · observed 20.1% over 3,465</div><span class="rng">≥ 56</span></div>
-						<div class="rung"><span class="nm" style="color:#8a92a8">Watch</span><div class="bar" data-tier="watch" data-i18n-owned="1" style="background:#8a92a8; width:58%; color:#06070d">34-55 · claims 5% · observed 7.2% over 9,572</div><span class="rng">≥ 34</span></div>
-						<div class="rung"><span class="nm" style="color:#6c7280">Avoid</span><div class="bar" data-tier="avoid" data-i18n-owned="1" style="background:#6c7280; width:46%">0-33 · claims nothing · observed 1.4% over 85,530</div><span class="rng">≥ 0</span></div>
+						<div class="rung"><span class="nm" style="color:#eceff5">Prime</span><div class="bar" data-tier="prime" data-i18n-owned="1" style="background:#eceff5; width:100%">86-100</div><span class="rng">≥ 86</span><div class="obs" data-obs="prime" data-i18n-owned="1">Claims 45% &middot; holdout observed 45.7% good over 300 launches</div></div>
+						<div class="rung"><span class="nm" style="color:#cdd2e0">Strong</span><div class="bar" data-tier="strong" data-i18n-owned="1" style="background:#cdd2e0; width:84%">72-85</div><span class="rng">≥ 72</span><div class="obs" data-obs="strong" data-i18n-owned="1">Claims 25% &middot; holdout observed 29.2% good over 1,133 launches</div></div>
+						<div class="rung"><span class="nm" style="color:#9aa0b0">Lean</span><div class="bar" data-tier="lean" data-i18n-owned="1" style="background:#9aa0b0; width:70%">56-71</div><span class="rng">≥ 56</span><div class="obs" data-obs="lean" data-i18n-owned="1">Claims 12% &middot; holdout observed 20.1% good over 3,465 launches</div></div>
+						<div class="rung"><span class="nm" style="color:#8a92a8">Watch</span><div class="bar" data-tier="watch" data-i18n-owned="1" style="background:#8a92a8; width:58%">34-55</div><span class="rng">≥ 34</span><div class="obs" data-obs="watch" data-i18n-owned="1">Claims 5% &middot; holdout observed 7.2% good over 9,572 launches</div></div>
+						<div class="rung"><span class="nm" style="color:#6c7280">Avoid</span><div class="bar" data-tier="avoid" data-i18n-owned="1" style="background:#6c7280; width:46%">0-33</div><span class="rng">≥ 0</span><div class="obs" data-obs="avoid" data-i18n-owned="1">Claims nothing &middot; holdout observed 1.4% good over 85,530 launches</div></div>
 					</div>
 				</div>
 				<p>Alongside the score, the engine emits <b>badges</b> (e.g. <code class="t">smart-money</code>, <code class="t">structure-flag</code>, <code class="t">pedigree-flag</code>, <code class="t">news</code>, <code class="t">momentum</code>, <code class="t">thin-data</code>, <code class="t">prime</code>) for fast visual scanning, and an ordered list of <b>reasons</b>: strongest evidence first, each quoting the observed outcome rate for the bucket it hit ("organic demand ≥0.8: 60% of similar launches worked"). The engine cites its training data instead of asserting adjectives.</p>
@@ -982,13 +984,15 @@ moon = graduated ∨ ATH ≥ 3×                         <span class="c">// it r
 			for (const bar of document.querySelectorAll('.ladder .bar[data-tier]')) {
 				const tier = bar.dataset.tier;
 				const rung = rungs.get(tier);
+				const obs = document.querySelector('.ladder .obs[data-obs="' + tier + '"]');
 				const range = TIER_RANGE[tier] || '';
-				if (!rung) { bar.textContent = range + ' · not published in this fit'; continue; }
-				const claims = rung.claims ? 'claims ' + Math.round(rung.claims * 100) + '%' : 'claims nothing';
-				const observed = rung.observed != null
-					? ' · observed ' + pct(rung.observed) + ' over ' + num(rung.samples)
-					: ' · not enough resolved launches yet';
-				bar.textContent = range + ' · ' + claims + observed;
+				bar.textContent = range;
+				if (!obs) continue;
+				if (!rung) { obs.textContent = 'Not published in this fit.'; continue; }
+				const claims = rung.claims ? 'Claims ' + Math.round(rung.claims * 100) + '%' : 'Claims nothing';
+				obs.textContent = rung.observed != null
+					? claims + ' · holdout observed ' + pct(rung.observed) + ' good over ' + num(rung.samples) + ' launches'
+					: claims + ' · not enough resolved launches in this band yet';
 			}
 		}
 

@@ -500,7 +500,15 @@
 					...opts,
 				});
 				const d = await res.json().catch(() => ({}));
-				if (!res.ok) throw Object.assign(new Error(d.message || d.error || `HTTP ${res.status}`), { status: res.status, code: d.code });
+				// api/_lib/http.js answers `{ error: <machine code>, error_description: <sentence> }`.
+				// Reading `d.error` as the message put the raw code ("insufficient_credits")
+				// in front of the user and left `err.code` undefined, so every branch that
+				// keys off a code was unreachable.
+				if (!res.ok) {
+					const code = d.code || d.error || null;
+					const message = d.error_description || d.message || `HTTP ${res.status}`;
+					throw Object.assign(new Error(message), { status: res.status, code });
+				}
 				return d;
 			}
 

@@ -36,6 +36,55 @@ Base URL: `https://three.ws`
    (`/api/cron/payment-session-sweep`, every 5 minutes) does the same for
    sessions that pass their expiry while still active.
 
+## The dashboard at /payments
+
+Everything below is available in the browser at
+[three.ws/payments](https://three.ws/payments), which is the fastest way to
+create a first session and watch it spend. The page lists every session you
+own with its budget bar, remaining balance, expiry countdown, host allowlist
+and per-transaction cap, and expanding a card loads that session's last ten
+executions with a Solscan link per settled payment. Press `N` anywhere on the
+page to open the create dialog.
+
+Two things the dashboard does that the API does not do for you:
+
+- **The token is shown exactly once**, right after creation, with a copy button
+  and a ready-made `PAYMENT_SESSION_TOKEN=` line. Only its HMAC hash is stored,
+  so there is no endpoint that can hand it back later. Copy it before closing.
+- **Cancel and refund** is one button per active session, and it tells you how
+  much went back to your credits.
+
+### Using a session from an MCP client
+
+Each session card carries a **Copy MCP config** button that emits the block
+below for [`@three-ws/agentcore-payments-mcp`](https://www.npmjs.com/package/@three-ws/agentcore-payments-mcp),
+which exposes the session tools to any MCP client:
+
+```json
+{
+  "mcpServers": {
+    "three-ws-payments": {
+      "command": "npx",
+      "args": ["-y", "@three-ws/agentcore-payments-mcp"],
+      "env": {
+        "THREE_WS_SESSION": "${THREE_WS_SESSION}",
+        "PAYMENT_SESSION_TOKEN": "${PAYMENT_SESSION_TOKEN}"
+      }
+    }
+  }
+}
+```
+
+The config references the two environment variables rather than inlining either
+secret, so the file itself never carries a credential. Export both before
+starting the server:
+
+- `PAYMENT_SESSION_TOKEN`: the `pss_...` token shown once when the session was
+  created. Backs the `pay_with_session` tool when no inline token is passed.
+- `THREE_WS_SESSION`: the **value** of your `__Host-sid` browser cookie, with no
+  `__Host-sid=` name prefix. Only the session-management tools (create, list,
+  cancel) need it; paying does not.
+
 ## Authentication
 
 The session-management and credits endpoints accept either credential:

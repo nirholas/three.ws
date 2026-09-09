@@ -3650,6 +3650,99 @@ curl -s 'https://three.ws/api/v1/pump/whales?mint=FeMbDoX7R1Psc4GEcvJdsbNbZA3bfz
 
 ---
 
+## Recording Pipeline API
+
+One call that answers "is the data loop actually running?" for the closed loop
+behind three.ws's pump.fun signal: the always-on launch recorder, signal intel,
+ground-truth outcomes, Oracle conviction, the wallet reputation graph, trained
+per-signal weights, and the agents trading on the result. Each link lives in a
+different table, so checking it by hand otherwise means six queries across six
+surfaces. The board that renders this is [three.ws/pipeline](https://three.ws/pipeline).
+
+### Pipeline health
+
+```
+GET /api/pipeline?network=mainnet|devnet
+```
+
+No auth, IP rate-limited, `cache-control: public, max-age=8`. `network`
+defaults to `mainnet`; anything that is not `devnet` is read as `mainnet`.
+
+```json
+{
+  "ok": true,
+  "network": "mainnet",
+  "health": "flowing",
+  "summary": "Pipeline flowing on mainnet: 1473 launches recorded in the last hour, ...",
+  "next_action": { "step": "running", "label": "Loop is running end to end", "detail": "..." },
+  "stages": {
+    "recorder":   { "state": "live", "reason": null, "mode": "live", "network": "mainnet",
+                    "feedLive": true, "heartbeatAgeMs": 20916, "lastEventAgeMs": 3829, "reconnects": 0 },
+    "intel":      { "total": 133507, "observed_24h": 29837, "observed_1h": 1473, "avg_quality": 21,
+                    "healthy": 1613, "mixed": 6321, "risky": 21903, "smart_money_touched": 65 },
+    "outcomes":   { "labeled": 131750, "graduated": 4389, "rugged": 22378, "pumped": 10184, "labeled_24h": 31916 },
+    "oracle":     { "scored_total": 888109, "scored_24h": 14376, "prime": 803, "strong": 1043, "open_actions": 26 },
+    "reputation": { "wallets": 746777, "smart_money": 2272 },
+    "learning":   { "sample_size": 20000, "trained_at": "2026-09-08T16:30:27.974Z",
+                    "weights": [{ "signal": "organic_score", "weight": 0.1812 }] },
+    "trading":    { "strategies_armed": 11, "open_positions": 0, "snipes_24h": 26, "trades_24h": 4 }
+  },
+  "docs": "https://three.ws/pipeline",
+  "t": 1788885583351
+}
+```
+
+`health` is one of:
+
+| Value | Meaning |
+| --- | --- |
+| `flowing` | the recorder is live and launches arrived in the last hour |
+| `recording` | the recorder is live but nothing has arrived in the last hour |
+| `idle` | the recorder is not live, so nothing downstream can advance |
+
+`recorder.state` is the operational truth behind that word: `live`, `degraded`
+(the worker beats but its feed is silent or disconnected), `down` (the heartbeat
+is stale), `offline` (never started, or recording a different network), or
+`unknown` (the status store was unreachable). Every non-live state carries a
+plain-language `reason`. **The recorder is network-scoped**: the worker writes a
+single heartbeat row for whichever network it records, so asking about the other
+network answers `offline` with `reason: "recording mainnet, not devnet"` rather
+than lending one network's liveness to the other.
+
+`next_action` is the single most useful move given that state, ordered by where
+the loop is actually blocked, so an agent can act on it without interpreting the
+numbers:
+
+| `step` | Needs an operator | Meaning |
+| --- | --- | --- |
+| `deploy_recorder` | yes | no heartbeat; `command` is `npm run deploy:sniper` |
+| `check_feed` | yes | the worker is up but its pump.fun feed went silent |
+| `accumulate` | no | recording; fewer than 50 outcomes labeled, the learner is waiting |
+| `await_training` | no | enough labels, waiting on the next training pass |
+| `arm_agents` | yes | trained and scored, but no strategy armed; `command` is `POST /api/sniper/strategy` |
+| `running` | no | recording, scoring, learning, and trading are all active |
+
+Every stage is queried independently and degrades on its own: a table that does
+not exist yet on a fresh database, or a worker that never booted, reports an
+honest zero or `offline` for that stage instead of failing the whole response.
+There is no `5xx` for "nothing recorded yet."
+
+**Example**
+
+```bash
+curl -s 'https://three.ws/api/pipeline?network=mainnet' | jq '{health, next: .next_action.step}'
+curl -s 'https://three.ws/api/pipeline?network=devnet'  | jq '.stages.recorder'
+```
+
+**Errors**
+
+| Status | Code           | Meaning                           |
+| ------ | -------------- | --------------------------------- |
+| `405`  | `method_not_allowed` | anything but `GET` or `OPTIONS` |
+| `429`  | `rate_limited` | over the per-IP limit             |
+
+---
+
 ## Trader Passport API
 
 A trader's daily on-chain score attestation (`threews.tradescore.v1`), served as a

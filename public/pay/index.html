@@ -4,9 +4,9 @@
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
 <title data-i18n="pay_index.meta_title">three.ws · pay-per-call (x402)</title>
-<meta name="description" content="Live x402 demo — agent pays $0.001 USDC on Solana per request to call MCP tools, render glTF/GLB models, and inspect 3D assets. No keys, no signup, on-chain settlement per call."  data-i18n-attr="content:pay_index.meta_description"/>
+<meta name="description" content="Live x402 demo: an agent pays $0.001 USDC on Solana per request to call MCP tools, render glTF/GLB models, and inspect 3D assets. No keys, no signup, on-chain settlement per call."  data-i18n-attr="content:pay_index.meta_description"/>
 <meta property="og:title" content="three.ws · pay-per-call (x402)"  data-i18n-attr="content:pay_index.meta_og_title"/>
-<meta property="og:description" content="Live x402 demo — agent pays $0.001 USDC on Solana per MCP tool call. Settled on-chain, rendered live."  data-i18n-attr="content:pay_index.meta_og_description"/>
+<meta property="og:description" content="Live x402 demo: an agent pays $0.001 USDC on Solana per MCP tool call. Settled on-chain, rendered live."  data-i18n-attr="content:pay_index.meta_og_description"/>
 <meta property="og:type" content="website" />
 <meta property="og:url" content="https://three.ws/pay" />
 <meta property="og:image" content="https://three.ws/api/x402-pay/og" />
@@ -569,8 +569,10 @@
     border: 1px solid var(--border); border-radius: 10px;
     cursor: pointer; background: var(--panel);
     transition: border-color 0.15s, background 0.15s;
-    font-size: 12px;
+    /* Rendered as <button>, so reset the UA's font and text alignment. */
+    color: inherit; font-family: inherit; font-size: 12px; text-align: left;
   }
+  .agent-card:active { transform: translateY(1px); }
   .agent-card:hover { border-color: var(--accent); background: rgba(255,255,255,0.06); }
   .agent-card.selected { border-color: var(--accent-2); background: rgba(34,211,238,0.07); }
   .agent-card .av {
@@ -580,6 +582,7 @@
     font-size: 10px; font-weight: 700; color: #0b0b0b; flex: 0 0 auto;
   }
   .agent-card .av img { width: 24px; height: 24px; border-radius: 6px; object-fit: cover; }
+  .agent-card > span:last-child { display: flex; flex-direction: column; align-items: flex-start; gap: 1px; }
   .agent-card .name { font-weight: 600; }
   .agent-card .bal { color: var(--muted); font-family: var(--mono); font-size: 11px; }
   .agent-card .no-wallet {
@@ -728,7 +731,7 @@
 
 	<meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1">
 	<meta property="og:locale" content="en_US">
-	<meta property="og:image:alt" content="Pay (x402) — three.ws">
+	<meta property="og:image:alt" content="Pay (x402) on three.ws">
 	<meta name="twitter:site" content="@trythreews">
 	<script src="/model-viewer-meshopt.js"></script>
 </head>
@@ -744,7 +747,7 @@
     <div class="logo"></div>
     <div>
       <h1 class="title">three.ws · pay-per-call</h1>
-      <div class="sub">Live x402 demo — agent pays USDC on Solana per request</div>
+      <div class="sub">Live x402 demo: an agent pays USDC on Solana per request</div>
     </div>
   </div>
   <div class="header-right">
@@ -774,22 +777,22 @@
           <span class="demo-note">Using shared demo wallet for now.</span>
         </span>
         <span id="agentLoading" style="color:var(--muted);font-size:12px" data-i18n="pay_index.loading_agents">loading agents…</span>
-        <!-- Browser wallet cards — protected from renderAgentCards() by data-wallet -->
-        <div class="agent-card" id="phantomCard" data-wallet="phantom" style="display:none">
-          <div class="av" style="background:linear-gradient(135deg,#ab9ff2,#534bb1);color:#fff;font-size:11px">P</div>
-          <div><div class="name">Phantom</div><span class="bal" id="phantomBalLabel" data-i18n="pay_index.solana_usdc_2">Solana USDC</span></div>
-        </div>
-        <div class="agent-card" id="evmCard" data-wallet="evm" style="display:none">
-          <div class="av" style="background:linear-gradient(135deg,#f6851b,#e2761b);color:#fff;font-size:11px">M</div>
-          <div><div class="name">EVM wallet</div><span class="bal" id="evmBalLabel" data-i18n="pay_index.base_usdc">Base USDC</span></div>
-        </div>
+        <!-- Browser wallet cards, protected from renderAgentCards() by data-wallet -->
+        <button type="button" class="agent-card" id="phantomCard" data-wallet="phantom" aria-pressed="false" style="display:none">
+          <span class="av" style="background:linear-gradient(135deg,#ab9ff2,#534bb1);color:#fff;font-size:11px">P</span>
+          <span><span class="name">Phantom</span><span class="bal" id="phantomBalLabel" data-i18n="pay_index.solana_usdc_2">Solana USDC</span></span>
+        </button>
+        <button type="button" class="agent-card" id="evmCard" data-wallet="evm" aria-pressed="false" style="display:none">
+          <span class="av" style="background:linear-gradient(135deg,#f6851b,#e2761b);color:#fff;font-size:11px">M</span>
+          <span><span class="name">EVM wallet</span><span class="bal" id="evmBalLabel" data-i18n="pay_index.base_usdc">Base USDC</span></span>
+        </button>
       </div>
     </div>
     <div class="conv" id="conv">
       <div class="msg agent">
         <div class="av">3</div>
         <div class="body">
-          Hi. I'm the three.ws agent. Every request below triggers a real <strong data-i18n="pay_index.x402">x402</strong> paid API call to <code>three.ws/api/mcp</code>: I sign a Solana SPL transfer for <strong data-i18n="pay_index.0_001_usdc">$0.001 USDC</strong>, the facilitator settles on-chain, the MCP tool runs, and I render the result — including <em data-i18n="pay_index.actual_3d_models">actual 3D models</em> when the tool processes one.
+          Hi. I'm the three.ws agent. Every request below triggers a real <strong data-i18n="pay_index.x402">x402</strong> paid API call to <code>three.ws/api/mcp</code>: I sign a Solana SPL transfer for <strong data-i18n="pay_index.0_001_usdc">$0.001 USDC</strong>, the facilitator settles on-chain, the MCP tool runs, and I render the result, including <em data-i18n="pay_index.actual_3d_models">actual 3D models</em> when the tool processes one.
           <br/><br/>
           Try one of the chips below, or paste a glTF/GLB URL.
         </div>
@@ -813,7 +816,7 @@
       <div class="bsc-header">
         <div>
           <strong data-i18n="pay_index.pay_on_bnb_smart_chain">Pay on BNB Smart Chain</strong>
-          <div class="bsc-sub">You sign the payment in MetaMask. <code>ThreeWSPayments.pay($0.001 USDC)</code> on-chain — no facilitator, no server-held key.</div>
+          <div class="bsc-sub">You sign the payment in MetaMask. <code>ThreeWSPayments.pay($0.001 USDC)</code> on-chain, with no facilitator and no server-held key.</div>
         </div>
         <button class="bsc-connect" id="bscConnect" data-i18n="pay_index.connect_metamask">Connect MetaMask</button>
       </div>
@@ -875,7 +878,7 @@
       <div class="step-item"><div class="num">2</div><div class="text">The agent wallet builds an <b data-i18n="pay_index.spl_transferchecked">SPL transferChecked</b> on Solana, signs it, and re-sends the request with an <b data-i18n="pay_index.x_payment">X-PAYMENT</b> header.</div></div>
       <div class="step-item"><div class="num">3</div><div class="text">The facilitator <b data-i18n="pay_index.verifies_settles">verifies + settles</b> on-chain. The MCP tool runs. You see the result + a Solscan tx link in &lt;2s.</div></div>
     </div>
-    <button id="closeWalk" data-i18n="pay_index.got_it_let_s_go">Got it — let's go</button>
+    <button id="closeWalk" data-i18n="pay_index.got_it_let_s_go">Got it, let's go</button>
   </div>
 </div>
 
@@ -934,6 +937,7 @@ function setSelectedBrowserWallet(type) {
   // De-select any agent card without re-rendering the whole list
   for (const el of agentList.querySelectorAll('.agent-card[data-agent-id].selected')) {
     el.classList.remove('selected');
+    el.setAttribute('aria-pressed', 'false');
   }
   updateBrowserWalletCards();
 }
@@ -941,11 +945,11 @@ function setSelectedBrowserWallet(type) {
 function updateBrowserWalletCards() {
   const phantomCard = $('phantomCard');
   const evmCard = $('evmCard');
-  if (phantomCard) {
-    phantomCard.classList.toggle('selected', selectedBrowserWallet === 'phantom');
-  }
-  if (evmCard) {
-    evmCard.classList.toggle('selected', selectedBrowserWallet === 'evm');
+  for (const [card, kind] of [[phantomCard, 'phantom'], [evmCard, 'evm']]) {
+    if (!card) continue;
+    const on = selectedBrowserWallet === kind;
+    card.classList.toggle('selected', on);
+    card.setAttribute('aria-pressed', String(on));
   }
 }
 
@@ -1004,9 +1008,11 @@ function renderAgentCards(agents) {
     return;
   }
   agents.forEach(agent => {
-    const el = document.createElement('div');
+    const el = document.createElement('button');
+    el.type = 'button';
     el.className = 'agent-card' + (selectedAgent?.id === agent.id ? ' selected' : '');
     el.dataset.agentId = agent.id;
+    el.setAttribute('aria-pressed', String(selectedAgent?.id === agent.id));
     // The thumbnail URL comes from the API (R2, public/unlisted avatars only).
     // There is no /avatars/<id>/thumbnail.png route on this origin, so deriving
     // one from avatar_id only ever 404'd and painted the fallback anyway.
@@ -1016,7 +1022,7 @@ function renderAgentCards(agents) {
     const walletHtml = agent.solana_address
       ? `<span class="bal">${agent.usdc != null ? agent.usdc.toFixed(3)+' USDC' : ''}</span>`
       : `<span class="no-wallet">no wallet</span>`;
-    el.innerHTML = `<div class="av">${avatarHtml}</div><div><div class="name">${escape(agent.name)}</div>${walletHtml}</div>`;
+    el.innerHTML = `<span class="av">${avatarHtml}</span><span><span class="name">${escape(agent.name)}</span>${walletHtml}</span>`;
     el.addEventListener('click', () => {
       if (!agent.solana_address) {
         openGenOverlay(agent);
@@ -1333,7 +1339,7 @@ async function refreshPhantomBalance(address) {
     console.warn('[pay] Phantom balance read failed:', err?.message || err);
     if (balLabel) {
       balLabel.textContent = `couldn't read balance · ${address.slice(0,4)}…${address.slice(-4)}`;
-      balLabel.title = 'Solana RPC balance lookup failed — payments still work.';
+      balLabel.title = 'Solana RPC balance lookup failed. Payments still work.';
     }
   }
 }
@@ -1533,7 +1539,7 @@ function escape(s) { return String(s).replace(/[<>&]/g, c => ({'<':'&lt;','>':'&
 // text-node safe only.
 function attr(s) { return escape(s).replace(/"/g, '&quot;').replace(/'/g, '&#39;'); }
 function formatBytes(n) {
-  if (!Number.isFinite(n)) return '—';
+  if (!Number.isFinite(n)) return 'unknown';
   if (n < 1024) return `${n} B`;
   if (n < 1024*1024) return `${(n/1024).toFixed(1)} KB`;
   return `${(n/1024/1024).toFixed(1)} MB`;
@@ -1718,7 +1724,7 @@ function renderValidate(args, result) {
   const ok = errs === 0;
   const meta = text.meta || {};
   return `
-    <div><strong>${ok ? '✅ glTF spec-compliant' : '❌ has errors'}</strong> — ${errs} errors, ${warns} warnings, ${infos} infos</div>
+    <div><strong>${ok ? '✅ glTF spec-compliant' : '❌ has errors'}</strong>: ${errs} errors, ${warns} warnings, ${infos} infos</div>
     <div class="meta-grid">
       ${meta.vertices != null ? chip('vertices', Number(meta.vertices).toLocaleString()) : ''}
       ${meta.triangles != null ? chip('triangles', Number(meta.triangles).toLocaleString()) : ''}
@@ -2277,7 +2283,7 @@ async function waitForReceipt(txHash, timeoutMs = 60000) {
     await new Promise((r) => setTimeout(r, wait));
     if (retryAfterMs == null) delay = Math.min(delay * 2, maxDelay);
   }
-  throw new Error(`tx ${txHash} did not confirm within ${timeoutMs / 1000}s — check BscScan.`);
+  throw new Error(`tx ${txHash} did not confirm within ${timeoutMs / 1000}s. Check BscScan.`);
 }
 
 async function bscConnect() {
@@ -2314,12 +2320,12 @@ function randomRef() {
 }
 
 async function payOnChain(ref) {
-  logStep(`💳 Calling <code>ThreeWSPayments.pay(${ref.slice(0, 10)}…)</code> — sign in MetaMask.`);
+  logStep(`💳 Calling <code>ThreeWSPayments.pay(${ref.slice(0, 10)}…)</code>. Sign it in MetaMask.`);
   const data = '0x8609cad1' + ref.replace(/^0x/, '');
   const txHash = await eth('eth_sendTransaction', [{
     from: bscAccount, to: BSC_PAYMENTS, data,
   }]);
-  const rowDiv = logStep(`📝 Pay tx: <a target="_blank" rel="noopener" href="https://bscscan.com/tx/${txHash}"><code>${txHash}</code></a> — waiting for confirmation…`);
+  const rowDiv = logStep(`📝 Pay tx: <a target="_blank" rel="noopener" href="https://bscscan.com/tx/${txHash}"><code>${txHash}</code></a> awaiting confirmation…`);
   const rcpt = await waitForReceipt(txHash);
   rowDiv.innerHTML = `✅ Payment confirmed in block ${parseInt(rcpt.blockNumber, 16)}: <a target="_blank" rel="noopener" href="https://bscscan.com/tx/${txHash}"><code>${txHash}</code></a>`;
   return txHash;

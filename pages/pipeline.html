@@ -212,7 +212,6 @@
 		const metaEl = document.getElementById('pl-meta');
 		const ctaEl = document.getElementById('pl-cta');
 		const refreshBtn = document.getElementById('pl-refresh');
-		const rawApiEl = document.getElementById('pl-raw-api');
 		const netBtns = [...document.querySelectorAll('.pl-net button')];
 
 		let network = 'mainnet';
@@ -409,6 +408,10 @@
 			const controller = new AbortController();
 			inFlightController = controller;
 			const asked = network;
+			// Re-queried rather than cached: the runtime i18n pass can replace this
+			// paragraph after first render, and a stale node would leave the link
+			// pointing at whichever network the page booted on.
+			document.getElementById('pl-raw-api')?.setAttribute('href', '/api/pipeline?network=' + asked);
 			refreshBtn.classList.add('spin');
 			flow.setAttribute('aria-busy', 'true');
 			try {
@@ -436,7 +439,6 @@
 			if (b.dataset.net === network) return;
 			network = b.dataset.net;
 			netBtns.forEach((x) => x.setAttribute('aria-pressed', String(x.dataset.net === network)));
-			rawApiEl.href = '/api/pipeline?network=' + network;
 			skeletons();
 			load();
 		}));
