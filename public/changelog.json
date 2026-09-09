@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-09-09T15:24:45.795Z",
+	"generated_at": "2026-09-09T15:27:22.887Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -304,6 +304,17 @@
 			"tags": [
 				"fix",
 				"improvement"
+			]
+		},
+		{
+			"date": "2026-09-09",
+			"type": "update",
+			"title": "Smart Home reads and works without a mouse, and now speaks past English",
+			"summary": "Three fixes to the connected house, all of them things a person hits rather than reads about. The room you have selected states what is on in it at full contrast: on the highlighted row that line sat below the readable minimum, which is exactly the row you are looking at. Answering the safety question that stands between you and an unlocked door now hands the keyboard back to the control you pressed, whether you answer with Yes, with Cancel or with Escape; the list rebuilds itself while the question is up, so the keyboard used to land back at the top of the page and you had to tab the whole house again. And the connect flow, the manage view and the floorplan editor now read from the same translation catalog the rest of the site does, so they are ready for the 86 languages three.ws ships in. Your own words are never translated: the name you gave your house, your rooms, your devices and anything your Home Assistant says come back exactly as you wrote them, in every language.",
+			"link": "/docs/smart-home",
+			"tags": [
+				"improvement",
+				"fix"
 			]
 		},
 		{
