@@ -60,18 +60,44 @@ export async function signIn(page, role = 'owner') {
 	return account;
 }
 
+/** Every home on the signed-in account, however the endpoint shapes its list. */
+async function listHomes(page) {
+	const list = await page.request.get('/api/home', { timeout: 60_000 });
+	if (!list.ok()) return [];
+	const body = await list.json().catch(() => null);
+	return Array.isArray(body?.homes) ? body.homes : Array.isArray(body) ? body : [];
+}
+
+/** The base URL of a listed home, whichever spelling the payload uses. */
+function homeBaseUrl(home) {
+	return String(home?.baseUrl || home?.base_url || '').replace(/\/+$/, '');
+}
+
 /**
- * Take every home this account has off the platform.
+ * The homes on this account that point at THIS lane's Home Assistant.
+ *
+ * Concurrent agents share this worktree and this QA account, and more than one
+ * home lane is routinely in flight at once. A helper that treated every home on
+ * the account as its own deleted the house a peer run was mid-journey inside,
+ * and then opened whichever house won the race, so both runs failed reporting
+ * product bugs that were never there. Each lane owns exactly the houses on its
+ * own container and leaves the rest alone.
+ */
+async function laneHomes(page) {
+	const mine = homeBaseUrl(homeInstance());
+	return (await listHomes(page)).filter((home) => homeBaseUrl(home) === mine);
+}
+
+/**
+ * Take this lane's homes off the platform.
  *
  * Journeys grant standing permissions on locks, and a grant surviving into the
  * next journey would quietly disarm the gate that journey is trying to prove.
- * Each one therefore starts from an account with no houses on it.
+ * Each one therefore starts from an account with no houses of ITS OWN on it;
+ * a concurrent lane's houses are none of its business.
  */
 export async function resetHomes(page) {
-	const list = await page.request.get('/api/home', { timeout: 60_000 });
-	if (!list.ok()) return 0;
-	const body = await list.json().catch(() => null);
-	const homes = Array.isArray(body?.homes) ? body.homes : Array.isArray(body) ? body : [];
+	const homes = await laneHomes(page);
 	for (const home of homes) {
 		await page.request.delete(`/api/home/${home.id}`, { timeout: 60_000 }).catch(() => {});
 	}
@@ -86,11 +112,16 @@ export async function resetHomes(page) {
  */
 export async function connectHome(page, { label = 'The lane house' } = {}) {
 	const home = homeInstance();
+	// Two agents running the SAME spec on this shared account would otherwise
+	// both connect a house called "Journey nine" and each would then assert on
+	// the other's. The lane name is already what separates their containers.
+	const lane = stack().lane;
+	const scoped = lane && lane !== 'e2e' ? `${label} ${lane}` : label;
 
 	await page.goto('/smart-home', { waitUntil: 'domcontentloaded' });
 	await expect(page.locator('#hm-url')).toBeVisible({ timeout: 60_000 });
 
-	await page.fill('#hm-label', label);
+	await page.fill('#hm-label', scoped);
 	await page.fill('#hm-url', home.baseUrl);
 	await page.fill('#hm-token', home.token);
 	await page.getByRole('button', { name: 'Connect this home' }).click();
@@ -98,8 +129,8 @@ export async function connectHome(page, { label = 'The lane house' } = {}) {
 	// The connected state is the one that lists rooms. Waiting for the room list
 	// rather than for a spinner to vanish means the assertion is about the house
 	// having been read, not about an animation having finished.
-	await expect(page.getByText(label, { exact: false }).first()).toBeVisible({ timeout: 120_000 });
-	return label;
+	await expect(page.getByText(scoped, { exact: false }).first()).toBeVisible({ timeout: 120_000 });
+	return scoped;
 }
 
 /**
@@ -111,10 +142,10 @@ export async function connectHome(page, { label = 'The lane house' } = {}) {
  * "Unlock Front Door" instead of on a guessed pixel of a WebGL canvas.
  */
 export async function openScene(page) {
-	const list = await page.request.get('/api/home', { timeout: 60_000 });
-	const body = await list.json();
-	const homes = Array.isArray(body?.homes) ? body.homes : Array.isArray(body) ? body : [];
-	if (!homes.length) throw new Error('no connected home to open');
+	const homes = await laneHomes(page);
+	if (!homes.length) {
+		throw new Error(`no connected home on this lane's house (${homeBaseUrl(homeInstance())}) to open`);
+	}
 
 	await page.goto(`/smart-home/${homes[0].id}`, { waitUntil: 'domcontentloaded' });
 	const flat = page.locator('#hs-view-2d');

@@ -29,7 +29,7 @@
 import { isPrivateHost, normalizeBaseUrl } from '@three-ws/home-bridge/url';
 
 import { disclosurePanel } from './disclosure-panel.js';
-import { renderManage } from './manage.js';
+import { isDegraded, renderManage } from './manage.js';
 
 /** The eleven states. Each one has a designed treatment; none falls through. */
 export const STATE = Object.freeze({
@@ -84,6 +84,14 @@ const root = document.getElementById('hm-root');
 /** Session-lived only: never persisted, so a reload re-reads it from the server. */
 let csrfToken = '';
 
+/**
+ * The screen currently on the page. State 3 (validating) is a property of one
+ * field rather than a different screen, so it is flipped on and off over this
+ * without re-rendering: rebuilding the card on a keystroke would take the caret
+ * out of the field the person is typing in.
+ */
+let renderedState = null;
+
 boot();
 
 async function boot() {
@@ -110,7 +118,21 @@ async function boot() {
 
 function renderHomes(homes, notice) {
 	if (!homes.length) return render(STATE.EMPTY, notice ? { notice } : {});
-	render(homes.length > 1 ? STATE.MANY : STATE.CONNECTED, { homes, ...(notice ? { notice } : {}) });
+	render(listState(homes), { homes, ...(notice ? { notice } : {}) });
+}
+
+/**
+ * Which of the list states this set of houses is in.
+ *
+ * The manage view renders all three identically on purpose (one list that
+ * scales), but the page still has to be able to say which one it is: a card
+ * reading "not answering right now" under `data-state="connected"` is the page
+ * disagreeing with itself, and it is the difference between state 9 being
+ * designed and state 9 being a paragraph.
+ */
+function listState(homes) {
+	if (homes.length > 1) return STATE.MANY;
+	return isDegraded(homes[0]) ? STATE.DEGRADED : STATE.CONNECTED;
 }
 
 /**
@@ -134,6 +156,7 @@ function sameHouse(storedBaseUrl, typedBaseUrl) {
  */
 function render(state, data = {}) {
 	root.setAttribute('aria-busy', state === STATE.VERIFYING ? 'true' : 'false');
+	renderedState = state;
 	root.dataset.state = state;
 	clear(root);
 
@@ -251,9 +274,14 @@ function connectCard({ notice, values = {}, focus } = {}) {
 	// message appears under the field the moment the address is unreachable in
 	// principle, which is the only honest time to say it.
 	const liveValidate = () => {
+		const typed = url.input.value.trim();
 		const verdict = checkReachable(url.input.value);
-		url.input.setAttribute('aria-invalid', verdict.ok || !url.input.value.trim() ? 'false' : 'true');
+		const invalid = Boolean(typed) && !verdict.ok;
+		url.input.setAttribute('aria-invalid', invalid ? 'true' : 'false');
 		setInlineError(url, verdict.ok ? '' : verdict.short);
+		// The page names the state it is in without rebuilding the card, so a
+		// keystroke never costs the caret and the state stays answerable.
+		root.dataset.state = invalid ? STATE.VALIDATING : renderedState;
 	};
 	url.input.addEventListener('input', liveValidate);
 	url.input.addEventListener('blur', liveValidate);
@@ -695,7 +723,7 @@ async function disconnect(home) {
 		title: `${home.label} is disconnected.`,
 		body: 'The access token we held has been erased. Delete the token in Home Assistant too if you want it gone on both sides, under ' + TOKEN_PATH + '.',
 	};
-	if (homes && homes.length) render(homes.length > 1 ? STATE.MANY : STATE.CONNECTED, { homes, notice });
+	if (homes && homes.length) render(listState(homes), { homes, notice });
 	else render(STATE.REVOKED, { notice });
 }
 
@@ -808,15 +836,25 @@ function field({ id, label, hint, value, attrs = {} }) {
 	input.value = value || '';
 	const hintEl = el('p', 'hm-hint', hint);
 	hintEl.id = `${id}-hint`;
+	// The hint is where inline validation speaks, so it announces its own
+	// changes. Without this a screen reader user types a LAN address, gets
+	// `aria-invalid` and no reason, and has to go looking for the sentence
+	// everybody else can see.
+	hintEl.setAttribute('aria-live', 'polite');
 	input.setAttribute('aria-describedby', hintEl.id);
 	wrap.append(labelEl, input, hintEl);
 	return { wrap, input, hint: hintEl, baseHint: hint };
 }
 
-/** Inline, per-field validation text. Replaces the hint rather than stacking. */
+/**
+ * Inline, per-field validation text. Replaces the hint rather than stacking, and
+ * marks itself with an attribute rather than a colour: colour alone is not a
+ * message, and `[data-error]` is what both the stylesheet and a test can read.
+ */
 function setInlineError(f, message) {
 	f.hint.textContent = message || f.baseHint;
-	f.hint.style.color = message ? 'var(--hm-down)' : '';
+	if (message) f.hint.dataset.error = 'true';
+	else delete f.hint.dataset.error;
 }
 
 /**

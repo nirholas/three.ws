@@ -551,6 +551,8 @@ download.zip
 # not a directory, so the pattern above does not reach them. Same contents: the
 # base URL and a working long-lived access token for the seeded house.
 .ha-config-e2e-stack.json
+# One per concurrent home e2e lane, keyed by HOME_LIVE_NAME.
+.ha-config-e2e-stack.*.json
 # Same thing at fleet scale: scripts/home-fleet.mjs boots numbered Home Assistant
 # instances under .home-fleet/<n>/, each with its own token store.
 .home-fleet/

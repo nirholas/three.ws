@@ -617,6 +617,23 @@ function isStale(home) {
 	return Date.now() - last > STALE_AFTER_MS;
 }
 
+/**
+ * Is this house currently something other than live?
+ *
+ * The card already says so in words; this is the same judgement as a boolean,
+ * so the page can name the state it is in rather than reporting `connected`
+ * over a card that reads "not answering right now". Three ways a house is not
+ * live, and the card has a different sentence for each: it has stopped
+ * answering (stale), it is refusing the connection (unreachable), or the token
+ * we hold no longer works (auth_failed). `pending` is not degraded, it is the
+ * first few seconds of a connection that is still being made.
+ */
+export function isDegraded(home) {
+	if (!home) return false;
+	if (home.status === 'unreachable' || home.status === 'auth_failed') return true;
+	return isStale(home);
+}
+
 function statusText(home, stale) {
 	if (stale) return `Last answered ${ago(home.last_ok_at)}. Showing the last state we saw.`;
 	switch (home.status) {

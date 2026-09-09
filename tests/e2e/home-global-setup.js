@@ -30,14 +30,24 @@ import { acquireHomeInstance } from '../_helpers/home-instance.js';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
 
-/** Where the stack's details land. Gitignored: it holds a real access token. */
-export const STACK_FILE = path.join(ROOT, '.ha-config-e2e-stack.json');
+/**
+ * Where the stack's details land. Gitignored: it holds a real access token.
+ *
+ * Keyed by HOME_LIVE_NAME, the same name that already gives each lane its own
+ * Home Assistant container. This worktree is shared by concurrent agents and
+ * more than one home run is often in flight at once; a single shared path meant
+ * the last setup to finish silently repointed every other run at ITS house, and
+ * the specs then drove the wrong Home Assistant while reporting product bugs.
+ * One file per lane costs nothing and removes the whole class.
+ */
+export const LANE = process.env.HOME_LIVE_NAME || 'e2e';
+export const STACK_FILE = path.join(ROOT, `.ha-config-e2e-stack${LANE === 'e2e' ? '' : `.${LANE}`}.json`);
 /** The reusable QA accounts. Gitignored: real credentials for a real account. */
 const ACCOUNTS_FILE = path.join(ROOT, '.ha-config-e2e-accounts.json');
 
 export default async function globalSetup(config) {
 	process.env.HOME_LIVE = process.env.HOME_LIVE || '1';
-	process.env.HOME_LIVE_NAME = process.env.HOME_LIVE_NAME || 'e2e';
+	process.env.HOME_LIVE_NAME = process.env.HOME_LIVE_NAME || LANE;
 
 	const origin = config?.projects?.[0]?.use?.baseURL || 'http://localhost:3020';
 
@@ -47,7 +57,7 @@ export default async function globalSetup(config) {
 	const accounts = await ensureAccounts(origin);
 	fs.writeFileSync(
 		STACK_FILE,
-		`${JSON.stringify({ home, accounts, origin, startedAt: new Date().toISOString() }, null, '\t')}\n`,
+		`${JSON.stringify({ home, accounts, origin, lane: LANE, startedAt: new Date().toISOString() }, null, '\t')}\n`,
 	);
 	console.log(`[home-e2e] accounts ready: ${accounts.owner.username}, ${accounts.guest.username}`);
 }

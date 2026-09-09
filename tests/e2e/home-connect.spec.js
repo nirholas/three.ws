@@ -31,44 +31,7 @@
 
 import { expect, test } from '@playwright/test';
 
-const PAGE = '/smart-home';
-const LIST = '**/api/home';
-const CSRF = '**/api/csrf-token';
-
-// First hit transforms this page's module graph through the dev server.
-const SLOW = 60_000;
-
-const HOME = {
-	id: '2b0d4c7e-1f8a-4c3d-9e11-7a6b5c4d3e2f',
-	label: 'Home',
-	base_url: 'https://home.example.com',
-	transport: 'direct',
-	relay_id: null,
-	status: 'connected',
-	status_detail: null,
-	capabilities: { websocket: true, entityCount: 120, areaCount: 3, floorCount: 1, macroCount: 2, haVersion: '2026.9.0', mcp: false, mcpToolCount: 0 },
-	last_ok_at: new Date().toISOString(),
-	last_error_at: null,
-	created_at: new Date().toISOString(),
-	updated_at: new Date().toISOString(),
-	revoked_at: null,
-};
-
-function json(body, status = 200) {
-	return { status, contentType: 'application/json', body: JSON.stringify(body) };
-}
-
-/** Everything the page reads, with the home list under the caller's control. */
-async function stub(page, { homes = [], onConnect } = {}) {
-	await page.route(CSRF, (route) => route.fulfill(json({ token: 'csrf-test-token', data: { token: 'csrf-test-token' } })));
-	await page.route(LIST, async (route) => {
-		if (route.request().method() === 'POST') {
-			const body = JSON.parse(route.request().postData() || '{}');
-			return route.fulfill(onConnect ? onConnect(body) : json({ home: HOME, capabilities: HOME.capabilities }, 201));
-		}
-		return route.fulfill(json({ homes }));
-	});
-}
+import { CSRF, HOME, json, LIST, PAGE, SLOW, stub } from './home-connect-stubs.js';
 
 const state = (page) => page.locator('#hm-root');
 
@@ -117,6 +80,37 @@ test.describe('/smart-home connect flow', () => {
 		// https URL that works today, and letting the house dial out to us.
 		await expect(page.getByRole('listitem').filter({ hasText: /remote https address/i })).toBeVisible();
 		await expect(page.getByRole('listitem').filter({ hasText: /dial out to three\.ws/i })).toBeVisible();
+	});
+
+	test('typing a LAN address names the state and says so under the field', async ({ page }) => {
+		// State 3 is the one that is easiest to leave implicit: an inline message
+		// with the page still calling itself `empty`. Naming it is what makes it
+		// assertable from outside, and the caret has to survive it, because a
+		// validation that re-rendered the card would eject the person mid-word.
+		await stub(page);
+		await page.goto(PAGE);
+		await expect(state(page)).toHaveAttribute('data-state', 'empty', { timeout: SLOW });
+
+		const sent = [];
+		page.on('request', (r) => { if (r.url().includes('/api/')) sent.push(r.url()); });
+
+		const url = page.locator('#hm-url');
+		await url.click();
+		await page.keyboard.type('http://192.168.1.10:8123');
+
+		await expect(state(page)).toHaveAttribute('data-state', 'validating');
+		await expect(url).toHaveAttribute('aria-invalid', 'true');
+		await expect(page.locator('#hm-url-hint')).toContainText(/only on your home network/i);
+		await expect(page.locator('#hm-url-hint')).toHaveAttribute('data-error', 'true');
+		// The caret is still where they were typing, so the next keystroke lands.
+		await expect(url).toBeFocused();
+		expect(sent, 'validating as they type must cost nothing on the network').toEqual([]);
+
+		// And it lets go again the moment the address becomes usable.
+		await url.fill('https://home.example.com');
+		await expect(state(page)).toHaveAttribute('data-state', 'empty');
+		await expect(url).toHaveAttribute('aria-invalid', 'false');
+		await expect(page.locator('#hm-url-hint')).not.toHaveAttribute('data-error', 'true');
 	});
 
 	test('a rejected token says so and puts focus back in the token field', async ({ page }) => {
@@ -251,7 +245,10 @@ test.describe('/smart-home connect flow', () => {
 		const twoHoursAgo = new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString();
 		await stub(page, { homes: [{ ...HOME, last_ok_at: twoHoursAgo }] });
 		await page.goto(PAGE);
-		await expect(state(page)).toHaveAttribute('data-state', 'connected', { timeout: SLOW });
+		// The page names it degraded rather than connected. A card that reads
+		// "not answering" under `data-state="connected"` is the page disagreeing
+		// with itself, and it is what made state 9 unassertable from outside.
+		await expect(state(page)).toHaveAttribute('data-state', 'degraded', { timeout: SLOW });
 
 		// The card is still there, and it says how long ago the house last spoke.
 		await expect(page.locator('.hm-card')).toHaveCount(1);
@@ -275,7 +272,7 @@ test.describe('/smart-home connect flow', () => {
 	test('a rejected stored token explains itself in the list', async ({ page }) => {
 		await stub(page, { homes: [{ ...HOME, status: 'auth_failed', status_detail: 'Home Assistant rejected the stored token.', last_ok_at: null }] });
 		await page.goto(PAGE);
-		await expect(state(page)).toHaveAttribute('data-state', 'connected', { timeout: SLOW });
+		await expect(state(page)).toHaveAttribute('data-state', 'degraded', { timeout: SLOW });
 
 		await expect(page.locator('.hm-status')).toContainText(/rejected the stored token/i);
 		await expect(page.locator('.hm-dot-auth_failed')).toBeVisible();
