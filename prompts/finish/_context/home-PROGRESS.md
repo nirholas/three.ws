@@ -2785,3 +2785,47 @@ every rendering number below):
 
 **Commits:** `ea3345a13` (the agent body, committed by a peer's sweep under an accurate message
 they wrote from the diff), plus this one.
+
+---
+
+**Addendum, 2026-09-09, a later session: order 19 re-verified at HEAD, and the price decision turns
+out to be narrower than the entry above assumed.**
+
+The order's own retirement clause keeps `313-home-19-plans-entitlements.md` on disk while the price
+is outstanding, so this run re-proved the acceptance evidence at `362f5a01e` rather than trusting
+the record, and re-derived what the owner is actually being asked.
+
+- **The most important line reproduces.** `tests/home-turn-gate.test.js` against a fresh real Home
+  Assistant 2026.9.0 (`plan19c`, its own container): **24 passed, 0 skipped**, live block included.
+  Over quota and on a paused home, `lock.lock` (3819ms), `cover.close_cover` (1667ms) and
+  `alarm_control_panel.alarm_arm_away` (1664ms) each ran and the device moved, asserted by reading
+  the state back out of the house; in the same moment an ordinary action and the unsafe direction
+  of a safety domain were both still refused. `tests/home-entitlements.test.js` +
+  `tests/home-turn-gate.test.js` together: **73 passed** with `DATABASE_URL` set, matching the 55 +
+  18 recorded above.
+- **The browser evidence had to be regenerated and now exists again.** `test-results/` is transient
+  and a later Playwright run had cleared both PNGs, so the screenshot line of the Definition of Done
+  was unbacked at HEAD even though it had once been met. Re-ran the documented command against a
+  real API on :8171, a real Vite on :3031 and the live house: **2 passed (33.5s)**.
+  `home-plan-quotas.png` shows all seven dimensions with real usage (`Connected homes 1 of 25`), the
+  real reset date (`Monthly allowances reset on October 1`), the per-account override rendered as
+  "This account has agreed limits" naming the three dimensions it raises, and both commitments under
+  "What a limit can never do". `home-plan-paused.png` shows the paused row kept and badged, reading
+  "You paused this home to make room for another one.", `Open` disabled, "Make live" offered, and
+  `Connected homes` recounted to `0 of 25`. The override is visible in both: a free tier whose
+  proposed ceiling is 1 home is running at 25 with no code change.
+- **The finding: Pro is already priced, so the owner is not being asked to invent a number.**
+  `pages/pricing.html` has sold Pro at **$49/mo, $480/yr** as a fixed marketing figure since before
+  this lane existed. The order and the entry above both framed the open question as "the price",
+  which overstates it. What is genuinely undecided is (a) the seven limit numbers and (b) whether the
+  home lane is inside the existing Pro or sold beside it.
+- **The gap that finding exposes: `/pricing` says nothing about the home lane.** Zero matches for
+  smart home, Home Assistant or connected home on that page, and it is exactly where the quota
+  refusal sends people (`upgradePath = '/pricing'` at `api/_lib/home/entitlements.js:596,673`, and
+  the plan page's "See plans" button). Today a user refused at the home ceiling lands on a page that
+  never mentions homes. Deliberately not fixed here: adding those rows publishes the limit numbers,
+  which is the decision this order was never allowed to make. It is the concrete work that lands
+  with the approval, and it is one page.
+
+Nothing in the mechanism changed this session; no code was touched. `313-home-19-plans-entitlements.md`
+stays on disk, still on the one outstanding owner action.
