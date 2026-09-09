@@ -475,6 +475,17 @@ async function scenarioHappyPath() {
 	}
 }
 
+/**
+ * The answer the agent is part-way through when it gets interrupted. Long enough
+ * that a real interruption lands inside it, and hoisted out of the scenario so
+ * main() can put it in the speech cache before the clock starts: synthesizing it
+ * live costs more than the interrupting clip's 5 s silent lead, which would make
+ * the scenario measure TTS latency instead of barge-in.
+ */
+const BARGE_IN_ANSWER =
+	'The kitchen light is off, the hallway light is off, the thermostat is holding at twenty degrees, ' +
+	'the front door is locked, and the garage is closed. Nothing else has changed since this morning.';
+
 async function scenarioBargeIn() {
 	const { browser, page } = await launch(CLIPS.bargeUser.path);
 	try {
@@ -489,12 +500,7 @@ async function scenarioBargeIn() {
 		await bootPage(page);
 		await optIn(page);
 		// Speak a long enough answer that the user's interruption lands inside it.
-		await page.evaluate(() => {
-			window.homeVoice.loop._speak(
-				'The kitchen light is off, the hallway light is off, the thermostat is holding at twenty degrees, ' +
-					'the front door is locked, and the garage is closed. Nothing else has changed since this morning.',
-			);
-		});
+		await page.evaluate((line) => window.homeVoice.loop._speak(line), BARGE_IN_ANSWER);
 		// Wait for sound actually leaving the speaker, not merely for the state
 		// flip: _speak enters `speaking` before the synthesis request returns, so a
 		// failed TTS call would otherwise read as a silent, un-interruptible agent.
@@ -784,6 +790,31 @@ async function scenarioStateGallery() {
 	}
 }
 
+/**
+ * Run one scenario, and run it again if a dev-server reload pulled the page out
+ * from under it.
+ *
+ * Concurrent agents edit this worktree while a run is in flight, and any source
+ * file they touch makes Vite reload every open page. That wipes the opt-in and
+ * the recorded events, so the scenario is not retryable in place: it has to
+ * start over, with the checks it already appended dropped, or a half-finished
+ * attempt would be reported alongside the real one. Only the navigation error is
+ * caught. A failing assertion is a failing assertion and is never retried.
+ */
+async function run(scenario) {
+	const mark = results.length;
+	for (let attempt = 0; ; attempt++) {
+		try {
+			return await scenario();
+		} catch (err) {
+			const reloaded = /Execution context was destroyed|Target closed|frame was detached/i.test(err?.message || '');
+			if (!reloaded || attempt >= 2) throw err;
+			results.length = mark;
+			console.log(`[retry] the dev server reloaded mid-scenario; starting it again (${attempt + 1}/2).`);
+		}
+	}
+}
+
 // ── run ─────────────────────────────────────────────────────────────────────
 
 async function main() {
@@ -794,19 +825,23 @@ async function main() {
 	}
 	await signIn();
 	await ensureClips();
+	// Synthesize the agent's interrupted answer once, before anything is timed,
+	// so the barge-in scenario is as fast on a machine that has never run this
+	// script as on one that has.
+	await cachedSpeech(BARGE_IN_ANSWER);
 	await warmUp();
 
 	const measured = {};
-	await scenarioColdLoad();
-	measured.happy = await scenarioHappyPath();
-	measured.barge = await scenarioBargeIn();
-	measured.selfTrigger = await scenarioSelfTrigger();
-	await scenarioGuarded({ clip: CLIPS.ambientYeah, expectRedeemed: false, label: 'ambient yes' });
-	await scenarioGuarded({ clip: CLIPS.confirmToken, expectRedeemed: true, label: 'the token' });
-	measured.mute = await scenarioMute();
-	await scenarioUnavailable();
-	await scenarioPermissionDenied();
-	await scenarioStateGallery();
+	await run(scenarioColdLoad);
+	measured.happy = await run(scenarioHappyPath);
+	measured.barge = await run(scenarioBargeIn);
+	measured.selfTrigger = await run(scenarioSelfTrigger);
+	await run(() => scenarioGuarded({ clip: CLIPS.ambientYeah, expectRedeemed: false, label: 'ambient yes' }));
+	await run(() => scenarioGuarded({ clip: CLIPS.confirmToken, expectRedeemed: true, label: 'the token' }));
+	measured.mute = await run(scenarioMute);
+	await run(scenarioUnavailable);
+	await run(scenarioPermissionDenied);
+	await run(scenarioStateGallery);
 
 	const failed = results.filter((r) => !r.pass);
 	writeFileSync(

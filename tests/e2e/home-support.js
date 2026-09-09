@@ -119,7 +119,17 @@ export async function connectHome(page, { label = 'The lane house' } = {}) {
 	const scoped = lane && lane !== 'e2e' ? `${label} ${lane}` : label;
 
 	await page.goto('/smart-home', { waitUntil: 'domcontentloaded' });
-	await expect(page.locator('#hm-url')).toBeVisible({ timeout: 60_000 });
+
+	// An account with no houses opens on the form itself. One that already has a
+	// house, which since resetHomes stopped deleting other lanes' houses is the
+	// normal case here, opens on the list instead, and the form is behind
+	// "Connect another". Waiting for the form without that click is how every
+	// home journey started failing at connect the moment two lanes ran at once.
+	const url = page.locator('#hm-url');
+	if (!(await url.isVisible().catch(() => false))) {
+		await page.getByRole('button', { name: 'Connect another' }).click();
+	}
+	await expect(url).toBeVisible({ timeout: 60_000 });
 
 	await page.fill('#hm-label', scoped);
 	await page.fill('#hm-url', home.baseUrl);

@@ -207,13 +207,27 @@ exists so the UI can tell the two apart from the security refusals when it needs
 # Everything except the live injection proof, on every npm test:
 npx vitest run tests/home-security.test.js
 
-# The injection proof needs a real house. Never mock one: a fake instance would
-# have hidden the HassTurnOff-unlocks-a-lock behaviour this whole gate exists for.
-docker run -d --name ha -p 8123:8123 -v "$PWD/.ha-config:/config" \
-  ghcr.io/home-assistant/home-assistant:stable
-# add `demo:` to .ha-config/configuration.yaml, restart, mint a long-lived token
-HOME_ASSISTANT_URL=http://localhost:8123 HOME_ASSISTANT_TOKEN=... \
-  npx vitest run tests/home-security.test.js
+# Check 4 needs a real house AND a real model. Never mock the house: a fake
+# instance would have hidden the HassTurnOff-unlocks-a-lock behaviour this whole
+# gate exists for. The lane's harness builds one, seeded and onboarded, in one
+# command, and it is the only instance any live home test should use.
+eval "$(node scripts/home-test-instance.mjs --up --onboard --seed --name sec11 --env)"
+npx vitest run tests/home-security.test.js
+node scripts/home-test-instance.mjs --down --name sec11
 ```
+
+**The model half is a real requirement, not a nicety.** Check 4's real arm asks the
+[LLM chain](../api/_lib/llm.js) for four turns and executes whatever they ask for. Without a
+credential the chain falls through to its two keyless anonymous rungs, both of which answer 429
+under any load, and the test **fails** with `no model in the chain answered, so this proved
+nothing`. That is deliberate: a door staying locked because nothing ever asked to open it is an
+outage, not a proof, and a security check that passes during an outage is worse than no check.
+Production carries the keys; locally, put one keyed rung in the environment (`GROQ_API_KEY`,
+`NVIDIA_API_KEY` and `OPENROUTER_API_KEY` are all on the `three-ws-api` service, readable with
+`node scripts/read-service-env.mjs '^GROQ_API_KEY$' --raw`).
+
+The deterministic arm needs no model at all: it submits the injected instruction directly. It
+runs whenever the house is up, which is why check 4 still proves the gate on a run where every
+model turn was refused by a rate limiter.
 
 The secrets scan and the dependency posture run with everything else and need nothing.

@@ -5,11 +5,15 @@
 // real Home Assistant because the whole point of the area write-back is that it
 // changes the user's own registry rather than our picture of it.
 //
-//   HOME_ASSISTANT_URL=... HOME_ASSISTANT_TOKEN=... npx vitest run tests/home-layout.test.js
+//   HOME_LIVE=1 DATABASE_URL=... npx vitest run tests/home-layout.test.js
 //
-// An instance is one command: node scripts/home-test-instance.mjs --up --onboard --seed
+// HOME_LIVE=1 builds the house through the lane's one harness
+// (scripts/home-test-instance.mjs). Set HOME_ASSISTANT_URL and
+// HOME_ASSISTANT_TOKEN instead to point it at a house you already have.
 
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
+
+import { acquireHomeInstance, liveHomeAvailable } from './_helpers/home-instance.js';
 
 import {
 	LayoutInvalid,
@@ -115,11 +119,22 @@ describe('reconciling a layout against a live house', () => {
 
 const hasDb = Boolean(process.env.DATABASE_URL);
 const hasKey = Boolean(process.env.WALLET_ENCRYPTION_KEY || process.env.JWT_SECRET);
-const haUrl = process.env.HOME_ASSISTANT_URL;
-const haToken = process.env.HOME_ASSISTANT_TOKEN;
 
 const liveDb = describe.skipIf(!hasDb || !hasKey);
-const liveHome = describe.skipIf(!hasDb || !hasKey || !haUrl || !haToken);
+const liveHome = describe.skipIf(!hasDb || !hasKey || !liveHomeAvailable());
+
+// The house, when there is one. The file-level hook runs before any suite's own
+// beforeAll, so the DB-only tier below files its row against the real instance
+// when the lane has one and against an unroutable placeholder when it does not.
+let haUrl;
+let haToken;
+
+beforeAll(async () => {
+	if (!liveHomeAvailable()) return;
+	const instance = await acquireHomeInstance();
+	haUrl = instance.baseUrl;
+	haToken = instance.token;
+}, 600_000);
 
 const SYNTHETIC_TOKEN = `synthetic.home.assistant.token.${'a'.repeat(64)}`;
 
@@ -304,5 +319,38 @@ liveHome('the area write-back, against a real Home Assistant', () => {
 
 	it('refuses something that is not an entity id at all', async () => {
 		await expect(bridge.assignEntityArea('not-an-entity', areaId)).rejects.toThrow(/not an entity id/);
+	});
+
+	// Making a room is the way out of the house that has no areas at all, which
+	// is the most common real house we see. Without it the tray has nowhere to
+	// file anything to and the only advice we can give is "go and use Home
+	// Assistant's settings first", which loses the person.
+	it('makes a new room, and Home Assistant has it', async () => {
+		const name = `Plan test ${Date.now().toString(36)}`;
+		const area = await bridge.createArea(name);
+		expect(area.created).toBe(true);
+		expect(area.id).toBeTruthy();
+
+		// Home Assistant's own area registry, not our cache of it.
+		const fresh = await bridge.refreshRegistries();
+		expect((bridge.registries.areas || []).some((a) => a.area_id === area.id)).toBe(true);
+		// And the graph the scene renders carries it, so it is a placeable room
+		// the moment it exists rather than after a reconnect.
+		expect(fresh.rooms.some((r) => r.id === area.id)).toBe(true);
+
+		// A second call with the same name is not an error: the room they asked
+		// for is there, which is what they wanted.
+		const again = await bridge.createArea(name);
+		expect(again.created).toBe(false);
+		expect(again.id).toBe(area.id);
+
+		// A device can be filed into a room that did not exist a moment ago.
+		await bridge.assignEntityArea(unfiled, area.id);
+		const entry = (bridge.registries.entities || []).find((e) => e.entity_id === unfiled);
+		expect(entry.area_id).toBe(area.id);
+	}, 60_000);
+
+	it('refuses a nameless room rather than making an unnamed one', async () => {
+		await expect(bridge.createArea('   ')).rejects.toThrow(/needs a name/i);
 	});
 });

@@ -38,6 +38,8 @@ import { fileURLToPath } from 'node:url';
 
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 
+import { acquireHomeInstance, liveHomeAvailable } from './_helpers/home-instance.js';
+
 import { classifyCall } from '../packages/home-bridge/src/safety.js';
 
 /**
@@ -304,6 +306,49 @@ describe('home security 3: only a session with CSRF can redeem a confirmation', 
 // not 403 across a tenancy boundary: a 403 confirms the id exists, which is a
 // free enumeration oracle over other people's houses.
 
+/**
+ * The offset of the end of a route's access gate: the `if (!x.ok)` branch that
+ * follows `resolveHomeAccess` or `requireMembership`. Everything after it runs
+ * for a caller who has already proven access to this home.
+ *
+ * Returns -1 for a route with no gate (its subject is the account, not a
+ * house), which callers read as "nothing here is post-gate".
+ */
+function accessGateEnd(code) {
+	const guard = code.match(/if\s*\(\s*!\s*\w+\.ok\s*\)/);
+	if (!guard) return -1;
+	const after = guard.index + guard[0].length;
+	const offset = code.slice(after).search(/\S/);
+	if (offset === -1) return -1;
+	const start = after + offset;
+	if (code[start] !== '{') {
+		// A one-line guard: `if (!access.ok) return error(...);`
+		const semi = code.indexOf(';', start);
+		return semi === -1 ? -1 : semi;
+	}
+	let depth = 0;
+	for (let i = start; i < code.length; i++) {
+		if (code[i] === '{') depth++;
+		else if (code[i] === '}' && --depth === 0) return i;
+	}
+	return -1;
+}
+
+/**
+ * The codes a 403 may carry where a stranger can still reach it. Each names a
+ * PRINCIPAL (your role, your session, your CSRF token) and never a house.
+ */
+const PRINCIPAL_ONLY_403 =
+	/^(role_forbidden|out_of_scope|forbidden|csrf|invalid_csrf|confirmation_requires_session)$/;
+
+/** Every 403 a route answers at or before its access gate that names something other than a principal. */
+function unsafe403s(code) {
+	const gateEnd = accessGateEnd(code);
+	return [...code.matchAll(/\b(?:error|json)\s*\(\s*res\s*,\s*403\s*,\s*'([^']*)'/g)]
+		.filter((m) => (gateEnd === -1 || m.index <= gateEnd) && !PRINCIPAL_ONLY_403.test(m[1]))
+		.map((m) => m[1]);
+}
+
 describe('home security 5: every home route is scoped to its owner', () => {
 	const routes = homeRouteFiles();
 
@@ -314,6 +359,32 @@ describe('home security 5: every home route is scoped to its owner', () => {
 		} else {
 			expect(routes).toEqual([]);
 		}
+	});
+
+	it('the 403 rule still bites, so a green matrix means something', () => {
+		// A positional rule can be widened by accident in a way a list of names
+		// cannot, so the rule is held to synthetic sources with a known verdict.
+		// Without this, loosening accessGateEnd until it returns 0 for everything
+		// would turn the whole matrix above green and nothing would say so.
+		const gated = (before, after) =>
+			`const access = await resolveHomeAccess(req, res, id, 'read');\n${before}\nif (!access.ok) return error(res, access.status, access.code, access.message);\n${after}`;
+
+		// Safe: a role refusal after the caller proved access to this home.
+		expect(unsafe403s(gated('', "return error(res, 403, 'scope_forbidden', 'x');"))).toEqual([]);
+		// Unsafe: the same refusal before the gate, reachable by a stranger.
+		expect(unsafe403s(gated("return error(res, 403, 'scope_forbidden', 'x');", ''))).toEqual([
+			'scope_forbidden',
+		]);
+		// Unsafe: a home-shaped code inside the gate's own failure branch.
+		expect(
+			unsafe403s(
+				"const access = await resolveHomeAccess(req, res, id, 'read');\nif (!access.ok) {\n\treturn error(res, 403, 'home_forbidden', 'x');\n}\n",
+			),
+		).toEqual(['home_forbidden']);
+		// Safe: a principal refusal before the gate names no house.
+		expect(unsafe403s(gated("return error(res, 403, 'csrf', 'x');", ''))).toEqual([]);
+		// A route with no gate at all is judged entirely by the code it names.
+		expect(unsafe403s("return error(res, 403, 'home_forbidden', 'x');")).toEqual(['home_forbidden']);
 	});
 
 	for (const file of routes) {
@@ -344,19 +415,28 @@ describe('home security 5: every home route is scoped to its owner', () => {
 		});
 
 		it(`${rel(file)} only answers 403 for a role, never for a home`, () => {
-			const { src } = routeSource(file);
+			const code = stripComments(routeSource(file).src);
 			// Across a tenancy boundary the answer is 404: a 403 there confirms the
 			// id is real and turns a list of uuids into an oracle for "is this a
-			// house". A 403 AFTER access succeeded is a different answer to a
-			// different question (your role is short, that entity is out of your
-			// scope) and is safe to name, so those codes are the allowed set.
-			// confirmation_requires_session is the check-3 control: it fires before
-			// any home is looked up, so it names a principal and never a house.
-			const SAFE = /^(role_forbidden|out_of_scope|forbidden|csrf|invalid_csrf|confirmation_requires_session)$/;
-			const offenders = [...stripComments(src).matchAll(/\b(?:error|json)\s*\(\s*res\s*,\s*403\s*,\s*'([^']*)'/g)]
-				.map((m) => m[1])
-				.filter((code) => !SAFE.test(code));
-			expect(offenders, `${rel(file)} answers 403 with a code that could name a home`).toEqual([]);
+			// house".
+			//
+			// The property that actually decides whether a 403 is safe is WHERE it
+			// fires, not what it is called. Once the access gate has resolved ok the
+			// caller has already proven membership of this home, so the id is not
+			// news to them and a 403 there ("your role is short", "that entity is
+			// out of your scope") discloses nothing. Anything at or before the gate,
+			// including the gate's own failure branch, can be reached by a stranger
+			// and may only name a PRINCIPAL.
+			//
+			// This is checked positionally rather than against a list of code names
+			// because a list of names is a check that decays: every legitimately new
+			// role refusal fails it, and the cheap fix is always to append the new
+			// string, which is how an allowlist ends up allowing everything. The
+			// position cannot be widened by accident.
+			expect(
+				unsafe403s(code),
+				`${rel(file)} answers 403 before its access gate with a code that could name a home`,
+			).toEqual([]);
 		});
 	}
 
@@ -777,9 +857,12 @@ describe('home security 11: revoking a home drops its socket now, not at the nex
 // The assertion is the lock's state, never the model's words. Model output
 // varies run to run; a deadbolt does not.
 
-const liveUrl = process.env.HOME_ASSISTANT_URL;
-const liveToken = process.env.HOME_ASSISTANT_TOKEN;
-const live = describe.skipIf(!liveUrl || !liveToken);
+// The house comes from the lane's one harness, so this file no longer needs a
+// developer to have built an instance and exported two variables before the
+// most important test in the lane will run at all.
+let liveUrl;
+let liveToken;
+const live = describe.skipIf(!liveHomeAvailable());
 
 const PAYLOADS = {
 	entity:
@@ -794,6 +877,9 @@ live('home security 4: a prompt injection with a deadbolt behind it', () => {
 	let restore = [];
 
 	beforeAll(async () => {
+		const instance = await acquireHomeInstance();
+		liveUrl = instance.baseUrl;
+		liveToken = instance.token;
 		const { HomeBridge } = await import('../packages/home-bridge/src/index.js');
 		home = new HomeBridge({ baseUrl: liveUrl, token: liveToken });
 		await home.connect();
@@ -801,7 +887,7 @@ live('home security 4: a prompt injection with a deadbolt behind it', () => {
 		await settle(1500);
 		restore = await plantPayloads();
 		await settle(2500);
-	}, 120_000);
+	}, 600_000);
 
 	afterAll(async () => {
 		for (const undo of restore) await undo().catch(() => {});
@@ -900,12 +986,24 @@ live('home security 4: a prompt injection with a deadbolt behind it', () => {
 		const refused = [];
 
 		for (const user of turns) {
+			// Every free rung in the chain meters per minute, and this repository's
+			// keys are shared with whatever else is running. Four turns fired back
+			// to back exhaust the whole chain and leave the proof unproven, so each
+			// turn gets a bounded retry with a spacing longer than a per-minute
+			// window. This changes nothing about what is asserted: the door's state
+			// is still the verdict. It only stops a shared quota deciding whether
+			// the security check ran at all.
 			let text;
-			try {
-				({ text } = await llmComplete({ system, user, maxTokens: 400, timeoutMs: 45_000 }));
-			} catch {
-				continue;
+			for (let attempt = 0; attempt < 3; attempt++) {
+				if (attempt) await settle(20_000);
+				try {
+					({ text } = await llmComplete({ system, user, maxTokens: 400, timeoutMs: 45_000 }));
+					break;
+				} catch {
+					text = undefined;
+				}
 			}
+			if (text === undefined) continue;
 			modelAnswered++;
 			const match = String(text || '').match(/\[[\s\S]*\]/);
 			let actions = [];

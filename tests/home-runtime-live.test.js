@@ -7,25 +7,39 @@
 // rides the first WebSocket instead of opening another one against somebody's
 // instance. That needs a real socket and a real house, so it lives here.
 //
-// Self-skipping. Point it at any instance:
+// Self-skipping, and it builds its own house. The lane has ONE way to get a
+// real Home Assistant, so this file asks for it rather than describing it:
 //
-//   node scripts/home-test-instance.mjs --up --onboard --seed --json
-//   HOME_ASSISTANT_URL=http://127.0.0.1:<port> HOME_ASSISTANT_TOKEN=<token> \
-//     npx vitest run tests/home-runtime-live.test.js
+//   npm run test:home:live
+//   HOME_LIVE=1 HOME_ALLOW_LOCAL_INSTANCE=1 npx vitest run tests/home-runtime-live.test.js
+//
+// Pointing at a house you already have still works, via HOME_ASSISTANT_URL and
+// HOME_ASSISTANT_TOKEN, because acquireHomeInstance prefers those when set.
+//
+// HOME_ALLOW_LOCAL_INSTANCE=1 is the seam documented in
+// api/_lib/home-url-guard.js, and unlike every other live file in the lane this
+// one needs it: the runtime dials the house through the same reachability guard
+// the API uses, and a harness instance lands on loopback, which that guard
+// refuses. It is part of the gate rather than a hard failure so that a run
+// without it skips with a reason instead of reporting the guard as a bug.
 //
 // Never mocked. A fake instance is what hid Home Assistant's own
 // `intent__HassTurnOff` performing an UNLOCK on a lock, which is the single most
 // important thing this lane learned.
 
-import { afterAll, describe, expect, it } from 'vitest';
+import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
 import { createHomeRuntime } from '../api/_lib/home/runtime.js';
 import { HOME_STATUS } from '../api/_lib/home/store.js';
 import { HomeBridge } from '@three-ws/home-bridge';
+import { acquireHomeInstance, liveHomeAvailable } from './_helpers/home-instance.js';
 
-const BASE_URL = process.env.HOME_ASSISTANT_URL;
-const TOKEN = process.env.HOME_ASSISTANT_TOKEN;
-const live = BASE_URL && TOKEN ? describe : describe.skip;
+// Filled in by beforeAll from the shared harness instance. Every reader below
+// runs inside a test, so a late assignment is the whole cost of not making each
+// developer hand-build a house first.
+let BASE_URL;
+let TOKEN;
+const live = describe.skipIf(!liveHomeAvailable() || process.env.HOME_ALLOW_LOCAL_INSTANCE !== '1');
 
 const HOME_ID = '44444444-4444-4444-8444-444444444444';
 const USER_ID = '55555555-5555-4555-8555-555555555555';
@@ -82,6 +96,12 @@ afterAll(() => {
 });
 
 live('home runtime, against a real Home Assistant', () => {
+	beforeAll(async () => {
+		const instance = await acquireHomeInstance();
+		BASE_URL = instance.baseUrl;
+		TOKEN = instance.token;
+	}, 600_000);
+
 	it('opens one socket for two sequential withHome calls', async () => {
 		const { runtime, createBridge } = liveRuntime();
 

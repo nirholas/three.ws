@@ -18,9 +18,13 @@
 //      built by hand, so every live test in the lane is pointed at the same
 //      thing (scripts/home-test-instance.mjs):
 //
-//        eval "$(node scripts/home-test-instance.mjs --up --onboard --seed --env)"
-//        DATABASE_URL=... WALLET_ENCRYPTION_KEY=... npx vitest run tests/home-store.test.js
-//        node scripts/home-test-instance.mjs --down
+//        HOME_LIVE=1 DATABASE_URL=... WALLET_ENCRYPTION_KEY=... \
+//          npx vitest run tests/home-store.test.js
+//        node scripts/home-test-instance.mjs --down --name lane
+//
+//      HOME_LIVE=1 is the whole setup: the file builds the house itself. Set
+//      HOME_ASSISTANT_URL and HOME_ASSISTANT_TOKEN instead to point it at one
+//      you already have.
 //
 //      The live tier writes throwaway users into whatever database it is given
 //      and deletes them again, the same posture as the package's live-home suite
@@ -33,6 +37,8 @@ import { fileURLToPath } from 'node:url';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
 import { classifyCall, createAllowList, HomeBridge } from '@three-ws/home-bridge';
+
+import { acquireHomeInstance, liveHomeAvailable } from './_helpers/home-instance.js';
 
 import {
 	createConnection,
@@ -120,16 +126,28 @@ describe('grant scoping, over the recorded instance', () => {
 
 const hasDb = Boolean(process.env.DATABASE_URL);
 const hasKey = Boolean(process.env.WALLET_ENCRYPTION_KEY || process.env.JWT_SECRET);
-const haUrl = process.env.HOME_ASSISTANT_URL;
-const haToken = process.env.HOME_ASSISTANT_TOKEN;
 
 const liveDb = describe.skipIf(!hasDb || !hasKey);
-const liveHome = describe.skipIf(!hasDb || !hasKey || !haUrl || !haToken);
+const liveHome = describe.skipIf(!hasDb || !hasKey || !liveHomeAvailable());
 
 // A token shaped like the real thing but belonging to nothing: the DB-only tier
 // proves the credential path without needing a house to point it at.
 const SYNTHETIC_TOKEN = `synthetic.home.assistant.token.${'a'.repeat(64)}`;
-const BASE_URL = haUrl || 'https://home.invalid.three.ws';
+
+// The house, when there is one. Filled in by the file-level hook below, which
+// runs before any suite's own beforeAll, so the DB-only tier stores the real
+// URL when a house exists and the unroutable placeholder when it does not.
+let haUrl;
+let haToken;
+let BASE_URL = 'https://home.invalid.three.ws';
+
+beforeAll(async () => {
+	if (!liveHomeAvailable()) return;
+	const instance = await acquireHomeInstance();
+	haUrl = instance.baseUrl;
+	haToken = instance.token;
+	BASE_URL = haUrl;
+}, 600_000);
 
 liveDb('against a real database', () => {
 	/** @type {import('@neondatabase/serverless').NeonQueryFunction} */
