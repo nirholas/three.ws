@@ -884,6 +884,98 @@ now collapses them either way.
 Left: unchanged. `04b` stays on disk, the published run is still the 2026-08-10 one, and the
 finishing command when row 20 clears is the one recorded two passes above.
 
+## 2026-09-09 (fourth pass): 01 ship-readiness, built clean at 7a053e6f3 with the first fully green `npm test`; the submit is the owner's
+
+**Prod before this run: `880bdcef8`, revision `three-ws-api-00420-ljh`, `dirty: false`.** Local
+`main` was 385 commits ahead. Nothing shipped in this session: the submit is gate 2 and the
+owner has not said yes, so this run ends at the rendered command, which is a finished run and
+not a blocked one.
+
+**The clean `npm test` this order has owed since 2026-08-08 now exists.** Taken in the deploy
+worktree at the exact pinned commit, after the build, exit code 0:
+
+    Test Files  2035 passed | 7 skipped (2042)
+         Tests  29496 passed | 175 skipped (29671)
+    playwright  256 passed, 1 flaky, 5 skipped (11.0m)
+
+The one flaky was `tests/e2e/coin-buy-trade.spec.js:284` (failed buy-prep copy), which passed
+on retry. `npm run gate` also exits 0 at that commit, as do the three deploy gates
+(`db:check`, `check:gcloudignore`, `audit:deploy`).
+
+**Four reds had to be fixed to get there, and only one of them was flake.**
+
+- **A lost host realm turned a handled boot failure into a crash** (`8d70251ec`). Two
+  unhandled rejections failed every full vitest sweep. In vitest's jsdom environment
+  `document.defaultView === globalThis`, so the existing "construct from the element's own
+  window" fix is a no-op there: when the environment teardown restores Node's native globals,
+  `view.CustomEvent` becomes Node's, and jsdom's `dispatchEvent` rejects it as "not of type
+  Event". Thrown from inside `_boot`'s own catch it escaped as an unhandled rejection. The
+  same thing happens to a real embedder whose SPA remounts mid-boot. `_emit` now drops an
+  event the realm will not accept, and the four other dispatch sites that repeated its four
+  lines route through it. Pinned by `tests/src/element-emit-realm.test.js`, verified against a
+  negative control (two of its three cases fail without the guard).
+- **`prep:worktree` dropped 25 fixtures from every staged tree** (`c7ab8d2d5`). It skipped any
+  artifact whose destination existed, which is wrong for a directory git only partly owns:
+  `animation-sources` holds tracked `.fbx` beside gitignored `.glb`, so checkout created it
+  with the tracked half and the stager left the rest behind. glb-diff and model-diff then
+  failed on missing files, which reads as a broken commit rather than an unstaged tree. An
+  existing destination is now merged into with `--update=none`, so a tracked file is never
+  hardlinked (which would make an edit in the deploy tree rewrite the source tree through the
+  shared inode). The placement rule is pure and pinned.
+- **The stage-room test raced a broadcast it can never win** (`7a053e6f3`). It asserted
+  `room.state.host.caption` the instant the `utterance` message arrived, but `StageRoom`
+  broadcasts with `afterNextPatch: false` on purpose, so the caption ALWAYS lands after the
+  message. It failed on a loaded box in three consecutive sweeps and passed on every isolated
+  re-run, which reads as flake and is a real ordering assumption. Now waits for state to catch
+  up, bounded by the deadline already in the test. Green 3/3 in a row.
+- **The committed feeds had fallen a changelog entry behind** (`8f6fd6b1d`). Nothing
+  regenerates them when an entry lands, so `CHANGELOG.md` and the published JSON and RSS were
+  missing the animation-gallery paging entry and the atlas index still advertised 814 pages
+  against a 816-page route table. This is also what made the first build stamp itself
+  `dirty: true`: `build:info:snapshot` reads the tree before `prebuild` rewrites those files,
+  so a tree that is already behind stamps dirty. Regenerated and committed; the shipped build
+  reads `dirty: false`.
+
+**The ordering rule that came out of this, worth keeping.** In a deploy worktree, build
+BEFORE you test. Nine failures in the first worktree sweep were missing build output
+(`avatar-sdk/dist/index.mjs`, and `dist/` for the server-404 and asset-path suites), and
+running `npm test` first also dirties the tree through Playwright's dev server, which runs
+`prebuild`. Both disappear when `build:gcp` runs first.
+
+**Two peer-caused reds were correctly NOT fixed.** A sweep in the shared tree reported
+`tests/changelog-push.test.js` and `tests/multiplayer-server-boot.test.js` failing; the first
+was a peer's uncommitted `api/_lib/changelog-push.js` edit landing mid-run (it passes at HEAD),
+and only the second was real. HEAD moved four times during this run, which is why the
+verification was taken in a pinned worktree rather than the shared tree.
+
+**Pre-ship healthz (unchanged from the start of the run):** 11 ok, 3 degraded, 1 down.
+`x402_settle` DOWN (settle 0.0%, 132 rail faults, sponsor under the SOL floor) and `sniper`
+degraded (5 of 13 wallets starved, funding master holds 0.0250 SOL against the 0.2834 SOL
+needed) are both order 902 and both need owner funds. `rpc_lanes` degraded (all 3 paid lanes
+cooling) and `okx_chat_bot` degraded (Vertex dunning denial, order 907) are likewise not this
+deploy's.
+
+**Left for the owner, in this order.** gcloud auth on this machine has expired
+("Reauthentication failed. cannot prompt during non-interactive execution"), so even a
+read-only `gcloud run services describe` fails here; the reauth is interactive and only the
+owner can complete it.
+
+    gcloud auth login
+    cd /workspaces/.deploy-wt-ship100b && gcloud builds submit --config server/cloudbuild.yaml --region us-central1 --project aerial-vehicle-466722-p5
+    gcloud compute url-maps invalidate-cdn-cache three-ws-lb --path '/*' --project aerial-vehicle-466722-p5
+
+No `--substitutions` on the submit: `server/cloudbuild.yaml` contains no `$SHORT_SHA` (it tags
+through `_IMAGE`), so passing one is rejected. The bare `gcloud builds submit` is correct here
+only because `db:check`, `check:gcloudignore` and `audit:deploy` were all run in that worktree
+and all exit 0. Then `curl -s https://three.ws/api/version` should report `7a053e6f3` with
+`dirty: false` on a revision above `three-ws-api-00420-ljh`, and `npm run smoke:prod` should
+exit 0.
+
+**The deploy worktree is deliberately left in place** at `/workspaces/.deploy-wt-ship100b`,
+built and verified, because the owner submits from it. Remove it with
+`git worktree remove --force /workspaces/.deploy-wt-ship100b` once the deploy lands. Disk is
+at 95% (7.2G free) with it there.
+
 ## Retire this file when the campaign is done (required)
 
 This file is shared context rather than a single order, so it outlives the
