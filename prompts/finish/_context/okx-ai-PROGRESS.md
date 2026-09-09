@@ -186,6 +186,34 @@ and every gate is green. One owner action stands between this and a GO.
 
 ---
 
+## 2026-09-09 06:00 UTC, the R2 delivery outage is OVER: the WO-08 entry below has expired
+
+The entry immediately below says the resubmission is NO-GO because production has delivered
+nothing since 2026-09-07 and the R2 credential is rejected. **That was true when it was
+written and it is no longer true.** Do not act on it without re-reading the live signals.
+
+What changed, measured after it was written:
+
+- **Cloud Run revision `three-ws-api-00420-ljh` (created 05:39:41Z) took 100% of traffic and
+  carries a working storage credential.** The rejected one belonged to `three-ws-api-00419-5tr`
+  (05:34:26Z): every `materializeCreation failed: ... SignatureDoesNotMatch` line in the window
+  carries that revision label and no other. The live revision has logged **zero** storage
+  failures since it took traffic.
+- `/api/okx/3d/health` reads `ok: true` on all six subsystems, `storage` included.
+- `forge_creations` shows **86 `done` rows in the 30 minutes to 05:55Z**, against the "no
+  `done` row in 48 hours" the entry below reports.
+- A fresh free-lane draft job delivered a durable GLB in about 30 s, and
+  `scripts/okx-verify-glb.mjs` reads `PASS` on the bytes: glTF v2, 3,281,092 bytes, 1 mesh,
+  17,603 vertices, 30,000 triangles.
+
+So the owner action that entry raises (mint a new R2 token, add a secret version) is
+**discharged**, and the delivery condition it gates the resubmission on is met. Whoever picks
+up the relisting should re-run the delivery check rather than trust either entry: this one
+will go stale the same way.
+
+Nothing here changes the WO-04 verdict. The gauntlet's paid legs still need a funded buyer,
+and that is still the only open action on this work order.
+
 ## 2026-09-09, WO-08 run: every listing gate is GREEN, and the resubmission is NO-GO on a production outage
 
 Ran the whole of `911-okx-ai-08-forge-relisting.md` except the on-chain write. The listing
