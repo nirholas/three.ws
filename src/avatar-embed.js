@@ -185,9 +185,13 @@ async function main() {
 		} else {
 			// Not in the curated manifest — resolve from the full motion library
 			// and register just the requested def (its url points at the R2 CDN).
+			// The ?name= lookup keeps that one embed request small: the whole
+			// manifest is over a megabyte and only one entry of it is wanted.
 			(async () => {
 				try {
-					const res = await fetch('/api/animations/library');
+					const res = await fetch(
+						`/api/animations/library?name=${encodeURIComponent(startAnim)}`,
+					);
 					if (res.ok) {
 						const data = await res.json();
 						const def = (data.clips || []).find((d) => d.name === startAnim);

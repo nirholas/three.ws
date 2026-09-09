@@ -294,32 +294,79 @@ batch, so a later batch cannot hand out a second set of free clips.
 Measured 2026-09-02 against the live site, with 2,874 clips in the library and
 58,544 avatars in the catalog.
 
-`GET /api/animations/library` already supports paging (`?limit=`, `?offset=`), and a
-paged response is small: 24.6 KB for `?limit=60`. **With no `?limit` it returns the
-entire manifest**, which is 1.12 MB uncompressed today (about 100 KB on the wire,
+`GET /api/animations/library` pages with `?limit=` and `?offset=`, and a paged
+response is small: 24.6 KB for `?limit=60`. With no `?limit` it returns the entire
+manifest, which is 1.14 MB uncompressed at 3,007 clips (about 100 KB on the wire,
 since the CDN serves it brotli-compressed). That un-paged form is the documented
-backward-compatible contract, and three consumers still use it:
+backward-compatible contract and it stays, but **nothing three.ws ships asks for it
+any more.** Two more query shapes landed on 2026-09-09 so no consumer has to:
 
-- `src/animations-gallery.js` (the `/animations` gallery)
-- `src/animation-library.js` (pose deep-link lookup by clip name)
-- `src/avatar-embed.js` (the embed viewer)
+| Query | Returns | Size at 3,007 clips | Size at 30,070 |
+|---|---|---|---|
+| `?name=<clip>` | just the named clips (up to 50 per request) | 365 B | 480 B |
+| `?facets=1` | catalog total plus per-category counts, no clips | 541 B | 558 B |
+| `?limit=1000&offset=0` | one bounded page | 388 KB | 397 KB |
+| (no params) | the whole manifest | 1.14 MB | 11.5 MB |
 
-At 5 to 10 times the current library those three each parse 6 to 11 MB of JSON on
-load. The gallery is the one to fix first, because it only ever renders a page at a
-time and has no reason to hold the whole manifest; the other two look a clip up by
-name, so they need either a name-indexed endpoint or a cached shard rather than
-simple paging. None of this is urgent at 2,874 clips and all of it bites well before
-30,000.
+Both are flat in the catalog size, which is the point.
+
+### What each consumer does now
+
+- `src/animation-library.js` (pose deep-link) and `src/avatar-embed.js` (embed
+  viewer) each resolve ONE clip by name. Paging cannot serve them, because neither
+  knows which page holds the name, so both used to download the whole manifest for
+  a single 3 KB entry: on every embed load carrying `?animation=`. They now ask
+  `?name=`, measured in a real browser at 365 B and 474 B against the live catalog,
+  a 3,190x smaller response for the same answer.
+- `src/animations-gallery.js` (the `/animations` gallery) loads **one page** plus
+  `?facets=1` and stops. Further pages are fetched when a reader actually reaches
+  the end of the grid. It used to fetch every page on load: 3 requests at 3,007
+  clips, 30 at ten times that, paid by every visitor who reads the first screen and
+  leaves.
+- `packages/vscode-3d/src/animations.js` pages already and is unchanged.
+
+The gallery's totals do not wait for the catalog. `?facets=1` counts it server-side
+with the same classifier the gallery uses (`src/animation-categories.js`), so the
+hero line and every filter chip read true at first paint and never count upward as
+pages arrive.
+
+Searching, filtering by category or re-sorting DOES need every clip, because all
+three run client-side over the whole gallery, and a count like "63 of 3,119" has to
+mean every match rather than every match among the pages that happen to be loaded.
+Those actions drain the remaining pages in the background and the grid refreshes as
+they land. Idle browsing, which is the common case, never pays for it. A URL that
+arrives already narrowed (`?cat=`, `?q=`, `?sort=`) drains for the same reason, and
+so does a `?clip=` deep link whose clip has not been loaded yet: a shared link must
+open the clip it names.
+
+### Measured at ten times the catalog
+
+Verified in Chromium against a synthetic 30,070-clip catalog served through the real
+endpoint:
+
+| | Before | After |
+|---|---|---|
+| `/animations` first paint | 30 requests, 11.5 MB | 2 requests, 389 KB |
+| Hero and chip counts at first paint | partial, counting up as pages land | exact |
+| Scrolling to the end of the grid | already loaded | one 397 KB page per screenful |
+| A search across the whole catalog | already loaded | 3.1 s to drain, results stream in |
+| Embed resolving one clip by name | 11.5 MB | 480 B |
+
+The remaining trade is deliberate: a deliberate search at 30,000 clips reads the
+catalog once, cached by the CDN and the browser, instead of every visitor reading it
+once.
 
 The other list surfaces are already scale-safe and need no change. Measured at
-58,544 avatars, each returns a bounded first page even with **no** `?limit` given:
+68,971 avatars (2026-09-09), each returns a bounded first page even with **no**
+`?limit` given:
 
 | Endpoint | No limit | `?limit=24` |
 |---|---|---|
-| `/api/marketplace` | 22.8 KB | 22.8 KB |
-| `/api/avatars/public` | 38.3 KB | 38.3 KB |
-| `/api/marketplace/animations` | cursor-paged, `limit` ceiling 60 | 
-| `/api/animations/library` | **1.12 MB, the whole manifest** | 24.6 KB |
+| `/api/marketplace` | 22 KB | 22 KB |
+| `/api/avatars/public` | 39 KB | 39 KB |
+| `/api/marketplace/animations` | cursor-paged, `limit` ceiling 60 | |
+| `/api/animations/library` | 1.14 MB, the whole manifest, no first-party caller | 24.6 KB |
 
-So the clip library is the single unbounded response on the platform, and the fix is
-the three consumers above rather than the endpoint, which already pages.
+`/gallery` pages at `?limit=24` with lazy thumbnails, and `/dashboard/avatars` is
+cursor-paged with an IntersectionObserver, both verified live at that catalog size
+with no console errors.

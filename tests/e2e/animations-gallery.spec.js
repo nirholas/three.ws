@@ -50,9 +50,22 @@ const PIXEL = Buffer.from(
 	'base64',
 );
 
+// The gallery asks for its totals separately (?facets=1) so it never has to hold
+// the whole catalogue to count it. Registered after the catalogue route because
+// Playwright matches the most recently added route first.
+const FACETS = {
+	total: LIBRARY.clips.length,
+	categories: [
+		{ key: 'locomotion', count: 2 },
+		{ key: 'dance', count: 0 },
+	],
+	generated_at: null,
+};
+
 async function stubCatalogue(page) {
 	await page.route('**/animations/manifest.json', (r) => r.fulfill({ json: CURATED }));
 	await page.route('**/api/animations/library**', (r) => r.fulfill({ json: LIBRARY }));
+	await page.route('**/api/animations/library?facets=1', (r) => r.fulfill({ json: FACETS }));
 	await page.route('**/api/animations/clips**', (r) => r.fulfill({ json: { items: [], next_cursor: null } }));
 	await page.route('https://cdn.example.invalid/**/thumbs/**', (r) =>
 		r.fulfill({ contentType: 'image/png', body: PIXEL }),

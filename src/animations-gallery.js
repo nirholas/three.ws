@@ -11,9 +11,24 @@
 // All are normalized to one card shape — poster thumbnail, derived category
 // (src/animation-categories.js), duration, loop mode — then filtered (search +
 // category + loop/once), sorted, and paginated client-side (PAGE_SIZE at a time,
-// infinite-scroll, lazy thumbnails). The full catalog is fetched from the CDN in
-// bounded pages (LIBRARY_PAGE_SIZE) rather than one large response, so a library
-// that grows past thousands of clips never lands as a single unbounded payload.
+// infinite-scroll, lazy thumbnails).
+//
+// THE CATALOG IS LOADED ON DEMAND, one bounded page at a time, because it is the
+// only source here with no ceiling on its size. A first load costs exactly one
+// page plus the tiny ?facets=1 response, at any catalog size; further pages are
+// fetched when the reader actually reaches the end of the grid. Loading every
+// page up front was 3 requests at 3,007 clips and would be 30 at ten times that,
+// paid by every visitor who looks at the first screen and leaves.
+//
+// Exact totals do NOT wait for that. ?facets=1 returns the catalog's size and
+// its per-category counts in about half a kilobyte, computed with the same
+// classifier this file uses, so the hero line and the filter chips read true
+// from the first paint and never count up as pages arrive.
+//
+// Searching, filtering or re-sorting DOES need the whole catalog, because those
+// run client-side over every clip, so those three actions drain the remaining
+// pages in the background and the grid refreshes as they land. That is the
+// trade: a deliberate narrowing pays for the catalog, idle browsing does not.
 //
 // Previews run through ONE shared WebGL engine (src/animations-live-preview.js):
 // hovering a card (or opening the detail modal) moves the singleton canvas into
@@ -103,6 +118,21 @@ const state = {
 	shown: 0,
 	loaded: false,
 	modalIndex: -1, // index into state.filtered while the modal is open
+	// Names the curated manifest already surfaces, so the same clip never lands
+	// twice when the catalog page carrying it arrives.
+	curatedNames: new Set(),
+	shuffleSeed: (Math.random() * 0xffffffff) >>> 0,
+	catalog: {
+		offset: 0, // next page to request
+		loaded: 0, // rows merged into state.all so far
+		total: 0, // full catalog size, known from ?facets=1 before any page lands
+		byCategory: new Map(), // merged rows per category, to net off the facets
+		facets: null, // Map<categoryKey, count> over the WHOLE catalog
+		pending: null, // in-flight page, so overlapping triggers coalesce
+		draining: false,
+		done: false,
+		failed: false,
+	},
 };
 
 const live = getLivePreview();
@@ -153,36 +183,111 @@ async function fetchCommunity() {
 }
 
 /**
- * Page through the full CDN catalog with the endpoint's opt-in ?limit/?offset so
- * each response is bounded and individually CDN-cacheable. `next_offset: null`
- * marks the last page; the page ceiling is a runaway guard.
- *
- * Each page is handed to `onPage` as soon as it lands rather than being held
- * back until the whole catalog is in hand. The grid used to wait for every page
- * before painting a single card, so time-to-first-card was the size of the
- * entire library: 1.1 MB at 2,874 clips, and growing with every seeding batch.
- * Streaming makes first paint cost one page no matter how large the catalog
- * gets, which is the whole reason the endpoint pages at all.
- *
- * @param {(clips: object[]) => void} [onPage]
+ * Catalog size and per-category counts, without a single clip attached. The
+ * counts come from the same classifier this file uses, so a chip and the
+ * endpoint can never disagree, and they are exact from the first paint however
+ * many pages are still unfetched.
  */
-async function fetchFullLibrary(onPage) {
-	const out = [];
-	let offset = 0;
-	for (let i = 0; i < LIBRARY_MAX_PAGES; i++) {
-		const res = await fetch(`${LIBRARY_API}?limit=${LIBRARY_PAGE_SIZE}&offset=${offset}`, {
-			cache: 'force-cache',
-		});
+async function fetchCatalogFacets() {
+	const res = await fetch(`${LIBRARY_API}?facets=1`, { cache: 'force-cache' });
+	if (!res.ok) throw new Error(`HTTP ${res.status}`);
+	const data = await res.json();
+	const cat = state.catalog;
+	cat.total = Number(data.total) || 0;
+	cat.facets = new Map(
+		(Array.isArray(data.categories) ? data.categories : []).map((c) => [c.key, Number(c.count) || 0]),
+	);
+}
+
+/**
+ * Fetch ONE bounded page of the catalog and merge it into the grid. Overlapping
+ * callers (the scroll sentinel and a drain running together) share the one
+ * in-flight request rather than racing two pages at the same offset.
+ *
+ * Resolves to false once the catalog is exhausted or has failed, which is what
+ * lets drainCatalog() terminate.
+ *
+ * @returns {Promise<boolean>} whether a page was merged
+ */
+function loadCatalogPage() {
+	const cat = state.catalog;
+	if (cat.pending) return cat.pending;
+	if (cat.done || cat.failed) return Promise.resolve(false);
+	if (cat.offset >= LIBRARY_PAGE_SIZE * LIBRARY_MAX_PAGES) {
+		cat.done = true;
+		return Promise.resolve(false);
+	}
+
+	cat.pending = (async () => {
+		const url = `${LIBRARY_API}?limit=${LIBRARY_PAGE_SIZE}&offset=${cat.offset}`;
+		const res = await fetch(url, { cache: 'force-cache' });
 		if (!res.ok) throw new Error(`HTTP ${res.status}`);
 		const data = await res.json();
-		const clips = Array.isArray(data.clips) ? data.clips : [];
-		const normalized = clips.map(normalizeFullLibraryClip);
-		out.push(...normalized);
-		if (onPage && normalized.length) onPage(normalized);
-		if (data.next_offset == null || clips.length === 0) break;
-		offset = data.next_offset;
+		const rows = Array.isArray(data.clips) ? data.clips : [];
+		if (!cat.total) cat.total = Number(data.total) || 0;
+
+		const fresh = rows
+			.map(normalizeFullLibraryClip)
+			.filter((c) => !state.curatedNames.has(c.id));
+		for (const clip of fresh) {
+			cat.byCategory.set(clip.category, (cat.byCategory.get(clip.category) || 0) + 1);
+		}
+		cat.loaded += fresh.length;
+		if (fresh.length) state.all = state.all.concat(fresh);
+		if (data.next_offset == null || rows.length === 0) cat.done = true;
+		else cat.offset = Number(data.next_offset);
+		return fresh.length > 0;
+	})()
+		.catch((err) => {
+			// One bad page must not strand the grid the reader is already using,
+			// and must not spin the sentinel: mark the catalog failed so the
+			// counts stop promising rows that will never arrive.
+			cat.failed = true;
+			cat.done = true;
+			throw err;
+		})
+		.finally(() => {
+			cat.pending = null;
+		});
+
+	return cat.pending;
+}
+
+/**
+ * Load every remaining page. Search, category and sort all run client-side over
+ * the whole set, so narrowing the view is the moment the rest of the catalog has
+ * to exist. The grid repaints as each page lands, keeping what is already on
+ * screen in place.
+ */
+async function drainCatalog() {
+	const cat = state.catalog;
+	if (cat.draining) return;
+	cat.draining = true;
+	try {
+		await drainLoop(cat);
+	} finally {
+		cat.draining = false;
 	}
-	return out;
+}
+
+/** @param {typeof state.catalog} cat */
+async function drainLoop(cat) {
+	while (!cat.done && !cat.failed) {
+		let merged = false;
+		try {
+			merged = await loadCatalogPage();
+		} catch {
+			break;
+		}
+		if (merged && state.loaded) refreshAfterCatalogPage();
+	}
+}
+
+/** Repaint the counts and the grid around a page that just landed. */
+function refreshAfterCatalogPage() {
+	renderHeroStats();
+	renderChips();
+	applyFilters({ preserveShown: true });
 }
 
 function normalizeLibraryClip(clip) {
@@ -240,46 +345,46 @@ function normalizeCommunityClip(clip) {
 
 async function loadAll() {
 	showState('loading');
+	// Retry restarts every source, so the catalog cursor restarts with them.
+	state.catalog = {
+		offset: 0,
+		loaded: 0,
+		total: 0,
+		byCategory: new Map(),
+		facets: null,
+		pending: null,
+		draining: false,
+		done: false,
+		failed: false,
+	};
 	// The curated manifest and the community feed are both small and bounded, so
-	// they are awaited together. The full CDN catalog is the unbounded one and is
-	// streamed in behind them: the first page paints, the rest merge in as they
-	// land. A user is looking at cards after one page instead of after the whole
-	// library, which is what keeps first paint flat as seeding grows the catalog.
+	// they are awaited together. The catalog is the unbounded one, and exactly
+	// one page of it is loaded here: the rest arrives when a reader scrolls to
+	// the end of the grid or narrows it. First paint costs the same whether the
+	// catalog holds three thousand clips or thirty.
 	const [libRes, comRes] = await Promise.allSettled([fetchLibrary(), fetchCommunity()]);
 	const library = libRes.status === 'fulfilled' ? libRes.value : [];
 	const community = comRes.status === 'fulfilled' ? comRes.value : [];
 
 	// Community clips lead (fresh, human-authored); the curated library follows;
-	// the full catalog trails, minus anything the curated set already surfaces.
-	const curatedNames = new Set(library.map((c) => c.id));
+	// the catalog trails, minus anything the curated set already surfaces.
+	state.curatedNames = new Set(library.map((c) => c.id));
 	state.all = [...community, ...library];
 
-	let painted = false;
-	const paint = () => {
-		state.loaded = true;
-		renderHeroStats();
-		renderChips();
-		applyFilters();
-		painted = true;
-	};
-
-	let fullFailed = false;
-	try {
-		await fetchFullLibrary((clips) => {
-			const fresh = clips.filter((c) => !curatedNames.has(c.id));
-			if (!fresh.length) return;
-			state.all = state.all.concat(fresh);
-			// The first page is what ends the loading state; later pages refresh a
-			// grid the user is already reading, so they only re-render what the
-			// counts and filters depend on.
-			paint();
-		});
-	} catch {
-		fullFailed = true;
-	}
+	// The counts and the first page are independent requests, so they fly
+	// together: the hero line and the chips are exact the moment the grid paints
+	// rather than one page behind it.
+	const [facetRes, pageRes] = await Promise.allSettled([fetchCatalogFacets(), loadCatalogPage()]);
+	const fullFailed = pageRes.status === 'rejected';
 
 	const results = [libRes, comRes, { status: fullFailed ? 'rejected' : 'fulfilled' }];
 	state.loaded = true;
+	if (facetRes.status === 'rejected') {
+		// Without facets the totals fall back to what is actually loaded, which
+		// is only right once everything is: drain rather than show a count that
+		// contradicts the grid.
+		drainCatalog();
+	}
 
 	// Nothing to show AND at least one source errored is a failure, not an empty
 	// library: "be the first to publish" would be a lie, and Retry is the action
@@ -290,42 +395,95 @@ async function loadAll() {
 		return;
 	}
 
-	if (!painted) paint();
-	else {
-		renderHeroStats();
-		renderChips();
-		applyFilters();
-	}
+	renderHeroStats();
+	renderChips();
+	applyFilters();
 
 	// ?clip= deep link → open the modal once data exists.
 	const wanted = new URLSearchParams(location.search).get('clip');
-	if (wanted) {
+	if (wanted) await openDeepLink(wanted);
+}
+
+/**
+ * Open ?clip=<id>. The clip may live on a catalog page nobody has asked for
+ * yet, so a miss loads the rest of the catalog before it gives up: a shared
+ * link has to open the clip it names whatever the reader's scroll position is.
+ *
+ * @param {string} wanted
+ */
+async function openDeepLink(wanted) {
+	for (;;) {
 		const idx = state.filtered.findIndex((c) => c.id === wanted);
-		if (idx >= 0) openModal(idx);
-		else {
-			const item = state.all.find((c) => c.id === wanted);
-			if (item) {
-				// Visible under different filters, so clear them for the link.
-				state.query = '';
-				state.category = '';
-				state.filter = '';
-				els.search.value = '';
-				syncTypeFilter();
-				renderChips();
-				applyFilters();
-				openModal(state.filtered.findIndex((c) => c.id === wanted));
-			}
+		if (idx >= 0) {
+			openModal(idx);
+			return;
 		}
+		const item = state.all.find((c) => c.id === wanted);
+		if (item) {
+			// Visible under different filters, so clear them for the link.
+			state.query = '';
+			state.category = '';
+			state.filter = '';
+			els.search.value = '';
+			syncTypeFilter();
+			renderChips();
+			applyFilters();
+			openModal(state.filtered.findIndex((c) => c.id === wanted));
+			return;
+		}
+		if (state.catalog.done || state.catalog.failed) return;
+		try {
+			await loadCatalogPage();
+		} catch {
+			return;
+		}
+		refreshAfterCatalogPage();
 	}
 }
 
 // ── Hero stats + chips ───────────────────────────────────────────────────────
 
+/**
+ * Catalog rows that exist but have not been fetched yet. Counting them keeps
+ * every total on the page equal to what the library actually holds, so nothing
+ * ticks upward as the reader scrolls.
+ */
+function catalogPending() {
+	const cat = state.catalog;
+	if (!cat.total || cat.failed) return 0;
+	return Math.max(0, cat.total - cat.loaded);
+}
+
+/** Every clip the gallery can show, loaded or not. */
+function totalClips() {
+	return state.all.length + catalogPending();
+}
+
+/**
+ * Per-category counts over the whole gallery: what is loaded, plus the catalog
+ * rows still unfetched, taken from the facets and netted against the rows of
+ * that category already merged so nothing is counted twice.
+ *
+ * @returns {Map<string, number>}
+ */
+function categoryCounts() {
+	const counts = new Map();
+	for (const item of state.all) counts.set(item.category, (counts.get(item.category) || 0) + 1);
+	const cat = state.catalog;
+	if (cat.facets && !cat.failed) {
+		for (const [key, total] of cat.facets) {
+			const pending = Math.max(0, total - (cat.byCategory.get(key) || 0));
+			if (pending) counts.set(key, (counts.get(key) || 0) + pending);
+		}
+	}
+	return counts;
+}
+
 function renderHeroStats() {
 	if (!els.heroStats) return;
-	const total = state.all.length;
+	const total = totalClips();
 	const community = state.all.filter((c) => c.source === 'community').length;
-	const cats = new Set(state.all.map((c) => c.category)).size;
+	const cats = [...categoryCounts().values()].filter(Boolean).length;
 	els.heroStats.textContent = `${total.toLocaleString()} clips · ${cats} categories${
 		community ? ` · ${community} community-authored` : ''
 	}`;
@@ -333,8 +491,7 @@ function renderHeroStats() {
 
 function renderChips() {
 	if (!els.chips) return;
-	const counts = new Map();
-	for (const item of state.all) counts.set(item.category, (counts.get(item.category) || 0) + 1);
+	const counts = categoryCounts();
 	els.chips.innerHTML = '';
 	const mk = (key, label, icon, count) => {
 		const btn = document.createElement('button');
@@ -347,7 +504,7 @@ function renderChips() {
 		}`;
 		els.chips.appendChild(btn);
 	};
-	mk('', 'All', '', state.all.length);
+	mk('', 'All', '', totalClips());
 	for (const cat of GALLERY_CATEGORIES) {
 		const n = counts.get(cat.key);
 		if (n) mk(cat.key, cat.label, cat.icon, n);
@@ -371,7 +528,19 @@ function syncTypeFilter() {
 
 // ── Filter + sort + render ───────────────────────────────────────────────────
 
-function applyFilters() {
+/**
+ * Recompute the filtered set and repaint.
+ *
+ * `preserveShown` keeps the reader where they are when a catalog page lands
+ * under them: the grid is rebuilt, but out to the same number of cards it held
+ * a moment ago instead of collapsing back to the first screen.
+ *
+ * @param {{ preserveShown?: boolean }} [opts]
+ */
+function applyFilters({ preserveShown = false } = {}) {
+	const keep = preserveShown ? state.shown : 0;
+	// A user action re-deals the shuffle; a page arriving underneath one does not.
+	if (!preserveShown) state.shuffleSeed = (Math.random() * 0xffffffff) >>> 0;
 	const q = state.query.toLowerCase();
 	state.filtered = state.all.filter((item) => {
 		if (state.filter === 'loop' && !item.loop) return false;
@@ -387,6 +556,30 @@ function applyFilters() {
 	state.shown = 0;
 	renderCount();
 	renderGrid();
+	while (state.shown < keep && state.shown < state.filtered.length) renderGrid();
+
+	// A narrowed view has to be complete to be honest: "63 of 3,119" must mean
+	// every clip that matches, not every clip that matches among the pages that
+	// happen to be loaded. Sorting is the same argument: every order but the
+	// source order ranks the whole gallery. Browsing unnarrowed is the only case
+	// that can be served a page at a time, and it is the common one.
+	const narrowed = Boolean(state.query || state.category || state.filter) || state.sort !== 'featured';
+	if (narrowed && !state.catalog.done && !state.catalog.failed) drainCatalog();
+}
+
+/**
+ * Stable pseudo-random ordering key for the shuffle sort: the same clip keeps
+ * the same place for as long as the seed does.
+ *
+ * @param {string} id
+ */
+function shuffleKey(id) {
+	let h = state.shuffleSeed >>> 0;
+	for (let i = 0; i < id.length; i++) {
+		h = Math.imul(h ^ id.charCodeAt(i), 3432918353);
+		h = (h << 13) | (h >>> 19);
+	}
+	return h >>> 0;
 }
 
 function sortFiltered() {
@@ -404,15 +597,16 @@ function sortFiltered() {
 		case 'longest':
 			arr.sort((a, b) => (b.duration_ms ?? -1) - (a.duration_ms ?? -1));
 			break;
-		case 'shuffle': {
-			// Reshuffled on every filter pass, so changing a chip or the search
-			// while shuffled deals a fresh hand rather than the same order.
-			for (let i = arr.length - 1; i > 0; i--) {
-				const j = Math.floor(Math.random() * (i + 1));
-				[arr[i], arr[j]] = [arr[j], arr[i]];
-			}
+		case 'shuffle':
+			// Ordered by a hash of the clip id against the current seed rather than
+			// by swapping in place. The hand is still random, and still re-dealt
+			// whenever the reader changes a chip or the search (applyFilters reseeds
+			// on a user action), but it no longer depends on the order clips
+			// arrived in: a catalog page landing mid-scroll slots its cards into
+			// the existing order instead of dealing everything again under the
+			// reader's cursor.
+			arr.sort((a, b) => shuffleKey(a.id) - shuffleKey(b.id));
 			break;
-		}
 		default:
 			// 'featured' — the assembled source order (community → curated → catalog).
 			break;
@@ -426,13 +620,22 @@ function renderCount() {
 		return;
 	}
 	const n = state.filtered.length;
-	els.count.textContent = n === state.all.length
+	const total = totalClips();
+	els.count.textContent = n === total
 		? `${n.toLocaleString()} animations`
-		: `${n.toLocaleString()} of ${state.all.length.toLocaleString()}`;
+		: `${n.toLocaleString()} of ${total.toLocaleString()}`;
 }
 
 function renderGrid() {
 	if (state.filtered.length === 0) {
+		// Nothing matches YET is not the same as nothing matches: a narrow filter
+		// can exclude every clip loaded so far while the page holding its matches
+		// is still unfetched. Keep the loading state and pull the rest in.
+		if (!state.catalog.done && !state.catalog.failed) {
+			showState('loading');
+			drainCatalog();
+			return;
+		}
 		if (state.all.length === 0) {
 			showState('empty');
 		} else {
@@ -463,6 +666,18 @@ function renderGrid() {
 	state.shown = end;
 
 	els.loadMore.hidden = state.shown >= state.filtered.length;
+
+	// Every loaded clip is on screen and the catalog has more: fetch the next
+	// page. This covers both ways a reader reaches the end: scrolling a long
+	// grid, and landing on a view whose matches all fit without scrolling at
+	// all, which no scroll sentinel would ever fire for.
+	if (els.loadMore.hidden && !state.catalog.done && !state.catalog.failed) {
+		loadCatalogPage()
+			.then((merged) => {
+				if (merged) refreshAfterCatalogPage();
+			})
+			.catch(() => {});
+	}
 }
 
 function showMore() {

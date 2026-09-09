@@ -154,11 +154,16 @@ export class AnimationLibrary {
 	 * manifest; their defs carry an absolute CDN url that preview()/_loadClip()
 	 * fetch like any other. Returns null when the library doesn't know the
 	 * name either (including before the library has been uploaded).
+	 *
+	 * Asks the endpoint for the single name rather than downloading the whole
+	 * manifest to find one entry in it: the catalog is thousands of clips and
+	 * growing with every seeding batch, so the unfiltered response is over a
+	 * megabyte of JSON to resolve about three kilobytes of it.
 	 * @param {string} name
 	 */
 	async _lookupFullLibrary(name) {
 		try {
-			const res = await fetch('/api/animations/library');
+			const res = await fetch(`/api/animations/library?name=${encodeURIComponent(name)}`);
 			if (!res.ok) return null;
 			const data = await res.json();
 			return (data.clips || []).find((d) => d.name === name) || null;

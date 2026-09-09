@@ -139,4 +139,105 @@ describe('GET /api/animations/library', () => {
 		expect(body).toEqual({ clips: CLIPS, total: 5, generated_at: null });
 		expect('next_offset' in body).toBe(false);
 	});
+
+	// ── Name lookup (?name=) ────────────────────────────────────────────────
+	// A pose deep-link and the embed viewer resolve ONE clip by name and cannot
+	// use paging to do it: they do not know which page holds the name. Without
+	// this they download the whole manifest per lookup, which is the response
+	// that grows worst as the catalog does.
+
+	it('returns only the named clip, with the full catalog total', async () => {
+		readManifest.mockResolvedValue(Buffer.from(JSON.stringify({ clips: CLIPS })));
+		const res = fakeRes();
+		await handler(fakeReq('GET', '/api/animations/library?name=mx-clip-3'), res);
+		const body = JSON.parse(res.body);
+		expect(body.clips.map((c) => c.name)).toEqual(['mx-clip-3']);
+		expect(body.total).toBe(5);
+	});
+
+	it('accepts several names, repeated and comma-separated', async () => {
+		readManifest.mockResolvedValue(Buffer.from(JSON.stringify({ clips: CLIPS })));
+		const res = fakeRes();
+		await handler(
+			fakeReq('GET', '/api/animations/library?name=mx-clip-0,mx-clip-2&name=mx-clip-4'),
+			res,
+		);
+		const body = JSON.parse(res.body);
+		expect(body.clips.map((c) => c.name)).toEqual(['mx-clip-0', 'mx-clip-2', 'mx-clip-4']);
+	});
+
+	it('returns an empty list for a name the library does not have', async () => {
+		readManifest.mockResolvedValue(Buffer.from(JSON.stringify({ clips: CLIPS })));
+		const res = fakeRes();
+		await handler(fakeReq('GET', '/api/animations/library?name=mx-nope'), res);
+		const body = JSON.parse(res.body);
+		expect(body.clips).toEqual([]);
+		expect(body.total).toBe(5);
+	});
+
+	it('matches names exactly rather than by prefix or substring', async () => {
+		readManifest.mockResolvedValue(Buffer.from(JSON.stringify({ clips: CLIPS })));
+		const res = fakeRes();
+		await handler(fakeReq('GET', '/api/animations/library?name=mx-clip'), res);
+		expect(JSON.parse(res.body).clips).toEqual([]);
+	});
+
+	it('caps how many names one request can ask for', async () => {
+		const many = Array.from({ length: 80 }, (_, i) => ({ ...CLIP, name: `mx-many-${i}` }));
+		readManifest.mockResolvedValue(Buffer.from(JSON.stringify({ clips: many })));
+		const res = fakeRes();
+		const query = many.map((c) => `name=${c.name}`).join('&');
+		await handler(fakeReq('GET', `/api/animations/library?${query}`), res);
+		const body = JSON.parse(res.body);
+		expect(body.clips.length).toBe(50);
+		expect(body.total).toBe(80);
+	});
+
+	// ── Facets (?facets=1) ──────────────────────────────────────────────────
+	// The gallery needs exact totals to render its hero line and chips. Deriving
+	// them client-side means holding the whole catalog in the browser, which is
+	// the reason it used to download every page on load.
+
+	it('counts the catalog by category and returns no clips', async () => {
+		readManifest.mockResolvedValue(Buffer.from(JSON.stringify({
+			clips: [
+				{ ...CLIP, name: 'mx-walking', label: 'Walking' },
+				{ ...CLIP, name: 'mx-running', label: 'Running' },
+				{ ...CLIP, name: 'mx-hip-hop-dancing', label: 'Hip Hop Dancing' },
+			],
+		})));
+		const res = fakeRes();
+		await handler(fakeReq('GET', '/api/animations/library?facets=1'), res);
+		const body = JSON.parse(res.body);
+		expect(body.clips).toBeUndefined();
+		expect(body.total).toBe(3);
+		const counts = Object.fromEntries(body.categories.map((c) => [c.key, c.count]));
+		expect(counts.locomotion).toBe(2);
+		expect(counts.dance).toBe(1);
+	});
+
+	it('sums the facet counts to the catalog total', async () => {
+		const clips = Array.from({ length: 40 }, (_, i) => ({ ...CLIP, name: `mx-clip-${i}`, label: `Clip ${i}` }));
+		readManifest.mockResolvedValue(Buffer.from(JSON.stringify({ clips })));
+		const res = fakeRes();
+		await handler(fakeReq('GET', '/api/animations/library?facets=1'), res);
+		const body = JSON.parse(res.body);
+		expect(body.categories.reduce((n, c) => n + c.count, 0)).toBe(body.total);
+	});
+
+	it('reports every category, including the empty ones, so chips stay stable', async () => {
+		readManifest.mockResolvedValue(Buffer.from(JSON.stringify({ clips: [CLIP] })));
+		const res = fakeRes();
+		await handler(fakeReq('GET', '/api/animations/library?facets=1'), res);
+		const body = JSON.parse(res.body);
+		expect(body.categories.length).toBeGreaterThan(5);
+		expect(body.categories.some((c) => c.count === 0)).toBe(true);
+	});
+
+	it('ignores an empty ?name= and falls through to the legacy full response', async () => {
+		readManifest.mockResolvedValue(Buffer.from(JSON.stringify({ clips: CLIPS })));
+		const res = fakeRes();
+		await handler(fakeReq('GET', '/api/animations/library?name='), res);
+		expect(JSON.parse(res.body).clips.length).toBe(5);
+	});
 });

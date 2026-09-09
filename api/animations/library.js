@@ -15,9 +15,26 @@
 // array, so a caller can page it with ?limit= (1..1000) and ?offset= to keep any
 // single response bounded as the catalog grows past thousands of clips. With no
 // ?limit the full array is returned exactly as before, so existing consumers
-// (embed viewer, pose deep-link lookup, the older gallery build) are unchanged.
-// Paged responses add `offset` + `next_offset` (null on the last page); `total`
-// is always the full catalog size regardless of paging.
+// (the older gallery build) are unchanged. Paged responses add `offset` +
+// `next_offset` (null on the last page); `total` is always the full catalog size
+// regardless of paging.
+//
+// Facets: ?facets=1 returns the catalog's size and its per-category counts and
+// no clips at all. The /animations gallery needs exact totals for its hero line
+// and its filter chips, and deriving them client-side means holding the whole
+// catalog in the browser, which is the reason the gallery downloaded every page
+// on load. The classifier that produces a category is shared with the gallery
+// (src/animation-categories.js), so a count here and a chip there can never
+// disagree.
+//
+// Name lookup: ?name=<clip> (repeatable, or comma-separated) returns only the
+// entries with those exact names. Paging cannot serve that caller, because a
+// deep-link resolves ONE clip by name and has no idea which page holds it, so
+// its only alternative is the whole manifest. That is what the pose deep-link
+// (src/animation-library.js) and the embed viewer (src/avatar-embed.js) used to
+// do, and at 1.1 MB per lookup for a single 3 KB entry it is the response that
+// grows worst as the catalog does. Names are capped at MAX_NAMES per request so
+// the lookup stays bounded too; unknown names are simply absent from `clips`.
 //
 // TWO MANIFESTS, ONE CATALOG. The Mixamo bake and the generative text-to-motion
 // seeder each own their own manifest object and never write the other's:
@@ -37,10 +54,36 @@
 
 import { cors, json, method, wrap } from '../_lib/http.js';
 import { getPublicObjectBuffer } from '../_lib/r2.js';
+import { GALLERY_CATEGORIES, galleryCategoryOf } from '../../src/animation-categories.js';
 
 const MANIFEST_KEY = 'animations/library/manifest.json';
 const GENERATED_MANIFEST_KEY = 'animations/library/generated/manifest.json';
 const MAX_PAGE = 1000;
+// Ceiling on ?name= entries per request. A deep-link resolves one clip and an
+// avatar with a full animation set resolves a handful, so this is generous for
+// every real caller while keeping the response bounded.
+const MAX_NAMES = 50;
+
+/**
+ * Parse ?name= into a deduped, bounded list of exact clip names. Accepts the
+ * param repeated (?name=a&name=b) and comma-separated (?name=a,b), because both
+ * spellings are natural to write and neither is ambiguous: a clip name never
+ * contains a comma.
+ *
+ * @param {URLSearchParams} params
+ * @returns {string[]}
+ */
+function parseNames(params) {
+	const seen = new Set();
+	for (const raw of params.getAll('name')) {
+		for (const part of String(raw).split(',')) {
+			const name = part.trim();
+			if (name) seen.add(name);
+			if (seen.size >= MAX_NAMES) return [...seen];
+		}
+	}
+	return [...seen];
+}
 
 /**
  * Read one manifest object. A missing object is the expected state for the
@@ -92,6 +135,27 @@ export default wrap(async (req, res) => {
 	res.setHeader('Cache-Control', 'public, s-maxage=300, stale-while-revalidate=3600');
 
 	const url = new URL(req.url, 'http://x');
+
+	if (url.searchParams.get('facets') === '1') {
+		const counts = new Map(GALLERY_CATEGORIES.map((c) => [c.key, 0]));
+		for (const clip of clips) {
+			const key = galleryCategoryOf(clip?.name || '', clip?.label || '');
+			counts.set(key, (counts.get(key) || 0) + 1);
+		}
+		return json(res, 200, {
+			total,
+			categories: [...counts].map(([key, count]) => ({ key, count })),
+			generated_at: generatedAt,
+		});
+	}
+
+	const names = parseNames(url.searchParams);
+	if (names.length) {
+		const wanted = new Set(names);
+		const matched = clips.filter((c) => c?.name && wanted.has(c.name));
+		return json(res, 200, { clips: matched, total, generated_at: generatedAt });
+	}
+
 	const rawLimit = url.searchParams.get('limit');
 	if (rawLimit == null) {
 		// Legacy full-catalog response — unchanged contract.

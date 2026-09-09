@@ -5767,6 +5767,8 @@ Each entry's `url` is an absolute CDN URL to the baked clip JSON (`THREE.Animati
 | -------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `limit`  | Page size, `1`–`1000`. When set, the response is a bounded page instead of the whole catalog — use this to keep a single response small as the library grows. |
 | `offset` | Zero-based start index into the ordered catalog. Default `0`.                                                                                                 |
+| `name`   | Exact clip name. Repeat it (`?name=a&name=b`) or comma-separate (`?name=a,b`) for up to 50 names; the response holds only those clips. Unknown names are simply absent. |
+| `facets` | `1` returns the catalog's size and its per-category counts, and no clips at all. |
 
 The manifest is a stable ordered array, so paging is offset-based. A paged response adds `offset` and `next_offset` (`null` on the last page); `total` is always the full catalog size. Page until `next_offset` is `null`:
 
@@ -5776,6 +5778,28 @@ GET /api/animations/library?limit=1000&offset=1000 # next 1000 → next_offset: 
 ```
 
 Omitting `limit` returns the full array exactly as before (no `offset`/`next_offset` fields) — the legacy contract is unchanged.
+
+**Resolving one clip by name.** Paging cannot serve a caller that knows a clip's name and nothing else, because it has no idea which page holds it. `?name=` answers that in a few hundred bytes instead of the whole manifest, which is what a pose deep-link and the embed viewer used to download for a single entry:
+
+```
+GET /api/animations/library?name=mx-hip-hop-dancing         # 365 B, not 1.1 MB
+GET /api/animations/library?name=mx-walking,mx-running      # up to 50 names
+```
+
+**Counting the catalog.** `?facets=1` returns the total and the per-category breakdown with no clips attached, so a browse UI can render exact totals and filter counts without holding the catalog:
+
+```json
+{
+	"total": 3007,
+	"categories": [
+		{ "key": "idle", "count": 184 },
+		{ "key": "locomotion", "count": 693 }
+	],
+	"generated_at": "2026-07-05T11:01:51.610Z"
+}
+```
+
+Categories come from the same classifier the `/animations` gallery uses (`src/animation-categories.js`), so a count here and a filter chip there always agree. Every category is listed, including the empty ones, so a UI built from this response keeps a stable set of controls. The response is about half a kilobyte whatever the catalog size.
 
 **Response**
 
