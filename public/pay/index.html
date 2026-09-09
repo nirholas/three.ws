@@ -67,7 +67,7 @@
     box-shadow: 0 0 24px rgba(255, 255, 255, 0.5);
     flex: 0 0 auto;
   }
-  .brand .title { font-weight: 700; font-size: 16px; letter-spacing: -0.01em; white-space: nowrap; }
+  .brand .title { margin: 0; font-weight: 700; font-size: 16px; letter-spacing: -0.01em; white-space: nowrap; }
   .brand .sub { font-size: 12px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .header-right { display: flex; gap: 8px; align-items: center; }
   .pill {
@@ -184,6 +184,17 @@
     transition: border-color 0.15s;
   }
   .input-row input:focus { border-color: var(--accent); }
+  /* Every control on this page is custom-styled, so pin one high-contrast ring
+     rather than leaving each to whatever the UA would have drawn. */
+  a:focus-visible,
+  button:focus-visible,
+  input:focus-visible,
+  summary:focus-visible,
+  [tabindex]:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+    border-radius: 6px;
+  }
   .input-row .send {
     background: var(--accent); color: #000000;
     border: none; padding: 0 22px; border-radius: 10px;
@@ -460,7 +471,7 @@
     from { opacity: 0; transform: scale(0.96); }
     to { opacity: 1; transform: scale(1); }
   }
-  .walkthrough h1 { margin: 0 0 4px; font-size: 22px; letter-spacing: -0.01em; }
+  .walkthrough h2 { margin: 0 0 4px; font-size: 22px; letter-spacing: -0.01em; }
   .walkthrough p { color: var(--muted); margin: 0 0 18px; font-size: 14px; }
   .walkthrough .steps { display: flex; flex-direction: column; gap: 10px; margin-bottom: 18px; }
   .walkthrough .step-item {
@@ -502,7 +513,7 @@
     footer.feed { padding: 6px 14px; gap: 8px; font-size: 10px; }
     .feed-label { display: none; }
     .walkthrough { padding: 22px 22px; }
-    .walkthrough h1 { font-size: 19px; }
+    .walkthrough h2 { font-size: 19px; }
     .mv-block model-viewer { height: 280px; }
     .avatars-grid { grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); }
     .avatar-card model-viewer { height: 110px; }
@@ -594,7 +605,7 @@
     border-radius: 16px; padding: 28px 32px; max-width: 420px; width: calc(100% - 32px);
     animation: walkIn 0.25s ease-out;
   }
-  .gen-modal h3 { margin: 0 0 6px; font-size: 18px; }
+  .gen-modal h2 { margin: 0 0 6px; font-size: 18px; }
   .gen-modal p { color: var(--muted); margin: 0 0 18px; font-size: 13px; }
   .gen-modal .actions { display: flex; flex-direction: column; gap: 8px; }
   .gen-modal button {
@@ -607,7 +618,18 @@
   .gen-modal button:hover { border-color: var(--accent); }
   .gen-modal button.primary { background: var(--accent); color: #000000; border-color: var(--accent); }
   .gen-modal button.primary:hover { background: #e0e0e0; }
-  .gen-modal .cancel { color: var(--muted); margin-top: 8px; font-size: 12px; text-align: center; cursor: pointer; }
+  .login-cta .cta-link {
+    background: none; border: none; padding: 0;
+    color: var(--accent-2); font: inherit; text-decoration: underline; cursor: pointer;
+  }
+  .login-cta .cta-link:hover { opacity: 0.8; }
+  .gen-modal .cancel {
+    display: block; width: 100%; margin-top: 8px;
+    background: none; border: none; padding: 6px;
+    color: var(--muted); font: inherit; font-size: 12px; text-align: center; cursor: pointer;
+    transition: color 0.15s;
+  }
+  .gen-modal .cancel:hover { color: var(--text); }
   .gen-modal .cancel:hover { color: var(--text); }
   .gen-modal .spinner { font-size: 18px; animation: spin 1.2s linear infinite; }
 
@@ -721,7 +743,7 @@
   <div class="brand">
     <div class="logo"></div>
     <div>
-      <div class="title">three.ws · pay-per-call</div>
+      <h1 class="title">three.ws · pay-per-call</h1>
       <div class="sub">Live x402 demo — agent pays USDC on Solana per request</div>
     </div>
   </div>
@@ -823,15 +845,15 @@
 <footer class="feed">
   <span class="feed-label" data-i18n="pay_index.recent_paid_calls">recent paid calls</span>
   <div class="feed-track">
-    <div class="feed-strip" id="feedStrip">
-      <span class="feed-item"><span class="ago">…</span></span>
+    <div class="feed-strip" id="feedStrip" aria-live="polite">
+      <span class="feed-item"><span class="ago" data-i18n="pay_index.loading_recent_calls">loading recent calls…</span></span>
     </div>
   </div>
 </footer>
 
-<div class="gen-overlay" id="genOverlay">
+<div class="gen-overlay" id="genOverlay" role="dialog" aria-modal="true" aria-labelledby="genTitle" aria-hidden="true">
   <div class="gen-modal">
-    <h3 id="genTitle" data-i18n="pay_index.set_up_solana_wallet">Set up Solana wallet</h3>
+    <h2 id="genTitle" data-i18n="pay_index.set_up_solana_wallet">Set up Solana wallet</h2>
     <p id="genBody" data-i18n="pay_index.your_agent_needs_a_solana_wallet_to">Your agent needs a Solana wallet to pay for tool calls. Generate one now or import a vanity address.</p>
     <div class="actions">
       <button class="primary" id="genBtn" data-i18n-html="pay_index.generate_wallet_instantly">
@@ -840,13 +862,13 @@
       </button>
       <button id="vanityBtn" data-i18n="pay_index.grind_a_vanity_address_instead">🎨 Grind a vanity address instead</button>
     </div>
-    <div class="cancel" id="genCancel">cancel</div>
+    <button type="button" class="cancel" id="genCancel" data-i18n="pay_index.cancel">cancel</button>
   </div>
 </div>
 
-<div class="overlay" id="walkthrough">
+<div class="overlay" id="walkthrough" role="dialog" aria-modal="true" aria-labelledby="walkthroughTitle" aria-hidden="true">
   <div class="walkthrough">
-    <h1 data-i18n="pay_index.how_this_works">How this works</h1>
+    <h2 id="walkthroughTitle" data-i18n="pay_index.how_this_works">How this works</h2>
     <p data-i18n="pay_index.every_action_on_this_page_costs_the">Every action on this page costs the agent $0.001 USDC. Settled per call. No keys, no signup.</p>
     <div class="steps">
       <div class="step-item"><div class="num">1</div><div class="text">You click. The page POSTs to <b data-i18n="pay_index.api_mcp">/api/mcp</b>. The server replies <b data-i18n="pay_index.402_payment_required">402 Payment Required</b> with the price.</div></div>
@@ -869,6 +891,21 @@ const agentList = $('agentList'), agentLoading = $('agentLoading'), agentLoginCt
 const genOverlay = $('genOverlay'), genCancel = $('genCancel'), genBtn = $('genBtn'), vanityBtn = $('vanityBtn');
 const genSpinner = $('genSpinner');
 
+// The runtime i18n pass (src/i18n.js) rewrites every [data-i18n] / [data-i18n-html]
+// node once its catalog lands, several hundred ms after boot. Half the pills and
+// modal copy on this page are live slots the script fills in, so that pass raced
+// the first balance fetch and put "loading…" back over a wallet balance that had
+// already rendered. The platform's opt-out is data-i18n-owned; claim it the
+// moment the script writes, and up front for the markup slots whose value is a
+// runtime address or amount rather than translatable copy.
+function ownText(el, text) {
+  el.dataset.i18nOwned = '1';
+  el.textContent = text;
+}
+for (const slot of document.querySelectorAll('[data-i18n-html] > code[id], [data-i18n-html] > span[id]')) {
+  slot.parentElement.dataset.i18nOwned = '1';
+}
+
 // ---- Agent state --------------------------------------------------------
 let selectedAgent = null;         // { id, name, solana_address, usdc, sol }
 let selectedBrowserWallet = null; // 'phantom' | 'evm' | null
@@ -879,11 +916,11 @@ function setSelectedAgent(agent) {
   selectedBrowserWallet = null;
   // update wallet pill to show selected agent's balance
   if (agent) {
-    walletText.textContent = `${agent.name} · ${
+    ownText(walletText, `${agent.name} · ${
       agent.usdc != null ? agent.usdc.toFixed(3) + ' USDC' : '? USDC'
     } · ${agent.sol != null ? agent.sol.toFixed(4) + ' SOL' : ''} · ${
       agent.solana_address ? agent.solana_address.slice(0,4)+'…'+agent.solana_address.slice(-4) : '?'
-    }`;
+    }`);
   }
   // re-render agent cards to highlight selected
   renderAgentCards(window._agentCache || []);
@@ -893,7 +930,7 @@ function setSelectedAgent(agent) {
 function setSelectedBrowserWallet(type) {
   selectedAgent = null;
   selectedBrowserWallet = type;
-  walletText.textContent = type === 'phantom' ? 'Phantom wallet' : 'EVM wallet';
+  ownText(walletText, type === 'phantom' ? 'Phantom wallet' : 'EVM wallet');
   // De-select any agent card without re-rendering the whole list
   for (const el of agentList.querySelectorAll('.agent-card[data-agent-id].selected')) {
     el.classList.remove('selected');
@@ -942,14 +979,28 @@ function isEip3009Accept(accept) {
   return /base|evm|ethereum/i.test(accept?.network || '') || accept?.scheme === 'eip3009';
 }
 
+// The CTA slot is the agent picker's empty / signed-out / unavailable state.
+// Mark it i18n-owned so the catalog pass on a non-English locale cannot stomp
+// the message the script just wrote back to the markup's English default.
+function setLoginCta(html) {
+  agentLoading.style.display = 'none';
+  agentLoginCta.style.display = 'block';
+  agentLoginCta.dataset.i18nOwned = '1';
+  agentLoginCta.innerHTML = html;
+  agentLoginCta.querySelector('[data-retry-agents]')?.addEventListener('click', () => {
+    agentLoginCta.style.display = 'none';
+    agentLoading.style.display = '';
+    loadAgents();
+  });
+}
+
 function renderAgentCards(agents) {
   window._agentCache = agents;
   agentLoading.style.display = 'none';
   // remove existing cards
   for (const el of agentList.querySelectorAll('.agent-card[data-agent-id]')) el.remove();
   if (!agents.length) {
-    agentLoginCta.style.display = 'block';
-    agentLoginCta.innerHTML = `No agents yet. <a href="/create">Create your first agent →</a>`;
+    setLoginCta(`No agents yet. <a href="/create">Create your first agent →</a>`);
     return;
   }
   agents.forEach(agent => {
@@ -981,12 +1032,21 @@ async function loadAgents() {
   try {
     const r = await fetch('/api/x402-pay?agents=1');
     if (r.status === 401) {
+      // Signed out: the markup's own sign-in copy is the right message here.
       agentLoading.style.display = 'none';
       agentLoginCta.style.display = 'block';
       return;
     }
     if (!r.ok) throw new Error('load_failed');
-    const { agents } = await r.json();
+    const payload = await r.json();
+    // The endpoint answers 200 with `configured:false` when the agent-wallet
+    // lane is unreachable. Treating that as an empty list told a signed-out
+    // visitor to "create your first agent", which is not what went wrong.
+    if (payload.configured === false || (payload.error && !payload.agents?.length)) {
+      setLoginCta(`Agent wallets are unavailable right now. <button type="button" class="cta-link" data-retry-agents>Retry</button> or <a href="/login?redirect=/pay">sign in</a> once they are back.`);
+      return;
+    }
+    const agents = payload.agents || [];
     renderAgentCards(agents);
     // auto-select first agent with a wallet
     if (!selectedAgent) {
@@ -995,32 +1055,69 @@ async function loadAgents() {
     }
   } catch (err) {
     console.warn('[pay] loadAgents failed:', err?.message || err);
-    agentLoading.style.display = 'none';
-    agentLoginCta.style.display = 'block';
+    setLoginCta(`Could not load your agents. <button type="button" class="cta-link" data-retry-agents>Retry</button> or <a href="/login?redirect=/pay">sign in</a>.`);
   }
 }
 
+// Both overlays on this page are modal. Keep `aria-hidden` in step with the
+// `show` class so a screen reader never reaches a closed dialog, move focus in
+// on open, hand it back to whatever opened the dialog on close, and let Escape
+// dismiss it the way every other modal on the platform does.
+let overlayReturnFocus = null;
+function anyOverlayOpen() {
+  return !!document.querySelector('.overlay.show, .gen-overlay.show');
+}
+// The composer grabs focus on boot and after every call. When a modal is up
+// that yanked the caret out from behind the dialog, so the first-visit
+// walkthrough opened with focus already on the input underneath it.
+function focusComposer() {
+  if (anyOverlayOpen()) return;
+  promptEl.focus();
+}
+function showOverlay(overlay, focusTarget) {
+  overlayReturnFocus = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+  overlay.classList.add('show');
+  overlay.setAttribute('aria-hidden', 'false');
+  (focusTarget || overlay.querySelector('button'))?.focus();
+}
+function hideOverlay(overlay) {
+  overlay.classList.remove('show');
+  overlay.setAttribute('aria-hidden', 'true');
+  overlayReturnFocus?.focus();
+  overlayReturnFocus = null;
+}
+document.addEventListener('keydown', (e) => {
+  if (e.key !== 'Escape') return;
+  const open = document.querySelector('.overlay.show, .gen-overlay.show');
+  if (!open) return;
+  e.preventDefault();
+  if (open === walkthrough) closeWalk.click();
+  else genCancel.click();
+});
+
 function openGenOverlay(agent) {
   pendingGenAgentId = agent.id;
-  $('genTitle').textContent = `Set up wallet for "${agent.name}"`;
+  ownText($('genTitle'), `Set up wallet for "${agent.name}"`);
+  $('genBody').dataset.i18nOwned = '1';
   $('genBody').textContent = `This agent needs a Solana wallet to pay $0.001 USDC per tool call. Generate one now (instant) or grind a vanity address.`;
-  genOverlay.classList.add('show');
+  showOverlay(genOverlay, genBtn);
 }
 
-genCancel.addEventListener('click', () => { genOverlay.classList.remove('show'); pendingGenAgentId = null; });
+genCancel.addEventListener('click', () => { hideOverlay(genOverlay); pendingGenAgentId = null; });
 vanityBtn.addEventListener('click', () => {
-  window.open(`/vanity-wallet?agent=${pendingGenAgentId}`, '_blank');
-  genOverlay.classList.remove('show');
+  window.open(`/vanity-wallet?agent=${pendingGenAgentId}`, '_blank', 'noopener');
+  hideOverlay(genOverlay);
 });
 genBtn.addEventListener('click', async () => {
   if (!pendingGenAgentId) return;
   genBtn.disabled = true;
   genSpinner.style.display = '';
+  genBtn.dataset.i18nOwned = '1';
   genBtn.childNodes[1].textContent = ' Generating…';
   try {
     const r = await apiFetch(`/api/agents/${pendingGenAgentId}/solana`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: '{}', allowAnonymous: true });
     if (!r.ok) throw new Error((await r.json()).error || 'gen_failed');
-    genOverlay.classList.remove('show');
+    hideOverlay(genOverlay);
     // reload agents to get the new address
     await loadAgents();
     const agent = (window._agentCache || []).find(a => a.id === pendingGenAgentId);
@@ -1203,7 +1300,7 @@ async function runPhantomPayment(call, displayLabel) {
     sendBtn.disabled = false;
     for (const b of quickEl.querySelectorAll('button')) b.disabled = false;
     promptEl.disabled = false;
-    promptEl.focus();
+    focusComposer();
   }
 }
 
@@ -1420,7 +1517,7 @@ async function runEvmPayment(call, displayLabel) {
     sendBtn.disabled = false;
     for (const b of quickEl.querySelectorAll('button')) b.disabled = false;
     promptEl.disabled = false;
-    promptEl.focus();
+    focusComposer();
   }
 }
 
@@ -1428,7 +1525,7 @@ const DEMO_MODEL = 'https://threejs.org/examples/models/gltf/DamagedHelmet/glTF-
 const TOOL_PRICE_USDC = 0.001;
 
 let sessionTotal = Number(sessionStorage.getItem('x402:total') || 0);
-const renderTicker = () => { tickerText.textContent = `${sessionTotal.toFixed(3)} USDC`; };
+const renderTicker = () => { ownText(tickerText, `${sessionTotal.toFixed(3)} USDC`); };
 renderTicker();
 
 function escape(s) { return String(s).replace(/[<>&]/g, c => ({'<':'&lt;','>':'&gt;','&':'&amp;'}[c])); }
@@ -1869,7 +1966,7 @@ async function run(call, displayLabel) {
     sendBtn.disabled = false;
     for (const b of quickEl.querySelectorAll('button')) b.disabled = false;
     promptEl.disabled = false;
-    promptEl.focus();
+    focusComposer();
   }
 }
 
@@ -1914,23 +2011,30 @@ async function refreshBalance() {
     if (!r.ok) throw new Error('bal_fetch_failed');
     const b = await r.json();
     if (b.address) {
-      walletText.textContent = `${b.usdc.toFixed(3)} USDC · ${b.sol.toFixed(3)} SOL · ${b.address.slice(0,4)}…${b.address.slice(-4)}`;
+      ownText(walletText, `${b.usdc.toFixed(3)} USDC · ${b.sol.toFixed(3)} SOL · ${b.address.slice(0,4)}…${b.address.slice(-4)}`);
     } else {
-      walletText.textContent = 'agent wallet (no env)';
+      ownText(walletText, 'shared wallet offline');
     }
   } catch (err) {
     console.warn('[pay] refreshBalance(shared) failed:', err?.message || err);
-    walletText.textContent = 'agent wallet';
+    ownText(walletText, 'balance unavailable');
   }
+}
+
+// The strip is a marquee, so its three non-populated states have to be single
+// items in the same shape: it previously sat on the placeholder ellipsis
+// forever whenever the endpoint failed, which read as a hung page.
+function setFeedNotice(text) {
+  feedStrip.innerHTML = `<span class="feed-item"><span class="ago">${escape(text)}</span></span>`;
 }
 
 async function refreshFeed() {
   try {
     const r = await fetch('/api/x402-pay?feed=1');
-    if (!r.ok) return;
+    if (!r.ok) { setFeedNotice('activity feed unavailable'); return; }
     const f = await r.json();
     const items = (f.items || []).slice(0, 25);
-    if (!items.length) { feedStrip.innerHTML = `<span class="feed-item"><span class="ago">no calls yet</span></span>`; return; }
+    if (!items.length) { setFeedNotice(f.error ? 'activity feed unavailable' : 'no calls yet'); return; }
     const make = () => items.map(it => `<span class="feed-item">
       <span class="tool">${escape(it.tool)}</span>
       <span class="ago">${ago(it.ts)}</span>
@@ -1939,6 +2043,7 @@ async function refreshFeed() {
     feedStrip.innerHTML = make() + make();
   } catch (err) {
     console.warn('[pay] refreshFeed failed:', err?.message || err);
+    setFeedNotice('activity feed unavailable');
   }
 }
 
@@ -1968,11 +2073,12 @@ promptEl.addEventListener('keydown', (e) => {
 });
 
 closeWalk.addEventListener('click', () => {
-  walkthrough.classList.remove('show');
-  localStorage.setItem('x402:seen-walk', '1');
+  hideOverlay(walkthrough);
+  try { localStorage.setItem('x402:seen-walk', '1'); } catch { /* private mode: show it again next visit */ }
 });
-if (!localStorage.getItem('x402:seen-walk') && !location.search.includes('skipwalk=1')) {
-  walkthrough.classList.add('show');
+const seenWalk = (() => { try { return localStorage.getItem('x402:seen-walk'); } catch { return null; } })();
+if (!seenWalk && !location.search.includes('skipwalk=1')) {
+  showOverlay(walkthrough, closeWalk);
 }
 
 // ---- Init ---------------------------------------------------------------
@@ -2011,7 +2117,7 @@ for (const [tool, alias] of [
 }
 if (params.get('list') === '1') queueMicrotask(() => run({ tool: 'tools/list', args: {} }));
 
-promptEl.focus();
+focusComposer();
 </script>
 
 <script type="module">
