@@ -3,6 +3,14 @@
 	"entries": [
 		{
 			"date": "2026-09-09",
+			"title": "Avatars and token art load again on sites that embed three.ws",
+			"summary": "Assets served from /cdn (avatars, thumbnails, generated models) are read from our object store with a signed request, and when that request is rejected the route falls back to the store's public address so the bytes still arrive. That fallback was a redirect, and a redirect throws away the cross-origin permission the route grants: browsers re-check permission at the redirect's destination, and the public address grants none. Measured from an outside site, every one of those reads failed outright, which took down model previews on pages that load art through the proxy and silently broke third-party embeds of three.ws avatars. The bytes are now served through three.ws itself rather than pointed at, so the permission, the file type and the download rules all survive the fallback, partial reads for video and audio keep working, and a file that genuinely is not there says so instead of reporting a server fault the page retries forever. It also keeps the fallback off the rate-limited public address, which is the whole reason the proxy exists.",
+			"tags": [
+				"fix"
+			]
+		},
+		{
+			"date": "2026-09-09",
 			"title": "Your monthly agent turns now count, and locking up never does",
 			"summary": "Talking to the agent about your house is the one part of the smart-home lane that can really cost money: the room graph makes a home prompt large, and on a paid model a single turn costs more than a year of holding that house’s connection open. Those turns were being counted but never actually limited. They are now, against the monthly allowance shown on your plan page, and if you run out the agent says so in a sentence that names the limit, the date it resets and where to raise it, instead of failing at you. Two things are deliberately left outside that limit. Asking the agent what the house is doing still works, because you have to be able to see which door is open. And telling it to lock a door, close a garage or a valve, or arm the alarm still runs, over quota, on a paused home, in every state we can put an account in: the safe direction is free, always, on every plan. If our own billing lookup fails, the turn is allowed through rather than refused.",
 			"tags": [
