@@ -4,6 +4,8 @@ three.ws agents can think on **IBM Granite** foundation models, served through *
 
 For the broader platform model see [How it works](./how-it-works.md); for the agent brain abstraction see [Agent system](./agent-system.md); for the standalone connector see [the MCP server](#mcp-server-three-wsibm-watsonx-mcp) below.
 
+For what the IBM Partner Plus membership itself entitles us to, which benefits are unused, and the watsonx Orchestrate Agent Catalog listing path, see [IBM Partner Plus](./partners/ibm-partner-plus.md).
+
 ---
 
 ## Partnership & affiliation
