@@ -202,7 +202,7 @@ Verified 2026-09-02: `Listing under review | status not listed | sold 2`.
 
 ---
 
-## 2. Drift resolved: the live listing IS our current catalog
+## 2. Names and prices match; the on-chain DESCRIPTIONS do not
 
 Historic note: from 2026-07-04 to 2026-08-27 the listing carried the old, rejected service
 set (7 REST rows, not one name matching the catalog module). That drift was closed by the
@@ -211,7 +211,20 @@ set (7 REST rows, not one name matching the catalog module). That drift was clos
 
 Re-verified 2026-09-02, live listing against
 [`api/_lib/okx-catalog.js`](../../api/_lib/okx-catalog.js): **7 rows, every name and every
-endpoint matching, no drift.**
+endpoint matching.**
+
+> **Correction, 2026-09-09: "no drift" was only ever checked on names and endpoints, and the
+> descriptions ARE stale.** Run the check with the agent id and it fails:
+> `AGENT_ID=2632 node scripts/okx-three-copy-check.mjs` reports
+> `COPY CHECK: FAIL (7 divergences)`, one per row. The on-chain rows carry prose parameter
+> text; the module's `listingDescription()` now emits a parameter spec line, a method line and
+> a runnable `curl` example. Rejection #2 (2026-07-26) was about "service description /
+> parameters / usage examples", so this is that exact class of defect. Without `AGENT_ID` the
+> same script reads `PASS`, because it then compares only module, live endpoint and listing
+> submission, which do agree: **always pass `AGENT_ID=2632` when the question is what a
+> reviewer sees.** Closing this is an on-chain write, owned by
+> [`okx-ai-08-forge-relisting.md`](../911-okx-ai-08-forge-relisting.md). Capture:
+> `prompts/okx-ai/e2e-evidence/95-2026-09-09-three-copy-onchain.txt`.
 
 ```bash
 onchainos agent service-list --agent-id 2632   # -> data[0].total = 7
@@ -233,7 +246,8 @@ All seven are `serviceType: A2MCP`, all on `chainIndex: 196`, all quoting
 The catalog module stays the source of truth. Nine further rows (Identity Studio and the
 single-capability REST services) are deployed and payable but carry `listed: false`; they
 show up under `unlisted` in `GET /api/okx/3d/catalog` and are deliberately not submitted.
-Re-run the comparison above after any change to the module, and after any listing update.
+Re-run the comparison above after any change to the module, and after any listing update,
+with `AGENT_ID=2632` set so the on-chain copy is actually in the comparison.
 
 ---
 
@@ -256,10 +270,11 @@ this session's `payment pay` command signs from, so a "self-payment" test is no 
 self-payment (buyer `0x75d0…cf69` → seller `0x4022de2D…f402`), which is arguably a more
 realistic E2E test, not a problem, but the funding target below is what actually needs money.
 
-**Wallet balances re-checked live 2026-09-02, block 69606689 (X Layer RPC `rpc.xlayer.tech`,
+**Wallet balances re-checked live 2026-09-09, block 70162898 (X Layer RPC `rpc.xlayer.tech`,
 direct `eth_call` on `balanceOf` + `eth_getBalance`). Every figure below is unchanged from
-2026-08-01 and from 2026-07-23, and the live 402's `payTo` was re-probed the same day across
-all four paid rows and had NOT drifted again:**
+2026-09-02, 2026-08-01 and 2026-07-23, and the live 402's `payTo` was re-probed the same day
+across all four paid rows and had NOT drifted again. Six weeks with nothing moving on this
+rail is itself a finding: no funding story explains any listing rejection.**
 
 | Wallet | Role | USD₮0 | OKB (gas) |
 | --- | --- | --- | --- |
@@ -375,11 +390,12 @@ This is the holder-visible moment. Work the list top to bottom.
 
 ---
 
-## 5.5 The pre-resubmission gate: three checks, all must pass
+## 5.5 The pre-resubmission gate: four checks, all must pass
 
-Never resubmit on a code review alone. These run against live production, take about a minute
-together, and each one covers a leg the others cannot see. Every rejection since 2026-07-04
-would have been caught by one of them.
+Never resubmit on a code review alone. These run against live production and each one covers a
+leg the others cannot see. Every rejection since 2026-07-04 would have been caught by one of
+them, and the fourth exists because on 2026-09-09 the first three were all green while the
+product had delivered nothing for two days.
 
 ```bash
 node scripts/okx-compliance-probe.mjs      # the 402 quotation, as the reviewer parses it
@@ -411,6 +427,32 @@ done                                       # the quotation, as OKX's OWN validat
   `loggedIn: true`), which is why the two scripts above stay the machine-runnable gate and
   this is the confirmation on top of them. Capture:
   `prompts/okx-ai/e2e-evidence/84-2026-09-07-okx-x402-check.json`.
+
+**4. The product actually delivers.** The three checks above all stop at the payment. None of
+them buys anything, so none of them can see a generation that is accepted, charged, and then
+never finishes. That is exactly what was happening on 2026-09-09: a rejected R2 credential
+failed `materializeCreation` on every job, `forge_creations` had no `done` row for 48 hours,
+and all three gates above passed anyway. Buy nothing to check it, the free lane runs the same
+delivery path:
+
+```bash
+JOB=$(curl -s -X POST https://three.ws/api/forge -H 'content-type: application/json' \
+  -d '{"prompt":"a small wooden stool","tier":"draft"}' | python3 -c 'import sys,json;print(json.load(sys.stdin)["job_id"])')
+# poll until terminal; it must reach status "done" with a glb_url, not "failed" and not stall
+curl -s "https://three.ws/api/forge?job=$(python3 -c 'import urllib.parse,sys;print(urllib.parse.quote(sys.argv[1]))' "$JOB")"
+```
+
+The DB is the faster read when several jobs are in flight, and it is the ground truth
+(CLAUDE.md points at this table for any generation question):
+
+```sql
+select status, backend, error, created_at from forge_creations order by created_at desc limit 20;
+```
+
+A window with no `done` row is a NO-GO on its own, whatever the payment gates say. Since
+`b481c2cc8` the paid rows refuse with `delivery_unavailable` and `charged: false` when the
+delivery bucket is unwritable, so a buyer is no longer charged for this, but a row that
+refuses every call is still not a listing worth submitting.
 
 The two scripts take `--base` (point them at a staged worktree's server before a deploy) and `--out`
 (write the capture into `prompts/okx-ai/e2e-evidence/`). Commit the captures: they are the
