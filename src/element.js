@@ -1876,9 +1876,7 @@ class Agent3DElement extends HTMLElement {
 				'memory:write',
 			]) {
 				this._runtime.addEventListener(ev, (e) => {
-					this.dispatchEvent(
-						new CustomEvent(ev, { detail: e.detail, bubbles: true, composed: true }),
-					);
+					this._emit(ev, e.detail, { bubbles: true, composed: true });
 					if (ev === 'brain:message') {
 						// Transfer sentiment from the most recent tool call to
 						// this assistant message so the bubble tints correctly.
@@ -2041,13 +2039,10 @@ class Agent3DElement extends HTMLElement {
 								}
 							}
 						} catch {}
-						this.dispatchEvent(
-							new CustomEvent('skill:purchased', {
-								detail: e.detail,
-								bubbles: true,
-								composed: true,
-							}),
-						);
+						this._emit('skill:purchased', e.detail, {
+							bubbles: true,
+							composed: true,
+						});
 					}
 				});
 			}
@@ -2664,19 +2659,30 @@ class Agent3DElement extends HTMLElement {
 		);
 	}
 
-	// Dispatch an element event using the constructor from THIS element's own
-	// window. `new CustomEvent(...)` reads whichever global is bound at call
-	// time, and _boot is fire-and-forget: an await inside it can settle after the
-	// host's document was replaced (an SPA remount, or a test runner tearing a
-	// DOM down between files), leaving the element in one realm and the global in
-	// another. dispatchEvent then rejects the object as "not of type Event",
-	// which throws out of _boot's own catch and becomes an unhandled rejection:
-	// a handled boot failure reported as a crash. Same-realm construction cannot
-	// mismatch, and an element whose window is gone has nobody left to notify.
+	// The single path every element event goes out through. Notifying the host is
+	// a boundary, not a control-flow step, so it must never be able to throw back
+	// into its caller.
+	//
+	// Two things make that a real risk. `new CustomEvent(...)` reads whichever
+	// global is bound at call time, so we construct from THIS element's own
+	// window instead. And _boot is fire-and-forget: an await inside it can settle
+	// after the host's document was replaced (an SPA remount, or a test runner
+	// tearing a DOM down between files), which leaves the element in one realm
+	// while its window object has been handed a foreign CustomEvent. dispatchEvent
+	// rejects that object as "not of type Event", and thrown from inside _boot's
+	// own catch it becomes an unhandled rejection: a handled boot failure reported
+	// as a crash. An element whose realm no longer accepts its events has nobody
+	// left to notify, so dropping the event is the whole correct response. Nothing
+	// else escapes here: a listener that throws is reported by the DOM itself and
+	// never propagates out of dispatchEvent.
 	_emit(type, detail, { bubbles = false, composed = false } = {}) {
 		const view = this.ownerDocument?.defaultView;
 		if (!view) return;
-		this.dispatchEvent(new view.CustomEvent(type, { detail, bubbles, composed }));
+		try {
+			this.dispatchEvent(new view.CustomEvent(type, { detail, bubbles, composed }));
+		} catch (err) {
+			log.debug('[agent-3d] dropped', type, 'event: host realm is gone', err);
+		}
 	}
 
 	_showError(err) {
@@ -2724,12 +2730,10 @@ class Agent3DElement extends HTMLElement {
 		// Bare avatars report policy failures through the event only, with no
 		// visible error banner. Chat agents also render a banner below.
 		if (!this._isChatMode()) {
-			this.dispatchEvent(
-				new CustomEvent('agent:error', {
-					detail: { phase: 'policy', error: { code, message } },
-					bubbles: true,
-					composed: true,
-				}),
+			this._emit(
+				'agent:error',
+				{ phase: 'policy', error: { code, message } },
+				{ bubbles: true, composed: true },
 			);
 			return;
 		}
@@ -2737,12 +2741,10 @@ class Agent3DElement extends HTMLElement {
 		el.className = 'error';
 		el.textContent = message;
 		this.shadowRoot.appendChild(el);
-		this.dispatchEvent(
-			new CustomEvent('agent:error', {
-				detail: { phase: 'policy', error: { code, message } },
-				bubbles: true,
-				composed: true,
-			}),
+		this._emit(
+			'agent:error',
+			{ phase: 'policy', error: { code, message } },
+			{ bubbles: true, composed: true },
 		);
 	}
 
@@ -2944,12 +2946,10 @@ class Agent3DElement extends HTMLElement {
 					type: ACTION_TYPES.EMOTE,
 					payload: { trigger: 'concern', weight: 0.8 },
 				});
-				this.dispatchEvent(
-					new CustomEvent('agent:error', {
-						detail: { phase: 'send', error: err },
-						bubbles: true,
-						composed: true,
-					}),
+				this._emit(
+					'agent:error',
+					{ phase: 'send', error: err },
+					{ bubbles: true, composed: true },
 				);
 			}
 		}
