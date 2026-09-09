@@ -21,6 +21,7 @@ sells ranking.
 | Facilitator endpoints we query/settle through | `api/_lib/x402/bazaar-client.js` — PayAI (Base default), CDP (`api.cdp.coinbase.com/platform/v2/x402`), self-facilitator for Solana (`api/_lib/x402/self-facilitator.js`) |
 | Per-agent A2A agent cards | `/a/sol/:id/.well-known/agent-card.json` |
 | Env-overridable prices | `api/_lib/x402-prices.js` (`X402_PRICE_<SLUG>`) |
+| Preview of what an x402scan registration run would add or deprecate | `scripts/x402scan-registration-gap.mjs` (`npm run preview:x402scan-registration`) |
 
 ## 1. x402scan (x402scan.com) — Merit Systems
 
@@ -61,7 +62,13 @@ metadata (og-tags, favicon) on the resource page, so those must be clean.
   its live 402 is. Since 2026-09-02 every paid service in
   `api/_lib/service-catalog/` is projected into it automatically
   (`catalogPaidPaths()` in `api/openapi-json.js`), guarded by
-  `tests/openapi-aggregator.test.js`.
+  `tests/openapi-aggregator.test.js`, and live in production since the
+  2026-09-08 deploy.
+- Preview the run before spending the signature: `npm run
+  preview:x402scan-registration` reproduces their classify/probe/deprecate
+  pipeline against live production and prints what would be added, what would
+  fail its probe, and (the one result that should stop a run) what would be
+  deprecated.
 - Solana volume needs no third party: since PR #1032 merged, x402scan
   attributes our own facilitator's settlements to us directly (section 7).
   Routing through the CDP facilitator is the separate, additive Base leg that
@@ -310,6 +317,75 @@ The path to being counted, all Solana, no Base required:
    their volume would exist to be counted.
 
 ## Registration log
+
+**2026-09-09: the deploy landed; registration is the only step left.** The
+`catalogPaidPaths()` fix shipped (production commit `880bdcef8`, revision
+`three-ws-api-00418-j26`), so `/openapi.json` now declares 82 paid
+`/api/x402/*` paths where it declared 24. Re-measured the same day against live
+production, no credentials used.
+
+Ran x402scan's own discovery library (`@agentcash/discovery`
+`discoverOriginSchema`) against `https://three.ws`: source `openapi`, 123
+endpoints, of which 83 are `/api/x402/*`. It classifies 82 of those as `paid`
+with the correct price and `pricingMode: fixed`. The one exception is correct
+rather than a defect: `GET /api/x402/forge` is genuinely free price discovery
+(`security: []`, no `x-payment-info`) and reads as `unprotected`, exactly
+matching the free row already listed beside the paid `POST /api/x402/forge`.
+
+This settles a question worth settling before a signature is spent: every paid
+operation declares `security: []`, and `x-payment-info` overrides it, so our
+paid endpoints register as paid rows and not as free "Public" catalog rows.
+
+**What a registration run would do now** (`npm run preview:x402scan-registration`,
+which reproduces their classify/probe/deprecate pipeline and agrees with their
+library endpoint for endpoint):
+
+| Outcome | Count |
+|---|---|
+| Registrable endpoints declared in `/openapi.json` | 123 |
+| Already listed on the origin page | 63 |
+| Rows the run would add | 60 |
+| Rows the run would deprecate | **0** |
+| Of the 60 new, answer a spec-valid 402 to a bare probe | 59 |
+
+The zero is the safety property: the run is purely additive and cannot drop or
+deprecate any of the 63 rows already listed. Run the preview again immediately
+before registering, because a `/openapi.json` change is what would turn that
+zero into a real deprecation.
+
+The single endpoint that will not probe-register is `GET
+/api/x402/vanity-premium`, and that is by design. A bare GET browses the
+premium inventory for free; only `?address=<base58>` triggers the 402. Their
+probe fills required query params only, and `address` is genuinely optional, so
+the probe sees the free mode. Marking it required in the spec to force a
+registration would be a lie about the route. It stays unlisted until the
+inventory is worth a dedicated listing.
+
+Also deliberately unlisted: `ring-settle` and `three-buy`. Both answer a valid
+402 in production but carry `discoverable: false` and are absent from the
+service catalog on purpose, so `catalogPaidPaths()` never projects them. They
+are internal ring machinery, and listing them would let dogfooded volume
+masquerade as organic third-party demand. Leave them out.
+
+**Correction to the 2026-09-02 entry below.** It recorded five endpoints as
+answering 503 `settlement_unavailable` instead of a 402 while the sponsor
+wallet sits under its SOL settle floor, and therefore unregisterable. That is
+no longer true. Re-probed 2026-09-09: `dance-tip`, `feed-health` and
+`spend-session` all answer a spec-valid 402 advertising both USDC and $THREE on
+Solana mainnet, so they are probe-registerable today; `ring-settle` and
+`three-buy` also answer 402 but stay unlisted for the reason above. The floor
+still bites at settle time rather than at challenge time
+(`/api/healthz` reports `x402.self_facilitator.settle` at 84 ok / 366 failed,
+every failure `fee_wallet_below_floor`), which is work order 01's capital
+problem and not a listing problem.
+
+**Remaining step, owner-gated:** one SIWX wallet signature at
+<https://www.x402scan.com/resources/register>, "Add API" for origin
+`https://three.ws`. It binds an identity and moves no funds. The alternative
+their repo exposes, the paid `registry-register` x402 endpoint, registers one
+URL per settled payment and would need 60 payments, so the bulk SIWX flow is
+strictly better.
+
 
 **2026-09-02: re-verification after the facilitator merge (measured, no
 credentials used).** PR #1032 merged 2026-08-11 with zero reviews, so the
