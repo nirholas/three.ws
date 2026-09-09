@@ -44,14 +44,19 @@ git history (`git log --diff-filter=D -- docs/openai-pr/`). What each closed:
 | 05 | Custom-GPT OpenAPI served, legal URLs aligned | `https://three.ws/.well-known/3d-studio-openapi.yaml` 200, two paths, `security: []`, Redocly lint clean; `/legal/privacy` and `/legal/tos` 200 |
 | 06 | Doc accuracy + the tool-count story | Count reconciled at **eleven** everywhere (live `tools/list`, `docs/mcp-studio.md`, `openai-submission.md`, `TRACKER.md`, the `/openai` page, the partnership brief, `tools.js`, `tests/mcp-studio.test.js`, which pins it); model-viewer single-sourced at 4.0.0 across 110 references in 94 files with `check:model-viewer` tightened to catch semver RANGES; every link, path, `ui://` URI, env var and sample in the four ChatGPT-surface docs verified against live |
 
-Open:
+Open: none. 07 ran on 2026-09-09 and closed:
 
-| # | Brief | Priority | State (measured 2026-09-08) |
-| --- | --- | --- | --- |
-| 07 | [Final live verification and submit checklist](../915-openai-pr-07-final-verification-and-submit.md) | P2 (runs last) | Never run. Its "exactly 10 tools" check must read 11; `initialize`, `tools/list`, `resources/list`, the served manifests and `/api/ar` pass today; the live `forge_free` and `POST /api/3d/studio` runs and the kit refresh remain. |
+| # | Brief | Verified by |
+| --- | --- | --- |
+| 07 | Final live verification and submit checklist | Every A-E check re-run against live production. Verdict recorded in `openai-submission.md` §0 and the `TRACKER.md` OpenAI row: **not ready**, held on the GCP billing hold (vision QA fails open when no rung answers) plus an unshipped deploy. Four defects found and fixed on the way: the widget fetched its GLB from an origin that refuses CORS to any host but ours, the pending ETA reported a fabricated "5s to go" indefinitely, the vision-QA chain recorded only its first rung's error, and 14 reviewer-visible strings carried a banned em-dash. |
 
-07 is the last brief. The human steps at its end (partner-portal submit, deleting the
-draft GPT) stay with the owner.
+07 was the last brief. Everything still open is the owner's: clear the GCP billing hold
+on project `93741856042`, deploy the tree, delete the duplicate draft GPT (no API for
+it), confirm the portal's screenshot dimensions, and make the partner-portal submit.
+
+This file stays until nothing under `prompts/finish/` links to it; two `_context/` files
+still do (`00-RETIRED-BY-OWNER.md`, `production-100-00-INDEX.md`), so deleting it here
+would leave two dead links and fail `npm run audit:docs`.
 
 ## Rules every task must follow (from `CLAUDE.md`)
 
