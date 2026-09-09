@@ -996,3 +996,75 @@ Routes that failed in the parallel pass are re-run once, serially, and the secon
 ### `/markets/robinhood/portfolios` (crypto)
 - [portfolios] stats unavailable: not_found
 
+
+---
+
+# Second pass, 2026-09-09 afternoon
+
+The morning sweep above ran on a box carrying another agent's build (load 80 to
+100 throughout). Every one of its 31 failing routes was re-measured serially
+against a dedicated dev server, and the picture changed: **29 of the 31 are
+clean, one was a real defect now fixed, and the two that remain are unshipped
+commits rather than page code.**
+
+Production at the time of this pass served `880bdcef8` (revision
+`three-ws-api-00420`), which is well ahead of every fix the earlier work order
+was waiting on. Confirmed live: `/api/healthz` 200, `/api/status` 200,
+`/api/home` 401 signed out (as designed), `/api/oracle/model` 200,
+`/api/img?...&fallback=none` 204, and `access-control-allow-origin: *` on
+`/x402.js`, `/i18n.js` and `/ibm/hello.live`. The four deploy-lag rows that
+order tracked have all cleared.
+
+## Re-measured
+
+| Routes | Morning reading | Second pass |
+|---|---|---|
+| 22 routes reporting `THREE.GLTFLoader: Couldn't load texture blob:` (`/agents`, `/wallet`, `/trading`, `/pill`, `/exit-lab`, `/swarms`, `/event`, `/reputation`, `/reputation/market`, `/preflight`, `/ledger`, `/my-agents`, `/spotlight`, `/credits`, `/payments`, `/pay/simulator`, `/login`, `/settings`, `/dashboard`, `/dashboard/account`, `/dashboard/data-api`, `/dashboard/billing`, `/dashboard/settings`) | 2 errors each | **Clean.** Every one of them passed on a quiet box. The footer avatar these pages share (`src/footer-bot.js` loading `/animations/robotexpressive.glb`) carries no textures at all, so no texture in that asset can fail; the failures were a contended box losing texture fetches, which the serial retry could not clear because the retry ran while the same build was still going. |
+| `/spotlight` `[agent-3d] boot failed TypeError: Failed to fetch` | 1 error | **Clean.** The `<agent-3d>` bundle is loaded from `https://three.ws` and its fetch was refused under the same contention. |
+| `/markets`, `/markets/news`, `/markets/robinhood/desk`, `/markets/robinhood/portfolios`, `/markets/robinhood/portfolios/universe` | 404s | **Real defect, fixed** (see below). |
+| `/globe` | 404 | **Unshipped, not a defect.** The whole `/globe` surface landed in `855a33ad3` at 22:43 on 2026-09-08; production was built at 18:57 the same day. `/api/globe/intel?range=7d` answers 404 in production and 200 against this tree. |
+| `/ibm/hello` | 2 CORS errors | **Unshipped, not a defect.** `f49cd1a04` (07:17 today) grants `/atlas/(.+)\.js` open CORS. This tree answers `access-control-allow-origin: *` on `/atlas/score.js`; production answers no such header. |
+| `/clash` warning | CoinCommunities unconfigured | **Still open, and still the owner's.** `CC_API_KEY` is in neither `.env` nor `.env.local`, and production `/api/clash/state` answers `503`. The page is fully wired behind the var and degrades as designed. A direct read of the service env was not possible this pass: `gcloud` needs an interactive reauth here. |
+
+## The one real defect: a live news card cached as a dead 404
+
+`/markets` and `/markets/news` logged 404s from `/api/news/image`. About a fifth
+of the feed ships text-only, so those cards render a source-initials tile and
+upgrade in place once the resolver finds the publisher's `og:image`
+(`src/shared/news-render.js`). Reproduced against production: of the nine
+imageless articles in a 20-article feed page, eight resolved and one answered
+404, stably, for as long as the answer stayed cached.
+
+Root cause: `findArticle` fanned out over all 197 registry feeds and raced them
+against `REFRESH_DEADLINE_MS` (2.5s). On an instance whose cache was still cold
+the straggler was dropped mid-refresh, so an article the feed had served seconds
+earlier came back unknown. The card degraded correctly, but the browser logs the
+404 before any handler runs, and the answer carried `s-maxage=600`, so one cold
+instance pinned a console 404 on every reader for ten minutes. Adding a
+cache-buster to the same URL returned `302` immediately, which is what proved it
+was a cache-amplified transient rather than a genuine miss.
+
+Measured on a cold process against the live feed, same article:
+
+```
+link  -> FOUND in 1730ms     (narrow path: refresh the one publisher)
+id    -> MISS  in 2549ms     (broad path: the whole registry, deadline-truncated)
+```
+
+Fixed in `cbdd48fa2`. `findArticle` now asks the one feed that could hold a link
+first, with the full timeout `getNews` already gives a narrow query, and only
+then falls back to the broad scan; `sourceKeyForLink` maps a publisher host to
+its source key off an index built from the registry's own feed URLs. A miss on a
+host that IS one of ours is cached for 30s rather than the full window, because
+it means the lookup could not confirm a card we almost certainly served.
+Verified: `/markets`, `/markets/news` and `/markets/news/article` all clean with
+the dev proxy pointed at this tree's own API server.
+
+## Reading a sweep on a shared box
+
+The serial retry (`c9deecba3`) clears a route that lost its settle window to a
+momentary spike. It does not clear a route swept while a multi-minute build is
+running, because the retry runs under the same load. Before trusting a failure
+list, check the load and, if it is high, re-run the failures against a dev
+server you started yourself once the box is quiet. Twenty-nine of the
+thirty-one findings above were the box, not the code.
