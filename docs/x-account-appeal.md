@@ -288,6 +288,52 @@ real appeal did.
   account". Both first-hand successes had reach suppressed for about eight
   days after restoration. Ramp up over a week.
 
+## 4b. Circulating advice that does not survive checking
+
+Suspension folklore travels faster than the documented cases in section 3, and
+it is always more appealing because it promises a shortcut. Anything landing
+here has been checked and failed. Add to this list rather than re-arguing an
+item; the point of writing them down is that nobody spends another session on
+the same tip.
+
+**"File the appeal in Hebrew and the account gets restored" (raised
+2026-09-09).** Do not do this. No source supports it: two searches across the
+appeal-guide literature, the first-hand accounts, and X's own pages turn up
+nothing connecting Hebrew, or any specific language, to a restoration. The
+only language datapoint that exists points the other way. A Japanese account
+recovery service reports that appeals in English get higher processing
+priority than appeals in Japanese, which is the same claim in a different
+language and is at least sourced to somebody who files these for a living
+([note.com/xbackup](https://note.com/xbackup/n/nc50ee47c6f02)).
+
+The folklore probably grows from something real, which is why it sounds
+plausible: a low-volume language queue plausibly gets more human attention per
+case than the English firehose, and section 3 shows human attention is the
+whole game. But that reasoning does not reach this account, for two specific
+reasons.
+
+The first is the one that matters. **The charge is authenticity.** This
+account has a twelve-year, English-only public history, and the appeal is
+filed from inside it. A machine-translated Hebrew submission arriving on that
+record is, on its face, a presentation that does not match the account: it is
+the precise shape of the thing the policy exists to catch. Section 5 already
+records the rule that a falsifiable claim is what turns a mistaken suspension
+into an upheld one, and this is worse, because it does not merely risk being
+caught in a false statement, it hands a reviewer behavioral evidence for the
+exact accusation under review.
+
+The second: appeal #2 (section 5b) rests on a precise technical claim, that
+X's notice says lock while its own endpoint reports suspended. It works only
+if a reviewer follows it exactly and pulls the record. Machine translation
+blurs precisely that kind of sentence, and neither the owner nor anyone here
+reads Hebrew well enough to catch it when it does.
+
+**File in English, per section 5b.** If a future tip proposes changing the
+language, the identity, the tone, or the account itself in a way that makes
+the submission look less like the account's own history, it is the same idea
+wearing different clothes, and section 4 already lists why each of those got
+people denied.
+
 ## 5. The appeal text, as filed
 
 **Filed 2026-08-28 at 06:26** through the form, logged in as `@nichxbt`,
