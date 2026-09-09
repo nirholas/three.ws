@@ -296,6 +296,40 @@ line was re-measured against the current tree, not carried forward:
   `address: null, deployed: false`. Setting the var is a config-only
   `--update-env-vars` call, which needs no further approval.
 
+**Re-verified 2026-09-09. The faucet has a precondition the earlier notes
+missed, and it is the reason funding has never landed.** Everything was
+re-measured against the current tree:
+
+- Both dry runs simulate green against the live chain-97 RPC at the same gas as
+  all three previous re-reads: `DeployWorldMoves` 566,068 gas and
+  `DeployGreenfieldVault` 1,711,362 gas at 0.1 gwei (0.0000566068 and
+  0.0001711362 BNB, 0.000227743 BNB for the pair). Run without `--rpc-url` the
+  scripts revert with "no known Greenfield hub addresses for this chain id",
+  which is correct behavior on foundry's default chain 31337, not a regression:
+  the hub table is keyed by chain id, so a dry run has to name a chain-97 RPC.
+- `forge test` is 19/19 on WorldMoves and 41/41 on GreenfieldVault.
+- `scripts/bnb-testnet-deploy-prove.mjs` (no flags) still reports the honest
+  preflight and signs nothing: `DEPLOYER IS UNFUNDED. Nothing was signed.`
+- The deployer `0x1C4918894dfA5eE11cfF9629B458b5169Cfa3871` holds 0 tBNB on
+  chain 97 (read on `bsc-testnet-rpc.publicnode.com` and
+  `data-seed-prebsc-1-s1`) and nonce 0, so it has never sent a transaction.
+- **New finding: the official faucet gates on a BSC MAINNET balance.**
+  `bnbchain.org/en/testnet-faucet` requires the claiming address to hold
+  0.002 BNB on BSC mainnet, dispenses 0.3 tBNB, and allows one claim per 24
+  hours. The deployer holds 0 BNB on mainnet (read on
+  `bsc-rpc.publicnode.com`), so completing the reCAPTCHA against this address
+  would fail eligibility even with a human at the keyboard. That is why three
+  sessions of "one human faucet claim away" never converted.
+- **The cheaper route avoids a mainnet transfer entirely:** claim the 0.3 tBNB
+  from any address that already holds 0.002+ BNB on mainnet, then send tBNB to
+  the deployer above. Only 0.000227743 tBNB is needed for both deploys, so a
+  single 0.3 tBNB claim covers this deploy and every future one by three
+  orders of magnitude.
+- Wiring after funding is still unblocked: `WORLD_MOVES_ADDRESS_TESTNET` is
+  confirmed absent from the `three-ws-api` service env, and
+  `/api/bnb/world-config?network=testnet` answers live today with
+  `address: null, deployed: false`.
+
 **Real broadcast proof — anvil fork of LIVE BSC testnet state** (per
 00-CONTEXT's decision-default table: "if every faucet fails, finish ALL code +
 tests against a local `anvil --chain-id 97` fork" — the same workaround

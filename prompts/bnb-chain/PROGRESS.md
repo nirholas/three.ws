@@ -2133,3 +2133,46 @@ end-to-end against real deployed bytecode, real transactions, and real client-si
 reimplementation at any layer. The single remaining gap across the whole track is identical and
 singular: a funded BSC testnet deployer key + a funded Greenfield account, both owner-side actions
 outside any agent's reach in this environment. No code gap remains anywhere in Track B.
+
+---
+
+## 2026-09-09: Prompt 07 (backlog), testnet deploys re-verified, root cause of the funding stall found
+
+**Outcome: still one funded key away, but for a reason the previous three passes
+never recorded.** Nothing was signed and nothing was broadcast.
+
+Re-measured against the current tree, not carried forward:
+
+- Both dry runs green against the live chain-97 RPC, identical gas to every
+  earlier read: `DeployGreenfieldVault` 1,711,362 gas / 0.0001711362 BNB,
+  `DeployWorldMoves` 566,068 gas / 0.0000566068 BNB, 0.000227743 BNB for the
+  pair at 0.1 gwei. The bare `forge script script/Deploy*.s.sol` form in the
+  backlog prompt reverts on foundry's default chain 31337 ("no known Greenfield
+  hub addresses for this chain id"); the hub table is keyed by chain id, so a
+  dry run must pass `--rpc-url` for chain 97. Correct behavior, not a break.
+- `forge test`: 19/19 WorldMoves, 41/41 GreenfieldVault.
+- `scripts/bnb-testnet-deploy-prove.mjs` preflight runs clean and refuses to
+  sign: `DEPLOYER IS UNFUNDED. Nothing was signed.`
+- `BNB_TESTNET_DEPLOYER_KEY` **does now exist** in the gitignored
+  `contracts/.env` (the backlog prompt's claim that it is absent everywhere is
+  stale). Deployer `0x1C4918894dfA5eE11cfF9629B458b5169Cfa3871`, nonce 0,
+  0 tBNB on chain 97.
+- `/api/bnb/world-config?network=testnet` answers live with `address: null,
+  deployed: false`; `WORLD_MOVES_ADDRESS_TESTNET` is absent from the
+  `three-ws-api` service env.
+
+**Root cause of the stall.** `bnbchain.org/en/testnet-faucet` requires the
+claiming address to hold **0.002 BNB on BSC mainnet**, dispenses 0.3 tBNB, and
+allows one claim per 24 hours. Our deployer holds 0 BNB on mainnet, so a human
+completing the reCAPTCHA against it would still be refused. Every prior entry
+described funding as "one reCAPTCHA away"; it is a mainnet-balance check plus a
+reCAPTCHA. The cheapest unblock is to claim from an address that already holds
+0.002+ BNB on mainnet and forward tBNB to the deployer, which needs no mainnet
+transfer at all. 0.3 tBNB covers this deploy roughly 1,300 times over.
+
+**Blocked on:** owner funds the deployer (or forwards tBNB from an
+already-eligible address), then approves the broadcast. After that
+`node scripts/bnb-testnet-deploy-prove.mjs --broadcast` deploys both and proves
+the sender, reader, and ghost paths against the real deployment in one command.
+The backlog prompt `prompts/finish/910-backlog-07-bnb-testnet-deploys.md` stays
+in place; this is a partial.
