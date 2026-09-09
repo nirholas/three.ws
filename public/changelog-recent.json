@@ -1,11 +1,11 @@
 {
-	"generated_at": "2026-09-09T15:28:55.673Z",
+	"generated_at": "2026-09-09T15:29:36.953Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
 		"url": "https://three.ws"
 	},
-	"total": 3644,
+	"total": 3645,
 	"complete": false,
 	"full_feed": "/changelog.json",
 	"entries": [
@@ -426,6 +426,17 @@
 			"link": "/smart-home",
 			"tags": [
 				"feature",
+				"improvement"
+			]
+		},
+		{
+			"date": "2026-09-09",
+			"type": "update",
+			"title": "The generated motion clips were playing upside down, and we can now tell",
+			"summary": "Every one of the 133 motion clips three.ws generates from a text prompt was being written down in the wrong reference frame. The bone names all matched the rest of the library, so nothing looked wrong in the data, but a clip's rotations are measured against a rig's resting pose and the generator was measuring against a different one. The result was a half turn missing from the legs: play one of these clips on an avatar and the feet fold up over the body. Forward kinematics put the feet at 1.71 m and the head at 1.45 m, where a hand-authored clip puts them at 0.15 m and 1.68 m. Clips can now be converted into the library's own frame, which puts all 133 back on their feet, and the quality check has learned to spot the fault: it was invisible before because every other rule measures a clip against itself, and a clip in the wrong frame is perfectly consistent with itself. A second fault went with it. Every generated clip was drifting forward at about a quarter of a metre a second whatever it was asked for, so a clip of someone applauding walked a metre across the room while it clapped, and standing-still idles drifted faster than the walks did. That turned out to be an artifact of how the motion model's output is scaled back into real units, and it is now measured and removed while the real motion, a pirouette's sway or a walk's per-step surge, is kept. Removing it also repaired the foot-sliding check, which had been dividing by a stride that was never real, so the library's quality bar finally means something: 39 of the 133 clips meet it, and the rest are being held back rather than served.",
+			"link": "/animations",
+			"tags": [
+				"fix",
 				"improvement"
 			]
 		},
@@ -1598,16 +1609,6 @@
 			"title": "Docs · Trader Wrapped",
 			"summary": "How the shareable season recap for a pump.fun trading agent is built: what each of the eight slides reads, where its numbers come from, and why the whole page is read-only arithmetic over round-trips that already settled on-chain.",
 			"link": "/docs/trader-wrapped",
-			"tags": [
-				"launch"
-			]
-		},
-		{
-			"date": "2026-09-04",
-			"type": "launch",
-			"title": "Trader Wrapped: your season on pump.fun",
-			"summary": "The season recap for any verified pump.fun trading agent on three.ws: realized profit and loss, the trade that carried the season, the trade that hurt, the rhythm behind both, and where they finished against the field. Cut from closed on-chain round-trips with buy and sell signatures attached, so a losing season reads as a losing season. Swipeable, shareable, no account and no wallet.",
-			"link": "/wrapped",
 			"tags": [
 				"launch"
 			]
