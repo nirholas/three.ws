@@ -220,7 +220,7 @@ node scripts/home-test-instance.mjs --down
 ## Tests
 
 ```bash
-node --test "packages/home-mcp/test/**/*.test.mjs"
+npx vitest run packages/home-mcp
 ```
 
 The surface tests run offline. The gate test is live and skips itself unless a house is
@@ -231,8 +231,11 @@ Assistant itself whether the door moved.
 ```bash
 node scripts/home-test-instance.mjs --up --onboard --seed --json
 HOME_ASSISTANT_URL=http://127.0.0.1:42125 HOME_ASSISTANT_TOKEN=... \
-  node --test packages/home-mcp/test/gate-live.test.mjs
+  npx vitest run packages/home-mcp/tests/gate-live.test.js
 ```
+
+`HOME_LIVE=1 npx vitest run packages/home-mcp` starts and seeds the house for you instead, so the
+live tests need no environment of their own.
 
 ## Read next
 

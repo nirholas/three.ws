@@ -32,21 +32,38 @@ const live = describe.skipIf(!liveHomeAvailable());
 const ENTRY = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../src/index.js');
 
 /**
- * The last lock in the house that is sitting cleanly locked or unlocked.
+ * A lock in this house that provably answers a lock command, claimed for this suite.
  *
- * `pickEntity` returns the FIRST match, and four other live suites in this lane
- * take exactly that against the same shared instance. Taking the last one keeps
- * this suite off their door. Filtering to a settled state keeps it off the demo
- * integration's deliberately unreliable lock, whose transitional states would
- * make "did the door move" unanswerable.
+ * Candidates are walked from the END of the sorted list, because `pickEntity`
+ * returns the FIRST match and four other live suites in this lane take exactly
+ * that against the same shared instance; starting at the far end keeps this
+ * suite off their door.
+ *
+ * A candidate is only accepted once it has actually reached `locked`. Its
+ * resting state is not evidence: the demo integration ships a deliberately
+ * unreliable lock that sits at `locked` on a fresh instance and jams the moment
+ * anything acts on it, so a resting-state filter picks it, and then every
+ * assertion about whether the door moved is asked of a door that cannot move.
+ * Trying the round trip is the only check that tells the two apart.
  */
-async function pickLastSettledLock(instance) {
+async function claimLockableLock(instance) {
 	const states = await readStates(instance);
-	const locks = states
-		.filter((s) => s.entity_id.startsWith('lock.') && (s.state === 'locked' || s.state === 'unlocked'))
+	const candidates = states
+		.filter((s) => s.entity_id.startsWith('lock.'))
 		.map((s) => s.entity_id)
-		.sort();
-	return locks.at(-1) || null;
+		.sort()
+		.reverse();
+	const rejected = [];
+	for (const entityId of candidates) {
+		try {
+			await setState(instance, 'lock', 'lock', entityId);
+			await waitForState(instance, entityId, 'locked', { timeout: 10_000 });
+			return entityId;
+		} catch (err) {
+			rejected.push(`${entityId} (${err.message})`);
+		}
+	}
+	throw new Error(`no lock in this house answers a lock command: ${rejected.join('; ') || 'the house has no locks'}`);
 }
 
 live('the gate, over a real stdio transport', () => {
@@ -60,9 +77,8 @@ live('the gate, over a real stdio transport', () => {
 	 * across every live suite, and four other files take `pickEntity(instance,
 	 * 'lock')`, which is the first match. Two suites locking and unlocking the
 	 * same door in parallel forks is how a gate test starts flapping and stops
-	 * being believed, so this one takes the last settled lock instead. "Settled"
-	 * excludes the demo integration's deliberately unreliable lock, which reports
-	 * transitional states and would make a door assertion a coin toss.
+	 * being believed, so this one works in from the far end and keeps the first
+	 * lock that answers a lock command for itself.
 	 */
 	let lockId;
 
@@ -70,10 +86,8 @@ live('the gate, over a real stdio transport', () => {
 		instance = await acquireHomeInstance();
 		({ Client } = await import('@modelcontextprotocol/sdk/client/index.js'));
 		({ StdioClientTransport } = await import('@modelcontextprotocol/sdk/client/stdio.js'));
-		lockId = await pickLastSettledLock(instance);
+		lockId = await claimLockableLock(instance);
 		expect(lockId, 'the house needs a lock for any of this to mean anything').toBeTruthy();
-		await setState(instance, 'lock', 'lock', lockId);
-		await waitForState(instance, lockId, 'locked');
 	}, 620_000);
 
 	afterAll(async () => {
