@@ -3,6 +3,14 @@
 	"entries": [
 		{
 			"date": "2026-09-09",
+			"title": "The partnership page works properly on the partner's own site",
+			"summary": "The IBM partnership page is published once onto IBM's own domain and then keeps itself current by reading from three.ws, so everything it loads is a cross-origin read and anything we get wrong there is invisible on three.ws itself. Three things were wrong. The site-wide command palette asked the partner's server for our page index and for the ranking module it imports, so it never opened and logged an error on every visit: the index now travels with the code the way the language catalogs already do, and both files are readable from other sites. And a build step that adds the site's mobile stylesheet to every page was reaching the partner artifacts too, even though they are copied out untouched by design, so the hosted copy asked IBM's server for a stylesheet only we have. All three are closed, and the audit that loads the page from a foreign domain now passes all four of its checks: the live update applies, the language switcher mounts, the paid demo arms, and the console is clean.",
+			"tags": [
+				"fix"
+			]
+		},
+		{
+			"date": "2026-09-09",
 			"title": "An app key can no longer say yes to unlocking your door",
 			"summary": "A person saying yes is the one thing that stands between an agent and your front door, and we found a way around it. If you had ever issued an API key or connected an app to your three.ws account, that key could send an unlock request with the \"the owner already approved this\" flag set, and the lock opened, with nobody asked and nothing to click. We reproduced it against a real house and a real deadbolt before fixing it. Two things changed. Only a signed-in browser session can say yes now: a key or a connected app can ask to unlock, open or disarm, and is always answered with \"a person has to approve this\", exactly as the agent in your chat window already was. And the home permissions you approve when you connect an app are now actually enforced on every home request, so an app you gave read-only access to, or one you never gave home access at all, is refused instead of let through. Nothing legitimate changed: your agent still asks, you still approve, the door still opens.",
 			"tags": [
