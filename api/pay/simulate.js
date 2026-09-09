@@ -142,7 +142,14 @@ export function parsePolicy(raw = {}) {
 		SESSION_LIMITS;
 
 	let budgetUsd = Number(raw.budget_usd);
-	if (!Number.isFinite(budgetUsd) || budgetUsd <= 0) budgetUsd = 1;
+	if (!Number.isFinite(budgetUsd) || budgetUsd <= 0) {
+		// A blank or zero budget used to become $1 in silence, so the caller read a
+		// verdict computed against a budget they never proposed. Substituting is
+		// still the right move (there is nothing to simulate against $0), but the
+		// substitution has to be visible in the answer.
+		notes.push('budget_usd was missing or not a positive number, so the run was costed against $1');
+		budgetUsd = 1;
+	}
 	if (budgetUsd < MIN_BUDGET_USD) {
 		notes.push(`budget_usd raised to the $${MIN_BUDGET_USD} minimum a session accepts`);
 		budgetUsd = MIN_BUDGET_USD;

@@ -59,7 +59,11 @@
 
 			/* Tooltip: an accessible "what is this?" affordance on every control. */
 			.tip { position: relative; display: inline-flex; }
-			.tip > button { width: 15px; height: 15px; padding: 0; border-radius: 50%; border: 1px solid rgba(255,255,255,0.25); background: transparent; color: rgba(255,255,255,0.5); font-size: 10px; font-weight: 700; line-height: 1; cursor: help; display: inline-flex; align-items: center; justify-content: center; transition: background var(--duration-fast), color var(--duration-fast), border-color var(--duration-fast); }
+			.tip > button { position: relative; width: 16px; height: 16px; padding: 0; border-radius: 50%; border: 1px solid rgba(255,255,255,0.25); background: transparent; color: rgba(255,255,255,0.5); font-size: 10px; font-weight: 700; line-height: 1; cursor: help; display: inline-flex; align-items: center; justify-content: center; transition: background var(--duration-fast), color var(--duration-fast), border-color var(--duration-fast); }
+			/* The glyph stays small next to a 12.5px label, but the tappable area is
+			   32x32 so a thumb can reach it. Without the spacer these were 15px
+			   targets, well under the 24px minimum. */
+			.tip > button::after { content: ''; position: absolute; inset: -8px; border-radius: 50%; }
 			.tip > button:hover, .tip > button:focus-visible { background: rgba(124,92,255,0.2); border-color: #7c5cff; color: #fff; }
 			.tip > button:focus-visible { outline: 2px solid #7c5cff; outline-offset: 2px; }
 			.tip .bubble { position: absolute; bottom: calc(100% + 8px); left: 50%; transform: translateX(-50%) translateY(4px); width: max-content; max-width: 260px; padding: 8px 11px; border-radius: 9px; background: #17171f; border: 1px solid rgba(255,255,255,0.16); box-shadow: 0 8px 28px rgba(0,0,0,0.55); font-size: 11.5px; line-height: 1.55; font-weight: 400; color: rgba(255,255,255,0.85); text-transform: none; letter-spacing: 0; opacity: 0; visibility: hidden; transition: opacity var(--duration-fast) var(--ease-standard), transform var(--duration-fast) var(--ease-standard), visibility var(--duration-fast); z-index: 40; pointer-events: none; }
@@ -115,6 +119,8 @@
 			.stat .k { font-size: 10px; text-transform: uppercase; letter-spacing: 0.08em; color: rgba(255,255,255,0.4); font-weight: 600; margin-bottom: 0.4rem; }
 			.stat .v { font-size: 1.35rem; font-weight: 800; letter-spacing: -0.03em; line-height: 1; font-variant-numeric: tabular-nums; }
 			.stat .v.g { color: #2fbf71; } .stat .v.r { color: var(--danger); } .stat .v.p { color: var(--accent-violet-strong); } .stat .v.b { color: #7dd3fc; }
+			.stat .v.d { color: rgba(255,255,255,0.55); } .stat .v.w { color: var(--warn); }
+			[data-theme='light'] .stat .v.d { color: rgba(0,0,0,0.55); }
 
 			/* ── Spend curve ─────────────────────────────────────────── */
 			.curve { border: 1px solid rgba(255,255,255,0.08); border-radius: 14px; padding: 1.1rem 1.2rem 0.9rem; background: rgba(255,255,255,0.022); margin-bottom: 1.35rem; }
@@ -193,6 +199,17 @@
 			[data-theme='light'] .tl-url, [data-theme='light'] .ps-next .t { color: rgba(0,0,0,0.85); }
 			[data-theme='light'] .codewrap pre { background: rgba(0,0,0,0.05); color: rgba(0,0,0,0.8); }
 			[data-theme='light'] .tip .bubble { background: #fff; color: rgba(0,0,0,0.82); border-color: rgba(0,0,0,0.14); }
+
+			/* A bubble centred on its button runs off the side of a narrow screen: at
+			   320px the hosts and network tips were clipped past the viewport edge and
+			   unreadable. Below this width the bubble spans the field instead, which is
+			   always inside the page. */
+			@media (max-width: 940px) {
+				.field label { position: relative; }
+				.tip { position: static; }
+				.tip .bubble { left: 0; right: 0; width: auto; max-width: none; transform: translateY(4px); }
+				.tip > button:hover + .bubble, .tip > button:focus-visible + .bubble { transform: translateY(0); }
+			}
 
 			@media (max-width: 560px) {
 				.field-row { grid-template-columns: 1fr; }
@@ -547,6 +564,39 @@
 				return `<div class="tl">${html}</div>${more}`;
 			}
 
+			const plural = (n, one, many) => `${n} ${n === 1 ? one : many}`;
+
+			// The four outcomes are not interchangeable: a settled call costs money, a
+			// free one answered without a 402 and was never governed, an unpriced one
+			// could not be measured at all, and a refused one hit a rule. Saying "all N
+			// calls settle" when only some did contradicts the counters right below it,
+			// so every sentence here is built from the counts it is describing.
+			function outcomeAside(v) {
+				const parts = [];
+				if (v.calls_free)
+					parts.push(`${plural(v.calls_free, 'call', 'calls')} answered without a 402, so ${v.calls_free === 1 ? 'it costs' : 'they cost'} nothing and ${v.calls_free === 1 ? 'is' : 'are'} never checked against the policy`);
+				if (v.calls_unpriced)
+					parts.push(`${plural(v.calls_unpriced, 'call', 'calls')} could not be priced`);
+				return parts.join(' and ');
+			}
+
+			function feasibleText(v, policy) {
+				const paid = v.calls_settled;
+				const aside = outcomeAside(v);
+				const head = aside
+					? `${paid} of ${plural(v.calls_total, 'call', 'calls')} settle for ${money(v.spend_usd)}; ${aside}.`
+					: `All ${plural(v.calls_total, 'call', 'calls')} settle for ${money(v.spend_usd)}.`;
+				return `${head} That leaves ${money(v.remaining_usd)} of the ${money(policy.budget_usd)} budget unused.`;
+			}
+
+			function blockedText(v, ruleSummary, policy) {
+				const spend = `The priced calls spend ${money(v.spend_usd)} of ${money(policy.budget_usd)}`;
+				if (!v.calls_refused)
+					return `${plural(v.calls_unpriced, 'call', 'calls')} could not be priced, so this run cannot be judged. Nothing was refused. ${spend}.`;
+				const aside = v.calls_unpriced ? ` A further ${plural(v.calls_unpriced, 'call', 'calls')} could not be priced.` : '';
+				return `${ruleSummary}. ${spend} before the agent stalls.${aside}`;
+			}
+
 			function render(data) {
 				lastData = data;
 				const v = data.verdict;
@@ -557,9 +607,7 @@
 					.map(([code, n]) => `${n} ${n === 1 ? 'call' : 'calls'} ${RULE_LABEL[code] || code}`)
 					.join(', ');
 
-				const verdictText = ok
-					? `All ${v.calls_total} ${v.calls_total === 1 ? 'call' : 'calls'} settle for ${money(v.spend_usd)}, leaving ${money(v.remaining_usd)} of the ${money(data.policy.budget_usd)} budget unused.`
-					: `${ruleSummary || `${v.calls_unpriced} could not be priced`}. The run spends ${money(v.spend_usd)} of ${money(data.policy.budget_usd)} before it stalls.`;
+				const verdictText = ok ? feasibleText(v, data.policy) : blockedText(v, ruleSummary, data.policy);
 
 				const notes = data.policy.notes.length
 					? `<div class="notes">${data.policy.notes.map((n) => esc(n)).join(' · ')}</div>`
@@ -587,6 +635,8 @@
 					<div class="ps-stats">
 						<div class="stat"><div class="k">Settles</div><div class="v g">${v.calls_settled}</div></div>
 						<div class="stat"><div class="k">Refused</div><div class="v ${v.calls_refused ? 'r' : ''}">${v.calls_refused}</div></div>
+						${v.calls_free ? `<div class="stat"><div class="k">Free</div><div class="v d">${v.calls_free}</div></div>` : ''}
+						${v.calls_unpriced ? `<div class="stat"><div class="k">Unpriced</div><div class="v w">${v.calls_unpriced}</div></div>` : ''}
 						<div class="stat"><div class="k">Total cost</div><div class="v p">${esc(money(v.spend_usd))}</div></div>
 						<div class="stat"><div class="k">Budget used</div><div class="v b">${v.budget_used_pct}%</div></div>
 					</div>
@@ -609,7 +659,7 @@
 						<div class="rec-grid">
 							<div class="rec-item"><div class="k">Budget</div><div class="v">${esc(money(rec.budget_usd))}<small>${esc(money(rec.exact_cost_usd))} exact, rounded up</small></div></div>
 							<div class="rec-item"><div class="k">Max per call</div><div class="v">${esc(money(rec.max_per_tx_usd))}<small>largest payment in the run</small></div></div>
-							<div class="rec-item"><div class="k">Allowed hosts</div><div class="v" style="font-size:12.5px">${rec.allowed_hosts.length ? rec.allowed_hosts.map((h) => esc(h)).join('<br>') : '-'}${rec.missing_hosts.length ? `<small style="color:var(--warn)">missing from your allowlist: ${rec.missing_hosts.map((h) => esc(h)).join(', ')}</small>` : ''}</div></div>
+							<div class="rec-item"><div class="k">Allowed hosts</div><div class="v" style="font-size:12.5px">${rec.allowed_hosts.length ? rec.allowed_hosts.map((h) => esc(h)).join('<br>') : '-'}${rec.missing_hosts.length ? `<small style="color:var(--warn)">add to your current allowlist: ${rec.missing_hosts.map((h) => esc(h)).join(', ')}</small>` : ''}</div></div>
 						</div>
 						<div class="rec-actions">
 							<button type="button" class="btn-primary" id="btnApply">Apply and re-run</button>
@@ -698,6 +748,32 @@
 				$('btnRetry')?.addEventListener('click', run);
 			}
 
+			// ── Errors from the API ──────────────────────────────────
+			// api/_lib/http.js answers `{error: "<code>", error_description: "<why>"}`.
+			// Reading only `error.message` treated `error` as an object, so a 400 that
+			// names the offending line ("calls[0] must be a public https URL: foo")
+			// rendered as a bare "Simulation failed (HTTP 400)" the reader could not act
+			// on. The description is the useful half, so it leads.
+			const ERROR_HINTS = {
+				invalid_url: 'Every line must be a full https URL, one per line. Lines starting with # are ignored.',
+				invalid_calls: 'Add at least one https URL, one per line, then run again.',
+				too_many_calls: 'Trim the list, or use x<n> to repeat one endpoint instead of pasting it many times.',
+				too_many_endpoints: 'Each distinct endpoint is probed live. Drop a few, or pin their prices with @<usd>.',
+			};
+
+			function apiErrorTitle(data, status) {
+				const desc = typeof data?.error_description === 'string' ? data.error_description : null;
+				if (desc) return desc;
+				if (typeof data?.error === 'string') return data.error.replace(/_/g, ' ');
+				return data?.error?.message || data?.message || `Simulation failed (HTTP ${status})`;
+			}
+
+			function apiErrorDetail(data, status) {
+				if (status === 429) return 'Too many simulations from this address. Wait a moment and try again.';
+				const code = typeof data?.error === 'string' ? data.error : data?.error?.code;
+				return ERROR_HINTS[code] || null;
+			}
+
 			// ── Run ──────────────────────────────────────────────────
 			let inFlight = null;
 
@@ -741,10 +817,7 @@
 					});
 					const data = await res.json().catch(() => null);
 					if (!res.ok || !data?.ok) {
-						showError(
-							data?.error?.message || data?.message || `Simulation failed (HTTP ${res.status})`,
-							res.status === 429 ? 'Too many simulations from this address. Wait a moment and try again.' : null,
-						);
+						showError(apiErrorTitle(data, res.status), apiErrorDetail(data, res.status));
 						return;
 					}
 					expanded = false;
