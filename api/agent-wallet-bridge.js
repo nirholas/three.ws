@@ -59,10 +59,26 @@ function endpointAllowed(endpoint) {
 	}
 }
 
-// A co-signable Solana accept: exact scheme, Solana CAIP-2 network, and the
-// facilitator fee payer the @x402/svm scheme needs to build the transaction.
+// A payable Solana accept: exact scheme on a Solana CAIP-2 network.
+//
+// `extra.feePayer` is OPTIONAL and picks the signing mode, it is not an
+// admission test. When the endpoint advertises a fee payer the facilitator
+// co-signs it (sponsored mode, built by @x402/svm). When it does not, that is
+// the x402 self-pay contract: the buyer signs as its own fee payer and the
+// facilitator only broadcasts. Requiring feePayer here is what made every quote
+// 502 the moment three.ws's own paid endpoints started advertising self-pay
+// accepts (x402-paid-endpoint.js drops the fee payer whenever the sponsor
+// wallet cannot co-sign), which took /play/agent-wallet down end to end.
 function isSolanaExactAccept(a) {
-	return a && a.scheme === 'exact' && String(a.network || '').startsWith('solana:') && a.extra?.feePayer;
+	return Boolean(a && a.scheme === 'exact' && String(a.network || '').startsWith('solana:'));
+}
+
+// Pick the accept this bridge pays: USDC first, so a challenge that also
+// advertises a $THREE Solana entry can never settle in the platform token off a
+// USDC-denominated cap.
+function pickSolanaAccept(accepts) {
+	const solana = accepts.filter(isSolanaExactAccept);
+	return solana.find((a) => a.asset === USDC_MINT_SOLANA) || solana[0] || null;
 }
 
 let signerPromise = null;
@@ -131,9 +147,51 @@ async function fetch402(endpoint, method, body) {
 	if (!Array.isArray(challenge?.accepts) || !challenge.accepts.length) {
 		throw new Error('402 challenge has no accepts[] entries');
 	}
-	const accept = challenge.accepts.find(isSolanaExactAccept);
+	const accept = pickSolanaAccept(challenge.accepts);
 	if (!accept) throw new Error('endpoint does not accept exact-scheme USDC on Solana');
 	return { challenge, accept };
+}
+
+// Build the signed SPL TransferChecked for a SELF-PAY accept (no advertised
+// facilitator fee payer): the agent wallet is both the token authority and the
+// transaction fee payer, so the transaction carries one signature and the
+// facilitator broadcasts it without co-signing. Reuses the ring's own builder so
+// the compute-budget nonce, the idempotent receiver-ATA create and the fee
+// sizing are byte-for-byte what the self-facilitator validates on /settle.
+async function buildSelfPayPayload(accept) {
+	const [web3, splToken, { solanaConnection }, { mintDecimals, getRecentBlockhash, blockhashKey }, pay] = await Promise.all([
+		import('@solana/web3.js'),
+		import('@solana/spl-token'),
+		import('./_lib/solana/connection.js'),
+		import('./_lib/solana/read-guards.js'),
+		import('./_lib/x402/pay.js'),
+	]);
+	const secretBytes = pay.decodeSeedSecret(PAYER_SECRET);
+	if (!secretBytes) {
+		throw new Error('agent wallet secret is not a decodable 64-byte Solana key');
+	}
+	const buyer = web3.Keypair.fromSecretKey(secretBytes);
+	const conn = solanaConnection({ url: SOLANA_RPC_URL, commitment: 'confirmed' });
+	const mint = new web3.PublicKey(accept.asset);
+	const [decimals, blockhash] = await Promise.all([
+		mintDecimals(conn, mint),
+		getRecentBlockhash(conn, blockhashKey({ network: accept.network })),
+	]);
+	const receiverAta = splToken.getAssociatedTokenAddressSync(
+		mint, new web3.PublicKey(accept.payTo), false,
+		splToken.TOKEN_PROGRAM_ID, splToken.ASSOCIATED_TOKEN_PROGRAM_ID,
+	);
+	const receiverAtaInfo = await conn.getAccountInfo(receiverAta).catch(() => null);
+	const transaction = pay.buildPaymentTx({
+		accept,
+		buyer,
+		blockhash,
+		mintInfo: { decimals },
+		receiverAtaExists: receiverAtaInfo !== null,
+		nonce: pay.nextAutoNonce(),
+		selfPay: true,
+	});
+	return { x402Version: 2, payload: { transaction } };
 }
 
 // ERC-8021 builder-code echo — the server rejects payments that don't echo the
@@ -182,8 +240,12 @@ async function executePayment({ endpoint, method, body, payerAddress, emit }) {
 			resource: challenge.resource || null,
 		});
 
-		// 3. The agent wallet builds + partially signs the SPL TransferChecked.
+		// 3. The agent wallet builds + signs the SPL TransferChecked. Sponsored
+		// accepts go through @x402/svm (which hard-requires extra.feePayer);
+		// self-pay accepts go through the ring builder with the agent wallet as
+		// its own fee payer.
 		const signer = await agentSigner();
+		const sponsored = Boolean(accept.extra?.feePayer);
 		emit({
 			stage: 'signing',
 			signer: signer.address,
@@ -191,12 +253,18 @@ async function executePayment({ endpoint, method, body, payerAddress, emit }) {
 			mint: accept.asset,
 			to: accept.payTo,
 			value: accept.amount,
-			feePayer: accept.extra.feePayer,
+			feePayer: sponsored ? accept.extra.feePayer : signer.address,
+			selfPay: !sponsored,
 		});
-		const { ExactSvmScheme } = await import('@x402/svm');
-		const scheme = new ExactSvmScheme(signer, { rpcUrl: SOLANA_RPC_URL });
-		const built = await scheme.createPaymentPayload(2, accept);
-		emit({ stage: 'signed', signer: signer.address });
+		let built;
+		if (sponsored) {
+			const { ExactSvmScheme } = await import('@x402/svm');
+			const scheme = new ExactSvmScheme(signer, { rpcUrl: SOLANA_RPC_URL });
+			built = await scheme.createPaymentPayload(2, accept);
+		} else {
+			built = await buildSelfPayPayload(accept);
+		}
+		emit({ stage: 'signed', signer: signer.address, selfPay: !sponsored });
 
 		// 4. Retry with the X-PAYMENT header — the endpoint verifies, settles via
 		// its facilitator, then does the paid work.
@@ -296,6 +364,7 @@ export default wrap(async (req, res) => {
 				asset: accept.asset,
 				network: accept.network,
 				feePayer: accept.extra?.feePayer || null,
+				selfPay: !accept.extra?.feePayer,
 				maxTimeoutSeconds: accept.maxTimeoutSeconds,
 				resource: challenge.resource || null,
 			}));
