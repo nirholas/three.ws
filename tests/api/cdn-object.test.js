@@ -6,6 +6,7 @@
 // R2 is mocked at the client level; no network.
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { Writable } from 'node:stream';
 
 vi.mock('../../api/_lib/zauth.js', () => ({ instrument: () => false, drain: async () => {} }));
 vi.mock('../../api/_lib/sentry.js', () => ({ captureException: () => {} }));
@@ -25,6 +26,27 @@ vi.mock('../../api/_lib/r2.js', async (importOriginal) => ({
 	r2: { send: (...args) => sendImpl(...args) },
 }));
 
+// The public-domain failover reads over the network. Stub only that call, so the
+// branch that chooses it stays the real one.
+let fetchUpstreamImpl = async () => {
+	throw new Error('fetchUpstream not stubbed for this test');
+};
+vi.mock('../../api/_lib/upstream-fetch.js', async (importOriginal) => ({
+	...(await importOriginal()),
+	fetchUpstream: (...args) => fetchUpstreamImpl(...args),
+}));
+
+/** A `fetch` Response as the handler consumes it: web stream body plus headers. */
+function upstreamResponse(bytes, { status = 200, headers = {} } = {}) {
+	const body = new ReadableStream({
+		start(controller) {
+			controller.enqueue(new Uint8Array(bytes));
+			controller.close();
+		},
+	});
+	return { status, ok: status >= 200 && status < 300, body, headers: new Headers(headers) };
+}
+
 import handler from '../../api/cdn-object.js';
 
 function makeBody() {
@@ -36,16 +58,28 @@ function makeReq({ key, method = 'GET', headers = {} } = {}) {
 }
 
 function makeRes() {
-	return {
-		statusCode: 200,
-		_h: {},
-		body: undefined,
-		headersSent: false,
-		writableEnded: false,
-		setHeader(k, v) { this._h[k.toLowerCase()] = v; },
-		getHeader(k) { return this._h[k.toLowerCase()]; },
-		end(body) { this.body = body; this.writableEnded = true; this.headersSent = true; },
+	const chunks = [];
+	const res = new Writable({
+		write(chunk, _enc, cb) {
+			chunks.push(Buffer.from(chunk));
+			cb();
+		},
+	});
+	res.statusCode = 200;
+	res._h = {};
+	res.body = undefined;
+	res.headersSent = false;
+	res.setHeader = (k, v) => { res._h[k.toLowerCase()] = v; };
+	res.getHeader = (k) => res._h[k.toLowerCase()];
+	res.removeHeader = (k) => { delete res._h[k.toLowerCase()]; };
+	res.written = () => Buffer.concat(chunks);
+	const end = res.end.bind(res);
+	res.end = (body) => {
+		res.body = body;
+		res.headersSent = true;
+		return end(typeof body === 'string' || Buffer.isBuffer(body) ? body : undefined);
 	};
+	return res;
 }
 
 async function invoke(opts) {
@@ -58,6 +92,9 @@ async function invoke(opts) {
 beforeEach(() => {
 	sendImpl = async () => {
 		throw new Error('r2.send not stubbed for this test');
+	};
+	fetchUpstreamImpl = async () => {
+		throw new Error('fetchUpstream not stubbed for this test');
 	};
 });
 
@@ -155,10 +192,16 @@ describe('GET /cdn/<key> — error mapping', () => {
 
 	// A rejected credential takes the signed read down for every object at once
 	// while the public bucket domain keeps serving those same keys, so this route
-	// hands the caller there rather than 502ing every avatar, thumbnail and GLB on
+	// serves them from there rather than 502ing every avatar, thumbnail and GLB on
 	// the site. Live on 2026-09-07, which is what the fallback was written for.
 	// Both wordings are covered because the SDK reports the same rejection two
 	// ways and the compact code was all the predicate used to match.
+	//
+	// It streams; it must never redirect. pub-*.r2.dev sends no
+	// access-control-allow-origin, and a browser re-runs the CORS check on a
+	// redirect's target, so a 302 discards the wildcard grant this route sets and
+	// every cross-origin read of /cdn fails outright (measured from a foreign
+	// origin on 2026-09-09).
 	for (const [label, build] of [
 		['the compact SDK code', () => Object.assign(new Error('signature mismatch'), { name: 'SignatureDoesNotMatch' })],
 		[
@@ -173,12 +216,19 @@ describe('GET /cdn/<key> — error mapping', () => {
 			sendImpl = async () => {
 				throw build();
 			};
+			fetchUpstreamImpl = async () => upstreamResponse([1, 2, 3]);
 			const res = await invoke({ key: 'u/owner/a.glb' });
-			expect(res.statusCode).toBe(302);
-			expect(res.getHeader('location')).toBe('https://pub-test.r2.dev/u/owner/a.glb');
-			// Never cached: the moment the credential is healthy again, traffic
-			// returns to the signed path instead of a stale hop pinned at the edge.
-			expect(res.getHeader('cache-control')).toBe('no-store');
+			expect(res.statusCode).toBe(200);
+			expect(res.getHeader('location')).toBeUndefined();
+			expect(res.written()).toEqual(Buffer.from([1, 2, 3]));
+			// The response stays on three.ws, so the grant callers depend on
+			// survives the degraded path.
+			expect(res.getHeader('cross-origin-resource-policy')).toBe('cross-origin');
+			// Cached briefly, not forever and not never: a burst of gallery
+			// thumbnails costs the rate-limited domain one read, and traffic
+			// returns to the signed path within a minute of the credential
+			// being healthy again.
+			expect(res.getHeader('cache-control')).toBe('public, max-age=60, s-maxage=60');
 		});
 	}
 });
