@@ -48,7 +48,7 @@ One section per finished order, newest at the bottom:
 | 16 test program | open | |
 | 17 a11y, i18n, mobile | open | |
 | 18 docs and SDK | docs done, npm publish owner-gated | 2026-09-03 |
-| 19 plans and entitlements | open | |
+| 19 plans and entitlements | built and verified, browser journeys queued, price owner-gated | 2026-09-09 |
 | 20 launch readiness | standing | |
 | 21 Matter direct | done, documented negative | 2026-09-03 |
 
@@ -1110,3 +1110,113 @@ standalone at HEAD. Left to their authors, who are mid-lane, rather than edited 
 **Commits:** `ac390203d` carries `tests/home-confirm-endpoint.test.js`; it was swept into a
 peer's `git add -A` before this session could stage it, under an accurate message. This entry
 is its own commit.
+
+---
+
+## 19. Plans, entitlements and quotas (2026-09-09)
+
+**Shipped:** most of this order was already in the tree, written on 2026-09-03 and swept into a
+peer's `git add -A` under an unrelated message (`2849cafb6`, "chore(scripts): add the EPA
+fuel-economy probe"), which is why nothing recorded it and the order file was never retired.
+`api/_lib/home/entitlements.js` (the resolver, the safety exemption, the downgrade path, the
+override row, `describeEntitlements`), `api/_lib/home/usage.js` (counters over the existing
+`usage_events`), `api/home/plan.js`, `src/home/plan.js`, the `home_plan_overrides` migration and
+`docs/home-plans.md` were all there and all correct. This session verified every line of the
+order's Definition of Done against real infrastructure rather than assuming, and closed the two
+gaps that verification found.
+
+**Gap 1, closed: the metered lanes were metered but not enforced.** `agentTurns` was counted
+(api/chat.js stamps `home_id` into the priced `usage_events` chat row it already writes) and
+never gated: nothing in the tree called a quota check before running a home tool. New
+`api/_lib/home/turn-gate.js` holds that gate and `api/chat.js` calls it from `runHomeRound`. Two
+holes in it are deliberate and both exist so commitment 1 survives a real conversation rather than
+only a unit test: read-only home tools are never gated (the model reads the house to find the
+door, then targets the lock; gate the read and the safety exemption ends one step before it was
+needed), and a safety action inside a gated tool is never refused (`home_call` carries its domain
+and service on the input, which is what the classifier reads, so a lock is recognised with no live
+entity list). The gate fails open on any read failure and resolves in two passes so it does not put
+a Solana RPC on the chat critical path: `resolveHomeEntitlementsFloor` answers without reading the
+chain, and because the $THREE multiplier is `Math.max(1, ...)` it can only raise a limit, so an
+account inside the floor is inside its real limit. Only an account past the floor pays for the full
+read, which is exactly the account whose holding might save it.
+
+**Gap 2, closed: a false number was load-bearing.** The header of `entitlements.js` and
+`docs/home-plans.md` both stated that "one agent turn on a paid model costs more than a year of
+holding that house's socket", citing "$0.0228 against $0.0155 per month". That is 1.5 months, not
+a year: the comparison had lost a factor of twelve, and it was the stated justification for the
+whole shape of the tier table. Corrected to "weeks" in both files, in the `agentTurns` dimension's
+`why` string, and in the changelog entry written for this order. The qualitative conclusion the
+number was used to support (turns are the dimension worth capping, connections are cheap enough to
+give the free tier a real one) survives the correction and survives the re-measurement below, which
+is the only reason this was a correction and not a re-plan.
+
+**`voiceMinutes` is recorded but has no caller yet, on purpose.** `recordHomeUsage` is built,
+tested and proven against the live database, but order 08 (voice loop) is still open, so there is
+no voice lane to call it from. The dimension is wired end to end and the call site lands with 08.
+
+**Measured** (real Neon, a real Home Assistant 2026.9.0 on the `plan19` container, 125 entities):
+
+- `npx vitest run tests/home-entitlements.test.js`: **55 passed, 0 skipped** with `DATABASE_URL`
+  set (50 passed / 5 skipped without it: the 5 live blocks refuse to run against a mock).
+- `tests/home-turn-gate.test.js`, new: **18 passed**, covering the four safety domains, the unsafe
+  direction of each, the read-only exemption, both fail-open paths and the two-pass fall-through.
+- `tests/api-home-contract.test.js`: **44 passed**, up from 42 passed / 2 failed. Both failures
+  were pre-existing and are fixed at root cause, not masked: the file's `vi.mock` of
+  `api/_lib/auth.js` listed its exports by hand, so the day `api/_lib/home/access.js` started
+  calling `hasScope` two tests failed with "No hasScope export is defined on the mock", which reads
+  as a handler bug. The mock now spreads `importOriginal()`. That exposed a second staleness: a
+  fixture granting a bare `home` scope where acting requires `home:act`, so the real `hasScope`
+  correctly refused it. Fixture corrected.
+- **The three safe actions, over quota AND on a paused home**, driven through `runHomeTool` against
+  the real house with every dimension overridden to 0: `lock.lock` unlocked -> locked,
+  `cover.close_cover` opening -> closing, `alarm_control_panel.alarm_arm_away` disarmed -> arming.
+  All three `ok=true`, all three verified by reading the state back out of Home Assistant. In the
+  same moment on the same account, `lock.unlock` returned a pending confirmation rather than
+  running, and the door stayed locked.
+- **The acquisition refusal, end to end over HTTP** against a real server on :8163 with a real
+  logged-in session: the first home connects `HTTP 201`, the second returns **`HTTP 402`** with
+  `quota_exceeded`, the limit, the usage, the tier and `upgrade: /pricing`. Not a 500.
+- **The override, on the same running server with no restart and no code change:** writing
+  `{ homes: 25 }` to `home_plan_overrides` turned that same 402 into a 502 `unreachable`, which is
+  the request getting past the quota gate and failing on the deliberately fake hostname behind it.
+- **The downgrade:** 4 connected homes, limit 1. Three paused, `revoked_at` null on all four,
+  `access_token_enc` intact on all four, **row count 4 before and 4 after, zero deleted**. Resuming
+  the fourth was refused while no slot was free, and succeeded after the user paused a different
+  house. The explanation string is rendered in full in the session transcript.
+- **Counter accuracy:** 20 real service calls and 3 voice turns produced 20 `home_action_log` rows,
+  20 `usage_events` chat rows carrying `home_id`, and 3 `home.voice` rows; `readHomeUsage` reported
+  `agentTurns: 20, voiceMinutes: 3`. Both exact.
+- **The gate is unaffected by tier:** a free-tier account (`user`, badges `user`) got the same
+  pending confirmation on an unlock and a full-fidelity action log.
+- **Cost re-measured** with `scripts/measure-home-entitlement-cost.mjs` against a second real
+  instance: marginal heap per connection **309 KB** (original: 302 KB) and the stream figure
+  **$0.0066/month** reproduce; resident memory does not, at **1.25 MB** marginal against the
+  original 262 KB, pricing a home at **$0.0738/month** instead of $0.0155. The re-measurement ran at
+  load 83 with several agents building concurrently and RSS under memory pressure includes much that
+  is not the connection, so $0.0155 stays the figure to price from and $0.0738 is a defensible upper
+  bound. At either end a Sonnet turn costs between nine days and six weeks of socket, so the free
+  tier still comfortably carries a real connected home. Both figures and the caveat are now in
+  `docs/home-plans.md`.
+- `npm run check:rules -- --paths <the 9 files touched>`: clean. `npm run audit:docs`: clean
+  (1586 files). `npm run db:status`: nothing pending.
+- Full `npx vitest run --root .`, sharded into quarters: **41 failures across 4 shards, none in
+  this lane and none mine.** Verified by checking out HEAD into a throwaway worktree and running a
+  representative sample there: the same files fail identically without any of this session's
+  changes. They are peers' in-flight work (for example a committed `check:windows-widget` gate step
+  that `data/guards.json` does not register) plus env-dependent suites. Left alone rather than
+  fixed: none of them block this lane and editing a peer's live work would collide.
+
+**Deviations:** the order asked for a proposal table and got one that already existed and is good;
+it was corrected rather than rewritten. The order also implies `voiceMinutes` enforcement, which
+cannot exist before order 08 ships the lane that spends them.
+
+**Left open:** the two browser journeys in `tests/e2e/home-plan.spec.js` are written and queued but
+have not executed: the machine has sat at load 50-85 all session with three concurrent agents
+running Playwright and Cloud builds, and order 07 already lost its browser verification to exactly
+this. Until they run, the screenshot line of this order's Definition of Done is unmet. Re-run with
+`HOME_E2E_API_PORT=<free> HOME_E2E_WEB_PORT=<free> HOME_LIVE=1 HOME_LIVE_NAME=plan19 npx playwright
+test --config playwright.home.config.js tests/e2e/home-plan.spec.js` when the box is quiet.
+Everything below the browser is verified against real infrastructure. **The price itself is the
+owner's, and is the one thing this order was never allowed to decide:** the mechanism is complete
+and every number is a config value (`HOME_LIMIT_<TIER>_<DIMENSION>` on the running service), so
+applying an approved price is an env change, not a deploy.

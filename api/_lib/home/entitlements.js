@@ -20,7 +20,12 @@
  *   the same turn on Claude Sonnet 5               →  $0.0228
  *
  * The finding that number produces is worth stating plainly: **one agent turn on
- * a paid model costs more than a year of holding that house's socket.** The free
+ * a paid model costs weeks of holding that house's socket** ($0.0228 against
+ * $0.0155 a month, so about six weeks for one sentence). A re-measurement on
+ * 2026-09-09 reproduced the heap and stream figures and put resident memory
+ * higher, at $0.0738 per home per month; even there a Sonnet turn is nine days
+ * of socket, so the shape below holds across the range. See
+ * docs/home-plans.md. The free
  * tier can therefore carry a genuinely connected home, and the limits below are
  * generous on connections and careful on paid-model turns, which is the opposite
  * of what the cost model looked like before it was measured.
@@ -151,7 +156,7 @@ export const HOME_DIMENSIONS = Object.freeze({
 		scalesWithHolding: true,
 		costPerUnitUsd: 0,
 		costBasis: 'the default provider chain leads with platform-held free lanes (isFreeLane in api/_lib/llm-pricing.js); the same 6,359-token home prompt costs $0.0025 on Vertex Gemini 2.5 Flash and $0.0228 on Claude Sonnet 5 when a paid model is chosen',
-		why: 'The room graph makes a home prompt large. On a paid model one turn costs more than a year of holding that house’s socket, so the turn is the dimension that actually needs a ceiling.',
+		why: 'The room graph makes a home prompt large. On a paid model one turn costs weeks of holding that house’s socket, so the turn is the dimension that actually needs a ceiling.',
 	}),
 	logRetentionDays: Object.freeze({
 		id: 'logRetentionDays',
@@ -426,6 +431,42 @@ export async function resolveHomeEntitlementsForUser(userId) {
 
 	const wallets = [user.wallet_address, ...linked.map((w) => w.address)].filter(Boolean);
 	return resolveHomeEntitlements(user, { walletAddresses: wallets });
+}
+
+/**
+ * The account's limits WITHOUT reading the chain: the floor below which no
+ * holder standing can matter.
+ *
+ * `detectHolder` is an on-chain balance read. It is 60-second cached and it is
+ * fine on a page load, but the agent-turn gate runs inside a chat turn, and
+ * putting a Solana RPC on that path to answer a question that is almost always
+ * "yes, obviously" would be a real latency regression for every user who talks
+ * to their house.
+ *
+ * It is skippable because of an ordering property in `computeEntitlements`: the
+ * holder multiplier is `Math.max(1, ...)`, so it only ever RAISES a limit, and a
+ * per-account override is applied AFTER it and therefore lands identically in
+ * both paths. So this floor is always less than or equal to the real limit, and
+ * a caller that is inside the floor is inside the real limit too. A caller that
+ * is NOT inside the floor has to do the full read, because that is exactly the
+ * account whose holding might be the thing that saves them.
+ *
+ * @param {string} userId
+ * @returns {Promise<object>} the same shape as resolveHomeEntitlements, holder-free
+ */
+export async function resolveHomeEntitlementsFloor(userId) {
+	const rows = await withDbRetry(() => sql`
+		select id, plan, account_tier, wallet_address
+		from users
+		where id = ${userId} and deleted_at is null
+		limit 1
+	`);
+	const user = rows[0];
+	if (!user) throw new Error('resolveHomeEntitlementsFloor: no such account');
+
+	const override = await getAccountOverride(userId).catch(() => null);
+	const resolved = computeEntitlements(user, { override: override?.limits || null });
+	return { ...resolved, override };
 }
 
 // ── Per-account overrides ────────────────────────────────────────────────────

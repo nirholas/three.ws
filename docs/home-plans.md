@@ -69,9 +69,21 @@ from a remembered figure. The production service shape comes from
 Two findings inverted the assumptions this work started from, and both are worth stating plainly
 because they point the pricing in the opposite direction:
 
-**One agent turn on a paid model costs more than a year of holding that house's socket.**
-$0.0228 against $0.0155 per month. The connection is not the expensive part after all; the prompt
-is, because the room graph makes a home prompt large.
+**One agent turn on a paid model costs weeks of holding that house's socket.** $0.0228 for a
+single Claude Sonnet 5 turn, against $0.0155 per home per month: about six weeks of connection for
+one sentence. The connection is not the expensive part after all; the prompt is, because the room
+graph makes a home prompt large.
+
+That ratio was re-measured on 2026-09-09 against a second real Home Assistant and it does not come
+back identical, so the honest version is a range rather than a point. The heap figure reproduces
+almost exactly (309 KB marginal per connection against the original 302 KB) and the stream figure
+reproduces to the cent, but resident memory does not: 1.25 MB marginal per connection against the
+original 262 KB, which prices a home at **$0.0738/month** instead of $0.0155. The re-measurement ran
+on a machine at load 83 with several other agents building, and RSS under memory pressure includes
+a great deal that is not attributable to the connection, so $0.0155 remains the figure to price from
+and $0.0738 is a defensible upper bound. Priced at the upper bound a Sonnet turn still costs
+**nine days** of holding the socket, so the conclusion below is unchanged at either end of the
+range, which is the only reason this is a footnote and not a re-plan.
 
 **Voice is not a cost driver at all.** The default speech lanes are keyless and cost the platform
 nothing per utterance. Voice minutes are metered because an unbounded always-listening satellite is
@@ -81,7 +93,9 @@ money.
 ### Can the free tier carry a connected home?
 
 **Yes, comfortably.** At 1.6 cents per home per month, ten thousand free connected homes cost
-about $155 a month, which is roughly one warm Cloud Run instance. The honest constrained free tier
+about $155 a month, which is roughly one warm Cloud Run instance. At the loaded-machine upper bound
+above the same ten thousand homes cost about $740 a month, which is still a rounding error against
+the credit grant and still does not change the answer. The honest constrained free tier
 some cost models would have forced (a session-scoped connection that closes when the tab does) is
 not necessary and would make the free tier worse for no saving worth having. The free tier gets a
 real, persistent, always-connected home.
@@ -248,9 +262,37 @@ user can predict, and it is shown on the plan page with that date.
 | Seats | [`api/home/[id]/members.js`](../api/home/%5Bid%5D/members.js) | an invitation past `members`, counting outstanding invites as well as members, billed to the home's **owner** |
 | Retention | [`api/_lib/home/privacy.js`](../api/_lib/home/privacy.js) | raising retention past the plan's ceiling. Never applied retroactively |
 | Actions | [`api/home/[id]/call.js`](../api/home/%5Bid%5D/call.js) | an ordinary action on a paused home. **The safety exemption is checked first**, so a safety action is never reached by this code |
+| Agent turns | [`api/_lib/home/turn-gate.js`](../api/_lib/home/turn-gate.js), called from [`api/chat.js`](../api/chat.js) | a home tool the agent tried to run past `agentTurns`. Read-only tools are never gated and safety actions are never gated, so over quota the agent can still be asked what the house is doing and told to lock up |
 
 Ordinary service calls are **not** metered at all. Actions are cheap; the socket is the cost. A
-user can run twenty lights all evening without touching a quota.
+user can run twenty lights all evening without touching a quota. What is metered is the *agent
+turn* that drives them, because on a paid model one turn costs weeks of holding that house's
+socket.
+
+Two deliberate holes in the agent-turn gate, both of which exist so commitment 1 survives contact
+with a real conversation rather than only with a unit test:
+
+* **Read-only home tools are never gated.** The agent finds the door by reading the house
+  (`home_status`) and only then targets the lock. Gate the read and the safety exemption ends one
+  step before it was needed. A read also spends nothing the turn had not already spent by the time
+  the model emitted the call.
+* **A safety action inside a gated tool is never refused.** `home_call` carries its domain and
+  service on the input, which is exactly what the safety classifier reads, so a lock, a close or an
+  arm is recognised with no live entity list and therefore in precisely the degraded states where
+  somebody most needs to lock up.
+
+The gate also **fails open**. An unreadable entitlement row or an unreachable usage counter
+resolves to "allowed", never to "refused": a quota that errs must err toward serving the user, and
+refusing a person access to their own house over a billing hiccup is the failure this lane is least
+willing to ship.
+
+And it resolves in **two passes**, so it does not put a Solana RPC on the chat critical path.
+`resolveHomeEntitlementsFloor` answers without reading the chain; because the $THREE multiplier is
+`Math.max(1, ...)` it can only ever raise a limit, so an account inside the floor is inside its real
+limit and nothing further needs to be known. Only an account that is PAST the floor pays for the
+full read, which is exactly the account whose holding might be the thing that raises its ceiling.
+A per-account override is applied after the multiplier in both passes, so it lands identically in
+each and the floor is never wrong about an enterprise row.
 
 There is also a separate, unrelated ceiling: the per-instance backpressure ladder in
 [`api/_lib/home/admission.js`](../api/_lib/home/admission.js). That answers "is this instance

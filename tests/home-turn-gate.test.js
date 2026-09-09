@@ -87,14 +87,43 @@ describe('the gate resolves a verdict', () => {
 
 	it('allows an account inside its limit', async () => {
 		const gate = await homeTurnGate('u1', {
+			resolveHomeEntitlementsFloor: async () => entitlements(1000),
 			resolveHomeEntitlementsForUser: async () => entitlements(1000),
 			readUsage: async () => 999,
 		});
 		expect(gate).toEqual({ allowed: true, error: null });
 	});
 
+	it('never reads the chain for a turn the floor already allows', async () => {
+		// The floor pass is holder-free. Putting a Solana balance read on the chat
+		// critical path for a turn that is obviously inside the limit would be a
+		// latency regression for every user who talks to their house.
+		const full = vi.fn(async () => entitlements(1000));
+		const gate = await homeTurnGate('u1', {
+			resolveHomeEntitlementsFloor: async () => entitlements(1000),
+			resolveHomeEntitlementsForUser: full,
+			readUsage: async () => 10,
+		});
+		expect(gate.allowed).toBe(true);
+		expect(full).not.toHaveBeenCalled();
+	});
+
+	it('falls through to the full read when the floor is not enough, and a holder is saved by it', async () => {
+		// Past the free floor, but this account holds $THREE and the ladder's
+		// multiplier raises the ceiling. The floor pass must not refuse them.
+		const full = vi.fn(async () => entitlements(4000));
+		const gate = await homeTurnGate('u1', {
+			resolveHomeEntitlementsFloor: async () => entitlements(1000),
+			resolveHomeEntitlementsForUser: full,
+			readUsage: async () => 1500,
+		});
+		expect(gate.allowed).toBe(true);
+		expect(full).toHaveBeenCalledOnce();
+	});
+
 	it('refuses the turn that would cross the limit, and says how to fix it', async () => {
 		const gate = await homeTurnGate('u1', {
+			resolveHomeEntitlementsFloor: async () => entitlements(1000),
 			resolveHomeEntitlementsForUser: async () => entitlements(1000),
 			readUsage: async () => 1000,
 		});
@@ -108,6 +137,7 @@ describe('the gate resolves a verdict', () => {
 
 	it('never refuses an unlimited plan', async () => {
 		const gate = await homeTurnGate('u1', {
+			resolveHomeEntitlementsFloor: async () => entitlements(UNLIMITED),
 			resolveHomeEntitlementsForUser: async () => entitlements(UNLIMITED),
 			readUsage: async () => 10_000_000,
 		});
@@ -117,6 +147,7 @@ describe('the gate resolves a verdict', () => {
 	it('FAILS OPEN when the entitlement read throws', async () => {
 		const onError = vi.fn();
 		const gate = await homeTurnGate('u1', {
+			resolveHomeEntitlementsFloor: async () => { throw new Error('neon is down'); },
 			resolveHomeEntitlementsForUser: async () => { throw new Error('neon is down'); },
 			readUsage: async () => 0,
 			onError,
@@ -127,6 +158,7 @@ describe('the gate resolves a verdict', () => {
 
 	it('FAILS OPEN when the usage counter is unreachable', async () => {
 		const gate = await homeTurnGate('u1', {
+			resolveHomeEntitlementsFloor: async () => entitlements(10),
 			resolveHomeEntitlementsForUser: async () => entitlements(10),
 			readUsage: async () => { throw new Error('redis and postgres both refused'); },
 			onError: () => {},

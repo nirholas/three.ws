@@ -22,6 +22,7 @@ import {
 	HomeQuotaError,
 	isQuotaExempt,
 	quotaPeriod,
+	resolveHomeEntitlementsFloor,
 	resolveHomeEntitlementsForUser,
 } from './entitlements.js';
 import { readUsage } from './usage.js';
@@ -78,16 +79,26 @@ export function homeCallShape(call) {
  * @returns {Promise<{ allowed: boolean, error: HomeQuotaError|null }>}
  */
 export async function homeTurnGate(userId, deps = {}) {
-	const resolve = deps.resolveHomeEntitlementsForUser || resolveHomeEntitlementsForUser;
+	const resolveFull = deps.resolveHomeEntitlementsForUser || resolveHomeEntitlementsForUser;
+	const resolveFloor = deps.resolveHomeEntitlementsFloor || resolveHomeEntitlementsFloor;
 	const read = deps.readUsage || readUsage;
+	const resetAt = quotaPeriod().endIso;
 	try {
-		const [entitlements, used] = await Promise.all([resolve(userId), read(userId, 'agentTurns')]);
-		assertWithinLimit({
-			entitlements,
-			dimension: 'agentTurns',
-			used,
-			resetAt: quotaPeriod().endIso,
-		});
+		// The cheap pass first: no chain read, and it settles almost every turn.
+		// The floor can only be lower than the real limit, so an account inside it
+		// is inside the real one and nothing further needs to be known.
+		const [floor, used] = await Promise.all([resolveFloor(userId), read(userId, 'agentTurns')]);
+		try {
+			assertWithinLimit({ entitlements: floor, dimension: 'agentTurns', used, resetAt });
+			return { allowed: true, error: null };
+		} catch (err) {
+			if (!(err instanceof HomeQuotaError)) throw err;
+		}
+
+		// Past the floor. THIS is the account whose $THREE standing might be the
+		// thing that raises the ceiling, so now the chain read is worth paying for.
+		const entitlements = await resolveFull(userId);
+		assertWithinLimit({ entitlements, dimension: 'agentTurns', used, resetAt });
 		return { allowed: true, error: null };
 	} catch (err) {
 		if (err instanceof HomeQuotaError) return { allowed: false, error: err };

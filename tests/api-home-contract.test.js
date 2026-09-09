@@ -67,7 +67,14 @@ vi.mock('../api/_lib/home/runtime.js', () => runtime);
 
 const sessionUser = vi.fn();
 const bearerUser = vi.fn();
-vi.mock('../api/_lib/auth.js', () => ({
+// Spread the real module rather than listing its exports. This mock only needs
+// to control who the caller is; everything else auth.js exports is pure logic
+// the handlers under test should run for real. Listing exports by hand meant
+// that the day api/_lib/home/access.js started calling `hasScope`, two contract
+// tests failed with "No hasScope export is defined on the mock", which reads as
+// a handler bug and is a stale mock.
+vi.mock('../api/_lib/auth.js', async (importOriginal) => ({
+	...(await importOriginal()),
 	getSessionUser: (...a) => sessionUser(...a),
 	authenticateBearer: (...a) => bearerUser(...a),
 	extractBearer: (req) => {
@@ -387,7 +394,10 @@ describe('POST /api/home/:id/call, the gate', () => {
 
 	it('meters an agent principal separately in the log', async () => {
 		sessionUser.mockResolvedValue(null);
-		bearerUser.mockResolvedValue({ userId: USER_A, scope: 'home' });
+		// `home:act`, not a bare `home`: acting is its own scope, and this fixture
+		// is about how an agent principal is METERED, not about whether an
+		// under-scoped token may act. That refusal has its own test.
+		bearerUser.mockResolvedValue({ userId: USER_A, scope: 'home:act' });
 		checkout(mkBridge());
 		await homeCall(mkReq({
 			method: 'POST', query: { id: HOME_ID }, headers: { authorization: 'Bearer tok' },
