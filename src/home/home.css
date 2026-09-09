@@ -723,6 +723,22 @@
 
 .hm-plan-room-name { font-size: var(--text-sm); font-weight: var(--weight-medium); line-height: 1.15; }
 .hm-plan-room-size { font-size: var(--text-2xs); color: var(--hm-ink-3); font-variant-numeric: tabular-nums; }
+
+/* A room card is drawn to scale, so its box is the room's real footprint and
+   the content has to survive whatever that turns out to be. An ordinary 5.7 m
+   room is 80px across at this zoom, which cannot hold a name, a measurement and
+   a button: everything wrapped mid-word and clipped, and a plan of small rooms
+   read as garbled text rather than as a plan. The name is what identifies the
+   room, so it is the last thing to go; the measurement and the orphan tag drop
+   out when there is no room for them, and the name shrinks with the box. */
+.hm-plan-room { container-type: size; }
+@container (max-width: 128px) or (max-height: 92px) {
+	.hm-plan-room-size { display: none; }
+}
+@container (max-width: 96px) or (max-height: 64px) {
+	.hm-plan-room-tag { display: none; }
+	.hm-plan-room-name { font-size: var(--text-2xs); }
+}
 .hm-plan-room-tag {
 	font-size: var(--text-2xs); text-transform: uppercase; letter-spacing: 0.07em;
 	color: var(--hm-ink-3);
@@ -735,7 +751,9 @@
 .hm-plan-room-drop:hover { color: var(--ink); border-color: var(--hm-ink-3); }
 
 .hm-plan-handle {
-	appearance: none; position: absolute; right: -1px; bottom: -1px;
+	/* Logical, not `right`: in an RTL locale the grab corner belongs on the end
+	   of the room the reader's eye finishes at, which is the left one. */
+	appearance: none; position: absolute; inset-inline-end: -1px; bottom: -1px;
 	width: 22px; height: 22px; padding: 0; cursor: nwse-resize; touch-action: none;
 	border: 0; border-radius: 0 0 var(--radius-sm) 0;
 	background: linear-gradient(135deg, transparent 50%, var(--hm-ink-3) 50%);
@@ -841,4 +859,49 @@
 .hm-plan-filemenu-item:hover {
 	background: var(--surface-2);
 	border-color: var(--stroke-strong);
+}
+
+/*
+ * The floorplan editor on a finger.
+ *
+ * Its toolbar buttons, its tray of rooms and the per-device File buttons all
+ * render at 21px, which is comfortable with a mouse and under half of what
+ * WCAG 2.5.5 asks of a touch target. The editor is also the one surface in this
+ * lane somebody is most likely to use standing up with a phone in one hand:
+ * they are walking round the house deciding where the rooms are.
+ *
+ * The rooms drawn on the canvas are deliberately NOT in this list. A room's
+ * rectangle is sized by the plan, in metres, and stretching a small room to
+ * 44px would draw a house that is not the house. Its resize handle is here
+ * instead, because a 22px grab corner is unusable with a fingertip and it is
+ * chrome rather than a measurement.
+ *
+ * Coarse pointers only, so a laptop's editor is untouched: a tray that grew
+ * 23px per chip on a desktop would push the canvas off the screen.
+ *
+ * Last in the file on purpose. `.hm-plan-tray-file` sets its own `min-height:
+ * 32px` several hundred lines below where this block reads best, and at equal
+ * specificity the later rule wins: placed up there, this raised every control
+ * except the File buttons, which stayed at 32px on a phone.
+ */
+@media (pointer: coarse) {
+	.hm-plan-btn,
+	.hm-plan-tray-room,
+	.hm-plan-tray-file,
+	.hm-plan-room-drop,
+	.hm-plan-filemenu-item,
+	.hm-plan-naming-input {
+		min-height: 44px;
+	}
+	.hm-plan-btn,
+	.hm-plan-tray-room,
+	.hm-plan-tray-file,
+	.hm-plan-room-drop,
+	.hm-plan-filemenu-item {
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		min-width: 44px;
+	}
+	.hm-plan-handle { width: 44px; height: 44px; }
 }

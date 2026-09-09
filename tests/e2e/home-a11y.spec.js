@@ -296,19 +296,64 @@ test('the house is usable at 320, 375, 768 and 1440, with the primary action in 
 		const overflow = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
 		expect(overflow, `no horizontal overflow at ${width}px`).toBeLessThanOrEqual(1);
 
-		// Every control a finger has to hit is at least 44px tall.
-		const small = await page.evaluate(() => {
+	}
+	await page.setViewportSize({ width: 1440, height: 900 });
+});
+
+/**
+ * Measure every control's height on a page that is really emulating a phone.
+ *
+ * The 44px floor is scoped to `pointer: coarse` in public/home-scene.css, which
+ * is the right question to ask: a laptop window dragged narrow has a mouse in
+ * it, and a rail that grew 12px per row there would push half the house off the
+ * screen. So the measurement has to be made on a context with touch emulation
+ * on, not on a desktop browser at a small viewport, which reports `pointer:
+ * fine` and skips those rules. Measured with a fine pointer, every one of the
+ * lane's 46 controls "fails" and none of them is broken.
+ */
+async function touchTargetsUnder44(browser, width, path, ready) {
+	const context = await browser.newContext({
+		viewport: { width, height: 720 },
+		hasTouch: true,
+		isMobile: true,
+		deviceScaleFactor: 2,
+	});
+	try {
+		const page = await context.newPage();
+		await signIn(page, 'owner');
+		await page.goto(path, { waitUntil: 'domcontentloaded' });
+		await ready(page);
+		await settle(page);
+		// The rules under test only exist inside `@media (pointer: coarse)`, so a
+		// context that did not actually emulate touch would pass this by testing
+		// nothing at all.
+		const coarse = await page.evaluate(() => matchMedia('(pointer: coarse)').matches);
+		expect(coarse, 'the context must really emulate a touch screen').toBe(true);
+		return await page.evaluate(() => {
 			const out = [];
-			for (const node of document.querySelectorAll('#hs-shell button, #hs-shell a[href]')) {
+			// A room on the floorplan canvas is sized by the plan itself: a 1.5m
+			// room is meant to be small, and stretching it to 44px would lie about
+			// the house. Everything that is chrome rather than content is held to
+			// the floor.
+			for (const node of document.querySelectorAll('#hs-shell button:not(.hm-plan-room), #hs-shell a[href], #hs-shell input')) {
 				const r = node.getBoundingClientRect();
 				if (r.width === 0 && r.height === 0) continue;
 				if (r.height < 44) out.push(`${node.className || node.tagName}: ${Math.round(r.height)}px`);
 			}
 			return out;
 		});
-		if (width <= 768) expect(small, `touch targets under 44px at ${width}px`).toEqual([]);
+	} finally {
+		await context.close();
 	}
-	await page.setViewportSize({ width: 1440, height: 900 });
+}
+
+test('every control in the live house clears 44px on a real touch screen', async ({ browser }) => {
+	for (const width of [320, 375]) {
+		const small = await touchTargetsUnder44(browser, width, `/smart-home/${homeId}?view=2d`, (page) =>
+			expect(page.locator('#hs-rooms')).not.toHaveAttribute('aria-busy', 'true', { timeout: 120_000 }),
+		);
+		expect(small, `touch targets under 44px at ${width}px`).toEqual([]);
+	}
 });
 
 test('a Fahrenheit house reads in Fahrenheit whatever the browser locale is', async ({ page }) => {
@@ -490,33 +535,26 @@ test('on a phone, the confirmation survives a stray tap and only a real answer c
 	await page.setViewportSize({ width: 1440, height: 900 });
 });
 
-test('the floorplan editor is a touch target at 320 and 375, not only at 1440', async ({ page }) => {
-	await signIn(page, 'owner');
+test('the floorplan editor is a touch target too, not only the house', async ({ browser, page }) => {
 	// The editor is where the 44px floor is easiest to miss: its controls are a
-	// dense toolbar and a tray of device chips, and the breakpoint sweep above
-	// only ever opens the 2D house.
+	// dense toolbar and a tray of device chips, and the sweep above only ever
+	// opens the 2D house.
+	for (const width of [320, 375]) {
+		const small = await touchTargetsUnder44(browser, width, `/smart-home/${homeId}?view=plan`, (page) =>
+			expect(page.locator('#hs-plan .hm-plan-toolbar, #hs-plan .hm-plan-skeleton').first()).toBeVisible({ timeout: 120_000 }),
+		);
+		expect(small, `floorplan controls under 44px at ${width}px`).toEqual([]);
+	}
+
+	// And the editor holds its own width, which is a layout question rather than
+	// a pointer one and so is asked of the ordinary page.
+	await signIn(page, 'owner');
 	for (const width of [320, 375]) {
 		await page.setViewportSize({ width, height: 720 });
 		await openView(page, homeId, 'plan');
 		await settle(page);
-
 		const overflow = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
 		expect(overflow, `the editor must not push the page sideways at ${width}px`).toBeLessThanOrEqual(1);
-
-		const small = await page.evaluate(() => {
-			const out = [];
-			// The rooms on the canvas are sized by the plan itself: a 1.5m room
-			// is meant to be small, and forcing it to 44px would lie about the
-			// house. Every control that is chrome rather than content is held to
-			// the floor.
-			for (const node of document.querySelectorAll('#hs-plan button, #hs-plan [role="button"]:not(.hm-plan-room), #hs-plan input')) {
-				const r = node.getBoundingClientRect();
-				if (r.width === 0 && r.height === 0) continue;
-				if (r.height < 44) out.push(`${node.className || node.tagName}: ${Math.round(r.height)}px`);
-			}
-			return out;
-		});
-		expect(small, `floorplan controls under 44px at ${width}px`).toEqual([]);
 	}
 	await page.setViewportSize({ width: 1440, height: 900 });
 	await openView(page, homeId, '2d');

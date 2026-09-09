@@ -18,6 +18,18 @@
 	<link rel="stylesheet" href="/nav.css" />
 	<link rel="stylesheet" href="/fonts/fonts.css" />
 	<link rel="stylesheet" href="/home-scene.css" />
+	<!--
+		The floorplan editor's own stylesheet. It renders inside this page's Plan
+		view (src/home/floorplan.js, every class prefixed hm-plan-), and its rules
+		live in the smart-home surface's sheet, which only the /smart-home pages
+		were loading. So the editor shipped here with no styling at all: browser
+		default buttons, a 21px toolbar, and none of the touch sizing the rest of
+		the lane has. Caught by measuring its controls on an emulated phone in
+		tests/e2e/home-a11y.spec.js. The sheet is safe to add: outside a :root
+		block of --hm-* custom properties, every selector in it is scoped to an
+		hm- class, and this page uses hs- ones.
+	-->
+	<link rel="stylesheet" href="/src/home/home.css" />
 </head>
 <body>
 	<div id="nav-container"></div>
