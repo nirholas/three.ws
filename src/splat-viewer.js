@@ -94,6 +94,23 @@ function setDownload(url, filename) {
 	btn.hidden = false;
 }
 
+// Enter a loading state, THEN await the engine. Spark is a multi-megabyte lazy
+// chunk fetched on first use, and two of the three entry points used to await it
+// before painting anything, so the first click on a sample or an upload sat on
+// the idle overlay with no feedback for as long as the download took. An import
+// that never settles read as a dead button. A failed import now lands in the
+// page's designed error state instead of an unhandled rejection.
+async function requireSpark(title, detail) {
+	setLoading(title, detail);
+	try {
+		return await loadSpark();
+	} catch (err) {
+		setError('The splat engine did not load', 'The renderer is fetched on first use and that request did not complete. Check your connection, then try again.');
+		console.error('[splat] engine load failed', err);
+		return null;
+	}
+}
+
 // -- Core render --------------------------------------------------------------
 async function renderBuffer(buffer, { label, fileType, fileName, flip = true }) {
 	_lastRender = { buffer, fileType, fileName, label, flip };
@@ -173,8 +190,8 @@ async function loadFromUrl(url, label) {
 	let parsed;
 	try { parsed = new URL(url, location.href); } catch { setError('That doesn’t look like a URL', url); return; }
 	parsed = normalizeAssetUrl(parsed);
-	setLoading('Fetching splat…', parsed.hostname);
-	const SPARK = await loadSpark();
+	const SPARK = await requireSpark('Fetching splat…', parsed.hostname);
+	if (!SPARK) return;
 	let buffer;
 	try {
 		const res = await fetch(parsed.href);
@@ -194,8 +211,8 @@ async function loadFromUrl(url, label) {
 }
 
 async function loadFromFile(file) {
-	const SPARK = await loadSpark();
-	setLoading('Reading file…', file.name);
+	const SPARK = await requireSpark('Reading file…', file.name);
+	if (!SPARK) return;
 	let buffer;
 	try { buffer = await file.arrayBuffer(); }
 	catch (err) { setError('Couldn’t read that file', err.message); return; }
@@ -275,8 +292,9 @@ function sampleBust(count = 14000) {
 }
 
 async function loadSample(kind) {
-	const SPARK = await loadSpark();
 	const isBust = kind === 'bust';
+	const SPARK = await requireSpark('Loading splat engine\u2026', 'Preparing the Gaussian-splat renderer.');
+	if (!SPARK) return;
 	const buffer = isBust ? sampleBust() : sampleShell();
 	const label = isBust ? 'Synthetic head bust' : 'Radiance shell';
 	const name = isBust ? 'sample-bust.splat' : 'sample-shell.splat';

@@ -18590,6 +18590,7 @@
 		"your_agent_s_llm_calls_four_tools": "Your agent's LLM calls four tools. Each one drives the visible avatar in the chat panel and returns a concise result the model reads back into the conversation — so the body language always matches what's happening on-chain."
 	},
 	"splat": {
+		"choose_a_file": "Choose a file",
 		"couldn_t_load_that_splat": "Couldn’t load that splat",
 		"download_splat_arialabel": "Download splat",
 		"download_splat_title": "Download splat",
@@ -18611,12 +18612,14 @@
 		"radiance_shell_6k_splats": "<span class=\"sp-sample-dot\" style=\"background:#86efac\"></span> Radiance shell · 6k splats",
 		"recenter_camera_arialabel": "Recenter camera",
 		"recenter_camera_title": "Recenter camera",
+		"render": "Render",
 		"render_gaussian_splat_and_radiance_field_ava": "Render Gaussian-splat and radiance-field avatars right in the browser — the photoreal output of engines like <a href=\"/avatar-engines?family=photoreal-head\">GaussianAvatars and HumanGaussian</a>. Load a <code>.ply</code>, <code>.spz</code>, <code>.splat</code>, <code>.ksplat</code>, or <code>.sog</code> by URL or drop a file in.",
 		"samples": "Samples",
 		"samples_are_procedurally_generated_to_exerci": "Samples are procedurally generated to exercise the renderer — not real captures.",
 		"splat_scene_url": "Splat scene URL",
 		"synthetic_head_bust_14k_splats": "<span class=\"sp-sample-dot\"></span> Synthetic head bust · 14k splats",
 		"try_a_sample": "Try a sample",
+		"upload_a_file": "Upload a file",
 		"where_splats_come_from": "Where splats come from"
 	},
 	"stablecoin": {
