@@ -58,6 +58,7 @@ from __future__ import annotations
 
 import asyncio
 import base64
+import gc
 import io
 import json
 import logging
@@ -664,6 +665,36 @@ async def _run_inference(
                 error=safe_error(exc, context=f"[{task_id}] inference"),
                 elapsed_ms=int((time.time() - t0) * 1000),
             )
+        finally:
+            # Hand this job's GPU memory back before releasing the semaphore, so
+            # the next inference starts against a drained device and the reclaim
+            # itself never races another job's allocations.
+            #
+            # Nothing else frees it. Torch's caching allocator holds freed blocks
+            # in reserve, and nvdiffrast's rasterizer allocates through its own
+            # cudaMalloc outside that cache, so an instance's usable VRAM only
+            # ever shrinks. The instance stays healthy for a while and then fails
+            # EVERY later job with `Cuda error: 2[cudaMalloc(&m_gpuPtr, bytes);]`
+            # out of postprocess_mesh's _fill_holes, while its health check keeps
+            # passing and Cloud Run keeps routing to it.
+            #
+            # That is exactly how this lane died: 1,189 generations on 2026-09-06,
+            # then on 2026-09-09 thirteen jobs succeeded after a restart and every
+            # single job after them failed. Restarting only buys another thirteen.
+            await loop.run_in_executor(None, _release_gpu_memory)
+
+
+def _release_gpu_memory() -> None:
+    """Return a finished job's GPU allocations to the driver.
+
+    Blocking, so callers run it in the executor. Safe on CPU-only hosts (the
+    unit tests import this module without a GPU) because every CUDA call is
+    gated on availability.
+    """
+    gc.collect()
+    if torch.cuda.is_available():
+        torch.cuda.empty_cache()
+        torch.cuda.ipc_collect()
 
 
 class InferRequest(BaseModel):

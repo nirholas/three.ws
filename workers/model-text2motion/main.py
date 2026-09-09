@@ -31,6 +31,7 @@ Environment:
 from __future__ import annotations
 
 import asyncio
+import gc
 import json
 import logging
 import os
@@ -217,6 +218,35 @@ async def _run_inference(task_id: str, prompt: str, n_frames: int, fps: int) -> 
             msg = safe_error(exc, context=f"text2motion task {task_id}")
             _tasks[task_id].update({"status": "failed", "error": msg})
             log.exception("task %s failed", task_id)
+        finally:
+            # Reclaim before releasing the semaphore, so the next inference
+            # starts against a drained device. See _release_gpu_memory.
+            await loop.run_in_executor(None, _release_gpu_memory)
+
+
+def _release_gpu_memory() -> None:
+    """Return a finished job's GPU allocations to the driver.
+
+    Blocking, so callers run it in the executor. torch is imported lazily and
+    the failure is swallowed because this module is deliberately importable
+    without torch or MDM installed (see _load_model); on such a host there is
+    no device to reclaim and the call is a no-op.
+
+    Torch's caching allocator keeps freed blocks reserved rather than returning
+    them, so without this an instance's usable VRAM only ever shrinks and a
+    long-lived one eventually fails every job it accepts with a cudaMalloc
+    error while its health check still passes. That is exactly how the sibling
+    TRELLIS lane went from 1,189 generations on 2026-09-06 to a 100% failure
+    rate on 2026-09-09; this lane had the same gap.
+    """
+    gc.collect()
+    try:
+        import torch
+    except ImportError:
+        return
+    if torch.cuda.is_available():
+        torch.cuda.empty_cache()
+        torch.cuda.ipc_collect()
 
 
 def _safe_name(prompt: str) -> str:

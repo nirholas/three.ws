@@ -30,6 +30,7 @@ Environment variables:
 from __future__ import annotations
 
 import asyncio
+import gc
 import io
 import json
 import logging
@@ -457,6 +458,29 @@ async def _run_inference(task_id: str, images: list[str], body_type: str, qualit
                 error=safe_error(exc, context=f"[{task_id}] inference"),
                 elapsed_ms=int((time.time() - t0) * 1000),
             )
+        finally:
+            # Reclaim before releasing the semaphore, so the next inference
+            # starts against a drained device. See _release_gpu_memory.
+            await loop.run_in_executor(None, _release_gpu_memory)
+
+
+def _release_gpu_memory() -> None:
+    """Return a finished job's GPU allocations to the driver.
+
+    Blocking, so callers run it in the executor. Safe on CPU-only hosts because
+    every CUDA call is gated on availability.
+
+    Torch's caching allocator keeps freed blocks reserved rather than returning
+    them, so without this an instance's usable VRAM only ever shrinks and a
+    long-lived one eventually fails every job it accepts with a cudaMalloc
+    error while its health check still passes. That is exactly how the sibling
+    TRELLIS lane went from 1,189 generations on 2026-09-06 to a 100% failure
+    rate on 2026-09-09; this lane had the same gap.
+    """
+    gc.collect()
+    if torch.cuda.is_available():
+        torch.cuda.empty_cache()
+        torch.cuda.ipc_collect()
 
 
 class InferRequest(BaseModel):
