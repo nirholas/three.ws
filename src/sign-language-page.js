@@ -50,6 +50,24 @@ async function boot() {
 		if (status) status.textContent = msg || '';
 	};
 
+	// The stage is a several-MB GLB over the network, so it has the same states
+	// as any other fetch. Every control reads `signingState` before it tries to
+	// sign, which is what keeps a click during the download from being a dead
+	// one: it queues instead.
+	const stageWrap = $('#sl-stage-wrap');
+	const stageFallback = $('#sl-stage-fallback');
+	const stageMsg = $('#sl-stage-msg');
+	/** @type {'loading'|'ready'|'mute'|'error'} */
+	let signingState = 'loading';
+	const setStageState = (state, message = '') => {
+		signingState = state;
+		if (stageWrap) stageWrap.dataset.state = state;
+		if (stageFallback) stageFallback.hidden = state !== 'error';
+		if (stageMsg) stageMsg.textContent = message;
+	};
+	/** A phrase asked for before the avatar was ready, performed on arrival. */
+	let pending = null;
+
 	// Speed and dominant hand are baked into the compiled clips, so changing
 	// either rebuilds the speaker (cheap: the vocabulary is compiled lazily and
 	// cached per setting).
@@ -100,6 +118,8 @@ async function boot() {
 		speaker?.cancel();
 		speaker = null;
 		stage?.dispose();
+		setStageState('loading');
+		setStatus(`Loading ${avatar.label}…`);
 		// Full-body framing: the whole avatar stays in frame, and the orbit
 		// controls let anyone zoom into the signing space when they want detail.
 		stage = new PoseStage(stageHost, {
@@ -110,18 +130,25 @@ async function boot() {
 			const { supported } = await stage.mount();
 			stage.start();
 			if (!supported) {
-				setStatus('This avatar can’t sign, but the tools below still work.');
+				setStageState('mute');
+				setStatus(`${avatar.label} can’t sign: it has no usable skeleton. Pick another avatar, or compile the signing over HTTP below.`);
 				return false;
 			}
 			rebuildSpeaker();
+			setStageState('ready');
 			return true;
 		} catch (err) {
 			log.warn('[sign-language] stage mount failed', err?.message);
-			setStatus('Live preview unavailable: the spelling tools below still work.');
+			// A failed mount is a network failure like any other, so it gets a
+			// way back rather than a permanently dead box.
+			setStageState(
+				'error',
+				'The 3D preview did not load. That is usually the network, so a retry fixes it; the sign API below runs on the server and works either way.',
+			);
+			setStatus('');
 			return false;
 		}
 	};
-	await mountStage();
 
 	// ── Hero auto-signing loop ────────────────────────────────────────────────
 	// Signing is content, so it is never disabled: but auto-PLAYING on arrival
@@ -146,32 +173,68 @@ async function boot() {
 		clearTimeout(heroTimer);
 		speaker?.cancel();
 	};
-	if (speaker && !reducedMotion) heroTick();
-	else if (speaker) setStatus('Type anything and watch the avatar sign it.');
 
 	// ── Spell-anything input ──────────────────────────────────────────────────
 	const spellInput = $('#sl-spell-input');
 	const spellBtn = $('#sl-spell-btn');
 
+	// Why the avatar cannot sign right now, phrased as something to do about it.
+	const unavailableReason = () =>
+		signingState === 'mute'
+			? `${avatar.label} has no signing skeleton. Pick another avatar above, or compile this over HTTP in the sign API below.`
+			: 'The 3D preview did not load. Retry it above, or compile this over HTTP in the sign API below.';
+
+	/**
+	 * Sign a phrase in whatever state the stage is in: queue it while the GLB
+	 * is still downloading, and say why when it cannot be performed at all.
+	 * @param {string} phrase
+	 * @param {{ label?: string, onSettled?: () => void }} [opts] `label` replaces
+	 *   the default "Signing: …" line; `onSettled` runs once the clip is over.
+	 * @returns {Promise<boolean>} whether it was performed now.
+	 */
+	const requestSign = async (phrase, opts = {}) => {
+		lastPhrase = phrase;
+		syncShare();
+		if (signingState === 'loading') {
+			pending = { phrase, opts };
+			setStatus(`Loading the avatar: it signs “${phrase.trim().toLowerCase()}” as soon as it arrives.`);
+			return false;
+		}
+		if (!speaker) {
+			setStatus(unavailableReason());
+			opts.onSettled?.();
+			return false;
+		}
+		setStatus(opts.label || `Signing: “${phrase.trim().toLowerCase()}”`);
+		try {
+			const result = await speaker.speak(phrase);
+			if (!result.superseded) setStatus(describeResult(result));
+			opts.onSettled?.();
+			return true;
+		} catch (e) {
+			setStatus(e?.message || 'Could not sign that.');
+			opts.onSettled?.();
+			return false;
+		}
+	};
+
+	/** Perform whatever was asked for while the avatar was still loading. */
+	const flushPending = async () => {
+		if (!pending) return false;
+		const { phrase, opts } = pending;
+		pending = null;
+		await requestSign(phrase, opts);
+		return true;
+	};
+
 	const spellIt = async () => {
-		if (!speaker) return;
 		const raw = spellInput.value.trim();
-		const norm = normalizeWord(raw);
-		if (!norm) {
+		if (!normalizeWord(raw)) {
 			setStatus('Type letters or numbers to sign.');
 			return;
 		}
 		stopHero();
-		heroActive = false;
-		lastPhrase = raw;
-		syncShare();
-		setStatus(`Signing: “${norm.toLowerCase()}”`);
-		try {
-			const result = await speaker.speak(raw);
-			if (!result.superseded) setStatus(describeResult(result));
-		} catch (e) {
-			setStatus(e?.message || 'Could not sign that.');
-		}
+		await requestSign(raw);
 	};
 	spellBtn?.addEventListener('click', spellIt);
 	spellInput?.addEventListener('keydown', (e) => {
@@ -311,23 +374,15 @@ async function boot() {
 			chip.textContent = word.toLowerCase();
 			const gloss = signGloss(word);
 			if (gloss) chip.title = gloss;
-			chip.addEventListener('click', async () => {
-				if (!speaker) return;
+			chip.addEventListener('click', () => {
 				stopHero();
-				heroActive = false;
 				active?.setAttribute('aria-pressed', 'false');
 				active = chip;
 				chip.setAttribute('aria-pressed', 'true');
-				lastPhrase = word;
-				syncShare();
-				setStatus(gloss ? `${word.toLowerCase()}: ${gloss}` : `Signing “${word.toLowerCase()}”`);
-				try {
-					const result = await speaker.speak(word);
-					if (!result.superseded) chip.setAttribute('aria-pressed', 'false');
-				} catch {
-					chip.setAttribute('aria-pressed', 'false');
-					setStatus('Could not sign that.');
-				}
+				requestSign(word, {
+					label: gloss ? `${word.toLowerCase()}: ${gloss}` : `Signing “${word.toLowerCase()}”`,
+					onSettled: () => chip.setAttribute('aria-pressed', 'false'),
+				});
 			});
 			vocabHost.appendChild(chip);
 		}
@@ -344,9 +399,9 @@ async function boot() {
 	initSignApiConsole({
 		defaults: { hand: dominant === 'Left' ? 'left' : 'right', speed: rate },
 		sign: async ({ text, hand, speed }) => {
-			if (!speaker) throw new Error('the avatar has not finished loading');
+			if (signingState === 'loading') throw new Error('the avatar has not finished loading');
+			if (!speaker) throw new Error(unavailableReason());
 			stopHero();
-			heroActive = false;
 			const wanted = hand === 'left' ? 'Left' : 'Right';
 			if (wanted !== dominant || speed !== rate) {
 				dominant = wanted;
@@ -356,13 +411,9 @@ async function boot() {
 				syncPills('#sl-speed', (btn) => btn.textContent === `${speed}×`);
 				rebuildSpeaker();
 			}
-			lastPhrase = text;
-			syncShare();
-			setStatus(`Signing: “${text.toLowerCase()}”`);
 			// Move to the avatar before it starts, not after it finishes.
 			stageHost.scrollIntoView({ behavior: reducedMotion ? 'auto' : 'smooth', block: 'center' });
-			const result = await speaker.speak(text);
-			if (!result.superseded) setStatus(describeResult(result));
+			await requestSign(text);
 		},
 	});
 
@@ -370,19 +421,25 @@ async function boot() {
 	// A shareable signing link, mirroring the studio's ?spell=: /sign-language
 	// ?say=hello+world signs the phrase on arrival (dictionary + spelling).
 	const say = new URLSearchParams(location.search).get('say');
-	if (say && speaker && normalizeWord(say)) {
+	if (say && normalizeWord(say)) {
 		stopHero();
-		heroActive = false;
 		if (spellInput) spellInput.value = say.slice(0, 48);
-		lastPhrase = say;
-		syncShare();
-		speaker
-			.speak(say)
-			.then((result) => {
-				if (!result.superseded) setStatus(describeResult(result));
-			})
-			.catch((e) => setStatus(e?.message || 'Could not sign that.'));
+		requestSign(say);
 	}
+
+	// ── Mount the stage last ──────────────────────────────────────────────────
+	// Everything above is wired before the several-MB GLB starts downloading, so
+	// a visitor who types during the load gets a queued phrase rather than a
+	// button with no listener on it.
+	$('#sl-stage-retry')?.addEventListener('click', () => startStage());
+	async function startStage() {
+		if (!(await mountStage())) return;
+		if (await flushPending()) return;
+		if (heroActive && !reducedMotion) heroTick();
+		else if (lastPhrase) replay();
+		else setStatus('Type anything and watch the avatar sign it.');
+	}
+	await startStage();
 }
 
 function wireWebcamDemo(setStatus) {

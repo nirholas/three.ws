@@ -59,6 +59,28 @@
 
 			.sl-stage-wrap { position: relative; border: 1px solid var(--stroke); border-radius: 20px; overflow: hidden; background: radial-gradient(120% 120% at 50% 0%, rgba(167,139,250,.10), transparent 60%), var(--surface-1); aspect-ratio: 4 / 5; min-height: 380px; }
 			#sl-stage { position: absolute; inset: 0; width: 100%; height: 100%; }
+
+			/* Loading: the GLB is several MB, so the stage is empty for a beat.
+			   A silhouette that breathes says "an avatar is coming" where an empty
+			   gradient box says "this is broken". Both children are removed from
+			   the a11y tree; #sl-status carries the same news to a screen reader. */
+			.sl-stage-skeleton { position: absolute; inset: 0; display: none; flex-direction: column; align-items: center; justify-content: center; gap: 14px; pointer-events: none; }
+			.sl-stage-wrap[data-state='loading'] .sl-stage-skeleton { display: flex; }
+			.sl-stage-skeleton-head, .sl-stage-skeleton-body { background: rgba(167,139,250,.14); border-radius: 999px; animation: sl-stage-breathe 1.6s ease-in-out infinite; }
+			.sl-stage-skeleton-head { width: 78px; height: 78px; }
+			.sl-stage-skeleton-body { width: 128px; height: 176px; border-radius: 64px 64px 28px 28px; animation-delay: .18s; }
+			@keyframes sl-stage-breathe { 0%, 100% { opacity: .35; } 50% { opacity: .85; } }
+
+			/* Error: a failed mount used to be a permanent dead stage. It is a
+			   network failure like any other, so it gets a real way back. */
+			.sl-stage-fallback[hidden] { display: none; }
+			.sl-stage-fallback { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px; padding: 24px; text-align: center; }
+			.sl-stage-fallback-msg { margin: 0; max-width: 34ch; color: var(--ink-dim); font-size: 14px; line-height: 1.6; }
+			.sl-stage-fallback a { color: var(--ink); }
+
+			@media (prefers-reduced-motion: reduce) {
+				.sl-stage-skeleton-head, .sl-stage-skeleton-body { animation: none; opacity: .6; }
+			}
 			.sl-status { position: absolute; left: 0; right: 0; bottom: 0; padding: 12px 16px; font-family: var(--font-mono); font-size: 13px; color: var(--ink); background: linear-gradient(to top, rgba(0,0,0,.55), transparent); pointer-events: none; min-height: 20px; }
 			:root[data-theme='light'] .sl-status { color: #fff; }
 
@@ -265,8 +287,17 @@
 
 		<main class="sl-main">
 			<section class="sl-hero">
-				<div class="sl-stage-wrap">
+				<div class="sl-stage-wrap" id="sl-stage-wrap" data-state="loading">
 					<div id="sl-stage"></div>
+					<div class="sl-stage-skeleton" aria-hidden="true">
+						<span class="sl-stage-skeleton-head"></span>
+						<span class="sl-stage-skeleton-body"></span>
+					</div>
+					<div class="sl-stage-fallback" id="sl-stage-fallback" hidden>
+						<p class="sl-stage-fallback-msg" id="sl-stage-msg" role="status"></p>
+						<button id="sl-stage-retry" class="sl-btn" type="button" data-i18n="sign_language.retry_the_avatar">Retry the avatar</button>
+						<a class="sl-cap-link" href="#sl-api" data-i18n="sign_language.compile_signing_over_http_instead">Compile signing over HTTP instead ↓</a>
+					</div>
 					<div class="sl-status" id="sl-status" aria-live="polite"></div>
 				</div>
 
