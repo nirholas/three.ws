@@ -20,6 +20,15 @@ import { STACK_FILE } from './home-global-setup.js';
 
 export { readState, readStates, waitForState };
 
+/**
+ * One live session per role for this whole run, keyed by role.
+ *
+ * Process-scoped on purpose: it lives exactly as long as the Playwright run
+ * that created it, so nothing leaks between runs and no credential is written
+ * to disk.
+ */
+const SESSIONS = new Map();
+
 /** The stack this run is driving, as global setup left it. */
 function stack() {
 	if (!fs.existsSync(STACK_FILE)) {
@@ -62,22 +71,43 @@ export async function signIn(page, role = 'owner') {
 	const account = stack().accounts[role];
 	if (!account) throw new Error(`no ${role} account in the e2e stack`);
 
-	// The login limiter is shared by every concurrent lane on this machine, and
-	// under several agents it answers 429 with the number of seconds to wait:
-	//   {"error":"rate_limited","retry_after":14,"reason":"rate_limiter_degraded_postgres"}
-	// Throwing on that reported "journey 9 failed" for a journey that never ran a
-	// single step of itself, which is a worse lie than a slow test. Waiting the
-	// interval the server itself named is not retrying a test into passing: this
-	// is the sign-in that gets us to the start line, no assertion has happened
-	// yet, and the thing being waited on is a documented Retry-After. Anything
-	// other than a 429 still fails immediately and loudly.
+	// Reuse the session this run already has, rather than minting another.
+	//
+	// Playwright gives every test a fresh browser context, so a per-test signIn
+	// meant a fresh POST /api/auth/login for each of the 37 calls across this
+	// lane's specs. The login limiter is shared by every concurrent agent on this
+	// machine and it ESCALATES: measured at retry_after 14s early in a soak and
+	// 125s four runs later, at which point runs fail on the sign-in before a
+	// single journey step has executed. That is what stopped the ten consecutive
+	// runs this order asks for, and no amount of waiting fixes it, because the
+	// waiting is what provokes it.
+	//
+	// So the cookie from the first real login is carried into later contexts. The
+	// session is still a real one issued by the real endpoint; it is simply not
+	// re-issued for no reason. It is verified before use and a stale one falls
+	// through to a fresh login, so this can never hand a test a dead session.
+	const cached = SESSIONS.get(role);
+	if (cached) {
+		await page.context().addCookies(cached);
+		const alive = await page.request.get('/api/home', { timeout: 60_000 }).catch(() => null);
+		if (alive?.ok()) return account;
+		SESSIONS.delete(role);
+		await page.context().clearCookies();
+	}
+
+	// The limiter answers 429 with the seconds to wait. Waiting the interval the
+	// server itself named is not retrying a test into passing: no assertion has
+	// run yet and the wait is a documented Retry-After. Anything else fails loudly.
 	for (let attempt = 0; ; attempt += 1) {
 		const res = await page.request.post('/api/auth/login', {
 			data: { email: account.email, password: account.password },
 			headers: { 'content-type': 'application/json' },
 			timeout: 60_000,
 		});
-		if (res.ok()) return account;
+		if (res.ok()) {
+			SESSIONS.set(role, await page.context().cookies());
+			return account;
+		}
 
 		const body = await res.text();
 		const retryAfter = Number(JSON.parse(body || '{}')?.retry_after) || 0;
