@@ -137,18 +137,33 @@ async function lookup(address, chain, { push = true } = {}) {
 	}
 }
 
+// The API answers errors in the platform envelope (api/_lib/http.js error()):
+// `{ error: "<code>", error_description: "<sentence>" }`. Read that first, then
+// the `{ message }` shape submit() synthesizes for a client-side rejection.
+function apiMessage(body) {
+	const m = body?.error_description || body?.message || body?.error?.message;
+	return typeof m === 'string' && m.trim() ? m.trim() : '';
+}
+
 function renderError(status, body) {
 	const title = $('pf-error-title');
 	const msg = $('pf-error-body');
+	const upstream = apiMessage(body);
 	if (status === 400) {
 		title.textContent = 'That address does not look right';
-		msg.textContent = body?.error?.message || body?.message || 'Check the address and chain, then try again.';
+		msg.textContent = upstream || 'Check the address and chain, then try again.';
 	} else if (status === 429) {
 		title.textContent = 'Slow down a moment';
 		msg.textContent = 'Too many lookups in a short burst. Wait a few seconds and retry.';
+	} else if (status === 503 && body?.error === 'not_configured') {
+		// This deployment has no provider key for the requested chain. Solana is
+		// keyless and always available, so name the way out rather than asking
+		// the reader to retry something that cannot start working on its own.
+		title.textContent = 'This chain is not available here';
+		msg.textContent = `${upstream || 'This chain needs a provider key that is not set on this deployment.'} Paste a Solana address to use the keyless path.`;
 	} else if (status === 503) {
 		title.textContent = 'Data source unavailable';
-		msg.textContent = body?.error?.message || body?.message || 'The balance sources for this chain are unreachable right now. Retry shortly.';
+		msg.textContent = upstream || 'The balance sources for this chain are unreachable right now. Retry shortly.';
 	} else {
 		title.textContent = 'Could not load this wallet';
 		msg.textContent = 'The request failed before reaching the data sources. Check your connection and retry.';
