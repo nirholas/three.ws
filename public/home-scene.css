@@ -543,3 +543,39 @@
 	.hs-panel { max-height: none; }
 	.hs-title { max-width: 14ch; }
 }
+
+/*
+ * Reduced motion, across the whole page and not just the three animations that
+ * used to name themselves here.
+ *
+ * The 3D scene already honours the preference from the inside: every damped
+ * quantity in src/home/scene-render.js snaps to its target, OrbitControls stops
+ * coasting, and focusing a room places the camera rather than flying it. What
+ * was left was the chrome around it, where a house's state travels in CSS: a
+ * room's light dot cross-fading to its new colour, a card fading as it goes
+ * stale, the whole canvas desaturating over --duration-slow. Those are the
+ * scene's transitions too, and someone who asked for less motion asked for
+ * these as well.
+ *
+ * The rule is a snap, never a freeze. A house is a live readout: values keep
+ * arriving and keep being correct, they simply stop travelling to their new
+ * state. 1ms rather than 0 so a transitionend listener still fires.
+ */
+@media (prefers-reduced-motion: reduce) {
+	.hs-shell *,
+	.hs-shell *::before,
+	.hs-shell *::after {
+		animation-duration: 1ms !important;
+		animation-iteration-count: 1 !important;
+		animation-delay: 0s !important;
+		transition-duration: 1ms !important;
+		transition-delay: 0s !important;
+		scroll-behavior: auto !important;
+	}
+	/* The 2D house's cards are the one place a transform moves a whole block
+	   rather than a colour. */
+	.hs-card,
+	.hs-btn:active:not(:disabled) {
+		transform: none !important;
+	}
+}

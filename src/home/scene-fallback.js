@@ -12,15 +12,23 @@
  * merely present.
  */
 
-/** Domains a person can act on from here, and the two services each offers. */
+import { formatNumber, locale, plural, t } from './i18n-home.js';
+
+/**
+ * Domains a person can act on from here, and the two services each offers.
+ *
+ * The third slot is a catalog key, not a label: the label is resolved at render
+ * time so switching language re-renders into the new one rather than keeping
+ * whatever was current when this module was first evaluated.
+ */
 const CONTROLS = {
-	light: { on: ['light', 'turn_on', 'Turn on'], off: ['light', 'turn_off', 'Turn off'] },
-	switch: { on: ['switch', 'turn_on', 'Turn on'], off: ['switch', 'turn_off', 'Turn off'] },
-	fan: { on: ['fan', 'turn_on', 'Turn on'], off: ['fan', 'turn_off', 'Turn off'] },
-	lock: { on: ['lock', 'unlock', 'Unlock'], off: ['lock', 'lock', 'Lock'] },
-	cover: { on: ['cover', 'open_cover', 'Open'], off: ['cover', 'close_cover', 'Close'] },
-	media_player: { on: ['media_player', 'media_play', 'Play'], off: ['media_player', 'media_pause', 'Pause'] },
-	vacuum: { on: ['vacuum', 'start', 'Start'], off: ['vacuum', 'return_to_base', 'Send home'] },
+	light: { on: ['light', 'turn_on', 'act_turn_on', 'Turn on'], off: ['light', 'turn_off', 'act_turn_off', 'Turn off'] },
+	switch: { on: ['switch', 'turn_on', 'act_turn_on', 'Turn on'], off: ['switch', 'turn_off', 'act_turn_off', 'Turn off'] },
+	fan: { on: ['fan', 'turn_on', 'act_turn_on', 'Turn on'], off: ['fan', 'turn_off', 'act_turn_off', 'Turn off'] },
+	lock: { on: ['lock', 'unlock', 'act_unlock', 'Unlock'], off: ['lock', 'lock', 'act_lock', 'Lock'] },
+	cover: { on: ['cover', 'open_cover', 'act_open', 'Open'], off: ['cover', 'close_cover', 'act_close', 'Close'] },
+	media_player: { on: ['media_player', 'media_play', 'act_play', 'Play'], off: ['media_player', 'media_pause', 'act_pause', 'Pause'] },
+	vacuum: { on: ['vacuum', 'start', 'act_start', 'Start'], off: ['vacuum', 'return_to_base', 'act_send_home', 'Send home'] },
 };
 
 /**
@@ -83,9 +91,23 @@ export function createHomeFallback(container, options = {}) {
 		const meta = document.createElement('p');
 		meta.className = 'hs-card-meta';
 		const bits = [];
-		bits.push(room.light.total ? `${room.light.count} of ${room.light.total} lights on` : 'no lights');
-		if (room.climate) bits.push(`${room.climate.label} from ${room.climate.sources} ${room.climate.sources === 1 ? 'sensor' : 'sensors'}`);
-		if (room.security) bits.push(room.security.secure ? 'secure' : `${room.security.unlocked.length + room.security.open.length} open`);
+		bits.push(room.light.total
+			? t('home_scene.flat_lights_on', '{{on}} of {{total}} lights on', { on: formatNumber(room.light.count), total: formatNumber(room.light.total) })
+			: t('home_scene.flat_no_lights', 'no lights'));
+		if (room.climate) {
+			bits.push(plural(
+				'home_scene.flat_from_sensors',
+				room.climate.sources,
+				'{{label}} from {{count}} sensor',
+				'{{label}} from {{count}} sensors',
+				{ label: room.climate.label },
+			));
+		}
+		if (room.security) {
+			bits.push(room.security.secure
+				? t('home_scene.flat_secure', 'secure')
+				: t('home_scene.flat_open_count', '{{count}} open', { count: formatNumber(room.security.unlocked.length + room.security.open.length) }));
+		}
 		meta.textContent = bits.join(' · ');
 		head.appendChild(meta);
 		card.appendChild(head);
@@ -118,7 +140,7 @@ export function createHomeFallback(container, options = {}) {
 		if (room.hiddenCount) {
 			const more = document.createElement('p');
 			more.className = 'hs-card-more';
-			more.textContent = `${room.hiddenCount} more ${room.hiddenCount === 1 ? 'device' : 'devices'} in this room`;
+			more.textContent = plural('home_scene.flat_hidden', room.hiddenCount, '{{count}} more device in this room', '{{count}} more devices in this room');
 			card.appendChild(more);
 		}
 		return card;
@@ -144,19 +166,24 @@ export function createHomeFallback(container, options = {}) {
 
 		const state = document.createElement('span');
 		state.className = 'hs-item-state';
-		state.textContent = object.available ? readableState(object) : 'unreachable';
+		state.textContent = object.available ? readableState(object) : t('home_scene.unreachable', 'unreachable');
 		row.appendChild(state);
 
 		const control = CONTROLS[object.domain];
 		if (control && object.available) {
 			const active = object.activity > 0.02;
-			const [domain, service, label] = active ? control.off : control.on;
+			const [domain, service, key, source] = active ? control.off : control.on;
+			const label = t(`home_scene.${key}`, source);
 			const button = document.createElement('button');
 			button.type = 'button';
 			button.className = 'hs-item-act';
-			button.textContent = busy.has(object.entityId) ? 'Working' : label;
+			button.textContent = busy.has(object.entityId) ? t('home_scene.working', 'Working') : label;
 			button.disabled = busy.has(object.entityId);
-			button.setAttribute('aria-label', `${label} ${object.name} in ${room.name}`);
+			// The device's name and its room's name are the user's own words, so
+			// they are interpolated rather than concatenated into a translatable
+			// sentence: a catalog string with "Front Door" baked into it would be
+			// machine-translated on the next run.
+			button.setAttribute('aria-label', t('home_scene.act_aria', '{{action}} {{name}} in {{room}}', { action: label, name: object.name, room: room.name }));
 			button.addEventListener('click', () => {
 				options.onAct?.({ entityId: object.entityId, domain, service, name: object.name, roomId: room.id });
 			});
@@ -176,7 +203,11 @@ export function createHomeFallback(container, options = {}) {
 	function readableState(object) {
 		if (object.domain === 'cover') {
 			const position = Number(object.attributes?.current_position);
-			if (Number.isFinite(position)) return position === 0 ? 'closed' : position === 100 ? 'open' : `${position}% open`;
+			if (Number.isFinite(position)) {
+				if (position === 0) return t('home_scene.state_closed', 'closed');
+				if (position === 100) return t('home_scene.state_open', 'open');
+				return t('home_scene.state_part_open', '{{percent}} open', { percent: percent(position) });
+			}
 		}
 		if (object.domain === 'climate') {
 			const current = Number(object.attributes?.current_temperature);
@@ -188,7 +219,9 @@ export function createHomeFallback(container, options = {}) {
 		}
 		if (object.domain === 'light' && object.activity > 0) {
 			const brightness = Number(object.attributes?.brightness);
-			if (Number.isFinite(brightness)) return `on · ${Math.round((brightness / 255) * 100)}%`;
+			if (Number.isFinite(brightness)) {
+				return t('home_scene.state_on_at', 'on · {{percent}}', { percent: percent(Math.round((brightness / 255) * 100)) });
+			}
 		}
 		return String(object.state);
 	}
@@ -199,9 +232,17 @@ export function createHomeFallback(container, options = {}) {
 			const object = room.objects.find((o) => o.entityId === entityId);
 			names.push(object ? object.name : entityId);
 		}
-		if (!names.length) return 'Something in this room is open.';
-		const verb = room.security.unlocked.length ? 'unlocked' : 'open';
-		return `${names.slice(0, 3).join(', ')}${names.length > 3 ? ` and ${names.length - 3} more` : ''} ${names.length === 1 ? 'is' : 'are'} ${verb}.`;
+		if (!names.length) return t('home_scene.something_open', 'Something in this room is open.');
+		// The device names are the user's own and are joined with the reader's own
+		// list separator; only the sentence around them is copy. English "is/are"
+		// and the "and 2 more" tail are both catalog keys so a locale can put them
+		// where its own grammar needs them.
+		const shown = names.slice(0, 3);
+		if (names.length > 3) shown.push(t('home_scene.n_more', '{{count}} more', { count: formatNumber(names.length - 3) }));
+		const extra = listFormat(shown);
+		return room.security.unlocked.length
+			? plural('home_scene.is_unlocked', names.length, '{{names}} is unlocked.', '{{names}} are unlocked.', { names: extra })
+			: plural('home_scene.is_open', names.length, '{{names}} is open.', '{{names}} are open.', { names: extra });
 	}
 
 	return {
@@ -220,7 +261,9 @@ export function createHomeFallback(container, options = {}) {
 		},
 		focusRoom(roomId) {
 			const card = list.querySelector(`[data-room-id="${cssEscape(roomId)}"]`);
-			card?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+			// Someone who asked for less motion gets the card placed, not flown to.
+			const reduce = typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion: reduce)').matches;
+			card?.scrollIntoView({ behavior: reduce ? 'auto' : 'smooth', block: 'center' });
 			card?.classList.add('is-focused');
 			setTimeout(() => card?.classList.remove('is-focused'), 1800);
 		},
@@ -236,6 +279,24 @@ export function createHomeFallback(container, options = {}) {
 			container.classList.remove('hs-flat');
 		},
 	};
+}
+
+/** A percentage in the reader's own locale, never `${n}%`. */
+function percent(value) {
+	try {
+		return new Intl.NumberFormat(locale(), { style: 'percent', maximumFractionDigits: 0 }).format(Number(value) / 100);
+	} catch {
+		return `${value}%`;
+	}
+}
+
+/** "a, b and c" in the reader's own language, never a hardcoded comma-and. */
+function listFormat(items) {
+	try {
+		return new Intl.ListFormat(locale(), { style: 'long', type: 'conjunction' }).format(items);
+	} catch {
+		return items.join(', ');
+	}
 }
 
 function cssEscape(value) {

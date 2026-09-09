@@ -15,6 +15,7 @@
 import { HomeApiError, callService, getHome, getLayout, grantEntity, openStream } from './api.js';
 import { buildSceneModel } from './scene-model.js';
 import { createHomeFallback, webglAvailable } from './scene-fallback.js';
+import { formatNumber, locale, plural, t } from './i18n-home.js';
 
 const VIEW_KEY = 'three:home:view';
 /** A device that cannot hold this for a few seconds is sent to the 2D house. */
@@ -110,9 +111,9 @@ boot();
 async function boot() {
 	if (!state.homeId) {
 		showOverlay({
-			title: 'No home in that link',
-			body: 'A home scene needs a home id, as in /home/<id>. Open one from your list of connected homes.',
-			actions: [{ label: 'Your homes', href: '/home', primary: true }],
+			title: t('home_scene.no_id_title', 'No home in that link'),
+			body: t('home_scene.no_id_body', 'A home scene needs a home id, as in /home/<id>. Open one from your list of connected homes.'),
+			actions: [{ label: t('home_scene.your_homes', 'Your homes'), href: '/home', primary: true }],
 		});
 		return;
 	}
@@ -190,8 +191,12 @@ async function load() {
 	try {
 		const payload = await getHome(state.homeId);
 		state.home = payload.home || null;
-		el.title.textContent = state.home?.label || 'Your home';
-		document.title = `${state.home?.label || 'Your home'} · three.ws`;
+		// The house's own label is the user's word for their own home: shown as
+		// they typed it, in every locale. Only the fallback for a home nobody
+		// named is ours to translate.
+		const label = state.home?.label || t('home_scene.untitled_home', 'Your home');
+		el.title.textContent = label;
+		document.title = `${label} · three.ws`;
 		mountRenderer();
 		// The authored floorplan, if anyone drew one. Best effort on purpose: a
 		// layout that cannot be read must never stop the house from rendering,
@@ -218,7 +223,7 @@ function subscribe() {
 	state.stream?.close();
 	state.stream = openStream(state.homeId, {
 		onOpen() {
-			setStatus('live', 'Live');
+			setStatus('live', t('home_scene.status_live', 'Live'));
 		},
 		onGraph(payload) {
 			const receivedAt = performance.now();
@@ -259,9 +264,9 @@ function setStatusFromServer(payload) {
 	state.stale = Boolean(payload.stale);
 	const detail = payload.detail || payload.statusDetail;
 	if (status === 'auth_failed' || status === 'revoked' || status === 'disconnected') {
-		setStatus('disconnected', status === 'auth_failed' ? 'Sign in again' : 'Disconnected', detail);
+		setStatus('disconnected', status === 'auth_failed' ? t('home_scene.status_reauth', 'Sign in again') : t('home_scene.status_disconnected', 'Disconnected'), detail);
 	} else if (status === 'unreachable' || state.stale || status === 'reconnecting' || status === 'pending' || status === 'connecting') {
-		setStatus('stale', status === 'reconnecting' ? 'Reconnecting' : 'Stale', detail);
+		setStatus('stale', status === 'reconnecting' ? t('home_scene.status_reconnecting', 'Reconnecting') : t('home_scene.status_stale', 'Stale'), detail);
 	} else {
 		setStatus('live', 'Live');
 	}
@@ -281,7 +286,7 @@ function setStatus(kind, label, detail) {
 	el.stage.classList.toggle('is-stale', stale);
 	renderAge();
 	if (kind === 'disconnected') {
-		announce(detail || 'The connection to your home dropped. The house below is the last state we saw.');
+		announce(detail || t('home_scene.dropped', 'The connection to your home dropped. The house below is the last state we saw.'));
 	}
 }
 
@@ -360,7 +365,7 @@ function mountRenderer() {
 	if (want === '2d' && state.view !== '2d') {
 		// Not a preference: this device genuinely cannot run WebGL, and it is
 		// told so rather than being shown a blank canvas.
-		announce('This browser cannot run WebGL, so your home is shown as a floor list you can still read and control.');
+		announce(t('home_scene.no_webgl_switched', 'This browser cannot run WebGL, so your home is shown as a floor list you can still read and control.'));
 		state.view = '2d';
 	}
 	setView(state.view, { remember: false, force: true });
@@ -368,7 +373,7 @@ function mountRenderer() {
 
 function setView(view, { remember = true, force = false } = {}) {
 	if (view === '3d' && !webglAvailable()) {
-		announce('WebGL is unavailable in this browser, so the 2D house stays on.');
+		announce(t('home_scene.no_webgl_stays', 'WebGL is unavailable in this browser, so the 2D house stays on.'));
 		view = '2d';
 	}
 	if (!force && view === state.view && state.renderer) return;
@@ -384,7 +389,7 @@ function setView(view, { remember = true, force = false } = {}) {
 	el.view2d.setAttribute('aria-pressed', String(view === '2d'));
 	el.viewPlan?.setAttribute('aria-pressed', String(view === 'plan'));
 	el.view3d.disabled = !webglAvailable();
-	if (el.view3d.disabled) el.view3d.title = 'This browser cannot run WebGL.';
+	if (el.view3d.disabled) el.view3d.title = t('home_scene.no_webgl_title', 'This browser cannot run WebGL.');
 
 	state.renderer?.dispose();
 	state.renderer = null;
@@ -495,7 +500,7 @@ async function mount3d() {
 			renderEmptyStates(state.model);
 		}
 	} catch (err) {
-		announce('The 3D house could not start, so the 2D house is on instead.');
+		announce(t('home_scene.render_failed', 'The 3D house could not start, so the 2D house is on instead.'));
 		console.warn('[home] 3D renderer failed to start', err);
 		setView('2d', { remember: false, force: true });
 	}
@@ -517,10 +522,10 @@ function startFpsWatch() {
 		if (stats.fps >= MIN_FPS) return;
 		if (state.viewChosen) {
 			// They asked for this view. Say what the device is doing and leave it on.
-			announce(`This device is holding ${stats.fps} frames a second in the 3D house. The 2D button is faster if it feels heavy.`);
+			announce(t('home_scene.fps_kept', 'This device is holding {{fps}} frames a second in the 3D house. The 2D button is faster if it feels heavy.', { fps: formatNumber(stats.fps) }));
 			return;
 		}
-		announce(`This device held only ${stats.fps} frames a second, so your home switched to the 2D view. The 3D button turns it back on.`);
+		announce(t('home_scene.fps_switched', 'This device held only {{fps}} frames a second, so your home switched to the 2D view. The 3D button turns it back on.', { fps: formatNumber(stats.fps) }));
 		setView('2d', { remember: false, force: true });
 	}, 1000);
 }
@@ -541,7 +546,7 @@ function renderRooms(model) {
 	if (!model.rooms.length) {
 		const note = document.createElement('p');
 		note.className = 'hs-panel-empty';
-		note.textContent = 'No rooms yet.';
+		note.textContent = t('home_scene.no_rooms', 'No rooms yet.');
 		el.rooms.appendChild(note);
 		return;
 	}
@@ -590,17 +595,17 @@ function renderRooms(model) {
 				meta.classList.add('hs-room-alert');
 				// The word carries it, not the colour: `hs-room-alert` is red AND
 				// says "open", and the two never disagree.
-				meta.textContent = 'open';
+				meta.textContent = t('home_scene.meta_open', 'open');
 			} else if (room.light.total) {
 				// Lights on used to live only in the dot's colour, which is exactly
 				// the failure WCAG 1.4.1 is about. The count is the same fact in
 				// words, and it is more useful than the bare entity count it
 				// replaced: "2/5" answers "did I leave a light on in there".
-				meta.textContent = `${room.light.count}/${room.light.total}`;
+				meta.textContent = t('home_scene.meta_lights', '{{on}}/{{total}}', { on: formatNumber(room.light.count), total: formatNumber(room.light.total) });
 			} else if (room.climate) {
 				meta.textContent = room.climate.label;
 			} else {
-				meta.textContent = `${room.entityCount}`;
+				meta.textContent = formatNumber(room.entityCount);
 			}
 			button.appendChild(meta);
 
@@ -608,7 +613,7 @@ function renderRooms(model) {
 			// of the above. It replaces the button's own label rather than adding
 			// to it, so "Kitchen, 2 of 5" is never read as two disconnected
 			// fragments.
-			button.setAttribute('aria-label', `${room.name}. ${describeRoom(room)}`);
+			button.setAttribute('aria-label', t('home_scene.said_room', '{{name}}. {{description}}', { name: room.name, description: describeRoom(room) }));
 
 			button.addEventListener('click', () => focusRoom(room.id));
 			item.appendChild(button);
@@ -652,16 +657,21 @@ function describeRoom(room) {
 	const bits = [];
 	if (room.light.total) {
 		bits.push(room.light.count === 0
-			? `No lights on out of ${room.light.total}.`
-			: `${room.light.count} of ${room.light.total} lights on.`);
+			? t('home_scene.desc_no_lights', 'No lights on out of {{total}}.', { total: formatNumber(room.light.total) })
+			: t('home_scene.desc_lights_on', '{{on}} of {{total}} lights on.', { on: formatNumber(room.light.count), total: formatNumber(room.light.total) }));
 	}
+	// The climate label is a number and the house's own unit. Neither is copy.
 	if (room.climate) bits.push(`${room.climate.label}.`);
 	if (room.security) {
+		const open = room.security.unlocked.length + room.security.open.length;
 		bits.push(room.security.secure
-			? 'Everything here is closed and locked.'
-			: `${room.security.unlocked.length + room.security.open.length} open or unlocked.`);
+			? t('home_scene.desc_secure', 'Everything here is closed and locked.')
+			: t('home_scene.desc_open', '{{count}} open or unlocked.', { count: formatNumber(open) }));
 	}
-	bits.push(`${room.entityCount} ${room.entityCount === 1 ? 'device' : 'devices'}.`);
+	// Plural through the catalog, never through a ternary on an English suffix:
+	// most locales do not form a plural by adding an s, and several need forms
+	// English has no word for.
+	bits.push(plural('home_scene.desc_devices', room.entityCount, '{{count}} device.', '{{count}} devices.'));
 	return bits.join(' ');
 }
 
@@ -678,7 +688,7 @@ function focusRoom(roomId) {
 	renderRooms(state.model);
 	if (hadFocus) el.rooms.querySelector(`.hs-room[data-room-id="${cssEscape(roomId)}"]`)?.focus();
 	const room = state.model.rooms.find((r) => r.id === roomId);
-	if (room) announce(`${room.name}. ${describeRoom(room)}`);
+	if (room) announce(t('home_scene.said_room', '{{name}}. {{description}}', { name: room.name, description: describeRoom(room) }));
 }
 
 /**
@@ -706,7 +716,7 @@ function renderRoomDevices(room, id) {
 		name.textContent = object.name;
 		const value = document.createElement('span');
 		value.className = 'hs-room-device-state';
-		value.textContent = object.available ? String(object.state) : 'unreachable';
+		value.textContent = object.available ? String(object.state) : t('home_scene.unreachable', 'unreachable');
 		pick.append(name, value);
 		pick.addEventListener('click', () => selectEntity(object.entityId, object));
 		li.appendChild(pick);
@@ -723,7 +733,18 @@ function selectEntity(entityId, object) {
 		button.setAttribute('aria-current', String(button.dataset.entityId === entityId));
 	}
 	renderInspector();
-	if (object) announce(`${object.name}. ${object.available ? `Currently ${object.state}.` : 'Unreachable.'} Its controls are in the device panel.`);
+	if (object) {
+		announce(t(
+			'home_scene.said_device',
+			'{{name}}. {{state}} Its controls are in the device panel.',
+			{
+				name: object.name,
+				state: object.available
+					? t('home_scene.currently', 'Currently {{state}}.', { state: object.state })
+					: t('home_scene.unreachable_sentence', 'Unreachable.'),
+			},
+		));
+	}
 }
 
 // ── inspector ────────────────────────────────────────────────────────────────
@@ -758,7 +779,9 @@ function renderInspector() {
 
 	const stateLine = document.createElement('p');
 	stateLine.className = 'hs-entity-state';
-	stateLine.textContent = object.available ? `Currently ${object.state}.` : 'Home Assistant cannot reach this device right now.';
+	stateLine.textContent = object.available
+		? t('home_scene.currently', 'Currently {{state}}.', { state: object.state })
+		: t('home_scene.device_unreachable', 'Home Assistant cannot reach this device right now.');
 	el.inspector.appendChild(stateLine);
 
 	const attrs = describeAttributes(object);
@@ -783,7 +806,7 @@ function renderInspector() {
 			const button = document.createElement('button');
 			button.type = 'button';
 			button.className = action.risky ? 'hs-btn hs-btn--danger' : 'hs-btn';
-			button.textContent = state.busy.has(object.entityId) ? 'Working' : action.label;
+			button.textContent = state.busy.has(object.entityId) ? t('home_scene.working', 'Working') : action.label;
 			button.disabled = state.busy.has(object.entityId);
 			button.addEventListener('click', () =>
 				act({ entityId: object.entityId, domain: action.domain, service: action.service, name: object.name, roomId: roomOf(object.entityId)?.id }),
@@ -798,15 +821,16 @@ function renderInspector() {
 function describeAttributes(object) {
 	const out = [];
 	const a = object.attributes || {};
-	if (Number.isFinite(Number(a.brightness))) out.push(['Brightness', `${Math.round((Number(a.brightness) / 255) * 100)}%`]);
-	if (Array.isArray(a.rgb_color)) out.push(['Colour', `rgb(${a.rgb_color.join(', ')})`]);
-	if (Number.isFinite(Number(a.current_position))) out.push(['Open', `${Number(a.current_position)}%`]);
+	if (Number.isFinite(Number(a.brightness))) out.push([t('home_scene.attr_brightness', 'Brightness'), percent(Math.round((Number(a.brightness) / 255) * 100))]);
+	if (Array.isArray(a.rgb_color)) out.push([t('home_scene.attr_colour', 'Colour'), `rgb(${a.rgb_color.join(', ')})`]);
+	if (Number.isFinite(Number(a.current_position))) out.push([t('home_scene.attr_open', 'Open'), percent(Number(a.current_position))]);
 	// The unit the house reports, not the one the browser's locale would guess.
 	const unit = state.model?.temperatureUnit || '°';
-	if (Number.isFinite(Number(a.current_temperature))) out.push(['Now', `${a.current_temperature}${unit}`]);
-	if (Number.isFinite(Number(a.temperature))) out.push(['Set to', `${a.temperature}${unit}`]);
-	if (a.device_class) out.push(['Class', String(a.device_class)]);
-	if (a.media_title) out.push(['Playing', String(a.media_title)]);
+	if (Number.isFinite(Number(a.current_temperature))) out.push([t('home_scene.attr_now', 'Now'), `${formatNumber(a.current_temperature)}${unit}`]);
+	if (Number.isFinite(Number(a.temperature))) out.push([t('home_scene.attr_set_to', 'Set to'), `${formatNumber(a.temperature)}${unit}`]);
+	if (a.device_class) out.push([t('home_scene.attr_class', 'Class'), String(a.device_class)]);
+	// The track title is the media's own name, never ours to translate.
+	if (a.media_title) out.push([t('home_scene.attr_playing', 'Playing'), String(a.media_title)]);
 	return out.slice(0, 6);
 }
 
@@ -817,24 +841,28 @@ function actionsFor(object) {
 		case 'switch':
 		case 'fan':
 			return [on
-				? { domain: object.domain, service: 'turn_off', label: 'Turn off' }
-				: { domain: object.domain, service: 'turn_on', label: 'Turn on' }];
+				? { domain: object.domain, service: 'turn_off', label: t('home_scene.act_turn_off', 'Turn off') }
+				: { domain: object.domain, service: 'turn_on', label: t('home_scene.act_turn_on', 'Turn on') }];
 		case 'lock':
 			return on
-				? [{ domain: 'lock', service: 'lock', label: 'Lock' }]
-				: [{ domain: 'lock', service: 'unlock', label: 'Unlock', risky: true }];
+				? [{ domain: 'lock', service: 'lock', label: t('home_scene.act_lock', 'Lock') }]
+				: [{ domain: 'lock', service: 'unlock', label: t('home_scene.act_unlock', 'Unlock'), risky: true }];
 		case 'cover':
 			return on
-				? [{ domain: 'cover', service: 'close_cover', label: 'Close' }]
-				: [{ domain: 'cover', service: 'open_cover', label: 'Open', risky: true }];
+				? [{ domain: 'cover', service: 'close_cover', label: t('home_scene.act_close', 'Close') }]
+				: [{ domain: 'cover', service: 'open_cover', label: t('home_scene.act_open', 'Open'), risky: true }];
 		case 'media_player':
-			return [on ? { domain: 'media_player', service: 'media_pause', label: 'Pause' } : { domain: 'media_player', service: 'media_play', label: 'Play' }];
+			return [on
+				? { domain: 'media_player', service: 'media_pause', label: t('home_scene.act_pause', 'Pause') }
+				: { domain: 'media_player', service: 'media_play', label: t('home_scene.act_play', 'Play') }];
 		case 'vacuum':
-			return [on ? { domain: 'vacuum', service: 'return_to_base', label: 'Send home' } : { domain: 'vacuum', service: 'start', label: 'Start' }];
+			return [on
+				? { domain: 'vacuum', service: 'return_to_base', label: t('home_scene.act_send_home', 'Send home') }
+				: { domain: 'vacuum', service: 'start', label: t('home_scene.act_start', 'Start') }];
 		case 'alarm_control_panel':
 			return on
-				? [{ domain: 'alarm_control_panel', service: 'alarm_disarm', label: 'Disarm', risky: true }]
-				: [{ domain: 'alarm_control_panel', service: 'alarm_arm_away', label: 'Arm' }];
+				? [{ domain: 'alarm_control_panel', service: 'alarm_disarm', label: t('home_scene.act_disarm', 'Disarm'), risky: true }]
+				: [{ domain: 'alarm_control_panel', service: 'alarm_arm_away', label: t('home_scene.act_arm', 'Arm') }];
 		default:
 			return [];
 	}
@@ -860,21 +888,21 @@ async function act(request, { confirmed = false, remember = false } = {}) {
 			confirmed,
 		});
 		dismissConfirm();
-		pushLog({ text: `${request.service.replace(/_/g, ' ')} ${request.name}`, outcome: 'ok' });
-		announce(`${request.name}: ${request.service.replace(/_/g, ' ')}.`);
+		pushLog({ text: t('home_scene.log_entry', '{{action}} {{name}}', { action: serviceLabel(request.service), name: request.name }), outcome: 'ok' });
+		announce(t('home_scene.act_done', '{{name}}: {{action}}.', { name: request.name, action: serviceLabel(request.service) }));
 	} catch (err) {
 		if (err instanceof HomeApiError && err.code === 'needs_confirmation') {
 			// The gate fired. Ask, next to the thing it would move.
 			state.pending = { request, message: err.message, risk: err.pending?.risk || 'physical', entityId: err.pending?.entityId || request.entityId };
-			pushLog({ text: `${request.service.replace(/_/g, ' ')} ${request.name}`, outcome: 'refused' });
+			pushLog({ text: t('home_scene.log_entry', '{{action}} {{name}}', { action: serviceLabel(request.service), name: request.name }), outcome: 'refused' });
 			// Where the keyboard was when the gate fired. Cancelling or pressing
 			// Escape puts it back there, so a keyboard user is returned to the
 			// control they pressed instead of to the top of the document.
 			state.confirmReturn = document.activeElement instanceof HTMLElement ? document.activeElement : null;
 			renderConfirm();
 		} else {
-			pushLog({ text: `${request.service.replace(/_/g, ' ')} ${request.name}`, outcome: 'failed' });
-			announce(err.message || 'That did not work.');
+			pushLog({ text: t('home_scene.log_entry', '{{action}} {{name}}', { action: serviceLabel(request.service), name: request.name }), outcome: 'failed' });
+			announce(err.message || t('home_scene.act_failed', 'That did not work.'));
 			showToastError(err);
 		}
 	} finally {
@@ -898,7 +926,7 @@ function renderConfirm() {
 	card.className = 'hs-confirm';
 	card.setAttribute('role', 'alertdialog');
 	card.setAttribute('aria-modal', 'false');
-	card.setAttribute('aria-label', 'Confirm this action');
+	card.setAttribute('aria-label', t('home_scene.confirm_aria', 'Confirm this action'));
 	// A screen reader reads an alertdialog's own description when focus lands
 	// inside it, and the description is these three paragraphs in order: the
 	// risk band, the question, and the reason the gate stopped it.
@@ -908,14 +936,20 @@ function renderConfirm() {
 	const risk = document.createElement('p');
 	risk.className = 'hs-confirm-risk';
 	risk.id = `${cardId}-risk`;
-	risk.textContent = pending.risk === 'security' ? 'Opens your home' : 'Moves something physical';
+	risk.textContent = pending.risk === 'security'
+		? t('home_scene.risk_security', 'Opens your home')
+		: t('home_scene.risk_physical', 'Moves something physical');
 	card.appendChild(risk);
 
 	const text = document.createElement('p');
 	text.className = 'hs-confirm-text';
 	text.id = `${cardId}-q`;
 	const object = findObject(pending.entityId);
-	text.textContent = `${pending.request.service.replace(/_/g, ' ')} ${object?.name || pending.request.name}?`;
+	// The question, with the user's own name for the thing interpolated in.
+	text.textContent = t('home_scene.confirm_question', '{{action}} {{name}}?', {
+		action: serviceLabel(pending.request.service),
+		name: object?.name || pending.request.name,
+	});
 	card.appendChild(text);
 
 	const why = document.createElement('p');
@@ -930,7 +964,7 @@ function renderConfirm() {
 	const yes = document.createElement('button');
 	yes.type = 'button';
 	yes.className = 'hs-btn hs-btn--primary';
-	yes.textContent = 'Yes, do it';
+	yes.textContent = t('home_scene.confirm_yes', 'Yes, do it');
 	yes.addEventListener('click', () => {
 		const remember = card.querySelector('input')?.checked;
 		const request = pending.request;
@@ -945,11 +979,11 @@ function renderConfirm() {
 	const no = document.createElement('button');
 	no.type = 'button';
 	no.className = 'hs-btn';
-	no.textContent = 'Cancel';
+	no.textContent = t('home_scene.confirm_no', 'Cancel');
 	no.addEventListener('click', () => {
 		state.pending = null;
 		dismissConfirm({ restoreFocus: true });
-		announce('Cancelled. Nothing moved.');
+		announce(t('home_scene.cancelled', 'Cancelled. Nothing moved.'));
 	});
 	row.append(yes, no);
 	card.appendChild(row);
@@ -958,7 +992,9 @@ function renderConfirm() {
 	rememberLabel.className = 'hs-confirm-remember';
 	const checkbox = document.createElement('input');
 	checkbox.type = 'checkbox';
-	rememberLabel.append(checkbox, document.createTextNode(`Do not ask again for ${object?.name || 'this device'}`));
+	rememberLabel.append(checkbox, document.createTextNode(t('home_scene.confirm_remember', 'Do not ask again for {{name}}', {
+		name: object?.name || t('home_scene.this_device', 'this device'),
+	})));
 	card.appendChild(rememberLabel);
 
 	el.stage.appendChild(card);
@@ -969,7 +1005,11 @@ function renderConfirm() {
 	yes.focus();
 	// Assertive, and self-contained: a reader that lands on the Yes button hears
 	// the button, not the question, so the question is said in full here.
-	alertAssertive(`${risk.textContent}. ${text.textContent} ${pending.message} Answer with the Yes or Cancel button, or press Escape to cancel.`);
+	alertAssertive(t(
+		'home_scene.confirm_spoken',
+		'{{risk}}. {{question}} {{why}} Answer with the Yes or Cancel button, or press Escape to cancel.',
+		{ risk: risk.textContent, question: text.textContent, why: pending.message },
+	));
 }
 
 /**
@@ -1028,7 +1068,7 @@ function onKeydown(event) {
 	if (event.key === 'Escape' && state.pending) {
 		state.pending = null;
 		dismissConfirm({ restoreFocus: true });
-		announce('Cancelled. Nothing moved.');
+		announce(t('home_scene.cancelled', 'Cancelled. Nothing moved.'));
 	}
 }
 
@@ -1037,18 +1077,18 @@ function onKeydown(event) {
 function renderEmptyStates(model) {
 	if (model.empty) {
 		showOverlay({
-			title: 'Your home is connected, and empty',
-			body: 'Home Assistant answered, but it is not exposing any devices yet. Add an integration in Home Assistant (Settings, Devices and services), and this scene fills in as soon as the first device appears. Nothing else to do here.',
-			actions: [{ label: 'Add a device in Home Assistant', href: integrationsUrl(), external: true, primary: true }],
+			title: t('home_scene.empty_title', 'Your home is connected, and empty'),
+			body: t('home_scene.empty_body', 'Home Assistant answered, but it is not exposing any devices yet. Add an integration in Home Assistant (Settings, Devices and services), and this scene fills in as soon as the first device appears. Nothing else to do here.'),
+			actions: [{ label: t('home_scene.empty_action', 'Add a device in Home Assistant'), href: integrationsUrl(), external: true, primary: true }],
 		});
 		return;
 	}
 	if (model.needsLayout) {
 		showOverlay({
-			title: 'Nothing is in a room yet',
-			body: 'Every device in this house is unfiled, so they are all in one room below. Assign them to areas in Home Assistant (Settings, Areas and zones) or lay the house out here, and the scene splits into real rooms.',
+			title: t('home_scene.unfiled_title', 'Nothing is in a room yet'),
+			body: t('home_scene.unfiled_body', 'Every device in this house is unfiled, so they are all in one room below. Assign them to areas in Home Assistant (Settings, Areas and zones) or lay the house out here, and the scene splits into real rooms.'),
 			actions: [
-				{ label: 'Assign rooms in Home Assistant', href: areasUrl(), external: true, primary: true },
+				{ label: t('home_scene.unfiled_action', 'Assign rooms in Home Assistant'), href: areasUrl(), external: true, primary: true },
 			],
 			dismissable: true,
 		});
@@ -1089,7 +1129,7 @@ function showOverlay({ title, body, actions = [], dismissable = false }) {
 		const close = document.createElement('button');
 		close.type = 'button';
 		close.className = 'hs-btn';
-		close.textContent = 'Show me the house anyway';
+		close.textContent = t('home_scene.overlay_dismiss', 'Show me the house anyway');
 		close.addEventListener('click', hideOverlay);
 		row.appendChild(close);
 	}
@@ -1107,36 +1147,36 @@ function renderFailure(err) {
 	const code = err instanceof HomeApiError ? err.code : 'call_failed';
 	const copy = {
 		unauthorized: {
-			title: 'Sign in to see this home',
-			body: 'A home belongs to the account that connected it. Sign in and this page opens straight onto your house.',
-			actions: [{ label: 'Sign in', href: `/login?next=${encodeURIComponent(location.pathname)}`, primary: true }],
+			title: t('home_scene.err_auth_title', 'Sign in to see this home'),
+			body: t('home_scene.err_auth_body', 'A home belongs to the account that connected it. Sign in and this page opens straight onto your house.'),
+			actions: [{ label: t('home_scene.sign_in', 'Sign in'), href: `/login?next=${encodeURIComponent(location.pathname)}`, primary: true }],
 		},
 		not_found: {
-			title: 'That home is not here',
-			body: 'Either this home was removed, or it belongs to another account. Your connected homes are one click away.',
-			actions: [{ label: 'Your homes', href: '/home', primary: true }],
+			title: t('home_scene.err_missing_title', 'That home is not here'),
+			body: t('home_scene.err_missing_body', 'Either this home was removed, or it belongs to another account. Your connected homes are one click away.'),
+			actions: [{ label: t('home_scene.your_homes', 'Your homes'), href: '/home', primary: true }],
 		},
 		auth: {
-			title: 'Home Assistant rejected the token',
-			body: 'The long-lived access token this home was connected with no longer works. Create a new one in Home Assistant (your profile, Security) and reconnect.',
-			actions: [{ label: 'Reconnect this home', href: '/home', primary: true }],
+			title: t('home_scene.err_token_title', 'Home Assistant rejected the token'),
+			body: t('home_scene.err_token_body', 'The long-lived access token this home was connected with no longer works. Create a new one in Home Assistant (your profile, Security) and reconnect.'),
+			actions: [{ label: t('home_scene.err_token_action', 'Reconnect this home'), href: '/home', primary: true }],
 		},
 		unreachable: {
-			title: 'Your home did not answer',
-			body: 'three.ws could not reach this Home Assistant. If it only exists on your home network, a public server cannot route to it: use your remote https URL, or run the three.ws add-on inside the network.',
-			actions: [{ label: 'Try again', onClick: () => reconnect(), primary: true }, { label: 'Connection settings', href: '/home' }],
+			title: t('home_scene.err_unreachable_title', 'Your home did not answer'),
+			body: t('home_scene.err_unreachable_body', 'three.ws could not reach this Home Assistant. If it only exists on your home network, a public server cannot route to it: use your remote https URL, or run the three.ws add-on inside the network.'),
+			actions: [{ label: t('home_scene.try_again', 'Try again'), onClick: () => reconnect(), primary: true }, { label: t('home_scene.connection_settings', 'Connection settings'), href: '/home' }],
 		},
 		not_connected: {
-			title: 'Still opening the connection',
-			body: 'The link to your house is coming up, or was paused after repeated failures. Give it a moment and try again.',
-			actions: [{ label: 'Try again', onClick: () => reconnect(), primary: true }],
+			title: t('home_scene.err_pending_title', 'Still opening the connection'),
+			body: t('home_scene.err_pending_body', 'The link to your house is coming up, or was paused after repeated failures. Give it a moment and try again.'),
+			actions: [{ label: t('home_scene.try_again', 'Try again'), onClick: () => reconnect(), primary: true }],
 		},
 	}[code] || {
-		title: 'Something went wrong loading your home',
-		body: err?.message || 'The request failed. Trying again usually works; if it keeps failing, the connection settings will say why.',
-		actions: [{ label: 'Try again', onClick: () => reconnect(), primary: true }, { label: 'Connection settings', href: '/home' }],
+		title: t('home_scene.err_generic_title', 'Something went wrong loading your home'),
+		body: err?.message || t('home_scene.err_generic_body', 'The request failed. Trying again usually works; if it keeps failing, the connection settings will say why.'),
+		actions: [{ label: t('home_scene.try_again', 'Try again'), onClick: () => reconnect(), primary: true }, { label: t('home_scene.connection_settings', 'Connection settings'), href: '/home' }],
 	};
-	setStatus('disconnected', 'Disconnected', err?.message);
+	setStatus('disconnected', t('home_scene.status_disconnected', 'Disconnected'), err?.message);
 	showOverlay(copy);
 	announce(copy.body);
 }
@@ -1144,7 +1184,7 @@ function renderFailure(err) {
 function showToastError(err) {
 	// A failed action is reported in the log and the live region rather than as
 	// a modal: the house is still on screen and still usable.
-	pushLog({ text: err?.message || 'Action failed', outcome: 'failed' });
+	pushLog({ text: err?.message || t('home_scene.action_failed', 'Action failed'), outcome: 'failed' });
 }
 
 function renderAge() {
@@ -1160,7 +1200,9 @@ function renderAge() {
 	const node = existing || document.createElement('div');
 	node.className = 'hs-age';
 	const write = () => {
-		node.textContent = `Last seen ${relativeAge(Date.now() - state.lastGraphAt)}. Showing the house as it was.`;
+		node.textContent = t('home_scene.last_seen', 'Last seen {{ago}}. Showing the house as it was.', {
+			ago: relativeAge(Date.now() - state.lastGraphAt),
+		});
 	};
 	write();
 	if (!existing) {
@@ -1169,13 +1211,21 @@ function renderAge() {
 	}
 }
 
+/**
+ * "2 minutes ago", in the reader's language, through Intl.RelativeTimeFormat.
+ *
+ * Not three catalog keys with an English `s` suffix bolted on: that spelling of
+ * a plural is wrong in most of the 84 locales this ships in, and several need
+ * forms English has no word for. The platform already knows all of them.
+ */
 function relativeAge(ms) {
 	const s = Math.max(0, Math.round(ms / 1000));
-	if (s < 60) return `${s} second${s === 1 ? '' : 's'} ago`;
-	const m = Math.round(s / 60);
-	if (m < 60) return `${m} minute${m === 1 ? '' : 's'} ago`;
-	const h = Math.round(m / 60);
-	return `${h} hour${h === 1 ? '' : 's'} ago`;
+	const [value, unit] = s < 60 ? [s, 'second'] : s < 3600 ? [Math.round(s / 60), 'minute'] : [Math.round(s / 3600), 'hour'];
+	try {
+		return new Intl.RelativeTimeFormat(locale(), { numeric: 'always' }).format(-value, unit);
+	} catch {
+		return `${value} ${unit}${value === 1 ? '' : 's'} ago`;
+	}
 }
 
 function pushLog(entry) {
@@ -1197,9 +1247,13 @@ function renderLog() {
 		if (entry.outcome !== 'ok') li.className = entry.outcome === 'refused' ? 'is-refused' : 'is-failed';
 		const time = document.createElement('time');
 		time.dateTime = entry.at.toISOString();
-		time.textContent = entry.at.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+		// The site's locale, not the browser's: someone reading three.ws in
+		// Japanese should not get a US clock because their OS is set that way.
+		time.textContent = entry.at.toLocaleTimeString(locale(), { hour: '2-digit', minute: '2-digit' });
 		const text = document.createElement('span');
-		text.textContent = entry.outcome === 'refused' ? `${entry.text} (needs your yes)` : entry.text;
+		text.textContent = entry.outcome === 'refused'
+			? t('home_scene.log_needs_yes', '{{entry}} (needs your yes)', { entry: entry.text })
+			: entry.text;
 		li.append(time, text);
 		list.appendChild(li);
 	}
@@ -1291,6 +1345,28 @@ function areasUrl() {
 /** ...and the screen where a device gets added in the first place. */
 function integrationsUrl() {
 	return state.home?.base_url ? `${state.home.base_url}/config/integrations` : null;
+}
+
+/**
+ * A Home Assistant service id as words: `open_cover` reads "open cover".
+ *
+ * Deliberately NOT a catalog key. The set of services is the union of what
+ * 1,500 integrations expose in the user's own instance, so it is unbounded and
+ * it is their house's vocabulary rather than our copy. Translating a guessed
+ * subset of it and leaving the rest in English would read worse than leaving
+ * the machine name legible everywhere.
+ */
+function serviceLabel(service) {
+	return String(service || '').replace(/_/g, ' ');
+}
+
+/** A percentage in the reader's own locale, never `${n}%`. */
+function percent(value) {
+	try {
+		return new Intl.NumberFormat(locale(), { style: 'percent', maximumFractionDigits: 0 }).format(Number(value) / 100);
+	} catch {
+		return `${value}%`;
+	}
 }
 
 function clamp(value, min, max) {

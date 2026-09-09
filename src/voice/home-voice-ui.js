@@ -21,63 +21,88 @@
  *    agreement.
  */
 
+import { t } from '../home/i18n-home.js';
 import { STATES } from './home-voice.js';
 import { WAKE_WORDS } from './wake-words.js';
 
-/** Everything the panel says, in one place, so the copy can be read as copy. */
+/**
+ * Everything the panel says, in one place, so the copy can be read as copy.
+ *
+ * Each field is a catalog key plus its English source, resolved at render time
+ * rather than at module load: this object is evaluated once when the bundle
+ * parses, which is before /i18n.js has a catalog, so baking the strings in here
+ * would pin the panel to English for the whole session no matter what language
+ * the visitor picked.
+ */
 const COPY = {
 	[STATES.OFF]: {
-		badge: 'Off',
-		title: 'Hands-free is off',
-		body: 'Turn it on and you can talk to your house without finding a phone. It stays off until you say so.',
+		badge: ['home_voice.off_badge', 'Off'],
+		title: ['home_voice.off_title', 'Hands-free is off'],
+		body: ['home_voice.off_body', 'Turn it on and you can talk to your house without finding a phone. It stays off until you say so.'],
 	},
 	[STATES.PERMISSION_PENDING]: {
-		badge: 'Waiting',
-		title: 'Your browser is asking',
-		body: 'Choose Allow in the microphone prompt. Nothing is captured until you do.',
+		badge: ['home_voice.permission_pending_badge', 'Waiting'],
+		title: ['home_voice.permission_pending_title', 'Your browser is asking'],
+		body: ['home_voice.permission_pending_body', 'Choose Allow in the microphone prompt. Nothing is captured until you do.'],
 	},
 	[STATES.PERMISSION_DENIED]: {
-		badge: 'Blocked',
-		title: 'The microphone is blocked',
-		body: 'Hands-free needs the mic. You can keep using the agent by typing in the meantime.',
+		badge: ['home_voice.permission_denied_badge', 'Blocked'],
+		title: ['home_voice.permission_denied_title', 'The microphone is blocked'],
+		body: ['home_voice.permission_denied_body', 'Hands-free needs the mic. You can keep using the agent by typing in the meantime.'],
 	},
 	[STATES.IDLE]: {
-		badge: 'Listening for the wake word',
-		title: 'Say the wake word',
-		body: 'Everything is being matched on this device. Nothing is sent anywhere until you say it.',
+		badge: ['home_voice.idle_badge', 'Listening for the wake word'],
+		title: ['home_voice.idle_title', 'Say the wake word'],
+		body: ['home_voice.idle_body', 'Everything is being matched on this device. Nothing is sent anywhere until you say it.'],
 	},
 	[STATES.CAPTURING]: {
-		badge: 'Listening',
-		title: 'Go ahead',
-		body: 'This part of what you say is sent for transcription, and nothing else is.',
+		badge: ['home_voice.capturing_badge', 'Listening'],
+		title: ['home_voice.capturing_title', 'Go ahead'],
+		body: ['home_voice.capturing_body', 'This part of what you say is sent for transcription, and nothing else is.'],
 	},
-	[STATES.THINKING]: { badge: 'Thinking', title: 'Working on it', body: 'Reading the house and deciding what to do.' },
-	[STATES.SPEAKING]: { badge: 'Speaking', title: 'Answering', body: 'Talk over it any time and it will stop.' },
-	[STATES.BARGED_IN]: { badge: 'Interrupted', title: 'Stopped', body: 'Listening to you instead.' },
+	[STATES.THINKING]: {
+		badge: ['home_voice.thinking_badge', 'Thinking'],
+		title: ['home_voice.thinking_title', 'Working on it'],
+		body: ['home_voice.thinking_body', 'Reading the house and deciding what to do.'],
+	},
+	[STATES.SPEAKING]: {
+		badge: ['home_voice.speaking_badge', 'Speaking'],
+		title: ['home_voice.speaking_title', 'Answering'],
+		body: ['home_voice.speaking_body', 'Talk over it any time and it will stop.'],
+	},
+	[STATES.BARGED_IN]: {
+		badge: ['home_voice.barged_in_badge', 'Interrupted'],
+		title: ['home_voice.barged_in_title', 'Stopped'],
+		body: ['home_voice.barged_in_body', 'Listening to you instead.'],
+	},
 	[STATES.CONFIRM_PENDING]: {
-		badge: 'Waiting for you',
-		title: 'This one needs a yes',
-		body: 'Say the word confirm, or press the button. Nothing else counts.',
+		badge: ['home_voice.confirm_pending_badge', 'Waiting for you'],
+		title: ['home_voice.confirm_pending_title', 'This one needs a yes'],
+		body: ['home_voice.confirm_pending_body', 'Say the word confirm, or press the button. Nothing else counts.'],
 	},
 	[STATES.UNAVAILABLE]: {
-		badge: 'Unavailable',
-		title: 'Voice is not available here',
-		body: 'Speech recognition is not configured in this deployment, so the microphone stays off.',
+		badge: ['home_voice.unavailable_badge', 'Unavailable'],
+		title: ['home_voice.unavailable_title', 'Voice is not available here'],
+		body: ['home_voice.unavailable_body', 'Speech recognition is not configured in this deployment, so the microphone stays off.'],
 	},
 	[STATES.MUTED]: {
-		badge: 'Muted',
-		title: 'The microphone is stopped',
-		body: 'Capture is stopped at the device, not hidden behind a setting.',
+		badge: ['home_voice.muted_badge', 'Muted'],
+		title: ['home_voice.muted_title', 'The microphone is stopped'],
+		body: ['home_voice.muted_body', 'Capture is stopped at the device, not hidden behind a setting.'],
 	},
-	[STATES.ERROR]: { badge: 'Problem', title: 'Something went wrong', body: '' },
+	[STATES.ERROR]: {
+		badge: ['home_voice.error_badge', 'Problem'],
+		title: ['home_voice.error_title', 'Something went wrong'],
+		body: ['home_voice.error_body', ''],
+	},
 };
 
 const CONSENT_POINTS = [
-	'The wake word is matched here, in this tab, by a model downloaded to your device. That audio never leaves.',
-	'Only what you say after the wake word is uploaded, and only to transcribe it.',
-	'Nothing is kept. The audio is not stored on our servers once the request is answered.',
-	'While the microphone is live there is an indicator on this page that cannot be turned off.',
-	'One tap on Mute stops the microphone at the device. You can turn hands-free off completely at any time.',
+	['home_voice.consent_1', 'The wake word is matched here, in this tab, by a model downloaded to your device. That audio never leaves.'],
+	['home_voice.consent_2', 'Only what you say after the wake word is uploaded, and only to transcribe it.'],
+	['home_voice.consent_3', 'Nothing is kept. The audio is not stored on our servers once the request is answered.'],
+	['home_voice.consent_4', 'While the microphone is live there is an indicator on this page that cannot be turned off.'],
+	['home_voice.consent_5', 'One tap on Mute stops the microphone at the device. You can turn hands-free off completely at any time.'],
 ];
 
 export class HomeVoicePanel {
@@ -121,45 +146,45 @@ export class HomeVoicePanel {
 		this.mount.innerHTML = `
 			<div class="hv-indicator" data-live="false" role="status" aria-live="polite">
 				<span class="hv-dot" aria-hidden="true"></span>
-				<span class="hv-indicator-text">Microphone off</span>
+				<span class="hv-indicator-text" data-i18n="home_voice.mic_off">Microphone off</span>
 			</div>
 			<div class="hv-head">
 				<div>
-					<span class="hv-badge" data-state="off">Off</span>
-					<h2 class="hv-title">Hands-free is off</h2>
+					<span class="hv-badge" data-state="off" data-i18n="home_voice.off_badge">Off</span>
+					<h2 class="hv-title" data-i18n="home_voice.off_title">Hands-free is off</h2>
 					<p class="hv-body"></p>
 				</div>
 				<div class="hv-actions"></div>
 			</div>
 			<div class="hv-consent" hidden>
-				<h3>Before you turn this on</h3>
+				<h3 data-i18n="home_voice.consent_heading">Before you turn this on</h3>
 				<ul class="hv-consent-list"></ul>
 				<div class="hv-consent-actions">
-					<button type="button" class="hv-btn hv-btn-primary" data-act="consent">Turn on hands-free</button>
-					<button type="button" class="hv-btn" data-act="cancel-consent">Not now</button>
+					<button type="button" class="hv-btn hv-btn-primary" data-act="consent" data-i18n="home_voice.act_consent">Turn on hands-free</button>
+					<button type="button" class="hv-btn" data-act="cancel-consent" data-i18n="home_voice.act_not_now">Not now</button>
 				</div>
 			</div>
 			<div class="hv-recovery" hidden></div>
 			<div class="hv-confirm" hidden>
 				<p class="hv-confirm-sentence"></p>
 				<ul class="hv-confirm-entities"></ul>
-				<p class="hv-confirm-hint">Say <strong>confirm</strong> to continue. A general yes does not count.</p>
+				<p class="hv-confirm-hint" data-i18n-html="home_voice.confirm_hint">Say <strong>confirm</strong> to continue. A general yes does not count.</p>
 				<div class="hv-confirm-actions">
-					<button type="button" class="hv-btn hv-btn-primary" data-act="confirm">Confirm</button>
-					<button type="button" class="hv-btn" data-act="cancel-confirm">Cancel</button>
+					<button type="button" class="hv-btn hv-btn-primary" data-act="confirm" data-i18n="home_voice.act_confirm">Confirm</button>
+					<button type="button" class="hv-btn" data-act="cancel-confirm" data-i18n="home_voice.act_cancel">Cancel</button>
 				</div>
 				<div class="hv-confirm-timer"><span></span></div>
 			</div>
 			<div class="hv-meter" hidden aria-hidden="true"><span class="hv-meter-fill"></span></div>
-			<ol class="hv-transcript" aria-label="Conversation"></ol>
+			<ol class="hv-transcript" aria-label="Conversation" data-i18n-attr="aria-label:home_voice.transcript_aria"></ol>
 			<div class="hv-settings">
 				<label class="hv-field">
-					<span>Wake word</span>
-					<select class="hv-wake" aria-label="Wake word"></select>
+					<span data-i18n="home_voice.wake_word">Wake word</span>
+					<select class="hv-wake" aria-label="Wake word" data-i18n-attr="aria-label:home_voice.wake_word"></select>
 				</label>
 				<p class="hv-wake-hint"></p>
 			</div>
-			<dl class="hv-latency" aria-label="Measured latency"></dl>
+			<dl class="hv-latency" aria-label="Measured latency" data-i18n-attr="aria-label:home_voice.latency_aria"></dl>
 		`;
 
 		this.el = {
@@ -184,9 +209,9 @@ export class HomeVoicePanel {
 			latency: this.mount.querySelector('.hv-latency'),
 		};
 
-		for (const point of CONSENT_POINTS) {
+		for (const [key, source] of CONSENT_POINTS) {
 			const li = document.createElement('li');
-			li.textContent = point;
+			li.textContent = t(key, source);
 			this.el.consentList.appendChild(li);
 		}
 
@@ -260,23 +285,25 @@ export class HomeVoicePanel {
 				this._appendLine('you', event.text);
 				break;
 			case 'wake':
-				this._appendLine('system', `Woke on "${wakePhrase(event.wakeWord)}" (${event.score.toFixed(2)}).`);
+				// The wake phrase is a setting the user chose, interpolated rather
+				// than folded into the sentence.
+				this._appendLine('system', t('home_voice.line_woke', 'Woke on "{{phrase}}" ({{score}}).', { phrase: wakePhrase(event.wakeWord), score: event.score.toFixed(2) }));
 				break;
 			case 'barge-in':
-				this._appendLine('system', 'You interrupted, so it stopped talking.');
+				this._appendLine('system', t('home_voice.line_barge_in', 'You interrupted, so it stopped talking.'));
 				break;
 			case 'guarded-refused':
-				this._appendLine('system', 'Refused: a guarded action cannot be confirmed by voice on a screenless device.');
+				this._appendLine('system', t('home_voice.line_guarded_refused', 'Refused: a guarded action cannot be confirmed by voice on a screenless device.'));
 				break;
 			case 'confirmation-not-token':
-				this._appendLine('system', 'That was not the word confirm, so nothing was unlocked.');
+				this._appendLine('system', t('home_voice.line_not_token', 'That was not the word confirm, so nothing was unlocked.'));
 				break;
 			case 'confirmation-executed':
-				this._appendLine('system', 'Confirmed and carried out.');
+				this._appendLine('system', t('home_voice.line_confirmed', 'Confirmed and carried out.'));
 				break;
 			case 'confirmation-closed':
-				if (event.reason === 'expired') this._appendLine('system', 'The confirmation expired. Nothing changed.');
-				if (event.reason === 'cancelled') this._appendLine('system', 'Cancelled. Nothing changed.');
+				if (event.reason === 'expired') this._appendLine('system', t('home_voice.line_expired', 'The confirmation expired. Nothing changed.'));
+				if (event.reason === 'cancelled') this._appendLine('system', t('home_voice.line_cancelled', 'Cancelled. Nothing changed.'));
 				break;
 			case 'tts-failed':
 				this._appendLine('agent', event.text);
@@ -301,21 +328,27 @@ export class HomeVoicePanel {
 	_syncIndicator() {
 		const live = this.loop.micLive;
 		this.el.indicator.dataset.live = String(live);
+		this.el.indicatorText.setAttribute('data-i18n-owned', '1');
 		this.el.indicatorText.textContent = live
 			? this.loop.state === STATES.CAPTURING
-				? 'Microphone live, and this is being sent for transcription'
-				: 'Microphone live, matching the wake word on this device'
+				? t('home_voice.mic_live_sending', 'Microphone live, and this is being sent for transcription')
+				: t('home_voice.mic_live_local', 'Microphone live, matching the wake word on this device')
 			: this.loop.muted
-				? 'Microphone stopped'
-				: 'Microphone off';
+				? t('home_voice.mic_stopped', 'Microphone stopped')
+				: t('home_voice.mic_off', 'Microphone off');
 	}
 
 	_render(state, detail) {
 		const copy = COPY[state] || COPY[STATES.ERROR];
-		this.el.badge.textContent = copy.badge;
+		// The template ships the OFF strings with data-i18n on them, and from the
+		// first render onwards this script owns those three nodes: without the
+		// marker the catalog pass would put "Hands-free is off" back over a live
+		// "Listening" the moment the locale finished loading.
+		for (const node of [this.el.badge, this.el.title, this.el.body]) node.setAttribute('data-i18n-owned', '1');
+		this.el.badge.textContent = t(...copy.badge);
 		this.el.badge.dataset.state = state;
-		this.el.title.textContent = copy.title;
-		this.el.body.textContent = detail?.message || detail?.reason || detail?.note || copy.body;
+		this.el.title.textContent = t(...copy.title);
+		this.el.body.textContent = detail?.message || detail?.reason || detail?.note || t(...copy.body);
 		this.mount.dataset.state = state;
 		this._syncIndicator();
 
@@ -364,16 +397,16 @@ export class HomeVoicePanel {
 	_renderActions(state) {
 		const buttons = [];
 		if (state === STATES.OFF) {
-			buttons.push(['ask-consent', 'Turn on hands-free', true]);
+			buttons.push(['ask-consent', t('home_voice.act_consent', 'Turn on hands-free'), true]);
 		} else if (state === STATES.PERMISSION_DENIED || state === STATES.ERROR) {
-			buttons.push(['retry', 'Try again', true]);
-			buttons.push(['off', 'Turn hands-free off', false]);
+			buttons.push(['retry', t('home_voice.act_retry', 'Try again'), true]);
+			buttons.push(['off', t('home_voice.act_off', 'Turn hands-free off'), false]);
 		} else if (state === STATES.MUTED) {
-			buttons.push(['unmute', 'Unmute', true]);
-			buttons.push(['off', 'Turn hands-free off', false]);
+			buttons.push(['unmute', t('home_voice.act_unmute', 'Unmute'), true]);
+			buttons.push(['off', t('home_voice.act_off', 'Turn hands-free off'), false]);
 		} else if (state !== STATES.UNAVAILABLE && state !== STATES.PERMISSION_PENDING) {
-			buttons.push(['mute', 'Mute', false]);
-			buttons.push(['off', 'Turn hands-free off', false]);
+			buttons.push(['mute', t('home_voice.act_mute', 'Mute'), false]);
+			buttons.push(['off', t('home_voice.act_off', 'Turn hands-free off'), false]);
 		}
 		this.el.actions.replaceChildren();
 		for (const [act, label, primary] of buttons) {
@@ -398,14 +431,14 @@ export class HomeVoicePanel {
 			firstAudio: 1800,
 		};
 		const labels = {
-			wake: 'Wake word',
-			endpoint: 'End of speech',
-			asr: 'Transcription',
-			turn: 'Agent turn',
-			toolCall: 'First tool call',
-			action: 'Action to device',
-			firstAudio: 'First audible reply',
-			tts: 'Speech synthesis',
+			wake: t('home_voice.wake_word', 'Wake word'),
+			endpoint: t('home_voice.leg_endpoint', 'End of speech'),
+			asr: t('home_voice.leg_asr', 'Transcription'),
+			turn: t('home_voice.leg_turn', 'Agent turn'),
+			toolCall: t('home_voice.leg_tool_call', 'First tool call'),
+			action: t('home_voice.leg_action', 'Action to device'),
+			firstAudio: t('home_voice.leg_first_audio', 'First audible reply'),
+			tts: t('home_voice.leg_tts', 'Speech synthesis'),
 		};
 		this.el.latency.replaceChildren();
 		for (const [leg, stats] of Object.entries(summary)) {
@@ -417,11 +450,11 @@ export class HomeVoicePanel {
 			const dt = document.createElement('dt');
 			dt.textContent = labels[leg] || leg;
 			const dd = document.createElement('dd');
-			dd.textContent = `${stats.median} ms`;
+			dd.textContent = t('home_voice.ms', '{{n}} ms', { n: stats.median });
 			const budget = budgets[leg];
 			if (budget) {
 				dd.dataset.over = String(stats.median > budget);
-				dd.title = `Budget ${budget} ms, worst ${stats.worst} ms over ${stats.count}`;
+				dd.title = t('home_voice.budget', 'Budget {{budget}} ms, worst {{worst}} ms over {{count}}', { budget, worst: stats.worst, count: stats.count });
 			}
 			pair.append(dt, dd);
 			this.el.latency.appendChild(pair);

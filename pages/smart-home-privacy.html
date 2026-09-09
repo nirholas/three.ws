@@ -16,6 +16,12 @@
 	<meta name="twitter:title" content="Your home data · three.ws" />
 	<meta name="twitter:description" content="Everything we store about your connected homes, and the controls to export or delete all of it." />
 	<link rel="icon" href="/favicon.ico" sizes="any" />
+	<!-- The platform PWA manifest, scope "/". A connected home is the one surface
+	     here meant to live on a screen that stays put (a kitchen tablet on a
+	     shelf), and an installed window is what makes that a display rather than
+	     a browser tab. No lane-specific manifest is invented for it. -->
+	<link rel="manifest" href="/manifest.webmanifest" />
+	<link rel="apple-touch-icon" href="/apple-touch-icon.png" />
 	<link rel="stylesheet" href="/style.css" />
 	<link rel="stylesheet" href="/nav.css" />
 	<link rel="stylesheet" href="/fonts/fonts.css" />

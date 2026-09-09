@@ -8,6 +8,12 @@
 	<meta name="description" content="A live 3D model of your house driven by Home Assistant: every room lit the way the real room is lit, every door and lock shown as it really is, and your agent standing in it." data-i18n-attr="content:home_scene.meta_description" />
 	<meta name="robots" content="noindex, follow" />
 	<link rel="icon" href="/favicon.ico" sizes="any" />
+	<!-- The platform PWA manifest, scope "/". A connected home is the one surface
+	     here meant to live on a screen that stays put (a kitchen tablet on a
+	     shelf), and an installed window is what makes that a display rather than
+	     a browser tab. No lane-specific manifest is invented for it. -->
+	<link rel="manifest" href="/manifest.webmanifest" />
+	<link rel="apple-touch-icon" href="/apple-touch-icon.png" />
 	<link rel="stylesheet" href="/style.css" />
 	<link rel="stylesheet" href="/nav.css" />
 	<link rel="stylesheet" href="/fonts/fonts.css" />
