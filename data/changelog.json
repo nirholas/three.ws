@@ -3,6 +3,15 @@
 	"entries": [
 		{
 			"date": "2026-09-09",
+			"title": "The \"have you tried\" card no longer hangs off the side of the screen on a phone",
+			"summary": "The small suggestion card that appears in the bottom corner of the site was drawn 34 pixels wider than the space it asked for, because its padding and border were being added on top of its width instead of counted inside it. On a phone that pushed the card 22 pixels past the left edge of the screen, so its kicker, title and description were all cut off mid-word and the button inside it ran wider than the card itself. This only happened on the pages that do not load the main site stylesheet, which includes the whole markets family: the screener, coin pages, categories, the heatmap and about thirty others. The card now sits fully on screen with an even gutter on both sides at every width, and its button fits inside it.",
+			"tags": [
+				"fix"
+			],
+			"link": "/screener"
+		},
+		{
+			"date": "2026-09-09",
 			"title": "The pitch deck now shows the whole character, and says so when the 3D cannot load",
 			"summary": "The live 3D figure on the deck at /pitch was framed by a camera that cut it off above the chest and pointed at its back, so the slide that says \"give your AI a face\" showed neither a head nor a face. Both stages now frame the full character from the front. Each stage also ships a still frame rendered from the same glTF file: it fills the panel while the model streams instead of leaving an empty box, and if the 3D runtime is blocked or fails outright the panel says so in the open, drops the \"Live\" badge that used to sit over nothing, and offers a retry. Navigation got the same pass: the slide dots are now full-size tap targets and step out of the way on a phone, the language picker no longer lands on the slide counter, slide copy no longer runs underneath the nav bar on a tablet, links on hidden slides are out of the keyboard tab order, and every button and link has a visible focus ring.",
 			"tags": [
