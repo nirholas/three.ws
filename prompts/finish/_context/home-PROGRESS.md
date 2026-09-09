@@ -37,7 +37,7 @@ One section per finished order, newest at the bottom:
 | 05 connect flow | mostly done, see entry | 2026-09-03 |
 | 06 3D home scene | open | |
 | 07 floorplan editor | built, browser verification blocked, see entry | |
-| 08 voice loop | open | |
+| 08 voice loop | done | 2026-09-09 |
 | 09 Wyoming satellite | open | |
 | 10 add-on relay | done, publish + deploy owner-gated | 2026-09-09 |
 | 11 security | done | 2026-09-09 |
@@ -1785,3 +1785,93 @@ loads. The worktree copy was byte-identical to HEAD's blob, so it was cleared wi
 `git status` reporting `D ` on a path that `git ls-tree HEAD` still has.
 
 **Commits:** this one for the retirement, plus `9e0574559` and `540b784de` for the work.
+
+## 08. The browser voice loop: wake word, barge-in, latency (2026-09-09)
+
+**Shipped:** the loop itself was already built and live at `/voice/home` before this session. It
+had shipped incidentally during order 18 (recorded in that entry) and was never retired, so the
+table said `open` while the feature said shipped. What this session added is the half that was
+missing: proof, and the harness defects that were hiding the absence of it. Four of those defects
+made a working feature report red, and one of them had left a row on the QA account that blocked
+every later run.
+
+**Measured, all at HEAD on 2026-09-09:**
+
+- `npx vitest run tests/home-voice.test.js`: **39/39**.
+- `node scripts/check-home-voice.mjs`: **36/36** across the ten browser scenarios, in a real
+  Chromium against the real production ASR and TTS lanes. Twelve state frames written.
+- `node scripts/check-home-voice.mjs --live --only live-confirm`: **6/6** against a real Home
+  Assistant 2026.9.0, twice, on two separate instances.
+- Legs, against the budget table in the order file: wake **21 ms** (budget 200), end of speech
+  **389 ms** settled and **480 ms** on a loaded machine (budget 400), transcription **738 ms**
+  best and **5.4 s** worst (budget 900), barge-in **91 to 101 ms** against genuinely audible
+  sound (budget 200).
+- The guarded path, proved against the device rather than against a response: the door starts
+  locked, a guarded call mints a real confirmation instead of acting, minting alone does not move
+  it, redeeming the id really unlocks it, and replaying the same id is refused `410
+  confirmation_spent` with the door still locked.
+
+**What was actually wrong, and it was never the product:**
+
+1. **The end-to-end `--live` leg was red for a credential, and said so as "the light is still
+   on".** Every rung of `api/_lib/llm-tool-chain.js` needs a provider key or a usable GCP token.
+   This checkout has no LLM keys in `.env`, and `gcloud` auth has expired to the point of
+   `Reauthentication failed. cannot prompt during non-interactive execution`, so
+   `providerChain()` returns **zero rungs** and no agent turn can run at all. Confirmed by
+   printing the chain. The run now counts the rungs first and skips that one leg with its cause
+   and its fix, instead of reporting a broken home lane.
+2. **The previous run leaked a home row and the plan covers one home**, so every later run failed
+   at connect with `402 quota_exceeded`. The row pointed at a container that had exited hours
+   earlier. `liveStack()` now prunes any home whose Home Assistant no longer answers before it
+   connects.
+3. **CSRF tokens rotate on every state-changing request**, and the live path held one across
+   several. That is a silent 403 that reads exactly like a broken endpoint.
+4. **The console-error assertion matched only the message text**, but a browser puts the failing
+   URL in the message's *location*, so the `/api/notifications` entry in its own noise filter
+   never matched and every run reported a 401 as a console error on the voice surface. Measured
+   with no auth hint present: a real signed-out visitor makes **zero** requests to that endpoint
+   and sees no 401, and a stale hint is cleared by the first 401 rather than retried.
+5. **Barge-in was racing its own fixture.** The interrupting clip starts talking 5 s in, and on a
+   cold page the models, the opt-in and the synthesis can still be finishing then, so the
+   interruption landed before a single sample had played and the run asserted on an inaudible
+   stop. The microphone clip loops, so the scenario now waits for the loop to be **idle** (an
+   utterance injected mid-turn is cancelled by the loop's own `_speak`, which neither plays nor
+   reports a failure) and measures an interruption that was genuinely audible.
+6. **`--only live-confirm` demanded a dev server it never opens.** The preflight now asks only
+   when a browser scenario on the shared server is selected.
+
+**Deviations from the order file:**
+
+- It is written as though nothing exists yet. Everything in its task table had already shipped,
+  including the models, which are committed under `public/models/voice/wake-word/` from
+  openWakeWord v0.5.1. Step 0 is the only reason that was caught.
+- It says order 06 must have landed first. Order 06 is still open and the loop shipped anyway.
+- Its "ONE thing is substituted" note in the check script was stale: it said order 04 had not
+  landed. Order 04 landed on 2026-09-09. The substituted `/api/chat` payload was verified against
+  what `api/_lib/home/tools.js` actually composes, summary sentence included, and the half a
+  substitution cannot vouch for (that the id was real and that redeeming it moves a deadbolt) is
+  now the `live-confirm` scenario.
+- The 400 ms end-of-speech budget is met settled and missed under load. The window itself is
+  352 ms of trailing silence; the rest is frame quantisation and per-frame inference on the main
+  thread. Reported rather than widened, per the order's own instruction. Not retuned on n=3:
+  shortening the redemption window to hit a number, on that little evidence, would trade a
+  measured number for clipped sentences.
+
+**A finding for order 11, stated precisely because it is theirs, not mine.** Their entry records
+that `[key holding home:act, no flag]` had regressed from `409 needs_confirmation` to `502`. On
+the **cookie session** path at this HEAD it does not reproduce: `POST /api/home/:id/call` with
+`lock.unlock` returns `409` with `code: needs_confirmation`, the door stays locked, and the
+pending block names the entity. That is a different auth path from the one they measured, so this
+is evidence that narrows their bug, not a claim that it is fixed.
+
+**Left open:** one leg, and it is a credential rather than code. The spoken end-to-end run
+("Hey Jarvis, turn the kitchen light off" moving a real light) needs one tool-calling provider
+key, or `gcloud auth application-default login` plus `GOOGLE_CLOUD_PROJECT`. Both are owner
+actions: the gcloud re-auth is interactive, and reading a key off the Cloud Run service needs
+that same login. Exposing the local Home Assistant to production through a Codespaces public port
+was tried as a way round it and was correctly refused by the sandbox. Everything downstream of
+the model is proven without it. **Owner: whoever next re-authenticates gcloud in this workspace.**
+
+**Commits:** the harness changes were swept into `d40e17778` by a concurrent agent's `git add -A`
+before they could be staged here (the message it landed under describes them accurately); this
+commit carries the docs and this entry.
