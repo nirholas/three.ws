@@ -49,7 +49,7 @@
 		<header><div id="nav-container"></div></header>
 		<script src="/nav.js"></script>
 
-		<main class="px-shell">
+		<main class="px-shell" id="px-shell" data-state="loading">
 			<section class="px-hero">
 				<p class="px-kicker" data-i18n-html="pulse.live_money_layer"><span class="px-live-dot" aria-hidden="true"></span> Live money layer</p>
 				<h1 class="px-title" data-i18n-html="pulse.the_money_pulse">The <em>Money Pulse</em></h1>
@@ -67,32 +67,32 @@
 			</section>
 
 			<dl class="px-counters" id="px-counters">
-				<div class="px-counter px-counter--lead" data-filter="all" role="button" tabindex="0" aria-label="Show all events in feed">
+				<div class="px-counter px-counter--lead" data-filter="all" role="button" tabindex="0" aria-pressed="true" aria-label="Show all events in feed">
 					<dt data-i18n="pulse.volume_24h">Volume · 24h</dt>
 					<dd id="px-c-vol">—</dd>
 					<span class="px-counter-sub" id="px-c-vol-sub" data-i18n="pulse.on_chain_flow">on-chain flow</span>
 				</div>
-				<div class="px-counter" data-filter="tips" role="button" tabindex="0" aria-label="Filter feed to tips">
+				<div class="px-counter" data-filter="tips" role="button" tabindex="0" aria-pressed="false" aria-label="Filter feed to tips">
 					<dt data-i18n="pulse.tips_24h">Tips · 24h</dt>
 					<dd id="px-c-tips">—</dd>
 					<span class="px-counter-sub" id="px-c-tips-sub">—</span>
 				</div>
-				<div class="px-counter" data-filter="launches" role="button" tabindex="0" aria-label="Filter feed to launches">
+				<div class="px-counter" data-filter="launches" role="button" tabindex="0" aria-pressed="false" aria-label="Filter feed to launches">
 					<dt data-i18n="pulse.launches_24h">Launches · 24h</dt>
 					<dd id="px-c-launches">—</dd>
 					<span class="px-counter-sub" data-i18n="pulse.coins_minted">coins minted</span>
 				</div>
-				<div class="px-counter" data-filter="trades" role="button" tabindex="0" aria-label="Filter feed to trades">
+				<div class="px-counter" data-filter="trades" role="button" tabindex="0" aria-pressed="false" aria-label="Filter feed to trades">
 					<dt data-i18n="pulse.trades_24h">Trades · 24h</dt>
 					<dd id="px-c-trades">—</dd>
 					<span class="px-counter-sub" id="px-c-trades-sub" data-i18n="pulse.swaps">swaps</span>
 				</div>
-				<div class="px-counter" data-filter="payments" role="button" tabindex="0" aria-label="Filter feed to payments">
+				<div class="px-counter" data-filter="payments" role="button" tabindex="0" aria-pressed="false" aria-label="Filter feed to payments">
 					<dt data-i18n="pulse.payments_24h">Payments · 24h</dt>
 					<dd id="px-c-pays">—</dd>
 					<span class="px-counter-sub" data-i18n="pulse.agent_agent_x402">agent → agent x402</span>
 				</div>
-				<div class="px-counter" data-filter="purchases" role="button" tabindex="0" aria-label="Filter feed to marketplace purchases">
+				<div class="px-counter" data-filter="purchases" role="button" tabindex="0" aria-pressed="false" aria-label="Filter feed to marketplace purchases">
 					<dt data-i18n="pulse.marketplace_24h">Marketplace · 24h</dt>
 					<dd id="px-c-market">—</dd>
 					<span class="px-counter-sub" id="px-c-market-sub" data-i18n="pulse.paid_skill_buys">paid skill buys</span>
@@ -133,20 +133,20 @@
 				</div>
 				<aside class="px-rail" aria-label="Money intelligence">
 					<section class="px-card px-card--hl" id="px-bigtip-card" hidden>
-						<div class="px-card-h">Biggest tip <small data-i18n="pulse.24h">24h</small></div>
+						<h3 class="px-card-h">Biggest tip <small data-i18n="pulse.24h">24h</small></h3>
 						<div id="px-bigtip"></div>
 					</section>
 					<section class="px-card">
-						<div class="px-card-h">Top earners <small data-i18n="pulse.tips_7d">tips · 7d</small></div>
-						<div id="px-earners"><p class="px-lb-empty" data-i18n="pulse.loading">Loading…</p></div>
+						<h3 class="px-card-h">Top earners <small data-i18n="pulse.tips_7d">tips · 7d</small></h3>
+						<div id="px-earners" aria-busy="true"><div class="px-lb-skels" aria-hidden="true"><div class="px-lb-skel"></div><div class="px-lb-skel"></div><div class="px-lb-skel"></div></div></div>
 					</section>
 					<section class="px-card">
-						<div class="px-card-h">Busiest wallets <small data-i18n="pulse.events_24h">events · 24h</small></div>
-						<div id="px-busiest"><p class="px-lb-empty" data-i18n="pulse.loading_2">Loading…</p></div>
+						<h3 class="px-card-h">Busiest wallets <small data-i18n="pulse.events_24h">events · 24h</small></h3>
+						<div id="px-busiest" aria-busy="true"><div class="px-lb-skels" aria-hidden="true"><div class="px-lb-skel"></div><div class="px-lb-skel"></div><div class="px-lb-skel"></div></div></div>
 					</section>
 					<section class="px-card">
-						<div class="px-card-h">Fresh launches <small data-i18n="pulse.newest_coins">newest coins</small></div>
-						<div id="px-launches"><p class="px-lb-empty" data-i18n="pulse.loading_3">Loading…</p></div>
+						<h3 class="px-card-h">Fresh launches <small data-i18n="pulse.newest_coins">newest coins</small></h3>
+						<div id="px-launches" aria-busy="true"><div class="px-lb-skels" aria-hidden="true"><div class="px-lb-skel"></div><div class="px-lb-skel"></div><div class="px-lb-skel"></div></div></div>
 					</section>
 					<div id="px-stats"></div>
 					<p class="px-sub px-fineprint">

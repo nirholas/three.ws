@@ -36,9 +36,12 @@ function setFeedFilter(filter) {
 	state.filter = f;
 	state.pulse?.setType(f);
 
-	// Highlight the active counter; un-highlight all others.
+	// Highlight the active counter; un-highlight all others. These are toggle
+	// controls, so the pressed state has to reach assistive tech too, not just paint.
 	for (const el of document.querySelectorAll('[data-filter]')) {
-		el.classList.toggle('px-counter--active', el.dataset.filter === f);
+		const on = el.dataset.filter === f;
+		el.classList.toggle('px-counter--active', on);
+		el.setAttribute('aria-pressed', String(on));
 	}
 
 	// Show / hide the filter bar.
@@ -73,20 +76,80 @@ function startUpdatedTick() {
 	setInterval(tick, 15_000);
 }
 
-async function loadStats() {
+// The three rail panels hydrate from the same stats call. When it fails they must
+// not sit on their loading skeletons forever, so each one gets the same actionable
+// error line and the same retry, which re-runs the single fetch that feeds them all.
+const RAIL_PANELS = ['px-earners', 'px-busiest', 'px-launches'];
+
+function clearStatsError() {
 	const host = $('px-stats');
+	if (host) host.innerHTML = '';
+}
+
+// One retry button, wired to loadStats, shared by the summary line and the rail.
+function retryButton() {
+	const btn = document.createElement('button');
+	btn.type = 'button';
+	btn.className = 'px-retry';
+	btn.textContent = 'Retry';
+	btn.addEventListener('click', () => {
+		for (const b of document.querySelectorAll('.px-retry')) { b.disabled = true; b.textContent = 'Retrying…'; }
+		loadStats();
+	});
+	return btn;
+}
+
+function renderStatsError(message) {
+	const host = $('px-stats');
+	if (host) {
+		host.innerHTML = '';
+		const box = document.createElement('div');
+		box.className = 'px-stats-err';
+		box.setAttribute('role', 'status');
+		const p = document.createElement('p');
+		p.textContent = `${message} The live feed below is unaffected. Retrying automatically every minute.`;
+		box.append(p, retryButton());
+		host.appendChild(box);
+	}
+	// The 7-day sparkline hydrates from the same call; an empty bar strip under a
+	// live-looking header reads as "no activity", which is a different and wrong claim.
+	const bars = $('px-spark-bars');
+	if (bars && bars.dataset.loaded !== '1') {
+		bars.innerHTML = '<p class="px-lb-empty">Activity history unavailable.</p>';
+	}
+	// Only replace a panel that never got real rows; a panel showing the last known
+	// good data keeps it, because stale money intelligence beats an error card.
+	for (const id of RAIL_PANELS) {
+		const panel = $(id);
+		if (!panel || panel.dataset.loaded === '1') continue;
+		panel.setAttribute('aria-busy', 'false');
+		panel.innerHTML = '';
+		const wrap = document.createElement('div');
+		wrap.className = 'px-lb-err';
+		const p = document.createElement('p');
+		p.textContent = 'Could not load this panel.';
+		wrap.append(p, retryButton());
+		panel.appendChild(wrap);
+	}
+}
+
+async function loadStats() {
 	try {
 		const res = await fetch(`/api/pulse?view=stats&network=${state.network}`, { headers: { accept: 'application/json' } });
 		if (!res.ok) throw new Error(`stats ${res.status}`);
 		const { data } = await res.json();
+		clearStatsError();
 		renderStats(data);
 		state.lastUpdated = Date.now();
 		const updEl = $('px-updated');
 		if (updEl) updEl.textContent = 'just now';
 	} catch (e) {
 		log.warn('stats failed', e?.message);
-		// The stats panel is supplementary — degrade quietly, never block the feed.
-		if (host) host.innerHTML = `<div class="px-stats-err">Money stats are reconnecting…</div>`;
+		// The stats panel is supplementary: degrade to a retryable notice, never block
+		// the feed, and never strand the rail on its loading skeletons.
+		renderStatsError('Money stats are offline right now.');
+	} finally {
+		$('px-shell')?.removeAttribute('data-state');
 	}
 }
 
@@ -99,6 +162,14 @@ function setCounter(id, value, format) {
 	if (!el) return;
 	if (value == null || !Number.isFinite(value)) { el.textContent = '—'; delete el.dataset.juiceVal; return; }
 	updateValue(el, value, format);
+}
+
+// A panel that has rendered real rows (or a real empty state) is hydrated: a later
+// stats failure leaves it alone rather than replacing known-good data with an error.
+function markPanelLoaded(el) {
+	if (!el) return;
+	el.dataset.loaded = '1';
+	el.setAttribute('aria-busy', 'false');
 }
 
 function renderStats(d) {
@@ -130,8 +201,9 @@ function renderStats(d) {
 			.join('');
 		wireWalletChips(earners);
 	} else {
-		earners.innerHTML = `<p class="px-lb-empty">No tips in the last 7 days. Be the first to back an agent.</p>`;
+		earners.innerHTML = `<p class="px-lb-empty">No tips in the last 7 days. <a href="/agents">Find an agent</a> and be the first to back one.</p>`;
 	}
+	markPanelLoaded(earners);
 
 	// Busiest wallets (24h events).
 	const busy = $('px-busiest');
@@ -141,8 +213,9 @@ function renderStats(d) {
 			.join('');
 		wireWalletChips(busy);
 	} else {
-		busy.innerHTML = `<p class="px-lb-empty">No wallet activity in the last 24 hours yet.</p>`;
+		busy.innerHTML = `<p class="px-lb-empty">No wallet activity in the last 24 hours. <a href="/agents-live">Watch the agents</a> that are online now.</p>`;
 	}
+	markPanelLoaded(busy);
 
 	renderLaunches(d.recent_launches);
 }
@@ -152,6 +225,7 @@ function renderSparkline(series) {
 	const host = $('px-spark-bars');
 	const totalEl = $('px-spark-total');
 	if (!host) return;
+	host.dataset.loaded = '1';
 	const days = Array.isArray(series) ? series : [];
 	const total = days.reduce((s, d) => s + (d.events || 0) + (d.launches || 0), 0);
 	if (totalEl) totalEl.textContent = `${fmtNum(total)} event${total === 1 ? '' : 's'}`;
@@ -186,6 +260,7 @@ function renderBigTip(t) {
 function renderLaunches(list) {
 	const host = $('px-launches');
 	if (!host) return;
+	markPanelLoaded(host);
 	if (!list?.length) {
 		host.innerHTML = `<p class="px-lb-empty">No coins launched yet. <a href="/launch">Launch one.</a></p>`;
 		return;
@@ -240,6 +315,9 @@ function switchNetwork(net) {
 	const label = $('px-net-label');
 	if (label) label.textContent = target;
 	state.pulse?.setNetwork(target);
+	// The counters belong to the previous network until the new ones land: show the
+	// loading skeletons again rather than stale numbers under a new label.
+	$('px-shell')?.setAttribute('data-state', 'loading');
 	loadStats();
 }
 

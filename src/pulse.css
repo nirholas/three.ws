@@ -231,6 +231,30 @@ body {
 .px-lb-empty, .px-stats-err { color: var(--ink-dim, #888); font-size: var(--text-sm, .8rem); padding: 8px; }
 .px-lb-empty a { color: var(--ink-bright, #fff); }
 
+/* Rail + stats error: say what broke, say when it retries, offer the retry now. */
+.px-stats-err { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; padding: 12px 14px;
+	background: var(--surface-1, rgba(255,255,255,.03)); border: 1px solid var(--stroke, rgba(255,255,255,.07));
+	border-radius: var(--radius-lg, 14px); line-height: 1.45; }
+.px-stats-err p { margin: 0; flex: 1 1 190px; min-width: 0; }
+.px-lb-err { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; padding: 8px;
+	color: var(--ink-dim, #888); font-size: var(--text-sm, .8rem); line-height: 1.45; }
+.px-lb-err p { margin: 0; flex: 1 1 140px; min-width: 0; }
+.px-retry { appearance: none; font: inherit; font-size: var(--text-2xs, .7rem); font-weight: 600; cursor: pointer;
+	color: var(--ink-bright, #fff); background: var(--surface-2, rgba(255,255,255,.05));
+	border: 1px solid var(--stroke-strong, rgba(255,255,255,.16)); border-radius: var(--radius-pill, 999px);
+	min-height: 30px; padding: 6px 14px; flex: 0 0 auto;
+	transition: background var(--duration-fast, 140ms) var(--ease-standard, ease), border-color var(--duration-fast, 140ms) var(--ease-standard, ease); }
+.px-retry:hover { background: var(--surface-3, rgba(255,255,255,.09)); border-color: var(--ink-bright, #fff); }
+.px-retry:focus-visible { outline: 2px solid var(--ink-bright, #fff); outline-offset: 2px; }
+.px-retry[disabled] { opacity: .55; cursor: progress; }
+
+/* Rail loading: three ghost rows sized like the real ones, so the card never
+   jumps when the data lands and never sits on a bare "Loading" string. */
+.px-lb-skels { display: flex; flex-direction: column; gap: 4px; }
+.px-lb-skel { height: 46px; border-radius: var(--radius-md, 9px);
+	background: linear-gradient(90deg, var(--surface-2, rgba(255,255,255,.05)) 25%, var(--surface-3, rgba(255,255,255,.11)) 50%, var(--surface-2, rgba(255,255,255,.05)) 75%);
+	background-size: 200% 100%; animation: px-skel 1.4s linear infinite; }
+
 /* ── Monochrome re-skin of the shared Money Pulse feed (this page only) ──
    The component defaults to the wallet violet; on /pulse we drive it to the
    ink ramp so tips/trades/launches read as one calm monochrome stream. */
@@ -281,8 +305,23 @@ body {
 [data-state="loading"] .px-spark-bars { display: block; }
 [data-state="loading"] .px-spark-bars::after { width: 100%; height: 100%; }
 [data-state="loading"] .px-market-skills > div::after { width: 100%; height: 92px; }
+[data-state="loading"] .px-counter dd,
+[data-state="loading"] .px-counter-sub,
+[data-state="loading"] .px-spark-total { position: relative; color: transparent; }
+[data-state="loading"] .px-counter dd::after,
+[data-state="loading"] .px-counter-sub::after {
+	content: ""; position: absolute; inset: 0; right: auto; border-radius: 6px;
+	background: linear-gradient(90deg, var(--surface-2, rgba(255,255,255,.05)) 25%, var(--surface-3, rgba(255,255,255,.11)) 50%, var(--surface-2, rgba(255,255,255,.05)) 75%);
+	background-size: 200% 100%; animation: px-skel 1.4s linear infinite;
+}
+[data-state="loading"] .px-counter dd::after { width: 62%; }
+[data-state="loading"] .px-counter-sub::after { width: 78%; }
+[data-state="loading"] .px-spark-total::after { position: absolute; inset: 0; right: auto; height: auto; }
 [data-state="loading"] .px-trade-insight { display: none; }
 @media (prefers-reduced-motion: reduce) {
+	.px-lb-skel,
+	[data-state="loading"] .px-counter dd::after,
+	[data-state="loading"] .px-counter-sub::after,
 	[data-state="loading"] .px-kpi dd::after,
 	[data-state="loading"] .px-market-tag::after,
 	[data-state="loading"] .px-spark-total::after,
