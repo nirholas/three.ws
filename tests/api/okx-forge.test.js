@@ -43,6 +43,14 @@ vi.mock('../../api/_lib/rate-limit.js', () => ({
 	clientIp: vi.fn(() => '203.0.113.9'),
 }));
 
+// The paid rows refuse before settlement when the delivery bucket is
+// unwritable, so every case here needs a verdict for that probe. Keep the real
+// module and override only the probe: a test must never reach for real R2.
+vi.mock('../../api/_lib/r2.js', async (importOriginal) => ({
+	...(await importOriginal()),
+	objectStorageUsable: vi.fn(async () => ({ ok: true, reason: null, message: null })),
+}));
+
 vi.mock('../../api/_lib/usage.js', () => ({
 	recordEvent: vi.fn(),
 	logger: () => ({ info: () => {}, warn: () => {}, error: () => {} }),
@@ -613,6 +621,37 @@ describe('each row drives its own lane', () => {
 		const out = await callTool('forge-hd', FORGE_TOOL, { prompt: 'a fox' });
 		expect(out.isError).toBe(true);
 		expect(out.structuredContent.error).toBe('tier_unavailable');
+	});
+
+	// Generation being up is not enough: this row settles when the lane ACCEPTS
+	// the job, but the buyer only ever receives a mesh that reached the delivery
+	// bucket. A rejected R2 credential broke that copy for every job from
+	// 2026-09-07, while the lane kept accepting and charging work that could
+	// never finish.
+	it('refuses BEFORE settlement when the delivery bucket is unwritable, and never submits', async () => {
+		const { objectStorageUsable } = await import('../../api/_lib/r2.js');
+		vi.mocked(objectStorageUsable).mockResolvedValueOnce({
+			ok: false,
+			reason: 'rejected',
+			message: 'The request signature we calculated does not match the signature you provided.',
+		});
+		const out = await callTool('forge-draft', FORGE_TOOL, { prompt: 'a fox' });
+		expect(out.isError).toBe(true);
+		expect(out.structuredContent.error).toBe('delivery_unavailable');
+		expect(out.structuredContent.charged).toBe(false);
+		expect(out.structuredContent.retry_after).toBe(120);
+		// Nothing reached the generator, so nothing can settle.
+		expect(submitted).toHaveLength(0);
+	});
+
+	// The probe fails OPEN on a transient fault, so a flaky list never takes the
+	// paid rows down: only a deterministic rejection refuses.
+	it('still sells when the storage probe reports a transient fault', async () => {
+		const { objectStorageUsable } = await import('../../api/_lib/r2.js');
+		vi.mocked(objectStorageUsable).mockResolvedValueOnce({ ok: true, reason: null, message: null });
+		const out = await callTool('forge-draft', FORGE_TOOL, { prompt: 'a fox' });
+		expect(out.isError).toBeFalsy();
+		expect(submitted).toHaveLength(1);
 	});
 
 	it('rejects an unsafe prompt BEFORE any generation runs, so it can never settle', async () => {

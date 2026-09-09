@@ -218,6 +218,13 @@ unit tests in [`tests/api/okx-forge.test.js`](../tests/api/okx-forge.test.js).
 - **HD means HD.** If the high-detail lane will not take a job, `forge-hd` answers
   `tier_unavailable` (with `charged: false` and a `retry_after`) instead of quietly serving
   a standard mesh at the HD price. That refusal is also before settlement.
+- **Delivery has to be up before you are charged.** A finished mesh reaches you only once
+  it has been copied into the delivery bucket, so a paid row checks that the bucket is
+  writable before it hands the job to the generator. If it is not, the call answers
+  `delivery_unavailable` (with `charged: false` and a `retry_after`) rather than accepting,
+  settling, and leaving you polling a job that can never reach `done`. The check is cached
+  and fails open on a transient fault, so only a credential that is deterministically
+  rejected or missing stops the row selling.
 - **A real MCP client gets a 402.** The shared three.ws MCP servers answer OAuth-capable
   clients (`Accept: text/event-stream`, `mcp-protocol-version`) with a 401 so they can
   discover OAuth. The OKX.AI endpoints never do: every unpaid paid-tool call is a 402 with

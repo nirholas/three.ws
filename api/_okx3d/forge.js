@@ -42,6 +42,7 @@ import { catalogEntry, FORGE_TOOL, FORGE_STATUS_TOOL } from '../_lib/okx-catalog
 import { startForge, pollOnce, originFromReq } from '../_mcp-studio/gpt-forge-client.js';
 import { shapeSubmit, shapePoll, tierOf } from '../_mcp-studio/studio-shape.js';
 import { checkPromptSafety } from '../_mcp-studio/safety.js';
+import { objectStorageUsable } from '../_lib/r2.js';
 import { renderTurntable, describeGeometry } from '../_lib/3d-vision.js';
 
 export { PROTOCOL_VERSION, FORGE_TOOL, FORGE_STATUS_TOOL };
@@ -185,6 +186,24 @@ function buildForgeTool(entry) {
 			}
 			if (!isImageLane && !prompt) {
 				return toolError('invalid_input', 'prompt is required: describe one subject in 3 to 1000 characters.');
+			}
+
+			// Delivery, not just generation, has to be up before we take money.
+			// This row settles when the lane ACCEPTS the job, and the finished mesh
+			// reaches the buyer only once materializeCreation has copied it into the
+			// delivery bucket. On 2026-09-09 that copy was failing on a rejected R2
+			// credential for every job since 2026-09-07, so the lane still accepted
+			// (and charged) work that could never reach a `done` state: a buyer paid
+			// and polled forever. The probe is the cached, single-flighted one the
+			// browser-upload path already relies on, so this costs a paid call one
+			// signed list per minute, and it fails OPEN on a transient fault: only a
+			// deterministically rejected or unconfigured credential refuses here.
+			const storage = await objectStorageUsable();
+			if (!storage.ok) {
+				return toolError('delivery_unavailable', 'model delivery storage is unavailable right now, so this call was not charged; try again shortly', {
+					retry_after: 120,
+					charged: false,
+				});
 			}
 
 			// The high tier is hold-gated on the generator; the buyer has already
