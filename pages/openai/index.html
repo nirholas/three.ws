@@ -4,7 +4,7 @@
 	<style>/* three.ws hidden-guard — make the `hidden` attribute authoritative; see scripts/lib/hidden-guard.mjs */[hidden]{display:none!important}</style>
 	<meta charset="utf-8" />
 	<meta name="viewport" content="width=device-width,initial-scale=1" />
-	<title data-i18n="openai_index.meta_title">three.ws is an OpenAI Select Partner — 3D for ChatGPT</title>
+	<title data-i18n="openai_index.meta_title">three.ws is an OpenAI Select Partner: 3D for ChatGPT</title>
 	<meta name="description" content="three.ws is an OpenAI Select Partner in the OpenAI Partner Network. Connect the free three.ws 3D Studio MCP server to ChatGPT and turn a prompt into an interactive, riggable, AR-ready 3D model inline in the conversation."  data-i18n-attr="content:openai_index.meta_description"/>
 	<link rel="canonical" href="https://three.ws/openai" />
 
@@ -36,9 +36,13 @@
 			color-scheme: dark;
 			--accent: #ffffff; --accent2: #cccccc;
 			--border: #222222; --bg: #000000;
-			--panel: #141414; --panel2: var(--bg-1);
+			--panel: #141414; --panel2: #1c1c1c;
 			--text: #e8e8f0; --muted: #8b8b99;
 			--oai: #10a37f;
+			/* Pinned locally, not inherited: this page paints one fixed dark palette,
+			   so nothing here may flip with the site theme toggle. */
+			--duration-fast: 140ms;
+			--ease-standard: cubic-bezier(0.2, 0.8, 0.2, 1);
 		}
 		* { box-sizing: border-box; margin: 0; padding: 0; }
 		body { font: 16px/1.6 -apple-system, system-ui, "Segoe UI", Roboto, sans-serif; color: var(--text); background: var(--bg); min-height: 100vh; }
@@ -100,7 +104,7 @@
 
 		/* ── Tools ────────────────────────────────────────────── */
 		.tools { background: var(--panel); border: 1px solid var(--border); border-radius: 14px; overflow: hidden; }
-		.tool { padding: 15px 22px; border-bottom: 1px solid var(--border); display: grid; grid-template-columns: 210px 1fr; gap: 20px; align-items: baseline; }
+		.tool { padding: 15px 22px; border-bottom: 1px solid var(--border); display: grid; grid-template-columns: 210px 1fr; gap: 20px; row-gap: 4px; align-items: baseline; }
 		.tool:last-child { border-bottom: none; }
 		.tool code { font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace; font-size: 13px; color: #6fd6b8; }
 		.tool .desc { font-size: 14px; color: var(--muted); }
@@ -116,13 +120,52 @@
 		.disclaimer a { color: #6fd6b8; text-decoration: underline; text-underline-offset: 2px; }
 		.disclaimer a:hover { text-decoration-thickness: 2px; }
 
+		/* ── Copy buttons + code panel ────────────────────── */
+		.copy-btn { display: inline-flex; align-items: center; gap: 6px; flex: none; background: var(--panel2); border: 1px solid var(--border); color: var(--muted); border-radius: 8px; padding: 5px 11px; font: 600 12px/1.4 inherit; cursor: pointer; transition: color var(--duration-fast), border-color var(--duration-fast), transform var(--duration-fast); }
+		.copy-btn:hover { color: var(--text); border-color: #2f4d45; }
+		.copy-btn:active { transform: translateY(1px); }
+		.copy-btn[data-result="ok"] { color: #6fd6b8; border-color: #2f4d45; }
+		.copy-btn[data-result="fail"] { color: #f0938c; border-color: #5a2f2c; }
+
+		.url-cell { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+
+		.code-panel { background: var(--panel); border: 1px solid var(--border); border-radius: 14px; overflow: hidden; margin-top: 16px; }
+		.code-bar { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 10px 14px 10px 20px; border-bottom: 1px solid var(--border); }
+		.code-bar .label { font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: .08em; }
+		.code-panel pre { margin-top: 0; border: 0; border-radius: 0; background: transparent; }
+
+		/* ── Live connector status ─────────────────────── */
+		.status { display: flex; align-items: flex-start; gap: 11px; flex-wrap: wrap; background: var(--panel); border: 1px solid var(--border); border-radius: 12px; padding: 13px 18px; margin-bottom: 16px; font-size: 14px; color: var(--muted); }
+		.status .sdot { width: 9px; height: 9px; margin-top: 7px; border-radius: 50%; flex: none; background: var(--muted); }
+		/* Keeps the dot and the message on one line down to 320px: without a
+		   flex basis the text is treated as unshrinkable and wraps below it. */
+		.status .stext { flex: 1 1 12rem; min-width: 0; }
+		.status[data-state="checking"] .sdot { background: #d9a441; animation: statusPulse 1.3s ease-in-out infinite; }
+		.status[data-state="live"] .sdot { background: var(--oai); box-shadow: 0 0 10px var(--oai); }
+		.status[data-state="empty"] .sdot { background: #d9a441; }
+		.status[data-state="down"] .sdot { background: #e0645c; }
+		.status .stext strong { color: var(--text); font-weight: 600; }
+		.status .retry { margin-left: auto; margin-top: 1px; }
+		@keyframes statusPulse { 0%, 100% { opacity: 1; } 50% { opacity: .22; } }
+
+		/* ── Per-tool verification marks ──────────────── */
+		.tool .tname { display: flex; align-items: baseline; gap: 8px; }
+		.tool .tmark { flex: none; width: 12px; font-size: 12px; line-height: 1.5; color: transparent; transition: color var(--duration-fast); }
+		.tool[data-live="yes"] .tmark { color: var(--oai); }
+		.tool[data-live="no"] .tmark { color: #e0645c; }
+		.tool[data-live="new"] .tmark { color: #d9a441; }
+		/* Spans the row rather than living inside .desc: runtime i18n rewrites
+		   .desc textContent wholesale and would eat a note nested in it. */
+		.tnote { display: block; grid-column: 1 / -1; font-size: 13px; color: #f0938c; }
+		.tool[data-live="new"] .tnote { color: #d9a441; }
+
 		@media (max-width: 720px) {
 			main { padding: 52px 20px 96px; }
 			.connect-row, .tool { grid-template-columns: 1fr; gap: 5px; }
 			.badge-plate img { width: 220px; }
 		}
 		@media (prefers-reduced-motion: reduce) {
-			* { transition: none !important; }
+			* { transition: none !important; animation: none !important; }
 		}
 	</style>
 
@@ -151,7 +194,7 @@
 	</p>
 
 	<div class="badge-plate">
-		<img src="/partners/openai/openai-select-partner.svg" width="375" height="177" alt="OpenAI Partner Network — Select Partner" />
+		<img src="/partners/openai/openai-select-partner.svg" width="375" height="177" alt="OpenAI Partner Network badge: Select Partner" />
 	</div>
 
 	<div class="cta-row">
@@ -225,10 +268,16 @@
 		<h2 data-i18n="openai_index.connect_the_server">Connect the server.</h2>
 		<p class="sub" data-i18n="openai_index.add_it_as_a_connector_with_no">Add it as a connector with no authentication. It answers every request synchronously over POST.</p>
 
+		<div class="status" id="mcp-status" data-state="checking" role="status" aria-live="polite">
+			<span class="sdot" aria-hidden="true"></span>
+			<span class="stext">Checking the connector from this browser.</span>
+			<button type="button" class="copy-btn retry" id="mcp-retry" hidden>Check again</button>
+		</div>
+
 		<div class="connect">
 			<div class="connect-row">
 				<span class="k" data-i18n="openai_index.url">URL</span>
-				<span class="v"><code>https://three.ws/api/mcp-studio</code></span>
+				<span class="v url-cell"><code id="mcp-url">https://three.ws/api/mcp-studio</code><button type="button" class="copy-btn" data-copy="mcp-url">Copy</button></span>
 			</div>
 			<div class="connect-row">
 				<span class="k" data-i18n="openai_index.transport">Transport</span>
@@ -240,7 +289,7 @@
 			</div>
 			<div class="connect-row">
 				<span class="k" data-i18n="openai_index.protocol">Protocol</span>
-				<span class="v" data-i18n-html="openai_index.mcp">MCP <code>2025-06-18</code></span>
+				<span class="v" id="mcp-protocol-cell"><span data-i18n-html="openai_index.mcp">MCP <code>2025-06-18</code></span></span>
 			</div>
 			<div class="connect-row">
 				<span class="k" data-i18n="openai_index.manifest">Manifest</span>
@@ -248,10 +297,15 @@
 			</div>
 		</div>
 
-<pre><span class="c"># list the tools from any MCP client</span>
-curl -s <span class="s">https://three.ws/api/mcp-studio</span> \
+	<div class="code-panel">
+		<div class="code-bar">
+			<span class="label">List the tools from any MCP client</span>
+			<button type="button" class="copy-btn" data-copy="mcp-curl">Copy</button>
+		</div>
+<pre id="mcp-curl">curl -s <span class="s">https://three.ws/api/mcp-studio</span> \
   -H <span class="s">'content-type: application/json'</span> \
   -d <span class="s">'{"jsonrpc":"2.0","id":1,"method":"tools/list"}'</span></pre>
+	</div>
 	</section>
 
 	<section>
@@ -259,17 +313,17 @@ curl -s <span class="s">https://three.ws/api/mcp-studio</span> \
 		<p class="sub" data-i18n="openai_index.six_generation_tools_a_collector_an_inspector">Six generation tools, a collector that picks up a model which took longer than one turn, an inspector that renders a finished model so the assistant can check its own work, plus three persona tools that give an assistant a living, lip-syncing body in the panel. All eleven free, all operator-funded.</p>
 
 		<div class="tools">
-			<div class="tool"><code>forge_free</code><span class="desc" data-i18n="openai_index.generate_a_textured_3d_model_from_a">Generate a textured 3D model from a text prompt. Returns a GLB.</span></div>
-			<div class="tool"><code>text_to_avatar</code><span class="desc" data-i18n="openai_index.generate_a_3d_avatar_from_a_prompt">Generate a 3D avatar from a prompt or a reference image.</span></div>
-			<div class="tool"><code>mesh_forge</code><span class="desc" data-i18n="openai_index.art_directed_mesh_generation_from_text_or">Art-directed mesh generation from text or an image.</span></div>
-			<div class="tool"><code>rig_mesh</code><span class="desc" data-i18n="openai_index.add_a_humanoid_skeleton_to_an_existing">Add a humanoid skeleton to an existing GLB so it can be animated.</span></div>
-			<div class="tool"><code>forge_avatar</code><span class="desc" data-i18n="openai_index.one_call_generate_the_mesh_and_rig">One call: generate the mesh and rig it, behind a humanoid gate.</span></div>
-			<div class="tool"><code>refine_model</code><span class="desc" data-i18n="openai_index.iterate_by_describing_a_change_make_it">Iterate by describing a change ("make it metallic"), with a revertable version lineage.</span></div>
-			<div class="tool"><code>check_job</code><span class="desc" data-i18n="openai_index.collect_a_generation_that_outran_its_tool">Collect a generation that outran its tool call. Read-only, and it never spends generation quota.</span></div>
-			<div class="tool"><code>look_at_model</code><span class="desc" data-i18n="openai_index.render_any_public_glb_from_several_angles">Render any public GLB from several angles and read back its geometry, so the assistant can see the model before it links it.</span></div>
-			<div class="tool"><code>create_agent_persona</code><span class="desc" data-i18n="openai_index.turn_a_generated_avatar_into_a_persistent">Turn a generated avatar into a persistent, named body that reloads by id.</span></div>
-			<div class="tool"><code>get_agent_persona</code><span class="desc" data-i18n="openai_index.reload_a_persona_in_a_fresh_session">Reload a persona in a fresh session. The id is the capability.</span></div>
-			<div class="tool"><code>persona_say</code><span class="desc" data-i18n="openai_index.make_the_body_speak_a_line_lip">Make the body speak a line: lip-sync, expression, and gesture blended together.</span></div>
+			<div class="tool" data-tool="forge_free"><span class="tname"><span class="tmark" aria-hidden="true"></span><code>forge_free</code></span><span class="desc" data-i18n="openai_index.generate_a_textured_3d_model_from_a">Generate a textured 3D model from a text prompt. Returns a GLB.</span></div>
+			<div class="tool" data-tool="text_to_avatar"><span class="tname"><span class="tmark" aria-hidden="true"></span><code>text_to_avatar</code></span><span class="desc" data-i18n="openai_index.generate_a_3d_avatar_from_a_prompt">Generate a 3D avatar from a prompt or a reference image.</span></div>
+			<div class="tool" data-tool="mesh_forge"><span class="tname"><span class="tmark" aria-hidden="true"></span><code>mesh_forge</code></span><span class="desc" data-i18n="openai_index.art_directed_mesh_generation_from_text_or">Art-directed mesh generation from text or an image.</span></div>
+			<div class="tool" data-tool="rig_mesh"><span class="tname"><span class="tmark" aria-hidden="true"></span><code>rig_mesh</code></span><span class="desc" data-i18n="openai_index.add_a_humanoid_skeleton_to_an_existing">Add a humanoid skeleton to an existing GLB so it can be animated.</span></div>
+			<div class="tool" data-tool="forge_avatar"><span class="tname"><span class="tmark" aria-hidden="true"></span><code>forge_avatar</code></span><span class="desc" data-i18n="openai_index.one_call_generate_the_mesh_and_rig">One call: generate the mesh and rig it, behind a humanoid gate.</span></div>
+			<div class="tool" data-tool="refine_model"><span class="tname"><span class="tmark" aria-hidden="true"></span><code>refine_model</code></span><span class="desc" data-i18n="openai_index.iterate_by_describing_a_change_make_it">Iterate by describing a change ("make it metallic"), with a revertable version lineage.</span></div>
+			<div class="tool" data-tool="check_job"><span class="tname"><span class="tmark" aria-hidden="true"></span><code>check_job</code></span><span class="desc" data-i18n="openai_index.collect_a_generation_that_outran_its_tool">Collect a generation that outran its tool call. Read-only, and it never spends generation quota.</span></div>
+			<div class="tool" data-tool="look_at_model"><span class="tname"><span class="tmark" aria-hidden="true"></span><code>look_at_model</code></span><span class="desc" data-i18n="openai_index.render_any_public_glb_from_several_angles">Render any public GLB from several angles and read back its geometry, so the assistant can see the model before it links it.</span></div>
+			<div class="tool" data-tool="create_agent_persona"><span class="tname"><span class="tmark" aria-hidden="true"></span><code>create_agent_persona</code></span><span class="desc" data-i18n="openai_index.turn_a_generated_avatar_into_a_persistent">Turn a generated avatar into a persistent, named body that reloads by id.</span></div>
+			<div class="tool" data-tool="get_agent_persona"><span class="tname"><span class="tmark" aria-hidden="true"></span><code>get_agent_persona</code></span><span class="desc" data-i18n="openai_index.reload_a_persona_in_a_fresh_session">Reload a persona in a fresh session. The id is the capability.</span></div>
+			<div class="tool" data-tool="persona_say"><span class="tname"><span class="tmark" aria-hidden="true"></span><code>persona_say</code></span><span class="desc" data-i18n="openai_index.make_the_body_speak_a_line_lip">Make the body speak a line: lip-sync, expression, and gesture blended together.</span></div>
 		</div>
 
 		<div class="note">
@@ -313,6 +367,7 @@ curl -s <span class="s">https://three.ws/api/mcp-studio</span> \
 
 <div id="footer-container"></div>
 
+<script src="/mcp-studio-status.js" defer></script>
 <script src="/brand.js" defer></script>
 <script src="/footer.js"></script>
 <!-- Runtime i18n: detects locale, swaps annotated copy, mounts <lang-switcher>. -->
