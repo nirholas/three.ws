@@ -702,23 +702,23 @@
 								Clear
 							</button>
 						</div>
-						<div class="pd-filter-row" role="tablist">
-							<button class="pd-filter-btn is-active" data-filter="all" type="button" data-i18n="pump_dashboard.all">
+						<div class="pd-filter-row" role="group" aria-label="Filter feed events by type">
+							<button class="pd-filter-btn is-active" data-filter="all" type="button" aria-pressed="true" data-i18n="pump_dashboard.all">
 								All
 							</button>
-							<button class="pd-filter-btn" data-filter="launch" type="button" data-i18n="pump_dashboard.launches">
+							<button class="pd-filter-btn" data-filter="launch" type="button" aria-pressed="false" data-i18n="pump_dashboard.launches">
 								Launches
 							</button>
-							<button class="pd-filter-btn" data-filter="trade" type="button" data-i18n="pump_dashboard.trades">
+							<button class="pd-filter-btn" data-filter="trade" type="button" aria-pressed="false" data-i18n="pump_dashboard.trades">
 								Trades
 							</button>
-							<button class="pd-filter-btn" data-filter="whale" type="button" data-i18n="pump_dashboard.whales">
+							<button class="pd-filter-btn" data-filter="whale" type="button" aria-pressed="false" data-i18n="pump_dashboard.whales">
 								Whales
 							</button>
-							<button class="pd-filter-btn" data-filter="graduation" type="button" data-i18n="pump_dashboard.graduations">
+							<button class="pd-filter-btn" data-filter="graduation" type="button" aria-pressed="false" data-i18n="pump_dashboard.graduations">
 								Graduations
 							</button>
-							<button class="pd-filter-btn" data-filter="claim" type="button" data-i18n="pump_dashboard.claims">
+							<button class="pd-filter-btn" data-filter="claim" type="button" aria-pressed="false" data-i18n="pump_dashboard.claims">
 								Claims
 							</button>
 						</div>
@@ -797,7 +797,7 @@
 				<section class="pd-page" id="page-claims" aria-label="Fee claims">
 					<div class="pd-form-inline">
 						<div class="pd-form-group" style="flex: 2">
-							<label data-i18n="pump_dashboard.filter_wallet">Filter wallet</label>
+							<label for="pd-claims-wallet-filter" data-i18n="pump_dashboard.filter_wallet">Filter wallet</label>
 							<input
 								class="pd-input"
 								type="text"
@@ -806,7 +806,7 @@
 							/>
 						</div>
 						<div class="pd-form-group" style="flex: 1">
-							<label data-i18n="pump_dashboard.type">Type</label>
+							<label for="pd-claims-type-filter" data-i18n="pump_dashboard.type">Type</label>
 							<select class="pd-select" id="pd-claims-type-filter">
 								<option value="" data-i18n="pump_dashboard.all_types">All types</option>
 								<option value="creator_fee" data-i18n="pump_dashboard.creator_fee">Creator fee</option>
@@ -959,7 +959,7 @@
 				<section class="pd-page" id="page-scanner" aria-label="Token scanner">
 					<div class="pd-form-inline">
 						<div class="pd-form-group" style="flex: 1">
-							<label data-i18n="pump_dashboard.token_mint_address">Token mint address</label>
+							<label for="pd-scanner-mint" data-i18n="pump_dashboard.token_mint_address">Token mint address</label>
 							<input
 								class="pd-input"
 								type="text"
@@ -1016,7 +1016,7 @@
 							<div class="pd-panel-head"><h2 data-i18n="pump_dashboard.buy_quote">Buy quote</h2></div>
 							<div class="pd-panel-body">
 								<div class="pd-form-group">
-									<label data-i18n="pump_dashboard.token_mint_2">Token mint</label>
+									<label for="pd-quote-buy-mint" data-i18n="pump_dashboard.token_mint_2">Token mint</label>
 									<input
 										class="pd-input"
 										type="text"
@@ -1025,7 +1025,7 @@
 									/>
 								</div>
 								<div class="pd-form-group">
-									<label data-i18n="pump_dashboard.sol_amount">SOL amount</label>
+									<label for="pd-quote-buy-amount" data-i18n="pump_dashboard.sol_amount">SOL amount</label>
 									<input
 										class="pd-input"
 										type="number"
@@ -1050,7 +1050,7 @@
 							<div class="pd-panel-head"><h2 data-i18n="pump_dashboard.sell_quote">Sell quote</h2></div>
 							<div class="pd-panel-body">
 								<div class="pd-form-group">
-									<label data-i18n="pump_dashboard.token_mint_3">Token mint</label>
+									<label for="pd-quote-sell-mint" data-i18n="pump_dashboard.token_mint_3">Token mint</label>
 									<input
 										class="pd-input"
 										type="text"
@@ -1059,7 +1059,7 @@
 									/>
 								</div>
 								<div class="pd-form-group">
-									<label data-i18n="pump_dashboard.token_amount">Token amount</label>
+									<label for="pd-quote-sell-amount" data-i18n="pump_dashboard.token_amount">Token amount</label>
 									<input
 										class="pd-input"
 										type="number"
@@ -1094,7 +1094,7 @@
 							</div>
 							<div class="pd-form-row">
 								<div class="pd-form-group">
-									<label data-i18n="pump_dashboard.prefix_optional">Prefix (optional)</label>
+									<label for="pd-vanity-prefix" data-i18n="pump_dashboard.prefix_optional">Prefix (optional)</label>
 									<input
 										class="pd-input"
 										type="text"
@@ -1104,7 +1104,7 @@
 									/>
 								</div>
 								<div class="pd-form-group">
-									<label data-i18n="pump_dashboard.suffix_optional">Suffix (optional)</label>
+									<label for="pd-vanity-suffix" data-i18n="pump_dashboard.suffix_optional">Suffix (optional)</label>
 									<input
 										class="pd-input"
 										type="text"
@@ -1172,7 +1172,7 @@
 								</div>
 								<div>
 									<div class="pd-form-group">
-										<label data-i18n="pump_dashboard.speech">Speech</label>
+										<label for="pd-speech-input" data-i18n="pump_dashboard.speech">Speech</label>
 										<input
 											class="pd-input"
 											type="text"
@@ -1198,8 +1198,8 @@
 										</div>
 									</div>
 									<div class="pd-form-group">
-										<label data-i18n="pump_dashboard.quick_actions">Quick actions</label>
-										<div style="display: flex; gap: 0.4rem; flex-wrap: wrap">
+										<div class="pd-form-label" id="pd-quick-actions-label" data-i18n="pump_dashboard.quick_actions">Quick actions</div>
+										<div style="display: flex; gap: 0.4rem; flex-wrap: wrap" role="group" aria-labelledby="pd-quick-actions-label">
 											<button
 												class="pd-btn"
 												data-agent-action="emote"
@@ -1224,7 +1224,7 @@
 										</div>
 									</div>
 									<div class="pd-form-group">
-										<label data-i18n="pump_dashboard.animation">Animation</label>
+										<label for="pd-anim-select" data-i18n="pump_dashboard.animation">Animation</label>
 										<select class="pd-select" id="pd-anim-select">
 											<option data-i18n="pump_dashboard.idle">Idle</option>
 											<option data-i18n="pump_dashboard.walk">Walk</option>
@@ -1287,7 +1287,7 @@
 							<div class="pd-panel-head"><h2 data-i18n="pump_dashboard.connection">Connection</h2></div>
 							<div class="pd-panel-body">
 								<div class="pd-form-group">
-									<label
+									<label for="pd-cfg-api-url"
 										 data-i18n-html="pump_dashboard.api_base_url">API base URL
 										<span class="pd-probe" id="pd-probe-api"></span
 									></label>
@@ -1299,14 +1299,14 @@
 									/>
 								</div>
 								<div class="pd-form-group">
-									<label
+									<label for="pd-cfg-ws-url"
 										 data-i18n-html="pump_dashboard.websocket_url">WebSocket URL
 										<span class="pd-probe" id="pd-probe-ws"></span
 									></label>
 									<input class="pd-input" type="text" id="pd-cfg-ws-url" />
 								</div>
 								<div class="pd-form-group">
-									<label
+									<label for="pd-cfg-api-key"
 										 data-i18n-html="pump_dashboard.api_key">API key <span class="pd-probe" id="pd-probe-key"></span
 									></label>
 									<input
@@ -1326,7 +1326,7 @@
 							<div class="pd-panel-head"><h2 data-i18n="pump_dashboard.solana_rpc">Solana RPC</h2></div>
 							<div class="pd-panel-body">
 								<div class="pd-form-group">
-									<label
+									<label for="pd-cfg-rpc-url"
 										 data-i18n-html="pump_dashboard.rpc_endpoint">RPC endpoint
 										<span class="pd-probe" id="pd-probe-rpc"></span
 									></label>
@@ -1339,7 +1339,7 @@
 									/>
 								</div>
 								<div class="pd-form-group">
-									<label data-i18n="pump_dashboard.commitment_level">Commitment level</label>
+									<label for="pd-cfg-commitment" data-i18n="pump_dashboard.commitment_level">Commitment level</label>
 									<select class="pd-select" id="pd-cfg-commitment">
 										<option value="confirmed" selected data-i18n="pump_dashboard.confirmed">Confirmed</option>
 										<option value="finalized" data-i18n="pump_dashboard.finalized">Finalized</option>
@@ -1399,8 +1399,10 @@
 									class="pd-form-group"
 									style="flex: 2; min-width: 240px; margin: 0"
 								>
-									<label data-i18n="pump_dashboard.scopes">Scopes</label>
+									<div class="pd-form-label" id="pd-key-scopes-label" data-i18n="pump_dashboard.scopes">Scopes</div>
 									<div
+										role="group"
+										aria-labelledby="pd-key-scopes-label"
 										style="
 											display: flex;
 											gap: 0.85rem;
@@ -1577,7 +1579,7 @@
 			<div class="pd-modal">
 				<h3 id="pd-add-watch-title" data-i18n="pump_dashboard.add_watch_2">Add watch</h3>
 				<div class="pd-form-group">
-					<label data-i18n="pump_dashboard.wallet_address">Wallet address *</label>
+					<label for="pd-watch-wallet" data-i18n="pump_dashboard.wallet_address">Wallet address *</label>
 					<input
 						class="pd-input"
 						type="text"
@@ -1586,7 +1588,7 @@
 					/>
 				</div>
 				<div class="pd-form-group">
-					<label data-i18n="pump_dashboard.label_2">Label</label>
+					<label for="pd-watch-label" data-i18n="pump_dashboard.label_2">Label</label>
 					<input
 						class="pd-input"
 						type="text"
@@ -1595,7 +1597,7 @@
 					/>
 				</div>
 				<div class="pd-form-group">
-					<label data-i18n="pump_dashboard.token_filter_comma_separated_mints">Token filter (comma-separated mints)</label>
+					<label for="pd-watch-token-filter" data-i18n="pump_dashboard.token_filter_comma_separated_mints">Token filter (comma-separated mints)</label>
 					<input
 						class="pd-input"
 						type="text"
@@ -1604,7 +1606,7 @@
 					/>
 				</div>
 				<div class="pd-form-group">
-					<label data-i18n="pump_dashboard.webhook_url">Webhook URL</label>
+					<label for="pd-watch-webhook" data-i18n="pump_dashboard.webhook_url">Webhook URL</label>
 					<input
 						class="pd-input"
 						type="text"
@@ -1635,7 +1637,7 @@
 					Copy this token now — you won't be able to see it again.
 				</p>
 				<div class="pd-form-group">
-					<label data-i18n="pump_dashboard.token_2">Token</label>
+					<label for="pd-key-token" data-i18n="pump_dashboard.token_2">Token</label>
 					<input class="pd-input pd-mono" type="text" id="pd-key-token" readonly />
 				</div>
 				<div class="pd-modal-actions">
@@ -2523,10 +2525,12 @@
 											: evt.kind === 'signal'
 												? 'signal'
 												: 'trade';
+							// buildFeed() normalises every item's time onto `ts` (unix
+							// seconds); without it every preloaded row was stamped "now".
 							handleWsEvent({
 								type,
 								...evt,
-								timestamp: evt.created_at || evt.timestamp || Date.now(),
+								timestamp: evt.ts || evt.created_at || evt.timestamp || Date.now(),
 							});
 						});
 				} catch {
@@ -2679,8 +2683,38 @@
 			let _feedQueue = [];
 			let _feedFlushRaf = 0;
 
+			// PumpPortal identifies an event in `txType`, not `type`, and interleaves
+			// subscription acknowledgements that carry no event at all. Without this
+			// normalisation every live frame fell through to the generic branch of
+			// addFeedItem and painted raw JSON into the feed.
+			const WS_TX_TYPES = {
+				create: 'launch',
+				buy: 'buy',
+				sell: 'sell',
+				migrate: 'graduation',
+				migration: 'graduation',
+				complete: 'graduation',
+			};
+			// A trade this size is a whale print, and the feed has a Whales filter that
+			// would otherwise never populate from a PumpPortal trade stream.
+			const WHALE_SOL_THRESHOLD = 10;
+
+			function feedEventType(data) {
+				const raw = data.type || data.event || data.kind || data.txType;
+				if (!raw) return null;
+				const key = String(raw).toLowerCase();
+				const mapped = WS_TX_TYPES[key] || key;
+				if (
+					(mapped === 'buy' || mapped === 'sell') &&
+					Number(data.solAmount) >= WHALE_SOL_THRESHOLD
+				)
+					return 'whale';
+				return mapped;
+			}
+
 			function handleWsEvent(data) {
-				const type = data.type || data.event || data.kind || 'unknown';
+				const type = feedEventType(data);
+				if (!type) return;
 				const ts = data.timestamp || Date.now();
 				_feedQueue.push({
 					type,
@@ -2758,33 +2792,60 @@
 					signal: { cls: 'is-signal', label: 'SIGNAL' },
 				}[item.type] || { cls: '', label: item.type.toUpperCase() };
 
+				// Two shapes reach this renderer: live PumpPortal frames (structured
+				// name/symbol/solAmount fields) and preloaded /api/pump/channel-feed
+				// items (normalised to mint + ts + a prose `summary`). Every branch
+				// reads the structured field first and falls back to the summary, so
+				// neither source renders a blank or a zero.
 				const d = item.data;
+				const sym = d.symbol || d.tokenSymbol || '';
+				const mintShort = d.mint ? shortAddr(d.mint) : '';
+				const trader = d.user || d.traderPublicKey || d.wallet || '';
+				const sol = Number(d.solAmount);
+				const solStr =
+					Number.isFinite(sol) && sol > 0 ? `${sol.toFixed(sol < 1 ? 4 : 2)} SOL` : '';
+				const join = (...parts) => parts.filter(Boolean).join(' · ');
 				let title = '',
 					detail = '';
 				if (item.type === 'launch' || item.type === 'create' || item.type === 'mint') {
-					title = `${d.name || d.tokenName || d.symbol || 'New token'} (${d.symbol || d.tokenSymbol || '?'})`;
-					detail = d.mint ? shortAddr(d.mint) : '';
+					const name = d.name || d.tokenName || '';
+					title = name
+						? sym && sym !== name
+							? `${name} (${sym})`
+							: name
+						: d.summary || sym || 'New token';
+					detail = join(mintShort, solStr && `initial buy ${solStr}`);
 				} else if (item.type === 'trade' || item.type === 'buy' || item.type === 'sell') {
-					title = `${d.tokenSymbol || '?'} · ${(Number(d.solAmount) || 0).toFixed(4)} SOL`;
-					detail = d.user ? shortAddr(d.user) : '';
+					const side = item.type === 'buy' ? 'Buy' : item.type === 'sell' ? 'Sell' : 'Trade';
+					title = join(`${side} ${sym || mintShort || 'token'}`, solStr) || d.summary;
+					detail = join(trader && shortAddr(trader), sym ? mintShort : '');
 				} else if (item.type === 'whale' || item.type === 'whale_trade') {
-					title = `${(Number(d.solAmount) || 0).toFixed(2)} SOL · ${d.tokenSymbol || '?'}`;
-					detail = d.user ? shortAddr(d.user) : '';
+					const side = String(d.txType || '').toLowerCase() === 'sell' ? 'sell' : 'buy';
+					title = solStr
+						? join(`${solStr} ${side}`, sym || mintShort)
+						: d.summary || 'Whale trade';
+					detail = join(trader && shortAddr(trader), sym ? mintShort : '');
 				} else if (item.type === 'graduation' || item.type === 'complete') {
-					title = `${d.tokenSymbol || d.name || 'Token'} graduated to AMM`;
-					detail = d.mint ? shortAddr(d.mint) : '';
+					title = `${sym || d.name || 'Token'} graduated to AMM`;
+					detail = join(mintShort, d.pool && `pool ${d.pool}`);
 				} else if (item.type === 'claim' || item.type === 'fee_claim') {
-					title = `${(Number(d.amountSol) || 0).toFixed(4)} SOL claimed`;
-					detail = `${d.claimType || 'fee'} · ${d.claimerWallet ? shortAddr(d.claimerWallet) : ''}`;
+					const amt = Number(d.amountSol);
+					title =
+						Number.isFinite(amt) && amt > 0
+							? `${amt.toFixed(4)} SOL claimed`
+							: d.summary || 'Fee claim';
+					detail = join(d.claimType, d.claimerWallet && shortAddr(d.claimerWallet), mintShort);
 				} else if (item.type === 'signal') {
 					// Agent-attributed pump.fun reputation signal from pumpfun_signals.
 					const w = Number(d.weight);
 					const weightStr = Number.isFinite(w) && w !== 0 ? ` ${w > 0 ? '+' : ''}${w}` : '';
 					title = d.summary || `${d.signal_kind || 'signal'}${weightStr}`;
-					detail = d.mint ? shortAddr(d.mint) : d.agent_name || '';
+					detail = mintShort || d.refs?.agent_name || d.agent_name || '';
 				} else {
-					title = JSON.stringify(d).slice(0, 80);
+					title = d.summary || `${item.type} event`;
+					detail = join(mintShort, trader && shortAddr(trader));
 				}
+				if (!title) title = d.summary || `${item.type} event`;
 
 				const timeStr = item.time.toLocaleTimeString('en-US', { hour12: false });
 				div.innerHTML = `
@@ -2806,6 +2867,8 @@
 
 				feed.prepend(div);
 				while (feed.children.length > 500) feed.lastElementChild.remove();
+				if (feedId === 'pd-live-feed' && div.style.display !== 'none')
+					$('pd-filter-empty')?.remove();
 			}
 
 			const FEED_FILTER_GROUPS = {
@@ -2822,6 +2885,59 @@
 				return matches.includes(type || '');
 			}
 
+			const FEED_FILTER_LABELS = {
+				launch: 'launches',
+				trade: 'trades',
+				whale: 'whale trades',
+				graduation: 'graduations',
+				claim: 'fee claims',
+			};
+
+			// A filter that matches nothing used to leave the panel blank, because every
+			// row was simply display:none. Tell the user what is being filtered instead.
+			function syncFilterEmptyState() {
+				const feed = $('pd-live-feed');
+				if (!feed) return;
+				const existing = $('pd-filter-empty');
+				const hasRows = feed.querySelector('.pd-feed-item');
+				const hasVisible = Array.from(feed.querySelectorAll('.pd-feed-item')).some(
+					(row) => row.style.display !== 'none',
+				);
+				if (!hasRows || hasVisible || state.currentFilter === 'all') {
+					if (existing) existing.remove();
+					return;
+				}
+				const label = FEED_FILTER_LABELS[state.currentFilter] || state.currentFilter;
+				if (existing) {
+					existing.querySelector('.pd-filter-empty-msg').textContent =
+						`No ${label} in the feed yet. Events stream in live; switch back to All to see everything.`;
+					return;
+				}
+				const box = document.createElement('div');
+				box.className = 'pd-empty';
+				box.id = 'pd-filter-empty';
+				const msg = document.createElement('div');
+				msg.className = 'pd-filter-empty-msg';
+				msg.textContent = `No ${label} in the feed yet. Events stream in live; switch back to All to see everything.`;
+				const btn = document.createElement('button');
+				btn.type = 'button';
+				btn.className = 'pd-btn pd-btn-sm';
+				btn.textContent = 'Show all events';
+				btn.addEventListener('click', () => setFeedFilter('all'));
+				box.append(msg, btn);
+				feed.prepend(box);
+			}
+
+			function setFeedFilter(filter) {
+				state.currentFilter = filter;
+				document.querySelectorAll('.pd-filter-btn').forEach((b) => {
+					const on = b.dataset.filter === filter;
+					b.classList.toggle('is-active', on);
+					b.setAttribute('aria-pressed', on ? 'true' : 'false');
+				});
+				applyFeedFilter();
+			}
+
 			// Called only when the user changes the active filter — a full rescan is
 			// correct here, but it no longer runs on every incoming feed event.
 			function applyFeedFilter() {
@@ -2832,6 +2948,7 @@
 						? ''
 						: 'none';
 				});
+				syncFilterEmptyState();
 			}
 
 			function clearFeed(feedId) {
@@ -4761,15 +4878,9 @@
 
 				// Filter buttons
 				document.querySelectorAll('.pd-filter-btn').forEach((b) => {
-					b.addEventListener('click', () => {
-						document
-							.querySelectorAll('.pd-filter-btn')
-							.forEach((x) => x.classList.remove('is-active'));
-						b.classList.add('is-active');
-						state.currentFilter = b.dataset.filter;
-						applyFeedFilter();
-					});
+					b.addEventListener('click', () => setFeedFilter(b.dataset.filter));
 				});
+				setFeedFilter(state.currentFilter);
 
 				$('pd-feed-pause').addEventListener('change', (e) => {
 					state.feedPaused = e.target.checked;
