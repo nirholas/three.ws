@@ -5,11 +5,16 @@ on-chain agent marketplace. Buyers are agents: they discover a service, receive 
 payment challenge, pay in stablecoins on X Layer (or USDC on our other x402 rails), and get
 the artifact. Our marketplace entry is agent **#2632 "three.ws 3D Studio"**.
 
-> **Listing state.** Resubmitted for review on 2026-08-27 with the line-up below (on-chain
-> update tx `0xb4b2f51d…415ba`, X Layer). The earlier listing was rejected on 2026-07-04
-> ("your A2MCP service has not been integrated with the OKX Agent Payments Protocol
-> standard"); every row now answers that directly. Until approval lands, the services are
-> reachable at the endpoints documented here. Current state is tracked in
+> **Listing state, read live 2026-09-09: rejected, awaiting resubmission.** The line-up below
+> was resubmitted on 2026-08-27 (on-chain update tx `0xb4b2f51d…415ba`, X Layer) and the review
+> rejected it on 2026-09-03 over the payment leg: an OKX agentic wallet is an EIP-7702 delegated
+> EOA and our verifier refused its signature. That is fixed and live (2026-09-05 release), OKX's
+> own `agent x402-check` reads `valid: true` on all four paid rows, and a TEE-signed
+> authorization is accepted end to end. The resubmission itself is an on-chain write and is the
+> only step left. The first rejection, on 2026-07-04 ("your A2MCP service has not been
+> integrated with the OKX Agent Payments Protocol standard"), was closed by the X Layer rail
+> every row now leads with. **Approval is not a precondition for using any of this**: every
+> endpoint documented here is deployed and answers today. Current state is tracked in
 > [`prompts/finish/_context/okx-ai-PROGRESS.md`](../prompts/finish/_context/okx-ai-PROGRESS.md).
 
 **What we list, as of 2026-08-22: three.ws Forge.** The listing was rebuilt around one
@@ -29,8 +34,10 @@ documented at the bottom of this page.
 The **single source of truth** for every service (names, OKX listing copy, prices,
 endpoints, input schemas, and which rows are listed) is
 [`api/_lib/okx-catalog.js`](../api/_lib/okx-catalog.js). The free catalog endpoint below
-serves it verbatim and the listing submission is generated from it, so the docs, the
-endpoints, and the OKX listing cannot drift apart.
+serves it verbatim and the listing submission is generated from it, so the docs and the
+endpoints cannot drift apart. The rows OKX stores are the one copy that is not automatic:
+they only change when an `agent update` is submitted, so `npm run okx:three-copy` compares
+them against the module and fails on the difference rather than letting it go unnoticed.
 
 ### The A2MCP listing description format
 
