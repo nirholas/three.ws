@@ -255,7 +255,13 @@ HTTP 502/503 GET|POST /api/x402/*, /api/mcp   ua: threews-x402-autonomous/1.0 or
      `X402_SPONSOR_SOL_FLOOR_LAMPORTS`. Self-heal territory: run
      `POST /api/cron/treasury-topup`; its `reclaimIdleAgentSol` leg refunds the
      fee wallet from idle agent SOL (commit `d6a7bf2a4`). No owner money needed
-     unless every reclaim source reports `at_or_below_floor`.
+     unless every reclaim source reports `at_or_below_floor` **and the run reports
+     `skipped_floor_held_sol` 0**. A floor skip carries its numbers
+     (`at_or_below_floor:<held><<keep>`), so a non-zero held total means the SOL is
+     sitting on a platform wallet behind a configured floor, not that the fleet is
+     empty; review that wallet's `minSol` before asking for capital. See
+     [economy-master.md](../economy-master.md) "A floor skip says whether the
+     wallet is empty or fenced".
   2. `--grep "data_unavailable"` hits = paid endpoints refunding honestly (no
      charge) because no market source could answer. Since 2026-07-28
      crypto-intel prices bonding-curve pump.fun mints from the pump.fun feed

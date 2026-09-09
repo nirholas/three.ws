@@ -240,6 +240,47 @@ node scripts/sniper-fleet-restore.mjs --apply --yes   # top up the fundable arms
 
 Sweeps below `ECONOMY_SWEEPBACK_MIN_SOL` (0.01 SOL) are skipped as dust.
 
+### A floor skip says whether the wallet is empty or fenced
+
+Both reclaim legs skip a wallet whose balance sits under its keep line (its
+operating floor plus the anti-oscillation buffer). That skip used to print the
+bare string `at_or_below_floor`, which cannot distinguish the two situations an
+operator has to tell apart:
+
+| Situation | What it means | What fixes it |
+| --- | --- | --- |
+| The wallet holds ~0 SOL | The source is genuinely empty | Owner capital to the economy master, nothing else |
+| The wallet holds real SOL under a higher floor | The platform owns the SOL; a configured floor is fencing it | Review that wallet's `minSol` in [`api/_lib/solana-signers.js`](../api/_lib/solana-signers.js), or accept the fence |
+
+They printed identically, so three consecutive triage sessions read the second as
+the first. On 2026-09-09 the x402 ring treasury (`wwwww…ccrU`) held 0.055 SOL
+against a `minSol` of 0.1, and reported the same `at_or_below_floor` as the 110
+genuinely-empty agent wallets beside it, while the ring payer was 0.0012 SOL short
+of the hard floor that had stopped settlement.
+
+A floor skip now carries both numbers, in the `<have><<need>` shape
+`below_swap_rent` already uses, and the run totals the fenced SOL:
+
+```json
+{
+  "name": "pump-x402-launcher",
+  "reason": "at_or_below_floor:0.054994966<0.11",
+  "heldSol": 0.054994966,
+  "floorSol": 0.1,
+  "keepSol": 0.11
+}
+```
+
+- `keepSol` is the number that actually blocked the sweep. Reporting and sizing
+  both read `reclaimKeepLineSol()`, so the message can never explain a refusal the
+  code did not make.
+- `floorHeldSol` on each reclaim result, and `skipped_floor_held_sol` on the
+  ledger's summary row, total the fenced SOL. **Zero is the only state that needs
+  owner money.** Non-zero means the SOL exists on a platform wallet.
+- The ledger's `skipped_reasons` histogram buckets on the class before the colon,
+  so a fleet-wide run still reports `{"at_or_below_floor": 110}` rather than 110
+  buckets of one.
+
 To see what a run would do without moving anything:
 
 ```bash
