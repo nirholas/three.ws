@@ -624,7 +624,7 @@ async function refreshStatus() {
 		live.balanceUsd = null;
 		$('bridgeOffline').classList.add('show');
 		$('lowBalance').classList.remove('show');
-		own($('wBal')).innerHTML = '—<small>USD</small>';
+		own($('wBal')).innerHTML = '-<small>USD</small>';
 	}
 	updatePayButton();
 	renderStages();
