@@ -575,6 +575,22 @@ html.pump-dashboard-page body {
 	margin-bottom: 0.55rem;
 }
 
+/* Persistent status line under a form that runs a slow on-chain read. */
+.pd-inline-status {
+	margin: 0.6rem 0 0;
+	padding: 0.55rem 0.75rem;
+	border: 1px solid var(--line, rgba(255, 255, 255, 0.08));
+	border-radius: 8px;
+	font-size: 0.82rem;
+	color: var(--ink-dim);
+	background: var(--surface-1, rgba(255, 255, 255, 0.02));
+}
+
+.pd-inline-status.is-error {
+	color: var(--danger);
+	border-color: color-mix(in srgb, var(--danger) 40%, transparent);
+}
+
 /* Filtered-empty notice inside the live feed: message plus a way back to All. */
 #pd-filter-empty {
 	display: flex;

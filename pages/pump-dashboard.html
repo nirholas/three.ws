@@ -973,6 +973,7 @@
 							Scan
 						</button>
 					</div>
+					<div class="pd-inline-status" id="pd-scan-status" role="status" hidden></div>
 					<div id="pd-scanner-results" hidden>
 						<div class="pd-stat-grid" style="margin-bottom: 1rem">
 							<div class="pd-stat">
@@ -1867,6 +1868,12 @@
 				if (sub) sub.classList.remove('is-danger');
 			}
 
+			// Some Solana providers accept a request and then never answer it
+			// (getTokenLargestAccounts is a known offender). Without a bound, the
+			// caller's await never settles: the token scanner sat on a click with no
+			// result, no error and no way to retry. Time every call out instead.
+			const RPC_TIMEOUT_MS = 25000;
+
 			async function rpcCall(rpcBody, { id = 1 } = {}) {
 				let resp;
 				try {
@@ -1874,11 +1881,17 @@
 						method: 'POST',
 						headers: { 'Content-Type': 'application/json' },
 						body: JSON.stringify({ jsonrpc: '2.0', id, ...rpcBody }),
+						signal: AbortSignal.timeout(RPC_TIMEOUT_MS),
 					});
 				} catch (e) {
+					const timedOut = e?.name === 'TimeoutError' || e?.name === 'AbortError';
 					console.warn('[pump-dashboard] RPC transport error:', e?.message || e);
-					markRpcError('unreachable');
-					throw new Error('RPC unreachable');
+					markRpcError(timedOut ? 'timed out' : 'unreachable');
+					throw new Error(
+						timedOut
+							? 'the Solana RPC did not respond in time'
+							: 'the Solana RPC is unreachable',
+					);
 				}
 				if (!resp.ok) {
 					console.warn('[pump-dashboard] RPC HTTP', resp.status, 'from', state.rpcUrl);
@@ -3743,13 +3756,31 @@
 
 			// ── Token Scanner ────────────────────────────────────────────
 
+			// A scan is two on-chain reads that routinely take several seconds, so the
+			// button and this line carry the busy state. A toast alone was not enough:
+			// it expires, leaving a failed scan indistinguishable from one never run.
+			function setScanStatus(text, kind = 'info') {
+				const el = $('pd-scan-status');
+				if (!el) return;
+				el.textContent = text || '';
+				el.hidden = !text;
+				el.classList.toggle('is-error', kind === 'error');
+			}
+
 			async function scanToken() {
 				const mint = $('pd-scanner-mint').value.trim();
 				if (!mint) {
 					toast('Enter a token mint address', 'error');
+					setScanStatus('Enter a token mint address to scan.', 'error');
+					$('pd-scanner-mint').focus();
 					return;
 				}
 				$('pd-scanner-results').hidden = true;
+				const scanBtn = $('pd-scan-token');
+				const scanLabel = scanBtn.textContent;
+				scanBtn.disabled = true;
+				scanBtn.textContent = 'Scanning…';
+				setScanStatus('Reading the mint account and top holders on-chain…');
 				try {
 					const [scanData, holdersData] = await Promise.all([
 						rpcCall(
@@ -3770,6 +3801,10 @@
 					const account = scanData.result?.value;
 					if (!account) {
 						toast('Token not found on-chain', 'error');
+						setScanStatus(
+							'No account exists at that address on mainnet. Check the mint and scan again.',
+							'error',
+						);
 						return;
 					}
 
@@ -3929,12 +3964,18 @@
 						)
 						.join('');
 					$('pd-scanner-results').hidden = false;
+					setScanStatus('');
 					toast(
 						'Scan complete: ' + riskLevel.toLowerCase() + ' risk',
 						riskLevel === 'HIGH' ? 'error' : 'success',
 					);
 				} catch (e) {
-					toast('Scan failed: ' + (e.message || 'Network error'), 'error');
+					const why = e.message || 'the network request failed';
+					toast('Scan failed: ' + why, 'error');
+					setScanStatus(`Scan failed: ${why}. Press Scan to try again.`, 'error');
+				} finally {
+					scanBtn.disabled = false;
+					scanBtn.textContent = scanLabel;
 				}
 			}
 
@@ -3960,6 +4001,27 @@
 				`;
 			}
 
+			// /api/pump/quote-sdk answers with { error, error_description }. Showing the
+			// raw code ("internal_error", "no_curve") told the user nothing and offered
+			// no next step, so translate the ones this page can actually hit.
+			const QUOTE_ERROR_TEXT = {
+				no_curve:
+					'No active bonding curve for that mint. It has graduated to an AMM, or the address is not a pump.fun token.',
+				bad_mint: 'That is not a valid Solana mint address.',
+				bad_amount: 'Enter an amount greater than zero.',
+				bad_side: 'Quote side must be buy or sell.',
+				upstream_unavailable:
+					'Every Solana RPC provider is rate limited right now. Try again in a moment.',
+			};
+
+			function quoteErrorText(status, data) {
+				const code = data?.error;
+				if (QUOTE_ERROR_TEXT[code]) return QUOTE_ERROR_TEXT[code];
+				if (status >= 500)
+					return 'The quote service could not reach Solana. Try again in a moment.';
+				return data?.error_description || data?.message || 'Quote failed.';
+			}
+
 			async function getBuyQuote() {
 				const mint = $('pd-quote-buy-mint').value.trim();
 				const solAmount = parseFloat($('pd-quote-buy-amount').value);
@@ -3979,7 +4041,7 @@
 					);
 					const data = await r.json();
 					if (!r.ok) {
-						target.innerHTML = `<span style="color:var(--danger)">${escapeHtml(data.message || data.error || 'Quote failed')}</span>`;
+						target.innerHTML = `<span style="color:var(--danger)">${escapeHtml(quoteErrorText(r.status, data))}</span>`;
 						return;
 					}
 					renderQuoteResult(target, {
@@ -4012,7 +4074,7 @@
 					);
 					const data = await r.json();
 					if (!r.ok) {
-						target.innerHTML = `<span style="color:var(--danger)">${escapeHtml(data.message || data.error || 'Quote failed')}</span>`;
+						target.innerHTML = `<span style="color:var(--danger)">${escapeHtml(quoteErrorText(r.status, data))}</span>`;
 						return;
 					}
 					renderQuoteResult(target, {

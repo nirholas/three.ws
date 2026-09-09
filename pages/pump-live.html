@@ -10,8 +10,8 @@
 		<link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png" />
 		<link rel="apple-touch-icon" href="/apple-touch-icon.png" />
 		<link rel="manifest" href="/manifest.webmanifest" />
-<title data-i18n="pump_live.meta_title">3D-Agent · PumpFun Live</title>
-<meta name="description" content="Real-time stream of new PumpFun token launches on Solana, presented by a 3D Agent." data-i18n-attr="content:pump_live.meta_description">
+<title data-i18n="pump_live.meta_title">Pump.fun Live Feed · three.ws</title>
+<meta name="description" content="Watch every pump.fun launch on Solana the moment it happens: live market caps, Oracle conviction scores, and a 3D agent that reacts to each new coin." data-i18n-attr="content:pump_live.meta_description">
 <link rel="canonical" href="https://three.ws/pump-live">
 <script type="importmap">
   {
@@ -105,6 +105,10 @@
   }
   .stat {
     flex: 1;
+    /* Without this the flex items refuse to shrink below their longest label,
+       so at 320px the four stats sum to 321px and the last one hangs a pixel
+       past the viewport. Labels wrap instead. */
+    min-width: 0;
     padding: 10px 16px;
     border-right: 1px solid var(--dark-grey);
     display: flex;
