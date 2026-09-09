@@ -6,6 +6,68 @@ Work Order 04 session, no earlier entries existed because no earlier work order 
 
 ---
 
+## 2026-09-09, WO-05 refused and deleted; the three pre-resubmission gates are green on today's production
+
+Asked to execute `912-okx-ai-05-relisting-resubmission.md`. **It was not executed, and the file
+is now gone from the queue.** Its own banner already marked it retired; every claim behind that
+banner was re-verified live before deleting it, and one of them had rotted:
+
+- `api/_lib/okx-catalog.js` and `https://three.ws/api/okx/3d/catalog` both report the same split:
+  `services` = the seven Forge rows (`forge-draft`, `forge-standard`, `forge-hd`, `forge-image`,
+  `forge-status`, `catalog`, `health`), `unlisted` = the nine back-burner rows including
+  `identity-studio`. `node scripts/okx-listing-payload.mjs` emits 7 rows, not the 11 WO-05 was
+  written around, so running WO-05 would have deleted seven live, reviewed rows and put a retired
+  line-up in their place.
+- **Stale claim corrected:** the banner says #2632 has read `Listing under review` since
+  2026-08-27. It does not. `onchainos agent get-my-agents` today reads
+  `approvalDisplayStatus: 5`, `approvalLabel: "Listing rejected"`, `status: 2` ("not listed"),
+  `soldCount: 2`, carrying the same rejection #3 remark (the four Forge rows plus the internal
+  note about the x402 quotation). So the resubmission is still open, it just belongs to
+  [`911-okx-ai-08-forge-relisting.md`](../911-okx-ai-08-forge-relisting.md).
+
+### The 2026-09-07 deploy blocker is gone: the fix is live
+
+Production reads commit `880bdcef8` (`three-ws-api-00418-j26`, built 2026-09-08 19:05 UTC).
+`d7e5e5277`, the commit the previous session staged and could not submit, is an ancestor of it,
+and `/workspaces/.deploy-wt-okx5` has been cleaned up. Nothing about the x402 fix is waiting on a
+deploy any more.
+
+### RUNBOOK 5.5, re-run against that revision. All three green
+
+| Check | Result | Capture |
+|---|---|---|
+| `scripts/okx-compliance-probe.mjs` | `PASS 20 probes against https://three.ws` | `prompts/okx-ai/e2e-evidence/86-2026-09-09-compliance-probe.json` |
+| `scripts/okx-payment-leg-probe.mjs` | `PASS 4 paid rows accepted a signed authorization` | `prompts/okx-ai/e2e-evidence/87-2026-09-09-payment-leg-replay.json` |
+| `onchainos agent x402-check` (4 paid rows) | `valid: true` on all four, `eip155:196` / `exact` / USD₮0 / `payTo 0x4022de2D...f402`, `amountMinimal` 10000 / 50000 / 250000 / 250000 | `prompts/okx-ai/e2e-evidence/88-2026-09-09-okx-x402-check.json` |
+
+The payment-leg probe spent nothing: the buyer `0x75d0...cf69` still holds 0 USD₮0, so every row
+answered `insufficient_balance`, which is thrown only after the signature, recipient, amount,
+validity window and nonce have all been accepted.
+
+### No service delta is needed
+
+`onchainos agent service-list --agent-id 2632` publishes seven rows whose endpoints, fees
+(0.01 / 0.05 / 0.25 / 0.25 and three free) and `serviceType: A2MCP` match the catalog module
+exactly (service ids 39975 to 39981). Piping it through `okx-listing-payload.mjs --delta` yields
+7 `update` operations and zero creates or deletes. Per RUNBOOK 5.5, do not run the WO-08 service
+delta in this state: it would churn correct rows and lose their ids.
+
+### The one open step, owner-gated
+
+```bash
+onchainos agent activate --agent-id 2632 --preferred-language en-US
+```
+
+An irreversible on-chain write, so it waits for an explicit yes. Wallet session is live
+(`onchainos wallet status` -> `loggedIn: true`, `claude@three.ws`), so no OTP is pending.
+
+Docs repointed away from the deleted order in the same commit: `okx-ai-README.md` (row 5 marked
+retired, row 8 added), `okx-ai-00-CONTEXT.md`, `okx-ai-RUNBOOK.md`, `prompts/README.md`,
+`911-okx-ai-08-forge-relisting.md`, and the stale X Layer creds row in
+`docs/ops/gcp-production.md` (the rail it says is missing has been live for weeks).
+
+---
+
 ## 2026-09-07, the new rejection email is the OLD verdict: the listing state never moved, and OKX's own validator now passes us
 
 An OKX rejection mail landed naming all four paid rows plus the internal note *"x402 quotation

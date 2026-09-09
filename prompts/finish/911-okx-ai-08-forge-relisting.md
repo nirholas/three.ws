@@ -5,8 +5,9 @@
 `prompts/finish/_context/okx-ai-00-CONTEXT.md`, the 2026-08-22 entry in `prompts/finish/_context/okx-ai-PROGRESS.md`,
 `prompts/finish/_context/okx-ai-RUNBOOK.md` and `CLAUDE.md` first.
 
-This supersedes `okx-ai-05-relisting-resubmission.md`, which submits the retired 11-row catalog.
-Do not run 05.
+This superseded `okx-ai-05-relisting-resubmission.md`, which submitted the back-burner
+identity-studio catalog. That order was deleted on 2026-09-09; this file is the only
+relisting order.
 
 ## Binding operating clause
 

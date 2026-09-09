@@ -119,9 +119,10 @@ for the 6-digit OTP from that inbox and run `onchainos wallet verify <otp>`. Nev
 | 02 | payments integration (retired, completed, in git history) | 01 |
 | 03 | service decomposition (retired, completed, in git history) | 02 |
 | 04 | `okx-ai-04-e2e-real-payment-test.md`, pay ourselves for real, verify settlement | 02, 03 |
-| 05 | `okx-ai-05-relisting-resubmission.md`, update #2632 and resubmit for review | 04 |
+| 05 | retired 2026-09-09, deleted: superseded by order 08 below | none |
 | 06 | Agent Identity Studio (retired 2026-08-01, verified shipped) | 02 |
 | 07 | `okx-ai-07-final-audit-and-watch.md`, full audit, docs closure, approval watch | all |
+| 08 | `911-okx-ai-08-forge-relisting.md`, resubmit #2632 with the Forge line-up | 02, 03 |
 
 ## Retire this file when the campaign is done (required)
 

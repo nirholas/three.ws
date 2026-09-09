@@ -21,11 +21,13 @@ facts) and ends by appending to `okx-ai-PROGRESS.md` (the cross-chat handoff log
 | 2 | `02-payments-integration.md` (retired: completed, in git history) | Implement the OKX rail on our endpoint, tested | done |
 | 3 | `03-service-decomposition.md` (retired: completed, in git history) | Split into micro-priced services + free catalog | done |
 | 4 | [04-e2e-real-payment-test.md](../913-okx-ai-04-e2e-real-payment-test.md) | Pay ourselves for real; settlement + adversarial gauntlet | **wallet funding**, OTP |
-| 5 | [05-relisting-resubmission.md](../912-okx-ai-05-relisting-resubmission.md) | Update #2632 + resubmit for review | OTP; confirm the on-chain write |
+| 5 | `05-relisting-resubmission.md` (retired 2026-09-09, deleted: it submitted the back-burner identity-studio catalog and would have deleted the seven live Forge rows) | superseded by order 08 | done |
 | 6 | `06-agent-pfp-wedge.md` (retired 2026-08-01, verified shipped: `identity-studio` in `api/_lib/okx-catalog.js`, `api/_okx3d/identity.js`, the `/agent-identities` showcase in `data/pages.json`, `docs/agent-identities.md`) | "Agent Identity Studio", 3D avatars for OKX agents | done |
 | 7 | [07-final-audit-and-watch.md](../914-okx-ai-07-final-audit-and-watch.md) | Adversarial re-audit, docs closure, approval watch, launch execution | OTP |
+| 8 | [08-forge-relisting.md](../911-okx-ai-08-forge-relisting.md) | Replace the listed rows with the seven-row Forge line-up and resubmit #2632 | confirm the on-chain write |
 
-Strict chain: 04, then 05, then 07. Each file is self-contained; paste it into a fresh chat.
+Strict chain: 08, then 07. Order 04 is independent of both: it needs buyer-wallet funding, and a
+listing can be submitted before any payment has settled. Each file is self-contained; paste it into a fresh chat.
 
 Both remaining human touchpoints are batched into one message per work order: the email OTP for
 `claude@three.ws`, and an explicit yes on any real payment. Everything else runs autonomously.

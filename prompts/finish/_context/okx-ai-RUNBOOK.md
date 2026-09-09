@@ -357,8 +357,8 @@ This is the holder-visible moment. Work the list top to bottom.
 2. **Append the verbatim remark to `okx-ai-PROGRESS.md`** with the date. Never paraphrase a
    reviewer.
 3. **Map the reason to the work order that owns it**, fix there, and re-run
-   [`okx-ai-08-forge-relisting.md`](../911-okx-ai-08-forge-relisting.md), which supersedes the
-   retired `okx-ai-05-relisting-resubmission.md`. Precedent:
+   [`okx-ai-08-forge-relisting.md`](../911-okx-ai-08-forge-relisting.md). It superseded the
+   retired `okx-ai-05-relisting-resubmission.md`, which was deleted on 2026-09-09. Precedent:
    - 2026-07-04 rejection ("your A2MCP service has not been integrated with the OKX Agent
      Payments Protocol standard") was owned by the payment rail, implemented in
      [`api/_lib/x402-xlayer-okx.js`](../../api/_lib/x402-xlayer-okx.js).
