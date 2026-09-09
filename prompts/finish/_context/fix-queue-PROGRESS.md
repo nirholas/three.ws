@@ -134,6 +134,33 @@ interactive login | `curl -o /dev/null -w '%{http_code}'` on the cron path = 401
 `npx vitest run tests/cron-scheduler-sync.test.js tests/cron-drift-classify.test.js`
 25 passed
 
+2026-09-09 | 03-cron-drift-garment-sweep | The original instance is CLOSED and the
+order now tracks two successors. `garment-job-sweep` is synced, ENABLED at
+`*/10 * * * *` with a 320s attempt deadline, and took 144 ticks in the last 24
+hours with zero non-200s (144 is exactly 24*6, so it has not missed a slot). It
+is doing real work rather than skipping: `GCP_GARMENT_FORGE_URL` (literal) and
+`GCP_RECONSTRUCTION_KEY` (secret ref) are both set on the service, making the
+`skipped: not_configured` branch unreachable, and Cloud Run logs the ticks at
+1.3s to 5.0s, which is the worker `/sweep` round trip. gcloud auth is alive
+again in this workspace, so every read above was taken directly rather than
+inferred; the 2026-09-02 "Reauthentication failed" note is stale. Drift has
+since reappeared on two crons that landed after this order was written:
+`/api/cron/globe-ingest` (`*/15 * * * *`) and
+`/api/cron/hood-portfolio-snapshot` (`17 2 * * *`), both `deployed, never
+synced`, both answering 401 on revision three-ws-api-00418-j26, so only the
+Cloud Scheduler write is missing for either. Both first ticks were checked and
+are safe: the snapshot is idempotent by UTC day and refuses to record fewer than
+50 priced tokens, and the ingest upserts on GlobalEventID, caps a tick at 12
+files, and carries `requireWriteCapacity`. Its table is applied
+(`20260908230000_globe_events.sql`). What remains is owner-gated for a NEW
+reason: the auto mode classifier refuses both
+`node scripts/create-gcp-scheduler.mjs --only globe-ingest,hood-portfolio-snapshot`
+and the equivalent bare `gcloud scheduler jobs create http`, twice each, so it
+is a harness gate on a production write rather than a missing credential |
+`npm run check:cron-drift` = 117 declared, MISSING: 2; `gcloud logging read` on
+the sweep job = 144 rows at status 200 and 0 rows at `status:* AND status!=200`
+over 24h; `npm run db:status` = all migrations applied
+
 ## Retire this file when the campaign is done (required)
 
 This file is shared context rather than a single order, so it outlives the

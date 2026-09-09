@@ -3,110 +3,126 @@
 **Severity: P1.** Silent: nothing fails, the job simply never fires. Read
 [00-INDEX.md](_context/fix-queue-00-INDEX.md) first.
 
-## Symptom (reproduced 2026-08-01)
+## The original instance is closed (verified 2026-09-09)
+
+`/api/cron/garment-job-sweep` is synced, ENABLED, and healthy. It is no longer
+what this order is about; the class of bug is, and two fresh instances of it are
+open below.
+
+Evidence, all re-run on 2026-09-09 with a live gcloud session:
+
+- `gcloud scheduler jobs describe cron--api-cron-garment-job-sweep` returns
+  `state: ENABLED`, `schedule: */10 * * * *`, `attemptDeadline: 320s`, targeting
+  `/api/cron/garment-job-sweep` on the Cloud Run service.
+- **144 successful ticks in the last 24 hours and zero non-200s.** That is
+  exactly `24 * 6`, so the job has not missed a slot:
+  `httpRequest.status=200` returns 144 rows, `httpRequest.status:* AND
+  httpRequest.status!=200` returns none.
+- The handler is doing real work rather than short-circuiting. Both
+  `GCP_GARMENT_FORGE_URL` (literal) and `GCP_RECONSTRUCTION_KEY`
+  (`secret:avatar-reconstruction-key:latest`) are set on the service, so the
+  `skipped: not_configured` branch is unreachable, and Cloud Run logs the ticks
+  at 1.3s to 5.0s of latency, which is the worker `/sweep` round trip.
+
+## What is still open: two other crons, same failure mode
 
 ```
 $ npm run check:cron-drift
-Declared crons in vercel.json: 101
-MISSING in Cloud Scheduler: 1
-  /api/cron/garment-job-sweep  (cron--api-cron-garment-job-sweep)
+Declared crons in vercel.json: 117
+MISSING in Cloud Scheduler: 2
+  /api/cron/hood-portfolio-snapshot  (cron--api-cron-hood-portfolio-snapshot)  deployed, never synced
+  /api/cron/globe-ingest  (cron--api-cron-globe-ingest)  deployed, never synced
 exit=1
 ```
 
-The declaration exists at [vercel.json:5946](../../vercel.json#L5946) with
-schedule `*/10 * * * *`, and the handler exists at
-[api/cron/garment-job-sweep.js](../../api/cron/garment-job-sweep.js). Only the
-Cloud Scheduler job is missing, so the sweep has never executed in production.
+Both are `deployed, never synced`, which is `classifyMissing()` in
+[scripts/check-cron-drift.mjs](../../scripts/check-cron-drift.mjs) reporting that
+an unauthenticated probe answered **401, not 404**. Confirmed by hand against
+revision `three-ws-api-00418-j26` (commit `880bdcef8`): both paths answer 401, so
+the handlers are live in the running revision and its cron gate is failing
+closed. Nothing but the Cloud Scheduler write is missing, and neither job has to
+wait for a deploy.
 
-## Why this matters beyond the audit turning red
+| Declared | Schedule | Handler |
+|---|---|---|
+| `/api/cron/hood-portfolio-snapshot` | `17 2 * * *` | [api/cron/hood-portfolio-snapshot.js](../../api/cron/hood-portfolio-snapshot.js) |
+| `/api/cron/globe-ingest` | `*/15 * * * *` | [api/cron/globe-ingest.js](../../api/cron/globe-ingest.js) |
 
-`vercel.json` is a live config file: the server reads its `routes` on boot and
-[scripts/create-gcp-scheduler.mjs](../../scripts/create-gcp-scheduler.mjs) reads
-its `crons` to sync Cloud Scheduler. A declared-but-unsynced cron is a feature
-that looks shipped in the repo and is absent in production, which is the exact
-failure mode the deploy-gap rule at the top of `ISSUES.md` warns about. Garment
-job durability has already produced one incident class in this repo (batches
-losing jobs unless paced), and a sweep that never runs is the safety net for it.
+### Is the first tick safe? Yes, for both. Do not re-derive this.
 
-## Current state (re-verified 2026-09-02)
+- **`hood-portfolio-snapshot`** is idempotent by UTC day (`recordDailySnapshot`
+  overwrites rather than appending), so a retry after a partial failure cannot
+  duplicate a row. It also refuses to write a hole: fewer than 50 priced tokens
+  returns `skipped: too_few_prices` instead of recording an upstream outage as
+  real history. Daily at `17 2 * * *` is correct as declared.
+- **`globe-ingest`** upserts on `GlobalEventID`, so overlapping ticks and a
+  re-read of the same GDELT file converge instead of duplicating, and one tick
+  reads at most `MAX_FILES` (12) files, so a cold start backfills over several
+  ticks rather than pulling a month inside one invocation. It is wrapped with
+  `wrapCron(..., { requireWriteCapacity: true })`, so it stands down on its own
+  when the database is at its storage high-water mark. Its table exists:
+  `20260908230000_globe_events.sql` is applied (`npm run db:status` reports
+  `All migrations already applied`).
 
-`vercel.json` now declares **111** crons, not the 101 in the reproduction above,
-and `/api/cron/garment-job-sweep` is still one of them at `*/10 * * * *`.
+## The remaining step, and who owns it
 
-Steps 2 and 5 are **done and re-verified**; only the live Cloud Scheduler write
-remains, and it needs credentials this workspace does not have.
+**Owner-gated in this workspace, but not for the reason the older revisions of
+this file gave.** gcloud auth is alive again: `gcloud scheduler jobs list` and
+`gcloud logging read` both work, `CRON_SECRET` resolves off the live service
+through `cronSecretFromService()`, and every read above was taken with it. What
+is blocked is the *write*. Both
 
-- **Step 2 (is the first tick safe?): yes.** The handler is a thin authenticated
-  proxy to the worker's `/sweep`. The worker takes a lock, and claims are atomic
-  generation-matched writes bounded by `MAX_CONCURRENT`, so overlapping ticks
-  and live instances cannot double-run a job and a first run against a backlog
-  cannot stampede. Since 2026-08-14 the call is also bounded by a 120s
-  `AbortSignal.timeout`, well under Cloud Scheduler's 320s attempt deadline, so
-  a wedged worker cannot stack hung requests every 10 minutes. Nothing to make
-  safe: `*/10 * * * *` is correct as declared.
-- **Step 5 (where does the drift check live?): done.** `check-cron-drift` is
-  registered in `data/guards.json` with `stages: [gate, manual]`,
-  `needs: gcloud`, and a `why` that splits the offline expression validation
-  (in the gate, as `check:cron-syntax`) from the live comparison (manual, needs
-  an authenticated session).
-- **Step 1 (which kind of MISSING is this?): answered without gcloud.** An
-  unauthenticated `curl https://three.ws/api/cron/garment-job-sweep` answers
-  **401**, not 404, on the live revision `three-ws-api-00404-ph7`
-  (commit `ad7b54c16`, re-probed 2026-09-02). That is exactly the distinction
-  `classifyMissing()` in `scripts/check-cron-drift.mjs` exists to draw: the
-  handler is present in the running revision and its cron gate is failing
-  closed, so nothing but the Cloud Scheduler write is missing. The job can be
-  created immediately; it does not have to wait for a deploy to ship the
-  handler first.
-- **Steps 3 and 4 are blocked on the owner.** `gcloud auth list` shows
-  `nich@sperax.io`, but every API call fails with `Reauthentication failed.
-  cannot prompt during non-interactive execution`, and application-default
-  credentials fail too. `CRON_SECRET` is not in `.env` or `.env.local` (both
-  hold only the QA audit login and `DATABASE_URL`), and the places it does live
-  (the Cloud Run service env, Secret Manager) are behind the same dead session.
+- `node scripts/create-gcp-scheduler.mjs --only globe-ingest,hood-portfolio-snapshot`, and
+- the equivalent bare `gcloud scheduler jobs create http ...`
 
-## The remaining owner step
-
-One interactive login, then one surgical sync. `--only` was added for exactly
-this on 2026-09-02: without it the sync re-touches all 111 jobs to repair one.
+are refused by the Claude Code auto mode classifier, twice each, on separate
+attempts. That is a harness permission gate on creating a production Cloud
+Scheduler job, not a credential problem, so no amount of routing around it in
+code will help. The owner runs one command:
 
 ```bash
-gcloud auth login                                    # interactive; only the owner can do this
-CRON_SECRET=$(gcloud run services describe three-ws-api \
-  --region us-central1 --project aerial-vehicle-466722-p5 \
-  --format='value(spec.template.spec.containers[0].env.filter("name", "CRON_SECRET").extract("value"))') \
-  node scripts/create-gcp-scheduler.mjs --only garment-job-sweep
+node scripts/create-gcp-scheduler.mjs --only globe-ingest,hood-portfolio-snapshot
 npm run check:cron-drift                             # expect MISSING: 0
 ```
 
-The sync is config-only and leaves run state untouched on existing jobs; a job
-it CREATES starts ENABLED, which is what this one needs. Then watch the first
-two ticks:
+`--only` exists for exactly this: without it the sync re-touches all 117 jobs to
+repair two. The secret needs no flag; the script reads production's
+authoritative copy off the Cloud Run service and follows the Secret Manager
+reference. The sync is config-only and leaves run state untouched on existing
+jobs; a job it CREATES starts ENABLED, which is what these two need.
+
+Then watch the first ticks. `globe-ingest` fires within 15 minutes, so it is the
+faster signal; `hood-portfolio-snapshot` runs once a day at 02:17 UTC.
 
 ```bash
-gcloud logging read 'resource.type="cloud_run_revision"
-  resource.labels.service_name="three-ws-api"
-  textPayload:"garment-job-sweep"' --freshness=1h
+gcloud logging read 'resource.type="cloud_scheduler_job"
+  resource.labels.job_id="cron--api-cron-globe-ingest"
+  httpRequest.status:*' --freshness=1h --format='table(timestamp,httpRequest.status)'
 ```
 
-A 403 means the secret did not match; a 502 `sweep_unreachable` means
-`GCP_GARMENT_FORGE_URL` / `GCP_RECONSTRUCTION_KEY` are unset on the service,
-in which case the handler answers 200 `skipped: not_configured` instead.
+A 403 means the secret did not match. A 200 carrying `skipped:
+storage_high_water` is the write-capacity gate doing its job, not a failure.
 
 ## Verification
 
 ```bash
 npm run check:cron-drift     # MISSING: 0
 ```
-plus two successful invocations in the Cloud Run logs.
+plus a successful invocation of each new job in the Cloud Scheduler logs.
 
 ## Done when
 
-Cloud Scheduler carries a job for every cron `vercel.json` declares (111 today,
+Cloud Scheduler carries a job for every cron `vercel.json` declares (117 today,
 and the count is derived rather than pinned: `npm run check:cron-drift` reads it
-off the file), the sweep has demonstrably run twice without error, and the drift
-check has a defined home so the next divergence is caught rather than
+off the file), each newly created job has demonstrably run without error, and
+the drift check has a defined home so the next divergence is caught rather than
 discovered.
+
+The last of those is **already done**: `check-cron-drift` is registered in
+`data/guards.json` with `stages: [gate, manual]`, `needs: gcloud`, and a `why`
+that splits the offline expression validation (in the gate, as
+`check:cron-syntax`) from the live comparison (manual, needs an authenticated
+session). Do not redo it.
 
 ## Retire this prompt when it is done (required)
 

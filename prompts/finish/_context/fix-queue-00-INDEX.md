@@ -59,10 +59,14 @@ extend that pack instead.
 
 **One order left, and it is owner-gated.** Everything else this pack opened with
 shipped and was retired; [PROGRESS.md](fix-queue-PROGRESS.md) carries what changed and the
-verification output for each. Order 03's code-side questions are both answered
-in that log (the first sweep is safe at `*/10`, and the drift check's home is
-already registered in `data/guards.json`); what remains is creating the Cloud
-Scheduler job, which needs a `gcloud auth login` this workspace does not have.
+verification output for each. Order 03's original instance closed on 2026-09-09:
+`garment-job-sweep` is ENABLED and took 144 ticks in 24 hours with zero non-200s.
+Two later crons drifted into the same state (`globe-ingest`,
+`hood-portfolio-snapshot`), so the order now tracks those. Every code-side
+question is answered in that log and in the order (both first ticks are safe,
+and the drift check's home is already registered in `data/guards.json`); what
+remains is the Cloud Scheduler write, which the auto mode classifier refuses in
+this workspace.
 
 Retired 2026-08-13 after verification: 01 (gate green), 04 (tour atlas), 05
 (stub hrefs), 06 (runnable docs), 07 (`test:core`), 08 (optimizer inflation).
