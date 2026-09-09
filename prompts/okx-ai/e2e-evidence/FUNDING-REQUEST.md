@@ -1,8 +1,28 @@
-# Work Order 04: funding request (rewritten 2026-09-02)
+# Work Order 04: funding request (re-verified 2026-09-09)
 
 Every leg of the gauntlet that does not move money is finished and green against production.
 The paid legs are blocked on one owner action. Amounts below are computed from the live
 catalog and today's gas price, not padded.
+
+## Re-verified 2026-09-09, and one blocker cleared itself
+
+- **All four unpaid gauntlet cases pass** (1, 1d, 5d, 7). `node scripts/okx-e2e-gauntlet.mjs
+  --dry-run` reads `4/14 cases passed`, the other ten being the paid legs this file asks to
+  unblock.
+- **Case 1d is GREEN in production.** The discovery paywall the 2026-09-02 version of this
+  file called out as "one thing funding will NOT fix" shipped since. A spec-compliant MCP
+  client (`Accept: text/event-stream` + `MCP-Protocol-Version`) now gets 200 on `initialize`
+  and `tools/list` on all four paid rows, so a reviewer can read the tool schema without
+  paying. That section is deleted from this file rather than carried forward stale.
+- **All three pre-resubmission gates pass**, including OKX's own validator:
+  `okx-compliance-probe.mjs` PASS 20 probes, `okx-payment-leg-probe.mjs` PASS 4 rows,
+  and `onchainos agent x402-check` reads `valid: true` on all four rows with the rail
+  resolved exactly as registered. Captures: `90-`, `91-`, `92-2026-09-09-*.json`.
+- **Delivery is healthy again.** A storage-credential fault (R2 `SignatureDoesNotMatch`) was
+  failing generation earlier today; Cloud Run revision `three-ws-api-00420-ljh` (05:39 UTC)
+  cleared it. `/api/okx/3d/health` now reads `ok: true` on all six subsystems, and a fresh
+  free-lane job delivered a 3,281,092-byte GLB that parses with real geometry
+  (1 mesh, 17,603 vertices, 30,000 triangles). A paid buyer would receive a real artifact.
 
 ## What changed since the 2026-08-01 version of this file
 
@@ -16,7 +36,7 @@ catalog and today's gas price, not padded.
   `avatar` and `fbx-export`; the gauntlet now buys the rows OKX actually lists.
 - **The ask is smaller.** $1.32 covers a clean run, against $3.00 before.
 
-## Live balances (X Layer RPC, direct `eth_call`, block 69607441, 2026-09-02)
+## Live balances (X Layer RPC, direct `eth_call`, block 70162898, 2026-09-09)
 
 | Wallet | Role | USD₮0 | OKB |
 | --- | --- | --- | --- |
@@ -24,7 +44,10 @@ catalog and today's gas price, not padded.
 | `0x4022de2D36C334E73C7a108805Cea11C0564f402` | Seller / payTo | 2.427731 | 0.839596 |
 | `0xe81DE501Dd5D9299E2bA8964498858d3fAD0415B` | Relayer (gas) | 0.000000 | 0.020000 |
 
-`payTo` re-probed off the live 402 today and unchanged. Gas is a non-issue: X Layer prices at
+Every figure is unchanged from 2026-09-02, 2026-08-01 and 2026-07-23: nothing has moved on
+this rail in six weeks, so no funding story explains any listing rejection.
+
+`payTo` re-probed off the live 402 today (2026-09-09) and unchanged. Gas is a non-issue: X Layer prices at
 0.02 gwei, so one `transferWithAuthorization` costs 0.000002 OKB and the relayer's 0.02 OKB
 covers roughly 10,000 settlements. The buyer needs no OKB at all: it signs an EIP-3009
 authorization off-chain and the relayer broadcasts.
@@ -73,8 +96,7 @@ for WO-05 and for retests during OKX's review.
 platform wallet to another. Net platform cost for a full run is the gas only (~0.00002 OKB).
 If it is easier to fund from `payTo` (2.427731 USD₮0, enough for a clean run plus two
 iterations) than from an exchange, that works and needs no external transfer. That key is in
-Secret Manager, which this box cannot read (`gcloud` auth is expired here), so it has to be
-you either way.
+Secret Manager and this session cannot read it, so it has to be you either way.
 
 ## Optional second leg: make case 7 a real paid legacy settlement
 
@@ -116,12 +138,7 @@ Cases 1, 1d, 2, 2b, 3, 3i, 3r, 5a, 5b, 5c, 5d, 6, 7, then case 4 (on-chain settl
 verification of every payment the run produced), writing evidence for each into this
 directory.
 
-## One thing funding will NOT fix, and it is not mine to ship
+## The wallet is already logged in
 
-Case 1d fails against production today, on all four paid rows: a spec-compliant MCP client
-(`Accept: text/event-stream` + `MCP-Protocol-Version`, which is what an OKX reviewer probes
-with) is answered **402 on `initialize` and `tools/list`**, so it can never read a tool
-description or a parameter schema. The fix is already in this worktree with unit tests behind
-it, written against the 2026-09-02 rejection. It reaches buyers on the next deploy, which is
-owner-gated. The payment gauntlet does not depend on it (`tools/call` is never a discovery
-method), but the listing does.
+`onchainos wallet status` reads `loggedIn: true` as `claude@three.ws` (verified 2026-09-09),
+so no OTP is needed for this work order. Funding is the single remaining owner action.

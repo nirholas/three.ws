@@ -284,6 +284,112 @@ The wallet session is live (`loggedIn: true`, `claude@three.ws`), so no OTP is o
 
 ---
 
+## 2026-09-09, the chat host is durable and unchanged; every AI lane it could use is out of money, so the host now uses whichever one is funded
+
+Read live before touching anything. The Cloud Run host from 2026-09-04 is still
+serving and nothing about it regressed:
+
+| Read | Value |
+|---|---|
+| `gcloud run services describe okx-chat-bot` | `okx-chat-bot-00001-926`, `Ready=True` |
+| `host.durable` | **true** (`cloudrun:okx-chat-bot`) |
+| `daemon` | `running pid=32`, 0 restarts, uptime 4.2 days |
+| `session` | `loggedIn: true`, `claude@three.ws`, no OTP needed |
+| `agents` | 1 XMTP client serving 1 agent identity: buyer chat IS delivered |
+| `/readyz` | 503 `ai_provider_unauthorized`, remedy attached |
+| `/api/healthz` | `okx_chat_bot` degraded, quoting the dunning 403 |
+
+So the backlog prompt's headline ("get it off the codespace") has been done since
+2026-09-04. The one line that has never passed is chat delivery end to end, and
+that has one cause.
+
+### Every AI credential this org holds was measured today. All four are out of funds.
+
+| Lane | Probe | Answer, 2026-09-09 |
+|---|---|---|
+| Vertex Claude | `claude-haiku-4-5@20251001:rawPredict` | `403 Lightning dunning decision is deny for project: projects/93741856042` |
+| Vertex Gemini | `gemini-2.0-flash-lite-001:generateContent` | same 403. The hold is project-wide, not publisher-scoped |
+| OpenAI (`openai-api-key`) | `POST /v1/chat/completions` | `429 billing_not_active` |
+| OpenRouter (`OPENROUTER_API_KEY`) | `POST /api/v1/messages` | `402 Insufficient credits` (key is valid, `is_free_tier: false`, usage $0.00036) |
+| Groq (`groq-api-key`) | `POST /openai/v1/chat/completions` | `429` tokens-per-day 200,000 exhausted (199,939 used, shared with the whole platform) |
+
+No engineering fixes a billing hold. **That line is the owner's, and it is the
+only thing between this listing and a bot that answers buyers.**
+
+### What DID need fixing: the host held a chain with one rung
+
+The host was pinned to Vertex alone. When the hold landed it sat on that one dead
+lane for days and never considered the other credentials on the same service, and
+would not have picked one up if the owner had funded it. That is the worker's own
+defining failure (silence with a healthy-looking process) rebuilt one level up.
+
+`workers/okx-chat-bot/` now holds an ordered chain and elects on a live probe:
+
+`vertex` (GCP credits) > `anthropic-key` > `anthropic-gateway` > `anthropic-login`
+> `openai-key`
+
+- `providerLanes()` / `resolveProviderChain()` (`config.js`) build it; `applyLane()`
+  points the flat `provider*` fields at the elected lane, so the heartbeat, the
+  health body and `cliEnv()` all follow with no plumbing change.
+- `probeLane()` probes each lane **through its own env overlay**, and
+  `electProvider()` (`provider.js`) walks the chain and stops at the first `ok`,
+  so a funded lane is never skipped and an unfunded one is never paid to learn
+  nothing. `unprobed` (a developer host's interactive grant) is still electable;
+  `unauthorized` is not.
+- A lane change re-asserts `okx-a2a config provider`, re-runs the codex login when
+  it applies, and calls the new `supervisor.restart()`: the adapter hands the AI
+  subsession the daemon's environment, fixed at spawn, so a credential change is
+  only real once the daemon carries it.
+- The election re-runs every `OKX_BOT_PROVIDER_PROBE_MS` (15 min), so **a lane the
+  owner funds is picked up with no deploy.**
+- `/readyz` now carries `provider.lane` and `provider.chain` (every lane's verdict
+  and detail), and the `remedy` lists them. Whoever fixes this needs to know which
+  credential to fund, not merely that one was refused.
+
+The new rung is a generic **Anthropic-wire-format gateway**: the same `claude`
+CLI with `ANTHROPIC_BASE_URL` moved, so the task lifecycle (accept / negotiate /
+deliver, driven by the subsession calling `okx-a2a` itself) is untouched. A
+one-shot responder would have broken it. OpenRouter serves such an endpoint and
+`three-ws@` already holds `secretAccessor` on `OPENROUTER_API_KEY`, so
+`cloudbuild.yaml` wires the lane in permanently: while the account has no credit
+the lane probes 402 and is never elected, and funding it is then a billing action
+rather than a deploy.
+
+**Two bugs the live probe caught before they could ship**, both of which would
+have produced exactly the silence this worker exists to kill:
+
+1. `ANTHROPIC_BASE_URL=https://openrouter.ai/api/v1` makes the CLI request
+   `/api/v1/v1/messages`. The base URL is the prefix `/v1/messages` is appended
+   to, so it ends at `/api`. One segment too deep answers 404 forever.
+2. `classifyProbeStatus()` reads a 400/404 as proof the credential works (true of
+   api.anthropic.com: it had to authenticate the caller before objecting to the
+   body). For a gateway that reasoning is false, and lane 1 above would have been
+   elected on its own 404. A gateway lane is now elected on a 2xx and nothing else.
+
+Verified: `tests/okx-chat-bot.test.js` 69 pass (10 new), `check-rules` clean on
+the touched paths, `audit:docs` clean, `build:pages` validated the changelog entry.
+The election was also run against the REAL endpoints with the real service
+credentials: chain `vertex > anthropic-gateway > openai-key`, elected `none`, each
+lane quoting its own live refusal.
+
+### What is left, and who owns it
+
+1. **Owner: fund one AI lane.** Clearing the GCP billing hold is the preferred
+   one (Vertex leads the chain and bills the credit pool). Adding OpenRouter
+   credit or reactivating the OpenAI account both work too, and neither needs a
+   deploy once the chain is live. Nothing in code is blocking.
+2. **Owner: deploy the worker**, one command, prepared and gated:
+   `gcloud builds submit --config workers/okx-chat-bot/cloudbuild.yaml --region us-central1 --project aerial-vehicle-466722-p5 --substitutions=SHORT_SHA=manual$(date +%s) .`
+   Re-seed the session snapshot first only if a host other than Cloud Run holds a
+   newer one; today Cloud Run is the sole writer, so the deploy is safe as-is.
+3. Still open from 2026-09-07 and unrelated to the bot:
+   `onchainos agent activate --agent-id 2632 --preferred-language en-US`.
+
+**Do not restart the codespace stopgap.** The GCS state object still has exactly
+one writer and Cloud Run still owns it.
+
+---
+
 ## 2026-09-07, the new rejection email is the OLD verdict: the listing state never moved, and OKX's own validator now passes us
 
 An OKX rejection mail landed naming all four paid rows plus the internal note *"x402 quotation

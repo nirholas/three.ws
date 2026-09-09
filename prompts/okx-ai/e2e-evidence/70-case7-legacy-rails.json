@@ -43,7 +43,8 @@
         "asset": "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v",
         "extra": {
           "name": "USDC",
-          "decimals": 6
+          "decimals": 6,
+          "feePayer": "WwwuGbqHrwF5RG89KhUbmRWEvjnRH9k5kVM5p7T3WwW"
         }
       },
       {
@@ -56,7 +57,8 @@
         "asset": "FeMbDoX7R1Psc4GEcvJdsbNbZA3bfztcyDCatJVJpump",
         "extra": {
           "name": "THREE",
-          "decimals": 6
+          "decimals": 6,
+          "feePayer": "WwwuGbqHrwF5RG89KhUbmRWEvjnRH9k5kVM5p7T3WwW"
         }
       },
       {

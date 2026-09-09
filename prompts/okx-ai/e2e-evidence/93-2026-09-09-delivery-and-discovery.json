@@ -1,0 +1,52 @@
+{
+  "capturedAt": "2026-09-09T05:50:00.930105Z",
+  "what": "Pre-funding delivery proof: the generation and delivery lane a paid OKX forge row runs on, exercised end to end on the free lane (same pipeline, same storage, same artifact).",
+  "why": "A paid row settles at job acceptance, so a buyer only receives value if generation and durable storage both work. Earlier today they did not: Cloud Run revision three-ws-api-00419-5tr answered every R2 write with SignatureDoesNotMatch and jobs failed after acceptance. Revision three-ws-api-00420-ljh (2026-09-09 05:39:41Z) cleared it.",
+  "liveRevision": "three-ws-api-00420-ljh",
+  "commit": "880bdcef88a497d4ef0562bf97b77e850dcf2daa",
+  "health": {
+    "ok": true,
+    "subsystems": [
+      "generation",
+      "submit-latency",
+      "render",
+      "storage",
+      "retarget",
+      "payment-rail"
+    ],
+    "allOk": true
+  },
+  "job": {
+    "tier": "draft",
+    "backend": "hunyuan3d",
+    "creationId": "c4e25fe1-e11f-4bea-96a0-4f824b4f59c8",
+    "durable": true,
+    "glbUrl": "https://pub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev/forge/anon/c4e25fe1-e11f-4bea-96a0-4f824b4f59c8.glb",
+    "httpStatus": 200,
+    "bytes": 3281092
+  },
+  "artifactVerification": {
+    "tool": "scripts/okx-verify-glb.mjs",
+    "verdict": "PASS",
+    "container": "glTF v2",
+    "meshes": 1,
+    "primitives": 1,
+    "vertices": 17603,
+    "triangles": 30000
+  },
+  "discoveryPaywall": {
+    "case": "1d",
+    "verdict": "PASS",
+    "note": "A spec-compliant MCP client (Accept: text/event-stream + MCP-Protocol-Version) now gets 200 on initialize and tools/list on all four paid rows. This was FAIL on 2026-09-02.",
+    "measured": {
+      "forge-draft": {
+        "initialize": 200,
+        "tools/list": 200
+      },
+      "forge-hd": {
+        "initialize": 200,
+        "tools/list": 200
+      }
+    }
+  }
+}

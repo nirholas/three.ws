@@ -166,9 +166,9 @@ export function shapePoll(data, base, jobId, title) {
 		return {
 			status: 'error',
 			job: jobId,
-			// Free lane: an upstream failure costs the caller nothing — say so and let
+			// Free lane: an upstream failure costs the caller nothing, so say so and let
 			// them simply retry. The message is already sanitized by /api/forge.
-			error: data?.error || '3D generation hit a snag upstream — no charge; try again.',
+			error: data?.error || '3D generation hit a snag upstream, no charge; try again.',
 			free: true,
 			upgrade: UPGRADE,
 		};

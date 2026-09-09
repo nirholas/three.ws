@@ -1,7 +1,7 @@
 // Shared, vendor-free copy for a failed-generation job's raw error string.
 //
-// Every async generation pipeline — the avatar flows (selfie/prompt → 3D, in
-// api/avatars) and the forge text→3D / image→3D poll (api/forge.js) — stores
+// Every async generation pipeline (the avatar flows: selfie or prompt to 3D, in
+// api/avatars, and the forge text-to-3D / image-to-3D poll in api/forge.js) stores
 // the provider's RAW error for operators, but must never relay it to a buyer.
 // Raw strings from the Replicate/Meshy/Tripo/GCP/NVIDIA adapters can carry a
 // vendor name ("Meshy account is out of credits."), a billing page URL, an
@@ -19,22 +19,22 @@ export function sanitizeJobError(raw) {
 	if (!raw) return null;
 	const s = String(raw).toLowerCase();
 	if (s.includes('nsfw') || s.includes('safety')) {
-		return 'This was flagged by content safety — try a different prompt or photo.';
+		return 'This was flagged by content safety. Try a different prompt or photo.';
 	}
 	if (s.includes('no face') || (s.includes('face') && s.includes('detect'))) {
-		return 'No clear face was detected — try a brighter, front-facing photo.';
+		return 'No clear face was detected. Try a brighter, front-facing photo.';
 	}
 	if (s.includes('oom') || s.includes('out of memory') || s.includes('memory')) {
-		return 'The engine ran out of resources — try again with a simpler request.';
+		return 'The engine ran out of resources. Try again with a simpler request.';
 	}
 	if (s.includes('timeout') || s.includes('timed out')) {
-		return 'The engine took too long — please try again.';
+		return 'The engine took too long, please try again.';
 	}
 	if (s.includes('credit') || s.includes('billing') || s.includes('quota') || s.includes('payment')) {
-		return 'The 3D engine is temporarily unavailable — please try again later.';
+		return 'The 3D engine is temporarily unavailable, please try again later.';
 	}
 	if (s.includes('rate') && s.includes('limit')) {
-		return 'The 3D engine is busy right now — wait a moment and try again.';
+		return 'The 3D engine is busy right now, wait a moment and try again.';
 	}
-	return '3D generation hit a snag — please try again.';
+	return '3D generation hit a snag, please try again.';
 }

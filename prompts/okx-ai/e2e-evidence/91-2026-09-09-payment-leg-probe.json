@@ -1,0 +1,135 @@
+{
+  "captured_at": "2026-09-09T05:46:11.406Z",
+  "base": "https://three.ws",
+  "what": "Live replay of a TEE-signed EIP-3009 authorization against every paid OKX.AI forge row, proving the payment leg accepts an EIP-7702 delegated payer and refuses only for the empty test wallet.",
+  "buyer": "0x75d00a2713565171f33216e5aa2a375e076ecf69",
+  "buyer_usdt0_atomics": "0",
+  "pass": true,
+  "failures": [],
+  "rows": [
+    {
+      "service": "forge-draft",
+      "endpoint": "https://three.ws/api/okx/3d/forge-draft",
+      "list_price_atomics": "10000",
+      "buyer": "0x75d00a2713565171f33216e5aa2a375e076ecf69",
+      "buyer_usdt0_atomics": "0",
+      "challenge": {
+        "status": 402,
+        "has_header": true
+      },
+      "xlayer_accept": {
+        "index": 0,
+        "amount": "10000",
+        "payTo": "0x4022de2D36C334E73C7a108805Cea11C0564f402",
+        "asset": "0x779ded0c9e1022225f8e0630b35a9b54be713736"
+      },
+      "authorization": {
+        "from": "0x75d00a2713565171f33216e5aa2a375e076ecf69",
+        "nonce": "0x39bd98a80752698c6242c296d84065cb05d602f945047d74922b5a19606cc863",
+        "to": "0x4022de2D36C334E73C7a108805Cea11C0564f402",
+        "validAfter": "0",
+        "validBefore": "1789019165",
+        "value": "10000"
+      },
+      "replay": {
+        "status": 402,
+        "error": "insufficient_balance"
+      },
+      "verdict": "authorization accepted, stopped only at the empty payer",
+      "nonce_redeemed_on_chain": false
+    },
+    {
+      "service": "forge-standard",
+      "endpoint": "https://three.ws/api/okx/3d/forge-standard",
+      "list_price_atomics": "50000",
+      "buyer": "0x75d00a2713565171f33216e5aa2a375e076ecf69",
+      "buyer_usdt0_atomics": "0",
+      "challenge": {
+        "status": 402,
+        "has_header": true
+      },
+      "xlayer_accept": {
+        "index": 0,
+        "amount": "50000",
+        "payTo": "0x4022de2D36C334E73C7a108805Cea11C0564f402",
+        "asset": "0x779ded0c9e1022225f8e0630b35a9b54be713736"
+      },
+      "authorization": {
+        "from": "0x75d00a2713565171f33216e5aa2a375e076ecf69",
+        "nonce": "0x655b8265397ce75c3fa0405ae01f7f8844af3b82a94cfe3d1e48ee79517d815f",
+        "to": "0x4022de2D36C334E73C7a108805Cea11C0564f402",
+        "validAfter": "0",
+        "validBefore": "1789019167",
+        "value": "50000"
+      },
+      "replay": {
+        "status": 402,
+        "error": "insufficient_balance"
+      },
+      "verdict": "authorization accepted, stopped only at the empty payer",
+      "nonce_redeemed_on_chain": false
+    },
+    {
+      "service": "forge-hd",
+      "endpoint": "https://three.ws/api/okx/3d/forge-hd",
+      "list_price_atomics": "250000",
+      "buyer": "0x75d00a2713565171f33216e5aa2a375e076ecf69",
+      "buyer_usdt0_atomics": "0",
+      "challenge": {
+        "status": 402,
+        "has_header": true
+      },
+      "xlayer_accept": {
+        "index": 0,
+        "amount": "250000",
+        "payTo": "0x4022de2D36C334E73C7a108805Cea11C0564f402",
+        "asset": "0x779ded0c9e1022225f8e0630b35a9b54be713736"
+      },
+      "authorization": {
+        "from": "0x75d00a2713565171f33216e5aa2a375e076ecf69",
+        "nonce": "0x9a951ed191c69bf58341289656e9c73db81cf109f064e56fa45285f3956ccbe2",
+        "to": "0x4022de2D36C334E73C7a108805Cea11C0564f402",
+        "validAfter": "0",
+        "validBefore": "1789019168",
+        "value": "250000"
+      },
+      "replay": {
+        "status": 402,
+        "error": "insufficient_balance"
+      },
+      "verdict": "authorization accepted, stopped only at the empty payer",
+      "nonce_redeemed_on_chain": false
+    },
+    {
+      "service": "forge-image",
+      "endpoint": "https://three.ws/api/okx/3d/forge-image",
+      "list_price_atomics": "250000",
+      "buyer": "0x75d00a2713565171f33216e5aa2a375e076ecf69",
+      "buyer_usdt0_atomics": "0",
+      "challenge": {
+        "status": 402,
+        "has_header": true
+      },
+      "xlayer_accept": {
+        "index": 0,
+        "amount": "250000",
+        "payTo": "0x4022de2D36C334E73C7a108805Cea11C0564f402",
+        "asset": "0x779ded0c9e1022225f8e0630b35a9b54be713736"
+      },
+      "authorization": {
+        "from": "0x75d00a2713565171f33216e5aa2a375e076ecf69",
+        "nonce": "0xe7f9a0b04d089f7402749e743a1da36410cc9dddcddb5dd3bce2e86a2bc669da",
+        "to": "0x4022de2D36C334E73C7a108805Cea11C0564f402",
+        "validAfter": "0",
+        "validBefore": "1789019170",
+        "value": "250000"
+      },
+      "replay": {
+        "status": 402,
+        "error": "insufficient_balance"
+      },
+      "verdict": "authorization accepted, stopped only at the empty payer",
+      "nonce_redeemed_on_chain": false
+    }
+  ]
+}

@@ -1,20 +1,20 @@
 {
   "health": {
-    "status": 503,
+    "status": 200,
     "body": {
-      "ok": false,
+      "ok": true,
       "subsystems": [
         {
           "name": "generation",
           "ok": true,
-          "latency_ms": 694,
+          "latency_ms": 23,
           "tiers": 3,
           "backends": 11
         },
         {
           "name": "submit-latency",
           "ok": true,
-          "latency_ms": 680,
+          "latency_ms": 145,
           "window_minutes": 60,
           "samples": 0,
           "errors": 0,
@@ -24,44 +24,31 @@
         {
           "name": "render",
           "ok": true,
-          "latency_ms": 607,
+          "latency_ms": 18,
           "poses": 28
         },
         {
-          "name": "SignatureDoesNotMatch",
-          "ok": false,
-          "latency_ms": 1144,
-          "error": "The request signature we calculated does not match the signature you provided. Check your secret access key and signing method.",
-          "$fault": "client",
-          "$metadata": {
-            "httpStatusCode": 403,
-            "attempts": 1,
-            "totalRetryDelay": 0
-          },
-          "Code": "SignatureDoesNotMatch",
-          "StringToSign": "AWS4-HMAC-SHA256\n20260909T053725Z\n20260909/auto/s3/aws4_request\n53f59d1fdd49e49496a1548bd5a721799944202c20fffc0f74b087463d32e677",
-          "StringToSignBytes": "41 57 53 34 2d 48 4d 41 43 2d 53 48 41 32 35 36 0a 32 30 32 36 30 39 30 39 54 30 35 33 37 32 35 5a 0a 32 30 32 36 30 39 30 39 2f 61 75 74 6f 2f 73 33 2f 61 77 73 34 5f 72 65 71 75 65 73 74 0a 35 33 66 35 39 64 31 66 64 64 34 39 65 34 39 34 39 36 61 31 35 34 38 62 64 35 61 37 32 31 37 39 39 39 34 34 32 30 32 63 32 30 66 66 66 63 30 66 37 34 62 30 38 37 34 36 33 64 33 32 65 36 37 37",
-          "CanonicalRequest": "PUT\n/okx-identity/health-probe.txt\nx-id=PutObject\namz-sdk-invocation-id:90439961-3a96-438a-8dc4-38c9a5266e31\namz-sdk-request:attempt=1; max=3\ncontent-length:35\ncontent-type:text/plain\nhost:chatty-storage.9b69258d55b0dc7ed0c31c067dd944d8.r2.cloudflarestorage.com\nx-amz-content-sha256:cc479d2b0cc819ca7d7bf694fe25084e8b2b5212124c137ba5037f408d65f79e\nx-amz-date:20260909T053725Z\nx-amz-user-agent:aws-sdk-js/3.1066.0\n\namz-sdk-invocation-id;amz-sdk-request;content-length;content-type;host;x-amz-content-sha256;x-amz-date;x-amz-user-agent\ncc479d2b0cc819ca7d7bf694fe25084e8b2b5212124c137ba5037f408d65f79e",
-          "CanonicalRequestBytes": "50 55 54 0a 2f 6f 6b 78 2d 69 64 65 6e 74 69 74 79 2f 68 65 61 6c 74 68 2d 70 72 6f 62 65 2e 74 78 74 0a 78 2d 69 64 3d 50 75 74 4f 62 6a 65 63 74 0a 61 6d 7a 2d 73 64 6b 2d 69 6e 76 6f 63 61 74 69 6f 6e 2d 69 64 3a 39 30 34 33 39 39 36 31 2d 33 61 39 36 2d 34 33 38 61 2d 38 64 63 34 2d 33 38 63 39 61 35 32 36 36 65 33 31 0a 61 6d 7a 2d 73 64 6b 2d 72 65 71 75 65 73 74 3a 61 74 74 65 6d 70 74 3d 31 3b 20 6d 61 78 3d 33 0a 63 6f 6e 74 65 6e 74 2d 6c 65 6e 67 74 68 3a 33 35 0a 63 6f 6e 74 65 6e 74 2d 74 79 70 65 3a 74 65 78 74 2f 70 6c 61 69 6e 0a 68 6f 73 74 3a 63 68 61 74 74 79 2d 73 74 6f 72 61 67 65 2e 39 62 36 39 32 35 38 64 35 35 62 30 64 63 37 65 64 30 63 33 31 63 30 36 37 64 64 39 34 34 64 38 2e 72 32 2e 63 6c 6f 75 64 66 6c 61 72 65 73 74 6f 72 61 67 65 2e 63 6f 6d 0a 78 2d 61 6d 7a 2d 63 6f 6e 74 65 6e 74 2d 73 68 61 32 35 36 3a 63 63 34 37 39 64 32 62 30 63 63 38 31 39 63 61 37 64 37 62 66 36 39 34 66 65 32 35 30 38 34 65 38 62 32 62 35 32 31 32 31 32 34 63 31 33 37 62 61 35 30 33 37 66 34 30 38 64 36 35 66 37 39 65 0a 78 2d 61 6d 7a 2d 64 61 74 65 3a 32 30 32 36 30 39 30 39 54 30 35 33 37 32 35 5a 0a 78 2d 61 6d 7a 2d 75 73 65 72 2d 61 67 65 6e 74 3a 61 77 73 2d 73 64 6b 2d 6a 73 2f 33 2e 31 30 36 36 2e 30 0a 0a 61 6d 7a 2d 73 64 6b 2d 69 6e 76 6f 63 61 74 69 6f 6e 2d 69 64 3b 61 6d 7a 2d 73 64 6b 2d 72 65 71 75 65 73 74 3b 63 6f 6e 74 65 6e 74 2d 6c 65 6e 67 74 68 3b 63 6f 6e 74 65 6e 74 2d 74 79 70 65 3b 68 6f 73 74 3b 78 2d 61 6d 7a 2d 63 6f 6e 74 65 6e 74 2d 73 68 61 32 35 36 3b 78 2d 61 6d 7a 2d 64 61 74 65 3b 78 2d 61 6d 7a 2d 75 73 65 72 2d 61 67 65 6e 74 0a 63 63 34 37 39 64 32 62 30 63 63 38 31 39 63 61 37 64 37 62 66 36 39 34 66 65 32 35 30 38 34 65 38 62 32 62 35 32 31 32 31 32 34 63 31 33 37 62 61 35 30 33 37 66 34 30 38 64 36 35 66 37 39 65",
-          "SignatureProvided": "ed4726d10a465dcc914fd445f3d077cf4c072de278632d088d4dc7df3ad5fa7a"
+          "name": "storage",
+          "ok": true,
+          "latency_ms": 146
         },
         {
           "name": "retarget",
           "ok": true,
-          "latency_ms": 716,
+          "latency_ms": 18,
           "clips": 112
         },
         {
           "name": "payment-rail",
           "ok": true,
-          "latency_ms": 1769,
+          "latency_ms": 486,
           "settleable": true,
-          "block": "70163209",
+          "block": "70163896",
           "token": "USD₮0",
           "facilitator_configured": false
         }
       ],
-      "checkedAt": "2026-09-09T05:37:26.050Z"
+      "checkedAt": "2026-09-09T05:48:53.066Z"
     }
   },
   "catalog": {
