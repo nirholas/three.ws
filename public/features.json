@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-09-09T03:17:26.022Z",
+	"generated_at": "2026-09-09T03:32:41.646Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json",
 	"site": {
 		"name": "three.ws",
@@ -1533,7 +1533,7 @@
 				{
 					"path": "/playground",
 					"title": "Playground",
-					"description": "Sandbox for experimenting with agents, prompts, and 3D scenes.",
+					"description": "Sandbox for 3D scenes: drop in any .glb, play its animations, tune the lighting, and copy a paste-ready embed snippet.",
 					"added": "2026-05-25",
 					"auth": null,
 					"indexable": true,

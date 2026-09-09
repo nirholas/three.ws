@@ -175,7 +175,7 @@ Experimental features actively shipping. Expect fast iteration.
 - [AR Studio](https://three.ws/ar/studio): A live multi-model AR scene through your camera: place any number of 3D models and avatars in your real space, pull in your forge creations, community models, the CC0 object library, or any GLB link, and generate new models by prompt without leaving the view.
 - [Daily Forge](https://three.ws/daily): A new 3D creative challenge every day. Forge today's theme into a real 3D model, free and no sign-up, build a daily streak, and place your creation in AR on your phone.
 - [Spatial MCP: reference renderer](https://three.ws/spatial-mcp): The open standard for returning a live, interactive 3D scene as a first-class MCP tool result, with a framework-free reference renderer that displays any conformant artifact: including ones transformed from other tools.
-- [Playground](https://three.ws/playground): Sandbox for experimenting with agents, prompts, and 3D scenes.
+- [Playground](https://three.ws/playground): Sandbox for 3D scenes: drop in any .glb, play its animations, tune the lighting, and copy a paste-ready embed snippet.
 - [Labs Showcase](https://three.ws/labs): A curated gallery of three.ws's most powerful (and most hidden) features. Find and try things you didn't know existed.
 - [Rankings](https://three.ws/rankings): The cross-surface three.ws leaderboard: creators ranked by real creations, remixes received, coin launches, followers, and distance walked. Track your streak and earn badges for showing up.
 - [Daily Match](https://three.ws/daily-match): Which agent ships the most real output today? Live daily standings over real agent activity: actions, trades, skill sales, and coin launches. Resets at 00:00 UTC.

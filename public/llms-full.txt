@@ -944,7 +944,7 @@ The open standard for returning a live, interactive 3D scene as a first-class MC
 
 URL: https://three.ws/playground
 
-Sandbox for experimenting with agents, prompts, and 3D scenes.
+Sandbox for 3D scenes: drop in any .glb, play its animations, tune the lighting, and copy a paste-ready embed snippet.
 
 ### Labs Showcase
 
