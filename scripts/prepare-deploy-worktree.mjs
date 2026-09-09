@@ -103,13 +103,25 @@ export const ARTIFACTS = [
 		optional: true,
 		why: 'an in-worktree agent-payments-sdk rebuild',
 	},
-	// The three below are not build inputs: build:gcp is green without them. They
-	// are what lets a deploy worktree run the repository's own test suite, which
-	// is the only way to test the exact commit being shipped rather than the
-	// shared tree with every concurrent session's work in it. Without them a full
-	// vitest run from a worktree reports eighteen failures that are all missing
-	// files, which reads as a broken commit and is the reason the pre-ship test
-	// run kept being taken in the dirty main tree instead.
+	// The four below are not inputs to build:gcp, which is green without them.
+	// They are what lets a deploy worktree run the repository's own gate and test
+	// suite, which is the only way to verify the exact commit being shipped
+	// rather than the shared tree with every concurrent session's work in it.
+	// Without them a full vitest run from a worktree reports eighteen failures
+	// that are all missing files, and `npm run gate` cannot pass at all, which
+	// reads as a broken commit and is why the pre-ship verification kept being
+	// taken in the dirty main tree instead.
+	{
+		// tour-sdk pins its own esbuild (0.27.7 against the root's 0.28.1) and the
+		// committed public/tour-builder/tour.global.js is that version's output.
+		// Built with the root's esbuild the helper prelude differs, so
+		// audit:tour-global reports the bundle stale over a toolchain version
+		// nobody changed, and the gate can never go green in a fresh worktree.
+		rel: 'tour-sdk/node_modules',
+		build: null,
+		optional: true,
+		why: 'audit:tour-global, which rebuilds the bundle with the esbuild tour-sdk pins',
+	},
 	{
 		// Same shape as agent-payments-sdk/dist: gitignored, so the package source
 		// arrives with nothing behind its entry and tour-sdk's importers die on
