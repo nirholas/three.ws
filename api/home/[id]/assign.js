@@ -36,7 +36,7 @@ export default wrap(async (req, res) => {
 	if (!access.ok) return error(res, access.status, access.code, access.message);
 	const { caller, home, scope, scoped } = access;
 
-	if (!requireCsrf(req, res)) return;
+	if (!(await requireCsrf(req, res, caller.userId))) return;
 
 	const rl = await limits.homeAct(caller.userId);
 	if (!rl.success) return rateLimited(res, rl, 'too many home writes, slow down');

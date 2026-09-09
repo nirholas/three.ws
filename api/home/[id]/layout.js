@@ -41,7 +41,7 @@ export default wrap(async (req, res) => {
 		return json(res, 200, await describe(home.id, caller.userId));
 	}
 
-	if (!requireCsrf(req, res)) return;
+	if (!(await requireCsrf(req, res, caller.userId))) return;
 
 	if (req.method === 'DELETE') {
 		const removed = await deleteLayout(home.id);

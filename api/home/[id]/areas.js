@@ -35,7 +35,7 @@ export default wrap(async (req, res) => {
 	if (!access.ok) return error(res, access.status, access.code, access.message);
 	const { caller, home, scoped } = access;
 
-	if (!requireCsrf(req, res)) return;
+	if (!(await requireCsrf(req, res, caller.userId))) return;
 
 	// A scoped member sees part of the house. A brand new room belongs to no
 	// scope by definition, so they would create something they could not then
