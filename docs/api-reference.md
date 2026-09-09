@@ -7860,7 +7860,10 @@ unreachable, because a person needs to see the record in order to fix it.
 DELETE /api/home/:id
 ```
 
-Soft-deletes the row and destroys the stored credential.
+Soft-deletes the row and destroys the stored credential. It also closes the
+pooled connection to that house and ends every open `stream` for it, so a page
+that was already watching learns the home is gone instead of holding the last
+state it saw behind a "Live" badge.
 
 ---
 
@@ -7877,6 +7880,11 @@ Server-Sent Events.
 | `graph`     | On open, and on every coalesced room-graph rebuild               |
 | `status`    | On open, on disconnect, on reconnect                             |
 | `heartbeat` | Every 25 s, because idle proxies close silent streams            |
+
+A `status` frame carries `status`, `connected`, `stale` and an optional `detail`
+sentence. `status: "revoked"` is terminal: the home was disconnected, this frame
+is the last one, and the server ends the stream immediately after it. Do not
+reconnect on it. The row is gone, so a retry answers `404`.
 
 Under severe load, stream admission is limited **before** action admission: someone asking to
 unlock a door is served before someone watching a dashboard.

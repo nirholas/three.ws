@@ -30,6 +30,7 @@ import { filterGraphForScope, resolveHomeAccess } from '../../_lib/home/access.j
 import { toHomeFailure } from '../../_lib/home/errors.js';
 import { assertWithinLimit, HomeQuotaError, resolveHomeEntitlementsForUser } from '../../_lib/home/entitlements.js';
 import { streamCount, subscribe } from '../../_lib/home/runtime.js';
+import { HOME_STATUS } from '../../_lib/home/store.js';
 import { cors, error, method, rateLimited, wrap } from '../../_lib/http.js';
 import { limits } from '../../_lib/rate-limit.js';
 
@@ -164,14 +165,25 @@ export default wrap(async (req, res) => {
 		const statusKey = `${event.status}|${event.stale}|${event.connected}`;
 		if (statusKey !== lastStatusKey) {
 			lastStatusKey = statusKey;
+			const revoked = event.status === HOME_STATUS.REVOKED;
 			send('status', {
 				status: event.status,
 				connected: Boolean(event.connected),
 				stale: Boolean(event.stale),
-				detail: event.stale
-					? 'Lost the connection to your home. This is the last state three.ws saw.'
-					: null,
+				detail: revoked
+					? 'This home was disconnected. Reconnect it to see it live again.'
+					: event.stale
+						? 'Lost the connection to your home. This is the last state three.ws saw.'
+						: null,
 			});
+			// A home the owner disconnected has nothing left to stream. Saying so
+			// and then hanging up is the honest end: the alternative is a socket
+			// heartbeating forever against a connection record that is gone, which
+			// holds a stream slot and leaves the page reading "Live".
+			if (revoked) {
+				cleanup();
+				return;
+			}
 		}
 		// Identity comparison, not deep equality: the bridge rebuilds the graph into
 		// a new object on every coalesced burst, so a new reference IS the signal

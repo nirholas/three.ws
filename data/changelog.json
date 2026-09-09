@@ -27939,6 +27939,16 @@
 				"fix"
 			],
 			"link": "/news"
+		},
+		{
+			"date": "2026-09-09",
+			"title": "Disconnecting a home now stops the screens that were showing it",
+			"summary": "A kitchen tablet or wall display left open on a connected home kept saying \"Live\" and kept drawing that house after the home had been disconnected from another device. The connection was really gone, but the open page was never told, so it sat on a stale picture of somebody's house with a green Live badge on it. Disconnecting now closes the live connection and hands every screen still watching a final message that says what happened, and those screens stop asking for more. They keep showing the last state they saw, greyed and dated, with the reason and a Reconnect button, which is what every other kind of drop already did.",
+			"tags": [
+				"fix",
+				"security"
+			],
+			"link": "/docs/home-scene"
 		}
 	]
 }

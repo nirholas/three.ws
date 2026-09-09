@@ -460,7 +460,7 @@ export function createHomeRuntime(deps = {}) {
 		const entry = entries.get(homeId);
 		if (!entry) return false;
 		entries.delete(homeId);
-		closeEntry(entry);
+		closeEntry(entry, { tell: HOME_STATUS.REVOKED });
 		if (!entries.size) stopSweep();
 		return true;
 	}
@@ -743,10 +743,30 @@ export function createHomeRuntime(deps = {}) {
 		admission.release(entry.pooled ? 'pooled' : 'unpooled');
 	}
 
-	function closeEntry(entry) {
+	/**
+	 * Close a pooled connection.
+	 *
+	 * `tell` is the status every open stream is handed on the way out, and it is
+	 * only ever passed by `closeHome`. A home the owner disconnected has to reach
+	 * the screens that are showing it: the socket goes away silently otherwise,
+	 * the stream keeps heartbeating, and a wall display sits on "Live" drawing a
+	 * house that is no longer connected to anything. Idle eviction and shutdown
+	 * pass nothing on purpose: eviction only ever closes an entry nobody is
+	 * watching, and a shutdown stream reconnects to another instance on its own,
+	 * so announcing a disconnect there would flash a button at somebody for every
+	 * deploy.
+	 */
+	function closeEntry(entry, { tell = null } = {}) {
 		releaseSlot(entry);
 		if (entry.closed) return;
 		entry.closed = true;
+		if (tell) {
+			entry.status = tell;
+			entry.stale = true;
+			// The last graph is kept deliberately: the house on screen stays on
+			// screen, greyed and dated, exactly as it does for any other drop.
+			notify(entry, entry.bridge);
+		}
 		entry.subscribers.clear();
 		try {
 			entry.bridge?.close();

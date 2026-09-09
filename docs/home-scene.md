@@ -137,6 +137,27 @@ case. Killing a real container mid-stream and watching the raw event feed:
 Nothing in the browser did anything in between, and the house was on screen the
 whole time.
 
+### A home you disconnect stops the screens that are showing it
+
+Disconnecting a home is the one drop that is not temporary, and it has to reach
+every screen already showing that house. The moment the connection record is
+revoked, the pooled connection is closed and every open stream is handed a final
+frame before it is hung up:
+
+```
++ 0s event: status {"status":"connected","connected":true,"stale":false,"detail":null}
++ 8s >>> the owner presses Disconnect, on another device
++ 8s event: status {"status":"revoked","stale":true,
+                    "detail":"This home was disconnected. Reconnect it to see it live again."}
++ 8s <<< the stream ends
+```
+
+The page shows the house it last saw, greyed and dated, with the Disconnected
+pill, that sentence, and the Reconnect button. It does not try the stream again:
+the record is gone, so a retry would come back as a bare failure and replace the
+explanation with "we lost the connection", which is a different and less useful
+thing to tell someone.
+
 ## Acting on the house
 
 Click any object, or any row in the 2D view, and the panel offers what that

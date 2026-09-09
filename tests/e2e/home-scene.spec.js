@@ -14,7 +14,7 @@
 
 import { expect, test } from '@playwright/test';
 
-import { anyLight, connectHome, homeInstance, openScene, readState, resetHomes, signIn, waitForState } from './home-support.js';
+import { anyLight, connectHome, csrfHeaders, homeInstance, openScene, readState, resetHomes, signIn, waitForState } from './home-support.js';
 
 test.describe.configure({ mode: 'serial' });
 
@@ -234,6 +234,30 @@ test('the scene holds its memory and its object count under a burst of real chan
 	// The scene's own per-frame work, which is the part this order controls. The
 	// rasterizer's cost is the machine's and is measured separately.
 	expect(after.updateMs).toBeLessThan(8);
+});
+
+test('a home disconnected somewhere else stops the display, and says why', async ({ page }) => {
+	const id = await open3d(page, 'Scene journey seven');
+	const before = await page.evaluate(() => window.__homeScene.model.rooms.length);
+	expect(before).toBeGreaterThan(0);
+
+	// The owner takes this home off the platform from another device, which is
+	// the one drop that is not temporary. A screen already showing the house has
+	// to be told: sitting on a green Live badge over a house that is no longer
+	// connected to anything is the worst thing this page can do.
+	const res = await page.request.delete(`/api/home/${id}`, { headers: await csrfHeaders(page) });
+	expect(res.status()).toBe(200);
+
+	await expect(page.locator('#hs-status')).toHaveAttribute('data-status', 'disconnected', { timeout: 60_000 });
+	// Still the whole house, greyed and dated rather than gone.
+	expect(await page.evaluate(() => window.__homeScene.model.rooms.length)).toBe(before);
+	await expect(page.locator('#hs-stage')).toHaveClass(/is-stale/);
+	await expect(page.locator('.hs-age')).toContainText(/Last seen/i);
+	// And the reason survives: the stream's own close arrives right behind the
+	// frame that explained it, and must not overwrite the explanation with a
+	// generic drop.
+	await expect(page.locator('#hs-status')).toHaveAttribute('title', /disconnected/i);
+	await expect(page.locator('#hs-reconnect')).toBeVisible();
 });
 
 async function stopHouse() {

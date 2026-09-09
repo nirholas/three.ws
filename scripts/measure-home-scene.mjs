@@ -403,8 +403,13 @@ async function captureStates(context, page, homeId) {
 	// 2 and 3: a real house with nothing in it, and one where nothing is filed.
 	if (opts['bare-stack']) Object.assign(shots, await captureEmptyHouse(context, shot));
 
-	// 5 and 6: the house taken away underneath the page it is drawn in.
+	// 5: the house taken away underneath the page it is drawn in.
 	if (HOUSE.container) Object.assign(shots, await captureLostHouse(page, shot));
+
+	// 6, and it goes last because it ends this run's home: disconnected is the
+	// state where nobody is retrying any more, and the run's own cleanup is
+	// exactly the action that produces it.
+	Object.assign(shots, await captureDisconnected(context, page, homeId, shot));
 
 	shots.dir = path.relative(ROOT, dir);
 	return shots;
@@ -446,13 +451,12 @@ async function captureEmptyHouse(context, shot) {
 }
 
 /**
- * Stale, then disconnected, then live again, by really stopping the container
- * the house runs in.
+ * Stale, then live again, by really stopping the container the house runs in.
  *
- * They are different states and the difference matters: stale means the
- * platform is still retrying and the house on screen is the last one we saw,
- * disconnected means nobody is retrying any more and there is a button. The
- * rooms must survive both.
+ * A stopped house is STALE, not disconnected, and that distinction is the point:
+ * the platform is still retrying and the house on screen is the last one we saw.
+ * Disconnected is a different state with a different cause, and
+ * `captureDisconnected` below produces it. The rooms must survive both.
  */
 async function captureLostHouse(page, shot) {
 	const out = {};
@@ -467,22 +471,6 @@ async function captureLostHouse(page, shot) {
 		await docker(['start', HOUSE.container]);
 	}
 
-	// Disconnected is NOT a house that stopped answering: while the platform is
-	// still retrying that is stale, and the page says so on purpose. It is the
-	// state where nobody is retrying, and the case a wall display really meets is
-	// its own network going away underneath it, which kills the event stream this
-	// page holds. The capability is the browser's, so nothing here is stubbed.
-	try {
-		await page.context().setOffline(true);
-		await page.locator('#hs-status[data-status="disconnected"]').waitFor({ timeout: 180_000 });
-		out.disconnected = await shot(page, '06-disconnected');
-		out.disconnectedRoomsHeld = await page.evaluate(() => window.__homeScene.model.rooms.length);
-		out.disconnectedOffersReconnect = await page.locator('#hs-reconnect:not([hidden])').isVisible();
-	} catch (err) {
-		out.disconnectedError = err.message;
-	} finally {
-		await page.context().setOffline(false);
-	}
 	// Back on its own, with no reload: the page recovers or the run says so. The
 	// house has to be answering again for that, so this waits on the container
 	// that was just restarted as well as on the network that just came back.
@@ -496,6 +484,35 @@ async function captureLostHouse(page, shot) {
 		.catch(() => {
 			out.recoveredWithoutReload = false;
 		});
+	return out;
+}
+
+/**
+ * Disconnected: the state where nobody is retrying any more.
+ *
+ * Not reachable by taking the house away (that is stale, correctly) and not by
+ * taking the browser offline either, because an EventSource that is already
+ * established keeps delivering, so the page is right to keep saying live. It is
+ * reached by revoking the connection, which is what the Disconnect button does
+ * and what this run does at the end anyway. The screen showing that house has to
+ * be told, and this is the check that it was.
+ */
+async function captureDisconnected(context, page, homeId, shot) {
+	const out = {};
+	const before = await page.evaluate(() => window.__homeScene.model.rooms.length).catch(() => 0);
+	await disconnectHouse(context, homeId);
+	try {
+		await page.locator('#hs-status[data-status="disconnected"]').waitFor({ timeout: 120_000 });
+		out.disconnected = await shot(page, '06-disconnected');
+		out.disconnectedRoomsHeld = await page.evaluate(() => window.__homeScene.model.rooms.length);
+		out.disconnectedHeldEveryRoom = out.disconnectedRoomsHeld === before;
+		out.disconnectedOffersReconnect = await page.locator('#hs-reconnect:not([hidden])').isVisible();
+		// The reason, not a generic drop: the frame that explains it arrives just
+		// ahead of the stream closing behind it, and the close must not erase it.
+		out.disconnectedSays = await page.locator('#hs-status').getAttribute('title');
+	} catch (err) {
+		out.disconnectedError = err.message;
+	}
 	return out;
 }
 

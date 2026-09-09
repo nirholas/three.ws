@@ -35,7 +35,7 @@ One section per finished order, newest at the bottom:
 | 03 API surface | done | 2026-09-03 |
 | 04 agent tools | done | 2026-09-09 |
 | 05 connect flow | done | 2026-09-09 |
-| 06 3D home scene | open | |
+| 06 3D home scene | done | 2026-09-09 |
 | 07 floorplan editor | done | 2026-09-09 |
 | 08 voice loop | done | 2026-09-09 |
 | 09 Wyoming satellite | done | 2026-09-09 |
@@ -43,7 +43,7 @@ One section per finished order, newest at the bottom:
 | 11 security | done | 2026-09-09 |
 | 12 households and RBAC | done | 2026-09-03 |
 | 13 observability | done, Cloud Scheduler job owner-gated | 2026-09-03 |
-| 14 reliability and scale | open | |
+| 14 reliability and scale | done | 2026-09-09 |
 | 15 privacy and retention | done | 2026-09-03 |
 | 16 test program | done | 2026-09-09 |
 | 17 a11y, i18n, mobile | a11y and mobile done, 84 locales need a backend, see entry | 2026-09-09 |
@@ -2586,3 +2586,202 @@ hidden.
 
 **Commits:** `c79ab3ecd`, `dba5cffe5`, `8afc40c1b`, `db9321f95`, `113f365ea`, `23bfd3b52`,
 `1319f26e3`, `83b4656de`, `e900f98dd`, `ab246a226`, `2ec8bae32`, plus this entry.
+
+
+## 14. Reliability and the scale envelope (2026-09-09)
+
+**Shipped:** the envelope, the ladder, the chaos suite and the Cloud Run decision were built on
+2026-09-03 alongside order 02 and re-measured on 2026-09-09, and this session's job was to verify
+every line of them against real output before retiring the order. Everything held except the
+Cloud Run memory setting, which had reverted for a third time, so the fix for that class of bug
+is this session's addition: **the pool now sizes itself from the memory its own container
+actually has** rather than trusting an env var that is set in a different system on a different
+schedule. `containerMemoryLimitBytes()` reads the cgroup limit (v2, then v1), and
+`memoryBackedConnectionCap()` turns it into a cap from the same three measured numbers this lane
+already published; `createHomeRuntime` takes the minimum of that and what `HOME_MAX_CONNECTIONS`
+asked for, sizes the admission ladder from the result, warns once, and reports it as
+`pooledCapNote` in `stats()` and `home.detail.pool.capacityNote` in `/api/healthz`.
+
+**Measured:**
+
+- **The envelope is real and reproduced.** Twelve real Home Assistant containers, run twice six
+  days apart at load 206 to 233 and again at 54 to 72. Every load-insensitive number reproduced
+  to the kilobyte: heap per connection 245 KB both times, large house 856 then 847 KB, SSE frame
+  25,168 then 25,172 bytes, descriptors per connection exactly 1, coalescing exactly 100:1. Raw
+  evidence: `tasks/home/envelope-2026-09-03.json` and `tasks/home/envelope-2026-09-09.json`, both
+  committed and both read this session rather than quoted from the prose.
+- **10 homes: 4.0 MB, p95 6.5 ms. 1,000 homes: 49.7 MB at 200 measured connections, p95 31.0 ms.
+  100,000: extrapolated and refused as simultaneously live**, with the model stated
+  (`P x I / D`) and the honest admission that `D`, the duplicate-socket factor under
+  `sessionAffinity=false`, is the one term not measured. No cell in the table says "assumed".
+- **Chaos: 7 of 7 pass, twice.** `tasks/home/chaos-2026-09-09.json` read directly:
+  `results.length === 7`, `passed === true` on all seven.
+- **Scenario 6 isolation, the two numbers:** the fast house's p95 was **6.80 ms alone and 6.99 ms**
+  with a house answering 2,000 times slower connected beside it. A drift of 0.19 ms, taken at
+  load average 190, so the noise floor was far above the effect.
+- **The ladder is identical across both runs, row for row, all ten rows** (`.ladder.rows`
+  compared byte for byte this session). Rung 4 holds where it matters: at the same moment a
+  stream is refused (`admitted:false, rung:shed_streams`), an action is admitted. The door beats
+  the dashboard.
+- **The gate never degrades, proven twice.** `.gate` in both envelopes: 400 guarded actions
+  against a real `lock.front_door`, `everWavedThrough: 0`, `violations: []`, rungs
+  `degraded_read`, `shed_streams` and `shed` all reached, 226 shed by load and 174 admitted then
+  refused by the gate, live call `needs_confirmation`, lock `locked` before and after.
+- **CPU throttling does not starve a timer in a held stream**, measured against production over
+  23 heartbeat intervals: median drift 1 ms, worst 1.6 s, neither stream cut by the platform.
+- **The new clamp:** 8 GiB backs 5,521 connections (600 passes untouched), 4 GiB backs **234**
+  (600 is clamped, logged and reported), 2 GiB falls to the floor of 25, no cgroup limit means no
+  bound. Eight cases in `tests/home-runtime.test.js` pin it, including that the admission ladder
+  is sized from the clamped cap and not the requested one.
+- **Tests:** the whole home surface, 29 files, **818 passed / 123 skipped**. Healthz and ops, 9
+  files, 170 passed. Full suite in four shards, no failure attributable to this lane.
+
+**Deviations:**
+
+1. **The order says publish the envelope in `docs/home-operations.md`. It is in
+   `docs/ops/home-operations.md`,** beside the rest of the lane's runbook, where order 13 put the
+   SLOs and the three alerts. Splitting the scale envelope from the alerting runbook to satisfy a
+   path would have been worse than the deviation. Left where it is.
+2. **The Cloud Run memory setting had reverted a third time, by a route the doc had not
+   anticipated.** `GET /api/version` reports the live revision as `three-ws-api-00420-ljh` serving
+   commit `880bdcef8`; the 8 GiB pin in `server/cloudbuild.yaml` is commit `a5e522822`, made ten
+   hours *after* the commit production is serving, so the pin has never been through a deploy and
+   at `880bdcef8` that file still reads `4Gi`. The first two reverts were a deploy overwriting the
+   setting; this one is a deploy of a commit made before the fix existed. Pinning it in a fourth
+   file would not have stopped it, which is why the runtime now negotiates instead. Recorded in
+   the doc under "It reverted a third time".
+
+**Left open:**
+
+- **One owner command, and it is pre-approved config-only work I could not run:**
+  `gcloud run services update three-ws-api --region us-central1 --project
+  aerial-vehicle-466722-p5 --memory 8Gi`. `gcloud` in this workspace answers
+  `Reauthentication failed. cannot prompt during non-interactive execution` on every call, so the
+  live memory limit is stated in the doc as what the deploy config asks for, never as a reading
+  off the service. The next full deploy of any commit at or after `a5e522822` makes it permanent.
+  The clamp makes 4 GiB **safe** in the meantime, not correct: the lane runs at 234 connections an
+  instance, which is 1,404 live homes across `minScale=6`, instead of risking an OOM that kills
+  the whole API container.
+- **`D`, the duplicate-socket factor, is unmeasurable before real traffic** and it is the term
+  that decides the fleet ceiling. First thing to measure after launch, per the doc.
+- **The 25 KB SSE frame is the lane's most expensive thing** and it is the whole room graph, not
+  the socket. The state channel should send a diff. Named in the doc; not this order's scope.
+
+**Note on the order file:** `309-home-14-reliability-scale.md` was retired by the owner's own
+sweep of `prompts/finish/` (`_context/00-RETIRED-BY-OWNER.md`) while this session was verifying
+it, so its deletion is not in this commit. This session briefly restored 26 order files before
+reading that directive, and undid the restore; the sweep completed over the top of it either way.
+
+**Commits:** the build work is in `b730a85a3` and the 2026-09-03 order-02 worktree; the second
+fleet run is `1dfb4e69f`; the 8 GiB deploy pin is `a5e522822`; this session's clamp, tests, doc
+correction, changelog entry and this entry.
+
+---
+
+## 06. The live 3D home (2026-09-09)
+
+**Shipped:** the order's build was already on disk when this session opened (`src/home/scene-model.js`,
+`scene-render.js`, `scene-fallback.js`, `scene.js`, `pages/home-scene.html`, both routes,
+`docs/home-scene.md`, a `STRUCTURE.md` row, 27 unit tests and 6 e2e journeys), built by an earlier
+session whose entry never landed. This session verified every claim of it against a real Home
+Assistant, produced the evidence the order asks for, and closed the three gaps that verification
+found:
+
+1. **The body standing in the house is now the visitor's own agent.** It was always the platform
+   default, while the walk world, `/play` and the voice satellite all showed the person's real
+   avatar. It now reads the same canonical `my agent` record (`src/agents/active-agent.js`),
+   swaps live when they switch agents in another tab, and falls back to the platform body for
+   somebody with no agent, no avatar, or a private avatar (which publishes no model URL by
+   design). Resolved after the first frame, so the house never waits on it.
+2. **Disconnecting a home now reaches the screens showing it.** `closeHome` closed the pooled
+   bridge and dropped its subscribers silently, and the SSE stream kept heartbeating, so a
+   display left open on a disconnected home sat on a green **Live** badge over that house
+   indefinitely. Measured: still "Live" and still drawing 5 rooms 180 s after `DELETE /api/home/:id`
+   returned 200. `closeEntry` now hands every open stream a final `revoked` status with the
+   sentence explaining it, the stream sends that frame and hangs up, and the client stops
+   reconnecting on it.
+3. **The explanation a disconnect carries no longer gets overwritten.** The stream's own close
+   arrives right behind the frame that explains it, and `openStream`'s error handler was
+   reporting the intermediate `reconnecting` and then a bare `disconnected`, which blanked the
+   pill's title and announced the generic "the connection dropped" instead of the real reason.
+
+**Measured** (all against Home Assistant 2026.9.0 in a container, `docs/home-scene.md`'s own
+harness `scripts/measure-home-scene.mjs`, on a 16-core Codespace shared with about ten concurrent
+agents, load average 58 to 112 throughout, and a **software rasterizer**, which is the caveat on
+every rendering number below):
+
+- **A real light changing in Home Assistant reaches the painted frame in 282 ms median, 404 ms
+  worst of six** (best isolated single measurement: 342 ms). The page's own half of that, SSE
+  frame to painted frame, is **13.5 ms median**, which matches the 10 to 23 ms the doc already
+  claimed.
+- **Heap over ten minutes and 150 real device changes: 30.06 MB to 30.63 MB, +0.57 MB**, with
+  object, geometry and texture counts identical at every one of the eleven samples. Each sample
+  is taken after a forced `HeapProfiler.collectGarbage`, so it is retained memory. Flat.
+- **Per-frame work 0.1 ms (desktop) and 0.2 ms (CPU-throttled 4x at 390 px), render 2.5 ms and
+  30.4 ms, 96 draw calls, 30 objects, 5 rooms.** The frame RATE could not be honestly measured
+  here: headless Chromium on swiftshader under this load reports 3 fps desktop and 2 fps mobile
+  while spending 2.5 ms per frame, which is a measurement of the box, not the page. Reported as
+  unmeasured rather than dressed up.
+- **Cold paint: first contentful paint 204 ms, DOM content loaded 215 ms, navigation to a drawn
+  house 3291 ms** through a Vite dev server on that same box. FCP meets the order's 2.5 s budget;
+  the drawn-house figure is dev-server plus load and is not a production number.
+- **Both routes serve the scene**: `/smart-home/:id` and `/home/:id`, 200 each.
+- **All ten states captured as screenshots**, plus a seven-frame sequence of a real light coming
+  on at 150 ms intervals, and an eleventh of the agent's own body. Loading, empty, nothing in a
+  room, live, stale, disconnected, acting, confirmation pending, no WebGL, error.
+- **The guarded confirmation is real**: asked to unlock `lock.front_door`, the page rendered
+  "OPENS YOUR HOME / unlock Front Door? / cannot be safely undone remotely" pinned to the door in
+  the scene, and Home Assistant still reported that lock `locked` while the question stood.
+- **The own-agent body is proven by the network, not by pixels**: with an avatar attached to the
+  QA account's agent the page fetched only that GLB and never `/avatars/default.glb`; with the
+  avatar detached it fetched the default. Both through the real `/api/agents/me` and
+  `PUT /api/agents/:id`.
+- **Tests:** `tests/e2e/home-scene.spec.js` **7 passed** (the six that existed, plus a new
+  journey for the disconnect fix), `tests/home-scene-model.test.js` 27 passed, and
+  `home-runtime`, `api-home-contract`, `api-home`, `home-store`, `home-tenant-health`
+  172 passed / 27 skipped. `npm run check:rules` clean on every file touched.
+
+**Deviations from the order file, all verified against the running product:**
+
+- The page's address is `/smart-home/:id`; `/home/:id` is a second route to the same page, not
+  the primary one. The order says `/home/:id` throughout.
+- "Empty house: connected but zero entities" is harder to reach than the order assumes. Home
+  Assistant 2026.9 onboarding creates three default areas and six config entries, so a bare
+  instance is neither empty nor unfiled: it renders 10 entities across 4 rooms. Both states were
+  produced honestly, by deleting the areas (state 3) and then every config entry (state 2).
+- "Disconnected: distinct from stale" was reachable in fewer ways than the order implies. A
+  stopped house is `unreachable`, which is **stale** by design and correctly so. Taking the
+  browser offline does not reach it either: an already-established EventSource keeps delivering,
+  so the page is right to say live. Revoking the house token does not reach it within 11 minutes
+  either (see below). What reaches it is a revoked connection, which is what the fix above made
+  work.
+- The order's `--bare-stack` path in the measurement harness expected an overlay heading on any
+  bare instance and timed out on one that has default areas. Fixed, along with two other harness
+  bugs the run found: object selection now falls back to the room rail (which requires focusing
+  the room first, since the rail lists devices for the focused room only), and the disconnected
+  capture stopped waiting 300 s for a state a stopped container cannot produce and now revokes
+  the connection instead, which is the run's own cleanup step and the only thing that does
+  produce it. One command now captures eight of the ten states; the two empty-house states still
+  need the second, bare instance.
+
+**Left open, with owners:**
+
+1. **A revoked Home Assistant token is reported as "unreachable" forever, never as "sign in
+   again".** Measured: minted a throwaway house token, connected a home with it, revoked it in
+   Home Assistant, restarted the house, and watched the pill for **11 minutes 30 seconds**. It
+   stayed **Stale** the whole time. The cause is in the runtime, not the page:
+   `wireEvents` maps the bridge's own `disconnected` event to `UNREACHABLE` regardless of why,
+   and the auth-coded `error` event beside it is only logged. `onConnectFailure` does classify
+   `ERR.AUTH` correctly, but it only runs for a fresh `acquire`, not for a reconnect inside a
+   live pool entry. The user is told to check their network when what they need is a new token.
+   **Owner: order 02.** Not fixed here: it is a reconnect-loop change inside
+   `home-assistant-js-websocket`'s own retry, in a file this lane's peers are actively editing,
+   and each verification cycle costs 12 minutes.
+2. **Frame rate is unmeasured on real hardware.** Everything on this machine is software
+   rendered. **Owner: order 16**, which should take it on a real GPU and a real phone.
+3. `/api/agents/me` answers 500 on a deployment without `S3_PUBLIC_DOMAIN` (it is set in
+   production). The scene degrades correctly to the default body, so this is a note, not a
+   blocker.
+
+**Commits:** `ea3345a13` (the agent body, committed by a peer's sweep under an accurate message
+they wrote from the diff), plus this one.

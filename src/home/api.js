@@ -249,6 +249,8 @@ export function openStream(id, handlers) {
 	const url = `/api/home/${encodeURIComponent(id)}/stream`;
 	const source = new EventSource(url, { withCredentials: true });
 	let watchdog = 0;
+	/** Set once the server has said something there is no reconnecting from. */
+	let terminal = false;
 	// The server heartbeats every 25 s. Two missed beats plus slack is a stream
 	// that is no longer delivering, whatever the socket believes.
 	const SILENCE_MS = 70_000;
@@ -270,10 +272,25 @@ export function openStream(id, handlers) {
 	source.addEventListener('status', (event) => {
 		beat();
 		const payload = parse(event.data);
-		if (payload) handlers.onStatus(payload);
+		if (!payload) return;
+		// `revoked` is the one status there is no coming back from: the home was
+		// disconnected, the row is gone, and the next reconnect would be a 404
+		// answered as a generic drop, which throws away the sentence this frame
+		// carries and tells the person nothing. Take the server at its word,
+		// report it, and stop reconnecting.
+		if (payload.status === 'revoked') {
+			terminal = true;
+			clearTimeout(watchdog);
+			source.close();
+		}
+		handlers.onStatus(payload);
 	});
 	source.addEventListener('heartbeat', beat);
 	source.addEventListener('error', () => {
+		// A stream the server ended on purpose has already said why. Anything after
+		// that is the socket closing behind the explanation, and reporting it again
+		// would replace a reason with "reconnecting".
+		if (terminal) return;
 		// EventSource fires `error` both for a transient drop it will retry and
 		// for a terminal close. `readyState` is the only honest signal of which.
 		handlers.onStatus({ status: source.readyState === EventSource.CLOSED ? 'disconnected' : 'reconnecting', stale: true });

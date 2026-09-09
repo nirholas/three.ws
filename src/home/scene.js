@@ -313,9 +313,15 @@ function setStatusFromServer(payload) {
 
 function setStatus(kind, label, detail) {
 	state.status = kind;
+	const sameKind = el.status.dataset.status === kind;
 	el.status.dataset.status = kind;
 	el.status.textContent = label;
-	el.status.title = detail || '';
+	// A later frame about the SAME state that carries no sentence must not erase
+	// the one that did. The server explains a disconnect once, in the status frame
+	// it sends before hanging up; the stream's own close arrives right behind it
+	// with nothing to say, and blanking the title there would throw away the only
+	// explanation the person was given.
+	el.status.title = detail || (sameKind ? el.status.title : '');
 	// Offered whenever the house is not live: on a terminal disconnect it is the
 	// only way back, and on a long stale it is a person deciding not to wait.
 	el.reconnect.hidden = kind === 'live' || kind === 'connecting';
@@ -324,8 +330,8 @@ function setStatus(kind, label, detail) {
 	state.renderer?.setStale?.(stale);
 	el.stage.classList.toggle('is-stale', stale);
 	renderAge();
-	if (kind === 'disconnected') {
-		announce(detail || t('home_scene.dropped', 'The connection to your home dropped. The house below is the last state we saw.'));
+	if (kind === 'disconnected' && !sameKind) {
+		announce(detail || el.status.title || t('home_scene.dropped', 'The connection to your home dropped. The house below is the last state we saw.'));
 	}
 }
 
