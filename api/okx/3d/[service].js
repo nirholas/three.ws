@@ -201,7 +201,7 @@ async function healthReport() {
 			const settleable = rail.settleable && (facilitator || relayerFunded !== false);
 			if (!settleable) {
 				const err = new Error(
-					facilitator || rail.relayer?.configured
+					relayerFunded === false
 						? 'X Layer settlement relayer is out of gas (OKB balance 0)'
 						: 'X Layer settlement route is not configured',
 				);
