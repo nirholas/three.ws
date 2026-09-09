@@ -309,3 +309,48 @@ quota you only meet at the moment it refuses you is a quota nobody showed you.
 
 It is also where a user swaps which homes are live after a downgrade, and where the two lines a
 limit can never touch are stated in words rather than buried in a policy nobody opens.
+
+---
+
+## How the two commitments are verified
+
+Both commitments are covered by tests that drive a real Home Assistant, not by unit tests over our
+own classifier. Bring a house up first:
+
+```bash
+node scripts/home-test-instance.mjs --up --onboard --seed --name plan19
+```
+
+**Commitment 1, the safety exemption.** The live block at the end of
+[`tests/home-turn-gate.test.js`](../tests/home-turn-gate.test.js) puts an account past every
+dimension at once (an override of `0` on all of them) and pauses its home the way a downgrade
+does, then asks the real house to lock a deadbolt, close a cover and arm the alarm. Each one
+asserts the state read back out of Home Assistant, so a pass means the device moved. In the same
+moment it asserts that an ordinary action and the unsafe direction of a safety domain are both
+still refused, because an exemption that is not selective is just a broken gate.
+
+```bash
+HOME_LIVE=1 HOME_LIVE_NAME=plan19 HOME_ALLOW_LOCAL_INSTANCE=1 \
+  node --env-file=.env.local node_modules/.bin/vitest run tests/home-turn-gate.test.js
+```
+
+`HOME_ALLOW_LOCAL_INSTANCE` has to be exported before the run rather than set inside it:
+[`api/_lib/home-url-guard.js`](../api/_lib/home-url-guard.js) reads it into a module-level constant
+the first time it is imported, so a value set later arrives too late and every call is refused as a
+private address. The block fails with that explanation rather than the confusing symptom.
+
+**Commitment 2, the downgrade, and commitment 3, the quota display.** The two journeys in
+[`tests/e2e/home-plan.spec.js`](../tests/e2e/home-plan.spec.js) open `/smart-home/plan` in a real
+browser against a real API and a real house. The first asserts every dimension renders with its
+usage and a real reset date before anything is near a ceiling. The second clicks Pause on a
+connected home and proves on screen that the row stays, is labelled paused, keeps its credential,
+and can be made live again.
+
+```bash
+HOME_E2E_API_PORT=8171 HOME_E2E_WEB_PORT=3031 HOME_LIVE=1 HOME_LIVE_NAME=plan19 \
+  npx playwright test --config playwright.home.config.js tests/e2e/home-plan.spec.js
+```
+
+The journeys pause by clicking the button, never by posting to `/api/home/plan` directly: that
+route is CSRF-guarded like every other state change, so a raw request would have to mint a token
+the product mints for itself, and the test would then be exercising a path no user takes.

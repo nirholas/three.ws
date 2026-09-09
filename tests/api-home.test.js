@@ -12,8 +12,8 @@
 // that need a live socket (the guarded 409, the SSE stream) are gated on a real
 // Home Assistant through tests/_helpers/home-instance.js and skip without one.
 
-import { afterAll, beforeAll, describe, expect, it } from 'vitest';
-import { randomUUID } from 'node:crypto';
+import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
+import { randomBytes, randomUUID } from 'node:crypto';
 
 import '../tests/setup.env.js';
 import { acquireHomeInstance, liveHomeAvailable, pickEntity } from './_helpers/home-instance.js';
@@ -381,8 +381,18 @@ d('every refusal leaves a row an owner can read', () => {
 live('against a real house', () => {
 	let instance;
 	let liveHomeId;
+	let stubbedKey = false;
 
 	beforeAll(async () => {
+		// Unlike the `dk` suites above, this block cannot be gated on HAS_KEY and
+		// still do its job: skipping it on a machine with a real house attached
+		// would silently drop the only live coverage this file has. It writes a
+		// connection, so it needs a key, and a per-run one thrown away with the
+		// process encrypts nothing but the rows created and deleted here.
+		if (!process.env.WALLET_ENCRYPTION_KEY && !process.env.JWT_SECRET) {
+			vi.stubEnv('WALLET_ENCRYPTION_KEY', randomBytes(32).toString('hex'));
+			stubbedKey = true;
+		}
 		instance = await acquireHomeInstance();
 		const created = await store.createConnection({
 			userId: users.owner,
@@ -393,6 +403,10 @@ live('against a real house', () => {
 		});
 		liveHomeId = created.id;
 	}, 600_000);
+
+	afterAll(() => {
+		if (stubbedKey) vi.unstubAllEnvs();
+	});
 
 	it('serves a snapshot with the house’s real rooms', async () => {
 		const res = mkRes();

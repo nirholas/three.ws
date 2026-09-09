@@ -24,10 +24,11 @@
 // Every live assertion reads the lock's state back from Home Assistant. A tool
 // result that says "pending" proves nothing about a door.
 
-import { afterAll, beforeAll, describe, expect, it } from 'vitest';
+import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 
 import { buildHomeGraph } from '@three-ws/home-bridge';
 
+import { randomBytes } from 'node:crypto';
 import { readFileSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -133,8 +134,19 @@ live('against a real Home Assistant', () => {
 	let lightId;
 
 	const asOwner = (tool, args) => runHomeTool(tool, args, { userId: owner.id, source: 'mcp' });
+	let stubbedKey = false;
 
 	beforeAll(async () => {
+		// The connection row's token is encrypted at rest, so createConnection
+		// below needs a key. A machine with neither of these set failed the whole
+		// live block with "Missing required env var: JWT_SECRET" raised from
+		// secret-box, which reads as a broken handler and is a missing variable.
+		// Generated per run and thrown away with the process: it encrypts only the
+		// rows this block creates and deletes.
+		if (!process.env.WALLET_ENCRYPTION_KEY && !process.env.JWT_SECRET) {
+			vi.stubEnv('WALLET_ENCRYPTION_KEY', randomBytes(32).toString('hex'));
+			stubbedKey = true;
+		}
 		instance = await acquireHomeInstance();
 		({ sql } = await import('../api/_lib/db.js'));
 		const { createConnection } = await import('../api/_lib/home/store.js');
@@ -159,6 +171,7 @@ live('against a real Home Assistant', () => {
 		const { closeAll } = await import('../api/_lib/home/runtime.js');
 		closeAll();
 		if (sql && owner) await sql`delete from users where id in (${owner.id}, ${stranger.id})`;
+		if (stubbedKey) vi.unstubAllEnvs();
 	});
 
 	it('reads the real house', async () => {

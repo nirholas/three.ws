@@ -58,38 +58,48 @@ test.describe('the plan page', () => {
 	});
 
 	test('a paused home is shown as paused, keeps its row, and can be swapped back', async ({ page }) => {
-		await connectHome(page, { label: 'Paused house journey' });
+		const label = await connectHome(page, { label: 'Paused house journey' });
 
 		const before = await (await page.request.get('/api/home', { timeout: 60_000 })).json();
 		const homes = Array.isArray(before?.homes) ? before.homes : before;
 		expect(homes.length).toBeGreaterThan(0);
-		const target = homes[homes.length - 1];
+		const target = homes.find((h) => h.label === label) || homes[homes.length - 1];
 
 		await page.goto('/smart-home/plan', { waitUntil: 'domcontentloaded' });
 
-		// Pause through the page's own endpoint, which is what a plan change does.
-		const paused = await page.request.post('/api/home/plan', {
-			data: { action: 'pause', home_id: target.id },
-			headers: { 'content-type': 'application/json' },
-			timeout: 60_000,
-		});
-		expect(paused.ok()).toBe(true);
+		// Pause by CLICKING, not by posting.
+		//
+		// An earlier version of this journey called POST /api/home/plan directly and
+		// failed on a 403, because that route is CSRF-guarded like every other state
+		// change and a raw page.request.post carries the session cookie without the
+		// header. Minting a token in the spec would have made the journey pass while
+		// testing a path no user takes. The button is the path a user takes, and it
+		// exercises the token mint in src/home/api.js on the way through.
+		const card = page.locator('.hm-card').filter({ hasText: label }).first();
+		await expect(card).toBeVisible({ timeout: 30_000 });
+		await card.getByRole('button', { name: 'Pause', exact: true }).click();
 
-		await page.reload({ waitUntil: 'domcontentloaded' });
-		await expect(page.getByText(/paused/i).first()).toBeVisible({ timeout: 30_000 });
-
-		// The row is intact: it still lists, it is not revoked, and it can come back.
-		const after = await (await page.request.get('/api/home', { timeout: 60_000 })).json();
-		const stillThere = (Array.isArray(after?.homes) ? after.homes : after).find((h) => h.id === target.id);
-		expect(stillThere).toBeTruthy();
+		// Commitment 2 on screen: the row is still there, and it says paused rather
+		// than having quietly vanished the way a disconnect would.
+		const pausedCard = page.locator('.hm-card').filter({ hasText: label }).first();
+		await expect(pausedCard.getByText('Paused', { exact: true })).toBeVisible({ timeout: 30_000 });
+		await expect(pausedCard.getByRole('button', { name: 'Make live' })).toBeVisible();
 
 		await page.screenshot({ path: 'test-results/home-plan-paused.png', fullPage: true });
 
-		const resumed = await page.request.post('/api/home/plan', {
-			data: { action: 'resume', home_id: target.id },
-			headers: { 'content-type': 'application/json' },
-			timeout: 60_000,
-		});
-		expect(resumed.ok()).toBe(true);
+		// Nothing was deleted and nothing was revoked: the row is intact in the API
+		// the moment the page says it is paused.
+		const after = await (await page.request.get('/api/home', { timeout: 60_000 })).json();
+		const stillThere = (Array.isArray(after?.homes) ? after.homes : after).find((h) => h.id === target.id);
+		expect(stillThere).toBeTruthy();
+		expect(stillThere.revoked_at ?? null).toBeNull();
+
+		// And the choice is reversible, which is the half of commitment 2 that makes
+		// the pause acceptable in the first place.
+		await pausedCard.getByRole('button', { name: 'Make live' }).click();
+		await expect(
+			page.locator('.hm-card').filter({ hasText: label }).first()
+				.getByRole('button', { name: 'Pause', exact: true }),
+		).toBeVisible({ timeout: 30_000 });
 	});
 });

@@ -1,5 +1,8 @@
 import { defineConfig } from '@playwright/test';
 import { randomBytes } from 'node:crypto';
+import { readFileSync } from 'node:fs';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 
 /**
  * The home lane's own Playwright config.
@@ -16,6 +19,31 @@ import { randomBytes } from 'node:crypto';
  * the process, so nothing here can decrypt a production credential and nothing
  * production wrote can be read by this run.
  */
+// The database, in THIS process and not only in the API child process.
+//
+// The API server below is started with `node --env-file=.env.local`, so it has
+// always had DATABASE_URL. The Playwright process did not: the global setup
+// provisions QA accounts and the specs read and write home rows directly, and
+// both of those run here. Without this the whole run dies before the first
+// browser opens with "Missing required env var: DATABASE_URL" thrown from
+// api/_lib/env.js, which reads as a product bug and is a missing variable.
+//
+// Same precedence as scripts/apply-migrations.mjs: a value already in the
+// environment wins, then .env.local, then .env. So `DATABASE_URL=... npx
+// playwright test` still points the run wherever the caller aimed it.
+const CONFIG_DIR = path.dirname(fileURLToPath(import.meta.url));
+for (const envFile of ['.env.local', '.env']) {
+	try {
+		for (const line of readFileSync(path.resolve(CONFIG_DIR, envFile), 'utf8').split('\n')) {
+			const m = line.match(/^([A-Z_][A-Z0-9_]*)=(.*)$/);
+			if (!m || process.env[m[1]]) continue;
+			const val = m[2].trim();
+			const quoted = (val.startsWith('"') && val.endsWith('"')) || (val.startsWith("'") && val.endsWith("'"));
+			process.env[m[1]] = quoted ? val.slice(1, -1) : val;
+		}
+	} catch { /* not present: an exported DATABASE_URL is a valid way to run this */ }
+}
+
 // Dedicated ports, and no server reuse. Other agents run their own `npm run
 // dev` on :3000 in this worktree, and reusing one is not a smaller version of
 // this stack: its /api proxy points at PRODUCTION, so the run silently tests
@@ -83,7 +111,31 @@ export default defineConfig({
 			reuseExistingServer: false,
 			stdout: 'pipe',
 			stderr: 'pipe',
-			env: { DEV_API_PROXY: `http://127.0.0.1:${API_PORT}` },
+			env: {
+				DEV_API_PROXY: `http://127.0.0.1:${API_PORT}`,
+				// No hot reload, for two independent reasons.
+				//
+				// The noisy one: vite.config.js points the HMR client at
+				// `<codespace>-<port>.app.github.dev` whenever it sees
+				// CODESPACE_NAME, which is right for a developer opening a
+				// forwarded port and wrong here, where the browser is headless,
+				// reaches vite on localhost, and the lane's port is not
+				// forwarded. The handshake 404s and every page collects three
+				// console errors and a pageerror it did not cause, which a
+				// journey asserting a clean console then fails on.
+				//
+				// The damaging one, and the reason this is off rather than
+				// merely repointed: concurrent agents edit src/ in this shared
+				// worktree while a journey is running, and a connected HMR
+				// client reloads the page on each of their saves. Journey 9e
+				// died exactly that way, on a navigation that arrived between
+				// naming a room and clicking File.
+				//
+				// Deliberately not solved by widening a spec's console-noise
+				// filter: that would hide the errors and keep the reloads, and
+				// the home lane has real websockets of its own to assert on.
+				VITE_NO_HMR: '1',
+			},
 		},
 	],
 });
