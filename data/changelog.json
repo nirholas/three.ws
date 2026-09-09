@@ -27641,6 +27641,16 @@
 				"improvement"
 			],
 			"link": "/oracle"
+		},
+		{
+			"date": "2026-09-09",
+			"title": "Pump Dashboard: the live feed shows real launches again instead of raw JSON",
+			"summary": "A full audit of /pump-dashboard, the pump.fun trading desk. The headline defect was the feed itself: every event streaming in from the realtime socket was labelled UNKNOWN and printed as a wall of raw JSON, because the socket names its event type in a field the page never read. Launches, graduations and trades now render as readable rows with the token name, symbol, mint and size, whale-sized trades are tagged as whales, and the socket's own subscription acknowledgements stop appearing as feed entries. Recent activity loaded on arrival was stamped with the current time, so a graduation from yesterday claimed to have happened seconds ago; each row now carries the time it actually happened. Filtering the feed to a type with nothing in it left an empty panel with no explanation, and now says what is being filtered and offers a way back to everything. The Token Scanner gave no sign it was working during a scan that routinely takes ten seconds, and could hang forever with no result and no error if a Solana provider accepted the request and never answered; it now shows a busy state, times out, and explains a failure with a way to retry. The Quote Engine printed raw machine codes at you (internal_error, no_curve) where a sentence belongs, and the quote service itself answered a rate-limited Solana chain with a generic internal error instead of an honest \"try again in a moment\". The Watch List fired a request that could only fail unless you had pointed the dashboard at your own PumpKit backend, and now explains the requirement and takes you to the setting. Twenty-one form fields across the desk got the labels screen readers need, the feed's filter row is now a properly labelled group of toggles, and the high-conviction stats no longer clip their labels on a 320 pixel phone.",
+			"tags": [
+				"fix",
+				"improvement"
+			],
+			"link": "/pump-dashboard"
 		}
 	]
 }
