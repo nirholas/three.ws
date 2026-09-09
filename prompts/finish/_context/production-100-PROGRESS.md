@@ -555,6 +555,50 @@ Left:
   remaining paths were checked back out and verified byte-identical to theirs. No reset, no
   amend. The helper now pins `$PARENT` before `read-tree`.
 
+## 2026-09-09: map (trading Arena retirement pass)
+
+Measured, all against production rather than the tree:
+- `gcloud run services describe agent-sniper` serves revision `agent-sniper-00033-rg6`,
+  whose image was built **2026-08-11T02:04:58Z**, from spec image tag `:latest`.
+- `curl https://three.ws/api/sniper/status` at 05:45 UTC: `mode: live`, heartbeat 6s old,
+  `feedLive: true`, 11 strategies, 1 open position, `globalKill: false`. The fleet is
+  trading real SOL on that August image right now. State reads `degraded` only because 4
+  of 11 agent wallets are starved, which is OWNER-ACTIONS row 2, not a crash.
+- `git log --since=2026-08-11 -- workers/agent-sniper/` is a single sweep commit
+  (`2849cafb6`, subject unrelated to its contents) carrying **48 files and 10,976
+  insertions** under that directory. All of it is committed and none of it is deployed.
+- `amm-exit.js` is inside that undeployed delta and is imported at HEAD by `executor.js`,
+  `positions.js` and `graduation-ride.js`. The arena plan names graduated-position AMM
+  exits as its blocker for copy-trading; the code exists and the running image has none
+  of it.
+- `sniper_risk_reviews` holds 7 rows, every one from 2026-09-04 and two of them
+  `enforced: true`, which is the local verification run, not production. The
+  shadow-evidence query printed in `workers/agent-sniper/README.md` runs green against
+  the live schema and returns zero rows, so the Risk Officer has never reviewed a
+  production trade.
+- `npm run db:status`: all migrations applied, `20260904020000_sniper_risk_officer.sql`
+  included. `npx vitest run tests/sniper-risk-officer.test.js tests/copy-eligibility.test.js`:
+  42 passed.
+- `npm run deploy:sniper -- --dry-run`: clean. gcloud authed, runtime SA and the `workers`
+  Artifact Registry repo present, both required secrets present, only the optional
+  `telegram-alerts-chat-id` missing. On an existing service it rolls
+  `gcloud run services update --image`, which preserves the running env, so it cannot
+  demote the live fleet to simulate the way applying `cloudrun.yaml` would.
+- `curl https://three.ws/api/version`: `880bdcef8` on `three-ws-api-00420-ljh`, built
+  2026-09-08 19:05 UTC. `/api/healthz` answers 200 and `/api/home/*` answer 401.
+
+Did: verified every claim the arena plan makes about itself and found them all true, so
+nothing in it needed building. Added OWNER-ACTIONS row 19 for the worker deploy and the
+separate, later decision to arm the Risk Officer. Corrected row 1, whose premise had
+rotted: it still described a 500ing healthz and 96 commits of lag, and that outage is
+cleared. Recorded the finding in the roadmap pack README next to the arena plan's entry.
+
+Left: two owner-gated steps, both on row 19. (1) `npm run deploy:sniper`, which is the
+whole of the first one and is dry-run proven. (2) Arming enforcement afterwards with
+`SNIPER_RISK_OFFICER=enforce` or a per-strategy `risk_officer_level`, which changes what
+real SOL buys and should wait for production shadow rows to justify it. Order 918 stays on
+disk because of (1); nothing in it is unbuilt.
+
 ## Retire this file when the campaign is done (required)
 
 This file is shared context rather than a single order, so it outlives the
