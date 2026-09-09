@@ -18,7 +18,8 @@ npm run check:announce                # gate the pack before anyone reads it
 1. **Rank.** [`scripts/announce-rank.mjs`](../../scripts/announce-rank.mjs) re-derives the
    inventory from `data/pages.json`, `packages/`, `workers/` and `services/`, reads the announced
    status out of the coverage audit, probes each route, scores what is left, and writes
-   [`data/announcements.json`](../../data/announcements.json). The score's weights come from the
+   `data/announcements.json`. That ledger is generated, not committed, so this is the
+   command that creates it. The score's weights come from the
    engagement archive, not from taste; the sources are named in
    [announce-voice.md](../announce-voice.md).
 2. **Capture.** Add a shot to [`data/announce-media.json`](../../data/announce-media.json) and run
