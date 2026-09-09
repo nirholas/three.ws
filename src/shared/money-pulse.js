@@ -83,7 +83,7 @@ function injectStyles() {
 .mp-livedot[data-state="error"]::before { background: var(--warn, #fbbf24); animation: none; }
 @keyframes mp-pulse { 0% { box-shadow: 0 0 0 0 rgba(74,222,128,.5);} 70% { box-shadow: 0 0 0 7px rgba(74,222,128,0);} 100% { box-shadow: 0 0 0 0 rgba(74,222,128,0);} }
 .mp-sound { appearance: none; background: transparent; border: 1px solid var(--stroke, rgba(255,255,255,.08)); border-radius: var(--radius-pill,999px);
-	color: var(--ink-dim,#888); cursor: pointer; font-size: var(--text-xs,.72rem); padding: 5px 11px; transition: color .14s ease, border-color .14s ease; }
+	color: var(--ink-dim,#888); cursor: pointer; font-size: var(--text-xs,.72rem); min-height: 28px; padding: 5px 12px; transition: color .14s ease, border-color .14s ease; }
 .mp-sound:hover { color: var(--ink,#e8e8e8); border-color: var(--mp-accent); }
 .mp-sound[aria-pressed="true"] { color: var(--mp-accent); border-color: var(--mp-accent); }
 
@@ -115,8 +115,10 @@ function injectStyles() {
 .mp-meta { display: flex; align-items: center; gap: 8px; margin-top: 3px; font-size: var(--text-2xs, .68rem); color: var(--ink-faint, #666); }
 .mp-chip-slot { display: inline-flex; }
 .mp-time { white-space: nowrap; }
-.mp-explore { color: var(--ink-faint, #666); text-decoration: none; }
-.mp-explore:hover { color: var(--mp-accent); }
+.mp-explore { display: inline-flex; align-items: center; justify-content: center; min-height: 24px; min-width: 44px;
+	margin: -4px 0; padding: 0 6px; border-radius: var(--radius-sm, 6px); color: var(--ink-faint, #666); text-decoration: none;
+	transition: color .14s ease, background .14s ease; }
+.mp-explore:hover { color: var(--mp-accent); background: var(--surface-2, rgba(255,255,255,.05)); }
 .mp-right { flex: 0 0 auto; display: flex; flex-direction: column; align-items: flex-end; gap: 2px; }
 .mp-kindtag { font-size: var(--text-2xs,.66rem); text-transform: uppercase; letter-spacing: .06em; color: var(--ink-faint,#666); }
 
@@ -354,7 +356,10 @@ function rowEl(ev) {
 		ex.href = ev.explorer || ev.mint_explorer;
 		ex.target = '_blank';
 		ex.rel = 'noopener noreferrer';
-		ex.textContent = ev.kind === 'launch' ? 'mint ↗' : 'tx ↗';
+		const isMint = ev.kind === 'launch';
+		ex.textContent = isMint ? 'mint ↗' : 'tx ↗';
+		ex.setAttribute('aria-label', isMint ? 'Open this mint in the block explorer (new tab)' : 'Open this transaction in the block explorer (new tab)');
+		ex.title = ex.getAttribute('aria-label');
 		ex.addEventListener('click', (e) => e.stopPropagation());
 		meta.appendChild(ex);
 	}
