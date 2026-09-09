@@ -17,12 +17,23 @@
  * seeded house and prints the URL and token. Every step is idempotent: running
  * it twice is a no-op that reprints the same connection details.
  *
- * Safety: this machine runs concurrent agents, several of which keep their own
- * Home Assistant containers alive. The harness therefore stamps every container
- * it creates with a label and REFUSES to stop, restart or remove a container
- * that does not carry it. It also never touches a config directory outside the
+ * Safety, and read the second half of this before you type `--down`:
+ *
+ * The harness stamps every container it creates with a label and REFUSES to
+ * stop, restart or remove a container that does not carry it, so nothing else
+ * running on this machine (the voice lane's own Home Assistant, say) can be
+ * taken by a stray name. It also never touches a config directory outside the
  * gitignored `.ha-config-*` prefix, because those directories hold real access
  * tokens.
+ *
+ * That label says "this harness made it", NOT "you made it". Concurrent agents
+ * share this machine and all of them use this script, so a peer's house carries
+ * the same label yours does and the check above cannot tell them apart. The
+ * lane name is the only thing that separates two houses. Passing somebody
+ * else's `--name` to `--down` therefore destroys a house a live run may be
+ * inside, which is exactly what happened on 2026-09-09. `assertNotInUse` is the
+ * guard that now stands in front of that: a house handed out in the last half
+ * hour needs `--force`.
  */
 
 import { spawn } from 'node:child_process';
@@ -35,6 +46,8 @@ const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 
 /** The label that marks a container as ours. Nothing without it is ever touched. */
 const LABEL = 'ws.three.home-test';
+/** How long after a run took a house it still counts as in use. See assertNotInUse. */
+const IN_USE_MS = 30 * 60 * 1000;
 const IMAGE = 'ghcr.io/home-assistant/home-assistant';
 const CLIENT_NAME = 'three.ws home lane';
 
@@ -83,7 +96,7 @@ async function main() {
 			let current = readState(instance);
 
 			if (opts.down) {
-				const removed = await down(instance, current);
+				const removed = await down(instance, current, { force: opts.force });
 				emit({ action: 'down', name: instance.name, ...removed });
 				return null;
 			}
@@ -103,6 +116,11 @@ async function main() {
 			return current;
 		});
 		if (!state) return;
+
+		// Stamp WHEN this house was last handed to somebody, so `--down` can tell
+		// a lane that finished hours ago from one a run is living inside right
+		// now. See `assertNotInUse`.
+		writeState(instance, { ...state, lastAcquiredAt: new Date().toISOString() });
 
 		emit({
 			action: 'ready',
@@ -231,11 +249,12 @@ async function start(inst, state) {
 	return writeState(inst, { ...current, running: true });
 }
 
-async function down(inst, state) {
+async function down(inst, state, { force = false } = {}) {
 	const existing = await inspect(inst.container);
 	let removedContainer = false;
 	if (existing) {
 		assertOurs(existing, inst.container);
+		assertNotInUse(inst, state, { force });
 		await docker(['rm', '-f', inst.container]);
 		removedContainer = true;
 		log(`[down] removed ${inst.container}`);
@@ -824,6 +843,34 @@ async function inspect(container) {
  * The guard that makes this safe to run on a machine full of other people's
  * Home Assistant containers. Nothing without our label is ever acted on.
  */
+/**
+ * Refuse to tear down a lane that somebody is still using.
+ *
+ * The label check below answers "did this harness make it", which is NOT the
+ * same question as "is it mine". Every concurrent agent on this machine uses
+ * this same harness, so a peer's house carries the identical label and
+ * `--down --name <their lane>` sailed straight through it. That is not
+ * hypothetical: on 2026-09-09 it removed a peer's seeded house out from under a
+ * live run, and the label guard did exactly what it was written to do while it
+ * happened.
+ *
+ * A lane in use is a lane that was handed out recently, which the ready path
+ * records on every acquire. Tearing down your own finished lane still works
+ * with no ceremony, because a finished lane goes quiet; taking one that is
+ * still serving needs `--force` and says so.
+ */
+function assertNotInUse(inst, state, { force }) {
+	if (force) return;
+	const stamped = Date.parse(state?.lastAcquiredAt || '');
+	if (!Number.isFinite(stamped)) return;
+	const idleMs = Date.now() - stamped;
+	if (idleMs >= IN_USE_MS) return;
+	const mins = Math.max(1, Math.round(idleMs / 60_000));
+	throw new Error(
+		`refusing to remove "${inst.name}": a run took this house ${mins} minute(s) ago, and another agent on this machine may be inside it. Wait for it to go idle, or pass --force if you know it is yours.`,
+	);
+}
+
 function assertOurs(info, container) {
 	if (!info || info.labels?.[LABEL] !== '1') {
 		throw new Error(
@@ -947,6 +994,7 @@ function parseArgs(args) {
 		else if (arg === '--start') out.start = true;
 		else if (arg === '--json') out.json = true;
 		else if (arg === '--env') out.env = true;
+		else if (arg === '--force') out.force = true;
 		else if (arg === '--help' || arg === '-h') out.help = true;
 		else if (arg === '--name') out.name = args[++i];
 		else if (arg === '--version') out.version = args[++i];
@@ -967,6 +1015,7 @@ function usage() {
   --onboard           complete onboarding and mint a long-lived access token
   --seed              demo entities, a floor, areas, scenes, mcp_server, an exposed lock
   --down              remove the container and its config directory
+  --force             with --down, remove a house even if a run took it recently
   --stop              stop the container, keeping its config, token and entities
   --start             start a stopped container and wait until it answers
   --name <slug>       run more than one instance side by side (default: default)

@@ -118,8 +118,13 @@ The house outlives the run on purpose, so ten consecutive runs pay for one boot:
 npm run home:instance:down     # or: node scripts/home-test-instance.mjs --down --name lane
 ```
 
-The harness only ever touches containers it labelled itself, so it can never remove another
-agent's Home Assistant on this machine.
+The harness only ever touches containers it labelled itself, so a stray name can never take
+something else on this machine (the voice lane's own Home Assistant, say). It does NOT make you
+safe from your peers: every agent here uses this same harness, so their houses carry the same
+label and only the lane name separates yours from theirs. `--down` therefore refuses a house
+that was handed to a run in the last half hour and tells you to pass `--force` if you are sure
+it is yours. Tearing down your own finished lane needs no ceremony, because a finished lane goes
+quiet.
 
 ## The conversion-path specs
 
