@@ -30,6 +30,10 @@
 <link rel="stylesheet" href="/footer.css" />
 <style>
 	:root { color-scheme: dark; }
+	/* The filter toggles .hidden on rows, sections, the jump list and the
+	   no-results panel, several of which set an explicit display. Pin the
+	   attribute here rather than trusting every UA sheet to mark it important. */
+	[hidden] { display: none !important; }
 	body { margin: 0; background: #060611; color: #e7e7f5; font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; -webkit-font-smoothing: antialiased; }
 	.sm-wrap { max-width: 1080px; margin: 0 auto; padding: 96px 24px 64px; }
 	.sm-hero { margin-bottom: 48px; }
@@ -101,7 +105,7 @@
 		<div class="sm-filter">
 			<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
 			<input id="sm-filter-input" type="search" placeholder="Filter 924 pages by name, path, or description…" aria-label="Filter pages" autocomplete="off" spellcheck="false" />
-			<kbd aria-hidden="true">/</kbd>
+			<kbd id="sm-filter-kbd" aria-hidden="true">/</kbd>
 		</div>
 		<p class="sm-filter-count" id="sm-filter-count" role="status" aria-live="polite"></p>
 		<section class="sm-new" id="sm-new" aria-labelledby="sm-new-title">
@@ -1273,7 +1277,7 @@
 					<a href="/playground">
 						<span class="sm-title">Playground</span>
 						<span class="sm-path">/playground</span>
-						<span class="sm-desc">Sandbox for experimenting with agents, prompts, and 3D scenes.</span>
+						<span class="sm-desc">Sandbox for 3D scenes: drop in any .glb, play its animations, tune the lighting, and copy a paste-ready embed snippet.</span>
 					</a>
 				</li>
 				<li>
@@ -6781,6 +6785,8 @@
 		var emptyQ = document.getElementById('sm-empty-q');
 		var emptyClear = document.getElementById('sm-empty-clear');
 		var emptySearch = document.getElementById('sm-empty-search');
+		var toc = document.querySelector('.sm-toc');
+		var kbdHint = document.getElementById('sm-filter-kbd');
 		var groups = Array.prototype.map.call(document.querySelectorAll('.sm-section'), function (sec) {
 			return {
 				sec: sec,
@@ -6796,31 +6802,66 @@
 
 		var newest = document.getElementById('sm-new');
 
-		function apply(q) {
-			q = q.trim().toLowerCase();
-			if (newest) newest.hidden = !!q;
+		// Every token has to hit, so "studio avatar" finds Avatar Studio in either
+		// word order. A single substring test would only match the typed order.
+		function matches(text, tokens) {
+			for (var i = 0; i < tokens.length; i++) {
+				if (text.indexOf(tokens[i]) === -1) return false;
+			}
+			return true;
+		}
+
+		// Safari throttles history.replaceState to ~100 calls per 30s and throws a
+		// SecurityError past that, which one fast typist in a 924-row list would
+		// reach. Filtering stays synchronous; only the URL write is coalesced.
+		var urlTimer = 0;
+		function syncUrl(q) {
+			clearTimeout(urlTimer);
+			urlTimer = setTimeout(function () {
+				var url = new URL(location.href);
+				if (q) url.searchParams.set('q', q); else url.searchParams.delete('q');
+				if (url.href !== location.href) history.replaceState(null, '', url);
+			}, 200);
+		}
+
+		function firstMatch() {
+			return document.querySelector('.sm-section:not([hidden]) .sm-list > li:not([hidden]) a');
+		}
+
+		function apply(raw) {
+			var q = raw.trim();
+			var tokens = q.toLowerCase().split(/\s+/).filter(Boolean);
+			var filtering = tokens.length > 0;
+			if (newest) newest.hidden = filtering;
 			var shown = 0;
+			var sectionsShown = 0;
 			groups.forEach(function (g) {
 				var visible = 0;
 				g.items.forEach(function (it) {
-					var hit = !q || it.text.indexOf(q) !== -1;
-					it.li.hidden = !hit;
+					var hit = !filtering || matches(it.text, tokens);
+					// Only write when the state actually flips: a blind assignment
+					// invalidates style for all 900+ rows on every keystroke.
+					if (it.li.hidden === hit) it.li.hidden = !hit;
 					if (hit) visible++;
 				});
-				g.sec.hidden = visible === 0;
-				if (g.toc) g.toc.hidden = visible === 0;
-				if (g.count) g.count.textContent = visible;
+				var blank = visible === 0;
+				if (g.sec.hidden !== blank) g.sec.hidden = blank;
+				if (g.toc && g.toc.hidden !== blank) g.toc.hidden = blank;
+				if (g.count && g.count.textContent !== String(visible)) g.count.textContent = visible;
+				if (!blank) sectionsShown++;
 				shown += visible;
 			});
-			countEl.textContent = q
-				? shown + ' of ' + total + ' pages match'
+			// Without this the section jump-list survives as an empty bordered bar
+			// floating above the no-results panel.
+			if (toc) toc.hidden = sectionsShown === 0;
+			countEl.textContent = filtering
+				? shown + ' of ' + total + ' pages match' + (shown ? ' \u00b7 press Enter to open the first' : '')
 				: total + ' pages \u00b7 ' + groups.length + ' sections';
+			if (kbdHint) kbdHint.textContent = filtering && shown ? '\u21b5' : '/';
 			emptyQ.textContent = q;
-			empty.hidden = !q || shown > 0;
-			emptySearch.href = q ? '/search?q=' + encodeURIComponent(q) : '/search';
-			var url = new URL(location.href);
-			if (q) url.searchParams.set('q', q); else url.searchParams.delete('q');
-			history.replaceState(null, '', url);
+			empty.hidden = !filtering || shown > 0;
+			emptySearch.href = filtering ? '/search?q=' + encodeURIComponent(q) : '/search';
+			syncUrl(q);
 		}
 
 		input.addEventListener('input', function () { apply(input.value); });
@@ -6834,7 +6875,13 @@
 				e.stopPropagation();
 				input.value = '';
 				apply('');
+				return;
 			}
+			if (e.key !== 'Enter' || e.metaKey || e.ctrlKey || e.altKey || e.shiftKey) return;
+			var first = firstMatch();
+			if (!first) return;
+			e.preventDefault();
+			first.click();
 		});
 		document.addEventListener('keydown', function (e) {
 			if (e.key !== '/' || e.metaKey || e.ctrlKey || e.altKey) return;
