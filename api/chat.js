@@ -58,7 +58,15 @@ import {
 	PER_CALL_TIMEOUT_MS,
 } from './_lib/chat-models.js';
 import { computeContext, searchMemories } from './_lib/memory-store.js';
-import { HOME_TOOL_DEFS, isHomeTool, runHomeTool } from './_lib/home/tools.js';
+import { HOME_TOOL_DEFS, isHomeTool, runHomeTool, HOME_TOOLS_BY_NAME } from './_lib/home/tools.js';
+import {
+	assertWithinLimit,
+	HomeQuotaError,
+	isQuotaExempt,
+	quotaPeriod,
+	resolveHomeEntitlementsForUser,
+} from './_lib/home/entitlements.js';
+import { readUsage } from './_lib/home/usage.js';
 import { listMembershipHomes } from './_lib/home/members.js';
 import { loadInstalledSkills, skillsPromptBlock } from './_lib/installed-skills.js';
 import {
@@ -1237,10 +1245,111 @@ export default wrap(async (req, res) => {
  * conversation is the product and a house that did not answer is something the
  * agent should be able to say out loud.
  */
+/**
+ * May this account spend another home agent turn this month?
+ *
+ * Resolved once per round rather than once per call, because the answer cannot
+ * change inside a round and a house with four tool calls should not pay for four
+ * entitlement resolutions.
+ *
+ * FAILS OPEN. An unreadable entitlement row or an unreachable usage counter
+ * resolves to "allowed", never to "refused". Refusing a person access to their
+ * own house because our billing read hiccuped is the failure this lane is least
+ * willing to ship, and it is the same bias api/_lib/home/usage.js already takes
+ * on a cold cache.
+ *
+ * @param {string} userId
+ * @returns {Promise<{ allowed: boolean, error: HomeQuotaError|null }>}
+ */
+async function homeTurnGate(userId) {
+	try {
+		const [entitlements, used] = await Promise.all([
+			resolveHomeEntitlementsForUser(userId),
+			readUsage(userId, 'agentTurns'),
+		]);
+		assertWithinLimit({
+			entitlements,
+			dimension: 'agentTurns',
+			used,
+			resetAt: quotaPeriod().endIso,
+		});
+		return { allowed: true, error: null };
+	} catch (err) {
+		if (err instanceof HomeQuotaError) return { allowed: false, error: err };
+		captureException(err, { route: 'chat', stage: 'home-turn-gate' });
+		return { allowed: true, error: null };
+	}
+}
+
+/**
+ * The shape `isQuotaExempt` needs, from a chat tool call.
+ *
+ * `home_call` carries the domain and service on the input, which is exactly what
+ * the safety classifier reads, so a lock, a close or an arm is recognised here
+ * with no live entity list and therefore works in precisely the degraded states
+ * where somebody most needs to lock up.
+ */
+function homeCallShape(call) {
+	const input = call.input || {};
+	if (call.name === 'home_call') {
+		return { domain: input.domain, service: input.service, attributes: input.data || {} };
+	}
+	return { tool: call.name, arguments: input, entities: [] };
+}
+
+/**
+ * Which home tools a monthly turn quota may refuse.
+ *
+ * Read-only tools are never gated, and that is a deliberate product decision
+ * rather than an oversight. Commitment 1 says a limit never blocks a safety
+ * action, and in an agent lane that promise is only real if the agent can still
+ * find the door: the model reads the house with `home_status` and then targets
+ * the lock. Gate the read and the exemption survives only in a unit test, never
+ * in the conversation a person is actually having. A read also adds nothing to
+ * the account's spend that the turn had not already spent by the time the model
+ * emitted the call.
+ */
+function isGatedHomeTool(name) {
+	return HOME_TOOLS_BY_NAME[name]?.readOnly !== true;
+}
+
+/** The refusal the model speaks when a turn is over quota. Never a bare error. */
+function quotaRefusalResult(err) {
+	return {
+		ok: false,
+		kind: 'error',
+		code: 'quota_exceeded',
+		text: err.message,
+		structured: {
+			error: 'quota_exceeded',
+			dimension: err.dimension,
+			limit: err.limit,
+			used: err.used,
+			resets_at: err.resetAt,
+			upgrade: err.upgradePath,
+		},
+	};
+}
+
 async function runHomeRound(calls, userId) {
 	const out = [];
+	// One resolution for the round, and only when a gated tool is actually
+	// present: a conversation that only reads the house never pays for a
+	// database round trip it cannot be refused by.
+	const gate = calls.slice(0, 4).some((c) => isGatedHomeTool(c.name))
+		? await homeTurnGate(userId)
+		: { allowed: true, error: null };
+
 	for (const call of calls.slice(0, 4)) {
 		let result;
+		// Commitment 1, at the agent's own call site. The safety exemption is
+		// checked before the quota verdict is applied, so there is no plan state
+		// in which asking the agent to lock up, close a garage or a valve, or arm
+		// an alarm is refused for a commercial reason.
+		if (!gate.allowed && isGatedHomeTool(call.name) && !isQuotaExempt(homeCallShape(call))) {
+			out.push({ call, result: quotaRefusalResult(gate.error) });
+			continue;
+		}
 		try {
 			result = await runHomeTool(call.name, call.input || {}, { userId, source: 'chat' });
 		} catch (err) {
