@@ -322,6 +322,15 @@ function applyGraph(graph, { stale = false, receivedAt = 0 } = {}) {
 	// exists for.
 	renderEmptyStates(model);
 	renderAge();
+	// A cold load straight into ?view=plan mounts the editor before the first
+	// graph has landed, so it opens with no rooms to arrange. Hand it the house
+	// the moment it arrives, exactly once: later frames are deliberately left
+	// alone, because rebuilding the tray on every state change would land under
+	// someone who is mid-drag.
+	if (state.planAwaitingGraph && state.plan) {
+		state.plan.setGraph?.(graph);
+		state.planAwaitingGraph = false;
+	}
 	if (receivedAt) measureLatency(receivedAt);
 	if (!state.renderer) return;
 	state.renderer.setModel(model);
@@ -420,6 +429,10 @@ async function mountPlan() {
 	el.plan.textContent = '';
 	const { mountFloorplan } = await import('./floorplan.js');
 	if (state.view !== 'plan') return;
+	// True only on a cold load into ?view=plan, where the editor is mounted
+	// before the first graph frame. applyGraph hands the house over when it
+	// lands and clears this.
+	state.planAwaitingGraph = !state.graph;
 	state.plan = mountFloorplan({
 		mount: el.plan,
 		homeId: state.homeId,

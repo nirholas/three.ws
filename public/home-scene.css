@@ -6,6 +6,27 @@
  * stays on the platform tokens so the page reads as three.ws and the house
  * reads as the house. */
 
+/*
+ * Two semantic hues, cut for each theme.
+ *
+ * --warn and --danger are platform tokens tuned to glow on near-black, and this
+ * page uses them as TEXT: the room that is open, the refused line in the log,
+ * the risk band on the confirmation, the flag on a 2D room card. Measured on
+ * white on 2026-09-09 they read 2.22:1 and 2.90:1 against the 4.5:1 WCAG 1.4.3
+ * asks of body text, so a light-theme reader is told a door is open in a colour
+ * that barely leaves the page. The dark rungs below ARE the platform tokens, so
+ * nothing changes on the theme this page ships in; the light rungs are the same
+ * two signals darkened until they clear AA on white and on --bg-1.
+ */
+:root {
+	--hs-warn-ink: var(--warn);
+	--hs-danger-ink: var(--danger);
+}
+[data-theme='light'] {
+	--hs-warn-ink: #8a5a05;
+	--hs-danger-ink: #b3261e;
+}
+
 .hs-shell {
 	display: grid;
 	grid-template-rows: auto minmax(0, 1fr);
@@ -215,7 +236,86 @@
 }
 .hs-room-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .hs-room-meta { font-size: var(--text-2xs); color: var(--ink-dim); font-variant-numeric: tabular-nums; }
-.hs-room-alert { color: var(--warn); }
+.hs-room-alert { color: var(--hs-warn-ink); }
+
+/*
+ * The devices of the focused room.
+ *
+ * This is the keyboard and screen-reader route into the house. A WebGL canvas
+ * is one opaque element, so picking a lamp out of the 3D scene is a gesture
+ * only a pointer can make; without this list the 3D view could be navigated as
+ * far as the rooms and no further. It is deliberately visible rather than
+ * screen-reader-only, because a control that takes focus without being seen
+ * fails WCAG 2.4.7, and because picking a small object out of a 3D scene is
+ * fiddly with a mouse too.
+ */
+.hs-room-devices {
+	list-style: none;
+	margin: 0.2rem 0 0.35rem;
+	padding: 0;
+	/* The indent lines the device names up under the room name rather than
+	   under its light dot, so the nesting reads at a glance. Logical, so an RTL
+	   locale indents from the right. */
+	padding-inline-start: calc(10px + 0.55rem);
+	display: grid;
+	gap: 0.1rem;
+}
+.hs-room-device {
+	width: 100%;
+	display: grid;
+	grid-template-columns: minmax(0, 1fr) auto;
+	align-items: center;
+	gap: 0.5rem;
+	padding: 0.3rem 0.45rem;
+	border-radius: var(--radius-sm);
+	border: 1px solid transparent;
+	background: transparent;
+	color: var(--ink-dim);
+	font: inherit;
+	font-size: var(--text-sm);
+	text-align: start;
+	cursor: pointer;
+	transition: background var(--duration-fast) var(--ease-standard), color var(--duration-fast) var(--ease-standard), border-color var(--duration-fast) var(--ease-standard);
+}
+.hs-room-device:hover { background: var(--surface-2); color: var(--ink); }
+.hs-room-device:active { background: var(--surface-3); }
+.hs-room-device:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.hs-room-device[aria-current='true'] {
+	background: var(--surface-2);
+	border-color: var(--stroke-strong);
+	color: var(--ink);
+}
+.hs-room-device-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.hs-room-device-state { font-size: var(--text-2xs); color: var(--ink-dim); font-variant-numeric: tabular-nums; }
+
+/*
+ * A finger is not a pointer. WCAG 2.5.5 asks 44x44 of a touch target, and at
+ * their text sizes the rail's room and device rows, the view toggles and the
+ * 2D house's per-device action pills all render shorter than that. Only coarse
+ * pointers pay the extra height, so the desktop layout is untouched: a rail
+ * that grew 12px per row on a laptop would push half the house off the screen.
+ */
+@media (pointer: coarse) {
+	.hs-room,
+	.hs-room-device,
+	.hs-btn,
+	.hs-back,
+	.hs-card-title,
+	.hs-item-act {
+		min-height: 44px;
+	}
+	.hs-btn,
+	.hs-item-act {
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		min-width: 44px;
+	}
+	/* The 2D house's rows carry their own action button, so the row itself has
+	   to be tall enough for the button to reach 44px without the neighbouring
+	   rows' hit areas overlapping it. */
+	.hs-item { padding: 0.45rem 0; }
+}
 
 /* ── inspector ─────────────────────────────────────────────────────────────── */
 
@@ -231,8 +331,8 @@
 .hs-log { list-style: none; margin: var(--space-md) 0 0; padding: var(--space-sm) 0 0; border-top: 1px solid var(--hairline); display: grid; gap: 0.3rem; font-size: var(--text-sm); }
 .hs-log li { display: flex; gap: 0.5rem; color: var(--ink-dim); }
 .hs-log time { font-variant-numeric: tabular-nums; flex: none; }
-.hs-log .is-refused { color: var(--warn); }
-.hs-log .is-failed { color: var(--danger); }
+.hs-log .is-refused { color: var(--hs-warn-ink); }
+.hs-log .is-failed { color: var(--hs-danger-ink); }
 
 /* ── the confirmation, anchored to the thing it would move ─────────────────── */
 
@@ -263,7 +363,7 @@
 	border-right: 1px solid rgba(251, 191, 36, 0.45);
 	border-bottom: 1px solid rgba(251, 191, 36, 0.45);
 }
-.hs-confirm-risk { font-size: var(--text-2xs); font-weight: var(--weight-bold); letter-spacing: 0.09em; text-transform: uppercase; color: var(--warn); margin: 0 0 0.3rem; }
+.hs-confirm-risk { font-size: var(--text-2xs); font-weight: var(--weight-bold); letter-spacing: 0.09em; text-transform: uppercase; color: var(--hs-warn-ink); margin: 0 0 0.3rem; }
 .hs-confirm-text { font-size: var(--text-md); line-height: var(--leading-normal); margin: 0 0 var(--space-sm); }
 .hs-confirm-row { display: flex; gap: 0.4rem; flex-wrap: wrap; align-items: center; }
 .hs-confirm-remember { display: flex; align-items: center; gap: 0.35rem; font-size: var(--text-sm); color: var(--ink-dim); margin-top: var(--space-sm); }
@@ -326,7 +426,30 @@
 	transition: border-color var(--duration-base) var(--ease-standard), background var(--duration-slow) var(--ease-standard), opacity var(--duration-slow) var(--ease-standard);
 }
 .hs-card.is-focused { border-color: var(--stroke-strong); box-shadow: 0 0 0 2px var(--accent-soft); }
-.hs-card.is-stale { opacity: 0.62; filter: grayscale(0.6); }
+/*
+ * Stale, without breaking contrast.
+ *
+ * This used to be `opacity: 0.62`, which composites the text INTO the page
+ * background: `--ink-dim` body copy measured 2.70:1 against the card behind it,
+ * against the 4.5:1 WCAG 1.4.3 asks of normal text. Measured on 2026-09-09 with
+ * the dark palette (`--bg-0` #0a0a0a, card `--surface-1`, ink-dim #888888), and
+ * no usable opacity fixes it: even 0.85, which barely reads as dimmed at all,
+ * only reaches 4.13:1. Dimming by alpha is simply the wrong instrument for text.
+ *
+ * So the state is carried by three things that cost no contrast: the colour
+ * drains completely (grayscale, and the room's own light stops glowing), the
+ * device names step down one rung of the ink ramp to the same grey the meta line
+ * already uses, and the border goes dashed. The dashed border is the part that
+ * matters for 1.4.1: stale is legible as a shape, not only as a shade, so it
+ * survives greyscale vision and a sunlit screen. The age pill over the stage
+ * says how old, in words.
+ */
+.hs-card.is-stale {
+	filter: grayscale(1);
+	--ink: var(--ink-dim);
+	--room-glow: 0;
+	border-style: dashed;
+}
 .hs-card-head { margin-bottom: var(--space-sm); }
 .hs-card-title {
 	appearance: none;
@@ -345,7 +468,7 @@
 .hs-card-title:hover { text-decoration: underline; }
 .hs-card-title:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
 .hs-card-meta { font-size: var(--text-sm); color: var(--ink-dim); margin: 0.15rem 0 0; }
-.hs-card-flag { font-size: var(--text-sm); color: var(--warn); margin: 0 0 var(--space-sm); }
+.hs-card-flag { font-size: var(--text-sm); color: var(--hs-warn-ink); margin: 0 0 var(--space-sm); }
 .hs-card-items { list-style: none; margin: 0; padding: 0; display: grid; gap: 0.15rem; }
 
 .hs-item {
@@ -358,7 +481,13 @@
 	border-bottom: 1px solid var(--hairline);
 }
 .hs-item:last-child { border-bottom: 0; }
-.hs-item.is-unavailable { opacity: 0.55; }
+/* Same rule as the stale card, same reason: `opacity: 0.55` put this row's
+ * text at 2.36:1. The row already says "unreachable" in words, so the visual
+ * only has to agree with it, not carry it alone. */
+.hs-item.is-unavailable {
+	filter: grayscale(1);
+	--ink: var(--ink-dim);
+}
 .hs-item-dot {
 	width: 10px;
 	height: 10px;

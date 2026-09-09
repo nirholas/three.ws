@@ -39,11 +39,15 @@ const EXTRA_HIGH_TRAFFIC = [
 	// never ride on their own priority scores staying high enough to land in
 	// the top 30. The two authed views, /smart-home/:id and /home/:id, are not
 	// here because they need a session and a connected house; they are covered
-	// by the lane's own live suite instead.
+	// by tests/e2e/home-a11y.spec.js, which signs in, connects a real Home
+	// Assistant and runs the same three WCAG rule sets against the live scene,
+	// the 2D house, the floorplan editor and the guarded confirmation.
 	'/smart-home',
 	'/smart-home/join',
 	'/smart-home/plan',
+	'/smart-home/privacy',
 	'/smart-home/satellite',
+	'/voice/home',
 ];
 const coveredPaths = new Set(top30.map((p) => p.path));
 const extraPages = allPages.filter(

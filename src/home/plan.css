@@ -123,7 +123,7 @@
 
 .hm-pill {
 	display: inline-block;
-	margin-left: 0.5rem;
+	margin-inline-start: 0.5rem;
 	padding: 0.1rem 0.5rem;
 	border-radius: var(--radius-pill);
 	border: 1px solid color-mix(in srgb, var(--hm-stale) 45%, transparent);

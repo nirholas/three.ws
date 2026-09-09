@@ -41,6 +41,27 @@
 	   further under AA than the dark theme ever was. 0.58 measures 5.16:1. */
 	--hm-ink-3: rgba(0, 0, 0, 0.58);
 	--hm-idle: rgba(0, 0, 0, 0.3);
+	/* The three status hues, re-cut for a white page.
+	 *
+	 * The dark-theme values are tuned to glow on near-black and they are text
+	 * colours here as well as dot colours: .hm-tag-ok, .hm-tag-failed,
+	 * .hm-tag-refused, .hm-hint[data-error], .hm-notice-icon and the step marks
+	 * all take them straight as `color`. Measured on white on 2026-09-09 they
+	 * read 2.38:1 (live), 2.22:1 (stale) and 3.66:1 (down) against the 4.5:1
+	 * WCAG 1.4.3 asks of body text, so a light-theme user was reading the outcome
+	 * of a physical action in colours that barely separate from the page.
+	 *
+	 * Same three signals, darkened until they clear AA on both light surfaces
+	 * (--bg-0 #ffffff and --bg-1 #f3f4f6): 5.41:1, 5.92:1 and 6.54:1. They stay
+	 * unmistakably green, amber and red, and where the token paints a dot or a
+	 * border instead of text a deeper ink is the right call on white anyway.
+	 *
+	 * This was invisible to the axe gate because it runs the page in its default
+	 * dark theme, which is the same reason --hm-ink-3 above drifted. The lane's
+	 * own contrast spec now pins data-theme and measures both. */
+	--hm-live: #0f7a43;
+	--hm-stale: #8a5a05;
+	--hm-down: #b3261e;
 }
 
 .hm-wrap {
@@ -551,7 +572,9 @@
    inside its own region rather than pushing the page sideways at 320px. */
 .hm-table { width: 100%; border-collapse: collapse; font-size: var(--text-sm); min-width: 42rem; }
 .hm-table th {
-	text-align: left;
+	/* Logical, not physical: an RTL locale aligns these headers to the right
+	   edge with the cells they label. */
+	text-align: start;
 	font-size: var(--text-2xs);
 	text-transform: uppercase;
 	letter-spacing: 0.08em;
@@ -569,7 +592,7 @@
 }
 .hm-table td:first-child { color: inherit; }
 .hm-table tr:last-child td { border-bottom: 0; }
-.hm-table .hm-tag { margin-left: 0.4rem; vertical-align: middle; }
+.hm-table .hm-tag { margin-inline-start: 0.4rem; vertical-align: middle; }
 
 /* The retention control. One row per home: what it keeps now, and five windows
    as one tap each. */
@@ -650,7 +673,7 @@
 	padding: var(--space-sm); border: 1px solid var(--hm-line);
 	border-radius: var(--radius-md); background: var(--hm-panel);
 }
-.hm-plan-count { margin-left: auto; font-size: var(--text-sm); color: var(--hm-ink-3); }
+.hm-plan-count { margin-inline-start: auto; font-size: var(--text-sm); color: var(--hm-ink-3); }
 .hm-plan-readonly { margin: 0; font-size: var(--text-sm); color: var(--hm-ink-2); }
 
 .hm-plan-btn {
@@ -800,7 +823,7 @@
 
 @media (max-width: 640px) {
 	.hm-plan-toolbar { gap: var(--space-2xs); }
-	.hm-plan-count { margin-left: 0; width: 100%; }
+	.hm-plan-count { margin-inline-start: 0; width: 100%; }
 	.hm-plan-canvas { max-height: 55vh; }
 	.hm-plan-skeleton { grid-template-columns: 1fr; }
 }
