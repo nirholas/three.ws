@@ -3,6 +3,16 @@
 	"entries": [
 		{
 			"date": "2026-09-09",
+			"title": "Three fades now stop when you ask the site to stop moving",
+			"summary": "Turn on reduced motion in your operating system and three.ws is supposed to hold still: every animation timing on the site is named rather than spelled out, so one switch can zero all of them at once. Three places had drifted off that and spelled their own timing instead, which meant the object library card fade, the avatar picker chips and the Money Pulse rows kept animating for people who had explicitly asked them not to. One of them was pointing at a timing name that does not exist, so the value it fell back to was never the one anyone chose. All three are back on the named ladder at the same speed they always looked, and the reduced-motion switch reaches them again.",
+			"tags": [
+				"fix",
+				"improvement"
+			],
+			"link": "/objects"
+		},
+		{
+			"date": "2026-09-09",
 			"title": "Avatars and token art load again on sites that embed three.ws",
 			"summary": "Assets served from /cdn (avatars, thumbnails, generated models) are read from our object store with a signed request, and when that request is rejected the route falls back to the store's public address so the bytes still arrive. That fallback was a redirect, and a redirect throws away the cross-origin permission the route grants: browsers re-check permission at the redirect's destination, and the public address grants none. Measured from an outside site, every one of those reads failed outright, which took down model previews on pages that load art through the proxy and silently broke third-party embeds of three.ws avatars. The bytes are now served through three.ws itself rather than pointed at, so the permission, the file type and the download rules all survive the fallback, partial reads for video and audio keep working, and a file that genuinely is not there says so instead of reporting a server fault the page retries forever. It also keeps the fallback off the rate-limited public address, which is the whole reason the proxy exists.",
 			"tags": [
