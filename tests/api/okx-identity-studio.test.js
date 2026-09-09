@@ -310,6 +310,44 @@ describe('free lanes over HTTP', () => {
 		expect(JSON.parse(res.body).ok).toBe(false);
 	});
 
+	// Live on 2026-09-09: GET /health answered with a subsystem literally named
+	// "SignatureDoesNotMatch" carrying the R2 request's StringToSign,
+	// CanonicalRequest and SignatureProvided. probe() spread the caught error, so
+	// an AWS SDK error's own `name` replaced the subsystem's and its signing
+	// material rode along, on a row that is public, unauthenticated, and listed on
+	// the OKX marketplace.
+	it('GET /health names the failing subsystem and leaks no signing material from a storage error', async () => {
+		mountHealthyProbes();
+		const r2 = await import('../../api/_lib/r2.js');
+		const awsError = () =>
+			Object.assign(new Error('The request signature we calculated does not match the signature you provided.'), {
+				name: 'SignatureDoesNotMatch',
+				Code: 'SignatureDoesNotMatch',
+				$fault: 'client',
+				$metadata: { httpStatusCode: 403 },
+				StringToSign: 'AWS4-HMAC-SHA256\n20260909T053242Z\n20260909/auto/s3/aws4_request',
+				CanonicalRequest: 'PUT\n/okx-identity/health-probe.txt\nhost:chatty-storage.example.r2.cloudflarestorage.com',
+				SignatureProvided: '85e96ef6b6e492eaee9ac0c5a53d6d3fd38769efbfb1e20ad417418f502e443d',
+			});
+		vi.mocked(r2.headObject).mockRejectedValueOnce(awsError()).mockRejectedValueOnce(awsError());
+		vi.mocked(r2.putObject).mockRejectedValueOnce(awsError());
+
+		const res = makeRes();
+		await handler(makeReq({ method: 'GET', service: 'health' }), res);
+
+		expect(res.statusCode).toBe(503);
+		const body = JSON.parse(res.body);
+		const storage = body.subsystems.find((s) => s.name === 'storage');
+		expect(storage).toBeDefined();
+		expect(storage.ok).toBe(false);
+		// The reason stays readable; only the error object's guts are dropped.
+		expect(storage.error).toContain('signature');
+		expect(body.subsystems.map((s) => s.name)).not.toContain('SignatureDoesNotMatch');
+		for (const secret of ['StringToSign', 'CanonicalRequest', 'SignatureProvided', '$metadata', '85e96ef6']) {
+			expect(res.body).not.toContain(secret);
+		}
+	});
+
 	// The static generation probe read all-green on 2026-08-25 while every text
 	// submit hung for 95 s+. The submit-latency probe judges the last hour of
 	// REAL forge_3d calls instead, so a stalled lane shows up here.

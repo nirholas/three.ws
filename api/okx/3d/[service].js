@@ -78,14 +78,23 @@ function serviceFrom(req) {
 	return m ? m[1] : '';
 }
 
+// A failing probe reports structured detail by attaching it to its error as
+// `detail`, the only property read here. Spreading the error object itself (what
+// this used to do) copies a third-party error's own enumerable fields onto the
+// response: an AWS SDK S3 error carries `name`, which silently replaced the
+// subsystem's name with `SignatureDoesNotMatch`, and it carries the request's
+// signing material (StringToSign, CanonicalRequest, SignatureProvided) plus the
+// bucket host, all served from an endpoint that is public, unauthenticated and
+// listed on the OKX marketplace. The fixed keys are written after the spread so
+// no detail can overwrite the subsystem's identity or verdict either.
 async function probe(name, fn) {
 	const started = Date.now();
 	try {
 		const detail = await fn();
-		return { name, ok: true, latency_ms: Date.now() - started, ...(detail || {}) };
+		return { ...(detail || {}), name, ok: true, latency_ms: Date.now() - started };
 	} catch (err) {
-		const { message, stack, ...detail } = err && typeof err === 'object' ? err : {};
-		return { name, ok: false, latency_ms: Date.now() - started, error: String(err?.message || err), ...detail };
+		const detail = err && typeof err === 'object' && err.detail && typeof err.detail === 'object' ? err.detail : null;
+		return { ...(detail || {}), name, ok: false, latency_ms: Date.now() - started, error: String(err?.message || err) };
 	}
 }
 
@@ -135,8 +144,8 @@ async function healthReport() {
 			// Three or more real submits in the hour is enough to judge. A median
 			// past 45 s means a ChatGPT-class client never sees the accept; more
 			// failures than successes means the lane is not taking jobs.
-			if (samples >= 3 && p50 != null && p50 > 45_000) throw Object.assign(new Error(`median submit ${p50} ms over the last hour`), detail);
-			if (samples >= 3 && errors * 2 > samples) throw Object.assign(new Error(`${errors} of ${samples} submits failed in the last hour`), detail);
+			if (samples >= 3 && p50 != null && p50 > 45_000) throw Object.assign(new Error(`median submit ${p50} ms over the last hour`), { detail });
+			if (samples >= 3 && errors * 2 > samples) throw Object.assign(new Error(`${errors} of ${samples} submits failed in the last hour`), { detail });
 			return detail;
 		}),
 		probe('render', async () => {
