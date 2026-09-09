@@ -21,17 +21,26 @@
  * lane rather than hand-picked from a recording. /api/asr and /api/tts/speak are
  * the real endpoints throughout.
  *
+ * Two more scenarios need --live, because they need a real Home Assistant:
+ *
+ *  11  live              a spoken command really turns a real light off
+ *  12  live-confirm      a real minted confirmation really unlocks a real door
+ *
  * ONE thing is substituted, and only in scenarios 5 and 6: the /api/chat
- * response that carries a pending_confirmation. The server-side home tools that
- * mint a real confirmation are order 04 of the home campaign and have not landed
- * yet, so the payload is supplied here to the documented shape. Every other leg
- * of those two scenarios (speech, VAD, ASR, the grammar, the redemption request)
- * is the real path. When order 04 lands, delete the route handler and the
- * scenarios keep working against a real confirmation.
+ * response that carries a pending_confirmation. Reaching the real one in the
+ * BROWSER needs a connected Home Assistant and a provider key for the model that
+ * picks the tool, so the payload is supplied there to the documented shape and
+ * every other leg of those two scenarios (speech, VAD, ASR, the grammar, the
+ * redemption request) is the real path. The half a substitution cannot vouch
+ * for, that the id was real and that redeeming it moves a deadbolt, is what
+ * scenario 12 proves against the real module and the real device. Verified on
+ * 2026-09-09: the substituted payload matches what api/_lib/home/tools.js
+ * composes, summary sentence included.
  *
  * Usage:
  *   node scripts/check-home-voice.mjs [--port 3457] [--out .cache/home-voice]
  *   node scripts/check-home-voice.mjs --headed        # watch it run
+ *   node scripts/check-home-voice.mjs --live --only live-confirm
  *
  * Exit code is 0 when every assertion held, 1 otherwise. The measured legs and
  * the assertions are written to <out>/report.json.
@@ -344,12 +353,25 @@ async function startBrowser(audioPath, loopAudio) {
 	// Noise from the harness and from the platform chrome, neither of which is the
 	// page under test: the dev server's HMR socket cannot reach a
 	// Codespace-forwarded origin, its dependency cache is re-optimized whenever a
-	// concurrent agent edits this worktree, and the site nav requests
-	// /api/notifications optimistically on every page.
+	// concurrent agent edits this worktree, and the site nav polls
+	// /api/notifications when localStorage still holds an auth hint.
+	//
+	// That last one is this harness's own doing and not something a visitor sees.
+	// The session here travels as a header, so the page is authenticated for the
+	// requests this script makes and anonymous for the cookie jar the nav reads,
+	// and the poll 401s in between. Measured on 2026-09-09 with no hint present:
+	// zero requests to /api/notifications and no 401, and a stale hint is cleared
+	// by the first 401 rather than retried.
+	//
+	// A console message carries the failing URL in its LOCATION, not in its text
+	// ("Failed to load resource: ... 401"), so the url has to be matched too. It
+	// was not, and every run reported that 401 as a console error on the voice
+	// surface.
 	const isDevNoise = (text) => /\[vite\]|WebSocket|hmr|\/api\/notifications|Outdated Optimize Dep|\/node_modules\/\.vite\//i.test(text);
 	page.on('console', (m) => {
-		if (m.type() === 'error' && !isDevNoise(m.text())) {
-			consoleErrors.push(`${m.text()} @ ${m.location()?.url || 'unknown'}`);
+		const where = m.location()?.url || 'unknown';
+		if (m.type() === 'error' && !isDevNoise(`${m.text()} ${where}`)) {
+			consoleErrors.push(`${m.text()} @ ${where}`);
 		}
 	});
 	page.on('response', (r) => {
@@ -540,31 +562,68 @@ async function scenarioBargeIn() {
 		await routeCachedSpeech(page);
 		await bootPage(page);
 		await optIn(page);
-		// Speak a long enough answer that the user's interruption lands inside it.
-		// Started, not awaited. _speak resolves when the utterance finishes playing,
-		// and the whole point of this scenario is that it never does: the promise a
-		// barge-in cancels is left unsettled on purpose, so returning it here would
-		// hang the evaluate for the rest of the run.
-		await page.evaluate((line) => {
-			window.homeVoice.loop._speak(line);
-		}, BARGE_IN_ANSWER);
-		// Wait for sound actually leaving the speaker, not merely for the state
-		// flip: _speak enters `speaking` before the synthesis request returns, so a
-		// failed TTS call would otherwise read as a silent, un-interruptible agent.
-		await page.waitForFunction(
-			() => !!window.homeVoice.loop._playback || window.__hv.events.some((e) => e.type === 'tts-failed'),
-			null,
-			{ timeout: 60000 },
-		);
-		const ttsFailure = (await events(page)).find((e) => e.type === 'tts-failed');
-		if (ttsFailure) throw new Error(`the agent could not speak, so barge-in cannot be measured: ${ttsFailure.message}`);
-		await waitForEvent(page, 'barge-in', 45000);
-		const all = await events(page);
-		const barge = all.find((e) => e.type === 'barge-in');
-		const stop = all.find((e) => e.type === 'playback-stopped' && e.reason === 'barge-in');
-		check('the user talking over the agent stops playback', !!stop, {
-			audible: stop?.audible,
-		});
+		// Speak a long enough answer that the user's interruption lands inside it,
+		// and keep trying until one of them genuinely does.
+		//
+		// The interrupting clip starts talking 5 s in, and on a cold page the
+		// models, the opt-in and the synthesis can still be finishing then, so the
+		// first interruption sometimes arrives before a single sample has played.
+		// That is not an un-interruptible agent, it is a race in this harness, and
+		// asserting on it made a passing feature look broken. The microphone clip
+		// loops, so another interruption is always a few seconds away: speak again
+		// and measure the one that lands while sound is actually coming out.
+		let stop = null;
+		let barge = null;
+		const stalls = [];
+		for (let attempt = 0; attempt < 3 && !stop?.audible; attempt++) {
+			// Wait for the loop to be quiet first. An utterance injected while the
+			// loop is mid-turn is cancelled by the loop's own _speak (which opens
+			// with _cancelPlayback), and a cancelled utterance neither plays nor
+			// reports a failure: it just silently returns. Measured on 2026-09-09,
+			// that is exactly what a retry started too early does.
+			await page.waitForFunction(() => window.homeVoice.loop.state === 'idle', null, { timeout: 60000 });
+			const mark = (await events(page)).length;
+			// Started, not awaited. _speak resolves when the utterance finishes
+			// playing, and the whole point of this scenario is that it never does:
+			// the promise a barge-in cancels is left unsettled on purpose, so
+			// returning it here would hang the evaluate for the rest of the run.
+			await page.evaluate((line) => {
+				window.homeVoice.loop._speak(line);
+			}, BARGE_IN_ANSWER);
+			// Wait for sound actually leaving the speaker, not merely for the state
+			// flip: _speak enters `speaking` before the synthesis request returns, so
+			// a failed TTS call would otherwise read as a silent, un-interruptible
+			// agent.
+			try {
+				await page.waitForFunction(
+					() => !!window.homeVoice.loop._playback || window.__hv.events.some((e) => e.type === 'tts-failed'),
+					null,
+					{ timeout: 30000 },
+				);
+			} catch {
+				// The loop took the utterance away again. Record what it was holding
+				// and try the next cycle rather than failing on a race: a bare
+				// "waitForFunction timed out" names none of the three legs this wait
+				// covers (the request, the decode, the start of playback).
+				stalls.push(
+					await page.evaluate(() => ({
+						state: window.homeVoice.loop.state,
+						contextState: window.homeVoice.loop._audioContext?.state ?? null,
+						pendingSynthesis: !!window.homeVoice.loop._playbackAbort,
+					})),
+				);
+				continue;
+			}
+			const ttsFailure = (await events(page)).slice(mark).find((e) => e.type === 'tts-failed');
+			if (ttsFailure) throw new Error(`the agent could not speak, so barge-in cannot be measured: ${ttsFailure.message}`);
+
+			await waitForEvent(page, 'barge-in', 45000);
+			const since = (await events(page)).slice(mark);
+			barge = since.find((e) => e.type === 'barge-in') || barge;
+			stop = since.find((e) => e.type === 'playback-stopped' && e.reason === 'barge-in') || stop;
+		}
+		if (!stop) throw new Error(`playback never started in three attempts: ${JSON.stringify(stalls)}`);
+		check('the user talking over the agent stops playback', !!stop, { audible: stop?.audible });
 		check('and the sound it stopped was already coming out of the speaker', stop?.audible === true, {
 			audible: stop?.audible,
 		});
@@ -859,6 +918,8 @@ async function scenarioStateGallery() {
  */
 /** The seeded demo light the spoken command names. Its friendly name is "Kitchen Lights". */
 const LIVE_LIGHT = 'light.kitchen_lights';
+/** The seeded lock the confirmation scenario drives. Its friendly name is "Front Door". */
+const LIVE_LOCK = 'lock.front_door';
 
 /**
  * Bring up everything the live scenario needs, and hand back a teardown.
@@ -891,13 +952,13 @@ async function liveStack() {
 	// The API server needs its own signing and encryption keys. They are local to
 	// this run: they sign the session it mints and encrypt the row it writes, both
 	// of which this function deletes again.
-	const env = {
-		...process.env,
-		PORT: String(LIVE_API_PORT),
-		HOME_ALLOW_LOCAL_INSTANCE: '1',
-		JWT_SECRET: process.env.JWT_SECRET || randomBytes(32).toString('hex'),
-		WALLET_ENCRYPTION_KEY: process.env.WALLET_ENCRYPTION_KEY || randomBytes(32).toString('hex'),
-	};
+	// Set on THIS process as well as the child's. The confirmation scenario below
+	// runs api/_lib/home/tools.js in-process, and it has to decrypt the same
+	// connection row this server wrote, with the same key.
+	process.env.HOME_ALLOW_LOCAL_INSTANCE = '1';
+	process.env.JWT_SECRET ||= randomBytes(32).toString('hex');
+	process.env.WALLET_ENCRYPTION_KEY ||= randomBytes(32).toString('hex');
+	const env = { ...process.env, PORT: String(LIVE_API_PORT) };
 	const api = spawn(process.execPath, ['server/index.mjs'], { env, stdio: 'ignore' });
 	const apiBase = `http://localhost:${LIVE_API_PORT}`;
 	await waitForHttp(`${apiBase}/api/healthz`, 60000);
@@ -920,6 +981,28 @@ async function liveStack() {
 	const authed = `${cookie}; ${cookieHeader(csrfRes)}`;
 	if (!csrf) throw new Error('the local server issued no CSRF token');
 
+	// Prune any home row whose Home Assistant no longer answers.
+	//
+	// This teardown can fail (it says so below), the plan covers one home, and a
+	// dead row therefore turns every LATER run of this script into a 402 that
+	// reads like a billing bug. Observed exactly that on 2026-09-09: a row left
+	// by the previous run pointed at a container that had since exited.
+	const existing = await fetch(`${apiBase}/api/home`, { headers: { cookie: authed } })
+		.then((r) => r.json())
+		.catch(() => ({ homes: [] }));
+	for (const home of existing.homes || []) {
+		const alive = await fetch(`${home.base_url}/api/`, { headers: { authorization: 'Bearer probe' } })
+			.then(() => true)
+			.catch(() => false);
+		if (alive) continue;
+		const token = await freshCsrf(apiBase, authed);
+		const dropped = await fetch(`${apiBase}/api/home/${home.id}`, {
+			method: 'DELETE',
+			headers: { cookie: authed, 'x-csrf-token': token },
+		}).catch(() => null);
+		console.log(`[live] pruned a home whose instance is gone: ${home.base_url} (${dropped?.status ?? 'no response'})`);
+	}
+
 	const created = await fetch(`${apiBase}/api/home`, {
 		method: 'POST',
 		headers: { 'content-type': 'application/json', cookie: authed, 'x-csrf-token': csrf },
@@ -939,10 +1022,15 @@ async function liveStack() {
 	const viteBase = `http://localhost:${LIVE_VITE_PORT}`;
 	await waitForHttp(`${viteBase}/voice/home`, 90000);
 
+	const { sql } = await import('../api/_lib/db.js');
+	const [account] = await sql`select id from users where lower(email) = lower(${process.env.AUDIT_EMAIL}) limit 1`;
+
 	return {
 		ha,
 		homeId,
 		cookie: authed,
+		apiBase,
+		userId: account?.id || null,
 		viteBase,
 		async teardown() {
 			// A fresh token, not the one the POST used: CSRF tokens rotate on a
@@ -960,6 +1048,18 @@ async function liveStack() {
 			api.kill();
 		},
 	};
+}
+
+/**
+ * Mint a CSRF token for the next state-changing request.
+ *
+ * Tokens rotate on every such request, so a token held across two of them is a
+ * silent 403 that reads exactly like a broken endpoint. Every mutating call in
+ * the live path takes a fresh one.
+ */
+async function freshCsrf(apiBase, cookie) {
+	const res = await fetch(`${apiBase}/api/csrf-token`, { headers: { cookie } });
+	return (await res.json().catch(() => ({})))?.data?.token || '';
 }
 
 /** Every cookie a response set, folded into one request-shaped header. */
@@ -1053,6 +1153,118 @@ async function scenarioLive({ ha, viteBase, homeId, cookie }) {
 }
 
 /**
+ * How many tool-calling providers this machine actually has.
+ *
+ * Every rung of api/_lib/llm-tool-chain.js needs either a provider key or a
+ * usable GCP token, so a checkout with no keys in .env and an expired gcloud
+ * login has NONE, and the agent turn cannot run at all. That failure surfaces
+ * downstream as "the light is still on", which reads like a broken home lane and
+ * is not one. Counting the rungs up front turns it into one honest line.
+ */
+async function agentTurnRungs() {
+	const { providerChain } = await import('../api/_lib/llm-tool-chain.js');
+	return providerChain().map((p) => p.name);
+}
+
+/**
+ * The guarded path, against a real Home Assistant and a real minted
+ * confirmation. No model is involved on purpose.
+ *
+ * The two browser guarded scenarios above prove the half that lives in the tab:
+ * the sentence is spoken and shown, an ambient "yeah" is refused, the token is
+ * accepted, and the redemption request goes out. What they cannot prove with a
+ * substituted /api/chat is that the id in that request was real and that
+ * redeeming it moves a real deadbolt. This proves exactly that, by driving
+ * api/_lib/home/tools.js (the same module api/chat.js runs server-side between
+ * its two model passes) and then redeeming through the real endpoint.
+ *
+ * Splitting it this way is deliberate: the model choosing a tool is the one leg
+ * that needs a provider key, and the safety properties do not depend on it.
+ */
+async function scenarioLiveConfirmation({ ha, homeId, cookie, apiBase, userId }) {
+	const state = async (entity) => {
+		const res = await fetch(`${ha.baseUrl}/api/states/${entity}`, { headers: { authorization: `Bearer ${ha.token}` } });
+		if (!res.ok) throw new Error(`home assistant ${res.status} reading ${entity}`);
+		return (await res.json()).state;
+	};
+	const lock = () =>
+		fetch(`${ha.baseUrl}/api/services/lock/lock`, {
+			method: 'POST',
+			headers: { authorization: `Bearer ${ha.token}`, 'content-type': 'application/json' },
+			body: JSON.stringify({ entity_id: LIVE_LOCK }),
+		});
+	const settle = async (entity, want, tries = 20) => {
+		let value = await state(entity);
+		for (let i = 0; i < tries && value !== want; i++) {
+			await new Promise((r) => setTimeout(r, 500));
+			value = await state(entity);
+		}
+		return value;
+	};
+	const redeem = async (id) => {
+		const token = await freshCsrf(apiBase, cookie);
+		const res = await fetch(`${apiBase}/api/home/${homeId}/confirm`, {
+			method: 'POST',
+			headers: { 'content-type': 'application/json', cookie, 'x-csrf-token': token },
+			body: JSON.stringify({ confirmation_id: id }),
+		});
+		return { status: res.status, ok: res.ok, body: await res.json().catch(() => ({})) };
+	};
+
+	await lock();
+	const before = await settle(LIVE_LOCK, 'locked');
+	check('the real door starts locked, so unlocking it is a change', before === 'locked', { before });
+
+	const { runHomeTool } = await import('../api/_lib/home/tools.js');
+	const minted = await runHomeTool(
+		'home_call',
+		{ home_id: homeId, domain: 'lock', service: 'unlock', data: { entity_id: LIVE_LOCK } },
+		{ userId, source: 'voice' },
+	);
+	const confirmation = minted?.structured?.confirmation || null;
+	check('a guarded call mints a confirmation instead of acting', minted?.kind === 'pending_confirmation' && !!confirmation?.id, {
+		kind: minted?.kind,
+		id: confirmation?.id,
+		summary: confirmation?.summary,
+	});
+	check(
+		'the confirmation carries the sentence, the entity and the redemption url the loop renders',
+		confirmation?.summary === 'This will unlock the Front Door.' &&
+			confirmation?.entity_ids?.includes(LIVE_LOCK) &&
+			confirmation?.entities?.[0]?.name === 'Front Door' &&
+			confirmation?.confirm_url === `/api/home/${homeId}/confirm`,
+		{
+			summary: confirmation?.summary,
+			entity_ids: confirmation?.entity_ids,
+			name: confirmation?.entities?.[0]?.name,
+			confirm_url: confirmation?.confirm_url,
+		},
+	);
+	check('minting alone does not move the real door', (await state(LIVE_LOCK)) === 'locked', { during: await state(LIVE_LOCK) });
+
+	const accepted = await redeem(confirmation.id);
+	const unlocked = await settle(LIVE_LOCK, 'unlocked');
+	check('redeeming the minted confirmation really unlocks the real door', accepted.ok && unlocked === 'unlocked', {
+		status: accepted.status,
+		after: unlocked,
+	});
+
+	// Single use, proved against the device rather than against the response: the
+	// same id must not be able to open the door a second time.
+	await lock();
+	await settle(LIVE_LOCK, 'locked');
+	const replayed = await redeem(confirmation.id);
+	const afterReplay = await settle(LIVE_LOCK, 'unlocked', 6);
+	check('and the same confirmation cannot open it twice', !replayed.ok && afterReplay === 'locked', {
+		status: replayed.status,
+		code: replayed.body?.code || replayed.body?.error,
+		afterReplay,
+	});
+
+	return { confirmationId: confirmation.id, unlocked, replayStatus: replayed.status };
+}
+
+/**
  * Run one scenario, and run it again if a dev-server reload pulled the page out
  * from under it.
  *
@@ -1080,18 +1292,29 @@ async function run(scenario) {
 // ── run ─────────────────────────────────────────────────────────────────────
 
 async function main() {
-	const probe = await fetch(`${BASE}/voice/home`).catch(() => null);
-	if (!probe?.ok) {
-		console.error(`No dev server at ${BASE}. Start one with: npx vite --port ${PORT}`);
-		process.exit(2);
+	// The live scenarios bring up their own Vite, and live-confirm opens no
+	// browser at all, so only a run that includes a browser scenario on the shared
+	// dev server needs one to already be listening.
+	const LIVE_ONLY_NAMES = ['live', 'live-confirm'];
+	const needsSharedServer = ONLY.length === 0 || ONLY.some((name) => !LIVE_ONLY_NAMES.includes(name));
+	if (needsSharedServer) {
+		const probe = await fetch(`${BASE}/voice/home`).catch(() => null);
+		if (!probe?.ok) {
+			console.error(`No dev server at ${BASE}. Start one with: npx vite --port ${PORT}`);
+			process.exit(2);
+		}
 	}
 	await signIn();
-	await ensureClips();
+	// The speech clips are what the browser scenarios speak into the fake
+	// microphone; a live-confirm run has no microphone and needs none of them.
+	if (needsSharedServer) await ensureClips();
 	// Synthesize the agent's interrupted answer once, before anything is timed,
 	// so the barge-in scenario is as fast on a machine that has never run this
 	// script as on one that has.
-	await cachedSpeech(BARGE_IN_ANSWER);
-	await warmUp();
+	if (needsSharedServer) {
+		await cachedSpeech(BARGE_IN_ANSWER);
+		await warmUp();
+	}
 
 	const measured = {};
 	const SCENARIOS = {
@@ -1107,18 +1330,38 @@ async function main() {
 		gallery: scenarioStateGallery,
 	};
 
-	const unknown = ONLY.filter((name) => name !== 'live' && !SCENARIOS[name]);
-	if (unknown.length) throw new Error(`unknown scenario(s): ${unknown.join(', ')}. Known: ${Object.keys(SCENARIOS).join(', ')}, live`);
+	const unknown = ONLY.filter((name) => !LIVE_ONLY_NAMES.includes(name) && !SCENARIOS[name]);
+	if (unknown.length) throw new Error(`unknown scenario(s): ${unknown.join(', ')}. Known: ${Object.keys(SCENARIOS).join(', ')}, ${LIVE_ONLY_NAMES.join(', ')}`);
 	const wanted = (name) => ONLY.length === 0 || ONLY.includes(name);
 
 	for (const [name, scenario] of Object.entries(SCENARIOS)) {
 		if (wanted(name)) await run(scenario);
 	}
 
-	if (LIVE && wanted('live')) {
+	if (LIVE && (wanted('live') || wanted('live-confirm'))) {
 		const stack = await liveStack();
 		try {
-			measured.live = await run(() => scenarioLive(stack));
+			// The confirmation scenario first: it needs no provider key, so the
+			// guarded proof still lands on a machine where the agent turn cannot.
+			if (wanted('live-confirm')) measured.liveConfirm = await run(() => scenarioLiveConfirmation(stack));
+			if (wanted('live')) {
+				const rungs = await agentTurnRungs();
+				console.log(`[live] tool-calling providers available: ${rungs.length ? rungs.join(', ') : 'NONE'}`);
+				if (!rungs.length) {
+					// Reported as a skip with its cause, never as a passing check and
+					// never as a failing home lane. The turn is what is missing here,
+					// and the missing piece is a credential, not code.
+					measured.live = { skipped: 'no tool-calling provider is configured on this machine' };
+					console.log(
+						'[live] SKIPPED the spoken end-to-end leg: every rung of api/_lib/llm-tool-chain.js needs a provider\n' +
+							'       key or a usable GCP token, and this checkout has neither, so no agent turn can run.\n' +
+							'       Set one of GROQ_API_KEY / CEREBRAS_API_KEY / OPENROUTER_API_KEY / GEMINI_API_KEY, or run\n' +
+							'       `gcloud auth application-default login` and export GOOGLE_CLOUD_PROJECT, then run it again.',
+					);
+				} else {
+					measured.live = await run(() => scenarioLive(stack));
+				}
+			}
 		} finally {
 			await stack.teardown();
 		}
