@@ -1,11 +1,11 @@
 {
-	"generated_at": "2026-09-09T15:09:28.073Z",
+	"generated_at": "2026-09-09T15:18:36.394Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
 		"url": "https://three.ws"
 	},
-	"total": 3640,
+	"total": 3642,
 	"complete": false,
 	"full_feed": "/changelog.json",
 	"entries": [
@@ -127,6 +127,16 @@
 		{
 			"date": "2026-09-09",
 			"type": "update",
+			"title": "Fact-check now reads the part of a source that is actually about your claim",
+			"summary": "When the fact-checker fell back to Wikipedia, it only ever read each article's opening summary. An opening summary says what a page is about, so it carries the answer only when your claim is about the page's subject. Ask whether Napoleon was unusually short and it read the first lines of \"Napoleon\", \"Napoleon III\" and \"Napoleonic Wars\", none of which mention height at all, so every source was scored as saying nothing and the verdict came back \"not enough evidence\" while the passage about his height sat further down the same article. The checker now reads each article in full and picks the paragraphs that actually discuss your claim, so that question returns the \"Appearance and image\" and \"Napoleon's height\" sections instead. Reference lists are skipped, since they repeat your words without asserting anything, and the deeper read is bounded by the time the check already had, so a slow source can never cost you the evidence that already arrived.",
+			"link": "/docs/fact-check",
+			"tags": [
+				"improvement"
+			]
+		},
+		{
+			"date": "2026-09-09",
+			"type": "update",
 			"title": "Fade Radar: the wallets that have never once been right, and the coins they are crowding into",
 			"summary": "The Smart Money Radar tells you which proven winners are buying a coin. Fade Radar is the other half of that question, and on pump.fun it turns out to be the sharper one: how much of a coin's buy side is money that has never been right. A wallet joins the reverse-indicator board only after five coins it bought have a known outcome and not one of them won, which is a bar a surprising number of addresses clear. The new page ranks every launch from the last few hours by how much of its observed buy side belongs to those wallets, by wallet count and by SOL, and carries a second board of the wallets themselves with their full record. The number above the board is the part we care most about: it is measured, not asserted. We rebuild the reverse-indicator group using only coins whose outcome was known before the coins it is graded on existed, then check what actually happened. Coins where a quarter or more of the buyers were reverse indicators went on to win 1.8 percent of the time, against 22.1 percent for coins with none, across 26,626 labelled coins. Nothing here is a short and nothing signs anything: on a bonding curve the only tradeable form of a fade is not buying, so every action on the page is a link out to the coin, its intel, or a wallet's track record. Wallet links also now open directly on the Smart Money Radar, so an address cited anywhere on the platform lands on its record instead of a board you have to scan by eye.",
 			"link": "/fade",
@@ -143,6 +153,16 @@
 			"tags": [
 				"fix",
 				"infra"
+			]
+		},
+		{
+			"date": "2026-09-09",
+			"type": "update",
+			"title": "News cards stop losing their preview picture to a cold cache",
+			"summary": "About a fifth of the crypto-news feed ships text-only, so those cards start as a source tile and upgrade in place once the publisher's own preview image is found. That lookup searched all 197 publisher feeds at once and gave up after 2.5 seconds, which on a freshly started server dropped whichever feed had not answered yet, so an article the feed had just served came back as unknown. The reader kept its tile, but the failed lookup was recorded as a public answer for the next ten minutes, so every visitor to /markets and /markets/news got the same dead result and a 404 in their browser console. The lookup now asks the one publisher that could hold the article first and waits for it, and a result that could not be confirmed is held for 30 seconds instead of ten minutes.",
+			"link": "/markets/news",
+			"tags": [
+				"fix"
 			]
 		},
 		{
@@ -1590,27 +1610,6 @@
 			"tags": [
 				"feature",
 				"security"
-			]
-		},
-		{
-			"date": "2026-09-04",
-			"type": "update",
-			"title": "Agent wallets can pay three.ws on X Layer again",
-			"summary": "Buying agents that pay for a 3D generation on X Layer sign their payment with a wallet that carries an on-chain delegation, which is how every OKX agent wallet is built. Our checker judged those signatures with a contract call that answers a different question, so it turned away correct, fully funded payments and quoted the price a second time instead of doing the work. Payments are now checked the same way the stablecoin itself checks them, so a signed authorization that the network would honour is one we accept.",
-			"link": null,
-			"tags": [
-				"fix"
-			]
-		},
-		{
-			"date": "2026-09-04",
-			"type": "update",
-			"title": "Cross-origin 3D loads no longer break on a header your site never sent",
-			"summary": "Embedding a three.ws avatar on your own site loads the model straight from us, and the site answers every origin. One case still failed: if your loader attached any extra header (a trace id, an auth token, anything a browser does not treat as standard), the browser first asked us for permission and we answered with a 404 page, so the model never loaded. That request is now answered properly, and the answer echoes exactly the headers you asked about. Alongside it, the media docs now spell out the three ways to read a model file and which one to pick: files under three.ws load directly, generated assets load directly from three.ws/cdn, and the /api/glb proxy is there for a URL whose host you cannot identify.",
-			"link": "/docs/media-api",
-			"tags": [
-				"fix",
-				"docs"
 			]
 		}
 	]

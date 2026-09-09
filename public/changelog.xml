@@ -95,6 +95,14 @@
 			<description>When the fact-checker fell back to Wikipedia, it only ever read each article's opening summary. An opening summary says what a page is about, so it carries the answer only when your claim is about the page's subject. Ask whether Napoleon was unusually short and it read the first lines of &quot;Napoleon&quot;, &quot;Napoleon III&quot; and &quot;Napoleonic Wars&quot;, none of which mention height at all, so every source was scored as saying nothing and the verdict came back &quot;not enough evidence&quot; while the passage about his height sat further down the same article. The checker now reads each article in full and picks the paragraphs that actually discuss your claim, so that question returns the &quot;Appearance and image&quot; and &quot;Napoleon's height&quot; sections instead. Reference lists are skipped, since they repeat your words without asserting anything, and the deeper read is bounded by the time the check already had, so a slow source can never cost you the evidence that already arrived.</description>
 		</item>
 		<item>
+			<title>Fact-check now reads the part of a source that is actually about your claim</title>
+			<link>https://three.ws/docs/fact-check</link>
+			<guid isPermaLink="false">2026-09-09:Fact-check now reads the part of a source that is actually about your claim</guid>
+			<pubDate>Wed, 09 Sep 2026 12:00:00 GMT</pubDate>
+			<category>improvement</category>
+			<description>When the fact-checker fell back to Wikipedia, it only ever read each article's opening summary. An opening summary says what a page is about, so it carries the answer only when your claim is about the page's subject. Ask whether Napoleon was unusually short and it read the first lines of &quot;Napoleon&quot;, &quot;Napoleon III&quot; and &quot;Napoleonic Wars&quot;, none of which mention height at all, so every source was scored as saying nothing and the verdict came back &quot;not enough evidence&quot; while the passage about his height sat further down the same article. The checker now reads each article in full and picks the paragraphs that actually discuss your claim, so that question returns the &quot;Appearance and image&quot; and &quot;Napoleon's height&quot; sections instead. Reference lists are skipped, since they repeat your words without asserting anything, and the deeper read is bounded by the time the check already had, so a slow source can never cost you the evidence that already arrived.</description>
+		</item>
+		<item>
 			<title>Fade Radar: the wallets that have never once been right, and the coins they are crowding into</title>
 			<link>https://three.ws/fade</link>
 			<guid isPermaLink="false">2026-09-09:Fade Radar: the wallets that have never once been right, and the coins they are crowding into</guid>
@@ -109,6 +117,14 @@
 			<pubDate>Wed, 09 Sep 2026 12:00:00 GMT</pubDate>
 			<category>fix</category>
 			<description>If your Home Assistant is only reachable inside your house, three.ws reaches it through the three.ws integration you install there, which dials out to us. Those homes were building their room list once, when the connection opened, and then quietly ignoring changes: assign a lamp to the kitchen, rename a floor, add a device, and the 3D house kept showing the old arrangement until the connection happened to be rebuilt. Homes connected by a direct address never had this problem, and the split was in the relay, which was not carrying the four small notices Home Assistant sends when its rooms, floors, devices or entities change. It carries them now, so both kinds of connection track the house the same way and updates land in seconds. The notices only say that something changed; the relay already read the full room and floor lists, so nothing new about your house is exposed by this.</description>
+		</item>
+		<item>
+			<title>News cards stop losing their preview picture to a cold cache</title>
+			<link>https://three.ws/markets/news</link>
+			<guid isPermaLink="false">2026-09-09:News cards stop losing their preview picture to a cold cache</guid>
+			<pubDate>Wed, 09 Sep 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>About a fifth of the crypto-news feed ships text-only, so those cards start as a source tile and upgrade in place once the publisher's own preview image is found. That lookup searched all 197 publisher feeds at once and gave up after 2.5 seconds, which on a freshly started server dropped whichever feed had not answered yet, so an article the feed had just served came back as unknown. The reader kept its tile, but the failed lookup was recorded as a public answer for the next ten minutes, so every visitor to /markets and /markets/news got the same dead result and a 404 in their browser console. The lookup now asks the one publisher that could hold the article first and waits for it, and a result that could not be confirmed is held for 30 seconds instead of ten minutes.</description>
 		</item>
 		<item>
 			<title>Oracle: a failed request now says so, instead of claiming no coins have been scored</title>

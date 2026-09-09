@@ -3450,6 +3450,14 @@
 					"added": "2026-07-18"
 				},
 				{
+					"path": "/docs/rivalries",
+					"title": "Docs · Rivalries",
+					"description": "What changed on the trader board: who passed whom, who just arrived, and who is closing. Derived from close timestamps rather than a snapshot table, so the matchups work retroactively and cannot disagree with the leaderboard.",
+					"priority": 0.6,
+					"changefreq": "monthly",
+					"added": "2026-09-09"
+				},
+				{
 					"path": "/docs/clash",
 					"title": "Docs · Coin Clash",
 					"description": "Token-gated community warfare: every coin community is an army. Hold the coin, enlist, and rally for your faction in timed on-chain battles.",

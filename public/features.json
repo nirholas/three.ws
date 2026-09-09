@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-09-09T07:20:21.637Z",
+	"generated_at": "2026-09-09T15:18:36.257Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json",
 	"site": {
 		"name": "three.ws",
@@ -4203,6 +4203,16 @@
 					"title": "Docs · Coin Radar",
 					"description": "Live pump.fun launch intelligence: every new coin scored in its first 90 seconds for bundle vs organic, wallet concentration, dev behaviour, and risk flags.",
 					"added": "2026-07-18",
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false
+				},
+				{
+					"path": "/docs/rivalries",
+					"title": "Docs · Rivalries",
+					"description": "What changed on the trader board: who passed whom, who just arrived, and who is closing. Derived from close timestamps rather than a snapshot table, so the matchups work retroactively and cannot disagree with the leaderboard.",
+					"added": "2026-09-09",
 					"auth": null,
 					"indexable": true,
 					"tags": [],
