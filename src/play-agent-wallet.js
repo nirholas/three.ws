@@ -27,26 +27,33 @@ import { applyCinematicDefaults, loadEnvironment, detectQualityTier } from './sh
 // ── config ──────────────────────────────────────────────────────────────────
 
 const params = new URLSearchParams(location.search);
-// The local bridge (scripts/agent-wallet-x402-bridge.mjs) holds a signing key in
-// a developer's terminal, so it only runs on localhost. In production we use the
-// hosted bridge (api/agent-wallet-bridge) which signs with the platform-held
-// payer wallet — gated behind sign-in + spending caps — so real visitors can pay
-// too. Prefer an explicit ?bridge= override, then a local dev bridge, else hosted.
-function localBridgeUrl() {
-	const explicit = params.get('bridge');
-	if (explicit) return explicit.replace(/\/$/, '');
+// Two bridges answer the same three calls. The local one
+// (scripts/agent-wallet-x402-bridge.mjs) holds a signing key in a developer's
+// terminal, so it only runs on localhost. The hosted one
+// (api/agent-wallet-bridge) signs with the platform-held payer wallet, gated
+// behind sign-in and spending caps, so real visitors can pay too.
+//
+// A dev machine prefers the local bridge, but almost nobody has it running, and
+// a hard preference dead-ended the whole page on "bridge offline" for every
+// contributor who just ran `npm run dev`. So the local bridge is a preference,
+// not a commitment: the first unreachable status call falls through to the
+// hosted bridge (vite proxies /api to production) and the page comes alive. An
+// explicit ?bridge= override is honored verbatim and never falls back, because
+// the caller asked for that endpoint specifically.
+const HOSTED_BRIDGE = '/api/agent-wallet-bridge';
+const explicitBridge = (params.get('bridge') || '').replace(/\/$/, '');
+function prefersLocalBridge() {
 	let isDev = false;
 	try { isDev = import.meta?.env?.DEV === true; } catch (_) {}
 	const host = typeof location !== 'undefined' ? location.hostname : '';
-	const isLocalHost = host === 'localhost' || host === '127.0.0.1';
-	return isDev || isLocalHost ? 'http://127.0.0.1:4402' : '';
+	return isDev || host === 'localhost' || host === '127.0.0.1';
 }
-const LOCAL_BRIDGE = localBridgeUrl();
-const HOSTED = !LOCAL_BRIDGE;
-const BRIDGE_BASE = LOCAL_BRIDGE || '/api/agent-wallet-bridge';
-const statusUrl = () => (HOSTED ? `${BRIDGE_BASE}?status=1` : `${BRIDGE_BASE}/status`);
-const quoteUrl = (qs) => (HOSTED ? `${BRIDGE_BASE}?quote=1&${qs}` : `${BRIDGE_BASE}/quote?${qs}`);
-const payUrl = () => (HOSTED ? `${BRIDGE_BASE}?pay=1` : `${BRIDGE_BASE}/pay`);
+let bridgeBase = explicitBridge || (prefersLocalBridge() ? 'http://127.0.0.1:4402' : HOSTED_BRIDGE);
+let hosted = bridgeBase === HOSTED_BRIDGE;
+let canFallBackToHosted = !explicitBridge && !hosted;
+const statusUrl = () => (hosted ? `${bridgeBase}?status=1` : `${bridgeBase}/status`);
+const quoteUrl = (qs) => (hosted ? `${bridgeBase}?quote=1&${qs}` : `${bridgeBase}/quote?${qs}`);
+const payUrl = () => (hosted ? `${bridgeBase}?pay=1` : `${bridgeBase}/pay`);
 // The paid endpoint the avatar buys from. three.ws prod by default so the
 // payment settles against the live facilitator even from local dev.
 const ENDPOINT = params.get('endpoint') || 'https://three.ws/api/x402/crypto-intel';
@@ -461,7 +468,13 @@ renderer.setAnimationLoop(() => {
 // ── side panel wiring ───────────────────────────────────────────────────────
 
 const $ = (id) => document.getElementById(id);
-const payBtn = $('payBtn');
+// Live data written into a node that also carries an i18n annotation. The
+// runtime catalog pass lands after an async /api/locale fetch, so without the
+// platform's `data-i18n-owned` opt-out it reverted the balance, the endpoint
+// name and the pay button's label back to their shipped placeholders seconds
+// after the bridge had filled them in.
+const own = (el) => { el?.setAttribute?.('data-i18n-owned', '1'); return el; };
+const payBtn = own($('payBtn'));
 const stagesEl = $('stages');
 let activeTopic = TOPICS[0].id;
 
@@ -472,12 +485,17 @@ for (const topic of TOPICS) {
 	b.textContent = topic.label;
 	b.setAttribute('aria-pressed', String(topic.id === activeTopic));
 	b.addEventListener('click', () => {
+		if (live.paying || activeTopic === topic.id) return;
 		activeTopic = topic.id;
 		for (const el of document.querySelectorAll('.t-chip')) {
 			const on = el === b;
 			el.classList.toggle('active', on);
 			el.setAttribute('aria-pressed', String(on));
 		}
+		// The 402 challenge is issued per request, so the price and payTo belong
+		// to the topic being bought. Re-quote rather than paying against a
+		// challenge that was raised for a different one.
+		loadQuote();
 	});
 	$('topics').appendChild(b);
 }
@@ -532,6 +550,16 @@ function renderReceipt() {
 	el.classList.add('show');
 }
 
+// What this call costs, in whole USD, from the live quote when we have one.
+function priceUsd() {
+	return live.quote ? Number(live.quote.amount) / 1e6 : 0.01;
+}
+// True once the bridge has reported a balance that cannot cover the quote.
+// `null` means the balance is not known yet, which is not a shortfall.
+function underfunded() {
+	return live.balanceUsd != null && Number(live.balanceUsd) < priceUsd();
+}
+
 function updatePayButton() {
 	const lbl = payBtn.querySelector('.lbl');
 	if (live.paying) {
@@ -546,8 +574,15 @@ function updatePayButton() {
 		lbl.textContent = live.bridge === 'offline' ? 'Bridge offline' : 'Connecting to bridge…';
 		return;
 	}
+	// Offering a button that can only fail is worse than saying why. The
+	// low-balance banner above it carries the address to send USDC to.
+	if (underfunded()) {
+		payBtn.disabled = true;
+		lbl.textContent = `Wallet needs ${fmtUsdc(priceUsd() * 1e6)} USDC to pay`;
+		return;
+	}
 	payBtn.disabled = false;
-	lbl.textContent = `Send avatar to pay — ${live.quote ? fmtUsdc(live.quote.amount) : '$0.01'} USDC`;
+	lbl.textContent = `Send avatar to pay: ${live.quote ? fmtUsdc(live.quote.amount) : '$0.01'} USDC`;
 }
 
 // ── bridge client ───────────────────────────────────────────────────────────
@@ -563,15 +598,25 @@ async function refreshStatus() {
 		$('wAddr').textContent = shortAddr(data.wallet.address);
 		$('wAddr').title = data.wallet.address;
 		$('wMode').textContent = `${data.wallet.mode} wallet`;
-		$('wBal').innerHTML = `$${escapeHtml(Number(data.balance?.totalValue || 0).toFixed(2))}<small>USD</small>`;
+		own($('wBal')).innerHTML = `$${escapeHtml(Number(data.balance?.totalValue || 0).toFixed(2))}<small>USD</small>`;
 		$('bridgeOffline').classList.remove('show');
-		const lowBal = Number(data.balance?.totalValue || 0) <= 0;
-		$('lowBalance').classList.toggle('show', lowBal && !live.receipt);
+		$('lowBalance').classList.toggle('show', underfunded() && !live.receipt);
 	} catch {
+		// A dev machine that prefers the local bridge gets one silent promotion to
+		// the hosted one rather than a dead page.
+		if (canFallBackToHosted) {
+			canFallBackToHosted = false;
+			bridgeBase = HOSTED_BRIDGE;
+			hosted = true;
+			const hint = $('bridgeDevHint');
+			if (hint) hint.style.display = 'none';
+			return refreshStatus();
+		}
 		live.bridge = 'offline';
+		live.balanceUsd = null;
 		$('bridgeOffline').classList.add('show');
 		$('lowBalance').classList.remove('show');
-		$('wBal').innerHTML = '—<small>USD</small>';
+		own($('wBal')).innerHTML = '—<small>USD</small>';
 	}
 	updatePayButton();
 	renderStages();
@@ -585,7 +630,7 @@ async function loadQuote() {
 		const q = await r.json();
 		if (!q.ok) throw new Error(q.error || 'quote failed');
 		live.quote = q;
-		$('epName').textContent = q.resource?.serviceName || 'three.ws Crypto Intel';
+		own($('epName')).textContent = q.resource?.serviceName || 'three.ws Crypto Intel';
 		$('epPrice').textContent = `${fmtUsdc(q.amount)} USDC`;
 		$('epDesc').textContent = q.resource?.description
 			? String(q.resource.description).split('. ').slice(0, 2).join('. ') + '.'
@@ -600,10 +645,14 @@ async function loadQuote() {
 		}
 	} catch {
 		// quote requires the bridge; the bridge-offline banner already explains
-		$('epName').textContent = 'three.ws Crypto Intel';
+		live.quote = null;
+		own($('epName')).textContent = 'three.ws Crypto Intel';
 		$('epPrice').textContent = '$0.01 USDC';
-		$('epDesc').textContent = 'Live market signal (bullish / bearish / neutral) — pay per call, settled in USDC on Solana mainnet.';
+		$('epDesc').textContent = 'Live market signal (bullish / bearish / neutral): pay per call, settled in USDC on Solana mainnet.';
+		$('epTags').innerHTML = '';
 	}
+	// The banner is priced against the quote, so it can only settle once we have one.
+	$('lowBalance').classList.toggle('show', live.bridge === 'online' && underfunded() && !live.receipt);
 	updatePayButton();
 }
 
@@ -723,9 +772,10 @@ $('copyAddr').addEventListener('click', async () => {
 	} catch { /* clipboard unavailable */ }
 });
 
-// In local-bridge mode, surface the dev hint inside the unavailable banner so a
-// developer knows to start the bridge; in hosted prod mode it stays hidden.
-if (!HOSTED) { const hint = $('bridgeDevHint'); if (hint) hint.style.display = 'block'; }
+// While the page is pointed at a local bridge, surface the dev hint inside the
+// unavailable banner so a developer knows to start it. It is hidden again the
+// moment we fall back to the hosted bridge, where the advice would be wrong.
+if (!hosted) { const hint = $('bridgeDevHint'); if (hint) hint.style.display = 'block'; }
 
 refreshStatus().then(loadQuote);
 setInterval(refreshStatus, 30_000);
