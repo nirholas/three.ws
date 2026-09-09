@@ -143,6 +143,14 @@
 			<description>If your Home Assistant is only reachable inside your house, three.ws reaches it through the three.ws integration you install there, which dials out to us. Those homes were building their room list once, when the connection opened, and then quietly ignoring changes: assign a lamp to the kitchen, rename a floor, add a device, and the 3D house kept showing the old arrangement until the connection happened to be rebuilt. Homes connected by a direct address never had this problem, and the split was in the relay, which was not carrying the four small notices Home Assistant sends when its rooms, floors, devices or entities change. It carries them now, so both kinds of connection track the house the same way and updates land in seconds. The notices only say that something changed; the relay already read the full room and floor lists, so nothing new about your house is exposed by this.</description>
 		</item>
 		<item>
+			<title>New gallery avatars now arrive with a skeleton, so they animate properly out of the box</title>
+			<link>https://three.ws/gallery</link>
+			<guid isPermaLink="false">2026-09-09:New gallery avatars now arrive with a skeleton, so they animate properly out of the box</guid>
+			<pubDate>Wed, 09 Sep 2026 12:00:00 GMT</pubDate>
+			<category>improvement</category>
+			<description>Avatars generated for the gallery were published as static meshes: they still moved, but through a fallback that maps a generic body onto them rather than a skeleton of their own. Every new one now goes through our auto-rigger first and arrives with a real 52-bone humanoid skeleton, which means the whole motion library drives it directly. If the rigger fails or stalls, the avatar is still published rather than held back, so nothing is lost to a bad rig.</description>
+		</item>
+		<item>
 			<title>News cards stop losing their preview picture to a cold cache</title>
 			<link>https://three.ws/markets/news</link>
 			<guid isPermaLink="false">2026-09-09:News cards stop losing their preview picture to a cold cache</guid>
@@ -333,6 +341,14 @@
 			<pubDate>Wed, 09 Sep 2026 12:00:00 GMT</pubDate>
 			<category>fix</category>
 			<description>Every three.ws page and API call is served by one container, and in early September that container was given twice the memory so it could hold live connections to people’s connected homes without ever running short. The setting did not survive: the next full deploy quietly put it back to the smaller limit, and the site then ran for five days on half the memory it had been sized for while still being configured to hold up to 600 home connections. Measured over the last 24 hours, memory was already peaking at 86% of that smaller limit before a single home connection was counted, which is close enough to the edge that a busy hour could have killed the container mid-request and taken every page down with it, not just the connected-home part. The limit is restored, peak memory is back to 43%, and it is now written into the deploy configuration itself so no future deploy can undo it again.</description>
+		</item>
+		<item>
+			<title>The avatar gallery passed 68,000 models, all generated on our own GPUs</title>
+			<link>https://three.ws/gallery</link>
+			<guid isPermaLink="false">2026-09-09:The avatar gallery passed 68,000 models, all generated on our own GPUs</guid>
+			<pubDate>Wed, 09 Sep 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>The gallery keeps filling on its own: a scheduled job generates avatars from a growing prompt library on the GPU fleet we host ourselves, checks each finished model for a usable mesh and real textures, and quarantines the ones that fail instead of publishing them. That took the catalog past 68,000 avatars, with about 800 more arriving a day, and every one is browsable, previewable and free to use. The last 30 days rejected 94 models on mesh faults alone.</description>
 		</item>
 		<item>
 			<title>The changelog channel stops announcing the same update twice</title>

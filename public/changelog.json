@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-09-09T20:08:05.351Z",
+	"generated_at": "2026-09-09T20:16:32.285Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -182,6 +182,17 @@
 			"tags": [
 				"fix",
 				"infra"
+			]
+		},
+		{
+			"date": "2026-09-09",
+			"type": "update",
+			"title": "New gallery avatars now arrive with a skeleton, so they animate properly out of the box",
+			"summary": "Avatars generated for the gallery were published as static meshes: they still moved, but through a fallback that maps a generic body onto them rather than a skeleton of their own. Every new one now goes through our auto-rigger first and arrives with a real 52-bone humanoid skeleton, which means the whole motion library drives it directly. If the rigger fails or stalls, the avatar is still published rather than held back, so nothing is lost to a bad rig.",
+			"link": "/gallery",
+			"tags": [
+				"improvement",
+				"feature"
 			]
 		},
 		{
@@ -444,6 +455,17 @@
 			"tags": [
 				"fix",
 				"infra"
+			]
+		},
+		{
+			"date": "2026-09-09",
+			"type": "update",
+			"title": "The avatar gallery passed 68,000 models, all generated on our own GPUs",
+			"summary": "The gallery keeps filling on its own: a scheduled job generates avatars from a growing prompt library on the GPU fleet we host ourselves, checks each finished model for a usable mesh and real textures, and quarantines the ones that fail instead of publishing them. That took the catalog past 68,000 avatars, with about 800 more arriving a day, and every one is browsable, previewable and free to use. The last 30 days rejected 94 models on mesh faults alone.",
+			"link": "/gallery",
+			"tags": [
+				"feature",
+				"improvement"
 			]
 		},
 		{

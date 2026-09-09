@@ -1747,6 +1747,45 @@ authored Mixamo control still passes 48 of 60 (80%) through the same gate, with
 frozen and out-of-duration assets as its only rejects, so the gate is calibrated
 and it is the lane's output that fails it.
 
+**The live cron is NOT running that gate, and its accept rate is not 75%
+(measured 2026-09-09).** The 75% above is `scripts/gcp/seed-avatars.mjs`, which
+runs mesh sanity AND the vision judge. `api/cron/forge-seed-cron.js`, which is
+what actually grew the catalog to 68,971 avatars, runs the mesh stage only:
+`SEED_CRON_VISION` is off on the service, deliberately, because the function has
+a 70 s wall and a render plus two judge calls costs 10 to 20 s of it. Measured
+over the last 7 days: **3,315 published against 47 rejected, a 98.6% accept
+rate**, mean mesh score 0.928, and the vision stage recorded as `skipped` on all
+3,297 gated publishes. Every rejection was a mesh fault the vision judge is not
+needed for: `no_textures` (50), `vertices_below_floor` (42), `file_too_small`
+(2), over 30 days.
+
+The gap between 98.6% and 75% is the vision judge's share, and it is the reason
+volume and curation have to be read separately: roughly a quarter of what the
+cron publishes would not survive the full gate the batch runner applies. One env
+flip on `three-ws-api` closes it, and it is an owner action because it changes what
+production spends:
+
+- `SEED_CRON_VISION=1` (with `SEED_CRON_VISION_MS` to bound it, default 20,000)
+  turns the judge on inside the tick. Watch the cron's duration afterwards; the
+  70 s wall is the reason it is off.
+The rigging half needed no flip: `SEED_CRON_RIG` is **on by default since
+2026-09-09**. **Zero of the 17,349 seed avatars published before that had ever
+been rigged**, so every one of them animates through the retarget fallback
+rather than its own skeleton. The lane was verified live the same day (a seeded
+mesh submitted to `POST /api/forge?action=rig` came back in under 10 s with a
+52-joint `mixamorig` skeleton, exactly the convention `src/glb-canonicalize.js`
+maps), and every failure path publishes the gated keeper static rather than
+losing it, including a rig that simply stops answering (`RIG_STALL_MS`, 45
+minutes, added in the same change because `advanceRigs` polls the ten oldest
+rigging rows and a permanently stuck row would starve the queue behind it). Set
+`SEED_CRON_RIG=0` to go back to static meshes.
+
+Both stages, and the accept rate they produce, are now measurable from
+`forge_seed_jobs` alone: since 2026-09-09 the cron records the full verdict on
+the keepers as well as the rejects (`publishSeedAvatar`, covered by
+`tests/cron-seed-gate-record.test.js`). Before that only rejects carried one, so
+9,925 publishes in 30 days looked identical to rows that had never been gated.
+
 **Cost model source.** Instance rates are the `us-central1` on-demand Cloud Run
 figures in the "Cost per asset" section above (8 vCPU / 32 GiB + L4 = \$1.69/hr,
 4 vCPU / 16 GiB + L4 = \$1.20/hr). They are not billing-export figures:
@@ -1790,9 +1829,26 @@ return bounded payloads.
 **`/animations` was fetch-all on the client.** The endpoint pages correctly, but the
 gallery awaited every page before painting a card, so time-to-first-card was the size
 of the whole library: 1.12 MB at 2,874 clips, and it would have been ~11 MB at ten
-times that. The catalog now streams: the first 1,000-clip page (397 KB) paints, later
-pages merge into the grid as they land. First paint is one page wide whatever the
-catalog does.
+times that. Streaming the pages fixed first paint; it did not stop the browser from
+downloading all of them.
+
+**Finished 2026-09-09: the gallery now loads one page, and the point lookups load
+one clip.** Verified in Chromium against a synthetic 30,070-clip catalog served
+through the real endpoint, so the numbers are the ten-times case rather than an
+extrapolation of it:
+
+| | Before | After |
+|---|---|---|
+| `/animations` first paint at 30,070 clips | 30 requests, 11.5 MB | 2 requests, 389 KB |
+| Hero and chip counts at first paint | counted up as pages landed | exact, from `?facets=1` (558 B) |
+| Embed or pose link resolving one clip by name | the whole manifest | 480 B, via `?name=` |
+| A search across the whole catalog | already paid on load | 3.1 s drain, results stream in |
+
+`?facets=1` and `?name=` are new on `/api/animations/library` and both are flat in
+the catalog size. Narrowing the view (search, category, sort, or a URL that arrives
+narrowed) still needs every clip, because those run client-side over the whole
+gallery and a count has to mean every match; that is the one case that reads the
+catalog, and it reads it once. See [docs/animation-seeding.md](../animation-seeding.md).
 
 Regression cover: `tests/avatars-list-scale.test.js` pins both query shapes, so a
 future edit cannot quietly reintroduce the OR predicate or the per-request aggregate.
