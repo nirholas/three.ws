@@ -232,6 +232,16 @@ const htmlAttrRe = /(?<![\w-])(?:href|formaction|action|data-href|data-route|dat
 // The lookbehind keeps it off a *property read* followed by a ternary colon -
 // `new URL(x, origin).href : ''` is a value expression, not a navigation.
 const jsNavRe = /(\.href\s*=|location\.(?:assign|replace)\s*\(|window\.open\s*\(|(?<![.\w$])href\s*:|\bnavigateTo\s*\(|\brouteTo\s*\()\s*("([^"]*)"|'([^']*)'|`([^`$]*)`)/gi;
+// `navigateTo(...)` / `routeTo(...)` read as router calls only when the router is
+// the site's. A page that declares its OWN function of that name is switching an
+// in-page section by key, not by path: pages/pump-dashboard.html hands its
+// navigateTo() a cockpit key ('config', 'watches') and renders `#config`. Those
+// keys are not files, so resolving them against the filesystem invents a broken
+// link out of working code, and does it selectively: 'animations' happened to
+// collide with pages/animations.html and passed, while 'config' failed the gate.
+const localRouterRe = /(?:function\s+(?:navigateTo|routeTo)\s*\(|(?:const|let|var)\s+(?:navigateTo|routeTo)\s*=)/;
+const routerCallRe = /^(?:navigateTo|routeTo)\s*\(/;
+
 const fetchRe = /\bfetch\s*\(\s*("([^"]*)"|'([^']*)'|`([^`$]*)`)/gi;
 
 // A string literal immediately followed by `+` is only the *head* of a computed
@@ -438,6 +448,8 @@ function scanFile(file) {
 	const mask = maskLinkHints(content, isJs ? commentMask(content) : htmlMask(content));
 	const inComment = (index) => mask[index] === 1;
 	findings.scanned++;
+	// Page-local router (see localRouterRe): its calls carry section keys, not paths.
+	const ownsRouter = localRouterRe.test(content);
 	let m;
 	const attrRe = isJs ? jsAttrRe : htmlAttrRe;
 	attrRe.lastIndex = 0;
@@ -462,6 +474,9 @@ function scanFile(file) {
 		// string stays a stub everywhere else. Only the object-literal form is
 		// exempt, so a real `el.href = ''` assignment is still reported.
 		if (target === '' && /href\s*:$/i.test(m[1])) continue;
+		// A section key handed to this file's own navigateTo()/routeTo() is not a
+		// navigable target; count it as skipped rather than resolving it as a path.
+		if (ownsRouter && routerCallRe.test(m[1])) { findings.dynamic++; continue; }
 		if (inComment(m.index)) continue;
 		record(target, file, lineOf(content, m.index), concatenatedAfter(content, m.index + m[0].length));
 	}
