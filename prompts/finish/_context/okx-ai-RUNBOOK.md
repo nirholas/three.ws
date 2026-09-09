@@ -348,7 +348,10 @@ Re-verify the relayer's OKB balance is still enough for ≥3 settlement tx befor
 still 0, so it has never broadcast one. `/api/okx/3d/health` reports that reading itself as
 `relayer_funded` on the `payment-rail` row and fails the subsystem when the only settlement
 route is a relayer with no gas, so a dry relayer shows up on the free health lane instead of
-as a 502 after a buyer has already paid (committed 2026-09-09, live on the next deploy).
+as a 502 after a buyer has already paid (commit `4e9ad0419`, refined by `a085871d7`). To tell
+whether the running revision has it, read the field rather than a deploy date:
+`curl -s https://three.ws/api/okx/3d/health | jq '.subsystems[] | select(.name=="payment-rail")'`
+carries `relayer_funded` once it is live and only `settleable` before.
 
 Once funded, run [`okx-ai-04-e2e-real-payment-test.md`](../913-okx-ai-04-e2e-real-payment-test.md). It needs ≥3
 real settlements with transaction hashes.

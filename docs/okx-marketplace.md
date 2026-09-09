@@ -78,6 +78,23 @@ curl https://three.ws/api/okx/3d/catalog
 curl https://three.ws/api/okx/3d/health
 ```
 
+`health` answers `200` when every subsystem is up and `503` when one is not, so a buyer can
+gate on the status code alone. The `payment-rail` subsystem is the one worth reading before
+paying. It carries:
+
+| Field | What it tells a buyer |
+| --- | --- |
+| `settleable` | Whether a payment made right now could actually be collected, not merely that a rail is configured |
+| `block` | The X Layer block height the probe read, so the reading has an age |
+| `token` | The fee token's `symbol()`, read from the contract rather than from our config |
+| `facilitator_configured` | Whether settlement routes through the OKX facilitator |
+| `relayer_funded` | When settlement routes through our own relayer instead, whether that relayer holds the gas to broadcast the redemption. `null` means the relayer is not the route in use |
+| `relayer_error` | Present only when the relayer's balance could not be read at all, which is a different fact from a balance of zero |
+
+The row goes `ok: false` (and the endpoint `503`) when nothing can settle, because a rail that
+quotes a price it cannot collect would take a payment and fail afterwards. That is the one
+health reading that should stop you paying.
+
 ---
 
 ## three.ws Forge

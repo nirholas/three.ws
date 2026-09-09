@@ -335,6 +335,28 @@ describe('free lanes over HTTP', () => {
 		expect(rail.error).toMatch(/out of gas/);
 	});
 
+	// A balance READ that fails carries an error and no reading at all, which is
+	// a different fact from a reading of zero. Collapsing the two answers a
+	// public endpoint with a confident "out of gas" for an unreadable account.
+	it('GET /health separates an unreadable relayer balance from a measured zero', async () => {
+		mountHealthyProbes();
+		fetchRoutes.rpc = (url, init) => {
+			const rpc = jsonRpcBody(init);
+			if (rpc?.method === 'eth_getBalance') {
+				return jsonResponse(200, { jsonrpc: '2.0', id: rpc.id, error: { code: -32000, message: 'relayer account unavailable' } });
+			}
+			return healthyXlayerRpc(url, init);
+		};
+		const res = makeRes();
+		await handler(makeReq({ method: 'GET', service: 'health' }), res);
+		const rail = JSON.parse(res.body).subsystems.find((s) => s.name === 'payment-rail');
+		expect(rail.ok).toBe(false);
+		expect(rail.relayer_funded).toBe(null);
+		expect(rail.error).toMatch(/could not be read/);
+		expect(rail.error).not.toMatch(/out of gas/);
+		expect(rail.relayer_error).toBeTruthy();
+	});
+
 	it('GET /health goes 503 when a subsystem is down — never a hardcoded ok', async () => {
 		fetchRoutes.render = () => new Response(null, { status: 500 });
 		fetchRoutes.forgeSubmit = () => jsonResponse(200, FORGE_CATALOG);

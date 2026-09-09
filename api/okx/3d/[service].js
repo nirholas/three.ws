@@ -196,25 +196,32 @@ async function healthReport() {
 			// and fail the subsystem when no route can actually settle: a rail that
 			// quotes a price it cannot collect is exactly the never-402-then-502
 			// case the challenge gate exists to prevent.
+			// Three states, deliberately kept apart. A relayer whose balance
+			// READ failed carries an `error` and no `funded` key, and folding
+			// that into "false" would answer a public endpoint with a confident
+			// out-of-gas diagnosis for what is really an unreadable account.
 			const facilitator = rail.facilitator?.configured ?? false;
-			const relayerFunded = rail.relayer?.configured ? rail.relayer.funded === true : null;
-			const settleable = rail.settleable && (facilitator || relayerFunded !== false);
-			if (!settleable) {
-				const err = new Error(
-					relayerFunded === false
-						? 'X Layer settlement relayer is out of gas (OKB balance 0)'
-						: 'X Layer settlement route is not configured',
-				);
-				err.detail = { settleable: false, block: rail.rpc?.block, token: rail.token?.symbol, facilitator_configured: facilitator, relayer_funded: relayerFunded };
-				throw err;
-			}
-			return {
+			const relayer = rail.relayer || { configured: false };
+			const relayerFunded = relayer.configured && typeof relayer.funded === 'boolean' ? relayer.funded : null;
+			const relayerError = relayer.configured ? relayer.error || null : null;
+			const settleable = Boolean(rail.settleable) && (facilitator || relayerFunded === true);
+			const detail = {
 				settleable,
 				block: rail.rpc?.block,
 				token: rail.token?.symbol,
 				facilitator_configured: facilitator,
 				relayer_funded: relayerFunded,
+				...(relayerError ? { relayer_error: relayerError } : {}),
 			};
+			if (!settleable) {
+				let reason = 'X Layer settlement route is not configured';
+				if (relayerFunded === false) reason = 'X Layer settlement relayer is out of gas (OKB balance 0)';
+				else if (relayerError) reason = `X Layer settlement relayer balance could not be read: ${relayerError}`;
+				const err = new Error(reason);
+				err.detail = detail;
+				throw err;
+			}
+			return detail;
 		}),
 	]);
 	return { ok: subsystems.every((s) => s.ok), subsystems, checkedAt: new Date().toISOString() };
