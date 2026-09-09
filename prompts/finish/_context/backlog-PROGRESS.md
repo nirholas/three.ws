@@ -1620,3 +1620,151 @@ Left: **the GCP billing hold, owner only.** Vertex denies every call, so chat is
 durably and no reply is authored. Nothing needs redeploying when it clears: the credential
 probe re-runs every 15 minutes and flips readiness on its own. Do NOT restart the codespace
 stopgap; Cloud Run owns the single-writer state object now.
+
+## 2026-09-09: 05 R2 bucket CORS
+
+Measured (all three surfaces, from raw `curl` and from the repaired probe, no bucket
+credentials used):
+
+| Surface | Result |
+|---|---|
+| Site edge `three.ws/avatars/*.glb`, foreign origin GET | PASS, `access-control-allow-origin: *`. |
+| Site edge, same route, `OPTIONS` preflight | PASS, `204` with `access-control-allow-headers: range`. The 2026-09-04 preflight fix is now LIVE (prod at `880bdcef8`), so that line moves from "ships with the next deploy" to verified. |
+| Public bucket host `pub-*.r2.dev` GET/HEAD, foreign origin | FAIL, unchanged. On a real `200` object, `example.org` gets no `access-control-allow-origin`; `three.ws` and `localhost:3000` get their origin echoed with `Vary: Origin`. That differential is the proof the live read rule is still the old allowlist, not the world-open `*`. |
+| Presigned `PUT` preflight on the S3 endpoint | Mixed, unchanged. `204` for `three.ws`, `*.vercel.app`, `localhost:3000`; `403` for `www.three.ws`, `*.app.github.dev`, `localhost:5173`, `example.org`. |
+
+So the item does NOT close: surfaces 1 and 2 both still fail and the fix needs the
+admin token. It stays in ISSUES.md as item 9, dates refreshed.
+
+Did:
+- Repaired `--probe`, which was exiting 1 with nothing measured. It sourced the
+  upload host only from `/api/forge-upload`, and that route returns `503` while
+  object storage is unhealthy, which is exactly now. It now tries three presign
+  routes, accepts explicit `--endpoint=`/`--bucket=` (both non-secret), and when
+  the write host is still unknown it measures and reports the read rule instead
+  of aborting, showing `skip` in the write column. The one-command re-check that
+  ISSUES.md and three docs advertise works again.
+- Refreshed the measurement dates in `docs/media-api.md`,
+  `docs/character-library.md` and both embed tutorials, and documented the new
+  probe flags in `scripts/README.md`.
+- Filed a NEW production outage found while measuring: ISSUES.md item 10.
+  `object_storage` is `down` with `credentialFault: true`, the bucket answering
+  `SignatureDoesNotMatch`. The access key id is accepted, so the secret is wrong.
+  Uploads `503`, the avatar and object libraries return `{"total":0}`, and forge
+  image generation is 0/30 over 6 hours.
+
+The two doc-cleanup lines in the work order were already satisfied by the
+2026-09-04 pass: the script warns against `vercel env pull` rather than
+instructing it, and the `/api/glb` docs already state per-host when the proxy is
+needed and when a direct fetch is fine. Verified both rather than assuming.
+`npm run audit:docs` clean; the four R2/CORS tests pass.
+
+Left: two owner actions, in this order.
+1. Re-set `S3_SECRET_ACCESS_KEY` (Secret Manager `s3-secret-access-key`) to the
+   R2 token's SHA-256 digest. Reading and rotating that secret is gated from this
+   machine. This is the urgent one: it is a live outage.
+2. Mint an "Admin Read & Write" R2 token for `chatty-storage`, put it in
+   `.env.local` as `R2_ACCESS_KEY_ID`/`R2_SECRET_ACCESS_KEY`, run
+   `node scripts/set-r2-cors.mjs`, confirm with `--probe`.
+   Doing this before (1) buys nothing: a correct CORS policy on a bucket we
+   cannot authenticate to changes nothing users can see.
+
+The work order file stays on disk: its "policy correct and applied" line is
+owner-gated.
+
+## 2026-09-09: 10 x402scan listing (the deploy landed; only the signature is left)
+
+Measured, all against live production with no credentials:
+
+- `curl -s https://three.ws/api/version` → `880bdcef8`, revision
+  `three-ws-api-00418-j26`, built 2026-09-08. The `catalogPaidPaths()` fix the
+  2026-09-02 pass left in the tree has shipped.
+- `curl -s https://three.ws/openapi.json` → **82** `/api/x402/*` paid paths
+  (120 total). The work order predicted 79; the catalog has grown since.
+- `gh pr view 1032 --repo Merit-Systems/x402scan` → `MERGED`
+  2026-08-11T20:01:45Z, unchanged.
+- Facilitator page live, rendering both fee payers
+  (`WwwuGbqHrwF5RG89KhUbmRWEvjnRH9k5kVM5p7T3WwW`,
+  `GGf9qBhJDCe1UUz4s4Vxq1uPPvcv7UW7sJTuj2Yo5XQj`) and linking `docsUrl`
+  `three.ws/docs/x402-distribution` (200). `/api/x402-facilitator/supported` 200.
+- Discovery endpoint: 4,521 resources, `total` stable across the sweep.
+- `npx vitest run tests/openapi-aggregator.test.js tests/service-catalog.test.js`
+  → 26 passed.
+
+Ran x402scan's own discovery library (`@agentcash/discovery`
+`discoverOriginSchema`) against `https://three.ws` rather than reasoning about
+what it would do: source `openapi`, 123 endpoints, 83 of them `/api/x402/*`, and
+82 of those classified `paid` with the right price and `pricingMode: fixed`. The
+one non-paid classification is correct: `GET /api/x402/forge` is genuinely free
+price discovery and reads `unprotected`, matching the free row already listed
+beside the paid `POST /api/x402/forge`. That answers the question worth
+answering before a signature is spent, because every paid operation declares
+`security: []` and it was not obvious that `x-payment-info` overrides it. It
+does, so our paid endpoints register as paid rows rather than free catalog rows.
+
+Did:
+
+- Added `scripts/x402scan-registration-gap.mjs`
+  (`npm run preview:x402scan-registration`), which reproduces their
+  classify/probe/deprecate pipeline against live production with no third-party
+  dependency. Validated it against the real library: 123 registrable both ways,
+  and zero classification mismatches on the rows it reports as new. It exists
+  because the alternative was freezing a 60-line endpoint list into a document
+  that would rot within a week.
+- Rewrote the runbook entry in
+  [docs/ops/x402-discovery-listings.md](../../docs/ops/x402-discovery-listings.md)
+  with the measured state, wired the script into its inventory table and its
+  registration steps, and corrected two claims the 2026-09-02 entry got wrong.
+
+What a registration run would do now: 123 registrable endpoints declared, 63
+already listed, **60 rows added and 0 deprecated**, 59 of the 60 answering a
+spec-valid 402 to a bare probe. The zero is the point: the run is purely
+additive and cannot drop any of the 63 rows already listed.
+
+Two corrections to the 2026-09-02 entry, both from re-probing rather than
+re-reading:
+
+1. It recorded five endpoints as answering 503 `settlement_unavailable` and
+   therefore unregisterable. False today. `dance-tip`, `feed-health` and
+   `spend-session` all answer a spec-valid 402 advertising USDC and $THREE on
+   Solana mainnet. The sponsor floor bites at settle time, not at challenge
+   time: `/api/healthz` reports `x402.self_facilitator.settle` at 84 ok / 366
+   failed with every failure `fee_wallet_below_floor`, which stays order 01's
+   capital problem and is not a listing blocker.
+2. `ring-settle` and `three-buy` were listed among those five as if they were a
+   gap to close. They are not. Both answer a valid 402 but carry
+   `discoverable: false` and are deliberately absent from the service catalog,
+   so `catalogPaidPaths()` never projects them. They are internal ring
+   machinery, and listing them would let dogfooded volume masquerade as organic
+   third-party demand. They must stay unlisted.
+
+Swept all 98 handlers under `api/x402/` against `/openapi.json` to check for
+more of the defect class the work order fixed: exactly two live-402 handlers are
+absent from the document, and they are those two deliberate exclusions. Every
+other absent handler is a genuinely free or internal helper route
+(`debug`, `echo`, `preflight`, `market`, `my-receipts`, `verify-receipt`, and
+similar). No further gap exists.
+
+One endpoint will not probe-register and should not: `GET
+/api/x402/vanity-premium`. A bare GET browses the premium inventory for free and
+only `?address=<base58>` triggers the 402. Their probe fills required query
+params only, and `address` is genuinely optional, so the probe sees the free
+mode. Marking it required to force a registration would be a lie about the
+route, so it stays unlisted.
+
+Left: one owner action, and nothing else.
+
+- **One SIWX wallet signature** at <https://www.x402scan.com/resources/register>,
+  "Add API" for origin `https://three.ws`. It binds an identity and moves no
+  funds. Run `npm run preview:x402scan-registration` immediately before signing
+  and confirm "would be deprecated" still reads 0.
+- The alternative their repo exposes, the paid `registry-register` x402
+  endpoint, registers one URL per settled payment and would need 60 payments, so
+  the bulk SIWX flow is strictly better.
+- The optional Base leg (CDP Bazaar) is unchanged and still a nice-to-have:
+  three.ws remains absent from that catalog because indexing is triggered by a
+  settle through the CDP facilitator and production has no
+  `X402_BUYER_PRIVATE_KEY`. Solana settlement stays self-hosted and must not be
+  re-pointed for visibility.
+
+The work order file stays on disk: its origin-registration line is owner-gated.

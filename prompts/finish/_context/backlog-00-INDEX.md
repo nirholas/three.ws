@@ -41,11 +41,11 @@ observable health, so 01 to 03 come first.
 | # | Work order | Blocked on | Owner action needed |
 |---|---|---|---|
 | 01 | [x402 settle: clear `fee_runway_exhausted`](../902-backlog-01-x402-settle-runway.md) | capital and the deploy (three more code defects found and fixed 2026-09-04, incl. a thin top-up that funded the wrong wallet) | SOL to the economy master, and the deploy that carries the ordering fix; the config levers are already applied |
-| 05 | [R2 bucket CORS: verify, then fix at the origin](../906-backlog-05-r2-bucket-cors.md) | one credential | mint an R2 admin token |
+| 05 | [R2 bucket CORS: verify, then fix at the origin](../906-backlog-05-r2-bucket-cors.md) | two credentials (re-measured 2026-09-09, both surfaces still fail) | first re-set `S3_SECRET_ACCESS_KEY` (object storage is DOWN, ISSUES.md item 10), then mint an R2 admin token |
 | 07 | [BNB testnet: deploy the two finished contracts](../910-backlog-07-bnb-testnet-deploys.md) | one funded EOA | send tBNB to `0x1C4918894dfA5eE11cfF9629B458b5169Cfa3871` (faucet is reCAPTCHA-gated) |
 | 08 | [OKX chat bot: move off the codespace](../907-backlog-08-okx-chat-bot-always-on.md) | **deployed 2026-09-04**; only the reply lane is blocked | clear the GCP billing hold so the bot can author replies |
 | 09 | [Telegram bots: durable hosting for both feeds](../908-backlog-09-telegram-bots-durability.md) | **done**, verified live 2026-09-02 | clear the commit gate on its file update |
-| 10 | [x402scan listing: finish the last three steps](../909-backlog-10-x402scan-listing.md) | the deploy (the facilitator listing itself is live) | approve the deploy, then one wallet signature to re-register the origin |
+| 10 | [x402scan listing: finish the last three steps](../909-backlog-10-x402scan-listing.md) | **the deploy landed 2026-09-08**; only the origin registration is left (re-measured 2026-09-09) | one SIWX wallet signature at x402scan `/resources/register` for origin `https://three.ws`; no funds move |
 
 ---
 
@@ -92,8 +92,18 @@ both feeds were verified running on Cloud Run on 2026-09-02 (`Ready=True`, webso
 $1,055 of volume to our facilitator, and their own crawler replayed against production returns
 4,519 stable items with no duplicates). What was left was on our side: their registration flow
 reads `/openapi.json`, which hand-enumerated 24 of the 75 live paid services, so 52 endpoints
-answered a valid 402 and could not be listed. That is fixed in the tree and ships with the next
-deploy, after which one wallet signature re-registers the origin.
+answered a valid 402 and could not be listed. **That shipped on 2026-09-08** (production
+`880bdcef8`), so the document now declares 82 paid paths. Re-measured 2026-09-09 by running
+x402scan's own discovery library against production and by
+`npm run preview:x402scan-registration`, which agrees with it endpoint for endpoint: 123
+registrable endpoints declared, 63 already listed, **60 rows a registration run would add and
+0 it would deprecate**, 59 of the 60 answering a spec-valid 402 to a bare probe. The run is
+purely additive, so the only step left is one owner wallet signature. Two claims from the
+2026-09-02 pass are now false and were corrected in the runbook: the five "503
+`settlement_unavailable`" endpoints all answer a valid 402 today (the sponsor floor bites at
+settle time, not at challenge time, which stays order 01's problem), and `ring-settle` /
+`three-buy` are `discoverable: false` internal ring machinery that must stay unlisted rather
+than being a gap to close.
 
 ## Shared rules (every work order obeys these)
 

@@ -46,23 +46,37 @@ hand-authored paths so the 24 richer entries keep their exact wording.
 Five guards in [tests/openapi-aggregator.test.js](../../tests/openapi-aggregator.test.js)
 keep it from reopening.
 
-## What remains
+## What remains (re-measured 2026-09-09)
 
-1. **Deploy.** The `/openapi.json` fix is in the tree and production is behind
-   `main`. Until it ships, registration still sees 24 endpoints.
+1. ~~**Deploy.**~~ **Done.** The `/openapi.json` fix shipped on 2026-09-08
+   (production `880bdcef8`, revision `three-ws-api-00418-j26`). The document now
+   declares **82** paid `/api/x402/*` paths, not 24.
 2. **Register the missing resources** (owner: one SIWX wallet signature, no
-   funds move). 53 live endpoints answer a valid 402 today and are absent from
-   the origin listing. After the deploy, the whole set is reachable from
-   `/openapi.json`, so the "Add API" flow for origin `https://three.ws` at
-   <https://www.x402scan.com/resources/register> picks them up in one pass.
-   Wallet sign-in is a signature, not a spend, but it binds an identity: render
-   what is being signed and get an owner yes.
-3. **Five endpoints cannot be registered until work order 01 lands capital.**
-   `dance-tip`, `feed-health`, `ring-settle`, `spend-session` and `three-buy`
-   are Solana-only, so while the sponsor wallet is under its SOL settle floor
-   they answer 503 `settlement_unavailable` instead of a 402 and any probe
-   fails. This is correct behavior, not a bug: every Base-carrying endpoint
-   keeps its 402 through the same outage.
+   funds move). This is the ONLY remaining step. Run
+   `npm run preview:x402scan-registration` first: it reproduces x402scan's
+   classify/probe/deprecate pipeline against live production and, on 2026-09-09,
+   reported 123 registrable endpoints declared, 63 already listed, **60 rows
+   added and 0 deprecated**, with 59 of the 60 answering a spec-valid 402 to a
+   bare probe. The zero is the safety property, so re-run the preview
+   immediately before signing and stop if it is no longer zero. Then use "Add
+   API" for origin `https://three.ws` at
+   <https://www.x402scan.com/resources/register>. Wallet sign-in is a signature,
+   not a spend, but it binds an identity: render what is being signed and get an
+   owner yes.
+3. **The "five blocked endpoints" line was wrong and is retired.** Re-probed
+   2026-09-09: `dance-tip`, `feed-health` and `spend-session` all answer a
+   spec-valid 402 advertising USDC and $THREE on Solana mainnet, so they are
+   probe-registerable today. The sponsor floor bites at settle time, not at
+   challenge time (`/api/healthz` reports `x402.self_facilitator.settle` at
+   84 ok / 366 failed, every failure `fee_wallet_below_floor`), which stays work
+   order 01's capital problem. `ring-settle` and `three-buy` also answer 402 but
+   are `discoverable: false` internal ring machinery, deliberately absent from
+   the service catalog so `catalogPaidPaths()` never projects them. Listing them
+   would let dogfooded volume masquerade as organic demand. **Leave them out.**
+   One endpoint genuinely will not probe-register and should not: `GET
+   /api/x402/vanity-premium` browses the inventory for free and only
+   `?address=<base58>` triggers the 402, so their required-params-only probe
+   sees the free mode. Marking `address` required would be a lie about the route.
 4. **Optional Base leg.** three.ws is in none of the CDP Bazaar's 15,127
    resources, exactly as documented: indexing is triggered by a settle through
    the CDP facilitator on Base, and production has no `X402_BUYER_PRIVATE_KEY`
@@ -78,10 +92,13 @@ curl -s https://three.ws/api/x402-facilitator/discovery/resources \
   | python3 -c "import json,sys; d=json.load(sys.stdin); print(d['pagination']['total'], 'resources')"
 curl -s https://three.ws/openapi.json \
   | python3 -c "import json,sys; p=json.load(sys.stdin)['paths']; print(len([k for k in p if k.startswith('/api/x402/')]), 'paid paths')"
+npm run preview:x402scan-registration
 npx vitest run tests/openapi-aggregator.test.js tests/service-catalog.test.js
 ```
 
-The third command reads 24 against production today and 79 after the deploy.
+The third command read 24 before the 2026-09-08 deploy and reads 82 now. The
+fourth is the one to trust before spending the signature: it must report 0 rows
+would be deprecated.
 
 ## Definition of done
 
@@ -90,8 +107,12 @@ The third command reads 24 against production today and 79 after the deploy.
 - [x] The discovery endpoint's live output matches what the PR registers,
       proven by replaying their own crawler against production.
 - [x] Solana settlement unchanged and still self-hosted.
-- [ ] Origin registration: blocked on the deploy, then one owner wallet
-      signature. The exact 53 endpoints are listed in PROGRESS.md.
+- [x] The deploy landed 2026-09-08; `/openapi.json` declares 82 paid paths.
+- [x] Registration preview built and validated against x402scan's own discovery
+      library (`npm run preview:x402scan-registration`): 60 rows added, 0
+      deprecated, 59/60 probe-valid.
+- [ ] Origin registration: **owner-gated**, one SIWX wallet signature and
+      nothing else. Re-run the preview immediately before signing.
 - [x] [PROGRESS.md](_context/backlog-PROGRESS.md) updated.
 
 ## Retire this prompt when it is done (required)
