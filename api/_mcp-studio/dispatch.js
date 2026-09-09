@@ -36,7 +36,7 @@ export const PROTOCOL_VERSION = '2025-06-18';
 const SERVER_INFO = { name: 'three-ws-3d-studio-free', version: '1.0.0' };
 
 const INSTRUCTIONS = [
-	'three.ws 3D Studio turns a text prompt or an image into an interactive, downloadable 3D model (GLB) — free.',
+	'three.ws 3D Studio turns a text prompt or an image into an interactive, downloadable 3D model (GLB), free.',
 	'forge_free(prompt) generates a model from text; text_to_avatar and mesh_forge generate an avatar or art-directed',
 	'mesh from text or a reference image; rig_mesh(glb_url) makes a static model animation-ready; forge_avatar does',
 	'generate + rig in one step. Each result includes a glbUrl and a viewerUrl and renders inline in a 3D viewer widget.',
@@ -61,7 +61,7 @@ function widgetResources() {
 			mimeType: COMPONENT_MIME,
 			text: COMPONENT_HTML,
 			_meta: {
-				'openai/widgetDescription': 'Interactive 3D viewer for a generated model — rotate, view, and download the GLB.',
+				'openai/widgetDescription': 'Interactive 3D viewer for a generated model: rotate, view, and download the GLB.',
 				'openai/widgetCSP': componentCsp(),
 				'openai/widgetDomain': 'https://three.ws',
 				'openai/widgetPrefersBorder': true,

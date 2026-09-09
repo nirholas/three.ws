@@ -94,7 +94,7 @@ async function guardWrite(req) {
 // ── handlers ──────────────────────────────────────────────────────────────────
 
 async function handleCreatePersona(args, _auth, req) {
-	if (!(await guardWrite(req))) return toolError('Too many requests — slow down and try again shortly.');
+	if (!(await guardWrite(req))) return toolError('Too many requests. Slow down and try again shortly.');
 	const glbUrl = String(args.glb_url || '').trim();
 	const name = String(args.name || '').trim();
 	if (!name) return toolError('Provide a display name for the agent (1–80 characters).');
@@ -133,8 +133,8 @@ async function handleCreatePersona(args, _auth, req) {
 					`Saved "${persona.name}" as a living persona.\n` +
 					`Persona ID: ${persona.persona_id}\n` +
 					(persona.look?.rigged
-						? 'Rig: humanoid — full body animation + lip-sync.\n'
-						: 'Rig: static/non-humanoid — falls back to a gentle idle gracefully.\n') +
+						? 'Rig: humanoid, full body animation + lip-sync.\n'
+						: 'Rig: static/non-humanoid, falls back to a gentle idle gracefully.\n') +
 					'Show the attached view to see the body. Call persona_say with this persona_id to make it ' +
 					'speak a reply, or get_agent_persona to bring it back in a future session.',
 			},
@@ -167,7 +167,7 @@ async function handleGetPersona(args) {
 }
 
 async function handlePersonaSay(args, _auth, req) {
-	if (!(await guardWrite(req))) return toolError('Too many requests — slow down and try again shortly.');
+	if (!(await guardWrite(req))) return toolError('Too many requests. Slow down and try again shortly.');
 	const id = String(args.persona_id || '').trim();
 	const text = String(args.text || '').trim();
 	if (!isPersonaId(id)) return toolError('That is not a valid persona id.');
@@ -189,7 +189,7 @@ async function handlePersonaSay(args, _auth, req) {
 				text:
 					`${persona.name} says it with a ${expr.emotion} expression` +
 					(expr.gesture ? ` and a ${expr.gesture} gesture` : '') +
-					'. Show the attached view — the body lip-syncs the reply and emotes.',
+					'. Show the attached view: the body lip-syncs the reply and emotes.',
 			},
 			embodimentArtifact({
 				persona,
@@ -247,11 +247,11 @@ const DEFS = [
 		name: 'create_agent_persona',
 		title: 'Save a rigged model as a living, persistent agent body',
 		description:
-			'Turn a generated GLB into a NAMED, persistent agent body — a "persona" the assistant reuses across ' +
+			'Turn a generated GLB into a NAMED, persistent agent body: a "persona" the assistant reuses across ' +
 			'turns and across sessions. The model is copied into durable storage so the body survives the source ' +
 			'URL expiring, then registered under a stable persona_id. The returned view renders the LIVING body ' +
 			'inline: it idles between turns, and persona_say makes it lip-sync and emote a reply. The persona_id is ' +
-			'the handle — keep it and pass it to get_agent_persona or persona_say later to bring the exact same body ' +
+			'the handle: keep it and pass it to get_agent_persona or persona_say later to bring the exact same body ' +
 			'back. No sign-in required.',
 		inputSchema: {
 			type: 'object',
@@ -272,7 +272,7 @@ const DEFS = [
 		name: 'get_agent_persona',
 		title: 'Reload a persona by id (continuity across sessions)',
 		description:
-			'Bring back a previously saved persona by its persona_id — the SAME body and identity, in a fresh ' +
+			'Bring back a previously saved persona by its persona_id: the SAME body and identity, in a fresh ' +
 			'session. Returns the persona name, its model, the accumulated turn count, and the inline living-body ' +
 			'view. Use this at the start of a conversation when the user returns to a named agent.',
 		inputSchema: {
@@ -294,14 +294,14 @@ const DEFS = [
 			'Make a persona PERFORM a reply: the body lip-syncs the text and shows the matching facial expression ' +
 			'and body gesture. Pass the persona_id and the exact text the agent is saying this turn; the emotion is ' +
 			'detected from the text automatically (or set it explicitly). The returned view animates the body for ' +
-			'this turn — show it alongside the reply. This is the turn-by-turn embodiment hook.',
+			'this turn: show it alongside the reply. This is the turn-by-turn embodiment hook.',
 		inputSchema: {
 			type: 'object',
 			additionalProperties: false,
 			required: ['persona_id', 'text'],
 			properties: {
 				persona_id: { type: 'string', minLength: 8, maxLength: 64, description: 'The persona to speak through.' },
-				text: { type: 'string', minLength: 1, maxLength: 2000, description: 'The reply text the agent is saying this turn — drives lip-sync and emotion.' },
+				text: { type: 'string', minLength: 1, maxLength: 2000, description: 'The reply text the agent is saying this turn: drives lip-sync and emotion.' },
 				emotion: { type: 'string', enum: ['neutral', 'joy', 'sad', 'angry', 'surprised', 'thinking'], description: 'Optional explicit emotion override; omit to auto-detect from the text.' },
 			},
 		},

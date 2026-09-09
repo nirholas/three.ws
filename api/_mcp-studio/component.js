@@ -279,7 +279,7 @@ export const COMPONENT_HTML = `<!doctype html>
     show(loading);
     mv.classList.remove('fading');
     mv.classList.add('veiled');
-    // The forge paints a concept image before sculpting the mesh — use it as
+    // The forge paints a concept image before sculpting the mesh, so use it as
     // the model-viewer poster so the user sees the painted reference the
     // instant the widget renders, while the GLB is still streaming in.
     if (isHttps(out.referenceImageUrl)) { mv.setAttribute('poster', out.referenceImageUrl); }

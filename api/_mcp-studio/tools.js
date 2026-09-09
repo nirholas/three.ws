@@ -522,7 +522,7 @@ async function handleForgeAvatar(args, _auth, req) {
 	}
 	if (prompt && !imageUrl && args.allow_non_humanoid !== true && looksNonHumanoid(prompt)) {
 		return toolError(
-			'That looks like an object rather than a character. Auto-rigging needs a humanoid figure — use the 3D mesh generator for objects, or set allow_non_humanoid to override.',
+			'That looks like an object rather than a character. Auto-rigging needs a humanoid figure. Use the 3D mesh generator for objects, or set allow_non_humanoid to override.',
 		);
 	}
 	try {
@@ -823,7 +823,7 @@ const DEFS = [
 		name: 'forge_free',
 		title: 'Generate a 3D model from text',
 		description:
-			'Turn a text prompt into a textured, downloadable 3D model (GLB) — free. Describe a single object, ' +
+			'Turn a text prompt into a textured, downloadable 3D model (GLB), free. Describe a single object, ' +
 			'character, or creature; the studio generates an interactive model you can rotate, view, and download. ' +
 			'Optional quality tier (draft, standard, high); high is slower and may fall back to standard under load. ' +
 			'Renders inline in an interactive 3D viewer.',
@@ -909,7 +909,7 @@ const DEFS = [
 		name: 'forge_avatar',
 		title: 'Generate a rigged, animation-ready avatar',
 		description:
-			'Generate a rigged, animation-ready 3D avatar (GLB) from a single text prompt or a reference image — ' +
+			'Generate a rigged, animation-ready 3D avatar (GLB) from a single text prompt or a reference image, ' +
 			'in one step. Generates the mesh, then auto-rigs it with a humanoid skeleton so it is ready to pose and ' +
 			'animate. Best for characters; objects are steered to the mesh generator. Renders inline in an ' +
 			'interactive 3D viewer.',
@@ -930,11 +930,11 @@ const DEFS = [
 		name: 'refine_model',
 		title: 'Refine a 3D model by describing a change',
 		description:
-			'Iterate on a model you already generated — just describe the change in words ("make it metallic", ' +
+			'Iterate on a model you already generated: just describe the change in words ("make it metallic", ' +
 			'"bigger helmet", "add wings"). The studio re-generates a new version anchored to the previous one, ' +
 			'carrying its form and materials forward. Pass the previous model\'s glb_url and, when you have it, the ' +
 			'prompt that made it (parent_prompt) so the change builds on it. Each refinement is recorded as a new ' +
-			'version in a lineage you can revert to or branch from — the returned lineage drives a version strip in ' +
+			'version in a lineage you can revert to or branch from, and the returned lineage drives a version strip in ' +
 			'the viewer. Renders the new version inline in the interactive 3D viewer.',
 		inputSchema: {
 			type: 'object',
@@ -951,7 +951,7 @@ const DEFS = [
 				parent_prompt: {
 					type: 'string',
 					maxLength: 1000,
-					description: 'Optional — the prompt that produced the model being refined, so the change builds on it instead of starting over.',
+					description: 'Optional: the prompt that produced the model being refined, so the change builds on it instead of starting over.',
 				},
 				reference_image_url: {
 					type: 'string',
@@ -960,13 +960,13 @@ const DEFS = [
 				},
 				parent_lineage: {
 					type: 'array',
-					description: 'Optional — the lineage array from a previous refine_model result, to extend the same version history.',
+					description: 'Optional: the lineage array from a previous refine_model result, to extend the same version history.',
 					items: { type: 'object', additionalProperties: true },
 				},
 				parent_index: {
 					type: 'integer',
 					minimum: 0,
-					description: 'Optional — branch off an earlier version in parent_lineage (its index) instead of the latest.',
+					description: 'Optional: branch off an earlier version in parent_lineage (its index) instead of the latest.',
 				},
 			},
 		},
