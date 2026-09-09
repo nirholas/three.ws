@@ -104,11 +104,23 @@ function layout(field) {
 	};
 }
 
+/**
+ * Layout paths are written the way JavaScript reads them (`stats.0.label`), but
+ * Adaptive Expression Language indexes an array with brackets. A dot before a
+ * number is a parse error there, and the templating engine throws on the whole
+ * card rather than skipping the one binding, so a single dotted index leaves
+ * the widget slot empty instead of merely missing a line.
+ */
+function binding(path) {
+	return path.replace(/\.(\d+)/g, '[$1]');
+}
+
 /** The unbound template the Windows widgets board fetches once. */
 export function adaptiveTemplate() {
-	return layout((path, fallback) =>
-		fallback ? `\${if(${path}, ${path}, '${fallback}')}` : `\${${path}}`,
-	);
+	return layout((path, fallback) => {
+		const expr = binding(path);
+		return fallback ? `\${if(${expr}, ${expr}, '${fallback}')}` : `\${${expr}}`;
+	});
 }
 
 /** The same card with this agent's values already in it. */

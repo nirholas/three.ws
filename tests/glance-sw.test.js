@@ -8,6 +8,7 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
+import { Template } from 'adaptivecards-templating';
 import { adaptiveTemplate } from '../api/_lib/glance-adaptive.js';
 
 const SW_SOURCE = readFileSync(resolve(process.cwd(), 'public/glance-sw.js'), 'utf8');
@@ -306,7 +307,7 @@ describe('the card the board renders binds to the payload the worker sends', () 
 	/** Every `${...}` in the template, as a path plus whether it has a fallback. */
 	function bindings(node, found = []) {
 		if (typeof node === 'string') {
-			const match = node.match(/^\$\{(?:if\((?<guarded>[\w.]+),|(?<plain>[\w.]+)\})/);
+			const match = node.match(/^\$\{(?:if\((?<guarded>[\w.[\]]+),|(?<plain>[\w.[\]]+)\})/);
 			if (match) {
 				const path = match.groups.plain || match.groups.guarded;
 				found.push({ path, optional: Boolean(match.groups.guarded) });
@@ -323,8 +324,13 @@ describe('the card the board renders binds to the payload the worker sends', () 
 		return found;
 	}
 
+	// Template paths are Adaptive Expression Language, which indexes arrays with
+	// brackets (`stats[0].label`); read them the way the board's engine does.
 	const resolvePath = (payload, path) =>
-		path.split('.').reduce((at, key) => (at === undefined || at === null ? undefined : at[key]), payload);
+		path
+			.replace(/\[(\d+)\]/g, '.$1')
+			.split('.')
+			.reduce((at, key) => (at === undefined || at === null ? undefined : at[key]), payload);
 
 	const template = adaptiveTemplate();
 	const bound = bindings(template);
@@ -358,12 +364,12 @@ describe('the card the board renders binds to the payload the worker sends', () 
 			'metric.label',
 			'metric.value',
 			'name',
-			'stats.0.label',
-			'stats.0.value',
-			'stats.1.label',
-			'stats.1.value',
-			'stats.2.label',
-			'stats.2.value',
+			'stats[0].label',
+			'stats[0].value',
+			'stats[1].label',
+			'stats[1].value',
+			'stats[2].label',
+			'stats[2].value',
 			'url',
 		]);
 	});
@@ -384,5 +390,27 @@ describe('the card the board renders binds to the payload the worker sends', () 
 		const payload = loadWorker().self.__threewsGlancePayload(AGENT);
 		expect(payload.stats).toHaveLength(3);
 		expect(payload.stats[2]).toEqual({ label: 'Days live', value: '12' });
+	});
+
+	// The checks above read the template with this repo's own idea of a path,
+	// which is how `${stats.0.label}` survived review: it looks like every other
+	// binding and resolves fine in JavaScript. The board does not use JavaScript
+	// paths. It evaluates Adaptive Expression Language, where an array is indexed
+	// with brackets and a dot before a digit is a parse error, and the engine
+	// throws on the whole card rather than skipping the one binding. So the last
+	// word goes to the engine the board actually runs.
+	it.each([
+		['signed out', { signedIn: false, signInUrl: 'https://three.ws/login' }],
+		['no agent yet', { signedIn: true, card: null, createUrl: 'https://three.ws/create' }],
+		['a live agent', AGENT],
+	])('expands in the real Adaptive Cards engine for %s', (_label, body) => {
+		const payload = loadWorker().self.__threewsGlancePayload(body);
+		const card = new Template(structuredClone(template)).expand({ $root: payload });
+		expect(JSON.stringify(card)).not.toContain('${');
+		// Every slot the board draws carries a real value, not an empty string.
+		expect(card.body[0].columns[1].items[0].text).toBeTruthy();
+		expect(card.body[1].columns[0].items[0].text).toBeTruthy();
+		for (const fact of card.body[2].facts) expect(fact.title).toBeTruthy();
+		for (const action of card.actions) expect(action.url).toMatch(/^https:\/\//);
 	});
 });
