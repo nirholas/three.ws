@@ -115,9 +115,10 @@ function injectStyles() {
 .mp-meta { display: flex; align-items: center; gap: 8px; margin-top: 3px; font-size: var(--text-2xs, .68rem); color: var(--ink-faint, #666); }
 .mp-chip-slot { display: inline-flex; }
 .mp-time { white-space: nowrap; }
-.mp-explore { display: inline-flex; align-items: center; justify-content: center; min-height: 24px; min-width: 44px;
+.mp-explore { position: relative; display: inline-flex; align-items: center; justify-content: center; min-height: 24px;
 	margin: -4px 0; padding: 0 6px; border-radius: var(--radius-sm, 6px); color: var(--ink-faint, #666); text-decoration: none;
 	transition: color .14s ease, background .14s ease; }
+.mp-explore::after { content: ""; position: absolute; top: 0; bottom: 0; left: -7px; right: -7px; }
 .mp-explore:hover { color: var(--mp-accent); background: var(--surface-2, rgba(255,255,255,.05)); }
 .mp-right { flex: 0 0 auto; display: flex; flex-direction: column; align-items: flex-end; gap: 2px; }
 .mp-kindtag { font-size: var(--text-2xs,.66rem); text-transform: uppercase; letter-spacing: .06em; color: var(--ink-faint,#666); }

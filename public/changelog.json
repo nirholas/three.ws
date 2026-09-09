@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-09-09T03:48:20.204Z",
+	"generated_at": "2026-09-09T04:04:38.471Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -31,12 +31,99 @@
 		{
 			"date": "2026-09-09",
 			"type": "update",
+			"title": "Ethereum wallets load on the portfolio page again, keylessly, and every token logo shows up",
+			"summary": "A full audit of /portfolio, where you paste any Solana or Ethereum address and get a live portfolio. The Ethereum half had gone dark: the single provider behind it ran out of monthly capacity, so every 0x address answered \"Data source unavailable\" with nothing behind it. Ethereum now has the same keyless floor Solana has always had. The ETH balance comes from the public Ethereum nodes the rest of the platform already uses, the token list with its prices and icons comes from a public block explorer, and the 24h move comes from the same market source the Solana side uses, with the coverage it achieved stated on the card. The Data panel names whichever lane actually answered, so you can see whether you are reading the paid provider or the free one. Token logos were another visible break: the page pointed your browser straight at an IPFS gateway, which the browser refuses on cross-origin grounds, so every holding fell back to a three-letter monogram and your address bar handed your IP to the gateway on every load. Logos now come through three.ws, sized for the row. Keyboard users could tab onto a slice of the allocation donut and get nothing: the tooltip was wired to an event handler property that browsers do not actually support, so it never fired once; the slice now names its asset and share, and Escape dismisses it. When a lookup fails, the page now shows the reason the server actually sent instead of a generic sentence, and clicking Retry after a rejected address no longer silently reloads the wallet you looked at before it. Underneath, the fallback that names Solana tokens when the primary metadata source is out of quota had never run at all, because of a missing import; token symbols and names come back on that path.",
+			"link": "/portfolio",
+			"tags": [
+				"fix",
+				"improvement"
+			]
+		},
+		{
+			"date": "2026-09-09",
+			"type": "update",
+			"title": "Pay-per-call is keyboard-drivable, and it now tells you when the wallet lane is down instead of sitting on a spinner",
+			"summary": "A full audit of /pay, the page where an agent pays $0.001 USDC on Solana per call to a paid API. Three things were quietly broken. The wallet pill kept reverting to \"loading\" after it had already shown a real balance: the page fills that pill from a live balance lookup, but the translation pass that runs a moment later put the placeholder back over it, and the same race hit the session ticker and the wallet setup dialog. Those slots are now marked as owned by the page, so a rendered balance stays put. The whole wallet picker was unreachable without a mouse, because each wallet was a clickable box rather than a button; every wallet is now a real button that tab reaches, Enter and Space activate, and a screen reader announces as selected or not. Both dialogs (the first-visit walkthrough and the wallet setup prompt) now take focus when they open, close on Escape, hand focus back to whatever opened them, and stay hidden from screen readers while closed. States are honest now too. When the agent wallet service is unreachable the page used to tell a signed-out visitor to create their first agent, which was never the problem; it now says wallets are unavailable and offers a Retry that re-runs the lookup without a page reload. A failed activity feed used to leave a row of dots ticking forever and now says the feed is unavailable. The page also gained the heading it never had, one high-contrast focus ring across every control, and a copy pass that removed the long dashes from its description and on-page text.",
+			"link": "/pay",
+			"tags": [
+				"fix",
+				"improvement"
+			]
+		},
+		{
+			"date": "2026-09-09",
+			"type": "update",
+			"title": "Payment sessions: the MCP config you copy now works, and a failed load tells you what to do",
+			"summary": "The Copy MCP config button on /payments handed out a config that could never connect. It baked in a shortened stand-in for your session token instead of the real one (the real token is shown only once, at creation, and is never retrievable afterwards), and it wrote your sign-in cookie in the wrong format. The snippet now points at two environment variables you export yourself, so the file you save never holds a secret, and a note beside it says exactly what each one is. Failures on the page also stopped hiding behind machine jargon: when the service refused a request, the page showed you its internal code, so trying to create a session with an empty balance read as the word insufficient_credits and nothing else. You now get the plain sentence, and when the balance is the problem, a link straight to Add credits. If the list itself cannot load, the four counters at the top no longer shimmer forever as though something were still loading: the page says what failed, leaves your sessions and budgets untouched, and offers a Try again button. Smaller things along the way: the Docs button used to open a page that did not exist, filtering to a status with nothing in it now offers a way back to the full list, the status filters are reachable on a narrow phone instead of being cut off at the edge, and every field in both dialogs is properly labelled for screen readers.",
+			"link": "/payments",
+			"tags": [
+				"fix",
+				"improvement"
+			]
+		},
+		{
+			"date": "2026-09-09",
+			"type": "update",
+			"title": "Rankings survives a stalled leaderboard and stops reading the whole board aloud",
+			"summary": "If the rankings service went quiet, /rankings sat on a shimmering skeleton forever with no way out: a request that never answered looked exactly like one still loading. The board now gives up after 15 seconds and shows the same error card it already had, with a Retry button and the reason, so a stall is always recoverable. Switching metrics still cancels the previous request silently, so a fast tap never surfaces a false error. For screen readers, the results list itself was marked live, so every metric switch and every Show more re-announced up to a hundred rows; the board now announces one short line instead, such as \"Creations: showing 50 of 169 ranked creators\". Page copy also lost its stray dashes.",
+			"link": "/rankings",
+			"tags": [
+				"fix",
+				"improvement"
+			]
+		},
+		{
+			"date": "2026-09-09",
+			"type": "update",
+			"title": "Rig Doctor's report fits on a phone, and its headline numbers now come from the analyser",
+			"summary": "On a narrow phone screen the whole right-hand side of a Rig Doctor diagnosis was cut off the edge of the page. Coverage, Inventory, the bone rewrites and the generated manifest were all rendered wider than the screen, and because the page clips rather than scrolls sideways, there was no way to reach them: you got the verdict and the preview and nothing else. The cause was the generated manifest, a long unbreakable block of code that was stretching every panel beside it. The panels are now pinned to the column and the code block scrolls on its own, so the full report reads on a 320px screen. Separately, the page advertised eleven recognised rig conventions when the analyser had grown to twelve, and the missing one, MikuMikuDance, was absent from the explainer too. Both counts in the hero are now read straight from the analyser rather than typed by hand, so they cannot drift again, and the sample rig labelled Halfbody now describes what it actually shows: its arms stay frozen as well as its legs.",
+			"link": "/rig-doctor",
+			"tags": [
+				"fix",
+				"improvement"
+			]
+		},
+		{
+			"date": "2026-09-09",
+			"type": "update",
 			"title": "Scene Studio fits a 320px phone screen, and its playback controls announce themselves",
 			"summary": "A full audit of /scene, the in-browser 3D scene editor. On a narrow phone the panel that holds the outliner, transforms, geometry and materials sits along the bottom of the screen, but it carried a 335px minimum width from the editor it is built on. That is wider than a 320px screen, and because the page suppresses sideways scrolling the right 15px of it simply had nowhere to go: the object type labels and the right-hand stepper of every number field were off-screen and unreachable. The panel now shrinks to the screen. The first-run card that tells you how to start a scene was centred in a band that ran underneath the Import/Export/Share buttons, so on the same narrow screens the buttons sat on top of its heading; the card now starts below them and scrolls inside itself on a short screen instead of running over the panel below. The floating translate/rotate/scale toolbar was painted under that card too, and now sits above it. And the animation timeline's play, pause and stop buttons are drawn as bare icons with no text, so a screen reader announced three identical unnamed buttons; all three now carry names taken from the editor's own translated string table.",
 			"link": "/scene",
 			"tags": [
 				"fix",
 				"improvement"
+			]
+		},
+		{
+			"date": "2026-09-09",
+			"type": "update",
+			"title": "Sign Language Avatars is usable the moment the page opens",
+			"summary": "The signing avatar on /sign-language is a multi-megabyte model, and until it finished downloading the page had nothing to say: an empty box, an empty status line, and buttons that had not been wired yet, so an early click on Sign it did nothing at all. The stage now shows a breathing silhouette while the avatar loads, every control is wired before the download starts, and anything you type, click or open with a ?say= link in the meantime is queued and signed the moment the avatar lands. If the model fails to download, the stage says so and offers Retry the avatar plus a link to the sign API below, which runs on the server and works without the 3D preview; the vocabulary chips and the Sign it button now explain why they cannot sign instead of doing nothing. An avatar with no signing skeleton says so in the same words.",
+			"link": "/sign-language",
+			"tags": [
+				"improvement",
+				"fix"
+			]
+		},
+		{
+			"date": "2026-09-09",
+			"type": "update",
+			"title": "Sign Mirror tells you why the camera did not start where you are actually looking",
+			"summary": "On /sign-mirror, pressing \"Turn the camera on\" and being refused, or being on a device with no camera, put the explanation on the far side of the page: it appeared in the status strip over the 3D avatar, in the other column, while the box directly above the button you had just pressed carried on giving the same idle tip as before. The button snapped back to \"Turn the camera on\" with nothing visibly changed beside it, so a refused camera read as a button that simply did not work. Every camera and hand-tracker failure now lands in that box beside the button, in both the side-by-side and the stacked phone layout, and the box turns amber and solid-edged so a problem no longer looks like a coaching tip. The sentences themselves are unchanged and still say what to do next, naming the browser permission prompt, a camera busy in another app, a missing camera, or a hand tracker that could not be downloaded. Picking another letter clears the warning and returns the box to its normal hint.",
+			"link": "/sign-mirror",
+			"tags": [
+				"fix",
+				"improvement"
+			]
+		},
+		{
+			"date": "2026-09-09",
+			"type": "update",
+			"title": "The \"have you tried\" card no longer hangs off the side of the screen on a phone",
+			"summary": "The small suggestion card that appears in the bottom corner of the site was drawn 34 pixels wider than the space it asked for, because its padding and border were being added on top of its width instead of counted inside it. On a phone that pushed the card 22 pixels past the left edge of the screen, so its kicker, title and description were all cut off mid-word and the button inside it ran wider than the card itself. This only happened on the pages that do not load the main site stylesheet, which includes the whole markets family: the screener, coin pages, categories, the heatmap and about thirty others. The card now sits fully on screen with an even gutter on both sides at every width, and its button fits inside it.",
+			"link": "/screener",
+			"tags": [
+				"fix"
 			]
 		},
 		{
@@ -97,6 +184,28 @@
 		{
 			"date": "2026-09-09",
 			"type": "update",
+			"title": "The Money Pulse now tells you when its stats are down, and retries on the spot",
+			"summary": "When the money-intelligence call behind /pulse failed, the three side panels (Top earners, Busiest wallets, Fresh launches) sat on \"Loading...\" forever and the 7-day activity strip went blank, which reads as \"the platform is quiet\" rather than \"we could not fetch this\". Each surface now says what went wrong, notes that the live feed itself is unaffected and that it retries every minute, and offers a Retry button that refetches immediately. First paint uses skeletons shaped like the real counters, bars and rows instead of dashes and a loading label, so nothing shifts when the numbers land. The empty states point somewhere useful now: no tips yet links to the agent directory, no wallet activity links to the agents that are online. Switching between mainnet and devnet shows the skeletons again rather than leaving the previous network's numbers under the new label. The stat cards report their filter state to screen readers, the rail cards are real headings, and the per-row explorer link is a full-size tap target that says where it goes.",
+			"link": "/pulse",
+			"tags": [
+				"fix",
+				"improvement"
+			]
+		},
+		{
+			"date": "2026-09-09",
+			"type": "update",
+			"title": "The Object Library is full again: 511 free CC0 props, and the page no longer stalls loading them",
+			"summary": "A full audit of /objects, the public-domain prop library. The page had been showing \"Object library coming online\" to everyone: the 511 props were sitting on the CDN the whole time, but the server read their index over a signed storage connection whose credential had stopped matching, so every visitor got an empty shelf. The index is public data on a public domain, so the read now falls back to that domain when the signed one fails, and the same change refills the character library, the animation clips and the asset catalogue the agent tools search. Browsing is a different page too. It used to build all 511 cards at once, each one a live 3D viewer with its own model, which meant 511 image requests before the first card appeared and about eighteen seconds of nothing. Now it renders 48 at a time, with a Load more button and automatic loading as you scroll, and a card stays a still picture until you rest the pointer on it, at which point that one spins up in 3D; a handful stay live at a time instead of hundreds. The filter row dropped eight chips that were Poly Haven collection names rather than anything you would browse by. On a phone the Preview, AR and Download buttons each get a full-width row instead of three cramped pills. Keyboard focus is now visible on every control, a failed load names the actual reason above its retry button, and the page description no longer contradicts the one in the markup.",
+			"link": "/objects",
+			"tags": [
+				"fix",
+				"improvement"
+			]
+		},
+		{
+			"date": "2026-09-09",
+			"type": "update",
 			"title": "The OpenAI partner page now proves the free ChatGPT connector is up instead of just claiming it",
 			"summary": "The /openai page told readers that a free, keyless 3D connector answers at three.ws/api/mcp-studio and then listed the eleven tools it exposes. Both were claims on a static page. Now the page calls the connector from the reader's own browser on load and reports what came back: live with the tool count and the response time, or a plain explanation and a Check again button if the call was blocked. The printed tool table is reconciled against the same response, so every tool the server really answers with is ticked, one the server has dropped is flagged, and one the server has added since the page was written is appended with its own description. The connector URL and the curl command both got copy buttons, and hover plates on the page no longer turn near-white when the site theme is switched to light.",
 			"link": "/openai",
@@ -122,6 +231,39 @@
 			"title": "The partner page gets its footer back, fits a narrow phone, and stops naming three partners it does not have",
 			"summary": "An end-to-end audit of /partners found it was the only page on the site that carried a footer slot but never loaded the footer, so the whole bottom of the page was missing. It is back. On a 320px phone the partner cards were 38px wider than the screen and the overhanging text was silently cut off, because a card header could not shrink past its logo, name and category chip on one line; the chip now wraps and every card fits. The page description search engines and link previews read was also stale: it advertised Intel, Microsoft and Oracle, none of which have a card, and left out OpenAI and HackerNoon, which do. The AWS card said View on AWS Marketplace above a link to our own AWS page, so it now says what it actually opens. Beyond that: the 8 partners and 22 chains counters are no longer hidden from screen readers and the partner number is now counted from the cards themselves, keyboard users get a visible ring on every card and button, the card lift is dropped for anyone who asks for reduced motion, and the page eyebrow, the four benefit headings and every card call to action are translatable instead of staying English on a translated page. The floating walk companion also got a full-size dismiss, avatar-swap and narration button on touch devices, everywhere it appears.",
 			"link": "/partners",
+			"tags": [
+				"fix",
+				"improvement"
+			]
+		},
+		{
+			"date": "2026-09-09",
+			"type": "update",
+			"title": "The pitch deck now shows the whole character, and says so when the 3D cannot load",
+			"summary": "The live 3D figure on the deck at /pitch was framed by a camera that cut it off above the chest and pointed at its back, so the slide that says \"give your AI a face\" showed neither a head nor a face. Both stages now frame the full character from the front. Each stage also ships a still frame rendered from the same glTF file: it fills the panel while the model streams instead of leaving an empty box, and if the 3D runtime is blocked or fails outright the panel says so in the open, drops the \"Live\" badge that used to sit over nothing, and offers a retry. Navigation got the same pass: the slide dots are now full-size tap targets and step out of the way on a phone, the language picker no longer lands on the slide counter, slide copy no longer runs underneath the nav bar on a tablet, links on hidden slides are out of the keyboard tab order, and every button and link has a visible focus ring.",
+			"link": "/pitch",
+			"tags": [
+				"fix",
+				"improvement"
+			]
+		},
+		{
+			"date": "2026-09-09",
+			"type": "update",
+			"title": "The press kit reads in the three.ws typeface, fits a phone, and quotes every mark at its true size",
+			"summary": "Every paragraph on the press kit was rendering in the browser default serif on a bare white-ish ground: the page styled its own cards and headings but never applied the site typeface, colour, or background to the document itself, so the one page a journalist opens looked nothing like the rest of three.ws. It now uses the platform design tokens throughout, in both light and dark mode. On a 320px phone the two OpenAI announcement cards were sliced off at the right edge, taking their Download PNG buttons with them, and because the page clips rather than scrolls sideways there was no way to reach what was cut; both card grids now fold to a single full-width column instead. The pixel dimensions printed under each mark were also all slightly wrong, off by a pixel or two from the artwork they labelled, which is the number a designer laying out a conference programme actually acts on. They are corrected, and the brand asset renderer now writes them back from the PNG headers on every build the way it already did for the archive size, so they cannot drift again. Last, the Copy buttons beside the boilerplate did nothing at all when the browser withheld clipboard access; they now select the passage in place and tell you which keys to press.",
+			"link": "/press",
+			"tags": [
+				"fix",
+				"improvement"
+			]
+		},
+		{
+			"date": "2026-09-09",
+			"type": "update",
+			"title": "The Pump Visualizer's live counters stopped freezing a few seconds after the page opened",
+			"summary": "A full audit of /pump-visualizer, the 3D scene of live pump.fun mints. The status bar across the top counts the tokens in the scene, the mint rate per minute and the total market cap, and about fifteen seconds into every visit all three froze: the counter sat at 0 and the rate and total sat at a dash while the scene behind them kept filling with new coins. The cause was the page's own translation pass. Those three numbers were written inside blocks of translated copy, so the moment the language file arrived the browser rebuilt that copy and threw away the very elements the page was writing into. The numbers now live beside their labels instead of inside them, so the labels still translate into all 85 languages and the values keep counting for as long as the page is open. The per-minute and per-hour units now translate too, which they never did once the page switched between live mints and migrations. The page also gained a heading and a labelled search box for screen readers, and its browser tab now reads Pump.fun Visualizer, three.ws instead of a retired product name.",
+			"link": "/pump-visualizer",
 			"tags": [
 				"fix",
 				"improvement"
@@ -188,6 +330,17 @@
 			"title": "The spend policy dry run stops contradicting its own counters",
 			"summary": "The simulator at /pay/simulator reports what an agent budget actually buys, and its headline sentence disagreed with the numbers directly beneath it. An endpoint that answers without asking for payment is free: it costs nothing and is never checked against your policy. The counters knew that, and the sentence did not, so the very first run on the page announced that all seven calls settle while the tile beside it said six. Calls that could not be priced at all vanished the same way, counted nowhere the reader could see. Both now have their own tile, and the verdict sentence is built from the counts it is describing, so settled, free, unpriced and refused always add up to the total in front of you. A run that fails now says why: an unusable line used to produce a bare \"Simulation failed (HTTP 400)\", and now quotes the endpoint the simulator could not read along with what a working line looks like. A budget left blank was quietly costed against one dollar, giving you a verdict for a budget you never proposed; the answer now says when that substitution happened. On a phone the little question marks beside each field were fifteen pixels wide and their explanations opened off the side of the screen, so the help was unreadable exactly where it was needed most: the tap targets are now large enough to hit and the explanations stay on the page at every width.",
 			"link": "/pay/simulator",
+			"tags": [
+				"fix",
+				"improvement"
+			]
+		},
+		{
+			"date": "2026-09-09",
+			"type": "update",
+			"title": "The Splat Viewer keeps its recenter and download controls, and its errors say what went wrong",
+			"summary": "Loading a scene on /splat used to erase the viewer's own controls: writing the scene label into the HUD replaced the recenter and download buttons with plain text, so from the first render onward neither existed. Both now live beside the label and survive every scene swap, and the download always offers the scene you are actually looking at rather than a previous one. The error state was worse than useless: it showed a heading over an empty space because the explanation was being written into an element that was not on the page. Now a failed load tells you what happened and what to do, including the advice to download and upload a file whose host blocks cross-origin requests. Clicking a sample or picking a file also shows the loading state immediately instead of sitting on an idle stage while the splat engine downloads in silence, and an engine that fails to load says so rather than leaving the page frozen.",
+			"link": "/splat",
 			"tags": [
 				"fix",
 				"improvement"

@@ -232,6 +232,8 @@ body {
 .px-lb-empty a { color: var(--ink-bright, #fff); }
 
 /* Rail + stats error: say what broke, say when it retries, offer the retry now. */
+#px-stats:empty { display: none; }
+#px-stats { margin: var(--space-md, 16px) 0 0; }
 .px-stats-err { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; padding: 12px 14px;
 	background: var(--surface-1, rgba(255,255,255,.03)); border: 1px solid var(--stroke, rgba(255,255,255,.07));
 	border-radius: var(--radius-lg, 14px); line-height: 1.45; }

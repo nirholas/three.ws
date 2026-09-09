@@ -51,6 +51,8 @@
 	.sm-filter input::-webkit-search-cancel-button { cursor: pointer; }
 	.sm-filter kbd { flex-shrink: 0; display: inline-flex; align-items: center; justify-content: center; min-width: 20px; height: 20px; padding: 0 5px; border: 1px solid rgba(255,255,255,.14); border-radius: 4px; font: 600 11px/1 ui-monospace, SFMono-Regular, Menlo, monospace; color: #7a85a8; }
 	.sm-filter-count { color: #9b9bb7; font-size: 13px; margin: 0 0 20px; min-height: 18px; padding: 0 4px; }
+	#sm-filter-hint { color: #7a85a8; }
+	#sm-filter-hint:not(:empty)::before { content: ' \00b7 '; }
 	.sm-empty { display: flex; flex-direction: column; align-items: center; gap: 10px; padding: 64px 24px; border: 1px dashed rgba(255,255,255,.12); border-radius: 16px; text-align: center; }
 	.sm-empty p { margin: 0; color: #b6b6cf; font-size: 15px; }
 	.sm-empty .sm-empty-hint { color: #7a85a8; font-size: 13px; }
@@ -107,7 +109,7 @@
 			<input id="sm-filter-input" type="search" placeholder="Filter 924 pages by name, path, or description…" aria-label="Filter pages" autocomplete="off" spellcheck="false" />
 			<kbd id="sm-filter-kbd" aria-hidden="true">/</kbd>
 		</div>
-		<p class="sm-filter-count" id="sm-filter-count" role="status" aria-live="polite"></p>
+		<p class="sm-filter-count" role="status" aria-live="polite"><span id="sm-filter-count"></span><span id="sm-filter-hint" aria-hidden="true"></span></p>
 		<section class="sm-new" id="sm-new" aria-labelledby="sm-new-title">
 			<h2 id="sm-new-title">Newest<a class="sm-new-more" href="/changelog">full changelog &rarr;</a></h2>
 			<p class="sm-section-desc">The 9 most recently launched pages, straight to the live surface.</p>
@@ -6787,6 +6789,7 @@
 		var emptySearch = document.getElementById('sm-empty-search');
 		var toc = document.querySelector('.sm-toc');
 		var kbdHint = document.getElementById('sm-filter-kbd');
+		var hintEl = document.getElementById('sm-filter-hint');
 		var groups = Array.prototype.map.call(document.querySelectorAll('.sm-section'), function (sec) {
 			return {
 				sec: sec,
@@ -6855,8 +6858,11 @@
 			// floating above the no-results panel.
 			if (toc) toc.hidden = sectionsShown === 0;
 			countEl.textContent = filtering
-				? shown + ' of ' + total + ' pages match' + (shown ? ' \u00b7 press Enter to open the first' : '')
+				? shown + ' of ' + total + ' pages match'
 				: total + ' pages \u00b7 ' + groups.length + ' sections';
+			// Decorative, and outside the announced text: the live region would
+			// otherwise repeat the whole hint on every keystroke.
+			if (hintEl) hintEl.textContent = filtering && shown ? 'press Enter to open the first' : '';
 			if (kbdHint) kbdHint.textContent = filtering && shown ? '\u21b5' : '/';
 			emptyQ.textContent = q;
 			empty.hidden = !filtering || shown > 0;
