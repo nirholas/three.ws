@@ -21,24 +21,51 @@ const LOCAL_THREE_PATH = (() => {
 	}
 })();
 
-// One probe, memoised: does the vendored copy actually answer here? A stale
-// deploy or a bundler that dropped public/three falls back to unpkg rather than
-// failing every compressed model with an opaque decoder error.
+const localDecoderBase = () => ({
+	draco: `${LOCAL_THREE_PATH}/draco/gltf/`,
+	basis: `${LOCAL_THREE_PATH}/basis/`,
+});
+const cdnDecoderBase = () => ({
+	draco: `${THREE_PATH}/examples/jsm/libs/draco/gltf/`,
+	basis: `${THREE_PATH}/examples/jsm/libs/basis/`,
+});
+
+// PROBE_GRACE_MS is how long a model load is willing to wait for the verdict,
+// not a deadline on the request itself. The probe runs to completion in the
+// background with no abort signal: a HEAD that is merely slow (it competes with
+// the three.js CDN downloads on a cold page and has been measured at 7s against
+// production) is not evidence that public/three is missing, and aborting it both
+// left a failed request in every viewer page's network log and demoted the
+// same-origin decoders to unpkg for the rest of the session.
+const PROBE_GRACE_MS = 1500;
+
+// One probe, memoised only on a conclusive answer: does the vendored copy
+// actually answer here? A stale deploy or a bundler that dropped public/three
+// falls back to unpkg rather than failing every compressed model with an opaque
+// decoder error. A network error leaves the question open, so the probe is
+// cleared and the next model load asks again.
 let _decoderBase = null;
+let _decoderProbe = null;
+
+function probeLocalDecoders() {
+	if (!_decoderProbe) {
+		_decoderProbe = fetch(`${LOCAL_THREE_PATH}/draco/gltf/draco_decoder.wasm`, { method: 'HEAD' })
+			.then((res) => { _decoderBase = res.ok ? localDecoderBase() : cdnDecoderBase(); })
+			.catch(() => { _decoderProbe = null; });
+	}
+	return _decoderProbe;
+}
+
 async function decoderBase() {
 	if (_decoderBase) return _decoderBase;
-	try {
-		const res = await fetch(`${LOCAL_THREE_PATH}/draco/gltf/draco_decoder.wasm`, {
-			method: 'HEAD',
-			signal: AbortSignal.timeout(4000),
-		});
-		_decoderBase = res.ok
-			? { draco: `${LOCAL_THREE_PATH}/draco/gltf/`, basis: `${LOCAL_THREE_PATH}/basis/` }
-			: { draco: `${THREE_PATH}/examples/jsm/libs/draco/gltf/`, basis: `${THREE_PATH}/examples/jsm/libs/basis/` };
-	} catch {
-		_decoderBase = { draco: `${THREE_PATH}/examples/jsm/libs/draco/gltf/`, basis: `${THREE_PATH}/examples/jsm/libs/basis/` };
-	}
-	return _decoderBase;
+	await Promise.race([
+		probeLocalDecoders(),
+		new Promise((resolve) => setTimeout(resolve, PROBE_GRACE_MS)),
+	]);
+	// Undecided within the grace window: the same-origin copy is what every
+	// deploy ships and what the artifact audit enforces, so start there. A
+	// conclusive 404 arriving later switches the next load to the mirror.
+	return _decoderBase || localDecoderBase();
 }
 
 /**
