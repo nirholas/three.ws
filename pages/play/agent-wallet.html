@@ -50,15 +50,24 @@
 		:focus-visible { outline:2px solid var(--acc-lt); outline-offset:3px; }
 		a { color:var(--usdc-lt); }
 
-		#app { display:grid; grid-template-rows:52px 1fr; height:100%; }
+		#app { display:grid; grid-template-rows:auto 1fr; height:100%; min-width:0; }
 
 		/* ── Top bar ─────────────────────────────────────────── */
+		/* The bar WRAPS rather than clipping. The body never scrolls, so a
+		   fixed-height row whose contents do not fit does not produce a
+		   scrollbar: it stretches the grid track wider than the viewport and
+		   silently cuts everything to its right off the screen. At 320px that
+		   swallowed the three destination links AND the right-hand edge of the
+		   side panel below them (the wallet address, the mode pill, the balance).
+		   Wrapping keeps every control reachable at every width. */
 		.topbar {
-			display:flex; align-items:center; justify-content:space-between; gap:12px;
-			padding:0 20px; border-bottom:1px solid var(--border);
+			display:flex; align-items:center; justify-content:space-between;
+			gap:10px 12px; flex-wrap:wrap; min-height:52px; min-width:0;
+			padding:8px 20px; border-bottom:1px solid var(--border);
 			background:rgba(7,8,15,0.95); backdrop-filter:blur(12px); z-index:20;
 		}
-		.brand { display:flex; align-items:center; gap:10px; min-width:0; }
+		.topbar .tb-actions { display:flex; align-items:center; gap:10px; flex-wrap:wrap; min-width:0; }
+		.brand { display:flex; align-items:center; gap:8px 10px; flex-wrap:wrap; min-width:0; }
 		.brand a { color:var(--text); text-decoration:none; font-weight:700; font-size:15px; letter-spacing:-0.01em; }
 		.brand a.crumb { color:var(--muted); font-weight:500; }
 		.brand a.crumb:hover { color:var(--text); }
@@ -79,7 +88,8 @@
 		.tb-btn:hover { background:rgba(255,255,255,0.09); color:var(--text); border-color:var(--border-hi); }
 
 		/* ── Stage + panel layout ────────────────────────────── */
-		#main { display:grid; grid-template-columns:1fr 384px; min-height:0; }
+		#main { display:grid; grid-template-columns:1fr 384px; min-height:0; min-width:0; }
+		#main > * { min-width:0; }
 		#stage3d { position:relative; overflow:hidden; background:var(--bg2); }
 		#stage3d canvas { display:block; outline:none; }
 		.scene-hint {
@@ -248,7 +258,7 @@
 		@media (max-width:860px) {
 			#main { grid-template-columns:1fr; grid-template-rows:46vh 1fr; }
 			#panel { border-left:0; border-top:1px solid var(--border); }
-			.topbar { padding:0 14px; }
+			.topbar { padding:8px 14px; }
 			.badge { display:none; }
 		}
 	</style>
@@ -271,7 +281,7 @@
 			<span class="sep">/</span>
 			<span class="badge" data-i18n-html="play_agent_wallet.agent_wallet_x402_on_solana"><span class="dot"></span>Agent Wallet × x402 on Solana</span>
 		</div>
-		<div style="display:flex;gap:10px;align-items:center;">
+		<div class="tb-actions">
 			<a class="tb-btn" href="/play/arena" title="Live agent trading arena" data-i18n="play_agent_wallet.arena" data-i18n-attr="title:play_agent_wallet.live_agent_trading_arena_title">Arena</a>
 			<a class="tb-btn" href="/agent-exchange" title="Two agents paying each other" data-i18n="play_agent_wallet.agent_exchange" data-i18n-attr="title:play_agent_wallet.two_agents_paying_each_other_title">Agent Exchange</a>
 			<a class="tb-btn" href="/pay" title="x402 pay-per-call demo" data-i18n="play_agent_wallet.x402_demo" data-i18n-attr="title:play_agent_wallet.x402_pay_per_call_demo_title">x402 demo</a>
@@ -334,6 +344,13 @@
 				</div>
 				<div class="ep-desc" id="epDesc"><span class="skel" data-i18n="play_agent_wallet.live_market_signal_pay_per_call_settled">Live market signal — pay per call, settled in USDC on Solana mainnet.</span></div>
 				<div class="ep-meta" id="epTags"></div>
+
+				<div class="banner offline" id="quoteOffline" role="alert">
+					<div class="b-head">Price unavailable</div>
+					The endpoint did not return a payment quote, so there is no price to show
+					and nothing to pay yet. This is usually brief.
+					<button class="retry" id="retryQuote" type="button">Retry quote</button>
+				</div>
 
 				<div class="topics" id="topics" role="group" aria-label="Intel topic"></div>
 

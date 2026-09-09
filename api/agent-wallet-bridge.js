@@ -69,14 +69,14 @@ function endpointAllowed(endpoint) {
 // 502 the moment three.ws's own paid endpoints started advertising self-pay
 // accepts (x402-paid-endpoint.js drops the fee payer whenever the sponsor
 // wallet cannot co-sign), which took /play/agent-wallet down end to end.
-function isSolanaExactAccept(a) {
+export function isSolanaExactAccept(a) {
 	return Boolean(a && a.scheme === 'exact' && String(a.network || '').startsWith('solana:'));
 }
 
 // Pick the accept this bridge pays: USDC first, so a challenge that also
 // advertises a $THREE Solana entry can never settle in the platform token off a
 // USDC-denominated cap.
-function pickSolanaAccept(accepts) {
+export function pickSolanaAccept(accepts) {
 	const solana = accepts.filter(isSolanaExactAccept);
 	return solana.find((a) => a.asset === USDC_MINT_SOLANA) || solana[0] || null;
 }

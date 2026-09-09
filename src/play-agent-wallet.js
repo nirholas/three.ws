@@ -288,6 +288,7 @@ const live = {
 	wallet: null,             // { address, mode }
 	balanceUsd: null,
 	quote: null,              // parsed /quote payload
+	quoteError: false,        // the bridge could not read a 402 challenge
 	stage: null,              // active stage id while paying
 	stageText: '',
 	receipt: null,            // { amount, payer, payTo, tx, result }
@@ -574,6 +575,13 @@ function updatePayButton() {
 		lbl.textContent = live.bridge === 'offline' ? 'Bridge offline' : 'Connecting to bridge…';
 		return;
 	}
+	// Same rule as the balance check below: never offer a payment we cannot
+	// price. The quote banner above the button says why and offers a retry.
+	if (live.quoteError) {
+		payBtn.disabled = true;
+		lbl.textContent = 'Endpoint price unavailable';
+		return;
+	}
 	// Offering a button that can only fail is worse than saying why. The
 	// low-balance banner above it carries the address to send USDC to.
 	if (underfunded()) {
@@ -608,7 +616,7 @@ async function refreshStatus() {
 		$('wMode').textContent = `${data.wallet.mode} wallet`;
 		own($('wBal')).innerHTML = `$${escapeHtml(Number(data.balance?.totalValue || 0).toFixed(2))}<small>USD</small>`;
 		$('bridgeOffline').classList.remove('show');
-		$('lowBalance').classList.toggle('show', underfunded() && !live.receipt);
+		$('lowBalance').classList.toggle('show', !live.quoteError && underfunded() && !live.receipt);
 	} catch {
 		// A dev machine that prefers the local bridge gets one silent promotion to
 		// the hosted one rather than a dead page.
@@ -638,6 +646,8 @@ async function loadQuote() {
 		const q = await r.json();
 		if (!q.ok) throw new Error(q.error || 'quote failed');
 		live.quote = q;
+		live.quoteError = false;
+		$('quoteOffline').classList.remove('show');
 		own($('epName')).textContent = q.resource?.serviceName || 'three.ws Crypto Intel';
 		$('epPrice').textContent = `${fmtUsdc(q.amount)} USDC`;
 		$('epDesc').textContent = q.resource?.description
@@ -652,15 +662,20 @@ async function loadQuote() {
 			tags.appendChild(el);
 		}
 	} catch {
-		// quote requires the bridge; the bridge-offline banner already explains
+		// The price comes from a live 402 challenge, so without one there is no
+		// price. Printing the usual $0.01 anyway would be a made-up number on a
+		// page whose whole claim is that the money is real: say it is unavailable
+		// and offer the retry instead.
 		live.quote = null;
+		live.quoteError = true;
 		own($('epName')).textContent = 'three.ws Crypto Intel';
-		$('epPrice').textContent = '$0.01 USDC';
+		$('epPrice').textContent = 'price unavailable';
 		$('epDesc').textContent = 'Live market signal (bullish / bearish / neutral): pay per call, settled in USDC on Solana mainnet.';
 		$('epTags').innerHTML = '';
+		$('quoteOffline').classList.toggle('show', live.bridge === 'online');
 	}
 	// The banner is priced against the quote, so it can only settle once we have one.
-	$('lowBalance').classList.toggle('show', live.bridge === 'online' && underfunded() && !live.receipt);
+	$('lowBalance').classList.toggle('show', live.bridge === 'online' && !live.quoteError && underfunded() && !live.receipt);
 	updatePayButton();
 }
 
@@ -770,6 +785,7 @@ function handleStageEvent(evt) {
 
 payBtn.addEventListener('click', pay);
 $('retryBridge').addEventListener('click', () => { refreshStatus().then(loadQuote); });
+$('retryQuote').addEventListener('click', () => { loadQuote(); });
 $('copyAddr').addEventListener('click', async () => {
 	const full = $('wAddr').title;
 	if (!full) return;
