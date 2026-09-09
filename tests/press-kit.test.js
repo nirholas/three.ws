@@ -75,6 +75,21 @@ describe('press kit archive', () => {
 		expect(readme).toMatch(/partnerships@three\.ws/);
 	});
 
+	it('quotes every mark at its real pixel size', () => {
+		// Every dimension on the page was a pixel or two off the artwork it
+		// labelled, which is the one number a designer laying out a programme
+		// actually acts on. render-brand-assets.mjs writes these back from the
+		// PNG headers now; this is the assertion that they were not hand-edited
+		// away from the bytes again.
+		const dims = [...html.matchAll(/<span data-dims="([^"]+)">(\d+) &times; (\d+)<\/span>/g)];
+		expect(dims.length, 'no data-dims spans on /press').toBeGreaterThanOrEqual(5);
+		for (const [, file, w, h] of dims) {
+			const head = readFileSync(join(PUBLIC, 'brand', file)).subarray(0, 24);
+			expect(Number(w), `${file} width`).toBe(head.readUInt32BE(16));
+			expect(Number(h), `${file} height`).toBe(head.readUInt32BE(20));
+		}
+	});
+
 	it('quotes its real size on the page', () => {
 		const quoted = html.match(/<span data-zip-size>([\d.]+) MB<\/span>/);
 		expect(quoted, 'the zip size span is missing from /press').not.toBeNull();
