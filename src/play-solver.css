@@ -305,6 +305,69 @@
 	transition: opacity var(--duration-fast) var(--ease-standard);
 }
 
+/* --- the level notice ---------------------------------------------------- */
+
+/* Dimming the tables says that something is off without ever saying what. This band
+   sits between the control and the numbers and names the mismatch out loud, so a
+   sighted reader gets the same account the live region gives a screen reader. */
+.ps-notice {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: var(--space-sm, 10px);
+	margin-bottom: clamp(16px, 3vw, 24px);
+	padding: var(--space-sm, 10px) var(--space-md, 16px);
+	border: 1px solid var(--stroke, rgba(255, 255, 255, 0.08));
+	border-radius: var(--radius-lg, 14px);
+	background: var(--surface-1, rgba(255, 255, 255, 0.03));
+}
+.ps-notice:focus-visible {
+	outline: 2px solid var(--ps-accent);
+	outline-offset: 2px;
+}
+.ps-notice-error {
+	border-color: color-mix(in srgb, var(--ps-warn) 45%, transparent);
+	background: color-mix(in srgb, var(--ps-warn) 8%, transparent);
+}
+.ps-notice-text {
+	flex: 1 1 22ch;
+	margin: 0;
+	font-size: var(--text-sm, 0.764rem);
+	line-height: 1.55;
+	color: var(--ink-dim, #9aa1ad);
+}
+.ps-notice-text strong {
+	color: var(--ink-bright, #fff);
+	font-weight: var(--weight-semibold, 600);
+}
+.ps-notice-actions {
+	display: flex;
+	flex-wrap: wrap;
+	gap: var(--space-xs, 6px);
+}
+
+/* An indeterminate ring, not a progress bar: the solve has no measurable progress to
+   report and inventing one would be a lie told in animation. */
+.ps-notice-spinner {
+	flex: none;
+	width: 15px;
+	height: 15px;
+	border: 2px solid color-mix(in srgb, var(--ps-accent) 28%, transparent);
+	border-top-color: var(--ps-accent);
+	border-radius: 50%;
+	animation: ps-spin 720ms linear infinite;
+}
+@keyframes ps-spin {
+	to {
+		transform: rotate(360deg);
+	}
+}
+
+.ps-btn-sm {
+	padding: 6px 14px;
+	font-size: var(--text-sm, 0.764rem);
+}
+
 /* --- stat tiles ---------------------------------------------------------- */
 
 .ps-stats {
@@ -874,6 +937,14 @@
 :root[data-theme='light'] .ps-slider::-moz-range-thumb {
 	background: #fff;
 }
+:root[data-theme='light'] .ps-notice {
+	border-color: var(--stroke, rgba(0, 0, 0, 0.1));
+	background: rgba(0, 0, 0, 0.025);
+}
+:root[data-theme='light'] .ps-notice-error {
+	border-color: color-mix(in srgb, var(--ps-warn) 55%, transparent);
+	background: color-mix(in srgb, var(--ps-warn) 12%, transparent);
+}
 :root[data-theme='light'] .ps-dot {
 	stroke: #fff;
 }
@@ -886,6 +957,13 @@
 	.ps-skel-chart,
 	.ps-skel-bar {
 		animation: none;
+	}
+	/* The ring stops turning but stays visible: it is the only visual mark that a
+	   solve is in flight, so hiding it would remove the state rather than calm it. */
+	.ps-notice-spinner {
+		animation: none;
+		border-top-color: var(--ps-accent);
+		opacity: 0.85;
 	}
 	.ps-btn,
 	.ps-stat,

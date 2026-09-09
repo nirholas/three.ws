@@ -534,6 +534,45 @@ function errorState(message, retry) {
 	]);
 }
 
+/**
+ * The banner that sits between the level control and the numbers whenever the two
+ * disagree. Dimming the tables says something is off but never says what, and the
+ * live region that carried the explanation is screen-reader-only, so a sighted user
+ * watching a failed solve saw one level on the chart, another in the tables, and no
+ * account of which was which. This states it in the open and offers the way out.
+ */
+function noticeFor(state, shownLevel, retry, revert) {
+	if (state.failed) {
+		return el('div', { class: 'ps-notice ps-notice-error', role: 'alert', tabindex: '-1', id: 'ps-notice' }, [
+			el('p', { class: 'ps-notice-text' }, [
+				el('strong', { text: `Level ${state.failed.level} did not solve.` }),
+				` ${state.failed.message} Every figure below is still level ${shownLevel}, so read it as level ${shownLevel}.`,
+			]),
+			el('div', { class: 'ps-notice-actions' }, [
+				el('button', {
+					type: 'button',
+					class: 'ps-btn ps-btn-sm ps-btn-primary',
+					text: `Solve level ${state.failed.level} again`,
+					onclick: retry,
+				}),
+				el('button', {
+					type: 'button',
+					class: 'ps-btn ps-btn-sm',
+					text: `Stay on level ${shownLevel}`,
+					onclick: revert,
+				}),
+			]),
+		]);
+	}
+	if (state.level !== shownLevel) {
+		return el('div', { class: 'ps-notice ps-notice-busy', id: 'ps-notice' }, [
+			el('span', { class: 'ps-notice-spinner', 'aria-hidden': 'true' }),
+			el('p', { class: 'ps-notice-text', text: `Solving level ${state.level}. The figures below are level ${shownLevel} until it lands.` }),
+		]);
+	}
+	return null;
+}
+
 /* --- boot ----------------------------------------------------------------- */
 
 const root = document.getElementById('ps-content');
@@ -542,7 +581,7 @@ const status = document.getElementById('ps-status');
 // One fetch holds the whole model plus the 99-level sweep. `models` caches the
 // per-level solve so re-rendering a level already visited costs nothing; the curves
 // are shared across all of them.
-const state = { level: 1, metric: 'cash', curves: null, models: new Map() };
+const state = { level: 1, metric: 'cash', curves: null, models: new Map(), failed: null, failedFocused: false };
 
 function setStatus(text) {
 	if (status) status.textContent = text;
@@ -555,6 +594,9 @@ async function loadLevel(level) {
 	if (!res.ok) throw new Error(`The solver endpoint answered ${res.status}.`);
 	const body = await res.json();
 	if (body.curves) state.curves = body.curves;
+	// Key the cache on the level the SERVER solved, not the one asked for. The two
+	// differ whenever a request is clamped, and caching under the requested level
+	// would leave `state.level` pointing at a model that does not exist.
 	state.models.set(body.level, body);
 	return body;
 }
@@ -564,15 +606,49 @@ async function loadLevel(level) {
 // current frame, and the tables re-solve once the control settles.
 let pending = null;
 function requestLevel(level, opts) {
+	// Moving off a level that failed retires its banner: the user has asked a new
+	// question and the old answer is no longer what they are looking at.
+	if (state.failed && state.failed.level !== level) clearFailure();
 	if (state.models.has(level)) { render(opts); return; }
 	clearTimeout(pending);
 	pending = setTimeout(() => {
 		loadLevel(level)
-			.then(() => { if (state.level === level) render(opts); })
-			.catch((err) => setStatus(`Could not solve level ${level}: ${err.message}`));
+			.then((body) => {
+				if (state.level !== level) return;
+				// A clamped request comes back solved at a different level; follow the
+				// server rather than waiting forever for a level it will never return.
+				if (body.level !== level) state.level = body.level;
+				clearFailure();
+				render(opts);
+			})
+			.catch((err) => {
+				if (state.level !== level) return;
+				state.failed = { level, message: `${err.message} The model is static config, so this is a transport problem rather than missing data.` };
+				render(opts);
+			});
 	}, 120);
 	// Draw the frame anyway so the chart marker and the readout stay live.
 	render(opts);
+}
+
+function clearFailure() {
+	state.failed = null;
+	state.failedFocused = false;
+}
+
+/**
+ * The level is readable from the URL on arrival, so it has to be writable back into
+ * it: a page that only parses the parameter it advertises hands out links to level 1
+ * no matter what the sender was looking at.
+ */
+function syncUrl(level) {
+	const url = new URL(location.href);
+	if (level === 1) url.searchParams.delete('level');
+	else url.searchParams.set('level', String(level));
+	const next = `${url.pathname}${url.search}${url.hash}`;
+	if (next !== `${location.pathname}${location.search}${location.hash}`) {
+		history.replaceState(null, '', next);
+	}
 }
 
 function render(opts = {}) {
@@ -586,9 +662,21 @@ function render(opts = {}) {
 	const stale = !exact;
 
 	const rerender = (o) => requestLevel(state.level, o);
+	const retryFailed = () => {
+		const lvl = state.failed.level;
+		clearFailure();
+		state.level = lvl;
+		requestLevel(lvl, {});
+	};
+	const revertToShown = () => {
+		clearFailure();
+		state.level = model.level;
+		render();
+	};
 
 	root.replaceChildren(
 		levelControl(state, model, rerender),
+		noticeFor(state, model.level, retryFailed, revertToShown),
 		headline(model),
 		findingsSection(model),
 		chartSection(model, state.curves || [], state, rerender),
@@ -601,6 +689,7 @@ function render(opts = {}) {
 	);
 
 	root.classList.toggle('ps-stale', stale);
+	syncUrl(state.level);
 
 	// Dragging the slider re-creates it, so focus has to be restored or the control
 	// dies under the user's finger after one step.
@@ -608,10 +697,22 @@ function render(opts = {}) {
 		const slider = document.getElementById('ps-level');
 		if (slider) slider.focus();
 	}
+	// A failure that only repaints in place can be missed entirely by someone who was
+	// looking at the tables. Move focus to the banner the first time it is raised, and
+	// exactly once, so a re-render does not keep stealing focus back.
+	if (state.failed && !state.failedFocused) {
+		const banner = document.getElementById('ps-notice');
+		if (banner) {
+			banner.focus();
+			state.failedFocused = true;
+		}
+	}
 	setStatus(
-		stale
-			? `Solving level ${state.level}.`
-			: `Solved at level ${model.level}. Best sustainable rate: ${model.bestRate.label}, ${fmtInt(model.bestRate.cashPerHour)} cash per hour.`,
+		state.failed
+			? `Level ${state.failed.level} did not solve. ${state.failed.message} The figures shown are level ${model.level}.`
+			: stale
+				? `Solving level ${state.level}.`
+				: `Solved at level ${model.level}. Best sustainable rate: ${model.bestRate.label}, ${fmtInt(model.bestRate.cashPerHour)} cash per hour.`,
 	);
 }
 
@@ -619,7 +720,11 @@ async function boot() {
 	root.replaceChildren(skeleton());
 	setStatus('Solving the world economy.');
 	try {
-		await loadLevel(state.level);
+		const first = await loadLevel(state.level);
+		// The server clamps an out-of-range level rather than rejecting it, so adopt
+		// the level it actually solved. Otherwise `state.level` names a model that
+		// will never arrive and the page renders nothing at all.
+		state.level = first.level;
 		render();
 	} catch (err) {
 		const offline = typeof navigator !== 'undefined' && navigator.onLine === false;
@@ -632,7 +737,10 @@ async function boot() {
 }
 
 // The solver is deep-linkable by level, so a shared URL lands on the same numbers.
+// The cap belongs to the model, not to this file, so the ceiling here is only a
+// sanity bound on what gets put in a query string. `boot` adopts whatever level the
+// server reports back, which is where the real clamp lives.
 const initial = Number(new URLSearchParams(location.search).get('level'));
-if (Number.isFinite(initial) && initial >= 1) state.level = Math.min(99, Math.floor(initial));
+if (Number.isFinite(initial) && initial >= 1) state.level = Math.min(9999, Math.floor(initial));
 
 boot();
