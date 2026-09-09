@@ -15,7 +15,7 @@ import { BrowserProvider, JsonRpcProvider, isAddress, getAddress } from 'ethers'
 import { EAS, SchemaEncoder } from '@ethereum-attestation-service/eas-sdk';
 import { CHAIN_META, switchChain } from '../../src/erc8004/chain-meta.js';
 import { REGISTRY_DEPLOYMENTS, IDENTITY_REGISTRY_ABI, REPUTATION_REGISTRY_ABI } from '../../src/erc8004/abi.js';
-import { getReputation, submitReputation } from '../../src/erc8004/reputation.js';
+import { getReputation } from '../../src/erc8004/reputation.js';
 import { Contract } from 'ethers';
 
 // ── EAS per-chain config ─────────────────────────────────────────────────────
@@ -148,6 +148,37 @@ function decodeAttestationData(decodedDataJson) {
 	}
 }
 
+// One definition of "this attestation carries a score", used by both the
+// aggregate stats and the filter tabs. Two different predicates here is how a
+// tab badge ends up disagreeing with the list it filters.
+function hasScore(a) {
+	const s = a?.decoded?.score;
+	return s !== undefined && s !== null && Number.isFinite(Number(s));
+}
+
+// EAS decoded values arrive as primitives, hex-wrapped bigints, or arrays.
+// Render something a human can read rather than "[object Object]".
+function formatFieldValue(value) {
+	if (value === null || value === undefined) return '';
+	if (Array.isArray(value)) return value.map(formatFieldValue).join(', ');
+	if (typeof value === 'object') {
+		if (typeof value.hex === 'string') {
+			try { return BigInt(value.hex).toString(); } catch { return value.hex; }
+		}
+		return JSON.stringify(value);
+	}
+	const str = String(value);
+	return str.length > 96 ? `${str.slice(0, 96)}…` : str;
+}
+
+// Every field the attestation carries beyond the review schema's own three.
+function extraFields(decoded) {
+	return Object.entries(decoded || {})
+		.filter(([name]) => name !== 'score' && name !== 'comment' && name !== 'agent')
+		.map(([name, value]) => [name, formatFieldValue(value)])
+		.filter(([, value]) => value !== '');
+}
+
 function scoreColor(avg) {
 	if (avg >= 70) return '#22d17a';
 	if (avg >= 40) return '#f5a623';
@@ -271,10 +302,7 @@ function parseUrl() {
 // ── Aggregate stats from attestations ────────────────────────────────────────
 
 function computeStats(attestations) {
-	const scored = attestations.filter((a) => {
-		const s = a.decoded?.score;
-		return s !== undefined && s !== null && Number.isFinite(Number(s));
-	});
+	const scored = attestations.filter(hasScore);
 	if (!scored.length) return { count: 0, average: 0, avgStars: 0, scoreMap: {} };
 
 	let total = 0;
@@ -311,10 +339,24 @@ function renderReviewCard(a, chainId) {
 	const chain = EAS_CHAINS[chainId] || {};
 	const score = a.decoded?.score;
 	const comment = a.decoded?.comment;
-	const stars = (score !== undefined && score !== null) ? scoreToStars(Number(score)) : null;
+	const stars = hasScore(a) ? scoreToStars(Number(score)) : null;
 	const ts = relativeTime(a.time);
 	const txUrl = a.txid ? `${chain.explorer}/tx/${a.txid}` : null;
 	const uidUrl = a.uid ? `${chain.easscan}/attestation/view/${a.uid}` : null;
+
+	// Anything written against another EAS schema (a verification, a name
+	// claim) still lands here, and rendering only an address and a timestamp
+	// leaves an empty card. Show what the attestation actually says.
+	const fields = extraFields(a.decoded);
+	const isReview = stars !== null || Boolean(comment);
+	const payload = isReview
+		? ''
+		: fields.length
+			? `<dl class="rep-attest-fields">${fields.slice(0, 4).map(([name, value]) =>
+					`<div class="rep-attest-field"><dt>${esc(name)}</dt><dd>${esc(value)}</dd></div>`).join('')}
+				${fields.length > 4 ? `<div class="rep-attest-field rep-attest-more">+${fields.length - 4} more field${fields.length - 4 !== 1 ? 's' : ''}</div>` : ''}</dl>`
+			: `<p class="rep-attest-nopayload">This attestation carries no readable payload. Open it on EASScan to inspect the raw data.</p>`;
+	const kindLabel = isReview ? '' : (a.schemaString || 'Attestation');
 
 	return `
 		<div class="rep-review-card">
@@ -325,10 +367,12 @@ function renderReviewCard(a, chainId) {
 				</div>
 				<div class="rep-review-meta-right">
 					${stars !== null ? starsHtml(stars, 13) : ''}
-					${score !== null && score !== undefined ? `<span class="rep-score-badge">${Number(score) > 5 ? Math.round(Number(score)) + '/100' : stars + '/5'}</span>` : ''}
+					${stars !== null ? `<span class="rep-score-badge">${Number(score) > 5 ? Math.round(Number(score)) + '/100' : stars + '/5'}</span>` : ''}
+					${kindLabel ? `<span class="rep-schema-tag" title="${esc(a.schemaId || '')}">${esc(kindLabel)}</span>` : ''}
 				</div>
 			</div>
 			${comment ? `<p class="rep-review-comment">${esc(String(comment))}</p>` : ''}
+			${payload}
 			<div class="rep-review-footer">
 				<span class="rep-review-time">${esc(ts)}</span>
 				<div class="rep-review-links">
@@ -608,8 +652,8 @@ function showSearchForm(appEl) {
 
 				<div class="rep-search-examples">
 					<span class="rep-examples-label">Try:</span>
-					<button class="rep-example-chip" data-addr="vitalik.eth">vitalik.eth</button>
-					<button class="rep-example-chip" data-addr="0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045">Vitalik (0x…)</button>
+					<button class="rep-example-chip" type="button" data-addr="vitalik.eth">vitalik.eth</button>
+					<button class="rep-example-chip" type="button" data-addr="0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045">Vitalik (0x…)</button>
 				</div>
 			</div>
 
@@ -694,7 +738,7 @@ async function renderProfile(appEl, { address, chainId }) {
 
 	if (!isAddress(address)) {
 		if (!address.includes('.')) {
-			appEl.innerHTML = `<div class="rep-error-card"><strong>Invalid address</strong><p>"${esc(address)}" is not a valid Ethereum address or ENS name.</p><a href="/reputation" class="rep-back-link">← Search again</a></div>`;
+			appEl.innerHTML = `<div class="rep-error-card" role="alert"><strong>Invalid address</strong><p>"${esc(address)}" is not a valid Ethereum address or ENS name.</p><a href="/reputation" class="rep-back-link">← Search again</a></div>`;
 			return;
 		}
 		isEns = true;
@@ -702,12 +746,12 @@ async function renderProfile(appEl, { address, chainId }) {
 		try {
 			const resolved = await resolveENS(address);
 			if (!resolved) {
-				appEl.innerHTML = `<div class="rep-error-card"><strong>ENS not found</strong><p>Could not resolve "${esc(address)}" to an Ethereum address.</p><a href="/reputation" class="rep-back-link">← Search again</a></div>`;
+				appEl.innerHTML = `<div class="rep-error-card" role="alert"><strong>ENS not found</strong><p>Could not resolve "${esc(address)}" to an Ethereum address.</p><a href="/reputation" class="rep-back-link">← Search again</a></div>`;
 				return;
 			}
 			resolvedAddress = resolved;
 		} catch (err) {
-			appEl.innerHTML = `<div class="rep-error-card"><strong>ENS resolution failed</strong><p>${esc(err.message)}</p><a href="/reputation" class="rep-back-link">← Search again</a></div>`;
+			appEl.innerHTML = `<div class="rep-error-card" role="alert"><strong>ENS resolution failed</strong><p>${esc(err.message)}</p><a href="/reputation" class="rep-back-link">← Search again</a></div>`;
 			return;
 		}
 	}
@@ -739,7 +783,7 @@ async function renderProfile(appEl, { address, chainId }) {
 	// Share URL
 	const shareUrl = `${window.location.origin}/reputation?address=${encodeURIComponent(resolvedAddress)}&chain=${chainId}`;
 	const tweetText = encodeURIComponent(
-		`On-chain reputation for ${displayName} on @trythreews: ${stats.count} review${stats.count !== 1 ? 's' : ''}${hasScores ? `, avg ${stats.avgStars}/5 stars` : ''}\n${shareUrl}`
+		`On-chain reputation for ${displayName} on @trythreews: ${attestations.length} attestation${attestations.length !== 1 ? 's' : ''}, ${stats.count} scored${hasScores ? `, avg ${stats.avgStars}/5 stars` : ''}\n${shareUrl}`
 	);
 	const tweetUrl = `https://x.com/intent/tweet?text=${tweetText}`;
 
@@ -791,7 +835,7 @@ async function renderProfile(appEl, { address, chainId }) {
 					<div class="rep-stars-display">${hasScores ? starsHtml(stats.avgStars, 16) : '<span class="rep-no-data">No reviews yet</span>'}</div>
 				</div>
 				<div class="rep-stat-card">
-					<div class="rep-stat-label">Total Reviews</div>
+					<div class="rep-stat-label">Attestations</div>
 					<div class="rep-stat-value">${attestations.length}</div>
 					<div class="rep-stat-sub">${stats.count} scored · ${withComment.length} with comments</div>
 				</div>
@@ -807,28 +851,26 @@ async function renderProfile(appEl, { address, chainId }) {
 				<div class="rep-erc8004-badge">
 					<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
 					ERC-8004 registry: ${erc8004Rep.count} vote${erc8004Rep.count !== 1 ? 's' : ''} · avg ${erc8004Rep.average.toFixed(1)}/100
-					<a href="/reputation?agent=${chainId}:${agentId}" class="rep-erc8004-link">View ERC-8004 ↗</a>
+					<a href="${esc(chain.explorer)}/token/${esc(REGISTRY_DEPLOYMENTS[chainId]?.identityRegistry || '')}?a=${agentId}" class="rep-erc8004-link" target="_blank" rel="noopener">Agent #${agentId} on ${esc(chain.name)} ↗</a>
+					<a href="/agent-identities" class="rep-erc8004-link">Browse agent identities</a>
 				</div>
 			` : ''}
 
 			<div class="rep-reviews-section">
-				<h2 class="rep-section-title">Reviews</h2>
-				<div class="rep-tabs" role="tablist">
-					<button class="rep-tab active" data-filter="all" role="tab" aria-selected="true">
+				<h2 class="rep-section-title">Attestations</h2>
+				<div class="rep-tabs" role="tablist" aria-label="Filter attestations">
+					<button class="rep-tab active" data-filter="all" id="rep-tab-all" role="tab" aria-selected="true" aria-controls="rep-review-list" type="button">
 						All <span class="rep-tab-badge">${all.length}</span>
 					</button>
-					<button class="rep-tab" data-filter="scored" role="tab" aria-selected="false">
+					<button class="rep-tab" data-filter="scored" id="rep-tab-scored" role="tab" aria-selected="false" aria-controls="rep-review-list" type="button">
 						Scored <span class="rep-tab-badge">${stats.count}</span>
 					</button>
-					<button class="rep-tab" data-filter="commented" role="tab" aria-selected="false">
+					<button class="rep-tab" data-filter="commented" id="rep-tab-commented" role="tab" aria-selected="false" aria-controls="rep-review-list" type="button">
 						With comments <span class="rep-tab-badge">${withComment.length}</span>
 					</button>
 				</div>
-				<div id="rep-review-list" class="rep-review-list">
-					${attestations.length === 0
-						? renderEmpty('No attestations found for this address on ' + chain.name + '. Be the first to review!')
-						: all.slice(0, 30).map((a) => renderReviewCard(a, chainId)).join('')}
-				</div>
+				<div id="rep-review-list" class="rep-review-list" role="tabpanel" aria-labelledby="rep-tab-all" aria-live="polite"></div>
+				<div id="rep-review-more" class="rep-list-footer"></div>
 			</div>
 			`}
 
@@ -841,17 +883,51 @@ async function renderProfile(appEl, { address, chainId }) {
 		renderProfile(appEl, { address, chainId });
 	});
 
-	// Wire filter tabs
-	const filterData = { all, scored: attestations.filter((a) => a.decoded?.score !== undefined), commented: withComment };
+	// Filter tabs plus paging. An address can hold hundreds of attestations;
+	// rendering a fixed first slice and silently dropping the rest makes the
+	// headline count unreachable, so the list pages instead.
+	const PAGE_SIZE = 30;
+	const filterData = { all, scored: attestations.filter(hasScore), commented: withComment };
+	const listEl = appEl.querySelector('#rep-review-list');
+	const moreEl = appEl.querySelector('#rep-review-more');
+	let activeFilter = 'all';
+	let shown = PAGE_SIZE;
+
+	function paintList(focusMore = false) {
+		if (!listEl || !moreEl) return;
+		const list = filterData[activeFilter] || [];
+		if (!list.length) {
+			listEl.innerHTML = renderEmpty(
+				activeFilter === 'all'
+					? `No attestations found for this address on ${chain.name}. Be the first to review it.`
+					: 'No attestations match this filter. Switch back to All to see everything on record.'
+			);
+			moreEl.innerHTML = '';
+			return;
+		}
+		const visible = Math.min(shown, list.length);
+		listEl.innerHTML = list.slice(0, visible).map((a) => renderReviewCard(a, chainId)).join('');
+		const remaining = list.length - visible;
+		moreEl.innerHTML = `
+			<span class="rep-list-count">Showing ${visible} of ${list.length}</span>
+			${remaining > 0 ? `<button class="rep-action-btn" id="rep-show-more" type="button">Show ${Math.min(PAGE_SIZE, remaining)} more</button>` : ''}`;
+		const moreBtn = moreEl.querySelector('#rep-show-more');
+		if (moreBtn) {
+			moreBtn.addEventListener('click', () => { shown += PAGE_SIZE; paintList(true); });
+			if (focusMore) moreBtn.focus();
+		}
+	}
+	paintList();
+
 	appEl.querySelectorAll('.rep-tab').forEach((tab) => {
 		tab.addEventListener('click', () => {
 			appEl.querySelectorAll('.rep-tab').forEach((t) => { t.classList.remove('active'); t.setAttribute('aria-selected', 'false'); });
 			tab.classList.add('active');
 			tab.setAttribute('aria-selected', 'true');
-			const list = filterData[tab.dataset.filter] || [];
-			document.getElementById('rep-review-list').innerHTML = list.length
-				? list.slice(0, 30).map((a) => renderReviewCard(a, chainId)).join('')
-				: renderEmpty('No reviews in this category.');
+			listEl?.setAttribute('aria-labelledby', tab.id);
+			activeFilter = tab.dataset.filter;
+			shown = PAGE_SIZE;
+			paintList();
 		});
 	});
 
@@ -885,12 +961,22 @@ async function renderLegacyAgent(appEl, { chainId, agentId }) {
 	const meta = CHAIN_META[chainId];
 	const deployment = REGISTRY_DEPLOYMENTS[chainId];
 
-	if (!meta?.rpcUrl || !deployment?.identityRegistry) {
-		appEl.innerHTML = `<div class="rep-error-card"><strong>Network not supported</strong><p>ERC-8004 is not deployed on chain ${chainId}.</p><a href="/reputation" class="rep-back-link">← Search</a></div>`;
+	if (!Number.isInteger(agentId) || agentId < 0) {
+		appEl.innerHTML = `<div class="rep-error-card" role="alert"><strong>Invalid agent reference</strong><p>An agent link looks like <code>?agent=8453:12</code>: a chain ID, a colon, then the numeric agent ID.</p><a href="/reputation" class="rep-back-link">← Search</a></div>`;
 		return;
 	}
 
-	showSkeleton(appEl);
+	if (!meta?.rpcUrl || !deployment?.identityRegistry) {
+		appEl.innerHTML = `<div class="rep-error-card" role="alert"><strong>Network not supported</strong><p>ERC-8004 is not deployed on chain ${chainId}.</p><a href="/reputation" class="rep-back-link">← Search</a></div>`;
+		return;
+	}
+
+	// This route resolves an agent ID to its owner and forwards. Showing the
+	// review skeleton here would promise a list that is not what is loading.
+	appEl.innerHTML = `<div class="rep-resolving" role="status">
+		<div class="spinner"></div>
+		<p>Resolving ERC-8004 agent #${agentId} on ${esc(meta.name)}…</p>
+	</div>`;
 
 	try {
 		const provider = new JsonRpcProvider(meta.rpcUrl, chainId, { staticNetwork: true });
@@ -903,10 +989,10 @@ async function renderLegacyAgent(appEl, { chainId, agentId }) {
 		if (ownerAddress) {
 			window.location.replace(`/reputation?address=${encodeURIComponent(ownerAddress)}&chain=${chainId}`);
 		} else {
-			appEl.innerHTML = `<div class="rep-error-card"><strong>Agent #${agentId} not found</strong><p>This agent ID does not exist on ${meta.name}.</p><a href="/reputation" class="rep-back-link">← Search</a></div>`;
+			appEl.innerHTML = `<div class="rep-error-card" role="alert"><strong>Agent #${agentId} not found</strong><p>This agent ID does not exist on ${meta.name}.</p><a href="/reputation" class="rep-back-link">← Search</a></div>`;
 		}
 	} catch (err) {
-		appEl.innerHTML = `<div class="rep-error-card"><strong>Load failed</strong><p>${esc(err.message)}</p><a href="/reputation" class="rep-back-link">← Search</a></div>`;
+		appEl.innerHTML = `<div class="rep-error-card" role="alert"><strong>Load failed</strong><p>${esc(err.message)}</p><a href="/reputation" class="rep-back-link">← Search</a></div>`;
 	}
 }
 
@@ -936,7 +1022,7 @@ async function main() {
 	} catch (err) {
 		console.error('[reputation] fatal:', err);
 		document.getElementById('app').innerHTML = `
-			<div class="rep-error-card">
+			<div class="rep-error-card" role="alert">
 				<strong>Something went wrong</strong>
 				<p>${esc(err.message || 'Unknown error')}</p>
 				<a href="/reputation" class="rep-back-link">← Try again</a>
