@@ -534,15 +534,38 @@ async function loadGraph() {
 		graphHandle = mountOracleGraph(canvas, labels);
 		graphHandle.loadCoins(coins);
 	} catch (err) {
-		if (stateEl) {
-			stateEl.innerHTML = `<div class="state" style="padding:0"><b>Graph failed to load</b>${esc(err.message || 'The conviction data could not be reached. This is usually temporary.')}<div style="margin-top:14px"><button class="btn" type="button" id="ogRetry">Retry now</button></div></div>`;
-			$('#ogRetry')?.addEventListener('click', () => {
-				canvas.dataset.loaded = '';
-				stateEl.textContent = '';
-				loadGraph();
-			});
-		}
+		if (!stateEl) return;
+		// A dynamic-import failure means this document is stale: it was cached
+		// against a build whose chunks have since been replaced, so the graph
+		// module 404s and no amount of retrying that import will ever succeed.
+		// Reloading refetches the HTML and the current chunk names with it.
+		const stale = isChunkLoadError(err);
+		const body = stale
+			? 'This page was loaded from a cached copy of an older release, so the graph module no longer exists. Reload to pick up the current build.'
+			: (err.message || 'The conviction data could not be reached. This is usually temporary.');
+		stateEl.innerHTML = `<div class="state" style="padding:0"><b>Graph failed to load</b>${esc(body)}<div style="margin-top:14px"><button class="btn" type="button" id="ogRetry">${stale ? 'Reload the page' : 'Retry now'}</button></div></div>`;
+		$('#ogRetry')?.addEventListener('click', () => {
+			if (stale) return reloadFresh();
+			canvas.dataset.loaded = '';
+			stateEl.textContent = '';
+			loadGraph();
+		});
 	}
+}
+
+// Vite emits hashed chunk names, so a chunk 404 is always "the HTML we are
+// running predates the chunks on the origin", never a transient network blip.
+function isChunkLoadError(err) {
+	const m = String(err?.message || err || '');
+	return /dynamically imported module|Importing a module script failed|error loading dynamically imported/i.test(m);
+}
+
+// Reload past the HTTP cache. A cache-busting query on the current URL forces a
+// fresh document even when an intermediary is still holding the stale variant.
+function reloadFresh() {
+	const url = new URL(location.href);
+	url.searchParams.set('_r', Date.now().toString(36));
+	location.replace(url.toString());
 }
 
 // Open coin drawer from the 3D graph node click.
