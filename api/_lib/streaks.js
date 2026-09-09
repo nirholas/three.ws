@@ -7,6 +7,7 @@
  *   · a finished forge model            (api/_lib/forge-store.js materializeCreation)
  *   · a saved world                     (api/_lib/diorama-store.js saveDiorama)
  *   · a /walk activity batch            (api/walk/metrics.js, signed-in walkers only)
+ *   · a confirmed on-chain trade        (api/pump/[action].js, buy and sell)
  *
  * Each of those call sites calls recordDailyActivity(userId) after its own
  * write succeeds. The upsert here is idempotent per UTC day — calling it

@@ -67,6 +67,7 @@ import { queryAgentLaunches } from '../_lib/pump-agent-launches.js';
 import { markPlanLaunched } from '../_lib/agent-token-plan.js';
 import { randomToken } from '../_lib/crypto.js';
 import { publishFeedEvent } from '../_lib/feed.js';
+import { recordDailyActivity } from '../_lib/streaks.js';
 import { normalizeGatewayURL } from '../../src/ipfs.js';
 import { buildTokenMetadata } from '../_lib/three-brand.js';
 import { buildPlatformFeeInstructions, effectivePumpFeeBps } from '../_lib/pump-platform-fee.js';
@@ -623,6 +624,11 @@ async function handleBuyConfirm(req, res) {
 				 ${body.slippage_bps ?? null}, ${body.tx_signature}, ${body.network})
 			on conflict (tx_signature, network) do nothing
 		`;
+		// A confirmed on-chain trade is the most real thing a user does here, and
+		// the cross-surface streak counted logins, forges, worlds and walks but not
+		// this. Fire-and-forget and idempotent per UTC day, exactly like every other
+		// call site: it can never delay or fail the buy that earned it.
+		recordDailyActivity(user.id).catch(() => {});
 	}
 
 	// Surface the buy on the site-wide live activity ticker. The tx is already
@@ -926,6 +932,7 @@ async function handleSellConfirm(req, res) {
 				 ${body.slippage_bps ?? null}, ${body.tx_signature}, ${body.network})
 			on conflict (tx_signature, network) do nothing
 		`;
+		recordDailyActivity(user.id).catch(() => {});
 	}
 
 	return json(res, 200, {
