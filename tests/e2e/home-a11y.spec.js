@@ -336,11 +336,38 @@ test('a Fahrenheit house reads in Fahrenheit whatever the browser locale is', as
 	}
 });
 
+/**
+ * Publish a locale to THIS page only, so the runtime can pick it.
+ *
+ * /i18n.js reads /locales/manifest.json as the allowlist for `?lang=`, and
+ * scripts/i18n-translate.mjs only lists a locale there once its catalog is
+ * complete, which is the right rule: a half-translated language in the picker
+ * renders as English with a foreign heading. It also means a locale with a
+ * translation backlog cannot be exercised at all, and the layout question this
+ * file asks (does the lane use logical properties) is not the same question as
+ * the catalog question.
+ *
+ * So the manifest ENTRY is the only thing faked. Everything else is the real
+ * runtime doing its real work: it reads `?lang=`, sets `lang` and `dir` on the
+ * document, fetches the committed public/locales/ar.json off disk and swaps the
+ * DOM from it. A hand-set `dir` attribute would prove none of that.
+ */
+async function publishLocale(page, code, dir) {
+	await page.route('**/locales/manifest.json', (route) =>
+		route.fulfill({
+			status: 200,
+			contentType: 'application/json',
+			body: JSON.stringify({ default: 'en', locales: [{ code: 'en', name: 'English', dir: 'ltr' }, { code, name: code, dir }] }),
+		}),
+	);
+}
+
 test('an RTL locale lays the house out right to left without breaking it', async ({ page }) => {
 	await signIn(page, 'owner');
 	// A real RTL locale from public/locales, driven the way a visitor drives it,
 	// not a CSS override: the point is that the runtime sets dir and the layout
 	// answers, which a hand-set attribute would prove nothing about.
+	await publishLocale(page, 'ar', 'rtl');
 	await page.goto(`/smart-home/${homeId}?view=2d&lang=ar`, { waitUntil: 'domcontentloaded' });
 	await expect(page.locator('#hs-rooms')).not.toHaveAttribute('aria-busy', 'true', { timeout: 120_000 });
 	await expect(page.locator('html')).toHaveAttribute('dir', 'rtl', { timeout: 60_000 });
@@ -366,6 +393,7 @@ test("a user's own device names are never translated", async ({ page }) => {
 	await signIn(page, 'owner');
 	const light = await anyLight(instance);
 
+	await publishLocale(page, 'ar', 'rtl');
 	const seen = [];
 	for (const lang of ['en', 'ar']) {
 		await page.goto(`/smart-home/${homeId}?view=2d&lang=${lang}`, { waitUntil: 'domcontentloaded' });
@@ -376,6 +404,12 @@ test("a user's own device names are never translated", async ({ page }) => {
 	// The house's own words for its own things, byte for byte, in both locales.
 	expect(seen[1]).toBe(seen[0]);
 	expect(seen[0]).toBe(light.name);
+	// ...and the page really was in Arabic for the second read. Without this the
+	// assertion above is satisfied by a page that silently stayed in English,
+	// which is exactly what happens when the locale is not published.
+	await expect(page.locator('html')).toHaveAttribute('lang', 'ar');
+	const railHead = (await page.locator('.hs-rail-head').textContent()) || '';
+	expect(railHead.trim(), 'the shell around the names is translated').not.toBe('Rooms');
 });
 
 test('prefers-reduced-motion turns the scene\'s motion off, in 3D and in the flat house', async ({ page }) => {

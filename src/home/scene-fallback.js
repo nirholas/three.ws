@@ -48,8 +48,28 @@ export function createHomeFallback(container, options = {}) {
 	let stale = false;
 	let busy = new Set();
 
+	/**
+	 * Rebuild the flat house, and put the keyboard back where it was.
+	 *
+	 * This list is the accessible route into a live house: a canvas is one opaque
+	 * element, so for a screen-reader or keyboard user these rows ARE the house.
+	 * And a live house never stops talking. Every state event on the stream (a
+	 * light dimming, a sensor ticking, the demo integration's thermostat drifting)
+	 * lands here and rebuilds every node, which used to drop the focused control
+	 * on the floor mid-press: the person tabs to Unlock, the kitchen sensor
+	 * reports, the button they were on is destroyed and their Enter goes to the
+	 * document. Measured against a real Home Assistant, where it also made the
+	 * no-mouse journey in tests/e2e/home-a11y.spec.js fail at random.
+	 *
+	 * The fix is to restore by identity rather than by node: `data-act-for` plus
+	 * `data-act-service` name an action control, `data-entity-id` a device row and
+	 * `data-room-id` a room, and each one's replacement is the same control by
+	 * every measure a person cares about. Selection state (`scrollTop`) is left
+	 * alone by the rebuild, so only focus needs carrying.
+	 */
 	function render() {
 		if (!model) return;
+		const keep = focusKey(document.activeElement);
 		list.innerHTML = '';
 		for (const floor of model.floors) {
 			const section = document.createElement('section');
@@ -68,6 +88,31 @@ export function createHomeFallback(container, options = {}) {
 			section.appendChild(grid);
 			list.appendChild(section);
 		}
+		if (keep) restoreFocus(keep);
+	}
+
+	/**
+	 * A selector that finds this element's replacement after a rebuild, or null
+	 * when the element is not one of ours (the page's own chrome keeps its focus
+	 * without help, because this only ever replaces what is inside `list`).
+	 */
+	function focusKey(node) {
+		if (!(node instanceof HTMLElement) || !list.contains(node)) return null;
+		if (node.dataset.actFor) {
+			return `[data-act-for="${cssEscape(node.dataset.actFor)}"]` +
+				(node.dataset.actService ? `[data-act-service="${cssEscape(node.dataset.actService)}"]` : '');
+		}
+		if (node.dataset.entityId) return `[data-entity-id="${cssEscape(node.dataset.entityId)}"]`;
+		if (node.dataset.roomId) return `[data-room-id="${cssEscape(node.dataset.roomId)}"]`;
+		return null;
+	}
+
+	function restoreFocus(selector) {
+		const again = list.querySelector(selector);
+		// Not an error when it is gone: a device really can leave the house
+		// between two frames, and the reader is better off where the browser puts
+		// them than focused on something that is no longer there.
+		if (again instanceof HTMLElement) again.focus({ preventScroll: true });
 	}
 
 	function roomCard(room) {
