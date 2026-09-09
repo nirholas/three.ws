@@ -319,3 +319,48 @@ USD₮0)** first for OKX.AI buyers, plus the existing Solana / Base / BSC USDC r
 non-OKX agents can pay the same endpoint. The wire format OKX buyers use (headers
 `PAYMENT-REQUIRED` / `PAYMENT-SIGNATURE` / `PAYMENT-RESPONSE`, scheme `exact` EIP-3009) is
 pinned down in [`specs/okx-agent-payments.md`](../specs/okx-agent-payments.md).
+
+---
+
+## Verified behavior
+
+Everything above states what the code is built to do. This section states only what has been
+*measured* against production, so a buyer can tell the two apart. It is written from the
+end-to-end gauntlet (`npm run okx:gauntlet`, source
+[`scripts/okx-e2e-gauntlet.mjs`](../scripts/okx-e2e-gauntlet.mjs)), and every claim below has a
+capture under `prompts/okx-ai/e2e-evidence/`. Last run 2026-09-09 against `https://three.ws`.
+
+**Replay protection: verified.** Three independent ways of presenting a payment that should
+not buy anything were tried against the live paid rows, and all three were refused before any
+work ran:
+
+| What was sent | What production answered |
+| --- | --- |
+| An authorization signed for `forge-draft` (10000 atomic) replayed against `forge-hd` (250000) | 402 with a fresh challenge and `signed payment amount 10000 is below required 250000`. The nonce was still unredeemed on X Layer afterwards. |
+| An authorization whose validity window had passed | 402, a message naming the expiry, and a complete fresh challenge to sign instead. Nonce unredeemed. |
+| Four malformed `PAYMENT-SIGNATURE` headers (not base64, valid base64 of the wrong shape, empty, truncated JSON) | 402 in every case, each naming what was wrong. No tool ran. |
+
+**Challenge shape: verified.** All four listed paid rows answer an unpaid `tools/call` with
+402 and a `PAYMENT-REQUIRED` header whose first accept is `eip155:196`, at an amount
+byte-identical to the catalog price, paying the same `payTo`. This holds whether or not the
+client sends the MCP headers an OAuth-capable client would send.
+
+**Free lanes: verified.** `catalog` and `health` serve live data at 200 with no payment
+demanded, and MCP `initialize` plus `tools/list` are free on every paid row, so a buyer can
+read the tool schema before deciding to pay.
+
+**Refund semantics: no refunds, and none are needed for a refused call.** There is no refund
+path. What there is instead is the acceptance line described under
+[Payment semantics](#payment-semantics): a call refused at acceptance never settles, so there
+is nothing to refund. That a refused call leaves the authorization unredeemed is enforced in
+code and covered by unit tests in
+[`tests/api/okx-forge.test.js`](../tests/api/okx-forge.test.js); the on-chain half of that
+assertion (reading the nonce back off X Layer after a funded refusal) has not been run yet,
+for the reason in the next paragraph.
+
+**Settlement timing: NOT yet verified on this rail, and we will not claim otherwise.** No
+funded payment has ever settled against these endpoints. The rail reports `settleable: true`
+on [`/api/okx/3d/health`](https://three.ws/api/okx/3d/health) and the settlement path is
+unit-tested, but the buyer wallet has never held a balance, so there is no transaction hash to
+point at. This paragraph gets replaced by real hashes, amounts and block numbers the day the
+first one lands, and not before.
