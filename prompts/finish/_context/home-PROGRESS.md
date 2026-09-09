@@ -34,7 +34,7 @@ One section per finished order, newest at the bottom:
 | 02 bridge runtime | done | 2026-09-03 |
 | 03 API surface | done | 2026-09-03 |
 | 04 agent tools | done | 2026-09-09 |
-| 05 connect flow | mostly done, see entry | 2026-09-03 |
+| 05 connect flow | done | 2026-09-09 |
 | 06 3D home scene | open | |
 | 07 floorplan editor | built, browser verification blocked, see entry | |
 | 08 voice loop | done | 2026-09-09 |
@@ -2230,3 +2230,131 @@ repeats. Neither is a product defect and neither reproduces on `https://three.ws
 
 **Commits:** `9e9a2f42f` (the two service fixes and their tests, committed from the shared worktree
 by a concurrent agent mid-run), `6fc8dccff` (README), plus this entry.
+
+---
+
+## 05. The connect flow: `/smart-home` onboarding, every state, run 2 (2026-09-09)
+
+**Verdict: done.** Run 1 (2026-09-03, above) built the surface and marked itself PARTIAL for one
+reason: the order 11 SSRF guard had closed the only route to a real Home Assistant, so the live
+half of the acceptance criteria could not be run at all. That is resolved. `api/_lib/home-url-guard.js`
+now carries the two-condition seam run 1 asked for (`HOME_ALLOW_LOCAL_INSTANCE=1` AND no
+`K_SERVICE`, tested positively so it is off on Cloud Run whatever else is configured), and
+`playwright.home.config.js` sets it for the lane. Every item run 1 left open is closed below
+against a real house, and no product code needed changing to close them.
+
+**Shipped:** nothing new on the surface. This run is the verification run 1 could not do, plus
+five defects fixed in the lane's own evidence harness, each of which was making a green result
+mean less than it appeared to.
+
+**Measured, all from run 7 of the tier this session (`npm run test:home:e2e`, connect specs):**
+- `tests/e2e/home-connect.spec.js` + `home-connect-live.spec.js` + `home-connect-gallery.spec.js`:
+  **39 passed, 0 failed** in 3.2 minutes, against Home Assistant `2026.9.0` in a real container.
+- **The real connect:** `HTTP 201`, capabilities measured live as `entityCount 125, areaCount 4,
+  floorCount 1, macroCount 2, haVersion 2026.9.0, mcp true, mcpToolCount 29`. `haVersion` is
+  asserted equal to what `/api/config` on the house itself returns, not scraped off an entity.
+  The whole browser console for the connect was two lines, both `debug: [vite] connecting/connected`.
+  Transcript and screenshots: `reports/home-connect-live/`.
+- **State 9, live, not rendered:** the container was really stopped mid-test. The card kept its
+  entire measured summary (4 rooms, 125 devices, 2 scenes, 2026.9.0, MCP 29 tools), the status
+  line read "Not answering right now. It last answered moments ago, and that is the state shown
+  below", `data-state` was `degraded`, and the home polled back to `connected` on its own once the
+  container returned, with no reconnect and no new token. This is the item run 1 could only assert
+  against a two-hour-old timestamp.
+- **State 7, live:** a junk token against the real house is classified `auth` on the wire (a 4xx,
+  never a 5xx), lands on `data-state="auth_failed"`, refocuses `#hm-token`, names the Long-lived
+  access tokens path, keeps the address the user typed, and stores no half-home. Added this run;
+  the tier previously proved only that the page maps code `auth` onto state 7, never that a real
+  Home Assistant 401 is classified as `auth` at all.
+- **All fifteen states photographed at 1440px and 320px** into `reports/home-connect-states/`
+  (30 PNGs), each asserted to add **zero horizontal overflow at 320px** and to write nothing to
+  the console.
+- **Private-host refusal: zero network requests** between submit and the rendered refusal,
+  counted on the Playwright request event.
+- **Keyboard:** the connect completes from the keyboard against the real house. Tab stops from
+  the top of the document to the first field: `Skip to content`, then `What we store, in full`,
+  then `hm-label`; then Tab to `hm-url`, Tab to `hm-token`, Enter submits.
+- **Token leak, four proofs, all against a real long-lived token:** absent from `localStorage`,
+  from `sessionStorage`, from `document.cookie` and from `window.location.href` (read out of the
+  page after a real submit); absent from the response body (substring search over the whole body);
+  absent from every request URL in the transcript; absent from every console line. Statically:
+  `grep -rn "localStorage\|sessionStorage\|document.cookie" src/home/` finds nothing in
+  `connect.js` or `manage.js` (the one hit is `scene.js` storing a 2D/3D view preference), and
+  `grep -rn "console\." src/home/` finds nothing in either file.
+- `npm run audit:web` for `/smart-home`, **authed against production**, desktop and mobile:
+  **0 error, 0 warn**, 3 info. Run 1 could only report 6 errors that were all the Codespace's own
+  HMR socket; auditing the live site removes that class entirely.
+- `npm run audit:docs`: clean, 1590 files. `npm run check:rules`: clean on every file touched.
+- Home unit tests, sharded to survive concurrent agents: **655 passed, 0 failed** across 26 files
+  (`tests/home-*.test.js` plus `packages/home-bridge`); the live-tier cases skip without a house.
+
+**Five defects fixed, all in the lane's evidence harness rather than the product.** Each one was
+letting a run report something other than what it measured:
+
+1. **`tests/e2e/home-global-setup.js`: the documented escape hatch from the registration rate
+   limit was itself broken.** `raiseHomeCeiling` iterated a hardcoded `['owner', 'guest']` while
+   `HOME_E2E_ROLES` exists precisely so a lane that needs only an owner does not spend one of five
+   hourly registrations on a guest. Setting it crashed on `accounts.guest.email`, so the one way
+   out of a rate limit was a dead end. Now iterates `ROLES` and skips a role it was not asked to
+   provision.
+2. **`tests/e2e/home-connect-gallery.spec.js`: the console assertion allowlisted one HTTP status.**
+   It muted `Failed to load resource ... 401` by literal string. States 8 and 12 arrived later
+   with a 502 and a 402, and both went red over a line Chromium's network stack writes about a
+   response the spec itself fulfilled and the page handled correctly. Replaced with a filter that
+   asks WHO emitted the line rather than which status it names: HMR, `GL Driver Message` from the
+   GPU process, and `Failed to load resource` **scoped to `/api/` by URL**. The same line for a
+   stylesheet, a script or a font still fails, which is the half worth keeping.
+3. **`tests/e2e/home-connect-stubs.js`: the shared fixture had a ninety-second fuse.**
+   `HOME.last_ok_at` was stamped once when the module was imported, and a connected home whose
+   last handshake has aged past 90 seconds is state 9. The tier runs for eight minutes, so most of
+   it was on the wrong side of that line: `connected` assertions passed or failed purely as a
+   function of how long the run had been going and which order the files executed in. The three
+   timestamps are now getters, so the fixture means what it says at the moment it is used, and a
+   spec that wants a stale house still says so explicitly.
+4. **`tests/e2e/home-connect-stubs.js`: state 5 was never actually held.** The gallery holds the
+   verifying screen by returning a promise that never settles, and `stub` passed that promise
+   straight to `route.fulfill`, which answered the request immediately with an empty 200. The page
+   then read no home, asked for the list, got an empty one, and landed on the EMPTY screen. State
+   5 existed only for as long as one round trip against a local stub, so the spec passed on a
+   quiet machine, failed on a loaded one, and on the runs where it passed it was photographing a
+   frame rather than a state. `onConnect` is now awaited, which makes a never-settling promise a
+   real hang. `05-verifying-1440.png` is the first honest picture of that screen.
+5. **`scripts/home-test-instance.mjs`: one killed harness poisoned its lane for fifteen minutes.**
+   `withLock` abandoned a lock only on age, with a 900-second threshold, while every caller of the
+   harness kills it on a much shorter timeout (`stopHomeInstance` allows 120 seconds) and a killed
+   process never reaches the `finally` that releases. So a timeout left a lock, the next call sat
+   in the wait loop until that lock aged out, died on its own caller's timeout, and left a fresh
+   one: one kill guaranteed the next several. It presented as `home-test-instance timed out after
+   120s` on a `--stop` that takes **7 seconds** when it runs at all, which reads as a hung
+   container and is a dead process's leftovers. The lock now records its holder's pid and a waiter
+   asks the operating system whether that process still exists. Proven both ways: a planted lock
+   owned by a dead pid is reclaimed and the call completes in 11 seconds, and a planted lock owned
+   by a live pid is still waited on, by name (`[lock] waiting for pid 418469 to finish with "c05"`).
+   `EPERM` counts as held, so another user's process is never evicted. SIGTERM and SIGINT now
+   release the lock too; SIGKILL cannot be caught, which is why the pid check is the real fix.
+
+**Deviations from the order file, beyond the ones run 1 already recorded:**
+- The order file asks for eleven states and a route at `/home`. Both were already superseded and
+  are correct as they stand: the route is `/smart-home` (run 1's deviation 1, `/home` is the
+  marketing landing page), and the flow has **fifteen** states, the four beyond the original
+  twelve being the pairing host, one deep-linked home, and an id that is not this account's.
+- The order's task list (page, controller, i18n, docs, changelog, `STRUCTURE.md`, `data/pages.json`)
+  was all completed by run 1 and verified present this run, so nothing there was rebuilt.
+  `data/changelog.json` gets no entry from this run: every change here is test-harness only, with
+  no user-visible effect, which the CLAUDE.md changelog rule explicitly excludes.
+
+**Operational note for the next lane, not a defect:** `playwright.home.config.js` defaults to
+ports 8099 and 3020 and refuses to reuse a server, so two agents running the home lane at once
+collide with `http://127.0.0.1:8099/api/version is already used`. That is the config behaving as
+its own comment says it should (own the ports or fail loudly). Set `HOME_E2E_API_PORT` and
+`HOME_E2E_WEB_PORT`, as this run did (8107 and 3027), rather than killing the peer's server.
+
+**Left open: nothing for this order.**
+
+**Commits:** all five fixes reached `main` inside concurrent agents' `git add -A` sweeps before
+they could be staged from here, under commit messages about other work: `f663e9c9a` carries the
+harness lock fix, the ROLES fix, the gallery filter, the live-spec filter, the new state 7 test
+and the fixture getters, and `af50eb075` carries the `onConnect` await. The content is intact and
+verified at HEAD; only the attribution is wrong, and the shared-worktree rule against amending
+means it stays that way. This entry and the order-file retirement are the only commit from this
+session.
