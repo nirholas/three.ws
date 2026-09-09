@@ -280,6 +280,16 @@ body.scene-studio {
 	filter: invert(1);
 }
 
+/* The vendored toolbar is positioned but leaves z-index at auto, so it painted
+ * under the empty-state overlay (z-index: 5). On a phone-height viewport the
+ * vendor parks it at `bottom: 330px`, which lands inside the band the overlay
+ * covers, and the first-run card hid the translate/rotate/scale controls
+ * outright. Lifting the live control above the hint keeps it clickable at every
+ * height; the card is click-through everywhere except its own body. */
+#studio-app #toolbar {
+	z-index: 6;
+}
+
 /* --- Listbox / dialogs -------------------------------------------------------- */
 
 #studio-app .Listbox {

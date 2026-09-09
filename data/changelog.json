@@ -27361,6 +27361,16 @@
 				"improvement"
 			],
 			"link": "/play/economy"
+		},
+		{
+			"date": "2026-09-09",
+			"title": "Scene Studio fits a 320px phone screen, and its playback controls announce themselves",
+			"summary": "A full audit of /scene, the in-browser 3D scene editor. On a narrow phone the panel that holds the outliner, transforms, geometry and materials sits along the bottom of the screen, but it carried a 335px minimum width from the editor it is built on. That is wider than a 320px screen, and because the page suppresses sideways scrolling the right 15px of it simply had nowhere to go: the object type labels and the right-hand stepper of every number field were off-screen and unreachable. The panel now shrinks to the screen. The first-run card that tells you how to start a scene was centred in a band that ran underneath the Import/Export/Share buttons, so on the same narrow screens the buttons sat on top of its heading; the card now starts below them and scrolls inside itself on a short screen instead of running over the panel below. The floating translate/rotate/scale toolbar was painted under that card too, and now sits above it. And the animation timeline's play, pause and stop buttons are drawn as bare icons with no text, so a screen reader announced three identical unnamed buttons; all three now carry names taken from the editor's own translated string table.",
+			"tags": [
+				"fix",
+				"improvement"
+			],
+			"link": "/scene"
 		}
 	]
 }
