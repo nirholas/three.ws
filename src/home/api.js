@@ -11,12 +11,23 @@
  */
 
 export class HomeApiError extends Error {
-	constructor(code, message, { status = 0, pending = null } = {}) {
+	constructor(code, message, { status = 0, pending = null, current = null, field = null } = {}) {
 		super(message);
 		this.name = 'HomeApiError';
 		this.code = code;
 		this.status = status;
 		this.pending = pending;
+		// `current` and `field` were passed by every caller below and destructured
+		// by none of them, so they arrived and were dropped. That is invisible
+		// until something reads them: the floorplan's 409 handler stores
+		// `err.current` as the document that won, and with it undefined the
+		// conflict panel offered "Take theirs" as a button that returned early
+		// and did nothing, above a sentence reading "They saved version ?". The
+		// one way out of a conflict was to overwrite the other person, which is
+		// the exact outcome the panel exists to prevent. `field` is the same
+		// story for a rejected layout: it says WHICH value the server refused.
+		this.current = current;
+		this.field = field;
 	}
 }
 
