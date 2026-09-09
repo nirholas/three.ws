@@ -352,7 +352,7 @@ function renderReviewCard(a, chainId) {
 	const payload = isReview
 		? ''
 		: fields.length
-			? `<dl class="rep-attest-fields">${fields.slice(0, 4).map(([name, value]) =>
+			? `<dl class="rep-attest-fields" data-no-glossary>${fields.slice(0, 4).map(([name, value]) =>
 					`<div class="rep-attest-field"><dt>${esc(name)}</dt><dd>${esc(value)}</dd></div>`).join('')}
 				${fields.length > 4 ? `<div class="rep-attest-field rep-attest-more">+${fields.length - 4} more field${fields.length - 4 !== 1 ? 's' : ''}</div>` : ''}</dl>`
 			: `<p class="rep-attest-nopayload">This attestation carries no readable payload. Open it on EASScan to inspect the raw data.</p>`;
@@ -368,7 +368,7 @@ function renderReviewCard(a, chainId) {
 				<div class="rep-review-meta-right">
 					${stars !== null ? starsHtml(stars, 13) : ''}
 					${stars !== null ? `<span class="rep-score-badge">${Number(score) > 5 ? Math.round(Number(score)) + '/100' : stars + '/5'}</span>` : ''}
-					${kindLabel ? `<span class="rep-schema-tag" title="${esc(a.schemaId || '')}">${esc(kindLabel)}</span>` : ''}
+					${kindLabel ? `<code class="rep-schema-tag" title="${esc(a.schemaId || '')}">${esc(kindLabel)}</code>` : ''}
 				</div>
 			</div>
 			${comment ? `<p class="rep-review-comment">${esc(String(comment))}</p>` : ''}
