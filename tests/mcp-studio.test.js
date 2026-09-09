@@ -241,6 +241,42 @@ describe('mcp-studio dispatch', () => {
 		expect(COMPONENT_HTML).toContain('poster');
 	});
 
+	it('routes the widget model fetch through /api/glb so it survives the ChatGPT sandbox origin', async () => {
+		// model-viewer FETCHES the GLB, so the bytes need an
+		// access-control-allow-origin the widget's origin is covered by. The
+		// public asset bucket's CORS policy is an origin allowlist naming
+		// https://three.ws, so a raw bucket URL loads on our own pages and
+		// dies as "Failed to fetch" inside ChatGPT's cross-origin widget
+		// sandbox, error-stating every single generation. /api/glb re-serves
+		// the same public object with open CORS. Measured against the live
+		// bucket 2026-09-09: Origin https://three.ws gets the header back,
+		// ChatGPT's sandbox origin gets none.
+		const { COMPONENT_HTML } = await import('../api/_mcp-studio/component.js');
+		const src = COMPONENT_HTML.match(/function fetchable\(glb\) \{[\s\S]*?\n  \}/);
+		const guard = COMPONENT_HTML.match(/function isHttps\(u\) \{[^\n]*\}/);
+		expect(src, 'the widget must define a fetchable() indirection').not.toBeNull();
+		expect(guard, 'fetchable() leans on the widget isHttps() guard').not.toBeNull();
+		// eslint-disable-next-line no-new-func -- exercising the shipped widget source, not a copy of it
+		const fetchable = new Function(`${guard[0]}; ${src[0]}; return fetchable;`)();
+
+		const bucket = 'https://pub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev/forge/anon/x.glb';
+		expect(fetchable(bucket)).toBe(`https://three.ws/api/glb?src=${encodeURIComponent(bucket)}`);
+		// Already on an origin that answers with CORS: no pointless extra hop.
+		expect(fetchable('https://three.ws/avatars/cesium-man.glb')).toBe('https://three.ws/avatars/cesium-man.glb');
+		// Non-https and junk are handed back untouched for the caller's own guard.
+		expect(fetchable('not a url')).toBe('not a url');
+
+		// Every model-viewer source assignment has to go through it, or one
+		// code path silently reintroduces the raw cross-origin URL.
+		const assignments = COMPONENT_HTML.match(/mv\.setAttribute\('src',[^)]*\)/g) || [];
+		expect(assignments.length).toBeGreaterThan(0);
+		for (const a of assignments) expect(a).toMatch(/fetchable\(|next/);
+
+		// The links stay on the raw URL: those are navigations, and a download
+		// through the proxy would hand the user a file named after the proxy.
+		expect(COMPONENT_HTML).toContain('downloadEl.href = glb;');
+	});
+
 	it('avatar results carry the IRL living-agent handoff; props stay static (AR bridges agents into the real world)', async () => {
 		globalThis.fetch = vi.fn(async () => ({
 			ok: true,

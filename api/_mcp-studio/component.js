@@ -193,13 +193,28 @@ export const COMPONENT_HTML = `<!doctype html>
 
   function isHttps(u) { return typeof u === 'string' && /^https:\\/\\//.test(u); }
 
+  // model-viewer FETCHES the GLB (XHR), so the bytes have to arrive from an
+  // origin that answers with access-control-allow-origin. Generated models sit
+  // on the public asset bucket, which sends no CORS header at all and refuses
+  // the preflight, so a direct src dies as "Failed to fetch" inside ChatGPT's
+  // cross-origin widget sandbox and error-states every generation. /api/glb
+  // re-serves the same public object from three.ws with open CORS, which is the
+  // same proxy the site's own viewers use. Links (open, download, AR) keep the
+  // raw URL: those are navigations, and CORS does not apply to them.
+  function fetchable(glb) {
+    if (!isHttps(glb)) return glb;
+    try { if (new URL(glb).hostname === 'three.ws') return glb; } catch (e) { return glb; }
+    return 'https://three.ws/api/glb?src=' + encodeURIComponent(glb);
+  }
+
   // Swap the displayed GLB with a cross-fade (no hard pop). Used both for the
   // initial refined result and for clicking an earlier version in the strip.
   function swapTo(glb) {
-    if (!isHttps(glb) || mv.getAttribute('src') === glb) return;
+    var next = fetchable(glb);
+    if (!isHttps(glb) || mv.getAttribute('src') === next) return;
     swapping = true;
     mv.classList.add('fading');
-    setTimeout(function () { mv.setAttribute('src', glb); armWatchdog(); }, 200);
+    setTimeout(function () { mv.setAttribute('src', next); armWatchdog(); }, 200);
   }
 
   // Build the version strip from a lineage. Each chip swaps its GLB in on click;
@@ -269,7 +284,7 @@ export const COMPONENT_HTML = `<!doctype html>
     // instant the widget renders, while the GLB is still streaming in.
     if (isHttps(out.referenceImageUrl)) { mv.setAttribute('poster', out.referenceImageUrl); }
     else { mv.removeAttribute('poster'); }
-    mv.setAttribute('src', glb);
+    mv.setAttribute('src', fetchable(glb));
     armWatchdog();
 
     var kind = (out.kind || 'model').replace(/_/g, ' ');
