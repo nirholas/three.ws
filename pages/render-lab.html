@@ -59,9 +59,9 @@
 					<div class="rl-stage-bar">
 						<span class="rl-stage-meta" id="stageMeta"></span>
 						<div class="rl-stage-actions">
-							<button type="button" class="rl-btn rl-btn-ghost" id="btnSheet" data-tip="Render this configuration across every camera framing and pose at once. Click any tile to adopt it.">Contact sheet</button>
+							<button type="button" class="rl-btn rl-btn-ghost" id="btnSheet" aria-expanded="false" aria-controls="sheet" data-tip="Render this configuration across every camera framing and pose at once. Click any tile to adopt it.">Contact sheet</button>
 							<button type="button" class="rl-btn rl-btn-ghost" id="btnPermalink" data-tip="Copy a link that reopens this exact configuration.">Copy link</button>
-							<a class="rl-btn rl-btn-primary" id="btnOpen" target="_blank" rel="noopener" data-tip="Open the raw image the API returned, in a new tab.">Open image</a>
+							<a class="rl-btn rl-btn-primary" id="btnOpen" target="_blank" rel="noopener" aria-disabled="true" tabindex="-1" data-tip="Open the raw image the API returned, in a new tab.">Open image</a>
 						</div>
 					</div>
 				</div>
@@ -84,16 +84,16 @@
 				<section class="rl-code">
 					<div class="rl-code-head">
 						<div class="rl-tabs" role="tablist" aria-label="Code format">
-							<button type="button" class="rl-tab is-on" role="tab" aria-selected="true" data-lang="url">URL</button>
-							<button type="button" class="rl-tab" role="tab" aria-selected="false" data-lang="html">HTML</button>
-							<button type="button" class="rl-tab" role="tab" aria-selected="false" data-lang="curl">curl</button>
-							<button type="button" class="rl-tab" role="tab" aria-selected="false" data-lang="js">JavaScript</button>
-							<button type="button" class="rl-tab" role="tab" aria-selected="false" data-lang="component">Web component</button>
-							<button type="button" class="rl-tab" role="tab" aria-selected="false" data-lang="mcp">MCP</button>
+							<button type="button" class="rl-tab is-on" role="tab" aria-selected="true" aria-controls="codePanel" data-lang="url">URL</button>
+							<button type="button" class="rl-tab" role="tab" aria-selected="false" aria-controls="codePanel" data-lang="html">HTML</button>
+							<button type="button" class="rl-tab" role="tab" aria-selected="false" aria-controls="codePanel" data-lang="curl">curl</button>
+							<button type="button" class="rl-tab" role="tab" aria-selected="false" aria-controls="codePanel" data-lang="js">JavaScript</button>
+							<button type="button" class="rl-tab" role="tab" aria-selected="false" aria-controls="codePanel" data-lang="component">Web component</button>
+							<button type="button" class="rl-tab" role="tab" aria-selected="false" aria-controls="codePanel" data-lang="mcp">MCP</button>
 						</div>
 						<button type="button" class="rl-btn rl-btn-secondary" id="btnCopyCode">Copy</button>
 					</div>
-					<pre class="rl-code-body"><code id="codeOut"></code></pre>
+					<pre class="rl-code-body" id="codePanel" role="tabpanel" tabindex="0"><code id="codeOut"></code></pre>
 					<p class="rl-code-note" id="codeNote"></p>
 				</section>
 			</section>
@@ -117,7 +117,7 @@
 					<div class="rl-cap-head" id="capHead"></div>
 					<div class="rl-meters" id="capMeters"></div>
 					<ul class="rl-verdicts" id="capVerdicts"></ul>
-					<p class="rl-cap-src">Read from the GLB itself via <a href="/docs/media-api#capabilities">/api/avatar/capabilities</a>.</p>
+					<p class="rl-cap-src">Read from the GLB itself via <a href="/docs/media-api#model-capabilities">/api/avatar/capabilities</a>.</p>
 				</section>
 
 				<section class="rl-panel">

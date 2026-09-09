@@ -3,6 +3,17 @@
 	"entries": [
 		{
 			"date": "2026-09-09",
+			"title": "Render Lab: every control leads somewhere, and the contact sheet shows its work",
+			"summary": "Render Lab now behaves when the things it depends on do not. The Open image button no longer sits there looking live before a render exists: it reads as unavailable until there is an image, and goes back to unavailable if the render fails. When no featured avatars come back, the model strip explains that and points at the field and at /create instead of showing a blank row. When the pose catalog cannot be reached, the panel says so and offers a retry rather than a lone None chip that reads like the model has no poses. Contact sheet tiles now shimmer while they render, so a sheet in flight looks like it is working instead of like a grid of empty squares, and a tile the renderer could not produce says so and keeps its label. Where a panel is switched off because the model cannot honor it, the explanation and its escape hatch stay at full strength and stay clickable: the link into Rig Doctor was previously unclickable, and the shortcut to a model with a full face rig now finds one from the live catalog instead of loading a raw file the slow way. Dragging the size slider no longer writes a new address on every step, which Safari eventually refuses outright. Copied links now carry the quality setting, so a link really does reopen the exact configuration. Framing, pose and model options are one stop for keyboard and screen reader users and move with the arrow keys, instead of costing 29 tab presses to walk past. The capabilities endpoint the whole page is built on is now documented in the Media API reference, which is where the page has always linked.",
+			"tags": [
+				"fix",
+				"improvement",
+				"docs"
+			],
+			"link": "/render-lab"
+		},
+		{
+			"date": "2026-09-09",
 			"title": "The retired Flappin UFO page is readable in light mode, and its two bottom-corner controls stopped sitting on top of each other",
 			"summary": "A full audit of /play/ufo, the page that stands where the retired Flappin UFO arcade demo used to be. In light mode its headline was painted in a violet-to-cyan gradient that all but vanished against the white card, the Retired badge and the Still live label were too pale to read, and the keyboard focus ring was that same near-invisible cyan, so tabbing through the page showed you nothing. All four now clear the contrast bar in both themes. The three links to the experiences that are still live were 37 pixels tall and the three.ws logo link was 21, both under the 44 pixels a thumb needs; every link on the page now clears it. The language picker and the Ctrl+K search hint were both pinned to the bottom right corner and overlapped each other, because this page carries its own compact header instead of the site nav that normally arranges that corner; they now stack. Two fixes from this audit land site-wide: the search hint was drawing dark text on its dark default pill on every light-themed page that does not define the site's surface colors, and neither floating control could be reached by screen reader landmark navigation. The page copy also lost the long dash the house style bans, in English and in all 84 translations.",
 			"tags": [

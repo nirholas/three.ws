@@ -18,6 +18,7 @@ Base URL: `https://three.ws`
 |----------|--------|------|--------------|
 | [`/api/avatar/render`](#render-an-avatar-as-an-image) | GET | none | Rendered PNG/JPEG/WebP of any public avatar |
 | [`/api/render/avatar-clip`](#render-any-glb-posed-and-camera-orbited) | GET, POST | none | Posed, camera-orbited PNG of any GLB |
+| [`/api/avatar/capabilities`](#model-capabilities) | GET | none | What a model can honor: ARKit shapes, skeleton coverage, geometry |
 | [`/api/avatar/optimize`](#optimize-a-glb-at-runtime) | GET | none | Runtime GLB transcoder (LOD, textures, morphs, Draco) |
 | [`/api/glb`](#same-origin-glb-proxy) | GET | none | Same-origin GLB proxy with open CORS |
 | [`/cdn/<key>`](#how-bucket-objects-are-served-cdnkey) | GET, HEAD | none | First-party CDN for bucket objects |
@@ -155,6 +156,109 @@ curl -s -X POST https://three.ws/api/render/avatar-clip \
     "background": "transparent"
   }' -o wave.png
 ```
+
+---
+
+## Model capabilities
+
+**`GET /api/avatar/capabilities`** answers what a model will and will not honor
+*before* you render it. Every other endpoint here returns a picture; this one
+returns a verdict. It reads the glTF JSON chunk of the GLB (a ranged read of the
+head of the file, never the mesh binary) and reports which ARKit-52 morph
+targets exist, how much of the canonical humanoid skeleton the rig maps onto,
+what the geometry weighs, and a plain-language reason per capability.
+
+It is the same mapping code the renderer and the retargeter run, so it is a
+report of what will happen, not an estimate. Call it once per model and build
+your `expression` and `pose` requests out of shapes and rigs that exist, instead
+of discovering the gap as a still face or a T-pose.
+
+Pass exactly one of `avatar` or `url`. With neither, it returns its own schema,
+so the endpoint is self-documenting from a browser address bar.
+
+### Query parameters
+
+| Name | Type | Notes |
+|------|------|-------|
+| `avatar` | string | three.ws avatar UUID. Public and unlisted avatars only. |
+| `url` | string | Any publicly reachable `.glb` URL. SSRF-guarded and range-capped. |
+
+### Response
+
+`200` with JSON. `x-capabilities-cache` is `hit` or `miss`; responses are
+cacheable for 5 minutes at the client and an hour at the edge.
+
+| Field | Notes |
+|-------|-------|
+| `rig.detected` / `rig.label` | Authoring pipeline inferred from bone names and the glTF generator string. |
+| `rig.boneCount` / `rig.skinCount` | Joints and skins across the whole file. |
+| `rig.canonicalCoverage` | 0..1 share of the canonical humanoid skeleton that maps. Above 0.5 with the core bones present, every baked clip retargets. |
+| `rig.fingerCoverage` | 0..1 share of the finger chain, for poses that need hands. |
+| `rig.mappedBones` / `rig.unmappedBones` | The bones behind those numbers. |
+| `rig.bakedAnimations` | Clips already in the file, by name. |
+| `morphs.total` / `morphs.named` | Morph targets present, including shapes outside the ARKit set. |
+| `morphs.arkitCoverage` | 0..1 share of Apple's 52 facial blendshapes present. |
+| `morphs.supported` / `morphs.missing` | The ARKit names you can drive, and the ones you cannot. |
+| `morphs.visemes` | Viseme shapes present, which is what phoneme-accurate lipsync needs. |
+| `morphs.custom` | Named shapes outside ARKit and the viseme set. |
+| `geometry` | `triangles`, `vertices`, `meshes`, `primitives`, `materials`, `textures`, and the glTF `extensions` in use. |
+| `can.pose` / `can.expression` / `can.lipsync` | `{ supported, reason }`. The reason is written for a human and names the fix when the answer is no. |
+| `subject` | Echoes what was inspected: `{ kind: "avatar", id, name, slug }` or `{ kind: "url", url }`. |
+
+### Errors
+
+| Situation | Response |
+|-----------|----------|
+| Avatar ID not found, or private | `404 not_found` |
+| Avatar exists but has no readable model | `403 private` |
+| `url` is not an absolute http(s) URL | `400 invalid_url` |
+| A caller-supplied `url` could not be read | `400 fetch_failed` |
+| A stored avatar's own model could not be read | `502 fetch_failed` |
+| The file is not a parseable binary glTF 2.0 | `422 not_a_glb` |
+| Over 120 inspections per 10 minutes per IP | `429` with `Retry-After` |
+
+`.gltf` plus external buffers is not supported. Only `.glb`.
+
+### curl
+
+```bash
+# The endpoint's own schema, plus the ARKit-52, viseme, and canonical bone lists
+curl -s https://three.ws/api/avatar/capabilities
+
+# Can this avatar smile? Which shapes can it actually move?
+curl -s 'https://three.ws/api/avatar/capabilities?avatar=a4bad2f5-8a07-43cf-82e5-b6ba1314441e' \
+  | jq '{ expression: .can.expression, shapes: .morphs.supported }'
+
+# Same question about a raw GLB that was never saved as an avatar
+curl -s 'https://three.ws/api/avatar/capabilities?url=https://three.ws/avatars/selfie-girl.glb' \
+  | jq '.can'
+```
+
+### Build a request that cannot silently no-op
+
+```js
+const caps = await fetch(
+  'https://three.ws/api/avatar/capabilities?avatar=' + avatarId,
+).then((r) => r.json());
+
+const wanted = { mouthSmileLeft: 0.7, mouthSmileRight: 0.7, jawOpen: 0.3 };
+const usable = Object.fromEntries(
+  Object.entries(wanted).filter(([shape]) => caps.morphs.supported.includes(shape)),
+);
+
+const url = new URL('https://three.ws/api/avatar/render');
+url.searchParams.set('avatar', avatarId);
+if (caps.can.pose.supported) url.searchParams.set('pose', 'wave');
+if (Object.keys(usable).length) url.searchParams.set('expression', JSON.stringify(usable));
+
+const res = await fetch(url);
+// 'applied' | 'partial' | 'none': what the renderer could actually drive.
+console.log(res.headers.get('x-render-expression'));
+```
+
+[Render Lab](https://three.ws/render-lab) is this endpoint with a UI on it: it
+reads the report first and switches off the controls the selected model cannot
+honor, with the reason.
 
 ---
 
