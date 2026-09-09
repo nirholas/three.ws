@@ -46,9 +46,9 @@ testable without a daemon, a wallet, or a network.
 | File | Role |
 |------|------|
 | `index.js` | Entrypoint. Boot order, session probe, heartbeat, ops alerts, graceful shutdown. |
-| `config.js` | Env-driven config (`loadConfig`, `paths`) and AI-provider selection (`resolveProvider`). |
+| `config.js` | Env-driven config (`loadConfig`, `paths`) and the AI lane chain (`providerLanes`, `resolveProviderChain`, `applyLane`). |
 | `cli.js` | Timeout-bounded, non-throwing wrappers around the `okx-a2a` and `onchainos` binaries. |
-| `provider.js` | Asks the AI provider whether it will actually serve this host, and hands codex its key. |
+| `provider.js` | Probes each AI lane (`probeLane`), elects the first that serves (`electProvider`), and hands codex its key. |
 | `session.js` | Pure health `classify()` plus `loginInstructions()`, the exact commands a human runs. |
 | `health-server.js` | The HTTP surface: strict `/readyz`, always-200 liveness, and the `remedy` payload. |
 | `state.js` | Tar the wallet/XMTP identity to GCS and restore it on boot (`snapshotState`, `restoreState`). |
@@ -102,12 +102,15 @@ locally with no code change. Defaults are the production posture.
 | `OKX_BOT_STATE_BUCKET` | unset | GCS bucket for the state snapshot. Unset means ephemeral mode. |
 | `OKX_BOT_STATE_OBJECT` | `okx-chat-bot/state.tar.gz` | Object name within that bucket. |
 | `OKX_BOT_REPO_ROOT` | `/app` | Where the briefing and skills are read from. |
-| `OKX_BOT_AI_PROVIDER` | auto | Pin the provider (`claude`, `codex`, `hermes`, `openclaw`). |
+| `OKX_BOT_AI_PROVIDER` | auto | Pin the provider (`claude`, `codex`, `hermes`, `openclaw`). Narrows the chain to that CLI's lanes rather than emptying it. |
 | `CLAUDE_CODE_USE_VERTEX` | unset | `1` routes the Claude subsession to Vertex AI, authenticated by the runtime service account. The production posture: no secret exists to leak, rotate, or forget. |
 | `ANTHROPIC_VERTEX_PROJECT_ID` | unset | The GCP project Vertex bills. Required alongside the flag above. |
 | `CLOUD_ML_REGION` | `global` | Vertex region for both the subsession and the credential probe. |
 | `OKX_A2A_AI_PERMISSION_PRESET` | unset | `bypass` on a headless host. Without it the subsession stalls on a tool-approval prompt nobody is there to answer, which the buyer experiences as an unresponsive bot. |
-| `OKX_BOT_PROVIDER_PROBE_MS` | `900000` | How often the provider's own API is asked whether the credential still works. |
+| `OKX_BOT_ANTHROPIC_BASE_URL` | unset | Base URL of an Anthropic-wire-format gateway. The CLI appends `/v1/messages`, so OpenRouter's is `https://openrouter.ai/api`, **not** `.../api/v1`. |
+| `OKX_BOT_ANTHROPIC_AUTH_TOKEN` | unset | That gateway's credential. Both it and the base URL are required, or no gateway lane exists. |
+| `OKX_BOT_ANTHROPIC_MODEL` | unset | Model id in the gateway's catalog, e.g. `anthropic/claude-sonnet-4.6`. |
+| `OKX_BOT_PROVIDER_PROBE_MS` | `900000` | How often every lane's own API is asked whether it will still serve. Also how quickly a recovered lane is picked up. |
 | `OKX_BOT_HOST_LABEL` | auto | Name this host on every beat. Cloud Run names itself from `K_SERVICE`. |
 | `OKX_BOT_HOST_DURABLE` | unset | Set to `1` to claim a non-Cloud-Run host stays up on its own. |
 | `OKX_BOT_DAEMON_BIN` | `okx-a2a` | The XMTP daemon binary the supervisor owns. |
@@ -118,15 +121,40 @@ locally with no code change. Defaults are the production posture.
 | `OKX_BOT_RESTART_BASE_MS` | `2000` | Daemon restart backoff floor. |
 | `OKX_BOT_RESTART_MAX_MS` | `60000` | Daemon restart backoff ceiling. |
 
-**Provider selection is by credential, not by preference.** A provider CLI with
-no key spawns, fails to authenticate, and produces exactly the symptom this
-worker exists to kill: silence on the buyer's side. So an explicit
-`OKX_BOT_AI_PROVIDER` wins; otherwise Vertex (`CLAUDE_CODE_USE_VERTEX=1` plus a
-project) selects `claude`, then `ANTHROPIC_API_KEY` or `CLAUDE_CODE_OAUTH_TOKEN`
-selects `claude`, then `OPENAI_API_KEY` selects `codex`. A developer host carries
-no key at all: its claude CLI was logged in by a human, so an existing
-`$OKX_BOT_HOME/.claude/.credentials.json` also counts as a credential. With no
-credential at all the worker boots, logs an error, and reports
+### The AI chain: whichever lane is funded is the lane that serves
+
+The host used to hold exactly **one** AI lane, which is a chain with a single
+rung. On 2026-09-04 the rung snapped: this GCP project's Vertex access started
+answering `PERMISSION_DENIED: Lightning dunning decision is deny`, and the bot
+went on receiving every buyer message and authoring no reply at all, for days,
+while other credentials sat unused on the same service.
+
+So [`providerLanes()`](config.js) builds an ordered chain and
+[`electProvider()`](provider.js) probes it, best lane first, and elects the first
+one that actually answers. The election re-runs every
+`OKX_BOT_PROVIDER_PROBE_MS`, so a lane that recovers (or one the owner funds) is
+picked up **with no deploy**: the config is re-asserted, codex is re-logged-in if
+it is the new lane, and the daemon is restarted so the subsession it spawns
+carries the new credentials.
+
+| # | Lane | Selected by | Why here |
+|---|---|---|---|
+| 1 | `vertex` | `CLAUDE_CODE_USE_VERTEX=1` + a project | GCP credits, authenticated by the runtime service account. Nothing to mint, rotate or forget, and the spend lands on the pool the platform prefers over any paid third-party API. |
+| 2 | `anthropic-key` | `ANTHROPIC_API_KEY` | A first-party key. |
+| 3 | `anthropic-gateway` | `OKX_BOT_ANTHROPIC_BASE_URL` + `..._AUTH_TOKEN` | Any service that speaks the Anthropic wire format (OpenRouter serves one). Opt-in, and last, because it bills a third-party account per token. |
+| 4 | `anthropic-login` | `$OKX_BOT_HOME/.claude/.credentials.json` | A developer host, whose `claude` CLI a human logged in. |
+| 5 | `openai-key` | `OPENAI_API_KEY` | The codex CLI. |
+
+**Every lane spawns a genuinely agentic CLI, and that is not negotiable.** The
+adapter does not read a reply out of the CLI's stdout: the spawned subsession
+sends the reply itself through `okx-a2a` and drives the task lifecycle (accept /
+negotiate / deliver). A one-shot completion call would not just answer worse, it
+would break the lifecycle. The gateway lane exists precisely because it keeps the
+same `claude` CLI and only moves its endpoint.
+
+A provider CLI with no key spawns, fails to authenticate, and produces exactly
+the symptom this worker exists to kill: silence on the buyer's side. So with an
+empty chain the worker boots, logs an error, and reports
 `ai_provider_uncredentialed` rather than pretending to be healthy.
 
 **Vertex wins over every key on purpose.** The credential is the runtime service
@@ -144,13 +172,27 @@ reads like an IAM problem) and the `openai-api-key` secret's account answers
 `billing_not_active`. A presence check calls either one green, the host reports
 ready, a buyer's message lands, and no reply is ever authored.
 
-So [provider.js](provider.js) asks the provider itself: one tiny request at boot
+So [provider.js](provider.js) asks each lane's own API: one tiny request at boot
 and every `OKX_BOT_PROVIDER_PROBE_MS`, classified into `ok`, `unauthorized`,
 `unreachable`, or `unprobed`. Only `unauthorized` fails readiness. `unreachable`
 deliberately does not: a provider outage is transient and self-heals, and paging
 a human for something no human can fix is how alerts stop being read. An
 interactive OAuth grant is `unprobed`, because the CLI refreshes that grant
-itself and no endpoint here can prove it without reimplementing the refresh.
+itself and no endpoint here can prove it without reimplementing the refresh, and
+`unprobed` is the one non-`ok` verdict a host may still be elected on.
+
+Every lane's verdict, not just the elected one's, is on `/readyz` under
+`provider.chain` and in the `remedy`. A human deciding which credential to fund
+needs the whole picture, not the news that one of them was refused.
+
+**A gateway lane is elected on a 2xx and nothing else.** `classifyProbeStatus()`
+reads a 400 or a 404 as proof the credential works, because api.anthropic.com had
+to authenticate the caller before it could object to the request. That reasoning
+does not survive a gateway: a base URL one path segment too deep, or a model id
+from a different catalog, answers exactly those statuses and then fails every
+real reply. Measured 2026-09-09, `https://openrouter.ai/api/v1` makes the CLI
+request `/api/v1/v1/messages` and answers 404 forever, which is why the base URL
+in [cloudbuild.yaml](cloudbuild.yaml) ends at `/api`.
 
 **One thing about Vertex that could not be tested here.** The billing hold denies
 every Vertex call on this project, so the credential probe was verified against
@@ -297,15 +339,25 @@ private bucket and nowhere else.
 Skipping the seed is not a failure; it just leaves the OTP the first boot would
 otherwise have asked for.
 
-### Switching off Vertex
+### Adding a lane
 
 Never patch an AI key onto the service by hand. `--set-secrets` in the deploy step
 replaces the whole secret set, so a hand-added key survives exactly until the next
-deploy and then vanishes without a single error line. To use a key instead of
-Vertex, edit [cloudbuild.yaml](cloudbuild.yaml): drop `CLAUDE_CODE_USE_VERTEX`
-from `--set-env-vars` (it wins over every key) and add
-`ANTHROPIC_API_KEY=anthropic-api-key:latest` to `--set-secrets`, after creating
-that secret and granting `three-ws@` `secretAccessor` on it.
+deploy and then vanishes without a single error line. A lane belongs in
+[cloudbuild.yaml](cloudbuild.yaml), where the next deploy carries it too:
+
+- **A first-party Anthropic key**: create the secret, grant `three-ws@`
+  `secretAccessor` on it, and add `ANTHROPIC_API_KEY=anthropic-api-key:latest` to
+  `--set-secrets`. It ranks below Vertex, so nothing else has to change; drop
+  `CLAUDE_CODE_USE_VERTEX` only if you want the key to lead.
+- **A gateway**: set `OKX_BOT_ANTHROPIC_BASE_URL` and `OKX_BOT_ANTHROPIC_MODEL` in
+  `--set-env-vars` and `OKX_BOT_ANTHROPIC_AUTH_TOKEN=<secret>:latest` in
+  `--set-secrets`. The deploy already carries the OpenRouter one.
+
+Because the chain elects on a live probe rather than on presence, a lane with no
+funds behind it is inert (it probes `unauthorized` and is never elected) and
+costs nothing to leave configured. That is the point: funding it is then a
+billing action, not a deploy.
 
 Shutdown order matters and is handled on SIGTERM: the daemon is stopped **before**
 the final snapshot, so the sqlite files are quiesced rather than copied mid-write.

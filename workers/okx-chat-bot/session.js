@@ -38,9 +38,13 @@ export function loginInstructions(loginUrl, authSessionId) {
  * is the only option with no secret to mint, rotate or forget, and it bills the
  * GCP credit pool the platform already prefers.
  */
-export function providerInstructions(detail = '') {
+export function providerInstructions(detail = '', lanes = []) {
+	const chain = lanes.length
+		? ['', 'Every lane in the chain was asked; none can serve:', ...lanes.map((l) => `  ${l.lane} (${l.transport}): ${l.code} - ${l.detail}`)]
+		: [];
 	return [
 		`The provider refused this host's credential: ${detail}`,
+		...chain,
 		'',
 		'1. Preferred (no secret): clear the project billing hold, then',
 		'   gcloud run services update okx-chat-bot --region us-central1 \\',
@@ -52,6 +56,11 @@ export function providerInstructions(detail = '') {
 		'   stripped by the next deploy).',
 		'3. Or reactivate billing on the OpenAI account behind the openai-api-key secret',
 		'   and pin OKX_BOT_AI_PROVIDER=codex.',
+		'4. Or point the host at any funded Anthropic-wire-format gateway (config only,',
+		'   pre-approved). OpenRouter serves one at /api/v1/messages:',
+		'   gcloud run services update okx-chat-bot --region us-central1 \\',
+		'     --update-env-vars=OKX_BOT_ANTHROPIC_BASE_URL=https://openrouter.ai/api,OKX_BOT_ANTHROPIC_MODEL=anthropic/claude-sonnet-4.6 \\',
+		'     --update-secrets=OKX_BOT_ANTHROPIC_AUTH_TOKEN=OPENROUTER_API_KEY:latest',
 	];
 }
 

@@ -16,8 +16,9 @@ import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { afterAll, describe, it, expect, vi } from 'vitest';
 import { classify, loginInstructions, providerInstructions } from '../workers/okx-chat-bot/session.js';
-import { classifyProbeStatus, loginCodex } from '../workers/okx-chat-bot/provider.js';
-import { resolveProvider, resolveHost, loadConfig, paths } from '../workers/okx-chat-bot/config.js';
+import { classifyProbeStatus, electProvider, loginCodex, probeLane } from '../workers/okx-chat-bot/provider.js';
+import { applyLane, providerLanes, resolveProviderChain, resolveHost, loadConfig, paths } from '../workers/okx-chat-bot/config.js';
+import { cliEnv } from '../workers/okx-chat-bot/cli.js';
 import { createHealthHandler } from '../workers/okx-chat-bot/health-server.js';
 import { createSupervisor } from '../workers/okx-chat-bot/supervisor.js';
 import { STATE_ROOTS, STATE_EXCLUDES } from '../workers/okx-chat-bot/state.js';
@@ -121,6 +122,8 @@ describe('okx-chat-bot provider selection', () => {
 	// A host with no interactive CLI login, so these assertions read the env and
 	// nothing else. mkdtemp gives a home that provably holds no credential file.
 	const bare = mkdtempSync(join(tmpdir(), 'okx-bot-nohome-'));
+	// The lane the host leads with: what the daemon is spawned on at boot.
+	const resolveProvider = (env, home) => resolveProviderChain(env, home).head;
 
 	it('prefers Claude when an Anthropic credential is present', () => {
 		const r = resolveProvider({ ANTHROPIC_API_KEY: 'sk-ant-x', OPENAI_API_KEY: 'sk-y' }, bare);
@@ -249,6 +252,145 @@ describe('okx-chat-bot provider credential probe', () => {
 
 	it('refuses to claim codex is logged in with no key to log in with', async () => {
 		await expect(loginCodex({ provider: 'codex', home: '/state' }, {})).resolves.toMatchObject({ ran: false, ok: false });
+	});
+});
+
+// A chain with one rung is not a chain. The host held exactly one AI lane until
+// 2026-09-09, so when the GCP project's Vertex access started answering
+// "Lightning dunning decision is deny" the bot received every buyer message and
+// could author no reply at all, for days, while other credentials sat unused on
+// the same service. These tests hold the line that whichever lane is funded is
+// the lane that serves.
+describe('okx-chat-bot provider chain', () => {
+	const bare = mkdtempSync(join(tmpdir(), 'okx-bot-chain-'));
+	const GATEWAY = {
+		OKX_BOT_ANTHROPIC_BASE_URL: 'https://openrouter.ai/api',
+		OKX_BOT_ANTHROPIC_AUTH_TOKEN: 'sk-or-test',
+		OKX_BOT_ANTHROPIC_MODEL: 'anthropic/claude-sonnet-4.6',
+	};
+
+	afterAll(() => rmSync(bare, { recursive: true, force: true }));
+
+	it('orders GCP credits ahead of every key, and a metered gateway last', () => {
+		const lanes = providerLanes(
+			{
+				CLAUDE_CODE_USE_VERTEX: '1',
+				ANTHROPIC_VERTEX_PROJECT_ID: 'aerial-vehicle-466722-p5',
+				ANTHROPIC_API_KEY: 'sk-ant-x',
+				OPENAI_API_KEY: 'sk-y',
+				...GATEWAY,
+			},
+			bare,
+		);
+		expect(lanes.map((l) => l.id)).toEqual(['vertex', 'anthropic-key', 'anthropic-gateway', 'openai-key']);
+	});
+
+	// A gateway bills a third-party account per token, so it must be a decision an
+	// operator made rather than something the host picks up from a stray key.
+	it('never invents a gateway lane from a half-set config', () => {
+		expect(providerLanes({ OKX_BOT_ANTHROPIC_BASE_URL: 'https://openrouter.ai/api' }, bare)).toEqual([]);
+		expect(providerLanes({ OKX_BOT_ANTHROPIC_AUTH_TOKEN: 'sk-or-test' }, bare)).toEqual([]);
+	});
+
+	// The container boots with CLAUDE_CODE_USE_VERTEX=1 baked in. Electing the
+	// gateway without unsetting it spawns a CLI that still reaches for the dead
+	// transport, which is the same silence with a different cause.
+	it('unsets the Vertex transport when a gateway lane is elected', () => {
+		const [lane] = providerLanes(GATEWAY, bare);
+		const cfg = applyLane({ home: '/state' }, lane);
+		const env = cliEnv(cfg);
+		expect(env.ANTHROPIC_BASE_URL).toBe('https://openrouter.ai/api');
+		expect(env.ANTHROPIC_MODEL).toBe('anthropic/claude-sonnet-4.6');
+		expect('CLAUDE_CODE_USE_VERTEX' in env).toBe(false);
+	});
+
+	it('keeps a pin honest: it narrows the chain, it does not empty it', () => {
+		const env = { ANTHROPIC_API_KEY: 'sk-ant-x', OPENAI_API_KEY: 'sk-y', ...GATEWAY, OKX_BOT_AI_PROVIDER: 'claude' };
+		expect(resolveProviderChain(env, bare).lanes.map((l) => l.id)).toEqual(['anthropic-key', 'anthropic-gateway']);
+	});
+
+	it('probes each lane through its own env, not the ambient one', async () => {
+		const seen = [];
+		const fetchMock = vi.fn(async (url, init) => {
+			seen.push({ url, auth: init.headers.authorization });
+			return new Response('{}', { status: 200 });
+		});
+		vi.stubGlobal('fetch', fetchMock);
+		const [lane] = providerLanes(GATEWAY, bare);
+		const v = await probeLane(lane, { ANTHROPIC_API_KEY: 'sk-ant-ambient' });
+		vi.unstubAllGlobals();
+		expect(v).toMatchObject({ code: 'ok', lane: 'anthropic-gateway', transport: 'gateway' });
+		expect(seen[0].url).toBe('https://openrouter.ai/api/v1/messages');
+		expect(seen[0].auth).toBe('Bearer sk-or-test');
+	});
+
+	// Measured live on 2026-09-09: base URL `https://openrouter.ai/api/v1` makes the
+	// CLI request `/api/v1/v1/messages`, which answers 404. classifyProbeStatus()
+	// reads a 404 from a first-party provider as proof the credential works, and
+	// that reading would have elected a lane that 404s every buyer reply.
+	it('refuses to elect a gateway that only answered a complaint about the request', async () => {
+		const [lane] = providerLanes(GATEWAY, bare);
+		vi.stubGlobal('fetch', async () => new Response('No endpoints found', { status: 404 }));
+		const v = await probeLane(lane, {});
+		vi.unstubAllGlobals();
+		expect(v.code).toBe('unauthorized');
+		expect(v.detail).toContain('OKX_BOT_ANTHROPIC_BASE_URL');
+	});
+
+	it('elects the first lane that answers and stops paying for the rest', async () => {
+		const chain = providerLanes(
+			{ CLAUDE_CODE_USE_VERTEX: '1', GOOGLE_CLOUD_PROJECT: 'p', ANTHROPIC_API_KEY: 'sk-ant-x', ...GATEWAY },
+			bare,
+		);
+		const calls = [];
+		vi.stubGlobal('fetch', async (url) => {
+			calls.push(String(url));
+			// Vertex is the dead lane; the Anthropic key answers.
+			return String(url).includes('aiplatform')
+				? new Response('Lightning dunning decision is deny', { status: 403 })
+				: new Response('{}', { status: 200 });
+		});
+		const r = await electProvider(chain, { ANTHROPIC_API_KEY: 'sk-ant-x' });
+		vi.unstubAllGlobals();
+		expect(r.elected.id).toBe('anthropic-key');
+		expect(r.lanes.map((l) => l.code)).toEqual(['unauthorized', 'ok']);
+		expect(calls.some((u) => u.includes('openrouter'))).toBe(false);
+	});
+
+	it('elects nothing when every lane is refused, and reports them all', async () => {
+		const chain = providerLanes({ ANTHROPIC_API_KEY: 'sk-ant-x', OPENAI_API_KEY: 'sk-y' }, bare);
+		vi.stubGlobal('fetch', async () => new Response('{"error":{"message":"no credit"}}', { status: 402 }));
+		const r = await electProvider(chain, { ANTHROPIC_API_KEY: 'sk-ant-x', OPENAI_API_KEY: 'sk-y' });
+		vi.unstubAllGlobals();
+		expect(r.elected).toBe(null);
+		expect(r.verdict.code).toBe('unauthorized');
+		expect(r.lanes.map((l) => l.lane)).toEqual(['anthropic-key', 'openai-key']);
+	});
+
+	// An unprovable grant is not a refusal. The developer host runs on exactly
+	// that, so calling it dead would take the stopgap offline for a lane that
+	// demonstrably authors replies.
+	it('serves on an unprovable lane rather than calling it refused', async () => {
+		const home = mkdtempSync(join(tmpdir(), 'okx-bot-login-'));
+		mkdirSync(join(home, '.claude'), { recursive: true });
+		writeFileSync(join(home, '.claude', '.credentials.json'), '{}');
+		const chain = providerLanes({ ANTHROPIC_API_KEY: 'sk-ant-x' }, home);
+		vi.stubGlobal('fetch', async () => new Response('nope', { status: 401 }));
+		const r = await electProvider(chain, { ANTHROPIC_API_KEY: 'sk-ant-x' });
+		vi.unstubAllGlobals();
+		rmSync(home, { recursive: true, force: true });
+		expect(r.elected.id).toBe('anthropic-login');
+		expect(r.verdict.code).toBe('unprobed');
+	});
+
+	it('puts every lane verdict on the status body a human funds from', () => {
+		const lines = providerInstructions('dunning deny', [
+			{ lane: 'vertex', transport: 'vertex', code: 'unauthorized', detail: 'Lightning dunning decision is deny' },
+			{ lane: 'openai-key', transport: 'api-key', code: 'unauthorized', detail: 'billing_not_active' },
+		]).join('\n');
+		expect(lines).toContain('vertex (vertex): unauthorized');
+		expect(lines).toContain('openai-key (api-key): unauthorized - billing_not_active');
+		expect(lines).toContain('OKX_BOT_ANTHROPIC_BASE_URL');
 	});
 });
 
@@ -513,6 +655,54 @@ describe('okx-chat-bot daemon supervision (smoke)', () => {
 			expect(classify({ daemon: 'stopped', wallet: null, agents: { agentCount: 0, activeClients: 0 }, providerCredentialed: true }).reason).toBe('daemon_down');
 		} finally {
 			await supervisor.stop(1_000);
+			await rm(home, { recursive: true, force: true });
+		}
+	});
+
+	// A newly elected AI lane only reaches the spawned subsession through the
+	// daemon's environment, which is fixed at spawn time, so the lane change is
+	// not real until the daemon is replaced. The replacement must leave exactly
+	// one daemon: the SIGTERM fires the exit handler's own restart as well, and
+	// two daemons race for one lock and one XMTP identity.
+	it('replaces the daemon exactly once when a lane change demands it', async () => {
+		const home = await mkdtemp(join(tmpdir(), 'okx-bot-restart-'));
+		const cfg = loadConfig({
+			OKX_BOT_HOME: home,
+			// node with a junk arg exits on its own terms; what is under test is that
+			// a restart yields exactly one live child, not zero and not two.
+			OKX_BOT_DAEMON_BIN: process.execPath,
+			OKX_BOT_RESTART_BASE_MS: '20',
+			OKX_BOT_RESTART_MAX_MS: '40',
+		});
+		const supervisor = createSupervisor(cfg, paths(cfg));
+		try {
+			supervisor.start();
+			const first = supervisor.stats().pid;
+			expect(first).toBeTruthy();
+			await supervisor.restart('test', 1_000);
+			const second = supervisor.stats().pid;
+			expect(second).toBeTruthy();
+			expect(second).not.toBe(first);
+		} finally {
+			await supervisor.stop(1_000);
+			await rm(home, { recursive: true, force: true });
+		}
+	});
+
+	// A shutdown that lands mid-restart must not be undone by the restart's own
+	// respawn: the final snapshot runs after stop(), and a daemon brought back
+	// behind it would be copied live.
+	it('does not resurrect the daemon when a shutdown lands mid-restart', async () => {
+		const home = await mkdtemp(join(tmpdir(), 'okx-bot-restart-race-'));
+		const cfg = loadConfig({ OKX_BOT_HOME: home, OKX_BOT_DAEMON_BIN: process.execPath });
+		const supervisor = createSupervisor(cfg, paths(cfg));
+		try {
+			supervisor.start();
+			const restarting = supervisor.restart('test', 1_000);
+			await supervisor.stop(1_000);
+			await restarting;
+			expect(supervisor.stats().pid).toBe(null);
+		} finally {
 			await rm(home, { recursive: true, force: true });
 		}
 	});

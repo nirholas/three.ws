@@ -14,83 +14,193 @@ const num = (v, fallback) => {
 };
 
 /**
- * Pick the AI provider the okx-a2a adapter should spawn for chat replies, and
- * say which transport authenticates it.
+ * Every AI lane this host could authenticate through, best first.
  *
- * The adapter does NOT read a reply out of the CLI's stdout, the spawned AI
- * subsession sends the reply itself through the `okx-a2a` CLI and drives the
- * task lifecycle (accept / negotiate / deliver). So the provider must be a
- * genuinely agentic CLI with tool access, not a one-shot completion call.
+ * There used to be exactly one. That is a chain with a single rung, and on
+ * 2026-09-04 the rung snapped: the GCP project's Vertex access started answering
+ * `PERMISSION_DENIED: Lightning dunning decision is deny` (a billing hold that
+ * reads like an IAM fault) and the host sat on that one dead lane, unable to
+ * author a single reply, while other credentials the project holds went
+ * unconsidered. Whichever lane is funded should be the lane that serves, and the
+ * host should move to it by itself.
  *
- * Selection is by credential, because a provider CLI with no key spawns, fails
- * to authenticate, and produces the exact symptom this worker exists to kill:
- * silence on the buyer's side.
+ * Order is a policy, not a preference:
  *
- *   OKX_BOT_AI_PROVIDER      pin explicitly (claude | codex | hermes | openclaw)
- *   CLAUDE_CODE_USE_VERTEX=1 → claude on Vertex AI, authenticated by the
- *                              runtime service account through ADC. No secret
- *                              exists to leak, rotate, or forget, and the spend
- *                              lands on the GCP credit pool the platform already
- *                              prefers, so this transport wins over every key.
- *   ANTHROPIC_API_KEY /
- *   CLAUDE_CODE_OAUTH_TOKEN  → claude on api.anthropic.com
- *   OPENAI_API_KEY           → codex
+ *   vertex             GCP credits, authenticated by the runtime service account.
+ *                      No secret exists to leak, rotate or forget, and the spend
+ *                      lands on the pool the platform already prefers.
+ *   anthropic-key      a first-party ANTHROPIC_API_KEY.
+ *   anthropic-gateway  any Anthropic-wire-format gateway (OpenRouter serves one
+ *                      at /api/v1/messages). Opt-in: it only exists when an
+ *                      operator sets its base URL and token, because it bills a
+ *                      third-party account per token.
+ *   anthropic-oauth    an interactive `claude` login on a developer host.
+ *   openai-key         the codex CLI on OPENAI_API_KEY.
  *
- * A headless host is credentialed by env alone, but a developer host running the
- * stopgap has no key at all: its claude CLI was logged in interactively and keeps
- * the grant in ~/.claude/.credentials.json. Ignoring that file reports
- * `ai_provider_uncredentialed` on a host whose adapter demonstrably authors
- * replies, which is a false red, and a false red trains people to ignore the
- * signal that this worker exists to raise.
- *
- * `credentialed` only answers "is a credential configured". Whether that
- * credential still WORKS is a different question, and on this project both
- * answers have differed: the GCP project's Vertex access and the OpenAI key are
- * each present and each refuse to serve. probeProvider() in provider.js asks the
- * provider itself, and its verdict is what readiness is judged on.
+ * Every lane carries the env its CLI needs, so electing one is applying that
+ * overlay and respawning the daemon. A `null` value means "unset this", which is
+ * what lets the gateway lane switch Vertex off for the subsession it spawns.
  *
  * @param {NodeJS.ProcessEnv} env
- * @param {string} [home] where the CLI keeps an interactive login
- * @returns {{ provider: string, transport: string, reason: string, credentialed: boolean }}
+ * @param {string} home where a CLI keeps an interactive login
+ * @returns {Array<{ id: string, provider: string, transport: string, reason: string, env: Record<string,string|null> }>}
  */
-export function resolveProvider(env = process.env, home = env.OKX_BOT_HOME || homedir()) {
-	const pinned = (env.OKX_BOT_AI_PROVIDER || '').trim().toLowerCase();
+export function providerLanes(env = process.env, home = env.OKX_BOT_HOME || homedir()) {
+	const lanes = [];
 	const onVertex =
 		(env.CLAUDE_CODE_USE_VERTEX === '1' || env.CLAUDE_CODE_USE_VERTEX === 'true') &&
 		!!(env.ANTHROPIC_VERTEX_PROJECT_ID || env.GOOGLE_CLOUD_PROJECT);
-	const hasClaudeKey = !!(env.ANTHROPIC_API_KEY || env.CLAUDE_CODE_OAUTH_TOKEN);
-	const hasClaudeLogin = existsSync(join(home, '.claude', '.credentials.json'));
-	const claude = onVertex
-		? { transport: 'vertex', reason: 'Vertex AI, authenticated by the runtime service account (no key to rotate)' }
-		: hasClaudeKey
-			? { transport: 'api-key', reason: 'ANTHROPIC_API_KEY present' }
-			: hasClaudeLogin
-				? { transport: 'oauth-login', reason: 'claude CLI holds an interactive login' }
-				: { transport: 'none', reason: 'no Anthropic credential' };
-	const codex = env.OPENAI_API_KEY
-		? { transport: 'api-key', reason: 'OPENAI_API_KEY present' }
-		: { transport: 'none', reason: 'no OpenAI credential' };
+	if (onVertex) {
+		lanes.push({
+			id: 'vertex',
+			provider: 'claude',
+			transport: 'vertex',
+			reason: 'Vertex AI, authenticated by the runtime service account (no key to rotate)',
+			credentialed: true,
+			env: {},
+		});
+	}
+	if (env.ANTHROPIC_API_KEY) {
+		lanes.push({
+			id: 'anthropic-key',
+			provider: 'claude',
+			transport: 'api-key',
+			reason: 'ANTHROPIC_API_KEY present',
+			credentialed: true,
+			env: { CLAUDE_CODE_USE_VERTEX: null, ANTHROPIC_BASE_URL: null },
+		});
+	}
+	const gateway = gatewayLane(env);
+	if (gateway) lanes.push(gateway);
+	if (env.CLAUDE_CODE_OAUTH_TOKEN) {
+		lanes.push({
+			id: 'anthropic-oauth-token',
+			provider: 'claude',
+			transport: 'api-key',
+			reason: 'CLAUDE_CODE_OAUTH_TOKEN present',
+			credentialed: true,
+			env: { CLAUDE_CODE_USE_VERTEX: null, ANTHROPIC_BASE_URL: null },
+		});
+	}
+	if (existsSync(join(home, '.claude', '.credentials.json'))) {
+		lanes.push({
+			id: 'anthropic-login',
+			provider: 'claude',
+			transport: 'oauth-login',
+			reason: 'claude CLI holds an interactive login',
+			credentialed: true,
+			env: {},
+		});
+	}
+	if (env.OPENAI_API_KEY) {
+		lanes.push({
+			id: 'openai-key',
+			provider: 'codex',
+			transport: 'api-key',
+			reason: 'OPENAI_API_KEY present',
+			credentialed: true,
+			env: {},
+		});
+	}
+	return lanes;
+}
 
-	if (pinned) {
-		const t = pinned === 'claude' ? claude : pinned === 'codex' ? codex : { transport: 'external', reason: 'provider supplies its own auth' };
-		return {
-			provider: pinned,
-			transport: t.transport,
-			reason: `pinned by OKX_BOT_AI_PROVIDER (${t.reason})`,
-			credentialed: t.transport !== 'none',
-		};
-	}
-	if (claude.transport !== 'none') {
-		return { provider: 'claude', transport: claude.transport, reason: claude.reason, credentialed: true };
-	}
-	if (codex.transport !== 'none') {
-		return { provider: 'codex', transport: codex.transport, reason: `${codex.reason} (no Anthropic credential)`, credentialed: true };
+/**
+ * The Anthropic-compatible gateway lane, or null when none is configured.
+ *
+ * `claude` speaks one wire format and reads its endpoint from ANTHROPIC_BASE_URL,
+ * so any service that serves `/v1/messages` is a usable lane for the same agentic
+ * CLI the adapter already spawns. That keeps the task lifecycle intact, which a
+ * one-shot completion responder would break.
+ *
+ * Deliberately opt-in: unlike Vertex it bills a third-party account per token, so
+ * it must be a decision an operator made, never something the host picks up from
+ * an unrelated key that happened to be on the service.
+ */
+function gatewayLane(env) {
+	const base = (env.OKX_BOT_ANTHROPIC_BASE_URL || '').trim().replace(/\/+$/, '');
+	const token = (env.OKX_BOT_ANTHROPIC_AUTH_TOKEN || '').trim();
+	if (!base || !token) return null;
+	const model = (env.OKX_BOT_ANTHROPIC_MODEL || '').trim();
+	let label = base;
+	try {
+		label = new URL(base).host;
+	} catch {
+		/* a malformed base URL still names itself in the reason */
 	}
 	return {
+		id: 'anthropic-gateway',
 		provider: 'claude',
-		transport: 'none',
-		reason: 'no AI-provider credential found, chat replies will fail until one is set',
-		credentialed: false,
+		transport: 'gateway',
+		reason: `Anthropic-compatible gateway at ${label}${model ? ` (${model})` : ''}`,
+		credentialed: true,
+		env: {
+			CLAUDE_CODE_USE_VERTEX: null,
+			ANTHROPIC_BASE_URL: base,
+			ANTHROPIC_AUTH_TOKEN: token,
+			ANTHROPIC_API_KEY: null,
+			...(model ? { ANTHROPIC_MODEL: model, ANTHROPIC_SMALL_FAST_MODEL: model } : {}),
+		},
+	};
+}
+
+/**
+ * Narrow the chain to what an explicit pin allows.
+ *
+ * A pin names a provider CLI, not a lane, so `OKX_BOT_AI_PROVIDER=claude` keeps
+ * every Anthropic lane and drops codex. A pin naming a provider with no lane at
+ * all still returns an honest, uncredentialed single entry rather than silently
+ * electing something the operator did not ask for.
+ */
+export function pinnedLanes(lanes, pinned) {
+	if (!pinned) return lanes;
+	const kept = lanes.filter((l) => l.provider === pinned);
+	if (kept.length) return kept.map((l) => ({ ...l, reason: `pinned by OKX_BOT_AI_PROVIDER (${l.reason})` }));
+	const external = pinned !== 'claude' && pinned !== 'codex';
+	return [
+		{
+			id: `${pinned}-pinned`,
+			provider: pinned,
+			transport: external ? 'external' : 'none',
+			reason: external
+				? 'pinned by OKX_BOT_AI_PROVIDER (provider supplies its own auth)'
+				: `pinned by OKX_BOT_AI_PROVIDER (no ${pinned === 'claude' ? 'Anthropic' : 'OpenAI'} credential)`,
+			env: {},
+			credentialed: external,
+		},
+	];
+}
+
+/**
+ * Resolve the whole chain: the lanes to try, in order, and which one leads.
+ *
+ * `credentialed` on a lane only answers "is a credential configured". Whether it
+ * still WORKS is a different question, and on this project the two answers have
+ * differed in both directions: the GCP project's Vertex access and the OpenAI key
+ * are each present and each refuse to serve. electProvider() in provider.js asks
+ * each lane's own API, and its verdict is what readiness is judged on.
+ *
+ * The adapter does NOT read a reply out of the CLI's stdout: the spawned AI
+ * subsession sends the reply itself through the `okx-a2a` CLI and drives the task
+ * lifecycle (accept / negotiate / deliver). So every lane must spawn a genuinely
+ * agentic CLI with tool access, never a one-shot completion call.
+ *
+ * @returns {{ lanes: Array<object>, head: object }}
+ */
+export function resolveProviderChain(env = process.env, home = env.OKX_BOT_HOME || homedir()) {
+	const pinned = (env.OKX_BOT_AI_PROVIDER || '').trim().toLowerCase();
+	const lanes = pinnedLanes(providerLanes(env, home), pinned);
+	if (lanes.length) return { lanes, head: lanes[0] };
+	return {
+		lanes: [],
+		head: {
+			id: 'none',
+			provider: 'claude',
+			transport: 'none',
+			reason: 'no AI-provider credential found, chat replies will fail until one is set',
+			env: {},
+			credentialed: false,
+		},
 	};
 }
 
@@ -104,9 +214,29 @@ export function resolveHost(env = process.env) {
 	return { label: `local:${hostname()}`, durable: false };
 }
 
+/**
+ * Point the config at one lane of the chain.
+ *
+ * Every consumer (the heartbeat, the health body, cliEnv) reads the flat
+ * `provider*` fields, so electing a lane is one mutation here rather than a
+ * plumbing change in five files. Called at boot with the head of the chain and
+ * again whenever a probe elects a different one.
+ *
+ * @param {ReturnType<loadConfig>} cfg
+ * @param {{ id: string, provider: string, transport: string, reason: string, env: object }} lane
+ */
+export function applyLane(cfg, lane) {
+	cfg.activeLane = lane;
+	cfg.provider = lane.provider;
+	cfg.providerTransport = lane.transport;
+	cfg.providerReason = lane.reason;
+	cfg.providerCredentialed = lane.credentialed === true;
+	return cfg;
+}
+
 export function loadConfig(env = process.env) {
 	const home = env.OKX_BOT_HOME || homedir();
-	const provider = resolveProvider(env, home);
+	const chain = resolveProviderChain(env, home);
 	const host = resolveHost(env);
 	return {
 		// HOME for both CLIs. Everything durable lands under it:
@@ -128,10 +258,15 @@ export function loadConfig(env = process.env) {
 		stateBucket: (env.OKX_BOT_STATE_BUCKET || '').trim(),
 		stateObject: env.OKX_BOT_STATE_OBJECT || 'okx-chat-bot/state.tar.gz',
 
-		provider: provider.provider,
-		providerTransport: provider.transport,
-		providerReason: provider.reason,
-		providerCredentialed: provider.credentialed,
+		// The lanes this host may authenticate through, best first, and the one it
+		// is currently using. A single-rung chain is what left the host sitting on
+		// a dead Vertex credential for days; see providerLanes().
+		chain: chain.lanes,
+		activeLane: chain.head,
+		provider: chain.head.provider,
+		providerTransport: chain.head.transport,
+		providerReason: chain.head.reason,
+		providerCredentialed: chain.head.credentialed === true,
 
 		// How often the provider's own API is asked whether the credential still
 		// works. A configured credential is not a working one: on this project the

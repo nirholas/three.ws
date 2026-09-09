@@ -18,6 +18,12 @@ import { log } from './log.js';
 export function createSupervisor(cfg, p) {
 	let child = null;
 	let stopping = false;
+	// Set once, by stop(). A restart flips `stopping` on and off around its own
+	// SIGTERM, so it needs a flag that a real shutdown cannot be confused with:
+	// respawning a daemon after the shutdown path has begun would leave the final
+	// snapshot copying a live sqlite file, which is exactly what the stop-then-
+	// snapshot ordering exists to prevent.
+	let terminated = false;
 	let restarts = 0;
 	let backoffMs = cfg.restartBaseMs;
 	let timer = null;
@@ -73,26 +79,54 @@ export function createSupervisor(cfg, p) {
 		child.on('exit', (code, signal) => daemonDied({ code, signal }));
 	}
 
+	async function stopChild(timeoutMs) {
+		if (timer) clearTimeout(timer);
+		const proc = child;
+		if (!proc) return;
+		await new Promise((resolve) => {
+			const done = setTimeout(() => {
+				proc.kill('SIGKILL');
+				resolve(undefined);
+			}, timeoutMs);
+			proc.once('exit', () => {
+				clearTimeout(done);
+				resolve(undefined);
+			});
+			proc.kill('SIGTERM');
+		});
+	}
+
 	return {
 		start: spawnDaemon,
 		/** Stop the child and wait for it, so state is quiesced before a snapshot. */
 		async stop(timeoutMs = 10_000) {
 			stopping = true;
-			if (timer) clearTimeout(timer);
-			const proc = child;
-			if (!proc) return;
-			await new Promise((resolve) => {
-				const done = setTimeout(() => {
-					proc.kill('SIGKILL');
-					resolve(undefined);
-				}, timeoutMs);
-				proc.once('exit', () => {
-					clearTimeout(done);
-					resolve(undefined);
-				});
-				proc.kill('SIGTERM');
-			});
+			terminated = true;
+			await stopChild(timeoutMs);
 			log.info('daemon stopped', { restarts });
+		},
+
+		/**
+		 * Replace the running daemon with one spawned from the current environment.
+		 *
+		 * The adapter hands the spawned AI subsession the daemon's own environment,
+		 * fixed at spawn time, so a newly elected AI lane cannot reach the CLI any
+		 * other way. Deliberately a full stop-then-start rather than a signal: the
+		 * daemon holds a lock and a sqlite file, and only a clean exit quiesces both.
+		 */
+		async restart(reason, timeoutMs = 10_000) {
+			if (stopping) return;
+			log.info('daemon restart', { reason, restarts });
+			// Suppress the exit handler's own restart for the duration: without this
+			// the SIGTERM below schedules a respawn AND the explicit spawn runs, and
+			// two daemons race for one lock and one XMTP identity.
+			stopping = true;
+			await stopChild(timeoutMs);
+			child = null;
+			if (terminated) return;
+			stopping = false;
+			backoffMs = cfg.restartBaseMs;
+			spawnDaemon();
 		},
 		stats() {
 			return { restarts, pid: child?.pid ?? null, uptimeMs: child ? Date.now() - startedAt : 0 };

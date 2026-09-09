@@ -22,10 +22,10 @@
 import { mkdir } from 'node:fs/promises';
 import { sendOpsAlert } from '../../api/_lib/alerts.js';
 import { sql } from '../../api/_lib/db.js';
-import { loadConfig, paths } from './config.js';
+import { applyLane, loadConfig, paths } from './config.js';
 import { agentRefresh, beginLogin, daemonStatus, exec, walletStatus } from './cli.js';
 import { startHealthServer } from './health-server.js';
-import { loginCodex, probeProvider } from './provider.js';
+import { electProvider, loginCodex } from './provider.js';
 import { classify, loginInstructions } from './session.js';
 import { restoreState, snapshotState } from './state.js';
 import { createSupervisor } from './supervisor.js';
@@ -49,6 +49,10 @@ const live = {
 	// which is why classify() treats a missing verdict as "no opinion" rather than
 	// as a failure: a host must not read red for a probe that has not run yet.
 	providerProbe: null,
+	// What EVERY lane in the chain last answered. The elected lane's verdict is
+	// `providerProbe`; this is the whole picture, so a human reading /readyz can
+	// see which credential to fund rather than only that one of them was refused.
+	providerLanes: [],
 };
 
 async function heartbeat(cfg, supervisor) {
@@ -68,7 +72,9 @@ async function heartbeat(cfg, supervisor) {
 		provider: cfg.provider,
 		providerTransport: cfg.providerTransport,
 		providerCredentialed: cfg.providerCredentialed,
+		providerLane: cfg.activeLane?.id ?? null,
 		providerVerdict: live.providerProbe?.code ?? null,
+		providerChain: live.providerLanes.map((l) => ({ lane: l.lane, code: l.code })),
 		daemonRestarts: supervisor.stats().restarts,
 		checkedAt: live.checkedAt,
 	};
@@ -113,20 +119,46 @@ async function maybeAlert(cfg, verdict) {
 	}).catch((err) => log.warn('ops alert failed', { err: err?.message }));
 }
 
-// Ask the provider whether it still serves this host. Kept off the session
-// probe's path: it is a network call to a third party, and a slow one must not
-// delay the verdict about whether XMTP is delivering. A transient `unreachable`
-// answer is remembered as-is, because classify() deliberately does not fail
-// readiness on it.
-async function probeProviderCredential(cfg) {
+// Ask every AI lane whether it still serves this host, and move to the best one.
+//
+// Kept off the session probe's path: these are network calls to third parties,
+// and a slow one must not delay the verdict about whether XMTP is delivering. A
+// transient `unreachable` answer is remembered as-is, because classify()
+// deliberately does not fail readiness on it.
+//
+// Election is what makes a dead credential survivable. The host used to hold one
+// lane, so the Vertex billing hold on 2026-09-04 left it unable to author a
+// single reply even though other credentials were configured. Now the lane that
+// answers is the lane that serves, and a lane that recovers is picked up on the
+// next tick with no deploy.
+async function electProviderLane(cfg, supervisor) {
 	const before = live.providerProbe?.code ?? null;
-	live.providerProbe = await probeProvider(cfg);
-	if (live.providerProbe.code !== before) {
+	const beforeLane = cfg.activeLane?.id ?? null;
+	const { elected, verdict, lanes } = await electProvider(cfg.chain);
+	live.providerLanes = lanes;
+	if (verdict) live.providerProbe = verdict;
+
+	if (elected && elected.id !== beforeLane) {
+		applyLane(cfg, elected);
+		log.info('provider lane elected', { lane: elected.id, transport: elected.transport, from: beforeLane });
+		// The adapter reads the provider out of ~/.okx-agent-task/config.toml, and
+		// the spawned CLI reads its credentials out of the daemon's environment.
+		// Both are set at spawn time, so a lane change is only real once the daemon
+		// has been replaced with one that carries it.
+		await exec(cfg, 'okx-a2a', ['config', 'provider', '--provider', cfg.provider], { timeoutMs: 30_000 });
+		const codexLogin = await loginCodex(cfg);
+		if (codexLogin.ran) log[codexLogin.ok ? 'info' : 'error']('codex login', codexLogin);
+		await supervisor.restart(`ai lane ${beforeLane || 'none'} -> ${elected.id}`);
+	}
+
+	if (live.providerProbe && live.providerProbe.code !== before) {
 		log[live.providerProbe.code === 'unauthorized' ? 'error' : 'info']('provider credential', {
 			provider: cfg.provider,
 			transport: cfg.providerTransport,
+			lane: live.providerProbe.lane,
 			code: live.providerProbe.code,
 			detail: live.providerProbe.detail,
+			lanes: lanes.map((l) => `${l.lane}=${l.code}`).join(' '),
 		});
 	}
 }
@@ -200,6 +232,7 @@ async function main() {
 		hostDurable: cfg.hostDurable,
 		provider: cfg.provider,
 		providerReason: cfg.providerReason,
+		chain: cfg.chain.map((l) => l.id).join(' > ') || 'none',
 		stateBucket: cfg.stateBucket || null,
 	});
 	if (!cfg.providerCredentialed) {
@@ -247,12 +280,12 @@ async function main() {
 		cfg.snapshotMs,
 	);
 	const providerProbeTimer = setInterval(
-		() => probeProviderCredential(cfg).catch((err) => log.warn('provider probe failed', { err: err?.message })),
+		() => electProviderLane(cfg, supervisor).catch((err) => log.warn('provider probe failed', { err: err?.message })),
 		cfg.providerProbeMs,
 	);
-	// Run the first credential probe immediately, but off the boot path: a slow
-	// provider must delay the verdict, never the daemon that receives the chat.
-	probeProviderCredential(cfg).catch((err) => log.warn('provider probe failed', { err: err?.message }));
+	// Run the first election immediately, but off the boot path: a slow provider
+	// must delay the verdict, never the daemon that receives the chat.
+	electProviderLane(cfg, supervisor).catch((err) => log.warn('provider probe failed', { err: err?.message }));
 	// A first verdict early enough to be useful. It can legitimately land before
 	// the daemon has claimed its lock, which classify() reports as
 	// `daemon_starting` rather than `daemon_down`, so an ordinary boot no longer

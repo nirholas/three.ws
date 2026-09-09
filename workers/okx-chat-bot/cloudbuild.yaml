@@ -110,15 +110,24 @@ steps:
       # there to answer, and the buyer experiences that as an unresponsive bot.
       # CLAUDE_CODE_USE_VERTEX points the subsession at Vertex AI, authenticated
       # by three-ws@ through ADC (roles/aiplatform.user, already granted).
-      - --set-env-vars=NODE_ENV=production,OKX_BOT_HOME=/state,OKX_BOT_REPO_ROOT=/app,OKX_BOT_AGENT_ID=2632,OKX_BOT_STATE_BUCKET=${_STATE_BUCKET},OKX_A2A_AI_PERMISSION_PRESET=bypass,CLAUDE_CODE_USE_VERTEX=1,ANTHROPIC_VERTEX_PROJECT_ID=$PROJECT_ID,CLOUD_ML_REGION=global
+      #
+      # OKX_BOT_ANTHROPIC_* is the last rung of the AI chain (providerLanes in
+      # config.js): an Anthropic-wire-format gateway the same `claude` CLI can be
+      # pointed at, so a lane change never costs the task lifecycle. It is here
+      # rather than in a runbook because the whole point of the chain is that a
+      # funded lane is used WITHOUT a deploy: while the OpenRouter account has no
+      # credit this lane simply probes 402 and is never elected, and the minute it
+      # is funded the next 15-minute probe elects it on its own. The base URL is
+      # the prefix the CLI appends /v1/messages to, so it ends at /api, NOT /api/v1
+      # (measured 2026-09-09: one segment too deep answers 404 on every reply).
+      - --set-env-vars=NODE_ENV=production,OKX_BOT_HOME=/state,OKX_BOT_REPO_ROOT=/app,OKX_BOT_AGENT_ID=2632,OKX_BOT_STATE_BUCKET=${_STATE_BUCKET},OKX_A2A_AI_PERMISSION_PRESET=bypass,CLAUDE_CODE_USE_VERTEX=1,ANTHROPIC_VERTEX_PROJECT_ID=$PROJECT_ID,CLOUD_ML_REGION=global,OKX_BOT_ANTHROPIC_BASE_URL=https://openrouter.ai/api,OKX_BOT_ANTHROPIC_MODEL=anthropic/claude-sonnet-4.6
       # An API key, if one is ever preferred over Vertex, belongs HERE and not
       # patched on afterwards: --set-secrets replaces the whole secret set, so a
       # hand-added key is silently stripped by the next deploy. Add
       # ANTHROPIC_API_KEY=anthropic-api-key:latest (or, for codex,
-      # OPENAI_API_KEY=openai-api-key:latest plus OKX_BOT_AI_PROVIDER=codex above)
-      # once the secret exists; resolveProvider in config.js prefers Vertex over
-      # both, so drop CLAUDE_CODE_USE_VERTEX when you mean to use the key.
-      - --set-secrets=DATABASE_URL=okx-chat-bot-database-url:latest
+      # OPENAI_API_KEY=openai-api-key:latest) once the secret exists; the chain
+      # ranks Vertex above both, and pinning is only needed to force one lane.
+      - --set-secrets=DATABASE_URL=okx-chat-bot-database-url:latest,OKX_BOT_ANTHROPIC_AUTH_TOKEN=OPENROUTER_API_KEY:latest
       # Liveness only. Readiness is deliberately NOT wired to Cloud Run: a
       # logged-out session fails /readyz and no restart can fix it, so probing it
       # here would put the service in a crash loop instead of paging a human.

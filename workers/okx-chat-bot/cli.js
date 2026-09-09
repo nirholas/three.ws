@@ -20,7 +20,7 @@ const DEFAULT_TIMEOUT_MS = 60_000;
  * @param {ReturnType<import('./config.js').loadConfig>} cfg
  */
 export function cliEnv(cfg) {
-	return {
+	const env = {
 		...process.env,
 		HOME: cfg.home,
 		// The onchainos installer drops its binary in $HOME/.local/bin, but the
@@ -28,6 +28,14 @@ export function cliEnv(cfg) {
 		// replaces $HOME. Keep both on PATH so a local run works either way.
 		PATH: `${cfg.home}/.local/bin:${process.env.PATH || ''}`,
 	};
+	// The elected AI lane's overlay. A `null` value UNSETS the variable, which is
+	// the only way a gateway lane can stop the spawned CLI from still reaching for
+	// the Vertex transport this container was booted with.
+	for (const [k, v] of Object.entries(cfg.activeLane?.env || {})) {
+		if (v === null || v === undefined) delete env[k];
+		else env[k] = String(v);
+	}
+	return env;
 }
 
 /**

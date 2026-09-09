@@ -44,6 +44,17 @@ export function statusBody(cfg, live, daemonStats, bootAt) {
 			verdict: live.providerProbe?.code ?? null,
 			verdictDetail: live.providerProbe?.detail ?? null,
 			verdictAt: live.providerProbe?.checkedAt ?? null,
+			// Which lane of the chain is serving, and what every other lane
+			// answered. A human deciding which credential to fund needs the whole
+			// picture, not just the fact that the elected one was refused.
+			lane: cfg.activeLane?.id ?? null,
+			chain: (live.providerLanes || []).map((l) => ({
+				lane: l.lane,
+				transport: l.transport,
+				verdict: l.code,
+				detail: l.detail,
+				checkedAt: l.checkedAt,
+			})),
 		},
 		daemon: { status: live.daemon, ...daemonStats },
 		session: live.wallet ? { loggedIn: live.wallet.loggedIn, email: live.wallet.email } : null,
@@ -54,7 +65,7 @@ export function statusBody(cfg, live, daemonStats, bootAt) {
 		checkedAt: live.checkedAt,
 	};
 	if (live.verdict.needsHumanLogin) body.remedy = loginInstructions(live.login?.loginUrl, live.login?.authSessionId);
-	else if (live.verdict.reason === 'ai_provider_unauthorized') body.remedy = providerInstructions(live.providerProbe?.detail);
+	else if (live.verdict.reason === 'ai_provider_unauthorized') body.remedy = providerInstructions(live.providerProbe?.detail, live.providerLanes);
 	return body;
 }
 
