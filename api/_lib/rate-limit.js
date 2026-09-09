@@ -2110,6 +2110,19 @@ export const limits = {
 	// the same reason as homeAct.
 	homeConnect: (userId) =>
 		getLimiter('home:connect', { limit: 10, window: '10 m' }).limit(userId),
+	// revoke: disconnecting a home (DELETE /api/home/:id). Its own bucket, and
+	// NOT a share of homeConnect, because sharing one inverts this lane's whole
+	// rule that a move toward safety always goes through. Revoking carries no
+	// token, is not a credential-stuffing surface, and is how a person cuts our
+	// access to their building. Sharing the connect budget meant the moment that
+	// budget was spent, which is exactly the moment someone had been fumbling a
+	// token or connecting several houses, they were told "too many connection
+	// changes, wait a moment" when they tried to disconnect one. Being unable to
+	// revoke for ten minutes is the wrong failure to have chosen. Still bounded,
+	// because a revoke writes to the database and drops sockets: 30 in 10 minutes
+	// is far more disconnecting than anyone does on purpose.
+	homeRevoke: (userId) =>
+		getLimiter('home:revoke', { limit: 30, window: '10 m' }).limit(userId),
 	// The live stream (api/home/[id]/stream.js). Its own bucket rather than a
 	// share of homeRead: an EventSource that reconnects in a tight loop (a dead
 	// network, a client bug) would otherwise eat a page-load budget it should not

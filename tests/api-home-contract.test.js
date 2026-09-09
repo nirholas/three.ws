@@ -88,7 +88,20 @@ vi.mock('../api/_lib/csrf.js', () => ({ requireCsrf: (...a) => csrfOk(...a) }));
 
 const allow = () => ({ success: true, limit: 100, remaining: 99, reset: Date.now() + 60_000 });
 const deny = () => ({ success: false, limit: 40, remaining: 0, reset: Date.now() + 300_000 });
-const buckets = { homeRead: vi.fn(allow), homeAct: vi.fn(allow), homeConnect: vi.fn(allow), homeStream: vi.fn(allow) };
+// A Proxy rather than a hand-listed map. This mock going stale is a known way
+// to lose a day: the day api/_lib/home/access.js started calling a new export,
+// two tests failed with "no such export on the mock" and read as handler bugs.
+// Any bucket a route reaches for now materialises as an allowing spy, so adding
+// a limiter to a home route can never again fail here as a phantom.
+const buckets = new Proxy(
+	{ homeRead: vi.fn(allow), homeAct: vi.fn(allow), homeConnect: vi.fn(allow), homeRevoke: vi.fn(allow), homeStream: vi.fn(allow) },
+	{
+		get(target, name) {
+			if (typeof name === 'string' && !(name in target)) target[name] = vi.fn(allow);
+			return target[name];
+		},
+	},
+);
 vi.mock('../api/_lib/rate-limit.js', () => ({ limits: buckets, clientIp: () => '127.0.0.1' }));
 
 vi.mock('../api/_lib/audit.js', () => ({ logAudit: vi.fn(), logAuditNow: vi.fn() }));

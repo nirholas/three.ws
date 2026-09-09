@@ -87,8 +87,8 @@ async function handleRead(req, res, { caller, home, scope }) {
 async function handleRevoke(req, res, { caller, home }) {
 	if (!(await requireCsrf(req, res, caller.userId))) return;
 
-	const rl = await limits.homeConnect(caller.userId);
-	if (!rl.success) return rateLimited(res, rl, 'too many connection changes, wait a moment');
+	const rl = await limits.homeRevoke(caller.userId);
+	if (!rl.success) return rateLimited(res, rl, 'too many disconnects, wait a moment');
 
 	const result = await revokeConnection(home.id, caller.userId);
 	// The row is gone and the ciphertext is scrubbed, but a socket this instance
