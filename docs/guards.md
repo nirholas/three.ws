@@ -137,6 +137,8 @@ Run `npm run audit:guards` to print the current count and per-stage breakdown. T
 | Documentation integrity | `npm run audit:docs` | No dead relative link, no command naming a missing script, no package without a README. |
 | Upstream resilience ratchet | `npm run audit:upstreams` | No new call to a third-party service without a deadline, and no existing one quietly getting weaker. |
 | Tutorial reachability | `npm run check:tutorials` | Every tutorial appears in the library manifest, has its markdown on disk, and is registered in `data/pages.json`. |
+| Home lane translation keys | `npm run i18n:home` | Every string the connected home speaks from JS has a key in `public/locales/en.json` whose English matches the code exactly, and no source value bakes a user's own room or device name into a translatable sentence. |
+| Home Assistant support table | `npm run check:home-matrix` | The version table in [smart-home.md](smart-home.md) is exactly what the last real matrix run measured, so a supported release is a measurement rather than a claim. |
 | Runnable doc samples | `npm run check:runnable-docs` | Every sample a reader can press Run on still returns what the doc says it returns. |
 | Doc figures | `npm run check:doc-media` | Every figure a doc points at was really captured, still matches its recipe, and carries alt text. |
 | Announcement packs | `npm run check:announce` | Every announcement pack ships captured media with alt text, a post inside X's real weighted limit, an opening no other pack reuses, and no reference to a crypto project other than $THREE. |

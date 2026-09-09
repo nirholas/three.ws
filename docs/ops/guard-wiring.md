@@ -97,6 +97,7 @@ in both the registry and the runbook.
 | `audit:route-shadowing` | `GET /api/agents/vitals`, documented in `docs/agent-vitals.md` and announced in the changelog, resolved to `api/agents/[id].js` instead of its own handler | Explicit `vercel.json` rule above the `/api/agents/([^/]+)` catch-all |
 | `check:doc-media` | 30 problems: `scene-studio` never captured, and 29 `usedBy` claims naming docs that embedded no figure at all | Captured `scene-studio`; embedded all 20 figures with their alt text and captions in the 27 docs that claimed them |
 | `check:runnable-docs` | 8 documented curl samples no longer answered as documented | 7 declared their real contract (`<!-- runnable: 401 ... -->` for the two session-gated calls, `404`/`400` for the five illustrative ids and placeholders). The eighth is a deploy lag, below. |
+| `check:windows-widget:live` | The same Windows widget contract against what three.ws is really serving: the deployed manifest, the worker bytes, the picker assets, and whether the deployed Adaptive Card expands in the board's engine | 1 | 4.1s | **manual (post-deploy).** Its 5 findings are one defect: production serves a card whose expressions the board's own engine refuses (`Invalid expression format`), so every pinned slot draws empty. The card in this tree expands cleanly, so the fix ships with the next deploy; re-run after it. |
 
 ## Still unwired, with the reason
 

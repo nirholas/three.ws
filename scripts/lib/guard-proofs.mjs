@@ -93,6 +93,17 @@ export function normalizeProof(guard) {
 		if (kinds.length !== 1) {
 			throw new Error(`guard "${guard.id}" json op needs exactly one of insert/set/removeWhere`);
 		}
+		// Pointers are dot paths (`results.0.tag`), not RFC 6901 slash pointers.
+		// A slash pointer does not fail: `set` splits it on `.`, finds one segment,
+		// and writes a junk top-level key named `/results/0/tag` that the guard
+		// never reads. The proof then reports NOT CAUGHT and reads as a rotted
+		// guard rather than as a typo in its own declaration.
+		if (op.pointer.includes('/')) {
+			throw new Error(
+				`guard "${guard.id}" json op pointer "${op.pointer}" is a slash path; ` +
+					`pointers are dot paths, so write "${op.pointer.replace(/^\/+/, '').replace(/\//g, '.')}"`,
+			);
+		}
 	}
 	if (!proof.expect || typeof proof.expect !== 'string') {
 		throw new Error(`guard "${guard.id}" proof needs an expect fragment`);

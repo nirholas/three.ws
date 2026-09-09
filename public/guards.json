@@ -858,6 +858,58 @@
 			}
 		},
 		{
+			"id": "check-home-matrix",
+			"script": "scripts/home-version-matrix.mjs",
+			"npm": "check:home-matrix",
+			"title": "The published Home Assistant support table is the one that was measured",
+			"protects": "The version table in docs/smart-home.md is exactly what the last real matrix run wrote into docs/ops/home-version-matrix.json: the same releases, the same roles and install shares, and the same per-capability result for connect, registries, stream and call.",
+			"why": "The home lane's correctness depends on a third party's monthly release, and the table is the only place we tell anyone which Home Assistant versions we support. The measurement is expensive (four containers, thirteen gigabytes, pulled and destroyed one at a time), so it is deliberately not run on every gate; what the gate can afford is proving that the cheap, published half still agrees with the expensive, measured half. Without that, the table decays into a claim: a run whose JSON landed but whose doc edit did not, or a doc edited by hand to say what someone hoped, both read as a supported version to every reader and to us.",
+			"stages": [
+				"gate"
+			],
+			"needs": "none",
+			"proof": {
+				"kind": "mutation",
+				"summary": "The measured matrix says one thing and the published table another.",
+				"violation": {
+					"json": [
+						{
+							"file": "docs/ops/home-version-matrix.json",
+							"pointer": "results.0.tag",
+							"set": "1999.1"
+						}
+					]
+				},
+				"expect": "is stale"
+			}
+		},
+		{
+			"id": "i18n-home",
+			"script": "scripts/i18n-home-keys.mjs",
+			"npm": "i18n:home",
+			"title": "Every string the connected home speaks has a catalog key",
+			"protects": "Each `t()` and `plural()` call site under the home lane resolves to a key in public/locales/en.json whose English source value is byte-identical to the fallback written in the code, and no source value smuggles a template expression into a translatable string.",
+			"why": "The HTML extractor reads `data-i18n` annotations, which covers the lane's page shells and misses the house itself: the rooms, the devices, the refusals, the confirmation and every spoken announcement are assembled in JS from live data and carry no markup to annotate. A new string added there is simply English forever in all 84 locales, and nothing complains, because the fallback argument renders perfectly. Drift is the quieter half: edit the English in the code and the catalog keeps serving the old sentence to every translated locale, so the product says two different things depending on the reader's language. The template-expression refusal guards a worse outcome, a user's own room or device name baked into a source string and machine-translated on the next run.",
+			"stages": [
+				"gate"
+			],
+			"needs": "none",
+			"proof": {
+				"kind": "mutation",
+				"summary": "The catalog's English keeps a sentence the code no longer says.",
+				"violation": {
+					"json": [
+						{
+							"file": "public/locales/en.json",
+							"pointer": "home_scene.act_close",
+							"set": "Shut"
+						}
+					]
+				},
+				"expect": "drift:"
+			}
+		},
+		{
 			"id": "check-awesome",
 			"script": "scripts/build-awesome.mjs",
 			"npm": "check:awesome",
