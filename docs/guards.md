@@ -113,6 +113,7 @@ Run `npm run audit:guards` to print the current count and per-stage breakdown. T
 | iOS app icon | `npm run check:ios-icons` | The committed iOS icon and launch images are exactly what the current brand mark produces, and the icon carries no alpha channel. |
 | macOS app icon | `npm run check:macos-icon` | The ten committed Mac icon sizes and their Contents.json are exactly what the current brand mark produces. |
 | Apple glance widget | `npm run check:apple-widget` | Both Xcode projects that build the Agent glance widget are consistent, every shared Swift source belongs to the targets that need it, and the Swift client still agrees with `api/glance/mine.js` on the endpoint, the headers, the states, the sizes and the token shape. |
+| Windows glance widget | `npm run check:windows-widget` | The widgets member in `vite.config.js`, the glance service worker, the two glance endpoints and the Adaptive Card all agree: every field the board requires is present, the declared icons and screenshots exist at the sizes claimed, the worker handles all six board lifecycle events and registers the advertised refresh, and the card expands in the board's own templating engine with no unbound expressions and no dead button targets. |
 
 ### Routing and pages
 

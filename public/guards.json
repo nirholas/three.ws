@@ -1,5 +1,5 @@
 {
-	"updated": "2026-09-08",
+	"updated": "2026-09-09",
 	"summary": "Every mechanical guard that protects this repository, and the stage each one runs in. This file is the single source of truth: scripts/audit-guards.mjs proves every entry is real and every stage claim is true, docs/guards.md explains them, and /guards renders them.",
 	"stages": [
 		{
@@ -833,6 +833,28 @@
 					}
 				},
 				"expect": "no longer reads"
+			}
+		},
+		{
+			"id": "check-windows-widget",
+			"script": "scripts/check-windows-widget.mjs",
+			"npm": "check:windows-widget",
+			"title": "The Windows 11 glance widget still satisfies the board's contract",
+			"protects": "The widgets member in vite.config.js, the glance service worker, the two glance endpoints and the Adaptive Card all agree with each other: every field the board requires is present, the declared icons and screenshots exist at the sizes claimed, the worker handles all six board lifecycle events, fetches the card rather than handing the host its URL, registers the refresh interval the manifest advertises, and the card expands in the board's own templating engine for every state with no unbound expressions and no dead button targets.",
+			"why": "The widgets board is the one surface nothing in this repository can open: it needs Windows 11, Edge, and the PWA installed. A broken slot renders as nothing at all rather than as an error, so every defect here is silent twice over, invisible locally and invisible to the user. Four have already reached that state while every other check stayed green: the worker passing the host a template URL where the card belonged, no periodic sync ever registered, a slot pinned before the worker activated staying empty, and a card written with JavaScript array paths that the board's expression engine refuses to parse. That last one is why this runs the real engine instead of reading the template with our own idea of a path: `${stats.0.label}` resolves in JavaScript and is a syntax error in Adaptive Expression Language, and the engine throws away the whole card rather than skipping the one binding, so a single dotted index empties the widget.",
+			"stages": [
+				"gate"
+			],
+			"needs": "none",
+			"proof": {
+				"kind": "mutation",
+				"summary": "A screenshot the manifest advertises to the widget picker is gone from the tree.",
+				"violation": {
+					"delete": [
+						"public/screenshots/glance-widget.png"
+					]
+				},
+				"expect": "is declared but"
 			}
 		},
 		{
