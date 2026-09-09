@@ -311,6 +311,14 @@
 			<description>On /play/agent-wallet a 3D avatar walks up to a paid x402 endpoint and buys a live market signal with real USDC on Solana. The page had gone quiet. three.ws's own paid endpoints switch to a self-pay payment challenge whenever the wallet that normally sponsors the Solana network fee cannot co-sign, and the bridge behind the page only knew how to build a sponsored payment, so every price quote came back as a server error and the demo never got past its connecting state. The bridge now signs both kinds: when no sponsor is offered, the agent wallet pays its own network fee, exactly as the platform's own payment ring already does. Four smaller things came with it. The page no longer offers a Pay button it knows will fail: when the agent wallet cannot cover the quoted price it says so and leaves the deposit address in front of you. Switching between BTC, ETH and SOL re-prices immediately instead of waiting for the next payment. The wallet balance and the Pay button stop reverting to placeholder text a few seconds after they load, which the translation pass had been overwriting. And the page carries a real page heading for screen readers and search engines, which it had been missing entirely.</description>
 		</item>
 		<item>
+			<title>The animation gallery now opens on one page of the catalog instead of all of it</title>
+			<link>https://three.ws/animations</link>
+			<guid isPermaLink="false">2026-09-09:The animation gallery now opens on one page of the catalog instead of all of it</guid>
+			<pubDate>Wed, 09 Sep 2026 12:00:00 GMT</pubDate>
+			<category>improvement</category>
+			<description>Browsing /animations used to download every clip in the library before you had finished reading the first screen, and that download grows with every batch of clips we add. It now loads one page and fetches more only when you reach the end of the grid, while the clip total and the per-category counts stay exact from the first moment the page paints. Searching or filtering still reads the whole catalog, because those look at every clip, and the results stream in as they arrive. Avatar embeds and pose links that name a single clip now ask for that one clip rather than the whole library, which took the request from 1.1 MB to a few hundred bytes.</description>
+		</item>
+		<item>
 			<title>The Animation Studio names itself for screen readers, and its empty timeline is legible on a phone</title>
 			<link>https://three.ws/pose</link>
 			<guid isPermaLink="false">2026-09-09:The Animation Studio names itself for screen readers, and its empty timeline is legible on a phone</guid>

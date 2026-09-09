@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-09-09T19:56:43.235Z",
+	"generated_at": "2026-09-09T20:08:05.351Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -411,6 +411,17 @@
 			"tags": [
 				"fix",
 				"improvement"
+			]
+		},
+		{
+			"date": "2026-09-09",
+			"type": "update",
+			"title": "The animation gallery now opens on one page of the catalog instead of all of it",
+			"summary": "Browsing /animations used to download every clip in the library before you had finished reading the first screen, and that download grows with every batch of clips we add. It now loads one page and fetches more only when you reach the end of the grid, while the clip total and the per-category counts stay exact from the first moment the page paints. Searching or filtering still reads the whole catalog, because those look at every clip, and the results stream in as they arrive. Avatar embeds and pose links that name a single clip now ask for that one clip rather than the whole library, which took the request from 1.1 MB to a few hundred bytes.",
+			"link": "/animations",
+			"tags": [
+				"improvement",
+				"infra"
 			]
 		},
 		{

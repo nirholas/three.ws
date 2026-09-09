@@ -1,11 +1,11 @@
 {
-	"generated_at": "2026-09-09T19:55:21.390Z",
+	"generated_at": "2026-09-09T20:08:05.378Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
 		"url": "https://three.ws"
 	},
-	"total": 3652,
+	"total": 3654,
 	"complete": false,
 	"full_feed": "/changelog.json",
 	"entries": [
@@ -68,6 +68,17 @@
 			"tags": [
 				"security",
 				"fix"
+			]
+		},
+		{
+			"date": "2026-09-09",
+			"type": "update",
+			"title": "An embedded avatar no longer crashes the page it was removed from",
+			"summary": "Sites embed three.ws avatars with the <agent-3d> tag, and a single-page app can swap the whole page out while an avatar is still loading. When that happened the avatar was left holding a piece of the page that no longer existed, and its own tidy-up threw an error into the host site console instead of quietly reporting that loading had stopped. The avatar had already handled the failure correctly; the report of it was what broke. Embedders now get the agent:error event they listen for, and nothing else, whether or not the page moved on while the avatar was still loading.",
+			"link": "/docs/web-component",
+			"tags": [
+				"fix",
+				"sdk"
 			]
 		},
 		{
@@ -403,6 +414,17 @@
 			"tags": [
 				"fix",
 				"improvement"
+			]
+		},
+		{
+			"date": "2026-09-09",
+			"type": "update",
+			"title": "The animation gallery now opens on one page of the catalog instead of all of it",
+			"summary": "Browsing /animations used to download every clip in the library before you had finished reading the first screen, and that download grows with every batch of clips we add. It now loads one page and fetches more only when you reach the end of the grid, while the clip total and the per-category counts stay exact from the first moment the page paints. Searching or filtering still reads the whole catalog, because those look at every clip, and the results stream in as they arrive. Avatar embeds and pose links that name a single clip now ask for that one clip rather than the whole library, which took the request from 1.1 MB to a few hundred bytes.",
+			"link": "/animations",
+			"tags": [
+				"improvement",
+				"infra"
 			]
 		},
 		{
@@ -1588,28 +1610,6 @@
 			"tags": [
 				"feature",
 				"docs"
-			]
-		},
-		{
-			"date": "2026-09-05",
-			"type": "update",
-			"title": "AI coding assistants can now search the three.ws asset library and get working code back",
-			"summary": "Every ready-made asset the platform publishes is now one search away from any AI coding client connected to the three.ws MCP server: 511 CC0 props, 107 rigged characters and 2,874 motion clips, all in a single searchable catalog instead of three separate browse pages. Ask for a wooden chair or an industrial lamp and you get matching items ranked best first, with tags, license, and the CDN link. Ask for the source and you get code that runs as it is: the model-viewer tag our own gallery renders with, the agent-3d web component pinned to the exact published version and its integrity hash, plain three.js, or a React component. Motion clips come back as three.js code that loads and plays them. All three tools are free and need no account, no API key and no payment, because you should be able to find out what is already here before you sign up for anything. A search that matches only part of what you typed says so instead of returning nothing.",
-			"link": "/docs/mcp",
-			"tags": [
-				"feature",
-				"sdk"
-			]
-		},
-		{
-			"date": "2026-09-05",
-			"type": "update",
-			"title": "Invite people to an IRL agent with a visit link and a printable sign",
-			"summary": "Every agent you have placed in the real world now has a visit link and a sign you can print and tape to the spot. Someone who scans it opens IRL with a banner naming the agent they came to meet, and the moment they are close enough the agent appears in their camera, flashes, and opens its card by itself: bio, reputation, wallet, tip QR, services, and a message box. That card also gained View in AR: on iPhone it stands the agent on the real floor in Quick Look, animated, and the banner inside AR brings you straight back to the card. The link never contains a location, so you can post it anywhere and the agent still only shows to people who are actually there. Find it under Visit link on each placement in your dashboard.",
-			"link": "/irl",
-			"tags": [
-				"feature",
-				"improvement"
 			]
 		}
 	]
