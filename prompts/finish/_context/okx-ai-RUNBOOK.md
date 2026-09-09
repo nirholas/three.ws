@@ -49,13 +49,32 @@ Only `curl` against our own `/api/okx/3d/*` endpoints (§7), public RPC reads, a
 
 ## 0.5 The chat bot goes offline on its own: `npm run okx:bot`
 
-The marketplace chat bot for #2632 is a LOCAL `okx-a2a` daemon plus the `onchainos` wallet
-session, both outside this repo. A codespace rebuild wipes the CLIs; an idle nap kills the
+> **Read this first, 2026-09-09.** The bot is NOT local any more. It runs on Cloud Run
+> (`okx-chat-bot`, up since 2026-09-04) and that host owns the GCS state object and the XMTP
+> identity, with `--max-instances=1` enforcing exactly one writer. **Running `npm run okx:bot`
+> now starts a second writer against both.** Use it only if the Cloud Run host is gone, and stop
+> the service first. Everything from here to the end of the section is that emergency path.
+>
+> To read the live state instead, no `gcloud` needed (its login dies with every codespace
+> recycle, and did on 2026-09-09):
+>
+> ```sh
+> curl -s https://three.ws/api/healthz | jq '.subsystems.subsystems[] | select(.name=="okx_chat_bot")'
+> node --env-file=.env.local -e "import('./api/_lib/db.js').then(async({sql})=>{console.log((await sql\`SELECT mode,last_beat_at,meta FROM bot_heartbeat WHERE worker='okx-chat-bot'\`)[0]);process.exit(0)})"
+> ```
+>
+> The heartbeat meta also identifies WHICH code the service runs: compare its key set against
+> `heartbeat()` in `workers/okx-chat-bot/index.js`. On 2026-09-09 it carried no
+> `providerLane` / `providerChain`, so the running revision predates the AI-lane chain and
+> cannot elect a funded lane until it is redeployed.
+
+The marketplace chat bot for #2632 used to be a LOCAL `okx-a2a` daemon plus the `onchainos`
+wallet session, both outside this repo. A codespace rebuild wipes the CLIs; an idle nap kills the
 daemon (observed: alive 21:09, dead by 03:13 the same night). OKX-side chat tests then time
 out with "no delivery in 30 min", which is what got the listing flagged as offline on
 2026-07-26.
 
-**One command does the whole recovery:**
+**One command does the whole emergency recovery:**
 
 ```bash
 npm run okx:bot
@@ -111,8 +130,9 @@ gcloud builds submit --config workers/okx-chat-bot/cloudbuild.yaml \
   --substitutions=SHORT_SHA=manual$(date +%s) .
 ```
 
-Until that lands, `npm run okx:bot` before an OKX retest window is still the stopgap: a
-codespace cannot stay up on its own, so the local bot dies whenever this workspace sleeps.
+**That deploy landed on 2026-09-04**, so the stopgap is retired and must stay stopped. A second
+deploy is owed: the AI-lane chain (`ad723e87f`, 2026-09-09) has not shipped, and until it does
+the host is pinned to Vertex and cannot pick up a lane the owner funds.
 
 **The deploy no longer waits on a credential (2026-09-04).** It used to demand an
 `anthropic-api-key` secret that exists nowhere, so it never ran. The service now authenticates
@@ -203,7 +223,10 @@ onchainos agent get-my-agents \
   | python3 -c "import json,sys; a=[x for g in json.load(sys.stdin)['data']['list'] for x in g['agentList'] if x['agentId']=='2632'][0]; print(a['approvalLabel'], '| status', a['statusLabel'], '| sold', a['soldCount'])"
 ```
 
-Verified 2026-09-02: `Listing under review | status not listed | sold 2`.
+Run it, do not quote it. That line read `Listing under review | status not listed | sold 2`
+on 2026-09-02 and reads `Listing rejected | status not listed | sold 2` on 2026-09-09, and a
+reader who takes the older reading for the current one concludes a review is in flight when
+none is.
 
 ---
 
@@ -344,11 +367,23 @@ This is the holder-visible moment. Work the list top to bottom.
 
 2. **Search as a buyer would.** We must actually appear:
    ```bash
-   onchainos agent search --query "3D avatar rigging GLB"
+   onchainos agent search --query "3D avatar rigging GLB" \
+     | python3 -c "import json,sys; t=json.load(sys.stdin)['data']['table']['rows']; print(len(t), [r['agentId'] for r in t])"
    ```
-   Verified 2026-07-10: returns 2 results, **agent 2632 absent** (correct, we are not
-   listed). After approval this must return us. Check the card copy reads well and the
-   prices are right.
+   **Results live under `data.table.rows`, not under `data`.** A one-liner that reads `data`
+   as a list prints `0` on a perfectly good response, which reads as "we are invisible" and
+   is not. Each row carries `agentId` (with a `#`), `name`, `soldCount`, `minPrice` and
+   `recommendService`.
+
+   Re-run 2026-09-09, three queries: `"3D avatar rigging GLB"` and
+   `"text to 3D model GLB generation"` each returned the SAME 10 rows, the marketplace's
+   top sellers by `soldCount` (#11167 3304 sales, #2023 1374, #6023 1061), none of them 3D,
+   so relevance ranking is not applied to those two queries today; `"3D model avatar
+   rendering game asset"` returned 1 genuinely matching row (#6731 Agent Reel, 576 sales).
+   **Agent 2632 was absent from all three**, which is correct while `status` is "not listed".
+   After approval at least one of these must return us. Check the card copy reads well and
+   the prices are right; do not read a generic top-seller page as a relevance failure on our
+   listing.
 
 3. **Announce it.** Append an entry to [`data/changelog.json`](../../data/changelog.json)
    with tag `feature`, in plain holder-readable language, then:

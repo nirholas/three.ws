@@ -22,6 +22,8 @@
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { XMLValidator } from 'fast-xml-parser';
+import { readFile } from 'node:fs/promises';
+import path from 'node:path';
 
 const db = vi.hoisted(() => ({ queries: [], rows: new Map(), fail: null }));
 
@@ -135,8 +137,19 @@ describe('GET /sitemap/<type>.xml: the six real types', () => {
 	});
 
 	it('advertises the xhtml namespace only when entries carry hreflang alternates', async () => {
-		// core localizes (public/locales/localized-pages.json); widgets never do.
-		expect((await call('core')).body).toContain('xmlns:xhtml="http://www.w3.org/1999/xhtml"');
+		// Alternates exist only while the committed manifest ships a second
+		// locale: alternatesFor() returns undefined below two, so a manifest
+		// held back to English alone (as it is whenever the catalogs are
+		// mid-regeneration) correctly emits no namespace. Read the same file
+		// the handler reads rather than pinning one side of that switch.
+		const manifest = JSON.parse(
+			await readFile(path.join(process.cwd(), 'public/locales/manifest.json'), 'utf8'),
+		);
+		const localizes = (manifest.locales || []).length >= 2;
+		const core = (await call('core')).body;
+		expect(core.includes('xmlns:xhtml="http://www.w3.org/1999/xhtml"')).toBe(localizes);
+		expect(core.includes('<xhtml:link rel="alternate"')).toBe(localizes);
+		// widgets never localize, whatever the manifest says.
 		expect((await call('widgets')).body).not.toContain('xmlns:xhtml');
 	});
 

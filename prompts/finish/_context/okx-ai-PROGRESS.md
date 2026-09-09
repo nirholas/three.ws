@@ -6,6 +6,142 @@ Work Order 04 session, no earlier entries existed because no earlier work order 
 
 ---
 
+## 2026-09-09, WO-07 closing audit: everything re-verified from scratch, and the one blocker is unchanged
+
+The last WO-07 session ran this morning; this one trusted none of it and re-measured every
+claim against production and against the chain. **Every claim in the entries below that this
+session could re-test survived re-verification.** The findings here are the two that did not,
+both in the RUNBOOK, plus a broken test outside this stream that was blocking a green suite.
+
+The owner retired all 30 work orders in `prompts/finish/` mid-session
+(`_context/00-RETIRED-BY-OWNER.md`), including this one, so this log and the RUNBOOK are now
+the only homes for the stream's state.
+
+### Re-verified today, independently
+
+| Claim | How it was re-tested | Verdict |
+| --- | --- | --- |
+| 402 is spec-valid on the cheapest and the flagship row | raw `curl` on `forge-draft` + `forge-hd`, decoded the `PAYMENT-REQUIRED` header | PASS, `x402Version 2`, `accepts[0]` = `exact` / `eip155:196` / USD₮0 / `payTo 0x4022de2D...f402` / 10000 and 250000 |
+| OKX's own validator accepts all four paid rows | `onchainos agent x402-check`, four rows | `valid: true` on all four, `amountMinimal` 10000 / 50000 / 250000 / 250000 |
+| Compliance across the reviewer's probe shapes | `scripts/okx-compliance-probe.mjs` | `PASS 20 probes` |
+| A real TEE-signed authorization is accepted | `scripts/okx-payment-leg-probe.mjs` | `PASS 4 paid rows`, each stopped only at `insufficient_balance`, nothing spent |
+| Replay and adversarial protection | `okx-e2e-gauntlet.mjs --yes --only 1,1d,5b,5c,5d` | 5/5 PASS, 0 settlements. 5b dies at `signed payment amount 10000 is below required 250000`; 5c is refused with a fresh challenge naming expiry; 5d answers 402 on all four garbage headers |
+| Free lane honest | `GET /catalog` 200 (7 rows), `GET /health` 200 with six subsystems `ok` and `settleable: true` at block 70196469, `forge-status` GET 405, four paid rows 402 with the MCP headers sent | PASS |
+| Product actually delivers | free-lane job `f82a43b8-34e9-46c9-bab9-e9fbff5e4c6d` on `trellis_selfhost` reached `done` with a real GLB; `scripts/okx-verify-glb.mjs` reads glTF v2, 1,646,228 bytes, 7,919 vertices, 12,262 triangles | PASS |
+| The delivery outage cleared | `forge_creations`: 170 `done` rows in 24 h, and in the last 6 h 26 done on `trellis_selfhost` against 1 failure, versus 44 of 91 failing when it was first found | PASS |
+| Module == live == submission | `npm run okx:three-copy` local three copies | PASS |
+| What OKX stores | same run, on-chain copy read from `agent service-list` | **FAIL, 7 divergences, unchanged.** All seven stored descriptions still carry two parts where the module emits four |
+| Listing state | `agent get-my-agents` | `approvalDisplayStatus 5`, `Listing rejected`, `status 2`, `soldCount 2`, `approvalRemark` 4109 chars, byte-identical to rejection #3 |
+| Reviews | `agent feedback-list --agent-id 2632` | `total: 0` |
+| Every OKX unit suite | `okx-forge` + `okx-xlayer-verify` + `okx-3d-services` + `okx-identity-studio` + `okx-chat-bot` | 197 passed |
+| Docs | `npm run audit:docs` | clean, 1590 files |
+| Changelog well-formed | `npm run build:pages` | exit 0, 926 pages, entries validated |
+
+### The listing's stored copy, re-confirmed against OKX's own contract
+
+`onchainos agent update --help` was read directly rather than quoted from this log. It states
+that an A2MCP `serviceDescription` is four newline-separated parts (what it does / parameter
+spec / request method / a working `curl`) and that **"an A2MCP listing missing any is rejected
+at listing QA"**. The seven rows OKX stores carry two. The delta that fixes it was generated and
+inspected end to end this session: seven `update` operations carrying the existing service ids
+39975 to 39981, four parts each, 255 to 673 characters (OKX's cap is 2000 half-width), correct
+`serviceType`, `fee` and `endpoint`, no `subscription` key. **Every one of the seven `curl`
+examples the delta would publish was executed against production**: the four paid rows answer
+402 and the three free rows answer 200, so a reviewer running the listing's own example gets
+the documented result.
+
+### The rejection remark's other instruction, checked in code rather than assumed
+
+The remark asks that verification logic not intercept OKX's audit address
+`0xbc59eb75C55e3bF1E63aaeE653C2b8E02BFd2033`. Grepped the whole payment path
+(`x402-xlayer-okx.js`, `_mcp/payments.js`, `okx/3d/[service].js`): the address appears exactly
+once, in a comment explaining the EIP-7702 root cause. **There is no per-address allow, deny or
+branch anywhere in the payment path**, so that instruction is satisfied by construction.
+
+### Wallets, read direct from X Layer at block 70197447
+
+| Wallet | USD₮0 | OKB | Code |
+| --- | --- | --- | --- |
+| buyer `0x75d0…cf69` | 0.000000 | 0.000000 | 23 B `0xef0100…` (EIP-7702 delegated) |
+| seller / payTo `0x4022de2D…f402` | 2.427731 | 0.839596 | EOA |
+| relayer `0xe81DE501…415B` | 0.000000 | 0.020000 | EOA |
+| OKX audit `0xbc59eb75…2033` | 19.548083 | 0.000000 | 23 B `0xef0100…` (EIP-7702 delegated) |
+
+Two things worth carrying forward. The buyer and OKX's audit wallet have the *same* delegated
+shape, so the `eip3009SignatureIsValid()` fix is being exercised by exactly the wallet class the
+reviewer pays from. And the audit wallet has spent 2,130 atomics since the 2026-09-04 reading
+(19.550213 to 19.548083), so OKX's QA agent is actively paying other sellers on this rail; its
+test is a real purchase, not a dry run.
+
+### RUNBOOK drift found by running it, and fixed
+
+1. **§1 quoted a stale status line as if current.** It ended with "Verified 2026-09-02:
+   `Listing under review | status not listed | sold 2`". Running the command today prints
+   `Listing rejected`. Rewritten to give both readings with their dates and to say plainly that
+   the older one is not the current state.
+2. **§4.2's buyer search could not work as written.** Results live at `data.table.rows`, not at
+   `data`, so the obvious one-liner prints `0` on a healthy response and reads as "we are
+   invisible". The section now carries a working parser, the row shape, and today's readings:
+   `"3D avatar rigging GLB"` and `"text to 3D model GLB generation"` both return the same 10
+   rows, the marketplace's top sellers by `soldCount` (#11167 with 3304 sales, #2023 with 1374,
+   #6023 with 1061), none of them 3D, so relevance is not applied to those queries today, while
+   `"3D model avatar rendering game asset"` returns 1 real match (#6731 Agent Reel, 576 sales).
+   Agent 2632 was absent from all three, which is correct while `status` is "not listed".
+
+Also worth recording against the CONTEXT file's competitive section, which warns it has gone
+stale once: it has gone stale again. The 2026-09-02 reading of 112 results for the third query
+is 1 today.
+
+### One test fixed outside this stream, because it blocked a green suite
+
+`tests/sitemap-type.test.js` asserted the core sitemap always advertises `xmlns:xhtml`. Commit
+`95c190180` held `public/locales/manifest.json` back to English alone, and `alternatesFor()`
+returns no alternates below two locales, so the handler correctly stops emitting the namespace.
+The code was right and the test pinned one side of that switch. It now reads the same manifest
+the handler reads and asserts the relationship, so it holds in both worlds.
+
+Full suite after that fix: **29,374 passed, 3 failed**, none of them this stream's and none of
+them code defects:
+
+- `tests/audit-guards.test.js` and `tests/guard-wiring.test.js` want registry rows for
+  `check:home-matrix`, `i18n:home` (added to `gate` by `91893eb2d`) and
+  `check:windows-widget:live` (`23ea927b7`). Every `data/guards.json` entry must carry a proof
+  fixture the auditor actually applies, and `guard-wiring.md` wants a measured runtime; writing
+  either for another lane's guard would be inventing evidence. Both lanes have `data/guards.json`
+  and `docs/guards.md` open in the working tree right now, so they are mid-fix.
+- `tests/multiplayer-server-boot.test.js` failed only under a concurrent peer vitest run and
+  passes 13/13 in isolation. Port contention, not a defect.
+
+### Launch branch executed: REJECTED, so no announcement
+
+`approvalLabel` reads `Listing rejected` and has not moved, so the approved branch (§4: confirm
+activation, changelog entry, buyer search) does not apply and no changelog entry was written.
+The rejected branch (§5) was executed: the remark is captured verbatim above and in the entries
+below, and it maps to two things, both already fixed in code and live (the 402 quotation shape
+and the EIP-7702 signature refusal) plus one that is not (the stored descriptions). Nothing in
+code remains to fix for this rejection.
+
+### The three owner actions, unchanged and each a single step
+
+1. **Approve the resubmission.** Two on-chain writes, in this order. The delta was regenerated
+   and validated this session; the wallet session is live, so no OTP is pending.
+
+   ```bash
+   onchainos agent service-list --agent-id 2632 \
+     | node scripts/okx-listing-payload.mjs --delta > /tmp/okx-2632-delta.json
+   onchainos agent update --agent-id 2632 --service "$(cat /tmp/okx-2632-delta.json)"
+   onchainos agent activate --agent-id 2632 --preferred-language en-US
+   ```
+
+2. **Fund the buyer** `0x75d00a2713565171f33216e5aa2a375e076ecf69` with >=$3 USD₮0
+   (`0x779ded0c9e1022225f8e0630b35a9b54be713736`) on X Layer / 196, for the first real
+   settlement. No OKB needed; the relayer pays gas. This does NOT gate the resubmission.
+3. **Clear the GCP billing hold** on `aerial-vehicle-466722-p5`. `/api/healthz` still reads
+   `okx_chat_bot: degraded`, "chat is delivered but the AI provider refuses this host's
+   credential", so a reviewer who chat-tests the listing gets silence.
+
+---
+
 ## 2026-09-09, backlog-08 re-verified with no `gcloud`: the host is unchanged, the lane chain is committed but has never shipped
 
 Independent re-measurement of the chat-bot work order a few hours after the entry below it,
