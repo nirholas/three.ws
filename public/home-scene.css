@@ -125,10 +125,19 @@
 	cursor: pointer;
 	transition: background var(--duration-fast) var(--ease-standard), border-color var(--duration-fast) var(--ease-standard), transform var(--duration-fast) var(--ease-standard);
 }
-.hs-btn:hover:not(:disabled) { background: var(--surface-3); border-color: var(--stroke-strong); }
-.hs-btn:active:not(:disabled) { transform: translateY(1px); }
+.hs-btn:hover:not(:disabled):not([aria-disabled='true']) { background: var(--surface-3); border-color: var(--stroke-strong); }
+.hs-btn:active:not(:disabled):not([aria-disabled='true']) { transform: translateY(1px); }
 .hs-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
-.hs-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+/*
+ * `aria-disabled` reads and looks exactly like `disabled`, and behaves like it
+ * on click, but stays in the tab order and can still hold focus. A control that
+ * is busy for the length of a network round trip must not vanish from under a
+ * keyboard user's fingers, which the `disabled` property does: the browser
+ * blurs it, the keyboard lands on the document, and the person has to tab the
+ * whole house again to get back to the lamp they just pressed.
+ */
+.hs-btn:disabled,
+.hs-btn[aria-disabled='true'] { opacity: 0.5; cursor: not-allowed; }
 .hs-btn[aria-pressed='true'] { background: var(--surface-3); border-color: var(--stroke-strong); }
 .hs-btn--primary { background: var(--ink); color: var(--bg-0); border-color: transparent; font-weight: var(--weight-semibold); }
 .hs-btn--primary:hover:not(:disabled) { background: #fff; }
@@ -521,9 +530,10 @@
 	cursor: pointer;
 	transition: background var(--duration-fast) var(--ease-standard), border-color var(--duration-fast) var(--ease-standard);
 }
-.hs-item-act:hover:not(:disabled) { background: var(--surface-3); border-color: var(--stroke-strong); }
+.hs-item-act:hover:not(:disabled):not([aria-disabled='true']) { background: var(--surface-3); border-color: var(--stroke-strong); }
 .hs-item-act:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
-.hs-item-act:disabled { opacity: 0.5; cursor: progress; }
+.hs-item-act:disabled,
+.hs-item-act[aria-disabled='true'] { opacity: 0.5; cursor: progress; }
 
 .hs-card-readouts {
 	display: grid;

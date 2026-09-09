@@ -850,11 +850,17 @@ function renderInspector() {
 			// dismissConfirm: the node itself does not.
 			button.dataset.actFor = object.entityId;
 			button.dataset.actService = `${action.domain}.${action.service}`;
-			button.textContent = state.busy.has(object.entityId) ? t('home_scene.working', 'Working') : action.label;
-			button.disabled = state.busy.has(object.entityId);
-			button.addEventListener('click', () =>
-				act({ entityId: object.entityId, domain: action.domain, service: action.service, name: object.name, roomId: roomOf(object.entityId)?.id }),
-			);
+			const working = state.busy.has(object.entityId);
+			button.textContent = working ? t('home_scene.working', 'Working') : action.label;
+			// aria-disabled rather than the disabled property, for the same reason
+			// the flat house uses it: a disabled control is blurred by the browser,
+			// and losing the keyboard for the length of a round trip is not an
+			// acceptable cost of pressing a button.
+			if (working) button.setAttribute('aria-disabled', 'true');
+			button.addEventListener('click', () => {
+				if (button.getAttribute('aria-disabled') === 'true') return;
+				act({ entityId: object.entityId, domain: action.domain, service: action.service, name: object.name, roomId: roomOf(object.entityId)?.id });
+			});
 			row.appendChild(button);
 		}
 		el.inspector.appendChild(row);
@@ -916,6 +922,12 @@ function actionsFor(object) {
 
 async function act(request, { confirmed = false, remember = false } = {}) {
 	const room = request.roomId ? state.model?.rooms.find((r) => r.id === request.roomId) : roomOf(request.entityId);
+	// Where the keyboard is RIGHT NOW, before anything below moves it. Read here
+	// rather than in the refusal branch because the lines that follow mark the
+	// device busy and re-render it, and the control that started this action is
+	// replaced by its working state in the process. By the time the gate answers
+	// there is nothing useful left to read off document.activeElement.
+	const returnTo = document.activeElement instanceof HTMLElement ? document.activeElement : null;
 	state.busy.add(request.entityId);
 	state.renderer?.setBusy?.([...state.busy]);
 	state.renderer?.setActing?.({ roomId: room?.id || null, entityId: request.entityId });
@@ -939,21 +951,22 @@ async function act(request, { confirmed = false, remember = false } = {}) {
 			// The gate fired. Ask, next to the thing it would move.
 			state.pending = { request, message: err.message, risk: err.pending?.risk || 'physical', entityId: err.pending?.entityId || request.entityId };
 			pushLog({ text: t('home_scene.log_entry', '{{action}} {{name}}', { action: serviceLabel(request.service), name: request.name }), outcome: 'refused' });
-			// Where the keyboard was when the gate fired. Cancelling or pressing
-			// Escape puts it back there, so a keyboard user is returned to the
-			// control they pressed instead of to the top of the document.
+			// Where the keyboard was when this action started. Cancelling or
+			// pressing Escape puts it back there, so a keyboard user is returned
+			// to the control they pressed instead of to the top of the document.
 			//
 			// Both the node AND what it is, because the node does not survive.
-			// This same call's `finally` runs setBusy, which rebuilds the flat
-			// house's whole list, so by the time anyone answers the question the
-			// button they pressed has been replaced by an identical one and the
-			// original is detached. Holding only the reference sent the keyboard
-			// to the top of the document on every Escape: caught by the
-			// no-mouse journey in tests/e2e/home-a11y.spec.js.
-			state.confirmReturn = document.activeElement instanceof HTMLElement ? document.activeElement : null;
-			state.confirmReturnKey = state.confirmReturn?.dataset?.actFor
-				? { entityId: state.confirmReturn.dataset.actFor, service: state.confirmReturn.dataset.actService || '' }
-				: null;
+			// The busy render above rebuilds the flat house's whole list, so the
+			// button they pressed has already been replaced by an identical one
+			// and the original is detached. Holding only the reference sent the
+			// keyboard to the top of the document on every Escape: caught by the
+			// no-mouse journey in tests/e2e/home-a11y.spec.js. The request itself
+			// is the last resort, and it always names the right control.
+			state.confirmReturn = returnTo;
+			state.confirmReturnKey = {
+				entityId: returnTo?.dataset?.actFor || request.entityId,
+				service: returnTo?.dataset?.actService || `${request.domain}.${request.service}`,
+			};
 			renderConfirm();
 		} else {
 			pushLog({ text: t('home_scene.log_entry', '{{action}} {{name}}', { action: serviceLabel(request.service), name: request.name }), outcome: 'failed' });

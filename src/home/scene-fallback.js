@@ -228,14 +228,21 @@ export function createHomeFallback(container, options = {}) {
 			// is answered and the node it was opened from has gone.
 			button.dataset.actFor = object.entityId;
 			button.dataset.actService = `${domain}.${service}`;
-			button.textContent = busy.has(object.entityId) ? t('home_scene.working', 'Working') : label;
-			button.disabled = busy.has(object.entityId);
+			const working = busy.has(object.entityId);
+			button.textContent = working ? t('home_scene.working', 'Working') : label;
+			// aria-disabled, not the disabled property. A disabled button cannot
+			// hold focus, so the browser blurs it the instant the request starts
+			// and a keyboard user is dropped at the top of the document for the
+			// length of a round trip. This reads as disabled to a screen reader,
+			// looks disabled, refuses the press below, and keeps the keyboard.
+			if (working) button.setAttribute('aria-disabled', 'true');
 			// The device's name and its room's name are the user's own words, so
 			// they are interpolated rather than concatenated into a translatable
 			// sentence: a catalog string with "Front Door" baked into it would be
 			// machine-translated on the next run.
 			button.setAttribute('aria-label', t('home_scene.act_aria', '{{action}} {{name}} in {{room}}', { action: label, name: object.name, room: room.name }));
 			button.addEventListener('click', () => {
+				if (button.getAttribute('aria-disabled') === 'true') return;
 				options.onAct?.({ entityId: object.entityId, domain, service, name: object.name, roomId: room.id });
 			});
 			row.appendChild(button);
