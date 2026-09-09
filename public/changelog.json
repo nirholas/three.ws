@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-09-09T15:43:39.320Z",
+	"generated_at": "2026-09-09T19:42:06.399Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -97,6 +97,17 @@
 			"tags": [
 				"improvement",
 				"fix"
+			]
+		},
+		{
+			"date": "2026-09-09",
+			"type": "update",
+			"title": "Disconnecting a home now stops the screens that were showing it",
+			"summary": "A kitchen tablet or wall display left open on a connected home kept saying \"Live\" and kept drawing that house after the home had been disconnected from another device. The connection was really gone, but the open page was never told, so it sat on a stale picture of somebody's house with a green Live badge on it. Disconnecting now closes the live connection and hands every screen still watching a final message that says what happened, and those screens stop asking for more. They keep showing the last state they saw, greyed and dated, with the reason and a Reconnect button, which is what every other kind of drop already did.",
+			"link": "/docs/home-scene",
+			"tags": [
+				"fix",
+				"security"
 			]
 		},
 		{
@@ -578,6 +589,17 @@
 		{
 			"date": "2026-09-09",
 			"type": "update",
+			"title": "The payments status page now says which of two opposite outages it is looking at",
+			"summary": "When agent payments stop settling, the status page names the cause. Two very different situations shared one description: either the platform stops offering Solana payment on its price quotes, so nothing is ever attempted, or it keeps offering them and then turns each signed payment away at the final check. Both are fixed by topping up the same wallet, but the evidence sits in opposite places, and the old wording sent whoever was on call to the wrong one. It could even report that Solana had been withdrawn from quotes while the counter printed beside it read zero withdrawals. The status page now names the mechanism and points at the record that actually holds the proof, and the operations runbook carries a table for telling the two apart.",
+			"link": null,
+			"tags": [
+				"fix",
+				"infra"
+			]
+		},
+		{
+			"date": "2026-09-09",
+			"type": "update",
 			"title": "The pitch deck now shows the whole character, and says so when the 3D cannot load",
 			"summary": "The live 3D figure on the deck at /pitch was framed by a camera that cut it off above the chest and pointed at its back, so the slide that says \"give your AI a face\" showed neither a head nor a face. Both stages now frame the full character from the front. Each stage also ships a still frame rendered from the same glTF file: it fills the panel while the model streams instead of leaving an empty box, and if the 3D runtime is blocked or fails outright the panel says so in the open, drops the \"Live\" badge that used to sit over nothing, and offers a retry. Navigation got the same pass: the slide dots are now full-size tap targets and step out of the way on a phone, the language picker no longer lands on the slide counter, slide copy no longer runs underneath the nav bar on a tablet, links on hidden slides are out of the keyboard tab order, and every button and link has a visible focus ring.",
 			"link": "/pitch",
@@ -757,6 +779,16 @@
 			"tags": [
 				"fix",
 				"infra"
+			]
+		},
+		{
+			"date": "2026-09-09",
+			"type": "update",
+			"title": "www.three.ws now takes you to three.ws, and 3D loads there",
+			"summary": "Typing www before the address landed on a copy of the site that looked right and then quietly refused to show any 3D. Avatars and models are served from a media host that only recognises three.ws, so on the www address every model was blocked by the browser and pages that should have shown a character showed an empty box instead. The www address now sends you straight to three.ws, keeping the page you asked for and anything after the question mark, so bookmarks and shared links keep working and everything on them renders.",
+			"link": null,
+			"tags": [
+				"fix"
 			]
 		},
 		{

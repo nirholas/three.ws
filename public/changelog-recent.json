@@ -1,11 +1,11 @@
 {
-	"generated_at": "2026-09-09T15:43:39.345Z",
+	"generated_at": "2026-09-09T19:42:06.423Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
 		"url": "https://three.ws"
 	},
-	"total": 3650,
+	"total": 3653,
 	"complete": false,
 	"full_feed": "/changelog.json",
 	"entries": [
@@ -100,6 +100,17 @@
 			"tags": [
 				"improvement",
 				"fix"
+			]
+		},
+		{
+			"date": "2026-09-09",
+			"type": "update",
+			"title": "Disconnecting a home now stops the screens that were showing it",
+			"summary": "A kitchen tablet or wall display left open on a connected home kept saying \"Live\" and kept drawing that house after the home had been disconnected from another device. The connection was really gone, but the open page was never told, so it sat on a stale picture of somebody's house with a green Live badge on it. Disconnecting now closes the live connection and hands every screen still watching a final message that says what happened, and those screens stop asking for more. They keep showing the last state they saw, greyed and dated, with the reason and a Reconnect button, which is what every other kind of drop already did.",
+			"link": "/docs/home-scene",
+			"tags": [
+				"fix",
+				"security"
 			]
 		},
 		{
@@ -581,6 +592,17 @@
 		{
 			"date": "2026-09-09",
 			"type": "update",
+			"title": "The payments status page now says which of two opposite outages it is looking at",
+			"summary": "When agent payments stop settling, the status page names the cause. Two very different situations shared one description: either the platform stops offering Solana payment on its price quotes, so nothing is ever attempted, or it keeps offering them and then turns each signed payment away at the final check. Both are fixed by topping up the same wallet, but the evidence sits in opposite places, and the old wording sent whoever was on call to the wrong one. It could even report that Solana had been withdrawn from quotes while the counter printed beside it read zero withdrawals. The status page now names the mechanism and points at the record that actually holds the proof, and the operations runbook carries a table for telling the two apart.",
+			"link": null,
+			"tags": [
+				"fix",
+				"infra"
+			]
+		},
+		{
+			"date": "2026-09-09",
+			"type": "update",
 			"title": "The pitch deck now shows the whole character, and says so when the 3D cannot load",
 			"summary": "The live 3D figure on the deck at /pitch was framed by a camera that cut it off above the chest and pointed at its back, so the slide that says \"give your AI a face\" showed neither a head nor a face. Both stages now frame the full character from the front. Each stage also ships a still frame rendered from the same glTF file: it fills the panel while the model streams instead of leaving an empty box, and if the 3D runtime is blocked or fails outright the panel says so in the open, drops the \"Live\" badge that used to sit over nothing, and offers a retry. Navigation got the same pass: the slide dots are now full-size tap targets and step out of the way on a phone, the language picker no longer lands on the slide counter, slide copy no longer runs underneath the nav bar on a tablet, links on hidden slides are out of the keyboard tab order, and every button and link has a visible focus ring.",
 			"link": "/pitch",
@@ -760,6 +782,16 @@
 			"tags": [
 				"fix",
 				"infra"
+			]
+		},
+		{
+			"date": "2026-09-09",
+			"type": "update",
+			"title": "www.three.ws now takes you to three.ws, and 3D loads there",
+			"summary": "Typing www before the address landed on a copy of the site that looked right and then quietly refused to show any 3D. Avatars and models are served from a media host that only recognises three.ws, so on the www address every model was blocked by the browser and pages that should have shown a character showed an empty box instead. The www address now sends you straight to three.ws, keeping the page you asked for and anything after the question mark, so bookmarks and shared links keep working and everything on them renders.",
+			"link": null,
+			"tags": [
+				"fix"
 			]
 		},
 		{
@@ -1576,38 +1608,6 @@
 			"link": "/irl",
 			"tags": [
 				"fix"
-			]
-		},
-		{
-			"date": "2026-09-05",
-			"type": "update",
-			"title": "Machine Atlas: two working machines built in the browser from code, with no 3D model files",
-			"summary": "A new Labs surface at /assembly renders a nine-cylinder radial aero engine and a coupled steam locomotive without loading a single model file. Both are generated when the page opens: bore and stroke set the crank throw, the crank throw sets the crankcase diameter, and every fin, rail section and propeller blade is a profile revolved, extruded or lofted at runtime. Move any dimension slider and the geometry is rebuilt in front of you. The motion is solved rather than animated, so the pistons follow the exact slider-crank and the locomotive's valve gear closes a real four-bar chain every frame, which means a rod length that cannot physically reach simply refuses to move. Pull either machine apart with the explode slider, switch to the structure view to see the mesh, hover any part to name it, hide whole subassemblies, and read the actual generating calls in the Source panel, printed from the values you set. Every configuration has its own link, and any of them can be exported as a GLB or saved as a PNG frame.",
-			"link": "/assembly",
-			"tags": [
-				"feature"
-			]
-		},
-		{
-			"date": "2026-09-05",
-			"type": "update",
-			"title": "One command drops a three.ws prop, character or motion clip into your project",
-			"summary": "npx @three-ws/assets search wooden chair finds it, and npx @three-ws/assets add object:painted_wooden_chair_01 downloads the model into your public folder and prints the tag that renders it, already pointing at your local copy rather than our CDN. Your site keeps working even if we do not. The catalog behind it is the same one the AI tools read: 511 CC0 props, 107 rigged characters and 2,874 motion clips, searchable in one place instead of three separate galleries. It is also a plain HTTP endpoint now, GET /api/catalog, free and open to any origin, so a build script or a site that is not using an AI client can read it too. Adding an asset twice changes nothing the second time, and a file you edited afterwards is never overwritten without asking. Every object is CC0, and the license of anything that is not travels with it in the output.",
-			"link": "/docs/api-reference",
-			"tags": [
-				"feature",
-				"sdk"
-			]
-		},
-		{
-			"date": "2026-09-05",
-			"type": "update",
-			"title": "Seven background jobs that were never running now run",
-			"summary": "Seven scheduled jobs were declared in the platform config but had no matching job on the scheduler, so they had never fired: the companion poll, feedback triage, print-order syncing, the home health alert, the home-relay sweep, web-variant generation for the forge, and the oracle refit. Three of them shipped with live features behind them, which meant those features quietly did nothing on a timer. All seven are now created and enabled on their declared schedules, and a drift check confirms every declared job exists and matches.",
-			"link": null,
-			"tags": [
-				"fix",
-				"infra"
 			]
 		}
 	]

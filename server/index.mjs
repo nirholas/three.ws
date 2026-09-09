@@ -36,7 +36,7 @@ import { statSync, readFileSync } from 'node:fs';
 import path from 'node:path';
 import { pathToFileURL, fileURLToPath } from 'node:url';
 import { isSsrRoute, renderSsrPage } from './ssr-pages.mjs';
-import { hasSeoRoute, renderSeoHead } from './seo-head.mjs';
+import { hasSeoRoute, renderSeoHead, CANONICAL_ORIGIN } from './seo-head.mjs';
 import { renderCrawlerBody } from './crawler-body.mjs';
 import { isMissingShellPage } from './shell-pages.mjs';
 import { hardenHeaderBag } from './csp-hashes.mjs';
@@ -334,6 +334,31 @@ app.disable('x-powered-by');
 // Default filter already skips non-compressible types (text/event-stream,
 // images, GLB), so SSE and binary assets pass through untouched.
 app.use(compression());
+
+// Canonical host. `www.three.ws` resolves to the same load balancer as the apex
+// and serves the identical app, but the apex is the only origin the platform
+// declares: seo-head.mjs pins every canonical URL to it, and the media bucket's
+// CORS read rule allowlists it alone. So a visitor on the www host got a page
+// that looked right and then failed every cross-origin media read, because the
+// browser sent `Origin: https://www.three.ws` and the bucket answered with no
+// Access-Control-Allow-Origin. Measured 2026-09-09 against the live bucket: the
+// apex gets its origin echoed on the same object, www gets nothing, so every
+// GLB load (fetch/XHR, unlike an <img>) is blocked there and 3D silently dies.
+// Collapsing the duplicate host fixes that without widening a bucket policy we
+// cannot reach, and removes the duplicate-content host at the same time.
+// 308 rather than 301 off the safe methods, so a POST keeps its method and body.
+const CANONICAL_HOST = new URL(CANONICAL_ORIGIN).host;
+const WWW_HOST = `www.${CANONICAL_HOST}`;
+
+app.use((req, res, next) => {
+	const host = String(req.headers.host || '').toLowerCase().split(':')[0];
+	if (host !== WWW_HOST) return next();
+	// Re-parse rather than concatenating req.url: absolute-form request targets
+	// are legal on the wire, and only the path and query may cross over.
+	const target = new URL(req.url, CANONICAL_ORIGIN);
+	const safeMethod = req.method === 'GET' || req.method === 'HEAD';
+	res.redirect(safeMethod ? 301 : 308, `${CANONICAL_ORIGIN}${target.pathname}${target.search}`);
+});
 
 // External-dest proxy — before the body parsers (see proxyExternal above).
 app.use((req, res, next) => {

@@ -12,6 +12,14 @@
 		},
 		{
 			"date": "2026-09-09",
+			"title": "www.three.ws now takes you to three.ws, and 3D loads there",
+			"summary": "Typing www before the address landed on a copy of the site that looked right and then quietly refused to show any 3D. Avatars and models are served from a media host that only recognises three.ws, so on the www address every model was blocked by the browser and pages that should have shown a character showed an empty box instead. The www address now sends you straight to three.ws, keeping the page you asked for and anything after the question mark, so bookmarks and shared links keep working and everything on them renders.",
+			"tags": [
+				"fix"
+			]
+		},
+		{
+			"date": "2026-09-09",
 			"title": "Trading finally counts toward your daily streak",
 			"summary": "The cross-surface streak on three.ws counted signing in, forging a model, saving a world and a walk session, but not a trade, which on a trading platform is the one thing it most obviously should count. A confirmed on-chain buy or sell now keeps your streak alive like any other activity, and still counts once per day however many times you trade, so the streak measures showing up rather than trading volume.",
 			"tags": [

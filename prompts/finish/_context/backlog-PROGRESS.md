@@ -2151,3 +2151,72 @@ Left: one owner action, the last box on that order. Approve committing the
 launchpad-referencing update into three.ws under the coin gate. Nothing technical
 remains; the code and the deploys landed in the sibling repo, which the gate
 exempts.
+
+## 2026-09-09 (third pass): 05 R2 bucket CORS
+
+Re-measured all three surfaces a third time, independently, raw `curl` plus
+`node scripts/set-r2-cors.mjs --probe`, no bucket credentials. Every row is
+unchanged from the two earlier passes today.
+
+| Surface | Result |
+|---|---|
+| Site edge `three.ws/avatars/cesium-man.glb`, `Origin: https://example.org` GET | PASS. `200`, `access-control-allow-origin: *`, `access-control-allow-methods: GET, HEAD, OPTIONS`. |
+| Site edge, same route, `OPTIONS` preflight | PASS. `204`, `access-control-allow-origin: *`, `access-control-allow-headers: range`, `access-control-max-age: 86400`. |
+| Public bucket host `pub-*.r2.dev`, real `200` object | FAIL. `example.org` gets no `access-control-allow-origin`; `three.ws` gets its origin echoed with `Vary: Origin`. |
+| Presigned `PUT` preflight on `chatty-storage.<account>.r2.cloudflarestorage.com` | FAIL off the allowlist. `204` for `three.ws` (`Access-Control-Allow-Methods: GET, PUT, HEAD, POST, DELETE`, one combined rule); bare `403` for `www.three.ws`, `localhost:5173`, `example.org`. |
+
+The probe's own drift table names five origins the live policy refuses that the
+script's policy would allow: `www.three.ws`, `*.app.github.dev`, `localhost:5173`,
+`example.org`, `localhost:8080`.
+
+Credential routes re-checked and all still shut: `.env` holds three keys and none
+is an R2 or Cloudflare one, `.env.local` holds no `R2_*`/`CLOUDFLARE_*`/`S3_*`
+variable, and `gcloud` answers `Reauthentication failed. cannot prompt during
+non-interactive execution` on every call, so Secret Manager cannot be read from
+here either. The two doc lines of the definition of done were verified rather
+than redone: the script header warns against `vercel env pull` and names
+`.env.local` plus `read-service-env.mjs` instead, and `docs/media-api.md`,
+`docs/character-library.md` and both embed tutorials say per-host when `/api/glb`
+is needed and when a direct fetch is fine.
+
+Found and fixed what three measurement passes had walked past: **the narrow
+allowlist was breaking a first-party origin.** `www.three.ws` resolves to the
+same load balancer as the apex (`136.68.246.178` for both), is on the managed
+cert, and served the identical app with a `200`, but the bucket echoes the apex
+alone. So `https://www.three.ws/api/avatars/library` handed the browser
+`pub-*.r2.dev` GLB URLs and every one of them was blocked: an `<img>` thumbnail
+survives without CORS, a GLTFLoader fetch does not, so 3D was simply dead on that
+host while looking healthy on the apex. Measured on one object the same day:
+apex gets `Access-Control-Allow-Origin: https://three.ws`, www gets no header.
+
+Did:
+- `server/index.mjs` redirects the whole www host to the apex, 301 on GET/HEAD
+  and 308 on everything else so an API write keeps its method and body. The
+  target is re-parsed through `new URL(req.url, CANONICAL_ORIGIN)` rather than
+  concatenated, so an absolute-form request target cannot smuggle an origin in.
+  This needs no bucket credential and matches what the site already declared:
+  `server/seo-head.mjs` pins every canonical URL to `https://three.ws`, and the
+  page served on www already carried `<link rel="canonical" href="https://three.ws/">`.
+- Exported that pinned origin as `CANONICAL_ORIGIN` from `server/seo-head.mjs`
+  so the redirect and the canonical tags cannot drift apart.
+- `tests/server-canonical-host.test.js` (8 tests, all passing): the redirect,
+  query preservation, the port and case forms of the Host header, the 308 on a
+  POST, the absolute-form target, and that the apex, `dev.three.ws`, `localhost`
+  and a `*.run.app` host all pass through untouched.
+- Runbook row in `docs/ops/gcp-production.md` under DNS / TLS / CDN, ISSUES.md
+  item 9 refreshed with the finding and this third measurement, and a
+  `data/changelog.json` entry (`npm run build:pages` regenerated the feeds).
+
+Verified: `npm run audit:docs` clean (1593 files), `check:rules` clean on every
+touched path, the new suite plus `server-media-cors-preflight`, `server-404-routes`,
+`server-rewrite-query`, `seo-head` and `ssr-pages` all green run per suite. Two
+`server-rewrite-query` tests time out when three server-spawning suites run in one
+vitest invocation and pass alone; the endpoint answers in 22ms against a
+hand-started server, so that is harness contention, not this change.
+
+Left: the same one owner action, unchanged. Mint an "Admin Read & Write" R2 token
+for `chatty-storage`, put it in `.env.local` as `R2_ACCESS_KEY_ID` /
+`R2_SECRET_ACCESS_KEY`, run `node scripts/set-r2-cors.mjs`, confirm with `--probe`.
+The work order stays on disk because its "policy applied" line is that action.
+The www fix removes the largest real-user consequence of the wait; third-party
+embeds still need `/cdn/<key>` or `/api/glb` until the policy is applied.

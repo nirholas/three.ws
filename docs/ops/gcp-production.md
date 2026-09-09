@@ -664,6 +664,19 @@ proxy + Memorystore + connector. The `upstash-redis-rest-token` secret and the
 - The Cloud Run URL `https://three-ws-api-lp642k3kpa-uc.a.run.app` serves the
   identical site and bypasses the LB — useful for isolating LB vs service
   issues.
+- **`www.three.ws` is a duplicate host, not a second origin.** Its A record and
+  the managed cert both cover it, so it reaches the same backend, but the apex
+  is the only origin the platform declares: `server/seo-head.mjs` pins every
+  canonical URL to `https://three.ws` and the media bucket's CORS read rule
+  allowlists that origin alone. Measured 2026-09-09 on one bucket object: the
+  apex gets `Access-Control-Allow-Origin: https://three.ws` back, `www` gets no
+  header at all, so every GLB fetch on a www page was blocked by the browser.
+  `server/index.mjs` now redirects the whole www host to the apex (301 on
+  GET/HEAD, 308 on everything else so a write keeps its method and body), and
+  `tests/server-canonical-host.test.js` locks in that no other host, including
+  the `*.run.app` URL above and `dev.three.ws`, is touched. Do not add a second
+  serving hostname without either widening the bucket policy to match or
+  redirecting it here too.
 
 ### Client geo header (analytics country column)
 

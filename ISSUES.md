@@ -183,7 +183,7 @@ here; the code-quality items from that pass are not production issues.
 
 9. **Live R2 CORS does not match `scripts/set-r2-cors.mjs`** (owner action:
     one credential). CONFIRMED by measurement, not inference, and RE-CONFIRMED
-    unchanged on 2026-09-09: `node scripts/set-r2-cors.mjs --probe` reads the
+    unchanged three times on 2026-09-09: `node scripts/set-r2-cors.mjs --probe` reads the
     enforced policy from outside and exits 1 on this bucket. The probe needs no
     credentials of any kind (it discovers the public host from a live listing
     endpoint, and the upload host from an auth-free presign route or from an
@@ -211,6 +211,22 @@ here; the code-quality items from that pass are not production issues.
     the `/api/glb` proxy (for a URL of unknown host). The docs say which path
     applies where (docs/media-api.md, docs/character-library.md, both embed
     tutorials).
+
+    Fixed on the way past, 2026-09-09: the same narrow allowlist was breaking a
+    FIRST-party origin, not just third-party ones. `www.three.ws` resolves to
+    the same load balancer as the apex, is covered by the managed cert, and
+    served the identical app, but the bucket echoes only the apex, so every
+    page on the www host got its GLB URLs from the API and had every one of
+    them blocked by the browser: 3D was dead there while looking fine
+    everywhere else. Measured on one bucket object the same day:
+    `Origin: https://three.ws` returns `Access-Control-Allow-Origin:
+    https://three.ws`, `Origin: https://www.three.ws` returns no header at all.
+    [server/index.mjs](server/index.mjs) now redirects the whole www host to
+    the apex (301 on GET/HEAD, 308 otherwise so a write keeps its method and
+    body), which matches the canonical URL the site already served there and
+    needs no bucket credential. `tests/server-canonical-host.test.js` locks in
+    that no other host is touched, the Cloud Run `*.run.app` URL and
+    `dev.three.ws` included. Ships with the next deploy.
 
     Fixed on the way past, 2026-09-04, and now VERIFIED LIVE (2026-09-09): the
     site edge advertised `access-control-allow-methods: GET, HEAD, OPTIONS` on

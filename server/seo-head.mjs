@@ -26,7 +26,13 @@ import { fileURLToPath } from 'node:url';
 import { truncateChars } from '../api/_lib/safe-text.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const ORIGIN = 'https://three.ws';
+// The single origin this site declares. Every canonical URL, Open Graph URL and
+// JSON-LD node is pinned to it rather than to the request host, so a page served
+// from any other hostname still names this one as itself. server/index.mjs
+// imports it to collapse the `www.` duplicate onto it, which keeps the served
+// host and the declared host from disagreeing.
+export const CANONICAL_ORIGIN = 'https://three.ws';
+const ORIGIN = CANONICAL_ORIGIN;
 
 function htmlEscape(s) {
 	return String(s)
