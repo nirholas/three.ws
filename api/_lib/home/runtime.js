@@ -23,6 +23,9 @@
 // the source of truth, this pool is a cache, and a cold instance reopening in a
 // few hundred milliseconds is the normal path rather than a failure.
 
+import { readFileSync } from 'node:fs';
+import { totalmem } from 'node:os';
+
 import { ERR, HomeBridge, HomeBridgeError } from '@three-ws/home-bridge';
 
 import { assertDialableHomeUrl, HomeUrlError, pinnedHomeSocketFactory } from '../home-url-guard.js';
@@ -61,6 +64,23 @@ const IDLE_MS = 90_000;
 const CONNECT_TIMEOUT_MS = 15_000;
 /** A socket plus a state map is roughly 1 to 3 MB of heap for a large house. */
 const DEFAULT_MAX_CONNECTIONS = 200;
+/**
+ * Measured RSS per pooled connection at a 90/10 small/large house mix: 666 KB for
+ * a 123 entity house, 1.12 MB for a 624 entity one, both amortized at 400 open
+ * connections (docs/ops/home-operations.md, tasks/home/envelope-2026-09-09.json).
+ */
+const RSS_PER_CONNECTION_BYTES = Math.round(0.9 * 666 * 1024 + 0.1 * 1.12 * 1024 ** 2);
+/**
+ * What the rest of the container needs, so the pool never claims it. Cloud
+ * Monitoring `container/memory/utilizations`, 24 hours of per-minute p99 read on
+ * 2026-09-09: max 0.859 of a 4 GiB limit, or 3.44 GiB, with zero home
+ * connections held.
+ */
+const NON_HOME_WORKING_SET_BYTES = Math.round(3.44 * 1024 ** 3);
+/** Sizing the pool to fill the container leaves nothing for the spike that follows it. */
+const MEMORY_UTILIZATION_TARGET = 0.9;
+/** A container too small to back a real pool gets a small lane, never a dead one. */
+const MIN_VIABLE_CONNECTIONS = 25;
 /** Consecutive connect failures that open the breaker for one home. */
 const BREAKER_THRESHOLD = 5;
 /** How long a revoked token or an offline house stops being retried on every page load. */
@@ -101,7 +121,22 @@ export function createHomeRuntime(deps = {}) {
 	const readAllowed = deps.listAllowedEntities || listAllowedEntities;
 	const writeHandshake = deps.recordHandshake || recordHandshake;
 	const now = deps.now || (() => Date.now());
-	const maxConnections = deps.maxConnections ?? readMaxConnections();
+	const requestedConnections = deps.maxConnections ?? readMaxConnections();
+	const memoryCap = memoryBackedConnectionCap(
+		deps.containerMemoryLimitBytes === undefined ? containerMemoryLimitBytes() : deps.containerMemoryLimitBytes,
+	);
+	const maxConnections = Math.min(requestedConnections, memoryCap);
+	/**
+	 * Null unless this container's memory refused the cap it was asked for. It
+	 * rides in `stats()` and out through `/api/healthz`, because the whole reason
+	 * this clamp exists is that the drift it corrects was invisible for days.
+	 */
+	const pooledCapNote = maxConnections < requestedConnections
+		? `asked for ${requestedConnections}, clamped to ${maxConnections} by a ${(memoryCap === Infinity ? 0 : Math.round((memoryCap * RSS_PER_CONNECTION_BYTES + NON_HOME_WORKING_SET_BYTES) / MEMORY_UTILIZATION_TARGET / 1024 ** 3 * 10) / 10)} GiB container`
+		: null;
+	if (pooledCapNote) {
+		console.warn(`[home] pool cap ${pooledCapNote}. Raise --memory or lower HOME_MAX_CONNECTIONS; docs/ops/home-operations.md.`);
+	}
 	const idleMs = deps.idleMs ?? IDLE_MS;
 	const connectTimeoutMs = deps.connectTimeoutMs ?? CONNECT_TIMEOUT_MS;
 	const resolveDial = deps.resolveDial || defaultResolveDial;
@@ -339,7 +374,7 @@ export function createHomeRuntime(deps = {}) {
 		}
 		let breakersOpen = 0;
 		for (const breaker of breakers.values()) if (breaker.openedUntil > now()) breakersOpen += 1;
-		return { open: entries.size, subscribers, pooledCap: maxConnections, breakersOpen, byStatus, admission: admission.snapshot() };
+		return { open: entries.size, subscribers, pooledCap: maxConnections, pooledCapNote, breakersOpen, byStatus, admission: admission.snapshot() };
 	}
 
 	/**
@@ -761,6 +796,55 @@ export async function defaultResolveDial(baseUrl) {
 function readMaxConnections() {
 	const raw = Number(process.env.HOME_MAX_CONNECTIONS);
 	return Number.isFinite(raw) && raw > 0 ? Math.floor(raw) : DEFAULT_MAX_CONNECTIONS;
+}
+
+/**
+ * The container's own memory limit in bytes, or `null` when it has none.
+ *
+ * cgroup v2 first, which is what Cloud Run's second generation execution
+ * environment and every modern container runtime expose, then v1 for anything
+ * older. A host with no limit reports the literal `max` on v2 and a sentinel
+ * near 2^63 on v1, and an unconstrained container reports the whole machine;
+ * all three mean the same thing here, which is that memory is not the bound.
+ */
+export function containerMemoryLimitBytes(readFile = readFileSync, hostBytes = totalmem()) {
+	for (const path of ['/sys/fs/cgroup/memory.max', '/sys/fs/cgroup/memory/memory.limit_in_bytes']) {
+		let raw;
+		try {
+			raw = String(readFile(path, 'utf8')).trim();
+		} catch {
+			continue;
+		}
+		if (raw === 'max') return null;
+		const bytes = Number(raw);
+		if (!Number.isFinite(bytes) || bytes <= 0 || bytes >= hostBytes) return null;
+		return bytes;
+	}
+	return null;
+}
+
+/**
+ * How many pooled connections this container's memory can actually back.
+ *
+ * `HOME_MAX_CONNECTIONS` and `--memory` are set in two different places and have
+ * drifted apart three times. A config-only `gcloud run services update` raised
+ * the container to 8 GiB, and the next full deploy put it back to 4 GiB because
+ * `server/cloudbuild.yaml` passes `--memory` explicitly while nothing in the
+ * deploy names the env var, which merges and survives. Production therefore ran
+ * for days sized for 600 connections on a container that could not hold them,
+ * and an OOM here kills the whole API rather than one lane.
+ *
+ * So the cap is negotiated rather than read: the env var asks, and the container
+ * decides. Every number behind this is measured, not chosen.
+ *
+ * @param {number|null} limitBytes The container limit, or null for unlimited.
+ * @returns {number} The cap, or `Infinity` when memory is not the bound.
+ */
+export function memoryBackedConnectionCap(limitBytes) {
+	if (!limitBytes) return Infinity;
+	const budget = limitBytes * MEMORY_UTILIZATION_TARGET - NON_HOME_WORKING_SET_BYTES;
+	if (budget <= 0) return MIN_VIABLE_CONNECTIONS;
+	return Math.max(MIN_VIABLE_CONNECTIONS, Math.floor(budget / RSS_PER_CONNECTION_BYTES));
 }
 
 function withTimeout(promise, ms, makeError) {

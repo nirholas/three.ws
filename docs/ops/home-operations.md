@@ -332,8 +332,10 @@ asks to unlock a door is served before a user who is watching a dashboard.**
 
 ### Each rung, demonstrated
 
-Run `node scripts/home-load.mjs ladder` for this live. Recorded on 2026-09-03
-with a controller of 4 pooled, 2 unpooled, 6 streams and 8 actions:
+Run `node scripts/home-load.mjs ladder` for this live, with a controller of 4
+pooled, 2 unpooled, 6 streams and 8 actions. Recorded on 2026-09-03 and again on
+2026-09-09, and the two runs are **identical row for row**, all ten of them
+(`.ladder.rows` in the two committed envelope files):
 
 | Step | Admitted | Rung | Detail |
 |---|---|---|---|
@@ -615,16 +617,99 @@ passes `--memory` explicitly, so it overwrites the service setting on every
 deploy; the env var survived only because `--update-env-vars` merges and nothing
 in the deploy names `HOME_MAX_CONNECTIONS`.
 
-Both halves are fixed:
+Both halves were addressed:
 
-- The live service is back at 8 GiB (revision `three-ws-api-00419-5tr`,
-  2026-09-09, serving 100% of traffic, `/api/healthz` 200).
+- The service was updated back to 8 GiB (revision `three-ws-api-00419-5tr`,
+  2026-09-09, `/api/healthz` 200).
 - `server/cloudbuild.yaml` now pins `--memory 8Gi` with the measurement in a
-  comment beside it, so a full deploy cannot revert it again.
+  comment beside it (commit `a5e522822`).
 
 **A config-only `gcloud run services update` is not durable on its own.** Any
 setting this file argues for must also be pinned in the deploy config, or the
 next deploy is the thing that undoes it.
+
+### It reverted a third time, and that is why the runtime now clamps itself
+
+Written the same day, a few hours later, because the fix above was not enough
+and the reason generalizes.
+
+`GET /api/version` reports the live revision as `three-ws-api-00420-ljh`, serving
+commit `880bdcef8`. The 8 GiB pin is commit `a5e522822`, made **ten hours after
+the commit production is serving**, so the pin has never been through a deploy:
+at `880bdcef8` the file still reads `'--memory', '4Gi'`.
+
+```
+$ curl -s https://three.ws/api/version | jq -r '.commitShort, .runtime.revision'
+880bdcef8
+three-ws-api-00420-ljh
+$ git show 880bdcef8:server/cloudbuild.yaml | grep -A1 -- "'--memory'"
+              '--memory',
+              '4Gi',
+```
+
+So a full deploy landed after the config-only update for the second time, and
+`HOME_MAX_CONNECTIONS=600` is still set (production `/api/healthz` reports
+`capacity: 600`) on a container whose deploy config asks for 4 GiB. That is once
+again the one combination the measurement rules out, arrived at by a different
+route than the first time: not a deploy that overwrote the setting, but a deploy
+of a commit made **before** the fix existed.
+
+Pinning the value in one more file would not have prevented this, and a fourth
+place to keep in sync is not a fix. The cap and the memory that backs it are set
+in different systems on different schedules, so the process now negotiates rather
+than trusts:
+
+| Piece | Where |
+|---|---|
+| The cgroup limit this container actually got | `containerMemoryLimitBytes()` in [`api/_lib/home/runtime.js`](../../api/_lib/home/runtime.js) |
+| What that much memory can back | `memoryBackedConnectionCap()`, same file |
+| The clamp and its warning | `createHomeRuntime`, which takes `Math.min` of the two and sizes the admission ladder from the result |
+| Reported as | `pooledCapNote` in `stats()`, surfaced as `home.detail.pool.capacityNote` in `/api/healthz` |
+
+`HOME_MAX_CONNECTIONS` asks; the container decides. The policy is the same
+arithmetic this section already argued, with the same measured inputs:
+
+```
+cap  =  (limit x 0.90  -  3.44 GiB)  /  0.71 MB per connection
+```
+
+`0.90` is a utilization target, because sizing the pool to fill the container
+leaves nothing for the spike that follows. `3.44 GiB` is the measured 24 hour p99
+peak of everything in the container that is not this lane. `0.71 MB` is the
+measured per-connection RSS at a 90/10 small/large house mix.
+
+| Container | Connections it backs | What happens to a 600 cap |
+|---|---|---|
+| 8 GiB | 5,521 | passes untouched |
+| 4 GiB | **234** | clamped to 234, logged, reported in `/api/healthz` |
+| 2 GiB | 25 (the floor) | clamped to the floor |
+| no cgroup limit (dev, tests) | unbounded | passes untouched |
+
+At 4 GiB the lane keeps working at 234 connections an instance, which is 1,404
+live homes across `minScale=6`, instead of risking an OOM that kills the whole
+API container. **The lane degrades; the API does not die.** A container too small
+to size still gets 25 connections rather than zero, because a dead lane is not a
+safer failure than a small one.
+
+Verified by construction rather than by inspection: eight cases in
+[`tests/home-runtime.test.js`](../../tests/home-runtime.test.js) pin the policy at
+each memory size, that the admission ladder is sized from the clamped cap rather
+than the requested one, that a cgroup v1 sentinel and a whole-host limit both
+mean "no bound", and that the clamp announces itself in `stats()`.
+
+**Still owner-gated, and it is one command.** The clamp makes 4 GiB safe, not
+correct. The service should be back at 8 GiB, and the next full deploy of any
+commit at or after `a5e522822` does it permanently. Until then:
+
+```bash
+gcloud run services update three-ws-api --region us-central1 \
+  --project aerial-vehicle-466722-p5 --memory 8Gi
+```
+
+That could not be run from the session that found this: `gcloud` in this
+workspace returned `Reauthentication failed. cannot prompt during
+non-interactive execution`, which is why the live memory limit is stated as what
+the deploy config asks for rather than as a reading off the service.
 
 **Verified live on 2026-09-09**, which is the check that proves the number
 reached the running code rather than just the service description. The `home`

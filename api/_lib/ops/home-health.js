@@ -367,6 +367,10 @@ function safeStats() {
 			// The runtime has spelled its cap both ways while this lane was being
 			// built. Read either rather than reporting a confident zero.
 			capacity: s.capacity ?? s.pooledCap ?? 0,
+			// Non-null only when the container's own memory limit refused the cap
+			// HOME_MAX_CONNECTIONS asked for. That drift was invisible for days
+			// twice, so it is reported where an operator already looks.
+			capacityNote: s.pooledCapNote ?? null,
 			breakersOpen: s.breakersOpen ?? 0,
 			byStatus: s.byStatus ?? {},
 			// The admission controller's own gauges, when it is present: the open
@@ -375,7 +379,7 @@ function safeStats() {
 			rung: s.admission?.rung ?? null,
 		};
 	} catch {
-		return { open: 0, subscribers: 0, capacity: 0, breakersOpen: 0, byStatus: {}, streams: null, rung: null };
+		return { open: 0, subscribers: 0, capacity: 0, capacityNote: null, breakersOpen: 0, byStatus: {}, streams: null, rung: null };
 	}
 }
 

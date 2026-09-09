@@ -15,7 +15,12 @@
 
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { createHomeRuntime, HOME_RUNTIME_ERR } from '../api/_lib/home/runtime.js';
+import {
+	containerMemoryLimitBytes,
+	createHomeRuntime,
+	HOME_RUNTIME_ERR,
+	memoryBackedConnectionCap,
+} from '../api/_lib/home/runtime.js';
 import { HOME_STATUS } from '../api/_lib/home/store.js';
 
 const HOME_ID = '11111111-1111-4111-8111-111111111111';
@@ -601,5 +606,97 @@ describe('home runtime: shutdown', () => {
 		expect(runtime.closeAll()).toBe(1);
 		expect(runtime.closeAll()).toBe(0);
 		expect(createBridge.built[0].closeCount).toBe(1);
+	});
+});
+
+// The pool cap and the container's `--memory` are configured in two different
+// places, and they have drifted apart three times in this service's life: a
+// config-only update raised the container to 8 GiB, and the next full deploy put
+// it back to 4 GiB while HOME_MAX_CONNECTIONS=600 survived, because the deploy
+// names one and not the other. These tests pin the negotiation that makes that
+// combination harmless, since an OOM in this container takes the whole API down.
+describe('home runtime: the pool cap is bounded by the memory that backs it', () => {
+	const GiB = 1024 ** 3;
+
+	it('lets 600 connections through on the 8 GiB container the sizing assumes', () => {
+		expect(memoryBackedConnectionCap(8 * GiB)).toBeGreaterThan(600);
+	});
+
+	it('refuses 600 connections on a 4 GiB container', () => {
+		const cap = memoryBackedConnectionCap(4 * GiB);
+		expect(cap).toBeLessThan(600);
+		expect(cap).toBeGreaterThan(100);
+	});
+
+	it('does not bound anything when the container has no memory limit', () => {
+		expect(memoryBackedConnectionCap(null)).toBe(Infinity);
+	});
+
+	it('leaves a working lane rather than a dead one on a container too small to size', () => {
+		expect(memoryBackedConnectionCap(512 * 1024 * 1024)).toBe(25);
+	});
+
+	it('grows monotonically with the memory it is given', () => {
+		const caps = [2, 4, 8, 16, 32].map((gib) => memoryBackedConnectionCap(gib * GiB));
+		for (let i = 1; i < caps.length; i += 1) expect(caps[i]).toBeGreaterThanOrEqual(caps[i - 1]);
+	});
+
+	it('clamps the runtime, resizes the ladder with it, and says so in stats', () => {
+		const runtime = createHomeRuntime({
+			createBridge: countingFactory(),
+			...storeDeps(),
+			maxConnections: 600,
+			containerMemoryLimitBytes: 4 * GiB,
+		});
+
+		const stats = runtime.stats();
+		expect(stats.pooledCap).toBe(memoryBackedConnectionCap(4 * GiB));
+		expect(stats.pooledCap).toBeLessThan(600);
+		// The ladder must be sized from the clamped cap, or rung 2 would never be
+		// reached and the pool would overrun the memory the clamp just protected.
+		expect(stats.admission.limits.maxPooled).toBe(stats.pooledCap);
+		expect(stats.pooledCapNote).toContain('600');
+	});
+
+	it('says nothing when the container can back what was asked for', () => {
+		const runtime = createHomeRuntime({
+			createBridge: countingFactory(),
+			...storeDeps(),
+			maxConnections: 600,
+			containerMemoryLimitBytes: 8 * GiB,
+		});
+
+		expect(runtime.stats().pooledCap).toBe(600);
+		expect(runtime.stats().pooledCapNote).toBeNull();
+	});
+
+	it('reads a cgroup v2 limit, and treats an unlimited one as no bound', () => {
+		const host = 64 * GiB;
+		const v2 = (path) => {
+			if (path === '/sys/fs/cgroup/memory.max') return '8589934592\n';
+			throw new Error('ENOENT');
+		};
+		expect(containerMemoryLimitBytes(v2, host)).toBe(8 * GiB);
+
+		const unlimited = (path) => {
+			if (path === '/sys/fs/cgroup/memory.max') return 'max\n';
+			throw new Error('ENOENT');
+		};
+		expect(containerMemoryLimitBytes(unlimited, host)).toBeNull();
+	});
+
+	it('treats a cgroup v1 sentinel and a whole-host limit as no bound', () => {
+		const host = 64 * GiB;
+		const v1 = (path) => {
+			if (path === '/sys/fs/cgroup/memory/memory.limit_in_bytes') return '9223372036854771712\n';
+			throw new Error('ENOENT');
+		};
+		expect(containerMemoryLimitBytes(v1, host)).toBeNull();
+
+		const wholeHost = (path) => {
+			if (path === '/sys/fs/cgroup/memory.max') return String(host);
+			throw new Error('ENOENT');
+		};
+		expect(containerMemoryLimitBytes(wholeHost, host)).toBeNull();
 	});
 });
