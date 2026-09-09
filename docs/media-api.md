@@ -354,7 +354,7 @@ If `draco=1` comes back `500 transcode_failed` with `draco.createCompressedPrimi
 ### When you need it, and when you do not
 
 It depends entirely on which host serves the `.glb`, not on which origin you
-are loading from. Re-measured 2026-09-04, unchanged since 2026-08-01:
+are loading from. Re-measured 2026-09-09, unchanged since 2026-08-01:
 
 | Source host | Cross-origin fetch | Use the proxy? |
 |---|---|---|
