@@ -17,6 +17,32 @@ each surface, not restated from memory. See [Verification log](#verification-log
 
 ---
 
+## Update 2026-09-09: what moved, and what did not
+
+Three weeks on. Read this before acting on the tables below, because four rows
+have changed state and two new deadlines exist that the original compile could
+not have known about.
+
+| Row | Then (2026-08-17) | Now (2026-09-09) |
+|---|---|---|
+| OpenAI App Directory | `ready-to-submit`, one portal action | **Regressed to blocked.** The whole surface was re-verified live today and passes, but [`prompts/store-submissions/_generated/TRACKER.md`](../prompts/store-submissions/_generated/TRACKER.md) now records three gates: clear the GCP billing hold that has Vertex denied project-wide, deploy the four fixes sitting unshipped in the tree, then submit. The blocker is infrastructure, not packaging. |
+| NVIDIA, the one email | Written, never sent | **Sent 2026-09-04** from support@three.ws, carrying all five asks. Follow-up date 2026-09-25. Do not open a second thread. |
+| NVIDIA Developer Forums, post 3 | Not written | **Written 2026-09-02**: [nvidia-forum-browser-digital-human.md](./nvidia-forum-browser-digital-human.md). Owner-gated on the external-channel rule, then paste and post. |
+| IBM | No map existed | **[ibm-visibility-map.md](./ibm-visibility-map.md)** now covers it: the Champions window, the Partner Plus Directory, the IBM Cloud catalog route, the two co-marketing commitments from 2026-06-18 that nothing was tracking, and the Partner Plus benefits never requested. |
+
+Two deadlines that did not exist at compile time:
+
+- **IBM TechXchange 2026 early-bird registration closes 2026-09-29** (USD 1,279, then USD 1,599). The event is 2026-10-26 to 10-29 in Atlanta. The speaking CFP stayed closed, but sponsorship, the Sandbox Expo and colocated user groups are open routes, and we run an IBM Community user group.
+- **IBM Champions nominations open around mid-September.** The last cycle ran 2025-09-15 to 2025-11-21, self-nomination is invited, and three.ws has never entered despite matching all four of IBM's published criteria on IBM's own properties. Missing it costs a full year.
+
+One correction to the tables below: Tier 1 row 3 calls the next AWS piece
+"article 2". [aws-builder-center.md](./aws-builder-center.md) records **two**
+published under our byline already (2026-05-30 and 2026-06-27) plus one written
+by AWS staff about us. The next one is article 3. The genre advice in that row
+still stands.
+
+---
+
 ## The finding that should reorder the week
 
 **Nothing on this board is blocked on strategy, research, capability, or
@@ -324,6 +350,7 @@ Publishing, posting, and sending are owner-gated under stop-and-ask gate 2 in
 ## Related
 
 - [NVIDIA visibility map](./nvidia-visibility-map.md): every NVIDIA surface in depth, and the dead ends
+- [IBM visibility map](./ibm-visibility-map.md): the same treatment for IBM, including the Champions window and the Partner Plus benefits never requested
 - [Partners](./partners.md): the eight programs, and the independence language that must survive any rewrite
 - [Listings and distribution](./listings.md): the canonical program and directory inventory
 - [Announcement coverage](./announcement-coverage.md): which surfaces have been announced on X and which have not

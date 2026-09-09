@@ -13,7 +13,7 @@ Page source: [`pages/partners.html`](../pages/partners.html). Partnership enquir
 | Partner | Chip on the card | Card links to | Deeper docs |
 |---|---|---|---|
 | OpenAI | Select Partner | `/openai` | [MCP 3D Studio (free)](./mcp-studio.md), [3D Studio (paid)](./mcp-3d-studio.md), [Custom GPT config](./chatgpt-3d-studio-gpt.md), [AR in ChatGPT](./chatgpt-ar.md), [Spatial MCP](./spatial-mcp.md) |
-| IBM | Strategic | `/blog/three-ws-ibm-business-partner` | [IBM watsonx and Granite](./ibm.md), [IBM Granite x402 MCP](./ibm-x402-mcp.md) |
+| IBM | Strategic | `/blog/three-ws-ibm-business-partner` | [IBM watsonx and Granite](./ibm.md), [IBM Granite x402 MCP](./ibm-x402-mcp.md), [IBM visibility map](./ibm-visibility-map.md) |
 | Amazon Web Services | Cloud | `/aws` | [AWS Marketplace](./aws-marketplace.md), [listing kit](./aws-marketplace-listing-kit.md), [partner spotlight](./aws-partner-spotlight.md) |
 | Google Cloud | Cloud | `/blog/three-ws-google-cloud-partnership` | [Production runbook](./ops/gcp-production.md), [credits plan](./ops/gcp-credits-plan.md), [model workers](./ops/gcp-model-workers.md) |
 | Alibaba Cloud | Cloud | `/blog/three-ws-alibaba-cloud-partnership` | [Listings and distribution](./listings.md), [the model router](./brain.md) |

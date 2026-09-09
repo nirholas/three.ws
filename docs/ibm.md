@@ -356,6 +356,8 @@ Unit tests for the same paths live in [`tests/`](../tests/) (`granite-oracle`, `
 - [How it works](./how-it-works.md) — the platform mental model
 - [Agent system](./agent-system.md) — the brain abstraction Granite plugs into
 - [IBM Granite x402 MCP](./ibm-x402-mcp.md) — pay-per-call Granite for agents (USDC, no IBM account)
+- [IBM visibility map](./ibm-visibility-map.md) - every IBM surface, its verified intake route, and the windows that close on a date
+- [IBM Partner Plus](./partners/ibm-partner-plus.md) - the program audit: unused benefits, the mailer triaged, and the Agent Catalog listing path
 - [MCP](./mcp.md) — wiring MCP servers into a client
 - [REST API](./api-reference.md) — the full endpoint reference
 - [Configuration](./configuration.md) — all environment variables
