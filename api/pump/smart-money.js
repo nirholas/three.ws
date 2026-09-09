@@ -258,12 +258,19 @@ function shapeWallet(r) {
 	};
 }
 
+// An absent query param is `null`, and `Number(null)` is 0, which is finite: the
+// clamp then read "not supplied" as the floor rather than the default, so a bare
+// /api/pump/smart-money answered with a single coin instead of the documented 50
+// (the page always passed a limit, so only API callers saw it). Missing means
+// default; a supplied value that is not a number still means default too.
 function clampInt(v, lo, hi, def) {
+	if (v == null || String(v).trim() === '') return def;
 	const n = Math.floor(Number(v));
 	if (!Number.isFinite(n)) return def;
 	return Math.min(hi, Math.max(lo, n));
 }
 function clampNum(v, lo, hi, def) {
+	if (v == null || String(v).trim() === '') return def;
 	const n = Number(v);
 	if (!Number.isFinite(n)) return def;
 	return Math.min(hi, Math.max(lo, n));

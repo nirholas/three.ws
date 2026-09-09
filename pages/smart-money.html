@@ -1135,9 +1135,23 @@
 		}
 		$('staleRetry').addEventListener('click', manualRetry);
 
+		function openFromQuery() {
+			const params = new URLSearchParams(location.search);
+			const wallet = (params.get('wallet') || '').trim();
+			const mint = (params.get('mint') || '').trim();
+			const BASE58 = /^[1-9A-HJ-NP-Za-km-z]{32,44}$/;
+			if (BASE58.test(wallet)) openWallet(wallet);
+			else if (BASE58.test(mint)) openCoin(mint);
+		}
+
 		// boot
 		initFork();
 		renderWalletHead();
+		// Deep link: /smart-money?wallet=<addr> (and ?mint=<addr>) opens that drawer
+		// straight away, so a wallet cited anywhere else on the platform, the Fade
+		// Radar board included, lands on its track record instead of a board the
+		// reader has to search by eye.
+		openFromQuery();
 		updateWatchCount();
 		$('feedGrid').innerHTML = Array.from({ length: 6 }, () => '<div class="skel"></div>').join('');
 		refresh();

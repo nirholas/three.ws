@@ -398,6 +398,10 @@
 					"path": "smart-money"
 				},
 				{
+					"label": "Fade Radar",
+					"path": "fade-radar"
+				},
+				{
 					"label": "Coin Radar",
 					"path": "radar"
 				},

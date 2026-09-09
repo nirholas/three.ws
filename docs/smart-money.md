@@ -91,10 +91,12 @@ for (const c of conviction.slice(0, 5)) {
 - **Warm-up window.** A coin is not judged until roughly 6 hours after launch, so a very fresh coin shows "not scored yet." The per-coin read deliberately returns `200 { found: false }` rather than a 404 for an unscored mint.
 - **Input validation.** A `wallet` or `mint` that is not a base58 Solana address is refused at the boundary with `400 invalid_wallet` / `400 invalid_mint`, so "that is not an address" and "no track record yet" stay different answers. Every error on the route, the wallet 404 included, carries the shared `{ error, error_description }` shape.
 - **Empty and error states.** The feed, leaderboard, and watchlist each have designed empty copy ("No proven money on a fresh coin yet," "No wallets ranked yet"). A wallet with no history returns 404 and renders "No track record yet." A failed full refresh shows a stale-data reconnecting bar with a Retry button and escalates its message after repeated failures. The watchlist tells a network failure apart from an honest "not on the radar": when every lookup fails to reach the API (or answers 5xx), the grid shows one "Couldn't reach the radar" panel with a Retry and keeps the saved list, and a single unreachable coin gets a "Couldn't load this one" card rather than being labelled unscored.
+- **Deep links.** `/smart-money?wallet=<address>` and `/smart-money?mint=<address>` open that drawer on load, so an address cited on another surface (the [Fade Radar](./fade-radar.md) board, a shared link) lands on its record instead of an unfiltered board. A malformed address is ignored rather than opening an empty drawer.
 - **Two engines, one name.** This page reads `/api/pump/smart-money` (the graduation-outcome rollup). A sibling endpoint, `/api/intel/smart-money`, is a distinct funder-cluster and sybil-detection graph used by other surfaces. They answer related questions from different tables; do not conflate them.
 
 ## Related
 
+- [Fade Radar](./fade-radar.md) reads the same graph from the losing side: the wallets with a judged record and no winners in it, and the coins they are crowding into. A wallet on that board links back into this page's drawer
 - [Oracle: the conviction engine](./oracle.md) uses this proven-wallet ledger as its WHO pillar
 - [The trading surfaces](./trading-surfaces.md) map, including the Coin Intelligence cross-coin trader board
 - [Coin Radar](./radar.md) and [Mission Control](./terminal.md) surface the same pedigree read inline

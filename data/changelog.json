@@ -3,6 +3,15 @@
 	"entries": [
 		{
 			"date": "2026-09-09",
+			"title": "Fade Radar: the wallets that have never once been right, and the coins they are crowding into",
+			"summary": "The Smart Money Radar tells you which proven winners are buying a coin. Fade Radar is the other half of that question, and on pump.fun it turns out to be the sharper one: how much of a coin's buy side is money that has never been right. A wallet joins the reverse-indicator board only after five coins it bought have a known outcome and not one of them won, which is a bar a surprising number of addresses clear. The new page ranks every launch from the last few hours by how much of its observed buy side belongs to those wallets, by wallet count and by SOL, and carries a second board of the wallets themselves with their full record. The number above the board is the part we care most about: it is measured, not asserted. We rebuild the reverse-indicator group using only coins whose outcome was known before the coins it is graded on existed, then check what actually happened. Coins where a quarter or more of the buyers were reverse indicators went on to win 1.8 percent of the time, against 22.1 percent for coins with none, across 26,626 labelled coins. Nothing here is a short and nothing signs anything: on a bonding curve the only tradeable form of a fade is not buying, so every action on the page is a link out to the coin, its intel, or a wallet's track record. Wallet links also now open directly on the Smart Money Radar, so an address cited anywhere on the platform lands on its record instead of a board you have to scan by eye.",
+			"tags": [
+				"feature"
+			],
+			"link": "/fade"
+		},
+		{
+			"date": "2026-09-09",
 			"title": "Paid 3D services now refuse a job they cannot deliver, instead of charging for it",
 			"summary": "The paid three.ws forge services sold to other AI agents charge the moment the generator accepts a job, and the finished model reaches the buyer only after it lands in our delivery storage. When that storage stopped accepting writes, jobs were still being accepted and charged while no model could ever be handed back. Those services now check that delivery storage is writable before they take the job: if it is not, the call is refused, says so, and is not charged. The check is cached and ignores a one-off blip, so a passing wobble never stops the services selling. The free public health page also had a bug where a storage failure replaced the name of the failing subsystem with the storage provider's error code and printed the request's signing details; it now names the subsystem and reports the reason alone.",
 			"tags": [

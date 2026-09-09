@@ -1,6 +1,6 @@
-# The trading surfaces: Radar, Mission Control, Live Trade Feed, Watchlist, Coin Intelligence
+# The trading surfaces: Radar, Mission Control, Live Trade Feed, Watchlist, Coin Intelligence, Fade Radar
 
-The platform's trading stack is spread across five public pages. Four of them are intelligence surfaces (they exist to answer "what's launching, what's real, who's winning") and one, Mission Control, is the full cockpit where a signed-in user trades from their agent's wallet. The intelligence pages are no longer dead ends: the Coin Radar and the Live Trade Feed (along with the [Smart Money Radar](smart-money.md) and [Ghost-copy](ghost-copy.md)) each carry a [Fork](fork-trade.md) button that opens the real pump.fun trade panel for the coin you are looking at, signed by your own wallet. This doc explains what each surface is, where its numbers come from, and how they fit together.
+The platform's trading stack is spread across six public pages. Five of them are intelligence surfaces (they exist to answer "what's launching, what's real, who's winning") and one, Mission Control, is the full cockpit where a signed-in user trades from their agent's wallet. The intelligence pages are no longer dead ends: the Coin Radar and the Live Trade Feed (along with the [Smart Money Radar](smart-money.md) and [Ghost-copy](ghost-copy.md)) each carry a [Fork](fork-trade.md) button that opens the real pump.fun trade panel for the coin you are looking at, signed by your own wallet. This doc explains what each surface is, where its numbers come from, and how they fit together.
 
 The one-line map:
 
@@ -8,6 +8,7 @@ The one-line map:
 | --- | --- | --- | --- |
 | Coin Radar | [/radar](https://three.ws/radar) | What launched in the last 90 seconds, and is it real? | Fork, from your own wallet |
 | Coin Intelligence | [/coin-intel](https://three.ws/coin-intel) | What did the intel engine learn about every launch? | No |
+| Fade Radar | [/fade](https://three.ws/fade) | Which coins is the money that is never right crowding into? | No |
 | Live Trade Feed | [/trades](https://three.ws/trades) | Which trades actually won, and what did the winner see? | Fork, from your own wallet |
 | Watchlist | [/watchlist](https://three.ws/watchlist) | What are *my* coins doing right now? | Buy via coin card |
 | Mission Control | [/terminal](https://three.ws/terminal) | Everything, live — and execute. | Yes, from your agent wallet |
@@ -16,7 +17,7 @@ Everything below is public and works signed-out except executing trades in Missi
 
 ## Where the numbers come from
 
-All five surfaces read the same underlying truth: the Coin Intelligence Engine (`workers/agent-sniper/intel`) watches every new pump.fun coin's first ~90 seconds of trading over the live firehose and persists what it saw — bundle patterns, organic demand, wallet concentration, funder clusters — to Postgres (`pump_coin_intel`, `pump_coin_wallets`, `pump_coin_outcomes`, `pump_intel_weights`). Every number on these pages traces to an on-chain trade the engine observed. When a signal wasn't measured for a coin, the UI says "not measured" — it never renders a fake zero.
+All six surfaces read the same underlying truth: the Coin Intelligence Engine (`workers/agent-sniper/intel`) watches every new pump.fun coin's first ~90 seconds of trading over the live firehose and persists what it saw (bundle patterns, organic demand, wallet concentration, funder clusters) to Postgres (`pump_coin_intel`, `pump_coin_wallets`, `pump_coin_outcomes`, `pump_intel_weights`). Every number on these pages traces to an on-chain trade the engine observed. When a signal wasn't measured for a coin, the UI says "not measured": it never renders a fake zero.
 
 On top of that base layer:
 
@@ -52,6 +53,14 @@ Four tabs:
 4. **What it learned** — the learned per-signal weights and outcome distribution. The engine grades its own predictions against real outcomes and shows you the weights it arrived at.
 
 If the engine is still warming up (fresh deploy, empty tables), the page says so honestly instead of rendering blanks. Public, no account, refreshes every 15 seconds. A caller mistake is answered as one, never as an outage: an unknown `view`, a non-base58 `mint`, or a `minQuality` outside 0-100 gets a `400` (`invalid_view`, `invalid_mint`, `invalid_min_quality`) rather than the "warming up" state. The feed's `q` search runs in SQL over the whole observed feed, and a `verdict` filter (derived after the row is shaped) scans up to 600 recent rows before slicing to the requested page, so `?verdict=strong` on a busy feed no longer answers with the one strong coin that happened to sit on page one. The `traders` and `learning` views are whole-history aggregates and are edge-cached for 5 minutes; the feed stays on a 5-second cache.
+
+## Fade Radar: /fade
+
+The inverse read, and the fastest reason to skip a coin. A **reverse indicator** is a wallet the graph has watched buy at least five coins whose outcome is already known, with zero winners among them (a win is a graduation to an AMM, or a 3x peak). Those wallets are the exit liquidity every dead launch is built on, and they cluster. The page ranks recent launches by how much of the observed buy side is theirs, by wallets and by SOL, and carries a second board of the reverse indicators themselves.
+
+What makes the verdict worth reading is that it is measured rather than asserted: the cohort is rebuilt from coins labelled in the earlier half of the recorded history, then graded on the later half it could not have seen. Coins in the `avoid` band (a quarter of observed buyers or more) went on to win 1.8 percent of the time against a 22.1 percent baseline, over 26,626 labelled coins. The page shows that table above the board and recomputes it from live history.
+
+Nothing here is a short. On a bonding curve the only tradeable form of a fade is not buying, so the page emits no trade and signs nothing; a wallet on the board links straight to its full track record on the [Smart Money Radar](smart-money.md). Full detail: [docs/fade-radar.md](fade-radar.md).
 
 ## Live Trade Feed — /trades
 
@@ -124,6 +133,11 @@ curl 'https://three.ws/api/pump/intel?mint=<MINT>'
 # Proven-wallet pedigree for one coin, or one wallet's reputation (both base58-validated)
 curl 'https://three.ws/api/intel/smart-money?mint=<MINT>'
 
+# The fade side: one coin's reverse-indicator share, the live board, the measured odds
+curl 'https://three.ws/api/pump/fade?mint=<MINT>'
+curl 'https://three.ws/api/pump/fade?hours=6&limit=20'
+curl 'https://three.ws/api/pump/fade?calibration=1'
+
 # Winning-trade feed
 curl 'https://three.ws/api/trades/feed'
 
@@ -135,6 +149,7 @@ Agents wanting the same intel over MCP: see [docs/mcp.md](mcp.md) (`@three-ws/in
 
 ## Related
 
+- [Fade Radar: the wallets that are never right](fade-radar.md): the reverse-indicator read behind the `/fade` board
 - [Meta-Allocator: the ETF of degens](meta-allocator.md): diversify a budget across the top verified leaders
 - [Clip Director: every trade becomes content](clip-director.md): turn any closed trade into shareable cards per surface
 - [The Trading Copilot — talk to your wallet](trading-copilot.md) — conversational trading over these same numbers

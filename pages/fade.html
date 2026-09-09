@@ -1,0 +1,202 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<script>/* three.ws theme boot */(function(){try{var m=localStorage.getItem('twx_theme');var l=m==='auto'?(window.matchMedia&&window.matchMedia('(prefers-color-scheme: light)').matches):m==='light';document.documentElement.setAttribute('data-theme',l?'light':'dark');}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();</script>
+		<meta charset="utf-8" />
+		<script src="/referral-capture.js"></script>
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<title>Fade Radar: the wallets that are never right · three.ws</title>
+		<meta name="description" content="The inverse of the Smart Money Radar. Every pump.fun coin ranked by how much of its buy side comes from wallets with a judged record and not one winner in it, with the measured, out-of-sample odds behind each verdict." />
+		<meta property="og:type" content="website" />
+		<meta property="og:site_name" content="three.ws" />
+		<meta property="og:url" content="https://three.ws/fade" />
+		<meta property="og:title" content="Fade Radar: the wallets that are never right · three.ws" />
+		<meta property="og:description" content="Some wallets have bought dozens of coins and never once been right. When they crowd a launch, that launch wins 1.8% of the time against a 22% baseline. Here is where they are right now." />
+		<meta property="og:image" content="https://three.ws/api/page-og?s=crypto&amp;t=Fade+Radar%3A+the+wallets+that+are+never+right&amp;d=Every+pump.fun+coin+ranked+by+how+much+of+its+buy+side+is+money+with+a+judged+record+and+not+one+winner+in+it&amp;p=%2Ffade" />
+		<meta property="og:image:width" content="1200" />
+		<meta property="og:image:height" content="630" />
+		<meta name="twitter:card" content="summary_large_image" />
+		<meta name="twitter:site" content="@trythreews" />
+		<meta name="twitter:title" content="Fade Radar: the wallets that are never right · three.ws" />
+		<meta name="twitter:description" content="The inverse of the Smart Money Radar: which coins the proven-losing wallets are crowding into right now, and the measured odds behind the call." />
+		<meta name="theme-color" content="#0a0a0a" />
+		<link rel="icon" href="/favicon.ico" sizes="any" />
+		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+		<link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+		<link rel="manifest" href="/manifest.webmanifest" />
+		<link rel="stylesheet" href="/fonts/fonts.css" />
+		<link rel="stylesheet" href="/tokens.css" />
+		<link rel="stylesheet" href="/nav.css" />
+		<link rel="stylesheet" href="/footer.css" />
+		<script defer src="/footer-newsletter.js"></script>
+		<link rel="canonical" href="https://three.ws/fade" />
+		<meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1" />
+		<script type="application/ld+json">{"@context":"https://schema.org","@type":"WebApplication","name":"Fade Radar","applicationCategory":"FinanceApplication","operatingSystem":"Web","description":"The inverse of the Smart Money Radar: pump.fun coins ranked by how much of their buy side comes from wallets with a judged on-chain record and no winners in it, with out-of-sample odds behind every verdict.","url":"https://three.ws/fade","isPartOf":{"@type":"WebSite","name":"three.ws","url":"https://three.ws"}}</script>
+		<style>
+			:root {
+				--fr-bg: #0a0a0b; --fr-panel: #121214; --fr-panel-2: #17171a; --fr-line: #26262b;
+				--fr-text: #f5f5f7; --fr-dim: #a1a1aa; --fr-faint: #6b6b74;
+				--fr-accent: #fb7185; --fr-accent-2: #22d3ee; --fr-green: #34d399; --fr-amber: var(--warn);
+				--fr-chip: #1e1e24;
+			}
+			:root[data-theme='light'] {
+				--fr-bg: #fafafa; --fr-panel: #ffffff; --fr-panel-2: #f4f4f6; --fr-line: #e4e4e8;
+				--fr-text: #14141a; --fr-dim: #52525b; --fr-faint: #8a8a93; --fr-chip: #eef0f4;
+			}
+			* { box-sizing: border-box; }
+			body { margin: 0; background: var(--fr-bg); color: var(--fr-text); font-family: 'Inter', system-ui, -apple-system, sans-serif; -webkit-font-smoothing: antialiased; }
+			.fr { max-width: 1080px; margin: 0 auto; padding: 28px 20px 80px; }
+			.fr-kicker { font-size: 12px; letter-spacing: .12em; text-transform: uppercase; color: var(--fr-accent); font-weight: 600; margin: 8px 0 10px; }
+			.fr-title { font-size: clamp(26px, 5vw, 44px); line-height: 1.05; font-weight: 800; margin: 0 0 12px; letter-spacing: -.02em; }
+			.fr-sub { font-size: clamp(14px, 2.2vw, 17px); color: var(--fr-dim); max-width: 66ch; line-height: 1.55; margin: 0 0 24px; }
+			.fr-sub a { color: var(--fr-accent-2); }
+
+			/* calibration strip */
+			.fr-strip { background: var(--fr-panel); border: 1px solid var(--fr-line); border-radius: 16px; padding: 18px; margin-bottom: 22px; }
+			.fr-strip-title { font-size: 13px; text-transform: uppercase; letter-spacing: .08em; color: var(--fr-faint); font-weight: 600; margin: 0 0 14px; }
+			.fr-bands { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 10px; margin: 0; }
+			.fr-band { background: var(--fr-panel-2); border: 1px solid var(--fr-line); border-radius: 12px; padding: 14px; border-left: 3px solid var(--fr-line); }
+			.fr-band-clear { border-left-color: var(--fr-green); }
+			.fr-band-caution { border-left-color: var(--fr-amber); }
+			.fr-band-avoid { border-left-color: var(--fr-accent); }
+			.fr-band dt { font-size: 11px; text-transform: uppercase; letter-spacing: .07em; color: var(--fr-faint); font-weight: 700; margin: 0 0 6px; }
+			.fr-band dd { margin: 0; font-size: 28px; font-weight: 800; letter-spacing: -.03em; font-variant-numeric: tabular-nums; }
+			.fr-band p { margin: 6px 0 8px; font-size: 12.5px; color: var(--fr-dim); line-height: 1.45; }
+			.fr-band small { display: block; font-size: 11.5px; color: var(--fr-faint); }
+			.fr-strip-foot { margin: 14px 0 0; font-size: 12.5px; color: var(--fr-faint); line-height: 1.6; max-width: 82ch; }
+			.fr-strip-note p { margin: 0; font-size: 13px; color: var(--fr-dim); line-height: 1.55; }
+
+			/* controls */
+			.fr-controls { display: flex; flex-wrap: wrap; gap: 16px; margin-bottom: 20px; }
+			.fr-field .fr-lbl { display: block; font-size: 12px; color: var(--fr-faint); text-transform: uppercase; letter-spacing: .08em; margin-bottom: 8px; font-weight: 600; }
+			.fr-seg { display: inline-flex; background: var(--fr-panel-2); border: 1px solid var(--fr-line); border-radius: 10px; padding: 4px; gap: 4px; }
+			.fr-seg button { appearance: none; border: none; background: transparent; color: var(--fr-dim); font: inherit; font-weight: 600; font-size: 13px; padding: 9px 14px; border-radius: 7px; cursor: pointer; transition: background var(--duration-fast), color var(--duration-fast); }
+			.fr-seg button:hover { color: var(--fr-text); }
+			.fr-seg button[aria-pressed='true'] { background: var(--fr-accent); color: #fff; }
+			.fr-seg button:focus-visible { outline: 2px solid var(--fr-accent-2); outline-offset: 2px; }
+
+			/* board */
+			.fr-caption { font-size: 13px; color: var(--fr-dim); margin: 0 0 10px; line-height: 1.5; }
+			.fr-tablewrap { overflow-x: auto; border: 1px solid var(--fr-line); border-radius: 12px; background: var(--fr-panel); /* contain the wide table's overflow to this box: without it the row of columns
+			   still counts toward the document's own scroll width, and a phone can swipe
+			   the whole page sideways into empty space beside the board. */ contain: paint; }
+			table.fr-table { width: 100%; border-collapse: collapse; font-size: 13px; min-width: 760px; }
+			.fr-table th { text-align: left; font-size: 11px; text-transform: uppercase; letter-spacing: .07em; color: var(--fr-faint); font-weight: 600; padding: 10px 12px; border-bottom: 1px solid var(--fr-line); white-space: nowrap; }
+			.fr-table td { padding: 10px 12px; border-bottom: 1px solid var(--fr-line); white-space: nowrap; vertical-align: middle; }
+			.fr-table tr:last-child td { border-bottom: none; }
+			.fr-table tbody tr:hover { background: var(--fr-panel-2); }
+			.fr-table td.num { font-variant-numeric: tabular-nums; font-weight: 600; }
+			.fr-table a { color: var(--fr-accent-2); text-decoration: none; }
+			.fr-table a:hover { text-decoration: underline; }
+			.fr-table a:focus-visible { outline: 2px solid var(--fr-accent-2); outline-offset: 2px; border-radius: 4px; }
+			.fr-coin { font-weight: 700; }
+			.fr-coin small { display: block; font-weight: 500; color: var(--fr-faint); font-size: 11px; max-width: 22ch; overflow: hidden; text-overflow: ellipsis; }
+			.fr-addr { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12.5px; }
+			.fr-tag { display: inline-block; margin-left: 6px; font-size: 10.5px; font-weight: 700; text-transform: uppercase; letter-spacing: .05em; padding: 2px 7px; border-radius: 999px; background: var(--fr-chip); color: var(--fr-dim); font-family: 'Inter', system-ui, sans-serif; }
+			.fr-score { display: flex; align-items: center; gap: 8px; min-width: 108px; }
+			.fr-score-bar { flex: 1; height: 6px; border-radius: 999px; background: var(--fr-chip); overflow: hidden; }
+			.fr-score-bar span { display: block; height: 100%; background: linear-gradient(90deg, var(--fr-amber), var(--fr-accent)); border-radius: 999px; }
+			.fr-score b { font-variant-numeric: tabular-nums; font-size: 13px; min-width: 22px; text-align: right; }
+			.fr-pill { font-size: 11px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; padding: 4px 9px; border-radius: 999px; background: var(--fr-chip); color: var(--fr-dim); }
+			.fr-pill-avoid { background: color-mix(in srgb, var(--fr-accent) 20%, transparent); color: var(--fr-accent); }
+			.fr-pill-caution { background: color-mix(in srgb, var(--fr-amber) 20%, transparent); color: var(--fr-amber); }
+			.fr-pill-clear { background: color-mix(in srgb, var(--fr-green) 18%, transparent); color: var(--fr-green); }
+
+			/* states */
+			.fr-empty, .fr-error { text-align: center; padding: 48px 20px; border: 1px dashed var(--fr-line); border-radius: 16px; background: var(--fr-panel); }
+			.fr-empty h3, .fr-error h3 { margin: 0 0 8px; font-size: 18px; }
+			.fr-empty p, .fr-error p { color: var(--fr-dim); margin: 0 auto 16px; max-width: 52ch; font-size: 14px; line-height: 1.55; }
+			.fr-empty a, .fr-error button { display: inline-block; background: var(--fr-accent); color: #fff; border: none; text-decoration: none; padding: 10px 18px; border-radius: 10px; font: inherit; font-weight: 600; cursor: pointer; }
+			.fr-empty a:focus-visible, .fr-error button:focus-visible { outline: 2px solid var(--fr-accent-2); outline-offset: 2px; }
+			.fr-skel { display: grid; gap: 12px; }
+			.fr-skel-block { border-radius: 14px; border: 1px solid var(--fr-line); background: linear-gradient(100deg, var(--fr-panel) 30%, var(--fr-panel-2) 50%, var(--fr-panel) 70%); background-size: 200% 100%; animation: fr-sh 1.3s ease-in-out infinite; }
+			.fr-skel-block.tall { height: 320px; } .fr-skel-block.short { height: 128px; }
+			@keyframes fr-sh { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
+			@media (prefers-reduced-motion: reduce) { .fr-skel-block { animation: none; } .fr-seg button { transition: none; } }
+			.sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); border: 0; }
+
+			.fr-honesty { background: var(--fr-panel); border: 1px solid var(--fr-line); border-left: 3px solid var(--fr-amber); border-radius: 10px; padding: 14px 16px; margin-top: 28px; }
+			.fr-honesty h2 { font-size: 13px; text-transform: uppercase; letter-spacing: .08em; color: var(--fr-amber); margin: 0 0 8px; }
+			.fr-honesty ul { margin: 0; padding-left: 18px; display: flex; flex-direction: column; gap: 6px; }
+			.fr-honesty li { font-size: 13px; color: var(--fr-dim); line-height: 1.55; }
+			.fr-honesty a { color: var(--fr-accent-2); }
+			.fr-more { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 20px; }
+			.fr-more a { font-size: 13.5px; font-weight: 600; text-decoration: none; color: var(--fr-text); background: var(--fr-panel); border: 1px solid var(--fr-line); border-radius: 10px; padding: 10px 16px; transition: border-color var(--duration-fast), transform var(--duration-fast); }
+			.fr-more a:hover { border-color: var(--fr-accent); transform: translateY(-1px); }
+			.fr-more a:focus-visible { outline: 2px solid var(--fr-accent-2); outline-offset: 2px; }
+			@media (prefers-reduced-motion: reduce) { .fr-more a:hover { transform: none; } }
+		</style>
+	</head>
+	<body>
+		<header><div id="nav-container"></div></header>
+		<script src="/nav.js"></script>
+
+		<main class="fr" aria-labelledby="fr-title">
+			<p class="fr-kicker">Fade Radar · the inverse of smart money</p>
+			<h1 id="fr-title" class="fr-title">The wallets that are never right</h1>
+			<p class="fr-sub">
+				The <a href="/smart-money">Smart Money Radar</a> asks who reputable is buying a coin.
+				This asks the sharper question: how much of the buy side has never once been right.
+				A reverse indicator here is a wallet the graph has watched buy at least five coins whose
+				outcome is now known, with zero winners among them. They are not rare, and when they
+				crowd a fresh launch that launch almost never goes anywhere. Nothing on this page is a
+				short: on a bonding curve the only tradeable form of a fade is not buying.
+			</p>
+
+			<section class="fr-strip" id="frStrip" aria-label="Measured odds behind each verdict"></section>
+
+			<section class="fr-controls" aria-label="Board settings">
+				<div class="fr-field">
+					<span class="fr-lbl" id="frViewLabel">Board</span>
+					<div class="fr-seg" role="group" aria-labelledby="frViewLabel" id="frViewSeg">
+						<button type="button" data-view="coins" aria-pressed="true">Coins</button>
+						<button type="button" data-view="wallets" aria-pressed="false">Reverse indicators</button>
+					</div>
+				</div>
+				<div class="fr-field" id="frWindowField">
+					<span class="fr-lbl" id="frWindowLabel">Launched within</span>
+					<div class="fr-seg" role="group" aria-labelledby="frWindowLabel" id="frWindowSeg">
+						<button type="button" data-hours="1" aria-pressed="false">1h</button>
+						<button type="button" data-hours="6" aria-pressed="true">6h</button>
+						<button type="button" data-hours="24" aria-pressed="false">24h</button>
+						<button type="button" data-hours="72" aria-pressed="false">3d</button>
+					</div>
+				</div>
+				<div class="fr-field" id="frActiveField" hidden>
+					<span class="fr-lbl" id="frActiveLabel">Last active</span>
+					<div class="fr-seg" role="group" aria-labelledby="frActiveLabel" id="frActiveSeg">
+						<button type="button" data-active="24" aria-pressed="false">24h</button>
+						<button type="button" data-active="168" aria-pressed="true">7d</button>
+						<button type="button" data-active="0" aria-pressed="false">All time</button>
+					</div>
+				</div>
+			</section>
+
+			<div id="frBoard" aria-live="polite"></div>
+
+			<section class="fr-honesty" aria-labelledby="frHonesty">
+				<h2 id="frHonesty">What this is and is not</h2>
+				<ul>
+					<li>A wallet's record counts only coins whose outcome is already known. A winner is a coin that graduated to an AMM or peaked at 3x or better.</li>
+					<li>The odds above are measured out of sample: the cohort is rebuilt from coins labelled in the earlier half of the history, then graded on coins it could not have seen.</li>
+					<li>A coin is scored only once at least five of its buyers have been observed. Below that the board says so rather than guessing.</li>
+					<li>This is a probabilistic read on a hostile market, never a prediction, and never advice. A clear coin can still go to zero.</li>
+					<li>The only coin three.ws promotes is $THREE. Every coin on this board is whatever the live feed handed us.</li>
+				</ul>
+			</section>
+
+			<nav class="fr-more" aria-label="Related surfaces">
+				<a href="/smart-money">Smart Money Radar</a>
+				<a href="/radar">Coin Radar</a>
+				<a href="/coin-intel">Coin Intelligence</a>
+				<a href="/trades">Live Trade Feed</a>
+				<a href="/docs/fade-radar">How the score works</a>
+			</nav>
+		</main>
+
+		<footer id="footer-root"></footer>
+		<script type="module" src="/src/fade-radar.js"></script>
+		<!-- Runtime i18n: detects locale, swaps annotated copy, mounts <lang-switcher>. -->
+		<script type="module" src="/i18n.js"></script>
+	</body>
+</html>

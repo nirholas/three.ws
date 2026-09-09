@@ -1168,6 +1168,10 @@
 			"dest": "/ghost-copy.html"
 		},
 		{
+			"src": "/fade/?",
+			"dest": "/fade.html"
+		},
+		{
 			"src": "/clip-director/?",
 			"dest": "/clip-director.html"
 		},
@@ -3390,6 +3394,10 @@
 		{
 			"src": "/api/pump/ghost-copy",
 			"dest": "/api/pump/ghost-copy.js"
+		},
+		{
+			"src": "/api/pump/fade",
+			"dest": "/api/pump/fade.js"
 		},
 		{
 			"src": "/api/pump/wrapped",
