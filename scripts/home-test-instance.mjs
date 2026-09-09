@@ -88,6 +88,13 @@ async function main() {
 				return null;
 			}
 
+			// Stop and start keep the house: the config directory, the token and
+			// the seeded entities all survive, so a test can take the instance off
+			// the network and put it back without paying for another onboarding.
+			// That is the only honest way to exercise a home that stops answering.
+			if (opts.stop) current = await stop(instance, current);
+			if (opts.start) current = await start(instance, current);
+
 			if (opts.up) current = await up(instance, current, { seedNow: opts.seed });
 			if (!current) current = requireState(instance);
 
@@ -174,6 +181,56 @@ async function up(inst, state, { seedNow }) {
  * Remove the container and its config directory. Refuses anything it did not
  * create, and reports honestly when there was nothing to remove.
  */
+/**
+ * Take the house off the network without destroying it.
+ *
+ * `--down` removes the container AND the config directory, which throws away
+ * the access token and every seeded entity: recovering from it costs a full
+ * onboarding. A house that has stopped answering is a state the product has to
+ * render, so exercising it must not cost two minutes and a new token. Stopping
+ * the container is what actually happens to a real house whose power went out,
+ * and `--start` puts it back exactly as it was.
+ */
+async function stop(inst, state) {
+	const current = state || requireState(inst);
+	const existing = await inspect(inst.container);
+	if (!existing) throw new Error(`no container named "${inst.container}" to stop. Run --up first.`);
+	assertOurs(existing, inst.container);
+	if (existing.running) {
+		// Thirty seconds, not ten: Home Assistant flushes its recorder database on
+		// SIGTERM and a ten-second grace killed it (exit 137) every time, which
+		// risks the sqlite store the seeded house lives in.
+		await docker(['stop', '--time', '30', inst.container]);
+		log(`[stop] stopped ${inst.container}`);
+	} else {
+		log(`[stop] ${inst.container} was already stopped`);
+	}
+	return writeState(inst, { ...current, running: false });
+}
+
+/** Put a stopped house back on the same port, and wait until it answers. */
+async function start(inst, state) {
+	const current = state || requireState(inst);
+	const existing = await inspect(inst.container);
+	if (!existing) throw new Error(`no container named "${inst.container}" to start. Run --up first.`);
+	assertOurs(existing, inst.container);
+	if (!existing.running) {
+		await docker(['start', inst.container]);
+		log(`[start] started ${inst.container}`);
+	}
+	// Docker publishes the same port mapping it was created with, so the base
+	// URL in the state file is still the right one; what is not guaranteed is
+	// that Home Assistant is ready behind it yet.
+	await waitForHomeAssistant(current.baseUrl);
+	// Answering is not the same as running. Straight after a restart /api/config
+	// reports `state: NOT_RUNNING` for several seconds while components come
+	// back, and a caller that connected in that window would read a house with
+	// no entities in it and blame the product. Once there is a token to ask
+	// with, wait for the house to say it is running.
+	if (current.token) await waitForRunning(current.baseUrl, current.token);
+	return writeState(inst, { ...current, running: true });
+}
+
 async function down(inst, state) {
 	const existing = await inspect(inst.container);
 	let removedContainer = false;
@@ -227,8 +284,16 @@ async function onboard(inst, state) {
 	}
 
 	const clientId = `${state.baseUrl}/`;
-	const steps = await json(`${state.baseUrl}/api/onboarding`);
-	const done = new Set(steps.filter((s) => s.done).map((s) => s.step));
+	// A finished instance unregisters its onboarding views, so on 2026.9 this
+	// answers 404 rather than listing four completed steps. That is the state a
+	// harness meets whenever a run was interrupted after the container came up
+	// but before the token was minted, or whenever a config directory outlived
+	// its state file, and it used to end the run with a raw
+	// "GET /api/onboarding returned 404" that reads like the instance is broken.
+	// No list means onboarding is over, which is exactly the case the owner-login
+	// path below already handles.
+	const steps = await json(`${state.baseUrl}/api/onboarding`, { optional: true });
+	const done = steps ? new Set(steps.filter((s) => s.done).map((s) => s.step)) : new Set(['user', 'core_config', 'analytics', 'integration']);
 
 	// An instance can be onboarded while the harness holds no token: an
 	// interrupted run, or a config directory that outlived its state file. The
@@ -642,15 +707,32 @@ class WsSession {
 
 // ---------------------------------------------------------------- helpers
 
+/**
+ * Wait until Home Assistant is serving, whatever point in its life it is at.
+ *
+ * Readiness is asked in a way that does not depend on onboarding state, and
+ * that is the whole subtlety here. `/api/onboarding` answers 200 while the
+ * instance is fresh, and on 2026.9 it answers **404** once onboarding is
+ * finished, because the onboarding views are unregistered when they are done.
+ * A probe that only accepted 200 or 401 therefore worked exactly once per
+ * container: the first `--up` on a fresh instance passed, and every later call
+ * that reused or restarted that same instance sat for the full 180 seconds and
+ * reported a healthy house as a timeout. Measured on 2026.9.0: an onboarded
+ * instance answers `/` 200, `/api/` 401, `/manifest.json` 200,
+ * `/api/onboarding` 404.
+ *
+ * So: any answer from `/api/onboarding` other than a 5xx means the HTTP stack
+ * is up, and a 401 from `/api/` means the API layer is up. Either is proof the
+ * house is answering.
+ */
 async function waitForHomeAssistant(baseUrl) {
 	let version = null;
 	await waitFor(
 		async () => {
-			const res = await fetch(`${baseUrl}/api/onboarding`, { signal: AbortSignal.timeout(4000) }).catch(() => null);
-			if (res && res.ok) return true;
-			// A fully onboarded instance answers /api/onboarding with 401 rather
-			// than 200, and that is just as good a readiness signal.
-			return Boolean(res && res.status === 401);
+			const onboarding = await fetch(`${baseUrl}/api/onboarding`, { signal: AbortSignal.timeout(4000) }).catch(() => null);
+			if (onboarding && onboarding.status < 500) return true;
+			const api = await fetch(`${baseUrl}/api/`, { signal: AbortSignal.timeout(4000) }).catch(() => null);
+			return Boolean(api && api.status === 401);
 		},
 		{ timeout: 180_000, label: `${baseUrl} to answer` },
 	);
@@ -660,6 +742,22 @@ async function waitForHomeAssistant(baseUrl) {
 		version = body?.version || null;
 	}
 	return version;
+}
+
+/** Home Assistant reports its own lifecycle on /api/config; wait for RUNNING. */
+async function waitForRunning(baseUrl, token) {
+	await waitFor(
+		async () => {
+			const res = await fetch(`${baseUrl}/api/config`, {
+				headers: { authorization: `Bearer ${token}` },
+				signal: AbortSignal.timeout(4000),
+			}).catch(() => null);
+			if (!res?.ok) return false;
+			const body = await res.json().catch(() => null);
+			return body?.state === 'RUNNING';
+		},
+		{ timeout: 180_000, label: `${baseUrl} to finish starting` },
+	);
 }
 
 async function tokenWorks(baseUrl, token) {
@@ -845,6 +943,8 @@ function parseArgs(args) {
 		else if (arg === '--onboard') out.onboard = true;
 		else if (arg === '--seed') out.seed = true;
 		else if (arg === '--down') out.down = true;
+		else if (arg === '--stop') out.stop = true;
+		else if (arg === '--start') out.start = true;
 		else if (arg === '--json') out.json = true;
 		else if (arg === '--env') out.env = true;
 		else if (arg === '--help' || arg === '-h') out.help = true;
@@ -867,6 +967,8 @@ function usage() {
   --onboard           complete onboarding and mint a long-lived access token
   --seed              demo entities, a floor, areas, scenes, mcp_server, an exposed lock
   --down              remove the container and its config directory
+  --stop              stop the container, keeping its config, token and entities
+  --start             start a stopped container and wait until it answers
   --name <slug>       run more than one instance side by side (default: default)
   --version <tag>     Home Assistant image tag (default: stable)
   --json              machine-readable output for a test to consume
