@@ -125,9 +125,16 @@ export async function connectHome(page, { label = 'The lane house' } = {}) {
 	// normal case here, opens on the list instead, and the form is behind
 	// "Connect another". Waiting for the form without that click is how every
 	// home journey started failing at connect the moment two lanes ran at once.
+	// isVisible() is an instantaneous read, not a wait, and this page renders its
+	// form from a module after domcontentloaded. Asking before that lands sees
+	// neither state, decides it must be the list, and then waits out the whole
+	// test timeout clicking for a button that a zero-home account never shows.
+	// Wait for whichever of the two states this account actually has first.
 	const url = page.locator('#hm-url');
+	const another = page.getByRole('button', { name: 'Connect another' });
+	await expect(url.or(another).first()).toBeVisible({ timeout: 60_000 });
 	if (!(await url.isVisible().catch(() => false))) {
-		await page.getByRole('button', { name: 'Connect another' }).click();
+		await another.click();
 	}
 	await expect(url).toBeVisible({ timeout: 60_000 });
 

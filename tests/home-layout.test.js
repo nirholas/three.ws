@@ -348,9 +348,42 @@ liveHome('the area write-back, against a real Home Assistant', () => {
 		await bridge.assignEntityArea(unfiled, area.id);
 		const entry = (bridge.registries.entities || []).find((e) => e.entity_id === unfiled);
 		expect(entry.area_id).toBe(area.id);
+
+		// Take the room away again. The lane's house is shared by every live test
+		// and reused across runs, so a test that leaves rooms behind quietly
+		// changes the house every later assertion is made against.
+		await bridge.assignEntityArea(unfiled, originalArea);
+		await removeArea(bridge, area.id);
 	}, 60_000);
 
 	it('refuses a nameless room rather than making an unnamed one', async () => {
 		await expect(bridge.createArea('   ')).rejects.toThrow(/needs a name/i);
 	});
 });
+
+/**
+ * Delete an area straight through Home Assistant's own websocket.
+ *
+ * The bridge deliberately has no delete: making a room is the flow the product
+ * needs, and removing one is a decision that belongs in the user's own Home
+ * Assistant rather than in a library we ship. A test that creates rooms still
+ * has to clean up after itself, so it opens its own socket for the one message.
+ */
+async function removeArea(bridge, areaId) {
+	const socket = new WebSocket(`${haUrl.replace(/^http/, 'ws')}/api/websocket`);
+	try {
+		await new Promise((resolve, reject) => {
+			const timer = setTimeout(() => reject(new Error('area delete timed out')), 20_000);
+			socket.onerror = () => { clearTimeout(timer); reject(new Error('websocket failed')); };
+			socket.onmessage = (event) => {
+				const msg = JSON.parse(event.data);
+				if (msg.type === 'auth_required') return socket.send(JSON.stringify({ type: 'auth', access_token: haToken }));
+				if (msg.type === 'auth_ok') return socket.send(JSON.stringify({ id: 1, type: 'config/area_registry/delete', area_id: areaId }));
+				if (msg.type === 'result') { clearTimeout(timer); resolve(); }
+			};
+		});
+	} finally {
+		socket.close();
+	}
+	await bridge.refreshRegistries();
+}

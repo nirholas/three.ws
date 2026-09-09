@@ -316,18 +316,27 @@ test('journey 9e: a house with no areas at all reaches a full floorplan from the
 		for (const area of leftover) {
 			await session.send({ type: 'config/area_registry/delete', area_id: area.area_id }).catch(() => {});
 		}
+		// Home Assistant derives an area id from the name, and usually gives back
+		// the same one. Usually is not good enough to re-file a house on, so the
+		// old id is mapped to whatever id the recreated area actually got.
+		const remap = new Map();
 		for (const area of originalAreas) {
-			await session.send({
+			const made = await session.send({
 				type: 'config/area_registry/create',
 				name: area.name,
 				...(area.floor_id ? { floor_id: area.floor_id } : {}),
-			}).catch(() => {});
+			}).catch(() => null);
+			if (made?.area_id) remap.set(area.area_id, made.area_id);
 		}
 		for (const device of deviceAreas) {
-			await session.send({ type: 'config/device_registry/update', device_id: device.id, area_id: device.areaId }).catch(() => {});
+			const areaId = remap.get(device.areaId);
+			if (!areaId) continue;
+			await session.send({ type: 'config/device_registry/update', device_id: device.id, area_id: areaId }).catch(() => {});
 		}
 		for (const entity of entityAreas) {
-			await session.send({ type: 'config/entity_registry/update', entity_id: entity.id, area_id: entity.areaId }).catch(() => {});
+			const areaId = remap.get(entity.areaId);
+			if (!areaId) continue;
+			await session.send({ type: 'config/entity_registry/update', entity_id: entity.id, area_id: areaId }).catch(() => {});
 		}
 		session.close();
 	}

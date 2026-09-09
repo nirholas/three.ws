@@ -239,3 +239,29 @@ The e2e journeys drive a real Home Assistant container: the scene renders the
 real house, a real light changed in Home Assistant reaches the rendered scene,
 the house survives its connection being killed, a browser with no WebGL can
 still operate it, and a burst of twenty real service calls grows nothing.
+
+### Running two lanes at once
+
+Everything the lane keeps on disk is keyed by `HOME_LIVE_NAME`, so a second run
+on the same machine does not walk into the first one:
+
+```bash
+HOME_LIVE_NAME=mylane HOME_E2E_API_PORT=8141 HOME_E2E_WEB_PORT=3071 \
+  HOME_E2E_ROLES=owner \
+  npx playwright test --config playwright.home.config.js tests/e2e/home-floorplan.spec.js
+```
+
+- The Home Assistant container, `.ha-config-e2e-stack.<lane>.json` and
+  `.ha-config-e2e-accounts.<lane>.json` all carry the lane name.
+- `resetHomes` and `openScene` only ever touch homes pointed at **this lane's**
+  Home Assistant, so a concurrent run's house is never deleted underneath it.
+- Each lane needs its **own** account: a plan carries a fixed number of homes,
+  so two lanes sharing one account means the second is refused with "this
+  account is at its home limit" and the only way to make room is to evict the
+  house the other run is using.
+- `HOME_E2E_ROLES` provisions only the accounts a run signs in as. Registration
+  is capped at five per hour per IP, so a spec that only uses the owner should
+  not spend one of those five on a guest.
+- Ports must be free and are never reused: the shared `npm run dev` on :3000
+  proxies `/api` at **production**, so a run that borrowed it would silently
+  test the wrong API.

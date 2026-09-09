@@ -101,6 +101,23 @@ all reach the same place) and then through fuzzy matching on the scene names. A 
 matching scene returns `{ ran: false, match: null }` rather than firing the closest thing it
 can find. Pass `{ dryRun: true }` to resolve without running.
 
+### Rooms the house does not have yet
+
+Most real Home Assistant setups have devices everywhere and not one area, so there is nothing to
+draw a room from. Make one and file devices into it, in the user's own registry:
+
+```js
+const area = await bridge.createArea('Kitchen');       // { id: 'kitchen', created: true }
+await bridge.assignEntityArea('light.bed_light', area.id);
+bridge.graph.rooms.find((r) => r.id === area.id);      // already carries the light
+```
+
+Both write the user's own Home Assistant, so the room reaches their dashboards, their voice
+assistant and their automations too. Neither is a guarded action: nothing moves and nothing
+opens, and both are reversible in two clicks in their own UI. `createArea` with a name that
+already exists returns that area with `created: false` rather than failing, because the room the
+caller asked for is there either way.
+
 ## The physical-action gate
 
 **Reads are free. Writes that open the house stop and ask.** The rule is asymmetric on
@@ -214,6 +231,7 @@ apart from "your house is offline".
 | Export | What it does |
 |---|---|
 | `HomeBridge` | One live connection: `connect`, `call`, `activate`, `macros`, `graph`, `states`, `on`, `close` |
+| `HomeBridge` room organisation | `areas`, `createArea`, `assignEntityArea`, `refreshRegistries`: read the rooms, make one, and file a device into it, in the user's own registry |
 | `connectHomeMcp` | The optional MCP capability channel, gated |
 | `buildHomeGraph` | Registries plus states to the room graph. Pure |
 | `flattenEntities` | The room graph to one flat entity list |

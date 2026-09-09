@@ -310,7 +310,7 @@ export function mountFloorplan({ mount, homeId, graph, canEdit = true, onChange 
 		if (state.creating) return;
 		const thenFile = state.naming?.thenFile || null;
 		state.creating = true;
-		state.naming = { error: null, thenFile };
+		state.naming = { error: null, thenFile, value: name };
 		render();
 		try {
 			const res = await createArea(homeId, { name });
@@ -335,10 +335,11 @@ export function mountFloorplan({ mount, homeId, graph, canEdit = true, onChange 
 			// rather than handing back a form and making them find it again.
 			if (thenFile) await fileEntity(thenFile, area.id);
 		} catch (err) {
-			// The form stays open holding what they typed: a name that was refused
-			// is a name to fix, not a reason to start over.
+			// The form stays open holding what they typed, and still remembers the
+			// device it was opened for: a name that was refused is a name to fix,
+			// not a reason to start over and go and find the device again.
 			state.creating = false;
-			state.naming = { error: describeError(err).body };
+			state.naming = { error: describeError(err).body, thenFile, value: name };
 			render();
 		}
 	}
@@ -393,7 +394,7 @@ export function mountFloorplan({ mount, homeId, graph, canEdit = true, onChange 
 
 	/** Open the new-room form, optionally to hold a device that needs somewhere. */
 	function openNaming(thenFile = null) {
-		state.naming = { error: null, thenFile };
+		state.naming = { error: null, thenFile, value: '' };
 		state.notice = null;
 		render();
 		view.querySelector('.hm-plan-naming input')?.focus();
@@ -425,6 +426,10 @@ export function mountFloorplan({ mount, homeId, graph, canEdit = true, onChange 
 		input.required = true;
 		input.autocomplete = 'off';
 		input.placeholder = 'Kitchen';
+		// Survives the re-render a refusal causes, so the name is theirs to fix
+		// rather than to retype.
+		input.value = state.naming.value || '';
+		input.addEventListener('input', () => { state.naming.value = input.value; });
 		form.append(input);
 
 		const actions = el('div', 'hm-plan-naming-actions');
@@ -450,7 +455,7 @@ export function mountFloorplan({ mount, homeId, graph, canEdit = true, onChange 
 			e.preventDefault();
 			const name = input.value.trim();
 			if (!name) {
-				state.naming = { ...state.naming, error: 'Give the room a name, like Kitchen.' };
+				state.naming = { ...state.naming, error: 'Give the room a name, like Kitchen.', value: input.value };
 				return render();
 			}
 			createRoom(name);

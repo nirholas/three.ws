@@ -42,8 +42,27 @@ const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '.
  */
 export const LANE = process.env.HOME_LIVE_NAME || 'e2e';
 export const STACK_FILE = path.join(ROOT, `.ha-config-e2e-stack${LANE === 'e2e' ? '' : `.${LANE}`}.json`);
-/** The reusable QA accounts. Gitignored: real credentials for a real account. */
-const ACCOUNTS_FILE = path.join(ROOT, '.ha-config-e2e-accounts.json');
+/**
+ * The reusable QA accounts, one file per lane.
+ *
+ * Sharing one account across concurrent lanes cannot work: a plan carries a
+ * fixed number of homes (one, on the account tier these are created at), so the
+ * second lane to connect is refused with "this account is at its home limit"
+ * and the only way to make room is to evict the house a peer run is mid-journey
+ * inside. Each lane gets its own account, reused for every later run of that
+ * lane, so the registration cost is paid once and never again.
+ */
+const ACCOUNTS_FILE = path.join(ROOT, `.ha-config-e2e-accounts${LANE === 'e2e' ? '' : `.${LANE}`}.json`);
+
+/**
+ * Which accounts to provision. Registration is capped at five per hour per IP,
+ * so a run that only signs in as the owner should not spend one of five on a
+ * guest it will never use.
+ */
+const ROLES = (process.env.HOME_E2E_ROLES || 'owner,guest')
+	.split(',')
+	.map((role) => role.trim())
+	.filter(Boolean);
 
 export default async function globalSetup(config) {
 	process.env.HOME_LIVE = process.env.HOME_LIVE || '1';
@@ -59,7 +78,7 @@ export default async function globalSetup(config) {
 		STACK_FILE,
 		`${JSON.stringify({ home, accounts, origin, lane: LANE, startedAt: new Date().toISOString() }, null, '\t')}\n`,
 	);
-	console.log(`[home-e2e] accounts ready: ${accounts.owner.username}, ${accounts.guest.username}`);
+	console.log(`[home-e2e] accounts ready: ${ROLES.map((role) => accounts[role]?.username).filter(Boolean).join(', ')}`);
 }
 
 /**
@@ -73,7 +92,7 @@ async function ensureAccounts(origin) {
 	const stored = readJson(ACCOUNTS_FILE) || {};
 	const accounts = { ...stored };
 
-	for (const role of ['owner', 'guest']) {
+	for (const role of ROLES) {
 		if (accounts[role] && (await loginWorks(origin, accounts[role]))) continue;
 		accounts[role] = await register(origin, role);
 		// Write after EVERY account, not once at the end. Registration is limited
@@ -85,14 +104,37 @@ async function ensureAccounts(origin) {
 	return accounts;
 }
 
+/**
+ * Whether a stored account still logs in.
+ *
+ * The distinction between "this account is gone" and "the server would not
+ * answer me just now" is worth money here. Registration is capped at five per
+ * hour per IP, and concurrent agents on this box all log in as the same QA
+ * account, so a login can come back 429 or 5xx while the account is perfectly
+ * fine. Treating that as gone re-registers, burns the hour's budget, and the
+ * NEXT run then fails at setup reporting the rate limiter as a product bug.
+ * Only an outright rejection counts as gone.
+ */
 async function loginWorks(origin, account) {
-	const res = await fetch(`${origin}/api/auth/login`, {
-		method: 'POST',
-		headers: { 'content-type': 'application/json', origin },
-		body: JSON.stringify({ email: account.email, password: account.password }),
-		signal: AbortSignal.timeout(30_000),
-	}).catch(() => null);
-	return Boolean(res?.ok);
+	for (let attempt = 0; attempt < 3; attempt += 1) {
+		const res = await fetch(`${origin}/api/auth/login`, {
+			method: 'POST',
+			headers: { 'content-type': 'application/json', origin },
+			body: JSON.stringify({ email: account.email, password: account.password }),
+			signal: AbortSignal.timeout(30_000),
+		}).catch(() => null);
+
+		if (res?.ok) return true;
+		// 401/403: the credentials really are no good, so re-provision.
+		if (res && res.status !== 429 && res.status < 500) return false;
+		// Anything else is the server being busy or unreachable. Back off and ask
+		// again rather than spending one of five registrations on a guess.
+		await new Promise((resolve) => setTimeout(resolve, 2_000 * (attempt + 1)));
+	}
+	// Still no clear answer after three tries. Keeping the account is the safe
+	// side of this bet: if it really is dead, the journeys fail with a plain 401
+	// that says so, which is cheaper than an hour of rate-limited setups.
+	return true;
 }
 
 /**
