@@ -724,6 +724,85 @@ gated on the GCP billing hold (OWNER-ACTIONS row 20). `04b` stays on disk. When 
 lifts, the finishing command is the same one recorded above, and this change should be
 re-measured in that run rather than assumed.
 
+## 2026-09-09 (later pass): 01 ship-readiness, built and gate-green at 90f0a919b; the submit is the owner's
+
+Prod was `880bdcef8` (revision `three-ws-api-00420-ljh`, built 2026-09-08) and `main` had
+moved 348 commits past it. Nothing was shippable when this run started: `npm run gate` was
+red in the shared tree, and in a clean worktree, which is the only tree that measures the
+commit rather than five sessions' uncommitted work, it was red four more times over. Every
+one of those was invisible from the shared tree, which is the whole finding of this pass.
+
+**Built and verified at `90f0a919b`** in `/workspaces/.deploy-wt-ship100`:
+`npm run gate` exit 0, `npm run build:gcp` exit 0 stamping `dirty: false`, `check:dist` and
+`check:pages` clean (816 declared pages), and all three submit gates green (`db:check` says
+every migration is applied, `check:gcloudignore` says the context is complete and carries no
+secrets across 2424 reachable modules, `audit:deploy` clean). `server/cloudbuild.yaml` pins
+`three-ws-build@` and references no `$SHORT_SHA`, so the submit needs no `--substitutions`.
+
+**vitest at the shipped SHA: 29,435 passed, 3 failed, 175 skipped across 2036 files.** All
+three failures were `Test timed out in 120000ms` in two forge suites, under load average 30
+with 2036 files in flight; both files pass in 19s when run alone. The first run of the same
+suite reported 18 failures and every one was the worktree's environment, not the commit,
+which is what the prep:worktree work below fixes. Playwright was left to a window with no
+peer run in flight.
+
+**Eight reds fixed, all of them at HEAD and none of them mine:**
+
+- `audit:motion-tokens` counted the `prefers-reduced-motion` floor as drift. A literal there
+  IS the zeroing the ladder exists to preserve; the auditor already knew that and had encoded
+  it as a whole-file exemption for `tokens.css`. Generalized, baseline 162 to 158.
+- `tests/audit-guards.test.js` and `tests/guard-wiring.test.js` were red because
+  `check:windows-widget`, `check:home-matrix` and `i18n:home` ran in the gate chain with no
+  registry entry, so `/guards` and `docs/guards.md` both omitted them. All three registered
+  with two-sided proofs; `prove-guards` reports PROVEN for each.
+- Proof pointers are dot paths and a slash pointer was silently accepted: `set` split it on
+  `.`, wrote a junk top-level key, and the proof reported NOT CAUGHT, which reads as a rotted
+  guard rather than a typo in its own declaration. `normalizeProof` now refuses one by name.
+- `audit:mcp-golden` and `audit:mcp-catalog` had been red since `dc8856f57` rewrote the
+  em-dashes out of the studio tool copy: descriptions are part of the published schema.
+  Reviewed as copy-only (no parameter added, removed, renamed or retyped) and re-recorded.
+- `audit:docs` reported three dead links to `data/announcements.json` in any tree where
+  nobody had run `announce:rank`, since the ledger is generated and gitignored. The docs now
+  name the command that writes it.
+- `check:images` found the render-lab sheet building bare `<img>` tags.
+
+**Two production defects found by verifying rather than by looking:**
+
+- **The localization manifest has been shipping 113 pages short.** `prebuild` wrote
+  `public/locales/localized-pages.json` and then ran the translation-annotation pass over
+  `public/news/*.html`, so all 113 news pages counted as English-only. Production serves
+  `count: 244` today; the built artifact says 357. Fixed by ordering, verified end to end in
+  a clean worktree build. Changelog entry written.
+- **`res.sendFile` applied the dotfiles deny policy to the whole absolute path**, including
+  the segments above `dist/` that no request can influence. Served from a checkout under a
+  dot-directory it denied every static file as Forbidden and answered 500 to everything,
+  `404.html` included. Latent in production (the container path has no dot segment) and the
+  reason every server suite fails from a deploy worktree, since `prep:worktree` names them
+  `.deploy-wt*`.
+
+**A deploy worktree can now verify itself, which is the durable part.** `prep:worktree`
+stages four more artifacts (`tour-sdk/node_modules`, `walk-sdk/dist`,
+`multiplayer/node_modules`, `animation-sources`), all hardlinked, so they cost nothing. The
+first matters most: tour-sdk pins esbuild 0.27.7 against the root's 0.28.1 and the committed
+`tour.global.js` is 0.27.7 output, so `audit:tour-global` called the bundle stale over a
+toolchain version nobody changed and **no fresh worktree could pass the gate at all**. Two
+tests also assumed the checkout is the primary worktree at a path named `three.ws`;
+`check-tdz-bootstrap` now measures against its own repo root and `setup-git-hooks` asks git
+for `--git-common-dir` rather than assuming `<root>/.git/hooks`, which is a file in any
+linked worktree.
+
+**Left for the owner (gate 2).** The artifact is built and the tree is clean. From
+`/workspaces/.deploy-wt-ship100`:
+
+    gcloud builds submit --config server/cloudbuild.yaml --region us-central1 --project aerial-vehicle-466722-p5
+    gcloud compute url-maps invalidate-cdn-cache three-ws-lb --path '/*' --project aerial-vehicle-466722-p5
+
+Then `curl -s https://three.ws/api/version` should report `90f0a919b`, `npm run smoke:prod`
+should exit 0, `https://three.ws/locales/localized-pages.json` should read 357 rather than
+244, and `npm run check:windows-widget:live` should stop reporting that the deployed Adaptive
+Card fails the widgets board's expression engine. That last one is live today: every pinned
+Windows glance widget draws empty, and the card in this tree expands cleanly.
+
 ## Retire this file when the campaign is done (required)
 
 This file is shared context rather than a single order, so it outlives the
