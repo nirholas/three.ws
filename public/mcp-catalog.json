@@ -14303,7 +14303,7 @@
 		{
 			"name": "create_agent_persona",
 			"title": "Save a rigged model as a living, persistent agent body",
-			"description": "Turn a generated GLB into a NAMED, persistent agent body — a \"persona\" the assistant reuses across turns and across sessions. The model is copied into durable storage so the body survives the source URL expiring, then registered under a stable persona_id. The returned view renders the LIVING body inline: it idles between turns, and persona_say makes it lip-sync and emote a reply. The persona_id is the handle — keep it and pass it to get_agent_persona or persona_say later to bring the exact same body back. No sign-in required.",
+			"description": "Turn a generated GLB into a NAMED, persistent agent body: a \"persona\" the assistant reuses across turns and across sessions. The model is copied into durable storage so the body survives the source URL expiring, then registered under a stable persona_id. The returned view renders the LIVING body inline: it idles between turns, and persona_say makes it lip-sync and emote a reply. The persona_id is the handle: keep it and pass it to get_agent_persona or persona_say later to bring the exact same body back. No sign-in required.",
 			"server": {
 				"id": "threews-3d-studio-free",
 				"title": "3D Studio (free)",
@@ -14358,7 +14358,7 @@
 		{
 			"name": "forge_avatar",
 			"title": "Generate a rigged, animation-ready avatar",
-			"description": "Generate a rigged, animation-ready 3D avatar (GLB) from a single text prompt or a reference image — in one step. Generates the mesh, then auto-rigs it with a humanoid skeleton so it is ready to pose and animate. Best for characters; objects are steered to the mesh generator. Renders inline in an interactive 3D viewer.",
+			"description": "Generate a rigged, animation-ready 3D avatar (GLB) from a single text prompt or a reference image, in one step. Generates the mesh, then auto-rigs it with a humanoid skeleton so it is ready to pose and animate. Best for characters; objects are steered to the mesh generator. Renders inline in an interactive 3D viewer.",
 			"server": {
 				"id": "threews-3d-studio-free",
 				"title": "3D Studio (free)",
@@ -14402,7 +14402,7 @@
 		{
 			"name": "forge_free",
 			"title": "Generate a 3D model from text",
-			"description": "Turn a text prompt into a textured, downloadable 3D model (GLB) — free. Describe a single object, character, or creature; the studio generates an interactive model you can rotate, view, and download. Optional quality tier (draft, standard, high); high is slower and may fall back to standard under load. Renders inline in an interactive 3D viewer.",
+			"description": "Turn a text prompt into a textured, downloadable 3D model (GLB), free. Describe a single object, character, or creature; the studio generates an interactive model you can rotate, view, and download. Optional quality tier (draft, standard, high); high is slower and may fall back to standard under load. Renders inline in an interactive 3D viewer.",
 			"server": {
 				"id": "threews-3d-studio-free",
 				"title": "3D Studio (free)",
@@ -14450,7 +14450,7 @@
 		{
 			"name": "get_agent_persona",
 			"title": "Reload a persona by id (continuity across sessions)",
-			"description": "Bring back a previously saved persona by its persona_id — the SAME body and identity, in a fresh session. Returns the persona name, its model, the accumulated turn count, and the inline living-body view. Use this at the start of a conversation when the user returns to a named agent.",
+			"description": "Bring back a previously saved persona by its persona_id: the SAME body and identity, in a fresh session. Returns the persona name, its model, the accumulated turn count, and the inline living-body view. Use this at the start of a conversation when the user returns to a named agent.",
 			"server": {
 				"id": "threews-3d-studio-free",
 				"title": "3D Studio (free)",
@@ -14590,7 +14590,7 @@
 		{
 			"name": "persona_say",
 			"title": "Speak a reply through a persona: lip-sync + emotion + gesture",
-			"description": "Make a persona PERFORM a reply: the body lip-syncs the text and shows the matching facial expression and body gesture. Pass the persona_id and the exact text the agent is saying this turn; the emotion is detected from the text automatically (or set it explicitly). The returned view animates the body for this turn — show it alongside the reply. This is the turn-by-turn embodiment hook.",
+			"description": "Make a persona PERFORM a reply: the body lip-syncs the text and shows the matching facial expression and body gesture. Pass the persona_id and the exact text the agent is saying this turn; the emotion is detected from the text automatically (or set it explicitly). The returned view animates the body for this turn: show it alongside the reply. This is the turn-by-turn embodiment hook.",
 			"server": {
 				"id": "threews-3d-studio-free",
 				"title": "3D Studio (free)",
@@ -14622,7 +14622,7 @@
 						"type": "string",
 						"minLength": 1,
 						"maxLength": 2000,
-						"description": "The reply text the agent is saying this turn — drives lip-sync and emotion."
+						"description": "The reply text the agent is saying this turn: drives lip-sync and emotion."
 					},
 					"emotion": {
 						"type": "string",
@@ -14648,7 +14648,7 @@
 		{
 			"name": "refine_model",
 			"title": "Refine a 3D model by describing a change",
-			"description": "Iterate on a model you already generated — just describe the change in words (\"make it metallic\", \"bigger helmet\", \"add wings\"). The studio re-generates a new version anchored to the previous one, carrying its form and materials forward. Pass the previous model's glb_url and, when you have it, the prompt that made it (parent_prompt) so the change builds on it. Each refinement is recorded as a new version in a lineage you can revert to or branch from — the returned lineage drives a version strip in the viewer. Renders the new version inline in the interactive 3D viewer.",
+			"description": "Iterate on a model you already generated: just describe the change in words (\"make it metallic\", \"bigger helmet\", \"add wings\"). The studio re-generates a new version anchored to the previous one, carrying its form and materials forward. Pass the previous model's glb_url and, when you have it, the prompt that made it (parent_prompt) so the change builds on it. Each refinement is recorded as a new version in a lineage you can revert to or branch from, and the returned lineage drives a version strip in the viewer. Renders the new version inline in the interactive 3D viewer.",
 			"server": {
 				"id": "threews-3d-studio-free",
 				"title": "3D Studio (free)",
@@ -14684,7 +14684,7 @@
 					"parent_prompt": {
 						"type": "string",
 						"maxLength": 1000,
-						"description": "Optional — the prompt that produced the model being refined, so the change builds on it instead of starting over."
+						"description": "Optional: the prompt that produced the model being refined, so the change builds on it instead of starting over."
 					},
 					"reference_image_url": {
 						"type": "string",
@@ -14693,7 +14693,7 @@
 					},
 					"parent_lineage": {
 						"type": "array",
-						"description": "Optional — the lineage array from a previous refine_model result, to extend the same version history.",
+						"description": "Optional: the lineage array from a previous refine_model result, to extend the same version history.",
 						"items": {
 							"type": "object",
 							"additionalProperties": true
@@ -14702,7 +14702,7 @@
 					"parent_index": {
 						"type": "integer",
 						"minimum": 0,
-						"description": "Optional — branch off an earlier version in parent_lineage (its index) instead of the latest."
+						"description": "Optional: branch off an earlier version in parent_lineage (its index) instead of the latest."
 					}
 				},
 				"additionalProperties": false,
