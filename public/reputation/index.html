@@ -274,12 +274,13 @@
 			.rep-dist-num { color: rgba(232,233,240,0.4); min-width: 16px; text-align: right; }
 
 			/* ── ERC-8004 badge ── */
-			.rep-erc8004-badge { display: flex; align-items: center; gap: 0.5rem; padding: 0.625rem 1rem; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.15); border-radius: 8px; font-size: 0.8125rem; color: rgba(232,233,240,0.6); }
-			.rep-erc8004-link { color: #ffffff; margin-left: auto; }
+			.rep-erc8004-badge { display: flex; align-items: center; flex-wrap: wrap; gap: 0.5rem 0.75rem; padding: 0.625rem 1rem; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.15); border-radius: 8px; font-size: 0.8125rem; color: rgba(232,233,240,0.6); }
+			.rep-erc8004-link { color: #ffffff; white-space: nowrap; }
+			.rep-erc8004-link:first-of-type { margin-left: auto; }
 
 			/* ── Reviews section ── */
 			.rep-reviews-section { display: flex; flex-direction: column; gap: 1rem; }
-			.rep-tabs { display: flex; gap: 0; border-bottom: 1px solid rgba(255,255,255,0.07); margin-bottom: 0; }
+			.rep-tabs { display: flex; flex-wrap: wrap; gap: 0; border-bottom: 1px solid rgba(255,255,255,0.07); margin-bottom: 0; }
 			.rep-tab { padding: 0.5rem 1rem; background: none; border: none; border-bottom: 2px solid transparent; color: rgba(232,233,240,0.45); font-size: 0.875rem; font-weight: 500; cursor: pointer; transition: color var(--duration-fast); margin-bottom: -1px; display: flex; align-items: center; gap: 0.4rem; font-family: inherit; }
 			.rep-tab:hover { color: rgba(232,233,240,0.8); }
 			.rep-tab.active { color: #e8e9f0; border-bottom-color: #ffffff; }
@@ -287,6 +288,24 @@
 			.rep-tab.active .rep-tab-badge { background: rgba(255,255,255,0.25); color: var(--ink-dim); }
 
 			.rep-review-list { display: flex; flex-direction: column; gap: 0.625rem; margin-top: 0.5rem; }
+
+			/* ── Paging under the attestation list ── */
+			.rep-list-footer:empty { display: none; }
+			.rep-list-footer { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 0.75rem; padding-top: 0.25rem; }
+			.rep-list-count { font-size: 0.75rem; color: rgba(232,233,240,0.35); font-variant-numeric: tabular-nums; }
+
+			/* ── Non-review attestations: show the payload, not an empty card ── */
+			.rep-schema-tag { display: block; font-size: 0.65rem; letter-spacing: 0.02em; color: rgba(232,233,240,0.45); background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.08); border-radius: 5px; padding: 0.1rem 0.4rem; font-family: 'JetBrains Mono', ui-monospace, monospace; max-width: 15rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+			.rep-attest-fields { display: flex; flex-wrap: wrap; gap: 0.4rem 1.25rem; margin: 0.625rem 0 0; }
+			.rep-attest-field { min-width: 0; max-width: 100%; }
+			.rep-attest-field dt { font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.06em; color: rgba(232,233,240,0.3); margin: 0; }
+			.rep-attest-field dd { margin: 0.1rem 0 0; font-size: 0.8125rem; color: rgba(232,233,240,0.72); font-family: 'JetBrains Mono', ui-monospace, monospace; overflow-wrap: anywhere; }
+			.rep-attest-more { font-size: 0.75rem; color: rgba(232,233,240,0.35); align-self: end; }
+			.rep-attest-nopayload { margin: 0.625rem 0 0; font-size: 0.8125rem; color: rgba(232,233,240,0.4); }
+
+			/* ── Waiting states ── */
+			.rep-loading, .rep-resolving { display: flex; flex-direction: column; align-items: center; gap: 0.875rem; padding: 4rem 1rem; color: rgba(232,233,240,0.5); font-size: 0.875rem; text-align: center; }
+			.rep-loading p, .rep-resolving p { margin: 0; }
 			.rep-review-card { padding: 1rem 1.125rem; background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.06); border-radius: 10px; transition: background var(--duration-fast), border-color var(--duration-fast); }
 			.rep-review-card:hover { background: rgba(255,255,255,0.035); border-color: rgba(255,255,255,0.1); }
 			.rep-review-top { display: flex; justify-content: space-between; align-items: center; gap: 0.75rem; }
@@ -395,6 +414,8 @@
 				.rep-star-btn-label { display: none; }
 				.rep-page-wrap { padding: 1.5rem 1rem 4rem; }
 				.rep-stat-value { font-size: 1.75rem; }
+				.rep-tab { padding: 0.5rem 0.75rem; }
+				.rep-schema-tag { max-width: 8rem; }
 			}
 		</style>
 	
