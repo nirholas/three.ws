@@ -450,13 +450,21 @@ function setView(view, { remember = true, force = false } = {}) {
 	if (view === '2d') {
 		state.renderer = createHomeFallback(el.stage, { onAct: act, onFocusRoom: focusRoom });
 		state.fpsSince = 0;
+		// The flat house is built synchronously, so the model it already has can
+		// go in right away. The 3D branch deliberately does NOT do this: mount3d
+		// is async (it lazy-imports Three.js) and `state.renderer` is still the
+		// null set above until that import resolves, so reaching for it here
+		// threw "Cannot read properties of null (reading 'setModel')" on every
+		// switch to 3D with a house already loaded. mount3d applies the current
+		// model itself once its renderer exists, which is the only moment that
+		// can work.
+		if (state.model) {
+			state.renderer.setModel(state.model);
+			state.renderer.setStale?.(state.stale);
+			renderEmptyStates(state.model);
+		}
 	} else {
 		mount3d();
-	}
-	if (state.model) {
-		state.renderer.setModel(state.model);
-		state.renderer.setStale?.(state.stale);
-		renderEmptyStates(state.model);
 	}
 	renderAge();
 }
