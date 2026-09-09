@@ -2316,6 +2316,13 @@ empty, `simulation_failed` sponsor vs buyer, and now withdrawn vs refused).
   `npm run build:pages` regenerated the feed.
 - `npm run check:rules -- --paths <the 4 touched files>`: clean.
 
+A follow-up (`019277358`) closes a gap the runbook edit created: `mechanism` was
+computed in the classifier but `readSettleHealth()` builds its `metrics` object
+from an explicit field list, so the field never reached `/api/healthz` and the
+new table pointed at something that was not in the payload. It is listed now, and
+a test reads the metrics block to pin the wiring so the next classifier field
+cannot go missing the same way. 73 green across the 3 importing suites.
+
 The commit stages four paths only. A peer's in-flight `www.three.ws` changelog
 entry was in the shared working tree, so `data/changelog.json` was committed as a
 clean blob built from HEAD plus this entry alone, and the regenerated feed
