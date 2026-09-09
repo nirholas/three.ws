@@ -15,6 +15,7 @@ import {
 	formatBytes,
 	MIN_CANONICAL_BONES,
 	CANONICAL_TOTAL,
+	CONVENTION_COUNT,
 	LIMB_GROUPS,
 } from '../src/rig-report.js';
 
@@ -205,5 +206,26 @@ describe('formatBytes', () => {
 		expect(formatBytes(512)).toBe('512 B');
 		expect(formatBytes(2048)).toBe('2.0 KB');
 		expect(formatBytes(5 * 1024 * 1024)).toBe('5.0 MB');
+	});
+});
+
+// The /rig-doctor hero advertises "N rig conventions recognised" and "52
+// canonical joints scored". The page rewrites both from this module at runtime,
+// but the markup still carries them for a reader with JavaScript off, and that
+// static copy had already gone stale by one convention. These assertions fail
+// the moment the two disagree again.
+describe('the /rig-doctor hero facts match the analyser', () => {
+	const html = readFileSync(join(ROOT, 'pages/rig-doctor.html'), 'utf8');
+
+	it('states the number of conventions the fingerprinter actually implements', () => {
+		const m = html.match(/<strong id="rd-fact-conventions">(\d+)<\/strong>/);
+		expect(m, 'pages/rig-doctor.html lost its #rd-fact-conventions element').not.toBeNull();
+		expect(Number(m[1])).toBe(CONVENTION_COUNT);
+	});
+
+	it('states the size of the canonical skeleton it actually scores against', () => {
+		const m = html.match(/<strong id="rd-fact-joints">(\d+)<\/strong>/);
+		expect(m, 'pages/rig-doctor.html lost its #rd-fact-joints element').not.toBeNull();
+		expect(Number(m[1])).toBe(CANONICAL_TOTAL);
 	});
 });

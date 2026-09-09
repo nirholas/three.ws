@@ -138,6 +138,13 @@ const CONVENTIONS = [
 	},
 ];
 
+/**
+ * How many authoring conventions the fingerprinter knows. The Rig Doctor page
+ * advertises this number in its hero, and a hand-typed copy of it went stale
+ * the first time a convention was added, so the page reads it from here.
+ */
+export const CONVENTION_COUNT = CONVENTIONS.length;
+
 // Oculus/OVR viseme set — what the lip-sync pipeline drives. An avatar missing
 // these can still animate; it just cannot speak with its mouth.
 const OVR_VISEMES = ['viseme_sil', 'viseme_PP', 'viseme_FF', 'viseme_TH', 'viseme_DD', 'viseme_kk', 'viseme_CH', 'viseme_SS', 'viseme_nn', 'viseme_RR', 'viseme_aa', 'viseme_E', 'viseme_I', 'viseme_O', 'viseme_U'];

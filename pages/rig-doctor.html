@@ -106,7 +106,7 @@
 								<button type="button" class="rd-sample" data-sample="/avatars/michelle.glb" data-sample-name="michelle.glb" data-tip="A Mixamo rig: every joint maps, full clip library plays">
 									Mixamo rig
 								</button>
-								<button type="button" class="rd-sample" data-sample="/avatars/realistic-halfbody.glb" data-sample-name="realistic-halfbody.glb" data-tip="A halfbody avatar: hands rigged, legs missing entirely">
+								<button type="button" class="rd-sample" data-sample="/avatars/realistic-halfbody.glb" data-sample-name="realistic-halfbody.glb" data-tip="A halfbody avatar: torso and hands map, arms and legs do not">
 									Halfbody
 								</button>
 								<button type="button" class="rd-sample" data-sample="/avatars/fox.glb" data-sample-name="fox.glb" data-tip="A skinned but non-humanoid rig: nothing maps">
@@ -121,8 +121,8 @@
 
 					<ul class="rd-hero-facts">
 						<li><strong>0 bytes</strong> leave your machine</li>
-						<li><strong>52</strong> canonical joints scored</li>
-						<li><strong>11</strong> rig conventions recognised</li>
+						<li><strong id="rd-fact-joints">52</strong> canonical joints scored</li>
+						<li><strong id="rd-fact-conventions">12</strong> rig conventions recognised</li>
 						<li><strong>1</strong> click to download the repair</li>
 					</ul>
 				</div>
@@ -267,9 +267,9 @@
 							<h3>Most rigs are one rename away</h3>
 							<p>
 								Mixamo, Avaturn, Ready Player Me, Unreal, VRM, Daz, Rigify, Biped,
-								HumanIK, Reallusion, and MakeHuman all name the same joints
-								differently. The canonicalizer already knows every one of those
-								dialects, and it can rewrite your file in place.
+								HumanIK, Reallusion, MikuMikuDance, and MakeHuman all name the same
+								joints differently. The canonicalizer already knows every one of
+								those dialects, and it can rewrite your file in place.
 							</p>
 						</article>
 						<article class="rd-explain-card">

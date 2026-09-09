@@ -17,7 +17,7 @@
 // the heaviest thing on the page, and a visitor who reads the explainer and
 // leaves should not pay for them.
 
-import { analyzeGlb, manifestFromReport, formatBytes, CANONICAL_TOTAL } from './rig-report.js';
+import { analyzeGlb, manifestFromReport, formatBytes, CANONICAL_TOTAL, CONVENTION_COUNT } from './rig-report.js';
 import { canonicalizeGLBBones } from './glb-canonicalize.js';
 
 // Clips offered under the preview, chosen so each one exercises a different
@@ -57,6 +57,7 @@ const state = {
 // ── Entry ────────────────────────────────────────────────────────────────────
 
 function init() {
+	syncFacts();
 	wireDropZone();
 	wireSamples();
 	wireTabs();
@@ -71,6 +72,17 @@ function init() {
 		const btn = document.querySelector(`.rd-sample[data-sample="${CSS.escape(preset)}"]`);
 		if (btn) loadSample(btn.dataset.sample, btn.dataset.sampleName);
 	}
+}
+
+// The hero counts are claims about the analyser, so they come from the analyser.
+// The markup carries the same numbers for a reader with no JavaScript, and these
+// two lines are what stop the pair drifting apart the next time a convention or
+// a canonical joint is added.
+function syncFacts() {
+	const conventions = $('rd-fact-conventions');
+	if (conventions) conventions.textContent = String(CONVENTION_COUNT);
+	const joints = $('rd-fact-joints');
+	if (joints) joints.textContent = String(CANONICAL_TOTAL);
 }
 
 // ── Input ────────────────────────────────────────────────────────────────────
@@ -381,6 +393,10 @@ function renderRenames(report) {
 	const panel = $('rd-renames-panel');
 	if (!renames.length) {
 		panel.hidden = true;
+		// Clear as well as hide. A hidden panel that still holds the previous
+		// file's rows is a lie the moment anything unhides it, and it keeps a
+		// file the user has already replaced alive in the DOM.
+		$('rd-renames').innerHTML = '';
 		return;
 	}
 	panel.hidden = false;
@@ -409,6 +425,7 @@ function renderUnmapped(report) {
 	const panel = $('rd-unmapped-panel');
 	if (!list.length) {
 		panel.hidden = true;
+		$('rd-unmapped').innerHTML = '';
 		return;
 	}
 	panel.hidden = false;
