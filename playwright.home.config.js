@@ -85,7 +85,14 @@ export default defineConfig({
 	use: {
 		baseURL: APP_ORIGIN,
 		headless: true,
-		screenshot: 'only-on-failure',
+		// Evidence mode. Several of this lane's requirements are answered with a
+		// picture rather than an assertion (the four breakpoints, an RTL locale,
+		// a user's device name unchanged in two languages, a Fahrenheit house in
+		// a Celsius browser), and a reviewer asking for those should not have to
+		// break a passing test to get them. `HOME_E2E_SCREENSHOTS=1` captures one
+		// per test into the output directory; the default stays failure-only, so
+		// an ordinary run writes nothing it does not need to.
+		screenshot: process.env.HOME_E2E_SCREENSHOTS ? 'on' : 'only-on-failure',
 		video: 'retain-on-failure',
 		trace: 'retain-on-failure',
 	},
