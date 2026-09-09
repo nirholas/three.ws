@@ -959,7 +959,9 @@ function setBoardError(err, { keepBoard = false } = {}) {
 		if (why) why.textContent = `The arena is still rendering, but standings and trades need the three.ws API (${err?.message || 'network error'}).`;
 	}
 	box.hidden = false;
-	$('arenaStats')?.setAttribute('hidden', '');
+	// A stale board still has real aggregates behind it, so only a board we never
+	// managed to read loses its KPI strip.
+	if (!stale) $('arenaStats')?.setAttribute('hidden', '');
 }
 
 // Retry pulls the full board again (and places the 3D floor if the first read

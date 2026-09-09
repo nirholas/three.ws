@@ -82,7 +82,20 @@
 		.btn:active { transform: translateY(0) scale(.97); }
 		.btn.primary { background: linear-gradient(135deg, color-mix(in srgb, var(--cyan) 22%, var(--panel)), color-mix(in srgb, var(--violet) 22%, var(--panel))); border-color: color-mix(in srgb, var(--cyan) 40%, var(--line)); color: #fff; }
 		.btn svg { width: 16px; height: 16px; }
-		@media (max-width: 560px) { .arena-nav .nav-lbl { display: none; } .arena-nav { padding: 9px 11px; } }
+		.pick-lbl-short { display: none; }
+		/* At 320px the full bar (brand + status + nav + "Choose your avatar") is wider
+		   than the viewport, and because the page suppresses sideways scrolling the
+		   primary action simply fell off the right edge. Collapse the labels instead. */
+		@media (max-width: 560px) {
+			.bar { gap: 8px; padding: 12px 12px; }
+			.arena-nav .nav-lbl { display: none; }
+			.arena-nav { padding: 9px 11px; }
+			.brand-name, .brand small { display: none; }
+			.pill.live { padding: 7px 10px; font-size: 11.5px; }
+			.btn { padding: 9px 12px; }
+			.pick-lbl-long { display: none; }
+			.pick-lbl-short { display: inline; }
+		}
 
 		/* ── side panels ─────────────────────────────────── */
 		.panel { position: fixed; z-index: 5; width: 326px; max-width: calc(100vw - 28px);
@@ -211,7 +224,10 @@
 		.hint kbd { font: 600 10.5px/1 var(--mono); background: rgba(255,255,255,0.08); border: 1px solid var(--line); border-radius: 5px; padding: 3px 5px; color: var(--ink); }
 
 		/* loading */
-		.loading { position: fixed; inset: 0; z-index: 9; display: flex; flex-direction: column; gap: 16px; align-items: center; justify-content: center;
+		/* The curtain hides an empty canvas, nothing more, so it sits ABOVE the canvas
+		   and BELOW the HUD (labels 4, panels 5/6): the leaderboard and the live tape
+		   stay readable and clickable while the 3D world is still assembling. */
+		.loading { position: fixed; inset: 0; z-index: 3; display: flex; flex-direction: column; gap: 16px; align-items: center; justify-content: center;
 			background: radial-gradient(80% 60% at 50% 40%, #0a0d18, #06070d); color: var(--muted); font-size: 14px; }
 		.loading .ring { width: 38px; height: 38px; border-radius: 50%; border: 3px solid rgba(255,255,255,0.12); border-top-color: var(--cyan); animation: spin .9s linear infinite; }
 		@keyframes spin { to { transform: rotate(360deg); } }
@@ -359,7 +375,7 @@
 
 	<!-- top bar -->
 	<div class="bar">
-		<a class="brand" href="/play"><img src="/favicon.ico" alt="" />three.ws <small data-i18n="play_arena.arena">/ arena</small></a>
+		<a class="brand" href="/play"><img src="/favicon.ico" alt="" /><span class="brand-name">three.ws</span> <small data-i18n="play_arena.arena">/ arena</small></a>
 		<span class="pill live" id="liveDot" data-i18n-html="play_arena.connecting"><i></i> <span>connecting…</span></span>
 		<a class="btn arena-nav" href="/agents">
 			<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="7" cy="6.5" r="2.6"/><path d="M2.5 16a4.5 4.5 0 0 1 9 0"/><circle cx="14.5" cy="7.5" r="2.1"/><path d="M13 13.2a4 4 0 0 1 4.5 2.8"/></svg>
@@ -367,8 +383,9 @@
 		</a>
 		<div class="spacer"></div>
 		<button class="btn primary" id="pickBtn">
-			<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="10" cy="6.5" r="3.2"/><path d="M4 17a6 6 0 0 1 12 0"/></svg>
-			Choose your avatar
+			<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="10" cy="6.5" r="3.2"/><path d="M4 17a6 6 0 0 1 12 0"/></svg>
+			<span class="pick-lbl-long" data-i18n="play_arena.choose_your_avatar">Choose your avatar</span>
+			<span class="pick-lbl-short" data-i18n="play_arena.avatar">Avatar</span>
 		</button>
 	</div>
 
@@ -401,11 +418,11 @@
 		</div>
 		<div class="board" id="board" aria-busy="true">
 			<div class="board-skels" id="boardSkeleton" role="status" aria-label="Loading the leaderboard">
-			<div class="board-skel" aria-hidden="true"><i></i><i class="av"></i><i></i><i></i></div>
-			<div class="board-skel" aria-hidden="true"><i></i><i class="av"></i><i></i><i></i></div>
-			<div class="board-skel" aria-hidden="true"><i></i><i class="av"></i><i></i><i></i></div>
-			<div class="board-skel" aria-hidden="true"><i></i><i class="av"></i><i></i><i></i></div>
-			<div class="board-skel" aria-hidden="true"><i></i><i class="av"></i><i></i><i></i></div>
+				<div class="board-skel" aria-hidden="true"><i></i><i class="av"></i><i></i><i></i></div>
+				<div class="board-skel" aria-hidden="true"><i></i><i class="av"></i><i></i><i></i></div>
+				<div class="board-skel" aria-hidden="true"><i></i><i class="av"></i><i></i><i></i></div>
+				<div class="board-skel" aria-hidden="true"><i></i><i class="av"></i><i></i><i></i></div>
+				<div class="board-skel" aria-hidden="true"><i></i><i class="av"></i><i></i><i></i></div>
 			</div>
 		</div>
 		<div class="empty" id="emptyState" hidden>
