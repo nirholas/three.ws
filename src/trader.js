@@ -15,6 +15,7 @@ import {
 import { mountCopyPanel } from './copy-panel.js';
 import { mountPassport, resetPassport } from './trader-passport.js';
 import { walletChipHTML, wireWalletChips } from './shared/agent-wallet-chip.js';
+import { embedSnippet } from './shared/trader-embed.js';
 import { ring, playRings, countUp } from './ui-juice.js';
 
 const WINDOWS = ['24h', '7d', '30d', 'all'];
@@ -351,10 +352,30 @@ function render(data) {
 		<div class="tp-actions">
 			<div class="lb-seg" role="tablist" aria-label="Time window" id="tp-window">${winSeg}</div>
 			<div style="display:flex;gap:var(--space-2xs)">
+				<button class="lb-btn" id="tp-embed" aria-expanded="false" aria-controls="tp-embed-panel">Embed this trader</button>
 				<button class="lb-btn" id="tp-share">Share track record</button>
 				<button class="lb-btn lb-btn-primary" id="tp-card">Download PnL card</button>
 			</div>
 		</div>
+
+		<section class="tp-embed" id="tp-embed-panel" hidden aria-label="Embed this trader">
+			<div class="tp-embed-copy">
+				<h3>Put this card on your own page</h3>
+				<p>One script tag renders this trader's live record anywhere: a site, a blog post, a
+				stream overlay, a link in bio. Visitors fork a coin or ghost-copy the trader from it,
+				signing with their own wallet. Nothing here holds funds or asks for a key.</p>
+				<label class="tp-embed-label" for="tp-embed-code">Paste this into your page</label>
+				<textarea id="tp-embed-code" class="tp-embed-code" readonly rows="3" spellcheck="false"></textarea>
+				<div class="tp-embed-actions">
+					<button class="lb-btn lb-btn-primary" type="button" id="tp-embed-copy">Copy snippet</button>
+					<a class="lb-btn" href="/docs/trader-card-embed" target="_blank" rel="noopener">Options and docs</a>
+				</div>
+			</div>
+			<div class="tp-embed-preview">
+				<span class="tp-embed-preview-label">Live preview</span>
+				<div id="tp-embed-mount"></div>
+			</div>
+		</section>
 
 		<div class="tp-metrics">${metricsGrid(m)}</div>
 
@@ -499,6 +520,60 @@ function wireShare() {
 		catch { toast(url); }
 	});
 	content.querySelector('#tp-card')?.addEventListener('click', () => downloadCard());
+	wireEmbed();
+}
+
+// --- Embeddable trader card --------------------------------------------------
+//
+// The leader's audience is already somewhere else, so this hands them the piece
+// of three.ws that travels: a one-tag <trader-card> carrying their own referral
+// code when they have one. The panel renders a real, live card rather than a
+// picture of one, so what they paste is exactly what they just looked at.
+
+function wireEmbed() {
+	const btn = content.querySelector('#tp-embed');
+	const panel = content.querySelector('#tp-embed-panel');
+	const field = content.querySelector('#tp-embed-code');
+	const mount = content.querySelector('#tp-embed-mount');
+	if (!btn || !panel || !field || !mount) return;
+
+	const snippet = embedSnippet({ agentId: ctx.agentId, window: ctx.window, ref: ctx.refCode });
+	if (!snippet) return; // not a real agent id: no snippet is better than a broken one
+	field.value = snippet;
+
+	btn.addEventListener('click', async () => {
+		const open = !panel.hidden;
+		panel.hidden = open;
+		btn.setAttribute('aria-expanded', String(!open));
+		if (open) return;
+		// The element is only fetched when someone actually asks to see the embed,
+		// so the profile does not pay for a widget most visitors never open.
+		if (!mount.firstElementChild) {
+			try {
+				await import(/* @vite-ignore */ '/trader-card/element.js');
+				const card = document.createElement('trader-card');
+				card.setAttribute('agent', ctx.agentId);
+				card.setAttribute('window', ctx.window);
+				card.setAttribute('origin', location.origin);
+				if (ctx.refCode) card.setAttribute('ref', ctx.refCode);
+				mount.appendChild(card);
+			} catch {
+				mount.innerHTML = '<p class="tp-embed-fallback">The preview could not load here, but the snippet above is still correct. '
+					+ 'Paste it into your page to see the card.</p>';
+			}
+		}
+		panel.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+	});
+
+	content.querySelector('#tp-embed-copy')?.addEventListener('click', async () => {
+		try {
+			await navigator.clipboard.writeText(field.value);
+			toast('Embed snippet copied');
+		} catch {
+			field.select();
+			toast('Select the snippet above and copy it');
+		}
+	});
 }
 
 // --- Shareable PnL card (PNG) ------------------------------------------------
