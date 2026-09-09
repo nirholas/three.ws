@@ -17,6 +17,69 @@
 export const MIN_TRAINING_SAMPLES = 50;
 
 /**
+ * Freshness window for the recorder's heartbeat: 2x the 30s cadence plus slack,
+ * so one skipped beat under load cannot flap it between "live" and "down".
+ */
+export const HEARTBEAT_FRESH_MS = 90_000;
+
+/**
+ * Derive the recorder's operational truth from its bot_heartbeat row.
+ *
+ * bot_heartbeat is keyed by worker alone, so a single row describes whichever
+ * network that worker is actually recording. Asking about the other network
+ * must not inherit its liveness: a mainnet worker is honestly "offline" from
+ * devnet's point of view, and reporting otherwise made every downstream devnet
+ * stage read as "waiting on the next launch" when nothing was ever recording.
+ *
+ * @param {any} beat        the bot_heartbeat row, or undefined
+ * @param {string} network  the network the caller asked about
+ * @param {number} [now]    epoch ms, injectable for tests
+ */
+export function recorderState(beat, network, now = Date.now()) {
+	if (!beat) return { state: 'offline', reason: 'never started' };
+	const lastBeatMs = beat.last_beat_at ? new Date(beat.last_beat_at).getTime() : 0;
+	const ageMs = lastBeatMs ? now - lastBeatMs : null;
+	const alive = ageMs != null && ageMs < HEARTBEAT_FRESH_MS;
+	const meta = beat.meta && typeof beat.meta === 'object' ? beat.meta : {};
+	if (meta.network && meta.network !== network) {
+		return {
+			state: 'offline',
+			reason: `recording ${meta.network}, not ${network}`,
+			mode: beat.mode || meta.mode || 'unknown',
+			network: meta.network,
+			feedLive: false,
+			feedSilent: false,
+			heartbeatAgeMs: ageMs,
+			lastEventAgeMs: null,
+			reconnects: null,
+			errors: null,
+			lastError: null,
+			intel: null,
+			bootAt: meta.bootAt ?? null,
+		};
+	}
+	const feedLive = alive && meta.feedConnected === true;
+	const watchdogMs = Number(meta.feedWatchdogMs) || 180_000;
+	const feedSilent = alive && Number(meta.lastEventAgeMs) > watchdogMs;
+	const state = !alive ? 'down' : feedSilent || !feedLive ? 'degraded' : 'live';
+	return {
+		state,
+		reason: state === 'down' ? 'heartbeat stale' : state === 'degraded' ? (feedLive ? 'feed silent' : 'feed disconnected') : null,
+		mode: beat.mode || meta.mode || 'unknown',
+		network: meta.network || null,
+		feedLive,
+		feedSilent: !!feedSilent,
+		heartbeatAgeMs: ageMs,
+		lastEventAgeMs: meta.lastEventAgeMs ?? null,
+		reconnects: meta.reconnects ?? null,
+		errors: meta.errors ?? null,
+		lastError: meta.lastError ?? null,
+		intel: meta.intel ?? null,
+		bootAt: meta.bootAt ?? null,
+	};
+}
+
+/**
  * @param {string} network
  * @param {{recorder:any,intel:any,outcomes:any,oracle:any,reputation:any,learning:any,trading:any}} stages
  * @returns {{health:'flowing'|'recording'|'idle', summary:string, next_action:{step:string,label:string,detail:string,command?:string}}}

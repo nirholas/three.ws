@@ -6,7 +6,7 @@
 // agent reading /api/pipeline) the wrong move.
 
 import { describe, it, expect } from 'vitest';
-import { summarize, MIN_TRAINING_SAMPLES } from '../api/_lib/pipeline-summary.js';
+import { summarize, recorderState, MIN_TRAINING_SAMPLES, HEARTBEAT_FRESH_MS } from '../api/_lib/pipeline-summary.js';
 
 /** Build a full stages object, overriding only what a case cares about. */
 function stages(over = {}) {
@@ -97,5 +97,66 @@ describe('pipeline summarize() — summary string', () => {
 			expect(r.summary).toContain('devnet');
 			expect(r.summary.length).toBeGreaterThan(20);
 		}
+	});
+});
+
+describe('recorderState(): the recorder is network-scoped', () => {
+	const NOW = Date.parse('2026-09-09T00:00:00.000Z');
+	const beat = (over = {}, meta = {}) => ({
+		mode: 'live',
+		last_beat_at: new Date(NOW - 5_000).toISOString(),
+		meta: { network: 'mainnet', feedConnected: true, lastEventAgeMs: 2_000, ...meta },
+		...over,
+	});
+
+	it('reports a mainnet worker as live when mainnet is what was asked', () => {
+		const r = recorderState(beat(), 'mainnet', NOW);
+		expect(r.state).toBe('live');
+		expect(r.feedLive).toBe(true);
+		expect(r.reason).toBeNull();
+	});
+
+	it('never lends one network\'s liveness to the other', () => {
+		// bot_heartbeat is keyed by worker alone, so the devnet view of a mainnet
+		// worker used to read LIVE and made every downstream devnet stage claim it
+		// was "waiting on the next launch".
+		const r = recorderState(beat(), 'devnet', NOW);
+		expect(r.state).toBe('offline');
+		expect(r.reason).toBe('recording mainnet, not devnet');
+		expect(r.feedLive).toBe(false);
+		expect(r.network).toBe('mainnet');
+	});
+
+	it('a heartbeat older than the freshness window is down', () => {
+		const stale = beat({ last_beat_at: new Date(NOW - HEARTBEAT_FRESH_MS - 1_000).toISOString() });
+		const r = recorderState(stale, 'mainnet', NOW);
+		expect(r.state).toBe('down');
+		expect(r.reason).toBe('heartbeat stale');
+	});
+
+	it('a fresh beat with a silent feed is degraded, and says which kind', () => {
+		const silent = recorderState(beat({}, { lastEventAgeMs: 600_000 }), 'mainnet', NOW);
+		expect(silent.state).toBe('degraded');
+		expect(silent.reason).toBe('feed silent');
+
+		const cut = recorderState(beat({}, { feedConnected: false }), 'mainnet', NOW);
+		expect(cut.state).toBe('degraded');
+		expect(cut.reason).toBe('feed disconnected');
+	});
+
+	it('no row at all is an honest offline, not a crash', () => {
+		expect(recorderState(undefined, 'mainnet', NOW)).toEqual({ state: 'offline', reason: 'never started' });
+	});
+
+	it('a row with no network in meta is not second-guessed', () => {
+		const r = recorderState(beat({}, { network: undefined }), 'devnet', NOW);
+		expect(r.state).toBe('live');
+	});
+
+	it('feeds summarize(): a cross-network recorder makes the loop idle', () => {
+		const rec = recorderState(beat(), 'devnet', NOW);
+		const out = summarize('devnet', stages({ recorder: rec }));
+		expect(out.health).toBe('idle');
+		expect(out.next_action.step).toBe('deploy_recorder');
 	});
 });

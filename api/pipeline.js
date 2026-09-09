@@ -25,71 +25,12 @@
 import { cors, json, method, wrap, rateLimited } from './_lib/http.js';
 import { limits, clientIp } from './_lib/rate-limit.js';
 import { sql } from './_lib/db.js';
-import { summarize } from './_lib/pipeline-summary.js';
+import { summarize, recorderState } from './_lib/pipeline-summary.js';
 
 const WORKER = 'agent-sniper';
-// 2× the 30s heartbeat cadence + slack: one skipped beat under load must not
-// flap the recorder between "live" and "down".
-const HEARTBEAT_FRESH_MS = 90_000;
 // Public spend categories whose 24h counts the loop produces (mirror pulse.js).
 const SNIPE = 'snipe';
 const TRADE = 'trade';
-
-/**
- * Derive the recorder's operational truth from its heartbeat row.
- *
- * bot_heartbeat is keyed by worker alone, so a single row describes whichever
- * network that worker is actually recording. Asking about the other network
- * must not inherit its liveness: a mainnet worker is honestly "offline" from
- * devnet's point of view, and reporting otherwise made every downstream devnet
- * stage read as "waiting on the next launch" when nothing was ever recording.
- *
- * @param {any} beat        the bot_heartbeat row, or undefined
- * @param {string} network  the network the caller asked about
- */
-function recorderState(beat, network) {
-	if (!beat) return { state: 'offline', reason: 'never started' };
-	const lastBeatMs = beat.last_beat_at ? new Date(beat.last_beat_at).getTime() : 0;
-	const ageMs = lastBeatMs ? Date.now() - lastBeatMs : null;
-	const alive = ageMs != null && ageMs < HEARTBEAT_FRESH_MS;
-	const meta = beat.meta && typeof beat.meta === 'object' ? beat.meta : {};
-	if (meta.network && meta.network !== network) {
-		return {
-			state: 'offline',
-			reason: `recording ${meta.network}, not ${network}`,
-			mode: beat.mode || meta.mode || 'unknown',
-			network: meta.network,
-			feedLive: false,
-			feedSilent: false,
-			heartbeatAgeMs: ageMs,
-			lastEventAgeMs: null,
-			reconnects: null,
-			errors: null,
-			lastError: null,
-			intel: null,
-			bootAt: meta.bootAt ?? null,
-		};
-	}
-	const feedLive = alive && meta.feedConnected === true;
-	const watchdogMs = Number(meta.feedWatchdogMs) || 180_000;
-	const feedSilent = alive && Number(meta.lastEventAgeMs) > watchdogMs;
-	const state = !alive ? 'down' : feedSilent || !feedLive ? 'degraded' : 'live';
-	return {
-		state,
-		reason: state === 'down' ? 'heartbeat stale' : state === 'degraded' ? (feedLive ? 'feed silent' : 'feed disconnected') : null,
-		mode: beat.mode || meta.mode || 'unknown',
-		network: meta.network || null,
-		feedLive,
-		feedSilent: !!feedSilent,
-		heartbeatAgeMs: ageMs,
-		lastEventAgeMs: meta.lastEventAgeMs ?? null,
-		reconnects: meta.reconnects ?? null,
-		errors: meta.errors ?? null,
-		lastError: meta.lastError ?? null,
-		intel: meta.intel ?? null,
-		bootAt: meta.bootAt ?? null,
-	};
-}
 
 export default wrap(async (req, res) => {
 	if (cors(req, res, { methods: 'GET,OPTIONS', origins: '*' })) return;
