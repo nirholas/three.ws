@@ -37,21 +37,28 @@ function showOnly(id) {
 	}
 }
 
+// Write a live value into a node the markup also annotates for translation.
+// `data-i18n-owned` is src/i18n.js's handshake: the catalog pass lands after an
+// async /api/locale fetch, seconds in, and without the flag it reverts whatever
+// the script wrote back to the annotated source string. That is what used to
+// turn "Sorting splats..." back into "Loading splat engine..." mid-load.
+function setText(node, value) {
+	if (!node) return;
+	node.textContent = value;
+	node.dataset.i18nOwned = '1';
+}
+
 function setLoading(title, detail) {
 	showOnly('sp-loading');
-	const t = $('#sp-loading-title');
-	const d = $('#sp-loading-detail');
-	if (t) t.textContent = title;
-	if (d) d.textContent = detail || '';
+	setText($('#sp-loading-title'), title);
+	setText($('#sp-loading-sub'), detail || '');
 	setHud(null);
 }
 
 function setError(title, detail) {
 	showOnly('sp-error');
-	const t = $('#sp-error-title');
-	const d = $('#sp-error-detail');
-	if (t) t.textContent = title;
-	if (d) d.textContent = detail || '';
+	setText($('#sp-error-title'), title);
+	setText($('#sp-error-sub'), detail || '');
 	setHud(null);
 }
 
@@ -60,13 +67,20 @@ function setLive(label) {
 	setHud(label);
 }
 
+// The label goes in its own node, never on #sp-hud itself: the HUD element also
+// holds the recenter and download controls, so writing textContent on it deletes
+// them from the DOM and every later query for them returns null.
 function setHud(label) {
 	const hud = $('#sp-hud');
 	if (!hud) return;
 	hud.hidden = !label;
-	if (label) hud.textContent = label;
+	const text = $('#sp-hud-label');
+	if (text) text.textContent = label || '';
 	const recenter = $('#sp-recenter');
 	if (recenter) recenter.hidden = !label;
+	// Leaving the live state also retires the previous scene's file: a download
+	// button still pointing at it over a fetch error hands back the wrong bytes.
+	if (!label) setDownload(null);
 }
 
 function setDownload(url, filename) {

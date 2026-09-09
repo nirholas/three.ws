@@ -204,18 +204,18 @@
 							</div>
 							<h3 data-i18n="splat.load_a_splat_to_begin">Load a splat to begin</h3>
 							<p data-i18n-html="splat.drop_a_here_paste_a_url_or">Drop a <code>.ply</code>, <code>.spz</code>, <code>.splat</code>, <code>.ksplat</code>, or <code>.sog</code> here, paste a URL, or try a sample on the right.</p>
-							<button class="sp-btn" id="sp-idle-pick" type="button" style="width:auto">Choose a file</button>
+							<button class="sp-btn" id="sp-idle-pick" type="button" style="width:auto" data-i18n="splat.choose_a_file">Choose a file</button>
 						</div>
 
 						<!-- Loading -->
-						<div class="sp-overlay" id="sp-loading" hidden>
+						<div class="sp-overlay" id="sp-loading" role="status" aria-live="polite" hidden>
 							<div class="sp-spinner"></div>
 							<h3 id="sp-loading-title" data-i18n="splat.loading_splat_engine">Loading splat engine…</h3>
 							<p id="sp-loading-sub" data-i18n="splat.fetching_and_decoding_the_radiance_field">Fetching and decoding the radiance field.</p>
 						</div>
 
 						<!-- Error -->
-						<div class="sp-overlay" id="sp-error" hidden>
+						<div class="sp-overlay" id="sp-error" role="alert" aria-live="assertive" hidden>
 							<div class="sp-glyph" style="color:#fca5a5;background:rgba(239,68,68,0.1);border-color:#5b2a2a">
 								<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 9v4 M12 17h.01"/><circle cx="12" cy="12" r="9"/></svg>
 							</div>
@@ -248,13 +248,13 @@
 								<input class="sp-input" id="sp-url" type="url" placeholder="https://…/avatar.ply" autocomplete="off" />
 								<button class="sp-btn sp-btn--primary" id="sp-load-url" type="button">
 									<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14 M13 5l7 7-7 7"/></svg>
-									Render
+									<span data-i18n="splat.render">Render</span>
 								</button>
 							</div>
 							<div class="sp-or">or</div>
 							<button class="sp-btn" id="sp-pick" type="button">
 								<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3v12 M7 11l5 4 5-4 M5 21h14"/></svg>
-								Upload a file
+								<span data-i18n="splat.upload_a_file">Upload a file</span>
 							</button>
 							<input id="sp-file" type="file" accept=".ply,.spz,.splat,.ksplat,.sog" hidden />
 							<p class="sp-hint" data-i18n="splat.files_stay_on_your_device_decoding_runs">Files stay on your device — decoding runs entirely in your browser.</p>
