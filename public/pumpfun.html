@@ -4,7 +4,7 @@
 	<script>/* three.ws theme boot — no-flash; runtime in /theme-switcher.js */(function(){try{var m=localStorage.getItem('twx_theme');var l=m==='auto'?(window.matchMedia&&window.matchMedia('(prefers-color-scheme: light)').matches):m==='light';document.documentElement.setAttribute('data-theme',l?'light':'dark');}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();</script>
 	<meta charset="utf-8" />
 	<meta name="viewport" content="width=device-width,initial-scale=1" />
-	<title data-i18n="pumpfun.meta_title">PumpFun migrations · three.ws</title>
+	<title data-i18n="pumpfun.meta_title">Pump.fun Stream · three.ws</title>
 	<link rel="icon" href="/favicon.ico" />
 	<link rel="stylesheet" href="/style.css" />
 	<link rel="stylesheet" href="/home.css" />
@@ -107,9 +107,12 @@
 		.pf-preview-meta .actions .primary:hover { filter: brightness(1.1); background: var(--accent); }
 		.pf-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 12px; }
 		.pf-card { position: relative; background: var(--surface-1, #171717); border: 1px solid var(--stroke, #242424); border-radius: var(--radius-card, 14px); overflow: hidden; cursor: pointer; transition: border-color var(--duration-fast), transform var(--duration-instant); display: flex; flex-direction: column; text-align: left; padding: 0; color: var(--ink, #eee); font: inherit; }
-		.pf-card:hover, .pf-card:focus-visible { border-color: var(--stroke-strong, #3b3b3b); outline: none; }
-		.pf-card:focus-visible { box-shadow: 0 0 0 2px var(--accent); }
-		.pf-card:active { transform: scale(0.98); }
+		.pf-card:hover, .pf-card:focus-within { border-color: var(--stroke-strong, #3b3b3b); }
+		.pf-card:has(.pf-card-main:focus-visible) { box-shadow: 0 0 0 2px var(--accent); }
+		.pf-card:has(.pf-card-main:active) { transform: scale(0.98); }
+		.pf-card-main { appearance: none; background: transparent; border: 0; margin: 0; padding: 0; width: 100%; color: inherit; font: inherit; text-align: left; cursor: pointer; display: flex; flex-direction: column; }
+		.pf-card-main:focus-visible { outline: none; }
+		.pf-card .fav:focus-visible { opacity: 1; outline: 2px solid var(--accent); outline-offset: 1px; }
 		.pf-card[data-selected="true"] { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent) inset; }
 		.pf-card .thumb { aspect-ratio: 1/1; background: var(--skeleton-base, rgba(255,255,255,0.04)) center/cover no-repeat; border-bottom: 1px solid var(--stroke, #242424); position: relative; display: flex; align-items: center; justify-content: center; color: var(--stroke-strong, rgba(255,255,255,0.14)); font-size: 32px; }
 		.pf-card .meta { padding: 8px 10px; }
@@ -294,6 +297,20 @@
 		.signal .l { font-size: 11px; color: var(--muted); margin-top: 2px; }
 		.signal.neg { border-color: #4a1f23; background: #1f1418; }
 		.empty { color: var(--muted); font-size: 12px; padding: 8px 16px; }
+		.feed-status { display: none; flex-direction: column; align-items: flex-start; gap: 6px; padding: 14px 16px; }
+		.feed-status[data-show="true"] { display: flex; }
+		.feed-status .fs-title { font-size: 12px; font-weight: 600; color: #e6e6f0; display: flex; align-items: center; gap: 6px; }
+		.feed-status .fs-body { font-size: 11px; color: var(--muted); line-height: 1.5; }
+		.feed-status .fs-action { margin-top: 2px; background: #171717; color: #eee; border: 1px solid #2b2b2b; border-radius: 6px; padding: 5px 10px; font: inherit; font-size: 11px; cursor: pointer;
+			transition: background var(--duration-fast) var(--ease-standard), border-color var(--duration-fast) var(--ease-standard); }
+		.feed-status .fs-action:hover { background: #212121; border-color: #3b3b3b; }
+		.feed-status[data-tone="down"] .fs-title { color: #f87171; }
+		.fc-skeleton { height: 56px; border-radius: 8px; margin: 0 16px 8px;
+			background: linear-gradient(90deg, #171717 0%, #202020 50%, #171717 100%); background-size: 200% 100%; animation: shimmer 1.4s linear infinite; }
+		#fc-refresh[aria-busy="true"] { opacity: 0.5; cursor: progress; }
+		.pf-mint-cta { font-size: 11px; color: var(--muted); border: 1px solid var(--border); border-radius: 999px; padding: 3px 9px; text-decoration: none; white-space: nowrap;
+			transition: color var(--duration-fast) var(--ease-standard), border-color var(--duration-fast) var(--ease-standard); }
+		.pf-mint-cta:hover { color: #eee; border-color: #4b4b4b; text-decoration: none; }
 		a { color: #888888; text-decoration: none; }
 		a:hover { text-decoration: underline; }
 		.warn { background: #2a1f0d; border: 1px solid #463a14; padding: 8px 10px; border-radius: 6px;
@@ -421,8 +438,9 @@
 	</header>
 	<script src="/nav.js"></script>
 	<div class="pf-filterbar">
-		<h1 data-i18n="pumpfun.pumpfun_migrations">✦ PumpFun migrations</h1>
-		<button type="button" class="status-pill" id="status-pill" data-state="connecting" title="Click to reconnect when offline" data-i18n-html="pumpfun.connecting" data-i18n-attr="title:pumpfun.click_to_reconnect_when_offl_title"><span class="dot connecting" id="status-dot"></span><span id="status-label">connecting…</span></button>
+		<h1 data-i18n="pumpfun.stream_heading">✦ Pump.fun Stream</h1>
+		<button type="button" class="status-pill" id="status-pill" data-state="connecting" title="Click to reconnect when offline" data-i18n-attr="title:pumpfun.click_to_reconnect_when_offl_title"><span class="dot connecting" id="status-dot" aria-hidden="true"></span><span id="status-label" data-i18n="pumpfun.status_connecting">connecting…</span></button>
+		<a class="pf-mint-cta" href="/launch" data-i18n="pumpfun.launch_a_coin">Launch a coin</a>
 		<div class="ctl">
 			<input id="ctl-asset" type="text" placeholder="Solana asset pubkey (optional)" size="22" />
 			<input id="ctl-mint" type="text" placeholder="Filter mint…" size="18" />
@@ -444,9 +462,9 @@
 			<input id="ctl-min-buy" type="number" placeholder="Min buy SOL" class="ctl-num" min="0" step="1" title="Min initial buy in SOL — new tokens only" />
 			<input id="ctl-whale" type="number" placeholder="Whale ≥ SOL" class="ctl-num" min="0" step="5" title="Whale filter — only show trades/claims ≥ N SOL" />
 			<div id="ctl-avatar-wrap">
-				<button id="ctl-avatar-btn" type="button" aria-haspopup="dialog" aria-expanded="false" title="Choose avatar" data-i18n-html="pumpfun.avatar" data-i18n-attr="title:pumpfun.choose_avatar_title">
+				<button id="ctl-avatar-btn" type="button" aria-haspopup="dialog" aria-expanded="false" title="Choose avatar" data-i18n-attr="title:pumpfun.choose_avatar_title">
 					<span class="avatar-thumb" id="ctl-avatar-thumb" aria-hidden="true"></span>
-					<span class="avatar-name" id="ctl-avatar-label">Avatar</span>
+					<span class="avatar-name" id="ctl-avatar-label" data-i18n="pumpfun.avatar_label">Avatar</span>
 					<span class="avatar-caret" aria-hidden="true">▾</span>
 				</button>
 			</div>
@@ -458,7 +476,7 @@
 				<option value="hype" data-i18n="pumpfun.hype">🤩 Hype</option>
 			</select>
 			<button id="ctl-config" class="pf-icon-btn" type="button" title="Configure agent reactions" data-i18n="pumpfun.config" data-i18n-attr="title:pumpfun.configure_agent_reactions_title">⚙️ Config</button>
-			<button id="ctl-share" class="pf-icon-btn" type="button" title="Copy a shareable link with current filters" data-i18n-html="pumpfun.share" data-i18n-attr="title:pumpfun.copy_a_shareable_link_with_c_title">🔗 <span id="ctl-share-label">Share</span></button>
+			<button id="ctl-share" class="pf-icon-btn" type="button" title="Copy a shareable link with current filters" data-i18n-attr="title:pumpfun.copy_a_shareable_link_with_c_title">🔗 <span id="ctl-share-label" data-i18n="pumpfun.share_label">Share</span></button>
 			<button id="side-toggle" class="pf-icon-btn" type="button" aria-pressed="false" aria-controls="side" title="Toggle live feed" data-i18n="pumpfun.feed" data-i18n-attr="title:pumpfun.toggle_live_feed_title">📡 Feed</button>
 		</div>
 	</div>
@@ -475,8 +493,8 @@
 				<button type="button" class="se-retry" id="stage-error-retry" data-i18n="pumpfun.retry">Retry</button>
 			</div>
 			<div id="anim-chips" role="group" aria-label="Trigger animation" aria-busy="true">
-				<button type="button" id="anim-loop-toggle" aria-pressed="true" title="Pause or resume the looping animation" hidden data-i18n-html="pumpfun.pause" data-i18n-attr="title:pumpfun.pause_or_resume_the_looping_title">
-					<span class="lt-glyph" aria-hidden="true">⏸</span><span class="lt-label">Pause</span>
+				<button type="button" id="anim-loop-toggle" aria-pressed="true" title="Pause or resume the looping animation" hidden data-i18n-attr="title:pumpfun.pause_or_resume_the_looping_title">
+					<span class="lt-glyph" aria-hidden="true">⏸</span><span class="lt-label" data-i18n="pumpfun.loop_pause">Pause</span>
 				</button>
 			</div>
 		</div>
@@ -508,9 +526,9 @@
 					<div id="first-claims"><div class="empty">Loading first-time claims…</div></div>
 				</div>
 				<div id="feed-wrap">
-					<h2 data-i18n-html="pumpfun.live_feed0powered_by_pumpportal"><span id="feed-title">Live feed</span><a id="helius-pill" class="helius-pill" href="https://pumpportal.fun" target="_blank" rel="noopener" title="Real-time pump.fun data via the PumpPortal WebSocket — count is events received this session"><span class="helius-dot" aria-hidden="true"></span><span id="helius-count" class="helius-count">0</span>Powered by PumpPortal</a></h2>
-					<button type="button" class="feed-jump" id="feed-jump" data-visible="false" aria-live="polite" data-i18n-html="pumpfun.0_new">↑ <span id="feed-jump-count">0</span> new</button>
-					<div id="feed"><div class="empty">Waiting for events…</div></div>
+					<h2><span id="feed-title" data-i18n="pumpfun.feed_heading">Live feed</span><a id="helius-pill" class="helius-pill" href="https://pumpportal.fun" target="_blank" rel="noopener" title="Real-time pump.fun data via the PumpPortal WebSocket. The count is events received this session." data-i18n-attr="title:pumpfun.pumpportal_pill_title"><span class="helius-dot" aria-hidden="true"></span><span id="helius-count" class="helius-count">0</span><span data-i18n="pumpfun.powered_by_pumpportal">Powered by PumpPortal</span></a></h2>
+					<button type="button" class="feed-jump" id="feed-jump" data-visible="false" aria-live="polite">↑ <span id="feed-jump-count">0</span> <span data-i18n="pumpfun.feed_jump_new">new</span></button>
+					<div id="feed"><div id="feed-status" class="feed-status" role="status" aria-live="polite"></div></div>
 				</div>
 			</div>
 		</aside>
@@ -596,11 +614,11 @@
 				<button class="pf-modal-close" type="button" aria-label="Close" data-picker-close data-i18n-attr="aria-label:pumpfun.close_arialabel">×</button>
 			</div>
 			<div class="pf-tabs" role="tablist">
-				<button class="pf-tab" role="tab" type="button" data-tab="defaults" aria-selected="true" data-i18n-html="pumpfun.defaults">Defaults<span class="badge" id="tab-count-defaults"></span></button>
-				<button class="pf-tab" role="tab" type="button" data-tab="recent" aria-selected="false" data-i18n-html="pumpfun.recent">Recent<span class="badge" id="tab-count-recent"></span></button>
-				<button class="pf-tab" role="tab" type="button" data-tab="favorites" aria-selected="false" data-i18n-html="pumpfun.favorites">Favorites<span class="badge" id="tab-count-favorites"></span></button>
-				<button class="pf-tab" role="tab" type="button" data-tab="community" aria-selected="false" data-i18n-html="pumpfun.community">Community<span class="badge" id="tab-count-community"></span></button>
-				<button class="pf-tab" role="tab" type="button" data-tab="mine" aria-selected="false" data-i18n-html="pumpfun.my_agents">My Agents<span class="badge" id="tab-count-mine"></span></button>
+				<button class="pf-tab" role="tab" type="button" data-tab="defaults" aria-selected="true"><span data-i18n="pumpfun.tab_defaults">Defaults</span><span class="badge" id="tab-count-defaults"></span></button>
+				<button class="pf-tab" role="tab" type="button" data-tab="recent" aria-selected="false"><span data-i18n="pumpfun.tab_recent">Recent</span><span class="badge" id="tab-count-recent"></span></button>
+				<button class="pf-tab" role="tab" type="button" data-tab="favorites" aria-selected="false"><span data-i18n="pumpfun.tab_favorites">Favorites</span><span class="badge" id="tab-count-favorites"></span></button>
+				<button class="pf-tab" role="tab" type="button" data-tab="community" aria-selected="false"><span data-i18n="pumpfun.tab_community">Community</span><span class="badge" id="tab-count-community"></span></button>
+				<button class="pf-tab" role="tab" type="button" data-tab="mine" aria-selected="false"><span data-i18n="pumpfun.tab_mine">My Agents</span><span class="badge" id="tab-count-mine"></span></button>
 			</div>
 			<div class="pf-toolbar">
 				<input type="search" id="picker-search" placeholder="Search by name…" autocomplete="off" aria-label="Search avatars" />
@@ -871,27 +889,91 @@
 			search: $('picker-search'),
 			customUrl: $('picker-custom-url'),
 			customGo: $('picker-custom-go'),
-			tabs: Array.from(document.querySelectorAll('.pf-tab')),
+			// Scoped to the picker: the agent-config modal below reuses .pf-tab, and
+			// a document-wide query wired its two tabs into the picker's handler.
+			tabs: Array.from(document.querySelectorAll('#avatar-picker .pf-tab')),
 			trigger: $('ctl-avatar-btn'),
 			label: $('ctl-avatar-label'),
 			thumb: $('ctl-avatar-thumb'),
 			activeTab: 'defaults',
 			query: '',
-			loaded: { defaults: true, community: false, mine: false },
-			loading: { community: false, mine: false },
-			error: { community: null, mine: null },
-			data: { defaults: DEFAULT_AVATARS.map((a) => ({ ...a, _kind: 'default' })), community: [], mine: [] },
+			loaded: { defaults: true, recent: true, favorites: true, community: false, mine: false },
+			loading: { recent: false, favorites: false, community: false, mine: false },
+			error: { recent: null, favorites: null, community: null, mine: null },
+			data: { defaults: DEFAULT_AVATARS.map((a) => ({ ...a, _kind: 'default' })), recent: [], favorites: [], community: [], mine: [] },
 			cursor: { community: null, mine: null },
-			hasMore: { community: false, mine: false },
+			hasMore: { recent: false, favorites: false, community: false, mine: false },
 			authed: null, // null = unknown, true/false after first /api/avatars probe
 			lastFocus: null,
 		};
+
+		const RECENT_KEY = 'pumpfun-avatar-recents';
+		const FAVORITES_KEY = 'pumpfun-avatar-favorites';
+		const RECENT_MAX = 24;
+		function readStore(key) {
+			try {
+				const parsed = JSON.parse(localStorage.getItem(key) || '[]');
+				return Array.isArray(parsed) ? parsed.filter((a) => a && a.url) : [];
+			} catch { return []; }
+		}
+		function writeStore(key, list) {
+			try { localStorage.setItem(key, JSON.stringify(list)); } catch {}
+		}
+		function avatarKey(a) { return String(a?.id || a?.url || ''); }
+		// Store the resolved URL, never the presign placeholder: a private avatar
+		// arrives with url === null and is only usable once selectAvatar has
+		// exchanged its id for a signed URL.
+		function storableAvatar(a, kind) {
+			return {
+				id: a.id || null,
+				url: a.url,
+				name: a.name,
+				sub: a.sub || '',
+				emoji: a.emoji || null,
+				thumbnail_url: a.thumbnail_url || null,
+				_kind: kind,
+			};
+		}
+		function rememberRecent(a) {
+			if (!a?.url) return;
+			const entry = storableAvatar(a, 'recent');
+			const list = readStore(RECENT_KEY).filter((x) => avatarKey(x) !== avatarKey(entry));
+			list.unshift(entry);
+			writeStore(RECENT_KEY, list.slice(0, RECENT_MAX));
+			syncStoredTabs();
+		}
+		function isFavorite(a) {
+			const key = avatarKey(a);
+			return readStore(FAVORITES_KEY).some((x) => avatarKey(x) === key);
+		}
+		function toggleFavorite(a) {
+			if (!a?.url) {
+				toast(t('pumpfun.fav_needs_load', 'Open that avatar once before starring it.'), 'error');
+				return false;
+			}
+			const key = avatarKey(a);
+			const list = readStore(FAVORITES_KEY);
+			const next = list.filter((x) => avatarKey(x) !== key);
+			const added = next.length === list.length;
+			if (added) next.unshift(storableAvatar(a, 'favorite'));
+			writeStore(FAVORITES_KEY, next);
+			syncStoredTabs();
+			if (picker.activeTab === 'favorites') renderPickerBody();
+			return added;
+		}
+		function syncStoredTabs() {
+			picker.data.recent = readStore(RECENT_KEY);
+			picker.data.favorites = readStore(FAVORITES_KEY);
+			updateTabBadge('recent', picker.data.recent.length || '');
+			updateTabBadge('favorites', picker.data.favorites.length || '');
+		}
 
 		function openPicker() {
 			picker.lastFocus = document.activeElement;
 			picker.modal.dataset.open = 'true';
 			picker.trigger.setAttribute('aria-expanded', 'true');
 			document.body.style.overflow = 'hidden';
+			syncStoredTabs();
 			renderPickerBody();
 			// Pre-fetch lists for every tab so badges and switching feel instant.
 			ensureLoaded('community');
@@ -912,13 +994,21 @@
 			if (e.key === 'Escape' && picker.modal.dataset.open === 'true') closePicker();
 		});
 
+		function selectPickerTab(name) {
+			const target = picker.tabs.find((el) => el.dataset.tab === name);
+			if (!target) return;
+			picker.tabs.forEach((el) => el.setAttribute('aria-selected', String(el === target)));
+			picker.activeTab = name;
+			renderPickerBody();
+			ensureLoaded(name);
+		}
 		picker.tabs.forEach((tab) => {
-			tab.addEventListener('click', () => {
-				picker.tabs.forEach((t) => t.setAttribute('aria-selected', String(t === tab)));
-				picker.activeTab = tab.dataset.tab;
-				renderPickerBody();
-				ensureLoaded(picker.activeTab);
-			});
+			tab.addEventListener('click', () => selectPickerTab(tab.dataset.tab));
+		});
+		// The Recent and Favorites empty states offer a way out to a populated tab.
+		picker.body.addEventListener('click', (e) => {
+			const jump = e.target.closest('[data-goto-tab]');
+			if (jump) selectPickerTab(jump.dataset.gotoTab);
 		});
 
 		picker.search.addEventListener('input', (e) => {
@@ -951,7 +1041,8 @@
 		}
 
 		async function ensureLoaded(tab) {
-			if (tab === 'defaults' || picker.loaded[tab] || picker.loading[tab]) return;
+			if (tab === 'defaults' || tab === 'recent' || tab === 'favorites') return;
+			if (picker.loaded[tab] || picker.loading[tab]) return;
 			picker.loading[tab] = true;
 			picker.error[tab] = null;
 			renderPickerBody();
@@ -973,6 +1064,8 @@
 					picker.hasMore.community = !!data.next_cursor;
 					updateTabBadge('community', picker.data.community.length + (picker.hasMore.community ? '+' : ''));
 				} else if (tab === 'mine') {
+					const me = await fetch('/api/auth/me', { credentials: 'include' }).then((x) => x.json()).catch(() => null);
+					if (!me?.user) { picker.authed = false; picker.loaded.mine = true; return; }
 					const r = await fetch('/api/avatars?limit=100', { credentials: 'include' });
 					if (r.status === 401) { picker.authed = false; picker.loaded.mine = true; return; }
 					picker.authed = true;
@@ -1093,6 +1186,20 @@
 						<p class="tws-es-body">Avatars are the 3D characters you can launch as a pump.fun agent. Create one to give your token a face, then mint it here.</p>
 						<div class="tws-es-actions"><a class="tws-es-btn tws-es-btn--primary" href="/create">Create your first agent</a></div>
 					</div>`;
+				} else if (tab === 'recent' && !picker.query) {
+					body.innerHTML = `<div class="tws-es" role="status">
+						<div class="tws-es-icon" aria-hidden="true">🕘</div>
+						<h3 class="tws-es-title">No recent avatars</h3>
+						<p class="tws-es-body">Every avatar you narrate the feed with lands here, newest first, so you can switch back in one click.</p>
+						<div class="tws-es-actions"><button type="button" class="tws-es-btn tws-es-btn--primary" data-goto-tab="defaults">Browse the defaults</button></div>
+					</div>`;
+				} else if (tab === 'favorites' && !picker.query) {
+					body.innerHTML = `<div class="tws-es" role="status">
+						<div class="tws-es-icon" aria-hidden="true">★</div>
+						<h3 class="tws-es-title">No favorites yet</h3>
+						<p class="tws-es-body">Star any avatar from its card and it stays one click away in this browser.</p>
+						<div class="tws-es-actions"><button type="button" class="tws-es-btn tws-es-btn--primary" data-goto-tab="community">Browse community avatars</button></div>
+					</div>`;
 				} else {
 					const msg = picker.query
 						? `No matches for “${escapeHtml(picker.query)}”. Try a different name or clear the search.`
@@ -1121,8 +1228,7 @@
 		}
 
 		function renderCard(a) {
-			const card = document.createElement('button');
-			card.type = 'button';
+			const card = document.createElement('div');
 			card.className = 'pf-card';
 			const isSelected = (a.id && a.id === selectedAvatarId) || (a.url && a.url === params.avatar);
 			if (isSelected) card.dataset.selected = 'true';
@@ -1131,14 +1237,38 @@
 			const visTag = a._kind === 'mine' && a.visibility
 				? `<span class="vis-tag ${a.visibility === 'private' ? 'private' : ''}">${escapeHtml(a.visibility)}</span>`
 				: '';
-			card.innerHTML = `
+			const main = document.createElement('button');
+			main.type = 'button';
+			main.className = 'pf-card-main';
+			main.innerHTML = `
 				<div class="thumb" ${thumbStyle}>${fallback}${visTag}<span class="selected-mark">✓</span></div>
 				<div class="meta">
 					<div class="name">${escapeHtml(a.name)}</div>
 					<div class="sub">${escapeHtml(a.sub || '')}</div>
 				</div>
 			`;
-			card.addEventListener('click', () => selectAvatar(a, card));
+			main.addEventListener('click', () => selectAvatar(a, card));
+			card.appendChild(main);
+
+			const fav = document.createElement('button');
+			fav.type = 'button';
+			fav.className = 'fav';
+			const paintFav = (on) => {
+				fav.dataset.on = String(on);
+				fav.textContent = on ? '★' : '☆';
+				fav.setAttribute('aria-pressed', String(on));
+				const label = on
+					? t('pumpfun.fav_remove', 'Remove {{name}} from favorites', { name: a.name })
+					: t('pumpfun.fav_add', 'Add {{name}} to favorites', { name: a.name });
+				fav.setAttribute('aria-label', label);
+				fav.title = label;
+			};
+			paintFav(isFavorite(a));
+			fav.addEventListener('click', (e) => {
+				e.stopPropagation();
+				paintFav(toggleFavorite(a));
+			});
+			card.appendChild(fav);
 			return card;
 		}
 
@@ -1153,7 +1283,7 @@
 					resolvedUrl = avatar?.url || avatar?.model_url;
 					if (!resolvedUrl) throw new Error('no url');
 				} catch (err) {
-					alert('Could not load that avatar (' + (err.message || 'error') + ').');
+					toast(t('pumpfun.avatar_load_failed', 'Could not load that avatar ({{reason}}). Pick another one.', { reason: err.message || 'error' }), 'error');
 					if (cardEl) { cardEl.style.opacity = ''; cardEl.style.pointerEvents = ''; }
 				}
 			}
@@ -1162,7 +1292,8 @@
 				selectedAvatarId = a.id || null;
 				updateUrl();
 				loadAgent();
-				picker.label.textContent = a.name;
+				rememberRecent({ ...a, url: resolvedUrl });
+				own(picker.label).textContent = a.name;
 				picker.thumb.style.backgroundImage = a.thumbnail_url ? `url('${attr(a.thumbnail_url)}')` : 'none';
 				closePicker();
 				toast('Avatar changed to ' + a.name, 'success');
@@ -1175,8 +1306,8 @@
 		let es = null, esTries = 0, esBackoff = 1000, esClosed = false;
 		let esOpenTimer = null;          // fires if a connection never reaches OPEN
 		let esConsecutiveFails = 0;      // consecutive failed connection attempts
-		const ES_OPEN_TIMEOUT_MS = 12000; // force-close a stuck CONNECTING socket after this
-		const ES_FAILS_BEFORE_ERROR = 4;  // surface a manual-retry error state after this many
+		const ES_OPEN_TIMEOUT_MS = 8000;  // force-close a stuck CONNECTING socket after this
+		const ES_FAILS_BEFORE_ERROR = 3;  // surface a manual-retry error state after this many
 		let queue = [], queueTimer = null, queuePaused = false;
 		let replayQueue = [];
 		let firstClaims = { data: [], el: $('first-claims'), refreshing: false, ts: 0 };
@@ -1237,8 +1368,12 @@
 			if (!hasLoop) return;
 			loopToggle.setAttribute('aria-pressed', String(loopActive));
 			loopToggle.querySelector('.lt-glyph').textContent = loopActive ? '⏸' : '▶';
-			loopToggle.querySelector('.lt-label').textContent = loopActive ? 'Pause' : 'Play';
-			loopToggle.title = loopActive ? 'Pause the looping animation' : 'Resume the looping animation';
+			own(loopToggle.querySelector('.lt-label')).textContent = loopActive
+				? t('pumpfun.loop_pause', 'Pause')
+				: t('pumpfun.loop_play', 'Play');
+			loopToggle.title = loopActive
+				? t('pumpfun.loop_pause_title', 'Pause the looping animation')
+				: t('pumpfun.loop_resume_title', 'Resume the looping animation');
 		}
 
 		loopToggle.addEventListener('click', () => {
@@ -1477,18 +1612,18 @@
 			if (esConsecutiveFails >= ES_FAILS_BEFORE_ERROR) {
 				// Stop hammering — surface a recoverable error the user can retry.
 				console.warn(`[sse] giving up after ${esConsecutiveFails} attempts (${reason}); awaiting manual retry`);
-				setStatus('down', 'offline — retry');
+				setStatus('down', 'status_offline');
 				return;
 			}
 			console.log(`[sse] ${reason}; reconnect in ${esBackoff / 1000}s (fail ${esConsecutiveFails})`);
-			setStatus('down', 'reconnecting…');
+			setStatus('down', 'status_reconnecting');
 			setTimeout(connect, esBackoff);
 			esBackoff = Math.min(esBackoff * 1.5, 15000);
 		}
 
 		function connect() {
 			esTries++;
-			setStatus('connecting', `connecting (try ${esTries})…`);
+			setStatus('connecting', 'status_connecting_try', { n: esTries });
 			teardownEs();
 
 			const endpoint = new URL('/api/agents/pumpfun-feed', location.href);
@@ -1517,7 +1652,7 @@
 				esTries = 0;
 				esBackoff = 1000;
 				esConsecutiveFails = 0;
-				setStatus('live', 'live');
+				setStatus('live', 'status_live');
 				scheduleQuiet();
 			});
 			const ingest = (sseType) => (msg) => {
@@ -1538,7 +1673,7 @@
 					scheduleReconnect('disconnected');
 				} else {
 					// Still CONNECTING — the open-timeout above is our backstop.
-					setStatus('connecting', 'reconnecting…');
+					setStatus('connecting', 'status_reconnecting');
 				}
 			};
 		}
@@ -1557,6 +1692,7 @@
 				feed.pending.push(card);
 				updateFeedJump();
 			}
+			renderFeedStatus();
 			markActivity();
 			narrateEvent(evt);
 		}
@@ -1640,20 +1776,37 @@
 			}
 		}
 
-		function setStatus(state, label) {
+		const STATUS_COPY = {
+			status_connecting: 'connecting…',
+			status_connecting_try: 'connecting (try {{n}})…',
+			status_reconnecting: 'reconnecting…',
+			status_live: 'live',
+			status_quiet: 'live · quiet',
+			status_offline: 'offline · retry',
+		};
+		let statusKey = 'status_connecting';
+		let statusVars = null;
+		function renderStatusLabel() {
+			own(status.label).textContent = t('pumpfun.' + statusKey, STATUS_COPY[statusKey], statusVars);
+		}
+		function setStatus(state, key, vars) {
+			statusKey = key;
+			statusVars = vars || null;
 			status.dot.className = `dot ${state}`;
-			status.label.textContent = label;
 			status.pill.dataset.state = state;
+			renderStatusLabel();
+			renderFeedStatus();
+		}
+		function reconnectFeed() {
+			esClosed = false;
+			esTries = 0;
+			esBackoff = 1000;
+			esConsecutiveFails = 0;
+			teardownEs();
+			connect();
 		}
 		status.pill.addEventListener('click', () => {
-			if (status.pill.dataset.state === 'down') {
-				esClosed = false;
-				esTries = 0;
-				esBackoff = 1000;
-				esConsecutiveFails = 0;
-				teardownEs();
-				connect();
-			}
+			if (status.pill.dataset.state === 'down') reconnectFeed();
 		});
 
 		// ── DOM init ─────────────────────────────────────────────────────────
@@ -1718,6 +1871,70 @@
 			$('ctl-share').addEventListener('click', copyShareLink);
 		}
 
+		// The feed has four states and one node renders all of them: waiting for
+		// the first event, live (hidden), every card filtered out, and
+		// disconnected. Called from setStatus, applyFilters and handleEvent.
+		function renderFeedStatus() {
+			const el = $('feed-status');
+			if (!el || !feed.el) return;
+			const cards = Array.from(feed.el.querySelectorAll('.evt'));
+			const visible = cards.filter((c) => c.style.display !== 'none').length;
+			if (visible > 0) { el.dataset.show = 'false'; el.textContent = ''; return; }
+
+			const offline = status.pill.dataset.state === 'down';
+			el.dataset.show = 'true';
+			el.dataset.tone = offline ? 'down' : '';
+			el.textContent = '';
+
+			const title = document.createElement('div');
+			title.className = 'fs-title';
+			const body = document.createElement('div');
+			body.className = 'fs-body';
+			el.append(title, body);
+
+			if (offline) {
+				title.textContent = t('pumpfun.feed_offline_title', 'Feed disconnected');
+				body.textContent = t('pumpfun.feed_offline_body', 'The live pump.fun stream stopped responding. Reconnect to resume, or reload the page.');
+				const retry = document.createElement('button');
+				retry.type = 'button';
+				retry.className = 'fs-action';
+				retry.textContent = t('pumpfun.feed_offline_retry', 'Reconnect');
+				retry.addEventListener('click', reconnectFeed);
+				el.appendChild(retry);
+				return;
+			}
+			if (cards.length) {
+				title.textContent = t('pumpfun.feed_filtered_title', 'No events match your filters');
+				body.textContent = t('pumpfun.feed_filtered_body', '{{n}} events arrived this session but every one is filtered out. Widen the market cap, tier or size filters to see them.', { n: cards.length });
+				const clear = document.createElement('button');
+				clear.type = 'button';
+				clear.className = 'fs-action';
+				clear.textContent = t('pumpfun.feed_filtered_clear', 'Clear filters');
+				clear.addEventListener('click', clearFilters);
+				el.appendChild(clear);
+				return;
+			}
+			title.textContent = t('pumpfun.feed_waiting_title', 'Waiting for the next launch');
+			body.textContent = t('pumpfun.feed_waiting_body', 'New pump.fun tokens, graduations and creator fee claims land here the moment they hit the chain.');
+		}
+
+		// Filters live in the URL as well as the controls, so clearing has to reset
+		// all three: state, inputs and query string.
+		const FILTER_KEYS = ['mint', 'minTier', 'mcMin', 'mcMax', 'minBuy', 'whale'];
+		function clearFilters() {
+			params.kind = 'all';
+			for (const k of FILTER_KEYS) params[k] = '';
+			$('ctl-kind').value = 'all';
+			$('ctl-tier').value = '';
+			$('ctl-mint').value = '';
+			$('ctl-mc-min').value = '';
+			$('ctl-mc-max').value = '';
+			$('ctl-min-buy').value = '';
+			$('ctl-whale').value = '';
+			updateUrl();
+			applyFilters();
+		}
+
 		function applyFilters() {
 			const events = Array.from(feed.el.querySelectorAll('.evt'));
 			events.forEach((el) => {
@@ -1735,6 +1952,7 @@
 					(!params.whale || (sol && Number(sol) >= params.whale));
 				el.style.display = show ? '' : 'none';
 			});
+			renderFeedStatus();
 		}
 
 		function updateUrl() {
@@ -1824,7 +2042,11 @@
 			const now = Date.now();
 			if (firstClaims.refreshing || (!force && now - firstClaims.ts < 60_000)) return;
 			firstClaims.refreshing = true;
-			firstClaims.el.innerHTML = '<div class="empty">Refreshing…</div>';
+			const refreshBtn = $('fc-refresh');
+			refreshBtn.setAttribute('aria-busy', 'true');
+			refreshBtn.disabled = true;
+			firstClaims.el.setAttribute('aria-busy', 'true');
+			firstClaims.el.innerHTML = '<div class="fc-skeleton"></div><div class="fc-skeleton"></div><div class="fc-skeleton"></div>';
 			try {
 				const windowMins = $('fc-window').value || 1440;
 				const r = await fetch(`/api/pump/first-claims?limit=50&sinceMinutes=${windowMins}`);
@@ -1841,10 +2063,25 @@
 				firstClaims.ts = now;
 				renderFirstClaims();
 			} catch (err) {
-				console.error('[fc] fetch failed', err);
-				firstClaims.el.innerHTML = '<div class="empty" style="color:var(--danger)">Fetch failed.</div>';
+				console.warn('[fc] fetch failed', err);
+				firstClaims.el.innerHTML = '';
+				const wrap = document.createElement('div');
+				wrap.className = 'empty';
+				wrap.setAttribute('role', 'alert');
+				wrap.textContent = t('pumpfun.fc_failed', 'Could not load first-time claims ({{reason}}).', { reason: err?.message || 'network error' });
+				const retry = document.createElement('button');
+				retry.type = 'button';
+				retry.className = 'fs-action';
+				retry.style.marginLeft = '8px';
+				retry.textContent = t('pumpfun.fc_retry', 'Try again');
+				retry.addEventListener('click', () => fetchFirstClaims(true));
+				wrap.appendChild(retry);
+				firstClaims.el.appendChild(wrap);
 			} finally {
 				firstClaims.refreshing = false;
+				firstClaims.el.removeAttribute('aria-busy');
+				refreshBtn.removeAttribute('aria-busy');
+				refreshBtn.disabled = false;
 			}
 		}
 
@@ -1887,6 +2124,17 @@
 			host.appendChild(el);
 			setTimeout(() => el.remove(), 4000);
 		}
+		// Copy this script writes at runtime. applyCatalog() skips any node
+		// carrying data-i18n-owned="1", which is how a script keeps a live value
+		// from being reverted to the markup placeholder by a later catalog pass.
+		function t(key, fallback, vars) {
+			const hit = window.threewsI18n?.t?.(key, vars);
+			if (hit && hit !== key) return hit;
+			return vars
+				? String(fallback).replace(/\{\{\s*(\w+)\s*\}\}/g, (m, k) => (k in vars ? String(vars[k]) : m))
+				: fallback;
+		}
+		function own(el) { if (el) el.dataset.i18nOwned = '1'; return el; }
 		function attr(s) { return (s || '').replace(/"/g, '&quot;'); }
 		function escapeHtml(s) {
 			return (s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#039;');
@@ -1900,7 +2148,7 @@
 		function scheduleQuiet() {
 			clearTimeout(quietTimer);
 			quietTimer = setTimeout(() => {
-				if (status.pill.dataset.state === 'live') setStatus('quiet', 'live · quiet');
+				if (status.pill.dataset.state === 'live') setStatus('quiet', 'status_quiet');
 			}, QUIET_AFTER_MS);
 		}
 		function markActivity() {
@@ -1912,7 +2160,7 @@
 				heliusPill.el.dataset.count = '';
 			}, 1200);
 			// An event after a quiet stretch means we're live again.
-			if (status.pill.dataset.state === 'quiet') setStatus('live', 'live');
+			if (status.pill.dataset.state === 'quiet') setStatus('live', 'status_live');
 			scheduleQuiet();
 		}
 		// Build a clean, shareable URL: keep only the public presentation params
@@ -1936,15 +2184,20 @@
 		function copyShareLink() {
 			const btn = $('ctl-share');
 			const label = $('ctl-share-label');
-			const orig = label.textContent;
-			navigator.clipboard.writeText(buildShareUrl()).then(() => {
-				label.textContent = 'Copied!';
+			const url = buildShareUrl();
+			navigator.clipboard.writeText(url).then(() => {
+				own(label).textContent = t('pumpfun.share_copied', 'Copied!');
 				btn.dataset.flash = 'true';
 				setTimeout(() => {
-					label.textContent = orig;
+					label.removeAttribute('data-i18n-owned');
+					label.textContent = t('pumpfun.share_label', 'Share');
 					btn.dataset.flash = '';
 				}, 1500);
-			}).catch(err => toast('Could not copy link.', 'error'));
+			}).catch(() => {
+				// Clipboard access can be denied outright (permissions policy, an
+				// insecure origin). The link is still useful, so hand it over.
+				prompt(t('pumpfun.share_manual', 'Copy this link:'), url);
+			});
 		}
 		function initFeedScroll() {
 			const sentinel = document.createElement('div');
@@ -2022,8 +2275,19 @@
 		initControls();
 		initFeedScroll();
 		initSidePanel();
+		syncStoredTabs();
+		renderFeedStatus();
 		connect();
 		fetchFirstClaims();
+
+		// Nodes this script owns are skipped by the catalog pass, so a locale
+		// switch has to re-render them from here.
+		window.addEventListener('i18n:change', () => {
+			renderStatusLabel();
+			renderFeedStatus();
+			syncLoopToggle();
+			if (picker.modal.dataset.open === 'true') renderPickerBody();
+		});
 	</script>
 	<script src="/brand.js" defer></script>
 		<div id="footer-container"></div>
