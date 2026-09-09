@@ -174,7 +174,22 @@ test('journey 4: "good night" runs the house\'s own scene, and the lock it touch
 	});
 	expect(dry.ok(), `activate dry run returned ${dry.status()}: ${(await dry.text()).slice(0, 300)}`).toBe(true);
 	const preview = await dry.json();
-	expect(preview.match?.entityId, '"good night" must resolve to a scene in this house').toMatch(/^(scene|script)\./);
+	// The wire field is `entity_id`, not `entityId`: macroShape() in the route
+	// answers in snake_case. Reading the camelCase name got undefined, which the
+	// matcher reported as "received value must be a string" rather than as a
+	// phrase that failed to resolve.
+	expect(preview.match?.entity_id, '"good night" must resolve to a scene in this house').toMatch(/^(scene|script)\./);
+
+	// A phrase the house has no scene for is an ordinary answer, not a failure:
+	// 200 with `match: null`, as the route's own contract says. This asserts it
+	// because that path used to answer 500, and nothing exercised it.
+	const nothing = await page.request.post(`/api/home/${home.id}/activate`, {
+		data: { phrase: 'brew the antimatter reactor', dryRun: true },
+		headers: await csrfHeaders(page),
+		timeout: 60_000,
+	});
+	expect(nothing.status(), `an unmatched phrase must be a 200: ${(await nothing.text()).slice(0, 200)}`).toBe(200);
+	expect((await nothing.json()).match, 'an unmatched phrase matches nothing').toBeNull();
 
 	const ran = await page.request.post(`/api/home/${home.id}/activate`, {
 		data: { phrase: 'good night' },
