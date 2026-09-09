@@ -91,6 +91,17 @@ async function resolveById(id) {
 	return j.agent || null;
 }
 
+// The legacy keys also hold built-in avatar slugs the walk companion ships with
+// ('guide', 'realistic-female'), a model URL, or the guest sentinel. Only a real
+// avatar id is a UUID, and /api/agents answers anything else with a 400 that the
+// browser logs as a console error on every page the companion mounts on. Check
+// the shape here instead of asking the server a question it cannot answer.
+const AVATAR_ID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+function isAvatarId(value) {
+	return typeof value === 'string' && AVATAR_ID_RE.test(value.trim());
+}
+
 // Find the agent backing a given avatar id — the bridge from the legacy avatar
 // keys to a canonical agent record.
 async function resolveByAvatarId(avatarId) {
@@ -148,8 +159,7 @@ async function resolveActive() {
 	}
 
 	const legacyAvatar = readStored(LEGACY_WALK_AVATAR) || readStored(LEGACY_CC_AVATAR);
-	if (legacyAvatar && !legacyAvatar.includes(':') && !legacyAvatar.includes('/')) {
-		// Looks like a bare avatar id (not a URL or the guest sentinel).
+	if (isAvatarId(legacyAvatar)) {
 		const agent = await resolveByAvatarId(legacyAvatar);
 		if (agent) {
 			writeStoredId(agent.id);
