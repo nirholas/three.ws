@@ -108,6 +108,14 @@ function pnlClass(v) {
 	return Number(v) > 0 ? 'xp-pos' : 'xp-neg';
 }
 
+// Model ids arrive provider-qualified ("anthropic/claude-haiku-4.5"). The board
+// leads with the bare name and keeps the full id on the line beneath, so an
+// arm with no model recorded reads as such instead of throwing on a null.
+function shortModel(m) {
+	if (!m) return 'unattributed';
+	return String(m).split('/').pop();
+}
+
 function shortAddr(a) {
 	if (!a) return null;
 	return `${a.slice(0, 4)}…${a.slice(-4)}`;
@@ -126,7 +134,7 @@ function walletLine(x) {
 
 function modeBadge(x) {
 	if (x.decision_mode === 'llm') {
-		return `<span class="xp-badge xp-badge-llm" title="No rule shields: an LLM judges each launch">LLM · ${esc((x.llm_model || 'auto').split('/').pop())}</span>`;
+		return `<span class="xp-badge xp-badge-llm" title="No rule shields: an LLM judges each launch">LLM · ${esc(shortModel(x.llm_model))}</span>`;
 	}
 	return `<span class="xp-badge xp-badge-rules">rules</span>`;
 }
@@ -192,8 +200,8 @@ function renderSkeleton() {
 			<table class="cv-table xp-table">
 				<thead>
 					<tr>
-						<th>Strategy</th><th>Entry conditions</th><th>Record</th><th>Win rate</th>
-						<th>Realized</th><th>ROI</th><th>Avg trade</th><th>Avg hold</th><th>Last trade</th>
+						<th scope="col">Strategy</th><th scope="col">Entry conditions</th><th scope="col">Record</th><th scope="col">Win rate</th>
+						<th scope="col">Realized</th><th scope="col">ROI</th><th scope="col">Avg trade</th><th scope="col">Avg hold</th><th scope="col">Last trade</th>
 					</tr>
 				</thead>
 				<tbody>${row.repeat(5)}</tbody>
@@ -231,7 +239,7 @@ function renderControls() {
 		<div class="xp-seg" role="group" aria-label="Time window">
 			${WINDOWS.map(
 				(w) => `
-				<button class="xp-seg-btn${w.key === windowKey ? ' on' : ''}" data-window="${w.key}" aria-pressed="${w.key === windowKey}">
+				<button type="button" class="xp-seg-btn${w.key === windowKey ? ' on' : ''}" data-window="${w.key}" aria-pressed="${w.key === windowKey}">
 					${esc(w.label)}
 				</button>`,
 			).join('')}
@@ -245,9 +253,6 @@ function renderControls() {
 	});
 }
 
-// How much of the fleet has traded its way into extra freedom. An arm at trusted
-// or above gets wider tuning bounds, more of the fleet budget, and a richer
-// evidence pack in front of its judge; one on probation gets held tighter.
 // Moon bags the fleet is still holding. Deliberately NOT added to realized P&L:
 // nothing here is realized until a bag is sold, and the whole point of the rule is
 // that these ride indefinitely. Shown because upside you cannot see is upside you
@@ -263,6 +268,9 @@ function moonbagTile(experiments) {
 		</div>`;
 }
 
+// How much of the fleet has traded its way into extra freedom. An arm at trusted
+// or above gets wider tuning bounds, more of the fleet budget, and a richer
+// evidence pack in front of its judge; one on probation gets held tighter.
 function earnedTile(experiments) {
 	const count = (tier) => experiments.filter((x) => x.autonomy_tier === tier).length;
 	const earned = count('trusted') + count('autonomous');
@@ -285,7 +293,7 @@ function renderSummary(experiments, masterWallet) {
 	const masterTile = masterWallet
 		? `<div class="cv-card xp-tile">
 				<span>Master funding wallet</span>
-				<b><a href="${esc(masterWallet.explorer_url)}" target="_blank" rel="noopener noreferrer">${esc(shortAddr(masterWallet.address))} ↗</a></b>
+				<b><a href="${esc(masterWallet.explorer_url)}" target="_blank" rel="noopener noreferrer" title="View the master funding wallet on Solscan">${esc(shortAddr(masterWallet.address))} ↗</a></b>
 				<i>${masterWallet.balance_sol != null ? `${masterWallet.balance_sol.toFixed(3)} SOL, auto-tops-up dry arms` : 'balance unavailable'}</i>
 			</div>`
 		: '';
@@ -295,7 +303,7 @@ function renderSummary(experiments, masterWallet) {
 			<div class="cv-card xp-tile"><span>Closed trades</span><b>${totalTrades}</b><i>${experiments.reduce((a, x) => a + x.open, 0)} open now</i></div>
 			<div class="cv-card xp-tile"><span>Fleet realized P&amp;L</span><b class="${pnlClass(totalPnl)}">${esc(sol(totalPnl))}</b><i>window: ${esc(windowKey)}</i></div>
 			<div class="cv-card xp-tile"><span>Fleet SOL on hand</span><b>${fleetSol.toFixed(3)} SOL</b><i>across ${experiments.filter((x) => x.wallet_address).length} wallets</i></div>
-			<div class="cv-card xp-tile"><span>Best arm</span><b>${best ? esc(best.label) : 'no trades yet'}</b><i>${best ? esc(sol(best.realized_pnl_sol)) : 'waiting on fills'}</i></div>
+			<div class="cv-card xp-tile"><span>Best arm</span><b>${best ? esc(best.label) : 'no trades yet'}</b><i class="${best ? pnlClass(best.realized_pnl_sol) : ''}">${best ? esc(sol(best.realized_pnl_sol)) : 'waiting on fills'}</i></div>
 			${moonbagTile(experiments)}
 			${earnedTile(experiments)}
 			${masterTile}
@@ -347,8 +355,8 @@ function renderBoard(experiments) {
 			<table class="cv-table xp-table">
 				<thead>
 					<tr>
-						<th>Strategy</th><th>Entry conditions</th><th>Record</th><th>Win rate</th>
-						<th>Realized</th><th>ROI</th><th>Avg trade</th><th>Avg hold</th><th>Last trade</th>
+						<th scope="col">Strategy</th><th scope="col">Entry conditions</th><th scope="col">Record</th><th scope="col">Win rate</th>
+						<th scope="col">Realized</th><th scope="col">ROI</th><th scope="col">Avg trade</th><th scope="col">Avg hold</th><th scope="col">Last trade</th>
 					</tr>
 				</thead>
 				<tbody>${rows}</tbody>
@@ -377,7 +385,7 @@ function renderJudgment(judgment) {
 	const rows = judgment
 		.map((j) => `
 		<tr>
-			<td class="xp-label">${esc(j.model.split('/').pop())}<div class="xp-cond-sub">${esc(j.model)}</div></td>
+			<td class="xp-label">${esc(shortModel(j.model))}<div class="xp-cond-sub">${esc(j.model || 'unattributed')}</div></td>
 			<td>${j.verdicts}</td>
 			<td>${j.verdicts > 0 ? Math.round((j.buy_calls / j.verdicts) * 100) + '%' : '·'} <span class="xp-cond-sub" style="display:inline">(${j.buy_calls})</span></td>
 			<td>${j.avg_confidence != null ? Math.round(j.avg_confidence * 100) + '%' : '·'}</td>
@@ -397,8 +405,8 @@ function renderJudgment(judgment) {
 			<table class="cv-table xp-table" style="min-width:720px">
 				<thead>
 					<tr>
-						<th>Model</th><th>Verdicts</th><th>Buy rate</th><th>Avg conf</th>
-						<th>Buy precision</th><th>Missed winners</th><th>Latency</th>
+						<th scope="col">Model</th><th scope="col">Verdicts</th><th scope="col">Buy rate</th><th scope="col">Avg conf</th>
+						<th scope="col">Buy precision</th><th scope="col">Missed winners</th><th scope="col">Latency</th>
 					</tr>
 				</thead>
 				<tbody>${rows}</tbody>

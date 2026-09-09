@@ -316,3 +316,10 @@
 }
 
 .xp-alert .dot { background: var(--cv-red); }
+
+/* ── related surfaces ────────────────────────────────────────────────────── */
+/* The board names things it can only gloss in a tooltip (autonomy tiers, moon
+ * bags, the reasoning ledger behind every verdict). These are the pages that
+ * write each one up, so the reader is never left at a dead end. */
+.xp-related { margin-top: 28px; }
+.xp-related .cv-h2 { margin-bottom: 10px; }
