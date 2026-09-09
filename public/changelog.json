@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-09-09T15:37:11.632Z",
+	"generated_at": "2026-09-09T15:43:39.320Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -725,6 +725,16 @@
 			"link": "/objects",
 			"tags": [
 				"fix",
+				"improvement"
+			]
+		},
+		{
+			"date": "2026-09-09",
+			"type": "update",
+			"title": "Trading finally counts toward your daily streak",
+			"summary": "The cross-surface streak on three.ws counted signing in, forging a model, saving a world and a walk session, but not a trade, which on a trading platform is the one thing it most obviously should count. A confirmed on-chain buy or sell now keeps your streak alive like any other activity, and still counts once per day however many times you trade, so the streak measures showing up rather than trading volume.",
+			"link": null,
+			"tags": [
 				"improvement"
 			]
 		},

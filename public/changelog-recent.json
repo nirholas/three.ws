@@ -1,11 +1,11 @@
 {
-	"generated_at": "2026-09-09T15:37:11.696Z",
+	"generated_at": "2026-09-09T15:43:39.345Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
 		"url": "https://three.ws"
 	},
-	"total": 3649,
+	"total": 3650,
 	"complete": false,
 	"full_feed": "/changelog.json",
 	"entries": [
@@ -728,6 +728,16 @@
 			"link": "/objects",
 			"tags": [
 				"fix",
+				"improvement"
+			]
+		},
+		{
+			"date": "2026-09-09",
+			"type": "update",
+			"title": "Trading finally counts toward your daily streak",
+			"summary": "The cross-surface streak on three.ws counted signing in, forging a model, saving a world and a walk session, but not a trade, which on a trading platform is the one thing it most obviously should count. A confirmed on-chain buy or sell now keeps your streak alive like any other activity, and still counts once per day however many times you trade, so the streak measures showing up rather than trading volume.",
+			"link": null,
+			"tags": [
 				"improvement"
 			]
 		},
@@ -1598,17 +1608,6 @@
 			"tags": [
 				"fix",
 				"infra"
-			]
-		},
-		{
-			"date": "2026-09-05",
-			"type": "update",
-			"title": "The site header now stays put when you scroll",
-			"summary": "The navigation bar was set to stick to the top of the window but never actually did: it scrolled away with the page on every route, at every screen size, so reaching the menu meant scrolling all the way back up. The bar was mounted inside a wrapper exactly its own height, and a sticky element can only travel inside its parent, so it had nowhere to go. The header now stays on screen wherever you scroll, on phones and desktop alike.",
-			"link": null,
-			"tags": [
-				"fix",
-				"improvement"
 			]
 		}
 	]

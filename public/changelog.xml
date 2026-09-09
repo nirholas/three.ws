@@ -543,6 +543,14 @@
 			<description>Turn on reduced motion in your operating system and three.ws is supposed to hold still: every animation timing on the site is named rather than spelled out, so one switch can zero all of them at once. Three places had drifted off that and spelled their own timing instead, which meant the object library card fade, the avatar picker chips and the Money Pulse rows kept animating for people who had explicitly asked them not to. One of them was pointing at a timing name that does not exist, so the value it fell back to was never the one anyone chose. All three are back on the named ladder at the same speed they always looked, and the reduced-motion switch reaches them again.</description>
 		</item>
 		<item>
+			<title>Trading finally counts toward your daily streak</title>
+			<link>https://three.ws/changelog</link>
+			<guid isPermaLink="false">2026-09-09:Trading finally counts toward your daily streak</guid>
+			<pubDate>Wed, 09 Sep 2026 12:00:00 GMT</pubDate>
+			<category>improvement</category>
+			<description>The cross-surface streak on three.ws counted signing in, forging a model, saving a world and a walk session, but not a trade, which on a trading platform is the one thing it most obviously should count. A confirmed on-chain buy or sell now keeps your streak alive like any other activity, and still counts once per day however many times you trade, so the streak measures showing up rather than trading volume.</description>
+		</item>
+		<item>
 			<title>Voice satellite: the token command works where you actually run it, and an unpaired satellite explains itself</title>
 			<link>https://three.ws/smart-home/satellite</link>
 			<guid isPermaLink="false">2026-09-09:Voice satellite: the token command works where you actually run it, and an unpaired satellite explains itself</guid>
