@@ -161,7 +161,11 @@ export function diagnoseSettleDrop({ noSolanaAccept, floorSignals, governorSkips
 				'secret does not decrypt is reported at stage `recover` and its SOL is unreachable until ' +
 				'WALLET_ENCRYPTION_KEY (or WALLET_ENCRYPTION_KEY_PREVIOUS) can open it, so no cron run and no ' +
 				'RPC tier will ever move it. Owner SOL is needed when every reclaim source reports ' +
-				'at_or_below_floor or secret_undecryptable. See docs/ops/production-log-triage.md.',
+				'at_or_below_floor or secret_undecryptable AND that plan reports ' +
+				'skipped_floor_held_sol 0. A floor skip carries its numbers ' +
+				'(at_or_below_floor:<held><<keep>), so a non-zero held total means the SOL exists on a ' +
+				'platform wallet and a floor is fencing it, not that the fleet is empty. ' +
+				'See docs/ops/production-log-triage.md.',
 		};
 	}
 	// Nothing failed and nothing was withdrawn: we are refusing our own settles to
@@ -179,8 +183,9 @@ export function diagnoseSettleDrop({ noSolanaAccept, floorSignals, governorSkips
 				'refills. Do NOT debug the facilitator and do NOT lower the sponsor floor. Read the live budget ' +
 				'at GET /api/x402/runway-lab, then fund the fee wallet: POST /api/cron/treasury-topup?dry=1 ' +
 				'(Bearer CRON_SECRET) shows what the free self-heal can reclaim, and owner SOL is needed only ' +
-				'when every reclaim source reports at_or_below_floor or an undecryptable secret. ' +
-				'See docs/x402-ring-economy.md "The wallet fee governor".',
+				'when every reclaim source reports at_or_below_floor or an undecryptable secret AND that ' +
+				'plan reports skipped_floor_held_sol 0; a non-zero held total is SOL we already own sitting ' +
+				'behind a configured floor. See docs/x402-ring-economy.md "The wallet fee governor".',
 		};
 	}
 	return {

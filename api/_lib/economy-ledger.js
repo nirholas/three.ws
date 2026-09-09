@@ -579,11 +579,23 @@ export function buildAgentReclaimRows({
 			read_errors: readErrors.length,
 			read_errors_logged: Math.min(readErrors.length, MAX_READ_ERROR_ROWS),
 			skipped: skipped.length,
+			// Bucket on the reason CLASS, the text before the first colon. Skip reasons
+			// carry their numbers now (`at_or_below_floor:0.0006<0.015`,
+			// `below_swap_rent:1253408<1870569`) so an operator can tell a fenced wallet
+			// from an empty one; keying the histogram on the whole string would give a
+			// fleet-wide run one bucket per wallet balance and destroy the count this
+			// field exists to provide.
 			skipped_reasons: skipped.reduce((acc, s) => {
-				const key = s?.reason || 'unknown';
+				const key = String(s?.reason || 'unknown').split(':')[0];
 				acc[key] = (acc[key] || 0) + 1;
 				return acc;
 			}, {}),
+			// SOL sitting on skipped wallets that is real but fenced by a floor. Zero
+			// means the sources are genuinely empty and only owner capital moves the
+			// rail; non-zero means a floor decision would release funds we already own.
+			skipped_floor_held_sol: round9(
+				skipped.reduce((sum, s) => sum + (Number(s?.heldSol) || 0), 0),
+			),
 			reclaimed_sol: reclaimed,
 			deficit_sol: deficitSol == null ? null : round9(deficitSol),
 			master_sol_before: before,

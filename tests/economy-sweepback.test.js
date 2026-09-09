@@ -15,6 +15,9 @@ import {
 	isPlatformOwnedAgent,
 	PLATFORM_AGENT_OWNER_EMAIL,
 	agentCandidateFromRow,
+	reclaimKeepLineSol,
+	floorBlockedSkip,
+	floorHeldSol,
 } from '../api/_lib/economy-sweepback.js';
 import { MIN_OPERATIONAL_WALLET_SOL } from '../api/_lib/agent-trade-guards.js';
 import { autoFundTargetSol } from '../api/_lib/agent-funding-policy.js';
@@ -316,7 +319,8 @@ test('planAgentReclaim honours the dust guard and the per-run wallet cap', () =>
 		{ agentId: 'a', name: 'Persona', address: 'P1', owner: BOT, sol: 0.0051, strategy: { enabled: false } },
 	]);
 	assert.equal(dust.plan.length, 0);
-	assert.equal(dust.skipped[0].reason, 'at_or_below_floor');
+	assert.match(dust.skipped[0].reason, /^at_or_below_floor:/);
+	assert.equal(dust.skipped[0].heldSol, 0.0051);
 
 	const many = Array.from({ length: 10 }, (_, i) => ({
 		agentId: `a${i}`, name: `Persona ${i}`, address: `P${i}`, owner: BOT, sol: 1, strategy: { enabled: false },
@@ -526,4 +530,87 @@ test('agent reclaim: rows chain like every other ledger batch', () => {
 	});
 	assert.equal(new Set(hashes).size, rows.length);
 	assert.ok(hashes.every((h) => /^[0-9a-f]{64}$/.test(h)));
+});
+
+// A floor skip has to say WHICH situation it is. `at_or_below_floor` alone was the
+// only thing three consecutive triage sessions saw for every reclaim source, and it
+// reads as "this wallet is empty" while equally meaning "this wallet holds real SOL
+// behind a floor somebody configured". The first needs owner capital; the second
+// needs a floor reviewed. In production the x402 ring treasury held 0.055 SOL against
+// a 0.1 SOL floor and printed exactly like the 110 genuinely-empty agent wallets
+// beside it, so the operator instruction "owner SOL is needed when every reclaim
+// source reports at_or_below_floor" fired while the platform already owned enough SOL
+// to restart the rail 45 times over.
+test('a floor skip separates a fenced wallet from an empty one, with both numbers', () => {
+	const fenced = floorBlockedSkip('x402-treasury', 0.054995, 0.1);
+	const empty = floorBlockedSkip('Swarm 2', 0, 0.01);
+
+	// The keep line is the number that actually blocked the sweep, not the bare floor.
+	assert.equal(fenced.keepSol, reclaimKeepLineSol(0.1));
+	assert.equal(fenced.reason, `at_or_below_floor:0.054995<${reclaimKeepLineSol(0.1)}`);
+	assert.equal(fenced.heldSol, 0.054995);
+	assert.equal(fenced.floorSol, 0.1);
+
+	assert.equal(empty.heldSol, 0);
+	assert.match(empty.reason, /^at_or_below_floor:0</);
+
+	// The two cases are now distinguishable by the field an operator acts on.
+	assert.notEqual(fenced.reason, empty.reason);
+	assert.ok(fenced.heldSol > 0 && empty.heldSol === 0);
+});
+
+// The reason and the sizing must read the same keep line, or the message would
+// explain a refusal the code did not make.
+test('the reported keep line is the one that made the sweep return nothing', () => {
+	for (const [held, floor] of [[0.054995, 0.1], [0.0051, 0.01], [0, 0.05], [1.2, 0.05]]) {
+		const skip = floorBlockedSkip('w', held, floor);
+		const swept = reclaimableSol(held, floor);
+		if (swept === 0) assert.ok(held < skip.keepSol + MIN_SWEEP_SOL, `${held}/${floor}`);
+		// Invariant the keep line exists to hold: never leave a wallet under its floor.
+		assert.ok(skip.keepSol >= skip.floorSol);
+	}
+});
+
+test('floorHeldSol totals only the SOL a floor is fencing', () => {
+	const skipped = [
+		floorBlockedSkip('treasury', 0.054995, 0.1),
+		floorBlockedSkip('a2a-payer', 0.0009, 0.05),
+		floorBlockedSkip('Swarm 2', 0, 0.01),
+		{ name: 'circulation-treasury', reason: 'feed_sink_exempt' },
+	];
+	assert.equal(floorHeldSol(skipped), 0.055895);
+	// Genuinely empty sources total zero, which is the only state that needs owner SOL.
+	assert.equal(floorHeldSol([floorBlockedSkip('a', 0, 0.01), floorBlockedSkip('b', 0, 0.01)]), 0);
+	assert.equal(floorHeldSol([]), 0);
+	assert.equal(floorHeldSol(undefined), 0);
+});
+
+// The ledger histogram counts skip CLASSES. Once a floor skip carries its numbers,
+// keying that histogram on the whole reason string would give a fleet-wide run one
+// bucket per wallet balance (110 buckets of 1 on the production fleet) and destroy
+// the count the field exists to provide. Bucketing on the text before the colon is
+// what keeps the two changes compatible.
+test('ledger skip histogram buckets by class, so numbered reasons do not fragment it', () => {
+	const skipped = [
+		floorBlockedSkip('bot-one', 0.0009, 0.01),
+		floorBlockedSkip('bot-two', 0.0031, 0.01),
+		floorBlockedSkip('bot-three', 0, 0.01),
+		{ name: 'bot-four', reason: 'capital_committed' },
+	];
+	// Every floor skip here carries a different number.
+	assert.equal(new Set(skipped.slice(0, 3).map((x) => x.reason)).size, 3);
+
+	const rows = buildAgentReclaimRows({
+		masterPubkey: ECONOMY_MASTER_ADDRESS,
+		masterSolBefore: 0.2,
+		deficitSol: 0.4,
+		result: { reclaimedSol: 0, moves: [], failed: [], skipped, readErrors: [] },
+		solUsd: 100,
+		now: 1_700_000_000_000,
+	});
+	const summary = rows[rows.length - 1];
+	assert.deepEqual(summary.detail.skipped_reasons, { at_or_below_floor: 3, capital_committed: 1 });
+	// And the fenced total rides along, so "nothing_reclaimable" can be read honestly.
+	assert.equal(summary.detail.skipped_floor_held_sol, 0.004);
+	assert.equal(summary.reason, 'nothing_reclaimable');
 });

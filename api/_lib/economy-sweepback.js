@@ -330,10 +330,67 @@ const RECLAIM_EXEMPT_NAMES = new Set(['circulation-treasury']);
  * @returns {number}
  */
 export function reclaimableSol(currentSol, minSol, minSweep = MIN_SWEEP_SOL) {
-	const floor = Math.max(0, minSol);
-	const keepSol = floor + Math.max(0.005, floor * 0.1);
-	const reclaimable = round(currentSol - keepSol);
+	const reclaimable = round(currentSol - reclaimKeepLineSol(minSol));
 	return reclaimable >= minSweep ? reclaimable : 0;
+}
+
+/**
+ * The balance a wallet is left holding: its operating floor PLUS the anti-oscillation
+ * buffer. Sizing (`reclaimableSol`) and reporting (`floorBlockedSkip`) both read it,
+ * so the number an operator is shown is by construction the number that blocked the
+ * sweep, and the two cannot drift apart the way a hand-written message would.
+ *
+ * @param {number} minSol
+ * @returns {number}
+ */
+export function reclaimKeepLineSol(minSol) {
+	const floor = Math.max(0, minSol);
+	return round(floor + Math.max(0.005, floor * 0.1));
+}
+
+/**
+ * Describe a wallet the reclaim leg will not draw from because its balance sits under
+ * its own keep line.
+ *
+ * The bare string `at_or_below_floor` is why this exists. It was the ONLY thing three
+ * consecutive triage sessions saw for every reclaim source, and it reads as "this
+ * wallet is empty" when it equally means "this wallet holds real SOL behind a floor
+ * somebody configured". Those are opposite operator situations: the first needs owner
+ * capital, the second needs a floor reviewed, and neither the settle-health hint nor
+ * the treasury-topup dry run could tell them apart. The x402 ring treasury held
+ * 0.055 SOL against a 0.1 SOL floor inherited from a role its own registry comment
+ * records as retired, and it printed exactly like the 110 genuinely-empty agent
+ * wallets beside it. Carrying the two numbers in the reason (the `<have><<need>`
+ * shape `below_swap_rent` already uses) makes that indistinguishable case impossible.
+ *
+ * @param {string} name
+ * @param {number} currentSol
+ * @param {number} minSol
+ * @returns {{name:string, reason:string, heldSol:number, keepSol:number, floorSol:number}}
+ */
+export function floorBlockedSkip(name, currentSol, minSol) {
+	const heldSol = round(Math.max(0, currentSol));
+	const keepSol = reclaimKeepLineSol(minSol);
+	return {
+		name,
+		reason: `at_or_below_floor:${heldSol}<${keepSol}`,
+		heldSol,
+		keepSol,
+		floorSol: round(Math.max(0, minSol)),
+	};
+}
+
+/**
+ * Total SOL stranded on wallets the reclaim leg skipped for their own floor. A
+ * non-zero total is the signal that the fleet is not empty, it is fenced: capital
+ * exists on platform wallets and a floor decision, not an owner transfer, is what
+ * would release it.
+ *
+ * @param {Array<{heldSol?:number}>} skipped
+ * @returns {number}
+ */
+export function floorHeldSol(skipped) {
+	return round((skipped || []).reduce((sum, s) => sum + (Number(s?.heldSol) || 0), 0));
 }
 
 /**
@@ -405,7 +462,7 @@ export async function reclaimIdleSol({ connection, network = 'mainnet', dryRun =
 		// so the topup never re-funds a reclaimed engine and the two cannot ping-pong.
 		const reclaimable = reclaimableSol(currentSol, w.minSol);
 		if (reclaimable <= 0) {
-			skipped.push({ name, reason: 'at_or_below_floor' });
+			skipped.push({ ...floorBlockedSkip(name, currentSol, w.minSol), pubkey: w.pubkey });
 			continue;
 		}
 		if (dryRun) {
@@ -430,6 +487,7 @@ export async function reclaimIdleSol({ connection, network = 'mainnet', dryRun =
 	return {
 		master,
 		reclaimedSol: round(moves.reduce((s, m) => s + m.sol, 0)),
+		floorHeldSol: floorHeldSol(skipped),
 		moves,
 		skipped,
 		failed,
@@ -535,7 +593,7 @@ export function planAgentReclaim(candidates, opts = {}) {
 		const floorSol = agentReclaimFloorSol(c.strategy);
 		const reclaimable = reclaimableSol(c.sol, floorSol, minSweep);
 		if (reclaimable <= 0) {
-			skipped.push({ name: c.name, reason: 'at_or_below_floor' });
+			skipped.push(floorBlockedSkip(c.name, c.sol, floorSol));
 			continue;
 		}
 		if (plan.length >= maxWallets) {
@@ -545,7 +603,7 @@ export function planAgentReclaim(candidates, opts = {}) {
 		plan.push({ agentId: c.agentId, name: c.name, address: c.address, sol: reclaimable, floorSol });
 		total = round(total + reclaimable);
 	}
-	return { plan, skipped, totalSol: total };
+	return { plan, skipped, totalSol: total, floorHeldSol: floorHeldSol(skipped) };
 }
 
 /**
@@ -695,7 +753,7 @@ export async function reclaimIdleAgentSol({ connection, network = 'mainnet', dry
 		for (const p of plan) {
 			if (await openReclaimWallet(p, { audit: false })) moves.push({ ...p, dryRun: true });
 		}
-		return { master, reclaimedSol: round(moves.reduce((s, m) => s + m.sol, 0)), moves, skipped, failed, readErrors };
+		return { master, reclaimedSol: round(moves.reduce((s, m) => s + m.sol, 0)), floorHeldSol: floorHeldSol(skipped), moves, skipped, failed, readErrors };
 	}
 
 	for (const p of plan) {
@@ -719,6 +777,7 @@ export async function reclaimIdleAgentSol({ connection, network = 'mainnet', dry
 	return {
 		master,
 		reclaimedSol: round(moves.reduce((s, m) => s + m.sol, 0)),
+		floorHeldSol: floorHeldSol(skipped),
 		moves,
 		skipped,
 		failed,
