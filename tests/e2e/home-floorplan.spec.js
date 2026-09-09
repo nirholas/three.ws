@@ -109,6 +109,23 @@ function watchConsole(page) {
 }
 
 /**
+ * The tray's File button, by the accessible name it actually has.
+ *
+ * Not /^File$/. The button reads "File" on screen but carries an aria-label,
+ * "File <device> into a room", and an aria-label is the accessible name: the
+ * visible text loses. Matching the label rather than the text is also the
+ * stronger assertion, because it is the name a screen reader announces, and a
+ * device list where every button is called "File" is the thing that label
+ * exists to prevent.
+ *
+ * This locator matched nothing from the moment the label landed with the i18n
+ * pass, and journeys 9c and 9e both hunted it until they timed out. Neither
+ * reported it: 9c skipped before it got that far, and that is exactly what a
+ * skip-if-empty guard costs when it can also fire for the wrong reason.
+ */
+const FILE_BUTTON = /^File .+ into a room$/;
+
+/**
  * Open the plan view and wait for it to have actually loaded.
  *
  * The wait on `.hm-plan-tray` is the load-bearing half. `#hs-plan` is the
@@ -205,7 +222,7 @@ test('journey 9c: filing a device from the tray changes the area in Home Assista
 	// below it is the same one the drop handler calls.
 	const first = loose.first();
 	const label = (await first.getAttribute('title')) || '';
-	await first.getByRole('button', { name: /^File$/ }).click();
+	await first.getByRole('button', { name: FILE_BUTTON }).click();
 
 	const target = page.locator('.hm-plan-filemenu-item').first();
 	await expect(target).toBeVisible();
@@ -300,7 +317,7 @@ test('journey 9e: a house with no areas at all reaches a full floorplan from the
 		const loose = page.locator('.hm-plan-tray-entity').first();
 		await expect(loose).toBeVisible({ timeout: 30_000 });
 		const filed = (await loose.getAttribute('title')) || '';
-		await loose.getByRole('button', { name: /^File$/ }).click();
+		await loose.getByRole('button', { name: FILE_BUTTON }).click();
 		await page.locator('.hm-plan-filemenu-item').filter({ hasText: 'Plan kitchen' }).click();
 		await expect(page.getByText(/was written to your Home Assistant/i)).toBeVisible({ timeout: 30_000 });
 

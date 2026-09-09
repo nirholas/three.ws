@@ -59,13 +59,27 @@ export function json(body, status = 200) {
 	return { status, contentType: 'application/json', body: JSON.stringify(body) };
 }
 
-/** Everything the page reads, with the home list under the caller's control. */
+/**
+ * Everything the page reads, with the home list under the caller's control.
+ *
+ * `onConnect` is AWAITED, which is what makes state 5 reachable. A caller that
+ * wants to photograph the verifying screen holds the connect open by returning
+ * a promise that never settles, and awaiting it here simply never answers the
+ * route, which is a real hang. Passing that promise straight to `route.fulfill`
+ * instead, as this did, answered the request immediately with an empty 200: the
+ * page read no home, asked for the list, got an empty one, and landed on the
+ * EMPTY screen. State 5 then only appeared for as long as one round trip
+ * against a local stub takes, so the spec asserting it passed on a quiet
+ * machine and failed on a loaded one, and on the runs where it passed it was
+ * photographing a frame rather than the state.
+ */
 export async function stub(page, { homes = [], onConnect } = {}) {
 	await page.route(CSRF, (route) => route.fulfill(json({ token: 'csrf-test-token', data: { token: 'csrf-test-token' } })));
 	await page.route(LIST, async (route) => {
 		if (route.request().method() === 'POST') {
 			const body = JSON.parse(route.request().postData() || '{}');
-			return route.fulfill(onConnect ? onConnect(body) : json({ home: HOME, capabilities: HOME.capabilities }, 201));
+			if (!onConnect) return route.fulfill(json({ home: HOME, capabilities: HOME.capabilities }, 201));
+			return route.fulfill(await onConnect(body));
 		}
 		return route.fulfill(json({ homes }));
 	});
