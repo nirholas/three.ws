@@ -131,49 +131,68 @@ export async function createSatelliteService({
 		version: SERVICE_VERSION,
 	};
 
-	if (paired) {
-		viewerServer = createViewerServer({
+	const health = () => ({
+		ok: paired,
+		service: 'home-satellite',
+		version: SERVICE_VERSION,
+		wyoming: WYOMING_VERSION,
+		paired,
+		pairing_error: pairingError,
+		satellite_id: identity?.satellite_id || null,
+		agent: identity?.agent || null,
+		hub_connected: !!hubLink?.connected,
+		viewers: viewerCount(),
+		...satellite.snapshot(),
+	});
+
+	// The viewer server runs whether or not the satellite is paired. An unpaired
+	// one serves its health (and so says WHY it is unpaired) and closes every
+	// viewer upgrade with that reason, which is the state an operator is most
+	// likely to be debugging. Refusing to open the port at all leaves them
+	// nothing to read but a container that looks alive.
+	viewerServer = createViewerServer({
+		satellite,
+		satelliteId: identity?.satellite_id || null,
+		secret: identity?.secret || null,
+		identity: identityForViewer,
+		health,
+		pairingError,
+		onLog: log,
+	});
+	viewerAddress = await viewerServer.listen(viewerPort, host);
+	log({ level: 'info', event: 'viewer.listening', port: viewerAddress.port, paired });
+
+	if (paired && hub && identity.hub_url) {
+		// The token is read fresh on every dial, so a reconnect after a long
+		// outage picks up whatever the refresh loop last stored rather than
+		// replaying an expired one.
+		hubLink = createHubLink({
 			satellite,
-			satelliteId: identity.satellite_id,
-			secret: identity.secret,
+			url: identity.hub_url,
+			token: () => identity.hub_token,
 			identity: identityForViewer,
 			onLog: log,
 		});
-		viewerAddress = await viewerServer.listen(viewerPort, host);
-		log({ level: 'info', event: 'viewer.listening', port: viewerAddress.port });
 
-		if (hub && identity.hub_url) {
-			// The token is read fresh on every dial, so a reconnect after a long
-			// outage picks up whatever the refresh loop last stored rather than
-			// replaying an expired one.
-			hubLink = createHubLink({
-				satellite,
-				url: identity.hub_url,
-				token: () => identity.hub_token,
-				identity: identityForViewer,
-				onLog: log,
-			});
-
-			const refresh = async () => {
-				try {
-					const next = await refreshHubToken({ identity, fetchImpl });
-					identity = { ...identity, ...next };
-					await saveIdentity(stateDir, identity);
-					log({ level: 'info', event: 'hub.token_refreshed', expires: identity.hub_token_exp });
-				} catch (err) {
-					log({ level: 'warn', event: 'hub.token_refresh_failed', message: err.message });
-				}
-			};
-			const schedule = () => {
-				const seconds = Math.max(60, (identity.hub_token_exp || 0) - Math.floor(Date.now() / 1000) - HUB_TOKEN_LEAD_SECONDS);
-				hubRefresh = setTimeout(async () => {
-					await refresh();
-					schedule();
-				}, seconds * 1000);
-				hubRefresh.unref?.();
-			};
-			schedule();
-		}
+		const refresh = async () => {
+			try {
+				const next = await refreshHubToken({ identity, fetchImpl });
+				identity = { ...identity, ...next };
+				await saveIdentity(stateDir, identity);
+				log({ level: 'info', event: 'hub.token_refreshed', expires: identity.hub_token_exp });
+			} catch (err) {
+				log({ level: 'warn', event: 'hub.token_refresh_failed', message: err.message });
+			}
+		};
+		const schedule = () => {
+			const seconds = Math.max(60, (identity.hub_token_exp || 0) - Math.floor(Date.now() / 1000) - HUB_TOKEN_LEAD_SECONDS);
+			hubRefresh = setTimeout(async () => {
+				await refresh();
+				schedule();
+			}, seconds * 1000);
+			hubRefresh.unref?.();
+		};
+		schedule();
 	}
 
 	return {
@@ -190,21 +209,7 @@ export async function createSatelliteService({
 			if (!identity) return null;
 			return signToken({ sid: identity.satellite_id, role: ROLE.VIEWER }, identity.secret, ttlSeconds);
 		},
-		health() {
-			return {
-				ok: paired,
-				service: 'home-satellite',
-				version: SERVICE_VERSION,
-				wyoming: WYOMING_VERSION,
-				paired,
-				pairing_error: pairingError,
-				satellite_id: identity?.satellite_id || null,
-				agent: identity?.agent || null,
-				hub_connected: !!hubLink?.connected,
-				viewers: viewerCount(),
-				...satellite.snapshot(),
-			};
-		},
+		health,
 		async close() {
 			if (hubRefresh) clearTimeout(hubRefresh);
 			hubLink?.close();

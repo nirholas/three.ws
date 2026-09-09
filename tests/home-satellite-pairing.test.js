@@ -7,7 +7,16 @@
 
 import { describe, expect, it } from 'vitest';
 
+import { spawn } from 'node:child_process';
+import { createServer } from 'node:net';
+import { mkdtemp, rm } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
+import { fileURLToPath } from 'node:url';
+
 import { generateCode, normalizeCode, CODE_TTL_MINUTES } from '../api/_lib/home/satellites.js';
+import { saveIdentity } from '../services/home-satellite/src/pairing.js';
+import { newSecret, verifyToken, ROLE } from '../services/home-satellite/src/token.js';
 import { PcmDownsampler, floatTo16kPcm } from '../src/voice/mic-capture.js';
 
 describe('pairing codes', () => {
@@ -107,5 +116,71 @@ describe('the streaming resampler', () => {
 		let streamed = 0;
 		for (let i = 0; i < samples.length; i += 128) streamed += down.push(samples.subarray(i, i + 128)).length;
 		expect(Math.abs(streamed - oneShot.length)).toBeLessThan(4);
+	});
+});
+
+// The `token` role exists to be run on the machine that is already running the
+// satellite, because that is where the identity file is. It used to build the
+// whole service to reach the signing key, which bound the Wyoming and viewer
+// ports a second time and died with EADDRINUSE in exactly that situation. So
+// the test that matters is that it mints while those ports are occupied.
+describe('the token role', () => {
+	it('mints a viewer token while the satellite it belongs to is running', async () => {
+		const dir = await mkdtemp(join(tmpdir(), 'satellite-token-'));
+		const identity = {
+			satellite_id: '00000000-0000-4000-8000-00000000beef',
+			secret: newSecret(),
+			name: 'Kitchen display',
+			agent: { id: 'a', name: 'Ada', avatarUrl: null },
+		};
+		await saveIdentity(dir, identity);
+
+		// Hold two ports and then tell the child to use exactly those, which is
+		// what a running satellite does to the machine the token is minted on.
+		const held = [createServer(), createServer()];
+		const ports = await Promise.all(held.map((s) => new Promise((resolve, reject) => {
+			s.once('error', reject);
+			s.listen(0, '127.0.0.1', () => resolve(s.address().port));
+		})));
+
+		try {
+			const token = await new Promise((resolve, reject) => {
+				const child = spawn(process.execPath, ['src/index.js', 'token', '--state-dir', dir], {
+					cwd: fileURLToPath(new URL('../services/home-satellite', import.meta.url)),
+					env: { ...process.env, WYOMING_PORT: String(ports[0]), VIEWER_PORT: String(ports[1]) },
+				});
+				let out = '';
+				let err = '';
+				child.stdout.on('data', (b) => { out += b; });
+				child.stderr.on('data', (b) => { err += b; });
+				child.on('close', (code) => (code === 0 ? resolve(out.trim()) : reject(new Error(`exit ${code}: ${err}`))));
+			});
+
+			// Nothing but the token: the documented use is `--token "$(… token)"`.
+			expect(token.split('\n')).toHaveLength(1);
+			const check = verifyToken(token, identity.secret);
+			expect(check.ok).toBe(true);
+			expect(check.claims.sid).toBe(identity.satellite_id);
+			expect(check.claims.role).toBe(ROLE.VIEWER);
+		} finally {
+			await Promise.all(held.map((s) => new Promise((r) => s.close(r))));
+			await rm(dir, { recursive: true, force: true });
+		}
+	});
+
+	it('exits non-zero when the satellite has never been paired', async () => {
+		const dir = await mkdtemp(join(tmpdir(), 'satellite-token-'));
+		try {
+			const code = await new Promise((resolve) => {
+				const child = spawn(process.execPath, ['src/index.js', 'token', '--state-dir', dir], {
+					cwd: fileURLToPath(new URL('../services/home-satellite', import.meta.url)),
+					stdio: 'ignore',
+				});
+				child.on('close', resolve);
+			});
+			expect(code).toBe(1);
+		} finally {
+			await rm(dir, { recursive: true, force: true });
+		}
 	});
 });

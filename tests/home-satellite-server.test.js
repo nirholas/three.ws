@@ -299,6 +299,44 @@ describe('an unpaired satellite', () => {
 		expect(error.data.code).toBe('unpaired');
 		expect(error.data.text).toMatch(/has not been paired/);
 	});
+
+	// The state an operator is most likely to be debugging is the one where
+	// nothing works yet, so the health endpoint has to answer in it. It used to
+	// be created only for a paired satellite, which meant the documented
+	// `curl localhost:10701/healthz` answered nothing at all on a fresh install.
+	it('still serves its health, and says why it is unpaired', async () => {
+		const { satellite } = await startSatellite({ paired: false });
+		const server = createViewerServer({
+			satellite,
+			secret: null,
+			identity: { name: 'three.ws agent', agent: null, version: '1.0.0' },
+			pairingError: 'no pairing code was supplied and no identity has been claimed',
+		});
+		const address = await server.listen(0, '127.0.0.1');
+		cleanup(() => server.close());
+
+		const health = await fetch(`http://127.0.0.1:${address.port}/healthz`).then((r) => r.json());
+		expect(health.ok).toBe(false);
+		expect(health.paired).toBe(false);
+		expect(health.state).toBe('unpaired');
+	});
+
+	it('closes a viewer with the reason it cannot be watched', async () => {
+		const { satellite } = await startSatellite({ paired: false });
+		const server = createViewerServer({
+			satellite,
+			secret: null,
+			identity: { name: 'three.ws agent', agent: null, version: '1.0.0' },
+			pairingError: 'no pairing code was supplied and no identity has been claimed',
+		});
+		const address = await server.listen(0, '127.0.0.1');
+		cleanup(() => server.close());
+
+		const ws = new WebSocket(`ws://127.0.0.1:${address.port}/viewer?token=anything`);
+		const [code, reason] = await once(ws, 'close');
+		expect(code).toBe(4401);
+		expect(String(reason)).toMatch(/no pairing code/);
+	});
 });
 
 describe('viewer tokens', () => {

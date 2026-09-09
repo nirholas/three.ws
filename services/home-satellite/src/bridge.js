@@ -184,10 +184,14 @@ export function attachViewer(satellite, socket, { identity, onLog = () => {} } =
  * @param {object} options.identity
  * @param {(entry: object) => void} [options.onLog]
  */
-export function createViewerServer({ satellite, satelliteId, secret, identity, onLog = () => {} }) {
+export function createViewerServer({ satellite, satelliteId = null, secret = null, identity, health = null, pairingError = null, onLog = () => {} }) {
 	const http = createServer((req, res) => {
 		if (req.url === '/healthz' || req.url === '/') {
-			const body = JSON.stringify({ ok: true, satellite_id: satelliteId, ...satellite.snapshot(), viewers: viewers.size });
+			const body = JSON.stringify(
+				health
+					? health()
+					: { ok: !!secret, satellite_id: satelliteId, ...satellite.snapshot(), viewers: viewers.size },
+			);
 			res.writeHead(200, { 'content-type': 'application/json', 'cache-control': 'no-store' });
 			res.end(body);
 			return;
@@ -209,6 +213,15 @@ export function createViewerServer({ satellite, satelliteId, secret, identity, o
 		}
 		if (url.pathname !== '/viewer') {
 			socket.destroy();
+			return;
+		}
+		// An unpaired satellite serves health and refuses everything else. There
+		// is no room to join and no secret to check a token against, so the only
+		// honest answer is the reason, closed cleanly enough for a browser to
+		// read it rather than report a generic network failure.
+		if (!secret) {
+			onLog({ level: 'warn', event: 'viewer.rejected', reason: 'unpaired' });
+			wss.handleUpgrade(req, socket, head, (ws) => ws.close(CLOSE.UNAUTHORIZED, pairingError || 'this satellite is not paired'));
 			return;
 		}
 		const check = verifyToken(url.searchParams.get('token') || '', secret);

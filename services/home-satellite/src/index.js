@@ -11,6 +11,8 @@
  */
 
 import { createSatelliteService, createHubService, SERVICE_VERSION } from './server.js';
+import { loadIdentity } from './pairing.js';
+import { signToken, ROLE } from './token.js';
 
 const argv = process.argv.slice(2);
 const role = argv.find((a) => !a.startsWith('-')) || process.env.SATELLITE_ROLE || 'satellite';
@@ -40,13 +42,27 @@ if (argv.includes('--help') || argv.includes('-h')) {
 	process.exit(0);
 }
 
+const log = (entry) => process.stdout.write(`${JSON.stringify({ ts: new Date().toISOString(), ...entry })}\n`);
+
 // `token` prints one credential to stdout and nothing else, because the
-// documented way to use it is `--token "$(node src/index.js token)"`. Logging a
-// startup line to stdout in that role puts JSON in front of the token and hands
-// the caller something that cannot authenticate. Every other role logs to
-// stdout, where a container runtime collects it.
-const logStream = role === 'token' ? process.stderr : process.stdout;
-const log = (entry) => logStream.write(`${JSON.stringify({ ts: new Date().toISOString(), ...entry })}\n`);
+// documented way to use it is `--token "$(node src/index.js token)"`: a startup
+// line on stdout would put JSON in front of the token and hand the caller
+// something that cannot authenticate. It reads the identity off disk and signs,
+// and deliberately does NOT build the service. The documented place to run it is
+// the machine already running the satellite, so constructing the service here
+// binds 10700 and 10701 a second time and the role died with EADDRINUSE in
+// exactly the situation it exists for. Signing needs the satellite id and the
+// secret and nothing else, so there is no server to start and no hub to dial.
+if (role === 'token') {
+	const identity = await loadIdentity(flag('state-dir', process.env.SATELLITE_STATE_DIR || './.satellite'));
+	if (!identity) {
+		console.error('this satellite has not been paired, so it has no room to hand out tokens for');
+		process.exit(1);
+	}
+	const ttl = Number(flag('ttl', process.env.VIEWER_TOKEN_TTL || 3600));
+	process.stdout.write(`${signToken({ sid: identity.satellite_id, role: ROLE.VIEWER }, identity.secret, ttl)}\n`);
+	process.exit(0);
+}
 
 if (role === 'hub') {
 	const service = await createHubService({ port: Number(flag('port', process.env.PORT || 8080)), log });
@@ -68,17 +84,6 @@ if (role === 'hub') {
 		hub: !argv.includes('--no-hub') && process.env.SATELLITE_HUB !== 'off',
 		log,
 	});
-
-	if (role === 'token') {
-		const token = service.viewerToken(3600);
-		await service.close();
-		if (!token) {
-			console.error('this satellite has not been paired, so it has no room to hand out tokens for');
-			process.exit(1);
-		}
-		process.stdout.write(`${token}\n`);
-		process.exit(0);
-	}
 
 	const health = service.health();
 	log({ level: 'info', event: 'satellite.ready', ...health });
