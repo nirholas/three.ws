@@ -591,11 +591,28 @@ async function clickEntity(page, entityId) {
 	// person cannot reach, because the room rail lists every one of them and is
 	// the keyboard route to the same selection. Falling back to it keeps the
 	// measurement about the product rather than about pointer luck.
-	const row = page.locator(`.hs-room-device[data-entity-id="${entityId.replace(/"/g, '\\"')}"]`).first();
+	//
+	// The rail lists devices for the room it is focused on, so the room comes
+	// first, exactly as a person using the keyboard would do it.
+	const roomId = await page.evaluate(
+		(id) => window.__homeScene.model.rooms.find((room) => room.objects.some((o) => o.entityId === id))?.id || null,
+		entityId,
+	);
+	if (!roomId) return false;
+	const room = page.locator(`.hs-room[data-room-id="${cssValue(roomId)}"]`).first();
+	if (!(await room.count())) return false;
+	await room.click();
+	const row = page.locator(`.hs-room-device[data-entity-id="${cssValue(entityId)}"]`).first();
+	await row.waitFor({ timeout: 10_000 }).catch(() => {});
 	if (!(await row.count())) return false;
 	await row.scrollIntoViewIfNeeded().catch(() => {});
 	await row.click();
 	return selected();
+}
+
+/** Quote a Home Assistant id for a CSS attribute selector. */
+function cssValue(value) {
+	return String(value).replace(/["\\]/g, '\\$&');
 }
 
 /** Every drawn object of a domain, room by room. */
