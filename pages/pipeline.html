@@ -54,7 +54,10 @@
 		.pl-net button:focus-visible { outline: 2px solid var(--stroke-strong, rgba(255,255,255,0.14)); outline-offset: -2px; }
 		.pl-refresh { appearance: none; background: var(--surface-1, rgba(255,255,255,0.03)); border: 1px solid var(--stroke, rgba(255,255,255,0.08)); border-radius: var(--radius-md, 10px); color: var(--ink-dim, #888); width: 34px; height: 34px; display: grid; place-items: center; cursor: pointer; transition: color var(--duration-fast), border-color var(--duration-fast), transform var(--duration-base); }
 		.pl-refresh:hover { color: var(--ink-bright, #fff); border-color: var(--stroke-strong, rgba(255,255,255,0.14)); }
-		.pl-refresh.spin svg { animation: pl-spin .6s var(--ease-standard, cubic-bezier(.2,.8,.2,1)); }
+		.pl-refresh:focus-visible { outline: 2px solid var(--ink-bright, #fff); outline-offset: 2px; color: var(--ink-bright, #fff); }
+		.pl-refresh:active { transform: scale(0.94); }
+		/* Spins for exactly as long as the request is in flight, never on a timer. */
+		.pl-refresh.spin svg { animation: pl-spin .7s linear infinite; }
 		@keyframes pl-spin { to { transform: rotate(360deg); } }
 
 		/* ── Overall health banner ───────────────────────────────────── */
@@ -66,6 +69,7 @@
 		.pl-dot.is-idle, .pl-dot.is-offline, .pl-dot.is-down, .pl-dot.is-unknown { background: transparent; border: 1.5px solid var(--pl-idle); }
 		@keyframes pl-pulse { 0% { box-shadow: 0 0 0 0 rgba(255,255,255,0.45); } 70% { box-shadow: 0 0 0 7px rgba(255,255,255,0); } 100% { box-shadow: 0 0 0 0 rgba(255,255,255,0); } }
 		@keyframes pl-blink { 50% { opacity: 0.3; } }
+		.pl-health-state { display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 16px; flex: 1 1 300px; min-width: 0; }
 		.pl-health-label { font-family: var(--font-display, sans-serif); font-weight: 600; font-size: 1.05rem; color: var(--ink-bright, #fff); text-transform: capitalize; }
 		.pl-health-note { color: var(--ink-dim, #888); font-size: 0.85rem; flex: 1 1 280px; line-height: 1.45; }
 		.pl-meta { color: var(--ink-faint, rgba(255,255,255,0.45)); font-size: 0.72rem; font-family: var(--font-mono, monospace); letter-spacing: 0.02em; white-space: nowrap; }
@@ -122,6 +126,13 @@
 		.pl-btn { appearance: none; background: var(--ink-bright, #fff); color: var(--bg-0, #0a0a0a); border: 0; border-radius: var(--radius-md, 10px); font: inherit; font-weight: 600; font-size: 0.82rem; padding: 9px 18px; cursor: pointer; transition: opacity var(--duration-fast), transform var(--duration-fast); }
 		.pl-btn:hover { opacity: 0.9; }
 		.pl-btn:active { transform: translateY(1px); }
+		.pl-btn:focus-visible { outline: 2px solid var(--ink-bright, #fff); outline-offset: 3px; }
+
+		/* ── Raw endpoints (this board is an API first) ──────────────── */
+		.pl-raw { margin: 18px 0 0; color: var(--ink-faint, rgba(255,255,255,0.45)); font-size: 0.72rem; line-height: 1.6; max-width: 74ch; }
+		.pl-raw a { color: var(--ink-dim, #888); font-family: var(--font-mono, monospace); text-decoration: none; border-bottom: 1px solid var(--stroke-strong, rgba(255,255,255,0.14)); transition: color var(--duration-fast), border-color var(--duration-fast); }
+		.pl-raw a:hover { color: var(--ink-bright, #fff); border-color: var(--ink-bright, #fff); }
+		.pl-raw a:focus-visible { outline: 2px solid var(--ink-bright, #fff); outline-offset: 3px; border-radius: 3px; }
 
 		/* ── Legend ──────────────────────────────────────────────────── */
 		.pl-legend { display: flex; flex-wrap: wrap; gap: 16px; margin-top: 26px; color: var(--ink-dim, #888); font-size: 0.72rem; }
@@ -165,17 +176,18 @@
 
 		<div class="pl-health" id="pl-health" hidden>
 			<span class="pl-dot" id="pl-health-dot"></span>
-			<span class="pl-health-label" id="pl-health-label">—</span>
-			<span class="pl-health-note" id="pl-health-note"></span>
+			<span class="pl-health-state" role="status">
+				<span class="pl-health-label" id="pl-health-label"></span>
+				<span class="pl-health-note" id="pl-health-note"></span>
+			</span>
 			<span class="pl-meta" id="pl-meta"></span>
 		</div>
 
-		<div class="pl-cta" id="pl-cta" hidden>
-			<h3 data-i18n="pipeline.the_recorder_hasn_t_started_yet">The recorder hasn't started yet</h3>
-			<p data-i18n-html="pipeline.the_always_on_worker_that_watches_the">The always-on worker that watches the live pump.fun feed isn't reporting a heartbeat. Deploy it in simulate mode — <code>npm run deploy:sniper</code> — and this pipeline lights up stage by stage as data flows. Simulate spends zero SOL; it only records.</p>
-		</div>
+		<!-- Populated from the endpoint's own next_action so the page, the API,
+		     and any agent reading it give one answer to "what should happen now". -->
+		<div class="pl-cta" id="pl-cta" hidden></div>
 
-		<div class="pl-flow" id="pl-flow" aria-live="polite">
+		<div class="pl-flow" id="pl-flow">
 			<div class="pl-skel"></div><div class="pl-skel"></div><div class="pl-skel"></div>
 			<div class="pl-skel"></div><div class="pl-skel"></div><div class="pl-skel"></div><div class="pl-skel"></div>
 		</div>
@@ -186,6 +198,8 @@
 			<span data-i18n-html="pipeline.idle_awaiting_upstream"><i class="pl-dot is-idle" style="position:static"></i> Idle — awaiting upstream</span>
 			<span data-i18n-html="pipeline.degraded_up_but_stalled"><i class="pl-dot is-degraded" style="position:static"></i> Degraded — up but stalled</span>
 		</div>
+
+		<p class="pl-raw" data-i18n-html="pipeline.every_number_on_this_board_comes">Every number on this board comes from one public endpoint: <a id="pl-raw-api" href="/api/pipeline?network=mainnet" target="_blank" rel="noopener">/api/pipeline</a>, which returns the same stages plus a machine-readable next action. The recorder's own liveness detail lives at <a href="/api/sniper/status" target="_blank" rel="noopener">/api/sniper/status</a>.</p>
 	</main>
 
 	<script src="/nav.js"></script>
@@ -198,29 +212,67 @@
 		const metaEl = document.getElementById('pl-meta');
 		const ctaEl = document.getElementById('pl-cta');
 		const refreshBtn = document.getElementById('pl-refresh');
+		const rawApiEl = document.getElementById('pl-raw-api');
 		const netBtns = [...document.querySelectorAll('.pl-net button')];
 
 		let network = 'mainnet';
 		let timer = null;
-		let inFlight = false;
+		// Requests supersede rather than queue: a click on the network toggle or
+		// the refresh button while the 8s poll is still in flight must win, or the
+		// board paints the previous network's numbers under the new label.
+		let seq = 0;
+		let inFlightController = null;
+		// Live handles on the seven stage cards. The board re-polls every 8s; it
+		// patches these in place rather than re-rendering the grid, so a card the
+		// user has tabbed to keeps focus and a screen reader is not handed a fresh
+		// copy of all seven cards on every tick.
+		let cards = null;
 
 		const esc = (s) => String(s ?? '').replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 		const fmt = (n) => { n = Number(n) || 0; return n >= 1e6 ? (n / 1e6).toFixed(1) + 'M' : n >= 1e3 ? (n / 1e3).toFixed(1) + 'k' : String(n); };
 		const ago = (ms) => { if (ms == null) return '—'; const s = Math.round(ms / 1000); if (s < 60) return s + 's ago'; const m = Math.round(s / 60); if (m < 60) return m + 'm ago'; return Math.round(m / 60) + 'h ago'; };
 		const since = (iso) => { if (!iso) return '—'; return ago(Date.now() - new Date(iso).getTime()); };
+		const setText = (el, v) => { const t = String(v); if (el.textContent !== t) el.textContent = t; };
+		const setAttr = (el, k, v) => { if (el.getAttribute(k) !== v) el.setAttribute(k, v); };
+
+		// A stage the endpoint stopped sending must still render as an honest zero.
+		// Normalizing once, at the boundary, keeps every model below able to read
+		// its fields directly and stops a shape change from turning the whole board
+		// into a "couldn't reach the pipeline" error that would be a lie.
+		const STAGE_DEFAULTS = {
+			recorder: { state: 'unknown' },
+			intel: { observed_24h: 0, observed_1h: 0, avg_quality: null, smart_money_touched: 0 },
+			outcomes: { labeled: 0, graduated: 0, pumped: 0, rugged: 0 },
+			oracle: { scored_total: 0, scored_24h: 0, prime: 0, strong: 0 },
+			reputation: { wallets: 0, smart_money: 0 },
+			learning: { sample_size: 0, trained_at: null, weights: [] },
+			trading: { strategies_armed: 0, open_positions: 0, snipes_24h: 0, trades_24h: 0 },
+		};
+
+		function normalize(stages) {
+			const out = {};
+			for (const key of Object.keys(STAGE_DEFAULTS)) {
+				const got = stages && typeof stages[key] === 'object' && stages[key] ? stages[key] : null;
+				out[key] = { ...STAGE_DEFAULTS[key], ...got };
+			}
+			if (!Array.isArray(out.learning.weights)) out.learning.weights = [];
+			return out;
+		}
 
 		// Each stage derives its visual state + headline + sub-rows from the raw payload.
 		// State is purely about data flow — encoded by lightness in the monochrome theme.
-		function stageModels(s) {
-			const rec = s.recorder || {};
+		function stageModels(raw) {
+			const s = normalize(raw);
+			const rec = s.recorder;
 			const recState = rec.state === 'live' ? 'live' : rec.state === 'degraded' ? 'degraded'
 				: (rec.state === 'down' || rec.state === 'offline' || rec.state === 'unknown') ? rec.state : 'idle';
 			const on = (v) => (v > 0 ? 'active' : 'idle');
 			return [
 				{
-					n: '01', label: 'Recorder', tag: 'pump.fun feed', state: recState, href: '/api/sniper/status', external: true,
+					n: '01', label: 'Recorder', tag: 'pump.fun feed', state: recState, href: '/pump-live',
 					value: rec.state === 'live' ? 'LIVE' : rec.state === 'degraded' ? 'STALL' : rec.state === 'down' ? 'DOWN' : 'OFF',
-					vdim: rec.state !== 'live', vlabel: rec.mode ? rec.mode + ' · ' + (rec.feedLive ? 'feed up' : 'feed down') : 'not reporting',
+					vdim: rec.state !== 'live',
+					vlabel: rec.state === 'live' ? (rec.mode || 'live') + ' · ' + (rec.feedLive ? 'feed up' : 'feed down') : (rec.reason || 'not reporting'),
 					subs: [['Heartbeat', ago(rec.heartbeatAgeMs)], ['Last event', ago(rec.lastEventAgeMs)], ['Reconnects', rec.reconnects ?? '—']],
 				},
 				{
@@ -247,7 +299,7 @@
 					n: '06', label: 'Learning', tag: 'trained weights', state: on(s.learning.sample_size), href: '/coin-intel',
 					value: fmt(s.learning.sample_size), vdim: !s.learning.sample_size, vlabel: s.learning.sample_size >= 50 ? 'samples trained' : 'samples · needs ≥50',
 					subs: s.learning.weights.length
-						? s.learning.weights.slice(0, 3).map((w) => [w.signal.replace(/_/g, ' '), (w.weight >= 0 ? '+' : '') + w.weight.toFixed(2)])
+						? s.learning.weights.slice(0, 3).map((w) => [String(w.signal).replace(/_/g, ' '), (w.weight >= 0 ? '+' : '') + Number(w.weight).toFixed(2)])
 						: [['Trained', since(s.learning.trained_at)]],
 				},
 				{
@@ -258,11 +310,11 @@
 			];
 		}
 
-		function stageCard(m, i) {
-			const subs = m.subs.map(([k, v]) => `<li><span>${esc(k)}</span><b>${esc(v)}</b></li>`).join('');
-			const tail = m.external ? ' target="_blank" rel="noopener"' : '';
-			const aria = `aria-label="${esc(m.label)} — ${esc(m.vlabel)}. Open details"`;
-			return `<a class="pl-stage s-${m.state}" href="${esc(m.href)}"${tail} ${aria} style="animation-delay:${i * 45}ms">
+		const subsHtml = (m) => m.subs.map(([k, v]) => `<li><span>${esc(k)}</span><b>${esc(v)}</b></li>`).join('');
+		const ariaFor = (m) => `${m.label}: ${m.value}, ${m.vlabel}. Open details`;
+
+		function cardHtml(m, i) {
+			return `<a class="pl-stage s-${m.state}" href="${esc(m.href)}" aria-label="${esc(ariaFor(m))}" style="animation-delay:${i * 45}ms">
 				<div class="pl-stage-top">
 					<span class="pl-stage-n">${m.n}</span>
 					<h2 class="pl-stage-label">${esc(m.label)}</h2>
@@ -273,59 +325,108 @@
 					<div class="pl-stat-v${m.vdim ? ' dim' : ''}">${esc(m.value)}</div>
 					<div class="pl-stat-l">${esc(m.vlabel)}</div>
 				</div>
-				<ul class="pl-subs">${subs}</ul>
-				<span class="pl-stage-go" aria-hidden="true">${m.external ? '↗' : '→'}</span>
+				<ul class="pl-subs">${subsHtml(m)}</ul>
+				<span class="pl-stage-go" aria-hidden="true">→</span>
 			</a>`;
+		}
+
+		/** Build the grid once, then patch values in place on every later poll. */
+		function paint(models) {
+			if (!cards || cards.length !== models.length) {
+				flow.innerHTML = models.map(cardHtml).join('');
+				cards = [...flow.querySelectorAll('.pl-stage')].map((root) => ({
+					root,
+					dot: root.querySelector('.pl-stage-dot'),
+					value: root.querySelector('.pl-stat-v'),
+					vlabel: root.querySelector('.pl-stat-l'),
+					subs: root.querySelector('.pl-subs'),
+				}));
+				return;
+			}
+			models.forEach((m, i) => {
+				const c = cards[i];
+				const cls = 'pl-stage s-' + m.state;
+				if (c.root.className !== cls) c.root.className = cls;
+				setAttr(c.root, 'href', m.href);
+				setAttr(c.root, 'aria-label', ariaFor(m));
+				const dotCls = 'pl-dot pl-stage-dot is-' + m.state;
+				if (c.dot.className !== dotCls) c.dot.className = dotCls;
+				setText(c.value, m.value);
+				c.value.classList.toggle('dim', !!m.vdim);
+				setText(c.vlabel, m.vlabel);
+				const rows = subsHtml(m);
+				if (c.subs.innerHTML !== rows) c.subs.innerHTML = rows;
+			});
+		}
+
+		function skeletons() {
+			cards = null;
+			flow.innerHTML = '<div class="pl-skel"></div>'.repeat(7);
 		}
 
 		function renderHealth(data) {
 			healthEl.hidden = false;
-			const rec = data.stages.recorder || {};
+			const rec = normalize(data.stages).recorder;
 			const cls = data.health === 'flowing' ? 'is-live' : data.health === 'recording' ? 'is-active'
 				: rec.state === 'degraded' ? 'is-degraded' : 'is-idle';
-			dotEl.className = 'pl-dot ' + cls;
-			labelEl.textContent = data.health;
-			noteEl.textContent = data.health === 'flowing'
-				? 'The recorder is live and launches are streaming in — the full loop is running.'
+			if (dotEl.className !== 'pl-dot ' + cls) dotEl.className = 'pl-dot ' + cls;
+			setText(labelEl, data.health ?? 'unknown');
+			setText(noteEl, data.health === 'flowing'
+				? 'The recorder is live and launches are streaming in, so the full loop is running.'
 				: data.health === 'recording'
 				? 'The recorder is live; waiting on the next launch to flow downstream.'
 				: rec.state === 'degraded'
-				? 'The worker is up but its feed has gone silent — no new launches are being recorded.'
-				: 'The pipeline is idle. Once the recorder worker starts, every downstream stage activates.';
-			metaEl.textContent = `${data.network} · updated ${new Date(data.t).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })}`;
+				? 'The worker is up but its feed has gone silent, so no new launches are being recorded.'
+				: 'The pipeline is idle. Once the recorder worker starts, every downstream stage activates.');
+			setText(metaEl, `${data.network} · updated ${new Date(data.t || Date.now()).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })}`);
 			// Drive the call-to-action straight from the endpoint's own guidance so
 			// the page and any agent reading /api/pipeline tell the same story.
 			const na = data.next_action || {};
 			const actionable = na.step && !['running', 'accumulate', 'await_training'].includes(na.step);
 			if (actionable) {
-				ctaEl.innerHTML = `<h3>${esc(na.label)}</h3><p>${esc(na.detail)}${na.command ? ` <code>${esc(na.command)}</code>` : ''}</p>`;
+				const html = `<h3>${esc(na.label)}</h3><p>${esc(na.detail)}${na.command ? ` <code>${esc(na.command)}</code>` : ''}</p>`;
+				if (ctaEl.innerHTML !== html) ctaEl.innerHTML = html;
 				ctaEl.hidden = false;
 			} else {
 				ctaEl.hidden = true;
 			}
 		}
 
+		function renderError(message) {
+			healthEl.hidden = true;
+			ctaEl.hidden = true;
+			cards = null;
+			flow.innerHTML = `<div class="pl-error" role="alert">
+				<h3>Couldn't reach the pipeline</h3>
+				<p>${esc(message)}. The board keeps retrying every 8 seconds on its own.</p>
+				<button class="pl-btn" id="pl-retry" type="button">Try again</button></div>`;
+			document.getElementById('pl-retry')?.addEventListener('click', load);
+		}
+
 		async function load() {
-			if (inFlight) return;
-			inFlight = true;
+			const mine = ++seq;
+			inFlightController?.abort();
+			const controller = new AbortController();
+			inFlightController = controller;
+			const asked = network;
 			refreshBtn.classList.add('spin');
+			flow.setAttribute('aria-busy', 'true');
 			try {
-				const r = await fetch(`/api/pipeline?network=${network}`, { headers: { accept: 'application/json' } });
-				if (!r.ok) throw new Error('HTTP ' + r.status);
+				const r = await fetch(`/api/pipeline?network=${asked}`, { headers: { accept: 'application/json' }, signal: controller.signal });
+				if (!r.ok) throw new Error('HTTP ' + r.status + ' from the status service');
 				const data = await r.json();
+				if (mine !== seq) return;
 				renderHealth(data);
-				flow.innerHTML = stageModels(data.stages).map(stageCard).join('');
+				paint(stageModels(data.stages));
 			} catch (e) {
-				healthEl.hidden = true;
-				ctaEl.hidden = true;
-				flow.innerHTML = `<div class="pl-error">
-					<h3>Couldn't reach the pipeline</h3>
-					<p>${esc(e.message)} — the status service may be briefly unavailable.</p>
-					<button class="pl-btn" id="pl-retry">Try again</button></div>`;
-				document.getElementById('pl-retry')?.addEventListener('click', load);
+				if (mine !== seq || e.name === 'AbortError') return;
+				renderError(navigator.onLine === false ? 'This device is offline' : e.message);
 			} finally {
-				inFlight = false;
-				setTimeout(() => refreshBtn.classList.remove('spin'), 600);
+				if (mine === seq) {
+					inFlightController = null;
+					refreshBtn.classList.remove('spin');
+					flow.setAttribute('aria-busy', 'false');
+				}
 			}
 		}
 
@@ -335,7 +436,8 @@
 			if (b.dataset.net === network) return;
 			network = b.dataset.net;
 			netBtns.forEach((x) => x.setAttribute('aria-pressed', String(x.dataset.net === network)));
-			flow.innerHTML = '<div class="pl-skel"></div>'.repeat(7);
+			rawApiEl.href = '/api/pipeline?network=' + network;
+			skeletons();
 			load();
 		}));
 		refreshBtn.addEventListener('click', load);
