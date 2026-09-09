@@ -1764,12 +1764,24 @@ not hunt a ghost.
 
 **Left open:** nothing in this order. `308-home-11-security.md` is deleted in this commit.
 
-**Where the doc changes actually landed:** `9e0574559`, another session's commit. Every edit this
-run made to `docs/home-security.md` (the guard's failure mode, the per-IP finding, the check-4
-counter note) was swept into it by a `git add -A` while that agent was documenting the Vertex rung
-in the same file. The content is intact and their own additions sit alongside it; only the commit
-subject is not about it. Their finding is the other half of mine and worth reading together: the
-diagnosis is that the keyless rungs meter by egress IP, and their answer is to export
-`GOOGLE_CLOUD_PROJECT` so the proof runs on the Vertex rung, which shares no third-party quota.
+**Where this run's changes actually landed: not in this commit.** Concurrent sessions swept every
+one of them before it could be committed here, which is ordinary on this worktree and is recorded
+so the next reader can find them:
 
-**Commits:** this one, plus `9e0574559` for the doc.
+- `9e0574559` carries the `docs/home-security.md` edits (the guard's failure mode, the per-IP
+  finding, the check-4 counter note), swept while that agent was documenting the Vertex rung in the
+  same file. Their addition is the other half of this one and the two belong together: the
+  diagnosis is that the keyless rungs meter by egress IP, and their answer is to export
+  `GOOGLE_CLOUD_PROJECT` so the proof runs on the Vertex rung, which shares no third-party quota.
+- `540b784de` carries the fix itself: `tests/setup.home-seam.js`, the `setupFiles` entry in
+  `vitest.config.js`, `armLocalInstanceSeam` in the harness helper, and the chain's last error in
+  the check-4 failure message. Its message describes the change accurately, so nothing is lost.
+
+One hazard came out of that and is worth knowing: between those commits the shared index held a
+STAGED DELETION of `tests/setup.home-seam.js` while `vitest.config.js` at HEAD already referenced
+it, so the next bare `git commit` by any session would have removed a file the whole test run now
+loads. The worktree copy was byte-identical to HEAD's blob, so it was cleared with
+`git reset -- tests/setup.home-seam.js` rather than a checkout. Check for this shape after a sweep:
+`git status` reporting `D ` on a path that `git ls-tree HEAD` still has.
+
+**Commits:** this one for the retirement, plus `9e0574559` and `540b784de` for the work.
