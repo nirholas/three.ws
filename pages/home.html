@@ -1514,6 +1514,26 @@ import { attendRotation } from '/src/shared/attended-rotation.js';
 	var reqSeq = 0;            // ignore a slow response after a tab switch
 	var hasRendered = false;   // a first successful render happened (keep the section on later empties)
 
+	// The "live" chip claims the strip is moving right now, so it has to be earned
+	// by the data rather than by which tab happens to be selected. When the object
+	// store rejected our credential on 2026-09-07 no new model could be recorded
+	// for two days, and the chip kept pulsing "live" over a strip whose newest card
+	// was 48h old. Older models are still worth showing, they just are not live.
+	var LIVE_MAX_AGE_MS = 6 * 3600 * 1000;
+
+	function feedIsLive(list) {
+		var newest = 0;
+		(list || []).forEach(function(c) {
+			var t = Date.parse(c && c.created_at);
+			if (t > newest) newest = t;
+		});
+		return newest > 0 && (Date.now() - newest) < LIVE_MAX_AGE_MS;
+	}
+
+	function syncLiveChip() {
+		if (liveChip) liveChip.hidden = sort !== 'fresh' || !feedIsLive(items);
+	}
+
 	function dedupe(all) {
 		var seen = new Set();
 		return (Array.isArray(all) ? all : []).filter(function(c) {
@@ -1596,6 +1616,7 @@ import { attendRotation } from '/src/shared/attended-rotation.js';
 				// Keep the grid tidy: never exceed the current visible cap.
 				var cap = expanded ? MAX : INITIAL;
 				while (track.children.length > cap) track.removeChild(track.lastChild);
+				syncLiveChip();
 			}).catch(function() { /* transient: keep the current stage */ });
 		}, POLL_MS);
 	}
@@ -1623,7 +1644,7 @@ import { attendRotation } from '/src/shared/attended-rotation.js';
 			items = res.items;
 			expanded = false;
 			render();
-			if (liveChip) liveChip.hidden = (s !== 'fresh');
+			syncLiveChip();
 			startPolling();
 		}).catch(function() {
 			if (seq !== reqSeq) return;
