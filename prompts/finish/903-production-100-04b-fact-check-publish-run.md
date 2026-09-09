@@ -8,6 +8,27 @@ This is the remainder of P100-04, whose code half landed on 2026-09-02. That ord
 diagnosis and fix are done and unit-tested; what is left needs credentials this workspace
 does not have and a deploy only the owner can approve.
 
+## Status as of 2026-09-09, read this before Step 0
+
+The title above is out of date and Step 0's exit test is misleading: the fix HAS been
+measured, and `/api/fact-check-benchmark` still shows the 2026-08-10 run **because the new
+one was correctly withheld**, not because nobody ran it. Three passes that day are written up
+in [PROGRESS.md](_context/production-100-PROGRESS.md); the short version:
+
+- The fix is deployed and reachable. `mixed` went from 0% to 10% and produced the verdict six
+  times, against zero in the published run.
+- Two other classes regressed, so the run was not published. The cause is not the calculus:
+  `groundedSearch` is denied project-wide by a GCP billing hold, every source is Wikipedia,
+  and 15 of 38 claims saw zero stance-bearing evidence.
+- **The only thing still blocking this order is OWNER-ACTIONS row 20**, clearing that hold.
+  Nothing on this machine routes around a dunning denial, and no amount of re-running changes
+  the answer.
+
+So do not open this order expecting to publish a number. Re-check row 20 first. If it is
+still open, the useful work is whatever improves the evidence layer for the run that happens
+after it clears, and PROGRESS records what has already been tried, measured and deliberately
+not shipped.
+
 ## Binding operating clause
 
 1. Finish 100%. Never end with a question or an unexecuted plan. Delete this file when the

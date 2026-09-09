@@ -814,6 +814,76 @@ should exit 0, `https://three.ws/locales/localized-pages.json` should read 357 r
 Card fails the widgets board's expression engine. That last one is live today: every pinned
 Windows glance widget draws empty, and the card in this tree expands cleanly.
 
+## 2026-09-09 (third pass): 04b, the blocker re-derived, and two traps measured so the next session does not pay for them
+
+Nothing in this pass changes 04b's status: the `mixed` fix is live, it was measured earlier
+today, and publishing is still gated on the GCP billing hold (OWNER-ACTIONS row 20). This
+pass re-derived that independently, then spent its time on the two things a fourth session
+would otherwise rediscover the slow way.
+
+**Row 20 confirmed, from outside the project.** `/api/web-search` still answers
+`502 upstream_error`, which is diagnostic because the handler returns `200 {enabled:false}`
+when `GOOGLE_CLOUD_PROJECT` is unset: a 502 means the variable IS set and the Vertex call is
+what fails. Two live free-lane checks of `/api/x402/fact-check` corroborate it from the
+product side. "The Eiffel Tower is located in Paris, France" returned four Wikipedia pages
+(one of them `Eiffel Tower (Paris, Texas)`, another `Eiffel Peak`); "Nvidia reported record
+data center revenue in its most recent quarterly earnings report" returned five, among them
+`Nintendo Switch` and `Foreign policy of the second Trump administration`, and answered
+`insufficient`. Production is still serving the keyless tier.
+
+**Trap 1: probing the keyless LLM floor with a toy prompt lies.** A bare probe says
+Pollinations is healthy: ten calls at 6s spacing, ten HTTP 200s, sub-second. Run the actual
+pipeline against it and the same rung answers `402 Payment Required` carrying
+`the Pollinations legacy text API is being deprecated`, and its edge returns Cloudflare 502
+pages for anything with a system message, a `response_format`, a 1024-token ceiling or a
+full-size prompt. OVH answered 429 on nine of ten probes. So the floor is not "up" in any
+sense a 40-claim run can use, and the previous pass's finding stands. **Probe a lane with
+the payload the caller actually sends**, or a dead rung reads as alive. The one in-process
+smoke check this pass could take degraded exactly as designed, reporting
+`query generation unavailable` and `stance extraction unavailable` rather than fabricating an
+all-neutral verdict, which is the contract the 2026-09-02 change added.
+
+**Trap 2: the search RANKING half is not the one-line fix it looks like.** The previous pass
+scoped it out and named the example. Measured here across ten concise, LLM-shaped queries
+(the shape `generateSearchQueries` actually emits, not the raw claim), the failure is real
+and worse than the example suggested: `Great Wall of China single continuous wall` ranks
+`Great Green Wall (China)` first and never returns the `Great Wall of China` article at all;
+`Napoleon Bonaparte actual height` never returns `Napoleon`; `lightning strikes same place
+twice` returns `Lockheed Martin F-35 Lightning II`, `Virtual XI` and `Molly Hatchet`;
+`carrots night vision myth origin` returns `Feijoada (Brazilian dish)`, `Heracles` and
+`J. R. R. Tolkien`.
+
+The obvious repair is a title-anchor rung: walk the query's leading word-prefixes through
+`action=opensearch` and add the article the query names. Measured, it recovers the canonical
+article in five of the ten cases, including `tongue map` to the `Tongue map` article that
+full-text search never returns. **It also injects junk in four of them**, because a short
+prefix resolves to a song, an album or a film: `lightning strikes same` to
+`Lightning Strikes (Aceyalone album)`, `carrots night` to `Carrot Rewards`, `humans use` to
+`Human sexual activity`, `goldfish memory` to the 2003 film `Goldfish Memory`. Two guards cut
+that down: reject a title carrying a parenthetical disambiguator, and require the resolved
+title to appear verbatim inside the query. Together they reject three of the four junk
+results while keeping all five wins; the film title survives both. That is a workable design
+and it is NOT a change to make blind, because with no LLM lane on this machine its effect on
+the per-class table cannot be measured, and shipping an unmeasured ranking change on top of
+an unmeasured passage change is how a fix becomes a regression nobody can attribute. It
+belongs in the same run that re-measures the passage change, once row 20 clears.
+
+**One defect found and fixed while verifying this order's own changelog entry**, unrelated to
+the fact-checker but shipping today. Community delivery keys an entry by date + title, and
+the posted-set can only suppress an entry sent on an EARLIER tick, so two feed entries
+sharing one key were both unposted when a batch was built and the send loop posted both:
+the identical announcement, twice, to every subscriber. `data/changelog.json` had six
+colliding pairs, three byte-identical, and one of those was added today and still unsent.
+Fixed in three layers: `pendingEntries` collapses repeats before the batch is built (new case
+in `tests/changelog-push.test.js`), the feed build now refuses a verbatim duplicate instead of
+shipping it (proved by making it fail and restoring), and the three verbatim repeats are gone
+from the data file. The three pairs that share a key while saying different things were left
+alone, because deleting or retitling published copy is a wording call, and the delivery layer
+now collapses them either way.
+
+Left: unchanged. `04b` stays on disk, the published run is still the 2026-08-10 one, and the
+finishing command when row 20 clears is the one recorded two passes above.
+
 ## Retire this file when the campaign is done (required)
 
 This file is shared context rather than a single order, so it outlives the
