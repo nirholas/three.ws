@@ -504,7 +504,16 @@
 	top: calc(var(--header-h) + var(--space-md));
 }
 
+/* `min-width: 0` is load-bearing, not tidying. A panel is a grid item of
+ * .rd-col, so its default `min-width: auto` sizes it to its own min-content,
+ * and the generated manifest inside "Ship it" is ~460px of unbreakable
+ * monospace. That pushed every report panel to 463px inside a 288px column at
+ * 320px wide, and because <body> clips rather than scrolls, the whole right
+ * column was cut off the screen with no way to reach it. Pinned to the track,
+ * the panel fits and the <pre> scrolls inside itself, which is where a long
+ * line belongs. */
 .rd-panel {
+	min-width: 0;
 	border: 1px solid var(--stroke);
 	border-radius: var(--radius-lg);
 	background: var(--surface-1);
