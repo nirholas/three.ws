@@ -398,3 +398,62 @@ export function isFeaturedSource(key) {
 	if (!s) return false;
 	return s.tier === 'tier1' || s.tier === 'tier2' || (s.credibility || 0) >= 0.85;
 }
+
+// ── Publisher host to source key ─────────────────────────────────────────────
+// A link names its publisher, and that publisher is exactly one of the feeds
+// above. Resolving it lets a lookup refresh the single source that could hold
+// an article instead of fanning out over every feed in the registry, which is
+// the difference between a narrow query that waits for its feed and a broad one
+// that truncates at a short deadline and drops the straggler.
+//
+// The index is built from the feed URLs, keyed by hostname with a leading
+// "www." removed, because a publisher routinely serves its RSS from the bare
+// domain and its articles from the www host (coincu.com/feed vs
+// www.coincu.com/article). Where two sources share a host (a publisher with a
+// per-category feed) the first key wins; both hold the same articles for this
+// purpose. A feed hosted somewhere other than the publisher's own domain simply
+// has no entry, and the caller falls back to the broad scan.
+let hostIndex = null;
+
+function normalizeHost(host) {
+	return String(host || '').toLowerCase().replace(/^www\./, '');
+}
+
+function buildHostIndex() {
+	const index = new Map();
+	for (const [key, source] of Object.entries(NEWS_SOURCES)) {
+		let host;
+		try {
+			host = normalizeHost(new URL(source.url).hostname);
+		} catch {
+			continue; // a malformed feed URL is simply not indexable
+		}
+		if (host && !index.has(host)) index.set(host, key);
+	}
+	return index;
+}
+
+/**
+ * The source key that publishes `link`, or null when no registered feed lives
+ * on that host. Matches the exact host first, then walks up the subdomains
+ * (news.example.com falls back to example.com) so a publisher whose articles
+ * sit on a subdomain of its feed host still resolves.
+ *
+ * @param {string} link article URL
+ * @returns {string|null}
+ */
+export function sourceKeyForLink(link) {
+	if (!hostIndex) hostIndex = buildHostIndex();
+	let host;
+	try {
+		host = normalizeHost(new URL(link).hostname);
+	} catch {
+		return null;
+	}
+	while (host.includes('.')) {
+		const hit = hostIndex.get(host);
+		if (hit) return hit;
+		host = host.slice(host.indexOf('.') + 1);
+	}
+	return null;
+}

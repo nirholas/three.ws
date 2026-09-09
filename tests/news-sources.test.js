@@ -5,8 +5,15 @@
 
 import { describe, it, expect } from 'vitest';
 
-const { NEWS_SOURCES, NEWS_CATEGORIES, NEWS_LANGUAGES, sourcesForCategory, sourcesForLanguage, sourcePriority } =
-	await import('../api/_lib/news-sources.js');
+const {
+	NEWS_SOURCES,
+	NEWS_CATEGORIES,
+	NEWS_LANGUAGES,
+	sourcesForCategory,
+	sourcesForLanguage,
+	sourcePriority,
+	sourceKeyForLink,
+} = await import('../api/_lib/news-sources.js');
 
 const entries = Object.entries(NEWS_SOURCES);
 
@@ -230,5 +237,41 @@ describe('sourcePriority', () => {
 
 	it('is stable for an unknown key', () => {
 		expect(sourcePriority('no_such_source')).toBe(3);
+	});
+});
+
+
+// findArticle uses this to refresh the one feed that could hold a link instead
+// of fanning out over the whole registry and truncating at a short deadline, so
+// a wrong answer here turns a live news card into a cacheable 404.
+describe('sourceKeyForLink', () => {
+	it('maps an article URL back to the feed that publishes it', () => {
+		for (const [key, src] of entries.slice(0, 40)) {
+			const host = new URL(src.url).hostname;
+			const resolved = sourceKeyForLink(`https://${host}/some-article`);
+			// A host shared by two feeds resolves to whichever was registered first,
+			// which is correct for this purpose: both carry the same articles.
+			expect(resolved, `${key}`).toBeTruthy();
+			expect(new URL(NEWS_SOURCES[resolved].url).hostname, `${key}`).toBe(host);
+		}
+	});
+
+	it('resolves the www host of a feed served from the bare domain', () => {
+		const bare = entries.find(([, s]) => !new URL(s.url).hostname.startsWith('www.'));
+		const host = new URL(bare[1].url).hostname;
+		expect(sourceKeyForLink(`https://www.${host}/story`)).toBe(sourceKeyForLink(`https://${host}/story`));
+	});
+
+	it('returns null for a host nobody here publishes, and for a non-URL', () => {
+		expect(sourceKeyForLink('https://not-a-registered-publisher.example/x')).toBeNull();
+		expect(sourceKeyForLink('')).toBeNull();
+		expect(sourceKeyForLink('not a url')).toBeNull();
+		expect(sourceKeyForLink(null)).toBeNull();
+	});
+
+	it('never resolves a bare public suffix, which would map every site to one feed', () => {
+		for (const tld of ['https://com/x', 'https://io/x', 'https://net/x']) {
+			expect(sourceKeyForLink(tld)).toBeNull();
+		}
 	});
 });

@@ -3,6 +3,15 @@
 	"entries": [
 		{
 			"date": "2026-09-09",
+			"title": "News cards stop losing their preview picture to a cold cache",
+			"summary": "About a fifth of the crypto-news feed ships text-only, so those cards start as a source tile and upgrade in place once the publisher's own preview image is found. That lookup searched all 197 publisher feeds at once and gave up after 2.5 seconds, which on a freshly started server dropped whichever feed had not answered yet, so an article the feed had just served came back as unknown. The reader kept its tile, but the failed lookup was recorded as a public answer for the next ten minutes, so every visitor to /markets and /markets/news got the same dead result and a 404 in their browser console. The lookup now asks the one publisher that could hold the article first and waits for it, and a result that could not be confirmed is held for 30 seconds instead of ten minutes.",
+			"tags": [
+				"fix"
+			],
+			"link": "/markets/news"
+		},
+		{
+			"date": "2026-09-09",
 			"title": "The trading arena now says who just passed whom",
 			"summary": "The live leaderboard on the arena told you who was ahead and nothing about what had changed, so a place changing hands, which happens several times a week on its own, went unnoticed. A grudge-match strip now sits under the standings: each trader is paired with the one directly above them, labelled as an overtake, a debut or a standing chase, with the profit or loss both sides settled in the last 24 hours as the reason. It is worked out from the same closed on-chain trades the board is ranked from, by rebuilding what the board actually said 24 hours ago out of the trade timestamps rather than trusting a stored snapshot, so the matchups reach back over history the platform already has and can never disagree with the leaderboard or with either trader's profile. Every line is written from those numbers: it will not call a trader behind when they in fact hold more SOL and rank lower on consistency, and it will not say someone booked nothing when they simply did not trade. Each matchup links to the leader's verified record and to a ghost-copy of them with no money at risk. Also available to agents and scripts at /api/sniper/rivalries.",
 			"tags": [

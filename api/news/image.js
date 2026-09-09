@@ -28,6 +28,7 @@
 import { wrap, cors, method, json, error, rateLimited } from '../_lib/http.js';
 import { limits, clientIp } from '../_lib/rate-limit.js';
 import { findArticle, extractOgImage } from '../_lib/news.js';
+import { sourceKeyForLink } from '../_lib/news-sources.js';
 import { fetchModel } from '../_lib/fetch-model.js';
 
 const PAGE_TIMEOUT_MS = 6_000;
@@ -83,10 +84,18 @@ export default wrap(async (req, res) => {
 	// one per render.
 	const article = await findArticle({ link });
 	if (!article) {
+		// How long that miss is allowed to stand depends on what it means. A link
+		// nobody publishes here is a probe, and its 404 is worth caching for the
+		// full window. A link whose publisher IS one of our feeds is a card we
+		// almost certainly served, so the miss is an unconfirmed lookup (that feed
+		// down, or its refresh still in flight) rather than a verdict: cache it
+		// briefly, or one cold instance pins a console 404 on every reader of the
+		// story for the next ten minutes.
+		const ours = Boolean(sourceKeyForLink(link));
 		return json(
 			res, 404,
 			{ error: 'unknown_article', error_description: 'not a current article from the news feed' },
-			{ 'cache-control': 'public, max-age=300, s-maxage=600' },
+			{ 'cache-control': ours ? 'public, max-age=30, s-maxage=30' : 'public, max-age=300, s-maxage=600' },
 		);
 	}
 

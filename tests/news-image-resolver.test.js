@@ -46,6 +46,11 @@ vi.mock('../api/_lib/fetch-model.js', () => ({ fetchModel: vi.fn(async () => ({ 
 
 const { default: handler } = await import('../api/news/image.js');
 
+// Read a real publisher host out of the registry rather than naming one here,
+// so this stays true when a feed is added, retired or re-pointed.
+const { NEWS_SOURCES } = await import('../api/_lib/news-sources.js');
+const ourPublisherHost = new URL(NEWS_SOURCES.coindesk.url).hostname;
+
 function makeRes() {
 	return {
 		statusCode: 200,
@@ -89,6 +94,23 @@ describe('the preview-image resolver separates "no picture" from "no such articl
 		await handler(req('https://not-ours.example/x'), res);
 		expect(res._json.status).toBe(404);
 		expect(res._json.body.error).toBe('unknown_article');
+		// Nobody publishes that host here, so the miss is a verdict and caching it
+		// for the full window is the point: an open-resolver probe costs one lookup.
+		expect(res._json.headers['cache-control']).toMatch(/max-age=300/);
+	});
+
+	it('caches a miss on one of our own publishers only briefly', async () => {
+		// A link whose host IS a registered feed is a card we very likely served,
+		// so a miss means the lookup could not confirm it (that feed down, or its
+		// refresh still in flight on this instance), not that the article is fake.
+		// The long window would pin the resulting console 404 on every reader of
+		// the story until it expired, which is the bug this guards.
+		findArticle.mockResolvedValue(null);
+		const res = makeRes();
+		await handler(req(`https://${ourPublisherHost}/some-story`), res);
+		expect(res._json.status).toBe(404);
+		expect(res._json.headers['cache-control']).toMatch(/max-age=30\b/);
+		expect(res._json.headers['cache-control']).not.toMatch(/max-age=300/);
 	});
 
 	it('redirects a known image to the same-origin proxy, never to the publisher', async () => {

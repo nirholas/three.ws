@@ -24,7 +24,7 @@
 
 import { createHash } from 'node:crypto';
 import { XMLParser } from 'fast-xml-parser';
-import { NEWS_SOURCES, sourcesForCategory, sourcesForLanguage, sourcePriority, isFeaturedSource } from './news-sources.js';
+import { NEWS_SOURCES, sourcesForCategory, sourcesForLanguage, sourcePriority, isFeaturedSource, sourceKeyForLink } from './news-sources.js';
 import { isSuppressed, excerptText } from './news-rights.js';
 import { isDisplayable } from './news-curation.js';
 import { truncateChars } from './safe-text.js';
@@ -764,13 +764,26 @@ export async function searchNews(q, limit = 8) {
  * page fetches — the content still comes from the publisher's own feed.
  */
 export async function findArticle({ link, id }) {
-	const keys = sourcesForCategory('all');
-	const all = await ensureSources(keys);
 	const wantId = id || (link ? articleId(link) : null);
 	if (!wantId && !link) return null;
-	const hit = all.find((a) => a.id === wantId || (link && a.link === link)) || null;
+	const match = (articles) => articles.find((a) => a.id === wantId || (link && a.link === link)) || null;
 	// A withdrawn story is "not found" to every caller, including the reader's
-	// feed-body fallback — otherwise a blocked page fetch would route straight
+	// feed-body fallback: otherwise a blocked page fetch would route straight
 	// around the rights filter and serve the publisher's feed copy instead.
-	return hit && isSuppressed(hit) ? null : hit;
+	const answer = (hit) => (hit && isSuppressed(hit) ? null : hit);
+
+	// Ask the one feed that could hold this link first, with the full timeout a
+	// narrow query gets in getNews. The broad scan below fans out over every
+	// source in the registry and truncates at REFRESH_DEADLINE_MS, so on an
+	// instance whose cache is still cold the publisher is dropped mid-refresh
+	// and an article the feed served seconds earlier reads as unknown. That is
+	// how /api/news/image came to answer a cacheable 404 for a live card, which
+	// then pinned a console 404 on every reader for the life of the cache entry.
+	const key = link ? sourceKeyForLink(link) : null;
+	if (key) {
+		const narrow = answer(match(await ensureSources([key], FEED_TIMEOUT_MS + 500)));
+		if (narrow) return narrow;
+	}
+
+	return answer(match(await ensureSources(sourcesForCategory('all'))));
 }
