@@ -40,7 +40,7 @@ Gas cost is minimal on L2 networks like Base (typically under $0.10). The panel 
 
 **Owners cannot vouch for their own agents.** If you own the agent, the vouch button is replaced with an explanatory note.
 
-A full reputation dashboard (showing aggregate stats and all recent reviews) is also available at [three.ws/reputation](https://three.ws/reputation) for any `(chainId, agentId)` pair.
+The standalone [Reputation Explorer](https://three.ws/reputation) covers any address, not just registered agents: open `/reputation?agent=<chainId>:<agentId>` and it resolves the agent to its owner address, or search the address directly. See [The Reputation Explorer page](#the-reputation-explorer-page) below.
 
 ### Via the SDK
 
@@ -58,7 +58,7 @@ const txHash = await submitReputation({
 });
 ```
 
-`submitFeedback` is an alias for `submitReputation` — both work identically.
+`submitReputation` is a back-compat alias for `submitFeedback` (the contract's own method name). Both work identically.
 
 ---
 
@@ -76,16 +76,31 @@ Recent vouches are loaded by querying `FeedbackSubmitted` event logs for the las
 
 Reads go through `readProvider(chainId)` from [src/erc8004/chain-meta.js](../src/erc8004/chain-meta.js): every keyless public node listed for the chain becomes a pinned provider and they are combined in an ethers `FallbackProvider` with quorum 1, so the first healthy node answers and a stalled or rate-limited one is passed over after four seconds instead of blanking the panel. The USD figure printed beside a stake amount comes from `getEthPriceUsd()` ([src/shared/usd-price.js](../src/shared/usd-price.js)), which walks four price feeds with per-provider cooldowns; a throttled feed leaves the ETH amount in place and only drops the USD hint.
 
-### Full reputation dashboard
+### The Reputation Explorer page
 
-The `ReputationDashboard` class ([src/reputation-ui.js](../src/reputation-ui.js)) is used on the standalone [/reputation](https://three.ws/reputation) page. It shows:
+The standalone [/reputation](https://three.ws/reputation) page is its own surface, not an instance of the agent-profile panel above. It lives in [public/reputation/index.html](../public/reputation/index.html) with its logic in [public/reputation/reputation.js](../public/reputation/reputation.js), and it reads **EAS (Ethereum Attestation Service)** rather than the ERC-8004 registry, so it works for any Ethereum address whether or not that address is a registered agent.
 
-- Review count, average rating, time since last review
-- Up to 10 recent reviews with inline transaction links
-- A submit form for leaving a new review (wallet connection handled inline)
-- Optimistic updates: your review appears immediately as "Pending" while the transaction confirms, then is replaced with the confirmed on-chain data. If a confirmation poll fails, the page says so ("Could not confirm your review on-chain; refresh to check.") rather than leaving the pending row looking stuck.
+URLs it answers:
 
-The dashboard reads through `getEvmProvider(chainId)` from [src/shared/evm-rpc-fallback.js](../src/shared/evm-rpc-fallback.js): the same-origin `/api/evm-rpc?chainId=N` proxy first (which inherits the server's keyed and curated RPC failover), then the chain's keyless public hosts, combined into one `FallbackProvider`. There is no per-chain RPC URL hardcoded in the dashboard any more; one dead public endpoint no longer reads as "chain unsupported".
+| URL | What it shows |
+|---|---|
+| `/reputation` | The search form: an address or ENS field plus a network picker |
+| `/reputation?address=0x…&chain=8453` | Every attestation written to that address on that chain |
+| `/reputation?address=vitalik.eth&chain=8453` | The same, resolving the ENS name through Ethereum mainnet first |
+| `/reputation?agent=8453:12` | Resolves ERC-8004 agent 12 on chain 8453 to its owner address and forwards to the address view |
+
+Chains covered: Base (8453, the default), Base Sepolia (84532), Ethereum (1), Optimism (10), Arbitrum (42161), Polygon (137). Each has its own EASScan GraphQL index and block explorer.
+
+What the page renders:
+
+- **Aggregate stats.** Attestation count, average star rating over the scored ones, and a 1-to-5 distribution bar. The count is labelled "attestations", not "reviews": most addresses hold attestations written against other EAS schemas (verifications, name claims), and calling those reviews would overstate the address's review history.
+- **The attestation list**, filterable by All / Scored / With comments, paged 30 at a time with a running "Showing X of Y" and a **Show more** button, so a heavily attested address does not silently truncate.
+- **Every attestation's payload.** A review renders as stars plus its comment. An attestation written against any other schema renders its decoded fields (name and value) with the schema string as a tag, so no card is a blank row with only an address and a timestamp.
+- **An ERC-8004 badge** when the address owns an agent in the Identity Registry on that chain, showing the registry's own vote count and average, linking out to the agent's registry token on the block explorer and to [/agent-identities](https://three.ws/agent-identities).
+- **A review form**, wallet-gated. Writes go to Base Sepolia, a free test network, which the form states plainly before you sign.
+- **A distinct failure state.** If the EASScan index does not answer, the page says the review history is unknown and offers a retry plus an EASScan link. It never reports an unreachable index as "0 reviews", which would be a false statement about the address.
+
+`ReputationDashboard` ([src/reputation-ui.js](../src/reputation-ui.js)) is a separate ERC-8004 registry dashboard component that no page currently mounts; do not assume editing it changes what /reputation shows.
 
 ### Via the SDK
 

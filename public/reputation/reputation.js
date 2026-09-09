@@ -187,17 +187,24 @@ function scoreColor(avg) {
 
 // ── EAS GraphQL read ─────────────────────────────────────────────────────────
 
+// One index page, and how many of them a single lookup will walk. A single
+// fixed page meant the headline count for a heavily attested address was the
+// page size rather than the truth, with no hint that anything was missing.
+const ATTESTATION_PAGE = 100;
+const MAX_ATTESTATIONS = 500;
+
 async function fetchAttestations(address, chainId) {
 	const chain = EAS_CHAINS[chainId];
 	if (!chain) throw new Error(`No EAS support for chain ${chainId}`);
 
 	const checksummed = getAddress(address);
 	const query = `
-		query Attestations($where: AttestationWhereInput!) {
+		query Attestations($where: AttestationWhereInput!, $take: Int!, $skip: Int!) {
 			attestations(
 				where: $where
 				orderBy: [{ time: desc }]
-				take: 100
+				take: $take
+				skip: $skip
 			) {
 				id
 				attester
@@ -213,24 +220,36 @@ async function fetchAttestations(address, chainId) {
 	`;
 
 	const where = { recipient: { equals: checksummed }, revoked: { equals: false } };
-	const res = await fetch(chain.graphql, {
-		method: 'POST',
-		headers: { 'content-type': 'application/json' },
-		body: JSON.stringify({ query, variables: { where } }),
-	});
-	if (!res.ok) throw new Error(`EASScan API error: ${res.status}`);
-	const body = await res.json();
-	if (body.errors) throw new Error(body.errors[0]?.message || 'GraphQL error');
-	return (body.data?.attestations || []).map((a) => ({
-		uid: a.id,
-		attester: a.attester,
-		recipient: a.recipient,
-		schemaId: a.schemaId,
-		schemaString: a.schema?.schema || '',
-		time: Number(a.time),
-		txid: a.txid,
-		decoded: decodeAttestationData(a.decodedDataJson),
-	}));
+	const rows = [];
+	let capped = false;
+
+	for (let skip = 0; skip < MAX_ATTESTATIONS; skip += ATTESTATION_PAGE) {
+		const res = await fetch(chain.graphql, {
+			method: 'POST',
+			headers: { 'content-type': 'application/json' },
+			body: JSON.stringify({ query, variables: { where, take: ATTESTATION_PAGE, skip } }),
+		});
+		if (!res.ok) throw new Error(`EASScan API error: ${res.status}`);
+		const body = await res.json();
+		if (body.errors) throw new Error(body.errors[0]?.message || 'GraphQL error');
+		const page = body.data?.attestations || [];
+		for (const a of page) {
+			rows.push({
+				uid: a.id,
+				attester: a.attester,
+				recipient: a.recipient,
+				schemaId: a.schemaId,
+				schemaString: a.schema?.schema || '',
+				time: Number(a.time),
+				txid: a.txid,
+				decoded: decodeAttestationData(a.decodedDataJson),
+			});
+		}
+		if (page.length < ATTESTATION_PAGE) break;
+		if (rows.length >= MAX_ATTESTATIONS) { capped = true; break; }
+	}
+
+	return { rows, capped };
 }
 
 async function resolveENS(name) {
@@ -763,13 +782,14 @@ async function renderProfile(appEl, { address, chainId }) {
 	// unreachable index as "0 reviews" is a false statement about the address.
 	const [attestationResult, agentId] = await Promise.all([
 		fetchAttestations(resolvedAddress, chainId).then(
-			(rows) => ({ rows }),
+			(result) => result,
 			(err) => ({ error: err })
 		),
 		findAgentIdForAddress(resolvedAddress, chainId).catch(() => null),
 	]);
 	const loadError = attestationResult.error || null;
 	const attestations = attestationResult.rows || [];
+	const capped = Boolean(attestationResult.capped);
 
 	// ERC-8004 reputation (if agent is registered)
 	let erc8004Rep = null;
@@ -836,7 +856,7 @@ async function renderProfile(appEl, { address, chainId }) {
 				</div>
 				<div class="rep-stat-card">
 					<div class="rep-stat-label">Attestations</div>
-					<div class="rep-stat-value">${attestations.length}</div>
+					<div class="rep-stat-value">${attestations.length}${capped ? '+' : ''}</div>
 					<div class="rep-stat-sub">${stats.count} scored · ${withComment.length} with comments</div>
 				</div>
 				<div class="rep-stat-card">
@@ -858,6 +878,7 @@ async function renderProfile(appEl, { address, chainId }) {
 
 			<div class="rep-reviews-section">
 				<h2 class="rep-section-title">Attestations</h2>
+				${capped ? `<p class="rep-list-note">Reading the ${MAX_ATTESTATIONS} most recent attestations on ${esc(chain.name)}. This address has more: <a href="${esc(chain.easscan)}/address/${esc(resolvedAddress)}" target="_blank" rel="noopener">see the full index on EASScan ↗</a></p>` : ''}
 				<div class="rep-tabs" role="tablist" aria-label="Filter attestations">
 					<button class="rep-tab active" data-filter="all" id="rep-tab-all" role="tab" aria-selected="true" aria-controls="rep-review-list" type="button">
 						All <span class="rep-tab-badge">${all.length}</span>
