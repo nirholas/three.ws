@@ -152,6 +152,16 @@ function ingest(data) {
 	setLoading('Building the arena…');
 	world.start();
 
+	// Controls are wired before anything can fail, so the retry button, the avatar
+	// picker and the sort toggle respond from the first frame.
+	mountControls();
+
+	// The HUD reads the leaderboard API, which owes nothing to the 3D load. Firing
+	// it here means the board (or its error state) paints while the animation
+	// library and the spectator's GLB are still downloading, instead of sitting on
+	// skeletons for the length of a multi-megabyte avatar fetch.
+	const firstBoard = loadAndPlace();
+
 	try {
 		await world.loadAnimations();
 	} catch (e) {
@@ -163,21 +173,26 @@ function ingest(data) {
 	try { await world.spawnPlayer(saved || '/avatars/default.glb'); } catch (e) { log.warn('player spawn', e); }
 
 	world.setLabelUpdater(updateLabels);
-	mountControls();
 	mountJoystick();
 
-	await loadAndPlace();
-	connectStream();
+	// The floor is walkable: drop the overlay and let queued agent placement run.
 	setLoading(null);
-
-	// World is walkable — release the tour caster.
+	_worldReadyResolve();
 	_tourReadyResolve?.();
+
+	await firstBoard;
+	connectStream();
 
 	// Periodic board refresh (realized P&L only changes on a close; SSE also nudges this).
 	setInterval(loadBoardOnly, 30_000);
 })();
 
 // ── data: leaderboard → agents in the world ────────────────────────────────────
+
+// Agents can only be given a body once the animation library and the scene are
+// up, so a board that lands first queues its placement behind this.
+let _worldReadyResolve;
+const worldReady = new Promise((res) => { _worldReadyResolve = res; });
 
 let _placed = false;
 async function loadAndPlace() {
@@ -204,7 +219,7 @@ async function loadAndPlace() {
 
 	if (!_placed && board.length) {
 		_placed = true;
-		spawnAgentsProgressively(board);
+		worldReady.then(() => spawnAgentsProgressively(board));
 	}
 
 	// Light up the Elite Floor — a server-decided trust treatment on the agents the
