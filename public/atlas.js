@@ -168,6 +168,13 @@ import { rankPages, rankIntents, highlight } from './atlas/score.js';
 		'[data-theme="light"] .tws-atlas-card{background:var(--surface-1,#fff);color:var(--ink,#111);',
 		'box-shadow:0 24px 80px rgba(0,0,0,.18)}',
 		'[data-theme="light"] .tws-atlas-skel{background:linear-gradient(90deg,rgba(0,0,0,.04),rgba(0,0,0,.1),rgba(0,0,0,.04));background-size:200% 100%}',
+		/* The chip kept its dark default surface on light pages that define --ink
+		   but no --surface-1, which painted near-black text on a near-black pill. */
+		'[data-theme="light"] .tws-atlas-hint{background:var(--surface-1,#fff);color:var(--ink,#111);',
+		'border-color:var(--stroke-strong,rgba(0,0,0,.16));box-shadow:0 8px 28px rgba(0,0,0,.14)}',
+		'[data-theme="light"] .tws-atlas-hint kbd{border-color:var(--stroke,rgba(0,0,0,.2));',
+		'background:var(--surface-2,rgba(0,0,0,.05))}',
+		'[data-theme="light"] .tws-atlas-hint button{color:var(--ink-dim,#5b5b5b)}',
 
 		'@media (max-width:560px){',
 		'.tws-atlas{padding:0}',
@@ -712,7 +719,11 @@ import { rankPages, rankIntents, highlight } from './atlas/score.js';
 
 		injectStyles();
 		var chip = el('div', 'tws-atlas-hint');
-		chip.setAttribute('role', 'note');
+		// A landmark, not role="note": the chip is fixed-position and lives outside
+		// every other landmark, so a plain note leaves its text unreachable by
+		// landmark navigation (and fails axe's "region" rule on every page).
+		chip.setAttribute('role', 'complementary');
+		chip.setAttribute('aria-label', 'Search shortcut');
 		chip.dataset.cornerPriority = '30';
 		chip.appendChild(el('kbd', null, MOD_LABEL + ' K'));
 		chip.appendChild(el('span', null, 'search anything on three.ws'));
