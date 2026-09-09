@@ -27535,7 +27535,7 @@
 		{
 			"date": "2026-09-09",
 			"title": "Endpoint Shopper fits a phone, and says something useful when a run finds nothing to buy",
-			"summary": "A full audit of /shopper, the page where you describe a task, set a budget, and let an agent shop the x402 Bazaar for endpoints that can answer it. Three things were wrong. A run that came back with no plan and no answer, which is what happens when nothing in the Bazaar matches the task or everything that does prices above your ceiling, painted an empty white column and stopped: no explanation, no way forward. That case now says no endpoints matched, quotes the task back, and offers the three things that change the outcome (rewrite the task, raise the budget, browse the Bazaar) plus a button to run again. Second, the page repeated whatever the server said back at you verbatim, and what the server says is written for machines: a run that failed because the service was misconfigured put the words no_payto_configured on the screen, and a dropped connection put up the browser's own wording for it. Neither names a cause or suggests a fix. A server fault now reads as the service being temporarily unavailable, a lost connection says so plainly, and a message written for a person (a task over the length limit, say) still comes through as written. Third, on a phone narrower than 560px the four navigation links were squeezed into a strip about 76px wide and had to be dragged sideways a few pixels at a time to read; they now wrap onto their own full-width row. Alongside those: the results column announces itself to a screen reader while a run is in flight and when it settles, the Task label sits above its box as intended rather than beside it, and an internal ticket number that had been sitting in the page's headline label since launch is gone.",
+			"summary": "A full audit of /shopper, the page where you describe a task, set a budget, and let an agent shop the x402 Bazaar for endpoints that can answer it. Three things were wrong. A run that came back with no plan and no answer, which is what happens when nothing in the Bazaar matches the task or everything that does prices above your ceiling, painted an empty white column and stopped: no explanation, no way forward. That case now says no endpoints matched, quotes the task back, and offers the three things that change the outcome (rewrite the task, raise the budget, browse the Bazaar) plus a button to run again. Second, when the request could not reach us at all, the page showed the browser's own wording for a dropped connection, which names no cause and suggests no fix; it now says the agent service could not be reached and what to do about it. Third, on a phone narrower than 560px the four navigation links were squeezed into a strip about 76px wide and had to be dragged sideways a few pixels at a time to read; they now wrap onto their own full-width row. Alongside those: the results column announces itself to a screen reader while a run is in flight and when it settles, the Task label sits above its box as intended rather than beside it, and an internal ticket number that had been sitting in the page's headline label since launch is gone.",
 			"tags": [
 				"fix",
 				"improvement"
@@ -27651,6 +27651,16 @@
 				"improvement"
 			],
 			"link": "/pump-dashboard"
+		},
+		{
+			"date": "2026-09-09",
+			"title": "Restyle Studio: a failed save now tells you what went wrong and what still works",
+			"summary": "A full audit of /restyle, the material and PBR editor. Every failure coming back from the server was thrown away and replaced with a bare status code: a rejected model URL read as \"Restyle failed: restyle failed (400)\" when the server had actually said which part of the URL it would not accept. The page now shows the real reason on all four calls it makes (AI restyle, seeded variants, version checkpoints, and texture generation). A second case got its own wording: when the model store itself is unavailable, the note says so, and points out that your edits are still live in the viewer and that Export GLB keeps working, because export runs entirely in your browser and needs no server at all. Dropping a local file used to be told to \"load a public URL instead\" even when the URL was never the problem, which sent people in circles; the advice now matches the actual failure. Verified end to end in a real browser: the 18 material presets, the live metalness, roughness, colour and emissive sliders, the seeded variant strip, Reset, and a validated GLB export all check out, as do the loading and error states, keyboard focus on every control, and the layout at 320, 768 and 1440 pixels.",
+			"tags": [
+				"fix",
+				"improvement"
+			],
+			"link": "/restyle"
 		}
 	]
 }
