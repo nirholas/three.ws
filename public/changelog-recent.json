@@ -1,11 +1,11 @@
 {
-	"generated_at": "2026-09-09T05:31:23.183Z",
+	"generated_at": "2026-09-09T05:43:06.259Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
 		"url": "https://three.ws"
 	},
-	"total": 3617,
+	"total": 3621,
 	"complete": false,
 	"full_feed": "/changelog.json",
 	"entries": [
@@ -243,6 +243,17 @@
 		{
 			"date": "2026-09-09",
 			"type": "update",
+			"title": "The floorplan editor can make rooms, so a home with no areas is no longer a dead end",
+			"summary": "Most Home Assistant setups we see have devices everywhere and not a single area, which left the 3D home and the floorplan with nothing to draw and the only advice we could give was to go and create areas in Home Assistant's own settings first. That is a chore people leave to do and do not come back from. The floorplan editor now makes the room itself: name it, and the area is created in your own Home Assistant, placed on the plan, and the device that prompted it is filed into it in the same step. It reaches your dashboards, your voice assistant and your automations too, because it is a real area in your registry and not a picture of one here. The tray tells a home with no rooms where to start, and a device you file no longer leaves a stale entry behind in the list.",
+			"link": "/smart-home",
+			"tags": [
+				"feature",
+				"improvement"
+			]
+		},
+		{
+			"date": "2026-09-09",
+			"type": "update",
 			"title": "The homepage stops calling its Community strip live when no new models are arriving",
 			"summary": "The Community strip on the homepage is headed \"Made with Forge. Right now.\" and carries a pulsing live chip. That chip was switched on by the Fresh tab alone, so it asserted liveness no matter how old the newest model on the strip actually was. When our object storage started rejecting the platform's credential on 2026-09-07, finished generations could no longer be recorded, the strip froze on the last model stored before that, and the chip went on pulsing live over two-day-old work with nothing on the page to say otherwise. The chip is now earned by the data: it appears only when the newest model on the strip is from the last six hours, and it reads the newest timestamp in the list rather than trusting the order it arrives in. Older models still show exactly as before, because a quiet stretch is worth showing; it just is not live.",
 			"link": "/",
@@ -434,6 +445,39 @@
 			"link": "/splat",
 			"tags": [
 				"fix",
+				"improvement"
+			]
+		},
+		{
+			"date": "2026-09-09",
+			"type": "update",
+			"title": "The Windows 11 widget draws its card again, and a new check keeps the board honest",
+			"summary": "The Agent glance widget on the Windows 11 widgets board renders an Adaptive Card, and the board fills that card in with its own expression engine rather than with JavaScript. Our card asked for the three stat rows the way JavaScript reads an array, which that engine treats as a syntax error, and it refuses the whole card rather than skipping the one line: a pinned widget came up empty with nothing to show for it anywhere else. The card now uses the syntax the board expects, and there is a new check that fills it in with the board's own engine before anything ships, alongside checks that the manifest, the service worker and the two endpoints still agree with each other. The board is the one surface we cannot open from a build machine, so the checks that stand in for it are the ones that have to be real.",
+			"link": "/glance",
+			"tags": [
+				"fix",
+				"infra"
+			]
+		},
+		{
+			"date": "2026-09-09",
+			"type": "update",
+			"title": "When the payment wallets look empty, the self-heal now says whether they are empty or just fenced",
+			"summary": "The x402 payment rail keeps a set of platform wallets topped up from one funding root, and a recovery run reports why it could not draw on each source. Every source that held less than its configured floor reported the same thing: \"at or below floor\". That single phrase covered two opposite situations. A wallet holding nothing needs money added from outside. A wallet holding real funds behind a floor somebody set does not: the platform already owns that money, and a floor decision releases it. Because the two printed identically, three separate investigations of the same stalled rail concluded the platform was out of funds while one of its own wallets held roughly forty-five times what the stalled wallet was short. A skipped source now reports how much it is holding and the line it had to stay above, and every run totals the funds it left behind, so an operator can tell at a glance whether the recovery needs a deposit or a decision. The health page and the operations runbook now point at that total instead of asserting that money is required.",
+			"link": null,
+			"tags": [
+				"fix",
+				"infra"
+			]
+		},
+		{
+			"date": "2026-09-09",
+			"type": "update",
+			"title": "Your monthly agent turns now count, and locking up never does",
+			"summary": "Talking to the agent about your house is the one part of the smart-home lane that can really cost money: the room graph makes a home prompt large, and on a paid model a single turn costs more than a year of holding that house’s connection open. Those turns were being counted but never actually limited. They are now, against the monthly allowance shown on your plan page, and if you run out the agent says so in a sentence that names the limit, the date it resets and where to raise it, instead of failing at you. Two things are deliberately left outside that limit. Asking the agent what the house is doing still works, because you have to be able to see which door is open. And telling it to lock a door, close a garage or a valve, or arm the alarm still runs, over quota, on a paused home, in every state we can put an account in: the safe direction is free, always, on every plan. If our own billing lookup fails, the turn is allowed through rather than refused.",
+			"link": "/smart-home/plan",
+			"tags": [
+				"feature",
 				"improvement"
 			]
 		},
@@ -1572,50 +1616,6 @@
 			"title": "The invitation link you just created stays on screen",
 			"summary": "Inviting somebody into your home hands you a link that works once. It used to vanish the instant the household list refreshed behind it, and since we keep only a fingerprint of that link and never the link itself, there was no way to get it back. It now stays put until you close the panel, whether or not the email went out.",
 			"link": null,
-			"tags": [
-				"fix"
-			]
-		},
-		{
-			"date": "2026-09-04",
-			"type": "update",
-			"title": "The IRL placements desk can use your location again, and only when you ask it to",
-			"summary": "The page that pins your agents to real places offers to measure how far away each pin is and to drop a new one where you are standing. None of it could work: the page arrived with the browser location service switched off for it, so every attempt failed on the spot. Location is allowed on that page now. It also no longer reaches for your position the second the page opens: it reads it only when you have already granted permission, and otherwise waits for you to press one of the location buttons.",
-			"link": null,
-			"tags": [
-				"fix",
-				"improvement"
-			]
-		},
-		{
-			"date": "2026-09-04",
-			"type": "update",
-			"title": "The one-line x402 script now works on your site, not just on ours",
-			"summary": "Our docs tell you to make any element payable by dropping one line onto your page: a script tag pointing at three.ws/x402.js. On your own domain that line never worked. Your browser asked us whether another site was allowed to read the file and we never answered, so the script was refused and the button stayed inert. The same silence broke the runtime translation script and the language catalogs it reads, and it broke the IBM partnership page that IBM hosts on its own domain: that page keeps itself current by pulling the latest copy from us, and instead had quietly frozen on the version baked in the day it was published. All of it answers any site that asks now. The live copy also carries its own script and translation addresses with it, instead of asking your server for files only we have, and a new check loads that page from a stranger's domain so none of this can go unnoticed again.",
-			"link": "/docs/x402-studio",
-			"tags": [
-				"fix",
-				"sdk",
-				"infra"
-			]
-		},
-		{
-			"date": "2026-09-04",
-			"type": "update",
-			"title": "The Smart Money directory stops asking your browser for pictures it can never get",
-			"summary": "Every wallet in the copy-trading Smart Money list carried a portrait link pointing at an outside image host that serves nobody but its own site. Browsers blocked all of them, so the list drew the trader initials it was designed to fall back on while quietly recording a failed request for each row on screen. That unusable link is no longer sent, so the directory looks exactly as it did with none of the wasted traffic behind it.",
-			"link": null,
-			"tags": [
-				"fix",
-				"improvement"
-			]
-		},
-		{
-			"date": "2026-09-04",
-			"type": "update",
-			"title": "The Windows 11 widget now actually paints your agent on the widgets board",
-			"summary": "Windows renders the Agent glance widget from a card layout the site has to hand it, and we were handing it the address of that layout instead of the layout itself, so a pinned widget had nothing to draw. The worker now fetches the card, keeps a copy so a machine that wakes up offline still renders, re-paints slots that were pinned before it took over, and registers the 15 minute refresh the widget advertises, which was never actually being scheduled. Pin it with Win + W, Add widgets, Agent glance.",
-			"link": "/glance",
 			"tags": [
 				"fix"
 			]

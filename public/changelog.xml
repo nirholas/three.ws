@@ -175,6 +175,14 @@
 			<description>The solver at /play/solver reprices the whole /play world when you move the skill level, and it fetches the new level as you move. If that fetch failed, the page dimmed its tables slightly and said nothing else: the chart marker sat at level 60 while every table below it still held level 1 figures, with no visible explanation, no way to tell which level you were reading, and no retry. The explanation existed but was written only into a region screen readers can reach, so anyone looking at the page saw a silent mismatch. A failed level now raises a banner in the open that names the level that failed, says plainly that the figures below are still the old level, and offers both a retry and a way back. A level still loading shows the same banner as a busy state with the level it is solving, so a slow connection reads as slow rather than as broken. The page also writes the level into its own address bar now: it has always read a level from a shared link, but never wrote one, so sending someone the URL after dragging to level 60 sent them level 1. And a link asking for a level past the cap settles on the cap instead of leaving the page waiting on a level that will never arrive. Alongside it, a conclusion in the model that shouted one word in capitals now reads as a normal sentence.</description>
 		</item>
 		<item>
+			<title>The floorplan editor can make rooms, so a home with no areas is no longer a dead end</title>
+			<link>https://three.ws/smart-home</link>
+			<guid isPermaLink="false">2026-09-09:The floorplan editor can make rooms, so a home with no areas is no longer a dead end</guid>
+			<pubDate>Wed, 09 Sep 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>Most Home Assistant setups we see have devices everywhere and not a single area, which left the 3D home and the floorplan with nothing to draw and the only advice we could give was to go and create areas in Home Assistant's own settings first. That is a chore people leave to do and do not come back from. The floorplan editor now makes the room itself: name it, and the area is created in your own Home Assistant, placed on the plan, and the device that prompted it is filed into it in the same step. It reaches your dashboards, your voice assistant and your automations too, because it is a real area in your registry and not a picture of one here. The tray tells a home with no rooms where to start, and a device you file no longer leaves a stale entry behind in the list.</description>
+		</item>
+		<item>
 			<title>The homepage stops calling its Community strip live when no new models are arriving</title>
 			<link>https://three.ws/</link>
 			<guid isPermaLink="false">2026-09-09:The homepage stops calling its Community strip live when no new models are arriving</guid>
@@ -317,6 +325,30 @@
 			<pubDate>Wed, 09 Sep 2026 12:00:00 GMT</pubDate>
 			<category>fix</category>
 			<description>Loading a scene on /splat used to erase the viewer's own controls: writing the scene label into the HUD replaced the recenter and download buttons with plain text, so from the first render onward neither existed. Both now live beside the label and survive every scene swap, and the download always offers the scene you are actually looking at rather than a previous one. The error state was worse than useless: it showed a heading over an empty space because the explanation was being written into an element that was not on the page. Now a failed load tells you what happened and what to do, including the advice to download and upload a file whose host blocks cross-origin requests. Clicking a sample or picking a file also shows the loading state immediately instead of sitting on an idle stage while the splat engine downloads in silence, and an engine that fails to load says so rather than leaving the page frozen.</description>
+		</item>
+		<item>
+			<title>The Windows 11 widget draws its card again, and a new check keeps the board honest</title>
+			<link>https://three.ws/glance</link>
+			<guid isPermaLink="false">2026-09-09:The Windows 11 widget draws its card again, and a new check keeps the board honest</guid>
+			<pubDate>Wed, 09 Sep 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>The Agent glance widget on the Windows 11 widgets board renders an Adaptive Card, and the board fills that card in with its own expression engine rather than with JavaScript. Our card asked for the three stat rows the way JavaScript reads an array, which that engine treats as a syntax error, and it refuses the whole card rather than skipping the one line: a pinned widget came up empty with nothing to show for it anywhere else. The card now uses the syntax the board expects, and there is a new check that fills it in with the board's own engine before anything ships, alongside checks that the manifest, the service worker and the two endpoints still agree with each other. The board is the one surface we cannot open from a build machine, so the checks that stand in for it are the ones that have to be real.</description>
+		</item>
+		<item>
+			<title>When the payment wallets look empty, the self-heal now says whether they are empty or just fenced</title>
+			<link>https://three.ws/changelog</link>
+			<guid isPermaLink="false">2026-09-09:When the payment wallets look empty, the self-heal now says whether they are empty or just fenced</guid>
+			<pubDate>Wed, 09 Sep 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>The x402 payment rail keeps a set of platform wallets topped up from one funding root, and a recovery run reports why it could not draw on each source. Every source that held less than its configured floor reported the same thing: &quot;at or below floor&quot;. That single phrase covered two opposite situations. A wallet holding nothing needs money added from outside. A wallet holding real funds behind a floor somebody set does not: the platform already owns that money, and a floor decision releases it. Because the two printed identically, three separate investigations of the same stalled rail concluded the platform was out of funds while one of its own wallets held roughly forty-five times what the stalled wallet was short. A skipped source now reports how much it is holding and the line it had to stay above, and every run totals the funds it left behind, so an operator can tell at a glance whether the recovery needs a deposit or a decision. The health page and the operations runbook now point at that total instead of asserting that money is required.</description>
+		</item>
+		<item>
+			<title>Your monthly agent turns now count, and locking up never does</title>
+			<link>https://three.ws/smart-home/plan</link>
+			<guid isPermaLink="false">2026-09-09:Your monthly agent turns now count, and locking up never does</guid>
+			<pubDate>Wed, 09 Sep 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>Talking to the agent about your house is the one part of the smart-home lane that can really cost money: the room graph makes a home prompt large, and on a paid model a single turn costs more than a year of holding that house’s connection open. Those turns were being counted but never actually limited. They are now, against the monthly allowance shown on your plan page, and if you run out the agent says so in a sentence that names the limit, the date it resets and where to raise it, instead of failing at you. Two things are deliberately left outside that limit. Asking the agent what the house is doing still works, because you have to be able to see which door is open. And telling it to lock a door, close a garage or a valve, or arm the alarm still runs, over quota, on a paused home, in every state we can put an account in: the safe direction is free, always, on every plan. If our own billing lookup fails, the turn is allowed through rather than refused.</description>
 		</item>
 		<item>
 			<title>Your private avatars load on the dashboard again, and say so when they cannot</title>

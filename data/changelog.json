@@ -3,6 +3,45 @@
 	"entries": [
 		{
 			"date": "2026-09-09",
+			"title": "Your monthly agent turns now count, and locking up never does",
+			"summary": "Talking to the agent about your house is the one part of the smart-home lane that can really cost money: the room graph makes a home prompt large, and on a paid model a single turn costs more than a year of holding that house’s connection open. Those turns were being counted but never actually limited. They are now, against the monthly allowance shown on your plan page, and if you run out the agent says so in a sentence that names the limit, the date it resets and where to raise it, instead of failing at you. Two things are deliberately left outside that limit. Asking the agent what the house is doing still works, because you have to be able to see which door is open. And telling it to lock a door, close a garage or a valve, or arm the alarm still runs, over quota, on a paused home, in every state we can put an account in: the safe direction is free, always, on every plan. If our own billing lookup fails, the turn is allowed through rather than refused.",
+			"tags": [
+				"feature",
+				"improvement"
+			],
+			"link": "/smart-home/plan"
+		},
+		{
+			"date": "2026-09-09",
+			"title": "The Windows 11 widget draws its card again, and a new check keeps the board honest",
+			"summary": "The Agent glance widget on the Windows 11 widgets board renders an Adaptive Card, and the board fills that card in with its own expression engine rather than with JavaScript. Our card asked for the three stat rows the way JavaScript reads an array, which that engine treats as a syntax error, and it refuses the whole card rather than skipping the one line: a pinned widget came up empty with nothing to show for it anywhere else. The card now uses the syntax the board expects, and there is a new check that fills it in with the board's own engine before anything ships, alongside checks that the manifest, the service worker and the two endpoints still agree with each other. The board is the one surface we cannot open from a build machine, so the checks that stand in for it are the ones that have to be real.",
+			"tags": [
+				"fix",
+				"infra"
+			],
+			"link": "/glance"
+		},
+		{
+			"date": "2026-09-09",
+			"title": "The floorplan editor can make rooms, so a home with no areas is no longer a dead end",
+			"summary": "Most Home Assistant setups we see have devices everywhere and not a single area, which left the 3D home and the floorplan with nothing to draw and the only advice we could give was to go and create areas in Home Assistant's own settings first. That is a chore people leave to do and do not come back from. The floorplan editor now makes the room itself: name it, and the area is created in your own Home Assistant, placed on the plan, and the device that prompted it is filed into it in the same step. It reaches your dashboards, your voice assistant and your automations too, because it is a real area in your registry and not a picture of one here. The tray tells a home with no rooms where to start, and a device you file no longer leaves a stale entry behind in the list.",
+			"tags": [
+				"feature",
+				"improvement"
+			],
+			"link": "/smart-home"
+		},
+		{
+			"date": "2026-09-09",
+			"title": "When the payment wallets look empty, the self-heal now says whether they are empty or just fenced",
+			"summary": "The x402 payment rail keeps a set of platform wallets topped up from one funding root, and a recovery run reports why it could not draw on each source. Every source that held less than its configured floor reported the same thing: \"at or below floor\". That single phrase covered two opposite situations. A wallet holding nothing needs money added from outside. A wallet holding real funds behind a floor somebody set does not: the platform already owns that money, and a floor decision releases it. Because the two printed identically, three separate investigations of the same stalled rail concluded the platform was out of funds while one of its own wallets held roughly forty-five times what the stalled wallet was short. A skipped source now reports how much it is holding and the line it had to stay above, and every run totals the funds it left behind, so an operator can tell at a glance whether the recovery needs a deposit or a decision. The health page and the operations runbook now point at that total instead of asserting that money is required.",
+			"tags": [
+				"fix",
+				"infra"
+			]
+		},
+		{
+			"date": "2026-09-09",
 			"title": "The homepage stops calling its Community strip live when no new models are arriving",
 			"summary": "The Community strip on the homepage is headed \"Made with Forge. Right now.\" and carries a pulsing live chip. That chip was switched on by the Fresh tab alone, so it asserted liveness no matter how old the newest model on the strip actually was. When our object storage started rejecting the platform's credential on 2026-09-07, finished generations could no longer be recorded, the strip froze on the last model stored before that, and the chip went on pulsing live over two-day-old work with nothing on the page to say otherwise. The chip is now earned by the data: it appears only when the newest model on the strip is from the last six hours, and it reads the newest timestamp in the list rather than trusting the order it arrives in. Older models still show exactly as before, because a quiet stretch is worth showing; it just is not live.",
 			"tags": [
