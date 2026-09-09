@@ -62,15 +62,30 @@ export async function signIn(page, role = 'owner') {
 	const account = stack().accounts[role];
 	if (!account) throw new Error(`no ${role} account in the e2e stack`);
 
-	const res = await page.request.post('/api/auth/login', {
-		data: { email: account.email, password: account.password },
-		headers: { 'content-type': 'application/json' },
-		timeout: 60_000,
-	});
-	if (!res.ok()) {
-		throw new Error(`login as ${role} returned ${res.status()}: ${(await res.text()).slice(0, 200)}`);
+	// The login limiter is shared by every concurrent lane on this machine, and
+	// under several agents it answers 429 with the number of seconds to wait:
+	//   {"error":"rate_limited","retry_after":14,"reason":"rate_limiter_degraded_postgres"}
+	// Throwing on that reported "journey 9 failed" for a journey that never ran a
+	// single step of itself, which is a worse lie than a slow test. Waiting the
+	// interval the server itself named is not retrying a test into passing: this
+	// is the sign-in that gets us to the start line, no assertion has happened
+	// yet, and the thing being waited on is a documented Retry-After. Anything
+	// other than a 429 still fails immediately and loudly.
+	for (let attempt = 0; ; attempt += 1) {
+		const res = await page.request.post('/api/auth/login', {
+			data: { email: account.email, password: account.password },
+			headers: { 'content-type': 'application/json' },
+			timeout: 60_000,
+		});
+		if (res.ok()) return account;
+
+		const body = await res.text();
+		const retryAfter = Number(JSON.parse(body || '{}')?.retry_after) || 0;
+		if (res.status() !== 429 || attempt >= 3 || retryAfter <= 0 || retryAfter > 120) {
+			throw new Error(`login as ${role} returned ${res.status()}: ${body.slice(0, 200)}`);
+		}
+		await new Promise((resolve) => setTimeout(resolve, (retryAfter + 1) * 1000));
 	}
-	return account;
 }
 
 /**
