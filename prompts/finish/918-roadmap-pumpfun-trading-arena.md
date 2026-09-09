@@ -45,10 +45,11 @@
 > image was built 2026-08-11, while 48 files under `workers/agent-sniper/` have
 > been committed since, so the fleet trading live right now has neither
 > `amm-exit.js` (section 9's blocker) nor `risk-officer.js`. Re-measured
-> 2026-09-09 against the production database: the worker is alive and buying
-> (heartbeat current, positions opened the same afternoon), every strategy row
-> reads `risk_officer_level = shadow`, and `sniper_risk_reviews` still holds only
-> the 7 rows from the 2026-09-04 local verification, none of them from the fleet.
+> 2026-09-09 19:34 UTC against the production database: the worker is alive and
+> buying (41 positions opened in the previous 24 hours, the last at 19:02 UTC),
+> all 27 strategy rows (13 enabled) read `risk_officer_level = shadow`, and
+> `sniper_risk_reviews` still holds only the 7 rows from the 2026-09-04 local
+> verification, none of them from the fleet.
 > The deploy is one command, `npm run deploy:sniper`, and on an existing service
 > it rolls `gcloud run services update --image`, which preserves the running env
 > and does not demote the fleet to simulate (gate 2). (2) Once shadow evidence
@@ -59,6 +60,17 @@
 > [production-100-OWNER-ACTIONS.md](_context/production-100-OWNER-ACTIONS.md).
 > Everything else in this plan is written, tested and applied to the production
 > schema.
+>
+> **Prove the deploy state from the database, not from `gcloud`.** The Codespace
+> loses its gcloud login on every recycle, so `gcloud run services describe
+> agent-sniper` (the image-date check) is usually unavailable, and its failure
+> says nothing about the fleet. The database answers the same question and is
+> always reachable: a shadow review is recorded fire-and-forget on EVERY buy
+> (`reviewBuy` in `executor.js`, `insert into sniper_risk_reviews` in
+> `risk-officer.js`), so fleet buys with no matching review rows can only mean
+> the running image predates `risk-officer.js`. 41 buys against 0 fleet review
+> rows is that proof. After the deploy, the same counts turning non-zero are how
+> you know it took.
 **The only coin this platform promotes is `$THREE` (`FeMbDoX7R1Psc4GEcvJdsbNbZA3bfztcyDCatJVJpump`).** Pump.fun coins traded/launched through the platform are user runtime data, never endorsements.
 
 ---
