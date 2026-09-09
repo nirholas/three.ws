@@ -107,6 +107,17 @@ export function assignEntityArea(id, { entityId, areaId }) {
 	return request(`/api/home/${encodeURIComponent(id)}/assign`, { method: 'POST', body: { entityId, areaId } });
 }
 
+/**
+ * Make a room in the user's own Home Assistant.
+ *
+ * The way in for a house that has never had an area: the editor creates the
+ * room here rather than sending the person off to Home Assistant's settings.
+ * A name that already exists comes back as the existing room, not an error.
+ */
+export function createArea(id, { name }) {
+	return request(`/api/home/${encodeURIComponent(id)}/areas`, { method: 'POST', body: { name } });
+}
+
 /** The caller's homes, credential free. */
 export function listHomes(signal) {
 	return request('/api/home', { signal });

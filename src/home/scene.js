@@ -31,6 +31,7 @@ const el = {
 	panelEmpty: document.getElementById('hs-panel-empty'),
 	inspector: document.getElementById('hs-inspector'),
 	live: document.getElementById('hs-live'),
+	alert: document.getElementById('hs-alert'),
 	view3d: document.getElementById('hs-view-3d'),
 	view2d: document.getElementById('hs-view-2d'),
 	viewPlan: document.getElementById('hs-view-plan'),
@@ -59,6 +60,8 @@ const state = {
 	lastGraphAt: 0,
 	selected: null,
 	pending: null,
+	/** The control that asked, so a cancelled confirmation gives the keyboard back. */
+	confirmReturn: null,
 	busy: new Set(),
 	log: [],
 	// Latency instrumentation: the wall time from an SSE frame landing to the
@@ -86,6 +89,19 @@ window.__homeScene = {
 	},
 	stats() {
 		return state.renderer?.stats?.() || null;
+	},
+	/**
+	 * Where an entity sits on screen right now, or null when the 3D view is not
+	 * mounted or the object is off camera.
+	 *
+	 * Clicking an object inside the canvas is the page's primary gesture and the
+	 * one interaction nothing automated can otherwise reach: a raycast needs a
+	 * pixel, and a pixel guessed from outside is a test that passes by luck. This
+	 * hands out the real position of a real object so the measurement pass and
+	 * the e2e spec click the same place a person would.
+	 */
+	project(entityId) {
+		return state.renderer?.project?.(entityId) || null;
 	},
 };
 
@@ -427,7 +443,13 @@ async function mountPlan() {
 async function refreshGraph() {
 	try {
 		const payload = await getHome(state.homeId);
-		if (payload?.graph) applyGraph(payload.graph, { stale: Boolean(payload.stale) });
+		if (payload?.graph) {
+			applyGraph(payload.graph, { stale: Boolean(payload.stale) });
+			// The editor holds its own reference to the graph and builds the tray
+			// from it. Filing a device or making a room changed the registry, so
+			// without this the tray still offers a device that now has a home.
+			state.plan?.setGraph?.(payload.graph);
+		}
 	} catch {
 		// The plan is still correct locally; the graph refreshes on the next event.
 	}
@@ -708,8 +730,11 @@ async function act(request, { confirmed = false, remember = false } = {}) {
 			// The gate fired. Ask, next to the thing it would move.
 			state.pending = { request, message: err.message, risk: err.pending?.risk || 'physical', entityId: err.pending?.entityId || request.entityId };
 			pushLog({ text: `${request.service.replace(/_/g, ' ')} ${request.name}`, outcome: 'refused' });
+			// Where the keyboard was when the gate fired. Cancelling or pressing
+			// Escape puts it back there, so a keyboard user is returned to the
+			// control they pressed instead of to the top of the document.
+			state.confirmReturn = document.activeElement instanceof HTMLElement ? document.activeElement : null;
 			renderConfirm();
-			announce(err.message);
 		} else {
 			pushLog({ text: `${request.service.replace(/_/g, ' ')} ${request.name}`, outcome: 'failed' });
 			announce(err.message || 'That did not work.');
@@ -737,20 +762,28 @@ function renderConfirm() {
 	card.setAttribute('role', 'alertdialog');
 	card.setAttribute('aria-modal', 'false');
 	card.setAttribute('aria-label', 'Confirm this action');
+	// A screen reader reads an alertdialog's own description when focus lands
+	// inside it, and the description is these three paragraphs in order: the
+	// risk band, the question, and the reason the gate stopped it.
+	const cardId = `hs-confirm-${Date.now().toString(36)}`;
+	card.setAttribute('aria-describedby', `${cardId}-risk ${cardId}-q ${cardId}-why`);
 
 	const risk = document.createElement('p');
 	risk.className = 'hs-confirm-risk';
+	risk.id = `${cardId}-risk`;
 	risk.textContent = pending.risk === 'security' ? 'Opens your home' : 'Moves something physical';
 	card.appendChild(risk);
 
 	const text = document.createElement('p');
 	text.className = 'hs-confirm-text';
+	text.id = `${cardId}-q`;
 	const object = findObject(pending.entityId);
 	text.textContent = `${pending.request.service.replace(/_/g, ' ')} ${object?.name || pending.request.name}?`;
 	card.appendChild(text);
 
 	const why = document.createElement('p');
 	why.className = 'hs-confirm-text';
+	why.id = `${cardId}-why`;
 	why.style.color = 'var(--ink-dim)';
 	why.textContent = pending.message;
 	card.appendChild(why);
@@ -765,7 +798,12 @@ function renderConfirm() {
 		const remember = card.querySelector('input')?.checked;
 		const request = pending.request;
 		state.pending = null;
+		// Answering yes hands the keyboard back to the control that asked, so the
+		// next Tab continues from the device rather than from the document head.
+		const back = state.confirmReturn;
+		state.confirmReturn = null;
 		act(request, { confirmed: true, remember });
+		if (back?.isConnected) back.focus();
 	});
 	const no = document.createElement('button');
 	no.type = 'button';
@@ -773,7 +811,8 @@ function renderConfirm() {
 	no.textContent = 'Cancel';
 	no.addEventListener('click', () => {
 		state.pending = null;
-		dismissConfirm();
+		dismissConfirm({ restoreFocus: true });
+		announce('Cancelled. Nothing moved.');
 	});
 	row.append(yes, no);
 	card.appendChild(row);
@@ -791,6 +830,9 @@ function renderConfirm() {
 	repositionConfirm();
 	requestAnimationFrame(repositionConfirm);
 	yes.focus();
+	// Assertive, and self-contained: a reader that lands on the Yes button hears
+	// the button, not the question, so the question is said in full here.
+	alertAssertive(`${risk.textContent}. ${text.textContent} ${pending.message} Answer with the Yes or Cancel button, or press Escape to cancel.`);
 }
 
 /**
@@ -829,15 +871,27 @@ function repositionConfirm() {
 	card.style.top = `${clamp(top, minTop, Math.max(minTop, maxTop))}px`;
 }
 
-function dismissConfirm() {
+function dismissConfirm({ restoreFocus = false } = {}) {
+	const had = Boolean(state.confirmCard);
 	state.confirmCard?.remove();
 	state.confirmCard = null;
+	// Leaving the question standing in an assertive region means the next
+	// unrelated announcement is read after a stale "unlock the front door?".
+	if (had) writeLive(el.alert, '');
+	// Only a dismissal that ENDS the question gives the keyboard back. Re-rendering
+	// the card (a second event for the same device) dismisses and rebuilds it, and
+	// must leave the return target exactly where act() put it.
+	if (!restoreFocus) return;
+	const back = state.confirmReturn;
+	state.confirmReturn = null;
+	if (back?.isConnected) back.focus();
 }
 
 function onKeydown(event) {
 	if (event.key === 'Escape' && state.pending) {
 		state.pending = null;
-		dismissConfirm();
+		dismissConfirm({ restoreFocus: true });
+		announce('Cancelled. Nothing moved.');
 	}
 }
 
@@ -1015,8 +1069,36 @@ function renderLog() {
 	el.panel.appendChild(list);
 }
 
+/**
+ * Ordinary state changes, politely: a light that went on, a house that went
+ * stale, a view that switched. A polite region waits for the reader to finish
+ * whatever it is saying, which is right for narration and wrong for a question.
+ *
+ * Writing the same string twice is a no-op in every screen reader, so a repeat
+ * (two lights refused for the same reason) is nudged into a different string
+ * rather than swallowed.
+ */
 function announce(message) {
-	el.live.textContent = message;
+	writeLive(el.live, message);
+}
+
+/**
+ * The guarded confirmation, assertively. This is the one message in the lane a
+ * person must not be able to miss: it stands between them and an unlocked front
+ * door, and a polite region can be queued behind a paragraph of room narration
+ * for long enough that the card times out unanswered.
+ */
+function alertAssertive(message) {
+	writeLive(el.alert, message);
+}
+
+function writeLive(node, message) {
+	if (!node) return;
+	const text = String(message || '');
+	// An identical assignment changes no text node, and a live region only
+	// announces a change. Clearing first makes the repeat a change again.
+	if (node.textContent === text) node.textContent = '';
+	node.textContent = text;
 }
 
 // ── helpers ──────────────────────────────────────────────────────────────────
@@ -1031,13 +1113,23 @@ function homeIdFromPath() {
 }
 
 function preferredView() {
+	// An explicit ?view= is a deliberate request for THIS visit: a link someone
+	// shared, a bookmark, or the address a wall display is pinned to. It is more
+	// specific than whatever this browser happens to remember, so it is read
+	// first and wins. Reading storage first meant one visit that ever touched
+	// the 2D button pinned every later ?view=3d link back to 2D, on a page whose
+	// own toggle treats a ?view= parameter as a choice the person made.
+	// It is deliberately not written back: a shared link should not overwrite
+	// the preference this browser chose for itself.
+	const asked = new URLSearchParams(location.search).get('view');
+	if (asked === '2d' || asked === '3d' || asked === 'plan') return asked;
 	try {
 		const stored = localStorage.getItem(VIEW_KEY);
 		if (stored === '2d' || stored === '3d') return stored;
 	} catch {
 		// Storage disabled: default to 3D and let the WebGL probe decide.
 	}
-	return new URLSearchParams(location.search).get('view') === '2d' ? '2d' : '3d';
+	return '3d';
 }
 
 function findObject(entityId) {

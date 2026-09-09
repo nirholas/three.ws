@@ -15,7 +15,7 @@
  * States 1 to 9 of order 07 all live here; each is a branch of render().
  */
 
-import { assignEntityArea, clearLayout, getLayout, HomeApiError, saveLayout } from './api.js';
+import { assignEntityArea, clearLayout, createArea, getLayout, HomeApiError, saveLayout } from './api.js';
 import { clear, el, noticeEl } from './connect.js';
 
 /** Metres per grid square. Matches the scene's CELL so the two read alike. */
@@ -51,6 +51,9 @@ export function mountFloorplan({ mount, homeId, graph, canEdit = true, onChange 
 		error: null,
 		notice: null,
 		conflict: null,
+		/** The new-room form, when it is open. `{ error }` while it is. */
+		naming: null,
+		creating: false,
 		selected: null,
 		history: [],
 		future: [],
@@ -61,7 +64,23 @@ export function mountFloorplan({ mount, homeId, graph, canEdit = true, onChange 
 	mount.append(view);
 
 	load();
-	return { destroy: () => view.remove(), reload: load };
+	return {
+		destroy: () => view.remove(),
+		reload: load,
+		/**
+		 * The house changed under us, so redraw the tray from the new graph.
+		 *
+		 * Filing a device and making a room both write Home Assistant's own
+		 * registry, and neither produces a state event that would correct a tray
+		 * built from the old graph. The scene re-reads the house and hands the
+		 * result back here.
+		 */
+		setGraph(next) {
+			if (!next) return;
+			graph = next;
+			render();
+		},
+	};
 
 	async function load() {
 		state.loading = true;
@@ -277,6 +296,53 @@ export function mountFloorplan({ mount, homeId, graph, canEdit = true, onChange 
 		render();
 	}
 
+	/**
+	 * Make a room that does not exist yet, in Home Assistant, and place it.
+	 *
+	 * State 2: a house where nothing has ever been assigned to an area. Without
+	 * this the tray offers one synthetic "Everything" bucket, filing has nowhere
+	 * to file to, and the only advice we can give is "go and use Home Assistant's
+	 * settings first", which is a chore that loses the person. The room is
+	 * created in their own registry, so it reaches their dashboards and voice
+	 * assistant too, exactly like filing a device does.
+	 */
+	async function createRoom(name) {
+		if (state.creating) return;
+		const thenFile = state.naming?.thenFile || null;
+		state.creating = true;
+		state.naming = { error: null, thenFile };
+		render();
+		try {
+			const res = await createArea(homeId, { name });
+			const area = res?.area;
+			if (!area?.id) throw new Error('Home Assistant did not name the new room.');
+
+			// Teach the local graph about it immediately, so nameOf, the file menu
+			// and liveRoomIds all work before the refreshed graph comes back. The
+			// authoritative copy arrives through setGraph a moment later.
+			graph = { ...(graph || {}), rooms: [...(graph?.rooms || []), { id: area.id, name: area.name, entities: [] }] };
+
+			state.naming = null;
+			state.creating = false;
+			placeRoom(area.id);
+			state.notice = area.created
+				? { tone: 'ok', title: `${area.name} is a room in your home now`, body: 'It was made in your Home Assistant, so you can file devices into it here and use it there.' }
+				: { tone: 'info', title: `${area.name} already existed`, body: 'It is on the plan now.' };
+			render();
+			onChange?.(toDocument(), { refreshGraph: true });
+
+			// The room was made in order to hold this device, so finish the job
+			// rather than handing back a form and making them find it again.
+			if (thenFile) await fileEntity(thenFile, area.id);
+		} catch (err) {
+			// The form stays open holding what they typed: a name that was refused
+			// is a name to fix, not a reason to start over.
+			state.creating = false;
+			state.naming = { error: describeError(err).body };
+			render();
+		}
+	}
+
 	// ---- rendering ---------------------------------------------------------
 
 	function render() {
@@ -294,6 +360,7 @@ export function mountFloorplan({ mount, homeId, graph, canEdit = true, onChange 
 		}
 		if (state.notice) view.append(noticeEl(state.notice));
 		if (state.conflict) view.append(conflictPanel());
+		if (state.naming && canEdit) view.append(namingForm());
 
 		view.append(toolbar());
 		view.append(canvas());
@@ -313,6 +380,7 @@ export function mountFloorplan({ mount, homeId, graph, canEdit = true, onChange 
 
 		bar.append(button('Undo', undo, { disabled: !state.history.length, key: 'Ctrl+Z' }));
 		bar.append(button('Redo', redo, { disabled: !state.future.length, key: 'Ctrl+Shift+Z' }));
+		bar.append(button('New room', () => openNaming(), { disabled: state.creating }));
 		const dirty = state.history.length > 0;
 		bar.append(button(state.saving ? 'Saving' : 'Save floorplan', save, { primary: true, disabled: state.saving || !dirty }));
 		bar.append(button('Reset to default', resetPlan, { disabled: state.saving || !state.rooms.size }));
@@ -321,6 +389,73 @@ export function mountFloorplan({ mount, homeId, graph, canEdit = true, onChange 
 		count.setAttribute('aria-live', 'polite');
 		bar.append(count);
 		return bar;
+	}
+
+	/** Open the new-room form, optionally to hold a device that needs somewhere. */
+	function openNaming(thenFile = null) {
+		state.naming = { error: null, thenFile };
+		state.notice = null;
+		render();
+		view.querySelector('.hm-plan-naming input')?.focus();
+	}
+
+	/**
+	 * Name a new room.
+	 *
+	 * A form rather than window.prompt: prompt cannot be styled, cannot show the
+	 * error the server returned without a second dialog, blocks the whole tab,
+	 * and is suppressed outright in some browsers. This is three elements and it
+	 * behaves like the rest of the product.
+	 */
+	function namingForm() {
+		const form = el('form', 'hm-plan-naming');
+		form.setAttribute('aria-label', 'Make a new room');
+
+		const id = `hm-plan-newroom-${Math.random().toString(36).slice(2, 8)}`;
+		const label = el('label', null, state.naming.thenFile
+			? `Name a room for ${state.naming.thenFile}`
+			: 'Name the new room');
+		label.htmlFor = id;
+		form.append(label);
+
+		const input = el('input', 'hm-plan-naming-input');
+		input.id = id;
+		input.type = 'text';
+		input.maxLength = 64;
+		input.required = true;
+		input.autocomplete = 'off';
+		input.placeholder = 'Kitchen';
+		form.append(input);
+
+		const actions = el('div', 'hm-plan-naming-actions');
+		const submit = el('button', 'hm-plan-btn is-primary', state.creating ? 'Making' : 'Make this room');
+		submit.type = 'submit';
+		submit.disabled = state.creating;
+		actions.append(submit);
+
+		const cancel = el('button', 'hm-plan-btn', 'Cancel');
+		cancel.type = 'button';
+		cancel.disabled = state.creating;
+		cancel.addEventListener('click', () => { state.naming = null; render(); });
+		actions.append(cancel);
+		form.append(actions);
+
+		if (state.naming.error) {
+			const err = el('p', 'hm-plan-naming-error', state.naming.error);
+			err.setAttribute('role', 'alert');
+			form.append(err);
+		}
+
+		form.addEventListener('submit', (e) => {
+			e.preventDefault();
+			const name = input.value.trim();
+			if (!name) {
+				state.naming = { ...state.naming, error: 'Give the room a name, like Kitchen.' };
+				return render();
+			}
+			createRoom(name);
+		});
+		return form;
 	}
 
 	function conflictPanel() {
@@ -485,6 +620,15 @@ export function mountFloorplan({ mount, homeId, graph, canEdit = true, onChange 
 		const wrap = el('div', 'hm-plan-tray');
 		wrap.append(el('h3', 'hm-plan-tray-title', 'To place'));
 
+		// State 2. A house with no areas has nothing to arrange, and the honest
+		// answer is not an empty panel: it is the first room.
+		if (canEdit && !liveRoomIds().some((id) => !id.startsWith('__'))) {
+			const start = el('div', 'hm-plan-tray-start');
+			start.append(el('p', null, 'Nothing in this home is in a room yet. Make the first one and the plan starts here.'));
+			start.append(button('Make a room', () => openNaming()));
+			wrap.append(start);
+		}
+
 		const unplaced = state.unplaced.length ? state.unplaced : liveRoomIds().filter((id) => !state.rooms.has(id));
 		if (unplaced.length) {
 			const list = el('ul', 'hm-plan-tray-rooms');
@@ -534,10 +678,10 @@ export function mountFloorplan({ mount, homeId, graph, canEdit = true, onChange 
 	/** The keyboard route into filing, so drag is never the only path. */
 	function fileByPrompt(entityId) {
 		const rooms = liveRoomIds().filter((id) => !id.startsWith('__'));
-		if (!rooms.length) {
-			state.notice = { tone: 'info', title: 'No rooms yet', body: 'Make an area in Home Assistant first, then devices can be filed into it.' };
-			return render();
-		}
+		// State 2, the common real house: nothing has ever been assigned to an
+		// area, so there is nowhere to file this. Make the room here instead of
+		// sending them to Home Assistant's settings to do a chore.
+		if (!rooms.length) return openNaming(entityId);
 		const menu = el('div', 'hm-plan-filemenu');
 		menu.setAttribute('role', 'menu');
 		for (const id of rooms) {

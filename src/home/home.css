@@ -95,6 +95,8 @@
 .hm-field { display: block; margin-bottom: var(--space-md); }
 .hm-label { display: block; font-size: var(--text-md); font-weight: var(--weight-medium); margin-bottom: 0.4rem; }
 .hm-hint { font-size: var(--text-sm); color: var(--hm-ink-3); margin: 0.35rem 0 0; line-height: var(--leading-normal); }
+/* Inline validation. The wording carries the message; the colour only agrees with it. */
+.hm-hint[data-error='true'] { color: var(--hm-down); }
 
 .hm-input {
 	width: 100%; box-sizing: border-box;
@@ -763,6 +765,30 @@
 .hm-plan-conflict h3 { margin: 0 0 0.35rem; font-size: var(--text-md); }
 .hm-plan-conflict p { margin: 0 0 var(--space-sm); font-size: var(--text-sm); line-height: var(--leading-normal); }
 .hm-plan-conflict-actions { display: flex; gap: var(--space-xs); flex-wrap: wrap; }
+
+/* Making the first room. The house with no areas at all starts here, so this
+   is a first-class panel rather than a dialog bolted on the side. */
+.hm-plan-naming {
+	display: grid; gap: var(--space-xs);
+	border: 1px solid var(--hm-line); border-radius: var(--radius-md);
+	background: var(--hm-panel); padding: var(--space-md);
+}
+.hm-plan-naming label { font-size: var(--text-sm); color: var(--hm-ink-2); }
+.hm-plan-naming-input {
+	width: 100%; box-sizing: border-box;
+	padding: 0.45rem 0.7rem; border: 1px solid var(--hm-line); border-radius: var(--radius-sm);
+	background: var(--hm-panel-2); color: var(--ink); font: inherit; font-size: var(--text-sm);
+}
+.hm-plan-naming-input:focus-visible { outline: 2px solid var(--hm-live); outline-offset: 1px; border-color: var(--hm-live); }
+.hm-plan-naming-actions { display: flex; gap: var(--space-xs); flex-wrap: wrap; }
+.hm-plan-naming-error { margin: 0; font-size: var(--text-sm); color: var(--hm-alert, #e0616a); line-height: var(--leading-normal); }
+
+.hm-plan-tray-start {
+	display: grid; gap: var(--space-xs); justify-items: start;
+	margin: 0 0 var(--space-sm);
+	padding: var(--space-sm); border: 1px dashed var(--hm-line); border-radius: var(--radius-sm);
+}
+.hm-plan-tray-start p { margin: 0; font-size: var(--text-sm); color: var(--hm-ink-2); line-height: var(--leading-normal); }
 
 .hm-plan-skeleton { display: grid; grid-template-columns: repeat(2, 1fr); gap: var(--space-sm); }
 .hm-plan-skeleton-room { height: 96px; border-radius: var(--radius-sm); background: var(--hm-panel-2); }

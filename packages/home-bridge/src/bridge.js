@@ -450,6 +450,59 @@ export class HomeBridge {
 		}
 	}
 
+	/**
+	 * Make a new area in the house, so a home with none can grow rooms.
+	 *
+	 * The common real house has nothing assigned to an area at all, and every
+	 * room-shaped feature we build is useless to it until somebody creates the
+	 * first area. Sending that person to Home Assistant's own settings to do it
+	 * is how the feature dies: they leave and do not come back. So the editor
+	 * creates the area itself, here, in their registry.
+	 *
+	 * Home Assistant derives the area id from the name and refuses a duplicate.
+	 * A name that already exists comes back as the EXISTING area rather than an
+	 * error, because "Kitchen already exists" is not a failure from the caller's
+	 * point of view: the room they asked for is there, which is what they wanted.
+	 *
+	 * @param {string} name
+	 * @param {{ floorId?: string|null }} [options]
+	 * @returns {Promise<{ id: string, name: string, floorId: string|null, created: boolean }>}
+	 */
+	async createArea(name, { floorId = null } = {}) {
+		this.#assertConnected();
+		const label = typeof name === 'string' ? name.trim() : '';
+		if (!label) throw new HomeBridgeError(ERR.CALL_FAILED, 'A room needs a name.');
+		if (label.length > 64) {
+			throw new HomeBridgeError(ERR.CALL_FAILED, 'That room name is too long; keep it under 65 characters.');
+		}
+
+		const existing = (this.#registries.areas || []).find(
+			(a) => String(a.name || '').trim().toLowerCase() === label.toLowerCase(),
+		);
+		if (existing) {
+			return { id: existing.area_id, name: existing.name, floorId: existing.floor_id || null, created: false };
+		}
+
+		try {
+			const result = await this.#connection.sendMessagePromise({
+				type: 'config/area_registry/create',
+				name: label,
+				...(floorId ? { floor_id: floorId } : {}),
+			});
+			// Same reason as assignEntityArea: the caller is about to redraw from
+			// the graph, so refresh rather than race our own registry event.
+			await this.refreshRegistries();
+			return {
+				id: result?.area_id,
+				name: result?.name || label,
+				floorId: result?.floor_id || null,
+				created: true,
+			};
+		} catch (err) {
+			throw toBridgeError(err, this.#options.baseUrl, `Could not make a room called ${label}.`);
+		}
+	}
+
 	/** Every area the house has, for a UI that files entities into them. */
 	areas() {
 		return (this.#registries.areas || []).map((a) => ({
