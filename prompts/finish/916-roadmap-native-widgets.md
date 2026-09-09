@@ -8,6 +8,11 @@ commit `880bdcef8` (2026-09-08 18:57Z) and the fix landed in `fe05babf6`
 (2026-09-09 05:41Z). That is now a one-command fact rather than a guess, via
 `npm run check:windows-widget:live` (added 2026-09-09), which binds the deployed
 card with the deployed worker in the board's own engine and currently exits 1.
+Re-verified 2026-09-09 19:44Z against commit `880bdcef8` (revision 00420): the
+11 offline checks and the 15 Apple checks pass, and the live probe's 5 findings
+are all the one undeployed card. That probe is now a registered guard
+(`data/guards.json`, `docs/guards.md`, `/guards`) rather than a command only
+this file mentions.
 **This file stays because two Definition of done lines cannot be closed from this
 machine** (one needs a Windows 11 machine, one needs an Apple Developer account),
 and the campaign's rule is to leave a work order in place until every line of it
