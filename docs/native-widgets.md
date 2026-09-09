@@ -94,6 +94,15 @@ The board holds three moving parts: the `widgets` member of the PWA manifest (ge
 `widgets.updateByTag`. `npm run check:windows-widget` verifies all three against each other
 without Windows, and it is in `npm run gate`.
 
+That run reads this working tree, which is not the same question as "does the widget work right
+now". A pinned slot draws whatever is **deployed**, so a fix that is green here is still invisible
+to the board until it ships. `npm run check:windows-widget:live` asks the deployed question: it
+fetches the live manifest, service worker, card and data endpoint, binds them with the deployed
+worker's own payload builder in the board's own templating engine, and fails when the origin is
+serving a card that would render nothing. Point it elsewhere with
+`node scripts/check-windows-widget.mjs --live --base https://staging.example`. It needs the
+network, so it stays out of `npm run gate`; run it after a deploy that touched the widget.
+
 Two traps are worth knowing before you touch the card, because both draw an empty slot rather
 than an error, and neither is visible outside a real board:
 

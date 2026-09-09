@@ -444,6 +444,7 @@
 		"check:macos-icon": "node apple/scripts/make-macos-icon.mjs --check",
 		"check:apple-widget": "node scripts/check-apple-widget.mjs",
 		"check:windows-widget": "node scripts/check-windows-widget.mjs",
+		"check:windows-widget:live": "node scripts/check-windows-widget.mjs --live",
 		"ios:open": "npm --prefix ios run open",
 		"clean:worktrees": "node scripts/clean-deploy-worktrees.mjs",
 		"prep:worktree": "node scripts/prepare-deploy-worktree.mjs",

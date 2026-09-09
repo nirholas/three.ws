@@ -1,12 +1,17 @@
 # RM-WIDGETS: Native widgets, the agent on the home screen and the desktop
 
-**Status 2026-09-09: all four tasks are built and re-verified live, and the
-2026-09-04 worker fix is now deployed** (production `/glance-sw.js` is
-byte-identical to `public/glance-sw.js` as of revision 00418). **This file stays
-because two Definition of done lines cannot be closed from this machine** (one
-needs a Windows 11 machine, one needs an Apple Developer account), and the
-campaign's rule is to leave a work order in place until every line of it passes.
-Read "What remains", not the history above it.
+**Status 2026-09-09: all four tasks are built, and the 2026-09-04 worker fix is
+deployed** (production `/glance-sw.js` is still byte-identical to
+`public/glance-sw.js` at revision 00420). **The 2026-09-09 card fix is not
+deployed**, so a pinned Windows slot renders nothing today: production serves
+commit `880bdcef8` (2026-09-08 18:57Z) and the fix landed in `fe05babf6`
+(2026-09-09 05:41Z). That is now a one-command fact rather than a guess, via
+`npm run check:windows-widget:live` (added 2026-09-09), which binds the deployed
+card with the deployed worker in the board's own engine and currently exits 1.
+**This file stays because two Definition of done lines cannot be closed from this
+machine** (one needs a Windows 11 machine, one needs an Apple Developer account),
+and the campaign's rule is to leave a work order in place until every line of it
+passes. Read "What remains", not the history above it.
 
 **How to run this:** paste this whole file into a fresh Claude Code chat opened in
 `/workspaces/three.ws`. Also read `prompts/finish/_context/roadmap-00-README.md` and `CLAUDE.md`.
@@ -22,7 +27,7 @@ platform is a rendering job against it. Product documentation:
 | --- | --- | --- |
 | 1. The card endpoint, two encodings | `api/glance/card.js`, `api/glance/mine.js`, `api/glance/token.js`, `api/glance/template.js` | Live in production. Verified 2026-09-03: `mine?format=png` answers `200 image/png` unauthenticated with `x-glance-state: signed-out`, `token` answers `401` with no session, and a real mint on the QA account fetched every size, theme and scale. |
 | 2. Android home screen widget | `solana-mobile/android-overlay/`, applied by `scripts/apply-overlay.mjs` inside `build-apk.sh` | In a signed APK (1.1.0, versionCode 2). All five emulator checks recorded in `solana-mobile/docs/CHECKLIST.md` section 7b. |
-| 3. Windows 11 widget | `widgets` member in `vite.config.js`, `public/glance-sw.js`, `api/glance/template.js` | Live: production `manifest.webmanifest` carries the member and `/glance-sw.js` serves 200. Guarded by `npm run check:windows-widget`. The card fix of 2026-09-09 is not deployed yet. |
+| 3. Windows 11 widget | `widgets` member in `vite.config.js`, `public/glance-sw.js`, `api/glance/template.js` | Live: production `manifest.webmanifest` carries the member and `/glance-sw.js` serves 200. Guarded by `npm run check:windows-widget` (offline, in `npm run gate`) and `npm run check:windows-widget:live` (deployed origin). The card fix of 2026-09-09 is not deployed yet, and the live guard fails on exactly that. |
 | 4. macOS and iOS WidgetKit | `apple/` (shared `GlanceKit/`, extension `GlanceWidget/`, Mac app `macos/`), plus a `GlanceWidgetExtension` target in `ios/native/App/App.xcodeproj` | Written, wired, and guarded by `npm run check:apple-widget`. Not built: no Mac, and no signing identity. |
 
 The one live number is **moves in the last 24 hours**, computed from the agent's
@@ -41,10 +46,14 @@ Neither line is code, and neither can be closed from this machine.
    with the signed-in account's real card, refreshes, and that its click targets
    land on the right routes. Owner, or anyone with a Windows 11 machine.
 
-   **Run it against a deploy that carries 2026-09-09's card fix.** Everything
-   about this line that can be checked without a board now is, mechanically, by
-   `npm run check:windows-widget` (11 checks, in `npm run gate`). What is left
-   for the human is genuinely only "a person sees the pixels".
+   **Run it against a deploy that carries 2026-09-09's card fix**, and do not
+   spend the trip before then: `npm run check:windows-widget:live` answers that
+   in one command, and today it exits 1 with `the deployed Adaptive Card differs
+   from api/_lib/glance-adaptive.js`. When it goes green, the deploy carries the
+   fix and the board check is worth a human's time. Everything about this line
+   that can be checked without a board now is, mechanically: 11 offline checks
+   in `npm run gate`, plus 5 more against the deployed origin. What is left for
+   the human is genuinely only "a person sees the pixels".
 
    Four defects have been found here so far, none of them visible from Linux and
    each of which would have failed this check on its own. Three came from reading
@@ -67,7 +76,13 @@ Neither line is code, and neither can be closed from this machine.
    card rather than skipping the one binding, so the widget rendered **nothing
    at all**. Both the code and the test that covered it shared the same wrong
    assumption, which is why the guard now uses the real engine. Fixed in
-   `api/_lib/glance-adaptive.js`; **this one still needs a deploy.**
+   `api/_lib/glance-adaptive.js`; **this one still needs a deploy** (any routine
+   deploy of `main` carries it, nothing widget-specific is required).
+
+   A fifth class of defect stands behind those four: a fix that is green in the
+   tree and absent from the deploy, which is what the widget is living through
+   right now. `--live` covers that class, so no future card change can be
+   believed shipped on the strength of a local run.
 2. **Signing and shipping the two Apple binaries.** An Apple Developer account
    is the blocker for both halves, not just the App Store one: the Mac app needs
    a Developer ID certificate and the iOS extension needs App Store signing.
