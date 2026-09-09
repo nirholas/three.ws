@@ -187,9 +187,26 @@ echoes):
 ```
 
 `/play/war` also works as a direct destination: with a valid `match` + `ticket`
-but no `holderPass`, it mints its own from the signed-in session. Without a
-pairing at all it says so and offers the way back rather than showing an empty
-battlefield. `return` is only ever honoured as a same-origin path.
+but no `holderPass`, it mints its own from the signed-in session. `return` is
+only ever honoured as a same-origin path.
+
+Without a pairing at all (a hand-typed URL, a link shared after the battle, an
+expired ticket) the arena has nothing to open, so the card that says so carries
+**the war room**: the battles running right now, the communities queued for an
+opponent, and the top of the ladder, read live from `/api/wars`. Every row links
+into that coin's world at `/play?coin=…`, which is where the war portal stands,
+and a live row carries `&war=<matchKey>` so that world's portal board opens on
+the battle you were reading about. The same panel appears under every other
+terminal state (an expired ticket, a holding below the floor, a dropped
+connection), because "there is no battle here" is only useful next to "here is
+where one is".
+
+The war room is [`src/play/war-board.js`](../src/play/war-board.js). It reads the
+same fold the in-world portal board reads, refreshes every 15s while the tab is
+visible, and has its own designed loading, empty, error and offline-matchmaking
+states. Coin names and images arriving from `/api/wars` are on-chain metadata:
+they are rendered through `textContent` and URL-encoded query values, never as
+markup.
 
 ---
 
@@ -204,6 +221,14 @@ battlefield. `return` is only ever honoured as a same-origin path.
 | `UPSTASH_REDIS_REST_URL` / `_TOKEN` | API + game server | The matchmaking queue and the live spectator registry. Without these, wars cannot be queued (the portal says so) and nothing can be spectated; the ladder still reads. |
 | `THREE_WS_API_BASE` | game server | Where the game server posts battle results. Defaults to `https://three.ws`. |
 
+The arena page also has to know which Colyseus host runs `clash_arena`. That is
+not an env var: `pages/play/war.html` carries a `<meta name="game-server">`, read
+through [`src/shared/game-server-url.js`](../src/shared/game-server-url.js), the
+same chain `/play` uses. A production build resolves to `""` without it (the
+localhost and Codespace hosts are inferred, the public domain is not), and every
+arrival at the arena then dead-ends on "The arena server is unreachable". Keep
+the meta on this page and on `pages/play.html` in step with the deployed service.
+
 ---
 
 ## Where the code is
@@ -213,12 +238,13 @@ battlefield. `return` is only ever honoured as a same-origin path.
 | The in-world portal | [`src/game/war-portal.js`](../src/game/war-portal.js), [`src/game/war-portal.css`](../src/game/war-portal.css) |
 | Portal location in the plaza | [`multiplayer/src/world-features.js`](../multiplayer/src/world-features.js) (`WAR_PORTAL`) |
 | The arena page | [`pages/play/war.html`](../pages/play/war.html), [`src/play/war.js`](../src/play/war.js), [`src/play/war-world.js`](../src/play/war-world.js) |
+| The war room on the terminal cards | [`src/play/war-board.js`](../src/play/war-board.js) |
 | The room | [`multiplayer/src/rooms/ClashRoom.js`](../multiplayer/src/rooms/ClashRoom.js) (`clash_arena`) |
 | Match rules (phases, score cap, sudden death) | [`multiplayer/src/clash.js`](../multiplayer/src/clash.js) |
 | Pairing math | [`multiplayer/src/war-matchmaking.js`](../multiplayer/src/war-matchmaking.js) |
 | League math | [`multiplayer/src/war-standings.js`](../multiplayer/src/war-standings.js) |
 | Spectator snapshots | [`multiplayer/src/war-live.js`](../multiplayer/src/war-live.js) |
 | The endpoint + store | [`api/wars.js`](../api/wars.js), [`api/_lib/wars-store.js`](../api/_lib/wars-store.js) |
-| Tests | [`tests/war-matchmaking.test.js`](../tests/war-matchmaking.test.js), [`tests/clash-match.test.js`](../tests/clash-match.test.js) |
+| Tests | [`tests/war-matchmaking.test.js`](../tests/war-matchmaking.test.js), [`tests/clash-match.test.js`](../tests/clash-match.test.js), [`tests/war-board.test.js`](../tests/war-board.test.js) |
 
 Related: [the in-game economy](in-game-economy.md), [play hardening](play-hardening.md).
