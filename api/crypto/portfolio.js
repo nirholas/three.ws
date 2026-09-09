@@ -8,7 +8,9 @@
 //
 // Chains: Solana first (fully keyless: Helius DAS when a key is present, public
 // RPC walk otherwise, Jupiter Lite + pump.fun curve prices), Ethereum via the
-// same getBalances() EVM path (needs ALCHEMY_API_KEY, degrades to 503).
+// same getBalances() EVM path, which is keyless-capable too: Alchemy when
+// ALCHEMY_API_KEY is set and answering, otherwise public RPC + Blockscout. Only
+// a deployment where both EVM rungs fail degrades to 503.
 //
 // 24h changes: the keyed EVM path carries CoinGecko 24h changes per token, but
 // the Solana path and the keyless EVM rung carry none, so this handler enriches
@@ -225,7 +227,7 @@ export default wrap(async function handler(req, res) {
 		});
 	} catch (err) {
 		if (err?.code === 'not_configured') {
-			return error(res, 503, 'not_configured', 'this chain requires a provider key that is not set on this deployment - Solana works keyless', {
+			return error(res, 503, 'not_configured', 'every balance lane for this chain is unreachable right now, keyed and keyless alike', {
 				chain: rawChain,
 			});
 		}

@@ -156,11 +156,11 @@ function renderError(status, body) {
 		title.textContent = 'Slow down a moment';
 		msg.textContent = 'Too many lookups in a short burst. Wait a few seconds and retry.';
 	} else if (status === 503 && body?.error === 'not_configured') {
-		// This deployment has no provider key for the requested chain. Solana is
-		// keyless and always available, so name the way out rather than asking
-		// the reader to retry something that cannot start working on its own.
-		title.textContent = 'This chain is not available here';
-		msg.textContent = `${upstream || 'This chain needs a provider key that is not set on this deployment.'} Paste a Solana address to use the keyless path.`;
+		// Every balance lane for the requested chain is down at once, keyed and
+		// keyless. Name the other chain rather than only asking for a retry: the
+		// Solana lane runs on separate infrastructure and is unaffected.
+		title.textContent = 'This chain is unreachable right now';
+		msg.textContent = `${upstream || 'Every balance lane for this chain is down at once.'} Solana lookups run on separate infrastructure and are unaffected.`;
 	} else if (status === 503) {
 		title.textContent = 'Data source unavailable';
 		msg.textContent = upstream || 'The balance sources for this chain are unreachable right now. Retry shortly.';
