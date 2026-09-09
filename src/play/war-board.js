@@ -118,14 +118,15 @@ function paint(root, data, coin) {
 	root.textContent = '';
 
 	if (live.length) {
-		root.appendChild(heading(live.length === 1 ? 'One war is running now' : `${live.length} wars are running now`));
+		root.appendChild(heading('Live now'));
 		const list = el('ul', 'war-board-list');
 		for (const m of live) list.appendChild(liveRow(m));
 		root.appendChild(list);
 	}
 
 	if (waiting.length) {
-		root.appendChild(heading(waiting.length === 1 ? 'One community is waiting for an opponent' : `${waiting.length} communities are waiting for an opponent`));
+		root.appendChild(heading('Waiting for an opponent'));
+		root.appendChild(note('Queue your coin at its war portal and this is who it fights.'));
 		const list = el('ul', 'war-board-list');
 		for (const c of waiting) list.appendChild(queueRow(c));
 		root.appendChild(list);
@@ -181,7 +182,7 @@ function queueRow(c) {
 	a.appendChild(avatar(c));
 	const main = el('span', 'war-board-main');
 	main.appendChild(text('span', 'war-board-title', label(c)));
-	main.appendChild(text('span', 'war-board-sub', `Queued ${ago(c.since)}: queue your coin and this is who you fight.`));
+	main.appendChild(text('span', 'war-board-sub', `Queued ${ago(c.since)}`));
 	a.appendChild(main);
 	a.appendChild(text('span', 'war-board-tag', 'in queue'));
 	li.appendChild(a);

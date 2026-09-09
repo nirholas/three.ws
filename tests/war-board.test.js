@@ -90,7 +90,7 @@ describe('the war room', () => {
 		});
 		await mount({});
 
-		expect(textOf()).toContain('One war is running now');
+		expect(textOf()).toContain('Live now');
 		expect(textOf()).toContain('$THREE 7 - 4 $SYN');
 		expect(textOf()).toContain('5 fighters on the field');
 
@@ -111,8 +111,8 @@ describe('the war room', () => {
 		});
 		await mount({});
 
-		expect(textOf()).toContain('One community is waiting for an opponent');
-		expect(textOf()).toContain('2m ago');
+		expect(textOf()).toContain('Waiting for an opponent');
+		expect(textOf()).toContain('Queued 2m ago');
 		expect(rows()[0].getAttribute('href')).toContain(`coin=${RIVAL_MINT}`);
 	});
 

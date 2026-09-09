@@ -493,12 +493,17 @@ button { font: inherit; color: inherit; cursor: pointer; }
 }
 
 .war-board-sub {
+	/* Two lines, then clip. A single nowrap line cut a sentence mid-word at every
+	   width, because the card is 420px at its widest and the phone case is the
+	   one that matters. */
+	display: -webkit-box;
+	-webkit-box-orient: vertical;
+	-webkit-line-clamp: 2;
+	line-clamp: 2;
 	overflow: hidden;
 	color: var(--war-muted);
 	font-size: 11.5px;
 	line-height: 1.4;
-	text-overflow: ellipsis;
-	white-space: nowrap;
 }
 
 .war-board-tag {
