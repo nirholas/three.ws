@@ -474,7 +474,14 @@ done                                       # the quotation, as OKX's OWN validat
   every one answers 402 with a `PAYMENT-REQUIRED` header that names each rail exactly once at
   the row's registered list price. It exists because a duplicated `eip155:196` accept at two
   prices reads to a validator as "quotation cannot be parsed", which is what rejection #3
-  said in the reviewer's internal note.
+  said in the reviewer's internal note. Since 2026-09-09 it also reads every challenge back
+  with **OKX's own published reader**, `parsePaymentRequired()` from `@okxweb3/app-x402-core`
+  (already a dependency of this repo), on both the `PAYMENT-REQUIRED` header and the body, so
+  the note's verdict is answered by their parser rather than by our reading of the spec. All
+  20 probes report `parsed` on both copies (capture:
+  `prompts/okx-ai/e2e-evidence/102-2026-09-09-okx-sdk-schema-read.json`). Note when extending
+  it: that function is a zod SAFE parse and never throws, so a `try`/`catch` around it passes
+  an empty object; the verdict has to read `result.success`.
 - **`okx-payment-leg-probe.mjs`** fetches the challenge, signs it through the `onchainos` TEE
   wallet (so the buyer is a real EIP-7702 delegated OKX agentic wallet, the same shape as the
   audit address), replays it, and requires the answer to be `insufficient_balance` and

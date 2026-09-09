@@ -1,0 +1,710 @@
+{
+  "captured_at": "2026-09-09T19:50:52.561Z",
+  "base": "https://three.ws",
+  "what": "Live A2MCP compliance capture of the four paid OKX.AI forge rows: the bodyless self-check answers the quotation, every quotation names each rail once at the registered list price, and OKX's own SDK reader parses both the header and the body copy.",
+  "pass": true,
+  "failures": [],
+  "probes": [
+    {
+      "service": "forge-draft",
+      "probe": "GET, the SSE transport a streaming MCP client opens with",
+      "status": 402,
+      "payment_required_header": true,
+      "accepts": [
+        {
+          "scheme": "exact",
+          "network": "eip155:196",
+          "asset": "USD₮0 (X Layer settlement stablecoin)",
+          "amount": "10000"
+        },
+        {
+          "scheme": "exact",
+          "network": "solana:5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp",
+          "asset": "USDC (Solana)",
+          "amount": "10000"
+        },
+        {
+          "scheme": "exact",
+          "network": "solana:5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp",
+          "asset": "$THREE",
+          "amount": "10000000"
+        },
+        {
+          "scheme": "exact",
+          "network": "eip155:8453",
+          "asset": "USDC (Base)",
+          "amount": "10000"
+        }
+      ],
+      "duplicate_rails": false,
+      "okx_sdk_reads_header": "parsed",
+      "okx_sdk_reads_body": "parsed"
+    },
+    {
+      "service": "forge-draft",
+      "probe": "docs self-check: POST, no body, no content-type",
+      "status": 402,
+      "payment_required_header": true,
+      "accepts": [
+        {
+          "scheme": "exact",
+          "network": "eip155:196",
+          "asset": "USD₮0 (X Layer settlement stablecoin)",
+          "amount": "10000"
+        },
+        {
+          "scheme": "exact",
+          "network": "solana:5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp",
+          "asset": "USDC (Solana)",
+          "amount": "10000"
+        },
+        {
+          "scheme": "exact",
+          "network": "solana:5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp",
+          "asset": "$THREE",
+          "amount": "10000000"
+        },
+        {
+          "scheme": "exact",
+          "network": "eip155:8453",
+          "asset": "USDC (Base)",
+          "amount": "10000"
+        }
+      ],
+      "duplicate_rails": false,
+      "okx_sdk_reads_header": "parsed",
+      "okx_sdk_reads_body": "parsed"
+    },
+    {
+      "service": "forge-draft",
+      "probe": "POST {} with content-type application/json",
+      "status": 402,
+      "payment_required_header": true,
+      "accepts": [
+        {
+          "scheme": "exact",
+          "network": "eip155:196",
+          "asset": "USD₮0 (X Layer settlement stablecoin)",
+          "amount": "10000"
+        },
+        {
+          "scheme": "exact",
+          "network": "solana:5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp",
+          "asset": "USDC (Solana)",
+          "amount": "10000"
+        },
+        {
+          "scheme": "exact",
+          "network": "solana:5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp",
+          "asset": "$THREE",
+          "amount": "10000000"
+        },
+        {
+          "scheme": "exact",
+          "network": "eip155:8453",
+          "asset": "USDC (Base)",
+          "amount": "10000"
+        }
+      ],
+      "duplicate_rails": false,
+      "okx_sdk_reads_header": "parsed",
+      "okx_sdk_reads_body": "parsed"
+    },
+    {
+      "service": "forge-draft",
+      "probe": "POST a plain business payload, naming no tool",
+      "status": 402,
+      "payment_required_header": true,
+      "accepts": [
+        {
+          "scheme": "exact",
+          "network": "eip155:196",
+          "asset": "USD₮0 (X Layer settlement stablecoin)",
+          "amount": "10000"
+        },
+        {
+          "scheme": "exact",
+          "network": "solana:5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp",
+          "asset": "USDC (Solana)",
+          "amount": "10000"
+        },
+        {
+          "scheme": "exact",
+          "network": "solana:5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp",
+          "asset": "$THREE",
+          "amount": "10000000"
+        },
+        {
+          "scheme": "exact",
+          "network": "eip155:8453",
+          "asset": "USDC (Base)",
+          "amount": "10000"
+        }
+      ],
+      "duplicate_rails": false,
+      "okx_sdk_reads_header": "parsed",
+      "okx_sdk_reads_body": "parsed"
+    },
+    {
+      "service": "forge-draft",
+      "probe": "well-formed tools/call forge_3d (control)",
+      "status": 402,
+      "payment_required_header": true,
+      "accepts": [
+        {
+          "scheme": "exact",
+          "network": "eip155:196",
+          "asset": "USD₮0 (X Layer settlement stablecoin)",
+          "amount": "10000"
+        },
+        {
+          "scheme": "exact",
+          "network": "solana:5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp",
+          "asset": "USDC (Solana)",
+          "amount": "10000"
+        },
+        {
+          "scheme": "exact",
+          "network": "solana:5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp",
+          "asset": "$THREE",
+          "amount": "10000000"
+        },
+        {
+          "scheme": "exact",
+          "network": "eip155:8453",
+          "asset": "USDC (Base)",
+          "amount": "10000"
+        }
+      ],
+      "duplicate_rails": false,
+      "okx_sdk_reads_header": "parsed",
+      "okx_sdk_reads_body": "parsed"
+    },
+    {
+      "service": "forge-standard",
+      "probe": "GET, the SSE transport a streaming MCP client opens with",
+      "status": 402,
+      "payment_required_header": true,
+      "accepts": [
+        {
+          "scheme": "exact",
+          "network": "eip155:196",
+          "asset": "USD₮0 (X Layer settlement stablecoin)",
+          "amount": "50000"
+        },
+        {
+          "scheme": "exact",
+          "network": "solana:5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp",
+          "asset": "USDC (Solana)",
+          "amount": "50000"
+        },
+        {
+          "scheme": "exact",
+          "network": "solana:5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp",
+          "asset": "$THREE",
+          "amount": "10000000"
+        },
+        {
+          "scheme": "exact",
+          "network": "eip155:8453",
+          "asset": "USDC (Base)",
+          "amount": "50000"
+        }
+      ],
+      "duplicate_rails": false,
+      "okx_sdk_reads_header": "parsed",
+      "okx_sdk_reads_body": "parsed"
+    },
+    {
+      "service": "forge-standard",
+      "probe": "docs self-check: POST, no body, no content-type",
+      "status": 402,
+      "payment_required_header": true,
+      "accepts": [
+        {
+          "scheme": "exact",
+          "network": "eip155:196",
+          "asset": "USD₮0 (X Layer settlement stablecoin)",
+          "amount": "50000"
+        },
+        {
+          "scheme": "exact",
+          "network": "solana:5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp",
+          "asset": "USDC (Solana)",
+          "amount": "50000"
+        },
+        {
+          "scheme": "exact",
+          "network": "solana:5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp",
+          "asset": "$THREE",
+          "amount": "10000000"
+        },
+        {
+          "scheme": "exact",
+          "network": "eip155:8453",
+          "asset": "USDC (Base)",
+          "amount": "50000"
+        }
+      ],
+      "duplicate_rails": false,
+      "okx_sdk_reads_header": "parsed",
+      "okx_sdk_reads_body": "parsed"
+    },
+    {
+      "service": "forge-standard",
+      "probe": "POST {} with content-type application/json",
+      "status": 402,
+      "payment_required_header": true,
+      "accepts": [
+        {
+          "scheme": "exact",
+          "network": "eip155:196",
+          "asset": "USD₮0 (X Layer settlement stablecoin)",
+          "amount": "50000"
+        },
+        {
+          "scheme": "exact",
+          "network": "solana:5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp",
+          "asset": "USDC (Solana)",
+          "amount": "50000"
+        },
+        {
+          "scheme": "exact",
+          "network": "solana:5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp",
+          "asset": "$THREE",
+          "amount": "10000000"
+        },
+        {
+          "scheme": "exact",
+          "network": "eip155:8453",
+          "asset": "USDC (Base)",
+          "amount": "50000"
+        }
+      ],
+      "duplicate_rails": false,
+      "okx_sdk_reads_header": "parsed",
+      "okx_sdk_reads_body": "parsed"
+    },
+    {
+      "service": "forge-standard",
+      "probe": "POST a plain business payload, naming no tool",
+      "status": 402,
+      "payment_required_header": true,
+      "accepts": [
+        {
+          "scheme": "exact",
+          "network": "eip155:196",
+          "asset": "USD₮0 (X Layer settlement stablecoin)",
+          "amount": "50000"
+        },
+        {
+          "scheme": "exact",
+          "network": "solana:5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp",
+          "asset": "USDC (Solana)",
+          "amount": "50000"
+        },
+        {
+          "scheme": "exact",
+          "network": "solana:5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp",
+          "asset": "$THREE",
+          "amount": "10000000"
+        },
+        {
+          "scheme": "exact",
+          "network": "eip155:8453",
+          "asset": "USDC (Base)",
+          "amount": "50000"
+        }
+      ],
+      "duplicate_rails": false,
+      "okx_sdk_reads_header": "parsed",
+      "okx_sdk_reads_body": "parsed"
+    },
+    {
+      "service": "forge-standard",
+      "probe": "well-formed tools/call forge_3d (control)",
+      "status": 402,
+      "payment_required_header": true,
+      "accepts": [
+        {
+          "scheme": "exact",
+          "network": "eip155:196",
+          "asset": "USD₮0 (X Layer settlement stablecoin)",
+          "amount": "50000"
+        },
+        {
+          "scheme": "exact",
+          "network": "solana:5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp",
+          "asset": "USDC (Solana)",
+          "amount": "50000"
+        },
+        {
+          "scheme": "exact",
+          "network": "solana:5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp",
+          "asset": "$THREE",
+          "amount": "10000000"
+        },
+        {
+          "scheme": "exact",
+          "network": "eip155:8453",
+          "asset": "USDC (Base)",
+          "amount": "50000"
+        }
+      ],
+      "duplicate_rails": false,
+      "okx_sdk_reads_header": "parsed",
+      "okx_sdk_reads_body": "parsed"
+    },
+    {
+      "service": "forge-hd",
+      "probe": "GET, the SSE transport a streaming MCP client opens with",
+      "status": 402,
+      "payment_required_header": true,
+      "accepts": [
+        {
+          "scheme": "exact",
+          "network": "eip155:196",
+          "asset": "USD₮0 (X Layer settlement stablecoin)",
+          "amount": "250000"
+        },
+        {
+          "scheme": "exact",
+          "network": "solana:5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp",
+          "asset": "USDC (Solana)",
+          "amount": "250000"
+        },
+        {
+          "scheme": "exact",
+          "network": "solana:5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp",
+          "asset": "$THREE",
+          "amount": "10000000"
+        },
+        {
+          "scheme": "exact",
+          "network": "eip155:8453",
+          "asset": "USDC (Base)",
+          "amount": "250000"
+        }
+      ],
+      "duplicate_rails": false,
+      "okx_sdk_reads_header": "parsed",
+      "okx_sdk_reads_body": "parsed"
+    },
+    {
+      "service": "forge-hd",
+      "probe": "docs self-check: POST, no body, no content-type",
+      "status": 402,
+      "payment_required_header": true,
+      "accepts": [
+        {
+          "scheme": "exact",
+          "network": "eip155:196",
+          "asset": "USD₮0 (X Layer settlement stablecoin)",
+          "amount": "250000"
+        },
+        {
+          "scheme": "exact",
+          "network": "solana:5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp",
+          "asset": "USDC (Solana)",
+          "amount": "250000"
+        },
+        {
+          "scheme": "exact",
+          "network": "solana:5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp",
+          "asset": "$THREE",
+          "amount": "10000000"
+        },
+        {
+          "scheme": "exact",
+          "network": "eip155:8453",
+          "asset": "USDC (Base)",
+          "amount": "250000"
+        }
+      ],
+      "duplicate_rails": false,
+      "okx_sdk_reads_header": "parsed",
+      "okx_sdk_reads_body": "parsed"
+    },
+    {
+      "service": "forge-hd",
+      "probe": "POST {} with content-type application/json",
+      "status": 402,
+      "payment_required_header": true,
+      "accepts": [
+        {
+          "scheme": "exact",
+          "network": "eip155:196",
+          "asset": "USD₮0 (X Layer settlement stablecoin)",
+          "amount": "250000"
+        },
+        {
+          "scheme": "exact",
+          "network": "solana:5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp",
+          "asset": "USDC (Solana)",
+          "amount": "250000"
+        },
+        {
+          "scheme": "exact",
+          "network": "solana:5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp",
+          "asset": "$THREE",
+          "amount": "10000000"
+        },
+        {
+          "scheme": "exact",
+          "network": "eip155:8453",
+          "asset": "USDC (Base)",
+          "amount": "250000"
+        }
+      ],
+      "duplicate_rails": false,
+      "okx_sdk_reads_header": "parsed",
+      "okx_sdk_reads_body": "parsed"
+    },
+    {
+      "service": "forge-hd",
+      "probe": "POST a plain business payload, naming no tool",
+      "status": 402,
+      "payment_required_header": true,
+      "accepts": [
+        {
+          "scheme": "exact",
+          "network": "eip155:196",
+          "asset": "USD₮0 (X Layer settlement stablecoin)",
+          "amount": "250000"
+        },
+        {
+          "scheme": "exact",
+          "network": "solana:5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp",
+          "asset": "USDC (Solana)",
+          "amount": "250000"
+        },
+        {
+          "scheme": "exact",
+          "network": "solana:5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp",
+          "asset": "$THREE",
+          "amount": "10000000"
+        },
+        {
+          "scheme": "exact",
+          "network": "eip155:8453",
+          "asset": "USDC (Base)",
+          "amount": "250000"
+        }
+      ],
+      "duplicate_rails": false,
+      "okx_sdk_reads_header": "parsed",
+      "okx_sdk_reads_body": "parsed"
+    },
+    {
+      "service": "forge-hd",
+      "probe": "well-formed tools/call forge_3d (control)",
+      "status": 402,
+      "payment_required_header": true,
+      "accepts": [
+        {
+          "scheme": "exact",
+          "network": "eip155:196",
+          "asset": "USD₮0 (X Layer settlement stablecoin)",
+          "amount": "250000"
+        },
+        {
+          "scheme": "exact",
+          "network": "solana:5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp",
+          "asset": "USDC (Solana)",
+          "amount": "250000"
+        },
+        {
+          "scheme": "exact",
+          "network": "solana:5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp",
+          "asset": "$THREE",
+          "amount": "10000000"
+        },
+        {
+          "scheme": "exact",
+          "network": "eip155:8453",
+          "asset": "USDC (Base)",
+          "amount": "250000"
+        }
+      ],
+      "duplicate_rails": false,
+      "okx_sdk_reads_header": "parsed",
+      "okx_sdk_reads_body": "parsed"
+    },
+    {
+      "service": "forge-image",
+      "probe": "GET, the SSE transport a streaming MCP client opens with",
+      "status": 402,
+      "payment_required_header": true,
+      "accepts": [
+        {
+          "scheme": "exact",
+          "network": "eip155:196",
+          "asset": "USD₮0 (X Layer settlement stablecoin)",
+          "amount": "250000"
+        },
+        {
+          "scheme": "exact",
+          "network": "solana:5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp",
+          "asset": "USDC (Solana)",
+          "amount": "250000"
+        },
+        {
+          "scheme": "exact",
+          "network": "solana:5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp",
+          "asset": "$THREE",
+          "amount": "10000000"
+        },
+        {
+          "scheme": "exact",
+          "network": "eip155:8453",
+          "asset": "USDC (Base)",
+          "amount": "250000"
+        }
+      ],
+      "duplicate_rails": false,
+      "okx_sdk_reads_header": "parsed",
+      "okx_sdk_reads_body": "parsed"
+    },
+    {
+      "service": "forge-image",
+      "probe": "docs self-check: POST, no body, no content-type",
+      "status": 402,
+      "payment_required_header": true,
+      "accepts": [
+        {
+          "scheme": "exact",
+          "network": "eip155:196",
+          "asset": "USD₮0 (X Layer settlement stablecoin)",
+          "amount": "250000"
+        },
+        {
+          "scheme": "exact",
+          "network": "solana:5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp",
+          "asset": "USDC (Solana)",
+          "amount": "250000"
+        },
+        {
+          "scheme": "exact",
+          "network": "solana:5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp",
+          "asset": "$THREE",
+          "amount": "10000000"
+        },
+        {
+          "scheme": "exact",
+          "network": "eip155:8453",
+          "asset": "USDC (Base)",
+          "amount": "250000"
+        }
+      ],
+      "duplicate_rails": false,
+      "okx_sdk_reads_header": "parsed",
+      "okx_sdk_reads_body": "parsed"
+    },
+    {
+      "service": "forge-image",
+      "probe": "POST {} with content-type application/json",
+      "status": 402,
+      "payment_required_header": true,
+      "accepts": [
+        {
+          "scheme": "exact",
+          "network": "eip155:196",
+          "asset": "USD₮0 (X Layer settlement stablecoin)",
+          "amount": "250000"
+        },
+        {
+          "scheme": "exact",
+          "network": "solana:5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp",
+          "asset": "USDC (Solana)",
+          "amount": "250000"
+        },
+        {
+          "scheme": "exact",
+          "network": "solana:5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp",
+          "asset": "$THREE",
+          "amount": "10000000"
+        },
+        {
+          "scheme": "exact",
+          "network": "eip155:8453",
+          "asset": "USDC (Base)",
+          "amount": "250000"
+        }
+      ],
+      "duplicate_rails": false,
+      "okx_sdk_reads_header": "parsed",
+      "okx_sdk_reads_body": "parsed"
+    },
+    {
+      "service": "forge-image",
+      "probe": "POST a plain business payload, naming no tool",
+      "status": 402,
+      "payment_required_header": true,
+      "accepts": [
+        {
+          "scheme": "exact",
+          "network": "eip155:196",
+          "asset": "USD₮0 (X Layer settlement stablecoin)",
+          "amount": "250000"
+        },
+        {
+          "scheme": "exact",
+          "network": "solana:5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp",
+          "asset": "USDC (Solana)",
+          "amount": "250000"
+        },
+        {
+          "scheme": "exact",
+          "network": "solana:5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp",
+          "asset": "$THREE",
+          "amount": "10000000"
+        },
+        {
+          "scheme": "exact",
+          "network": "eip155:8453",
+          "asset": "USDC (Base)",
+          "amount": "250000"
+        }
+      ],
+      "duplicate_rails": false,
+      "okx_sdk_reads_header": "parsed",
+      "okx_sdk_reads_body": "parsed"
+    },
+    {
+      "service": "forge-image",
+      "probe": "well-formed tools/call forge_3d (control)",
+      "status": 402,
+      "payment_required_header": true,
+      "accepts": [
+        {
+          "scheme": "exact",
+          "network": "eip155:196",
+          "asset": "USD₮0 (X Layer settlement stablecoin)",
+          "amount": "250000"
+        },
+        {
+          "scheme": "exact",
+          "network": "solana:5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp",
+          "asset": "USDC (Solana)",
+          "amount": "250000"
+        },
+        {
+          "scheme": "exact",
+          "network": "solana:5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp",
+          "asset": "$THREE",
+          "amount": "10000000"
+        },
+        {
+          "scheme": "exact",
+          "network": "eip155:8453",
+          "asset": "USDC (Base)",
+          "amount": "250000"
+        }
+      ],
+      "duplicate_rails": false,
+      "okx_sdk_reads_header": "parsed",
+      "okx_sdk_reads_body": "parsed"
+    }
+  ],
+  "note": "WO-07 closing audit: every 402 the four paid rows emit is read back with OKX's own published reader (@okxweb3/app-x402-core parsePaymentRequired), header copy and body copy, against the rejection remark's internal note that the quotation could not be parsed."
+}
