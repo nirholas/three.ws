@@ -32,7 +32,14 @@
 	<link rel="stylesheet" href="/footer.css" />
 	<script src="/nav.js" defer></script>
 	<style>
-		:root {
+		/* The site theme toggle stamps :root[data-theme] (0,2,0), which outranks a
+		   plain :root (0,1,0) and was repainting --accent, --bg and --text on this
+		   page: dark body text on a black ground once light mode was picked. This
+		   surface is a deliberate fixed-dark OpenAI plate, so its palette is
+		   declared at matching specificity and stays put in either theme. */
+		:root,
+		:root[data-theme='light'],
+		:root[data-theme='dark'] {
 			color-scheme: dark;
 			--accent: #ffffff; --accent2: #cccccc;
 			--border: #222222; --bg: #000000;
