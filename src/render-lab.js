@@ -769,7 +769,7 @@ async function renderSheet() {
 		.map(
 			(cell, i) => `
 			<button type="button" class="rl-cell is-pending" data-cell="${i}" aria-label="Use ${esc(cell.label)}">
-				<img alt="${esc(cell.label)}" />
+				<img alt="${esc(cell.label)}" loading="lazy" />
 				<span class="rl-cell-label">${esc(cell.label)}</span>
 			</button>`,
 		)
