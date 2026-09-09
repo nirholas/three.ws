@@ -1,6 +1,6 @@
 # The Pump.fun Trading Arena — Master Plan
 
-**Status:** Strategy / roadmap. Owner-facing. Last updated 2026-09-03.
+**Status:** Strategy / roadmap. Owner-facing. Last updated 2026-09-09.
 **Scope:** ONLY pump.fun trading, deploying, agent monetization, and copy-trading. Nothing else.
 
 > **Build status (verified 2026-09-03).** Phases 0 to 6 are shipped, on surfaces that
@@ -17,8 +17,10 @@
 > Section 4's anti-gaming layer was the last real gap and closed on 2026-09-03
 > (`api/_lib/copy-eligibility.js`): the copyable-status sybil bar (4.4), the follower
 > drawdown circuit breaker (4.5), and self-copy / self-follow exclusion (4.6).
-> Section 9's named blocker, AMM exits on graduated positions, is done
-> (`workers/agent-sniper/amm-exit.js`).
+> Section 9's named blocker, AMM exits on graduated positions, is written and
+> committed (`workers/agent-sniper/amm-exit.js`, imported at HEAD by
+> `executor.js`, `positions.js` and `graduation-ride.js`). It is not yet running:
+> see the deploy paragraph below.
 >
 > **Prompt D, the adversarial Risk Officer (section 6), is now BUILT**
 > (`workers/agent-sniper/risk-officer.js`, migration
@@ -38,12 +40,25 @@
 > positions that actually opened, so their realized P&L is the evidence for or
 > against arming it (the query is in `workers/agent-sniper/README.md`).
 >
-> **Owner: two owner-gated steps remain, both by design.** (1) Deploy the
-> agent-sniper worker so shadow evidence starts accumulating in production (gate
-> 2). (2) Once that evidence justifies it, arm enforcement with
-> `SNIPER_RISK_OFFICER=enforce` fleet-wide, or per strategy via
-> `risk_officer_level` (gate 1: it changes what real SOL buys). Everything else in
-> this plan is live.
+> **Owner: two owner-gated steps remain, both by design, and the first one is
+> larger than the Risk Officer.** (1) Deploy the agent-sniper worker. Its running
+> image was built 2026-08-11, while 48 files under `workers/agent-sniper/` have
+> been committed since, so the fleet trading live right now has neither
+> `amm-exit.js` (section 9's blocker) nor `risk-officer.js`. Re-measured
+> 2026-09-09 against the production database: the worker is alive and buying
+> (heartbeat current, positions opened the same afternoon), every strategy row
+> reads `risk_officer_level = shadow`, and `sniper_risk_reviews` still holds only
+> the 7 rows from the 2026-09-04 local verification, none of them from the fleet.
+> The deploy is one command, `npm run deploy:sniper`, and on an existing service
+> it rolls `gcloud run services update --image`, which preserves the running env
+> and does not demote the fleet to simulate (gate 2). (2) Once shadow evidence
+> exists, arm enforcement with `SNIPER_RISK_OFFICER=enforce` fleet-wide (via
+> `--update-env-vars`, never `--set-env-vars`) or per strategy via
+> `risk_officer_level` (gate 1: it changes what real SOL buys). Both are tracked
+> as row 19 of
+> [production-100-OWNER-ACTIONS.md](_context/production-100-OWNER-ACTIONS.md).
+> Everything else in this plan is written, tested and applied to the production
+> schema.
 **The only coin this platform promotes is `$THREE` (`FeMbDoX7R1Psc4GEcvJdsbNbZA3bfztcyDCatJVJpump`).** Pump.fun coins traded/launched through the platform are user runtime data, never endorsements.
 
 ---
