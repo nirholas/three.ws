@@ -112,6 +112,30 @@ refusal). The third is the stored descriptions, which is an on-chain write.
 **Nothing in code remains to fix for this rejection**, and the case is now made with OKX's own
 reader rather than ours.
 
+### The audit of the audit: the health fix shipped with a defect of its own
+
+The `completionist` subagent was run over the three commits and caught something this session
+had not. `xlayerRailHealth()` sets `relayer = { configured: true, error }` with **no `funded`
+key** when the balance read throws, and the first version of the fix read
+`relayer.funded === true`, which collapses "unreadable" into "empty". A public endpoint would
+have answered `503` with a confident `out of gas (OKB balance 0)` for an account whose balance
+nobody had actually seen, and dropped the read error entirely.
+
+Three states are now kept apart (funded / measured zero / unreadable), the unreadable case
+carries its own message plus `relayer_error`, and a third test case covers the throwing read
+(`20a1a249d`). Two lessons worth keeping: a boolean derived from an optional field is a lie
+whenever the field is absent, and this class of defect survived a green suite because both new
+cases exercised readings that succeeded.
+
+The same audit found two documentation gaps in the same work, both closed in that commit.
+`relayer_funded` is a developer-visible field on the endpoint the new changelog entry links to,
+so `docs/okx-marketplace.md` now documents the whole `payment-rail` row and the 503. And the
+RUNBOOK note pinned itself to "live on the next deploy", which is the exact rotting
+construction this pass had just deleted from `specs/okx-agent-payments.md`; it now names the
+commits and gives the field to curl for.
+
+`tests/api/` re-run after all of it: 522 files, 7,736 passed, 0 failed.
+
 ### The owner actions, unchanged
 
 1. **Approve the resubmission** (two on-chain writes, delta first, RUNBOOK §5.5). Wallet
