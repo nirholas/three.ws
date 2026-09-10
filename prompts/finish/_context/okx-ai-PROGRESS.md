@@ -4155,3 +4155,48 @@ this campaign, once nothing else in `prompts/finish/` references it:
 While any sibling prompt of this campaign is still on disk, leave this file in
 place and keep it accurate instead. The shrinking directory is the only signal
 to the next agent that a campaign is closed.
+
+## 2026-09-10 | order 07 (914) | Part 1 and Part 2 re-audited against production
+
+Ran the audit rather than trusting the previous entry, per the order's own binding clause. Part 3
+(approval watch, launch execution) and Part 1 item 2 (a real paid call) still need the owner: an
+OTP and a funded buyer wallet. Everything else below was measured today.
+
+**Part 1 item 1, unpaid 402s, spec-valid: PASS, and it found a real bug.** Checked five endpoints
+across the whole price range (`model-check` $0.001, `skill-marketplace` $0.001, `forge` $0.15,
+`fact-check` $0.10, `pump-launch` $5). All answer `402` with `x402Version: 2`, scheme `exact`, a
+`payTo` and an `asset`, and amounts matching the discovery catalog exactly.
+
+The bug: **the live 402 and the discovery catalog disagreed about which chain to settle on.**
+`/.well-known/x402.json` advertised these Solana-first, but fifteen routes under `api/x402/`
+passed `networks: ['base', 'solana']` to `paidEndpoint`, overriding the platform's Solana-first
+default, so the live challenge handed back Base as `accepts[0]`. Twelve routes were confirmed
+mismatched against the catalog. An agent that reads the catalog picks Solana and then settles on
+Base. Not one of the fifteen carried a comment explaining the override, and `paidEndpoint`'s
+default documents itself as Solana-first "unless a route explicitly overrides the network order",
+so this was copy-paste drift and not a decision. Fixed by deleting the overrides so every route
+inherits the default (`72c841f5e`), with a source-level guard in
+`tests/x402-solana-first-ordering.test.js` so it cannot creep back. 535 x402 tests pass.
+
+**Part 1 item 4, free lane honest and catalog identical to the module: PASS.**
+`/api/okx/3d/health` answers `200` with real subsystem latencies, and `/api/okx/3d/catalog`
+answers `200` with 7 listed services plus 9 under `unlisted`, which is exactly the 16 in
+`api/_lib/okx-catalog.js`. The split is deliberate and documented in both the route header
+(`api/okx/3d/[service].js`: back-burner services stay routable but off the listing) and
+`docs/okx-marketplace.md`. Worth recording because reading only `services` makes this look like a
+9-service regression, and it is not.
+
+**Part 1 item 6: PASS.** `npm run audit:docs` clean across 1,605 markdown files;
+`npm run build:pages` green, which is what validates the changelog entries.
+
+**Part 2, docs closure: PASS on everything checkable without the OTP.** The `curl` examples in
+`docs/okx-marketplace.md` were RUN, not read: catalog `200`, health `200`, and `forge-standard`
+with no body returns a spec-valid `402` naming `PAYMENT-SIGNATURE`. `docs/okx-marketplace.md` is
+linked from `docs/start-here.md`. `specs/okx-agent-payments.md` and `docs/agent-identities.md` are
+present and current. `STRUCTURE.md` carries OKX rows. `data/pages.json` registers both
+`/agent-identities` and `/docs/agent-identities` (they live under `sections[].pages`, so a flat
+scan of the file reports a false negative). README coverage under `packages/`, `workers/` and
+`services/` is 100%.
+
+**Left open:** Part 1 items 2 and 3 (a real paid call and the replay spot check, both needing a
+funded buyer wallet) and all of Part 3 (OTP). The order stays on disk.
