@@ -603,7 +603,6 @@ function paidHandler() {
 		route: ROUTE,
 		method: 'POST',
 		priceAtomics: priceFor('fact-check', '100000'), // $0.10
-		networks: ['base', 'solana'],
 		description: DESCRIPTION,
 		bazaar: BAZAAR,
 		service: withService({

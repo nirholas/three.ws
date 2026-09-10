@@ -165,7 +165,6 @@ const singleEndpoint = paidEndpoint({
 	route: ROUTE,
 	method: 'GET',
 	priceAtomics: priceFor('agent-reputation', '10000'),
-	networks: ['base', 'solana'],
 	description: DESCRIPTION,
 	bazaar: BAZAAR,
 	service: withService({
@@ -354,7 +353,6 @@ const sweepEndpoint = paidEndpoint({
 	route: ROUTE,
 	method: 'POST',
 	priceAtomics: priceFor('agent-reputation', '10000'),
-	networks: ['base', 'solana'],
 	description: SWEEP_DESCRIPTION,
 	bazaar: SWEEP_BAZAAR,
 	service: withService({

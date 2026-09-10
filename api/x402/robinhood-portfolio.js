@@ -93,7 +93,6 @@ export default paidEndpoint({
 	route: ROUTE,
 	method: 'GET',
 	priceAtomics: priceFor('robinhood-portfolio', '2000'),
-	networks: ['base', 'solana'],
 	description: DESCRIPTION,
 	bazaar: BAZAAR,
 	service: withService({

@@ -195,7 +195,6 @@ export default async function handler(req, res) {
 		route: ROUTE,
 		method: 'GET',
 		priceAtomics: String(asset.price_atomics),
-		networks: ['base', 'solana'],
 		description: `${DESCRIPTION} — currently delivering: ${asset.title}.`,
 		mimeType: 'application/json',
 		bazaar: BAZAAR,

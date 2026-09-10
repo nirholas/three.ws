@@ -391,7 +391,6 @@ const getEndpoint = paidEndpoint({
 	route: ROUTE,
 	method: 'GET',
 	priceAtomics: priceFor('pump-agent-audit', '20000'),
-	networks: ['base', 'solana'],
 	description: DESCRIPTION,
 	bazaar: BAZAAR,
 	service: withService({
@@ -650,7 +649,6 @@ const whaleEndpoint = paidEndpoint({
 	route: ROUTE,
 	method: 'POST',
 	priceAtomics: priceFor('pump-agent-audit', '20000'),
-	networks: ['base', 'solana'],
 	description: WHALE_DESCRIPTION,
 	bazaar: WHALE_BAZAAR,
 	service: withService({

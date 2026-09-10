@@ -351,7 +351,6 @@ const getEndpoint = paidEndpoint({
 	route: ROUTE,
 	method: 'GET',
 	priceAtomics: priceFor('skill-marketplace', '1000'),
-	networks: ['base', 'solana'],
 	description: DESCRIPTION,
 	bazaar: BAZAAR,
 	service: withService({
@@ -380,7 +379,6 @@ const postEndpoint = paidEndpoint({
 	route: ROUTE,
 	method: 'POST',
 	priceAtomics: priceFor('skill-marketplace', '1000'),
-	networks: ['base', 'solana'],
 	description:
 		DESCRIPTION +
 		' POST mode="price_distribution" returns min/max/median price + listing count.' +

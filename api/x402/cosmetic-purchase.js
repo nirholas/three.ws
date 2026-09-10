@@ -229,7 +229,6 @@ export default async function handler(req, res) {
 		route: ROUTE,
 		method: 'GET',
 		priceAtomics,
-		networks: ['base', 'solana'],
 		description: `${DESCRIPTION} — currently unlocking: ${item.name} (${item.rarity}).`,
 		bazaar: BAZAAR,
 		service: withService({

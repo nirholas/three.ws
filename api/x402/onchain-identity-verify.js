@@ -153,7 +153,6 @@ export default paidEndpoint({
 	route: ROUTE,
 	method: 'GET',
 	priceAtomics: priceFor('onchain-identity-verify', '5000'),
-	networks: ['base', 'solana'],
 	description: DESCRIPTION,
 	bazaar: BAZAAR,
 	service: withService({

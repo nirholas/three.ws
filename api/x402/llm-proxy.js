@@ -172,7 +172,6 @@ export default paidEndpoint({
 	route: ROUTE,
 	method: 'POST',
 	priceAtomics: priceFor('llm-proxy', '5000'), // $0.005 USDC
-	networks: ['base', 'solana'],
 	description: DESCRIPTION,
 	bazaar: BAZAAR,
 	service: withService({

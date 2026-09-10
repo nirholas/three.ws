@@ -174,7 +174,6 @@ const singleEndpoint = paidEndpoint({
 	route: ROUTE,
 	method: 'GET',
 	priceAtomics: priceFor('symbol-availability', '1000'),
-	networks: ['base', 'solana'],
 	description: DESCRIPTION,
 	bazaar: BAZAAR,
 	service: withService({
@@ -280,7 +279,6 @@ const batchEndpoint = paidEndpoint({
 	route: ROUTE,
 	method: 'POST',
 	priceAtomics: priceFor('symbol-availability-batch', '5000'),
-	networks: ['base', 'solana'],
 	description: BATCH_DESCRIPTION,
 	bazaar: BATCH_BAZAAR,
 	service: withService({

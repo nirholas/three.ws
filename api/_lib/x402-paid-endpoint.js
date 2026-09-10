@@ -8,8 +8,9 @@
 // handler that returns JSON.
 //
 // Pricing: each endpoint gets its own `priceAtomics` (USDC has 6 decimals,
-// so "1000" = $0.001). Networks default to Base mainnet only; pass
-// `networks: ['base', 'solana']` to advertise both. The bazaar discovery
+// so "1000" = $0.001). Networks default to Solana first then Base, which is
+// the order the 402 challenge lists them in; pass `networks` only to narrow
+// that set (e.g. `['solana']`) or to force a different order. The bazaar discovery
 // extension is required — agentic.market's catalog rejects entries without
 // it. See api/_lib/x402-spec.js for the v2 wire-format details.
 //

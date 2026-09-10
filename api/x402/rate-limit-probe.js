@@ -205,7 +205,6 @@ export default paidEndpoint({
 	route: ROUTE,
 	method: 'POST',
 	priceAtomics: priceFor('rate-limit-probe', '1000'),
-	networks: ['base', 'solana'],
 	description: DESCRIPTION,
 	bazaar: BAZAAR,
 	service: withService({
