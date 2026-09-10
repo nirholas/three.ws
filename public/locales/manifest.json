@@ -297,6 +297,16 @@
 			"dir": "ltr"
 		},
 		{
+			"code": "bs",
+			"name": "Bosanski",
+			"dir": "ltr"
+		},
+		{
+			"code": "ca",
+			"name": "Català",
+			"dir": "ltr"
+		},
+		{
 			"code": "be",
 			"name": "Беларуская",
 			"dir": "ltr"
