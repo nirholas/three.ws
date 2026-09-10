@@ -427,6 +427,78 @@ describe('home runtime: the graph goes stale, never empty', () => {
 		runtime.closeAll();
 	});
 
+	it('writes a mid-connection drop through to the stored row, not just to subscribers', async () => {
+		// The regression this locks in: onConnectSuccess and onConnectFailure only
+		// run inside the initial ready promise, so a pooled bridge that dies while
+		// checked out used to change nothing but memory. /api/home reads the row,
+		// so a stopped house kept reporting connected with its old last_ok_at for
+		// as long as the entry stayed pooled, and the card read "Live" over a house
+		// that was gone.
+		const createBridge = countingFactory();
+		const deps = storeDeps();
+		const runtime = createHomeRuntime({ createBridge, ...deps });
+
+		await runtime.subscribe(HOME_ID, USER_ID, () => {});
+		const bridge = createBridge.built[0];
+		expect(deps.handshakes.at(-1)).toMatchObject({ id: HOME_ID, status: 'connected' });
+
+		bridge.connected = false;
+		bridge.emit('disconnected');
+		await Promise.resolve();
+
+		const recorded = deps.handshakes.at(-1);
+		expect(recorded.id).toBe(HOME_ID);
+		expect(recorded.status).toBe('unreachable');
+		expect(recorded.statusDetail).toMatch(/stopped answering/i);
+		runtime.closeAll();
+	});
+
+	it('records the recovery too, so a house that comes back stops reading unreachable', async () => {
+		const createBridge = countingFactory();
+		const deps = storeDeps();
+		const runtime = createHomeRuntime({ createBridge, ...deps });
+
+		await runtime.subscribe(HOME_ID, USER_ID, () => {});
+		const bridge = createBridge.built[0];
+
+		bridge.connected = false;
+		bridge.emit('disconnected');
+		await Promise.resolve();
+		const afterDrop = deps.handshakes.length;
+		bridge.connected = true;
+		bridge.emit('reconnected');
+		await Promise.resolve();
+
+		// A fresh write, not the one the original connect left behind: asserting
+		// only the last row's status passes even with the recovery path missing,
+		// because onConnectSuccess already stored `connected`.
+		expect(deps.handshakes.length).toBe(afterDrop + 1);
+		expect(deps.handshakes.at(-1)).toMatchObject({ id: HOME_ID, status: 'connected' });
+		runtime.closeAll();
+	});
+
+	it('does not spend a write on a repeated event that changes nothing', async () => {
+		// A flapping house emits one event per transition; anything else is the
+		// same fact arriving twice and is not worth a database round trip.
+		const createBridge = countingFactory();
+		const deps = storeDeps();
+		const runtime = createHomeRuntime({ createBridge, ...deps });
+
+		await runtime.subscribe(HOME_ID, USER_ID, () => {});
+		const bridge = createBridge.built[0];
+
+		bridge.connected = false;
+		bridge.emit('disconnected');
+		await Promise.resolve();
+		const afterFirst = deps.handshakes.length;
+		bridge.emit('disconnected');
+		bridge.emit('disconnected');
+		await Promise.resolve();
+
+		expect(deps.handshakes.length).toBe(afterFirst);
+		runtime.closeAll();
+	});
+
 	it('comes back live on reconnect with no action from the client', async () => {
 		const createBridge = countingFactory();
 		const runtime = createHomeRuntime({ createBridge, ...storeDeps() });

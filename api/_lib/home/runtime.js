@@ -564,6 +564,8 @@ export function createHomeRuntime(deps = {}) {
 			openedAt: now(),
 			stale: false,
 			status: HOME_STATUS.PENDING,
+			/** What the database row is believed to say, so persistStatus only writes transitions. */
+			persistedStatus: null,
 			lastGraph: { floors: [], rooms: [], unassigned: [] },
 			subscribers: new Set(),
 			closed: false,
@@ -641,11 +643,13 @@ export function createHomeRuntime(deps = {}) {
 			entry.stale = true;
 			entry.status = HOME_STATUS.UNREACHABLE;
 			notify(entry, bridge);
+			persistStatus(entry, HOME_STATUS.UNREACHABLE, 'This home stopped answering three.ws. It reconnects on its own when it comes back.');
 		});
 		bridge.on('reconnected', () => {
 			entry.stale = false;
 			entry.status = HOME_STATUS.CONNECTED;
 			notify(entry, bridge);
+			persistStatus(entry, HOME_STATUS.CONNECTED, null);
 		});
 		bridge.on('error', (err) => {
 			// Once per socket, not once per message: a malformed burst must not be
@@ -658,6 +662,38 @@ export function createHomeRuntime(deps = {}) {
 			// URL is somebody's address in a log with its own retention. Fall back
 			// to the error's name, never its message.
 			console.warn('[home-runtime] bridge reported an error', { homeId: entry.homeId, ...safeError(err) });
+		});
+	}
+
+	/**
+	 * Write a mid-connection status change through to the database.
+	 *
+	 * `onConnectSuccess` and `onConnectFailure` only ever run inside the initial
+	 * `entry.ready` promise, so before this existed the ONLY way a house's stored
+	 * status changed was a fresh connect attempt. A pooled entry never takes that
+	 * path again: `acquire` finds it in `entries`, awaits an already-resolved
+	 * `ready`, and hands the bridge straight back. The liveness ping still noticed
+	 * the house was gone and still told every live subscriber, but the row kept
+	 * saying `connected` with its old `last_ok_at` and no `last_error_at`.
+	 *
+	 * That is invisible on a cold pool and permanent on a warm one, which is
+	 * exactly the shape it was found in: a stopped house read "Live, updated
+	 * moments ago" for as long as anyone watched, but only when an earlier request
+	 * had left a socket in the pool. `/api/home` and the `isDegraded` judgement in
+	 * `src/home/manage.js` both read the row, so the wall display this whole
+	 * mechanism exists to protect was the one surface still being lied to.
+	 *
+	 * Redundant writes are skipped rather than debounced: a house that flaps emits
+	 * one event per transition, and only a transition is worth a round trip.
+	 */
+	function persistStatus(entry, status, statusDetail) {
+		if (entry.persistedStatus === status) return;
+		entry.persistedStatus = status;
+		writeHandshake(entry.homeId, { status, statusDetail }).catch((err) => {
+			// Let the next transition try again rather than pinning a value the
+			// database never accepted.
+			if (entry.persistedStatus === status) entry.persistedStatus = null;
+			console.warn('[home-runtime] status change not recorded', { homeId: entry.homeId, status, ...safeError(err) });
 		});
 	}
 
@@ -684,6 +720,10 @@ export function createHomeRuntime(deps = {}) {
 
 	function onConnectSuccess(homeId, entry, bridge) {
 		breakers.delete(homeId);
+		// Keep persistStatus's view of the row in step with what this write is
+		// about to store, so the first mid-connection transition is judged against
+		// the truth rather than against an empty field.
+		entry.persistedStatus = HOME_STATUS.CONNECTED;
 		const graph = entry.lastGraph;
 		// Measured from the socket that just opened, never inferred. The store
 		// merges capabilities, so writing the WebSocket half here cannot erase the

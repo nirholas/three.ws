@@ -15,6 +15,14 @@
 			<description>Files served straight from our asset storage carried a permission list that only named a handful of sites, so a browser on any other site quietly threw the file away after downloading it. Anyone embedding a three.ws avatar or model from its direct storage link saw an empty viewer with a cross-origin error, and the workarounds were our /cdn and /api/glb routes. Storage now allows reads from everywhere while keeping uploads locked to our own pages, so direct links work in any embed. This also fixed a first-party case: the www version of the site served every page correctly but had all of its 3D blocked.</description>
 		</item>
 		<item>
+			<title>A smart home that stops answering now says so, instead of reading Live</title>
+			<link>https://three.ws/smart-home</link>
+			<guid isPermaLink="false">2026-09-10:A smart home that stops answering now says so, instead of reading Live</guid>
+			<pubDate>Thu, 10 Sep 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>If your house went offline while three.ws already had a connection open to it, the home card could keep showing Live, updated moments ago for as long as you watched. The live 3D scene knew and went stale correctly, but the stored status did not, so anything reading it (the card, the home list, a wall display) kept describing a house that was gone as healthy. A house dropping out is now recorded the moment it is noticed, and recorded again when it comes back, so every surface agrees. This was invisible on a first visit and permanent on a busy one, which is why it survived so long.</description>
+		</item>
+		<item>
 			<title>Generated motion clips rebuilt so they no longer slide across the floor</title>
 			<link>https://three.ws/animations</link>
 			<guid isPermaLink="false">2026-09-10:Generated motion clips rebuilt so they no longer slide across the floor</guid>
