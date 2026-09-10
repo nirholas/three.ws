@@ -153,6 +153,10 @@ export class DopplerSensor {
 		this._startedAt = 0;
 		this._history = [];
 		this._lastFrameAt = 0;
+		// Bumped by every start and every stop. start() awaits the microphone and
+		// the carrier probe, and a user who presses stop during that wait must not
+		// end up with a sensor that arms itself once the await finally resolves.
+		this._generation = 0;
 		this.running = false;
 	}
 
@@ -167,6 +171,8 @@ export class DopplerSensor {
 	async start() {
 		if (this.running) return;
 		if (!isSupported()) throw new Error('This browser has no Web Audio microphone input.');
+		const gen = ++this._generation;
+		const superseded = () => gen !== this._generation;
 		this._status('starting', 'Requesting the microphone');
 		try {
 			this._stream = await navigator.mediaDevices.getUserMedia(MIC_CONSTRAINTS);
@@ -177,9 +183,15 @@ export class DopplerSensor {
 					: `The microphone could not be opened: ${err?.message || err}`,
 			);
 		}
+		if (superseded()) {
+			for (const track of this._stream?.getTracks() || []) track.stop();
+			this._stream = null;
+			return;
+		}
 		const Ctx = window.AudioContext || window.webkitAudioContext;
 		this._ctx = new Ctx();
 		await this._ctx.resume();
+		if (superseded()) return this._teardown();
 
 		if (this._ctx.sampleRate < this.tone * 2 + 1000) {
 			const usable = TONE_CANDIDATES.filter((t) => this._ctx.sampleRate >= t * 2 + 1000);
@@ -219,6 +231,10 @@ export class DopplerSensor {
 		if (this.autoTone) {
 			this._status('tuning', 'Finding a carrier this hardware can hear');
 			await this._pickTone();
+			if (superseded()) {
+				this.running = false;
+				return this._teardown();
+			}
 		}
 		this.recalibrate();
 		this._status('calibrating', 'Hold still while the room is measured');
@@ -399,6 +415,7 @@ export class DopplerSensor {
 
 	/** Silence the tone, release the microphone, and stop reporting. */
 	stop() {
+		this._generation++;
 		this.running = false;
 		cancelAnimationFrame(this._raf);
 		this._raf = 0;

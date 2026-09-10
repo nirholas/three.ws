@@ -1,0 +1,217 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8" />
+		<title>Hand control with no camera: driving an embedded agent by sound</title>
+		<meta name="viewport" content="width=device-width, initial-scale=1" />
+		<!--
+			Your laptop already has a motion sensor: the speakers and the
+			microphone. This page turns it on for an embedded agent.
+
+			The speakers emit a tone above hearing. A hand moving in front of the
+			machine reflects it, and the reflection comes back frequency-shifted:
+			higher closing in, lower pulling away. That is the Doppler effect, and
+			it is enough to read a sweep, a push and a lift with no camera.
+
+			Two halves, side by side:
+
+			1. `<agent-3d sonar>` with the built-in response: a sweep steps the
+			   agent through its gestures, a push moves the camera in, a held lift
+			   turns it. One attribute and a button; nothing else to wire.
+			2. The same events, taken over: preventDefault() on `sonar-gesture`
+			   suppresses the built-in response and the gestures drive this page's
+			   own cards instead.
+
+			The attribute only permits the capability. Nothing opens a microphone
+			until startSonar() is called, which is why both halves are behind a
+			button: it needs a real user gesture, and putting a 20 kHz tone into
+			somebody's room is their decision to make.
+
+			Use the built-in speakers and microphone, and keep the volume up:
+			headphones break the reflection path. The carrier sits near 20 kHz,
+			which cats and dogs can hear.
+
+			Run it: npm run dev, then open
+			http://localhost:3000/examples/sonar-hand-control.html
+
+			The technique and its limits: docs/sonar.md. The attribute, methods
+			and event detail: docs/web-component.md.
+		-->
+		<style>
+			:root { color-scheme: dark; }
+			* { box-sizing: border-box; }
+			body {
+				margin: 0; min-height: 100vh; background: #07090d; color: #e8edf5;
+				font: 16px/1.6 ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
+				padding: 40px clamp(16px, 5vw, 56px) 80px;
+			}
+			header { max-width: 68ch; }
+			h1 { font-size: clamp(26px, 4vw, 38px); line-height: 1.1; letter-spacing: -.02em; margin: 0 0 12px; }
+			h2 { font-size: 17px; margin: 0 0 6px; }
+			p.lede { color: #93a2b8; margin: 0 0 8px; }
+			p.note { color: #93a2b8; font-size: 14px; margin: 0 0 24px; }
+			code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: .92em; color: #7dd3fc; }
+			.grid { display: grid; gap: 28px; grid-template-columns: repeat(auto-fit, minmax(340px, 1fr)); margin-top: 32px; }
+			.panel { border: 1px solid #1c2531; border-radius: 14px; padding: 18px; background: #0b0f16; }
+			.panel > p { color: #93a2b8; font-size: 14px; margin: 0 0 14px; }
+			agent-3d { display: block; width: 100%; height: 360px; border-radius: 10px; overflow: hidden; }
+			.row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin: 14px 0; }
+			button {
+				font: inherit; font-size: 14px; padding: 8px 14px; border-radius: 8px; cursor: pointer;
+				border: 1px solid #24303f; background: #131a24; color: inherit;
+				transition: background .16s ease, border-color .16s ease;
+			}
+			button:hover:not(:disabled) { background: #1a2331; border-color: #35455a; }
+			button:active:not(:disabled) { transform: translateY(1px); }
+			button:focus-visible { outline: 2px solid #7dd3fc; outline-offset: 2px; }
+			button:disabled { opacity: .45; cursor: not-allowed; }
+			select { font: inherit; font-size: 14px; padding: 7px 10px; border-radius: 8px; border: 1px solid #24303f; background: #131a24; color: inherit; }
+			select:focus-visible { outline: 2px solid #7dd3fc; outline-offset: 2px; }
+			pre { margin: 0; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12.5px; color: #93a2b8; white-space: pre-wrap; min-height: 3em; }
+			.cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin: 14px 0; }
+			.card {
+				border: 1px solid #24303f; border-radius: 10px; padding: 18px 10px; text-align: center;
+				font-size: 13px; color: #93a2b8; transition: border-color .2s ease, background .2s ease, color .2s ease;
+			}
+			.card[aria-current='true'] { border-color: #4ade80; background: #102318; color: #e8edf5; }
+			@media (prefers-reduced-motion: reduce) { button, .card { transition: none; } }
+		</style>
+	</head>
+	<body>
+		<header>
+			<h1>Wave at your laptop</h1>
+			<p class="lede">
+				No camera. The speakers play a tone you cannot hear, your hand bends it on the way
+				back, and the microphone reads the shift. Left: the built-in response. Right: the
+				same gestures, taken over by this page.
+			</p>
+			<p class="note">
+				Use the built-in speakers and microphone and keep the volume up, because headphones
+				break the reflection path. Hold still for the first couple of seconds while the room
+				is measured. The carrier sits near 20 kHz, which cats and dogs can hear.
+			</p>
+		</header>
+
+		<div class="grid">
+			<section class="panel">
+				<h2>1. The built-in response</h2>
+				<p>
+					<code>&lt;agent-3d sonar&gt;</code> plus a button. A sweep steps the agent through
+					its gesture vocabulary, a push moves the camera in and a pull eases it back out,
+					a held lift turns the camera.
+				</p>
+				<agent-3d id="built-in" sonar src="/avatars/cz.glb"></agent-3d>
+				<div class="row">
+					<button id="built-in-start" type="button">Start sensing</button>
+					<button id="built-in-stop" type="button" disabled>Stop</button>
+					<label for="built-in-mode">Gesture</label>
+					<select id="built-in-mode">
+						<option value="swipe">Sweep</option>
+						<option value="push">Push and pull</option>
+						<option value="lift">Lift</option>
+						<option value="all">All three</option>
+					</select>
+				</div>
+				<pre id="built-in-out">Idle. Press Start sensing.</pre>
+			</section>
+
+			<section class="panel">
+				<h2>2. The same gestures, your behaviour</h2>
+				<p>
+					<code>preventDefault()</code> on <code>sonar-gesture</code> suppresses the built-in
+					response. The agent stays still and a sweep moves the selection below instead,
+					which is the shape of a slide deck, a gallery or a kiosk.
+				</p>
+				<agent-3d id="custom" sonar src="/avatars/cz.glb"></agent-3d>
+				<div class="cards" id="cards">
+					<div class="card" aria-current="true">One</div>
+					<div class="card">Two</div>
+					<div class="card">Three</div>
+				</div>
+				<div class="row">
+					<button id="custom-start" type="button">Start sensing</button>
+					<button id="custom-stop" type="button" disabled>Stop</button>
+				</div>
+				<pre id="custom-out">Idle. Press Start sensing.</pre>
+			</section>
+		</div>
+
+		<script type="module" src="/src/element.js"></script>
+		<script type="module">
+			/**
+			 * Wire one panel's start/stop buttons to an element's sonar session.
+			 * startSonar() rejects with a message written to be shown, so failures
+			 * land in the panel rather than in the console.
+			 */
+			function wire(el, { startBtn, stopBtn, out, mode = () => 'swipe' }) {
+				const say = (text) => {
+					out.textContent = text;
+				};
+				startBtn.addEventListener('click', async () => {
+					startBtn.disabled = true;
+					say('Opening the microphone…');
+					try {
+						const started = await el.startSonar({ mode: mode() });
+						if (!started) {
+							say('This browser has no Web Audio microphone input.');
+							return;
+						}
+						stopBtn.disabled = false;
+						say('Listening. Hold still for two seconds, then try a gesture.');
+					} catch (err) {
+						startBtn.disabled = false;
+						say(err.message);
+					}
+				});
+				stopBtn.addEventListener('click', () => {
+					el.stopSonar();
+					startBtn.disabled = false;
+					stopBtn.disabled = true;
+					say('Stopped. The microphone is released.');
+				});
+			}
+
+			// 1. Built-in response: listen only to report what was read.
+			const builtIn = document.getElementById('built-in');
+			const builtInOut = document.getElementById('built-in-out');
+			const modeSelect = document.getElementById('built-in-mode');
+			wire(builtIn, {
+				startBtn: document.getElementById('built-in-start'),
+				stopBtn: document.getElementById('built-in-stop'),
+				out: builtInOut,
+				mode: () => modeSelect.value,
+			});
+			modeSelect.addEventListener('change', () => {
+				// A running session keeps its mode; restart to change it.
+				if (builtIn.sonarRunning) builtInOut.textContent = 'Stop and start again to change gesture.';
+			});
+			builtIn.addEventListener('sonar-gesture', (e) => {
+				const { gesture } = e.detail;
+				// A lift reports every frame it turns; only the discrete ones are worth printing.
+				if (gesture === 'lift') return;
+				builtInOut.textContent =
+					gesture === 'swipe'
+						? `sweep ${e.detail.direction > 0 ? 'right' : 'left'} → playing "${e.detail.slot}"`
+						: `push, step ${e.detail.action}`;
+			});
+
+			// 2. Taken over: the agent does not move, the cards do.
+			const custom = document.getElementById('custom');
+			const customOut = document.getElementById('custom-out');
+			const cards = [...document.getElementById('cards').children];
+			let index = 0;
+			wire(custom, {
+				startBtn: document.getElementById('custom-start'),
+				stopBtn: document.getElementById('custom-stop'),
+				out: customOut,
+			});
+			custom.addEventListener('sonar-gesture', (e) => {
+				e.preventDefault(); // the agent stays put; this page decides what happens
+				if (e.detail.gesture !== 'swipe') return;
+				index = (index + e.detail.direction + cards.length) % cards.length;
+				for (const [i, card] of cards.entries()) card.setAttribute('aria-current', String(i === index));
+				customOut.textContent = `sweep ${e.detail.direction > 0 ? 'right' : 'left'} → card ${index + 1}`;
+			});
+		</script>
+	</body>
+</html>

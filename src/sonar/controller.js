@@ -111,6 +111,7 @@ export class SonarController {
 		this._lift = new LiftMotion();
 		this._raf = 0;
 		this._liftLast = 0;
+		this._generation = 0;
 		this.lastReading = null;
 	}
 
@@ -130,6 +131,9 @@ export class SonarController {
 	 */
 	async start() {
 		if (this.running) return;
+		// start() awaits the microphone; a stop() arriving during that wait must
+		// win, or the frame loop below installs itself over a stopped session.
+		const gen = ++this._generation;
 		this._sensor = new DopplerSensor({
 			tone: this._opts.tone,
 			autoTone: this._opts.autoTone,
@@ -144,6 +148,7 @@ export class SonarController {
 			this.onError?.(err);
 			throw err;
 		}
+		if (gen !== this._generation) return;
 		this.resetDetectors();
 		this._liftLast = 0;
 		this._raf = requestAnimationFrame(this._tick);
@@ -151,6 +156,7 @@ export class SonarController {
 
 	/** Silence the tone, release the microphone, and stop reporting. */
 	stop() {
+		this._generation++;
 		this._sensor?.stop();
 		this._sensor = null;
 		// Guarded rather than unconditional: stop() is a teardown path, reachable

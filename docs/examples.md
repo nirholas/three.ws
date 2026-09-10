@@ -735,7 +735,7 @@ genuinely invested in the user's progress.
 
 ## Every runnable example in the repo
 
-The repo ships 47 examples: 11 web component demos, 10 end-to-end projects, and 26 package example sets. This table is generated from what is on disk, so it cannot list one that was deleted or miss one that was added. The machine-readable version is [data/examples.json](../data/examples.json).
+The repo ships 48 examples: 12 web component demos, 10 end-to-end projects, and 26 package example sets. This table is generated from what is on disk, so it cannot list one that was deleted or miss one that was added. The machine-readable version is [data/examples.json](../data/examples.json).
 
 ### Example projects
 
@@ -792,6 +792,7 @@ The repo ships 47 examples: 11 web component demos, 10 end-to-end projects, and 
 | [`examples/two-agents.html`](../examples/two-agents.html) | Both agents render in a single WebGL context. Each keeps its own brain, memory, and chat chrome. | `http://localhost:3000/examples/two-agents.html` |
 | [`examples/web-component.html`](../examples/web-component.html) | Minimal, auto-rotate, and poster/reveal variants of the Custom Element wrapper. | `http://localhost:3000/examples/web-component.html` |
 | [`examples/bare-avatar.html`](../examples/bare-avatar.html) | JUST the avatar - the default. No chat, no input, no debug GUI, no name-plate, transparent background. Add the `chat` attribute to opt into the conversational UI. | `http://localhost:3000/examples/bare-avatar.html` |
+| [`examples/sonar-hand-control.html`](../examples/sonar-hand-control.html) | No camera. The speakers play a tone you cannot hear, your hand bends it on the way back, and the microphone reads the shift. Left: the built-in response. Right: the same gestures, taken over by this page. | `http://localhost:3000/examples/sonar-hand-control.html` |
 | [`examples/minimal.html`](../examples/minimal.html) | This is a plain HTML page. The floating agent in the corner was added with a single <agent-3d> tag - no build step, no framework. | `http://localhost:3000/examples/minimal.html` |
 | [`examples/one-line-demo.html`](../examples/one-line-demo.html) | Everything below the heading is a single <agent-3d> tag. | `http://localhost:3000/examples/one-line-demo.html` |
 | [`examples/sign-language.html`](../examples/sign-language.html) | Left: an agent whose every reply is signed, from one HTML attribute. Right: the signing engine on its own, compiling whatever you type into a single animation clip. | `http://localhost:3000/examples/sign-language.html` |
