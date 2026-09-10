@@ -39,7 +39,7 @@
 //   node scripts/i18n-translate.mjs --concurrency=8 # widen the chunk pool for a bulk run
 //   node scripts/i18n-translate.mjs --split-token=2400 # bigger chunks, fewer requests
 
-import { writeFileSync, existsSync, readFileSync } from 'node:fs';
+import { writeFileSync, existsSync, readFileSync, renameSync, unlinkSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { config as dotenv } from 'dotenv';
@@ -168,7 +168,7 @@ function runPrune() {
 			continue;
 		}
 		if (!flag('dry-run')) {
-			writeFileSync(localePath(code), JSON.stringify(pruned, null, '\t') + '\n');
+			writeJsonAtomic(localePath(code), JSON.stringify(pruned, null, '\t') + '\n');
 		}
 		removedTotal += removed.length;
 		touched++;
@@ -179,6 +179,27 @@ function runPrune() {
 	console.log(
 		`\ni18n-prune: ${flag('dry-run') ? 'would drop' : 'dropped'} ${removedTotal} stale key(s) across ${touched} locale(s).`,
 	);
+}
+
+// A catalog is rewritten after every chunk batch, and a bulk run is routinely
+// stopped part-way (a retune, a Codespace recycle). writeFileSync truncates the
+// destination before it writes, so a stop inside that window leaves a half
+// written catalog that no longer parses, and the locale's whole translated
+// history is gone. Write to a sibling temp file and rename it into place
+// instead: rename is atomic on the same filesystem, so a reader (and the next
+// run) sees either the previous catalog or the complete new one, never a
+// truncated one.
+function writeJsonAtomic(path, text) {
+	const tmp = `${path}.tmp-${process.pid}`;
+	try {
+		writeFileSync(tmp, text);
+		renameSync(tmp, path);
+	} catch (err) {
+		try {
+			unlinkSync(tmp);
+		} catch {}
+		throw err;
+	}
 }
 
 // --- chunking --------------------------------------------------------------
@@ -872,7 +893,7 @@ function persist(code, existing, translatedFlat) {
 	const translatedNested = {};
 	for (const [k, v] of Object.entries(translatedFlat)) setDeep(translatedNested, k, v);
 	const merged = mergeOrdered(source, existing, translatedNested);
-	writeFileSync(localePath(code), JSON.stringify(merged, null, '\t') + '\n');
+	writeJsonAtomic(localePath(code), JSON.stringify(merged, null, '\t') + '\n');
 }
 
 // Refresh the runtime manifest the locale switcher reads. Only locales with a
@@ -913,7 +934,7 @@ function writeManifest() {
 		dir: (cfg.rtlLocales || []).includes(code) ? 'rtl' : 'ltr',
 	}));
 	const manifest = { default: cfg.entryLocale, locales: localesList };
-	writeFileSync(
+	writeJsonAtomic(
 		resolve(ROOT, cfg.output, 'manifest.json'),
 		JSON.stringify(manifest, null, '\t') + '\n',
 	);
@@ -1034,7 +1055,7 @@ async function repairLocale(code, maxAttempts = 4) {
 			repaired++;
 		}
 		setDeep(existing, key, fixed);
-		writeFileSync(localePath(code), JSON.stringify(existing, null, '\t') + '\n');
+		writeJsonAtomic(localePath(code), JSON.stringify(existing, null, '\t') + '\n');
 	}
 	console.log(`  ${code}: repaired ${repaired}, baked ${baked}`);
 	return { code, repaired, baked };

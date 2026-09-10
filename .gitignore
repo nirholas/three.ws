@@ -613,3 +613,6 @@ generated-assets-onchain-claude-code-prompt.md
 # Staging area for scripts/glb-mobile-payload.mjs. The script removes it on a
 # clean exit; this keeps a killed run from ever being committed by a sweep.
 public/_payload-check/
+
+# Atomic-write scratch files from scripts/i18n-translate.mjs
+public/locales/*.tmp-*
