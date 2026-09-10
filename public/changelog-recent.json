@@ -1,11 +1,11 @@
 {
-	"generated_at": "2026-09-10T15:20:36.348Z",
+	"generated_at": "2026-09-10T15:26:08.096Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
 		"url": "https://three.ws"
 	},
-	"total": 3664,
+	"total": 3665,
 	"complete": false,
 	"full_feed": "/changelog.json",
 	"entries": [
@@ -28,6 +28,17 @@
 			"link": "/smart-home",
 			"tags": [
 				"fix"
+			]
+		},
+		{
+			"date": "2026-09-10",
+			"type": "update",
+			"title": "Adding more AI providers no longer makes the image check slower to answer",
+			"summary": "The image check behind generated models asks several providers in turn, and it shared its time limit out equally between all of them. That had a perverse effect: every provider added to the list shortened the time given to the first and best one, so growing the list made the check worse rather than more resilient. Three providers were added last week and the first one's window fell just below what it needs to answer, which is why the check started timing out instead of returning verdicts. Each provider is now given whatever time the ones behind it do not need, with a guaranteed minimum still held back for every one of them, so the check gets a real answer from the first healthy provider and still falls through to the rest when it has to.",
+			"link": null,
+			"tags": [
+				"fix",
+				"improvement"
 			]
 		},
 		{
@@ -1605,17 +1616,6 @@
 			"tags": [
 				"improvement",
 				"feature"
-			]
-		},
-		{
-			"date": "2026-09-07",
-			"type": "update",
-			"title": "Turn a photo into a 3D model without leaving your editor",
-			"summary": "The Blender tools could already build a model from a written description. They now build one from a picture too: point at an image on your machine or a link to one, add a few words to steer it if you like, and the finished model opens in Blender. It runs on the same free lane as the text version and takes about as long.",
-			"link": null,
-			"tags": [
-				"feature",
-				"sdk"
 			]
 		}
 	]

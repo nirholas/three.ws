@@ -57,10 +57,37 @@ afterEach(async () => {
 });
 
 describe('laneAttemptTimeout', () => {
-	it('splits the remaining deadline across the lanes still to come', () => {
-		// 18s left, three lanes to go: 6s each, so the last rung still gets a turn.
-		expect(laneAttemptTimeout(18_000, 3, 20_000)).toBe(6_000);
-		expect(laneAttemptTimeout(12_000, 2, 20_000)).toBe(6_000);
+	it('reserves the floor for the rungs behind, and gives this lane the rest', () => {
+		// 18s left, three lanes to go: hold 3.5s for each of the two behind and
+		// hand this one the remaining 11s. Dividing equally (6s each) starved the
+		// best lane for the benefit of rungs that may never be reached.
+		expect(laneAttemptTimeout(18_000, 3, 20_000)).toBe(11_000);
+		expect(laneAttemptTimeout(12_000, 2, 20_000)).toBe(8_500);
+	});
+	it('still guarantees every remaining rung its floor', () => {
+		// Walk the chain the way describeImage does, spending each slice in full.
+		let remaining = 18_000;
+		const slices = [];
+		for (let lanesLeft = 3; lanesLeft > 0; lanesLeft--) {
+			const ms = laneAttemptTimeout(remaining, lanesLeft, 20_000);
+			slices.push(ms);
+			remaining -= ms;
+		}
+		expect(slices).toEqual([11_000, 3_500, 3_500]);
+		expect(remaining).toBe(0);
+		for (const ms of slices) expect(ms).toBeGreaterThanOrEqual(3_500);
+	});
+	it('does not shrink the first lane as the chain grows', () => {
+		// The regression that took the forge quality gate to 0 verdicts in 10.
+		// Its deadline is 29s and the chain went from 3 lanes to 6 when the
+		// OpenRouter rungs landed; under equal division the free NIM lane's slice
+		// fell from ~9.7s to ~4.8s, just under what the scoring rubric needs.
+		const sixLanes = laneAttemptTimeout(29_000, 6, 25_000);
+		const equalDivision = Math.floor(29_000 / 6); // 4_833, the old policy
+		expect(sixLanes).toBe(11_500);
+		expect(sixLanes).toBeGreaterThan(equalDivision * 2);
+		// Deep chains still leave the first lane more than a single VLM call needs.
+		expect(laneAttemptTimeout(29_000, 8, 25_000)).toBeGreaterThan(4_000);
 	});
 	it('never exceeds the caller timeout and never outlives the deadline', () => {
 		expect(laneAttemptTimeout(60_000, 1, 20_000)).toBe(20_000);
@@ -81,7 +108,7 @@ describe('laneAttemptTimeout', () => {
 		// fallback rung. 23_474/3 is the shape production actually produced.
 		const split = laneAttemptTimeout(23_474, 3, 20_000);
 		expect(Number.isInteger(split)).toBe(true);
-		expect(split).toBe(7_824);
+		expect(split).toBe(16_474);
 		expect(() => AbortSignal.timeout(split)).not.toThrow();
 		for (const remaining of [23_474, 9_999, 12_345, 7_001]) {
 			for (const lanes of [1, 2, 3, 4, 7]) {

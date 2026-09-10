@@ -23,6 +23,14 @@
 			<description>If your house went offline while three.ws already had a connection open to it, the home card could keep showing Live, updated moments ago for as long as you watched. The live 3D scene knew and went stale correctly, but the stored status did not, so anything reading it (the card, the home list, a wall display) kept describing a house that was gone as healthy. A house dropping out is now recorded the moment it is noticed, and recorded again when it comes back, so every surface agrees. This was invisible on a first visit and permanent on a busy one, which is why it survived so long.</description>
 		</item>
 		<item>
+			<title>Adding more AI providers no longer makes the image check slower to answer</title>
+			<link>https://three.ws/changelog</link>
+			<guid isPermaLink="false">2026-09-10:Adding more AI providers no longer makes the image check slower to answer</guid>
+			<pubDate>Thu, 10 Sep 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>The image check behind generated models asks several providers in turn, and it shared its time limit out equally between all of them. That had a perverse effect: every provider added to the list shortened the time given to the first and best one, so growing the list made the check worse rather than more resilient. Three providers were added last week and the first one's window fell just below what it needs to answer, which is why the check started timing out instead of returning verdicts. Each provider is now given whatever time the ones behind it do not need, with a guaranteed minimum still held back for every one of them, so the check gets a real answer from the first healthy provider and still falls through to the rest when it has to.</description>
+		</item>
+		<item>
 			<title>Generated motion clips rebuilt so they no longer slide across the floor</title>
 			<link>https://three.ws/animations</link>
 			<guid isPermaLink="false">2026-09-10:Generated motion clips rebuilt so they no longer slide across the floor</guid>

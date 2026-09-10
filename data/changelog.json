@@ -28070,6 +28070,15 @@
 				"fix",
 				"improvement"
 			]
+		},
+		{
+			"date": "2026-09-10",
+			"title": "Adding more AI providers no longer makes the image check slower to answer",
+			"summary": "The image check behind generated models asks several providers in turn, and it shared its time limit out equally between all of them. That had a perverse effect: every provider added to the list shortened the time given to the first and best one, so growing the list made the check worse rather than more resilient. Three providers were added last week and the first one's window fell just below what it needs to answer, which is why the check started timing out instead of returning verdicts. Each provider is now given whatever time the ones behind it do not need, with a guaranteed minimum still held back for every one of them, so the check gets a real answer from the first healthy provider and still falls through to the rest when it has to.",
+			"tags": [
+				"fix",
+				"improvement"
+			]
 		}
 	]
 }

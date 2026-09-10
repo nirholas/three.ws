@@ -162,7 +162,25 @@ function coolLane(chain, lane, { seconds, reason, hostWide }) {
  */
 export function laneAttemptTimeout(remainingMs, lanesLeft, timeoutMs) {
 	if (!Number.isFinite(remainingMs)) return timeoutMs;
-	const share = remainingMs / Math.max(1, lanesLeft);
+	// Reserve the floor for the rungs behind this one, then give this lane the
+	// rest. It used to divide the budget EQUALLY, which quietly punishes the
+	// chain for having depth: every lane added to the list shrinks the slice the
+	// FIRST and best lane gets, even though that lane is the one most likely to
+	// answer. Adding three OpenRouter rungs on 2026-09-09 took the free NIM
+	// lane's slice from about 9.7s to about 4.8s against the forge quality
+	// gate's 29s deadline, which is just under what it needs for the scoring
+	// rubric, and the gate went from 5 verdicts in 10 to 0 in 10 (measured on
+	// production 2026-09-10). Nothing about either lane changed; the arithmetic
+	// did.
+	//
+	// Reserving instead of dividing keeps the property the split existed for (a
+	// hung lane cannot eat the whole deadline, and every remaining rung is still
+	// guaranteed MIN_LANE_ATTEMPT_MS) while letting the lane in hand use the
+	// budget nobody else needs yet. A lane that fails fast hands its unused
+	// share straight to the next one, because `remainingMs` is re-read per
+	// attempt.
+	const reserve = MIN_LANE_ATTEMPT_MS * Math.max(0, lanesLeft - 1);
+	const share = Math.max(MIN_LANE_ATTEMPT_MS, remainingMs - reserve);
 	// The floor may exceed the share when the budget is nearly spent; capping it
 	// by what is actually left keeps the attempt inside the deadline either way.
 	//
