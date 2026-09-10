@@ -82,6 +82,22 @@ describe('describeImageJson lane acceptance', () => {
 		expect(out.json).toEqual(VERDICT);
 	});
 
+	it('falls through an empty reply, which is how a reasoning model fails in production', async () => {
+		// Observed live on 2026-09-10 against /api/vision: the winning lane was
+		// openrouter nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free and it
+		// returned text: ''. The model spends its budget on reasoning tokens and
+		// leaves message.content empty, which extractText faithfully reports as an
+		// empty string. An empty reply is a failed lane, not an answer.
+		fetchSpy
+			.mockResolvedValueOnce(reply(''))
+			.mockResolvedValueOnce(reply(JSON.stringify(VERDICT)));
+
+		const out = await call();
+
+		expect(fetchSpy).toHaveBeenCalledTimes(2);
+		expect(out.json).toEqual(VERDICT);
+	});
+
 	it('throws only once every rung has failed the shape test', async () => {
 		fetchSpy.mockResolvedValue(reply('not json at all'));
 
