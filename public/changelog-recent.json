@@ -1,14 +1,36 @@
 {
-	"generated_at": "2026-09-10T04:03:58.066Z",
+	"generated_at": "2026-09-10T04:48:03.506Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
 		"url": "https://three.ws"
 	},
-	"total": 3658,
+	"total": 3661,
 	"complete": false,
 	"full_feed": "/changelog.json",
 	"entries": [
+		{
+			"date": "2026-09-10",
+			"type": "update",
+			"title": "3D assets now load on any website, not just ours",
+			"summary": "Files served straight from our asset storage carried a permission list that only named a handful of sites, so a browser on any other site quietly threw the file away after downloading it. Anyone embedding a three.ws avatar or model from its direct storage link saw an empty viewer with a cross-origin error, and the workarounds were our /cdn and /api/glb routes. Storage now allows reads from everywhere while keeping uploads locked to our own pages, so direct links work in any embed. This also fixed a first-party case: the www version of the site served every page correctly but had all of its 3D blocked.",
+			"link": null,
+			"tags": [
+				"fix",
+				"infra"
+			]
+		},
+		{
+			"date": "2026-09-10",
+			"type": "update",
+			"title": "Generated motion clips rebuilt so they no longer slide across the floor",
+			"summary": "The generated half of the animation library was written in the wrong rest pose and carried a constant forward drift that was never in the original motion, which made characters glide instead of plant their feet. Every published clip was re-derived from the motion already generated, re-checked against the quality gate, and republished: 39 clips that now pass are live, and the 94 that still failed on foot-sliding were withdrawn rather than left on the shelf. No new generation was needed, because the motion was correct all along and only written down wrong.",
+			"link": "/animations",
+			"tags": [
+				"fix",
+				"improvement"
+			]
+		},
 		{
 			"date": "2026-09-10",
 			"type": "update",
@@ -18,6 +40,17 @@
 			"tags": [
 				"fix",
 				"improvement"
+			]
+		},
+		{
+			"date": "2026-09-10",
+			"type": "update",
+			"title": "Two scheduled jobs that had never once run are now running",
+			"summary": "The daily portfolio snapshot and the 15-minute global events ingest were both declared and deployed but had no schedule attached, so neither had ever fired. Both are now scheduled and enabled. The events feed backfills a few files per tick rather than all at once, and the snapshot refuses to record a day it cannot price properly, so neither one writes a hole into history while it catches up.",
+			"link": null,
+			"tags": [
+				"fix",
+				"infra"
 			]
 		},
 		{
@@ -1580,36 +1613,6 @@
 			"title": "Docs · Pocket Console",
 			"summary": "How the /pocket handheld works: the D-pad and gamepad controls, the three cartridges, the URL params that make a share link, and the one iframe that puts a live 3D agent console on any site.",
 			"link": "/docs/pocket",
-			"tags": [
-				"launch"
-			]
-		},
-		{
-			"date": "2026-09-05",
-			"type": "launch",
-			"title": "Docs · three.ws in VS Code",
-			"summary": "The VS Code extension that renders .glb and .gltf files in an editor tab, reports on them, generates and rigs new models on the free lane, and writes a pinned <agent-3d> embed.",
-			"link": "/docs/vscode",
-			"tags": [
-				"launch"
-			]
-		},
-		{
-			"date": "2026-09-05",
-			"type": "launch",
-			"title": "Filming the product demo",
-			"summary": "How the narrated walkthrough of every three.ws feature is filmed on the live site: the route is generated from the Feature Tour curriculum, so a page that ships tomorrow films itself, and each chapter can be re-shot on its own.",
-			"link": "/docs/product-demo",
-			"tags": [
-				"launch"
-			]
-		},
-		{
-			"date": "2026-09-05",
-			"type": "launch",
-			"title": "Machine Atlas",
-			"summary": "A radial aero engine and a steam locomotive generated in the browser from code, with no 3D model files: solved linkages, live dimensions, explode views and a GLB export.",
-			"link": "/assembly",
 			"tags": [
 				"launch"
 			]

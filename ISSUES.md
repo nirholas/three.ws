@@ -181,91 +181,32 @@ Found by the 2026-07-30 documentation audit, which read the handlers behind
 every surface it documented. Only the production-affecting findings are listed
 here; the code-quality items from that pass are not production issues.
 
-9. **Live R2 CORS does not match `scripts/set-r2-cors.mjs`** (owner action:
-    one credential). CONFIRMED by measurement, not inference, and RE-CONFIRMED
-    unchanged three times on 2026-09-09: `node scripts/set-r2-cors.mjs --probe` reads the
-    enforced policy from outside and exits 1 on this bucket. The probe needs no
-    credentials of any kind (it discovers the public host from a live listing
-    endpoint, and the upload host from an auth-free presign route or from an
-    explicit `--endpoint=`/`--bucket=`, both non-secret), so anyone can re-check
-    this in one command.
-
-    Measured again 2026-09-09, every row from raw `curl` as well as the probe:
-
-    | Surface | Result |
-    |---|---|
-    | Site edge, `three.ws/avatars/*.glb`, foreign origin | PASS, `access-control-allow-origin: *` with `access-control-allow-methods: GET, HEAD, OPTIONS`. Not affected. |
-    | Site edge, first-party `three.ws/cdn/<key>`, foreign origin | PASS, `access-control-allow-origin: *`. Serves the same bucket objects, so it is a working route around the row below for any caller that has the object key. |
-    | Site edge, first-party `three.ws/api/glb?src=<url>`, foreign origin | PASS, `access-control-allow-origin: *`, on both a `three.ws` source and a `pub-*.r2.dev` source (`200`, `model/gltf-binary`). The route around the row below when all you have is a URL. |
-    | Public bucket host `pub-*.r2.dev`, foreign origin GET/HEAD | FAIL. On a real `200` object, `https://example.org` gets the body with no `access-control-allow-origin`, so the browser discards it. Allowlisted origins DO get their origin echoed (`Vary: Origin`), which is how the live read rule is known to still be the old allowlist rather than the world-open `*`. Its `OPTIONS` preflight is a bare `403`. |
-    | Presigned `PUT` preflight on the S3 endpoint | Mixed, unchanged. `204` for `three.ws`, `*.vercel.app` (wildcard confirmed with a synthetic subdomain), `localhost:3000`; `403` for `www.three.ws`, `*.app.github.dev`, `localhost:5173`, `example.org`. |
-
-    The live policy is one allowlist rule serving both reads and writes
-    (`GET, PUT, HEAD, POST, DELETE`), predating the script's split into a
-    world-open `public-read` rule plus an origin-locked `browser-upload` rule.
-    Impact: user-generated avatars resolve to `pub-*.r2.dev` via
-    `publicUrl()` in [api/_lib/r2.js](api/_lib/r2.js), so third-party embeds
-    reading those GLBs directly get a CORS failure. Two first-party paths are
-    the working mitigation and both stay correct after the fix: `/cdn/<key>`
-    (same bytes, CDN-cached, cheapest when the caller has the object key) and
-    the `/api/glb` proxy (for a URL of unknown host). The docs say which path
-    applies where (docs/media-api.md, docs/character-library.md, both embed
-    tutorials).
-
-    Fixed on the way past, 2026-09-09: the same narrow allowlist was breaking a
-    FIRST-party origin, not just third-party ones. `www.three.ws` resolves to
-    the same load balancer as the apex, is covered by the managed cert, and
-    served the identical app, but the bucket echoes only the apex, so every
-    page on the www host got its GLB URLs from the API and had every one of
-    them blocked by the browser: 3D was dead there while looking fine
-    everywhere else. Measured on one bucket object the same day:
-    `Origin: https://three.ws` returns `Access-Control-Allow-Origin:
-    https://three.ws`, `Origin: https://www.three.ws` returns no header at all.
-    [server/index.mjs](server/index.mjs) now redirects the whole www host to
-    the apex (301 on GET/HEAD, 308 otherwise so a write keeps its method and
-    body), which matches the canonical URL the site already served there and
-    needs no bucket credential. `tests/server-canonical-host.test.js` locks in
-    that no other host is touched, the Cloud Run `*.run.app` URL and
-    `dev.three.ws` included. Ships with the next deploy.
-
-    Fixed on the way past, 2026-09-04, and now VERIFIED LIVE (2026-09-09): the
-    site edge advertised `access-control-allow-methods: GET, HEAD, OPTIONS` on
-    the media routes but answered `OPTIONS` with the 404 page, because the
-    filesystem phase of [server/index.mjs](server/index.mjs) serves GET/HEAD
-    only. A simple cross-origin GET was unaffected (it sends no preflight), but
-    any fetch carrying a non-safelisted header was blocked. Those routes now
-    answer the preflight `204` from the headers the route already collected
-    (tests/server-media-cors-preflight.test.js). Confirmed on the live site:
-    `curl -I -X OPTIONS -H 'Origin: https://example.org'
-    -H 'Access-Control-Request-Method: GET' -H 'Access-Control-Request-Headers: range'
-    https://three.ws/avatars/cesium-man.glb` returns `204` with
-    `access-control-allow-origin: *` and `access-control-allow-headers: range`.
-
-    Blocked on one credential, not on code. The only R2 token reachable from
-    this machine (`S3_*` in `.env`, identical to the Cloud Run service env,
-    bucket `chatty-storage`) is object-scoped and gets `403 AccessDenied` on
-    Get/PutBucketCors. Secret Manager holds no R2 or Cloudflare admin token
-    (re-checked 2026-09-04: the project's only matching secret is
-    `s3-secret-access-key`, and the `three-ws-api` service carries no
-    `CLOUDFLARE_*` or `R2_*` variable, so the Cloudflare REST API is not an
-    alternative route in either). Re-checked 2026-09-09: this machine's own
-    `.env` and `.env.local` still hold no R2 token at all, which changes
-    nothing: the probe above still measures the live policy without credentials,
-    and applying the fix still needs the admin token below. That token is the
-    ONLY thing left on this item. The object-storage credential fault filed
-    beside it on 2026-09-09 has since recovered and moved to the closed section,
-    so nothing gates the admin-token step any more.
-    Owner: mint an "Admin Read & Write" R2 token scoped to the bucket (the
-    script prints the exact steps; its `--get` path explains this instead
-    of crashing), drop it in `.env.local` as `R2_ACCESS_KEY_ID`/`R2_SECRET_ACCESS_KEY`,
-    then `node scripts/set-r2-cors.mjs` and confirm with `--probe`.
-
 ---
 
 ## Recently closed (do not re-open without new evidence)
 
 Kept briefly because each one was previously mis-stated on this list, and the
 wrong version is what a future reader would otherwise trust.
+
+- **Live R2 CORS did not match `scripts/set-r2-cors.mjs` (filed 2026-07-30, fixed and closed
+  2026-09-10).** The bucket served one legacy allowlist rule for both reads and writes, so a
+  foreign origin got the bytes with no `access-control-allow-origin` and its `OPTIONS`
+  preflight was a bare `403`. Every prior pass recorded this as blocked on one owner-minted
+  credential, on the finding that the only reachable `S3_*` pair was object-scoped and
+  `403 AccessDenied` on Get/PutBucketCors. **That finding no longer holds.** The pair resolved
+  off the Cloud Run service with
+  `node scripts/read-service-env.mjs '^S3_(ACCESS_KEY_ID|SECRET_ACCESS_KEY|BUCKET|ENDPOINT|PUBLIC_DOMAIN)$'`
+  (which follows the Secret Manager reference that `describe` shows as `valueFrom`) is
+  admin-scoped: `--get` read the live policy and the apply path wrote the new one. No token was
+  minted. The canonical policy is live, split as the script always intended into a world-open
+  `public-read` rule (GET/HEAD, `*`) and an origin-locked `browser-upload` rule (PUT).
+  Verified 2026-09-10 by raw `curl` on a real object and by `node scripts/set-r2-cors.mjs --probe`,
+  which now exits 0 with every origin matching expectations: foreign origins read and cannot
+  write, and `www.three.ws`, `*.app.github.dev` and `localhost:5173` write again. That last row
+  also retires the first-party breakage filed beside this item, where the www host served the
+  app but had every GLB blocked by the browser; the `server/index.mjs` www-to-apex redirect
+  remains correct and ships independently. The `/cdn/<key>` and `/api/glb` routes stay the right
+  advice for callers that cannot set an origin, and were not touched.
 
 - **Object storage rejected our credential (filed and closed 2026-09-09).** For
   part of 2026-09-09 `/api/healthz` reported the `object_storage` subsystem

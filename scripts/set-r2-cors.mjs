@@ -23,18 +23,21 @@
  *   node scripts/set-r2-cors.mjs               # apply (idempotent, needs an admin token)
  *
  * Where the credentials come from:
- *   - `.env` / `.env.local` hold S3_ENDPOINT, S3_ACCESS_KEY_ID,
- *     S3_SECRET_ACCESS_KEY, S3_BUCKET. The token normally checked in here is
- *     "Object Read & Write" scoped, which is NOT enough for Get/PutBucketCors.
- *     Put an "Admin Read & Write" R2 token in `.env.local` as
- *     R2_ACCESS_KEY_ID / R2_SECRET_ACCESS_KEY to use --get or to apply.
+ *   - `.env` / `.env.local` may hold S3_ENDPOINT, S3_ACCESS_KEY_ID,
+ *     S3_SECRET_ACCESS_KEY, S3_BUCKET. A bucket token minted as
+ *     "Object Read & Write" cannot call Get/PutBucketCors; an admin-scoped one
+ *     can. If the pair you have is refused with 403 AccessDenied, put an
+ *     "Admin Read & Write" R2 token in `.env.local` as
+ *     R2_ACCESS_KEY_ID / R2_SECRET_ACCESS_KEY instead.
  *   - --probe needs NONE of them. With no credentials it discovers the public
  *     host from a live listing endpoint and the presigned-upload host from the
  *     auth-free /api/forge-upload, which is exactly what a browser sees.
  *   - Production runtime values live on the Cloud Run service, where credentials
- *     are Secret Manager references rather than literals; read one with
- *     `node scripts/read-service-env.mjs '^S3_' `. Those are the same
- *     object-scoped keys, so they do not unlock --get either.
+ *     are Secret Manager references rather than literals. Read them with
+ *     `node scripts/read-service-env.mjs '^S3_(ACCESS_KEY_ID|SECRET_ACCESS_KEY|BUCKET|ENDPOINT|PUBLIC_DOMAIN)$'`,
+ *     which resolves literals and references alike. Verified 2026-09-10: that
+ *     pair IS admin-scoped and both --get and the apply path work with it, so
+ *     the service is the first place to look before minting a new token.
  *   - Do NOT use `vercel env pull`: it returns empty for secret-type vars, and
  *     production has not run on Vercel since 2026-07-07.
  *
