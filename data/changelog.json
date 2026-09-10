@@ -3,6 +3,15 @@
 	"entries": [
 		{
 			"date": "2026-09-10",
+			"title": "three.ws now reads in 38 languages",
+			"summary": "The site has carried translated text for a long time, but the language picker only ever offered English and Spanish, so almost nobody could reach the rest. Every one of those catalogs has now been finished and checked: 38 languages, complete across all 600 pieces of text on the site, with nothing left sitting in English and nothing left half translated. Retired labels that no longer appear anywhere were cleared out at the same time, so no page shows a stale phrase in one language that it does not show in another. Pick a language from the switcher and the whole site follows, right to left languages included.",
+			"tags": [
+				"feature",
+				"improvement"
+			]
+		},
+		{
+			"date": "2026-09-10",
 			"title": "Repaired the free AI lanes, which had been quietly answering nothing",
 			"summary": "Several of the free AI models the platform falls back to had been retired by their provider and were answering every request with a Gone error. Nothing logged it as a problem, because a dead model looks the same as a busy one to a fallback chain: it just moves on. The cost was real though, since each dead entry ate one of the limited retry slots that should have gone to a lane that could actually answer, making the whole chain fail sooner and more often under load. Every model id is now checked against the provider's live catalog, the dead ones are replaced with working models, and the same applies to the search-and-memory embedding lane, which had been failing for two weeks. Older stored memories keep working: they are tagged with the model that created them and still resolve.",
 			"tags": [
