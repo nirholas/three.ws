@@ -352,7 +352,13 @@ export function isFatalAuthFailure(err) {
 	);
 }
 
-function modelName() {
+// The model for a lane. `provider` is passed by the fallback chain so a rung
+// resolves ITS OWN default: without it every rung inherited the PRIMARY's model
+// id, which meant the groq rung offered nvidia's model and 404'd on the one
+// request that was supposed to rescue the chunk. --model still pins the primary
+// only, for the same reason: it names a model that exists on one vendor.
+function modelName(provider = cfg.provider) {
+	if (provider !== cfg.provider) return PROVIDER_DEFAULT_MODEL[provider] || PROVIDER_DEFAULT_MODEL.gemini;
 	return cfg.modelName || PROVIDER_DEFAULT_MODEL[cfg.provider] || PROVIDER_DEFAULT_MODEL.gemini;
 }
 
@@ -381,7 +387,7 @@ function buildPrompt(langName, payload) {
 		.join('\n');
 }
 
-async function callGemini(prompt) {
+async function callGemini(prompt, modelOverride = null) {
 	const key =
 		process.env.GEMINI_API_KEY ||
 		process.env.GOOGLE_API_KEY ||
@@ -390,7 +396,7 @@ async function callGemini(prompt) {
 		throw configError(
 			'GEMINI_API_KEY (or GOOGLE_API_KEY) not set — free keys: https://aistudio.google.com/apikey',
 		);
-	const url = `https://generativelanguage.googleapis.com/v1beta/models/${modelName()}:generateContent?key=${key}`;
+	const url = `https://generativelanguage.googleapis.com/v1beta/models/${modelOverride || modelName()}:generateContent?key=${key}`;
 	const res = await fetch(url, {
 		method: 'POST',
 		headers: { 'content-type': 'application/json' },
@@ -416,7 +422,7 @@ async function callGemini(prompt) {
 	return text;
 }
 
-async function callAnthropic(prompt) {
+async function callAnthropic(prompt, modelOverride = null) {
 	const key = process.env.ANTHROPIC_API_KEY;
 	if (!key) throw configError('ANTHROPIC_API_KEY not set');
 	const res = await fetch('https://api.anthropic.com/v1/messages', {
@@ -427,7 +433,7 @@ async function callAnthropic(prompt) {
 			'anthropic-version': '2023-06-01',
 		},
 		body: JSON.stringify({
-			model: modelName(),
+			model: modelOverride || modelName(),
 			max_tokens: 8192,
 			temperature: cfg.temperature ?? 0.2,
 			messages: [{ role: 'user', content: prompt }],
@@ -477,7 +483,7 @@ function threewsSessionCookie() {
 	return `${cookie.name}=${cookie.value}`;
 }
 
-async function callThreews(prompt) {
+async function callThreews(prompt, modelOverride = null) {
 	const agentId = process.env.THREEWS_I18N_AGENT;
 	if (!agentId)
 		throw configError(
@@ -489,7 +495,7 @@ async function callThreews(prompt) {
 		method: 'POST',
 		headers: { 'content-type': 'application/json', cookie: threewsSessionCookie() },
 		body: JSON.stringify({
-			model: modelName(),
+			model: modelOverride || modelName(),
 			max_tokens: 8192,
 			stream: false,
 			temperature: cfg.temperature ?? 0.2,
@@ -582,7 +588,7 @@ async function vertexToken({ fresh = false } = {}) {
 	return token;
 }
 
-async function callVertex(prompt) {
+async function callVertex(prompt, modelOverride = null) {
 	const project = process.env.GOOGLE_CLOUD_PROJECT;
 	if (!project) {
 		throw configError(
@@ -599,7 +605,7 @@ async function callVertex(prompt) {
 			method: 'POST',
 			headers: { 'content-type': 'application/json', authorization: `Bearer ${token}` },
 			body: JSON.stringify({
-				model: modelName(),
+				model: modelOverride || modelName(),
 				temperature: cfg.temperature ?? 0.2,
 				top_p: cfg.topP ?? 0.9,
 				max_tokens: 8192,
@@ -684,19 +690,66 @@ function backend() {
 	);
 }
 
-// Ordered backend chain: the configured provider first, then OpenRouter as the
-// universal failover so a mid-batch outage of the primary lane (a Vertex token
-// hiccup, a free-tier 429 storm) doesn't degrade a whole run to English
-// fallback. OpenRouter uses a FUNDED model (no :free) so the failover reliably
-// serves — a free-tier model would 402/429 exactly when it is needed. Set
-// OPENROUTER_I18N_MODEL to override. Skipped when the primary IS OpenRouter or
-// no OpenRouter key is configured.
+// Ordered backend chain: the configured provider first, then EVERY other lane
+// this machine holds a credential for, free tiers before paid backstops.
+//
+// This used to be two rungs, primary then one OpenRouter model, and on
+// 2026-09-10 that left the whole run with no fallback at all: nvidia answered
+// 429 on a single one-token request (its free quota was spent) and the only
+// other rung was a PAID OpenRouter model on an account carrying no credit, so
+// it answered `402 Insufficient credits` every time. A chain whose sole
+// fallback needs a funded account is not a fallback on a free-tier machine.
+// Groq had budget left that whole time and the chain never tried it.
+//
+// Ordering is by what a spent lane costs the run: the free lanes first (any of
+// them finishing is free), OpenRouter next (it is per-account-per-day capped,
+// so it is a real rung but a shallow one), and the paid vendors last, since
+// they are the only ones that turn a retry into money. A lane with no key is
+// never queued, so a missing credential costs zero attempts rather than a
+// round of backoff.
+const FALLBACK_LANES = [
+	// [provider id, the env var that makes it callable]
+	['groq', 'GROQ_API_KEY'],
+	['nvidia', 'NVIDIA_API_KEY'],
+	['mistral', 'MISTRAL_API_KEY'],
+	['gemini', 'GEMINI_API_KEY'],
+	['vertex', 'GOOGLE_CLOUD_PROJECT'],
+	['openrouter', 'OPENROUTER_API_KEY'],
+	['openai', 'OPENAI_API_KEY'],
+	['anthropic', 'ANTHROPIC_API_KEY'],
+];
+
+// gemini reads either name, so a machine carrying only GOOGLE_API_KEY still
+// queues the lane instead of silently dropping it.
+function laneCredentialPresent(provider, envKey) {
+	if (provider === 'gemini')
+		return Boolean(process.env.GEMINI_API_KEY?.trim() || process.env.GOOGLE_API_KEY?.trim());
+	return Boolean(process.env[envKey]?.trim());
+}
+
+function laneCall(provider) {
+	const model = PROVIDER_DEFAULT_MODEL[provider];
+	if (provider === 'gemini') return (prompt) => callGemini(prompt, model);
+	if (provider === 'anthropic') return (prompt) => callAnthropic(prompt, model);
+	if (provider === 'vertex') return (prompt) => callVertex(prompt, model);
+	// OpenRouter is the one lane that needs an explicit model: its default id in
+	// PROVIDER_DEFAULT_MODEL is a `:free` route, and those share one
+	// per-account-per-day cap, so as a FALLBACK it uses the funded id when the
+	// account has credit. OPENROUTER_I18N_MODEL overrides.
+	if (provider === 'openrouter') {
+		const model = process.env.OPENROUTER_I18N_MODEL?.trim() || 'meta-llama/llama-3.3-70b-instruct';
+		return (prompt) => callOpenAICompat(prompt, 'openrouter', model);
+	}
+	return (prompt) => callOpenAICompat(prompt, provider, model);
+}
+
 function backendChain() {
 	const chain = [{ name: cfg.provider, call: (p) => backend()(p) }];
-	const orKey = process.env.OPENROUTER_API_KEY?.trim();
-	if (orKey && cfg.provider !== 'openrouter') {
-		const orModel = process.env.OPENROUTER_I18N_MODEL?.trim() || 'meta-llama/llama-3.3-70b-instruct';
-		chain.push({ name: `openrouter(${orModel})`, call: (p) => callOpenAICompat(p, 'openrouter', orModel) });
+	for (const [provider, envKey] of FALLBACK_LANES) {
+		if (provider === cfg.provider) continue;
+		if (!laneCredentialPresent(provider, envKey)) continue;
+		const model = provider === 'openrouter' ? '' : PROVIDER_DEFAULT_MODEL[provider] || '';
+		chain.push({ name: model ? `${provider}(${model})` : provider, call: laneCall(provider) });
 	}
 	return chain;
 }
