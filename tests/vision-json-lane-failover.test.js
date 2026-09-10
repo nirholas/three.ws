@@ -107,3 +107,30 @@ describe('describeImageJson lane acceptance', () => {
 		expect(fetchSpy.mock.calls.length).toBeGreaterThan(1);
 	});
 });
+
+describe('reasoning lanes are told not to think', () => {
+	it('sends reasoning.effort none only on the lane that needs it', async () => {
+		// OpenRouter's model record for the nemotron route says default_enabled:
+		// true and mandatory: false, so it reasons unless told otherwise and it
+		// accepts being told. Left on, the thinking eats the lane's slice of the
+		// deadline and message.content comes back empty (observed live).
+		// Fail the first rung so the walk actually reaches the OpenRouter lanes;
+		// asserting on a chain that stopped at lane 1 would pass vacuously.
+		fetchSpy
+			.mockResolvedValueOnce(reply('not json'))
+			.mockResolvedValue(reply(JSON.stringify(VERDICT)));
+		await call();
+
+		const bodies = fetchSpy.mock.calls.map(([, init]) => JSON.parse(init.body));
+		const nim = bodies.find((b) => String(b.model).includes('llama-3.2'));
+		const nemotron = bodies.find((b) => String(b.model).includes('nemotron'));
+
+		expect(bodies.length).toBeGreaterThan(1);
+		expect(nemotron).toBeDefined();
+		// Only the reasoning route carries it. The parameter is host-specific, so
+		// putting it on NVIDIA's own lane would be a silent no-op there.
+		expect(nemotron.reasoning).toEqual({ effort: 'none' });
+		expect(nim).toBeDefined();
+		expect(nim.reasoning).toBeUndefined();
+	});
+});

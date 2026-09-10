@@ -80,10 +80,27 @@ const NVIDIA_VISION_MODELS = [
 // routes were saturated (429) in the same probe and are kept behind it as spare
 // capacity: a 429 falls through in ~150 ms and, unlike the 410 that retired the
 // NIM model above, it recovers when the shared free pool drains.
+//
+// The nemotron route is a REASONING model, and OpenRouter's own model record
+// says `default_enabled: true`, so left alone it thinks before it answers. In a
+// bulk text run that is merely expensive; inside a vision lane's slice of a
+// shared deadline it is fatal, because the thinking consumes the budget and the
+// lane returns an EMPTY message.content. Probing /api/vision on production
+// (2026-09-10) caught it doing exactly that: provider openrouter, model
+// nemotron-omni, text ''. The same record says `mandatory: false`, which is
+// OpenRouter's way of saying this model accepts being told not to, so the lane
+// carries reasoning.effort:'none'.
+//
+// Note the parameter is host-specific and copying the wrong one ships a no-op:
+// NVIDIA's own host takes chat_template_kwargs.enable_thinking (see
+// scripts/i18n-translate.mjs), OpenRouter takes reasoning.effort. Check a
+// model's `reasoning` object at https://openrouter.ai/api/v1/models before
+// assuming either works; a model with `mandatory: true` rejects 'none' with a
+// 400.
 const OPENROUTER_VISION_MODELS = [
-	'nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free',
-	'google/gemma-4-31b-it:free',
-	'google/gemma-4-26b-a4b-it:free',
+	{ model: 'nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free', extraBody: { reasoning: { effort: 'none' } } },
+	{ model: 'google/gemma-4-31b-it:free' },
+	{ model: 'google/gemma-4-26b-a4b-it:free' },
 ];
 // Paid last-resort tail. gpt-5.4-nano is vision-capable and already priced in
 // llm-pricing.js, keeping the backstop cheap and the spend ledger truthful.
@@ -222,7 +239,7 @@ export class VisionUnavailableError extends Error {
 // the only shape difference from llm.js's text providers. `getHeaders` (async)
 // replaces the static key header for keyless lanes whose auth is minted per
 // request (the Vertex Gemini credits anchor).
-function openaiCompatVisionProvider({ name, key, url, model, getHeaders = null }) {
+function openaiCompatVisionProvider({ name, key, url, model, getHeaders = null, extraBody = null }) {
 	return {
 		name,
 		model,
@@ -234,7 +251,7 @@ function openaiCompatVisionProvider({ name, key, url, model, getHeaders = null }
 			const messages = [];
 			if (system) messages.push({ role: 'system', content: system });
 			messages.push({ role: 'user', content: parts });
-			return { model, max_tokens: maxTokens, temperature: 0, messages };
+			return { model, max_tokens: maxTokens, temperature: 0, messages, ...(extraBody || {}) };
 		},
 		extractText: (r) => r.choices?.[0]?.message?.content || '',
 		extractUsage: (r) => ({ input: r.usage?.prompt_tokens ?? 0, output: r.usage?.completion_tokens ?? 0 }),
@@ -263,12 +280,13 @@ export function visionChain() {
 	// them here leaves the Vertex anchor exactly where it was in the chain
 	// relative to the paid tail; nothing is evicted.
 	if (env.OPENROUTER_API_KEY) {
-		for (const model of OPENROUTER_VISION_MODELS) {
+		for (const spec of OPENROUTER_VISION_MODELS) {
 			chain.push(openaiCompatVisionProvider({
 				name: 'openrouter',
 				key: env.OPENROUTER_API_KEY,
 				url: 'https://openrouter.ai/api/v1/chat/completions',
-				model,
+				model: spec.model,
+				extraBody: spec.extraBody || null,
 			}));
 		}
 	}
