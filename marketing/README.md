@@ -12,4 +12,6 @@ Campaign assets for three.ws announcements and distribution: video scripts and r
 | [product-demo](product-demo/README.md) | The narrated product demo: a presenter walking every feature of three.ws on the live site, filmed at 1080p in chapters by `npm run demo:video`. |
 | [pumpfun-verified](pumpfun-verified/README.md) | The $THREE pump.fun verification graphics: a three.ws / pump.fun lockup on black in 16:9 and 1:1, plus the HTML source they render from. |
 | [quicknode](quicknode/) | Finished QuickNode announcement graphics, dark and light PNG variants. |
+| [seeker-launch](seeker-launch/README.md) | The Solana dApp Store announcement kit: the IRL video run of show with paste-ready copy for X, Telegram, LinkedIn and the vertical platforms, the earlier photo-first thread, and the tools that cut the footage and count the characters. |
+| [seeker-video](../docs/seeker-video.md) | Rendered Seeker screen captures of the shipping app, produced by `npm run seeker:screencast` and `npm run seeker:feature-tour`: bare 1200x2670 panel and a device-framed 1080x1920, ready to post or to cut around IRL footage. |
 | [x402-milestone](x402-milestone/README.md) | A 25-second stats film for the x402 economy's first 25 days on Solana mainnet: Veo 3 footage composited with exact overlaid numbers. |

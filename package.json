@@ -177,6 +177,7 @@
 		"build:dapp-store-previews": "node solana-mobile/scripts/make-screenshots.mjs",
 		"seeker:screencast": "node solana-mobile/scripts/make-screencast.mjs",
 		"seeker:feature-tour": "node solana-mobile/scripts/make-feature-tour.mjs --authed",
+		"seeker:launch:cuts": "node marketing/seeker-launch/make-cuts.mjs",
 		"demo:video": "node scripts/make-product-demo.mjs --authed",
 		"demo:video:highlights": "node scripts/make-product-demo.mjs --authed --route=highlights",
 		"render:pumpfun-verified": "node scripts/render-pumpfun-verified.mjs",
