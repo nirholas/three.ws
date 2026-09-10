@@ -152,10 +152,6 @@ export class PushPullDetector {
 		this._budget = 0;
 	}
 
-	get enlarged() {
-		return this.steps > 0;
-	}
-
 	/** Forget the stroke in flight without forgetting where the zoom sits. */
 	clearEvidence() {
 		this._direction = '';
@@ -246,13 +242,12 @@ export class LiftMotion {
 		this.velocity = 0;
 		this.target = 0;
 		this.forward = true;
-		this.toggles = 0;
 		this._lastAway = -Infinity;
 	}
 
+	/** Flip which way a lift travels, dropping the motion in flight with it. */
 	switchDirection() {
 		this.forward = !this.forward;
-		this.toggles += 1;
 		this.velocity = 0;
 		this.target = 0;
 		this._lastAway = -Infinity;

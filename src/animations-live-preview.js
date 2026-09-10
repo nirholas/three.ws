@@ -280,13 +280,14 @@ export class AnimationLivePreview {
 	}
 
 	/**
-	 * Turn the camera around the avatar, in radians. Additive, and it survives
-	 * the re-framing a crossfaded clip change does. A cold mount starts from the
-	 * framed shot again, so a caller holding a viewing angle across cuts
-	 * re-applies it after play() resolves.
+	 * Turn the camera around the avatar: an absolute angle in radians, measured
+	 * from the framed shot. Absolute rather than additive on purpose, because a
+	 * crossfaded clip change keeps the yaw it already had while a cold mount
+	 * resets it; a caller re-applying its own angle after every cut would double
+	 * it on the warm path and the shot would drift further with every gesture.
 	 */
-	orbitBy(radians) {
-		this._yaw += radians;
+	setYaw(radians) {
+		this._yaw = radians || 0;
 		this._applyCamera();
 	}
 
@@ -294,10 +295,6 @@ export class AnimationLivePreview {
 	setZoom(factor) {
 		this._zoom = Math.max(0.6, Math.min(3, factor || 1));
 		this._applyCamera();
-	}
-
-	getZoom() {
-		return this._zoom;
 	}
 
 	/** Drop the viewer's turn and zoom, back to the framed shot. */

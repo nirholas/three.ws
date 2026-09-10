@@ -95,7 +95,7 @@ const sensor = new DopplerSensor({
 
 `PushPullDetector` paces the return by reading how far the reflected energy sits from the carrier, so a quick pull snaps back and a slow one eases. A push while already pushed is ignored rather than stacked.
 
-`LiftMotion` is continuous rather than discrete: `feed()` sets a target from the returned energy, `step()` eases toward it and returns the distance for that frame. It bridges a couple of uncertain frames on purpose, so a momentary misread mid-lift does not drop the motion.
+`LiftMotion` is continuous rather than discrete: `feed()` sets a target from the returned energy, `step()` eases toward it and returns the distance for that frame. It bridges a couple of uncertain frames on purpose, so a momentary misread mid-lift does not drop the motion. `switchDirection()` flips which way a lift travels and drops the motion in flight with it, rather than reversing a camera that is still moving under the hand; `reset()` clears the motion without changing the direction.
 
 ---
 

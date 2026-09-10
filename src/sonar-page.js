@@ -123,10 +123,28 @@ async function loadManifest() {
 	for (const clip of await res.json()) state.clips.set(clip.name, clip);
 }
 
-/** Re-apply the viewer's turn and zoom after a cold mount reframes the shot. */
+/**
+ * Push the viewer's turn and zoom onto the stage. This page owns both numbers;
+ * the preview is told the absolute value every time, so re-applying after a cut
+ * cannot compound with the angle the stage is already holding.
+ */
 function applyView(preview) {
 	preview.setZoom(ZOOM_STEPS[state.zoomSteps] ?? 1);
-	if (state.yaw) preview.orbitBy(state.yaw);
+	preview.setYaw(state.yaw);
+}
+
+/**
+ * Run something against the preview engine, reporting a failure on the stage
+ * instead of throwing into a click handler or an animation frame. Every path
+ * here touches a dynamic import and a clip fetch, so every path can fail.
+ */
+async function withPreview(fn) {
+	try {
+		return await fn(await getPreview());
+	} catch (err) {
+		setStageState('error', err?.message ? `The stage failed: ${err.message}` : undefined);
+		return null;
+	}
 }
 
 /**
@@ -172,15 +190,22 @@ async function playCurrent({ crossfade = 0.25 } = {}) {
 
 async function toIdle() {
 	const def = state.clips.get(DEFAULT_ANIMATION_MAP.idle);
-	if (!def) return;
+	if (!def) {
+		setStageState('error', `"${DEFAULT_ANIMATION_MAP.idle}" is not in the clip manifest.`);
+		return;
+	}
 	state.playing = 'idle';
-	const preview = await getPreview();
-	await preview.play(
-		q('stage'),
-		{ id: def.name, source: 'curated', url: def.url, loop: true },
-		{ crossfade: 0.35 },
-	);
-	applyView(preview);
+	if (!state.preview) setStageState('loading');
+	await withPreview(async (preview) => {
+		await preview.play(
+			q('stage'),
+			{ id: def.name, source: 'curated', url: def.url, loop: true },
+			{ crossfade: 0.35 },
+		);
+		if (state.playing !== 'idle') return;
+		applyView(preview);
+		setStageState('none');
+	});
 }
 
 /* ── the three gestures ────────────────────────────────────────────────── */
@@ -196,8 +221,7 @@ async function applyZoom(action, source) {
 	if (action > 0) state.zoomSteps = 3;
 	else if (action === 0) state.zoomSteps = 0;
 	else state.zoomSteps = Math.max(0, state.zoomSteps - 1);
-	const preview = await getPreview();
-	preview.setZoom(ZOOM_STEPS[state.zoomSteps]);
+	await withPreview((preview) => preview.setZoom(ZOOM_STEPS[state.zoomSteps]));
 	const label = state.zoomSteps === 0 ? 'Back to the framed shot' : `Camera in, step ${state.zoomSteps}`;
 	flash('live-push', label);
 	if (action > 0 || action === 0) logEvent(action > 0 ? 'Push' : 'Pull, released', label, source);
@@ -205,8 +229,7 @@ async function applyZoom(action, source) {
 
 async function orbit(radians, source) {
 	state.yaw += radians;
-	const preview = await getPreview();
-	preview.orbitBy(radians);
+	await withPreview((preview) => preview.setYaw(state.yaw));
 	if (source === 'keyboard') {
 		flash('live-lift', `Turned ${radians > 0 ? 'right' : 'left'}`);
 		logEvent('Turn', `${Math.round((state.yaw * 180) / Math.PI)}°`, source);
@@ -230,6 +253,10 @@ function logEvent(gesture, detail, source) {
 		at: new Date().toLocaleTimeString([], { hour12: false }),
 	});
 	state.log = state.log.slice(0, 40);
+	// The list itself is not a live region: replacing its markup would make a
+	// screen reader re-read all forty rows on every gesture. One sentence for the
+	// event that just happened is the whole announcement.
+	setStatus(q('log-latest'), `${gesture}. ${detail}.`);
 	renderLog();
 }
 
@@ -340,6 +367,7 @@ function onReading(reading) {
 	if (calibrating) {
 		const pct = 100 * (1 - reading.calibrationRemaining / CALIBRATION_SECONDS);
 		q('calibrating-bar').style.width = `${pct.toFixed(0)}%`;
+		q('calibrating-meter')?.setAttribute('aria-valuenow', pct.toFixed(0));
 	}
 
 	setStatus(q('hud-direction'), DIRECTION_LABEL[reading.direction] || reading.direction);
@@ -352,6 +380,16 @@ function onReading(reading) {
 		const pct = Math.min(100, Math.max(0, (Math.log1p(reading.strength / 0.0003) / Math.log1p(40)) * 100));
 		meter.style.width = `${pct.toFixed(1)}%`;
 		meter.classList.toggle('is-hot', reading.strength > 0.002);
+		const gauge = q('hud-meter');
+		if (gauge) {
+			gauge.setAttribute('aria-valuenow', pct.toFixed(0));
+			gauge.setAttribute(
+				'aria-valuetext',
+				reading.strength > 0.0003
+					? `${DIRECTION_LABEL[reading.direction] || reading.direction}, ${pct.toFixed(0)} percent`
+					: 'No motion',
+			);
+		}
 	}
 	const hud = q('hud');
 	if (hud) hud.dataset.direction = reading.direction;
@@ -452,6 +490,11 @@ function stop() {
 	setStatus(q('hud-snr'), 'Contrast off');
 	const meter = q('hud-strength');
 	if (meter) meter.style.width = '0%';
+	const gauge = q('hud-meter');
+	if (gauge) {
+		gauge.setAttribute('aria-valuenow', '0');
+		gauge.setAttribute('aria-valuetext', 'No motion');
+	}
 	state.lastReading = null;
 	drawSignal(null);
 }
@@ -523,8 +566,13 @@ function syncModeCards() {
 		const on = live.includes(card.dataset.gesture);
 		card.classList.toggle('is-off', !on);
 		const label = q(`live-${card.dataset.gesture}`);
-		if (label && !on) label.textContent = 'Not in this mode';
-		else if (label && label.textContent === 'Not in this mode') label.textContent = 'Waiting';
+		if (!label) continue;
+		if (!on) {
+			label.classList.remove('is-live');
+			label.textContent = 'Not in this mode';
+		} else if (label.textContent === 'Not in this mode') {
+			label.textContent = 'Waiting';
+		}
 	}
 }
 
@@ -545,8 +593,13 @@ function bindControls() {
 		state.yaw = 0;
 		state.push.steps = 0;
 		state.push.clearEvidence();
-		(await getPreview()).resetView();
+		await withPreview((preview) => preview.resetView());
 		flash('live-push', 'Back to the framed shot');
+	});
+	q('reverse-lift')?.addEventListener('change', () => {
+		// LiftMotion carries its own direction, so flipping it mid-turn drops the
+		// motion in flight rather than reversing a moving camera under the hand.
+		state.lift.switchDirection();
 	});
 	const volume = q('volume');
 	volume?.addEventListener('input', () => {

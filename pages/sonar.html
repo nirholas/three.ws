@@ -117,7 +117,16 @@
 							<span class="sn-hud-label">Motion</span>
 							<span class="sn-hud-value" data-role="hud-direction">Not sensing</span>
 						</div>
-						<div class="sn-meter" role="img" aria-label="Reflected motion strength" data-role="hud-meter">
+						<div
+							class="sn-meter"
+							role="progressbar"
+							aria-label="Reflected motion strength"
+							aria-valuemin="0"
+							aria-valuemax="100"
+							aria-valuenow="0"
+							aria-valuetext="No motion"
+							data-role="hud-meter"
+						>
 							<span class="sn-meter-fill" data-role="hud-strength"></span>
 						</div>
 						<div class="sn-hud-row sn-hud-row--small">
@@ -129,7 +138,17 @@
 					<div class="sn-calibrating" data-role="calibrating" hidden>
 						<p class="sn-calibrating-title">Measuring the room</p>
 						<p class="sn-calibrating-sub">Hold still. Everything the microphone hears right now becomes the baseline that your hand is measured against.</p>
-						<div class="sn-progress"><span data-role="calibrating-bar"></span></div>
+						<div
+							class="sn-progress"
+							role="progressbar"
+							aria-label="Measuring the room"
+							aria-valuemin="0"
+							aria-valuemax="100"
+							aria-valuenow="0"
+							data-role="calibrating-meter"
+						>
+							<span data-role="calibrating-bar"></span>
+						</div>
 					</div>
 				</div>
 
@@ -172,6 +191,7 @@
 						<div class="sn-toggles">
 							<label><input type="checkbox" data-role="reverse-swipe" /> Reverse sweep</label>
 							<label><input type="checkbox" data-role="reverse-zoom" /> Reverse push</label>
+							<label><input type="checkbox" data-role="reverse-lift" /> Reverse lift</label>
 						</div>
 						<div class="sn-control-actions">
 							<button type="button" class="sn-btn sn-btn--secondary" data-role="recalibrate" disabled>Re-measure the room</button>
@@ -213,7 +233,8 @@
 					<h2 class="sn-section-title">What it read</h2>
 					<span class="sn-log-count" data-role="log-count">Nothing yet</span>
 				</div>
-				<ol class="sn-log" data-role="log" aria-live="polite">
+				<p class="sn-visually-hidden" data-role="log-latest" aria-live="polite"></p>
+				<ol class="sn-log" data-role="log">
 					<li class="sn-log-empty" data-role="log-empty">
 						Every gesture the sensor recognises lands here, with the reading that triggered it.
 						A run of misreads is usually the carrier: try a different one in Controls.

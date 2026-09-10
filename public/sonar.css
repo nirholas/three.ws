@@ -34,6 +34,19 @@
 	--sn-error: #b91c1c;
 }
 
+/* Announced by screen readers, never painted. */
+.sn-visually-hidden {
+	position: absolute;
+	width: 1px;
+	height: 1px;
+	margin: -1px;
+	padding: 0;
+	overflow: hidden;
+	clip-path: inset(50%);
+	white-space: nowrap;
+	border: 0;
+}
+
 .sn-page {
 	min-height: 100vh;
 	background: var(--bg, #000);
@@ -402,8 +415,24 @@
 .sn-control select:focus-visible,
 .sn-control input:focus-visible { outline: 2px solid var(--sn-accent); outline-offset: 2px; }
 
-.sn-toggles { display: grid; gap: 8px; margin: 14px 0; font-size: 13px; color: var(--sn-muted); }
-.sn-toggles label { display: flex; align-items: center; gap: 8px; cursor: pointer; }
+.sn-toggles { display: grid; gap: 4px; margin: 14px 0; font-size: 13px; color: var(--sn-muted); }
+
+.sn-toggles label {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	padding: 4px 6px;
+	margin-left: -6px;
+	border-radius: 7px;
+	cursor: pointer;
+	transition: background 0.16s ease, color 0.16s ease;
+}
+
+.sn-toggles label:hover { background: var(--sn-surface-2); color: inherit; }
+.sn-toggles label:active { background: var(--sn-surface-3); }
+.sn-toggles label:has(input:checked) { color: inherit; }
+.sn-toggles label:has(input:focus-visible) { outline: 2px solid var(--sn-accent); outline-offset: 1px; }
+.sn-toggles input { accent-color: var(--sn-accent); cursor: pointer; }
 .sn-control-actions { display: flex; flex-wrap: wrap; gap: 8px; }
 .sn-control-actions .sn-btn { padding: 8px 12px; font-size: 13px; }
 
@@ -439,29 +468,30 @@
 .sn-card h3 { margin: 10px 0 8px; font-size: 15px; }
 .sn-card p { margin: 0 0 8px; font-size: 13px; line-height: 1.6; color: var(--sn-muted); }
 
-.sn-card-live {
-	margin: 12px 0 8px !important;
+/* Specificity, not !important, so the flash keyframes below can win. */
+.sn-card p.sn-card-live {
+	margin: 12px 0 8px;
 	padding: 7px 10px;
 	border-radius: 8px;
 	background: var(--sn-surface-2);
 	font-size: 12.5px;
 	font-weight: 500;
-	color: var(--sn-muted) !important;
+	color: var(--sn-muted);
 	font-variant-numeric: tabular-nums;
 }
 
-.sn-card-live.is-live {
-	color: var(--sn-accent-ink) !important;
-	background: var(--sn-live);
-	animation: sn-flash 0.7s ease-out;
-}
+/* The highlight decays inside the animation rather than being cleared by a
+ * timer, so a card cannot latch green: when the animation is off (reduced
+ * motion) the pill simply never lights, which is the right answer there too. */
+.sn-card p.sn-card-live.is-live { animation: sn-flash 0.9s ease-out; }
 
 @keyframes sn-flash {
-	from { transform: scale(1.03); }
-	to { transform: scale(1); }
+	0% { background: var(--sn-live); color: var(--sn-accent-ink); transform: scale(1.03); }
+	55% { background: var(--sn-live); color: var(--sn-accent-ink); transform: scale(1); }
+	100% { background: var(--sn-surface-2); color: var(--sn-muted); transform: scale(1); }
 }
 
-.sn-card-keys { margin: 0 !important; font-size: 12px; }
+.sn-card p.sn-card-keys { margin: 0; font-size: 12px; }
 
 kbd {
 	display: inline-block;
@@ -542,7 +572,29 @@ kbd {
 
 .sn-explain h3 { margin: 0 0 8px; font-size: 15px; }
 .sn-explain p { margin: 0; font-size: 13.5px; line-height: 1.7; color: var(--sn-muted); }
-.sn-explain a { color: var(--sn-accent); }
+
+/* /style.css carries no global link hover or focus rule, so prose links on this
+ * page state their own. Every one of them is a real destination. */
+.sn-page main p a,
+.sn-alert a {
+	color: var(--sn-accent);
+	text-decoration: underline;
+	text-decoration-color: color-mix(in srgb, var(--sn-accent) 40%, transparent);
+	text-underline-offset: 2px;
+	transition: color 0.16s ease, text-decoration-color 0.16s ease;
+}
+
+.sn-page main p a:hover,
+.sn-alert a:hover { text-decoration-color: currentcolor; }
+.sn-page main p a:active,
+.sn-alert a:active { color: color-mix(in srgb, var(--sn-accent) 75%, var(--text, #fafafa)); }
+
+.sn-page main p a:focus-visible,
+.sn-alert a:focus-visible {
+	outline: 2px solid var(--sn-accent);
+	outline-offset: 2px;
+	border-radius: 3px;
+}
 
 /* ── responsive ───────────────────────────────────────────────────────── */
 
@@ -562,8 +614,8 @@ kbd {
 @media (prefers-reduced-motion: reduce) {
 	.sn-hero-dot,
 	.sn-spinner,
-	.sn-card-live.is-live,
+	.sn-card p.sn-card-live.is-live,
 	.sn-log-row { animation: none; }
 	.sn-card:hover { transform: none; }
-	.sn-btn, .sn-card, .sn-hud, .sn-meter-fill { transition: none; }
+	.sn-btn, .sn-card, .sn-hud, .sn-meter-fill, .sn-toggles label { transition: none; }
 }

@@ -145,6 +145,7 @@ Resolved (see `public/animations/registry.json` under `resolved_issues`): the `w
 
 - [Agent Gestures](/gestures): the live slot-and-hint reference, with an override builder
 - [Choreography](/docs/choreography): sequence gesture slots into named, replayable routines, authored at [/choreograph](https://three.ws/choreograph)
+- [Sonar](/docs/sonar): step through these slots by hand, with no camera, at [/sonar](https://three.ws/sonar). The speakers emit an inaudible tone and the microphone reads the Doppler shift of a moving hand off it
 - [Give your agent body language](/tutorials/animate-your-agent): the walkthrough
 - [3D asset pipeline](/docs/3d-asset-pipeline): the full generate, rig, animate, export chain
 - [Animation Studio](/docs/animation-studio): author and preview clips in the browser
