@@ -4,10 +4,11 @@
 // copy so the counts table in video-launch.md stays true.
 
 import { readFileSync, readdirSync } from 'node:fs'
-import { dirname, join } from 'node:path'
+import { dirname, join, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
 const HERE = dirname(fileURLToPath(import.meta.url))
+const PAGES = resolve(HERE, '../../data/pages.json')
 const URL_PATTERN = /(https?:\/\/)?[\w.-]+\.(ws|fun|com|app|xyz|io)(\/\S*)?/g
 const X_LIMIT = 280
 // A block headed "long form" is a Premium post and is allowed the long-post
@@ -36,7 +37,29 @@ function blocks (markdown) {
 
 const weight = (text) => text.replace(URL_PATTERN, 'y'.repeat(23)).length
 
+// Copy that links a page which no longer exists is worse than copy with a typo:
+// it sends a launch audience to a 404. Every three.ws path in the copy is
+// checked against the route table the sitemap is built from.
+function knownPaths () {
+  const data = JSON.parse(readFileSync(PAGES, 'utf8'))
+  const paths = new Set()
+  for (const section of data.sections || []) {
+    for (const page of section.pages || []) paths.add(page.path)
+  }
+  return paths
+}
+
+function deadLinks (text, paths) {
+  const found = text.match(/three\.ws(\/[\w\-./]*)?/g) || []
+  return found
+    .map((hit) => hit.slice('three.ws'.length).replace(/[.]$/, ''))
+    .filter((path) => path && path !== '/')
+    .filter((path) => !paths.has(path))
+}
+
+const paths = knownPaths()
 let over = 0
+let dead = 0
 for (const file of readdirSync(HERE).filter((f) => f.endsWith('.md')).sort()) {
   const found = blocks(readFileSync(join(HERE, file), 'utf8'))
   if (!found.length) continue
@@ -48,7 +71,12 @@ for (const file of readdirSync(HERE).filter((f) => f.endsWith('.md')).sort()) {
     const flag = isX && count > limit ? `  OVER by ${count - limit}` : ''
     if (flag) over += 1
     console.log(`  ${String(count).padStart(4)}  ${(label || 'unlabelled').padEnd(46)}${flag}`)
+    for (const path of deadLinks(text, paths)) {
+      dead += 1
+      console.log(`        no such page: three.ws${path}`)
+    }
   }
 }
-console.log(over ? `\n  ${over} X block(s) over the limit.\n` : `\n  every X block fits its limit (${X_LIMIT}, or ${X_PREMIUM_LIMIT} for a long-form post).\n`)
-process.exit(over ? 1 : 0)
+console.log(over ? `\n  ${over} X block(s) over the limit.` : `\n  every X block fits its limit (${X_LIMIT}, or ${X_PREMIUM_LIMIT} for a long-form post).`)
+console.log(dead ? `  ${dead} link(s) point at a page that does not exist.\n` : '  every three.ws link resolves to a page in data/pages.json.\n')
+process.exit(over + dead ? 1 : 0)

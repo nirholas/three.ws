@@ -88,7 +88,7 @@ Solana desk audience is awake for on both coasts and still afternoon in Europe.
 | T-1 day | The device | Cold install from the dApp Store on a phone that has never had the app. If that is not clean, nothing else on this list happens |
 | T-1 day | The site | Publish the loop cut as the `/seeker` hero, so the destination the thread points at is showing the same footage |
 | T0 | X, post 1 | The 16:9 cut, native upload. The long-form post if the account has Premium, the short opener if not |
-| T0 + 2 min onward | X, the replies | The eight capability replies, one every two or three minutes so the thread builds instead of dumping. `@solanamobile` gets tagged once, in the Seed Vault reply, never in post 1 |
+| T0 + 2 min onward | X, the replies | The continuation replies, one every two or three minutes so the thread builds instead of dumping. `@solanamobile` gets tagged once, in the closing reply, never in post 1 |
 | T0 + 30 min | Telegram, @three_ws | The loop cut and three lines. The community channel gets it as news, not as a repost ask |
 | T0 + 2 h | LinkedIn | The 16:9 cut, native, with the founder-voice text below |
 | T0 + 5 h | TikTok, Reels, Shorts | The vertical cut, captions burned in, posted to all three within the same hour |
@@ -112,16 +112,22 @@ because it is scarce; asking them to converts a share into a favour.
 
 ## 3. The copy
 
-Two thread shapes. Pick one before you post; do not mix them.
+Three shapes. Pick one before you post; do not mix them.
 
-- **The everything thread** is the default. Post 1 is the whole product in one
-  post, and the eight capability replies carry it on a free account. Use it
-  because the app is a studio, and any opener that names one feature ("take a
-  selfie, get an avatar") gets read as the entire product by someone who has
-  never seen it.
-- **The tight thread** is post 1 as a single 280-character opener plus four
-  replies. Use it only when the video is unusually strong on its own and you
-  want nothing competing with it.
+- **The full thread** is the default: the long-form post 1 below, then the
+  eleven continuation replies, which take one section each and back it with a
+  live link. Post 1 is the claim, the thread is the receipt.
+- **The free-account thread** is the short opener, then the eight capability
+  replies (the long post split into postable pieces), then continuation replies
+  4, 5, 6 and 11 for the embed line, ownership, earning and the close. Nineteen
+  replies is too many; those four are the ones that convert.
+- **The tight thread** is a single 280-character opener plus four replies. Use
+  it only when the video is unusually strong on its own and you want nothing
+  competing with it.
+
+Whichever shape you post, the app is a studio, so no opener may name one feature
+and stop. "Take a selfie, get an avatar" reads as the entire product to someone
+who has never seen it.
 
 ### X, post 1, long form (attach the 16:9 cut)
 
@@ -164,6 +170,137 @@ Creating, chatting and browsing are free.
 Search three.ws in the dApp Store on your Seeker.
 three.ws/seeker
 ```
+
+### X, the continuation replies
+
+Under the long-form post 1. Each one takes a section of it, adds the detail that
+proves the claim, and links the surface where the reader can go do it. Post them
+one every two or three minutes. All eleven fit 280.
+
+**Reply 1**
+
+```
+Creation, in detail.
+
+A frontal selfie is enough; two side angles sharpen the likeness. The mesh comes back rigged and textured, so it can move the moment it exists.
+
+No camera? A prompt does the same job.
+
+three.ws/create/selfie
+three.ws/forge
+```
+
+**Reply 2**
+
+```
+Animation, in detail.
+
+The clip library retargets onto whatever skeleton your model has. Mixamo, VRM, Unreal, Daz, Blender naming: all mapped, legs included. No curated rig list, no T-pose fallback.
+
+three.ws/animations
+three.ws/mocap-studio
+```
+
+**Reply 3**
+
+```
+The mind, in detail.
+
+Pick a personality, pick a voice, attach skills, then talk. Lipsync moves the face while it speaks, and it holds the conversation in your language, not only in English.
+
+three.ws/chat
+three.ws/voice
+```
+
+**Reply 4**
+
+```
+Putting it somewhere, in detail.
+
+This is the whole integration:
+
+<agent-3d agent="your-agent"></agent-3d>
+
+One line, no framework, drops into a plain HTML page. Or walk your agent across any site on the web.
+
+three.ws/docs/embedding
+three.ws/walk
+```
+
+**Reply 5**
+
+```
+Ownership, in detail.
+
+Deploying mints a Metaplex Core asset to your wallet with an open manifest, so the agent stays portable to any compatible marketplace, with or without us. Typically under 0.01 SOL.
+
+three.ws/deploy-onchain
+```
+
+**Reply 6**
+
+```
+Earning, in detail.
+
+Agents pay each other per call over x402 on Solana. No invoices, no accounts, settlement in USDC. Publish a skill and anything that can pay can use it.
+
+three.ws/pay
+three.ws/skills
+```
+
+**Reply 7**
+
+```
+The community, in detail.
+
+Every agent in the marketplace is someone's build, and you can orbit it, inspect it, fork it, or just talk to it. Crews, rankings and tournaments sit on top of it.
+
+three.ws/marketplace
+three.ws/crews
+```
+
+**Reply 8**
+
+```
+For developers.
+
+SDKs, an MCP server so your own assistant can build agents, a CLI, and an API for 3D generation and rendering. All documented, all open source.
+
+three.ws/docs/sdk
+github.com/nirholas/three.ws
+```
+
+**Reply 9**
+
+```
+Things only the app does.
+
+Share a photo from any app and it lands in the avatar flow already attached. Long-press the icon for Create, Discover, My agents. Any three.ws link opens in the app instead of a browser tab.
+```
+
+**Reply 10**
+
+```
+Own a Seeker and you can prove it. The app reads your soulbound Genesis Token, never moves it, and puts a Seeker verified badge on every agent you own.
+
+A read, never a transaction.
+```
+
+**Reply 11**
+
+```
+And it is the same account as the web.
+
+Whatever you make on the Seeker is waiting on three.ws the moment you sign in there. Same wallet, same library, any screen.
+
+Search three.ws in the dApp Store on your Seeker.
+
+@solanamobile
+```
+
+Every link in these replies resolves to a live page, and `count-x.mjs` checks
+each one against `data/pages.json` on every run, so a renamed route fails here
+before it sends a launch audience to a 404.
 
 ### X, the eight capability replies (free account)
 
@@ -334,7 +471,7 @@ Own a Seeker and you can prove it. The app reads your soulbound Genesis Token, n
 A read, never a transaction.
 ```
 
-Whichever shape you post, `@solanamobile` gets tagged once, in the Seed Vault
+Whichever shape you post, `@solanamobile` gets tagged exactly once, in the last
 reply, and never in post 1.
 
 ### Telegram, @three_ws
