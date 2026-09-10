@@ -17,15 +17,40 @@ Fahrenheit, RTL through the real Arabic catalog, untranslated device names, redu
 stray-tap-proof confirmation). Six real defects were found and fixed getting there; the entry
 lists them.
 
-What remains is a single owner action, because no translation backend is reachable from a
-session: Vertex fails on revoked Application Default Credentials that need an interactive
-`gcloud auth login`, and the free `threews` proxy lane answers 502/503 on every request.
+**Corrected 2026-09-10: the premise below was wrong in its first half and right in its second.**
+Translation backends ARE reachable from a session, and gcloud does not need an interactive
+login: `gcloud auth print-access-token` mints a token in this workspace today (the binary is not
+on PATH, call it at `/home/codespace/google-cloud-sdk/bin/gcloud`). What is actually missing is
+THROUGHPUT, not auth or reachability.
 
-       gcloud auth login
-       GOOGLE_CLOUD_PROJECT=aerial-vehicle-466722-p5 npm run i18n:translate
+    node scripts/read-service-env.mjs '^NVIDIA_API_KEY$'    # the key is on the Cloud Run service
+    node scripts/i18n-translate.mjs --provider=nvidia --locales=<shard> --concurrency=3
+    node scripts/i18n-translate.mjs --provider=nvidia --locales=<shard> --repair
+    node scripts/i18n-translate.mjs --lint                  # ground truth, always
 
-That is roughly 500 requests and clears the whole repo's 49,378 lint problems, of which 30,259
-are this lane's 358 keys across 84 locales. When it lands: confirm `npm run i18n:lint` is clean,
+That works and was used on 2026-09-10 to take Spanish to a clean 19,875-key catalog and to fill
+a large part of the rest. But every free lane is throttled per key and they cannot finish 84
+locales in a session:
+
+- **NVIDIA NIM** is the working lane, at roughly 27 keys/min per process. Running six processes
+  against it does NOT go six times faster: the key is throttled per account, all six collapsed
+  into `429 Too Many Requests`, and the whole batch stalled. Two processes at `--concurrency=3`
+  is about the ceiling.
+- **Groq** authenticates and translates well, but its free tier is 200,000 tokens per DAY, which
+  is a few hundred keys. It is a useful second lane, not a bulk one.
+- **OpenAI** is `billing_not_active`.
+- **Vertex AND the Generative Language API are both denied project-wide** by the same
+  `Lightning dunning decision is deny` billing hold, so `GOOGLE_API_KEY` is no help either.
+
+Vertex is the lane that can actually do this in one pass, because it is billed to the GCP credit
+pool with no free-tier quota to exhaust. So the single owner action for this order is **not**
+`gcloud auth login`; it is **clearing the GCP billing hold**, which is the same action that
+unblocks orders 903 (fact-check `groundedSearch`) and 907 (the OKX bot reply lane). Three orders,
+one payment.
+
+Until it clears, the free lanes make real progress and should be left grinding: the run is
+resumable, idempotent, and an incomplete locale is held out of `manifest.json` rather than shipped
+half-translated, so stopping mid-way is safe. When it lands: confirm `npm run i18n:lint` is clean,
 delete the `publishLocale` helper in `tests/e2e/home-a11y.spec.js` (the RTL and never-translate
 tests can read the real manifest once a locale is complete), re-run the suite, and retire this
 file per the section at the bottom.
