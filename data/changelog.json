@@ -3,6 +3,16 @@
 	"entries": [
 		{
 			"date": "2026-09-10",
+			"title": "Any embedded agent can now be waved at, not just the one on our own page",
+			"summary": "Hand control arrived last week on a page of ours: your speakers play a tone too high to hear, and your microphone listens for how your hand bends it on the way back, so you can drive a 3D agent by waving at your laptop with the camera shut. It now works on any agent embedded anywhere. Add sonar to the embed tag, give people a button to switch it on, and a sweep of the hand steps the agent through its gestures, a push moves the camera in, and a held hand turns it around. Sites that want the gestures to do something else entirely can take them over and drive their own page with them. Nothing is recorded, nothing is downloaded until somebody actually turns it on, and it stops the moment they navigate away.",
+			"tags": [
+				"feature",
+				"sdk"
+			],
+			"link": "/sonar"
+		},
+		{
+			"date": "2026-09-10",
 			"title": "Control a 3D agent with your hands, no camera needed",
 			"summary": "Your laptop already has a motion sensor: the speakers and the microphone. The new Sonar page plays a tone too high to hear, then listens for how your hand bends it on the way back, the same effect that drops the pitch of a passing siren. Sweep your hand across the keyboard and the agent on screen steps to its next gesture. Push your palm toward the screen and the camera moves in. Lift your hand and hold it, and the camera turns around the agent. Nothing is recorded and nothing leaves the page, and every gesture is on the keyboard too, so the page works with the microphone switched off. The sensing itself is two small modules you are free to point at anything, documented for developers.",
 			"tags": [

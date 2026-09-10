@@ -126,6 +126,69 @@ The microphone stream is analysed in memory and never leaves the page: no record
 
 ---
 
+## On an embedded agent
+
+Any `<agent-3d>` embed can be driven by hand. The attribute permits it; the page
+starts it, because opening a microphone and putting a tone into someone's room is
+the viewer's decision, not the embed's:
+
+```html
+<agent-3d agent-id="your-agent" sonar></agent-3d>
+```
+
+```js
+const el = document.querySelector('agent-3d');
+startButton.addEventListener('click', () => el.startSonar({ mode: 'swipe' }));
+```
+
+A sweep steps the agent through its gesture vocabulary, a push moves the camera
+in and a pull eases it back out, a held lift turns the camera. Every recognised
+gesture also fires a cancelable `sonar-gesture` event, so a host page can take
+the gestures and do something else entirely with them:
+
+```js
+el.addEventListener('sonar-gesture', (e) => {
+	e.preventDefault();
+	if (e.detail.gesture === 'swipe') e.detail.direction > 0 ? nextSlide() : prevSlide();
+});
+```
+
+Nothing of the sensing ships until `startSonar()` is called for the first time,
+so an embed that never uses it pays nothing for the capability. The attribute,
+the methods and the event detail are specified in
+[Web component](./web-component.md#hand-control-no-camera).
+
+---
+
+## The shared controller
+
+`src/sonar/controller.js` is the layer both surfaces sit on. It owns the sensor,
+the three detectors, the mode arbitration and the reverse switches, and reports
+what it read through callbacks. What a gesture *means* stays with the consumer.
+
+```js
+import { SonarController } from '/src/sonar/controller.js';
+
+const sonar = new SonarController({
+	mode: 'swipe',
+	onSwipe: (direction) => (direction > 0 ? next() : previous()),
+	onZoom: (action) => zoom(action),
+	onTurn: (radians) => camera.orbitBy(radians),
+});
+await sonar.start();
+```
+
+| Member | Purpose |
+| --- | --- |
+| `start()` / `stop()` | Open and release the microphone. `stop()` is safe when nothing is running. |
+| `setMode(mode)` | `'swipe'`, `'push'`, `'lift'` or `'all'`. Drops the stroke in flight, so a half-formed gesture cannot complete under the new mapping. |
+| `setReversed(gesture, on)` | Flip a gesture's direction. `'lift'` reverses through the motion itself, so a held turn stops rather than snapping the other way. |
+| `recalibrate()` | Re-measure the still room without restarting the microphone. |
+| `feed(reading)` | Drive it from a Reading you already have. The sensor calls this for you; it is public so a recorded stream can be replayed through the same mapping, which is how `tests/sonar-controller.test.js` covers the mode and reverse behaviour with no microphone. |
+| `GESTURE_CAST` | The ordered gesture slots a sweep walks through, shared so the page and an embed step the same cast. |
+
+---
+
 ## Reusing it elsewhere
 
 The modules ship in the frontend bundle and are plain ES modules with no dependencies beyond each other:

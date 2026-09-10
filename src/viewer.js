@@ -490,29 +490,68 @@ export class Viewer {
 	// every three.ws viewer surface; reduced-motion halves the step so users
 	// who asked for less motion get finer, calmer control instead of smoothing.
 	_handleOrbitKeydown(event) {
-		if (!this.controls || !this.activeCamera) return;
 		const stepScale = this._reducedMotion ? 0.5 : 1;
 		const rotateStep = 0.05 * stepScale;
 		const zoomStep = 1.08;
-		const offset = this._tempVec.subVectors(this.activeCamera.position, this.controls.target);
-		const spherical = new Spherical().setFromVector3(offset);
 		let handled = true;
 		switch (event.key) {
-			case 'ArrowLeft': spherical.theta -= rotateStep; break;
-			case 'ArrowRight': spherical.theta += rotateStep; break;
-			case 'ArrowUp': spherical.phi = Math.max(0.05, spherical.phi - rotateStep); break;
-			case 'ArrowDown': spherical.phi = Math.min(Math.PI - 0.05, spherical.phi + rotateStep); break;
+			case 'ArrowLeft': handled = this.orbitBy(-rotateStep, 0); break;
+			case 'ArrowRight': handled = this.orbitBy(rotateStep, 0); break;
+			case 'ArrowUp': handled = this.orbitBy(0, -rotateStep); break;
+			case 'ArrowDown': handled = this.orbitBy(0, rotateStep); break;
 			case '+':
 			case '=':
-			case 'PageUp': spherical.radius /= zoomStep; break;
+			case 'PageUp': handled = this.dollyBy(1 / zoomStep); break;
 			case '-':
 			case '_':
-			case 'PageDown': spherical.radius *= zoomStep; break;
+			case 'PageDown': handled = this.dollyBy(zoomStep); break;
 			default: handled = false;
 		}
 		if (!handled) return;
 		event.preventDefault();
 		event.stopPropagation();
+	}
+
+	/**
+	 * Move the camera around its orbit target, in radians. `dTheta` turns
+	 * around the model, `dPhi` raises and lowers the shot (clamped clear of the
+	 * poles, where the up vector flips and the view snaps).
+	 *
+	 * Public because the keyboard is no longer the only thing that steers this
+	 * camera: acoustic gestures drive it too (src/sonar/controller.js), and both
+	 * need the same spherical move rather than two copies of it.
+	 *
+	 * @returns {boolean} false when there is no camera to move yet.
+	 */
+	orbitBy(dTheta = 0, dPhi = 0) {
+		if (!this.controls || !this.activeCamera) return false;
+		const offset = this._tempVec.subVectors(this.activeCamera.position, this.controls.target);
+		const spherical = new Spherical().setFromVector3(offset);
+		spherical.theta += dTheta;
+		spherical.phi = Math.max(0.05, Math.min(Math.PI - 0.05, spherical.phi + dPhi));
+		this._applySpherical(spherical);
+		return true;
+	}
+
+	/**
+	 * Dolly the camera along its view ray. Factors below 1 move in, above 1 move
+	 * out; the range is clamped against the framed distance so a caller cannot
+	 * drive the camera inside the model or off into the void.
+	 *
+	 * @returns {boolean} false when there is no camera to move yet.
+	 */
+	dollyBy(factor) {
+		if (!this.controls || !this.activeCamera || !(factor > 0)) return false;
+		const offset = this._tempVec.subVectors(this.activeCamera.position, this.controls.target);
+		const spherical = new Spherical().setFromVector3(offset);
+		const min = this.controls.minDistance || spherical.radius * 0.2;
+		const max = this.controls.maxDistance || spherical.radius * 5;
+		spherical.radius = Math.max(min, Math.min(max, spherical.radius * factor));
+		this._applySpherical(spherical);
+		return true;
+	}
+
+	_applySpherical(spherical) {
 		const newOffset = new Vector3().setFromSpherical(spherical);
 		this.activeCamera.position.copy(this.controls.target).add(newOffset);
 		this.controls.update();

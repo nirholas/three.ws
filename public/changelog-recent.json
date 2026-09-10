@@ -1,11 +1,11 @@
 {
-	"generated_at": "2026-09-10T16:27:25.836Z",
+	"generated_at": "2026-09-10T20:30:13.068Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
 		"url": "https://three.ws"
 	},
-	"total": 3667,
+	"total": 3668,
 	"complete": false,
 	"full_feed": "/changelog.json",
 	"entries": [
@@ -49,6 +49,17 @@
 			"tags": [
 				"fix",
 				"improvement"
+			]
+		},
+		{
+			"date": "2026-09-10",
+			"type": "update",
+			"title": "Any embedded agent can now be waved at, not just the one on our own page",
+			"summary": "Hand control arrived last week on a page of ours: your speakers play a tone too high to hear, and your microphone listens for how your hand bends it on the way back, so you can drive a 3D agent by waving at your laptop with the camera shut. It now works on any agent embedded anywhere. Add sonar to the embed tag, give people a button to switch it on, and a sweep of the hand steps the agent through its gestures, a push moves the camera in, and a held hand turns it around. Sites that want the gestures to do something else entirely can take them over and drive their own page with them. Nothing is recorded, nothing is downloaded until somebody actually turns it on, and it stops the moment they navigate away.",
+			"link": "/sonar",
+			"tags": [
+				"feature",
+				"sdk"
 			]
 		},
 		{
@@ -1605,16 +1616,6 @@
 			"tags": [
 				"improvement",
 				"feature"
-			]
-		},
-		{
-			"date": "2026-09-07",
-			"type": "update",
-			"title": "The featured agent is one you can actually open",
-			"summary": "The agent we spotlight is picked automatically from real activity, but the pick only checked whether an agent was public, not whether its owner had published it. That let a brand new starter agent, the draft every account is given on signup, take the spot, and every panel that tried to read it came back empty with a live feed error. The pick now requires a published agent, so the spotlight lands on one that every part of the site can open.",
-			"link": null,
-			"tags": [
-				"fix"
 			]
 		}
 	]

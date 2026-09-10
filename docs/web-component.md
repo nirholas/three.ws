@@ -105,6 +105,50 @@ in the hosted app and in an embed. A runnable page is
 vocabulary are documented in [Sign language](./sign-language.md), and the
 alphabet is browsable at [/asl-alphabet](https://three.ws/asl-alphabet).
 
+### Hand control, no camera
+
+| Attribute | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `sonar` | boolean | off | Permits acoustic hand control on this element. The speakers emit a tone above hearing and the microphone reads how a hand bends it on the way back, so a viewer can drive the agent by waving at their laptop with the camera shut. Any value except `off` or `false` permits it; removing the attribute stops a session already running. |
+
+The attribute only **permits** the capability. Nothing starts until the page calls
+`startSonar()`, and that call needs a real user gesture behind it, because it
+prompts for the microphone and puts a tone into the viewer's room. An embed that
+never calls it ships none of the sensing code: the modules load on first use.
+
+```html
+<agent-3d agent-id="your-agent" sonar></agent-3d>
+```
+
+```js
+const el = document.querySelector('agent-3d');
+document.querySelector('#wave-at-me').addEventListener('click', async () => {
+	try {
+		await el.startSonar({ mode: 'swipe' });
+	} catch (err) {
+		// A denied or unavailable microphone. err.message is written to be shown.
+		show(err.message);
+	}
+});
+```
+
+Out of the box a sweep steps the agent through its gesture vocabulary, a push
+moves the camera in and a pull eases it back out, and a held lift turns the
+camera around the agent. To map the gestures to your own behaviour instead,
+cancel the event:
+
+```js
+el.addEventListener('sonar-gesture', (e) => {
+	e.preventDefault(); // suppress the built-in response
+	if (e.detail.gesture === 'swipe') e.detail.direction > 0 ? nextSlide() : prevSlide();
+});
+```
+
+Say plainly wherever you ship this that the carrier sits near 20 kHz, which cats
+and dogs can hear. The technique, its three gestures, what it needs from the
+room, and why running more than one gesture at a time needs a mode are all in
+[Sonar](./sonar.md).
+
 ### Skills and memory
 
 | Attribute | Type | Default | Description |
@@ -162,6 +206,8 @@ el.skills     // Array of installed Skill objects
 **`el.memory`** — The `Memory` instance. Supports `read(key)`, `write(key, value)`, and `export()` for portability.
 
 **`el.skills`** — Array of all currently installed `Skill` objects. Updated live as skills are installed or uninstalled.
+
+**`el.sonarRunning`** - Read-only boolean, true while the microphone is open and hand gestures are being read. See [`startSonar()`](#startsonaropts).
 
 ---
 
@@ -278,6 +324,32 @@ if (result) {
 | `text` | string | The utterance to perform. |
 
 Resolves once the motion finishes, with `{ signed, spelled }`, or with `null` when the loaded rig has no finger bones to sign with. Use it for captions, accessibility overlays, and any surface that has its own text; the `sign-language` attribute covers the conversational case, where every assistant reply is signed automatically.
+
+---
+
+### `startSonar(opts?)`
+
+Starts reading hand gestures from the microphone. Requires the `sonar` attribute and a real user gesture behind the call.
+
+```js
+const started = await el.startSonar({ mode: 'push' });
+```
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `opts.mode` | `'swipe'` \| `'push'` \| `'lift'` \| `'all'` | Which gesture is live. Default `'swipe'`. |
+| `opts.amplitude` | number | Speaker level for the carrier, 0 to 1. Default `0.08`. |
+| `opts.tone` | number | Carrier in Hz. Omit it: the sensor measures the candidates against the machine's own hardware and keeps the best. |
+
+Only one gesture is live at a time because they are not separable at the hardware level: the microphone senses distance, so a sweep passing it is an approach followed by a retreat, which is exactly what a push and a pull look like. `'all'` runs every detector and misreads more often.
+
+Resolves `true` once sensing has begun, or `false` when the `sonar` attribute is absent, a session is already running, or the browser has no Web Audio microphone input. Rejects with a user-showable message when the microphone is denied or unavailable.
+
+---
+
+### `stopSonar()`
+
+Silences the tone and releases the microphone, which is what turns the browser's recording indicator off. Safe to call when nothing is running. Removing the `sonar` attribute does this for you, and so does removing the element from the page.
 
 ---
 
@@ -444,6 +516,20 @@ All events bubble and are `composed: true`, meaning they cross shadow DOM bounda
 | `voice:speech-end` | `{}` | TTS playback ends. |
 | `voice:listen-start` | `{}` | Microphone opens. |
 | `voice:transcript` | `{ text, final }` | STT chunk received. `final: true` means the utterance is complete. |
+
+### Hand control events
+
+| Event | Detail | When |
+|-------|--------|------|
+| `sonar-gesture` | `{ gesture, ... }` | A hand gesture was recognised. Cancelable: `preventDefault()` suppresses the built-in response and leaves the gesture entirely to your handler. Bubbles and crosses the shadow boundary. |
+
+`detail.gesture` is `"swipe"`, `"push"` or `"lift"`, each carrying what its own response needs:
+
+| Gesture | Detail fields |
+|---------|---------------|
+| `swipe` | `direction` (`1` next, `-1` previous) and `slot`, the gesture slot the agent is about to play. |
+| `push` | `action` (`3` on the push, `-1` per step of the paced return, `0` as it lands back at rest) and `factor`, the camera dolly it maps to. |
+| `lift` | `radians` turned this frame and the current `velocity`. Fires per animation frame while a hand is held up, so treat it as a stream, not an event. |
 
 ### Skill events
 

@@ -643,6 +643,7 @@ class Agent3DElement extends HTMLElement {
 			'framing',
 			'wallet',
 			'sign-language',
+			'sonar',
 		];
 	}
 
@@ -689,6 +690,7 @@ class Agent3DElement extends HTMLElement {
 		// WebGL context budget bookkeeping.
 		this._inViewport = false;
 		this._lastVisibleAt = 0;
+		this._sonar = null; // acoustic hand control, only once startSonar() is called
 		// Reduced-motion bookkeeping.
 		this._mqReduce = null;
 		this._mqReduceHandler = null;
@@ -855,6 +857,11 @@ class Agent3DElement extends HTMLElement {
 		if (name === 'framing') {
 			this._viewer?.setFraming?.(newVal === 'portrait' ? 'portrait' : 'full');
 		}
+		// Acoustic hand control is capability-gated, never auto-started: opening a
+		// microphone and putting a 20 kHz tone into someone's room is the viewer's
+		// decision, so the attribute only permits startSonar(). Removing it, or
+		// setting it off, stops a session already running.
+		if (name === 'sonar' && !this._sonarAllowed()) this.stopSonar();
 		// ASL replies: any value except "off"/"false" enables signing.
 		if (name === 'sign-language') {
 			const on = newVal != null && newVal !== 'off' && newVal !== 'false';
@@ -2820,6 +2827,8 @@ class Agent3DElement extends HTMLElement {
 			}
 			this._autoResolvedManifest = false;
 		}
+		// A torn-down element must not leave a microphone open or a tone playing.
+		this.stopSonar();
 		_untrackLiveViewer(this);
 		try {
 			this._io?.disconnect();
@@ -3137,6 +3146,97 @@ class Agent3DElement extends HTMLElement {
 			sc.viewer.invalidate();
 		};
 		sc._addHook(tick);
+	}
+
+	/* ── acoustic hand control ─────────────────────────────────────────────
+	 *
+	 * The speakers emit a tone above hearing and the microphone reads how a hand
+	 * bends it on the way back, so an embedded agent can be driven by hand with
+	 * no camera. The sensing lives in src/sonar/ and is loaded only when a page
+	 * actually calls startSonar(), so an embed that never uses it ships none of
+	 * it. The full technique and its limits: docs/sonar.md.
+	 */
+
+	/** True when the host page has permitted acoustic control on this element. */
+	_sonarAllowed() {
+		const v = this.getAttribute('sonar');
+		return v != null && v !== 'off' && v !== 'false';
+	}
+
+	/** True while the microphone is open and gestures are being read. */
+	get sonarRunning() {
+		return Boolean(this._sonar?.running);
+	}
+
+	/**
+	 * Start reading hand gestures. Requires the `sonar` attribute and a real user
+	 * gesture behind the call, because it prompts for the microphone and puts a
+	 * tone through the speakers.
+	 *
+	 * By default a sweep steps the agent through its gesture vocabulary, a push
+	 * moves the camera in and a pull eases it back out, and a held lift turns the
+	 * camera around the agent. Pass `mode` to choose which gesture is live: the
+	 * three are not separable at the hardware level, so running all of them at
+	 * once ('all') misreads more often.
+	 *
+	 * Every recognised gesture also fires a cancelable `sonar-gesture` event, so
+	 * a host page can map them to its own behaviour instead:
+	 * `el.addEventListener('sonar-gesture', (e) => { e.preventDefault(); ... })`.
+	 *
+	 * @param {{ mode?: 'swipe'|'push'|'lift'|'all', amplitude?: number, tone?: number }} [opts]
+	 * @returns {Promise<boolean>} false when the attribute is absent or the
+	 *   browser cannot sense; rejects with a user-showable message on a denied
+	 *   or unavailable microphone.
+	 */
+	async startSonar(opts = {}) {
+		if (!this._sonarAllowed() || this.sonarRunning) return false;
+		const [{ SonarController, GESTURE_CAST }, { isSupported }] = await Promise.all([
+			import('./sonar/controller.js'),
+			import('./sonar/doppler.js'),
+		]);
+		if (!isSupported()) return false;
+
+		let index = 0;
+		const emit = (gesture, detail) =>
+			this.dispatchEvent(
+				new CustomEvent('sonar-gesture', {
+					detail: { gesture, ...detail },
+					bubbles: true,
+					composed: true,
+					cancelable: true,
+				}),
+			);
+
+		this._sonar = new SonarController({
+			mode: opts.mode,
+			amplitude: opts.amplitude,
+			tone: opts.tone,
+			onSwipe: (direction) => {
+				index = (index + direction + GESTURE_CAST.length) % GESTURE_CAST.length;
+				const slot = GESTURE_CAST[index];
+				if (emit('swipe', { direction, slot })) this._scene?.playAnimationByHint(slot);
+			},
+			onZoom: (action) => {
+				// +3 on the push, -1 per step of the paced return, 0 as it lands.
+				const factor = action > 0 ? 1 / 1.35 : action < 0 ? 1.1 : 1;
+				if (!emit('push', { action, factor })) return;
+				if (action === 0) this._scene?.viewer?.frameContent?.({ animate: true });
+				else this._scene?.viewer?.dollyBy?.(factor);
+			},
+			onTurn: (radians, velocity) => {
+				if (emit('lift', { radians, velocity })) this._scene?.viewer?.orbitBy?.(radians, 0);
+			},
+			onError: () => this.stopSonar(),
+		});
+		await this._sonar.start();
+		return true;
+	}
+
+	/** Silence the tone and release the microphone. Safe to call when idle. */
+	stopSonar() {
+		if (!this._sonar) return;
+		this._sonar.stop();
+		this._sonar = null;
 	}
 
 	async wave(opts) {

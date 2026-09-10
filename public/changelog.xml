@@ -39,6 +39,14 @@
 			<description>The image check behind generated models asks several providers in turn, and it shared its time limit out equally between all of them. That had a perverse effect: every provider added to the list shortened the time given to the first and best one, so growing the list made the check worse rather than more resilient. Three providers were added last week and the first one's window fell just below what it needs to answer, which is why the check started timing out instead of returning verdicts. Each provider is now given whatever time the ones behind it do not need, with a guaranteed minimum still held back for every one of them, so the check gets a real answer from the first healthy provider and still falls through to the rest when it has to.</description>
 		</item>
 		<item>
+			<title>Any embedded agent can now be waved at, not just the one on our own page</title>
+			<link>https://three.ws/sonar</link>
+			<guid isPermaLink="false">2026-09-10:Any embedded agent can now be waved at, not just the one on our own page</guid>
+			<pubDate>Thu, 10 Sep 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>Hand control arrived last week on a page of ours: your speakers play a tone too high to hear, and your microphone listens for how your hand bends it on the way back, so you can drive a 3D agent by waving at your laptop with the camera shut. It now works on any agent embedded anywhere. Add sonar to the embed tag, give people a button to switch it on, and a sweep of the hand steps the agent through its gestures, a push moves the camera in, and a held hand turns it around. Sites that want the gestures to do something else entirely can take them over and drive their own page with them. Nothing is recorded, nothing is downloaded until somebody actually turns it on, and it stops the moment they navigate away.</description>
+		</item>
+		<item>
 			<title>Control a 3D agent with your hands, no camera needed</title>
 			<link>https://three.ws/sonar</link>
 			<guid isPermaLink="false">2026-09-10:Control a 3D agent with your hands, no camera needed</guid>

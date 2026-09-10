@@ -14,17 +14,13 @@
 
 import { DopplerSensor, DIRECTION, DIRECTION_LABEL, TONE_CANDIDATES, isSupported, CALIBRATION_SECONDS } from './sonar/doppler.js';
 import { SwipeDetector, PushPullDetector, LiftMotion } from './sonar/gestures.js';
+import { GESTURE_CAST } from './sonar/controller.js';
 import { DEFAULT_ANIMATION_MAP } from './runtime/animation-slots.js';
 
 const MANIFEST_URL = '/animations/manifest.json';
 
-/**
- * The slots a sweep walks through, in the order they read best on stage: an
- * opener, two reactions, a loop worth landing on, then the rest of the
- * vocabulary. Every entry resolves through DEFAULT_ANIMATION_MAP, so a slot
- * that gets re-pointed there moves here too.
- */
-const CAST = ['wave', 'nod', 'celebrate', 'dance', 'point', 'shrug', 'think', 'bow', 'concern', 'shake'];
+/** The slots a sweep walks through. Shared with the <agent-3d> embed. */
+const CAST = GESTURE_CAST;
 
 /** Camera distance for each push step. Step 0 is the framed shot. */
 const ZOOM_STEPS = [1, 1.18, 1.36, 1.6];
