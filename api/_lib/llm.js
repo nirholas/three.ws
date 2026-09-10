@@ -108,7 +108,9 @@ const NVIDIA_MODEL = 'nvidia/nemotron-3-super-120b-a12b';
 // NVIDIA-native model to lead (see `preferNvidia`/`nvidiaModel` below). Fast
 // enough for a single prompt-refine turn; the rest of the free chain still
 // backs it up if the NIM lane is down.
-const NVIDIA_NEMOTRON_MODEL = 'nvidia/nemotron-3-nano-30b-a3b';
+// Re-pinned 2026-09-10: nemotron-3-nano-30b-a3b is no longer in the NIM
+// catalog and answered every call with a 410, so this opt-in lane was dead.
+const NVIDIA_NEMOTRON_MODEL = 'nvidia/nemotron-3.5-lightning-30b-a3b';
 // nemotron-3 puts its reasoning in a separate field only when thinking is off;
 // with it on, the chain of thought leaks into `content` (verified 2026-08-27).
 const NVIDIA_NO_THINK = Object.freeze({ chat_template_kwargs: { enable_thinking: false } });

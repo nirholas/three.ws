@@ -3,12 +3,12 @@
 // similarity search.
 //
 // Provider policy is NOT restated here: it is delegated to api/_lib/embeddings.js,
-// the platform's single embedder registry (free NVIDIA NIM nv-embedqa-e5-v5 first,
+// the platform's single embedder registry (free NVIDIA NIM nemotron-3-embed-1b first,
 // then the GCP-credit-funded Vertex lane, then OpenAI as the paid backstop). That
 // module exists to prevent one specific trap: embeddings from different models are
 // different vector spaces, and comparing across them yields plausible-looking
 // garbage. So the response carries the registry's `embedder` tag (model + dim,
-// e.g. "nvidia/nv-embedqa-e5-v5@1024"). Callers that persist a vector must persist
+// e.g. "nvidia/nemotron-3-embed-1b@2048"). Callers that persist a vector must persist
 // that tag beside it and only compare vectors sharing one.
 //
 // `inputType` matters for the same reason: NIM's retrieval models are asymmetric.

@@ -1584,7 +1584,7 @@ const FALLBACK_SIBLINGS = {
 	// Like Groq, NVIDIA NIM rate-limits per key (one account), so a second NIM
 	// model would re-hit the same throttle — keep a single slot and give the
 	// next fallback slot to a different provider.
-	nvidia: ['meta/llama-3.3-70b-instruct'],
+	nvidia: ['nvidia/nemotron-3.5-lightning-30b-a3b'],
 	// Same one-account rationale as Groq/NVIDIA: one slot each, then move on
 	// to a different provider.
 	sambanova: ['Meta-Llama-3.3-70B-Instruct'],

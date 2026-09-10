@@ -15,6 +15,7 @@ vi.mock('../../api/_lib/gcp-auth.js', () => ({
 
 import {
 	NIM_EMBED_TAG,
+	NIM_EMBED_TAG_RETIRED,
 	VERTEX_EMBED_TAG,
 	OPENAI_EMBED_TAG,
 	LEGACY_EMBED_TAG,
@@ -117,8 +118,8 @@ describe('embedder tag resolution (vector-space identity)', () => {
 
 	it('exposes model id + dimension for known tags', () => {
 		expect(embedderInfo(NIM_EMBED_TAG)).toMatchObject({
-			model: 'nvidia/nv-embedqa-e5-v5',
-			dim: 1024,
+			model: 'nvidia/nemotron-3-embed-1b',
+			dim: 2048,
 			free: true,
 		});
 		expect(embedderInfo(VERTEX_EMBED_TAG)).toMatchObject({
@@ -130,6 +131,20 @@ describe('embedder tag resolution (vector-space identity)', () => {
 			model: 'text-embedding-3-small',
 			dim: 256,
 		});
+	});
+
+	it('still resolves the retired NIM space, so old rows stay queryable', () => {
+		// The NIM embedder was re-pinned on 2026-09-10 when nv-embedqa-e5-v5 was
+		// retired upstream. Every row embedded before then carries the old tag, and
+		// dropping it from the registry would make those rows unresolvable, which
+		// is the exact failure the tagging scheme exists to prevent.
+		expect(embedderInfo(NIM_EMBED_TAG_RETIRED)).toMatchObject({
+			model: 'nvidia/nv-embedqa-e5-v5',
+			dim: 1024,
+		});
+		expect(NIM_EMBED_TAG_RETIRED).not.toBe(NIM_EMBED_TAG);
+		// Resolvable, but never selectable for new work: the upstream model is gone.
+		expect(embedderConfigured(NIM_EMBED_TAG_RETIRED)).toBe(false);
 	});
 
 	it('embedderConfigured tracks the provider key for the tag, not any key', () => {
@@ -158,7 +173,7 @@ describe('embedWith — NIM lane', () => {
 		expect(fetchMock).toHaveBeenCalledTimes(1);
 		expect(fetchMock.mock.calls[0][0]).toBe(NIM_URL);
 		expect(lastBody()).toEqual({
-			model: 'nvidia/nv-embedqa-e5-v5',
+			model: 'nvidia/nemotron-3-embed-1b',
 			input: ['one', 'two'],
 			input_type: 'passage',
 		});

@@ -31,6 +31,14 @@
 			<description>The generated half of the animation library was written in the wrong rest pose and carried a constant forward drift that was never in the original motion, which made characters glide instead of plant their feet. Every published clip was re-derived from the motion already generated, re-checked against the quality gate, and republished: 39 clips that now pass are live, and the 94 that still failed on foot-sliding were withdrawn rather than left on the shelf. No new generation was needed, because the motion was correct all along and only written down wrong.</description>
 		</item>
 		<item>
+			<title>Repaired the free AI lanes, which had been quietly answering nothing</title>
+			<link>https://three.ws/changelog</link>
+			<guid isPermaLink="false">2026-09-10:Repaired the free AI lanes, which had been quietly answering nothing</guid>
+			<pubDate>Thu, 10 Sep 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>Several of the free AI models the platform falls back to had been retired by their provider and were answering every request with a Gone error. Nothing logged it as a problem, because a dead model looks the same as a busy one to a fallback chain: it just moves on. The cost was real though, since each dead entry ate one of the limited retry slots that should have gone to a lane that could actually answer, making the whole chain fail sooner and more often under load. Every model id is now checked against the provider's live catalog, the dead ones are replaced with working models, and the same applies to the search-and-memory embedding lane, which had been failing for two weeks. Older stored memories keep working: they are tagged with the model that created them and still resolve.</description>
+		</item>
+		<item>
 			<title>The image check now moves on when a model answers in the wrong format</title>
 			<link>https://three.ws/changelog</link>
 			<guid isPermaLink="false">2026-09-10:The image check now moves on when a model answers in the wrong format</guid>

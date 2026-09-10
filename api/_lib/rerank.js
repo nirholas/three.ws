@@ -12,6 +12,16 @@
 // OpenAI-shaped — query/passages in, `rankings: [{index, logit}]` out,
 // sorted best-first, `index` pointing back into the input passage array.
 
+// KNOWN DEAD as of 2026-09-10, and deliberately left pinned. This model is no
+// longer served on our NIM account (404 Not Found for the account, and no
+// reranking model on GET /v1/models answered on this endpoint), so the stage
+// cannot currently run. That is harmless rather than an outage for two reasons
+// and both are load-bearing: the stage is opt-in behind KNOWLEDGE_RERANK_ENABLED,
+// which is NOT set on the production service, and rerank() fails open by
+// contract, returning null so callers keep their existing cosine order. Pinning
+// a model that has been verified dead beats swapping in a guess that has not
+// been verified alive. Before enabling the stage, probe a replacement against
+// this endpoint and re-pin here.
 const RERANK_URL = 'https://ai.api.nvidia.com/v1/retrieval/nvidia/reranking';
 const RERANK_MODEL = 'nvidia/rerank-qa-mistral-4b';
 

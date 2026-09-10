@@ -84,17 +84,22 @@ const MODELS = {
 	// NVIDIA NIM free tier (build.nvidia.com). One nvapi key, OpenAI-compatible,
 	// tool-call capable. Used both as directly-selectable models and as a free
 	// fallback ahead of paid Anthropic in the chain below.
-	'nvidia/llama-3.3-nemotron-super-49b-v1.5': {
+	// Both ids that used to sit here (llama-3.3-nemotron-super-49b-v1.5 and
+	// nvidia-nemotron-nano-9b-v2) were retired from the NIM catalog and answered
+	// 410 Gone, which took this free rung out of the chain without any log
+	// saying so. Re-pinned from GET /v1/models on 2026-09-10; check there before
+	// adding an id here.
+	'nvidia/nemotron-3.5-lightning-30b-a3b': {
 		kind: 'openai',
 		provider: 'nvidia',
 		envKey: 'NVIDIA_API_KEY',
 	},
-	'nvidia/nvidia-nemotron-nano-9b-v2': {
+	'nvidia/nemotron-3-ultra-550b-a55b': {
 		kind: 'openai',
 		provider: 'nvidia',
 		envKey: 'NVIDIA_API_KEY',
 	},
-	'meta/llama-4-maverick-17b-128e-instruct': {
+	'nvidia/nemotron-3-super-120b-a12b': {
 		kind: 'openai',
 		provider: 'nvidia',
 		envKey: 'NVIDIA_API_KEY',
@@ -206,7 +211,12 @@ export function modelFallbackChain(requestedModel) {
 			// and quota pool from the OpenRouter lane above, so an OpenRouter rate
 			// limit does not carry over into it.
 			'llama-3.1-8b-instant',
-			'meta/llama-4-maverick-17b-128e-instruct',
+			// Was 'meta/llama-4-maverick-17b-128e-instruct' until 2026-09-10, when
+			// it was found retired from the NIM catalog and answering 410 Gone.
+			// A dead id in this chain is not a no-op: it consumes a rung, so a
+			// request that should have reached SambaNova spent an attempt on a
+			// model that could never answer.
+			'nvidia/nemotron-3.5-lightning-30b-a3b',
 			// SambaNova free 70B: an independent quota pool between the NVIDIA
 			// free rung and the paid Anthropic backstop. Skipped at call time
 			// when SAMBANOVA_API_KEY is unset, like every keyed rung here.
@@ -532,7 +542,7 @@ export default wrap(async (req, res) => {
 	// Ordered fallback chain for 429 / 5xx from OpenRouter free tier:
 	//   1. Requested model (e.g. llama-3.3-70b:free)
 	//   2. llama-3.1-8b-instant                       (smaller free model, Groq)
-	//   3. meta/llama-4-maverick-17b-128e-instruct    (free NVIDIA NIM tier)
+	//   3. nvidia/nemotron-3.5-lightning-30b-a3b      (free NVIDIA NIM tier)
 	//   4. claude-haiku-4-5-20251001                  (paid Anthropic)
 	//   5. Vertex Gemini credits anchor               (keyless last resort)
 	// The NVIDIA free tier sits ahead of paid Anthropic so a rate-limited OpenRouter

@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 // Re-embed all stored widget knowledge chunks into the free NVIDIA NIM
-// embedding space (nvidia/nv-embedqa-e5-v5@1024), safely.
+// embedding space (nvidia/nemotron-3-embed-1b@2048), safely.
 //
 // Why: rows embedded with OpenAI text-embedding-3-small@256 can only be
 // queried while an OpenAI key serves — and the platform's free-first policy

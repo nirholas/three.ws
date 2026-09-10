@@ -398,7 +398,7 @@ const PROVIDERS = {
 		maxOutput: 16384,
 		description: 'Nemotron reasoning model tuned on Llama 3.3. Math, code, planning.',
 		reasoningTrace: true,
-		native: () => (env.NVIDIA_API_KEY ? nvidia('nvidia/llama-3.3-nemotron-super-49b-v1.5') : null),
+		native: () => (env.NVIDIA_API_KEY ? nvidia('nvidia/nemotron-3-ultra-550b-a55b') : null),
 	},
 	'nvidia-nemotron-nano': {
 		label: 'Nemotron Nano 9B',
@@ -407,7 +407,7 @@ const PROVIDERS = {
 		maxOutput: 8192,
 		description: 'Compact Nemotron with built-in reasoning. Strong quality per token.',
 		reasoningTrace: true,
-		native: () => (env.NVIDIA_API_KEY ? nvidia('nvidia/nvidia-nemotron-nano-9b-v2') : null),
+		native: () => (env.NVIDIA_API_KEY ? nvidia('nvidia/nemotron-3.5-lightning-30b-a3b') : null),
 	},
 	'nvidia-deepseek-v4': {
 		label: 'DeepSeek V4 Pro',
@@ -432,7 +432,7 @@ const PROVIDERS = {
 		tier: 'balanced',
 		maxOutput: 8192,
 		description: 'Meta Llama 4 Maverick (128-expert MoE) on NIM. Fast, multimodal-capable.',
-		native: () => (env.NVIDIA_API_KEY ? nvidia('meta/llama-4-maverick-17b-128e-instruct') : null),
+		native: () => (env.NVIDIA_API_KEY ? nvidia('nvidia/nemotron-3-super-120b-a12b') : null),
 	},
 	'nvidia-minimax-m2': {
 		label: 'MiniMax M2.7',
@@ -524,9 +524,9 @@ export function freeFallbackChain(providerKey, spec, primary) {
 	});
 	if (env.NVIDIA_API_KEY && !providerKey.startsWith('nvidia-')) {
 		chain.push({
-			label: 'nvidia/llama-3.3-70b-instruct',
-			model: nvidia('meta/llama-3.3-70b-instruct'),
-			meter: { provider: 'nvidia', model: 'meta/llama-3.3-70b-instruct' },
+			label: 'nvidia/nemotron-3.5-lightning-30b-a3b',
+			model: nvidia('nvidia/nemotron-3.5-lightning-30b-a3b'),
+			meter: { provider: 'nvidia', model: 'nvidia/nemotron-3.5-lightning-30b-a3b' },
 		});
 	}
 	// Three more free lanes on independent quota pools (see api/_lib/llm.js for

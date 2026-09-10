@@ -1,11 +1,11 @@
 {
-	"generated_at": "2026-09-10T05:02:38.362Z",
+	"generated_at": "2026-09-10T05:14:13.617Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
 		"url": "https://three.ws"
 	},
-	"total": 3662,
+	"total": 3663,
 	"complete": false,
 	"full_feed": "/changelog.json",
 	"entries": [
@@ -39,6 +39,17 @@
 			"tags": [
 				"fix",
 				"improvement"
+			]
+		},
+		{
+			"date": "2026-09-10",
+			"type": "update",
+			"title": "Repaired the free AI lanes, which had been quietly answering nothing",
+			"summary": "Several of the free AI models the platform falls back to had been retired by their provider and were answering every request with a Gone error. Nothing logged it as a problem, because a dead model looks the same as a busy one to a fallback chain: it just moves on. The cost was real though, since each dead entry ate one of the limited retry slots that should have gone to a lane that could actually answer, making the whole chain fail sooner and more often under load. Every model id is now checked against the provider's live catalog, the dead ones are replaced with working models, and the same applies to the search-and-memory embedding lane, which had been failing for two weeks. Older stored memories keep working: they are tagged with the model that created them and still resolve.",
+			"link": null,
+			"tags": [
+				"fix",
+				"infra"
 			]
 		},
 		{
@@ -1605,16 +1616,6 @@
 			"tags": [
 				"improvement",
 				"docs"
-			]
-		},
-		{
-			"date": "2026-09-07",
-			"type": "update",
-			"title": "World tiles show their artwork again",
-			"summary": "The picker that lets you choose a community world was loading each world's artwork straight from a public storage gateway, and browsers now refuse to draw images served that way. Nine tiles on the page failed silently every visit. The artwork is now fetched through our own image service, so tiles paint their real picture, and a world whose artwork has gone missing falls back to its lettered tile instead of an empty square.",
-			"link": null,
-			"tags": [
-				"fix"
 			]
 		}
 	]

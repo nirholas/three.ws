@@ -105,10 +105,15 @@ export const MODEL_CATALOG = {
 	'ibm-granite/granite-4.1-8b': { provider: 'openrouter', tools: true, paid: true },
 
 	// ── NVIDIA NIM free tier — one nvapi key, OpenAI-compatible ───────────────
-	'nvidia/nemotron-3-super-120b-a12b':          { provider: 'nvidia', tools: true },
-	'nvidia/nemotron-3-nano-30b-a3b':             { provider: 'nvidia', tools: true },
-	'meta/llama-3.3-70b-instruct':               { provider: 'nvidia', tools: true },
-	'nvidia/llama-3.3-nemotron-super-49b-v1.5':  { provider: 'nvidia', tools: true },
+	// Checked against GET /v1/models on 2026-09-10, after three of the four ids
+	// registered here turned out to be retired and answering every call with a
+	// 410 Gone. A dead id is worse than a missing one: it is eligible for an
+	// auto-built fallback slot, so the chain spent a retry on a model that could
+	// never answer. Re-check this list against the live catalog before adding an
+	// id, and prefer one the platform's own chat lane already resolves to.
+	'nvidia/nemotron-3-super-120b-a12b':     { provider: 'nvidia', tools: true },
+	'nvidia/nemotron-3.5-lightning-30b-a3b': { provider: 'nvidia', tools: true },
+	'nvidia/nemotron-3-ultra-550b-a55b':     { provider: 'nvidia', tools: true },
 
 	// ── SambaNova Cloud free tier (no card): Llama 3.3 70B, own quota pool ────
 	'Meta-Llama-3.3-70B-Instruct': { provider: 'sambanova', tools: true },

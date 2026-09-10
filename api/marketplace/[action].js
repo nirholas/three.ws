@@ -903,7 +903,7 @@ const PREVIEW_PROVIDERS = {
 	nvidia: {
 		envKey: 'NVIDIA_API_KEY',
 		url: 'https://integrate.api.nvidia.com/v1/chat/completions',
-		defaultModel: 'meta/llama-3.3-70b-instruct',
+		defaultModel: 'nvidia/nemotron-3.5-lightning-30b-a3b',
 		style: 'openai',
 	},
 	// SambaNova / Mistral / Z.AI free tiers: independent quota pools, same

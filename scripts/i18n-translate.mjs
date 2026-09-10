@@ -221,7 +221,11 @@ const PROVIDER_DEFAULT_MODEL = {
 	vertex: 'google/gemini-2.5-flash',
 	groq: 'qwen/qwen3.8-27b',
 	openrouter: 'google/gemma-4-31b-it:free',
-	nvidia: 'meta/llama-3.3-70b-instruct',
+	// meta/llama-3.3-70b-instruct reached end of life on 2026-08-26 and now answers
+	// every request with a 410, which took this rung out of the chain silently.
+	// nemotron-3 is what the platform's own chat lane resolves to, so the two
+	// cannot drift apart again without someone noticing on /chat first.
+	nvidia: 'nvidia/nemotron-3-super-120b-a12b',
 	mistral: 'mistral-small-latest',
 	openai: 'gpt-4o-mini',
 	anthropic: 'claude-haiku-4-5-20251001',

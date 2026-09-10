@@ -1,7 +1,7 @@
 // Multi-provider text embeddings with vector-space tagging.
 //
 // Provider policy (free-first, per the platform LLM policy): NVIDIA NIM's
-// nv-embedqa-e5-v5 (1024-dim, free with one nvapi key) is the default for new
+// nemotron-3-embed-1b (2048-dim, free with one nvapi key) is the default for new
 // ingests; Vertex AI's text-embedding-005 (768-dim, service-account auth,
 // billed to the platform's GCP credit pool — no vendor quota to exhaust) is
 // the second-choice ingest lane when NIM is unconfigured; OpenAI
@@ -14,7 +14,7 @@
 // different vector spaces. A query embedded with model A compared against
 // passages embedded with model B returns garbage similarity scores that look
 // plausible. So every embed call here names its embedder explicitly via a
-// `tag` (model id + dimension, e.g. "nvidia/nv-embedqa-e5-v5@1024"), callers
+// `tag` (model id + dimension, e.g. "nvidia/nemotron-3-embed-1b@2048"), callers
 // persist that tag next to every stored vector, and query-time code must
 // resolve the stored tag back through this module — never pick a provider ad
 // hoc. Untagged legacy rows are OpenAI text-embedding-3-small@256 by
@@ -44,15 +44,27 @@ function vertexEmbedUrl() {
 	return `https://${location}-aiplatform.googleapis.com/v1/projects/${project}/locations/${location}/publishers/google/models/text-embedding-005:predict`;
 }
 
-// NIM nv-embedqa-e5-v5 hard-caps inputs at 512 tokens (probed: longer inputs
-// 400 with "exceeds maximum allowed token size"). The chunker already targets
+// The NIM embedding lane hard-caps inputs at 512 tokens (probed on
+// nv-embedqa-e5-v5: longer inputs 400 with "exceeds maximum allowed token
+// size"). Kept at that bound for nemotron-3-embed-1b rather than raised on
+// assumption: a cap that is too low costs a little recall, one that is too high
+// fails the call. The chunker already targets
 // ≤512 estimated tokens (4 chars/token), but dense text (code, CJK) can run
 // more tokens per char — so the NIM lane retries an over-length 400 once with
 // inputs truncated to a conservative 3 chars/token budget.
 const NIM_MAX_TOKENS = 512;
 const NIM_SAFE_CHARS = NIM_MAX_TOKENS * 3;
 
-export const NIM_EMBED_TAG = 'nvidia/nv-embedqa-e5-v5@1024';
+// The current free NIM embedder. `nv-embedqa-e5-v5` held this slot until it
+// reached end of life on 2026-08-25 and began answering every call with a
+// 410 Gone, which took the free ingest lane out silently. Re-pinned 2026-09-10
+// from GET /v1/models, dimension measured from a live call rather than assumed.
+export const NIM_EMBED_TAG = 'nvidia/nemotron-3-embed-1b@2048';
+// The retired NIM embedder. Rows embedded before 2026-09-10 carry this tag and
+// resolve through it forever: like LEGACY_EMBED_TAG below, this must never be
+// removed even though nothing new is written with it. It is deliberately absent
+// from INGEST_PREFERENCE, so it is resolvable but never chosen.
+export const NIM_EMBED_TAG_RETIRED = 'nvidia/nv-embedqa-e5-v5@1024';
 export const VERTEX_EMBED_TAG = 'vertex/text-embedding-005@768';
 export const OPENAI_EMBED_TAG = 'text-embedding-3-small@256';
 
@@ -66,10 +78,22 @@ const EMBEDDERS = Object.freeze({
 	[NIM_EMBED_TAG]: Object.freeze({
 		tag: NIM_EMBED_TAG,
 		provider: 'nim',
+		model: 'nvidia/nemotron-3-embed-1b',
+		dim: 2048,
+		free: true,
+		configured: () => !!process.env.NVIDIA_API_KEY,
+	}),
+	// Resolvable for the rows that carry it, never selected for new work.
+	[NIM_EMBED_TAG_RETIRED]: Object.freeze({
+		tag: NIM_EMBED_TAG_RETIRED,
+		provider: 'nim',
 		model: 'nvidia/nv-embedqa-e5-v5',
 		dim: 1024,
 		free: true,
-		configured: () => !!process.env.NVIDIA_API_KEY,
+		// The upstream model is gone, so this can never be re-embedded against.
+		// Reporting it unconfigured keeps it out of every automatic selection
+		// path while leaving its dimension readable for existing rows.
+		configured: () => false,
 	}),
 	[VERTEX_EMBED_TAG]: Object.freeze({
 		tag: VERTEX_EMBED_TAG,
@@ -173,8 +197,9 @@ export function embedPassages(tag, texts) {
 // ── Ingest-time provider walk ───────────────────────────────────────────────
 //
 // embedWith is deliberately strict: a stored vector space has ONE embedder, and
-// the three lanes have three different dimensions (NIM 1024, Vertex 768, OpenAI
-// 256), so answering a query against an existing space with another lane's
+// the lanes have different dimensions (NIM 2048, Vertex 768, OpenAI 256, plus
+// the retired NIM space at 1024), so answering a query against an existing
+// space with another lane's
 // vectors would compare points in unrelated geometries. Nothing here weakens
 // that, and this must never be used to query an existing space.
 //
