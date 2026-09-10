@@ -244,9 +244,16 @@ const PROVIDER_DEFAULT_MODEL = {
 	openrouter: 'google/gemma-4-31b-it:free',
 	// meta/llama-3.3-70b-instruct reached end of life on 2026-08-26 and now answers
 	// every request with a 410, which took this rung out of the chain silently.
-	// nemotron-3 is what the platform's own chat lane resolves to, so the two
-	// cannot drift apart again without someone noticing on /chat first.
-	nvidia: 'nvidia/nemotron-3-super-120b-a12b',
+	// Measured head to head on 2026-09-10, six sustained 60-key chunks each on the
+	// same key: ultra-550b landed 5/6 at a 10.3s median (225 keys/min) while
+	// super-120b landed 3/6 at a 35.4s median (73 keys/min) and was the one
+	// serving 429s. The larger model is the faster lane here because it is not
+	// the one the free tier is throttling, and it translates the hard scripts
+	// (Sinhala, Amharic, Khmer, Lao) with nothing left in English.
+	// nvidia/riva-translate-4b looks like the obvious pick for a translation job
+	// and is a trap: it is a plain sentence-in/sentence-out model, so it echoes
+	// the English back for a JSON payload and never parses for most locales.
+	nvidia: 'nvidia/nemotron-3-ultra-550b-a55b',
 	mistral: 'mistral-small-latest',
 	openai: 'gpt-4o-mini',
 	anthropic: 'claude-haiku-4-5-20251001',
