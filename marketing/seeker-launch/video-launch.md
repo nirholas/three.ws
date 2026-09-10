@@ -113,38 +113,55 @@ because it is scarce; asking them to converts a share into a favour.
 
 ### X, post 1 (attach the 16:9 cut)
 
-Option A, the moment. Use this if a second person is on camera and the video
-carries any warmth at all.
+Post 1 names the category, not one feature. An opener that says "take a selfie,
+get an avatar" reads as the whole product to someone who has never seen it, and
+the app does considerably more than that. Give the range in one breath (a
+character from a photo, a prompt, or a model you already have; a mind and a
+voice; ownership on-chain) and let the replies carry the detail.
+
+Option A, video-led. The first line is a caption for what is on screen, so this
+is the one to use if the footage opens on the dApp Store listing.
 
 ```
-This is a phone installing an app from a blockchain, and then that app turning a selfie into a 3D character.
+A phone that installs apps from a blockchain.
 
+three.ws is live on the Solana dApp Store. Make a character from a photo, a prompt, or a model you own, give it a mind and a voice, talk to it in 3D, own it on-chain.
+
+Search three.ws on your Seeker.
+```
+
+Option B, the studio. Widest of the three, and the one to use if the video is
+close and technical rather than warm.
+
+```
 three.ws is live on the Solana dApp Store.
 
-Open the dApp Store on your Seeker and search three.ws.
+Your Seeker is now a 3D agent studio. Make a character from a photo, a prompt, or a model you own. Give it a personality, a voice, skills. Talk to it in 3D. Own it on-chain.
+
+Search three.ws on your Seeker.
 ```
 
-Option B, the product. Use this if the video is close and technical, all screen
-and hands.
+Option C, studio plus the hardware. Trades one creation detail for the Seed
+Vault line, which is the claim no other app store listing can make.
 
 ```
 three.ws is live on the Solana dApp Store.
 
-Take a selfie. Get a rigged 3D agent. Give it a mind, a voice, and a wallet that never leaves your Seeker.
+A 3D agent studio on your phone. Make an agent, give it a mind and a voice, talk to it, own it on-chain, put it anywhere.
 
-No extension. No twelve words to write down.
+Signing never leaves the Seeker's secure element.
 
-Search three.ws in the dApp Store on your Seeker.
+Search three.ws on your Seeker.
 ```
 
 ### X, reply 1 (the link)
 
 ```
-What it is: a 3D agent studio on your phone.
+Three ways in: a selfie, a text prompt, or a GLB you already have. The selfie comes back rigged and textured in about a minute.
 
-One selfie becomes a textured, rigged, animation-ready character in about a minute. No photo? Describe it in text instead. Then give it a personality, a voice and skills, and talk to it in 3D.
+Then a personality, a voice, skills. It answers you in 3D, in your language.
 
-Free to try.
+Creating, chatting and browsing are free.
 
 three.ws/seeker
 ```
@@ -254,9 +271,10 @@ no long-post feature and no threading fallback.
 
 | Block | X characters |
 |---|---|
-| Post 1, option A | 239 |
-| Post 1, option B | 277 |
-| Reply 1 | 277 |
+| Post 1, option A | 276 |
+| Post 1, option B | 280 |
+| Post 1, option C | 279 |
+| Reply 1 | 273 |
 | Reply 2 | 277 |
 | Reply 3 | 263 |
 | Reply 4 | 181 |
