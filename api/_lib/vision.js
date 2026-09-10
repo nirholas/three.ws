@@ -413,6 +413,7 @@ export async function describeImage({
 	timeoutMs = 20_000,
 	deadlineMs = null,
 	track = null,
+	accept = null,
 }) {
 	const chain = visionChain();
 	if (!chain.length) throw new VisionUnavailableError();
@@ -549,30 +550,67 @@ export async function describeImage({
 		}
 		const data = await upstream.json();
 		const usage = p.extractUsage(data);
+		// Meter it either way: the tokens were spent whether or not the reply is
+		// usable, and a ledger that hides rejected replies understates the cost of
+		// a lane that answers fluently in the wrong shape.
 		recordVisionSpend(p, usage, Date.now() - startedAt, track);
+		const text = (p.extractText(data) || '').trim();
+		// A 200 is not the same as an answer. When the caller requires a shape
+		// (describeImageJson requires parseable JSON), validating it HERE makes the
+		// shape part of the chain's success test instead of a filter bolted on
+		// after a winner is picked. That distinction is the whole bug: with the
+		// check outside the loop, the first lane to emit prose ended the request
+		// and every healthy rung behind it went untried, which is exactly how a
+		// reasoning model that narrates before it answers took the forge quality
+		// gate from intermittent to 0 verdicts in 10 (production, 2026-09-10).
+		//
+		// A rejected lane is NOT cooled. The cooldown key is shared with callers
+		// that want free-form prose, and that reply is perfectly good to them;
+		// benching it here would degrade alt-text to punish a JSON caller.
+		let accepted;
+		if (accept) {
+			try {
+				accepted = accept(text);
+			} catch (e) {
+				attempts.push({
+					provider: p.name,
+					model: p.model || null,
+					status: upstream.status,
+					detail: `reply rejected: ${String(e?.message || e).slice(0, 120)}`,
+				});
+				lastErr = Object.assign(
+					new Error(`${p.name} vision reply rejected: ${e?.message || e}`),
+					{ status: 502, code: e?.code || 'vision_bad_reply' },
+				);
+				continue;
+			}
+		}
 		// A lane that just served a real request is healthy whatever an earlier
 		// window recorded; waiting out the rest of a disproved cooldown only keeps
 		// a recovered lane off the menu.
 		void clearProviderCooldown(laneKey(p));
 		return {
-			text: (p.extractText(data) || '').trim(),
+			text,
 			provider: p.name,
 			model: p.model,
 			usage,
 			raw: data,
+			accepted,
 		};
 	}
 	throw Object.assign(lastErr || new VisionUnavailableError(), { lanes: attempts });
 }
 
-// Convenience: describeImage + tolerant JSON parse of the reply. VLMs reliably
-// honor "reply ONLY JSON" (probes/vision.md) but may wrap it in a ```json fence
-// or a trailing newline; this strips both. Returns the parsed object plus the
-// provider metadata, or throws if the model returned unparseable text (the
-// caller's degraded path handles that exactly like a vision outage).
+// Convenience: describeImage with "parseable JSON" as the acceptance test. VLMs
+// mostly honor "reply ONLY JSON" (probes/vision.md) but may wrap it in a ```json
+// fence or a trailing newline, and a reasoning model may narrate around it;
+// parseJsonLoose strips what it can. A reply it cannot parse fails THAT LANE and
+// the chain moves to the next rung, so one chatty model no longer costs the
+// request every healthy provider behind it. Throws only when no rung produced
+// parseable JSON (the caller's degraded path handles that like a vision outage).
 export async function describeImageJson(opts) {
-	const result = await describeImage(opts);
-	return { ...result, json: parseJsonLoose(result.text) };
+	const result = await describeImage({ ...opts, accept: parseJsonLoose });
+	return { ...result, json: result.accepted };
 }
 
 // Strip a ```json fence / stray prose and parse the first JSON object/array in

@@ -4,6 +4,10 @@
 
 Public history for [three.ws](https://three.ws), newest first. New pages come from `added` dates in data/pages.json; everything else is curated in data/changelog.json. Also available as [JSON](https://three.ws/changelog.json) and [RSS](https://three.ws/changelog.xml), live at [three.ws/changelog](https://three.ws/changelog).
 
+## 2026-09-10
+
+- **The image check now moves on when a model answers in the wrong format**: Generated models are inspected by a vision model before you see them, and that inspection asks several providers in turn so one being busy is never the end of it. The catch was that a provider only had to reply, not reply usefully: a model that narrated its thinking instead of returning the requested format counted as the answer, and the healthy providers waiting behind it were never asked. A reply the check cannot read is now treated as that provider failing, so it moves straight to the next one, and it only gives up once every provider has been tried. The practical effect is that the quality check returns a real verdict far more often, and when it cannot, the reason it reports names the provider that actually lost. `[fix, improvement]`
+
 ## 2026-09-09
 
 - **Docs · Fade Radar** (`/docs/fade-radar`): How the Fade Radar scores a coin's buy side: what makes a wallet a reverse indicator, the 0 to 100 fade score, the verdict bands, and the out-of-sample measurement behind them.

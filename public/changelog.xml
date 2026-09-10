@@ -7,6 +7,14 @@
 		<description>What's new on three.ws: features, improvements, and releases, newest first.</description>
 		<language>en</language>
 		<item>
+			<title>The image check now moves on when a model answers in the wrong format</title>
+			<link>https://three.ws/changelog</link>
+			<guid isPermaLink="false">2026-09-10:The image check now moves on when a model answers in the wrong format</guid>
+			<pubDate>Thu, 10 Sep 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>Generated models are inspected by a vision model before you see them, and that inspection asks several providers in turn so one being busy is never the end of it. The catch was that a provider only had to reply, not reply usefully: a model that narrated its thinking instead of returning the requested format counted as the answer, and the healthy providers waiting behind it were never asked. A reply the check cannot read is now treated as that provider failing, so it moves straight to the next one, and it only gives up once every provider has been tried. The practical effect is that the quality check returns a real verdict far more often, and when it cannot, the reason it reports names the provider that actually lost.</description>
+		</item>
+		<item>
 			<title>Docs · Fade Radar</title>
 			<link>https://three.ws/docs/fade-radar</link>
 			<guid isPermaLink="false">2026-09-09:Docs · Fade Radar</guid>
