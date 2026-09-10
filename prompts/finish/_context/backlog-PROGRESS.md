@@ -2344,3 +2344,47 @@ floor. Both options move SOL, so both are stop-and-ask gate 1:
 DoD lines 1 and 3 stay open behind that decision (line 3 additionally needs
 `CRON_SECRET`, which needs `gcloud` re-auth in this codespace). Line 2 passes.
 Lines 4 to 6 are done. The prompt file stays on disk.
+
+## 2026-09-10 | 05-r2-bucket-cors | CLOSED, order retired
+
+**The credential was never missing.** Six weeks of passes filed this as blocked on the owner
+minting an "Admin Read & Write" R2 token, on the finding that the only `S3_*` pair reachable from
+this machine was object-scoped and answered `403 AccessDenied` on `GetBucketCors` and
+`PutBucketCors`. The pair resolved off the Cloud Run service, through the Secret Manager reference
+that `gcloud run services describe` prints as `valueFrom` rather than a value, is admin-scoped:
+
+    node scripts/read-service-env.mjs '^S3_(ACCESS_KEY_ID|SECRET_ACCESS_KEY|BUCKET|ENDPOINT|PUBLIC_DOMAIN)$'
+
+`--get` read the live policy on the first try. The general lesson is the CLAUDE.md credential row:
+a credential is not missing until the service's Secret Manager references have been resolved, and
+"the local copy is object-scoped" says nothing about the production copy.
+
+**Measured before, on the bucket's own host, real key, foreign origin:** `GET` returned `200` with
+no `access-control-allow-origin` (so a browser downloads the bytes and discards them) and its
+`OPTIONS` preflight was a bare `403`. `Origin: https://three.ws` got its own origin echoed, which
+is how the live rule was known to be the old allowlist.
+
+**Applied:** the canonical policy already in `scripts/set-r2-cors.mjs`, split as designed into
+`public-read` (GET/HEAD, `AllowedOrigins: ['*']`) and `browser-upload` (PUT, origin-locked).
+
+**Measured after:** foreign-origin `GET` returns `access-control-allow-origin: *` with the
+`ExposeHeaders` set; foreign-origin `OPTIONS` returns `204` with `Access-Control-Max-Age: 86400`;
+a `three.ws` PUT preflight returns `204` for `PUT`; the site edge is unchanged. Then
+`node scripts/set-r2-cors.mjs --probe`, which needs no credentials at all, exited 0 with all nine
+probe origins matching expectations.
+
+**Side effect worth naming:** this also fixes a FIRST-party breakage. `www.three.ws` served the
+app but had every GLB blocked by the browser, because the bucket echoed only the apex. It now
+reads and writes. The `server/index.mjs` www-to-apex redirect stays correct and ships independently.
+
+**Docs corrected in the same change,** because they all documented the workaround as permanent:
+`docs/media-api.md` (the "when you need the proxy" table now says a direct fetch is the default and
+names the two cases the proxy still serves), `docs/character-library.md`,
+`docs/tutorials/character-library-to-embed.md` (Step 6 was an entire step built on the failure, now
+a confirmation with the stale-policy case kept as a fallback), and
+`docs/tutorials/render-avatar-images.md`. `/api/glb` and `/cdn/<key>` were deliberately NOT removed:
+the proxy is still right for a URL on a host that is not ours, and `/cdn/<key>` is still the
+cheapest path for our own objects. `docs/model-diff.md` needed no change, its claim is about
+arbitrary third-party CDNs. `npm run audit:docs` clean across 1,599 files; `docs/ALL.md` regenerated.
+
+**ISSUES.md** item 9 moved to the closed section with the evidence above.

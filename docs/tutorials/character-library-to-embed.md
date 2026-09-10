@@ -264,11 +264,9 @@ For production, pin the exact version as above. The current Subresource Integrit
 
 ---
 
-## Step 6 - Fix the CORS failure before it happens on production
+## Step 6 - Confirm CORS, and know when you need the proxy
 
-This is the one that bites on deploy day, and it is worth thirty seconds of prevention.
-
-Loading a GLB in a browser is a cross-origin `fetch`, which means CORS. The CDN answers cross-origin GLB reads only for origins it recognizes: `three.ws` itself and the standard local dev ports. Check for yourself:
+Loading a GLB in a browser is a cross-origin `fetch`, which means CORS. **Since 2026-09-10 the media bucket answers every origin**, so the manifest URL you got in Step 2 works directly from your site and this step is a thirty-second confirmation rather than a fix. Check for yourself:
 
 ```bash
 for O in https://three.ws http://localhost:3000 https://your-site.com; do
@@ -279,14 +277,16 @@ done
 ```
 
 ```
-https://three.ws           Access-Control-Allow-Origin: https://three.ws
-http://localhost:3000      Access-Control-Allow-Origin: http://localhost:3000
-https://your-site.com      (none)
+https://three.ws           Access-Control-Allow-Origin: *
+http://localhost:3000      Access-Control-Allow-Origin: *
+https://your-site.com      Access-Control-Allow-Origin: *
 ```
 
-So the embed works perfectly on `localhost:3000` and then shows an empty box the moment you deploy. That is not a bug in your code and it is not worth debugging twice.
+Three stars means you are done: use `$GLB` as-is and skip to Step 7.
 
-The fix is one attribute change: route the GLB through `GET /api/glb?src=<url>`, which streams any public GLB back with `access-control-allow-origin: *`.
+**If the third row comes back `(none)`, you are reading a stale bucket policy.** That was the state before 2026-09-10: the bucket echoed only an allowlist of origins, so an embed worked perfectly on `localhost:3000` and then showed an empty box the moment you deployed. Confirm what is live with `node scripts/set-r2-cors.mjs --probe`, which needs no credentials.
+
+You still want `GET /api/glb?src=<url>` in one situation that has nothing to do with our bucket: a model hosted somewhere else entirely, whose CORS headers you do not control. It streams any public GLB back with `access-control-allow-origin: *`, and it is harmless on a URL that would have loaded directly, so code that accepts arbitrary model URLs can route them all through it.
 
 ```bash
 # Build the proxied URL from the manifest URL.
@@ -468,8 +468,8 @@ Doing the copy server-side also sidesteps cross-origin reads and browser upload 
 | Symptom | Cause | Fix |
 |---|---|---|
 | Nothing renders, no console error | The element has zero height | It has no intrinsic size. Set both `width` and `height` in CSS. |
-| Empty box, CORS error in the console | Loading the CDN GLB directly from an origin the CDN does not echo | Route it through `/api/glb?src=...` (Step 6). Works on localhost, fails on production, every time. |
-| Works locally, blank after deploy | The same CORS issue, discovered late | Same fix. Use the proxied URL from the start. |
+| Empty box, CORS error in the console | A model host that does not answer your origin. Our own hosts all do since 2026-09-10, so this now means a third-party URL, or a bucket policy that has regressed | Confirm with the Step 6 loop. Route a foreign URL through `/api/glb?src=...`; if one of our hosts fails, check `node scripts/set-r2-cors.mjs --probe`. |
+| Works locally, blank after deploy | The classic shape of the CORS issue above, discovered late | Run the Step 6 check against your real production origin before you ship, not just against localhost. |
 | `{ "avatars": [], "total": 0 }` from the library API | Manifest not staged in this environment | Expected pre-launch state, not an error. Feature-detect by emptiness. |
 | Character loads but never moves | A `clip` name that is not in the manifest, or `prefers-reduced-motion` is on | Check the name against `curl -s https://three.ws/animations/manifest.json`. Reduced motion holds a clean static idle on purpose; pass `{ userInitiated: true }` for click-driven motion. |
 | `playClip` throws "not a function" | Called before the runtime upgraded the element, or the script tag failed | Wait for `agent:ready`. Confirm the script tag loaded and the SRI hash matches the version in the URL. |

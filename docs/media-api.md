@@ -353,37 +353,42 @@ If `draco=1` comes back `500 transcode_failed` with `draco.createCompressedPrimi
 
 ### When you need it, and when you do not
 
-It depends entirely on which host serves the `.glb`, not on which origin you
-are loading from. Re-measured 2026-09-09, unchanged since 2026-08-01:
+**Since 2026-09-10 you usually do not need it.** Every host we serve models
+from now answers a cross-origin read, so a direct fetch is the default and the
+proxy is for the cases below. Re-measured 2026-09-10:
 
 | Source host | Cross-origin fetch | Use the proxy? |
 |---|---|---|
 | `https://three.ws/...` (built-in library avatars, `/avatars/*`, anything under the site) | `access-control-allow-origin: *` on every origin | No. Fetch it directly. |
 | `https://three.ws/cdn/<key>` (the same bucket objects, served first-party) | `access-control-allow-origin: *` on every origin | No. Fetch it directly, and prefer this over the proxy. |
-| `https://pub-*.r2.dev/...` (the media bucket's own host: user-generated avatars, forge output, character-library GLBs, the target of `/api/avatar/render`'s `302`) | Header only for origins on the bucket allowlist (`three.ws`, `*.vercel.app`, `localhost:3000`). Every other origin gets a `200` with no `access-control-allow-origin`, so the browser discards the bytes. | Yes, or rewrite the URL to `/cdn/<key>`. |
+| `https://pub-*.r2.dev/...` (the media bucket's own host: user-generated avatars, forge output, character-library GLBs, the target of `/api/avatar/render`'s `302`) | `access-control-allow-origin: *` on every origin, since the bucket read rule was opened on 2026-09-10 | No, not for CORS. Rewriting to `/cdn/<key>` is still cheaper. |
 
 So a `<model-viewer>` embed on a partner site, a Jupyter/Colab notebook, a
-Codespaces preview, or a Vite dev server on `localhost:5173` can read
-`three.ws` URLs directly but needs the proxy for `pub-*.r2.dev` URLs.
+Codespaces preview, or a Vite dev server on `localhost:5173` can now read every
+one of those hosts directly. Before that date the bucket host echoed only an
+allowlist of origins and silently failed everywhere else, which is the bug most
+older embed guides are written around.
 
-Two ways out of a bucket URL, and they are not equivalent:
+The proxy is still the right tool in two cases, and both are about a URL rather
+than about us:
 
-- **[`/cdn/<key>`](#how-bucket-objects-are-served-cdnkey)** is the cheaper one
-  when you have the object key (everything after the bucket host). Same bytes,
-  first-party, CORS-open, and CDN-cached for 30 days at the edge.
-- **`/api/glb?src=<url>`** is the one to reach for when all you have is a URL
-  someone handed you, including a URL on a host that is not ours at all. It is
-  always safe: passing it a `three.ws` URL costs one extra hop on a cold CDN
-  cache and nothing after.
+- **A URL on a host that is not ours at all.** `/api/glb?src=<url>` re-serves any
+  public GLB with open CORS, so a model someone handed you from a third-party
+  CDN loads without you auditing that CDN's headers.
+- **A URL whose host you cannot determine ahead of time.** The proxy is harmless
+  on a URL that would have loaded directly, costing one hop on a cold cache and
+  nothing after, so code that accepts arbitrary model URLs can route them all
+  through it and stop branching.
 
-The bucket allowlist is the deliberate part for uploads (presigned `PUT`s stay
-origin-locked) and an accident for reads, which are meant to be world-open.
-`scripts/set-r2-cors.mjs` holds the corrected policy and
+For our own bucket objects, prefer
+**[`/cdn/<key>`](#how-bucket-objects-are-served-cdnkey)** when you have the
+object key: same bytes, first-party, CORS-open, and CDN-cached for 30 days at
+the edge, which beats both the proxy and the bucket host.
+
+Presigned `PUT` uploads stay origin-locked on purpose, and that half of the
+policy did not change. `scripts/set-r2-cors.mjs` holds the canonical policy and
 `node scripts/set-r2-cors.mjs --probe` measures what is live from any machine,
 with no bucket credentials; see [`scripts/README.md`](../scripts/README.md).
-Even once reads are world-open, both first-party paths stay the right answer for
-callers that want one URL shape and no dependency on a third-party host's
-headers.
 
 Safe by construction: upstream objects are already public and keyless, and
 the fetch runs through the SSRF-hardened fetcher (scheme allowlist, DNS

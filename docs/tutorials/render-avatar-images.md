@@ -452,13 +452,13 @@ Consequences, in order of how likely they are to matter to you:
 
 Sometimes an image is not enough and you want the actual interactive model. Loading a GLB in the browser is a cross-origin `fetch`, which means CORS, and whether it works depends on which host serves the file.
 
-Two hosts, two answers (measured 2026-08-01):
+Three hosts, and since 2026-09-10 the same answer from all of them (re-measured that day):
 
-- **`https://three.ws/...`**, which is where the built-in library avatars live (`/avatars/selfie-girl.glb` and friends), answers every origin with `access-control-allow-origin: *`. Load these directly. No proxy needed.
-- **`https://pub-*.r2.dev/...`**, the media bucket's own host, behind every avatar you or your users generated, answers only origins on its allowlist (`three.ws`, `*.vercel.app`, `localhost:3000`; re-measured 2026-09-09). From `https://your-site.com`, from Jupyter, or from a Vite server on `localhost:5173`, a direct load fails with a CORS error and an empty canvas. That is the URL `/api/avatar/render` redirects to and the URL the avatar APIs return for user avatars.
-- **`https://three.ws/cdn/<key>`** serves those same bucket objects first-party, with `access-control-allow-origin: *` on every origin. If you have the object key (everything after the bucket host), this loads directly and needs nothing below.
+- **`https://three.ws/...`**, which is where the built-in library avatars live (`/avatars/selfie-girl.glb` and friends), answers every origin with `access-control-allow-origin: *`. Load these directly.
+- **`https://pub-*.r2.dev/...`**, the media bucket's own host, behind every avatar you or your users generated, now also answers every origin with `access-control-allow-origin: *`. That is the URL `/api/avatar/render` redirects to and the URL the avatar APIs return for user avatars. Until 2026-09-10 it answered only an allowlist (`three.ws`, `*.vercel.app`, `localhost:3000`), so a direct load from your own site, from Jupyter, or from a Vite server on `localhost:5173` failed with a CORS error and an empty canvas. Guides written before that date route around a problem that no longer exists.
+- **`https://three.ws/cdn/<key>`** serves those same bucket objects first-party, also `*` on every origin, and CDN-cached for 30 days. If you have the object key (everything after the bucket host), prefer this: it is the cheapest of the three.
 
-`GET /api/glb?src=<url>` exists for the second case. It streams any public GLB back with `access-control-allow-origin: *`, and it is harmless on the first, so if you cannot tell which host a URL points at, use it. The example below proxies a `three.ws` URL that would also load directly, because it is the pattern that keeps working when you swap in a generated avatar:
+So for our own models you no longer need a proxy at all. `GET /api/glb?src=<url>` earns its keep on a model hosted somewhere else, whose CORS headers you do not control, and on a URL whose host you cannot determine ahead of time: it streams any public GLB back with `access-control-allow-origin: *` and is harmless on a URL that would have loaded directly. The example below proxies a `three.ws` URL for exactly that reason, as the shape that keeps working whatever you swap in:
 
 ```bash
 curl -sD - -o /dev/null -H 'Origin: https://your-site.com' \
@@ -513,7 +513,7 @@ If you want a talking, animated agent rather than a viewer, that is the `<agent-
 | `avatar-clip` request hangs, then dies with no body | `glbUrl` is over the 10 MB cap | Check with `curl -sI <url> \| grep -i content-length` first, then shrink it through `/api/avatar/optimize` and pass the optimizer URL as `glbUrl` (Step 7). |
 | `502 render_failed` on `avatar-clip` | GLB unreachable or unparseable | Verify the URL returns a real GLB: `curl -sL -o m.glb <url> && head -c 4 m.glb` should print `glTF`. |
 | `429` with `Retry-After` | 120 renders per 10 min per IP on `/api/avatar/render`, 60 on `avatar-clip` | Keep batches sequential and honour `Retry-After`. It is a rolling window, not a ban. |
-| Empty canvas in `<model-viewer>`, CORS error in console | Loading a `pub-*.r2.dev` GLB directly from an origin the CDN does not echo | Route it through `/api/glb?src=...` (Step 9). A `three.ws/...` GLB needs no proxy, so check the host before you assume CORS. |
+| Empty canvas in `<model-viewer>`, CORS error in console | A model host that does not answer your origin. All three of ours do since 2026-09-10, so this now points at a third-party URL | Route a foreign URL through `/api/glb?src=...` (Step 9). If one of our own hosts fails, the bucket policy has regressed: check `node scripts/set-r2-cors.mjs --probe`. |
 | Social card shows a blank or black box | Scraper hit a cold render, or choked on PNG alpha | Warm the URL once with `curl -sL`, and use `format=jpeg` with an opaque `bg`. |
 
 ---
