@@ -87,9 +87,8 @@ Solana desk audience is awake for on both coasts and still afternoon in Europe.
 |---|---|---|
 | T-1 day | The device | Cold install from the dApp Store on a phone that has never had the app. If that is not clean, nothing else on this list happens |
 | T-1 day | The site | Publish the loop cut as the `/seeker` hero, so the destination the thread points at is showing the same footage |
-| T0 | X, post 1 | The 16:9 cut, native upload, no link in the body |
-| T0 + 2 min | X, reply 1 | What it is, and the install instruction. This reply carries the URL |
-| T0 + 5 min | X, reply 2 | Seed Vault and MWA, the part that needed this phone. Tag `@solanamobile` here, never in post 1 |
+| T0 | X, post 1 | The 16:9 cut, native upload. The long-form post if the account has Premium, the short opener if not |
+| T0 + 2 min onward | X, the replies | The eight capability replies, one every two or three minutes so the thread builds instead of dumping. `@solanamobile` gets tagged once, in the Seed Vault reply, never in post 1 |
 | T0 + 30 min | Telegram, @three_ws | The loop cut and three lines. The community channel gets it as news, not as a repost ask |
 | T0 + 2 h | LinkedIn | The 16:9 cut, native, with the founder-voice text below |
 | T0 + 5 h | TikTok, Reels, Shorts | The vertical cut, captions burned in, posted to all three within the same hour |
@@ -98,10 +97,12 @@ Solana desk audience is awake for on both coasts and still afternoon in Europe.
 
 Pin post 1 to the profile the moment it is up, and leave it pinned for a week.
 
-**Why the link is not in post 1.** X demotes posts that send people away, and a
-video post with a link gets the worst of both. The install instruction ("open
-the dApp Store on your Seeker") is a call to action that needs no URL, and the
-reply two minutes later carries the link for everyone who wants it.
+**Where the link goes.** X demotes posts that send people away, and a video
+post with a link gets the worst of both. "Search three.ws in the dApp Store on
+your Seeker" is a call to action that needs no URL, so the short opener carries
+none and the last reply carries the link. If you post the long-form version, the
+URL sits at the very bottom under the install line; if reach matters more than
+clicks that day, cut it from post 1 and let the final reply carry it alone.
 
 **Do not ask anyone for a repost.** Tagging `@solanamobile` in the technical
 reply is the whole outreach. Ecosystem accounts amplify real device footage
@@ -111,16 +112,148 @@ because it is scarce; asking them to converts a share into a favour.
 
 ## 3. The copy
 
-### X, post 1 (attach the 16:9 cut)
+Two thread shapes. Pick one before you post; do not mix them.
 
-Post 1 names the category, not one feature. An opener that says "take a selfie,
-get an avatar" reads as the whole product to someone who has never seen it, and
-the app does considerably more than that. Give the range in one breath (a
-character from a photo, a prompt, or a model you already have; a mind and a
-voice; ownership on-chain) and let the replies carry the detail.
+- **The everything thread** is the default. Post 1 is the whole product in one
+  post, and the eight capability replies carry it on a free account. Use it
+  because the app is a studio, and any opener that names one feature ("take a
+  selfie, get an avatar") gets read as the entire product by someone who has
+  never seen it.
+- **The tight thread** is post 1 as a single 280-character opener plus four
+  replies. Use it only when the video is unusually strong on its own and you
+  want nothing competing with it.
 
-Option A, video-led. The first line is a caption for what is on screen, so this
-is the one to use if the footage opens on the dApp Store listing.
+### X, post 1, long form (attach the 16:9 cut)
+
+One post, the whole product. X shows the first few lines and a Show more, so
+the first two lines do the work and the rest rewards the tap. Needs a Premium
+account for the length; without one, post the short opener below and run the
+eight capability replies instead.
+
+```
+three.ws is live on the Solana dApp Store.
+
+Your Seeker is now a 3D agent studio. Here is all of it.
+
+MAKE SOMETHING IN 3D
+A selfie becomes a rigged, textured, animation-ready character in about a minute. Or describe it in text. Or turn any photo into a model. Or upload a GLB you already have. Then restyle its materials, change its clothes, check its rig and fix it.
+
+MAKE IT MOVE
+A clip library that retargets onto any humanoid skeleton. Mocap from your camera. Lipsync from text or a live mic. Gestures. Sign language. A choreographer for full routines. And motion swap, which drops your avatar into video you already shot.
+
+GIVE IT A MIND
+A personality, a voice, skills, and a choice of models behind it. Then talk to it. It answers in 3D, out loud or in text, in your language.
+
+PUT IT ANYWHERE
+Every agent has a URL and a one-line embed, so it drops into a site, a chat, or a widget. Place it in your room in AR. Walk it across any web page. Turn a URL into a 3D world it can stand in. Render it out as video.
+
+OWN IT
+Deploy it on-chain as a Metaplex Core asset your wallet holds. Open manifest, no lock-in. Give it an on-chain identity, a name, and a wallet with recovery and inheritance. Sell its skills. Take tips. Trade the agent itself in USDC.
+
+LET IT EARN
+Pay-per-call, so other agents can buy what yours does and yours can buy what it needs. A skills marketplace, a labor market, vaults that let people back an agent, and a live feed of agents paying each other. Launch a coin around it if you want one.
+
+FIND EVERYONE ELSE
+A marketplace of what the community built: orbit any agent, inspect it, fork it, talk to it. Crews, rankings, tournaments, leaderboards. And build on it: SDKs, an MCP server, a CLI, an API, and the whole platform open source.
+
+AND THE PART THAT NEEDED THIS PHONE
+Every signature routes to Seed Vault through Mobile Wallet Adapter. Signing in is one tap, and the private key never enters the app process.
+
+Creating, chatting and browsing are free.
+
+Search three.ws in the dApp Store on your Seeker.
+three.ws/seeker
+```
+
+### X, the eight capability replies (free account)
+
+The same copy, delivered as a thread under a short opener. Every one of these
+fits 280 with room to spare, so nothing needs Premium and nothing gets cut.
+
+**Reply 1**
+
+```
+Make something in 3D.
+
+A selfie becomes a rigged, textured, animation-ready character in about a minute. Or describe it in text. Or turn any photo into a model. Or upload a GLB you already have.
+
+Then restyle its materials, change its clothes, check its rig, fix its rig.
+```
+
+**Reply 2**
+
+```
+Make it move.
+
+A clip library that retargets onto any humanoid skeleton. Mocap from your camera. Lipsync from text or a live mic. Gestures. Sign language. A choreographer for full routines. And motion swap, which drops your avatar into video you already shot.
+```
+
+**Reply 3**
+
+```
+Give it a mind.
+
+A personality, a voice, skills, and a choice of models behind it. Then talk to it. It answers in 3D, out loud or in text, in your language.
+```
+
+**Reply 4**
+
+```
+Put it anywhere.
+
+Every agent has a URL and a one-line embed, so it drops into a site, a chat, or a widget. Place it in your room in AR. Walk it across any web page. Turn a URL into a 3D world it can stand in. Render it out as video.
+```
+
+**Reply 5**
+
+```
+Own it.
+
+Deploy it on-chain as a Metaplex Core asset your wallet holds. Open manifest, no lock-in. Give it an on-chain identity, a name, and a wallet with recovery and inheritance.
+
+Sell its skills. Take tips. Trade the agent itself in USDC.
+```
+
+**Reply 6**
+
+```
+Let it earn.
+
+Pay-per-call, so other agents can buy what yours does and yours can buy what it needs. A skills marketplace, a labor market, vaults that let people back an agent, and a live feed of agents paying each other.
+
+Launch a coin around it if you want one.
+```
+
+**Reply 7**
+
+```
+Find everyone else.
+
+A marketplace of what the community built: orbit any agent, inspect it, fork it, talk to it. Crews, rankings, tournaments, leaderboards.
+
+And build on it: SDKs, an MCP server, a CLI, an API, and the whole platform open source.
+```
+
+**Reply 8**
+
+```
+And the part that needed this phone.
+
+Every signature routes to Seed Vault through Mobile Wallet Adapter. Signing in is one tap, and the private key never enters the app process.
+
+Creating, chatting and browsing are free.
+
+three.ws/seeker
+```
+
+### X, post 1, short openers
+
+For the tight thread, and for the free-account version of the everything
+thread. All three name the category before they name a feature, so the list
+that follows reads as examples rather than as the full inventory.
+
+Option A, video-led. The first line captions what is on screen, so use it if the
+footage opens on the dApp Store listing.
 
 ```
 A phone that installs apps from a blockchain.
@@ -130,8 +263,8 @@ three.ws is live on the Solana dApp Store. Make a character from a photo, a prom
 Search three.ws on your Seeker.
 ```
 
-Option B, the studio. Widest of the three, and the one to use if the video is
-close and technical rather than warm.
+Option B, the studio. Widest of the three, and the right opener above the eight
+capability replies.
 
 ```
 three.ws is live on the Solana dApp Store.
@@ -154,7 +287,12 @@ Signing never leaves the Seeker's secure element.
 Search three.ws on your Seeker.
 ```
 
-### X, reply 1 (the link)
+### X, the tight thread's replies
+
+Only for the tight thread. Skip these entirely if you are running the eight
+capability replies, which already cover all of it.
+
+**Reply 1, the link**
 
 ```
 Three ways in: a selfie, a text prompt, or a GLB you already have. The selfie comes back rigged and textured in about a minute.
@@ -166,7 +304,7 @@ Creating, chatting and browsing are free.
 three.ws/seeker
 ```
 
-### X, reply 2 (the part that needed a Seeker)
+**Reply 2, why this phone**
 
 ```
 Why this phone.
@@ -178,7 +316,7 @@ No extension. No seed phrase typed into a phone.
 @solanamobile
 ```
 
-### X, reply 3 (the ownership beat)
+**Reply 3, the ownership beat**
 
 ```
 When an agent should be properly yours, you deploy it on-chain as a Metaplex Core asset your wallet holds. Open manifest, no lock-in, portable.
@@ -188,15 +326,16 @@ Everything you make on the phone is on the web app the moment you sign in there.
 Open source: github.com/nirholas/three.ws
 ```
 
-### X, reply 4 (optional, for Seeker owners)
-
-Post this one only if the thread is moving. It is the beat Seeker owners quote.
+**Reply 4, for Seeker owners**
 
 ```
 Own a Seeker and you can prove it. The app reads your soulbound Genesis Token, never moves it, and puts a Seeker verified badge on every agent you own.
 
 A read, never a transaction.
 ```
+
+Whichever shape you post, `@solanamobile` gets tagged once, in the Seed Vault
+reply, and never in post 1.
 
 ### Telegram, @three_ws
 
@@ -206,7 +345,9 @@ already half expected, not as an advertisement.
 ```
 three.ws on a real Seeker, from the dApp Store.
 
-Search three.ws in the dApp Store on your Seeker or Saga and install it. One tap signs you in through Seed Vault, a selfie becomes a rigged 3D agent in about a minute, and everything you make is waiting on the web app when you sign in there.
+Search three.ws in the dApp Store on your Seeker or Saga and install it. One tap signs you in through Seed Vault, and the whole studio is on the phone.
+
+A selfie, a text prompt, a photo or a GLB becomes a rigged 3D character. An animation library that retargets onto any humanoid rig, plus mocap, lipsync, gestures and sign language. A personality, a voice and skills, so you can talk to it. A URL, a one-line embed and AR, so you can put it anywhere. On-chain deploy so your wallet holds it outright. Pay-per-call so it can earn. And the marketplace of everything the community has already built.
 
 Creating, chatting and browsing are free.
 
@@ -223,7 +364,7 @@ A phone that installs apps from a blockchain, running a 3D agent studio.
 
 three.ws is live on the Solana dApp Store for Solana Seeker and Saga.
 
-Point the camera at yourself and about a minute later you have a textured, rigged, animation-ready 3D character. Give it a personality, a voice and skills, then talk to it. Publish it, embed it in a site with one line, or deploy it on-chain so your wallet holds it outright.
+Point the camera at yourself and about a minute later you have a textured, rigged, animation-ready 3D character. Or describe one in text, turn a photo into a model, or bring a GLB you already have. Animate it from a clip library that retargets onto any humanoid rig, or from your own camera. Give it a personality, a voice and skills, then talk to it. Publish it, embed it in a site with one line, place it in your room in AR, or render it out as video. Deploy it on-chain so your wallet holds it outright, sell what it can do, and let other agents pay it per call.
 
 The interesting engineering is underneath. Signing happens in the phone's secure element through Mobile Wallet Adapter, so signing in is a single tap and the private key never enters the app process. There is no browser extension and no seed phrase to write down. For anyone who has watched a normal person try to use a crypto app for the first time, that is the entire difference.
 
@@ -243,7 +384,7 @@ An app store on a blockchain
 Caption:
 
 ```
-three.ws is live on the Solana dApp Store. Selfie in, rigged 3D character out, and it signs with the phone's secure element instead of a seed phrase. Free to try on Seeker and Saga.
+three.ws is live on the Solana dApp Store. A 3D agent studio on the phone: make a character from a selfie, a prompt or a model, animate it, give it a voice, talk to it, own it on-chain. Free to try on Seeker and Saga.
 ```
 
 Hashtags, on those three platforms only, never on X:
@@ -257,7 +398,7 @@ Hashtags, on those three platforms only, never on X:
 ```
 three.ws is live on the Solana dApp Store.
 
-Selfie to rigged 3D agent on the phone, signed by Seed Vault, yours on-chain when you want it.
+A 3D agent studio on your phone: selfie, prompt or GLB to a rigged character, a mind and a voice on top of it, embeds and AR to put it anywhere, and on-chain ownership when you want it.
 
 three.ws/seeker
 ```
@@ -265,27 +406,15 @@ three.ws/seeker
 ### Counts
 
 X's arithmetic, not a character count: a URL costs 23 characters however long it
-is, a newline costs one, and an `@handle` costs its literal length. Every X
-block above fits inside 280, so the whole thread posts from a free account with
-no long-post feature and no threading fallback.
+is, a newline costs one, and an `@handle` costs its literal length. Every short
+opener and every reply fits inside 280, so the whole everything thread posts
+from a free account. Only the long-form post 1 needs Premium.
 
-| Block | X characters |
-|---|---|
-| Post 1, option A | 276 |
-| Post 1, option B | 280 |
-| Post 1, option C | 279 |
-| Reply 1 | 273 |
-| Reply 2 | 277 |
-| Reply 3 | 263 |
-| Reply 4 | 181 |
-
-Re-run the count after any edit:
+Re-run the counts after any edit:
 
 ```bash
 node marketing/seeker-launch/count-x.mjs
 ```
-
----
 
 ## 4. What stays out
 

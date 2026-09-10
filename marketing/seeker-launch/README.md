@@ -5,7 +5,7 @@ live for Seeker and Saga since 2026-09-01; this directory is how it gets told.
 
 | File | What it is |
 | --- | --- |
-| [video-launch.md](video-launch.md) | The run of show for the IRL video announcement: edit spec, the order of the day across X, Telegram, LinkedIn and the vertical platforms, and paste-ready copy for each, every X block under 280 characters |
+| [video-launch.md](video-launch.md) | The run of show for the IRL video announcement: edit spec, the order of the day across X, Telegram, LinkedIn and the vertical platforms, and paste-ready copy for each: the everything thread (one long-form post, or eight capability replies that each fit 280), the short openers, and the tight-thread alternative |
 | [post.md](post.md) | The earlier photo-first version. Its long explainer copy is still the best plain-language description of the app, and the video thread reuses it |
 | [make-cuts.mjs](make-cuts.mjs) | Cuts the raw phone footage into the four masters the launch needs |
 | [count-x.mjs](count-x.mjs) | Counts every copy block in this directory the way X counts it, and exits non-zero if an X block is over the limit |

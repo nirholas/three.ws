@@ -10,6 +10,9 @@ import { fileURLToPath } from 'node:url'
 const HERE = dirname(fileURLToPath(import.meta.url))
 const URL_PATTERN = /(https?:\/\/)?[\w.-]+\.(ws|fun|com|app|xyz|io)(\/\S*)?/g
 const X_LIMIT = 280
+// A block headed "long form" is a Premium post and is allowed the long-post
+// ceiling instead. Everything else has to survive on a free account.
+const X_PREMIUM_LIMIT = 25000
 
 function blocks (markdown) {
   const found = []
@@ -41,10 +44,11 @@ for (const file of readdirSync(HERE).filter((f) => f.endsWith('.md')).sort()) {
   for (const { label, text } of found) {
     const count = weight(text)
     const isX = /^X[,:]/.test(label)
-    const flag = isX && count > X_LIMIT ? `  OVER by ${count - X_LIMIT}` : ''
+    const limit = /long form/i.test(label) ? X_PREMIUM_LIMIT : X_LIMIT
+    const flag = isX && count > limit ? `  OVER by ${count - limit}` : ''
     if (flag) over += 1
     console.log(`  ${String(count).padStart(4)}  ${(label || 'unlabelled').padEnd(46)}${flag}`)
   }
 }
-console.log(over ? `\n  ${over} X block(s) over ${X_LIMIT}.\n` : `\n  every X block fits ${X_LIMIT}.\n`)
+console.log(over ? `\n  ${over} X block(s) over the limit.\n` : `\n  every X block fits its limit (${X_LIMIT}, or ${X_PREMIUM_LIMIT} for a long-form post).\n`)
 process.exit(over ? 1 : 0)
