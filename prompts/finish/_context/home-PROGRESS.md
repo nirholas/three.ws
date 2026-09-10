@@ -3001,3 +3001,36 @@ run them without hunting.
 is closed.
 **Commits:** `d063a6f86`, `efe9c3b3a`, `3f97e2078`, `b42d86c51` (the spec change, swept into a
 peer's commit), plus this entry.
+
+## 2026-09-10 | order 20 blocking finding 1 | ROOT-CAUSED AND FIXED
+
+The "Live, updated moments ago" over a stopped house is fixed (`a9b725221`). It was not a
+timing or a pool-warmth problem in the way run 4 framed it; the warm pool was the condition
+that EXPOSED it, not the cause.
+
+**Cause.** `home_connections.status` had exactly two writers, `onConnectSuccess` and
+`onConnectFailure` in `api/_lib/home/runtime.js`, and both run only inside the initial
+`entry.ready` promise. A warm `acquire()` never re-enters that path: it finds the pooled entry,
+awaits an already-resolved `ready`, and returns the bridge. The bridge's liveness ping DID
+notice the house was gone and DID emit `disconnected`, and `wireEvents` handled it, but only in
+memory (`entry.stale`, `entry.status`) plus a `notify()` to live subscribers. Nothing wrote the
+row. `/api/home` and `isDegraded` in `src/home/manage.js` both read the row, so the card kept
+reporting `connected` with its old `last_ok_at` and no `last_error_at`, forever.
+
+That is exactly why it passed in isolation and failed in the full tier: a cold pool re-handshakes,
+`onConnectFailure` fires, and the row flips in seconds. It was never flaky.
+
+**Fix.** A `persistStatus(entry, status, detail)` helper writes transitions through from the
+bridge's own lifecycle events, both directions, skipping a write when the stored status already
+matches so a flapping house does not buy a round trip per event. Both drop paths are covered
+because the library's own `disconnected` event and the liveness ping's failure are the same
+`#emit('disconnected')` (`packages/home-bridge/src/bridge.js:174` and `#startLiveness`).
+
+**Tests.** Three in `tests/home-runtime.test.js`, and the first was confirmed to FAIL with the
+fix removed rather than assumed to cover it. The recovery test asserts a NEW write (length + 1)
+rather than the last row's status, because asserting only the status passes even with the
+recovery path missing: `onConnectSuccess` already stored `connected`.
+
+**Left open:** the campaign, still. This clears blocking finding 1 only. Findings 2 (order 17's
+translation) and 3 (orders 17 and 19 open) stand, and order 20 cannot be re-run until they are
+retired. The e2e spec has NOT been re-run against a live container from this session.

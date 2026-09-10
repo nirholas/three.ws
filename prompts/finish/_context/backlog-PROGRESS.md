@@ -2388,3 +2388,34 @@ cheapest path for our own objects. `docs/model-diff.md` needed no change, its cl
 arbitrary third-party CDNs. `npm run audit:docs` clean across 1,599 files; `docs/ALL.md` regenerated.
 
 **ISSUES.md** item 9 moved to the closed section with the evidence above.
+
+## 2026-09-10 | cross-lane finding | the free LLM chain was full of retired model ids
+
+Found while looking for a translation lane that Vertex's billing hold does not cover. Checked
+every NVIDIA-routed model id in the tree against the live catalog
+(`GET https://integrate.api.nvidia.com/v1/models`). Most were dead, all answering `410 Gone`:
+`meta/llama-3.3-70b-instruct` (EOL 2026-08-26), `nvidia/nv-embedqa-e5-v5` (EOL 2026-08-25),
+`nemotron-3-nano-30b-a3b`, `llama-3.3-nemotron-super-49b-v1.5`, `nvidia-nemotron-nano-9b-v2`
+and `meta/llama-4-maverick-17b-128e-instruct`. Fixed in `4dbe02cc7`.
+
+**Why nobody noticed, and why it still cost something.** A fallback chain cannot distinguish
+`410 Gone` from a rate limit: it moves on. No outage is logged and every surface still answers.
+But each dead id consumed one of a deliberately small number of retry slots, so the chain
+reached its paid backstop, or gave up, sooner and more often than designed. This is the kind of
+rot that only a live-catalog audit finds; reading the code tells you nothing.
+
+The embedding half is the one with state. `NIM_EMBED_TAG` now points at
+`nvidia/nemotron-3-embed-1b` at 2048 dims (measured from a live call, not assumed), and the old
+1024-dim tag stays in the registry as `NIM_EMBED_TAG_RETIRED`, resolvable forever but reporting
+`configured: false` so it is never chosen for new work. Rows written before today keep resolving,
+which is the whole point of the tagging scheme. Vectors are jsonb, not pgvector, so the dimension
+change needed no migration.
+
+`api/_lib/rerank.js` is deliberately left pinned to a model verified dead: the stage is opt-in
+behind `KNOWLEDGE_RERANK_ENABLED`, which is unset on the service, and `rerank()` fails open by
+contract. A verified-dead pin with a comment beats an unverified guess.
+
+**Working lanes as of today:** NVIDIA (free, the one that works), Groq (key valid but capped at
+200k tokens/day, far too small for bulk), OpenAI (`billing_not_active`), Google Vertex AND the
+Generative Language API (both denied project-wide by the same dunning hold, so ISSUES item 1 and
+the fact-check order's row 20 share one cause).
