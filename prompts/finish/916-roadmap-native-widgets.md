@@ -51,11 +51,16 @@ Neither line is code, and neither can be closed from this machine.
    with the signed-in account's real card, refreshes, and that its click targets
    land on the right routes. Owner, or anyone with a Windows 11 machine.
 
-   **Run it against a deploy that carries 2026-09-09's card fix**, and do not
-   spend the trip before then: `npm run check:windows-widget:live` answers that
-   in one command, and today it exits 1 with `the deployed Adaptive Card differs
-   from api/_lib/glance-adaptive.js`. When it goes green, the deploy carries the
-   fix and the board check is worth a human's time. Everything about this line
+   **This precondition is now MET, re-measured 2026-09-10.** The guard exists so
+   nobody spends the trip on a stale origin, and it has gone green:
+   `npm run check:windows-widget:live` now passes all 16 checks against
+   `https://three.ws`, including `the deployed Adaptive Card is the one this tree
+   generates`, `the deployed worker is byte-identical to public/glance-sw.js` and
+   `the deployed card binds the live response and all 3 states in the board's
+   engine`. It exited 1 as recently as 2026-09-09 with `the deployed Adaptive Card
+   differs from api/_lib/glance-adaptive.js`; a deploy has since carried the card
+   fix. **So the board check is worth a human's time now.** Re-run the one command
+   before travelling anyway, since a later deploy could regress it. Everything about this line
    that can be checked without a board now is, mechanically: 11 offline checks
    in `npm run gate`, plus 5 more against the deployed origin. What is left for
    the human is genuinely only "a person sees the pixels".
