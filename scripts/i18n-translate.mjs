@@ -237,6 +237,15 @@ function chunkKeys(keys, budgetChars) {
 //   openrouter OPENROUTER_API_KEY  https://openrouter.ai/keys  (use a :free model)
 //   nvidia     NVIDIA_API_KEY      https://build.nvidia.com  (free NIM credits)
 
+// A bulk run is thousands of requests over hours, and a single stalled socket
+// used to hang the whole run forever: no fetch here carried a timeout, so a
+// connection the upstream never answers parks the process with one open socket,
+// no output and almost no CPU. Seen twice on 2026-09-10 against the NVIDIA lane,
+// each time reading as "the lane died" when it was simply blocked with no
+// deadline. Every request now has one, which turns an unbounded hang into an
+// ordinary lane error that the failover chain already knows how to route around.
+const REQUEST_TIMEOUT_MS = Number(process.env.I18N_REQUEST_TIMEOUT_MS || 180_000);
+
 const PROVIDER_DEFAULT_MODEL = {
 	gemini: 'gemini-2.5-flash',
 	vertex: 'google/gemini-2.5-flash',
@@ -398,6 +407,7 @@ async function callGemini(prompt, modelOverride = null) {
 		);
 	const url = `https://generativelanguage.googleapis.com/v1beta/models/${modelOverride || modelName()}:generateContent?key=${key}`;
 	const res = await fetch(url, {
+		signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
 		method: 'POST',
 		headers: { 'content-type': 'application/json' },
 		body: JSON.stringify({
@@ -426,6 +436,7 @@ async function callAnthropic(prompt, modelOverride = null) {
 	const key = process.env.ANTHROPIC_API_KEY;
 	if (!key) throw configError('ANTHROPIC_API_KEY not set');
 	const res = await fetch('https://api.anthropic.com/v1/messages', {
+		signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
 		method: 'POST',
 		headers: {
 			'content-type': 'application/json',
@@ -492,6 +503,7 @@ async function callThreews(prompt, modelOverride = null) {
 		);
 	const base = (process.env.THREEWS_BASE_URL || 'https://three.ws').replace(/\/$/, '');
 	const res = await fetch(`${base}/api/llm/anthropic?agent=${encodeURIComponent(agentId)}`, {
+		signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
 		method: 'POST',
 		headers: { 'content-type': 'application/json', cookie: threewsSessionCookie() },
 		body: JSON.stringify({
@@ -602,6 +614,7 @@ async function callVertex(prompt, modelOverride = null) {
 	const url = `https://${host}/v1beta1/projects/${project}/locations/${location}/endpoints/openapi/chat/completions`;
 	const send = (token) =>
 		fetch(url, {
+			signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
 			method: 'POST',
 			headers: { 'content-type': 'application/json', authorization: `Bearer ${token}` },
 			body: JSON.stringify({
@@ -660,6 +673,7 @@ async function callOpenAICompat(prompt, providerName = cfg.provider, modelOverri
 	// thinking off, against hundreds of tokens and many seconds with it on.
 	if (spec.noThink) body.chat_template_kwargs = { enable_thinking: false };
 	const res = await fetch(spec.url(), {
+		signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
 		method: 'POST',
 		headers: {
 			'content-type': 'application/json',
