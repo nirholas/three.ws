@@ -278,6 +278,7 @@ const OPENAI_COMPAT = {
 	nvidia: {
 		envKey: 'NVIDIA_API_KEY',
 		url: () => 'https://integrate.api.nvidia.com/v1/chat/completions',
+		noThink: true,
 	},
 	// Mistral Experiment tier (free, about 1B tokens/month): the strongest free
 	// lane for European-language output, and it honors response_format json.
@@ -636,6 +637,15 @@ async function callOpenAICompat(prompt, providerName = cfg.provider, modelOverri
 		messages: [{ role: 'user', content: prompt }],
 	};
 	if (spec.jsonMode) body.response_format = { type: 'json_object' };
+	// Nemotron is a reasoning model: left to itself it spends most of its output
+	// budget narrating a chain of thought before it emits the object, which on a
+	// bulk run is the difference between about a second a chunk and tens of
+	// seconds, and sometimes a `finish_reason: length` with an EMPTY content
+	// because the budget ran out mid-thought. The same switch the platform's own
+	// NVIDIA lane uses (NVIDIA_NO_THINK in api/_lib/llm.js) turns it off.
+	// Measured 2026-09-10 on a five-string chunk: 40 output tokens in 1.1s with
+	// thinking off, against hundreds of tokens and many seconds with it on.
+	if (spec.noThink) body.chat_template_kwargs = { enable_thinking: false };
 	const res = await fetch(spec.url(), {
 		method: 'POST',
 		headers: {
