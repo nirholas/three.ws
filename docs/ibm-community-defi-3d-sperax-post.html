@@ -1,0 +1,371 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Sperax, three.ws, and IBM Granite: giving a DeFi agent a body, a brain, and a reason to trust it</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+  body{ max-width:820px; margin:0 auto; padding:56px 24px 96px; background:#fff; color:#161616;
+    font-family:'IBM Plex Sans',system-ui,sans-serif; font-size:17px; line-height:1.65; }
+  h1{ font-size:40px; line-height:1.2; letter-spacing:-.01em; margin:0 0 24px; }
+  h2{ font-size:27px; margin:52px 0 16px; letter-spacing:-.01em; }
+  h3{ font-size:21px; margin:34px 0 12px; }
+  p,li{ font-size:17px; }
+  ul,ol{ padding-left:26px; }
+  li{ margin-bottom:8px; }
+  a{ color:#0f62fe; }
+  em{ color:#525252; }
+  img+p em{ display:block; margin-top:6px; font-size:15px; }
+</style></head>
+<body>
+<h1>Sperax, three.ws, and IBM Granite: giving a DeFi agent a body, a brain, and a reason to trust it</h1>
+<p><em>By Jessica Swanson. Posted in the <a href="https://community.ibm.com/community/user/groups/community-home?communitykey=e71510cc-d953-408f-9a1c-019f5c0a7016">Three.ws User Group</a> on IBM Community.</em></p>
+<p><img style="max-width:100%;height:auto;border:1px solid #e0e0e0;margin:8px 0" src="./media/ibm-sperax-featured.png" alt="Sperax, three.ws, and IBM"></p>
+<hr style="border:none;border-top:1px solid #e0e0e0;margin:44px 0">
+<h2>0. An IBM employee writing about two crypto companies</h2>
+<p>I work at IBM. I am about to publish six thousand words about two crypto companies. I want to deal with that up front, because it is the first thing I would think if this turned up in my feed.</p>
+<p>IBM has thousands of Business Partners. Two of them, Sperax and three.ws, are also partners with each other, and they shipped something together that I think is the most complete piece of embodied-agent engineering I have read this year. I am not here to explain IBM&#39;s partnership strategy. That is not my job, not my call, and not something any one employee should narrate on a community blog. I am here for a much narrower reason, and it is entirely my own:</p>
+<p><strong>My job at IBM is decision management. The best real-world material on automated-decision integrity I have read in months arrived from a direction nobody in my part of the industry is looking.</strong></p>
+<p>That is the whole pitch. If you skip everything else, read section 7.</p>
+<h3>The triangle, drawn plainly</h3>
+<p>Three relationships, all real, all different, and they close around one agent:</p>
+<ul>
+<li><strong>Sperax and three.ws are partners with each other</strong>, and they built the integration this post is about.</li>
+<li><strong>Both are IBM Business Partners.</strong></li>
+<li><strong>The three.ws agent runtime runs on IBM Granite models through watsonx.ai</strong>, using your own IBM Cloud credentials.</li>
+</ul>
+<p>Split by what each side actually contributes and the shape is clean:</p>
+<ul>
+<li><strong>three.ws gives the agent a body.</strong> A rigged, animated 3D avatar you can generate from a sentence, drop into any web page with one custom element, or place in a room through a phone camera with AR. It speaks, it gestures, and its expression changes with what it is doing.</li>
+<li><strong>Sperax gives the agent a domain, and the domain is decentralized finance.</strong> An open-source AI agent workspace where an agent can swap, lend, borrow, hunt yield, and watch a position toward liquidation, across 99 built-in tool packages exposing 592 tool APIs against live protocols. Somewhere real to act, where being wrong costs money in the same block.</li>
+<li><strong>IBM Granite can be the agent&#39;s brain.</strong> The three.ws runtime is model-agnostic and runs Granite through watsonx.ai on your own credentials, so the reasoning layer is enterprise-grade and stays yours.</li>
+</ul>
+<p>Body, domain, brain. Read one at a time those are three product announcements. Read together they are the most complete end-to-end example I have seen of what an embodied enterprise agent actually costs to build, and because both partner codebases are public, this group can read every line of it, including the parts that went wrong.</p>
+<h3>Why this is worth an enterprise reader&#39;s afternoon</h3>
+<p>I want to make the argument rather than assume it, because I know what &quot;DeFi&quot; does to an enterprise audience&#39;s attention.</p>
+<p>Every hard problem in enterprise agents shows up in this domain first, in its most extreme form, because the consequences arrive in seconds instead of quarters. An agent that reads stale data, or states a mechanism confidently and wrongly, or reports an action it did not take, produces an irreversible financial loss within one block. There is no quarterly review that catches it. So the people building here have had to solve, under real pressure, the exact things the rest of us are still writing policy documents about: how you prove a number came from its source, how you record what an autonomous system did in a way nobody can quietly edit, how you make a system refuse to act until a human says yes, and how you keep an interface from projecting more confidence than its data has earned.</p>
+<p>They have not solved all of it. Section 7 is a story about them getting it badly wrong and then fixing it in public. That is exactly why it is worth reading. Most enterprise AI governance material I encounter is aspirational. This is a diff.</p>
+<h3>Being precise about who did what</h3>
+<p>One more piece of precision, because &quot;three partners&quot; can be heard as something it is not.</p>
+<p><strong>IBM did not commission, sponsor, review, endorse, or co-build the three.ws and Sperax integration.</strong> Two partner companies decided to build something, built it, and published the code. IBM&#39;s place in the triangle is real but specific: the partner relationships themselves, and the model layer the agent can run on. Nothing described in this post is an IBM product, an IBM deliverable, or an IBM endorsement. The developer tools three.ws publishes for exploring Granite are its own work. And this user group is a community space three.ws moderates on IBM&#39;s platform, not an IBM product either. I lead it, I work at IBM, and neither of those makes anything posted here an IBM release.</p>
+<p>One more, since the domain invites it: <strong>this is not financial advice and it is not a product recommendation.</strong> I picked this case study because decentralized finance is unusually hostile to a chat box, not because I am telling anyone to use it. There is no token in this post, no price, and nothing to buy.</p>
+<p>That precision is not a legal footnote. It is most of the reason the post is worth your time. This is what partner companies do on their own initiative, in the open, with the receipts left in, and you get to audit it rather than take a press release&#39;s word for it. I could not have written this article about a closed enterprise integration, and that is worth sitting with.</p>
+<h3>Why it belongs in this group</h3>
+<p>Look at what this one integration actually touches, and then ask how many production engineering write-ups you have read on any of it:</p>
+<ul>
+<li><strong>Real-time 3D as an application interface</strong>, rather than as a demo or a game. An animated character rendered inside somebody else&#39;s product, driven by that product&#39;s live state.</li>
+<li><strong>A high-stakes domain as an agent&#39;s workplace</strong>, where the state changes every few seconds, most of it is numeric, and a confidently wrong answer costs money.</li>
+<li><strong>On-chain identity for agents</strong>, so the thing on your screen is bound to something verifiable rather than to a row in a private database.</li>
+<li><strong>Machine-to-machine payment</strong>, where one program pays another per call with no human in the loop.</li>
+<li><strong>Enterprise foundation models underneath all of it</strong>, which is the part of the stack this community actually works in.</li>
+<li><strong>AR as the next surface for the same avatar</strong>, which is not part of this integration and which I will flag again at the end so nobody misreads it as shipped.</li>
+</ul>
+<p>That list is close to word for word the remit this group was founded on: spatial reasoning, generative 3D, agentic pipelines, and real-time interactive AI. This case study is the browser-panel end of that spectrum. AR is the other end, and the same avatar walks between them.</p>
+<h3>One more thing, and then the engineering</h3>
+<p>Decision management means I spend my working life on a single question: what happens when an automated decision is wrong, and who finds out. Agents with faces and voices made that question louder for me, not quieter. A chatbot that gives you a bad answer looks exactly like a chatbot giving you a good one. An agent with a <em>body</em> can look reassuring while it is wrong, and that is a genuinely new failure mode that our existing controls were not designed for.</p>
+<p>So I asked the three.ws team to walk me through how the integration works and to write it up honestly, including what broke. What follows is that walkthrough, checked against both repositories myself, with the parts I found most useful to this group kept and the parts that make the best announcement cut.</p>
+<hr style="border:none;border-top:1px solid #e0e0e0;margin:44px 0">
+<h2>1. Why decentralized finance is the hard case for an agent interface</h2>
+<p>Before any of the engineering, it is worth being specific about why this domain and not another. I did not pick it for the crypto. I picked it because it breaks the chat box in four distinct ways, and every one of them is a general lesson wearing a specific costume.</p>
+<p><strong>The state moves every block.</strong> A number the agent read twelve seconds ago may already be wrong. A support chatbot answering from a knowledge base has no equivalent problem. Here, the gap between reading and acting is a risk window, and any interface that renders a value without rendering its age is quietly lying about how much it knows.</p>
+<p><strong>It is numerically dense and unit-hostile.</strong> Amounts in the smallest indivisible unit against amounts in whole tokens. Contracts against coins. Annual percentage rate against annual percentage yield. Basis points. Prose flattens all of that: &quot;your position is healthy&quot; reads identically whether the underlying calculation used the right unit or was off by a factor of ten to the eighteenth. Section 7 is a real example of a units-shaped bug that survived into a shipped preview.</p>
+<p><strong>Actions are irreversible.</strong> No chargeback, no undo, no support ticket that reverses a confirmed transaction. This is the property that makes an agent in this domain different in kind from an agent that drafts an email. An agent that is wrong ninety-nine times out of a hundred in a text box is annoying. Here, the hundredth is permanent.</p>
+<p><strong>The mechanics are protocol-specific, and models state them confidently anyway.</strong> Two protocols can both use the word &quot;staking&quot; and compute completely different things underneath. A language model trained on the general internet will produce a fluent, plausible, wrong explanation of the specific one in front of it, and there is nothing in the sentence&#39;s texture to warn you. This is the single most important thing I took from the whole write-up, and it is why section 11 lists a maintained domain skill pack as a planned item rather than a nice-to-have.</p>
+<h3>What the agent actually does in there</h3>
+<p>For anyone who has never opened this kind of workspace, the tool catalog is the fastest orientation. Grouped roughly as the repository groups them:</p>
+<table style="border-collapse:collapse;width:100%;margin:24px 0">
+<thead>
+<tr>
+<th style="border:1px solid #e0e0e0;padding:10px 14px;text-align:left;background:#f4f4f4">Category</th>
+<th style="border:1px solid #e0e0e0;padding:10px 14px;text-align:left;background:#f4f4f4">What the agent can call</th>
+</tr>
+</thead>
+<tbody><tr>
+<td style="border:1px solid #e0e0e0;padding:10px 14px;vertical-align:top">Trading</td>
+<td style="border:1px solid #e0e0e0;padding:10px 14px;vertical-align:top">Swaps across aggregators, limit orders, route comparison</td>
+</tr>
+<tr>
+<td style="border:1px solid #e0e0e0;padding:10px 14px;vertical-align:top">Lending</td>
+<td style="border:1px solid #e0e0e0;padding:10px 14px;vertical-align:top">Supply and borrow, health factor, liquidation watch</td>
+</tr>
+<tr>
+<td style="border:1px solid #e0e0e0;padding:10px 14px;vertical-align:top">Yield</td>
+<td style="border:1px solid #e0e0e0;padding:10px 14px;vertical-align:top">Pool discovery, rate comparison, auto-compounding</td>
+</tr>
+<tr>
+<td style="border:1px solid #e0e0e0;padding:10px 14px;vertical-align:top">Analytics</td>
+<td style="border:1px solid #e0e0e0;padding:10px 14px;vertical-align:top">Total value locked, protocol revenue, chain metrics, exchange volume</td>
+</tr>
+<tr>
+<td style="border:1px solid #e0e0e0;padding:10px 14px;vertical-align:top">Portfolio</td>
+<td style="border:1px solid #e0e0e0;padding:10px 14px;vertical-align:top">Wallet tracking, profit and loss, allocation, gas history</td>
+</tr>
+<tr>
+<td style="border:1px solid #e0e0e0;padding:10px 14px;vertical-align:top">Market intelligence</td>
+<td style="border:1px solid #e0e0e0;padding:10px 14px;vertical-align:top">Funding rates, sentiment indices, large-holder alerts, fund flows</td>
+</tr>
+</tbody></table>
+<p>That is 592 callable APIs across 99 packages, and the repository ships a machine-readable index of all of them that marks <strong>which ones move funds</strong>. I want to underline that, because it is the kind of thing that only exists when someone has thought about the problem seriously. A tool catalog that distinguishes &quot;reads a number&quot; from &quot;spends your money&quot; is a governance primitive, not documentation.</p>
+<p>The same instinct shows up in the SDK&#39;s execution model, which does not let an agent act and then tell you:</p>
+<pre style="background:#f4f4f4;border-left:4px solid #0f62fe;padding:16px 20px;overflow-x:auto;font-family:'IBM Plex Mono',ui-monospace,monospace;font-size:14px;line-height:1.6"><code class="language-typescript">// Async mode returns immediately so you can stream the agent&#39;s work.
+const { data } = await sperax.agent.runAsync({
+  prompt: &#39;Find the best USDC yield on Arbitrum and prepare a deposit&#39;,
+  maxSteps: 15,
+});
+
+for await (const event of sperax.agent.stream(data.operationId)) {
+  if (event.event === &#39;stream_chunk&#39;) process.stdout.write(event.data.content);
+}
+
+// The run pauses before acting; you decide whether it proceeds.
+await sperax.agent.approve(data.operationId);
+</code></pre>
+<p>Note the verb in the prompt: <em>prepare</em> a deposit. The run streams its reasoning, stops at the boundary where value would move, and waits for a human. Registering an agent on-chain works the same way: the API builds the calldata and never holds a key or broadcasts for you.</p>
+<h3>And this is where a body starts to earn its place</h3>
+<p>Put those four properties together and you get an interface problem that is genuinely under-served by text.</p>
+<p>A dashboard reports state. A face reports <em>change in</em> state, pre-attentively, before you have read anything. When a position&#39;s health drifts from comfortable toward dangerous, the number moving from one value to another has to be noticed, parsed, and interpreted. An expression that has been holding concern for the last ten seconds is noticed before you read a single digit.</p>
+<p>That is the actual argument for embodiment here, and it is why section 7 matters more than the rendering. The channel only helps if what it is expressing is true.</p>
+<hr style="border:none;border-top:1px solid #e0e0e0;margin:44px 0">
+<h2>2. What was actually built</h2>
+<p>The host side is <a href="https://chat.sperax.io">SperaxOS</a>. The specifications, from its own repository: 99 built-in tool packages exposing 592 tool APIs, 63 of which are reachable from any MCP client, an agent runtime on Next.js with more than 70 model providers behind it, an on-chain agent registry, an Apache-2.0 license, and self-hosting through Docker. It is a serious piece of software, which matters here, because the interesting engineering constraints in this post all come from it being somebody&#39;s real product rather than a demo harness.</p>
+<p>The integration puts the three.ws agent inside it. In the chat panel, an agent has a body. It speaks, it gestures, and its facial expression and posture shift continuously in response to what its tools are actually doing.</p>
+<p>Here is what has shipped, as of this writing:</p>
+<table style="border-collapse:collapse;width:100%;margin:24px 0">
+<thead>
+<tr>
+<th style="border:1px solid #e0e0e0;padding:10px 14px;text-align:left;background:#f4f4f4">Surface</th>
+<th style="border:1px solid #e0e0e0;padding:10px 14px;text-align:left;background:#f4f4f4">What it is</th>
+</tr>
+</thead>
+<tbody><tr>
+<td style="border:1px solid #e0e0e0;padding:10px 14px;vertical-align:top">Standalone plugin</td>
+<td style="border:1px solid #e0e0e0;padding:10px 14px;vertical-align:top">A hosted manifest at a well-known URL plus four LLM-callable tools. Install it in the host, paste an agent ID, done.</td>
+</tr>
+<tr>
+<td style="border:1px solid #e0e0e0;padding:10px 14px;vertical-align:top">Native component</td>
+<td style="border:1px solid #e0e0e0;padding:10px 14px;vertical-align:top">The <code style="font-family:'IBM Plex Mono',ui-monospace,monospace;font-size:0.92em;background:#f4f4f4;padding:1px 5px">three.ws</code> npm package mounted directly in the host&#39;s own React tree, no iframe.</td>
+</tr>
+<tr>
+<td style="border:1px solid #e0e0e0;padding:10px 14px;vertical-align:top">Inline 3D in a chat message</td>
+<td style="border:1px solid #e0e0e0;padding:10px 14px;vertical-align:top">A markdown element that renders a live, orbitable model inside a reply.</td>
+</tr>
+<tr>
+<td style="border:1px solid #e0e0e0;padding:10px 14px;vertical-align:top">Emotion and lip-sync engines</td>
+<td style="border:1px solid #e0e0e0;padding:10px 14px;vertical-align:top">Ported from three.ws into the host codebase, kept framework-agnostic so they are unit-testable.</td>
+</tr>
+<tr>
+<td style="border:1px solid #e0e0e0;padding:10px 14px;vertical-align:top">Hash-chained action ledger</td>
+<td style="border:1px solid #e0e0e0;padding:10px 14px;vertical-align:top">Ported the same direction, with the reconcile job that checks it.</td>
+</tr>
+<tr>
+<td style="border:1px solid #e0e0e0;padding:10px 14px;vertical-align:top">Three packages ported the other way</td>
+<td style="border:1px solid #e0e0e0;padding:10px 14px;vertical-align:top">Chain and token utilities, a typed tool-authoring SDK, and a market-data collector, all now running inside three.ws.</td>
+</tr>
+<tr>
+<td style="border:1px solid #e0e0e0;padding:10px 14px;vertical-align:top">A guided 3D site tour</td>
+<td style="border:1px solid #e0e0e0;padding:10px 14px;vertical-align:top">An eight-stop template that exports as a single script tag.</td>
+</tr>
+</tbody></table>
+\n<p>The rest of this post is what I learned reading how those were built.</p>
+<hr style="border:none;border-top:1px solid #e0e0e0;margin:44px 0">
+<h2>3. The first design question is not the one you expect</h2>
+<p>I assumed the hard question was &quot;how do you render a 3D avatar inside an application you do not control.&quot; It is not. Rendering is a solved problem and the team spent very little time on it.</p>
+<p>The actual question is <strong>who owns the React tree</strong>, and it has two legitimate answers depending on the host.</p>
+<p><img style="max-width:100%;height:auto;border:1px solid #e0e0e0;margin:8px 0" src="./media/ibm-sperax-integration-paths.png" alt="Two integration paths for embedding an agent in a host application"></p>
+<p><em>Figure 1. The two integration paths, and what each one costs you.</em></p>
+<p><strong>Path one is for hosts that will not take your code.</strong> Most plugin ecosystems will not let a third party ship JavaScript into the main bundle, and I think they are right not to. For those hosts, three.ws ships a standalone plugin: one hosted manifest, one hosted iframe, and a handful of HTTP endpoints. Nothing to vendor, nothing for the host&#39;s security team to review, no supply chain to audit. It is live in a day.</p>
+<p><strong>Path two is for hosts that want the dependency.</strong> When a host is willing to take a package, an iframe is a downgrade. You lose shared context, you pay for a second renderer, and you cannot compose the avatar into anything the host renders itself.</p>
+<p>SperaxOS ended up in both camps at once, which is why the integration has both halves. If you are building something similar, the team&#39;s advice, which I would repeat, is: <strong>ship the manifest first, because it gets you live and it works for hosts that will never take your code. Then do the native integration, because that is the one that finds your bugs.</strong> More on that in section 5, and it is not a throwaway line.</p>
+<h3>The manifest, in full</h3>
+<p>The whole of path one is one JSON file served with CORS:</p>
+<pre style="background:#f4f4f4;border-left:4px solid #0f62fe;padding:16px 20px;overflow-x:auto;font-family:'IBM Plex Mono',ui-monospace,monospace;font-size:14px;line-height:1.6"><code>https://three.ws/.well-known/sperax-plugin.json
+</code></pre>
+<p>Its shape:</p>
+<pre style="background:#f4f4f4;border-left:4px solid #0f62fe;padding:16px 20px;overflow-x:auto;font-family:'IBM Plex Mono',ui-monospace,monospace;font-size:14px;line-height:1.6"><code class="language-jsonc">{
+  &quot;identifier&quot;: &quot;three-ws&quot;,
+  &quot;type&quot;: &quot;standalone&quot;,
+  &quot;ui&quot;: { &quot;url&quot;: &quot;https://three.ws/sperax/iframe/&quot;, &quot;height&quot;: 480, &quot;mode&quot;: &quot;iframe&quot; },
+  &quot;settings&quot;: {
+    &quot;type&quot;: &quot;object&quot;,
+    &quot;required&quot;: [&quot;agentId&quot;],
+    &quot;properties&quot;: { &quot;agentId&quot;: { &quot;type&quot;: &quot;string&quot;, &quot;title&quot;: &quot;Agent ID&quot; } }
+  },
+  &quot;api&quot;: [
+    { &quot;name&quot;: &quot;render_agent&quot;, &quot;url&quot;: &quot;https://three.ws/api/chat-plugin/render-agent&quot;, &quot;...&quot;: &quot;...&quot; },
+    { &quot;name&quot;: &quot;speak&quot;,        &quot;url&quot;: &quot;https://three.ws/api/chat-plugin/speak&quot;,        &quot;...&quot;: &quot;...&quot; },
+    { &quot;name&quot;: &quot;gesture&quot;,      &quot;url&quot;: &quot;https://three.ws/api/chat-plugin/gesture&quot;,      &quot;...&quot;: &quot;...&quot; },
+    { &quot;name&quot;: &quot;emote&quot;,        &quot;url&quot;: &quot;https://three.ws/api/chat-plugin/emote&quot;,        &quot;...&quot;: &quot;...&quot; }
+  ]
+}
+</code></pre>
+<p>Four tools, and I want to note what is <em>not</em> in that list. There is no <code style="font-family:'IBM Plex Mono',ui-monospace,monospace;font-size:0.92em;background:#f4f4f4;padding:1px 5px">set_expression_to_happy</code>. The tools are <code style="font-family:'IBM Plex Mono',ui-monospace,monospace;font-size:0.92em;background:#f4f4f4;padding:1px 5px">render_agent</code> to bind or swap the avatar, <code style="font-family:'IBM Plex Mono',ui-monospace,monospace;font-size:0.92em;background:#f4f4f4;padding:1px 5px">speak</code> with an emotional valence in the range minus one to one, <code style="font-family:'IBM Plex Mono',ui-monospace,monospace;font-size:0.92em;background:#f4f4f4;padding:1px 5px">gesture</code> for a named physical beat (wave, nod, point, shrug), and <code style="font-family:'IBM Plex Mono',ui-monospace,monospace;font-size:0.92em;background:#f4f4f4;padding:1px 5px">emote</code> to blend a named feeling into a continuous emotional state. Only the last two touch the face, and neither of them sets it. They contribute to it. That distinction is section 6.</p>
+<p>The only required setting is a public agent ID. No API key, which is a design decision I appreciate: the plugin cannot leak a credential it never asks for.</p>
+<hr style="border:none;border-top:1px solid #e0e0e0;margin:44px 0">
+<h2>4. Every tool call runs in two halves</h2>
+<p>This is the piece I would put on a slide if I were teaching this.</p>
+<p><img style="max-width:100%;height:auto;border:1px solid #e0e0e0;margin:8px 0" src="./media/ibm-sperax-tool-call-halves.png" alt="Every tool call runs in two halves, in parallel"></p>
+<p><em>Figure 2. Both halves run on every call. The split is what keeps the model from asserting things it cannot know.</em></p>
+<p>When the model calls <code style="font-family:'IBM Plex Mono',ui-monospace,monospace;font-size:0.92em;background:#f4f4f4;padding:1px 5px">speak</code>, two things happen in parallel. The host frames the plugin&#39;s panel and posts the call into it, and the avatar speaks. Separately, the host&#39;s plugin gateway POSTs the same arguments to the tool&#39;s HTTP endpoint, and that endpoint returns a short result the model reads back into its own context.</p>
+<p>Why bother with both? Because <strong>the model must never be the thing that asserts the avatar moved.</strong> If the model simply says &quot;I waved&quot; and the panel silently failed, the transcript now contains a false statement that the model will happily build on for the rest of the conversation. Splitting the halves means the model receives a result saying the wave was dispatched, and the panel is the thing that actually waved. The two can be compared.</p>
+<p>That is not a hypothetical. It is exactly the bug they shipped first, and the fix is my favorite twenty lines in either repository:</p>
+<pre style="background:#f4f4f4;border-left:4px solid #0f62fe;padding:16px 20px;overflow-x:auto;font-family:'IBM Plex Mono',ui-monospace,monospace;font-size:14px;line-height:1.6"><code class="language-js">async function resolveAgent(agentId) {
+  if (!isUuid(agentId)) return { known: true, name: null };
+  try {
+    const [row] = await sql`
+      SELECT name FROM agent_identities
+      WHERE id = ${agentId} AND deleted_at IS NULL
+      LIMIT 1
+    `;
+    if (!row) return { known: false, name: null };
+    return { known: true, name: typeof row.name === &#39;string&#39; ? row.name : null };
+  } catch (err) {
+    console.warn(&#39;[chat-plugin] agent lookup failed, binding unverified:&#39;, err?.message);
+    return { known: true, name: null };
+  }
+}
+</code></pre>
+<p>The original version confirmed any agent ID it was handed. Someone with a typo in their settings got a model cheerfully announcing &quot;I have bound to your agent&quot; over a permanently empty panel. There is no error anywhere. The system is behaving exactly as written, and it is lying.</p>
+<p>Three behaviors in the fix are deliberate, and I would defend all three in a design review:</p>
+<ol>
+<li><strong>A well-formed ID that does not exist comes back as a real error</strong>, one the model can explain, pointing the user back to their dashboard to recopy it.</li>
+<li><strong>A handle or manifest ID passes through unverified</strong>, because the browser element resolves those and the server has no business pretending it checked something it did not.</li>
+<li><strong>A database outage degrades to an unverified binding instead of a 500.</strong> An infrastructure problem on one side must never take down the other side&#39;s chat panel.</li>
+</ol>
+<p>That third one is the decision-management instinct showing, and I was glad to see it in someone else&#39;s code. The failure mode of a dependency should be proportional to what the dependency actually does. A name lookup being unavailable is not a reason to break a conversation.</p>
+<p>One small practical note that will save somebody an afternoon: hosts rename the settings header. LobeChat sends <code style="font-family:'IBM Plex Mono',ui-monospace,monospace;font-size:0.92em;background:#f4f4f4;padding:1px 5px">lobe-chat-plugin-settings</code> and SperaxOS sends <code style="font-family:'IBM Plex Mono',ui-monospace,monospace;font-size:0.92em;background:#f4f4f4;padding:1px 5px">Sperax-Plugin-Settings</code>. Read both.</p>
+<hr style="border:none;border-top:1px solid #e0e0e0;margin:44px 0">
+<h2>5. The native path is where the real bugs live</h2>
+<p>Path two is a dependency and a mount:</p>
+<pre style="background:#f4f4f4;border-left:4px solid #0f62fe;padding:16px 20px;overflow-x:auto;font-family:'IBM Plex Mono',ui-monospace,monospace;font-size:14px;line-height:1.6"><code class="language-tsx">// three.ws registers &lt;agent-3d&gt; via customElements.define(...)
+useEffect(() =&gt; {
+  if (typeof window !== &#39;undefined&#39; &amp;&amp; !window.VIEWER) window.VIEWER = {};
+  import(&#39;three.ws&#39;).then(() =&gt; {
+    customElements.whenDefined(&#39;agent-3d&#39;).then(() =&gt; setRegistered(true));
+  });
+}, []);
+</code></pre>
+<p>Six lines, two scars, and both are worth your time even if you never touch 3D.</p>
+<p><strong>The dynamic import is not a style choice.</strong> The package shipped <code style="font-family:'IBM Plex Mono',ui-monospace,monospace;font-size:0.92em;background:#f4f4f4;padding:1px 5px">sideEffects: false</code> in its manifest. For a package whose entire job is a <code style="font-family:'IBM Plex Mono',ui-monospace,monospace;font-size:0.92em;background:#f4f4f4;padding:1px 5px">customElements.define</code> side effect, that field is simply false, and a production bundler believed it: the registration was tree-shaken away and the element silently never upgraded. Not an error, not a warning, just an element that stays inert. The host now carries a patch for the flag <em>and</em> imports dynamically, because dynamic imports are never tree-shaken. <strong>If you publish a custom element, go check that field right now.</strong></p>
+<p><strong>The <code style="font-family:'IBM Plex Mono',ui-monospace,monospace;font-size:0.92em;background:#f4f4f4;padding:1px 5px">window.VIEWER</code> seed is the other one.</strong> The library assigned to <code style="font-family:'IBM Plex Mono',ui-monospace,monospace;font-size:0.92em;background:#f4f4f4;padding:1px 5px">window.VIEWER.json</code> during model boot without ever initializing the global. In three.ws&#39;s own pages the global happened to exist. In someone else&#39;s application it did not, and boot threw a <code style="font-family:'IBM Plex Mono',ui-monospace,monospace;font-size:0.92em;background:#f4f4f4;padding:1px 5px">TypeError</code>.</p>
+<p>Neither of those is findable from inside your own product. That is the whole argument for doing the native integration even after the iframe works: the iframe protects you from the host, and it also protects you from learning what your package does in a world you did not build.</p>
+<p>Once the component is native, it composes in ways the iframe cannot. The host added a markdown plugin so a chat message can contain a live model:</p>
+<pre style="background:#f4f4f4;border-left:4px solid #0f62fe;padding:16px 20px;overflow-x:auto;font-family:'IBM Plex Mono',ui-monospace,monospace;font-size:14px;line-height:1.6"><code class="language-html">&lt;avatar3d url=&quot;https://.../model.glb&quot; size=&quot;260&quot; clip=&quot;Wave&quot; zoom=&quot;true&quot; /&gt;
+</code></pre>
+<p>That renders in the same React tree, no iframe, no sandbox, and the model can come from anywhere. An agent answering &quot;what does this thing look like&quot; can now answer with the thing.</p>
+<p>There is also a client lane in the tool router, which I had not thought about before reading this. Animation control cannot round-trip through a server without the animation being late, so a dispatcher intercepts the calls that belong to the browser before the rest go server-side:</p>
+<pre style="background:#f4f4f4;border-left:4px solid #0f62fe;padding:16px 20px;overflow-x:auto;font-family:'IBM Plex Mono',ui-monospace,monospace;font-size:14px;line-height:1.6"><code class="language-ts">const CLIENT_TOOL_IDS = new Set([&#39;agent-3d-controls&#39;, &#39;get-available-animations&#39;]);
+
+for (const tool_call of params.tool_calls) {
+  if (CLIENT_TOOL_IDS.has(tool_call.function.name)) params.onClientToolCall(tool_call);
+  else serverToolCalls.push(tool_call);
+}
+</code></pre>
+<p>Obvious once you see it. Worth stealing if your agent controls anything with a frame rate.</p>
+<hr style="border:none;border-top:1px solid #e0e0e0;margin:44px 0">
+<h2>6. Emotion as a continuous blend, not a state machine</h2>
+<p>Here is the part I expected to find cosmetic and did not.</p>
+<p>The obvious way to build an expressive avatar is a state machine: happy, sad, thinking, alarmed. It takes about thirty seconds of real use to see why that is wrong. The avatar snaps between moods, and the snap reads as a cartoon. Worse, for a monitoring interface, a state machine has to <em>choose</em>, and the truth is usually a mixture.</p>
+<p>The approach both teams now share is a continuous weighted blend. Each emotion is a float between zero and one. Events spike it. It then decays exponentially, at its own rate, every frame. All active emotions are blended into facial morph targets and body language on every frame, so a face can be forty percent concerned, thirty percent curious, and thirty percent neutral at the same time, which is how faces actually work.</p>
+<p><img style="max-width:100%;height:auto;border:1px solid #e0e0e0;margin:8px 0" src="./media/ibm-sperax-empathy-decay.png" alt="The five emotion decay curves and a blended face at one moment"></p>
+<p><em>Figure 3. The five decay curves. Each dot marks where a full spike has fallen to the floor value and the emotion is treated as inactive.</em></p>
+<p>The ported definition table doubles as the design document, and the comments are the original author&#39;s:</p>
+<pre style="background:#f4f4f4;border-left:4px solid #0f62fe;padding:16px 20px;overflow-x:auto;font-family:'IBM Plex Mono',ui-monospace,monospace;font-size:14px;line-height:1.6"><code class="language-ts">export const EMOTION_DEFINITIONS: Record&lt;EmotionName, EmotionDef&gt; = {
+  // Positive sentiment or success: a warm, open smile.
+  celebration: { decaySeconds: 6,  morphs: { jawOpen: 0.2, smile: 0.85 } },
+  // Negative sentiment or tool error: a worried frown with raised inner brows.
+  concern:     { decaySeconds: 12, morphs: { browInnerUp: 0.6, frown: 0.55 } },
+  // Loading or processing: an inquisitive head tilt.
+  curiosity:   { decaySeconds: 8,  headTiltZ: 0.12 },
+  // Emotional or supportive moments: a soft, squinting, caring look.
+  empathy:     { decaySeconds: 13, morphs: { browInnerUp: 0.5, eyeSquint: 0.4 } },
+  // Long-running operations: a patient backward lean.
+  patience:    { decaySeconds: 20, leanX: -0.08 },
+};
+</code></pre>
+<p><strong>The decay rates carry the entire personality, and they are deliberately not uniform.</strong> Celebration is bright and brief at six seconds. Concern lingers at twelve, so a risk that appeared while you were looking away is still on the face when you look back. Patience runs twenty, so an agent waiting on a slow operation keeps <em>looking</em> like it is waiting instead of going blank. Empathy is the slowest of the soft states at thirteen, because empathy that switches off the instant a sentence ends reads as insincere, and it turns out that is true of rendered faces too.</p>
+<p>Two implementation choices are what make this maintainable rather than a pile of magic numbers:</p>
+<p><strong>Keep the engine pure.</strong> The emotion module has no 3D library and no React in it. It maps time and spikes to logical morph weights, and a separate module resolves those logical names onto whatever concrete blendshapes the loaded mesh happens to have. So the emotion model is unit-testable with no renderer, and it ported cleanly between two codebases that share no UI framework. If you take one architectural idea from this post, take this one: <strong>the interesting part of your system should not import your rendering layer.</strong></p>
+<p><strong>Compose, do not multiplex.</strong> Speech drives the mouth through an entirely separate path. A Web Audio analyser samples the speech waveform each frame and maps a smoothed amplitude onto the jaw channel, gated below a noise floor so room hum does not make the avatar chew, saturating well before a full open so it never gapes:</p>
+<pre style="background:#f4f4f4;border-left:4px solid #0f62fe;padding:16px 20px;overflow-x:auto;font-family:'IBM Plex Mono',ui-monospace,monospace;font-size:14px;line-height:1.6"><code class="language-ts">const NOISE_GATE = 0.02;
+const FULL_OPEN_RMS = 0.22;
+const MAX_JAW = 0.7;
+</code></pre>
+<p>Because articulation and emotion write to different logical channels and are summed, the agent can deliver bad news <em>while looking concerned about it</em>. A state machine would have to pick one.</p>
+<hr style="border:none;border-top:1px solid #e0e0e0;margin:44px 0">
+<h2>7. The part that actually matters, and it is not the rendering</h2>
+<p>Now the section I asked for, and the reason I wanted this written up at all.</p>
+<p><strong>An expressive avatar sitting on top of wrong data is not a nice interface. It is a confident liar, and it is worse than a table of numbers, because a table does not lean toward you and look reassuring.</strong></p>
+<p>They learned this the direct way, and to their credit the commit history says so in plain language.</p>
+<p>The SPA staking panel in the host application, and the chat tools behind it, were returning literals. Total SPA locked: zero. Total veSPA supply: zero. Average lockup: zero. The four-year staking rate: a hardcoded <code style="font-family:'IBM Plex Mono',ui-monospace,monospace;font-size:0.92em;background:#f4f4f4;padding:1px 5px">22.61</code>, with a source comment that said, and I am quoting the code, &quot;from app screenshot.&quot; Because two of those were zero, the panel&#39;s own has-data check failed and it rendered dashes in every field. The agent, meanwhile, would narrate the number that had been copied off a screenshot months earlier, with a face on.</p>
+<p>The fix reads the contracts instead:</p>
+<ul>
+<li>Total locked and escrow supply now come from live <code style="font-family:'IBM Plex Mono',ui-monospace,monospace;font-size:0.92em;background:#f4f4f4;padding:1px 5px">totalSPALocked()</code> and <code style="font-family:'IBM Plex Mono',ui-monospace,monospace;font-size:0.92em;background:#f4f4f4;padding:1px 5px">totalSupply()</code> calls on the voting-escrow contract. At the time of the fix that was 242.66 million SPA locked against 416.78 million veSPA.</li>
+<li>The rate is derived from the rewarder contract&#39;s <code style="font-family:'IBM Plex Mono',ui-monospace,monospace;font-size:0.92em;background:#f4f4f4;padding:1px 5px">rewardsPerWeek</code> over a trailing eight-week window, landing at 21.0 percent at maximum lock. Close to the number that had been copied, which is exactly the point: it is now sourced and auditable rather than coincidentally near-correct. The eight-week window exists because emissions funding is irregular enough that any single week is noise.</li>
+</ul>
+<p>The worse bug was in the estimator, and this is the one I would use in a decision-integrity training session. It is also section 1&#39;s fourth property in the flesh. Both call sites computed voting power with the linear <code style="font-family:'IBM Plex Mono',ui-monospace,monospace;font-size:0.92em;background:#f4f4f4;padding:1px 5px">amount * lockSeconds / MAXTIME</code> slope that a <em>different</em> well-known vote-escrow design uses. Same word, same general idea, different math: this escrow mints one veSPA per SPA per <strong>year</strong> locked, capped at four years. Someone locking 1,000 SPA for four years was shown an estimate of roughly 1,000 veSPA and would actually have received roughly 3,984.</p>
+<p>A four-fold understatement. In a preview. Next to an avatar nodding encouragingly.</p>
+<p>It is now a shared helper backing both the dashboard panel and the chat tool preview, verified against the contract&#39;s own <code style="font-family:'IBM Plex Mono',ui-monospace,monospace;font-size:0.92em;background:#f4f4f4;padding:1px 5px">estimateDeposit</code> at six different lock lengths, and pinned by tests so it cannot drift back.</p>
+<p>The rule that came out of it, and which I think generalizes far past this domain:</p>
+<blockquote style="border-left:4px solid #0f62fe;background:#edf5ff;margin:28px 0;padding:18px 24px;font-size:1.05em">
+<p><strong>The avatar may only express state it can prove.</strong> If a number cannot be read from its source of truth, the correct behavior is a visible unknown, not a confident face over a stale literal.</p>
+</blockquote>
+<p>I would go further, from the decision-management side. Embodiment raises the cost of being wrong, because it raises the user&#39;s trust before the data has earned it. Every project in this group that puts a face on an agent is quietly taking on that liability. It is worth deciding, on purpose and in advance, what your avatar does when it does not know.</p>
+<hr style="border:none;border-top:1px solid #e0e0e0;margin:44px 0">
+<h2>8. Failing honestly, including about other people&#39;s systems</h2>
+<p>A smaller story, same principle, opposite direction.</p>
+<p>While embedding the partner&#39;s own application in a frame, a probe fetched the target and received a <code style="font-family:'IBM Plex Mono',ui-monospace,monospace;font-size:0.92em;background:#f4f4f4;padding:1px 5px">403</code>, so the page hid the embed and told the user the site had refused framing.</p>
+<p>The site had refused nothing. Its bot protection challenges every datacenter address, and the probe was running on one. The giveaway is that a plain top-level request, a static asset, and a path that does not exist all returned the same <code style="font-family:'IBM Plex Mono',ui-monospace,monospace;font-size:0.92em;background:#f4f4f4;padding:1px 5px">403</code>, which has nothing to do with framing. The header being read as a framing policy belonged to the challenge page, not to the application.</p>
+<p>The probe now sends an unframed control request alongside the framed one, and only trusts a framing refusal when the control was actually served. On a challenged network it reports <code style="font-family:'IBM Plex Mono',ui-monospace,monospace;font-size:0.92em;background:#f4f4f4;padding:1px 5px">UNKNOWN</code> and exits with a distinct code.</p>
+<p><strong>A negative result from a network you do not control is not a fact about the other system.</strong> I have watched teams write a permanent configuration change on exactly this kind of evidence. Reporting &quot;I could not tell&quot; is a feature.</p>
+<hr style="border:none;border-top:1px solid #e0e0e0;margin:44px 0">
+<h2>9. Provenance, for a body that can move money</h2>
+<p>Once an embodied agent can execute rather than only explain, expressiveness stops being the interesting problem and provenance starts.</p>
+<p>three.ws had built a hash-chained ledger for its own agent activity, and the host ported the primitive: an append-only, SHA-256 hash-chained record of every value movement an agent initiates, where each entry commits its predecessor.</p>
+<pre style="background:#f4f4f4;border-left:4px solid #0f62fe;padding:16px 20px;overflow-x:auto;font-family:'IBM Plex Mono',ui-monospace,monospace;font-size:14px;line-height:1.6"><code>entryHash = sha256( canonicalFields(entry) || prevHash )
+</code></pre>
+<p>Each user owns an independent chain. Sequence numbers are per-user and monotonic from one, the first entry commits a genesis hash of sixty-four zeros, and the canonical serialization is a fixed field order with free-text detail folded in through a key-sorted stringify, so identical payloads always hash identically.</p>
+<p>The field separator is a NUL byte, and the reasoning is the sort of detail that decides whether a scheme is sound or decorative. Two of the committed fields are free text and can contain spaces. With a printable separator the encoding is ambiguous: two different field tuples could serialize to the same string, and a chain built on an ambiguous encoding proves nothing at all. A NUL cannot occur in any of the values, so the serialization is injective and the hash means what it claims.</p>
+<p>Editing or deleting any historical row breaks the chain from that point forward. A reconcile job runs on a schedule looking for two things: a chain break, and an on-chain movement that was never recorded. <strong>The second alarm is the interesting one.</strong> A value movement with no corresponding ledger entry is the signal that a key is being used outside the agent runtime, which is to say it is a breach detector wearing an accounting hat.</p>
+<p>What did <em>not</em> get ported is as deliberate as what did. The origin system&#39;s signing keys, its price oracle, and its multi-wallet funding topology all stayed behind, because the receiving system has different custody and its own valuation source. A port that drags its origin&#39;s assumptions along with it is not a port, it is a fork with extra steps.</p>
+<p>For an agent with a face, this is the other half of trustworthiness. The emotion layer makes the agent legible in the moment. The ledger makes it accountable afterward. You need both, and I would argue the second one is the part that lets a regulated organization say yes to the first.</p>
+<hr style="border:none;border-top:1px solid #e0e0e0;margin:44px 0">
+<h2>10. The code went both ways, and that is the part I would negotiate for</h2>
+<p>Here is what surprised me most, and it is a partnership observation rather than a technical one.</p>
+<p><img style="max-width:100%;height:auto;border:1px solid #e0e0e0;margin:8px 0" src="./media/ibm-sperax-code-exchange.png" alt="What was ported in each direction between the two codebases"></p>
+<p><em>Figure 4. What moved which way. The right-hand column is the half nobody writes a press release about.</em></p>
+<p><strong>Into the host from three.ws:</strong> the emotion engine, the lip-sync driver, the inline 3D markdown element, the client-side tool dispatcher, and the hash-chained ledger with its reconcile job.</p>
+<p><strong>Into three.ws from the host:</strong></p>
+<ul>
+<li>A zero-dependency single source of truth for chain and token constants, minimal contract interface fragments, and address and amount validation. The existing maps were kept verbatim and a section was added for a chain the origin did not cover.</li>
+<li>A typed tool-authoring layer, derived from the host&#39;s plugin SDK. One call declares a tool&#39;s identity, its schemas, and its permission manifest, and derives the machine-readable schema automatically. A second call wires a typed implementation onto it and routes every invocation through a single entry point that validates parameters, enforces the declared rate limit, and normalizes both success and failure into one shape. A third adapts the result into the exact registration shape the receiving project&#39;s MCP servers already use, so adopting it is one call instead of a rewrite. It was rewritten from TypeScript into plain ESM with JSDoc to match the receiving codebase&#39;s conventions, and re-scoped away from chat-interface concepts it no longer needed.</li>
+<li>A market-data collector, since hardened considerably: per-topic subscription acknowledgements on one exchange whose retired topic used to fail silently, a unit conversion on another whose raw size field counts contracts rather than units, a geographic restriction probe on a third, and per-lane health reporting. It runs as a standalone always-on service because it holds long-lived WebSockets, and the proxy in front of it returns a 503 when the collector is unreachable rather than inventing numbers, which is the same principle as section 7 wearing different clothes.</li>
+</ul>
+<p>If you are ever in the room where an integration is being negotiated, <strong>this is the clause to push for: a shared right to port implementation between the two codebases.</strong> Two teams working on adjacent problems produce more reusable primitives than either will build alone, and a partnership you can measure in merged commits ages a great deal better than one you can only measure in announcements.</p>
+<hr style="border:none;border-top:1px solid #e0e0e0;margin:44px 0">
+<h2>11. What is planned, stated as plans and not as shipping claims</h2>
+<p>I asked for this list explicitly and I am labeling it clearly, because I do not want anything here read as available today.</p>
+<p>Shipped and live: everything in the table in section 2.</p>
+<p>Designed, in progress, or proposed:</p>
+<ol>
+<li><strong>Compute endowments.</strong> USDs, the Sperax stablecoin, pays yield to whoever holds it, automatically, with no staking step: the balance grows in the wallet. The idea is that you deposit once and that yield stream funds an agent&#39;s compute balance indefinitely, so the agent never runs out of inference budget. Set the domain aside for a second and look at the shape of it: it is a real answer to &quot;who pays for this agent&#39;s inference in year three,&quot; and it needs no new financial mechanism, only new plumbing between an existing yield stream and an existing credit ledger. I find that the most interesting idea on the list, as an agent-economics question, independent of the asset involved.</li>
+<li><strong>A recurring credit grant keyed to holdings</strong> rather than a one-time claim, so the relationship is retention rather than a giveaway.</li>
+<li><strong>A second settlement asset</strong> on the machine-to-machine payment rails that already handle per-call settlement over the x402 HTTP payment scheme.</li>
+<li><strong>A domain skill pack</strong>, so an agent reasons about the specific protocol mechanics from a maintained source rather than approximating them from training data. The voting-power bug in section 7 is precisely the failure a real skill pack prevents, which is why I think this one matters more than it sounds.</li>
+<li><strong>The guided site tour deployed on the live partner site.</strong> The template exists and exports as a single script tag. A builder preview can only prove the mechanics, so the real test is the deployment.</li>
+</ol>
+<hr style="border:none;border-top:1px solid #e0e0e0;margin:44px 0">
+<h2>12. What I would like from this group</h2>
+<p>A few things, and then the links.</p>
+<p><strong>If you have embedded an agent into somebody else&#39;s application, tell us which path you took.</strong> Section 3 is the fork in the road, and I would like the group&#39;s collective experience on it. My suspicion is that most people reach for the iframe and never do the native version, and therefore never find their equivalent of the <code style="font-family:'IBM Plex Mono',ui-monospace,monospace;font-size:0.92em;background:#f4f4f4;padding:1px 5px">sideEffects</code> bug.</p>
+<p><strong>If you publish a web component, go and check your <code style="font-family:'IBM Plex Mono',ui-monospace,monospace;font-size:0.92em;background:#f4f4f4;padding:1px 5px">sideEffects</code> field.</strong> That is the single most immediately actionable thing in this post and it takes ninety seconds.</p>
+<p><strong>If you put a face on an agent, decide now what it does when it does not know.</strong> Section 7 is my honest reason for publishing this. I would rather this group be known for building agents that are legible about their uncertainty than for building agents that are charming about it.</p>
+<p><strong>And the AR question I promised to come back to.</strong> Everything above happens in a rectangle on a screen. The same rigged avatar, the same emotion blend, the same tool calls, can also be placed in a room through a phone camera, and three.ws ships that surface separately. It is not part of this integration and I am not going to pretend it is. But every argument in section 7 gets sharper when the agent is standing in your kitchen instead of sitting in a panel, because the trust an embodied thing borrows from being <em>present</em> is larger again. If somebody in this group wants to be the first to put a domain-grounded agent into AR and write up what broke, I will give that post the front of the group and I will bring the questions to both teams myself.</p>
+<p>And if you want to try any of it, none of the following requires an account with anyone, and the generation step requires no key at all:</p>
+<ul>
+<li>Generate a rigged, animation-ready avatar from a sentence at <a href="https://three.ws/create">three.ws/create</a>, or a static model at <a href="https://three.ws/forge">three.ws/forge</a>.</li>
+<li>Embed it with the documented custom element at <a href="https://three.ws/docs/embedding">three.ws/docs/embedding</a>, or install the package if you want it natively in a React tree.</li>
+<li>Read <a href="https://three.ws/.well-known/sperax-plugin.json">the plugin manifest itself</a>. It is the shortest complete description of the four-tool interface, and the pattern transfers to any host of the same lineage.</li>
+<li>The integration write-up from the three.ws side is at <a href="https://three.ws/sperax">three.ws/sperax</a>, and the host application is Apache-2.0 at <a href="https://github.com/nirholas/sperax">github.com/nirholas/sperax</a> if you want to read the receiving half.</li>
+</ul>
+<p>Back to the third corner of the triangle, with one practical note. The agent brain is provider-agnostic on both sides of this integration, so pointing it at IBM Granite through watsonx.ai changes nothing about the rest. The emotion engine in section 6 takes its spikes from tool-call outcomes and sentiment rather than from any provider&#39;s output format, and the four plugin tools are plain HTTP. Your model choice is genuinely orthogonal to the body, which is the property that makes the whole stack swappable. If you are wiring an embodied agent to Granite and you hit something ugly, post it here. That is what the group is for.</p>
+<p>I will bring the harder questions from this thread back to the three.ws team, the same way I did for the meetup Q&amp;A. The skeptical ones are still the most useful ones.</p>
+</body></html>
