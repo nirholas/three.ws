@@ -97,11 +97,40 @@ const NVIDIA_VISION_MODELS = [
 // model's `reasoning` object at https://openrouter.ai/api/v1/models before
 // assuming either works; a model with `mandatory: true` rejects 'none' with a
 // 400.
+// Enumerated from https://openrouter.ai/api/v1/models on 2026-09-10 by filtering
+// `:free` routes whose architecture.input_modalities includes "image": ten
+// exist, and this list carries nine of them. The tenth,
+// nvidia/nemotron-3.5-content-safety:free, is a safety classifier rather than a
+// general VLM and is deliberately excluded; asking it to score a render is not
+// what it does.
+//
+// ORDER IS A HEURISTIC, not a measurement, and it is ranked by how likely a
+// route is to emit clean JSON rather than narrate:
+//   1. Routes whose model record says reasoning default_enabled:false lead.
+//      They have nothing to switch off and nothing to narrate.
+//   2. Then the dedicated vision (VL) route.
+//   3. Then general routes with no declared reasoning default.
+//   4. Reasoning-by-default routes go last, each carrying reasoning.effort:none
+//      (see the note above about the host-specific parameter). nemotron-omni
+//      sits at the back of that group because it is the one caught returning an
+//      empty message.content in production.
+// Replace this ordering with measured latency and JSON-success rates by running
+// `node scripts/probe-vision-lanes.mjs`, which sends the real rubric payload to
+// every route and ranks them.
 const OPENROUTER_VISION_MODELS = [
-	{ model: 'nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free', extraBody: { reasoning: { effort: 'none' } } },
 	{ model: 'google/gemma-4-31b-it:free' },
 	{ model: 'google/gemma-4-26b-a4b-it:free' },
+	{ model: 'inclusionai/ling-3.0-flash-vl:free', extraBody: { reasoning: { effort: 'none' } } },
+	{ model: 'dots-studio/dots-3-note-preview:free' },
+	{ model: 'nex-agi/nex-n2.5-pro:free' },
+	{ model: 'nex-agi/nex-n2.5-mini:free' },
+	{ model: 'thinkingmachines/inkling-small:free', extraBody: { reasoning: { effort: 'none' } } },
+	{ model: 'thinkingmachines/inkling:free', extraBody: { reasoning: { effort: 'none' } } },
+	{ model: 'nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free', extraBody: { reasoning: { effort: 'none' } } },
 ];
+// Cloudflare Workers AI's vision route. Same weights as the NIM lane above, so
+// it is a capacity and quota hedge rather than a new capability.
+const CLOUDFLARE_VISION_MODEL = '@cf/meta/llama-3.2-11b-vision-instruct';
 // Paid last-resort tail. gpt-5.4-nano is vision-capable and already priced in
 // llm-pricing.js, keeping the backstop cheap and the spend ledger truthful.
 const OPENAI_VISION_MODEL = 'gpt-5.4-nano';
@@ -135,6 +164,9 @@ const VISION_LANE_COOLDOWN_SECONDS = 45;
 // Below this a lane cannot complete a VLM call, so handing it a smaller slice
 // only burns budget the next rung could have used.
 const MIN_LANE_ATTEMPT_MS = 3_500;
+// How many rungs behind the current one the budget is held open for. Two means
+// a request plans for three attempts: a generous one and two fallbacks.
+const MAX_RESERVED_LANES = 2;
 // Share of the remaining deadline the image inline fetch may take. It runs
 // BEFORE any lane, so an uncapped one starves the whole chain: at the measured
 // 20s timeout against a 24s deadline it left 4s for every provider combined.
@@ -196,7 +228,17 @@ export function laneAttemptTimeout(remainingMs, lanesLeft, timeoutMs) {
 	// budget nobody else needs yet. A lane that fails fast hands its unused
 	// share straight to the next one, because `remainingMs` is re-read per
 	// attempt.
-	const reserve = MIN_LANE_ATTEMPT_MS * Math.max(0, lanesLeft - 1);
+	// Reserve for the next few rungs, NOT for all of them. Reserving per remaining
+	// lane makes the chain punish its own depth a second way: at twelve rungs the
+	// reserve (3.5s x 11) exceeds the whole 29s deadline, so the first and best
+	// lane collapses back to the floor and we are back to the starvation this
+	// formula was written to end. A request cannot realistically walk twelve
+	// providers anyway; it should spend its budget on the two or three most
+	// likely to answer. Capping the reserve decouples the DEPTH of the chain
+	// (how many providers exist, which is pure upside as cooldowns rotate
+	// across requests) from the SPEND of one request (bounded, and weighted
+	// toward the lane in hand).
+	const reserve = MIN_LANE_ATTEMPT_MS * Math.min(Math.max(0, lanesLeft - 1), MAX_RESERVED_LANES);
 	const share = Math.max(MIN_LANE_ATTEMPT_MS, remainingMs - reserve);
 	// The floor may exceed the share when the budget is nearly spent; capping it
 	// by what is actually left keeps the attempt inside the deadline either way.
@@ -289,6 +331,21 @@ export function visionChain() {
 				extraBody: spec.extraBody || null,
 			}));
 		}
+	}
+	// Cloudflare Workers AI: the SAME llama-3.2-11b-vision weights the free NIM
+	// lane already answers with, served on a different host behind a different
+	// quota. That is the point of it. Until now one NVIDIA model carried the
+	// entire chain (the list lost nemotron-nano-12b-v2-vl to a hard 410 on
+	// 2026-08-26), so a single throttle took vision down platform-wide. This rung
+	// is a proven model, not a new bet. The vendor is already wired for text in
+	// llm.js and gated on the same pair of vars, so it costs no new credential.
+	if (env.CLOUDFLARE_ACCOUNT_ID && env.CLOUDFLARE_AI_API_TOKEN) {
+		chain.push(openaiCompatVisionProvider({
+			name: 'cloudflare',
+			key: env.CLOUDFLARE_AI_API_TOKEN,
+			url: `https://api.cloudflare.com/client/v4/accounts/${env.CLOUDFLARE_ACCOUNT_ID}/ai/v1/chat/completions`,
+			model: CLOUDFLARE_VISION_MODEL,
+		}));
 	}
 	// Vertex Gemini credits anchor: multimodal (Gemini Flash reads image_url
 	// parts, data URIs included, through the same OpenAI-compatible endpoint),

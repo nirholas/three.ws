@@ -114,22 +114,22 @@ describe('reasoning lanes are told not to think', () => {
 		// true and mandatory: false, so it reasons unless told otherwise and it
 		// accepts being told. Left on, the thinking eats the lane's slice of the
 		// deadline and message.content comes back empty (observed live).
-		// Fail the first rung so the walk actually reaches the OpenRouter lanes;
-		// asserting on a chain that stopped at lane 1 would pass vacuously.
-		fetchSpy
-			.mockResolvedValueOnce(reply('not json'))
-			.mockResolvedValue(reply(JSON.stringify(VERDICT)));
-		await call();
+		// Fail every rung so the walk covers the whole chain; asserting on a chain
+		// that stopped at its first lane would pass vacuously.
+		fetchSpy.mockResolvedValue(reply('not json'));
+		await expect(call()).rejects.toThrow();
 
 		const bodies = fetchSpy.mock.calls.map(([, init]) => JSON.parse(init.body));
-		const nim = bodies.find((b) => String(b.model).includes('llama-3.2'));
-		const nemotron = bodies.find((b) => String(b.model).includes('nemotron'));
-
 		expect(bodies.length).toBeGreaterThan(1);
-		expect(nemotron).toBeDefined();
-		// Only the reasoning route carries it. The parameter is host-specific, so
-		// putting it on NVIDIA's own lane would be a silent no-op there.
-		expect(nemotron.reasoning).toEqual({ effort: 'none' });
+
+		// Whatever carries the parameter must carry the value that disables it.
+		const reasoningLanes = bodies.filter((b) => b.reasoning !== undefined);
+		expect(reasoningLanes.length).toBeGreaterThan(0);
+		for (const b of reasoningLanes) expect(b.reasoning).toEqual({ effort: 'none' });
+
+		// The parameter is host-specific: on NVIDIA's own lane it is a no-op, so
+		// it must not be sent there and imply a protection that is not real.
+		const nim = bodies.find((b) => String(b.model).includes('llama-3.2') && !String(b.model).startsWith('@cf/'));
 		expect(nim).toBeDefined();
 		expect(nim.reasoning).toBeUndefined();
 	});

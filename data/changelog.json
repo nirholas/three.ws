@@ -28098,6 +28098,15 @@
 				"fix",
 				"improvement"
 			]
+		},
+		{
+			"date": "2026-09-10",
+			"title": "The image check behind generated models now has ten providers instead of four",
+			"summary": "The check that inspects a generated model before you see it was leaning on a single working AI provider, because one of the two free ones was retired by its vendor and the other three were unavailable. It now draws on every free vision-capable provider we could find, including a second host serving the exact same model so one provider being busy no longer stops the check. Depth was made free first: a request used to share its time limit out among all the providers on the list, so adding providers made every one of them slower, and the first and best provider got squeezed hardest. Each request now spends its time on the two or three most likely to answer and simply has more of them to choose from as busy ones recover.",
+			"tags": [
+				"improvement",
+				"infra"
+			]
 		}
 	]
 }

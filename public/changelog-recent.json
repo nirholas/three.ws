@@ -1,11 +1,11 @@
 {
-	"generated_at": "2026-09-10T20:30:13.068Z",
+	"generated_at": "2026-09-10T20:40:54.003Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
 		"url": "https://three.ws"
 	},
-	"total": 3668,
+	"total": 3669,
 	"complete": false,
 	"full_feed": "/changelog.json",
 	"entries": [
@@ -91,6 +91,17 @@
 			"link": null,
 			"tags": [
 				"fix",
+				"infra"
+			]
+		},
+		{
+			"date": "2026-09-10",
+			"type": "update",
+			"title": "The image check behind generated models now has ten providers instead of four",
+			"summary": "The check that inspects a generated model before you see it was leaning on a single working AI provider, because one of the two free ones was retired by its vendor and the other three were unavailable. It now draws on every free vision-capable provider we could find, including a second host serving the exact same model so one provider being busy no longer stops the check. Depth was made free first: a request used to share its time limit out among all the providers on the list, so adding providers made every one of them slower, and the first and best provider got squeezed hardest. Each request now spends its time on the two or three most likely to answer and simply has more of them to choose from as busy ones recover.",
+			"link": null,
+			"tags": [
+				"improvement",
 				"infra"
 			]
 		},
@@ -1605,17 +1616,6 @@
 			"link": "/agenc/embodied",
 			"tags": [
 				"fix"
-			]
-		},
-		{
-			"date": "2026-09-07",
-			"type": "update",
-			"title": "The Blender tools now show you the render instead of describing it",
-			"summary": "Asking an assistant to render a 3D model used to hand back a file path, which is useless if the assistant cannot open files on your disk. The rendered image now comes back with the answer, scaled to fit, while the full-resolution PNG still lands on disk. That turns a look at this model into one step, so an assistant can render, spot the problem, fix it and render again. Reading a file also reports its texture budget now: every image with its resolution and byte size, plus the total, which is usually what actually decides whether a model is small enough to ship, and it was previously reported as nothing more than a count. Two reliability fixes came out of real use: several requests at once now queue instead of all starting Blender at the same moment and exhausting the machine, and when Blender is installed but momentarily will not start you get a message saying exactly that, with the details, rather than being told to install software you already have.",
-			"link": null,
-			"tags": [
-				"improvement",
-				"feature"
 			]
 		}
 	]

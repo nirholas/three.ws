@@ -77,6 +77,19 @@ describe('laneAttemptTimeout', () => {
 		expect(remaining).toBe(0);
 		for (const ms of slices) expect(ms).toBeGreaterThanOrEqual(3_500);
 	});
+	it('bounds one request to a few attempts however deep the chain is', () => {
+		// Twelve rungs is depth for the chain, not spend for the request: the
+		// budget still buys a generous first attempt plus the reserved fallbacks,
+		// and then the deadline stops the walk honestly.
+		let remaining = 29_000;
+		let attempts = 0;
+		for (let lanesLeft = 12; lanesLeft > 0 && remaining > 0; lanesLeft--) {
+			remaining -= laneAttemptTimeout(remaining, lanesLeft, 25_000);
+			attempts++;
+		}
+		expect(attempts).toBeLessThanOrEqual(4);
+		expect(remaining).toBe(0);
+	});
 	it('does not shrink the first lane as the chain grows', () => {
 		// The regression that took the forge quality gate to 0 verdicts in 10.
 		// Its deadline is 29s and the chain went from 3 lanes to 6 when the
@@ -84,10 +97,13 @@ describe('laneAttemptTimeout', () => {
 		// fell from ~9.7s to ~4.8s, just under what the scoring rubric needs.
 		const sixLanes = laneAttemptTimeout(29_000, 6, 25_000);
 		const equalDivision = Math.floor(29_000 / 6); // 4_833, the old policy
-		expect(sixLanes).toBe(11_500);
-		expect(sixLanes).toBeGreaterThan(equalDivision * 2);
-		// Deep chains still leave the first lane more than a single VLM call needs.
-		expect(laneAttemptTimeout(29_000, 8, 25_000)).toBeGreaterThan(4_000);
+		expect(sixLanes).toBe(22_000);
+		expect(sixLanes).toBeGreaterThan(equalDivision * 4);
+		// The reserve is capped, so DEPTH no longer costs the first lane anything.
+		// Three rungs or twelve, the lane in hand gets the same generous slice;
+		// otherwise adding providers would quietly re-create the starvation.
+		expect(laneAttemptTimeout(29_000, 3, 25_000)).toBe(22_000);
+		expect(laneAttemptTimeout(29_000, 12, 25_000)).toBe(22_000);
 	});
 	it('never exceeds the caller timeout and never outlives the deadline', () => {
 		expect(laneAttemptTimeout(60_000, 1, 20_000)).toBe(20_000);
