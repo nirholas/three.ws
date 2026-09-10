@@ -94,7 +94,7 @@ engineering. So BYOL first, paid listing later if the volume justifies the paper
 | Supported auth (OAuth2 without Dynamic Client Registration, API key, bearer, basic, key-value) | **Satisfied with no code change.** Our OAuth advertises a `registration_endpoint`, but it also supports `client_secret_basic` and `client_secret_post`, so IBM gets a pre-registered static client and never touches DCR |
 | Test credentials that stay valid through onboarding | We can mint these; they must be tracked so they are not rotated mid-review |
 | Setup documentation plus at least one use case | Have it: [`docs/mcp-3d-studio.md`](../mcp-3d-studio.md), [`docs/mcp-studio.md`](../mcp-studio.md) |
-| Square icon, max 200x200 | Producible from the existing brand kit in [`marketing/brand`](../../marketing/brand) |
+| Listing icon | **Built and verified.** IBM requires SVG only, transparent background, under 200 KB, legible at 48x48. A PNG fails validation. Shipped at `public/partners/ibm/three-ws-agent-connect-icon.svg` |
 | `APP_ID` from the IBM Ecosystem team | **The only true blocker.** Obtained by emailing `IBMAgentConnect@ibm.com` |
 | IBM Cloud account, Concierge access | Owner action |
 
@@ -177,13 +177,22 @@ IBM's ecosystem team something new to co-market.
 
 **Engineering (unblocked, no external dependency):**
 
-1. Build `marketing/ibm-partner-plus/` to the shape of `marketing/openai-select-partner/`:
-   README, badge rules, social copy, and the no-endorsement language carried over verbatim.
-2. Produce the 200x200 square listing icon from the brand kit.
-3. Write the listing copy and the single required use case, reusing
-   [`docs/mcp-3d-studio.md`](../mcp-3d-studio.md).
-4. Provision and document a durable IBM QA credential, flagged so rotation does not kill it
-   mid-review.
+Done on 2026-09-10, all of it in [`marketing/ibm-partner-plus/`](../../marketing/ibm-partner-plus/README.md):
+
+1. The kit itself, built to the shape of `marketing/openai-select-partner/`, with the
+   no-endorsement rules carried over.
+2. The catalog icon, `public/partners/ibm/three-ws-agent-connect-icon.svg`. IBM's spec is
+   SVG with a transparent background, so the shipped 3D Studio mark could not be reused
+   as-is: its dark rounded background plate is the exact thing the guidelines reject.
+3. The full submission pack in
+   [`agent-connect-listing.md`](../../marketing/ibm-partner-plus/agent-connect-listing.md):
+   every Concierge field, the required use case, and the verified support, EULA, and
+   documentation URLs.
+4. The QA credential requirements, including the rotation trap that would silently fail
+   IBM's connection test during the 3-week release window.
+
+Held until the listing is live: the announcement copy in
+[`social-copy.md`](../../marketing/ibm-partner-plus/social-copy.md).
 
 **Explicitly not doing:** the infrastructure resale incentive, IBM Software Quoting, and
 the Confluent track. None of them are reachable from a Build track partner and none of them
