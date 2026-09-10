@@ -55,6 +55,14 @@
 			<description>Your laptop already has a motion sensor: the speakers and the microphone. The new Sonar page plays a tone too high to hear, then listens for how your hand bends it on the way back, the same effect that drops the pitch of a passing siren. Sweep your hand across the keyboard and the agent on screen steps to its next gesture. Push your palm toward the screen and the camera moves in. Lift your hand and hold it, and the camera turns around the agent. Nothing is recorded and nothing leaves the page, and every gesture is on the keyboard too, so the page works with the microphone switched off. The sensing itself is two small modules you are free to point at anything, documented for developers.</description>
 		</item>
 		<item>
+			<title>Fourteen paid endpoints now offer Solana first, matching what the catalog advertises</title>
+			<link>https://three.ws/changelog</link>
+			<guid isPermaLink="false">2026-09-10:Fourteen paid endpoints now offer Solana first, matching what the catalog advertises</guid>
+			<pubDate>Thu, 10 Sep 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>Agents that pay for a three.ws service are handed a list of chains they can settle on, and most clients simply take the first one. Fourteen of those endpoints were handing back Base first even though the public service catalog listed them as Solana, so an agent that read the catalog and then called the endpoint could end up paying on a different chain than the one it had picked. All fourteen now lead with Solana, which is the platform default the rest of the endpoints already followed, so the catalog and the live payment request finally agree. Nothing changes for anyone who deliberately settles on Base, which is still offered.</description>
+		</item>
+		<item>
 			<title>Generated motion clips rebuilt so they no longer slide across the floor</title>
 			<link>https://three.ws/animations</link>
 			<guid isPermaLink="false">2026-09-10:Generated motion clips rebuilt so they no longer slide across the floor</guid>

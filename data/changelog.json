@@ -3,6 +3,15 @@
 	"entries": [
 		{
 			"date": "2026-09-10",
+			"title": "Fourteen paid endpoints now offer Solana first, matching what the catalog advertises",
+			"summary": "Agents that pay for a three.ws service are handed a list of chains they can settle on, and most clients simply take the first one. Fourteen of those endpoints were handing back Base first even though the public service catalog listed them as Solana, so an agent that read the catalog and then called the endpoint could end up paying on a different chain than the one it had picked. All fourteen now lead with Solana, which is the platform default the rest of the endpoints already followed, so the catalog and the live payment request finally agree. Nothing changes for anyone who deliberately settles on Base, which is still offered.",
+			"tags": [
+				"fix",
+				"improvement"
+			]
+		},
+		{
+			"date": "2026-09-10",
 			"title": "Any embedded agent can now be waved at, not just the one on our own page",
 			"summary": "Hand control arrived last week on a page of ours: your speakers play a tone too high to hear, and your microphone listens for how your hand bends it on the way back, so you can drive a 3D agent by waving at your laptop with the camera shut. It now works on any agent embedded anywhere. Add sonar to the embed tag, give people a button to switch it on, and a sweep of the hand steps the agent through its gestures, a push moves the camera in, and a held hand turns it around. Sites that want the gestures to do something else entirely can take them over and drive their own page with them. Nothing is recorded, nothing is downloaded until somebody actually turns it on, and it stops the moment they navigate away.",
 			"tags": [

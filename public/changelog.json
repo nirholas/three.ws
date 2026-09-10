@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-09-10T20:40:53.981Z",
+	"generated_at": "2026-09-10T20:59:08.965Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -67,6 +67,17 @@
 			"link": "/sonar",
 			"tags": [
 				"feature"
+			]
+		},
+		{
+			"date": "2026-09-10",
+			"type": "update",
+			"title": "Fourteen paid endpoints now offer Solana first, matching what the catalog advertises",
+			"summary": "Agents that pay for a three.ws service are handed a list of chains they can settle on, and most clients simply take the first one. Fourteen of those endpoints were handing back Base first even though the public service catalog listed them as Solana, so an agent that read the catalog and then called the endpoint could end up paying on a different chain than the one it had picked. All fourteen now lead with Solana, which is the platform default the rest of the endpoints already followed, so the catalog and the live payment request finally agree. Nothing changes for anyone who deliberately settles on Base, which is still offered.",
+			"link": null,
+			"tags": [
+				"fix",
+				"improvement"
 			]
 		},
 		{
