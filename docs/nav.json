@@ -782,6 +782,10 @@
 					"path": "choreography"
 				},
 				{
+					"label": "Sonar (hand control)",
+					"path": "sonar"
+				},
+				{
 					"label": "Avatar inspector",
 					"path": "avatar-inspector"
 				},

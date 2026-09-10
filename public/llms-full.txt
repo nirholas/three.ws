@@ -44,6 +44,12 @@ URL: https://three.ws/gestures
 
 The three.ws agent gesture vocabulary: every animation slot, the clip it plays, the skills that trigger it, and a builder for overriding any slot on your own agent. Previewed live on a real avatar.
 
+### Sonar Control
+
+URL: https://three.ws/sonar
+
+Control a 3D agent with your hands and no camera. three.ws plays an inaudible carrier tone through your speakers and reads the Doppler shift of your hand off the microphone, so a sweep, a push or a lift moves the avatar on screen.
+
 ### Choreographer
 
 URL: https://three.ws/choreograph
@@ -3669,6 +3675,12 @@ The motion clips (idle, wave, dance, and about 3,000 more) that bring three.ws a
 URL: https://three.ws/docs/choreography
 
 The developer reference for agent gesture routines: the routine format, the storage and manifest fields, the URL wire format that makes a link a routine, and every way to play one from an embed or your own renderer.
+
+### Docs · Sonar
+
+URL: https://three.ws/docs/sonar
+
+The developer reference for acoustic gesture control: the Doppler sensor and its Reading, the three detectors ported from Sonar and SoundWave, why running more than one at a time needs a mode, and what the technique needs from the room.
 
 ### Docs · Architecture overview
 

@@ -1,14 +1,24 @@
 {
-	"generated_at": "2026-09-10T15:26:08.096Z",
+	"generated_at": "2026-09-10T15:46:14.944Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
 		"url": "https://three.ws"
 	},
-	"total": 3665,
+	"total": 3667,
 	"complete": false,
 	"full_feed": "/changelog.json",
 	"entries": [
+		{
+			"date": "2026-09-10",
+			"type": "launch",
+			"title": "Sonar Control",
+			"summary": "Control a 3D agent with your hands and no camera. three.ws plays an inaudible carrier tone through your speakers and reads the Doppler shift of your hand off the microphone, so a sweep, a push or a lift moves the avatar on screen.",
+			"link": "/sonar",
+			"tags": [
+				"launch"
+			]
+		},
 		{
 			"date": "2026-09-10",
 			"type": "update",
@@ -39,6 +49,16 @@
 			"tags": [
 				"fix",
 				"improvement"
+			]
+		},
+		{
+			"date": "2026-09-10",
+			"type": "update",
+			"title": "Control a 3D agent with your hands, no camera needed",
+			"summary": "Your laptop already has a motion sensor: the speakers and the microphone. The new Sonar page plays a tone too high to hear, then listens for how your hand bends it on the way back, the same effect that drops the pitch of a passing siren. Sweep your hand across the keyboard and the agent on screen steps to its next gesture. Push your palm toward the screen and the camera moves in. Lift your hand and hold it, and the camera turns around the agent. Nothing is recorded and nothing leaves the page, and every gesture is on the keyboard too, so the page works with the microphone switched off. The sensing itself is two small modules you are free to point at anything, documented for developers.",
+			"link": "/sonar",
+			"tags": [
+				"feature"
 			]
 		},
 		{
@@ -1595,27 +1615,6 @@
 			"link": null,
 			"tags": [
 				"fix"
-			]
-		},
-		{
-			"date": "2026-09-07",
-			"type": "update",
-			"title": "The partner-hosted demo page loads all of its pieces again",
-			"summary": "Our partnership page is published once onto a partner's own website, so everything it loads comes from three.ws across origins. Two of its scripts were being refused by the browser there, which quietly cost the page its in-editor map and its iOS handoff. Both are now served with the same cross-origin permission the rest of the page already had, and an audit that loads the page from a foreign origin now passes end to end.",
-			"link": null,
-			"tags": [
-				"fix"
-			]
-		},
-		{
-			"date": "2026-09-07",
-			"type": "update",
-			"title": "The splat viewer opens the compressed formats captures actually ship",
-			"summary": "Gaussian-splat scenes used to arrive as enormous PLY files, and the tools that make them now export compressed containers instead: the same capture that is a gigabyte of PLY is about 100 MB as SPZ and about 42 MB as SOG. The viewer could not open either. It now reads .spz and .sog alongside .ply, .splat, and .ksplat, works out the format from the file contents instead of trusting the filename, and frames the camera on the scene it actually loaded rather than a fixed distance that suited one file in ten. It also shows the real splat count, and waits for the first sorted frame before going live so a slow machine no longer shows an empty stage.",
-			"link": "/splat",
-			"tags": [
-				"improvement",
-				"feature"
 			]
 		}
 	]

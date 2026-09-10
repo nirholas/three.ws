@@ -57,6 +57,14 @@
 					"added": "2026-07-30"
 				},
 				{
+					"path": "/sonar",
+					"title": "Sonar Control",
+					"description": "Control a 3D agent with your hands and no camera. three.ws plays an inaudible carrier tone through your speakers and reads the Doppler shift of your hand off the microphone, so a sweep, a push or a lift moves the avatar on screen.",
+					"priority": 0.7,
+					"changefreq": "weekly",
+					"added": "2026-09-10"
+				},
+				{
 					"path": "/choreograph",
 					"title": "Choreographer",
 					"description": "Compose agent gestures into a timed routine on a real timeline, preview the whole performance on a live 3D avatar, then save it to your agent and play it by name from any embed.",
@@ -2775,7 +2783,7 @@
 				},
 				{
 					"path": "/docs/globe",
-					"title": "Docs \u00b7 Global Intel Globe",
+					"title": "Docs · Global Intel Globe",
 					"description": "The live 3D globe at /globe: its eleven keyless open-data layers and where each comes from, the URL parameters that make any view a shareable link, the one API call that returns every layer, and why an ingest cron has to keep its own GDELT window for the time control to be honest.",
 					"priority": 0.6,
 					"changefreq": "monthly",
@@ -4730,6 +4738,13 @@
 					"path": "/docs/choreography",
 					"title": "Docs · Choreography",
 					"description": "The developer reference for agent gesture routines: the routine format, the storage and manifest fields, the URL wire format that makes a link a routine, and every way to play one from an embed or your own renderer.",
+					"priority": 0.6,
+					"changefreq": "monthly"
+				},
+				{
+					"path": "/docs/sonar",
+					"title": "Docs · Sonar",
+					"description": "The developer reference for acoustic gesture control: the Doppler sensor and its Reading, the three detectors ported from Sonar and SoundWave, why running more than one at a time needs a mode, and what the technique needs from the room.",
 					"priority": 0.6,
 					"changefreq": "monthly"
 				},

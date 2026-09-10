@@ -1,0 +1,276 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<script>/* three.ws theme boot: no-flash */(function(){try{var m=localStorage.getItem('twx_theme');var l=m==='auto'?(window.matchMedia&&window.matchMedia('(prefers-color-scheme: light)').matches):m==='light';document.documentElement.setAttribute('data-theme',l?'light':'dark');}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();</script>
+		<meta charset="utf-8" />
+		<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+		<title>Sonar Control · three.ws</title>
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<meta name="description" content="Control a 3D agent with your hands and no camera. three.ws emits an inaudible tone through your speakers and reads the Doppler shift off your microphone, so a sweep, a push or a lift moves the avatar on screen." />
+		<meta name="theme-color" content="#000000" />
+		<link rel="canonical" href="https://three.ws/sonar" />
+
+		<meta property="og:type" content="website" />
+		<meta property="og:site_name" content="three.ws" />
+		<meta property="og:title" content="Sonar Control · three.ws" />
+		<meta property="og:description" content="Wave at your laptop and your 3D agent answers. Acoustic gesture control: inaudible tone out of the speakers, Doppler shift in through the microphone, no camera at any point." />
+		<meta property="og:url" content="https://three.ws/sonar" />
+		<meta property="og:image" content="https://three.ws/api/page-og?s=main&amp;t=Sonar+Control&amp;d=Control+a+3D+agent+with+your+hands+and+no+camera%3A+an+inaudible+tone+out+of+the+speakers%2C+the+Doppler+shift+in+through+the+microphone&amp;p=%2Fsonar" />
+		<meta name="twitter:card" content="summary_large_image" />
+		<meta name="twitter:site" content="@trythreews" />
+		<meta name="twitter:title" content="Sonar Control · three.ws" />
+		<meta name="twitter:description" content="Hand control for 3D agents with no camera. Your speakers emit a tone, your hand bends it, the avatar moves." />
+		<meta name="twitter:image" content="https://three.ws/api/page-og?s=main&amp;t=Sonar+Control&amp;d=Control+a+3D+agent+with+your+hands+and+no+camera%3A+an+inaudible+tone+out+of+the+speakers%2C+the+Doppler+shift+in+through+the+microphone&amp;p=%2Fsonar" />
+
+		<link rel="icon" href="/favicon.ico" sizes="any" />
+		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+		<link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png" />
+		<link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png" />
+		<link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+		<link rel="manifest" href="/manifest.webmanifest" />
+		<link rel="stylesheet" href="/style.css" />
+		<link rel="stylesheet" href="/nav.css" />
+		<link rel="stylesheet" href="/footer.css" />
+		<link rel="stylesheet" href="/fonts/fonts.css" />
+		<link rel="stylesheet" href="/sonar.css" />
+
+		<script type="application/ld+json">{"@context":"https://schema.org","@type":"WebPage","name":"Sonar Control","description":"Acoustic gesture control for three.ws agents: an inaudible carrier tone from the speakers, the Doppler shift of your hand read off the microphone, and a 3D avatar that answers it.","url":"https://three.ws/sonar","isPartOf":{"@type":"WebSite","name":"three.ws","url":"https://three.ws"}}</script>
+
+		<meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1">
+		<meta property="og:locale" content="en_US">
+		<meta property="og:image:alt" content="Sonar Control on three.ws">
+	</head>
+	<body class="sn-page">
+		<header>
+			<div id="nav-container"></div>
+		</header>
+		<script src="/nav.js"></script>
+
+		<main>
+			<section class="sn-hero">
+				<div class="sn-hero-chip">
+					<span class="sn-hero-dot" aria-hidden="true"></span>
+					<span>No camera. Just sound.</span>
+				</div>
+				<h1>Wave at your laptop. Your agent answers.</h1>
+				<p class="sn-hero-lede">
+					Your speakers play a tone you cannot hear. Your hand reflects it, and the reflection
+					comes back <strong>bent</strong>: higher when you move in, lower when you pull away.
+					That shift is enough to read a sweep, a push and a lift, and to drive a real 3D agent
+					with them. Nothing is recorded, nothing leaves the page, and the camera stays shut.
+				</p>
+				<div class="sn-hero-actions">
+					<button type="button" class="sn-btn sn-btn--primary" data-role="start">
+						Start sensing
+					</button>
+					<button type="button" class="sn-btn sn-btn--secondary" data-role="stop" hidden>
+						Stop
+					</button>
+					<a class="sn-btn sn-btn--ghost" href="/gestures">The gesture vocabulary</a>
+					<a class="sn-btn sn-btn--ghost" href="/docs/sonar">How it works</a>
+				</div>
+				<p class="sn-hero-note">
+					Use the built-in speakers and microphone, and keep the volume up. Headphones break the
+					reflection path, so the sensing has nothing to read.
+					<strong>The carrier sits near 20&nbsp;kHz: cats and dogs can hear it,</strong> so stop
+					if a pet in the room seems bothered.
+				</p>
+			</section>
+
+			<div class="sn-alert sn-alert--warn" data-role="unsupported" hidden>
+				<h2>This browser cannot run the sensor</h2>
+				<p data-role="unsupported-reason">
+					Acoustic sensing needs Web Audio and microphone input. Safari, Chrome, Edge and Firefox
+					on a laptop all qualify.
+				</p>
+				<p>
+					The keyboard controls below work regardless, and
+					<a href="/gestures">the gesture vocabulary</a> is browsable without any hardware.
+				</p>
+			</div>
+
+			<div class="sn-alert sn-alert--error" data-role="error" hidden>
+				<h2 data-role="error-title">Sensing stopped</h2>
+				<p data-role="error-detail"></p>
+				<button type="button" class="sn-btn sn-btn--secondary" data-role="retry">Try again</button>
+			</div>
+
+			<section class="sn-console" aria-label="Sonar console">
+				<div class="sn-stage-wrap">
+					<div class="sn-stage" data-role="stage" aria-label="Live 3D agent">
+						<div class="sn-stage-overlay" data-role="stage-empty">
+							<p class="sn-stage-title">The stage is idle</p>
+							<p class="sn-stage-sub">Press <strong>Start sensing</strong>, or use the keyboard controls to drive it without a microphone.</p>
+						</div>
+						<div class="sn-stage-overlay" data-role="stage-loading" hidden>
+							<div class="sn-spinner" aria-hidden="true"></div>
+							<p class="sn-stage-sub">Loading the agent</p>
+						</div>
+						<div class="sn-stage-overlay" data-role="stage-error" hidden>
+							<p class="sn-stage-title" data-role="stage-error-title">The clip could not be staged</p>
+							<p class="sn-stage-sub">Every other gesture still works. Sweep again to move on.</p>
+						</div>
+					</div>
+
+					<div class="sn-hud" data-role="hud">
+						<div class="sn-hud-row">
+							<span class="sn-hud-label">Motion</span>
+							<span class="sn-hud-value" data-role="hud-direction">Not sensing</span>
+						</div>
+						<div class="sn-meter" role="img" aria-label="Reflected motion strength" data-role="hud-meter">
+							<span class="sn-meter-fill" data-role="hud-strength"></span>
+						</div>
+						<div class="sn-hud-row sn-hud-row--small">
+							<span data-role="hud-tone">Carrier off</span>
+							<span data-role="hud-snr">Contrast off</span>
+						</div>
+					</div>
+
+					<div class="sn-calibrating" data-role="calibrating" hidden>
+						<p class="sn-calibrating-title">Measuring the room</p>
+						<p class="sn-calibrating-sub">Hold still. Everything the microphone hears right now becomes the baseline that your hand is measured against.</p>
+						<div class="sn-progress"><span data-role="calibrating-bar"></span></div>
+					</div>
+				</div>
+
+				<div class="sn-side">
+					<div class="sn-panel">
+						<h2 class="sn-panel-title">Signal</h2>
+						<p class="sn-panel-sub">
+							The carrier and 600&nbsp;Hz either side of it. Grey is the still room. Green is
+							what is coming back right now: energy to the <em>right</em> of the spike is a hand
+							closing in, to the <em>left</em> is a hand pulling away.
+						</p>
+						<canvas data-role="signal" class="sn-signal" width="640" height="180" aria-label="Live spectrum around the carrier tone"></canvas>
+						<p class="sn-signal-legend">
+							<span class="sn-key sn-key--base"></span> still room
+							<span class="sn-key sn-key--live"></span> live
+							<span class="sn-key sn-key--carrier"></span> carrier
+						</p>
+					</div>
+
+					<div class="sn-panel">
+						<h2 class="sn-panel-title">Controls</h2>
+						<fieldset class="sn-modes" data-role="modes">
+							<legend>Gesture in play</legend>
+							<p class="sn-modes-note">
+								The microphone senses distance, not direction, so a sweep and a push look
+								alike coming in. Pick the one you are making; <em>All three</em> runs every
+								detector at once and will misread more often.
+							</p>
+							<div class="sn-modes-row"></div>
+						</fieldset>
+						<div class="sn-control">
+							<label for="sn-volume">Carrier level</label>
+							<input type="range" id="sn-volume" data-role="volume" min="1" max="20" step="1" value="8" />
+							<output data-role="volume-out">8%</output>
+						</div>
+						<div class="sn-control">
+							<label for="sn-tone">Carrier</label>
+							<select id="sn-tone" data-role="tone"></select>
+						</div>
+						<div class="sn-toggles">
+							<label><input type="checkbox" data-role="reverse-swipe" /> Reverse sweep</label>
+							<label><input type="checkbox" data-role="reverse-zoom" /> Reverse push</label>
+						</div>
+						<div class="sn-control-actions">
+							<button type="button" class="sn-btn sn-btn--secondary" data-role="recalibrate" disabled>Re-measure the room</button>
+							<button type="button" class="sn-btn sn-btn--ghost" data-role="reset-view">Reset the shot</button>
+						</div>
+					</div>
+				</div>
+			</section>
+
+			<section class="sn-vocab" aria-label="What each gesture does">
+				<h2 class="sn-section-title">Three gestures</h2>
+				<div class="sn-cards">
+					<article class="sn-card" data-gesture="swipe">
+						<div class="sn-card-icon" aria-hidden="true">&#8596;</div>
+						<h3>Sweep sideways</h3>
+						<p>Palm down over the keyboard, sweep across, then pause before sweeping back. Each sweep steps to the next gesture in the agent's vocabulary.</p>
+						<p class="sn-card-live" data-role="live-swipe">Waiting</p>
+						<p class="sn-card-keys">Keyboard: <kbd>&larr;</kbd> <kbd>&rarr;</kbd></p>
+					</article>
+					<article class="sn-card" data-gesture="push">
+						<div class="sn-card-icon" aria-hidden="true">&#10530;</div>
+						<h3>Push and pull</h3>
+						<p>Push your palm toward the screen to move the camera in. Pull back and it eases out, paced by how fast your hand actually moves.</p>
+						<p class="sn-card-live" data-role="live-push">Waiting</p>
+						<p class="sn-card-keys">Keyboard: <kbd>+</kbd> <kbd>&minus;</kbd></p>
+					</article>
+					<article class="sn-card" data-gesture="lift">
+						<div class="sn-card-icon" aria-hidden="true">&#8597;</div>
+						<h3>Lift and hold</h3>
+						<p>Raise your hand off the keyboard and hold it there. The camera turns around the agent for as long as you hold, and settles when you lower it.</p>
+						<p class="sn-card-live" data-role="live-lift">Waiting</p>
+						<p class="sn-card-keys">Keyboard: <kbd>[</kbd> <kbd>]</kbd></p>
+					</article>
+				</div>
+			</section>
+
+			<section class="sn-log-section" aria-label="Recognised gestures">
+				<div class="sn-log-head">
+					<h2 class="sn-section-title">What it read</h2>
+					<span class="sn-log-count" data-role="log-count">Nothing yet</span>
+				</div>
+				<ol class="sn-log" data-role="log" aria-live="polite">
+					<li class="sn-log-empty" data-role="log-empty">
+						Every gesture the sensor recognises lands here, with the reading that triggered it.
+						A run of misreads is usually the carrier: try a different one in Controls.
+					</li>
+				</ol>
+			</section>
+
+			<section class="sn-explain">
+				<h2 class="sn-section-title">Why this works</h2>
+				<div class="sn-explain-grid">
+					<div>
+						<h3>The Doppler effect, indoors</h3>
+						<p>
+							A siren drops in pitch as it passes you. The same thing happens to a 20&nbsp;kHz
+							tone reflecting off your hand, only the shift is a few hertz rather than a few
+							hundred. Averaging the room while you hold still gives a reference, and anything
+							that appears beside the carrier afterwards is something that moved.
+						</p>
+					</div>
+					<div>
+						<h3>Distance, not direction</h3>
+						<p>
+							The microphone only senses whether something got closer or further away. A sweep
+							is read as one coherent approach followed by its retreat, which is why pausing
+							before you sweep back matters: without the pause, the return stroke reads as a
+							second sweep in the other direction.
+						</p>
+					</div>
+					<div>
+						<h3>Standing on prior work</h3>
+						<p>
+							The technique is <a href="https://www.microsoft.com/en-us/research/project/soundwave-using-the-doppler-effect-to-sense-gestures/" rel="noopener">SoundWave</a>
+							(Gupta, Morris, Patel and Tan, CHI 2012). The detectors here are ported from
+							<a href="https://github.com/nirholas/sonar.cool" rel="noopener">Sonar</a>, Emanuel Perez's
+							MIT-licensed macOS implementation, with
+							<a href="https://github.com/DanielRapp/doppler" rel="noopener">Daniel Rapp's Doppler</a>
+							as the prior art for doing it in a browser at all.
+						</p>
+					</div>
+					<div>
+						<h3>Take it with you</h3>
+						<p>
+							The sensor and the detectors are two plain modules with no 3D and no DOM in them.
+							Point them at anything: a slide deck, a kiosk, an
+							<a href="/docs/embedding">embedded agent</a>. The
+							<a href="/docs/sonar">developer reference</a> has the whole surface.
+						</p>
+					</div>
+				</div>
+			</section>
+		</main>
+
+		<div id="footer-container"></div>
+		<script src="/footer.js" defer></script>
+
+		<script type="module" src="/src/sonar-page.js"></script>
+		<!-- Runtime i18n: detects locale, swaps annotated copy, mounts <lang-switcher>. -->
+		<script type="module" src="/i18n.js"></script>
+	</body>
+</html>

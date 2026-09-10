@@ -96,7 +96,7 @@
 	<main class="sm-wrap">
 		<div class="sm-hero">
 			<h1>Sitemap</h1>
-			<p>All 928 pages on three.ws, grouped by purpose. Looking for the machine-readable versions?</p>
+			<p>All 930 pages on three.ws, grouped by purpose. Looking for the machine-readable versions?</p>
 			<div class="sm-formats">
 				<a href="/sitemap.xml"><code>sitemap.xml</code> · for search engines</a>
 				<a href="/llms.txt"><code>llms.txt</code> · for AI agents</a>
@@ -108,7 +108,7 @@
 		</div>
 		<div class="sm-filter">
 			<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
-			<input id="sm-filter-input" type="search" placeholder="Filter 928 pages by name, path, or description…" aria-label="Filter pages" autocomplete="off" spellcheck="false" />
+			<input id="sm-filter-input" type="search" placeholder="Filter 930 pages by name, path, or description…" aria-label="Filter pages" autocomplete="off" spellcheck="false" />
 			<kbd id="sm-filter-kbd" aria-hidden="true">/</kbd>
 		</div>
 		<p class="sm-filter-count" role="status" aria-live="polite"><span id="sm-filter-count"></span><span id="sm-filter-hint" aria-hidden="true"></span></p>
@@ -116,6 +116,14 @@
 			<h2 id="sm-new-title">Newest<a class="sm-new-more" href="/changelog">full changelog &rarr;</a></h2>
 			<p class="sm-section-desc">The 9 most recently launched pages, straight to the live surface.</p>
 			<ul class="sm-list">
+				<li>
+					<a href="/sonar">
+						<span class="sm-new-date">Sep 10, 2026</span>
+						<span class="sm-title">Sonar Control</span>
+						<span class="sm-path">/sonar</span>
+						<span class="sm-desc">Control a 3D agent with your hands and no camera. three.ws plays an inaudible carrier tone through your speakers and reads the Doppler shift of your hand off the microphone, so a sweep, a push or a lift moves the avatar on screen.</span>
+					</a>
+				</li>
 				<li>
 					<a href="/fade">
 						<span class="sm-new-date">Sep 9, 2026</span>
@@ -180,14 +188,6 @@
 						<span class="sm-desc">A live onchain trading desk for any Robinhood Chain (4663) wallet: book value, native balance history rebuilt from the indexer, an activity tape of swaps and transfers, positions priced against Chainlink NAV and the deepest Uniswap pool, the NAV premium ridge layered by pool depth, counterparty flow, and memecoin movers.</span>
 					</a>
 				</li>
-				<li>
-					<a href="/markets/robinhood/portfolios">
-						<span class="sm-new-date">Sep 7, 2026</span>
-						<span class="sm-title">Robinhood Portfolios</span>
-						<span class="sm-path">/markets/robinhood/portfolios</span>
-						<span class="sm-desc">Describe a portfolio in a sentence and get a real basket of Robinhood Chain assets: tokenized equities, crypto majors and chain-native tokens in one index. A screen ranks the whole 700-asset universe against the prompt, the weights are committed on-chain as a signed immutable manifest, and a vault holds the basket in kind and rebalances it back to target on a published schedule.</span>
-					</a>
-				</li>
 			</ul>
 		</section>
 		<nav class="sm-toc" aria-label="Sections">
@@ -205,7 +205,7 @@
 		</nav>
 		<section class="sm-section" id="main">
 			<header>
-				<h2>Main<span class="sm-count" data-count>58</span></h2>
+				<h2>Main<span class="sm-count" data-count>59</span></h2>
 				<p class="sm-section-desc">Entry points into the product.</p>
 			</header>
 			<ul class="sm-list">
@@ -242,6 +242,13 @@
 						<span class="sm-title">Agent Gestures</span>
 						<span class="sm-path">/gestures</span>
 						<span class="sm-desc">The three.ws agent gesture vocabulary: every animation slot, the clip it plays, the skills that trigger it, and a builder for overriding any slot on your own agent. Previewed live on a real avatar.</span>
+					</a>
+				</li>
+				<li>
+					<a href="/sonar">
+						<span class="sm-title">Sonar Control</span>
+						<span class="sm-path">/sonar</span>
+						<span class="sm-desc">Control a 3D agent with your hands and no camera. three.ws plays an inaudible carrier tone through your speakers and reads the Doppler shift of your hand off the microphone, so a sweep, a push or a lift moves the avatar on screen.</span>
 					</a>
 				</li>
 				<li>
@@ -2555,7 +2562,7 @@
 
 		<section class="sm-section" id="learn">
 			<header>
-				<h2>Learn<span class="sm-count" data-count>428</span></h2>
+				<h2>Learn<span class="sm-count" data-count>429</span></h2>
 				<p class="sm-section-desc">Docs, tutorials, and reference.</p>
 			</header>
 			<ul class="sm-list">
@@ -4447,6 +4454,13 @@
 						<span class="sm-title">Docs · Choreography</span>
 						<span class="sm-path">/docs/choreography</span>
 						<span class="sm-desc">The developer reference for agent gesture routines: the routine format, the storage and manifest fields, the URL wire format that makes a link a routine, and every way to play one from an embed or your own renderer.</span>
+					</a>
+				</li>
+				<li>
+					<a href="/docs/sonar">
+						<span class="sm-title">Docs · Sonar</span>
+						<span class="sm-path">/docs/sonar</span>
+						<span class="sm-desc">The developer reference for acoustic gesture control: the Doppler sensor and its Reading, the three detectors ported from Sonar and SoundWave, why running more than one at a time needs a mode, and what the technique needs from the room.</span>
 					</a>
 				</li>
 				<li>

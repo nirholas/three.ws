@@ -977,6 +977,7 @@ const appConfig = {
 				'pose-mini': resolve(__dirname, 'pages/pose-mini.html'),
 				animations: resolve(__dirname, 'pages/animations.html'),
 				gestures: resolve(__dirname, 'pages/gestures.html'),
+				sonar: resolve(__dirname, 'pages/sonar.html'),
 				choreograph: resolve(__dirname, 'pages/choreograph.html'),
 				'character-library': resolve(__dirname, 'pages/character-library.html'),
 				'sign-language': resolve(__dirname, 'pages/sign-language.html'),

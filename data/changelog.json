@@ -3,6 +3,15 @@
 	"entries": [
 		{
 			"date": "2026-09-10",
+			"title": "Control a 3D agent with your hands, no camera needed",
+			"summary": "Your laptop already has a motion sensor: the speakers and the microphone. The new Sonar page plays a tone too high to hear, then listens for how your hand bends it on the way back, the same effect that drops the pitch of a passing siren. Sweep your hand across the keyboard and the agent on screen steps to its next gesture. Push your palm toward the screen and the camera moves in. Lift your hand and hold it, and the camera turns around the agent. Nothing is recorded and nothing leaves the page, and every gesture is on the keyboard too, so the page works with the microphone switched off. The sensing itself is two small modules you are free to point at anything, documented for developers.",
+			"tags": [
+				"feature"
+			],
+			"link": "/sonar"
+		},
+		{
+			"date": "2026-09-10",
 			"title": "three.ws now reads in 38 languages",
 			"summary": "The site has carried translated text for a long time, but the language picker only ever offered English and Spanish, so almost nobody could reach the rest. Every one of those catalogs has now been finished and checked: 38 languages, complete across all 600 pieces of text on the site, with nothing left sitting in English and nothing left half translated. Retired labels that no longer appear anywhere were cleared out at the same time, so no page shows a stale phrase in one language that it does not show in another. Pick a language from the switcher and the whole site follows, right to left languages included.",
 			"tags": [

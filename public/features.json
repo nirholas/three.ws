@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-09-10T15:26:08.064Z",
+	"generated_at": "2026-09-10T15:46:14.912Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json",
 	"site": {
 		"name": "three.ws",
@@ -61,6 +61,16 @@
 					"title": "Agent Gestures",
 					"description": "The three.ws agent gesture vocabulary: every animation slot, the clip it plays, the skills that trigger it, and a builder for overriding any slot on your own agent. Previewed live on a real avatar.",
 					"added": "2026-07-30",
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false
+				},
+				{
+					"path": "/sonar",
+					"title": "Sonar Control",
+					"description": "Control a 3D agent with your hands and no camera. three.ws plays an inaudible carrier tone through your speakers and reads the Doppler shift of your hand off the microphone, so a sweep, a push or a lift moves the avatar on screen.",
+					"added": "2026-09-10",
 					"auth": null,
 					"indexable": true,
 					"tags": [],
@@ -6032,6 +6042,16 @@
 					"path": "/docs/choreography",
 					"title": "Docs · Choreography",
 					"description": "The developer reference for agent gesture routines: the routine format, the storage and manifest fields, the URL wire format that makes a link a routine, and every way to play one from an embed or your own renderer.",
+					"added": null,
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false
+				},
+				{
+					"path": "/docs/sonar",
+					"title": "Docs · Sonar",
+					"description": "The developer reference for acoustic gesture control: the Doppler sensor and its Reading, the three detectors ported from Sonar and SoundWave, why running more than one at a time needs a mode, and what the technique needs from the room.",
 					"added": null,
 					"auth": null,
 					"indexable": true,

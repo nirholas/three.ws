@@ -7,6 +7,14 @@
 		<description>What's new on three.ws: features, improvements, and releases, newest first.</description>
 		<language>en</language>
 		<item>
+			<title>Sonar Control</title>
+			<link>https://three.ws/sonar</link>
+			<guid isPermaLink="false">2026-09-10:Sonar Control</guid>
+			<pubDate>Thu, 10 Sep 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>Control a 3D agent with your hands and no camera. three.ws plays an inaudible carrier tone through your speakers and reads the Doppler shift of your hand off the microphone, so a sweep, a push or a lift moves the avatar on screen.</description>
+		</item>
+		<item>
 			<title>3D assets now load on any website, not just ours</title>
 			<link>https://three.ws/changelog</link>
 			<guid isPermaLink="false">2026-09-10:3D assets now load on any website, not just ours</guid>
@@ -29,6 +37,14 @@
 			<pubDate>Thu, 10 Sep 2026 12:00:00 GMT</pubDate>
 			<category>fix</category>
 			<description>The image check behind generated models asks several providers in turn, and it shared its time limit out equally between all of them. That had a perverse effect: every provider added to the list shortened the time given to the first and best one, so growing the list made the check worse rather than more resilient. Three providers were added last week and the first one's window fell just below what it needs to answer, which is why the check started timing out instead of returning verdicts. Each provider is now given whatever time the ones behind it do not need, with a guaranteed minimum still held back for every one of them, so the check gets a real answer from the first healthy provider and still falls through to the rest when it has to.</description>
+		</item>
+		<item>
+			<title>Control a 3D agent with your hands, no camera needed</title>
+			<link>https://three.ws/sonar</link>
+			<guid isPermaLink="false">2026-09-10:Control a 3D agent with your hands, no camera needed</guid>
+			<pubDate>Thu, 10 Sep 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>Your laptop already has a motion sensor: the speakers and the microphone. The new Sonar page plays a tone too high to hear, then listens for how your hand bends it on the way back, the same effect that drops the pitch of a passing siren. Sweep your hand across the keyboard and the agent on screen steps to its next gesture. Push your palm toward the screen and the camera moves in. Lift your hand and hold it, and the camera turns around the agent. Nothing is recorded and nothing leaves the page, and every gesture is on the keyboard too, so the page works with the microphone switched off. The sensing itself is two small modules you are free to point at anything, documented for developers.</description>
 		</item>
 		<item>
 			<title>Generated motion clips rebuilt so they no longer slide across the floor</title>

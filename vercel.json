@@ -4595,6 +4595,10 @@
 			"dest": "/gestures.html"
 		},
 		{
+			"src": "/sonar/?",
+			"dest": "/sonar.html"
+		},
+		{
 			"src": "/choreograph/?",
 			"dest": "/choreograph.html"
 		},

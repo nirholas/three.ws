@@ -26,6 +26,12 @@ export class AnimationLivePreview {
 		this._bones = [];
 		this._restPose = new Map();
 		this._maps = null; // canonical maps captured at bind pose
+		// Framing computed by _frameCamera, plus the viewer's own offsets on top
+		// of it. Kept apart so a new clip can re-frame without throwing away a
+		// turn or a zoom the viewer asked for.
+		this._framing = null;
+		this._yaw = 0;
+		this._zoom = 1;
 		this._retargetMod = null;
 
 		this._clipJsonCache = new Map(); // clip name → raw clip JSON promise
@@ -247,16 +253,58 @@ export class AnimationLivePreview {
 		const distV = size.y / 2 / Math.tan(fovV / 2);
 		const distH = Math.max(size.x, size.z) / 2 / Math.tan(fovH / 2);
 		const dist = Math.max(distV, distH) * 1.15 + Math.max(size.z, size.x) / 2;
-		const azimuth = THREE.MathUtils.degToRad(24);
-		const elevation = THREE.MathUtils.degToRad(11);
+		this._framing = {
+			center,
+			dist,
+			azimuth: THREE.MathUtils.degToRad(24),
+			elevation: THREE.MathUtils.degToRad(11),
+		};
+		this._applyCamera();
+	}
+
+	/** Place the camera from the current framing plus the viewer's turn and zoom. */
+	_applyCamera() {
+		const f = this._framing;
+		if (!f || !this._camera) return;
+		const cam = this._camera;
+		const azimuth = f.azimuth + this._yaw;
+		const dist = f.dist / this._zoom;
 		cam.position.set(
-			center.x + dist * Math.cos(elevation) * Math.sin(azimuth),
-			center.y + dist * Math.sin(elevation),
-			center.z + dist * Math.cos(elevation) * Math.cos(azimuth),
+			f.center.x + dist * Math.cos(f.elevation) * Math.sin(azimuth),
+			f.center.y + dist * Math.sin(f.elevation),
+			f.center.z + dist * Math.cos(f.elevation) * Math.cos(azimuth),
 		);
-		cam.lookAt(center);
-		this._keyLight.target.position.copy(center);
+		cam.lookAt(f.center);
+		this._keyLight.target.position.copy(f.center);
 		this._keyLight.target.updateMatrixWorld();
+	}
+
+	/**
+	 * Turn the camera around the avatar, in radians. Additive, and it survives
+	 * the re-framing a crossfaded clip change does. A cold mount starts from the
+	 * framed shot again, so a caller holding a viewing angle across cuts
+	 * re-applies it after play() resolves.
+	 */
+	orbitBy(radians) {
+		this._yaw += radians;
+		this._applyCamera();
+	}
+
+	/** Dolly in or out. 1 is the framed distance; clamped to a usable range. */
+	setZoom(factor) {
+		this._zoom = Math.max(0.6, Math.min(3, factor || 1));
+		this._applyCamera();
+	}
+
+	getZoom() {
+		return this._zoom;
+	}
+
+	/** Drop the viewer's turn and zoom, back to the framed shot. */
+	resetView() {
+		this._yaw = 0;
+		this._zoom = 1;
+		this._applyCamera();
 	}
 
 	/** Stop every crossfade source whose fade has elapsed. */
@@ -414,6 +462,8 @@ export class AnimationLivePreview {
 			this._renderer.domElement.parentNode.removeChild(this._renderer.domElement);
 		}
 		this._container = null;
+		this._yaw = 0;
+		this._zoom = 1;
 	}
 
 	/** Modal transport controls. No-ops when nothing is playing. */
