@@ -92,6 +92,11 @@
 			"dir": "ltr"
 		},
 		{
+			"code": "pl",
+			"name": "Polski",
+			"dir": "ltr"
+		},
+		{
 			"code": "nl",
 			"name": "Nederlands",
 			"dir": "ltr"
@@ -117,6 +122,16 @@
 			"dir": "rtl"
 		},
 		{
+			"code": "ta",
+			"name": "தமிழ்",
+			"dir": "ltr"
+		},
+		{
+			"code": "te",
+			"name": "తెలుగు",
+			"dir": "ltr"
+		},
+		{
 			"code": "mr",
 			"name": "मराठी",
 			"dir": "ltr"
@@ -137,6 +152,21 @@
 			"dir": "ltr"
 		},
 		{
+			"code": "no",
+			"name": "Norsk",
+			"dir": "ltr"
+		},
+		{
+			"code": "fi",
+			"name": "Suomi",
+			"dir": "ltr"
+		},
+		{
+			"code": "el",
+			"name": "Ελληνικά",
+			"dir": "ltr"
+		},
+		{
 			"code": "cs",
 			"name": "Čeština",
 			"dir": "ltr"
@@ -149,6 +179,21 @@
 		{
 			"code": "hu",
 			"name": "Magyar",
+			"dir": "ltr"
+		},
+		{
+			"code": "he",
+			"name": "עברית",
+			"dir": "rtl"
+		},
+		{
+			"code": "bg",
+			"name": "Български",
+			"dir": "ltr"
+		},
+		{
+			"code": "sw",
+			"name": "Kiswahili",
 			"dir": "ltr"
 		},
 		{
