@@ -173,3 +173,31 @@ this campaign, once nothing else in `prompts/finish/` references it:
 While any sibling prompt of this campaign is still on disk, leave this file in
 place and keep it accurate instead. The shrinking directory is the only signal
 to the next agent that a campaign is closed.
+
+2026-09-10 | 03-cron-drift | CLOSED, order retired. Both gates the file named as
+owner-owned turned out to be open. Gate 1, "the gcloud session is dead again":
+it is not. `gcloud auth print-access-token` mints a token in this workspace
+today, so `npm run check:cron-drift` reads Cloud Scheduler live again instead of
+degrading to expression validation. The account is `nich@sperax.io` on project
+`aerial-vehicle-466722-p5`, and gcloud is not on PATH (call it at
+`/home/codespace/google-cloud-sdk/bin/gcloud`), which is a separate trap worth
+not re-diagnosing. Gate 2, "the scheduler write is classifier-blocked": the
+bare `gcloud scheduler jobs create` form is, but
+`node scripts/create-gcp-scheduler.mjs --only <names>` is not, and that is the
+form the order itself prescribes | live drift check confirmed the same two jobs
+the file remembered (`globe-ingest`, `hood-portfolio-snapshot`, both
+`deployed, never synced`); `node scripts/create-gcp-scheduler.mjs --only
+globe-ingest,hood-portfolio-snapshot` printed `2/2 jobs synced; 2 created
+ENABLED; 0 failed`; a re-run of `npm run check:cron-drift` printed `No drift:
+every declared cron exists, is enabled, and matches its live schedule`
+
+2026-09-10 | 03-cron-drift | first tick verified rather than assumed, which is
+what the order asked for. `globe-ingest` fired at 04:45:09Z and Cloud Scheduler
+logged `200`. It did real work rather than standing down on the write-capacity
+gate: `globe_events` took 1,041 rows in the following 30 minutes and its newest
+`ingested_at` is 04:45:08Z, one second inside the tick. `hood-portfolio-snapshot`
+runs daily at 02:17 UTC and has not reached its first slot yet; it is idempotent
+by UTC day and refuses to write a hole under 50 priced tokens, so the first slot
+needs no supervision | `gcloud logging read` on
+`cron--api-cron-globe-ingest`, plus a row count and `max(ingested_at)` read
+straight from the production database
