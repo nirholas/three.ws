@@ -50,7 +50,17 @@ one payment.
 
 Until it clears, the free lanes make real progress and should be left grinding: the run is
 resumable, idempotent, and an incomplete locale is held out of `manifest.json` rather than shipped
-half-translated, so stopping mid-way is safe. When it lands: confirm `npm run i18n:lint` is clean,
+half-translated, so stopping mid-way is safe.
+
+**Measured throughput, so nobody re-derives it.** Turning off the reasoning model's chain of
+thought is worth more than any amount of parallelism and was the single biggest win
+(`d14497d11`): on a five-string chunk, 40 output tokens in 1.1s with thinking off against
+hundreds of tokens and tens of seconds with it on. Even so, NVIDIA's free tier will not absorb a
+bulk run. Six processes collapsed into `429 Too Many Requests`; three at `--concurrency=4` still
+drew `429` plus `503 Service temporarily overloaded`, and a chunk that fails takes its whole
+locale's pass with it, so an over-parallel run can spend an hour and finish nothing. One process
+at `--concurrency=2` is the sustainable shape. Budget on the order of a day of wall clock for the
+remaining catalog on free lanes, against roughly one pass on Vertex. When it lands: confirm `npm run i18n:lint` is clean,
 delete the `publishLocale` helper in `tests/e2e/home-a11y.spec.js` (the RTL and never-translate
 tests can read the real manifest once a locale is complete), re-run the suite, and retire this
 file per the section at the bottom.

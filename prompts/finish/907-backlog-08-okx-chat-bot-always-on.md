@@ -94,6 +94,37 @@ Order does not matter; whichever lands second is picked up by the next 15-minute
 An email OTP is **not** currently needed: the session has been `loggedIn: true` since
 2026-09-05.
 
+## A second route to the reply lane, found 2026-09-10 (owner's call, not taken)
+
+Owner action 1 (clear the GCP billing hold) is still the clean fix, and it now unblocks four
+orders rather than two, so it is worth doing on its own merits. But it is no longer the ONLY
+route to a working reply lane, and the alternative needs no payment:
+
+`providerLanes()` in [config.js](../../workers/okx-chat-bot/config.js) already carries an
+`anthropic-gateway` lane that accepts any Anthropic-wire-format endpoint via
+`ANTHROPIC_BASE_URL` + `ANTHROPIC_AUTH_TOKEN`. **three.ws serves exactly that shape itself** at
+`/api/llm/anthropic`, the we-pay proxy the avatar embeds already use, and its free NVIDIA rungs
+were repaired on 2026-09-10 (`4dbe02cc7`); before that they were retired ids answering `410 Gone`,
+so this route would not have worked even if someone had tried it. Pointing the bot at our own
+proxy bills no third party and needs no Google lane.
+
+Three things gate it, and none is a code change:
+
+1. **The API deploy carrying `4dbe02cc7` has to land first**, or the proxy's NVIDIA rungs are
+   still the dead ids.
+2. **The proxy meters per agent.** It answers `400 agent query param required`, so this needs an
+   agent id owned by the platform user, and the i18n lane's own docs warn never to point it at
+   someone else's agent. Which agent to meter is an owner decision. Its embed-policy default is
+   10 requests/min, which is ample for chat but is a real ceiling.
+3. **Electing a lane respawns the daemon.** That is the documented mechanism (an env overlay plus
+   a respawn), and this bot's identity, the wallet keyring plus the XMTP client database, is a
+   single-writer state object whose corruption costs a human email OTP to recover. That risk is
+   why this was left for the owner rather than applied from a session.
+
+Not verified end to end from here, deliberately: proving it would mean metering a real agent and
+respawning the live daemon. What IS verified is that the gateway lane exists, that
+`/api/llm/anthropic` speaks the Anthropic wire format, and that its free chain answers again.
+
 ## Definition of done
 
 - [ ] **Chat delivery verified end to end with a real inbound message.** The inbound half
