@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-09-10T15:46:14.944Z",
+	"generated_at": "2026-09-10T16:27:25.836Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -97,8 +97,8 @@
 		{
 			"date": "2026-09-10",
 			"type": "update",
-			"title": "three.ws now reads in 38 languages",
-			"summary": "The site has carried translated text for a long time, but the language picker only ever offered English and Spanish, so almost nobody could reach the rest. Every one of those catalogs has now been finished and checked: 38 languages, complete across all 600 pieces of text on the site, with nothing left sitting in English and nothing left half translated. Retired labels that no longer appear anywhere were cleared out at the same time, so no page shows a stale phrase in one language that it does not show in another. Pick a language from the switcher and the whole site follows, right to left languages included.",
+			"title": "three.ws now reads in 47 languages",
+			"summary": "The site has carried translated text for a long time, but the language picker only ever offered English and Spanish, so almost nobody could reach the rest. Those catalogs are being finished and checked one at a time, and the switcher now offers 47 languages. Each one is complete across every piece of text on the site, close to twenty thousand phrases, with nothing left sitting in English and nothing left half translated. A language only appears in the switcher once its translation is finished, so anything you can pick is a language the whole site speaks. Retired labels that no longer appear anywhere were cleared out at the same time, so no page shows a stale phrase in one language that it does not show in another. Right to left languages are included.",
 			"link": null,
 			"tags": [
 				"feature",

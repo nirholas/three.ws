@@ -71,12 +71,12 @@
 			<description>Generated models are inspected by a vision model before you see them, and that inspection asks several providers in turn so one being busy is never the end of it. The catch was that a provider only had to reply, not reply usefully: a model that narrated its thinking instead of returning the requested format counted as the answer, and the healthy providers waiting behind it were never asked. A reply the check cannot read is now treated as that provider failing, so it moves straight to the next one, and it only gives up once every provider has been tried. The practical effect is that the quality check returns a real verdict far more often, and when it cannot, the reason it reports names the provider that actually lost.</description>
 		</item>
 		<item>
-			<title>three.ws now reads in 38 languages</title>
+			<title>three.ws now reads in 47 languages</title>
 			<link>https://three.ws/changelog</link>
-			<guid isPermaLink="false">2026-09-10:three.ws now reads in 38 languages</guid>
+			<guid isPermaLink="false">2026-09-10:three.ws now reads in 47 languages</guid>
 			<pubDate>Thu, 10 Sep 2026 12:00:00 GMT</pubDate>
 			<category>feature</category>
-			<description>The site has carried translated text for a long time, but the language picker only ever offered English and Spanish, so almost nobody could reach the rest. Every one of those catalogs has now been finished and checked: 38 languages, complete across all 600 pieces of text on the site, with nothing left sitting in English and nothing left half translated. Retired labels that no longer appear anywhere were cleared out at the same time, so no page shows a stale phrase in one language that it does not show in another. Pick a language from the switcher and the whole site follows, right to left languages included.</description>
+			<description>The site has carried translated text for a long time, but the language picker only ever offered English and Spanish, so almost nobody could reach the rest. Those catalogs are being finished and checked one at a time, and the switcher now offers 47 languages. Each one is complete across every piece of text on the site, close to twenty thousand phrases, with nothing left sitting in English and nothing left half translated. A language only appears in the switcher once its translation is finished, so anything you can pick is a language the whole site speaks. Retired labels that no longer appear anywhere were cleared out at the same time, so no page shows a stale phrase in one language that it does not show in another. Right to left languages are included.</description>
 		</item>
 		<item>
 			<title>Two scheduled jobs that had never once run are now running</title>
