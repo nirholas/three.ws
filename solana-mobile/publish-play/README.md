@@ -93,6 +93,23 @@ The icon at `../publish/media/icon.png` is already 512 x 512 and can be copied. 
 graphic must be regenerated at 1024 x 500 (the dApp Store one is the same size, so check it
 before rebuilding).
 
+**The feature graphic slot rejects transparency.** Play takes a JPEG or a 24-bit PNG with no
+alpha channel there, so `media/feature-1024x500.png` is flat on purpose and is the file that
+goes in the console. For the surfaces that do want the lockup over their own background, two
+transparent variants sit beside it:
+
+```bash
+node solana-mobile/scripts/make-media.mjs --target=play
+# media/feature-1024x500-alpha-on-dark.png    white type
+# media/feature-1024x500-alpha-on-light.png   dark type
+```
+
+Two of them, because ink cannot be transparent: a white wordmark over nothing disappears the
+moment it lands on a light ground, and nothing in the render warns you, since on a dark canvas
+it looks right. Pick the variant that matches the ground you are compositing over. Their
+tagline is read from `listing/short-description.txt`, so the artwork cannot claim something the
+store listing does not say.
+
 Every screenshot on this listing is generated, not hand-captured:
 
 ```bash

@@ -8,6 +8,14 @@
 // real Seeker device captures (see ../docs/ASSETS.md).
 //
 // Usage: node solana-mobile/scripts/make-media.mjs [agent-page-url]
+//        node solana-mobile/scripts/make-media.mjs --target=play
+//
+// The --target=play run writes ONE file, publish-play/media/feature-1024x500-alpha.png:
+// the brand lockup on a genuinely transparent ground, for surfaces that composite
+// it over their own background. It is deliberately NOT the Play upload. Play's
+// feature graphic slot takes a 24-bit PNG or JPEG with no alpha channel, so the
+// flattened feature-1024x500.png beside it is the file that goes in the console;
+// uploading an alpha PNG there is rejected at the form.
 
 import sharp from 'sharp';
 import { chromium } from 'playwright';
@@ -16,7 +24,8 @@ import { fileURLToPath } from 'node:url';
 import path from 'node:path';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
-const OUT = path.join(ROOT, 'solana-mobile/publish/media');
+const TARGET = process.argv.includes('--target=play') ? 'play' : 'dapp';
+const OUT = path.join(ROOT, TARGET === 'play' ? 'solana-mobile/publish-play/media' : 'solana-mobile/publish/media');
 const BG = '#080814';
 mkdirSync(OUT, { recursive: true });
 
@@ -32,12 +41,27 @@ async function writeAsset(name, buffer, width, height, note) {
   console.log(`[make-media] ${name}  ${width}x${height}  ${Math.round(buffer.length / 1024)} KB  (${note})`);
 }
 
-await writeAsset(
-  'icon.png',
-  await sharp(path.join(ROOT, 'public/pwa-512x512.png'))
-    .flatten({ background: BG }).resize(512, 512).removeAlpha().png({ compressionLevel: 9 }).toBuffer(),
-  512, 512, 'shipped app mark on the brand ground',
-);
+/** A store slot that wants transparency is the exception, so it gets its own
+    writer rather than a flag on the opaque one: the guards are opposites and a
+    shared writer would have to trust the caller to pick the right side. */
+async function writeAlphaAsset(name, buffer, width, height, note) {
+  const meta = await sharp(buffer).metadata();
+  if (meta.width !== width || meta.height !== height) {
+    throw new Error(`[make-media] ${name} is ${meta.width}x${meta.height}, expected ${width}x${height}`);
+  }
+  if (!meta.hasAlpha) throw new Error(`[make-media] ${name} has no alpha channel; a transparent asset that is opaque is a silent failure`);
+  await sharp(buffer).toFile(path.join(OUT, name));
+  console.log(`[make-media] ${name}  ${width}x${height}  ${Math.round(buffer.length / 1024)} KB  (${note})`);
+}
+
+if (TARGET === 'dapp') {
+  await writeAsset(
+    'icon.png',
+    await sharp(path.join(ROOT, 'public/pwa-512x512.png'))
+      .flatten({ background: BG }).resize(512, 512).removeAlpha().png({ compressionLevel: 9 }).toBuffer(),
+    512, 512, 'shipped app mark on the brand ground',
+  );
+}
 
 /* Banner: the brand lockup on the brand ground, drawn in a real browser against
    the same Space Grotesk and Inter files the site serves. An SVG rendered by
@@ -52,8 +76,11 @@ const FONT_FACES = [
 const MARK_URI = `data:image/png;base64,${readFileSync(path.join(ROOT, 'public/pwa-512x512.png')).toString('base64')}`;
 /* The banner says exactly what the listing's short description says, read from
    the same file, so the two can never drift. */
-const [TAGLINE_A, TAGLINE_B] = readFileSync(path.join(ROOT, 'solana-mobile/publish/listing/short-description.txt'), 'utf8')
-  .trim().split(/(?<=\.)\s+/);
+const SHORT_DESC = readFileSync(
+  path.join(ROOT, TARGET === 'play' ? 'solana-mobile/publish-play/listing/short-description.txt' : 'solana-mobile/publish/listing/short-description.txt'),
+  'utf8',
+).trim();
+const [TAGLINE_A, TAGLINE_B] = SHORT_DESC.split(/(?<=\.)\s+/);
 
 async function renderBanner(browser) {
   const page = await browser.newPage({ viewport: { width: 1200, height: 600 }, deviceScaleFactor: 1 });
@@ -120,13 +147,76 @@ h1{font-family:'Space Grotesk',sans-serif;font-weight:600;font-size:132px;
 
 // Default hero: first agent returned by the live marketplace API, so the
 // capture always reflects real, current product UI.
-let agentUrl = process.argv[2];
-if (!agentUrl) {
+let agentUrl = process.argv[2] === `--target=${TARGET}` ? undefined : process.argv[2];
+if (TARGET === 'dapp' && !agentUrl) {
   const res = await fetch('https://three.ws/api/marketplace/agents?limit=1');
   const body = await res.json();
   const first = body?.data?.items?.[0];
   if (!first) throw new Error('[make-media] marketplace API returned no agents to capture');
   agentUrl = `https://three.ws/agents/${first.id}`;
+}
+
+/**
+ * The feature graphic's lockup on a transparent ground.
+ *
+ * `omitBackground` is what makes the alpha real: the page paints no ground at
+ * all, so the PNG carries the mark, the wordmark and the tagline over nothing,
+ * and whatever composites it supplies its own background.
+ *
+ * Type colour cannot be transparent, which is the trap in every "just make it
+ * transparent" asset: a white wordmark over nothing is invisible the moment
+ * someone drops it on a light ground, and the render gives no warning because
+ * on the designer's dark canvas it looks perfect. So this renders twice, once
+ * per ink, and the caller picks by the ground it is compositing over.
+ */
+async function renderFeatureAlpha(browser, ink) {
+  const page = await browser.newPage({ viewport: { width: 1024, height: 500 }, deviceScaleFactor: 1 });
+  await page.setContent(`<!doctype html><meta charset="utf-8"><style>
+${FONT_FACES}
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{background:transparent}
+body{width:1024px;height:500px;overflow:hidden;display:flex;flex-direction:column;
+  align-items:center;justify-content:center;gap:34px;color:${ink.title};
+  font-family:'Inter',sans-serif;-webkit-font-smoothing:antialiased}
+.lockup{display:flex;align-items:center;gap:30px}
+.lockup img{width:132px;height:132px}
+h1{font-family:'Space Grotesk',sans-serif;font-weight:600;font-size:96px;
+  letter-spacing:-.045em;line-height:1}
+p{max-width:860px;text-align:center;font-size:29px;line-height:1.4;color:${ink.body}}
+</style><body>
+<div class="lockup"><img src="${MARK_URI}" alt=""><h1>three.ws</h1></div>
+<p>${SHORT_DESC}</p>
+</body>`, { waitUntil: 'load' });
+
+  const loaded = await page.evaluate(async () => {
+    await document.fonts.ready;
+    return document.fonts.check('600 96px "Space Grotesk"') && document.fonts.check('400 29px "Inter"');
+  });
+  if (!loaded) throw new Error('[make-media] brand fonts did not load; the feature graphic would render in a fallback face');
+
+  const shot = await page.screenshot({ type: 'png', omitBackground: true });
+  await page.close();
+  return shot;
+}
+
+const INKS = [
+  ['on-dark', { title: '#ffffff', body: '#9fb0d0' }, 'white type, for dark grounds'],
+  ['on-light', { title: '#0b0c1a', body: '#4a5570' }, 'dark type, for light grounds'],
+];
+
+if (TARGET === 'play') {
+  const browser = await chromium.launch({ args: ['--use-angle=swiftshader', '--enable-webgl'] });
+  const rendered = [];
+  try {
+    for (const [name, ink, note] of INKS) rendered.push([name, await renderFeatureAlpha(browser, ink), note]);
+  } finally {
+    await browser.close();
+  }
+  for (const [name, buf, note] of rendered) {
+    await writeAlphaAsset(`feature-1024x500-alpha-${name}.png`, buf, 1024, 500, `${note}, NOT the Play upload`);
+  }
+  console.log("[make-media] Play's feature graphic slot rejects alpha; upload the flattened feature-1024x500.png instead.");
+  process.exit(0);
 }
 
 const browser = await chromium.launch({ args: ['--use-angle=swiftshader', '--enable-webgl'] });
