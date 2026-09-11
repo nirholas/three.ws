@@ -1,11 +1,22 @@
 {
-	"generated_at": "2026-09-10T21:11:49.517Z",
+	"generated_at": "2026-09-11T01:21:22.327Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
 		"url": "https://three.ws"
 	},
 	"entries": [
+		{
+			"date": "2026-09-11",
+			"type": "update",
+			"title": "Selfie to avatar is unstuck: a scan that used to wait forever now finishes in seconds",
+			"summary": "Uploading a photo on the selfie page could sit on the same message indefinitely and never start the scan, with no error and nothing to retry. One copy of the face-tracking runtime held at our CDN was telling browsers to expect 11 MB and then sending a third of that, so the page waited for bytes that were never coming. That copy is gone, and three changes make the failure impossible to repeat silently: the face-tracking runtime now loads from three.ws first instead of a public CDN, any wait on it gives up after fifteen seconds and builds your avatar from the photo as it is, and a photo is never rejected for having no face in it just because the detector could not load. A new check also walks every large file on the site the way a browser asks for it and fails loudly when the bytes do not add up. Measured after the fix: a selfie became a rigged, animation-ready avatar in about fifteen seconds, and still finished in under a minute with the face-tracking runtime completely unreachable.",
+			"link": "/create/selfie",
+			"tags": [
+				"fix",
+				"infra"
+			]
+		},
 		{
 			"date": "2026-09-10",
 			"type": "launch",

@@ -4,6 +4,10 @@
 
 Public history for [three.ws](https://three.ws), newest first. New pages come from `added` dates in data/pages.json; everything else is curated in data/changelog.json. Also available as [JSON](https://three.ws/changelog.json) and [RSS](https://three.ws/changelog.xml), live at [three.ws/changelog](https://three.ws/changelog).
 
+## 2026-09-11
+
+- **Selfie to avatar is unstuck: a scan that used to wait forever now finishes in seconds**: Uploading a photo on the selfie page could sit on the same message indefinitely and never start the scan, with no error and nothing to retry. One copy of the face-tracking runtime held at our CDN was telling browsers to expect 11 MB and then sending a third of that, so the page waited for bytes that were never coming. That copy is gone, and three changes make the failure impossible to repeat silently: the face-tracking runtime now loads from three.ws first instead of a public CDN, any wait on it gives up after fifteen seconds and builds your avatar from the photo as it is, and a photo is never rejected for having no face in it just because the detector could not load. A new check also walks every large file on the site the way a browser asks for it and fails loudly when the bytes do not add up. Measured after the fix: a selfie became a rigged, animation-ready avatar in about fifteen seconds, and still finished in under a minute with the face-tracking runtime completely unreachable. (`/create/selfie`) `[fix, infra]`
+
 ## 2026-09-10
 
 - **Sonar Control** (`/sonar`): Control a 3D agent with your hands and no camera. three.ws plays an inaudible carrier tone through your speakers and reads the Doppler shift of your hand off the microphone, so a sweep, a push or a lift moves the avatar on screen.
