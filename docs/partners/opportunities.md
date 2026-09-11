@@ -44,7 +44,7 @@ work already done and is waiting on a single human step.
 | 2 | **IBM Agent Connect catalog listing** | Email `IBMAgentConnect@ibm.com` for the BYOL `APP_ID` | Everything else is built and verified ([submission pack](../../marketing/ibm-partner-plus/agent-connect-listing.md)). One email opens an IBM-backed enterprise channel. |
 | 3 | **AWS Marketplace** | Create the product in the AWS Marketplace Management Portal | The SaaS integration is built, deployed, and conformant. The listing was simply never created, so an enterprise procurement channel we already paid the engineering cost for returns nothing. |
 | 4 | **NVIDIA NGC Catalog** | One container build plus the partner legal agreement | The only NVIDIA directory with self-serve intake. The EULA prerequisite is already closed. |
-| 5 | **OpenAI Plugin Directory** | Submit | We already meet the gating requirement (public OAuth 2.1 MCP server). |
+| 5 | **OpenAI Plugin Directory** | Submit | We already meet the gating requirement (public OAuth 2.1 MCP server), and the output-quality blocker that held this back is closed: the forge quality gate measured **10/10 verdicts** on production 2026-09-11, up from 0/10 two days earlier. It was closed by fixing the vision failover chain, not by clearing the GCP billing hold. |
 | 6 | **Second IBM community event** | Pick a date | A fully costed proposal ([ibm-next-event.md](../ibm-next-event.md)) has been waiting on nothing but a calendar decision. Cheapest unblock on this page. |
 
 ---
