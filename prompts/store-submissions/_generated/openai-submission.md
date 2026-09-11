@@ -187,12 +187,12 @@ a separate surface, `api/_mcp-studio/component.js`; `/viewer` is the "open in a 
 | Field | Value |
 |-------|-------|
 | **App name** | **three.ws 3D Studio** |
-| **Tagline** | Turn a text prompt into a downloadable, animation-ready 3D model — free, inside ChatGPT. |
-| **Short description** | three.ws 3D Studio generates textured 3D models, avatars, and rigged characters from a text prompt (or a reference image) and renders each result inline in an interactive 3D viewer you can rotate, inspect, and download as a GLB. It can also auto-rig a static model into an animation-ready one. Free to use — no account, no key, no payment. |
+| **Tagline** | Turn a text prompt into a downloadable, animation-ready 3D model. Free, inside ChatGPT. |
+| **Short description** | three.ws 3D Studio generates textured 3D models, avatars, and rigged characters from a text prompt (or a reference image) and renders each result inline in an interactive 3D viewer you can rotate, inspect, and download as a GLB. It can also auto-rig a static model into an animation-ready one. Free to use: no account, no key, no payment. |
 | **Long description** | Describe anything ("a friendly round robot mascot," "a low-poly treasure chest," "a knight character I can animate") and three.ws 3D Studio builds a real, textured 3D model and shows it in an interactive viewer right in the conversation. Eleven tools cover the full path from idea to asset: generate a model from text, generate an avatar, generate an art-directed mesh, auto-rig a static model into an animation-ready one, generate-then-rig a character in a single step, refine an existing model by describing a change, collect a detailed model that took longer than one turn, look at a finished model from several angles to check the result, and save a rigged model as a persistent persona that can speak with lip-sync and emotion. Every result is a standard **GLB** you can download and drop into Blender, Unity, Unreal, three.js, or any glTF pipeline. Generation runs on three.ws's own free 3D lane, so there is nothing to sign up for and nothing to pay. Not natively possible in ChatGPT: turning language into a manipulable, downloadable 3D asset with an inline viewer. |
 | **Category** | Creativity & Design (secondary: Productivity) |
 | **Country availability** | All countries / Global (no geo-restriction; anonymous + free). |
-| **Age suitability** | Suitable for ages 13–17 (content-safety gate on every generation lane — §2.6). |
+| **Age suitability** | Suitable for ages 13 to 17 (content-safety gate on every generation lane, see §2.6). |
 | **App icon** | `_generated/assets/icon-512x512.png` (512×512, owned IP). |
 | **Support contact** | `support@three.ws` · `https://three.ws/support` (page live, HTTP 200, verified 2026-07-14; lists support/security/abuse channels) |
 | **Privacy policy URL** | `https://three.ws/legal/privacy` (live, HTTP 200, verified 2026-07-14; the studio collects no personal data, see §2.4) |
