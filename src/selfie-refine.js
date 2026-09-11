@@ -29,7 +29,7 @@
 
 import { GATES } from './selfie-gates.js';
 import { log } from './shared/log.js';
-import { loadVision, modelUrl, visionWasmBase } from './shared/mediapipe-assets.js';
+import { loadVision, modelUrl, visionWasmBase, withVisionDeadline } from './shared/mediapipe-assets.js';
 
 // MediaPipe tasks-vision — same pinned build the face stack uses, so the WASM
 // runtime is shared/cached across the landmarker and the segmenter.
@@ -184,7 +184,13 @@ export function assessPhotoQuality(m) {
 	const issues = [];
 	const shortEdge = Math.max(1, Math.min(m.width, m.height));
 
-	if (!m.faceCount) {
+	// A null count means the detector never loaded. That is not evidence about
+	// the photo, so the gate steps aside rather than telling someone their
+	// perfectly good selfie has no face in it. The reconstruction worker runs
+	// its own face pass and stays the authority either way.
+	const faceCountKnown = typeof m.faceCount === 'number';
+
+	if (faceCountKnown && !m.faceCount) {
 		return {
 			verdict: 'block',
 			issues: ['no-face'],
@@ -194,7 +200,7 @@ export function assessPhotoQuality(m) {
 		};
 	}
 
-	if (m.faceCount > 1) issues.push('multiple-faces');
+	if (faceCountKnown && m.faceCount > 1) issues.push('multiple-faces');
 
 	if (m.faceBox) {
 		const faceRel = m.faceBox.w / shortEdge;
@@ -340,7 +346,8 @@ async function loadSegmenter() {
 			outputConfidenceMasks: true,
 			outputCategoryMask: false,
 		});
-	})().catch((err) => {
+	})();
+	_segmenterPromise = withVisionDeadline(_segmenterPromise, 'selfie segmenter').catch((err) => {
 		_segmenterPromise = null; // allow a retry on the next photo
 		log.warn('[selfie-refine] segmenter load failed:', err);
 		return null;
@@ -361,7 +368,8 @@ async function loadFaceDetector() {
 			baseOptions: { modelAssetPath: FACE_DETECTOR_MODEL_URL, delegate: 'GPU' },
 			runningMode: 'IMAGE',
 		});
-	})().catch((err) => {
+	})();
+	_detectorPromise = withVisionDeadline(_detectorPromise, 'face detector').catch((err) => {
 		_detectorPromise = null;
 		log.warn('[selfie-refine] face detector load failed:', err);
 		return null;
@@ -441,7 +449,10 @@ function fitWithin(w, h, max) {
 export async function assessPhoto(bitmap) {
 	const { w, h } = dimsOf(bitmap);
 	try {
-		const face = await detectFaceBox(bitmap);
+		// Availability and result are separate answers: a detector that never
+		// loaded must not read as "this photo has no face in it".
+		const detector = await loadFaceDetector();
+		const face = detector ? await detectFaceBox(bitmap) : null;
 
 		// Sample at a small fixed size — quality metrics don't need full res and
 		// this keeps the per-pixel passes cheap.
@@ -478,7 +489,7 @@ export async function assessPhoto(bitmap) {
 		const assessment = assessPhotoQuality({
 			width: w,
 			height: h,
-			faceCount: face ? face.count : 0,
+			faceCount: detector ? (face ? face.count : 0) : null,
 			faceBox: faceBoxPx,
 			sharpness: laplacianVariance(grey, s.w, s.h),
 			flatness: flatnessScore(grey, s.w, s.h),

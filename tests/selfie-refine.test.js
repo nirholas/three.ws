@@ -87,6 +87,26 @@ describe('assessPhotoQuality', () => {
 		expect(r.primary).toBe('no-face');
 	});
 
+	it('does not block when the detector never loaded, since that says nothing about the photo', () => {
+		// null means "no detector", which is how the 2026-09-11 stall surfaced:
+		// with the face model unreachable, a perfectly good selfie was being told
+		// it had no face in it, and the reconstruction request was never sent.
+		const r = assessPhotoQuality({ ...sharpClearFace, faceCount: null, faceBox: null });
+		expect(r.verdict).not.toBe('block');
+		expect(r.issues).not.toContain('no-face');
+	});
+
+	it('does not flag multiple faces when the count is unknown', () => {
+		const r = assessPhotoQuality({ ...sharpClearFace, faceCount: null, faceBox: null });
+		expect(r.issues).not.toContain('multiple-faces');
+	});
+
+	it('still blocks a photo the detector really did examine and found no face in', () => {
+		const r = assessPhotoQuality({ ...sharpClearFace, faceCount: 0, faceBox: null });
+		expect(r.verdict).toBe('block');
+		expect(r.primary).toBe('no-face');
+	});
+
 	it('passes a sharp, well-framed real photo', () => {
 		const r = assessPhotoQuality(sharpClearFace);
 		expect(r.verdict).toBe('good');

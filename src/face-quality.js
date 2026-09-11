@@ -22,7 +22,7 @@
 
 import { SLOT_PRESETS, gradeFrame, grayFaceStats } from './selfie-gates.js';
 
-import { loadVision, modelUrl, visionWasmBase } from './shared/mediapipe-assets.js';
+import { loadVision, modelUrl, visionWasmBase, withVisionDeadline } from './shared/mediapipe-assets.js';
 // The tasks-vision module is a real dependency, so it ships in our bundle
 // instead of being pulled from a CDN at runtime; the WASM runtime and model come
 // from the shared resolver (our vendored copy first).
@@ -49,7 +49,8 @@ function loadLandmarker() {
 			runningMode: 'VIDEO',
 			numFaces: 1,
 		});
-	})().catch((err) => {
+	})();
+	_landmarkerPromise = withVisionDeadline(_landmarkerPromise, 'face landmarker').catch((err) => {
 		_landmarkerPromise = null;
 		throw err;
 	});
@@ -73,7 +74,8 @@ function loadImageLandmarker() {
 			numFaces: 1,
 			outputFaceBlendshapes: false,
 		});
-	})().catch((err) => {
+	})();
+	_imageLandmarkerPromise = withVisionDeadline(_imageLandmarkerPromise, 'image face landmarker').catch((err) => {
 		_imageLandmarkerPromise = null;
 		throw err;
 	});

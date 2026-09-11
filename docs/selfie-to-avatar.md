@@ -76,10 +76,48 @@ Request body: `name` (1-120, required), `photos` (1-6 image URLs or data URIs) *
 - **Bring your own key.** If no platform reconstruction backend is configured, the server returns `402 { code: 'regen_needs_byok', providers: ['meshy','tripo'] }` and the page shows a key-entry form. Meshy and Tripo run image-to-3D with your own API key; credit exhaustion surfaces as `402 insufficient_credits`.
 - **Single frame.** Despite "captures several angles automatically" in some copy, the scanner takes one manual still per slot; side angles are an optional manual add.
 - **Timing.** The build screen says "1-2 minutes"; polling gives up after 8 minutes, and a job still reported running 10 minutes after submit (possible when a pending job resumes across a reload) stops with a "taking unusually long" message pointing you to your dashboard, since the avatar may still finish server-side.
-- **Quality gating.** Only a frontal with no detectable face hard-blocks. Blur, illustrations, or multiple faces are surfaced as warnings you can proceed past.
+- **Quality gating.** Only a frontal with no detectable face hard-blocks. Blur, illustrations, or multiple faces are surfaced as warnings you can proceed past. If the face detector itself cannot load, the gate steps aside rather than blocking: an unavailable model is not evidence about your photo, and the worker runs its own face pass regardless.
+- **Vision models are on a deadline.** The client-side refinement pass (subject matte, reframe, face box) needs MediaPipe's 11 MB runtime plus a model file. Every wait on one is capped at 15 seconds (`withVisionDeadline` in [src/shared/mediapipe-assets.js](../src/shared/mediapipe-assets.js)); past that the raw photo is submitted and the reconstruction proceeds. Before that cap existed, an asset that never finished downloading left the page on "Processing your face..." indefinitely, with the reconstruction request never sent. The runtime is served from three.ws (`public/vendor/mediapipe/`) and only falls back to a public CDN when our own origin definitively lacks the file.
 - **Error handling.** Camera denial distinguishes `NotAllowedError` ("Camera access was denied... use Upload instead") from other failures. Job failures map to friendly messages (no face, content-safety flag, blur, service unavailable, timeout, out-of-memory). Poll tolerates up to 5 consecutive network errors with backoff before "Lost connection to the avatar engine." Rate limits (`429`) start a 60-second cooldown with a live countdown. Pending jobs resume across reloads.
 - **Output.** glTF 2.0 GLB with a Mixamo-standard humanoid rig, 52 ARKit blendshapes, and 15 visemes. Private avatars return a short-lived signed `url`; `model_url` is the public CDN URL once you make it public.
 - **Error copy.** The worker classifies a failure as either the caller's input or a service fault. An input rejection ("no face detected in any of the provided photos") or a plan refusal is relayed verbatim, and the status response carries `errorKind: 'input'` so the client shows that text as-is instead of rewriting an unrecognised message into generic "try a clearer photo" advice; a service fault is masked into neutral retry copy, because its raw text can carry a vendor name or an operator-only correlation id. Your visibility choice rides along to the Forge store, so a private capture never surfaces in a public gallery.
+
+## Verifying it end to end
+
+`npm run verify:selfie` drives the real page in a real browser: it uploads a
+photograph into the frontal slot, submits it, and follows the job until the
+avatar engine returns a GLB or fails. Nothing in it calls the API behind the
+page's back, so the capture gates, the reconstruct call, the poll loop and the
+viewer are all exercised the way a visitor exercises them.
+
+```bash
+npm run audit:web:login          # mint the QA session the reconstruct call needs
+npm run verify:selfie            # generates a portrait, runs the whole flow
+```
+
+Without `--photo` it generates one through the platform's own free text-to-image
+lane (`POST /api/v1/ai/image`, five free images per day per IP, no payment),
+because the reconstruction worker's only hard input rejection is a frame with no
+detectable face. Useful flags:
+
+| Flag | What it does |
+|---|---|
+| `--photo=<path>` | Use a photograph you already have instead of generating one |
+| `--origin=http://localhost:3000` | Run against a dev server; the QA session is replayed onto that origin and `/api` proxies to production |
+| `--stall-vision` | Hang every request for MediaPipe's runtime, to prove the flow still submits without it |
+| `--timeout=<ms>` | How long to wait for the build (default 10 minutes) |
+| `--out=<dir>` | Where screenshots and `run.json` land (default `scripts/.selfie-verify/`) |
+
+The run prints the pipeline's own event trail (`submit -> preview -> building ->
+progress -> done`), which is the fastest way to see where a failure happened: no
+`building` event means the reconstruction request was never sent, and the
+problem is in the browser rather than in the engine.
+
+`--stall-vision` is the regression harness for the 2026-09-11 stall. Measured
+with the vision runtime completely unreachable: the flow gives up on refinement
+after two 15-second deadlines, submits the unrefined photo, and still returns a
+rigged avatar (58 seconds end to end, against 12 seconds when the runtime loads
+normally).
 
 ## Related
 

@@ -2,6 +2,16 @@
 	"$comment": "Curated changelog entries for three.ws, the editorial layer of the public changelog. New PAGE launches are tracked automatically via the `added` field in data/pages.json; this file is for everything else holders care about: improvements, fixes, SDK releases, trading/payments capabilities, security work. scripts/build-page-index.mjs merges both sources into CHANGELOG.md, public/changelog.json, and public/changelog.xml. Newest first. Allowed tags: feature, improvement, fix, sdk, infra, docs, security. `link` is optional and must be a live three.ws path.",
 	"entries": [
 		{
+			"date": "2026-09-11",
+			"title": "Selfie to avatar is unstuck: a scan that used to wait forever now finishes in seconds",
+			"summary": "Uploading a photo on the selfie page could sit on the same message indefinitely and never start the scan, with no error and nothing to retry. One copy of the face-tracking runtime held at our CDN was telling browsers to expect 11 MB and then sending a third of that, so the page waited for bytes that were never coming. That copy is gone, and three changes make the failure impossible to repeat silently: the face-tracking runtime now loads from three.ws first instead of a public CDN, any wait on it gives up after fifteen seconds and builds your avatar from the photo as it is, and a photo is never rejected for having no face in it just because the detector could not load. A new check also walks every large file on the site the way a browser asks for it and fails loudly when the bytes do not add up. Measured after the fix: a selfie became a rigged, animation-ready avatar in about fifteen seconds, and still finished in under a minute with the face-tracking runtime completely unreachable.",
+			"tags": [
+				"fix",
+				"infra"
+			],
+			"link": "/create/selfie"
+		},
+		{
 			"date": "2026-09-10",
 			"title": "Fourteen paid endpoints now offer Solana first, matching what the catalog advertises",
 			"summary": "Agents that pay for a three.ws service are handed a list of chains they can settle on, and most clients simply take the first one. Fourteen of those endpoints were handing back Base first even though the public service catalog listed them as Solana, so an agent that read the catalog and then called the endpoint could end up paying on a different chain than the one it had picked. All fourteen now lead with Solana, which is the platform default the rest of the endpoints already followed, so the catalog and the live payment request finally agree. Nothing changes for anyone who deliberately settles on Base, which is still offered.",
