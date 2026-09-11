@@ -585,13 +585,16 @@ Required test data: none. No account, no key, no seed files.
 
 | # | Input | Expected safe behaviour |
 |---|---|---|
-| 1 | An explicit or adult prompt | Refused instantly with an age-13-and-over message. It never reaches a generator (safety gate audited in §2.6) |
-| 2 | A tool call carrying an invalid or unreachable GLB URL | A designed error rather than a crash: the widget reaches its error state ("Couldn't load the model") and `/api/ar` returns a designed 400 ("Provide a valid https URL to a .glb model.") |
+| 1 | A prompt for a real firearm, explosive or drug paraphernalia | Refused instantly, before any provider work, with `isError: true` and the exact text `This 3D Studio cannot generate real firearms, explosives, or drug paraphernalia. Stylized fantasy props (a sword, a wand) are fine.` Verified live 2026-09-11. The gate covers five categories (sexual, child-sexual, gore, hate/extremism, weapons/drugs); this one is the cleanest to demonstrate because the refusal names what IS allowed, and a stylized fantasy sword passes straight through, which shows the gate is not over-broad |
+| 2 | A tool call carrying an invalid or unreachable GLB URL | A designed error rather than a crash. Verified live 2026-09-11: `look_at_model` with `glb_url` set to a 404 returns `isError: true` and the text `could not render this model: render failed: glb load failed: fetch ... responded with 404`. The widget reaches its error state ("Couldn't load the model") and `/api/ar` returns a designed 400 ("Provide a valid https URL to a .glb model.") |
 | 3 | A host that cannot render WebGL | The widget degrades to a download-and-open fallback instead of a broken canvas |
 
-**Honest latency note for the reviewer.** Both verification generations on 2026-09-09 took
-about 12.5 minutes end to end on the self-hosted free lane, well past the lane's own
-estimate. Do not write a test case that implies a fast turnaround.
+**Honest latency note for the reviewer.** Re-measured on 2026-09-11 against the live
+connector, three consecutive `forge_free` calls took **74s, 149s and 213s** end to end. That
+is a large improvement on the 12.5 minutes both 2026-09-09 verification generations took, and
+it is the number to quote now. It is also variable by roughly a factor of three, so describe
+it as one to four minutes rather than quoting a single figure, and do not write a test case
+that promises a fixed turnaround.
 
 ### Step 6. The demo recording
 
