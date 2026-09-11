@@ -88,6 +88,8 @@ Play's sizes are not the dApp Store's, so `../publish/media/` cannot be reused a
 | Phone screenshots | 2 to 8, between 320 px and 3840 px on each side, 16:9 or 9:16 | yes |
 | 10-inch tablet screenshots | up to 8, between 1080 px and 7680 px on each side | optional, and Play ranks listings that have them higher |
 | 7-inch tablet screenshots | up to 8, between 320 px and 3840 px on each side | same |
+| Chromebook screenshots | 4 to 8, between 1080 px and 7680 px on each side | optional |
+| Android XR screenshots | 4 to 8, between 720 px and 7680 px on each side | optional |
 
 The icon at `../publish/media/icon.png` is already 512 x 512 and can be copied. The feature
 graphic must be regenerated at 1024 x 500 (the dApp Store one is the same size, so check it
@@ -113,9 +115,16 @@ store listing does not say.
 Every screenshot on this listing is generated, not hand-captured:
 
 ```bash
-node solana-mobile/scripts/make-screenshots.mjs --target=play         # media/phone/screen-1..5.png at 1080x1920
-node solana-mobile/scripts/make-screenshots.mjs --target=play-tablet  # media/tablet/{10-inch,7-inch}/screen-1..5.png
+node solana-mobile/scripts/make-screenshots.mjs --target=play           # media/phone/screen-1..5.png at 1080x1920
+node solana-mobile/scripts/make-screenshots.mjs --target=play-tablet    # media/tablet/{10-inch,7-inch}/screen-1..5.png
+node solana-mobile/scripts/make-screenshots.mjs --target=play-landscape # media/landscape/screen-1..5.png at 2560x1440
 ```
+
+The landscape set fills BOTH the Chromebook and the Android XR slot: same 16:9, same app on a
+flat surface, and 2560x1440 clears both floors, so the same five files are uploaded twice
+rather than rendered twice. Nothing in them draws headset chrome or a fabricated room. An
+Android app on XR is a flat panel floating in the user's space, and inventing an immersive
+frame for it would misrepresent the app to a reviewer who owns the hardware.
 
 Both targets capture the live site, compose the five panels as one continuous strip, and slice
 it, so the uploads read as one photograph of a shelf of devices rather than five unrelated

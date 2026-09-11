@@ -20,6 +20,7 @@
  *   node solana-mobile/scripts/make-screenshots.mjs                        # dApp Store panels
  *   node solana-mobile/scripts/make-screenshots.mjs --target=play           # Google Play phone panels
  *   node solana-mobile/scripts/make-screenshots.mjs --target=play-tablet    # Play 10-inch + 7-inch panels
+ *   node solana-mobile/scripts/make-screenshots.mjs --target=play-landscape # Play Chromebook AND Android XR panels, 2560x1440
  *   node solana-mobile/scripts/make-screenshots.mjs --origin=http://localhost:3000
  *   node solana-mobile/scripts/make-screenshots.mjs --keep-raw   # also write the raw captures
  */
@@ -47,6 +48,12 @@ const MEDIA_DIRS = {
   dapp: 'solana-mobile/publish/media',
   play: 'solana-mobile/publish-play/media/phone',
   'play-tablet': 'solana-mobile/publish-play/media/tablet',
+  /* Chromebook and Android XR get ONE set of files, not two identical ones.
+     Both slots take 16:9, both are the same app on a flat landscape surface,
+     and 2560x1440 clears both floors (1080 px per side for Chromebook, 720 for
+     XR), so rendering twice would commit five duplicate megabytes to say the
+     same thing. Upload these five to both slots. */
+  'play-landscape': 'solana-mobile/publish-play/media/landscape',
 };
 if (!MEDIA_DIRS[TARGET]) throw new Error(`--target must be one of ${Object.keys(MEDIA_DIRS).join(', ')}; got ${TARGET}`);
 /* The tablet strip is the Play strip in a tablet's clothes: same five stories,
@@ -54,7 +61,15 @@ if (!MEDIA_DIRS[TARGET]) throw new Error(`--target must be one of ${Object.keys(
    viewport, which is a different composition from the phone one and the whole
    reason Play asks for the upload separately. */
 const IS_TABLET = TARGET === 'play-tablet';
-const IS_PLAY = TARGET === 'play' || IS_TABLET;
+/* Chromebook and Android XR are the two landscape slots. They share a target
+   because they are the same honest claim: a TWA on ChromeOS is a browser window
+   and on Android XR it is a flat panel floating in the room, and in both the
+   user is looking at the desktop layout of three.ws, not a phone one. Nothing
+   here draws headset chrome or a fake room: inventing an immersive frame for an
+   app that renders a 2D panel would misrepresent the experience to a reviewer
+   who owns the hardware. */
+const IS_LANDSCAPE = TARGET === 'play-landscape';
+const IS_PLAY = TARGET === 'play' || IS_TABLET || IS_LANDSCAPE;
 const MEDIA = path.join(ROOT, MEDIA_DIRS[TARGET]);
 const DEVICE = path.join(MEDIA, 'device');
 const RAW = path.join(MEDIA, 'raw');
@@ -63,8 +78,11 @@ const RAW = path.join(MEDIA, 'raw');
     9:16 at 1440x2560, which is the smallest size clearing Play's 1,080 px
     minimum on BOTH sides of a 10-inch shot and still downscales exactly to the
     1260x2240 the 7-inch upload takes. */
-const W = IS_TABLET ? 1440 : 1080;
-const H = IS_TABLET ? 2560 : 1920;
+/* The landscape slots take 16:9 with every side inside Play's window: 1080 to
+   7680 px for Chromebook, 720 to 7680 for XR. 2560x1440 satisfies both, so one
+   composition fills both slots. */
+const W = IS_LANDSCAPE ? 2560 : IS_TABLET ? 1440 : 1080;
+const H = IS_LANDSCAPE ? 1440 : IS_TABLET ? 2560 : 1920;
 const COUNT = 5;
 const BG = '#080814';
 /* Every composition constant below was tuned against the 1080 px phone panel,
@@ -72,7 +90,7 @@ const BG = '#080814';
    radii are the one thing that does not scale linearly: a tablet's corners are
    tighter relative to its body than a phone's, so scaling 54 px straight up
    would draw a comically rounded slab. */
-const S = W / 1080;
+const S = IS_LANDSCAPE ? 1 : W / 1080;
 const px = (n) => Math.round(n * S);
 const rad = (n) => Math.round(n * S * (IS_TABLET ? 0.6 : 1));
 
@@ -80,8 +98,10 @@ const rad = (n) => Math.round(n * S * (IS_TABLET ? 0.6 : 1));
    2.5x device pixel ratio yields exactly 1080x1920 of real product UI. A tablet
    frame holds the tablet layout instead: 768x1024 CSS is what Android reports
    for a 10-inch portrait viewport, and 2x gives a 1536x2048 capture. */
-const SHOT_CSS = IS_TABLET ? { width: 768, height: 1024 } : { width: 432, height: 768 };
-const SHOT_DPR = IS_TABLET ? 2 : 2.5;
+const SHOT_CSS = IS_LANDSCAPE ? { width: 1280, height: 800 }
+  : IS_TABLET ? { width: 768, height: 1024 }
+  : { width: 432, height: 768 };
+const SHOT_DPR = IS_TABLET || IS_LANDSCAPE ? 2 : 2.5;
 const SHOT_W = SHOT_CSS.width * SHOT_DPR;
 const SHOT_H = SHOT_CSS.height * SHOT_DPR;
 
@@ -171,6 +191,7 @@ const PLAY_PANELS = [
        these uploads only to tablet users; a headline promising "on your phone"
        there is the listing telling the reader it was not made for them. */
     tabletTitle: 'Real 3D,\non your tablet',
+    wideTitle: 'Real 3D,\nin the browser',
     sub: 'Rigged, animated glTF in your hand. Not a video, not a pre-rendered clip.',
   },
   {
@@ -301,9 +322,16 @@ async function sourceShot(ctx, spec) {
   if (meta.width !== SHOT_W || meta.height !== SHOT_H) {
     throw new Error(`[screenshots] capture of ${url} is ${meta.width}x${meta.height}, expected ${SHOT_W}x${SHOT_H}`);
   }
-  const means = (await sharp(buf).stats()).channels.map((c) => c.mean);
-  if (means.every((m) => m < 6)) {
-    throw new Error(`[screenshots] capture of ${url} is effectively blank (channel means ${means.map((m) => m.toFixed(1)).join(',')})`);
+  /* A blank capture is a FLAT one, not a dark one. Mean brightness was the old
+     test and it fails the moment the viewport widens: three.ws is dark-themed,
+     so the same page that means 15 at a 432 px phone width means 4.5 at 1280 px
+     simply because proportionally less of the frame carries ink, and a
+     perfectly good desktop capture got thrown out as empty. Standard deviation
+     asks the question that was always meant: does this image have structure?
+     Real captures land near 30 to 38; a uniform fill of any colour is 0. */
+  const stdev = (await sharp(buf).stats()).channels.map((c) => c.stdev);
+  if (stdev.every((d) => d < 3)) {
+    throw new Error(`[screenshots] capture of ${url} is effectively blank (channel stdev ${stdev.map((d) => d.toFixed(1)).join(',')})`);
   }
   console.log(`[screenshots] ${label}: live capture ${url}`);
   return buf;
@@ -318,6 +346,94 @@ const HERO_W = Math.round(W * (IS_TABLET ? 0.76 : 0.611));
 const HERO_CY = IS_TABLET ? 1700 : 1258;
 const SEAM_W = Math.round(W * (IS_TABLET ? 0.47 : 0.398));
 const SEAM_CY = IS_TABLET ? 1460 : 1074;
+
+/** A panel whose headline names the hardware needs one line per form factor, or
+    it tells the reader the listing was written for somebody else's device. */
+function panelTitle(spec) {
+  if (IS_LANDSCAPE && spec.wideTitle) return spec.wideTitle;
+  if (IS_TABLET && spec.tabletTitle) return spec.tabletTitle;
+  return spec.title;
+}
+
+/**
+ * The landscape panels, for the Chromebook and Android XR slots.
+ *
+ * A 16:9 panel cannot use the portrait shelf: a phone standing in the middle of
+ * a wide frame leaves two dead columns. So each panel reads left to right, the
+ * headline holding the left third and the screen filling the right.
+ *
+ * Unlike the portrait strip these are NOT sliced out of one wide render, and
+ * that is not a style choice. Five 2560 px panels make a 12800 px page, and
+ * Chromium clamps a viewport near 8192, so the far end of such a strip comes
+ * back as repeated content rather than the panels that were laid out there: the
+ * first attempt produced a fifth panel holding the first panel's artwork. Each
+ * panel therefore renders at its own 2560x1440 viewport with the FULL-width
+ * background shifted left underneath it, so the glow, the beam and the floor
+ * still run unbroken across all five uploads while no single render ever
+ * exceeds what the browser will draw.
+ */
+async function composeLandscapePanels(browser, heroShots) {
+  const stripW = W * COUNT;
+  /* The screen sits fully inside its panel. Bleeding it off the right edge put
+     it on top of the NEXT panel's headline, which is only invisible while the
+     strip is viewed whole and is the first thing a reader sees once Play shows
+     the panels one at a time. */
+  const screenW = 1560;
+  const screenX = 910;
+  const page = await browser.newPage({ viewport: { width: W, height: H }, deviceScaleFactor: 1 });
+  const out = [];
+
+  for (const [i, buf] of heroShots.entries()) {
+    await page.setContent(`<!doctype html><meta charset="utf-8"><style>
+${FONT_FACES}
+*{margin:0;padding:0;box-sizing:border-box}
+body{width:${W}px;height:${H}px;background:${BG};color:#fff;overflow:hidden;position:relative;
+  font-family:'Inter',sans-serif;-webkit-font-smoothing:antialiased}
+/* One background for all five panels, slid into place for this one. */
+.strip{position:absolute;top:0;left:${-W * i}px;width:${stripW}px;height:${H}px}
+.glow{position:absolute;inset:0;
+  background:
+    radial-gradient(30% 62% at 5% 22%, rgba(96,140,255,.30), transparent 70%),
+    radial-gradient(26% 58% at 28% 80%, rgba(150,90,255,.24), transparent 72%),
+    radial-gradient(32% 66% at 56% 16%, rgba(64,196,255,.22), transparent 70%),
+    radial-gradient(26% 60% at 80% 76%, rgba(120,110,255,.26), transparent 72%),
+    linear-gradient(180deg, #0a0a1c 0%, #080814 60%, #06060f 100%)}
+.beam{position:absolute;left:-4%;right:-4%;top:30%;height:520px;transform:rotate(-2.2deg);
+  background:linear-gradient(90deg, transparent, rgba(150,200,255,.14) 16%, rgba(190,220,255,.24) 50%, rgba(150,200,255,.14) 84%, transparent);
+  filter:blur(90px)}
+.floor{position:absolute;left:0;right:0;bottom:0;height:460px;
+  background:linear-gradient(180deg, transparent, rgba(4,5,16,.78))}
+header{position:absolute;top:50%;transform:translateY(-50%);width:900px;padding:0 130px}
+h2{font-family:'Space Grotesk',sans-serif;font-weight:600;font-size:88px;line-height:1.05;
+  letter-spacing:-.035em}
+header p{margin-top:32px;font-size:34px;line-height:1.45;color:#93a4c6}
+.screen{position:absolute;top:50%;left:${screenX}px;width:${screenW}px;
+  transform:translateY(-50%) rotate(${i % 2 ? -1.2 : 1.2}deg);
+  border-radius:30px;padding:16px;background:linear-gradient(160deg,#2f3350,#12131f 58%,#262a40);
+  box-shadow:0 60px 170px rgba(3,4,14,.84), 0 0 0 1px rgba(255,255,255,.07) inset}
+.screen img{display:block;width:100%;border-radius:16px;background:${BG}}
+.lockup{position:absolute;left:130px;bottom:90px;display:flex;align-items:center;gap:22px}
+.lockup img{width:72px;height:72px;border-radius:19px}
+.lockup span{font-family:'Space Grotesk',sans-serif;font-weight:600;font-size:46px;letter-spacing:-.045em}
+</style><body>
+<div class="strip"><div class="glow"></div><div class="beam"></div><div class="floor"></div></div>
+<header><h2>${panelTitle(PANELS[i]).replace(/\n/g, '<br>')}</h2><p>${PANELS[i].sub}</p></header>
+<div class="screen"><img src="data:image/png;base64,${buf.toString('base64')}" alt=""></div>
+${i === 0 ? `<div class="lockup"><img src="${MARK_URI}" alt=""><span>three.ws</span></div>` : ''}
+</body>`, { waitUntil: 'load' });
+
+    const loaded = await page.evaluate(async () => {
+      await document.fonts.ready;
+      return document.fonts.check('600 88px "Space Grotesk"') && document.fonts.check('400 34px "Inter"');
+    });
+    if (!loaded) throw new Error('[screenshots] brand fonts did not load; the panel would render in a fallback face');
+
+    out.push(await page.screenshot({ type: 'png' }));
+  }
+
+  await page.close();
+  return out;
+}
 
 /**
  * Draw the whole strip in one browser page, then slice it into store panels.
@@ -340,7 +456,7 @@ async function composeStrip(browser, heroShots, seamShots) {
     </div>`).join('');
 
   const headers = PANELS.map((s, i) => `<header style="left:${W * i}px">
-      <h2>${((IS_TABLET && s.tabletTitle) || s.title).replace(/\n/g, '<br>')}</h2>
+      <h2>${panelTitle(s).replace(/\n/g, '<br>')}</h2>
       <p>${s.sub}</p>
     </header>`).join('');
 
@@ -412,32 +528,38 @@ try {
   const ctx = await browser.newContext({
     viewport: SHOT_CSS,
     deviceScaleFactor: SHOT_DPR,
-    isMobile: !IS_TABLET,
+    isMobile: !IS_TABLET && !IS_LANDSCAPE,
     hasTouch: true,
     /* Holds every entrance transition and the avatar turntable still, so the
        same page captured twice yields the same frame. */
     reducedMotion: 'reduce',
-    userAgent: IS_TABLET
+    userAgent: IS_LANDSCAPE
+      ? 'Mozilla/5.0 (X11; CrOS x86_64 14541.0.0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36'
+      : IS_TABLET
       ? 'Mozilla/5.0 (Linux; Android 14; Pixel Tablet) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36'
       : `Mozilla/5.0 (Linux; Android 14; ${TARGET === 'play' ? 'Pixel 8' : 'Seeker'}) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Mobile Safari/537.36`,
   });
   const heroShots = [];
   for (const spec of PANELS) heroShots.push(await sourceShot(ctx, spec));
+  /* A landscape panel has no seam devices: the screen already bleeds off the
+     edge, so there is no dead column for a half-device to fill. */
   const seamShots = [];
-  for (const spec of SEAMS) seamShots.push(await sourceShot(ctx, spec));
+  if (!IS_LANDSCAPE) for (const spec of SEAMS) seamShots.push(await sourceShot(ctx, spec));
   await ctx.close();
 
   if (args['keep-raw']) console.log(`[screenshots] raw captures written to ${path.relative(ROOT, RAW)}/`);
 
-  strip = await composeStrip(browser, heroShots, seamShots);
+  strip = IS_LANDSCAPE
+    ? await composeLandscapePanels(browser, heroShots)
+    : await composeStrip(browser, heroShots, seamShots);
 } finally {
   await browser.close();
 }
 
-writeFileSync(path.join(MEDIA, 'carousel.png'), strip);
+if (!IS_LANDSCAPE) writeFileSync(path.join(MEDIA, 'carousel.png'), strip);
 for (const [i, spec] of PANELS.entries()) {
-  const panel = await sharp(strip)
-    .extract({ left: i * W, top: 0, width: W, height: H })
+  const panel = await sharp(IS_LANDSCAPE ? strip[i] : strip)
+    .extract(IS_LANDSCAPE ? { left: 0, top: 0, width: W, height: H } : { left: i * W, top: 0, width: W, height: H })
     .flatten({ background: BG })
     .removeAlpha()
     .png({ compressionLevel: 9 })
@@ -466,4 +588,8 @@ for (const [i, spec] of PANELS.entries()) {
   await sharp(panel).toFile(path.join(MEDIA, spec.file));
   console.log(`[screenshots] ${spec.file}  ${W}x${H}  ${Math.round(panel.length / 1024)} KB`);
 }
-console.log(`[screenshots] full strip: ${path.relative(ROOT, path.join(MEDIA, 'carousel.png'))} (${W * COUNT}x${H}, upload the panels, not this)`);
+if (!IS_LANDSCAPE) {
+  console.log(`[screenshots] full strip: ${path.relative(ROOT, path.join(MEDIA, 'carousel.png'))} (${W * COUNT}x${H}, upload the panels, not this)`);
+} else {
+  console.log('[screenshots] upload these five to BOTH the Chromebook and the Android XR slot.');
+}
