@@ -12,11 +12,32 @@ fix is deployed and re-verified, the remaining step is the owner's final submit 
 
 ---
 
-## 0. Submission verdict: NOT READY (one owner-gated dependency, re-measured 2026-09-09)
+## 0. Submission verdict: READY (B3 closed on measurement, 2026-09-11)
 
 **Every connector, manifest, widget and Actions surface re-verified live on 2026-09-09 and all
-pass** (see the §7 checklist). Submission is held on one product defect, not a protocol one, and
-the picture is materially better than it was on 2026-09-02:
+pass** (see the §7 checklist), and **B3, the last blocker, closed on 2026-09-11**.
+
+**B3 is closed, and NOT by clearing the GCP billing hold.** Measured on 2026-09-11 against live
+revision `three-ws-api-00424-5p4`: ten consecutive authenticated calls to
+`/api/forge-quality-check` returned **10 real verdicts out of 10** (`provider: nvidia`,
+`qa_available: true`). The same probe returned 3/10 on 2026-09-10 and 0/10 on 2026-09-09. The gate
+no longer fails open in normal operation, so a flagged slab is scored rather than shipped
+unexamined.
+
+It closed because the vision failover chain was repaired, not because Vertex came back:
+
+- Parseable JSON became part of the chain's success test instead of a filter applied after a
+  winner was already chosen, so a provider that answers `200` with prose or an empty body now
+  fails that lane and the walk continues.
+- The per-lane time budget stopped being divided equally across every remaining rung, which had
+  been starving the one healthy provider as the chain grew.
+- A billing-denied Vertex is parked by a circuit breaker instead of being re-probed on every call.
+- The chain widened from four providers to ten, all free.
+
+**Vertex is still refused project-wide on the billing hold.** It no longer decides the outcome.
+Clearing the hold remains worth doing and is no longer a submission dependency.
+
+The historical record of the blocker, for anyone auditing how it was closed:
 
 | # | Blocker | State measured 2026-09-09 |
 |---|---------|---------------------------|
@@ -468,12 +489,13 @@ curl -s -X POST https://three.ws/api/mcp-studio -H 'content-type: application/js
 
 ## 7. Pre-submit checklist
 
-- [ ] **B3** narrowed to one owner-gated dependency (§0). The cheap-scorer fix is **deployed and
-      re-measured on 2026-09-09**: 40 consecutive production generations gave 4 planar flags, 4 of 4
-      escalating to vision QA. The gate fails open when no vision provider answers, and Vertex is still
-      refused project-wide (`403 Lightning dunning decision is deny for project`), so escalation is only
-      as reliable as the free fallback rung. `[HUMAN: clear the GCP billing hold]`, then one clean
-      confirming generation.
+- [x] **B3** cleared (§0). The cheap-scorer half was deployed and re-measured on 2026-09-09: 40
+      consecutive production generations gave 4 planar flags, 4 of 4 escalating to vision QA. The
+      vision half closed on 2026-09-11, measured against revision `three-ws-api-00424-5p4`: ten
+      consecutive authenticated `/api/forge-quality-check` calls returned 10/10 real verdicts, against
+      3/10 the day before and 0/10 the day before that. The chain was repaired and widened from four
+      providers to ten rather than waiting on the GCP billing hold, which is still in place and no
+      longer decides the outcome.
 - [x] **B1** cleared: `tools/call forge_free` returns 200 with a GLB (re-verified live 2026-09-09: HTTP 200
       in 137s, real 5,402,572-byte `model/gltf-binary`, keyless, scored 0.976 by the cheap gate with no
       planar signal; verbatim response saved to `_generated/live-call-forge_free.json`).
