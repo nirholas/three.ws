@@ -634,6 +634,114 @@ listing is actually public.
 
 ---
 
+## 9. Tool justifications (the MCP step's annotation panel)
+
+The portal asks, for every tool, why each explicit annotation value is accurate, "in enough
+detail for us to confirm it doesn't misrepresent what the tool does". Eleven tools times three
+annotations, plus one frame-domains justification.
+
+Every justification below is derived from the annotation constants in the source rather than
+written to sound good: `GEN_ANNOTATIONS` in [`api/_mcp-studio/tools.js`](../../../api/_mcp-studio/tools.js)
+and `CREATE_ANNOTATIONS` / `READ_ANNOTATIONS` / `SAY_ANNOTATIONS` in
+[`api/_mcp-studio/persona-tools.js`](../../../api/_mcp-studio/persona-tools.js), each of which
+already carries its own one-line rationale comment. If an annotation changes, change it there
+first and re-derive this section; a justification that no longer matches the served annotation
+is the exact misrepresentation the panel exists to catch.
+
+### Group A: the six generation tools
+
+`forge_free`, `text_to_avatar`, `mesh_forge`, `rig_mesh`, `forge_avatar`, `refine_model`.
+Identical annotations, so the same three answers apply to all six.
+
+**Read Only is False.** The call creates a new hosted asset. Each invocation runs a generation
+and writes a new GLB to our object storage, then returns its URL. The call has a real side
+effect (a stored file, and the compute spent producing it), so marking it read-only would
+understate what it does.
+
+**Open World is True.** The work runs against external model providers rather than a bounded
+dataset we own. Results depend on third-party inference services, and the same prompt
+legitimately yields a different mesh on different calls, so the tool's effects are not confined
+to a closed, predictable domain.
+
+**Destructive is False.** The tool only ever adds. It writes a new asset and never modifies,
+overwrites or deletes anything. This holds for the two tools that take an existing model as
+input: `rig_mesh` and `refine_model` read the source and emit a separate new GLB, leaving the
+original untouched and still addressable at its original URL.
+
+### Group B: the two generation-side read tools
+
+**`check_job` - Read Only is True.** A status probe. It looks up an existing job by id and
+reports its state. It creates nothing and changes nothing.
+
+**`check_job` - Open World is True.** The job it reports on is executing on external model
+providers, so the status reflects third-party systems outside our control rather than a closed
+internal dataset.
+
+**`check_job` - Destructive is False.** It reads job state only. Nothing is written, modified or
+removed.
+
+**`look_at_model` - Read Only is True.** It renders views of a model that already exists and
+returns images. It creates no new stored asset and modifies nothing.
+
+**`look_at_model` - Open World is True.** It accepts an arbitrary public GLB URL, so it fetches
+from hosts outside our own domain and its result depends on that external resource.
+
+**`look_at_model` - Destructive is False.** It only reads the supplied model in order to render
+it. The source file is never modified or deleted.
+
+### Group C: the three persona tools
+
+**`create_agent_persona` - Read Only is False.** It saves a new persona record, a persistent
+body tied to a rigged model, so the call has a durable side effect.
+
+**`create_agent_persona` - Open World is True.** Creating the persona involves external model
+and speech providers, and it accepts a model URL that may be hosted outside our domain.
+
+**`create_agent_persona` - Destructive is False.** It only creates. Existing personas and models
+are never modified or deleted.
+
+**`get_agent_persona` - Read Only is True.** A pure read. It looks up an existing persona by id
+and returns its configuration. Nothing is created or changed.
+
+**`get_agent_persona` - Open World is False.** It reads only our own stored persona records. No
+external provider is contacted, and the result is fully determined by data we hold.
+
+**`get_agent_persona` - Destructive is False.** A read-only lookup. Nothing is written or
+removed.
+
+**`persona_say` - Read Only is False.** It is a render directive that also increments the
+persona's turn counter, which is a write to our stored state.
+
+**`persona_say` - Open World is False.** It acts only on a persona we already store and renders
+through our own embed. It does not reach outside our own systems.
+
+**`persona_say` - Destructive is False.** It appends a turn and updates a counter. It never
+deletes or overwrites the persona's configuration or its model.
+
+### Frame Domains
+
+Only the three persona tools declare `frame_domains`, and the single declared origin is
+`https://three.ws`.
+
+> The three persona tools render a living agent body: an interactive WebGL avatar that speaks
+> with lip-synced facial animation. It is framed from https://three.ws, our own verified domain
+> and the same origin that serves this MCP connector. No third-party origin is framed. An
+> iframe is used because the embodiment surface needs a real-time WebGL canvas driving 52
+> facial blendshapes alongside synchronised audio, which cannot be expressed as static inline
+> content. The framed page is first-party, carries no advertising and no third-party scripts
+> beyond the pinned CDN entries already declared in the CSP metadata, and exposes no payment,
+> login or account surface. The eight tools that do not need it declare no frame_domains at
+> all.
+
+### The outputSchema nudge
+
+The panel flags "Recommended: Add an outputSchema" on every tool. It is a recommendation, not a
+requirement, and it does not block submission. Worth doing in a later version: every tool
+already returns a consistent `structuredContent` shape, so the schemas are a description of
+existing behaviour rather than new work.
+
+---
+
 ## 7. Pre-submit checklist
 
 - [x] **B3** cleared (§0). The cheap-scorer half was deployed and re-measured on 2026-09-09: 40
