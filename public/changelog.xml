@@ -15,6 +15,14 @@
 			<description>Uploading a photo on the selfie page could sit on the same message indefinitely and never start the scan, with no error and nothing to retry. One copy of the face-tracking runtime held at our CDN was telling browsers to expect 11 MB and then sending a third of that, so the page waited for bytes that were never coming. That copy is gone, and three changes make the failure impossible to repeat silently: the face-tracking runtime now loads from three.ws first instead of a public CDN, any wait on it gives up after fifteen seconds and builds your avatar from the photo as it is, and a photo is never rejected for having no face in it just because the detector could not load. A new check also walks every large file on the site the way a browser asks for it and fails loudly when the bytes do not add up. Measured after the fix: a selfie became a rigged, animation-ready avatar in about fifteen seconds, and still finished in under a minute with the face-tracking runtime completely unreachable.</description>
 		</item>
 		<item>
+			<title>Your selfie avatar now survives a storage outage instead of vanishing at the last step</title>
+			<link>https://three.ws/create/selfie</link>
+			<guid isPermaLink="false">2026-09-11:Your selfie avatar now survives a storage outage instead of vanishing at the last step</guid>
+			<pubDate>Fri, 11 Sep 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>For part of today, a selfie could finish building and then be thrown away. The 3D model was generated correctly, but the step that files it into your library could not reach our object storage, so the page said the avatar finished and could not be saved, and trying again hit the same wall. The avatar was never actually lost: a complete copy sits with the service that built it. The last step now recognises a storage outage for what it is and keeps your avatar, serving it from that copy and flagging it to be filed away properly once storage is back, so a problem on our side costs a housekeeping step instead of the model you waited for. Anything that is not a storage outage still fails loudly rather than quietly papering over a real bug. The image API for agents also now answers with a clear temporarily unavailable instead of a generic failure, so it no longer reads as a bad prompt when nothing was wrong with the prompt.</description>
+		</item>
+		<item>
 			<title>Sonar Control</title>
 			<link>https://three.ws/sonar</link>
 			<guid isPermaLink="false">2026-09-10:Sonar Control</guid>
