@@ -1,6 +1,6 @@
 {
   "name": "@three-ws/react",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "React components for embedding three.ws 3D AI agents",
   "main": "dist/index.cjs",
   "module": "dist/index.mjs",

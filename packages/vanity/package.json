@@ -1,6 +1,6 @@
 {
   "name": "@three-ws/vanity",
-  "version": "0.1.2",
+  "version": "0.1.3",
   "description": "Mine Solana vanity addresses (custom prefix/suffix) locally in Node or the browser. Zero-dependency grind() over the platform's native Ed25519, with progress, difficulty/ETA, and a paid x402 fallback.",
   "type": "module",
   "main": "./src/index.js",

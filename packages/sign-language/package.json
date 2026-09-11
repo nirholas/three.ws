@@ -1,6 +1,6 @@
 {
 	"name": "@three-ws/sign-language",
-	"version": "0.1.0",
+	"version": "0.1.1",
 	"description": "American Sign Language for 3D avatars. Compile text into one continuous signed animation clip: known words sign from a lexicon of anatomically described signs, everything else fingerspells, with contact solving and non-manual facial markers. Zero runtime dependencies.",
 	"keywords": [
 		"asl",

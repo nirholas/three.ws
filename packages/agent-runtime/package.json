@@ -1,6 +1,6 @@
 {
   "name": "@three-ws/agent-runtime",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "The three.ws agent engine: a plan/execute decision loop with human-approval gates, a seven-layer GuardChain (security blacklist, intervention, capability, permission, trade guard, spend envelope, x402 budget), a tamper-evident hash-chained action ledger, and a multi-step transaction pipeline with rollback.",
   "type": "module",
   "main": "./src/index.js",

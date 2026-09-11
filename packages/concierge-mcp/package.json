@@ -1,6 +1,6 @@
 {
 	"name": "@three-ws/concierge-mcp",
-	"version": "0.1.0",
+	"version": "0.1.1",
 	"mcpName": "io.github.nirholas/concierge-mcp",
 	"description": "Ask any website's AI concierge a grounded question, and generate the copy-paste embed code to add a three.ws Concierge (an AI chat widget with a 3D avatar) to a site. concierge_ask fetches a page and answers from its real content; concierge_embed builds the one-tag install; concierge_avatars lists the avatars. No key, no signer, no payment.",
 	"type": "module",
