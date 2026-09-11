@@ -86,12 +86,30 @@ Play's sizes are not the dApp Store's, so `../publish/media/` cannot be reused a
 | App icon | 512 x 512, 32-bit PNG, no transparency | yes |
 | Feature graphic | 1024 x 500 | yes |
 | Phone screenshots | 2 to 8, between 320 px and 3840 px on each side, 16:9 or 9:16 | yes |
-| 7-inch and 10-inch tablet screenshots | same rules | optional, and Play ranks listings that have them higher |
+| 10-inch tablet screenshots | up to 8, between 1080 px and 7680 px on each side | optional, and Play ranks listings that have them higher |
+| 7-inch tablet screenshots | up to 8, between 320 px and 3840 px on each side | same |
 
 The icon at `../publish/media/icon.png` is already 512 x 512 and can be copied. The feature
 graphic must be regenerated at 1024 x 500 (the dApp Store one is the same size, so check it
-before rebuilding). Screenshots can come from the emulator recipe in
-[`../README.md`](../README.md#emulator-qa): unlike the dApp Store, Play does not require a
+before rebuilding).
+
+Every screenshot on this listing is generated, not hand-captured:
+
+```bash
+node solana-mobile/scripts/make-screenshots.mjs --target=play         # media/phone/screen-1..5.png at 1080x1920
+node solana-mobile/scripts/make-screenshots.mjs --target=play-tablet  # media/tablet/{10-inch,7-inch}/screen-1..5.png
+```
+
+Both targets capture the live site, compose the five panels as one continuous strip, and slice
+it, so the uploads read as one photograph of a shelf of devices rather than five unrelated
+stills. Upload the sliced panels in numerical order; `carousel.png` beside them is the master
+strip and is not an upload. The tablet run is not the phone run upscaled: it drives the browser
+at a 768 px viewport with the mobile flag off, so the frames hold the layout three.ws actually
+serves a tablet, and any headline that names the hardware carries a `tabletTitle` override in
+the script. One 1440x2560 composition serves both tablet slots, downscaled to 1260x2240 for the
+7-inch one.
+
+Neither target needs a device or an emulator. Unlike the dApp Store, Play does not require a
 Seeker, and the two Seeker-specific frames (Seed Vault sheet, mint confirmation) are not
 appropriate for a Play listing that ships to every Android phone anyway.
 

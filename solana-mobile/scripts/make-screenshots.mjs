@@ -17,8 +17,9 @@
  * Nothing is mocked or drawn to look like product UI.
  *
  * Usage:
- *   node solana-mobile/scripts/make-screenshots.mjs                 # dApp Store panels
- *   node solana-mobile/scripts/make-screenshots.mjs --target=play    # Google Play panels
+ *   node solana-mobile/scripts/make-screenshots.mjs                        # dApp Store panels
+ *   node solana-mobile/scripts/make-screenshots.mjs --target=play           # Google Play phone panels
+ *   node solana-mobile/scripts/make-screenshots.mjs --target=play-tablet    # Play 10-inch + 7-inch panels
  *   node solana-mobile/scripts/make-screenshots.mjs --origin=http://localhost:3000
  *   node solana-mobile/scripts/make-screenshots.mjs --keep-raw   # also write the raw captures
  */
@@ -42,21 +43,47 @@ const ORIGIN = String(args.origin || 'https://three.ws').replace(/\/$/, '');
    Android phone and Play rejects screenshots advertising a flow the user cannot
    reach. Everything below the panel definitions is shared. */
 const TARGET = String(args.target || 'dapp');
-if (!['dapp', 'play'].includes(TARGET)) throw new Error(`--target must be dapp or play; got ${TARGET}`);
-const MEDIA = path.join(ROOT, TARGET === 'play' ? 'solana-mobile/publish-play/media/phone' : 'solana-mobile/publish/media');
+const MEDIA_DIRS = {
+  dapp: 'solana-mobile/publish/media',
+  play: 'solana-mobile/publish-play/media/phone',
+  'play-tablet': 'solana-mobile/publish-play/media/tablet',
+};
+if (!MEDIA_DIRS[TARGET]) throw new Error(`--target must be one of ${Object.keys(MEDIA_DIRS).join(', ')}; got ${TARGET}`);
+/* The tablet strip is the Play strip in a tablet's clothes: same five stories,
+   same shelf, but each device holds the layout three.ws serves to a 768 px
+   viewport, which is a different composition from the phone one and the whole
+   reason Play asks for the upload separately. */
+const IS_TABLET = TARGET === 'play-tablet';
+const IS_PLAY = TARGET === 'play' || IS_TABLET;
+const MEDIA = path.join(ROOT, MEDIA_DIRS[TARGET]);
 const DEVICE = path.join(MEDIA, 'device');
 const RAW = path.join(MEDIA, 'raw');
 
-/** Panel geometry. The store slot is 1080x1920; five of them make the strip. */
-const W = 1080;
-const H = 1920;
+/** Panel geometry. The phone slot is 1080x1920; the tablet slot is the same
+    9:16 at 1440x2560, which is the smallest size clearing Play's 1,080 px
+    minimum on BOTH sides of a 10-inch shot and still downscales exactly to the
+    1260x2240 the 7-inch upload takes. */
+const W = IS_TABLET ? 1440 : 1080;
+const H = IS_TABLET ? 2560 : 1920;
 const COUNT = 5;
 const BG = '#080814';
+/* Every composition constant below was tuned against the 1080 px phone panel,
+   so the tablet strip scales them instead of re-tuning them by hand. Frame
+   radii are the one thing that does not scale linearly: a tablet's corners are
+   tighter relative to its body than a phone's, so scaling 54 px straight up
+   would draw a comically rounded slab. */
+const S = W / 1080;
+const px = (n) => Math.round(n * S);
+const rad = (n) => Math.round(n * S * (IS_TABLET ? 0.6 : 1));
 
 /* Seeker renders 1080 CSS-independent pixels wide. Capturing 432 CSS px at
-   2.5x device pixel ratio yields exactly 1080x1920 of real product UI. */
-const SHOT_CSS = { width: 432, height: 768 };
-const SHOT_DPR = 2.5;
+   2.5x device pixel ratio yields exactly 1080x1920 of real product UI. A tablet
+   frame holds the tablet layout instead: 768x1024 CSS is what Android reports
+   for a 10-inch portrait viewport, and 2x gives a 1536x2048 capture. */
+const SHOT_CSS = IS_TABLET ? { width: 768, height: 1024 } : { width: 432, height: 768 };
+const SHOT_DPR = IS_TABLET ? 2 : 2.5;
+const SHOT_W = SHOT_CSS.width * SHOT_DPR;
+const SHOT_H = SHOT_CSS.height * SHOT_DPR;
 
 /**
  * The five panels. `path` is captured live when no device capture exists.
@@ -139,6 +166,11 @@ const PLAY_PANELS = [
     file: 'screen-3.png',
     path: null, // resolved to a currently listed agent
     title: 'Real 3D,\non your phone',
+    /* The tablet strip is the same five stories on a device that is not a
+       phone, so any panel naming the hardware needs its own line. Play shows
+       these uploads only to tablet users; a headline promising "on your phone"
+       there is the listing telling the reader it was not made for them. */
+    tabletTitle: 'Real 3D,\non your tablet',
     sub: 'Rigged, animated glTF in your hand. Not a video, not a pre-rendered clip.',
   },
   {
@@ -170,8 +202,8 @@ const PLAY_SEAMS = [
   { id: 'seam-4', path: '/agents' },
 ];
 
-const PANELS = TARGET === 'play' ? PLAY_PANELS : DAPP_PANELS;
-const SEAMS = TARGET === 'play' ? PLAY_SEAMS : DAPP_SEAMS;
+const PANELS = IS_PLAY ? PLAY_PANELS : DAPP_PANELS;
+const SEAMS = IS_PLAY ? PLAY_SEAMS : DAPP_SEAMS;
 
 /* Floating product widgets that are useful in the app and noise in a store
    frame: the corner stack (onboarding pill, language picker, claim card), the
@@ -233,8 +265,8 @@ async function sourceShot(ctx, spec) {
   const device = spec.file ? path.join(DEVICE, spec.file) : null;
   if (device && existsSync(device)) {
     const meta = await sharp(device).metadata();
-    if (meta.width !== W || meta.height !== H) {
-      throw new Error(`[screenshots] ${device} is ${meta.width}x${meta.height}, a device capture must be ${W}x${H}`);
+    if (meta.width !== SHOT_W || meta.height !== SHOT_H) {
+      throw new Error(`[screenshots] ${device} is ${meta.width}x${meta.height}, a device capture must be ${SHOT_W}x${SHOT_H}`);
     }
     console.log(`[screenshots] ${label}: device capture ${path.relative(ROOT, device)}`);
     return sharp(device).png().toBuffer();
@@ -266,8 +298,8 @@ async function sourceShot(ctx, spec) {
   }
 
   const meta = await sharp(buf).metadata();
-  if (meta.width !== W || meta.height !== H) {
-    throw new Error(`[screenshots] capture of ${url} is ${meta.width}x${meta.height}, expected ${W}x${H}`);
+  if (meta.width !== SHOT_W || meta.height !== SHOT_H) {
+    throw new Error(`[screenshots] capture of ${url} is ${meta.width}x${meta.height}, expected ${SHOT_W}x${SHOT_H}`);
   }
   const means = (await sharp(buf).stats()).channels.map((c) => c.mean);
   if (means.every((m) => m < 6)) {
@@ -282,10 +314,10 @@ async function sourceShot(ctx, spec) {
    each upload carries one whole screen plus the two halves it shares with its
    neighbours. That overlap is the whole point: the five uploads have to read as
    one photograph of a shelf of devices, not five separate stills. */
-const HERO_W = 660;
-const HERO_CY = 1258;
-const SEAM_W = 430;
-const SEAM_CY = 1074;
+const HERO_W = Math.round(W * (IS_TABLET ? 0.76 : 0.611));
+const HERO_CY = IS_TABLET ? 1700 : 1258;
+const SEAM_W = Math.round(W * (IS_TABLET ? 0.47 : 0.398));
+const SEAM_CY = IS_TABLET ? 1460 : 1074;
 
 /**
  * Draw the whole strip in one browser page, then slice it into store panels.
@@ -298,17 +330,17 @@ async function composeStrip(browser, heroShots, seamShots) {
 
   /* Heroes rise toward the middle of the strip and settle again, so swiping the
      carousel reads as one arc rather than five identical layouts. */
-  const heroLift = [0, -26, -46, -26, 0];
+  const heroLift = [0, -26, -46, -26, 0].map(px);
   const heroes = heroShots.map((buf, i) => `<div class="phone hero" style="left:${W * i + W / 2}px;top:${HERO_CY + heroLift[i]}px;width:${HERO_W}px">
       <img src="data:image/png;base64,${buf.toString('base64')}" alt="">
     </div>`).join('');
 
-  const seams = seamShots.map((buf, i) => `<div class="phone seam" style="left:${W * (i + 1)}px;top:${SEAM_CY + (i % 2 ? 24 : -24)}px;width:${SEAM_W}px;--tilt:${i % 2 ? 4 : -4}deg">
+  const seams = seamShots.map((buf, i) => `<div class="phone seam" style="left:${W * (i + 1)}px;top:${SEAM_CY + (i % 2 ? px(24) : -px(24))}px;width:${SEAM_W}px;--tilt:${i % 2 ? 4 : -4}deg">
       <img src="data:image/png;base64,${buf.toString('base64')}" alt="">
     </div>`).join('');
 
   const headers = PANELS.map((s, i) => `<header style="left:${W * i}px">
-      <h2>${s.title.replace(/\n/g, '<br>')}</h2>
+      <h2>${((IS_TABLET && s.tabletTitle) || s.title).replace(/\n/g, '<br>')}</h2>
       <p>${s.sub}</p>
     </header>`).join('');
 
@@ -326,36 +358,36 @@ body{width:${stripW}px;height:${H}px;background:${BG};color:#fff;overflow:hidden
     radial-gradient(34% 46% at 82% 74%, rgba(120,110,255,.26), transparent 72%),
     linear-gradient(180deg, #0a0a1c 0%, #080814 60%, #06060f 100%)}
 /* A single light beam swept across all five panels. */
-.beam{position:absolute;left:-6%;right:-6%;top:40%;height:360px;transform:rotate(-3.4deg);
+.beam{position:absolute;left:-6%;right:-6%;top:40%;height:${px(360)}px;transform:rotate(-3.4deg);
   background:linear-gradient(90deg, transparent, rgba(150,200,255,.15) 16%, rgba(190,220,255,.26) 50%, rgba(150,200,255,.15) 84%, transparent);
-  filter:blur(60px)}
+  filter:blur(${px(60)}px)}
 /* A continuous floor the whole shelf of devices stands on. */
-.floor{position:absolute;left:0;right:0;bottom:0;height:520px;
+.floor{position:absolute;left:0;right:0;bottom:0;height:${px(520)}px;
   background:linear-gradient(180deg, transparent, rgba(4,5,16,.78))}
-header{position:absolute;top:150px;width:${W}px;padding:0 78px;text-align:center}
-h2{font-family:'Space Grotesk',sans-serif;font-weight:600;font-size:80px;line-height:1.06;
+header{position:absolute;top:${px(150)}px;width:${W}px;padding:0 ${px(78)}px;text-align:center}
+h2{font-family:'Space Grotesk',sans-serif;font-weight:600;font-size:${px(80)}px;line-height:1.06;
   letter-spacing:-.035em}
-header p{margin-top:28px;font-size:32px;line-height:1.42;color:#93a4c6}
+header p{margin-top:${px(28)}px;font-size:${px(32)}px;line-height:1.42;color:#93a4c6}
 .phone{position:absolute;transform:translate(-50%,-50%) rotate(var(--tilt,0deg));
-  border-radius:54px;padding:12px;background:linear-gradient(160deg,#2f3350,#12131f 58%,#262a40);
-  box-shadow:0 46px 130px rgba(3,4,14,.8), 0 0 0 1px rgba(255,255,255,.07) inset}
-.phone img{display:block;width:100%;border-radius:44px;background:${BG}}
-.seam{border-radius:40px;padding:9px;opacity:.94}
-.seam img{border-radius:33px}
+  border-radius:${rad(54)}px;padding:${px(12)}px;background:linear-gradient(160deg,#2f3350,#12131f 58%,#262a40);
+  box-shadow:0 ${px(46)}px ${px(130)}px rgba(3,4,14,.8), 0 0 0 1px rgba(255,255,255,.07) inset}
+.phone img{display:block;width:100%;border-radius:${rad(44)}px;background:${BG}}
+.seam{border-radius:${rad(40)}px;padding:${px(9)}px;opacity:.94}
+.seam img{border-radius:${rad(33)}px}
 /* Lockup on the first panel, so the strip opens with the brand. */
-.lockup{position:absolute;left:80px;bottom:64px;display:flex;align-items:center;gap:24px}
-.lockup img{width:78px;height:78px;border-radius:21px}
-.lockup span{font-family:'Space Grotesk',sans-serif;font-weight:600;font-size:50px;letter-spacing:-.045em}
+.lockup{position:absolute;left:${px(80)}px;bottom:${px(64)}px;display:flex;align-items:center;gap:${px(24)}px}
+.lockup img{width:${px(78)}px;height:${px(78)}px;border-radius:${rad(21)}px}
+.lockup span{font-family:'Space Grotesk',sans-serif;font-weight:600;font-size:${px(50)}px;letter-spacing:-.045em}
 </style><body>
 <div class="glow"></div><div class="beam"></div><div class="floor"></div>
 ${headers}${seams}${heroes}
 <div class="lockup"><img src="${MARK_URI}" alt=""><span>three.ws</span></div>
 </body>`, { waitUntil: 'load' });
 
-  const loaded = await page.evaluate(async () => {
+  const loaded = await page.evaluate(async ([head, body]) => {
     await document.fonts.ready;
-    return document.fonts.check('600 80px "Space Grotesk"') && document.fonts.check('400 32px "Inter"');
-  });
+    return document.fonts.check(`600 ${head}px "Space Grotesk"`) && document.fonts.check(`400 ${body}px "Inter"`);
+  }, [px(80), px(32)]);
   if (!loaded) throw new Error('[screenshots] brand fonts did not load; the strip would render in a fallback face');
 
   const strip = await page.screenshot({ type: 'png' });
@@ -380,12 +412,14 @@ try {
   const ctx = await browser.newContext({
     viewport: SHOT_CSS,
     deviceScaleFactor: SHOT_DPR,
-    isMobile: true,
+    isMobile: !IS_TABLET,
     hasTouch: true,
     /* Holds every entrance transition and the avatar turntable still, so the
        same page captured twice yields the same frame. */
     reducedMotion: 'reduce',
-    userAgent: `Mozilla/5.0 (Linux; Android 14; ${TARGET === 'play' ? 'Pixel 8' : 'Seeker'}) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Mobile Safari/537.36`,
+    userAgent: IS_TABLET
+      ? 'Mozilla/5.0 (Linux; Android 14; Pixel Tablet) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36'
+      : `Mozilla/5.0 (Linux; Android 14; ${TARGET === 'play' ? 'Pixel 8' : 'Seeker'}) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Mobile Safari/537.36`,
   });
   const heroShots = [];
   for (const spec of PANELS) heroShots.push(await sourceShot(ctx, spec));
@@ -409,9 +443,25 @@ for (const [i, spec] of PANELS.entries()) {
     .png({ compressionLevel: 9 })
     .toBuffer();
   /* The dApp Store portal caps a preview at 3 MB; Play allows 8 MB. */
-  const capMb = TARGET === 'play' ? 8 : 3;
+  const capMb = IS_PLAY ? 8 : 3;
   if (panel.length > capMb * 1024 * 1024) {
     throw new Error(`[screenshots] ${spec.file} is ${(panel.length / 1024 / 1024).toFixed(2)} MB, the ceiling is ${capMb} MB`);
+  }
+  if (IS_TABLET) {
+    /* Play takes the two tablet sizes as separate uploads with different
+       floors: a 10-inch shot must be at least 1,080 px on every side, a 7-inch
+       one only 320. One composition serves both, because 1440x2560 divides
+       exactly into the 1260x2240 the smaller slot wants and a downscale of a
+       clean render beats a second render tuned to nothing. */
+    for (const [dir, width] of [['10-inch', W], ['7-inch', 1260]]) {
+      const out = path.join(MEDIA, dir);
+      mkdirSync(out, { recursive: true });
+      const sized = width === W ? panel : await sharp(panel).resize({ width, kernel: 'lanczos3' }).png({ compressionLevel: 9 }).toBuffer();
+      await sharp(sized).toFile(path.join(out, spec.file));
+      const meta = await sharp(sized).metadata();
+      console.log(`[screenshots] ${dir}/${spec.file}  ${meta.width}x${meta.height}  ${Math.round(sized.length / 1024)} KB`);
+    }
+    continue;
   }
   await sharp(panel).toFile(path.join(MEDIA, spec.file));
   console.log(`[screenshots] ${spec.file}  ${W}x${H}  ${Math.round(panel.length / 1024)} KB`);

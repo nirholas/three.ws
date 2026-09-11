@@ -1,0 +1,4 @@
+# The 7200x2560 master strip the panels are sliced from. Derived, 4.7 MB,
+# and never an upload; regenerate with --target=play-tablet.
+carousel.png
+raw/
