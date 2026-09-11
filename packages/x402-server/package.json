@@ -1,6 +1,6 @@
 {
   "name": "@three-ws/x402-server",
-  "version": "0.1.2",
+  "version": "0.1.3",
   "description": "The merchant side of x402 — turn any HTTP endpoint into a paid one. Issue 402 challenges, price SKUs, verify and settle the X-PAYMENT header on Solana and Base, and take a platform fee. Advertise the two main assets — USDC and $THREE — in one challenge.",
   "type": "module",
   "main": "./src/index.js",
