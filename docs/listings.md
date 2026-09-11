@@ -122,6 +122,7 @@ Subscribe via RSS to track new listings, integrations, and protocol updates.
 
 ## Related
 
+- [Partnership and listing pipeline](./partners/opportunities.md): the same surfaces as an action list, showing what is stuck, on whom, and the single step that unblocks each one
 - [AWS Marketplace](/docs/aws-marketplace): the AWS listing and entitlement-issued x402 API keys
 - [Syndication](/docs/syndication): how announcements flow to HackerNoon and other channels
 - [Publishing program, September 2026](./publishing-program-2026-09.md): the venue matrix, running order, and per-venue rules for the current writing push
