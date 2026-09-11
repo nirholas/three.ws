@@ -199,6 +199,7 @@ Deeper references that don't fit a track above but answer real questions:
 - [NVIDIA Inception membership](./nvidia-inception.md): what the platform already runs on NVIDIA silicon and what the program adds on top
 - [NVIDIA visibility map](./nvidia-visibility-map.md): every NVIDIA surface worth being on (Showcase, GTC, NGC, ACE, the forums, social), the verified intake route for each, and the member benefits nobody has claimed yet
 - [Big-tech recognition dispatch board](./big-tech-recognition-week.md): every big-tech surface ranked against every other by the odds of a published mention this week, which six are already one action from shipping, and what to stop chasing
+- [Partnership and listing pipeline](./partners/opportunities.md): every partnership, marketplace and directory as one decision list, showing what is stuck, on whom, and the single step that unblocks it
 - [IBM visibility map](./ibm-visibility-map.md): every IBM surface worth being on (the user group, IBM Champions, the Partner Plus Directory, the IBM Cloud catalog, TechXchange), the verified intake route for each, and the two windows that close on a date
 - [IBM Partner Plus](./partners/ibm-partner-plus.md): the companion audit of the program itself, including the watsonx Orchestrate Agent Catalog listing through Agent Connect
 - [The generator was never the hard part](./nvidia-nemotron-spotlight.md): our Nemotron Nano write-up, published on the NVIDIA Developer Forums

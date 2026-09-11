@@ -349,6 +349,7 @@ Publishing, posting, and sending are owner-gated under stop-and-ask gate 2 in
 
 ## Related
 
+- [Partnership and listing pipeline](./partners/opportunities.md): the durable worklist this week-shaped board feeds into
 - [NVIDIA visibility map](./nvidia-visibility-map.md): every NVIDIA surface in depth, and the dead ends
 - [IBM visibility map](./ibm-visibility-map.md): the same treatment for IBM, including the Champions window and the Partner Plus benefits never requested
 - [Partners](./partners.md): the eight programs, and the independence language that must survive any rewrite

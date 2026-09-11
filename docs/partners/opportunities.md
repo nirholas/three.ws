@@ -15,6 +15,24 @@ Last reconciled against the source docs on 2026-09-11.
 
 ---
 
+## Closing windows
+
+Everything else on this page waits. These do not: miss the date and the opportunity is gone
+for a cycle, not delayed. Nothing here is on anyone's calendar yet.
+
+| By when | Opportunity | The one action | Owner |
+|---|---|---|---|
+| **2026-09-29** | IBM TechXchange early-bird registration. The event runs 2026-10-26 to 10-29 in Atlanta; the speaking CFP closed in May, but sponsorship, the Sandbox Expo and the colocated user-group route are open, and we moderate an IBM Community user group | Register, or decide not to attend | Owner |
+| **Opens mid-September, closes late November** | IBM Champions nomination. Self-nomination is invited and our record already matches all four of IBM's published criteria (spoke at an IBM event, moderate a user group, published on their community, run Granite in production). We have never entered | Watch the announcement blog, then nominate a person (the program is for individuals, not companies) | Owner |
+| **Watch weekly** | NVIDIA GTC 2027 call for submissions. Recent cycles opened in summer and closed in early autumn. Missing it costs a full year | Keep the CFP page on a weekly check; write the abstract while it is shut | Either |
+| Spring 2027 | IBM TechXchange 2027 call for speakers | Submit when it opens | Owner |
+
+Dates and intake routes for the IBM rows are verified in
+[ibm-visibility-map.md](../ibm-visibility-map.md); the GTC row in
+[nvidia-visibility-map.md](../nvidia-visibility-map.md).
+
+---
+
 ## Do these next
 
 Ranked by value divided by remaining effort, not by size of logo. Every one of these has the
@@ -69,6 +87,25 @@ The work is done or nearly done. A human on our side has to act.
 | IBM G2 review | Honest to write, we run Granite in production | Write it | Either |
 | CoinGecko market addition for $THREE | Form researched; only one of our live venues qualifies | Submit for that venue | Owner |
 
+### Anthropic, which this page was missing
+
+Worth stating plainly: [partners.md](../partners.md) lists eight partners and Anthropic is
+not one of them, while the agent brain defaults to Claude models and three Anthropic
+surfaces sit at `ready-to-submit` in
+[the submission tracker](../../prompts/store-submissions/_generated/TRACKER.md). It is the
+most underdeveloped big-tech relationship relative to how much the product already depends
+on it, and the cheapest to move.
+
+| Opportunity | State | Next action | Owner |
+|---|---|---|---|
+| Official MCP Registry | Publish batch staged and cross-checked by a dry run, never run | `mcp-publisher login github`, review the staged batch, run it | Owner |
+| Claude plugin marketplace | Ready, install evidence captured | Submit | Owner |
+| Claude Connectors Directory | Ready. The old blocker (auth-gated discovery) is resolved | Org role plus a reviewer-credential decision, then submit | Owner |
+| Smithery, mcp.so, PulseMCP | Listing content generated and committed | Create each account | Owner |
+
+These belong with the Glama and LobeHub finding below: same class of problem, work finished
+and never dispatched.
+
 ## In flight, blocked on them
 
 Nothing for us to do but keep the thread warm. Do not re-scope these into our own backlog.
@@ -78,6 +115,25 @@ Nothing for us to do but keep the thread warm. Do not re-scope these into our ow
 | OpenAI Cookbook PR #2874 | Open since 2026-07-21 | Revival steps are in [openai-listing-channels.md](../openai-listing-channels.md) |
 | Dedicated three.ws page on the IBM domain | Promised 2026-06-18, not live | **Do not link it or describe it as public until IBM ships it** |
 | IBM co-promotion on X | Promised 2026-06-18, no recorded delivery | Reopen alongside the Agent Connect conversation |
+
+### Written and never posted
+
+Four finished artefacts are sitting in the repo. Publishing is self-serve on the partner's
+own domain, which is the channel with our best track record.
+
+| Artefact | Venue | Owner |
+|---|---|---|
+| [nvidia-forum-browser-digital-human.md](../nvidia-forum-browser-digital-human.md) | NVIDIA Developer Forums, post 3 | Owner posts |
+| [nvidia-forum-gpu-fleet-post.md](../nvidia-forum-gpu-fleet-post.md) | NVIDIA Developer Forums | Owner posts |
+| [ibm-community-governed-agents-post.md](../ibm-community-governed-agents-post.md) | Our own IBM user group, against a one-per-week allowance | Owner posts |
+| [openai-community-3d-studio-post.md](../openai-community-3d-studio-post.md), [openai-community-physical-world-post.md](../openai-community-physical-world-post.md) | OpenAI Developer Community | Owner posts |
+
+Two more NVIDIA rows with no artefact to write, only an action to take: the AI Podcast guest
+nomination (one form, self-nomination invited, answers already drafted) and the Inception
+membership announcement on our own channels, which has never been posted. Both are in
+[nvidia-visibility-map.md](../nvidia-visibility-map.md), which also flags that the strongest
+piece of social proof the company owns is recorded with a null source link and cannot
+currently be shown to anyone.
 
 ## Open, unclaimed
 
@@ -105,6 +161,24 @@ Shipping a manifest is not the same as being listed. Somebody should open both d
 check whether three.ws actually appears, and then either add the row to
 [listings.md](../listings.md) or submit the listing. Fifteen minutes, and it either closes a
 gap or confirms a channel we forgot we had.
+
+---
+
+## Doors that are closed: do not re-research these
+
+Each of these was investigated and ruled out. Recorded so the next person does not spend a
+morning rediscovering it.
+
+| Surface | Why not |
+|---|---|
+| NVIDIA Connect for ISVs | Retired. The page redirects; the programme folded into the Developer Program |
+| A self-serve "list my product" form on any NVIDIA marketing surface | None exists except NGC. Everything else runs through the portal record plus a human at the programme inbox |
+| NVIDIA Omniverse Exchange | Correctly blocked: OpenUSD interop is roadmap, not shipping |
+| NVIDIA Technical Blog | No public guest-submission process. The realistic path is a forum post that performs, then a pitch |
+| IBM TechXchange 2026 speaking | CFP closed 2026-05-22, acceptances went out from 2026-07-15. There is no late route to a session |
+| `ibm.com/community/ibm-champion-nominate/` | Returns 404 despite ranking in search results. Use the programme page |
+| OpenAI Grove | Explicitly aimed at pre-idea and pre-seed founders. three.ws is past that stage |
+| OpenAI Cookbook as a *primary* channel | The repo promises no merges and most that land come from staff or affiliated partners. Worth reviving, never worth leading with |
 
 ---
 

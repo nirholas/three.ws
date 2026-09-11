@@ -213,6 +213,7 @@ buries the one ask with a concrete technical unblock.
 - [IBM Community post catalog](./ibm-community.md): every post in our user group, with authors, dates and activity
 - [The second IBM community event](./ibm-next-event.md): the finished proposal waiting on a date
 - [IBM Granite x402 MCP](./ibm-x402-mcp.md): the pay-per-call Granite path
+- [Partnership and listing pipeline](./partners/opportunities.md): every partner surface as one worklist, IBM's rows included
 - [Big-tech recognition dispatch board](./big-tech-recognition-week.md): this map ranked against OpenAI, NVIDIA and AWS by odds of a published mention
 - [NVIDIA visibility map](./nvidia-visibility-map.md): the same treatment for NVIDIA, and the template this follows
 - [Listings and distribution](./listings.md): the canonical program and directory inventory
