@@ -289,6 +289,7 @@ const UNPUBLISHED_DOCS = new Map([
 	['avatar-cli', 'internal: in-flight, register when the CLI ships'],
 	['avatar-fidelity-program', 'internal: program goals and competitive targets'],
 	['aws-marketplace-listing-kit', 'internal: paste-ready listing copy and portal steps'],
+	['aws-builder-center-before-the-signature', 'internal: draft prepared for the AWS Builder Center'],
 	['aws-builder-center-agent-commerce-spine', 'internal: draft prepared for the AWS Builder Center'],
 	['big-tech-recognition-week', 'internal: outreach dispatch board naming unsent asks and unclaimed program benefits'],
 	['bnb-babt-findings', 'owner-gated: names a crypto project other than $THREE'],

@@ -621,3 +621,9 @@ scripts/.selfie-verify/
 # Image exports dropped at the root for drag-and-drop. The source of truth for
 # any of these lives in the repo it belongs to; the root copy is never committed.
 /x-card-*.png
+
+# Paste-ready article bodies dropped at the root for copying into an external
+# publisher's editor (AWS Builder Center, IBM Community). Frontmatter and the H1
+# are stripped so the paste lands clean. The source of truth is the docs/ copy;
+# the root file is regenerated from it and never committed.
+/paste-*.md

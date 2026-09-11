@@ -68,6 +68,14 @@
 			"url": "/tour",
 			"alt": "The three.ws Guided Tour page: quick highlights of 18 picks in about 7 minutes, or the full tour of 257 features across 6 chapters, walked on the live site by a 3D guide that speaks and points, paced by you",
 			"caption": "The same 257-stop route the film walks, handed to the reader with the pacing controls."
+		},
+		{
+			"id": "aws-builder-center-authorization-spine",
+			"surface": "AWS Builder Center",
+			"url": "https://builder.aws.com/content/3JAVvvItd3ZSVjYCDb4qjj5VBb9/budgets-entitlements-and-the-dollarthree-token-layer-how-we-authorize-autonomous-agent-spending-or-threews-an-aws-partner",
+			"alt": "The article live on the AWS Builder Center under the three.ws byline, headlined \"Budgets, entitlements, and the $THREE token layer: how we authorize autonomous agent spending\", published 11 September 2026 as the second article in the three.ws series",
+			"caption": "Published on AWS's own builder platform, with $THREE named in the headline.",
+			"settle": 4500
 		}
 	]
 }

@@ -54,6 +54,7 @@ Written and reviewed in this repo, not yet submitted:
 
 | Draft | Subject |
 |---|---|
+| [aws-builder-center-before-the-signature.md](./aws-builder-center-before-the-signature.md) | **Flagship.** The whole authorization spine in one piece: Marketplace entitlements under Concurrent Agreements, budgets instead of private keys, the budget check as a predicate in the `UPDATE`, the SSRF guard around an LLM-chosen URL, the payment outcome with no clean answer, signed inference receipts, agent vitals, hardware-backed signing, and the fabrication gate in front of a manufactured object. Supersedes the four topic drafts below. |
 | [aws-builder-center-agent-payment-sessions.md](./aws-builder-center-agent-payment-sessions.md) | Agent Payment Sessions: giving an agent a budget instead of a private key, and enforcing it atomically in Postgres |
 | [aws-builder-center-mcp-agents.md](./aws-builder-center-mcp-agents.md) | An MCP server whose paid tools settle per call in USDC over HTTP 402 |
 | [mobile-launch/aws-builder-center-article.md](./mobile-launch/aws-builder-center-article.md) | One web product, three native apps, zero forks: the Seeker, Android, and iPhone shells, with the AWS SDK v3 storage client and the Marketplace front door |
