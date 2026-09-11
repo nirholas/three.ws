@@ -487,6 +487,150 @@ curl -s -X POST https://three.ws/api/mcp-studio -H 'content-type: application/js
 
 ---
 
+## 8. The portal form, field by field, in order
+
+Written against the live form on 2026-09-11. The portal's field shapes differ from the
+metadata in §1 (it wants a 30-character subtitle, two icons, a semantic version, a terms
+URL and a demo recording), so fill from THIS section and use §1 only for the long-form
+description. The portal saves a draft throughout, so it does not have to be done in one
+sitting.
+
+### Step 0. Before you open it
+
+| Check | Detail |
+|---|---|
+| Organization | Submit from the **three.ws** org, not a personal account |
+| Role | **Apps Management** must be set to **Write** in your org role. If "Create plugin" is missing or greyed out, this is why |
+| Identity | Verified organization, done 2026-07-14. No action |
+
+Entry point: **Plugins** in the left sidebar of `platform.openai.com`, then **Create plugin**,
+then **With MCP** (not "Skills only": the submission is the remote MCP connector).
+
+### Step 1. Info
+
+| Field | Value |
+|---|---|
+| Directory icon | `_generated/assets/icon-512x512.png` (needs 256 x 256 or larger) |
+| ChatGPT composer icon | the same file (needs 48 x 48 or larger) |
+| Name | `three.ws 3D Studio` |
+| Version | `1.0.0` |
+| Subtitle (30 char max) | `Create 3D models from text` (26 characters) |
+| Description | the fitted paragraph below |
+| Category | Creativity & Design |
+| Developer identity | pick the verified entity from the dropdown |
+| Plugin Author | copy the verified legal or business name EXACTLY as the dropdown shows it |
+| Website URL | `https://three.ws` |
+| Customer support URL | `https://three.ws/support` |
+| Privacy policy URL | `https://three.ws/legal/privacy` |
+| Terms of Service URL | `https://three.ws/legal/tos` |
+| Demo Recording URL | see step 6. This is the only field with no asset yet |
+
+All three legal URLs returned 200 on 2026-09-11.
+
+Description, fitted to the portal's "concrete value, no marketing language" guidance:
+
+> Describe any object or character and three.ws 3D Studio builds a real, textured 3D model,
+> then shows it in an interactive viewer inside the conversation. Eleven tools cover the path
+> from idea to asset: generate a model from text or a reference image, generate an avatar,
+> auto-rig a static model so it can be animated, refine a model by describing a change, and
+> inspect a finished model from several angles. Every result downloads as a standard GLB that
+> opens in Blender, Unity, Unreal, three.js, or any glTF pipeline. No account, no API key, no
+> payment.
+
+### Step 2. MCP
+
+| Field | Value |
+|---|---|
+| Server URL | `https://three.ws/api/mcp-studio` |
+| Transport | Streamable HTTP, JSON-RPC 2.0 over POST |
+| Protocol version | `2025-06-18` |
+| Authentication | **None** |
+
+State the auth answer explicitly rather than leaving it blank. The connector is anonymous and
+free, so OpenAI's "provide a fully-featured demo account with test credentials" requirement
+does not apply: there is no login to give. Full connectivity detail is in §3.
+
+### Step 3. Skills
+
+Import from the MCP server. It exposes 11 tools, each already carrying its four `openai/*`
+annotations and its `outputTemplate`, plus two widget resources. Do not hand-edit the
+annotations after import: §2.3 audits them and a wrong `readOnlyHint` on a tool that spends
+compute is a documented rejection reason.
+
+### Step 4. Prompts
+
+1. `Make a 3D model of a friendly round robot mascot, glossy white plastic.`
+2. `Generate a low-poly treasure chest with iron bands.`
+3. `Create a 3D avatar of a space explorer in a white-and-orange suit.`
+4. `Make a rigged, animation-ready knight character I can pose.`
+
+### Step 5. Testing
+
+At least five positive cases and three negative ones. Every behaviour below is documented in
+§5 and was verified live; none of it is aspirational.
+
+**Positive**
+
+| # | Prompt | Expected result |
+|---|---|---|
+| 1 | `Make a 3D model of a friendly round robot mascot, glossy white plastic.` | Inline interactive 3D viewer with the textured model, plus Download, Spin, Recenter and Open in three.ws. The widget frames the model, casts a soft ground shadow, and auto-rotates until dragged |
+| 2 | `Generate a low-poly treasure chest with iron bands.` | Same viewer flow, returns a downloadable GLB |
+| 3 | `Create a 3D avatar of a space explorer in a white-and-orange suit.` | Avatar generated and rendered inline |
+| 4 | `Make a rigged, animation-ready knight character I can pose.` | Rigged GLB, and an idle animation plays in the viewer |
+| 5 | `Now make that robot's shell matte instead of glossy.` | The model is refined from the previous turn and the updated GLB replaces it in the viewer |
+
+Required test data: none. No account, no key, no seed files.
+
+**Negative**
+
+| # | Input | Expected safe behaviour |
+|---|---|---|
+| 1 | An explicit or adult prompt | Refused instantly with an age-13-and-over message. It never reaches a generator (safety gate audited in §2.6) |
+| 2 | A tool call carrying an invalid or unreachable GLB URL | A designed error rather than a crash: the widget reaches its error state ("Couldn't load the model") and `/api/ar` returns a designed 400 ("Provide a valid https URL to a .glb model.") |
+| 3 | A host that cannot render WebGL | The widget degrades to a download-and-open fallback instead of a broken canvas |
+
+**Honest latency note for the reviewer.** Both verification generations on 2026-09-09 took
+about 12.5 minutes end to end on the self-hosted free lane, well past the lane's own
+estimate. Do not write a test case that implies a fast turnaround.
+
+### Step 6. The demo recording
+
+The one asset that does not exist yet. The form wants a video of the plugin working, recorded
+in ChatGPT Developer Mode. Screen recordings are acceptable and OpenAI states it is not shared
+externally; it is used to validate the test cases above.
+
+1. Enable Developer Mode in ChatGPT.
+2. Add `https://three.ws/api/mcp-studio` as a custom connector. No credentials.
+3. Record positive case 1 end to end, with the inline viewer and the Download control both
+   visible in frame.
+4. If the generation runs long, cut the waiting rather than speeding up the footage. A sped-up
+   recording implies a turnaround a reviewer will not get, which is the one way this video can
+   work against the submission.
+
+### Step 7. Global
+
+All countries. The connector is anonymous and free with no geo-restriction.
+
+### Step 8. Submit
+
+- **Commerce and Purchasing: leave the box unchecked.** The submitted connector is keyless and
+  free, has no checkout, and no longer advertises payment headers on its CORS surface. three.ws
+  operates paid x402 endpoints elsewhere; they are not part of this plugin, so unchecked is the
+  accurate answer for what is being submitted. Deceptive commerce is a documented rejection
+  reason, and so is under-disclosure, which is why this is stated rather than skipped.
+- Release notes: first public release.
+- Read the policy attestations rather than clicking through them. The two that actually bite us
+  are tool annotations (step 3) and payment disclosure (this step), and both are already clean.
+
+### After you submit
+
+Review, then approval, then **you** publish. It does not go live on approval. OpenAI's own
+wording is that review timelines vary as they scale the process, so do not build an
+announcement around a particular week. The changelog entry and any social copy wait until the
+listing is actually public.
+
+---
+
 ## 7. Pre-submit checklist
 
 - [x] **B3** cleared (§0). The cheap-scorer half was deployed and re-measured on 2026-09-09: 40
