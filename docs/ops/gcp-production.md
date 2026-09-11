@@ -678,6 +678,59 @@ proxy + Memorystore + connector. The `upstash-redis-rest-token` secret and the
   serving hostname without either widening the bucket policy to match or
   redirecting it here too.
 
+### A truncated asset can sit in the CDN and hang every browser (2026-09-11)
+
+Cloud CDN held one copy of `/vendor/mediapipe/wasm/vision_wasm_internal.wasm`
+that carried `content-length: 11153617` (the identity length) with a
+brotli-compressed body and no `content-encoding` header. A client that reads
+that response waits forever for eight megabytes that never arrive.
+
+It only reproduced with the exact `Accept-Encoding` a browser sends:
+
+```bash
+# healthy
+curl -s -o /dev/null -w '%{size_download} %{time_total}\n' \
+  -H 'Accept-Encoding: br' https://three.ws/vendor/mediapipe/wasm/vision_wasm_internal.wasm
+
+# the bug: bytes stop arriving, the request never completes
+curl -s -o /dev/null -w '%{size_download} %{time_total}\n' \
+  -H 'Accept-Encoding: gzip, deflate, br, zstd' \
+  https://three.ws/vendor/mediapipe/wasm/vision_wasm_internal.wasm
+```
+
+The Cloud Run origin served the same URL correctly under every encoding, so the
+bad variant was created and cached at the edge, not by the container. A
+cache-busting query string also served correctly, which is how you tell a
+poisoned object from a broken build.
+
+**Symptom at the product level:** `/create/selfie` sat on "Processing your
+face..." indefinitely and never sent the reconstruction request, because the
+capture gates await MediaPipe and MediaPipe's loader has no deadline. Nothing
+errored, nothing retried, and no page check caught it: a page sweep reads HTML,
+not the largest binary on the site.
+
+**Recovery**, one path, not a global purge:
+
+```bash
+gcloud compute url-maps invalidate-cdn-cache three-ws-lb \
+  --path '/vendor/mediapipe/wasm/vision_wasm_internal.wasm' \
+  --project aerial-vehicle-466722-p5
+```
+
+**Detection:** `npm run check:asset-encoding` walks the largest compressible
+files under `public/`, requests each from the live site with a browser's
+`Accept-Encoding`, reads every body to completion, and fails on a length that
+disagrees with the bytes delivered. Run it after a deploy; it is the only check
+that would have caught this.
+
+**Client-side hardening:** `src/shared/mediapipe-assets.js` now prefers our own
+vendored copy unless the origin definitively lacks the file (a probe that
+merely times out no longer sends the runtime to a public CDN), shares one probe
+across all callers, and bounds every vision-model load with
+`withVisionDeadline`. A stalled load now degrades to the unrefined photo after
+15 seconds instead of hanging the flow. `npm run verify:selfie -- --stall-vision`
+reproduces the hostile case end to end.
+
 ### Client geo header (analytics country column)
 
 `api/_lib/client-geo.js` resolves a visitor's country from an edge geo header
