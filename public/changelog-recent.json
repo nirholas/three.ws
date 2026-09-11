@@ -1,11 +1,11 @@
 {
-	"generated_at": "2026-09-11T01:21:22.349Z",
+	"generated_at": "2026-09-11T05:05:14.644Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
 		"url": "https://three.ws"
 	},
-	"total": 3671,
+	"total": 3672,
 	"complete": false,
 	"full_feed": "/changelog.json",
 	"entries": [
@@ -14,6 +14,17 @@
 			"type": "update",
 			"title": "Selfie to avatar is unstuck: a scan that used to wait forever now finishes in seconds",
 			"summary": "Uploading a photo on the selfie page could sit on the same message indefinitely and never start the scan, with no error and nothing to retry. One copy of the face-tracking runtime held at our CDN was telling browsers to expect 11 MB and then sending a third of that, so the page waited for bytes that were never coming. That copy is gone, and three changes make the failure impossible to repeat silently: the face-tracking runtime now loads from three.ws first instead of a public CDN, any wait on it gives up after fifteen seconds and builds your avatar from the photo as it is, and a photo is never rejected for having no face in it just because the detector could not load. A new check also walks every large file on the site the way a browser asks for it and fails loudly when the bytes do not add up. Measured after the fix: a selfie became a rigged, animation-ready avatar in about fifteen seconds, and still finished in under a minute with the face-tracking runtime completely unreachable.",
+			"link": "/create/selfie",
+			"tags": [
+				"fix",
+				"infra"
+			]
+		},
+		{
+			"date": "2026-09-11",
+			"type": "update",
+			"title": "Your selfie avatar now survives a storage outage instead of vanishing at the last step",
+			"summary": "For part of today, a selfie could finish building and then be thrown away. The 3D model was generated correctly, but the step that files it into your library could not reach our object storage, so the page said the avatar finished and could not be saved, and trying again hit the same wall. The avatar was never actually lost: a complete copy sits with the service that built it. The last step now recognises a storage outage for what it is and keeps your avatar, serving it from that copy and flagging it to be filed away properly once storage is back, so a problem on our side costs a housekeeping step instead of the model you waited for. Anything that is not a storage outage still fails loudly rather than quietly papering over a real bug. The image API for agents also now answers with a clear temporarily unavailable instead of a generic failure, so it no longer reads as a bad prompt when nothing was wrong with the prompt.",
 			"link": "/create/selfie",
 			"tags": [
 				"fix",
@@ -1606,17 +1617,6 @@
 			"link": null,
 			"tags": [
 				"security",
-				"infra"
-			]
-		},
-		{
-			"date": "2026-09-07",
-			"type": "update",
-			"title": "Shared avatar and agent links now show a real page to Google, not a loading spinner",
-			"summary": "Search engines were shown a different version of every /avatars/... and /agents/... page than people were, and that version had nothing on it: the name and description were hidden in a fallback block that a crawler removes before reading, the rest was a spinner, and the last line of the page sent the crawler straight back to the URL it was already on. Tens of thousands of avatar and agent pages therefore looked identical to Google and were filed as duplicates instead of being listed. Crawlers now get the same content a visitor sees: the name, the description, the rendered card, the creator, the tags, the skills, the on-chain identity, and links onward into the gallery and the directory. A link to an avatar or agent that no longer exists now says so honestly instead of quietly bouncing to a listing page, an id that belongs to the other side of the platform redirects to where it actually lives, and a private agent is no longer readable by anything sending a crawler's name. Signed-in surfaces were also unblocked in robots.txt so their existing no-index instruction can finally be read and obeyed.",
-			"link": null,
-			"tags": [
-				"fix",
 				"infra"
 			]
 		}

@@ -16,7 +16,7 @@
 // deployments keep their exact current behavior until rigging is wired.
 
 import { sql } from './db.js';
-import { putObject, publicUrl } from './r2.js';
+import { putObject, publicUrl, isStorageInfrastructureError } from './r2.js';
 import { storageKeyFor, createAvatar } from './avatars.js';
 import { inspectGlb, isValidGlbHeader } from './glb-inspect.js';
 import { dispatchWebhooks } from './webhook-dispatch.js';
@@ -27,6 +27,46 @@ import { getRegenProviderForMode } from './regen-provider.js';
 // fetch() of a provider URL remains in this file.
 import { fetchProviderGlbBuffer } from './provider-result-url.js';
 import { registerReconstructionCreation } from './forge-store.js';
+
+// Park the finished mesh in our bucket, and keep the reconstruction when the
+// bucket refuses the write.
+//
+// This one PUT sat between a user and the avatar they had already waited for.
+// When the R2 credential stopped verifying at 03:15 UTC on 2026-09-11 (the
+// second such outage in three days), every selfie reconstruction completed on
+// the GPU and was then thrown away here: materialize aborted, no avatar row was
+// written, and the page could only say "Avatar finished but could not be saved."
+// The mesh was never actually lost - the reconstruction worker had already
+// parked it in a public, lifecycle-free GCS bucket, and that URL was sitting in
+// the job row the whole time.
+//
+// So a storage-INFRASTRUCTURE fault (credential rejected or revoked, bucket
+// missing, endpoint unreachable) now costs the durable copy in our bucket, not
+// the user's avatar: the provider's own public URL becomes the storage key.
+// `publicUrl()` passes an absolute key straight through, `copyObject()` already
+// declines to copy one, and `defaultStorageMode()` records r2.present = false,
+// so the avatar renders and animates while staying findable for a later
+// re-copy. This is the same trade image-persist.js makes for reference images,
+// and for the same reason: storage must never hold the flagship flow hostage.
+//
+// Anything else (a programming error, an oversized body) still throws - only a
+// fault we can name is allowed to degrade.
+//
+// @returns {Promise<string>} the storage key to record: the bucket key on a
+//   successful write, else the provider's absolute URL.
+async function storeGlbOrKeepProviderUrl({ key, body, metadata, providerUrl }) {
+	try {
+		await putObject({ key, body, contentType: 'model/gltf-binary', metadata });
+		return key;
+	} catch (err) {
+		if (!isStorageInfrastructureError(err)) throw err;
+		if (!/^https:\/\//i.test(providerUrl || '')) throw err;
+		console.warn(
+			`[reconstruct] object storage rejected the mesh (${String(err?.name || err?.Code || 'storage error')}); serving the provider copy at ${providerUrl} so the reconstruction survives`,
+		);
+		return providerUrl;
+	}
+}
 
 function glbMetaFrom(info) {
 	return info
@@ -72,6 +112,7 @@ async function materializeReconstructAvatar({
 	glbInfo,
 	storageKey,
 	slug,
+	providerUrl = null,
 	extraTags = [],
 	sourceMetaExtra = {},
 }) {
@@ -99,12 +140,17 @@ async function materializeReconstructAvatar({
 		console.warn('[reconstruct] canonicalize skipped:', err?.message);
 	}
 
-	await putObject({
+	const finalKey = await storeGlbOrKeepProviderUrl({
 		key: storageKey,
 		body: glbBuf,
-		contentType: 'model/gltf-binary',
 		metadata: { source: 'reconstruct', job_id: jobId },
+		providerUrl,
 	});
+	// The provider copy predates the bone canonicalization above, so an avatar
+	// served from it carries the model's original rig names. The browser
+	// canonicalizes at load time (src/glb-canonicalize.js), so it still animates;
+	// recording the pending copy keeps the difference visible rather than silent.
+	const servedFromProvider = finalKey !== storageKey;
 
 	const tags = [baseTag, ...extraTags];
 	if (glbInfo && !glbInfo.isRigged && !tags.includes('unrigged')) tags.push('unrigged');
@@ -115,7 +161,7 @@ async function materializeReconstructAvatar({
 
 	const avatar = await createAvatar({
 		userId,
-		storageKey,
+		storageKey: finalKey,
 		input: {
 			slug,
 			name,
@@ -123,7 +169,14 @@ async function materializeReconstructAvatar({
 			size_bytes: glbBuf.length,
 			content_type: 'model/gltf-binary',
 			source: 'reconstruct',
-			source_meta: { jobId, provider: job.provider, ...glbMetaFrom(glbInfo), ...promptMeta, ...sourceMetaExtra },
+			source_meta: {
+				jobId,
+				provider: job.provider,
+				...glbMetaFrom(glbInfo),
+				...promptMeta,
+				...sourceMetaExtra,
+				...(servedFromProvider ? { servedFrom: 'provider', pendingBucketKey: storageKey } : {}),
+			},
 			visibility,
 			tags,
 			checksum_sha256: null,
@@ -158,8 +211,8 @@ async function materializeReconstructAvatar({
 			jobId,
 			provider: job.provider,
 			prompt: fromPrompt && params.prompt ? String(params.prompt) : name,
-			glbKey: storageKey,
-			glbUrl: publicUrl(storageKey),
+			glbKey: finalKey,
+			glbUrl: publicUrl(finalKey),
 			sizeBytes: glbBuf.length,
 			visibility,
 			previewImageUrl: referenceUrl,
@@ -212,19 +265,21 @@ export async function finalizeReconstructStage({ userId, jobId, job, glbUrl }) {
 	const canRig = !!(info && !info.isRigged && provider?.instance);
 
 	if (!canRig) {
-		const avatar = await materializeReconstructAvatar({ userId, jobId, job, glbBuf, glbInfo: info, storageKey, slug });
+		const avatar = await materializeReconstructAvatar({ userId, jobId, job, glbBuf, glbInfo: info, storageKey, slug, providerUrl: glbUrl });
 		return { status: 'done', resultAvatarId: avatar.id };
 	}
 
 	// Store the bare mesh durably first: it gives the rig model a stable URL to
-	// fetch and guarantees a fallback if rigging fails.
-	await putObject({
+	// fetch and guarantees a fallback if rigging fails. When the bucket refuses
+	// the write, the provider's own public copy already satisfies both roles, so
+	// rigging proceeds instead of stranding a finished reconstruction.
+	const unriggedKey = await storeGlbOrKeepProviderUrl({
 		key: storageKey,
 		body: glbBuf,
-		contentType: 'model/gltf-binary',
 		metadata: { source: 'reconstruct', job_id: jobId, stage: 'unrigged' },
+		providerUrl: glbUrl,
 	});
-	const unriggedUrl = publicUrl(storageKey);
+	const unriggedUrl = publicUrl(unriggedKey);
 
 	let rigSubmission;
 	try {
@@ -246,6 +301,7 @@ export async function finalizeReconstructStage({ userId, jobId, job, glbUrl }) {
 			glbInfo: info,
 			storageKey,
 			slug,
+			providerUrl: glbUrl,
 			extraTags: ['unrigged'],
 			sourceMetaExtra: { rigError: String(rigErr?.message || rigErr) },
 		});
@@ -291,6 +347,7 @@ export async function pollRiggingStage({ userId, jobId, job }) {
 		const info = isValidGlbHeader(glbBuf) ? inspectGlb(glbBuf) : null;
 		const avatar = await materializeReconstructAvatar({
 			userId, jobId, job, glbBuf, glbInfo: info, storageKey, slug,
+			providerUrl: rig.unriggedUrl,
 			extraTags: ['unrigged'],
 			sourceMetaExtra: { rigError: 'rig job not pollable' },
 		});
@@ -304,6 +361,7 @@ export async function pollRiggingStage({ userId, jobId, job }) {
 		const info = isValidGlbHeader(glbBuf) ? inspectGlb(glbBuf) : null;
 		const avatar = await materializeReconstructAvatar({
 			userId, jobId, job, glbBuf, glbInfo: info, storageKey, slug,
+			providerUrl: update.resultGlbUrl,
 			sourceMetaExtra: { rigged: true, rigJobId: rig.extJobId, reconstructGlb: rig.unriggedUrl },
 		});
 		return { status: 'done', resultAvatarId: avatar.id };
@@ -315,6 +373,7 @@ export async function pollRiggingStage({ userId, jobId, job }) {
 		const info = isValidGlbHeader(glbBuf) ? inspectGlb(glbBuf) : null;
 		const avatar = await materializeReconstructAvatar({
 			userId, jobId, job, glbBuf, glbInfo: info, storageKey, slug,
+			providerUrl: rig.unriggedUrl,
 			extraTags: ['unrigged'],
 			sourceMetaExtra: { rigFailed: true, rigError: update.error || null },
 		});

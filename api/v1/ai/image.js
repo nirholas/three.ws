@@ -39,6 +39,7 @@ import {
 	SUPPORTED_ASPECT_RATIOS,
 } from '../../_lib/ai-image-lanes.js';
 import { peekFreeQuota, consumeFreeQuota, freePerDay } from '../../_lib/ai-image-quota.js';
+import { isInlineImageRef } from '../../_lib/image-persist.js';
 
 const ROUTE = '/api/v1/ai/image';
 const PRICE_ATOMICS = priceFor('ai-image', '20000'); // $0.02 USDC per image above quota
@@ -225,6 +226,23 @@ async function generateAndRespond({ prompt, aspectRatio, seed }, { free, ip }) {
 	}
 
 	const url = result?.imageUrl;
+	// The lane drew the image but object storage refused to keep it, so the bytes
+	// came back inline (see api/_lib/image-persist.js). Our own workers read an
+	// inline reference happily; a third-party caller of this endpoint cannot,
+	// because the contract here is a durable https URL it can fetch later. So the
+	// honest answer is a transient storage fault, not "generation_failed". That
+	// told the caller to retry a prompt that was never the problem, and told the
+	// operator nothing at all while the R2 credential sat rejected for hours
+	// (2026-09-09, and again from 03:15 UTC on 2026-09-11).
+	if (isInlineImageRef(url)) {
+		throw Object.assign(
+			new Error('The image was generated but could not be stored: object storage is rejecting writes. Retry shortly.'),
+			// 5xx descriptions are redacted to a support ref on this route, so the
+			// machine-readable code is what a caller reacts to and the sentence is
+			// what the operator reads next to that ref in the logs.
+			{ status: 503, code: 'storage_unavailable' },
+		);
+	}
 	if (!url || !/^https?:\/\//.test(url)) {
 		throw Object.assign(new Error('Image lane returned no usable image URL.'), {
 			status: 502,

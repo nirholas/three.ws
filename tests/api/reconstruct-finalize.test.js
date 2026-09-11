@@ -9,11 +9,25 @@ const sqlMock = vi.fn(async () => []);
 vi.mock('../../api/_lib/db.js', () => ({ sql: (...args) => sqlMock(...args), isDbUnavailableError: () => false, isDbCapacityError: () => false }));
 
 const putObjectMock = vi.fn(async () => undefined);
-const publicUrlMock = vi.fn((key) => `https://cdn.test/${key}`);
+// Mirrors the real publicUrl(): an absolute key is passed straight through, so a
+// mesh served from the provider's own bucket resolves to itself.
+const publicUrlMock = vi.fn((key) => (/^https?:\/\//i.test(key) ? key : `https://cdn.test/${key}`));
 vi.mock('../../api/_lib/r2.js', () => ({
 	putObject: (...a) => putObjectMock(...a),
 	publicUrl: (...a) => publicUrlMock(...a),
+	// The real classifier, narrowed to the shapes these tests raise.
+	isStorageInfrastructureError: (err) =>
+		/signaturedoesnotmatch|unauthorized|nosuchbucket|access denied|econnrefused/i.test(
+			[err?.name, err?.Code, err?.message].filter(Boolean).join(' '),
+		),
 }));
+
+// The fault a rejected R2 token actually raises.
+function signatureError() {
+	return Object.assign(new Error('The request signature we calculated does not match the signature you provided.'), {
+		name: 'SignatureDoesNotMatch',
+	});
+}
 
 const createAvatarMock = vi.fn(async ({ input }) => ({ id: 'avatar-1', name: input.name, slug: input.slug }));
 vi.mock('../../api/_lib/avatars.js', () => ({
@@ -227,5 +241,86 @@ describe('pollRiggingStage', () => {
 		const out = await pollRiggingStage({ userId: 'u1', jobId: 'j1', job: rigJob });
 		expect(out).toEqual({ status: 'rigging' });
 		expect(createAvatarMock).not.toHaveBeenCalled();
+	});
+});
+
+// A rejected object-storage credential took the whole selfie flow down twice in
+// three days (2026-09-09, then 2026-09-11 03:15 UTC): the mesh finished on the
+// GPU and was discarded at the bucket write, so the user was told their avatar
+// "could not be saved" while a perfectly good copy sat in the provider's own
+// public bucket. Storage is allowed to lose the durable copy; it is not allowed
+// to lose the reconstruction.
+describe('object storage outage', () => {
+	it('keeps the avatar, served from the provider copy, when the bucket rejects the write', async () => {
+		inspectGlbMock.mockReturnValue(RIGGED);
+		putObjectMock.mockRejectedValueOnce(signatureError());
+
+		const out = await finalizeReconstructStage({
+			userId: 'u1',
+			jobId: 'j1',
+			job: baseJob,
+			glbUrl: 'https://storage.googleapis.com/three-ws-avatar-reconstructions/avatars/abc.glb',
+		});
+
+		expect(out).toEqual({ status: 'done', resultAvatarId: 'avatar-1' });
+		const created = createAvatarMock.mock.calls[0][0];
+		expect(created.storageKey).toBe('https://storage.googleapis.com/three-ws-avatar-reconstructions/avatars/abc.glb');
+		// Flagged for a later re-copy rather than silently diverging from the bucket.
+		expect(created.input.source_meta.servedFrom).toBe('provider');
+		expect(created.input.source_meta.pendingBucketKey).toBe('u/u1/' + created.input.slug + '/m.glb');
+	});
+
+	it('registers the Forge creation against the URL actually serving the mesh', async () => {
+		inspectGlbMock.mockReturnValue(RIGGED);
+		putObjectMock.mockRejectedValueOnce(signatureError());
+
+		await finalizeReconstructStage({
+			userId: 'u1',
+			jobId: 'j1',
+			job: baseJob,
+			glbUrl: 'https://storage.googleapis.com/three-ws-avatar-reconstructions/avatars/abc.glb',
+		});
+
+		const reg = registerReconstructionCreationMock.mock.calls[0][0];
+		expect(reg.glbUrl).toBe('https://storage.googleapis.com/three-ws-avatar-reconstructions/avatars/abc.glb');
+		expect(reg.glbKey).toBe(reg.glbUrl);
+	});
+
+	it('still rigs an unrigged mesh, handing the rig model the provider copy', async () => {
+		inspectGlbMock.mockReturnValue(UNRIGGED);
+		putObjectMock.mockRejectedValueOnce(signatureError());
+		const submit = vi.fn(async () => ({ extJobId: 'rig-ext-1' }));
+		providerMock.instance = { supportsMode: (m) => m === 'rerig', submit };
+
+		const out = await finalizeReconstructStage({
+			userId: 'u1',
+			jobId: 'j1',
+			job: baseJob,
+			glbUrl: 'https://storage.googleapis.com/three-ws-avatar-reconstructions/avatars/abc.glb',
+		});
+
+		expect(out).toEqual({ status: 'rigging' });
+		expect(submit.mock.calls[0][0].sourceUrl).toBe(
+			'https://storage.googleapis.com/three-ws-avatar-reconstructions/avatars/abc.glb',
+		);
+	});
+
+	it('still throws on a fault that is not storage infrastructure', async () => {
+		inspectGlbMock.mockReturnValue(RIGGED);
+		putObjectMock.mockRejectedValueOnce(new TypeError('body is not a Buffer'));
+
+		await expect(
+			finalizeReconstructStage({ userId: 'u1', jobId: 'j1', job: baseJob, glbUrl: 'https://x/m.glb' }),
+		).rejects.toThrow('body is not a Buffer');
+		expect(createAvatarMock).not.toHaveBeenCalled();
+	});
+
+	it('refuses to degrade when there is no provider URL to fall back to', async () => {
+		inspectGlbMock.mockReturnValue(RIGGED);
+		putObjectMock.mockRejectedValueOnce(signatureError());
+
+		await expect(
+			finalizeReconstructStage({ userId: 'u1', jobId: 'j1', job: baseJob, glbUrl: 'http://insecure/m.glb' }),
+		).rejects.toThrow(/signature/i);
 	});
 });

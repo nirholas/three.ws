@@ -33,11 +33,21 @@ export const storageModeSchema = z.object({
 	}),
 });
 
+// An avatar whose storage_key is an absolute URL does NOT live in our bucket:
+// it is served straight from the origin that produced it (a reconstruction
+// parked in GCS when the R2 write could not be made). Reporting r2.present for
+// one of those told every reader the bytes were in the bucket when no object
+// existed, so a re-copy sweep could never find the ones that still need one.
+function livesInBucket(storageKey) {
+	return typeof storageKey === 'string' && storageKey !== '' && !/^https?:\/\//i.test(storageKey);
+}
+
 export function defaultStorageMode(avatarRow = {}) {
+	const inBucket = livesInBucket(avatarRow.storage_key);
 	return {
 		version: STORAGE_MODE_VERSION,
 		primary: 'r2',
-		r2: { present: true, key: avatarRow.storage_key ?? null },
+		r2: { present: inBucket, key: inBucket ? avatarRow.storage_key : null },
 		ipfs: { pinned: false, cid: null, pinned_at: null },
 		attestation: {
 			hash: avatarRow.checksum_sha256 ?? null,

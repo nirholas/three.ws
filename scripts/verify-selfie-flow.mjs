@@ -156,6 +156,11 @@ page.on('console', (msg) => {
 page.on('requestfailed', (req) => {
 	failedRequests.push(`${req.method()} ${req.url().slice(0, 160)}: ${req.failure()?.errorText}`);
 });
+// A refusal from the submit call itself is terminal: the job never starts, so
+// no pipeline event will ever fire and waiting out the full build timeout only
+// delays the answer. A full avatar library (402 plan_limit) cost one run ten
+// minutes to report something the first response already said.
+let submitRefusal = null;
 page.on('response', async (res) => {
 	const url = res.url();
 	if (!url.includes('/api/avatars/')) return;
@@ -163,6 +168,15 @@ page.on('response', async (res) => {
 	if (!res.ok()) entry.body = (await res.text().catch(() => '')).slice(0, 300);
 	apiCalls.push(entry);
 	log(`  ${entry.status} ${entry.url}${entry.body ? ` ${entry.body}` : ''}`);
+	if (url.includes('/api/avatars/reconstruct') && res.status() >= 400) {
+		let parsed = null;
+		try { parsed = JSON.parse(entry.body || ''); } catch { parsed = null; }
+		submitRefusal = {
+			status: res.status(),
+			code: parsed?.error || 'error',
+			message: parsed?.error_description || entry.body || '(no body)',
+		};
+	}
 });
 
 const started = Date.now();
@@ -203,7 +217,14 @@ await submit.click();
 // id the job produced; selfie:build-error carries the message the user is
 // shown. Anything else at the deadline is a stall, and the last progress label
 // says where it stalled.
-const outcome = await page.evaluate(async (timeout) => {
+const outcome = await Promise.race([
+	// The submit call was refused outright, so stop instead of waiting for a
+	// pipeline that will never run.
+	(async () => {
+		while (!submitRefusal) await new Promise((r) => setTimeout(r, 250));
+		return { state: 'refused', detail: `${submitRefusal.status} ${submitRefusal.code}: ${submitRefusal.message}`, ms: 0, events: [] };
+	})(),
+	page.evaluate(async (timeout) => {
 	const started = Date.now();
 	const events = () => window.__selfieEvents || [];
 	const last = (name) => [...events()].reverse().find((e) => e.name === name);
@@ -250,7 +271,8 @@ const outcome = await page.evaluate(async (timeout) => {
 			}
 		}, 1000);
 	});
-}, buildTimeoutMs);
+}, buildTimeoutMs),
+]);
 
 const trail = (outcome.events || []).map((e) => e.name.replace('selfie:', '')).join(' -> ');
 log(`pipeline: ${trail || '(no events fired)'}`);
@@ -273,6 +295,9 @@ if (outcome.state === 'built') {
 	const avatar = outcome.detail ? `${origin}/avatars/${outcome.detail}` : '(no id in the event)';
 	console.log(`\n  built in ${elapsed}s: ${avatar}\n  evidence in ${outDir}\n`);
 	process.exit(0);
+}
+if (outcome.state === 'refused') {
+	bail(1, `the reconstruct call was refused after ${elapsed}s: ${outcome.detail}\n  evidence in ${outDir}`);
 }
 if (outcome.state === 'error') bail(1, `the flow failed after ${elapsed}s: ${outcome.detail}\n  evidence in ${outDir}`);
 bail(1, `no avatar after ${elapsed}s. Last status on screen: ${outcome.detail || '(blank)'}\n  evidence in ${outDir}`);

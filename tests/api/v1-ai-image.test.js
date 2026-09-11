@@ -261,3 +261,48 @@ describe('GET surfaces', () => {
 		expect(body.lanes.replicate.status).toBe('ok');
 	});
 });
+
+// When object storage rejects the write, the lane still draws the image and
+// image-persist.js hands back an inline data URI so our own 3D workers keep
+// running. This endpoint's contract is a durable https URL a third party can
+// fetch, so it cannot pass that through, but it also must not report it as a
+// failed generation. That opaque 502 is what a rejected R2 credential looked
+// like for hours on 2026-09-09 and again from 03:15 UTC on 2026-09-11.
+describe('object storage outage', () => {
+	const INLINE = 'data:image/jpeg;base64,/9j/4AAQSkZJRg==';
+
+	it('answers 503 storage_unavailable when the image could only be stored inline', async () => {
+		laneState.impl = async () => ({ imageUrl: INLINE, model: 'black-forest-labs/flux.1-schnell' });
+		const res = makeRes();
+		await handler(makeReq({ body: { prompt: 'a brass owl figurine' } }), res);
+		expect(res.statusCode).toBe(503);
+		const body = JSON.parse(res.body);
+		// The code is the contract a caller reacts to: retry later, and do not
+		// rewrite the prompt. (5xx descriptions on this route are redacted to a
+		// support ref by design; the sentence reaches the operator via the log.)
+		expect(body.error).toBe('storage_unavailable');
+		expect(body.ref).toBeTruthy();
+	});
+
+	it('never leaks the inline bytes into the response', async () => {
+		laneState.impl = async () => ({ imageUrl: INLINE, model: 'black-forest-labs/flux.1-schnell' });
+		const res = makeRes();
+		await handler(makeReq({ body: { prompt: 'a brass owl figurine' } }), res);
+		expect(res.body).not.toContain('data:image/');
+	});
+
+	it('does not burn a free-quota slot on a storage failure', async () => {
+		laneState.impl = async () => ({ imageUrl: INLINE, model: 'black-forest-labs/flux.1-schnell' });
+		const res = makeRes();
+		await handler(makeReq({ body: { prompt: 'a brass owl figurine' } }), res);
+		expect(quotaState.consumed).toBe(0);
+	});
+
+	it('still reports a genuinely empty lane result as generation_failed', async () => {
+		laneState.impl = async () => ({ imageUrl: null, model: 'black-forest-labs/flux.1-schnell' });
+		const res = makeRes();
+		await handler(makeReq({ body: { prompt: 'a brass owl figurine' } }), res);
+		expect(res.statusCode).toBe(502);
+		expect(JSON.parse(res.body).error).toBe('generation_failed');
+	});
+});

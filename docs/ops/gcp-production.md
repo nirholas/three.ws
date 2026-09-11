@@ -731,6 +731,87 @@ across all callers, and bounds every vision-model load with
 15 seconds instead of hanging the flow. `npm run verify:selfie -- --stall-vision`
 reproduces the hostile case end to end.
 
+### A rejected object-storage credential silently eats finished avatars (2026-09-11)
+
+The R2 credential stopped verifying at **03:15 UTC on 2026-09-11**, the second
+such outage in three days (the first ran 05:04-05:19 on 2026-09-09 and was
+fixed by rotating the secret). Every signed operation answered
+`SignatureDoesNotMatch`, for reads and writes alike.
+
+Confirm it in one command, against whatever the service is actually running
+(the secret is a Secret Manager reference, so `describe` shows `valueFrom`):
+
+```bash
+export S3_ENDPOINT=$(node scripts/read-service-env.mjs '^S3_ENDPOINT$' --raw)
+export S3_BUCKET=$(node scripts/read-service-env.mjs '^S3_BUCKET$' --raw)
+export S3_PUBLIC_DOMAIN=$(node scripts/read-service-env.mjs '^S3_PUBLIC_DOMAIN$' --raw)
+export S3_ACCESS_KEY_ID=$(node scripts/read-service-env.mjs '^S3_ACCESS_KEY_ID$' --raw)
+export S3_SECRET_ACCESS_KEY=$(node scripts/read-service-env.mjs '^S3_SECRET_ACCESS_KEY$' --raw)
+node -e "const {putObject}=await import('./api/_lib/r2.js');
+await putObject({key:'forge/refs/probe.png',body:Buffer.from('89504e470d0a1a0a','hex'),contentType:'image/png'});
+console.log('write ok')"
+```
+
+Count the blast radius, which is what tells a credential fault from a code bug:
+
+```bash
+gcloud logging read 'resource.type="cloud_run_revision"
+  resource.labels.service_name="three-ws-api" textPayload:"SignatureDoesNotMatch"' \
+  --freshness=12h --limit=1000 --format='value(timestamp)' \
+  --project aerial-vehicle-466722-p5 | cut -c1-13 | sort | uniq -c
+```
+
+A clean start hour with nothing before it is a credential that died at that
+minute. Failures spread evenly across many hours are a different fault.
+
+**Symptom at the product level:** `/create/selfie` reconstructed the mesh on
+the GPU, took ~35 s, and then said **"Avatar finished but could not be saved.
+Try again."** Retrying could not work, because the prompt was never the problem.
+The job row is the ground truth, and it logs nothing:
+
+```sql
+select job_id, status, result_avatar_id, error from avatar_regen_jobs
+order by created_at desc limit 5;
+-- status 'done', result_avatar_id NULL, error NULL
+```
+
+`error` stays NULL **on purpose**: `/api/cron/reconstruct-sweep` recovers exactly
+the rows matching `status = 'done' and error is null`, so writing the failure
+there would strand the job instead of retrying it. Do not "fix" that NULL.
+
+**Why it is no longer fatal.** `api/_lib/reconstruct-finalize.js` treats a
+storage-infrastructure fault (`isStorageInfrastructureError`: credential
+rejected or revoked, bucket missing, endpoint unreachable) as a reason to lose
+the durable copy, never the reconstruction. The mesh is already public and
+lifecycle-free in `gs://three-ws-avatar-reconstructions`, so that URL becomes
+the avatar's storage key: `publicUrl()` passes an absolute key through,
+`defaultStorageMode()` records `r2.present = false`, and `source_meta` carries
+`servedFrom: 'provider'` plus the `pendingBucketKey` a later re-copy needs. Any
+other fault still throws. Same trade `api/_lib/image-persist.js` makes for
+reference images.
+
+`POST /api/v1/ai/image` cannot make that trade (its contract is a durable https
+URL a third party can fetch), so it answers **503 `storage_unavailable`** rather
+than the old opaque 502 `generation_failed`, which told callers to retry a good
+prompt and told operators nothing.
+
+**Real recovery** is a new R2 API token, and it is owner-gated: no Cloudflare
+API token exists on this machine or on the Cloud Run service, so a token cannot
+be minted from here. Mint one in the Cloudflare dashboard (R2 > Manage API
+tokens, Object Read & Write on the bucket in `S3_BUCKET`), then:
+
+```bash
+printf %s "<new secret>" | gcloud secrets versions add s3-secret-access-key \
+  --data-file=- --project aerial-vehicle-466722-p5
+# only if the access key id changed too (--update-env-vars MERGES; --set-env-vars REPLACES)
+gcloud run services update three-ws-api --region us-central1 \
+  --update-env-vars S3_ACCESS_KEY_ID=<new id> --project aerial-vehicle-466722-p5
+```
+
+`api/_lib/r2.js` re-probes a rejected credential every 15 s, so a fixed token
+recovers without a redeploy. Avatars written during the outage keep serving from
+GCS; find them with `storage_mode->'r2'->>'present' = 'false'`.
+
 ### Client geo header (analytics country column)
 
 `api/_lib/client-geo.js` resolves a visitor's country from an edge geo header
