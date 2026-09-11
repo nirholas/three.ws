@@ -1,0 +1,820 @@
+locale,title,short_description,full_description
+"ar","three.ws: 3D Models & Agents","أنشئ نماذج 3D ووكلاء AI من صورة أو نص، تملكها وتضمّنها في أي مكان","three.ws يحول صورة أو وصفًا نصيًا إلى نماذج ثلاثية الأبعاد ووكالات ذكية تمتلكها.
+
+صف كائنًا واحصل على نموذج ثلاثي الأبعاد مع نسيج. التقط صورة شخصية واحصل على صورة رمزية مجهزة وجاهزة للتحريك في نحو دقيقة. امنح شخصية وصفًا وصوتًا، وتحدث معها، وضعها في أي مكان على الإنترنت بسطر HTML واحد. لا حاجة لبرامج ثلاثية الأبعاد، ولا مهارات نمذجة، ولا حساب مطلوب للاستكشاف.
+
+ما يمكنك فعله
+
+صنع نموذج ثلاثي الأبعاد من نص. صف أداة أو كائنًا أو مشهدًا وسيبني المسار المجاني النموذج مع نسيج وجاهزًا للتنزيل بصيغة glTF. لا مفتاح، لا حساب، لا تكلفة.
+
+صنع صورة رمزية من صورة شخصية. صورة أمامية واحدة تصبح صورة رمزية مجهزة؛ زاويتان جانبيتان اختياريتان تحسّنان التشابه. بوابات جودة مباشرة تخبرك إن كانت الإضاءة أو الإطار أو التركيز ستضر بالنتيجة قبل أن تنتظر دقيقة.
+
+صنع شخصية من وصف. لا صورة؟ صف الشخصية واحصل على صورة رمزية مجهزة. لديك نموذج بالفعل؟ ارفع ملف GLB وسيتم تجهيزه لك.
+
+امنحها عقلًا. أرفق شخصية وصوتًا ومهارات، ثم أجرِ محادثة معها. الوكيل يجيب في ثلاثة أبعاد، على هاتفك.
+
+اكتشف. تصفح نماذج المجتمع ووكالاته كلها. اسحب للدوران، اضغط للفحص، افتح أي وكيل للدردشة معه.
+
+امتلكه على السلسلة، إن شئت. انشر وكيلًا كأصل Metaplex Core على Solana تحتفظ به محفظتك. هذا اختياري تمامًا: الإنشاء والدردشة والتصفح لا تمس محفظة أبدًا.
+
+أدرجه في أي مكان. لكل وكيل رابط قابل للمشاركة ومقتطف تضمين بسطر واحد يعمل في مقال، موقع توثيق، Notion، أو منتجك الخاص.
+
+راه في غرفتك. وجّه الكاميرا وضع أي نموذج أو وكيل في الفضاء الحقيقي عبر دعم الواقع المعزز في متصفحك. لا شيء لتثبيته.
+
+المحافظ اختيارية
+
+يمكنك استخدام three.ws دون ربط محفظة أبدًا. إن ربطت واحدة، يتم التوقيع عبر Mobile Wallet Adapter، فيحدث داخل تطبيق المحفظة الذي تثق به بالفعل، وهذا التطبيق لا يرى مفتاحًا خاصًا ولا عبارة بذور. three.ws ليست محفظة، ولا تحتفظ بأموالك، ولا تشغّل بورصة.
+
+مفتوح افتراضيًا
+
+three.ws مفتوح المصدر على github.com/nirholas/three.ws. الوكالات تنشر ببيان مفتوح فتبقى قابلة للنقل إلى أي عارض أو سوق متوافق. عملك لك، ويرحل معك.
+
+ما تحتاجه
+
+هاتف يعمل بنظام Android 6.0 أو أحدث، واتصال شبكة. إذن الكاميرا يُطلب فقط عند اختيار مسار الصورة الشخصية، ويمكنك رفع صورة من المعرض بدلًا من ذلك. نشر وكيل على السلسلة يحتاج قدرًا صغيرًا من SOL، عادة أقل من 0.01؛ كل شيء آخر مجاني.
+
+الدعم
+
+support@three.ws
+https://three.ws/docs
+github.com/nirholas/three.ws/issues"
+"de-DE","three.ws: 3D Models & Agents","Foto oder Prompt zu 3D-Modellen & KI-Agenten, dein Eigentum, überall einbettbar","three.ws verwandelt ein Foto oder eine Eingabe in 3D-Modelle und KI-Agenten, die Ihnen gehören.
+
+Beschreiben Sie ein Objekt und erhalten Sie ein texturiertes 3D-Modell zurück. Machen Sie ein Selfie und erhalten Sie in etwa einer Minute einen geriggten, animationsbereiten 3D-Avatar. Geben Sie einem Charakter eine Persönlichkeit und eine Stimme, sprechen Sie mit ihm, und platzieren Sie ihn mit einer Zeile HTML überall im Internet. Keine 3D-Software, keine Modellierkenntnisse, kein Konto erforderlich, um sich umzusehen.
+
+WAS SIE TUN KÖNNEN
+
+Erstellen Sie ein 3D-Modell aus Text. Beschreiben Sie ein Requisit, ein Objekt oder eine Szene, und der kostenlose Generierungsmodus baut es, texturiert und bereit zum Download als glTF. Kein Schlüssel, kein Konto, keine Kosten.
+
+Erstellen Sie einen Avatar aus einem Selfie. Ein frontales Foto wird zu einem geriggten Avatar; zwei optionale Seitenansichten verbessern die Ähnlichkeit. Live-Qualitätsprüfungen zeigen Ihnen, ob Beleuchtung, Bildausschnitt oder Fokus das Ergebnis beeinträchtigen, bevor Sie eine Minute warten.
+
+Erstellen Sie einen Charakter aus einer Beschreibung. Kein Foto? Beschreiben Sie den Charakter und erhalten Sie einen geriggten Avatar. Haben Sie bereits ein Modell? Laden Sie eine GLB hoch, und sie wird für Sie geriggt.
+
+Geben Sie ihm einen Verstand. Fügen Sie eine Persönlichkeit, eine Stimme und Fähigkeiten hinzu, und führen Sie ein Gespräch damit. Der Agent antwortet in 3D, auf Ihrem Telefon.
+
+Entdecken. Durchstöbern Sie alle Modelle und Agenten der Community. Ziehen Sie, um zu orbitieren, tippen Sie, um zu inspizieren, öffnen Sie jeden Agenten, um mit ihm zu chatten.
+
+Besitzen Sie es on-chain, wenn Sie möchten. Stellen Sie einen Agenten als Metaplex Core Asset auf Solana bereit, das in Ihrer eigenen Wallet gehalten wird. Dies ist vollständig optional: Erstellen, Chatten und Durchsuchen berühren niemals eine Wallet.
+
+Einbetten überall. Jeder Agent hat einen teilbaren Link und ein einzeiliges Einbettungs-Snippet, das in einem Blogbeitrag, einer Docs-Site, Notion oder Ihrem eigenen Produkt funktioniert.
+
+Sehen Sie es in Ihrem Raum. Richten Sie Ihre Kamera aus und platzieren Sie jedes Modell oder jeden Agenten im echten Raum über die AR-Unterstützung Ihres Browsers. Nichts zu installieren.
+
+WALLETS SIND OPTIONAL
+
+Sie können three.ws nutzen, ohne jemals eine Wallet zu verbinden. Wenn Sie doch eine verbinden, läuft das Signieren über Mobile Wallet Adapter, sodass es in der Wallet-App passiert, der Sie bereits vertrauen, und diese App niemals einen privaten Schlüssel oder eine Seed-Phrase sieht. three.ws ist keine Wallet, hält keine Gelder und betreibt keine Börse.
+
+STANDARDMÄSSIG OFFEN
+
+three.ws ist Open Source unter github.com/nirholas/three.ws. Agenten werden mit einem offenen Manifest veröffentlicht, sodass sie für jeden kompatiblen Viewer oder Marktplatz portabel bleiben. Ihre Arbeit gehört Ihnen, und sie geht mit Ihnen.
+
+WAS SIE BRAUCHEN
+
+Ein Telefon mit Android 6.0 oder höher und eine Netzwerkverbindung. Kameraberechtigung wird nur angefordert, wenn Sie den Selfie-Flow wählen, und Sie können stattdessen ein Foto aus Ihrer Galerie hochladen. Das Bereitstellen eines Agenten on-chain erfordert eine kleine Menge SOL, typischerweise unter 0,01; alles andere ist kostenlos.
+
+SUPPORT
+
+support@three.ws
+https://three.ws/docs
+github.com/nirholas/three.ws/issues"
+"es-419","three.ws: 3D Models & Agents","Crea modelos 3D y agentes IA desde foto o prompt, tuyos para usar donde quieras.","three.ws convierte una foto o una indicación en modelos 3D y agentes de IA que son tuyos.
+
+Describe un objeto y obtén un modelo 3D texturizado. Tómate una selfie y consigue un avatar 3D riggeado, listo para animar, en aproximadamente un minuto. Dale a un personaje una personalidad y una voz, habla con él y colócalo en cualquier lugar de internet con una sola línea de HTML. Sin software 3D, sin conocimientos de modelado, sin necesidad de cuenta para explorar.
+
+QUÉ PUEDES HACER
+
+Crea un modelo 3D a partir de texto. Describe un accesorio, un objeto o una escena y la vía de generación gratuita lo construye, texturizado y listo para descargar como glTF. Sin clave, sin cuenta, sin costo.
+
+Crea un avatar a partir de una selfie. Una foto frontal se convierte en un avatar riggeado; dos ángulos laterales opcionales mejoran el parecido. Los controles de calidad en vivo te avisan si la iluminación, el encuadre o el foco afectarán el resultado antes de que esperes un minuto.
+
+Crea un personaje a partir de una descripción. ¿No tienes foto? Describe al personaje y obtén un avatar riggeado. ¿Ya tienes un modelo? Sube un GLB y se riggea por ti.
+
+Dale una mente. Adjunta una personalidad, una voz y habilidades, y mantén una conversación con él. El agente responde en 3D, en tu teléfono.
+
+Descubre. Explora los modelos y agentes de toda la comunidad. Arrastra para orbitar, toca para inspeccionar, abre cualquier agente para chatear con él.
+
+Tenlo en cadena, si quieres. Despliega un agente como activo de Metaplex Core en Solana custodiado por tu propia billetera. Es totalmente opcional: crear, chatear y explorar nunca tocan una billetera.
+
+Inserta en cualquier lugar. Cada agente tiene un enlace compartible y un fragmento de inserción de una línea que funciona en una entrada de blog, un sitio de documentación, Notion o tu propio producto.
+
+Míralo en tu habitación. Apunta la cámara y coloca cualquier modelo o agente en el espacio real mediante la compatibilidad AR de tu navegador. Nada que instalar.
+
+LAS BILLETERAS SON OPCIONALES
+
+Puedes usar three.ws sin conectar nunca una billetera. Si conectas una, la firma se realiza a través de Mobile Wallet Adapter, así que ocurre dentro de la app de billetera en la que ya confías y esta app nunca ve una clave privada ni una frase semilla. three.ws no es una billetera, no custodia tus fondos y no opera un intercambio.
+
+ABIERTO POR DEFECTO
+
+three.ws es de código abierto en github.com/nirholas/three.ws. Los agentes se publican con un manifiesto abierto para que sigan siendo portables a cualquier visor o marketplace compatible. Tu trabajo es tuyo y se va contigo.
+
+QUÉ NECESITAS
+
+Un teléfono con Android 6.0 o posterior y una conexión a internet. El permiso de cámara se solicita solo cuando eliges el flujo de selfie, y puedes subir una foto de tu galería en su lugar. Desplegar un agente en cadena requiere una pequeña cantidad de SOL, normalmente menos de 0.01; todo lo demás es gratis.
+
+SOPORTE
+
+support@three.ws
+https://three.ws/docs
+github.com/nirholas/three.ws/issues"
+"es-ES","three.ws: 3D Models & Agents","Convierte foto o texto en modelos 3D y agentes IA para insertar donde quieras.","three.ws convierte una foto o una descripción en modelos 3D y agentes de IA que son tuyos.
+
+Describe un objeto y obtén un modelo 3D texturizado. Hazte un selfie y consigue un avatar 3D riggeado, listo para animar, en aproximadamente un minuto. Dale a un personaje una personalidad y una voz, habla con él y colócalo en cualquier lugar de internet con una sola línea de HTML. Sin software 3D, sin conocimientos de modelado, sin necesidad de cuenta para explorar.
+
+QUÉ PUEDES HACER
+
+Crea un modelo 3D a partir de texto. Describe un accesorio, un objeto o una escena y la vía de generación gratuita lo construye, texturizado y listo para descargar como glTF. Sin clave, sin cuenta, sin coste.
+
+Crea un avatar a partir de un selfie. Una foto frontal se convierte en un avatar riggeado; dos ángulos laterales opcionales mejoran el parecido. Controles de calidad en vivo te avisan si la iluminación, el encuadre o el enfoque perjudicarán el resultado antes de que esperes un minuto.
+
+Crea un personaje a partir de una descripción. ¿No tienes foto? Describe el personaje y obtén un avatar riggeado. ¿Ya tienes un modelo? Sube un GLB y se riggea por ti.
+
+Dale una mente. Adjunta una personalidad, una voz y habilidades, y mantén una conversación con él. El agente responde en 3D, en tu móvil.
+
+Descubre. Explora los modelos y agentes de toda la comunidad. Arrastra para orbitar, toca para inspeccionar, abre cualquier agente para chatear con él.
+
+Tenlo en cadena, si quieres. Despliega un agente como activo de Metaplex Core en Solana custodiado por tu propia cartera. Es totalmente opcional: crear, chatear y explorar nunca tocan una cartera.
+
+Inserta en cualquier sitio. Cada agente tiene un enlace compartible y un fragmento de inserción de una línea que funciona en una entrada de blog, un sitio de documentación, Notion o tu propio producto.
+
+Míralo en tu habitación. Apunta la cámara y coloca cualquier modelo o agente en el espacio real mediante el soporte AR de tu navegador. Nada que instalar.
+
+LAS CARTERAS SON OPCIONALES
+
+Puedes usar three.ws sin conectar nunca una cartera. Si la conectas, la firma se realiza a través de Mobile Wallet Adapter, así que ocurre dentro de la aplicación de cartera en la que ya confías y esta app nunca ve una clave privada ni una frase semilla. three.ws no es una cartera, no custodia tus fondos y no opera un exchange.
+
+ABIERTO POR DEFECTO
+
+three.ws es de código abierto en github.com/nirholas/three.ws. Los agentes se publican con un manifiesto abierto para que sigan siendo portables a cualquier visor o marketplace compatible. Tu trabajo es tuyo y se va contigo.
+
+QUÉ NECESITAS
+
+Un móvil con Android 6.0 o posterior y conexión a internet. El permiso de cámara se solicita solo cuando eliges el flujo de selfie, y puedes subir una foto de tu galería en su lugar. Desplegar un agente en cadena requiere una pequeña cantidad de SOL, normalmente menos de 0,01; todo lo demás es gratis.
+
+SOPORTE
+
+support@three.ws
+https://three.ws/docs
+github.com/nirholas/three.ws/issues"
+"fr-FR","three.ws: 3D Models & Agents","Transformez photo ou prompt en modèles 3D agents IA possédez, intégrez partout.","three.ws transforme une photo ou une description en modèles 3D et en agents IA que vous possédez.
+
+Décrivez un objet et obtenez un modèle 3D texturé. Prenez un selfie et obtenez un avatar 3D riggé, prêt pour l'animation, en environ une minute. Donnez une personnalité et une voix à un personnage, discutez avec lui, et placez-le n'importe où sur internet avec une seule ligne de HTML. Aucun logiciel 3D, aucune compétence en modélisation, aucun compte requis pour explorer.
+
+CE QUE VOUS POUVEZ FAIRE
+
+Créez un modèle 3D à partir de texte. Décrivez un accessoire, un objet ou une scène et la file de génération gratuite le construit, texturé et prêt à télécharger au format glTF. Aucune clé, aucun compte, aucun coût.
+
+Créez un avatar à partir d'un selfie. Une photo de face devient un avatar riggé, deux angles latéraux optionnels affinent la ressemblance. Des contrôles de qualité en direct vous indiquent si l'éclairage, le cadrage ou la mise au point nuira au résultat avant que vous n'attendiez une minute.
+
+Créez un personnage à partir d'une description. Pas de photo? Décrivez le personnage et obtenez un avatar riggé. Vous avez déjà un modèle? Importez un GLB et il sera riggé pour vous.
+
+Donnez-lui un esprit. Ajoutez une personnalité, une voix et des compétences, puis conversez avec lui. L'agent répond en 3D, sur votre téléphone.
+
+Découvrez. Parcourez les modèles et agents de toute la communauté. Faites glisser pour orbiter, appuyez pour inspecter, ouvrez n'importe quel agent pour discuter avec lui.
+
+Possédez-le sur la chaîne, si vous le souhaitez. Déployez un agent en tant qu'actif Metaplex Core sur Solana, détenu par votre propre portefeuille. Cela est entièrement optionnel: la création, la discussion et la navigation ne touchent jamais à un portefeuille.
+
+Intégrez partout. Chaque agent dispose d'un lien partageable et d'un extrait d'intégration en une ligne qui fonctionne dans un article de blog, un site de documentation, Notion ou votre propre produit.
+
+Voyez-le dans votre pièce. Pointez votre caméra et placez n'importe quel modèle ou agent dans l'espace réel grâce à la prise en charge AR de votre navigateur. Rien à installer.
+
+LES PORTEFEUILLES SONT OPTIONNELS
+
+Vous pouvez utiliser three.ws sans jamais connecter de portefeuille. Si vous en connectez un, la signature passe par Mobile Wallet Adapter, donc elle se produit dans l'application de portefeuille que vous connaissez déjà et cette application ne voit jamais de clé privée ni de phrase de départ. three.ws n'est pas un portefeuille, ne conserve pas vos fonds et n'exploite pas d'échange.
+
+OUVERT PAR DÉFAUT
+
+three.ws est open source sur github.com/nirholas/three.ws. Les agents sont publiés avec un manifeste ouvert afin qu'ils restent portables vers n'importe quel visualiseur ou place de marché compatible. Votre travail vous appartient, et il vous suit.
+
+CE DONT VOUS AVEZ BESOIN
+
+Un téléphone sous Android 6.0 ou version ultérieure, et une connexion réseau. La permission caméra n'est demandée que lorsque vous choisissez le flux selfie, et vous pouvez importer une photo depuis votre galerie à la place. Déployer un agent sur la chaîne nécessite une petite quantité de SOL, généralement inférieure à 0,01. Tout le reste est gratuit.
+
+SUPPORT
+
+support@three.ws
+https://three.ws/docs
+github.com/nirholas/three.ws/issues"
+"hi-IN","three.ws: 3D Models & Agents","फोटो या प्रॉम्प्ट से 3D मॉडल और AI एजेंट बनाएं, कहीं भी एम्बेड करें।","three.ws एक फोटो या प्रॉम्प्ट को 3D मॉडल और AI एजेंट में बदल देता है जो आपके अपने होते हैं।
+
+एक वस्तु का वर्णन करें और एक टेक्सचर किया हुआ 3D मॉडल वापस पाएं। एक सेल्फी लें और लगभग एक मिनट में एक रिग्ड, एनिमेशन-रेडी 3D अवतार प्राप्त करें। एक चरित्र को व्यक्तित्व और आवाज दें, उससे बात करें, और HTML की एक लाइन के साथ इसे इंटरनेट पर कहीं भी रखें। कोई 3D सॉफ्टवेयर नहीं, कोई मॉडलिंग कौशल नहीं, देखने के लिए किसी खाते की आवश्यकता नहीं।
+
+आप क्या कर सकते हैं
+
+टेक्स्ट से 3D मॉडल बनाएं। एक प्रॉप, वस्तु या दृश्य का वर्णन करें और मुफ्त जनरेशन लेन इसे बनाता है, टेक्सचर किया हुआ और glTF के रूप में डाउनलोड के लिए तैयार। कोई कुंजी नहीं, कोई खाता नहीं, कोई लागत नहीं।
+
+सेल्फी से अवतार बनाएं। एक फ्रंटल फोटो एक रिग्ड अवतार बन जाता है; दो वैकल्पिक साइड एंगल समानता को तेज करते हैं। लाइव क्वालिटी गेट आपको बताते हैं कि क्या लाइटिंग, फ्रेमिंग या फोकस परिणाम को नुकसान पहुंचाएगा, इससे पहले कि आप एक मिनट इंतजार करें।
+
+विवरण से चरित्र बनाएं। कोई फोटो नहीं? चरित्र का वर्णन करें और एक रिग्ड अवतार प्राप्त करें। पहले से ही एक मॉडल है? एक GLB अपलोड करें और यह आपके लिए रिग्ड हो जाता है।
+
+इसे दिमाग दें। एक व्यक्तित्व, आवाज और कौशल जोड़ें, फिर इसके साथ बातचीत करें। एजेंट 3D में जवाब देता है, आपके फोन पर।
+
+खोजें। पूरे समुदाय के मॉडल और एजेंट ब्राउज़ करें। ऑर्बिट करने के लिए ड्रैग करें, निरीक्षण करने के लिए टैप करें, चैट करने के लिए किसी भी एजेंट को खोलें।
+
+चाहें तो ऑन-चेन स्वामित्व लें। एक एजेंट को Solana पर Metaplex Core एसेट के रूप में तैनात करें जो आपके अपने वॉलेट द्वारा रखा जाता है। यह पूरी तरह से वैकल्पिक है: बनाना, चैट करना और ब्राउज़ करना कभी भी वॉलेट को नहीं छूता।
+
+कहीं भी एम्बेड करें। हर एजेंट का एक साझा करने योग्य लिंक और एक-लाइन एम्बेड स्निपेट होता है जो ब्लॉग पोस्ट, डॉक्स साइट, Notion, या आपके अपने उत्पाद में काम करता है।
+
+इसे अपने कमरे में देखें। अपने कैमरे को इंगित करें और ब्राउज़र के AR समर्थन के माध्यम से किसी भी मॉडल या एजेंट को वास्तविक स्थान में रखें। इंस्टॉल करने के लिए कुछ भी नहीं।
+
+वॉलेट वैकल्पिक हैं
+
+आप three.ws का उपयोग बिना कभी वॉलेट कनेक्ट किए कर सकते हैं। यदि आप एक कनेक्ट करते हैं, तो साइनिंग Mobile Wallet Adapter के माध्यम से चलती है, इसलिए यह उस वॉलेट ऐप के अंदर होता है जिस पर आप पहले से भरोसा करते हैं और यह ऐप कभी भी निजी कुंजी या सीड फ्रेज नहीं देखता। three.ws एक वॉलेट नहीं है, आपके फंड नहीं रखता, और एक्सचेंज संचालित नहीं करता।
+
+डिफ़ॉल्ट रूप से खुला
+
+three.ws github.com/nirholas/three.ws पर ओपन सोर्स है। एजेंट एक खुले मैनिफेस्ट के साथ प्रकाशित होते हैं ताकि वे किसी भी संगत व्यूअर या मार्केटप्लेस पर पोर्टेबल रहें। आपका काम आपका है, और यह आपके साथ जाता है।
+
+आपको क्या चाहिए
+
+Android 6.0 या बाद का संस्करण चलाने वाला फोन, और एक नेटवर्क कनेक्शन। कैमरा अनुमति केवल तब मांगी जाती है जब आप सेल्फी फ्लो चुनते हैं, और आप इसके बजाय अपनी गैलरी से एक फोटो अपलोड कर सकते हैं। एक एजेंट को ऑन-चेन तैनात करने के लिए थोड़ी मात्रा में SOL की आवश्यकता होती है, आमतौर पर 0.01 से कम; बाकी सब मुफ्त है।
+
+सहायता
+
+support@three.ws
+https://three.ws/docs
+github.com/nirholas/three.ws/issues"
+"id","three.ws: 3D Models & Agents","Ubah foto atau prompt jadi model 3D dan agen AI milikmu, sematkan di mana saja","three.ws mengubah foto atau perintah menjadi model 3D dan agen AI yang Anda miliki.
+
+Jelaskan sebuah objek dan dapatkan model 3D bertekstur. Ambil selfie dan dapatkan avatar 3D yang sudah di-rig dan siap dianimasikan dalam sekitar satu menit. Beri karakter kepribadian dan suara, ajak bicara, dan tempatkan di mana saja di internet dengan satu baris HTML. Tanpa perangkat lunak 3D, tanpa keterampilan modelling, tanpa akun untuk menjelajahi.
+
+APA YANG BISA ANDA LAKUKAN
+
+Buat model 3D dari teks. Jelaskan properti, objek, atau adegan dan jalur generasi gratis membangunnya, bertekstur dan siap diunduh sebagai glTF. Tanpa kunci, tanpa akun, tanpa biaya.
+
+Buat avatar dari selfie. Satu foto frontal menjadi avatar yang di-rig; dua sudut samping opsional mempertajam kemiripan. Gerbang kualitas langsung memberitahu apakah pencahayaan, bingkai, atau fokus akan merusak hasil sebelum Anda menunggu satu menit.
+
+Buat karakter dari deskripsi. Tidak ada foto? Jelaskan karakternya dan dapatkan avatar yang di-rig. Sudah punya model? Unggah GLB dan akan di-rig untuk Anda.
+
+Berikan pikiran. Pasangkan kepribadian, suara, dan keterampilan, lalu lakukan percakapan dengannya. Agen menjawab dalam 3D, di ponsel Anda.
+
+Temukan. Jelajahi model dan agen seluruh komunitas. Seret untuk mengorbit, ketuk untuk memeriksa, buka agen mana pun untuk mengobrol dengannya.
+
+Milik di rantai, jika Anda mau. Sebarkan agen sebagai aset Metaplex Core di Solana yang disimpan dompet Anda sendiri. Ini sepenuhnya opsional: membuat, mengobrol, dan menjelajahi tidak pernah menyentuh dompet.
+
+Sematkan di mana saja. Setiap agen memiliki tautan berbagi dan cuplikan sematan satu baris yang berfungsi di postingan blog, situs dokumen, Notion, atau produk Anda sendiri.
+
+Lihat di ruangan Anda. Arahkan kamera dan tempatkan model atau agen apa pun di ruang nyata melalui dukungan AR browser. Tidak ada yang perlu diinstal.
+
+DOMPET ADALAH OPSIONAL
+
+Anda bisa menggunakan three.ws tanpa pernah menghubungkan dompet. Jika Anda menghubungkannya, penandatanganan berjalan melalui Mobile Wallet Adapter, sehingga terjadi di dalam aplikasi dompet yang Anda percaya dan aplikasi ini tidak pernah melihat kunci privat atau frasa seed. three.ws bukan dompet, tidak menyimpan dana Anda, dan tidak mengoperasikan bursa.
+
+TERBUKA SECARA DEFAULT
+
+three.ws bersumber terbuka di github.com/nirholas/three.ws. Agen diterbitkan dengan manifes terbuka sehingga tetap portabel ke penampil atau pasar kompatibel apa pun. Karya Anda milik Anda, dan pergi bersamamu.
+
+APA YANG ANDA BUTUHKAN
+
+Ponsel yang menjalankan Android 6.0 atau lebih baru, dan koneksi jaringan. Izin kamera diminta hanya saat Anda memilih alur selfie, dan Anda bisa mengunggah foto dari galeri. Menyebarkan agen di rantai memerlukan sedikit SOL, biasanya di bawah 0,01; sisanya gratis.
+
+DUKUNGAN
+
+support@three.ws
+https://three.ws/docs
+github.com/nirholas/three.ws/issues"
+"it-IT","three.ws: 3D Models & Agents","Crea modelli 3D e agenti IA tuoi da foto o prompt, da usare ovunque","three.ws trasforma una foto o una descrizione in modelli 3D e agenti AI tuoi.
+
+Descrivi un oggetto e ottieni un modello 3D testurizzato. Un selfie diventa un avatar 3D riggato, pronto ad animare, in circa un minuto. Dai personalità e voce a un personaggio, parlaci e inseriscilo ovunque con una riga di HTML. Niente software 3D, niente competenze, niente account per esplorare.
+
+COSA PUOI FARE
+
+Crea modelli 3D dal testo. Descrivi un oggetto o una scena: la generazione gratuita lo costruisce testurizzato, pronto da scaricare come glTF. Nessuna chiave, account o costo.
+
+Crea un avatar da un selfie. Una foto frontale basta; due lati opzionali affinano la somiglianza. Controlli live su luce, inquadratura e fuoco ti avvisano prima di attendere.
+
+Crea un personaggio dalla descrizione. Senza foto? Descrivilo e ottieni un avatar riggato. Hai un GLB? Caricalo e lo riggiamo noi.
+
+Dagli una mente. Aggiungi personalità, voce e abilità, poi conversa in 3D sul telefono.
+
+Scopri. Esplora modelli e agenti della community. Ruota, ispeziona, chatta con qualsiasi agente.
+
+Possedilo on-chain, se vuoi. Pubblica l'agente come asset Metaplex Core su Solana nel tuo portafoglio. Opzionale: creare, chattare ed esplorare non usano portafogli.
+
+Incorpora ovunque. Link condivisibile e snippet one-line per blog, docs, Notion o il tuo prodotto.
+
+Vedilo nella tua stanza. Punta la fotocamera e posiziona modelli o agenti in AR dal browser. Niente installazioni.
+
+I PORTAFOGLI SONO OPZIONALI
+
+Usi three.ws senza connettere portafogli. Se ne colleghi uno, la firma passa per Mobile Wallet Adapter dentro l'app che ti fidi: l'app non vede chiavi private né seed. three.ws non è un portafoglio, non custodisce fondi, non fa exchange.
+
+APERTO PER DEFAULT
+
+three.ws è open source su github.com/nirholas/three.ws. Gli agenti hanno manifesto aperto, portabili su qualsiasi viewer o marketplace compatibile. Il tuo lavoro è tuo e ti segue.
+
+COSA TI SERVE
+
+Android 6.0+, rete. Fotocamera solo per selfie, puoi caricare dalla galleria. Deploy on-chain richiede poco SOL (<0,01); il resto è gratis.
+
+SUPPORTO
+
+support@three.ws
+https://three.ws/docs
+github.com/nirholas/three.ws/issues"
+"ja-JP","three.ws: 3D Models & Agents","写真やプロンプトから3DモデルとAIエージェントを作成、所有し、どこでも埋め込み可能。","three.ws は、写真やプロンプトを、あなたが所有できる 3D モデルと AI エージェントに変換します。
+
+オブジェクトを説明すれば、テクスチャ付きの 3D モデルが返ってきます。自撮り写真を撮れば、約 1 分でリグ付き、アニメーション対応の 3D アバターが完成します。キャラクターに性格と声を与え、会話し、HTML 1 行でインターネット上のどこにでも配置できます。3D ソフトウェアも、モデリング スキルも、アカウントも不要で、自由に閲覧できます。
+
+できること
+
+テキストから 3D モデルを作成。小道具、オブジェクト、シーンを説明すれば、無料生成レーンがテクスチャ付きで作成し、glTF としてダウンロード可能です。キーも、アカウントも、費用も不要です。
+
+自撮りからアバターを作成。正面写真 1 枚でリグ付きアバターが生成され、オプションの側面写真 2 枚を追加すれば似姿がより鮮明になります。リアルタイム品質チェックが、照明、構図、ピントが結果に悪影響を与えるかどうかを、待ち時間の前に教えてくれます。
+
+説明からキャラクターを作成。写真がなくても、キャラクターを説明すればリグ付きアバターが得られます。すでにモデルをお持ちなら、GLB をアップロードするだけでリグが自動的に追加されます。
+
+知性を与える。性格、声、スキルを設定し、会話を楽しめます。エージェントはスマートフォン上で 3D で応答します。
+
+発見。コミュニティ全体のモデルとエージェントを閲覧。ドラッグで回転、タップで詳細表示、任意のエージェントを開いてチャットできます。
+
+オンチェーンで所有、希望なら。エージェントを Metaplex Core アセットとして Solana 上にデプロイし、あなたのウォレットで保有できます。これは完全に任意です。作成、チャット、閲覧ではウォレットは一切使用しません。
+
+どこにでも埋め込み可能。すべてのエージェントに共有リンクと 1 行の埋め込みスニペットがあり、ブログ記事、ドキュメント サイト、Notion、独自の製品で動作します。
+
+あなたの部屋で体験。カメラを向けて、ブラウザの AR 機能で任意のモデルやエージェントを現実空間に配置できます。インストールは不要です。
+
+ウォレットは任意
+
+three.ws はウォレットを接続せずに利用できます。接続する場合、署名は Mobile Wallet Adapter を通じて行われ、すでに信頼しているウォレット アプリ内で完結するため、このアプリが秘密鍵やシード フレーズを見ることはありません。three.ws はウォレットではなく、資金を預からず、取引所も運営していません。
+
+デフォルトでオープン
+
+three.ws は github.com/nirholas/three.ws でオープンソースとして公開されています。エージェントはオープン マニフェストとともに公開されるため、互換性のあるビューアやマーケットプレイスへ移植可能です。あなたの作品はあなたのものであり、あなたとともに移動できます。
+
+必要なもの
+
+Android 6.0 以降を搭載したスマートフォンとネットワーク接続。カメラ権限は自撮りフローを選択したときのみ要求され、代わりにギャラリーから写真をアップロードすることもできます。エージェントをオンチェーンでデプロイするには少量の SOL が必要です（通常 0.01 未満）。それ以外はすべて無料です。
+
+サポート
+
+support@three.ws
+https://three.ws/docs
+github.com/nirholas/three.ws/issues"
+"ko-KR","three.ws: 3D Models & Agents","사진이나 프롬프트로 3D 모델과 내 소유 AI 에이전트를 만들어 어디서든 임베드하세요.","three.ws는 사진이나 프롬프트를 당신이 소유하는 3D 모델과 AI 에이전트로 바꿔줍니다.
+
+객체를 설명하면 텍스처가 입혀진 3D 모델을 돌려받습니다. 셀피를 찍으면 약 1분 만에 리깅된 애니메이션 준비 완료 3D 아바타가 생성됩니다. 캐릭터에 성격과 목소리를 부여하고 대화한 뒤, HTML 한 줄로 인터넷 어디에든 배치할 수 있습니다. 3D 소프트웨어도, 모델링 기술도, 둘러보기 위한 계정도 필요 없습니다.
+
+할 수 있는 것
+
+텍스트로 3D 모델 만들기. 소품, 객체, 장면을 설명하면 무료 생성 레인이 텍스처까지 입혀 glTF로 다운로드할 수 있게 만듭니다. 키도, 계정도, 비용도 없습니다.
+
+셀피로 아바타 만들기. 정면 사진 한 장이면 리깅된 아바타가 되고, 선택적으로 측면 사진 두 장을 더하면 닮은꼴이 더 선명해집니다. 실시간 품질 게이트가 조명, 구도, 초점이 결과에 악영향을 줄지 1분을 기다리기 전에 알려줍니다.
+
+설명으로 캐릭터 만들기. 사진이 없으신가요? 캐릭터를 설명하면 리깅된 아바타를 얻습니다. 이미 모델이 있으신가요? GLB를 업로드하면 자동으로 리깅됩니다.
+
+마음 부여하기. 성격, 목소리, 스킬을 붙인 뒤 대화해 보세요. 에이전트가 3D로, 당신의 폰에서 답합니다.
+
+발견하기. 커뮤니티 전체의 모델과 에이전트를 둘러보세요. 드래그로 회전, 탭으로 검사, 아무 에이전트나 열어 대화할 수 있습니다.
+
+원하면 온체인으로 소유하기. 에이전트를 Metaplex Core 자산으로 Solana에 배포해 내 지갑이 보유하게 할 수 있습니다. 이는 전적으로 선택 사항이며, 생성, 대화, 둘러보기는 지갑과 전혀 무관합니다.
+
+어디에든 임베드하기. 모든 에이전트는 공유 링크와 한 줄 임베드 스니펫을 가지며, 블로그 포스트, 문서 사이트, Notion, 내 제품 어디에나 작동합니다.
+
+내 방에서 보기. 카메라를 향하고 브라우저의 AR 지원으로 아무 모델이나 에이전트를 실제 공간에 배치하세요. 설치할 것 없습니다.
+
+지갑 연결은 선택 사항
+
+three.ws는 지갑을 연결하지 않고도 쓸 수 있습니다. 연결한다면 서명은 Mobile Wallet Adapter를 통해 이미 신뢰하는 지갑 앱 안에서 이루어지며, 이 앱은 개인 키나 시드 구문을 절대 보지 않습니다. three.ws는 지갑이 아니며, 자금을 보관하지 않고, 거래소도 운영하지 않습니다.
+
+기본적으로 개방
+
+three.ws는 github.com/nirholas/three.ws에서 오픈 소스입니다. 에이전트는 열린 매니페스트로 발행되어 호환되는 뷰어나 마켓플레이스 어디로든 이동 가능합니다. 당신의 작업은 당신의 것이며, 당신과 함께 떠납니다.
+
+필요한 것
+
+Android 6.0 이상을 실행하는 폰과 네트워크 연결. 카메라 권한은 셀피 흐름을 선택할 때만 요청되며, 갤러리에서 사진을 업로드할 수도 있습니다. 에이전트를 온체인에 배포하려면 적은 양의 SOL이 필요합니다(일반적으로 0.01 미만), 그 외 모든 것은 무료입니다.
+
+지원
+
+support@three.ws
+https://three.ws/docs
+github.com/nirholas/three.ws/issues"
+"nl-NL","three.ws: 3D Models & Agents","Zet foto of prompt om in 3D-modellen en AI-agents die je bezit en overal plaatst","three.ws zet een foto of een prompt om in 3D-modellen en AI-agents die van jou zijn.
+
+Beschrijf een object en krijg een getekstureerd 3D-model terug. Maak een selfie en krijg in ongeveer een minuut een gerigde, animatie-klaar 3D-avatar. Geef een personage een persoonlijkheid en een stem, praat ermee, en plaats het overal op het internet met één regel HTML. Geen 3D-software, geen modelleringsskills, geen account nodig om rond te kijken.
+
+WAT JE KUNT DOEN
+
+Maak een 3D-model uit tekst. Beschrijf een requisiet, een object of een scène en de gratis generatielaag bouwt het, getekstureerd en klaar om te downloaden als glTF. Geen sleutel, geen account, geen kosten.
+
+Maak een avatar uit een selfie. Eén frontale foto wordt een gerigde avatar; twee optionele zijhoeken verbeteren de gelijkenis. Live kwaliteitscontroles vertellen je of verlichting, kaderscherming of scherpte het resultaat zullen schaden voordat je een minuut wacht.
+
+Maak een personage uit een beschrijving. Geen foto? Beschrijf het personage en krijg een gerigde avatar. Heb je al een model? Upload een GLB en het wordt voor je gerigd.
+
+Geef het een geest. Koppel een persoonlijkheid, een stem en vaardigheden, en voer een gesprek met het. De agent antwoordt in 3D, op je telefoon.
+
+Ontdek. Blader door alle modellen en agents van de community. Sleep om te draaien, tik om te inspecteren, open elke agent om mee te chatten.
+
+Bezit het on-chain, als je wilt. Implementeer een agent als een Metaplex Core-asset op Solana die wordt beheerd door je eigen portemonnee. Dit is volledig optioneel: maken, chatten en bladeren raken nooit een portemonnee.
+
+Insluiten overal. Elke agent heeft een deelbare link en een één-regels insluitfragment dat werkt in een blogpost, een documentatiesite, Notion, of je eigen product.
+
+Zie het in je kamer. Richt je camera en plaats elk model of agent in de echte ruimte via de AR-ondersteuning van je browser. Niets te installeren.
+
+PORTMONNEES ZIJN OPTIONEEL
+
+Je kunt three.ws gebruiken zonder ooit een portemonnee te koppelen. Als je er wel een koppelt, verloopt het ondertekenen via Mobile Wallet Adapter, dus het gebeurt in de portemonnee-app die je al vertrouwt en deze app ziet nooit een privésleutel of een seed-phrase. three.ws is geen portemonnee, bewaart geen gelden en exploiteert geen beurs.
+
+STANDAARD OPEN
+
+three.ws is open source op github.com/nirholas/three.ws. Agents worden gepubliceerd met een open manifest zodat ze draagbaar blijven naar elke compatibele viewer of marktplaats. Je werk is van jou, en het gaat mee met je.
+
+WAT JE NODIG HEBT
+
+Een telefoon met Android 6.0 of nieuwer, en een netwerkverbinding. Cameratoestemming wordt alleen gevraagd wanneer je de selfie-flow kiest, en je kunt ook een foto uit je galerij uploaden. Het implementeren van een agent on-chain vereist een klein bedrag SOL, meestal onder 0,01; alles anders is gratis.
+
+ONDERSTEUNING
+
+support@three.ws
+https://three.ws/docs
+github.com/nirholas/three.ws/issues"
+"pl-PL","three.ws: 3D Models & Agents","Zamień zdjęcie lub opis w modele 3D i agentów AI, które wstawiasz wszędzie.","three.ws zamienia zdjęcie lub polecenie w modele 3D i agentów AI, których jesteś właścicielem.
+
+Opisz obiekt i otrzymaj teksturowany model 3D. Zrób selfie i uzyskaj gotowego do animacji, zrigowanego awatar 3D w około minucie. Nadaj postaci osobowość i głos, porozmawiaj z nią i umieść ją w dowolnym miejscu w sieci za pomocą jednej linijki HTML. Bez oprogramowania 3D, bez umiejętności modelowania, bez konta, by tylko się rozglądać.
+
+CO MOŻESZ ROBIĆ
+
+Twórz model 3D z tekstu. Opisz rekwizyt, obiekt lub scenę, a darmowy tryb generacji stworzy go, nanoteksturowany i gotowy do pobrania jako glTF. Bez klucza, bez konta, bez kosztów.
+
+Stwórz awatar z selfie. Jedno zdjęcie z przodu zamienia się w zrigowanego awatara; dwa opcjonalne ujęcia z boku doprecyzują podobieństwo. Na żywo sprawdzane kryteria jakości powiedzą Ci, czy oświetlenie, kadrowanie lub ostrość mogą pogorszyć wynik zanim upłynie minuta oczekiwania.
+
+Stwórz postać z opisu. Brak zdjęcia? Opisz postać i otrzymaj zrigowanego awatara. Masz już model? Wgraj GLB i my go zrigujemy za Ciebie.
+
+Nadaj mu umysł. Przypisz osobowość, głos i umiejętności, a następnie porozmawiaj z nim. Agent odpowiada w 3D, na Twoim telefonie.
+
+Odkrywaj. Przeglądaj modele i agentów całej społeczności. Przeciągnij, by obracać, dotknij, by przyjrzeć się, otwórz dowolnego agenta, by z nim pogadać.
+
+Bądź właścicielem on-chain, jeśli chcesz. Wdróż agenta jako zasób Metaplex Core na Solanie, trzymanego w Twoim własnym portfelu. To w pełni opcjonalne: tworzenie, czatowanie i przeglądanie nigdy nie dotykają portfela.
+
+Wbudowuj wszędzie. Każdy agent ma link do udostępnienia i jednolinijkowy fragment kodu do osadzenia, który działa w poście na blogu, na stronie dokumentacji, w Notion czy w Twoim produkcie.
+
+Zobacz to w swoim pokoju. Skieruj kamerę i umieść dowolny model lub agenta w rzeczywistej przestrzeni dzięki obsłudze AR w przeglądarce. Nic do instalacji.
+
+PORTFELE SĄ OPCJONALNE
+
+Możesz korzystać z three.ws, nigdy nie łącząc portfela. Jeśli jednak go połączysz, podpisywanie przebiega przez Mobile Wallet Adapter, więc dzieje się to w aplikacji portfela, której już ufasz, a ta aplikacja nigdy nie widzi klucza prywatnego ani frazy seed. three.ws nie jest portfelem, nie przechowuje Twoich środków i nie prowadzi giełdy.
+
+OTWARTE DOMYŚLNIE
+
+three.ws jest open source na github.com/nirholas/three.ws. Agenci są publikowane z otwartym manifestem, dzięki czemu pozostają przenośne do dowolnego kompatybilnego przeglądarki lub marketplace'u. Twoja praca należy do Ciebie i idzie z Tobą.
+
+CO POTRZEBUJESZ
+
+Telefon z Androidem 6.0 lub nowszym oraz połączenie z siecią. Uprawnienie do kamery jest proszone tylko, gdy wybierasz przepływ z selfie, a Ty możesz wgrać zdjęcie z galerii. Wdrożenie agenta on-chain wymaga niewielkiej ilości SOL, zazwyczaj poniżej 0,01; wszystko inne jest darmowe.
+
+POMOC
+
+support@three.ws
+https://three.ws/docs
+github.com/nirholas/three.ws/issues"
+"pt-BR","three.ws: 3D Models & Agents","Transforme foto ou prompt em 3D e agentes de IA seus para usar em qualquer lugar","O three.ws transforma uma foto ou um prompt em modelos 3D e agentes de IA que são seus.
+
+Descreva um objeto e receba um modelo 3D texturizado de volta. Tire uma selfie e obtenha um avatar 3D rigado, pronto para animação, em cerca de um minuto. Dê personalidade e voz a um personagem, converse com ele e coloque-o em qualquer lugar da internet com uma linha de HTML. Sem software 3D, sem habilidades de modelagem, sem conta necessária para explorar.
+
+O QUE VOCÊ PODE FAZER
+
+Crie um modelo 3D a partir de texto. Descreva um acessório, um objeto ou uma cena e a faixa de geração gratuita o constrói, texturizado e pronto para download como glTF. Sem chave, sem conta, sem custo.
+
+Crie um avatar a partir de uma selfie. Uma foto frontal vira um avatar rigado; dois ângulos laterais opcionais melhoram a semelhança. Verificações de qualidade em tempo real avisam se iluminação, enquadramento ou foco vão prejudicar o resultado antes de você gastar um minuto esperando.
+
+Crie um personagem a partir de uma descrição. Sem foto? Descreva o personagem e receba um avatar rigado. Já tem um modelo? Faça upload de um GLB e ele será rigado para você.
+
+Dê uma mente a ele. Anexe personalidade, voz e habilidades, depois converse com ele. O agente responde em 3D, no seu celular.
+
+Descubra. Navegue pelos modelos e agentes de toda a comunidade. Arraste para orbitar, toque para inspecionar, abra qualquer agente para conversar com ele.
+
+Tenha a propriedade on-chain, se quiser. Implante um agente como ativo Metaplex Core na Solana guardado pela sua própria carteira. Isso é totalmente opcional: criar, conversar e navegar nunca tocam uma carteira.
+
+Incorpore em qualquer lugar. Todo agente tem um link compartilhável e um snippet de incorporação de uma linha que funciona em post de blog, site de documentação, Notion ou seu próprio produto.
+
+Veja no seu quarto. Aponte a câmera e coloque qualquer modelo ou agente no espaço real pelo suporte de AR do navegador. Nada para instalar.
+
+CARTEIRAS SÃO OPCIONAIS
+
+Você pode usar o three.ws sem nunca conectar uma carteira. Se conectar uma, a assinatura roda pelo Mobile Wallet Adapter, então acontece dentro do app de carteira em que você já confia e este app nunca vê chave privada ou frase-semente. O three.ws não é carteira, não guarda seus fundos e não opera exchange.
+
+ABERTO POR PADRÃO
+
+O three.ws é open source no github.com/nirholas/three.ws. Agentes são publicados com manifesto aberto para que permaneçam portáteis a qualquer visualizador ou marketplace compatível. Seu trabalho é seu, e vai com você.
+
+O QUE VOCÊ PRECISA
+
+Um celular com Android 6.0 ou posterior e conexão de rede. Permissão de câmera é pedida só quando você escolhe o fluxo de selfie, e você pode enviar uma foto da galeria. Implantar um agente on-chain precisa uma pequena quantia de SOL, geralmente abaixo de 0,01; todo o resto é grátis.
+
+SUPORTE
+
+support@three.ws
+https://three.ws/docs
+github.com/nirholas/three.ws/issues"
+"pt-PT","three.ws: 3D Models & Agents","Transforme foto ou prompt em modelos 3D e agentes IA possui e insira onde quiser","three.ws transforma uma foto ou um prompt em modelos 3D e agentes de IA que lhe pertencem.
+
+Descreva um objeto e obtenha um modelo 3D texturizado de volta. Tire uma selfie e obtenha um avatar 3D rigged, pronto para animação, em cerca de um minuto. Dê a uma personagem uma personalidade e uma voz, converse com ela e coloque-a em qualquer lugar na internet com uma linha de HTML. Sem software 3D, sem competências de modelação, sem conta necessária para explorar.
+
+O QUE PODE FAZER
+
+Crie um modelo 3D a partir de texto. Descreva um adereço, um objeto ou uma cena e a via de geração gratuita constrói-o, texturizado e pronto para descarregar como glTF. Sem chave, sem conta, sem custo.
+
+Crie um avatar a partir de uma selfie. Uma foto frontal torna-se um avatar rigged; dois ângulos laterais opcionais afinam a semelhança. Portas de qualidade em tempo real indicam se a iluminação, o enquadramento ou o foco prejudicarão o resultado antes de gastar um minuto à espera.
+
+Crie uma personagem a partir de uma descrição. Não tem foto? Descreva a personagem e obtenha um avatar rigged. Já tem um modelo? Carregue um GLB e ele será rigged por si.
+
+Dê-lhe uma mente. Associe uma personalidade, uma voz e competências, depois converse com ela. O agente responde em 3D, no seu telemóvel.
+
+Descubra. Navegue por todos os modelos e agentes da comunidade. Arraste para orbitar, toque para inspecionar, abra qualquer agente para conversar com ele.
+
+Possua-o on-chain, se quiser. Implemente um agente como ativo Metaplex Core na Solana guardado pela sua própria carteira. Isto é totalmente opcional: criar, conversar e navegar nunca tocam numa carteira.
+
+Incorpore em qualquer lugar. Cada agente tem um link partilhável e um snippet de incorporação de uma linha que funciona numa publicação de blog, num site de documentação, no Notion ou no seu próprio produto.
+
+Veja-o na sua sala. Aponte a câmara e coloque qualquer modelo ou agente no espaço real através do suporte AR do navegador. Nada para instalar.
+
+AS CARTEIRAS SÃO OPCIONAIS
+
+Pode usar o three.ws sem nunca ligar uma carteira. Se ligar uma, a assinatura decorre através do Mobile Wallet Adapter, pelo que acontece dentro da aplicação de carteira em que já confia e esta aplicação nunca vê uma chave privada ou uma seed phrase. O three.ws não é uma carteira, não guarda os seus fundos e não opera uma exchange.
+
+ABERTO POR DEFEITO
+
+O three.ws é open source em github.com/nirholas/three.ws. Os agentes são publicados com um manifesto aberto para que permaneçam portáteis para qualquer visualizador ou marketplace compatível. O seu trabalho é seu, e vai consigo.
+
+O QUE PRECISA
+
+Um telemóvel com Android 6.0 ou posterior, e uma ligação à rede. A permissão de câmara é pedida apenas quando escolhe o fluxo de selfie, e pode carregar uma foto da sua galeria em vez disso. Implementar um agente on-chain precisa de uma pequena quantidade de SOL, tipicamente abaixo de 0,01; tudo o resto é gratuito.
+
+SUPORTE
+
+support@three.ws
+https://three.ws/docs
+github.com/nirholas/three.ws/issues"
+"ru-RU","three.ws: 3D Models & Agents","Фото или промпт в 3D-модели и ИИ-агенты, ваши, для встраивания куда угодно.","three.ws превращает фото или запрос в 3D-модели и ИИ-агентов, которыми вы владеете.
+
+Опишите объект и получите текстурированную 3D-модель. Сделайте селфи и получите сриггированный, готовый к анимации 3D-аватар примерно за минуту. Наделите персонажа личностью и голосом, поговорите с ним и разместите где угодно в интернете с помощью одной строки HTML. Никакого 3D-софта, навыков моделирования или аккаунта для просмотра не требуется.
+
+ЧТО ВЫ МОЖЕТЕ ДЕЛАТЬ
+
+Создавайте 3D-модели из текста. Опишите реквизит, объект или сцену, и бесплатный канал генерации создаст их, текстурированные и готовые к скачиванию как glTF. Никаких ключей, аккаунтов или платы.
+
+Создавайте аватар из селфи. Одно фронтальное фото превращается в сриггированный аватар; два дополнительных боковых ракурса улучшают сходство. Проверки качества в реальном времени покажут, не испортят ли освещение, кадр или фокус результат, прежде чем вы потратите минуту на ожидание.
+
+Создавайте персонажа по описанию. Нет фото? Опишите персонажа и получите сриггированный аватар. Уже есть модель? Загрузите GLB, и она будет сриггирована автоматически.
+
+Наделите его разумом. Прикрепите личность, голос и навыки, затем ведите с ним диалог. Агент отвечает в 3D прямо на вашем телефоне.
+
+Исследуйте. Просматривайте все модели и агентов сообщества. Перетаскивайте для вращения, нажимайте для осмотра, откройте любого агента для чата.
+
+Владейте им в блокчейне, если хотите. Разверните агента как актив Metaplex Core в Solana, хранящийся в вашем кошельке. Это полностью опционально: создание, чат и просмотр никогда не затрагивают кошелек.
+
+Встраивайте куда угодно. У каждого агента есть ссылка для обмена и однострочный код встраивания, который работает в посте блога, на сайте документации, в Notion или в вашем продукте.
+
+Посмотрите у себя в комнате. Наведите камеру и разместите любую модель или агента в реальном пространстве через AR-поддержку браузера. Ничего устанавливать не нужно.
+
+КОШЕЛЬКИ ОПЦИОНАЛЬНЫ
+
+Вы можете пользоваться three.ws, никогда не подключая кошелек. Если подключите, подпись пройдёт через Mobile Wallet Adapter, то есть внутри доверенного приложения кошелька, а это приложение никогда не увидит приватный ключ или сид-фразу. three.ws: не кошелек, не хранит ваши средства и не управляет биржей.
+
+ОТКРЫТО ПО УМОЛЧАНИЮ
+
+three.ws: открытый исходный код на github.com/nirholas/three.ws. Агенты публикуются с открытым манифестом, поэтому их можно переносить в любой совместимый просмотрщик или маркетплейс. Ваша работа: ваша, и она уходит с вами.
+
+ЧТО ВАМ ПОНАДОБИТСЯ
+
+Телефон на Android 6.0 или новее и сетевое соединение. Разрешение на камеру запрашивается только при выборе потока селфи, а фото можно загрузить из галереи. Развертывание агента в блокчейне требует немного SOL, обычно менее 0,01; всё остальное бесплатно.
+
+ПОДДЕРЖКА
+
+support@three.ws
+https://three.ws/docs
+github.com/nirholas/three.ws/issues"
+"th","three.ws: 3D Models & Agents","แปลงรูปหรือข้อความเป็นโมเดล 3D และ AI Agent ของคุณ ฝังได้ทุกที่","three.ws เปลี่ยนรูปภาพหรือคำสั่งให้กลายเป็นโมเดล 3 มิติและเอเจนต์ AI ที่คุณเป็นเจ้าของ
+
+อธิบายสิ่งของและรับโมเดล 3 มิติที่มีเท็กซ์เจอร์กลับมา ถ่ายเซลฟีและได้แอวตาร์ 3 มิติที่ริกแล้ว พร้อมทำแอนิเมชัน ในเวลาประมาณหนึ่งนาที ให้ตัวละครมีบุคลิกภาพและเสียง คุยกับมัน และวางไว้ที่ไหนก็ได้บนอินเทอร์เน็ตด้วยโค้ด HTML เพียงบรรทัดเดียว ไม่ต้องใช้ซอฟต์แวร์ 3 มิติ ไม่ต้องมีทักษะการทำโมเดล ไม่ต้องสมัครบัญชีเพื่อดูชม
+
+สิ่งที่คุณทำได้
+
+สร้างโมเดล 3 มิติจากข้อความ อธิบายของใช้ วัตถุ หรือฉาก และช่องทางสร้างฟรีจะสร้างให้ พร้อมเท็กซ์เจอร์ ดาวน์โหลดเป็น glTF ได้เลย ไม่ต้องมีคีย์ ไม่ต้องสมัคร ไม่ต้องเสียค่าใช้จ่าย
+
+สร้างแอวตาร์จากเซลฟี รูปหน้าตรงหนึ่งรูปกลายเป็นแอวตาร์ที่ริกแล้ว สองมุมข้างเพิ่มเติมจะทำให้คล้ายเดิมมากขึ้น ประตูคุณภาพแบบเรียลไทม์บอกว่าส่องสว่าง การจัดเฟรม หรือโฟกัสจะส่งผลต่อผลลัพธ์หรือไม่ ก่อนที่คุณจะรอหนึ่งนาที
+
+สร้างตัวละครจากคำอธิบาย ไม่มีรูป? อธิบายตัวละครและได้แอวตาร์ที่ริกแล้ว มีโมเดลอยู่แล้ว? อัปโหลด GLB และระบบจะริกให้โดยอัตโนมัติ
+
+ให้มันมีจิตใจ ผูกบุคลิกภาพ เสียง และทักษะ แล้วคุยกับมัน เอเจนต์ตอบกลับใน 3 มิติ บนโทรศัพท์ของคุณ
+
+ค้นพบ เรียกดูโมเดลและเอเจนต์ของชุมชนทั้งหมด ลากเพื่อหมุน แตะเพื่อตรวจสอบ เปิดเอเจนต์ใดก็ได้เพื่อแชท
+
+เป็นเจ้าของบนเชน ถ้าต้องการ ปรับใช้เอเจนต์เป็นสินทรัพย์ Metaplex Core บน Solana ที่ถือครองโดยกระเป๋าของคุณเอง สิ่งนี้เป็นทางเลือกอย่างสมบูรณ์: การสร้าง การแชท และการเรียกดูไม่ได้สัมผัสกระเป๋าเลย
+
+ฝังที่ไหนก็ได้ ทุกเอเจนต์มีลิงก์แชร์และโค้ดฝังบรรทัดเดียวที่ทำงานในบล็อกโพสต์ ไซต์เอกสาร Notion หรือผลิตภัณฑ์ของคุณเอง
+
+เห็นมันในห้องของคุณ จุดกล้องและวางโมเดลหรือเอเจนต์ใดก็ได้ในพื้นที่จริงผ่านการรองรับ AR ของเบราว์เซอร์ ไม่ต้องติดตั้งอะไร
+
+กระเป๋าเป็นทางเลือก
+
+คุณสามารถใช้ three.ws ได้โดยไม่ต้องเชื่อมต่อกระเป๋าเลย หากคุณเชื่อมต่อ การเซ็นจะทำงานผ่าน Mobile Wallet Adapter ดังนั้นเกิดขึ้นภายในแอปกระเป๋าที่คุณเชื่อมั่นอยู่แล้ว และแอปนี้ไม่เคยเห็นคีย์ส่วนตัวหรือซีดเฟรส three.ws ไม่ใช่กระเป๋า ไม่ถือเงินทุนของคุณ และไม่ดำเนินการแลกเปลี่ยน
+
+เปิดโดยค่าเริ่มต้น
+
+three.ws เป็นโอเพนซอร์สที่ github.com/nirholas/three.ws เอเจนต์เผยแพร่พร้อมมานิเฟสต์เปิด จึงยังพกพาไปยังวิวเวอร์หรือมาร์เก็ตเพลสที่เข้ากันได้ใดๆ งานของคุณเป็นของคุณ และมันจะไปกับคุณ
+
+สิ่งที่คุณต้องการ
+
+โทรศัพท์ที่รัน Android 6.0 ขึ้นไป และการเชื่อมต่อเครือข่าย สิทธิ์กล้องจะขอเฉพาะเมื่อคุณเลือกโฟลว์เซลฟี และคุณสามารถอัปโหลดรูปจากแกลเลอรีแทนได้ การปรับใช้เอเจนต์บนเชนต้องการ SOL น้อยมาก ปกติต่ำกว่า 0.01 ส่วนที่เหลือฟรีทั้งหมด
+
+การสนับสนุน
+
+support@three.ws
+https://three.ws/docs
+github.com/nirholas/three.ws/issues"
+"tr-TR","three.ws: 3D Models & Agents","Fotoğraf veya metin 3D modeller, AI ajanları oluşturun, sahiplenin, gömün.","three.ws bir fotoğrafı veya bir komutu, size ait 3D modeller ve AI ajanlarına dönüştürür.
+
+Bir nesne tanımlayın ve dokulu bir 3D model alın. Bir selfie çekin ve yaklaşık bir dakika içinde riglenmiş, animasyona hazır 3D bir avatar elde edin. Bir karaktere kişilik ve ses verin, onunla konuşun ve tek bir HTML satırıyla internetin her yerine yerleştirin. 3D yazılım gerekmez, modelleme becerisi gerekmez, etrafınıza bakmak için hesap gerekmez.
+
+NE YAPABİLİRSİNİZ
+
+Metinden 3D model oluşturun. Bir aksesuar, bir nesne veya bir sahne tanımlayın ve ücretsiz üretim kanalı onu, dokulu ve glTF olarak indirmeye hazır hale getirir. Anahtar gerekmez, hesap gerekmez, maliyet yok.
+
+Selfie'den avatar oluşturun. Bir ön yüz fotoğrafı riglenmiş bir avatara dönüşür; iki isteğe bağlı yan açı benzetiyi keskinleştirir. Canlı kalite kontrolleri, ışıklandırma, çerçeveleme veya odaklama sonucu olumsuz etkileyip etkilemeyeceğini, bir dakika beklemeden önce size bildirir.
+
+Tanımdan karakter oluşturun. Fotoğrafınız yok mu? Karakteri tanımlayın ve riglenmiş bir avatar alın. Zaten bir modeliniz var mı? GLB yükleyin ve sizin için riglensin.
+
+Ona bir zihin verin. Kişilik, ses ve yetenekler ekleyin, ardından onunla bir konuşma yapın. Ajan 3D olarak, telefonunuzda cevap verir.
+
+Keşfedin. Tüm topluluğun modellerini ve ajanlarını inceleyin. Sürükleyerek döndürün, incelemek için dokunun, herhangi bir ajanı açın ve onunla sohbet edin.
+
+İsterseniz zincir üzerinde sahiplenin. Bir ajanı, kendi cüzdanınızla tutulan bir Metaplex Core varlığı olarak Solana'da dağıtın. Bu tamamen isteğe bağlıdır: oluşturma, sohbet etme ve göz atma asla bir cüzdana dokunmaz.
+
+Her yerde gömün. Her ajanın paylaşılabilir bir bağlantısı ve bir satırlık gömme kodu parçası vardır; bu bir blog yazısında, bir dokümantasyon sitesinde, Notion'da veya kendi ürününüzde çalışır.
+
+Odanızda görün. Kameranızı yönlendirin ve tarayıcınızın AR desteğiyle herhangi bir modeli veya ajanı gerçek uzayda yerleştirin. Kurulum yok.
+
+CÜZDANLAR İSTEĞE BAĞLI
+
+three.ws'i cüzdan bağlamadan kullanabilirsiniz. Bağlarsanız, imzalama Mobile Wallet Adapter üzerinden gerçekleşir, bu da zaten güvendiğiniz cüzdan uygulaması içinde olur ve bu uygulama asla özel anahtarı veya tohum ifadeyi görmez. three.ws bir cüzdan değildir, fonlarınızı tutmaz ve bir borsa işletmez.
+
+VARSAYILAN OLARAK AÇIK
+
+three.ws, github.com/nirholas/three.ws adresinde açık kaynaklıdır. Ajanlar açık bir manifestle yayınlanır, böylece herhangi bir uyumlu görüntüleyici veya pazar yerinde taşınabilir kalır. Çalışmanız size aittir ve sizinle gider.
+
+NE GEREKLİ
+
+Android 6.0 veya üzeri çalışan bir telefon ve bir ağ bağlantısı. Kamera izni yalnızca selfie akışını seçtiğinizde istenir ve yerine galerinizden bir fotoğraf yükleyebilirsiniz. Bir ajanı zincir üzerinde dağıtmak için küçük miktarda SOL gerekir, genellikle 0.01'in altındadır; geri kalan her şey ücretsizdir.
+
+DESTEK
+
+support@three.ws
+https://three.ws/docs
+github.com/nirholas/three.ws/issues"
+"uk","three.ws: 3D Models & Agents","Створіть 3D-моделі та AI-агентів із фото чи промпту, ваші, вбудовуйте будь-де.","three.ws перетворює фото або запит на 3D-моделі та AI-агентів, які належать вам.
+
+Опишіть об'єкт і отримайте текстуровану 3D-модель. Зробіть селфі і за хвилину отримайте зібраного, готового до анімації 3D-аватара. Наділіть персонажа особистістю та голосом, спілкуйтеся з ним і розмістіть будь-де в інтернеті за допомогою одного рядка HTML. Потрібного 3D-софту, навичок моделювання чи облікового запису для перегляду немає.
+
+ЩО ВИ МОЖЕТЕ РОБИТИ
+
+Створюйте 3D-модель з тексту. Опишіть реквізит, об'єкт або сцену, і безкоштовний режим генерації створить його, текстурований і готовий до завантаження як glTF. Без ключа, без облікового запису, безкоштовно.
+
+Створюйте аватар із селфі. Одне фронтальне фото стає зібраним аватаром; два додаткові бічні ракурси, за бажанням, покращують подібність. Інтерактивні перевірки якості повідомлять, чи можуть освітлення, кадрування чи фокус погіршити результат, ще до того як ви витратите хвилину на очікування.
+
+Створюйте персонажа за описом. Немає фото? Опишіть персонажа і отримайте зібраного аватара. Вже є модель? Завантажте GLB, і вона буде зібрана для вас.
+
+Наділіть його розумом. Прив'яжіть особистість, голос і навички, потім ведіть з ним діалог. Агент відповідає у 3D, прямо на вашому телефоні.
+
+Відкривайте. Переглядайте моделі та агентів усякої спільноти. Перетягуйте, щоб обертати, натискайте, щоб оглянути, відкрийте будь-якого агента для спілкування.
+
+Володійте цею ланцюгово, якщо хочете. Розгорніть агента як актив Metaplex Core на Solana, який зберігається у вашому гаманці. Це повністю опціонально: створення, спілкування та перегляд ніколи не чіпають гаманець.
+
+Вбудовуйте будь-де. У кожного агента є посилання для спільного доступу і однострічковий фрагмент для вбудовування, який працює у статті блогу, на сайті документації, у Notion або у вашому продукті.
+
+Подивіться це у своїй кімнаті. Наведіть камеру і розмістіть будь-яку модель або агента у реальному просторі за допомогою AR-підтримки браузера. Нічого встановлювати не потрібно.
+
+ГАМАНЦІ ОПЦІОНАЛЬНО
+
+Ви можете користуватися three.ws, ніколи не підключаючи гаманець. Якщо ви все ж підключите його, підпис відбувається через Mobile Wallet Adapter, тому це стається всередині додатку гаманця, якому ви вже довіряєте, а цей додаток ніколи не бачить приватний ключ чи seed-фразу. three.ws не є гаманцем, він не зберігає ваші кошти і не керує біржею.
+
+ВІДКРИТЕ ЗА ЗАМОВЧУВАННЯМ
+
+three.ws є відкритим кодом за адресою github.com/nirholas/three.ws. Агенти публікуються з відкритим маніфестом, щоб вони залишалися переносимими для будь-якого сумісного переглядача або маркетплейсу. Ваша робота належить вам, і вона йде з вами.
+
+ЩО ПОТРІБНО
+
+Телефон на Android 6.0 або новішому, і мережеве з'єднання. Дозвіл на камеру запитується лише коли ви обираєте потік із селфі, а ви також можете завантажити фото з галереї. Розгортання агента в ланцюгу вимагає невеликої кількості SOL, зазвичай менше 0,01; все інше, безкоштовно.
+
+ПІДТРИМКА
+
+support@three.ws
+https://three.ws/docs
+github.com/nirholas/three.ws/issues"
+"vi","three.ws: 3D Models & Agents","Chuyển ảnh hoặc lời nhắc thành mô hình 3D và AI bạn sở hữu, nhúng mọi nơi.","three.ws biến một bức ảnh hoặc một lời nhắc thành các mô hình 3D và tác nhân AI mà bạn sở hữu.
+
+Mô tả một vật thể và nhận lại một mô hình 3D đã được kết cấu. Chụp một selfie và nhận một avatar 3D đã được gắn khung xương, sẵn sàng cho hoạt hình chỉ trong khoảng một phút. Cho một nhân vật tính cách và một giọng nói, trò chuyện với nó, và đặt nó ở bất kỳ đâu trên internet chỉ với một dòng HTML. Không cần phần mềm 3D, không cần kỹ năng mô hình hóa, không cần tài khoản để xem quanh.
+
+NHỮNG GÌ BẠN CÓ THỂ LÀM
+
+Tạo mô hình 3D từ văn bản. Mô tả một đạo cụ, một vật thể hoặc một cảnh và làn tạo miễn phí sẽ xây dựng nó, đã kết cấu và sẵn sàng tải xuống dưới dạng glTF. Không cần khóa, không cần tài khoản, không tốn chi phí.
+
+Tạo avatar từ selfie. Một ảnh mặt trước trở thành một avatar đã gắn khung xương; hai góc nghiêng tùy chọn làm tăng độ giống. Cổng chất lượng trực tiếp cho bạn biết ánh sáng, khung hình hay tiêu cự có thể làm hỏng kết quả trước khi bạn mất một phút chờ đợi.
+
+Tạo nhân vật từ mô tả. Không có ảnh? Mô tả nhân vật và nhận một avatar đã gắn khung xương. Đã có mô hình? Tải lên GLB và nó sẽ được gắn khung xương cho bạn.
+
+Cho nó một trí tuệ. Gắn một tính cách, một giọng nói và các kỹ năng, sau đó trò chuyện với nó. Tác nhân trả lời trong 3D, trên điện thoại của bạn.
+
+Khám phá. Duyệt qua các mô hình và tác nhân của toàn bộ cộng đồng. Kéo để xoay quanh, chạm để kiểm tra, mở bất kỳ tác nhân nào để trò chuyện.
+
+Sở hữu nó on-chain, nếu bạn muốn. Triển khai một tác nhân như một tài sản Metaplex Core trên Solana do ví của bạn nắm giữ. Điều này hoàn toàn tùy chọn: tạo, trò chuyện và duyệt không bao giờ chạm vào ví.
+
+Nhúng ở bất kỳ đâu. Mỗi tác nhân có một liên kết chia sẻ và một đoạn nhúng một dòng hoạt động trong bài blog, trang tài liệu, Notion, hoặc sản phẩm của bạn.
+
+Xem nó trong phòng của bạn. Trỏ camera và đặt bất kỳ mô hình hoặc tác nhân nào vào không gian thực thông qua hỗ trợ AR của trình duyệt. Không cần cài đặt.
+
+VÍ LÀ TUỲ CHỌN
+
+Bạn có thể sử dụng three.ws mà không bao giờ kết nối ví. Nếu bạn kết nối, việc ký chạy qua Mobile Wallet Adapter, nên nó xảy ra bên trong ứng dụng ví bạn đã tin tưởng và ứng dụng này không bao giờ thấy khóa riêng hay cụm từ hạt giống. three.ws không phải là ví, không nắm giữ tiền của bạn, và không vận hành sàn giao dịch.
+
+MỞ THEO MẶC ĐỊNH
+
+three.ws là mã nguồn mở tại github.com/nirholas/three.ws. Các tác nhân được phát hành với bản kê khai mở để chúng vẫn có thể di chuyển đến bất kỳ trình xem hoặc thị trường tương thích nào. Công việc của bạn thuộc về bạn, và nó đi cùng bạn.
+
+NHỮNG GÌ BẠN CẦN
+
+Một điện thoại chạy Android 6.0 trở lên, và kết nối mạng. Quyền camera chỉ được yêu cầu khi bạn chọn quy trình selfie, và bạn có thể tải ảnh từ thư viện thay vào đó. Triển khai tác nhân on-chain cần một lượng nhỏ SOL, thường dưới 0.01; mọi thứ khác đều miễn phí.
+
+HỖ TRỢ
+
+support@three.ws
+https://three.ws/docs
+github.com/nirholas/three.ws/issues"
+"zh-CN","three.ws: 3D Models & Agents","将照片或提示词转为可拥有、可嵌入的3D模型与AI智能体","three.ws 只需一张照片或一段提示词，即可生成属于您的 3D 模型与 AI 智能体。
+
+描述一个物体，即可获得带纹理的 3D 模型。上传一张自拍，约一分钟即可得到可动画、已绑定骨骼的 3D 虚拟形象。为角色赋予性格与声音，与其对话，再用一行 HTML 将其嵌入任意网页。无需 3D 软件、建模技能，甚至无需注册账号即可浏览体验。
+
+您可以做什么
+
+从文字生成 3D 模型。描述道具、物体或场景，免费生成通道即可构建带纹理的模型，支持下载为 glTF 格式。无需密钥、账号，完全免费。
+
+从自拍生成虚拟形象。一张正面照即可生成已绑定骨骼的虚拟形象；可选提供两张侧面照以提升相似度。实时质量检测会在您等待前，提示光线、构图或对焦是否会影响效果。
+
+从描述生成角色。没有照片？描述角色即可获得已绑定骨骼的虚拟形象。已有模型？上传 GLB 文件，系统自动为您绑定骨骼。
+
+赋予它思维。添加性格、声音与技能，即可与其对话。智能体将在您的手机上以 3D 形式回应。
+
+发现。浏览社区所有模型与智能体。拖动旋转视角，点击查看细节，打开任意智能体即可聊天。
+
+如需上链，可将智能体作为 Metaplex Core 资产部署到 Solana，由您自己的钱包持有。这完全可选：创建、聊天、浏览均不涉及钱包。
+
+随处嵌入。每个智能体均提供可分享链接与单行嵌入代码，适用于博客、文档站点、Notion 或您的自有产品。
+
+置于您的房间。指向摄像头，借助浏览器 AR 支持，将任意模型或智能体置入现实空间。无需安装任何应用。
+
+钱包完全可选
+
+您无需连接钱包即可使用 three.ws。若选择连接，签名将通过 Mobile Wallet Adapter 在您信任的钱包应用内完成，本应用绝不会接触私钥或助记词。three.ws 不是钱包，不托管资金，不运营交易所。
+
+默认开放
+
+three.ws 在 github.com/nirholas/three.ws 开源。智能体采用开放清单发布，可移植至任何兼容查看器或市场。您的作品归您所有，随时可带走。
+
+所需条件
+
+运行 Android 6.0 或更高版本的手机，以及网络连接。仅在您选择自拍流程时请求相机权限，也可改为从相册上传照片。链上部署智能体需少量 SOL（通常低于 0.01）；其余功能均免费。
+
+支持
+
+support@three.ws
+https://three.ws/docs
+github.com/nirholas/three.ws/issues"
+"zh-TW","three.ws: 3D Models & Agents","把照片或提示變成可擁有、可嵌入的 3D 模型與 AI 代理。","three.ws 將照片或提示詞轉化為您擁有的 3D 模型與 AI 代理。
+
+描述一個物件即可獲得帶貼圖的 3D 模型。拍一張自拍，約一分鐘即可獲得可動畫、已綁定骨架的 3D 虛擬形象。為角色賦予個性與聲音，與其對話，並以一行 HTML 將其放置於網頁任何位置。無需 3D 軟體、建模技巧，瀏覽更無需帳號。
+
+您可以做什麼
+
+以文字生成 3D 模型。描述道具、物件或場景，免費生成通道即可為您建構，含貼圖並可下載為 glTF 格式。無需金鑰、帳號，完全免費。
+
+以自拍建立虛擬形象。一張正面照即可生成已綁定骨架的虛擬形象；另可選擇提供兩張側面照以提升相似度。即時品質檢查會在您等待一分鐘前，告知光線、構圖或對焦是否會影響結果。
+
+以描述建立角色。沒有照片？描述角色即可獲得已綁定骨架的虛擬形象。已有模型？上傳 GLB 即可為您完成綁定。
+
+賦予它思維。附加個性、聲音與技能，然後與其對話。代理將在您的手機上以 3D 形式回應。
+
+探索發現。瀏覽全社群的模型與代理。拖曳以環繞檢視，點擊以仔細查看，開啟任意代理即可聊天。
+
+如您願，可上鏈擁有。將代理作為 Metaplex Core 資產部署於 Solana，由您自己的錢包持有。這完全屬選用：建立、聊天與瀏覽從不涉及錢包。
+
+隨處嵌入。每個代理皆具可分享連結與單行嵌入程式碼，適用於部落格文章、文件網站、Notion 或您的自有產品。
+
+在您的房間中查看。指向相機，透過瀏覽器的 AR 支援，將任意模型或代理置於真實空間。無需安裝。
+
+錢包為選用
+
+您無需連接錢包即可使用 three.ws。若您選擇連接，簽名將透過 Mobile Wallet Adapter 進行，因此發生在您已信任的錢包應用程式內，本應用程式絕不會看到私鑰或種子詞組。three.ws 不是錢包，不持有您的資金，也不營運交易所。
+
+預設開放
+
+three.ws 於 github.com/nirholas/three.ws 開源。代理以開放資訊清單發布，使其可移植至任何相容的檢視器或市場。您的作品屬於您，並隨您攜帶離開。
+
+所需條件
+
+執行 Android 6.0 或更新版本的手機，以及網路連線。相機權限僅在您選擇自拍流程時請求，您也可改為從相簿上傳照片。上鏈部署代理需少量 SOL，通常低於 0.01；其他功能皆免費。
+
+支援
+
+support@three.ws
+https://three.ws/docs
+github.com/nirholas/three.ws/issues"

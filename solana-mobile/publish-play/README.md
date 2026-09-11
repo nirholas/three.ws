@@ -139,6 +139,39 @@ Neither target needs a device or an emulator. Unlike the dApp Store, Play does n
 Seeker, and the two Seeker-specific frames (Seed Vault sheet, mint confirmation) are not
 appropriate for a Play listing that ships to every Android phone anyway.
 
+## Translations
+
+`listing/translations.csv` holds the store listing in 21 languages and is the file Play
+Console's **Main store listing > Manage translations > Import translations** card takes. One row
+per locale, Play's own locale codes, RFC 4180 quoting so the multi paragraph descriptions survive.
+
+Regenerate it from the English source files:
+
+```bash
+export NVIDIA_API_KEY="$(node scripts/read-service-env.mjs '^NVIDIA_API_KEY$' --raw)"
+node scripts/play-listing-translations.mjs                    # all 21 locales
+node scripts/play-listing-translations.mjs --locales=de-DE,ja-JP
+node scripts/play-listing-translations.mjs --provider=groq     # nvidia is the default
+```
+
+Three things that file cannot get wrong, and each one is a check in the script rather than a
+convention to remember:
+
+- **Play's limits are per locale, not per source.** The English title is 28/30 and the short
+  description 79/80, and almost every language runs longer, so a translation that reads perfectly
+  still lands at 94 characters and the console flags the locale. Every field is measured and
+  re asked until it fits, and a field that never fits falls back to English rather than to a
+  sentence cut mid word.
+- **The app name is never translated.** It is a brand plus a three word descriptor already using
+  28 of its 30 characters, and Play accepts the same name in every locale.
+- **Product, chain and format names survive byte for byte** (`three.ws`, `glTF`, `GLB`, `Solana`,
+  `Metaplex Core`, `Mobile Wallet Adapter`, the support address and URLs). A localised domain or a
+  translated `glTF` is a broken listing, not a localised one.
+
+The em dash and en dash are banned repo wide, including in translated copy, which several of
+these languages reach for by default: the script says so in the system prompt and strips any
+that survive, so the generated CSV passes `npm run check:rules` like any other file.
+
 ## What Play will reject
 
 Read [`listing/financial-features.md`](listing/financial-features.md) before building anything
