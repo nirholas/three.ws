@@ -88,6 +88,34 @@ option / skills directory the SDK exposes.
 - After adding or editing a skill, regenerate the manifest:
   `node scripts/build-skills-pack.mjs` (CI-style check: `--check`).
 
+### d) Packaged for the OpenAI Plugin Directory
+
+OpenAI's Skills tab takes a zip whose root holds one directory per skill, each
+with its own `SKILL.md`. That is already the shape of `.agents/skills/`, so the
+bundle is derived rather than hand-assembled:
+
+```bash
+npm run build:openai-skills          # writes dist-skills/openai-plugin-skills.zip
+npm run build:openai-skills -- --check   # verify only, write nothing
+```
+
+The builder takes only the skills whose frontmatter declares
+`metadata.category: 3d/*` and `cross-platform-safe: true`, because a 3D plugin
+shipping the pack's wallet and exchange skills reads as unfocused against
+OpenAI's guidance to keep instructions scoped to the plugin's purpose.
+
+It then does the check that matters: it reads the live tool list from
+`https://three.ws/api/mcp-studio` and **drops any skill that tells the model to
+call a tool the connector does not expose.** Inside ChatGPT there is no shell, so
+a skill's `curl` fallback is unreachable and a missing tool is simply a dead
+path. `find-3d-assets` is excluded today for exactly that reason: its
+`search_catalog` / `get_catalog_item` / `get_item_source` tools live on the full
+MCP server, not on the hosted studio endpoint. Ship those three on mcp-studio and
+the skill rejoins the bundle with no edit to the builder.
+
+Packaged Markdown is normalized to the repo's dash rule on the way into the zip;
+the canonical files under `.agents/skills/` are never rewritten.
+
 ## The 3D-creation skills
 
 The platform's signature set, safe to reuse anywhere:

@@ -552,10 +552,47 @@ does not apply: there is no login to give. Full connectivity detail is in §3.
 
 ### Step 3. Skills
 
-Import from the MCP server. It exposes 11 tools, each already carrying its four `openai/*`
-annotations and its `outputTemplate`, plus two widget resources. Do not hand-edit the
-annotations after import: §2.3 audits them and a wrong `readOnlyHint` on a tool that spends
-compute is a documented rejection reason.
+Two things land here, and they are separate.
+
+**Tools come from the MCP server, not from this tab.** Selecting **Scan Tools** on the MCP
+tab imports all 11, each already carrying its four `openai/*` annotations and its
+`outputTemplate`, plus two widget resources. Do not hand-edit the annotations after import:
+§2.3 audits them and a wrong `readOnlyHint` on a tool that spends compute is a documented
+rejection reason.
+
+**Skills are an optional upload, and we have one.** Skills teach the model when and how to
+reach for the tools; the tools alone teach it only what exists. Build the bundle:
+
+```bash
+npm run build:openai-skills          # dist-skills/openai-plugin-skills.zip
+```
+
+Upload that zip. It carries four skills, one directory each with its own `SKILL.md`:
+
+| Skill | Triggers on | Drives |
+|---|---|---|
+| `generate-3d-model` | "make a 3D model of...", a prop or object from text | `forge_free`, `mesh_forge` |
+| `create-3d-avatar` | "make a 3D avatar/character I can animate" | `forge_avatar`, `text_to_avatar` |
+| `rig-a-model` | "rig this GLB", "add a skeleton" | `rig_mesh` |
+| `embed-three-ws-avatar` | "embed a 3D avatar on my site" | the `<agent-3d>` web component |
+
+The bundle is derived from `.agents/skills/`, not hand-assembled, and the builder enforces
+the two rules that matter for review:
+
+1. **Scope.** Only skills tagged `3d/creative` and `cross-platform-safe` ship. The pack's
+   other 39 skills are wallet, payments and partner-exchange work; shipping them in a 3D
+   plugin contradicts OpenAI's guidance to keep instructions scoped to the plugin's purpose,
+   and none of them are reachable through this connector anyway.
+2. **No dead paths.** The builder reads `tools/list` off the live connector and drops any
+   skill referencing a tool that is not there. `find-3d-assets` is excluded on that rule:
+   its `search_catalog` / `get_catalog_item` / `get_item_source` tools live on the full MCP
+   server, not on mcp-studio. A skill that tells ChatGPT to call a tool the connector does
+   not expose is a reviewer-visible failure, and inside ChatGPT there is no shell, so the
+   skill's documented `curl` fallback cannot rescue it.
+
+Adding those three catalog tools to mcp-studio is the follow-up that unlocks a fifth skill.
+It is deliberately not done pre-submission: the 11 tools are already scanned and their 33
+annotation justifications written, and changing the tool surface now would invalidate both.
 
 ### Step 4. Prompts
 

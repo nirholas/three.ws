@@ -627,3 +627,6 @@ scripts/.selfie-verify/
 # are stripped so the paste lands clean. The source of truth is the docs/ copy;
 # the root file is regenerated from it and never committed.
 /paste-*.md
+
+# Generated submission bundle (scripts/build-openai-skills-bundle.mjs)
+dist-skills/

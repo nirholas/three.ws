@@ -430,6 +430,7 @@
 		"pump:launch": "node scripts/pump-launch-repos.mjs",
 		"pump:launch:ui": "node scripts/pump-launch-server.mjs",
 		"seed:skills": "node scripts/seed-skills.js",
+		"build:openai-skills": "node scripts/build-openai-skills-bundle.mjs",
 		"build:skills-seed": "node scripts/build-skills-seed.mjs",
 		"check:skills-seed": "node scripts/build-skills-seed.mjs --check",
 		"install:sdk": "npm install --prefix agent-payments-sdk && npm run build --prefix agent-payments-sdk && npm install ./agent-payments-sdk",
