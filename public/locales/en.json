@@ -21089,5 +21089,10 @@
 		"total_tvl": "Total TVL",
 		"tvl": "TVL",
 		"yield_data_from_defillama_apy_figures_are": "Yield data from <a href=\"https://defillama.com/yields\" rel=\"noopener noreferrer\" target=\"_blank\">DeFiLlama</a>. APY figures are protocol-reported and vary with pool conditions. Not financial advice."
-	}
+	},
+	"legal_privacy.photos_you_capture_or_upload": "Photos you capture or upload",
+	"legal_privacy.one_frontal_photo_and_up_to_two_optional_sid": "One frontal photo and up to two optional side angles, if you use the selfie flow",
+	"legal_privacy.building_your_3d_avatar_and_reproducing_re_r": "Building your 3D avatar, and reproducing, re-rigging or re-scoring that result",
+	"legal_privacy.1a_photos_you_capture_or_upload": "1a. Photos You Capture or Upload",
+	"legal_privacy.if_you_use_the_selfie_flow_the_photos_you": "If you use the selfie flow, the photos you capture (one frontal image and up to two optional side angles) are uploaded to our reconstruction service and used to build your 3D avatar. They are stored with the generation record so the result can be reproduced, re-rigged and re-scored for quality, and they are visible only to your account. They are deleted when you delete the generation or your account, subject to the retention windows in Section 5. We do <strong>not</strong> use them to train models, we do <strong>not</strong> share them with advertisers, and we do <strong>not</strong> derive or store a face template or any other biometric identifier from them. Using the selfie flow is optional: you can upload a photo from your gallery instead, or describe a character in words and never provide a photo at all."
 }
