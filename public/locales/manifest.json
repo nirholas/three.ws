@@ -302,6 +302,11 @@
 			"dir": "ltr"
 		},
 		{
+			"code": "cy",
+			"name": "Cymraeg",
+			"dir": "ltr"
+		},
+		{
 			"code": "ca",
 			"name": "Català",
 			"dir": "ltr"
