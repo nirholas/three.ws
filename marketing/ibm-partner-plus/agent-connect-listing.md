@@ -167,8 +167,10 @@ same path, so batch changes rather than shipping them one at a time.
 - We provide first-line support for the server. The support URL above is the entry point.
 - Adoption is reported back through IBM Ecosystem team reports; ask for them.
 
-## Open item
+## Asset status
 
-The catalog icon is committed at `public/partners/ibm/three-ws-agent-connect-icon.svg` but
-its public URL 404s until the next production deploy. Concierge takes a file upload rather
-than a URL, so this does not block submission, but deploy before pointing IBM at the link.
+The catalog icon is live and publicly reachable at
+`https://three.ws/partners/ibm/three-ws-agent-connect-icon.svg` (verified 200 on
+2026-09-11). Concierge takes a file upload rather than a URL, so either route works: upload
+`public/partners/ibm/three-ws-agent-connect-icon.svg` from the repo, or point IBM at the
+public URL.
