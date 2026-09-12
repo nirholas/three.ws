@@ -1,18 +1,50 @@
 # three.ws 3D Studio — OpenAI ChatGPT App Directory submission package
 
-**Prepared:** 2026-07-07 · **Last re-verified live:** 2026-09-09 · **Owning prompt:** 07
+**Prepared:** 2026-07-07 · **Last re-verified live:** 2026-09-09 · **Submitted:** 2026-09-12 · **Owning prompt:** 07
 **Endpoint:** `https://three.ws/api/mcp-studio`
 **Prereqs verified live:** prompt 04 (`/api/mcp-studio` deployed), prompt 05 (widget renders real GLBs).
 
-This is the copy-paste-ready answer sheet for submitting the free three.ws 3D Studio to the
-OpenAI ChatGPT App Directory, plus an evidence-backed compliance audit. **Every field is
-filled** (2026-07-14: organization verified on platform.openai.com, support contact and privacy
-policy confirmed live). Submission is currently held on the §0 output-quality blocker; once that
-fix is deployed and re-verified, the remaining step is the owner's final submit in the portal.
+This is the answer sheet that was used to submit the free three.ws 3D Studio to the OpenAI
+Plugin Directory, plus an evidence-backed compliance audit. **Submitted 2026-09-12 at 00:10Z as
+version 1.0.0, now showing status Review in the portal.** Keep it accurate rather than frozen:
+a resubmission, a reviewer question, or a new version all start from this file.
 
 ---
 
-## 0. Submission verdict: READY (B3 closed on measurement, 2026-09-11)
+## 0. Submission verdict: SUBMITTED 2026-09-12, in review
+
+**Version 1.0.0 was submitted on 2026-09-12 at 00:10Z and the portal shows status Review.**
+
+What went in, as submitted:
+
+| Field | Value |
+|---|---|
+| Name | three.ws 3D AI Studio |
+| Tagline | Create 3D models from text |
+| Type | With MCP (remote MCP connector) |
+| MCP server URL | `https://three.ws/api/mcp-studio` |
+| Authentication | None |
+| Tools | 11, imported by Scan Tools, with all 33 annotation justifications and the frame-domains justification |
+| Domain verification | Verified. `/.well-known/openai-apps-challenge` shipped in commit `f569ec6c4` and went live 2026-09-11 at 23:46Z |
+| Prompts | 3 (the free lane, the rigged character, the low-poly prop) |
+| Test cases | 5 positive and 3 negative, all in Step 5 below |
+| Demo recording | `https://youtu.be/DIKBUJypXzw` |
+| Age rating | Suitable for under 18, backed by the age-13+ content gate in §2.4 |
+
+**The compliance attestation on money movement was verified before signing, not assumed.**
+`api/mcp3d/persona-identity.js` answers `GET`/`HEAD` only and returns 405 otherwise, the
+embodiment embed carries no send, sign, swap or trade path, and the `wallet` flag in
+`api/_lib/embodiment-artifact.js` defaults to false with `api/_mcp-studio/persona-tools.js`
+never passing it, so the opt-in chain-state mode is unreachable from ChatGPT. Nothing this
+connector exposes can initiate or execute a transfer.
+
+**Two things the reviewer was warned about, deliberately.** The listing uses `frame_domains`
+for the three persona tools, which the portal says raises review requirements because an iframe
+reduces its visibility into the rendered experience; test case 5 exercises that widget on
+purpose, because a reviewer who never sees it is left more suspicious of it. And the latency
+note quotes the measured 74s/149s/213s spread rather than a single figure.
+
+### How B3, the last blocker, closed (2026-09-11)
 
 **Every connector, manifest, widget and Actions surface re-verified live on 2026-09-09 and all
 pass** (see the §7 checklist), and **B3, the last blocker, closed on 2026-09-11**.
