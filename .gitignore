@@ -630,3 +630,6 @@ scripts/.selfie-verify/
 
 # Generated submission bundle (scripts/build-openai-skills-bundle.mjs)
 dist-skills/
+
+# Upload copy of the submission package artifact (canonical lives in prompts/store-submissions/_generated/)
+/chatgpt-app-submission.json

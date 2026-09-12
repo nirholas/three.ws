@@ -6,189 +6,189 @@ Each block is under the portal's silent limit. Do not edit them longer without r
 
 ### forge_free
 
-**Read Only**  (182/200)
+**Read Only**  (101/200)
 ```
-False because the call writes. Each invocation runs a generation and stores a new GLB in our object storage, then returns its URL. That stored file is a real side effect of the call.
-```
-
-**Open World**  (195/200)
-```
-True because generation runs on third-party inference providers, not a dataset we own. The same prompt can legitimately return a different mesh, so the result is not a closed, predictable domain.
+Runs a 3D generation and writes a new GLB file into our object storage, then returns that file's URL.
 ```
 
-**Destructive**  (193/200)
+**Open World**  (136/200)
 ```
-False because the tool only adds. It writes a new GLB and never modifies or deletes anything. Given an existing model it reads the source and emits a separate file, leaving the original intact.
+Publishes the generated GLB at a public URL anyone with the link can fetch, and relies on third-party inference providers to produce it.
+```
+
+**Destructive**  (117/200)
+```
+Only adds a new file and never overwrites or deletes an existing one, so a model supplied as input is left unchanged.
 ```
 
 ### text_to_avatar
 
-**Read Only**  (182/200)
+**Read Only**  (101/200)
 ```
-False because the call writes. Each invocation runs a generation and stores a new GLB in our object storage, then returns its URL. That stored file is a real side effect of the call.
-```
-
-**Open World**  (195/200)
-```
-True because generation runs on third-party inference providers, not a dataset we own. The same prompt can legitimately return a different mesh, so the result is not a closed, predictable domain.
+Runs a 3D generation and writes a new GLB file into our object storage, then returns that file's URL.
 ```
 
-**Destructive**  (193/200)
+**Open World**  (136/200)
 ```
-False because the tool only adds. It writes a new GLB and never modifies or deletes anything. Given an existing model it reads the source and emits a separate file, leaving the original intact.
+Publishes the generated GLB at a public URL anyone with the link can fetch, and relies on third-party inference providers to produce it.
+```
+
+**Destructive**  (117/200)
+```
+Only adds a new file and never overwrites or deletes an existing one, so a model supplied as input is left unchanged.
 ```
 
 ### mesh_forge
 
-**Read Only**  (182/200)
+**Read Only**  (101/200)
 ```
-False because the call writes. Each invocation runs a generation and stores a new GLB in our object storage, then returns its URL. That stored file is a real side effect of the call.
-```
-
-**Open World**  (195/200)
-```
-True because generation runs on third-party inference providers, not a dataset we own. The same prompt can legitimately return a different mesh, so the result is not a closed, predictable domain.
+Runs a 3D generation and writes a new GLB file into our object storage, then returns that file's URL.
 ```
 
-**Destructive**  (193/200)
+**Open World**  (136/200)
 ```
-False because the tool only adds. It writes a new GLB and never modifies or deletes anything. Given an existing model it reads the source and emits a separate file, leaving the original intact.
+Publishes the generated GLB at a public URL anyone with the link can fetch, and relies on third-party inference providers to produce it.
+```
+
+**Destructive**  (117/200)
+```
+Only adds a new file and never overwrites or deletes an existing one, so a model supplied as input is left unchanged.
 ```
 
 ### rig_mesh
 
-**Read Only**  (182/200)
+**Read Only**  (101/200)
 ```
-False because the call writes. Each invocation runs a generation and stores a new GLB in our object storage, then returns its URL. That stored file is a real side effect of the call.
-```
-
-**Open World**  (195/200)
-```
-True because generation runs on third-party inference providers, not a dataset we own. The same prompt can legitimately return a different mesh, so the result is not a closed, predictable domain.
+Runs a 3D generation and writes a new GLB file into our object storage, then returns that file's URL.
 ```
 
-**Destructive**  (193/200)
+**Open World**  (136/200)
 ```
-False because the tool only adds. It writes a new GLB and never modifies or deletes anything. Given an existing model it reads the source and emits a separate file, leaving the original intact.
+Publishes the generated GLB at a public URL anyone with the link can fetch, and relies on third-party inference providers to produce it.
+```
+
+**Destructive**  (117/200)
+```
+Only adds a new file and never overwrites or deletes an existing one, so a model supplied as input is left unchanged.
 ```
 
 ### forge_avatar
 
-**Read Only**  (182/200)
+**Read Only**  (101/200)
 ```
-False because the call writes. Each invocation runs a generation and stores a new GLB in our object storage, then returns its URL. That stored file is a real side effect of the call.
-```
-
-**Open World**  (195/200)
-```
-True because generation runs on third-party inference providers, not a dataset we own. The same prompt can legitimately return a different mesh, so the result is not a closed, predictable domain.
+Runs a 3D generation and writes a new GLB file into our object storage, then returns that file's URL.
 ```
 
-**Destructive**  (193/200)
+**Open World**  (136/200)
 ```
-False because the tool only adds. It writes a new GLB and never modifies or deletes anything. Given an existing model it reads the source and emits a separate file, leaving the original intact.
+Publishes the generated GLB at a public URL anyone with the link can fetch, and relies on third-party inference providers to produce it.
+```
+
+**Destructive**  (117/200)
+```
+Only adds a new file and never overwrites or deletes an existing one, so a model supplied as input is left unchanged.
 ```
 
 ### refine_model
 
-**Read Only**  (182/200)
+**Read Only**  (101/200)
 ```
-False because the call writes. Each invocation runs a generation and stores a new GLB in our object storage, then returns its URL. That stored file is a real side effect of the call.
-```
-
-**Open World**  (195/200)
-```
-True because generation runs on third-party inference providers, not a dataset we own. The same prompt can legitimately return a different mesh, so the result is not a closed, predictable domain.
+Runs a 3D generation and writes a new GLB file into our object storage, then returns that file's URL.
 ```
 
-**Destructive**  (193/200)
+**Open World**  (136/200)
 ```
-False because the tool only adds. It writes a new GLB and never modifies or deletes anything. Given an existing model it reads the source and emits a separate file, leaving the original intact.
+Publishes the generated GLB at a public URL anyone with the link can fetch, and relies on third-party inference providers to produce it.
+```
+
+**Destructive**  (117/200)
+```
+Only adds a new file and never overwrites or deletes an existing one, so a model supplied as input is left unchanged.
 ```
 
 ### check_job
 
-**Read Only**  (125/200)
+**Read Only**  (113/200)
 ```
-True because it only looks up an existing job by its id and reports that job's state. It creates nothing and changes nothing.
-```
-
-**Open World**  (180/200)
-```
-True because the job it reports on is running on external inference providers, so the status reflects third-party systems outside our control rather than a closed internal dataset.
+Looks up an existing generation job by its id and reports that job's state without creating or changing anything.
 ```
 
-**Destructive**  ( 91/200)
+**Open World**  (128/200)
 ```
-False because it reads job state only. Nothing is written, modified or removed by the call.
+Reports on work running on third-party inference providers, so its result reflects external systems rather than data we control.
+```
+
+**Destructive**  ( 71/200)
+```
+Only reads job state and never deletes, overwrites or cancels anything.
 ```
 
 ### look_at_model
 
-**Read Only**  (141/200)
+**Read Only**  (127/200)
 ```
-True because it renders views of a model that already exists and returns those frames as images. It stores no new asset and modifies nothing.
-```
-
-**Open World**  (150/200)
-```
-True because it accepts any public GLB URL, so it fetches from hosts outside our own domain and its result depends entirely on that external resource.
+Renders a model that already exists from several angles and returns the frames as images, storing nothing and changing nothing.
 ```
 
-**Destructive**  (115/200)
+**Open World**  ( 92/200)
 ```
-False because it only reads the supplied model in order to render it. The source file is never modified or deleted.
-```
-
-### create_agent_persona
-
-**Read Only**  (164/200)
-```
-False because it saves a new persona record and copies the model into durable storage so the body outlives the source URL. That stored record is a real side effect.
-```
-
-**Open World**  (146/200)
-```
-True because creating the persona calls external model and speech providers, and it accepts a model URL that may be hosted outside our own domain.
+Fetches an arbitrary public GLB URL, so it reaches third-party hosts outside our own domain.
 ```
 
 **Destructive**  ( 99/200)
 ```
-False because it only creates. Existing personas and existing models are never modified or deleted.
+Only reads the supplied model in order to render it, and never modifies or deletes the source file.
+```
+
+### create_agent_persona
+
+**Read Only**  (109/200)
+```
+Saves a new persona record and copies the model into our durable storage so the body outlives the source URL.
+```
+
+**Open World**  (136/200)
+```
+Stores the persona privately in our own database but publishes its model at a public URL, and calls external model and speech providers.
+```
+
+**Destructive**  ( 86/200)
+```
+Only creates a new persona and never modifies or deletes an existing persona or model.
 ```
 
 ### get_agent_persona
 
-**Read Only**  (145/200)
+**Read Only**  (115/200)
 ```
-True because it is a pure lookup. It reads an existing persona by its id and returns that persona's configuration. Nothing is created or changed.
-```
-
-**Open World**  (158/200)
-```
-False because it reads only persona records we store ourselves. No external provider is contacted, and the result is fully determined by data we already hold.
+Looks up a stored persona by its id and returns that persona's configuration without creating or changing anything.
 ```
 
-**Destructive**  ( 70/200)
+**Open World**  ( 89/200)
 ```
-False because it is a read-only lookup. Nothing is written or removed.
+Reads only persona records held in our own private store and contacts no external system.
+```
+
+**Destructive**  ( 65/200)
+```
+Only reads a persona record and never writes or removes anything.
 ```
 
 ### persona_say
 
-**Read Only**  (149/200)
+**Read Only**  (106/200)
 ```
-False because it increments the persona's turn counter, which is a write to our stored state, alongside returning the render directive for this turn.
-```
-
-**Open World**  (134/200)
-```
-False because it acts only on a persona we already store and renders through our own embed. It does not reach outside our own systems.
+Increments the persona's turn counter in our own store while returning the render directive for this turn.
 ```
 
-**Destructive**  (127/200)
+**Open World**  (111/200)
 ```
-False because it appends a turn and updates a counter. It never deletes or overwrites the persona's configuration or its model.
+Acts only on a persona in our own private store and renders through our own embed, reaching no external system.
+```
+
+**Destructive**  (110/200)
+```
+Only appends a turn and updates a counter, never deleting or overwriting the persona's configuration or model.
 ```
 
 ## MCP tab: Frame Domains  (199/200)

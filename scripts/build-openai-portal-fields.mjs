@@ -22,9 +22,9 @@ const LIMITS = { justification: 200, frame: 200, negative: 200, expected: 300, s
 
 // The six generation tools carry identical annotations, so they share one set.
 const GENERATION = {
-	read_only: 'False because the call writes. Each invocation runs a generation and stores a new GLB in our object storage, then returns its URL. That stored file is a real side effect of the call.',
-	open_world: 'True because generation runs on third-party inference providers, not a dataset we own. The same prompt can legitimately return a different mesh, so the result is not a closed, predictable domain.',
-	destructive: 'False because the tool only adds. It writes a new GLB and never modifies or deletes anything. Given an existing model it reads the source and emits a separate file, leaving the original intact.',
+	read_only: 'Runs a 3D generation and writes a new GLB file into our object storage, then returns that file\'s URL.',
+	open_world: 'Publishes the generated GLB at a public URL anyone with the link can fetch, and relies on third-party inference providers to produce it.',
+	destructive: 'Only adds a new file and never overwrites or deletes an existing one, so a model supplied as input is left unchanged.',
 };
 
 const JUSTIFICATIONS = {
@@ -35,29 +35,29 @@ const JUSTIFICATIONS = {
 	forge_avatar: GENERATION,
 	refine_model: GENERATION,
 	check_job: {
-		read_only: 'True because it only looks up an existing job by its id and reports that job\'s state. It creates nothing and changes nothing.',
-		open_world: 'True because the job it reports on is running on external inference providers, so the status reflects third-party systems outside our control rather than a closed internal dataset.',
-		destructive: 'False because it reads job state only. Nothing is written, modified or removed by the call.',
+		read_only: 'Looks up an existing generation job by its id and reports that job\'s state without creating or changing anything.',
+		open_world: 'Reports on work running on third-party inference providers, so its result reflects external systems rather than data we control.',
+		destructive: 'Only reads job state and never deletes, overwrites or cancels anything.',
 	},
 	look_at_model: {
-		read_only: 'True because it renders views of a model that already exists and returns those frames as images. It stores no new asset and modifies nothing.',
-		open_world: 'True because it accepts any public GLB URL, so it fetches from hosts outside our own domain and its result depends entirely on that external resource.',
-		destructive: 'False because it only reads the supplied model in order to render it. The source file is never modified or deleted.',
+		read_only: 'Renders a model that already exists from several angles and returns the frames as images, storing nothing and changing nothing.',
+		open_world: 'Fetches an arbitrary public GLB URL, so it reaches third-party hosts outside our own domain.',
+		destructive: 'Only reads the supplied model in order to render it, and never modifies or deletes the source file.',
 	},
 	create_agent_persona: {
-		read_only: 'False because it saves a new persona record and copies the model into durable storage so the body outlives the source URL. That stored record is a real side effect.',
-		open_world: 'True because creating the persona calls external model and speech providers, and it accepts a model URL that may be hosted outside our own domain.',
-		destructive: 'False because it only creates. Existing personas and existing models are never modified or deleted.',
+		read_only: 'Saves a new persona record and copies the model into our durable storage so the body outlives the source URL.',
+		open_world: 'Stores the persona privately in our own database but publishes its model at a public URL, and calls external model and speech providers.',
+		destructive: 'Only creates a new persona and never modifies or deletes an existing persona or model.',
 	},
 	get_agent_persona: {
-		read_only: 'True because it is a pure lookup. It reads an existing persona by its id and returns that persona\'s configuration. Nothing is created or changed.',
-		open_world: 'False because it reads only persona records we store ourselves. No external provider is contacted, and the result is fully determined by data we already hold.',
-		destructive: 'False because it is a read-only lookup. Nothing is written or removed.',
+		read_only: 'Looks up a stored persona by its id and returns that persona\'s configuration without creating or changing anything.',
+		open_world: 'Reads only persona records held in our own private store and contacts no external system.',
+		destructive: 'Only reads a persona record and never writes or removes anything.',
 	},
 	persona_say: {
-		read_only: 'False because it increments the persona\'s turn counter, which is a write to our stored state, alongside returning the render directive for this turn.',
-		open_world: 'False because it acts only on a persona we already store and renders through our own embed. It does not reach outside our own systems.',
-		destructive: 'False because it appends a turn and updates a counter. It never deletes or overwrites the persona\'s configuration or its model.',
+		read_only: 'Increments the persona\'s turn counter in our own store while returning the render directive for this turn.',
+		open_world: 'Acts only on a persona in our own private store and renders through our own embed, reaching no external system.',
+		destructive: 'Only appends a turn and updates a counter, never deleting or overwriting the persona\'s configuration or model.',
 	},
 };
 
@@ -108,16 +108,19 @@ const NEGATIVE_CASES = [
 		scenario:
 			'The user wants a 2D image, not a 3D model. The wording nearly matches our main generation prompt, but this plugin only returns 3D GLB files, so image generation should handle it.',
 		prompt: "Draw a cartoon robot mascot for my startup's landing page.",
+		expected: 'The app should not be invoked, because it only produces 3D GLB models and the user asked for a 2D image.',
 	},
 	{
 		scenario:
 			'"Model" is a verb here, meaning a financial projection. Nothing 3D is involved, and no tool in this plugin operates on spreadsheets or forecasts.',
 		prompt: 'Model out our Q3 revenue if we raise prices 20%.',
+		expected: 'The app should not be invoked, because no tool here operates on spreadsheets, forecasts or financial data.',
 	},
 	{
 		scenario:
 			'The user asks how to do something in other software, not for work on a file. It says "rig" and "character", but rig_mesh needs the URL of an existing GLB and would return nothing they asked for.',
 		prompt: 'How do I rig a humanoid character in Blender?',
+		expected: 'The app should not be invoked, because the user wants an explanation of other software rather than work on a file.',
 	},
 ];
 
@@ -130,8 +133,23 @@ function measure(label, text, limit) {
 	return text.length;
 }
 
+/**
+ * The submission skill asks for one sentence per justification, and rejects a
+ * justification that restates the annotation instead of describing behavior.
+ */
+function oneSentence(label, text) {
+	const sentences = text.split(/\.\s+/).filter(Boolean).length;
+	if (sentences > 1) violations.push(`${label}: ${sentences} sentences, the skill asks for one`);
+	if (/^(readOnlyHint|openWorldHint|destructiveHint)\b/i.test(text) || /\bbecause the tool is\b/i.test(text)) {
+		violations.push(`${label}: restates the annotation instead of describing the behavior`);
+	}
+}
+
 for (const [tool, set] of Object.entries(JUSTIFICATIONS)) {
-	for (const [kind, text] of Object.entries(set)) measure(`${tool}.${kind}`, text, LIMITS.justification);
+	for (const [kind, text] of Object.entries(set)) {
+		measure(`${tool}.${kind}`, text, LIMITS.justification);
+		oneSentence(`${tool}.${kind}`, text);
+	}
 }
 measure('frame_domains', FRAME_DOMAINS, LIMITS.frame);
 TEST_CASES.forEach((t, i) => measure(`test case ${i + 1} expected output`, t.expected, LIMITS.expected));
@@ -152,35 +170,143 @@ if (process.argv.includes('--check')) {
 
 const bar = (n, limit) => `${String(n).padStart(3)}/${limit}`;
 
-console.log('# OpenAI Plugin Directory: every field, paste-ready\n');
-console.log('Each block is under the portal\'s silent limit. Do not edit them longer without re-running this script.\n');
-console.log('## MCP tab: tool justifications\n');
-for (const [tool, set] of Object.entries(JUSTIFICATIONS)) {
-	console.log(`### ${tool}\n`);
-	for (const kind of ['read_only', 'open_world', 'destructive']) {
-		console.log(`**${ANNOTATION_LABEL[kind]}**  (${bar(set[kind].length, LIMITS.justification)})`);
-		console.log('```');
-		console.log(set[kind]);
-		console.log('```\n');
+if (!process.argv.includes('--json')) {
+	console.log('# OpenAI Plugin Directory: every field, paste-ready\n');
+	console.log('Each block is under the portal\'s silent limit. Do not edit them longer without re-running this script.\n');
+	console.log('## MCP tab: tool justifications\n');
+	for (const [tool, set] of Object.entries(JUSTIFICATIONS)) {
+		console.log(`### ${tool}\n`);
+		for (const kind of ['read_only', 'open_world', 'destructive']) {
+			console.log(`**${ANNOTATION_LABEL[kind]}**  (${bar(set[kind].length, LIMITS.justification)})`);
+			console.log('```');
+			console.log(set[kind]);
+			console.log('```\n');
+		}
 	}
+	console.log(`## MCP tab: Frame Domains  (${bar(FRAME_DOMAINS.length, LIMITS.frame)})\n`);
+	console.log('```');
+	console.log(FRAME_DOMAINS);
+	console.log('```\n');
+
+	console.log('## Testing tab: test cases\n');
+	TEST_CASES.forEach((t, i) => {
+		console.log(`### Test Case ${i + 1}\n`);
+		console.log(`**Scenario**\n\`\`\`\n${t.scenario}\n\`\`\`\n`);
+		console.log(`**User prompt**\n\`\`\`\n${t.prompt}\n\`\`\`\n`);
+		console.log(`**Tool triggered**\n\`\`\`\n${t.tools}\n\`\`\`\n`);
+		console.log(`**Expected output**  (${bar(t.expected.length, LIMITS.expected)})\n\`\`\`\n${t.expected}\n\`\`\`\n`);
+	});
+
+	console.log('## Testing tab: negative cases\n');
+	NEGATIVE_CASES.forEach((n, i) => {
+		console.log(`### Negative Test Case ${i + 1}\n`);
+		console.log(`**Scenario**  (${bar(n.scenario.length, LIMITS.negative)})\n\`\`\`\n${n.scenario}\n\`\`\`\n`);
+		console.log(`**User prompt**\n\`\`\`\n${n.prompt}\n\`\`\`\n`);
+	});
 }
-console.log(`## MCP tab: Frame Domains  (${bar(FRAME_DOMAINS.length, LIMITS.frame)})\n`);
-console.log('```');
-console.log(FRAME_DOMAINS);
-console.log('```\n');
 
-console.log('## Testing tab: test cases\n');
-TEST_CASES.forEach((t, i) => {
-	console.log(`### Test Case ${i + 1}\n`);
-	console.log(`**Scenario**\n\`\`\`\n${t.scenario}\n\`\`\`\n`);
-	console.log(`**User prompt**\n\`\`\`\n${t.prompt}\n\`\`\`\n`);
-	console.log(`**Tool triggered**\n\`\`\`\n${t.tools}\n\`\`\`\n`);
-	console.log(`**Expected output**  (${bar(t.expected.length, LIMITS.expected)})\n\`\`\`\n${t.expected}\n\`\`\`\n`);
-});
+// The upload the portal's Info, MCP and Testing tabs read, per the openai/plugins
+// chatgpt-app-submission skill. Writing it is strictly better than typing the
+// same values into form boxes that truncate without saying so.
+const APP_INFO = {
+	// Matches the GPT Store listing and the package, which is the inconsistency
+	// the earlier submissions carried: the portal header said "3D AI Studio"
+	// while the stored display_name said this.
+	display_name: 'three.ws 3D Studio',
+	subtitle: 'Create 3D models from text',
+	description:
+		'Describe any object or character and three.ws 3D Studio builds a real, textured 3D model, then shows it in an interactive viewer inside the conversation. Eleven tools cover the path from idea to asset: generate a model from text or a reference image, generate an avatar, auto-rig a static model so it can be animated, refine a model by describing a change, and inspect a finished model from several angles. Every result downloads as a standard GLB that opens in Blender, Unity, Unreal, three.js, or any glTF pipeline. No account, no API key, no payment.',
+	// The skill's enum has no "creativity", so the closest true member is used.
+	category: 'DESIGN',
+};
 
-console.log('## Testing tab: negative cases\n');
-NEGATIVE_CASES.forEach((n, i) => {
-	console.log(`### Negative Test Case ${i + 1}\n`);
-	console.log(`**Scenario**  (${bar(n.scenario.length, LIMITS.negative)})\n\`\`\`\n${n.scenario}\n\`\`\`\n`);
-	console.log(`**User prompt**\n\`\`\`\n${n.prompt}\n\`\`\`\n`);
-});
+measure('app_info.subtitle', APP_INFO.subtitle, LIMITS.subtitle);
+
+if (process.argv.includes('--json')) {
+	const { writeFileSync } = await import('node:fs');
+	const CONNECTOR = process.env.OPENAI_CONNECTOR_URL || 'https://three.ws/api/mcp-studio';
+
+	// Read the annotations off the running connector rather than restating them
+	// here. A justification is only true of the annotation actually served, and
+	// the whole point of this field is that the two agree.
+	const res = await fetch(CONNECTOR, {
+		method: 'POST',
+		headers: {
+			'content-type': 'application/json',
+			accept: 'application/json, text/event-stream',
+			'mcp-protocol-version': '2025-06-18',
+		},
+		body: JSON.stringify({ jsonrpc: '2.0', id: 1, method: 'tools/list', params: {} }),
+		signal: AbortSignal.timeout(30_000),
+	});
+	if (!res.ok) throw new Error(`${CONNECTOR} answered ${res.status}`);
+	const served = JSON.parse((await res.text()).trim().split('\n').filter(Boolean).pop().replace(/^data:\s*/, '')).result.tools;
+
+	const problems = [];
+	const tools = {};
+	for (const tool of served) {
+		const set = JUSTIFICATIONS[tool.name];
+		if (!set) {
+			problems.push(`${tool.name} is served but has no justifications here`);
+			continue;
+		}
+		const a = tool.annotations || {};
+		for (const hint of ['readOnlyHint', 'openWorldHint', 'destructiveHint']) {
+			if (typeof a[hint] !== 'boolean') problems.push(`${tool.name}.${hint} is not set explicitly, which is a submission blocker`);
+		}
+		tools[tool.name] = {
+			annotations: {
+				readOnlyHint: a.readOnlyHint,
+				openWorldHint: a.openWorldHint,
+				destructiveHint: a.destructiveHint,
+			},
+			justifications: {
+				read_only_justification: set.read_only,
+				open_world_justification: set.open_world,
+				destructive_justification: set.destructive,
+			},
+		};
+		if (!tool.outputSchema) problems.push(`${tool.name} declares no outputSchema (a warning, not a blocker)`);
+	}
+	for (const name of Object.keys(JUSTIFICATIONS)) {
+		if (!served.some((t) => t.name === name)) problems.push(`${name} has justifications here but is not served`);
+	}
+
+	const doc = {
+		$schema: 'https://developers.openai.com/apps-sdk/schemas/chatgpt-app-submission.v1.json',
+		schema_version: 1,
+		app_info: APP_INFO,
+		tools,
+		test_cases: TEST_CASES.map((t) => ({
+			description: t.scenario,
+			user_prompt: t.prompt,
+			file_attachment_urls: null,
+			tools_triggered: t.tools,
+			expected_output: t.expected,
+			expected_output_url: null,
+		})),
+		negative_test_cases: NEGATIVE_CASES.map((n) => ({
+			description: n.scenario,
+			user_prompt: n.prompt,
+			file_attachment_urls: null,
+			tools_triggered: null,
+			expected_output: n.expected,
+			expected_output_url: null,
+		})),
+	};
+
+	// Canonical copy sits with the rest of the submission package so the record
+	// survives the session; the root copy exists only because the portal's upload
+	// box takes a file the owner has to reach for in the editor.
+	const serialized = JSON.stringify(doc, null, 2) + '\n';
+	const canonical = 'prompts/store-submissions/_generated/chatgpt-app-submission.json';
+	writeFileSync(canonical, serialized);
+	writeFileSync('chatgpt-app-submission.json', serialized);
+	console.log(`wrote ${canonical}`);
+	console.log(`  and ./chatgpt-app-submission.json to upload: ${Object.keys(tools).length} tools, ${doc.test_cases.length} test cases, ${doc.negative_test_cases.length} negative cases.`);
+	if (problems.length) {
+		console.log('\nReview findings:');
+		for (const p of problems) console.log(`  ${p}`);
+	}
+	process.exit(0);
+}
