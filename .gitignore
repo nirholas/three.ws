@@ -633,3 +633,7 @@ dist-skills/
 
 # Upload copy of the submission package artifact (canonical lives in prompts/store-submissions/_generated/)
 /chatgpt-app-submission.json
+
+# Working snapshot of what is pending on the npm registry across repos.
+# Regenerated on demand from the live registry, never committed.
+docs/ops/npm-publish-status.md
