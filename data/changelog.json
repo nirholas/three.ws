@@ -28136,6 +28136,16 @@
 				"improvement",
 				"infra"
 			]
+		},
+		{
+			"date": "2026-09-11",
+			"title": "The 3D creation skills are now a public download",
+			"summary": "The skills that teach an AI agent when and how to generate, rig, and embed 3D models on three.ws used to live only inside this repo. Four of them are now published at three.ws/skills/3d-studio: read one straight from the web, or download the whole set as a zip and drop it into whatever agent you are building. Nothing there needs an account, an API key, or a payment. A skill is only included if every tool it tells an agent to call is actually served, so a downloaded skill cannot send an agent after something that does not exist.",
+			"tags": [
+				"feature",
+				"sdk"
+			],
+			"link": "/docs/agent-skills"
 		}
 	]
 }

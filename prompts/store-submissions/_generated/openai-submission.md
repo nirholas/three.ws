@@ -603,28 +603,73 @@ annotation justifications written, and changing the tool surface now would inval
 
 ### Step 5. Testing
 
-At least five positive cases and three negative ones. Every behaviour below is documented in
-§5 and was verified live; none of it is aspirational.
+The portal asks for exactly five test cases and exactly three negative ones, and each test
+case has four fields: Scenario, User prompt, Tool triggered, Expected output.
 
-**Positive**
+**Read "negative" the way the portal means it.** It is not a safety refusal and not a
+malformed input. It is a prompt where this plugin should NOT be invoked at all, "but the model
+may mistakenly think it is relevant". Our safety and bad-URL behaviour is real and is
+documented in §2.4 and §5, but putting it here answers a question nobody asked and wastes all
+three slots. Every tool named below was confirmed against a live `tools/list` on 2026-09-12.
 
-| # | Prompt | Expected result |
-|---|---|---|
-| 1 | `Make a 3D model of a friendly round robot mascot, glossy white plastic.` | Inline interactive 3D viewer with the textured model, plus Download, Spin, Recenter and Open in three.ws. The widget frames the model, casts a soft ground shadow, and auto-rotates until dragged |
-| 2 | `Generate a low-poly treasure chest with iron bands.` | Same viewer flow, returns a downloadable GLB |
-| 3 | `Create a 3D avatar of a space explorer in a white-and-orange suit.` | Avatar generated and rendered inline |
-| 4 | `Make a rigged, animation-ready knight character I can pose.` | Rigged GLB, and an idle animation plays in the viewer |
-| 5 | `Now make that robot's shell matte instead of glossy.` | The model is refined from the previous turn and the updated GLB replaces it in the viewer |
+**Test case 1. Generate a 3D prop from a text description**
+
+- Prompt: `Make a 3D model of a friendly round robot mascot, glossy white plastic.`
+- Tool: `forge_free`, then `check_job` if the first response returns status "pending"
+- Expected: an inline interactive 3D viewer with the textured model, plus Download, Spin,
+  Recenter and Open in three.ws. The widget frames the model, casts a soft ground shadow and
+  auto-rotates until dragged. Free, no account. Roughly one to four minutes; past the inline
+  wait the tool returns a `job_id` and `check_job` collects the finished model.
+
+**Test case 2. Generate a rigged, animation-ready character**
+
+- Prompt: `Make a rigged, animation-ready knight character I can pose.`
+- Tool: `forge_avatar`, then `check_job` if pending
+- Expected: a rigged GLB in the same viewer, humanoid skeleton and skin weights already
+  applied, so an idle animation plays instead of a bind pose. One call does mesh and rig.
+
+**Test case 3. Iterate on a model by describing the change**
+
+- Prompt, in the same conversation as case 1: `Now make that robot's shell matte instead of
+  glossy.`
+- Tool: `refine_model`
+- Expected: a new version anchored to the previous model rather than an unrelated
+  regeneration, replacing the GLB in the viewer. The prior version stays reachable, so the
+  change is revertable.
+
+**Test case 4. Let the assistant see a model and report on it**
+
+- Prompt: `Look at this 3D model and tell me what it is and whether it has any obvious
+  defects: https://three.ws/cdn/objects/polyhaven/glb/ArmChair_01.glb`
+- Tool: `look_at_model`
+- Expected: frames from several angles returned as MCP image content blocks, which the client
+  renders into the conversation, plus geometry stats (triangles, materials, textures). The
+  assistant describes the armchair from images it can actually see. Free, seconds not minutes.
+  The URL is on our own domain and needs no credentials, so the case is self-contained.
+
+**Test case 5. Turn a model into a persistent agent body that speaks**
+
+- Prompt, in the same conversation as case 2: `Save that knight as a persistent agent body
+  called Sir Gareth, then have him introduce himself.`
+- Tools: `create_agent_persona`, then `persona_say`
+- Expected: an inline living-body widget framed from `https://three.ws`, our own verified
+  domain and the same origin as the connector, in which the avatar lip-syncs the line with a
+  matching expression and gesture and idles between turns. Returns a `persona_id` that
+  `get_agent_persona` reloads in a fresh session with its accumulated turn count.
+
+Include this case rather than hiding it. The portal warns that `frame_domains` raises review
+requirements because an iframe reduces its visibility into the rendered experience; a reviewer
+who never exercises the widget is left more suspicious of it, not less.
 
 Required test data: none. No account, no key, no seed files.
 
-**Negative**
+**Negative cases (prompts that must NOT invoke the plugin)**
 
-| # | Input | Expected safe behaviour |
+| # | Prompt | Why the model might misroute it, and why it must not |
 |---|---|---|
-| 1 | A prompt for a real firearm, explosive or drug paraphernalia | Refused instantly, before any provider work, with `isError: true` and the exact text `This 3D Studio cannot generate real firearms, explosives, or drug paraphernalia. Stylized fantasy props (a sword, a wand) are fine.` Verified live 2026-09-11. The gate covers five categories (sexual, child-sexual, gore, hate/extremism, weapons/drugs); this one is the cleanest to demonstrate because the refusal names what IS allowed, and a stylized fantasy sword passes straight through, which shows the gate is not over-broad |
-| 2 | A tool call carrying an invalid or unreachable GLB URL | A designed error rather than a crash. Verified live 2026-09-11: `look_at_model` with `glb_url` set to a 404 returns `isError: true` and the text `could not render this model: render failed: glb load failed: fetch ... responded with 404`. The widget reaches its error state ("Couldn't load the model") and `/api/ar` returns a designed 400 ("Provide a valid https URL to a .glb model.") |
-| 3 | A host that cannot render WebGL | The widget degrades to a download-and-open fallback instead of a broken canvas |
+| 1 | `Draw a cartoon robot mascot for my startup's landing page.` | The wording nearly matches test case 1, but the user wants a 2D image and this plugin only returns 3D GLB models. Image generation owns this |
+| 2 | `Model out our Q3 revenue if we raise prices 20%.` | "Model" is a verb here, meaning a financial projection. Nothing 3D is involved |
+| 3 | `How do I rig a humanoid character in Blender?` | Uses "rig" and "character", but asks for an explanation, not work on a file. `rig_mesh` requires the URL of an existing GLB and would produce nothing the user asked for |
 
 **Honest latency note for the reviewer.** Re-measured on 2026-09-11 against the live
 connector, three consecutive `forge_free` calls took **74s, 149s and 213s** end to end. That
