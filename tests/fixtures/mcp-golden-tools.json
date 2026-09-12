@@ -32,9 +32,9 @@
 			"descHead": "dynamic",
 			"descHash": "dynamic",
 			"annotations": {
-				"readOnlyHint": true,
+				"readOnlyHint": false,
 				"destructiveHint": false,
-				"idempotentHint": true,
+				"idempotentHint": false,
 				"openWorldHint": true
 			},
 			"schemaHash": "06fcfd29d4c4"

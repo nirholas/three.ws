@@ -71,9 +71,14 @@ All eleven are free and keyless.
 The six generation tools run operator-funded on the platform's own generation
 pipeline. Annotations: `readOnlyHint:false`, `destructiveHint:false`,
 `idempotentHint:false`, `openWorldHint:true` (work runs against external model
-APIs; nothing is ever modified or deleted). `check_job` is the exception: it is a
-pure status probe (`readOnlyHint:true`, `idempotentHint:true`) and never counts
-against the generation quota. `look_at_model` is read-only and idempotent too,
+APIs; nothing is ever modified or deleted). `check_job` reads like a status probe
+but is not one, and its annotations say so (`readOnlyHint:false`,
+`idempotentHint:false`): the FIRST check that finds a job finished materializes
+the creation, copying the model into our storage, recording the row and running
+the quality gate, and it can route failed work to another provider. Later checks
+of the same job are served from the done-frame cache, which is exactly why it is
+not idempotent either. It still never counts against the generation quota.
+`look_at_model` is genuinely read-only and idempotent,
 but it renders frames server-side, so it rides the same per-IP generation
 quota as the six generators.
 

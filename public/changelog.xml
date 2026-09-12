@@ -7,6 +7,14 @@
 		<description>What's new on three.ws: features, improvements, and releases, newest first.</description>
 		<language>en</language>
 		<item>
+			<title>Corrected what the 3D Studio connector declares about checking a pending job</title>
+			<link>https://three.ws/docs/mcp-studio</link>
+			<guid isPermaLink="false">2026-09-12:Corrected what the 3D Studio connector declares about checking a pending job</guid>
+			<pubDate>Sat, 12 Sep 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>The tool that collects a finished 3D generation was labelled a read-only status probe. It is not: the first check that finds a job done copies the model into permanent storage, records it, and scores it, and it can route failed work to another provider. Any AI client reading those labels to decide whether a call is safe to repeat was being told the wrong thing. The labels and the documentation now match the behaviour. Nothing about how the tool works changed.</description>
+		</item>
+		<item>
 			<title>Selfie to avatar is unstuck: a scan that used to wait forever now finishes in seconds</title>
 			<link>https://three.ws/create/selfie</link>
 			<guid isPermaLink="false">2026-09-11:Selfie to avatar is unstuck: a scan that used to wait forever now finishes in seconds</guid>

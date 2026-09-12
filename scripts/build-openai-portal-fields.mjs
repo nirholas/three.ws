@@ -35,9 +35,9 @@ const JUSTIFICATIONS = {
 	forge_avatar: GENERATION,
 	refine_model: GENERATION,
 	check_job: {
-		read_only: 'Looks up an existing generation job by its id and reports that job\'s state without creating or changing anything.',
-		open_world: 'Reports on work running on third-party inference providers, so its result reflects external systems rather than data we control.',
-		destructive: 'Only reads job state and never deletes, overwrites or cancels anything.',
+		read_only: 'The first check that finds a job finished copies the model into our storage and records the creation, so the call writes rather than only reads.',
+		open_world: 'Collects work from third-party inference providers and publishes the finished GLB at a public URL anyone with the link can fetch.',
+		destructive: 'Only adds the finished model and never deletes or overwrites an earlier one.',
 	},
 	look_at_model: {
 		read_only: 'Renders a model that already exists from several angles and returns the frames as images, storing nothing and changing nothing.',
@@ -46,7 +46,7 @@ const JUSTIFICATIONS = {
 	},
 	create_agent_persona: {
 		read_only: 'Saves a new persona record and copies the model into our durable storage so the body outlives the source URL.',
-		open_world: 'Stores the persona privately in our own database but publishes its model at a public URL, and calls external model and speech providers.',
+		open_world: 'Fetches the GLB from a public URL outside our domain and republishes it from our storage at a public URL anyone with the link can fetch.',
 		destructive: 'Only creates a new persona and never modifies or deletes an existing persona or model.',
 	},
 	get_agent_persona: {
@@ -75,14 +75,14 @@ const TEST_CASES = [
 	{
 		scenario: 'Generate a rigged, animation-ready character',
 		prompt: 'Make a rigged, animation-ready knight character I can pose.',
-		tools: 'forge_avatar, then check_job if the first response returns status "pending"',
+		tools: 'forge_avatar, then check_job if it returns status "pending", then rig_mesh if the finished job was only the mesh',
 		expected:
-			'A rigged GLB in the same inline viewer, with a humanoid skeleton and skin weights already applied, so an idle animation plays rather than the model standing in a bind pose. One call performs both the mesh generation and the rig.',
+			'A GLB in the inline viewer with a humanoid skeleton and skin weights applied, so it can be posed. One call normally does mesh and rig; if it times out at the mesh stage the pending result says to finish with rig_mesh. A humanoid rig also plays an idle clip.',
 	},
 	{
 		scenario: 'Iterate on a model by describing the change in words',
 		prompt: "Now make that robot's shell matte instead of glossy.",
-		tools: 'refine_model',
+		tools: 'refine_model, then check_job if it returns status "pending"',
 		expected:
 			'Run immediately after test case 1, in the same conversation. Returns a new version anchored to the previous model rather than an unrelated regeneration, and replaces the GLB in the viewer. The earlier version stays reachable, so the change can be reverted.',
 	},
@@ -241,6 +241,39 @@ if (process.argv.includes('--json')) {
 	});
 	if (!res.ok) throw new Error(`${CONNECTOR} answered ${res.status}`);
 	const served = JSON.parse((await res.text()).trim().split('\n').filter(Boolean).pop().replace(/^data:\s*/, '')).result.tools;
+
+	// The reviewer scans the DEPLOYED server, so the JSON has to describe that.
+	// But a local source fix that has not shipped yet would make this file
+	// disagree with their scan, which is the same misrepresentation the
+	// justifications exist to prevent. Refuse to generate until they match.
+	// TOOL_CATALOG / PERSONA_TOOL_CATALOG are the served descriptor arrays; the
+	// TOOLS maps beside them are name-keyed handler tables, not descriptors.
+	const { TOOL_CATALOG } = await import('../api/_mcp-studio/tools.js');
+	const { PERSONA_TOOL_CATALOG } = await import('../api/_mcp-studio/persona-tools.js');
+	const local = new Map(
+		[...TOOL_CATALOG, ...PERSONA_TOOL_CATALOG].map((t) => [t.name, t.annotations || {}]),
+	);
+	if (local.size !== served.length) {
+		console.error(`this checkout declares ${local.size} tool descriptors but ${CONNECTOR} serves ${served.length}`);
+		process.exit(1);
+	}
+	const drift = [];
+	for (const tool of served) {
+		const mine = local.get(tool.name);
+		if (!mine) continue;
+		for (const hint of ['readOnlyHint', 'openWorldHint', 'destructiveHint', 'idempotentHint']) {
+			if (mine[hint] !== (tool.annotations || {})[hint]) {
+				drift.push(`${tool.name}.${hint}: this checkout says ${mine[hint]}, ${CONNECTOR} serves ${(tool.annotations || {})[hint]}`);
+			}
+		}
+	}
+	if (drift.length) {
+		console.error('This checkout and the deployed connector disagree about tool annotations:\n');
+		for (const d of drift) console.error(`  ${d}`);
+		console.error('\nThe reviewer scans the deployed server, so deploy this checkout before generating');
+		console.error('the submission JSON. Shipping it now would hand them a file that contradicts their own scan.');
+		process.exit(1);
+	}
 
 	const problems = [];
 	const tools = {};

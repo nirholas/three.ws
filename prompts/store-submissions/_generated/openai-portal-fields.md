@@ -108,19 +108,19 @@ Only adds a new file and never overwrites or deletes an existing one, so a model
 
 ### check_job
 
-**Read Only**  (113/200)
+**Read Only**  (144/200)
 ```
-Looks up an existing generation job by its id and reports that job's state without creating or changing anything.
-```
-
-**Open World**  (128/200)
-```
-Reports on work running on third-party inference providers, so its result reflects external systems rather than data we control.
+The first check that finds a job finished copies the model into our storage and records the creation, so the call writes rather than only reads.
 ```
 
-**Destructive**  ( 71/200)
+**Open World**  (129/200)
 ```
-Only reads job state and never deletes, overwrites or cancels anything.
+Collects work from third-party inference providers and publishes the finished GLB at a public URL anyone with the link can fetch.
+```
+
+**Destructive**  ( 76/200)
+```
+Only adds the finished model and never deletes or overwrites an earlier one.
 ```
 
 ### look_at_model
@@ -149,7 +149,7 @@ Saves a new persona record and copies the model into our durable storage so the 
 
 **Open World**  (136/200)
 ```
-Stores the persona privately in our own database but publishes its model at a public URL, and calls external model and speech providers.
+Fetches the GLB from a public URL outside our domain and republishes it from our storage at a public URL anyone with the link can fetch.
 ```
 
 **Destructive**  ( 86/200)
@@ -235,12 +235,12 @@ Make a rigged, animation-ready knight character I can pose.
 
 **Tool triggered**
 ```
-forge_avatar, then check_job if the first response returns status "pending"
+forge_avatar, then check_job if it returns status "pending", then rig_mesh if the finished job was only the mesh
 ```
 
-**Expected output**  (228/300)
+**Expected output**  (257/300)
 ```
-A rigged GLB in the same inline viewer, with a humanoid skeleton and skin weights already applied, so an idle animation plays rather than the model standing in a bind pose. One call performs both the mesh generation and the rig.
+A GLB in the inline viewer with a humanoid skeleton and skin weights applied, so it can be posed. One call normally does mesh and rig; if it times out at the mesh stage the pending result says to finish with rig_mesh. A humanoid rig also plays an idle clip.
 ```
 
 ### Test Case 3
@@ -257,7 +257,7 @@ Now make that robot's shell matte instead of glossy.
 
 **Tool triggered**
 ```
-refine_model
+refine_model, then check_job if it returns status "pending"
 ```
 
 **Expected output**  (256/300)

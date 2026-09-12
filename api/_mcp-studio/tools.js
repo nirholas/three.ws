@@ -980,7 +980,8 @@ const DEFS = [
 		description:
 			'Check on a 3D generation that returned status "pending" and collect the finished model. Pass the ' +
 			'job_id from the pending result. While it is still rendering you get updated timing; call again after ' +
-			'the suggested wait. When it is done the model renders inline in the interactive 3D viewer.',
+			'the suggested wait. Checking can save the completed model and restart failed work on another ' +
+			'provider. When it is done the model renders inline in the interactive 3D viewer.',
 		inputSchema: {
 			type: 'object',
 			additionalProperties: false,
@@ -995,9 +996,9 @@ const DEFS = [
 			},
 		},
 		annotations: {
-			readOnlyHint: true, // a status probe; creates nothing
+			readOnlyHint: false, // polling can persist a model and submit recovery jobs
 			destructiveHint: false,
-			idempotentHint: true, // same job_id, same answer until the job advances
+			idempotentHint: false, // later checks can advance recovery to another provider
 			openWorldHint: true,
 		},
 		_meta: widgetMeta('Checking your 3D model…', 'Here is your 3D model'),

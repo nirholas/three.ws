@@ -1,14 +1,25 @@
 {
-	"generated_at": "2026-09-11T23:57:28.226Z",
+	"generated_at": "2026-09-12T01:51:12.338Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
 		"url": "https://three.ws"
 	},
-	"total": 3673,
+	"total": 3674,
 	"complete": false,
 	"full_feed": "/changelog.json",
 	"entries": [
+		{
+			"date": "2026-09-12",
+			"type": "update",
+			"title": "Corrected what the 3D Studio connector declares about checking a pending job",
+			"summary": "The tool that collects a finished 3D generation was labelled a read-only status probe. It is not: the first check that finds a job done copies the model into permanent storage, records it, and scores it, and it can route failed work to another provider. Any AI client reading those labels to decide whether a call is safe to repeat was being told the wrong thing. The labels and the documentation now match the behaviour. Nothing about how the tool works changed.",
+			"link": "/docs/mcp-studio",
+			"tags": [
+				"fix",
+				"sdk"
+			]
+		},
 		{
 			"date": "2026-09-11",
 			"type": "update",
@@ -1608,16 +1619,6 @@
 			"link": "/forge",
 			"tags": [
 				"fix"
-			]
-		},
-		{
-			"date": "2026-09-07",
-			"type": "update",
-			"title": "Robinhood Portfolios: describe a portfolio in a sentence, hold it on-chain",
-			"summary": "Robinhood Chain is the one place where tokenized stocks, crypto majors and memecoins trade against each other in the same pools, so a basket holding NVDA, WETH and a launchpad coin is just three tokens in one vault. Write a sentence at three.ws/markets/robinhood/portfolios and a screen ranks all 700-odd holdable assets against it, then hands back a real basket with target weights, a thesis, and a per-holding reason for every pick. The whole methodology, the prompt, the weights, the schedule, and every holding's price and liquidity at the moment it was chosen, is hashed into a manifest you can download, so the document you read is provably the one the portfolio is deployed against. The vault behind it holds the basket in kind: you deliver every holding to mint and receive every holding to redeem, so it never sells anything to let somebody in or out and needs no price feed to work at all, which matters because most of this chain has none. Rebalancing back to target happens on the schedule the manifest published, and is offered as a descending-price auction anyone can fill rather than a trade a manager makes. Refining a portfolio mints a new version pointing back at its parent instead of editing what you already hold, and forks pay their ancestors out of a fixed slice of fees. When a tokenized stock is paused by its issuer everything stops until it resumes, and the page says so, because a halted share cannot be moved at any price. A companion board at /markets/robinhood/portfolios/universe lists every asset a portfolio may hold, with live liquidity, volume, and the premium each stock trades at against its Chainlink price.",
-			"link": "/markets/robinhood/portfolios",
-			"tags": [
-				"feature"
 			]
 		}
 	]
