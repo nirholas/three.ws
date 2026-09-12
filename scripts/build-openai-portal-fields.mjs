@@ -267,11 +267,17 @@ if (process.argv.includes('--json')) {
 			}
 		}
 	}
-	if (drift.length) {
+	// --pending-deploy: describe the annotations THIS CHECKOUT declares, for the
+	// window where the fix is built and deploying but production still serves the
+	// old values. The file is correct the moment that deploy lands, which is why
+	// the warning below says to hold the Submit click rather than the upload.
+	const pendingDeploy = process.argv.includes('--pending-deploy');
+	if (drift.length && !pendingDeploy) {
 		console.error('This checkout and the deployed connector disagree about tool annotations:\n');
 		for (const d of drift) console.error(`  ${d}`);
 		console.error('\nThe reviewer scans the deployed server, so deploy this checkout before generating');
 		console.error('the submission JSON. Shipping it now would hand them a file that contradicts their own scan.');
+		console.error('If that deploy is in flight right now, pass --pending-deploy to describe this checkout instead.');
 		process.exit(1);
 	}
 
@@ -283,7 +289,9 @@ if (process.argv.includes('--json')) {
 			problems.push(`${tool.name} is served but has no justifications here`);
 			continue;
 		}
-		const a = tool.annotations || {};
+		// Source wins only while a deploy is in flight; otherwise the served
+		// annotations are the truth the reviewer will scan.
+		const a = (pendingDeploy ? local.get(tool.name) : tool.annotations) || {};
 		for (const hint of ['readOnlyHint', 'openWorldHint', 'destructiveHint']) {
 			if (typeof a[hint] !== 'boolean') problems.push(`${tool.name}.${hint} is not set explicitly, which is a submission blocker`);
 		}
@@ -336,6 +344,12 @@ if (process.argv.includes('--json')) {
 	writeFileSync(canonical, serialized);
 	writeFileSync('chatgpt-app-submission.json', serialized);
 	console.log(`wrote ${canonical}`);
+	if (pendingDeploy && drift.length) {
+		console.log('\n  NOTE: generated from THIS CHECKOUT, not the deployed server, which still serves:');
+		for (const d of drift) console.log(`    ${d}`);
+		console.log('  Upload the file now if you like, but do not hit Submit until that deploy is live,');
+		console.log('  or the reviewer\'s scan and this file will disagree.');
+	}
 	console.log(`  and ./chatgpt-app-submission.json to upload: ${Object.keys(tools).length} tools, ${doc.test_cases.length} test cases, ${doc.negative_test_cases.length} negative cases.`);
 	if (problems.length) {
 		console.log('\nReview findings:');
