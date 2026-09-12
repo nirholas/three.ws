@@ -7,6 +7,11 @@ they are inventory that already works, and the audit that established this lives
 [announcement-coverage.md](../announcement-coverage.md). Working that backlog down is what this
 directory is for.
 
+**Which pack to make next** is not decided in this directory. The backlog is grouped into clusters, ordered
+into waves, and checked for whether it can be demoed at all in
+[announcement-checklist.md](../announcement-checklist.md). Work that file top down; come here when a cluster
+comes up.
+
 ## How a pack gets made
 
 ```bash

@@ -939,6 +939,14 @@ const appConfig = {
 				'ar-page': resolve(__dirname, 'pages/ar.html'),
 				pricing: resolve(__dirname, 'pages/pricing.html'),
 				billing: resolve(__dirname, 'pages/billing.html'),
+				// These three were served only by the dev-server middleware below, so they
+				// rendered locally and answered 404 in production: /billing/keys (linked
+				// from the AWS Marketplace welcome page) and every markets stock and coin
+				// detail page. A page a route points at has to be a build input, and
+				// tests/route-build-inputs.test.js now fails when one is not.
+				'billing-keys': resolve(__dirname, 'pages/billing/keys.html'),
+				'robinhood-stock': resolve(__dirname, 'pages/robinhood-stock.html'),
+				'robinhood-coin': resolve(__dirname, 'pages/robinhood-coin.html'),
 				credits: resolve(__dirname, 'pages/credits.html'),
 				payments: resolve(__dirname, 'pages/payments.html'),
 				'pay-simulator': resolve(__dirname, 'pages/pay-simulator.html'),

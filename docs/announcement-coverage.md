@@ -2,6 +2,10 @@
 
 Source: `trythreews_tweets_2026-08-09.json` (174 posts scraped 2026-08-09, first post 2026-04-17) cross-referenced against `data/pages.json`, `packages/*`, the top-level SDKs, and `workers/` + `services/`.
 
+**This file is the audit, not the plan.** It establishes which surfaces have been posted about, as of the
+scrape date above. The prioritized work queue derived from it, with clusters, waves, verified blockers and
+checkboxes, is [announcement-checklist.md](./announcement-checklist.md).
+
 Status legend: **Yes** = the surface was specifically announced or demoed in a post. **Passing** = covered only by a related, aggregate, or partner post (never given its own announcement). **No** = never referenced on X in any form.
 
 ## Summary
