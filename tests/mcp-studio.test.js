@@ -45,10 +45,9 @@ describe('mcp-studio catalog', () => {
 		for (const t of TOOL_CATALOG) {
 			expect(typeof t.title).toBe('string');
 			expect(t.title.length).toBeGreaterThan(0);
-			// check_job is a status probe and look_at_model draws a picture of a
-			// model that already exists: both read-only and idempotent. Every
-			// generator creates a fresh asset per call.
-			const readOnly = t.name === 'check_job' || t.name === 'look_at_model';
+			// check_job can persist completed assets and submit recovery jobs;
+			// only rendering an existing model is read-only here.
+			const readOnly = t.name === 'look_at_model';
 			expect(t.annotations).toMatchObject(
 				readOnly
 					? { readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: true }
