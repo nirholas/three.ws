@@ -1,19 +1,40 @@
 # three.ws 3D Studio — OpenAI ChatGPT App Directory submission package
 
 **Prepared:** 2026-07-07 · **Last re-verified live:** 2026-09-09 · **Submitted:** 2026-09-12 · **Owning prompt:** 07
-**Endpoint:** `https://three.ws/api/mcp-studio`
+**Endpoint:** `https://three.ws/api/mcp-chatgpt` (the ChatGPT plugin surface of `https://three.ws/api/mcp-studio`)
 **Prereqs verified live:** prompt 04 (`/api/mcp-studio` deployed), prompt 05 (widget renders real GLBs).
 
-This is the answer sheet that was used to submit the free three.ws 3D Studio to the OpenAI
-Plugin Directory, plus an evidence-backed compliance audit. **Submitted 2026-09-12 at 00:10Z as
-version 1.0.0, now showing status Review in the portal.** Keep it accurate rather than frozen:
-a resubmission, a reviewer question, or a new version all start from this file.
+This is the answer sheet for submitting the free three.ws 3D Studio to the OpenAI Plugin
+Directory, plus an evidence-backed compliance audit. **Version 1.0.0 was rejected twice on
+2026-09-12, and the resubmission points at `https://three.ws/api/mcp-chatgpt`.** Keep it
+accurate rather than frozen: a resubmission, a reviewer question, or a new version all start
+from this file.
 
 ---
 
-## 0. Submission verdict: SUBMITTED 2026-09-12, in review
+## 0. Submission verdict: RESUBMITTING on the ChatGPT surface
 
-**Version 1.0.0 was submitted on 2026-09-12 at 00:10Z and the portal shows status Review.**
+**Version 1.0.0 was submitted on 2026-09-12 at 00:10Z and rejected twice that day.** The portal
+never displayed a reason, so every cause below was found by measuring the submission against the
+portal's own export, OpenAI's app guidelines, and OpenAI's example servers:
+
+1. **Four required icon slots were empty** (directory and composer, light and dark). Built by
+   `scripts/build-openai-icons.mjs`.
+2. **Every justification over 200 characters and every expected output over 300 was silently cut
+   mid-word.** `npm run check:openai-fields` now refuses any field over the limit.
+3. **`check_job` declared `readOnlyHint: true` while its first poll writes** a permanent model and
+   a database row. Corrected in source, docs and the golden fixture, and live since `87c44fb46`.
+4. **The persona widget used `frameDomains` to frame our own page.** OpenAI's app guidelines
+   reserve frame domains for embedding an essential third-party experience and say those apps
+   "are often not approved for broad distribution"; none of OpenAI's example servers use it. The
+   resubmission points at `/api/mcp-chatgpt`, which serves the eight 3D tools and the model viewer
+   and no persona tools.
+5. **The model viewer's CSP listed wildcard and unused domains.** The resubmission's viewer
+   allowlists exactly `https://three.ws` and the model-viewer CDN. Verified by rendering the widget
+   in Chromium under that CSP with an off-origin GLB and an off-origin poster: the model loaded
+   through `/api/glb`, the poster through `/api/img`, with zero CSP violations.
+
+The record of the first submission follows.
 
 What went in, as submitted:
 
@@ -22,9 +43,9 @@ What went in, as submitted:
 | Name | three.ws 3D AI Studio |
 | Tagline | Create 3D models from text |
 | Type | With MCP (remote MCP connector) |
-| MCP server URL | `https://three.ws/api/mcp-studio` |
+| MCP server URL | `https://three.ws/api/mcp-studio` (resubmission: `https://three.ws/api/mcp-chatgpt`) |
 | Authentication | None |
-| Tools | 11, imported by Scan Tools, with all 33 annotation justifications and the frame-domains justification |
+| Tools | 11 with 33 justifications and a frame-domains justification (resubmission: 8 with 24, and no frame domains) |
 | Domain verification | Verified. `/.well-known/openai-apps-challenge` shipped in commit `f569ec6c4` and went live 2026-09-11 at 23:46Z |
 | Prompts | 3 (the free lane, the rigged character, the low-poly prop) |
 | Test cases | 5 positive and 3 negative, all in Step 5 below |
@@ -38,11 +59,11 @@ embodiment embed carries no send, sign, swap or trade path, and the `wallet` fla
 never passing it, so the opt-in chain-state mode is unreachable from ChatGPT. Nothing this
 connector exposes can initiate or execute a transfer.
 
-**Two things the reviewer was warned about, deliberately.** The listing uses `frame_domains`
-for the three persona tools, which the portal says raises review requirements because an iframe
-reduces its visibility into the rendered experience; test case 5 exercises that widget on
-purpose, because a reviewer who never sees it is left more suspicious of it. And the latency
-note quotes the measured 74s/149s/213s spread rather than a single figure.
+**What the first submission told the reviewer, and why the resubmission does not.** It used
+`frame_domains` for the three persona tools and exercised that widget in test case 5. That was the
+wrong call: the guidelines quoted in item 4 say frame domains are for third-party embeds, so the
+resubmission surface carries no persona tools and no frame domains at all. The latency note still
+quotes the measured 74s/149s/213s spread rather than a single figure.
 
 ### How B3, the last blocker, closed (2026-09-11)
 
@@ -221,7 +242,7 @@ a separate surface, `api/_mcp-studio/component.js`; `/viewer` is the "open in a 
 | **App name** | **three.ws 3D Studio** |
 | **Tagline** | Turn a text prompt into a downloadable, animation-ready 3D model. Free, inside ChatGPT. |
 | **Short description** | three.ws 3D Studio generates textured 3D models, avatars, and rigged characters from a text prompt (or a reference image) and renders each result inline in an interactive 3D viewer you can rotate, inspect, and download as a GLB. It can also auto-rig a static model into an animation-ready one. Free to use: no account, no key, no payment. |
-| **Long description** | Describe anything ("a friendly round robot mascot," "a low-poly treasure chest," "a knight character I can animate") and three.ws 3D Studio builds a real, textured 3D model and shows it in an interactive viewer right in the conversation. Eleven tools cover the full path from idea to asset: generate a model from text, generate an avatar, generate an art-directed mesh, auto-rig a static model into an animation-ready one, generate-then-rig a character in a single step, refine an existing model by describing a change, collect a detailed model that took longer than one turn, look at a finished model from several angles to check the result, and save a rigged model as a persistent persona that can speak with lip-sync and emotion. Every result is a standard **GLB** you can download and drop into Blender, Unity, Unreal, three.js, or any glTF pipeline. Generation runs on three.ws's own free 3D lane, so there is nothing to sign up for and nothing to pay. Not natively possible in ChatGPT: turning language into a manipulable, downloadable 3D asset with an inline viewer. |
+| **Long description** | Describe anything ("a friendly round robot mascot," "a low-poly treasure chest," "a knight character I can animate") and three.ws 3D Studio builds a real, textured 3D model and shows it in an interactive viewer right in the conversation. Eight tools cover the full path from idea to asset: generate a model from text, generate an avatar, generate an art-directed mesh, auto-rig a static model into an animation-ready one, generate-then-rig a character in a single step, refine an existing model by describing a change, collect a detailed model that took longer than one turn, and look at a finished model from several angles to check the result. Every result is a standard **GLB** you can download and drop into Blender, Unity, Unreal, three.js, or any glTF pipeline. Generation runs on three.ws's own free 3D lane, so there is nothing to sign up for and nothing to pay. Not natively possible in ChatGPT: turning language into a manipulable, downloadable 3D asset with an inline viewer. |
 | **Category** | Creativity & Design (secondary: Productivity) |
 | **Country availability** | All countries / Global (no geo-restriction; anonymous + free). |
 | **Age suitability** | Suitable for ages 13 to 17 (content-safety gate on every generation lane, see §2.6). |
@@ -246,11 +267,11 @@ a separate surface, `api/_mcp-studio/component.js`; `/viewer` is the "open in a 
 | `rig_mesh` | Rig a 3D model for animation | Static GLB URL → humanoid-rigged, animation-ready GLB. |
 | `forge_avatar` | Generate a rigged, animation-ready avatar | Text/image → generate + auto-rig in one step. |
 | `refine_model` | Refine a 3D model by describing a change | Existing GLB + instruction → regenerated model with version lineage. |
-| `check_job` | Check a pending 3D generation | Job id → the finished model, or a fresh pending state with a live ETA. Read-only; collects a generation that outran its original tool call. |
+| `check_job` | Check a pending 3D generation | Job id → the finished model, or a fresh pending state with a live ETA. Collects a generation that outran its original tool call; the first check that finds it done saves the model, so it is not read-only. |
 | `look_at_model` | Look at a 3D model | GLB URL → rendered frames from several angles as images, plus geometry stats (triangles, materials, textures) and a plain reading of them. Read-only; works on any public https GLB. |
-| `create_agent_persona` | Save a rigged model as a living, persistent agent body | Rigged GLB + name → persona id (continuity across sessions). |
-| `get_agent_persona` | Reload a persona by id (continuity across sessions) | Persona id → saved persona (read-only). |
-| `persona_say` | Speak a reply through a persona: lip-sync + emotion + gesture | Persona id + text → lip-sync, emotion, and gesture playback in the viewer. |
+| `create_agent_persona` (`/api/mcp-studio` only) | Save a rigged model as a living, persistent agent body | Rigged GLB + name → persona id (continuity across sessions). |
+| `get_agent_persona` (`/api/mcp-studio` only) | Reload a persona by id (continuity across sessions) | Persona id → saved persona (read-only). |
+| `persona_say` (`/api/mcp-studio` only) | Speak a reply through a persona: lip-sync + emotion + gesture | Persona id + text → lip-sync, emotion, and gesture playback in the viewer. |
 
 ---
 
@@ -323,7 +344,7 @@ checkout; the app charges the user nothing. (If monetization is ever added, Open
 goods via external checkout — out of scope here.)
 
 ### 2.3 Tool annotations correct on all eleven tools: **PASS**
-Pulled from the live `tools/list` (all eleven rows re-checked against it on 2026-09-09):
+Pulled from the live `tools/list` (all eleven rows re-checked against it on 2026-09-09; `check_job` corrected on 2026-09-12). The ChatGPT plugin surface `/api/mcp-chatgpt` serves the first eight rows only:
 
 | Tool | readOnlyHint | destructiveHint | idempotentHint | openWorldHint |
 |------|:---:|:---:|:---:|:---:|
@@ -333,18 +354,19 @@ Pulled from the live `tools/list` (all eleven rows re-checked against it on 2026
 | rig_mesh | false | false | false | **true** |
 | forge_avatar | false | false | false | **true** |
 | refine_model | false | false | false | **true** |
-| check_job | **true** | false | **true** | **true** |
+| check_job | false | false | false | **true** |
 | look_at_model | **true** | false | **true** | **true** |
-| create_agent_persona | false | false | false | **true** |
-| get_agent_persona | **true** | false | **true** | false |
-| persona_say | false | false | false | false |
+| create_agent_persona (`/api/mcp-studio` only) | false | false | false | **true** |
+| get_agent_persona (`/api/mcp-studio` only) | **true** | false | **true** | false |
+| persona_say (`/api/mcp-studio` only) | false | false | false | false |
 
 Rationale (matches OpenAI guidance): each generation tool **creates a new hosted asset** → not
 read-only; it **never modifies or deletes** existing data → `destructiveHint: false` (generation is
 non-destructive; `refine_model` creates a new version, the parent is preserved in the lineage); same
 prompt yields a fresh mesh → not idempotent; generation runs against **external model APIs** →
-`openWorldHint: true`. `check_job` only reads the state of a job already submitted → `readOnlyHint:
-true`, `idempotentHint: true`, and it still polls the external provider → `openWorldHint: true`.
+`openWorldHint: true`. `check_job` is not a pure read: the first check that finds a job finished copies the model into
+our storage, records the creation and runs the quality gate, so `readOnlyHint: false` and
+`idempotentHint: false`, and it collects work from external providers → `openWorldHint: true`.
 `look_at_model` draws pictures of a model that already exists and creates nothing → `readOnlyHint:
 true`, `idempotentHint: true`, and it fetches a caller-supplied GLB from wherever it is hosted →
 `openWorldHint: true`.
@@ -393,9 +415,9 @@ No chat-history or "just in case" fields; `additionalProperties: false` on every
 | refine_model | `glb_url`, `instruction`, `parent_prompt`, `reference_image_url`, `parent_lineage`, `parent_index` | `glb_url`, `instruction` |
 | check_job | `job_id` | `job_id` |
 | look_at_model | `glb_url`, `views`, `size` | `glb_url` |
-| create_agent_persona | `glb_url`, `name`, `voice`, `source_prompt` | `glb_url`, `name` |
-| get_agent_persona | `persona_id` | `persona_id` |
-| persona_say | `persona_id`, `text`, `emotion` | `persona_id`, `text` |
+| create_agent_persona (`/api/mcp-studio` only) | `glb_url`, `name`, `voice`, `source_prompt` | `glb_url`, `name` |
+| get_agent_persona (`/api/mcp-studio` only) | `persona_id` | `persona_id` |
+| persona_say (`/api/mcp-studio` only) | `persona_id`, `text`, `emotion` | `persona_id`, `text` |
 
 ### 2.6 Age-appropriate (13–17) — **PASS** (safety gate present + live-tested)
 A synchronous, dependency-free content-safety gate (`api/_mcp-studio/safety.js`) runs **before any
@@ -424,7 +446,7 @@ re-verified live; nothing stands between this package and a submission.
 
 | Field | Value |
 |-------|-------|
-| **MCP server URL** | `https://three.ws/api/mcp-studio` |
+| **MCP server URL** | `https://three.ws/api/mcp-chatgpt` (the full surface, with the persona tools, stays at `https://three.ws/api/mcp-studio`) |
 | **Transport** | Streamable HTTP / JSON-RPC 2.0 over `POST` (synchronous responses; no server-initiated stream). `GET` → `405`. |
 | **Protocol version** | `2025-06-18` (echoed on `initialize` and the `mcp-protocol-version` response header). |
 | **serverInfo** | `{ "name": "three-ws-3d-studio-free", "version": "1.0.0" }` |
@@ -483,9 +505,9 @@ re-capturing to whatever the form asks for is trivial.]`
 **No credentials needed** (anonymous, free). Full flow re-verified green against production 2026-09-09.
 
 1. **Discover**: `initialize` → `tools/list` → `resources/list` against
-   `https://three.ws/api/mcp-studio`. Expect 11 tools + two resources,
-   `ui://widget/three-studio-model.html` (the inline 3D viewer) and
-   `ui://widget/three-studio-persona.html` (the living agent body).
+   `https://three.ws/api/mcp-chatgpt`. Expect 8 tools and one resource,
+   `ui://widget/three-studio-model.html` (the inline 3D viewer), with no `frame_domains` in its
+   CSP.
 2. **Generate** a model that reliably succeeds — say to ChatGPT: *"Make a 3D model of a friendly round
    robot mascot, glossy white plastic."* Expect, in ~15–60s, an inline interactive 3D viewer with the
    model plus **Download / Spin / Recenter / Open in three.ws**.
@@ -573,7 +595,7 @@ Description, fitted to the portal's "concrete value, no marketing language" guid
 
 | Field | Value |
 |---|---|
-| Server URL | `https://three.ws/api/mcp-studio` |
+| Server URL | `https://three.ws/api/mcp-chatgpt` |
 | Transport | Streamable HTTP, JSON-RPC 2.0 over POST |
 | Protocol version | `2025-06-18` |
 | Authentication | **None** |
@@ -587,8 +609,8 @@ does not apply: there is no login to give. Full connectivity detail is in §3.
 Two things land here, and they are separate.
 
 **Tools come from the MCP server, not from this tab.** Selecting **Scan Tools** on the MCP
-tab imports all 11, each already carrying its four `openai/*` annotations and its
-`outputTemplate`, plus two widget resources. Do not hand-edit the annotations after import:
+tab imports all 8, each already carrying its four `openai/*` annotations and its
+`outputTemplate`, plus the one model-viewer widget resource. Do not hand-edit the annotations after import:
 §2.3 audits them and a wrong `readOnlyHint` on a tool that spends compute is a documented
 rejection reason.
 
@@ -679,19 +701,17 @@ three slots. Every tool named below was confirmed against a live `tools/list` on
   assistant describes the armchair from images it can actually see. Free, seconds not minutes.
   The URL is on our own domain and needs no credentials, so the case is self-contained.
 
-**Test case 5. Turn a model into a persistent agent body that speaks**
+**Test case 5. Generate a model through the art-directed lane**
 
-- Prompt, in the same conversation as case 2: `Save that knight as a persistent agent body
-  called Sir Gareth, then have him introduce himself.`
-- Tools: `create_agent_persona`, then `persona_say`
-- Expected: an inline living-body widget framed from `https://three.ws`, our own verified
-  domain and the same origin as the connector, in which the avatar lip-syncs the line with a
-  matching expression and gesture and idles between turns. Returns a `persona_id` that
-  `get_agent_persona` reloads in a fresh session with its accumulated turn count.
+- Prompt: `Use the art-directed generator to make a detailed vintage brass telescope on a wooden
+  tripod.`
+- Tool: `mesh_forge`, then `check_job` if it returns status "pending"
+- Expected: a textured GLB in the same inline viewer, with Download and Open in three.ws. An
+  art-direction pass may first tighten the prompt into a single-subject spec. Free, no account.
+  Verified live on 2026-09-12: `mesh_forge` returned a finished GLB in 146 seconds.
 
-Include this case rather than hiding it. The portal warns that `frame_domains` raises review
-requirements because an iframe reduces its visibility into the rendered experience; a reviewer
-who never exercises the widget is left more suspicious of it, not less.
+This replaced the first submission's persona test case, because the persona tools are not on the
+resubmission surface (§0 item 4).
 
 Required test data: none. No account, no key, no seed files.
 
@@ -751,8 +771,7 @@ listing is actually public.
 ## 9. Tool justifications (the MCP step's annotation panel)
 
 The portal asks, for every tool, why each explicit annotation value is accurate, "in enough
-detail for us to confirm it doesn't misrepresent what the tool does". Eleven tools times three
-annotations, plus one frame-domains justification.
+detail for us to confirm it doesn't misrepresent what the tool does". Eight tools times three annotations on the resubmission surface.
 
 Every justification below is derived from the annotation constants in the source rather than
 written to sound good: `GEN_ANNOTATIONS` in [`api/_mcp-studio/tools.js`](../../../api/_mcp-studio/tools.js)
@@ -762,90 +781,18 @@ already carries its own one-line rationale comment. If an annotation changes, ch
 first and re-derive this section; a justification that no longer matches the served annotation
 is the exact misrepresentation the panel exists to catch.
 
-### Group A: the six generation tools
+### The justifications themselves
 
-`forge_free`, `text_to_avatar`, `mesh_forge`, `rig_mesh`, `forge_avatar`, `refine_model`.
-Identical annotations, so the same three answers apply to all six.
+Superseded. The first submission pasted per-tool justifications from this section, and the portal
+cut every one over 200 characters mid-word. The paste-ready text now lives in one generated file,
+[`openai-portal-fields.md`](openai-portal-fields.md), written by
+`scripts/build-openai-portal-fields.mjs` to OpenAI's stated hint meanings, one sentence each,
+measured against the portal's limits, and exported as `chatgpt-app-submission.json` with the
+annotations read off the live connector. Edit it there, never here.
 
-**Read Only is False.** The call creates a new hosted asset. Each invocation runs a generation
-and writes a new GLB to our object storage, then returns its URL. The call has a real side
-effect (a stored file, and the compute spent producing it), so marking it read-only would
-understate what it does.
-
-**Open World is True.** The work runs against external model providers rather than a bounded
-dataset we own. Results depend on third-party inference services, and the same prompt
-legitimately yields a different mesh on different calls, so the tool's effects are not confined
-to a closed, predictable domain.
-
-**Destructive is False.** The tool only ever adds. It writes a new asset and never modifies,
-overwrites or deletes anything. This holds for the two tools that take an existing model as
-input: `rig_mesh` and `refine_model` read the source and emit a separate new GLB, leaving the
-original untouched and still addressable at its original URL.
-
-### Group B: the two generation-side read tools
-
-**`check_job` - Read Only is True.** A status probe. It looks up an existing job by id and
-reports its state. It creates nothing and changes nothing.
-
-**`check_job` - Open World is True.** The job it reports on is executing on external model
-providers, so the status reflects third-party systems outside our control rather than a closed
-internal dataset.
-
-**`check_job` - Destructive is False.** It reads job state only. Nothing is written, modified or
-removed.
-
-**`look_at_model` - Read Only is True.** It renders views of a model that already exists and
-returns images. It creates no new stored asset and modifies nothing.
-
-**`look_at_model` - Open World is True.** It accepts an arbitrary public GLB URL, so it fetches
-from hosts outside our own domain and its result depends on that external resource.
-
-**`look_at_model` - Destructive is False.** It only reads the supplied model in order to render
-it. The source file is never modified or deleted.
-
-### Group C: the three persona tools
-
-**`create_agent_persona` - Read Only is False.** It saves a new persona record, a persistent
-body tied to a rigged model, so the call has a durable side effect.
-
-**`create_agent_persona` - Open World is True.** Creating the persona involves external model
-and speech providers, and it accepts a model URL that may be hosted outside our domain.
-
-**`create_agent_persona` - Destructive is False.** It only creates. Existing personas and models
-are never modified or deleted.
-
-**`get_agent_persona` - Read Only is True.** A pure read. It looks up an existing persona by id
-and returns its configuration. Nothing is created or changed.
-
-**`get_agent_persona` - Open World is False.** It reads only our own stored persona records. No
-external provider is contacted, and the result is fully determined by data we hold.
-
-**`get_agent_persona` - Destructive is False.** A read-only lookup. Nothing is written or
-removed.
-
-**`persona_say` - Read Only is False.** It is a render directive that also increments the
-persona's turn counter, which is a write to our stored state.
-
-**`persona_say` - Open World is False.** It acts only on a persona we already store and renders
-through our own embed. It does not reach outside our own systems.
-
-**`persona_say` - Destructive is False.** It appends a turn and updates a counter. It never
-deletes or overwrites the persona's configuration or its model.
-
-### Frame Domains
-
-Only the three persona tools declare `frame_domains`, and the single declared origin is
-`https://three.ws`.
-
-> The three persona tools render a living agent body: an interactive WebGL avatar that speaks
-> with lip-synced facial animation. It is framed from https://three.ws, our own verified domain
-> and the same origin that serves this MCP connector. No third-party origin is framed. An
-> iframe is used because the embodiment surface needs a real-time WebGL canvas driving 52
-> facial blendshapes alongside synchronised audio, which cannot be expressed as static inline
-> content. The framed page is first-party, carries no advertising and no third-party scripts
-> beyond the pinned CDN entries already declared in the CSP metadata, and exposes no payment,
-> login or account surface. The eight tools that do not need it declare no frame_domains at
-> all.
+The persona tools and their `frame_domains` explanation are not part of the resubmission: they live
+only on `/api/mcp-studio`, and the ChatGPT plugin surface `/api/mcp-chatgpt` does not serve them
+(§0 item 4).
 
 ### The outputSchema nudge
 
@@ -876,7 +823,7 @@ existing behaviour rather than new work.
 - [x] Review surface is the MCP connector metadata, not `/.well-known/ai-plugin.json` (§2.1a, cited);
       live `initialize` + `tools/list` return `three-ws-3d-studio-free` on protocol `2025-06-18` with the
       exact 11-tool surface, each carrying its four `openai/*` annotations and its `outputTemplate`
-      (the 8 model tools to the model widget, the 3 persona tools to the persona widget), and
+      (the 8 model tools to the model widget, the 3 persona tools to the persona widget, on `/api/mcp-studio`; the ChatGPT surface serves only the first), and
       `resources/list` returns both skybridge resources with `widgetCSP`, `widgetDescription` and
       `widgetDomain` (re-verified live 2026-09-09).
 - [x] App discovery schema served + guarded — `/.well-known/3d-studio-openapi.yaml`, free-only,

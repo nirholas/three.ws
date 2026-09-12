@@ -111,7 +111,7 @@
 			"includeFiles": "{src/solana/vanity/wasm/**,examples/skills/**,data/pages.json,data/archives/**,data/rss/**,data/_generated/**,sdk/src/sas-config.json}",
 			"maxDuration": 60
 		},
-		"{api/mcp-studio,api/forge-nim,api/nim-forge,api/launch/mm,api/cron/avaturn-seed-cron,api/irl/interactions-stream}.js": {
+		"{api/mcp-studio,api/mcp-chatgpt,api/forge-nim,api/nim-forge,api/launch/mm,api/cron/avaturn-seed-cron,api/irl/interactions-stream}.js": {
 			"maxDuration": 300
 		},
 		"api/x402/remix-asset.js": {

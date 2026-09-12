@@ -7,6 +7,7 @@ Public history for [three.ws](https://three.ws), newest first. New pages come fr
 ## 2026-09-12
 
 - **Corrected what the 3D Studio connector declares about checking a pending job**: The tool that collects a finished 3D generation was labelled a read-only status probe. It is not: the first check that finds a job done copies the model into permanent storage, records it, and scores it, and it can route failed work to another provider. Any AI client reading those labels to decide whether a call is safe to repeat was being told the wrong thing. The labels and the documentation now match the behaviour. Nothing about how the tool works changed. (`/docs/mcp-studio`) `[fix, sdk]`
+- **The 3D viewer inside ChatGPT now loads everything through three.ws**: The interactive viewer that shows your 3D model inside ChatGPT now fetches every model and every preview image through three.ws itself, so the only places it is allowed to reach are three.ws and the 3D viewer library it runs on. Nothing about what you see changes: the model still renders, spins and downloads the same way. There is also a dedicated connection address for the ChatGPT plugin directory, https://three.ws/api/mcp-chatgpt, carrying the eight 3D creation tools. The existing connector at https://three.ws/api/mcp-studio keeps every tool, including the living agent body. (`/docs/mcp-studio`) `[improvement, security]`
 
 ## 2026-09-11
 

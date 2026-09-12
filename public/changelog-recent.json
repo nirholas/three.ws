@@ -1,11 +1,11 @@
 {
-	"generated_at": "2026-09-12T01:51:12.338Z",
+	"generated_at": "2026-09-12T20:49:03.649Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
 		"url": "https://three.ws"
 	},
-	"total": 3674,
+	"total": 3675,
 	"complete": false,
 	"full_feed": "/changelog.json",
 	"entries": [
@@ -18,6 +18,17 @@
 			"tags": [
 				"fix",
 				"sdk"
+			]
+		},
+		{
+			"date": "2026-09-12",
+			"type": "update",
+			"title": "The 3D viewer inside ChatGPT now loads everything through three.ws",
+			"summary": "The interactive viewer that shows your 3D model inside ChatGPT now fetches every model and every preview image through three.ws itself, so the only places it is allowed to reach are three.ws and the 3D viewer library it runs on. Nothing about what you see changes: the model still renders, spins and downloads the same way. There is also a dedicated connection address for the ChatGPT plugin directory, https://three.ws/api/mcp-chatgpt, carrying the eight 3D creation tools. The existing connector at https://three.ws/api/mcp-studio keeps every tool, including the living agent body.",
+			"link": "/docs/mcp-studio",
+			"tags": [
+				"improvement",
+				"security"
 			]
 		},
 		{
@@ -1609,16 +1620,6 @@
 			"tags": [
 				"feature",
 				"sdk"
-			]
-		},
-		{
-			"date": "2026-09-07",
-			"type": "update",
-			"title": "Reference-image upload now tells you to paste a URL instead of failing with a network error",
-			"summary": "When the image storage credentials are rejected, /forge used to hand the browser an upload address that the storage service refused. The refusal arrives without the header a browser needs to read it, so the page could only say \"Network error during upload\" and the reference image was lost. The upload endpoint now checks storage the same way the rest of the site does, so it says up front that direct upload is unavailable and points you at the paste-a-URL field, which keeps working through the outage.",
-			"link": "/forge",
-			"tags": [
-				"fix"
 			]
 		}
 	]

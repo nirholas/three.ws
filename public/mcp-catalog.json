@@ -6,8 +6,8 @@
 		"servers": 41,
 		"free": 289,
 		"paid": 28,
-		"read": 212,
-		"write": 80,
+		"read": 211,
+		"write": 81,
 		"irreversible": 25,
 		"withSchema": 317,
 		"withArguments": 292
@@ -14264,7 +14264,7 @@
 		{
 			"name": "check_job",
 			"title": "Check a pending 3D generation",
-			"description": "Check on a 3D generation that returned status \"pending\" and collect the finished model. Pass the job_id from the pending result. While it is still rendering you get updated timing; call again after the suggested wait. When it is done the model renders inline in the interactive 3D viewer.",
+			"description": "Check on a 3D generation that returned status \"pending\" and collect the finished model. Pass the job_id from the pending result. While it is still rendering you get updated timing; call again after the suggested wait. Checking can save the completed model and restart failed work on another provider. When it is done the model renders inline in the interactive 3D viewer.",
 			"server": {
 				"id": "threews-3d-studio-free",
 				"title": "3D Studio (free)",
@@ -14272,11 +14272,11 @@
 				"transport": "remote",
 				"auth": "none"
 			},
-			"safety": "read",
+			"safety": "write",
 			"annotations": {
-				"readOnlyHint": true,
+				"readOnlyHint": false,
 				"destructiveHint": false,
-				"idempotentHint": true,
+				"idempotentHint": false,
 				"openWorldHint": true
 			},
 			"price": {

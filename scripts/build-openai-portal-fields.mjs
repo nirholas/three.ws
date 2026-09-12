@@ -14,11 +14,11 @@
 // measure before pasting. That is this file's whole job.
 //
 // Every justification is still derived from the annotation constants in
-// api/_mcp-studio/tools.js and api/_mcp-studio/persona-tools.js. Shortening the
+// api/_mcp-studio/tools.js. Shortening the
 // prose must never soften the claim: if an annotation changes, change it there
 // first, then re-derive here.
 
-const LIMITS = { justification: 200, frame: 200, negative: 200, expected: 300, subtitle: 30 };
+const LIMITS = { justification: 200, negative: 200, expected: 300, subtitle: 30 };
 
 // The six generation tools carry identical annotations, so they share one set.
 const GENERATION = {
@@ -44,25 +44,7 @@ const JUSTIFICATIONS = {
 		open_world: 'Fetches an arbitrary public GLB URL, so it reaches third-party hosts outside our own domain.',
 		destructive: 'Only reads the supplied model in order to render it, and never modifies or deletes the source file.',
 	},
-	create_agent_persona: {
-		read_only: 'Saves a new persona record and copies the model into our durable storage so the body outlives the source URL.',
-		open_world: 'Fetches the GLB from a public URL outside our domain and republishes it from our storage at a public URL anyone with the link can fetch.',
-		destructive: 'Only creates a new persona and never modifies or deletes an existing persona or model.',
-	},
-	get_agent_persona: {
-		read_only: 'Looks up a stored persona by its id and returns that persona\'s configuration without creating or changing anything.',
-		open_world: 'Reads only persona records held in our own private store and contacts no external system.',
-		destructive: 'Only reads a persona record and never writes or removes anything.',
-	},
-	persona_say: {
-		read_only: 'Increments the persona\'s turn counter in our own store while returning the render directive for this turn.',
-		open_world: 'Acts only on a persona in our own private store and renders through our own embed, reaching no external system.',
-		destructive: 'Only appends a turn and updates a counter, never deleting or overwriting the persona\'s configuration or model.',
-	},
 };
-
-const FRAME_DOMAINS =
-	'The persona tools render a live WebGL avatar that lip-syncs its reply. It is framed from https://three.ws, our verified domain and the same origin as this connector. No third-party content is framed.';
 
 const TEST_CASES = [
 	{
@@ -95,11 +77,11 @@ const TEST_CASES = [
 			'Frames from several angles returned as MCP image content blocks, which the client renders into the conversation, plus geometry stats. The assistant describes the armchair from images it can actually see. Free, seconds not minutes. The URL is ours and needs no credentials.',
 	},
 	{
-		scenario: 'Turn a generated model into a persistent agent body that speaks',
-		prompt: 'Save that knight as a persistent agent body called Sir Gareth, then have him introduce himself.',
-		tools: 'create_agent_persona, then persona_say',
+		scenario: 'Generate a model through the art-directed lane',
+		prompt: 'Use the art-directed generator to make a detailed vintage brass telescope on a wooden tripod.',
+		tools: 'mesh_forge, then check_job if it returns status "pending"',
 		expected:
-			'Run after test case 2, in the same conversation. An inline living-body widget framed from https://three.ws, in which the avatar lip-syncs the line with a matching expression and gesture. Returns a persona_id that get_agent_persona reloads in a fresh session.',
+			'A textured GLB in the same inline viewer, with Download and Open in three.ws. An art-direction pass may first tighten the prompt into a single-subject spec. Free, no account. One to four minutes; a pending result is collected with check_job.',
 	},
 ];
 
@@ -151,7 +133,6 @@ for (const [tool, set] of Object.entries(JUSTIFICATIONS)) {
 		oneSentence(`${tool}.${kind}`, text);
 	}
 }
-measure('frame_domains', FRAME_DOMAINS, LIMITS.frame);
 TEST_CASES.forEach((t, i) => measure(`test case ${i + 1} expected output`, t.expected, LIMITS.expected));
 NEGATIVE_CASES.forEach((n, i) => measure(`negative case ${i + 1} scenario`, n.scenario, LIMITS.negative));
 
@@ -164,7 +145,7 @@ if (violations.length) {
 
 if (process.argv.includes('--check')) {
 	const n = Object.values(JUSTIFICATIONS).reduce((a, s) => a + Object.keys(s).length, 0);
-	console.log(`every portal field fits: ${n} justifications, 1 frame-domains explanation, ${TEST_CASES.length} test cases, ${NEGATIVE_CASES.length} negative cases.`);
+	console.log(`every portal field fits: ${n} justifications, ${TEST_CASES.length} test cases, ${NEGATIVE_CASES.length} negative cases.`);
 	process.exit(0);
 }
 
@@ -183,10 +164,6 @@ if (!process.argv.includes('--json')) {
 			console.log('```\n');
 		}
 	}
-	console.log(`## MCP tab: Frame Domains  (${bar(FRAME_DOMAINS.length, LIMITS.frame)})\n`);
-	console.log('```');
-	console.log(FRAME_DOMAINS);
-	console.log('```\n');
 
 	console.log('## Testing tab: test cases\n');
 	TEST_CASES.forEach((t, i) => {
@@ -215,7 +192,7 @@ const APP_INFO = {
 	display_name: 'three.ws 3D Studio',
 	subtitle: 'Create 3D models from text',
 	description:
-		'Describe any object or character and three.ws 3D Studio builds a real, textured 3D model, then shows it in an interactive viewer inside the conversation. Eleven tools cover the path from idea to asset: generate a model from text or a reference image, generate an avatar, auto-rig a static model so it can be animated, refine a model by describing a change, and inspect a finished model from several angles. Every result downloads as a standard GLB that opens in Blender, Unity, Unreal, three.js, or any glTF pipeline. No account, no API key, no payment.',
+		'Describe any object or character and three.ws 3D Studio builds a real, textured 3D model, then shows it in an interactive viewer inside the conversation. Eight tools cover the path from idea to asset: generate a model from text or a reference image, generate an avatar, auto-rig a static model so it can be animated, refine a model by describing a change, and inspect a finished model from several angles. Every result downloads as a standard GLB that opens in Blender, Unity, Unreal, three.js, or any glTF pipeline. No account, no API key, no payment.',
 	// The skill's enum has no "creativity", so the closest true member is used.
 	category: 'DESIGN',
 };
@@ -224,7 +201,7 @@ measure('app_info.subtitle', APP_INFO.subtitle, LIMITS.subtitle);
 
 if (process.argv.includes('--json')) {
 	const { writeFileSync } = await import('node:fs');
-	const CONNECTOR = process.env.OPENAI_CONNECTOR_URL || 'https://three.ws/api/mcp-studio';
+	const CONNECTOR = process.env.OPENAI_CONNECTOR_URL || 'https://three.ws/api/mcp-chatgpt';
 
 	// Read the annotations off the running connector rather than restating them
 	// here. A justification is only true of the annotation actually served, and
@@ -246,13 +223,10 @@ if (process.argv.includes('--json')) {
 	// But a local source fix that has not shipped yet would make this file
 	// disagree with their scan, which is the same misrepresentation the
 	// justifications exist to prevent. Refuse to generate until they match.
-	// TOOL_CATALOG / PERSONA_TOOL_CATALOG are the served descriptor arrays; the
-	// TOOLS maps beside them are name-keyed handler tables, not descriptors.
-	const { TOOL_CATALOG } = await import('../api/_mcp-studio/tools.js');
-	const { PERSONA_TOOL_CATALOG } = await import('../api/_mcp-studio/persona-tools.js');
-	const local = new Map(
-		[...TOOL_CATALOG, ...PERSONA_TOOL_CATALOG].map((t) => [t.name, t.annotations || {}]),
-	);
+	// The descriptors the ChatGPT surface serves, read from the same SURFACES table
+	// the endpoint dispatches on, so this comparison cannot pick a different set.
+	const { toolCatalogFor } = await import('../api/_mcp-studio/dispatch.js');
+	const local = new Map(toolCatalogFor('chatgpt').map((t) => [t.name, t.annotations || {}]));
 	if (local.size !== served.length) {
 		console.error(`this checkout declares ${local.size} tool descriptors but ${CONNECTOR} serves ${served.length}`);
 		process.exit(1);

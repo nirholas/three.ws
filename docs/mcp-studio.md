@@ -23,13 +23,32 @@ answers every request synchronously over `POST`. `OPTIONS` is handled for CORS.
 
 ### ChatGPT (Apps SDK)
 
-Add the connector with the URL above and **No authentication**. Each generation
-tool renders its result inline in an interactive 3D viewer widget
-(`ui://widget/three-studio-model.html`); the persona tools render a living agent
-body in their own widget (`ui://widget/three-studio-persona.html`). Both widgets
-declare an `openai/widgetCSP` whose allowlist includes the GLB storage origin,
-so models load inside real ChatGPT (which enforces the CSP), not just in
-permissive test harnesses.
+Two front doors serve the same tools over one handler
+([`api/_mcp-studio/handler.js`](../api/_mcp-studio/handler.js)) and share one
+generation quota:
+
+| URL | Serves | Use it for |
+|---|---|---|
+| `https://three.ws/api/mcp-studio` | all eleven tools, both widgets | any MCP host, including a ChatGPT developer-mode connector |
+| `https://three.ws/api/mcp-chatgpt` | the eight 3D tools and the model viewer | the ChatGPT plugin directory listing |
+
+The ChatGPT surface leaves out the three persona tools because their widget
+frames the hosted embodiment page, which needs `frameDomains`. OpenAI's app
+guidelines reserve frame domains for embedding an essential third-party
+experience and say those apps "are often not approved for broad distribution";
+framing our own page is not that case. `SURFACES` in
+[`api/_mcp-studio/dispatch.js`](../api/_mcp-studio/dispatch.js) is the single
+definition of what each door advertises.
+
+Add either connector with **No authentication**. Each generation tool renders its
+result inline in an interactive 3D viewer widget
+(`ui://widget/three-studio-model.html`); on `/api/mcp-studio` the persona tools
+also render a living agent body in their own widget
+(`ui://widget/three-studio-persona.html`). The model viewer's `openai/widgetCSP`
+allowlists exactly two origins, `https://three.ws` and the model-viewer CDN,
+because the widget re-serves every off-origin GLB through `/api/glb` and every
+poster through `/api/img`. ChatGPT enforces that CSP, and its review flags
+wildcard or unused domains.
 
 ### Any MCP client
 

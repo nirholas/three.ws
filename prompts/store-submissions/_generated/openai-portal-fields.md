@@ -140,63 +140,6 @@ Fetches an arbitrary public GLB URL, so it reaches third-party hosts outside our
 Only reads the supplied model in order to render it, and never modifies or deletes the source file.
 ```
 
-### create_agent_persona
-
-**Read Only**  (109/200)
-```
-Saves a new persona record and copies the model into our durable storage so the body outlives the source URL.
-```
-
-**Open World**  (136/200)
-```
-Fetches the GLB from a public URL outside our domain and republishes it from our storage at a public URL anyone with the link can fetch.
-```
-
-**Destructive**  ( 86/200)
-```
-Only creates a new persona and never modifies or deletes an existing persona or model.
-```
-
-### get_agent_persona
-
-**Read Only**  (115/200)
-```
-Looks up a stored persona by its id and returns that persona's configuration without creating or changing anything.
-```
-
-**Open World**  ( 89/200)
-```
-Reads only persona records held in our own private store and contacts no external system.
-```
-
-**Destructive**  ( 65/200)
-```
-Only reads a persona record and never writes or removes anything.
-```
-
-### persona_say
-
-**Read Only**  (106/200)
-```
-Increments the persona's turn counter in our own store while returning the render directive for this turn.
-```
-
-**Open World**  (111/200)
-```
-Acts only on a persona in our own private store and renders through our own embed, reaching no external system.
-```
-
-**Destructive**  (110/200)
-```
-Only appends a turn and updates a counter, never deleting or overwriting the persona's configuration or model.
-```
-
-## MCP tab: Frame Domains  (199/200)
-
-```
-The persona tools render a live WebGL avatar that lip-syncs its reply. It is framed from https://three.ws, our verified domain and the same origin as this connector. No third-party content is framed.
-```
-
 ## Testing tab: test cases
 
 ### Test Case 1
@@ -291,22 +234,22 @@ Frames from several angles returned as MCP image content blocks, which the clien
 
 **Scenario**
 ```
-Turn a generated model into a persistent agent body that speaks
+Generate a model through the art-directed lane
 ```
 
 **User prompt**
 ```
-Save that knight as a persistent agent body called Sir Gareth, then have him introduce himself.
+Use the art-directed generator to make a detailed vintage brass telescope on a wooden tripod.
 ```
 
 **Tool triggered**
 ```
-create_agent_persona, then persona_say
+mesh_forge, then check_job if it returns status "pending"
 ```
 
-**Expected output**  (258/300)
+**Expected output**  (241/300)
 ```
-Run after test case 2, in the same conversation. An inline living-body widget framed from https://three.ws, in which the avatar lip-syncs the line with a matching expression and gesture. Returns a persona_id that get_agent_persona reloads in a fresh session.
+A textured GLB in the same inline viewer, with Download and Open in three.ws. An art-direction pass may first tighten the prompt into a single-subject spec. Free, no account. One to four minutes; a pending result is collected with check_job.
 ```
 
 ## Testing tab: negative cases

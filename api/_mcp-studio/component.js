@@ -207,6 +207,14 @@ export const COMPONENT_HTML = `<!doctype html>
     return 'https://three.ws/api/glb?src=' + encodeURIComponent(glb);
   }
 
+  // The painted concept image is loaded directly as the poster, so it needs the
+  // same treatment: the widget CSP allowlists three.ws, and an off-origin poster
+  // goes through the same-origin image proxy instead of widening that list.
+  function posterUrl(img) {
+    try { if (new URL(img).hostname === 'three.ws') return img; } catch (e) { return img; }
+    return 'https://three.ws/api/img?url=' + encodeURIComponent(img) + '&fallback=none';
+  }
+
   // Swap the displayed GLB with a cross-fade (no hard pop). Used both for the
   // initial refined result and for clicking an earlier version in the strip.
   function swapTo(glb) {
@@ -282,7 +290,7 @@ export const COMPONENT_HTML = `<!doctype html>
     // The forge paints a concept image before sculpting the mesh, so use it as
     // the model-viewer poster so the user sees the painted reference the
     // instant the widget renders, while the GLB is still streaming in.
-    if (isHttps(out.referenceImageUrl)) { mv.setAttribute('poster', out.referenceImageUrl); }
+    if (isHttps(out.referenceImageUrl)) { mv.setAttribute('poster', posterUrl(out.referenceImageUrl)); }
     else { mv.removeAttribute('poster'); }
     mv.setAttribute('src', fetchable(glb));
     armWatchdog();
@@ -337,36 +345,18 @@ export const COMPONENT_URI = 'ui://widget/three-studio-model.html';
 // Established Apps SDK skybridge MIME for HTML widget resources.
 export const COMPONENT_MIME = 'text/html+skybridge';
 
-// The public origin generated GLBs are actually served from (the R2 public
-// bucket, e.g. https://pub-<hash>.r2.dev). ChatGPT ENFORCES the widget CSP
-// inside its sandbox, so leaving this origin out blocks every model fetch and
-// the widget error-states on 100% of generations, even though the same widget
-// works in permissive test harnesses. Resolved lazily because S3_PUBLIC_DOMAIN
-// is a required-env getter (throws when storage isn't configured, e.g. tests).
-function glbStorageOrigin() {
-	try {
-		let v = env.S3_PUBLIC_DOMAIN;
-		if (!/^https?:\/\//i.test(v)) v = `https://${v}`;
-		const origin = new URL(v).origin;
-		return origin.startsWith('https://') ? origin : null;
-	} catch {
-		return null;
-	}
-}
-
-// CSP for the widget iframe: where it may connect (fetch GLBs) and load resources
-// (the model-viewer script + GLB assets). Declared on the resource _meta so the
-// ChatGPT host can enforce it. Built per-read so the storage origin tracks env.
+// CSP for the widget iframe, declared on the resource _meta so the ChatGPT host
+// enforces it inside its sandbox. It lists exactly what the widget loads and
+// nothing wider:
+//   - https://three.ws: every GLB, because fetchable() re-serves anything
+//     off-origin through /api/glb, and every poster, because posterUrl() does
+//     the same through /api/img. No storage bucket or provider host is ever
+//     loaded directly, so none needs to be allowlisted.
+//   - the model-viewer CDN: the pinned <model-viewer> build.
+// OpenAI's own Apps SDK example servers declare no wildcard domains, and the
+// submission review flags broad or unused ones.
 export function componentCsp() {
-	const domains = [
-		'https://three.ws',
-		'https://*.three.ws',
-		MODEL_VIEWER_CDN_ORIGIN,
-		'https://replicate.delivery',
-		'https://*.replicate.delivery',
-	];
-	const storage = glbStorageOrigin();
-	if (storage && !domains.includes(storage)) domains.push(storage);
+	const domains = ['https://three.ws', MODEL_VIEWER_CDN_ORIGIN];
 	return { connect_domains: [...domains], resource_domains: [...domains] };
 }
 

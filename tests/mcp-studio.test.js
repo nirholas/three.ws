@@ -2,8 +2,9 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 
 import { TOOL_CATALOG, TOOL_NAMES } from '../api/_mcp-studio/tools.js';
 import { PERSONA_TOOL_CATALOG, PERSONA_TOOL_NAMES } from '../api/_mcp-studio/persona-tools.js';
-import { dispatch } from '../api/_mcp-studio/dispatch.js';
-import { COMPONENT_URI, PERSONA_COMPONENT_URI, componentCsp } from '../api/_mcp-studio/component.js';
+import { dispatch, toolCatalogFor } from '../api/_mcp-studio/dispatch.js';
+import { COMPONENT_HTML, COMPONENT_URI, PERSONA_COMPONENT_URI, componentCsp } from '../api/_mcp-studio/component.js';
+import { MODEL_VIEWER_CDN_ORIGIN } from '../api/_lib/model-viewer-cdn.js';
 
 // The eight tools in api/_mcp-studio/tools.js: six generators (which render the
 // model-viewer widget) + check_job (collects a pending generation) +
@@ -152,29 +153,22 @@ describe('mcp-studio dispatch', () => {
 		expect(readPersona.result.contents[0]._meta['openai/widgetCSP'].frame_domains).toContain('https://three.ws');
 	});
 
-	it('widget CSP allowlists the GLB storage origin (ChatGPT enforces it in the sandbox)', () => {
-		const prev = process.env.S3_PUBLIC_DOMAIN;
-		process.env.S3_PUBLIC_DOMAIN = 'https://pub-abc123.r2.dev';
-		try {
-			const csp = componentCsp();
-			expect(csp.connect_domains).toContain('https://pub-abc123.r2.dev');
-			expect(csp.resource_domains).toContain('https://pub-abc123.r2.dev');
-		} finally {
-			if (prev === undefined) delete process.env.S3_PUBLIC_DOMAIN;
-			else process.env.S3_PUBLIC_DOMAIN = prev;
-		}
+	// ChatGPT enforces this CSP inside the widget sandbox, and its submission
+	// review flags wildcard and unused domains. The widget re-serves every GLB
+	// through /api/glb and every poster through /api/img, so three.ws plus the
+	// model-viewer CDN is the complete list.
+	it('widget CSP lists only the origins the widget actually loads', () => {
+		const csp = componentCsp();
+		const expected = ['https://three.ws', MODEL_VIEWER_CDN_ORIGIN];
+		expect(csp.connect_domains).toEqual(expected);
+		expect(csp.resource_domains).toEqual(expected);
+		expect(JSON.stringify(csp)).not.toContain('*');
+		expect(csp.frame_domains).toBeUndefined();
 	});
 
-	it('widget CSP stays valid when storage is unconfigured', () => {
-		const prev = process.env.S3_PUBLIC_DOMAIN;
-		delete process.env.S3_PUBLIC_DOMAIN;
-		try {
-			const csp = componentCsp();
-			expect(csp.connect_domains).toContain('https://three.ws');
-			expect(csp.connect_domains.every((d) => d.startsWith('https://'))).toBe(true);
-		} finally {
-			if (prev !== undefined) process.env.S3_PUBLIC_DOMAIN = prev;
-		}
+	it('widget proxies off-origin GLBs and posters so the narrow CSP holds', () => {
+		expect(COMPONENT_HTML).toContain("'https://three.ws/api/glb?src='");
+		expect(COMPONENT_HTML).toContain("'https://three.ws/api/img?url='");
 	});
 
 	it('unknown tool returns an error', async () => {
@@ -591,5 +585,59 @@ describe('mcp-studio dispatch', () => {
 			expect(submits).toHaveLength(1);
 			expect(submits[0].tier).toBe('standard');
 		});
+	});
+});
+
+// The ChatGPT plugin surface (/api/mcp-chatgpt). It must never advertise a tool
+// or widget that needs frameDomains, and a persona call on it must fail rather
+// than succeed off-listing.
+describe('mcp-studio chatgpt surface', () => {
+	const opts = { surface: 'chatgpt' };
+
+	it('lists exactly the eight tools in tools.js', async () => {
+		const r = await dispatch({ jsonrpc: '2.0', id: 1, method: 'tools/list' }, auth, mkReq(), opts);
+		expect(r.result.tools.map((t) => t.name).sort()).toEqual([...ALLOWED].sort());
+		expect(toolCatalogFor('chatgpt').map((t) => t.name).sort()).toEqual([...ALLOWED].sort());
+	});
+
+	it('serves only the model-viewer widget, with no frame domains anywhere', async () => {
+		const list = await dispatch({ jsonrpc: '2.0', id: 2, method: 'resources/list' }, auth, mkReq(), opts);
+		expect(list.result.resources.map((r) => r.uri)).toEqual([COMPONENT_URI]);
+		const persona = await dispatch(
+			{ jsonrpc: '2.0', id: 3, method: 'resources/read', params: { uri: PERSONA_COMPONENT_URI } },
+			auth,
+			mkReq(),
+			opts,
+		);
+		expect(JSON.stringify(persona)).toContain('unknown resource');
+		const model = await dispatch(
+			{ jsonrpc: '2.0', id: 4, method: 'resources/read', params: { uri: COMPONENT_URI } },
+			auth,
+			mkReq(),
+			opts,
+		);
+		const tools = await dispatch({ jsonrpc: '2.0', id: 5, method: 'tools/list' }, auth, mkReq(), opts);
+		expect(JSON.stringify([list, model, tools])).not.toMatch(/frame_domains|frameDomains/);
+	});
+
+	it('refuses a persona tool call', async () => {
+		const r = await dispatch(
+			{
+				jsonrpc: '2.0',
+				id: 6,
+				method: 'tools/call',
+				params: { name: 'create_agent_persona', arguments: { glb_url: 'https://three.ws/x.glb', name: 'x' } },
+			},
+			auth,
+			mkReq(),
+			opts,
+		);
+		expect(JSON.stringify(r)).toContain('unknown tool');
+	});
+
+	it('does not tell the model about persona tools', async () => {
+		const r = await dispatch({ jsonrpc: '2.0', id: 7, method: 'initialize' }, auth, mkReq(), opts);
+		expect(r.result.instructions).not.toMatch(/persona/i);
+		expect(FORBIDDEN.test(JSON.stringify(r))).toBe(false);
 	});
 });
