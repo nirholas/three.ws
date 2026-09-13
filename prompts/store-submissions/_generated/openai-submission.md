@@ -251,12 +251,11 @@ a separate surface, `api/_mcp-studio/component.js`; `/viewer` is the "open in a 
 | **Privacy policy URL** | `https://three.ws/legal/privacy` (live, HTTP 200, verified 2026-07-14; the studio collects no personal data, see §2.4) |
 | **Developer/Publisher** | three.ws (verified organization on platform.openai.com, confirmed by owner 2026-07-14; OpenAI Partner Network member since 2026-07-14) |
 
-### Example prompts (3–5, all reliably produce a model)
-1. `Make a 3D model of a friendly round robot mascot, glossy white plastic.`
-2. `Generate a low-poly treasure chest with iron bands.`
-3. `Create a 3D avatar of a space explorer in a white-and-orange suit.`
-4. `Make a rigged, animation-ready knight character I can pose.`
-5. `Model a small ceramic teapot with a bamboo handle and a celadon glaze.`
+### Example prompts (broad starters that reliably produce a model)
+1. `Surprise me with a polished 3D model.`
+2. `Create a useful 3D asset for a game or scene.`
+3. `Design a memorable 3D character I can animate.`
+4. `Make something imaginative in 3D and choose the style.`
 
 ### Tool list (titles as shown to users; matches live `tools/list`, re-pulled 2026-09-09)
 | Tool | Title | What it does |
@@ -650,10 +649,10 @@ annotation justifications written, and changing the tool surface now would inval
 
 ### Step 4. Prompts
 
-1. `Make a 3D model of a friendly round robot mascot, glossy white plastic.`
-2. `Generate a low-poly treasure chest with iron bands.`
-3. `Create a 3D avatar of a space explorer in a white-and-orange suit.`
-4. `Make a rigged, animation-ready knight character I can pose.`
+1. `Surprise me with a polished 3D model.`
+2. `Create a useful 3D asset for a game or scene.`
+3. `Design a memorable 3D character I can animate.`
+4. `Make something imaginative in 3D and choose the style.`
 
 ### Step 5. Testing
 
