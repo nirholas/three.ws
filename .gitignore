@@ -637,3 +637,6 @@ dist-skills/
 # Working snapshot of what is pending on the npm registry across repos.
 # Regenerated on demand from the live registry, never committed.
 docs/ops/npm-publish-status.md
+
+# Packaged VS Code extensions belong on GitHub Releases, not in Git history.
+*.vsix
