@@ -1,0 +1,35 @@
+{
+  "submission_url": "https://openai.com/form/showcase-submission/",
+  "about_you": {
+    "first_name": "Nicholas",
+    "last_name": "Resendez",
+    "email": "support@three.ws",
+    "website": "https://three.ws"
+  },
+  "about_project": {
+    "type": "Interactive 3D demo",
+    "used_codex": "Yes",
+    "used_another_coding_agent": "Yes: Claude Code",
+    "tech_stack": "Python, Jupyter, OpenAI Python SDK, Responses API, Requests, Pillow, model-viewer, and the three.ws REST API",
+    "use_cases": "Creative tools, 3D asset generation, game and scene prototyping, automated visual quality assurance, and bounded agentic repair.",
+    "capability_showcased": "An OpenAI model turns one creative brief into structured art direction, emits several function calls in one turn to build a coordinated asset set in parallel, and reviews standardized renders with vision. Structured Outputs convert the visual review into per-asset pass/fail decisions and specific repair prompts. A bounded retry loop regenerates only failed assets, producing a themed set of downloadable GLB files with interactive previews.",
+    "openai_models_and_apis": "gpt-5-mini through the Responses API, using function calling with parallel tool calls, image inputs for vision, and Structured Outputs.",
+    "other_models_and_apis": "Microsoft TRELLIS through NVIDIA NIM for text-to-3D generation, plus the free three.ws GLB rendering API.",
+    "building_process": "Claude Code supported the original project work. Codex audited the implementation, updated it against the current OpenAI Cookbook, resolved merge conflicts, ran every notebook cell, and verified a live end-to-end generation. The demo uses a bounded plan -> generate -> inspect -> repair loop so model decisions remain visible and reproducible."
+  },
+  "project_details": {
+    "github_url": "https://github.com/nirholas/openai-cookbook/blob/add-text-to-3d-function-calling-cookbook/examples/third_party/text_to_3d_with_function_calling.ipynb",
+    "hosted_url": "https://three.ws/cookbook/self-correcting-3d/",
+    "setup_steps": "Open the hosted tutorial for a read-only walkthrough. To run it, clone nirholas/openai-cookbook, check out add-text-to-3d-function-calling-cookbook, install openai, requests, Pillow, and ipython, set OPENAI_API_KEY, change RUN_LIVE to True, and run all notebook cells. The three.ws generation and rendering endpoints need no key.",
+    "title": "Self-Correcting 3D Collection Builder",
+    "tagline": "Turn one creative brief into a coordinated set of downloadable 3D models, then automatically inspect and repair weak results.",
+    "description": "Self-Correcting 3D Collection Builder turns a short theme into a coordinated set of textured 3D props. The model acts as an art director, creates a structured plan, and launches multiple text-to-3D function calls in parallel. Each result is a standard GLB that can be previewed in the browser or downloaded for Blender, Unity, Unreal, or a glTF workflow.\n\nThe same workflow renders every model from consistent angles and uses vision to evaluate shape, materials, coherence, and usability. Structured verdicts identify weak assets and generate targeted repair prompts, while a bounded retry loop rebuilds only the failures. The public notebook exposes each decision and includes a keyless mode so readers can inspect the full flow before running paid model calls.",
+    "author_display_names": "Nicholas Resendez / three.ws",
+    "cover_image_url": "https://three.ws/cookbook/houseplant-set.png",
+    "cover_image_rights_confirmed": true
+  },
+  "submission_attestations": {
+    "showcase_gallery_program_agreement": "REQUIRES_AUTHORIZED_PERSON",
+    "information_is_accurate": "REQUIRES_AUTHORIZED_PERSON"
+  }
+}
