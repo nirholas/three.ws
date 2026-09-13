@@ -9,6 +9,21 @@ x402 is a protocol for developers and agents, not end users, so unlike a 3D
 viewer this is genuinely editor-native: the people wiring up paid endpoints and
 calling them live in VS Code.
 
+## Pay with $THREE on Solana
+
+Set `threewsX402.preferToken` to `three` to prefer endpoints that accept the
+three.ws ecosystem token.
+
+- **Symbol:** `$THREE`
+- **Network:** Solana
+- **Contract address:** `FeMbDoX7R1Psc4GEcvJdsbNbZA3bfztcyDCatJVJpump`
+- **Payment scheme:** x402 `exact` through `@x402/svm`
+
+The extension only selects $THREE when the endpoint advertises that exact mint
+in its 402 challenge. It shows the amount, network, paying address, and
+recipient, then requires explicit confirmation before signing. Read the full
+[x402 for VS Code guide](https://three.ws/docs/x402-vscode).
+
 ## Features
 
 - **Bazaar sidebar** — live list of paid x402 HTTP APIs and MCP tools, merged

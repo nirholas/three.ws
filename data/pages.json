@@ -3622,6 +3622,14 @@
 					"added": "2026-04-29"
 				},
 				{
+					"path": "/docs/x402-vscode",
+					"title": "Docs · x402 for VS Code",
+					"description": "Find, inspect, and pay x402 APIs from VS Code with $THREE or USDC on Solana, including wallet setup, token selection, safety controls, and the $THREE contract address.",
+					"priority": 0.8,
+					"changefreq": "monthly",
+					"added": "2026-09-13"
+				},
+				{
 					"path": "/docs/premium",
 					"title": "Premium Pass: Monthly Data API Access",
 					"description": "One Solana payment ($THREE at 20% off, SOL, or USDC) buys 30 days of unmetered Data API access with an API key: no per-call x402 payments.",

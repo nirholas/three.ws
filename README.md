@@ -10311,6 +10311,8 @@ The same five tools ship over two transports: **stdio** (`npx @three-ws/ibm-x402
 
 three.ws is a first-class [x402](https://x402.org) host. Agents can both **pay for** and **expose** paid endpoints. Settlement runs on Base, BSC, and Solana; the bazaar at [three.ws/x402](https://three.ws/x402) is the discovery surface.
 
+The [x402 extension for VS Code](https://marketplace.visualstudio.com/items?itemName=threews.vscode-x402) brings that flow into the editor: browse the Bazaar, inspect a 402 challenge, and pay with **$THREE or USDC on Solana**. The $THREE contract address is `FeMbDoX7R1Psc4GEcvJdsbNbZA3bfztcyDCatJVJpump`. The [setup guide](https://three.ws/docs/x402-vscode) covers secure wallet storage, token selection, confirmation, and settlement receipts.
+
 **Public proof:** the server is [listed on x402scan](https://www.x402scan.com/server/17cbd874-52ac-4920-a020-b22ff2489a07) with its paid tool calls and revenue, and [three.ws/pulse](https://three.ws/pulse) renders every settled agent-to-agent payment as it lands on-chain (hundreds of x402 settlements per day, live counters, real events only).
 
 ### Payment rails

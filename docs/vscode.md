@@ -2,8 +2,9 @@
 
 Two extensions put the platform inside the editor. **three.ws 3D** makes model
 files, 3D generation, animation, and embedding native to VS Code. **three.ws
-x402** does the same for paid endpoints. This page covers the first; see
-[x402](./x402.md#open-source-packages) for the second.
+x402** does the same for paid endpoints. It pays with $THREE on Solana at
+`FeMbDoX7R1Psc4GEcvJdsbNbZA3bfztcyDCatJVJpump`. This page covers the first;
+see [x402 for VS Code](./x402-vscode.md) for the second.
 
 | | |
 |---|---|
