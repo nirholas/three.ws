@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.2.2
+
+- Pin the Solana and x402 payment libraries to compatible versions so VSIX
+  packaging validates its production dependency tree.
+- Display non-stable token prices in token units and always require explicit
+  confirmation when no USD conversion is present.
+
 ## 0.2.1
 
 - **Scaffolded endpoints are Solana-first.** `x402: Scaffold a Paid Endpoint`

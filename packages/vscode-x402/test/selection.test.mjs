@@ -85,6 +85,9 @@ test('summarize flags the chosen accept and says so when none is payable', () =>
 	const paid = summarize({ status: 402, accepts: [solUsdc, baseUsdc], chosen: solUsdc });
 	assert.ok(paid.some((l) => l.includes('payable by this wallet')));
 	assert.ok(paid.some((l) => l.includes('[solana]') && l.includes('USDC')));
+	const three = summarize({ status: 402, accepts: [solThree], chosen: solThree });
+	assert.ok(three.some((l) => l.includes('10.000000 $THREE')));
+	assert.ok(three.every((l) => !l.includes('$10.000000 $THREE')), 'non-stable tokens are not mislabeled as USD');
 
 	const unpayable = summarize({ status: 402, accepts: [{ network: 'cosmos:hub-4', amount: '1' }], chosen: null });
 	assert.ok(unpayable.some((l) => l.includes('No requirement this wallet can satisfy')));

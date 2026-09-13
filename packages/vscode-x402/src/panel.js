@@ -151,7 +151,7 @@ function render(item) {
 			out.classList.remove('hidden');
 			const r = m.result;
 			const rc = document.getElementById('receipt');
-			const paid = r.amountUsd ? '\$' + Number(r.amountUsd).toFixed(6) + (r.token ? ' ' + r.token : '') + (r.network ? ' on ' + r.network : '') : 'free';
+			const paid = r.paymentLabel && r.paymentLabel !== 'free' ? r.paymentLabel + (r.network ? ' on ' + r.network : '') : 'free';
 			let receipt = '<div class="kv"><b>Status</b> ' + r.status + ' · <b>Paid</b> ' + paid + (r.address ? ' · <b>From</b> <code>' + r.address + '</code>' : '') + '</div>';
 			if (r.receipt) {
 				const tx = r.receipt.transaction || r.receipt.txHash;

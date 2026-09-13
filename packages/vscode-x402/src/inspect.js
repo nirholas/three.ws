@@ -102,11 +102,13 @@ export function summarize(result) {
 	}
 	const lines = ['Status: 402 Payment Required', ''];
 	result.accepts.forEach((a, i) => {
-		const usd = amountToUsd(a);
+		const amount = amountToUsd(a);
 		const rail = railOf(a);
 		const railTag = rail ? ` [${rail}]` : '';
 		const mark = a === result.chosen ? ' ← payable by this wallet' : '';
-		lines.push(`#${i + 1} ${a.network || '?'} · ${a.scheme || 'exact'} · $${usd.toFixed(6)} ${tokenLabel(a)}${railTag}${mark}`);
+		const token = tokenLabel(a);
+		const price = isUsdcAccept(a) ? `$${amount.toFixed(6)} ${token}` : `${amount.toFixed(6)} ${token}`;
+		lines.push(`#${i + 1} ${a.network || '?'} · ${a.scheme || 'exact'} · ${price}${railTag}${mark}`);
 		if (a.payTo) lines.push(`     payTo: ${a.payTo}`);
 	});
 	if (!result.chosen) {

@@ -55,6 +55,10 @@ calling them live in VS Code.
 | `threewsX402.preferToken` | `auto` | Token to pay when several are offered: `auto` (USDC first, then $THREE), `usdc`, or `three`. |
 | `threewsX402.filters` | `{ "type": "http" }` | Default bazaar filters. |
 
+The USD spending cap applies to USDC payments. A non-stable token such as
+`$THREE` is always shown in token units and always requires explicit
+confirmation because the 402 challenge does not provide a fiat conversion.
+
 ## How payment works
 
 The extension reads the 402 challenge and picks a payable requirement across both

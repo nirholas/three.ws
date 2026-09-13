@@ -81,7 +81,7 @@ export async function payAndCall(context, req) {
 	if (probe.status !== 402) {
 		// Free or non-paid endpoint — just run it, no signing.
 		const res = await fetch(req.url, init);
-		return finalize(res, { amountUsd: 0, address: '', token: '', network: '' });
+		return finalize(res, { amountUsd: 0, tokenAmount: 0, paymentLabel: 'free', address: '', token: '', network: '' });
 	}
 
 	if (!probe.chosen) {
@@ -113,8 +113,10 @@ export async function payAndCall(context, req) {
 
 	const chosen = probe.chosen;
 	const rail = probe.rail;
-	const amountUsd = amountToUsd(chosen);
 	const token = tokenLabel(chosen);
+	const tokenAmount = amountToUsd(chosen);
+	const amountUsd = isUsdcAccept(chosen) ? tokenAmount : null;
+	const paymentLabel = amountUsd != null ? `$${amountUsd.toFixed(6)} ${token}` : `${tokenAmount.toFixed(6)} ${token}`;
 	const netLabel = networkLabel(chosen, rail);
 
 	// Derive the paying address for the confirmation prompt.
@@ -129,17 +131,17 @@ export async function payAndCall(context, req) {
 		}
 	}
 
-	if (amountUsd > cfg.maxPaymentUsd) {
+	if (amountUsd != null && amountUsd > cfg.maxPaymentUsd) {
 		const raise = await vscode.window.showWarningMessage(
-			`This call costs $${amountUsd.toFixed(4)} (${token} on ${netLabel}), above your cap of $${cfg.maxPaymentUsd.toFixed(4)}.`,
+			`This call costs ${paymentLabel} on ${netLabel}, above your cap of $${cfg.maxPaymentUsd.toFixed(4)}.`,
 			'Raise cap & pay',
 			'Cancel',
 		);
 		if (raise !== 'Raise cap & pay') return null;
-	} else if (cfg.confirmEachPayment) {
+	} else if (cfg.confirmEachPayment || amountUsd == null) {
 		const from = address ? ` from ${short(address)}` : '';
 		const go = await vscode.window.showInformationMessage(
-			`Pay $${amountUsd.toFixed(6)} in ${token} on ${netLabel}${from} to call ${req.serviceName || req.url}?`,
+			`Pay ${paymentLabel} on ${netLabel}${from} to call ${req.serviceName || req.url}?`,
 			{ modal: true },
 			'Pay & call',
 		);
@@ -156,24 +158,26 @@ export async function payAndCall(context, req) {
 		address = built.address;
 	} else {
 		paidFetch = withX402(evmKey, {
-			maxPaymentUsd: Math.max(cfg.maxPaymentUsd, amountUsd),
+			maxPaymentUsd: Math.max(cfg.maxPaymentUsd, amountUsd ?? 0),
 			network: chosen.network,
 		});
 	}
 
 	const res = await vscode.window.withProgress(
-		{ location: vscode.ProgressLocation.Notification, title: `Paying $${amountUsd.toFixed(6)} in ${token} & calling…` },
+		{ location: vscode.ProgressLocation.Notification, title: `Paying ${paymentLabel} on ${netLabel} & calling…` },
 		() => paidFetch(req.url, init),
 	);
-	return finalize(res, { amountUsd, address, token, network: netLabel });
+	return finalize(res, { amountUsd, tokenAmount, paymentLabel, address, token, network: netLabel });
 }
 
-async function finalize(res, { amountUsd, address, token, network }) {
+async function finalize(res, { amountUsd, tokenAmount, paymentLabel, address, token, network }) {
 	const bodyText = await res.text();
 	return {
 		ok: res.ok,
 		status: res.status,
 		amountUsd,
+		tokenAmount,
+		paymentLabel,
 		address,
 		token,
 		network,
