@@ -53,7 +53,7 @@
 		"access": "public"
 	},
 	"dependencies": {
-		"three": "^0.184.0"
+		"three": "^0.186.0"
 	},
 	"optionalDependencies": {
 		"sharp": "^0.35.3"

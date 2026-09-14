@@ -59,7 +59,7 @@
     "short-uuid": "^6.0.3",
     "squaresplit": "^1.0.2",
     "styled-components": "^5.3.1",
-    "three": "^0.184.0",
+    "three": "^0.186.0",
     "three-mesh-bvh": "^0.9.10",
     "use-sound": "^5.0.0",
     "vite-plugin-mkcert": "^2.1.0",
