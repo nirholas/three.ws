@@ -642,7 +642,7 @@
 		"dotenv": "^17.4.2",
 		"es-module-lexer": "^2.0.0",
 		"fbx2gltf": "^0.9.7-p1",
-		"glob": "^11.1.0",
+		"glob": "^13.0.6",
 		"i18n-iso-countries": "^7.14.0",
 		"jsdom": "27.3.0",
 		"json5": "^2.2.3",
