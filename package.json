@@ -600,7 +600,7 @@
 		"livekit-client": "^2.19.2",
 		"livepeer": "^3.5.0",
 		"lru-cache": "^11.5.2",
-		"manifold-3d": "^3.5.1",
+		"manifold-3d": "^3.5.3",
 		"marked": "^18.0.7",
 		"meshoptimizer": "^1.1.1",
 		"mppx": "^0.6.31",
