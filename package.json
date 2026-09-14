@@ -648,7 +648,7 @@
 		"json5": "^2.2.3",
 		"playwright": "^1.45.1",
 		"prettier": "^3.8.4",
-		"puppeteer": "^24.42.0",
+		"puppeteer": "^25.10.0",
 		"topojson-client": "^3.1.0",
 		"typescript": "^5.9.3",
 		"vite": "^7.3.2",
