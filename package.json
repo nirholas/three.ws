@@ -505,7 +505,7 @@
 		"@coinbase/cdp-sdk": "^1.50.0",
 		"@coinbase/x402": "^2.1.0",
 		"@coral-xyz/anchor": "^0.32.1",
-		"@dimforge/rapier3d-compat": "^0.19.3",
+		"@dimforge/rapier3d-compat": "^0.20.0",
 		"@elevenlabs/elevenlabs-js": "^2.51.0",
 		"@ethereum-attestation-service/eas-sdk": "^2.9.1",
 		"@ffmpeg/ffmpeg": "^0.12.15",
