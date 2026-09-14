@@ -634,7 +634,7 @@
 		"zod": "^3.23.8"
 	},
 	"devDependencies": {
-		"@axe-core/playwright": "^4.12.1",
+		"@axe-core/playwright": "^4.13.0",
 		"@playwright/test": "^1.60.0",
 		"@x402/fetch": "^2.14.0",
 		"adaptive-expressions": "^4.23.3",
