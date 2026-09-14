@@ -72,7 +72,7 @@
 		"zod": "^3.23.8"
 	},
 	"optionalDependencies": {
-		"better-sqlite3": "^11.0.0",
+		"better-sqlite3": "^13.0.3",
 		"express": "^5.2.1"
 	},
 	"devDependencies": {
