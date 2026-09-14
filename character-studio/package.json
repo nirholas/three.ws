@@ -26,7 +26,7 @@
     "@metaplex-foundation/umi-serializers": "^1.5.1",
     "@pixiv/three-vrm": "^3.5.3",
     "@pump-fun/pump-sdk": "^2.0.0",
-    "@solana/pay": "1.0.16",
+    "@solana/pay": "1.0.26",
     "@solana/spl-token": "^0.4.14",
     "@solana/web3.js": "^1.98.4",
     "@use-gesture/react": "^10.0.0-beta.22",
