@@ -48,7 +48,7 @@
     "jszip": "^3.10.1",
     "ktx2-encoder": "^0.5.1",
     "livepeer": "3.5.0",
-    "postprocessing": "^6.38.3",
+    "postprocessing": "^6.39.5",
     "react": "^19.2.8",
     "react-color": "^2.19.3",
     "react-colorful": "^5.7.0",
