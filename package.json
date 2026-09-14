@@ -533,7 +533,7 @@
 		"@node-saml/node-saml": "^5.1.0",
 		"@octokit/rest": "^22.0.1",
 		"@okxweb3/app-x402-core": "^0.2.0",
-		"@privy-io/js-sdk-core": "^0.67.0",
+		"@privy-io/js-sdk-core": "^0.75.0",
 		"@pump-fun/agent-payments-sdk": "^3.0.3",
 		"@pump-fun/pump-sdk": "^2.0.0",
 		"@pump-fun/pump-swap-sdk": "^1.20.0",
