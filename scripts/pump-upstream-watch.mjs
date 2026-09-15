@@ -11,10 +11,12 @@ const accept = args.has('--accept');
 const asJson = args.has('--json');
 const githubToken = process.env.PUMP_WATCH_GITHUB_TOKEN || process.env.GITHUB_TOKEN || '';
 
-const PACKAGES = [
+const OFFICIAL_NPM_SCOPE = '@pump-fun/';
+const KNOWN_PACKAGES = [
 	'@pump-fun/pump-sdk',
 	'@pump-fun/pump-swap-sdk',
 	'@pump-fun/agent-payments-sdk',
+	'@pump-fun/shared-contracts',
 ];
 
 async function fetchJson(url, { github = false } = {}) {
@@ -36,8 +38,17 @@ async function fetchJson(url, { github = false } = {}) {
 }
 
 async function npmState() {
+	const search = await fetchJson('https://registry.npmjs.org/-/v1/search?text=scope%3Apump-fun&size=250');
+	const packages = [
+		...new Set([
+			...KNOWN_PACKAGES,
+			...(search.objects ?? [])
+				.map((entry) => entry.package?.name)
+				.filter((name) => typeof name === 'string' && name.startsWith(OFFICIAL_NPM_SCOPE)),
+		]),
+	].sort((a, b) => a.localeCompare(b));
 	const entries = await Promise.all(
-		PACKAGES.map(async (name) => {
+		packages.map(async (name) => {
 			const encoded = name.replace('/', '%2f');
 			const metadata = await fetchJson(`https://registry.npmjs.org/${encoded}`);
 			const version = metadata['dist-tags']?.latest;
@@ -132,8 +143,8 @@ function readDeclaredVersions() {
 	for (const path of manifests) {
 		const manifest = JSON.parse(readFileSync(resolve(ROOT, path), 'utf8'));
 		const dependencies = { ...manifest.dependencies, ...manifest.devDependencies };
-		for (const name of PACKAGES) {
-			if (dependencies[name]) rows.push({ path, name, range: dependencies[name] });
+		for (const [name, range] of Object.entries(dependencies)) {
+			if (name.startsWith(OFFICIAL_NPM_SCOPE)) rows.push({ path, name, range });
 		}
 	}
 	return rows;
@@ -144,6 +155,9 @@ function diffState(baseline, current) {
 	for (const [name, value] of Object.entries(current.packages)) {
 		const previous = baseline.packages?.[name]?.version;
 		if (previous !== value.version) changes.push(`npm ${name}: ${previous ?? 'new'} -> ${value.version}`);
+	}
+	for (const name of Object.keys(baseline.packages ?? {})) {
+		if (!current.packages[name]) changes.push(`npm ${name}: removed or made private`);
 	}
 	for (const [name, value] of Object.entries(current.repositories)) {
 		const previous = baseline.repositories?.[name]?.pushedAt;
