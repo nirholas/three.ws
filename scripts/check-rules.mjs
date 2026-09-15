@@ -54,6 +54,9 @@ const git = (args) =>
 const SKIP = [
 	/^dist\//,
 	/^dist-lib\//,
+	// The Marketplace Action executes this generated ncc bundle directly. Its
+	// source remains fully scanned under satellites/glb-quality-gate/src/.
+	/^satellites\/glb-quality-gate\/dist\//,
 	/^node_modules\//,
 	/(^|\/)node_modules\//,
 	/^public\/chat\/assets\//,
