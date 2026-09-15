@@ -28,7 +28,7 @@ for a cycle, not delayed. Nothing here is on anyone's calendar yet.
 | **Apply as soon as a venue is real** | [Hacktoberfest 2026 Fest](https://hacktoberfest.com/host/). Applications are open on a rolling basis and confirmed events receive directory and community-channel promotion | Name the venue, city, capacity, and host, then submit either a one-day Hack Day or Meet Up application | Owner |
 | **2026-09-29** | IBM TechXchange early-bird registration. The event runs 2026-10-26 to 10-29 in Atlanta; the speaking CFP closed in May, but sponsorship, the Sandbox Expo and the colocated user-group route are open, and we moderate an IBM Community user group | Register, or decide not to attend | Owner |
 | **Opens mid-September, closes late November** | IBM Champions nomination. Self-nomination is invited and our record already matches all four of IBM's published criteria (spoke at an IBM event, moderate a user group, published on their community, run Granite in production). We have never entered | Watch the announcement blog, then nominate a person (the program is for individuals, not companies) | Owner |
-| **Watch weekly** | NVIDIA GTC 2027 call for submissions. Recent cycles opened in summer and closed in early autumn. Missing it costs a full year | Keep the CFP page on a weekly check; write the abstract while it is shut | Either |
+| **Watch weekly** | NVIDIA GTC 2027 call for speaking/poster submissions. This is separate from the Startup Pavilion, which NVIDIA confirmed is invite-only | Keep the CFP page on a weekly check; maintain the demo and profile for Pavilion consideration | Either |
 | Spring 2027 | IBM TechXchange 2027 call for speakers | Submit when it opens | Owner |
 
 Dates and intake routes for the IBM rows are verified in
@@ -47,9 +47,10 @@ work already done and is waiting on a single human step.
 | 1 | **OKX.AI agent #2632** | Submit the on-chain `agent update`, then activate | A built listing is sitting rejected over a payment bug **that was fixed and shipped on 2026-09-05**. OKX's own `agent x402-check` now reads `valid: true` on all four paid rows. Nothing is being built here, a finished listing is simply not live. |
 | 2 | **IBM Agent Connect catalog listing** | Email `IBMAgentConnect@ibm.com` for the BYOL `APP_ID` | Everything else is built and verified ([submission pack](../../marketing/ibm-partner-plus/agent-connect-listing.md)). One email opens an IBM-backed enterprise channel. |
 | 3 | **AWS Marketplace** | Create the product in the AWS Marketplace Management Portal | The SaaS integration is built, deployed, and conformant. The listing was simply never created, so an enterprise procurement channel we already paid the engineering cost for returns nothing. |
-| 4 | **NVIDIA NGC Catalog** | One container build plus the partner legal agreement | The only NVIDIA directory with self-serve intake. The EULA prerequisite is already closed. |
-| 5 | **OpenAI Plugin Directory** | Submit | We already meet the gating requirement (public OAuth 2.1 MCP server), and the output-quality blocker that held this back is closed: the forge quality gate measured **10/10 verdicts** on production 2026-09-11, up from 0/10 two days earlier. It was closed by fixing the vision failover chain, not by clearing the GCP billing hold. |
-| 6 | **Second IBM community event** | Pick a date | A fully costed proposal ([ibm-next-event.md](../ibm-next-event.md)) has been waiting on nothing but a calendar decision. Cheapest unblock on this page. |
+| 4 | **NVIDIA Accelerated Apps Catalog** | Complete the existing Shipping product record exactly as NVIDIA requested | NVIDIA answered the request: the portal record is the periodically reviewed application. Copy, technical evidence, logo, brand color, and screenshots are ready; only the authenticated save remains. |
+| 5 | **NVIDIA NGC Catalog** | One container build plus the partner legal agreement | The only NVIDIA directory with self-serve intake. The EULA prerequisite is already closed. |
+| 6 | **OpenAI Plugin Directory** | Submit | We already meet the gating requirement (public OAuth 2.1 MCP server), and the output-quality blocker that held this back is closed: the forge quality gate measured **10/10 verdicts** on production 2026-09-11, up from 0/10 two days earlier. It was closed by fixing the vision failover chain, not by clearing the GCP billing hold. |
+| 7 | **Second IBM community event** | Pick a date | A fully costed proposal ([ibm-next-event.md](../ibm-next-event.md)) has been waiting on nothing but a calendar decision. Cheapest unblock on this page. |
 
 ---
 
@@ -83,7 +84,7 @@ The work is done or nearly done. A human on our side has to act.
 | IBM Agent Connect (BYOL MCP listing) | Fully prepared | `APP_ID` request email, then Concierge | Owner |
 | AWS Marketplace | Integration deployed, listing never created | Create the product in the portal | Owner |
 | NVIDIA NGC Catalog | Prerequisites cleared | One build plus partner legal agreement | Owner + eng |
-| NVIDIA Accelerated Apps Catalog | Inclusion email sent 2026-09-04; portal record still understates the shipping stack | Correct the portal record, then follow up in the same thread on 2026-09-25 if unanswered | Owner |
+| NVIDIA Accelerated Apps Catalog | NVIDIA answered 2026-09-14; complete Shipping records are periodically reviewed, and the current record still understates the runtime stack | Complete the technology fields, Product Description, Technical Details, logo, and brand color in the portal; then check the public catalog monthly | Owner |
 | OpenAI Plugin Directory | Eligible | Submit | Owner |
 | OpenAI Showcase Gallery | Eligible, open web form | Submit | Owner |
 | IBM My Digital Marketing | Entitled, never used | Request access and the Build track marketing kit | Owner |
@@ -134,7 +135,9 @@ own domain, which is the channel with our best track record.
 
 Two more NVIDIA rows with no artefact to write, only an action to take: the AI Podcast guest
 nomination (one form, self-nomination invited, answers already drafted) and the Inception
-membership announcement on our own channels, which has never been posted. Both are in
+membership announcement on our own channels, which has never been posted. NVIDIA restored
+the co-branded asset benefit on 2026-09-14, so retrieve and reconcile the current kit before
+publishing. Both are in
 [nvidia-visibility-map.md](../nvidia-visibility-map.md), which also flags that the strongest
 piece of social proof the company owns is recorded with a null source link and cannot
 currently be shown to anyone.

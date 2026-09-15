@@ -14,6 +14,14 @@ Researched and verified 2026-08-17. Every intake URL and email below was fetched
 or searched the same day; the ones that turned out to be dead are recorded in
 [Dead ends](#dead-ends-do-not-spend-time-here) so nobody re-chases them.
 
+**Program-team update, 2026-09-14.** NVIDIA answered the consolidated request. Catalog
+consideration runs through periodically reviewed Shipping product records with complete
+runtime-technology evidence, descriptions, technical details, logo, and brand color. The
+Co-Branded Marketing Assets benefit is accessible again. The GTC Startup Pavilion is
+invite-only and selected from current member profiles, demos, and relationships. Startup
+Showcase routing and an ACE introduction were not directly answered, so those are the only
+two questions worth sending back.
+
 ---
 
 ## The two facts that should reorder priorities
@@ -51,9 +59,9 @@ Everything here can be done today. Nothing waits on NVIDIA, a build, or a date.
 | # | Surface | Intake | Why it is Tier 1 |
 |---|---|---|---|
 | 1 | **Our own X, LinkedIn, and Telegram** | Ours | The membership post that never happened. See [Social](#social-surfaces-ours-to-drive). |
-| 2 | **Inception co-marketing kit** | Portal benefit request, or `inceptionprogram@nvidia.com` | An entitlement we have never claimed. See [Benefits we are owed](#benefits-we-are-entitled-to-and-have-never-requested). |
+| 2 | **Inception co-marketing kit** | `Portal > Benefits > Co-Branded Marketing Assets` | NVIDIA confirmed on 2026-09-14 that the page is back up. Download the current package, reconcile its badge/guidelines, then publish. |
 | 3 | **Portal product record correction** | `programs.nvidia.com/phoenix/application` | Gates the Showcase AND the Apps Catalog. Already specified in [nvidia-apps-catalog-listing.md](./nvidia-apps-catalog-listing.md) step 1. Nothing else in this doc lands well while the record says "CUDA consumer". |
-| 4 | **Inception Startup Showcase** | `inceptionprogram@nvidia.com` | NVIDIA's own wording is "member spotlights and story opportunities". Curated from the portal record, so do #3 first. |
+| 4 | **Inception Startup Showcase** | Existing `inceptionprogram@nvidia.com` thread | Requested 2026-09-04 and not directly answered. After #3, send only the focused routing question drafted in [nvidia-apps-catalog-request.md](./nvidia-apps-catalog-request.md). |
 | 5 | **AI Podcast guest nomination** | Embedded form at [ai-podcast.nvidia.com](https://ai-podcast.nvidia.com) | Free, one form, and a founder-shaped story. **Answers drafted below: [AI Podcast nomination](#ai-podcast-nomination-paste-ready).** Re-verified 2026-09-04: the form is live and self-nomination is explicitly invited. |
 | 6 | **NVIDIA Developer Forums, post 3** | [forums.developer.nvidia.com](https://forums.developer.nvidia.com) | We are 2 for 2 on posts that landed. This is the one channel with a proven track record, and it is self-serve. **Drafted 2026-09-02: [nvidia-forum-browser-digital-human.md](./nvidia-forum-browser-digital-human.md).** Owner-gated on the external-channel rule, then paste and post. See [Technical publishing](#technical-publishing-the-proven-channel). |
 | 7 | **NVIDIA Developer Discord** | [discord.com/invite/nvidiadeveloper](https://discord.com/invite/nvidiadeveloper) | NVIDIA engineers and product staff are in there. The browser Audio2Face demo is a conversation starter with the actual ACE team, not a marketing ask. |
@@ -145,9 +153,10 @@ Actions, in order:
    plus Nemotron driving a rigged avatar in a tab with no install, on a fleet of
    L4s and one Blackwell. Second-strongest is the L4-and-Blackwell engineering
    material already published on our blog.
-3. **Ask about the Inception Startup Pavilion separately.** Pavilion placement is
-   an Inception benefit negotiated with the program team, not a CFP submission.
-   Fold the question into the Showcase email so it costs no extra round trip.
+3. **Do not search for a Startup Pavilion form.** NVIDIA confirmed on 2026-09-14 that the
+   Pavilion is exclusive and invite-only. Keep the Shipping product record complete, keep
+   the browser Audio2Face demo reliable, and send real technical proof through the existing
+   relationship; those are the selection signals NVIDIA named.
 4. **Do not forget the Content Interest Survey.** It closes alongside the CFP and
    is a low-effort way to signal topic fit before sessions are locked.
 
@@ -238,7 +247,7 @@ when approved.
 | [nvidia-forum-gpu-fleet-post.md](./nvidia-forum-gpu-fleet-post.md) | The production GPU fleet: cold weight loads on L4s, min-instances as a quota decision rather than a performance one, the keep-warm cron, and why a failover chain must never have an empty rung |
 | [nvidia-forum-browser-digital-human.md](./nvidia-forum-browser-digital-human.md) | Audio2Face-3D streamed onto a rig the visitor generated ninety seconds earlier |
 
-## Benefits we are entitled to and have never requested
+## Member benefits and current disposition
 
 Straight from NVIDIA's [Inception program page](https://www.nvidia.com/en-us/startups/).
 These are membership benefits, not favors, and they are requested through the
@@ -246,8 +255,8 @@ portal or the program email.
 
 | Benefit | NVIDIA's wording | Status |
 |---|---|---|
-| Co-marketing assets | "Amplify your brand with official badges, co-branded social content, and customizable assets for events." | **Never requested.** Ask for the kit. |
-| Startup Showcase feature | "Feature in the NVIDIA Inception Startup Showcase with member spotlights and story opportunities." | Never requested. Tier 1 #4. |
+| Co-marketing assets | "Amplify your brand with official badges, co-branded social content, and customizable assets for events." | **Access restored 2026-09-14.** Owner downloads from `Portal > Benefits > Co-Branded Marketing Assets` and reconciles the current kit before posting. |
+| Startup Showcase feature | "Feature in the NVIDIA Inception Startup Showcase with member spotlights and story opportunities." | Requested 2026-09-04; NVIDIA's reply did not address routing. One focused question remains. |
 | Member-only newsletter | Product releases and offers | Confirm we are subscribed. Also the likeliest place a member spotlight surfaces. |
 | Event exposure | GTC, Oracle AI World, KubeCon, Supercomputing, Microsoft Ignite, AWS re:Invent, NeurIPS | Never asked which have startup slots. |
 | Capital Connect / VC Alliance | Eligibility-based investor introductions | [Program page](https://www.nvidia.com/en-us/startups/venture-capital/). Owner's call, not an engineering task. |
@@ -292,12 +301,12 @@ Recorded so the next person does not repeat the search.
 One thread, one address. Every ask in Tier 1 goes to the same inbox, so batch
 them into a single email rather than sending four.
 
-**Sent 2026-09-04.** [nvidia-apps-catalog-request.md](./nvidia-apps-catalog-request.md)
-carries all five asks (catalog listing, Showcase nomination, co-marketing kit,
-ACE redirect, GTC pavilion and event slots) and went to the inbox in one thread
-from support@three.ws. **Do not start a second thread.** Tier 1 items 2 and 4
-above are now pending NVIDIA rather than pending us. Reply routing for each ask,
-and the 2026-09-25 follow-up date, live in the request doc.
+**Sent 2026-09-04; answered 2026-09-14.**
+[nvidia-apps-catalog-request.md](./nvidia-apps-catalog-request.md) carries all five asks and
+the reply disposition. **Do not start a second thread.** Catalog and co-marketing are now
+blocked on authenticated portal work on our side; the Pavilion is invite-only. The only
+reply to send is the narrow two-question draft for Startup Showcase routing and an ACE
+contact. The old 2026-09-25 no-response follow-up is cancelled.
 
 Still ours to finish regardless of the reply: the portal record correction (step 1
 of [nvidia-apps-catalog-listing.md](./nvidia-apps-catalog-listing.md)), because a

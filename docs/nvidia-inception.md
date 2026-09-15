@@ -24,6 +24,20 @@ GPU capacity is the single hardest constraint on how fast and how detailed gener
 
 Membership is a startup program, not a partnership or an investment: NVIDIA reviews applicants and admits companies building seriously on accelerated computing.
 
+## Catalog and event consideration
+
+NVIDIA clarified the operating path on 2026-09-14. Accelerated Application Catalog
+consideration comes from a periodically reviewed Inception product record, not an automatic
+publication button. A qualifying record must describe NVIDIA technology used at runtime,
+be set to **Shipping**, distinguish technology currently used from technology only being
+considered, include supporting Product Description and Technical Details, and carry a
+product logo and brand color.
+
+The GTC Startup Pavilion is separate and invite-only. NVIDIA identifies potential
+candidates from current member profiles, clear demos of NVIDIA acceleration, and ongoing
+work with NVIDIA contacts. A public GTC call for submissions, when open, is a separate
+speaking/poster route and should not be described as a Pavilion application.
+
 ## Where you'll see it
 
 - The **NVIDIA Inception member badge** in the site footer, linking to [NVIDIA's startup program](https://www.nvidia.com/en-us/startups/).

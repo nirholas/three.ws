@@ -4,6 +4,12 @@ Campaign assets for the NVIDIA Inception membership. Membership was accepted Jul
 2026 and never announced on our own social channels, which is the gap this
 directory closes.
 
+NVIDIA confirmed on 2026-09-14 that its Marketing Assets page is available again at
+`Inception portal > Benefits > Co-Branded Marketing Assets`. The checked-in badge is the
+asset already used by the site, but the owner must download the current package and compare
+its badge and usage guidance before any new campaign is published. Record the archive name,
+download date, and whether the SVG changed here when that is done.
+
 | File | What it is |
 | --- | --- |
 | [social-copy.md](social-copy.md) | Paste-ready posts for X, LinkedIn, and Telegram, plus the badge and no-endorsement rules every one of them follows. Owner-gated: drafted, not posted. |
@@ -21,6 +27,15 @@ Strategy lives in docs, not here:
 
 ## Assets
 
-- Official member badge: [public/marks/nvidia-inception-badge.svg](../../public/marks/nvidia-inception-badge.svg), used unmodified. Already live in the site footer.
+- Existing member badge: [public/marks/nvidia-inception-badge.svg](../../public/marks/nvidia-inception-badge.svg), used unmodified and already live in the site footer. Reconcile it against the restored portal package before new use.
 - Brand marks and lockups: [public/brand/](../../public/brand)
 - Demo to capture for the highest-value clip: `/demos/audio2face`
+
+## Portal retrieval checklist
+
+- [ ] Download the current badge package, social kits, event assets, and brand guidelines.
+- [ ] Record the archive filename and download date here.
+- [ ] Compare the supplied badge with `public/marks/nvidia-inception-badge.svg`.
+- [ ] Record clear-space, background, attribution, and social-tag requirements here.
+- [ ] Replace assets only if NVIDIA's current package differs.
+- [ ] Approve and publish the prepared posts in `social-copy.md`.

@@ -1,19 +1,50 @@
-# The NVIDIA Inception email: send-ready packet
+# NVIDIA Inception catalog request and response record
 
-Everything needed to send the Accelerated Apps Catalog request in one sitting: the pre-send portal fix, the paste-ready email, the assets, and what to do with each reply.
+The outbound Accelerated Apps Catalog request, NVIDIA's 2026-09-14 disposition, the portal
+work it requires, a focused reply for the two unanswered asks, and the assets behind each
+claim.
 
 The Inception portal has no "publish to the catalog" control. A product record makes the company eligible; the public [Accelerated Apps Catalog](https://marketplace.nvidia.com/en-us/enterprise/applications/) is curated and published by NVIDIA. This email is the request that asks for the listing, and it carries four other asks that have never been made. Per [nvidia-visibility-map.md](./nvidia-visibility-map.md), every Tier 1 ask routes to the same inbox, so they are batched here deliberately. **Do not split these into separate emails.** A program manager who receives one clear email with five asks answers it. Five separate emails read as noise.
 
 - **To:** inceptionprogram@nvidia.com
 - **Subject:** three.ws (Inception member): catalog listing, Showcase, and co-marketing
 - **From:** the address on the Inception portal account
-- **Sent:** 2026-09-04, 2:20 PM, from support@three.ws. Follow up on ask 1 only if there is no reply by **2026-09-25**, and use the "Maximize Your Membership" webinar Q&A to raise asks 2 and 3 live in the meantime.
+- **Sent:** 2026-09-04, 2:20 PM, from support@three.ws.
+- **Answered:** 2026-09-14, 11:39 AM. NVIDIA confirmed the portal-record criteria for
+  periodic catalog review, restored access to the co-branded asset benefit, supplied the
+  technical-resource routes, and confirmed that the GTC Startup Pavilion is invite-only.
+  The old 2026-09-25 no-response follow-up is cancelled.
+
+## What the reply changed
+
+NVIDIA did not supply another catalog application. It said the periodically reviewed
+product record must show runtime NVIDIA use, Development Stage **Shipping**, accurate
+Currently Used and Considering selections, supporting Product Description and Technical
+Details, a product logo, and a brand color. All copy and assets are now mapped field by
+field in [nvidia-apps-catalog-listing.md](./nvidia-apps-catalog-listing.md).
+
+The co-marketing page is available at
+`Inception portal > Benefits > Co-Branded Marketing Assets`. Downloading its current badge,
+social kits, event assets, and guidelines is now an owner action rather than something
+pending on NVIDIA.
+
+NVIDIA also confirmed that the GTC Startup Pavilion is exclusive and invite-only. A current
+profile, a demo that makes the NVIDIA acceleration obvious, and active NVIDIA connections
+are the selection signals. Stop looking for a Pavilion form; the public CFP remains a
+separate speaking/poster route.
+
+Two original asks were not directly answered: Startup Showcase routing and an ACE /
+digital-human introduction. A focused reply for only those two points is below.
 
 ---
 
-## Step 1: fix the portal record first (about 5 minutes)
+## Step 1: fix the portal record now (about 5 minutes)
 
-Do this before sending. The email's first two asks are judged against the record, and as filed the record reads as a CUDA consumer rather than a digital-human app. Verified 2026-09-04: still uncorrected.
+This should have preceded the request and remains the one catalog blocker on our side. The
+email's first two asks are judged against the record, and as last authenticated the record
+read as a CUDA consumer rather than a digital-human app. Verified 2026-09-04: still
+uncorrected. NVIDIA's 2026-09-14 reply explicitly asked for this evidence in the product
+record.
 
 Go to the Inception portal, Products, then Edit on the `three.ws` row.
 
@@ -31,7 +62,8 @@ Go to the Inception portal, Products, then Edit on the `three.ws` row.
 
 **Keep under Used, and add if the form offers them:** CUDA Toolkit, cuDNN, cuBLAS, CUDA Python, NVIDIA Kaolin, nvdiffrast, L4 GPUs, RTX PRO 6000 Blackwell.
 
-Save the record. Then send the email below.
+Save the record, reopen it to verify the changes persisted, then send the focused reply for
+the two unanswered asks below.
 
 ## Step 2: the five asks, and why each one is in this email
 
@@ -198,32 +230,28 @@ captures were prepared on 2026-09-14 for the next touch:
 Lead with the NVIDIA product page and Audio2Face images. The Forge capture includes token
 holder controls and is supporting product evidence rather than the lead NVIDIA image.
 
-## September 25 follow-up
+## Focused reply for the two unanswered asks
 
-Send this as a reply in the existing thread only if NVIDIA has not answered by
-2026-09-25. Attach the NVIDIA product-page and Audio2Face screenshots above.
+Send this in the existing thread after the portal record is corrected. Do not send the old
+no-response follow-up and do not repeat questions NVIDIA already answered.
 
 ```text
 Hello,
 
-Following up on the Accelerated Apps Catalog request for three.ws below. Our
-Inception product record identifies the application as Shipping / GPU
-Accelerated, and I have attached current 1920x1080 captures of the NVIDIA stack
-page and the browser-native Audio2Face-3D demo.
+Thank you. This clarifies the catalog review path, the restored co-branded asset
+benefit, and the invite-only GTC Pavilion process. We are updating the Shipping
+product record with the runtime technologies, supporting Product Description and
+Technical Details, logo, and brand color, and will keep the record and demo current.
 
-The public NVIDIA AI Accelerated page still displays an Apply Now link, but it
-currently resolves to the retired Salesforce path
-mynvidia.force.com/NVPartners/s/nvidiaaiacceleratedprogram and returns 404. Is
-there a replacement intake form, or should the application continue through
-this Inception thread?
+Two questions from my original note remain:
 
-The product, demo, technical documentation, and engineering evidence remain
-live at:
+1. Is Inception Startup Showcase consideration also driven by the product record,
+or is there a separate nomination step?
+2. Could you point me to the appropriate ACE / digital-human contact for our
+browser-native Audio2Face-3D and Riva implementation?
 
-- https://three.ws/nvidia
-- https://three.ws/demos/audio2face
-- https://three.ws/docs/nvidia-models
-- https://three.ws/blog/image-to-3d-on-nvidia-l4-and-blackwell
+The live, no-install demo is https://three.ws/demos/audio2face and the complete
+runtime map is https://three.ws/docs/nvidia-models.
 
 Thank you,
 
@@ -235,17 +263,23 @@ https://three.ws
 ## After you send
 
 1. Send date recorded in the **Sent** field at the top of this doc.
-2. File the second product record, the `<agent-3d>` digital-human embed. Copy is ready in [nvidia-apps-catalog-listing.md](./nvidia-apps-catalog-listing.md) under "Second product record". It targets the Digital Humans workload filter that the main record does not, and it is independent of the reply.
-3. Route each reply:
+2. Correct the main product record with every field NVIDIA named, then file the second
+   product record, the `<agent-3d>` digital-human embed. Copy is ready in
+   [nvidia-apps-catalog-listing.md](./nvidia-apps-catalog-listing.md) under "Second product
+   record".
+3. Download and review the current kit from
+   `Portal > Benefits > Co-Branded Marketing Assets` before posting.
+4. Send the focused two-question reply above.
+5. Route each later reply:
 
 | Reply | Where it goes next |
 |---|---|
-| Catalog form or asset request | Answer same day. Everything is in [nvidia-apps-catalog-listing.md](./nvidia-apps-catalog-listing.md). |
+| Catalog information or asset request | Answer same day. Everything is in [nvidia-apps-catalog-listing.md](./nvidia-apps-catalog-listing.md). |
 | Showcase interest | Draft the profile against the engineering posts, not marketing copy. |
-| Co-marketing kit arrives | Unblocks the badge post. Copy is drafted in [marketing/nvidia-inception/social-copy.md](../marketing/nvidia-inception/social-copy.md), owner-gated. |
+| Co-marketing kit changes | Reconcile the current badge/guidelines, then use the owner-gated copy in [marketing/nvidia-inception/social-copy.md](../marketing/nvidia-inception/social-copy.md). |
 | ACE redirect | The forum post 3 draft, [nvidia-forum-browser-digital-human.md](./nvidia-forum-browser-digital-human.md), is the technical brief to send them. |
-| GTC dates | Put them on the watch in [nvidia-visibility-map.md](./nvidia-visibility-map.md) Tier 3 and write the abstracts. |
-| No reply in 3 weeks | One follow-up on ask 1 only, and use the "Maximize Your Membership" webinar Q&A to ask 2 and 3 live. |
+| GTC invitation or CFP dates | Record the invitation directly; keep public CFP dates in [nvidia-visibility-map.md](./nvidia-visibility-map.md) without conflating the two routes. |
+| No reply to the two focused questions | Keep building public technical proof; do not restart the five-ask thread. |
 
 ## Verification log
 

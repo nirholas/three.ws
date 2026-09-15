@@ -6,26 +6,37 @@ Related docs: [nvidia-inception.md](./nvidia-inception.md) (membership overview)
 
 ---
 
-## Status: product record filed, public listing not live (2026-09-14)
+## Status: NVIDIA replied; portal completion is the application (2026-09-14)
 
 The portal shows the product row (`three.ws | Shipping | GPU Accelerated`), but a search for `three.ws` on the public catalog returns 0 results. **Public search re-verified 2026-09-14:** still 0 results. The last authenticated portal check on 2026-09-04 showed the uncorrected record below (Used: cuBLAS, CUDA Python, CUDA Toolkit, cuDNN; Considering: DeepVariant NIM, Riva, TensorRT, Triton, Omniverse Kit, Audio2Face). That is expected, not a bug: **the portal record and the public catalog are two different systems.**
 
 - **Portal > Profile > Products** makes the company benefits-eligible and feeds NVIDIA's internal recommendation engine. The portal's own wording is "we **may** feature it in the personalized recommendations we share with our customers."
 - **The public catalog** ([marketplace.nvidia.com/en-us/enterprise/applications](https://marketplace.nvidia.com/en-us/enterprise/applications/), filtered view for startups at [nvidia.com/en-gb/accelerated-applications/inception](https://www.nvidia.com/en-gb/accelerated-applications/inception/)) is curated and published by NVIDIA. Submissions are reviewed on a rolling basis and approval is subject to availability and fit. Nothing in the portal auto-publishes.
 
-So there are exactly two things to do: make the record obviously worth featuring, then ask for the listing.
+NVIDIA answered the listing request on 2026-09-14 and confirmed the operative criteria:
+the product must use NVIDIA technology at runtime, its Development Stage must be
+**Shipping**, the two technology fields plus Product Description and Technical Details must
+carry the supporting evidence, and the record must include a product logo and brand color.
+Qualifying records are reviewed periodically. NVIDIA supplied no separate form, submission
+ID, or review date.
+
+The request has therefore been made. There are now exactly two things to do: complete the
+record NVIDIA described, then wait for periodic review and check the public catalog monthly.
 
 ### Current intake route
 
 The public [NVIDIA AI Accelerated](https://www.nvidia.com/en-us/ai-data-science/ai-accelerated/)
 page still displays an **Apply Now** action, but on 2026-09-14 that action resolved to
 `mynvidia.force.com/NVPartners/s/nvidiaaiacceleratedprogram` and returned 404. Do not wait
-on or repeatedly retry that dead link. The working route is:
+on or repeatedly retry that dead link. The working route, confirmed by NVIDIA's 2026-09-14
+reply, is:
 
-1. correct the product record in the authenticated Inception portal;
-2. keep the catalog request in the existing `inceptionprogram@nvidia.com` thread;
-3. ask for the replacement intake URL in the scheduled 2026-09-25 follow-up if NVIDIA has
-   not replied before then.
+1. complete the product record in the authenticated Inception portal exactly as specified
+   below;
+2. keep any conversation in the existing `inceptionprogram@nvidia.com` thread; and
+3. wait for NVIDIA's periodic review rather than searching for another application form.
+
+The old 2026-09-25 no-response follow-up is cancelled: NVIDIA answered on 2026-09-14.
 
 ### 1. Correct the portal record (the record understates the stack)
 
@@ -45,9 +56,55 @@ Remove and leave unchecked:
 - **TensorRT** and **Triton Inference Server** stay under "Considering": the GPU workers are PyTorch + CUDA today. Do not claim them.
 - **Omniverse Kit** stays under "Considering" (OpenUSD interop is roadmap, not shipping).
 
+### Portal requirement matrix
+
+Every item NVIDIA named in its reply has one unambiguous value or source:
+
+| NVIDIA requirement | Value / source | State |
+|---|---|---|
+| Runtime NVIDIA technology | Riva, Audio2Face-3D, NIM/NVCF, CUDA libraries, Kaolin/nvdiffrast, NVIDIA L4 and RTX PRO 6000 | Shipping code and live demos; portal selections still need correction |
+| Development Stage | **Shipping** | Already shown on the product row; verify it remains saved |
+| Technologies currently used | Use the corrected list above | Owner saves in portal |
+| Technologies being considered | TensorRT, Triton Inference Server, Omniverse Kit | Owner saves in portal |
+| Product Description | Paste-ready block below | Ready |
+| Technical Details | Paste-ready block below | Ready |
+| Product logo | `public/brand/three-ws-mark.png` (898×1024 RGBA PNG) | Ready |
+| Brand color | `#0B0D0C` (the canonical dark wordmark color) | Ready |
+
+### Product Description (paste into the portal)
+
+> three.ws is a browser-native platform for generating 3D avatars, worlds, and AI agents
+> from a prompt. Text, image, and sketch inputs become textured, auto-rigged GLB models in
+> seconds. The resulting agents can reason, listen, speak, lip-sync, move, and embed on any
+> website with one script tag. The free text-to-3D lane requires no signup. Runtime
+> acceleration comes from a self-hosted fleet of NVIDIA L4 GPUs and an RTX PRO 6000
+> Blackwell path, plus NVIDIA-hosted NIM and NVCF services for generation, reasoning,
+> vision, memory, safety, speech, and facial animation.
+
+### Technical Details (paste into the portal)
+
+> three.ws uses NVIDIA technology at runtime in two production layers. The self-hosted 3D
+> layer runs PyTorch/CUDA workers on NVIDIA L4 GPUs in Google Cloud Run, with an RTX PRO
+> 6000 Blackwell path validated using sm_120 builds. Hunyuan3D 2.1 and TRELLIS handle
+> image-to-3D, TripoSG handles sketch-to-3D, TripoSR provides fast drafts,
+> Make-It-Animatable auto-rigs humanoids, and Motion Diffusion Model generates motion. The
+> containers use CUDA Toolkit, cuDNN, cuBLAS, CUDA Python, NVIDIA Kaolin, nvdiffrast, and
+> other compiled CUDA rasterization extensions.
+>
+> The hosted layer uses NVIDIA NIM/NVCF at runtime. Microsoft TRELLIS is the default free
+> text-to-3D lane; Nemotron models handle agent reasoning and vision; NV-EmbedQA-E5-v5 and
+> NVIDIA's Mistral reranker power retrieval; and NemoGuard screens content published to
+> third-party showcases. NVIDIA Riva provides ASR and Magpie multilingual TTS.
+> Audio2Face-3D returns ARKit blendshape tracks that three.ws maps onto visitor-provided 3D
+> avatars in a browser. Live proof: https://three.ws/forge,
+> https://three.ws/demos/audio2face, and https://three.ws/docs/nvidia-models.
+
 ### 2. Ask for the catalog listing
 
-The portal has no "publish to catalog" button, so the request goes to the program team. Send the email in [nvidia-apps-catalog-request.md](./nvidia-apps-catalog-request.md) to `inceptionprogram@nvidia.com` after the record corrections above are saved, and note the send date there. **Sent 2026-09-04.** The ask is now with NVIDIA; nothing further to submit unless they ask for a form or assets.
+The portal has no "publish to catalog" button. The request in
+[nvidia-apps-catalog-request.md](./nvidia-apps-catalog-request.md) was sent on **2026-09-04**,
+and NVIDIA replied on **2026-09-14**: qualifying, complete Shipping records are reviewed
+periodically. There is no further catalog email to send unless NVIDIA requests information.
 
 ---
 
@@ -140,6 +197,10 @@ A genuinely distinct shipping surface with its own NVIDIA story, filed as a sepa
 
 **Product URL:** https://three.ws/docs/embedding
 
+**Product logo:** `public/brand/three-ws-mark.png`
+
+**Brand color:** `#0B0D0C`
+
 ### Short description (about 130 characters)
 
 > One script tag puts a talking, lip-synced 3D AI agent on any website. Voice by NVIDIA Riva, facial animation by Audio2Face-3D.
@@ -183,12 +244,16 @@ Filing note: this record is independent of the catalog email sent 2026-09-04. It
 
 ## Submission checklist
 
-1. Log in to the Inception portal, go to Profile, then Add product.
-2. Paste the core fields above; use the description length the form allows (short, medium, or long).
-3. Select categories per the Categories section, adjusting to the form's actual taxonomy.
-4. Check every NVIDIA technology the form offers that appears in the list above; check nothing that does not.
-5. Upload the logo mark and OG image; add screenshots if the form accepts them.
-6. Submit. Listings are reviewed on a rolling basis; note the submission date in this doc when done.
-7. Correct the existing record per the Status section (move Riva/Audio2Face/NIM to Used, drop DeepVariant NIM) BEFORE adding anything new.
-8. Add the `<agent-3d>` embed as a second product using its section above. Do not file more records than these two: duplicates read as noise to the curator.
-9. Send the inclusion-request email in [nvidia-apps-catalog-request.md](./nvidia-apps-catalog-request.md) to inceptionprogram@nvidia.com and record the send date there.
+1. Log in to the Inception portal and edit the existing `three.ws` product first.
+2. Verify Development Stage is **Shipping**.
+3. Replace Product Description and Technical Details with the paste-ready blocks above.
+4. Move Riva, Audio2Face, and applicable NIM services to Currently Used; retain the verified
+   CUDA stack; remove DeepVariant; leave TensorRT, Triton, and Omniverse Kit under
+   Considering.
+5. Upload `public/brand/three-ws-mark.png` and set brand color to `#0B0D0C`.
+6. Select the closest categories from the Categories section, save the record, reopen it,
+   and capture completion evidence.
+7. Add `<agent-3d>` as the second and only other product record using its section above.
+8. Do not send the old no-response follow-up. NVIDIA answered on 2026-09-14.
+9. Check the public catalog monthly. A live catalog URL is the only completion evidence for
+   listing; a complete portal record is eligibility, not publication.

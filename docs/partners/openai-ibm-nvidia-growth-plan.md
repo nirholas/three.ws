@@ -15,9 +15,9 @@ stage is a small number of portal actions, emails, and well-timed follow-ups.
 |---|---|---|---|---|
 | 1 | IBM watsonx Orchestrate Agent Catalog | Request the BYOL `APP_ID`, then submit the Remote MCP listing through Agent Connect | Low | Enterprise discovery inside IBM's governed agent catalog |
 | 2 | OpenAI Developer Showcase | Submit the completed Showcase packet | Low | Public proof, a durable OpenAI-hosted project page, and a stronger app-review story |
-| 3 | NVIDIA AI Accelerated | Correct the Inception product record and continue the existing catalog request through the program team | Low | Product validation and visibility in NVIDIA's accelerated application ecosystem |
+| 3 | NVIDIA AI Accelerated | Complete the Shipping record with every field NVIDIA named, then wait for periodic catalog review | Low | Product validation and visibility in NVIDIA's accelerated application ecosystem |
 | 4 | IBM Partner Plus marketing | Activate My Digital Marketing, obtain the Build-track marketing kit, and reopen the promised IBM page and social support | Low | Campaign assets and IBM-owned distribution without another engineering project |
-| 5 | NVIDIA Inception visibility | Continue the existing catalog/Showcase/co-marketing request; follow up on **2026-09-25** if unanswered | Low | Member spotlight, official assets, technical-team introductions, and event access |
+| 5 | NVIDIA Inception visibility | Retrieve the restored co-brand kit; reply only for the unanswered Showcase route and ACE contact; keep the demo current for invite-only GTC Pavilion review | Low | Member spotlight, official assets, technical-team introductions, and event access |
 | 6 | NVIDIA NGC Catalog | Package one useful GPU service as a maintained container and complete publisher onboarding | Medium | A self-contained NVIDIA catalog artifact developers can deploy |
 | 7 | IBM Cloud Catalog | Start only after deciding whether three.ws will offer an IBM-hosted deployable product or commercial SaaS plan | High | Enterprise procurement and consolidated IBM billing |
 
@@ -131,10 +131,10 @@ NVIDIA's current AI Accelerated page invites software and solution providers to 
 validate performance on NVIDIA platforms, and increase application visibility. This is the
 best public catalog target for the full three.ws product. As of 2026-09-14, however, its
 public **Apply Now** link resolves to a retired Salesforce URL and returns 404. Use the
-Inception portal product record and the existing program-team thread until NVIDIA supplies
-a replacement intake URL.
+Inception portal product record: NVIDIA's 2026-09-14 reply confirmed that complete Shipping
+records are the periodically reviewed catalog path and supplied no replacement form.
 
-Before applying, correct the Inception portal product record:
+To enter review with an accurate record, correct the Inception portal product:
 
 - mark **Riva**, **Audio2Face**, and applicable **NIM microservices** as technologies used;
 - remove **DeepVariant NIM**;
@@ -143,23 +143,24 @@ Before applying, correct the Inception portal product record:
 - retain the verified CUDA, Kaolin, nvdiffrast, L4, and RTX PRO 6000 Blackwell usage.
 
 The public catalog remains curated. Treat the corrected portal record as the internal
-application and the existing Inception email as the catalog request. Ask for the current
-intake URL in the scheduled follow-up rather than waiting on the dead public link.
+application and the existing Inception email as the catalog request. Do not wait on the dead
+public link or ask again for an intake URL NVIDIA did not identify as part of the process.
 
-### 2. Continue the Inception co-marketing request without restarting it
+### 2. Act on NVIDIA's reply without restarting the thread
 
-The consolidated request was sent to `inceptionprogram@nvidia.com` on **2026-09-04**. It
-already asks for:
+The consolidated request was sent to `inceptionprogram@nvidia.com` on **2026-09-04** and
+answered on **2026-09-14**. NVIDIA confirmed:
 
-1. Accelerated Apps Catalog consideration;
-2. an Inception Startup Showcase feature;
-3. the current co-marketing kit and badge rules;
-4. an introduction to the ACE/digital-human team;
-5. GTC Startup Pavilion and related event routes.
+1. Accelerated Apps Catalog consideration comes from a complete, periodically reviewed
+   Shipping product record;
+2. the Co-Branded Marketing Assets benefit is accessible again through the portal; and
+3. the GTC Startup Pavilion is exclusive and invite-only, with current profiles, clear
+   NVIDIA-accelerated demos, and active NVIDIA relationships as the selection signals.
 
-Do not send a second broad email. If no reply arrives, follow up on the catalog request on
-**2026-09-25**, then use an Inception webinar or office-hours session for the Showcase and
-co-marketing questions.
+Do not send a second broad email and do not send the old September 25 no-response follow-up.
+Complete the product record, download the current asset package from
+`Portal > Benefits > Co-Branded Marketing Assets`, then use the narrow reply already drafted
+for the two unanswered asks: Startup Showcase routing and an ACE/digital-human contact.
 
 Prepared asset: [NVIDIA catalog and co-marketing request](../nvidia-apps-catalog-request.md).
 
@@ -193,9 +194,10 @@ NGC both a technical distribution surface and proof of NVIDIA optimization.
 
 ### 5. Prepare the next event pitch early
 
-NVIDIA's GTC startup program features Inception startup pitches and startup booths. Prepare
-the abstract now around the browser-native digital-human result, then submit when the next
-call opens or when the Inception team offers a startup route.
+NVIDIA confirmed that the GTC Startup Pavilion is invite-only. Keep the member profile and
+browser-native digital-human demo current so they are strong selection evidence; there is
+no Pavilion form to submit. Separately, prepare the browser-digital-human abstract now and
+submit it only through the public speaking/poster call when the next call opens.
 
 Use **“three.ws is a member of NVIDIA Inception.”** Do not use “NVIDIA partner” or imply
 endorsement unless NVIDIA provides approved co-marketing copy.
@@ -233,9 +235,9 @@ audience and product.
 | Sep 14 to 18 | Submit the OpenAI Showcase packet | Owner | confirmation email or submission ID |
 | Sep 14 to 18 | Request IBM Agent Connect BYOL `APP_ID` | Owner | IBM thread and assigned ID |
 | Sep 14 to 18 | Activate IBM My Digital Marketing and verify Partner Plus Directory profile | Owner | portal screenshots and live profile URL |
-| Sep 14 to 18 | Correct the NVIDIA Inception product record | Owner | saved portal record |
+| Sep 14 to 18 | Complete the NVIDIA Inception Shipping record, including runtime technology fields, descriptions, logo, and brand color; retrieve the restored co-brand kit | Owner | saved portal record plus dated asset-package receipt |
 | Sep 18 to 24 | Publish the prepared OpenAI and NVIDIA technical posts on a measured cadence | Owner | live URLs added to the publishing tracker |
-| Sep 25 | Follow up once with NVIDIA if the September 4 request has no reply | Owner | reply or next checkpoint |
+| After portal save | Reply once to NVIDIA with only the unanswered Showcase-routing and ACE-contact questions | Owner | sent reply in the existing thread |
 | By Sep 29 | Decide on IBM TechXchange attendance | Owner | registration or explicit close |
 | By Oct 14 | Assemble 30-day proof: usage, completion rate, latency, installs, and examples | Growth + engineering | partner-ready one-page evidence brief |
 

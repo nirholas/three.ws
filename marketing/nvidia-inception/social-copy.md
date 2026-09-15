@@ -11,6 +11,11 @@ Strategy, priorities, and every other NVIDIA surface:
 **Posting is owner-gated.** Everything here is drafted and ready; none of it has
 been posted.
 
+**Asset gate, updated 2026-09-14:** NVIDIA says the current kit is available at
+`Inception portal > Benefits > Co-Branded Marketing Assets`. Download and reconcile that
+package with the checked-in badge before using any post below. The copy is ready; official
+asset and guideline verification is the remaining gate.
+
 ---
 
 ## The rules these posts follow

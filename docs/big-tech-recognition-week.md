@@ -26,7 +26,7 @@ not have known about.
 | Row | Then (2026-08-17) | Now (2026-09-09) |
 |---|---|---|
 | OpenAI App Directory | `ready-to-submit`, one portal action | **Regressed to blocked.** The whole surface was re-verified live today and passes, but [`prompts/store-submissions/_generated/TRACKER.md`](../prompts/store-submissions/_generated/TRACKER.md) now records three gates: clear the GCP billing hold that has Vertex denied project-wide, deploy the four fixes sitting unshipped in the tree, then submit. The blocker is infrastructure, not packaging. |
-| NVIDIA, the one email | Written, never sent | **Sent 2026-09-04** from support@three.ws, carrying all five asks. Follow-up date 2026-09-25. Do not open a second thread. |
+| NVIDIA, the one email | Written, never sent | **Sent 2026-09-04; answered 2026-09-14.** NVIDIA confirmed portal-driven catalog review, restored co-brand asset access, and an invite-only GTC Pavilion. Complete the portal record, retrieve the kit, then ask only the two unanswered Showcase/ACE questions in the existing thread. |
 | NVIDIA Developer Forums, post 3 | Not written | **Written 2026-09-02**: [nvidia-forum-browser-digital-human.md](./nvidia-forum-browser-digital-human.md). Owner-gated on the external-channel rule, then paste and post. |
 | IBM | No map existed | **[ibm-visibility-map.md](./ibm-visibility-map.md)** now covers it: the Champions window, the Partner Plus Directory, the IBM Cloud catalog route, the two co-marketing commitments from 2026-06-18 that nothing was tracking, and the Partner Plus benefits never requested. |
 
