@@ -7,10 +7,10 @@ they are inventory that already works, and the audit that established this lives
 [announcement-coverage.md](../announcement-coverage.md). Working that backlog down is what this
 directory is for.
 
-**Which pack to make next** is not decided in this directory. The backlog is grouped into clusters, ordered
-into waves, and checked for whether it can be demoed at all in
-[announcement-checklist.md](../announcement-checklist.md). Work that file top down; come here when a cluster
-comes up.
+**Which pack to make next** is not decided in this directory. Use the
+[marketing command center](../../marketing/growth/README.md) for the scheduled campaign, owner, audience,
+call to action, and measurement plan. Run `npm run announce:rank` when the current repository inventory needs
+to be re-scored, then build the selected evidence pack here.
 
 ## How a pack gets made
 
