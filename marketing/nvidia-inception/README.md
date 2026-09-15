@@ -39,3 +39,24 @@ Strategy lives in docs, not here:
 - [ ] Record clear-space, background, attribution, and social-tag requirements here.
 - [ ] Replace assets only if NVIDIA's current package differs.
 - [ ] Approve and publish the prepared posts in `social-copy.md`.
+
+## NVIDIA review demo, 60 seconds
+
+NVIDIA said Pavilion candidates should make the acceleration visible. Use this sequence for
+any program review, Showcase pitch, or contact introduction:
+
+1. Open `/nvidia` (10 seconds). Say: “three.ws has two runtime layers: self-hosted NVIDIA
+   GPU workers for 3D and NVIDIA-hosted NIM/NVCF services around them.”
+2. Open `/forge`, select the free NVIDIA/TRELLIS lane, and submit one centered-object prompt
+   (25 seconds). Say: “This is a real textured GLB generated in the browser workflow, not a
+   prerendered image.”
+3. Open `/demos/audio2face`, press Speak, and point to the live pipeline state and returned
+   blendshapes (20 seconds). Say: “Riva Magpie produces the voice; Audio2Face-3D returns the
+   facial track; the browser maps it onto the loaded avatar.”
+4. End on the downloadable GLB or moving face (5 seconds). Say: “No plugin, game engine, or
+   visitor install.”
+
+Capture browser chrome so the browser-native claim is visible. Use the prepared NVIDIA-page
+and Audio2Face PNGs as still-image backup. Do not lead with the Forge capture because it
+contains `$THREE` holder controls, and do not call a fallback result NVIDIA-generated unless
+the live pipeline identifies the NVIDIA lane.
