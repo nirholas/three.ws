@@ -103,6 +103,7 @@ const SERVERS = [
 	{ key: 'activity-mcp', dir: 'packages/activity-mcp', manifest: 'packages/activity-mcp/server.json' },
 	{ key: 'agenc-mcp', dir: 'packages/agenc-mcp', manifest: 'packages/agenc-mcp/server.json' },
 	{ key: 'vision-mcp', dir: 'packages/vision-mcp', manifest: 'packages/vision-mcp/server.json' },
+	{ key: 'solana-memo-media-mcp', dir: 'packages/solana-memo-media-mcp', manifest: 'packages/solana-memo-media-mcp/server.json' },
 	{ key: 'brain-mcp', dir: 'packages/brain-mcp', manifest: 'packages/brain-mcp/server.json' },
 	{ key: 'audio-mcp', dir: 'packages/audio-mcp', manifest: 'packages/audio-mcp/server.json' },
 	{ key: 'kol-mcp', dir: 'packages/kol-mcp', manifest: 'packages/kol-mcp/server.json' },

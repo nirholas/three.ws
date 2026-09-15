@@ -109,6 +109,7 @@
 		"packages/agenc-mcp",
 		"packages/agora-mcp",
 		"packages/vision-mcp",
+		"packages/solana-memo-media-mcp",
 		"packages/brain-mcp",
 		"packages/audio-mcp",
 		"packages/kol-mcp",
