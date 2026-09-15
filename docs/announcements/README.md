@@ -7,10 +7,10 @@ they are inventory that already works, and the audit that established this lives
 [announcement-coverage.md](../announcement-coverage.md). Working that backlog down is what this
 directory is for.
 
-**Which pack to make next** is not decided in this directory. Run
-`npm run announce:rank -- --probe` to rebuild the backlog from the current page, package, worker, and
-service inventories, verify which routes can be demonstrated, and rank the viable candidates. Come here
-after selecting a live candidate from that output.
+**Which pack to make next** is not decided in this directory. Use the
+[marketing command center](../../marketing/growth/README.md) for the scheduled campaign, owner, audience,
+call to action, and measurement plan. Run `npm run announce:rank` when the current repository inventory needs
+to be re-scored, then build the selected evidence pack here.
 
 ## How a pack gets made
 

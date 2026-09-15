@@ -2,9 +2,11 @@
 
 Source: `trythreews_tweets_2026-08-09.json` (174 posts scraped 2026-08-09, first post 2026-04-17) cross-referenced against `data/pages.json`, `packages/*`, the top-level SDKs, and `workers/` + `services/`.
 
-**This file is the historical audit.** It establishes which surfaces had been posted about as of the
-scrape date above. Run `npm run announce:rank -- --probe` for the current prioritized queue, live-route
-checks, evidence score, and stage of every shipped surface.
+**This file is the historical audit, not the current plan.** It establishes which surfaces had been posted
+about as of the scrape date above. Current selection, dates, owners, calls to action, and measurements live
+in the [marketing command center](../marketing/growth/README.md) and its
+[90-day campaign ledger](../marketing/growth/campaigns.csv). Run `npm run announce:rank` to regenerate the
+current scored feature inventory from the repository and live routes.
 
 Status legend: **Yes** = the surface was specifically announced or demoed in a post. **Passing** = covered only by a related, aggregate, or partner post (never given its own announcement). **No** = never referenced on X in any form.
 
