@@ -54,6 +54,20 @@ Agent record shape (`agent_identities.meta`):
 
 Public RPCs are rate-limited. For production, set `SOLANA_RPC_URL` to a Helius, Quicknode, or Triton endpoint. Server-side calls do not depend on a single endpoint: [api/_lib/solana/connection.js](../api/_lib/solana/connection.js) builds a failover chain (explicit `SOLANA_RPC_URL`, then keyed providers such as Helius and Alchemy when their keys are set, then operator-supplied `SOLANA_RPC_FALLBACK_URLS`, then keyless public endpoints, with `SOLANA_RPC_LAST_RESORT_URLS` as a paid reserve tried last) and rotates past endpoints that are rate-limited or cooling down.
 
+## Viewing files written in a transaction Memo
+
+[Onchain Viewer](/onchain) turns a public Solana transaction Memo back into something a person can read. It is for small files or messages written directly into a signed transaction, such as a PNG encoded as a `data:image/png;base64,...` URI. The viewer reads the transaction from Solana in the browser; it does not upload the Memo to three.ws or ask the visitor to connect a wallet.
+
+Share a transaction with a ready-to-open URL:
+
+```text
+https://three.ws/onchain/?tx=<Solana transaction signature>
+```
+
+The page also accepts the complete Solscan transaction URL. For a supported PNG, JPEG, GIF, or WebP data URI, it previews the image and provides a download. Plain-text Memos are shown with a copy action. The page shows the signing account, time, format, and a link to the original transaction on Solscan, so the displayed content can be independently checked against the signed chain record.
+
+The viewer supports version-1 transactions by requesting `maxSupportedTransactionVersion: 1`. It intentionally does not preview SVG or other active/document formats: content inside an on-chain Memo is public but still untrusted input. Unsupported payloads remain visible as text rather than being executed in the page.
+
 **Never name the same endpoint as both the primary and the last-resort reserve.** The chain dedupes by URL and keeps the FIRST occurrence, so an endpoint listed in `SOLANA_RPC_URL` (or `QUICKNODE_RPC_URL`) *and* in `SOLANA_RPC_LAST_RESORT_URLS` is simply the primary: it absorbs 100% of traffic and its reserve status is a no-op. Production ran this exact misconfiguration until 2026-07-28, pointing `SOLANA_RPC_URL` at the metered QuickNode endpoint that was also the reserve; it burned through its daily request cap (`-32003 daily request limit reached`) while the free chain sat idle. The reserve must appear in `SOLANA_RPC_LAST_RESORT_URLS` and **nowhere else**.
 
 Two safeguards back this up. A bare public-cluster URL passed as the caller's explicit endpoint no longer wins priority 1: roughly 35 call sites spell their default as ``process.env.SOLANA_RPC_URL || 'https://api.mainnet-beta.solana.com'``, so an unset `SOLANA_RPC_URL` used to pin the most-throttled endpoint in the chain ahead of every paid lane. It is still tried, just at its natural position. And the cooldown breaker is fleet-wide, mirrored through the shared cache: when one instance parks a provider for an exhausted quota, siblings inherit that verdict on their first call instead of each re-burning a doomed request against a cap that is already full.

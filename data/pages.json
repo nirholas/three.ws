@@ -1602,6 +1602,14 @@
 					"added": "2026-09-15"
 				},
 				{
+					"path": "/onchain",
+					"title": "Onchain Viewer",
+					"description": "Open an image or text written into a public Solana Memo. Paste a transaction signature or Solscan link to preview the signed data without copying a data URI.",
+					"priority": 0.7,
+					"changefreq": "always",
+					"added": "2026-09-15"
+				},
+				{
 					"path": "/airdrops",
 					"title": "Airdrop Checker",
 					"description": "Check any Solana or Ethereum wallet against tracked airdrop criteria: a real on-chain activity scan, a 0-100 eligibility score per program, exactly what is missing with next steps, and the manual protocol actions a scan cannot see. Free, keyless, deep-linkable.",
