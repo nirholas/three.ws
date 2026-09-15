@@ -5,7 +5,7 @@
 	"description": "A GitHub Action that explains structural changes to GLB files in pull requests.",
 	"type": "module",
 	"scripts": {
-		"build": "ncc build src/index.js -o dist --minify --source-map",
+		"build": "ncc build src/index.js -o dist --minify",
 		"check": "node --check src/index.js && node --check src/report.js",
 		"test": "node --test"
 	},
