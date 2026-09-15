@@ -3818,6 +3818,12 @@
 					"added": "2026-04-27"
 				},
 				{
+					"path": "/docs/mcp-solana-memo-media",
+					"title": "Docs · Solana Memo Media MCP",
+					"description": "Decode validated image data embedded in Solana Memo transactions and return safe inline MCP images with provenance.",
+					"added": "2026-09-15"
+				},
+				{
 					"path": "/docs/vscode",
 					"title": "Docs · three.ws in VS Code",
 					"description": "The VS Code extension that renders .glb and .gltf files in an editor tab, reports on them, generates and rigs new models on the free lane, and writes a pinned <agent-3d> embed.",

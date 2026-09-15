@@ -492,6 +492,7 @@ async function main() {
 				label: extra.label,
 				icon: extra.icon,
 				loop: extra.loop !== false,
+				...(extra.category ? { category: extra.category } : {}),
 				...(duration ? { duration } : {}),
 			});
 			already.add(extra.name);

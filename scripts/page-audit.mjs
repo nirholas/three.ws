@@ -373,7 +373,7 @@ function inPageAudit() {
 	for (const el of document.querySelectorAll('body *')) {
 		if (el.children.length > 3) continue;
 		// Docs and articles legitimately print error strings in code samples.
-		if (el.closest('pre, code, script, style, table, article')) continue;
+		if (el.closest('pre, code, script, style, table, article, [data-audit-intentional-error]')) continue;
 		const t = (el.innerText || '').trim();
 		if (!t || t.length > 400 || !ERROR_TEXT.test(t)) continue;
 		const r = el.getBoundingClientRect();

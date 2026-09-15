@@ -49,10 +49,9 @@ export const DEFAULT_ANIMATION_MAP = {
 	think: 'think',
 	celebrate: 'celebrate',
 	concern: 'defeated',
-	// No bow clip is baked yet, so this stays an approximation: `sitclap` reads
-	// as gratitude/applause. Tracked in registry.json known_issues (bow-slot-
-	// approximation) with the Mixamo source to add.
-	bow: 'sitclap',
+	// A dedicated, project-authored one-shot. Its reproducible keyframes live in
+	// scripts/build-original-animations.mjs, so this no longer borrows applause.
+	bow: 'bow',
 	point: 'point',
 	shrug: 'shrug',
 	// Was 'Fidget', a clip that does not exist (case mismatch against the

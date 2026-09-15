@@ -8,6 +8,10 @@
 	"git": {
 		"deploymentEnabled": false
 	},
+	"github": {
+		"enabled": false,
+		"silent": true
+	},
 	"functions": {
 		"api/cron/{economy-tick,copy-fanout,mirror-fanout,signal-fanout,three-holders-snapshot,x402-autonomous-loop,pulse-tick,coin-intel-observe,launcher-tick,reflect-sweep,solana-autodeploy,db-retention,custody-attest,sniper-optimize,sniper-evolve,oracle-realized-labels,oracle-calibrate,arena-tick}.js": {
 			"maxDuration": 120

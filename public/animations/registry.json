@@ -65,7 +65,7 @@
         { "name": "think",                   "label": "Think",              "icon": "🤔", "loop": false, "clip": "public/animations/clips/think.json",                   "source_fbx": "animation-sources/mx-thoughtfully-nodding-head-yes-c9c91939b96c.fbx", "agent_slots": ["think"] },
         { "name": "rumba",                   "label": "Rumba",              "icon": "🕺", "loop": true,  "clip": "public/animations/clips/rumba.json",                   "source_fbx": "animation-sources/Rumba Dancing.fbx",                                 "agent_slots": ["dance"] },
         { "name": "silly",                   "label": "Silly Dance",        "icon": "🤪", "loop": true,  "clip": "public/animations/clips/silly.json",                   "source_fbx": "animation-sources/Silly Dancing.fbx",                                 "agent_slots": [] },
-        { "name": "sitclap",                 "label": "Sit Clap",           "icon": "👏", "loop": false, "clip": "public/animations/clips/sitclap.json",                 "source_fbx": "animation-sources/Sitting Clap.fbx",                                  "agent_slots": ["bow"] },
+        { "name": "sitclap",                 "label": "Sit Clap",           "icon": "👏", "loop": false, "clip": "public/animations/clips/sitclap.json",                 "source_fbx": "animation-sources/Sitting Clap.fbx",                                  "agent_slots": [] },
         { "name": "sitlaugh",                "label": "Sit Laugh",          "icon": "😂", "loop": false, "clip": "public/animations/clips/sitlaugh.json",                "source_fbx": "animation-sources/Sitting Laughing.fbx",                              "agent_slots": [] },
         { "name": "sitloop",                 "label": "Sitting Idle",       "icon": "🪑", "loop": true,  "clip": "public/animations/clips/sitloop.json",                 "source_fbx": "animation-sources/mx-sitting-with-breathing-idle-c9ccab1bb96c.fbx",   "agent_slots": [] },
         { "name": "taunt",                   "label": "Taunt",              "icon": "😝", "loop": false, "clip": "public/animations/clips/taunt.json",                   "source_fbx": "animation-sources/Taunt.fbx",                                         "agent_slots": [] },
@@ -120,7 +120,8 @@
         { "name": "xbot-walk",               "label": "Walk (Xbot)",        "icon": "🚶", "loop": true,  "clip": "public/animations/clips/xbot-walk.json",               "source_fbx": "animation-sources/xbot-walk.glb",                                     "agent_slots": [] },
         { "name": "torch-light",             "label": "Light Torch",        "icon": "🔥", "loop": false, "clip": "public/animations/clips/torch-light.json",             "source_fbx": "animation-sources/Standing Torch Light Torch From Fire.fbx",          "agent_slots": [] },
         { "name": "torch-light-wall",        "label": "Light Torch (Wall)", "icon": "🕯️", "loop": false, "clip": "public/animations/clips/torch-light-wall.json",        "source_fbx": "animation-sources/Standing Torch Light Torch From Wall.fbx",          "agent_slots": [] },
-        { "name": "sitidle",                 "label": "Sit Idle",           "icon": "🪑", "loop": true,  "clip": "public/animations/clips/sitidle.json",                 "source_fbx": null,                                                                  "agent_slots": [], "note": "Hand-authored 2-key pose, no FBX source (commit 7a22e5993). Merged into manifest.json by build-animations.mjs from scripts/animations-extra-clips.json (previously orphaned; see known_issues history)." }
+        { "name": "sitidle",                 "label": "Sit Idle",           "icon": "🪑", "loop": true,  "clip": "public/animations/clips/sitidle.json",                 "source_fbx": null,                                                                  "agent_slots": [], "note": "Hand-authored 2-key pose, no FBX source (commit 7a22e5993). Merged into manifest.json by build-animations.mjs from scripts/animations-extra-clips.json (previously orphaned; see known_issues history)." },
+        { "name": "bow",                     "label": "Bow",                "icon": "🙇", "loop": false, "clip": "public/animations/clips/bow.json",                     "source_fbx": null,                                                                  "agent_slots": ["bow"] }
       ]
     },
 
@@ -267,7 +268,7 @@
       "think":      { "default_clip": "think",              "status": "active" },
       "celebrate":  { "default_clip": "celebrate",          "status": "active" },
       "concern":    { "default_clip": "defeated",           "status": "active" },
-      "bow":        { "default_clip": "sitclap",            "status": "active (approximation): no bow clip is baked; 'sitclap' reads as gratitude/applause. See known_issues: bow-slot-approximation" },
+      "bow":        { "default_clip": "bow",                "status": "active" },
       "point":      { "default_clip": "point",              "status": "active" },
       "shrug":      { "default_clip": "shrug",              "status": "active" },
       "fidget":     { "default_clip": "av-listening-music", "status": "active" },

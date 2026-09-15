@@ -279,6 +279,12 @@ When reverting, do NOT use git's default `Revert "<original title>"` message: it
 
 **We do not use GitHub Actions.** Do not create, edit, or rely on workflows under `.github/workflows/`. Automation runs elsewhere (Cloud Build deploys, Cloud Scheduler crons, workers, local scripts). Never propose a GitHub Actions workflow as the solution for CI, scheduling, or deployment.
 
+### Google Cloud only, no Vercel
+
+**Vercel is not a deployment target, preview environment, CI provider, or merge gate for this repository.** Production and preview infrastructure belongs on Google Cloud. Use the Cloud Run and Cloud Build paths documented below. Never connect a Vercel project or GitHub App to this repository, never add or require a Vercel status check, and never let a `Vercel - three.ws` status delay or block a merge. If that status reappears, remove the repository from the Vercel integration instead of working around it.
+
+The root `vercel.json` filename is legacy but the file is still load-bearing: the Cloud Run server reads its route table and Cloud Scheduler tooling reads its cron definitions. Keep both `git.deploymentEnabled` and the legacy `github.enabled` set to `false`, keep `github.silent` set to `true`, and reject any change that re-enables Vercel. Do not delete or rename `vercel.json` until its Cloud Run consumers have first migrated to a provider-neutral schema.
+
 ---
 
 ## Deploy runbook (API/frontend)

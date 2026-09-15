@@ -75,9 +75,9 @@ describe('animation-slots', () => {
 	});
 
 	it('the slots with a dedicated clip of the same name use it', () => {
-		// These five borrowed `reaction`/`pray`/`defeated` until their own clips
-		// were baked, then kept borrowing. Pin the fix.
-		for (const slot of ['wave', 'nod', 'point', 'think', 'shrug']) {
+		// These slots once borrowed semantically different clips. Pin each fix so
+		// a future manifest rebuild cannot silently restore an approximation.
+		for (const slot of ['wave', 'nod', 'point', 'think', 'shrug', 'bow']) {
 			expect(DEFAULT_ANIMATION_MAP[slot], `slot "${slot}" should play its own clip`).toBe(slot);
 		}
 	});

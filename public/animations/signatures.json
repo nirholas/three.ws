@@ -1,6 +1,6 @@
 {
 	"version": 1,
-	"count": 112,
+	"count": 113,
 	"clips": {
 		"angry": {
 			"clip": "angry",
@@ -1045,6 +1045,35 @@
 			"overlay": false,
 			"static": false,
 			"declaredLoop": true
+		},
+		"bow": {
+			"clip": "bow",
+			"duration": 1.8,
+			"frames": 6,
+			"energy": 0.048,
+			"speed": 0.06,
+			"regions": {
+				"head": 0.082,
+				"arms": 0.003,
+				"torso": 0.679,
+				"root": 0.002,
+				"legs": 0.234
+			},
+			"lead": "torso",
+			"upperShare": 0.764,
+			"balance": 0.998,
+			"travel": 0,
+			"path": 0,
+			"rise": 0.015,
+			"tempo": 69,
+			"beat": 0.756,
+			"seam": 0,
+			"seamRoot": 0,
+			"loopClean": true,
+			"anchored": true,
+			"overlay": true,
+			"static": false,
+			"declaredLoop": false
 		},
 		"capoeira": {
 			"clip": "capoeira",

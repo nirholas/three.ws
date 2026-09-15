@@ -88,6 +88,10 @@ const gallery = document.getElementById('state-gallery');
 for (const state of STATE_ORDER) {
 	const wrap = document.createElement('section');
 	wrap.className = 'vh-state';
+	// This surface deliberately renders the real ERROR state as part of its UI
+	// state catalogue. Tell the browser audit that text inside this one preview
+	// is documentation, not a live failure banner.
+	if (state === STATES.ERROR) wrap.dataset.auditIntentionalError = '';
 	const heading = document.createElement('h3');
 	heading.textContent = state;
 	const host = document.createElement('div');

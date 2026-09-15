@@ -23,6 +23,14 @@
 			<description>A living thank-you to the developers, issue reporters, and community members improving the open-source three.ws platform.</description>
 		</item>
 		<item>
+			<title>Onchain Viewer</title>
+			<link>https://three.ws/onchain</link>
+			<guid isPermaLink="false">2026-09-15:Onchain Viewer</guid>
+			<pubDate>Tue, 15 Sep 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>Open an image or text written into a public Solana Memo. Paste a transaction signature or Solscan link to preview the signed data without copying a data URI.</description>
+		</item>
+		<item>
 			<title>three.ws is ready for Solana's new 4 KiB transactions</title>
 			<link>https://three.ws/atomic</link>
 			<guid isPermaLink="false">2026-09-15:three.ws is ready for Solana's new 4 KiB transactions</guid>

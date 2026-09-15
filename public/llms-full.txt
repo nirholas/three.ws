@@ -1184,6 +1184,12 @@ URL: https://three.ws/atomic
 
 A live Solana Transaction V1 observatory and pre-sign inspector. Paste a mainnet signature or base64 wire transaction to see exact bytes, resource caps, compute use, and sponsor safety.
 
+### Onchain Viewer
+
+URL: https://three.ws/onchain
+
+Open an image or text written into a public Solana Memo. Paste a transaction signature or Solscan link to preview the signed data without copying a data URI.
+
 ### Airdrop Checker
 
 URL: https://three.ws/airdrops

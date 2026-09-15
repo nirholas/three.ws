@@ -5,5 +5,13 @@
 		"icon": "🪑",
 		"loop": true,
 		"_note": "Hand-authored 2-key hold pose (no FBX source), added in commit 7a22e5993 for the /walk sit gesture. Not part of the Mixamo retarget pipeline — merged into manifest.json here so it stays reachable by AnimationManager.crossfadeTo('sitidle') instead of silently regressing to a dead gesture slot on the next animation build."
+	},
+	{
+		"name": "bow",
+		"label": "Bow",
+		"icon": "🙇",
+		"loop": false,
+		"category": "gesture",
+		"_note": "Project-authored one-shot generated deterministically by scripts/build-original-animations.mjs from the cleared canonical idle pose."
 	}
 ]

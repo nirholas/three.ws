@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-09-15T06:57:06.556Z",
+	"generated_at": "2026-09-15T07:37:54.271Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json",
 	"site": {
 		"name": "three.ws",
@@ -1931,6 +1931,16 @@
 					"path": "/atomic",
 					"title": "Atomic - Solana V1 Inspector",
 					"description": "A live Solana Transaction V1 observatory and pre-sign inspector. Paste a mainnet signature or base64 wire transaction to see exact bytes, resource caps, compute use, and sponsor safety.",
+					"added": "2026-09-15",
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false
+				},
+				{
+					"path": "/onchain",
+					"title": "Onchain Viewer",
+					"description": "Open an image or text written into a public Solana Memo. Paste a transaction signature or Solscan link to preview the signed data without copying a data URI.",
 					"added": "2026-09-15",
 					"auth": null,
 					"indexable": true,

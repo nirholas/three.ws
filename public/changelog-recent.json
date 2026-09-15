@@ -1,11 +1,11 @@
 {
-	"generated_at": "2026-09-15T06:57:06.768Z",
+	"generated_at": "2026-09-15T07:37:54.570Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
 		"url": "https://three.ws"
 	},
-	"total": 3679,
+	"total": 3680,
 	"complete": false,
 	"full_feed": "/changelog.json",
 	"entries": [
@@ -25,6 +25,16 @@
 			"title": "Contributors",
 			"summary": "A living thank-you to the developers, issue reporters, and community members improving the open-source three.ws platform.",
 			"link": "/contributors",
+			"tags": [
+				"launch"
+			]
+		},
+		{
+			"date": "2026-09-15",
+			"type": "launch",
+			"title": "Onchain Viewer",
+			"summary": "Open an image or text written into a public Solana Memo. Paste a transaction signature or Solscan link to preview the signed data without copying a data URI.",
+			"link": "/onchain",
 			"tags": [
 				"launch"
 			]
@@ -1608,16 +1618,6 @@
 			"tags": [
 				"fix",
 				"sdk"
-			]
-		},
-		{
-			"date": "2026-09-07",
-			"type": "update",
-			"title": "Hood Desk: a live onchain trading desk for any Robinhood Chain wallet",
-			"summary": "Paste a Robinhood Chain address (or connect a wallet) at three.ws/markets/robinhood/desk and the whole book loads: total value in USD, every token you hold priced against its Chainlink NAV feed or its deepest Uniswap pool, a native balance curve rebuilt from the chain's own history, and a live tape of your swaps, transfers and mints that folds each trade into one readable line instead of three. The centrepiece is the NAV premium ridge: the spread between what every tokenized stock is worth and what it actually trades for on the DEX, redrawn once per liquidity floor, so a dislocation that survives to the back rows is one you could really size into. Under it, the widest tradeable gaps, ranked. Reading any wallet is free, keyless and signature-free, so a desk link is a view anyone can open.",
-			"link": "/markets/robinhood/desk",
-			"tags": [
-				"feature"
 			]
 		}
 	]

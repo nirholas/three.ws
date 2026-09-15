@@ -42,7 +42,14 @@ async function listening(port) {
 }
 async function ensureServer() {
 	if (await listening(PORT)) return null;
-	const proc = spawn('npx', ['vite', '--port', String(PORT), '--strictPort'], {
+	const proc = spawn('npx', [
+		'vite',
+		'--config',
+		'scripts/motion-filmstrip.vite.config.mjs',
+		'--port',
+		String(PORT),
+		'--strictPort',
+	], {
 		cwd: ROOT,
 		stdio: ['ignore', 'pipe', 'pipe'],
 	});

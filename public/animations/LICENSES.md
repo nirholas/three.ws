@@ -11,6 +11,16 @@ tool. Every clip here is retargetable onto an arbitrary rigged humanoid via
 [`src/animation-retarget.js`](../../src/animation-retarget.js); nothing in the
 gallery is a placeholder or empty clip.
 
+## Project-authored animations (repository license)
+
+| Clip name | Source | Notes |
+| --------- | ------ | ----- |
+| `bow` | [`scripts/build-original-animations.mjs`](../../scripts/build-original-animations.mjs) | Deterministic one-shot keyframes authored for three.ws. The neutral local transforms come from the first frame of the already-cleared `idle` clip; the bow choreography itself is generated in-repository. |
+
+The generator is the editable source of truth and is covered by the repository
+license. Running `npm run build:animations` regenerates the committed clip
+before rebuilding the manifest, registry, and motion signatures.
+
 ## Mixamo (commercial use OK)
 
 All clips below were exported from [mixamo.com](https://www.mixamo.com/) under

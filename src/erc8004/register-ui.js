@@ -1099,7 +1099,10 @@ export class RegisterUI {
 		this._mvLoading = new Promise((resolve, reject) => {
 			const s = document.createElement('script');
 			s.type = 'module';
-			s.src = 'https://ajax.googleapis.com/ajax/libs/model-viewer/4.0.0/model-viewer.min.js';
+			// 4.0.0 shipped a meshopt loader path that could parse a compressed GLB
+			// before its decoder was attached, producing a hard console exception in
+			// the live preview. 4.3.1 awaits the bundled decoder before loading.
+			s.src = 'https://ajax.googleapis.com/ajax/libs/model-viewer/4.3.1/model-viewer.min.js';
 			s.onload = () => resolve();
 			s.onerror = () => reject(new Error('model-viewer failed to load'));
 			document.head.appendChild(s);

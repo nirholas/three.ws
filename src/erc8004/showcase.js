@@ -10,7 +10,7 @@
  */
 
 import { CHAIN_META, supportedChainIds } from './chain-meta.js';
-import { resolveURI } from '../ipfs.js';
+import { proxiedImageURL } from '../ipfs.js';
 import { skeletonHTML, emptyStateHTML, errorStateHTML, ensureStateKitStyles } from '../shared/state-kit.js';
 import { onchainBadgeHTML, ensureOnchainBadgeStyles } from '../shared/onchain-badge.js';
 ensureStateKitStyles();
@@ -481,7 +481,15 @@ class ShowcasePage {
 function renderCard(a) {
 	const chainMeta = CHAIN_META[a.chainId];
 	const chainShort = chainMeta?.shortName || a.chainName || `#${a.chainId}`;
-	const img = (a.image && !hasExpiringSignature(a.image)) ? resolveURI(a.image) : '';
+	// Registry metadata routinely points at IPFS gateways and object-store URLs
+	// that omit browser CORS headers (or whose object has since disappeared).
+	// /api/img retries decentralised gateways and returns the deterministic art
+	// fallback on total failure, so a bad third-party thumbnail cannot make the
+	// public showcase emit ORB/network errors.
+	const img =
+		a.image && !hasExpiringSignature(a.image)
+			? proxiedImageURL(a.image, `${a.chainId}:${a.agentId}`, { width: 480 })
+			: '';
 	const title = esc(a.name || `Agent #${a.agentId}`);
 	const descLine = a.description
 		? `<p class="showcase-card-desc">${esc(truncate(a.description, 140))}</p>`
