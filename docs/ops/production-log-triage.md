@@ -97,6 +97,18 @@ sentence, `[cdn-object] signed read failed, serving public bucket domain`,
 storage rejected the generation`, `[register/prep] object storage rejected the
 manifest`, or `object_storage: down` in `/api/healthz`.
 
+The request-log-only form is `HTTP 503 POST /api/forge-upload`. The monitor
+classifies that as `r2-upload-unavailable` (owner) because the route has only
+two 503 outcomes: storage is absent, or its signing credential is rejected.
+Confirm which one from `healthz.object_storage`; do not spend a code-debugging
+cycle on a deliberately honest storage preflight response.
+
+The deep monitor runs its log, HTTP/TLS, fleet, page, cron, database and wallet
+probes concurrently. Keep child processes asynchronous: a synchronous Cloud
+SDK read blocks the Node event loop and turns healthy network probes into a
+cluster of false timeouts. Cloud SDK inventory calls also get a three-minute
+ceiling because concurrent credential/config reads may serialize.
+
 **What it is.** Cloudflare R2 is refusing our signed requests, and the SECRET is
 wrong. Every signed operation fails at once, read and write.
 
@@ -718,6 +730,12 @@ ws error: Unexpected server response: 301
   matrix (which free node refuses which method, and why PublicNode as primary
   silently breaks holder gating), the rotate-vs-fail classification contract,
   and the recovery commands.
+- **Bonding-curve symptom:** `HTTP 502 GET /api/pump/curve` (and the v1 alias)
+  answers `upstream_error` only after the read-only RPC/Jupiter fallback is
+  exhausted. The monitor classifies an isolated occurrence as
+  `pump-curve-rpc-unavailable` (self-healing). Escalate it only when it persists
+  after `healthz.rpc_lanes` shows at least one healthy lane; no transaction was
+  broadcast and retrying cannot spend user funds.
 
 ---
 

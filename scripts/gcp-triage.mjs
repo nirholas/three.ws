@@ -220,6 +220,19 @@ const KNOWN_HTTP_SIGNATURES = [
 		action: `502 on a /api/coin/* route means every CoinGecko rung failed and no cached last-good existed. The usual cause is the DEMO KEY, not the upstream: the demo tier caps at 10,000 calls per MONTH, and once exhausted every request carrying COINGECKO_API_KEY gets 429 while the identical keyless request is still served (2026-07-28: /coin/detail, /tickers and /exchange all 502'd for hours on an exhausted key). Confirm in one call: curl -s -H "x-cg-demo-api-key: $KEY" https://api.coingecko.com/api/v3/key — error_code 10006 is the cap. geckoFetch now benches a rejected key for 15 min and retries keyless on its own, so a lingering 502 means the keyless tier is ALSO throttled (the Cloud Run egress IP is shared). Fix: gcloud run services update three-ws-api --region us-central1 --remove-env-vars COINGECKO_API_KEY (config-only, pre-approved) to stop paying the round trip, and tell the owner the key needs a paid tier or a monthly reset. ${RUNBOOK} §coingecko-quota-exhausted.`,
 	},
 	{
+		id: 'r2-upload-unavailable',
+		test: (g) => g.service === 'three-ws-api' && g.status === 503 && g.path === '/api/forge-upload',
+		class: 'owner',
+		action: `The upload preflight intentionally returns 503 when object storage is unconfigured or rejects its credential. Confirm healthz object_storage; SignatureDoesNotMatch means the owner must rotate the R2 credential and add a new s3-secret-access-key Secret Manager version. No code or retry fixes a rejected signing secret. ${RUNBOOK} §r2-credential.`,
+	},
+	{
+		id: 'pump-curve-rpc-unavailable',
+		test: (g) => g.service === 'three-ws-api' && g.status === 502
+			&& (g.path === '/api/pump/curve' || g.path === '/api/v1/pump/curve'),
+		class: 'self-healing',
+		action: `The read-only bonding-curve route exhausted its RPC/Jupiter fallback and returned an honest no-store upstream_error. Check healthz rpc_lanes: short cooling windows recover automatically. Investigate only if the same route persists across sweeps after at least one RPC lane is healthy; then inspect api/_lib/pump-curve-view.js rather than retrying a transaction. ${RUNBOOK} §solana-rpc.`,
+	},
+	{
 		id: 'cc-unconfigured-503',
 		// Every /api/community/* and /api/clash route wraps the same client and
 		// answers the same designed 503 when CC_API_KEY is absent — match the
@@ -297,17 +310,20 @@ async function fetchHealthz() {
 	}
 }
 
-function readLogs(opts) {
+async function readLogs(opts) {
 	const query = 'resource.type="cloud_run_revision" severity>=WARNING';
-	const res = spawnSync('gcloud', [
+	// Keep this asynchronous. The deep sweep deliberately runs its HTTP/TLS
+	// probes alongside the log read; spawnSync blocked Node's event loop for
+	// 40+ seconds and made healthy 10-15 second probes time out in a batch.
+	const res = await runCommand(['gcloud',
 		'logging', 'read', query,
 		`--project=${opts.project}`,
 		`--freshness=${opts.since}`,
 		`--limit=${opts.limit}`,
 		'--format=json',
-	], { encoding: 'utf8', maxBuffer: 256 * 1024 * 1024 });
-	if (res.status !== 0) {
-		const why = res.error?.message || (res.stderr || '').trim() || 'unknown error';
+	], { timeoutMs: 180000 });
+	if (res.code !== 0) {
+		const why = (res.stderr || '').trim() || (res.timedOut ? 'timed out' : 'unknown error');
 		console.error(`gcloud logging read failed: ${why}`);
 		if (/ENOENT/.test(why)) console.error('gcloud is not installed at any known path; see scripts/lib/gcloud-path.mjs.');
 		if (/reauth|invalid_grant|credential/i.test(why)) console.error('gcloud auth has lapsed; only the owner can re-run `gcloud auth login` here.');
@@ -635,7 +651,12 @@ async function probeTls() {
 }
 
 async function probeFleet(opts) {
-	const r = await runCommand(['gcloud', 'run', 'services', 'list', `--project=${opts.project}`, '--region=us-central1', '--format=json'], { timeoutMs: 90000 });
+	// Deep mode launches the Scheduler and logging audits at the same time. The
+	// Cloud SDK can serialize credential/config reads under that load, so give
+	// the fleet inventory the same ceiling as the log read. A healthy 47-service
+	// inventory has exceeded 90 seconds during a concurrent sweep even though
+	// the identical standalone command completed successfully.
+	const r = await runCommand(['gcloud', 'run', 'services', 'list', `--project=${opts.project}`, '--region=us-central1', '--format=json'], { timeoutMs: 180000 });
 	if (r.code !== 0) return { status: 'error', note: tail(r.stderr, 3) };
 	const services = JSON.parse(r.stdout || '[]');
 	const notReady = [];
@@ -659,12 +680,24 @@ async function probePages() {
 		const m = out.match(/all (\d+) declared pages reachable/);
 		return { status: 'ok', note: m ? `all ${m[1]} advertised pages reachable` : 'all advertised pages reachable' };
 	}
-	const lines = out.split('\n').filter((l) => l.includes('[check-pages]') && !l.includes(' OK ')).slice(0, 14);
-	const countMatch = out.match(/(\d+) declared page/);
-	return { status: 'findings', note: `${countMatch ? countMatch[1] : 'some'} page(s) failing`, findings: [deepFinding('pages', 'investigate', 'advertised pages failing on the live site', {
-		count: countMatch ? Number(countMatch[1]) : 1, services: ['three-ws-api'], sample: lines.join('\n'),
+	const summary = summarizePageCheckFailure(out);
+	return { status: 'findings', note: `${summary.count} page(s) failing`, findings: [deepFinding('pages', 'investigate', 'advertised pages failing on the live site', {
+		count: summary.count, services: ['three-ws-api'], sample: summary.sample,
 		action: 'Each failing path is advertised in the sitemap and llms.txt. The sweep output states whether it is a routing bug or deploy lag (route landed after the running image). Routing bug: add the vercel.json rewrite and vite input, commit. Deploy lag: note it for the next owner-approved deploy.',
 	})] };
+}
+
+export function summarizePageCheckFailure(output) {
+	const out = String(output || '');
+	const unreachable = Number(out.match(/(\d+) unreachable page\(s\)/)?.[1] || 0);
+	const wrong = Number(out.match(/(\d+) page\(s\) answered 200 with another page's content/)?.[1] || 0);
+	const count = unreachable + wrong || 1;
+	const lines = out.split('\n').filter((line) => {
+		if (!line.includes('[check-pages]')) return false;
+		if (/\d+\/\d+…/.test(line) || line.includes(' sweeping ')) return false;
+		return true;
+	}).slice(-20);
+	return { count, sample: lines.join('\n').slice(0, 1400) };
 }
 
 async function probeCronDrift() {
@@ -824,7 +857,7 @@ async function main() {
 	const deepPromise = opts.deep ? runDeepSweep(opts) : Promise.resolve(null);
 	const [healthz, entries] = await Promise.all([
 		fetchHealthz(),
-		Promise.resolve().then(() => readLogs(opts)),
+		readLogs(opts),
 	]);
 	const findings = buildFindings(entries);
 	findings.push(...gpuCapacityFindings(findings));
