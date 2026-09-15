@@ -586,7 +586,7 @@
 		"compression": "^1.8.2",
 		"cron-parser": "^5.10.0",
 		"dat.gui": "^0.7.9",
-		"dompurify": "^3.4.12",
+		"dompurify": "^3.4.15",
 		"draco3dgltf": "^1.5.7",
 		"esbuild": "^0.28.1",
 		"ethers": "^6.16.0",
