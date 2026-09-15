@@ -1,0 +1,27 @@
+name: three.ws GLB Quality Gate
+description: Explain structural GLB changes in pull requests and stop breaking model regressions.
+author: three.ws
+branding:
+  icon: box
+  color: purple
+inputs:
+  github-token:
+    description: Token used to read model versions and write the pull request report.
+    required: true
+    default: ${{ github.token }}
+  fail-on:
+    description: Lowest severity that fails the check (none, cosmetic, minor, major, or breaking).
+    required: false
+    default: breaking
+  max-files:
+    description: Maximum number of changed GLB files reviewed in one pull request.
+    required: false
+    default: "20"
+outputs:
+  severity:
+    description: Highest severity found across every changed GLB file.
+  files-checked:
+    description: Number of changed GLB files included in the report.
+runs:
+  using: node20
+  main: dist/index.js

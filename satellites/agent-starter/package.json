@@ -1,0 +1,19 @@
+{
+	"name": "threews-agent-starter",
+	"version": "1.0.0",
+	"private": true,
+	"description": "A one-click starter for putting an animated three.ws 3D agent on the web.",
+	"type": "module",
+	"scripts": {
+		"dev": "serve . -l 4173 --no-clipboard",
+		"check": "node scripts/check.mjs",
+		"test": "npm run check"
+	},
+	"devDependencies": {
+		"serve": "^14.2.4"
+	},
+	"engines": {
+		"node": ">=20"
+	},
+	"license": "Apache-2.0"
+}

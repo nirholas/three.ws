@@ -1,0 +1,25 @@
+{
+	"name": "three-ws-glb-quality-gate",
+	"version": "1.0.0",
+	"private": true,
+	"description": "A GitHub Action that explains structural changes to GLB files in pull requests.",
+	"type": "module",
+	"scripts": {
+		"build": "ncc build src/index.js -o dist --minify --source-map",
+		"check": "node --check src/index.js && node --check src/report.js",
+		"test": "node --test"
+	},
+	"dependencies": {
+		"@actions/core": "^1.11.1",
+		"@actions/github": "^6.0.1",
+		"@three-ws/glb-diff": "^0.1.0"
+	},
+	"devDependencies": {
+		"@gltf-transform/core": "^4.4.0",
+		"@vercel/ncc": "^0.38.3"
+	},
+	"engines": {
+		"node": ">=20"
+	},
+	"license": "Apache-2.0"
+}
