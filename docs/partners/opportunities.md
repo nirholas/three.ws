@@ -13,7 +13,7 @@ does not restate the reference docs:
 This page is the part those three do not answer: **what is actually stuck, on whom, and
 what unblocks it.**
 
-Last reconciled against the source docs on 2026-09-14.
+Last reconciled against the source docs and live program pages on 2026-09-15.
 
 ---
 
@@ -24,6 +24,8 @@ for a cycle, not delayed. Nothing here is on anyone's calendar yet.
 
 | By when | Opportunity | The one action | Owner |
 |---|---|---|---|
+| **Now** | GitHub Open Source Friday. [Issue #254](https://github.com/githubevents/open-source-friday/issues/254) is open and approved; GitHub is waiting for the selected stream date | Select a Friday at `https://gh.io/osf-booking`, then reply on issue #254 with the date | Owner |
+| **Apply as soon as a venue is real** | [Hacktoberfest 2026 Fest](https://hacktoberfest.com/host/). Applications are open on a rolling basis and confirmed events receive directory and community-channel promotion | Name the venue, city, capacity, and host, then submit either a one-day Hack Day or Meet Up application | Owner |
 | **2026-09-29** | IBM TechXchange early-bird registration. The event runs 2026-10-26 to 10-29 in Atlanta; the speaking CFP closed in May, but sponsorship, the Sandbox Expo and the colocated user-group route are open, and we moderate an IBM Community user group | Register, or decide not to attend | Owner |
 | **Opens mid-September, closes late November** | IBM Champions nomination. Self-nomination is invited and our record already matches all four of IBM's published criteria (spoke at an IBM event, moderate a user group, published on their community, run Granite in production). We have never entered | Watch the announcement blog, then nominate a person (the program is for individuals, not companies) | Owner |
 | **Watch weekly** | NVIDIA GTC 2027 call for submissions. Recent cycles opened in summer and closed in early autumn. Missing it costs a full year | Keep the CFP page on a weekly check; write the abstract while it is shut | Either |
