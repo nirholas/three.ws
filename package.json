@@ -597,7 +597,7 @@
 		"gltf-validator": "^2.0.0-dev.3.10",
 		"helius-sdk": "^3.0.0",
 		"idb-keyval": "^6.3.0",
-		"imapflow": "^1.7.6",
+		"imapflow": "^2.0.2",
 		"jose": "^5.9.6",
 		"lightweight-charts": "^5.2.0",
 		"livekit-client": "^2.19.2",
