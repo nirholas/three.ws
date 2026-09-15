@@ -57,6 +57,9 @@
 		"test": "node --test test/*.test.mjs",
 		"prepublishOnly": "npm run build"
 	},
+	"devDependencies": {
+		"esbuild": "^0.28.1"
+	},
 	"peerDependencies": {
 		"three": ">=0.150.0"
 	},
