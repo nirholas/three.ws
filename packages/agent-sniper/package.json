@@ -65,7 +65,7 @@
 		"@solana/web3.js": "^1.98.4",
 		"@three-ws/agent-payments": "^3.2.0",
 		"@three-ws/x402-server": "^0.1.0",
-		"bn.js": "^5.2.3",
+		"bn.js": "^5.2.5",
 		"bs58": "^6.0.0",
 		"playwright": "^1.61.1",
 		"ws": "^8.21.0",

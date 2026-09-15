@@ -11,12 +11,14 @@ Run the same check locally that GitHub runs every day:
 npm run pump:watch
 ```
 
-The command compares the current npm `latest` tags and every public repository
-under `pump-fun` with `data/pump-upstream-baseline.json`. A new package version,
-new repository, removed repository, or repository push exits with status 2 and
-prints a review report. `.github/workflows/pump-upstream-watch.yml` runs it
-daily and opens or refreshes one GitHub issue instead of creating duplicate
-alerts. Dependabot separately opens dependency pull requests for `@pump-fun/*`.
+The command discovers every current `@pump-fun/*` npm package, compares their
+`latest` tags and every public repository under `pump-fun` with
+`data/pump-upstream-baseline.json`. A new package, package version, removed
+package, new repository, removed repository, or repository push exits with
+status 2 and prints a review report. `.github/workflows/pump-upstream-watch.yml`
+runs it daily and opens or refreshes one GitHub issue instead of creating
+duplicate alerts. Dependabot separately opens dependency pull requests for
+`@pump-fun/*`.
 
 After reviewing and integrating an upstream change, acknowledge the exact
 state in the same pull request:
