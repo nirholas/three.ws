@@ -121,6 +121,14 @@ const HOSTED_SERVERS = [
 		transport: 'stdio',
 		auth: 'api-key',
 	},
+	{
+		match: (f) => f.startsWith('packages/solana-memo-media-mcp/src/tools/'),
+		id: 'solana-memo-media-mcp',
+		title: '@three-ws/solana-memo-media-mcp',
+		endpoint: 'npx -y @three-ws/solana-memo-media-mcp',
+		transport: 'stdio',
+		auth: 'none',
+	},
 ];
 
 /** Resolve a tool-definition file to the server that publishes it. */

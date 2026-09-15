@@ -1,0 +1,21 @@
+{
+	"name": "@three-ws/solana-memo-media-mcp",
+	"version": "0.1.0",
+	"mcpName": "io.github.nirholas/solana-memo-media-mcp",
+	"description": "Extract, validate, and display image data URIs embedded in Solana SPL Memo instructions. Read-only, local decoding, no key required.",
+	"type": "module",
+	"author": "nirholas <support@three.ws>",
+	"license": "Apache-2.0",
+	"homepage": "https://three.ws",
+	"repository": { "type": "git", "url": "git+https://github.com/nirholas/three.ws.git", "directory": "packages/solana-memo-media-mcp" },
+	"bugs": { "url": "https://github.com/nirholas/three.ws/issues" },
+	"keywords": ["mcp", "three.ws", "solana", "spl-memo", "data-uri", "onchain-media"],
+	"publishConfig": { "access": "public" },
+	"files": ["src", "server.json", "smithery.yaml", "README.md", "LICENSE"],
+	"bin": { "solana-memo-media-mcp": "src/index.js" },
+	"main": "./src/index.js",
+	"exports": { ".": "./src/index.js" },
+	"engines": { "node": ">=20" },
+	"scripts": { "start": "node src/index.js", "test": "node --test \"test/**/*.test.mjs\"", "inspect": "npx -y @modelcontextprotocol/inspector node src/index.js" },
+	"dependencies": { "@modelcontextprotocol/sdk": "^1.29.0", "zod": "^3.23.8" }
+}

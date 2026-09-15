@@ -43,7 +43,7 @@ The MCP server configuration is at `.mcp.json` in the project root, which Claude
 
 ## The full three.ws MCP ecosystem
 
-This page documents the hosted avatar/3D server at `/api/mcp`, but it's one of **72 three.ws MCP servers**, all listed in the [official MCP registry](https://registry.modelcontextprotocol.io/?q=io.github.nirholas), so any MCP-compatible client can discover them by name.
+This page documents the hosted avatar/3D server at `/api/mcp`, but it's one of **73 three.ws MCP servers**, all listed in the [official MCP registry](https://registry.modelcontextprotocol.io/?q=io.github.nirholas), so any MCP-compatible client can discover them by name.
 
 The hosted servers are also self-describing: [`https://three.ws/.well-known/mcp.json`](https://three.ws/.well-known/mcp.json) is a machine-readable directory of every hosted endpoint with its transport, auth model, and a one-line description, so an agent can enumerate all of them with a single fetch.
 
@@ -61,7 +61,7 @@ There are two kinds. **Hosted remote servers** run over Streamable HTTP with not
 | pump.fun | `/api/pump-fun-mcp` | Free pump.fun + Solana token tools; `get_new_tokens` and `get_trending_tokens` read the live pump.fun feed with no indexer needed; `pumpfun_upload_metadata` needs a key |
 | IBM x402 | `/api/ibm-mcp` | Pay-per-use IBM Granite AI |
 
-**Forty-one install-and-run servers** on npm under the `@three-ws` scope, each running over stdio with one command:
+**Forty-two install-and-run servers** on npm under the `@three-ws` scope, each running over stdio with one command:
 
 ```bash
 # 3D & avatars
@@ -116,6 +116,7 @@ npx -y @three-ws/activity-mcp      # trending agents/coins, $THREE holder board 
 
 # More AI & capability
 npx -y @three-ws/vision-mcp        # analyze & describe images via the three.ws vision pipeline
+npx -y @three-ws/solana-memo-media-mcp # render validated image data from Solana SPL Memos
 npx -y @three-ws/brain-mcp         # run any LLM through the multi-provider router
 npx -y @three-ws/audio-mcp         # TTS, STT, audio-to-face lipsync & motion-capture clips
 npx -y @three-ws/alibaba-cloud-mcp  # Qwen chat + embeddings on your own DashScope key
@@ -152,6 +153,7 @@ Deep dives — every tool, argument, env var, and example:
 - **Hosted remote:** [3D Studio (free)](./mcp-studio.md) · [3D Studio (paid)](./mcp-3d-studio.md) · [Agent wallet](./mcp-agent.md) · [x402 Bazaar](./mcp-x402-bazaar.md) · [IBM x402](./ibm-x402-mcp.md)
 - **Runs against your machine:** [Blender MCP](./blender-mcp.md) drives the Blender installed on your own computer, headless: inspect, convert, render and script 3D files, plus text-to-3D straight into a scene.
 - **Install-and-run:** each npm server ships its usage guide (tools, arguments, env vars, examples) in its package README on [npmjs.com/org/three-ws](https://www.npmjs.com/org/three-ws). The [MCP Tools Catalog](./mcp-tools.md) maps every tool to its server and price.
+- **Solana Memo Media:** [full guide](./mcp-solana-memo-media.md) for validating and rendering data URI images embedded in SPL Memo instructions.
 
 ---
 
