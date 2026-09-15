@@ -23,6 +23,14 @@
 			<description>A living thank-you to the developers, issue reporters, and community members improving the open-source three.ws platform.</description>
 		</item>
 		<item>
+			<title>Show and tell now captures projects people can actually try</title>
+			<link>https://three.ws/changelog</link>
+			<guid isPermaLink="false">2026-09-15:Show and tell now captures projects people can actually try</guid>
+			<pubDate>Tue, 15 Sep 2026 12:00:00 GMT</pubDate>
+			<category>improvement</category>
+			<description>The GitHub community showcase now asks builders for the outcome, live demo, source, three.ws surface used, one useful lesson, and visual proof. That structure makes each submission easier to understand, reproduce, feature, and turn into an honest adopter story. Two compact developer front doors are also fully built and exportable: a Codespaces starter that opens on a live animated agent, and a GLB pull-request quality gate powered by the same model-diff engine as three.ws.</description>
+		</item>
+		<item>
 			<title>three.ws is ready for Solana's new 4 KiB transactions</title>
 			<link>https://three.ws/atomic</link>
 			<guid isPermaLink="false">2026-09-15:three.ws is ready for Solana's new 4 KiB transactions</guid>
