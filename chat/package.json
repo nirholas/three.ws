@@ -26,6 +26,7 @@
 		"vite-plugin-compression": "^0.5.1"
 	},
 	"dependencies": {
+		"@noble/hashes": "^1.8.0",
 		"github-slugger": "^2.0.0",
 		"katex": "^0.16.10",
 		"marked": "^15.0.7",
