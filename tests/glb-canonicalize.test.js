@@ -241,6 +241,8 @@ describe('canonicalizeBoneName', () => {
 	it.each([
 		['CC_Base_Hip',         'Hips'],
 		['CC_Base_Pelvis',      'Hips'],
+		['CC_Base_Spine01',     'Spine'],
+		['CC_Base_Spine02',     'Spine1'],
 		['CC_Base_Head',        'Head'],
 		['CC_Base_NeckTwist01', 'Neck'],
 		['CC_Base_L_Clavicle',  'LeftShoulder'],
