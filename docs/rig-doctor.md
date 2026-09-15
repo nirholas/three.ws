@@ -117,6 +117,9 @@ The convention detector reports which authoring tool your skeleton came from and
 | Mixamo | `mixamorig:` joint prefix | `mixamo` |
 | VRM / VRoid | `J_Bip_*` humanoid joint names | `vrm-humanoid` |
 | MikuMikuDance (PMX/PMD) | Japanese PMX bone names (`センター`, `上半身`, `左腕`) | `custom` |
+| Apple / ARKit joint suffix | Four or more skeleton joints ending in `_joint` | `custom` |
+| Kinect / Azure Kinect | `SpineBase` / `SpineMid` plus full trailing-side limb names | `custom` |
+| MediaPipe Pose | `foot_index` and `heel` landmark joints | `custom` |
 | Reallusion Character Creator | `CC_Base_*` joint prefix | `custom` |
 | Unreal Engine mannequin | `pelvis`, `thigh_l`, `clavicle_l` | `custom` |
 | 3ds Max Biped | `Bip01` / `Bip001` prefix | `custom` |

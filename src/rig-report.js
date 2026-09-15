@@ -94,6 +94,21 @@ export const CONVENTIONS = [
 		evidence: 'Japanese PMX bone names (センター / 上半身 / 左腕)',
 	},
 	{
+		id: 'apple-joint', label: 'Apple / ARKit joint suffix', schema: 'custom',
+		test: (ctx) => ctx.joints.filter((n) => /_joint$/i.test(n)).length >= 4,
+		evidence: 'four or more skeleton joints with the _joint suffix',
+	},
+	{
+		id: 'kinect', label: 'Kinect / Azure Kinect', schema: 'custom',
+		test: (ctx) => ctx.joints.some((n) => /^Spine(Base|Mid|Shoulder)$/i.test(n)) && ctx.joints.some((n) => /^(Shoulder|Elbow|Knee)(Left|Right)$/i.test(n)),
+		evidence: 'SpineBase/SpineMid plus full trailing-side limb names',
+	},
+	{
+		id: 'mediapipe', label: 'MediaPipe Pose', schema: 'custom',
+		test: (ctx) => ctx.joints.some((n) => /^(left|right)_foot_index$/i.test(n)) && ctx.joints.some((n) => /^(left|right)_heel$/i.test(n)),
+		evidence: 'foot_index and heel landmark joints',
+	},
+	{
 		id: 'reallusion', label: 'Reallusion Character Creator', schema: 'custom',
 		test: (ctx) => ctx.joints.some((n) => /^CC_Base_/i.test(n)),
 		evidence: 'CC_Base_* joint prefix',

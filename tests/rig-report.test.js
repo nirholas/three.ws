@@ -91,6 +91,21 @@ describe('detectConvention fingerprints', () => {
 		expect(detectConvention(ctx(['Hips', 'Spine', 'LeftArm', 'RightArm'])).id).not.toBe('mmd');
 	});
 
+	it('identifies Apple joint-suffixed rigs', () => {
+		const c = detectConvention(ctx(['hips_joint', 'spine_joint', 'left_arm_joint', 'right_arm_joint']));
+		expect(c.id).toBe('apple-joint');
+	});
+
+	it('identifies Kinect rigs without confusing SpineShoulder for a limb', () => {
+		const c = detectConvention(ctx(['SpineBase', 'SpineMid', 'SpineShoulder', 'ShoulderLeft', 'KneeRight']));
+		expect(c.id).toBe('kinect');
+	});
+
+	it('identifies MediaPipe Pose from its unique foot landmarks', () => {
+		const c = detectConvention(ctx(['left_hip', 'left_knee', 'left_heel', 'right_foot_index']));
+		expect(c.id).toBe('mediapipe');
+	});
+
 	it('reports unknown rather than guessing when nothing fingerprints', () => {
 		expect(detectConvention(ctx(['bone_a', 'bone_b', 'bone_c'])).id).toBe('unknown');
 	});

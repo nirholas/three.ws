@@ -12,6 +12,9 @@
 //   • VRM / VRoid:     `J_Bip_C_Hips`, `J_Bip_L_UpperArm`, `J_Bip_L_Little1` (alias map)
 //   • VRM 1.0:         `upperChest`, `leftUpperArm`, `leftLowerLeg`, `leftToes` (camelCase)
 //   • MMD (PMX/PMD):   `センター`, `上半身`, `左腕`, `左ひじ`, `左ひざ` (Japanese, 左/右 side prefix)
+//   • Apple / ARKit:   `hips_joint`, `left_arm_joint`, `left_upLeg_joint` (`_joint` suffix)
+//   • Kinect:          `SpineBase`, `SpineShoulder`, `ShoulderLeft`, `KneeRight`
+//   • MediaPipe Pose:  `left_hip`, `left_heel`, `left_foot_index` (landmark joints)
 //   • Daz / Genesis:   `hip`, `abdomen`, `lShldr`, `lForeArm`, `lThigh`, `lShin`, `lCollar`
 //   • MakeHuman:       `upperarm.L`, `shin.L`, `clavicle.L` (shared with Unreal/Blender stems)
 //   • Simple rigs:     `shoulderL`, `elbowL`, `wristL`, `hipL`, `kneeL`, `ankleL`, `chest`
@@ -213,6 +216,9 @@ const EXTRA_ALIASES = (() => {
 		// Second Life / OpenSim centre chain (`m`-prefixed body bones).
 		['mPelvis', 'Hips'], ['mTorso', 'Spine'], ['mChest', 'Spine1'],
 		['mNeck', 'Neck'], ['mHead', 'Head'],
+		// Kinect v2 / Azure Kinect body tracking. SpineShoulder is the upper
+		// torso joint between SpineMid and Neck, not a shoulder-side joint.
+		['SpineBase', 'Hips'], ['SpineMid', 'Spine'], ['SpineShoulder', 'Spine2'],
 		// Advanced Skeleton (Maya) tags centre bones with an `_M` side token:
 		// `Root_M`, `Spine1_M`, `Spine2_M`, `Chest_M`, `Neck_M`, `Head_M`. Its LIMBS
 		// use `_L`/`_R` and already resolve through the sided table, which is why
@@ -282,6 +288,15 @@ const EXTRA_ALIASES = (() => {
 		['mElbowLeft', 'LeftForeArm'], ['mWristLeft', 'LeftHand'],
 		['mHipLeft', 'LeftUpLeg'], ['mKneeLeft', 'LeftLeg'],
 		['mAnkleLeft', 'LeftFoot'], ['mFootLeft', 'LeftToeBase'], ['mToeLeft', 'LeftToeBase'],
+		// Kinect puts the full side word last. ShoulderLeft is the upper-arm
+		// joint, while the Kinect skeleton has no separate clavicle joint.
+		['ShoulderLeft', 'LeftArm'], ['ElbowLeft', 'LeftForeArm'],
+		['WristLeft', 'LeftHand'], ['HipLeft', 'LeftUpLeg'],
+		['KneeLeft', 'LeftLeg'], ['AnkleLeft', 'LeftFoot'], ['FootLeft', 'LeftToeBase'],
+		// MediaPipe Pose uses its foot-index landmark as the toe endpoint and
+		// heel as the articulating foot. Its other limb names already resolve
+		// through the side-prefix aliases above.
+		['leftHeel', 'LeftFoot'], ['leftFootIndex', 'LeftToeBase'],
 		// Side-SUFFIX leg spellings (`UpperLeg.L`, `LowerLeg.R`, `LowerArm.L`). The
 		// arm twins were added with the Rigify forearm fix, but the LEG twins were
 		// not, and the side-PREFIX entries above (`leftUpperLeg`, `lUpperLeg`) never
@@ -400,6 +415,13 @@ export function canonicalizeBoneName(name) {
 	if (typeof name !== 'string' || !name) return null;
 	const direct = _lookupBone(name);
 	if (direct) return direct;
+	// Apple Reality Composer, ARKit-to-Maya, and related USD pipelines append
+	// `_joint` to every skeleton joint. Retry without that exact trailing token
+	// only after the full spelling failed, preserving any future literal alias
+	// that legitimately ends in `joint`. `root_joint` stays unmapped because
+	// `root` is a transform above the skeleton, not a body joint.
+	const appleJoint = name.replace(/_joint$/i, '');
+	if (appleJoint !== name) return _lookupBone(appleJoint);
 	// glTF/FBX node de-dup suffix: exporters (CharacterStudio, Blender's glTF
 	// writer, FBX2glTF) append `_NN` to keep node names unique, producing
 	// `mixamorig:Hips_01`, `Spine1_03`, `LeftForeArm_010`. The plain lookup

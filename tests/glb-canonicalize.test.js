@@ -485,6 +485,57 @@ describe('canonicalizeBoneName', () => {
 		expect(canonicalizeBoneName(input)).toBe(expected);
 	});
 
+	it.each([
+		['hips_joint', 'Hips'],
+		['left_arm_joint', 'LeftArm'],
+		['right_arm_joint', 'RightArm'],
+		['left_forearm_joint', 'LeftForeArm'],
+		['right_hand_joint', 'RightHand'],
+		['left_upLeg_joint', 'LeftUpLeg'],
+		['right_leg_joint', 'RightLeg'],
+		['left_foot_joint', 'LeftFoot'],
+	])('maps Apple / ARKit _joint skeleton bones: %s → %s', (input, expected) => {
+		expect(canonicalizeBoneName(input)).toBe(expected);
+	});
+
+	it('does not map Apple transform roots as body joints', () => {
+		expect(canonicalizeBoneName('root_joint')).toBeNull();
+	});
+
+	it.each([
+		['SpineBase', 'Hips'],
+		['SpineMid', 'Spine'],
+		['SpineShoulder', 'Spine2'],
+		['ShoulderLeft', 'LeftArm'],
+		['ShoulderRight', 'RightArm'],
+		['ElbowLeft', 'LeftForeArm'],
+		['WristRight', 'RightHand'],
+		['HipLeft', 'LeftUpLeg'],
+		['KneeRight', 'RightLeg'],
+		['AnkleLeft', 'LeftFoot'],
+		['FootRight', 'RightToeBase'],
+	])('maps Kinect body-tracking bones: %s → %s', (input, expected) => {
+		expect(canonicalizeBoneName(input)).toBe(expected);
+	});
+
+	it.each([
+		['left_heel', 'LeftFoot'],
+		['right_heel', 'RightFoot'],
+		['left_foot_index', 'LeftToeBase'],
+		['right_foot_index', 'RightToeBase'],
+	])('maps MediaPipe Pose foot landmarks: %s → %s', (input, expected) => {
+		expect(canonicalizeBoneName(input)).toBe(expected);
+	});
+
+	it('never crosses sides for Apple, Kinect, or MediaPipe names', () => {
+		for (const name of ['left_arm_joint', 'ShoulderLeft', 'left_heel', 'left_foot_index']) {
+			expect(canonicalizeBoneName(name)?.startsWith('Right'), name).toBe(false);
+		}
+		for (const name of ['right_arm_joint', 'ShoulderRight', 'right_heel', 'right_foot_index']) {
+			expect(canonicalizeBoneName(name)?.startsWith('Left'), name).toBe(false);
+		}
+	});
+
 	// Side-SUFFIX leg spellings. The arm twins (`forearm.L`, `upper_arm.L`) were
 	// covered by the Rigify fix; the LEG twins were not, and no side-PREFIX entry
 	// reaches `upperlegl`. Found in production by scripts/audit-rig-coverage.mjs:
