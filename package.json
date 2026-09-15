@@ -649,7 +649,7 @@
 		"i18n-iso-countries": "^7.14.0",
 		"jsdom": "27.3.0",
 		"json5": "^2.2.3",
-		"playwright": "^1.45.1",
+		"playwright": "^1.63.0",
 		"prettier": "^3.8.4",
 		"puppeteer": "^25.10.0",
 		"topojson-client": "^3.1.0",
