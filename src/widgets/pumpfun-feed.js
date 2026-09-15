@@ -257,11 +257,34 @@ function renderFirstGithubClaim(ev) {
 	const creatorTokens = Array.isArray(ev.creator_recent_tokens) ? ev.creator_recent_tokens : null;
 
 	const verified = ev.verified ?? ev.signal_verified;
+	const candidateCount = Array.isArray(ev.candidate_mints) ? ev.candidate_mints.length
+		: Array.isArray(ev.all_candidate_mints) ? ev.all_candidate_mints.length : 0;
+	const repoOwner = repoFull ? String(repoFull).split('/')[0].toLowerCase() : '';
+	const claimUser = ghUser ? String(ghUser).toLowerCase() : '';
+	let attribution = ev.attribution_status || ev.attribution;
+	if (!attribution) {
+		if (candidateCount > 1) attribution = 'unresolved_pooled';
+		else if (claimUser && repoOwner && claimUser !== repoOwner) attribution = 'identity_mismatch';
+		else if (verified || (claimUser && repoOwner === claimUser)) attribution = 'verified_repository';
+		else if (claimer && creator && claimer === creator) attribution = 'verified_creator_wallet';
+		else attribution = 'unverified';
+	}
+	const attributionCopy = {
+		verified_repository: ['✅ VERIFIED GITHUB FEE CLAIM', 'Claiming GitHub identity matches the repository owner in token metadata.'],
+		verified_creator_wallet: ['✅ CREATOR-WALLET GITHUB FEE CLAIM', 'Receiving wallet also created the token; repository ownership was not established.'],
+		identity_mismatch: ['🚩 IDENTITY MISMATCH — GITHUB FEE WITHDRAWAL', 'Claiming GitHub identity differs from the repository owner in token metadata.'],
+		unresolved_pooled: ['⚠️ UNRESOLVED POOLED GITHUB FEE WITHDRAWAL', `This shared fee account maps to ${candidateCount || 'multiple'} coins, so no single CA is proven.`],
+		unverified: ['⚠️ UNVERIFIED GITHUB FEE WITHDRAWAL', 'The withdrawal is real, but it does not prove this GitHub user created or endorses the coin.'],
+	};
+	const [claimHeadline, claimExplanation] = attributionCopy[attribution] || attributionCopy.unverified;
+	const isVerifiedRelationship = attribution === 'verified_repository' || attribution === 'verified_creator_wallet';
 
 	const sections = [];
 
 	sections.push(`
-		<div style="font-weight:700;color:#ff6e6e;letter-spacing:0.5px">🚨🚨🚨 FIRST CREATOR FEE CLAIM</div>
+		<div style="font-weight:700;color:${isVerifiedRelationship ? '#6ce0c8' : '#ff9a76'};letter-spacing:0.5px">${escapeHtml(claimHeadline)}</div>
+		<div style="opacity:0.85;margin-top:3px">${escapeHtml(claimExplanation)}</div>
+		${ev.first_time_claim ? '<div style="opacity:0.85;margin-top:3px">🆕 First-ever withdrawal observed for this GitHub fee account.</div>' : ''}
 		${tier ? `<div style="opacity:0.85;margin-top:2px">${escapeHtml(tier)}</div>` : ''}
 		${mint ? `<div style="font-family:ui-monospace,monospace;font-size:11px;opacity:0.7;margin-top:6px;word-break:break-all">${escapeHtml(mint)}</div>` : ''}
 	`);
@@ -305,7 +328,7 @@ function renderFirstGithubClaim(ev) {
 		if (ghLoc) devLines.push(`📍 Location: ${escapeHtml(ghLoc)}`);
 		if (ghBio) devLines.push(`<span style="opacity:0.85;font-style:italic">${escapeHtml(ghBio)}</span>`);
 		if (ghTwitter) devLines.push(`𝕏 <a href="https://x.com/${encodeURIComponent(ghTwitter)}" target="_blank" rel="noopener" style="color:#6ce0c8">${escapeHtml(ghTwitter)}</a>`);
-		sections.push(headedBlock('👨‍💻 Linked Dev', devLines));
+		sections.push(headedBlock('👨‍💻 Claiming GitHub Identity', devLines));
 	}
 
 	if (repoFull) {
@@ -317,7 +340,7 @@ function renderFirstGithubClaim(ev) {
 		if (repoLastPush) repoLines.push(`🕐 Last push: ${repoLastPush}`);
 		if (repoCreated) repoLines.push(`📅 Repo created: ${repoCreated}`);
 		if (repoTopics?.length) repoLines.push(`🏷 Topics: ${repoTopics.map(escapeHtml).join(', ')}`);
-		sections.push(headedBlock('📂 Repo Claimed', repoLines));
+		sections.push(headedBlock('📂 Repository in Token Metadata', repoLines));
 	}
 
 	if (creator) {
@@ -334,9 +357,12 @@ function renderFirstGithubClaim(ev) {
 		sections.push(headedBlock('🧑‍💻 Token Creator', cLines));
 	}
 
-	if (verified || ev.ai_take) {
+	if (attribution || ev.ai_take) {
 		const sigLines = [];
-		if (verified) sigLines.push('✅ Verified — token GitHub matches claimer');
+		if (isVerifiedRelationship) sigLines.push('✅ Verified relationship');
+		if (attribution === 'identity_mismatch') sigLines.push('🚩 Username mismatch — do not treat as project verification');
+		if (attribution === 'unverified') sigLines.push('⚠️ GitHub-to-coin relationship not verified');
+		if (attribution === 'unresolved_pooled') sigLines.push('⚠️ Shared withdrawal cannot be assigned to one coin');
 		if (ev.ai_take) sigLines.push(`<span style="font-style:italic;opacity:0.85">${escapeHtml(ev.ai_take)}</span>`);
 		sections.push(headedBlock('⚡ Signals', sigLines));
 	}
@@ -348,7 +374,7 @@ function renderFirstGithubClaim(ev) {
 	if (repoFull) links.push(`<a href="https://github.com/${repoFull.split('/').map(encodeURIComponent).join('/')}" target="_blank" rel="noopener" style="color:#6ce0c8">🌐 github.com/${escapeHtml(repoFull)}</a>`);
 	if (links.length) sections.push(`<div style="margin-top:8px;display:flex;flex-direction:column;gap:2px">${links.join('')}</div>`);
 
-	if (mint) {
+	if (mint && isVerifiedRelationship) {
 		const trade = terminalLinks(mint)
 			.map((t) => `<a href="${attrEsc(t.url)}" target="_blank" rel="noopener" style="color:#6ce0c8">${t.label}</a>`)
 			.join(' | ');

@@ -2,6 +2,12 @@
 
 Pump.fun is a Solana token launchpad, and three.ws agents can watch it live: an agent avatar reacts (speaks, gestures, emotes) as claims and token graduations happen, and the same activity feeds each agent's trust score. If you just want to see it, add the `pumpfun-feed` widget to an agent in Studio; this page documents the plumbing behind it for developers.
 
+GitHub social-fee claims are classified by evidence. A real withdrawal alone
+does not prove that a GitHub user created or endorses the coin. Only verified
+repository-owner or creator-wallet relationships receive a positive
+`first_claim` reputation signal; mismatched, unverified and pooled events remain
+visible without increasing trust. Pooled withdrawals select no primary CA.
+
 This integrates the upstream [`pumpfun-claims-bot`](https://github.com/nirholas/pumpfun-claims-bot) MCP server into the three.ws platform so a Solana agent can:
 
 - Observe live pump.fun activity (GitHub social-fee claims, token graduations)
@@ -94,7 +100,7 @@ Reactions are computed by the shared dispatcher in [src/widgets/pumpfun-reaction
 |---|---|---|---|---|
 | `graduation_standard` | any graduation | `celebration` 0.9 (up to 1.0 for moonshots) | celebrate clip | +0.7 to +0.95 |
 | `claim_first_verified` | first claim, verified GitHub | `celebration` 1.0 | `thriller` (6s) | +0.85 |
-| `claim_first_raw` | first claim, no GitHub link | `celebration` 0.85 | `celebrate` (4.5s) | +0.7 |
+| `claim_first_raw` | unverified first withdrawal | `curiosity` 0.65 | `look_around` (3s) | 0 |
 | `claim_fake` | fake claim detected | `concern` 0.85 | `shake` (1.8s) | -0.6 |
 | `claim_tier_mega` / `_influencer` | repeat claim by tier | `celebration` 0.7 / `curiosity` 0.55 | short taunt/reaction | +0.5 / +0.3 |
 
@@ -128,7 +134,7 @@ Default weights:
 | Kind | Weight | Lane |
 |---|---|---|
 | `graduation` | +0.3 | graduations |
-| `first_claim` | +0.2 | claims |
+| `first_claim` | +0.2 | verified repository/creator-wallet claims only |
 | `influencer` | +0.2 | claims |
 | `whale_buy` | +0.1 | whales |
 | `launch` | +0.05 | mints |

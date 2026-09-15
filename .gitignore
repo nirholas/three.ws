@@ -621,6 +621,7 @@ scripts/.selfie-verify/
 # Image exports dropped at the root for drag-and-drop. The source of truth for
 # any of these lives in the repo it belongs to; the root copy is never committed.
 /x-card-*.png
+/HSN-rLOWcAAbJxu-1.jpg
 
 # Paste-ready article bodies dropped at the root for copying into an external
 # publisher's editor (AWS Builder Center, IBM Community). Frontmatter and the H1

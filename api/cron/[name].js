@@ -2360,7 +2360,14 @@ function pumpfunSignalsFromClaim(ev) {
 	const out = [];
 	// Bot claims carry tx_signature; the pf:claims Redis lane carries signature.
 	const base = { tx_signature: ev.tx_signature || ev.signature, payload: ev };
-	if (ev.first_time_claim) out.push({ kind: 'first_claim', ...base });
+	const attribution = ev.attribution_status || ev.attribution;
+	const verifiedRelationship = attribution === 'verified_repository'
+		|| attribution === 'verified_creator_wallet'
+		|| (!attribution && (ev.verified === true || ev.signal_verified === true));
+	// A first withdrawal is positive reputation only when the coin relationship
+	// is verified. Raw, mismatched, or pooled claims remain visible as evidence
+	// but must not boost an agent/token trust score.
+	if (ev.first_time_claim && verifiedRelationship) out.push({ kind: 'first_claim', ...base });
 	if (ev.fake_claim) out.push({ kind: 'fake_claim', ...base });
 	if (ev.tier === 'mega' || ev.tier === 'influencer') out.push({ kind: 'influencer', ...base });
 	if (ev.github_account_age_days != null && ev.github_account_age_days < 30) {

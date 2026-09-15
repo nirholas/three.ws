@@ -123,6 +123,7 @@ describe('pumpfun-signals cron', () => {
 				{
 					tx_signature: 'sig1', signature: 'sig1', timestamp: 1000,
 					claimer: 'WALLET_A', first_time_claim: true, tier: 'influencer',
+					attribution_status: 'verified_repository',
 					github_account_age_days: 5,
 				},
 				{ tx_signature: 'sig2', signature: 'sig2', timestamp: 1001, claimer: 'WALLET_UNKNOWN', first_time_claim: true },
@@ -145,8 +146,8 @@ describe('pumpfun-signals cron', () => {
 		h.recentClaims.mockResolvedValue({
 			ok: true,
 			data: [
-				{ tx_signature: 'c1', signature: 'c1', timestamp: 100, claimer: 'W', first_time_claim: true },
-				{ tx_signature: 'c2', signature: 'c2', timestamp: 200, claimer: 'W', first_time_claim: true },
+				{ tx_signature: 'c1', signature: 'c1', timestamp: 100, claimer: 'W', first_time_claim: true, attribution_status: 'verified_repository' },
+				{ tx_signature: 'c2', signature: 'c2', timestamp: 200, claimer: 'W', first_time_claim: true, attribution_status: 'verified_repository' },
 			],
 		});
 		linkedRows = [{ address: 'W', agent_asset: 'A' }];
@@ -162,6 +163,21 @@ describe('pumpfun-signals cron', () => {
 		// is at the boundary and collides on (tx, kind).
 		expect(second.body.inserted).toBe(0);
 		expect(second.body.skipped_by_cursor).toBeGreaterThanOrEqual(1);
+	});
+
+	it('does not turn an unverified first withdrawal into positive reputation', async () => {
+		h.recentClaims.mockResolvedValue({
+			ok: true,
+			data: [{
+				tx_signature: 'unverified1', timestamp: 300, claimer: 'W',
+				first_time_claim: true, attribution_status: 'identity_mismatch',
+			}],
+		});
+		linkedRows = [{ address: 'W', agent_asset: 'A' }];
+
+		const { body } = await run();
+		expect(body.inserted).toBe(0);
+		expect(insertedRows).toEqual([]);
 	});
 
 	it('emits whale_buy and launch signals from the redis lanes', async () => {
