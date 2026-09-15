@@ -52,6 +52,18 @@ describe('reactionFor', () => {
 			expect(r.priority).toBe(85);
 		});
 
+		it('does not trust a legacy verified flag when attribution says mismatch', () => {
+			const r = reactionFor('claim', {
+				mint: 'M',
+				first_time_claim: true,
+				github_user: 'alice',
+				signal_verified: true,
+				attribution_status: 'identity_mismatch',
+			});
+			expect(r.variant).toBe('claim_first_unverified_gh');
+			expect(r.gesture.name).not.toBe('thriller');
+		});
+
 		it('first-time GitHub-linked unverified claim plays silly', () => {
 			const r = reactionFor('claim', {
 				mint: 'M',
@@ -61,13 +73,15 @@ describe('reactionFor', () => {
 			expect(r.gesture.name).toBe('silly');
 		});
 
-		it('first-time non-GitHub claim plays the celebrate clip', () => {
+		it('first-time non-GitHub claim stays neutral and curious', () => {
 			const r = reactionFor('claim', {
 				mint: 'M',
 				first_time_claim: true,
 				claimer: 'wallet1',
 			});
-			expect(r.gesture.name).toBe('celebrate');
+			expect(r.gesture.name).toBe('look_around');
+			expect(r.emote.trigger).toBe('curiosity');
+			expect(r.speak.sentiment).toBe(0);
 		});
 
 		it('fake claim plays a head-shake with concern', () => {

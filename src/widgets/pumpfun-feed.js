@@ -265,7 +265,10 @@ function renderFirstGithubClaim(ev) {
 	if (!attribution) {
 		if (candidateCount > 1) attribution = 'unresolved_pooled';
 		else if (claimUser && repoOwner && claimUser !== repoOwner) attribution = 'identity_mismatch';
-		else if (verified || (claimUser && repoOwner === claimUser)) attribution = 'verified_repository';
+		// A matching username is not verification: `repoFull` may itself be
+		// synthesized from `github_user`, making equality tautological. Only the
+		// upstream verifier's explicit boolean can preserve the legacy status.
+		else if (verified === true) attribution = 'verified_repository';
 		else if (claimer && creator && claimer === creator) attribution = 'verified_creator_wallet';
 		else attribution = 'unverified';
 	}

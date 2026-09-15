@@ -102,7 +102,7 @@ Reactions are computed by the shared dispatcher in [src/widgets/pumpfun-reaction
 | `claim_first_verified` | first claim, verified GitHub | `celebration` 1.0 | `thriller` (6s) | +0.85 |
 | `claim_first_raw` | unverified first withdrawal | `curiosity` 0.65 | `look_around` (3s) | 0 |
 | `claim_fake` | fake claim detected | `concern` 0.85 | `shake` (1.8s) | -0.6 |
-| `claim_tier_mega` / `_influencer` | repeat claim by tier | `celebration` 0.7 / `curiosity` 0.55 | short taunt/reaction | +0.5 / +0.3 |
+| `claim_tier_mega` / `_influencer` | verified repeat claim by tier | `celebration` 0.7 / `curiosity` 0.55 | short taunt/reaction | +0.5 / +0.3 |
 
 These are continuous-blend stimuli, not discrete states — they decay according to the per-second rates in [agent-system.md](agent-system.md#5-the-avatar-emotion-system-empathy-layer).
 

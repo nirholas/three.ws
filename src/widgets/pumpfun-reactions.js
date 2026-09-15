@@ -95,7 +95,10 @@ export function extractSignals(ev) {
 	// GitHub / claim legitimacy
 	const ghUser = ev.github_user || null;
 	const ghLinked = !!(ghUser || ev.github_repo || ev.github_account_age_days != null);
-	const ghVerified = !!(ev.verified ?? ev.signal_verified);
+	const attribution = ev.attribution_status || ev.attribution;
+	const ghVerified = attribution === 'verified_repository'
+		|| attribution === 'verified_creator_wallet'
+		|| (!attribution && (ev.verified === true || ev.signal_verified === true));
 	const ghFollowers = num(ev.github_followers);
 	const ghAccountAgeDays = num(ev.github_account_age_days);
 	const repoStars = num(ev.github_repo_stars ?? ev.repo_stars);
@@ -250,11 +253,11 @@ function claimReaction(s) {
 		}
 		return {
 			variant: 'claim_first_raw',
-			icon: '🚨',
-			emote: { trigger: 'celebration', weight: 0.85 },
-			gesture: { name: 'celebrate', duration: 4500 },
-			speak: { text: `First-time claim on $${s.symbol || 'a new token'}.${s.aiTake ? ' ' + s.aiTake : ''}`, sentiment: 0.7 },
-			lookAt: 'camera',
+			icon: '❓',
+			emote: { trigger: 'curiosity', weight: 0.65 },
+			gesture: { name: 'look_around', duration: 3000 },
+			speak: { text: `Unverified first withdrawal observed on $${s.symbol || 'a token'}.${s.aiTake ? ' ' + s.aiTake : ''}`, sentiment: 0 },
+			lookAt: 'token',
 			priority: 78,
 		};
 	}

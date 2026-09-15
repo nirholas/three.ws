@@ -2369,7 +2369,9 @@ function pumpfunSignalsFromClaim(ev) {
 	// but must not boost an agent/token trust score.
 	if (ev.first_time_claim && verifiedRelationship) out.push({ kind: 'first_claim', ...base });
 	if (ev.fake_claim) out.push({ kind: 'fake_claim', ...base });
-	if (ev.tier === 'mega' || ev.tier === 'influencer') out.push({ kind: 'influencer', ...base });
+	if (verifiedRelationship && (ev.tier === 'mega' || ev.tier === 'influencer')) {
+		out.push({ kind: 'influencer', ...base });
+	}
 	if (ev.github_account_age_days != null && ev.github_account_age_days < 30) {
 		out.push({ kind: 'new_account', ...base });
 	}

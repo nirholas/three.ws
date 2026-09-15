@@ -170,7 +170,7 @@ describe('pumpfun-signals cron', () => {
 			ok: true,
 			data: [{
 				tx_signature: 'unverified1', timestamp: 300, claimer: 'W',
-				first_time_claim: true, attribution_status: 'identity_mismatch',
+				first_time_claim: true, tier: 'influencer', attribution_status: 'identity_mismatch',
 			}],
 		});
 		linkedRows = [{ address: 'W', agent_asset: 'A' }];
