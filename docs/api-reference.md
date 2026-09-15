@@ -46,6 +46,101 @@ Rate-limited responses return HTTP 429 with `{ "error": "...", "code": "RATE_LIM
 
 ---
 
+## Solana Transaction Inspection API
+
+Atomic is a public, read-only inspector for legacy, V0, and V1 Solana transactions. It never signs,
+simulates, or broadcasts. See the [Atomic guide](./atomic.md) for the V1 resource model and sponsor-safety
+rules.
+
+### Read V1 activation status
+
+```http
+GET /api/solana/atomic
+```
+
+Returns Solana mainnet's current confirmed slot, the Transaction V1 activation slot, and the legacy and
+V1 wire limits. The response is cached for 15 seconds.
+
+```json
+{
+	"status": {
+		"cluster": "mainnet-beta",
+		"feature": "txv1",
+		"featureAddress": "txv1aq4pp281K9um3tnPgkfX8UqtFT6wcVW3hNezGLL",
+		"active": true,
+		"activationSlot": 447120000,
+		"currentSlot": 447120123,
+		"legacyLimitBytes": 1232,
+		"v1LimitBytes": 4096
+	}
+}
+```
+
+### Inspect a confirmed mainnet transaction
+
+```http
+GET /api/solana/atomic?signature=<base58-signature>
+```
+
+The RPC read opts into transaction version 1. The response includes exact signed-wire utilization,
+transaction structure, normalized resource limits, sponsor safety, confirmation status, fee, and actual
+compute use when Solana supplies it. Confirmed inspections are cached for one hour.
+
+### Inspect signed wire bytes offline
+
+```http
+POST /api/solana/atomic
+Content-Type: application/json
+
+{ "transaction": "BASE64_SIGNED_TRANSACTION" }
+```
+
+The body may be at most 16 KiB. The transaction is decoded locally and is not sent to an RPC. The
+inspection shape is the same as the signature path except that confirmation and explorer fields are absent.
+
+```json
+{
+	"inspection": {
+		"version": 1,
+		"versionLabel": "V1",
+		"wireDiscriminator": "0x81",
+		"bytes": 1036,
+		"limitBytes": 4096,
+		"headroomBytes": 3060,
+		"utilizationPct": 25.3,
+		"largerThanLegacyLimit": false,
+		"signatureCount": 1,
+		"requiredSignatureCount": 1,
+		"feePayer": "SOLANA_ADDRESS",
+		"staticAccountCount": 4,
+		"instructionCount": 1,
+		"budget": {
+			"source": "transaction-config",
+			"computeUnitLimit": 5480,
+			"loadedAccountsDataSizeLimit": 393216,
+			"heapSize": null,
+			"priorityFeeLamports": 2740,
+			"explicit": {
+				"computeUnitLimit": true,
+				"loadedAccountsDataSizeLimit": true,
+				"heapSize": false,
+				"priorityFee": true
+			}
+		},
+		"sponsor": {
+			"verdict": "caps-explicit",
+			"safeToCosign": true,
+			"notes": ["Read caps from transactionConfig. Compute Budget instruction scans do not bind V1 transactions."]
+		}
+	}
+}
+```
+
+Errors use `invalid_signature`, `invalid_transaction`, `not_found`, `rate_limited`, or `upstream_error`.
+The endpoint allows cross-origin `GET` and `POST` requests and requires no authentication.
+
+---
+
 ## Asset Catalog API
 
 One search across every ready-made asset three.ws publishes: the CC0 object/prop library, the ready-made character library, and the motion-clip library. **No authentication, no API key, no payment.** Open CORS, cached at the edge for 5 minutes.

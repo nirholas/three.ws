@@ -6,7 +6,7 @@ info:
         session cookies, and API keys for authentication. Avatars are stored as
         glTF/GLB files on Cloudflare R2 and exposed via a Model Context Protocol
         (MCP) JSON-RPC server for AI tool integrations.
-    version: 1.5.1
+    version: 1.5.2
     contact:
         email: support@three.ws
     license:
@@ -31,6 +31,8 @@ tags:
       description: Account usage and quota statistics
     - name: Discovery
       description: Well-known discovery endpoints
+    - name: Solana
+      description: Read-only Solana transaction inspection
 
 # ---------------------------------------------------------------------------
 # Security schemes
@@ -224,6 +226,109 @@ components:
                     type: integer
             required: [avatars, bytes, mcp_calls_24h, events_30d]
 
+        # -- Solana --------------------------------------------------------------
+        SolanaTransactionInspection:
+            type: object
+            required:
+                - version
+                - versionLabel
+                - bytes
+                - limitBytes
+                - headroomBytes
+                - utilizationPct
+                - largerThanLegacyLimit
+                - signatureCount
+                - requiredSignatureCount
+                - staticAccountCount
+                - instructionCount
+                - budget
+                - sponsor
+            properties:
+                version:
+                    oneOf:
+                        - type: string
+                          enum: [legacy]
+                        - type: integer
+                          enum: [0, 1]
+                versionLabel: { type: string, enum: [Legacy, V0, V1] }
+                wireDiscriminator:
+                    type: string
+                    nullable: true
+                    enum: [0x81]
+                bytes: { type: integer, minimum: 1 }
+                limitBytes: { type: integer, enum: [1232, 4096] }
+                headroomBytes: { type: integer }
+                utilizationPct: { type: number }
+                largerThanLegacyLimit: { type: boolean }
+                signatureCount: { type: integer, minimum: 0 }
+                requiredSignatureCount: { type: integer, minimum: 0 }
+                feePayer:
+                    type: string
+                    nullable: true
+                staticAccountCount: { type: integer, minimum: 0 }
+                instructionCount: { type: integer, minimum: 0 }
+                budget:
+                    type: object
+                    required: [source, explicit]
+                    properties:
+                        source:
+                            type: string
+                            enum: [compute-budget-instructions, transaction-config]
+                        computeUnitLimit:
+                            oneOf:
+                                - type: integer
+                                - type: string
+                            nullable: true
+                        loadedAccountsDataSizeLimit:
+                            oneOf:
+                                - type: integer
+                                - type: string
+                            nullable: true
+                        heapSize:
+                            oneOf:
+                                - type: integer
+                                - type: string
+                            nullable: true
+                        priorityFeeLamports:
+                            oneOf:
+                                - type: integer
+                                - type: string
+                            nullable: true
+                        explicit:
+                            type: object
+                            required: [computeUnitLimit, loadedAccountsDataSizeLimit, heapSize, priorityFee]
+                            properties:
+                                computeUnitLimit: { type: boolean }
+                                loadedAccountsDataSizeLimit: { type: boolean }
+                                heapSize: { type: boolean }
+                                priorityFee: { type: boolean }
+                sponsor:
+                    type: object
+                    required: [verdict, safeToCosign, notes]
+                    properties:
+                        verdict:
+                            type: string
+                            enum: [legacy-rules, caps-explicit, limits-missing]
+                        safeToCosign:
+                            type: boolean
+                            nullable: true
+                        notes:
+                            type: array
+                            items: { type: string }
+                signature: { type: string }
+                cluster: { type: string, enum: [mainnet-beta] }
+                confirmation:
+                    type: object
+                    properties:
+                        slot: { type: integer }
+                        blockTime: { type: integer, nullable: true }
+                        success: { type: boolean }
+                        error: { nullable: true }
+                        feeLamports: { type: integer, nullable: true }
+                        computeUnitsConsumed: { type: integer, nullable: true }
+                        computeUtilizationPct: { type: number, nullable: true }
+                explorerUrl: { type: string, format: uri }
+
         # -- Pagination ----------------------------------------------------------
         Cursor:
             type: string
@@ -358,6 +463,111 @@ paths:
             responses:
                 '200':
                     description: The 3D viewer HTML page.
+
+    # --------------------------------------------------------------------------
+    # Solana
+    # --------------------------------------------------------------------------
+    /api/solana/atomic:
+        get:
+            operationId: inspectSolanaTransaction
+            tags: [Solana]
+            summary: Read Transaction V1 status or inspect a confirmed transaction
+            description: >
+                With no query parameter, returns Solana mainnet Transaction V1 activation status.
+                With `signature`, fetches a confirmed transaction using
+                `maxSupportedTransactionVersion: 1` and returns its exact wire footprint,
+                normalized resource limits, confirmation metadata, and sponsor-safety assessment.
+                This endpoint never signs, simulates, or broadcasts.
+            parameters:
+                - in: query
+                  name: signature
+                  required: false
+                  schema:
+                      type: string
+                      pattern: '^[1-9A-HJ-NP-Za-km-z]{64,96}$'
+                  description: Base58 Solana transaction signature. Omit for live V1 status.
+            responses:
+                '200':
+                    description: Activation status or transaction inspection
+                    content:
+                        application/json:
+                            schema:
+                                oneOf:
+                                    - type: object
+                                      required: [status]
+                                      properties:
+                                          status:
+                                              type: object
+                                              required: [cluster, feature, active, currentSlot, legacyLimitBytes, v1LimitBytes]
+                                              properties:
+                                                  cluster: { type: string, enum: [mainnet-beta] }
+                                                  feature: { type: string, enum: [txv1] }
+                                                  featureAddress: { type: string }
+                                                  active: { type: boolean }
+                                                  activationSlot: { type: integer, nullable: true }
+                                                  currentSlot: { type: integer }
+                                                  legacyLimitBytes: { type: integer, enum: [1232] }
+                                                  v1LimitBytes: { type: integer, enum: [4096] }
+                                    - type: object
+                                      required: [inspection]
+                                      properties:
+                                          inspection:
+                                              $ref: '#/components/schemas/SolanaTransactionInspection'
+                '400':
+                    description: Invalid signature or transaction
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Error'
+                '404':
+                    description: Transaction not found on Solana mainnet
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Error'
+                '429':
+                    $ref: '#/components/responses/TooManyRequests'
+                '502':
+                    description: Solana RPC unavailable
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Error'
+        post:
+            operationId: inspectSolanaWireTransaction
+            tags: [Solana]
+            summary: Inspect signed Solana wire bytes without broadcasting
+            requestBody:
+                required: true
+                content:
+                    application/json:
+                        schema:
+                            type: object
+                            required: [transaction]
+                            properties:
+                                transaction:
+                                    type: string
+                                    format: byte
+                                    description: Base64-encoded signed or partially signed Solana transaction.
+            responses:
+                '200':
+                    description: Normalized transaction inspection
+                    content:
+                        application/json:
+                            schema:
+                                type: object
+                                required: [inspection]
+                                properties:
+                                    inspection:
+                                        $ref: '#/components/schemas/SolanaTransactionInspection'
+                '400':
+                    description: Invalid JSON or transaction bytes
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Error'
+                '429':
+                    $ref: '#/components/responses/TooManyRequests'
 
     # --------------------------------------------------------------------------
     # Auth
