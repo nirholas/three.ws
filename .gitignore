@@ -2,6 +2,7 @@ node_modules
 dist
 !satellites/glb-quality-gate/dist/
 !satellites/glb-quality-gate/dist/*.js
+!satellites/glb-quality-gate/dist/package.json
 dist-lib
 dist-artifact
 .cache
