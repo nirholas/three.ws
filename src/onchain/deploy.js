@@ -79,7 +79,7 @@ function clearPrepCache(agentId, ref, transactionVersion = 0) {
  * @param {{ id: string, name: string, [k: string]: any }} opts.agent
  * @param {import('./chain-ref.js').ChainRef} opts.ref
  * @param {(step: 'connect'|'prep'|'sign'|'confirm'|'save', detail?: object) => void} [opts.onProgress]
- * @returns {Promise<{ ref: import('./chain-ref.js').ChainRef, txHash: string, onchainId: string|null, contractOrMint: string|null, agent: object }>}
+ * @returns {Promise<{ ref: import('./chain-ref.js').ChainRef, txHash: string, onchainId: string|null, contractOrMint: string|null, transactionVersion: number|null, agent: object }>}
  */
 export async function deployAgent({ agent, ref, onProgress = () => {} }) {
 	if (!agent?.id) throw new Error('agent.id is required');
@@ -140,6 +140,7 @@ export async function deployAgent({ agent, ref, onProgress = () => {} }) {
 		txHash: sig.txHash,
 		onchainId: sig.onchainId,
 		contractOrMint: prep.contractAddress || prep.assetPubkey || null,
+		transactionVersion: ref.family === 'solana' ? transactionVersion : null,
 		agent: result.agent,
 	};
 }

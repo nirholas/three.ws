@@ -95,7 +95,7 @@ Request shape (prep):
 }
 ```
 
-Response (prep): `{ prepId, chain, metadataUri, cid, contractAddress | { assetPubkey, txBase64, cluster } }`
+Response (prep): `{ prepId, chain, metadataUri, cid, contractAddress | { assetPubkey, txBase64, cluster, transactionVersion } }`
 
 Request shape (confirm):
 
@@ -120,6 +120,7 @@ Confirm writes a single canonical block to `agent_identities.meta.onchain`:
     "contract_or_mint": "0x8004...",
     "wallet":           "0x...",
     "metadata_uri":     "ipfs://...",
+	"transaction_version": 1,
     "confirmed_at":     "2026-..."
   }
 }

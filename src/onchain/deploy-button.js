@@ -141,7 +141,12 @@ export class OnchainDeployButton {
 		if (onchain) {
 			const entry = entryByCaip2(this._registry, onchain.chain);
 			if (entry) {
-				this._renderSuccessChip(entry, onchain.tx_hash, onchain.contract_or_mint);
+				this._renderSuccessChip(
+					entry,
+					onchain.tx_hash,
+					onchain.contract_or_mint,
+					onchain.transaction_version,
+				);
 				return;
 			}
 		}
@@ -224,14 +229,15 @@ export class OnchainDeployButton {
 			.addEventListener('click', () => this._renderDeployButton());
 	}
 
-	_renderSuccessChip(entry, txHash, contractOrMint) {
+	_renderSuccessChip(entry, txHash, contractOrMint, transactionVersion = null) {
 		// Prefer the tx explorer link — it survives across chains and works for
 		// both EVM (tx hash) and Solana (signature).
 		const url = entry.explorerTx(txHash);
+		const versionLabel = entry.ref.family === 'solana' && transactionVersion === 1 ? ' v1' : '';
 		this._root.innerHTML = `
 			<a class="deploy-chip deploy-chip--success" href="${_esc(url)}" target="_blank" rel="noopener noreferrer"
 			   aria-label="View on ${_esc(entry.name)} explorer">
-				&#x2B22; On-chain on ${_esc(entry.name)} &middot; view on explorer
+				&#x2B22; On-chain on ${_esc(entry.name)}${versionLabel} &middot; view on explorer
 			</a>
 		`;
 	}

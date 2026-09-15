@@ -494,7 +494,7 @@ async function verifyEvm({ chainId, txHash, expectedContract, expectedOwner }) {
 	return { blockNumber: receipt.blockNumber };
 }
 
-async function verifySolana({ cluster, txSig, expectedAsset, expectedOwner }) {
+async function verifySolana({ cluster, txSig, expectedAsset, expectedOwner, expectedVersion = 0 }) {
 	const rpc =
 		cluster === 'devnet'
 			? process.env.SOLANA_RPC_URL_DEVNET || 'https://api.devnet.solana.com'
@@ -524,15 +524,23 @@ async function verifySolana({ cluster, txSig, expectedAsset, expectedOwner }) {
 		e.status = 422;
 		throw e;
 	}
+	if (tx.version !== expectedVersion) {
+		const e = new Error(`Transaction version ${String(tx.version)} does not match prepared v${expectedVersion}.`);
+		e.code = 'tx_wrong_version';
+		e.status = 422;
+		throw e;
+	}
 
-	const accountKeys = tx.transaction.message.accountKeys.map((k) => k.pubkey?.toString());
-	if (expectedAsset && !accountKeys.includes(expectedAsset)) {
-		const e = new Error('Asset pubkey not found in transaction.');
+	const accountKeys = tx.transaction.message.accountKeys;
+	const assetKey = accountKeys.find((key) => key.pubkey?.toString() === expectedAsset);
+	if (expectedAsset && (!assetKey || !assetKey.signer)) {
+		const e = new Error('Asset pubkey is not a transaction signer.');
 		e.code = 'asset_not_in_tx';
 		e.status = 422;
 		throw e;
 	}
-	if (!accountKeys.includes(expectedOwner)) {
+	const ownerKey = accountKeys.find((key) => key.pubkey?.toString() === expectedOwner);
+	if (!ownerKey?.signer) {
 		const e = new Error('Wallet address not in transaction signers.');
 		e.code = 'wrong_signer';
 		e.status = 422;
@@ -584,6 +592,7 @@ async function handleConfirm(req, res) {
 				txSig: body.tx_hash,
 				expectedAsset: p.asset_pubkey,
 				expectedOwner: body.wallet_address,
+				expectedVersion: p.transaction_version || 0,
 			});
 		} else {
 			return error(res, 400, 'validation_error', `unknown chain family: ${p.chain_family}`);
@@ -610,7 +619,9 @@ async function handleConfirm(req, res) {
 		wallet: body.wallet_address,
 		metadata_uri: prep.metadata_uri,
 		confirmed_at: new Date().toISOString(),
-		...(p.chain_family === 'solana' ? { cluster: p.cluster } : {}),
+		...(p.chain_family === 'solana'
+			? { cluster: p.cluster, transaction_version: p.transaction_version || 0 }
+			: {}),
 	};
 
 	// For Solana, also surface the flat fields the edit + attestation paths key on
