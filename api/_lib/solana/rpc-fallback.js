@@ -134,52 +134,69 @@ export class RpcFallback {
 	}
 
 	async withFallback(fn) {
-		const tried = new Set();
-		while (tried.size < this.urls.length) {
-			// Skip endpoints parked in the shared process-wide cooldown (e.g. Helius
-			// after a quota 429) or this instance's local cooldown — don't re-probe a
-			// known-dead lane on every call. Count it as tried so the loop still
-			// terminates when everything is cooling.
-			// Use _advanceSilently() here (no log) — the endpoint was already known-dead
-			// from a prior discovery; emitting a "rotated" line for every RPC call that
-			// skips a cooling provider flooded the logs with ~20+ identical lines per
-			// pump-agent-stats cron tick, all reporting the same known-dead Helius URL.
-			if (isEndpointCooling(this.currentUrl) || this.cooldownUntil[this.currentIndex] > Date.now()) {
+		// Respect known cooldowns first. If that excludes every lane, perform one
+		// forced pass instead of returning an instant outage from stale breaker
+		// bookkeeping. The Connection's rotating fetch applies the same widening
+		// rule internally, so this outer wrapper must not prevent that recovery
+		// probe from running at all. This was observable in production as a split
+		// fleet: warm instances returned /api/pump/curve 502 in ~300ms while fresh
+		// instances reached a healthy RPC lane and returned the correct response.
+		for (const ignoreCooldown of [false, true]) {
+			const tried = new Set();
+			let attempted = false;
+			while (tried.size < this.urls.length) {
+				// Skip endpoints parked in the shared process-wide cooldown (e.g. Helius
+				// after a quota 429) or this instance's local cooldown. Do not re-probe a
+				// known-dead lane on every call. Count it as tried so the loop still
+				// terminates when everything is cooling.
+				// Use _advanceSilently() here (no log). The endpoint was already known-dead
+				// from a prior discovery; emitting a "rotated" line for every RPC call that
+				// skips a cooling provider flooded the logs with ~20+ identical lines per
+				// pump-agent-stats cron tick, all reporting the same known-dead Helius URL.
+				if (
+					!ignoreCooldown &&
+					(isEndpointCooling(this.currentUrl) || this.cooldownUntil[this.currentIndex] > Date.now())
+				) {
+					tried.add(this.currentIndex);
+					this._advanceSilently();
+					continue;
+				}
+				attempted = true;
 				tried.add(this.currentIndex);
-				this._advanceSilently();
-				continue;
-			}
-			tried.add(this.currentIndex);
-			try {
-				const result = await fn(this.getConnection());
-				this.reportSuccess();
-				return result;
-			} catch (err) {
-				if (isRetryable(err)) {
-					const status = statusFromErr(err);
-					// Check BEFORE marking so parallel withFallback() calls that race
-					// onto the same endpoint only emit the log once: the first caller
-					// sees alreadyCooling=false, logs, then marks; every subsequent
-					// concurrent caller that resolves afterward sees alreadyCooling=true.
-					const alreadyCooling = isEndpointCooling(this.currentUrl);
-					const ms = markEndpointCooldown(this.currentUrl, status, String((err && err.message) || err));
-					if (!alreadyCooling) {
-						// INFO, not WARN: withFallback() keeps trying the remaining
-						// endpoints and the call still resolves. Only an exhausted chain
-						// (the throw below) is actionable — so this stays out of the
-						// `level:warning` view to avoid non-actionable failover chatter.
-						console.log(
-							'[rpc-fallback] %s %s — cooling %dm, rotating',
-							maskUrl(this.currentUrl),
-							status,
-							Math.round(ms / 60_000),
-						);
+				try {
+					const result = await fn(this.getConnection());
+					this.reportSuccess();
+					return result;
+				} catch (err) {
+					if (isRetryable(err)) {
+						const status = statusFromErr(err);
+						// Check BEFORE marking so parallel withFallback() calls that race
+						// onto the same endpoint only emit the log once: the first caller
+						// sees alreadyCooling=false, logs, then marks; every subsequent
+						// concurrent caller that resolves afterward sees alreadyCooling=true.
+						const alreadyCooling = isEndpointCooling(this.currentUrl);
+						const ms = markEndpointCooldown(this.currentUrl, status, String((err && err.message) || err));
+						if (!alreadyCooling) {
+							// INFO, not WARN: withFallback() keeps trying the remaining
+							// endpoints and the call still resolves. Only an exhausted chain
+							// (the throw below) is actionable, so this stays out of the
+							// `level:warning` view to avoid non-actionable failover chatter.
+							console.log(
+								'[rpc-fallback] %s %s; cooling %dm, rotating',
+								maskUrl(this.currentUrl),
+								status,
+								Math.round(ms / 60_000),
+							);
+						}
+						this.reportFailure();
+					} else {
+						throw err;
 					}
-					this.reportFailure();
-				} else {
-					throw err;
 				}
 			}
+			// Do not retry a pass that genuinely exercised the chain and failed. The
+			// widened pass exists only for the zero-attempt, all-cooling case.
+			if (attempted) break;
 		}
 		// Every endpoint failed or is cooling — the caller gets nothing. This is the
 		// actionable condition (the whole failover chain is down), so it warns where

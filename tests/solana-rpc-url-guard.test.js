@@ -1,6 +1,7 @@
-import { describe, it, expect, beforeEach, afterEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import {
 	isHttpUrl,
+	markEndpointCooldown,
 	normalizeRpcUrl,
 	normalizeWsUrl,
 	resolveWsEndpoint,
@@ -150,6 +151,21 @@ describe('RpcFallback — never hands new Connection a non-http(s) URL', () => {
 		const rpc = rpcFallbackFromEnv({ network: 'mainnet' });
 		expect(rpc.currentUrl).toBe('https://mainnet.helius-rpc.com/?api-key=test');
 		expect(() => rpc.getConnection()).not.toThrow();
+	});
+
+	it('forces a recovery probe when every lane is already cooling', async () => {
+		const url = 'https://all-cooling-recovery.example/rpc';
+		markEndpointCooldown(url, 429, 'slow down');
+		const rpc = new RpcFallback({ url });
+		const connection = {};
+		rpc.getConnection = vi.fn(() => connection);
+		const read = vi.fn(async (received) => {
+			expect(received).toBe(connection);
+			return 'recovered';
+		});
+
+		await expect(rpc.withFallback(read)).resolves.toBe('recovered');
+		expect(read).toHaveBeenCalledTimes(1);
 	});
 });
 
