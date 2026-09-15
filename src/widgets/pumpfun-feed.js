@@ -275,7 +275,7 @@ function renderFirstGithubClaim(ev) {
 	const attributionCopy = {
 		verified_repository: ['✅ VERIFIED GITHUB FEE CLAIM', 'Claiming GitHub identity matches the repository owner in token metadata.'],
 		verified_creator_wallet: ['✅ CREATOR-WALLET GITHUB FEE CLAIM', 'Receiving wallet also created the token; repository ownership was not established.'],
-		identity_mismatch: ['🚩 IDENTITY MISMATCH — GITHUB FEE WITHDRAWAL', 'Claiming GitHub identity differs from the repository owner in token metadata.'],
+		identity_mismatch: ['🚩 IDENTITY MISMATCH: GITHUB FEE WITHDRAWAL', 'Claiming GitHub identity differs from the repository owner in token metadata.'],
 		unresolved_pooled: ['⚠️ UNRESOLVED POOLED GITHUB FEE WITHDRAWAL', `This shared fee account maps to ${candidateCount || 'multiple'} coins, so no single CA is proven.`],
 		unverified: ['⚠️ UNVERIFIED GITHUB FEE WITHDRAWAL', 'The withdrawal is real, but it does not prove this GitHub user created or endorses the coin.'],
 	};
@@ -363,7 +363,7 @@ function renderFirstGithubClaim(ev) {
 	if (attribution || ev.ai_take) {
 		const sigLines = [];
 		if (isVerifiedRelationship) sigLines.push('✅ Verified relationship');
-		if (attribution === 'identity_mismatch') sigLines.push('🚩 Username mismatch — do not treat as project verification');
+		if (attribution === 'identity_mismatch') sigLines.push('🚩 Username mismatch: do not treat as project verification');
 		if (attribution === 'unverified') sigLines.push('⚠️ GitHub-to-coin relationship not verified');
 		if (attribution === 'unresolved_pooled') sigLines.push('⚠️ Shared withdrawal cannot be assigned to one coin');
 		if (ev.ai_take) sigLines.push(`<span style="font-style:italic;opacity:0.85">${escapeHtml(ev.ai_take)}</span>`);

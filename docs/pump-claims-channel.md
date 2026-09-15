@@ -4,7 +4,7 @@ A live feed of **first-time pump.fun creator fee claims**, delivered to a
 Telegram channel (`@pumpfunclaims`), one message per claim.
 
 A claim is a real on-chain withdrawal. For GitHub social fees, it proves payment
-to a GitHub fee account—not automatically that the GitHub user created, owns, or
+to a GitHub fee account, not automatically that the GitHub user created, owns, or
 endorses a particular coin. Token metadata can name lookalike accounts, and one
 fee account can pool rewards from several coins.
 
