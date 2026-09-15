@@ -7,7 +7,10 @@ const idle = JSON.parse(readFileSync(new URL('../public/animations/clips/idle.js
 const committed = JSON.parse(readFileSync(new URL('../public/animations/clips/bow.json', import.meta.url), 'utf8'));
 
 function frame(track, index) {
-	return new Quaternion().fromArray(track.values, index * 4);
+	// Clip compaction rounds components independently. Normalize before angular
+	// comparison, as runtime interpolation does, so identical compacted poses do
+	// not acquire a tiny false angle from a length just below one.
+	return new Quaternion().fromArray(track.values, index * 4).normalize();
 }
 
 describe('project-authored bow clip', () => {
@@ -31,6 +34,7 @@ describe('project-authored bow clip', () => {
 		const hips = committed.tracks.find((entry) => entry.name === 'Hips.position');
 		expect(committed.duration).toBe(1.8);
 		expect(hips.values.at(0)).toBeCloseTo(hips.values.at(-3), 6);
+		expect(hips.values.at(1)).toBeCloseTo(hips.values.at(-2), 6);
 		expect(hips.values.at(2)).toBeCloseTo(hips.values.at(-1), 6);
 	});
 });
