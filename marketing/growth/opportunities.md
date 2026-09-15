@@ -48,6 +48,40 @@ group, and the group led into an in-world event.
 | HackerNoon    | Recurring canonical syndication and a flagship founder story                           | Keep RSS healthy; pitch only the strongest quarterly proof as an editorial package                                                      | Automatic clean feed, original technical reporting, canonical URLs                   | [Syndication runbook](../../docs/syndication.md)                                                                                                                                                                                    |
 | QuickNode     | Startup-program spotlight and technical reliability story                              | Ask the program contact for a founder spotlight or co-authored RPC failover post                                                        | Real Solana RPC failover implementation and operational lessons                      | [Partner record](../../docs/partners.md)                                                                                                                                                                                            |
 
+## Installable distribution already built in the repo
+
+These are unusually efficient because the product work exists and the result lives on a
+recognized third-party install surface. Treat each listing as its own launch with a native
+workflow capture and an activation measure.
+
+### VS Code Marketplace
+
+`packages/vscode-3d` and `packages/vscode-x402` already contain extensions, build scripts,
+tests, icons, READMEs, and Marketplace metadata. Resolve the inconsistent publisher IDs,
+package and inspect both, then publish the 3D extension first. Its preview, generation,
+animation, optimization, and embed workflow has the broadest immediate audience.
+
+**Official source:** [Publishing Extensions](https://code.visualstudio.com/api/working-with-extensions/publishing-extension).
+
+### Comfy Registry and Manager
+
+`integrations/comfyui` contains working Text-to-3D and Image-to-3D nodes plus a real
+server-backed smoke test. Add the required `pyproject.toml`, create the publisher and Registry
+key, package, and publish. The Registry powers ComfyUI Manager discovery, so the same release
+creates both a listing and a native install channel.
+
+**Official source:** [Publishing Nodes](https://docs.comfy.org/registry/publishing).
+
+### Blender Extensions
+
+`integrations/blender` contains a working stdlib-only Forge add-on. Before submission, make
+outbound requests honor `bpy.app.online_access`, which Blender requires for networked
+extensions. Then add the extension manifest, package, and upload through the official surface.
+A listing is distribution, not a Blender partnership.
+
+**Official sources:** [Add-on Guidelines](https://developer.blender.org/docs/handbook/extensions/addon_guidelines/),
+[Extension Hosting](https://developer.blender.org/docs/handbook/extensions/hosted/).
+
 ### The IBM event series
 
 The IBM Community user-group route is the fastest repeatable partner-owned channel because
