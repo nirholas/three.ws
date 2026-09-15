@@ -15,7 +15,7 @@
 	"dependencies": {
 		"@bonfida/spl-name-service": "^0.1.67",
 		"@colyseus/core": "^0.16.24",
-		"@colyseus/monitor": "^0.16.7",
+		"@colyseus/monitor": "^0.18.3",
 		"@colyseus/redis-driver": "^0.16.0",
 		"@colyseus/redis-presence": "^0.16.0",
 		"@colyseus/schema": "3.0.76",
