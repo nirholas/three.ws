@@ -580,7 +580,7 @@
 		"bn.js": "^5.2.5",
 		"borsher": "^4.0.0",
 		"bs58": "^6.0.0",
-		"cborg": "^4.5.8",
+		"cborg": "^6.1.2",
 		"cockatiel": "^4.0.0",
 		"colyseus.js": "0.16.22",
 		"compression": "^1.8.2",
