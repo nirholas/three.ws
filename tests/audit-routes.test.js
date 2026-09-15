@@ -14,7 +14,7 @@ import { readFileSync } from 'node:fs';
 import { resolve, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-import { AUTHED_ROUTES, isHtmlRoute } from '../scripts/lib/audit-routes.mjs';
+import { AUTHED_ROUTES, isHtmlRoute, seedDynamicRoutes } from '../scripts/lib/audit-routes.mjs';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const routeTable = JSON.parse(readFileSync(resolve(ROOT, 'vercel.json'), 'utf8')).routes;
@@ -63,5 +63,24 @@ describe('AUTHED_ROUTES', () => {
 		for (const path of ['/profile', '/settings', '/my-agents']) {
 			expect(AUTHED_ROUTES).toContain(path);
 		}
+	});
+});
+
+describe('seedDynamicRoutes', () => {
+	it('uses an on-chain explore result only with the on-chain viewer route', async () => {
+		const ctx = {
+			request: {
+				get: async () => ({
+					ok: () => true,
+					json: async () => ({ items: [{ chainId: 8453, agentId: 87073 }] }),
+				}),
+			},
+		};
+		const routes = await seedDynamicRoutes(ctx, 'https://three.ws');
+		expect(routes).toEqual(['/a/8453/87073']);
+		// /agent/:id is the internal UUID editor route. Feeding it an ERC-8004
+		// chain/id pair deterministically creates two API 404s and a fake audit
+		// failure for an agent that was never addressable there.
+		expect(routes.some((route) => route.startsWith('/agent/'))).toBe(false);
 	});
 });

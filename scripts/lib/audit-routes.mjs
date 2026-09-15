@@ -112,7 +112,6 @@ export async function seedDynamicRoutes(ctx, baseUrl) {
 			const onchain = items.find((i) => i.agentId && i.chainId);
 			if (onchain) {
 				routes.push(`/a/${onchain.chainId}/${onchain.agentId}`);
-				routes.push(`/agent/${onchain.chainId}:${onchain.agentId}`);
 			}
 		}
 	} catch {
