@@ -105,6 +105,21 @@ the next sweep without anyone remembering to edit a second list.
 `tests/audit-routes.test.js` pins that: a stub or a pattern in `AUTHED_ROUTES`,
 or a served dashboard page missing from it, fails the suite.
 
+An ERC-8004 result from `/api/explore` seeds only `/a/<chain>/<agentId>`. The
+similarly named `/agent/<id>` route is the editor for an internal UUID; joining
+an on-chain chain/id pair with `:` and feeding it to that editor produces a
+guaranteed not-found page, not a meaningful dynamic-route check.
+
+## Intentional error-state examples
+
+The visible-error detector treats phrases such as “Something went wrong” and
+“failed to load” as release failures. A component catalogue may intentionally
+render its real error state for designers and reviewers. Put
+`data-audit-intentional-error` on the smallest container that holds that one
+example. The detector ignores matching text inside the annotated container;
+console, exception, request, and HTTP findings are still collected normally.
+Do not put the annotation on a page root or live application container.
+
 ## Targeting
 
 `BASE_URL` selects the target and defaults to production:
