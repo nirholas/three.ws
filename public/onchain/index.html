@@ -1,0 +1,95 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Open files and messages stored in Solana transaction memos.">
+  <title>Onchain viewer · three.ws</title>
+  <style>
+    :root { color-scheme: dark; font-family: Inter, ui-sans-serif, system-ui, sans-serif; background: #080a10; color: #f6f7fb; }
+    * { box-sizing: border-box; }
+    body { margin: 0; min-height: 100vh; background: radial-gradient(circle at 20% 0%, #1b2743 0, transparent 35rem), #080a10; }
+    main { width: min(760px, calc(100% - 32px)); margin: 0 auto; padding: 64px 0; }
+    a { color: #9cc8ff; } h1 { margin: 0 0 10px; font-size: clamp(2rem, 7vw, 3.5rem); letter-spacing: -.055em; }
+    .lede { color: #b9c1d1; line-height: 1.55; margin: 0 0 30px; max-width: 54ch; }
+    form, .card { background: #10141fdd; border: 1px solid #2a3346; border-radius: 18px; padding: 18px; box-shadow: 0 22px 70px #0006; }
+    form { display: flex; gap: 10px; } input { min-width: 0; flex: 1; color: #f6f7fb; background: #080b12; border: 1px solid #34405a; border-radius: 10px; padding: 13px; font: inherit; }
+    button { cursor: pointer; border: 0; border-radius: 10px; padding: 13px 17px; color: #06111e; background: #9cc8ff; font: 700 .95rem/1 inherit; } button.secondary { color: #dce7fb; background: #26334b; }
+    #status { min-height: 1.5em; margin: 18px 2px; color: #b9c1d1; } .error { color: #ffb4b4 !important; }
+    .card { display: none; } .card.visible { display: block; } .meta { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; margin-bottom: 18px; } .meta div { color: #aeb8ca; font-size: .86rem; } .meta strong { display: block; color: #fff; overflow-wrap: anywhere; font-size: .95rem; margin-top: 3px; }
+    .preview { display: grid; place-items: center; min-height: 180px; background: repeating-conic-gradient(#151b28 0 25%, #111722 0 50%) 50% / 22px 22px; border-radius: 12px; overflow: hidden; } .preview img { display: block; max-width: 100%; max-height: 520px; image-rendering: auto; }
+    pre { overflow: auto; max-height: 360px; padding: 16px; background: #080b12; border-radius: 12px; white-space: pre-wrap; overflow-wrap: anywhere; } .actions { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 16px; } .fine { font-size: .86rem; color: #aeb8ca; line-height: 1.5; }
+    @media (max-width: 540px) { main { padding-top: 36px; } form { flex-direction: column; } .meta { grid-template-columns: 1fr; } }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>Onchain viewer</h1>
+    <p class="lede">Paste a Solana transaction. If it contains a file or message in a Memo, we’ll show it here without copying an inscrutable data URI.</p>
+    <form id="lookup">
+      <input id="transaction" aria-label="Solana transaction signature or Solscan link" placeholder="Transaction signature or Solscan link" autocomplete="off" spellcheck="false">
+      <button>Open</button>
+    </form>
+    <p id="status" role="status">Enter a transaction to begin.</p>
+    <section class="card" id="result" aria-live="polite">
+      <div class="meta" id="meta"></div>
+      <div class="preview" id="preview"></div>
+      <div class="actions" id="actions"></div>
+      <p class="fine">This viewer reads public, signed transaction data directly from Solana. Treat unfamiliar files with the same care you would any internet download.</p>
+    </section>
+  </main>
+  <script>
+    const RPC = 'https://api.mainnet-beta.solana.com';
+    const memoProgram = 'Memo4c2pN8afCj432Lb7RMVKi9PbQnnW7ewFFaV3oAH';
+    const $ = (id) => document.getElementById(id);
+    const signatureFrom = (value) => {
+      const trimmed = value.trim();
+      const match = trimmed.match(/(?:solscan\.io\/tx\/)?([1-9A-HJ-NP-Za-km-z]{80,100})/);
+      return match ? match[1] : '';
+    };
+    const setStatus = (message, error = false) => { $('status').textContent = message; $('status').className = error ? 'error' : ''; };
+    const escape = (value) => String(value).replace(/[&<>"']/g, (c) => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' })[c]);
+    const formatTime = (seconds) => seconds ? new Intl.DateTimeFormat(undefined, { dateStyle: 'medium', timeStyle: 'short' }).format(new Date(seconds * 1000)) : 'Unavailable';
+    function dataUriDetails(value) {
+      const match = value.match(/^data:([a-z]+\/[a-z0-9+.-]+);base64,([a-z0-9+/=\s]+)$/i);
+      if (!match) return null;
+      const mime = match[1].toLowerCase();
+      // Raster formats only: the data is displayed, never executed as a document.
+      if (!['image/png', 'image/jpeg', 'image/gif', 'image/webp'].includes(mime)) return { unsupported: mime };
+      try { return { mime, bytes: atob(match[2].replace(/\s/g, '')).length, uri: value }; } catch { return null; }
+    }
+    function render(signature, transaction, memo) {
+      const detail = dataUriDetails(memo);
+      $('result').classList.add('visible');
+      const payer = transaction.transaction.message.accountKeys.find((key) => key.signer)?.pubkey || 'Unavailable';
+      $('meta').innerHTML = `<div>Format<strong>${detail?.mime || (detail?.unsupported ? detail.unsupported + ' (not previewed)' : 'Text memo')}</strong></div><div>Written<strong>${formatTime(transaction.blockTime)}</strong></div><div>Signed by<strong>${escape(payer)}</strong></div><div>Transaction<strong><a target="_blank" rel="noopener" href="https://solscan.io/tx/${encodeURIComponent(signature)}">View on Solscan</a></strong></div>`;
+      const preview = $('preview'); const actions = $('actions'); preview.replaceChildren(); actions.replaceChildren();
+      if (detail?.uri) {
+        const image = new Image(); image.src = detail.uri; image.alt = `Onchain ${detail.mime} (${detail.bytes.toLocaleString()} bytes)`; preview.append(image);
+        const download = document.createElement('a'); download.href = detail.uri; download.download = `solana-memo-${signature.slice(0, 8)}.${detail.mime.split('/')[1]}`; download.textContent = 'Download file'; download.style.cssText = 'display:inline-block;padding:13px 17px;border-radius:10px;text-decoration:none;background:#26334b;color:#dce7fb'; actions.append(download);
+        setStatus(`Found a ${detail.mime} image (${detail.bytes.toLocaleString()} bytes).`);
+      } else {
+        const text = document.createElement('pre'); text.textContent = memo; preview.append(text);
+        const copy = document.createElement('button'); copy.type = 'button'; copy.className = 'secondary'; copy.textContent = 'Copy memo'; copy.onclick = async () => { await navigator.clipboard.writeText(memo); copy.textContent = 'Copied'; }; actions.append(copy);
+        setStatus(detail?.unsupported ? `Found a ${detail.unsupported} payload. This viewer does not preview that format yet.` : 'Found a text memo.');
+      }
+    }
+    async function lookup(event) {
+      event?.preventDefault(); const signature = signatureFrom($('transaction').value);
+      $('result').classList.remove('visible');
+      if (!signature) return setStatus('Enter a valid Solana transaction signature or Solscan transaction link.', true);
+      history.replaceState({}, '', `?tx=${encodeURIComponent(signature)}`); setStatus('Reading the signed transaction…');
+      try {
+        const response = await fetch(RPC, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ jsonrpc: '2.0', id: 1, method: 'getTransaction', params: [signature, { encoding: 'jsonParsed', maxSupportedTransactionVersion: 1 }] }) });
+        const payload = await response.json(); if (payload.error) throw new Error(payload.error.message); if (!payload.result) throw new Error('Transaction was not found on the Solana mainnet.');
+        const instruction = payload.result.transaction.message.instructions.find((item) => item.programId === memoProgram && typeof item.parsed === 'string');
+        if (!instruction) throw new Error('No readable Memo was found in this transaction.');
+        render(signature, payload.result, instruction.parsed);
+      } catch (error) { setStatus(error.message || 'Could not read that transaction.', true); }
+    }
+    $('lookup').addEventListener('submit', lookup);
+    const initial = new URLSearchParams(location.search).get('tx');
+    if (initial) { $('transaction').value = initial; lookup(); }
+  </script>
+</body>
+</html>

@@ -59,6 +59,19 @@ const result = await deployAgent({
 // → { ref, txHash, onchainId, contractOrMint, agent }
 ```
 
+### Solana transaction v1
+
+Solana deploys negotiate the transaction format after wallet connection. When
+the matching Wallet Standard account advertises transaction version `1`, prep
+returns a v1 Metaplex Core mint with explicit `transactionConfig` caps and the
+wallet signs its raw bytes through `solana:signTransaction`. Wallets without v1
+support continue through the existing v0 path automatically.
+
+The v1 deploy config is intentionally explicit because v1 compute-unit and
+loaded-account-data limits otherwise resolve to zero. Server-side asset and
+collection signatures are applied before the prepared transaction is returned;
+the connected owner wallet supplies the remaining fee-payer signature.
+
 ## API surface (server)
 
 Two endpoints — replace the four legacy ones:

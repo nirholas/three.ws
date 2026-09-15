@@ -40,6 +40,10 @@ import {
 	loadCollectionAuthorityKeypair,
 	collectionAuthoritySigner,
 } from '../../_lib/solana-collection.js';
+import {
+	buildPartiallySignedV1Transaction,
+	SOLANA_TRANSACTION_V1,
+} from '../../_lib/solana/transaction-v1.js';
 
 import { pinToIPFS, ipfsPinningConfigured } from '../../_lib/ipfs-pin.js';
 export default wrap(async (req, res) => {
@@ -93,6 +97,9 @@ const prepBodySchema = z.object({
 		.array(z.string().regex(/^[a-z0-9-]{1,40}$/i))
 		.max(16)
 		.optional(),
+	// Solana v1 is opt-in because older wallets may only sign legacy/v0. The
+	// client selects it only after reading the wallet-standard capability.
+	transaction_version: z.union([z.literal(0), z.literal(1)]).optional(),
 });
 
 // Pin a manifest. Try the IPFS provider chain first (Pinata, then web3.storage,
@@ -159,7 +166,7 @@ const SOLANA_PUBLIC_RPC = {
 	devnet: 'https://api.devnet.solana.com',
 };
 
-async function buildSolanaTx({ rpc, network, walletAddress, name, metadataUri, attributes, collectionAddr }) {
+async function buildSolanaTx({ rpc, network, walletAddress, name, metadataUri, attributes, collectionAddr, transactionVersion = 0 }) {
 	// Build through the multi-endpoint failover Connection rather than handing
 	// umi a bare URL. umi's createUmi accepts a web3.js Connection directly, so
 	// every RPC the build needs — chiefly getLatestBlockhash — rotates across the
@@ -197,8 +204,18 @@ async function buildSolanaTx({ rpc, network, walletAddress, name, metadataUri, a
 		createArgs.authority = collectionAuthoritySigner(umi);
 	}
 	const builder = create(umi, createArgs);
+	if (transactionVersion === SOLANA_TRANSACTION_V1) {
+		const lifetime = await connection.getLatestBlockhash('confirmed');
+		const txBytes = await buildPartiallySignedV1Transaction({
+			instructions: builder.getInstructions(),
+			signers: builder.getSigners(umi),
+			feePayer: walletAddress,
+			lifetime,
+		});
+		return { assetSigner, txBytes, transactionVersion: SOLANA_TRANSACTION_V1 };
+	}
 	const tx = await builder.buildAndSign(umi);
-	return { assetSigner, txBytes: umi.transactions.serialize(tx) };
+	return { assetSigner, txBytes: umi.transactions.serialize(tx), transactionVersion: 0 };
 }
 
 function isRpcAuthError(err) {
@@ -220,7 +237,7 @@ function isRpcMalformed(err) {
 	return /StructError|failed to get recent blockhash|failed to get info about account|Unexpected (token|end of JSON)|invalid json response/i.test(msg);
 }
 
-async function prepSolana({ cluster, metadataUri, walletAddress, name, attributes }) {
+async function prepSolana({ cluster, metadataUri, walletAddress, name, attributes, transactionVersion = 0 }) {
 	const configuredRpc =
 		cluster === 'devnet'
 			? process.env.SOLANA_RPC_URL_DEVNET || SOLANA_PUBLIC_RPC.devnet
@@ -253,6 +270,7 @@ async function prepSolana({ cluster, metadataUri, walletAddress, name, attribute
 			metadataUri,
 			attributes,
 			collectionAddr,
+			transactionVersion,
 		}));
 	} catch (err) {
 		if (isRpcRateLimited(err)) {
@@ -289,6 +307,7 @@ async function prepSolana({ cluster, metadataUri, walletAddress, name, attribute
 		txBase64: Buffer.from(txBytes).toString('base64'),
 		metadataUri,
 		collection: collectionAddr || null,
+		transactionVersion,
 	};
 }
 
@@ -358,6 +377,7 @@ async function handlePrep(req, res) {
 				walletAddress: body.wallet_address,
 				name: body.name,
 				attributes,
+				transactionVersion: body.transaction_version || 0,
 			});
 		}
 	} catch (e) {
@@ -403,7 +423,12 @@ async function handlePrep(req, res) {
 				skills: body.skills || [],
 				...(chain.family === 'evm'
 					? { contract_address: familyPrep.contractAddress }
-					: { asset_pubkey: familyPrep.assetPubkey, cluster: chain.cluster, collection: familyPrep.collection }),
+					: {
+						asset_pubkey: familyPrep.assetPubkey,
+						cluster: chain.cluster,
+						collection: familyPrep.collection,
+						transaction_version: familyPrep.transactionVersion,
+					}),
 			})}::jsonb,
 			${expiresAt}
 		)
@@ -420,6 +445,7 @@ async function handlePrep(req, res) {
 					assetPubkey: familyPrep.assetPubkey,
 					txBase64: familyPrep.txBase64,
 					cluster: chain.cluster,
+					transactionVersion: familyPrep.transactionVersion,
 				}),
 		expiresAt: expiresAt.toISOString(),
 	});

@@ -13,6 +13,7 @@
  */
 
 import { Connection, Transaction, VersionedTransaction } from '@solana/web3.js';
+import { getWallets } from '@wallet-standard/app';
 import { solana } from '../chain-ref.js';
 
 // Route through our same-origin proxy. The public mainnet RPC returns 403 to
@@ -62,11 +63,30 @@ function decodeTx(b64) {
 	}
 }
 
+function fromBase64(b64) {
+	const bin = atob(b64);
+	const bytes = new Uint8Array(bin.length);
+	for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+	return bytes;
+}
+
+/** Find the Wallet Standard account that owns an address and advertises v1. */
+export function findV1WalletStandardSigner(wallets, address) {
+	for (const wallet of wallets || []) {
+		const feature = wallet?.features?.['solana:signTransaction'];
+		if (!feature?.supportedTransactionVersions?.includes(1)) continue;
+		const account = wallet.accounts?.find((candidate) => candidate.address === address);
+		if (account) return { wallet, account, feature };
+	}
+	return null;
+}
+
 /** @implements {import('./base.js').WalletAdapter} */
 export class SolanaAdapter {
 	#provider = null;
 	#address = null;
 	#preferred;
+	#v1Signer = null;
 
 	constructor({ preferredWallet = null } = {}) {
 		this.#preferred = preferredWallet;
@@ -74,6 +94,10 @@ export class SolanaAdapter {
 
 	get family() {
 		return 'solana';
+	}
+
+	get supportedTransactionVersions() {
+		return this.#v1Signer ? [0, 1] : [0];
 	}
 
 	isAvailable() {
@@ -113,6 +137,7 @@ export class SolanaAdapter {
 		}
 		this.#address = (resp?.publicKey || provider.publicKey)?.toString();
 		if (!this.#address) throw new Error('Could not read Solana wallet address.');
+		this.#v1Signer = findV1WalletStandardSigner(getWallets().get(), this.#address);
 
 		if (ensureLinked) {
 			await this.#ensureLinkedViaSiws(cluster);
@@ -133,15 +158,31 @@ export class SolanaAdapter {
 		if (!this.#provider) throw new Error('Wallet not connected');
 		if (!prep.txBase64) throw new Error('Solana prep missing txBase64');
 
-		const tx = decodeTx(prep.txBase64);
 		const conn = new Connection(RPC[ref.cluster], 'confirmed');
 
 		// Always go through signTransaction + our own Connection so we control
 		// which cluster the tx lands on. Avoids the silent mismatch where
 		// Phantom is set to mainnet but the user picked devnet (or vice versa).
-		let signed;
+		let raw;
 		try {
-			signed = await this.#provider.signTransaction(tx);
+			if (prep.transactionVersion === 1) {
+				if (!this.#v1Signer) {
+					const err = new Error('This wallet does not advertise Solana transaction v1 signing.');
+					err.code = 'TX_VERSION_UNSUPPORTED';
+					throw err;
+				}
+				const [result] = await this.#v1Signer.feature.signTransaction({
+					account: this.#v1Signer.account,
+					transaction: fromBase64(prep.txBase64),
+					options: { preflightCommitment: 'confirmed' },
+				});
+				if (!result?.signedTransaction) throw new Error('Wallet returned no signed v1 transaction.');
+				raw = result.signedTransaction;
+			} else {
+				const tx = decodeTx(prep.txBase64);
+				const signed = await this.#provider.signTransaction(tx);
+				raw = signed.serialize();
+			}
 		} catch (e) {
 			if (e?.code === 4001 || /reject/i.test(e?.message || '')) {
 				const err = new Error('Signature cancelled.');
@@ -151,7 +192,6 @@ export class SolanaAdapter {
 			throw e;
 		}
 
-		const raw = signed.serialize();
 		const signature = await conn.sendRawTransaction(raw, {
 			skipPreflight: false,
 			preflightCommitment: 'confirmed',

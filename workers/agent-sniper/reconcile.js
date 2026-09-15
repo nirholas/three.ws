@@ -144,7 +144,7 @@ export async function reconcileVanishedBag({ ctx, position, reason }) {
 			for (const s of sigs || []) {
 				if (s.err || s.signature === position.buy_sig) continue;
 				const tx = await ctx.connection.getParsedTransaction(s.signature, {
-					maxSupportedTransactionVersion: 0,
+					maxSupportedTransactionVersion: 1,
 				});
 				if (!tx || tx.meta?.err) continue;
 				const pre = (tx.meta?.preTokenBalances || []).find(

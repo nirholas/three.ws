@@ -17,12 +17,12 @@ import { toCaip2 } from './chain-ref.js';
 
 const PREP_CACHE_TTL_MS = 50 * 60 * 1000; // server keeps prep 60m
 
-function prepCacheKey(agentId, ref) {
-	return `3dagent:onchain-prep:${agentId}:${toCaip2(ref)}`;
+function prepCacheKey(agentId, ref, transactionVersion = 0) {
+	return `3dagent:onchain-prep:${agentId}:${toCaip2(ref)}:tx${transactionVersion}`;
 }
 
-async function getOrCreatePrep(agent, ref, walletAddress) {
-	const key = prepCacheKey(agent.id, ref);
+async function getOrCreatePrep(agent, ref, walletAddress, transactionVersion = 0) {
+	const key = prepCacheKey(agent.id, ref, transactionVersion);
 	try {
 		const raw = localStorage.getItem(key);
 		if (raw) {
@@ -41,6 +41,7 @@ async function getOrCreatePrep(agent, ref, walletAddress) {
 		description: agent.description || '',
 		avatar_id: agent.avatarId || agent.avatar_id || null,
 		skills: Array.isArray(agent.skills) && agent.skills.length ? agent.skills : undefined,
+		...(ref.family === 'solana' ? { transaction_version: transactionVersion } : {}),
 	};
 	const resp = await fetch('/api/agents/onchain/prep', {
 		method: 'POST',
@@ -65,9 +66,9 @@ async function getOrCreatePrep(agent, ref, walletAddress) {
 	return cached;
 }
 
-function clearPrepCache(agentId, ref) {
+function clearPrepCache(agentId, ref, transactionVersion = 0) {
 	try {
-		localStorage.removeItem(prepCacheKey(agentId, ref));
+		localStorage.removeItem(prepCacheKey(agentId, ref, transactionVersion));
 	} catch {
 		/* ignore */
 	}
@@ -96,13 +97,15 @@ export async function deployAgent({ agent, ref, onProgress = () => {} }) {
 		ensureLinked: true,
 		cluster: ref.family === 'solana' ? ref.cluster : undefined,
 	});
+	const transactionVersion =
+		ref.family === 'solana' && adapter.supportedTransactionVersions?.includes(1) ? 1 : 0;
 
 	if (ref.family === 'evm' && walletRef.family === 'evm' && walletRef.chainId !== ref.chainId) {
 		await adapter.switchTo(ref);
 	}
 
 	onProgress('prep');
-	const prep = await getOrCreatePrep(agent, ref, address);
+	const prep = await getOrCreatePrep(agent, ref, address, transactionVersion);
 
 	onProgress('sign');
 	const sig = await adapter.signAndSend(prep, ref);
@@ -130,7 +133,7 @@ export async function deployAgent({ agent, ref, onProgress = () => {} }) {
 	const result = await confirmResp.json();
 
 	onProgress('save');
-	clearPrepCache(agent.id, ref);
+	clearPrepCache(agent.id, ref, transactionVersion);
 
 	return {
 		ref,

@@ -76,7 +76,7 @@ export async function walletHistoryCount(address, { endpoint, freshMax = 12 } = 
 export async function fetchTransaction(signature, { endpoint }) {
 	return rpc(endpoint, 'getTransaction', [
 		signature,
-		{ encoding: 'jsonParsed', maxSupportedTransactionVersion: 0, commitment: 'confirmed' },
+		{ encoding: 'jsonParsed', maxSupportedTransactionVersion: 1, commitment: 'confirmed' },
 	]);
 }
 

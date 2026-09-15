@@ -1,3 +1,13 @@
+/**
+ * Solana transaction-v1 builder bridge.
+ *
+ * Metaplex Umi exposes the instructions and signers needed to create a Core
+ * asset, but its transaction factory currently emits v0. This module converts
+ * those Umi-shaped instructions to @solana/kit and compiles the v1 envelope.
+ * The server-owned asset/collection keys sign here; the owner's wallet slot is
+ * intentionally left empty for Wallet Standard to sign in the browser.
+ */
+
 import {
 	COMPUTE_BUDGET_PROGRAM_ADDRESS,
 	ComputeBudgetInstruction,
@@ -9,16 +19,109 @@ import {
 	MAX_COMPUTE_UNIT_LIMIT,
 } from '@solana-program/compute-budget';
 import {
+	AccountRole,
+	address,
+	appendTransactionMessageInstructions,
+	assertIsTransactionWithinSizeLimit,
+	blockhash,
+	compileTransaction,
+	createTransactionMessage,
 	decompileTransactionMessage,
 	getBase64Encoder,
 	getCompiledTransactionMessageDecoder,
 	getTransactionDecoder,
+	getTransactionEncoder,
+	pipe,
+	setTransactionMessageConfig,
+	setTransactionMessageFeePayer,
+	setTransactionMessageLifetimeUsingBlockhash,
 } from '@solana/kit';
 
 export const TX_V1_FEATURE_ADDRESS = 'txv1aq4pp281K9um3tnPgkfX8UqtFT6wcVW3hNezGLL';
 export const LEGACY_TRANSACTION_LIMIT = 1_232;
 export const V1_TRANSACTION_LIMIT = 4_096;
+export const SOLANA_TRANSACTION_V1 = 1;
 const DEFAULT_COMPUTE_UNITS_PER_INSTRUCTION = 200_000;
+
+// V1 has no implicit compute/data limits. These conservative limits cover a
+// Metaplex Core create while bounding the resources a prepared tx may consume.
+export const AGENT_DEPLOY_V1_CONFIG = Object.freeze({
+	computeUnitLimit: 500_000,
+	loadedAccountsDataSizeLimit: 8 * 1024 * 1024,
+	priorityFeeLamports: 5_000n,
+});
+
+const COMPUTE_BUDGET_PROGRAM = 'ComputeBudget111111111111111111111111111111';
+
+function accountRole(meta) {
+	if (meta.isSigner) {
+		return meta.isWritable ? AccountRole.WRITABLE_SIGNER : AccountRole.READONLY_SIGNER;
+	}
+	return meta.isWritable ? AccountRole.WRITABLE : AccountRole.READONLY;
+}
+
+export function toKitInstruction(instruction) {
+	if (String(instruction.programId) === COMPUTE_BUDGET_PROGRAM) {
+		throw new Error('v1 resource limits must use transactionConfig, not ComputeBudget instructions');
+	}
+	return {
+		programAddress: address(String(instruction.programId)),
+		accounts: instruction.keys.map((meta) => ({
+			address: address(String(meta.pubkey)),
+			role: accountRole(meta),
+		})),
+		data: instruction.data,
+	};
+}
+
+/**
+ * Build a partially signed v1 transaction from Umi instructions/signers.
+ * @param {object} input
+ * @param {Array<object>} input.instructions Umi-shaped instructions.
+ * @param {Array<{publicKey: string, signMessage(bytes: Uint8Array): Promise<Uint8Array>}>} input.signers
+ * @param {string} input.feePayer Owner wallet; deliberately not server-signed.
+ * @param {{blockhash: string, lastValidBlockHeight: number|bigint}} input.lifetime
+ * @param {object} [input.config]
+ */
+export async function buildPartiallySignedV1Transaction({
+	instructions,
+	signers = [],
+	feePayer,
+	lifetime,
+	config = AGENT_DEPLOY_V1_CONFIG,
+}) {
+	const message = pipe(
+		createTransactionMessage({ version: SOLANA_TRANSACTION_V1 }),
+		(m) => setTransactionMessageFeePayer(address(feePayer), m),
+		(m) =>
+			setTransactionMessageLifetimeUsingBlockhash(
+				{
+					blockhash: blockhash(lifetime.blockhash),
+					lastValidBlockHeight: BigInt(lifetime.lastValidBlockHeight),
+				},
+				m,
+			),
+		(m) => appendTransactionMessageInstructions(instructions.map(toKitInstruction), m),
+		(m) => setTransactionMessageConfig(config, m),
+	);
+
+	const transaction = compileTransaction(message);
+	const signatures = { ...transaction.signatures };
+	for (const signer of signers) {
+		const signerAddress = String(signer.publicKey);
+		// The wallet fee payer is represented by Umi's noop signer. Keep its
+		// signature null so the browser wallet can fill it.
+		if (signerAddress === feePayer || signatures[signerAddress] === undefined) continue;
+		signatures[signerAddress] = await signer.signMessage(transaction.messageBytes);
+	}
+
+	const partiallySigned = Object.freeze({
+		...transaction,
+		signatures: Object.freeze(signatures),
+	});
+	assertIsTransactionWithinSizeLimit(partiallySigned);
+	return getTransactionEncoder().encode(partiallySigned);
+}
 
 function asSafeNumber(value) {
 	if (value === undefined || value === null) return null;
@@ -128,10 +231,7 @@ function sponsorAssessment(version, budget) {
 	return { verdict: safeToCosign ? 'caps-explicit' : 'limits-missing', safeToCosign, notes };
 }
 
-/**
- * Decode a signed Solana wire transaction without contacting an RPC.
- * Returns one stable, JSON-safe shape for legacy, V0, and V1.
- */
+/** Decode a signed Solana wire transaction into one JSON-safe shape. */
 export function inspectWireTransaction(base64Transaction) {
 	const value = String(base64Transaction || '').trim();
 	if (!value || value.length > 12_000 || !/^[A-Za-z0-9+/]+={0,2}$/.test(value)) {

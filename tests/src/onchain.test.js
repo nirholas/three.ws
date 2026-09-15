@@ -104,6 +104,30 @@ describe('chain-ref', () => {
 });
 
 describe('adapter factory', () => {
+	it('selects only a matching Wallet Standard account that advertises V1', async () => {
+		const { findV1WalletStandardSigner } = await import('../../src/onchain/adapters/solana.js');
+		const signTransaction = async () => [];
+		const account = { address: 'AgentOwner111', chains: [], features: [] };
+		const wallet = {
+			accounts: [account],
+			features: {
+				'solana:signTransaction': {
+					supportedTransactionVersions: ['legacy', 0, 1],
+					signTransaction,
+				},
+			},
+		};
+
+		expect(findV1WalletStandardSigner([wallet], account.address)).toEqual({
+			wallet,
+			account,
+			feature: wallet.features['solana:signTransaction'],
+		});
+		expect(findV1WalletStandardSigner([wallet], 'AnotherOwner')).toBeNull();
+		wallet.features['solana:signTransaction'].supportedTransactionVersions = ['legacy', 0];
+		expect(findV1WalletStandardSigner([wallet], account.address)).toBeNull();
+	});
+
 	it('returns the correct family adapter and caches', async () => {
 		const { getAdapter, _resetAdapters } = await import('../../src/onchain/adapters/index.js');
 		_resetAdapters();

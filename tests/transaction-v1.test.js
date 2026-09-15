@@ -1,8 +1,11 @@
 import { describe, it, expect } from 'vitest';
 import { Keypair, SystemProgram, Transaction } from '@solana/web3.js';
+import nacl from 'tweetnacl';
 import {
+	AGENT_DEPLOY_V1_CONFIG,
 	LEGACY_TRANSACTION_LIMIT,
 	V1_TRANSACTION_LIMIT,
+	buildPartiallySignedV1Transaction,
 	decodeFeatureActivationSlot,
 	inspectWireTransaction,
 } from '../api/_lib/solana/transaction-v1.js';
@@ -39,6 +42,50 @@ describe('Solana transaction V1 inspector', () => {
 	it('publishes the protocol limits used for legacy and V1 envelopes', () => {
 		expect(LEGACY_TRANSACTION_LIMIT).toBe(1_232);
 		expect(V1_TRANSACTION_LIMIT).toBe(4_096);
+	});
+
+	it('builds a partially signed V1 deploy with explicit resource caps', async () => {
+		const owner = Keypair.generate();
+		const asset = Keypair.generate();
+		const instruction = SystemProgram.createAccount({
+			fromPubkey: owner.publicKey,
+			newAccountPubkey: asset.publicKey,
+			lamports: 1,
+			space: 0,
+			programId: SystemProgram.programId,
+		});
+		const wire = await buildPartiallySignedV1Transaction({
+			feePayer: owner.publicKey.toBase58(),
+			lifetime: {
+				blockhash: Keypair.generate().publicKey.toBase58(),
+				lastValidBlockHeight: 123n,
+			},
+			instructions: [{
+				programId: instruction.programId.toBase58(),
+				keys: instruction.keys.map((key) => ({
+					pubkey: key.pubkey.toBase58(),
+					isSigner: key.isSigner,
+					isWritable: key.isWritable,
+				})),
+				data: instruction.data,
+			}],
+			signers: [{
+				publicKey: asset.publicKey.toBase58(),
+				signMessage: async (message) => nacl.sign.detached(message, asset.secretKey),
+			}],
+		});
+
+		expect(wire[0]).toBe(0x81);
+		const inspected = inspectWireTransaction(Buffer.from(wire).toString('base64'));
+		expect(inspected.version).toBe(1);
+		expect(inspected.limitBytes).toBe(V1_TRANSACTION_LIMIT);
+		expect(inspected.budget).toMatchObject({
+			source: 'transaction-config',
+			computeUnitLimit: AGENT_DEPLOY_V1_CONFIG.computeUnitLimit,
+			loadedAccountsDataSizeLimit: AGENT_DEPLOY_V1_CONFIG.loadedAccountsDataSizeLimit,
+			priorityFeeLamports: Number(AGENT_DEPLOY_V1_CONFIG.priorityFeeLamports),
+		});
+		expect(inspected.sponsor).toMatchObject({ verdict: 'caps-explicit', safeToCosign: true });
 	});
 
 	it('rejects malformed wire input without contacting an RPC', () => {
