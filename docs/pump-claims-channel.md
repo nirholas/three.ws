@@ -3,10 +3,16 @@
 A live feed of **first-time pump.fun creator fee claims**, delivered to a
 Telegram channel (`@pumpfunclaims`), one message per claim.
 
-A "first claim" is the first time a creator ever pulls their accrued
-creator/delegated rewards out of the fee vault. It is an on-chain, irreversible
-signal that the creator is live and engaged with their coin, which is why it
-gets its own channel rather than a line in the holder changelog.
+A claim is a real on-chain withdrawal. For GitHub social fees, it proves payment
+to a GitHub fee account—not automatically that the GitHub user created, owns, or
+endorses a particular coin. Token metadata can name lookalike accounts, and one
+fee account can pool rewards from several coins.
+
+Trader-facing cards use five evidence labels: **Verified GitHub Fee Claim**,
+**Creator-Wallet GitHub Fee Claim**, **Identity Mismatch**, **Unverified**, and
+**Unresolved Pooled**. A pooled event selects no primary CA or per-coin amount.
+“First-ever” refers to the shared fee account, and trade links appear only for
+verified relationships. The feed is a research lead, not an endorsement.
 
 ## How it works
 
