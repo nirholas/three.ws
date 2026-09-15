@@ -187,6 +187,9 @@ The execution order is deliberately narrow:
    review before posting; AWS explicitly says it may repost approved seller announcements.
 6. Establish the measurement baseline using the campaign IDs and scorecard in
    [measurement.md](./measurement.md).
+7. Open the installable-distribution wave: package the finished VS Code 3D extension,
+   add official Registry metadata to the ComfyUI nodes, and complete Blender's required
+   online-access compliance before its Extension submission.
 
 ## Weekly operating rhythm
 
