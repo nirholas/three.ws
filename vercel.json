@@ -6,19 +6,91 @@
 		"NODE_OPTIONS": "--no-deprecation"
 	},
 	"functions": {
-		"api/cron/{economy-tick,copy-fanout,mirror-fanout,signal-fanout,three-holders-snapshot,x402-autonomous-loop,pulse-tick,coin-intel-observe,launcher-tick,reflect-sweep,solana-autodeploy,db-retention,custody-attest,sniper-optimize,sniper-evolve,oracle-realized-labels,oracle-calibrate,arena-tick}.js": {
+		"api/cron/economy-tick.js": {
 			"maxDuration": 120
 		},
-		"api/cron/{strategy-fanout,gmgn-seed}.js": {
+		"api/cron/copy-fanout.js": {
+			"maxDuration": 120
+		},
+		"api/cron/mirror-fanout.js": {
+			"maxDuration": 120
+		},
+		"api/cron/signal-fanout.js": {
+			"maxDuration": 120
+		},
+		"api/cron/three-holders-snapshot.js": {
+			"maxDuration": 120
+		},
+		"api/cron/x402-autonomous-loop.js": {
+			"maxDuration": 120
+		},
+		"api/cron/pulse-tick.js": {
+			"maxDuration": 120
+		},
+		"api/cron/coin-intel-observe.js": {
+			"maxDuration": 120
+		},
+		"api/cron/launcher-tick.js": {
+			"maxDuration": 120
+		},
+		"api/cron/reflect-sweep.js": {
+			"maxDuration": 120
+		},
+		"api/cron/solana-autodeploy.js": {
+			"maxDuration": 120
+		},
+		"api/cron/db-retention.js": {
+			"maxDuration": 120
+		},
+		"api/cron/custody-attest.js": {
+			"maxDuration": 120
+		},
+		"api/cron/sniper-optimize.js": {
+			"maxDuration": 120
+		},
+		"api/cron/sniper-evolve.js": {
+			"maxDuration": 120
+		},
+		"api/cron/oracle-realized-labels.js": {
+			"maxDuration": 120
+		},
+		"api/cron/oracle-calibrate.js": {
+			"maxDuration": 120
+		},
+		"api/cron/arena-tick.js": {
+			"maxDuration": 120
+		},
+		"api/cron/strategy-fanout.js": {
+			"maxDuration": 300
+		},
+		"api/cron/gmgn-seed.js": {
 			"maxDuration": 300
 		},
 		"api/cron/treasury-topup.js": {
 			"maxDuration": 120
 		},
-		"{api/cron/economy-reconcile,api/cron/x402-ring-leak-scan,api/cron/quality-bench,api/cron/likeness-eval,api/cron/fact-check-benchmark}.js": {
+		"api/cron/economy-reconcile.js": {
 			"maxDuration": 300
 		},
-		"{api/strategies,api/cron/payment-session-sweep,api/cron/three-market-refresh}.js": {
+		"api/cron/x402-ring-leak-scan.js": {
+			"maxDuration": 300
+		},
+		"api/cron/quality-bench.js": {
+			"maxDuration": 300
+		},
+		"api/cron/likeness-eval.js": {
+			"maxDuration": 300
+		},
+		"api/cron/fact-check-benchmark.js": {
+			"maxDuration": 300
+		},
+		"api/strategies.js": {
+			"maxDuration": 30
+		},
+		"api/cron/payment-session-sweep.js": {
+			"maxDuration": 30
+		},
+		"api/cron/three-market-refresh.js": {
 			"maxDuration": 30
 		},
 		"api/agents/[id].js": {
@@ -30,10 +102,56 @@
 		"api/tournaments/[id]/[action].js": {
 			"maxDuration": 120
 		},
-		"{api/agents/networth,api/avatars/from-forge,api/pay/execute,api/pay/simulate,api/cron/launcher-claimer,api/seed/synthesize,api/cron/x402-ring-tick}.js": {
+		"api/agents/networth.js": {
 			"maxDuration": 60
 		},
-		"{api/club/tips-stream,api/feed-stream,api/pump/trades-stream,api/oracle/stream,api/oracle/action-stream,api/sniper/stream,api/sniper/radar-stream,api/agent-screen-stream}.js": {
+		"api/avatars/from-forge.js": {
+			"maxDuration": 60
+		},
+		"api/pay/execute.js": {
+			"maxDuration": 60
+		},
+		"api/pay/simulate.js": {
+			"maxDuration": 60
+		},
+		"api/cron/launcher-claimer.js": {
+			"maxDuration": 60
+		},
+		"api/seed/synthesize.js": {
+			"maxDuration": 60
+		},
+		"api/cron/x402-ring-tick.js": {
+			"maxDuration": 60
+		},
+		"api/club/tips-stream.js": {
+			"includeFiles": "{examples/skills/**,data/pages.json,data/archives/**,data/rss/**,data/_generated/**,sdk/src/sas-config.json}",
+			"maxDuration": 300
+		},
+		"api/feed-stream.js": {
+			"includeFiles": "{examples/skills/**,data/pages.json,data/archives/**,data/rss/**,data/_generated/**,sdk/src/sas-config.json}",
+			"maxDuration": 300
+		},
+		"api/pump/trades-stream.js": {
+			"includeFiles": "{examples/skills/**,data/pages.json,data/archives/**,data/rss/**,data/_generated/**,sdk/src/sas-config.json}",
+			"maxDuration": 300
+		},
+		"api/oracle/stream.js": {
+			"includeFiles": "{examples/skills/**,data/pages.json,data/archives/**,data/rss/**,data/_generated/**,sdk/src/sas-config.json}",
+			"maxDuration": 300
+		},
+		"api/oracle/action-stream.js": {
+			"includeFiles": "{examples/skills/**,data/pages.json,data/archives/**,data/rss/**,data/_generated/**,sdk/src/sas-config.json}",
+			"maxDuration": 300
+		},
+		"api/sniper/stream.js": {
+			"includeFiles": "{examples/skills/**,data/pages.json,data/archives/**,data/rss/**,data/_generated/**,sdk/src/sas-config.json}",
+			"maxDuration": 300
+		},
+		"api/sniper/radar-stream.js": {
+			"includeFiles": "{examples/skills/**,data/pages.json,data/archives/**,data/rss/**,data/_generated/**,sdk/src/sas-config.json}",
+			"maxDuration": 300
+		},
+		"api/agent-screen-stream.js": {
 			"includeFiles": "{examples/skills/**,data/pages.json,data/archives/**,data/rss/**,data/_generated/**,sdk/src/sas-config.json}",
 			"maxDuration": 300
 		},
@@ -48,15 +166,26 @@
 			"includeFiles": "{node_modules/@img/sharp-libvips-linux-x64/**,node_modules/@img/sharp-linux-x64/**}",
 			"maxDuration": 300
 		},
-		"{api/crypto/index,api/crypto/openapi}.js": {
+		"api/crypto/index.js": {
 			"includeFiles": "api/_lib/crypto-catalog/**",
 			"maxDuration": 30
 		},
-		"{api/3d/index,api/3d/openapi}.js": {
+		"api/crypto/openapi.js": {
+			"includeFiles": "api/_lib/crypto-catalog/**",
+			"maxDuration": 30
+		},
+		"api/3d/index.js": {
 			"includeFiles": "api/_lib/3d-catalog/**",
 			"maxDuration": 30
 		},
-		"{api/3d/generate,api/3d/studio}.js": {
+		"api/3d/openapi.js": {
+			"includeFiles": "api/_lib/3d-catalog/**",
+			"maxDuration": 30
+		},
+		"api/3d/generate.js": {
+			"maxDuration": 120
+		},
+		"api/3d/studio.js": {
 			"maxDuration": 120
 		},
 		"api/x402/embody.js": {
@@ -66,15 +195,51 @@
 			"includeFiles": "{examples/skills/**,data/pages.json,data/archives/**,data/rss/**,data/_generated/**,sdk/src/sas-config.json}",
 			"maxDuration": 300
 		},
-		"{api/agents/pumpfun,api/agents/gmgn,api/brain/chat,api/chat/proxy,api/agent-ask}.js": {
+		"api/agents/pumpfun.js": {
 			"includeFiles": "{examples/skills/**,data/pages.json,data/archives/**,data/rss/**,data/_generated/**,sdk/src/sas-config.json}",
 			"maxDuration": 120
 		},
-		"api/cron/{uptime-check,world-health,quota-check}.js": {
+		"api/agents/gmgn.js": {
+			"includeFiles": "{examples/skills/**,data/pages.json,data/archives/**,data/rss/**,data/_generated/**,sdk/src/sas-config.json}",
+			"maxDuration": 120
+		},
+		"api/brain/chat.js": {
+			"includeFiles": "{examples/skills/**,data/pages.json,data/archives/**,data/rss/**,data/_generated/**,sdk/src/sas-config.json}",
+			"maxDuration": 120
+		},
+		"api/chat/proxy.js": {
+			"includeFiles": "{examples/skills/**,data/pages.json,data/archives/**,data/rss/**,data/_generated/**,sdk/src/sas-config.json}",
+			"maxDuration": 120
+		},
+		"api/agent-ask.js": {
+			"includeFiles": "{examples/skills/**,data/pages.json,data/archives/**,data/rss/**,data/_generated/**,sdk/src/sas-config.json}",
+			"maxDuration": 120
+		},
+		"api/cron/uptime-check.js": {
 			"includeFiles": "data/pages.json",
 			"maxDuration": 30
 		},
-		"{api/cron/relayer-balance-check,api/cron/flush-usage-events,api/cron/oracle-digest,api/jobs/flush-usage-events}.js": {
+		"api/cron/world-health.js": {
+			"includeFiles": "data/pages.json",
+			"maxDuration": 30
+		},
+		"api/cron/quota-check.js": {
+			"includeFiles": "data/pages.json",
+			"maxDuration": 30
+		},
+		"api/cron/relayer-balance-check.js": {
+			"includeFiles": "data/pages.json",
+			"maxDuration": 60
+		},
+		"api/cron/flush-usage-events.js": {
+			"includeFiles": "data/pages.json",
+			"maxDuration": 60
+		},
+		"api/cron/oracle-digest.js": {
+			"includeFiles": "data/pages.json",
+			"maxDuration": 60
+		},
+		"api/jobs/flush-usage-events.js": {
 			"includeFiles": "data/pages.json",
 			"maxDuration": 60
 		},
@@ -82,7 +247,10 @@
 			"includeFiles": "data/pages.json",
 			"maxDuration": 300
 		},
-		"api/cron/{forge-seed-cron,x402-seed-cron}.js": {
+		"api/cron/forge-seed-cron.js": {
+			"maxDuration": 70
+		},
+		"api/cron/x402-seed-cron.js": {
 			"maxDuration": 70
 		},
 		"api/cron/avatar-thumbnail-render.js": {
@@ -93,7 +261,10 @@
 			"includeFiles": "{examples/skills/**,data/pages.json,data/_generated/**,sdk/src/sas-config.json}",
 			"maxDuration": 120
 		},
-		"api/cron/{recompute-reputation,smart-money-graph}.js": {
+		"api/cron/recompute-reputation.js": {
+			"maxDuration": 300
+		},
+		"api/cron/smart-money-graph.js": {
 			"maxDuration": 300
 		},
 		"api/cron/sketchfab-showcase.js": {
@@ -111,7 +282,25 @@
 			"includeFiles": "{src/solana/vanity/wasm/**,examples/skills/**,data/pages.json,data/archives/**,data/rss/**,data/_generated/**,sdk/src/sas-config.json}",
 			"maxDuration": 60
 		},
-		"{api/mcp-studio,api/mcp-chatgpt,api/forge-nim,api/nim-forge,api/launch/mm,api/cron/avaturn-seed-cron,api/irl/interactions-stream}.js": {
+		"api/mcp-studio.js": {
+			"maxDuration": 300
+		},
+		"api/mcp-chatgpt.js": {
+			"maxDuration": 300
+		},
+		"api/forge-nim.js": {
+			"maxDuration": 300
+		},
+		"api/nim-forge.js": {
+			"maxDuration": 300
+		},
+		"api/launch/mm.js": {
+			"maxDuration": 300
+		},
+		"api/cron/avaturn-seed-cron.js": {
+			"maxDuration": 300
+		},
+		"api/irl/interactions-stream.js": {
 			"maxDuration": 300
 		},
 		"api/x402/remix-asset.js": {
@@ -121,7 +310,15 @@
 			"includeFiles": "{examples/skills/**,data/pages.json,data/archives/**,data/rss/**,data/_generated/**,sdk/src/sas-config.json}",
 			"maxDuration": 15
 		},
-		"{api/oracle/follow,api/trades/feed,api/oracle/categories}.js": {
+		"api/oracle/follow.js": {
+			"includeFiles": "{examples/skills/**,data/pages.json,data/archives/**,data/rss/**,data/_generated/**,sdk/src/sas-config.json}",
+			"maxDuration": 10
+		},
+		"api/trades/feed.js": {
+			"includeFiles": "{examples/skills/**,data/pages.json,data/archives/**,data/rss/**,data/_generated/**,sdk/src/sas-config.json}",
+			"maxDuration": 10
+		},
+		"api/oracle/categories.js": {
 			"includeFiles": "{examples/skills/**,data/pages.json,data/archives/**,data/rss/**,data/_generated/**,sdk/src/sas-config.json}",
 			"maxDuration": 10
 		},
@@ -134,7 +331,19 @@
 		"api/irl/share/[token].js": {
 			"maxDuration": 20
 		},
-		"{api/agent-vanity-grind,api/agent-collab,api/x402/forge,api/forge}.js": {
+		"api/agent-vanity-grind.js": {
+			"includeFiles": "{examples/skills/**,data/pages.json,data/archives/**,data/rss/**,data/_generated/**,sdk/src/sas-config.json}",
+			"maxDuration": 300
+		},
+		"api/agent-collab.js": {
+			"includeFiles": "{examples/skills/**,data/pages.json,data/archives/**,data/rss/**,data/_generated/**,sdk/src/sas-config.json}",
+			"maxDuration": 300
+		},
+		"api/x402/forge.js": {
+			"includeFiles": "{examples/skills/**,data/pages.json,data/archives/**,data/rss/**,data/_generated/**,sdk/src/sas-config.json}",
+			"maxDuration": 300
+		},
+		"api/forge.js": {
 			"includeFiles": "{examples/skills/**,data/pages.json,data/archives/**,data/rss/**,data/_generated/**,sdk/src/sas-config.json}",
 			"maxDuration": 300
 		},
@@ -142,11 +351,75 @@
 			"includeFiles": "{examples/skills/**,data/pages.json,data/archives/**,data/rss/**,data/_generated/**,sdk/src/sas-config.json}",
 			"maxDuration": 90
 		},
-		"{api/input-photo,api/vision,api/a2f,api/autopilot/proposals,api/ibm/galaxy,api/ibm/vision,api/agent/reflect,api/walk/pilot,api/agent-trade/demo}.js": {
+		"api/input-photo.js": {
 			"includeFiles": "{examples/skills/**,data/pages.json,data/archives/**,data/rss/**,data/_generated/**,sdk/src/sas-config.json}",
 			"maxDuration": 60
 		},
-		"{api/inference/livepeer,api/tts/speak,api/x402-pay,api/x402/vanity-verifiable,api/x402/pump-launch,api/zauth-reposcan,api/chat,api/oracle/trades,api/copy/settle-fee}.js": {
+		"api/vision.js": {
+			"includeFiles": "{examples/skills/**,data/pages.json,data/archives/**,data/rss/**,data/_generated/**,sdk/src/sas-config.json}",
+			"maxDuration": 60
+		},
+		"api/a2f.js": {
+			"includeFiles": "{examples/skills/**,data/pages.json,data/archives/**,data/rss/**,data/_generated/**,sdk/src/sas-config.json}",
+			"maxDuration": 60
+		},
+		"api/autopilot/proposals.js": {
+			"includeFiles": "{examples/skills/**,data/pages.json,data/archives/**,data/rss/**,data/_generated/**,sdk/src/sas-config.json}",
+			"maxDuration": 60
+		},
+		"api/ibm/galaxy.js": {
+			"includeFiles": "{examples/skills/**,data/pages.json,data/archives/**,data/rss/**,data/_generated/**,sdk/src/sas-config.json}",
+			"maxDuration": 60
+		},
+		"api/ibm/vision.js": {
+			"includeFiles": "{examples/skills/**,data/pages.json,data/archives/**,data/rss/**,data/_generated/**,sdk/src/sas-config.json}",
+			"maxDuration": 60
+		},
+		"api/agent/reflect.js": {
+			"includeFiles": "{examples/skills/**,data/pages.json,data/archives/**,data/rss/**,data/_generated/**,sdk/src/sas-config.json}",
+			"maxDuration": 60
+		},
+		"api/walk/pilot.js": {
+			"includeFiles": "{examples/skills/**,data/pages.json,data/archives/**,data/rss/**,data/_generated/**,sdk/src/sas-config.json}",
+			"maxDuration": 60
+		},
+		"api/agent-trade/demo.js": {
+			"includeFiles": "{examples/skills/**,data/pages.json,data/archives/**,data/rss/**,data/_generated/**,sdk/src/sas-config.json}",
+			"maxDuration": 60
+		},
+		"api/inference/livepeer.js": {
+			"includeFiles": "{examples/skills/**,data/pages.json,data/archives/**,data/rss/**,data/_generated/**,sdk/src/sas-config.json}",
+			"maxDuration": 60
+		},
+		"api/tts/speak.js": {
+			"includeFiles": "{examples/skills/**,data/pages.json,data/archives/**,data/rss/**,data/_generated/**,sdk/src/sas-config.json}",
+			"maxDuration": 60
+		},
+		"api/x402-pay.js": {
+			"includeFiles": "{examples/skills/**,data/pages.json,data/archives/**,data/rss/**,data/_generated/**,sdk/src/sas-config.json}",
+			"maxDuration": 60
+		},
+		"api/x402/vanity-verifiable.js": {
+			"includeFiles": "{examples/skills/**,data/pages.json,data/archives/**,data/rss/**,data/_generated/**,sdk/src/sas-config.json}",
+			"maxDuration": 60
+		},
+		"api/x402/pump-launch.js": {
+			"includeFiles": "{examples/skills/**,data/pages.json,data/archives/**,data/rss/**,data/_generated/**,sdk/src/sas-config.json}",
+			"maxDuration": 60
+		},
+		"api/zauth-reposcan.js": {
+			"includeFiles": "{examples/skills/**,data/pages.json,data/archives/**,data/rss/**,data/_generated/**,sdk/src/sas-config.json}",
+			"maxDuration": 60
+		},
+		"api/chat.js": {
+			"includeFiles": "{examples/skills/**,data/pages.json,data/archives/**,data/rss/**,data/_generated/**,sdk/src/sas-config.json}",
+			"maxDuration": 60
+		},
+		"api/oracle/trades.js": {
+			"includeFiles": "{examples/skills/**,data/pages.json,data/archives/**,data/rss/**,data/_generated/**,sdk/src/sas-config.json}",
+			"maxDuration": 60
+		},
+		"api/copy/settle-fee.js": {
 			"includeFiles": "{examples/skills/**,data/pages.json,data/archives/**,data/rss/**,data/_generated/**,sdk/src/sas-config.json}",
 			"maxDuration": 60
 		},
@@ -154,7 +427,35 @@
 			"includeFiles": "{examples/skills/**,data/pages.json,data/archives/**,data/rss/**,data/_generated/**,sdk/src/sas-config.json}",
 			"maxDuration": 60
 		},
-		"{api/agents/solana-wallet,api/avatars/fork,api/creations,api/genome/breed,api/labor/bounty,api/labor/deliver,api/labor/release,api/x402/skill-call}.js": {
+		"api/agents/solana-wallet.js": {
+			"includeFiles": "examples/skills/**",
+			"maxDuration": 30
+		},
+		"api/avatars/fork.js": {
+			"includeFiles": "examples/skills/**",
+			"maxDuration": 30
+		},
+		"api/creations.js": {
+			"includeFiles": "examples/skills/**",
+			"maxDuration": 30
+		},
+		"api/genome/breed.js": {
+			"includeFiles": "examples/skills/**",
+			"maxDuration": 30
+		},
+		"api/labor/bounty.js": {
+			"includeFiles": "examples/skills/**",
+			"maxDuration": 30
+		},
+		"api/labor/deliver.js": {
+			"includeFiles": "examples/skills/**",
+			"maxDuration": 30
+		},
+		"api/labor/release.js": {
+			"includeFiles": "examples/skills/**",
+			"maxDuration": 30
+		},
+		"api/x402/skill-call.js": {
 			"includeFiles": "examples/skills/**",
 			"maxDuration": 30
 		},
@@ -2022,23 +2323,40 @@
 		},
 		{
 			"src": "/embed/?",
-			"has": [{ "type": "query", "key": "mode" }],
+			"has": [
+				{
+					"type": "query",
+					"key": "mode"
+				}
+			],
 			"dest": "/studio/index.html"
 		},
 		{
 			"src": "/embed/?",
-			"has": [{ "type": "query", "key": "avatar" }],
+			"has": [
+				{
+					"type": "query",
+					"key": "avatar"
+				}
+			],
 			"dest": "/studio/index.html"
 		},
 		{
 			"src": "/embed/?",
-			"has": [{ "type": "query", "key": "id" }],
+			"has": [
+				{
+					"type": "query",
+					"key": "id"
+				}
+			],
 			"dest": "/studio/index.html"
 		},
 		{
 			"src": "/embed/?",
 			"status": 301,
-			"headers": { "Location": "/studio" }
+			"headers": {
+				"Location": "/studio"
+			}
 		},
 		{
 			"src": "/embodiment/embed/?",
