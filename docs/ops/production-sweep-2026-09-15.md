@@ -1,4 +1,4 @@
-# Production sweep — 2026-09-15
+# Production sweep: 2026-09-15
 
 Internal operations record for the NVIDIA follow-up, credential validation,
 repository build, and Google Cloud production sweep performed on 2026-09-15.
@@ -57,10 +57,10 @@ checks still covered their public operational signals.
 
 ## Repository fixes
 
-- `fix(chat): declare noble hashes dependency` — the chat bundle imported
+- `fix(chat): declare noble hashes dependency`: the chat bundle imported
   `@noble/hashes/sha3` without declaring the package, making builds depend on an
   accidental root-level hoist.
-- `fix(solana): probe RPC recovery after full cooldown` — prevents warm
+- `fix(solana): probe RPC recovery after full cooldown`: prevents warm
   instances from returning an immediate pump-curve outage solely because every
   endpoint is marked cooling. A regression test pins the forced recovery pass.
 
