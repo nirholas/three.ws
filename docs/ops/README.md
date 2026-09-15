@@ -7,6 +7,7 @@ Start with [gcp-production.md](gcp-production.md); it is the complete operationa
 | Runbook | What it covers |
 |---|---|
 | [gcp-production.md](gcp-production.md) | The production platform end to end: Cloud Run services, LB/DNS/TLS, env, deploy, rollback, recovery. |
+| [hosting-and-credentials.md](hosting-and-credentials.md) | Hosting source of truth, Vercel GitHub App removal, GCP authentication, Secret Manager boundaries, R2 rotation, and exposed-credential response. |
 | [gcp-credits-plan.md](gcp-credits-plan.md) | Standing map of the ~$100k GCP credit spend: fleet, quota, pre-approved scaling, what to do next without asking. |
 | [gcp-credits.md](gcp-credits.md) | The Vertex AI and GCP footprint runbook backing the credits plan. |
 | [gcp-model-workers.md](gcp-model-workers.md) | Self-hosted GPU generation lanes on Cloud Run: workers, weights, deploys. |

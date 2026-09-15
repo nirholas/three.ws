@@ -100,6 +100,25 @@ describe('redactUrlSecrets', () => {
 		expect(redis).toContain('redis://default:REDACTED@fly.upstash.io:6379');
 	});
 
+	it('masks provider tokens pasted into free-form text', () => {
+		const github = `github_pat_${'Az7_'.repeat(18)}`;
+		const cloudflare = `cfat_${'Kp9_'.repeat(12)}`;
+		const npm = `npm_${'Q7wE'.repeat(9)}`;
+		const out = redactUrlSecrets(`credentials: ${github} ${cloudflare} ${npm}`);
+		for (const leaked of [github, cloudflare, npm]) expect(out).not.toContain(leaked);
+		expect(out.match(/REDACTED/g)).toHaveLength(3);
+	});
+
+	it('masks labeled R2 access and secret keys in free-form text', () => {
+		const access = '9f4e8d2c7b6a1053'.repeat(2);
+		const secret = '9f4e8d2c7b6a1053'.repeat(4);
+		const out = redactUrlSecrets(`Access Key ID: ${access} Secret Access Key: ${secret}`);
+		expect(out).not.toContain(access);
+		expect(out).not.toContain(secret);
+		expect(out).toContain('Access Key ID: REDACTED');
+		expect(out).toContain('Secret Access Key: REDACTED');
+	});
+
 	it('keeps the username and host readable, masking only the password', () => {
 		// Redaction has to leave enough behind to debug with: which database, which
 		// host, which role. Only the secret goes.

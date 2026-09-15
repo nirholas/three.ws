@@ -113,6 +113,7 @@ const SKIP_CONTENT = [
 	// must hold synthetic examples of every shape they redact.
 	/^api\/_lib\/scrub-secrets\.js$/,
 	/^tests\/scrub-secrets\.test\.js$/,
+	/^tests\/check-secrets\.test\.js$/,
 ];
 const skippedContent = (file) => SKIP_CONTENT.some((re) => re.test(file));
 
@@ -132,8 +133,22 @@ const CONTENT_RULES = [
 		// Each alternative is a format one vendor issues and nothing else
 		// produces. Lengths are the vendor minimums, so a truncated docs sample
 		// ("sk-ant-...") does not match.
-		find: /(sk-ant-api[0-9]{2}-[A-Za-z0-9_-]{40,}|sk-proj-[A-Za-z0-9_-]{40,}|sk-[A-Za-z0-9]{48,}|gh[pousr]_[A-Za-z0-9]{36,}|github_pat_[A-Za-z0-9_]{60,}|glpat-[A-Za-z0-9_-]{20,}|AKIA[0-9A-Z]{16}|AIza[0-9A-Za-z_-]{35}|xox[baprs]-[0-9A-Za-z-]{20,}|hf_[A-Za-z0-9]{34,}|nvapi-[A-Za-z0-9_-]{40,}|r8_[A-Za-z0-9]{37,}|gsk_[A-Za-z0-9]{50,}|sk-or-v1-[a-f0-9]{60,}|SG\.[A-Za-z0-9_-]{20,}\.[A-Za-z0-9_-]{30,}|npm_[A-Za-z0-9]{36}|dckr_pat_[A-Za-z0-9_-]{20,}|ya29\.[0-9A-Za-z_-]{60,})/,
+		find: /(sk-ant-api[0-9]{2}-[A-Za-z0-9_-]{40,}|sk-proj-[A-Za-z0-9_-]{40,}|sk-[A-Za-z0-9]{48,}|gh[pousr]_[A-Za-z0-9]{36,}|github_pat_[A-Za-z0-9_]{60,}|glpat-[A-Za-z0-9_-]{20,}|AKIA[0-9A-Z]{16}|AIza[0-9A-Za-z_-]{35}|xox[baprs]-[0-9A-Za-z-]{20,}|hf_[A-Za-z0-9]{34,}|nvapi-[A-Za-z0-9_-]{40,}|r8_[A-Za-z0-9]{37,}|gsk_[A-Za-z0-9]{50,}|sk-or-v1-[a-f0-9]{60,}|SG\.[A-Za-z0-9_-]{20,}\.[A-Za-z0-9_-]{30,}|npm_[A-Za-z0-9]{36}|dckr_pat_[A-Za-z0-9_-]{20,}|ya29\.[0-9A-Za-z_-]{60,}|cf(?:at|ut)_[A-Za-z0-9_-]{32,})/,
 		except: (value) => FAKE_VALUE.test(value),
+	},
+	{
+		id: 'r2-access-key',
+		what: 'an R2 S3-compatible access key identifier',
+		find: /(?:S3_ACCESS_KEY_ID|access\s+key\s+id)\W{0,8}([a-f0-9]{32})\b/i,
+		group: 1,
+		except: (value) => FAKE_VALUE.test(value) || new Set(value.toLowerCase()).size < 8,
+	},
+	{
+		id: 'r2-secret-key',
+		what: 'an R2 S3-compatible secret access key',
+		find: /(?:S3_SECRET_ACCESS_KEY|secret\s+access\s+key)\W{0,8}([a-f0-9]{64})\b/i,
+		group: 1,
+		except: (value) => FAKE_VALUE.test(value) || new Set(value.toLowerCase()).size < 8,
 	},
 	{
 		id: 'private-key-block',

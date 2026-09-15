@@ -66,6 +66,13 @@ const URL_QUERY_CREDENTIAL_RE = /([?&](?:api[-_]?key|access[-_]?token|token|secr
 // `//user:` then anything up to the `@`. The username is kept (it is useful for
 // debugging and is not the secret); only the password is masked.
 const URL_USERINFO_RE = /(\/\/[^/@\s:]+:)[^/@\s]+@/g;
+// Provider tokens are sometimes pasted into a user-supplied message rather
+// than carried under a secret-shaped object key. Keep this list narrow to
+// self-identifying formats so ordinary hashes and transaction ids survive.
+const INLINE_PROVIDER_CREDENTIAL_RE = /\b(?:gh[pousr]_[A-Za-z0-9]{36,}|github_pat_[A-Za-z0-9_]{60,}|cf(?:at|ut)_[A-Za-z0-9_-]{32,}|npm_[A-Za-z0-9]{36})\b/g;
+// R2 S3 credentials do not have a unique prefix. Only redact their hex value
+// when a credential label makes the meaning unambiguous.
+const INLINE_R2_CREDENTIAL_RE = /((?:S3_ACCESS_KEY_ID|S3_SECRET_ACCESS_KEY|access\s+key\s+id|secret\s+access\s+key)\s*[:=]\s*)[a-f0-9]{32,64}\b/gi;
 
 /**
  * Mask credential VALUES embedded in a URL inside a free-form string (typically
@@ -81,5 +88,7 @@ const URL_USERINFO_RE = /(\/\/[^/@\s:]+:)[^/@\s]+@/g;
 export function redactUrlSecrets(text) {
 	return String(text ?? '')
 		.replace(URL_QUERY_CREDENTIAL_RE, '$1REDACTED')
-		.replace(URL_USERINFO_RE, '$1REDACTED@');
+		.replace(URL_USERINFO_RE, '$1REDACTED@')
+		.replace(INLINE_PROVIDER_CREDENTIAL_RE, 'REDACTED')
+		.replace(INLINE_R2_CREDENTIAL_RE, '$1REDACTED');
 }
