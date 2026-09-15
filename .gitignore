@@ -1,5 +1,7 @@
 node_modules
 dist
+!satellites/glb-quality-gate/dist/
+!satellites/glb-quality-gate/dist/*.js
 dist-lib
 dist-artifact
 .cache
