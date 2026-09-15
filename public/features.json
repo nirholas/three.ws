@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-09-15T06:08:37.118Z",
+	"generated_at": "2026-09-15T06:57:06.556Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json",
 	"site": {
 		"name": "three.ws",
@@ -391,6 +391,16 @@
 					"title": "Community",
 					"description": "Live platform activity plus where to follow, contribute, and connect with three.ws creators.",
 					"added": "2026-05-04",
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false
+				},
+				{
+					"path": "/contributors",
+					"title": "Contributors",
+					"description": "A living thank-you to the developers, issue reporters, and community members improving the open-source three.ws platform.",
+					"added": "2026-09-15",
 					"auth": null,
 					"indexable": true,
 					"tags": [],

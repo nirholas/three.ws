@@ -11397,14 +11397,11 @@ In-scope: this repository and its deployed surfaces (`three.ws` including the `/
 
 ## Contributors
 
-Thanks to everyone who has contributed to this project. Commit-level contributors are visible in [the GitHub contributors graph](https://github.com/nirholas/three.ws/graphs/contributors); a few standouts:
+Thanks to everyone improving three.ws through code, reviews, bug reports, and design ideas. The living roll is on [three.ws/contributors](https://three.ws/contributors), with commit-level history in [GitHub's contributors graph](https://github.com/nirholas/three.ws/graphs/contributors).
 
-- [@nirholas](https://github.com/nirholas) — maintainer
-- [@humanoidrobot-glitch](https://github.com/humanoidrobot-glitch) — thank you for your contributions!
-- [@overstepping](https://github.com/overstepping) — thank you for your contributions!
-- [@swarmsyy](https://github.com/swarmsyy) — thank you for your contributions!
+Special thanks to [@Victoriaali04](https://github.com/Victoriaali04) for the precise Forge photo-upload report in [issue #164](https://github.com/nirholas/three.ws/issues/164). Its timestamps, request sequence, and redacted R2 signature evidence led directly to better storage health checks and an honest retryable error instead of a misleading “network error.”
 
-Want your name here? Open a PR — see [Contributing](#contributing).
+Want your name there? A contribution is more than a commit: open a PR, report a reproducible bug, improve the docs, or bring a design question that makes the platform better. See [Contributing](#contributing).
 
 ---
 

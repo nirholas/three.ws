@@ -1,0 +1,515 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<script>
+			/* three.ws theme boot: no-flash; runtime in /theme-switcher.js */ (function () {
+				document.documentElement.classList.add('js');
+				try {
+					var m = localStorage.getItem('twx_theme');
+					var l =
+						m === 'auto'
+							? window.matchMedia &&
+								window.matchMedia('(prefers-color-scheme: light)').matches
+							: m === 'light';
+					document.documentElement.setAttribute('data-theme', l ? 'light' : 'dark');
+				} catch (e) {
+					document.documentElement.setAttribute('data-theme', 'dark');
+				}
+			})();
+		</script>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+		<title data-i18n="contributors.meta_title">Contributors · three.ws</title>
+		<meta
+			name="description"
+			content="Meet the developers, issue reporters, and community members who make three.ws better."
+			data-i18n-attr="content:contributors.meta_description"
+		/>
+		<meta property="og:type" content="website" />
+		<meta property="og:site_name" content="three.ws" />
+		<meta property="og:title" content="Contributors · three.ws" />
+		<meta
+			property="og:description"
+			content="A living thank-you to the people improving the open-source three.ws platform."
+		/>
+		<meta property="og:url" content="https://three.ws/contributors" />
+		<meta
+			property="og:image"
+			content="https://three.ws/api/page-og?s=main&amp;t=Contributors&amp;d=A+living+thank-you+to+the+developers%2C+issue+reporters%2C+and+community+members+improving+the+open-source+three.ws+platform.&amp;p=%2Fcontributors"
+		/>
+		<meta name="twitter:card" content="summary_large_image" />
+		<meta name="twitter:title" content="Contributors · three.ws" />
+		<meta
+			name="twitter:description"
+			content="A living thank-you to the people improving the open-source three.ws platform."
+		/>
+		<meta
+			name="twitter:image"
+			content="https://three.ws/api/page-og?s=main&amp;t=Contributors&amp;d=A+living+thank-you+to+the+developers%2C+issue+reporters%2C+and+community+members+improving+the+open-source+three.ws+platform.&amp;p=%2Fcontributors"
+		/>
+		<link rel="canonical" href="https://three.ws/contributors" />
+		<link rel="icon" href="/favicon.ico" sizes="any" />
+		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+		<link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+		<link rel="manifest" href="/manifest.webmanifest" />
+		<link rel="stylesheet" href="/style.css" />
+		<link rel="stylesheet" href="/nav.css" />
+		<link rel="stylesheet" href="/footer.css" />
+		<link rel="stylesheet" href="/fonts/fonts.css" />
+		<link rel="stylesheet" href="/mobile.css" />
+		<style>
+			* {
+				box-sizing: border-box;
+			}
+			body {
+				margin: 0;
+				min-height: 100vh;
+				background: var(--bg-0);
+				color: var(--ink);
+				font-family: var(--font-body);
+			}
+			main {
+				width: min(1080px, 100%);
+				margin: 0 auto;
+				padding: clamp(3rem, 7vw, 6rem) clamp(1.25rem, 4vw, 2rem) 6rem;
+			}
+			.eyebrow {
+				margin: 0 0 0.9rem;
+				color: var(--accent);
+				font-size: 0.75rem;
+				font-weight: 650;
+				letter-spacing: 0.14em;
+				text-transform: uppercase;
+			}
+			h1 {
+				max-width: 12ch;
+				margin: 0;
+				font-size: clamp(2.5rem, 7vw, 5.5rem);
+				font-weight: 600;
+				letter-spacing: -0.055em;
+				line-height: 0.98;
+			}
+			.intro {
+				max-width: 660px;
+				margin: 1.5rem 0 0;
+				color: var(--ink-dim);
+				font-size: clamp(1rem, 2.2vw, 1.2rem);
+				line-height: 1.65;
+			}
+			.actions {
+				display: flex;
+				flex-wrap: wrap;
+				gap: 0.75rem;
+				margin-top: 2rem;
+			}
+			.action {
+				display: inline-flex;
+				align-items: center;
+				min-height: 44px;
+				padding: 0.7rem 1rem;
+				border: 1px solid var(--stroke-strong);
+				border-radius: 10px;
+				background: var(--bg-1);
+				color: var(--ink);
+				font-size: 0.9rem;
+				font-weight: 600;
+				text-decoration: none;
+				transition:
+					background var(--duration-fast),
+					border-color var(--duration-fast),
+					transform var(--duration-fast);
+			}
+			.action.primary {
+				background: var(--btn-primary-bg);
+				color: var(--btn-primary-fg);
+				border-color: var(--btn-primary-border);
+			}
+			.action:hover {
+				background: var(--surface-2);
+				border-color: var(--accent);
+				transform: translateY(-1px);
+			}
+			.action.primary:hover {
+				background: var(--btn-primary-bg-hover);
+			}
+			.action:active {
+				transform: translateY(0);
+			}
+			.action:focus-visible,
+			.retry:focus-visible,
+			.person:focus-visible {
+				outline: 2px solid var(--accent);
+				outline-offset: 3px;
+			}
+			section {
+				margin-top: clamp(4rem, 9vw, 7rem);
+			}
+			.section-head {
+				display: flex;
+				align-items: end;
+				justify-content: space-between;
+				gap: 1rem;
+				padding-bottom: 1rem;
+				border-bottom: 1px solid var(--stroke);
+			}
+			.section-head h2 {
+				margin: 0;
+				font-size: clamp(1.5rem, 4vw, 2.25rem);
+				font-weight: 600;
+				letter-spacing: -0.025em;
+			}
+			.section-head p {
+				max-width: 48ch;
+				margin: 0;
+				color: var(--ink-dim);
+				font-size: 0.9rem;
+				text-align: right;
+			}
+			.people {
+				display: grid;
+				grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
+				gap: 0.85rem;
+				margin-top: 1rem;
+			}
+			.person {
+				display: flex;
+				align-items: center;
+				gap: 0.85rem;
+				min-width: 0;
+				padding: 1rem;
+				border: 1px solid var(--stroke);
+				border-radius: 14px;
+				background: var(--bg-1);
+				color: inherit;
+				text-decoration: none;
+				transition:
+					border-color var(--duration-fast),
+					transform var(--duration-fast),
+					background var(--duration-fast);
+			}
+			.person:hover {
+				border-color: var(--stroke-strong);
+				background: var(--surface-2);
+				transform: translateY(-2px);
+			}
+			.person:active {
+				transform: translateY(0);
+			}
+			.avatar {
+				width: 46px;
+				height: 46px;
+				flex: 0 0 auto;
+				border: 1px solid var(--stroke);
+				border-radius: 50%;
+				background: var(--surface-2);
+				object-fit: cover;
+			}
+			.person-copy {
+				min-width: 0;
+			}
+			.handle {
+				display: block;
+				overflow: hidden;
+				font-weight: 600;
+				text-overflow: ellipsis;
+				white-space: nowrap;
+			}
+			.detail {
+				display: block;
+				margin-top: 0.15rem;
+				color: var(--ink-dim);
+				font-size: 0.78rem;
+			}
+			.state {
+				margin-top: 1rem;
+				padding: 1.2rem;
+				border: 1px solid var(--stroke);
+				border-radius: 14px;
+				background: var(--bg-1);
+				color: var(--ink-dim);
+				font-size: 0.9rem;
+			}
+			.state[hidden] {
+				display: none;
+			}
+			.retry {
+				margin-left: 0.5rem;
+				padding: 0;
+				border: 0;
+				background: transparent;
+				color: var(--accent);
+				font: inherit;
+				font-weight: 600;
+				cursor: pointer;
+			}
+			.retry:hover {
+				text-decoration: underline;
+			}
+			.thanks {
+				display: grid;
+				grid-template-columns: repeat(2, minmax(0, 1fr));
+				gap: 1rem;
+				margin-top: 1rem;
+			}
+			.thank {
+				padding: 1.25rem;
+				border: 1px solid var(--stroke);
+				border-radius: 14px;
+				background: var(--bg-1);
+			}
+			.thank a {
+				color: var(--ink);
+				font-weight: 650;
+				text-decoration: none;
+			}
+			.thank a:hover {
+				color: var(--accent);
+				text-decoration: underline;
+			}
+			.thank p {
+				margin: 0.55rem 0 0;
+				color: var(--ink-dim);
+				font-size: 0.9rem;
+				line-height: 1.55;
+			}
+			.note {
+				margin-top: 2rem;
+				padding-left: 1rem;
+				border-left: 2px solid var(--accent);
+				color: var(--ink-dim);
+				font-size: 0.88rem;
+				line-height: 1.6;
+			}
+			.note a {
+				color: var(--accent);
+			}
+			@media (max-width: 700px) {
+				.section-head {
+					align-items: start;
+					flex-direction: column;
+				}
+				.section-head p {
+					text-align: left;
+				}
+				.thanks {
+					grid-template-columns: 1fr;
+				}
+			}
+			@media (prefers-reduced-motion: reduce) {
+				.action,
+				.person {
+					transition: none;
+				}
+			}
+		</style>
+		<script type="application/ld+json">
+			{
+				"@context": "https://schema.org",
+				"@type": "WebPage",
+				"name": "Contributors",
+				"description": "A living thank-you to the people improving the open-source three.ws platform.",
+				"url": "https://three.ws/contributors",
+				"isPartOf": { "@type": "WebSite", "name": "three.ws", "url": "https://three.ws" }
+			}
+		</script>
+
+		<meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1" />
+		<meta property="og:locale" content="en_US" />
+		<meta property="og:image:alt" content="Contributors - three.ws" />
+		<meta name="twitter:site" content="@trythreews" />
+	</head>
+	<body>
+		<header><div id="nav-container"></div></header>
+		<script src="/nav.js"></script>
+
+		<main>
+			<p class="eyebrow">Open source, made together</p>
+			<h1>Built by people who showed up.</h1>
+			<p class="intro">
+				Every pull request, careful bug report, design question, and hard-to-reproduce edge
+				case makes three.ws stronger. This page is our living thank-you to the people doing
+				that work.
+			</p>
+			<div class="actions">
+				<a
+					class="action primary"
+					href="https://github.com/nirholas/three.ws/blob/main/CONTRIBUTING.md"
+					>Make a contribution</a
+				>
+				<a class="action" href="https://github.com/nirholas/three.ws/issues"
+					>Report an issue</a
+				>
+			</div>
+
+			<section aria-labelledby="code-heading">
+				<div class="section-head">
+					<h2 id="code-heading">Code contributors</h2>
+					<p id="code-summary">Loaded from the public GitHub contributors record.</p>
+				</div>
+				<div class="state" id="contributors-state" role="status">
+					Loading the contributor roll…
+				</div>
+				<div class="people" id="contributors-list" aria-live="polite"></div>
+			</section>
+
+			<section aria-labelledby="thanks-heading">
+				<div class="section-head">
+					<h2 id="thanks-heading">Reports and ideas</h2>
+					<p>Community contributions that led to a concrete improvement.</p>
+				</div>
+				<div class="thanks">
+					<article class="thank">
+						<a href="https://github.com/Victoriaali04">@Victoriaali04</a>
+						<p>
+							Reported the Forge photo-upload failure with the exact timestamp,
+							request sequence, and redacted R2 signature evidence that made the
+							outage diagnosable.
+							<a href="https://github.com/nirholas/three.ws/issues/164">Issue #164</a>
+						</p>
+					</article>
+					<article class="thank">
+						<a href="https://github.com/GTCC777">@GTCC777</a>
+						<p>
+							Found marketplace discovery and payment-validation edge cases in the
+							x402 service catalog.
+							<a href="https://github.com/nirholas/three.ws/issues/72">Issue #72</a> ·
+							<a href="https://github.com/nirholas/three.ws/issues/73">Issue #73</a>
+						</p>
+					</article>
+					<article class="thank">
+						<a href="https://github.com/zsxh1990">@zsxh1990</a>
+						<p>
+							Asked for a clearer path to plugging custom memory backends into
+							three.ws.
+							<a href="https://github.com/nirholas/three.ws/issues/42">Issue #42</a>
+						</p>
+					</article>
+					<article class="thank">
+						<a href="https://github.com/gautamgb">@gautamgb</a>
+						<p>
+							Helped improve the project's MCP listing and discovery metadata.
+							<a href="https://github.com/nirholas/three.ws/issues/69">Issue #69</a>
+						</p>
+					</article>
+					<article class="thank">
+						<a href="https://github.com/SamyTouri">@SamyTouri</a>
+						<p>
+							Contributed a useful design question about which reputation evidence
+							should travel with an agent.
+							<a href="https://github.com/nirholas/three.ws/issues/70">Issue #70</a>
+						</p>
+					</article>
+					<article class="thank">
+						<a href="https://github.com/jaymarrero2-lab">@jaymarrero2-lab</a>
+						<p>
+							Shared an integration idea for pay-per-call evaluation services over
+							x402.
+							<a href="https://github.com/nirholas/three.ws/issues/95">Issue #95</a>
+						</p>
+					</article>
+				</div>
+				<p class="note">
+					A useful contribution is not only a commit. If your report led to a shipped fix
+					and your name is missing, please
+					<a href="https://github.com/nirholas/three.ws/issues/new">tell us</a>. We will
+					also honor requests to change or remove credit.
+				</p>
+			</section>
+		</main>
+
+		<div id="footer-container"></div>
+		<script src="/footer.js"></script>
+		<script src="/brand.js" defer></script>
+		<script type="module">
+			const endpoint =
+				'https://api.github.com/repos/nirholas/three.ws/contributors?per_page=100&anon=true';
+			const list = document.getElementById('contributors-list');
+			const state = document.getElementById('contributors-state');
+			const summary = document.getElementById('code-summary');
+
+			function trustedGitHubUrl(value, kind) {
+				try {
+					const url = new URL(value);
+					const allowedHost =
+						kind === 'profile'
+							? url.hostname === 'github.com'
+							: url.hostname === 'avatars.githubusercontent.com';
+					return url.protocol === 'https:' && allowedHost ? url.href : null;
+				} catch {
+					return null;
+				}
+			}
+
+			function renderPerson(person) {
+				const link = document.createElement('a');
+				link.className = 'person';
+				link.href = person.profileUrl;
+				link.target = '_blank';
+				link.rel = 'noopener noreferrer';
+				link.setAttribute('aria-label', `Open @${person.login}'s GitHub profile`);
+
+				const avatar = document.createElement('img');
+				avatar.className = 'avatar';
+				avatar.src = person.avatarUrl;
+				avatar.alt = '';
+				avatar.loading = 'lazy';
+				avatar.width = 46;
+				avatar.height = 46;
+				avatar.referrerPolicy = 'no-referrer';
+
+				const copy = document.createElement('span');
+				copy.className = 'person-copy';
+				const handle = document.createElement('span');
+				handle.className = 'handle';
+				handle.textContent = `@${person.login}`;
+				const detail = document.createElement('span');
+				detail.className = 'detail';
+				detail.textContent = person.login === 'nirholas' ? 'Maintainer' : 'Contributor';
+				copy.append(handle, detail);
+				link.append(avatar, copy);
+				return link;
+			}
+
+			async function loadContributors() {
+				state.hidden = false;
+				state.textContent = 'Loading the contributor roll…';
+				list.replaceChildren();
+				try {
+					const response = await fetch(endpoint, {
+						headers: { accept: 'application/vnd.github+json' },
+						signal: AbortSignal.timeout(8000),
+					});
+					if (!response.ok) throw new Error(`GitHub returned ${response.status}`);
+					const payload = await response.json();
+					const people = payload
+						.filter((person) => person && person.type !== 'Bot' && person.login)
+						.map((person) => ({
+							...person,
+							profileUrl: trustedGitHubUrl(person.html_url, 'profile'),
+							avatarUrl: trustedGitHubUrl(person.avatar_url, 'avatar'),
+						}))
+						.filter((person) => person.profileUrl && person.avatarUrl);
+					if (!people.length) throw new Error('GitHub returned no public contributors');
+					list.append(...people.map(renderPerson));
+					summary.textContent = `${people.length} public GitHub contributors, refreshed live.`;
+					state.hidden = true;
+				} catch (error) {
+					state.replaceChildren(
+						document.createTextNode(
+							'GitHub’s contributor roll is unavailable right now.',
+						),
+					);
+					const retry = document.createElement('button');
+					retry.className = 'retry';
+					retry.type = 'button';
+					retry.textContent = 'Try again';
+					retry.addEventListener('click', loadContributors, { once: true });
+					state.append(retry);
+				}
+			}
+
+			loadContributors();
+		</script>
+		<script type="module" src="/i18n.js"></script>
+	</body>
+</html>

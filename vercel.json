@@ -4861,6 +4861,14 @@
 			"dest": "/community.html"
 		},
 		{
+			"src": "/contributors",
+			"dest": "/contributors.html"
+		},
+		{
+			"src": "/contributors/",
+			"dest": "/contributors.html"
+		},
+		{
 			"src": "/bazaar",
 			"dest": "/bazaar.html"
 		},

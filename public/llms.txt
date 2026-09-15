@@ -66,6 +66,7 @@ Entry points into the product.
 - [Knock](https://three.ws/knock): Put a price on reaching you. Anyone, a person or an agent, can pay it to get exactly one message through, and your 3D companion walks on screen and delivers it out loud with their name and what they paid. The USDC settles straight to your wallet.
 - [Herald](https://three.ws/herald): Deliver a message in person: a 3D character walks onto your page and tells the user what happened. Open SDK, one line of code, an accessible fallback, and a CLI that announces when your build finishes.
 - [Community](https://three.ws/community): Live platform activity plus where to follow, contribute, and connect with three.ws creators.
+- [Contributors](https://three.ws/contributors): A living thank-you to the developers, issue reporters, and community members improving the open-source three.ws platform.
 - [Crew HQ](https://three.ws/crews): Found a crew, invite your people, and watch the whole roster stand in one 3D headquarters. Every member appears as their own agent, lit when they are live in the world.
 - [Search](https://three.ws/search): One search across every creation type on three.ws: avatars, agents, 3D models, worlds, and coins. Remix a model straight from the results.
 - [Atlas](https://three.ws/atlas): The whole platform as one searchable map: every page grouped by what it is for, plus the task shortcuts the Cmd+K palette answers with. Press Cmd+K anywhere on the site to search it without leaving the page.

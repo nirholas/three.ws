@@ -1,6 +1,6 @@
 {
 	"generated": true,
-	"count": 357,
+	"count": 358,
 	"paths": [
 		"/",
 		"/3d",
@@ -60,6 +60,7 @@
 		"/compose",
 		"/concierge",
 		"/constellation",
+		"/contributors",
 		"/converter",
 		"/cookbook/self-correcting-3d",
 		"/cosmos",

@@ -15,6 +15,14 @@
 			<description>A live Solana Transaction V1 observatory and pre-sign inspector. Paste a mainnet signature or base64 wire transaction to see exact bytes, resource caps, compute use, and sponsor safety.</description>
 		</item>
 		<item>
+			<title>Contributors</title>
+			<link>https://three.ws/contributors</link>
+			<guid isPermaLink="false">2026-09-15:Contributors</guid>
+			<pubDate>Tue, 15 Sep 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>A living thank-you to the developers, issue reporters, and community members improving the open-source three.ws platform.</description>
+		</item>
+		<item>
 			<title>three.ws is ready for Solana's new 4 KiB transactions</title>
 			<link>https://three.ws/atomic</link>
 			<guid isPermaLink="false">2026-09-15:three.ws is ready for Solana's new 4 KiB transactions</guid>

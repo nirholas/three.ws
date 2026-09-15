@@ -1,11 +1,11 @@
 {
-	"generated_at": "2026-09-15T06:08:37.760Z",
+	"generated_at": "2026-09-15T06:57:06.768Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
 		"url": "https://three.ws"
 	},
-	"total": 3678,
+	"total": 3679,
 	"complete": false,
 	"full_feed": "/changelog.json",
 	"entries": [
@@ -15,6 +15,16 @@
 			"title": "Atomic - Solana V1 Inspector",
 			"summary": "A live Solana Transaction V1 observatory and pre-sign inspector. Paste a mainnet signature or base64 wire transaction to see exact bytes, resource caps, compute use, and sponsor safety.",
 			"link": "/atomic",
+			"tags": [
+				"launch"
+			]
+		},
+		{
+			"date": "2026-09-15",
+			"type": "launch",
+			"title": "Contributors",
+			"summary": "A living thank-you to the developers, issue reporters, and community members improving the open-source three.ws platform.",
+			"link": "/contributors",
 			"tags": [
 				"launch"
 			]
@@ -1608,17 +1618,6 @@
 			"link": "/markets/robinhood/desk",
 			"tags": [
 				"feature"
-			]
-		},
-		{
-			"date": "2026-09-07",
-			"type": "update",
-			"title": "Keyboard focus is visible again on every /play HUD button, and the AGI filter counts clear AA contrast",
-			"summary": "Six buttons on the /play world HUD (friends, jobs, avatar, wardrobe, shop and buy) had lost their keyboard focus ring: the page never defined the shared focus-ring colour those buttons outline with, so the browser dropped the outline entirely and a keyboard player could not see where they were. The ring is back. On /agi, the count inside a selected filter chip measured 4.37:1 against its background at 11px, just under the 4.5:1 AA floor; it now uses the primary ink and clears it comfortably.",
-			"link": "/play",
-			"tags": [
-				"fix",
-				"improvement"
 			]
 		}
 	]

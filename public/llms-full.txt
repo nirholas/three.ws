@@ -245,6 +245,12 @@ URL: https://three.ws/community
 
 Live platform activity plus where to follow, contribute, and connect with three.ws creators.
 
+### Contributors
+
+URL: https://three.ws/contributors
+
+A living thank-you to the developers, issue reporters, and community members improving the open-source three.ws platform.
+
 ### Crew HQ
 
 URL: https://three.ws/crews

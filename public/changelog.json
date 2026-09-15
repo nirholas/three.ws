@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-09-15T06:08:37.459Z",
+	"generated_at": "2026-09-15T06:57:06.600Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -12,6 +12,16 @@
 			"title": "Atomic - Solana V1 Inspector",
 			"summary": "A live Solana Transaction V1 observatory and pre-sign inspector. Paste a mainnet signature or base64 wire transaction to see exact bytes, resource caps, compute use, and sponsor safety.",
 			"link": "/atomic",
+			"tags": [
+				"launch"
+			]
+		},
+		{
+			"date": "2026-09-15",
+			"type": "launch",
+			"title": "Contributors",
+			"summary": "A living thank-you to the developers, issue reporters, and community members improving the open-source three.ws platform.",
+			"link": "/contributors",
 			"tags": [
 				"launch"
 			]

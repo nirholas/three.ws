@@ -918,6 +918,7 @@ const appConfig = {
 				'avatar-artifact': resolve(__dirname, 'pages/avatar-artifact.html'),
 				'launch-week': resolve(__dirname, 'pages/three-ws-launch-week.html'),
 				community: resolve(__dirname, 'pages/community.html'),
+				contributors: resolve(__dirname, 'pages/contributors.html'),
 				profile: resolve(__dirname, 'pages/profile.html'),
 				feed: resolve(__dirname, 'pages/feed.html'),
 				'threews-claim': resolve(__dirname, 'pages/threews-claim.html'),
