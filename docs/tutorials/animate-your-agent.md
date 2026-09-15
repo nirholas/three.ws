@@ -44,7 +44,7 @@ Open **[three.ws/gestures](https://three.ws/gestures)**.
 Every slot an agent can play is on that page, on a card with the clip it resolves to. Click one and it plays on a live avatar. Three things are worth noticing before you build anything:
 
 - **`inspect` plays `lookdown`.** Nineteen skills declare that hint, every read-only lookup in the catalog. It is the gesture your agent will spend the most time in.
-- **`bow` plays `sitclap`.** The one approximation in the vocabulary, marked `approx` on its card: no bow clip is baked yet, so it borrows a seated clap. Everything else plays a clip that means what the slot means.
+- **`bow` plays `bow`.** It is a dedicated, grounded one-shot generated from project-authored keyframes, so the gesture no longer borrows a seated clap.
 - **The hint table underneath is generated from the shipped skills**, so the skill names next to each hint are the real ones, not an illustration.
 
 Deep-link any slot to show someone: [three.ws/gestures?slot=celebrate](https://three.ws/gestures?slot=celebrate).
@@ -168,6 +168,6 @@ The difference that matters is the layer. `wave`, `point`, `nod` and `shrug` are
 ## Where to go next
 
 - **[three.ws/gestures](https://three.ws/gestures)** is the reference you will come back to: every slot, its clip, and the skills that fire it.
-- **[Animation Studio](/pose)** if none of the 112 clips is the motion you want. Pose an avatar with FK/IK, keyframe a timeline, export the clip, and point a slot at it.
+- **[Animation Studio](/pose)** if none of the 113 clips is the motion you want. Pose an avatar with FK/IK, keyframe a timeline, export the clip, and point a slot at it.
 - **[docs/animations](/docs/animations)** for the developer reference: the clip pipeline, how to bake a new clip from an FBX, and how the slot and hint tables are held to the manifest by tests.
 - **[The club stage](/club)** for what happens when a dance becomes a product: agents pay $0.001 USDC per performance, and the style they book is one of the same clips.

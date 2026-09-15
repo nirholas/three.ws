@@ -283,15 +283,15 @@
     }
   },
 
-  "known_issues": [
-    {
-      "id": "bow-slot-approximation",
-      "description": "The 'bow' slot has no dedicated clip: it resolves to 'sitclap' (Sitting Clap), which reads as gratitude/applause rather than a bow. Every other slot now plays a clip that means what the slot means. Fix: add Mixamo 'Bowing' (In Place, Without Skin) to animation-sources/, register it in scripts/animations.config.json as 'bow', run npm run build:animations, then point DEFAULT_ANIMATION_MAP.bow at it. tests/animation-slots.test.js already asserts the target exists, so the swap is a one-line change once the clip is baked.",
-      "affected_file": "src/runtime/animation-slots.js"
-    }
-  ],
+  "known_issues": [],
 
   "resolved_issues": [
+    {
+      "id": "bow-slot-approximation",
+      "resolved": "2026-09-15",
+      "description": "GitHub issue #113 is resolved: the 'bow' slot now plays a dedicated 1.8-second, project-authored bow instead of Sitting Clap. scripts/build-original-animations.mjs deterministically generates the clip from the cleared canonical idle pose; the committed motion is torso-led, anchored, non-looping, and visually verified on the CZ avatar at 100% canonical-track coverage.",
+      "affected_file": "src/runtime/animation-slots.js"
+    },
     {
       "id": "unused-agent-hint-targets",
       "resolved": "2026-07-30",

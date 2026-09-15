@@ -893,5 +893,14 @@
 		"icon": "🪑",
 		"loop": true,
 		"duration": 1
+	},
+	{
+		"name": "bow",
+		"url": "/animations/clips/bow.json",
+		"label": "Bow",
+		"icon": "🙇",
+		"loop": false,
+		"category": "gesture",
+		"duration": 1.8
 	}
 ]

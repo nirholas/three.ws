@@ -156,7 +156,7 @@ Open that. Orbit around it. Check the silhouette at the size your page will actu
 
 This is the step people skip, and it is the one that makes the whole thing work.
 
-The manifest said `"animations": 1`. That number counts clips baked into the GLB file, and it is nearly always 1 for every character in the library. It says nothing about what the character can play, because **the animations do not come from the file.** three.ws holds a canonical clip library (112 clips: idle, walk, run, wave, dance, cheer, and the rest) and retargets them onto any humanoid skeleton at runtime. There is no per-character allowlist. Any character in the library plays any clip.
+The manifest said `"animations": 1`. That number counts clips baked into the GLB file, and it is nearly always 1 for every character in the library. It says nothing about what the character can play, because **the animations do not come from the file.** three.ws holds a canonical clip library (113 clips: idle, walk, run, wave, bow, dance, cheer, and the rest) and retargets them onto any humanoid skeleton at runtime. There is no per-character allowlist. Any character in the library plays any clip.
 
 You can prove that in one request, without a browser, by asking the server to pose the character:
 
@@ -394,7 +394,7 @@ The methods worth knowing for a decorative embed:
 | `el.pause()` / `el.resume()` | Stop and restart the render loop. Useful when your own code knows the element is hidden. |
 | `el.lookAt('user')` | Point the head at the camera. |
 
-`playClip` is the one to reach for. The reason it exists is that `loop` is a property of the clip, not of your intent, and a host page should not have to keep a table of which of the 112 clips loop.
+`playClip` is the one to reach for. The reason it exists is that `loop` is a property of the clip, not of your intent, and a host page should not have to keep a table of which of the 113 clips loop.
 
 Because events are dispatched with `composed: true`, they cross the shadow DOM boundary and bubble, so you can also listen on a container instead of the element:
 

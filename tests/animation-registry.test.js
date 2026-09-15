@@ -1,7 +1,7 @@
 /**
  * public/animations/registry.json is the developer-facing catalogue of every
  * animation asset, and its own header tells the reader to consult it first.
- * A registry that has drifted is worse than none: it drifted to 37 of 112 built
+ * A registry that has drifted is worse than none: it once drifted to 37 built
  * clips, with `source_fbx` paths pointing into a directory that has held no FBX
  * since the sources moved to animation-sources/, and `agent_slots` recording
  * slot assignments that had moved to other clips.
