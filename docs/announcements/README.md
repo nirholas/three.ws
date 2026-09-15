@@ -7,10 +7,10 @@ they are inventory that already works, and the audit that established this lives
 [announcement-coverage.md](../announcement-coverage.md). Working that backlog down is what this
 directory is for.
 
-**Which pack to make next** is not decided in this directory. The backlog is grouped into clusters, ordered
-into waves, and checked for whether it can be demoed at all in
-[announcement-checklist.md](../announcement-checklist.md). Work that file top down; come here when a cluster
-comes up.
+**Which pack to make next** is not decided in this directory. Run
+`npm run announce:rank -- --probe` to rebuild the backlog from the current page, package, worker, and
+service inventories, verify which routes can be demonstrated, and rank the viable candidates. Come here
+after selecting a live candidate from that output.
 
 ## How a pack gets made
 
