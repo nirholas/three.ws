@@ -16,6 +16,8 @@ This directory is the operational layer above the repo's deeper source material:
   performed, and what can be pushed again.
 - [Opportunity register](./opportunities.md): partner-by-partner asks, new relationship
   targets, official intake paths, and the big-brand engagement ladder.
+- [GitHub and ecosystem growth surfaces](./github-growth-surfaces.md): the starter-template,
+  Marketplace Action, curated-directory, adopter-story, and startup-program acquisition loops.
 - [90-day campaigns](./campaigns.csv): one row per campaign, with channel, CTA, partner ask,
   KPI, date, and status.
 - [Opportunity tracker](./opportunities.csv): the machine-readable pipeline. This is where
