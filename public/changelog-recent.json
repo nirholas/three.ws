@@ -1,11 +1,11 @@
 {
-	"generated_at": "2026-09-15T07:37:54.570Z",
+	"generated_at": "2026-09-15T08:31:21.804Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
 		"url": "https://three.ws"
 	},
-	"total": 3680,
+	"total": 3682,
 	"complete": false,
 	"full_feed": "/changelog.json",
 	"entries": [
@@ -32,11 +32,32 @@
 		{
 			"date": "2026-09-15",
 			"type": "launch",
+			"title": "Docs · Solana Memo Media MCP",
+			"summary": "Decode validated image data embedded in Solana Memo transactions and return safe inline MCP images with provenance.",
+			"link": "/docs/mcp-solana-memo-media",
+			"tags": [
+				"launch"
+			]
+		},
+		{
+			"date": "2026-09-15",
+			"type": "launch",
 			"title": "Onchain Viewer",
 			"summary": "Open an image or text written into a public Solana Memo. Paste a transaction signature or Solscan link to preview the signed data without copying a data URI.",
 			"link": "/onchain",
 			"tags": [
 				"launch"
+			]
+		},
+		{
+			"date": "2026-09-15",
+			"type": "update",
+			"title": "Show and tell now captures projects people can actually try",
+			"summary": "The GitHub community showcase now asks builders for the outcome, live demo, source, three.ws surface used, one useful lesson, and visual proof. That structure makes each submission easier to understand, reproduce, feature, and turn into an honest adopter story. Two compact developer front doors are also fully built and exportable: a Codespaces starter that opens on a live animated agent, and a GLB pull-request quality gate powered by the same model-diff engine as three.ws.",
+			"link": null,
+			"tags": [
+				"improvement",
+				"docs"
 			]
 		},
 		{
@@ -1596,28 +1617,6 @@
 			"tags": [
 				"fix",
 				"infra"
-			]
-		},
-		{
-			"date": "2026-09-07",
-			"type": "update",
-			"title": "Awesome 3D Agents: a curated list of everything you need to give an AI a body",
-			"summary": "Giving an agent a body means assembling a pipeline out of a dozen separate fields, and the map of that pipeline did not exist anywhere. There is now one: 152 hand-picked projects across 15 sections, covering text-to-3D generation, photo and video capture, avatars, rigging, motion generation, texturing, lipsync and voice, web renderers, asset pipelines, AR and XR, physics and networking, agent frameworks, datasets, free assets, and where to learn all of it. Each entry says in one sentence what the thing does and why you would reach for it instead of the alternative. The list is searchable and filterable by tag at /awesome, copyable as Markdown, and published in the standard awesome-list format on GitHub so it can be read, forked, and contributed to there. Every link is fetched and verified before it ships.",
-			"link": "/awesome",
-			"tags": [
-				"feature",
-				"docs"
-			]
-		},
-		{
-			"date": "2026-09-07",
-			"type": "update",
-			"title": "Blender tools now open three.ws avatars, which Blender alone cannot",
-			"summary": "Most three.ws avatars are delivered in a compressed form that Blender flatly cannot read: point stock Blender at one and it refuses the file. That made the new Blender tools useless on exactly the models this platform produces. Compressed models are now unpacked automatically before Blender opens them, for both of the common compression schemes, with nothing extra to install and your original file left untouched. The answer tells you when it happened.",
-			"link": null,
-			"tags": [
-				"fix",
-				"sdk"
 			]
 		}
 	]

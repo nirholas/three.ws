@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-09-15T07:37:54.271Z",
+	"generated_at": "2026-09-15T08:31:21.586Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json",
 	"site": {
 		"name": "three.ws",
@@ -4743,6 +4743,16 @@
 					"title": "Docs · MCP",
 					"description": "Expose your agent as an MCP server for Claude, ChatGPT, and other clients.",
 					"added": "2026-04-27",
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false
+				},
+				{
+					"path": "/docs/mcp-solana-memo-media",
+					"title": "Docs · Solana Memo Media MCP",
+					"description": "Decode validated image data embedded in Solana Memo transactions and return safe inline MCP images with provenance.",
+					"added": "2026-09-15",
 					"auth": null,
 					"indexable": true,
 					"tags": [],

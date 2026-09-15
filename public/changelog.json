@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-09-15T07:37:54.387Z",
+	"generated_at": "2026-09-15T08:31:21.658Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -29,11 +29,32 @@
 		{
 			"date": "2026-09-15",
 			"type": "launch",
+			"title": "Docs · Solana Memo Media MCP",
+			"summary": "Decode validated image data embedded in Solana Memo transactions and return safe inline MCP images with provenance.",
+			"link": "/docs/mcp-solana-memo-media",
+			"tags": [
+				"launch"
+			]
+		},
+		{
+			"date": "2026-09-15",
+			"type": "launch",
 			"title": "Onchain Viewer",
 			"summary": "Open an image or text written into a public Solana Memo. Paste a transaction signature or Solscan link to preview the signed data without copying a data URI.",
 			"link": "/onchain",
 			"tags": [
 				"launch"
+			]
+		},
+		{
+			"date": "2026-09-15",
+			"type": "update",
+			"title": "Show and tell now captures projects people can actually try",
+			"summary": "The GitHub community showcase now asks builders for the outcome, live demo, source, three.ws surface used, one useful lesson, and visual proof. That structure makes each submission easier to understand, reproduce, feature, and turn into an honest adopter story. Two compact developer front doors are also fully built and exportable: a Codespaces starter that opens on a live animated agent, and a GLB pull-request quality gate powered by the same model-diff engine as three.ws.",
+			"link": null,
+			"tags": [
+				"improvement",
+				"docs"
 			]
 		},
 		{

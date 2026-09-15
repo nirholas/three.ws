@@ -2896,6 +2896,12 @@ URL: https://three.ws/docs/mcp
 
 Expose your agent as an MCP server for Claude, ChatGPT, and other clients.
 
+### Docs · Solana Memo Media MCP
+
+URL: https://three.ws/docs/mcp-solana-memo-media
+
+Decode validated image data embedded in Solana Memo transactions and return safe inline MCP images with provenance.
+
 ### Docs · three.ws in VS Code
 
 URL: https://three.ws/docs/vscode
