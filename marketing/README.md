@@ -4,6 +4,7 @@ Campaign assets for three.ws announcements and distribution: video scripts and r
 
 | Campaign | Description |
 | --- | --- |
+| [growth](growth/README.md) | The 90-day marketing command center: channel and content audit, partner and listing pipeline, $THREE utility series, community-event system, campaign calendar, outreach templates, and measurement rules. |
 | [huggingface-article](huggingface-article/post.md) | The X thread announcing the second Hugging Face community article and thanking every program and partner named in it, with the tagging rules each one requires. |
 | [ibm-partner-plus](ibm-partner-plus/README.md) | The IBM Partner Plus kit: the Agent Connect BYOL submission pack for listing the 3D Studio MCP server in the watsonx Orchestrate Agent Catalog, the catalog icon, the claims we may and may not make, and held announcement copy. |
 | [imessage-video](imessage-video/README.md) | A 9:16 vertical video of a fake iMessage thread that lands the AR Forge and OpenAI collaboration beats, built for X, TikTok, and Reels. |
