@@ -1,0 +1,18 @@
+{
+	"name": "three.ws agent starter",
+	"image": "mcr.microsoft.com/devcontainers/javascript-node:1-22-bookworm",
+	"forwardPorts": [4173],
+	"portsAttributes": {
+		"4173": {
+			"label": "three.ws agent",
+			"onAutoForward": "openBrowser"
+		}
+	},
+	"postCreateCommand": "npm ci",
+	"postStartCommand": "nohup npm run dev > /tmp/threews-agent-starter.log 2>&1 &",
+	"customizations": {
+		"codespaces": {
+			"openFiles": ["README.md", "index.html", "app.js"]
+		}
+	}
+}

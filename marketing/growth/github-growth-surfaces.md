@@ -174,6 +174,26 @@ Each month, choose one adjacent open-source 3D or agent project. Build the small
 integration, contribute it upstream, and publish a two-sided demo. Start with maintainers who
 already use or mention three.ws; expand to cold targets only after the format works.
 
+## Implementation status
+
+The first owned surfaces are built in the canonical repository:
+
+- [`satellites/agent-starter`](../../satellites/agent-starter) contains the live responsive
+  demo, Codespaces configuration, ten-minute guide, contribution guide, and structural test.
+- [`satellites/glb-quality-gate`](../../satellites/glb-quality-gate) contains the complete
+  GitHub Action, real serialized-GLB tests, bundled runtime build, usage docs, and release
+  contract.
+- [`scripts/export-growth-satellites.mjs`](../../scripts/export-growth-satellites.mjs) builds,
+  tests, licenses, bundles, and stamps standalone repository histories for both.
+- [The directory submission kit](./submissions/README.md) contains copy and verification
+  packets for the two curated-list pull requests.
+- [The Show and tell discussion form](../../.github/DISCUSSION_TEMPLATE/show-and-tell.yml)
+  collects a project outcome, live/source links, the three.ws surface used, one lesson, media,
+  and optional feature permission.
+
+Publication requires GitHub authentication as the `nirholas` owner because both planned
+destinations live in that personal namespace. Do not publish them under a different account.
+
 ## Decision sequence
 
 | By         | Decision or deliverable                                              | Evidence                                            |
