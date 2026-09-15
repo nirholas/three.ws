@@ -9,7 +9,7 @@ directory is for.
 
 **Which pack to make next** is not decided in this directory. Use the
 [marketing command center](../../marketing/growth/README.md) for the scheduled campaign, owner, audience,
-call to action, and measurement plan. Run `npm run announce:rank` when the current repository inventory needs
+call to action, and measurement plan. Run `npm run announce:rank -- --probe` when the current repository inventory needs
 to be re-scored, then build the selected evidence pack here.
 
 ## How a pack gets made
