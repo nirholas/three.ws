@@ -7,6 +7,15 @@
 
 import { createHttp, ThreeWsError } from './http.js';
 
+export {
+	MPL_HYBRID_PROGRAM_ID,
+	MPL_HYBRID_INSTRUCTION_VERSION,
+	MPL_HYBRID_ASSET_STANDARD,
+	MPL_HYBRID_DOCS_URL,
+	createMpl404Plan,
+	isMpl404Compatible,
+} from './mpl404.js';
+
 export { ThreeWsError, PaymentRequiredError, DEFAULT_BASE_URL } from './http.js';
 
 /** pump.fun's agent transaction API: builds the unsigned/mint-signed tx. */

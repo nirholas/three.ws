@@ -5,6 +5,9 @@ import {
 	NATIVE_MINT,
 	ThreeWsError,
 	PaymentRequiredError,
+	createMpl404Plan,
+	isMpl404Compatible,
+	MPL_HYBRID_PROGRAM_ID,
 } from '../src/index.js';
 
 // $THREE is the only coin. Tests use the real $THREE mint or a clearly-synthetic
@@ -12,6 +15,35 @@ import {
 const THREE_MINT = 'FeMbDoX7R1Psc4GEcvJdsbNbZA3bfztcyDCatJVJpump';
 const SYNTH_MINT = 'THREEsynthetic1111111111111111111111111111';
 const WALLET = 'YourWa11et1111111111111111111111111111111111';
+
+test('createMpl404Plan() makes Pump.fun the SPL backing asset, not a fake launch mode', () => {
+	const plan = createMpl404Plan({
+		tokenMint: THREE_MINT,
+		collection: 'Co11ection111111111111111111111111111111111',
+		authority: WALLET,
+		name: 'THREE relics',
+		uri: 'https://example.com/relics.json',
+		amount: '1000000',
+	});
+	assert.equal(plan.programId, MPL_HYBRID_PROGRAM_ID);
+	assert.equal(plan.assetStandard, 'metaplex-core');
+	assert.equal(plan.backing.mint, THREE_MINT);
+	assert.deepEqual(plan.requiredTransactions, ['initEscrowV1', 'captureV1', 'releaseV1']);
+	assert.equal(plan.initEscrowV1.amount, '1000000');
+	assert.equal(isMpl404Compatible({ tokenMint: THREE_MINT, assetStandard: 'metaplex-core' }), true);
+});
+
+test('createMpl404Plan() rejects an unsafe or inverted swap ratio', () => {
+	assert.throws(() => createMpl404Plan({
+		tokenMint: THREE_MINT, collection: 'bad', authority: WALLET,
+		name: 'x', uri: 'https://example.com/x.json', amount: '1',
+	}), /collection must be a base58/);
+	assert.throws(() => createMpl404Plan({
+		tokenMint: THREE_MINT,
+		collection: 'Co11ection111111111111111111111111111111111', authority: WALLET,
+		name: 'x', uri: 'https://example.com/x.json', min: '2', amount: '1', max: '3',
+	}), /min <= amount <= max/);
+});
 
 // A scripted fetch double: each call shifts the next queued response and records
 // the request. No network, no real endpoints, we assert on request shaping and

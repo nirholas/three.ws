@@ -4,7 +4,7 @@
 
 <h1 align="center">@three-ws/pumpfun-skills</h1>
 
-<p align="center"><strong>pump.fun launch + trade as composable agent tools: create a coin, swap, and read creator fees, with a runtime-supplied mint.</strong></p>
+<p align="center"><strong>pump.fun launch, trade, creator fees, and MPL-404 hybrid planning as composable agent tools.</strong></p>
 
 <p align="center">
   <a href="https://www.npmjs.com/package/@three-ws/pumpfun-skills"><img alt="npm" src="https://img.shields.io/npm/v/@three-ws/pumpfun-skills?logo=npm&color=cb3837"></a>
@@ -54,6 +54,8 @@ the user to sign. These skills collapse that into three calls:
   `collectFees({...})` builds the claim or distribution transaction.
 - **Mint supplied at runtime.** Pass any pump.fun mint you control. There is no
   coin list, no allowlist: generic plumbing, your inputs.
+- **MPL-404-ready.** Turn a Pump.fun mint into the fungible backing side of a
+  Metaplex Hybrid V1 project, without pretending Pump.fun itself creates NFTs.
 
 This is the SDK twin of the `pumpfun_create_coin`, `pumpfun_swap`, and
 `pumpfun_collect_fees` MCP/skill tools: same endpoints, plain functions.
@@ -127,6 +129,33 @@ Also exported: `createPumpfunSkills(options)` builds a configured client (custom
 the functions below; plus the `AGENT_API_BASE`, `COINS_V2_BASE`, and
 `FEE_DESTINATIONS` constants and the `ThreeWsError` / `PaymentRequiredError`
 error classes.
+
+### `createMpl404Plan(input) → Mpl404Plan`
+
+Creates a validated plan for the maintained Metaplex Hybrid program (commonly
+called MPL-404/SPL-404). A Pump.fun launch supplies the fungible SPL mint; a
+Metaplex **Core** collection supplies the NFT side. The helper never sends a
+transaction or holds a secret key. It returns the exact V1 setup parameters for
+your wallet-controlled `initEscrowV1`, followed by `captureV1` and `releaseV1`.
+
+```js
+import { createMpl404Plan } from '@three-ws/pumpfun-skills';
+
+const plan = createMpl404Plan({
+  tokenMint: launch.mint,       // Pump.fun mint
+  collection: coreCollection,
+  authority: wallet.publicKey.toBase58(),
+  name: '$THREE relics',
+  uri: 'https://ipfs.io/ipfs/Qm…/hybrid.json',
+  amount: '1000000',            // backing token's smallest units per NFT
+});
+// Use plan.initEscrowV1 with @metaplex-foundation/mpl-hybrid's V1 instruction.
+```
+
+Only Core collections are supported by the upstream hybrid program today;
+Token Metadata/pNFT and Token-2022-extension assets must be rejected rather
+than silently producing an unusable escrow. Protocol fees are governed by the
+deployed program, so confirm the current fee in the wallet flow before signing.
 
 ### `createCoin(input) → Promise<BuiltTx & { mint: string }>`
 

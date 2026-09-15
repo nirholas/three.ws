@@ -18,6 +18,11 @@ export declare const AGENT_API_BASE: string;
 export declare const COINS_V2_BASE: string;
 export declare const NATIVE_MINT: string;
 export declare const FEE_DESTINATIONS: FeeDestination[];
+/** Metaplex's maintained MPL-404 / hybrid swap program. */
+export declare const MPL_HYBRID_PROGRAM_ID: string;
+export declare const MPL_HYBRID_INSTRUCTION_VERSION: 'V1';
+export declare const MPL_HYBRID_ASSET_STANDARD: 'metaplex-core';
+export declare const MPL_HYBRID_DOCS_URL: string;
 
 export type FeeDestination = 'creator' | 'cashback' | 'sharing_config';
 export type SharingConfigMode = 'create' | 'update';
@@ -159,6 +164,45 @@ export interface PumpfunSkillsClient {
 	sharingConfig(input: SharingConfigInput, opts?: RequestOptions): Promise<BuiltTx>;
 	coinFees(mint: string, opts?: ReadOptions): Promise<FeeInfo>;
 }
+
+export interface Mpl404PlanInput {
+	/** The Pump.fun (or another SPL Token) mint that backs each hybrid asset. */
+	tokenMint: string;
+	/** Metaplex Core collection address. Token Metadata/pNFT collections are not supported by MPL-Hybrid. */
+	collection: string;
+	/** Wallet that administers the V1 escrow. */
+	authority: string;
+	/** Fee recipient; defaults to authority. */
+	feeLocation?: string;
+	name: string;
+	uri: string;
+	/** Smallest fungible units required to release one Core NFT. */
+	amount: string | number | bigint;
+	min?: string | number | bigint;
+	max?: string | number | bigint;
+	feeAmount?: string | number | bigint;
+	solFeeAmount?: string | number | bigint;
+	path?: number;
+}
+
+export interface Mpl404Plan {
+	standard: 'mpl-404';
+	instructionVersion: 'V1';
+	programId: string;
+	assetStandard: 'metaplex-core';
+	backing: { kind: 'spl-fungible-token'; mint: string };
+	collection: string;
+	authority: string;
+	feeLocation: string;
+	initEscrowV1: Record<string, string | number>;
+	feeNotice: string;
+	docsUrl: string;
+	requiredTransactions: ['initEscrowV1', 'captureV1', 'releaseV1'];
+}
+
+/** Create a validated, user-signed V1 MPL-404 escrow plan for a Pump.fun mint. */
+export declare function createMpl404Plan(input: Mpl404PlanInput): Mpl404Plan;
+export declare function isMpl404Compatible(input: { tokenMint?: string; assetStandard?: string }): boolean;
 
 export declare function createPumpfunSkills(options?: PumpfunSkillsOptions): PumpfunSkillsClient;
 export declare function createCoin(input: CreateCoinInput, opts?: RequestOptions): Promise<CreateCoinResult>;
