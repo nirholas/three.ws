@@ -2,6 +2,10 @@
 
 Campaign assets for three.ws announcements and distribution: video scripts and renders, press and social copy, badge rules, and finished graphics. Each campaign lives in its own directory with the assets and the instructions for using them.
 
+Start with the [90-day marketing operating plan](OPERATING-PLAN.md). It turns the campaign assets,
+partner pipeline, publishing program, `$THREE` utility story, community events, and measurement
+rules into one execution order.
+
 | Campaign | Description |
 | --- | --- |
 | [growth](growth/README.md) | The 90-day marketing command center: channel and content audit, partner and listing pipeline, $THREE utility series, community-event system, campaign calendar, outreach templates, and measurement rules. |

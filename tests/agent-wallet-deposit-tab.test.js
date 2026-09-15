@@ -133,7 +133,7 @@ describe('Deposit tab — public funding surface', () => {
 	it('fires the "received" confirmation only on a real balance increase', async () => {
 		vi.useFakeTimers();
 		try {
-			fetchAgentSolanaWallet.mockResolvedValue({ status: 'ok', data: { address: ADDR, sol: 0, deposits_enabled: true } });
+			fetchAgentSolanaWallet.mockResolvedValueOnce({ status: 'ok', data: { address: ADDR, sol: 0, deposits_enabled: true } });
 			const ctx = makeCtx();
 			const { panel, inst } = mountTab(ctx);
 			inst.onShow();
