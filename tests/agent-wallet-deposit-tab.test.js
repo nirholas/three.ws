@@ -82,7 +82,7 @@ describe('Deposit tab — public funding surface', () => {
 	});
 
 	it('renders the QR, address, copy control and who-you-are-funding header', async () => {
-		fetchAgentSolanaWallet.mockResolvedValue({ status: 'ok', data: { address: ADDR, sol: 0 } });
+		fetchAgentSolanaWallet.mockResolvedValue({ status: 'ok', data: { address: ADDR, sol: 0, deposits_enabled: true } });
 		const { panel, inst } = mountTab();
 		inst.onShow();
 		await tick();
@@ -99,7 +99,7 @@ describe('Deposit tab — public funding surface', () => {
 	});
 
 	it('shows the calm "waiting for your first deposit" state before any funds land', async () => {
-		fetchAgentSolanaWallet.mockResolvedValue({ status: 'ok', data: { address: ADDR, sol: 0 } });
+		fetchAgentSolanaWallet.mockResolvedValue({ status: 'ok', data: { address: ADDR, sol: 0, deposits_enabled: true } });
 		const { panel, inst } = mountTab();
 		inst.onShow();
 		await tick();
@@ -111,7 +111,7 @@ describe('Deposit tab — public funding surface', () => {
 	it('rewrites the deep-link with ?amount= when an amount is entered', async () => {
 		vi.useFakeTimers();
 		try {
-			fetchAgentSolanaWallet.mockResolvedValue({ status: 'ok', data: { address: ADDR, sol: 0 } });
+			fetchAgentSolanaWallet.mockResolvedValue({ status: 'ok', data: { address: ADDR, sol: 0, deposits_enabled: true } });
 			const { panel, inst } = mountTab();
 			inst.onShow();
 			await vi.runOnlyPendingTimersAsync();
@@ -133,7 +133,7 @@ describe('Deposit tab — public funding surface', () => {
 	it('fires the "received" confirmation only on a real balance increase', async () => {
 		vi.useFakeTimers();
 		try {
-			fetchAgentSolanaWallet.mockResolvedValueOnce({ status: 'ok', data: { address: ADDR, sol: 0 } });
+			fetchAgentSolanaWallet.mockResolvedValue({ status: 'ok', data: { address: ADDR, sol: 0, deposits_enabled: true } });
 			const ctx = makeCtx();
 			const { panel, inst } = mountTab(ctx);
 			inst.onShow();
@@ -142,7 +142,7 @@ describe('Deposit tab — public funding surface', () => {
 			expect(ctx.toast).not.toHaveBeenCalled();
 
 			// Next poll observes a real on-chain increase.
-			fetchAgentSolanaWallet.mockResolvedValue({ status: 'ok', data: { address: ADDR, sol: 0.5 } });
+			fetchAgentSolanaWallet.mockResolvedValue({ status: 'ok', data: { address: ADDR, sol: 0.5, deposits_enabled: true } });
 			await vi.advanceTimersByTimeAsync(15_000);
 			await vi.runOnlyPendingTimersAsync();
 
@@ -155,20 +155,42 @@ describe('Deposit tab — public funding surface', () => {
 		}
 	});
 
-	it('keeps the address + QR usable and shows a paused state when the RPC is unreachable', async () => {
+	it('fails closed without funding controls when wallet health cannot be verified', async () => {
 		fetchAgentSolanaWallet.mockResolvedValue({ status: 'error', error: 'rpc down' });
 		const { panel, inst } = mountTab();
 		inst.onShow();
 		await tick();
-		// Address comes from the agent record, so funding still works.
+		// The address may remain visible for identification, but it cannot be copied,
+		// encoded in a QR/deep-link, or tipped until the API proves it is signable.
 		expect(panel.textContent).toContain(ADDR);
-		expect(panel.querySelector('a.awh-dep-qr svg')).toBeTruthy();
-		expect(panel.querySelector('.awh-dep-status[data-state="paused"]')).toBeTruthy();
+		expect(panel.textContent).toMatch(/Do not send funds/i);
+		expect(panel.querySelector('a.awh-dep-qr')).toBeNull();
+		expect(panel.querySelector('[data-host="deeplink"]')).toBeNull();
+		expect(panel.querySelector('[data-act="copy"]')).toBeNull();
+		expect(panel.querySelector('[data-act="tip"]')).toBeNull();
+		inst.destroy();
+	});
+
+	it('removes every funding affordance for a retired-key wallet', async () => {
+		fetchAgentSolanaWallet.mockResolvedValue({
+			status: 'ok',
+			data: { address: ADDR, sol: 1, deposits_enabled: false, deposits_disabled_reason: 'key_retired' },
+		});
+		const { panel, inst } = mountTab();
+		inst.onShow();
+		await tick();
+
+		expect(panel.textContent).toMatch(/Deposits are disabled/i);
+		expect(panel.textContent).toMatch(/Do not send funds/i);
+		expect(panel.querySelector('a.awh-dep-qr')).toBeNull();
+		expect(panel.querySelector('[data-host="deeplink"]')).toBeNull();
+		expect(panel.querySelector('[data-act="copy"]')).toBeNull();
+		expect(panel.querySelector('[data-act="tip"]')).toBeNull();
 		inst.destroy();
 	});
 
 	it('never throws or blanks the panel on an extreme agent name (QR stays scannable)', async () => {
-		fetchAgentSolanaWallet.mockResolvedValue({ status: 'ok', data: { address: ADDR, sol: 0 } });
+		fetchAgentSolanaWallet.mockResolvedValue({ status: 'ok', data: { address: ADDR, sol: 0, deposits_enabled: true } });
 		const longName = '🚀'.repeat(300); // emoji → 4 bytes each, far past QR capacity
 		const ctx = makeCtx({ agent: { id: 'agent-1', name: longName, solana_address: ADDR } });
 		const { panel, inst } = mountTab(ctx);

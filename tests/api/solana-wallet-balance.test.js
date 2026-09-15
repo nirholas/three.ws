@@ -16,6 +16,7 @@ const addr = () => Keypair.generate().publicKey.toBase58();
 // Shared, mutable RPC stub state — defined before vi.mock so the (lazy) mock
 // factory closes over it, matching the pattern in solana-wallet-import.test.js.
 const rpcState = { lamports: 0, calls: 0, err: null };
+const keyState = { err: null, addressOverride: null };
 
 vi.mock('../../api/_lib/auth.js', () => ({
 	getSessionUser: vi.fn(async () => null),
@@ -47,11 +48,15 @@ vi.mock('../../api/_lib/agent-pumpfun.js', () => {
 			return rpcState.lamports;
 		},
 	});
-	return { solanaConnection: () => conn(), solanaPublicConnection: () => conn() };
+	return { solanaConnection: () => conn(), solanaPublicConnection: () => conn(), isUnrecoverableSecret: (e) => e?.name === 'OperationError' };
 });
 
 vi.mock('../../api/_lib/agent-wallet.js', () => ({
 	generateSolanaAgentWallet: vi.fn(async () => ({ address: 'x', encrypted_secret: 'y' })),
+	recoverSolanaAgentKeypair: vi.fn(async (secret) => {
+		if (keyState.err) throw keyState.err;
+		return { publicKey: { toBase58: () => keyState.addressOverride || secret } };
+	}),
 }));
 
 const { default: handler } = await import('../../api/agents/solana-wallet.js');
@@ -72,7 +77,7 @@ function makeRes() {
 }
 async function read(address, network = 'mainnet') {
 	// Unique address per call keeps the shared cache from leaking across tests.
-	sqlState.queue.push([{ id: 'agent-1', meta: { solana_address: address } }]);
+	sqlState.queue.push([{ id: 'agent-1', meta: { solana_address: address, encrypted_solana_secret: address } }]);
 	const req = makeReq(`/api/agents/agent-1/solana?network=${network}`);
 	const res = makeRes();
 	await handler(req, res, 'agent-1');
@@ -83,6 +88,8 @@ beforeEach(() => {
 	rpcState.lamports = 0;
 	rpcState.calls = 0;
 	rpcState.err = null;
+	keyState.err = null;
+	keyState.addressOverride = null;
 	sqlState.queue = [];
 });
 
@@ -94,6 +101,7 @@ describe('GET /api/agents/:id/solana — public balance read', () => {
 		expect(body.data.balance).toBe(2.5);
 		expect(body.data.lamports).toBe(2_500_000_000);
 		expect(body.data.balance_error).toBeUndefined();
+		expect(body.data.deposits_enabled).toBe(true);
 	});
 
 	it('surfaces balance_error=rpc_rate_limited when the RPC 429s on every attempt', async () => {
@@ -122,5 +130,20 @@ describe('GET /api/agents/:id/solana — public balance read', () => {
 		const second = await read(wallet);
 		expect(second.body.data.balance).toBe(1);
 		expect(rpcState.calls).toBe(callsAfterFirst); // no additional RPC call
+	});
+
+	it('disables deposits when the custodial key is retired', async () => {
+		keyState.err = Object.assign(new Error('decrypt failed'), { name: 'OperationError' });
+		const { status, body } = await read(addr());
+		expect(status).toBe(200);
+		expect(body.data.deposits_enabled).toBe(false);
+		expect(body.data.deposits_disabled_reason).toBe('key_retired');
+	});
+
+	it('disables deposits when the recovered key does not own the advertised address', async () => {
+		keyState.addressOverride = addr();
+		const { body } = await read(addr());
+		expect(body.data.deposits_enabled).toBe(false);
+		expect(body.data.deposits_disabled_reason).toBe('key_mismatch');
 	});
 });

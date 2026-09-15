@@ -528,7 +528,7 @@ registerWalletTab({
 		// does not send the field leaves it undefined, which stays null here and
 		// keeps the form exactly as it was: this gate blocks only on a definite no.
 		async function loadSignable() {
-			const res = await call(`/api/agents/${encodeURIComponent(ctx.agentId)}/wallet?network=${ctx.getNetwork()}`);
+			const res = await call(`/api/agents/${encodeURIComponent(ctx.agentId)}/solana?network=${ctx.getNetwork()}`);
 			if (destroyed || !res.ok) return;
 			if (res.data?.signable === false) {
 				state.signable = false;

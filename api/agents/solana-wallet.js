@@ -155,6 +155,29 @@ async function resolveAuth(req) {
 	return null;
 }
 
+// A deposit address is safe to advertise only when the stored custodial key can
+// actually sign for that exact address. Balance reads alone cannot prove this:
+// an address whose encryption key was retired still has a perfectly valid,
+// publicly-readable on-chain balance. Keep this verdict in the API so every
+// funding surface can fail closed instead of independently guessing from the
+// presence of an address.
+async function walletSigningStatus(meta = {}) {
+	if (!meta.solana_address) return { signable: false, reason: 'wallet_missing' };
+	if (!meta.encrypted_solana_secret) return { signable: false, reason: 'key_missing' };
+	try {
+		const keypair = await recoverSolanaAgentKeypair(meta.encrypted_solana_secret);
+		if (keypair.publicKey.toBase58() !== meta.solana_address) {
+			return { signable: false, reason: 'key_mismatch' };
+		}
+		return { signable: true, reason: null };
+	} catch (e) {
+		return {
+			signable: false,
+			reason: isUnrecoverableSecret(e) ? 'key_retired' : 'key_error',
+		};
+	}
+}
+
 // ── activity ──────────────────────────────────────────────────────────────────
 
 async function handleActivity(req, res, id) {
@@ -309,9 +332,13 @@ async function handlePublicWalletRead(req, res, id) {
 				wallet: null,
 				balance: null,
 				chain: 'solana',
+				deposits_enabled: false,
+				deposits_disabled_reason: 'wallet_missing',
 			},
 		});
 	}
+
+	const signing = await walletSigningStatus(row.meta);
 
 	let lamports = null;
 	let balanceError = null;
@@ -343,6 +370,8 @@ async function handlePublicWalletRead(req, res, id) {
 			chain: 'solana',
 			network: net,
 			lamports,
+			deposits_enabled: signing.signable,
+			...(!signing.signable ? { deposits_disabled_reason: signing.reason } : {}),
 			...(balanceError ? { balance_error: balanceError } : {}),
 		},
 	});
@@ -470,24 +499,17 @@ async function handleWallet(req, res, id) {
 		? await _reverseSnsCached(meta.solana_address)
 		: null;
 
-	// Can we still SIGN for this wallet, or are we showing the owner a balance they
+	// Can we still SIGN for this wallet, or are we showing a balance whose funds
 	// can never move? A custodial secret sealed under a retired WALLET_ENCRYPTION_KEY
 	// still reads back a perfectly healthy on-chain balance, so the wallet card looked
 	// identical to a working one right up until the owner typed an amount, confirmed a
 	// withdrawal, and got a 500. Measured 2026-08-01: two customer agents holding
 	// 0.35 SOL are in exactly that state. The check is a local AES-GCM attempt on one
-	// record (no network, sub-millisecond) and runs only on the owner's own read.
-	let signable = null;
-	let signableReason = null;
-	if (meta.encrypted_solana_secret) {
-		try {
-			await recoverSolanaAgentKeypair(meta.encrypted_solana_secret);
-			signable = true;
-		} catch (e) {
-			signable = false;
-			signableReason = isUnrecoverableSecret(e) ? 'key_retired' : 'key_error';
-		}
-	}
+	// record (no network, sub-millisecond). The public read exposes only the deposit
+	// safety verdict; the owner read additionally exposes the signing verdict.
+	const signing = await walletSigningStatus(meta);
+	const signable = signing.signable;
+	const signableReason = signing.reason;
 
 	return json(res, req.method === 'POST' ? 201 : 200, {
 		data: {
@@ -498,6 +520,8 @@ async function handleWallet(req, res, id) {
 			...(balanceError ? { balance_error: balanceError } : {}),
 			signable,
 			...(signableReason ? { signable_reason: signableReason } : {}),
+			deposits_enabled: signable,
+			...(!signable ? { deposits_disabled_reason: signableReason } : {}),
 			vanity_prefix: meta.solana_vanity_prefix || null,
 			vanity_suffix: meta.solana_vanity_suffix || null,
 			source: meta.solana_wallet_source || (meta.encrypted_solana_secret ? 'generated' : null),

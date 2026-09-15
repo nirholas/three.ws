@@ -135,6 +135,11 @@ registerWalletTab({
 		const state = {
 			loaded: false,
 			address: ctx.agent?.solana_address || ctx.agent?.meta?.solana_address || null,
+			// Funding is enabled only after the API proves that the platform can
+			// sign for this exact address. Unknown must fail closed: otherwise a
+			// stale address remains fundable during an API error or old deployment.
+			depositsEnabled: null,
+			depositsDisabledReason: null,
 			amount: '', // user-entered SOL amount for the QR/deep-link
 			amountError: false,
 			// Live confirmation tracking.
@@ -271,6 +276,41 @@ registerWalletTab({
 				return;
 			}
 
+			if (state.depositsEnabled !== true) {
+				const reason = state.depositsDisabledReason;
+				const knownKeyFailure = ['key_retired', 'key_missing', 'key_mismatch', 'key_error'].includes(reason);
+				panel.innerHTML = `
+					<div class="awh-card">
+						<div class="awh-dep-who">
+							${avatar ? `<img class="awh-dep-who-av" src="${escapeHtml(avatar)}" alt="" loading="lazy" data-fallback="remove" />` : ''}
+							<div class="awh-dep-who-txt"><strong>Deposits are disabled for ${escapeHtml(agentName)}.</strong></div>
+						</div>
+						<div class="awh-err" role="alert">
+							<strong>Do not send funds to this wallet.</strong>
+							<div class="why" style="text-transform:none; margin-top:6px; line-height:1.5;">
+								${knownKeyFailure
+									? 'The platform cannot authorize outgoing transactions from this address. Existing on-chain funds remain visible, but sending more would leave those funds immovable.'
+									: 'The platform could not verify that it can authorize outgoing transactions from this address. Funding controls stay disabled until that safety check succeeds.'}
+							</div>
+						</div>
+						<div class="awh-dep-label" style="margin-top:12px">Disabled wallet address</div>
+						<div class="awh-dep-addr" title="${escapeHtml(state.address)}">${escapeHtml(state.address)}</div>
+						<div class="awh-dep-actions" style="margin-top:12px">
+							<a class="awh-btn" href="${escapeHtml(explorerAddressUrl(state.address, net))}" target="_blank" rel="noopener">View existing funds ↗</a>
+							${ctx.isOwner ? `<a class="awh-btn" href="/support?topic=wallet-key&agent=${encodeURIComponent(ctx.agentId)}">Contact support</a>` : ''}
+							<button class="awh-btn" type="button" data-act="reload">Re-check</button>
+						</div>
+					</div>`;
+				panel.querySelector('[data-act="reload"]')?.addEventListener('click', () => {
+					state.loaded = false;
+					state.depositsEnabled = null;
+					state.depositsDisabledReason = null;
+					render();
+					loadInitial();
+				});
+				return;
+			}
+
 			const uri = solanaUri();
 			panel.innerHTML = `
 				<div class="awh-card">
@@ -394,18 +434,24 @@ registerWalletTab({
 			} catch {
 				return { ok: false };
 			}
-			if (!r) return { ok: false };
-			if (r.status === 'forbidden') return { ok: false, forbidden: true };
-			if (r.status === 'none') return { ok: true, address: null, sol: null };
-			if (r.status === 'error') return { ok: false };
-			if (r.data?.balance_error) return { ok: false };
-			return { ok: true, address: r.data?.address || null, sol: r.data?.sol ?? null };
+			if (!r) return { ok: false, depositsEnabled: false, depositsDisabledReason: 'health_unavailable' };
+			if (r.status === 'forbidden') return { ok: false, forbidden: true, depositsEnabled: false, depositsDisabledReason: 'health_unavailable' };
+			if (r.status === 'none') return { ok: true, address: null, sol: null, depositsEnabled: false, depositsDisabledReason: 'wallet_missing' };
+			if (r.status === 'error') return { ok: false, depositsEnabled: false, depositsDisabledReason: 'health_unavailable' };
+			const health = {
+				depositsEnabled: r.data?.deposits_enabled === true,
+				depositsDisabledReason: r.data?.deposits_disabled_reason || (r.data?.deposits_enabled === true ? null : 'health_unavailable'),
+			};
+			if (r.data?.balance_error) return { ok: false, address: r.data?.address || null, ...health };
+			return { ok: true, address: r.data?.address || null, sol: r.data?.sol ?? null, ...health };
 		}
 
 		async function loadInitial() {
 			const res = await readBalance();
+			state.depositsEnabled = res.depositsEnabled === true;
+			state.depositsDisabledReason = res.depositsDisabledReason || null;
 			if (res.ok) {
-				if (res.address) state.address = res.address;
+				state.address = res.address;
 				state.balanceError = false;
 				if (typeof res.sol === 'number') state.baselineSol = res.sol;
 			} else {
@@ -420,6 +466,16 @@ registerWalletTab({
 		async function poll() {
 			if (!visible || destroyed || !state.address) return;
 			const res = await readBalance();
+			if (res.depositsEnabled !== true) {
+				state.depositsEnabled = false;
+				state.depositsDisabledReason = res.depositsDisabledReason || 'health_unavailable';
+				if (res.address) state.address = res.address;
+				state.balanceError = !res.ok;
+				render();
+				return;
+			}
+			state.depositsEnabled = true;
+			state.depositsDisabledReason = null;
 			if (!res.ok) {
 				if (!state.balanceError) {
 					state.balanceError = true;
@@ -483,6 +539,8 @@ registerWalletTab({
 		// A network switch resets the live-confirmation baseline for the new cluster.
 		detachNet = ctx.onNetworkChange(() => {
 			state.loaded = false;
+			state.depositsEnabled = null;
+			state.depositsDisabledReason = null;
 			state.baselineSol = null;
 			state.received = null;
 			state.receivedCount = 0;
