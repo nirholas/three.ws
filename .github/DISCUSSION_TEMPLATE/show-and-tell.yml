@@ -1,0 +1,65 @@
+title: "[Show and tell] "
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Show the community what you built with three.ws. Finished products, experiments, integrations, and useful works in progress are welcome.
+  - type: input
+    id: project
+    attributes:
+      label: Project name
+      placeholder: My animated support agent
+    validations:
+      required: true
+  - type: textarea
+    id: outcome
+    attributes:
+      label: What did you build?
+      description: Explain what a user can do and which three.ws surface made it possible.
+      placeholder: Visitors can ask our site guide questions and see the answer performed by a 3D character.
+    validations:
+      required: true
+  - type: input
+    id: live_url
+    attributes:
+      label: Live URL
+      description: Add a public demo when one is available.
+      placeholder: https://example.com/demo
+  - type: input
+    id: source_url
+    attributes:
+      label: Source repository
+      description: Link the code when it is public.
+      placeholder: https://github.com/owner/repository
+  - type: dropdown
+    id: surface
+    attributes:
+      label: Main three.ws surface used
+      options:
+        - agent-3d web component
+        - 3D generation or rigging
+        - Model inspection or diff
+        - MCP server or tool
+        - SDK or package
+        - World or spatial experience
+        - Another three.ws surface
+    validations:
+      required: true
+  - type: textarea
+    id: lesson
+    attributes:
+      label: What did you learn?
+      description: Share one implementation detail that would help the next builder.
+    validations:
+      required: true
+  - type: textarea
+    id: media
+    attributes:
+      label: Screenshot or short recording
+      description: Drag an image, GIF, or video here so people can understand the result quickly.
+  - type: checkboxes
+    id: feature_permission
+    attributes:
+      label: Community feature
+      options:
+        - label: three.ws may link to this project from community channels with attribution.

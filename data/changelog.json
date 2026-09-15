@@ -3,6 +3,15 @@
 	"entries": [
 		{
 			"date": "2026-09-15",
+			"title": "Show and tell now captures projects people can actually try",
+			"summary": "The GitHub community showcase now asks builders for the outcome, live demo, source, three.ws surface used, one useful lesson, and visual proof. That structure makes each submission easier to understand, reproduce, feature, and turn into an honest adopter story. Two compact developer front doors are also fully built and exportable: a Codespaces starter that opens on a live animated agent, and a GLB pull-request quality gate powered by the same model-diff engine as three.ws.",
+			"tags": [
+				"improvement",
+				"docs"
+			]
+		},
+		{
+			"date": "2026-09-15",
 			"title": "three.ws is ready for Solana's new 4 KiB transactions",
 			"summary": "Solana V1 transactions are live, with more than three times the wire room and a different place for execution limits. Every three.ws transaction reader now opts into V1, so a payment, registration, receipt, or agent action cannot disappear just because it uses the new format. The new Atomic inspector reads a confirmed signature or raw base64 handoff and shows the exact byte footprint, compute and account-data limits, priority fee, actual compute use, and the warning a fee sponsor needs before co-signing. It never signs or broadcasts anything.",
 			"tags": [

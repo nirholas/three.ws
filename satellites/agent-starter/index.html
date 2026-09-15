@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="UTF-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1" />
+		<meta
+			name="description"
+			content="Put an animated three.ws 3D agent on a web page, then make a character of your own."
+		/>
+		<title>Your first three.ws agent</title>
+		<link rel="stylesheet" href="./styles.css" />
+		<script type="module" src="https://three.ws/agent-3d/latest/agent-3d.js"></script>
+		<script type="module" src="./app.js"></script>
+	</head>
+	<body>
+		<main>
+			<section class="copy" aria-labelledby="title">
+				<a class="eyebrow" href="https://three.ws" target="_blank" rel="noreferrer">three.ws starter</a>
+				<h1 id="title">Give your website a body.</h1>
+				<p class="lede">
+					This page is already running a real animated 3D agent. Make it react, inspect the tiny
+					integration, then generate a character that is yours.
+				</p>
+
+				<div class="actions" aria-label="Agent controls">
+					<button type="button" data-action="wave" disabled>Wave hello</button>
+					<button type="button" class="secondary" data-action="speak" disabled>Introduce yourself</button>
+				</div>
+
+				<div class="command-card">
+					<div>
+						<span class="step">Make your own</span>
+						<code id="create-command">npm create @three-ws/agent "a friendly robot guide"</code>
+					</div>
+					<button type="button" class="copy-button" data-copy aria-describedby="copy-status">Copy</button>
+				</div>
+				<p id="copy-status" class="status" role="status" aria-live="polite">
+					Run the command in this Codespace terminal. No account or API key is required.
+				</p>
+
+				<nav aria-label="Next steps">
+					<a href="./LEARN.md">Follow the 10-minute guide</a>
+					<a href="https://three.ws/docs/web-component" target="_blank" rel="noreferrer">Read the component API</a>
+					<a href="https://three.ws/create" target="_blank" rel="noreferrer">Open the creator</a>
+				</nav>
+			</section>
+
+			<section class="stage" aria-label="Live 3D agent preview">
+				<div class="live-pill"><span aria-hidden="true"></span> Live component</div>
+				<agent-3d
+					id="agent"
+					body="https://three.ws/avatars/default.glb"
+					name="Nova"
+					camera="fullbody"
+					background="transparent"
+					style="width: 100%; height: 100%"
+				></agent-3d>
+				<p class="stage-caption">One script. One element. A full 3D character.</p>
+			</section>
+		</main>
+	</body>
+</html>

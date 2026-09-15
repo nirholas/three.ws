@@ -1,0 +1,250 @@
+:root {
+	color-scheme: dark;
+	font-family:
+		Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+	background: #09090f;
+	color: #f7f7fb;
+}
+
+* {
+	box-sizing: border-box;
+}
+
+body {
+	margin: 0;
+	min-width: 320px;
+	min-height: 100vh;
+	background:
+		radial-gradient(circle at 78% 18%, rgba(120, 72, 255, 0.24), transparent 32rem),
+		radial-gradient(circle at 14% 88%, rgba(0, 214, 170, 0.12), transparent 28rem), #09090f;
+}
+
+main {
+	display: grid;
+	grid-template-columns: minmax(0, 1fr) minmax(320px, 0.8fr);
+	gap: clamp(2rem, 7vw, 8rem);
+	align-items: center;
+	width: min(1180px, calc(100% - 2rem));
+	min-height: 100vh;
+	margin: 0 auto;
+	padding: 3rem 0;
+}
+
+.copy {
+	display: grid;
+	gap: 1.35rem;
+}
+
+.eyebrow,
+.step {
+	color: #9f87ff;
+	font-size: 0.78rem;
+	font-weight: 750;
+	letter-spacing: 0.12em;
+	text-transform: uppercase;
+}
+
+.eyebrow {
+	width: fit-content;
+	text-decoration: none;
+}
+
+h1 {
+	max-width: 10ch;
+	margin: 0;
+	font-size: clamp(3.2rem, 8vw, 6.8rem);
+	font-weight: 750;
+	letter-spacing: -0.075em;
+	line-height: 0.9;
+}
+
+.lede {
+	max-width: 57ch;
+	margin: 0;
+	color: #b8b7c4;
+	font-size: clamp(1rem, 2vw, 1.18rem);
+	line-height: 1.7;
+}
+
+.actions,
+nav {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.75rem;
+}
+
+button,
+nav a {
+	border: 1px solid transparent;
+	border-radius: 999px;
+	font: inherit;
+	font-weight: 700;
+	transition:
+		transform 160ms ease,
+		background 160ms ease,
+		border-color 160ms ease;
+}
+
+button {
+	padding: 0.78rem 1.1rem;
+	background: #f7f7fb;
+	color: #11111a;
+	cursor: pointer;
+}
+
+button.secondary {
+	border-color: #373642;
+	background: #17161f;
+	color: #f7f7fb;
+}
+
+button:hover:not(:disabled),
+nav a:hover {
+	transform: translateY(-2px);
+}
+
+button:active:not(:disabled),
+nav a:active {
+	transform: translateY(0);
+}
+
+button:focus-visible,
+a:focus-visible {
+	outline: 3px solid #9f87ff;
+	outline-offset: 3px;
+}
+
+button:disabled {
+	cursor: progress;
+	opacity: 0.5;
+}
+
+.command-card {
+	display: flex;
+	gap: 1rem;
+	align-items: center;
+	justify-content: space-between;
+	padding: 1rem 1.1rem;
+	border: 1px solid #2d2c36;
+	border-radius: 1.1rem;
+	background: rgba(20, 19, 28, 0.78);
+	box-shadow: 0 1.5rem 4rem rgba(0, 0, 0, 0.22);
+}
+
+.command-card > div {
+	display: grid;
+	gap: 0.45rem;
+	min-width: 0;
+}
+
+code {
+	overflow-wrap: anywhere;
+	color: #f1efff;
+	font-size: 0.88rem;
+}
+
+.copy-button {
+	flex: none;
+}
+
+.status {
+	min-height: 1.4em;
+	margin: -0.65rem 0 0;
+	color: #8c8b98;
+	font-size: 0.86rem;
+}
+
+nav a {
+	padding: 0.55rem 0.8rem;
+	color: #c9c4df;
+	font-size: 0.86rem;
+	text-decoration: none;
+}
+
+.stage {
+	position: relative;
+	height: min(74vh, 680px);
+	min-height: 480px;
+	overflow: hidden;
+	border: 1px solid rgba(255, 255, 255, 0.11);
+	border-radius: 2rem;
+	background: linear-gradient(145deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.025));
+	box-shadow: 0 2rem 6rem rgba(0, 0, 0, 0.42);
+}
+
+.live-pill,
+.stage-caption {
+	position: absolute;
+	z-index: 2;
+	left: 1.25rem;
+	border: 1px solid rgba(255, 255, 255, 0.12);
+	background: rgba(9, 9, 15, 0.72);
+	backdrop-filter: blur(14px);
+}
+
+.live-pill {
+	top: 1.25rem;
+	display: flex;
+	gap: 0.55rem;
+	align-items: center;
+	padding: 0.55rem 0.75rem;
+	border-radius: 999px;
+	font-size: 0.76rem;
+	font-weight: 700;
+}
+
+.live-pill span {
+	width: 0.55rem;
+	height: 0.55rem;
+	border-radius: 50%;
+	background: #27e4aa;
+	box-shadow: 0 0 0.9rem #27e4aa;
+}
+
+.stage-caption {
+	right: 1.25rem;
+	bottom: 1.25rem;
+	margin: 0;
+	padding: 0.8rem 1rem;
+	border-radius: 0.9rem;
+	color: #d0ceda;
+	font-size: 0.8rem;
+	text-align: center;
+}
+
+@media (max-width: 820px) {
+	main {
+		grid-template-columns: 1fr;
+		padding: 3rem 0 1rem;
+	}
+
+	h1 {
+		max-width: 12ch;
+	}
+
+	.stage {
+		order: -1;
+		height: 52vh;
+		min-height: 390px;
+	}
+}
+
+@media (max-width: 480px) {
+	.command-card {
+		align-items: stretch;
+		flex-direction: column;
+	}
+
+	.copy-button {
+		width: 100%;
+	}
+}
+
+@media (prefers-reduced-motion: reduce) {
+	*,
+	*::before,
+	*::after {
+		scroll-behavior: auto !important;
+		transition-duration: 0.01ms !important;
+	}
+}
