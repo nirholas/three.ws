@@ -39,8 +39,16 @@ costs nothing.
 receipt.** [data/timeline.json](../data/timeline.json) carries
 `2026-07-18-jensen-huang`: "NVIDIA CEO Jensen Huang interacts with three.ws
 content, amplifying the NVIDIA Inception announcement." Its `source_url` is
-`null`. Five of the seven NVIDIA timeline events have a null `source_url`,
-including the Inception acceptance and its public announcement.
+`null`. Four of the seven NVIDIA timeline events have a null `source_url`,
+including the Inception acceptance and its public announcement. (The Developer
+Program event now cites the 2026-07-11 @trythreews acceptance post.)
+
+The repo copy of the X archive cannot close this gap: on 2026-09-16 every
+NVIDIA-related post in `data/x-archive/trythreews-2026-08-14.json` was checked
+and none records the interaction, and no Inception announcement post exists
+there either. An engagement from another account shows up only in the
+account's own notifications or the other account's activity, so the receipt
+has to come from whoever holds the @trythreews or @nichxbt login.
 
 That is the highest-value social proof this company has and it is currently
 unciteable. An engagement from NVIDIA's CEO is the first line of any Showcase
