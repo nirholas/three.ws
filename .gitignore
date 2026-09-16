@@ -644,3 +644,5 @@ docs/ops/npm-publish-status.md
 # Packaged VS Code extensions belong on GitHub Releases, not in Git history.
 *.vsix
 HSO6cvibUAATRw9.jpg
+# Local X announcement publish ledger (production uses R2).
+.x-announcement-state.json
