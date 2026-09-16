@@ -200,13 +200,13 @@ async function recentPrioritizationFee(connection) {
 // A REAL simulateTransaction of the trade instructions to read unitsConsumed,
 // padded 15% for the runtime drift between sim and land. Not cached (it depends on
 // the exact instruction set), but it's a single RPC call on the hot path.
-async function estimateComputeUnits(connection, payer, instructions) {
+async function estimateComputeUnits(connection, payer, instructions, lookupTables = []) {
 	const { blockhash } = await connection.getLatestBlockhash('confirmed');
 	const msg = new TransactionMessage({
 		payerKey: payer.publicKey,
 		recentBlockhash: blockhash,
 		instructions,
-	}).compileToV0Message();
+	}).compileToV0Message(lookupTables);
 	const sim = await connection.simulateTransaction(new VersionedTransaction(msg), {
 		sigVerify: false,
 		replaceRecentBlockhash: true,
@@ -422,6 +422,8 @@ async function sendProtected(signedTx, signature, connection, blockhashCtx, conf
  * @param {import('@solana/web3.js').Keypair[]} [o.opts.extraSigners=[]]  co-signers
  *          beyond the fee-payer (e.g. a new mint Keypair on a launch)
  * @param {number}  [o.opts.confirmTimeoutMs=45000]            protected-route confirm bound
+ * @param {import('@solana/web3.js').AddressLookupTableAccount[]} [o.opts.addressLookupTables=[]]
+ *          tables to compile the v0 message against (a launch needs pump.fun's to fit)
  * @param {boolean} [o.opts.preSimulated=false]               caller already simulated (firewall) — still estimates CU
  * @param {(tipLamports: bigint, route: string) => Promise<void>} [o.opts.onTip]
  *          Spend-guard hook invoked BEFORE a tip is appended. Throw to veto the
@@ -438,6 +440,7 @@ export async function submitProtected({ network, connection, payer, instructions
 	// signature set. (Sim uses sigVerify:false, so it needs only the account metas
 	// the instructions already carry, not these keypairs.)
 	const extraSigners = Array.isArray(opts.extraSigners) ? opts.extraSigners : [];
+	const lookupTables = Array.isArray(opts.addressLookupTables) ? opts.addressLookupTables : [];
 	// Strip any caller-supplied ComputeBudget instructions: this engine sets its own
 	// data-driven CU limit + escalating priority fee, and a SECOND ComputeBudget
 	// instruction of the same kind makes the runtime reject the whole transaction.
@@ -455,7 +458,7 @@ export async function submitProtected({ network, connection, payer, instructions
 	//    parallel — both are real RPC reads (fee cached, CU is a fresh simulate).
 	const [priorityFeeBase, cuLimit] = await Promise.all([
 		estimatePriorityFeeMicroLamports(connection, network),
-		estimateComputeUnits(connection, payer, userIxs),
+		estimateComputeUnits(connection, payer, userIxs, lookupTables),
 	]);
 
 	const canJito = jitoEligible(network, tipMode);
@@ -531,7 +534,7 @@ export async function submitProtected({ network, connection, payer, instructions
 			payerKey: payer.publicKey,
 			recentBlockhash: blockhashCtx.blockhash,
 			instructions: txIxs,
-		}).compileToV0Message();
+		}).compileToV0Message(lookupTables);
 		const tx = new VersionedTransaction(msg);
 		tx.sign([payer, ...extraSigners]);
 		const signature = bs58Sig(tx);

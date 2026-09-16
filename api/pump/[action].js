@@ -70,7 +70,19 @@ import { publishFeedEvent } from '../_lib/feed.js';
 import { recordDailyActivity } from '../_lib/streaks.js';
 import { normalizeGatewayURL } from '../../src/ipfs.js';
 import { buildTokenMetadata } from '../_lib/three-brand.js';
-import { buildPlatformFeeInstructions, effectivePumpFeeBps } from '../_lib/pump-platform-fee.js';
+import {
+	buildPlatformFeeInstructions,
+	effectivePumpFeeBps,
+	pumpFeeRecipient,
+	pumpLaunchFeeBps,
+	txPaidPlatformFee,
+} from '../_lib/pump-platform-fee.js';
+import {
+	buildLaunchTransaction,
+	getPumpLookupTables,
+	pumpAgentBuybackAvailable,
+	transactionV1Status,
+} from '../_lib/pump-launch-tx.js';
 import { pinToIPFS, ipfsPinningConfigured } from '../_lib/ipfs-pin.js';
 import { THREE_WS_VANITY, hasThreeWsMark } from '../../src/solana/vanity/brand.js';
 import { grindVanityNode, GrindExhaustedError } from '../../src/solana/vanity/grinder-node.js';
@@ -1274,6 +1286,11 @@ const launchPrepSchema = z
 		// Pump SDK 2.0 holder-reward launch. Creator fees accrue to the
 		// protocol-derived holder rewards PDA instead of a creator wallet.
 		holder_reward: z.boolean().default(false),
+		// Transaction format. 'auto' compiles v0 against pump.fun's lookup table and
+		// only moves to the 4,096-byte v1 envelope when v0 overflows AND the wallet
+		// advertised v1 signing (`v1_capable`). 0 or 1 pins the format.
+		transaction_version: z.union([z.literal('auto'), z.literal(0), z.literal(1)]).default('auto'),
+		v1_capable: z.boolean().default(false),
 		// Optional Launch Copilot attach: a market-maker policy to arm on this coin
 		// the moment it's confirmed (the success screen can also attach one after).
 		// Validated + safety-gated by api/_lib/market-maker.js at confirm time.
@@ -1416,7 +1433,11 @@ async function handleLaunchPrep(req, res) {
 	//   regular→ V1 path, no agent binding
 	const isMayhem = body.coin_type === 'mayhem';
 	const isAgent = body.coin_type === 'agent';
-	const effBuyback = isAgent ? body.buyback_bps : 0;
+	// The PumpAgent program currently refuses new agents (see
+	// pumpAgentBuybackAvailable), so an 'agent' coin launches without the
+	// on-chain buyback binding instead of reverting the whole launch.
+	const buybackAvailable = pumpAgentBuybackAvailable();
+	const effBuyback = isAgent && buybackAvailable ? body.buyback_bps : 0;
 
 	// Resolve the quote pairing: null → SOL-paired; an explicit mint (e.g. USDC)
 	// → stable-paired so the agent's USDC buyback can swap+burn natively. The
@@ -1460,13 +1481,33 @@ async function handleLaunchPrep(req, res) {
 		instructions.push(createIx);
 	}
 
+	// three.ws launch fee: a disclosed share of the dev buy, paid by the signer in
+	// the same transaction as the create. No dev buy, no fee.
+	const launchFee = await buildPlatformFeeInstructions({
+		network: body.network,
+		payer: signer,
+		isUsdc: quote.isUsdc,
+		quoteMintPk: launchQuoteMint,
+		grossAtomics: quote.isUsdc
+			? BigInt(Math.round((body.usdc_buy_in || 0) * 1_000_000))
+			: BigInt(Math.floor((body.sol_buy_in || 0) * LAMPORTS_PER_SOL_LAUNCH)),
+		basis: 'launch_dev_buy',
+		bps: pumpLaunchFeeBps(),
+	});
+	if (launchFee) instructions.push(...launchFee.instructions);
+
 	// Signer pays gas + funds the initial buy. Creator stays on-chain as the
-	// reward recipient regardless of who paid.
-	const txBase64 = await buildUnsignedTxBase64({
+	// reward recipient regardless of who paid. A server-ground mint co-signs
+	// here so the browser only adds the wallet signature.
+	const built = await buildLaunchTransaction({
 		network: body.network,
 		payer: signer,
 		instructions,
+		transactionVersion: body.transaction_version,
+		v1Capable: body.v1_capable,
+		signers: mintKeypair ? [mintKeypair] : [],
 	});
+	const txBase64 = built.tx_base64;
 
 	const prepId = await randomToken(24);
 	const expiresAt = new Date(Date.now() + 30 * 60 * 1000);
@@ -1490,6 +1531,8 @@ async function handleLaunchPrep(req, res) {
 				coin_type: body.coin_type,
 				holder_reward: body.holder_reward,
 				quote_mint: quote.quoteMint, // null = SOL-paired; else the stable quote mint
+				platform_fee: launchFee ? launchFee.disclosure : null,
+				transaction_version: built.transaction_version,
 				prep_id: prepId,
 				mm: body.mm || null, // optional Launch Copilot policy to arm on confirm
 			})}::jsonb,
@@ -1508,7 +1551,13 @@ async function handleLaunchPrep(req, res) {
 			? Buffer.from(mintKeypair.secretKey).toString('base64')
 			: null,
 		client_supplied_mint: !mintKeypair,
+		mint_presigned: !!mintKeypair,
 		tx_base64: txBase64,
+		transaction_version: built.transaction_version,
+		tx_bytes: built.bytes,
+		tx_limit_bytes: built.limit_bytes,
+		platform_fee: launchFee ? launchFee.disclosure : null,
+		buyback_available: buybackAvailable,
 		network: body.network,
 		buyback_bps: effBuyback,
 		coin_type: body.coin_type,
@@ -1517,7 +1566,7 @@ async function handleLaunchPrep(req, res) {
 		quote_currency: quote.label,
 		expires_at: expiresAt.toISOString(),
 		instructions: mintKeypair
-			? 'Decode tx_base64 as VersionedTransaction. Sign with the mint keypair (mint_secret_key_b64) AND the user wallet, submit, then POST /api/pump/launch-confirm with the tx_signature.'
+			? 'The mint keypair has already co-signed tx_base64. Have the user wallet sign it (a Wallet Standard signTransaction for transaction_version 1), submit, then POST /api/pump/launch-confirm with the tx_signature.'
 			: 'Decode tx_base64 as VersionedTransaction. Sign with your locally-held vanity mint keypair AND the user wallet, submit, then POST /api/pump/launch-confirm with the tx_signature.',
 	});
 }
@@ -1570,6 +1619,12 @@ async function handleLaunchConfirm(req, res) {
 	// or transfer touching the new mint account could be recorded as a launch.
 	if (!txInvokesPumpProgram(tx)) {
 		return error(res, 422, 'not_a_pump_launch', 'transaction did not invoke the pump.fun program');
+	}
+	// The launch fee rode inside the transaction launch-prep built. A signature
+	// for some other transaction (the same mint, minus the fee) is not a
+	// three.ws launch and is not listed as one.
+	if (!txPaidPlatformFee(tx, p.platform_fee, p.quote_mint || undefined)) {
+		return error(res, 422, 'platform_fee_missing', 'transaction did not include the disclosed three.ws launch fee');
 	}
 
 	const [existing] = await sql`
@@ -1827,6 +1882,22 @@ async function handleLaunchAgent(req, res) {
 	const quote = classifyLaunchQuote({ quoteMint: requestedQuoteMint, network: body.network });
 	const launchQuoteMint = quote.quoteMint ? solanaPubkey(quote.quoteMint) : null;
 
+	// three.ws launch fee on the dev buy, paid by the agent wallet in the launch
+	// transaction itself. Built before the preflight so the balance check covers it.
+	const launchFee = await buildPlatformFeeInstructions({
+		network: body.network,
+		payer: creator,
+		isUsdc: quote.isUsdc,
+		quoteMintPk: launchQuoteMint,
+		grossAtomics: quote.isUsdc
+			? BigInt(Math.round((body.usdc_buy_in || 0) * 1_000_000))
+			: BigInt(Math.floor((body.sol_buy_in || 0) * LAMPORTS_PER_SOL)),
+		basis: 'launch_dev_buy',
+		bps: pumpLaunchFeeBps(),
+	});
+	const feeLamports = launchFee && launchFee.disclosure.asset === 'SOL' ? Number(launchFee.disclosure.amount) : 0;
+	const feeUsdcAtomics = launchFee && launchFee.disclosure.asset === 'USDC' ? BigInt(launchFee.disclosure.amount) : 0n;
+
 	// Pre-flight: make sure the agent wallet can afford the launch.
 	const conn = solanaConnection(body.network);
 	const PUMP_BASE_LAMPORTS = Math.floor(0.022 * LAMPORTS_PER_SOL);
@@ -1836,7 +1907,7 @@ async function handleLaunchAgent(req, res) {
 	const initialBuyLamports = quote.isUsdc
 		? 0
 		: Math.floor((body.sol_buy_in || 0) * LAMPORTS_PER_SOL);
-	const requiredLamports = PUMP_BASE_LAMPORTS + initialBuyLamports;
+	const requiredLamports = PUMP_BASE_LAMPORTS + initialBuyLamports + feeLamports;
 	let balanceLamports = 0;
 	try {
 		balanceLamports = await conn.getBalance(creator);
@@ -1855,7 +1926,7 @@ async function handleLaunchAgent(req, res) {
 	// USDC dev buy: the custodial wallet must hold the USDC it will spend, or the
 	// create+buy reverts on-chain. Verify up front so it fails cleanly here.
 	if (quote.isUsdc && body.usdc_buy_in > 0) {
-		const needAtomics = BigInt(Math.round(body.usdc_buy_in * 1_000_000));
+		const needAtomics = BigInt(Math.round(body.usdc_buy_in * 1_000_000)) + feeUsdcAtomics;
 		let haveAtomics = 0n;
 		try {
 			const { getAssociatedTokenAddressSync } = await import('@solana/spl-token');
@@ -1879,7 +1950,8 @@ async function handleLaunchAgent(req, res) {
 
 	const isMayhem = body.coin_type === 'mayhem';
 	const isAgent = body.coin_type === 'agent';
-	const effBuyback = isAgent ? body.buyback_bps : 0;
+	const buybackAvailable = pumpAgentBuybackAvailable();
+	const effBuyback = isAgent && buybackAvailable ? body.buyback_bps : 0;
 
 	const instructions = await buildLaunchInstructions({
 		sdk,
@@ -1906,6 +1978,7 @@ async function handleLaunchAgent(req, res) {
 		});
 		instructions.push(createIx);
 	}
+	if (launchFee) instructions.push(...launchFee.instructions);
 
 	// Spend-policy gate: this path signs server-side with the agent's custodial
 	// wallet, so a stolen session could otherwise drive an arbitrarily large SOL
@@ -1914,7 +1987,7 @@ async function handleLaunchAgent(req, res) {
 	// so concurrent launches can't both pass, and the launch is recorded toward
 	// the daily cap. A USDC-paired dev buy moves no SOL (amount 0). Released on
 	// send failure, finalized with the signature on success.
-	const launchSolOutflow = quote.isUsdc ? 0 : body.sol_buy_in || 0;
+	const launchSolOutflow = (quote.isUsdc ? 0 : body.sol_buy_in || 0) + feeLamports / LAMPORTS_PER_SOL;
 	const reservation = await reserveSpend({
 		agentId: resolvedAgentId,
 		meta: loaded.meta,
@@ -1940,7 +2013,10 @@ async function handleLaunchAgent(req, res) {
 			connection: conn,
 			payer: agentKeypair,
 			instructions,
-			opts: { extraSigners: [mintKeypair] },
+			opts: {
+				extraSigners: [mintKeypair],
+				addressLookupTables: await getPumpLookupTables({ network: body.network }),
+			},
 		}));
 	} catch (err) {
 		await releaseSpend(reservation.reservationId);
@@ -1986,6 +2062,7 @@ async function handleLaunchAgent(req, res) {
 		buyback_bps: effBuyback,
 		coin_type: body.coin_type,
 		holder_reward: body.holder_reward,
+		platform_fee: launchFee ? launchFee.disclosure : null,
 		source: 'studio_agent_wallet',
 	});
 
@@ -2018,6 +2095,8 @@ async function handleLaunchAgent(req, res) {
 		quote_mint: quote.quoteMint,
 		quote_currency: quote.label,
 		pump_agent_mint: row || null,
+		platform_fee: launchFee ? launchFee.disclosure : null,
+		buyback_available: buybackAvailable,
 		explorer: `https://solscan.io/tx/${signature}${body.network === 'devnet' ? '?cluster=devnet' : ''}`,
 		pumpfun_url: `https://pump.fun/coin/${mintAddr}`,
 	});
