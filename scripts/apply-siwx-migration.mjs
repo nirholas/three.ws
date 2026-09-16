@@ -58,7 +58,7 @@ const statements = text
 	.filter((s) => s.length > 0);
 
 for (const s of statements) {
-	await sql(s, [], {});
+	await sql.query(s, [], {});
 	console.log('OK:', s.slice(0, 80).replace(/\s+/g, ' '));
 }
 console.log('siwx tables ready');

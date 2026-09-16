@@ -62,6 +62,8 @@ function stripNul(v) {
 
 // Brand identifying a composable fragment produced by this wrapper.
 const FRAGMENT = Symbol('neonSqlFragment');
+// Builds (once) and returns the fragment's underlying Neon query object.
+const NATIVE = Symbol('neonSqlNative');
 
 function isFragment(v) {
 	return v != null && typeof v === 'object' && v[FRAGMENT] === true;
@@ -95,7 +97,7 @@ function composeFragment(strings, values) {
 
 // A fragment is a lazy, composable stand-in for a NeonQueryPromise. It holds the
 // raw template pieces so a parent query can splice it, and only builds the
-// underlying Neon query (via the function form, which prepares params and stays
+// underlying Neon query (via `client.query`, which prepares params and stays
 // lazy until awaited) the first time it is executed, inspected for its
 // `parameterizedQuery`, or read for `opts` — i.e. when used standalone or inside
 // `sql.transaction([...])`.
@@ -106,7 +108,7 @@ function makeFragment(strings, values) {
 			const { query, params } = composeFragment(strings, values);
 			const { sql: client, err } = getSqlSafe();
 			if (err) throw err;
-			native = client(query, params);
+			native = client.query(query, params);
 		}
 		return native;
 	};
@@ -129,7 +131,8 @@ function makeFragment(strings, values) {
 		[Symbol.toStringTag]: 'NeonQueryPromise',
 		strings,
 		values,
-		get parameterizedQuery() { return toNative().parameterizedQuery; },
+		[NATIVE]: toNative,
+		get parameterizedQuery() { return toNative().queryData; },
 		get opts() { return toNative().opts; },
 		then(onFulfilled, onRejected) { return settle().then(onFulfilled, onRejected); },
 		catch(onRejected) { return settle().catch(onRejected); },
@@ -339,11 +342,28 @@ export async function isStoragePressured() {
 	}
 }
 
+// Neon 1.x `transaction()` only accepts its own query objects (an instanceof
+// check), so a fragment is unwrapped to the native query it builds before the
+// batch is handed over. Accepts both Neon forms: an array of queries, or a
+// function that receives the transaction client and returns one.
+function unwrapQueries(queries) {
+	return Array.isArray(queries) ? queries.map((q) => (isFragment(q) ? q[NATIVE]() : q)) : queries;
+}
+
+function transaction(queriesOrFn, opts) {
+	const client = getSql();
+	const batch = typeof queriesOrFn === 'function'
+		? (txn) => unwrapQueries(queriesOrFn(txn))
+		: unwrapQueries(queriesOrFn);
+	return client.transaction(batch, opts);
+}
+
 export const sql = /** @type {ReturnType<typeof import('@neondatabase/serverless').neon>} */ (new Proxy(function () {}, {
 	apply(_t, _this, args) {
-		// Neon dispatches on the first argument: a string is the ordinary
-		// function form `sql(queryText, params, opts)`; anything else is a
-		// tagged-template call where the first arg is the strings array.
+		// A string first argument is the function form `sql(queryText, params, opts)`;
+		// anything else is a tagged-template call where the first arg is the strings
+		// array. Neon 1.x rejects the function form on the client itself, so both
+		// paths build their query through `client.query`, which it still accepts.
 		if (typeof args[0] === 'string') {
 			const [queryText, params, opts] = args;
 			const safeParams = Array.isArray(params) ? params.map(stripNul) : params;
@@ -352,11 +372,12 @@ export const sql = /** @type {ReturnType<typeof import('@neondatabase/serverless
 			// the same way the tagged-template fragment path does.
 			const { sql: client, err } = getSqlSafe();
 			if (err) return Promise.reject(err);
-			return client(queryText, safeParams, opts);
+			return client.query(queryText, safeParams, opts);
 		}
 		return makeFragment(args[0], args.slice(1));
 	},
 	get(_t, prop) {
+		if (prop === 'transaction') return transaction;
 		return getSql()[prop];
 	},
 }));

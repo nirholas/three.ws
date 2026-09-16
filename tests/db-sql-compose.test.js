@@ -5,6 +5,7 @@
 // positional parameter and emits invalid SQL (`… 2) $3 $4 …` → Postgres
 // `syntax error at or near "$3"`). Our wrapper flattens fragments inline and
 // renumbers placeholders. These tests assert the generated `parameterizedQuery`
+// (Neon 1.x `queryData`: params stay as bound values until the query runs)
 // without touching a database — DATABASE_URL only needs to be a syntactically
 // valid connection string so neon() can instantiate lazily.
 
@@ -21,7 +22,7 @@ describe('sql fragment composition', () => {
 	it('builds a plain parameterized query with no fragments', () => {
 		expect(sql`select * from t where id = ${5}`.parameterizedQuery).toEqual({
 			query: 'select * from t where id = $1',
-			params: ['5'],
+			params: [5],
 		});
 	});
 
@@ -45,7 +46,7 @@ describe('sql fragment composition', () => {
 		`.parameterizedQuery;
 
 		// Every placeholder is sequential and contiguous — no bare `$N` gaps.
-		expect(params).toEqual(['mainnet', '2', 'prime', '30', '50']);
+		expect(params).toEqual(['mainnet', 2, 'prime', 30, 50]);
 		expect(query).toContain('c.network = $1');
 		expect(query).toContain('o.ath_multiple >= $2');
 		expect(query).toContain('c.tier = $3');
@@ -74,15 +75,16 @@ describe('sql fragment composition', () => {
 		);
 		expect(sql`update t ${setClause} where id = ${'x'} returning *`.parameterizedQuery).toEqual({
 			query: 'update t set avatar_id = $1, price_amount = $2, price_currency = $3 where id = $4 returning *',
-			params: ['av1', '100', 'USDC', 'x'],
+			params: ['av1', 100, 'USDC', 'x'],
 		});
 	});
 
 	it('keeps fragments compatible with sql.transaction([...])', () => {
 		const f = sql`insert into t(a) values (${1})`;
-		// Neon's transaction() rejects anything whose toStringTag !== 'NeonQueryPromise'.
+		// The wrapper unwraps fragments to native Neon queries before transaction(),
+		// and the tag keeps code that sniffs for a Neon query recognising one.
 		expect(Object.prototype.toString.call(f)).toBe('[object NeonQueryPromise]');
-		expect(f.parameterizedQuery).toEqual({ query: 'insert into t(a) values ($1)', params: ['1'] });
+		expect(f.parameterizedQuery).toEqual({ query: 'insert into t(a) values ($1)', params: [1] });
 		expect(f.opts).toBeUndefined();
 	});
 
@@ -101,9 +103,9 @@ describe('sql fragment composition', () => {
 	});
 
 	it('passes ordinary function-form calls straight through', () => {
-		expect(sql('select $1::int', [7]).parameterizedQuery).toEqual({
+		expect(sql('select $1::int', [7]).queryData).toEqual({
 			query: 'select $1::int',
-			params: ['7'],
+			params: [7],
 		});
 	});
 });
@@ -113,7 +115,7 @@ describe('sqlValues — multi-row VALUES fragment', () => {
 		const { query, params } = sql`insert into t (a, b) values ${sqlValues([[1, 'x']])}`
 			.parameterizedQuery;
 		expect(query).toBe('insert into t (a, b) values ($1, $2)');
-		expect(params).toEqual(['1', 'x']);
+		expect(params).toEqual([1, 'x']);
 	});
 
 	it('renders multiple rows with contiguous, renumbered placeholders', () => {
@@ -123,7 +125,7 @@ describe('sqlValues — multi-row VALUES fragment', () => {
 			[3, 'z'],
 		])}`.parameterizedQuery;
 		expect(query).toBe('insert into t (a, b) values ($1, $2), ($3, $4), ($5, $6)');
-		expect(params).toEqual(['1', 'x', '2', 'y', '3', 'z']);
+		expect(params).toEqual([1, 'x', 2, 'y', 3, 'z']);
 	});
 
 	it('renumbers against a parent query that also binds params', () => {
@@ -148,7 +150,7 @@ describe('sqlValues — multi-row VALUES fragment', () => {
 		// exact failure mode (`syntax error at or near ":"`) the helper prevents.
 		expect(query).not.toContain(':');
 		expect(params[0]).toBe('x');
-		expect(String(params[1])).toContain('2026-06-20');
+		expect(params[1]).toBe(ts);
 	});
 
 	it('rejects empty input and ragged rows', () => {

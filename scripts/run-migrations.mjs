@@ -161,7 +161,7 @@ async function main() {
 			for (const stmt of statements) {
 				const body = stmt.replace(/--[^\n]*/g, '').trim();
 				if (body) {
-					await sql(stmt);
+					await sql.query(stmt);
 				}
 			}
 			const sha256 = createHash('sha256').update(sqlText).digest('hex');
