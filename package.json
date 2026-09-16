@@ -556,7 +556,7 @@
 		"@tetsuo-ai/sdk": "^1.4.0",
 		"@three-ws/companion": "*",
 		"@three-ws/solana-agent": "file:solana-agent-sdk",
-		"@upstash/qstash": "^2.11.0",
+		"@upstash/qstash": "^2.11.3",
 		"@upstash/ratelimit": "^2.0.5",
 		"@upstash/redis": "^1.38.0",
 		"@vercel/og": "^0.11.1",
