@@ -607,7 +607,7 @@
 		"marked": "^18.0.7",
 		"meshoptimizer": "^1.1.1",
 		"mppx": "^0.6.31",
-		"multiformats": "^9.9.0",
+		"multiformats": "^14.0.5",
 		"nanoid": "^3.3.11",
 		"nipplejs": "^1.0.4",
 		"node-html-parser": "^7.1.0",
