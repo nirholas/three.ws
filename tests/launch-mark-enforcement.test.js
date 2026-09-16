@@ -121,6 +121,16 @@ vi.mock('../api/_lib/execution-engine.js', () => ({
 	submitProtected: vi.fn(async () => ({ signature: 'a'.repeat(88), slot: 1, route: 'protected' })),
 }));
 
+const launchTxState = vi.hoisted(() => ({ buybackAvailable: true }));
+
+// ── launch transaction assembly (lookup tables / v1 need a live RPC) ─────────
+vi.mock('../api/_lib/pump-launch-tx.js', () => ({
+	buildLaunchTransaction: vi.fn(async () => ({ tx_base64: 'BASE64TX', transaction_version: 0, bytes: 900, limit_bytes: 1232 })),
+	getPumpLookupTables: vi.fn(async () => []),
+	pumpAgentBuybackAvailable: vi.fn(() => launchTxState.buybackAvailable),
+	transactionV1Status: vi.fn(async () => ({ active: true, activation_slot: 1 })),
+}));
+
 // ── pump.js SDK ───────────────────────────────────────────────────────────────
 vi.mock('../api/_lib/pump.js', () => ({
 	getConnection: vi.fn(() => ({})),

@@ -2,6 +2,17 @@
 	"$comment": "Curated changelog entries for three.ws, the editorial layer of the public changelog. New PAGE launches are tracked automatically via the `added` field in data/pages.json; this file is for everything else holders care about: improvements, fixes, SDK releases, trading/payments capabilities, security work. scripts/build-page-index.mjs merges both sources into CHANGELOG.md, public/changelog.json, and public/changelog.xml. Newest first. Allowed tags: feature, improvement, fix, sdk, infra, docs, security. `link` is optional and must be a live three.ws path.",
 	"entries": [
 		{
+			"date": "2026-09-16",
+			"title": "A cleaner launchpad for your 3D agent's coin, with rewards you claim right here",
+			"summary": "three.ws/launch is rebuilt around one flow: pick one of your 3D agents, name the coin, and launch it on pump.fun from your wallet or from the agent's own wallet. The coin's metadata links your agent's page and 3D body, a live preview and cost panel show exactly what you will pay (including a 1% three.ws fee on the dev buy), and a new My coins tab shows unclaimed creator rewards and claims them in one click, no pump.fun app needed. Launches now fit in a single transaction thanks to pump.fun's lookup table, and larger ones, like USDC-paired coins with a dev buy, use Solana transaction v1 automatically when your wallet supports it. This also fixes launches that were failing because an on-chain buyback program stopped accepting new agents.",
+			"tags": [
+				"feature",
+				"improvement",
+				"fix"
+			],
+			"link": "/launch"
+		},
+		{
 			"date": "2026-09-15",
 			"title": "Show and tell now captures projects people can actually try",
 			"summary": "The GitHub community showcase now asks builders for the outcome, live demo, source, three.ws surface used, one useful lesson, and visual proof. That structure makes each submission easier to understand, reproduce, feature, and turn into an honest adopter story. Two compact developer front doors are also fully built and exportable: a Codespaces starter that opens on a live animated agent, and a GLB pull-request quality gate powered by the same model-diff engine as three.ws.",

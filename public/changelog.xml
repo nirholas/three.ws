@@ -7,6 +7,22 @@
 		<description>What's new on three.ws: features, improvements, and releases, newest first.</description>
 		<language>en</language>
 		<item>
+			<title>Docs · The /launch launchpad</title>
+			<link>https://three.ws/docs/launchpad</link>
+			<guid isPermaLink="false">2026-09-16:Docs · The /launch launchpad</guid>
+			<pubDate>Wed, 16 Sep 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>How three.ws/launch launches a pump.fun coin for a 3D agent: agent-linked metadata, the 1% dev-buy fee, v0 lookup-table and Solana transaction v1 formats, claiming creator rewards on three.ws, and the API behind it.</description>
+		</item>
+		<item>
+			<title>A cleaner launchpad for your 3D agent's coin, with rewards you claim right here</title>
+			<link>https://three.ws/launch</link>
+			<guid isPermaLink="false">2026-09-16:A cleaner launchpad for your 3D agent's coin, with rewards you claim right here</guid>
+			<pubDate>Wed, 16 Sep 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>three.ws/launch is rebuilt around one flow: pick one of your 3D agents, name the coin, and launch it on pump.fun from your wallet or from the agent's own wallet. The coin's metadata links your agent's page and 3D body, a live preview and cost panel show exactly what you will pay (including a 1% three.ws fee on the dev buy), and a new My coins tab shows unclaimed creator rewards and claims them in one click, no pump.fun app needed. Launches now fit in a single transaction thanks to pump.fun's lookup table, and larger ones, like USDC-paired coins with a dev buy, use Solana transaction v1 automatically when your wallet supports it. This also fixes launches that were failing because an on-chain buyback program stopped accepting new agents.</description>
+		</item>
+		<item>
 			<title>Atomic - Solana V1 Inspector</title>
 			<link>https://three.ws/atomic</link>
 			<guid isPermaLink="false">2026-09-15:Atomic - Solana V1 Inspector</guid>
@@ -26236,7 +26252,7 @@ And all of it is public. Oracle Lab publishes the actual model: every weight, th
 			<guid isPermaLink="false">2026-06-15:Launch a Coin</guid>
 			<pubDate>Mon, 15 Jun 2026 12:00:00 GMT</pubDate>
 			<category>launch</category>
-			<description>Mint a coin for your 3D AI agent in one flow: pick an agent, set the name, symbol, and image, then launch on pump.fun straight from your wallet with an optional three.ws-branded vanity mint.</description>
+			<description>The pump.fun launchpad for 3D AI agents: pick your agent, name the coin, launch it from your wallet or the agent's wallet, and claim creator rewards on three.ws.</description>
 		</item>
 		<item>
 			<title>Smart Money Radar: follow the wallets that win on pump.fun</title>

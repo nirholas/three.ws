@@ -4,6 +4,11 @@
 
 Public history for [three.ws](https://three.ws), newest first. New pages come from `added` dates in data/pages.json; everything else is curated in data/changelog.json. Also available as [JSON](https://three.ws/changelog.json) and [RSS](https://three.ws/changelog.xml), live at [three.ws/changelog](https://three.ws/changelog).
 
+## 2026-09-16
+
+- **Docs · The /launch launchpad** (`/docs/launchpad`): How three.ws/launch launches a pump.fun coin for a 3D agent: agent-linked metadata, the 1% dev-buy fee, v0 lookup-table and Solana transaction v1 formats, claiming creator rewards on three.ws, and the API behind it.
+- **A cleaner launchpad for your 3D agent's coin, with rewards you claim right here**: three.ws/launch is rebuilt around one flow: pick one of your 3D agents, name the coin, and launch it on pump.fun from your wallet or from the agent's own wallet. The coin's metadata links your agent's page and 3D body, a live preview and cost panel show exactly what you will pay (including a 1% three.ws fee on the dev buy), and a new My coins tab shows unclaimed creator rewards and claims them in one click, no pump.fun app needed. Launches now fit in a single transaction thanks to pump.fun's lookup table, and larger ones, like USDC-paired coins with a dev buy, use Solana transaction v1 automatically when your wallet supports it. This also fixes launches that were failing because an on-chain buyback program stopped accepting new agents. (`/launch`) `[feature, improvement, fix]`
+
 ## 2026-09-15
 
 - **Atomic - Solana V1 Inspector** (`/atomic`): A live Solana Transaction V1 observatory and pre-sign inspector. Paste a mainnet signature or base64 wire transaction to see exact bytes, resource caps, compute use, and sponsor safety.
@@ -3546,7 +3551,7 @@ And all of it is public. Oracle Lab publishes the actual model: every weight, th
 
 - **Coin Intelligence** (`/coin-intel`): Every pump.fun launch watched and classified in real time: organic vs bundle, the wallets behind it, a transparent quality score, and a model that learns which signals predict winners.
 - **Coin Radar** (`/radar`): Live pump.fun launch intelligence: every new coin scored in its first ~90 seconds: bundle vs organic, wallet concentration, dev behaviour, and risk flags from the Coin Intelligence Engine.
-- **Launch a Coin** (`/launch`): Mint a coin for your 3D AI agent in one flow: pick an agent, set the name, symbol, and image, then launch on pump.fun straight from your wallet with an optional three.ws-branded vanity mint.
+- **Launch a Coin** (`/launch`): The pump.fun launchpad for 3D AI agents: pick your agent, name the coin, launch it from your wallet or the agent's wallet, and claim creator rewards on three.ws.
 - **Smart Money Radar: follow the wallets that win on pump.fun** (`/smart-money`): A live first-party reputation graph of every pump.fun wallet. We cross each coin's buyers with the coins that actually graduated, so you can see which wallets keep picking winners: and what the proven money is buying right now.
 - **Sniper Arena: autonomous AI agents trading live** (`/play/arena`): Watch three.ws AI agents trade pump.fun autonomously in real time. Live P&L leaderboard, each trade signed by the agent's own wallet and verifiable on-chain.
 - **Trader Leaderboard** (`/leaderboard`): Pump.fun traders ranked by a provable, on-chain track record: realized P&L, win rate, and drawdown, with every number traceable to its transaction.

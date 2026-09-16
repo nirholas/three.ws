@@ -1,14 +1,36 @@
 {
-	"generated_at": "2026-09-16T16:27:18.321Z",
+	"generated_at": "2026-09-16T16:41:04.225Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
 		"url": "https://three.ws"
 	},
-	"total": 3682,
+	"total": 3684,
 	"complete": false,
 	"full_feed": "/changelog.json",
 	"entries": [
+		{
+			"date": "2026-09-16",
+			"type": "launch",
+			"title": "Docs · The /launch launchpad",
+			"summary": "How three.ws/launch launches a pump.fun coin for a 3D agent: agent-linked metadata, the 1% dev-buy fee, v0 lookup-table and Solana transaction v1 formats, claiming creator rewards on three.ws, and the API behind it.",
+			"link": "/docs/launchpad",
+			"tags": [
+				"launch"
+			]
+		},
+		{
+			"date": "2026-09-16",
+			"type": "update",
+			"title": "A cleaner launchpad for your 3D agent's coin, with rewards you claim right here",
+			"summary": "three.ws/launch is rebuilt around one flow: pick one of your 3D agents, name the coin, and launch it on pump.fun from your wallet or from the agent's own wallet. The coin's metadata links your agent's page and 3D body, a live preview and cost panel show exactly what you will pay (including a 1% three.ws fee on the dev buy), and a new My coins tab shows unclaimed creator rewards and claims them in one click, no pump.fun app needed. Launches now fit in a single transaction thanks to pump.fun's lookup table, and larger ones, like USDC-paired coins with a dev buy, use Solana transaction v1 automatically when your wallet supports it. This also fixes launches that were failing because an on-chain buyback program stopped accepting new agents.",
+			"link": "/launch",
+			"tags": [
+				"feature",
+				"improvement",
+				"fix"
+			]
+		},
 		{
 			"date": "2026-09-15",
 			"type": "launch",
@@ -1595,28 +1617,6 @@
 			"tags": [
 				"fix",
 				"improvement"
-			]
-		},
-		{
-			"date": "2026-09-07",
-			"type": "update",
-			"title": "A sharper cutout for images with hair, fur, or fine edges",
-			"summary": "Background removal now offers BiRefNet as an optional model alongside the fast default. The default model smears wispy boundaries into a soft halo, and because every image-to-3D lane rebuilds geometry from the cut-out subject, that halo turned into real polygons on the finished mesh. BiRefNet keeps hair strands, fur, foliage, and thin straps intact. It takes about six seconds against the default's one, so it stays opt-in: pass model \"birefnet\" on the background-removal endpoint or pick it from the MCP tool when the edge is what matters.",
-			"link": null,
-			"tags": [
-				"improvement",
-				"feature"
-			]
-		},
-		{
-			"date": "2026-09-07",
-			"type": "update",
-			"title": "Archived news stories with emoji in their summary keep their search listing",
-			"summary": "Google Search Console flagged an archived story page for unparsable structured data. The cause: the archive trims a publisher summary to a fixed length before serving it, and the cut landed in the middle of an emoji, leaving half a character in the page data that search engines read. Trimming is now character-aware, so it never splits an emoji, a flag, or an accented letter, and the page data is checked for half characters before it is written. Around one archived story in seven thousand carried the flaw; all of them serve a valid listing now. The same fix covers the story summaries shown in link previews and the shared page descriptions across the site.",
-			"link": "/markets/news",
-			"tags": [
-				"fix",
-				"infra"
 			]
 		}
 	]

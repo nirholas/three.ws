@@ -790,13 +790,14 @@ function walletBlocker(c) {
 	if (state.user === null) return { field: 'wallet', text: 'Sign in to launch', blocking: false };
 	if (state.form.launcher === 'agent') {
 		if (!state.agentWallet) return { field: 'wallet', text: state.agentWalletError || "Loading the agent's wallet", blocking: true };
-		if (c.quote === 'SOL' && state.agentWallet.sol != null && state.agentWallet.sol < c.totalSol) {
+		// USDC coins still pay rent and network fees in SOL (totalSol covers both lanes).
+		if (state.agentWallet.sol != null && state.agentWallet.sol < c.totalSol) {
 			return { field: 'wallet', text: `The agent's wallet needs ~${formatAmount(c.totalSol - state.agentWallet.sol, 4)} more SOL`, blocking: true };
 		}
 		return null;
 	}
 	if (!state.wallet) return null;
-	if (c.quote === 'SOL' && state.balance != null && state.balance < c.totalSol) {
+	if (state.balance != null && state.balance < c.totalSol) {
 		return { field: 'wallet', text: `Your wallet needs ~${formatAmount(c.totalSol - state.balance, 4)} more SOL`, blocking: true };
 	}
 	return null;

@@ -1466,7 +1466,7 @@
 				{
 					"path": "/launch",
 					"title": "Launch a Coin",
-					"description": "Mint a coin for your 3D AI agent in one flow: pick an agent, set the name, symbol, and image, then launch on pump.fun straight from your wallet with an optional three.ws-branded vanity mint.",
+					"description": "The pump.fun launchpad for 3D AI agents: pick your agent, name the coin, launch it from your wallet or the agent's wallet, and claim creator rewards on three.ws.",
 					"priority": 0.8,
 					"changefreq": "monthly",
 					"added": "2026-06-15"
@@ -2980,6 +2980,14 @@
 					"priority": 0.6,
 					"changefreq": "monthly",
 					"added": "2026-08-11"
+				},
+				{
+					"path": "/docs/launchpad",
+					"title": "Docs · The /launch launchpad",
+					"description": "How three.ws/launch launches a pump.fun coin for a 3D agent: agent-linked metadata, the 1% dev-buy fee, v0 lookup-table and Solana transaction v1 formats, claiming creator rewards on three.ws, and the API behind it.",
+					"priority": 0.6,
+					"changefreq": "monthly",
+					"added": "2026-09-16"
 				},
 				{
 					"path": "/docs/analytics-retention",

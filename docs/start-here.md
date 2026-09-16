@@ -215,6 +215,7 @@ Deeper references that don't fit a track above but answer real questions:
 - [Agent trading spec](./specs/agent-trading.md): the proposed agent trading capability contract
 - [ERC-8004 validation attestation](./erc8004/validation-attestation.md): the attestation written when an agent registers on-chain
 - [zauth](./zauth/index.md): the vendored security infrastructure docs our agent auth builds on
+- [The /launch launchpad](./launchpad.md): launch a pump.fun coin for a 3D agent from your wallet or the agent's wallet, pay a disclosed 1% dev-buy fee, and claim creator rewards on three.ws, with automatic Solana transaction v1 for launches that overflow v0
 - [Agent tokens](./agent-tokens.md): configure the coin an agent will become, rehearse the launch for free against a real cluster, then launch it on Solana
 - [pump.fun program docs](./pumpfun-program/README.md): the vendored on-chain program reference behind the launch surfaces
 - [pump-fun-mcp at the edge](./pump-fun-mcp-edge.md): the Cloudflare Workers mirror of the pump.fun MCP endpoint

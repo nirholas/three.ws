@@ -1,11 +1,33 @@
 {
-	"generated_at": "2026-09-16T16:27:18.295Z",
+	"generated_at": "2026-09-16T16:41:04.189Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
 		"url": "https://three.ws"
 	},
 	"entries": [
+		{
+			"date": "2026-09-16",
+			"type": "launch",
+			"title": "Docs · The /launch launchpad",
+			"summary": "How three.ws/launch launches a pump.fun coin for a 3D agent: agent-linked metadata, the 1% dev-buy fee, v0 lookup-table and Solana transaction v1 formats, claiming creator rewards on three.ws, and the API behind it.",
+			"link": "/docs/launchpad",
+			"tags": [
+				"launch"
+			]
+		},
+		{
+			"date": "2026-09-16",
+			"type": "update",
+			"title": "A cleaner launchpad for your 3D agent's coin, with rewards you claim right here",
+			"summary": "three.ws/launch is rebuilt around one flow: pick one of your 3D agents, name the coin, and launch it on pump.fun from your wallet or from the agent's own wallet. The coin's metadata links your agent's page and 3D body, a live preview and cost panel show exactly what you will pay (including a 1% three.ws fee on the dev buy), and a new My coins tab shows unclaimed creator rewards and claims them in one click, no pump.fun app needed. Launches now fit in a single transaction thanks to pump.fun's lookup table, and larger ones, like USDC-paired coins with a dev buy, use Solana transaction v1 automatically when your wallet supports it. This also fixes launches that were failing because an on-chain buyback program stopped accepting new agents.",
+			"link": "/launch",
+			"tags": [
+				"feature",
+				"improvement",
+				"fix"
+			]
+		},
 		{
 			"date": "2026-09-15",
 			"type": "launch",
@@ -34498,7 +34520,7 @@
 			"date": "2026-06-15",
 			"type": "launch",
 			"title": "Launch a Coin",
-			"summary": "Mint a coin for your 3D AI agent in one flow: pick an agent, set the name, symbol, and image, then launch on pump.fun straight from your wallet with an optional three.ws-branded vanity mint.",
+			"summary": "The pump.fun launchpad for 3D AI agents: pick your agent, name the coin, launch it from your wallet or the agent's wallet, and claim creator rewards on three.ws.",
 			"link": "/launch",
 			"tags": [
 				"launch"

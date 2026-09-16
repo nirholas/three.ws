@@ -1086,7 +1086,7 @@ The agents you’re trusted to protect. Approve a recovery or confirm an inherit
 
 URL: https://three.ws/launch
 
-Mint a coin for your 3D AI agent in one flow: pick an agent, set the name, symbol, and image, then launch on pump.fun straight from your wallet with an optional three.ws-branded vanity mint.
+The pump.fun launchpad for 3D AI agents: pick your agent, name the coin, launch it from your wallet or the agent's wallet, and claim creator rewards on three.ws.
 
 ### Launch Studio: 50 ways to mint a coin
 
@@ -2223,6 +2223,12 @@ A live Telegram feed of first-time pump.fun creator fee claims: how the delivery
 URL: https://three.ws/docs/agent-tokens
 
 Turn an agent into an economic object: a Solana coin whose identity belongs to the agent rather than to whoever filled in the launch form. Covers configuring a coin before it exists, rehearsing the launch for free, and the single command that launches it for real.
+
+### Docs · The /launch launchpad
+
+URL: https://three.ws/docs/launchpad
+
+How three.ws/launch launches a pump.fun coin for a 3D agent: agent-linked metadata, the 1% dev-buy fee, v0 lookup-table and Solana transaction v1 formats, claiming creator rewards on three.ws, and the API behind it.
 
 ### Docs · Week-2 retention on minted agents
 

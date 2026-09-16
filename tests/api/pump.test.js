@@ -59,6 +59,16 @@ const mockPumpAgent = {
 	})),
 };
 
+const launchTxState = vi.hoisted(() => ({ buybackAvailable: true }));
+
+// ── launch transaction assembly (lookup tables / v1 need a live RPC) ─────────
+vi.mock('../../api/_lib/pump-launch-tx.js', () => ({
+	buildLaunchTransaction: vi.fn(async () => ({ tx_base64: 'BASE64TX', transaction_version: 0, bytes: 900, limit_bytes: 1232 })),
+	getPumpLookupTables: vi.fn(async () => []),
+	pumpAgentBuybackAvailable: vi.fn(() => launchTxState.buybackAvailable),
+	transactionV1Status: vi.fn(async () => ({ active: true, activation_slot: 1 })),
+}));
+
 vi.mock('../../api/_lib/pump.js', () => ({
 	getConnection: vi.fn(() => ({})),
 	solanaPubkey: vi.fn((s) => (s ? { toBase58: () => s, toString: () => s } : null)),
@@ -237,6 +247,27 @@ describe('POST /api/pump/launch-prep', () => {
 		expect(json.buyback_bps).toBe(500);
 		expect(mockPumpAgentOffline.create).toHaveBeenCalledOnce();
 		expect(mockPumpAgentOffline.create.mock.calls[0][0].buybackBps).toBe(500);
+	});
+
+	it('launches without the buyback binding while PumpAgent refuses new agents', async () => {
+		launchTxState.buybackAvailable = false;
+		authState.session = { id: 'user-1' };
+		sqlState.queue = [[{ id: 'wallet-1' }], [{ id: 'agent-1', name: 'Foo' }], []];
+		mockPumpAgentOffline.create.mockClear();
+		const { res, json } = await invoke(pumpAction('launch-prep'), {
+			method: 'POST', url: '/api/pump/launch-prep',
+			body: {
+				agent_id: '00000000-0000-0000-0000-000000000001',
+				wallet_address: walletB58,
+				name: 'Foo', symbol: 'FOO', uri: 'https://x/m.json',
+				network: 'devnet', buyback_bps: 500,
+			},
+		});
+		launchTxState.buybackAvailable = true;
+		expect(res.statusCode).toBe(201);
+		expect(json.buyback_bps).toBe(0);
+		expect(json.buyback_available).toBe(false);
+		expect(mockPumpAgentOffline.create).not.toHaveBeenCalled();
 	});
 });
 

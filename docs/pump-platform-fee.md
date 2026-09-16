@@ -52,3 +52,25 @@ The fee is **never** charged silently. When `platform_fee_bps > 0`:
 4. Set `PUMP_PLATFORM_FEE_BPS=100`.
 5. Confirm the modal shows the fee line and a test trade routes the fee to the
    wallet.
+
+## Launch fee (on by default)
+
+Coins launched through three.ws (`/launch`, `/api/pump/launch-prep`, `/api/pump/launch-agent`)
+carry a separate **launch fee on the dev buy**, set by the owner at 1%.
+
+| Env var | Effect |
+|---|---|
+| `PUMP_LAUNCH_FEE_BPS` | Rate in basis points on the dev buy. **Default `100` (1%).** `0` turns it off. Hard-capped at 500. |
+| `PUMP_PLATFORM_FEE_WALLET` | Same recipient as the trade fee (falls back to the platform treasury pubkey). |
+
+- A launch with no dev buy pays no launch fee.
+- The fee is a transfer inside the launch transaction itself (SOL for SOL-paired coins, USDC for
+  USDC-paired ones). `launch-prep` returns it as `platform_fee` and `/launch` shows it in the cost
+  panel before the wallet prompt.
+- `launch-confirm` reads the recipient's balance delta from the confirmed transaction
+  (`txPaidPlatformFee`) and refuses to list a launch whose transaction did not pay it.
+- On the agent-wallet path, a USDC launch plus the fee can exceed the v0 packet; the coin then
+  launches first and the fee follows in its own transaction (`platform_fee.settlement: 'separate'`,
+  or `'failed'` if that transfer did not land, in which case nothing was charged).
+- `GET /api/pump/launch-config` reports the live `launch_fee_bps` (0 when no recipient resolves).
+- Terms: section 8 of `/legal/tos` discloses platform fees on Real-Funds Features.
