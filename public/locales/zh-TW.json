@@ -2038,7 +2038,6 @@
 		"three_ws_2": "three.ws",
 		"three_ws_implements_the_full_aws_marketplace": "three.ws 實作完整的 AWS Marketplace SaaS 合約 — 包含註冊、計量、權利，以及簽署的 SNS 訂閱生命週期 Webhook。",
 		"three_ws_is_an_independent_aws_partner": "three.ws 是獨立的 AWS 合作夥伴，已加入 AWS 合作夥伴網路軟體路徑。本頁說明當 AWS Marketplace 上架公開後，AWS 客戶將如何採購 three.ws。AWS、AWS Marketplace、AWS Partner Network 和 AWS Activate 是 Amazon.com, Inc. 或其附屬公司的商標。",
-		"three_ws_is_an_open_source_3d": "three.ws 是一個開源 3D AI 代理平台 — WebGL 檢視器、Claude 驅動的執行環境、鏈上身份，一個標籤即可嵌入任何地方。<strong>現已成為 AWS 合作夥伴。</strong> Marketplace 即將上架 — 可使用 AWS 點數訂閱，帳單計入您的 AWS 發票，並計入 EDP 承諾額度。",
 		"three_ws_on_aws": "three.ws 於 <span class=\"gradient\">AWS</span>。",
 		"three_ws_subscribes_under_the_aws_standard": "three.ws 依據 AWS Marketplace 標準合約訂閱。開箱即用，採購無憂。",
 		"try_three_ws_community_edition_with_no": "試用 three.ws 社群版，無任何承諾。訂閱僅在試用期結束後才啟用。",

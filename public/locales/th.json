@@ -2038,7 +2038,6 @@
 		"three_ws_2": "three.ws",
 		"three_ws_implements_the_full_aws_marketplace": "three.ws ใช้สัญญา SaaS ของ AWS Marketplace อย่างเต็มรูปแบบ — การลงทะเบียน, การวัดปริมาณการใช้งาน, สิทธิ์การใช้งาน, และการแจ้งเตือนเว็บฮุกวงจรชีวิตการสมัครสมาชิก SNS ที่ลงนามแล้ว",
 		"three_ws_is_an_independent_aws_partner": "three.ws เป็นพาร์ทเนอร์อิสระของ AWS ที่ลงทะเบียนใน AWS Partner Network Software Path หน้านี้อธิบายว่าลูกค้า AWS จะจัดซื้อ three.ws ได้อย่างไรเมื่อรายการใน AWS Marketplace พร้อมใช้งานต่อสาธารณะ AWS, AWS Marketplace, AWS Partner Network และ AWS Activate เป็นเครื่องหมายการค้าของ Amazon.com, Inc. หรือบริษัทในเครือ",
-		"three_ws_is_an_open_source_3d": "three.ws เป็นแพลตฟอร์มเอเจนต์ AI 3D แบบโอเพนซอร์ส — โปรแกรมดูสำหรับ WebGL, รันไทม์ที่ขับเคลื่อนด้วย Claude, ข้อมูลระบุตัวตนบนเชน, ฝังได้ทุกที่ด้วยแท็กเดียว <strong>ตอนนี้เป็นพาร์ทเนอร์ของ AWS แล้ว</strong> รายการใน Marketplace กำลังจะมาถึงเร็วๆ นี้ — สมัครสมาชิกด้วยเครดิต AWS, เรียกเก็บเงินในใบแจ้งหนี้ AWS ของคุณ, นับรวมในข้อผูกพัน EDP",
 		"three_ws_on_aws": "three.ws บน <span class=\"gradient\">AWS</span>",
 		"three_ws_subscribes_under_the_aws_standard": "three.ws สมัครสมาชิกภายใต้สัญญามาตรฐาน AWS สำหรับ Marketplace พร้อมจัดซื้อได้ทันที",
 		"try_three_ws_community_edition_with_no": "ลองใช้ three.ws Community Edition โดยไม่มีข้อผูกมัด การสมัครสมาชิกจะเปิดใช้งานหลังจากช่วงทดลองใช้สิ้นสุดลงเท่านั้น",

@@ -2038,7 +2038,6 @@
 		"three_ws_2": "three.ws",
 		"three_ws_implements_the_full_aws_marketplace": "three.ws нь AWS Marketplace-ийн SaaS гэрээний бүрэн хэрэгжилтийг хангадаг — бүртгэл, хэмжилт, эрх, мөн гарын үсэг зурсан SNS захиалгын амьдралын мөчлөгийн вебхукууд.",
 		"three_ws_is_an_independent_aws_partner": "three.ws нь AWS Partner Network-ийн Програм хангамжийн замд бүртгэгдсэн бие даасан AWS Түнш юм. Энэ хуудас нь AWS Marketplace-ийн жагсаалт олон нийтэд нээлттэй болоход AWS-ийн хэрэглэгчид three.ws-ийг хэрхэн авахыг тайлбарласан болно. AWS, AWS Marketplace, AWS Partner Network, болон AWS Activate нь Amazon.com, Inc. эсвэл түүний харьяа компаниудын худалдааны тэмдэг юм.",
-		"three_ws_is_an_open_source_3d": "three.ws нь нээлттэй эхийн 3D хиймэл оюун ухаант агентын платформ юм — WebGL үзүүлэгч, Claude-аар ажилладаг runtime, гинжин хэлхээний танилт, нэг тагаар хаана ч суулгах боломжтой. <strong>Одоо AWS Түнш болсон.</strong> Маркетплейс дээр удахгүй нэмэгдэнэ — AWS кредит ашиглан захиалж, AWS-ийн нэхэмжлэхээр төлж, EDP амлалтад тооцуулах боломжтой.",
 		"three_ws_on_aws": "three.ws <span class=\"gradient\">AWS</span> дээр.",
 		"three_ws_subscribes_under_the_aws_standard": "three.ws нь Marketplace-д зориулсан AWS-ийн Стандарт Гэрээний дагуу захиалдаг. Шууд ашиглахад бэлэн.",
 		"try_three_ws_community_edition_with_no": "three.ws Community Edition-ийг ямар ч үүрэг хүлээхгүйгээр туршиж үзээрэй. Захиалга туршилтын хугацаа дууссаны дараа л идэвхждэг.",
