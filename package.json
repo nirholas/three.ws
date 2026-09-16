@@ -541,7 +541,7 @@
 		"@pythnetwork/hermes-client": "^3.1.0",
 		"@ricky0123/vad-web": "^0.0.30",
 		"@scure/base": "^1.2.6",
-		"@solana-mobile/mobile-wallet-adapter-protocol-web3js": "^2.2.9",
+		"@solana-mobile/mobile-wallet-adapter-protocol-web3js": "^2.3.0",
 		"@solana-program/compute-budget": "^0.15.0",
 		"@solana-program/stake": "^0.6.1",
 		"@solana-program/token": "^0.13.0",
